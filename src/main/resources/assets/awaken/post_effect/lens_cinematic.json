@@ -35,12 +35,12 @@
       "height": 300
     },
     "awaken:lens_light": {
-      "width": 1280,
-      "height": 720
+      "width": 960,
+      "height": 540
     },
     "awaken:lens_hist": {
-      "width": 1280,
-      "height": 720,
+      "width": 960,
+      "height": 540,
       "persistent": true
     },
     "awaken:lens_sunmap": {
@@ -279,6 +279,11 @@
           "bilinear": true
         },
         {
+          "sampler_name": "Wide",
+          "target": "awaken:lens_wide",
+          "bilinear": true
+        },
+        {
           "sampler_name": "Params",
           "location": "awaken:lens_params",
           "width": 16,
@@ -358,6 +363,11 @@
         "LensConfig": [
           {
             "name": "Cinematic",
+            "type": "float",
+            "value": 1.0
+          },
+          {
+            "name": "Quality",
             "type": "float",
             "value": 1.0
           }

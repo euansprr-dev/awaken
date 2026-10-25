@@ -46,8 +46,8 @@ float sunVisibility(vec3 p, vec3 n, vec3 l, float noise, bool ultra) {
     ivec2 own = ivec2(floor(o.xz));
     if (o.y < heightAt(own, 0).g - 1.0) return 0.0;
     float maxH = f15.y, trust = f15.z, horiz = max(length(l.xz), 1.0e-3);
-    int steps = ultra ? 40 : 28;
-    float base = ultra ? 0.25 : 0.3, grow = ultra ? 0.13 : 0.2;
+    int steps = ultra ? 40 : 24;
+    float base = ultra ? 0.25 : 0.32, grow = ultra ? 0.13 : 0.23;
     float t = base * (0.4 + noise), vis = 1.0;
     for (int i = 0; i < steps; i++) {
         vec3 q = o + l * t;
@@ -71,7 +71,7 @@ float sunVisibility(vec3 p, vec3 n, vec3 l, float noise, bool ultra) {
 
 // the depth buffer, a short way toward the light: what the heightfield can't hold (mobs, grass, slabs, block edges)
 float contactShadow(vec3 p, vec3 n, vec3 l, float dist, float noise, mat4 vp, bool z01, float zFar, bool ultra) {
-    int steps = ultra ? 12 : 8;
+    int steps = ultra ? 12 : 6;
     float len = clamp(0.35 + dist * 0.025, 0.35, 3.0);
     vec3 o = p + n * (0.02 + dist * 0.0008);
     for (int i = 0; i < steps; i++) {
@@ -119,15 +119,18 @@ float litAt(vec3 w, vec4 f12, float cell) {
 }
 
 // sunlight scattered toward the eye by a thin mist along the view ray v (to distance d), wherever the air is lit: the
-// mist thickens toward sea level (the look's mist and mistHeight); forward-peaked toward the sun (Henyey-Greenstein)
+// mist lies on the land, thickest at the height of the ground under the camera and thinning above it over the look's
+// mistHeight (so valleys fill and the air over a mountain stays clear); forward-peaked toward the sun (Henyey-Greenstein)
 float volume(vec3 v, float d, vec3 l, float strength, float jitter, bool ultra) {
     vec4 f12 = F(12), v19 = P(19);
     float cell = 1024.0 / float(textureSize(SunmapSampler, 0).x);
-    int steps = ultra ? 16 : 10;
+    int steps = ultra ? 16 : 8;
+    float ground = heightAt(ivec2(floor(f12.xz)), 0).g;
+    float floorY = ground > -1000.0 ? max(ground, 40.0) : 63.0;
     float dt = d / float(steps), scaleH = max(v19.g * 256.0, 4.0), acc = 0.0;
     for (int i = 0; i < steps; i++) {
         vec3 w = v * ((float(i) + jitter) * dt);
-        acc += litAt(w, f12, cell) * exp(-max(w.y + f12.y - 63.0, 0.0) / scaleH);
+        acc += litAt(w, f12, cell) * exp(-max(w.y + f12.y - floorY, 0.0) / scaleH);
     }
     const float g = 0.6;
     float phase = 0.06 + 4.0 * (1.0 - g * g) / (12.566 * pow(1.0 + g * g - 2.0 * g * dot(v, l), 1.5));

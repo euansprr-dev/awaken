@@ -20,7 +20,9 @@ import java.util.Arrays;
  * from the client chunks' own heightmaps, which the light pass marches toward the sun. A 1024×1024 RG16F texture,
  * addressed by world block coordinate modulo 1024 (a ring buffer, so moving never shifts it): r the top of everything
  * that blocks motion (leaves included), g the same without leaves (a roof). Mips 1-4 hold the maximum of their 2×2, so
- * far steps of the march test a whole cell at once. Built from a 64×64-chunk window centred on the camera's chunk,
+ * far steps of the march test a whole cell at once. Where the top is water, g sits at the block's base + 0.75 instead of
+ * its top (exactly representable in half floats to y 512): the shaders read that fraction as "water here" (Lens 2's
+ * reflections, L3) and lose nothing as an occluder. Built from a 64×64-chunk window centred on the camera's chunk,
  * nearest chunks first and a few each tick; block changes show within a few seconds (a rolling rescan). Uploads go up
  * as whole-width strips of the window, straight from an off-heap mirror, so nothing is allocated per tick.
  */
@@ -172,9 +174,11 @@ final class LensHeightfield {
                 int a = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z) + 1;
                 int s = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) + 1;
                 all[x + z * 16] = a;
-                solid[x + z * 16] = s;
+                // open water on top: its column's solid top drops to base + 0.75, the shaders' water mark
+                boolean water = a == s && chunk.getFluidState(x, s - 1, z).getType().is(net.minecraft.tags.FluidTags.WATER);
+                solid[x + z * 16] = water ? s - 0.25f : s;
                 high = Math.max(high, a);
-                h = (h ^ (a * 4099L + s)) * 1099511628211L;
+                h = (h ^ (a * 4099L + s * 2L + (water ? 1L : 0L))) * 1099511628211L;
             }
         }
         if (h == hash[slot]) return true;

@@ -32,6 +32,7 @@ final class LensFrame {
     private final Vector3f spinAxis = new Vector3f();
     private double prevX, prevY, prevZ;
     private long prevNs;
+    private final long start = System.nanoTime();
     private int frame;
     private boolean hasPrev;
 
@@ -80,7 +81,9 @@ final class LensFrame {
         put(14, lightX, lightY, lightZ, light);
         put(15, height != null ? ring : 0f, height != null ? height.maxTop() : -64f, LensHeightfield.TRUSTED, 0f);
         put(16, zeroToOne ? 1f : 0f, moon ? 1f : 0f, rain, 0.05f);
-        for (int i = 17; i < WIDTH; i++) put(i, 0f, 0f, 0f, 0f);
+        // 17: x seconds (wrapping every hour) for what moves on its own: ripples, heat shimmer, frost
+        put(17, (float) ((now - start) / 1.0e9 % 3600.0), 0f, 0f, 0f);
+        for (int i = 18; i < WIDTH; i++) put(i, 0f, 0f, 0f, 0f);
         RenderSystem.getDevice().createCommandEncoder().writeToTexture(texture.getTexture(), data, 0, 0, 0, 0, WIDTH, 1);
 
         prevViewProj.set(viewProj);

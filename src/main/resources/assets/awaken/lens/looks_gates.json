@@ -41,7 +41,8 @@
       "mist": 0.0,
       "mistHeight": 48.0,
       "fogGlow": 0.5,
-      "skyGlow": 0.0
+      "skyGlow": 0.0,
+      "glow": 0.9
     },
     "biome:awaken:gate_fungal_hollow": {
       "_name": "Fungal Hollow: damp teal-green haze, vivid saturated spore colour, bioluminescence glowing strong into the wet air",
@@ -82,7 +83,8 @@
       "mist": 0.0,
       "mistHeight": 48.0,
       "fogGlow": 1.0,
-      "skyGlow": 0.0
+      "skyGlow": 0.0,
+      "glow": 0.9
     },
     "biome:awaken:gate_ember_mines": {
       "_name": "Ember Mines: orange-red heat haze, deep rust shadows, lava and braziers blooming hard, everything leaning warm",
@@ -123,7 +125,9 @@
       "mist": 0.0,
       "mistHeight": 48.0,
       "fogGlow": 1.1,
-      "skyGlow": 0.0
+      "skyGlow": 0.0,
+      "heat": 0.55,
+      "glow": 0.8
     },
     "biome:awaken:gate_drowned_archive": {
       "_name": "Drowned Archive: soft blue-green underwater haze, cool and quiet, lantern pools hanging in the murk",
@@ -246,7 +250,8 @@
       "mist": 0.0,
       "mistHeight": 48.0,
       "fogGlow": 0.35,
-      "skyGlow": 0.0
+      "skyGlow": 0.0,
+      "heat": 0.4
     },
     "biome:awaken:gate_hive": {
       "_name": "Hive: thick honey-amber haze, golden highlights, brown-amber shadows, a warm glow from every cell",
@@ -410,7 +415,8 @@
       "mist": 0.0,
       "mistHeight": 48.0,
       "fogGlow": 0.5,
-      "skyGlow": 0.0
+      "skyGlow": 0.0,
+      "frost": 0.6
     },
     "biome:awaken:gate_mirror_palace": {
       "_name": "Mirror Palace: crisp high contrast, silver highlights over violet shadows, almost no haze, reflections blooming",
@@ -451,7 +457,8 @@
       "mist": 0.0,
       "mistHeight": 48.0,
       "fogGlow": 0.5,
-      "skyGlow": 0.0
+      "skyGlow": 0.0,
+      "glow": 0.9
     },
     "biome:awaken:gate_precursor_lab": {
       "_name": "Precursor Lab: clinical cyan-teal, cool shadows, a thin haze, the Signal's blue glow bleeding off every panel",
@@ -492,7 +499,8 @@
       "mist": 0.0,
       "mistHeight": 48.0,
       "fogGlow": 0.7,
-      "skyGlow": 0.0
+      "skyGlow": 0.0,
+      "glow": 0.9
     },
     "biome:awaken:gate_nightmare": {
       "_name": "Nightmare: crushed darks, drained violet-red, a thick sickly haze close in, a heavy vignette, uneasy faint glows",
@@ -533,7 +541,8 @@
       "mist": 0.0,
       "mistHeight": 48.0,
       "fogGlow": 0.4,
-      "skyGlow": 0.0
+      "skyGlow": 0.0,
+      "glow": 0.9
     },
     "biome:awaken:gate_sky_archipelago": {
       "_name": "Sky Archipelago: bright and airy, a pale sky-blue haze, warm highlights, soft blue shadows, an open light frame",
@@ -615,7 +624,8 @@
       "mist": 0.0,
       "mistHeight": 48.0,
       "fogGlow": 0.35,
-      "skyGlow": 0.0
+      "skyGlow": 0.0,
+      "glow": 0.9
     }
   }
 }

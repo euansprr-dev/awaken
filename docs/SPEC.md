@@ -2254,7 +2254,8 @@ magic.
   NeoForge 26.3.0.95), selectable on every backend; its budgets are Cinematic p50 ≤ 11.1 ms / p99 ≤ 20 ms and Ultra
   ≤ 16.7 / ≤ 25 ms. With an Iris shaderpack on, no tier is current and Lens steps aside as before.
 - **Chain** (Cinematic, Ultra): far-depth probe and trust (two 1-px passes) → **sun map** (`lens_sunmap.fsh`, L2) →
-  **light** (`lens_light.fsh`, 1280×720 on Cinematic, 1600×900 on Ultra; uniform `LensConfig.Quality` 1 or 2) → blit
+  **light** (`lens_light.fsh`, 960×540 on Cinematic, 1440×810 on Ultra since the L2 tour; uniform `LensConfig.Quality`
+  1 or 2) → blit
   into the persistent `awaken:lens_hist` → Lens's bloom and shafts passes → **composite** (`lens_composite_lit.fsh` =
   the Swift composite's body, `include/lens_composite.glsl`, with `LENS_LIGHT` defined) → blit. 13 passes against
   Swift's 9; full-size passes stay two (composite and its blit), as before. Measured at L1 (no sun map yet), the extra
@@ -2280,13 +2281,13 @@ magic.
 - **Light pass** (per pixel of the reduced buffer, from the full-size depth): position and normal from depth (of the
   two neighbours per axis the one continuing the centre's plane; a normal within 0.9 of an axis snaps to it, since
   block faces are axis-aligned), then:
-  - **Sun shadow from the heightfield**: march from the surface (nudged 0.06 along its normal) toward the light, 28
+  - **Sun shadow from the heightfield**: march from the surface (nudged 0.06 along its normal) toward the light, 24
     steps on Cinematic / 40 on Ultra, each longer than the last (to about 250 blocks), far steps testing a whole max
     cell (mip by the stride) so a stride can't skip a ridge; solid → shadow, through leaves the light fades
     (exp(-0.9 × stride)) for flecks under trees. Stops above the window's highest surface or past the trusted radius.
     A heightmap counts a slab, stair or carpet as a whole block, so a surface's own column only counts from a block
     above it; a point more than a block under its column's solid top (a roof, a cave) gets no sun.
-  - **Contact shadows**: 8 / 12 steps through the depth buffer toward the light, 0.35 to 3 blocks (longer far off):
+  - **Contact shadows**: 6 / 12 steps through the depth buffer toward the light, 0.35 to 3 blocks (longer far off):
     mobs, grass, slabs and block edges the heightfield can't hold. Within 96 blocks.
   - **Ambient occlusion**: 6 / 10 cosine-weighted samples in a 0.9-block hemisphere against the depth buffer. Within
     96 blocks.
@@ -2299,7 +2300,8 @@ magic.
     run, and the holo glass at 0.62 m): not shadowed, never an occluder.
 - **Composite light** (before the haze; the frame is display-encoded, so a multiplier m on linear light is applied as
   √m): the light buffer upsampled by distance (of its 2×2 texels the ones that saw this surface), the normal again at
-  full size, then a warm key where the sun reaches (noon (1.04, 1.02, 0.97); golden hour, by the sunrise colour's
+  full size (from screen derivatives where the pixel's 2×2 quad lies on one surface, the four-tap version only across
+  an edge), then a warm key where the sun reaches (noon (1.04, 1.02, 0.97); golden hour, by the sunrise colour's
   strength × `keyWarmth`, (1.24, 1.0, 0.74); the moon (0.93, 0.98, 1.08)) and a cool shade where it doesn't
   (`shadeTint` × (1 − `shade`), deepened 30% at golden hour). Faces turned from the sun shade only as it lowers (none
   at noon, when Minecraft's sun is straight overhead and the game's own face shading stays; all by golden hour). The
@@ -2313,7 +2315,8 @@ magic.
 - **Filmic curve** (`filmic`, in place of the plain contrast clamp): past white, colour runs toward white instead of
   clipping its hue; the top tenth rolls off with tanh (white itself within 3% of white); contrast is an S around
   mid-grey with the look's slope there, then a black point of 0.45 × (contrast − 1), as deep as the plain contrast's,
-  so night and shade keep their depth.
+  so night and shade keep their depth. Not on the open sky, where the sun's glow keeps its soft blow-out (a shoulder
+  there showed the sun's square disc).
 - **Look fields** (looks*.json, inherited from `default`; texels 17-19): `light` 1.0, `shade` 0.32, `shadeTint`
   [0.86, 0.93, 1.14], `keyWarmth` 0.8, `ao` 0.65, `filmic` 1.0; L2: `mist` 0.5, `mistHeight` 48 (blocks), `fogGlow`
   0.15, `skyGlow` 0.6. Texel 19: r mist, g mistHeight/256, b fogGlow/2, a skyGlow.
@@ -2339,15 +2342,19 @@ magic.
   leaves in b/a (two bytes each, -256..768 blocks in 1/64 steps). Its march (24 / 32 steps, max mips by stride) stops
   as soon as nothing further toward the sun could rise above what it has, so most stop in a few steps.
 - **Volumetric light** (in the light pass, its blue channel; it replaces adding a pass): along each view ray to the
-  surface (or 192 / 320 blocks into the sky), 10 / 16 jittered samples of the sun map (lit, in a shadow, or under
-  leaves at 35%) in a mist that thickens toward sea level (exp(-(y - 63) / mistHeight)); optical depth 0.0016 per
+  surface (or 192 / 320 blocks into the sky), 8 / 16 jittered samples of the sun map (lit, in a shadow, or under
+  leaves at 35%) in a mist lying on the land: thickest at the height of the ground under the camera (its heightfield
+  column; sea level 63 where unknown) and thinning above it, exp(-(y - ground) / mistHeight), so valleys fill and the
+  air over a mountain stays clear (at sea level only, it vanished wherever the land is high); optical depth 0.0016 per
   block × `mist` × the look's `shafts` × the light's strength, sent toward the eye by a Henyey-Greenstein phase (g 0.6,
   plus a 0.06 floor), so beams show strongest toward the sun and the air away from it stays clear. Accumulated over
   frames (0.2 new on Cinematic, 0.15 on Ultra). The composite adds it (screen) in the light's colour × 1.6, and keeps
   the screen-space shafts at half (0.7) for what the sun map can't hold: clouds crossing the sun. Classic (view 8)
   shows the old shafts alone.
-- **Fog glow** (lights glowing in haze, the gates' light pools; composite only): the wide bloom layer sampled again on a
-  ring a tenth of the screen out (eight taps and the centre), tinted toward the haze colour, × `fogGlow` × 2.
+- **Fog glow** (lights glowing in haze, the gates' light pools): the shafts pass (quarter size, its g/b/a) spreads the
+  wide bloom layer again over two rings of six taps (3.5% and 7.5% of the screen out) and the centre; the composite
+  adds it tinted toward the haze colour, × `fogGlow` × 3. (At L2's tour it sat in the full-size composite with nine
+  taps a pixel: too costly, and too diffuse to read as light pools.)
 - **Sky scattering**: the sky, and the haze over terrain, brighten around the light's direction (pow(μ, 5) × 0.3 +
   pow(μ, 40) × 0.4 in the light's colour, × `skyGlow`, wider and warmer at golden hour). Clouds are in the depth
   buffer, so they take the key and shade like terrain (their sunlit tops warm, their undersides cool).
@@ -2364,4 +2371,32 @@ magic.
   Spirit themes wisps, Drowned Archive rising motes, ...); the Nether has embers; the overworld by day has dust that
   spawns only in sunlit air (a CPU march of the heightfield mirror toward the sun) and glints when it's between you and
   the sun. Your breath shows every 3-4 s in first person in the Frost Monastery and wherever it snows. Embers, spores,
-  wisps and dust are full bright (Lens's bloom picks them up); frost and breath take the world's light.
+  wisps and dust are full bright (Lens's bloom picks them up); frost and breath take the world's light. Gate rates are
+  ×1.5 the table's since the L2 tour, and every kind half as big again (they read as specks).
+- L2 measured (same vista as L1, p50/p99 ms): off 9.00/13.61, Swift 8.94/14.12, Cinematic 13.13/23.75, Ultra
+  16.14/23.66. Ultra holds 60; Cinematic (+4.1 ms) missed 90, so after that tour: the fog glow moved to the quarter-size
+  shafts pass, normals from screen derivatives, Cinematic's light buffer 960×540 (24 sun, 6 contact, 8 volume steps),
+  Ultra's 1440×810. Measured again in L3's tour.
+
+**L3, water and magic** (looks: `water` 0.6, `heat` 0, `frost` 0, `glow` 0.6 by default; texel 20: r water, g heat,
+b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
+- **Water**: the heightfield marks open-water columns (a solid top at the block's base + 0.75, exact in half floats up
+  to y 512; the occluder loses nothing). A pixel whose surface lies on such a column's water level (base + 0.889) is
+  water; where water draws without depth the pixel shows what's under it, and the reflection sits where the view ray
+  crossed the water's surface. Rippling normals (two sines each way, by world position and time), Schlick Fresnel
+  (F0 0.02). The reflection: the frame where the reflected ray meets open sky on screen, else the fog's colour; on
+  Ultra a 20-step screen-space march of the reflected ray against the depth buffer (nearest first, fading at the
+  frame's edge) reflects the scene itself. The sun's glint (pow(R·L, 240) × 5, none in the water's own shade) in the
+  light's colour: the reference's glinting river. × `water` and the fog fade. Only where the heightfield is built (an
+  overworld sky).
+- **Emissive glow**: AWAKEN's glows (bright, saturated, not a warm hue: runes, vortices, the Signal's blue, eyes, the
+  gate pillars) bloom up to 2.5× as much as lit surfaces of the same brightness (the prefilter, by `glow`; all tiers),
+  and keep their light in Lens 2's shade (the shade's weight × (1 − glowness × `glow`)). They glow through fog
+  because the bloom is made before the haze and the fog glow spreads it. No creature was repainted.
+- **Heat shimmer** (`heat`: the Nether 0.45, Ember Mines 0.55, Glass Desert 0.4): the frame is read through rippling
+  offsets (up to about 0.2% of the screen, more in the lower frame), Cinematic and Ultra only.
+- **Frost** (`frost`: Frost Monastery 0.6): frost creeps in from the frame's edges (a band up to 11% of the height ×
+  frost, deeper at the corners, crystalline refraction in it and a pale rime with fine streaks over it).
+- `glow` 0.9 for the Spirit and Charge themes and the Mirror Palace, 0.8 for the Ember Mines.
+- Tour: `tools/autopilot/lens2-l3.txt` (a pool in the lab into the sun, glowing creatures at dusk and night,
+  Carillon's river, the Ember Mines' shimmer, the Frost Monastery's frost, the bench).

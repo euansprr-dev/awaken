@@ -85,7 +85,7 @@ public final class LensParticles {
         RandomSource r = level.getRandom();
         Emitter[] place = biome != null ? GATES.getOrDefault(biome, NONE) : NONE;
         if (place == NONE && level.dimension() == net.minecraft.world.level.Level.NETHER) place = NETHER;
-        for (Emitter e : place) emit(level, r, eye, camera.forwardVector(), e.kind, e.tint, e.rate * scale, e.rise, 1f);
+        for (Emitter e : place) emit(level, r, eye, camera.forwardVector(), e.kind, e.tint, e.rate * scale * 1.5f, e.rise, 1f);
         // the overworld by day: dust, only where the sun reaches, glinting when it's between you and the sun
         if (place == NONE && light > 0.2f && height != null) {
             int n = count(r, 2.5f * scale);
@@ -201,25 +201,25 @@ public final class LensParticles {
             switch (kind) {
                 case EMBER -> {
                     lifetime = 40 + r.nextInt(50);
-                    size0 = 0.03f + r.nextFloat() * 0.04f;
+                    size0 = 0.045f + r.nextFloat() * 0.05f;
                     friction = 0.97f;
                     base = 0.95f;
                 }
                 case FROST -> {
                     lifetime = 90 + r.nextInt(80);
-                    size0 = 0.04f + r.nextFloat() * 0.05f;
+                    size0 = 0.06f + r.nextFloat() * 0.06f;
                     friction = 0.98f;
                     base = 0.85f;
                 }
                 case SPORE -> {
                     lifetime = 100 + r.nextInt(100);
-                    size0 = 0.03f + r.nextFloat() * 0.035f;
+                    size0 = 0.045f + r.nextFloat() * 0.045f;
                     friction = 0.96f;
                     base = 0.8f;
                 }
                 case WISP -> {
                     lifetime = 120 + r.nextInt(100);
-                    size0 = 0.11f + r.nextFloat() * 0.09f;
+                    size0 = 0.16f + r.nextFloat() * 0.12f;
                     friction = 0.97f;
                     base = 0.5f;
                 }
@@ -231,7 +231,7 @@ public final class LensParticles {
                 }
                 default -> {
                     lifetime = 70 + r.nextInt(80);
-                    size0 = 0.018f + r.nextFloat() * 0.025f;
+                    size0 = 0.028f + r.nextFloat() * 0.032f;
                     friction = 0.96f;
                     base = 0.85f;
                 }

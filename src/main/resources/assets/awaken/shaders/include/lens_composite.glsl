@@ -24,6 +24,9 @@ layout(std140) uniform SamplerInfo {
 
 layout(std140) uniform LensConfig {
     float Cinematic;
+#ifdef LENS_LIGHT
+    float Quality;                   // 1 Cinematic, 2 Ultra (screen-space reflections)
+#endif
 };
 
 layout(location = 0) out vec4 fragColor;
@@ -95,9 +98,75 @@ vec3 lightColour(vec4 p1, vec4 sunset) {
 // doesn't (deeper and warmer-keyed as the sun lowers), ambient occlusion in corners. As a multiplier on linear light;
 // the frame is display-encoded, where that is about its square root. Fades out under solid cover (a roof, a cave),
 // for the hand and holo glass (within arm's reach), toward the end of the render distance and in the game's thick fog.
-vec3 lensLight(vec3 c, vec3 p, float depth, float rdEnd, float fogFade, vec4 p1, out vec4 dbg) {
+// how much a pixel looks like one of AWAKEN's glows (runes, vortices, the Signal's blue, eyes): bright and saturated,
+// and not a warm hue (a sunlit orange roof is bright and saturated too; the glows are cyan, blue, violet, pink, red)
+float glowness(vec3 c) {
+    float hi = max(c.r, max(c.g, c.b)), lo = min(c.r, min(c.g, c.b));
+    float sat = hi > 1.0e-4 ? (hi - lo) / hi : 0.0;
+    float cool = c.b >= c.g * 0.9 || (c.g > c.r && c.b > c.r) ? 1.0 : 0.0;
+    return smoothstep(0.7, 0.95, hi) * smoothstep(0.45, 0.8, sat) * cool;
+}
+
+// open water under the light: Fresnel reflection of what's above it (the sky, or on Ultra the scene itself, marched in
+// screen space), rippling, with the sun's glint on top. The heightfield marks water columns (solid top at base + 0.75).
+vec3 lensWater(vec3 c, vec3 p, vec3 n, float vis, float strength) {
+    if (F(15).x < 1.0) return c;
+    vec4 f12 = F(12), f14 = F(14), f16 = F(16);
+    vec3 w = p + f12.xyz;
+    float g = heightAt(ivec2(floor(w.xz)), 0).g;
+    if (abs(fract(g) - 0.75) > 0.02) return c;
+    float surf = floor(g) + 0.889;
+    // the depth holds the water's surface, or (water drawn without depth) what lies under it: then the ray crossed the
+    // surface on its way, where it reflects
+    if (w.y < surf - 0.3) {
+        if (f12.y < surf || p.y > -1.0e-3) return c;
+        p *= (surf - f12.y) / p.y;
+        w = p + f12.xyz;
+        g = heightAt(ivec2(floor(w.xz)), 0).g;
+        if (abs(fract(g) - 0.75) > 0.02) return c;
+    } else if (n.y < 0.9) {
+        return c;
+    }
+    float on = 1.0 - smoothstep(0.1, 0.3, abs(w.y - surf));
+    if (on <= 0.0) return c;
+    bool z01 = f16.x > 0.5;
+    float t = F(17).x;
+    vec2 rip = vec2(sin(w.x * 1.7 + t * 1.6) + sin(w.z * 2.3 - t * 1.3 + w.x * 0.7),
+                    cos(w.z * 1.9 + t * 1.1) + sin(w.x * 2.9 + w.z * 1.1 + t * 2.0)) * 0.03;
+    vec3 N = normalize(vec3(rip.x, 1.0, rip.y)), V = normalize(p), R = reflect(V, N);
+    float fres = 0.02 + 0.98 * pow(1.0 - max(dot(-V, N), 0.0), 5.0);
+    mat4 vp = frameMat(4);
+    // the sky above: the frame itself where the reflected ray meets open sky on screen, else the fog's colour
+    vec3 s = project(vp, R * 1000.0, z01);
+    vec3 refl = P(10).rgb;
+    if (s.x > 0.0 && s.y > 0.0 && s.x < 1.0 && s.y < 1.0 && texture(DepthSampler, s.xy).r < 1.0e-7) refl = texture(InSampler, s.xy).rgb;
+    if (Quality > 1.5) {
+        // Ultra: march the reflected ray against the depth buffer, nearest first
+        vec4 p1 = P(1);
+        float zFar = max(p1.r * 255.0 * 256.0 + p1.g * 255.0, 16.0), tt = 0.3;
+        for (int i = 0; i < 20; i++) {
+            tt *= 1.22;
+            vec3 q = project(vp, p + R * tt, z01);
+            if (q.x <= 0.0 || q.y <= 0.0 || q.x >= 1.0 || q.y >= 1.0) break;
+            float sd = texture(DepthSampler, q.xy).r;
+            float zs = linearDepth(sd, zFar, z01), zq = linearDepth(q.z, zFar, z01);
+            if (sd > 1.0e-7 && zs > 1.25 && zs < zq - 0.05 && zq - zs < tt * 0.35 + 0.4) {
+                vec2 edge = min(q.xy, 1.0 - q.xy);
+                refl = mix(refl, texture(InSampler, q.xy).rgb, smoothstep(0.0, 0.08, min(edge.x, edge.y)));
+                break;
+            }
+        }
+    }
+    vec3 lit = c + (refl - c) * fres * on * strength;
+    // the sun's glint off the ripples (none in the water's own shade)
+    float glint = pow(max(dot(R, f14.xyz), 0.0), 240.0) * 5.0 * f14.w * vis * on * strength;
+    vec3 sunColour = f16.y > 0.5 ? vec3(0.6, 0.7, 0.95) * 0.7 : mix(vec3(1.0, 0.96, 0.88), P(9).rgb, P(1).a);
+    return lit + sunColour * glint;
+}
+
+vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float fogFade, vec4 p1, out vec4 dbg) {
     dbg = vec4(0.0);
-    vec4 f12 = F(12), f14 = F(14), f16 = F(16), l17 = P(17), l18 = P(18);
+    vec4 f12 = F(12), f14 = F(14), f16 = F(16), l17 = P(17), l18 = P(18), m20 = P(20);
     if (f16.w <= 0.0) return c;
     bool z01 = f16.x > 0.5;
     mat4 inv = frameMat(0);
@@ -108,8 +177,11 @@ vec3 lensLight(vec3 c, vec3 p, float depth, float rdEnd, float fogFade, vec4 p1,
     vec3 lr = upsample(LightSampler, packDistance8(dist));
     vec3 m = vec3(1.0);
     float sun = f14.w * l17.r;
+    bool needNormal = sun > 0.0 || (m20.r > 0.0 && F(15).x > 0.0);
+    // the screen-derivative normal where this pixel's 2x2 quad lies on one surface; the careful four taps across an edge
+    vec3 n = quickNormal;
+    if (needNormal && n == vec3(0.0)) n = normalAt(clamp(ivec2(texCoord * OutSize), ivec2(0), ivec2(OutSize) - 1), p, depth, inv, z01, OutSize);
     if (sun > 0.0) {
-        vec3 n = normalAt(clamp(ivec2(texCoord * OutSize), ivec2(0), ivec2(OutSize) - 1), p, depth, inv, z01, OutSize);
         // solid blocks above this point in its own column: under a ledge it's shade, deep under a roof it's left alone
         float cover = 0.0;
         if (F(15).x > 0.0) {
@@ -127,13 +199,16 @@ vec3 lensLight(vec3 c, vec3 p, float depth, float rdEnd, float fogFade, vec4 p1,
         vec3 key = mix(vec3(1.04, 1.02, 0.97), vec3(1.24, 1.0, 0.74), golden * l18.a);
         key = mix(key, vec3(0.93, 0.98, 1.08), f16.y);
         vec3 shade = l18.rgb * 2.0 * (1.0 - min(0.85, l17.g * (1.0 + 0.3 * golden)));
-        float k = open * sun * near * fogFade * (1.0 - smoothstep(0.75 * rdEnd, rdEnd, dist));
+        // a glow is light, not a lit surface: it keeps its brightness in the shade
+        float k = open * sun * near * fogFade * (1.0 - smoothstep(0.75 * rdEnd, rdEnd, dist)) * (1.0 - glowness(c) * m20.a);
         m = mix(vec3(1.0), mix(shade, key, direct), k);
         dbg = vec4(n * 0.5 + 0.5, direct);
     }
     // ambient occlusion everywhere, day or night (it only darkens), less of it far away
     m *= mix(1.0, lr.g, l17.b * near * (1.0 - smoothstep(48.0, 96.0, dist)));
-    return c * sqrt(m);
+    c *= sqrt(m);
+    if (m20.r > 0.0) c = lensWater(c, p, n, lr.r, m20.r * fogFade);
+    return c;
 }
 
 // a smooth filmic curve in place of the plain contrast: past white, colour runs toward white instead of clipping its
@@ -152,7 +227,42 @@ vec3 filmic(vec3 c, float contrast) {
 }
 #endif
 
+#ifdef LENS_LIGHT
+// how far frost has crept in from the frame's edge here (0 clear, 1 frosted)
+float frostEdge(vec2 uv, float frost) {
+    vec2 v = (uv - 0.5) * vec2(OutSize.x / OutSize.y, 1.0);
+    float wobble = sin(atan(v.y, v.x) * 11.0) * 0.012 + sin(atan(v.y, v.x) * 27.0) * 0.006;
+    // distance in from the nearest edge, corners reaching furthest in
+    vec2 e = min(uv, 1.0 - uv) * vec2(OutSize.x / OutSize.y, 1.0);
+    float in_ = min(e.x, e.y) - 0.02 * smoothstep(0.6, 1.0, length(v)) + wobble;
+    return (1.0 - smoothstep(0.0, 0.11 * frost, in_)) * frost;
+}
+
+// heat shimmer (rippling, more toward the lower frame where hot ground is) and frost creeping in at the frame's edges
+// (crystalline refraction there), as an offset to where the frame is read (L3; the look's heat and frost)
+vec2 distortion(vec2 uv, float heat, float frost, float t) {
+    vec2 o = vec2(0.0);
+    if (heat > 0.0) {
+        float mask = 0.35 + 0.65 * smoothstep(0.75, 0.05, uv.y);
+        o += vec2(sin(uv.y * 95.0 + t * 6.0 + sin(uv.x * 23.0 + t * 1.3) * 2.0), cos(uv.x * 71.0 - t * 4.7 + uv.y * 30.0)) * heat * 0.0018 * mask;
+    }
+    if (frost > 0.0) {
+        float e = frostEdge(uv, frost);
+        vec2 cell = floor(uv * vec2(OutSize.x / OutSize.y, 1.0) * 60.0);
+        vec2 h = fract(sin(vec2(dot(cell, vec2(127.1, 311.7)), dot(cell, vec2(269.5, 183.3)))) * 43758.5453) - 0.5;
+        o += h * e * 0.006;
+    }
+    return o;
+}
+
+#endif
+
 void main() {
+    vec2 uvc = texCoord;
+#ifdef LENS_LIGHT
+    vec4 m20early = P(20);
+    if ((m20early.g > 0.0 || m20early.b > 0.0) && int(P(0).r * 255.0 + 0.5) != 8) uvc += distortion(texCoord, m20early.g, m20early.b, F(17).x);
+#endif
     // 16: moving fast through the air (LensClient.motion): r strength, g/b the heading on screen. The frame smears
     // toward where you're heading (sharp there, more toward the edges) with a touch of chroma at the rim; nothing at rest
     vec4 mo = P(16);
@@ -165,7 +275,7 @@ void main() {
         float wsum = 0.0;
         for (int i = 0; i < 6; i++) {
             float w = 1.0 - float(i) / 7.0;
-            acc += texture(InSampler, texCoord + stepv * float(i)).rgb * w;
+            acc += texture(InSampler, uvc + stepv * float(i)).rgb * w;
             wsum += w;
         }
         c = acc / wsum;
@@ -173,7 +283,7 @@ void main() {
         c.r = mix(c.r, texture(InSampler, texCoord - stepv * 1.5).r, 0.5 * fringe);
         c.b = mix(c.b, texture(InSampler, texCoord + stepv * 2.5).b, 0.5 * fringe);
     } else {
-        c = texture(InSampler, texCoord).rgb;
+        c = texture(InSampler, uvc).rgb;
     }
     vec4 p0 = P(0), p1 = P(1), g = P(3), shadowT = P(4), highT = P(5), b = P(6), h = P(7), hz = P(8), sunset = P(9);
     vec4 fogColor = P(10), fogDist = P(11), p12 = P(12), sunPos = P(2);
@@ -208,7 +318,19 @@ void main() {
     // this pixel's camera-relative position (none for sky and far terrain, which the game's depth doesn't hold)
     bool open = sky || farTerrain;
     vec3 pRel = open ? vec3(0.0) : unproject(frameMat(0), texCoord, depth, F(16).x > 0.5);
-    if (!open && !classic) c = lensLight(c, pRel, depth, rdEnd, clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0), p1, lightDbg);
+    // the surface normal from screen derivatives (free, but only where the 2x2 quad lies on one surface: across an edge
+    // it's left 0 for the careful version); axis-aligned block faces snap
+    vec3 dpx = dFdx(pRel), dpy = dFdy(pRel);
+    float pd = max(length(pRel), 0.05);
+    vec3 quick = vec3(0.0);
+    if (max(abs(dFdx(pd)), abs(dFdy(pd))) < pd * 0.015 && !open) {
+        quick = normalize(cross(dpx, dpy));
+        if (dot(quick, pRel) > 0.0) quick = -quick;
+        vec3 qa = abs(quick);
+        float qm = max(qa.x, max(qa.y, qa.z));
+        if (qm > 0.9) quick = step(vec3(qm), qa) * sign(quick);
+    }
+    if (!open && !classic) c = lensLight(c, pRel, quick, depth, rdEnd, clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0), p1, lightDbg);
 #endif
     float haze = sky ? h.r * 0.12 : smoothstep(h.g * rdEnd, rdEnd * 1.1, d) * h.r;
     // aerial perspective keeps deepening over far terrain: ridges fade layer by layer toward the horizon
@@ -226,17 +348,9 @@ void main() {
 #ifdef LENS_LIGHT
     if (!classic) {
         vec4 v19 = P(19), f14 = F(14);
-        // lights glowing in fog: the wide glow spread wider still (eight taps on a ring a tenth of the screen out), tinted
-        // toward the haze, as strong as the place's fogGlow
-        if (v19.b > 0.0) {
-            vec2 ring = vec2(OutSize.y / OutSize.x, 1.0) * 0.1;
-            vec3 fog = texture(WideSampler, texCoord).rgb * 0.2;
-            for (int k = 0; k < 8; k++) {
-                float a = float(k) * 0.785398;
-                fog += texture(WideSampler, texCoord + vec2(cos(a), sin(a)) * ring).rgb * 0.1;
-            }
-            c = screen(c, fog * v19.b * 2.0 * mix(vec3(1.0), hazeColor * 1.6, 0.35));
-        }
+        // lights glowing in fog: the wide glow spread wider still (the shafts pass's g/b/a), tinted toward the haze, as
+        // strong as the place's fogGlow
+        if (v19.b > 0.0) c = screen(c, texture(ShaftsSampler, texCoord).gba * v19.b * 3.0 * mix(vec3(1.0), hazeColor * 1.6, 0.35));
         // the sky and the haze scatter the light around the sun's direction (warmer and wider at golden hour)
         if (f14.w > 0.0 && v19.a > 0.0 && (sky || haze > 0.0)) {
             vec3 dir = open ? normalize(unproject(frameMat(0), texCoord, 1.0e-5, F(16).x > 0.5)) : normalize(pRel);
@@ -280,7 +394,7 @@ void main() {
     c += (shadowT.rgb - vec3(luma(shadowT.rgb))) * (1.0 - l) * (1.0 - l) * shadowT.a;
     c += (highT.rgb - vec3(luma(highT.rgb))) * l * l * shadowT.a;
 #ifdef LENS_LIGHT
-    c = mix(clamp((c - 0.5) * (g.g * 2.0) + 0.5, 0.0, 1.0), filmic(c, g.g * 2.0), classic ? 0.0 : P(17).a);
+    c = mix(clamp((c - 0.5) * (g.g * 2.0) + 0.5, 0.0, 1.0), filmic(c, g.g * 2.0), classic || sky ? 0.0 : P(17).a);
 #else
     c = clamp((c - 0.5) * (g.g * 2.0) + 0.5, 0.0, 1.0);
 #endif
@@ -297,6 +411,15 @@ void main() {
         c = mix(c, mix(vec3(luma(c)), c, 0.5) * vec3(0.8, 0.88, 1.0) * 0.6, k);
     }
 
+#ifdef LENS_LIGHT
+    // frost at the frame's edge: a pale rime with fine crystal streaks over what it covers
+    if (P(20).b > 0.0 && !classic) {
+        float e = frostEdge(texCoord, P(20).b);
+        vec2 fv = (texCoord - 0.5) * vec2(OutSize.x / OutSize.y, 1.0);
+        float streak = pow(abs(sin(atan(fv.y, fv.x) * 40.0 + length(fv) * 90.0)), 12.0);
+        c = mix(c, vec3(0.84, 0.93, 1.0) * (0.55 + 0.45 * luma(c)) + streak * 0.12, e * 0.5);
+    }
+#endif
     // vignette, rounder on wide screens
     vec2 v = (texCoord - 0.5) * vec2(OutSize.x / OutSize.y, 1.0) * 0.82;
     c *= mix(1.0, smoothstep(0.98, 0.32, length(v)), highT.a);

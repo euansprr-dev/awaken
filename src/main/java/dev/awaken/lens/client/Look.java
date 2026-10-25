@@ -17,7 +17,9 @@ final class Look {
             // Lens 2 (Cinematic and Ultra, SPEC §22): the sun's light and shade, ambient occlusion, the filmic shoulder
             LIGHT = 25, SHADE = 26, SHADE_TINT = 27, KEY_WARMTH = 30, AO = 31, FILMIC = 32,
             // and its atmosphere: the sunlit mist and how high it reaches, lights glowing in fog, the sky's scattering
-            MIST = 33, MIST_HEIGHT = 34, FOG_GLOW = 35, SKY_GLOW = 36, SIZE = 37;
+            MIST = 33, MIST_HEIGHT = 34, FOG_GLOW = 35, SKY_GLOW = 36,
+            // and water and magic: reflections on water, heat shimmer, frost at the frame's edge, emissive glow
+            WATER = 37, HEAT = 38, FROST = 39, GLOW = 40, SIZE = 41;
 
     /** The neutral look: the frame exactly as the game drew it, apart from the dither. */
     static float[] neutral() {
@@ -62,6 +64,10 @@ final class Look {
         num(o, "mistHeight", v, MIST_HEIGHT);
         num(o, "fogGlow", v, FOG_GLOW);
         num(o, "skyGlow", v, SKY_GLOW);
+        num(o, "water", v, WATER);
+        num(o, "heat", v, HEAT);
+        num(o, "frost", v, FROST);
+        num(o, "glow", v, GLOW);
         return v;
     }
 

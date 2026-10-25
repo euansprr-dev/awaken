@@ -8,6 +8,7 @@
 //   14   toward the light (sun, or the moon by night); w how strongly it lights the world (0: no sun model here)
 //   15   heightfield: x its size (0: none), y the highest surface in it, z blocks from the camera it can be trusted
 //   16   x 1 for zero-to-one depth, y 1 when the light is the moon, z rain, w the near plane
+//   17   x seconds, wrapping every hour (ripples, shimmer)
 
 vec4 F(int i) { return texelFetch(FrameSampler, ivec2(i, 0), 0); }
 
