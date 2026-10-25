@@ -1,14 +1,17 @@
-"""CARILLON's people and their things: 244 painted skins (240 citizens minus the four named ones, plus 8 thieves), the lamp,
+"""CARILLON's people and their things: ~462 painted skins (the citizens minus the named, plus 8 thieves; Kestrel and Bram have theirs
+beside Oren's), a closed-eyes copy of every skin for the renderer's blink, the lamp,
 laundry, fire and crate blocks, the props the citizens hold, the chimney/forge/lamp/ember particles.
 
     python3 tools/art/build_all.py citizens          write every texture
-    python3 tools/art/specs/citizens.py preview DIR  contact sheets (front, back, things) + the checks
-    python3 tools/art/specs/citizens.py check        only the checks (variety numbers, skin format)
+    python3 tools/art/specs/citizens.py skins        write only the skins (every citizen, the thieves, Kestrel and Bram, each with
+                                                     its closed-eyes copy) and remove skins of an earlier roster
+    python3 tools/art/specs/citizens.py preview DIR  contact sheets (front, back, things, the named) + the checks
+    python3 tools/art/specs/citizens.py check        only the checks (variety numbers, skin format, blinks)
 
 Reads src/main/resources/data/awaken/city/citizens.json (tools/city/citizens.py): per citizen job, build, age,
 look = [tone, hairStyle, hairColour, outfit, accent, face]. Everything is composed from seeded layers, so the same roster
 always gives the same pixels. One town: bronze buttons and buckles, a bell motif on every crest and badge, wool with fold
-lines, leather a little glossy at its edges. 240 people: skin, hair, face, build and a palette per citizen.
+lines, leather a little glossy at its edges. ~460 people: skin, hair, face, build and a palette per citizen.
 
 Skin format: 64x64 player skins, classic layout; build 1 = slim (3 px arms, the layout shifts as in vanilla slim skins).
 Base parts are fully opaque, overlay parts (hat, jacket, sleeves, pants) are transparent where unused, never partial alpha.
@@ -747,7 +750,7 @@ def outfit(name):
 
 PATCH_COL = ["#8a6a48", "#6a7a5a", "#a0a090", "#7a5a5a", "#5a6a82"]
 RIBBON = ["#b0453a", "#4f78a8", "#c8983a", "#7a9a5a", "#9a5a8a"]
-NO_PATCH = ("watch", "crier", "clerk", "healer")
+NO_PATCH = ("watch", "crier", "clerk", "healer", "kestrel", "bram")
 PIN_JOBS = {"stallkeeper": 0.4, "baker": 0.4, "miller": 0.4, "mason": 0.4, "boatman": 0.4, "washer": 0.4, "tavernkeeper": 0.4,
             "shopkeeper": 0.4, "porter": 0.3, "clerk": 0.9, "runner": 0.0, "smith": 0.0, "resident": 0.0}
 
@@ -853,10 +856,13 @@ def validate(cv: Canvas, slim, name):
 # Roster
 
 def load_roster():
+    """The citizens with a generated skin (not the named, who have their own: Oren, Mira, Teodor and Sun in hearth.py, Kestrel and
+    Bram below) and the thieves, whose files follow the citizens (t0..t7)."""
     d = json.load(open(ROSTER))
     f = d["citizens"]["fields"]
     ix = {k: i for i, k in enumerate(f)}
     ppl = []
+    n = len(d["citizens"]["rows"])
     for r in d["citizens"]["rows"]:
         if r[ix["named"]]:
             continue
@@ -867,9 +873,9 @@ def load_roster():
     for e in d["extras"]:
         c = Ctx(e["id"], "thief", tuple(e["look"]), e["build"], 2, "", role="thief")
         c.role = c.jobname = "thief"
-        c.household = -1 - (e["id"] - 240)
+        c.household = -1 - (e["id"] - n)
         c.jobid = 99
-        c.file = "t%d" % (e["id"] - 240)
+        c.file = "t%d" % (e["id"] - n)
         ppl.append(c)
     return ppl
 
@@ -1353,18 +1359,19 @@ def kid_legs(c, cloth, to):
 
 @outfit("watch")
 def watch(c, L):
-    blue = mk(jig(c, ["#243f73", "#27447a", "#213a6a", "#2a4678"][c.outfit], 0.015))
+    blue = mk(jig(c, ["#223c72", "#2c4c86", "#1c3262", "#33508a"][c.outfit], 0.04))     # (32 of them now: four navies, well apart)
     trous = mk(jig(c, "#2b303f", 0.03))
     rank = int(c.v("rank") * 3)          # 0 watchman, 1 a bronze band on the sleeve, 2 two bands
     pouch_x = 0 if c.v("pouch") < 0.5 else 6
     has_pouch = c.v("haspouch") < 0.6
+    msh = 2 + (1 if c.accent in (1, 3) else 0)      # the mail's shade: bright or dull (32 watchers: the clothes carry the difference)
 
     def body(f):
         if f.face == "front" and f.y == 0 and f.x in (3, 4):
             return c.S(2)
         if f.face == "bottom":
             return P(MAIL, 1, f)
-        return mailpx(c, f, 2)
+        return mailpx(c, f, msh)
 
     def tab(f):
         x, y = f.x, f.y
@@ -1401,11 +1408,11 @@ def watch(c, L):
 
     def sleeve(f):  # a lighter ring of mail at the shoulder, a bronze stud
         if f.face in ("top",):
-            return mailpx(c, f, 4)
+            return mailpx(c, f, msh + 2)
         if f.face == "bottom" or f.inner:
             return None
         if f.y <= 1:
-            return mailpx(c, f, 4) if not (f.face == "front" and f.u == 0 and f.y == 1) else P(BRONZE, 4, f)
+            return mailpx(c, f, msh + 2) if not (f.face == "front" and f.u == 0 and f.y == 1) else P(BRONZE, 4, f)
         if rank >= 1 and f.y == 3:
             return P(BRONZE, 4, f)  # a sergeant's band
         if rank >= 2 and f.y == 5:
@@ -1415,11 +1422,11 @@ def watch(c, L):
     def armf(f):
         y = f.y
         if f.face == "top":
-            return mailpx(c, f, 3)
+            return mailpx(c, f, msh + 1)
         if f.face == "bottom":
             return P(DARKLEATHER, 1)
         if y <= 7:
-            return mailpx(c, f, 3)
+            return mailpx(c, f, msh + 1)
         if y in (8, 9):  # leather bracers
             return T(c, LEATHER, 4 if y == 8 else 3, f, folds=0.0)
         return T(c, DARKLEATHER, 4 if y == 10 else 3, f, folds=0.0, lo=0.1)  # gloves
@@ -2591,6 +2598,211 @@ def healer(c, L):
     return dict(body=body, jacket=jk, rarm=armf, rleg=legs, rpants=skirt_f, hat=hat)
 
 
+# --- the named of M4 B3a: Kestrel and Bram --------------------------------------------------------------------------------
+# Their skins are written beside Oren's and the others' (textures/entity/townsfolk/kestrel.png, bram.png); the roster marks them
+# `named`, so no cNNN skin is made for them. Fixed looks (tone, hairStyle, hairColour, outfit, accent, face).
+
+@outfit("kestrel")
+def kestrel(c, L):
+    """The Roostmaster of the Runners' Guild: wiry, in her fifties, weathered, short grey hair. A dark leather runner's jerkin over a
+    worn linen shirt, the guild's rust-and-cream sash from shoulder to hip knotted round a little bronze bell, forearms wrapped in
+    strips of cloth, soft boots laced to the shin."""
+    jerk = mk("#33251a")
+    shirt = mk_soft("#a39370")
+    rust = mk("#a8472a")
+    cream = mk_soft("#e8dfc2")
+    trou = mk("#3b3a3c")
+    boot = mk("#5a4430")
+    L.specs = False
+
+    def body(f):
+        if f.face == "front" and f.y == 0 and f.x in (3, 4):
+            return c.S(2)
+        return T(c, shirt, 3, f, folds=0.15)
+
+    def stripe(f, d):
+        """The sash: rust and cream turns, two cloth rows each, along the diagonal."""
+        return T(c, rust if (d // 2) % 2 == 0 else cream, 3 if (d // 2) % 2 == 0 else 3, f, folds=0.08)
+
+    def jk(f):
+        x, y = f.x, f.y
+        if f.face == "bottom":
+            return None
+        if f.face == "top":
+            return T(c, jerk, 4, f, folds=0.1)
+        if f.face in ("left", "right"):
+            if y == 9:
+                return P(DARKLEATHER, 3, f)           # the belt runs round
+            if y == 10 and f.face == "right" and f.fd <= 1:
+                return stripe(f, 1)                    # a sash tail over the hip
+            return T(c, jerk, 3, f, folds=0.12)
+        if f.face == "front":
+            if y == 0:
+                return T(c, jerk, 4, f, folds=0.0) if x in (1, 2, 5, 6) else None
+            if y == 1 and x in (3, 4):
+                return None                            # the shirt's open neck
+            sx = round(1 + y * 5 / 10)
+            if y <= 10 and x in (sx, sx + 1):
+                if y == 10 and x == sx + 1:
+                    return P(BRONZE, 4, f)             # the sash knotted round a bell
+                return stripe(f, y + x)
+            if y == 9:
+                return P(DARKLEATHER, 3, f) if x not in (3, 4) else P(BRONZE, 4 if x == 3 else 3, f)   # belt, buckle
+            if x in (3, 4) and 2 <= y <= 8:
+                return (P(cream, 3, f) if (y + x) % 2 == 0 else P(jerk, 2, f))   # the lacing
+            if y == 11:
+                return P(jerk, 2, f)
+            return T(c, jerk, 3, f, folds=0.12)
+        if f.face == "back":
+            if y <= 1 and x in (1, 6):
+                return P(BRONZE, 4, f) if y == 1 else T(c, jerk, 4, f, folds=0.0)   # rivets on the shoulder straps
+            sx = round(6 - y * 5 / 10)
+            if y <= 10 and x in (sx, sx - 1):
+                return stripe(f, y + x + 1)
+            if y == 9:
+                return P(DARKLEATHER, 3, f)
+            if x in (3, 4) and y >= 3:
+                return P(jerk, 2, f)                   # the seam
+            if y == 11:
+                return P(jerk, 2, f)
+            return T(c, jerk, 3, f, folds=0.12)
+        return None
+
+    def armf(f):
+        y = f.y
+        if f.face == "bottom":
+            return c.S(2)
+        if f.face == "top":
+            return T(c, shirt, 3, f)
+        if y <= 3:
+            return T(c, shirt, 3, f, folds=0.18)       # a linen sleeve to above the elbow
+        if y == 4:
+            return P(shirt, 4, f)                      # the rolled cuff
+        if y <= 9:
+            tone = 3 if ((f.u + y) // 2) % 2 == 0 else 2
+            if y == 9 and f.u % 2 == 0:
+                return P(rust, 3, f)                   # the end of the wrap, tied off in rust
+            return T(c, cream, tone, f, folds=0.0)
+        return cl(c.sk, shade(f, 3))                   # bare hands
+    legs = trousers(c, trou, 3, boot_from=7, boot=boot, boot_idx=3,
+                    extra=lambda f: P(cream, 4, f) if f.face == "front" and f.u in (1, 2) and f.y in (8, 10) and (f.y + f.u) % 2 == 0 else None)
+    return dict(body=body, jacket=jk, rarm=armf, rleg=legs, hat=None)
+
+
+@outfit("bram")
+def bram(c, L):
+    """A Hunter Association officer: tall and tidy, a short dark beard, parted hair. A navy double-breasted coat with bronze piping and
+    buttons, a high stand collar, bronze cuffs, a ledger satchel on a leather strap across the chest, polished boots."""
+    navy = mk("#202c48")
+    coat_dark = mk("#18223a")
+    trou = mk("#262c3c")
+    leather = LEATHER
+    L.beard = "full"
+    L.specs = False
+
+    def body(f):
+        if f.face == "front" and f.y == 0 and f.x in (3, 4):
+            return c.S(2)
+        return T(c, LINEN, 3, f, folds=0.1)
+
+    def jk(f):
+        x, y = f.x, f.y
+        if f.face == "bottom":
+            return None
+        if f.face == "top":
+            return T(c, navy, 4, f, folds=0.1)
+        # the satchel: on the left hip, a block of leather with a flap and a bronze buckle
+        if f.face == "front" and 5 <= x <= 7 and 8 <= y <= 10:
+            if y == 8:
+                return T(c, leather, 4, f, folds=0.0)
+            if x == 6 and y == 9:
+                return P(BRONZE, 5, f)
+            if y == 10 and x == 5:
+                return P(LINEN, 4, f)            # a ledger's pages showing at the corner
+            return T(c, leather, 3 if y == 9 else 2, f, folds=0.1)
+        if f.face == "left" and 1 <= f.fd <= 4 and 8 <= y <= 10:
+            return T(c, leather, 3 if y == 9 else (4 if y == 8 else 2), f, folds=0.1)
+        if f.face == "back" and 5 <= x <= 7 and 8 <= y <= 10:
+            return T(c, leather, 2, f, folds=0.1)
+        if f.face in ("left", "right"):
+            if y == 0:
+                return P(navy, 4, f)             # the high collar all the way round
+            if y == 11:
+                return P(BRONZE, 3, f)
+            return T(c, navy, 3, f, folds=0.15)
+        if y == 11:
+            return P(BRONZE, 3, f)
+        if f.face == "front":
+            if y == 0:
+                return P(BRONZE, 4, f) if x in (3, 4) else T(c, navy, 4, f, folds=0.0)      # the collar's clasp
+            if y == 1:
+                return P(BRONZE, 3, f) if x in (1, 6) else T(c, navy, 4, f, folds=0.0)      # collar tips
+            # (the strap runs from the right shoulder, the viewer's left, down to the satchel: left to right)
+            sx = round(1 + (y - 1) * 4 / 7)
+            if 1 <= y <= 8 and x == sx:
+                return T(c, leather, 4 if y % 2 else 3, f, folds=0.0)
+            if x in (2, 5) and y >= 2 and y <= 10:
+                return P(BRONZE, 4 if (y % 2 == 0) else 3, f)       # two rows of buttons, piped
+            if x == 3 and y >= 2:
+                return P(coat_dark, 2, f)
+            return T(c, navy, 3, f, folds=0.18)
+        if f.face == "back":
+            if y == 0:
+                return T(c, navy, 4, f, folds=0.0)
+            if y == 1 and x in (1, 6):
+                return P(BRONZE, 3, f)
+            sx = round(6 - (y - 1) * 4 / 7)
+            if 1 <= y <= 8 and x == sx:
+                return T(c, leather, 3, f, folds=0.0)
+            if x in (3, 4) and y >= 4:
+                return P(coat_dark, 2, f)            # the vent of the coat
+            return T(c, navy, 3, f, folds=0.18)
+        return None
+
+    def armf(f):
+        y = f.y
+        if f.face == "bottom":
+            return c.S(2)
+        if f.face == "top":
+            return T(c, navy, 3, f)
+        if y <= 7:
+            return T(c, navy, 3, f, folds=0.18)
+        if y == 8:
+            return P(BRONZE, 4, f)               # bronze cuffs
+        if y == 9:
+            return T(c, LINEN, 4, f, folds=0.0)
+        return cl(c.sk, shade(f, 3))
+    legs = trousers(c, trou, 3, boot_from=9, boot=DARKLEATHER, boot_idx=4,
+                    extra=lambda f: P(BRONZE, 4, f) if f.face == "front" and f.u == 1 and f.y == 10 else None)
+    tails = skirt(c, navy, 4, hem=BRONZE, hem_idx=2, bronze_hem=True)
+    return dict(body=body, jacket=jk, rarm=armf, rleg=legs, rpants=tails, hat=None)
+
+
+NAMED_LOOKS = {   # name -> (tone, hairStyle, hairColour, outfit, accent, face); both wear the wide model
+    "kestrel": (3, 0, 6, 0, 0, 2),
+    "bram": (3, 1, 1, 0, 0, 0),
+}
+
+
+def load_named():
+    """Kestrel and Bram as skin contexts (seeded by their record ids, so the same roster always gives the same pixels)."""
+    d = json.load(open(ROSTER))
+    f = d["citizens"]["fields"]
+    ix = {k: i for i, k in enumerate(f)}
+    out = []
+    for r in d["citizens"]["rows"]:
+        name = r[ix["named"]]
+        if name in NAMED_LOOKS:
+            # (Kestrel is in her fifties: the weathered face of an old one, on an adult's build)
+            c = Ctx(r[ix["id"]], name, NAMED_LOOKS[name], 0, 3 if name == "kestrel" else 2, r[ix["given"]], role=name)
+            c.jobname = name
+            c.household = r[ix["household"]]
+            c.jobid = r[ix["job"]]
+            c.file = "townsfolk/" + name
+            out.append(c)
+    return out
+
+
 # --- thief -------------------------------------------------------------------------------------------------------------
 
 @outfit("thief")
@@ -3581,10 +3793,49 @@ PARTICLES = {**{f"chimney_smoke_{i}": (lambda i=i: chimney_smoke(i)) for i in ra
              **{f"fire_ember_{i}": (lambda i=i: fire_ember(i)) for i in range(3)}}
 
 
-def build(out):
+EYE_XS = (1, 2, 5, 6)     # the columns of the eyes on the head's front face (face_features paints them at y 4)
+
+
+def blink_of(cv: Canvas, c: Ctx) -> Canvas:
+    """The same skin with the eyes shut (the closed-eyes copy the renderer shows while a citizen blinks): the eye pixels (y 4 of the
+    head's front face, as face_features paints them) take the lid colour, the skin of the row above one step darker, and a
+    1 px darker lash line runs along their bottom (y 5; a child's eyes are two rows tall and close the same way). Nothing else changes."""
+    out = cv.copy()
+    fx, fy = _faces(*PARTS_WIDE["head"])["front"][:2]
+    lid, lash = c.S(2), c.S(1)
+    for x in EYE_XS:
+        out.set(fx + x, fy + 4, lid)
+        out.set(fx + x, fy + 5, lash)
+    return out
+
+
+def named_skins():
+    """{file: Canvas} for Kestrel and Bram."""
+    return {c.file: (c, compose(c)) for c in load_named()}
+
+
+def build_skins(out):
+    """Every citizen's skin (cNNN, the thieves tK) and its closed-eyes copy, then Kestrel's and Bram's townsfolk skins and theirs;
+    skins of an earlier roster that no record uses any more are removed."""
     people = load_roster()
+    keep = set()
     for c in people:
-        out.entity("citizen/" + c.file, compose(c))
+        cv = compose(c)
+        out.entity("citizen/" + c.file, cv)
+        out.entity("citizen/" + c.file + "_blink", blink_of(cv, c))
+        keep.add(c.file + ".png")
+        keep.add(c.file + "_blink.png")
+    for file, (c, cv) in named_skins().items():
+        out.entity(file, cv)
+        out.entity(file + "_blink", blink_of(cv, c))
+    d = os.path.join(out.root, "assets/awaken/textures/entity/citizen")
+    for f in sorted(os.listdir(d)):
+        if f.endswith(".png") and f not in keep:
+            os.remove(os.path.join(d, f))
+
+
+def build(out):
+    build_skins(out)
     for name, fn in BLOCKS.items():
         if name in STREET_OWNED:
             continue
@@ -3676,8 +3927,10 @@ def check(people=None, skins=None):
         if c.role != "thief":
             assert town_detail(skins[c.file]), f"{c.file} ({c.role}) has no bronze or brass on it"
     rep = variety(people, skins)
-    named = 4
-    print(f"skins: {rep['skins']} (240 citizens - {named} named + 8 thieves)")
+    d = json.load(open(ROSTER))
+    n_cit = len(d["citizens"]["rows"])
+    named = sum(1 for r in d["citizens"]["rows"] if r[d["citizens"]["fields"].index("named")])
+    print(f"skins: {rep['skins']} ({n_cit} citizens - {named} named + 8 thieves), each with a closed-eyes copy; Kestrel and Bram's townsfolk skins too")
     print(f"distinct (job, outfit, hairStyle, hairColour, tone) among 40 random citizens: min {rep['distinct_min']}, "
           f"mean {rep['distinct_mean']:.1f} of 40 (threshold {DISTINCT_THRESHOLD}); {rep['distinct_all']} distinct among all")
     print(f"image difference, same job, different households: min {rep['mad_min']:.1f} {rep['mad_worst_pair']}, "
@@ -3686,6 +3939,26 @@ def check(people=None, skins=None):
         print(f"   {j:12s} min {mn:5.1f} median {md:5.1f}")
     assert rep["distinct_min"] >= DISTINCT_THRESHOLD, "too few distinct looks among 40 citizens"
     assert rep["mad_min"] >= MAD_THRESHOLD, f"two same-job skins are too alike: {rep['mad_worst_pair']}"
+    # the closed-eyes copies: the eye row and the lash line under it change, nothing else
+    fx, fy = _faces(*PARTS_WIDE["head"])["front"][:2]
+    changed = {(fx + x, fy + y) for x in EYE_XS for y in (4, 5)}
+    for c in people:
+        a = skins[c.file]
+        b = blink_of(compose(c), c).image()
+        assert a.size == b.size == (64, 64), c.file
+        pa, pb = a.load(), b.load()
+        for y in range(64):
+            for x in range(64):
+                if pa[x, y] != pb[x, y]:
+                    assert (x, y) in changed, f"{c.file}: the blink changes pixel {x},{y}, which is not an eye or a lash"
+                    assert pb[x, y][3] == 255, f"{c.file}: blink alpha at {x},{y}"
+        assert any(pa[x, y] != pb[x, y] for x, y in changed), f"{c.file}: the blink changes nothing"
+    # Kestrel and Bram
+    for file, (c, cv) in named_skins().items():
+        img = cv.image()
+        assert img.size == (64, 64) and town_detail(img), file
+        assert img.tobytes() != blink_of(cv, c).image().tobytes(), file
+    assert len(named_skins()) == 2, "Kestrel and Bram"
     # textures: every block, item and particle builds, sizes right
     for name, fn in {**BLOCKS, **ITEMS, **PARTICLES}.items():
         cv = fn()
@@ -3703,24 +3976,34 @@ def check(people=None, skins=None):
 
 
 def disk_check(people):
-    """Every skin, block, item and particle is on disk (run build_all.py citizens first) and is what the spec makes."""
+    """Every skin and its blink, Kestrel's and Bram's, every block, item and particle is on disk (run build_all.py citizens, or this
+    file's `skins` command, first) and is what the spec makes."""
     tex = os.path.join(ROOT, "src/main/resources/assets/awaken/textures")
     if not os.path.isdir(os.path.join(tex, "entity/citizen")):
         print("on disk: nothing built yet (python3 tools/art/build_all.py citizens)")
         return
     have = sorted(f for f in os.listdir(os.path.join(tex, "entity/citizen")) if f.endswith(".png"))
-    want = sorted(c.file + ".png" for c in people)
-    assert have == want, f"skins on disk differ from the roster: missing {set(want) - set(have)}, extra {set(have) - set(want)}"
+    want = sorted([c.file + ".png" for c in people] + [c.file + "_blink.png" for c in people])
+    assert have == want, f"skins on disk differ from the roster: missing {sorted(set(want) - set(have))[:6]}, extra {sorted(set(have) - set(want))[:6]}"
     for c in people:
-        im = Image.open(os.path.join(tex, "entity/citizen", c.file + ".png"))
-        assert im.size == (64, 64) and im.mode == "RGBA", c.file
+        for suffix in ("", "_blink"):
+            im = Image.open(os.path.join(tex, "entity/citizen", c.file + suffix + ".png"))
+            assert im.size == (64, 64) and im.mode == "RGBA", c.file
+        a = Image.open(os.path.join(tex, "entity/citizen", c.file + ".png"))
+        assert a.tobytes() == compose(c).image().tobytes(), f"{c.file} on disk is not what the spec makes"
+    for file, (c, cv) in named_skins().items():
+        for suffix, canvas in (("", cv), ("_blink", blink_of(cv, c))):
+            path = os.path.join(tex, "entity", file + suffix + ".png")
+            assert os.path.isfile(path), file + suffix
+            im = Image.open(path)
+            assert im.size == (64, 64) and im.mode == "RGBA" and im.tobytes() == canvas.image().tobytes(), file + suffix
     for kind, table in (("block", BLOCKS), ("item", ITEMS), ("particle", PARTICLES)):
         for name in table:
             assert os.path.isfile(os.path.join(tex, kind, name + ".png")), f"{kind}/{name}.png missing"
     assert os.path.isfile(os.path.join(tex, "block/city_fire.png")) and os.path.isfile(os.path.join(tex, "block/city_fire.png.mcmeta"))
     fire = Image.open(os.path.join(tex, "block/city_fire.png"))
     assert fire.size == (16, 16 * FIRE_FRAMES), fire.size
-    print(f"on disk: {len(have)} skins, {len(BLOCKS) + 1} blocks, {len(ITEMS)} items, {len(PARTICLES)} particles, all present")
+    print(f"on disk: {len(have)} skins (with blinks) and Kestrel and Bram, {len(BLOCKS) + 1} blocks, {len(ITEMS)} items, {len(PARTICLES)} particles, all present")
 
 
 def preview(d):
@@ -3730,8 +4013,31 @@ def preview(d):
     sz = sheet(people, skins, False, os.path.join(d, "citizens_front.png"), cols=20, scale=4)
     sheet(people, skins, True, os.path.join(d, "citizens_back.png"), cols=20, scale=4)
     things_sheet(os.path.join(d, "citizens_things.png"))
+    named_sheet(os.path.join(d, "citizens_named.png"))
     print("sheets", sz)
     return people, skins
+
+
+def named_sheet(path, scale=8):
+    """Kestrel and Bram: front, back, open eyes and shut, with the face enlarged."""
+    from PIL import ImageDraw
+    items = list(named_skins().items())
+    cw = 16 * scale + 20
+    im = Image.new("RGB", (cw * 4 * len(items) + 12, 32 * scale + 60 + 8 * 8 * scale // 2), (58, 60, 66))
+    dr = ImageDraw.Draw(im)
+    f = _font(13)
+    for i, (file, (c, cv)) in enumerate(items):
+        for j, (img, back) in enumerate(((cv.image(), False), (cv.image(), True), (blink_of(cv, c).image(), False))):
+            x = 6 + (i * 4 + j) * cw
+            fig = figure(img, False, back).resize((16 * scale, 32 * scale), Image.NEAREST)
+            im.paste(fig, (x, 24), fig)
+        x = 6 + (i * 4 + 3) * cw
+        face = crop(cv.image(), "head", PARTS_WIDE, "front")
+        face.alpha_composite(crop(cv.image(), "hat", PARTS_WIDE, "front"))
+        face = face.resize((8 * scale * 2, 8 * scale * 2), Image.NEAREST)
+        im.paste(face, (x, 24), face)
+        dr.text((6 + i * 4 * cw, 4), file.split("/")[-1] + "  (front, back, eyes shut, face)", fill=(235, 220, 170), font=f)
+    im.save(path)
 
 
 def things_sheet(path, scale=8):
@@ -3764,7 +4070,11 @@ def things_sheet(path, scale=8):
 
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "check"
-    if cmd == "preview":
+    if cmd == "skins":
+        out = Out(os.path.join(ROOT, "src/main/resources"))
+        build_skins(out)
+        print(f"skins: {len(out.written)} textures")
+    elif cmd == "preview":
         ppl, sk = preview(sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, "build/art/citizens"))
         check(ppl, sk)
     else:
