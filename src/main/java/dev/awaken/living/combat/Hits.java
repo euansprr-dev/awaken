@@ -51,6 +51,11 @@ public final class Hits {
         dev.awaken.core.AwakenNet.send(sp, new LivingNet.HitFx(target.getId(), amount, isCrit, force, false));
     }
 
+    /** The player's next blow is a crit (tours, where nothing falls or rolls PER). */
+    public static void markCrit(ServerPlayer p) {
+        CRIT_AT.put(p.getUUID(), p.level().getGameTime());
+    }
+
     /** Whether the player was hurt or hit something in the last five seconds. */
     public static boolean inFight(ServerPlayer p) {
         Long at = FIGHT_AT.get(p.getUUID());

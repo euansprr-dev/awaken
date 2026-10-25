@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "_about": "The Living Wilds' moments (dev.awaken.living; SPEC §21.1), merged with looks.json by Lens. Played through LensClient.override.",
+  "looks": {
+    "awaken:living_level": {
+      "_name": "Level up: the world holds its breath for a second; cool highlights, the band's light blooming, a soft vignette",
+      "exposure": 0.9,
+      "contrast": 1.08,
+      "saturation": 0.88,
+      "warmth": -0.06,
+      "shadowTint": [0.32, 0.4, 0.54],
+      "highlightTint": [0.88, 0.96, 1.0],
+      "splitTone": 0.16,
+      "vignette": 0.34,
+      "bloom": 1.35,
+      "bloomThreshold": 0.48,
+      "skyBloom": 0.2,
+      "shafts": 0.4,
+      "haze": 0.08,
+      "hazeStart": 0.5,
+      "hazeTint": [0.58, 0.72, 0.9],
+      "hazeTintMix": 0.4,
+      "hazeDesaturate": 0.15,
+      "sunsetWarmth": 0.2,
+      "sunGlow": 0.5
+    }
+  }
+}

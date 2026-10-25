@@ -1,0 +1,70 @@
+# The Living Wilds, Phase B (SPEC §21.1-21.2): the band's combat layer. The Commons' caption, a plate over a creature
+# by day, damage in strokes of light (and a crit), the bar draining, a kill's XP streaming into the band, a pillar over
+# a rare drop, the level moment in first and third person, a night creature's plate, and another region's caption.
+# Run: SLOT_WHO=living-wilds slot.sh light tools/autopilot.sh living-b
+world autopilot_living creative 20261025
+waitworld
+cmd weather clear 100000
+cmd time set 6000
+cmd gamerule awaken:fauna_spawning false
+cmd awaken admin awaken
+wait 40
+cmd awaken powers starter 1
+screen close
+wait 60
+shot living_01_commons_caption
+cmd tp @s ~ ~ ~ 0 10
+look 0 10
+cmd summon minecraft:husk ^ ^ ^5 {NoAI:1b,PersistenceRequired:1b}
+wait 30
+look 0 14
+wait 10
+shot living_02_plate_day
+cmd awaken living strike
+wait 4
+shot living_03_glyph
+cmd awaken living strike crit
+wait 3
+shot living_04_crit
+wait 8
+shot living_05_drain
+cmd awaken living strike kill
+wait 7
+shot living_06_xp_stream
+wait 14
+shot living_07_xp_pop
+look 0 30
+cmd awaken living pillar
+wait 30
+shot living_08_pillar
+look 0 8
+cmd awaken living moment
+wait 6
+shot living_09_moment_rings
+wait 10
+shot living_10_moment_pane
+wait 40
+camera back
+cmd awaken living moment
+wait 8
+shot living_11_moment_third
+wait 40
+camera first
+cmd time set 18000
+look 0 10
+cmd awaken fauna summon gloomstalker
+wait 40
+look 0 16
+wait 10
+shot living_12_plate_night
+cmd awaken living strike crit
+wait 3
+shot living_13_night_crit
+cmd awaken living region
+cmd tp @s 2600 160 2600
+wait 400
+shot living_14_far_region_caption
+cmd awaken living region
+wait 20
+shot living_15_region_chat
+quit

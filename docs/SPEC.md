@@ -2340,3 +2340,21 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   25 16.8 h, 50 51.2 h (the v2 target 55-60 moved to 50-60: the open world now pays through D and C), 135 101.8 h;
   main power level 5 at player level 48; gate checks unchanged.
 - `Progression.onXpGranted(listener)`: every grant after scaling (player, XP, source, world key), for the stream.
+
+### 21.4 Phase B as built (2026-10-25)
+- Server: `living.region` (RegionMap, Names, RegionService saved data `awaken:living_regions`, RegionTracker),
+  `living.combat` (Creatures, KillXp, Hits, XpStream, LevelMoments, LootPillars, PlateRules), payloads
+  `living_region`, `living_hit_fx` (also a hit the player took, which marks that creature as fighting),
+  `living_xp_fx`, `living_level_up`, `living_shown`; attachments `awaken:creature_tag` (core.api, synced),
+  `awaken:loot_pillar` (synced, not saved); game rule `awaken:pure_survival`.
+- Client (`living.client`): LivingClient (plate picking by PlateRules each tick, a 24-block ray with a wall check,
+  four line-of-sight checks a tick for notables, pillars every 5 ticks, the level moment waiting for a fight to end:
+  a hit either way in the last 5 s, at most 30 s), LivingFx (one additive mesh pass and one glass pass per frame,
+  plates' words as text with a four-copy halo), LivingHud (region caption, level pane through HudLook, XP pops by the
+  level line), StrokeFont (digits and "+XP LV" as light). Jade drops its creature level row while plates show.
+- Plates draw through LivingFx's own glass until the Holo's world-space API exists (pack session), then switch.
+- Sounds `living.scan|crit|xp_tick|level_up|region_enter` (tools/art/specs/audio_living.py, UI loudness); Lens look
+  `awaken:living_level` (assets/awaken/lens/looks_living.json); tips `awaken:living/first_plate`, `first_region`
+  (assets/awaken/tips/living/, read once Carillon's tip system is installed).
+- Dev: `/awaken living region` (anyone), admin `regions [radius]`, `tag`, `strike [crit|kill]`, `pillar`, `moment`.
+  Tour `tools/autopilot/living-b.txt`.

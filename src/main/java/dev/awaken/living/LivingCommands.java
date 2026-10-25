@@ -37,6 +37,12 @@ final class LivingCommands {
                     .then(Commands.argument("radius", IntegerArgumentType.integer(500, 20000))
                             .executes(c -> regions(c.getSource(), c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "radius")))));
             l.then(Commands.literal("tag").requires(AwakenCommands.admin()).executes(c -> tag(c.getSource().getPlayerOrException())));
+            // tours: a blow at the creature you look at (no attack key in the autopilot), a drop in a pillar
+            l.then(Commands.literal("strike").requires(AwakenCommands.admin())
+                    .executes(c -> strike(c.getSource().getPlayerOrException(), 4, false))
+                    .then(Commands.literal("crit").executes(c -> strike(c.getSource().getPlayerOrException(), 9, true)))
+                    .then(Commands.literal("kill").executes(c -> strike(c.getSource().getPlayerOrException(), 100000, false))));
+            l.then(Commands.literal("pillar").requires(AwakenCommands.admin()).executes(c -> pillar(c.getSource().getPlayerOrException())));
             l.then(Commands.literal("moment").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 LevelMoments.offer(p, Progression.profile(p).level(), 1);
@@ -76,6 +82,35 @@ final class LivingCommands {
                 .forEach(r -> src.sendSuccess(() -> Component.literal(String.format("%-22s Lv %3d-%-3d %s", r.name(), r.low(), r.high(),
                         r.commons() ? "(home)" : "heart " + r.heartX() + " " + r.heartZ())), false));
         return found.size();
+    }
+
+    private static int strike(ServerPlayer p, float damage, boolean crit) {
+        LivingEntity target = looked(p);
+        if (target == null) {
+            p.sendSystemMessage(Component.literal("Look at a creature."));
+            return 0;
+        }
+        if (crit) dev.awaken.living.combat.Hits.markCrit(p);
+        target.hurtServer((ServerLevel) p.level(), p.damageSources().playerAttack(p), damage);
+        return 1;
+    }
+
+    private static int pillar(ServerPlayer p) {
+        Vec3 at = p.getEyePosition().add(p.getViewVector(1).scale(3));
+        var core = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(dev.awaken.Awaken.id("power_core"));
+        var stack = new net.minecraft.world.item.ItemStack(core == net.minecraft.world.item.Items.AIR ? net.minecraft.world.item.Items.NETHER_STAR : core);
+        var item = new net.minecraft.world.entity.item.ItemEntity(p.level(), at.x, at.y, at.z, stack);
+        item.setData(LivingContent.LOOT_PILLAR.get(), 3);
+        item.setUnlimitedLifetime();
+        p.level().addFreshEntity(item);
+        return 1;
+    }
+
+    private static @org.jspecify.annotations.Nullable LivingEntity looked(ServerPlayer p) {
+        Vec3 eye = p.getEyePosition(), look = p.getViewVector(1).scale(24);
+        var hit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(p, eye, eye.add(look),
+                new AABB(eye, eye.add(look)).inflate(1), e -> e instanceof LivingEntity && e != p, 24 * 24);
+        return hit != null && hit.getEntity() instanceof LivingEntity le ? le : null;
     }
 
     private static int tag(ServerPlayer p) {
