@@ -13,7 +13,8 @@
     "together": "Join links and proximity voice.",
     "ultra": "Experimental: Iris shaders (OpenGL only; Iris lists Apple Silicon as unsupported).",
     "tools": "Profiling.",
-    "world": "New terrain (Tectonic). Only ever installed into a fresh game folder (tools/play.sh --pack): it would seam existing worlds."
+    "world": "New terrain (Tectonic). Only ever installed into a fresh game folder (tools/play.sh --pack): it would seam existing worlds.",
+    "soundspike": "World sound Phase 0 spike only (docs/sound/PLAN.md §11): Tread Lightly, Immersive Thunder Reforged and the AmbientSounds benchmark beside Sound Physics. Never installed by tools/play.sh."
   },
   "mods": [
     {
@@ -213,6 +214,27 @@
         "tools"
       ],
       "why": "Profiler for frame and tick spikes."
+    },
+    {
+      "slug": "tread-lightly-aspctt",
+      "profiles": [
+        "soundspike"
+      ],
+      "why": "Footsteps by surface, wetness and boots (world sound decision 2); joins the sound profile once the spike passes."
+    },
+    {
+      "slug": "immersivethunder-reforged",
+      "profiles": [
+        "soundspike"
+      ],
+      "why": "Thunder delayed by distance; replaces our own thunder re-voicing if the spike is clean."
+    },
+    {
+      "slug": "ambientsounds",
+      "profiles": [
+        "soundspike"
+      ],
+      "why": "The benchmark for listening batch 1 (decision 3). Never shipped; our jar mutes it in awaken: dimensions."
     }
   ],
   "configs": [
