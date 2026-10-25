@@ -220,6 +220,13 @@ styled("rapier", lean=-1)
 styled("daggers", lean=4, sink=0.6)
 styled("katana", lean=2, sink=0.2)
 styled("twinblades", lean=3, sink=0.3)
+styled("glaive", lean=4, sink=0.2)
+styled("scythe", lean=5, sink=0.3)
+styled("gauntlets", lean=6, sink=0.5)
+styled("chainblade", lean=2)
+styled("shieldblade", lean=3, sink=0.3)
+styled("warstaff", lean=3, sink=0.2)
+styled("precursor", lean=2)
 
 
 # ---------------------------------------------------------------------------------------------------------------------

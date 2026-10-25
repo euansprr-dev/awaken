@@ -3794,8 +3794,23 @@ against it, so a vanilla item plays its designed tempo).
   the last move ended) is drawn from the sheath: ×1.7 motion, ×1.8 posture. The deflect window 5 ticks.
 - **Twinblades** (2.0, a double-ended blade): a fast four-strike chain on tight rhythm windows closing on a spin all
   round, a fifth spinning back with mastery; its Art a whirl.
+- **Glaive** (1.0): sweeping arcs of 160° at 3.8 for crowds, a finisher all round, a thrust with mastery.
+- **Scythe** (0.9): wide reaps (150°) that rise and fall, a finisher reaping down across; a spirit struck ×1.6 (it
+  cuts the Veil's spirits).
+- **Gauntlets** (2.4): fist strings (a four-punch chain on 1-tick wind-ups, an uppercut finisher, a fifth with mastery),
+  a dodge of 5 ticks recharging in 18; a riposte that throws the body (knockback 1.3).
+- **Chain-blade** (1.3): lashes at 5 blocks, a thrust to 6, the heavy to 6.5; each blow landed reels the body up to 2
+  blocks in.
+- **Shieldblade** (1.4): block-first, the guard taking 85% (70% of a HEAVY), 150° wide, broken for only 10 ticks; the
+  second strike a shield bash; the riposte a bash that throws (1.0).
+- **War-staff** (1.2): sweeping two-handed blows; each blow landed gives back 3 power energy (`Powers.restoreEnergy`),
+  so a staff fighter's powers come round faster.
+- **Precursor Arm** (1.5, Tech): an energy blade whose reach grows half a block with each step of the chain (2.6 to 3.6
+  by the finisher), the heavy at 4; its Art a wave to 14 blocks.
 - Style traits (`Archetype.Traits`, optional per style in the table): `backstab`, `drawIdle`, `drawMotion`,
-  `drawPosture` (`ArmsRules.behind`, `ArmsRules.drawn`; test `arms_style_traits`).
+  `drawPosture`, `spirit`, `pull`, `energy`, `reachPerStep`, `riposteThrow` (`ArmsRules.behind`, `ArmsRules.drawn`;
+  the server applies the rest as the blow lands; a Lord, 150 health and up, is neither reeled in nor thrown; test
+  `arms_style_traits`).
 - Third person: `arms_<style>_<move>` clips on each style's own ticks, generated from the authored poses by the move's
   kind (a side cut, an overhead, a thrust, a sweep round), heavier styles leaning and sinking further; the slide's,
   the fall's and the dodge's strikes are every style's. Strike 1's follow-through passes out in front (a waypoint) so

@@ -261,6 +261,12 @@ final class ArmsTests {
         h.assertTrue(!ArmsRules.drawn(t, Archetype.Move.STRIKE_1, t.drawIdle() - 1), "not before it has rested");
         h.assertTrue(!ArmsRules.drawn(t, Archetype.Move.STRIKE_2, 1000), "and only the chain's first strike");
         h.assertTrue(!ArmsRules.drawn(longsword().def().traits(), Archetype.Move.STRIKE_1, 1000), "a Longsword draws nothing");
+        h.assertTrue(Archetypes.get("scythe").def().traits().spirit() > 1F, "the Scythe cuts spirits deeper");
+        h.assertTrue(Archetypes.get("chainblade").def().traits().pull() > 0F, "the Chain-blade reels them in");
+        h.assertTrue(Archetypes.get("warstaff").def().traits().energy() > 0F, "the War-staff's blows charge power energy");
+        h.assertTrue(Archetypes.get("precursor").def().traits().reachPerStep() > 0F, "the Precursor Arm's blade grows with the chain");
+        h.assertTrue(Archetypes.get("gauntlets").def().traits().riposteThrow() > 0F, "the Gauntlets' riposte throws");
+        h.assertTrue(Archetypes.all().size() == 16, "sixteen styles, as PLAN §4.5 (" + Archetypes.all().size() + ")");
         h.succeed();
     }
 
