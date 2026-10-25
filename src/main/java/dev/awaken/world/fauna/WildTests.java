@@ -340,6 +340,7 @@ final class WildTests {
             ServerPlayer p = FaunaTests.realPlayer(h, new BlockPos(0, UP + 4, 10));
             BlockPos centre = h.absolutePos(new BlockPos(0, UP, 0));
             clearFauna(level, p);
+            dev.awaken.core.test.AwakenTests.clearAbove(level, centre, 12, 7, 40);
             LairRegistry reg = LairRegistry.get(level.getServer());
             BlockPos den = Lairs.placeAt(level, LairStyle.WALLOW, centre, 42L);
             long key = ChunkPos.containing(centre).pack();
@@ -459,6 +460,9 @@ final class WildTests {
             ServerPlayer p = FaunaTests.realPlayer(h, new BlockPos(0, UP, 0));
             FaunaTests.awaken(p);
             while (Progression.profile(p).level() < 3) Progression.grantLevels(p, 1.0, Progression.XpSource.COMMAND);
+            // the world is shared: a beast an earlier test left near this plot takes the tracker's line from the lair
+            BeastRegistry beasts = BeastRegistry.get(level.getServer());
+            for (BeastRegistry.Entry e : List.copyOf(beasts.all())) beasts.gone(e.id());
             Lairs.Locator before = Lairs.locator;
             try {
                 Lairs.locator = (l, beast, near) -> beast.equals("briar_sow") ? near.offset(900, 0, -400) : null;

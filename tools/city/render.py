@@ -54,7 +54,47 @@ BASES = [('deepslate_tile', 'deepslate_tiles'), ('deepslate_brick', 'deepslate_b
          ('waxed_', '')]
 
 
+KIT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../src/main/resources/assets/awaken/textures/block'))
+
+
+def kit_colour(bid, props):
+    """The Carillon kit's blocks (M4): their own textures."""
+    def tex(name):
+        path = os.path.join(KIT, name + '.png')
+        if name not in _cache:
+            if not os.path.exists(path):
+                _cache[name] = None
+            else:
+                from PIL import Image
+                im = Image.open(path).convert('RGBA')
+                a = np.asarray(im).reshape(-1, 4).astype(float)
+                a = a[a[:, 3] > 0]
+                _cache[name] = tuple(int(v) for v in a[:, :3].mean(axis=0)) if len(a) else None
+        return _cache[name]
+    if bid.startswith('slate_tile'):
+        return tex('slate_tiles')
+    if bid.startswith('clay_tile'):
+        return tex('clay_tiles')
+    names = {'plaster': ['plaster_%s_0' % props.get('colour', 'white'), 'plaster_%s' % props.get('colour', 'white')],
+             'timber': ['timber_%s_side_0' % props.get('tone', 'dark')],
+             'city_bricks': ['city_bricks_0', 'city_bricks'], 'ashlar': ['ashlar_0', 'ashlar'],
+             'lit_window': ['window_%s_%s' % (props.get('style'), props.get('half')), 'window_%s_upper' % props.get('style'),
+                            'window_%s_single' % props.get('style')],
+             'flower_box': ['flower_box_%s' % props.get('style', 'wood')],
+             'shutter': ['shutter_%s_lower' % props.get('colour', 'blue')], 'drainpipe': ['drainpipe'],
+             'trellis': ['trellis_ivy'], 'chimney_bricks': ['chimney_band_%s' % props.get('material', 'brick')],
+             'loading_door': ['loading_door_lower_left'], 'rope': ['rope'], 'hoist_beam': ['loading_door_lower_left']}
+    for n in names.get(bid, []):
+        c = tex(n)
+        if c:
+            return c
+    return (255, 0, 255)
+
+
 def block_colour(state, face):
+    k = re.match(r'Block\{awaken:([a-z0-9_]+)\}(\[(.*)\])?', state)
+    if k:
+        return kit_colour(k.group(1), dict(kv.split('=') for kv in k.group(3).split(',')) if k.group(3) else {})
     m = re.match(r'Block\{minecraft:([a-z0-9_]+)\}(\[(.*)\])?', state)
     if not m:
         return (255, 0, 255)

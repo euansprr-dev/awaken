@@ -1,0 +1,35 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/ashlar_0",
+        "weight": 3
+      },
+      {
+        "model": "awaken:block/ashlar_0",
+        "y": 180,
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/ashlar_1",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/ashlar_2",
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/ashlar_3",
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/ashlar_4",
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/ashlar_5",
+        "weight": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column_horizontal",
+  "textures": {
+    "side": "awaken:block/timber_dark_side_1",
+    "end": "awaken:block/timber_dark_end_0"
+  }
+}

@@ -57,12 +57,14 @@ import java.util.Map;
  * info                                           logs the renderer, device, framebuffer, heap, GC and loaded mods
  * window &lt;width&gt; &lt;height&gt;                       windowed at that size in points (Retina doubles the pixels)
  * opt renderDistance|simulationDistance &lt;n&gt;     changes a video option for the following scenes
- * lens off|swift|cinematic                      switches Awaken's light layer, for same-moment A/B shots
+ * lens off|swift|cinematic|ultra                switches Awaken's light layer, for same-moment A/B shots
  * lookswitch swift|cinematic|ultra              picks a Look tier as a click on its card would (the open Look screen's,
  *                                                else straight through the switch)
  * pixels &lt;scale&gt; [fsr|sharp|bilinear]|config|state  Pixels' render scale and upscaler for the following scenes (not saved)
  * pixels gpu on|off|reset|&lt;label&gt;              GPU time of the world pass and the upscale (timestamps), logged per label
- * lensdebug 0..4                                 Lens debug views: normal, pass-through, depth masks, far depth, haze
+ * lensdebug 0..8                                 Lens debug views: normal, pass-through, depth masks, far depth, haze;
+ *                                                Cinematic and Ultra: 5 light buffer, 6 normals, 7 the light alone,
+ *                                                8 the classic Cinematic (before Lens 2) on the same frame
  * fardepth share|auto                           Distant Horizons shares its depth with Lens on every graphics API (to
  *                                                check it on Vulkan), or again only on the one it was checked on
  * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder

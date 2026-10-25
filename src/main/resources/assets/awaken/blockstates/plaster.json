@@ -1,0 +1,260 @@
+{
+  "variants": {
+    "colour=white": [
+      {
+        "model": "awaken:block/plaster_white_0",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_white_0_mirrored",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_white_0",
+        "y": 180,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_white_0_mirrored",
+        "y": 180,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_white_1",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_white_2",
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_white_3",
+        "weight": 1
+      }
+    ],
+    "colour=cream": [
+      {
+        "model": "awaken:block/plaster_cream_0",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_cream_0_mirrored",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_cream_0",
+        "y": 180,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_cream_0_mirrored",
+        "y": 180,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_cream_1",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_cream_2",
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_cream_3",
+        "weight": 1
+      }
+    ],
+    "colour=ochre": [
+      {
+        "model": "awaken:block/plaster_ochre_0",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_ochre_0_mirrored",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_ochre_0",
+        "y": 180,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_ochre_0_mirrored",
+        "y": 180,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_ochre_1",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_ochre_2",
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_ochre_3",
+        "weight": 1
+      }
+    ],
+    "colour=rose": [
+      {
+        "model": "awaken:block/plaster_rose_0",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_rose_0_mirrored",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_rose_0",
+        "y": 180,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_rose_0_mirrored",
+        "y": 180,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_rose_1",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_rose_2",
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_rose_3",
+        "weight": 1
+      }
+    ],
+    "colour=clay": [
+      {
+        "model": "awaken:block/plaster_clay_0",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_clay_0_mirrored",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_clay_0",
+        "y": 180,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_clay_0_mirrored",
+        "y": 180,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_clay_1",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_clay_2",
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_clay_3",
+        "weight": 1
+      }
+    ],
+    "colour=mauve": [
+      {
+        "model": "awaken:block/plaster_mauve_0",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_mauve_0_mirrored",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_mauve_0",
+        "y": 180,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_mauve_0_mirrored",
+        "y": 180,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_mauve_1",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_mauve_2",
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_mauve_3",
+        "weight": 1
+      }
+    ],
+    "colour=oxblood": [
+      {
+        "model": "awaken:block/plaster_oxblood_0",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_oxblood_0_mirrored",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_oxblood_0",
+        "y": 180,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_oxblood_0_mirrored",
+        "y": 180,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_oxblood_1",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_oxblood_2",
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_oxblood_3",
+        "weight": 1
+      }
+    ],
+    "colour=sage": [
+      {
+        "model": "awaken:block/plaster_sage_0",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_sage_0_mirrored",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_sage_0",
+        "y": 180,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_sage_0_mirrored",
+        "y": 180,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_sage_1",
+        "weight": 2
+      },
+      {
+        "model": "awaken:block/plaster_sage_2",
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/plaster_sage_3",
+        "weight": 1
+      }
+    ]
+  }
+}
