@@ -32,7 +32,8 @@ final class LensHeightfield {
     static final float NONE = -2048f;
     /** Blocks from the camera the shader may trust: the window's half-width less the camera's own chunk. */
     static final float TRUSTED = (CHUNKS / 2 - 1) * 16f;
-    private static final int READS_PER_TICK = 40, RESCANS_PER_TICK = 24, NEAR_EVERY = 5, NEAR_RADIUS = 2, UPLOAD_ROWS_PER_TICK = 8;
+    // the rolling rescan and the near re-read are the steady CPU cost (block changes still show within ten seconds)
+    private static final int READS_PER_TICK = 40, RESCANS_PER_TICK = 12, NEAR_EVERY = 10, NEAR_RADIUS = 2, UPLOAD_ROWS_PER_TICK = 8;
 
     final Texture texture;
     // per level, the whole window as the texture holds it (row-major RG16F) and one view per chunk row for its upload

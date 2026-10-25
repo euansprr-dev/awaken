@@ -341,7 +341,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   that frame by HoloRender exactly as a K-menu panel (same HoloPanel/HoloCanvas, glass shader, edge glow, halo, scan
   line, see-through text with its glow), facing the camera; world-sized up close (`PlateScale.WORLD_UNIT` 0.021 m a
   unit) and never under `PlateScale.MIN_PX` 2.1 framebuffer pixels a unit at 1080 lines however far. Writes depth like
-  the panels (Lens leaves fog and AO off it), draws over walls, never counts toward `UiHooks.focus`. `on()` false with
+  the panels (Lens leaves its light, AO and haze off it: `lensPlates(float[])` hands Lens the plates drawn this frame,
+  9 floats each, the camera-relative centre and half-width and half-height vectors; §22), draws over walls, never counts toward `UiHooks.focus`. `on()` false with
   reduced motion or without the holo pipelines; `allowed()` false with reduced motion (fallbacks stay off too). At most
   `MAX` 6 a frame. Frame cost per plate: three custom-geometry submits plus five text submits per line; no allocation
   once a slot has drawn, a line's record rebuilt only when its position, colour or scale changes. Test `holo_plate_scale`.
@@ -1026,7 +1027,7 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   texels: 13 the ritual, 14 Holo.
 - The Look switch, AWAKEN · LOOK (`compat.client.LookScreen`; the rules in `compat.Look`): three tiers, and one choice
   sets every companion that offers a supported way, writing only the keys below, so each mod's own menu still works
-  for the rest. Opened with U (`key.awaken.look`, Awaken's key category), from Awaken's settings (Mods → AWAKEN →
+  for the rest. Opened with O (`key.awaken.look`; U went to Sovereign on 2026-10-25, Awaken's key category), from Awaken's settings (Mods → AWAKEN →
   Config → the client section's "Look" row, under Lens) and by autopilot (`screen look`, `lookswitch <tier>`). The
   default stays SWIFT (client config `lens`). The current tier is read back from the settings (Lens, Iris's shaders
   switch), not stored twice. Drawn like the System's cards (`HudLook`: projected glass that scans in while the holo
@@ -2059,7 +2060,10 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   rope reach +0.4 a Tether level (44 → 48; the server's anchor check allows 48 + 6 = 54), pump +3% a Tether level, double jump +0.012 and
   dash +2% a Leaper level, glide drag −2% a Wings level.
 - **Perks** (`Progression.perk`; Living Wilds' relics): `awaken:rope_reach` adds its blocks to the rope's reach on
-  both sides (the throw in `AscentMoves.fire`, the server's anchor check; Wren's Hook gives 6).
+  both sides (the throw in `AscentMoves.fire`, the server's anchor check; Wren's Hook gives 6). `awaken:sprint_recharge`
+  takes its fraction off the tactical sprint's recharge for the rank, at most half and never under the S rank's 30
+  (`BodyRules.tacRecharge(player)`, read alike by the client, the server's check and the sprint line; the Courier's
+  Knot gives 0.25: 80 ticks at E become 60, an A rank's 40 the floor's 30).
 - **A level gained** shows as one quiet line over the hotbar for 5.5 s ("Tether mastery III · the line reaches
   further"; `AscentNotes`), never a toast; the first sync of a session only fills the client's copy. Runner mastery:
   a wall-run lasts a tick longer a level (both sides; ranks and Wall Stride still set the base).
@@ -2495,6 +2499,16 @@ reached by movement), `awaken:use/windway` (one glide holding a lane from its fi
 Leviathan fallen in its trial), and `awaken:use/ascent_glide` with its length (blocks across the ground from where the
 wings opened to where the glide ended, glides of 8 or more; `Quests.advance(player, id, amount)`).
 
+### 17.21 Roofs: climbing out onto a stair or slab eave (Euan's playtest, 2026-10-25)
+Hanging from a roof's eave, the climb out (the ledge jump's, and the free-run's from the hang) lands on whatever is
+walkable just past the face: the lip's own top or a step up to 0.6 over it (`RunnerRules.CLIMB_STEP`, vanilla's step),
+so a stair eave puts you on its high back half and you walk on up the slope. Never onto a fence or wall top, never
+down a drop behind a thin lip. The standing body (from that height to 1.8 over it) and the way over the lip must be
+free, and the way up in front of the face from the hold to standing height. The server re-checks with the same
+`climbOut`. Covered by `runner_roof_climb`: a stair eave on a 3-high wall under a stair slope, a slab eave under a
+slab slope, Carillon's overhanging eave stair on a gentle and a steep gable (`CityGrammar.roof`), and a step with a
+block over it (no climb).
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
@@ -2700,13 +2714,17 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   waiting on them moves on (or says what it needs), a delivery changes hands, Hale reads the bounty board, a chain they
   give is offered on a choice card (Help / Not now), else one of their idle lines. People: Wren, Hettie, Ilse, Gus,
   Pell, Hale, Marta (`Wayfarers.PEOPLE`).
-- **The first drop, six of eight chains**: Ten Sheep Short (Hettie, 1-8), Moth Lights (Ilse, 1-8), Wren's Rope (cliff,
+- **The first drop, all eight chains** (The Last Delivery is written and waits for Carillon's B3b to call
+  `Quests.talk` for Kestrel; it opens on `counter:awaken:carillon_registered`): Ten Sheep Short (Hettie, 1-8), Moth Lights (Ilse, 1-8), Wren's Rope (cliff,
   8-20), The Caravan Road (Marta, road, 8-20), The Hermit's Horn (Gus, crag, 8-20), Pell's Message (Pell, road, 8-20).
-  The Last Delivery (with Carillon's Kestrel) and Oren's First Steel (Oren's forge) wait for their hosts' hooks.
+  Oren's First Steel (Oren in Carillon via `Quests.talk`, ore, coal, a temper reported by hearth's
+  `Upgrades.offerTemper` as `awaken:use/temper`) also waits for B3b.
 - **Relics** (`living.quest.Relics`): stack of one, rare, kept through death (held back from the drops, returned on
   respawn), a perk while carried (`Progression.addPerkSource`): Shepherd's Lantern `awaken:night_ward` 8 (living reads
   it: at night hunters and monsters within 8 give up and back off; gate creatures, wardens and beasts don't), Wren's
-  Hook `awaken:rope_reach` 6, Caravan Writ `awaken:shop_discount` 0.15, Pell's Spurs `awaken:mount_sprint` 0.15 and
+  Hook `awaken:rope_reach` 6, Oren's Mark `awaken:temper_start` 1 (hearth: a fresh, untempered weapon starts at 1 + perk levels within the Forge's
+  cap, at that level's price), Courier's Knot `awaken:sprint_recharge` 0.25 (the Ascent takes it off the rank's tactical-sprint
+  recharge, perks capped at 0.5, never under S's 30 ticks), Caravan Writ `awaken:shop_discount` 0.15, Pell's Spurs `awaken:mount_sprint` 0.15 and
   `awaken:whistle_range` 80 (each read by its owning module when it adopts it). Used: Lumen Tonic (Night Vision 2 min,
   refills in 5), Herdcaller Horn (once a play-day: whatever targets you within 24 stops and slows; passive and neutral
   creatures within 32 run 24 blocks the way you face). Pell's Letter is an errand item.
@@ -2721,6 +2739,96 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - Tests: `living_quest_engine`, `living_bounty_board`, `living_scene_finder`. Dev (admin): `/awaken living wayfarer <who>`,
   `talk` (the nearest Wayfarer), `scene <chain>` (its scene now, close by), `view <distance>` (stand back from your
   newest scene, facing it), `camp`, `quests`. Tour `tools/autopilot/living-c.txt`.
+
+### 21.6 The World Pulse and happenings (Phase D, as built 2026-10-25)
+- **The Pulse** (`living.pulse.Pulse`, saved data `awaken:living_pulse`, schema 1): per player outdoors (overworld,
+  awakened, not in a gate, a Hearth's radius or the city), checked every 10 s: none near (256 blocks) and 90 s since
+  their last → one starts; one or two near → another after 10 minutes; never more than three near (the anomalies near
+  count too). The first comes about two minutes outdoors. Kinds by weight × the moon (`moon_weight` on favoured phases)
+  × 2 for a kind the player hasn't witnessed, never the same kind twice running; up to three kinds are tried for a
+  place. Happenings are world state, shared, and end on their own; their creatures are tagged `awaken_happening`,
+  persistent, and leave with them (any no player is within 24-48 of go; the rest stay as ordinary creatures).
+- **The calendar**: moon phase = (clock / 24000) mod 8 (0 full, 4 new); time of day dawn 23000-1500, day, dusk
+  11500-13500, night; weather clear/rain/thunder.
+- **Data** `data/<ns>/awaken/happening/<id>.json`, schema 1: `title`, `family`, `behaviour` (code), `when` {`time`,
+  `moon`, `moon_weight`, `moon_only`, `weather`}, `groups` (fauna biome groups), `bands`, `duration_s`, `weight`,
+  `witness_radius`, `tell` (haze, dustline, flock, circle, storm, ghost, fog, lanterns, roar), `tell_radius`,
+  `rumours` (with `{dir}`). No em dashes.
+- **The launch set** (behaviours in `Herds`, `Skies`, `Hunts`, `Tides`, `People`):
+  - The Great Migration (dawn/day, grazing lands): a herd of 10-14 of the land's grazer crosses 140 blocks in 5 min;
+    hunters come at the stragglers at a third and two thirds of the way. Stampede (day): 8-10 at a full run, 90 blocks
+    in 40 s; 4 damage and a shove to anyone in the way (once per 1.5 s).
+  - Murmuration (dusk, over water): client-drawn only; witnessing it gives `awaken:lucidity_start` +10 for that
+    play-day (a perk source). Carrion Circle: kites over a barrel of remains (bones, leather, arrows, 40% a creature
+    part, 25% a worn iron sword) and scattered bone blocks; the remains stay.
+  - The Rolling Storm (day/dusk): a cell crossing 180 blocks in 4 min; visual lightning near its centre about every
+    3 s; 3 damage within 4 blocks of a strike; struck sand turns to glass.
+  - The Wild Hunt (full moon only, night, bands 1+): five wisp hounds and the Huntmaster (an elite four levels up,
+    titled "Huntmaster of the Pale Moon") run 220 blocks; they go for anyone within 18; each hound drops 2 essence, the
+    Huntmaster 6. Beast Duel (bands 1+): two named beasts fight; the winner is left at 45% health.
+  - The Deep Tide (new moon only, dusk/night, 10 min): fog out of a broken gate within 300 (else open ground); while it's
+    up the night's hunters, elites and camps are two levels harder everywhere (`Regions.creatureLevel`).
+  - Caravan (day, ×3 on the half moons): a wandering trader ("Caravan Master") and 2-3 trader llamas walk 140 blocks in
+    6 min; trade as usual. 40% are ambushed halfway by 3-4 pillagers; if the master lives, everyone within 40 gets
+    0.15 of a level (budget "pulse", 0.15 per 10 min) and 4 emeralds.
+- **Tells** (payload `living_happenings`: id, tell, centre, radius, progress, line direction; to players within 512
+  every 2 s, an empty list once when the last goes). `living.client.PulseFx` draws them in an alpha pass (unfogged,
+  reads by day) and an additive pass, the centre eased over the 2 s; past 70% of the render distance a tell is pulled
+  in along its sight line and shrunk to match (as the gate pillars).
+- **The Almanac**: within a kind's `witness_radius` a player witnesses it once: counter `awaken:happenings_witnessed`;
+  the first time a discovery `happening/<id>` (0.1 of a level), a new thing for the Director, and "Witnessed · <title>".
+  The Codex tab lists them ("HAPPENINGS WITNESSED · n / ??").
+- **Rumours** (`Rumours`, attachment `awaken:rumours`, schema 1, synced to the owner, kept through death): half the
+  time a Wayfarer with nothing for you tells of a happening on now 160-2500 blocks away that you haven't witnessed, with
+  a compass direction; it leaves a "? <title>" mark on the Gate Map (MapMarks) for two play-days (at most 8).
+- Dev (admin): `/awaken living happen <kind>`, `happenings`, `calm`. Test `living_pulse`.
+
+### 21.7 Creatures live somewhere: the ledger (Phase D, as built 2026-10-25)
+- `living.population.Ledger` (saved data `awaken:living_world`, schema 1, only cells players reached): per 512×512 cell,
+  made once from the world seed the first time a player is within a cell of it (one cell a tick at most), from its
+  land at five points (the biome source; never loads a chunk): up to two herds (greenwild mossback, frostwild frost
+  stag, sunscorch dune ray, crag crag ram, blossom honey bear; 6-10 of 12), one pack linked to the first herd
+  (greenwild gloomstalker, frostwild wisp hound, canopy canopy prowler, duskwood thornling; 3-5 of 5), one roost
+  (frostwild frostfinch, crag peak kite, duskwood hollow owl; 4-6 of 6). A record: kind, species, home, three pastures,
+  count, max, last play-day, seed, linked herd.
+- Where (pure, from seed, play-day, time): a herd at pasture (day+seed) mod 3 → the next by 2000 (dawn walk) → the one
+  after from 12000-13500 (dusk walk), wandering ±10; a pack at its den 23000-13000, else 24 blocks off its herd toward
+  the den; a roost at home, out circling at 40 blocks at dawn and dusk.
+- Bodies: every 2 s, a population within 96 blocks of a player (its place loaded and dry) takes min(count, 12/5/6)
+  bodies (tags `awaken_ledger`, `awaken_ledger_<id>`, persistent; at most 24 near a player); they walk toward where
+  their population is (herds 0.9, packs 1.1; grazing within 12). No player within 128 of any body: they're discarded.
+  A death lowers the count; a body loaded from disk that isn't current is discarded (after a restart).
+- Catch-up (when a population takes bodies after days away): herds +1 a day (+2 while their pack is wiped out), packs
+  +1 per 2 days (+1 per 4 once wiped), roosts +1 a day; each night a pack lived its herd lost one (never under 2).
+- Natural spawning leaves the herd species to the ledger (`LivingHooks.ledgered`, read by `FaunaRules.verdict`:
+  "its herds live in the Living Wilds' ledger"); hunters and ambient creatures keep spawning as before. Game rule
+  `awaken:living_herds` (default on): off, herds spawn naturally again and the ledger keeps only packs and roosts; the
+  GameTest server starts with it off, so the fauna tests see natural herds as before (`living_ledger` checks the rule).
+- Dev: `/awaken living ledger`. Test `living_ledger`.
+
+### 21.8 Camps and nests (Phase D, as built 2026-10-25)
+- `living.camp.Camps` (saved data `awaken:living_camps`, schema 1): a riftborn camp (45%; gate creatures that got out,
+  an E-rank theme: Ember Mines, Bell Crypt, Fungal Hollow, Overgrown Temple or Hive) and a hollow den (30%; the
+  Hollows) seeded with each ledger cell whose centre is level 8+, and a blight nest at a broken gate nobody cleared for
+  two play-days (its theme). A seeded camp finds its ground (dry, level within 2 over 5 blocks, 120+ from a Hearth, 48
+  from a gate, never the city) within 48 of its seed spot the first time a player is within 160, else it never was.
+- Built (`CampPainter`, natural ground and air only, every block recorded) when a player is within 96: a riftborn camp
+  (coarse dirt and paths, a crying-obsidian rift scar, a palisade of fence posts and dripstone points with gaps, 1-3
+  wool tents, a lit campfire, two soul lanterns), a blight nest (blackstone, sculk and crying obsidian over the scar,
+  a heart pillar), a hollow den (mossy stone, bone blocks, webs); radius 3 + tier; three lights at most.
+- Awake within 40: the heart (an elite of the theme, "Heart of the <camp>", +2 levels) and a wave of 2 + tier
+  (max 9) at `Regions.creatureLevel(CAMP)` + 2 per tier above 1, through `Mobs.spawn` (stats at that level), tagged
+  `awaken_camp`, creature kind CAMP (kill XP by role); when a wave is down and the heart stands, another, tier - 1
+  more in all. Everyone gone past 104: it sleeps (its creatures go; whole again next time).
+- The heart killed: cleared. Its ground turns to coarse dirt (ash), what it stood up goes, for 5 play-days; then it
+  can return at tier 1. Players within 56 get 0.4 × (1 + 0.25 per tier above 1) of a level (budget "camp", 0.10 per 10 min, as
+  pacing_sim's CAMP_K), counter
+  `awaken:camps_cleared`, "Cleared · <camp>".
+- Each new play-day: with a player within 1500, a camp grows a tier every two days (max 5; rebuilt bigger next time).
+  At tier 4+ it picks the nearest Hearth or the Wayfarer camp within 800, warns players within 800 of it ("it raids
+  tomorrow night"), and the next night (14000-14400) 4 + tier of its creatures come 24 blocks short of the target,
+  toward it.
+- Dev: `/awaken living camps`, `nest <kind> <tier>`. Test `living_camp`.
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 
@@ -2757,8 +2865,8 @@ magic.
   and MOTION_BLOCKING_NO_LEAVES to the client): r the top of everything that blocks motion (leaves included), g without
   leaves. A ring addressed by world block modulo 1024, a 64×64-chunk window centred on the camera's chunk: a chunk
   entering the window clears its slot and is read nearest first (40 a tick), a loaded chunk is read when it arrives
-  (`ChunkEvent.Load` on the client), the 5×5 chunks around the camera are re-read every 5 ticks and the rest of the
-  window 24 a tick in turn (block changes show within a few seconds), and a slot uploads only when its hash changed,
+  (`ChunkEvent.Load` on the client), the 5×5 chunks around the camera are re-read every 10 ticks and the rest of the
+  window 12 a tick in turn (block changes show within about ten seconds; halved for the CPU after L3), and a slot uploads only when its hash changed,
   as whole-width strips (8 chunk rows a tick, every level). Built only where the dimension has the overworld sky.
 - **Light pass** (per pixel of the reduced buffer, from the full-size depth): position and normal from depth (of the
   two neighbours per axis the one continuing the centre's plane; a normal within 0.9 of an axis snaps to it, since
@@ -2784,11 +2892,14 @@ magic.
   √m): the light buffer upsampled by distance (of its 2×2 texels the ones that saw this surface), the normal again at
   full size (from screen derivatives where the pixel's 2×2 quad lies on one surface, the four-tap version only across
   an edge), then a warm key where the sun reaches (noon (1.04, 1.02, 0.97); golden hour, by the sunrise colour's
-  strength × `keyWarmth`, (1.24, 1.0, 0.74); the moon (0.93, 0.98, 1.08)) and a cool shade where it doesn't
-  (`shadeTint` × (1 − `shade`), deepened 30% at golden hour). Faces turned from the sun shade only as it lowers (none
+  strength × `keyWarmth`, (1.30, 1.03, 0.72); the moon (0.93, 0.98, 1.08)) and a cool shade where it doesn't
+  (`shadeTint` × (1 − `shade`), deepened 30% at golden hour and up to 35% with distance, 24 to 160 blocks, so long
+  shadows stay readable across the land; warmed a little at golden hour by light bounced off sunlit ground). Sunlit
+  colour gains up to 16% saturation at golden hour, and the distance haze takes a share of the sunrise colour, so a
+  golden-hour vista reads warmer and richer, not greyer (the orchestrator's note on L1's sheet). Faces turned from the sun shade only as it lowers (none
   at noon, when Minecraft's sun is straight overhead and the game's own face shading stays; all by golden hour). The
   model fades out under solid cover (1 to 7 blocks of it: a ledge is shade, a roofed room is left as the game lit it,
-  torches and all), toward the end of the render distance (75-100%), in the game's thick fog (as the haze does) and
+  torches and all), toward the end of the render distance (85-100%), in the game's thick fog (as the haze does) and
   within 1.45 blocks. Strength: the sun's height (none at the horizon crossing), a faint moon (0.4) by night, rain
   (−85%) and thunder (−50%); 0 where there's no overworld sky. Golden hour is the more of the sunrise colour's strength
   and the sun's height (full below sin 0.1, none above 0.5; the sunrise colour alone only peaks as the sun touches the
@@ -2801,7 +2912,7 @@ magic.
   there showed the sun's square disc).
 - **Look fields** (looks*.json, inherited from `default`; texels 17-19): `light` 1.0, `shade` 0.32, `shadeTint`
   [0.86, 0.93, 1.14], `keyWarmth` 0.8, `ao` 0.65, `filmic` 1.0; L2: `mist` 0.5, `mistHeight` 48 (blocks), `fogGlow`
-  0.15, `skyGlow` 0.6. Texel 19: r mist, g mistHeight/256, b fogGlow/2, a skyGlow.
+  0.15, `skyGlow` 0.3. Texel 19: r mist, g mistHeight/256, b fogGlow/2, a skyGlow.
 - **Debug views** (`lensdebug`, Cinematic/Ultra): 5 the light buffer (r sun, g AO), 6 normals with direct sun, 7 the
   light alone (grey 0.5 = unchanged), 8 the classic Cinematic (no Lens 2 light, plain contrast) on the same frame, for
   before/after shots.
@@ -2837,8 +2948,9 @@ magic.
   wide bloom layer again over two rings of six taps (3.5% and 7.5% of the screen out) and the centre; the composite
   adds it tinted toward the haze colour, × `fogGlow` × 3. (At L2's tour it sat in the full-size composite with nine
   taps a pixel: too costly, and too diffuse to read as light pools.)
-- **Sky scattering**: the sky, and the haze over terrain, brighten around the light's direction (pow(μ, 5) × 0.3 +
-  pow(μ, 40) × 0.4 in the light's colour, × `skyGlow`, wider and warmer at golden hour). Clouds are in the depth
+- **Sky scattering**: the sky, and the haze over terrain, brighten around the light's direction (pow(μ, 8) × 0.25 +
+  pow(μ, 48) × 0.35 in the light's colour, × `skyGlow` (0.3 since L4: wider, it washed half the golden-hour sky
+  white), warmer at golden hour). Clouds are in the depth
   buffer, so they take the key and shade like terrain (their sunlit tops warm, their undersides cool).
 - **Gate looks**: each theme's biome (`awaken:gate_<theme>`) has a look of its own, `biome:awaken:gate_<theme>` in
   `assets/awaken/lens/looks_gates.json` (all 15 themes; the camera's biome picks it as for any biome, so no new sync).
@@ -2882,6 +2994,62 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
 - `glow` 0.9 for the Spirit and Charge themes and the Mirror Palace, 0.8 for the Ember Mines.
 - Tour: `tools/autopilot/lens2-l3.txt` (a pool in the lab into the sun, glowing creatures at dusk and night,
   Carillon's river, the Ember Mines' shimmer, the Frost Monastery's frost, the bench).
+- L3 measured (with L2's fixes; same vista, p50/p99 ms): off 8.00/12.39 (122 fps), Swift 7.93/11.94, Cinematic
+  11.02/16.67 (about 90 fps), Ultra 12.99/19.79 (77 fps): both tiers on budget. The tour harness's `gate interior
+  enter` landed in other themes' gates, so heat and frost weren't in its shots.
+
+**L4, volumetric clouds** (Euan, 2026-10-25: "the blocky clouds just aren't it")
+- On Cinematic and Ultra Lens draws its own clouds wherever the game would draw clouds (the frame's cloud colour has
+  alpha and the player's Clouds setting isn't Off) and the look's `clouds` (cover, default 0.45; 0 keeps the game's) is
+  above 0. In `ExtractLevelRenderStateEvent` Lens takes the frame's cloud height and colour and clears that colour's
+  alpha, so vanilla's clouds skip that frame; the setting itself is never touched (Swift, Off and a shaderpack keep the
+  game's clouds). Rain thickens the cover by up to 0.4. Frame texels 18-19: base height (0: none), cover, the camera's
+  x and z plus the wind's drift (0.04 blocks a game tick east) modulo 30720; the cloud colour.
+- Shape (`include/lens_clouds.glsl`): a cumulus layer from 6 blocks under the game's cloud height, 84 blocks thick.
+  Cover 0.45 leaves most of the sky open between distinct clouds (a coverage threshold of 1 − 0.72 × cover, edges 0.1
+  wide), closing into an overcast deck toward 0.95; the threshold rises with height (0.16 × h²), so each cloud narrows
+  upward into a dome and only the thickest rise tall (flat 2D cover read as vertical curtains). One tileable noise
+  texture, `awaken:lens_cloud_noise` (256×256 RGBA, made in the frequency domain by
+  `tools/art/specs/lens_clouds.py`: r coverage, g shape, b billows, a wisps), sampled at 3072, 960, 256 and 120 blocks
+  a repeat (all dividing 30720) for where clouds stand and their outlines; their billows are two octaves of a cheap 3D
+  value noise in world space (46 and 17 blocks on Ultra, one octave at 38 on Cinematic; flat noise slid with height
+  drew vertical streaks), skipped deep inside a cloud. The cover slides up to 45 blocks with height (two noise channels,
+  opposite ways; only in the main march, not the light-step and shadow look-ups), so a cloud's sides lean and break
+  up instead of standing as straight walls. Flat-ish bases,
+  domes that rise where a cloud is thick, billows eating the edges.
+- Pass `lens_clouds.fsh` (560×315 on Cinematic, 800×450 on Ultra; then a blit into the persistent
+  `awaken:lens_clouds_hist`): each ray marched through the layer (20 / 32 steps, up to 800 / 1100 blocks of it, never
+  past nearer terrain), lit by 3 / 5 steps toward the light (doubling from 6 blocks): two octaves of Beer's law (the
+  second, at 35% and a quarter of the extinction, stands in for light scattered many times inside, so bases stay soft
+  grey-white), σ 0.03 per block, a powder term (thin sunward edges glow, dense cores darken), a phase of 0.85 + 0.9 × HG(0.6) (white from every side, a modest silver
+  lining toward the sun; stronger forward lobes blew the sky round the sun out into one white mass), the sun's colour (warm at
+  golden hour, the moon's at night) and the sky's light on them (a cool blue with a third of the horizon's colour, by
+  the game's cloud colour but never below half and up to 1.95× toward overcast, so a grey sky stays bright grey; 60% at
+  the base to 100% at the tops; the sun's light on them × 1.05). Distant cloud melts into the
+  fog colour from 1500 blocks and is gone at 5000, so the deck never ends in a line. Accumulated over frames (0.15 /
+  0.12 new), reprojected where the ray entered the layer. Out: rgb their light (premultiplied), a
+  what shows through.
+- The composite lays them over the sky and over anything farther than where the ray enters their layer, before the
+  haze. The bloom prefilter (`lens_prefilter_lit.fsh`) folds them into the sky, so bright edges bloom, and the sky's
+  alpha (what the screen-space shafts and the sun's halo read) carries 60% of their transmittance: rays break through
+  gaps and the halo dims behind a cloud (all of it streaked the whole sky like rain curtains; the shafts also drop to
+  0.35 in the composite). The shafts read the open sky's own brightness, not the clouds' (bright cloud tops seen from
+  above streaked into rays). The light pass darkens the sun on the land under them (to 28% under thick cloud, along
+  the light ray through the layer's middle) and, on Ultra at half strength, in the volumetric beams: moving cloud
+  shadows and beams through gaps.
+- First tour (bad8a542, 480×270, 20 steps, the first cover curve; p50 ms off 7.74, Swift 7.85, Cinematic 10.73, Ultra
+  13.20: the clouds cost no net frame time, since the game's are no longer drawn): too much cover (a stormy deck),
+  dark bellies, a hard line toward the horizon, a noise grid; tuned as above.
+- Tour: `tools/autopilot/lens2-l4.txt` (Swift's clouds against Lens's: noon, golden hour into the sun, cloud shadows
+  over Carillon, above the deck, rain, night; the bench). Final (f53b8bf4, p50 ms): off 6.80, Swift 6.79, Cinematic
+  9.96 (100 fps), Ultra 13.46 (74 fps).
+
+**Holo world plates** (the Living Wilds' creature plates, 2026-10-25): plates write their depth at a creature's
+distance (4-40 blocks), beyond the 1.25-block rule that keeps the panels and the hand out. `HoloWorld.lensPlates`
+hands Lens the plates drawn this frame (up to 6: centre, half-width and half-height vectors, camera-relative); the frame
+texture carries them (texel 20 x the count, texels 24-41, three a plate; it grew to 48×1), and a surface point within
+0.15 block of a plate's plane and inside its rectangle (`onPlate` in lens_frame.glsl) gets no shadow, AO, key or shade
+and no haze. With the K panel open they dim with the rest of the world (the focus dim stays).
 
 ## 23. Creature life (Fresh Animations in the pack, and a life layer on every body of ours; Euan 2026-10-25)
 

@@ -63,6 +63,15 @@ public final class LivingClient {
     public static void init(IEventBus modBus) {
         LivingClientConfig.register();
         JournalSection.register();
+        AlmanacSection.register();
+        // rumours: a "?" on the map where you heard something is happening
+        dev.awaken.core.api.MapMarks.register(p -> {
+            var heard = p.getData(dev.awaken.living.LivingContent.RUMOURS.get()).heard();
+            if (heard.isEmpty()) return java.util.List.of();
+            java.util.List<dev.awaken.core.api.MapMarks.Mark> out = new java.util.ArrayList<>(heard.size());
+            for (var h : heard) out.add(new dev.awaken.core.api.MapMarks.Mark(new net.minecraft.core.BlockPos(h.x(), 64, h.z()), 0xE7C27A, "? " + h.title(), false));
+            return out;
+        });
         modBus.addListener(RegisterGuiLayersEvent.class, LivingHud::register);
         modBus.addListener(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers.class,
                 e -> e.registerEntityRenderer(dev.awaken.living.LivingContent.WAYFARER.get(), WayfarerRenderer::new));
@@ -74,10 +83,12 @@ public final class LivingClient {
             e.register(LivingNet.Shown.TYPE, (m, ctx) -> shown = m.shown());
             e.register(LivingNet.Journal.TYPE, (m, ctx) -> JournalSection.entries = List.copyOf(m.entries()));
             e.register(LivingNet.Tells.TYPE, (m, ctx) -> TELLS = List.copyOf(m.at()));
+            e.register(LivingNet.Happenings.TYPE, (m, ctx) -> PulseFx.onTells(m));
         });
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
         bus.addListener(SubmitCustomGeometryEvent.class, LivingFx::submit);
+        bus.addListener(SubmitCustomGeometryEvent.class, PulseFx::submit);
         bus.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, LivingPlates::extract);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> reset());
     }
@@ -87,6 +98,7 @@ public final class LivingClient {
         CANDIDATES.clear();
         PILLARS.clear();
         TELLS = List.of();
+        PulseFx.reset();
         JournalSection.entries = List.of();
         FIGHT.clear();
         LOOK.clear();

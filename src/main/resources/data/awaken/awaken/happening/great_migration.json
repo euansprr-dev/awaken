@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "title": "The Great Migration",
+  "family": "creature",
+  "behaviour": "migration",
+  "when": {
+    "time": [
+      "dawn",
+      "day"
+    ]
+  },
+  "groups": [
+    "greenwild",
+    "frostwild",
+    "sunscorch",
+    "crag",
+    "blossom"
+  ],
+  "duration_s": 300,
+  "weight": 3.0,
+  "witness_radius": 56,
+  "tell": "haze",
+  "tell_radius": 22,
+  "rumours": [
+    "A whole herd on the move {dir} of here. You can see the dust from the ridge.",
+    "Something big crossing the valley {dir}. The ground hums with it, they say.",
+    "Herd's moving {dir}. And where a herd goes, the hunters follow."
+  ]
+}

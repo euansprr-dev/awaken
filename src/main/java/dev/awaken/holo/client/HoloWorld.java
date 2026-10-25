@@ -50,6 +50,11 @@ public final class HoloWorld {
     private static final HoloRender.Draw[] SLOTS = new HoloRender.Draw[MAX];
     private static final double[] AT = new double[MAX * 3];
     private static int count;
+    // the plates drawn this frame, for Lens (which keeps its light, AO and haze off them): per plate the camera-relative
+    // centre, then half its width and half its height as vectors (9 floats)
+    private static final float[] DRAWN = new float[MAX * 9];
+    private static final org.joml.Vector3f AXIS = new org.joml.Vector3f();
+    private static int drawn;
 
     static {
         for (int i = 0; i < MAX; i++) {
@@ -98,6 +103,7 @@ public final class HoloWorld {
     static void submit(SubmitCustomGeometryEvent e) {
         int n = count;
         count = 0;
+        drawn = 0;
         if (n == 0 || !HoloPipelines.ok()) return;
         var cam = e.getLevelRenderState().cameraRenderState;
         Vec3 c = cam.pos;
@@ -112,7 +118,31 @@ public final class HoloWorld {
             p.pose.identity().translate(dx, dy, dz).rotate(q).scale(unit, -unit, unit).translate(-p.w / 2f, -p.h, 0);
             p.drawn = true;
             HoloRender.submitPlate(e.getSubmitNodeCollector(), d);
+            // centre = the bottom centre plus half the height up the plate; its half-axes turned by the camera
+            int o = drawn++ * 9;
+            q.transform(AXIS.set(0f, unit * p.h / 2f, 0f));
+            DRAWN[o] = dx + AXIS.x;
+            DRAWN[o + 1] = dy + AXIS.y;
+            DRAWN[o + 2] = dz + AXIS.z;
+            DRAWN[o + 6] = AXIS.x;
+            DRAWN[o + 7] = AXIS.y;
+            DRAWN[o + 8] = AXIS.z;
+            q.transform(AXIS.set(unit * p.w / 2f, 0f, 0f));
+            DRAWN[o + 3] = AXIS.x;
+            DRAWN[o + 4] = AXIS.y;
+            DRAWN[o + 5] = AXIS.z;
         }
+    }
+
+    /**
+     * The plates drawn this frame, for Lens (SPEC §22, Holo world plates): copies up to {@link #MAX} of them into
+     * {@code out} (9 floats each: the camera-relative centre, half the width as a vector, half the height as a vector)
+     * and returns how many. Lens keeps its light, ambient occlusion and haze off those pixels, as it does for panels.
+     */
+    public static int lensPlates(float[] out) {
+        int n = Math.min(drawn, out.length / 9);
+        System.arraycopy(DRAWN, 0, out, 0, n * 9);
+        return n;
     }
 
     /** Plates queued so far this frame (tests). */

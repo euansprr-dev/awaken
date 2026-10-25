@@ -57,6 +57,10 @@ neoForge {
             gameDirectory = project.file(project.findProperty('gameDir') ?: 'run')
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            // the pack at 4K on a 16 GB Mac hitched with the default heap (a quarter of RAM, 4 GB at 78% and ~400 MB/s of
+            // garbage): give it 8 GB by default, -Pxmx=... to change
+            jvmArgument "-Xmx${project.findProperty('xmx') ?: '8G'}"
+            jvmArgument '-Xms2G'
         }
 
         // Development only: plays a script (run-autopilot/script.txt) in its own game folder and takes screenshots.

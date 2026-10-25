@@ -63,6 +63,8 @@ public final class RunnerRules {
     public static final double SHIMMY = 0.08;
     /** Up to a ledge this much higher; sideways this far; back off the wall with this push. */
     public static final double LEDGE_UP = 2.5, LEDGE_SIDE = 3.0, LEDGE_BACK_OUT = 0.5, LEDGE_BACK_UP = 0.42;
+    /** A climb out may land this much over the lip (vanilla's step: a stair eave's back half, a roof's next slab). */
+    public static final double CLIMB_STEP = 0.6;
     // ---- jump help --------------------------------------------------------------------------------------------------
     public static final int COYOTE = 3, BUFFER = 4;
     public static final double SNAP = 0.3;
@@ -357,22 +359,26 @@ public final class RunnerRules {
     }
 
     /**
-     * Where the feet go when climbing out over an edge, or null: a standing body fits just past the face on top of the
-     * edge, and the way up in front of the face is clear to standing height.
+     * Where the feet go when climbing out over an edge, or null: something to stand on just past the face (the edge's
+     * own top, or a walkable step up to {@link #CLIMB_STEP} over it: a stair eave's back half, a roof's next slab),
+     * a standing body fits there, and the way up in front of the face and over the lip is clear to standing height.
      */
     public static double @Nullable [] climbOut(BlockGetter level, CollisionContext ctx, BlockPos.MutableBlockPos m, Edge e) {
         probes++;
         double sc = e.plane() + e.sign() * (W + 0.08), t = e.along();
         double hc = e.axis() == 0 ? e.hx() : e.hz();
-        if (blockedAxis(level, ctx, m, e.axis(), sc - W + 1e-3, sc + W - 1e-3, e.top() + 1e-3, e.top() + H, t - W + 1e-3, t + W - 1e-3)) return null;
-        // the way up: in front of the face from the hold to standing height over the lip
-        if (blockedAxis(level, ctx, m, e.axis(), hc - W + 1e-3, hc + W - 1e-3, e.hy() + 1e-3, e.top() + H, t - W + 1e-3, t + W - 1e-3)) return null;
-        // something to stand on there (the edge's own top, not a drop behind a thin lip)
+        // what the feet land on: not a drop behind a thin lip, not a fence top
         double[] top = SCRATCH.get();
-        if (e.axis() == 0) BodyRules.surface(level, ctx, m, sc - W + 0.02, t - W + 0.02, sc + W - 0.02, t + W - 0.02, e.top() - 0.5, e.top() + 0.01, top);
-        else BodyRules.surface(level, ctx, m, t - W + 0.02, sc - W + 0.02, t + W - 0.02, sc + W - 0.02, e.top() - 0.5, e.top() + 0.01, top);
-        if (Double.isNaN(top[0]) || Math.abs(top[0] - e.top()) > 0.05) return null;
-        return e.axis() == 0 ? new double[]{sc, e.top(), t} : new double[]{t, e.top(), sc};
+        if (e.axis() == 0) BodyRules.surface(level, ctx, m, sc - W + 0.02, t - W + 0.02, sc + W - 0.02, t + W - 0.02, e.top() - 0.5, e.top() + CLIMB_STEP, top);
+        else BodyRules.surface(level, ctx, m, t - W + 0.02, sc - W + 0.02, t + W - 0.02, sc + W - 0.02, e.top() - 0.5, e.top() + CLIMB_STEP, top);
+        if (Double.isNaN(top[0]) || top[1] != 0 || top[0] < e.top() - 0.05) return null;
+        double sy = top[0];
+        // the standing body there and the way over the lip to it, from the hold's column on
+        double o0 = Math.min(hc, sc) - W + 1e-3, o1 = Math.max(hc, sc) + W - 1e-3;
+        if (blockedAxis(level, ctx, m, e.axis(), o0, o1, sy + 1e-3, sy + H, t - W + 1e-3, t + W - 1e-3)) return null;
+        // the way up: in front of the face from the hold to standing height over the lip
+        if (blockedAxis(level, ctx, m, e.axis(), hc - W + 1e-3, hc + W - 1e-3, e.hy() + 1e-3, sy + H, t - W + 1e-3, t + W - 1e-3)) return null;
+        return e.axis() == 0 ? new double[]{sc, sy, t} : new double[]{t, sy, sc};
     }
 
     /**

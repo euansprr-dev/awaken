@@ -19,7 +19,9 @@ final class Look {
             // and its atmosphere: the sunlit mist and how high it reaches, lights glowing in fog, the sky's scattering
             MIST = 33, MIST_HEIGHT = 34, FOG_GLOW = 35, SKY_GLOW = 36,
             // and water and magic: reflections on water, heat shimmer, frost at the frame's edge, emissive glow
-            WATER = 37, HEAT = 38, FROST = 39, GLOW = 40, SIZE = 41;
+            WATER = 37, HEAT = 38, FROST = 39, GLOW = 40,
+            // and the sky: how much of it Lens's own volumetric clouds cover (0: none, vanilla's stay)
+            CLOUDS = 41, SIZE = 42;
 
     /** The neutral look: the frame exactly as the game drew it, apart from the dither. */
     static float[] neutral() {
@@ -68,6 +70,7 @@ final class Look {
         num(o, "heat", v, HEAT);
         num(o, "frost", v, FROST);
         num(o, "glow", v, GLOW);
+        num(o, "clouds", v, CLOUDS);
         return v;
     }
 

@@ -58,6 +58,8 @@ public final class Regions {
      */
     public static int creatureLevel(ServerLevel level, BlockPos pos, Role role) {
         int lv = levelAt(level, pos.getX(), pos.getZ()) + role.offset;
+        // the Deep Tide (new moon): the night's hunters, elites and camps run two levels harder
+        if (role == Role.HUNTER || role == Role.ELITE || role == Role.CAMP) lv += dev.awaken.living.pulse.Pulse.tideExtra(level);
         if (pos.getY() < 0 && level.getBiome(pos).is(Biomes.DEEP_DARK)) lv += DEEP_DARK;
         int calm = hearthCalm(level, pos);
         if (calm > 0) lv = Math.min(lv, calm + Math.max(0, role.offset));

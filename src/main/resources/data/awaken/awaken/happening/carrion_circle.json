@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "title": "Carrion Circle",
+  "family": "creature",
+  "behaviour": "carrion_circle",
+  "duration_s": 360,
+  "weight": 2.0,
+  "witness_radius": 24,
+  "tell": "circle",
+  "tell_radius": 10,
+  "rumours": [
+    "Kites circling {dir} since morning. Something died out there. Something big, or something carrying.",
+    "Follow the kites {dir}. Whatever they've found, it won't be needing its pack."
+  ]
+}

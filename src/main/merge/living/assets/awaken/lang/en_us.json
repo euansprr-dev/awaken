@@ -19,6 +19,19 @@
   "item.awaken.herdcaller_horn.spent": "The horn is spent until tomorrow.",
   "item.awaken.pells_spurs": "Pell's Spurs",
   "item.awaken.pells_spurs.desc": "Your mount sprints 15% faster and its whistle carries 80 blocks further.",
+  "item.awaken.couriers_knot": "Courier's Knot",
+  "item.awaken.couriers_knot.desc": "Your tactical sprint recharges 25% faster (most while your rank is low).",
+  "item.awaken.orens_mark": "Oren's Mark",
+  "item.awaken.orens_mark.desc": "A fresh blade you temper starts one level up (weapons only, within the Forge's cap).",
   "item.awaken.pells_letter": "Pell's Letter",
-  "item.awaken.pells_letter.desc": "Sealed. For Quartermaster Hale at the High Gate."
+  "item.awaken.pells_letter.desc": "Sealed. For Quartermaster Hale at the High Gate.",
+  "happening.awaken.beast_duel": "Beast Duel",
+  "happening.awaken.caravan": "Caravan",
+  "happening.awaken.carrion_circle": "Carrion Circle",
+  "happening.awaken.deep_tide": "The Deep Tide",
+  "happening.awaken.great_migration": "The Great Migration",
+  "happening.awaken.murmuration": "Murmuration",
+  "happening.awaken.rolling_storm": "The Rolling Storm",
+  "happening.awaken.stampede": "Stampede",
+  "happening.awaken.wild_hunt": "The Wild Hunt"
 }

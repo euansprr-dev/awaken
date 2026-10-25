@@ -20,11 +20,11 @@ import java.nio.ByteBuffer;
  * Lens 2's per-frame values that need full float precision (SPEC §22): the frame's exact view-projection (the
  * game's projection with its view bob, hurt tilt and nausea, times the view rotation; camera-relative), its inverse,
  * the previous frame's (for temporal accumulation), the camera within the heightfield's ring and the light's direction.
- * A 24×1 RGBA32F texture ({@code awaken:lens_frame}), written once a frame just before the post effects run; layout in
+ * A 48×1 RGBA32F texture ({@code awaken:lens_frame}), written once a frame just before the post effects run; layout in
  * {@code shaders/include/lens_frame.glsl}. Nothing is allocated per frame.
  */
 final class LensFrame {
-    static final int WIDTH = 24;
+    static final int WIDTH = 48;
     final Texture texture = new Texture();
     private final ByteBuffer data = MemoryUtil.memAlloc(WIDTH * 16);
     private final Matrix4f proj = new Matrix4f(), bob = new Matrix4f(), viewProj = new Matrix4f(), inverse = new Matrix4f(),
@@ -35,6 +35,21 @@ final class LensFrame {
     private final long start = System.nanoTime();
     private int frame;
     private boolean hasPrev;
+
+    private float cloudBase, cloudCover;
+    // the Holo world plates drawn this frame (HoloWorld.lensPlates): Lens keeps its light, AO and haze off them
+    private final float[] plates = new float[dev.awaken.holo.client.HoloWorld.MAX * 9];
+    private int plateCount;
+    private double cloudDrift;
+    private int cloudColour;
+
+    /** This frame's clouds (L4): the layer's base height (0: Lens draws none), cover 0..1, wind drift in blocks, colour. */
+    void clouds(float base, float cover, double drift, int colour) {
+        cloudBase = base;
+        cloudCover = cover;
+        cloudDrift = drift;
+        cloudColour = colour;
+    }
 
     /** Forget the previous frame (a new chain, a new place): the next frame starts its history fresh. */
     void reset() {
@@ -83,7 +98,24 @@ final class LensFrame {
         put(16, zeroToOne ? 1f : 0f, moon ? 1f : 0f, rain, 0.05f);
         // 17: x seconds (wrapping every hour) for what moves on its own: ripples, heat shimmer, frost
         put(17, (float) ((now - start) / 1.0e9 % 3600.0), 0f, 0f, 0f);
-        for (int i = 18; i < WIDTH; i++) put(i, 0f, 0f, 0f, 0f);
+        // 18-19: the clouds: base height (0 none), cover, the camera's x and z plus the wind's drift (modulo the noise's
+        // 30720-block repeat); their colour (the game's, by time and weather) and alpha
+        double period = 30720.0;
+        put(18, cloudBase, cloudCover, (float) floorMod(x + cloudDrift, period), (float) floorMod(z, period));
+        put(19, ((cloudColour >> 16) & 255) / 255f, ((cloudColour >> 8) & 255) / 255f, (cloudColour & 255) / 255f, ((cloudColour >>> 24) & 255) / 255f);
+        // 20: x the Holo world plates drawn this frame (up to 6); 24-41: each plate's camera-relative centre, half its
+        // width and half its height as vectors (3 texels a plate)
+        plateCount = dev.awaken.holo.client.HoloWorld.lensPlates(plates);
+        put(20, plateCount, 0f, 0f, 0f);
+        for (int i = 21; i < 24; i++) put(i, 0f, 0f, 0f, 0f);
+        for (int k = 0; k < dev.awaken.holo.client.HoloWorld.MAX; k++) {
+            int o = k * 9, t = 24 + k * 3;
+            boolean on = k < plateCount;
+            put(t, on ? plates[o] : 0f, on ? plates[o + 1] : 0f, on ? plates[o + 2] : 0f, 0f);
+            put(t + 1, on ? plates[o + 3] : 0f, on ? plates[o + 4] : 0f, on ? plates[o + 5] : 0f, 0f);
+            put(t + 2, on ? plates[o + 6] : 0f, on ? plates[o + 7] : 0f, on ? plates[o + 8] : 0f, 0f);
+        }
+        for (int i = 42; i < WIDTH; i++) put(i, 0f, 0f, 0f, 0f);
         RenderSystem.getDevice().createCommandEncoder().writeToTexture(texture.getTexture(), data, 0, 0, 0, 0, WIDTH, 1);
 
         prevViewProj.set(viewProj);
@@ -93,6 +125,10 @@ final class LensFrame {
         prevNs = now;
         hasPrev = true;
         frame = (frame + 1) & 0xFFFF;
+    }
+
+    private static double floorMod(double v, double m) {
+        return v - Math.floor(v / m) * m;
     }
 
     void close() {

@@ -49,6 +49,10 @@ public final class LivingModule {
         dev.awaken.living.wayfarer.Scenes.init();
         modBus.addListener(LivingNet::register);
         XpBudget.register(HUNT, 0.10);
+        XpBudget.register("pulse", 0.15);
+        XpBudget.register("camp", 0.10);
+        dev.awaken.core.PlayDays.onNewPlayDay(dev.awaken.living.camp.Camps::onNewDay);
+        Progression.addPerkSource(dev.awaken.living.pulse.Pulse::lucidity);
         LivingHooks.install(new LivingHooks.Bridge() {
             @Override
             public boolean paysKills() {
@@ -58,6 +62,11 @@ public final class LivingModule {
             @Override
             public boolean levelMoment(ServerPlayer player, int level, int gained) {
                 return LevelMoments.offer(player, level, gained);
+            }
+
+            @Override
+            public boolean ledgered(net.minecraft.server.level.ServerLevel level, String speciesId) {
+                return dev.awaken.living.population.Ledger.ledgered(speciesId) && dev.awaken.living.population.Ledger.herdsOn(level);
             }
         });
         Progression.onXpGranted(XpStream::granted);
@@ -72,6 +81,14 @@ public final class LivingModule {
         bus.addListener(LivingDeathEvent.class, dev.awaken.living.quest.QuestEngine::onDeath);
         bus.addListener(dev.awaken.living.quest.QuestBook::addReload);
         bus.addListener(dev.awaken.living.bounty.Bounties::addReload);
+        bus.addListener(dev.awaken.living.pulse.HappeningBook::addReload);
+        bus.addListener(LivingDropsEvent.class, dev.awaken.living.pulse.Pulse::onDrops);
+        bus.addListener(LivingDeathEvent.class, e -> dev.awaken.living.population.Ledger.onDeath(e.getEntity()));
+        bus.addListener(LivingDeathEvent.class, e -> dev.awaken.living.camp.Camps.onDeath(e.getEntity()));
+        bus.addListener(EntityJoinLevelEvent.class, e -> {
+            if (!e.getLevel().isClientSide() && e.getLevel() instanceof net.minecraft.server.level.ServerLevel sl && sl.dimension() == net.minecraft.world.level.Level.OVERWORLD)
+                dev.awaken.living.population.Ledger.onJoin(e.getEntity(), sl.getServer());
+        });
         bus.addListener(LivingDeathEvent.class, dev.awaken.living.bounty.Bounties::onDeath);
         bus.addListener(EventPriority.HIGH, LivingDropsEvent.class, dev.awaken.living.quest.Relics::onDrops);
         bus.addListener(PlayerEvent.PlayerRespawnEvent.class, dev.awaken.living.quest.Relics::onRespawn);
@@ -84,7 +101,12 @@ public final class LivingModule {
             if (e.getServer().getTickCount() % 20 == 0) for (ServerPlayer p : e.getServer().getPlayerList().getPlayers()) dev.awaken.living.quest.QuestEngine.poll(p);
             XpStream.tick(e.getServer());
             shownTick(e.getServer());
-            if (shown(e.getServer())) dev.awaken.living.wayfarer.Scenes.tick(e.getServer());
+            if (shown(e.getServer())) {
+                dev.awaken.living.wayfarer.Scenes.tick(e.getServer());
+                dev.awaken.living.pulse.Pulse.tick(e.getServer());
+                dev.awaken.living.population.Ledger.tick(e.getServer());
+                dev.awaken.living.camp.Camps.tick(e.getServer());
+            }
             dev.awaken.living.quest.Relics.wardTick(e.getServer());
         });
         bus.addListener(PlayerEvent.PlayerLoggedInEvent.class, e -> {
@@ -98,6 +120,12 @@ public final class LivingModule {
             RegionTracker.forget(id);
             XpStream.forget(id);
             Hits.forget(id);
+        });
+        bus.addListener(net.neoforged.neoforge.event.server.ServerStartedEvent.class, e -> {
+            // the GameTest server keeps the old natural herds for the fauna tests (living_ledger checks the rule itself)
+            if (e.getServer() instanceof net.minecraft.gametest.framework.GameTestServer) {
+                e.getServer().overworld().getGameRules().set(LivingContent.LIVING_HERDS.get(), false, e.getServer());
+            }
         });
         bus.addListener(ServerStoppedEvent.class, e -> {
             RegionService.reset();

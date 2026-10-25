@@ -42,6 +42,8 @@ public final class FaultLinesFeature implements Feature {
 
     @Override
     public boolean place(WorldGenLevel level, ChunkGenerator generator, RandomSource random, BlockPos origin) {
+        // never inside Carillon: the city is built over this ground, and nothing here would clear these
+        if (dev.awaken.terrain.api.CityBasin.reservedWithin(origin.getX(), origin.getZ(), 32)) return false;
         long t0 = System.nanoTime();
         var rs = level.getLevel().getChunkSource().randomState();
         Noise fault = FaultNoise.fault(rs), trench = FaultNoise.trench(rs);
