@@ -172,3 +172,6 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
 - 2026-10-25: Euan added five extras to Phase B (SPEC §16.0 decision 27): the kit to ~60 (furniture, wares, shop signs,
   random texture variants: variants in B1, the rest in B3), movement for free (B3), animals (B3), interiors you can
   glimpse plus four full interiors (B4), city light (B6/B7). Not added: the soundscape, citizens who interact, weather.
+- 2026-10-25: Euan added the city soundscape (SPEC §16.0 decision 28) to B3's builder: vanilla layered first, CC0 only for
+  what vanilla lacks and only after his yes per file, synthesis for bells and the Choir; a listening page is the gate
+  before B3 merges.

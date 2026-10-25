@@ -1388,6 +1388,17 @@ https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
       the bakery and the Association.
     - City light (B6/B7): Carillon's Lens looks, warm lamp bloom at night and morning haze over the river
       (assets/awaken/lens/looks_carillon.json).
+28. The city soundscape (Euan, 2026-10-25), built by B3's builder (no extra builder):
+    - Sources, best first: vanilla sound events referenced and layered (pitch, volume, combinations; never copied);
+      CC0 recordings only for what vanilla lacks (wordless crowd murmur, gulls, water at quays, carts on cobbles,
+      distant hammering, a tavern's hum), each listed with its source and licence and downloaded only after Euan's yes;
+      synthesis (tools/art/specs audio pipeline) only for bells, the Choir's hum, gates and UI.
+    - The mix: a quiet bed per district plus positional one-shots; many variants with random pitch, volume and timing
+      (nothing loops audibly); the crowd bed follows the citizen ledger's count in that district at that hour; dawn,
+      noon, night and rain change it; every sound comes from a place (Sound Physics in the pack); it plugs into
+      core/audio's layer system so it never fights the music.
+    - The gate is Euan's ears: a listening page (each district at morning, noon and night, before/after) published for
+      his approval before B3 merges.
 
 ### 16.1 Modules (new packages; same module rules as §1)
 | Module | Owns |
