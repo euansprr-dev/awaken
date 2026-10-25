@@ -78,11 +78,7 @@ DAY_SHOTS = {
 }
 # CitySound's clocks: anvils 900-10800, stalls 1000-11500, carts before 12600; at 06:00 (tod 0) the forges and stalls
 # are still shut, and the dawn chorus (before tod 1500) sings three times as often
-MORNING_SHUT = {"city.anvil", "city.bellows", "city.stall", "city.crier"}
-# the criers are recordings (tools/art/specs/audio_city_cc0.py): in the Market's scenes once they're in
-CRIERS = os.path.exists(os.path.join(SOUNDS, "city/crier1.ogg"))
-if CRIERS:
-    DAY_SHOTS["market"] += [("city.crier", 12, 70, 0.5, (5.0, 14.0), 0.1), ("city.crier", 20, -120, 0.5, (8.0, 18.0), 0.1)]
+MORNING_SHUT = {"city.anvil", "city.bellows", "city.stall"}
 LOOPS = {
     "market": [("city.fountain", 9, -75, 0.8)],
     "quay": [("city.lap", 6, 90, 0.8), ("city.lap", 15, -90, 0.8)],
@@ -275,7 +271,6 @@ EVENT_LINES = {
     "city.gull.call": "gulls over the river and on the nets",
     "city.cart.roll": "a cart's wheels on the stones (vanilla's hooves go with it in game)",
     "city.cart.bells": "a carthorse's harness bells when it tosses its head",
-    "city.crier": "a stallholder calling, now and then, through the busy middle of the day",
     "city.handbell": "the Watch's handbell on its rounds at night",
     "city.carillon.dawn": "the Choir's carillon at dawn, from the spire",
     "city.carillon.noon": "the Choir's carillon at noon",
@@ -313,8 +308,6 @@ def build(audio=True):
         stems.append(dict(id="stem." + name, name=name, line=line, file=f))
     evs = []
     for eid, line in EVENT_LINES.items():
-        if eid == "city.crier" and not CRIERS:
-            continue
         f = write(f"{eid.replace('.', '_')}.mp3", lambda eid=eid: alone(eid), 96)
         evs.append(dict(id=eid, name=eid.replace("city.", ""), line=line, file=f))
     page = render(cards, stems, evs)
@@ -382,7 +375,7 @@ EXTRA_STYLE = """
 .notes td a { color:var(--accent); overflow-wrap:anywhere; }
 .notes li { margin:3px 0; }
 """
-SECTIONS = {"RECOMMEND": "recommendations.html", "CC0": "cc0.html"}
+SECTIONS = {"RECOMMEND": "recommendations.html", "NATURE": "nature.html"}
 
 PAGE = """<!doctype html>
 <html lang="en">
@@ -405,15 +398,15 @@ PAGE = """<!doctype html>
   handbell and the carillon at their own places and hours. Rendered here offline from the shipped files, so three
   things differ from the game: no Sound Physics echo down the lanes, plain stereo panning, and the animals' vanilla
   voices (cats, dogs, hooves) are left out because they can't be copied into the public repo. Headphones help.</p>
-  <p>Everything but the animals' voices is synthesised. The weak spot is the crowd: <a href="#cc0">the CC0 shortlist</a> below lists real
-  recordings that could replace it, each with its source and licence. Nothing is downloaded until you say yes.</p>
+  <p>The city's own sounds are synthesised; nature comes from AmbientSounds when you have it (<a href="#nature">below</a>),
+  and those recordings are heard in the game, not here. The weak spot is the crowd.</p>
   <p>Your choices stay in this browser. When you're done, <b>Export</b> and send me the file (or the text).</p>
 </div>
 <div class="bar"><span class="progress" id="progress"></span>
   <button id="export">Export choices (.json)</button><button id="text">Show as text</button></div>
 <section class="card notes" id="recommend">%RECOMMEND%</section>
 %CARDS%
-<section class="card notes" id="cc0">%CC0%</section>
+<section class="card notes" id="nature">%NATURE%</section>
 <textarea id="out" hidden readonly></textarea>
 </main>
 <script>

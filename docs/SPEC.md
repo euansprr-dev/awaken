@@ -1475,11 +1475,15 @@ https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
       At dawn, noon and dusk the Choir plays its tune first and strikes the hour 300 ticks later.
     - Sources: synthesised (tools/art/specs/audio_city_life.py) except the animals' voices (vanilla's cat, wolf and
       horse events, referenced by id). This departs from decision 28's "vanilla first": vanilla has no city sounds
-      beyond water, fire and animals. Euan approved all fifteen CC0 recordings on the page (25 Oct 2026: "Go ahead with
-      all sounds"): they replace the crowd, tavern and forge stems, the fountain, quay and tavern loops, the gulls, carts,
-      anvils and pigeons, and add market criers (`city.crier`, from stalls 1500-10500, every 5-14 s within 30 blocks;
-      registered only once its recordings are in the jar). tools/art/specs/audio_city_cc0.py imports them, pins each
-      file's sha256 and writes the credits beside the sounds; the synthesised versions stay until it has run.
+      beyond water, fire and animals. Nature is AmbientSounds' (Euan, 25 Oct 2026, instead of downloading CC0
+      recordings ourselves; the pack's sound profile, 6.3.11 with CreativeCore, client-only). Its own engine plays real
+      birds, crickets and owls where there's greenery, wind 15 blocks above the ground and rain. The client tells the
+      server at login whether it runs the mod (`CitizensNet.Ears`), and such a player hears `awaken:city/as/<district>`
+      and `awaken:city/as/night`: the same beds without our synthetic birds and crickets (generated beside them). The city
+      adds what its engine never does in a paved city, with its recordings by id (`citizens.client.CityNature`):
+      gulls within 64 blocks of the river by day (ours stand down), a gull chorus within 24 now and then, doves over
+      Bellwatch, the Terrace, the Garden Ward and the Wallring by day, owls within 48 of the wall or a bell tower at
+      night. Its files are stereo, so these play unplaced, at a volume falling with distance. Nothing of it is copied.
 
 ### 16.1 Modules (new packages; same module rules as §1)
 | Module | Owns |

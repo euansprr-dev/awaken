@@ -6,8 +6,10 @@
 # Watch's drawn lanterns, and the lantern A/B: frame times with drawn light (glow) against the old moving light blocks
 # (blocks) on the Watch's round (show watch picks a watchman each time), then the light-block writes each made. The
 # log carries "[citizens] animals near you" every 30 s and the ambience slot's "status: mixing" lines (the beds play).
+# The sound profile brings AmbientSounds (and Sound Physics): the tour is muted, but the log shows the ambience slot on
+# awaken:city/as/* (the beds without our birds and crickets) once the client has told the server it runs the mod.
 # Run (it measures frame times: the tour slot, alone on the machine):
-#   PACK=perf,world,horizon TECTONIC=awakened DH=swift RD=20 SLOT_WHO=M4-B3b \
+#   PACK=perf,world,horizon,sound TECTONIC=awakened DH=swift RD=20 SLOT_WHO=M4-B3b \
 #   /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/carillon-m4b3b.txt 900
 world carillonM4b3a creative 20261024
 waitworld

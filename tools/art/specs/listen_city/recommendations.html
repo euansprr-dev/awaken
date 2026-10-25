@@ -10,19 +10,18 @@ dark, with every other sound at its own place and hour. Each bed sits 6 to 12 dB
 so the places carry the detail and the bed only holds the gaps. Measured mixes: about -35 dBFS when a district is
 quiet, up to -28 when the Market is packed.</li>
 <li><b>The crowd is the weak link.</b> Its murmur is made of synthetic formant voices. Far off it reads as people; close
-up it may read as an imitation. Your first yes or no: replace <code>murmur_far</code>, <code>murmur_near</code> and the
-tavern's hum with the CC0 recordings below (gecop's distant chatter, nicoproson's village square, denkmal's tavern).</li>
-<li><b>Add the criers</b> once there are recordings: short market calls cut from the CC0 vendor recordings, played at
-stalls by the goods they sell (B3a's <code>stalls[].good</code>), a few a minute at noon. Synthesis can't make a call
-that sounds human.</li>
+up it may read as an imitation. AmbientSounds has no crowd, so this stays ours: mark the Market "remake" if it doesn't
+hold up and say what's wrong.</li>
+<li><b>Nature is now recorded</b> where you have AmbientSounds (below): birds, crickets, owls, gulls, doves, wind and
+rain. Our synthetic birds and crickets step aside so nothing doubles.</li>
 <li><b>If the Market at noon sounds thin,</b> say "louder" in its note. The packed level can rise about 3 dB and still
 pass the beds' test.</li>
-<li><b>Night:</b> the crickets' chirps fall on a regular pattern in the spectrogram. Over the 48 s loop that may be heard
+<li><b>Night, without AmbientSounds:</b> our crickets' chirps fall on a regular pattern in the spectrogram. Over the 48 s loop that may be heard
 as a loop. If you hear it, mark the night "remake" and I'll scatter them.</li>
 <li><b>06:00 is quiet on purpose.</b> The forges start at 06:45 and the stalls at 07:00, so dawn is the bed, the birds and
 the carillon. Mark it "remake" if it feels empty rather than early.</li>
-<li><b>Rain is only half done.</b> In rain the bed drops a level (vanilla's rain plays on top), but no awnings drip and
-no gutters run yet. A rain-on-roofs layer is the next thing to add if you want rain to change the city.</li>
+<li><b>Rain</b>: the bed drops a level, and AmbientSounds plays rain outdoors and mutes the rest under it. No awnings
+drip or gutters run yet; that's the next thing to add if you want rain to change the city itself.</li>
 </ol>
 <h3>Fixed while making this page</h3>
 <ul>
@@ -32,7 +31,6 @@ comes from the spire, fading over 320 blocks. At the Wallring it is faint.</li>
 other (noon is twelve strokes over 28 s). Now the tune plays first and the hour is struck after it, as a clock tower does.</li>
 </ul>
 <h3>Not like the plan</h3>
-<p>Decision 28 put vanilla's sounds first. The game has almost nothing for a city, so this build synthesises
-everything except the animals' voices: cats, dogs and hooves are vanilla's own, played by id (not heard on this page).
-Bells, the carillon and the Choir stay synthetic whatever you choose. If you'd rather hear vanilla's water and fire
-under the fountains and forges, say so on those rows.</p>
+<p>Decision 28 put vanilla's sounds first. The game has almost nothing for a city, so this build synthesises the
+city's own sounds and borrows the rest by id: cats, dogs and hooves are vanilla's, and nature is AmbientSounds'. Neither
+is heard on this page. If you'd rather hear vanilla's water and fire under the fountains and forges, say so on those rows.</p>

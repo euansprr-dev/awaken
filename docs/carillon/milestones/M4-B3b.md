@@ -113,10 +113,26 @@ The tour's lantern A/B (`perf lanterns_glow` and `lanterns_blocks`) gives the be
 seven districts at 06:00, noon and 22:00, after against before (before = the Choir striking the hour, otherwise
 silence), each mixed offline the way the game would: the bed at the roster's level, places and one-shots at their hours,
 rates and volumes with Minecraft's linear falloff. Every bed stem and place is also there alone. Keep / remake / cut with
-a JSON export, my recommendations, and a CC0 shortlist (13 picks, licences read on each Freesound page; the longer list
-is below). Nothing was downloaded.
+a JSON export, my recommendations, and what AmbientSounds adds (its recordings are heard in the game, not on the page).
 
-CC0 candidates beyond the page's picks (all "Creative Commons 0" on their pages, 25 Oct 2026):
+**Nature comes from AmbientSounds** (Euan's call, 25 Oct 2026). Downloading CC0 recordings ourselves would have meant a
+Freesound login or an API key with an approval wait. AmbientSounds is in the pack's sound profile now (6.3.11, CreativeCore
+2.14.24, both client-only, added to the lock without re-resolving anything else).
+- **Its engine** plays real birds, crickets and owls wherever there's greenery (the Garden Ward, the Terrace's gardens),
+  wind on high roofs and the wall walk, and rain.
+- **No doubling**: the client says at login whether it runs the mod (`CitizensNet.Ears`), and such a player gets the
+  `as/` beds, the same beds without our synthetic birds and crickets. They're generated beside the beds; the test
+  keeps them from drifting.
+- **What its engine never does in a paved city**, the city does with its recordings by id (`client/CityNature`): gulls
+  over the river (ours stand down), a gull chorus on the quays now and then, doves over the quiet districts by day, owls
+  by the wall and the bell towers at night. Its files are stereo, so these play unplaced, at a volume falling with distance.
+- **Still synthesised**: the crowd, market, taverns, forges, carts, boats, fountains, quay water, bells and carillon.
+  AmbientSounds has none of them.
+
+For the record, the CC0 shortlist researched before that (all "Creative Commons 0" on their pages, 25 Oct 2026; not used).
+The page's picks: gecop 640254, Erbsland-Music 625625, nicoproson 648483, bushtobazaar 522583, ikbenraar 200294, timmydes
+706254, denkmal 539811, vinjatovix 178449, giddykipper 53488, pnwheeler 831723, bruno.auzet 838025 and 640197, BonnyOrbit
+442481, Kinoton 468080, Sandy-Ogilvie 717784. The rest:
 - distant crowd: Orsoo 757829 (a phone recording), leonelmail 427832 (a train station: announcements?)
 - square: SamuelGremaud 544338 (Sault market), YannSauvin 777275 (the Tunis medina), bassimat 861594 (a piazza, 40 s),
   kyles 450590 (an 11-minute mono market walla)
@@ -149,16 +165,11 @@ The structure is right and cheap: no server cost for any of the life, no blocks 
 crowds, sounds that come from places, and a set of bugs fixed that would have been heard on day one (the stereo carillon,
 the hour struck over the tune, sounds the registry didn't know). Against Euan's bar it's unproven. The animals and boats
 have rigs, coats and behaviour at the level of the citizens, but nobody has looked at them in motion. The crowd murmur
-is synthesis doing something synthesis is bad at; the CC0 crowd and criers are what would make the Market at noon feel
-real. My guess: the night (lamp pools, festoons, lanterns on the boats, cats' eyes, taverns through walls) lands first;
-the noon Market needs the recordings.
-
-## The recordings
-Euan approved all fifteen CC0 recordings ("Go ahead with all sounds"). The import is built and tested on stand-ins
-(tools/art/specs/audio_city_cc0.py): they replace the crowd, tavern and forge stems, the fountain, quay and tavern
-loops, the gulls, carts, anvils and pigeons, and add market criers. The files themselves still need downloading:
-Freesound refuses this cloud environment, so see the handoff for the two ways in.
+is synthesis doing something synthesis is bad at, and AmbientSounds has no crowd to lend. With AmbientSounds, the
+gardens, the river and the night are real recordings now. My guess: the night (lamp pools, festoons, boats' lanterns,
+cats' eyes, owls, taverns through walls) lands first; the noon Market is where the synthesis shows.
 
 ## Decisions (SPEC §16.0 decision 30)
 Client-only animals and boats with their reaches and caps; drawn lantern and lamp light; the beds' contexts, levels and
-loudness window; mono places; the carillon before the hour; synthesis with vanilla animal voices, CC0 after Euan's yes.
+loudness window; mono places; the carillon before the hour; synthesis with vanilla's animal voices and AmbientSounds'
+nature (the as/ beds for its players, the city's own zones from its recordings).
