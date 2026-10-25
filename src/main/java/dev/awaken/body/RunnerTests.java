@@ -38,6 +38,7 @@ final class RunnerTests {
         AwakenTests.registerIsolated("runner_probe_cost", 200, RunnerTests::probeCost);
         AwakenTests.register("runner_roof_climb", 20, RunnerTests::roofClimb);
         AwakenTests.registerIsolated("runner_pipe_grip", 120, RunnerTests::pipeGrip);
+        AwakenTests.registerIsolated("runner_pipe_cornice", 120, RunnerTests::pipeCornice);
         // runner_hang_real_tick (hangRealTick below) is kept for W2 but not registered: its harness doesn't yet get its own
         // teleport accepted, so every move after it is ignored (see docs/carillon/spikes/S3-runner.md, Open issue)
     }
@@ -625,6 +626,73 @@ final class RunnerTests {
             for (int t = 1; t <= GripRules.HOP_TICKS; t++) rise += GripRules.hopStep(t);
             h.assertTrue(Math.abs(rise - GripRules.HOP) < 1e-9, "a hop rises " + rise);
             for (int x = -1; x <= 5; x++) for (int y = -1; y <= 6; y++) for (int z = -2; z <= 2; z++)
+                level.setBlockAndUpdate(o.offset(x, y, z), Blocks.AIR.defaultBlockState());
+            BodyTests.done(h, a, b);
+        });
+    }
+
+    /**
+     * The top of a pipe always leads somewhere (Euan, 2026-10-25: "the last block doesn't let me through"; SPEC §17.23):
+     * a drainpipe up a wall under a one-block cornice, a roof behind it. At the pipe's top, the head under the cornice,
+     * the lip over it is a hang from its outer face (out, then up), the server takes it only from a grip, and the hang
+     * climbs out onto the roof. A ceiling with no lip in reach, or open air, is no hang.
+     */
+    static void pipeCornice(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = origin(h);
+        BlockState pipe = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getValue(dev.awaken.Awaken.id("drainpipe")).defaultBlockState()
+                .setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH);
+        BlockState stone = Blocks.STONE.defaultBlockState(), bricks = Blocks.STONE_BRICKS.defaultBlockState();
+        for (int x = -1; x <= 2; x++) for (int z = -4; z <= 4; z++) level.setBlockAndUpdate(o.offset(x, -1, z), stone);
+        for (int x = -1; x <= 2; x++) {
+            for (int y = 0; y <= 3; y++) level.setBlockAndUpdate(o.offset(x, y, 1), stone);
+            // the cornice one out over the wall's face, the roof behind it
+            level.setBlockAndUpdate(o.offset(x, 4, 0), bricks);
+            for (int z = 1; z <= 3; z++) level.setBlockAndUpdate(o.offset(x, 4, z), stone);
+        }
+        for (int y = 0; y <= 3; y++) level.setBlockAndUpdate(o.offset(0, y, 0), pipe);
+        RunnerServer.fromHistory = true;
+        RunnerServer.latencyTicks = 0;
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            var m0 = new BlockPos.MutableBlockPos();
+            CollisionContext ctx = CollisionContext.empty();
+            GripRules.Line l = GripRules.find(level, m0, o.getX() + 0.5, o.getY() + 2, o.getZ() + 0.3, 0F);
+            h.assertTrue(l != null && l.fz() == 1, "the drainpipe is a line: " + l);
+            // at the top: the head under the cornice
+            Vec3 s = new Vec3(l.x(), o.getY() + 4 - BodyRules.HEIGHT, l.z());
+            int axis = 2, sign = 1;
+            RunnerRules.Edge e = GripRules.topLip(level, ctx, m0, s.x, s.y, s.z, axis, sign, 0);
+            h.assertTrue(e != null && Math.abs(e.top() - (o.getY() + 5)) < 1e-6, "the cornice's lip is the way on: " + e);
+            h.assertTrue(Math.abs(e.hz() - (o.getZ() - BodyRules.HALF_WIDTH - RunnerRules.HANG_GAP)) < 0.01 && e.hz() < s.z,
+                    "hung from the cornice's outer face, out from the pipe: " + e);
+            double[] stand = RunnerRules.climbOut(level, ctx, m0, e);
+            h.assertTrue(stand != null && Math.abs(stand[1] - (o.getY() + 5)) < 1e-6, "and the hang climbs out onto the roof: "
+                    + (stand == null ? "none" : stand[1]));
+
+            long now = level.getServer().overworld().getGameTime();
+            ServerPlayer b = BodyTests.player(h, null);
+            b.snapTo(s.x, s.y, s.z, 0F, 0F);
+            h.assertFalse(RunnerServer.startHang(b, BodyServer.motion(b), run(Move.LEDGE_HANG, BodyPayloads.HANG_EAVE, 0F, s, e.hx(), e.hy(), e.hz(), axis, sign), now),
+                    "the lip over a pipe's top is taken only from the pipe");
+            ServerPlayer a = BodyTests.player(h, null);
+            a.snapTo(s.x, s.y, s.z, 0F, 0F);
+            a.setOnGround(false);
+            BodyMotion m = BodyServer.motion(a);
+            h.assertTrue(RunnerServer.grip(a, m, run(Move.GRIP, BodyPayloads.GRIP_CLIMB, 0F, s, l.x(), s.y, l.z(), axis, sign), now), "a grip on the pipe");
+            RunnerServer.onEnd(a, Move.GRIP);
+            h.assertTrue(RunnerServer.startHang(a, m, run(Move.LEDGE_HANG, BodyPayloads.HANG_EAVE, 0F, s, e.hx(), e.hy(), e.hz(), axis, sign), now + 1)
+                    && m.hanging && Math.abs(m.hangTop - e.top()) < 1e-6, "the server takes the hang on the cornice from the pipe's top");
+            Vec3 hold = new Vec3(e.hx(), e.hy(), e.hz());
+            a.snapTo(hold.x, hold.y, hold.z, 0F, 0F);
+            h.assertTrue(RunnerServer.ledgeJump(a, m, run(Move.LEDGE_JUMP, BodyPayloads.JUMP_CLIMB, 0F, hold, stand[0], stand[1], stand[2], axis, sign), now + 12)
+                    && !m.hanging, "and lets it climb out onto the roof");
+
+            // a ceiling running far out with no lip in reach, and open air: no hang (the grip holds, or vanilla climbs)
+            for (int x = -1; x <= 2; x++) for (int z = -4; z <= 0; z++) level.setBlockAndUpdate(o.offset(x, 4, z), stone);
+            h.assertTrue(GripRules.topLip(level, ctx, m0, s.x, s.y, s.z, axis, sign, 0) == null, "no lip under a deep ceiling");
+            for (int x = -1; x <= 2; x++) for (int z = -4; z <= 3; z++) level.setBlockAndUpdate(o.offset(x, 4, z), Blocks.AIR.defaultBlockState());
+            h.assertTrue(GripRules.topLip(level, ctx, m0, s.x, s.y + 0.6, s.z, axis, sign, 0) == null, "no lip over open air");
+            for (int x = -1; x <= 2; x++) for (int y = -1; y <= 4; y++) for (int z = -4; z <= 4; z++)
                 level.setBlockAndUpdate(o.offset(x, y, z), Blocks.AIR.defaultBlockState());
             BodyTests.done(h, a, b);
         });
