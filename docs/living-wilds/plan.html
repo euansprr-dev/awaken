@@ -116,6 +116,10 @@ td.num { white-space: nowrap; }
 .quests td:last-child { min-width: 14rem; }
 .quests tr.zone td { background: var(--glass-2); font-family: var(--pixel); font-size: 0.72rem; letter-spacing: 0.1em; color: var(--horizon); font-weight: 400; padding-block: 6px; }
 .relic { color: var(--amber); font-weight: 600; }
+.happen td:first-child { font-family: var(--pixel); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--horizon); white-space: nowrap; }
+.happen td:nth-child(2) { white-space: nowrap; }
+.happen td:nth-child(3) { min-width: 14rem; color: var(--muted); }
+.happen td:nth-child(4) { min-width: 18rem; }
 
 .chip { display: inline-block; font-family: var(--pixel); font-size: 0.7rem; letter-spacing: 0.06em; padding: 1px 7px 0; color: var(--chip-ink); white-space: nowrap; }
 .r-e { background: var(--rank-e); } .r-d { background: var(--rank-d); } .r-c { background: var(--rank-c); }
@@ -155,20 +159,43 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
 <header>
   <span class="eyebrow">Awaken · plan for approval · 25 Oct 2026</span>
   <h1>The Living Wilds</h1>
-  <p class="lede">Everything you do outside the gates leads to something, and you see it. Your band reads the creatures
-  you fight, XP streams into it, the land is a patchwork of named regions, each with its own danger, people out in the wilds
-  need your rope and your wings, herds and packs live in their valleys, and six crafts level as you survive. Gates stay
-  the big jumps. Survival stays the core.</p>
-  <div class="meta"><span>Version 2: regions instead of distance rings, after your note</span><span>Four phases, built in order: B · C · D · E</span><span>Becomes SPEC §21 on your yes</span><span>No code written yet</span></div>
+  <p class="lede">Ordinary Minecraft survival in a world that's always up to something. Migrations cross the valleys, caravans
+  travel the roads, storms roll over the plains and hunts sweep the moors under a full moon, on their own clock. Every
+  region has a name, a level and a wonder. People out there need your rope and your wings. Everything you do pays and you
+  see it, and your home becomes a village the world passes through. You never have to do any of it.</p>
+  <div class="meta"><span>Version 3: the living world, after your notes</span><span>Six phases, built in order: B · C · D · E · F · G</span><span>Becomes SPEC §21 on your yes</span><span>No code written yet</span></div>
   <figure class="hero">
-    <div class="frame"><img src="concept/01-holo-nameplate.jpg" alt="First-person view at dusk: a dark fox-like Gloomstalker lunges; a thin glass plate above it reads GLOOMSTALKER, Lv 14, ELITE, with a segmented health bar losing a segment in amber; a cyan line runs from the wrist band to the creature." width="1536" height="1024"></div>
-    <figcaption><b>The band reads what you look at.</b> A plate of Holo glass over the creature: name, level in its rank colour, a segmented health bar, the Elite tag. In game it is smaller than drawn here, about the creature's width.</figcaption>
+    <div class="frame"><img src="concept/09-hilltop.jpg" alt="From a hilltop at golden hour a hunter looks over a valley: a migration of hundreds of white stags fords a river under a dust haze, a caravan of lantern-lit wagons travels a road, smoke rises from a distant camp, a storm with lightning crosses the plains, a gate's blue pillar stands on the horizon, and birds wheel overhead." width="1536" height="1024"></div>
+    <figcaption><b>The Hilltop Test.</b> Stand on any hill and something pulls you: a migration at the ford, a caravan on the road, a storm coming, a camp's smoke, a gate's pillar.</figcaption>
   </figure>
 </header>
 
+<section id="feeling" style="border-top:0; margin-top:0; padding-top:8px">
+  <div class="head"><span class="eyebrow">What you asked for</span><h2>Normal survival, always interesting</h2></div>
+  <p class="prose">You described a mix of Minecraft survival and Crimson Desert: keep exploring and there's always something new, none of it
+  required, always more to unlock and more ways to play, a world that's alive and moving, while you still build your home, your base, your
+  village, however you like. Three layers make that:</p>
+  <div class="why">
+    <div><b>It happens without you</b><span>The World Pulse keeps the land you can see busy: migrations, caravans, storms, festivals, the Wild Hunt. Join, watch, or miss it and hear about it later.</span><em>→ Phase D</em></div>
+    <div><b>There's always somewhere new</b><span>Named regions, one wonder in each, secrets, eight legendary beasts, treasure maps, Wayfarers in trouble.</span><em>→ Phases B, C, F</em></div>
+    <div><b>Your home is part of it</b><span>People you helped settle at your Hearth, your village gets a name on the map, caravans use your roads, migrations cross your fields.</span><em>→ Phase G</em></div>
+  </div>
+  <h3>The Hilltop Test, the bar every part must pass</h3>
+  <ol class="steps prose">
+    <li><div>From any hilltop in daylight, within 30 seconds, something pulls you: a dust haze over a herd, a caravan's smoke, a storm cell, a festival's lanterns, a gate's pillar, kites circling something dead.</div></li>
+    <li><div>At night there's at least one light on the land that isn't yours.</div></li>
+    <li><div>Every 15 minutes or so of wandering in new land, you stumble on something you haven't seen (for the first 30 hours or so).</div></li>
+    <li><div>Nothing waits for you. Happenings run on their own clock, and you can miss them: "You missed the crossing. It went over at dawn."</div></li>
+    <li><div>Nothing nags: no markers over heads, no timers on screen, nothing in your Journal until you choose it.</div></li>
+    <li><div>It looks and sounds like Awaken, with tells drawn at a distance like the gate pillars.</div></li>
+    <li><div>Survival first: your base is part of the world and is never hit by something you weren't warned about.</div></li>
+    <li><div>120 fps on the M4 with three happenings in view; the Pulse costs at most 0.5 ms of a server tick.</div></li>
+  </ol>
+</section>
+
 <div class="decisions frame" id="decisions">
   <span class="eyebrow">What your yes covers</span>
-  <p class="go">Fifteen decisions, each with my recommendation. <b>"Go with your recommendations"</b> says yes to all of them.</p>
+  <p class="go">Nineteen decisions, each with my recommendation. <b>"Go with your recommendations"</b> says yes to all of them.</p>
   <ol class="dec">
     <li><span class="q">The overworld becomes a patchwork of named regions, each with its own level, replacing the follow-you scaling for every creature, vanilla monsters included.</span><span class="rec"><b>Yes.</b> Revised after your note: distance only tilts the odds, so hard and gentle regions turn up in every direction. The Commons round Carillon (or world spawn) stays 1–8 and its neighbours stay under 20.</span></li>
     <li><span class="q">Your Hearth calms the land around it.</span><span class="rec"><b>Yes.</b> Within its radius plus 96 blocks the level never exceeds your household's, so a base in a hard region never has nights above you.</span></li>
@@ -185,6 +212,10 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
     <li><span class="q">A "Pure survival" world option.</span><span class="rec"><b>Yes.</b> It removes plates, numbers, the XP stream, quests and bounties. Regions and crafts stay, because they are the world and survival skills.</span></li>
     <li><span class="q">The first hour: your first Director gate opens at level 4 or after 45 minutes outside, and the Commons get a quartermaster and a Wayfarer camp.</span><span class="rec"><b>Yes.</b> Carillon worlds only; the city parts (the gatehouse yard, Bram's line) are agreed with the Carillon session.</span></li>
     <li><span class="q">The Nether and the End keep their vanilla danger for now.</span><span class="rec"><b>Yes.</b> Regions are an overworld idea; the other dimensions can get theirs later.</span></li>
+    <li><span class="q">The World Pulse: one director for every happening in the open world, with the Hilltop Test as its bar.</span><span class="rec"><b>Yes.</b> About 28 kinds of happening on the moon calendar, all missable, and today's anomalies folded in.</span></li>
+    <li><span class="q">Wonders, secrets and legends.</span><span class="rec"><b>Yes.</b> One wonder per region from a library of about forty, three secrets per region, eight legendary beasts that fall for good, and treasure maps.</span></li>
+    <li><span class="q">Your place in the world: settlers, a named village, roads that caravans travel.</span><span class="rec"><b>Yes.</b> Wayfarers you helped can move in; raids always come with a warning. Agreed with the hearth and Carillon owners first.</span></li>
+    <li><span class="q">Rumours and the Almanac.</span><span class="rec"><b>Yes.</b> The first time you witness each kind of happening is a discovery, and rumours put a faint "?" on a region of the Atlas. Never a list.</span></li>
   </ol>
 </div>
 
@@ -202,6 +233,10 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
 
 <section id="phase-b">
   <div class="head"><span class="phase-tag">PHASE B</span><h2>Everything pays, and you see it</h2></div>
+  <figure>
+    <div class="frame"><img src="concept/01-holo-nameplate.jpg" alt="First-person view at dusk: a dark fox-like Gloomstalker lunges; a thin glass plate above it reads GLOOMSTALKER, Lv 14, ELITE, with a segmented health bar losing a segment in amber; a cyan line runs from the wrist band to the creature." width="1536" height="1024" loading="lazy"></div>
+    <figcaption><b>The band reads what you look at.</b> A plate of Holo glass over the creature: name, level in its rank colour, a segmented health bar, the Elite tag. In game it is smaller than drawn here, about the creature's width.</figcaption>
+  </figure>
   <div class="split">
     <ul class="points prose">
       <li><strong>Plates.</strong> The creature under your crosshair (24 blocks; 32 and 40 at PER 20 and 40) and everything fighting you, at most four at once. Ten segments of light; a hit breaks some off and they drain in amber. Ten levels below you the chip greys; five above it turns ember with a skull glyph. The rim tints warm for hostile, cyan for neutral.</li>
@@ -312,7 +347,7 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
       <li><strong>Rewards that change how you play:</strong> a relic per chain, recipes, titles, Power Core Shards, Atlas reveals, renown with Carillon's factions.</li>
       <li><strong>The Journal</strong> is a new K-menu tab with only the chains you took, as short journal pages. The tracked step takes the Horizon line.</li>
       <li><strong>Bounties</strong> at Quartermaster Hale's board by the High Gate: cull, hunt an elite, bring family materials, clear a camp you've seen.</li>
-      <li><strong>World events you stumble on:</strong> a herd migration at a ford, a blight surge, the Wild Hunt at night, caravan days on the road.</li>
+      <li><strong>Happenings open quests too.</strong> Refugees, an ambushed caravan or a festival often start a chain or a bounty (Phase D).</li>
     </ul>
   </div>
 
@@ -353,7 +388,28 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
 </section>
 
 <section id="phase-d">
-  <div class="head"><span class="phase-tag">PHASE D</span><h2>Creatures live somewhere</h2></div>
+  <div class="head"><span class="phase-tag">PHASE D</span><h2>The world is alive</h2></div>
+  <div class="split">
+    <div class="prose" style="display:grid; gap:12px">
+      <h3>The World Pulse</h3>
+      <ul class="points">
+        <li><strong>One director for everything that happens</strong> in the open world, so the rhythm is designed rather than random. Today's rifts, processions, stars and groves fold into it.</li>
+        <li><strong>Around you:</strong> one happening with a visible tell within about 256 blocks most of the time, at most three at once, a kind you haven't seen every 15 minutes or so while you explore, quieter at home, nothing in gates.</li>
+        <li><strong>The moon calendar.</strong> Minecraft's own moon phases set the rhythm: the full moon brings the Wild Hunt, the new moon the Deep Tide, the half moons caravans and festivals. Weather brings storms and blooms; dawn brings migrations, dusk murmurations.</li>
+        <li><strong>Seen from afar</strong>, like the gate pillars: dust, smoke, lanterns, a storm cell, a circling flock.</li>
+        <li><strong>Missable and real.</strong> Happenings change the world (a herd moves on, a camp burns) and leave traces and a rumour behind.</li>
+        <li><strong>Rumours</strong> from Wayfarers, Carillon's taverns, Pell's post and Mira: "A thousand stags crossing the Rimewold ford at dawn, they say." A rumour puts a "?" on that region of the Atlas.</li>
+        <li><strong>The Almanac:</strong> the first time you witness each kind is a discovery, counted in the Codex as "Happenings witnessed 7 / ??".</li>
+      </ul>
+    </div>
+    <figure>
+      <div class="frame"><img src="concept/12-wild-hunt.jpg" alt="Night under a full moon and aurora: a huge pale stag with glowing ice-blue antlers leads a pack of spectral wolves across a snowy moor in a trail of blue light; a hunter crouches behind rocks with a dimmed lantern; a small plate reads OLD GREYMANE · LEGENDARY." width="1536" height="1024" loading="lazy"></div>
+      <figcaption><b>The Wild Hunt</b> under a full moon and an aurora, led by Old Greymane, one of the eight legends.</figcaption>
+    </figure>
+  </div>
+  <h3>About 28 happenings at launch</h3>
+<div class="tbl"><table class="happen"><thead><tr><th>Family</th><th>Happening</th><th>The tell from afar</th><th>What you can do</th></tr></thead><tbody><tr><td>Creature life</td><td><b>The Great Migration</b></td><td>A dust haze and a low rumble over a valley at dawn</td><td>Ride along, hold the ford against the packs, hunt stragglers, meet the beast that walks with it. The herd moves on to new pastures.</td></tr><tr><td></td><td><b>Stampede</b></td><td>Thunder of hooves, a dust line</td><td>Get clear, or turn it into your enemies with the Herdcaller Horn.</td></tr><tr><td></td><td><b>Murmuration</b></td><td>A living cloud of finches over a lake at dusk</td><td>Watch it: that night's dreams start more lucid.</td></tr><tr><td></td><td><b>Spawning Run</b></td><td>Silver splashing up a river, bears gathering</td><td>Fish beside the Honey Bears: triple catches.</td></tr><tr><td></td><td><b>Beast Duel</b></td><td>Two roars and falling trees at a border</td><td>Finish the weakened winner, or tip the fight.</td></tr><tr><td></td><td><b>Carrion Circle</b></td><td>Kites circling high over one spot</td><td>Find what died: a beast's part, a fallen hunter's log, or a lure.</td></tr><tr><td></td><td><b>Egg Season</b></td><td>A cliff loud with calls</td><td>Climb for eggs with the rope while the parents dive.</td></tr><tr><td></td><td><b>The Wild Hunt</b></td><td>Full moon: ghost-blue light and howling crossing the land</td><td>Hide, follow, or fight a beast and its pack for the best loot of the night.</td></tr><tr><td>Sky and land</td><td><b>Starfall</b></td><td>Streaks across the night</td><td>A shower of fallen stars over one region.</td></tr><tr><td></td><td><b>Aurora night</b></td><td>Green and violet curtains in cold regions</td><td>Spirits show without the Veil; Veil-only paths open.</td></tr><tr><td></td><td><b>The Rolling Storm</b></td><td>A dark cell with lightning crossing the plains</td><td>Charge powers grow inside it; struck ground leaves charged glass.</td></tr><tr><td></td><td><b>Signal Storm</b></td><td>The sky fractures in the Signal's colours</td><td>Where the last bolt lands, a gate forms.</td></tr><tr><td></td><td><b>The Deep Tide</b></td><td>New moon: grey fog creeping from old break sites</td><td>Nests surge, the night runs harder, blight creatures walk.</td></tr><tr><td></td><td><b>Bloom</b></td><td>A whole meadow turns to flower for a day</td><td>Foraging pays double; the Empress Moth wanders out.</td></tr><tr><td></td><td><b>The Opening</b></td><td>A dust plume and a boom</td><td>A sinkhole opens into a cave hollow with ore and a den, never near a Hearth.</td></tr><tr><td></td><td><b>Eclipse</b></td><td>The sun goes dark (rare, from rank A)</td><td>Every gate flares and the Hollow Court whispers.</td></tr><tr><td>People</td><td><b>Caravan</b></td><td>Lanterns and smoke moving along a road</td><td>Trade, escort, or defend it.</td></tr><tr><td></td><td><b>Travelling Merchant</b></td><td>A lone painted cart</td><td>Rare stock for a day: recipes, treasure maps, mount gear.</td></tr><tr><td></td><td><b>Rival Hunters</b></td><td>A campfire near a beast's lair</td><td>Race them to the beast or join them.</td></tr><tr><td></td><td><b>Ambush</b></td><td>Smoke and the clash of a fight</td><td>The Unbound or riftborn hitting a caravan or camp.</td></tr><tr><td></td><td><b>Refugees</b></td><td>A line of walkers with carts</td><td>Escort them to Carillon or your village, where they may stay.</td></tr><tr><td></td><td><b>Festival</b></td><td>Lanterns and music at a camp at night</td><td>Climbing pole, archery, a race, a feast.</td></tr><tr><td></td><td><b>Pilgrims</b></td><td>Robed walkers with bells</td><td>Follow them to a wonder.</td></tr><tr><td></td><td><b>Runners' Relay</b></td><td>A flare passed from roof to ridge</td><td>Join the relay for the Runners' Guild.</td></tr><tr><td>The Signal</td><td><b>A ruin wakes</b></td><td>Bells ringing from a ruin at night</td><td>Its machines light for one night: a puzzle opens a sealed room.</td></tr><tr><td></td><td><b>Monolith beam</b></td><td>A beam across the land at dusk</td><td>It points at one of the region's secrets.</td></tr><tr><td></td><td><b>Gates, rifts, processions, groves, stars</b></td><td>As today</td><td>Scheduled by the Pulse with everything else.</td></tr></tbody></table></div>
+  <h3>Creatures live somewhere</h3>
   <figure>
     <div class="frame"><img src="concept/05-herd-and-pack.jpg" alt="Golden hour over a taiga valley: a herd of white stags with glowing ice-blue antlers grazes along grass trails; on a ridge in the foreground a pack of pale wolves with frost runes stalks them; glowing cyan pawprints lead across the grass; birds roost on a far cliff." width="1536" height="1024" loading="lazy"></div>
     <figcaption><b>A valley that's the same valley tomorrow.</b> The herd moves along its trail between pastures; the pack has a den on the ridge; tracks glow for a Hunter.</figcaption>
@@ -403,6 +459,36 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
   </div>
 </section>
 
+<section id="phase-f">
+  <div class="head"><span class="phase-tag">PHASE F</span><h2>Wonders, secrets and legends</h2></div>
+  <div class="split">
+    <figure>
+      <div class="frame"><img src="concept/11-wonder-frozen-gate.jpg" alt="A snowy valley: a gigantic gate caught the moment it broke, frozen into a ring of glowing ice, monsters frozen mid-leap in blocks of ice hanging in the air, a tiny hunter looking up; a caption reads WONDER FOUND · THE FROZEN GATE." width="1536" height="1024" loading="lazy"></div>
+      <figcaption><b>The Frozen Gate</b>, a break caught in ice mid-spill. One of about forty wonders.</figcaption>
+    </figure>
+    <ul class="points prose">
+      <li><strong>One wonder in every region</strong>, from a library of about forty, matched to the land; some exist once per world. The Frozen Gate, the Bell Tree (ring it once a day), the Glass Sea, the Upside-down Falls, the Giant's Arch, the Singing Canyon, the Sunken Spire, the Statue Field, the Petrified Herd, the Star Crater, the Chain Bridge, the Mirror Lake. Each is a discovery with a Codex page, a unique resource or effect, and usually a quest or a happening of its own.</li>
+      <li><strong>Three secrets in every region:</strong> a cairn over a cache, a cave behind a waterfall, a Precursor log, a puzzle shrine, a spirit's grave. Never listed; the Atlas says "Secrets found 1 / ??".</li>
+      <li><strong>Eight legendary beasts</strong>, one of each per world: Old Greymane, Mother Thorn, the Glass Wyrm, Hush, the Kingfisher, the Lantern Queen, Stonefather, the Drowned King. Rumours come first. Fell one and it's gone from that world for good; some can be calmed instead.</li>
+      <li><strong>Treasure maps</strong> from ruins, camps and merchants: a cache somewhere in a region, found from terrain clues, never a pin.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="phase-g">
+  <div class="head"><span class="phase-tag">PHASE G</span><h2>Your place in the world</h2></div>
+  <figure>
+    <div class="frame"><img src="concept/10-your-village.jpg" alt="A player-built village at sunset: timber houses with lit windows, a sheep pen, an herb garden, a market stall, a smithy, a watchtower; settlers at work, a courier at a message post; two lantern-lit wagons arrive along a road of lantern posts under a gate captioned HOLLYFORD · your village." width="1536" height="1024" loading="lazy"></div>
+    <figcaption><b>Your village.</b> You build it, the Minecraft way; settlers and caravans bring it to life.</figcaption>
+  </figure>
+  <ul class="points prose">
+    <li><strong>Settlers.</strong> Wayfarers whose chains you finished can move to your Hearth, each in a room the Hearth recognises. Ilse keeps an herb garden, Hettie tends your animals, Gus mounts trophies, Pell runs a Runner post with a rumour a day, Ama Voss reads relics, Wren strings rope lines round the village, and a caravan master opens a stall. Refugees you escorted can stay too.</li>
+    <li><strong>A name on the map.</strong> Name your village at the Anchor; it shows on the Atlas and greets you: "HOLLYFORD · your village".</li>
+    <li><strong>Roads.</strong> Place road markers from your village to a Wayfarer camp or Carillon. Once they join up, caravans travel that road every few play-days, bringing trade and news, and they're worth defending.</li>
+    <li><strong>The world passes through:</strong> migrations cross your fields (fences turn them), refugees knock, a festival comes once four settlers live there, and a nest nearby raids at night after a play-day's warning.</li>
+  </ul>
+</section>
+
 <section id="first-hour">
   <div class="head"><span class="eyebrow">With Carillon's onboarding</span><h2>The first hour</h2></div>
   <ol class="steps prose">
@@ -413,6 +499,30 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
     <li><div><b>The first gate.</b> The Director opens it at level 4 or after 45 minutes outside, at the Commons' outer edge. <div class="t">level 4–5 by ~40–55 min</div></div></li>
     <li><div><b>Tips through Carillon's TipHooks</b>, never a second tips system: the first plate, the first region caption, the first bounty, the first Wayfarer sign, the first craft level.</div></li>
   </ol>
+</section>
+
+<section id="opens">
+  <div class="head"><span class="eyebrow">Always more to unlock</span><h2>What opens when</h2></div>
+  <p class="prose muted">A balanced player, on the sim's clock. Approximate, and none of it required.</p>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>When</th><th>What opens</th></tr></thead>
+      <tbody>
+        <tr><td class="num">0 h</td><td>The Commons, plates and XP, Hale's bounties, the Wayfarer camp, first creatures, first happenings</td></tr>
+        <tr><td class="num">~0.7 h</td><td>The first gate (level 4)</td></tr>
+        <tr><td class="num">1–2 h</td><td>The first chains, the first regions past the Commons, a beast's lair</td></tr>
+        <tr><td class="num">2–5 h</td><td>The rope at the first vault: cliff rescues, spires, egg-season climbs</td></tr>
+        <tr><td class="num">~4 h</td><td>Mounts at level 11: ride with migrations, escort caravans, The Crossing</td></tr>
+        <tr><td class="num">~5 h</td><td>D rank: harder regions, camps and nests, Wild Hunt nights worth fighting</td></tr>
+        <tr><td class="num">~6 h</td><td>The first wonder; the first settler at your Hearth</td></tr>
+        <tr><td class="num">~8 h</td><td>The Veil at level 15: aurora paths, spirit chains, the Keeper's Lantern</td></tr>
+        <tr><td class="num">12–18 h</td><td>Craft perks (tracks, ore-sense), legendary beast rumours, caravans on your road</td></tr>
+        <tr><td class="num">~18 h</td><td>C rank: Deep Tide nights, Bell Metal, the Weaver, Mire rescues by glide</td></tr>
+        <tr><td class="num">30–55 h</td><td>Wings and flight: sky happenings, the Relay Spires, the far wonders</td></tr>
+        <tr><td class="num">55 h +</td><td>B rank and beyond: regions of 80+, the oldest nests, eclipses, the last chains</td></tr>
+      </tbody>
+    </table>
+  </div>
 </section>
 
 <section id="survival">
@@ -427,8 +537,8 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
 
 <section id="build">
   <div class="head"><span class="eyebrow">For the builders</span><h2>Ownership, APIs and what changes</h2></div>
-  <p class="prose">A new module, <code>living</code> (package <code>dev.awaken.living</code>): region, combat (+client), wayfarer, quest, bounty, event, population,
-  camp, craft. Commands under <code>/awaken living</code>, payloads <code>living:*</code>. New public API in SPEC §12: <code>Regions</code>
+  <p class="prose">A new module, <code>living</code> (package <code>dev.awaken.living</code>): region, combat (+client), wayfarer, quest, bounty, pulse, population,
+  camp, craft, wonder, village. Commands under <code>/awaken living</code>, payloads <code>living:*</code>. New public API in SPEC §12: <code>Regions</code>
   (levelAt, regionAt, creatureLevel, bandOf), <code>Quests</code> (active, tracked, advance for abilities other modules report), <code>Crafts</code>
   (grant, level, has), and <code>core.api.LivingHooks</code>.</p>
   <div class="tbl">
@@ -441,7 +551,9 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
         <tr><td>compat (Jade)</td><td>Hide creature lines while plates show them</td><td>Orchestrator</td></tr>
         <tr><td>wilds</td><td>Nothing inside it; the tracked quest is a Horizon source</td><td>Ascent session</td></tr>
         <tr><td>Carillon</td><td>The gatehouse yard and Hale, Bram's line, bounties on the contracts board, the Atlas region layer, coin and renown through their hooks, TipHooks</td><td>Carillon session</td></tr>
-        <tr><td>anomalies</td><td>Wayfarer scenes share the outdoor rhythm; never both at once</td><td>Orchestrator</td></tr>
+        <tr><td>world (anomalies)</td><td>Today's anomaly kinds become happenings scheduled by the World Pulse</td><td>Orchestrator</td></tr>
+        <tr><td>hearth</td><td>Settlers as townsfolk with rooms, the village name and caption, road markers, raid warnings</td><td>Orchestrator and Carillon</td></tr>
+        <tr><td>terrain (worldgen)</td><td>Wonder structures, one per region through the region map; region secrets</td><td>Orchestrator</td></tr>
       </tbody>
     </table>
   </div>
@@ -455,13 +567,15 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
           <tbody>
             <tr><td>B</td><td><code>living_region_map</code> · <code>living_kill_xp</code> · <code>living_plate_rules</code></td></tr>
             <tr><td>C</td><td><code>living_quest_engine</code> · <code>living_bounty_board</code> · <code>living_scene_finder</code></td></tr>
-            <tr><td>D</td><td><code>living_population_ledger</code> · <code>living_camp_lifecycle</code></td></tr>
+            <tr><td>D</td><td><code>living_pulse_cadence</code> · <code>living_population_ledger</code> · <code>living_camp_lifecycle</code></td></tr>
             <tr><td>E</td><td><code>living_craft_xp</code></td></tr>
+            <tr><td>F</td><td><code>living_wonder_placement</code></td></tr>
+            <tr><td>G</td><td><code>living_settlers_and_roads</code></td></tr>
             <tr><td>All</td><td><code>living_pure_survival</code>, plus the pacing check in the sim</td></tr>
           </tbody>
         </table>
       </div>
-      <p class="muted" style="font-size:0.9rem">Locally only <code>-Ptests=living_</code>; CI runs the full suite on every push to pack/living-wilds. One light screenshot tour per phase.</p>
+      <p class="muted" style="font-size:0.9rem">Locally only <code>-Ptests=living_</code>; CI runs the full suite on every push to pack/living-wilds. One light screenshot tour per phase, and from Phase D a Hilltop tour: twenty random hilltops by day and night, judged against the test.</p>
     </div>
     <div style="display:grid; gap:10px; min-width:0">
       <h3>Risks and performance</h3>
@@ -469,6 +583,7 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
         <li><strong>Frame:</strong> plates, glyphs, motes and pillars within 0.3 ms a frame, gate fights included.</li>
         <li><strong>Server:</strong> region lookups are free; one sync per spawn; two tiny event payloads; the ledger under 0.3 ms a tick.</li>
         <li><strong>A hard region next door:</strong> an ember caption, the band's warning, skulls on plates and the Atlas all say so first. It's a place to come back to, not a trap.</li>
+        <li><strong>The Pulse:</strong> at most 0.5 ms a server tick; tells are drawn by the client from tiny records; happening creatures exist only near players.</li>
         <li><strong>MMO creep:</strong> found scenes, no markers, a short Journal, Pure survival.</li>
         <li><strong>Old worlds:</strong> regions apply to new spawns; beasts re-level when their lair wakes them.</li>
       </ul>
@@ -476,8 +591,9 @@ footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line);
   </div>
 
   <h3>Order</h3>
-  <p class="prose">One builder at a time. <strong>B</strong> the combat layer, regions and XP → <strong>C</strong> Wayfarers, quests and bounties (the eight chains for levels 1–20,
-  then the twelve) → <strong>D</strong> living creatures and camps → <strong>E</strong> crafts. Opus at extra-high effort for the look and the quest
+  <p class="prose">One builder at a time. <strong>B</strong> the combat layer, regions and XP → <strong>C</strong> Wayfarers, quests, bounties and rumours (the eight chains for levels 1–20,
+  then the twelve) → <strong>D</strong> the World Pulse, happenings, living creatures and camps → <strong>E</strong> crafts → <strong>F</strong> wonders, secrets and legends →
+  <strong>G</strong> settlers, your village and roads. Opus at extra-high effort for the look and the quest
   writing; Sonnet for data, spawn tables, tests and docs. Each phase goes to the orchestrator with its CI run.</p>
 </section>
 

@@ -1,7 +1,9 @@
 # The Living Wilds · Phase A plan (for Euan's approval)
 
-MMO-RPG-lite progression in the overworld: everything you do outside the gates leads to something, you can see it,
-and the world has places, people and creatures that live somewhere. Survival stays the core.
+Ordinary survival in a world that's always up to something: everything you do outside the gates leads to something
+and you can see it; the land is a patchwork of named regions with wonders, legends and people in trouble; migrations,
+caravans, storms and hunts happen on their own clock; and your home becomes a village the world passes through.
+Survival stays the core.
 
 Euan approved the direction on 2026-10-25 ("All four phases, approval page first"). This file is the source of the
 approval page; on his yes it becomes SPEC §21 "The Living Wilds" (§18 Pixels exists; §19 Turbo and §20 Far Sight are
@@ -17,6 +19,44 @@ Approval page: https://claude.ai/artifact/C97MPmz9gBFJMMjL7Eu8hT (source `plan.h
 
 ---
 
+## The feeling (v3, Euan, 2026-10-25)
+
+"A mix between normal MC survival and Crimson Desert [...] you can keep exploring, there's always new things to do, but
+you don't have to do them [...] always more things to unlock and more ways to play [...] you're doing a normal
+survival, but it's always interesting [...] you can always stumble upon new quests or new biomes you haven't seen or
+new areas where there's even stronger and unique experiences [...] world events that you stumble on [...] things
+actually alive and happening, not always stuck. Sometimes you see a migration of animals going somewhere [...] whilst
+also still being very survival-based, like MC, where you can build your home somewhere and build a base and build a
+village [...] to the highest level."
+
+So the plan has one job above the others: **you're playing ordinary survival, and the world around you is always up
+to something.** Three layers make it:
+
+1. **It happens without you.** A director, the **World Pulse**, keeps the land you can see busy: migrations, caravans,
+   storms that cross the plains, festivals, hunts under the full moon. They start and end on their own clock; you can
+   join, watch, or miss them and hear about them later (§3).
+2. **There's always somewhere new.** Regions with names and levels (§1.2), one **wonder** per region, secrets,
+   legendary beasts, treasure maps (§5), Wayfarers in trouble (§2): explore any direction for hours and keep finding
+   things.
+3. **Your home is part of it.** People you helped can settle at your Hearth, your village gets a name on the map,
+   caravans come along the roads you mark, migrations pass your fields, raids come with warning (§6). Building stays
+   free-form Minecraft.
+
+**The Hilltop Test** (the bar, like the Ascent's "genuinely magical" list; judged from tour screenshots and play, never
+from code alone):
+1. From any hilltop in daylight, within 30 seconds, you can see at least one thing that pulls you: a dust haze over a
+   herd, a caravan's smoke, a storm cell, a festival's lanterns, a gate's pillar, kites circling something dead.
+2. At night there's at least one light on the land that isn't yours.
+3. Every ~15 minutes of wandering in new land you stumble on something you haven't seen before (for the first ~30 hours).
+4. Nothing waits for you: happenings run on their own clock and you can miss them ("You missed the crossing. It went
+   over at dawn.").
+5. Nothing nags: no markers over heads, no timers on screen, nothing in the Journal until you choose it.
+6. It looks and sounds like Awaken: our particles, our sounds, tells drawn at a distance like the gate pillars.
+7. Survival first: your base is part of the world and never the victim of something unwarned.
+8. 120 fps on the M4 with three happenings in view; the Pulse within 0.5 ms a server tick.
+
+---
+
 ## 0. Why it doesn't feel like an MMO today (the diagnosis Euan agreed with)
 
 A lot already pays: hostile kills, ores and building give a hidden trickle (§4.3, budgets per 10 minutes); fauna has
@@ -29,7 +69,7 @@ Truths and Titles. It doesn't read as progression because:
 3. **No people in the wilds.**
 4. **Spawns are random around the player**, not creatures that live somewhere.
 
-The four phases answer these in order.
+Phases B, C and D answer these in order; E, F and G add crafts, wonders and your place in the world.
 
 ---
 
@@ -177,6 +217,9 @@ Hourly, through the mid-game: focused hunting in a region at your level ≈ 0.55
 mixed wilds play (hunting, two crafts, a quest step, a camp) ≈ 0.9; three gate floors ≈ 0.65 (C) to 2.0 (B). So the
 wilds can carry you, and gates make you strong. First hour: level 3 at ~27 min, level 5 at ~54 min (target 45-60).
 
+Happenings witnessed (~28 kinds), wonders (~40) and legends add to the discovery pool (140 → ~210 over the game); the
+Phase B retune absorbs them.
+
 Note for the pacing owner: pacing_sim counts in-game days (Regimen, Directives, dreams) only in outdoor minutes; real
 days also pass while you're in a gate. Counting them makes every player ~15-20% faster in the same model. Both columns
 above use the corrected count, so the comparison is fair; the absolute calibration stays pacing_sim's.
@@ -227,9 +270,8 @@ hands you a list.
 - **Association bounties:** three notices at a time on the High Gate quartermaster's board (and the Association's in
   the city), for your level and rank only: cull, hunt an elite, bring family materials, clear a camp you've seen. A new
   one next play-day after you take one; no expiry.
-- **World events you stumble on:** a herd migration crossing a ford (packs gather, the herd's beast walks with it), a
-  blight surge (an ignored nest raids, §3), the Wild Hunt (a named beast and its pack sweep a region at night), caravan
-  days (a caravan travels the road from Carillon to an outpost and can be ambushed).
+- **World events you stumble on** come from the World Pulse (§3): migrations, caravans, festivals, refugees, the Wild
+  Hunt. Many open a chain or a bounty.
 
 ### 2.2 The twenty chains (hand-written; outlines, full text in Phase C)
 
@@ -277,7 +319,7 @@ Relics are bound to you: one per player per chain, kept on death, never duplicat
   `AvatarRenderState`), a few poses, lines through Signal story lines; hurt, never killed (Carillon's citizen rule).
 - Wayfarer camps (one in the Commons on the High Gate road, then about one per 2,000 blocks of road): a fire, wagons,
   two or three Wayfarers, a bounty post; safe from spawns within 24 blocks.
-- Journal: a K-menu tab (holo, §5.3), `living.quest.client.JournalPage`; Horizon: one `HorizonHooks.Source` for the
+- Journal: a K-menu tab (holo, §7.3), `living.quest.client.JournalPage`; Horizon: one `HorizonHooks.Source` for the
   tracked step (raised); arrival within 32 blocks pings the band and shimmers the target once.
 - Bounties: `living.bounty`, templates in data, three notices per player for their level and rank, claim once;
   coin through `EconomyHooks.pay` once Carillon's economy exists, essence and XP until then; renown via
@@ -288,9 +330,67 @@ Relics are bound to you: one per player per chain, kept on death, never duplicat
 
 ---
 
-## 3. Phase D · Living creatures and camps (concepts 05, 06)
+## 3. Phase D · The world is alive: the World Pulse, happenings, creatures and camps (concepts 05, 06, 09, 12)
 
-### 3.1 What the player sees
+### 3.0 The World Pulse
+
+One director for everything that happens in the open world, so the cadence is designed rather than random: today's
+anomalies (rifts, processions, wandering gates, stars, groves) become happenings under it, beside the new ones.
+
+- **Around each player** (merged when players are near each other) it keeps a liveliness target: one happening with a
+  visible tell within ~256 blocks most of the time outdoors, at most three active near you, a new kind you haven't
+  witnessed every ~15 minutes of exploring new land during the first ~30 hours (it reads the Director's novelty
+  memory), quieter inside a Hearth's radius (your village has its own life, §6), nothing in gates.
+- **The moon calendar:** vanilla's 8-phase moon drives the rhythm: full moon the Wild Hunt and wolves, new moon the
+  Deep Tide (nests surge), the half moons caravan days and festivals. Weather drives storms and blooms; time of day
+  drives murmurations at dusk and migrations at dawn.
+- **Tells are seen from afar:** each happening has a tell drawn on the client at a clamped distance like the gate
+  pillars (a dust haze, a smoke column, lantern lights, a storm cell, a circling flock), from one compact record (kind,
+  position, intensity) the server sends to players within 512 blocks, every 2 s when changed.
+- **Missable and world-real:** happenings are world state (patent rule: consequences go to world state), shared in
+  multiplayer, and end on their own. Missing one leaves a trace (tracks, a trampled ford, a burnt-out camp) and a
+  rumour.
+- **Rumours** are how you stumble on more: Wayfarers, Carillon's taverns (its gossip), Pell's Runner post at your
+  village and Mira tell of happenings, wonders and legends in named regions ("A thousand stags crossing the Rimewold
+  ford at dawn, they say."). A rumour puts a faint "?" on that region of the Atlas. Never a list.
+- **The Almanac:** the first time you witness each kind of happening is a discovery (0.1 of a level, "Witnessed · the
+  Great Migration"), recorded in the Codex with a count ("Happenings witnessed 7 / ??", the Codex's own rule).
+- Data-driven: `data/awaken/awaken/happening/*.json` (where: band, biomes, terrain; when: time, moon, weather; tell;
+  duration; participants; outcome; rewards) plus a small behaviour class per kind.
+
+### 3.1 The happenings (launch set)
+
+| Family | Happening | Tell from afar | What you can do |
+|---|---|---|---|
+| Creature life | **The Great Migration** | a dust haze and a low rumble over a valley at dawn, birds wheeling above | ride along on your mount, hold the ford against the packs, hunt the stragglers, meet the beast that walks with it; the herd's home moves on to the next region |
+| | **Stampede** | thunder of hooves, a dust line | get clear (it hurts), or turn it into your enemies with the Herdcaller Horn |
+| | **Murmuration** | a living cloud of finches or petalwings over a lake at dusk | watch it: that night's dreams start more lucid; sometimes a white finch's feather falls |
+| | **Spawning Run** | silver splashing along a river, bears and kites gathering | fish (catches ×3) beside the Honey Bears, who don't like being crowded |
+| | **Beast Duel** | two roars and falling trees at a region border | watch, then finish the weakened winner, or tip the fight; both parts drop |
+| | **Carrion Circle** | kites circling high over one spot | find what died: a beast's carcass and its part, a fallen hunter's last log and gear, or a lure |
+| | **Egg Season** | a cliff loud with calls | climb for eggs with the rope while the parents dive at you |
+| | **The Wild Hunt** (full moon) | a ghost-blue light and howling moving across the land | hide, follow at a distance, or fight a beast and its pack for the best night of loot in the game |
+| Sky and land | **Starfall** | streaks across the night, then several craters | a shower of fallen stars over one region |
+| | **Aurora night** (cold regions) | curtains of green and violet | spirits show without the Veil, dreams run lucid, Veil-only paths open |
+| | **The Rolling Storm** | a dark cell with lightning crossing the plains over minutes | Charge powers grow stronger inside it; struck ground leaves charged glass; storm fishing |
+| | **Signal Storm** | the sky fractures in the Signal's colours | where the last bolt lands, a gate forms |
+| | **The Deep Tide** (new moon) | grey fog fingers creeping from old break sites at dusk | nests surge (raids likelier), the night runs two levels harder, blight creatures walk |
+| | **Bloom** | a whole meadow region turns to flower for a day | Foraging pays double; the Empress Moth wanders out |
+| | **The Opening** | a dust plume and a boom | a sinkhole opens in wild ground into a cave hollow with ore and a den (never near a Hearth) |
+| | **Eclipse** (rare, from rank A) | the sun goes dark for minutes | every gate flares, the Hollow Court whispers (lore), hostiles walk by day |
+| People | **Caravan** | lanterns and smoke moving along a road | trade, escort it, or defend it from an ambush |
+| | **Travelling Merchant** | a lone painted cart | rare stock for a day: recipes, treasure maps, mount gear |
+| | **Rival Hunters** | three hunters' campfire near a beast's lair | race them to the beast or join them and split the loot |
+| | **Ambush** | smoke and the clash of a fight | the Unbound or riftborn hitting a caravan or a camp |
+| | **Refugees** | a line of walkers with carts | people fleeing a gate break; escort them to Carillon or your village, where they may stay (§6) |
+| | **Festival** | lanterns and music at a Wayfarer camp at night | the wilds' own Bell Festival: a climbing pole, an archery match, a race, a feast |
+| | **Pilgrims** | robed walkers with bells on a path | follow them and they lead you to a wonder |
+| | **Runners' Relay** | a flare passed from rooftop to ridge | join the relay: a movement run across the region for the Runners' Guild |
+| The Signal | **A ruin wakes** | bells ringing from a Precursor ruin at night | its machines light for one night: a power puzzle that opens a sealed room |
+| | **Monolith beam** | a beam from a monolith at dusk pointing across the land | it points at one of the region's secrets |
+| | gates forming and breaking, rift tears, spirit processions, shimmer groves, fallen stars, wandering gates | as today | as today, scheduled by the Pulse |
+
+### 3.2 Creatures live somewhere: what the player sees
 
 - **Herds** graze between pastures on trails you can see in the grass (Frost Stags, Mossbacks, Crag Rams, Dune Rays,
   Honey Bears): the same herd is in the same valley tomorrow, a little further along.
@@ -304,7 +404,7 @@ Relics are bound to you: one per player per chain, kept on death, never duplicat
   Wayfarer camp, outpost or Hearth at night, warned a play-day ahead like a gate break.
 - Vanilla's night stays dangerous: zombies and skeletons still spawn in the dark anywhere (at the region's level).
 
-### 3.2 The model (cheap by design)
+### 3.3 The model (cheap by design)
 
 - **A ledger, not entities** (Carillon's citizens pattern, measured at p95 0.015-0.04 ms): per 512×512 region,
   generated lazily the first time a player enters it from the world seed, at most 6 population records (herd, pack,
@@ -345,15 +445,61 @@ feeds the Hunter level (through their budgets, §1.3), so a sheep finally leads 
   play-day (no block entity), shown by the glint and checked by the server on harvest. New items: six herbs, about
   eight meals with buffs.
 - Saved in its own attachment `awaken:crafts` (schema 1, kept through death, synced to the owner). K-menu tab
-  "Crafts" (holo, §5.3). A craft level is a toast with its icon; a perk is a toast and a line in the tab.
+  "Crafts" (holo, §7.3). A craft level is a toast with its icon; a perk is a toast and a line in the tab.
 - Perk looks are Awaken's own: the herb glint a thin vertical shimmer in the Horizon's sea-green, ore-sense a band
   pulse and glass outlines (server-sent positions, like the Veil's ore glow), tracks glowing pawprints that fade.
 
 ---
 
-## 5. The first hour, survival, ownership, tests, risks
+## 5. Phase F · Wonders, secrets and legends (concepts 11, 12)
 
-### 5.1 The first hour (with Carillon's onboarding)
+Always somewhere new, in every direction.
+
+- **One wonder per region**, chosen from an authored library of about forty by the region's land (some are one per
+  world): **the Frozen Gate** (a break caught in ice mid-spill, monsters frozen in the air), **the Bell Tree** (an
+  ancient tree grown round a Precursor bell; ring it once a day), **the Glass Sea** (a desert of fused glass where a
+  wyrm sleeps), **the Upside-down Falls** (water rising into the sky; the Veil shows why), **the Giant's Arch** (a
+  skeleton spanning a valley; climb it), **the Singing Canyon** (the wind plays the Choir's notes; stand in the right
+  place at dusk for a vision), **the Sunken Spire** (a Precursor tower tilted into a lake), **the Statue Field**
+  (hundreds of stone figures, the Sleepers' kin), **the Petrified Herd** (a migration turned to stone mid-stride),
+  **the Star Crater** (a lake in an old impact, glowing at night), **the Chain Bridge** (a broken Precursor bridge over
+  a gorge, a rope route), **the Mirror Lake** (it reflects a different sky). Each is a structure placed by worldgen
+  (warded, like the ruins), a discovery (0.15 of a level), a Codex page, a unique resource or effect, and usually a
+  quest hook or a happening of its own.
+- **Region secrets:** each region hides three from a library (a cairn over a buried cache, a cave behind a waterfall, a
+  Precursor log, a puzzle shrine, a spirit's grave, a legendary fishing spot). Never listed: the Atlas's region card
+  says "Secrets found 1 / ??".
+- **Legendary beasts:** eight unique creatures, one of each per world, roaming a band of regions: **Old Greymane** (a
+  white stag the size of a house who walks with the migrations and leads the Wild Hunt under an aurora), Mother Thorn,
+  the Glass Wyrm, Hush (a silent hound that hunts only in auroras), the Kingfisher, the Lantern Queen, Stonefather,
+  the Drowned King. Rumours precede them. Fell one and it's gone from that world for good (every player hears); some
+  can be calmed instead (Old Greymane with the Herdcaller Horn blesses your mount). Trophy, relic, title.
+- **Treasure maps** from ruins, camps and merchants mark a cache somewhere in a region with terrain clues, never a
+  pin.
+
+## 6. Phase G · Your place in the world (concept 10)
+
+Build wherever you like, the Minecraft way; the living world comes to you.
+
+- **Settlers:** Wayfarers whose chains you finished can move to your Hearth, each needing a room the Hearth recognises
+  (beside the townsfolk who come from Carillon at Trusted renown): Ilse keeps an herb garden and teaches Foraging, Hettie
+  tends your animals, Gus carves horn and mounts trophies, Pell runs a Runner post (letters and a rumour every
+  play-day), Ama Voss keeps an archive desk (reads relics and logs), Wren strings rope lines round your village, a
+  caravan master opens a market stall. Refugees you escorted can stay too.
+- **Your village has a name** you give it at the Anchor; it shows on the Atlas as a settlement and greets you with its
+  own place caption ("HOLLYFORD · your village").
+- **Roads:** place road markers (a craftable post) from your village toward a Wayfarer camp or Carillon; once they join
+  up (each within 64 blocks of the next), caravans travel that road every few play-days, bringing trade and news, and a
+  caravan on your road is worth defending.
+- **The world passes through:** migrations can cross your fields (fences turn them), refugees knock, a festival comes to
+  your village once four settlers live there, and a nest that grows nearby raids at night with a play-day's warning
+  (your Echoes on Guard, settlers take shelter). The Hearth keeps its land at your level (§1.2).
+
+---
+
+## 7. The first hour, survival, ownership, tests, risks
+
+### 7.1 The first hour (with Carillon's onboarding)
 
 1. The Registry walk ends on the balcony; Bram's pan frames the High Gate. Proposed change to one line (Carillon's
    call): "That's the High Gate. The Commons start past it. Hale at the gatehouse has work for new licences."
@@ -367,18 +513,19 @@ feeds the Hunter level (through their budgets, §1.3), so a sheep finally leads 
 6. Tips through Carillon's `TipHooks` (never a second tips UI): the first plate ("Your band reads what you look at"),
    the first region caption, the first bounty, the first Wayfarer sign, the first craft level.
 
-### 5.2 Survival stays the core
+### 7.2 Survival stays the core
 
 Hunger, building, crafting and dangerous nights are unchanged; vanilla animals farm as ever. Regions change levels, not
 what lives where. Quests are found, never assigned; nothing is listed before you find it. World option **Pure
 survival**: no plates, damage numbers, XP stream, quests or bounties (regions, crafts and their perks stay: they're the
 world and survival skills).
 
-### 5.3 Ownership, packages and APIs
+### 7.3 Ownership, packages and APIs
 
 New module **`living`** (package `dev.awaken.living`; same module rules as §1): `living.region`, `living.combat`
-(+`.client`), `living.wayfarer`, `living.quest`, `living.bounty`, `living.event`, `living.population`, `living.camp`,
-`living.craft`; commands `/awaken living ...`; payloads `living:*`; merge folder `src/main/merge/living/`.
+(+`.client`), `living.wayfarer`, `living.quest`, `living.bounty`, `living.pulse` (the World Pulse, happenings, rumours, the
+Almanac), `living.population`, `living.camp`, `living.craft`, `living.wonder` (wonders, secrets, legends, treasure
+maps), `living.village` (settlers, the village name, roads, caravans); commands `/awaken living ...`; payloads `living:*`; merge folder `src/main/merge/living/`.
 
 New public API (SPEC §12):
 - `dev.awaken.living.api.Regions`: `levelAt(Level, x, z)`, `regionAt(Level, x, z)` (id, name, band, span),
@@ -398,9 +545,11 @@ Changes in existing modules (each small, at the seam):
 | compat (Jade) | hide Jade's creature lines while the plate shows them (one source of truth) | orchestrator |
 | wilds | none inside it: the tracked quest is a `HorizonHooks.Source` | Ascent session (informed) |
 | Carillon (city, citizens, opening, atlas, economy, renown) | the gatehouse yard and Hale, Bram's line, bounties on the contracts board, Atlas region layer (`AtlasHooks`), coin and renown through their hooks, TipHooks | Carillon session |
-| anomalies | the Wayfarer scene and the anomaly share one outdoor rhythm (never both at once) | orchestrator |
+| world (anomalies) | today's anomaly kinds become happenings scheduled by the World Pulse (their behaviour stays; the scheduler moves) | orchestrator |
+| hearth | settlers as townsfolk with rooms, the village name and its caption, road markers, raid warnings, a festival | orchestrator (hearth) and Carillon |
+| terrain / world (worldgen) | wonder structures and their sets, placed one per region through the region map; region secrets | orchestrator (terrain) |
 
-### 5.4 Tests (one per mechanism; run with `-Ptests=living_`; CI runs the full suite)
+### 7.4 Tests (one per mechanism; run with `-Ptests=living_`; CI runs the full suite)
 
 | Phase | Test | Checks |
 |---|---|---|
@@ -412,13 +561,17 @@ Changes in existing modules (each small, at the seam):
 | C | `living_scene_finder` | a cliff scene and a road scene find valid spots in a real world, never in a Hearth, ward or the city |
 | D | `living_population_ledger` | deterministic route, bodies within 96 and gone past 128, a kill lowers the count, regrowth and pack catch-up by play-days |
 | D | `living_camp_lifecycle` | a break seeds a nest, clear → stays clear N days, ignored → grows → raid warned a play-day ahead |
+| D | `living_pulse_cadence` | over simulated hours round a moving player: a tell within 256 blocks most of the time, ≤ 3 active, a new kind every ~15 min early on, quiet in a Hearth, none in gates, the moon calendar (pure scheduler) |
 | E | `living_craft_xp` | an action pays craft and Hunter XP through budgets; perks unlock at tiers |
+| F | `living_wonder_placement` | one wonder per region in a real world, in fitting land, warded, one-per-world kinds unique |
+| G | `living_settlers_and_roads` | a finished chain's Wayfarer settles into a recognised room; joined road markers make a caravan route |
 | all | `living_pure_survival` | the option removes plates, numbers, quests and bounties; regions and crafts stay |
 
 Plus the pacing check in tools/sim (the balanced player's targets hold). One `slot.sh light` tour per phase for
-screenshots (plates in a fight by day and night, the level moment, a region caption, a scene, a herd and a nest).
+screenshots (plates in a fight by day and night, the level moment, a region caption, a scene, a herd and a nest), and
+from Phase D a **Hilltop tour**: twenty random hilltops by day and night, judged against the Hilltop Test.
 
-### 5.5 Risks and performance
+### 7.5 Risks and performance
 
 - **Frame budget:** plates (≤ 4 glass quads with text), glyphs (≤ 24), XP motes (≤ 64), pillars: target ≤ 0.3 ms a
   frame total; they also draw in gate fights, where SPEC's p50 ≥ 110 fps must hold.
@@ -428,15 +581,62 @@ screenshots (plates in a fight by day and night, the level moment, a region capt
   band warns, plates show skulls, and the Atlas marks it: a place to come back to, not a trap. The Commons' neighbours
   never exceed 20.
 - **Bases in hard regions:** the Hearth calms its land.
+- **The Pulse:** ≤ 0.5 ms a server tick in all; tells are client-drawn from tiny records; happening entities only within
+  96-128 blocks (the ledger's rule). Happenings never change terrain within a Hearth's radius plus 96.
+- **Worldgen:** wonders are structures with their own sets placed by the region map; new chunks only, like every ruin.
 - **MMO creep:** found-never-forced scenes, no markers, the Journal limited to what you took, Pure survival.
 - **Two sessions near the same code:** Carillon (the gate yard, Bram, the board, the Atlas) and the pack session (holo
   API) are asked first; the wilds module is untouched.
 - **Old worlds:** regions apply to new spawns; existing persistent beasts re-level when their lair wakes them.
 
-### 5.6 Order and size
+### 7.6 Order and size
 
 One builder at a time per phase, Opus at extra-high effort for the look (the combat layer, scenes, the level moment)
 and the quest writing, Sonnet subagents for data, templates, spawn tables, tests and docs.
-B (combat layer, regions, XP) → C (Wayfarers, quests, bounties: the eight chains for levels 1-20 first, then the
-twelve) → D (living creatures, camps) → E (crafts). Each phase pushes to pack/living-wilds for CI and goes to the
+B (combat layer, regions, XP) → C (Wayfarers, quests, bounties, rumours: the eight chains for levels 1-20 first, then
+the twelve) → D (the World Pulse, happenings, living creatures, camps) → E (crafts) → F (wonders, secrets, legends) →
+G (settlers, your village, roads). Each phase pushes to pack/living-wilds for CI and goes to the
 orchestrator with its CI run id.
+
+### 7.7 What opens when (always more to unlock; balanced player, pacing_sim hours, approximate)
+
+| When | What opens |
+|---|---|
+| 0 h | the Commons, plates and XP, Hale's first bounties, the Wayfarer camp, first creatures, first happenings (a murmuration, a caravan) |
+| ~0.7 h | the first Director gate (level 4) |
+| 1-2 h | the first chains (The Last Delivery, Ten Sheep Short, Moth Lights), the first regions past the Commons, a beast's lair |
+| 2-5 h | the rope at the first vault: cliff rescues, spires, egg-season climbs |
+| ~4 h | mounts (level 11): ride with migrations, escort caravans, The Crossing |
+| ~5 h | D rank: harder regions, camps and nests, Wild Hunt nights worth fighting |
+| ~6 h | the first wonder; the first settler at your Hearth |
+| ~8 h | the Veil (level 15): aurora paths, spirit chains, the Keeper's Lantern |
+| 12-18 h | craft perks (tracks, ore-sense), legendary beast rumours, caravans on your road |
+| ~18 h | C rank: Deep Tide nights, Bell Metal, the Weaver, Mire rescues by glide |
+| 30-55 h | wings and flight: sky happenings, the Relay Spires, the far wonders |
+| 55 h + | B rank and beyond: regions of 80+, the oldest nests, eclipses, the last chains |
+
+### 7.8 Decisions for Euan (each with a recommendation; "go with your recommendations" says yes to all)
+
+1. Regions replace follow-you scaling for every overworld creature; distance only tilts the odds (§1.2). **Yes.**
+2. The Hearth calms its land. **Yes.**
+3. XP rebalance: every creature pays by its level, crafts, quests, bounties and camps pay, gate floors ×0.76. **Yes.**
+4. Plates, damage numbers and the XP stream on by default, with settings. **On.**
+5. Level-up as a System moment, seen by others nearby, compact in a fight. **Yes.**
+6. Elites in the wild (5%). **Yes.**
+7. The Journal amends "Never a quest list": only chains you found and took. **Yes.**
+8. Twenty hand-written chains in two drops; relics bound to you. **Yes.**
+9. Bounties as the first slice of Carillon's contracts board. **Yes, agreed with Carillon.**
+10. Creatures in a ledger (herds, packs, roosts, camps); ignored nests raid with warning. **Yes.**
+11. Six crafts with perks and a Crafts tab. **Yes.**
+12. Jade hides creature lines while plates show them. **Yes.**
+13. Pure survival world option. **Yes.**
+14. The first hour: first gate at level 4 or 45 minutes outside; Hale and a Wayfarer camp in the Commons. **Yes.**
+15. The Nether and End keep vanilla danger for now. **Yes.**
+16. The World Pulse: one director for every happening, the Hilltop Test as the bar, the moon calendar, missable
+    happenings, today's anomalies folded in (§3). **Yes.**
+17. Wonders (one per region), region secrets, eight legendary beasts that can fall for good, treasure maps (§5). **Yes.**
+18. Your place in the world: settlers, a named village on the Atlas, roads that caravans travel, warned raids (§6).
+    **Yes, agreed with the hearth and Carillon owners.**
+19. Rumours and the Almanac: witnessing a happening kind the first time is a discovery; rumours mark regions with a
+    "?" (§3.0). **Yes.**
+
