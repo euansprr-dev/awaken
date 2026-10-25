@@ -77,6 +77,10 @@ public final class AtlasModule {
             LiteralArgumentBuilder<CommandSourceStack> atlas = Commands.literal("atlas");
             atlas.then(Commands.literal("stats").executes(c -> stats(c.getSource().getPlayerOrException())));
             atlas.then(Commands.literal("share").executes(c -> Discovery.share(c.getSource().getPlayerOrException())));
+            atlas.then(Commands.literal("pin").executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                return Discovery.pin(p, p.getBlockX(), p.getBlockY() - 1, p.getBlockZ(), false) ? 1 : 0;
+            }));
             atlas.then(Commands.literal("reveal").requires(AwakenCommands.admin())
                     .then(Commands.argument("radius", IntegerArgumentType.integer(1, 4096)).executes(c -> {
                         ServerPlayer p = c.getSource().getPlayerOrException();

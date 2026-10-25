@@ -55,6 +55,67 @@ public final class AtlasNet {
         }
     }
 
+    static final StreamCodec<ByteBuf, AtlasData.Region> REGION = StreamCodec.composite(
+            ByteBufCodecs.VAR_LONG, AtlasData.Region::id,
+            ByteBufCodecs.stringUtf8(64), AtlasData.Region::name,
+            ByteBufCodecs.VAR_INT, AtlasData.Region::heartX,
+            ByteBufCodecs.VAR_INT, AtlasData.Region::heartZ,
+            ByteBufCodecs.VAR_INT, AtlasData.Region::low,
+            ByteBufCodecs.VAR_INT, AtlasData.Region::high,
+            AtlasData.Region::new);
+
+    /** Every region the player has been in (the overworld's), whole. */
+    public record Regions(List<AtlasData.Region> regions) implements CustomPacketPayload {
+        public static final Type<Regions> TYPE = new Type<>(Awaken.id("atlas_regions"));
+        public static final StreamCodec<ByteBuf, Regions> STREAM_CODEC = StreamCodec.composite(
+                REGION.apply(ByteBufCodecs.list(1024)), Regions::regions, Regions::new);
+
+        @Override
+        public Type<Regions> type() {
+            return TYPE;
+        }
+    }
+
+    /** One pin as a party member sees it: whose, its colour, where, and whether it's the viewer's own. */
+    public record PinView(String owner, int colour, int x, int y, int z, boolean mine) {
+        static final StreamCodec<ByteBuf, PinView> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.stringUtf8(32), PinView::owner,
+                ByteBufCodecs.INT, PinView::colour,
+                ByteBufCodecs.VAR_INT, PinView::x,
+                ByteBufCodecs.VAR_INT, PinView::y,
+                ByteBufCodecs.VAR_INT, PinView::z,
+                ByteBufCodecs.BOOL, PinView::mine,
+                PinView::new);
+    }
+
+    /** The pins of your party (yours included) in your dimension, whole. */
+    public record Pins(List<PinView> pins) implements CustomPacketPayload {
+        public static final Type<Pins> TYPE = new Type<>(Awaken.id("atlas_pins"));
+        public static final StreamCodec<ByteBuf, Pins> STREAM_CODEC = StreamCodec.composite(
+                PinView.STREAM_CODEC.apply(ByteBufCodecs.list(256)), Pins::pins, Pins::new);
+
+        @Override
+        public Type<Pins> type() {
+            return TYPE;
+        }
+    }
+
+    /** Drop a pin at (x, y, z), or with {@code remove}, take back your own pin nearest it. */
+    public record Pin(int x, int y, int z, boolean remove) implements CustomPacketPayload {
+        public static final Type<Pin> TYPE = new Type<>(Awaken.id("atlas_pin"));
+        public static final StreamCodec<ByteBuf, Pin> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, Pin::x,
+                ByteBufCodecs.VAR_INT, Pin::y,
+                ByteBufCodecs.VAR_INT, Pin::z,
+                ByteBufCodecs.BOOL, Pin::remove,
+                Pin::new);
+
+        @Override
+        public Type<Pin> type() {
+            return TYPE;
+        }
+    }
+
     /** The player asks to share what they know of this dimension with their party. */
     public record Share() implements CustomPacketPayload {
         public static final Type<Share> TYPE = new Type<>(Awaken.id("atlas_share"));
@@ -70,6 +131,11 @@ public final class AtlasNet {
         var r = e.registrar("1");
         r.playToClient(Sync.TYPE, Sync.STREAM_CODEC);
         r.playToClient(Trail.TYPE, Trail.STREAM_CODEC);
+        r.playToClient(Regions.TYPE, Regions.STREAM_CODEC);
+        r.playToClient(Pins.TYPE, Pins.STREAM_CODEC);
+        r.playToServer(Pin.TYPE, Pin.STREAM_CODEC, (m, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer sp) Discovery.pin(sp, m.x(), m.y(), m.z(), m.remove());
+        });
         r.playToServer(Share.TYPE, Share.STREAM_CODEC, (m, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) Discovery.share(sp);
         });

@@ -28,7 +28,8 @@ final class AtlasRenderer extends PictureInPictureRenderer<AtlasRenderState> {
     private final AtlasPainter painter = new AtlasPainter();
     private AtlasRenderState last;
     private long lastDraw;
-    private static final long DRIFT_NANOS = 33_000_000L;
+    /** How often drifting clouds redraw the picture (dev: {@code /atlas drift <hz>}). */
+    static long DRIFT_NANOS = 33_000_000L;
 
     /** Same picture apart from the clouds' clock. */
     private static boolean sameView(AtlasRenderState a, AtlasRenderState b) {

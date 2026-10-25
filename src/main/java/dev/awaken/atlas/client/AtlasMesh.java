@@ -25,7 +25,10 @@ import java.util.concurrent.Executors;
  */
 final class AtlasMesh {
     static final int S = 64, SHIFT = 6;
-    static final int Y_REF = 64, BASE_Y = 44;
+    static final int Y_REF = 64;
+    /** The diorama's base: the cut edges go down to it and the holo grid lies on it (lower under a roof: the Nether's
+     *  lava sea is at 31). Set per dimension, with the mesh cleared. */
+    static volatile int BASE_Y = 44;
     static final int LODS = 3;
     /** Blocks per column at each level, and its shift. */
     static final int[] STEP = {1, 4, 16}, STEP_SHIFT = {0, 2, 4};

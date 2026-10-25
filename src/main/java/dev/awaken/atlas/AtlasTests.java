@@ -29,12 +29,16 @@ final class AtlasTests {
             d.trail.add(1);
             d.trail.add(70);
             d.trail.add(-2);
+            d.regions.add(new AtlasData.Region(7L, "The Ashen Reach", 900, -400, 8, 14));
+            d.pins.add(new AtlasData.Pin("minecraft:overworld", 5, 70, -9));
             var json = AtlasData.CODEC.encodeStart(JsonOps.INSTANCE, d).getOrThrow();
             h.assertTrue(json.getAsJsonObject().get("schemaVersion").getAsInt() == AtlasData.SCHEMA, "schemaVersion saved");
             AtlasData back = AtlasData.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow();
             Explored ow = back.peek("minecraft:overworld");
             h.assertTrue(ow != null && ow.count() == 3 && ow.explored(-40, 100) && ow.explored(64, 64), "cells round-trip");
             h.assertTrue(back.trail().length == 3 && back.trail()[1] == 70, "trail round-trips");
+            h.assertTrue(back.regions().size() == 1 && back.regions().getFirst().name().equals("The Ashen Reach"), "regions round-trip");
+            h.assertTrue(back.pins().size() == 1 && back.pins().getFirst().z() == -9, "pins round-trip");
             h.assertTrue(Discovery.mapped("minecraft:overworld") && !Discovery.mapped("awaken:gate_cells"), "instanced dimensions are never mapped");
             h.succeed();
         });
@@ -51,6 +55,47 @@ final class AtlasTests {
                 h.assertTrue(AtlasHooks.explored(p, at.offset(-40, 0, 40)), "a diagonal within the circle is known");
                 h.assertFalse(AtlasHooks.explored(p, at.offset(100, 0, 0)), "100 blocks east isn't");
                 h.assertTrue(Discovery.reveal(p, at, Discovery.RADIUS) == 0, "walking the same ground clears nothing new");
+                h.succeed();
+            } finally {
+                Discovery.forget(p);
+                h.getLevel().getServer().getPlayerList().remove(p);
+            }
+        });
+
+        // pins: only on ground you know, twelve at most (the oldest goes), and a pin is taken back by its owner
+        AwakenTests.register("atlas_pins", 40, h -> {
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            try {
+                BlockPos at = h.absolutePos(new BlockPos(1, 1, 1));
+                AtlasData d = Discovery.data(p);
+                d.dim(Discovery.dim(p.level())).clear();
+                d.pins.clear();
+                h.assertFalse(Discovery.pin(p, at.getX(), at.getY(), at.getZ(), false), "no pin on ground you haven't seen");
+                Discovery.reveal(p, at, 200);
+                for (int i = 0; i < AtlasData.PINS_MAX + 2; i++) Discovery.pin(p, at.getX() + i * 10, at.getY(), at.getZ(), false);
+                h.assertTrue(d.pins().size() == AtlasData.PINS_MAX && d.pins().getFirst().x() == at.getX() + 20, "twelve pins, the oldest gone");
+                h.assertTrue(Discovery.pin(p, at.getX() + 52, at.getY(), at.getZ(), true), "your own pin nearby comes back");
+                h.assertTrue(d.pins().size() == AtlasData.PINS_MAX - 1 && d.pins().stream().noneMatch(q -> q.x() == at.getX() + 50), "the nearest one");
+                h.succeed();
+            } finally {
+                Discovery.forget(p);
+                h.getLevel().getServer().getPlayerList().remove(p);
+            }
+        });
+
+        // regions: the Living Wilds region you stand in joins your Atlas once
+        AwakenTests.register("atlas_regions", 40, h -> {
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            try {
+                AtlasData d = Discovery.data(p);
+                d.regions.clear();
+                Discovery.region(p);
+                Discovery.region(p);
+                if (dev.awaken.living.api.Regions.on(p.level())) {
+                    h.assertTrue(d.regions().size() == 1 && !d.regions().getFirst().name().isBlank(), "one named region, was " + d.regions());
+                } else {
+                    h.assertTrue(d.regions().isEmpty(), "no regions outside the overworld");
+                }
                 h.succeed();
             } finally {
                 Discovery.forget(p);

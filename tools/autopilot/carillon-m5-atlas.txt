@@ -1,8 +1,8 @@
-# Carillon M5: the Atlas (SPEC §16.8), one tour per phase (phase 2 adds night lights, cloud shadows and the glance).
-# The Choir's bell clears the city, then a walk north out of the High Gate clears a road into the wilds; the table opens over the city by day, orbits, closes in, zooms out to the
-# coarser levels, goes to night, plays a bell's ripple over a cleared Bellwatch and the Registry reveal. Short perf
-# pairs (closed / open at the same spot) and the '[atlas]' lines carry open time, prepare() cost, mesh and memory.
-# Run: PACK=perf,world TECTONIC=awakened RD=16 SLOT_WHO=atlas \
+# Carillon M5: the Atlas (SPEC §16.8). Phase 3's tour, on OpenGL so frames aren't held at the display's 120 Hz (MoltenVK
+# presents at the display's rate even with vsync off): interleaved closed/open pairs at the same spot, with the clouds
+# redrawing at 30 and 60 Hz and frozen, then shots of a bell's ripple (no stray land), the city's lights at night, the
+# run's thread, party pins, region lettering from a walk east, and the Nether under its roof.
+# Run: BACKEND=opengl PACK=perf,world TECTONIC=awakened RD=16 SLOT_WHO=atlas \
 #      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/carillon-m5-atlas.txt 900
 world carillonM5atlas creative 20261024
 waitworld
@@ -20,14 +20,12 @@ wait 20
 screen close
 window 1440 900
 info
-cmd awaken city info
 hud off
-# the city: the Choir's bell clears all of it
+# the city and the road north (the world may already know them from earlier tours)
 cmd awaken city view square
 wait 160
 cmd awaken atlas ring city
 wait 20
-# a road north: out of the High Gate and on into the wilds, 32-block hops so the 64-block circle leaves no gaps
 cmd awaken city view studio_high_gate
 wait 120
 cmd tp @s ~ ~ ~-32
@@ -38,52 +36,63 @@ cmd tp @s ~8 ~ ~-32
 wait 10
 cmd tp @s ~16 ~ ~-32
 wait 10
+cmd awaken atlas pin
 cmd tp @s ~16 ~ ~-32
 wait 10
 cmd tp @s ~24 ~ ~-32
 wait 10
-cmd tp @s ~24 ~ ~-24
-wait 10
-cmd tp @s ~32 ~ ~-16
-wait 10
-cmd tp @s ~32 ~ ~-8
-wait 10
-cmd tp @s ~32 ~ ~
-wait 10
-cmd tp @s ~32 ~ ~8
-wait 10
-cmd tp @s ~32 ~ ~16
-wait 10
-# back to the square, where the table opens
+# a region beyond the Commons: stand in it long enough to learn its name
+cmd tp @s ~1300 ~ ~-200
+wait 120
+cmd awaken atlas reveal 96
+wait 60
+cmd tp @s ~-700 ~ ~900
+wait 120
+cmd awaken atlas reveal 96
+wait 40
 cmd awaken city view square
 wait 200
+cmd awaken atlas pin
 cmd awaken atlas stats
-perf m5_closed 10
+# ---- frame cost: interleaved pairs at the same spot and look --------------------------------------------------------
+perf m5_closed_a 10
 cmd atlas open 20 52 1
-wait 80
-shot m5_city_day
-perf m5_open_day 10
-cmd atlas view 40 40 1
-wait 30
-shot m5_orbit
+wait 60
+perf m5_open_30hz 10
+screen close
+perf m5_closed_b 10
+cmd atlas open 20 52 1
+cmd atlas drift 60
+wait 60
+perf m5_open_60hz 10
+cmd atlas drift 30
+cmd atlas freeze on
+wait 10
+perf m5_open_frozen 10
+cmd atlas freeze off
+screen close
+perf m5_closed_c 10
+cmd atlas open 20 52 1
+wait 40
 cmd atlas spin 30
 perf m5_open_orbit 8
 cmd atlas spin 0
+screen close
+perf m5_closed_d 8
+# ---- shots ------------------------------------------------------------------------------------------------------------
+cmd atlas open 20 52 1
+wait 60
+shot m5_city_day
 cmd atlas view 25 62 3
 wait 40
 shot m5_closeup
-cmd atlas view 20 55 0.5
-wait 60
-shot m5_road
-cmd atlas view 20 58 0.18
-wait 80
-shot m5_far
 cmd atlas view 20 50 0.4
 wait 60
 shot m5_edge
+cmd atlas view 20 60 0.09
+wait 80
+shot m5_regions
 screen close
-perf m5_closed_2 10
-# night: the land goes blue and the city's lamps come on
 cmd time set 18000
 cmd atlas open 20 52 1
 wait 80
@@ -93,14 +102,13 @@ wait 40
 shot m5_night_close
 screen close
 cmd time set 4000
-# the wrist glance on the K menu
 hud on
 screen holo
 wait 80
 shot m5_glance
 screen close
 hud off
-# a bell's ripple: forget the city, open the table, ring Bellwatch's bell
+# a bell's ripple: forget the city, open the table, ring Bellwatch's bell (no stray land in the clouds)
 cmd awaken atlas clear
 wait 20
 cmd awaken atlas reveal 64
@@ -113,7 +121,6 @@ shot m5_ripple_mid
 wait 50
 shot m5_ripple_after
 screen close
-# the Registry reveal: the run's thread over the city
 cmd awaken atlas ring city
 wait 10
 cmd atlas reveal
@@ -121,6 +128,15 @@ wait 50
 shot m5_reveal_mid
 wait 90
 shot m5_reveal_after
+screen close
+# the Nether under its roof
+cmd execute in minecraft:the_nether run tp @s 0 70 0
+wait 200
+cmd awaken atlas reveal 128
+wait 200
+cmd atlas open 20 55 1
+wait 100
+shot m5_nether
 cmd atlas stats
 screen close
 quit

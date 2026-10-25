@@ -23,6 +23,8 @@ import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.level.ChunkEvent;
 
+import java.util.List;
+
 /**
  * The Atlas, client half (SPEC §16.8): M opens the table; columns are sampled as chunks arrive and kept in the disk
  * cache; the server's explored tiles land in {@code Discovery.CLIENT}; the mesh is kept warm round the player while
@@ -43,6 +45,8 @@ public final class AtlasClient {
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(AtlasNet.Sync.TYPE, (m, ctx) -> AtlasState.get().onSync(m));
             e.register(AtlasNet.Trail.TYPE, (m, ctx) -> AtlasState.get().onTrail(m));
+            e.register(AtlasNet.Regions.TYPE, (m, ctx) -> AtlasState.get().regions = List.copyOf(m.regions()));
+            e.register(AtlasNet.Pins.TYPE, (m, ctx) -> AtlasState.get().pins = List.copyOf(m.pins()));
         });
         NeoForge.EVENT_BUS.addListener(RegisterClientCommandsEvent.class, AtlasClient::commands);
         NeoForge.EVENT_BUS.addListener(ChunkEvent.Load.class, e -> {
@@ -88,6 +92,10 @@ public final class AtlasClient {
                     return 1;
                 })))
                 .then(Commands.literal("reveal").executes(c -> reveal()))
+                .then(Commands.literal("drift").then(Commands.argument("hz", FloatArgumentType.floatArg(1f, 240f)).executes(c -> {
+                    AtlasRenderer.DRIFT_NANOS = (long) (1e9 / f(c, "hz"));
+                    return 1;
+                })))
                 .then(Commands.literal("stats").executes(c -> {
                     for (String line : AtlasState.describe()) Awaken.LOG.info("[atlas] stats: {}", line);
                     Awaken.LOG.info("[atlas] stats: glance paint {} ms", String.format(java.util.Locale.ROOT, "%.2f", AtlasGlance.paintNanos / 1e6));

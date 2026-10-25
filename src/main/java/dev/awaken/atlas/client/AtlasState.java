@@ -39,12 +39,19 @@ final class AtlasState {
     final AtlasClouds clouds = new AtlasClouds();
     /** When each recently explored cell cleared (nanoTime; later for a ripple), so its clouds part over a second. */
     final Long2LongOpenHashMap revealedAt = new Long2LongOpenHashMap();
+    /** Cells a bell's ripple will reach later (nanoTime), kept out of the record until then. */
+    private final Long2LongOpenHashMap pending = new Long2LongOpenHashMap();
     int[] trail = new int[0];
     long trailStart;
     /** The opening ended: the next time the table opens it plays the Registry reveal. */
     boolean revealPending;
     private ClientLevel level;
     private String dim = "";
+    private boolean roofed;
+    private final it.unimi.dsi.fastutil.longs.LongArrayList roofQueue = new it.unimi.dsi.fastutil.longs.LongArrayList();
+    /** The Living Wilds regions you've been in, and your party's pins here (from the server). */
+    java.util.List<dev.awaken.atlas.AtlasData.Region> regions = java.util.List.of();
+    java.util.List<AtlasNet.PinView> pins = java.util.List.of();
     private int ticks;
 
     // ---- the server's word ----------------------------------------------------------------------------------------------
@@ -56,13 +63,15 @@ final class AtlasState {
             Discovery.clientDim = m.dim();
             mine.clear();
             revealedAt.clear();
+            pending.clear();
+            mesh.clear(); // slices built from the old record would float as stray land under the clouds
         }
         boolean animate = !m.reset();
         for (Explored.TileBits t : m.tiles()) {
-            long[] old = mine.tile(t.tx(), t.tz());
+            long[] old = mine.tile(t.tx(), t.tz()), bits = t.bits().clone();
             if (animate) {
                 for (int w = 0; w < Explored.WORDS; w++) {
-                    long added = t.bits()[w] & ~(old == null ? 0L : old[w]);
+                    long added = bits[w] & ~(old == null ? 0L : old[w]);
                     while (added != 0) {
                         int bit = Long.numberOfTrailingZeros(added);
                         added &= added - 1;
@@ -73,6 +82,12 @@ final class AtlasState {
                             double dx = (cx << 4) + 8 - m.ox(), dz = (cz << 4) + 8 - m.oz();
                             at += (long) (Math.sqrt(dx * dx + dz * dz) * RIPPLE_PER_BLOCK_NANOS);
                         }
+                        if (at > now + 40_000_000L) {
+                            // the ripple hasn't reached it: no land there yet, or tall roofs would poke through the clouds
+                            bits[w] &= ~(1L << bit);
+                            pending.put(Explored.key(cx, cz), at);
+                            continue;
+                        }
                         revealedAt.put(Explored.key(cx, cz), at);
                         mesh.changed(cx << 4, cz << 4, 16);
                     }
@@ -80,7 +95,23 @@ final class AtlasState {
             } else {
                 mesh.changed(t.tx() << 9, t.tz() << 9, 512);
             }
-            mine.putTile(t.tx(), t.tz(), t.bits());
+            if (old != null) for (int w = 0; w < Explored.WORDS; w++) bits[w] |= old[w];
+            mine.putTile(t.tx(), t.tz(), bits);
+        }
+    }
+
+    /** Cells the ripple reaches now join the record: their land is built and their clouds start to part. */
+    private void ripple(long now) {
+        if (pending.isEmpty()) return;
+        var it = pending.long2LongEntrySet().iterator();
+        while (it.hasNext()) {
+            var e = it.next();
+            if (e.getLongValue() > now) continue;
+            int cx = Explored.keyX(e.getLongKey()), cz = Explored.keyZ(e.getLongKey());
+            Discovery.CLIENT.mark(cx, cz);
+            revealedAt.put(e.getLongKey(), now);
+            mesh.changed(cx << 4, cz << 4, 16);
+            it.remove();
         }
     }
 
@@ -107,13 +138,32 @@ final class AtlasState {
     void onChunkLoad(LevelChunk chunk) {
         sameLevel();
         if (!Discovery.mapped(dim)) return;
-        store.sample(chunk, chunk.getLevel().dimensionType().hasCeiling());
+        if (roofed) { // reading under a roof costs more: a few chunks a tick (roofedTick)
+            roofQueue.add(chunk.getPos().pack());
+            return;
+        }
+        store.sample(chunk, false);
         mesh.changed(chunk.getPos().getMinBlockX(), chunk.getPos().getMinBlockZ(), 16);
+    }
+
+    /** Samples queued roofed chunks that are still loaded, up to about a millisecond a tick. */
+    private void roofedTick(ClientLevel l) {
+        long t0 = System.nanoTime();
+        while (!roofQueue.isEmpty() && System.nanoTime() - t0 < 1_000_000L) {
+            long k = roofQueue.removeLong(0);
+            int cx = net.minecraft.world.level.ChunkPos.getX(k), cz = net.minecraft.world.level.ChunkPos.getZ(k);
+            if (l.getChunkSource().getChunk(cx, cz, false) instanceof LevelChunk c) {
+                store.sample(c, true);
+                mesh.changed(cx << 4, cz << 4, 16);
+            }
+        }
     }
 
     void tick(Minecraft mc, boolean open) {
         if (mc.level == null || mc.player == null) return;
         sameLevel();
+        ripple(System.nanoTime());
+        if (roofed && !roofQueue.isEmpty()) roofedTick(mc.level);
         ColumnStore.Tile t;
         int adopted = 0;
         while ((t = cache.loaded.poll()) != null && adopted++ < 4) {
@@ -141,6 +191,9 @@ final class AtlasState {
         revealedAt.clear();
         if (l == null) return;
         dim = l.dimension().identifier().toString();
+        roofed = l.dimensionType().hasCeiling();
+        roofQueue.clear();
+        AtlasMesh.BASE_Y = roofed ? 24 : 44;
         cache.open(dim);
         if (mc.player != null) {
             int tx = mc.player.getBlockX() >> ColumnStore.TILE_SHIFT, tz = mc.player.getBlockZ() >> ColumnStore.TILE_SHIFT;
@@ -156,6 +209,7 @@ final class AtlasState {
     }
 
     void leave() {
+        pending.clear();
         cache.save(store.tiles.values());
         TileCache.drain();
         store.clear();
@@ -165,6 +219,8 @@ final class AtlasState {
         Discovery.clientDim = "";
         trail = new int[0];
         trailStart = 0;
+        regions = java.util.List.of();
+        pins = java.util.List.of();
         revealPending = false;
         level = null;
     }
@@ -181,6 +237,7 @@ final class AtlasState {
     }
 
     static float night(ClientLevel level) {
+        if (level.dimensionType().hasCeiling()) return 0f; // no sky under a roof
         long t = Math.floorMod(level.getDefaultClockTime(), 24000L);
         if (t < 12000) return 0f;
         if (t < 13800) return (t - 12000) / 1800f;

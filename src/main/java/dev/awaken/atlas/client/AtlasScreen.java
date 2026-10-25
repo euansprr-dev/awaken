@@ -172,7 +172,8 @@ public final class AtlasScreen extends Screen {
         clearX0 = clearX1 - font.width(clear);
         shareX1 = clearX0 - 14;
         shareX0 = shareX1 - font.width(share);
-        for (String hint : new String[]{"drag orbit  ·  right-drag pan  ·  scroll zoom  ·  C you", "drag · right-drag · scroll · C"}) {
+        for (String hint : new String[]{"drag orbit  ·  right-drag pan  ·  scroll zoom  ·  double-click pin  ·  C you",
+                "drag orbit  ·  right-drag pan  ·  scroll zoom  ·  C you", "drag · right-drag · scroll · C"}) {
             if (x0 + 2 + font.width(hint) < shareX0 - 12) {
                 HudLook.text(g, font, hint, x0 + 2, buttonsY, Glass.LABEL | 0xFF000000, false);
                 break;
@@ -219,6 +220,22 @@ public final class AtlasScreen extends Screen {
                 label(g, name, Math.round(v.x), Math.round(v.y) - 6, d.key().equals("market") ? BRONZE : 0xFFD9E4F2);
             }
         }
+        // the Living Wilds' regions you've been in, lettered across the land once you're zoomed out, as old maps name
+        // a country: spaced capitals, quiet, with the region's levels under the name
+        if (lod > 0) {
+            for (dev.awaken.atlas.AtlasData.Region r : atlas.regions) {
+                if (!project(r.heartX(), atlas.store.groundY(r.heartX(), r.heartZ(), 64) + 6, r.heartZ(), x0, y0)) continue;
+                String name = spaced(r.name().toUpperCase(Locale.ROOT));
+                int sx = Math.round(v.x), sy = Math.round(v.y);
+                g.pose().pushMatrix();
+                g.pose().translate(sx, sy);
+                g.pose().scale(1.5f, 1.5f);
+                HudLook.text(g, font, name, -font.width(name) / 2, -4, 0xD8E6EEF8, false);
+                g.pose().popMatrix();
+                String lv = r.low() == r.high() ? "LV " + r.low() : "LV " + r.low() + "–" + r.high();
+                HudLook.text(g, font, lv, sx - font.width(lv) / 2, sy + 10, 0xB08FA7C4, false);
+            }
+        }
         if (mc.player != null) {
             for (MapMarks.Mark m : MapMarks.collect(mc.player)) {
                 BlockPos p = m.pos();
@@ -231,6 +248,17 @@ public final class AtlasScreen extends Screen {
                 int sx = Math.round(v.x), sy = Math.round(v.y), c = 0xFF000000 | m.colour();
                 diamond(g, sx, sy, 4, c, m.visited());
                 if (zoom > 0.6f) label(g, m.label(), sx, sy - 14, c);
+            }
+            // your party's pins (and yours, ringed), standing on the table
+            for (dev.awaken.atlas.AtlasNet.PinView pin : atlas.pins) {
+                if (!project(pin.x() + 0.5, pin.y() + 1, pin.z() + 0.5, x0, y0)) continue;
+                int sx = Math.round(v.x), sy = Math.round(v.y), c = pin.colour();
+                g.fill(sx, sy - 16, sx + 1, sy, 0xFF0B1626);
+                g.fill(sx - 1, sy - 16, sx, sy, c);
+                g.fill(sx - 3, sy - 21, sx + 3, sy - 15, 0xFF0B1626);
+                g.fill(sx - 2, sy - 20, sx + 2, sy - 16, c);
+                if (pin.mine()) ring(g, sx, sy - 18, 5, 0xE0E9F1FF);
+                if (zoom > 0.5f && !pin.mine()) label(g, pin.owner(), sx, sy - 32, c);
             }
             double px = mc.player.getX(), pz = mc.player.getZ();
             if (project(px, atlas.store.groundY(px, pz, mc.player.getY()), pz, x0, y0)) {
@@ -252,6 +280,41 @@ public final class AtlasScreen extends Screen {
             }
         }
         g.disableScissor();
+    }
+
+    /** "THE ASHEN REACH" → "T H E   A S H E N   R E A C H": a map's lettering for a whole country. */
+    static String spaced(String s) {
+        StringBuilder b = new StringBuilder(s.length() * 2);
+        for (int i = 0; i < s.length(); i++) {
+            if (i > 0) b.append(' ');
+            b.append(s.charAt(i) == ' ' ? "  " : String.valueOf(s.charAt(i)));
+        }
+        return b.toString();
+    }
+
+    /**
+     * The ground under a point of the panel (GUI coordinates): the view is affine, so the line of sight through it is
+     * solved for the table's height there, a few times over as the height under it settles. False off the panel.
+     */
+    private boolean ground(double mx, double my, double[] out) {
+        int x0 = px0(), y0 = py0();
+        if (mx < x0 || mx > px1() || my < y0 || my > py1()) return false;
+        Matrix4f inv = AtlasRenderState.view(new Matrix4f(), px1() - x0, py1() - y0, zoom, yaw, tilt).invert();
+        Vector3f o = inv.transformPosition((float) (mx - x0), (float) (my - y0), 0f, new Vector3f());
+        Vector3f d = inv.transformDirection(0f, 0f, 1f, new Vector3f());
+        if (Math.abs(d.y) < 1e-6f) return false;
+        double h = cy;
+        double wx = cx, wz = cz;
+        for (int i = 0; i < 4; i++) {
+            float t = (float) ((h - cy - o.y) / d.y);
+            wx = cx + o.x + d.x * t;
+            wz = cz + o.z + d.z * t;
+            h = AtlasState.get().store.groundY(wx, wz, h);
+        }
+        out[0] = wx;
+        out[1] = h;
+        out[2] = wz;
+        return true;
     }
 
     /** An amber "?" riding the clouds over a place you've only heard of, with its name. */
@@ -307,6 +370,23 @@ public final class AtlasScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent e, boolean doubleClick) {
+        // double-click: drop a pin on the ground there (your party sees it), or take back your own pin under the cursor
+        double[] at = new double[3];
+        if (doubleClick && e.button() == InputConstants.MOUSE_BUTTON_LEFT && ground(e.x(), e.y(), at)) {
+            boolean remove = false;
+            AtlasRenderState.view(gui, px1() - px0(), py1() - py0(), zoom, yaw, tilt);
+            for (dev.awaken.atlas.AtlasNet.PinView pin : AtlasState.get().pins) {
+                if (!pin.mine() || !project(pin.x() + 0.5, pin.y() + 1, pin.z() + 0.5, px0(), py0())) continue;
+                if (Math.abs(v.x - e.x()) <= 6 && v.y - e.y() >= -4 && v.y - e.y() <= 24) {
+                    remove = true;
+                    at[0] = pin.x();
+                    at[2] = pin.z();
+                }
+            }
+            ClientPacketDistributor.sendToServer(new AtlasNet.Pin((int) Math.floor(at[0]), (int) Math.floor(at[1]), (int) Math.floor(at[2]), remove));
+            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(HoloSounds.HOVER.get(), remove ? 0.8f : 1.3f, 0.8f));
+            return true;
+        }
         if (e.button() == InputConstants.MOUSE_BUTTON_LEFT && e.y() >= buttonsY - 2 && e.y() < buttonsY + 10) {
             if (e.x() >= shareX0 && e.x() < shareX1) {
                 ClientPacketDistributor.sendToServer(new AtlasNet.Share());

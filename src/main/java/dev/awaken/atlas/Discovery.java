@@ -32,7 +32,7 @@ public final class Discovery {
     /** Blocks cleared round the path. */
     public static final int RADIUS = 64;
     /** Ticks between path checks, blocks moved before a new check clears anything, ticks between batches. */
-    static final int PERIOD = 5, STEP = 4, FLUSH = 10, BELL_PERIOD = 20, TRAIL_PERIOD = 10;
+    static final int PERIOD = 5, STEP = 4, FLUSH = 10, BELL_PERIOD = 20, TRAIL_PERIOD = 10, REGION_PERIOD = 40;
 
     /** Per-player working state, never saved (the attachment is the record). */
     static final class Live {
@@ -84,6 +84,7 @@ public final class Discovery {
             l.lx = Integer.MIN_VALUE;
             l.dirty.clear();
             sendAll(p);
+            sendPins(p);
         }
         trail(p, l, phase);
         if (!mapped(dim)) return;
@@ -94,6 +95,7 @@ public final class Discovery {
             around(p, l, bx, bz, RADIUS);
         }
         if (phase % BELL_PERIOD == 0) belfry(p, l);
+        if (phase % REGION_PERIOD == 0) region(p);
         if (phase % FLUSH == 0) flush(p, l);
     }
 
@@ -183,6 +185,80 @@ public final class Discovery {
         return n;
     }
 
+    // ---- regions and pins ---------------------------------------------------------------------------------------------
+
+    /** The Living Wilds region you stand in joins your Atlas's lettering the first time you're in it. */
+    static void region(ServerPlayer p) {
+        if (!dev.awaken.living.api.Regions.on(p.level())) return;
+        var r = dev.awaken.living.api.Regions.regionAt(p.level(), p.getBlockX(), p.getBlockZ());
+        AtlasData d = data(p);
+        for (AtlasData.Region known : d.regions) if (known.id() == r.id()) return;
+        d.regions.add(new AtlasData.Region(r.id(), r.name(), r.heartX(), r.heartZ(), r.low(), r.high()));
+        AwakenNet.send(p, new AtlasNet.Regions(List.copyOf(d.regions)));
+    }
+
+    /** Drops a pin (on ground you know), or takes back your own pin nearest the spot; your party sees the change. */
+    public static boolean pin(ServerPlayer p, int x, int y, int z, boolean remove) {
+        String dim = dim(p.level());
+        AtlasData d = data(p);
+        boolean changed = false;
+        if (remove) {
+            AtlasData.Pin best = null;
+            long bestD = 24L * 24;
+            for (AtlasData.Pin pin : d.pins) {
+                long dx = pin.x() - x, dz = pin.z() - z;
+                if (pin.dim().equals(dim) && dx * dx + dz * dz <= bestD) {
+                    bestD = dx * dx + dz * dz;
+                    best = pin;
+                }
+            }
+            changed = best != null && d.pins.remove(best);
+        } else if (mapped(dim) && explored(p, new BlockPos(x, y, z))) {
+            if (d.pins.size() >= AtlasData.PINS_MAX) d.pins.removeFirst(); // the oldest goes
+            d.pins.add(new AtlasData.Pin(dim, x, y, z));
+            changed = true;
+        }
+        if (changed) for (ServerPlayer m : party(p)) sendPins(m);
+        return changed;
+    }
+
+    /** The party members online, this player first. */
+    static List<ServerPlayer> party(ServerPlayer p) {
+        List<ServerPlayer> out = new ArrayList<>();
+        out.add(p);
+        for (UUID id : PartyHooks.members(p)) {
+            if (id.equals(p.getUUID())) continue;
+            ServerPlayer m = p.level().getServer().getPlayerList().getPlayer(id);
+            if (m != null) out.add(m);
+        }
+        return out;
+    }
+
+    /** A pin colour of its own for each player: a bright hue from their id. */
+    static int colour(UUID id) {
+        float h = (id.hashCode() & 0xFFFF) / 65536f * 6f, f = h - (int) h, lo = 0.45f, up = lo + (1f - lo) * f, dn = 1f - (1f - lo) * f;
+        float[] rgb = switch ((int) h) {
+            case 0 -> new float[]{1f, up, lo};
+            case 1 -> new float[]{dn, 1f, lo};
+            case 2 -> new float[]{lo, 1f, up};
+            case 3 -> new float[]{lo, dn, 1f};
+            case 4 -> new float[]{up, lo, 1f};
+            default -> new float[]{1f, lo, dn};
+        };
+        return 0xFF000000 | ((int) (rgb[0] * 255) << 16) | ((int) (rgb[1] * 255) << 8) | (int) (rgb[2] * 255);
+    }
+
+    /** Every pin of this player's party in their dimension. */
+    static void sendPins(ServerPlayer viewer) {
+        String dim = dim(viewer.level());
+        List<AtlasNet.PinView> out = new ArrayList<>();
+        for (ServerPlayer m : party(viewer))
+            for (AtlasData.Pin pin : data(m).pins)
+                if (pin.dim().equals(dim))
+                    out.add(new AtlasNet.PinView(m.getName().getString(), colour(m.getUUID()), pin.x(), pin.y(), pin.z(), m == viewer));
+        AwakenNet.send(viewer, new AtlasNet.Pins(out));
+    }
+
     // ---- the opening run ----------------------------------------------------------------------------------------------
 
     /** Keeps the run's path while the opening's run is on; when the opening ends, sends it for the Registry reveal. */
@@ -235,6 +311,8 @@ public final class Discovery {
         sendAll(p);
         AtlasData d = data(p);
         if (!d.trail.isEmpty()) AwakenNet.send(p, new AtlasNet.Trail(List.copyOf(d.trail), false));
+        if (!d.regions.isEmpty()) AwakenNet.send(p, new AtlasNet.Regions(List.copyOf(d.regions)));
+        for (ServerPlayer m : party(p)) sendPins(m);
     }
 
     // ---- the party ----------------------------------------------------------------------------------------------------

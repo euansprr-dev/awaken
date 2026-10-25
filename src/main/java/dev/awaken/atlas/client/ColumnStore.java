@@ -89,8 +89,8 @@ final class ColumnStore {
         for (int lz = 0; lz < 16; lz++) {
             for (int lx = 0; lx < 16; lx++) {
                 int bx = bx0 + lx, bz = bz0 + lz, i = index(bx, bz);
-                int y = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING, lx, lz);
-                if (y < minY || ceiling) { // void column (End islands' gaps), or a roofed dimension we can't read yet
+                int y = ceiling ? underRoof(chunk, bx, bz, minY) : chunk.getHeight(Heightmap.Types.MOTION_BLOCKING, lx, lz);
+                if (y < minY) { // void column (End islands' gaps), or no floor under a roof
                     t.color[i] = 0;
                     continue;
                 }
@@ -124,12 +124,14 @@ final class ColumnStore {
                                 : mc == MapColor.WOOD || mc == MapColor.TERRACOTTA_WHITE || mc == MapColor.COLOR_RED ? K_BUILT : K_STONE;
                     }
                 }
-                // lit: a lamp on top, or a light a few blocks down the column (a lantern under an eave, a lit
-                // window in the wall under a roof's edge), so the city glows at night
+                // lit: a lamp on top, or a light a few blocks down the column (a lantern under an eave), or one of
+                // Carillon's lit windows (the city's kit, found by id) in the wall under a roof's edge, so the city
+                // glows at night
                 boolean lit = false;
-                for (int dy = 0; dy <= 5 && !lit; dy++) {
+                for (int dy = 0; dy <= 12 && !lit; dy++) {
                     pos.setY(y - dy);
-                    lit = chunk.getBlockState(pos).getLightEmission(chunk, pos) >= 10;
+                    BlockState below = chunk.getBlockState(pos);
+                    lit = dy <= 5 && below.getLightEmission(chunk, pos) >= 10 || window() != net.minecraft.world.level.block.Blocks.AIR && below.getBlock() == window();
                 }
                 t.height[i] = (short) y;
                 t.color[i] = argb;
@@ -141,6 +143,31 @@ final class ColumnStore {
         long dt = System.nanoTime() - t0;
         sampleNanos[(int) (samples & 4095)] = dt;
         samples++;
+    }
+
+    /** A roofed dimension (the Nether) starts sampling this far under its roof. */
+    static final int ROOF_START = 118, ROOF_SCAN = 110;
+
+    /**
+     * Under a roof the heightmap only finds the roof, so read down from just under it: through the rock to the first
+     * open air, then down through the air to the floor. The table then shows the highest floor of each column, the
+     * ledges and shores you can walk. Up to {@link #ROOF_SCAN} blocks a column, so roofed chunks are sampled a few a
+     * tick (AtlasState), never all on arrival.
+     */
+    private int underRoof(LevelChunk chunk, int bx, int bz, int minY) {
+        int y = Math.min(ROOF_START, chunk.getMaxY() - 2), end = Math.max(minY, y - ROOF_SCAN);
+        pos.set(bx, y, bz);
+        while (y > end && !chunk.getBlockState(pos).isAir()) pos.setY(--y);
+        while (y > end && chunk.getBlockState(pos).isAir()) pos.setY(--y);
+        return y > end ? y : minY - 1;
+    }
+
+    private static net.minecraft.world.level.block.Block window;
+
+    /** The city's lit window block, or air when the city isn't here. */
+    private static net.minecraft.world.level.block.Block window() {
+        if (window == null) window = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getValue(dev.awaken.Awaken.id("lit_window"));
+        return window;
     }
 
     private static Biome biome(LevelChunk chunk, int bx, int y, int bz) {
