@@ -46,6 +46,9 @@ public final class ArmsModule {
         bus.addListener(ArmsServer::onServerTick);
         bus.addListener(ArmsServer::onEntityTick);
         bus.addListener(ArmsServer::onLeave);
+        bus.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer sp) ArmsWeaves.sync(sp);
+        });
         bus.addListener(EventPriority.HIGHEST, ArmsServer::onIncomingDamage);
         bus.addListener(ArmsServer::onShieldBlock);
         bus.addListener(EventPriority.HIGHEST, ArmsServer::onAttack);
@@ -70,6 +73,7 @@ public final class ArmsModule {
         });
         r.playToClient(ArmsPayloads.Result.TYPE, ArmsPayloads.Result.STREAM_CODEC);
         r.playToClient(ArmsPayloads.Seen.TYPE, ArmsPayloads.Seen.STREAM_CODEC);
+        r.playToClient(ArmsPayloads.Woven.TYPE, ArmsPayloads.Woven.STREAM_CODEC);
     }
 
     /**

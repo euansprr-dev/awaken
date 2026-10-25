@@ -54,6 +54,7 @@ public final class ArmsClient {
     public static void init(IEventBus modBus) {
         ArmsComfort.register();
         CombatFeedback.install(ArmsFeel.INSTANCE);
+        dev.awaken.progression.client.CodexEntries.addSource(ArmsCodex::entries);
         CombatFeedback.engaged = ArmsPredict::engaged;
         FirstPerson.view(ArmsHands::view);
         Stances.install(ArmsStances.INSTANCE);
@@ -84,13 +85,17 @@ public final class ArmsClient {
         bus.addListener(ViewportEvent.ComputeCameraAngles.class, ArmsFeel::onCameraAngles);
         bus.addListener(ViewportEvent.ComputeFov.class, ArmsFeel::onFov);
         bus.addListener(net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent.class, BladeTrail::onSubmit);
-        bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> ArmsPredict.reset());
+        bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
+            ArmsPredict.reset();
+            ArmsCodex.reset();
+        });
         bus.addListener(ClientPlayerNetworkEvent.Clone.class, e -> ArmsPredict.reset());
     }
 
     private static void onPayloads(RegisterClientPayloadHandlersEvent event) {
         event.register(ArmsPayloads.Result.TYPE, (msg, ctx) -> ArmsPredict.onResult(msg));
         event.register(ArmsPayloads.Seen.TYPE, (msg, ctx) -> ArmsPredict.onSeen(msg));
+        event.register(ArmsPayloads.Woven.TYPE, (msg, ctx) -> ArmsCodex.onWoven(msg));
     }
 
     private static void onExtensions(RegisterClientExtensionsEvent event) {

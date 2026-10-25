@@ -144,6 +144,8 @@ public final class ArmsWeaves implements WeaveHooks.Weaver {
                 s.edgeForce = force;
                 s.edgeFamily = fam;
                 Fx.at(level0, FxKind.CHARGE, style, p.getEyePosition()).caster(p).scale(0.6).ticks(10).send();
+                // seen from outside too: the family's light rings the fighter's feet as the edge takes it
+                Fx.at(level0, FxKind.RING, style, p.position().add(0, 0.1, 0)).caster(p).scale(2.2).ticks(8).send();
             }
             default -> { }
         }
@@ -202,7 +204,10 @@ public final class ArmsWeaves implements WeaveHooks.Weaver {
         ArmsMemory m = p.getData(ArmsContent.MEMORY);
         String id = id(opening, fam);
         boolean first = m.weaves().add(id);
-        if (first) p.setData(ArmsContent.MEMORY, m);
+        if (first) {
+            p.setData(ArmsContent.MEMORY, m);
+            sync(p);
+        }
         Component text = Component.literal("WEAVE · ").withStyle(Style.EMPTY.withColor(0xE2B450))
                 .append(Component.literal(name(opening, fam)).withStyle(Style.EMPTY.withColor(fam.colour)));
         if (first) Signal.toast(p, text);
@@ -221,6 +226,30 @@ public final class ArmsWeaves implements WeaveHooks.Weaver {
         static ArmsMemory fresh() {
             return new ArmsMemory(SCHEMA, new HashSet<>());
         }
+    }
+
+    /** Tells the fighter's client every Weave they have woven (on joining, after a new one). */
+    static void sync(ServerPlayer p) {
+        dev.awaken.core.AwakenNet.send(p, new dev.awaken.arms.net.ArmsPayloads.Woven(List.copyOf(p.getData(ArmsContent.MEMORY).weaves())));
+    }
+
+    /** The opening and family a Weave's id names, as {opening, family ordinal}, or null for an unknown id. */
+    public static int @Nullable [] parts(String id) {
+        for (int o = DEFLECT; o <= RHYTHM; o++) {
+            for (PowerType.Family f : PowerType.Family.values()) if (id(o, f).equals(id)) return new int[]{o, f.ordinal()};
+        }
+        return null;
+    }
+
+    /** What a Weave does, in a line (the Codex): its opening's shape and its family's element. */
+    public static String describe(int opening, PowerType.Family family) {
+        String shape = switch (opening) {
+            case DEFLECT -> "Deflect, then cast: a ring bursts off the meeting of the blades.";
+            case DODGE -> "Dodge perfectly, then cast: an echo strikes where you stood.";
+            case BREAK -> "Break a stance, then cast: the power goes through the broken body and holds it down.";
+            default -> "Finish a chain in full rhythm, then cast: your next three blows carry the power.";
+        };
+        return shape + " " + family.label + " is its element. A Weave's power costs 30% less.";
     }
 
     /** How many Weaves this fighter has found (the Codex: N / ??). */
