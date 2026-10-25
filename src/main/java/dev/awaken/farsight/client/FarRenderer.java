@@ -17,7 +17,12 @@ import dev.awaken.farsight.FarColumns;
 import dev.awaken.farsight.FarLandmarks;
 import dev.awaken.farsight.FarTrees;
 import dev.awaken.farsight.Rings;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MappableRingBuffer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
+import net.minecraft.world.level.levelgen.Heightmap;
 import org.joml.FrustumIntersection;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
@@ -81,6 +86,7 @@ final class FarRenderer implements AutoCloseable {
     private final GpuTexture chunks;
     private final GpuTextureView chunksView;
     private final ByteBuffer chunkBytes = MemoryUtil.memCalloc(64 * 64);
+    private final BlockPos.MutableBlockPos probe = new BlockPos.MutableBlockPos();
 
     // the frame's pieces: ring, first cell (window-local), width and height in cells
     private final int[] pRing = new int[MAX_DRAWS], pX = new int[MAX_DRAWS], pZ = new int[MAX_DRAWS], pW = new int[MAX_DRAWS], pH = new int[MAX_DRAWS];
@@ -135,13 +141,29 @@ final class FarRenderer implements AutoCloseable {
         chunksView = RenderSystem.getDevice().createTextureView(chunks);
     }
 
-    /** Marks which chunks within {@code radius} of chunk (cx, cz) the client has. A 64×64 sweep at most: cheap. */
-    void chunks(net.minecraft.world.level.chunk.ChunkSource source, int cx, int cz, int radius) {
+    /**
+     * Marks which chunks within {@code radius} of chunk (cx, cz) the player can see: loaded, and meshed from the surface
+     * down 48 blocks (the sea floor under shallow water too), so a chunk whose water is drawn before its floor never
+     * shows the sky through it. A 64×64 sweep at most: cheap.
+     */
+    void chunks(ClientLevel level, LevelRenderer sections, long fade,
+                int cx, int cz, int radius) {
         radius = Math.min(radius, 31);
+        var source = level.getChunkSource();
+        int minY = level.getMinY();
         for (int dz = -radius; dz <= radius; dz++) {
             for (int dx = -radius; dx <= radius; dx++) {
                 int x = cx + dx, z = cz + dz;
-                chunkBytes.put(((z & 63) << 6) | (x & 63), source.hasChunk(x, z) ? (byte) 255 : 0);
+                var chunk = source.getChunk(x, z, ChunkStatus.FULL, false);
+                boolean shown = chunk != null;
+                if (shown) {
+                    int top = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, 8, 8);
+                    for (int y = top; shown && y >= Math.max(minY, top - 48); y -= 16) {
+                        probe.set(x * 16 + 8, y, z * 16 + 8);
+                        shown = sections.isSectionCompiledAndVisible(probe, fade);
+                    }
+                }
+                chunkBytes.put(((z & 63) << 6) | (x & 63), shown ? (byte) 255 : 0);
             }
         }
         chunkBytes.clear();

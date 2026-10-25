@@ -1356,6 +1356,12 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
     wanders ±9 (160-block noise), drops 22 on north faces and lifts 14 on south ones, on slopes under 1.0; scree from
     1.25, bare rock from 1.7 (vanilla's two-block surface gradient, halved). Prepended to `minecraft:overworld/biome_surface`
     for `#awaken:alpine` (the peaks, slopes, grove, windswept biomes, Frost Spires, Shattered Highlands).
+  - Mountain forests: spruce (`minecraft:trees_taiga`) 6-7 a chunk on windswept hills and forests, 0-2 on meadows
+    (per-world biome modifiers), kept below the treeline (14 under the snow line) and off slopes over 1.1 by the
+    `awaken:treeline` placement filter, `AlpineSurface.treeAllowed`, which Far Sight's far trees use too; the far forests
+    add the matching density (`AlpineSurface.mountainForest`).
+  - The snow edge breaks into drifts and bare patches over about 20 blocks (`AlpineSurface.patches`, value noise on 24-
+    and 7-block lattices with farsight.glsl's hash), in the chunks and far alike.
   - `tools/sim/ErosionStudio.java` shows the erosion offline. Tests: `terrain_alpine_erosion` (gullies run downhill,
     bounded, smooth, deterministic; summits and ridges under the ceiling), `terrain_alpine_snow_and_rock`.
 
@@ -1400,12 +1406,18 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   surface (bilinear between its corners), exactly at the edge: no crack, no pop. A corner with no data takes the coarser
   rings' surface, else open sea at sea level (never a collapsed vertex). Far terrain is hidden where the real chunks are,
   dithering in over 32 blocks at the render distance's edge, and drawn where they haven't loaded (a 64×64 chunk mask).
-- **Look** (`farsight_terrain.fsh`): Awakened Alpine's erosion octaves finer than two cells and coarser than about four
-  pixels, worked out per pixel from the same formulas (`farsight_erosion.glsl`) and lit; snow by the alpine snow line
-  (height, aspect, slope: `AlpineSurface`'s numbers) or on a cold biome's gentle ground; scree and bare rock by slope;
-  badlands strata; water with shallows; a block-by-block grain and a line at every block of height on slopes while a
-  block spans pixels; forest ground speckled with crowns. Light: the lightmap's sky texel, faces shaded as block faces,
-  a warm key where the sun reaches past the ridges and a cool shade where it doesn't, valleys darker.
+- **Look** (`farsight_terrain.fsh`; Euan's playtest, 2026-10-25: "it feels like an extension of the world"): far ground
+  is drawn in blocks at every distance. Each pixel walks its view ray through columns standing on the mesh's local
+  plane, about a pixel wide (1 block by the real chunks, then 2, 4 .. 64, dithered between widths), tops rounded to
+  whole blocks, and shows the face it meets: the top, or a side facing x or z, shaded as the game shades faces (1, 0.8,
+  0.6) under a light matched to Lens 2's on the chunks (`farLight`: a warm key where the sun reaches, Lens's cool shade
+  behind ridges, faces turned from the sun shaded only as it lowers). Grass tops stand over dirt risers (the dirt
+  texture's average, a grass fringe along the top), cliffs show stone or an Awakened biome's own block (hoarfrost, riven
+  shale, fused glass, mirepeat: palette rock kinds in colour flags bits 4-6), badlands their strata, every block its own
+  grain. Snow lies by the alpine snow line and by a smooth coldness (each corner's blocks above the game's own cold
+  line, info alpha, found by bisecting `coldEnoughToSnow`), both broken into patches over a ~20-block band
+  (`AlpineSurface.patches`, the same noise the chunks' snow uses), on tops and as a fringe on risers. Scree and bare
+  rock by slope; water with shallows; forest floor tinted by its crowns.
 - **Bake** (fragment pass, `FarGpu`): per corner the normal, valley shade, and sunlight: a march toward the sun across
   the ring (40 steps, growing), soft by how far under the ridge line. Changed rings at once, one more each frame.
 - **Far forests** (`FarTrees`): rings 1-4 (half a kilometre to four) plant jittered candidate spots per cell (1, 2, 3,

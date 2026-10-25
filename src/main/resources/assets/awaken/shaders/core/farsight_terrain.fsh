@@ -175,7 +175,7 @@ void main() {
     // the top's material, as the chunks choose it (the real chunks' colour where seen)
     vec3 top = vColor;
     float density = vInfo.b;
-    float rock = 0.0, snow = 0.0;
+    float rock = 0.0, snow = 0.0, canopy = 0.0;
     if (water) {
         // shallows show their sandy floor through the water; deep water keeps its colour
         vec3 shallow = mix(vec3(0.80, 0.76, 0.58) * (top.r + top.g + top.b) / 1.2, top * 1.5, 0.5);
@@ -192,6 +192,9 @@ void main() {
         }
         // forests: the floor under them takes the crowns' tint (the trees themselves stand on it)
         if (density > 0.0) top = mix(top, vCrown.rgb * (0.8 + 0.3 * grain), density * 0.6 * (1.0 - rock));
+        // past where trees are drawn one by one (rings 1-4, to about 4 km) a forest is its canopy: crowns over every face
+        // of the slope, risers too, speckled crown by crown, so forested far slopes read as forest, not as bare terraces
+        canopy = density * (1.0 - rock) * smoothstep(1500.0, 3500.0, horizontal);
         if (!generated) snow = snowOn(world, y, g, slope, alpine);
     }
     bool grassy = top.g > top.r * 1.05 && top.g > top.b && rock < 0.5;
@@ -205,6 +208,10 @@ void main() {
         c = side;
     } else {
         c = mix(top, SNOW, snow);
+    }
+    if (canopy > 0.0) {
+        float crownGrain = farHash(blk * 5 + ivec2(17, int(floor(y / 3.0))));
+        c = mix(c, vCrown.rgb * (0.72 + 0.4 * crownGrain), canopy * 0.9);
     }
     // every block its own shade, as block textures vary
     c *= 0.9 + 0.2 * grain;

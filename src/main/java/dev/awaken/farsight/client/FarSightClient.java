@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.fog.environment.AtmosphericFogEnvironment;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+import net.minecraft.util.Util;
 import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.phys.Vec3;
@@ -186,7 +187,7 @@ public final class FarSightClient {
         if ((partsOff & 8) == 0) gpu.bake(field, bake, sun, sun.y > 0.01f);
         field.dirty = 0;
         renderer.timeBaked();
-        if ((bakeTurn & 1) == 0) renderer.chunks(mc.level.getChunkSource(), Math.floorDiv((int) Math.floor(cam.x), 16), Math.floorDiv((int) Math.floor(cam.z), 16), rd + 1);
+        if ((bakeTurn & 1) == 0) renderer.chunks(mc.level, mc.levelRenderer, Util.toMillis(mc.options.chunkSectionFadeInTime().get()), Math.floorDiv((int) Math.floor(cam.x), 16), Math.floorDiv((int) Math.floor(cam.z), 16), rd + 1);
         RenderTarget main = mc.gameRenderer.mainRenderTarget();
         var camera = mc.gameRenderer.mainCamera();
         float fov = Math.max(camera.getFov(), mc.options.fov().get()) + 10f;
