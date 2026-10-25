@@ -88,8 +88,9 @@ final class CitizensTests {
             }
             for (int s = r.spotStart[p]; s < r.spotStart[p + 1]; s++) {
                 // a straight walk along open street may be long; a path through obstacles only the last few blocks
+                // (14.2: the generator's PATH_REACH, under the navigator's follow range of 16)
                 double dist = Math.hypot(r.spotX[s] - g.x[node], r.spotZ[s] - g.z[node]);
-                if (dist > (r.pPath[p] ? 14 : 36)) bad.add("place " + p + " spot " + s + " is " + (int) dist + " blocks from its node");
+                if (dist > (r.pPath[p] ? 14.2 : 36)) bad.add("place " + p + " spot " + s + " is " + (int) dist + " blocks from its node");
                 byte k = plan.kind((int) Math.floor(r.spotX[s]), (int) Math.floor(r.spotZ[s]));
                 boolean door = r.pKind[p] == Roster.P_DOOR || r.pKind[p] == Roster.P_LANDMARK;
                 if (!door && !CityPlan.walkable(k)) bad.add("place " + p + " (" + Roster.PLACE_KINDS[r.pKind[p]] + ") spot " + s + " on " + k);
