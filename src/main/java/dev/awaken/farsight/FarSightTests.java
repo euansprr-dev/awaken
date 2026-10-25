@@ -10,6 +10,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -135,6 +136,13 @@ final class FarSightTests {
             ServerLevel level = h.getLevel();
             BlockPos o = h.absolutePos(BlockPos.ZERO);
             int x0 = (o.getX() & ~15) + 4, z0 = (o.getZ() & ~15) + 4, y0 = o.getY() + 2;
+            // the isolated test can land under real terrain (new worlds' mountains), so the fixture owns its columns: open
+            // to the sky over the pillar, the pool and the cells around them, whatever the ground there
+            for (int x = x0 - 2; x < x0 + 8; x++) {
+                for (int z = z0 - 2; z < z0 + 4; z++) {
+                    for (int y = y0; y <= level.getMaxY(); y++) level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                }
+            }
             // the pillar: chunk cell (2, 2), 12 high; the pool: cell (4, 2), 3 deep on a stone floor
             for (int y = y0; y < y0 + 12; y++) {
                 for (int k = 0; k < 4; k++) level.setBlockAndUpdate(new BlockPos(x0 + (k & 1), y, z0 + (k >> 1)), Blocks.STONE.defaultBlockState());
