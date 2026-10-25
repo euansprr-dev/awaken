@@ -21,6 +21,27 @@ public final class AlpineSurface {
     /** Ground heights (y) over which erosion fades in: none on lowland, full on mountains. */
     public static final float ERODE_FROM = 74f, ERODE_FULL = 140f;
 
+    /** The treeline sits this far under the snow line; trees need slopes gentler than {@link #TREE_SLOPE}. */
+    public static final float TREELINE_GAP = 14f, TREE_SLOPE = 1.1f;
+
+    /**
+     * Mountain forests: spruce the pack plants in mountain biomes (windswept hills thick, meadows sparse), as the tree
+     * density (0..255) Far Sight's far forests add for them, matched to the placed features' counts.
+     */
+    public static int mountainForest(String archetype) {
+        return switch (archetype) {
+            case "windswept_hills" -> 120;
+            case "windswept_forest" -> 60;
+            case "meadow" -> 34;
+            default -> 0;
+        };
+    }
+
+    /** Whether a tree may stand on ground at (x, y, z) sloping (gx, gz): below the treeline, on soil-holding slopes. */
+    public static boolean treeAllowed(float x, float y, float z, float gx, float gz) {
+        return Math.sqrt(gx * gx + gz * gz) <= TREE_SLOPE && y <= snowLine(x, z, gx, gz) - TREELINE_GAP;
+    }
+
     /** How strongly erosion works on ground standing at {@code y}: 0 below {@link #ERODE_FROM}, 1 from {@link #ERODE_FULL}. */
     public static float erosionStrength(float y) {
         return Erosion.smooth(ERODE_FROM, ERODE_FULL, y);

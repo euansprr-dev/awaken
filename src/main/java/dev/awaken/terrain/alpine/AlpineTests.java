@@ -1,6 +1,9 @@
 package dev.awaken.terrain.alpine;
 
+import dev.awaken.Awaken;
 import dev.awaken.core.test.AwakenTests;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.core.Direction;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.level.levelgen.densityfunction.DensityFunction;
@@ -69,6 +72,11 @@ final class AlpineTests {
             h.assertTrue(pack != null, "the Awakened Alpine pack is offered");
             h.assertFalse(pack.getRequestedFeatures().isSubsetOf(FeatureFlags.DEFAULT_FLAGS), "old worlds can't load it");
             h.assertTrue(server.getPackRepository().getSelectedIds().contains(pack.getId()), "a new world loads it");
+            // mountain forests: spruce below the treeline, on soil-holding slopes, planted by the pack
+            h.assertTrue(AlpineSurface.treeAllowed(0, 120, 0, 0.3f, 0) && !AlpineSurface.treeAllowed(0, 240, 0, 0.3f, 0)
+                    && !AlpineSurface.treeAllowed(0, 120, 0, 1.5f, 0), "trees below the treeline, never on cliffs");
+            h.assertTrue(h.getLevel().registryAccess().lookupOrThrow(Registries.PLACED_FEATURE)
+                    .get(ResourceKey.create(Registries.PLACED_FEATURE, Awaken.id("alpine/mountain_spruce"))).isPresent(), "the mountain spruce loads");
             h.succeed();
         });
     }

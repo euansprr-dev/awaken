@@ -1,7 +1,8 @@
 # Far Sight 2 reference shots (docs/perf/far-sight/PLAN-2.md gates): five scenes framed like Euan's five references in
 # /Volumes/MEDIA/farsight-ref, each in four directions (the script can't know where the peaks are), on Lens Cinematic.
 # r1: high over a range at golden hour (Terrain Diffusion + Voxy); r2: a meadow under peaks; r3: down a valley from a
-# ridge; r4: forested slopes under cliffs; r5: a snowy peak over pines (Tellus). Plus a flight for seams.
+# ridge; r4: forested slopes under cliffs; r5: a snowy peak over pines (Tellus); r6: mountain forest on windswept
+# hills. Plus a flight for seams.
 # Run: PACK=perf,world TECTONIC=awakened RD=16 LENS=cinematic slot.sh tour tools/autopilot.sh tools/autopilot/farsight2-refshots.txt 1800
 world fs2ref creative 20261025
 waitworld
@@ -117,6 +118,25 @@ shot fs2r_r5_peak_pines_n
 look -90 4
 wait 40
 shot fs2r_r5_peak_pines_e
+# r6_windswept_forest
+cmd time set 7500
+cmd awaken terrain visit minecraft:windswept_hills
+wait 300
+cmd tp @s ~ ~45 ~ 0 10
+wait 600
+farsight status
+look 0 10
+wait 40
+shot fs2r_r6_windswept_s
+look 90 10
+wait 40
+shot fs2r_r6_windswept_w
+look 180 10
+wait 40
+shot fs2r_r6_windswept_n
+look -90 10
+wait 40
+shot fs2r_r6_windswept_e
 # a flight at golden hour, for seams and pops
 cmd time set 12300
 cmd tp @s ~ ~80 ~ 90 10

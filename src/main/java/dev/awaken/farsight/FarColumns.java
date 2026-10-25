@@ -1,6 +1,7 @@
 package dev.awaken.farsight;
 
 import dev.awaken.Awaken;
+import dev.awaken.terrain.alpine.AlpineSurface;
 import dev.awaken.terrain.api.CityBasin;
 import dev.awaken.terrain.api.CitySite;
 import dev.awaken.terrain.city.CityBasinFunction;
@@ -241,7 +242,8 @@ public final class FarColumns {
                 if (biome.value().coldEnoughToSnow(pos.set(x, (int) top, z), seaLevel)) flags |= COLD;
                 int rgb = water ? FarPalette.water(biome) : look.ground();
                 int depth = water ? Math.clamp(Math.round(seaLevel - ground), 1, MAX_DEPTH) : 0;
-                int density = water ? 0 : look.density();
+                // Awakened Alpine plants spruce in the mountain biomes: the far forests stand there too
+                int density = water ? 0 : Math.min(255, look.density() + (alpine ? AlpineSurface.mountainForest(look.archetype()) : 0));
                 height[k] = packHeight(top);
                 colour[k] = abgr(rgb, flags);
                 info[k] = abgr(depth, Math.min(255, look.canopy() * 4), density, 255);

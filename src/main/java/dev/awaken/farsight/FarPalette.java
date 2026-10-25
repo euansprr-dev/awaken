@@ -29,9 +29,10 @@ public final class FarPalette {
 
     /**
      * A biome from afar: its ground colour; its forest (how densely trees stand, 0..255, how tall their canopy is in
-     * blocks, their shape, and the crown colour); and its flags ({@link #BADLANDS}, {@link #STONY}).
+     * blocks, their shape, and the crown colour); its flags ({@link #BADLANDS}, {@link #STONY}); and the vanilla biome
+     * it stands for (its archetype's path).
      */
-    public record Look(int ground, int density, int canopy, int shape, int crown, int flags) {}
+    public record Look(int ground, int density, int canopy, int shape, int crown, int flags, String archetype) {}
 
     /** Tree shapes the far forests draw: round broadleaf crowns, conifers, tall jungle trees, flat acacia tops. */
     public static final int BROADLEAF = 0, CONIFER = 1, JUNGLE = 2, ACACIA = 3;
@@ -106,40 +107,40 @@ public final class FarPalette {
         int lawn = scale(grass, 0.68f), leaves = scale(foliage, 0.56f);
         if (a.contains("badlands")) {
             int ground = a.startsWith("eroded") ? TERRACOTTA : RED_SAND;
-            return a.startsWith("wooded") ? new Look(ground, 40, 6, BROADLEAF, leaves, BADLANDS) : new Look(ground, 0, 0, 0, 0, BADLANDS);
+            return a.startsWith("wooded") ? new Look(ground, 40, 6, BROADLEAF, leaves, BADLANDS, a) : new Look(ground, 0, 0, 0, 0, BADLANDS, a);
         }
-        if (a.equals("desert")) return open(SAND);
-        if (a.equals("beach")) return open(0xE0D6A4);
-        if (a.equals("snowy_beach")) return open(0xE3E8E8);
-        if (a.equals("stony_shore") || a.equals("stony_peaks")) return new Look(STONE, 0, 0, 0, 0, STONY);
-        if (a.contains("ocean") || a.contains("river")) return open(a.startsWith("frozen") ? SNOW : SEABED);
+        if (a.equals("desert")) return open(SAND, a);
+        if (a.equals("beach")) return open(0xE0D6A4, a);
+        if (a.equals("snowy_beach")) return open(0xE3E8E8, a);
+        if (a.equals("stony_shore") || a.equals("stony_peaks")) return new Look(STONE, 0, 0, 0, 0, STONY, a);
+        if (a.contains("ocean") || a.contains("river")) return open(a.startsWith("frozen") ? SNOW : SEABED, a);
         if (a.equals("ice_spikes") || a.equals("snowy_plains") || a.equals("snowy_slopes") || a.equals("frozen_peaks")
-                || a.equals("jagged_peaks")) return open(SNOW);
-        if (a.equals("snowy_taiga")) return new Look(mix(SNOW, lawn, 0.6f), 150, 8, CONIFER, mix(leaves, SNOW, 0.75f), 0);
-        if (a.equals("grove")) return new Look(SNOW, 140, 9, CONIFER, mix(leaves, SNOW, 0.75f), 0);
-        if (a.equals("mushroom_fields")) return open(MYCELIUM);
-        if (a.equals("windswept_gravelly_hills")) return new Look(GRAVEL, 20, 7, CONIFER, leaves, STONY);
-        if (a.equals("windswept_hills")) return new Look(mix(lawn, STONE, 0.65f), 25, 7, CONIFER, leaves, STONY);
-        if (a.equals("windswept_forest")) return new Look(mix(lawn, STONE, 0.65f), 150, 8, CONIFER, leaves, 0);
-        if (a.equals("windswept_savanna")) return new Look(scale(grass, 0.8f), 30, 6, ACACIA, leaves, 0);
-        if (a.equals("pale_garden")) return new Look(PALE, 210, 9, BROADLEAF, 0x8F9590, 0);
-        if (a.equals("cherry_grove")) return new Look(lawn, 150, 6, BROADLEAF, 0xD9A3B8, 0);
-        if (a.equals("dark_forest")) return new Look(scale(lawn, 0.8f), 235, 8, BROADLEAF, scale(leaves, 0.85f), 0);
-        if (a.equals("sparse_jungle")) return new Look(lawn, 90, 12, JUNGLE, leaves, 0);
-        if (a.contains("jungle")) return new Look(lawn, 230, 16, JUNGLE, leaves, 0);
-        if (a.equals("old_growth_pine_taiga") || a.equals("old_growth_spruce_taiga")) return new Look(scale(lawn, 0.9f), 220, 16, CONIFER, leaves, 0);
-        if (a.contains("taiga")) return new Look(lawn, 190, 8, CONIFER, leaves, 0);
-        if (a.equals("mangrove_swamp")) return new Look(scale(lawn, 0.85f), 200, 8, BROADLEAF, leaves, 0);
-        if (a.contains("swamp")) return new Look(scale(lawn, 0.85f), 110, 6, BROADLEAF, leaves, 0);
-        if (a.contains("forest")) return new Look(lawn, a.equals("flower_forest") ? 140 : 200, 6, BROADLEAF, leaves, 0);
-        if (a.startsWith("savanna")) return new Look(scale(grass, 0.8f), 30, 6, ACACIA, leaves, 0);
-        if (a.equals("meadow")) return new Look(lawn, 8, 8, CONIFER, leaves, 0);
-        if (a.equals("plains") || a.equals("sunflower_plains")) return new Look(lawn, 6, 6, BROADLEAF, leaves, 0);
-        return open(lawn);
+                || a.equals("jagged_peaks")) return open(SNOW, a);
+        if (a.equals("snowy_taiga")) return new Look(mix(SNOW, lawn, 0.6f), 150, 8, CONIFER, mix(leaves, SNOW, 0.75f), 0, a);
+        if (a.equals("grove")) return new Look(SNOW, 140, 9, CONIFER, mix(leaves, SNOW, 0.75f), 0, a);
+        if (a.equals("mushroom_fields")) return open(MYCELIUM, a);
+        if (a.equals("windswept_gravelly_hills")) return new Look(GRAVEL, 20, 7, CONIFER, leaves, STONY, a);
+        if (a.equals("windswept_hills")) return new Look(mix(lawn, STONE, 0.65f), 25, 7, CONIFER, leaves, STONY, a);
+        if (a.equals("windswept_forest")) return new Look(mix(lawn, STONE, 0.65f), 150, 8, CONIFER, leaves, 0, a);
+        if (a.equals("windswept_savanna")) return new Look(scale(grass, 0.8f), 30, 6, ACACIA, leaves, 0, a);
+        if (a.equals("pale_garden")) return new Look(PALE, 210, 9, BROADLEAF, 0x8F9590, 0, a);
+        if (a.equals("cherry_grove")) return new Look(lawn, 150, 6, BROADLEAF, 0xD9A3B8, 0, a);
+        if (a.equals("dark_forest")) return new Look(scale(lawn, 0.8f), 235, 8, BROADLEAF, scale(leaves, 0.85f), 0, a);
+        if (a.equals("sparse_jungle")) return new Look(lawn, 90, 12, JUNGLE, leaves, 0, a);
+        if (a.contains("jungle")) return new Look(lawn, 230, 16, JUNGLE, leaves, 0, a);
+        if (a.equals("old_growth_pine_taiga") || a.equals("old_growth_spruce_taiga")) return new Look(scale(lawn, 0.9f), 220, 16, CONIFER, leaves, 0, a);
+        if (a.contains("taiga")) return new Look(lawn, 190, 8, CONIFER, leaves, 0, a);
+        if (a.equals("mangrove_swamp")) return new Look(scale(lawn, 0.85f), 200, 8, BROADLEAF, leaves, 0, a);
+        if (a.contains("swamp")) return new Look(scale(lawn, 0.85f), 110, 6, BROADLEAF, leaves, 0, a);
+        if (a.contains("forest")) return new Look(lawn, a.equals("flower_forest") ? 140 : 200, 6, BROADLEAF, leaves, 0, a);
+        if (a.startsWith("savanna")) return new Look(scale(grass, 0.8f), 30, 6, ACACIA, leaves, 0, a);
+        if (a.equals("meadow")) return new Look(lawn, 8, 8, CONIFER, leaves, 0, a);
+        if (a.equals("plains") || a.equals("sunflower_plains")) return new Look(lawn, 6, 6, BROADLEAF, leaves, 0, a);
+        return open(lawn, a);
     }
 
-    private static Look open(int rgb) {
-        return new Look(rgb, 0, 0, 0, 0, 0);
+    private static Look open(int rgb, String a) {
+        return new Look(rgb, 0, 0, 0, 0, 0, a);
     }
 
     static int scale(int rgb, float k) {

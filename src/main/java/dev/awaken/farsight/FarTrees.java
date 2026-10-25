@@ -59,7 +59,7 @@ public final class FarTrees {
                 // the cell's slope (rise per block): too steep for soil, no trees
                 float gx = ((h10 - h00) + (h11 - h01)) * 0.5f / s, gz = ((h01 - h00) + (h11 - h10)) * 0.5f / s;
                 float slope = (float) Math.sqrt(gx * gx + gz * gz);
-                if (slope > 1.1f) continue;
+                if (slope > AlpineSurface.TREE_SLOPE) continue;
                 int flags = colour[k] >>> 24;
                 int wx0 = (px * Rings.PATCH + i) * s, wz0 = (pz * Rings.PATCH + j) * s;
                 for (int t = 0; t < spots; t++) {
@@ -70,8 +70,8 @@ public final class FarTrees {
                     if (Erosion.unit(hash * 0x297A2D39) >= density * 0.72f) continue;
                     float ground = h00 * (1 - u) * (1 - v) + h10 * u * (1 - v) + h01 * (1 - u) * v + h11 * u * v;
                     float wx = wx0 + u * s, wz = wz0 + v * s;
-                    // the treeline: a little under the alpine snow line
-                    if ((flags & FarColumns.ALPINE) != 0 && ground > AlpineSurface.snowLine(wx, wz, gx, gz) - 14f) continue;
+                    // the treeline, as the chunks' own trees keep it (Awakened Alpine's awaken:treeline)
+                    if ((flags & FarColumns.ALPINE) != 0 && !AlpineSurface.treeAllowed(wx, ground, wz, gx, gz)) continue;
                     int at = n * INTS;
                     int lx = Math.round((i + u) * s * 16), lz = Math.round((j + v) * s * 16);
                     int c = crown[k];
