@@ -89,6 +89,7 @@ public final class RitualClient {
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> reset());
         NeoForge.EVENT_BUS.addListener(ToastAddEvent.class, RitualClient::onToast);
         NeoForge.EVENT_BUS.addListener(RenderHandEvent.class, RitualClient::onHand);
+        dev.awaken.core.api.FirstPerson.view(RitualFp::viewPose);
     }
 
     // ---- quiet: nothing else on screen while the scene plays --------------------------------------------------------

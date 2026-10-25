@@ -244,7 +244,7 @@ final class Hands implements FirstPerson.Player {
 
     private static void fist(RenderHandEvent e, boolean right, float[] f) {
         float w = f[3];
-        WorldBody.drawFist(e, right, f[0] / w, f[1] / w, f[2] / w, VIEW.tint);
+        WorldBody.drawFist(e, right, f[0] / w, f[1] / w, f[2] / w, VIEW.tint, VIEW.glow);
     }
 
     private static void apply(PoseStack ps, float[] m) {

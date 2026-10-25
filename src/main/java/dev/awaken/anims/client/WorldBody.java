@@ -244,7 +244,7 @@ final class WorldBody {
      * A view clip's fist (FirstPerson.View fists): the empty arm on that side drawn rising to (x, y, z) in view space, as
      * the hand pass sees it. Drawn in the main hand's event (the off hand's may not come when it holds nothing).
      */
-    static void drawFist(net.neoforged.neoforge.client.event.RenderHandEvent e, boolean right, float x, float y, float z, int tint) {
+    static void drawFist(net.neoforged.neoforge.client.event.RenderHandEvent e, boolean right, float x, float y, float z, int tint, float glow) {
         if (broken) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
@@ -258,7 +258,10 @@ final class WorldBody {
             FirstPerson.Limb l = right ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM;
             double side = right ? 1 : -1;
             rgb = tint == 0 ? 0xFFFFFF : tint;
-            viewArm(e.getPoseStack(), e.getSubmitNodeCollector(), parts[l.ordinal()], part(model, l), type, e.getPackedLight(), x, y, z,
+            // lit from within: the block light raised toward full by the glow
+            int light = e.getPackedLight();
+            if (glow > 0) light = LightCoordsUtil.withBlock(light, Math.max(LightCoordsUtil.block(light), Math.round(15 * Math.min(1F, glow))));
+            viewArm(e.getPoseStack(), e.getSubmitNodeCollector(), parts[l.ordinal()], part(model, l), type, light, x, y, z,
                     side * FIST_ANCHOR_X, FIST_ANCHOR_Y, FIST_ANCHOR_Z, FIST_REACH, 1F);
             rgb = 0xFFFFFF;
         } catch (RuntimeException ex) {

@@ -3296,7 +3296,15 @@ of the plan). No mixins.
   (`fp_pet`), a meal from a bowl held up with the free hand under it (a stance while eating); P5 adds the Forge (block
   id `awaken:forge`, not its class) or an anvil hammered three times (`fp_hammer`, 18 ticks: holding the blade being
   tempered, the off hand strikes) and food a campfire takes (`RecipePropertySet.CAMPFIRE_INPUT`) laid on it by the hand
-  holding it (`fp_lay`). At most 9 ticks each; the
+  holding it (`fp_lay`). P6 adds: a palm pressed to a stone and held while the light answers (`fp_palm`, 18 ticks; the
+  hand lit from within, `View.glow`, and cooled a touch, 5-18) on Awaken's waystone, conduit, ascent stone, Hearth anchor,
+  rest and Stillpoint shrines, gate entrance, seal and rune (by id) and vanilla's lodestone, respawn anchor and beacon; a
+  notice torn off the Spire board (`fp_tear`); a grindstone cranked (`fp_crank`); a page turned at a lectern, an
+  enchanting table, or as a book or the Dream Journal opens (`fp_page`); the smithing table hammered (`fp_hammer`); both
+  hands set to a stonecutter, loom, cartography table or brewing stand (`fp_set`, two-handed like the lid); any
+  `awaken:*_cache` lifted like a chest. The Ritual of the Bell (`story.client.RitualFp`, a view stance): kneeling in the
+  bow both palms go flat to the floor (eased in over 6 ticks), as the eyes open the main hand comes up against the bloom
+  (50-132), at the End both hands rise palms out, shaking harder as the light drains (30-195), and drop at the error. At most 9 ticks each; the
   action never waits; a swing cuts them; with the main hand full the off hand does it (each has an `_off` twin), with both
   full nothing. Settings (feel): `firstPersonMoves` (P1-P3) and `firstPersonTouches` (P4), both on.
 - **Station scenes** (P5, `anims.client.station`): at a crafting table (used within 10 ticks of its screen opening, not
@@ -3326,6 +3334,6 @@ of the plan). No mixins.
   `anims-touch.txt` (P4: filmed with the pilot's clip recorder, since a command reaches the client a few ticks late),
   `anims-station.txt` (P5), PACK=feel, HUD on. Pilot lines `use`, `attack`, `usehold <ticks>` press the real keys;
   `station <slot> [button]` clicks a slot of the open station scene.
-- P1-P5 built (P5: the crafting table and furnace scenes, the Forge and campfire touches). Next: P6. The casts (powers) still draw their own first-person
+- P1-P6 built (P5: the crafting table and furnace scenes, the Forge and campfire touches; P6: the rest of the touches, books, the Ritual's hands). Tour P6: `anims-p6.txt`. The casts (powers) still draw their own first-person
   arms (`CastAnims`); folding them into Hands is the powers module's step, coordinated with the combat plan.
 

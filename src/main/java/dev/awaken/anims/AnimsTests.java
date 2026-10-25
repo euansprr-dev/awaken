@@ -20,7 +20,7 @@ final class AnimsTests {
         for (String name : dev.awaken.body.BodyClips.FP) h.assertTrue(clips.containsKey(name), name + " is in the file");
         for (String name : AnimsClips.TOUCHES) {
             h.assertTrue(clips.containsKey(name), name + " is in the file");
-            if (!name.equals(AnimsClips.LID)) h.assertTrue(clips.containsKey(name + "_off"), name + "_off is in the file");
+            if (!AnimsClips.twoHanded(name)) h.assertTrue(clips.containsKey(name + "_off"), name + "_off is in the file");
         }
         float[] m = new float[6], o = new float[6];
         for (FpClipSet.Clip c : clips.values()) {

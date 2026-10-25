@@ -16,6 +16,17 @@ import net.minecraft.world.item.component.UseRemainder;
 import net.minecraft.world.item.crafting.RecipePropertySet;
 import net.minecraft.world.level.block.AnvilBlock;
 import net.minecraft.world.level.block.BarrelBlock;
+import net.minecraft.world.level.block.BeaconBlock;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.BrewingStandBlock;
+import net.minecraft.world.level.block.CartographyTableBlock;
+import net.minecraft.world.level.block.EnchantingTableBlock;
+import net.minecraft.world.level.block.GrindstoneBlock;
+import net.minecraft.world.level.block.LecternBlock;
+import net.minecraft.world.level.block.LoomBlock;
+import net.minecraft.world.level.block.RespawnAnchorBlock;
+import net.minecraft.world.level.block.SmithingTableBlock;
+import net.minecraft.world.level.block.StonecutterBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ButtonBlock;
 import net.minecraft.world.level.block.CampfireBlock;
@@ -29,7 +40,11 @@ import net.minecraft.world.level.block.ShulkerBoxBlock;
 import net.minecraft.world.level.block.SweetBerryBushBlock;
 import net.minecraft.world.level.block.TrapDoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.BookEditScreen;
+import net.minecraft.client.gui.screens.inventory.BookViewScreen;
 import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import org.jspecify.annotations.Nullable;
 
@@ -66,7 +81,7 @@ final class Touches {
         lastAt = ticks;
         trace(clip + " (main " + p.getMainHandItem() + ", off " + p.getOffhandItem() + ")");
         if (p.getMainHandItem().isEmpty()) FirstPerson.play(clip);
-        else if (p.getOffhandItem().isEmpty() && !clip.equals(AnimsClips.LID)) FirstPerson.play(clip + "_off");
+        else if (p.getOffhandItem().isEmpty() && !AnimsClips.twoHanded(clip)) FirstPerson.play(clip + "_off");
     }
 
     static void rightClickBlock(PlayerInteractEvent.RightClickBlock e) {
@@ -89,15 +104,33 @@ final class Touches {
         if (clip != null) play(p, clip);
     }
 
+    /** Awaken's stones a palm is pressed to (by id: each is another module's block). */
+    private static final java.util.Set<String> PALM_STONES = java.util.Set.of("waystone", "conduit", "ascent_stone", "hearth_anchor",
+            "rest_shrine", "stillpoint_shrine", "gate_entrance", "gate_seal", "gate_rune");
+
     private static @Nullable String forUse(BlockState s) {
         Block b = s.getBlock();
+        Identifier id = BuiltInRegistries.BLOCK.getKey(b);
+        if (id.getNamespace().equals("awaken")) {
+            String path = id.getPath();
+            if (PALM_STONES.contains(path)) return AnimsClips.PALM;
+            if (path.equals("spire_board")) return AnimsClips.TEAR;
+            if (path.endsWith("_cache")) return AnimsClips.LID;
+        }
+        if (s.is(Blocks.LODESTONE) || b instanceof RespawnAnchorBlock || b instanceof BeaconBlock) return AnimsClips.PALM;
+        if (b instanceof GrindstoneBlock) return AnimsClips.CRANK;
+        if (b instanceof LecternBlock || b instanceof EnchantingTableBlock) return AnimsClips.PAGE;
+        if (b instanceof SmithingTableBlock) return AnimsClips.HAMMER;
+        if (b instanceof StonecutterBlock || b instanceof LoomBlock || b instanceof CartographyTableBlock || b instanceof BrewingStandBlock) {
+            return AnimsClips.SET;
+        }
         if (b instanceof DoorBlock || b instanceof TrapDoorBlock || b instanceof FenceGateBlock) return AnimsClips.PUSH;
         if (b instanceof LeverBlock) return AnimsClips.LEVER;
         if (b instanceof ButtonBlock) return AnimsClips.BUTTON;
         if (b instanceof ChestBlock || b instanceof BarrelBlock || b instanceof EnderChestBlock || b instanceof ShulkerBoxBlock) return AnimsClips.LID;
         if (b instanceof SweetBerryBushBlock || b instanceof CaveVinesBlock) return AnimsClips.PLUCK;
         // the Forge (the Hearth's: by its id, not its class) or an anvil: hammered, the blade held in the other hand
-        if (b instanceof AnvilBlock || FORGE.equals(BuiltInRegistries.BLOCK.getKey(b))) return AnimsClips.HAMMER;
+        if (b instanceof AnvilBlock || FORGE.equals(id)) return AnimsClips.HAMMER;
         return null;
     }
 
@@ -121,6 +154,14 @@ final class Touches {
         if (p.getMainHandItem().isEmpty()) play(p, AnimsClips.PET);
     }
 
+    /** A book opening (a written book, a book and quill, the Dream Journal): a page turned as it opens. */
+    static void screenOpening(ScreenEvent.Opening e) {
+        LocalPlayer p = Minecraft.getInstance().player;
+        if (p == null || !on(p)) return;
+        Screen s = e.getNewScreen();
+        if (s instanceof BookViewScreen || s instanceof BookEditScreen || s.getClass().getSimpleName().contains("Journal")) play(p, AnimsClips.PAGE);
+    }
+
     /** A swing cuts any touch (the hands are needed). */
     static void interactionKey(InputEvent.InteractionKeyMappingTriggered e) {
         if (!e.isAttack()) return;
@@ -130,9 +171,18 @@ final class Touches {
         }
     }
 
-    /** A stance: eating a meal from a bowl, the free hand comes up under the bowl. */
+    /** A stance: eating a meal from a bowl, the free hand comes up under the bowl. And a palm on a stone glows. */
     static void viewPose(float pt, FirstPerson.View v) {
         LocalPlayer p = Minecraft.getInstance().player;
+        if (p != null && (FirstPerson.playing(AnimsClips.PALM) || FirstPerson.playing(AnimsClips.PALM + "_off"))) {
+            // the light answers the hand: up as it presses (tick 5), held, gone as it draws back (18)
+            float a = ticks - lastAt + pt;
+            v.glow = Math.max(v.glow, a < 5 ? 0 : a < 8 ? (a - 5) / 3F : a < 13 ? 1 : Math.max(0, 1 - (a - 13) / 5F));
+            if (v.tint == 0 && v.glow > 0) {
+                // and a cool touch of the stone's light on the skin
+                v.tint = (255 - (int) (40 * v.glow)) << 16 | (255 - (int) (14 * v.glow)) << 8 | 0xFF;
+            }
+        }
         if (p == null || !p.isUsingItem() || !FirstPerson.touchesOn.getAsBoolean()) return;
         ItemStack using = p.getUseItem();
         if (using.getUseAnimation() != ItemUseAnimation.EAT && using.getUseAnimation() != ItemUseAnimation.DRINK) return;
