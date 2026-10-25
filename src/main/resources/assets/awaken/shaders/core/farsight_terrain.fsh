@@ -192,9 +192,9 @@ void main() {
         }
         // forests: the floor under them takes the crowns' tint (the trees themselves stand on it)
         if (density > 0.0) top = mix(top, vCrown.rgb * (0.8 + 0.3 * grain), density * 0.6 * (1.0 - rock));
-        // past where trees are drawn one by one (rings 1-4, to about 4 km) a forest is its canopy: crowns over every face
+        // past a few hundred blocks the drawn trees thin to dots and a forest is its canopy: crowns over every face
         // of the slope, risers too, speckled crown by crown, so forested far slopes read as forest, not as bare terraces
-        canopy = density * (1.0 - rock) * smoothstep(1500.0, 3500.0, horizontal);
+        canopy = density * (1.0 - rock) * smoothstep(600.0, 2400.0, horizontal);
         if (!generated) snow = snowOn(world, y, g, slope, alpine);
     }
     bool grassy = top.g > top.r * 1.05 && top.g > top.b && rock < 0.5;

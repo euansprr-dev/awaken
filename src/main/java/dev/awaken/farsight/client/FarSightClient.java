@@ -27,6 +27,7 @@ import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
+import net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -80,6 +81,11 @@ public final class FarSightClient {
                     FarPalette.clear();
                 }));
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.AfterSky.class, FarSightClient::afterSky);
+        // vanilla fades a new chunk section in from the fog colour, which over far terrain is a pale square on every
+        // chunk that arrives; while Far Sight draws, sections appear at once (this frame's options only, never saved)
+        NeoForge.EVENT_BUS.addListener(ExtractLevelRenderStateEvent.class, e -> {
+            if (drawing()) e.getOptionsRenderState().chunkSectionFadeInTime = 0.0;
+        });
         // before Lens (LOWEST), which reads vanilla's render-distance end through FarTerrain
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ViewportEvent.RenderFog.class, FarSightClient::fog);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingIn.class, e -> joinNanos = System.nanoTime());
@@ -187,7 +193,7 @@ public final class FarSightClient {
         if ((partsOff & 8) == 0) gpu.bake(field, bake, sun, sun.y > 0.01f);
         field.dirty = 0;
         renderer.timeBaked();
-        if ((bakeTurn & 1) == 0) renderer.chunks(mc.level, mc.levelRenderer, Util.toMillis(mc.options.chunkSectionFadeInTime().get()), Math.floorDiv((int) Math.floor(cam.x), 16), Math.floorDiv((int) Math.floor(cam.z), 16), rd + 1);
+        if ((bakeTurn & 1) == 0) renderer.chunks(mc.level, mc.levelRenderer, Util.toMillis(mc.gameRenderer.gameRenderState().optionsRenderState.chunkSectionFadeInTime), Math.floorDiv((int) Math.floor(cam.x), 16), Math.floorDiv((int) Math.floor(cam.z), 16), rd + 1);
         RenderTarget main = mc.gameRenderer.mainRenderTarget();
         var camera = mc.gameRenderer.mainCamera();
         float fov = Math.max(camera.getFov(), mc.options.fov().get()) + 10f;

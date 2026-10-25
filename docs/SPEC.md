@@ -1405,7 +1405,10 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   the generated layer, else the prediction, and over the window's outer 16 cells eases into the next coarser ring's
   surface (bilinear between its corners), exactly at the edge: no crack, no pop. A corner with no data takes the coarser
   rings' surface, else open sea at sea level (never a collapsed vertex). Far terrain is hidden where the real chunks are,
-  dithering in over 32 blocks at the render distance's edge, and drawn where they haven't loaded (a 64×64 chunk mask).
+  dithering in over 32 blocks at the render distance's edge, and drawn where they aren't shown yet (a 64×64 chunk mask:
+  a chunk counts once its surface section and the three below are meshed). While Far Sight draws, new chunk sections
+  appear at once instead of fading in from the fog colour, a pale square over far terrain (that frame's options
+  render state only; the player's setting is untouched).
 - **Look** (`farsight_terrain.fsh`; Euan's playtest, 2026-10-25: "it feels like an extension of the world"): far ground
   is drawn in blocks at every distance. Each pixel walks its view ray through columns standing on the mesh's local
   plane, about a pixel wide (1 block by the real chunks, then 2, 4 .. 64, dithered between widths), tops rounded to
@@ -1417,7 +1420,8 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   grain. Snow lies by the alpine snow line and by a smooth coldness (each corner's blocks above the game's own cold
   line, info alpha, found by bisecting `coldEnoughToSnow`), both broken into patches over a ~20-block band
   (`AlpineSurface.patches`, the same noise the chunks' snow uses), on tops and as a fringe on risers. Scree and bare
-  rock by slope; water with shallows; forest floor tinted by its crowns.
+  rock by slope; water with shallows; forest floor tinted by its crowns, and from about 600 blocks out (full by 2.4 km)
+  a forest is its canopy: crown colour over every face, speckled crown by crown.
 - **Bake** (fragment pass, `FarGpu`): per corner the normal, valley shade, and sunlight: a march toward the sun across
   the ring (40 steps, growing), soft by how far under the ridge line. Changed rings at once, one more each frame.
 - **Far forests** (`FarTrees`): rings 1-4 (half a kilometre to four) plant jittered candidate spots per cell (1, 2, 3,
