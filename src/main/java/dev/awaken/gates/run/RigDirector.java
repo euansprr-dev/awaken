@@ -123,6 +123,7 @@ public final class RigDirector {
         scanned = false;
         RigCaveIn.resetAll();
         RigMirrorsLive.resetAll();
+        RigGauntletLive.resetAll();
     }
 
     // ---- the tick ---------------------------------------------------------------------------------------------------
@@ -565,6 +566,13 @@ public final class RigDirector {
         RigCaveIn.tick(level, Long.MAX_VALUE / 2);
         RigCaveIn.tick(level, Long.MAX_VALUE);
         return n;
+    }
+
+    /** The time of the run kept as this player's ghost on a Gauntlet's course, or -1 (tests). */
+    public static int ghostTicks(GateRecord g, FloorLayout f, Room r, ServerPlayer p) {
+        Live l = LIVE.get(new Key(g.id, f.area, f.floor, r.id));
+        RigGauntletLive.Ghost ghost = l == null ? null : RigGauntletLive.best(l, p.getUUID());
+        return ghost == null ? -1 : ghost.ticks();
     }
 
     /** Whether this player's run of a Gauntlet's course is on the clock (tests). */

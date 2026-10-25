@@ -203,7 +203,7 @@ final class RigTests {
      * The Gauntlet (content version 5): every course of 1,000 seeded gates is run by the check's runner with a margin, all
      * four obstacles turn up, version 4 builds the two themes without one and every other theme exactly as version 5;
      * then a course run for real: the clock starts off the landing, a ledge falls under you, a press lands on you and
-     * throws you back, the pit throws you back, the far landing stops the clock.
+     * throws you back, the pit throws you back, the far landing stops the clock and keeps the run as your ghost.
      */
     static void registerGauntlet() {
         AwakenTests.register("gates_rig_gauntlet", 1200, h -> {
@@ -286,6 +286,7 @@ final class RigTests {
                 at.accept(c.last());
                 h.assertFalse(RigDirector.racing(g, f, r, p), "the far landing stops the clock");
                 h.assertTrue(dev.awaken.progression.Progression.profile(p).counter("awaken:gauntlet_runs") == 1, "a run counted");
+                h.assertTrue(RigDirector.ghostTicks(g, f, r, p) >= 0, "and kept as your ghost on this course");
             });
             h.succeed();
         });

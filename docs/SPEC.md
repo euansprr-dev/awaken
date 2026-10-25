@@ -1877,7 +1877,14 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
     press only while it is up with 3 ticks clear either side (waiting on the row before for its window). Its time is the
     course's par. The builder tries 4 variants, each gentler (fewer ledges and presses, a slower beat, no wall-run, no
     presses), and drops the room if none passes.
-  - Not yet: your ghost (the best run replayed) and pistons.
+  - **Your ghost**: every run is sampled (every 2 ticks: room-local position and yaw); a finished run faster than your
+    best on that course (gate, area, floor, room) becomes your ghost, kept while the server runs. Starting a run there
+    again, the server sends it to you alone (`gate_rig_ghost`: eighths of a block from the room's origin, yaw in 256ths)
+    and the clock shows "best" beside the par; your client runs a translucent you in pale gold (`GauntletGhost`, the
+    Echo's figure in your own skin, lit from within, a soft glow about it and a short ribbon of gold light behind it)
+    along it from the same start, interpolated between samples, its walk animated by its pace. It waits 1.5 s at its end,
+    then goes; giving the run up takes it at once. Client only: never seen by anyone else, never saved.
+  - Not yet: pistons.
 - **Collapse Timer** (the modifier) now drops real blocks: once a floor's time is up, every 2 s for each player still on
   it and not in a safe room, three blocks of ceiling (one where they are heading, two within 5) crack for a second,
   fall, and land as rubble (never on a door axis, a doorway or a feature): 2 + 6% of health to a player under one,

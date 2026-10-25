@@ -32,11 +32,50 @@ import java.util.UUID;
 final class RigGauntletLive {
     private RigGauntletLive() {}
 
-    /** One player's run. {@code armed}: stood on the start landing since the last run (a run starts from there). */
+    /**
+     * One player's run. {@code armed}: stood on the start landing since the last run (a run starts from there).
+     * {@code track}: where they were every {@link #GHOST_STEP} ticks of it (room-local x, y, z, yaw), for the ghost.
+     */
     static final class Racer {
         boolean armed, running, edged;
         long start;
         int ring = -1;
+        float[] track = new float[256];
+        int samples;
+
+        void sample(double x, double y, double z, float yaw) {
+            if (samples * 4 + 4 > track.length) {
+                if (samples >= RigPayloads.Ghost.MAX) return;
+                track = java.util.Arrays.copyOf(track, track.length * 2);
+            }
+            int i = samples++ * 4;
+            track[i] = (float) x;
+            track[i + 1] = (float) y;
+            track[i + 2] = (float) z;
+            track[i + 3] = yaw;
+        }
+    }
+
+    /** A run kept as its runner's ghost on that course: its time and its samples (as {@link Racer#track}). */
+    record Ghost(int ticks, float[] track, int samples) {}
+
+    /** Ghosts are sampled every this many ticks. */
+    static final int GHOST_STEP = 2;
+    /** Each player's best run per course (gate:area:floor:room), while the server runs. */
+    private static final java.util.Map<UUID, java.util.Map<String, Ghost>> BEST = new java.util.HashMap<>();
+
+    static void resetAll() {
+        BEST.clear();
+    }
+
+    private static String key(RigDirector.Live l) {
+        return l.g.id + ":" + l.f.area + ":" + l.f.floor + ":" + l.r.id;
+    }
+
+    /** The ghost a player would race on this course (tests), or null. */
+    static Ghost best(RigDirector.Live l, UUID player) {
+        var m = BEST.get(player);
+        return m == null ? null : m.get(key(l));
     }
 
     /** A press on its way down: its blocks land at {@code at}. */
@@ -137,6 +176,7 @@ final class RigGauntletLive {
                 r.armed = true;
             }
             if (row == c.first() && r.armed && !r.running) start(level, l, p, r, now);
+            if (r.running && (now - r.start) % GHOST_STEP == 0) r.sample(q[0], q[1], q[2], p.getYRot());
             if (r.running && row >= 0) {
                 for (int i = r.ring + 1; i < c.rings().length; i++) {
                     if (row < c.rings()[i]) break;
@@ -186,7 +226,11 @@ final class RigGauntletLive {
         r.armed = false;
         r.start = now;
         r.ring = -1;
-        AwakenNet.send(p, new RigPayloads.Run(RigPayloads.Run.START, 0, -1, c.rings().length, 0, c.par()));
+        r.samples = 0;
+        // your best run of this course races you (sent before the start, so it starts with you)
+        Ghost best = best(l, p.getUUID());
+        if (best != null) AwakenNet.send(p, ghost(l, best));
+        AwakenNet.send(p, new RigPayloads.Run(RigPayloads.Run.START, best == null ? 0 : best.ticks(), -1, c.rings().length, 0, c.par()));
         RigDirector.sound(level, p.position(), GatesRegistry.SND_RIG_RUN.get(), 0.8F, 1.3F);
     }
 
@@ -199,6 +243,12 @@ final class RigGauntletLive {
         RigGauntlet.Course c = l.rig.course;
         int ticks = (int) (now - r.start), medal = medal(ticks, c.par());
         r.running = false;
+        // a faster run becomes the ghost of this course
+        Ghost best = best(l, p.getUUID());
+        if ((best == null || ticks < best.ticks()) && r.samples > 1) {
+            BEST.computeIfAbsent(p.getUUID(), u -> new java.util.HashMap<>()).put(key(l),
+                    new Ghost(ticks, java.util.Arrays.copyOf(r.track, r.samples * 4), r.samples));
+        }
         AwakenNet.send(p, new RigPayloads.Run(RigPayloads.Run.FINISH, ticks, r.ring, c.rings().length, medal, c.par()));
         RigDirector.sound(level, p.position(), GatesRegistry.SND_RIG_MEDAL.get(), 1F, medal == RigPayloads.Run.GOLD ? 1.12F
                 : medal == RigPayloads.Run.SILVER ? 1F : 0.89F);
@@ -225,6 +275,19 @@ final class RigGauntletLive {
         Twists.placePortal(level, g, l.f, past, past.feature(dev.awaken.gates.world.Room.FeatureKind.EXIT_ANCHOR),
                 GatesRegistry.EXIT.get().defaultBlockState());
         dev.awaken.gates.GateRegistry.get(level.getServer()).setDirty();
+    }
+
+    /** A ghost as its payload: eighths of a block from the room's origin, the yaw in 256ths of a turn. */
+    private static RigPayloads.Ghost ghost(RigDirector.Live l, Ghost g) {
+        List<Integer> xz = new ArrayList<>(g.samples()), yw = new ArrayList<>(g.samples());
+        float[] t = g.track();
+        for (int i = 0; i < g.samples(); i++) {
+            int x = (short) Math.round(t[i * 4] * 8), y = (short) Math.round(t[i * 4 + 1] * 8), z = (short) Math.round(t[i * 4 + 2] * 8);
+            int yaw = Math.round(net.minecraft.util.Mth.wrapDegrees(t[i * 4 + 3]) / 360F * 256) & 0xFF;
+            xz.add((x << 16) | (z & 0xFFFF));
+            yw.add((y << 16) | yaw);
+        }
+        return new RigPayloads.Ghost(l.world(0, 0, 0), GHOST_STEP, g.ticks(), xz, yw);
     }
 
     /** Back to your last ring (the start landing before the first), facing the way on, with the pit's roar. */

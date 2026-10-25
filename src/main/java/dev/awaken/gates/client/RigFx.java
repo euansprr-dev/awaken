@@ -95,7 +95,8 @@ final class RigFx {
     static void submit(SubmitCustomGeometryEvent e) {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
-        if (level == null || (RigClient.beams.isEmpty() && MOVES.isEmpty() && GLOWS.isEmpty() && !RigClient.hasRings())) return;
+        if (level == null || (RigClient.beams.isEmpty() && MOVES.isEmpty() && GLOWS.isEmpty() && !RigClient.hasRings()
+                && RigGhost.current() == null)) return;
         var state = e.getLevelRenderState();
         Vec3 cam = state.cameraRenderState.pos;
         cx = cam.x;
@@ -113,6 +114,7 @@ final class RigFx {
                 for (RigClient.Beam b : RigClient.beams) beam(vc, b);
                 for (Glow g : GLOWS) glow(vc, g);
                 rings(vc);
+                ghostTrail(vc);
             } catch (RuntimeException ex) {
                 Awaken.LOG.error("[gates] rig light failed", ex);
             }
@@ -229,6 +231,29 @@ final class RigFx {
                 ring(vc, q, 0.45F, argb(hot(c, 0.4F), (done ? 0.35F : 0.6F) * pulse));
                 ring(vc, q, 0.13F, argb(hot(c, 0.85F), 0.95F * pulse));
             }
+        }
+    }
+
+    /** Your ghost's wake: a ribbon of gold light through its last steps, fading behind it. */
+    private static void ghostTrail(VertexConsumer vc) {
+        var g = RigGhost.current();
+        if (g == null) return;
+        // a soft glow about it, breathing, so it reads against dark iron as well as the slag's glow
+        Vec3 at = g.getPosition(pt).add(0, 1.0, 0);
+        float breathe = 0.85F + 0.15F * Mth.sin((now + pt) * 0.2F);
+        flare(vc, at, 1.5F * breathe, argb(0xFFD27A, 0.22F));
+        flare(vc, at.add(0, 0.55, 0), 0.6F, argb(hot(0xFFD27A, 0.6F), 0.3F));
+        if (RigGhost.TRAIL_POINTS.size() < 2) return;
+        Vec3 prev = null;
+        int i = 0, n = RigGhost.TRAIL_POINTS.size();
+        for (Vec3 p : RigGhost.TRAIL_POINTS) {
+            if (prev != null) {
+                float f = 1F - i / (float) n;
+                ribbon(vc, prev, p, 0.55F * f, argb(0xFFD27A, 0.35F * f));
+                ribbon(vc, prev, p, 0.16F * f, argb(hot(0xFFD27A, 0.7F), 0.7F * f));
+            }
+            prev = p;
+            i++;
         }
     }
 

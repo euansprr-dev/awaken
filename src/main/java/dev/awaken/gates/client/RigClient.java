@@ -77,6 +77,7 @@ public final class RigClient {
 
     static void clear() {
         RigRunHud.clear();
+        RigGhost.clear();
         ringRooms = List.of();
         rooms = List.of();
         surge = new boolean[0];
@@ -221,9 +222,10 @@ public final class RigClient {
         ClientLevel level = mc.level;
         LocalPlayer p = mc.player;
         if (level == null || p == null || level.dimension() != GatesRegistry.GATES) {
-            if (!rooms.isEmpty()) clear();
+            if (!rooms.isEmpty() || RigGhost.current() != null) clear();
             return;
         }
+        RigGhost.tick();
         long now = level.getGameTime();
         RigFx.expire(now);
         beams.clear();

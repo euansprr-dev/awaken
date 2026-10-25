@@ -51,7 +51,11 @@ public final class GatesClient {
         });
         e.register(dev.awaken.gates.net.RigPayloads.Scene.TYPE, (msg, ctx) -> RigClient.scene(msg));
         e.register(dev.awaken.gates.net.RigPayloads.Cue.TYPE, (msg, ctx) -> RigClient.cue(msg));
-        e.register(dev.awaken.gates.net.RigPayloads.Run.TYPE, (msg, ctx) -> RigRunHud.run(msg));
+        e.register(dev.awaken.gates.net.RigPayloads.Run.TYPE, (msg, ctx) -> {
+            RigRunHud.run(msg);
+            RigGhost.run(msg);
+        });
+        e.register(dev.awaken.gates.net.RigPayloads.Ghost.TYPE, (msg, ctx) -> RigGhost.ghost(msg));
         e.register(GatePayloads.SatchelView.TYPE, (msg, ctx) -> {
             ClientGates.satchel = List.copyOf(msg.items());
             ClientGates.satchelXp = msg.xp();
