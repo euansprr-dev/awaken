@@ -43,14 +43,15 @@ public final class WorldMaps {
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer sp) apply(sp);
         });
-        Awaken.LOG.info("[compat] Xaero's World Map: shut in instanced Awaken dimensions");
+        Awaken.LOG.debug("[compat] Xaero's World Map, if a player adds it: shut in instanced Awaken dimensions");
     }
 
     /** Xaero's effect, when it is registered. */
     static Optional<Holder<MobEffect>> effect() {
         if (effect == null) {
             effect = BuiltInRegistries.MOB_EFFECT.get(NO_WORLD_MAP).map(h -> h);
-            if (effect.isEmpty()) Awaken.LOG.warn("[compat] {} isn't registered (Xaero's World Map missing here, or its register_status_effects off): the map stays open everywhere", NO_WORLD_MAP);
+            // the usual case since the Atlas replaced Xaero's in the pack (SPEC §16.8): nothing to shut, nothing to say
+            if (effect.isEmpty()) Awaken.LOG.debug("[compat] {} isn't registered (no Xaero's World Map): nothing to shut", NO_WORLD_MAP);
         }
         return effect;
     }

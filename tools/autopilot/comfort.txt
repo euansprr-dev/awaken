@@ -1,11 +1,10 @@
-# Comfort tour (Awakened Pack stage 5, docs/plan-pack.html): JEI, Jade and Xaero's World Map with Awaken's plugins.
+# Comfort tour (Awakened Pack stage 5, docs/plan-pack.html): JEI and Jade with Awaken's plugins.
 #   PACK=comfort tools/autopilot.sh tools/autopilot/comfort.txt
 # Survival, so the spoiler guard is on (creative sees everything). Shots:
 #   01-02  JEI beside the inventory on a fresh player: Awaken's items hidden, the guard's count in the log
 #   03-04  after picking things up: they (and the recipes they teach) appear
 #   05-13  each Awaken JEI category, in the System's glass
 #   14-20  Jade on a gate, machines, a broken machine, a creature, the Hearth Anchor and a townsperson
-#   21-22  Xaero's World Map in the overworld, then shut inside a gate ("The map is disabled with a potion effect")
 # Read the log for [compat] lines (guard counts, plugin start, "world map shut/open") and for errors from any comfort mod.
 world autopilot_comfort survival 4242
 waitworld
@@ -135,25 +134,5 @@ cmd awaken compat stand townsfolk
 wait 40
 shot comfort_20_jade_townsperson
 
-# ---- Xaero's World Map: the overworld, then shut inside a gate ----------------------------------------------------
-compat map
-compat press gui.xaero_open_map
-wait 80
-shot comfort_21_map_overworld
-screen close
-wait 10
-cmd awaken gate hop
-wait 60
-cmd awaken gate open E bell_crypt
-wait 320
-cmd awaken gate interior enter
-wait 240
-compat map
-compat press gui.xaero_open_map
-wait 80
-shot comfort_22_map_inside_gate
-screen close
-cmd awaken gate leave
-wait 100
-compat map
+# Xaero's World Map left the pack when Awaken's own Atlas shipped (Carillon M5, SPEC §16.8); its shots 21-22 are gone.
 quit
