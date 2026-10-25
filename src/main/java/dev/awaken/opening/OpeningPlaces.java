@@ -14,8 +14,8 @@ import org.jspecify.annotations.Nullable;
  * block); the High Terrace is lifted {@link #TERRACE} above it.
  */
 public final class OpeningPlaces {
-    /** The High Terrace's lift (M1: eight above the street). */
-    static final int TERRACE = 8;
+    /** The High Terrace's lift, from the city's plan (12 since M4 B2, SPEC decision 22; M1 had eight). */
+    static final int TERRACE = CityPlan.get().terraceLift;
     /** The Association's halls (plan boxes): the infirmary west of the great door, the Registry east of it. */
     static final int INF_X0 = -21, INF_X1 = -8, HALL_Z0 = -150, HALL_Z1 = -137, ATRIUM_X0 = -7, ATRIUM_X1 = 6, REG_X0 = 7, REG_X1 = 20;
     /** Beds: heads against the north wall at these x (the first four), then against the south wall. */

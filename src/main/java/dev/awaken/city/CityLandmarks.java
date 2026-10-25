@@ -46,6 +46,8 @@ final class CityLandmarks {
                     case "mill" -> mill(c, b, p, box, x, z, g);
                     case "wheel" -> wheel(c, b, p, box, x, z);
                     case "bridge" -> bridge(c, b, p, box, x, z);
+                    case "cellar" -> cellar(c, b, p, box, x, z, g);
+                    case "walkway" -> walkway(c, b, p, box, x, z);
                     default -> {
                     }
                 }
@@ -686,6 +688,145 @@ final class CityLandmarks {
             else if (mid && r <= 5.4 && (Math.abs(dx) < 0.6 || Math.abs(dy) < 0.6 || Math.abs(Math.abs(dx) - Math.abs(dy)) < 0.6)) s = DARK_WOOD;
             if (s != null) b.set(x, ry, z, s);
         }
+    }
+
+    // ---- under the old bell (M4 B2; SPEC decision 29) -----------------------------------------------------------
+
+    /**
+     * The cellar under Bellwatch's bell tower, in the Knoll's fill: a vaulted room 9 x 9 x 5 (floor at the street's
+     * level, the bell square 8 over it), a passage east, and steps down to it from the bell square in an open stairwell
+     * with a parapet round it, entered from the north. The box: the room's walls at its west, north and south edges, the
+     * passage and the stairwell east of the room. B4 dresses it; the Living Wilds' quest finds its melting room here.
+     */
+    static void cellar(Ctx c, CityBuffer b, Part p, Box box, int x, int z, int g) {
+        if (!box.contains(x, z)) return;
+        int u = x - box.x0(), v = z - box.z0();
+        boolean room = u >= 1 && u <= 9 && v >= 1 && v <= 9;
+        boolean roomWall = u >= 0 && u <= 10 && v >= 0 && v <= 10 && !room;
+        if (room) {
+            b.set(x, 0, z, c.pct(x, z, 400) < 25 ? COBBLE : STONE_BRICKS);
+            b.column(x, 1, 5, z, AIR);
+            b.set(x, 6, z, u % 3 == 2 ? BEAM_Z[0] : DARK_PLANKS);
+        } else if (roomWall) {
+            for (int ry = 0; ry <= 6; ry++) b.set(x, ry, z, weatheredStone(c, x, ry, z));
+        }
+        // the stairwell: two wide, steps down from the north to a landing by the passage; its walls and parapet
+        boolean well = (u == 13 || u == 14) && v >= 0 && v <= 8;
+        boolean wellWall = ((u == 12 || u == 15) && v >= 0 && v <= 9) || ((u == 13 || u == 14) && v == 9);
+        if (well) {
+            if (v <= 6) {
+                int step = 7 - v;
+                b.set(x, step, z, STONE_STAIR[N]);
+                b.column(x, step + 1, g, z, AIR);
+            } else {
+                b.set(x, 0, z, STONE_BRICKS);
+                b.column(x, 1, g, z, AIR);
+            }
+        } else if (wellWall) {
+            for (int ry = 0; ry <= g; ry++) b.set(x, ry, z, weatheredStone(c, x, ry, z));
+            b.set(x, g + 1, z, STONE_WALLS[wellMask(u, v)]);
+        }
+        // the passage east (two wide, three high) through the room's wall and the stairwell's
+        if (u >= 10 && u <= 12 && (v == 7 || v == 8)) {
+            b.set(x, 0, z, STONE_BRICKS);
+            b.column(x, 1, 3, z, AIR);
+            b.set(x, 4, z, STONE_SLAB_TOP);
+        }
+        // a lantern under the vault (the room is found by its light)
+        if (u == 5 && v == 5) {
+            b.set(x, 5, z, CHAIN_Y);
+            b.set(x, 4, z, LANTERN_HANGING);
+        }
+    }
+
+    private static BlockState weatheredStone(Ctx c, int x, int ry, int z) {
+        int h = c.pct(x, z, 410 + ry);
+        return h < 15 ? MOSSY_STONE_BRICKS : h < 25 ? CRACKED_STONE_BRICKS : STONE_BRICKS;
+    }
+
+    /** The stairwell's parapet: joined along its two sides and round its south end. */
+    private static int wellMask(int u, int v) {
+        int m = 0;
+        if ((u == 12 || u == 15) && v > 0) m |= 1;
+        if ((u == 12 || u == 15) && v < 9) m |= 4;
+        if (v == 9 && u <= 14) m |= 2;
+        if (v == 9 && u >= 13) m |= 8;
+        return m;
+    }
+
+    // ---- walkways over the avenues (M4 B2; look bible §3.5) ---------------------------------------------------
+
+    /**
+     * An enclosed walkway between two facing upper floors across an avenue: its floor a storey under the lower house's
+     * eave, walls of the district's frame with small windows (blind running faces along it), its roof a road level with
+     * that eave, carried on brackets against both fronts. The box runs across the avenue ({@code axis}), three wide.
+     */
+    static void walkway(Ctx c, CityBuffer b, Part p, Box box, int x, int z) {
+        if (!box.contains(x, z)) return;
+        boolean alongX = p.axis().equals("x");
+        int along = alongX ? x - box.x0() : z - box.z0();
+        int len = alongX ? box.w() : box.d();
+        int across = alongX ? z - box.z0() : x - box.x0();
+        boolean side = across == 0 || across == 2;
+        int deck = p.h(), floor = deck - 4;
+        String st = p.style();
+        boolean timber = st.equals("bellwatch") || st.equals("quay") || st.equals("wallring");
+        BlockState wall = switch (st) {
+            case "bellwatch", "wallring", "garden" -> PLASTER[P_WHITE];
+            case "quay" -> SPRUCE_PLANKS;
+            case "market" -> PLASTER[P_CREAM];
+            case "terrace" -> CALCITE;
+            default -> CITY_BRICKS;
+        };
+        BlockState frame = timber ? T_POST[0] : st.equals("terrace") ? POLISHED_DIORITE : st.equals("market") ? CUT_SANDSTONE : ASHLAR;
+        BlockState beam = alongX ? T_BEAM_X[0] : T_BEAM_Z[0];
+        // (at its ends it meets the houses: never inside a jettied upper storey, and a drainpipe in front of a house runs
+        // on up past it)
+        int toward = along <= 1 ? -1 : along >= len - 2 ? 1 : 0;
+        if (toward != 0 && houseEnd(c, x, z, alongX ? toward : 0, alongX ? 0 : toward)) return;
+        BlockState roof = switch (st) {
+            case "bellwatch", "wallring" -> SLATE_KIT.block();
+            case "quay" -> SPRUCE.block();
+            case "market" -> CLAY.block();
+            case "terrace" -> PALE.block();
+            case "garden" -> GREEN.block();
+            default -> BRICK.block();
+        };
+        b.set(x, floor, z, timber ? beam : STONE_SLAB_TOP);
+        for (int ry = floor + 1; ry < deck; ry++) {
+            BlockState s;
+            if (!side) s = AIR;
+            else if (along == 0 || along == len - 1 || along % 3 == 0) s = frame;
+            else if (ry == floor + 2) s = WINDOW[timber ? W_LEADED : W_SASH][2];
+            else s = wall;
+            b.set(x, ry, z, s);
+        }
+        b.set(x, deck, z, side ? (timber ? beam : frame) : roof);
+        // brackets under its ends, against the fronts (where the walkway starts: its end cell, or the next when a jetty took it)
+        int ax = alongX ? toward : 0, az = alongX ? 0 : toward;
+        boolean end = along == 0 || along == len - 1 || (toward != 0 && houseEnd(c, x + ax, z + az, ax, az));
+        if (side && end && toward != 0) {
+            int facing = alongX ? (toward < 0 ? W : E) : (toward < 0 ? N : S);
+            b.set(x, floor - 1, z, (timber ? CORBEL : STONE_CORBEL)[facing]);
+        }
+    }
+
+    /**
+     * Whether (x, z) belongs to the house a step or two beyond it in direction (dx, dz): inside its upper storeys (a
+     * jetty over the street), or the cell of a climb line in front of them.
+     */
+    static boolean houseEnd(Ctx c, int x, int z, int dx, int dz) {
+        for (int k = 1; k <= 2; k++) {
+            int id = c.plan.plotAt(x + dx * k, z + dz * k);
+            if (id < 0) continue;
+            CityGrammar.Facade f = CityGrammar.facadeOf(c, c.plan.plots.get(id));
+            if (f.up.contains(x, z)) return true;
+            int sd = f.up.outside(x, z);
+            if (sd < 0) return false;
+            int t = f.up.along(sd, x, z);
+            return t >= 0 && t < f.climb[sd].length && f.climb[sd][t];
+        }
+        return false;
     }
 
     // ---- bridges ----------------------------------------------------------------------------------------------
