@@ -386,6 +386,109 @@ final class CityTests {
             h.succeed();
         });
 
+        // the grid holds for the Runner's own hang (body.RunnerRules.findEdge, the code the free-run uses): a body jumping
+        // at any hold of a climbing face's window stack from 1.8 below it catches that hold, and from the street the
+        // row-3 hood is caught at the top of a standing jump
+        AwakenTests.register("city_grid_catchable", 200, h -> {
+            CityLayout l = layoutAt(0, 0);
+            long seed = 20261024L;
+            CityPainter.Ctx c = new CityPainter.Ctx(l, seed);
+            CityBuffer buf = new CityBuffer(24, 24);
+            net.minecraft.world.level.BlockGetter view = new net.minecraft.world.level.BlockGetter() {
+                @Override
+                public net.minecraft.world.level.block.entity.BlockEntity getBlockEntity(BlockPos p) {
+                    return null;
+                }
+
+                @Override
+                public BlockState getBlockState(BlockPos p) {
+                    BlockState s = buf.get(p.getX(), p.getY(), p.getZ());
+                    return s == null ? Blocks.AIR.defaultBlockState() : s;
+                }
+
+                @Override
+                public net.minecraft.world.level.material.FluidState getFluidState(BlockPos p) {
+                    return getBlockState(p).getFluidState();
+                }
+
+                @Override
+                public int getHeight() {
+                    return CityBuffer.H;
+                }
+
+                @Override
+                public int getMinY() {
+                    return CityBuffer.YMIN;
+                }
+            };
+            BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+            var ctx = net.minecraft.world.phys.shapes.CollisionContext.empty();
+            int holds = 0, caught = 0, hoods = 0, hoodsCaught = 0;
+            String first = "";
+            java.util.Map<String, Integer> misses = new java.util.TreeMap<>();
+            for (CityPlan.Plot p : l.plan.plots) {
+                if (p.id() % 3 != 0 || p.storeys() < 2) continue;
+                CityGrammar.Facade f = CityGrammar.facadeOf(c, p);
+                boolean painted = false;
+                int g = p.lift();
+                for (int sd = 0; sd < 4; sd++) {
+                    if (f.jetty[sd]) continue; // a jettied face is climbed at its ends
+                    int len = f.up.length(sd);
+                    int ax = sd == CityPlan.N || sd == CityPlan.S ? 2 : 0, sign = sd == CityPlan.N || sd == CityPlan.W ? 1 : -1;
+                    for (int t = 1; t < len - 1; t++) {
+                        if (f.upClass(sd, t) < CityGrammar.F_BACK || !f.win(sd, t, len, 1)) continue;
+                        int[] o = f.outsideCell(f.up, sd, t);
+                        if (CityGrammar.shared(l.plan, p, sd, o[0], o[1]) || CityGrammar.underForeignJetty(l.plan, p, o[0], o[1])) continue;
+                        if (!painted) {
+                            paintAround(l, seed, p.x0() - 5, p.z0() - 5, buf);
+                            painted = true;
+                        }
+                        // the face of the outside cell toward the street, and a body just in front of it
+                        double face = switch (sd) {
+                            case CityPlan.N -> o[1];
+                            case CityPlan.S -> o[1] + 1;
+                            case CityPlan.W -> o[0];
+                            default -> o[0] + 1;
+                        };
+                        double body = face - sign * 0.33;
+                        double along = (ax == 2 ? o[0] : o[1]) + 0.5;
+                        for (int r = 3; r < p.eave(); r += 2) {
+                            BlockState s = buf.get(o[0], g + r, o[1]);
+                            if (s == null || !lip(s) || !clearOver(buf.get(o[0], g + r + 1, o[1]))) continue;
+                            if (g + r <= l.plan.lift(o[0], o[1])) continue;
+                            double top = g + r + 1;
+                            double py = r == 3 ? g + 1 + 1.25 : top - 1.8;
+                            double px = ax == 0 ? body : along, pz = ax == 0 ? along : body;
+                            var e = dev.awaken.body.RunnerRules.findEdge(view, ctx, m, px, py, pz, ax, sign, dev.awaken.body.RunnerRules.HANG_REACH,
+                                    dev.awaken.body.RunnerRules.HANG_LO, dev.awaken.body.RunnerRules.HANG_HI, 0, 0.2);
+                            boolean ok = e != null && Math.abs(e.top() - top) < 0.01;
+                            if (r == 3) {
+                                hoods++;
+                                if (ok) hoodsCaught++;
+                            } else {
+                                holds++;
+                                if (ok) caught++;
+                            }
+                            if (!ok) {
+                                String why = dev.awaken.body.RunnerRules.whyNot(view, ctx, m, px, py, pz, ax, sign, dev.awaken.body.RunnerRules.HANG_REACH,
+                                        dev.awaken.body.RunnerRules.HANG_LO, dev.awaken.body.RunnerRules.HANG_HI).replaceAll("[-0-9.]+", "#");
+                                misses.merge("row " + (r == 3 ? "3" : r % 4 == 1 ? "course" : "box") + ": " + s.getBlock().getDescriptionId() + ": " + why, 1, Integer::sum);
+                            }
+                            if (!ok && first.isEmpty())
+                                first = "row " + r + " of plot " + p.id() + " (" + CityPlan.DISTRICTS[p.district()] + ") side " + sd + " column " + t + ": " + s
+                                        + " -> " + dev.awaken.body.RunnerRules.whyNot(view, ctx, m, px, py, pz, ax, sign, dev.awaken.body.RunnerRules.HANG_REACH,
+                                        dev.awaken.body.RunnerRules.HANG_LO, dev.awaken.body.RunnerRules.HANG_HI);
+                        }
+                    }
+                }
+            }
+            dev.awaken.Awaken.LOG.info("[city] catchable: {}/{} holds, {}/{} hoods from the street; misses by kind {}", caught, holds, hoodsCaught, hoods, misses);
+            h.assertTrue(holds > 2000 && hoods > 200, "holds checked: " + holds + ", hoods " + hoods);
+            h.assertTrue(caught * 100 >= holds * 98, (holds - caught) + " of " + holds + " holds the Runner can't catch; first " + first);
+            h.assertTrue(hoodsCaught * 100 >= hoods * 95, (hoods - hoodsCaught) + " of " + hoods + " hoods out of reach from the street; first " + first);
+            h.succeed();
+        });
+
         // the kit's climbables climb, and the movement tags (SPEC §16.9) hold none of the "no" language
         AwakenTests.register("city_kit_tags", 20, h -> {
             for (var blk : List.of(dev.awaken.city.kit.CityKit.DRAINPIPE, dev.awaken.city.kit.CityKit.TRELLIS, dev.awaken.city.kit.CityKit.ROPE)) {
