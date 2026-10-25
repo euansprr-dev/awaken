@@ -22,15 +22,24 @@ public record Archetype(String id, String name, float baseSpeed, Guard guard, Do
     /**
      * What sets a style apart beyond its rows (SPEC §25 "Styles"): a blow from behind multiplied (the Daggers' backstab;
      * 1 for none), and the draw cut (the Katana: the first strike after the blade has rested this long, in ticks, is
-     * drawn from the sheath, its motion and posture multiplied; 0 for none).
+     * drawn from the sheath, its motion and posture multiplied; 0 for none). A spirit struck multiplied (the Scythe);
+     * the struck body pulled this far toward the fighter (the Chain-blade); power energy back for each blow landed (the
+     * War-staff); reach grown with each step of the chain (the Precursor Arm's blade); a riposte that throws the body
+     * this hard (the Gauntlets).
      */
-    public record Traits(float backstab, int drawIdle, float drawMotion, float drawPosture) {
-        public static final Traits NONE = new Traits(1F, 0, 1F, 1F);
+    public record Traits(float backstab, int drawIdle, float drawMotion, float drawPosture, float spirit, float pull, float energy,
+                         float reachPerStep, float riposteThrow) {
+        public static final Traits NONE = new Traits(1F, 0, 1F, 1F, 1F, 0F, 0F, 0F, 0F);
         static final Codec<Traits> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.FLOAT.optionalFieldOf("backstab", 1F).forGetter(Traits::backstab),
                 Codec.INT.optionalFieldOf("drawIdle", 0).forGetter(Traits::drawIdle),
                 Codec.FLOAT.optionalFieldOf("drawMotion", 1F).forGetter(Traits::drawMotion),
-                Codec.FLOAT.optionalFieldOf("drawPosture", 1F).forGetter(Traits::drawPosture)
+                Codec.FLOAT.optionalFieldOf("drawPosture", 1F).forGetter(Traits::drawPosture),
+                Codec.FLOAT.optionalFieldOf("spirit", 1F).forGetter(Traits::spirit),
+                Codec.FLOAT.optionalFieldOf("pull", 0F).forGetter(Traits::pull),
+                Codec.FLOAT.optionalFieldOf("energy", 0F).forGetter(Traits::energy),
+                Codec.FLOAT.optionalFieldOf("reachPerStep", 0F).forGetter(Traits::reachPerStep),
+                Codec.FLOAT.optionalFieldOf("riposteThrow", 0F).forGetter(Traits::riposteThrow)
         ).apply(i, Traits::new));
     }
 

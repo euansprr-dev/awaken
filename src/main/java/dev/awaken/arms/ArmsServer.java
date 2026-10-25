@@ -251,7 +251,9 @@ final class ArmsServer {
     /** The arc's work for one active tick: every creature in reach and in the arc, once. */
     static void sweep(ServerPlayer p, ArmsState s, Archetype.MoveDef def, long now) {
         ServerLevel level = p.level();
-        double reach = def.reachAt(now - s.moveStart) + 0.3;
+        // the Precursor Arm's blade grows with the chain
+        float grow = s.style == null || s.step < 0 || s.move == null || !s.move.strike() ? 0F : s.style.def().traits().reachPerStep() * s.step;
+        double reach = def.reachAt(now - s.moveStart) + 0.3 + grow;
         Vec3 eye = p.getEyePosition();
         float yaw = p.getYRot() + focusTurn(p, s);
         AABB box = p.getBoundingBox().inflate(reach + 1, 1.5, reach + 1);
@@ -338,6 +340,7 @@ final class ArmsServer {
             pendingMotion *= traits.drawMotion();
             pendingPosture = Math.round(pendingPosture * traits.drawPosture());
         }
+        if (traits.spirit() != 1F && dev.awaken.core.api.BodyMaterial.of(t) == dev.awaken.core.api.BodyMaterial.SPIRIT) pendingMotion *= traits.spirit();
         if (traits.backstab() > 1F) {
             float toStriker = (float) (Mth.atan2(p.getZ() - t.getZ(), p.getX() - t.getX()) * Mth.RAD_TO_DEG) - 90F;
             if (ArmsRules.behind(t.yBodyRot, toStriker)) pendingMotion *= traits.backstab();
@@ -354,6 +357,7 @@ final class ArmsServer {
             pendingBy = pendingTarget = -1;
         }
         if (!pendingLanded) return;
+        landedTraits(p, s, t, traits);
         p.level().playSound(p, t.getX(), t.getY(0.6), t.getZ(), ArmsSounds.impact(t, s.move, def, s.style == null ? null : s.style.id()), SoundSource.PLAYERS, 1.0F, ArmsSounds.impactPitch(t, def));
         s.fightAt = now;
         if (s.focus != t.getId()) s.focus = t.getId();
@@ -364,6 +368,29 @@ final class ArmsServer {
         AwakenNet.send(p, new ArmsPayloads.Result(s.moveSeq, ArmsPayloads.HIT, t.getId(), ms, s.move == null ? 0 : s.move.ordinal()));
         seen(p, new ArmsPayloads.Seen(t.getId(), ArmsPayloads.HIT, p.getId(), ms, s.move == null ? 0 : s.move.ordinal()));
         if (def.finisher()) resonance(p, s, ArmsRules.RESONANCE_FINISHER);
+    }
+
+    /** What a style's blow does beyond its damage once it lands: a pull, a throw off a riposte, energy back. */
+    private static void landedTraits(ServerPlayer p, ArmsState s, LivingEntity t, Archetype.Traits traits) {
+        boolean heavyBody = t.getMaxHealth() >= 150; // a Lord is neither reeled in nor thrown
+        double resist = 1 - t.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE);
+        if (traits.pull() > 0 && !heavyBody) {
+            net.minecraft.world.phys.Vec3 to = p.position().subtract(t.position());
+            double d = Math.max(1e-3, to.horizontalDistance());
+            if (d > 1.6) {
+                double k = Math.min(traits.pull(), d - 1.5) * 0.35 * resist;
+                t.setDeltaMovement(t.getDeltaMovement().add(to.x / d * k, 0.12, to.z / d * k));
+                t.needsSync = true;
+            }
+        }
+        if (traits.riposteThrow() > 0 && s.move == Archetype.Move.RIPOSTE && !heavyBody) {
+            net.minecraft.world.phys.Vec3 away = t.position().subtract(p.position());
+            double d = Math.max(1e-3, away.horizontalDistance());
+            double k = traits.riposteThrow() * resist;
+            t.setDeltaMovement(t.getDeltaMovement().add(away.x / d * k, 0.25 + 0.15 * k, away.z / d * k));
+            t.needsSync = true;
+        }
+        if (traits.energy() > 0) dev.awaken.powers.Powers.restoreEnergy(p, traits.energy());
     }
 
     // ---- damage -------------------------------------------------------------------------------------------------------
