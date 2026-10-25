@@ -1299,7 +1299,8 @@ The Veil, the Lucidium and the rest:
   while the world's `pvp` game rule is on. A Body felled by a player who may not hurt it never takes its owner along.
 - Only its owner possesses a bonded mount (as with tamed pets; `MobHooks.bondedTo`).
 - Overworld creatures' content level follows the group: the lowest level among awakened players within 48 blocks of
-  the spawn decides (then the nearest player within 128, as before).
+  the spawn decides (then the nearest player within 128, as before). Since the Living Wilds (§21.0.1) this holds only
+  where the region map is off; in the overworld the place decides and a Hearth calms its land (§21.0.2).
 - The cast-fail sound plays to the caster only.
 - Rate limits: Journal actions 4 a second, reality checks one per 10 ticks, the playtest "unfair death" flag one per
   2 s; background dream builds at most 3 per player per 1000 ticks, whatever asks for them.
