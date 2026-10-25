@@ -331,14 +331,18 @@ final class CitizensCommands {
             if (score == 3 && pk != Roster.P_DOOR && pk != Roster.P_TAVERN_OUT && pk != Roster.P_SIT && pk != Roster.P_LANDMARK) score = 4;
             if (d.state[i] != CitizensData.INSIDE && own(job, pk, c.ledger.act(i))) score += 3;
             if (d.dwellUntil[i] > 0) score -= 1; // they'll walk on soon
-            score = score * 1000 + (int) Math.floorMod(CitizenWork.mixHash(i), 997L);
+            // (B3b) each call shows the next of the best-placed, not the same one again (tours frame several)
+            score = score * 1000 + (int) Math.floorMod(CitizenWork.mixHash(i + 7919L * showTurn), 997L);
             if (score > bestScore) {
                 bestScore = score;
                 best = i;
             }
         }
+        showTurn++;
         return best;
     }
+
+    private static int showTurn;
 
     /** The job's own work: the place kind (or act) that shows it. */
     private static boolean own(int job, byte pk, byte act) {
@@ -351,7 +355,7 @@ final class CitizensCommands {
             case Roster.SMITH -> pk == Roster.P_ANVIL;
             case Roster.WATCH -> pk == Roster.P_POST || act == Roster.ROUND;
             case Roster.CRIER -> pk == Roster.P_CRIER;
-            case Roster.BOATMAN -> pk == Roster.P_PICKUP;
+            case Roster.BOATMAN -> pk == Roster.P_MOORING || pk == Roster.P_NET;
             case Roster.WASHER -> pk == Roster.P_WASH || pk == Roster.P_LINE;
             case Roster.MASON -> pk == Roster.P_STAND;
             case Roster.MILLER -> pk == Roster.P_MILL;
