@@ -191,6 +191,7 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         l.life = life;
         int stage = FaunaMob.cueStage(f.cue());
         life.hurt = l.hurt;
+        life.entity = mob.getId();
         life.windup = stage == FaunaMob.CUE_WINDUP && s.cueClip >= 0 && s.cueWeight > 0 && s.cueClip != roar
                 ? Mth.clamp(s.cueTime / Math.max(0.01F, m.length(s.cueClip)), 0.0F, 1.0F) : -1;
         life.roar = s.cueWeight > 0 && s.cueClip >= 0 && (s.cueClip == roar || s.cueClip == warn);

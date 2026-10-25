@@ -73,7 +73,8 @@ final class Abilities {
     }
 
     static void hurtBy(ServerLevel level, @Nullable AwakenMob mob, @Nullable Entity direct, LivingEntity e, float amount, BoltKind bolt, @Nullable MobEffectInstance effect) {
-        if (amount > 0) e.hurtServer(level, source(level, mob, direct, bolt), amount);
+        // a blow that was deflected, evaded or blocked whole (Arms) brings none of its burn or effects with it
+        if (amount > 0 && !e.hurtServer(level, source(level, mob, direct, bolt), amount)) return;
         if (bolt == BoltKind.FIRE) e.igniteForSeconds(3.0F);
         if (effect != null) e.addEffect(new MobEffectInstance(effect), mob);
         else if (bolt.effect != null && bolt.effectTicks > 0) e.addEffect(new MobEffectInstance(bolt.effect, bolt.effectTicks, 0), mob);

@@ -54,16 +54,25 @@ final class WeaponPipelines {
             .withLocation(Awaken.id("pipeline/arms_weapon_glow"))
             .withColorTargetState(new ColorTargetState(BlendFunction.LIGHTNING))
             .build();
+    /**
+     * The trails' shade: the same corners alpha-blended, laid under their light so a trail reads against a bright sky
+     * or pale stone (additive light alone can only brighten, and vanishes there).
+     */
+    static final RenderPipeline SHADE = RenderPipeline.builder(GLOW_SNIPPET)
+            .withLocation(Awaken.id("pipeline/arms_trail_shade"))
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .build();
     private static final OitPipelineSet GLOW_OIT = OitPipelineSet.builder(Awaken.id("arms_weapon_glow"),
             RenderPipeline.builder(GLOW_SNIPPET).withShaderDefine("OIT_ADDITIVE")).build();
 
     private static final Map<Identifier, RenderType> TYPES = new HashMap<>();
-    private static RenderType glow;
+    private static RenderType glow, shade;
     private static int ok = -1; // -1 unknown, 0 failed, 1 compiled
 
     static void onRegister(RegisterRenderPipelinesEvent e) {
         e.registerOptionalPipeline(WEAPON);
         e.registerOptionalPipeline(GLOW);
+        e.registerOptionalPipeline(SHADE);
         e.registerOitPipelineSet(GLOW_OIT);
     }
 
@@ -90,6 +99,12 @@ final class WeaponPipelines {
     static RenderType glow() {
         if (glow == null) glow = RenderType.create("awaken_arms_weapon_glow", RenderSetup.builder(GLOW).setOitPipelines(GLOW_OIT).createRenderSetup());
         return glow;
+    }
+
+    /** The trails' shade (alpha-blended). */
+    static RenderType shade() {
+        if (shade == null) shade = RenderType.create("awaken_arms_trail_shade", RenderSetup.builder(SHADE).createRenderSetup());
+        return shade;
     }
 
     /**

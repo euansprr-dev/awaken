@@ -65,8 +65,9 @@ final class ArmsHands {
     }
 
     // vanilla's handheld first-person display (item/handheld.json) and where a sword's blade runs on its sprite:
-    // the guard at pixel (5.5, 10.5), the tip at (15.5, 1.5); the trail runs from a third of the way up to the tip
-    private static final float[] VANILLA_ROOT = {(5.5F + 10F * 0.35F) / 16F, 1 - (10.5F - 9F * 0.35F) / 16F, 0.5F},
+    // the guard at pixel (5.5, 10.5), the tip at (15.5, 1.5); the trail runs over the blade's outer quarter (the
+    // blade fills a third of the view in first person: more would wash the frame)
+    private static final float[] VANILLA_ROOT = {(5.5F + 10F * 0.75F) / 16F, 1 - (10.5F - 9F * 0.75F) / 16F, 0.5F},
             VANILLA_TIP = {15.5F / 16F, 1 - 1.5F / 16F, 0.5F};
     private static final org.joml.Matrix4f M = new org.joml.Matrix4f();
 

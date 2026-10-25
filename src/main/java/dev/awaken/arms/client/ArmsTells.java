@@ -12,8 +12,9 @@ import net.minecraft.world.entity.LivingEntity;
  * Every told blow seen as well as heard (SPEC §25 "Tells"): the eye learns the class before the blow, as the ear does
  * from its voice. LIGHT (deflect, block or dodge): a white glint on the striking hand five ticks before it lands, the
  * cue to raise the guard. HEAVY (deflect or dodge; it breaks a guard): an amber flare and ring as the wind-up starts,
- * then the hand burns amber, brighter as it nears. PERILOUS (dodge only): a red flare and a red sign over the head for
- * the whole wind-up. GRAB (dodge only): the same in violet. Drawn on the effects engine from the synced tell
+ * then the hand burns amber, brighter as it nears. PERILOUS (dodge only): a big red flare at the hand and a red rune
+ * ring on the ground under it, turning and tightening for the whole wind-up (over the head it hid behind the name
+ * plate, first tells tour). GRAB (dodge only): the same in violet. Drawn on the effects engine from the synced tell
  * ({@link Strikes#tell}); fixed slots, nothing allocated per tick.
  */
 final class ArmsTells {
@@ -67,9 +68,12 @@ final class ArmsTells {
             }
             case PERILOUS, GRAB -> {
                 int rgb = t.kind() == Strikes.Kind.PERILOUS ? PERILOUS : GRAB;
-                if (fresh) FxClient.tellMark(FxClient.TELL_FLARE, hx, hy, hz, rgb, size * 1.4F, 9);
-                double sy = e.getY() + e.getBbHeight() + 0.55 + Math.min(1.0, e.getBbHeight() * 0.1);
-                FxClient.tellMark(FxClient.TELL_SIGN, e.getX(), sy, e.getZ(), rgb, Mth.clamp(e.getBbWidth() * 0.6F, 0.55F, 1.4F), 2);
+                if (fresh) FxClient.tellMark(FxClient.TELL_FLARE, hx, hy, hz, rgb, size * 2.0F, 10);
+                // the ring tightens as the blow nears: from its reach to the body's own width
+                float near = 1F - Math.min(1F, t.ticks() / 20F);
+                float ring = Mth.clamp(e.getBbWidth() * (3.2F - 1.4F * near) + 0.6F, 1.4F, 6F);
+                FxClient.tellMark(FxClient.TELL_SIGN, e.getX(), e.getY() + 0.06, e.getZ(), rgb, ring, 2);
+                FxClient.tellMark(FxClient.TELL_GLOW, hx, hy, hz, rgb, size * (0.5F + 0.6F * near), 2);
             }
             default -> { }
         }

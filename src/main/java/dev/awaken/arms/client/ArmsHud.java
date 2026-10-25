@@ -75,7 +75,7 @@ final class ArmsHud {
     private static void lowHealth(GuiGraphicsExtractor g, float partial) {
         float e = ArmsFeel.edgeWas + (ArmsFeel.edge - ArmsFeel.edgeWas) * partial;
         if (e < 0.01F) return;
-        float a = Mth.clamp(e * (0.62F + 0.22F * ArmsFeel.pulse), 0, 0.9F);
+        float a = Mth.clamp(e * (0.82F + 0.18F * ArmsFeel.pulse), 0, 0.95F);
         int w = g.guiWidth(), h = g.guiHeight();
         g.blit(RenderPipelines.GUI_TEXTURED, EDGE, 0, 0, 0F, 0F, w, h, 256, 256, 256, 256, ARGB.color(Math.round(a * 255), COLD));
     }

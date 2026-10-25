@@ -496,7 +496,9 @@ final class FxRecipes {
 
     /** One mark of a tell (FxClient.tellMark). */
     static void tellMark(int mark, double x, double y, double z, int argb, float size, int life) {
-        int hot = FxWorld.mix(argb, 0xFFFFFFFF, 0.5f);
+        // a red stays red: the danger colours take little white at their heart
+        boolean danger = ((argb >> 16) & 255) > 200 && ((argb >> 8) & 255) < 120;
+        int hot = FxWorld.mix(argb, 0xFFFFFFFF, danger ? 0.22f : 0.5f);
         switch (mark) {
             case FxClient.TELL_GLINT -> {
                 // a star's glint: white at its heart, the class's colour round it, there and gone
@@ -512,8 +514,9 @@ final class FxRecipes {
                         FxPool.ADD | FxPool.NEAR);
             }
             case FxClient.TELL_SIGN -> {
-                int s = FxWorld.sprite(GLYPH, x, y, z, 0, 0, 0, life, size, size, FxWorld.alpha(hot, 0.95f), FxWorld.alpha(argb, 0.6f),
-                        FxPool.ADD | FxPool.NEAR);
+                // a rune ring flat on the ground under the creature: the reach of what is coming
+                int s = FxWorld.sprite(GLYPH, x, y, z, 0, 0, 0, life, size, size, FxWorld.alpha(hot, 0.9f), FxWorld.alpha(argb, 0.7f),
+                        FxPool.ADD | FxPool.FLAT);
                 FxWorld.spin(s, 0, 0.05f);
             }
             default -> FxWorld.sprite(GLOW, x, y, z, 0, 0, 0, life, size, size * 0.8f, FxWorld.alpha(argb, 0.75f), FxWorld.alpha(argb, 0.2f),

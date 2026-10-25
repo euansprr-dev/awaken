@@ -19,6 +19,7 @@ import java.util.Map;
  * arms strike                         a tap of the attack key (a real click, held 2 ticks as a finger does)
  * arms press                          Arms' press alone, without the key (the old line)
  * arms trace &lt;ticks&gt;                  logs the move, its clock and the hand's pose every tick for that long
+ * arms trailfreeze on|off             blade ribbons stop ageing once laid (a still frame shows the whole ribbon)
  * arms heavy &lt;ticks&gt;                  the attack key held that long, then let go
  * arms guard on|off                   the use key held (the guard up) or let go
  * arms dodge left|right|back|none     the sprint key pressed with that direction for a tick
@@ -48,6 +49,17 @@ public final class ArmsAutopilot {
                 if (!ArmsPredict.fights(p)) return "not fighting (no style in hand, or Arms off)";
                 ArmsPredict.press(p, mc);
                 return "strike: " + ArmsPredict.move;
+            }
+            case "ribbonstate" -> {
+                return BladeTrail.state();
+            }
+            case "ribbonlog" -> {
+                BladeTrail.debug = a.length > 1 ? Integer.parseInt(a[1]) : 12;
+                return "logging ribbon samples";
+            }
+            case "trailfreeze" -> {
+                BladeTrail.frozen = a.length < 2 || a[1].equals("on");
+                return "trails " + (BladeTrail.frozen ? "held" : "live");
             }
             case "trace" -> {
                 traceUntil = ArmsPredict.ticks + (a.length > 1 ? Integer.parseInt(a[1]) : 40);

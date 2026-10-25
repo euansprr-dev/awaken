@@ -154,7 +154,7 @@ final class ArmsFeel implements CombatFeedback.Sink {
         float share = alive ? p.getHealth() / Math.max(1F, p.getMaxHealth()) : 1F;
         low = alive && (low ? share < CLEAR : share < LOW);
         edgeWas = edge;
-        float target = low ? Mth.clamp((LOW - share) / LOW * 0.6F + 0.4F, 0.4F, 1F) : 0F;
+        float target = low ? Mth.clamp((LOW - share) / LOW * 0.4F + 0.6F, 0.6F, 1F) : 0F;
         edge += (target - edge) * (target > edge ? 0.12F : 0.06F);
         pulse *= 0.82F;
         if (!low) {

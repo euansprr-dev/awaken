@@ -11,9 +11,9 @@ import org.joml.Vector3f;
 
 /**
  * The blade's own trail (SPEC §25 "Trails"): a ribbon laid down by the blade itself, sampled every frame from where it
- * is drawn (its root half-way up the blade, its tip) while a blow is in the air, kept in the world so a turn of the
+ * is drawn (its outer third: a root two thirds up the blade, its tip), so it is a crescent on the tip's path while a blow is in the air, kept in the world so a turn of the
  * head leaves it behind, and drawn as a band that is brightest along the tip's path and fades to nothing toward the
- * root and with age. Between samples it runs on a smooth curve (Catmull-Rom through the samples), and its head is
+ * root and with age, its light on a darker shade of its colour so it reads by day as well as by night. Between samples it runs on a smooth curve (Catmull-Rom through the samples), and its head is
  * carried on to where the blade is this frame, so it never lags the steel. In first person the samples come from the
  * hand pass, carried out from the hands' 70° to the world's field of view; in third person from our sculpted weapons'
  * own draw (a vanilla sword seen from outside keeps the hand-arc crescent, ArmsFx). Fixed pools: nothing allocated.
@@ -88,8 +88,36 @@ final class BladeTrail {
         TIP[i * 3 + 1] = c.y + B.y;
         TIP[i * 3 + 2] = c.z + B.z;
         AT[i] = now;
+        lastSampleAt = now;
+        if (debug > 0) {
+            if (--debug == 0) debug = -1; // logged them all: now draw loud
+            dev.awaken.Awaken.LOG.info("[arms ribbon] e={} hand={} root=({}, {}, {}) tip=({}, {}, {}) from the eye; pose t=({}, {}, {})", entity, hand,
+                    fmt(A.x), fmt(A.y), fmt(A.z), fmt(B.x), fmt(B.y), fmt(B.z), fmt(pose.m30()), fmt(pose.m31()), fmt(pose.m32()));
+        }
         HEAD[r] = (HEAD[r] + 1) % N;
         COUNT[r] = Math.min(N, COUNT[r] + 1);
+    }
+
+    /** Autopilot only: each ring's samples and ages now, on the clock ribbons age by. */
+    static String state() {
+        StringBuilder b = new StringBuilder("frozen=" + frozen);
+        long now = clock(), real = System.nanoTime();
+        b.append(" clockLag=").append((real - now) / 1_000_000).append("ms");
+        for (int r = 0; r < RINGS; r++) {
+            if (ENTITY[r] == Integer.MIN_VALUE) continue;
+            int n = COUNT[r];
+            long newest = n > 0 ? AT[r * N + (HEAD[r] - 1 + N) % N] : 0, oldest = n > 0 ? AT[r * N + (HEAD[r] - n + N) % N] : 0;
+            b.append(" | e=").append(ENTITY[r]).append(" n=").append(n).append(" newestAge=").append((now - newest) / 1_000_000)
+                    .append("ms oldestAge=").append((now - oldest) / 1_000_000).append("ms until=").append((UNTIL[r] - real) / 1_000_000).append("ms");
+        }
+        return b.toString();
+    }
+
+    /** Autopilot only: log this many samples. */
+    static int debug;
+
+    private static String fmt(float v) {
+        return String.format(java.util.Locale.ROOT, "%.2f", v);
     }
 
     private static int ring(int entity, boolean claim) {
@@ -112,16 +140,26 @@ final class BladeTrail {
 
     // ---- drawing --------------------------------------------------------------------------------------------------
 
-    /** Subdivisions of each gap between samples (the curve), and across the band (root to tip). */
-    private static final int SUB = 4, ACROSS = 3;
+    /** Subdivisions of each gap between samples (the curve), and where the band's strips run across it (root to tip). */
+    private static final int SUB = 4;
+    private static final float[] ACROSS = {0F, 0.45F, 0.8F, 0.93F, 1F};
     private static final double[] PR = new double[3], PT = new double[3];
     private static final float[] RX = new float[N * SUB + 2], RY = new float[N * SUB + 2], RZ = new float[N * SUB + 2],
             TX = new float[N * SUB + 2], TY = new float[N * SUB + 2], TZ = new float[N * SUB + 2], AGE = new float[N * SUB + 2];
     private static double camX, camY, camZ;
+    /** Autopilot only: ribbons stop ageing once their blade stops laying them, so a still frame shows the whole ribbon. */
+    static boolean frozen;
+    private static long lastSampleAt;
+
+    /** The clock ribbons age by: real time, or (frozen) held just after the last sample. */
+    private static long clock() {
+        long now = System.nanoTime();
+        return frozen ? Math.min(now, lastSampleAt + 15_000_000L) : now;
+    }
 
     static void onSubmit(SubmitCustomGeometryEvent e) {
         boolean any = false;
-        long now = System.nanoTime();
+        long now = clock();
         for (int r = 0; r < RINGS; r++) {
             if (COUNT[r] < 2) continue;
             if (now - AT[r * N + (HEAD[r] - 1 + N) % N] > LIFE) {
@@ -137,11 +175,24 @@ final class BladeTrail {
         camY = c.y;
         camZ = c.z;
         PoseStack ps = e.getPoseStack();
-        e.getSubmitNodeCollector().submitCustomGeometry(ps, WeaponPipelines.glow(), BladeTrail::drawAll);
+        e.getSubmitNodeCollector().submitCustomGeometry(ps, WeaponPipelines.shade(), BladeTrail::drawShade);
+        e.getSubmitNodeCollector().order(1).submitCustomGeometry(ps, WeaponPipelines.glow(), BladeTrail::drawAll);
+    }
+
+    /** Whether this pass is the shade (darker, alpha-blended) under the light. */
+    private static boolean shading;
+
+    private static void drawShade(PoseStack.Pose pose, VertexConsumer buffer) {
+        shading = true;
+        try {
+            drawAll(pose, buffer);
+        } finally {
+            shading = false;
+        }
     }
 
     private static void drawAll(PoseStack.Pose pose, VertexConsumer buffer) {
-        long t = System.nanoTime();
+        long t = clock();
         for (int r = 0; r < RINGS; r++) if (COUNT[r] >= 2) draw(buffer, r, t, camX, camY, camZ);
     }
 
@@ -177,7 +228,8 @@ final class BladeTrail {
         }
         int argb = ARGB[r];
         int cr = argb >> 16 & 255, cg = argb >> 8 & 255, cb = argb & 255;
-        float alpha = (argb >>> 24) / 255F;
+        // strong enough to read on a noon sky: the colour's own alpha (the rhythm's brightness) lifted, never faint
+        float alpha = Math.min(0.95F, 0.55F + 0.5F * ((argb >>> 24) / 255F));
         for (int a = 0; a + 1 < m; a++) band(buffer, a, a + 1, cr, cg, cb, alpha);
     }
 
@@ -197,9 +249,9 @@ final class BladeTrail {
      */
     private static void band(VertexConsumer buffer, int a, int b, int cr, int cg, int cb, float alpha) {
         float fa = fade(AGE[a]) * alpha, fb = fade(AGE[b]) * alpha;
-        if (fa <= 0.002F && fb <= 0.002F) return;
-        for (int s = 0; s < ACROSS; s++) {
-            float v0 = s / (float) ACROSS, v1 = (s + 1) / (float) ACROSS;
+        if (fa <= 0.002F && fb <= 0.002F && debug >= 0) return;
+        for (int s = 0; s + 1 < ACROSS.length; s++) {
+            float v0 = ACROSS[s], v1 = ACROSS[s + 1];
             float w0 = across(v0), w1 = across(v1);
             corner(buffer, a, v0, cr, cg, cb, fa * w0, v0);
             corner(buffer, a, v1, cr, cg, cb, fa * w1, v1);
@@ -210,9 +262,11 @@ final class BladeTrail {
         }
     }
 
-    /** Across the band: nothing at the root, rising to full at the tip (eased, so the inner edge never shows). */
+    /** Across the band: nothing at the root, a soft rise (the inner edge never shows), full along the tip's crisp edge. */
     private static float across(float v) {
-        return v * v * (3 - 2 * v);
+        if (v >= 0.93F) return 1F;
+        float u = Math.min(1F, v / 0.93F);
+        return 0.85F * u * u * (3 - 2 * u);
     }
 
     /** With age: full for the first fifth, then out on a curve. */
@@ -223,8 +277,24 @@ final class BladeTrail {
     }
 
     private static void corner(VertexConsumer buffer, int m, float v, int cr, int cg, int cb, float a, float whiten) {
-        float w = whiten > 0.99F ? 0.55F : 0F; // the edge itself burns towards white
-        int r = Math.round(cr + (255 - cr) * w), g = Math.round(cg + (255 - cg) * w), b = Math.round(cb + (255 - cb) * w);
+        int r, g, b;
+        if (debug < 0) {
+            // autopilot's loud mode: the geometry alone, solid red
+            buffer.addVertex(RX[m] + (TX[m] - RX[m]) * v, RY[m] + (TY[m] - RY[m]) * v, RZ[m] + (TZ[m] - RZ[m]) * v).setColor(255, 0, 0, 255);
+            return;
+        }
+        if (shading) {
+            // the shade: the colour taken well down, so the light above it has something to stand on by day
+            r = cr * 2 / 5;
+            g = cg * 2 / 5;
+            b = cb * 2 / 5;
+            a *= 0.6F;
+        } else {
+            float w = whiten >= 0.93F ? 0.65F : 0F; // the tip's edge strip burns towards white
+            r = Math.round(cr + (255 - cr) * w);
+            g = Math.round(cg + (255 - cg) * w);
+            b = Math.round(cb + (255 - cb) * w);
+        }
         buffer.addVertex(RX[m] + (TX[m] - RX[m]) * v, RY[m] + (TY[m] - RY[m]) * v, RZ[m] + (TZ[m] - RZ[m]) * v)
                 .setColor(r, g, b, Math.max(0, Math.min(255, Math.round(a * 255))));
     }

@@ -533,7 +533,11 @@ public class AwakenMob extends Monster {
         if (++auraPulse >= 20) {
             auraPulse = 0;
             for (LivingEntity e : Abilities.enemiesNear(level, this, position(), auraRadius)) {
-                Abilities.hurt(level, this, e, auraDamage, auraBolt, auraEffect);
+                // an aura's pulse is the perilous blow it was told as
+                dev.awaken.core.api.Strikes.deliver(this, dev.awaken.core.api.Strikes.Kind.PERILOUS, () -> {
+                    Abilities.hurt(level, this, e, auraDamage, auraBolt, auraEffect);
+                    return true;
+                });
             }
         }
     }

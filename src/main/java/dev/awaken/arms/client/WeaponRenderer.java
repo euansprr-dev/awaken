@@ -125,35 +125,23 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
     private static final float[] LINE = new float[6];
 
     /**
-     * Where the blade runs on a mesh (item space): from the middle of its length (the average of the corners half way
-     * along) to its point (the corner furthest along). Worked out once per mesh.
+     * Where the blade runs on a mesh (item space): its outer fifth, the line from the corner nearest the pommel to the
+     * one furthest along (the weapons are straight along it), from 78% of the way to the point. Once per mesh.
      */
     private static float[] blade(WeaponMesh mesh) {
         if (lineOf == mesh) return LINE;
         float[] p = mesh.pos();
         byte[] al = mesh.along();
-        int tip = 0, n = 0;
-        float mx = 0, my = 0, mz = 0;
+        int tip = 0, base = 0;
         for (int i = 0; i < mesh.vertices(); i++) {
             int a = al[i] & 255;
             if (a > (al[tip] & 255)) tip = i;
-            if (Math.abs(a - 150) <= 4) {
-                mx += p[i * 3];
-                my += p[i * 3 + 1];
-                mz += p[i * 3 + 2];
-                n++;
-            }
+            if (a < (al[base] & 255)) base = i;
         }
-        if (n == 0) {
-            mx = my = mz = 0.5F;
-            n = 1;
+        for (int c = 0; c < 3; c++) {
+            LINE[c] = p[base * 3 + c] + (p[tip * 3 + c] - p[base * 3 + c]) * 0.78F;
+            LINE[3 + c] = p[tip * 3 + c];
         }
-        LINE[0] = mx / n;
-        LINE[1] = my / n;
-        LINE[2] = mz / n;
-        LINE[3] = p[tip * 3];
-        LINE[4] = p[tip * 3 + 1];
-        LINE[5] = p[tip * 3 + 2];
         lineOf = mesh;
         return LINE;
     }

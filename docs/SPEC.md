@@ -3668,7 +3668,8 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   invincibility in AWAKEN**); a blow in ticks 0–2 is a perfect dodge: the attacker alone runs at half speed for 8
   ticks (every other tick; the plan's 0.45 rounded to the tick clock), Resonance +15, a Slipcut for 6 ticks. Two
   charges, 24 ticks each. A refused dodge stops the body where it is.
-- **Context moves** (no input of their own): Riposte (strike ≤ 12 ticks after a deflect), Slipcut (strike ≤ 6 ticks
+- **Context moves** (no input of their own): Riposte (strike ≤ 12 ticks after a deflect), Slipcut (motion 2.5, from
+  1.2: the sim's reward for a dodge; strike ≤ 6 ticks
   after a dodge), Execution (a heavy on a broken creature in reach: motion 4, capped at 8% of a Lord's max health),
   **Undercut** (a strike out of a slide, the body module's own state: a low sweep, 160° wide, posture 8; the slide's
   trip still happens), **Plunge** (a strike in a fall of 2+ blocks arms it: the hands hold the blade high, the client
@@ -3677,14 +3678,16 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
 - **The Art** (the Longsword's default): a heavy held through to full charge (2 ticks' grace) with Resonance full is
   the Art, not a heavy, and spends the whole meter (so holding past the glint is a choice). A great level sweep whose
   reach grows 2 blocks a tick through its 4 active ticks, out to 10, striking each creature once as the wave passes:
-  motion 3, posture 30, 150 ms hit-stop, capped at 12% of a Lord's health. Its arc burns gold, a golden wave rolls on
+  motion 7 (3 as first built: the combat sim showed the Art dealt less than plain chaining in the same time, so a
+  full meter made a fight longer; at 7 it pays), posture 30, 150 ms hit-stop, capped at 12% of a Lord's health. Its arc burns gold, a golden wave rolls on
   along the ground, and the kit's `arms.art` replaces the swish (the steel's ring swelling through the wind-up, the
   release, a wave of air rolling out). Lord-forged and legendary weapons bring their own Arts later (S8).
 - **Posture** (creatures only; no player stamina): normal 20, elites, wardens and beasts 40, bosses, breaks and
   nightmares 100 (`CreatureTag`, `MobRole`). It drains at 6/s (Lords 8/s) after 2 s untouched; full, it breaks for 50
   ticks (Lords 40), then cannot break again for 6 s. On the struck creature only (the patent rule holds). Not saved.
-- **Resonance** (per player, 0–100, not saved): deflect 20, perfect dodge 15, break 25, a finisher 6, a rhythm-3
-  finisher 12 more; drains 2/s after 5 s out of a fight. Full: the Art (S2).
+- **Resonance** (per player, 0–100, not saved): deflect 20, perfect dodge 15, break 25, a finisher 6, a finisher in
+  full rhythm (every press of the chain in its window: a cadence equal to its step; "rhythm 3" as first written was
+  out of the 3-strike chain's reach) 12 more; drains 2/s after 5 s out of a fight. Full: the Art (S2).
 - **Soft focus**: the creature you last struck turns your strikes toward it by at most 15°; looking more than 60°
   away from it for a second lets it go (server and client by one rule, `ArmsRules.lookedAt`).
 - **Stances on the plates** (`core.api.Stances`, §12, read by the living module's plates): every stance change sends
@@ -3703,7 +3706,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   (16), a perfect dodge breathes out 5% (18) and, with Lens on and no story moment playing, drains the frame for 12
   ticks (`awaken:arms_breath` in `lens/looks_arms.json`: colour at 0.42, cool, closed in; `LensClient.overriding()`
   says whose moment is on). Under 30% health (clear again over 36%) the heart beats (`arms.heartbeat`, 28 ticks a beat
-  at 30%, 16 near nothing) and the frame's edges cool and darken (our own texture, `textures/gui/arms/low_health.png`
+  at 30%, 16 near nothing) and the frame's edges cool and darken (from 0.6 of full at 30% to full near nothing) (our own texture, `textures/gui/arms/low_health.png`
   from tools/art/specs/arms_hud.py), tightening on each beat; a Lens look was rejected for it: a look replaces the
   whole place's look and would flatten minutes of play. In the shoulder view the action camera takes a COMBAT pose
   while you fight (a blow either way in the last 3 s with a fighting weapon in hand, `CombatFeedback.engaged`): 0.45
@@ -3733,13 +3736,18 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   hand). The fighter's own from their prediction, everyone else's from `Seen` MOVE, CHARGE and DODGE. Every clip is
   checked for an arm through the head or body (under 1.25 px). Without the library: vanilla's arm swing.
 - **The blade's own ribbon** (S2, `BladeTrail`; PLAN §4.8's SWEEP): while a blow is in the air the blade lays a
-  ribbon from half-way up it to its point, sampled every frame from where it is drawn: the fighter's own in first
+  ribbon over its outer part (the outer quarter of a vanilla blade in first person, where the blade fills a third of
+  the view; ours from 78% of the way along to the point), sampled every frame from where it is drawn: the fighter's own in first
   person (any styled weapon; a vanilla sword through `item/handheld.json`'s display transform and its sprite's blade,
   pixel (5.5, 10.5) to (15.5, 1.5); ours from the mesh, the corners half way along to the furthest one), and our
   weapons in anyone's hand in third person. The samples live in the world 150 ms (a turn of the head leaves the ribbon
   behind), run on a Catmull-Rom curve between frames, and the head is carried on along the blade's last motion to the
-  present frame so it never trails the steel. Drawn additive (the weapons' glow pipeline): nothing at the root, full
-  along the tip's path with the edge itself whitened, out with age. The hand-arc crescent below stands aside wherever a
+  present frame so it never trails the steel. Drawn in two passes: a shade (the colour at two fifths, alpha-blended,
+  `arms_trail_shade`) under the light (additive, the weapons' glow pipeline), so it reads on a noon sky as well as at
+  night (additive alone vanished by day: the frozen-ribbon tour showed the geometry right and the light invisible);
+  alpha 0.55 + half the rhythm's brightness, nothing at the root, a soft rise, a crisp whitened strip along the tip's
+  path, out with age. `arms trailfreeze on` (autopilot) holds ribbons still for a frame; `arms ribbonlog N` logs
+  samples and then draws them flat red to check the geometry. The hand-arc crescent below stands aside wherever a
   ribbon is laid; it stays for vanilla blades seen from outside. The first tour on the Mac showed the crescent floating
   off the blade ("laggy", Euan).
 - **Trails and sparks** (`ArmsFx`, on the powers module's effects engine: one budget, one settings page). As a
@@ -3783,8 +3791,10 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   resolves. Deflect, block, guard break, break, perfect dodge, dodge, the heavy's draw and its glint each have theirs.
 - **Tells by eye** (S3, `ArmsTells`, from the synced tell, `Strikes.tell`): LIGHT, a white glint on the striking
   hand 5 ticks before it lands (the deflect window is 4: a tick to see it, then the press); HEAVY, an amber flare and
-  ring as the wind-up starts, then the hand burning amber, brighter as it nears; PERILOUS, a red flare and a red sign
-  (the glyph ring) over the head for the whole wind-up; GRAB the same in violet. The striking hand is ahead of the body
+  ring as the wind-up starts, then the hand burning amber, brighter as it nears; PERILOUS, a big red flare at the hand
+  that keeps its red, the hand glowing, and a red rune ring flat on the ground under the creature for the whole wind-up,
+  tightening from its reach to the body's own width as the blow nears (over the head, the first plan, it hid behind
+  the name plate); GRAB the same in violet. The striking hand is ahead of the body
   at its reach, toward its main arm. On the effects engine with the new `FxPool.NEAR` (drawn even inside 1.5 blocks of
   the eye, where every other sprite fades: a blow is told at sword's length; the fighter's own first-person motes use
   it too), `FxClient.tellMark`.
@@ -3802,20 +3812,22 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   and lights its swings in its tier's colour (the row's `trail`).
 - Until the Forge's blueprints (S7), each is crafted from its tier's Hunter blade between the tier's core and bind
   (a column: core, blade, bind); the recipe unlocks when the blade is held, like every AWAKEN recipe.
-- **Sculpted, not built of cubes** (Euan, 2026-10-25: "push it to the maximum... I didn't even know this was possible
-  in MC"). Each weapon is a mesh designed by hand in code (tools/art/mesh.py: blades lofted through real
-  cross-sections, an edge each side, a hollow-ground bevel and a fuller sunk into the flat, tapering to a true point;
-  guards swept along curves; grips turned and bound in wire or straps; cut gems), 2,600–4,800 triangles, at most
-  6,000 (`ArmsTests.MESH_BUDGET`). Written to `arms/weapons/<id>.mesh` (`WeaponMesh`, versioned binary: item-space
-  corners with normal, uv and how far along the weapon each lies; then the points that glow; then, under header flag 1,
-  the streams of light that lift off it: kind (ember, wisp, mote), colour, rate a second, spread and a polyline, each
-  design function naming its own, e.g. a blade's edge from the loft's own width function, `edge_line`). Version 1
-  meshes without the flag read as before.
-- **Painted texel by texel** in each material's own language (polished ivory, gold, knapped flint with flake scars,
-  tusk, fur, gate-steel, Veil-steel, black scale...), the light worked out continuously and set onto the material's
-  hand-picked hue-shifted ramp with an ordered dither: a smooth form that still reads as pixel art, at 4 texels a
-  unit. Contact shadows where parts meet. Each part unfolds about its own line, so runes, circuits and scales run
-  down straight columns of texels. The texture is the albedo beside a material map (metal, gloss, emissive, flow).
+- **Built to Euan's reference** (`/Volumes/MEDIA/arms-ref/weapon-style-ref.webp`, a Minecraft-Dungeons-style hero
+  with a great hammer; the look bar for every Arms weapon). Two passes came before it: plain JSON cubes ("still very,
+  very blocky... push it to the maximum") and lofted sculpted meshes at 4 texels a unit (2835ede4: "too thin and
+  noisy against his reference"). Now (2026-10-26, `tools/art/voxel.py`): **designed box construction at the player's
+  own density**, 1 texel = 1 item unit (a skin pixel), each face its own chart, buried texels dropped and visible ones
+  merged; the style rules every archetype follows are in `docs/combat/weapon-style.md` (density, construction from
+  bold parts and whole-angle turned boxes never staircases, a longsword about 28 texels with two thirds blade,
+  painted bevels as one-texel bands lit toward the painted light and dark away with contact shadows at joins, three
+  or four hue-shifted ramps with one dark and one warm, a few deliberate marks per part and no per-texel noise,
+  stones in 45° frames standing proud with concentric painted faces, emissive by flow hilt to tip). Each weapon still
+  writes the same `.mesh` (`WeaponMesh`: item-space corners with normal, uv and how far along the weapon each lies;
+  the points that glow; then, under header flag 1, the streams of light that lift off it), 244–510 triangles (budget
+  6,000, `ArmsTests.MESH_BUDGET`); `check()` repeats `arms_assets` and fails on two faces sharing a plane on different
+  texel grids (they z-fight). Review: `python3 tools/art/specs/arms_weapons.py sheet OUT.png` puts the reference beside
+  every weapon in three-quarter, back, hilt close-up, first person at rest and in vanilla's hold, night and the icon
+  (`docs/combat/weapons-voxel-2026-10-26.png`).
 - **Drawn by our shader** (`arms_weapon` pipeline; `WeaponRenderer`, the `awaken:weapon` special item model): vanilla's
   two item lights partly banded (painted light, not plastic), metals reflecting a soft studio (a cool sky, a warm
   floor, a strip light), a gloss highlight, a rim of the weapon's accent, the world's light on all but what glows; a
@@ -3835,8 +3847,9 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   Nothing while a screen is open or the game is paused.
 - **It carries the fight**: the fighter's own blade fills with its accent's light as a heavy charges, flares on the
   glint and on a perfect heavy, and hums while the Resonance is full (the Art ready); its halos swell with it.
-- **First person**: a hold of its own (`<id>_in_hand.json`, which draws nothing itself): the whole blade standing at
-  the right with its point in view, its flat turned a little to the eye (vanilla's sword sits so close a longsword
+- **First person**: a hold of its own (`<id>_in_hand.json`, which draws nothing itself; scale 0.52 for the voxel
+  blades, whose points ran off the top at the lofted ones' 0.6): the whole blade standing at the right with its point
+  in view, its flat turned a little to the eye (vanilla's sword sits so close a longsword
   shows a fragment); the swings move the hand as for any sword. Third person: vanilla's handheld hold. Size: a fifth
   longer than vanilla's sword (`SCALE` 0.9 of sword units).
 - **Inventory icon** (32×32; `items/<id>.json` selects on the display context like the trident: the icon in the
@@ -3847,6 +3860,16 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   files and that the hands route to the weapon renderer. tools/art/mesh_render.py renders any weapon with the shader's
   own terms (turntables, close-ups, and first person with vanilla's exact hand transforms and 70° projection, which
   matches the game frame); tools/autopilot/arms-weapons.txt is the in-game tour.
+
+**The combat sim** (S3, `tools/sim/combat_sim.py`, report `docs/combat/sim-2026-10-26.md`): every Lord at its home
+rank against four profiles (Tank, Dodger, Parrier, Expert) and a diamond-sword Parrier at D, the numbers parsed from
+the sources at start (timing table, bestiary, scaling), seeded. It found three bugs, fixed: every blow lands as the
+class it was told as (a bolt carries its ability's class, our fangs are HEAVY, hazard and aura pulses PERILOUS,
+through `Strikes.installClassifier` and `Strikes.deliver`; before, Force bolts landed as NONE and could not be
+answered at all); an answered blow (deflected, evaded, blocked whole) brings none of its burn or effects; a broken
+stance starts no ability until it stands. Tuning for the whole game's pacing (Lord damage by rank, Lord health,
+fliers in reach, vanilla's flat burn and fang, per-Lord health) is recommended there and waits for Euan's three-Lord
+session (PLAN §6.4 S3 gate): it moves powers players' fights too.
 
 **Tests** (`arms_`): timeline, defence rules, strike arc, damage stack, deflect, deflect latency, dodge, posture break,
 kill switch, sounds, stance rules, clips, the Art, the Plunge, assets; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;

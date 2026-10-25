@@ -129,8 +129,27 @@ final class ArmsFx {
         return alpha << 24 | rgb;
     }
 
+    /**
+     * The blow's way through the struck body and its weight (CombatFeedback.blow): ahead from the wielder, swept
+     * sideways as the swing travels across (a thrust straight in), heavier with the move's damage.
+     */
+    static void blow(Entity target, Entity by, Archetype.MoveDef def) {
+        float yaw = by.getYRot() * Mth.DEG_TO_RAD;
+        float fx = -Mth.sin(yaw), fz = Mth.cos(yaw), rx = -Mth.cos(yaw), rz = -Mth.sin(yaw);
+        float side = 0;
+        if (def.swish() != Archetype.Swish.THRUST) {
+            List<Float> from = def.swing().from(), to = def.swing().to();
+            float dx = to.get(0) - from.get(0), dy = to.get(1) - from.get(1);
+            side = Mth.clamp(dx / Math.max(0.05F, Math.abs(dx) + Math.abs(dy)), -1, 1);
+            if (by instanceof LivingEntity l && l.getMainArm() == HumanoidArm.LEFT) side = -side;
+        }
+        dev.awaken.core.api.CombatFeedback.blow(target.getId(), fx * (1 - 0.6F * Math.abs(side)) + rx * side, fz * (1 - 0.6F * Math.abs(side)) + rz * side,
+                Mth.clamp(def.motion() / 1.2F, 0.6F, 3F));
+    }
+
     /** Where a blade landed, along the line from the wielder. */
     static void hit(Entity target, Entity by, Archetype.MoveDef def) {
+        blow(target, by, def);
         Vec3 centre = target.getBoundingBox().getCenter();
         Vec3 dir = centre.subtract(by.getEyePosition());
         dir = dir.lengthSqr() < 1e-6 ? Vec3.ZERO : dir.normalize();

@@ -4,6 +4,9 @@
 # pack as the owner plays it (PACK=feel,horizon,perf).
 world armsrepro creative 778
 waitworld
+wait 60
+cmd awaken opening skip
+wait 40
 gui 0
 cmd gamerule send_command_feedback false
 cmd gamerule awaken:fauna_spawning false
@@ -102,6 +105,27 @@ shotnow fp_c3_2
 wait 2
 shotnow fp_c3_4
 wait 30
+# 4b. ribbons held still: a strike, a backhand, an overhead and a heavy, each shot just after its blow
+arms trailfreeze on
+look 0 5
+wait 10
+arms strike
+wait 8
+shot rib_s1
+wait 6
+arms strike
+wait 8
+shot rib_s2
+wait 6
+arms strike
+wait 9
+shot rib_s3
+wait 30
+arms heavy 18
+wait 30
+shot rib_heavy
+arms trailfreeze off
+wait 10
 # 5. third person: a tap on the husk, then seen from the front, then a held heavy at the ground
 camera back
 look 0 5
@@ -120,6 +144,7 @@ shotnow tp_a4
 wait 2
 shotnow tp_a6
 wait 20
+cmd tp @e[type=minecraft:husk] ~3 ~ ~2
 camera front
 wait 4
 arms strike
@@ -141,6 +166,31 @@ shotnow tp_h18
 wait 13
 shotnow tp_h31
 wait 30
+# 5b. the six forged Longswords in first person by day, at rest
+camera first
+look 0 5
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
+wait 30
+shot day_wildhide
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_longsword
+wait 30
+shot day_beastbound
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
+wait 30
+shot day_gatewrought
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_longsword
+wait 30
+shot day_veilwoven
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_longsword
+wait 30
+shot day_lordscale
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_longsword
+wait 30
+shot day_sovereign
+camera back
+wait 20
+shot day_sovereign_3p
+camera first
 # 6. the high blades at dusk: Lordscale's embers, the Sovereign's motes, their ribbons, first person and third
 cmd time set 13000
 camera first
@@ -183,6 +233,12 @@ wait 20
 cmd item replace entity @s weapon.mainhand with awaken:lordscale_longsword
 wait 40
 shot ws_lord_3p
+arms trailfreeze on
+arms strike
+wait 8
+shot ws_lord_3p_ribbon
+arms trailfreeze off
+wait 10
 arms strike
 wait 1
 shotnow ws_lord_3p_blow1
@@ -195,6 +251,8 @@ cmd time set 6000
 cmd gamemode survival
 cmd attribute @s minecraft:max_health base set 20
 cmd damage @s 16 minecraft:out_of_world
+wait 12
+cmd damage @s 3 minecraft:out_of_world
 wait 40
 shot low_health
 cmd effect give @s minecraft:instant_health 1 3 true

@@ -28,8 +28,8 @@ final class BladeTraceLayer extends RenderLayer<AvatarRenderState, PlayerModel> 
         ((AvatarRenderer) r).addLayer(new BladeTraceLayer(r));
     }
 
-    // a sword's blade on its sprite (as ArmsHands): a third of the way up from the guard to the tip
-    private static final float RX = (5.5F + 10F * 0.35F) / 16F, RY = 1 - (10.5F - 9F * 0.35F) / 16F, TX = 15.5F / 16F, TY = 1 - 1.5F / 16F;
+    // a sword's blade on its sprite (as ArmsHands): its outer third, from two thirds up the blade to the tip
+    private static final float RX = (5.5F + 10F * 0.66F) / 16F, RY = 1 - (10.5F - 9F * 0.66F) / 16F, TX = 15.5F / 16F, TY = 1 - 1.5F / 16F;
     private static final Matrix4f M = new Matrix4f();
 
     @Override

@@ -114,7 +114,15 @@ public final class Hazards {
     private static void apply(ServerLevel level, Hazard h) {
         AwakenMob owner = h.owner != null && h.owner.isAlive() ? h.owner : null;
         for (LivingEntity e : Abilities.enemiesNear(level, owner, h.pos, h.radius)) {
-            Abilities.hurt(level, owner, e, h.damage, h.bolt, h.effect == null ? null : new MobEffectInstance(h.effect));
+            // a cloud's or a field's pulse lands as the perilous blow its ability was told as (dodge it, never parry)
+            if (owner != null) {
+                dev.awaken.core.api.Strikes.deliver(owner, dev.awaken.core.api.Strikes.Kind.PERILOUS, () -> {
+                    Abilities.hurt(level, owner, e, h.damage, h.bolt, h.effect == null ? null : new MobEffectInstance(h.effect));
+                    return true;
+                });
+            } else {
+                Abilities.hurt(level, null, e, h.damage, h.bolt, h.effect == null ? null : new MobEffectInstance(h.effect));
+            }
         }
     }
 
