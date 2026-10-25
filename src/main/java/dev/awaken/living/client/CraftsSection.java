@@ -13,7 +13,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
  * perks it has open, by name, under it.
  */
 final class CraftsSection implements StatusSections.Section {
-    static final int ROW = 22;
+    static final int ROW = 31;
 
     static void register() {
         StatusSections.add(StatusSections.Tab.STATUS, new CraftsSection());
@@ -63,8 +63,11 @@ final class CraftsSection implements StatusSections.Section {
                 if (lv >= perk.level()) open.append(open.isEmpty() ? "" : " · ").append(perk.title());
                 else if (next == null) next = perk;
             }
-            String line = next == null ? open.toString() : (open.isEmpty() ? "" : open + "  ·  ") + "next: " + next.title() + " at " + next.level();
-            HudLook.text(g, font, font.plainSubstrByWidth(line, width - 4), x + 4, row + 11, 0xFF8FA7C4, false);
+            // what it has on one line (cut with a mark if it runs long), the next perk on its own below
+            String has = open.isEmpty() ? "no perks yet" : open.toString();
+            if (font.width(has) > width - 4) has = font.plainSubstrByWidth(has, width - 4 - font.width("…")) + "…";
+            HudLook.text(g, font, has, x + 4, row + 11, 0xFF8FA7C4, false);
+            if (next != null) HudLook.text(g, font, "next: " + next.title() + " at " + next.level(), x + 4, row + 20, 0xFF5E7590, false);
             row += ROW;
         }
     }

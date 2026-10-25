@@ -370,6 +370,10 @@ public final class Autopilot {
                 }
                 waitTicks = 10;
             }
+            case "scroll" -> { // scroll <notches>: the open screen's wheel (negative scrolls down)
+                if (mc.gui.screen() != null) mc.gui.screen().mouseScrolled(0, 0, 0, Double.parseDouble(arg.trim()));
+                waitTicks = 2;
+            }
             case "gui" -> {
                 mc.options.guiScale().set(Integer.parseInt(arg.trim()));
                 mc.resizeGui();

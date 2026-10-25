@@ -64,7 +64,7 @@ public final class Crafts {
         Signal.toast(p, Component.literal(c.title + " · level " + after));
         for (Craft.Perk perk : c.perks) {
             if (perk.level() > before && perk.level() <= after) {
-                Signal.toast(p, Component.literal("New perk · " + perk.title() + " · " + perk.text()));
+                Signal.toast(p, Component.literal("New perk · " + perk.title())); // what it does: the Crafts tab
                 Progression.count(p, "awaken:craft_perks");
             }
         }
@@ -80,10 +80,17 @@ public final class Crafts {
 
     /** Dev and tests: sets a craft's level outright (its XP at the start of that level). */
     public static void setLevel(ServerPlayer p, Craft c, int level) {
+        setLevel(p, c, level, false);
+    }
+
+    /** As {@link #setLevel(ServerPlayer, Craft, int)}; {@code announce} shows a rise as play would (tours). */
+    public static void setLevel(ServerPlayer p, Craft c, int level, boolean announce) {
+        int before = state(p).level(c);
         double xp = 0;
         for (int l = 1; l < Math.max(1, Math.min(Craft.MAX_LEVEL, level)); l++) xp += Craft.toNext(l);
         CraftState s = state(p);
         s.xp.put(c.id, xp + 0.5); // a hair past the line, so rounding never leaves it a level short
         p.setData(LivingContent.CRAFTS.get(), s);
+        if (announce && s.level(c) > before) levelled(p, c, before, s.level(c));
     }
 }
