@@ -326,6 +326,16 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   glitch)`, `text(...)`, `centered(...)`, `glow(...)`, `shake(glitch)`, `holo()`. Flat `Glass` unless the holo module
   installs its projected look; the flat paths make exactly the calls they made before. `ReadingScreen` marks a screen
   the player reads (the first-power choice): with the projected look the world dims behind it (`UiHooks.focus`).
+- `dev.awaken.holo.client.HoloWorld` (client) — Holo glass in the world (§21.1's creature plates first): fill a reused
+  `Spec` (bottom-centre x, y, z; w×h units; alpha; accent; scan) and call `plate(spec, content)` during
+  `ExtractLevelRenderStateEvent`, `content` writing fills and text into the plate's `HoloCanvas` (units, y down). Drawn
+  that frame by HoloRender exactly as a K-menu panel (same HoloPanel/HoloCanvas, glass shader, edge glow, halo, scan
+  line, see-through text with its glow), facing the camera; world-sized up close (`PlateScale.WORLD_UNIT` 0.021 m a
+  unit) and never under `PlateScale.MIN_PX` 2.1 framebuffer pixels a unit at 1080 lines however far. Writes depth like
+  the panels (Lens leaves fog and AO off it), draws over walls, never counts toward `UiHooks.focus`. `on()` false with
+  reduced motion or without the holo pipelines; `allowed()` false with reduced motion (fallbacks stay off too). At most
+  `MAX` 6 a frame. Frame cost per plate: three custom-geometry submits plus five text submits per line; no allocation
+  once a slot has drawn, a line's record rebuilt only when its position, colour or scale changes. Test `holo_plate_scale`.
 - `dev.awaken.signal.client.UiCanvas.texture(Identifier, x, y, w, h, u0, v0, u1, v1, argb)` (client) — part of a whole
   texture (a DynamicTexture or a registered render target) on a panel or a flat screen, one tinted quad.
 - `dev.awaken.core.api.UiHooks` (client) — `setFocus(Object owner, float value)`, `clearFocus(Object owner)`, `focus()`
