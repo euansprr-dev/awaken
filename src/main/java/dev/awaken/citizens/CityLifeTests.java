@@ -291,7 +291,8 @@ final class CityLifeTests {
             "city_dog", List.of("idle", "walk", "trot", "sit", "pant", "sniff", "lie"),
             "city_horse", List.of("idle", "walk", "toss"),
             "city_cart", List.of(),
-            "city_boat", List.of("idle", "walk", "drift"));
+            "city_boat", List.of("idle", "walk", "drift"),
+            "city_hand_lantern", List.of("idle"));
 
     /** Every rig parses without problems, carries the clips its brain plays, and every coat (and its blink) is a texture. */
     private static void rigs(GameTestHelper h) {
@@ -301,7 +302,8 @@ final class CityLifeTests {
             try {
                 HeroRig r = HeroRig.parse(src);
                 rigs.put(r.id, r);
-                problems.addAll(r.problems());
+                // a hand lantern has no gait: the rigs' walk-or-fly rule is for bodies
+                for (String q : r.problems()) if (!(r.id.equals("city_hand_lantern") && q.contains("neither walk nor fly"))) problems.add(q);
             } catch (RuntimeException e) {
                 problems.add("a rig fails to parse: " + e.getMessage());
             }
@@ -322,13 +324,14 @@ final class CityLifeTests {
                 String base = "/assets/awaken/textures/entity/city/" + e.getKey() + (v.isEmpty() ? "" : "_" + v);
                 if (missing(base + ".png")) problems.add(base + ".png missing");
                 // living animals blink (the cart and the boats don't); cats' eyes and boats' lanterns glow in the dark
-                boolean thing = e.getKey().equals("city_cart") || e.getKey().equals("city_boat");
+                boolean thing = e.getKey().equals("city_cart") || e.getKey().equals("city_boat") || e.getKey().equals("city_hand_lantern");
                 if (!thing && missing(base + "_blink.png")) problems.add(base + "_blink.png missing");
                 if (e.getKey().equals("city_cat") && missing(base + "_glow.png")) problems.add(base + "_glow.png missing (eyeshine)");
                 if (e.getKey().equals("city_boat") && missing(base + "_glow.png")) problems.add(base + "_glow.png missing (the bow lantern)");
+                if (e.getKey().equals("city_hand_lantern") && missing(base + "_glow.png")) problems.add(base + "_glow.png missing (glass and flame)");
             }
         }
-        h.assertTrue(rigs.size() == CLIPS.size(), "one rig per animal and the cart (" + rigs.keySet() + ")");
+        h.assertTrue(rigs.size() == CLIPS.size(), "one rig per animal, the cart and the hand lantern (" + rigs.keySet() + ")");
         h.assertTrue(problems.isEmpty(), String.join("; ", problems));
         h.succeed();
     }
