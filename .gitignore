@@ -51,6 +51,3 @@ awaken-registry.json
 
 ### Python ###
 __pycache__/
-
-# CC0 source recordings (tools/art/specs/audio_city_cc0.py fetch): downloaded, never committed
-tools/art/.cc0-cache/

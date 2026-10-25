@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "source": "ambient",
+  "title": "Carillon at night (with AmbientSounds)",
+  "sampleRate": 44100,
+  "frames": 2116800,
+  "stems": [
+    {
+      "name": "air",
+      "file": "awaken:layers/layer_city_air",
+      "attack": 6,
+      "duck": 8,
+      "release": 10
+    },
+    {
+      "name": "night_far",
+      "file": "awaken:layers/layer_city_night_far",
+      "attack": 6,
+      "duck": 8,
+      "release": 10
+    },
+    {
+      "name": "tavern_far",
+      "file": "awaken:layers/layer_city_tavern_far",
+      "attack": 6,
+      "duck": 8,
+      "release": 10
+    },
+    {
+      "name": "water",
+      "file": "awaken:layers/layer_city_water",
+      "attack": 6,
+      "duck": 8,
+      "release": 10
+    },
+    {
+      "name": "murmur_far",
+      "file": "awaken:layers/layer_city_murmur_far",
+      "attack": 6,
+      "duck": 8,
+      "release": 10
+    }
+  ],
+  "levels": [
+    {
+      "name": "calm",
+      "gains": [
+        0.7,
+        0.8,
+        0.0,
+        0.3,
+        0.0
+      ]
+    },
+    {
+      "name": "tension",
+      "gains": [
+        0.65,
+        0.6,
+        0.6,
+        0.3,
+        0.15
+      ]
+    },
+    {
+      "name": "combat",
+      "gains": [
+        0.6,
+        0.5,
+        0.9,
+        0.3,
+        0.3
+      ]
+    },
+    {
+      "name": "lord",
+      "gains": [
+        0.6,
+        0.4,
+        1.0,
+        0.3,
+        0.45
+      ]
+    }
+  ]
+}

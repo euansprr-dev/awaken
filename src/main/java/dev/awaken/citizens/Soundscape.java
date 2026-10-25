@@ -15,7 +15,9 @@ import org.jspecify.annotations.Nullable;
  * bed after dark ({@code awaken:city/night}), the slot crossfading as they walk from one district into the next. The
  * level is the crowd: how many of the district's citizens are outdoors now against its busiest hour (the ledger,
  * counted every 100 ticks), one lower in the rain; at night, the taverns' hours. The places that sound (fountains,
- * quays, forges, taverns, the carillon) are the client's ({@code citizens.client.CitySound}).
+ * quays, forges, taverns, the carillon) are the client's ({@code citizens.client.CitySound}). A player whose client runs
+ * AmbientSounds (it plays birds and crickets for real wherever there's greenery) hears the same beds without our
+ * synthetic birds and crickets: {@code awaken:city/as/<district>}, {@code awaken:city/as/night}.
  */
 final class Soundscape {
     private Soundscape() {}
@@ -23,12 +25,18 @@ final class Soundscape {
     /** The districts' keys by plan id (1 market .. 7 wallring); their outdoor count at the busiest hour (roster, B3a). */
     static final String[] KEYS = {"wallring", "market", "bellwatch", "quay", "terrace", "works", "garden", "wallring"};
     static final int[] PEAK = {21, 169, 42, 55, 21, 41, 20, 21};
-    private static final Identifier[] DAY = new Identifier[KEYS.length];
-    private static final Identifier NIGHT = Awaken.id("city/night");
+    private static final Identifier[] DAY = new Identifier[KEYS.length], DAY_AS = new Identifier[KEYS.length];
+    private static final Identifier NIGHT = Awaken.id("city/night"), NIGHT_AS = Awaken.id("city/as/night");
 
     static {
-        for (int i = 0; i < KEYS.length; i++) DAY[i] = Awaken.id("city/" + KEYS[i]);
+        for (int i = 0; i < KEYS.length; i++) {
+            DAY[i] = Awaken.id("city/" + KEYS[i]);
+            DAY_AS[i] = Awaken.id("city/as/" + KEYS[i]);
+        }
     }
+
+    /** Players whose clients run AmbientSounds (told at login, CitizensNet.Ears). */
+    private static final java.util.Set<java.util.UUID> NATURE = new java.util.HashSet<>();
 
     /** Citizens outdoors in each district (plan id), as last counted. */
     static final int[] OUTDOORS = new int[KEYS.length];
@@ -36,6 +44,19 @@ final class Soundscape {
 
     static void register() {
         MusicLayers.register(MusicLayers.Slot.AMBIENCE, 100, "carillon", Soundscape::context); // SPEC Plan v2 · audio: the city's reserved ids
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
+                (net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> NATURE.remove(e.getEntity().getUUID()));
+    }
+
+    static void hears(ServerPlayer p, boolean ambientSounds) {
+        if (ambientSounds) NATURE.add(p.getUUID());
+        else NATURE.remove(p.getUUID());
+    }
+
+    /** The bed a player hears for a district (plan id), or the night bed: with or without our birds and crickets. */
+    static Identifier bed(boolean nature, int district, boolean night) {
+        if (night) return nature ? NIGHT_AS : NIGHT;
+        return (nature ? DAY_AS : DAY)[district];
     }
 
     /** Every 100 ticks: where the ledger's people stand, by district (no allocation: the plan's raster). */
@@ -72,15 +93,16 @@ final class Soundscape {
         Citizens c = Citizens.active;
         if (c == null || p.level() != c.level || !CityHooks.inCity(p.level(), p.blockPosition())) return null;
         int tod = (int) Math.floorMod(p.level().getOverworldClockTime(), 24000L);
+        boolean nature = NATURE.contains(p.getUUID());
         if (night(tod)) {
             s.forced = nightLevel(tod);
-            return NIGHT;
+            return bed(nature, 0, true);
         }
         int d = CityPlan.get().district(p.getBlockX() - c.work.cx, p.getBlockZ() - c.work.cz);
         if (d < 0 || d >= KEYS.length) d = 0;
         int lv = level(d, OUTDOORS[d]);
         if (p.level().isRainingAt(p.blockPosition().above())) lv = Math.max(Intensity.CALM, lv - 1);
         s.forced = lv;
-        return DAY[d];
+        return bed(nature, d, false);
     }
 }

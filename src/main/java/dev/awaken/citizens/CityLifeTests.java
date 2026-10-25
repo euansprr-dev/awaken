@@ -30,7 +30,8 @@ import java.util.concurrent.CompletableFuture;
 /**
  * The city's drawn life (M4 B3b, prefix {@code citizens_}), one test per mechanism where breakage is silent: the Watch's
  * lanterns place no light blocks (and the A/B path and old saves still clean up after themselves); every district bed
- * and the night bed resolve to equal-length loops whose crowd stems rise with the crowd, at the beds' loudness; the
+ * and the night bed (and each as heard with AmbientSounds) resolve to equal-length loops whose crowd stems rise with the
+ * crowd, at the beds' loudness; the
  * animals' (and the boats') rigs parse and carry every clip the client's brain plays (a missing clip just freezes it).
  */
 final class CityLifeTests {
@@ -114,6 +115,8 @@ final class CityLifeTests {
 
     // ---- the beds ----------------------------------------------------------------------------------------------------
 
+    /** The stems AmbientSounds plays for real (audio_city_life.py NATURE): left out of the as/ beds. */
+    private static final java.util.Set<String> NATURE = java.util.Set.of("birds", "crickets");
     /** The stems that carry people: their gains never fall as the crowd grows. */
     private static final List<String> CROWD = List.of("murmur_far", "murmur_near", "bustle", "works", "tavern_far");
     /**
@@ -138,6 +141,9 @@ final class CityLifeTests {
         List<LayerManifest> beds = new ArrayList<>();
         List<String> names = new ArrayList<>(List.of(Soundscape.KEYS).subList(1, Soundscape.KEYS.length));
         names.add("night");
+        // and each bed as a player with AmbientSounds hears it (as/): the same bed without our birds and crickets
+        for (int k = 0, n = names.size(); k < n; k++) names.add("as/" + names.get(k));
+        java.util.Map<String, LayerManifest> byName = new java.util.HashMap<>();
         for (String key : names) {
             Identifier ctx = Awaken.id("city/" + key);
             Identifier path = LayerManifest.path(ctx);
@@ -154,6 +160,7 @@ final class CityLifeTests {
                 continue;
             }
             beds.add(m);
+            byName.put(key, m);
             if (m.music()) problems.add(ctx + ": a bed plays on the ambient source");
             for (LayerManifest.Stem s : m.stems()) {
                 long frames = oggFrames(file(s));
@@ -194,6 +201,29 @@ final class CityLifeTests {
             h.assertTrue(lv >= Intensity.CALM && lv <= Intensity.COMBAT, "the night bed's level at " + tod);
         }
         h.assertTrue(Soundscape.night(18000) && !Soundscape.night(6000), "night at midnight, day at noon");
+
+        // the AmbientSounds beds never drift from their own: same stems but birds and crickets, same gains
+        for (var en : byName.entrySet()) {
+            if (en.getKey().startsWith("as/")) continue;
+            LayerManifest plain = en.getValue(), as = byName.get("as/" + en.getKey());
+            if (as == null) continue;
+            int j = 0;
+            for (int k = 0; k < plain.stems().size(); k++) {
+                String stem = plain.stems().get(k).name();
+                if (NATURE.contains(stem)) continue;
+                h.assertTrue(j < as.stems().size() && as.stems().get(j).name().equals(stem), en.getKey() + ": the AmbientSounds bed lacks " + stem);
+                for (int l = 0; l < Intensity.NAMES.length; l++) {
+                    h.assertTrue(Math.abs(as.gainsAt(l)[j] - plain.gainsAt(l)[k]) < 1e-4F, en.getKey() + ": " + stem + " differs at " + Intensity.name(l));
+                }
+                j++;
+            }
+            h.assertTrue(j == as.stems().size(), en.getKey() + ": the AmbientSounds bed has stems its own doesn't");
+        }
+        h.assertTrue(Soundscape.bed(true, 1, false).equals(Awaken.id("city/as/market")) && Soundscape.bed(false, 1, false).equals(Awaken.id("city/market"))
+                && Soundscape.bed(true, 0, true).equals(Awaken.id("city/as/night")), "a player with AmbientSounds gets the as/ beds");
+        var buf = io.netty.buffer.Unpooled.buffer();
+        CitizensNet.Ears.STREAM_CODEC.encode(buf, new CitizensNet.Ears(true));
+        h.assertTrue(CitizensNet.Ears.STREAM_CODEC.decode(buf).ambientSounds(), "what the client hears with round-trips");
 
         CompletableFuture<List<String>> job = new CompletableFuture<>();
         Thread worker = new Thread(() -> {

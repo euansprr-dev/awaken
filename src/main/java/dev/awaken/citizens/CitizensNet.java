@@ -16,6 +16,7 @@ import java.util.List;
 /**
  * Server → client: a line a citizen says (to one player, or aloud to everyone near), and the chimneys and forges the
  * client puffs smoke from (found server side as their chunks load; the client decides the hour's smoke itself).
+ * Client → server: what the player's game hears with ({@link Ears}).
  */
 public final class CitizensNet {
     private CitizensNet() {}
@@ -74,11 +75,28 @@ public final class CitizensNet {
         }
     }
 
+    /**
+     * Sent once at login: whether the player's client runs AmbientSounds (it plays the city's birds and crickets for
+     * real), so the server picks the beds that leave those out (citizens.Soundscape).
+     */
+    public record Ears(boolean ambientSounds) implements CustomPacketPayload {
+        public static final Type<Ears> TYPE = new Type<>(Awaken.id("city_ears"));
+        public static final StreamCodec<ByteBuf, Ears> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.BOOL, Ears::ambientSounds, Ears::new);
+
+        @Override
+        public Type<Ears> type() {
+            return TYPE;
+        }
+    }
+
     static void register(RegisterPayloadHandlersEvent e) {
         var r = e.registrar("1");
         r.playToClient(Speech.TYPE, Speech.STREAM_CODEC);
         r.playToClient(Emitters.TYPE, Emitters.STREAM_CODEC);
         r.playToClient(Site.TYPE, Site.STREAM_CODEC);
+        r.playToServer(Ears.TYPE, Ears.STREAM_CODEC, (msg, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer sp) Soundscape.hears(sp, msg.ambientSounds());
+        });
     }
 
     static void say(ServerPlayer p, CitizenBody b, String text, int ticks, int kind) {

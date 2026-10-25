@@ -29,6 +29,10 @@ public final class CitizensClient {
         NeoForge.EVENT_BUS.addListener(CityCritters::onLeave);
         NeoForge.EVENT_BUS.addListener(CityCritters::onSound);
         NeoForge.EVENT_BUS.addListener(CitySound::tick);
+        NeoForge.EVENT_BUS.addListener(CityNature::tick);
+        // the server picks the beds by what this game hears with (AmbientSounds plays the birds and crickets itself)
+        NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingIn e) ->
+                net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(new CitizensNet.Ears(CityNature.INSTALLED)));
         modBus.addListener((RegisterParticleProvidersEvent e) -> {
             e.registerSpriteSet(CitizensContent.CHIMNEY_SMOKE.get(), CitizenParticles.Smoke.Provider::new);
             e.registerSpriteSet(CitizensContent.FORGE_SPARK.get(), CitizenParticles.Spark.Provider::new);
