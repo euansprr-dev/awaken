@@ -84,8 +84,11 @@ public final class AscentPayloads {
         @Override public Type<Stop> type() { return TYPE; }
     }
 
-    /** Remember's modes: an old world's tiers given back, or wings given at a sky platform's core. */
-    public static final int REMEMBER = 0, GIFT_WINGS = 1;
+    /**
+     * Remember's modes: an old world's tiers given back, wings given at a sky platform's core, the leap given at the far
+     * landing of the Leaper's Gauntlet, and the short moment at its chasm's edge (no waiting for a free moment).
+     */
+    public static final int REMEMBER = 0, GIFT_WINGS = 1, GIFT_LEAP = 2, LEAP_EDGE = 3;
 
     /**
      * Server → client: a scene of tiers given: "your body remembers" (an old world's first load, SPEC §17.6) or "wings

@@ -114,6 +114,7 @@ public final class AscentPilot {
                 case "boom" -> glide(p, true);
                 case "soar" -> soar(p);
                 case "climb" -> climb(p);
+                case "leap" -> leap(p);
                 default -> script = "";
             }
         }
@@ -378,6 +379,48 @@ public final class AscentPilot {
             }
         }
         if (age > 2400) script = "";
+    }
+
+    /**
+     * Over a chasm (the Leaper's Gauntlet, SPEC §17.10): sprint straight on, jump at the edge, dash a few ticks up
+     * (sprint let go and pressed again), jump again as the rise runs out, and stop once down. Ends 60 ticks after
+     * landing (or after 15 s).
+     */
+    private static void leap(LocalPlayer p) {
+        if (phase < 3) press(FORWARD, 2);
+        // sprint held on the ground; let go in the air and pressed again: a dash
+        if (phase == 0 || phase == 2 || (phase == 1 && age - mark > 4)) press(SPRINT, phase == 1 ? 1 : 2);
+        boolean ground = p.onGround();
+        switch (phase) {
+            case 0 -> {
+                // the edge: no floor a stride ahead
+                double fx = -Mth.sin(p.getYRot() * Mth.DEG_TO_RAD), fz = Mth.cos(p.getYRot() * Mth.DEG_TO_RAD);
+                net.minecraft.core.BlockPos ahead = net.minecraft.core.BlockPos.containing(p.getX() + fx * 1.1, p.getY() - 0.5, p.getZ() + fz * 1.1);
+                if (ground && age > 4 && p.level().getBlockState(ahead).isAir()) {
+                    press(JUMP, 2);
+                    phase = 1;
+                    mark = age;
+                }
+            }
+            case 1 -> {
+                // a dash a few ticks up (sprint pressed again), then the second jump as the rise runs out
+                if (!ground && age - mark > 8 && p.getDeltaMovement().y < 0.12) {
+                    press(JUMP, 2);
+                    phase = 2;
+                    mark = age;
+                }
+            }
+            case 2 -> {
+                if (ground && age - mark > 4) {
+                    phase = 3;
+                    mark = age;
+                }
+            }
+            default -> {
+                if (age - mark > 60) script = "";
+            }
+        }
+        if (age > 300) script = "";
     }
 
     /** The sky platform's core, if one is in sight (on the deck's level or just under it). */

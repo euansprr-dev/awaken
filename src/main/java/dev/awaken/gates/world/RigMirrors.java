@@ -381,6 +381,6 @@ public final class RigMirrors {
         List<RigRoom.Trigger> triggers = new ArrayList<>();
         triggers.add(new RigRoom.Trigger(RigRoom.On.BEAM, new RigRoom.Box(pz.sealX, BEAM_DY, pz.sealZ, pz.sealX, BEAM_DY, pz.sealZ), 0, true, 0));
         if (pz.chamber != null) triggers.add(new RigRoom.Trigger(RigRoom.On.ZONE, pz.chamber, 1, true, 0));
-        return new RigRoom(RigRoom.Kind.MIRROR_HALL, groups, tracks, triggers, null, pz, null);
+        return new RigRoom(RigRoom.Kind.MIRROR_HALL, groups, tracks, triggers, null, pz, null, null);
     }
 }

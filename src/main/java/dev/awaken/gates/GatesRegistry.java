@@ -201,8 +201,18 @@ public final class GatesRegistry {
     public static final DeferredBlock<RigBlocks.Seal> RIG_SEAL = BLOCKS.registerBlock("gate_rig_seal",
             RigBlocks.Seal::new, p -> unbreakable(MapColor.COLOR_LIGHT_BLUE, SoundType.AMETHYST, 0).apply(p)
                     .lightLevel(s -> s.getValue(RigBlocks.Seal.LIT) ? 15 : 4));
+    // ---- the Gate Rig's Gauntlet (SPEC §17.5): the presses and the wall you run along ----------------------------------
+
+    /** The Foundry's press: riveted iron, its face banded in warning amber. */
+    public static final DeferredBlock<Block> PRESS = BLOCKS.registerSimpleBlock("gate_press", unbreakable(MapColor.COLOR_GRAY, SoundType.METAL, 0));
+    /** The Monastery's ram: a block of rime-hard blue ice in a frame of iron. */
+    public static final DeferredBlock<Block> FROST_RAM = BLOCKS.registerSimpleBlock("gate_frost_ram", unbreakable(MapColor.ICE, SoundType.GLASS, 3));
+    /** The wall a Gauntlet's course runs along over the drop: dark panels with a lit groove at running height. */
+    public static final DeferredBlock<Block> RUN_WALL = BLOCKS.registerSimpleBlock("gate_run_wall", unbreakable(MapColor.COLOR_GRAY, SoundType.DEEPSLATE_TILES, 7));
+
     public static final List<DeferredItem<BlockItem>> RIG_ITEMS = List.of(ITEMS.registerSimpleBlockItem(RIG_MIRROR),
-            ITEMS.registerSimpleBlockItem(RIG_LENS), ITEMS.registerSimpleBlockItem(RIG_SEAL));
+            ITEMS.registerSimpleBlockItem(RIG_LENS), ITEMS.registerSimpleBlockItem(RIG_SEAL), ITEMS.registerSimpleBlockItem(PRESS),
+            ITEMS.registerSimpleBlockItem(FROST_RAM), ITEMS.registerSimpleBlockItem(RUN_WALL));
 
     public static final DeferredItem<BlockItem> FRAME_ITEM = ITEMS.registerSimpleBlockItem(FRAME);
     public static final DeferredItem<BlockItem> FRAME_CRACKED_ITEM = ITEMS.registerSimpleBlockItem(FRAME_CRACKED);
@@ -281,6 +291,11 @@ public final class GatesRegistry {
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_SURGE = sound("gate.rig.surge");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_CAVE = sound("gate.rig.cave");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_RUBBLE = sound("gate.rig.rubble");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_WINDUP = sound("gate.rig.windup");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_PRESS = sound("gate.rig.press");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_LIFT = sound("gate.rig.lift");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_RING = sound("gate.rig.ring");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_MEDAL = sound("gate.rig.medal");
 
     // ---- particles (the Gate Rig's own; client providers in gates.client.RigParticles) -------------------------------
 

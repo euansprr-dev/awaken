@@ -28,6 +28,13 @@ final class FloorBuilder {
             main.add(b.finish());
             return new GateLayout(plan, main, List.of());
         }
+        if (plan.leaperTrial()) {
+            // the Leaper's Gauntlet: the antechamber, the course's long hall, the room past its chasm
+            Builder b = new Builder(plan, plan.theme(), 0, 1, Hash.of(plan.seed(), 0, 1));
+            b.trialFloor();
+            main.add(b.finish());
+            return new GateLayout(plan, main, List.of());
+        }
         for (int f = 1; f <= plan.floors(); f++) {
             Builder b = new Builder(plan, plan.theme(), 0, f, Hash.of(plan.seed(), 0, f));
             if (f == plan.floors()) b.bossFloor(false);
@@ -424,6 +431,24 @@ final class FloorBuilder {
             end = hall;
         }
 
+        /**
+         * The Leaper's Gauntlet: the antechamber (the start) south into the course's hall (1x3 slots, its doors on one
+         * line: a straight course) and on into the room past it, where the way out opens. The floor counts as the Lord's
+         * floor: nothing about it is "cleared" but the course itself.
+         */
+        void trialFloor() {
+            bossFloor = true;
+            grid(1, 5);
+            int a = add(Room.Type.START, Room.Shape.RECT, 0, 0, 1, 1, 0);
+            int hall = add(Room.Type.NORMAL, Room.Shape.RECT, 0, 1, 1, 3, 0);
+            // a calm room (no monsters, no pressure): the way out opens there
+            int past = add(Room.Type.ANNEX_EXIT, Room.Shape.RECT, 0, 4, 1, 1, 0);
+            connect(a, hall);
+            connect(hall, past);
+            start = a;
+            end = past;
+        }
+
         /** Boss floor: a short approach and the arena. Annex boss floors get a smaller arena (the inner gate's keeper). */
         void bossFloor(boolean smallArena) {
             bossFloor = true;
@@ -517,7 +542,8 @@ final class FloorBuilder {
                 if (!friendly && !hollow) deeperTypes();
             }
             // the Gate Rig's room (version 4): chosen by per-room hashes, so every other room stays as version 3 built it
-            if (plan.contentVersion() >= 4) RigRooms.assign(this);
+            if (plan.leaperTrial()) RigRooms.trial(this);
+            else if (plan.contentVersion() >= 4) RigRooms.assign(this);
             for (Room r : rooms) {
                 if (!(friendly || (hollow && r.type != Room.Type.BOSS))) spawns(r);
                 features(r);

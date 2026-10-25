@@ -16,6 +16,11 @@ Three families, one per archetype, and the cave-in:
 - Gravity Wells, air: flip_up and flip_down (the whoomph of down turning over, rising or falling), surge (the room
   drawing breath before it turns).
 - Cave-in: cave (the ceiling creaking, dust trickling), rubble (a block of it hitting the floor).
+- Gauntlet, iron and clockwork: windup (a ratchet winding faster under a rising whine: a press about to fall), press (a
+  hiss and a slam that rings the iron), lift (hydraulics letting go, the chain taking it back up), ring (a checkpoint:
+  two glass notes up and a shimmer), medal (the far landing: a rising chord, the higher the medal the brighter).
+
+    python3 tools/art/specs/audio_rig.py --only press,lift   render only these
 """
 import json
 import os
@@ -244,6 +249,64 @@ def rubble(seed):
     return finish(x, 0.25, 7000)
 
 
+# ---- the Gauntlet ------------------------------------------------------------------------------------------------
+
+def windup(seed):
+    n = K.ns(0.65)
+    x = np.zeros(n)
+    t, gap = 0.0, 0.085
+    i = 0
+    while t < 0.55:                                                         # the ratchet, faster and faster
+        x += at(n, t, burst(0.012, 3400 + 140 * i, 2.2, 0.005, seed + i)) * (0.25 + 0.04 * i)
+        t += gap
+        gap = max(0.022, gap * 0.82)
+        i += 1
+    whine = K.sine(K.glide(K.ns(0.6), 320, 760), K.ns(0.6)) * K.line(K.ns(0.6), [(0, 0), (0.8, 1), (1, 0)])
+    x += at(n, 0.02, whine) * 0.12                                          # the spring taking the load
+    x += at(n, 0.0, grind(0.6, 260, seed + 30, 9.0)) * 0.2
+    return finish(x, 0.2)
+
+
+def press(seed):
+    n = K.ns(1.1)
+    x = at(n, 0.0, K.highpass(burst(0.09, 5200, 0.7, 0.06, seed + 1), 2500, 2)) * 0.35   # the hiss as it lets go
+    x += at(n, 0.07, thump(95, 42, 0.5, 0.2, 1.0, 200, seed + 2)) * 1.0                  # the slam
+    clang = K.modal(K.hz(K.midi("C3")), (1.0, 2.31, 3.89, 5.6), (1.0, 0.55, 0.3, 0.18), (0.9, 0.6, 0.4, 0.25),
+                    K.ns(0.9), seed=seed + 3)
+    x += at(n, 0.07, clang) * 0.35                                                       # the iron rings with it
+    x += at(n, 0.08, grit(0.4, 180, seed + 4, 0.5, 1.6)) * 0.3                           # dust off the floor
+    return finish(x, 0.28, 7500)
+
+
+def lift(seed):
+    n = K.ns(0.9)
+    x = at(n, 0.0, sweep(0.7, 900, 2600, 1.2, seed + 1, 0.2, 1.2, "white")) * 0.3       # hydraulics letting go
+    for i in range(7):                                                                   # the chain taking it up
+        x += at(n, 0.08 + i * 0.075, burst(0.02, 2100 + 60 * i, 1.8, 0.012, seed + 2 + i)) * 0.22
+    x += at(n, 0.0, grind(0.8, 220, seed + 20, 6.0)) * 0.25
+    return finish(x, 0.25)
+
+
+def ring(seed):
+    n = K.ns(1.3)
+    x = at(n, 0.0, glass_ping(K.hz(K.midi("A5")), 1.0, seed + 1, 0.7)) * 0.45
+    x += at(n, 0.07, glass_ping(K.hz(K.midi("E6")), 1.1, seed + 2, 0.75)) * 0.4
+    shimmer = K.highpass(K.noise(K.ns(0.9), "pink", seed + 3), 5000, 2) * K.line(K.ns(0.9), [(0, 0), (0.15, 1), (1, 0)])
+    x += at(n, 0.05, shimmer) * 0.06
+    return finish(x, 0.35, 13000)
+
+
+def medal(seed):
+    n = K.ns(2.2)
+    x = np.zeros(n)
+    for i, (m, t) in enumerate((("D5", 0.0), ("A5", 0.1), ("D6", 0.2), ("F#6", 0.3), ("A6", 0.42))):
+        x += at(n, t, glass_ping(K.hz(K.midi(m)), 1.6, seed + i, 0.65)) * (0.45 - i * 0.05)
+    swell = K.pad(K.hz(K.midi("D4")), n, voices=6, seed=seed + 9, bright=0.4)
+    x += swell * K.line(n, [(0, 0), (0.25, 0.9), (0.7, 0.5), (1, 0)]) * 0.3
+    x += at(n, 0.0, thump(120, 80, 0.25, 0.1, 0.3, 300, seed + 12)) * 0.4
+    return finish(x, 0.4, 13000)
+
+
 SOUNDS_SPEC = [
     # file, render, rms (dBFS, sfx -20 ± 4), event, subtitle, volume, attenuation
     ("gate_rig_crack", crack, -21.0, "gate.rig.crack", "Floor cracks", 1.0, 20),
@@ -261,6 +324,11 @@ SOUNDS_SPEC = [
     ("gate_rig_surge", surge, -21.0, "gate.rig.surge", "The room draws breath", 1.0, 32),
     ("gate_rig_cave", cave, -20.5, "gate.rig.cave", "Ceiling creaks", 1.0, 24),
     ("gate_rig_rubble", rubble, -19.0, "gate.rig.rubble", "Rubble lands", 1.0, 24),
+    ("gate_rig_windup", windup, -21.0, "gate.rig.windup", "A press winds up", 1.0, 24),
+    ("gate_rig_press", press, -18.5, "gate.rig.press", "A press slams down", 1.0, 32),
+    ("gate_rig_lift", lift, -21.5, "gate.rig.lift", "A press lifts", 1.0, 20),
+    ("gate_rig_ring", ring, -21.0, "gate.rig.ring", "Checkpoint", 1.0, 16),
+    ("gate_rig_medal", medal, -19.5, "gate.rig.medal", "Course run", 1.0, 16),
 ]
 
 
@@ -270,8 +338,14 @@ def build(out):  # build_all.py makes textures; audio is rendered on demand (mai
 
 def main(argv):
     tgt, tol, ceil, q = TARGETS["sfx"]
+    only = None
+    for a in argv:
+        if a.startswith("--only"):
+            only = set(argv[argv.index(a) + 1].split(",")) if a == "--only" else set(a.split("=", 1)[1].split(","))
     if "--json" not in argv:
         for name, fn, rms, *_ in SOUNDS_SPEC:
+            if only is not None and name.replace("gate_rig_", "") not in only:
+                continue
             assert abs(rms - tgt) <= tol, name
             x = K.mono(fn(sum(map(ord, name))))
             y = K.master(x, rms, ceil - 0.7)

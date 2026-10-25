@@ -280,6 +280,9 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
 - `dev.awaken.mobs.Ritual` — the Ritual of the Bell's cast: `spawnSeated`, `spawnStatue` (stages set on the entities).
 - `dev.awaken.gates.Gates` (ritual) — `ritualPlan(seed)`, `ritualHall(server, gateId)` (`RitualHall`: every position in
   the hall), `isRitual(server, gateId)`.
+- `dev.awaken.gates.Gates` (trials) — `leaperTrialPlan(seed)`: the Leaper's Gauntlet's plan, opened with
+  `openScripted(player, plan)` (§17.10). `dev.awaken.core.api.TrialHooks` — `atEdge(player, trial)`, `done(player, trial,
+  ticks, medal)`, installed by the Ascent.
 - `dev.awaken.body.Body` — `unlocked(Player, Move)`, `isSliding`, `isTacticalSprinting`, `isMantling`, `lastMoveTick` (both sides).
 - `dev.awaken.body.ascent.Ascent` — the Ascent's ladder (§17): `enum Tier {TETHER, LEAPER, WINGS, SKYBORN, SOVEREIGN}`,
   `has(Player, Tier)` (both sides), `highest(Player)`, `grant(ServerPlayer, Tier, String source)` (grants that tier and
@@ -1755,6 +1758,9 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   choice is a per-room hash after the version 3 rooms are built, never the builder's random stream: version 3 plans
   build exactly as before, and in a version 4 plan every room without a rig is what version 3 built. READY gates
   nobody entered rebuild on version 4 at start, as for every version bump.
+- **Content version 5:** the Gauntlet on the ordinary floors of the Clockwork Foundry and the Frost Monastery (which had
+  no rig room); `RigRooms.kinds(theme, version)`, so a version 4 plan of those themes builds no Gauntlet and every other
+  theme builds exactly as version 4 (`gates_rig_gauntlet` checks both).
 - **The model:** a *group* is a set of blocks swapped together between their painted (rest) state and an active state
   (a group with no blocks is a flag the archetype reads); a *track* is a timeline of beats (WARN, APPLY, RESTORE) on
   groups, looping or not; a *trigger* starts a track: a player in a box (ZONE, PLATE), the light reaching a block
@@ -1817,6 +1823,43 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   flip (it sets the same modifier the moment you step in), and the camera tips 5 degrees and back over 0.7 s
   (none with camera shake off; the FOV-effects slider scales it and a 7% FOV breath). Solvability: a breadth-first walk
   over the floor and the ceiling reaches the exit's ledge, and without the wells it can't.
+- **Gauntlet** (`RigGauntlet`, `RigGauntletLive`; plan §7 "Gauntlet"): the room is a pit (slag glow in the Foundry,
+  cloud in the Monastery, lit from below by light set in it every few columns) crossed by a course along the two door
+  axes, 4 wide, from the door you came in by (only rooms with exactly those two doors, at their floor). Rows are steps
+  from the entry as in the Collapse Run; 2 rows at each end are landings. A course needs 14 rows between them (a
+  single slot's room is too short to be worth a clock: about one gate in five of these themes has one).
+  - Obstacles, in an order of the room's own (each rotation tried, the one placing most kept), round again in a long
+    room, a floor row before the first and after each (two in a course of 20+ rows); a smaller version where the full
+    one won't fit:
+    - **gap**: 2 rows of open pit (3 from B), a sprint jump;
+    - **ledges**: 2 (3 from B), each 2 rows over the pit after a 1-row gap; one cracks the moment you land on it, falls
+      14 ticks later and knits back 60 after that;
+    - **presses**: 1 at D, 2 at C, 3 from B, each 2 rows with 2 floor rows between, in a straight stretch, in rooms 6+
+      high: a block of iron (`gate_press`, amber hazard bands) or a ram of ice (`gate_frost_ram`) 3 high, parked in the
+      ceiling over its rows. On a loop of 48 ticks (40 from B, 56 in a gentler variant) each comes down for 16 ticks (18
+      from B), alternate presses half a period apart. 12 ticks before, the floor under it glows with chevrons and a
+      ratchet winds (`gate.rig.windup`); it is drawn coming down out of the ceiling for 4 ticks, then its blocks land
+      (`gate.rig.press`), and whoever is under it is hit (4 + 12% of health) and thrown back. It lifts back into the
+      ceiling over 14 ticks (`gate.rig.lift`). The loop starts with the clock (a run started alone starts it fresh, so
+      its beat is the one the par was set to) and stops, putting everything back, when the room empties;
+    - **wall-run**: 5 rows of open pit (6 from B) in a straight stretch, with a wall (`gate_run_wall`, dark panels ruled
+      with lit grooves) beside them on one side, a row past either end, from the pit to 4 over the floor: run along it.
+  - **Rings**: after every second obstacle, over a straight floor row with 8+ rows still to go, a hoop of the theme's
+    light stands over the course (drawn by the client from the scene, its foot under the floor); passing it is your
+    checkpoint (`gate.rig.ring`, a pip on the clock lights, the split shows).
+  - **The clock** (yours only, `gate_rig_run`): stepping from the start landing onto the first row starts it; back on
+    the start landing gives the run up; the far landing stops it. Top centre: the time, a pip a ring, the par; at the
+    end the time in the medal's colour: gold within par × 1.1 + 1 s, silver within par × 1.5 + 2 s, else bronze
+    (`gate.rig.medal`, pitched by medal). A run pays world XP once in a while (`awaken:gauntlet`, 6% / 3.5% / 2% of a
+    level) and counts `awaken:gauntlet_runs` (and `awaken:gauntlet_gold`).
+  - **The pit**: 4 ticks in it and it throws you back to your last ring (the start before the first) facing the way on,
+    for 3 + 8% of health. No monsters on the course; no cache.
+  - **Solvability** (`RigGauntlet.solve`): from the first row (the clock and the presses start together) a runner at 0.26
+    a tick, gaps of up to 3 jumped, a wall-run of up to 7 rows at 0.32, off every ledge before it falls, through every
+    press only while it is up with 3 ticks clear either side (waiting on the row before for its window). Its time is the
+    course's par. The builder tries 4 variants, each gentler (fewer ledges and presses, a slower beat, no wall-run, no
+    presses), and drops the room if none passes.
+  - Not yet: your ghost (the best run replayed) and pistons.
 - **Collapse Timer** (the modifier) now drops real blocks: once a floor's time is up, every 2 s for each player still on
   it and not in a safe room, three blocks of ceiling (one where they are heading, two within 5) crack for a second,
   fall, and land as rubble (never on a door axis, a doorway or a feature): 2 + 6% of health to a player under one,
@@ -1825,11 +1868,14 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   `awaken:gate_breakable`): every painted block is protected, the Kit's dressing and the set pieces as much as the
   palette. Nothing is placed in a gate by a player (the placement event, which also covers fire, stripped logs and
   other block changes an item makes), and buckets neither pour nor scoop there. Powers' constructs still form.
-- **Tours:** `/awaken gate interior goto rig` stands in the rig room's doorway; `/awaken gate rig start` starts its first
-  track, `/awaken gate rig solve` turns a Mirror Hall's mirrors to their solution.
-- **Tests:** `gates_rig_collapse_run`, `gates_rig_mirror_hall`, `gates_rig_gravity_wells` (each: the archetype's
-  solvability check on every rig room of 1,000 seeded gates, every rank and layout; the same plan builds the same rig,
-  version 3 builds none; the server running it in the test level), `gates_rig_protection`.
+- **Tours:** `/awaken gate interior goto rig` stands in the rig room's doorway (on whichever floor has one);
+  `/awaken gate rig start` starts its first track, `/awaken gate rig solve` turns a Mirror Hall's mirrors to their
+  solution, `/awaken gate rig at <start|first|gap|ledge|press|wall|ring|last>` stands you on that part of the gate's
+  fullest Gauntlet; `/awaken gate open <rank> <theme> rig` rolls until the gate has a rig room (a Gauntlet with a press
+  and a ring). `tools/autopilot/gauntlet.txt`.
+- **Tests:** `gates_rig_collapse_run`, `gates_rig_mirror_hall`, `gates_rig_gravity_wells`, `gates_rig_gauntlet` (each:
+  the archetype's solvability check on every rig room of 1,000 seeded gates, every rank and layout; the same plan builds
+  the same rig, version 3 builds none; the server running it in the test level), `gates_rig_protection`.
 
 ### 17.6 Phase 1c: Flow, chains and mastery
 - **Flow** (client, 0..1; `AscentFlow`): each move adds to it, less as it fills (+a × (1 − flow/2), ×1.25 once a chain
@@ -2005,6 +2051,36 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   yet; puts you on the ground under the lowest ring); pilot `run climb` climbs the rings, the perch and the pier, walks
   round the cabin to its door and in, and ends when the core gives Wings (`tools/autopilot/ascent-sky.txt`: from a buoy
   at sea level to the pier in about 21 s, the core 7 s later; seed 4246).
+
+### 17.10 Ascension trials: the Leaper's Gauntlet
+- **Opened for you** (`AscentTrials`): once you hold the rope (not the leap) and have swung enough to know it (Tether
+  mastery level 2: 100 points), awake, in the overworld on the ground, checked every 5 s: a scripted gate opens in front
+  of you (`Gates.openScripted`, `Gates.leaperTrialPlan`), once (`AscentMemory` flag `LEAPER_TRIAL` = 4), with "A gate
+  is beating like a running heart: the Leaper's Gauntlet." It never breaks. Its card: "The Leaper's Gauntlet. A course
+  of the Foundry, and at its end a chasm no running jump will cross." · Trial: run it to the far side.
+- **The gate** (`GatePlan.LEAPER_TRIAL` boss marker, content version 5): a D-rank Clockwork Foundry of one floor, the
+  antechamber, the course's hall (1x3 slots, its doors on one line) and a calm room past it (`ANNEX_EXIT`: no monsters,
+  no pressure). The objective line: "The Leaper's Gauntlet: run the course to the far side", then "The way out is open
+  past the course".
+- **The course** (`RigGauntlet.trial`, laid by hand, a Gauntlet in every other way: the clock, rings, medals, the pit):
+  a floor row and a 2-row gap, two ledges, a ring, two presses (if the hall is tall enough; a gentle 56-tick beat, down
+  16), a 5-row wall-run, a ring, four rows of run-up to the **edge**, then the **chasm**: 5 rows of open pit (no sprint
+  jump crosses more than 3; a double jump or an air dash crosses it with room to spare), and on to the far landing. The
+  check's runner crosses the chasm at a dash's 0.6 a tick (up to 7 rows).
+- **The edge** (`TrialHooks.atEdge`, gates → the Ascent): stepping on the edge row without the leap gives it (LEAPER)
+  with a short moment at once (`Remember` mode `LEAP_EDGE`, about 3 s, no waiting for stillness): the remember swell a
+  little higher, light rising at the feet, "Your legs remember the air." and "Jump. In the air, jump again."
+- **The far landing** (`TrialHooks.done`): the clock stops (its medal as any Gauntlet's), then once a player (flag
+  `LEAPER_TRIAL_DONE` = 8) the gift's scene (`GIFT_LEAP`: "The leap is yours." · "In the air: jump again · sprint to
+  dash · sneak high up to slam."), 10 Leaper mastery, a fifth of a level's XP (DISCOVERY), counter
+  `awaken:ascent_leaper_trial`. The gate is done: cleared (as after a Lord), the exit opens in the room past the course,
+  and it comes down once everyone has left.
+- `core.api.TrialHooks` (installed by the Ascent; the defaults give nothing): `atEdge(player, trial)`,
+  `done(player, trial, ticks, medal)`; `TrialHooks.LEAPER` names this trial.
+- Dev: `/awaken ascent trial leaper` opens it now; `/awaken gate rig at runup|edge`; pilot `run leap` (sprint, jump at the
+  edge, dash, jump again); `tools/autopilot/leaper-trial.txt`. Test: `gates_leaper_trial` (the plan's floor, the course
+  and its chasm, the check with the leap, the same every time; run for real: the edge gives the leap, the far landing
+  clears the gate and opens the way out).
 
 ---------------------------------------------------------------------------------------------------------------------
 

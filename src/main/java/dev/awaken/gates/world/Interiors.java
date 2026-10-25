@@ -11,6 +11,7 @@ import dev.awaken.gates.run.RunState;
 import dev.awaken.gates.run.Runs;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -47,7 +48,94 @@ public final class Interiors {
                         .executes(c -> go(c, StringArgumentType.getString(c, "spot"))))))));
         AwakenCommands.add((root, ctx) -> root.then(Commands.literal("gate").then(Commands.literal("rig").requires(AwakenCommands.admin())
                 .then(Commands.literal("start").executes(c -> rig(c, false)))
-                .then(Commands.literal("solve").executes(c -> rig(c, true))))));
+                .then(Commands.literal("solve").executes(c -> rig(c, true)))
+                .then(Commands.literal("at").then(Commands.argument("part", StringArgumentType.word())
+                        .suggests((c, b) -> {
+                            for (String s : List.of("start", "first", "gap", "ledge", "press", "wall", "ring", "edge", "runup", "last")) b.suggest(s);
+                            return b.buildFuture();
+                        })
+                        .executes(c -> at(c, StringArgumentType.getString(c, "part"))))))));
+    }
+
+    /**
+     * Tours: stands you on a part of the Gauntlet on this floor (any floor's, if this one has none), facing the way on:
+     * the start landing, the first row (the clock starts), the row before a gap, a ledge, a press or the wall-run, a
+     * ring, or the far landing.
+     */
+    private static int at(CommandContext<CommandSourceStack> c, String part) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = c.getSource().getPlayerOrException();
+        RunState run = Runs.run(p);
+        GateRecord g = run.active() ? GateRegistry.get(c.getSource().getServer()).gate(run.gateId) : null;
+        ServerLevel gl = GateService.gateLevel(c.getSource().getServer());
+        if (g == null || gl == null) {
+            c.getSource().sendFailure(Component.literal("Not inside a gate."));
+            return 0;
+        }
+        GateLayout l = GateLayout.of(g.plan);
+        FloorLayout f = null;
+        Room r = null;
+        FloorLayout here = l.floor(run.area, run.floor);
+        List<FloorLayout> floors = new java.util.ArrayList<>();
+        if (here != null) floors.add(here);
+        floors.addAll(l.main);
+        // the gate's fullest course (this floor's on a tie)
+        int best = -1;
+        for (FloorLayout o : floors) {
+            for (Room q : o.rooms) {
+                if (q.rig == null || q.rig.kind != RigRoom.Kind.GAUNTLET) continue;
+                RigGauntlet.Course qc = q.rig.course;
+                int parts = (qc.presses() > 0 ? 2 : 0) + (qc.runs() > 0 ? 1 : 0) + (qc.ledges() > 0 ? 1 : 0) + (qc.rings().length > 0 ? 2 : 0);
+                if (parts > best) {
+                    best = parts;
+                    r = q;
+                    f = o;
+                }
+            }
+        }
+        if (r == null) {
+            c.getSource().sendFailure(Component.literal("No Gauntlet in this gate."));
+            return 0;
+        }
+        RigGauntlet.Course co = r.rig.course;
+        int k = switch (part) {
+            case "start" -> 0;
+            case "first" -> co.first();
+            // the trial's edge, and four rows back from it (the run-up to the leap)
+            case "edge" -> co.edge();
+            case "runup" -> co.edge() < 0 ? -1 : co.edge() - 3;
+            case "last" -> co.last();
+            case "ring" -> co.rings().length > 0 ? co.rings()[0] : -1;
+            default -> {
+                byte want = switch (part) {
+                    case "gap" -> RigGauntlet.GAP;
+                    case "ledge" -> RigGauntlet.LEDGE;
+                    case "press" -> RigGauntlet.PRESS;
+                    case "wall" -> RigGauntlet.RUN;
+                    default -> -1;
+                };
+                int found = -1;
+                for (int i = co.first(); i < co.last() && found < 0; i++) if (co.rowKind()[i] == want) found = i;
+                if (found < 0 || want == RigGauntlet.LEDGE) yield found;
+                // a floor row before it (a press: a few back, to see it come down)
+                int stand = found - 1;
+                for (int i = found - 1; i >= co.first(); i--) {
+                    byte kk = co.rowKind()[i];
+                    if (kk != RigGauntlet.FLOOR && kk != RigGauntlet.RING) break;
+                    stand = i;
+                    if (want != RigGauntlet.PRESS || found - i >= 3) break;
+                }
+                yield stand;
+            }
+        };
+        if (k < 0) {
+            c.getSource().sendFailure(Component.literal("This Gauntlet has no " + part + "."));
+            return 0;
+        }
+        double[] q = co.rowCentre(k), on = co.rowCentre(Math.min(co.rows() - 1, k + 3));
+        BlockPos o = GateService.world(g, f, 0, r.dy, 0);
+        float yaw = (float) Math.toDegrees(Math.atan2(-(on[0] - q[0]), on[1] - q[1]));
+        p.teleportTo(gl, o.getX() + q[0], o.getY() + 0.05, o.getZ() + q[1], Set.of(), yaw, 12F, true);
+        return 1;
     }
 
     private static int rig(CommandContext<CommandSourceStack> c, boolean solve) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
@@ -101,6 +189,11 @@ public final class Interiors {
         GateLayout l = GateLayout.of(g.plan);
         FloorLayout f = spot.equals("lord") || spot.equals("ante") ? l.main.get(l.main.size() - 1) : l.floor(run.area, run.floor);
         if (f == null) f = l.main.get(0);
+        // the rig room may be on another floor: the first that has one
+        if (spot.equals("rig") && view(f, spot) == null) for (FloorLayout o : l.main) if (view(o, spot) != null) {
+            f = o;
+            break;
+        }
         double[] view = view(f, spot);
         if (view == null) {
             c.getSource().sendFailure(Component.literal("No " + spot + " on this floor."));

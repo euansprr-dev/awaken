@@ -442,5 +442,50 @@
         "attenuation_distance": 24
       }
     ]
+  },
+  "gate.rig.windup": {
+    "subtitle": "subtitles.awaken.gate.rig.windup",
+    "sounds": [
+      {
+        "name": "awaken:gate_rig_windup",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "gate.rig.press": {
+    "subtitle": "subtitles.awaken.gate.rig.press",
+    "sounds": [
+      {
+        "name": "awaken:gate_rig_press",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "gate.rig.lift": {
+    "subtitle": "subtitles.awaken.gate.rig.lift",
+    "sounds": [
+      {
+        "name": "awaken:gate_rig_lift",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "gate.rig.ring": {
+    "subtitle": "subtitles.awaken.gate.rig.ring",
+    "sounds": [
+      {
+        "name": "awaken:gate_rig_ring",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "gate.rig.medal": {
+    "subtitle": "subtitles.awaken.gate.rig.medal",
+    "sounds": [
+      {
+        "name": "awaken:gate_rig_medal",
+        "attenuation_distance": 16
+      }
+    ]
   }
 }

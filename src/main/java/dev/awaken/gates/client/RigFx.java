@@ -30,7 +30,10 @@ import java.util.List;
 final class RigFx {
     private RigFx() {}
 
-    /** A block in motion, from the moment its cue arrived (client game time). */
+    /**
+     * A block in motion, from the moment its cue arrived (client game time). {@code seed}: a per-cell jitter (for a press:
+     * how many ticks it takes to come down; it rests at the bottom after that).
+     */
     record Move(int kind, BlockState state, BlockPos pos, long start, int ticks, float a, int theme, float seed) {}
 
     /** A glow on cells (a warning, a flash), from the moment its cue arrived. */
@@ -68,6 +71,8 @@ final class RigFx {
             case PRECURSOR_LAB -> 0x6FF6FF;
             case NIGHTMARE -> 0xB07CFF;
             case SKY_ARCHIPELAGO -> 0xBFE6FF;
+            case CLOCKWORK_FOUNDRY -> 0xFFA63A;
+            case FROST_MONASTERY -> 0x9FDCFF;
             default -> 0xFFF1D6;
         };
     }
@@ -90,7 +95,7 @@ final class RigFx {
     static void submit(SubmitCustomGeometryEvent e) {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
-        if (level == null || (RigClient.beams.isEmpty() && MOVES.isEmpty() && GLOWS.isEmpty())) return;
+        if (level == null || (RigClient.beams.isEmpty() && MOVES.isEmpty() && GLOWS.isEmpty() && !RigClient.hasRings())) return;
         var state = e.getLevelRenderState();
         Vec3 cam = state.cameraRenderState.pos;
         cx = cam.x;
@@ -107,6 +112,7 @@ final class RigFx {
             try {
                 for (RigClient.Beam b : RigClient.beams) beam(vc, b);
                 for (Glow g : GLOWS) glow(vc, g);
+                rings(vc);
             } catch (RuntimeException ex) {
                 Awaken.LOG.error("[gates] rig light failed", ex);
             }
@@ -155,6 +161,11 @@ final class RigFx {
             case RigPayloads.Cue.CAVE -> {
                 for (BlockPos c : g.cells) ceilingCrack(vc, c, argb(0xFFD9A0, 0.15F + 0.5F * a), a);
             }
+            case RigPayloads.Cue.HAZARD -> {
+                // the floor under a press: chevrons of the theme's light pulsing faster and brighter until it comes down
+                float beat = 0.55F + 0.45F * Mth.sin((now + pt) * (0.6F + 1.6F * a));
+                for (BlockPos c : g.cells) hazard(vc, c, argb(hot(col, 0.3F * a), (0.18F + 0.6F * a) * beat));
+            }
             case RigPayloads.Cue.SHATTER, RigPayloads.Cue.IGNITE -> {
                 float f = (1 - a) * (1 - a);
                 for (BlockPos c : g.cells) flare(vc, Vec3.atCenterOf(c), 1.4F * (0.5F + a), argb(hot(col, 0.6F), 0.8F * f));
@@ -178,6 +189,60 @@ final class RigFx {
         strip(vc, x0 + 0.5 + j2 * 0.4, y, z0 + 0.55, x0 + 0.92, y, z0 + 0.85 - j1 * 0.5, w, argb);
         strip(vc, x0 + 0.5 + j2 * 0.4, y, z0 + 0.55, x0 + 0.35 + j1, y, z0 + 0.95, w * 0.8F, argb);
         strip(vc, x0 + 0.6, y, z0 + 0.08, x0 + 0.5 + j2 * 0.4, y, z0 + 0.55, w * 0.7F, argb);
+    }
+
+    /** Two chevrons and a rim over a tile's top. */
+    private static void hazard(VertexConsumer vc, BlockPos c, int argb) {
+        double y = c.getY() + 1.006;
+        double x0 = c.getX(), z0 = c.getZ();
+        strip(vc, x0 + 0.15, y, z0 + 0.2, x0 + 0.5, y, z0 + 0.45, 0.07F, argb);
+        strip(vc, x0 + 0.5, y, z0 + 0.45, x0 + 0.85, y, z0 + 0.2, 0.07F, argb);
+        strip(vc, x0 + 0.15, y, z0 + 0.6, x0 + 0.5, y, z0 + 0.85, 0.07F, argb);
+        strip(vc, x0 + 0.5, y, z0 + 0.85, x0 + 0.85, y, z0 + 0.6, 0.07F, argb);
+        int rim = argb & 0x00FFFFFF | ((argb >>> 25) << 24);
+        strip(vc, x0 + 0.03, y, z0 + 0.03, x0 + 0.97, y, z0 + 0.03, 0.03F, rim);
+        strip(vc, x0 + 0.03, y, z0 + 0.97, x0 + 0.97, y, z0 + 0.97, 0.03F, rim);
+    }
+
+    // ---- the Gauntlet's rings -------------------------------------------------------------------------------------
+
+    /** Ring segments, and how far off a ring is still drawn. */
+    static final int RING_SEGMENTS = 40;
+    static final double RING_SEEN = 64;
+
+    /**
+     * Each Gauntlet ring: a hoop of light standing over its row of the course, wider than the course, its foot just under
+     * the floor. Your own run lights the rings you've passed gold; the next one breathes.
+     */
+    private static void rings(VertexConsumer vc) {
+        int passed = RigRunHud.passed();
+        for (RigClient.RingRoom room : RigClient.ringRooms()) {
+            int col = light(room.theme());
+            for (int i = 0; i < room.rings().size(); i++) {
+                double[] q = room.rings().get(i);
+                double mx = q[0], my = q[1], mz = q[2];
+                if ((mx - cx) * (mx - cx) + (my - cy) * (my - cy) + (mz - cz) * (mz - cz) > RING_SEEN * RING_SEEN) continue;
+                boolean done = i <= passed, next = RigRunHud.running() && i == passed + 1;
+                float pulse = next ? 0.75F + 0.25F * Mth.sin((now + pt) * 0.25F) : 1F;
+                int c = done ? 0xFFD27A : col;
+                ring(vc, q, 1.2F, argb(c, (done ? 0.10F : 0.18F) * pulse));
+                ring(vc, q, 0.45F, argb(hot(c, 0.4F), (done ? 0.35F : 0.6F) * pulse));
+                ring(vc, q, 0.13F, argb(hot(c, 0.85F), 0.95F * pulse));
+            }
+        }
+    }
+
+    /** One hoop: {@code q} = centre (x, y, z), the unit across the course (ax, az), the radius. */
+    private static void ring(VertexConsumer vc, double[] q, float width, int argb) {
+        double r = q[5];
+        Vec3 prev = null;
+        for (int k = 0; k <= RING_SEGMENTS; k++) {
+            double t = k * Math.PI * 2 / RING_SEGMENTS;
+            double u = Math.cos(t) * r, v = Math.sin(t) * r;
+            Vec3 p = new Vec3(q[0] + q[3] * u, q[1] + v, q[2] + q[4] * u);
+            if (prev != null) ribbon(vc, prev, p, width, argb);
+            prev = p;
+        }
     }
 
     private static void ceilingCrack(VertexConsumer vc, BlockPos c, int argb, float a) {
@@ -270,6 +335,16 @@ final class RigFx {
             case RigPayloads.Cue.DROP -> {
                 dy = -Math.min(m.a, 0.5 * 0.04 * t * t);
                 rx = t * 1.5F * (m.seed - 0.5F);
+            }
+            case RigPayloads.Cue.PRESS -> {
+                // out of the ceiling, gathering speed, and a jolt as it lands
+                float u = Math.min(1, t / Math.max(1, m.seed));
+                dy = m.a * (1 - u * u);
+                if (u >= 1) dy = -0.04 * Math.max(0, 1 - (t - m.seed) / 2.5);
+            }
+            case RigPayloads.Cue.LIFT -> {
+                float u = Math.min(1, t / Math.max(1, m.ticks));
+                dy = m.a * u * u * (3 - 2 * u);
             }
             default -> {
                 return;
