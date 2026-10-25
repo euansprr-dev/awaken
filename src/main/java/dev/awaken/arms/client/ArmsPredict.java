@@ -13,6 +13,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.ClientInput;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -117,8 +118,14 @@ public final class ArmsPredict {
     }
 
     static void begin(LocalPlayer p, Archetypes.Loaded st, Archetype.Move m, int st2, int cad, int s) {
+        begin(p, st, m, st2, cad, s, false);
+    }
+
+    /** perfect: a heavy released on its glint. */
+    static void begin(LocalPlayer p, Archetypes.Loaded st, Archetype.Move m, int st2, int cad, int s, boolean perfect) {
         Archetype.MoveDef def = st.move(m);
         if (def == null) return;
+        perfectHeavy = perfect;
         style = st;
         move = m;
         step = st2;
@@ -130,6 +137,7 @@ public final class ArmsPredict {
         buffered = null;
         fadeFrom = -100;
         ArmsAudio.swing(p, st, m, cad);
+        ArmsFx.move(p, st, m, cad, perfect);
     }
 
     /** Ticks into the running move on the hands' clock (hit-stop holds pause it), with the frame's fraction. */
@@ -141,6 +149,7 @@ public final class ArmsPredict {
     static void tick() {
         ticks++;
         ArmsFeel.tick();
+        ArmsFx.tick();
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null) return;
@@ -195,10 +204,11 @@ public final class ArmsPredict {
         int target = mc.hitResult instanceof EntityHitResult ehr ? ehr.getEntity().getId() : -1;
         ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_RELEASE, p.getYRot(), p.getXRot(), target));
         boolean execution = target >= 0 && BROKEN.containsKey(target) && st.move(Archetype.Move.EXECUTION) != null;
-        begin(p, st, execution ? Archetype.Move.EXECUTION : Archetype.Move.HEAVY, -1, 0, seq);
-        if (!execution) perfectHeavy = c.perfect(c.min() + (ticks - chargeStart));
+        begin(p, st, execution ? Archetype.Move.EXECUTION : Archetype.Move.HEAVY, -1, 0, seq,
+                !execution && c.perfect(c.min() + (ticks - chargeStart)));
     }
 
+    /** The running heavy was released on its glint (its arc burns gold). */
     static boolean perfectHeavy;
 
     /** How far a held heavy has charged (0..1, the glint at its mark), or -1 when not charging. */
@@ -308,6 +318,7 @@ public final class ArmsPredict {
             case ArmsPayloads.HIT -> {
                 fightAt = ticks;
                 ArmsAudio.impact(p, r.entity(), style, r.aux2());
+                hitFx(p, r.entity(), style, r.aux2());
                 if (r.aux() > 0) {
                     CombatFeedback.hitstop(r.entity(), r.aux());
                     CombatFeedback.hold(r.aux());
@@ -373,8 +384,35 @@ public final class ArmsPredict {
     /** The world yaw a blow on us last came from, and the tick it landed (the HUD's shard). */
     static int hurtYaw, hurtAt = -1000;
 
+    /** Sparks where our blade landed. */
+    private static void hitFx(Entity by, int targetId, Archetypes.@Nullable Loaded st, int moveId) {
+        Minecraft mc = Minecraft.getInstance();
+        Entity t = mc.level == null ? null : mc.level.getEntity(targetId);
+        Archetype.Move m = Archetype.Move.byId(moveId);
+        Archetype.MoveDef def = st == null || m == null ? null : st.move(m);
+        if (t != null && def != null) ArmsFx.hit(t, by, def);
+    }
+
+    /** Another fighter near us: their move's arc, their blow's sparks and freeze, a stance breaking. */
     static void onSeen(ArmsPayloads.Seen s) {
-        if (s.what() == ArmsPayloads.BREAK) BROKEN.put(s.entity(), ticks + s.aux());
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) return;
+        switch (s.what()) {
+            case ArmsPayloads.MOVE -> {
+                Entity e = mc.level.getEntity(s.entity());
+                Archetypes.Loaded st = Archetypes.byIndex(s.aux());
+                Archetype.Move m = Archetype.Move.byId(s.aux2());
+                if (e != null && st != null && m != null) ArmsFx.move(e, st, m, 0, false);
+            }
+            case ArmsPayloads.HIT -> {
+                Entity by = mc.level.getEntity(s.other());
+                Archetypes.Loaded st = by instanceof net.minecraft.world.entity.LivingEntity l ? Arms.styleOf(l.getMainHandItem()) : null;
+                if (by != null) hitFx(by, s.entity(), st, s.aux2());
+                CombatFeedback.hitstop(s.entity(), s.aux());
+            }
+            case ArmsPayloads.BREAK -> BROKEN.put(s.entity(), ticks + s.aux());
+            default -> { }
+        }
     }
 
     static void reset() {
@@ -387,5 +425,6 @@ public final class ArmsPredict {
         resonance = 0;
         BROKEN.clear();
         ArmsFeel.reset();
+        ArmsFx.reset();
     }
 }

@@ -58,7 +58,8 @@ public final class ArmsPayloads {
 
     /**
      * Server → players near: a fighter did something worth seeing. MOVE (aux = archetype index, aux2 = move id),
-     * DODGE (aux = yaw of the way), DEFLECT / BLOCK / GUARD_BREAK (other = the attacker), BREAK (entity = whose stance).
+     * DODGE (aux = yaw of the way), DEFLECT / BLOCK / GUARD_BREAK (other = the attacker), BREAK (entity = whose stance),
+     * HIT (entity = struck, other = the fighter, aux = hit-stop ms, aux2 = the move).
      */
     public record Seen(int entity, int what, int other, int aux, int aux2) implements CustomPacketPayload {
         public static final Type<Seen> TYPE = new Type<>(Awaken.id("arms_seen"));

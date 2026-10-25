@@ -290,6 +290,7 @@ final class ArmsServer {
         if (now - s.lastHitstopAt < ArmsRules.HITSTOP_GAP) ms = 0;
         else s.lastHitstopAt = now;
         AwakenNet.send(p, new ArmsPayloads.Result(s.moveSeq, ArmsPayloads.HIT, t.getId(), ms, s.move == null ? 0 : s.move.ordinal()));
+        seen(p, new ArmsPayloads.Seen(t.getId(), ArmsPayloads.HIT, p.getId(), ms, s.move == null ? 0 : s.move.ordinal()));
         if (def.finisher()) resonance(p, s, ArmsRules.RESONANCE_FINISHER);
     }
 

@@ -384,6 +384,10 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
 - `dev.awaken.core.api.CombatFeedback` (client, §24) — every blow's one feel: `hitstop(entityId, ms)` (the body freezes
   and trembles), `hold(ms)` (the striker's hands and view), `kick(yaw, pitch, roll, ticks)` (follows camera shake).
   Installed by Arms; no-op before that and on a dedicated server. Powers' hits use it.
+- `dev.awaken.powers.client.fx.FxClient` (client) — the effects engine for other modules' weapons (§24):
+  `slash(wielder, offset, axis0, axis90, startDeg, sweepDeg, radius, band, sweepTicks, argb)` (a blade's crescent that
+  moves with the wielder), `thrust(wielder, offset, dir, from, to, width, sweepTicks, argb)`, `bladeHit(at, dir, size,
+  BodyMaterial)`. Same budget and settings as the powers' own effects.
 - `dev.awaken.arms.Arms` (§24) — `styleOf(ItemStack|Item)` (the fighting style, or null for tools and bare hands),
   `guards(ItemStack)`, `fights(LivingEntity)`, `posture(LivingEntity)` (0..1, server), `broken(LivingEntity)` (server),
   `tellSound(Strikes.Kind)` (the class's one voice; the mobs module plays it with each tell).
@@ -3254,6 +3258,17 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   a raised chop. A held heavy draws back to its start pose and trembles finely as it charges; the guard is vanilla's
   blocking pose eased in over 2 ticks. Reviewed frame by frame with `tools/autopilot/arms-poses.txt` (the autopilot's
   `arms pose <move> <0..1>` holds the hands still). Third person keeps vanilla's arm swing until S2's clips.
+- **Trails and sparks** (`ArmsFx`, on the powers module's effects engine: one budget, one settings page). As a
+  blow starts (the end of its wind-up), its arc: a crescent following the hand's own arc about the shoulder, pushed
+  out 1.5 blocks ahead of the eye so it faces whoever looks (an arc in the plane of the look is seen edge-on, a line:
+  found in the tour), nothing at the hand, a tinted body and a crisp bright rim along the blade's visible middle,
+  its head crossing in the move's active ticks on the hands' curve, its tail chasing it. A thrust is a straight
+  streak. The weapon tints it (diamond cyan, netherite violet, gold, copper, iron, stone, wood; our blades Holo blue),
+  each rhythm step brightens it, a perfect heavy and an Execution burn gold; the fighter's own is softer in first
+  person. Where a blade lands, on the body's near side: a small white flare and sparks by what it met (warm off plate
+  and stone, pale chips off bone, brown off wood, wisps through a spirit, green spatter from slime, dark red from
+  flesh). The fighter's from their prediction and the HIT result; everyone near from `Seen` MOVE and HIT (observers
+  also see the struck body's freeze).
 - **HUD** (`arms_hud`, above the crosshair layer): a 15-dot arc under the crosshair for Resonance or the heavy's charge
   (gold when full or at the glint), the dodge's two pips beside the sprint line, and a red shard on a ring round the
   crosshair pointing to where the last blow on you came from (any held item; 24 ticks). Nothing at rest.
