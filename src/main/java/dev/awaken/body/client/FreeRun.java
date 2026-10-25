@@ -40,6 +40,24 @@ final class FreeRun {
         if (!held) hangHeld = 0;
     }
 
+    /** Up a climb line (Carillon's drainpipes, trellises, hoist ropes, any ladder: #minecraft:climbable), free-running. */
+    static final double CLIMB_UP = 0.3;
+    private static int climbTicks;
+
+    /**
+     * Against a climb line with the free-run held: hand over hand, half again a ladder's pace (0.3 a tick against
+     * 0.2), a grip sound every few pulls. At the top the eave's lip is caught as a hang and the hold climbs out of it.
+     */
+    static void climb(LocalPlayer p) {
+        if (!held || !p.onClimbable() || !p.horizontalCollision) {
+            climbTicks = 0;
+            return;
+        }
+        Vec3 v = p.getDeltaMovement();
+        p.setDeltaMovement(v.x, Math.max(v.y, CLIMB_UP), v.z);
+        if (climbTicks++ % 6 == 0) BodyFx.sound(p, dev.awaken.body.BodyContent.GRAB.get(), 0.3F, 1.1F + p.getRandom().nextFloat() * 0.2F);
+    }
+
     /** On the ground, running: a vault, a jump at a wall or a leap from an edge. True when it jumped. */
     static boolean ground(LocalPlayer p, BlockGetter level, CollisionContext ctx, int now) {
         if (!held) {

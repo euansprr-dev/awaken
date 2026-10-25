@@ -26,6 +26,8 @@ public final class AscentClient {
 
     public static void init(IEventBus modBus) {
         modBus.addListener(AscentClient::onPayloads);
+        // the Sovereign's Ascend key (default U; SPEC §17.19)
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent e) -> e.register(SovereignClient.ASCEND));
         modBus.addListener((RegisterParticleProvidersEvent e) -> e.registerSpriteSet(AscentContent.MOTE.get(), MoteParticle.Provider::new));
         modBus.addListener(AscentClient::onAddLayers);
         modBus.addListener((EntityRenderersEvent.RegisterRenderers e) ->
@@ -60,6 +62,7 @@ public final class AscentClient {
             AscentNotes.reset();
             dev.awaken.body.ascent.Updrafts.clear();
             dev.awaken.body.ascent.Windways.setClient(java.util.List.of());
+            SovereignClient.reset();
             AscentRemote.reset();
             AscentPilot.stop();
             AscentRoutes.stop();
@@ -98,6 +101,7 @@ public final class AscentClient {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;
         AscentMoves.tick();
+        SovereignClient.tick(mc);
         AscentFlow.tick(mc.player);
         AscentScene.tick(mc.player);
         VowScene.tick(mc.player);

@@ -1,0 +1,66 @@
+# Living Wilds Phase C check: Holo plates (bigger) at 6/12/20 blocks and beside the K panel; Wren's flare from 70 blocks.
+# Run: SLOT_WHO=living-wilds slot.sh light tools/autopilot.sh tools/autopilot/living-c-check.txt 600
+world autopilot_living_c3 creative 20261025
+waitworld
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd gamerule advance_time false
+cmd time set 6000
+cmd gamerule awaken:fauna_spawning false
+cmd awaken admin levels 9
+wait 20
+cmd tp @s ~ 140 ~-520 0 10
+wait 120
+cmd fill ~-12 138 ~-24 ~12 138 ~30 minecraft:grass_block
+wait 10
+cmd tp @s ~ 139 ~ 180 8
+wait 40
+cmd summon minecraft:husk ~ 139 ~-6 {NoAI:1b,PersistenceRequired:1b}
+wait 30
+look 180 12
+wait 20
+shot check_01_plate_6
+cmd awaken living strike
+wait 4
+shot check_02_plate_hit
+cmd tp @s ~ 139 ~6 180 6
+wait 30
+shot check_03_plate_12
+cmd tp @s ~ 139 ~8 180 4
+wait 30
+shot check_04_plate_20
+cmd tp @s ~ 139 ~-12 180 10
+wait 30
+key status
+wait 40
+shot check_05_plate_beside_k
+screen close
+wait 10
+cmd time set 13000
+wait 20
+shot check_06_plate_dusk
+cmd time set 6000
+cmd awaken living scene wrens_rope
+wait 120
+cmd awaken living view 70
+wait 60
+shot check_07a_flare
+wait 360
+shot check_07b_flare
+wait 360
+shot check_07c_flare
+wait 360
+shot check_07d_flare
+wait 360
+shot check_07e_flare
+cmd time set 13500
+wait 360
+shot check_07f_flare_dusk
+quit

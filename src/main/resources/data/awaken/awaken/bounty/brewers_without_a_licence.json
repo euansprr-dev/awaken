@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "title": "Brewers Without a Licence",
+  "band": 1,
+  "objective": {
+    "type": "kill",
+    "target": "minecraft:witch",
+    "count": 5
+  },
+  "levels": 0.25,
+  "essence": 3,
+  "requires": [],
+  "text": "The Association licenses brewers. These are not on the list. Mind the potions."
+}

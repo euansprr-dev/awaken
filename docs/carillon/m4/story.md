@@ -149,7 +149,8 @@ BOW. · RING. · BE JUDGED. · [ERROR] (kept)
 | The Directive | clerk | The Signal sets your Directives. The Association pays for them. (kept, "Off you go" moves to the end) |
 | | Bram | Never more than three. It isn't a list. It's a nudge. |
 | To the balcony | Bram | Come and see. |
-| The pan to the High Gate | Bram | That's the High Gate. North, up the road. The wilds are past it, and so are the gates. |
+| The pan to the High Gate | Bram | That's the High Gate. The Commons start past it, and so do the gates. |
+| | Bram | Hale at the gatehouse has work for new licences. |
 | | Bram | Any gate in the wall will let you out. The Watch shuts them at dark. |
 | Back on your shoulder | Bram | Come back when you're tired. The Roost still has your room. |
 | | Bram | And Kestrel wants her word from the square. Off you go. |

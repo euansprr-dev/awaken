@@ -40,10 +40,11 @@ final class TogetherFaunaTests {
                 for (ServerPlayer o : java.util.List.copyOf(level.players())) {
                     if (o != v && o != l && o.distanceToSqr(Vec3.atCenterOf(spawn)) < 160 * 160) level.getServer().getPlayerList().remove(o);
                 }
-                int group = FaunaRules.contentLevel(level, spawn, FaunaRole.NEUTRAL);
+                // the group rule, where the Living Wilds' region levels are off (SPEC §21.2: in the overworld the place decides)
+                int group = FaunaRules.followLevel(level, spawn, FaunaRole.NEUTRAL);
                 h.assertTrue(group == Math.max(0, ll - 1), "near both, a creature takes the friend's level (" + group + ")");
                 l.teleportTo(level, spawn.getX() + 100.5, spawn.getY(), spawn.getZ() + 0.5, java.util.Set.of(), 0F, 0F, true);
-                int alone = FaunaRules.contentLevel(level, spawn, FaunaRole.NEUTRAL);
+                int alone = FaunaRules.followLevel(level, spawn, FaunaRole.NEUTRAL);
                 h.assertTrue(alone > group, "with only the veteran near, the veteran's (" + alone + ")");
 
                 // a bonded mount answers to its owner only

@@ -3,7 +3,7 @@
  "minecraft": "26.3",
  "loader": "neoforge",
  "neoforge": "26.3.0.95",
- "generated": "2026-10-25 10:00",
+ "generated": "2026-10-25 12:46",
  "files": [
   {
    "slug": "3dskinlayers",
@@ -199,6 +199,27 @@
    "why": "Share a single-player world by link."
   },
   {
+   "slug": "entity-model-features",
+   "title": "[EMF] Entity Model Features",
+   "projectId": "4I1XuqiY",
+   "versionId": "a1TEBxBW",
+   "version": "3.3.12-neoforge-26.3",
+   "channel": "release",
+   "published": "2026-10-15",
+   "file": "entity_model_features-3.3.12-26.3-neoforge.jar",
+   "url": "https://cdn.modrinth.com/data/4I1XuqiY/versions/a1TEBxBW/entity_model_features-3.3.12-26.3-neoforge.jar",
+   "size": 665542,
+   "sha1": "b54d176fe7d34a29838ee6b8eeed2f55ed72d0e7",
+   "sha512": "a663bc65981490157c0ecbef5e935a84aad2597d2a43cdbd2890d70d59fc7ea660116fa09f11fb4d620a90eb8635b37f99ac46d4b11a89a6d0f1d553b4de644b",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "feel"
+   ],
+   "dependencyOf": [],
+   "why": "Entity Model Features: runs Fresh Animations' models and animations on vanilla creature bodies. Client only. Awaken's own bodies have no .jem models, so it leaves them alone (SPEC \u00a723)."
+  },
+  {
    "slug": "entityculling",
    "title": "Entity Culling",
    "projectId": "NNAgCjsB",
@@ -220,6 +241,29 @@
    "why": "Skips entities and block entities you can't see."
   },
   {
+   "slug": "entitytexturefeatures",
+   "title": "[ETF] Entity Texture Features",
+   "projectId": "BVzZfTc1",
+   "versionId": "bD9JPCuU",
+   "version": "7.2.6-neoforge-26.3",
+   "channel": "release",
+   "published": "2026-10-15",
+   "file": "entity_texture_features-7.2.6-26.3-neoforge.jar",
+   "url": "https://cdn.modrinth.com/data/BVzZfTc1/versions/bD9JPCuU/entity_texture_features-7.2.6-26.3-neoforge.jar",
+   "size": 793559,
+   "sha1": "3c417d802fc0bf1a35d0e8c4c54381ba7e1ddf63",
+   "sha512": "30be8e3f76d65a488a208e77452e219a1c3d68acccb03ca7a0f3efacd8da36d871bf0d37a7309200b22d5ada10ff2328fc0948ce1e4184f8934594cef47fb9aa",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "feel"
+   ],
+   "dependencyOf": [
+    "entity-model-features"
+   ],
+   "why": "Entity Texture Features: EMF's partner (blinking, emissive and variant textures). Client only."
+  },
+  {
    "slug": "ferrite-core",
    "title": "FerriteCore",
    "projectId": "uXXizFIs",
@@ -239,6 +283,28 @@
    ],
    "dependencyOf": [],
    "why": "Less memory, which matters on 16 GB."
+  },
+  {
+   "slug": "fresh-animations",
+   "title": "Fresh Animations",
+   "projectId": "50dA9Sha",
+   "versionId": "tvGVYMD4",
+   "version": "1.11.1",
+   "channel": "release",
+   "published": "2026-10-20",
+   "file": "FreshAnimations_v1.11.1_26.1+.zip",
+   "url": "https://cdn.modrinth.com/data/50dA9Sha/versions/tvGVYMD4/FreshAnimations_v1.11.1_26.1%2B.zip",
+   "size": 776684,
+   "sha1": "ae9175983c5109162c86daae1acff34ccf623faf",
+   "sha512": "5357a3dbce74f5bdb688f3c4e6f7cadb6e0d81d3dde41d46017993d5bc5456a325a39a3faad0d471be51fcc73e3a47218ec64ed8e0024b092cd117b422f23356",
+   "client": "required",
+   "server": "unsupported",
+   "profiles": [
+    "feel"
+   ],
+   "dependencyOf": [],
+   "why": "Resource pack: livelier vanilla creatures (breathing, blinking, weight, idle fidgets), and our gate monsters on vanilla bodies with them. Needs EMF and ETF. Our own bodies get Awaken's life layer instead (SPEC \u00a723).",
+   "kind": "resourcepack"
   },
   {
    "slug": "immediatelyfast",

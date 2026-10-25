@@ -23,6 +23,11 @@ public final class CityHooks {
         default @Nullable BlockPos startPoint(ServerPlayer p) { return null; }
         /** The centre of Choir Square, or null outside a Carillon world. */
         default @Nullable BlockPos square(Level level) { return null; }
+        /**
+         * A named spot the city lays out for other modules (SPEC §16.9), e.g. "high_gate_yard", "bounty_post",
+         * "quartermaster", "association_board"; null when unknown or outside a Carillon world.
+         */
+        default @Nullable BlockPos spot(Level level, String id) { return null; }
     }
 
     private static Access access = new Access() {};
@@ -54,5 +59,9 @@ public final class CityHooks {
 
     public static @Nullable BlockPos square(Level level) {
         return access.square(level);
+    }
+
+    public static @Nullable BlockPos spot(Level level, String id) {
+        return access.spot(level, id);
     }
 }

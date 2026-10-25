@@ -51,6 +51,7 @@ public final class ActionCamera {
 
     /** What the body is doing, as the camera sees it. */
     private static ActionRig.Pose read(LocalPlayer p) {
+        if (dev.awaken.body.ascent.client.SovereignClient.active()) return ActionRig.Pose.SOVEREIGN;
         switch (AscentMoves.state()) {
             case TETHER -> {
                 return ActionRig.Pose.ROPE;

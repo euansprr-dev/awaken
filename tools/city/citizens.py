@@ -127,7 +127,9 @@ class City:
         P = self.P = json.loads(raw)
         dec = lambda s: np.frombuffer(zlib.decompress(base64.b64decode(s)), np.uint8).reshape(N, N)
         R = P['raster']
-        self.kind, self.dist, self.lift = dec(R['kind']), dec(R['district']), dec(R['lift'])
+        self.kind, self.dist = dec(R['kind']), dec(R['district'])
+        # (plan schema 2: the lift is signed, Choir Square's bowl stands below the street)
+        self.lift = dec(R['lift']).view(np.int8).astype(np.int16) if P.get('schemaVersion', 1) >= 2 else dec(R['lift'])
         self.districts = {d['key']: d for d in P['districts']}
         self.dkey = {d['id']: d['key'] for d in P['districts']}
         # plots

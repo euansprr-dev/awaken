@@ -32,7 +32,7 @@ final class CityTests {
      * The plan's SHA-256. A changed plan changes every new world's city and its graphs: regenerate it on purpose
      * ({@code python3 -I tools/city/plan.py}), then update this pin in the same commit.
      */
-    static final String PLAN_SHA256 = "711a4c1d60b48e293827b00ee5b23e1fb003e77bc93cabc1fae562faa8e981a0";
+    static final String PLAN_SHA256 = "9d0f435151e66d21eab65a5196aa092d0c178826fbe71a6b2b1b833d61099566";
 
     /** A city placed at (x, z) for tests (carved, so no plate fill is asked of a GameTest world). */
     static CityLayout layoutAt(int x, int z) {
@@ -462,6 +462,9 @@ final class CityTests {
                             var e = dev.awaken.body.RunnerRules.findEdge(view, ctx, m, px, py, pz, ax, sign, dev.awaken.body.RunnerRules.HANG_REACH,
                                     dev.awaken.body.RunnerRules.HANG_LO, dev.awaken.body.RunnerRules.HANG_HI, 0, 0.2);
                             boolean ok = e != null && Math.abs(e.top() - top) < 0.01;
+                            // (a hood is caught "from the street" only where the street in front is level with the house:
+                            // on a retaining wall's edge or below a flight it is a hold like the others, out of a jump's reach)
+                            if (r == 3 && l.plan.lift(o[0], o[1]) != g) continue;
                             if (r == 3) {
                                 hoods++;
                                 if (ok) hoodsCaught++;
@@ -510,6 +513,254 @@ final class CityTests {
             h.succeed();
         });
 
+        // ---- Milestone 4 (B2): the relief, roofs that chain, crossings, named spots ------------------------------------
+
+        // the relief stays walkable: along every street-graph edge, the painted ground climbs by steps a body walks up
+        // (0.6 at most from one cell's edge to the next: a stair's half step, never a block), on flights, the bowl's rings,
+        // the Terrace's stairs and the bridges' decks alike
+        AwakenTests.register("city_relief_steps", 400, h -> {
+            CityLayout l = layoutAt(0, 0);
+            long seed = 20261024L;
+            CityPlan p = l.plan;
+            CityPlan.Graph g = p.streetGraph;
+            it.unimi.dsi.fastutil.longs.LongOpenHashSet chunks = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+            for (int e = 0; e < g.edges(); e++) {
+                if (p.moves.get(g.emove()[e]).equals("door")) continue;
+                float ax = g.nx()[g.ea()[e]], az = g.nz()[g.ea()[e]], bx = g.nx()[g.eb()[e]], bz = g.nz()[g.eb()[e]];
+                int n = Math.max(2, (int) (Math.hypot(bx - ax, bz - az) * 4));
+                for (int k = 0; k <= n; k++) {
+                    int x = (int) Math.floor(ax + (bx - ax) * k / n), z = (int) Math.floor(az + (bz - az) * k / n);
+                    chunks.add(net.minecraft.world.level.ChunkPos.pack(x >> 4, z >> 4));
+                }
+            }
+            BlockState[] ground = new BlockState[p.size * p.size];
+            CityBuffer buf = new CityBuffer(16, 16);
+            for (long key : chunks) {
+                var cp = net.minecraft.world.level.ChunkPos.unpack(key);
+                CityPainter.paintChunk(l, cp.x(), cp.z(), seed, buf);
+                for (int lz = 0; lz < 16; lz++)
+                    for (int lx = 0; lx < 16; lx++) {
+                        int x = buf.px0 + lx, z = buf.pz0 + lz;
+                        if (p.inRaster(x, z)) ground[(z - p.origin) * p.size + (x - p.origin)] = buf.get(x, p.lift(x, z), z);
+                    }
+            }
+            int pairs = 0, bad = 0;
+            String first = "";
+            for (int e = 0; e < g.edges(); e++) {
+                if (p.moves.get(g.emove()[e]).equals("door")) continue;
+                float ax = g.nx()[g.ea()[e]], az = g.nz()[g.ea()[e]], bx = g.nx()[g.eb()[e]], bz = g.nz()[g.eb()[e]];
+                int n = Math.max(2, (int) (Math.hypot(bx - ax, bz - az) * 4));
+                int px = Integer.MIN_VALUE, pz = 0;
+                for (int k = 0; k <= n; k++) {
+                    int x = (int) Math.floor(ax + (bx - ax) * k / n), z = (int) Math.floor(az + (bz - az) * k / n);
+                    byte kind = p.kind(x, z);
+                    boolean open = CityPlan.walkable(kind) && kind != CityPlan.LOWQUAY || CityPlan.water(kind);
+                    if (!open) {
+                        px = Integer.MIN_VALUE;
+                        continue;
+                    }
+                    if (px != Integer.MIN_VALUE && (x != px || z != pz) && (x == px || z == pz)) {
+                        int d = x > px ? CityPlan.E : x < px ? CityPlan.W : z > pz ? CityPlan.S : CityPlan.N;
+                        BlockState a = ground[(pz - p.origin) * p.size + (px - p.origin)], b = ground[(z - p.origin) * p.size + (x - p.origin)];
+                        if (a != null && b != null && !a.isAir() && !b.isAir()) {
+                            pairs++;
+                            if (!stepOk(p.lift(px, pz), a, d, p.lift(x, z), b)) {
+                                if (bad++ == 0) first = "from " + px + "," + pz + " (" + a + ") to " + x + "," + z + " (" + b + ")";
+                            }
+                        }
+                    }
+                    px = x;
+                    pz = z;
+                }
+            }
+            dev.awaken.Awaken.LOG.info("[city] relief steps: {} cell-to-cell steps on {} chunks, {} too tall (first {})", pairs, chunks.size(), bad, first);
+            h.assertTrue(pairs > 10000, "steps checked: " + pairs);
+            h.assertTrue(bad == 0, bad + " steps along the streets are taller than a stair's half step; first " + first);
+            h.succeed();
+        });
+
+        // roofs that chain (look bible §3.4): every roof is within a storey of a neighbour (from anywhere on it, at most 4 up
+        // onto the next eave and 6 down onto the next roof; neighbours share a wall or face it across a sprint-jump of 4)
+        // or has a soft way off (water, or open ground beside it 6 or less under its eave); along a row of houses on one
+        // level, neighbouring eaves stand within a storey. Houses alone in their gardens are counted (pipes take you down).
+        AwakenTests.register("city_roofs_chain", 60, h -> {
+            CityPlan p = CityPlan.get();
+            int alone = 0, bad = 0, rows = 0;
+            String first = "";
+            for (CityPlan.Plot a : p.plots) {
+                boolean any = false, ok = false;
+                for (CityPlan.Plot b : p.plots) {
+                    if (b == a) continue;
+                    int gx = Math.max(b.x0() - a.x1() - 1, a.x0() - b.x1() - 1), gz = Math.max(b.z0() - a.z1() - 1, a.z0() - b.z1() - 1);
+                    if (gx >= 0 && gz >= 0 || Math.max(gx, gz) > 4) continue;
+                    any = true;
+                    if ((b.lift() + b.eave()) - (a.lift() + a.top()) <= 4 && (a.lift() + a.eave()) - (b.lift() + b.top()) <= 6) ok = true;
+                    boolean row = Math.max(gx, gz) == 0 && a.front() == b.front() && Math.abs(a.lift() - b.lift()) <= 2
+                            && ((a.front() == CityPlan.N || a.front() == CityPlan.S) ? gx == 0 : gz == 0);
+                    if (row && a.id() < b.id() && Math.abs((a.lift() + a.eave()) - (b.lift() + b.eave())) > 4) rows++;
+                }
+                if (!any) alone++;
+                if (any && !ok && !softLanding(p, a)) {
+                    if (bad++ == 0) first = "plot " + a.id() + " (" + CityPlan.DISTRICTS[a.district()] + ", " + a.storeys() + " storeys on " + a.lift() + ")";
+                }
+            }
+            dev.awaken.Awaken.LOG.info("[city] roofs: {} plots, {} alone in their gardens, {} without a neighbour in reach, {} rows out of step",
+                    p.plots.size(), alone, bad, rows);
+            h.assertTrue(bad == 0, bad + " roofs have no neighbour within a storey and no soft way off; first " + first);
+            h.assertTrue(rows == 0, rows + " neighbours in a row stand more than a storey apart");
+            h.assertTrue(alone * 10 < p.plots.size(), "most houses have a neighbour in reach: " + alone + " alone");
+            h.succeed();
+        });
+
+        // a line across every avenue and the Ring at most every 48 blocks wherever houses line it (look bible §3.5): an
+        // enclosed walkway between two upper floors, or a hang line's site (B3 hangs it), from the plan's own geometry
+        AwakenTests.register("city_avenue_crossings", 60, h -> {
+            CityPlan p = CityPlan.get();
+            java.util.Map<String, List<CityPlan.Street>> groups = new java.util.LinkedHashMap<>();
+            for (int i = 0; i < p.streets.size(); i++) {
+                CityPlan.Street s = p.streets.get(i);
+                if (s.rank() == 1 || s.name().equals("The Ring"))
+                    groups.computeIfAbsent(s.name().isEmpty() ? "avenue " + i : s.name(), k -> new ArrayList<>()).add(s);
+            }
+            int stretches = 0, checked = 0;
+            for (var en : groups.entrySet()) {
+                List<double[]> samples = new ArrayList<>();   // chainage, x, z, lined
+                double ch = 0;
+                CityPlan.Street prev = null;
+                for (CityPlan.Street s : en.getValue()) {
+                    if (prev != null) ch += Math.hypot(s.ax() - prev.bx(), s.az() - prev.bz());
+                    double L = Math.hypot(s.bx() - s.ax(), s.bz() - s.az()), ux = (s.bx() - s.ax()) / Math.max(L, 1e-9), uz = (s.bz() - s.az()) / Math.max(L, 1e-9);
+                    for (int k = 0; k <= (int) L; k++) {
+                        double x = s.ax() + ux * k, z = s.az() + uz * k;
+                        boolean lined = facadeAcross(p, x, z, -uz, ux, s.width() / 2 + 2) || facadeAcross(p, x, z, uz, -ux, s.width() / 2 + 2);
+                        samples.add(new double[]{ch + k, x, z, lined ? 1 : 0});
+                    }
+                    ch += L;
+                    prev = s;
+                }
+                List<Double> at = new ArrayList<>();
+                for (CityPlan.Crossing c : p.crossings) {
+                    if (!c.street().equals(en.getKey())) continue;
+                    double cx = (c.ax() + c.bx()) / 2.0, cz = (c.az() + c.bz()) / 2.0, best = Double.MAX_VALUE, bc = 0;
+                    for (double[] sm : samples) {
+                        double d = Math.hypot(sm[1] - cx, sm[2] - cz);
+                        if (d < best) {
+                            best = d;
+                            bc = sm[0];
+                        }
+                    }
+                    if (best < 8) at.add(bc);
+                }
+                int gapless = 0;
+                double start = Double.NaN, end = Double.NaN;
+                for (int k = 0; k <= samples.size(); k++) {
+                    boolean lined = k < samples.size() && samples.get(k)[3] > 0;
+                    if (lined) {
+                        if (Double.isNaN(start)) start = samples.get(k)[0];
+                        end = samples.get(k)[0];
+                        gapless = 0;
+                    } else if (k == samples.size() || ++gapless >= 20) {
+                        if (!Double.isNaN(start)) {
+                            stretches++;
+                            double last = start;
+                            List<Double> in = new ArrayList<>();
+                            for (double a : at) if (a >= start - 1 && a <= end + 1) in.add(a);
+                            java.util.Collections.sort(in);
+                            in.add(end);
+                            for (double a : in) {
+                                checked++;
+                                h.assertTrue(a - last <= 50, en.getKey() + ": " + (int) (a - last) + " blocks without a line across, from "
+                                        + (int) last + " to " + (int) a + " along it (houses line it from " + (int) start + " to " + (int) end + ")");
+                                last = a;
+                            }
+                        }
+                        start = Double.NaN;
+                    }
+                }
+            }
+            long walkways = p.crossings.stream().filter(c -> c.kind().equals("walkway")).count();
+            long parts = p.parts.stream().filter(q -> q.kind().equals("walkway")).count();
+            h.assertTrue(walkways == parts && walkways > 0, "every walkway is built (a landmark part): " + walkways + " sites, " + parts + " parts");
+            for (CityPlan.Crossing c : p.crossings) {
+                if (!c.kind().equals("walkway")) continue;
+                CityPlan.Plot a = p.plots.get(c.plotA()), b = p.plots.get(c.plotB());
+                h.assertTrue(Math.abs(c.ary() - (a.lift() + a.eave())) <= 4 && Math.abs(c.ary() - (b.lift() + b.eave())) <= 4,
+                        "a walkway's roof is within a storey of both eaves: plots " + a.id() + ", " + b.id());
+            }
+            dev.awaken.Awaken.LOG.info("[city] crossings: {} ({} walkways) over {} lined stretches, {} gaps checked", p.crossings.size(), walkways, stretches, checked);
+            h.succeed();
+        });
+
+        // the named spots other modules ask for (SPEC §16.9, decision 29) resolve in a Carillon world: the gatehouse yard,
+        // the quartermaster's and the bounty post's places in it, the Association board's place, and the cellar under the
+        // old bell (painted: room to stand on a floor; the cellar a room with a way down to it from the bell square)
+        AwakenTests.register("city_spots", 200, h -> {
+            BlockPos abs = h.absolutePos(new BlockPos(0, 1, 0));
+            CityLayout l = layoutAt(abs.getX(), abs.getZ());
+            CityLayout before = City.install(l);
+            long seed = 20261024L;
+            try {
+                Level level = h.getLevel();
+                CityBuffer buf = new CityBuffer(24, 24);
+                for (String id : new String[]{"high_gate_yard", "bounty_post", "quartermaster", "association_board", "bellwatch_cellar"}) {
+                    BlockPos s = CityHooks.spot(level, id);
+                    h.assertTrue(s != null, id + " resolves");
+                    h.assertTrue(l.inCity(s.getX(), s.getZ()), id + " lies in the city: " + s);
+                    int px = s.getX() - l.cx, ry = s.getY() - l.streetY, pz = s.getZ() - l.cz;
+                    if (id.equals("association_board")) {
+                        // (the atrium is hollowed by the opening's stage; the spot stands in its north wall's row, on the Terrace's floor)
+                        h.assertTrue(ry == l.plan.terraceLift + 1 && l.plan.parts.stream().anyMatch(q -> q.kind().equals("assoc_centre")
+                                && px > q.x0() && px < q.x1() && pz > q.z0() && pz < q.z1()), "the board's spot is in the Association's atrium: " + s);
+                        continue;
+                    }
+                    paintAround(l, seed, px - 12, pz - 12, buf);
+                    BlockState at = buf.get(px, ry, pz), over = buf.get(px, ry + 1, pz), under = buf.get(px, ry - 1, pz);
+                    h.assertTrue(at != null && at.isAir() && over != null && over.isAir(), id + " has room to stand: " + at + " / " + over);
+                    h.assertTrue(under != null && !under.isAir() && !under.getCollisionShape(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty(),
+                            id + " stands on a floor: " + under);
+                }
+                h.assertTrue(CityHooks.spot(level, "nowhere") == null, "an unknown spot is null");
+                // the cellar: 9 x 9 x 5 of air round its spot, under the Knoll's top; steps down from the bell square
+                int[] c = l.plan.spots.get("bellwatch_cellar");
+                paintAround(l, seed, c[0] - 12, c[2] - 12, buf);
+                int air = 0;
+                for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) for (int ry = 1; ry <= 5; ry++) {
+                    BlockState s = buf.get(c[0] + dx, ry, c[2] + dz);
+                    if (s != null && (s.isAir() || s.getCollisionShape(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty())) air++;
+                }
+                h.assertTrue(air >= 9 * 9 * 5 - 4, "the cellar is a room: " + air + " of 405 cells open");
+                h.assertTrue(l.plan.lift(c[0], c[2]) >= 8, "the cellar lies under the Knoll's top");
+                int stairs = 0;
+                for (int dx = 0; dx <= 12; dx++) for (int dz = -6; dz <= 6; dz++) for (int ry = 1; ry <= 8; ry++) {
+                    BlockState s = buf.get(c[0] + dx, ry, c[2] + dz);
+                    if (s != null && s.getBlock() instanceof net.minecraft.world.level.block.StairBlock) stairs++;
+                }
+                h.assertTrue(stairs >= 14, "steps lead down to it: " + stairs);
+            } finally {
+                City.install(before);
+            }
+            h.succeed();
+        });
+
+        // a hanging ladder holds while its column reaches a ladder fixed to a wall, and goes (dropping a ladder) when that does
+        AwakenTests.register("city_hanging_ladder", 40, h -> {
+            BlockPos wall = new BlockPos(1, 3, 2), top = new BlockPos(1, 3, 1);
+            BlockState ladder = Blocks.LADDER.defaultBlockState().setValue(net.minecraft.world.level.block.LadderBlock.FACING, Direction.NORTH);
+            BlockState hung = dev.awaken.city.kit.CityKit.HANGING_LADDER.get().defaultBlockState()
+                    .setValue(net.minecraft.world.level.block.LadderBlock.FACING, Direction.NORTH);
+            h.setBlock(wall, Blocks.STONE);
+            h.setBlock(top, ladder);
+            h.setBlock(top.below(), hung);
+            h.setBlock(top.below(2), hung);
+            h.assertTrue(h.getBlockState(top.below(2)).is(dev.awaken.city.kit.CityKit.HANGING_LADDER.get()), "two ladders hang under a fixed one");
+            h.assertTrue(hung.canSurvive(h.getLevel(), h.absolutePos(top.below(2))), "the lower one holds through the one above it");
+            h.assertTrue(!hung.canSurvive(h.getLevel(), h.absolutePos(new BlockPos(3, 3, 1))), "a ladder alone in the air does not hold");
+            h.assertTrue(hung.is(net.minecraft.tags.BlockTags.CLIMBABLE), "a hanging ladder climbs");
+            h.setBlock(wall, Blocks.AIR);
+            h.succeedWhen(() -> h.assertTrue(h.getBlockState(top).isAir() && h.getBlockState(top.below()).isAir()
+                    && h.getBlockState(top.below(2)).isAir(), "with the wall gone the whole ladder comes down"));
+        });
+
         // dev studio: with a request file in the game folder, paint the whole city and dump it for tools/city/render.py
         AwakenTests.register("city_studio_dump", 400, h -> {
             java.nio.file.Path req = h.getLevel().getServer().getServerDirectory().resolve("city-dump.request");
@@ -535,6 +786,66 @@ final class CityTests {
             for (int cz = (l.cz + z0) >> 4; cz <= (l.cz + z0 + buf.d - 1) >> 4; cz++)
                 for (int id : l.pieces(cx, cz)) ids.add(id);
         CityPainter.paint(l, seed, buf, ids.stream().mapToInt(Integer::intValue).toArray());
+    }
+
+    /**
+     * Whether a body walks (steps up at most 0.6, the vanilla step) from ground block a (at row la) to ground block b (at
+     * row lb), crossing a's edge on side d and b's opposite edge. Stairs offer their half or full height on each edge.
+     */
+    static boolean stepOk(int la, BlockState a, int d, int lb, BlockState b) {
+        double[] ha = edgeHeights(a, d), hb = edgeHeights(b, (d + 2) & 3);
+        if (ha == null || hb == null) return true; // (an obstacle standing in the ground's row: walked round, not up)
+        for (double x : ha) for (double y : hb) if (Math.abs((lb + y) - (la + x)) <= 0.601) return true;
+        return false;
+    }
+
+    private static final Direction[] SIDE = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+
+    /** The heights a block's top offers along its edge on side s (0 N, 1 E, 2 S, 3 W), or null for an obstacle. */
+    static double[] edgeHeights(BlockState s, int side) {
+        if (s.getBlock() instanceof net.minecraft.world.level.block.StairBlock
+                && s.getValue(net.minecraft.world.level.block.StairBlock.HALF) == net.minecraft.world.level.block.state.properties.Half.BOTTOM) {
+            Direction f = s.getValue(net.minecraft.world.level.block.StairBlock.FACING);
+            int F = java.util.Arrays.asList(SIDE).indexOf(f), L = (F + 3) & 3, R = (F + 1) & 3, B = (F + 2) & 3;
+            double[] low = {0.5}, high = {1.0}, both = {0.5, 1.0};
+            return switch (s.getValue(net.minecraft.world.level.block.StairBlock.SHAPE)) {
+                case STRAIGHT -> side == F ? high : side == B ? low : both;
+                case OUTER_LEFT -> side == F || side == L ? both : low;
+                case OUTER_RIGHT -> side == F || side == R ? both : low;
+                case INNER_LEFT -> side == F || side == L ? high : both;
+                case INNER_RIGHT -> side == F || side == R ? high : both;
+            };
+        }
+        var shape = s.getCollisionShape(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, BlockPos.ZERO);
+        if (shape.isEmpty()) return new double[]{0.0};
+        double top = shape.max(Direction.Axis.Y);
+        return top > 1.01 ? null : new double[]{top};
+    }
+
+    /** As the plan generator's facade_across: a plot met walking from (x, z) along (nx, nz) over open street within reach. */
+    static boolean facadeAcross(CityPlan p, double x, double z, double nx, double nz, double reach) {
+        for (int k = 1; k <= (int) (reach * 2); k++) {
+            byte c = p.kind((int) Math.floor(x + nx * k * 0.5), (int) Math.floor(z + nz * k * 0.5));
+            if (c == CityPlan.PLOT) return true;
+            if (c != CityPlan.AVENUE && c != CityPlan.STREET && c != CityPlan.LANE && c != CityPlan.ALLEY && c != CityPlan.RING
+                    && c != CityPlan.STAIR && c != CityPlan.PLAZA) return false;
+        }
+        return false;
+    }
+
+    /** A soft way off a roof: water within 3 of the house, or open ground beside it at most 6 under its eave. */
+    static boolean softLanding(CityPlan p, CityPlan.Plot a) {
+        int e = a.lift() + a.eave();
+        for (int x = a.x0() - 3; x <= a.x1() + 3; x++) {
+            for (int z = a.z0() - 3; z <= a.z1() + 3; z++) {
+                byte k = p.kind(x, z);
+                if (CityPlan.water(k)) return true;
+                boolean beside = x >= a.x0() - 1 && x <= a.x1() + 1 && z >= a.z0() - 1 && z <= a.z1() + 1;
+                if (beside && (CityPlan.walkable(k) || k == CityPlan.YARD || k == CityPlan.GARDEN || k == CityPlan.FREE) && e - p.lift(x, z) <= 6)
+                    return true;
+            }
+        }
+        return false;
     }
 
     /** A climb line at column u of a side: climbable from the ground in front of it (or a step up) to under the eave. */

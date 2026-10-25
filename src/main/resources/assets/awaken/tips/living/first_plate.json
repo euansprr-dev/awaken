@@ -1,0 +1,9 @@
+{
+  "text": "Your band reads what you look at: its name, its level, how much fight it has left.",
+  "priority": 40,
+  "show_for": 140,
+  "retire_after_done": 1,
+  "retire_after_shown": 2,
+  "cooldown": 1200,
+  "awake": "after"
+}

@@ -111,6 +111,7 @@ final class AscentScene {
                 case AscentPayloads.LEAP_EDGE -> "awaken.ascent.edge.leap";
                 case AscentPayloads.GIFT_SKY -> "awaken.ascent.gift.sky";
                 case AscentPayloads.SKY_EDGE -> "awaken.ascent.edge.sky";
+                case AscentPayloads.GIFT_SOVEREIGN -> "awaken.ascent.gift.sovereign";
                 default -> "awaken.ascent.remember.title";
             });
             HudLook.glow(g, cx - mc.font.width(title) - 8, y - 6, mc.font.width(title) * 2 + 16, 22, Glass.EDGE, 0.5F * a1);
@@ -127,6 +128,8 @@ final class AscentScene {
                 case AscentPayloads.LEAP_EDGE -> Component.translatable("awaken.ascent.edge.leap.how").getString();
                 case AscentPayloads.GIFT_SKY -> Component.translatable("awaken.ascent.gift.sky.how").getString();
                 case AscentPayloads.SKY_EDGE -> Component.translatable("awaken.ascent.edge.sky.how").getString();
+                case AscentPayloads.GIFT_SOVEREIGN -> Component.translatable("awaken.ascent.gift.sovereign.how",
+                        SovereignClient.ASCEND.getTranslatedKeyMessage()).getString();
                 default -> given(playing);
             };
             HudLook.centered(g, mc.font, line, cx, y + 26, Glass.a(Glass.EDGE, a2), true);

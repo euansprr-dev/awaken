@@ -266,7 +266,7 @@ public final class ProgressionModule {
         }
         if (!(event.getSource().getEntity() instanceof ServerPlayer sp)) return;
         Profile p = Progression.profile(sp);
-        if (dead instanceof Enemy && isHome(sp.level())) {
+        if (dead instanceof Enemy && isHome(sp.level()) && !dev.awaken.core.api.LivingHooks.paysKills()) {
             var role = dev.awaken.core.api.MobRole.of(dead);
             int contentLevel = role.role() == dev.awaken.core.api.MobRole.Role.NONE ? 0 : Math.max(0, role.contentLevel());
             double xp = KILL_XP * Math.min(2.0, dead.getMaxHealth() / 20.0);

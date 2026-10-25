@@ -52,5 +52,6 @@ public final class AwakenClient {
         dev.awaken.wilds.client.WildsClient.init(modBus);
         dev.awaken.citizens.client.CitizensClient.init(modBus);
         dev.awaken.opening.client.OpeningClient.init(modBus);
+        dev.awaken.living.client.LivingClient.init(modBus);
     }
 }

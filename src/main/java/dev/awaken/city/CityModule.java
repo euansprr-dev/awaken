@@ -99,5 +99,11 @@ public final class CityModule {
             CityLayout l = at(level);
             return l == null ? null : City.square(l);
         }
+
+        @Override
+        public @Nullable BlockPos spot(Level level, String id) {
+            CityLayout l = at(level);
+            return l == null ? null : City.spot(l, id);
+        }
     }
 }

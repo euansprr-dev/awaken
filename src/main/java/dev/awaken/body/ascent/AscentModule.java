@@ -26,11 +26,15 @@ public final class AscentModule {
             if (e.getEntity() instanceof net.minecraft.server.level.ServerPlayer p) {
                 TetherVow.forget(p);
                 WindwaysServer.forget(p.getUUID());
+                Sovereign.forget(p.getUUID());
+                AscentQuests.forget(p.getUUID());
             }
         });
         bus.addListener(AscentServer::onRespawn);
         // aerial kills: Skyborn mastery for a kill made in flight
         bus.addListener(AscentServer::onKill);
+        // the Sovereign form: every hit its holder lands lands harder (SPEC §17.19)
+        bus.addListener(Sovereign::onDamage);
         bus.addListener(AscentServer::onDimension);
         bus.addListener(net.neoforged.bus.api.EventPriority.LOWEST, AscentServer::onPlace);
         AscentCommands.register();

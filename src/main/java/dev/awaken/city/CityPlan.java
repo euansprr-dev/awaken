@@ -26,7 +26,8 @@ import java.util.zip.Inflater;
  * are relative to the street (ry 0 is the paving's top block).
  */
 public final class CityPlan {
-    public static final int SCHEMA = 1;
+    /** 2 (M4 B2): the lift raster is signed (Choir Square's bowl), plus crossings, named spots and the relief. */
+    public static final int SCHEMA = 2;
     public static final String RESOURCE = "/data/awaken/city/plan.json";
 
     // ground kinds, one byte per cell (tools/city/plan.py writes the same numbers)
@@ -45,6 +46,12 @@ public final class CityPlan {
     public final List<Part> parts;
     public final List<Bridge> bridges;
     public final List<Stair> stairs;
+    /** The streets as laid out (centre lines): avenues rank 1, streets 2, lanes 3, alleys 4. */
+    public final List<Street> streets;
+    /** The crossings over the avenues and the Ring (walkways built now; hang-line sites B3 dresses). */
+    public final List<Crossing> crossings;
+    /** Named spots for other modules (CityHooks.spot): plan x, ry (the block a thing stands in), z. */
+    public final java.util.Map<String, int[]> spots;
     public final List<int[]> trees;   // x, z, kind (0 oak, 1 birch, 2 cherry, 3 avenue), size
     /** The cells the trees' trunks stand in (a facade keeps its climb lines clear of them). */
     private final it.unimi.dsi.fastutil.longs.LongOpenHashSet treeCells = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
@@ -84,6 +91,17 @@ public final class CityPlan {
     public record Bridge(String id, String name, int x0, int z0, int x1, int z1, boolean alongX, boolean breakable, boolean canal) {}
 
     public record Stair(String name, int x0, int z0, int x1, int z1, int down, int lift) {}
+
+    /** A street's centre line, its width and rank; the name ("" when it has none). */
+    public record Street(int rank, float width, float ax, float az, float bx, float bz, String name) {}
+
+    /**
+     * A line across an avenue (look bible §3.5): a walkway (an enclosed bridge between two upper floors, its roof the
+     * road at ry ary) or a hang line between the facing first-floor courses (anchor "facades") or to a post at the far
+     * kerb (anchor "post"). Ends a and b in plan coordinates; plotA / plotB the houses (-1 for a post).
+     */
+    public record Crossing(String kind, String street, float ax, float ary, float az, float bx, float bry, float bz,
+                           int plotA, int plotB, String anchor) {}
 
     public record District(int id, String key, String name, int bellX, int bellZ) {}
 
@@ -203,6 +221,36 @@ public final class CityPlan {
                     x.get(3).getAsInt(), side(s.get("down").getAsString().toUpperCase(java.util.Locale.ROOT)), s.get("lift").getAsInt()));
         }
         stairs = List.copyOf(st);
+
+        List<Street> sts = new ArrayList<>();
+        for (JsonElement e : o.getAsJsonArray("streets")) {
+            JsonObject t = e.getAsJsonObject();
+            JsonArray a = t.getAsJsonArray("a"), b = t.getAsJsonArray("b");
+            sts.add(new Street(t.get("rank").getAsInt(), t.get("width").getAsFloat(), a.get(0).getAsFloat(), a.get(1).getAsFloat(),
+                    b.get(0).getAsFloat(), b.get(1).getAsFloat(), t.has("name") ? t.get("name").getAsString() : ""));
+        }
+        streets = List.copyOf(sts);
+
+        List<Crossing> cr = new ArrayList<>();
+        if (o.has("crossings")) {
+            for (JsonElement e : o.getAsJsonArray("crossings")) {
+                JsonObject c = e.getAsJsonObject();
+                JsonArray a = c.getAsJsonArray("a"), b = c.getAsJsonArray("b"), pp = c.getAsJsonArray("plots");
+                cr.add(new Crossing(c.get("kind").getAsString(), c.get("street").getAsString(), a.get(0).getAsFloat(), a.get(1).getAsFloat(),
+                        a.get(2).getAsFloat(), b.get(0).getAsFloat(), b.get(1).getAsFloat(), b.get(2).getAsFloat(),
+                        pp.get(0).isJsonNull() ? -1 : pp.get(0).getAsInt(), pp.get(1).isJsonNull() ? -1 : pp.get(1).getAsInt(),
+                        c.has("anchor") ? c.get("anchor").getAsString() : ""));
+            }
+        }
+        crossings = List.copyOf(cr);
+        java.util.Map<String, int[]> sp = new java.util.LinkedHashMap<>();
+        if (o.has("spots")) {
+            for (var e : o.getAsJsonObject("spots").entrySet()) {
+                JsonArray a = e.getValue().getAsJsonArray();
+                sp.put(e.getKey(), new int[]{a.get(0).getAsInt(), a.get(1).getAsInt(), a.get(2).getAsInt()});
+            }
+        }
+        spots = java.util.Collections.unmodifiableMap(sp);
 
         List<int[]> tr = new ArrayList<>();
         for (JsonElement e : o.getAsJsonArray("trees")) {
@@ -361,6 +409,7 @@ public final class CityPlan {
         return district[j * size + i];
     }
 
+    /** The ground's top block at a cell, relative to the street (signed: Choir Square's bowl goes below it). */
     public int lift(int x, int z) {
         int i = x - origin, j = z - origin;
         if (i < 0 || j < 0 || i >= size || j >= size) return 0;

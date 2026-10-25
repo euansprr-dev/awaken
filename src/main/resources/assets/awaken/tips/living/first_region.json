@@ -1,0 +1,9 @@
+{
+  "text": "Every region has its own level. The higher above yours, the harder it bites.",
+  "priority": 35,
+  "show_for": 140,
+  "retire_after_done": 1,
+  "retire_after_shown": 2,
+  "cooldown": 1200,
+  "awake": "after"
+}

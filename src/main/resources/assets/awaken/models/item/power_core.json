@@ -5,7 +5,7 @@
     "layer1": {
       "sprite": "awaken:item/power_core_glow",
       "neoforge_data": {
-        "light_emission": 12
+        "light_emission": 15
       }
     }
   }
