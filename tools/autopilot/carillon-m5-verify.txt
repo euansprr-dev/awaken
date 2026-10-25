@@ -1,0 +1,57 @@
+# Carillon M5: the Atlas's fix check after phase 3's tour (short): the orbit's frame cost against a closed pair, a bell's
+# ripple with the clouds over everything (no roofs through the blanket), and the Nether under its roof after the
+# mesher's clear fix. Same world as carillon-m5-atlas.txt.
+# Run: BACKEND=opengl PACK=perf,world TECTONIC=awakened RD=16 SLOT_WHO=atlas \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/carillon-m5-verify.txt 600
+world carillonM5atlas creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd time set 4000
+wait 100
+screen close
+window 1440 900
+info
+hud off
+cmd awaken city view square
+wait 200
+cmd awaken atlas ring city
+wait 40
+perf m5v_closed_a 8
+cmd atlas open 20 52 1
+wait 60
+cmd atlas spin 30
+perf m5v_open_orbit 8
+cmd atlas spin 0
+wait 10
+perf m5v_open_30hz 8
+screen close
+perf m5v_closed_b 8
+cmd awaken atlas clear
+wait 20
+cmd awaken atlas reveal 64
+wait 10
+cmd atlas open 0 58 1.2
+wait 60
+cmd awaken atlas ring bellwatch
+wait 12
+shot m5_ripple_mid
+wait 50
+shot m5_ripple_after
+screen close
+cmd awaken atlas ring city
+cmd execute in minecraft:the_nether run tp @s 0 70 0
+wait 240
+cmd awaken atlas reveal 128
+wait 240
+cmd atlas open 20 55 1
+wait 100
+shot m5_nether
+cmd atlas view 35 45 2
+wait 40
+shot m5_nether_close
+cmd atlas stats
+screen close
+quit

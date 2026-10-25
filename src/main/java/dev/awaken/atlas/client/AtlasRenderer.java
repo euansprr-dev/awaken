@@ -30,6 +30,7 @@ final class AtlasRenderer extends PictureInPictureRenderer<AtlasRenderState> {
     private long lastDraw;
     /** How often drifting clouds redraw the picture (dev: {@code /atlas drift <hz>}). */
     static long DRIFT_NANOS = 33_000_000L;
+    static final long MOVE_NANOS = 16_000_000L;
 
     /** Same picture apart from the clouds' clock. */
     private static boolean sameView(AtlasRenderState a, AtlasRenderState b) {
@@ -69,7 +70,9 @@ final class AtlasRenderer extends PictureInPictureRenderer<AtlasRenderState> {
         // 100+ fps). Nothing moving: the last picture is still right
         long now = System.nanoTime();
         boolean moved = last == null || !sameView(s, last);
-        boolean redraw = resized || moved || s.age() < 1.5f || s.animate() && now - lastDraw >= DRIFT_NANOS;
+        // while the view moves (an orbit, a drag) the picture redraws at most 60 times a second: above that the eye
+        // can't follow the table, and each redraw costs the land again
+        boolean redraw = resized || (moved || s.age() < 1.5f) && now - lastDraw >= MOVE_NANOS || s.animate() && now - lastDraw >= DRIFT_NANOS;
         if (redraw) {
             lastDraw = now;
             painter.paint(device, s, color, colorView, depth, depthView, w, h, guiScale, true);

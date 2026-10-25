@@ -47,6 +47,7 @@ public final class AtlasScreen extends Screen {
     private final Matrix4f gui = new Matrix4f();
     private final Vector3f v = new Vector3f();
     private boolean reveal;
+    private final int[] regionBoxes = new int[32 * 4];
     private int wantX = Integer.MIN_VALUE, wantZ;
     private int shareX0, shareX1, clearX0, clearX1, buttonsY;
 
@@ -223,10 +224,21 @@ public final class AtlasScreen extends Screen {
         // the Living Wilds' regions you've been in, lettered across the land once you're zoomed out, as old maps name
         // a country: spaced capitals, quiet, with the region's levels under the name
         if (lod > 0) {
+            int placed = 0;
             for (dev.awaken.atlas.AtlasData.Region r : atlas.regions) {
                 if (!project(r.heartX(), atlas.store.groundY(r.heartX(), r.heartZ(), 64) + 6, r.heartZ(), x0, y0)) continue;
                 String name = spaced(r.name().toUpperCase(Locale.ROOT));
-                int sx = Math.round(v.x), sy = Math.round(v.y);
+                int sx = Math.round(v.x), sy = Math.round(v.y), half = Math.round(font.width(name) * 0.75f);
+                // names never sit on one another: a later one that would overlap an earlier one waits for a closer zoom
+                boolean clear = true;
+                for (int k = 0; k < placed && clear; k++)
+                    clear = sx + half < regionBoxes[k * 4] || sx - half > regionBoxes[k * 4 + 2] || sy + 20 < regionBoxes[k * 4 + 1] || sy - 8 > regionBoxes[k * 4 + 3];
+                if (!clear || placed >= 32) continue;
+                regionBoxes[placed * 4] = sx - half;
+                regionBoxes[placed * 4 + 1] = sy - 8;
+                regionBoxes[placed * 4 + 2] = sx + half;
+                regionBoxes[placed * 4 + 3] = sy + 20;
+                placed++;
                 g.pose().pushMatrix();
                 g.pose().translate(sx, sy);
                 g.pose().scale(1.5f, 1.5f);

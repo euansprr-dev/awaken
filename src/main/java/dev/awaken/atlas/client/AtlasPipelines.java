@@ -45,7 +45,10 @@ final class AtlasPipelines {
             .withCull(false)
             .build();
 
-    /** Cloud puffs: a soft sprite, translucent, depth-tested so tall explored peaks can poke through. */
+    /**
+     * Cloud puffs and their shadows: a soft sprite, translucent, over everything. (Spike S5 depth-tested them so tall
+     * peaks poke through; at the edge of the known land that left roofs and spires floating in the blanket.)
+     */
     static final RenderPipeline CLOUDS = RenderPipeline.builder(RenderPipelines.GLOBALS_SNIPPET)
             .withLocation(Identifier.fromNamespaceAndPath(Awaken.MODID, "pipeline/atlas_clouds"))
             .withBindGroupLayout(BindGroupLayouts.PROJECTION)
@@ -56,7 +59,7 @@ final class AtlasPipelines {
             .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
             .withVertexBinding(0, DefaultVertexFormat.POSITION_TEX_COLOR)
             .withPrimitiveTopology(PrimitiveTopology.QUADS)
-            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
+            .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
             .withCull(false)
             .build();
 

@@ -125,6 +125,8 @@ final class AtlasMesh {
     /** Everything is stale (a new dimension, a cleared cache). */
     void clear() {
         generation++;
+        inFlight = 0; // builds still running belong to the old generation and will never report back
+        snapshotVersion = -1;
         for (var map : slices) {
             for (Slice s : map.values()) close(s);
             map.clear();

@@ -1665,6 +1665,25 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     where you look is up) painted into the texture `awaken:atlas/glance` (480×280) at most once a second while the menu
     shows it, or sooner once you've moved 4 blocks or turned 12°; the Holo draws it as one textured quad, with a button
     to the table.
+  - Phase 3 (`AtlasData` schemaVersion 2): the Living Wilds region you stand in (`living.api.Regions`, checked every 40
+    ticks, overworld only) joins your Atlas once; zoomed out, each known region's name is lettered at its heart in
+    spaced capitals with its levels under it. Party pins: double-click the table to drop a pin on ground you know (or
+    take back your own under the cursor); twelve per player, the oldest goes; each party member online sees the
+    party's pins in their dimension, in the owner's own colour (a hue from their id), with the owner's name. Dev:
+    `/awaken atlas pin`. Roofed dimensions (the Nether) are read from just under the roof (y 118) down through rock to
+    the first air, then to the floor, so the table shows the highest floor of each column; those chunks are sampled
+    from a queue about 1 ms a tick, the diorama's base drops to 24 and there is no night. Carillon's lit windows
+    (`awaken:lit_window`, within 12 of a column's top) count as night lights.
+  - A bell's ripple adds each cell to the client's record only when the ripple reaches it (so no land shows under
+    clouds that haven't parted), a whole re-send drops every built slice, and the clouds draw over the land (no depth
+    test: spike S5's poke-through left roofs and spires floating in the blanket at the known edge). While the view
+    moves the picture redraws at most 60 times a second.
+  - Measured on OpenGL, uncapped, interleaved pairs at the same spot (tour 2026-10-25, load 5–9): the table open and
+    still +1.5–1.6 ms p50 (+1.4–1.5 of it is the open screen itself, re-blitting the frozen picture: the blit, the glass
+    card, Lens dimming), clouds at 60 Hz +1.9–2.0, orbiting +1.9–2.0 after the 60 Hz cap (+2.6 before); open 12–20 ms
+    cold, 2–8 ms warm; the glance 0.23 ms a paint; sampler 10–18 µs a chunk (120 µs under the Nether's roof).
+  - Frame cost is judged on OpenGL: on Vulkan, MoltenVK presents at the display's rate (120 Hz) even with vsync off, so
+    a capped tour can't show it.
 
 ### 16.9 Public hooks (`core.api`, v0; signatures may change only through the orchestrator)
 - `CityHooks`: `inCity(Level, BlockPos)`, `district(Level, BlockPos)` (id or null), `isCivic(Level, BlockPos)`,
