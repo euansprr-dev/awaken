@@ -107,6 +107,15 @@ No block entities, no loot.
 - **The Watch on his round:** `/awaken citizens show wall_watch[_front|_side]` stands on the walk near a night watchman.
   The tour catches him (walls_watch_round*: lantern, halberd, calling the hour, a dog at his heels).
 
+## Fourth pass (three targeted fixes, one tour)
+- **The Works' dressing in mud brick** instead of red brick: courses, caps, quoins and the stairs on the ledges
+  (`runner_ledges` gains mud brick stairs). The only red left is the Works towers' whole brick bands, every sixth row.
+- **The barbican's cream kept to a plinth, one string course and the arch's voussoirs.** The rest of each pier is
+  weathered stone brick, mossy at the foot.
+- **Ivy mostly deep green.** Darker drifts come from noise, with a little autumn (about one cell in seven). The chance is
+  higher on the inner face, the north faces and the Garden and Quay stretches, and it grows thick at the foot.
+- Shots (tour 7, Vulkan): `walls_out_s`, `walls_gate_yard`, `walls_watergate`.
+
 ## Tests (GameTests, one per mechanism; `-Ptests=city_wall_`)
 - `city_wall_grid`: every hold on the wall's faces below the walk sits in an odd row (9,841 holds), the outer courses
   (896 cells) and the inner (529) are whole along every clear stretch, and 23 of 24 sides have a climb line from the
@@ -136,12 +145,15 @@ Three light tours of `tools/autopilot/carillon-m4walls.txt` (B3a's world, seed a
 ## Where it still falls short
 - Close under the inner face of a slanted side, the panels' heads, the corbel table and the band step with the raster and
   read heavy.
-- The Works' stretch in brick dressings is the busiest face of the ring: red courses and bands read strongly against the
-  grey; it's deliberate (the industrial district) but could take a lighter hand.
+- On the Works' slanted sides the mud brick still traces the buttresses' stepping and the corbel steps. It is calmer than
+  red, but it still reads as lines. The next step would be to dress only the two string courses there and leave the
+  caps and corbels in stone.
+- The ivy's "dark" tone reads blue-black at a distance. Close up, its clumps keep rectangular edges where a patch ends at
+  a course.
 
 ## CI
 GameTests on every push of `carillon/m4-walls`: 40217807842 (first pass) green, 40221579843 (the Watch's round, second
-pass) green, 40223015764 (light budget, merged carillon/main) see the hand-back.
+pass) green, 40223015764 (light budget), 40229252280 (third pass), 40230869266 (fourth pass, d0b836d1): all green.
 
 ## Decisions (SPEC §16.2, "Decided in M4 Walls")
 The cross-section and its rows, the rhythm in face cells, the roofed sides, the climb lines, the towers by district, gate
