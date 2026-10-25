@@ -33,7 +33,7 @@ from fauna_anim import cycle, wave, s, c  # noqa: E402
 JAVA_OUT = os.path.join(ROOT, "src/main/java/dev/awaken/citizens/client/CityFaunaData.java")
 
 # render scale per animal (the body is designed this much larger than it stands in the world)
-SCALE = {"city_pigeon": 0.5, "city_gull": 0.6, "city_cat": 0.6, "city_dog": 0.7, "city_horse": 1.0, "city_cart": 1.0,
+SCALE = {"city_pigeon": 0.6, "city_gull": 0.75, "city_cat": 0.7, "city_dog": 0.8, "city_horse": 1.0, "city_cart": 1.0,
          "city_boat": 1.0}
 
 

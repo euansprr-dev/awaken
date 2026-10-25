@@ -87,8 +87,8 @@ public final class CityGlow {
     // ---- the numbers ----------------------------------------------------------------------------------------------
 
     /** A carried lantern: pool radius and strength, halo size; a street lamp's pool is wider and softer. */
-    static final float LANTERN_POOL = 4.6F, LANTERN_POOL_A = 0.30F, LANTERN_HALO = 0.85F, LANTERN_CORE = 0.16F;
-    static final float LAMP_POOL = 7.5F, LAMP_POOL_A = 0.24F, LAMP_HALO = 1.25F, LAMP_CORE = 0.22F;
+    static final float LANTERN_POOL = 6.5F, LANTERN_POOL_A = 0.72F, LANTERN_HALO = 1.3F, LANTERN_CORE = 0.22F;
+    static final float LAMP_POOL = 9.0F, LAMP_POOL_A = 0.55F, LAMP_HALO = 1.6F, LAMP_CORE = 0.26F;
     /** Lights further than this from the camera aren't drawn (the fog has them by then). */
     static final double RANGE = 88;
     /** Warm candle light (linear-ish sRGB): the pool's middle is warmer and dimmer than the flame. */
@@ -274,11 +274,12 @@ public final class CityGlow {
         public void pool(double x, double y, double z, float radius, float strength) {
             if (strength <= 0.003F) return;
             float px = (float) (x - cx), py = (float) (y - cy), pz = (float) (z - cz);
-            // ring radii and strengths: the inverse-square-ish falloff of a point light over a floor
-            ring(px, py, pz, 0F, radius * 0.18F, strength, strength * 0.78F);
-            ring(px, py, pz, radius * 0.18F, radius * 0.45F, strength * 0.78F, strength * 0.36F);
-            ring(px, py, pz, radius * 0.45F, radius * 0.75F, strength * 0.36F, strength * 0.10F);
-            ring(px, py, pz, radius * 0.75F, radius, strength * 0.10F, 0F);
+            // ring radii and strengths: a broad bright middle under the flame (it must read as light on the stones from
+            // ten blocks off, through moonlight), then a long soft tail (B3b tour: the first profile read as a tint)
+            ring(px, py, pz, 0F, radius * 0.3F, strength, strength * 0.92F);
+            ring(px, py, pz, radius * 0.3F, radius * 0.6F, strength * 0.92F, strength * 0.5F);
+            ring(px, py, pz, radius * 0.6F, radius * 0.85F, strength * 0.5F, strength * 0.16F);
+            ring(px, py, pz, radius * 0.85F, radius, strength * 0.16F, 0F);
         }
 
         private void ring(float x, float y, float z, float r0, float r1, float a0, float a1) {
@@ -294,8 +295,8 @@ public final class CityGlow {
         /** The flame: a near-white core inside a warm halo, both facing the camera. */
         public void halo(double x, double y, double z, float radius, float core, float f) {
             float px = (float) (x - cx), py = (float) (y - cy), pz = (float) (z - cz);
-            sprite(px, py, pz, radius * f, col(HR, HG, HB, 0.34F * f), col(HR, HG, HB, 0F));
-            sprite(px, py, pz, radius * 0.42F, col(HR, HG, HB, 0.42F * f), col(HR, HG, HB, 0F));
+            sprite(px, py, pz, radius * f, col(HR, HG, HB, 0.45F * f), col(HR, HG, HB, 0F));
+            sprite(px, py, pz, radius * 0.42F, col(HR, HG, HB, 0.62F * f), col(HR, HG, HB, 0F));
             sprite(px, py, pz, core, col(1F, 0.95F, 0.82F, 0.95F), col(1F, 0.86F, 0.6F, 0F));
         }
 

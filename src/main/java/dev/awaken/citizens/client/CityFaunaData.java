@@ -22,10 +22,10 @@ public final class CityFaunaData {
 
     /** Render scale per animal (designed larger than it stands). */
     static final java.util.Map<String, Float> SCALE = java.util.Map.of(
-            "city_pigeon", 0.5F,
-            "city_gull", 0.6F,
-            "city_cat", 0.6F,
-            "city_dog", 0.7F,
+            "city_pigeon", 0.6F,
+            "city_gull", 0.75F,
+            "city_cat", 0.7F,
+            "city_dog", 0.8F,
             "city_horse", 1.0F,
             "city_cart", 1.0F,
             "city_boat", 1.0F
