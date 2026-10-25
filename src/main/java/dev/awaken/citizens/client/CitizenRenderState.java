@@ -25,4 +25,6 @@ public final class CitizenRenderState extends SkinRenderState {
     /** The life layer (breath, blinks, the slow head, idle glances) and which model's rig it was made for. */
     public dev.awaken.mobs.client.life.@org.jspecify.annotations.Nullable Life life;
     public boolean lifeSlim;
+    /** The lantern in the off hand (drawn by the lantern layer), or null. */
+    public @org.jspecify.annotations.Nullable LanternHold lantern;
 }

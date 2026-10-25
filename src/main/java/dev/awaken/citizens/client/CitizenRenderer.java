@@ -48,6 +48,8 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         this.wideModel = wide;
         this.slimModel = slim;
         addLayer(new BackLayer(this));
+        addLayer(new LanternLayer(this, new CritterModel(ctx.bakeLayer(CritterRenderer.layer("city_hand_lantern")),
+                CritterRenderer.rigs().get("city_hand_lantern"), "citizen")));
     }
 
     @Override
@@ -104,8 +106,27 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         }
         else s.backItem.clear();
         s.height = body.getBbHeight();
-        // a lantern lights its bearer (CityGlow draws the flame and the pool on the stones)
-        if (CityGlow.carries(body)) s.lightCoords = net.minecraft.util.LightCoordsUtil.withBlock(s.lightCoords, Math.max(13, net.minecraft.util.LightCoordsUtil.block(s.lightCoords)));
+        // a lantern: the 3D one in the off hand replaces the flat item; it lights its bearer, and CityGlow throws its light
+        // from the flame the lantern layer finds
+        s.lantern = null;
+        if (CityGlow.carries(body)) {
+            s.lightCoords = net.minecraft.util.LightCoordsUtil.withBlock(s.lightCoords, Math.max(13, net.minecraft.util.LightCoordsUtil.block(s.lightCoords)));
+            LanternHold h;
+            if (body.clientLantern instanceof LanternHold held) h = held;
+            else body.clientLantern = h = new LanternHold();
+            s.lantern = h;
+            s.leftHandItemState.clear(); // the off hand (the right holds the Watch's halberd)
+            // the swing: the lantern lags the arm's swing a quarter beat, and sways a little at a stand
+            float walk = s.walkAnimationSpeed, pos = s.walkAnimationPos;
+            h.state.xRot = Mth.sin(pos * 0.6662F - 0.9F) * 0.55F * walk + Mth.sin(age * 0.11F + rec) * 0.05F;
+            h.state.yRot = Mth.sin(age * 0.07F + rec * 1.7F) * 0.04F;
+            h.flicker = CityGlow.flicker(age / 20F, body.getId());
+            h.state.ageInTicks = age;
+            h.state.clip = 0;
+            h.state.clipTime = age / 20F + (rec & 7) * 0.31F;
+            h.state.prevWeight = 0F;
+            h.state.life = null;
+        }
         // what they say, fading in and out; their name when you look at them up close
         s.speech = null;
         if (body.speech != null && body.tickCount < body.speechUntil && s.distanceToCameraSq < 28 * 28) {
@@ -223,6 +244,55 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         if (lean != 0f) pose.rotateDegrees(Axis.XP, -lean);
         if (tilt != 0f) pose.rotateDegrees(Axis.ZP, tilt);
         pose.translate(0f, -0.75f, 0f);
+    }
+
+    /**
+     * The Watch's hand lantern, in 3D (M4 B3b, Euan): it hangs from the off hand's fist by its bail, plumb whatever the
+     * arm does, swinging a little behind the arm's swing; its glass and flame glow (full bright, flickering with the light
+     * CityGlow throws). Where the flame is this frame goes back to the bearer's LanternHold, camera-relative, so the halo and
+     * the pool on the paving come from the flame itself.
+     */
+    private static final class LanternLayer extends RenderLayer<CitizenRenderState, dev.awaken.core.client.skin.SkinModel<CitizenRenderState>> {
+        private static final Identifier SKIN = Awaken.id("textures/entity/city/city_hand_lantern.png"),
+                GLOW = Awaken.id("textures/entity/city/city_hand_lantern_glow.png");
+        /** The flame's middle in the lantern's model (pixels below the grip), and the lantern's size in the hand. */
+        private static final float FLAME_Y = 6.6F / 16F, SCALE = 0.9F;
+        private final CritterModel model;
+        private final org.joml.Vector3f v = new org.joml.Vector3f();
+
+        LanternLayer(RenderLayerParent<CitizenRenderState, dev.awaken.core.client.skin.SkinModel<CitizenRenderState>> parent, CritterModel model) {
+            super(parent);
+            this.model = model;
+        }
+
+        @Override
+        public void submit(PoseStack pose, SubmitNodeCollector collector, int light, CitizenRenderState s, float yRot, float xRot) {
+            LanternHold h = s.lantern;
+            if (h == null || s.alpha < 0.1F) return;
+            var m = getParentModel();
+            var arm = m.leftArm;
+            pose.pushPose();
+            m.root().translateAndRotate(pose);
+            arm.translateAndRotate(pose);
+            pose.translate(1F / 16F, 10F / 16F, 0F); // the fist at the end of the arm
+            // plumb: undo the arm's own turn (it was applied Z, Y, X), then the swing behind it
+            pose.rotate(Axis.XP.rotation(-arm.xRot + h.state.xRot));
+            pose.rotate(Axis.YP.rotation(-arm.yRot + h.state.yRot));
+            pose.rotate(Axis.ZP.rotation(-arm.zRot));
+            pose.scale(SCALE, SCALE, SCALE);
+            int a = Math.round(s.alpha * 255F);
+            collector.submitModel(model, h.state, pose, net.minecraft.client.renderer.rendertype.RenderTypes.entityCutout(SKIN), light,
+                    OverlayTexture.NO_OVERLAY, a << 24 | 0xFFFFFF, null, s.outlineColor);
+            float glow = Mth.clamp(0.72F + 0.28F * h.flicker, 0F, 1F) * s.alpha;
+            collector.order(1).submitModel(model, h.state, pose, net.minecraft.client.renderer.rendertype.RenderTypes.entityTranslucentEmissive(GLOW),
+                    net.minecraft.util.LightCoordsUtil.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, net.minecraft.util.ARGB.white(glow), null, 0);
+            pose.last().pose().transformPosition(0F, FLAME_Y, 0F, v);
+            h.rx = v.x;
+            h.ry = v.y;
+            h.rz = v.z;
+            h.frame = CityGlow.frame();
+            pose.popPose();
+        }
     }
 
     /** A porter's crate, strapped high on the back. */

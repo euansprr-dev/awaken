@@ -17,7 +17,8 @@ public final class CityFaunaData {
             "city_dog", List.of("terrier", "collie", "hound"),
             "city_horse", List.of("bay", "grey", "chestnut", "black"),
             "city_cart", List.of(""),
-            "city_boat", List.of("tar", "blue", "green", "ochre")
+            "city_boat", List.of("tar", "blue", "green", "ochre"),
+            "city_hand_lantern", List.of("")
     );
 
     /** Render scale per animal (designed larger than it stands). */
@@ -28,7 +29,8 @@ public final class CityFaunaData {
             "city_dog", 0.8F,
             "city_horse", 1.0F,
             "city_cart", 1.0F,
-            "city_boat", 1.0F
+            "city_boat", 1.0F,
+            "city_hand_lantern", 0.9F
     );
 
     /** Every rig's source text, in order. */
@@ -668,6 +670,34 @@ public final class CityFaunaData {
                 track hull rot 2 0 0 0 0 1 0.3 0 0 0 1
                 clip death 0.3 0
                 track hull rot 2 0 0 0 0 1 0.3 0 0 0 1
+                """
+            },
+            // city_hand_lantern
+            new String[] {
+                """
+                rig city_hand_lantern 32 32 0 1 2 0.1 0.2 0
+                bone lantern - 0 0 0 0 0 0
+                cube 16 10 -1.5 0 -0.5 3 1 1 0 -0.3
+                cube 12 6 1 0.5 -0.5 1 2 1 0 -0.3
+                cube 12 6 -2 0.5 -0.5 1 2 1 0 -0.3
+                cube 24 10 -0.5 1.8 -0.5 1 1 1 0 -0.1
+                cube 16 0 -2 2.6 -2 4 1 4 0 0
+                cube 0 8 -1.5 2.1 -1.5 3 1 3 0 -0.1
+                cube 12 0 1 3.6 1 1 5 1 0 -0.28
+                cube 12 0 -2 3.6 1 1 5 1 0 -0.28
+                cube 12 0 1 3.6 -2 1 5 1 0 -0.28
+                cube 12 0 -2 3.6 -2 1 5 1 0 -0.28
+                cube 0 0 -1.5 3.6 -1.5 3 5 3 0 -0.04
+                cube 16 5 -2 8.6 -2 4 1 4 0 0
+                bone flame lantern 0 7.4 0 0 0 0
+                cube 12 9 -0.5 -1.8 -0.5 1 2 1 0 -0.12
+                clip idle 1.3 1
+                track flame scale 7 0 1 1 1 1 0.17 0.9 1.18 0.9 1 0.33 1.05 0.92 1.05 1 0.55 0.95 1.12 0.95 1 0.8 1.08 0.86 1.08 1 1.05 0.92 1.1 0.92 1 1.3 1 1 1 1
+                track flame rot 5 0 0 0 0 1 0.4 0 0 5 1 0.7 0 0 -4 1 1 3 0 2 1 1.3 0 0 0 1
+                clip hurt 0.3 0
+                track lantern rot 2 0 0 0 0 1 0.3 0 0 0 1
+                clip death 0.3 0
+                track lantern rot 2 0 0 0 0 1 0.3 0 0 0 1
                 """
             }
     );

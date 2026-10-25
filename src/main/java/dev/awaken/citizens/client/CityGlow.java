@@ -87,7 +87,7 @@ public final class CityGlow {
     // ---- the numbers ----------------------------------------------------------------------------------------------
 
     /** A carried lantern: pool radius and strength, halo size; a street lamp's pool is wider and softer. */
-    static final float LANTERN_POOL = 6.5F, LANTERN_POOL_A = 0.72F, LANTERN_HALO = 1.3F, LANTERN_CORE = 0.22F;
+    static final float LANTERN_POOL = 7.0F, LANTERN_POOL_A = 0.72F, LANTERN_HALO = 1.1F, LANTERN_CORE = 0.1F;
     static final float LAMP_POOL = 9.0F, LAMP_POOL_A = 0.55F, LAMP_HALO = 1.6F, LAMP_CORE = 0.26F;
     /** Lights further than this from the camera aren't drawn (the fog has them by then). */
     static final double RANGE = 88;
@@ -154,11 +154,31 @@ public final class CityGlow {
     // ---- drawing --------------------------------------------------------------------------------------------------
 
     private static final Out OUT = new Out();
+    /** Frames drawn: a lantern layer stamps its flame with this; the pass after the entities in the same frame reads it. */
+    private static int frame;
+
+    static int frame() {
+        return frame;
+    }
+
+    /** A flame's unsteady breath (0.86-1.0), its own rhythm per seed: the lantern's glass and its thrown light share it. */
+    static float flicker(float seconds, int seed) {
+        float a = seed * 0.37F;
+        return 0.93F + 0.045F * Mth.sin(seconds * 9.1F + a) + 0.025F * Mth.sin(seconds * 23.7F + a * 2.3F);
+    }
     private static final Vector3f RIGHT = new Vector3f(), UP = new Vector3f();
     private static final Quaternionf CAM = new Quaternionf();
     private static final BlockPos.MutableBlockPos M = new BlockPos.MutableBlockPos();
 
     static void submit(SubmitCustomGeometryEvent e) {
+        try {
+            draw(e);
+        } finally {
+            frame++;
+        }
+    }
+
+    private static void draw(SubmitCustomGeometryEvent e) {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
         if (level == null) return;
@@ -188,17 +208,33 @@ public final class CityGlow {
         }
     };
 
-    /** The lantern hangs from the bearer's off hand (left): swung by the walk, low at the hip. */
+    /**
+     * A carried lantern's light, from its flame: where the lantern layer drew it this frame (the 3D lantern in the off
+     * hand, following the arm and its swing). A body the frustum culled wasn't drawn, so its flame is estimated from the
+     * arm's swing (its pool can still be on screen). The pool lies on the stones under the flame.
+     */
     private static void lantern(CitizenBody b, float pt) {
-        double x = Mth.lerp(pt, b.xo, b.getX()), y = Mth.lerp(pt, b.yo, b.getY()), z = Mth.lerp(pt, b.zo, b.getZ());
-        if (OUT.far(x, y, z)) return;
-        float yaw = Mth.rotLerp(pt, b.yBodyRotO, b.yBodyRot) * Mth.DEG_TO_RAD;
-        float swing = Mth.cos(b.walkAnimation.position(pt) * 0.6662F) * 1.1F * b.walkAnimation.speed(pt) * 0.5F;
-        float arm = 0.6F, s = b.getScale();
-        double fx = -Mth.sin(yaw), fz = Mth.cos(yaw), lx = Mth.cos(yaw), lz = Mth.sin(yaw);
-        double fwd = Mth.sin(swing) * arm * s + 0.06, side = 0.36 * s, up = (1.36 - Mth.cos(swing) * arm - 0.16) * s;
-        double hx = x + fx * fwd + lx * side, hy = y + up, hz = z + fz * fwd + lz * side;
-        float f = OUT.flicker(b.getId());
+        double y = Mth.lerp(pt, b.yo, b.getY());
+        double hx, hy, hz;
+        float f;
+        if (b.clientLantern instanceof LanternHold h && h.frame == OUT.frameId) {
+            hx = OUT.cx + h.rx;
+            hy = OUT.cy + h.ry;
+            hz = OUT.cz + h.rz;
+            f = h.flicker;
+        } else {
+            double x = Mth.lerp(pt, b.xo, b.getX()), z = Mth.lerp(pt, b.zo, b.getZ());
+            float yaw = Mth.rotLerp(pt, b.yBodyRotO, b.yBodyRot) * Mth.DEG_TO_RAD;
+            float swing = Mth.cos(b.walkAnimation.position(pt) * 0.6662F) * 1.1F * b.walkAnimation.speed(pt) * 0.5F;
+            float arm = 0.6F, s = b.getScale();
+            double fx = -Mth.sin(yaw), fz = Mth.cos(yaw), lx = Mth.cos(yaw), lz = Mth.sin(yaw);
+            double fwd = Mth.sin(swing) * arm * s, side = 0.38 * s, up = (1.375 - Mth.cos(swing) * arm - 0.42) * s;
+            hx = x + fx * fwd + lx * side;
+            hy = y + up;
+            hz = z + fz * fwd + lz * side;
+            f = flicker((b.tickCount + pt) / 20F, b.getId());
+        }
+        if (OUT.far(hx, hy, hz)) return;
         OUT.pool(hx, y + 0.03, hz, LANTERN_POOL, LANTERN_POOL_A * f);
         OUT.halo(hx, hy, hz, LANTERN_HALO, LANTERN_CORE, f);
     }
@@ -243,6 +279,9 @@ public final class CityGlow {
             }
         }
 
+        /** The frame this pass was queued in (the callback draws later, after the counter moves on). */
+        int frameId;
+
         void frame(ClientLevel level, double cx, double cy, double cz, float pt, float t) {
             this.level = level;
             this.cx = cx;
@@ -250,6 +289,7 @@ public final class CityGlow {
             this.cz = cz;
             this.pt = pt;
             this.t = t;
+            this.frameId = frame;
         }
 
         void begin(VertexConsumer vc) {
@@ -274,12 +314,14 @@ public final class CityGlow {
         public void pool(double x, double y, double z, float radius, float strength) {
             if (strength <= 0.003F) return;
             float px = (float) (x - cx), py = (float) (y - cy), pz = (float) (z - cz);
-            // ring radii and strengths: a broad bright middle under the flame (it must read as light on the stones from
-            // ten blocks off, through moonlight), then a long soft tail (B3b tour: the first profile read as a tint)
-            ring(px, py, pz, 0F, radius * 0.3F, strength, strength * 0.92F);
-            ring(px, py, pz, radius * 0.3F, radius * 0.6F, strength * 0.92F, strength * 0.5F);
-            ring(px, py, pz, radius * 0.6F, radius * 0.85F, strength * 0.5F, strength * 0.16F);
-            ring(px, py, pz, radius * 0.85F, radius, strength * 0.16F, 0F);
+            // a broad bright middle under the flame (it reads as light on the stones from ten blocks off, through
+            // moonlight), then a long tail that eases out to nothing: no rim (Euan: soften the pool's edge)
+            ring(px, py, pz, 0F, radius * 0.2F, strength, strength * 0.95F);
+            ring(px, py, pz, radius * 0.2F, radius * 0.4F, strength * 0.95F, strength * 0.78F);
+            ring(px, py, pz, radius * 0.4F, radius * 0.6F, strength * 0.78F, strength * 0.5F);
+            ring(px, py, pz, radius * 0.6F, radius * 0.78F, strength * 0.5F, strength * 0.24F);
+            ring(px, py, pz, radius * 0.78F, radius * 0.92F, strength * 0.24F, strength * 0.07F);
+            ring(px, py, pz, radius * 0.92F, radius, strength * 0.07F, 0F);
         }
 
         private void ring(float x, float y, float z, float r0, float r1, float a0, float a1) {
