@@ -54,6 +54,20 @@ final class AwRender {
         return Awaken.id("textures/entity/mobs/" + d.id + "_glow.png");
     }
 
+    /** The closed-eyes skin a blink draws ({@code <id>_blink.png}, from tools/art), if the creature has one. */
+    static Identifier blink(MobDef d) {
+        return Awaken.id("textures/entity/mobs/" + d.id + "_blink.png");
+    }
+
+    static Identifier glowBlink(MobDef d) {
+        return Awaken.id("textures/entity/mobs/" + d.id + "_glow_blink.png");
+    }
+
+    /** The id if the resource is there (checked once, when renderers are made), else null. */
+    static @org.jspecify.annotations.Nullable Identifier exists(Identifier id) {
+        return net.minecraft.client.Minecraft.getInstance().getResourceManager().getResource(id).isPresent() ? id : null;
+    }
+
     /** The texture the model is drawn with: ours for our own models, else the vanilla creature's. */
     static Identifier base(MobDef d) {
         return d.model.ownTexture() ? skin(d) : vanilla(d);

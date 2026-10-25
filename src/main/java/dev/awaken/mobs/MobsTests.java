@@ -41,6 +41,7 @@ final class MobsTests {
 
     static void register() {
         dev.awaken.mobs.entity.HeroTests.register(); // hero bodies, their clips and the creatures' voices
+        dev.awaken.mobs.entity.LifeTests.register(); // the life layer's data and bindings (SPEC §23)
         AwakenTests.register("mobs_scaling_maths", 40, h -> {
             h.assertTrue(Math.abs(MobScaling.healthMultiplier(5) - 1.375) < 1e-9, "health multiplier at lv5");
             h.assertTrue(Math.abs(MobScaling.damageMultiplier(150) - 7.0) < 1e-9, "damage multiplier at lv150");

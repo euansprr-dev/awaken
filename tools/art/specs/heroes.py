@@ -49,8 +49,27 @@ def rigs(only=None):
 
 
 def paint(rig, painter):
+    return paint_full(rig, painter)[:2]
+
+
+def paint_full(rig, painter):
+    """(skin, glow, blink): blink is (skin, glow) with the eyes shut, or None (fauna_rig.Painter.eyes)."""
     P = R.Painter(rig, "heroes|" + rig.id)
-    return painter(rig, P)
+    skin, glow = painter(rig, P)
+    return skin, glow, P.blink()
+
+
+def write(out, hid, skin, glow, blink, tex_dir):
+    """Writes a creature's skin, glow and (if its eyes were recorded) the closed-eye pair the life layer blinks with."""
+    pairs = [(hid, skin), (hid + "_glow", glow)]
+    if blink is not None:
+        pairs += [(hid + "_blink", blink[0]), (hid + "_glow_blink", blink[1])]
+    for name, canvas in pairs:
+        if out is not None:
+            out.entity("mobs/" + name, canvas)
+        else:
+            os.makedirs(tex_dir, exist_ok=True)
+            canvas.image().save(os.path.join(tex_dir, name + ".png"))
 
 
 def java(all_rigs):
@@ -102,14 +121,8 @@ def java(all_rigs):
 def build(out=None):
     all_rigs = rigs()
     for hid, rig, painter in all_rigs:
-        skin, glow = paint(rig, painter)
-        if out is not None:
-            out.entity("mobs/" + hid, skin)
-            out.entity("mobs/" + hid + "_glow", glow)
-        else:
-            os.makedirs(TEX_DIR, exist_ok=True)
-            skin.image().save(os.path.join(TEX_DIR, hid + ".png"))
-            glow.image().save(os.path.join(TEX_DIR, hid + "_glow.png"))
+        skin, glow, blink = paint_full(rig, painter)
+        write(out, hid, skin, glow, blink, TEX_DIR)
     path = java(all_rigs)
     print(f"heroes: {len(all_rigs)} rigs -> {os.path.relpath(path, ROOT)}")
 

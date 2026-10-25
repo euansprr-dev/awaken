@@ -852,6 +852,8 @@ public class AwakenMob extends Monster {
         l.squish = Mth.lerp(partialTicks, oSquish, squish);
         l.upsideDown = d.has(Trait.UPSIDE_DOWN);
         l.fallen = (flags & F_FALLEN) != 0;
+        l.hurt = hurtTime > 0 && hurtDuration > 0 ? Math.max(0.0F, (hurtTime - partialTicks) / hurtDuration) : 0.0F;
+        l.aggressive = isAggressive();
         return l;
     }
 
