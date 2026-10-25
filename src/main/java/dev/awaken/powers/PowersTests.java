@@ -46,6 +46,16 @@ final class PowersTests {
             h.succeed();
         });
 
+        AwakenTests.register("powers_icons_present", 20, h -> {
+            for (PowerType t : PowerRegistry.all()) {
+                h.assertTrue(PowersTests.class.getResource("/assets/awaken/textures/gui/sprites/power/" + t.path + ".png") != null,
+                        t.path + " has no icon (tools/art/powerglyphs.py)");
+                h.assertTrue(PowersTests.class.getResource("/assets/awaken/models/item/power_core/" + t.path + ".json") != null,
+                        t.path + " has no Power Core crystal model");
+            }
+            h.succeed();
+        });
+
         AwakenTests.register("powers_cooldown_math", 20, h -> {
             h.assertTrue(PowerMath.cooldown(100, 1f, 1, 0) == 100, "base cooldown");
             h.assertTrue(PowerMath.cooldown(100, 1f, 1, 0.2) == 80, "20% cooldown reduction");
