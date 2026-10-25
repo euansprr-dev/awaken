@@ -83,6 +83,8 @@ public final class CityCritters {
     private static final RandomSource R = RandomSource.create();
     /** Clip indices per animal, by name (the rig's clip order is the model's). */
     private static final Map<String, Integer>[] CLIPS = clipTables();
+    /** Tours log what's about every 30 s (the shots' proof). */
+    private static final boolean AUTOPILOT = System.getProperty("awaken.autopilot") != null;
     private static double px, py, pz, pSpeed;
     private static long now;
     /** Where a cart's horse and its axle are (cartAt's out: x, z, heading dx, dz, distance along), reused every tick. */
@@ -263,6 +265,11 @@ public final class CityCritters {
             }
         }
         dogs(level);
+        if (AUTOPILOT && clock % 600 == 0) {
+            int[] c = counts();
+            dev.awaken.Awaken.LOG.info("[citizens] animals near you: {} pigeons, {} gulls, {} cats, {} dogs, {} carts ({} homes)",
+                    c[CityCritter.PIGEON], c[CityCritter.GULL], c[CityCritter.CAT], c[CityCritter.DOG], c[CityCritter.HORSE], HOMES.size());
+        }
     }
 
     /** Who is about at this hour: pigeons on the ground by day, in their towers at night; carts by day. */
@@ -988,18 +995,12 @@ public final class CityCritters {
         level.playLocalSound(c.getX(), c.getY(), c.getZ(), ev, SoundSource.NEUTRAL, vol, pitch, false);
     }
 
-    /** How many of each kind are about (dev line and the test). */
+    /** How many of each kind are about (the autopilot's status line). */
     static int[] counts() {
         int[] out = new int[5];
         for (Home h : HOMES) if (h.spawned) out[h.kind] += h.members.size();
         out[CityCritter.DOG] = DOGS.size();
         return out;
-    }
-
-    static int homes(int kind) {
-        int n = 0;
-        for (Home h : HOMES) if (h.kind == kind) n++;
-        return n;
     }
 
     static void clear() {

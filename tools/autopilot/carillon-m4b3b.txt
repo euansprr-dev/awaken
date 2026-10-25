@@ -1,0 +1,130 @@
+# Carillon M4 step B3b (animals, the soundscape, the city at night): one measuring tour (shots plus the lantern A/B).
+# The same world and settings as B3a's tour (carillon-m4b3a.txt), so the framings pair with b3a_*: the animals at
+# noon (pigeons in the bowl and on the square, gulls on the quay, carts and dogs in the Market), the moved laundry lane
+# at noon, dusk and night, cats on Bellwatch's roofs with their eyes at night, Choir Square's festoons from dusk, the
+# Watch's drawn lanterns, and the lantern A/B: frame times with drawn light (glow) against the old moving light blocks
+# (blocks) on the Watch's round (show watch picks a watchman each time), then the light-block writes each made. The log carries "[citizens] animals near you"
+# every 30 s and the ambience slot's "status: mixing" lines (the beds really play).
+# Run (it measures frame times: the tour slot, alone on the machine):
+#   PACK=perf,world,horizon TECTONIC=awakened DH=swift RD=20 SLOT_WHO=M4-B3b \
+#   /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/carillon-m4b3b.txt 900
+world carillonM4b3a creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd awaken city info
+hud off
+cmd gamemode spectator
+# ---- noon: the animals (they are made near you, so each view waits for its flock to settle)
+cmd awaken city view bowl
+wait 300
+shot b3b_noon_bowl_pigeons
+cmd awaken city view square
+wait 200
+shot b3b_noon_square
+cmd awaken city view bowl_stalls
+wait 160
+shot b3b_noon_bowl_stalls
+cmd awaken city view quay
+wait 240
+shot b3b_noon_quay_gulls
+cmd awaken city view canal_lights
+wait 160
+shot b3b_noon_canal
+cmd awaken city view market
+wait 240
+shot b3b_noon_market_carts
+cmd awaken city view market_street
+wait 200
+shot b3b_noon_market_street
+cmd awaken city view roofs_bellwatch
+wait 240
+shot b3b_noon_roofs_cats
+cmd awaken city view bellwatch
+wait 160
+shot b3b_noon_bellwatch
+cmd awaken city view studio_bellwatch_tower
+wait 200
+shot b3b_noon_tower_flock
+# the moved laundry lane (B3a's framed a wall): down the Bellwatch lane with twelve lines
+cmd awaken city view laundry_lane
+wait 200
+shot b3b_noon_laundry_lane
+# the beds' and the animals' status lines into the log
+cmd awaken audio why
+wait 20
+# ---- dusk: the festoons light with the lamps (12200), windows come on house by house
+cmd time set 12400
+cmd awaken city view bowl
+wait 400
+shot b3b_dusk_bowl_festoons
+cmd awaken city view square
+wait 160
+shot b3b_dusk_square_festoons
+cmd awaken city view laundry_lane
+wait 200
+shot b3b_dusk_laundry_lane
+cmd awaken city view roofs_bellwatch
+wait 200
+shot b3b_dusk_roofs_cats
+cmd awaken city view sky_nw_low
+wait 300
+shot b3b_dusk_sky
+# ---- night: drawn lanterns and lamp pools, the festoons' canopy, cats' eyes
+cmd time set 16000
+cmd awaken city view bowl
+wait 300
+shot b3b_night_bowl_festoons
+cmd awaken city view square
+wait 160
+shot b3b_night_square
+cmd awaken city view market_street
+wait 200
+shot b3b_night_market_street_lamps
+cmd awaken city view laundry_lane
+wait 160
+shot b3b_night_laundry_lane
+cmd awaken city view roofs_bellwatch
+wait 200
+shot b3b_night_roofs_eyeshine
+cmd awaken city view sky_nw_low
+wait 300
+shot b3b_night_sky
+# ---- the lantern A/B on the Watch's round: drawn light (the default) against the old light blocks
+cmd time set 17000
+cmd awaken citizens lanterns glow
+cmd awaken citizens show watch
+wait 300
+shot b3b_night_watch_glow
+cmd awaken citizens lanterns
+perf lanterns_glow 20
+cmd awaken citizens lanterns
+cmd awaken citizens lanterns blocks
+cmd awaken citizens show watch
+wait 300
+shot b3b_night_watch_blocks
+cmd awaken citizens lanterns
+perf lanterns_blocks 20
+cmd awaken citizens lanterns
+# back to drawn light (the old blocks are taken away within 5 ticks) and a second glow run to catch drift
+cmd awaken citizens lanterns glow
+wait 100
+cmd awaken citizens show watch
+wait 200
+perf lanterns_glow_2 20
+cmd awaken citizens lanterns
+cmd awaken city info
+wait 20
+quit
