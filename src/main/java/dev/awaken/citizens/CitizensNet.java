@@ -33,7 +33,25 @@ public final class CitizensNet {
         }
     }
 
-    /** Smoke sources: packed block positions and their kinds (0 bakery, 1 house, 2 tavern, 3 forge, 4 fire). */
+    /**
+     * Where the city stands (its plan's origin and street level), so the client can read the plan (on the classpath)
+     * for the life it draws itself: animals, the soundscape, lamp light (M4 B3b). Sent at login; none outside Carillon.
+     */
+    public record Site(int cx, int sy, int cz) implements CustomPacketPayload {
+        public static final Type<Site> TYPE = new Type<>(Awaken.id("city_site"));
+        public static final StreamCodec<ByteBuf, Site> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, Site::cx, ByteBufCodecs.VAR_INT, Site::sy, ByteBufCodecs.VAR_INT, Site::cz, Site::new);
+
+        @Override
+        public Type<Site> type() {
+            return TYPE;
+        }
+    }
+
+    /**
+     * Smoke sources and other places the client lights or sounds: packed block positions and their kinds (0 bakery,
+     * 1 house, 2 tavern, 3 forge, 4 fountain; 5 a street lamp's head, whose pool of light the client draws while lit).
+     */
     public record Emitters(boolean replace, long[] pos, byte[] kind) implements CustomPacketPayload {
         public static final Type<Emitters> TYPE = new Type<>(Awaken.id("citizen_emitters"));
         public static final StreamCodec<ByteBuf, Emitters> STREAM_CODEC = StreamCodec.composite(
@@ -60,6 +78,7 @@ public final class CitizensNet {
         var r = e.registrar("1");
         r.playToClient(Speech.TYPE, Speech.STREAM_CODEC);
         r.playToClient(Emitters.TYPE, Emitters.STREAM_CODEC);
+        r.playToClient(Site.TYPE, Site.STREAM_CODEC);
     }
 
     static void say(ServerPlayer p, CitizenBody b, String text, int ticks, int kind) {

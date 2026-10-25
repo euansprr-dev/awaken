@@ -104,6 +104,8 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         }
         else s.backItem.clear();
         s.height = body.getBbHeight();
+        // a lantern lights its bearer (CityGlow draws the flame and the pool on the stones)
+        if (CityGlow.carries(body)) s.lightCoords = net.minecraft.util.LightCoordsUtil.withBlock(s.lightCoords, Math.max(13, net.minecraft.util.LightCoordsUtil.block(s.lightCoords)));
         // what they say, fading in and out; their name when you look at them up close
         s.speech = null;
         if (body.speech != null && body.tickCount < body.speechUntil && s.distanceToCameraSq < 28 * 28) {

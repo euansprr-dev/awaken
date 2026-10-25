@@ -804,12 +804,18 @@ final class CitizenWork implements Ledger.Work {
             ps.add(BlockPos.asLong(cx + pr.x0() + 2, sy + pr.ry() + 3, cz + pr.z0() + 2));
             ks.add((byte) 4);
         }
+        // (M4 B3b) every street lamp's head: the client draws its pool of light while it's lit
+        for (BlockPos lh : lampHead) {
+            ps.add(lh.asLong());
+            ks.add((byte) 5);
+        }
         long[] pa = new long[ps.size()];
         byte[] ka = new byte[ks.size()];
         for (int k = 0; k < pa.length; k++) {
             pa[k] = ps.get(k);
             ka[k] = ks.get(k);
         }
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(p, new CitizensNet.Site(cx, sy, cz));
         CitizensNet.emitters(java.util.List.of(p), true, pa, ka);
     }
 

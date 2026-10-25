@@ -103,6 +103,12 @@ public final class CitizensModule {
             e.setCanceled(true);
             return;
         }
+        // a named citizen (Kestrel, Bram, Oren, Mira, Teodor, Sun) answers a Wayfarer chain first; then their own words
+        String who = c.roster.named[b.rec];
+        if (!who.isEmpty() && dev.awaken.living.api.Quests.talk(p, who)) {
+            e.setCanceled(true);
+            return;
+        }
         if (c.roster.isCitizen(b.rec) && c.data.role[b.rec] == 0) c.recognition.greet(b, b.rec, p, c.level.getGameTime(), true);
         e.setCanceled(true);
     }

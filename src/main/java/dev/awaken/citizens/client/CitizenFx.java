@@ -34,6 +34,7 @@ public final class CitizenFx {
     private static int cursor;
 
     static void emitters(CitizensNet.Emitters msg, IPayloadContext ctx) {
+        CityGlow.emittersChanged();
         if (msg.replace()) {
             pos = msg.pos().clone();
             kind = msg.kind().clone();
@@ -123,10 +124,20 @@ public final class CitizenFx {
             // houses at breakfast and supper and through the evening; one in four keeps a fire in all day (M4 B3a)
             case 1 -> (i % 3 != 0) && (tod < 1600 || tod >= 11400 && tod < 16500) || i % 4 == 0 ? 1 : 0;
             case 4 -> 3;                                                                   // a fountain
+            case 5 -> 0;                                                                   // a lamp (CityGlow draws its light)
             case 2 -> tod >= 9000 && tod < 18500 ? 2 : 0;                                 // taverns all evening
             case 3 -> tod >= 900 && tod < 10800 ? 2 : 0;                                  // forges in working hours
             default -> 2;
         };
+    }
+
+    /** The emitters as sent (CityGlow reads the lamp heads, kind 5). */
+    static long[] positions() {
+        return pos;
+    }
+
+    static byte[] kinds() {
+        return kind;
     }
 
     static void clear() {

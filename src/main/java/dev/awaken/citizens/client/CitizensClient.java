@@ -25,8 +25,17 @@ public final class CitizensClient {
         modBus.addListener((RegisterClientPayloadHandlersEvent e) -> {
             e.register(CitizensNet.Speech.TYPE, CitizenFx::speech);
             e.register(CitizensNet.Emitters.TYPE, CitizenFx::emitters);
+            e.register(CitizensNet.Site.TYPE, CityLife::site);
         });
+        modBus.addListener(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent.class, CityGlow::onRegister);
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent e) -> CityGlow.submit(e));
+        NeoForge.EVENT_BUS.addListener(CityGlow::onJoin);
+        NeoForge.EVENT_BUS.addListener(CityGlow::onLeave);
         NeoForge.EVENT_BUS.addListener(CitizenFx::tick);
-        NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> CitizenFx.clear());
+        NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> {
+            CitizenFx.clear();
+            CityGlow.clear();
+            CityLife.clear();
+        });
     }
 }
