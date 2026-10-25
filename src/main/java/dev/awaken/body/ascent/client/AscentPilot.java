@@ -69,6 +69,11 @@ public final class AscentPilot {
                 core = null;
             }
             case "rec" -> ClipRecorder.start(a[1], Integer.parseInt(a[2]), a.length > 3 ? Integer.parseInt(a[3]) : 2);
+            // the Ascend key, pressed once (the Sovereign form, or in it high up a Judgement Fall)
+            case "ascend" -> {
+                var pl = net.minecraft.client.Minecraft.getInstance().player;
+                if (pl != null) SovereignClient.press(pl);
+            }
             case "route" -> AscentRoutes.line(a);
             case "lensmotion" -> dev.awaken.body.client.feel.FeelDirector.lensMotionOn = !a[1].equals("off");
             case "double" -> {

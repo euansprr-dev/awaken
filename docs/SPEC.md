@@ -2400,6 +2400,30 @@ Skyborn's earn path (the plan: "the Sky Archipelago Lord, rebuilt as a flight fi
 - Not yet: the Leviathan's own flight-fight kit (its dives and wingbeats were made for an island fight), aerial combat's
   own enemies, and casting tuned for the air.
 
+### 17.19 The Sovereign: the god form
+The ladder's top (the plan: "the angel overlord"). Euan chose its trigger on 25 Oct: its own Ascend key, default U,
+needing full Aether, with a 10-minute cooldown.
+- **Earned** at the story's end: the world's ending seen (`StoryHooks.gatesCalm(server, player)`: the Signal broken
+  and their gates calm; or `colourRestored`: the world awake), checked every 5 s; the tier with the gift's scene
+  ("Sovereign. · Aether full, press U: thirty seconds as the sky's own. Press it again high up: Judgement."), its tip,
+  every tier under it. Dev: `/awaken ascent grant sovereign`.
+- **The form** (`body.ascent.Sovereign`, server-kept; `client.SovereignClient` draws it): the Ascend key with the tier,
+  the Aether full (0.95+) and the cooldown passed (10 min, saved: `AscentMemory.sovereignAt`, schema 3; otherwise a
+  toast says why: "The sky gathers itself: 4 min", "Not yet: the Aether must be full") takes the form for 30 s: the
+  body lifts into flight (0.42 a tick up for its first 24 ticks, about ten blocks: a hover alone bleeds its rise away)
+  that never tires (Aether pinned full on both sides), every hit you land (blows and powers)
+  is struck 1.5 times as hard, and every hostile within 24 is slowed (Slowness III), loses you as its target and runs
+  16 blocks away (refreshed twice a second). Lens turns gold (`awaken:sovereign`, looks_ascent.json), the action camera
+  pulls far back and up (ActionRig's SOVEREIGN pose: 4.5 back, 1.4 up, in behind you), the wings stay open and a ring of
+  light breathes round you; others see the wings and the aura. 5 Sovereign mastery, `awaken:ascent_sovereign_forms`.
+- **The Judgement Fall**: in the form, Ascend again from 8 or more up: the body drops at 2.6 a tick (the Leaper's dive,
+  harder); its landing strikes everything within 9 (20 at a landing of 1, scaled 0.6-2.5 and by distance; thrown up and
+  away), the ground answers with rings of light and a low boom for everyone near. 4 Sovereign mastery.
+- Test: `ascent_sovereign` (refused without the tier or the Aether; hits struck 1.5 times; the Judgement strikes; it
+  ends on its clock; the cooldown holds). Tour: `tools/autopilot/ascent-sovereign.txt` (PACK=feel). Pilot `ascend`.
+- Not yet: slowed time for everything (only the field's hostiles are slowed), the ground shattering (the Judgement's
+  mark is light, not broken blocks), radiant (gold) wings of their own.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
