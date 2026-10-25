@@ -22,7 +22,7 @@ public final class RigRunHud {
     private static boolean running;
     /** Client game time the clock started (corrected by the server's own count at each ring). */
     private static long start, shownAt = Long.MIN_VALUE / 4, splitAt = Long.MIN_VALUE / 4;
-    private static int ring = -1, rings, par, finalTicks, medal, split;
+    private static int ring = -1, rings, par, finalTicks, medal, split, best;
 
     static void run(RigPayloads.Run r) {
         var level = Minecraft.getInstance().level;
@@ -35,6 +35,7 @@ public final class RigRunHud {
                 ring = -1;
                 rings = r.rings();
                 par = r.par();
+                best = r.ticks();
                 shownAt = Long.MIN_VALUE / 4;
                 splitAt = Long.MIN_VALUE / 4;
             }
@@ -124,7 +125,8 @@ public final class RigRunHud {
             float s = Math.max(0.05F, 1F - (now - splitAt + pt) / 40F);
             g.centeredText(font, "ring " + (ring + 1) + " · " + clock(split), cx, ly, ((int) (s * 255) << 24) | (GOLD & 0xFFFFFF));
         } else {
-            g.centeredText(font, "par " + clock(par), cx, ly, PALE);
+            // your ghost's time when you have one (it is running beside you), else the course's par
+            g.centeredText(font, best > 0 ? "best " + clock(best) + " · par " + clock(par) : "par " + clock(par), cx, ly, PALE);
         }
     }
 }

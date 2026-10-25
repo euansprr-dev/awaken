@@ -78,9 +78,33 @@ public final class RigPayloads {
     }
 
     /**
+     * Your ghost on a Gauntlet's course (only to you, as your run starts): your best run of it, a sample every
+     * {@code step} ticks, positions in eighths of a block from {@code origin} ({@code xz}: x then z as two shorts;
+     * {@code yw}: y as a short, then the yaw in 256ths of a turn), and its time.
+     */
+    public record Ghost(BlockPos origin, int step, int ticks, List<Integer> xz, List<Integer> yw) implements CustomPacketPayload {
+        public static final int MAX = 1600;
+        public static final Type<Ghost> TYPE = new Type<>(Awaken.id("gate_rig_ghost"));
+        public static final StreamCodec<ByteBuf, Ghost> STREAM_CODEC = StreamCodec.of((buf, g) -> {
+            BlockPos.STREAM_CODEC.encode(buf, g.origin);
+            ByteBufCodecs.VAR_INT.encode(buf, g.step);
+            ByteBufCodecs.VAR_INT.encode(buf, g.ticks);
+            ByteBufCodecs.INT.apply(ByteBufCodecs.list(MAX)).encode(buf, g.xz);
+            ByteBufCodecs.INT.apply(ByteBufCodecs.list(MAX)).encode(buf, g.yw);
+        }, buf -> new Ghost(BlockPos.STREAM_CODEC.decode(buf), ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
+                ByteBufCodecs.INT.apply(ByteBufCodecs.list(MAX)).decode(buf), ByteBufCodecs.INT.apply(ByteBufCodecs.list(MAX)).decode(buf)));
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /**
      * Your own run of a Gauntlet's course (only to the runner): the clock started, a ring passed ({@code ring} of
      * {@code rings}), the far landing reached ({@code ticks} on the clock, the {@code medal} won against {@code par}), or
-     * the run abandoned. Medals: 0 none, 1 bronze, 2 silver, 3 gold.
+     * the run abandoned. Medals: 0 none, 1 bronze, 2 silver, 3 gold. At the start {@code ticks} is your best time on this
+     * course (0: none yet).
      */
     public record Run(int phase, int ticks, int ring, int rings, int medal, int par) implements CustomPacketPayload {
         public static final int START = 0, RING = 1, FINISH = 2, STOP = 3;

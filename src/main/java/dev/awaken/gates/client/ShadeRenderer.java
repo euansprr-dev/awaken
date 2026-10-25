@@ -18,7 +18,8 @@ import java.util.UUID;
 
 /**
  * Draws a gate entity with a player's skin (its owner's, or the default): the Mirror shade (dark), the Echo ghost
- * (translucent blue) and the Hollow follower (a black silhouette).
+ * (translucent blue), the Hollow follower (a black silhouette) and a Gauntlet's ghost (translucent pale gold, lit from
+ * within).
  */
 public final class ShadeRenderer<T extends Mob & SkinOwner> extends SkinnedMobRenderer<T, ShadeRenderer.State> {
     /** Owner strings parsed once (a frame must not parse a UUID per entity); NO_OWNER marks a bad string. */
@@ -68,6 +69,12 @@ public final class ShadeRenderer<T extends Mob & SkinOwner> extends SkinnedMobRe
     @Override
     protected int getModelTint(State state) {
         return state.tint;
+    }
+
+    /** A Gauntlet's ghost is a figure of light: lit by nothing around it. */
+    @Override
+    protected int getBlockLightLevel(T entity, net.minecraft.core.BlockPos pos) {
+        return entity instanceof dev.awaken.gates.entity.GauntletGhost ? 15 : super.getBlockLightLevel(entity, pos);
     }
 
     @Override
