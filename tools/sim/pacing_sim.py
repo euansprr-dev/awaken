@@ -1,8 +1,10 @@
-"""AWAKEN pacing simulator (planning harness, not game code). v2: "The Awakened World".
+"""AWAKEN pacing simulator (planning harness, not game code). v3: "The Living Wilds" (SPEC section 21.3).
 
 What it checks: whether one set of progression numbers hits the plan-v2 pacing targets (level 5 in 45-60 min,
 level 10 in 3-4 h, level 25 in 15-20 h, level 50 in 55-60 h of normal play) for different kinds of players, and
 whether the "push one more floor or extract" choice inside a gate stays a real decision.
+v3 swaps the overworld for the Living Wilds model (creatures by level and role, crafts, Wayfarer quests, camps) and
+trims gate floor rewards by WILDS_TRIM so the balanced player's length still lands on the plan's targets.
 
 What it does NOT check: whether any of this is fun. Only playtests answer that.
 
@@ -25,7 +27,9 @@ RANK_MID = {"E": 5, "D": 17, "C": 35, "B": 57, "A": 85, "S": 118, "Sovereign": 1
 SHARE = {"E": 0.28, "D": 0.16, "C": 0.065, "B": 0.22, "A": 0.6, "S": 0.55, "Sovereign": 0.5}
 
 # Plan v2 targets: hours of normal play to reach a level (balanced player's median).
-LEVEL_TARGETS = {5: (0.75, 1.0), 10: (3.0, 4.0), 25: (15.0, 20.0), 50: (55.0, 60.0), 135: (95.0, 105.0)}
+# Level 50 moved from 55-60 to 50-60 with the Living Wilds (SPEC §21.3): the open world now pays through the D-C
+# stretch, so the balanced player reaches 50 about 5 h sooner while level 135 (the story's length) holds.
+LEVEL_TARGETS = {5: (0.75, 1.0), 10: (3.0, 4.0), 25: (15.0, 20.0), 50: (50.0, 60.0), 135: (95.0, 105.0)}
 # The first-hour slice (docs/v2/BRIEF.md): level at 30 and 60 minutes.
 FIRST_HOUR = {30: (3, 4.99), 60: (5, 6.99)}
 
@@ -37,8 +41,17 @@ def xp_to_next(level):  # JAVA Curve.xpToNext (unchanged since v1)
 FLOOR_GROWTH, KILL_SHARE, BELOW_RANK = 1.4, 0.4, 0.3  # JAVA Curve
 
 
+# JAVA Curve.WILDS_TRIM: gate floor rewards (and everything priced from floor 1 of a rank: anomalies, camps) x this, because the
+# wilds now carry part of the climb. The only number retuned for v3. 0.80 is the middle of the window (0.78-0.82) that keeps
+# level 5, 10, 25 and 135 and the first hour on target; level 50 cannot be reached by the trim alone (the wilds carry the 25-50 climb).
+WILDS_TRIM = 0.80
+# JAVA LivingModule.WILDS_RANK: the open world pays by rank the way gates do (C is the long climb), applied after the
+# budget to hunting, crafts and camps (quests and discoveries are authored one-offs and pay in full).
+WILDS_RANK = {"E": 1.0, "D": 1.0, "C": 0.55, "B": 1.0, "A": 1.0, "S": 1.0, "Sovereign": 1.0}
+
+
 def gate_floor_xp(rank, floor):  # JAVA Curve.floorReward
-    return SHARE[rank] * xp_to_next(RANK_MID[rank]) * FLOOR_GROWTH ** (floor - 1)
+    return WILDS_TRIM * SHARE[rank] * xp_to_next(RANK_MID[rank]) * FLOOR_GROWTH ** (floor - 1)
 
 
 FLOOR_MIN = {"E": (4, 6), "D": (5, 7), "C": (6, 8), "B": (6, 9), "A": (7, 10),
@@ -50,11 +63,17 @@ DEATH_EXTRA_MIN = 8  # Fracture: a short debuff you clear by resting
 # Below the budget it pays in full; above it each extra bit pays budget/tally, so grinding one thing levels off at about
 # one budget per 10 minutes while varied play is never cut.
 TAU_MIN = 10.0
-BUDGET = {"kill": 0.15, "ore": 0.06, "build": 0.03, "world": 0.25}
-KILL_FRAC = 0.04      # JAVA: share of a level per overworld kill of a 20-HP mob (x min(2, hp/20))
+# v3: "kill" became "hunt" (0.10) and the crafts and camps got budgets of their own (SPEC 21.3, XpBudget.register).
+BUDGET = {"hunt": 0.10, "ore": 0.06, "build": 0.03, "world": 0.25,                 # JAVA
+          "forage": 0.012, "mine": 0.012, "fish": 0.012, "cook": 0.007, "smith": 0.007, "camp": 0.10}  # JAVA
+KILL_K = 0.03         # JAVA: share of a level per kill of an on-level hunter-role creature (before role and diff)
+ROLE_MIX = ((0.55, 1.0), (0.30, 0.5), (0.10, 0.15), (0.05, 4.0))  # JAVA roles: (share of kills, multiplier): hunter, neutral, ambient, elite
+CRAFT_ACTION = 0.008  # JAVA: share of a level per craft action that pays (a herb, an ore vein, a catch, a meal, a temper)
+QUEST_STEP = 0.12     # JAVA: mean reward of a Wayfarer step or bounty, in levels (a chain's finale pays ~0.8)
+CAMP_K = 0.4          # JAVA: a cleared camp or nest pays CAMP_K x floor 1 of the zone's rank (through the camp budget)
 ORE_FRAC = 0.01       # JAVA: per ore
 BLOCK_FRAC = 0.0005   # JAVA: per block placed
-OUTLEVEL = 10.0       # JAVA: world kills taper 1/(1 + levels above the mob's content level / 10)
+OUTLEVEL = 10.0       # JAVA: ore and building taper 1/(1 + levels above content level 0 / 10)
 
 
 class Budget:
@@ -77,8 +96,15 @@ class Budget:
         return full + b * math.log(after / max(t, b))
 
 
-def taper(level, content_level=0):  # JAVA XpBudget.taper (applied to what the budget pays)
+def taper(level, content_level=0):  # JAVA XpBudget.taper (applied to what the budget pays; ores and building only in v3)
     return 1.0 / (1.0 + max(0, level - 1 - content_level) / OUTLEVEL)
+
+
+def diff(delta):
+    """JAVA: creature level minus player level. Above pays up to +40%, below tapers (applied after the budget)."""
+    if delta >= 0:
+        return 1.0 + 0.08 * min(5, delta)   # JAVA
+    return 1.0 / (1.0 + (-delta) / 8.0)     # JAVA
 
 
 # ---- the prologue (JAVA story/Prologue + Progression bank) --------------------------------------------------------
@@ -102,11 +128,18 @@ DREAM_LEVELS = 0.1
 
 PLAYERS = {
     # skill: lowers death risk and clear time. push: deepest floor they aim for. daily: chance to finish the Regimen.
-    # build_time: share of extra overworld time. engage: chance to take on an anomaly. night_kills: kills per night minute.
-    "careful":  {"skill": 0.85, "push": 2, "daily": 0.5, "build_time": 0.45, "engage": 0.6, "night_kills": 0.6, "ores": 0.6},
-    "balanced": {"skill": 1.00, "push": 3, "daily": 0.65, "build_time": 0.35, "engage": 0.7, "night_kills": 0.8, "ores": 0.8},
-    "greedy":   {"skill": 1.05, "push": 6, "daily": 0.4, "build_time": 0.25, "engage": 0.9, "night_kills": 1.2, "ores": 0.6},
-    "builder":  {"skill": 0.90, "push": 3, "daily": 0.7, "build_time": 0.60, "engage": 0.4, "night_kills": 0.4, "ores": 1.2},
+    # build_time: share of extra overworld time. engage: chance to take on an anomaly. ores: ore pace.
+    # v3 (the Living Wilds): outside: minutes outside per gate cycle (uniform range, x (1 + 0.5 build_time)).
+    # zone_fit: chance the player hunts where creatures are within 2 levels of them (else far below). hunt, gather: share of
+    # outside minutes spent hunting / crafting (hunting adds 0.15 at night). quest, camp: per-minute chance of a Wayfarer step / a camp.
+    "careful":  {"skill": 0.85, "push": 2, "daily": 0.5, "build_time": 0.45, "engage": 0.6, "ores": 0.6,
+                 "outside": (12, 24), "zone_fit": 0.6, "hunt": 0.35, "gather": 0.45, "quest": 1 / 43, "camp": 1 / 60},
+    "balanced": {"skill": 1.00, "push": 3, "daily": 0.65, "build_time": 0.35, "engage": 0.7, "ores": 0.8,
+                 "outside": (10, 22), "zone_fit": 0.7, "hunt": 0.45, "gather": 0.35, "quest": 1 / 40, "camp": 1 / 45},
+    "greedy":   {"skill": 1.05, "push": 6, "daily": 0.4, "build_time": 0.25, "engage": 0.9, "ores": 0.6,
+                 "outside": (6, 14), "zone_fit": 0.8, "hunt": 0.6, "gather": 0.15, "quest": 1 / 57, "camp": 1 / 35},
+    "builder":  {"skill": 0.90, "push": 3, "daily": 0.7, "build_time": 0.60, "engage": 0.4, "ores": 1.2,
+                 "outside": (14, 30), "zone_fit": 0.5, "hunt": 0.25, "gather": 0.55, "quest": 1 / 50, "camp": 1 / 70},
 }
 
 
@@ -125,8 +158,8 @@ UTILISATION = 0.7             # share of energy regen you actually spend while f
 LANDED = 0.85                 # share of the main power's energy whose cast lands a hit (the rest is spent in the fight)
 KILLS_PER_COMBAT_MIN = 1.5    # kills per minute of fighting (gates, nights, rift tears)
 INT_PER_LEVEL = 0.5           # 3 points a level over six stats
-# combat minutes per event: share of a gate floor's minutes, a night minute with kills, a rift tear, a rank trial
-COMBAT_MIN = {"floor": 0.55, "night_kill_minute": 0.5, "rift": 1.5, "trial": 12.0}
+# combat minutes per event: share of a gate floor's minutes, an outdoor minute spent hunting, a rift tear, a rank trial
+COMBAT_MIN = {"floor": 0.55, "hunt_minute": 0.5, "rift": 1.5, "trial": 12.0}
 ELITES_PER_FLOOR = 0.4
 
 
@@ -272,20 +305,41 @@ def simulate(kind, rng):
         gain(frac * xp_to_next(st["level"]))
 
     def overworld(minutes, awake=True):
-        """Minute by minute outside: kills at night, ores, building, first sightings, anomalies."""
+        """Minute by minute outside (the Living Wilds, SPEC 21.3): kills by creature level and role, crafts, ores, building,
+        Wayfarer quest steps, camps, first sightings, anomalies."""
         for _ in range(int(round(minutes))):
             st["t"] += 1
             budget.decay(1)
             lv = st["level"]
+            xpn = xp_to_next(lv)
             night = (st["t"] % 20) >= 13           # 7 of every 20 minutes are night
-            kills = rng.random() < (p["night_kills"] if night else 0.15)
-            hp_factor = rng.choice((1.0, 1.0, 1.0, 1.3, 2.0))
-            if kills:
-                gain(budget.pay("kill", KILL_FRAC * hp_factor) * taper(lv) * xp_to_next(lv))
-                fight(COMBAT_MIN["night_kill_minute"])
+            r = rng.random()
+            if r < p["hunt"] + (0.15 if night else 0.0):
+                for _k in range(rng.choice((1, 1, 2, 2, 3))):  # a fight of one to three creatures
+                    # in your zone the creatures are within 2 levels of you; out of it, far below (taper)
+                    delta = rng.randint(-2, 2) if rng.random() < p["zone_fit"] else -rng.randint(4, 12)
+                    role = 1.0
+                    x = rng.random()
+                    for share, mult in ROLE_MIX:
+                        x -= share
+                        if x <= 0:
+                            role = mult
+                            break
+                    # the budget first, then the level difference (taper after the budget, like XpBudget in the game)
+                    gain(budget.pay("hunt", KILL_K * role) * diff(delta) * WILDS_RANK[RANKS[rank_i]] * xpn)
+                fight(COMBAT_MIN["hunt_minute"])
+            elif r < p["hunt"] + p["gather"]:
+                for craft in rng.sample(("forage", "mine", "fish", "cook", "smith"), 2):  # two crafts a gathering minute
+                    gain(budget.pay(craft, CRAFT_ACTION * rng.randint(1, 3)) * WILDS_RANK[RANKS[rank_i]] * xpn)
             if rng.random() < 0.25 * p["ores"]:
-                gain(budget.pay("ore", ORE_FRAC * rng.randint(1, 4)) * taper(lv) * xp_to_next(lv))
-            gain(budget.pay("build", BLOCK_FRAC * 12 * (1 + 2 * p["build_time"])) * taper(lv) * xp_to_next(lv))
+                gain(budget.pay("ore", ORE_FRAC * rng.randint(1, 4)) * taper(lv) * xpn)
+            gain(budget.pay("build", BLOCK_FRAC * 12 * (1 + 2 * p["build_time"])) * taper(lv) * xpn)
+            if rng.random() < p["quest"]:
+                st["t"] += rng.uniform(2, 6)       # a Wayfarer step: talk, walk, do the thing
+                levels(QUEST_STEP * rng.uniform(0.5, 1.6))
+            if rng.random() < p["camp"]:
+                st["t"] += rng.uniform(3, 6)       # a camp or nest cleared (once per cycle per camp)
+                gain(budget.pay("camp", CAMP_K * gate_floor_xp(RANKS[rank_i], 1) / xpn) * WILDS_RANK[RANKS[rank_i]] * xpn)
             # first sightings: a fast start, then rarer as the world gets known
             hours = st["t"] / 60
             rate = DISCOVERY_FIRST_HOUR / 60 * math.exp(-hours / 6.0)
@@ -316,12 +370,14 @@ def simulate(kind, rng):
     bell_crypt_done = False
     while st["t"] < 200 * 60 and st["level"] < 140:
         rank = RANKS[rank_i]
-        # 1) Time outside: building, crafting, exploring, the odd anomaly.
-        home = rng.uniform(6, 16) * (1 + p["build_time"])
+        # 1) Time outside: hunting, crafting, building, quests, exploring, the odd anomaly.
+        home = rng.uniform(*p["outside"]) * (1 + 0.5 * p["build_time"])
         if not bell_crypt_done:
-            home = rng.uniform(10, 14)  # the first hour: try the power, meet creatures, a rift tear, then go back in
+            home = rng.uniform(14, 22)  # the first hour (the Commons): try the power, meet creatures, a rift tear, then go in
         before = st["t"]
         overworld(home)
+        # Known quirk: in-game days advance only outdoors here; in the real game they also pass in gates (a flattering
+        # simplification for a player who stays outside; docs/living-wilds/living_wilds_sim.py counts both).
         day_clock += st["t"] - before
         # 2) Each in-game day (20 real minutes): the Regimen (optional) and maybe a Directive kept.
         while day_clock >= 20:
@@ -496,8 +552,9 @@ def push_ev(rank="C", level=35, skill=1.0, max_floor=7, trials=20000, seed=7):
     return out
 
 
-def farm_check():
-    """A mob farm (60 kills every 10 minutes, nothing else) at a few levels: levels per hour from kills alone."""
+def farm_check(delta=0):
+    """A mob farm (60 hunter-role kills every 10 minutes, nothing else) at a few levels: levels per hour from kills alone.
+    delta = creature level minus yours: 0 is the best case (a farm in your own region); -10 is a farm you have outgrown."""
     out = {}
     for lv in (3, 10, 25, 50):
         b = Budget()
@@ -505,7 +562,7 @@ def farm_check():
         for minute in range(600):
             b.decay(1)
             for _ in range(6):
-                paid += b.pay("kill", KILL_FRAC) * taper(lv)
+                paid += b.pay("hunt", KILL_K) * diff(delta)
         out[lv] = round(paid / 10, 2)  # levels per hour over 10 hours
     return out
 
@@ -587,6 +644,8 @@ def main():
               "push_ev_real_gates": evs,
               "push_ev_C_underlevelled": push_ev(level=28),
               "mob_farm_levels_per_hour": farm_check(),
+              "mob_farm_outgrown_levels_per_hour": farm_check(-10),
+              "wilds_trim": WILDS_TRIM,
               "xp_curve": {L: round(xp_to_next(L)) for L in (1, 5, 10, 25, 45, 70, 100, 135)},
               "share": SHARE}
     if "--json" in sys.argv:
@@ -602,7 +661,9 @@ def main():
               " combat share", row["combat_share_median"])
     print("\nTarget checks (balanced player):")
     for c in checks: print("  ", c)
-    print("\nMob farm, kills only (levels per hour):", result["mob_farm_levels_per_hour"])
+    print("\nWILDS_TRIM =", WILDS_TRIM)
+    print("Mob farm, kills only (levels per hour), on-level / ten levels below you:",
+          result["mob_farm_levels_per_hour"], result["mob_farm_outgrown_levels_per_hour"])
     print("Mastery, nothing but fighting: hours to take one power from 1 to 5, by player level:",
           result["mastery_pure_combat_hours_1_to_5"])
     print("\nPush EV, C-rank gate, on-level player:")

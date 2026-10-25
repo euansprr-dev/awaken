@@ -175,6 +175,18 @@ public final class FaunaRules {
      * never out-levelled beside a veteran; with nobody that close, the nearest player within 128 blocks.
      */
     public static int contentLevel(ServerLevel level, BlockPos pos, FaunaRole role) {
+        // the Living Wilds (SPEC §21.2): in the overworld a creature takes its place's level, not the nearest player's
+        if (dev.awaken.living.api.Regions.on(level)) return dev.awaken.living.api.Regions.creatureLevel(level, pos, switch (role) {
+            case AMBIENT -> dev.awaken.living.api.Regions.Role.AMBIENT;
+            case HUNTER -> dev.awaken.living.api.Regions.Role.HUNTER;
+            case BEAST -> dev.awaken.living.api.Regions.Role.BEAST;
+            default -> dev.awaken.living.api.Regions.Role.NEUTRAL;
+        });
+        return followLevel(level, pos, role);
+    }
+
+    /** The old rule (before the Living Wilds), still used outside the overworld: a step below the nearest player. */
+    static int followLevel(ServerLevel level, BlockPos pos, FaunaRole role) {
         if (role == FaunaRole.AMBIENT) return 0;
         double x = pos.getX() + 0.5, y = pos.getY(), z = pos.getZ() + 0.5;
         int best = Integer.MAX_VALUE;

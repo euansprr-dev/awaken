@@ -334,6 +334,7 @@ public final class JadeClient {
                 t.add(temperament(f.faunaRole(), angry));
             }
             if (mob.isDecoy()) return; // an illusion says nothing more than its name
+            if (dev.awaken.living.client.LivingClient.platesOn()) return; // the band's plate shows level, rank and role (SPEC §21.0.12)
             var data = ServerData.CREATURE.decodeFromData(a);
             if (data.isEmpty()) return;
             LookAt.Creature c = data.get();

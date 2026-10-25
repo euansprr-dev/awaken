@@ -55,8 +55,11 @@ public final class LensClient {
     private static LensFrame lensFrame;
     private static LensHeightfield heightfield;
     private static boolean lit, sunHere;
-    private static float lightStrength, rain;
+    private static float lightStrength, rain, warmth;
     private static boolean moonLight;
+    // toward the light (the sun, or the moon by night) and the sunrise colour (0xRRGGBB), for the ambient particles
+    private static final Vector3f lightDir = new Vector3f(0f, 1f, 0f);
+    private static int warm = 0xFFFFFF;
     /**
      * Development (autopilot lensdebug): 0 normal; 1 pass-through; 2 depth masks; 3 far-terrain depth raw; 4 haze amount;
      * Lens 2 (Cinematic, Ultra): 5 light buffer, 6 normals and direct sun, 7 the light alone, 8 the classic Cinematic.
@@ -99,6 +102,7 @@ public final class LensClient {
         // after every other fog listener (Blight, the Veil): Lens hazes toward the fog the player actually sees
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ViewportEvent.RenderFog.class, LensClient::frame);
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.AfterLevel.class, LensClient::afterLevel);
+        modBus.addListener(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent.class, LensParticles::register);
         NeoForge.EVENT_BUS.addListener(ChunkEvent.Load.class, e -> {
             if (heightfield != null && e.getLevel().isClientSide()) heightfield.loaded(e.getChunk());
         });
@@ -176,6 +180,7 @@ public final class LensClient {
             var at = mc.gameRenderer.mainCamera().blockPosition();
             heightfield.tick(mc.level, at.getX() >> 4, at.getZ() >> 4);
         }
+        if (lit && !scene) LensParticles.tick(mc, want == ULTRA, biomeFor, lightStrength, lightDir, warm, warmth, sunHere ? heightfield : null);
         // a hard cut on joining a world
         float k = snap ? 1f : ease;
         for (int i = 0; i < Look.SIZE; i++) current[i] += (target[i] - current[i]) * k;
@@ -320,6 +325,9 @@ public final class LensClient {
             sg = glow.y();
             sb = glow.z();
             sunset = glow.w();
+            lightDir.set(sunDir).mul(moonLight ? -1f : 1f);
+            warm = Math.clamp(Math.round(sr * 255f), 0, 255) << 16 | Math.clamp(Math.round(sg * 255f), 0, 255) << 8 | Math.clamp(Math.round(sb * 255f), 0, 255);
+            warmth = sunset;
         }
         var fog = e.getFogData();
         // motion eases toward its target by the frame's real time (the same feel at 60 and 240 fps)

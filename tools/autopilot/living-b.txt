@@ -1,0 +1,81 @@
+# The Living Wilds, Phase B (SPEC §21.1-21.2): the band's combat layer, on a platform outside Carillon's walls. A plate
+# over a creature by day, damage in strokes of light (and a crit), the bar draining, a kill's XP streaming into the
+# band, a pillar over a rare drop, the level moment in first and third person, a night creature's plate, and a far
+# region's caption.
+# Run: SLOT_WHO=living-wilds slot.sh light tools/autopilot.sh tools/autopilot/living-b.txt
+world autopilot_living creative 20261025
+waitworld
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd gamerule advance_time false
+cmd time set 6000
+cmd gamerule awaken:fauna_spawning false
+cmd tp @s ~ 140 ~-520 0 10
+wait 120
+cmd fill ~-7 138 ~-7 ~7 138 ~7 minecraft:grass_block
+wait 10
+cmd tp @s ~ 139 ~ 0 10
+wait 60
+shot living_01_platform_caption
+look 0 14
+cmd summon minecraft:husk ^ ^ ^5 {NoAI:1b,PersistenceRequired:1b}
+wait 30
+shot living_02_plate_day
+cmd awaken living strike
+wait 3
+shot living_03_glyph
+cmd awaken living strike crit
+wait 2
+shot living_04_crit
+wait 8
+shot living_05_drain
+cmd awaken living strike kill
+wait 6
+shot living_06_xp_stream
+wait 14
+shot living_07_xp_pop
+look 0 35
+cmd awaken living pillar
+wait 30
+shot living_08_pillar
+look 0 8
+cmd awaken living moment
+wait 6
+shot living_09_moment_rings
+wait 10
+shot living_10_moment_pane
+wait 40
+camera back
+cmd awaken living moment
+wait 8
+shot living_11_moment_third
+wait 40
+camera first
+cmd time set 18000
+look 0 14
+cmd awaken fauna summon gloomstalker
+wait 30
+shot living_12_plate_night
+cmd awaken living strike crit
+wait 2
+shot living_13_night_crit
+cmd awaken living strike
+wait 3
+shot living_14_night_hit
+cmd time set 6000
+cmd tp @s ~2600 200 ~2600
+wait 50
+shot living_15_far_region_caption
+wait 12
+shot living_16_far_region_caption_b
+cmd awaken living region
+wait 10
+shot living_17_region_chat
+quit
