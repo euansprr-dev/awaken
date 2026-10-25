@@ -33,7 +33,7 @@ dropped beyond reach, and never saved.
 | **boats** (tar, blue, green, ochre) | ~21 moored along both quays inside the wall (one every 24 blocks, a quarter empty, none within 6 of a bridge); 2 rowed up and down the river (410 blocks), 1 round the canal and back down the river (~200) | moored: rocking on the swell, a load of crates or nets or none, a third with the lantern lit at night; rowed: the boatman pulls (a 2.4 s stroke, blades clearing on the recovery, buried on the drive), oarlocks creak, rests on his oars as the boat comes round at the river's ends, bow lantern after dusk | 88 · 8 |
 
 Every animal is a hero rig (bones, clips, crossfades) with the creature-life layer (breath, blinks, springy ears and tails,
-glances) on top. Pigeons and gulls are designed larger and drawn at 0.5-0.6 so they don't read as four-pixel blobs. Boats skip the life layer and cast no
+glances) on top. Small animals are designed larger and drawn at pigeon 0.6, gull 0.75, cat 0.7, dog 0.8 (raised on the Mac after a first look, 26131b06) so they don't read as four-pixel blobs. Boats skip the life layer and cast no
 shadow. 7 rigs, 43 textures (coats, blink copies, cats' and boats' glow layers). The voices are vanilla's cat, wolf and
 horse events, referenced by id. Ours: pigeon coo and flutter, gull call, cart roll, harness bells, oarlocks (the boat
 creak, pitched up).
