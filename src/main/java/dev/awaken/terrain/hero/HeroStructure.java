@@ -59,7 +59,7 @@ public class HeroStructure extends Structure {
                 z += (rnd.nextInt(SEARCH * 2 + 1) - SEARCH) * 16 + rnd.nextInt(9) - 4;
             }
             // never in or over the city's basin (Carillon's site; a no-op unless the city is on)
-            if (cityNear(x, z, tree.reach)) continue;
+            if (cityNear(x, z, tree)) continue;
             int top = height(ctx, x, z, Heightmap.Types.WORLD_SURFACE_WG);
             Holder<Biome> b = ctx.biomeResolver().getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(top), QuartPos.fromBlock(z));
             if (!ctx.validBiome().test(b)) continue;
@@ -98,13 +98,9 @@ public class HeroStructure extends Structure {
         return top - floor <= tree.wetDepth && floor >= sea - tree.wetDepth && top >= sea;
     }
 
-    /** The city reserve under the tree's foot or under any edge of its crown. */
-    private static boolean cityNear(int x, int z, int reach) {
-        if (dev.awaken.terrain.api.CityBasin.reserved(x, z)) return true;
-        for (int[] k : new int[][]{{reach, 0}, {-reach, 0}, {0, reach}, {0, -reach}}) {
-            if (dev.awaken.terrain.api.CityBasin.reserved(x + k[0], z + k[1])) return true;
-        }
-        return false;
+    /** Whether any part of this tree's crown, standing with its foot at (x, z), would reach the city reserve. */
+    public static boolean cityNear(int x, int z, HeroTree tree) {
+        return dev.awaken.terrain.api.CityBasin.reservedWithin(x, z, tree.reach());
     }
 
     private static int height(GenerationContext ctx, int x, int z, Heightmap.Types type) {

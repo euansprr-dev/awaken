@@ -222,6 +222,18 @@ public final class Voxels {
         return used;
     }
 
+    /** How far from the centre the furthest cell lies, horizontally, after {@link #seal()} (the city reserve is kept this far off). */
+    public double reach() {
+        double m = 0;
+        for (int x = -extent; x <= extent; x++) {
+            for (int z = -extent; z <= extent; z++) {
+                int c = column(x, z);
+                if (colLo[c] <= colHi[c]) m = Math.max(m, Math.hypot(x, z));
+            }
+        }
+        return m;
+    }
+
     /** The cells' bounds after {@link #seal()}: minX, minY, minZ, maxX, maxY, maxZ (all 0 when empty). */
     public int[] bounds() {
         int[] b = {Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE};

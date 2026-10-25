@@ -25,6 +25,9 @@ import java.util.Set;
  * view &lt;name&gt;          stand at a named viewpoint (sky shots, street level per district, the studio framings)
  * repaint [radius]     paint the chunks round you again, live (dev; a repaired or edited plan)
  * dump                 paint the whole city into memory and write city-dump.bin for tools/city/render.py (dev)
+ * scan [radius]        find tree wood hanging in the air within radius of the centre (default 400; reads the chunks from disk)
+ * tidy [radius]        scan, then remove the floating tree wood it finds (cities made before the sweep took the lands' bark)
+ * floater &lt;n&gt;        stand beside the n-th floating group of the last scan
  * </pre>
  */
 final class CityCommands {
@@ -39,7 +42,15 @@ final class CityCommands {
                 .then(Commands.literal("repaint").executes(c -> repaint(c.getSource(), 0))
                         .then(Commands.argument("radius", IntegerArgumentType.integer(0, 8))
                                 .executes(c -> repaint(c.getSource(), IntegerArgumentType.getInteger(c, "radius")))))
-                .then(Commands.literal("dump").executes(c -> dump(c.getSource())))));
+                .then(Commands.literal("dump").executes(c -> dump(c.getSource())))
+                .then(Commands.literal("scan").executes(c -> scan(c.getSource(), 400, false))
+                        .then(Commands.argument("radius", IntegerArgumentType.integer(32, 700))
+                                .executes(c -> scan(c.getSource(), IntegerArgumentType.getInteger(c, "radius"), false))))
+                .then(Commands.literal("tidy").executes(c -> scan(c.getSource(), 400, true))
+                        .then(Commands.argument("radius", IntegerArgumentType.integer(32, 700))
+                                .executes(c -> scan(c.getSource(), IntegerArgumentType.getInteger(c, "radius"), true))))
+                .then(Commands.literal("floater").then(Commands.argument("n", IntegerArgumentType.integer(1, 500))
+                        .executes(c -> floater(c.getSource(), IntegerArgumentType.getInteger(c, "n")))))));
     }
 
     private static CityLayout need(CommandSourceStack src) {
@@ -166,6 +177,31 @@ final class CityCommands {
         int fn = n, fc = chunks;
         src.sendSuccess(() -> Component.literal("Repainted " + fc + " chunks, " + fn + " blocks changed"), false);
         return chunks;
+    }
+
+    private static int scan(CommandSourceStack src, int radius, boolean tidy) {
+        CityLayout l = need(src);
+        if (l == null) return 0;
+        CityScan.Result r = CityScan.scan(src.getServer().overworld(), l, radius, tidy);
+        for (String line : CityScan.report(r, 40)) src.sendSuccess(() -> Component.literal(line), false);
+        return r.count(false);
+    }
+
+    private static int floater(CommandSourceStack src, int n) throws CommandSyntaxException {
+        var list = CityScan.last;
+        if (n > list.size()) {
+            src.sendFailure(Component.literal("The last scan found " + list.size() + " floating groups"));
+            return 0;
+        }
+        CityScan.Floater f = list.get(n - 1);
+        ServerPlayer p = src.getPlayerOrException();
+        // stand 14 blocks out from it, towards the city centre, looking at it
+        CityLayout l = City.layout();
+        double dx = l.cx - f.x(), dz = l.cz - f.z(), len = Math.max(1, Math.hypot(dx, dz));
+        double sx = f.x() + 0.5 + dx / len * 14, sz = f.z() + 0.5 + dz / len * 14;
+        double yaw = Math.toDegrees(Math.atan2(-(f.x() + 0.5 - sx), f.z() + 0.5 - sz));
+        p.teleportTo(src.getServer().overworld(), sx, f.y() + 1, sz, Set.of(), (float) yaw, 0F, true);
+        return 1;
     }
 
     private static int dump(CommandSourceStack src) {

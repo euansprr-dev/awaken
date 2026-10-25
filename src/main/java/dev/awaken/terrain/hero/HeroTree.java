@@ -139,6 +139,11 @@ public enum HeroTree implements StringRepresentable {
         return id;
     }
 
+    /** How far from its foot any block of the tree can lie (a circle; the city reserve is kept clear of it). */
+    public int reach() {
+        return reach;
+    }
+
     abstract Blueprint shape(long seed);
 
     abstract BlockState[] blocks();
