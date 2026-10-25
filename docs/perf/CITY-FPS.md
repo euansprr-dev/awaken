@@ -155,3 +155,10 @@ shows GC pauses mattering, the same tour once more with `ZGC=1`.
   lined up with the frame spikes; `jdk.ExecutionSample` on the render thread.
 
 Without the Dell, the same tour on the MacBook (5.2 MP) still answers every question but the 4K ones.
+
+## Decision, 25 Oct: Distant Horizons off by default
+
+Euan: remove Distant Horizons for now; our own far-terrain renderer comes later. `tools/play.sh --pack` no longer
+installs the horizon profile (`--horizon` brings it back), and the next install takes out the DH jar an earlier one
+put there (checked on a scratch folder). That removes cause 3's DH half and the DH part of cause 1. Fix A is no longer
+needed; render distance now carries all the distance on its own.

@@ -856,7 +856,9 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   Modrinth's Maven, never bundled or required.
 - The pack is `pack/mods.json` (profiles: perf, horizon, feel, sound, comfort, together, ultra, tools), pinned by
   `tools/pack.py lock` into `pack/lock.json` (exact files and SHA-512, required dependencies, a dependency's own
-  version pin). `tools/pack.py install <game-dir> <profiles>` puts exactly those files into a game folder, removes only
+  version pin). Distant Horizons (the horizon profile) is off by default since 2026-10-25: `tools/play.sh --pack` leaves
+  it out unless `--horizon` is given (its far generation in a new world was the lead CPU and garbage cost behind
+  Carillon's hitches, docs/perf/CITY-FPS.md); our own far-terrain renderer is the plan. `tools/pack.py install <game-dir> <profiles>` puts exactly those files into a game folder, removes only
   what it installed, and refuses while a client runs there. GameTests never load the pack: they test Awaken alone.
 - Instanced dimensions (`compat.Instanced`): every `awaken:` dimension but `awaken:stillpoint` (gate and dream cells,
   trials, the Halo, the Descent's strata, the Endless). Companions that draw or remember a place stay out of them.
