@@ -3641,6 +3641,28 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
 - **Hurt**: a blow of any class landing on a player plays a blunt body thump to that player only (`arms.hurt`, no
   voice), with the shard and a small view jolt from where it came (vanilla's own tilt stays).
 
+**Weapons** (`ArmsItems` from the generated `ArmsData`; tools/art/specs/arms_weapons.py, its catalog the source).
+- The six forged Longswords, one per Hunter tier (Wildhide, Beastbound, Gatewrought, Veilwoven, Lordscale, Sovereign):
+  the tier's Hunter blade plus half a point of damage (4.5 to 9.5 over the player's 1), its uses, rarity and
+  enchantability, the Longsword's speed (−2.4), mended by the tier's repair tag. Each fights with its row's style
+  (`Arms.plainStyle` reads the row before the name rules), is in `#minecraft:swords` (vanilla's sword enchantments)
+  and lights its swings in its tier's colour (the row's `trail`).
+- Until the Forge's blueprints (S7), each is crafted from its tier's Hunter blade between the tier's core and bind
+  (a column: core, blade, bind); the recipe unlocks when the blade is held, like every AWAKEN recipe.
+- In the hands a 3D model (`<id>_in_hand`, cuboid elements along vanilla's diagonal, the grip where iron_sword.png's
+  handle is, so vanilla's hand transforms and the swings hold it); in the inventory, on the ground, in frames and on
+  shelves a 16×16 icon drawn from the same parts (`items/<id>.json` selects on the display context, like the
+  trident), with a glow layer for its lit parts.
+- Checked before writing: bounds, at most 400 quads, one texel per unit, no element without faces (the game refuses
+  the model), no coplanar faces, the atlas fits, silhouettes under 85% alike, icons apart in outline or colour.
+  `arms_assets` checks the items, recipes, files and model structure on the classpath; tools/art/model_preview.py
+  renders any item model without the game; tools/autopilot/arms-weapons.txt is the in-game tour.
+- **Look: first pass, being redone.** Euan's review (2026-10-25, against a reference of chunky key art): too thin and
+  noisy. The redo: hand-designed silhouettes from a kit of well-made parts, whole-texel sizes (no part under a unit),
+  bevelled hand-painted faces on hue-shifted ramps instead of noise, diamond gems in frames; each weapon compared
+  with the reference at its angle before it ships. Size in hand awaits his answer (proposed: chunky, about 1.2× a
+  vanilla sword's length).
+
 **Tests** (`arms_`): timeline, defence rules, strike arc, damage stack, deflect, deflect latency, dodge, posture break,
-kill switch, sounds, stance rules, clips, the Art, the Plunge; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
+kill switch, sounds, stance rules, clips, the Art, the Plunge, assets; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
 `audio_events_resolve` covers the kit's files and subtitles.
