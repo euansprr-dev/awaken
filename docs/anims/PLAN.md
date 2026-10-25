@@ -1,6 +1,6 @@
 # Hands: first-person animation for AWAKEN (approved 2026-10-25; building phase by phase)
 
-Status: approved by Euan 2026-10-25 with every recommendation in §7; P1 built (SPEC §17.23, §24). Branch `pack/fp-anims`. Approval page: https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy (`docs/plan-hands.html`).
+Status: approved by Euan 2026-10-25 with every recommendation in §7; P1-P5 built (SPEC §17.23, §24); P6 next. Branch `pack/fp-anims`. Approval page: https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy (`docs/plan-hands.html`).
 Euan's ask: a real pipe climb and slide; first-person animation for every move of The Ascent; "Cinematic
 Interactions"-level hand moments across the mod; all in the design language we already have.
 
@@ -197,7 +197,7 @@ clip tour in first person and in the shoulder view, run alone, Gradle wrapped in
 | P2 The Runner's Kit in FP | Every ground and wall move of §4, the stair slide included (3P tilt and FP) | 2-3 h |
 | P3 The Ascent in FP | Rope, Leaper, wings, flight, Sovereign, landings | 2-3 h |
 | P4 Touches | #1, 3, 4, 6, 7, 10, 11 of §5 | 2-3 h |
-| P5 Station scenes | The scene kit (lean-in shot, input, cursor ray, arms in the world, vanilla escape hatch) and the crafting table; then the Forge and anvils, cooking, the Journal. Test: `anims_station_menu` (a recipe laid by the scene's clicks crafts on the server exactly as by the vanilla screen) | 4-6 h |
+| P5 Station scenes | The scene kit (lean-in shot, input, cursor ray, arms in the world, vanilla escape hatch) and the crafting table; then the Forge and anvils, cooking, the Journal. Built: the crafting table and furnace scenes, the Forge/anvil and campfire touches; the Journal moves to P6. No `anims_station_menu` test: the scene sends the vanilla menu's own clicks, so the server sees nothing new (tours check the scene) | 4-6 h |
 | P6 The rest | #12-14 | 2-3 h |
 
 Total about 15-22 hours of builder time. P4 and P5 can swap if Euan wants the crafting table sooner.

@@ -5,15 +5,20 @@ import dev.awaken.core.api.FirstPerson;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.UseRemainder;
+import net.minecraft.world.item.crafting.RecipePropertySet;
+import net.minecraft.world.level.block.AnvilBlock;
 import net.minecraft.world.level.block.BarrelBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ButtonBlock;
+import net.minecraft.world.level.block.CampfireBlock;
 import net.minecraft.world.level.block.CaveVinesBlock;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.DoorBlock;
@@ -32,12 +37,13 @@ import org.jspecify.annotations.Nullable;
  * Touches (Hands P4; SPEC §24): quick hand moments on the things you use, from the game's own interaction events, so
  * every module's doors, levers, chests and plants get them by what they are: a palm pushes a door or gate through its
  * swing, a lever is thrown, a button pressed, a chest's lid lifted with both hands, a plant pinched and plucked, a
- * creature stroked; a meal in a bowl is held up with both hands. The action never waits for them (they animate what
+ * creature stroked, the Forge or an anvil hammered, food laid on a campfire; a meal in a bowl is held up with both hands. The action never waits for them (they animate what
  * already happened); swinging cuts them. With the main hand full the off hand does it; with both full, nothing.
  */
 final class Touches {
     private Touches() {}
 
+    private static final Identifier FORGE = Identifier.fromNamespaceAndPath("awaken", "forge");
     private static int lastAt = -100;
     private static int ticks;
     private static final boolean TRACE = System.getProperty("awaken.autopilot") != null;
@@ -69,7 +75,17 @@ final class Touches {
         LocalPlayer p = Minecraft.getInstance().player;
         if (p == null || e.getEntity() != p || !on(p)) return;
         if (p.isShiftKeyDown() && !p.getMainHandItem().isEmpty()) return; // a sneak-use places or uses the item
-        String clip = forUse(e.getLevel().getBlockState(e.getPos()));
+        BlockState s = e.getLevel().getBlockState(e.getPos());
+        if (s.getBlock() instanceof CampfireBlock && e.getLevel().recipeAccess().propertySet(RecipePropertySet.CAMPFIRE_INPUT).test(p.getMainHandItem())) {
+            // the hand holding the food lays it on the grate
+            if (ticks - lastAt >= 4) {
+                lastAt = ticks;
+                trace(AnimsClips.LAY);
+                FirstPerson.play(AnimsClips.LAY);
+            }
+            return;
+        }
+        String clip = forUse(s);
         if (clip != null) play(p, clip);
     }
 
@@ -80,6 +96,8 @@ final class Touches {
         if (b instanceof ButtonBlock) return AnimsClips.BUTTON;
         if (b instanceof ChestBlock || b instanceof BarrelBlock || b instanceof EnderChestBlock || b instanceof ShulkerBoxBlock) return AnimsClips.LID;
         if (b instanceof SweetBerryBushBlock || b instanceof CaveVinesBlock) return AnimsClips.PLUCK;
+        // the Forge (the Hearth's: by its id, not its class) or an anvil: hammered, the blade held in the other hand
+        if (b instanceof AnvilBlock || FORGE.equals(BuiltInRegistries.BLOCK.getKey(b))) return AnimsClips.HAMMER;
         return null;
     }
 

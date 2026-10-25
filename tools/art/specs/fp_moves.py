@@ -321,6 +321,39 @@ touch("fp_pluck", 9, [(0, REST_FIST, "linear"), (2, fist(0.14, -0.46, -0.84), "e
 touch("fp_pet", 14, [(0, REST_FIST, "linear"), (3, fist(0.12, -0.36, -0.8), "easeoutcubic"), (6, fist(0.0, -0.4, -0.76), "easeinoutsine"),
                      (9, fist(0.12, -0.36, -0.8), "easeinoutsine"), (11, fist(0.0, -0.4, -0.76), "easeinoutsine"), (14, REST_FIST, "easeinoutsine")],
       note="a hand strokes the creature")
+# The Forge or an anvil: the fist hammers three times (the off hand, when the main holds the blade being tempered).
+HAM_UP, HAM_DOWN = fist(0.2, 0.08, -0.82), fist(0.06, -0.3, -0.96)
+touch("fp_hammer", 18, [(0, REST_FIST, "linear"), (3, HAM_UP, "easeoutcubic"), (5, HAM_DOWN, "easeinquad"), (8, HAM_UP, "easeoutcubic"),
+                        (10, HAM_DOWN, "easeinquad"), (13, HAM_UP, "easeoutcubic"), (15, HAM_DOWN, "easeinquad"), (18, REST_FIST, "easeinoutsine")],
+      events=[(5, "strike"), (10, "strike"), (15, "strike")], note="three strikes on the anvil")
+# A campfire: the food laid on the grate, the hand drawn back from the heat.
+touch("fp_lay", 10, [(0, REST_FIST, "linear"), (3, fist(0.1, -0.22, -0.96), "easeoutcubic"), (5, fist(0.04, -0.17, -1.04), "easeinoutsine"),
+                     (7, fist(0.24, -0.32, -0.82), "easeoutcubic"), (10, REST_FIST, "easeinoutsine")], events=[(5, "lay")],
+      note="laid on the fire, drawn back from the heat")
+# P6. A waystone, conduit, shrine, gate rune or the Hearth anchor: the palm pressed flat to the stone and held while the
+# light answers (the hand glows: Touches tints it), then drawn back.
+PALM = fist(0.06, -0.12, -1.02)
+touch("fp_palm", 18, [(0, REST_FIST, "linear"), (3, fist(0.08, -0.1, -0.92), "easeoutcubic"), (5, PALM, "easeinquad"),
+                      (12, fist(0.06, -0.13, -1.04), "linear"), (18, REST_FIST, "easeinoutsine")], events=[(5, "press")],
+      note="a palm pressed to the stone, held, drawn back")
+# A notice board: a notice torn off and brought down to read.
+touch("fp_tear", 12, [(0, REST_FIST, "linear"), (3, fist(0.1, -0.02, -0.98), "easeoutcubic"), (5, fist(0.12, 0.0, -1.0), "linear"),
+                      (7, fist(0.3, -0.36, -0.82), "easeinquad"), (9, fist(0.22, -0.34, -0.7), "easeoutcubic"), (12, REST_FIST, "easeinoutsine")],
+      events=[(6, "tear")], note="torn off the board, brought down to read")
+# A grindstone: the handle cranked round once.
+CRANK = [fist(0.36 + 0.1 * math.cos(a), -0.3 + 0.1 * math.sin(a), -0.86) for a in [i * math.pi / 3 for i in range(7)]]
+touch("fp_crank", 18, [(0, REST_FIST, "linear"), (3, CRANK[0], "easeoutcubic")] + [(5 + 2 * i, c, "linear") for i, c in enumerate(CRANK[1:])]
+      + [(18, REST_FIST, "easeinoutsine")], note="the grindstone's handle cranked round")
+# A lectern or an enchanting table's book: a page turned, right to left.
+touch("fp_page", 10, [(0, REST_FIST, "linear"), (3, fist(0.3, -0.4, -0.86), "easeoutcubic"), (6, fist(0.0, -0.3, -0.88), "easeinoutsine"),
+                      (7, fist(-0.06, -0.34, -0.88), "linear"), (10, REST_FIST, "easeinoutsine")], events=[(5, "turn")],
+      note="a page turned")
+# A stonecutter, loom, cartography table or brewing stand: both hands set the work on it.
+SET_A = fist(0.24, -0.44, -0.86)
+clip("fp_set", 8, fists=True, main=[(0, REST_FIST, "linear"), (3, SET_A, "easeoutcubic"), (5, fist(0.24, -0.47, -0.88), "linear"), (8, REST_FIST, "easeinoutsine")],
+     off=[(0, OFF_OUT, "linear"), (3, mf(SET_A), "easeoutcubic"), (5, mf(fist(0.24, -0.47, -0.88)), "linear"), (8, OFF_OUT, "easeinoutsine")],
+     events=[(3, "set")], note="both hands set the work down")
+TOUCHES.append("fp_set")
 # A chest, barrel or cache: both hands lift the lid while the server answers (the screen opens at once).
 LID_A, LID_B = fist(0.2, -0.36, -0.8), fist(0.2, -0.08, -0.86)
 clip("fp_lid", 8, fists=True, main=[(0, REST_FIST, "linear"), (2, LID_A, "easeoutcubic"), (5, LID_B, "easeinoutsine"), (8, REST_FIST, "easeinoutsine")],

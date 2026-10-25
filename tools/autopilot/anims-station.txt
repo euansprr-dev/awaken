@@ -1,6 +1,7 @@
 # Hands P5 (SPEC §24): the crafting table's scene (run with PACK=feel, HUD on). Use the table: the view leans in, the
 # grid is the table top. Pick up planks, lay one on each of two squares (the hands lay them), put the rest back, take
-# the sticks (a hand takes them), leave. Filmed with the clip recorder; a still of the worked table. Shots: anims_p5_*.
+# the sticks (a hand takes them), leave. Then a furnace (beef in the mouth, coal in the firebox, the cooked beef taken),
+# a campfire (beef laid on it) and the Forge (hammered). Filmed with the clip recorder. Shots: anims_p5_*.
 world anims_station survival 4253
 waitworld
 window 1440 900
@@ -25,7 +26,9 @@ cmd fill -4 199 -4 6 199 8 minecraft:smooth_stone
 cmd fill -4 200 -4 6 206 8 minecraft:air
 cmd fill -4 200 5 6 203 5 minecraft:spruce_planks
 cmd setblock 1 200 3 minecraft:crafting_table
-cmd setblock 3 200 3 minecraft:barrel[facing=up]
+cmd setblock 5 200 3 minecraft:furnace[facing=north]
+cmd setblock -2 200 3 minecraft:campfire[facing=north]
+cmd setblock 3 200 3 awaken:forge[facing=north]
 cmd clear @s
 cmd give @s minecraft:oak_planks 4
 camera first
@@ -56,5 +59,51 @@ screen close
 wait 4
 cmd awaken ascent pilot rec station_out 16 3
 wait 20
+
+# ---- a furnace: beef in the mouth, coal in the firebox, the cooked beef taken (hotbar 0 and 1 are menu slots 30, 31) ----
+cmd clear @s
+cmd give @s minecraft:beef 2
+cmd give @s minecraft:coal 1
+cmd tp @s 5.5 200 1.6 0 30
+wait 20
+cmd awaken ascent pilot rec furnace_in 24 3
+cmd awaken ascent pilot use
+wait 30
+shotnow anims_p5_furnace
+cmd awaken ascent pilot station 30 0
+wait 6
+cmd awaken ascent pilot rec furnace_lay 44 3
+cmd awaken ascent pilot station 0 1
+wait 14
+cmd awaken ascent pilot station 30 0
+wait 6
+cmd awaken ascent pilot station 31 0
+wait 6
+cmd awaken ascent pilot station 1 0
+wait 20
+shotnow anims_p5_furnace_lit
+wait 200
+shotnow anims_p5_furnace_cooked
+cmd awaken ascent pilot rec furnace_take 24 3
+cmd awaken ascent pilot station 2 0
+wait 30
+screen close
+wait 10
+
+# ---- a campfire: the beef laid on it ----
+cmd tp @s -1.5 200 1.6 0 40
+wait 20
+cmd awaken ascent pilot rec touch_lay 20 3
+cmd awaken ascent pilot use
+wait 30
+
+# ---- the Forge: hammered with an empty hand ----
+cmd clear @s
+cmd tp @s 3.5 200 1.6 0 30
+wait 20
+cmd awaken ascent pilot rec touch_hammer 26 3
+cmd awaken ascent pilot use
+wait 34
+screen close
 info
 quit

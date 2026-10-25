@@ -3293,12 +3293,15 @@ of the plan). No mixins.
   (`fp_button`), a chest, barrel, ender chest or shulker box's lid lifted with both hands (`fp_lid`; the screen opens at
   once and covers it in single player), berries or a plant that breaks at a touch (no hardness, no collision: flowers,
   ferns, grass, the Living Wilds' herbs) pinched and plucked (`fp_pluck`), an animal stroked with an empty hand
-  (`fp_pet`), a meal from a bowl held up with the free hand under it (a stance while eating). At most 9 ticks each; the
+  (`fp_pet`), a meal from a bowl held up with the free hand under it (a stance while eating); P5 adds the Forge (block
+  id `awaken:forge`, not its class) or an anvil hammered three times (`fp_hammer`, 18 ticks: holding the blade being
+  tempered, the off hand strikes) and food a campfire takes (`RecipePropertySet.CAMPFIRE_INPUT`) laid on it by the hand
+  holding it (`fp_lay`). At most 9 ticks each; the
   action never waits; a swing cuts them; with the main hand full the off hand does it (each has an `_off` twin), with both
   full nothing. Settings (feel): `firstPersonMoves` (P1-P3) and `firstPersonTouches` (P4), both on.
 - **Station scenes** (P5, `anims.client.station`): at a crafting table (used within 10 ticks of its screen opening, not
-  sneaking: sneak + use is the plain screen) the screen is replaced by `TableScreen`, the vanilla crafting menu with its
-  grid and result drawn on the table in the world instead of on the screen. The view turns to the table's top and
+  sneaking: sneak + use is the plain screen) the screen is replaced by `StationScreen` (kind `TABLE`), the vanilla
+  crafting menu with its grid and result drawn on the table in the world instead of on the screen. The view turns to the table's top and
   narrows (×0.64) over 12 ticks (6 coming back within 12 s), out over 10; the player's own look never moves. Each
   ingredient lies on its square (the grid square to the block, row 0 the far one; the way in snapped to an axis), the
   result floats over the middle turning, the square under the cursor is outlined (Holo blue). A click on a square or on
@@ -3306,7 +3309,15 @@ of the plan). No mixins.
   checks), and the grid's screen places are never hovered or drawn. Your inventory is a glass strip at the foot of the
   screen. Your hands (world source `anims_station`, 200) rest off the table's near corners and one goes out to every
   square whose contents change (and to the result as it is taken), over 9 ticks; moving, jumping, E or Esc leave.
-  Setting `stationScenes` (feel), on. Drawn for you only (others see you at the table as before).
+  A hand moves only within 6 ticks of your own click on a slot, so a furnace cooking on its own moves none; taking a
+  result moves the hand to the result only. Furnaces (kind `FURNACE`: furnace, smoker, blast furnace, any
+  `AbstractFurnaceScreen`): worked from the front (the way in against `FACING`), the view turned to the front's middle
+  (a little below its middle) and narrowed ×0.78; what cooks sits upright in the mouth (0.68 up, 0.06 out), the fuel in the firebox (0.24 up), the
+  result floats out at the right (0.34 out, 0.36 across, 0.62 up) turning; a slot is picked by the nearest one the ray
+  passes within 0.16 of, outlined flat to the front; the cooking (Holo blue) and the fuel left (fire) run as two thin
+  lines over the strip; the hands wait at your sides under the frame (the fuel is the off hand's, the rest the main's). The
+  recipe book is not in the scenes (sneak + use for it).
+  Setting `stationScenes` (feel), on. Drawn for you only (others see you at the station as before).
 - **The lens** (P5): the hand pass draws at a fixed 70°; anything the world anchors (arms on a pipe, at a table; near
   legs) has its view x and y scaled by tan(35°) / tan(world FOV / 2), so it lands where the world shows it on screen even
   with the view narrowed or widened (a station's zoom, the speed FOV).
@@ -3314,7 +3325,7 @@ of the plan). No mixins.
   hands back). Tours: `tools/autopilot/anims-pipe.txt` (P1), `anims-runner.txt` (P2), `anims-ascent.txt` (P3),
   `anims-touch.txt` (P4: filmed with the pilot's clip recorder, since a command reaches the client a few ticks late),
   `anims-station.txt` (P5), PACK=feel, HUD on. Pilot lines `use`, `attack`, `usehold <ticks>` press the real keys;
-  `station <slot> [button]` clicks a slot of the open table scene.
-- P1-P4 and P5 part 1 (the kit and the crafting table) built. Next: P5 part 2 (furnaces and campfires, the Forge), P6. The casts (powers) still draw their own first-person
+  `station <slot> [button]` clicks a slot of the open station scene.
+- P1-P5 built (P5: the crafting table and furnace scenes, the Forge and campfire touches). Next: P6. The casts (powers) still draw their own first-person
   arms (`CastAnims`); folding them into Hands is the powers module's step, coordinated with the combat plan.
 
