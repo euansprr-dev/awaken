@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "facing=north,part=body": {
+      "model": "awaken:block/hay_cart_body"
+    },
+    "facing=north,part=shafts": {
+      "model": "awaken:block/hay_cart_shafts"
+    },
+    "facing=east,part=body": {
+      "model": "awaken:block/hay_cart_body",
+      "y": 90
+    },
+    "facing=east,part=shafts": {
+      "model": "awaken:block/hay_cart_shafts",
+      "y": 90
+    },
+    "facing=south,part=body": {
+      "model": "awaken:block/hay_cart_body",
+      "y": 180
+    },
+    "facing=south,part=shafts": {
+      "model": "awaken:block/hay_cart_shafts",
+      "y": 180
+    },
+    "facing=west,part=body": {
+      "model": "awaken:block/hay_cart_body",
+      "y": 270
+    },
+    "facing=west,part=shafts": {
+      "model": "awaken:block/hay_cart_shafts",
+      "y": 270
+    }
+  }
+}

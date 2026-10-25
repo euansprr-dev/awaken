@@ -76,6 +76,7 @@ public final class BodyModule {
         @Override public @Nullable Vec3 slideDirection(Player p) { return Body.slideDirection(p); }
         @Override public boolean wallRunning(Player p) { return Body.isWallRunning(p); }
         @Override public boolean hanging(Player p) { return Body.isHanging(p); }
+        @Override public boolean stairSliding(Player p) { return Body.isStairSliding(p); }
 
         /** A cast ends a tactical sprint at once (the cast is never held back); a slide keeps going. */
         @Override public void castStarting(ServerPlayer p) {

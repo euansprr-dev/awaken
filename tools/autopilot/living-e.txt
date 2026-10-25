@@ -1,6 +1,6 @@
 # The Living Wilds, Phase E (SPEC §21.9): crafts. Herb Glint on ripe plants, Ore Sense through stone in a cave, Tracks
 # behind a creature the band read, the CRAFTS section in the K menu, the herbs and meals in hand.
-# Run: SLOT_WHO=living-wilds slot.sh light tools/autopilot.sh tools/autopilot/living-e.txt 600
+# Run: SLOT_WHO=living-wilds slot.sh tour tools/autopilot.sh tools/autopilot/living-e.txt 600
 world autopilot_living_e creative 20261025
 waitworld
 cmd gamerule spawn_mobs false
@@ -13,6 +13,7 @@ cmd awaken powers starter 1
 wait 20
 screen close
 cmd gamerule advance_time false
+cmd recipe give @s *
 cmd time set 6000
 cmd gamerule awaken:fauna_spawning false
 cmd awaken living craft hunting 20
@@ -21,38 +22,79 @@ cmd awaken living craft mining 20
 cmd awaken living craft fishing 12
 cmd awaken living craft smithing 50
 cmd awaken living craft cooking 40
+# far from Carillon (the world spawns in it), then the nearest greenwild
+cmd tp @s 2500 140 2500
+wait 120
 cmd awaken living goto greenwild
-wait 200
-cmd tp @s ~200 ~ ~200
-wait 160
-cmd awaken living face
-look 0 60
+wait 240
+camera first
+# a meadow in front (6% of its plants are ripe on a given day), looked across rather than down
+cmd fill ~-7 ~-1 ~2 ~7 ~-1 ~16 minecraft:grass_block
+cmd fill ~-7 ~ ~2 ~7 ~4 ~16 minecraft:air
+cmd fill ~-7 ~ ~2 ~7 ~ ~16 minecraft:short_grass
+cmd setblock ~-2 ~ ~5 minecraft:poppy
+cmd setblock ~3 ~ ~8 minecraft:cornflower
+look 0 25
 wait 60
 shot living_e01_herb_glint
-look 90 50
+look 20 12
 wait 30
 shot living_e02_herb_glint_b
 # ---- tracks behind a creature the band read ----
-cmd summon minecraft:sheep ^ ^ ^6
-look 0 30
+look -11 11
+wait 5
+cmd summon minecraft:sheep ~1 ~ ~5
 wait 200
 shot living_e03_tracks
+wait 200
+shot living_e03b_tracks
 # ---- the K menu's CRAFTS ----
 key status
-wait 40
+wait 60
+scroll -3
+wait 5
+scroll -3
+wait 5
+scroll -3
+wait 5
+scroll -3
+wait 5
+scroll -3
+wait 5
+scroll -3
+wait 5
+scroll -3
+wait 5
+scroll -3
+wait 5
+scroll -3
+wait 10
 shot living_e04_crafts
 screen close
 wait 10
 # ---- ore sense in a cave ----
 cmd tp @s ~ 24 ~
+wait 20
+cmd fill ~-7 ~-2 ~-7 ~7 ~5 ~7 minecraft:stone
 cmd fill ~-3 ~-1 ~-3 ~3 ~3 ~3 minecraft:air
 cmd fill ~-3 ~-1 ~-3 ~3 ~-1 ~3 minecraft:glass
+cmd setblock ~1 ~1 ~5 minecraft:diamond_ore
+cmd setblock ~-1 ~2 ~5 minecraft:iron_ore
+cmd setblock ~-1 ~2 ~6 minecraft:iron_ore
+cmd setblock ~-2 ~2 ~6 minecraft:iron_ore
+cmd setblock ~2 ~0 ~6 minecraft:gold_ore
+cmd setblock ~0 ~1 ~-5 minecraft:copper_ore
+cmd setblock ~1 ~1 ~-5 minecraft:copper_ore
+cmd setblock ~1 ~2 ~-6 minecraft:copper_ore
+cmd setblock ~-2 ~0 ~-6 minecraft:redstone_ore
+cmd setblock ~-3 ~ ~-3 minecraft:lantern
+cmd setblock ~3 ~ ~3 minecraft:lantern
 cmd item replace entity @s weapon.mainhand with minecraft:iron_pickaxe
-look 0 20
+look 0 5
 wait 100
 shot living_e05_ore_sense
-look 180 20
-wait 30
+look 180 5
+wait 70
 shot living_e06_ore_sense_b
 # ---- herbs and meals in hand ----
 cmd tp @s ~ 200 ~
@@ -64,6 +106,19 @@ cmd give @s awaken:duskbloom 4
 cmd give @s awaken:spiritgrass 2
 cmd give @s awaken:hunters_stew
 cmd give @s awaken:miners_pasty
+cmd item replace entity @s weapon.mainhand with awaken:hunters_stew
+look 0 10
 wait 30
 shot living_e07_hotbar
+holo inv open
+wait 30
+shot living_e07b_inventory
+holo inv close
+wait 10
+# ---- a craft level and a perk, as play shows them ----
+cmd awaken living craft fishing 20 announce
+wait 12
+shot living_e08_toasts
+wait 50
+shot living_e09_toasts_b
 quit

@@ -8,12 +8,13 @@
     "perf": "Frame rate and memory. Client-side except Lithium and FerriteCore.",
     "horizon": "Far terrain.",
     "feel": "Camera, limbs, the animation library Awaken's full-body casts use, and Fresh Animations for vanilla creature bodies.",
-    "sound": "Room acoustics.",
-    "comfort": "Recipe lookup, block info, inventory help, a world map (no minimap, by design).",
+    "sound": "Room acoustics and the world's nature ambience (AmbientSounds); AWAKEN's own world sound is in the mod.",
+    "comfort": "Recipe lookup, block info and inventory help. The world map is Awaken's own Atlas (M); no minimap, by design.",
     "together": "Join links and proximity voice.",
     "ultra": "Experimental: Iris shaders (OpenGL only; Iris lists Apple Silicon as unsupported).",
     "tools": "Profiling.",
-    "world": "New terrain (Tectonic). Only ever installed into a fresh game folder (tools/play.sh --pack): it would seam existing worlds."
+    "world": "New terrain (Tectonic). Only ever installed into a fresh game folder (tools/play.sh --pack): it would seam existing worlds.",
+    "soundspike": "World sound spike only (docs/sound/PLAN.md §11): Tread Lightly and Immersive Thunder Reforged beside Sound Physics. Never installed by tools/play.sh."
   },
   "mods": [
     {
@@ -152,6 +153,13 @@
       "why": "Reverb and echo in halls and caves."
     },
     {
+      "slug": "ambientsounds",
+      "profiles": [
+        "sound"
+      ],
+      "why": "Nature ambience for every biome (Euan, 2026-10-25: use the mod that already does this well); the city's own zones (gulls over the river, owls, doves, garden birds, wind on the roofs) reference its sounds by id (SPEC §16.0 decision 30). AWAKEN's Conductor plays the magic and places and lowers it under AWAKEN's moments (compat.client.AmbientSoundsBridge); our jar mutes it in awaken: dimensions."
+    },
+    {
       "slug": "jei",
       "profiles": [
         "comfort"
@@ -187,13 +195,6 @@
       "why": "Searchable key binds."
     },
     {
-      "slug": "xaeros-world-map",
-      "profiles": [
-        "comfort"
-      ],
-      "why": "A world map you open; no minimap."
-    },
-    {
       "slug": "e4mc",
       "profiles": [
         "together"
@@ -220,6 +221,20 @@
         "tools"
       ],
       "why": "Profiler for frame and tick spikes."
+    },
+    {
+      "slug": "tread-lightly-aspctt",
+      "profiles": [
+        "soundspike"
+      ],
+      "why": "Footsteps by surface, wetness and boots (world sound decision 2); joins the sound profile once the spike passes."
+    },
+    {
+      "slug": "immersivethunder-reforged",
+      "profiles": [
+        "soundspike"
+      ],
+      "why": "Thunder delayed by distance; replaces our own thunder re-voicing if the spike is clean."
     }
   ],
   "configs": [

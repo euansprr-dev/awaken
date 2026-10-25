@@ -44,5 +44,6 @@ public final class AudioModule {
         AudioCommands.register();
         AudioTests.register();
         AudioLayerTests.register();
+        WorldSoundTests.register();
     }
 }

@@ -40,6 +40,7 @@ Hard rules:
 | `body` | the Awakened Body: soft landing, tactical sprint, slide, mantle; momentum hits and trips; `core.api.MovementHooks` |
 | `terrain` | Awakened Lands (§15): the biome table, Awakened biomes and their placement, trees, ground cover, wind and falling leaves, biome looks and sound, the terrain studio commands |
 | `wilds` | The Wilds (§17): Precursor wards, how you arrived (`core.api.ArrivalHooks`), biome discoveries; later spires, windways and chases |
+| `anims` | Hands (§24): the first-person system (the world body, the view layer, view clips), `core.api.FirstPerson` |
 | `living` | The Living Wilds (§21): regions, the Holo combat layer, Wayfarers and quests, bounties, the World Pulse and happenings, populations and camps, crafts, wonders, settlers and villages |
 | `arms` | Weapons and combat (§24): the three verbs (strike, guard, dodge) on every melee weapon, fighting styles on one timing table, deflect, block, posture, Resonance, the feel of a blow (`core.api.CombatFeedback`), its sounds |
 
@@ -296,7 +297,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   every one under it, saved, synced; true when new), `onGranted(BiConsumer<ServerPlayer, Tier>)` (each new tier once,
   lowest first), `state(ServerPlayer)` (`AscentState`), `arrivedByMovement(ServerPlayer, int seconds ≤ 20)` (a third
   of the stretch in a rope, glide, flight, wall-run or hang, and no block placed: a tower never counts).
-  `core.api.MovementHooks.wallRunning(Player)` / `hanging(Player)` read the Runner's moves. `core.api.AirHooks`
+  `core.api.MovementHooks.wallRunning(Player)` / `hanging(Player)` read the Runner's moves, `stairSliding(Player)` a
+  slide down stairs (§17.22; `sliding` is true too). `core.api.AirHooks`
   (`register(Source)`, `Source.airAt(Level, x, y, z, double[] out)`): moving air the free states feel (§17.6).
   `core.api.CameraHooks` (client): `installToggle(BooleanSupplier)`, `toggleView()` (the View key asks it first; with
   Shoulder Surfing it flips first person and the shoulder view, §17.13).
@@ -314,12 +316,21 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   player's context `<ns>:<path>`, read from `assets/<ns>/music_layers/<path>.json`, or null; it may set the given
   `Intensity.Signals`' `pressure`, `forced` (0..3) and `arrival`), `current(ServerPlayer, Slot)`, `level(ServerPlayer,
   Slot)` (-1 without a context). `dev.awaken.gates.Gates.pressure(ServerPlayer)` — the floor's pressure stage (0..3).
+- `dev.awaken.core.audio.client.Soundscape` (client, world sound): `hush(Object owner, Vec3 at, float radius, float
+  depth, int ticks)` (birds and insects quiet within the radius; depth = what is left), `register(Conductor.Source)`
+  (another module's ambient voices, `voices()`, counted in the Conductor's budget of 16), `yieldWeight(Conductor.Yield)`
+  (`at(x, y, z)` 0..1: how much of the world bed gives way there; the city), `natureLevel()` (0..1, how much nature
+  ambience to let through now; AmbientSounds follows it), `overlay(owner, Identifier soundscape, weight, ticks)` (a
+  soundscape over everything while renewed; at most two), `muffle(owner, cutoffHz, natureLeft, ticks)` (the air's
+  filter closed and nature held back while renewed). `/awaken audio world [off|on]` (client).
+  Read by the Conductor: `terrain.client.ClientWind.field()` and `terrain.client.TerrainClientConfig.leafRustle()`.
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,
   `hearthsOf`, `household`, `shareHearth`, `within`), `PartyHooks` (`members`, `sameParty`; see "Together";
   `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks`,
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
-  Animation Library is installed; a no-op otherwise). The Wilds (§17): `WardHooks` (`register(Source)`, `at(level, pos)`:
+  Animation Library is installed; a no-op otherwise), `FirstPerson` (Hands, §24: the world body, view stances, view
+  clips and their events; every module's first person goes through it). The Wilds (§17): `WardHooks` (`register(Source)`, `at(level, pos)`:
   wards for sites placed by code; structures just join `#awaken:warded`), `ArrivalHooks` (`report(player, Way, ticks)` for
   movement systems, `byMovement(player)` for rewards, `history(player)`), `HorizonHooks` (`register(Source)` of sites,
   `addReach(Reach)` for needs such as `WINGS`, `collect(player)`, the pure `pick`).
@@ -714,7 +725,75 @@ Plan v2 · audio (details in docs/modules/audio.md):
   or the Ritual). Reserved: `awaken:descent/stratum_<n>` (music); `awaken:city/<district>` for the city's ambience
   (ambience slot, `source` ambient, priority 100; its levels are the district's crowd, e.g. night / quiet / busy /
   crowd, pinned by the provider from the district's density; it answers only inside the city site, so it never meets a
-  gate's music).
+  gate's music). In use since Carillon M4 B3b, with `awaken:city/night` after dark (§16.0 decision 30).
+
+Plan v2 · world sound (Euan approved all seven decisions 2026-10-25; details in docs/sound/PLAN.md, page
+docs/sound/plan.html):
+- Approach C, revised by Euan the same day ("rebuilding from scratch something that already exists very well is not
+  smart"): **AmbientSounds** (in the pack's `sound` profile) plays the world's nature in every biome; AWAKEN's own
+  layer, the **Conductor** (`core/audio`, client in `core.audio.client.world`), plays only what is ours (hushes,
+  hums, magic, places, reactions) and lowers AmbientSounds while one of our moments sounds (`Soundscape.natureLevel()`,
+  applied by `compat.client.AmbientSoundsBridge`). No field recordings of our own. Sound Physics Remastered gives
+  positional sounds their room; Tread Lightly plays footsteps once its spike passes on the Mac (else the Conductor
+  re-voices player steps by surface and armour). Raise Sound Limit Simplified and Sounds (IMB11) stay out.
+- Four layers: **air** (ONE streamed, non-positional stereo sound for the whole Conductor; a Java mixer on vanilla's
+  `JOrbisAudioStream`, the decoder `StemMixer` shares, plays up to six bed layers, two families crossfading, each with
+  up to three layers of co-prime length, through a one-pole low-pass that closes indoors, underwater, in the Veil, in
+  falling snow and in low-lucidity dreams); **textures** (≤ 6 positional mono loops anchored to real blocks,
+  re-anchored with a short crossfade when the enclosure changes and every ~12 s, since Sound Physics judges a loop when
+  it starts); **events** (≤ 10 positional one-shots, ≤ 4 new a second, Poisson timing, call and answer, lulls);
+  **reactions and re-voicing** (`PlaySoundEvent`: rain by the surface it lands on, thunder delayed by distance at 343
+  blocks a second). Event names: positional ones never `<ns>:ambient.*` (Sound Physics skips those).
+- Every overworld biome is in exactly one family tag `#awaken:soundscape/<family>` (16 families: greenwood, blossom,
+  duskwood, conifer, open_grass, dry_warmth, desert, canopy, mire, heights, snowfield, coast, open_sea, river,
+  sporewild, hollows), written by `tools/terrain/biomes.py`; a biome in none falls back by climate. Awakened biomes are
+  their family plus a variant. The Nether and the End keep vanilla's loops. Data: `assets/<ns>/soundscape/<id>.json`
+  (schemaVersion 1); any module adds its own place files.
+- Budgets: 1 streaming channel; ≤ 16 ambient static voices including other modules' registered sources (quietest
+  and farthest stolen first); client main thread ≤ 0.10 ms a tick average, ≤ 0.4 ms worst, no allocation per tick;
+  decoded static world ambience ≤ 48 MB; ≤ 60 MB of new Ogg. Loudness: beds and textures −28 ± 3 dBFS RMS, ≤ −6 dBTP;
+  events −26 ± 3; magic −32 ± 3.
+- Fit: the Conductor plays on the Ambient/Environment slider and never touches the music channel; layered combat or
+  Lord music: beds −4 dB, events halved; a stage cue: beds −3 dB; calm music: no ducking. Inside Carillon the city's
+  soundscape owns the walls and the Conductor yields by the city's weight.
+- Reactions (first numbers, tuned on Euan's ears): a hostile within 24 hushes birds and insects within 32 of it to 10%
+  in 3 s, back over 20 s; insects within 6 of a moving player fall silent and resume 6-10 s after; sprinting, sliding
+  or landing hard within 8 of leaves or tall grass flushes 3-5 birds and silences that tree 15 s; drips for 60-90 s
+  after rain; a power cast within 16 flushes and hushes 10 s.
+- AWAKEN's touches: the hush around open gates (48-96 blocks by rank) spreading as a Break nears; gusts played along
+  `terrain.Wind`'s fronts; the Awakened lands' faint harmony in D major pentatonic (never the System's glass timbre);
+  Mirror Marsh's one delayed answer; PER widens what you hear; dream clarity follows lucidity.
+- Sources: AmbientSounds for nature; for our own sounds vanilla events first (referenced, never copied), then
+  synthesis (`tools/art/audiokit.py`). No recordings (Euan: field recordings would sound out of place with Minecraft).
+- The nature level (0..1, eased down in ~1 s, up over ~5 s): the hush where the listener stands (an open gate 48
+  blocks at E to 108 at S, deeper and 1.4× wider while a break is near, deepest once broken), layered combat or Lord
+  music (0.55), a stage cue (0.5), and AWAKEN's beds sounding near (rift, grove, the Well, ruins, a falling star:
+  × (1 − 0.6 × their level)). AmbientSounds' master volume = the player's own × the level; the player's value is
+  restored on shutdown. Without AmbientSounds the Conductor plays its own nature fallback (Greenwood today); with it,
+  none.
+- Quality gate: five listening batches of ten minutes or less (forest; every land; reactions; below and beyond; the
+  magic); an unmarked entry counts as keep once Euan has opened the page.
+- AWAKEN's own places and moments (built 2026-10-25; sounds synthesised, `tools/art/specs/audio_world.py`):
+  **place soundscapes** `<ns>:place/<biome path>` play wherever the camera's biome has one, with or without
+  AmbientSounds: the Stillpoint (cloud-sea wind, a temple tone, chimes, a far bell about every 40 s), the Halo (station
+  hum, airlocks, far metal, data chirps, lulls of silence), Lucidium's dream (a shimmering chord, reversed swells),
+  Elderwood (the colossi groaning with the wind, gold glints by day), Lumen Forest (a low hum, specks chiming and
+  answering at night). **The Veil** (while projecting): the overlay `awaken:state/veil` (a far choir on D and A, faint
+  glints) and a muffle (1.1 kHz, nature 0.2). **Dreams**: clarity follows lucidity (the air's filter from 900 Hz at
+  lucidity 0 to open at 80). **Living Wilds happenings** heard from afar (`living.client.PulseSound`, from the tells
+  the server already sends): stampede rumble (260 blocks), murmuration wings (200), the Deep Tide's drone (320; a
+  hush 0.3 over 200+), caravan bells (160), the Wild Hunt's horn (400) and its hounds baying (220; a hush 0.1 over 200),
+  kites over a carrion circle (180), a migrating herd lowing (220), a beast duel's roars (260); level = (1 − d/range)²;
+  a happening near lets nature step back (× (1 − 0.6 × 0.8 × its level)). Each air pair or trio repeats together no
+  sooner than 30 minutes (census test). **The hush before a Lord**: a gate room's own one-shots (`gate.ambient.*`)
+  are dropped while the layered music is at the Lord, half of them in combat. **Mirror Marsh answers** (a soundscape's
+  `echo`: chance 0.35, at most one every 2.5 s): a sound you make within 4 blocks (players and blocks sources) comes
+  back 0.6-1.2 s later at 0.35, pitch 0.97, from 14-22 blocks away toward the nearest water; an echo never echoes.
+- AmbientSounds data in our jar (read only by AmbientSounds): `assets/ambientsounds/basic/dimensions/awaken_dimensions.json`
+  mutes it in every `awaken:` dimension (gates, strata, the Veil's Stillpoint, dreams, the Halo: those are ours), and
+  `blockgroups/{rock,grass_block,grass,ice}.json` add our Awakened ground and plants so its region detection hears
+  our biomes (riven shale and faultstone as rock, mirepeat as ground, lumen moss and moonblooms as plants, hoarfrost
+  and frostspar as ice). Awakened biomes inherit their archetype's tags, which AmbientSounds matches.
 
 Plan v2 · overworld structures (details in docs/modules/structures.md):
 - One visual language: three families (gates, Precursor ruins, lairs), each with its own light and palette.
@@ -879,7 +958,11 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   Modrinth's Maven, never bundled or required.
 - The pack is `pack/mods.json` (profiles: perf, horizon, feel, sound, comfort, together, ultra, tools), pinned by
   `tools/pack.py lock` into `pack/lock.json` (exact files and SHA-512, required dependencies, a dependency's own
-  version pin). `tools/pack.py install <game-dir> <profiles>` puts exactly those files into a game folder, removes only
+  version pin). Distant Horizons (the horizon profile) is off by default since 2026-10-25: `tools/play.sh --pack` leaves
+  it out unless `--horizon` is given (its far generation in a new world was the lead CPU and garbage cost behind
+  Carillon's hitches, docs/perf/CITY-FPS.md); our own far-terrain renderer is the plan. The play client (`runClient`, 8 GB) runs
+  generational ZGC since the same day: in the city tour G1 paused 5.9 s in total (young pauses to 180 ms, a 417 ms
+  full GC at join) and ZGC 2 ms (max 0.7 ms); `-Pg1` goes back to G1. `tools/pack.py install <game-dir> <profiles>` puts exactly those files into a game folder, removes only
   what it installed, and refuses while a client runs there. GameTests never load the pack: they test Awaken alone.
 - Instanced dimensions (`compat.Instanced`): every `awaken:` dimension but `awaken:stillpoint` (gate and dream cells,
   trials, the Halo, the Descent's strata, the Endless). Companions that draw or remember a place stay out of them.
@@ -946,9 +1029,13 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   `compat.client.FarTerrain` (texture `awaken:lens_far_depth`; DH's clip planes and depth convention in params texel 15
   and texel 0's b/a). Far terrain is hazed by its real distance (aerial perspective deepening to 8× the render
   distance), never counts as open sky for bloom, light shafts or the sun halo. Params texels: 13 the ritual, 14 Holo.
-- Comfort (stage 5): the `comfort` profile is JEI, Jade, AppleSkin, Mouse Tweaks, Controlling, Dynamic FPS and Xaero's
-  World Map. Xaero's World Map stays only until Carillon's own Atlas ships; no minimap, ever (direction comes from the
-  world). AppleSkin, Mouse Tweaks and Controlling need nothing from Awaken (the comfort tour checks they load with no
+- Sound (world sound, 2026-10-25): the `sound` profile is Sound Physics Remastered (≥ 1.5.2) and **AmbientSounds**
+  6.3.11 with CreativeCore (compiled against as `compileOnly` for `compat.client.AmbientSoundsBridge`); Tread Lightly
+  (and Immersive Thunder Reforged) join once their spike passes on the Mac (profile `soundspike` until then); Raise
+  Sound Limit Simplified and Sounds stay out (docs/sound/PLAN.md §4).
+- Comfort (stage 5): the `comfort` profile is JEI, Jade, AppleSkin, Mouse Tweaks, Controlling and Dynamic FPS. Xaero's
+  World Map left it when Carillon's own Atlas shipped (M5, §16.8; M opens the table); no minimap, ever (direction
+  comes from the world). `compat.WorldMaps` stays for a player who adds Xaero's themselves, and is silent without it. AppleSkin, Mouse Tweaks and Controlling need nothing from Awaken (the comfort tour checks they load with no
   log errors). Tours turn Dynamic FPS off in `run-autopilot/config/dynamic_fps.json` (it drops a background window to
   1 fps or none). JEI and Jade are compiled against as `compileOnly` from Modrinth's Maven by version id (the builds
   `pack/lock.json` pins); their plugins (`compat.client.jei`, `compat.jade`, `compat.client.jade`) are found by their
@@ -1005,7 +1092,7 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   "The map is disabled with a potion effect". Xaero still records those chunks into that dimension's own cache (the
   overworld map is never touched). The effect lives in the server's registry: single player always has it, a dedicated
   server needs Xaero's World Map installed (it is server-optional). Without Xaero nothing registers. Autopilot
-  `compat map` reports it. Test: `compat_world_map_rule`. Until Carillon's Atlas replaces Xaero.
+  `compat map` reports it. Test: `compat_world_map_rule`. Kept for a player who adds Xaero's (it left the pack at M5).
 - Lens and far terrain: Distant Horizons draws without the game's depth, so Lens samples DH's own depth texture
   through `compat.client.FarTerrain` (texture `awaken:lens_far_depth`), with no copy: DH 3.3.4's Blaze renderer (the
   default engine on 26.3) clears that texture only at the start of its own pass (right after
@@ -1203,7 +1290,10 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   0.25 by 30 fps); tinted from the leaf's BlockColors tint over its texture's average; tumble, flutter, wind drift,
   1-3 s rest, 1 s fade. Per-block and per-biome rules in `assets/awaken/lands/air.json` (schemaVersion 1): forests
   1.0, elsewhere 0.5, cherry 0 (vanilla petals), Elderwood 3.0 gold, Lumen Forest motes at night only.
-- Leaf rustle (`terrain.client.LeafRustle`): `amb.lands_rustle` under canopy and `amb.lands_wind_high` high and in the
+- Soundscape (world sound): the biome table's `soundscape` column puts every biome in one family tag
+  `awaken:soundscape/<family>`; the Conductor plays the Awakened biomes' beds, so their `minecraft:audio/ambient_sounds`
+  keeps only `mood`.
+- Leaf rustle (played by the world sound Conductor since 2026-10-25, soundscape `awaken:world`): `amb.lands_rustle` under canopy and `amb.lands_wind_high` high and in the
   open, volumes from the wind and a 16-column canopy ring; client setting `leaf_rustle` (default on).
 - Waving leaves (spike done 2026-10-24, docs/spikes/waving-leaves.md: safe, cost within noise, at most ~0.05 ms p50 in
   a dense dark forest): `dev.awaken.terrain.client`. A built-in client pack (`resourcepacks/awaken_waving_leaves`)
@@ -1469,6 +1559,37 @@ https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
     The city also gives "Bell Metal" a rooftop chase: B5 (the opening from affordances, which brings citizens' rooftop
     running) publishes named roof routes and a chase hook the Living Wilds calls for its fleeing buyer; until then that
     step waits.
+30. The city's animals, drawn light and soundscape (M4 B3b, 2026-10-25; the B3b builder's calls, for the orchestrator's
+    review and Euan's listening page, docs/audio/carillon-b3b/):
+    - Animals and boats are client-only entities (`citizens.CityCritter`, discarded on a server, never saved): homes and
+      routes from the plan, made within reach (pigeons 56 blocks, gulls 72, cats 40, dogs 48, carts 96, boats 88) and
+      dropped 12 beyond; at most 40 pigeons, 16 gulls, 10 cats, 8 dogs, 4 carts and 8 boats near a player. Carts and
+      rowed boats run on the world clock, so every client sees them in the same place. Dogs: one keeper in seven among
+      residents, children, the Watch, porters, washers, shopkeepers and millers. Boats: one moored every 24 blocks along
+      each quay inside the wall (a quarter left empty, none within 6 of a bridge); two rowed up and down the river, one
+      round the canal; rowing from 23000 to 18000, bow lanterns lit after dusk (a third of the moored ones too).
+    - Hand lanterns and lit street lamps are drawn light (`citizens.client.CityGlow`: an additive core, halo and pool on
+      the ground), never light blocks; `/awaken citizens lanterns blocks|glow` keeps the old path for measuring only.
+      Choir Square's festoons: paper lanterns strung between the bowl's eight lamp posts, lit 12200-19500.
+    - The beds: `awaken:city/<district>` by day and `awaken:city/night` from 12500 to 23300, on the ambience slot. The
+      level is the district's citizens outdoors (counted every 100 ticks) against its busiest hour: calm under 15%,
+      light under 45%, busy under 80%, else packed; one lower in the rain. The night bed is busy 12500-14500 and light
+      to 16500 (the taverns), then calm. Each level's mix sits at -37 to -26 dBFS gated RMS and under -6 dBTP
+      (quieter than the -28 ± 3 ambience rule: the beds lie under the places that sound), and a crowd stem never falls
+      as the level rises.
+    - Every place's sound is mono (positional), the carillon too: it comes from the spire and fades over 320 blocks.
+      At dawn, noon and dusk the Choir plays its tune first and strikes the hour 300 ticks later.
+    - Sources: synthesised (tools/art/specs/audio_city_life.py) except the animals' voices (vanilla's cat, wolf and
+      horse events, referenced by id). This departs from decision 28's "vanilla first": vanilla has no city sounds
+      beyond water, fire and animals. Nature is AmbientSounds' (Euan, 25 Oct 2026, instead of downloading CC0
+      recordings ourselves; the pack's sound profile, 6.3.11 with CreativeCore, client-only). Its own engine plays real
+      birds, crickets and owls where there's greenery, wind 15 blocks above the ground and rain. The client tells the
+      server at login whether it runs the mod (`CitizensNet.Ears`), and such a player hears `awaken:city/as/<district>`
+      and `awaken:city/as/night`: the same beds without our synthetic birds and crickets (generated beside them). The city
+      adds what its engine never does in a paved city, with its recordings by id (`citizens.client.CityNature`):
+      gulls within 64 blocks of the river by day (ours stand down), a gull chorus within 24 now and then, doves over
+      Bellwatch, the Terrace, the Garden Ward and the Wallring by day, owls within 48 of the wall or a bell tower at
+      night. Its files are stereo, so these play unplaced, at a volume falling with distance. Nothing of it is copied.
 
 ### 16.1 Modules (new packages; same module rules as §1)
 | Module | Owns |
@@ -1530,7 +1651,9 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
 - Climbable language: bronze trim, dark beams and drainpipes can be held; plain plaster and glass can't.
 - Pregenerated at world creation (~1,250 chunks, ≤ 30 s on a quiet M4; G0 measured 11–28 s for terrain + city, the
   city 2–5% of it; Distant Horizons holds its LOD building until the pregen ends) behind the opening card; graphs saved
-  with the world; generator changes never touch a built city.
+  with the world; generator changes never touch a built city. A finished chunk keeps a timed `awaken:city_hold` ticket
+  (1,200 game ticks) instead of none, so the city isn't unloaded, saved and read back between the pregen and the
+  player's join (26.3 has no spawn-chunk ticket).
 - Drawing (G0, spike S1: a 480-block city sits inside RD 16 from anywhere in it, so all of it is always drawn): houses
   have solid cores (dark fill behind windows, sealed attics) except the ~60 enterable buildings; geometry density
   varies by district (dense only where the run needs it); the painter writes straight into chunk sections (never
@@ -1579,6 +1702,8 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   (approved proposal; the gate opens in the square via `GateHooks.openScripted`) → the Void → the infirmary → the
   Registry (licence E-rank, the Holo wristband, the Atlas opens with the run revealed, first Directive) → free play.
 - No death in the opening (falls leave ≥ 1 heart). Relog at any beat resumes it. `/awaken opening skip`.
+- Registration (2026-10-25): when the opening ends, or is skipped, the counter `awaken:carillon_registered` is counted
+  once (`OpeningDirector.REGISTERED`). Chains and content that wait on "after the Registry" require it.
 - Decided in M2 (2026-10-25; details docs/carillon/milestones/M2-opening.md): the opening's beats SKY, RUN, ARRIVAL,
   WAKE, REGISTRY are appended to `StoryProgress.Prologue` after DONE (schema 3; the story's GATE_OPEN, RITUAL and
   ACCEPTING sit in between); in Carillon worlds the opening owns NOT_STARTED/GLITCHED and the prologue's own first beats
@@ -1644,6 +1769,72 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   first; "Clear Atlas cache" button).
 - Table view: a Screen with a picture-in-picture renderer (depth, orbit, zoom, tilt); wrist glance cached on the Holo.
   ≤ 2 ms/frame open, ≤ 150 ms to open, glance ≤ 0.3 ms. Markers only for what the player knows.
+- Decided in M5 (2026-10-25; concept https://claude.ai/artifact/3QCvup43wuVW6t1wDfVroP, docs/carillon/m5/):
+  - Discovery (`atlas.Discovery`, attachment `awaken:atlas`, `AtlasData` schemaVersion 1, copyOnDeath): per dimension,
+    tiles of 32×32 cells (16 longs). A player's path is checked every 5 ticks once they've moved 4 blocks; every cell the
+    64-block circle touches clears. Spectators explore nothing. Awaken's instanced dimensions (`compat.Instanced`:
+    gates, dreams, trials) are never recorded and the table doesn't open there ("The Atlas can't see inside a gate").
+    Changed tiles go to their owner in one `atlas_sync` batch every 10 ticks; login, respawn and a new dimension send
+    the dimension whole. `AtlasHooks.reveal` clears at once and ripples out from its centre on the client.
+  - Bells: a bell rung by a player (by hand or by their projectile) or a player standing in its belfry (within its
+    tower's box ±1, at or above the belfry floor − 2) clears its district: every cell whose centre
+    `CityHooks.district` gives that district, within 360 of the square. The Choir spire's bell (belfry 61) clears every
+    cell in the city. Towers, belfry heights and district names come from `data/awaken/city/plan.json`. The clouds over
+    a district part in a ring from the tower (160 blocks a second).
+  - The opening run's path is kept (a point every 10 ticks of the run and arrival, ≥ 3 blocks apart, ≤ 400) and sent
+    when the opening ends; the next time the table opens it plays the Registry reveal (the land prints in, then the
+    run draws itself as a bronze thread over 2.4 s and settles to a faint line). An automatic open inside the Registry
+    scene is the opening module's call (proposed to the orchestrator).
+  - Party sharing on request ("Share with party" on the table, `/awaken atlas share`): the current dimension's cells are
+    merged into each online member's record.
+  - Cache: one deflated file per 512×512 tile, `t.<x>.<z>.bin` ("AWAT", version 1: heights, ARGB colours, an info byte
+    per column with water depth, material class and a lit bit for night), under `sp-<save folder>` or `mp-<address>`.
+    Saved every 30 s and on leaving; the whole cache is kept ≤ 64 MB by deleting the oldest tiles down to 56 MB.
+    "Clear Atlas cache" deletes every world's tiles and the sampled columns; what you explored is the server's and
+    stays. Roofed dimensions (the Nether) draw no terrain yet.
+  - Mesh: three levels (a column is 1, 4 or 16 blocks; the level follows zoom: ≥ 0.9, ≥ 0.22, below), slices of 64×64
+    columns, a 15×15-slice window per level, ≤ 96 MB of GPU buffers (farthest dropped first); a level not drawn for 20 s
+    lets its slices go. Slices build on one worker thread from snapshots; the main thread only uploads, before the
+    pass opens. The finest level is kept built round the player while the table is shut.
+  - The table opens on M (Xaero's key), in the Holo's projected glass (`HudLook` FRAME | DRIFT, text as light), sets
+    `UiHooks` focus while open, and plays the Holo's open and close sounds. C centres on you. Dev: `/awaken atlas
+    stats|share|reveal <r>|ring <city|district>|clear` and the client's `/atlas open|view|spin|freeze|reveal|stats`.
+  - The look (phase 2): night lights from the lit bit (a light-emitting block in the top 6 of a column) as warm soft
+    sprites, flickering a little, at the two finer levels; cloud shadows on explored ground beside the blanket's edge
+    (east and south of each puff: the sun is low in the west); ambient occlusion on the top faces (darker for each
+    taller neighbour); three cloud sprites with sunlit rims and a tone per puff; zoomed out, a coarse cell that is
+    mostly known carries no cloud. Rumours (`MapMarks` labelled "? …") hang in the clouds as an amber "?" with their
+    name; every other mark shows only in an explored cell. You are a pin of light with a ring and a facing tick.
+  - Cost: slices outside the picture aren't drawn, and while only the clouds drift the picture is redrawn about 30
+    times a second (every frame while the view moves or the land prints in).
+  - The wrist glance: a section on the K menu's Status page right under NOW, the land round you (240 blocks across,
+    where you look is up) painted into the texture `awaken:atlas/glance` (480×280) at most once a second while the menu
+    shows it, or sooner once you've moved 4 blocks or turned 12°; the Holo draws it as one textured quad, with a button
+    to the table.
+  - Phase 3 (`AtlasData` schemaVersion 2): the Living Wilds region you stand in (`living.api.Regions`, checked every 40
+    ticks, overworld only) joins your Atlas once; zoomed out, each known region's name is lettered at its heart in
+    spaced capitals with its levels under it. Party pins: double-click the table to drop a pin on ground you know (or
+    take back your own under the cursor); twelve per player, the oldest goes; each party member online sees the
+    party's pins in their dimension, in the owner's own colour (a hue from their id), with the owner's name. Dev:
+    `/awaken atlas pin`. Roofed dimensions (the Nether) are read from just under the roof (y 118) down through rock to
+    the first air, then to the floor, so the table shows the highest floor of each column; those chunks are sampled
+    from a queue about 1 ms a tick, the diorama's base drops to 24 and there is no night. Carillon's lit windows
+    (`awaken:lit_window`, within 12 of a column's top) count as night lights.
+  - A bell's ripple adds each cell to the client's record only when the ripple reaches it (so no land shows under
+    clouds that haven't parted), a whole re-send drops every built slice, and the clouds draw over the land (no depth
+    test: spike S5's poke-through left roofs and spires floating in the blanket at the known edge). While the view
+    moves the picture redraws at most 60 times a second.
+  - Measured on OpenGL, uncapped, interleaved pairs at the same spot (tour 2026-10-25, load 5–9): the table open and
+    still +1.5–1.6 ms p50 (+1.4–1.5 of it is the open screen itself, re-blitting the frozen picture: the blit, the glass
+    card, Lens dimming), clouds at 60 Hz +1.9–2.0, orbiting +1.9–2.0 after the 60 Hz cap (+2.6 before); open 12–20 ms
+    cold, 2–8 ms warm; the glance 0.23 ms a paint; sampler 10–18 µs a chunk (120 µs under the Nether's roof).
+  - Zoomed out (polish, 2026-10-25): a cloud cell of 64 or 256 blocks carries no cloud if any cell in it is known
+    (counted exactly, a word of bits a row), and one beside known land carries a half-size cloud that keeps to its own
+    cell, so the land you know shows at every zoom under a whole blanket. Region names keep clear of you, the pins, the
+    marks and each other (moved up or down by a line or two, else left for a closer zoom) and slide inside the panel
+    at its edges.
+  - Frame cost is judged on OpenGL: on Vulkan, MoltenVK presents at the display's rate (120 Hz) even with vsync off, so
+    a capped tour can't show it.
 
 ### 16.9 Public hooks (`core.api`, v0; signatures may change only through the orchestrator)
 - `CityHooks`: `inCity(Level, BlockPos)`, `district(Level, BlockPos)` (id or null), `isCivic(Level, BlockPos)`,
@@ -2530,6 +2721,112 @@ free, and the way up in front of the face from the hold to standing height. The 
 slab slope, Carillon's overhanging eave stair on a gentle and a steep gable (`CityGrammar.roof`), and a step with a
 block over it (no climb).
 
+### 17.22 Stair slide (Euan's playtest, 2026-10-25: "if I use the slide whilst I'm on a stair, it actually slides down")
+A slide started on a run of stairs or stepped slabs, or one that reaches the top of a run, slides down it. No new key;
+the slide's own controls (jump out, a power's motion, a push, water) end it as before.
+- **A run** (`BodyRules.stairStart`): along the slide's way, at least two half-block steps down (0.25-0.6 each; a full
+  block or more is an edge, a single step is just a step) ahead within 1.6 of the body's centre, nothing rising and no
+  gap before them, and the run's fall line (the grid side the ground drops most to over 1.25 blocks) within 35° of the
+  way. Read each tick on the line through the body's centre every 1/16 block, from 1.2 behind its rear to 1.6 ahead;
+  each nose that matters is then found exactly (bisection, 1/512). Running down stairs the feet leave each step: a
+  run under them counts as ground for starting a slide (client and server).
+- **The glide**: the body moves along the way, then down onto the straight line through the step noses (its rear edge
+  on the line: never inside a step, never a bump or a hop per step; up to 0.25 a tick back up onto it after a step
+  dropped off), and vanilla's move does the vertical part (its collisions, its landing). On a stair run the drop per
+  tick is exactly speed × slope. The way bends onto the fall line at up to 3° a tick. Speed tends to 0.42 b/t (a
+  tactical sprint is ~0.35, a slide enters at 0.38 / 0.46) at up to 0.012 a tick: a faded slide builds, a tactical one
+  eases down. No 14-tick limit while the run goes on; at most 120 ticks (6 s) of run. The ride is never a fall (fall
+  distance reset on both sides each tick).
+- **The bottom** (`StairProfile.last`): down the last step at the run's own slope onto the floor, then the run-out: the
+  slide's last 8 ticks, its own decay from the speed it has (0.42 → ~0.27, ~2.8 blocks). A landing mid-flight is a
+  bottom; the run-out slides on and, at the next flight's top, the stair slide takes over again. A turn in the run or a
+  wall at its end ends it the same way (the run-out, then the wall's thud). Something in the way of the crawl box mid-
+  run hands it to the run-out at once.
+- **Jump out** keeps the run's speed + 0.15; on the noses (feet just off the steps) the slide jumps itself.
+- **Server**: authoritative as for the slide. It reads the run itself from where it has the body (the same functions,
+  the same bend): while it sees one, the slide's end moves to 16 ticks ahead (run-out 8 + grace 6 + 2), else the slide
+  ends as before and the client is told. Vanilla's move check ignores the vertical difference of the client's line, so
+  the glide is never corrected.
+- **Look**: the third-person slide pose (or its clip) tipped forward to the slope it is going down (from the body's own
+  motion, eased, up to 40°), ours and others' alike. First person: `MovementHooks.stairSliding(Player)` (both sides,
+  `Body.isStairSliding`) for the animation plan to hook into.
+- Test: `body_stair_slide` (six stone-brick stairs, a slide from the top: the bottom in 23 ticks at 0.38 b/t against a
+  walk's 0.22, a 15-tick glide whose drop never changes by more than 0.014 a tick, the server sliding past 20 ticks
+  and no fall; a way across the stairs is no run).
+
+### 17.23 Mantling onto stair tops (Euan's play, 2026-10-25: "I can't mantle up blocks with a stair on it")
+The mantle's lip is the lowest top along the face's edge across the body's width, by the real collision shapes (a
+stair's low half, a slab, any kit block), within 1.1-1.6 over the feet; nothing on that edge more than a step (0.6,
+`BodyRules.MANTLE_STEP`) over it. The feet land a body width past the face on whatever top is there, from the lip's
+height up to a step over it, never lower (no drop behind a thin lip), never a fence or wall top, with 2 blocks of room
+over it. So a 1-block wall topped with a stair facing away or sideways is climbed by its low half (1.5) and stood on by
+its high half (2.0): a body 0.6 wide can't stand on a half 0.5 deep. A stair facing you is a 2-block face and an
+upside-down one a 2-block top: not mantled (the wall-run, the hang and the climb-out take those). Client and server run
+the same `findLedge`. Test: `body_mantle_stair_tops` (all four facings, the upper half, a slab-topped wall, the
+server's check); `body_mantle_ledges` and `body_mantle_gate_walls` unchanged.
+
+### 17.24 The landing slide (Euan's play, 2026-10-25: "sprinting, jump, shift while in air, slide when it touches floor")
+Crouch pressed any time in the air and still held at touchdown slides from the landing (`ClientMoves`, the touchdown
+tick). Needs a running jump: air speed at least 0.15 b/t having sprinted in the air, or 0.28 without the sprint flag (a
+launch). Entry `BodyRules.landSlideEntry`: the slide's own (0.38, 0.46 out of a tactical sprint) or the landing's speed if
+faster, plus a 0.06 kick for the landing, at most 0.6 (slide-hops can't snowball; the 20-tick cooldown holds too): a
+sprint jump's ~0.32 lands into 0.44 (~4.6 blocks against a run's 4.0). The way is the jump's. A landing on a downward run
+becomes a stair slide (§17.22). Not when crouch was let go before touchdown (a normal landing), not onto an edge with no
+floor within 0.6 under a point 0.6 ahead (vanilla's edge-sneak stays), not in water, using an item, mid-move.
+- Falls: a crouch-held landing already counts as the soft landing on the server (§6: safe fall +3, ×0.6 beyond), so a
+  landing slide softens a fall exactly like the roll and never adds damage. On our own client the slide is the landing's
+  look: the roll's animation and sound stay quiet. Others see the server's roll for a tick, then the slide.
+- Server: as any slide, plus the sprint check takes a body that sprinted within 40 ticks (the flag can drop in the air)
+  or whose last move was 0.2 b/t or more. Clips, the run's return after the slide, the Runner and free-run inputs: as
+  before (the free-run's mantle still comes first).
+- Test: `body_land_slide` (a sprint jump's landing speed slides farther than a run's slide, a walk's doesn't, an edge
+  with a drop is no slide, the server takes a sprinted landing and refuses a body that never ran).
+
+### 17.23 The grip on a climb line (Hands P1; Euan, 2026-10-25: "you just float up")
+A Runner move (`Move.GRIP`, appended; `GripRules`, client `body.client.GripMoves`) on every `#awaken:runner_climbs`
+block: Carillon's drainpipes, trellises, hoist ropes and hanging ladders, and every ladder. Approved controls (decision
+A of the Hands plan): "Shift takes you down, Jump takes you off".
+- **Taking a line**: walking into it facing it (within 70° of its wall; a free rope from any side), or in the air with
+  forward or the free-run held (a swing out to the side catches the next line without). The body stands centred in
+  front of the line, 0.02 off its face (a rope: from the side it's on). A fall caught keeps its speed as a short slide
+  that brakes into the hold.
+- **On it**: no keys holds still (vanilla drifts down); forward climbs at 0.2 b/t, 0.3 with the free-run held (the
+  free-run's pace, unchanged); Shift held slides, +0.06 a tick to 0.65 b/t; letting go of Shift brakes to a hold over 4
+  ticks; Jump alone lunges 1.2 up the line (6 ticks, once per 10); Jump + back kicks off the wall (0.5 out, 0.42 up,
+  turning to face out over 5 ticks: the ledge back-jump's numbers); Jump + left/right swings out sideways (0.42 along,
+  0.12 out, 0.36 up). The foot of the line lands you (no fall damage at any slide speed); with no keys at the foot you
+  step off. **The top** always leads somewhere (Euan, 2026-10-25: "the last block doesn't let me through"): it is
+  reached when there's no line where the hands would go (1.75 over the feet) or the head meets something over it (a
+  cornice, an eave, a coping row). With forward held: (1) a lip over the head, its face out past the body within 1.5
+  of it, its top 1.6-3.2 over the feet, with the way out level and then up to the hold free (`GripRules.topLip`), is a
+  hang from that face: the body goes out from under it, then up (7 ticks, `HANG_EAVE`), and the hang's own climb out
+  (§17.21) puts you on the roof or coping; (2) else, open air over the head hands the body to vanilla's climb, whose
+  eave is caught as a hang as before (§17.14); (3) else the hands hold still at the top (no climb, no jitter) until
+  forward is let go. The server takes the eave hang only from a grip held or ended within 6 ticks, with the same
+  `topLip` from where it has the body (plus its tolerance). A screen open holds the grip. The rope key still cuts in.
+- **Motion**: the grip moves the body itself (`move`), its velocity zeroed, so vanilla's ladder cap (0.15 down) doesn't
+  hold back the slide on any line, vanilla's ladder included; sideways it eases onto the line at most 0.15 a tick.
+- **Server** (`RunnerServer.grip`): the first Run takes a line in the claimed column where the server saw the body
+  lately (flags HOLD, CLIMB, CLIMB_FAST); later Runs change what others see (SLIDE, HOP) or leave the line (KICK,
+  SIDE_L, SIDE_R, LAND); while gripping its copy's motion is zeroed after its tick, fall distance reset, hunger at half a
+  hang's; every 4 ticks the column must still hold a line within the body's reach, 3 misses end it (`Refuse`).
+- **Look**: third person, `body_pipe_hold`, `body_pipe_climb` (a pair of pulls every 8 ticks: 1.6 blocks at 0.2),
+  `body_pipe_climb_fast` (6 ticks), `body_pipe_slide` (loops with `_end`), `body_pipe_kick`, `body_pipe_side_l/_r`,
+  `body_pipe_hop`, `body_pipe_land` (tools/art/specs/body_moves.py); the figure faces the line and leans into it (back
+  off it in a slide). First person: both hands closed round the line in the world (§24, `body.client.GripView`; P1.1):
+  each fist closed on its own side of the pipe, drawn at 0.85; the holds at the eyes +0.04 and -0.12 (the eyes are about
+  0.3 from the pipe: both fists in the frame looking ahead, their arms rising from below). Climbing, a hand stays where
+  it gripped while you rise past it (to -0.2), then lets go and reaches up past the other for a new hold (hand over
+  hand); held still, look round them; sliding, both run down the line with you, shaking with the friction (0.018 up and
+  down, 0.006 across at full speed); look down to see your feet clamped on it. The top-out: both hands go up onto the
+  top of the line, stay there 12 ticks while vanilla's climb carries you up past them, and fade.
+  Leaving: view clips `fp_pipe_kick`, `fp_pipe_side_l/_r`, `fp_pipe_land`. Sound: the grip's grab, `body.pipe_slide`
+  (palms hissing on the line, every 8 ticks of a slide), `body.pipe_brake`; the line's own grit off the hands while
+  sliding, sparks off a metal line at speed; a faint judder in the view.
+- Tests: `runner_pipe_grip`; `runner_pipe_cornice` (a drainpipe under a one-block cornice with a roof behind: the lip is
+  the way on, hung from its outer face, taken by the server only from the grip, climbed out onto the roof; a deep
+  ceiling and open air give no lip). Tour: `tools/autopilot/anims-pipe.txt` (PACK=feel).
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
@@ -2569,10 +2866,11 @@ Plan: the Far Sight page, path 4 (https://claude.ai/artifact/LvAoTbYB82o6ggcHS73
   fell 0.8–1.8 ms where the GPU was the limit; p99 doesn't move (its spikes are CPU work). The upscale costs bilinear
   0.12 ms, SHARP 0.24 ms, FSR 1.21 ms, so on Apple's GPU FSR eats most of what 0.67 saves (only 16–23% of the world
   pass scales with pixels; the rest is geometry). Fine block textures soften at every scale; GUI text never changes.
-- Defaults (decided 2026-10-24 from those numbers): `renderScale` 1.0 (off), `upscaler` SHARP. Recommended:
-  1.0 on the MacBook's own screen (about 1 ms, and nothing once a scene sits at 120 Hz or on the CPU, doesn't pay
-  for the softer textures); 0.75 with SHARP on a 4K screen (the pixel-bound part grows 1.73×: an estimate until a
-  Dell run, which needs Euan's OK).
+- Defaults (decided 2026-10-24 from those numbers; 4K added 2026-10-25, Euan): `renderScale` 1.0 (off) on screens under
+  4K, `renderScale4k` 0.75 on a game frame of 8 MP or more (the Dell at 3840×2160 is 8.3 MP; a 16" MacBook at
+  3456×2234 is 7.7), `upscaler` SHARP. 1.0 on the MacBook's own screen (about 1 ms, and nothing once a scene sits at
+  120 Hz or on the CPU, doesn't pay for the softer textures); at 4K Lens 2 and the world's pixel-bound part cost the
+  most (estimated 3–6 ms saved on Cinematic/Ultra, docs/perf/CITY-FPS.md). The autopilot's `pixels <scale>` sets both.
 - Holo: panels draw inside the world (the level's always-on-top phase), so at render scale their text would be
   upscaled with it (measured: softer, with RCAS fringes at 0.67). While a panel holds the player's attention
   (`UiHooks.focus() > 0`: the K menu, a reading screen) the world renders native, so panel text, Lens's bloom on the
@@ -2852,7 +3150,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 ### 21.9 Crafts (Phase E, as built 2026-10-25)
 - Six crafts (`living.craft.Craft`), levels 1-50, craft XP to the next level 40·c^1.3 + 40; attachment `awaken:crafts`
   (schema 1, kept through death, synced to its owner: craft XP per craft, kinds hunted). A craft level is a toast; a
-  perk opening is a toast that names it (counter `awaken:craft_perks`).
+  perk opening is a toast that names it, what it does is in the Crafts tab (counter `awaken:craft_perks`).
 - Each paying action also pays the Hunter level 0.008 of a level (pacing_sim CRAFT_ACTION) through its craft's budget
   (forage 0.012, mine 0.012, fish 0.012, cook 0.007, smith 0.007 per 10 min, × the rank's wild share), and the craft
   XP shrinks by the same share the budget kept back, so a farm levels off on both. Hunting rides the kill's "hunt"
@@ -2869,8 +3167,8 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   (Strength and Speed 120 s), forager's salad (Regeneration 30 s), miner's pasty (Haste 180 s), angler's chowder (Water
   Breathing 120 s, Dolphin's Grace 60 s), spirit tea (Luck 120 s).
 - Perks (5 · 10 · 20 · 30 · 40 · 50), all live:
-  - Hunting: Field Dressing (animals: a hide or more meat 33%), Tracks (client: glowing pawprints of creatures the band
-    read, 30 s), Weak Spot (crits ×1.15 on kinds killed 20+), Stalker (sneak attacks on a creature not targeting you
+  - Hunting: Field Dressing (animals: a hide or more meat 33%), Tracks (client: for 30 s after the band reads a creature it
+    leaves glowing amber prints, paws or cloven hooves, lying on top of grass and flowers, fading over 30 s), Weak Spot (crits ×1.15 on kinds killed 20+), Stalker (sneak attacks on a creature not targeting you
     ×1.5), Trophy (beast parts twice), Apex (×1.1 to elites and beasts).
   - Foraging: Herb Glint (client: a sea-green shimmer on ripe plants within 16), Wild Larder (+1 berries, glow berries,
     mushrooms), Root Sense (6% ripe), Seed Keeper (grass 4%: pumpkin, melon, beetroot or torchflower seeds), Bloom (by
@@ -2890,7 +3188,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   The plan's Tidewater bait, sigil slot, temper discount and an apex phase read moved out: they need other modules'
   systems; the replacements above are this module's own.
 - UI: CRAFTS in the K menu's Status tab (level, a bar, perks open, the next). Dev: `/awaken living craft <craft>
-  <level>`. Test `living_crafts`.
+  <level> [announce]` (announce: with the level and perk toasts, for tours). Test `living_crafts`.
 - Art: the 15 icons are drawn by `tools/art/specs/items_crafts.py` (16×16, our own palette, one wooden bowl shape shared
   by the bowl meals; the pasty stands on its flat side with a crimped rope; no vanilla pixels). Its `preview DIR` checks
   colour count, distinct colours and herb silhouettes.
@@ -2932,7 +3230,9 @@ magic.
   entering the window clears its slot and is read nearest first (40 a tick), a loaded chunk is read when it arrives
   (`ChunkEvent.Load` on the client), the 5×5 chunks around the camera are re-read every 10 ticks and the rest of the
   window 12 a tick in turn (block changes show within about ten seconds; halved for the CPU after L3), and a slot uploads only when its hash changed,
-  as whole-width strips (8 chunk rows a tick, every level). Built only where the dimension has the overworld sky.
+  as the changed chunks only: a tick's changes as one box per level when they fit in 64 chunks (a recentre's new
+  column or row), else up to 8 rows a tick, each the span of its changed chunks (packed through one staging buffer;
+  whole-width strips cost 320 barriered copies per step east or west, docs/perf/CITY-FPS.md). Built only where the dimension has the overworld sky.
 - **Light pass** (per pixel of the reduced buffer, from the full-size depth): position and normal from depth (of the
   two neighbours per axis the one continuing the centre's plane; a normal within 0.9 of an axis snaps to it, since
   block faces are axis-aligned), then:
@@ -2990,8 +3290,8 @@ magic.
   ms): off 10.59/15.30, Swift 11.20/17.18, Cinematic 13.01/17.95, Ultra 13.16/18.36: Cinematic +2.4 ms over off,
   Ultra +2.6 ms, inside both budgets. A four-way diagnostic (`lens2-diag.txt`, one pillar, the light buffer facing N, E,
   S, W) proved the shadow direction from every side.
-- The heightfield uploads dirty strips round the ring from where the last tick stopped (8 a tick), so a row that keeps
-  changing near the camera can't starve the rest.
+- The heightfield's scattered uploads go round the ring from where the last tick stopped (8 rows a tick), so a row
+  that keeps changing near the camera can't starve the rest.
 
 **L2, atmosphere**
 - **Sun map** (`lens_sunmap.fsh`, `awaken:lens_sunmap`, 512×512 cells of 2 blocks on Cinematic, 1024×1024 of 1 block
@@ -3185,9 +3485,134 @@ the 14 hand-built bodies), driven by bone names and a temperament, never by per-
   gets springs on them, every creature that blinks has lids, eye bones or a closed-eye skin). Tour:
   `tools/autopilot/creature-life.txt` (PACK=perf,feel; clips in run-autopilot/clips/life_*).
 
+## 24. Hands: the first-person system (plan docs/anims/PLAN.md, page https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy; approved 2026-10-25)
+
+Euan: "right now for basically everything there is no first-person animation". One owner for everything drawn in first
+person, as the Feel Director is for the camera (module `anims`; public face `core.api.FirstPerson`; built in phases P1-P6
+of the plan). No mixins.
+- **World layer**: your body in first person, posed in the world (`anims.client.WorldBody`): a `WorldPose` source fills a
+  `FirstPerson.Rig` (each limb from its root toward its tip, its front, a weight; `Rig.reach` slides a rigid limb's root
+  so its fist or foot lands on a spot); the highest priority source that poses this frame wins (movement 100,
+  interactions 200, combat 300). Limbs are parts of a private copy of the player model (vanilla's own is posed by every
+  player in the frame and drawn after submission), with your skin, sleeves and pants. Legs are drawn in the world with
+  real depth (`SubmitCustomGeometryEvent`). Arms are viewmodels (P1 tour: a fist a third of a block from the eye filled
+  half the frame): drawn in the hand pass, each fist where the world puts it on screen but at 0.85 from the eye, the arm
+  rising to it from under the frame's corner on its side (view (±0.5, -0.85, -0.1)); vanilla's hands step aside. No
+  torso (from inside the head it is only a slab under the camera). Never in third person. Like vanilla's hands, none of
+  it shows with the HUD hidden (F1).
+- **View layer** (`anims.client.Hands`, the one owner of `RenderHandEvent`, first for each hand and last for the off
+  hand): every `ViewPose` stance adds moves (view space: x right, y up, z toward you, blocks; then pitch, yaw, roll in
+  degrees) for both hands, the main or the off hand; the body's stances (sprint, slide, hang, mantle) and the rope's
+  arm moved here from their own hand listeners. The casts (powers) still draw their own arms until P3.
+- **View clips**: `assets/awaken/fp_clips/*.json` (`anims.FpClipSet`, schemaVersion 1) written by
+  `tools/art/specs/fp_moves.py` (edit there; `preview DIR` draws vanilla's arms from the eye); keys in ticks eased by
+  `anims.Ease` (the same curve names as the third-person clips), authored right-handed and mirrored for a left main arm;
+  a one-shot ends at rest; `FirstPerson.play(name[, speed])`, `stop` (a 3-tick fade), `playing`; keyed events reach
+  `FirstPerson.listen` listeners (sounds, hit-stops). Combat's animations use the same three layers.
+- **Fists** (P2): a view clip (`"fists": true`) or a stance may key where each EMPTY hand is on screen (view space)
+  instead of moving vanilla's arm by offsets: its arm is drawn rising to the fist from under the frame's corner (from
+  view (±0.48, -0.84, -0.53), vanilla's own arm start), so a hand can be lifted anywhere without its forearm floating into
+  view (offsets that lift a vanilla arm show its end: the P2 preview). Vanilla's resting fist is
+  `FirstPerson.View.REST_FIST` (0.744, -0.455, -1.072); a clip's fists replace a stance's for that hand; a hand holding
+  an item ignores fists (vanilla draws it). A fist clip gives the hands back at rest (or the off hand out under the
+  frame), or, marked `toStance`, where its stance holds them (the hang's ledge jumps).
+- **Look-lag** (P2): the hands trail fast turns of the view on a damped spring (up to 0.06 sideways, 0.045 up, 4° of
+  roll), halved with reduced motion (`FirstPerson.reducedMotion`, the body's setting).
+- **Near legs** (P2): a foot nearer the eye than 1.15 is drawn in the hand pass, pushed out along its line of sight to
+  that distance, as the arms are; farther legs stay in the world. (No source puts one there since P2.1 cut the slide's
+  legs: from eyes 0.4 up they could only be a slab across the frame.)
+- **Clean fists** (P1.1; Euan, 2026-10-25): the hands are vanilla's own blocky fists, never modelled fingers (finger
+  boxes read as loose bricks). A world arm rises to its fist from under it on its own side (its root follows the fist
+  across by `WorldBody.RISE` 0.45), not from the frame's corner, so a hand high in the frame never drags its sleeve
+  across it. A world rig sets `handDistance` (nearer reads bigger: touches 0.75, both hands 0.85, stations 0.8, the
+  pipe 0.85, the slide and landing 0.78), `held[]` (an item at the fist: a plucked flower, food being laid) and `glow`.
+  Vanilla's hand steps aside only on the side the world body has an arm (a touch with one hand leaves the sword in the
+  other). In the hand pass the frame shows y down to about 0.7·|z|: keep keyed fists inside it.
+- **The Runner's Kit in first person** (P2, `body.client.BodyFp`): each move's view clip starts from the same event as
+  its third-person clip (BodyAnims hands the clip's name over): `fp_roll`, `fp_mantle` (and every climb out),
+  `fp_grab`, `fp_lower`, `fp_ledge_up`, `fp_ledge_side_l/_r`, `fp_ledge_back`, `fp_walljump_l/_r` (the run's wall side),
+  `fp_vault` and `fp_leap` (the free-run), `fp_slide_jump`, `fp_land_soft` / `fp_land_hard` (a fall over 0.55 b/t,
+  hard over 0.95; never over a roll), `fp_stair_bump` (each half step a stair slide passes). Stances: the tactical
+  sprint's lowered hands pumping in step (empty fists pumping up into the lower frame in turn, P2.1), the slide's brace, a
+  wall-run's wall-side fist at the frame's edge brushing the wall with each footfall, a wall climb's fists slapping up in
+  turn, a hang's fists on the lip (`BodyFp.HANG_*`, swaying; shimmying hand over hand). The wall jump's shove is well
+  in the frame. World (source `body_moves`, 90; P2.1): the slide's trailing hand (the off side) on the
+  ground where the eye's ray through view (±0.42, -0.34) meets it (the step under it on stairs), skimming it with a
+  friction shake; a hard landing's fists slapped onto the ground under view (±0.2, -0.3) (down 3 ticks, held to 7, back
+  by 12) instead of `fp_land_hard`;
+  feet to the wall in a hang. No legs in a slide. The stair slide tips the view 9° down the run (`BodyCamera`).
+- **The Ascent in first person** (P3, `body.ascent.client.AscentFp`): moments, each where the Ascent gives the Feel
+  Director its beat: `fp_rope_fire` (the main arm flings the rope), `fp_rope_release`, `fp_rope_launch`, `fp_wings_open`,
+  `fp_wing_beat` (every beat, the one that takes flight too), `fp_barrel_roll`, `fp_boom` (hands up against it),
+  `fp_double_jump`, `fp_air_dash` (the lead fist punches through), `fp_dive` and `fp_slam_land` (fists up for a dive slam
+  or the Judgement Fall, smashed down on landing), `fp_sovereign_ascend`. Stances: on a rope the main fist holds it at
+  view (0.3, -0.02, -0.72), where AscentRender now starts the rope in first person, the other hand joining to pump
+  (forward) and climbing over it to reel (sneak); a zip, both hands on it; flying free, arms out low for balance (fists
+  up in a dive slam); wings, arms out flat at the frame's edges trembling with speed (swept out of the frame folding into
+  a dive); flight, one fist forward on a boost, palms down in a hover, arms sweeping up to climb, swept back cruising; in
+  the Sovereign's form the arms are tinted gold (`FirstPerson.View.tint`).
+- **Reaches** (P4.1, `anims.client.Reaches`, world source `anims_touch`, 200): a touch's hand goes to the thing and does
+  it there. Each touch is a few keys (tick, s across, u up, n out toward you) about where the hand meets the thing (its
+  anchor, followed as it moves: a creature's flank, a lid's edge), from and back to rest under the frame's foot,
+  smoothstepped; drawn at 0.75 (both hands 0.85). A door's palm meets it where you clicked (vanilla's door is open by
+  then) and pushes on through. The player never moves (Euan, 2026-10-25: walking you to the thing
+  would take control): past 2.5 blocks the hand only gets an arm's length (1.3) toward the thing, and while a hand is out
+  the view narrows ×0.95 (a lean; off with reduced motion). A chest's screen waits 4 ticks for both hands to reach its
+  lid (the menu is already open; the server is never held). The fist clips below stay for books (no world thing).
+- **Touches** (P4, `anims.client.Touches`, `anims.AnimsClips`): quick hand moments from the game's own interaction
+  events (client side), so every module's blocks get them by what they are: a door, trapdoor or gate (`DoorBlock`,
+  `TrapDoorBlock`, `FenceGateBlock`) pushed with a palm (`fp_push`), a lever thrown (`fp_lever`), a button pressed
+  (`fp_button`), a chest, barrel, ender chest or shulker box's lid lifted with both hands (`fp_lid`; the screen opens at
+  once and covers it in single player), berries or a plant that breaks at a touch (no hardness, no collision: flowers,
+  ferns, grass, the Living Wilds' herbs) pinched and plucked (`fp_pluck`), an animal stroked with an empty hand
+  (`fp_pet`), a meal from a bowl held up with the free hand under it (a stance while eating); P5 adds the Forge (block
+  id `awaken:forge`, not its class) or an anvil hammered three times (`fp_hammer`, 18 ticks: holding the blade being
+  tempered, the off hand strikes) and food a campfire takes (`RecipePropertySet.CAMPFIRE_INPUT`) laid on it by the hand
+  holding it (`fp_lay`). P6 adds: a palm pressed to a stone and held while the light answers (`fp_palm`, 18 ticks; the
+  hand lit from within, `View.glow`, and cooled a touch, 5-18) on Awaken's waystone, conduit, ascent stone, Hearth anchor,
+  rest and Stillpoint shrines, gate entrance, seal and rune (by id) and vanilla's lodestone, respawn anchor and beacon; a
+  notice torn off the Spire board (`fp_tear`); a grindstone cranked (`fp_crank`); a page turned at a lectern, an
+  enchanting table, or as a book or the Dream Journal opens (`fp_page`); the smithing table hammered (`fp_hammer`); both
+  hands set to a stonecutter, loom, cartography table or brewing stand (`fp_set`, two-handed like the lid); any
+  `awaken:*_cache` lifted like a chest. The Ritual of the Bell (`story.client.RitualFp`, a view stance): kneeling in the
+  bow both palms go flat to the floor (eased in over 6 ticks), as the eyes open the main hand comes up against the bloom
+  (50-132), at the End both hands rise palms out, shaking harder as the light drains (30-195), and drop at the error. At most 9 ticks each; the
+  action never waits; a swing cuts them; with the main hand full the off hand does it (each has an `_off` twin), with both
+  full nothing. Settings (feel): `firstPersonMoves` (P1-P3) and `firstPersonTouches` (P4), both on.
+- **Station scenes** (P5, `anims.client.station`): at a crafting table (used within 10 ticks of its screen opening, not
+  sneaking: sneak + use is the plain screen) the screen is replaced by `StationScreen` (kind `TABLE`), the vanilla
+  crafting menu with its grid and result drawn on the table in the world instead of on the screen. The view turns to the table's top and
+  narrows (×0.64) over 12 ticks (6 coming back within 12 s), out over 10; the player's own look never moves. Each
+  ingredient lies on its square (the grid square to the block, row 0 the far one; the way in snapped to an axis), the
+  result floats over the middle turning, the square under the cursor is outlined (Holo blue). A click on a square or on
+  the result is the same click on that slot (`slotClicked`, the menu's own path: stacks, splits, shift-clicks, the server
+  checks), and the grid's screen places are never hovered or drawn. Your inventory is a glass strip at the foot of the
+  screen. Your hands (world source `anims_station`, 200) rest off the table's near corners and one goes out to every
+  square whose contents change (and to the result as it is taken), over 9 ticks; moving, jumping, E or Esc leave.
+  A hand moves only within 6 ticks of your own click on a slot, so a furnace cooking on its own moves none; taking a
+  result moves the hand to the result only. Furnaces (kind `FURNACE`: furnace, smoker, blast furnace, any
+  `AbstractFurnaceScreen`): worked from the front (the way in against `FACING`), the view turned to the front's middle
+  (a little below its middle) and narrowed ×0.78; what cooks sits upright in the mouth (0.68 up, 0.06 out), the fuel in the firebox (0.24 up), the
+  result floats out at the right (0.34 out, 0.36 across, 0.62 up) turning; a slot is picked by the nearest one the ray
+  passes within 0.16 of, outlined flat to the front; the cooking (Holo blue) and the fuel left (fire) run as two thin
+  lines over the strip; the hands wait at your sides under the frame (the fuel is the off hand's, the rest the main's). The
+  recipe book is not in the scenes (sneak + use for it).
+  Setting `stationScenes` (feel), on. Drawn for you only (others see you at the station as before).
+- **The lens** (P5): the hand pass draws at a fixed 70°; anything the world anchors (arms on a pipe, at a table; near
+  legs) has its view x and y scaled by tan(35°) / tan(world FOV / 2), so it lands where the world shows it on screen even
+  with the view narrowed or widened (a station's zoom, the speed FOV).
+- Test: `anims_fp_clips` (the file reads, every clip the body and the touches play is in it, every one-shot gives the
+  hands back). Tours: `tools/autopilot/anims-pipe.txt` (P1), `anims-runner.txt` (P2), `anims-ascent.txt` (P3),
+  `anims-touch.txt` (P4: filmed with the pilot's clip recorder, since a command reaches the client a few ticks late),
+  `anims-station.txt` (P5), PACK=feel, HUD on. Pilot lines `use`, `attack`, `usehold <ticks>` press the real keys;
+  `station <slot> [button]` clicks a slot of the open station scene.
+- P1-P6 built (P5: the crafting table and furnace scenes, the Forge and campfire touches; P6: the rest of the touches, books, the Ritual's hands). Tour P6: `anims-p6.txt`. The casts (powers) still draw their own first-person
+  arms (`CastAnims`); folding them into Hands is the powers module's step, coordinated with the combat plan.
+
+
 ---------------------------------------------------------------------------------------------------------------------
 
-## 24. Arms (weapons and combat; plan docs/combat/PLAN.md, page docs/combat/plan.html; Euan 2026-10-25)
+## 25. Arms (weapons and combat; plan docs/combat/PLAN.md, page docs/combat/plan.html; Euan 2026-10-25)
 
 Euan: "Massively level up the weapons and combat system." Approved: "Go ahead with the full plan", every §7 decision
 as recommended (i-frames on the dodge only; dodge = sprint + back/left/right/none; guard on right mouse; Hands grows to

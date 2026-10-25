@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "awaken:block/mooring_ring"
+    },
+    "facing=east": {
+      "model": "awaken:block/mooring_ring",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "awaken:block/mooring_ring",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "awaken:block/mooring_ring",
+      "y": 270
+    }
+  }
+}

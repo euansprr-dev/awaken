@@ -60,6 +60,7 @@ final class RunnerServer {
             case SHIMMY -> shimmy(p, m, msg, now);
             case LEDGE_JUMP -> ledgeJump(p, m, msg, now);
             case WALL_CLIMB -> startClimb(p, m, msg, now);
+            case GRIP -> grip(p, m, msg, now);
             default -> false;
         };
         if (bench != null && bench.target == move.ordinal()) {
@@ -161,6 +162,10 @@ final class RunnerServer {
             e = RunnerRules.edgeNear(p.level(), ctx, M, msg.tx(), msg.ty(), msg.tz(), msg.axis(), msg.sign(), s[1], 0.3, 0.1 + RunnerRules.SERVER_TOL);
             // a real drop under the hold (the column in front of the face)
             if (e != null && RunnerRules.groundWithin(p.level(), ctx, M, e.hx(), e.top(), e.hz(), RunnerRules.LOWER_DROP)) return false;
+        } else if (msg.flag() == BodyPayloads.HANG_EAVE) {
+            // from a climb line's top up to the lip over it (SPEC §17.23): only from a grip held or just let go
+            if (!m.gripping && now - m.gripEndedAt > 6) return false;
+            e = GripRules.topLip(p.level(), ctx, M, s[0], s[1], s[2], msg.axis(), msg.sign(), RunnerRules.SERVER_TOL);
         } else {
             e = RunnerRules.findEdge(p.level(), ctx, M, s[0], s[1], s[2], msg.axis(), msg.sign(), RunnerRules.HANG_REACH + RunnerRules.SERVER_TOL,
                     RunnerRules.HANG_LO - 0.3, RunnerRules.HANG_HI + 0.3, 0, 0.2);
@@ -275,6 +280,69 @@ final class RunnerServer {
         });
     }
 
+    // ---- the grip on a climb line (SPEC §17.23) ------------------------------------------------------------------------
+
+    /** The clip others see for a grip flag. */
+    static String gripClip(int flag) {
+        return switch (flag) {
+            case BodyPayloads.GRIP_CLIMB -> BodyClips.PIPE_CLIMB;
+            case BodyPayloads.GRIP_CLIMB_FAST -> BodyClips.PIPE_CLIMB_FAST;
+            case BodyPayloads.GRIP_SLIDE -> BodyClips.PIPE_SLIDE;
+            case BodyPayloads.GRIP_HOP -> BodyClips.PIPE_HOP;
+            case BodyPayloads.GRIP_KICK -> BodyClips.PIPE_KICK;
+            case BodyPayloads.GRIP_SIDE_L -> BodyClips.PIPE_SIDE_L;
+            case BodyPayloads.GRIP_SIDE_R -> BodyClips.PIPE_SIDE_R;
+            case BodyPayloads.GRIP_LAND -> BodyClips.PIPE_LAND;
+            default -> BodyClips.PIPE_HOLD;
+        };
+    }
+
+    /**
+     * A grip's Run: the first one takes a line (a climb line in the claimed column, where the server saw the body
+     * lately); later ones say what the hands do now (others see its clip); the last leaves the line.
+     */
+    static boolean grip(ServerPlayer p, BodyMotion m, BodyPayloads.Run msg, long now) {
+        int flag = msg.flag();
+        if (!m.gripping) {
+            if (flag != BodyPayloads.GRIP_HOLD && flag != BodyPayloads.GRIP_CLIMB && flag != BodyPayloads.GRIP_CLIMB_FAST) return false;
+            double[] s = from(p, m, msg);
+            if (s == null) return false;
+            GripRules.Line l = GripRules.find(p.level(), M, s[0], s[1], s[2], msg.yaw());
+            if (l == null || l.bx() != (int) Math.floor(msg.tx()) || l.bz() != (int) Math.floor(msg.tz())) return false;
+            endRun(m, now);
+            endHang(m, now);
+            m.gripping = true;
+            m.gripBx = l.bx();
+            m.gripBz = l.bz();
+            m.gripSince = now;
+            m.gripMiss = 0;
+            m.links = 0; // a grip is a landing for the chain
+            m.wallCount = 0;
+            p.resetFallDistance();
+            BodyServer.didClip(p, m, Move.GRIP, msg.yaw(), BodyContent.GRAB, 0.5F, now, gripClip(flag));
+            return true;
+        }
+        switch (flag) {
+            case BodyPayloads.GRIP_KICK, BodyPayloads.GRIP_SIDE_L, BodyPayloads.GRIP_SIDE_R, BodyPayloads.GRIP_LAND -> {
+                endGrip(m, now);
+                m.lastMove = now;
+                BodyServer.showClip(p, gripClip(flag), msg.yaw());
+            }
+            default -> {
+                m.lastMove = now;
+                BodyServer.showClip(p, gripClip(flag), msg.yaw());
+            }
+        }
+        return true;
+    }
+
+    private static void endGrip(BodyMotion m, long now) {
+        if (!m.gripping) return;
+        m.gripping = false;
+        m.gripEndedAt = now;
+        m.lastMove = now;
+    }
+
     static void onEnd(ServerPlayer p, Move move) {
         BodyMotion m = p.getExistingDataOrNull(BodyContent.MOTION);
         if (m == null) return;
@@ -291,6 +359,10 @@ final class RunnerServer {
             case SHIMMY -> {
                 m.shimmying = false;
                 if (m.hanging) BodyServer.showClip(p, BodyClips.HANG, p.getYRot());
+            }
+            case GRIP -> {
+                endGrip(m, now);
+                BodyServer.showRunnerEnd(p);
             }
             default -> {
             }
@@ -336,9 +408,10 @@ final class RunnerServer {
     /** One tick of a run or a hang in progress (also driven by GameTests). */
     static void tick(ServerPlayer p, BodyMotion m, long now) {
         if (BodyServer.off(p) || p.isInLiquid()) {
-            if (m.runUntil != 0 || m.hanging) {
+            if (m.runUntil != 0 || m.hanging || m.gripping) {
                 endRun(m, now);
                 endHang(m, now);
+                endGrip(m, now);
             }
             return;
         }
@@ -362,6 +435,7 @@ final class RunnerServer {
                 }
             }
         }
+        gripTick(p, m, now);
         if (m.hanging) {
             // the server runs a player's physics between its packets (26.3: AUTHORITATIVE_SIDE_AND_SERVER), and a still,
             // hanging client only sends a reminder every 20 ticks: without this its copy here sinks under gravity
@@ -379,6 +453,24 @@ final class RunnerServer {
                     Awaken.LOG.info("[runner] t{} ended LEDGE_HANG (no edge at the server's position)", now);
                 }
             }
+        }
+    }
+
+    /** One tick of a grip: the body held where the client says it is, no fall damage, and the line still there. */
+    static void gripTick(ServerPlayer p, BodyMotion m, long now) {
+        if (!m.gripping) return;
+        // as a hang: the server's own physics would sink a still climber's copy between its packets
+        p.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        p.resetFallDistance();
+        p.causeFoodExhaustion(GripRules.EXHAUSTION);
+        m.lastMove = now;
+        if ((now - m.gripSince) % GripRules.CHECK != 0) return;
+        m.gripMiss = GripRules.stillHolds(p.level(), M, m.gripBx, m.gripBz, p.getX(), p.getY(), p.getZ()) ? 0 : m.gripMiss + 1;
+        if (m.gripMiss >= GripRules.MISS) {
+            endGrip(m, now);
+            m.tEnded = true;
+            AwakenNet.send(p, new BodyPayloads.Refuse(Move.GRIP.ordinal()));
+            Awaken.LOG.info("[runner] t{} ended GRIP (no climb line at the server's position)", now);
         }
     }
 

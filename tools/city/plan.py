@@ -347,15 +347,7 @@ class Plan:
         L.append({'id': 'market_hall', 'name': "The Association's Market Hall", 'parts': mh, 'at': [-43, -25]})
         for p in mh:
             self.put_box(*p['box'], LANDMARK)
-        # stalls on the square, a ring of twelve awnings, the centre kept clear (the gate opens there)
-        stalls = []
-        for k in range(12):
-            a = math.radians(k * 30 + 15)
-            cx, cz = int(round(28 * math.cos(a))), int(round(28 * math.sin(a)))
-            if cz < -24 and abs(cx) < 14:
-                continue
-            stalls.append({'kind': 'stall', 'box': [cx - 2, cz - 2, cx + 2, cz + 2], 'h': 4, 'colour': k % 6})
-        L.append({'id': 'stalls', 'name': 'Market stalls', 'parts': stalls})
+        # (the square's stalls are street-life props since M4 B3a: tools/city/props.py, clusters on the bowl's -2 ring)
         # the High Terrace: the Hunter Association, raised with the terrace
         assoc = [{'kind': 'assoc_hall', 'box': [-21, -150, -8, -137], 'h': 26},
                  {'kind': 'assoc_centre', 'box': [-7, -150, 6, -137], 'h': 40},
@@ -1692,10 +1684,14 @@ class Plan:
             lines.append((p, q, 'walk', None))
         for a in range(0, 360, 45):
             lines.append(((0.0, 0.0), (36 * math.cos(math.radians(a)), 36 * math.sin(math.radians(a))), 'walk', None))
-        # every street that starts at the square is joined to its middle
+        # every street that starts at the square is joined to the ring path at its own bearing (M4 B3a: no longer to
+        # the middle, so the eight winds stay the square's only aisles and its stalls stand between them)
         for st in self.streets:
             for end in (st['a'], st['b']):
-                if math.hypot(*end) < 42:
+                r = math.hypot(*end)
+                if 30.5 < r < 42:
+                    lines.append(((end[0] * 30.0 / r, end[1] * 30.0 / r), tuple(end), 'walk', None))
+                elif r <= 30.5:
                     lines.append(((0.0, 0.0), tuple(end), 'walk', None))
         for key, (bx, bz) in self.bells.items():
             for (ax_, az_), (bx_, bz_) in (((bx - 16, bz - 9), (bx + 15, bz - 9)), ((bx - 16, bz + 8), (bx + 15, bz + 8)),
@@ -1840,6 +1836,8 @@ class Plan:
                         'roads': [[g['x'], g['z'], int(g['x'] * 1.4), int(g['z'] * 1.4)] for g in self.gates]},
             'trees': self.trees,
             'lamps': self.lamps,
+            'propFields': ['kind', 'x0', 'z0', 'x1', 'z1', 'ry', 'facing', 'v', 's'],
+            'props': self.street_life.props,
             'start': {'x': self.landmarks_by_id('roost')['parts'][2]['box'][2] - 3, 'ry': WALL_H,
                       'z': self.landmarks_by_id('roost')['parts'][2]['box'][3] - 3, 'yaw': -45.0,
                       'note': "the Runners' Roost terrace on the NW wall, facing the spire"},
@@ -2209,6 +2207,10 @@ def build():
     p.uses()
     p.crossings()
     p.graphs()
+    # the street-life layer (look bible §7, M4 B3a): stalls, carts, wells, benches, lamps at every junction, lines
+    sys.path.insert(0, HERE)
+    import props as street_props
+    p.street_life = street_props.build(p, globals())
     # the opening's street route: the Roost to the square, never over the Bell Bridge (it falls)
     adj = p.street_graph.adjacency()
     sq = min(range(len(p.street_graph.nodes)), key=lambda n: math.hypot(*p.street_graph.nodes[n][:2]))
@@ -2248,6 +2250,7 @@ def stats(p):
     print(f"enterable {sum(1 for q in p.plots if q['enter'])}  uses "
           f"{dict(Counter(q['use'] for q in p.plots if q['enter']))}  no door {sum(1 for q in p.plots if not q['door'])}")
     print(f"landmarks {len(p.landmarks)} ({sum(len(l['parts']) for l in p.landmarks)} parts)  trees {len(p.trees)}  lamps {len(p.lamps)}")
+    print('street life', p.street_life.summary())
     print(f"streets {len(p.streets)}  street graph {len(sg.nodes)} nodes {len(sg.edges)} edges; "
           f"reachable from the square {len(seen)}; doors {len(doors)}, unreachable {len(lost)}")
     print(f"roof graph {len(p.roof_graph['nodes'])} nodes {len(p.roof_graph['edges'])} edges ({p.roof_graph['links']} to the street)")

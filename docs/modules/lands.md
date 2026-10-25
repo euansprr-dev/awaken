@@ -82,12 +82,13 @@ sways hardest where a front is passing.
   grove 0 and cherry leaves skipped (vanilla already drops petals), Elderwood 3.0 and gold, Lumen Forest motes only;
   `awaken:elder_leaves` and `awaken:lumen_leaves` are already listed for the slice's trees.
 
-**Leaf rustle** (`terrain.client.LeafRustle`, Ambient/Environment slider): two mono beds around the listener,
-`amb.lands_rustle` (leaf ticks over a soft shush, a little air) and `amb.lands_wind_high` (a slow low howl, rumble,
-a faint whistle), rendered by `tools/art/specs/audio_lands.py`. Rustle volume = canopy × (0.12 + 0.88 strength) ×
-(0.75 + 0.25 gust), canopy being the share of 16 columns on rings of 5 and 11 blocks whose top is leaves above head
-height; high wind = open sky × (0.12 + 0.88 height above sea level + 30, over 70 blocks) × (0.1 + 0.9 strength) ×
-(1 − 0.6 canopy). Both ease in and out and stop when silent. Setting `leaf_rustle` (default on).
+**Leaf rustle** (since 2026-10-25 played by the world sound Conductor, `core.audio.client.world`, soundscape
+`assets/awaken/soundscape/world.json`; Ambient/Environment slider): `amb.lands_rustle` (leaf ticks over a soft shush,
+a little air) as a texture placed at the canopy overhead, and `amb.lands_wind_high` (a slow low howl, rumble, a faint
+whistle) placed toward the open side, rendered by `tools/art/specs/audio_lands.py`. Rustle = canopy × (0.12 + 0.88
+strength) × (0.75 + 0.25 gust), canopy being the share of 16 columns on rings of 5 and 11 blocks whose top is leaves
+above head height; high wind = open sky × (0.12 + 0.88 height above sea level + 30, over 70 blocks) × (0.1 + 0.9
+strength) × (1 − 0.6 canopy). Both ease in and out and stop when silent. Setting `leaf_rustle` (default on).
 
 **Commands** (client): `/awaken terrain leaves status|amount <off|low|normal|high>|biome <id|clear>` (the biome line
 treats every spot as that biome: a showcase aid), `/awaken terrain wind status|force <steady> <gust>|real`,

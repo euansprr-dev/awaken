@@ -1,0 +1,71 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/awning_plum",
+    "top": "awaken:block/awning_plum",
+    "trim": "awaken:block/awning_plum_trim",
+    "iron": "awaken:block/street_iron"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        14,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#top"
+        },
+        "down": {
+          "uv": [
+            0,
+            16,
+            16,
+            0
+          ],
+          "texture": "#top"
+        },
+        "north": {
+          "uv": [
+            0,
+            6,
+            16,
+            8
+          ],
+          "texture": "#trim"
+        },
+        "east": {
+          "uv": [
+            0,
+            4,
+            16,
+            6
+          ],
+          "texture": "#trim"
+        },
+        "west": {
+          "uv": [
+            0,
+            4,
+            16,
+            6
+          ],
+          "texture": "#trim"
+        }
+      }
+    }
+  ]
+}

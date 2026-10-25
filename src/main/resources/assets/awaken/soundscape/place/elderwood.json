@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "title": "Elderwood (with its family's or AmbientSounds' forest): the colossi groaning in the gusts, gold light glinting",
+  "air": [
+    {"file": "awaken:amb_world_elder_groan", "gain": 0.55, "drive": "wind"}
+  ],
+  "events": [
+    {"sound": "awaken:world.elder_creak", "anchor": "leaves", "per_minute": 1.2, "hush": false,
+     "volume": [0.35, 0.6], "pitch": [0.85, 1.05], "distance": [12, 30]},
+    {"sound": "awaken:world.elder_glint", "anchor": "leaves", "per_minute": 2,
+     "when": {"dawn": 0.6, "morning": 1.0, "day": 1.0, "dusk": 0.5, "night": 0.0}, "rain": 0.2, "hush": false,
+     "volume": [0.15, 0.3], "pitch": [1.0, 1.0], "distance": [6, 18]}
+  ]
+}

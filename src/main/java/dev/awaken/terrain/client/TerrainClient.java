@@ -48,9 +48,6 @@ public final class TerrainClient {
     private static void tick() {
         Minecraft mc = Minecraft.getInstance();
         FallingLeaves.tick(mc);
-        long t0 = System.nanoTime();
-        LeafRustle.tick(mc);
-        FallingLeaves.spawnNanos += System.nanoTime() - t0;
     }
 
     /**
@@ -61,7 +58,7 @@ public final class TerrainClient {
     private static void commands(RegisterClientCommandsEvent e) {
         e.getDispatcher().register(Commands.literal(Awaken.MODID).then(Commands.literal("terrain")
                 .then(Commands.literal("leaves")
-                        .then(Commands.literal("status").executes(c -> say("Falling leaves: " + FallingLeaves.status() + "; " + LeafRustle.status() + "; " + LandsMotes.status())))
+                        .then(Commands.literal("status").executes(c -> say("Falling leaves: " + FallingLeaves.status() + "; " + LandsMotes.status())))
                         .then(Commands.literal("amount").then(Commands.argument("amount", StringArgumentType.word()).executes(c -> {
                             var a = TerrainClientConfig.LeafAmount.valueOf(StringArgumentType.getString(c, "amount").toUpperCase(Locale.ROOT));
                             TerrainClientConfig.setFallingLeaves(a);

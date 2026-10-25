@@ -79,9 +79,11 @@ final class CitizenWork implements Ledger.Work {
         this.cz = l.cz;
         this.sy = l.streetY;
         lampHead = new BlockPos[r.lampPlace.length];
+        dev.awaken.city.CityPlan plan = dev.awaken.city.CityPlan.get();
         for (int k = 0; k < lampHead.length; k++) {
-            int ry = r.pRy[r.lampPlace[k]];
-            lampHead[k] = new BlockPos(cx + (int) Math.floor(r.lampX[k]), sy + ry + 4, cz + (int) Math.floor(r.lampZ[k]));
+            // the head stands four over the post's own ground (the painter's), not the lamplighter's spot beside it
+            int lx = (int) Math.floor(r.lampX[k]), lz = (int) Math.floor(r.lampZ[k]);
+            lampHead[k] = new BlockPos(cx + lx, sy + plan.lift(lx, lz) + 4, cz + lz);
         }
         lineAxis = new Direction.Axis[r.lines.size()];
         for (int k = 0; k < r.lines.size(); k++) {
@@ -334,52 +336,43 @@ final class CitizenWork implements Ledger.Work {
 
     // ---- stalls ------------------------------------------------------------------------------------------------------
 
-    private static final BlockState SHUTTER_DOWN = parse("minecraft:spruce_trapdoor[facing=north,half=bottom,open=true]");
-    private static final BlockState SHUTTER_UP = parse("minecraft:spruce_trapdoor[facing=north,half=top,open=false]");
-    private static final BlockState COUNTER_LOW = parse("minecraft:stone_slab[type=bottom]");
-    private static final BlockState COUNTER_HIGH = parse("minecraft:stone_slab[type=top]");
+    private static final String[] SIDES = {"north", "east", "south", "west"};
+    /** The street kit's counter by facing, shut [0] and open [1] (M4 B3a). */
+    private static final BlockState[][] COUNTER = new BlockState[4][2];
 
-    private static BlockState[] wares(String good) {
-        String[] s = switch (good) {
-            case "bread" -> new String[]{"minecraft:cake", "minecraft:cake", "minecraft:cake"};
-            case "fish" -> new String[]{"minecraft:barrel[facing=up,open=true]", "minecraft:barrel[facing=up,open=true]", "minecraft:barrel[facing=up,open=true]"};
-            case "produce" -> new String[]{"minecraft:melon", "minecraft:pumpkin", "minecraft:melon"};
-            case "cloth" -> new String[]{"minecraft:red_carpet", "minecraft:cyan_carpet", "minecraft:yellow_carpet"};
-            case "pottery" -> new String[]{"minecraft:decorated_pot", "minecraft:flower_pot", "minecraft:decorated_pot"};
-            case "candles" -> new String[]{"minecraft:white_candle[candles=4]", "minecraft:yellow_candle[candles=3]", "minecraft:white_candle[candles=4]"};
-            case "flowers" -> new String[]{"minecraft:potted_poppy", "minecraft:potted_blue_orchid", "minecraft:potted_allium"};
-            case "spice" -> new String[]{"minecraft:potted_red_mushroom", "minecraft:potted_brown_mushroom", "minecraft:potted_red_mushroom"};
-            case "tools" -> new String[]{"minecraft:lantern", "minecraft:lightning_rod", "minecraft:lantern"};
-            default -> new String[]{"minecraft:honey_block", "minecraft:honey_block", "minecraft:honey_block"};
-        };
-        BlockState[] out = new BlockState[3];
-        for (int k = 0; k < 3; k++) out[k] = parse(s[k]);
-        return out;
+    static {
+        for (int f = 0; f < 4; f++) {
+            COUNTER[f][0] = parse("awaken:stall_counter[facing=" + SIDES[f] + ",open=false]");
+            COUNTER[f][1] = parse("awaken:stall_counter[facing=" + SIDES[f] + ",open=true]");
+        }
     }
 
-    /** One stall cell a tick toward the stall's wanted state: shutters flip one after another, wares go out by stock. */
+    /** The kit's wares for a stall's good (never vanilla stand-ins: decision 26). */
+    private static BlockState wares(String good) {
+        return WARES.computeIfAbsent(good, g -> parse("awaken:wares[good=" + g + "]"));
+    }
+
+    private static final java.util.Map<String, BlockState> WARES = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * One stall cell every few ticks toward the stall's wanted state: the keeper drops the counter's board and lays the
+     * wares out one cell after the other (the middle first), and folds it all away at dusk; wares show by stock.
+     */
     private void reconcileStalls(long now) {
         if (now % 3 != 0 || r.stalls.isEmpty()) return;
         int s = stallCursor;
         stallCursor = (stallCursor + 1) % r.stalls.size();
         Stall st = r.stalls.get(s);
-        int g = sy + (r.pRy[st.keeper()]);
+        int g = sy + r.pRy[st.keeper()];
         boolean open = d.stallOpen[s] != 0;
-        int z = cz + st.z1();
-        BlockState[] wares = wares(st.good());
-        int shown = d.stock[s] >= 66 ? 3 : d.stock[s] >= 33 ? 2 : d.stock[s] > 5 ? 1 : 0;
-        boolean changed = false;
-        for (int x = st.x0() + 1; x <= st.x1() - 1 && !changed; x++) {
-            int t = x - st.x0() - 1; // 0..2 along the counter
-            int order = t == 1 ? 0 : t == 0 ? 1 : 2; // the middle goes first
-            BlockPos low = new BlockPos(cx + x, g + 1, z), mid = low.above(), high = mid.above();
+        int shown = d.stock[s] >= 50 ? 2 : d.stock[s] > 5 ? 1 : 0;
+        BlockState ware = wares(st.good());
+        for (int k = 0; k < 2; k++) {
+            BlockPos low = new BlockPos(cx + st.counterX(k), g + 1, cz + st.counterZ(k));
             if (!level.isLoaded(low)) return;
-            BlockState counter = open ? COUNTER_HIGH : COUNTER_LOW;
-            BlockState ware = open && order < shown ? wares[t % 3] : Blocks.AIR.defaultBlockState();
-            BlockState wantMid = open ? ware : SHUTTER_DOWN, wantHigh = open ? SHUTTER_UP : SHUTTER_DOWN;
-            changed |= set(high, wantHigh, true);
-            if (!changed) changed |= set(mid, wantMid, true);
-            if (!changed) changed |= set(low, counter, false);
+            if (set(low, COUNTER[st.facing()][open ? 1 : 0], true)) return;
+            BlockState want = open && k < shown ? ware : Blocks.AIR.defaultBlockState();
+            if (set(low.above(), want, false)) return;
         }
     }
 
@@ -389,9 +382,9 @@ final class CitizenWork implements Ledger.Work {
         if (s == want) return false;
         if (!s.isAir() && !mine(s)) return false;
         level.setBlock(pos, want, Block.UPDATE_ALL);
-        if (sound && (want.is(Blocks.SPRUCE_TRAPDOOR) || s.is(Blocks.SPRUCE_TRAPDOOR)))
-            level.playSound(null, pos, want.is(Blocks.SPRUCE_TRAPDOOR) && want.getValue(net.minecraft.world.level.block.TrapDoorBlock.OPEN)
-                    ? SoundEvents.WOODEN_TRAPDOOR_CLOSE : SoundEvents.WOODEN_TRAPDOOR_OPEN, SoundSource.BLOCKS, 0.5f, 1f);
+        if (sound && want.getBlock() instanceof dev.awaken.city.kit.StreetBlocks.StallCounter)
+            level.playSound(null, pos, want.getValue(dev.awaken.city.kit.StreetBlocks.StallCounter.OPEN)
+                    ? SoundEvents.WOODEN_TRAPDOOR_OPEN : SoundEvents.WOODEN_TRAPDOOR_CLOSE, SoundSource.BLOCKS, 0.5f, 1f);
         return true;
     }
 
@@ -405,8 +398,8 @@ final class CitizenWork implements Ledger.Work {
     static {
         MINE.add(Blocks.SPRUCE_TRAPDOOR);
         MINE.add(Blocks.STONE_SLAB);
-        for (String g : new String[]{"bread", "fish", "produce", "cloth", "pottery", "candles", "flowers", "spice", "tools", "cheese"})
-            for (BlockState w : wares(g)) MINE.add(w.getBlock());
+        MINE.add(COUNTER[0][0].getBlock());
+        MINE.add(wares("bread").getBlock());
     }
 
     // ---- laundry -------------------------------------------------------------------------------------------------------
@@ -543,14 +536,21 @@ final class CitizenWork implements Ledger.Work {
         d.setDirty();
     }
 
+    /**
+     * Ticks the hour waits at dawn, noon and dusk while the Choir's carillon plays its tune (citizens.client.CitySound,
+     * 10.6-13.6 s): the tune first, then the hour struck, as a clock tower does (M4 B3b).
+     */
+    static final int AFTER_TUNE = 300;
+
     /** On the hour: every tower whose ringer is at the bell rings the hour, the Choir first, the districts after it. */
     private void ringHour(long now, int tod) {
         int hour = (6 + tod / 1000) % 24;
         int strokes = hour % 12 == 0 ? 12 : hour % 12;
+        long wait = hour == 6 || hour == 12 || hour == 18 ? AFTER_TUNE : 0;
         for (int b = 0; b < r.bells.size(); b++) {
             if (!ringerAt(b)) continue;
             boolean choir = "choir".equals(r.bells.get(b).landmark());
-            long start = now + (choir ? 0 : 50 + 23L * b);
+            long start = now + wait + (choir ? 0 : 50 + 23L * b);
             peals.add(new long[]{b, start, strokes, choir ? 46 : 34, 0});
         }
     }
@@ -805,12 +805,24 @@ final class CitizenWork implements Ledger.Work {
             ps.add(e.getValue());
             ks.add(chimneyKind.getOrDefault(e.getKey(), (byte) 1));
         }
+        // (M4 B3a) the fountains' spray, from the upper bowl of each
+        for (dev.awaken.city.CityPlan.Prop pr : dev.awaken.city.CityPlan.get().props) {
+            if (!pr.kind().equals("fountain")) continue;
+            ps.add(BlockPos.asLong(cx + pr.x0() + 2, sy + pr.ry() + 3, cz + pr.z0() + 2));
+            ks.add((byte) 4);
+        }
+        // (M4 B3b) every street lamp's head: the client draws its pool of light while it's lit
+        for (BlockPos lh : lampHead) {
+            ps.add(lh.asLong());
+            ks.add((byte) 5);
+        }
         long[] pa = new long[ps.size()];
         byte[] ka = new byte[ks.size()];
         for (int k = 0; k < pa.length; k++) {
             pa[k] = ps.get(k);
             ka[k] = ks.get(k);
         }
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(p, new CitizensNet.Site(cx, sy, cz));
         CitizensNet.emitters(java.util.List.of(p), true, pa, ka);
     }
 
@@ -936,8 +948,43 @@ final class CitizenWork implements Ledger.Work {
                 case P_SIT -> act = Act.SIT;
                 case P_PLAY -> act = Act.PLAY;
                 case P_MILL -> act = Act.HAUL;
-                case P_TAVERN_OUT -> act = (i % 3) == 0 ? Act.LEAN : Act.TALK;
-                case P_SHOP_DOOR -> act = (i & 1) == 0 ? Act.LEAN : Act.ARMS_CROSSED;
+                case P_TAVERN_OUT -> {
+                    if (job == TAVERNKEEPER) {
+                        // (M4 B3b) the house serves its tables in the lane: trays out, a pour at the door, a word between
+                        int k = (int) Math.floorMod((now + i * 613L) / 400, 3L);
+                        act = k == 0 ? Act.TRAY : k == 1 ? Act.SERVE : Act.TALK;
+                        if (k == 0) main = Props.BREAD;
+                    } else act = (i % 3) == 0 ? Act.LEAN : Act.TALK;
+                }
+                case P_SHOP_DOOR -> {
+                    // (M4 B3b) a shopkeeper minds the door: wares carried out and set down, a word with a passer-by, a lean
+                    int k = (int) Math.floorMod(now / 600 + i * 7L, 4L);
+                    act = k == 0 ? Act.SET_DOWN : k == 1 ? Act.TALK : k == 2 ? Act.LEAN : Act.SET_DOWN;
+                    crate = k == 0;
+                }
+                case P_MOORING -> {
+                    // (M4 B3b) a boatman at his berth: the lines coiled and made fast, the boat bailed, a crate swung down
+                    // into it, the boat fended off the quay with the pole; each spell its own length, out of step with the
+                    // next berth's
+                    int k = (int) Math.floorMod((now + i * 977L) / 520, 5L);
+                    switch (k) {
+                        case 0 -> act = Act.COIL;
+                        case 1 -> {
+                            act = Act.BAIL;
+                            main = Props.BUCKET;
+                        }
+                        case 2 -> {
+                            act = Act.SET_DOWN;
+                            crate = true;
+                        }
+                        case 3 -> {
+                            act = Act.POLE;
+                            main = Props.POLE;
+                        }
+                        default -> act = Act.HAUL;
+                    }
+                }
+                case P_NET -> act = Act.MEND;
                 default -> {
                     if (job == MASON) {
                         act = Act.TROWEL;
@@ -974,14 +1021,12 @@ final class CitizenWork implements Ledger.Work {
         return -1;
     }
 
-    /** True while the stall's shutters are still flipping (its keeper works them). */
+    /** True while the stall's counter is still being opened or shut (its keeper works it). */
     private boolean stallBusy(int s) {
         Stall st = r.stalls.get(s);
-        BlockPos p = new BlockPos(cx + (st.x0() + st.x1()) / 2, sy + r.pRy[st.keeper()] + 3, cz + st.z1());
+        BlockPos p = new BlockPos(cx + st.counterX(1), sy + r.pRy[st.keeper()] + 1, cz + st.counterZ(1));
         if (!level.isLoaded(p)) return false;
-        BlockState hi = level.getBlockState(p);
-        boolean open = d.stallOpen[s] != 0;
-        return open ? hi != SHUTTER_UP : hi != SHUTTER_DOWN;
+        return level.getBlockState(p) != COUNTER[st.facing()][d.stallOpen[s] != 0 ? 1 : 0];
     }
 
     // ---- helpers ------------------------------------------------------------------------------------------------------

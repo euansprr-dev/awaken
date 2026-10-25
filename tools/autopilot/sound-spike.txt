@@ -1,0 +1,69 @@
+# World sound, Phase 0 spike (docs/sound/PLAN.md §11; decisions 2-3 wait on it). Mac only, with Euan's go-ahead.
+# Installs the pack's sound profile plus the spike profile (Tread Lightly, Immersive Thunder Reforged, AmbientSounds
+# and CreativeCore) beside Sound Physics Remastered, with SPR's logs on:
+#   mkdir -p run-autopilot/config/sound_physics_remastered
+#   printf 'debug_logging=true\nperformance_logging=true\n' \
+#     > run-autopilot/config/sound_physics_remastered/soundphysics.properties
+#   PACK=sound,soundspike tools/autopilot.sh tools/autopilot/sound-spike.txt
+# Pass:
+#   - no crash, no mixin or "Exception" line from treadlightly, immersivethunder, ambientsounds or creativecore;
+#   - "Sound Physics - Debug ... name: 'treadlightly:..." lines while the player lands (Tread Lightly's steps reach SPR);
+#   - in the gate (an awaken: dimension) AmbientSounds plays nothing: its /ambient-debug HUD, if opened by hand, shows
+#     the dimension muted (our assets/ambientsounds/basic/dimensions/awaken_dimensions.json);
+#   - the four perf lines within 2% of each other with and without the spike profile (run once with PACK=sound too).
+# Then by ear, 15 minutes in the same world (Euan, or the session with his yes): walk forest floor, stone, wood, gravel,
+# snow, water's edge in rain; stand in a forest at dawn and in a storm. Record 60 s of AmbientSounds at dawn in the
+# forest for batch 1's A/B (kept on the Mac, never committed). In chat: /treadlightly report lists our unmapped blocks.
+world sound_spike creative 4243
+waitworld
+gui 0
+cmd gamerule awaken:fauna_spawning false
+cmd awaken admin awaken
+wait 200
+screen close
+# ---- a forest at dawn: AmbientSounds' birds, our leaf rustle -------------------------------------------------------
+cmd awaken terrain visit minecraft:forest
+wait 200
+cmd weather clear 1000000
+cmd time set 23200
+wait 400
+perf spike_forest_dawn 20
+shot spike_01_forest_dawn
+# ---- a storm in the same forest: Immersive Thunder's delayed thunder, rain ----------------------------------------
+cmd weather thunder 6000
+wait 200
+cmd summon minecraft:lightning_bolt ~40 ~ ~
+wait 100
+cmd summon minecraft:lightning_bolt ~160 ~ ~
+wait 200
+perf spike_forest_storm 20
+# ---- landings on four surfaces: Tread Lightly's land events through SPR --------------------------------------------
+cmd weather clear 1000000
+cmd fill ~-2 ~6 ~-2 ~2 ~6 ~2 minecraft:stone
+cmd tp @s ~ ~10 ~
+wait 60
+cmd fill ~-2 ~6 ~-2 ~2 ~6 ~2 minecraft:oak_planks
+cmd tp @s ~ ~10 ~
+wait 60
+cmd fill ~-2 ~6 ~-2 ~2 ~6 ~2 minecraft:gravel
+cmd tp @s ~ ~10 ~
+wait 60
+cmd fill ~-2 ~6 ~-2 ~2 ~6 ~2 minecraft:snow_block
+cmd tp @s ~ ~10 ~
+wait 60
+# ---- a closed stone chamber (a cave stand-in): reverb on steps, AmbientSounds' cave sounds -------------------------
+cmd fill ~-12 ~-1 ~-12 ~12 ~9 ~12 minecraft:stone hollow
+wait 200
+perf spike_chamber 20
+shot spike_02_chamber
+cmd fill ~-12 ~-1 ~-12 ~12 ~9 ~12 minecraft:air
+# ---- a gate: AmbientSounds must be silent in an awaken: dimension --------------------------------------------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open E bell_crypt
+wait 320
+cmd awaken gate interior enter
+wait 200
+perf spike_gate 20
+shot spike_03_gate
+quit

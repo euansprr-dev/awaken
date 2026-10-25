@@ -1,13 +1,10 @@
 package dev.awaken.body.client;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+
 import dev.awaken.body.BodyRules;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.neoforged.neoforge.client.event.ComputeFovModifierEvent;
-import net.neoforged.neoforge.client.event.RenderFrameEvent;
-import net.neoforged.neoforge.client.event.RenderHandEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 
 /**
@@ -18,12 +15,7 @@ import net.neoforged.neoforge.client.event.ViewportEvent;
 final class BodyCamera {
     private BodyCamera() {}
 
-    private static long frame, handsFrame = -1;
-    private static float tacWide, slideWide;
-
-    static void onFrame(RenderFrameEvent.Pre e) {
-        frame++;
-    }
+    private static float tacWide, slideWide, stairTilt;
 
     private static float now(float pt) {
         return ClientMoves.ticks + pt;
@@ -66,9 +58,16 @@ final class BodyCamera {
             pitch -= 3F * s;
             pitch += 0.35F * s * Mth.sin(t * 2.9F) * (float) (ClientMoves.slideSpeed / BodyRules.SLIDE_V0);
         }
+        // a stair slide (SPEC §17.22): the view tips down the run you're gliding (eased in and out)
+        stairTilt += ((ClientMoves.stairSliding ? 1F : 0F) - stairTilt) * 0.08F;
+        if (stairTilt > 0.01F) pitch += 9F * stairTilt;
         // the slide-cancel: a kick up as you come out
         float j = t - ClientMoves.slideJumpAt;
         if (j >= 0 && j < 7) pitch -= 5F * Mth.sin(j / 7F * Mth.PI);
+        // the grip's slide (SPEC §17.23): a faint judder from the line running through the hands
+        if (GripMoves.active() && GripMoves.mode == GripMoves.SLIDE) {
+            pitch += 0.4F * Mth.sin(t * 3.3F) * (float) (-GripMoves.v / dev.awaken.body.GripRules.SLIDE_MAX);
+        }
         // tactical sprint: a slight forward lean and a running sway
         float a = hold(t, ClientMoves.tacStart, ClientMoves.tacEnd, ClientMoves.tac, 4F, 5F);
         if (a > 0) {
@@ -96,36 +95,5 @@ final class BodyCamera {
         slideWide += ((ClientMoves.sliding ? 1F : 0F) - slideWide) * 0.3F;
         float extra = 0.035F * tacWide + 0.07F * slideWide;
         if (extra > 1e-4F) e.setNewFovModifier(e.getNewFovModifier() * (1 + extra * e.getFovScale()));
-    }
-
-    /** Hands: lowered in a tactical sprint, braced in a slide, reaching up in a mantle. Once a frame, for both hands. */
-    static void onHand(RenderHandEvent e) {
-        if (handsFrame == frame) return;
-        handsFrame = frame;
-        float t = now(e.getPartialTick());
-        PoseStack ps = e.getPoseStack();
-        float a = hold(t, ClientMoves.tacStart, ClientMoves.tacEnd, ClientMoves.tac, 4F, 4F);
-        if (a > 0) {
-            ps.translate(0, -0.22F * a, 0.06F * a);
-            ps.rotateDegrees(Axis.XP, 16F * a);
-        }
-        float s = hold(t, ClientMoves.slideStart, ClientMoves.slideEnd, ClientMoves.sliding, 2.5F, 4F);
-        if (s > 0) {
-            ps.translate(0.04F * s, -0.1F * s, 0.1F * s);
-            ps.rotateDegrees(Axis.ZP, -6F * s);
-        }
-        // spike S3: hanging, both hands are up on the lip
-        if (RunnerMoves.hanging()) {
-            ps.translate(0, 0.42F, -0.18F);
-            ps.rotateDegrees(Axis.XP, -32F);
-        }
-        float m = t - ClientMoves.mantleStart;
-        if (m >= 0 && m < BodyRules.MANTLE_TICKS + 4) {
-            float u = Mth.clamp(m / BodyRules.MANTLE_TICKS, 0, 1);
-            float reach = Mth.sin(Math.min(1, u / 0.45F) * Mth.HALF_PI) * (1 - Mth.clamp((m - BodyRules.MANTLE_TICKS) / 4F, 0, 1));
-            float push = u > 0.45F ? (u - 0.45F) / 0.55F : 0;
-            ps.translate(0, (0.42F - 0.5F * push) * reach, -0.18F * reach);
-            ps.rotateDegrees(Axis.XP, (-32F + 40F * push) * reach);
-        }
     }
 }

@@ -34,6 +34,8 @@ import java.util.Set;
  * greet                 the nearest citizen with a body speaks to you now
  * bodies on|off, cap n  embodiment switches (measuring)
  * window start|end      a labelled timing window in the log
+ * lanterns blocks|glow  the Watch's lanterns as moving light blocks (pre-B3b, measuring) or drawn light (default);
+ *                       with no argument: light-block writes since the last report
  * </pre>
  */
 final class CitizensCommands {
@@ -42,7 +44,7 @@ final class CitizensCommands {
     static final List<String> SHOW = List.of("crowd_market", "crowd_bellwatch", "crowd_quay", "crowd_terrace", "crowd_works",
             "crowd_garden", "crowd_wallring", "lamplighter", "bellringer", "porter", "stallkeeper", "baker", "smith", "watch",
             "crier", "boatman", "washer", "mason", "runner", "shopkeeper", "tavernkeeper", "child", "resident", "stall", "event",
-            "oren", "mira", "teodor", "sun", "lamps", "laundry");
+            "oren", "mira", "teodor", "sun", "lamps", "laundry", "watch_front", "watch_side", "watch_far");
 
     static void register() {
         AwakenCommands.add((root, ctx) -> root.then(Commands.literal("citizens").requires(AwakenCommands.admin())
@@ -65,6 +67,22 @@ final class CitizensCommands {
                     if (!z.crowd.on) z.crowd.despawnAll();
                     return say(c.getSource(), "bodies " + z.crowd.on);
                 })))
+                .then(Commands.literal("lanterns").executes(c -> {
+                    Citizens z = need(c.getSource());
+                    if (z == null) return 0;
+                    long w = Lanterns.writes;
+                    Lanterns.writes = 0;
+                    Awaken.LOG.info("[citizens] lanterns {}: {} light-block writes since the last report, {} lit now",
+                            Lanterns.legacy ? "blocks" : "glow", w, z.lanterns.active());
+                    return say(c.getSource(), "lanterns " + (Lanterns.legacy ? "blocks" : "glow") + ": " + w + " writes, " + z.lanterns.active() + " lit");
+                }).then(Commands.argument("mode", StringArgumentType.word())
+                        .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("blocks", "glow"), b)).executes(c -> {
+                            Citizens z = need(c.getSource());
+                            if (z == null) return 0;
+                            Lanterns.legacy = StringArgumentType.getString(c, "mode").equals("blocks");
+                            Lanterns.writes = 0;
+                            return say(c.getSource(), "lanterns " + (Lanterns.legacy ? "blocks" : "glow"));
+                        })))
                 .then(Commands.literal("cap").then(Commands.argument("n", IntegerArgumentType.integer(0, 200)).executes(c -> {
                     Citizens z = need(c.getSource());
                     if (z == null) return 0;
@@ -170,6 +188,13 @@ final class CitizensCommands {
         ServerPlayer p = src.getPlayerOrException();
         Ledger l = c.ledger;
         Roster r = c.roster;
+        // (B3b) watch_front / watch_side / watch_far: a watchman framed by his own heading (his lantern up close)
+        String frame = null;
+        if (what.startsWith("watch_")) {
+            frame = what.substring(6);
+            what = "watch";
+        }
+        CitizenBody shown = null;
         double[] at = new double[3];
         boolean found = false;
         double want = 7;
@@ -178,9 +203,9 @@ final class CitizensCommands {
         switch (what) {
             case "stall" -> {
                 Roster.Stall st = r.stalls.get(0);
-                at[0] = l.cx + (st.x0() + st.x1() + 1) / 2.0;
-                at[1] = l.streetY + 2;
-                at[2] = l.cz + st.z1() + 0.5;
+                at[0] = l.cx + st.counterX(0) + 0.5;
+                at[1] = l.streetY + r.pRy[st.keeper()] + 2;
+                at[2] = l.cz + st.counterZ(0) + 0.5;
                 found = true;
             }
             case "event" -> {
@@ -225,6 +250,7 @@ final class CitizensCommands {
                 if (pick >= 0) {
                     label = describe(c, pick);
                     CitizenBody b = l.body[pick];
+                    shown = b;
                     if (b != null) BlockPosHolder.set(at, b.getX(), b.getY() + 1.2, b.getZ());
                     else if (l.position(pick, at)) at[1] += 1.2;
                     else {
@@ -239,6 +265,22 @@ final class CitizensCommands {
         if (!found) {
             src.sendFailure(Component.literal("Nothing to show for " + what));
             return 0;
+        }
+        if (frame != null && shown != null) {
+            double h = Math.toRadians(shown.getYRot()), fx = -Math.sin(h), fz = Math.cos(h), lx = Math.cos(h), lz = Math.sin(h);
+            double x = shown.getX(), z = shown.getZ(), ex, ez;
+            switch (frame) {
+                case "front" -> { ex = x + fx * 4.5 + lx * 0.6; ez = z + fz * 4.5 + lz * 0.6; }     // in his path, he walks toward us
+                case "side" -> { ex = x + lx * 3.0 + fx * 0.6; ez = z + lz * 3.0 + fz * 0.6; }      // beside him, on his lantern's side
+                default -> { ex = x + fx * 5.5 + lx * 5.5; ez = z + fz * 5.5 + lz * 5.5; }          // about eight blocks off, ahead
+            }
+            double ey = shown.getY() + 0.05, lookY = shown.getY() + 0.75;
+            float yaw = (float) Math.toDegrees(Math.atan2(-(x - ex), z - ez));
+            float pitch = (float) -Math.toDegrees(Math.atan2(lookY - (ey + 1.62), Math.max(0.5, Math.hypot(x - ex, z - ez))));
+            p.teleportTo(c.level, ex, ey, ez, Set.of(), yaw, pitch, true);
+            Awaken.LOG.info("[citizens] show watch_{}: camera at {} {} {}, {}", frame, String.format(Locale.ROOT, "%.1f", ex),
+                    String.format(Locale.ROOT, "%.1f", ey), String.format(Locale.ROOT, "%.1f", ez), label);
+            return 1;
         }
         double[] eye = anchor != null ? vantage(c, anchor[0], c.ledger.streetY + 2.2, anchor[1], want) : vantage(c, at[0], at[1], at[2], want);
         // on the street (a step up at most), looking up at a roof when that's where it is

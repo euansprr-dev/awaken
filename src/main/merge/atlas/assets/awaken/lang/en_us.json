@@ -1,0 +1,11 @@
+{
+  "key.awaken.atlas": "Open the Atlas",
+  "screen.awaken.atlas": "Atlas",
+  "atlas.awaken.bell.district": "The bell of %s: the district is on your Atlas",
+  "atlas.awaken.bell.city": "%s: all of Carillon is on your Atlas",
+  "atlas.awaken.shared.in": "%s shared their Atlas: %s new places",
+  "atlas.awaken.shared.out": "Your Atlas was shared with %s",
+  "atlas.awaken.shared.none": "Nobody in your party to share with",
+  "atlas.awaken.closed": "The Atlas can't see inside a gate",
+  "atlas.awaken.cleared": "Atlas cache cleared"
+}

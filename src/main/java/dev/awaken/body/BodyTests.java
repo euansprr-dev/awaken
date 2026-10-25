@@ -108,8 +108,11 @@ final class BodyTests {
         AwakenTests.register("body_action_camera", 20, BodyTests::actionCamera);
         AwakenTests.register("body_free_run", 20, BodyTests::freeRun);
         AwakenTests.registerIsolated("body_mantle_ledges", 100, BodyTests::mantleLedges);
+        AwakenTests.registerIsolated("body_mantle_stair_tops", 100, BodyTests::mantleStairTops);
         AwakenTests.register("body_mantle_gate_walls", 400, BodyTests::mantleGateWalls);
         AwakenTests.registerIsolated("body_slide_gap_and_wall", 100, BodyTests::slideGapAndWall);
+        AwakenTests.registerIsolated("body_stair_slide", 100, BodyTests::stairSlide);
+        AwakenTests.registerIsolated("body_land_slide", 100, BodyTests::landSlide);
         AwakenTests.register("body_soft_landing_damage", 60, h -> withoutKit(h, BodyTests::softLanding));
         AwakenTests.register("body_soft_landing_before_awakening", 60, BodyTests::softLandingRunner);
         AwakenTests.register("body_soft_landing_never_stacks", 100, BodyTests::softLandingNeverStacks);
@@ -211,6 +214,51 @@ final class BodyTests {
             at(h, c2, 2.5, 1, 0.5, 0F);
             h.assertFalse(BodyServer.startMantle(c2, 0F, ok.x() + 2, ok.y() + 0.5, ok.z()), "the server refuses a ledge that isn't there");
             done(h, c, d, c2);
+        });
+    }
+
+    /**
+     * SPEC §17.23 (Euan, Carillon: "I can't mantle up blocks with a stair on it"): a 1-block wall topped with a stair
+     * is climbed by its low half (1.5) and stood on by its high one (2.0), facing away or sideways; a stair facing you
+     * is a 2-block face, and an upside-down one a 2-block top: no. A slab-topped wall is climbed onto the slab, and the
+     * server takes the stair ledge the client claims.
+     */
+    static void mantleStairTops(GameTestHelper h) {
+        floor(h, -1, 15, -1, 6, 6);
+        var stairs = net.minecraft.world.level.block.StairBlock.FACING;
+        var half = net.minecraft.world.level.block.StairBlock.HALF;
+        BlockState stair = Blocks.STONE_BRICK_STAIRS.defaultBlockState();
+        // facing +z from z = 0.5, each lane's wall at z = 1: the stair's high back half is on its FACING side
+        net.minecraft.core.Direction[] facings = {net.minecraft.core.Direction.SOUTH, net.minecraft.core.Direction.EAST,
+                net.minecraft.core.Direction.WEST, net.minecraft.core.Direction.NORTH};
+        for (int i = 0; i < 4; i++) {
+            h.setBlock(new BlockPos(2 * i, 1, 1), Blocks.STONE);
+            h.setBlock(new BlockPos(2 * i, 2, 1), stair.setValue(stairs, facings[i]));
+        }
+        h.setBlock(new BlockPos(8, 1, 1), Blocks.STONE);
+        h.setBlock(new BlockPos(8, 2, 1), stair.setValue(stairs, net.minecraft.core.Direction.SOUTH).setValue(half, net.minecraft.world.level.block.state.properties.Half.TOP));
+        h.setBlock(new BlockPos(10, 1, 1), Blocks.STONE);
+        h.setBlock(new BlockPos(10, 2, 1), Blocks.SMOOTH_STONE_SLAB.defaultBlockState());
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            String[] names = {"facing away", "sideways (east)", "sideways (west)"};
+            for (int i = 0; i < 3; i++) {
+                BodyRules.Ledge l = ledge(h, 2 * i + 0.5, 0.5, BodyRules.MANTLE_REACH);
+                h.assertTrue(l != null, "a wall topped with a stair " + names[i] + " is a ledge");
+                h.assertTrue(Math.abs(l.height() - 2.0) < 1e-3, "landing on the stair's high half (" + names[i] + "), was " + l.height());
+            }
+            h.assertTrue(ledge(h, 6.5, 0.5, BodyRules.MANTLE_REACH) == null, "a stair facing you is a 2-block face");
+            h.assertTrue(ledge(h, 8.5, 0.5, BodyRules.MANTLE_REACH) == null, "an upside-down stair on a block is a 2-block top");
+            BodyRules.Ledge slab = ledge(h, 10.5, 0.5, BodyRules.MANTLE_REACH);
+            h.assertTrue(slab != null && Math.abs(slab.height() - 1.5) < 1e-3, "a slab-topped wall: onto the slab");
+            BodyRules.Ledge away = ledge(h, 0.5, 0.5, BodyRules.MANTLE_REACH);
+            ServerPlayer p = player(h, Rank.C);
+            at(h, p, 0.5, 1, 0.5, 0F);
+            h.assertTrue(BodyServer.startMantle(p, 0F, away.x(), away.y(), away.z()), "the server takes the stair ledge");
+            double[] path = new double[3];
+            Vec3 s = h.absoluteVec(new Vec3(0.5, 1, 0.5));
+            BodyRules.mantlePath(s.x, s.y, s.z, away, BodyRules.MANTLE_TICKS, path);
+            h.assertTrue(Math.abs(path[1] - away.y()) < 1e-6, "and the climb ends on the high half");
+            done(h, p);
         });
     }
 
@@ -356,6 +404,125 @@ final class BodyTests {
             h.assertTrue(e.getForcedPose() == null && !Body.isSliding(e), "the box is given back when it ends");
             h.assertFalse(BodyServer.startSlide(e, 0F, false), "and the cooldown holds");
             done(h, a, b, c, d, e);
+        });
+    }
+
+    /**
+     * SPEC §17.22: a slide started on the top of six stairs glides down them (a straight line through the noses, no
+     * stall, no hop per step), faster than walking, the server keeping the slide going past its 14 ticks while it sees
+     * the run, no fall at the bottom, then the run-out and the end. A way 90° off the fall line is not a run.
+     */
+    static void stairSlide(GameTestHelper h) {
+        floor(h, -1, 3, -1, 16, 9);
+        var stair = Blocks.STONE_BRICK_STAIRS.defaultBlockState().setValue(net.minecraft.world.level.block.StairBlock.FACING, net.minecraft.core.Direction.NORTH);
+        for (int x = 0; x <= 2; x++) {
+            for (int z = 0; z <= 2; z++) for (int y = 1; y <= 6; y++) h.setBlock(new BlockPos(x, y, z), Blocks.STONE); // the top, feet at 7
+            for (int k = 0; k < 6; k++) { // down toward +z: stair k's high back half at 7 - k
+                for (int y = 1; y < 6 - k; y++) h.setBlock(new BlockPos(x, y, 3 + k), Blocks.STONE);
+                h.setBlock(new BlockPos(x, 6 - k, 3 + k), stair);
+            }
+        }
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            var level = h.getLevel();
+            var ctx = CollisionContext.empty();
+            BodyRules.StairProfile sp = new BodyRules.StairProfile();
+            double[] fall = new double[2], out = new double[3];
+            Vec3 across = h.absoluteVec(new Vec3(1.5, 7, 2.6));
+            h.assertFalse(BodyRules.stairStart(level, ctx, sp, across.x, across.y, across.z, 1, 0, fall), "sliding across the stairs is no run");
+            ServerPlayer p = player(h, Rank.D);
+            at(h, p, 1.5, 7, 1.0, 0F);
+            BodyServer.assist(p, Move.SLIDE, 40);
+            h.assertTrue(BodyServer.startSlide(p, 0F, false), "the server accepts the slide");
+            BodyMotion m = BodyServer.motion(p);
+            long now = BodyServer.now(p);
+            double[] way = {0, 1};
+            double v = BodyRules.SLIDE_V0, z0 = p.getZ(), bottom = h.absoluteVec(new Vec3(0, 1, 0)).y;
+            boolean stairs = false, serverSaw = false;
+            int age = 0, onRun = 0, reached = -1;
+            double lastDy = Double.NaN, worstJerk = 0, slowest = 9, shallowest = -9;
+            int gliding = 0;
+            StringBuilder path = new StringBuilder();
+            for (int t = 1; t <= 60 && reached < 0; t++) {
+                now++;
+                age++;
+                double y0 = p.getY(), zBefore = p.getZ();
+                if (!stairs && BodyRules.stairStart(level, ctx, sp, p.getX(), p.getY(), p.getZ(), way[0], way[1], fall)) stairs = true;
+                if (stairs) { // exactly the client's tick (ClientMoves.applyStairs)
+                    BodyRules.stairBend(way, fall[0], fall[1]);
+                    v = BodyRules.stairSpeed(v);
+                    if (BodyRules.stairStep(level, ctx, sp, p.getX(), p.getY(), p.getZ(), way[0], way[1], v, out)) {
+                        p.setPos(out[0], p.getY(), out[2]);
+                        p.move(MoverType.SELF, new Vec3(0, out[1] - p.getY(), 0));
+                        onRun++;
+                        double dy = p.getY() - y0;
+                        path.append(String.format(" %.2f/%.2f", p.getZ() - z0, dy));
+                        // the glide, once it has tipped over the top (a real corner) and before the floor
+                        if (gliding > 0 && !sp.last) {
+                            if (gliding > 1) worstJerk = Math.max(worstJerk, Math.abs(dy - lastDy));
+                            shallowest = Math.max(shallowest, dy);
+                        }
+                        if (dy < -0.05 || gliding > 0) gliding++;
+                        if (onRun > 1) slowest = Math.min(slowest, p.getZ() - zBefore);
+                        lastDy = dy;
+                        if (sp.last) stairs = false;
+                    } else {
+                        stairs = false;
+                    }
+                } else {
+                    v = BodyRules.slideSpeed(age, BodyRules.SLIDE_V0);
+                    p.move(MoverType.SELF, new Vec3(way[0] * v, -0.08, way[1] * v));
+                }
+                BodyServer.tick(p, m, now);
+                serverSaw |= MovementHooks.stairSliding(p);
+                if (p.getY() <= bottom + 1e-3) reached = t;
+            }
+            h.assertTrue(reached > 0, "the slide reaches the bottom (feet at " + String.format("%.2f", p.getY() - bottom) + " over it)");
+            double speed = (p.getZ() - z0) / reached;
+            h.assertTrue(speed > 0.3, "faster than walking (0.22 a tick): " + String.format("%.2f", speed) + " over " + reached + " ticks");
+            h.assertTrue(onRun >= 10 && slowest > 0.3, "no stall on the run (" + onRun + " ticks, slowest " + String.format("%.2f", slowest) + ")");
+            h.assertTrue(gliding > 8 && shallowest < -0.25 && worstJerk < 0.05, "a straight glide, no hop per step (" + gliding
+                    + " ticks, shallowest drop " + String.format("%.2f", shallowest) + ", worst change of drop " + String.format("%.3f", worstJerk) + "; z/dy" + path + ")");
+            h.assertTrue(serverSaw && reached > BodyRules.SLIDE_TICKS + BodyRules.SLIDE_GRACE && Body.isSliding(p),
+                    "the server keeps the slide going down the run (" + reached + " ticks)");
+            h.assertTrue(p.fallDistance < 1, "and the ride is no fall (" + p.fallDistance + ")");
+            Awaken.LOG.info("[body_stair_slide] bottom after {} ticks, {} b/t, glide {} ticks, worst change of drop {}, z/dy{}",
+                    reached, String.format("%.2f", speed), gliding, String.format("%.3f", worstJerk), path);
+            for (int t = 0; t < 30 && Body.isSliding(p); t++) BodyServer.tick(p, m, ++now);
+            h.assertFalse(Body.isSliding(p), "after the run-out the slide ends");
+            done(h, p);
+        });
+    }
+
+    /**
+     * SPEC §17.24: a sprint jump landed with crouch held slides from the landing, farther than a slide from a run; a
+     * walk-speed landing doesn't; an edge with a drop ahead is an edge-sneak; the server takes the landing slide from a
+     * body that sprinted a moment ago (the sprint flag can drop in the air) and refuses one that never ran.
+     */
+    static void landSlide(GameTestHelper h) {
+        floor(h, -1, 7, -1, 12, 3);
+        for (int z = 6; z <= 12; z++) h.setBlock(new BlockPos(6, 0, z), Blocks.AIR); // lane 6: the floor ends at z 6
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            double air = 0.32; // a sprint jump's horizontal speed as it lands (0.28 run + 0.2 kick, air drag over ~12 ticks)
+            h.assertTrue(BodyRules.landSlideFast(air, true), "a sprint jump's landing slides");
+            h.assertFalse(BodyRules.landSlideFast(0.1, true) || BodyRules.landSlideFast(0.22, false), "a walk's or a standing hop's doesn't");
+            double v0 = BodyRules.landSlideEntry(air, false);
+            ServerPlayer a = player(h, Rank.D), b = player(h, Rank.D), c = player(h, Rank.D), d = player(h, Rank.D);
+            at(h, a, 0.5, 1, 0.5, 0F);
+            at(h, b, 2.5, 1, 0.5, 0F);
+            double landing = slide(a, v0, true), run = slide(b, BodyRules.SLIDE_V0, true);
+            h.assertTrue(landing > run + 0.5, "the landing slide carries farther: " + String.format("%.2f against %.2f", landing, run));
+            var ctx = CollisionContext.empty();
+            Vec3 flat = h.absoluteVec(new Vec3(4.5, 1, 2.5)), edge = h.absoluteVec(new Vec3(6.5, 1, 5.8));
+            h.assertTrue(BodyRules.groundAhead(h.getLevel(), ctx, flat.x, flat.y, flat.z, 0, 1), "ground ahead on the floor");
+            h.assertFalse(BodyRules.groundAhead(h.getLevel(), ctx, edge.x, edge.y, edge.z, 0, 1), "landing at an edge with a drop ahead is an edge-sneak");
+            // the server: no sprint flag now, but a run a moment ago (the jump); a body that never ran is refused
+            at(h, c, 4.5, 1, 0.5, 0F);
+            at(h, d, 4.5, 1, 8.5, 0F);
+            long now = BodyServer.now(c);
+            BodyServer.motion(c).lastSprint = now - 12;
+            h.assertTrue(!c.isSprinting() && BodyServer.startSlide(c, 0F, false), "the server takes the landing slide of a sprint jump");
+            h.assertFalse(BodyServer.startSlide(d, 0F, false), "and refuses one that never ran");
+            done(h, a, b, c, d);
         });
     }
 

@@ -1,0 +1,163 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/street_iron",
+    "iron": "awaken:block/street_iron",
+    "scroll": "awaken:block/sign_bracket_scroll",
+    "chain": "awaken:block/street_chain"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        13,
+        0
+      ],
+      "to": [
+        9,
+        15,
+        16
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            4,
+            0,
+            6,
+            16
+          ],
+          "texture": "#iron"
+        },
+        "down": {
+          "uv": [
+            6,
+            0,
+            8,
+            16
+          ],
+          "texture": "#iron"
+        },
+        "east": {
+          "uv": [
+            0,
+            4,
+            16,
+            6
+          ],
+          "texture": "#iron"
+        },
+        "west": {
+          "uv": [
+            0,
+            8,
+            16,
+            10
+          ],
+          "texture": "#iron"
+        },
+        "north": {
+          "uv": [
+            4,
+            4,
+            6,
+            6
+          ],
+          "texture": "#iron"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        10,
+        15
+      ],
+      "to": [
+        11,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            2,
+            8,
+            8
+          ],
+          "texture": "#iron"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            1,
+            6
+          ],
+          "texture": "#iron"
+        },
+        "west": {
+          "uv": [
+            1,
+            0,
+            2,
+            6
+          ],
+          "texture": "#iron"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            6,
+            1
+          ],
+          "texture": "#iron"
+        },
+        "down": {
+          "uv": [
+            0,
+            1,
+            6,
+            2
+          ],
+          "texture": "#iron"
+        }
+      }
+    },
+    {
+      "from": [
+        8,
+        4,
+        6
+      ],
+      "to": [
+        8,
+        13,
+        16
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            0,
+            0,
+            10,
+            9
+          ],
+          "texture": "#scroll"
+        },
+        "west": {
+          "uv": [
+            10,
+            0,
+            0,
+            9
+          ],
+          "texture": "#scroll"
+        }
+      }
+    }
+  ]
+}

@@ -211,6 +211,73 @@ clip("body_lower", [(0, LO_CROUCH, "linear"), (3, pose(LO_CROUCH, ground=False, 
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+# The grip on a climb line (SPEC §17.23): facing a drainpipe, rope or ladder close in front, both hands on it, the
+# knees bent and the insteps clamping it. The game turns the body to the line and leans it in a touch; these clips pose
+# the limbs. A line is narrow, so both hands meet in front of the chest (arms turned in across, y < 0 for the right).
+
+# Held still: the right hand high, the left at the chest, elbows soft, knees bent round the line.
+PH = pose(ground=False, lean=4, ra=(-158, -16, -4), re=34, la=(-112, 16, 4), le=56,
+          rl=(-42, 0, -6), rk=64, ll=(-20, 0, 6), lk=40)
+held("body_pipe_hold", PH, [nudge(PH, rise=0.2, ra=(-2, 0, 0)), nudge(PH, rise=-0.1, la=(2, 0, 0), rl=(-3, 0, 0))], 40,
+     "holding a line: one hand high, one at the chest, knees round it")
+
+
+def pipe_climb():
+    """Hand over hand: the high hand pulls down to the chest while the low one reaches up past it; the knee on its side
+    drives up to the next clamp. One pair of pulls (1.6 blocks at a ladder's pace) every 8 ticks."""
+    a = pose(PH, ra=(-170, -12, -6), re=18, la=(-104, 18, 6), le=64, rl=(-72, 0, -6), rk=100, ll=(-8, 0, 6), lk=22)
+    b = pose(PH, ra=(-136, -16, -4), re=52, la=(-138, 16, 4), le=48, rl=(-40, 0, -6), rk=60, ll=(-40, 0, 6), lk=60)
+    c = pose(PH, ra=(-104, -18, -6), re=64, la=(-170, 12, 6), le=18, rl=(-8, 0, -6), rk=22, ll=(-72, 0, 6), lk=100)
+    d = pose(c, ra=(-138, -16, -4), re=48, la=(-136, 16, 4), le=52, rl=(-40, 0, -6), rk=60, ll=(-40, 0, 6), lk=60)
+    return a, [(0, a, "linear"), (2, b, "easeinoutsine"), (4, c, "easeinoutsine"), (6, d, "easeinoutsine"), (8, a, "easeinoutsine")]
+
+
+PC_A, PC_KEYS = pipe_climb()
+clip("body_pipe_climb", PC_KEYS, 8, loop=True, note="hand over hand up a line, knees driving to the next clamp")
+clip("body_pipe_climb_end", [(0, PC_A, "linear")], 5, end=0, note="settles out of body_pipe_climb")
+# the free-run's pace (0.3 a tick): the same pulls, a pair every 6 ticks
+clip("body_pipe_climb_fast", [(t * 0.75, k, e) for t, k, e in PC_KEYS], 6, loop=True, note="hand over hand at the free-run's pace")
+clip("body_pipe_climb_fast_end", [(0, PC_A, "linear")], 5, end=0, note="settles out of body_pipe_climb_fast")
+
+# Sliding: the hands loose round the line at the chest, arms longer, the body hanging back off it, the legs wrapped
+# and crossed at the ankles under it; a quick tremble from the line running through the hands.
+PS = pose(ground=False, lean=-10, ra=(-140, -18, -4), re=22, la=(-128, 18, 4), le=26,
+          rl=(-52, 0, -12), rk=74, ll=(-46, 0, 12), lk=78)
+held("body_pipe_slide", PS, [nudge(PS, ra=(2, 0, 0), la=(-2, 0, 0)), nudge(PS, ra=(-2, 0, 0), la=(2, 0, 0), rise=0.15)], 4,
+     "sliding down a line: hands loose, hanging back, legs wrapped")
+
+# The kick off the wall (Jump with back): knees to the chest, feet on the wall, then a shove: the body thrown back
+# and the arms open for the fall (the ledge back-jump's shape, from a line).
+PK_PUSH = pose(ground=False, lean=8, ra=(-150, -10, -10), re=70, la=(-150, 10, 10), le=70, rl=(-96, 0, 4), rk=112, ll=(-90, 0, -4), lk=112)
+PK_OPEN = pose(ground=False, lean=-14, ra=(-56, 0, 72), re=20, la=(-56, 0, -72), le=20, rl=(-28, 0, 8), rk=36, ll=(-8, 0, -8), lk=26)
+clip("body_pipe_kick", [(0, PH, "linear"), (2, PK_PUSH, "easeinquad"), (4, PK_OPEN, "easeoutcubic"), (9, PK_OPEN, "linear")], 12,
+     note="feet to the wall, shove off the line, arms open")
+
+
+def pipe_side(left):
+    """Swung out to a side: a push off the line with the far hand, the body swinging across, the lead hand reaching."""
+    s = 1 if left else -1
+    push = pose(ground=False, lean=4, ra=(-130, -10 if s > 0 else -24, -(10 if s > 0 else 30)), re=40,
+                la=(-130, 24 if s > 0 else 10, 30 if s > 0 else 10), le=40, rl=(-40, 0, 12 * -s), rk=60, ll=(-30, 0, 12 * -s), lk=50)
+    reach = pose(ground=False, lean=0, ra=(-150, 0, -(20 if s > 0 else 70)), re=10, la=(-150, 0, 70 if s > 0 else 20), le=10,
+                 rl=(-20, 0, 16 * s), rk=30, ll=(-6, 0, 16 * s), lk=24)
+    return [(0, PH, "linear"), (2, push, "easeinquad"), (5, reach, "easeoutcubic"), (9, reach, "linear")]
+
+
+clip("body_pipe_side_l", pipe_side(True), 11, note="push off the line, swing left, reach")
+clip("body_pipe_side_r", pipe_side(False), 11, note="push off the line, swing right, reach")
+
+# The hop (Jump alone): knees drive, both hands let go and snatch the line higher up, then the hold again.
+PP_DRIVE = pose(ground=False, lean=6, ra=(-176, -8, -6), re=8, la=(-170, 8, 6), le=12, rl=(-80, 0, -6), rk=104, ll=(-66, 0, 6), lk=96)
+clip("body_pipe_hop", [(0, PH, "linear"), (2, PP_DRIVE, "easeoutcubic"), (5, PH, "easeinoutsine")], 6, note="a lunge up the line")
+
+# The landing at the line's foot: the slide's crouch meets the ground, then the body stands out of it.
+PL_CROUCH = pose(lean=22, ra=(-60, -10, 6), re=40, la=(-56, 10, -6), le=40, rl=(-70, 0, 4), rk=100, ll=(-62, 0, -4), lk=96)
+clip("body_pipe_land", [(0, PS, "linear"), (2, PL_CROUCH, "easeoutcubic"), (5, PL_CROUCH, "linear")], 10, end=5,
+     note="down off the line into a crouch, standing out of it")
+
+
+# ---------------------------------------------------------------------------------------------------------------------
 # Output, checks, previews
 
 def document():
@@ -256,7 +323,8 @@ def moves_sheet(out_dir, px=5.0):
     from PIL import Image, ImageDraw
     beats = {"body_slide": [0], "body_slide_jump": [0, 3, 7], "body_roll": [2, 4.5, 7, 12], "body_mantle": [0, 2, 4, 6],
              "body_sprint": [0, 2, 4, 6], "body_wallrun_l": [0, 4], "body_wallclimb": [0, 4], "body_walljump": [0, 2, 6], "body_hang": [0],
-             "body_grab": [1.5, 5], "body_ledge_up": [2, 4], "body_ledge_back": [2, 4]}
+             "body_grab": [1.5, 5], "body_ledge_up": [2, 4], "body_ledge_back": [2, 4],
+             "body_pipe_hold": [0], "body_pipe_climb": [0, 4], "body_pipe_slide": [0], "body_pipe_kick": [2, 4], "body_pipe_land": [2]}
     views = (("front", -35.0, 10.0), ("side", -90.0, 6.0))
     rows = []
     for suffix in ("", "_bent"):

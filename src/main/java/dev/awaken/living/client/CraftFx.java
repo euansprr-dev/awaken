@@ -45,9 +45,13 @@ final class CraftFx {
     private static final List<BlockPos> HERBS = new ArrayList<>();
     private record Ore(BlockPos pos, int rgb) {}
     private static final List<Ore> ORES = new ArrayList<>();
-    private static long oreAt = Long.MIN_VALUE;
+    /** Not Long.MIN_VALUE: {@code now - oreAt} would overflow and the first pulse never come. */
+    private static final long NEVER = -1_000_000L;
+    private static long oreAt = NEVER;
     /** Pawprints per creature: x, y, z, the tick laid, which foot. */
     private static final Map<Integer, ArrayDeque<double[]>> TRACKS = new HashMap<>();
+    /** Creatures the band read, and when: each leaves tracks for 30 s after, wherever it wanders. */
+    private static final Map<Integer, Long> SIGHTED = new HashMap<>();
 
     static void tick(ClientTickEvent.Post e) {
         Minecraft mc = Minecraft.getInstance();
@@ -57,6 +61,7 @@ final class CraftFx {
             HERBS.clear();
             ORES.clear();
             TRACKS.clear();
+            SIGHTED.clear();
             return;
         }
         long now = level.getGameTime();
@@ -108,7 +113,8 @@ final class CraftFx {
         float a = age < 6 ? age / 6F : 1 - (age - 6) / (ORE_SHOW - 6F);
         if (a <= 0.02F) return;
         int alpha = (int) (Mth.clamp(a, 0, 1) * 220) << 24;
-        for (Ore o : ORES) Gizmos.cuboid(o.pos(), 0.02F, GizmoStyle.stroke(alpha | o.rgb(), 2.2F)).setAlwaysOnTop();
+        int fill = (int) (Mth.clamp(a, 0, 1) * 40) << 24;              // a faint pane on each face, so it reads as glass
+        for (Ore o : ORES) Gizmos.cuboid(o.pos(), 0.02F, GizmoStyle.strokeAndFill(alpha | o.rgb(), 2.2F, fill | o.rgb())).setAlwaysOnTop();
     }
 
     private static int tint(BlockState s) {
@@ -131,27 +137,45 @@ final class CraftFx {
             while (!q.isEmpty() && now - q.peekFirst()[3] > TRACK_TICKS) q.pollFirst();
             if (q.isEmpty()) it.remove();
         }
-        if (!on || now % TRACK_EVERY != 0) return;
-        for (var c : LivingClient.PICKED) {
-            Entity e = level.getEntity(c.id());
+        if (!on) {
+            SIGHTED.clear();
+            return;
+        }
+        for (var c : LivingClient.PICKED) SIGHTED.put(c.id(), now);
+        SIGHTED.values().removeIf(t -> now - t > TRACK_TICKS || now < t);
+        if (now % TRACK_EVERY != 0) return;
+        for (int id : SIGHTED.keySet()) {
+            Entity e = level.getEntity(id);
             if (e == null || !e.onGround()) continue;
-            ArrayDeque<double[]> q = TRACKS.computeIfAbsent(c.id(), k -> new ArrayDeque<>());
+            ArrayDeque<double[]> q = TRACKS.computeIfAbsent(id, k -> new ArrayDeque<>());
             double[] last = q.peekLast();
             if (last != null && Math.hypot(e.getX() - last[0], e.getZ() - last[2]) < 0.9) continue;
-            q.addLast(new double[]{e.getX(), e.getY() + 0.02, e.getZ(), now, q.size() % 2, e.getYRot()});
+            // in grass or flowers a print on the ground is hidden: it lies on top of the plants instead
+            BlockState at = level.getBlockState(e.blockPosition());
+            double lift = !at.isAir() && at.getCollisionShape(level, e.blockPosition()).isEmpty() && at.getFluidState().isEmpty() ? 0.86 : 0.02;
+            q.addLast(new double[]{e.getX(), e.getY() + lift, e.getZ(), now, q.size() % 2, e.getYRot(), hoofed(e) ? 1 : 0});
             while (q.size() > 80) q.pollFirst();
         }
+    }
+
+    /** Cloven hooves leave a split print; everything else a paw. */
+    private static boolean hoofed(Entity e) {
+        return e instanceof net.minecraft.world.entity.animal.sheep.Sheep || e instanceof net.minecraft.world.entity.animal.cow.AbstractCow
+                || e instanceof net.minecraft.world.entity.animal.pig.Pig || e instanceof net.minecraft.world.entity.animal.goat.Goat
+                || e instanceof net.minecraft.world.entity.animal.equine.AbstractHorse;
     }
 
     static void reset() {
         HERBS.clear();
         ORES.clear();
         TRACKS.clear();
+        SIGHTED.clear();
+        oreAt = NEVER;
     }
 
     // ---- drawing ----------------------------------------------------------------------------------------------------
 
-    private static RenderType light, alpha;
+    private static RenderType light;
     private static double cx, cy, cz;
     private static final Vector3f RIGHT = new Vector3f();
     private static final Quaternionf CAM = new Quaternionf();
@@ -166,11 +190,10 @@ final class CraftFx {
         CAM.set(state.cameraRenderState.orientation);
         RIGHT.set(1, 0, 0).rotate(CAM);
         if (light == null) light = RenderTypes.lightning();
-        if (alpha == null) alpha = RenderTypes.debugQuads();
         float now = LivingClient.ticks + state.worldPartialTicks;
         long gameNow = Minecraft.getInstance().level == null ? 0 : Minecraft.getInstance().level.getGameTime();
         if (!HERBS.isEmpty()) e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), light, (pose, vc) -> guard(() -> glints(vc, now)));
-        if (!TRACKS.isEmpty()) e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), alpha, (pose, vc) -> guard(() -> prints(vc, gameNow)));
+        if (!TRACKS.isEmpty()) e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), light, (pose, vc) -> guard(() -> prints(vc, gameNow)));
     }
 
     private static void guard(Runnable r) {
@@ -187,34 +210,62 @@ final class CraftFx {
             float ph = (b.getX() * 7 + b.getZ() * 13) % 40;
             float flick = 0.6F + 0.4F * Mth.sin(now * 0.25F + ph);
             double x = b.getX() + 0.5, y = b.getY() + 0.1, z = b.getZ() + 0.5;
-            streak(vc, x, y, z, 1.3, 0.05F, 0x6FE6C8, 0.75F * flick);
-            streak(vc, x, y, z, 0.9, 0.22F, 0x6FE6C8, 0.18F * flick);
+            streak(vc, x, y, z, 1.3, 0.07F, 0x6FE6C8, 0.85F * flick);
+            streak(vc, x, y, z, 0.9, 0.3F, 0x6FE6C8, 0.24F * flick);
             float rise = ((now * 0.03F + ph / 40F) % 1F);
             streak(vc, x, y + rise * 1.1, z, 0.18, 0.12F, 0xD8FFF2, 0.8F * (1 - rise));
         }
     }
 
-    /** Tracks: paired paw marks on the ground, glowing amber, fading over their 30 s. */
+    /** Tracks: paired prints, glowing amber, the newest brightest, fading over their 30 s; a paw or a cloven hoof. */
     private static void prints(VertexConsumer vc, long now) {
         for (ArrayDeque<double[]> q : TRACKS.values()) {
             for (double[] t : q) {
                 float age = (now - (long) t[3]) / (float) TRACK_TICKS;
                 if (age >= 1) continue;
-                float a = (1 - age) * 0.85F;
+                float a = (1 - age) * (1 - age);
                 double yaw = Math.toRadians(t[5]);
-                double side = t[4] == 0 ? 0.18 : -0.18;
+                double side = t[4] == 0 ? 0.16 : -0.16;
                 double px = t[0] + Math.cos(yaw) * side, pz = t[2] + Math.sin(yaw) * side;
-                paw(vc, px, t[1], pz, yaw, a);
+                if (t[6] > 0) hoof(vc, px, t[1], pz, yaw, a);
+                else paw(vc, px, t[1], pz, yaw, a);
             }
         }
     }
 
+    private static int amber(float a, float k) {
+        return ((int) (Mth.clamp(a * k, 0, 1) * 255) << 24) | 0xFFB050;
+    }
+
     private static void paw(VertexConsumer vc, double x, double y, double z, double yaw, float a) {
-        int c = ((int) (Mth.clamp(a, 0, 1) * 255) << 24) | 0xFFC060;
         double fx = -Math.sin(yaw), fz = Math.cos(yaw), sx = Math.cos(yaw), sz = Math.sin(yaw);
-        flat(vc, x, y, z, fx, fz, sx, sz, 0.12, 0.1, c);                       // the pad
-        for (int toe = -1; toe <= 1; toe++) {                                    // three toes ahead of it
-            flat(vc, x + fx * 0.16 + sx * toe * 0.08, y, z + fz * 0.16 + sz * toe * 0.08, fx, fz, sx, sz, 0.045, 0.045, c);
+        halo(vc, x, y - 0.005, z, fx, fz, sx, sz, 0.3, 0.26, amber(a, 0.35F));
+        flat(vc, x, y, z, fx, fz, sx, sz, 0.1, 0.11, amber(a, 1.0F));                          // the pad
+        for (int toe = 0; toe < 4; toe++) {                                                     // four toes fanned ahead
+            double off = (toe - 1.5) * 0.085, ahead = 0.15 + (toe == 0 || toe == 3 ? 0 : 0.035);
+            flat(vc, x + fx * ahead + sx * off, y, z + fz * ahead + sz * off, fx, fz, sx, sz, 0.035, 0.03, amber(a, 1.0F));
+        }
+    }
+
+    private static void hoof(VertexConsumer vc, double x, double y, double z, double yaw, float a) {
+        double fx = -Math.sin(yaw), fz = Math.cos(yaw), sx = Math.cos(yaw), sz = Math.sin(yaw);
+        halo(vc, x, y - 0.005, z, fx, fz, sx, sz, 0.28, 0.22, amber(a, 0.35F));
+        for (int half = -1; half <= 1; half += 2) {                                             // two halves, a gap between
+            double cx = x + sx * half * 0.045, cz = z + sz * half * 0.045;
+            flat(vc, cx, y, cz, fx, fz, sx, sz, 0.1, 0.032, amber(a, 1.0F));
+            flat(vc, cx + fx * 0.09, y, cz + fz * 0.09, fx, fz, sx, sz, 0.03, 0.022, amber(a, 1.0F));   // the pointed tip
+        }
+    }
+
+    /** A soft oval of light under a print: bright in the middle, nothing at its rim (a fan of twelve). */
+    private static void halo(VertexConsumer vc, double x, double y, double z, double fx, double fz, double sx, double sz, double rl, double rw, int c) {
+        float x0 = (float) (x - cx), y0 = (float) (y - cy), z0 = (float) (z - cz);
+        int clear = c & 0xFFFFFF;
+        for (int i = 0; i < 12; i++) {
+            double a0 = i * Math.PI / 6, a1 = (i + 1) * Math.PI / 6;
+            float ex0 = (float) (fx * Math.cos(a0) * rl + sx * Math.sin(a0) * rw), ez0 = (float) (fz * Math.cos(a0) * rl + sz * Math.sin(a0) * rw);
+            float ex1 = (float) (fx * Math.cos(a1) * rl + sx * Math.sin(a1) * rw), ez1 = (float) (fz * Math.cos(a1) * rl + sz * Math.sin(a1) * rw);
+            quad(vc, x0, y0, z0, x0, y0, z0, x0 + ex1, y0, z0 + ez1, x0 + ex0, y0, z0 + ez0, c, clear);
         }
     }
 

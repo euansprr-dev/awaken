@@ -31,7 +31,7 @@ import org.jspecify.annotations.Nullable;
 public final class RunnerMoves {
     private RunnerMoves() {}
 
-    enum State { NONE, RUN, HANG, PATH }
+    enum State { NONE, RUN, HANG, PATH, GRIP }
 
     static State state = State.NONE;
     /** Spike comparison: a fresh run needs jump held (false) or a jump press in the air within the buffer (true). */
@@ -66,7 +66,7 @@ public final class RunnerMoves {
     static int shimmyDir;
     private static int regrabAt, settleAt, shimmyAt = -100;
     // path
-    static final int GRAB = 0, LOWER = 1, CLIMB = 2, UP = 3, SIDE = 4, CORNER = 5;
+    static final int GRAB = 0, LOWER = 1, CLIMB = 2, UP = 3, SIDE = 4, CORNER = 5, EAVE = 6;
     static int pathKind, pathAge, pathLen, pathStart = -100;
     private static boolean pathToHang;
     private static double ax, ay, az, bx, by, bz, cx, cz;
@@ -125,6 +125,7 @@ public final class RunnerMoves {
                 if (dev.awaken.body.ascent.client.AscentMoves.state() == dev.awaken.body.ascent.AscentState.NONE && fallVy < -ActionCamera.LAND_FROM) {
                     dev.awaken.body.client.feel.FeelDirector.land((float) (-fallVy * 0.6));
                     ActionCamera.land(-fallVy);
+                    BodyFp.landed(-fallVy);
                 }
             }
             groundAt = now;
@@ -163,12 +164,18 @@ public final class RunnerMoves {
                 pathTick(p, in, now);
                 return true;
             }
+            case GRIP -> {
+                GripMoves.tick(p, in, k, jumpPressed, level, now);
+                return true;
+            }
             default -> {
             }
         }
         if (!ground) {
             if (jumpPressed) airJumpAt = now;
             FreeRun.air(p);
+            // a climb line in reach: the grip takes it (SPEC §17.23)
+            if (GripMoves.tryStart(p, in, k, level, false, now)) return true;
             if (now >= regrabAt && tryGrab(p, in, level, ctx, now)) return true;
             boolean chain = now <= chainUntil && links > 0;
             // free-running, sprint held is the jump held: run along the wall beside you, climb the one ahead
@@ -190,6 +197,7 @@ public final class RunnerMoves {
                 }
             }
         } else {
+            if (GripMoves.tryStart(p, in, k, level, true, now)) return true;
             return tryLower(p, in, k, level, ctx, now);
         }
         return false;
@@ -209,7 +217,7 @@ public final class RunnerMoves {
         }
     }
 
-    private static void send(Move move, int flag, LocalPlayer p, double tx, double ty, double tz, int axis, int sign) {
+    static void send(Move move, int flag, LocalPlayer p, double tx, double ty, double tz, int axis, int sign) {
         // the Runner's moves feed the Ascent's Flow (a shimmy is a pause, not a move)
         switch (move) {
             case WALL_RUN -> dev.awaken.body.ascent.client.AscentFlow.gain(0.07F);
@@ -222,12 +230,12 @@ public final class RunnerMoves {
         ClientPacketDistributor.sendToServer(new BodyPayloads.Run(move.ordinal(), flag, p.getYRot(), p.getX(), p.getY(), p.getZ(), tx, ty, tz, axis, sign));
     }
 
-    private static void sendEnd(Move move) {
+    static void sendEnd(Move move) {
         ClientPacketDistributor.sendToServer(new BodyPayloads.End(move.ordinal()));
     }
 
     /** Air control vanilla adds this tick (moveRelative in the air), so a move can take it back out. */
-    private static void inputAccel(LocalPlayer p, ClientInput in, double[] out) {
+    static void inputAccel(LocalPlayer p, ClientInput in, double[] out) {
         Vec2 mv = in.getMoveVector();
         float x = mv.x, y = mv.y;
         out[0] = out[1] = 0;
@@ -254,14 +262,14 @@ public final class RunnerMoves {
         out[1] = (y * cos + x * sin) * speed;
     }
 
-    private static void turnTo(float yaw, int ticks) {
+    static void turnTo(float yaw, int ticks) {
         LocalPlayer p = Minecraft.getInstance().player;
         if (p == null) return;
         turnStep = Mth.wrapDegrees(yaw - p.getYRot()) / ticks;
         turnLeft = ticks;
     }
 
-    private static float yawOf(double dx, double dz) {
+    static float yawOf(double dx, double dz) {
         return (float) (Mth.atan2(-dx, dz) * Mth.RAD_TO_DEG);
     }
 
@@ -531,6 +539,15 @@ public final class RunnerMoves {
         return true;
     }
 
+    /**
+     * From a climb line's top up to the lip of an eave or cornice over it (GripRules.topLip; SPEC §17.23): out from the
+     * line under the overhang, then up into the hang on its outer face. From there the hang's own climb out (Jump, or
+     * forward) puts you on the roof.
+     */
+    static void eaveHang(LocalPlayer p, RunnerRules.Edge e, int now) {
+        startHang(p, e, BodyPayloads.HANG_EAVE, now);
+    }
+
     private static void startHang(LocalPlayer p, RunnerRules.Edge e, int kind, int now) {
         send(Move.LEDGE_HANG, kind, p, e.hx(), e.hy(), e.hz(), e.axis(), e.sign());
         links = 0;
@@ -538,7 +555,8 @@ public final class RunnerMoves {
         chainUntil = -100;
         hangStart = now;
         shimmying = false;
-        ClientMoves.trace(String.format("hang (%s) top %.2f above the feet %.2f", kind == BodyPayloads.HANG_LOWER ? "lower" : "grab", e.top(), e.top() - p.getY()));
+        ClientMoves.trace(String.format("hang (%s) top %.2f above the feet %.2f", kind == BodyPayloads.HANG_LOWER ? "lower"
+                : kind == BodyPayloads.HANG_EAVE ? "eave" : "grab", e.top(), e.top() - p.getY()));
         boolean lower = kind == BodyPayloads.HANG_LOWER;
         BodyAnims.runner(p.getId(), lower ? BodyClips.LOWER : BodyClips.GRAB);
         BodyFx.sound(p, lower ? BodyContent.SHIMMY.get() : BodyContent.GRAB.get(), lower ? 0.5F : 0.85F, 1F);
@@ -546,7 +564,8 @@ public final class RunnerMoves {
             BodyFx.lip(cl, e.hx() + e.fx() * 0.3, e.top(), e.hz() + e.fz() * 0.3, e.fx(), e.fz());
         }
         if (kind == BodyPayloads.HANG_LOWER) turnTo(yawOf(e.fx(), e.fz()), 8);
-        startPath(p, kind == BodyPayloads.HANG_LOWER ? LOWER : GRAB, e.hx(), e.hy(), e.hz(), kind == BodyPayloads.HANG_LOWER ? 8 : 3, e, now);
+        int path = kind == BodyPayloads.HANG_LOWER ? LOWER : kind == BodyPayloads.HANG_EAVE ? EAVE : GRAB;
+        startPath(p, path, e.hx(), e.hy(), e.hz(), path == LOWER ? 8 : path == EAVE ? 7 : 3, e, now);
     }
 
     private static void hangTick(LocalPlayer p, ClientInput in, Input k, boolean jumpPressed, boolean shiftPressed, BlockGetter level,
@@ -770,13 +789,13 @@ public final class RunnerMoves {
             holdX = bx;
             holdY = by;
             holdZ = bz;
-            if (pathKind != GRAB && pathKind != LOWER) {
+            if (pathKind != GRAB && pathKind != LOWER && pathKind != EAVE) {
                 hangStart = now;
                 // caught the next edge
                 BodyFx.sound(p, BodyContent.GRAB.get(), 0.75F, 1.05F);
             }
             // the catch settles into the hang once its clip has played (the grab and lower clips run 8 ticks)
-            settleAt = now + (pathKind == GRAB || pathKind == LOWER ? 5 : 1);
+            settleAt = now + (pathKind == GRAB || pathKind == LOWER || pathKind == EAVE ? 5 : 1);
         } else {
             state = State.NONE;
             ClientMoves.trace("climbed out");
@@ -793,7 +812,7 @@ public final class RunnerMoves {
         double u = k / (double) pathLen;
         double h, v;
         switch (pathKind) {
-            case LOWER -> { // out over the edge first, then down to the hold
+            case LOWER, EAVE -> { // out over the edge first, then down to the hold (from a line's top: out, then up)
                 h = smooth(u / 0.4);
                 v = smooth((u - 0.4) / 0.6);
             }
@@ -852,6 +871,7 @@ public final class RunnerMoves {
             case LEDGE_JUMP -> {
                 if (state == State.PATH) state = State.NONE;
             }
+            case GRIP -> GripMoves.end(p, false, "refused");
             default -> {
             }
         }
@@ -860,6 +880,7 @@ public final class RunnerMoves {
     static void stop(LocalPlayer p, String why) {
         endRun(p, true, why);
         endHang(p, true, why);
+        GripMoves.end(p, true, why);
         if (state == State.PATH) state = State.NONE;
         state = State.NONE;
     }
@@ -867,6 +888,7 @@ public final class RunnerMoves {
     /** The dev driver starts a script, or the player was replaced: everything lets go at once. */
     static void reset() {
         FreeRun.reset();
+        GripMoves.reset();
         state = State.NONE;
         runClimb = climbUsed = false;
         edge = null;
@@ -881,6 +903,7 @@ public final class RunnerMoves {
     }
 
     static float wallYaw() {
+        if (state == State.GRIP) return GripMoves.yaw();
         RunnerRules.Edge e = state == State.PATH ? pathEdge : edge;
         return e == null ? 0 : yawOf(e.fx(), e.fz());
     }

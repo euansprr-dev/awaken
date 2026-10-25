@@ -74,6 +74,7 @@ public final class CityKit {
             p -> p.forceSolidOff().strength(0.4f).sound(SoundType.LADDER).noOcclusion().pushReaction(PushReaction.POPPED));
 
     public static void register(IEventBus modBus) {
+        StreetKit.init(); // B3a's street kit joins this register first
         BLOCKS.register(modBus);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(CityKit::hangLadder);
     }

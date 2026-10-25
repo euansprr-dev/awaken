@@ -2,15 +2,12 @@ package dev.awaken.core.audio.client;
 
 import dev.awaken.Awaken;
 import dev.awaken.core.audio.LayerManifest;
-import it.unimi.dsi.fastutil.floats.FloatConsumer;
 import net.minecraft.client.sounds.AudioStream;
-import net.minecraft.client.sounds.JOrbisAudioStream;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceProvider;
 import org.lwjgl.BufferUtils;
 
 import javax.sound.sampled.AudioFormat;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -27,13 +24,13 @@ import java.nio.ByteBuffer;
  * Vorbis decoder itself does (vanilla's streams do the same).
  */
 final class StemMixer implements AudioStream {
-    static final int SR = 44100;
+    static final int SR = OggLoop.SR;
     /** Frames per read: 0.25 s. */
     static final int CHUNK = 11025;
     private static final AudioFormat FORMAT = new AudioFormat(SR, 16, 2, true, false);
     private static final float KNEE = 0.891F; // -1 dBFS
 
-    private final Track[] tracks;
+    private final OggLoop[] tracks;
     private final ByteBuffer out = BufferUtils.createByteBuffer(CHUNK * 4);
     // sound thread
     private final float[] gain, target, step;
@@ -47,7 +44,7 @@ final class StemMixer implements AudioStream {
     volatile long frames;
     volatile int softened;
 
-    private StemMixer(Track[] tracks) {
+    private StemMixer(OggLoop[] tracks) {
         this.tracks = tracks;
         int n = tracks.length;
         gain = new float[n];
@@ -61,7 +58,7 @@ final class StemMixer implements AudioStream {
 
     /** Loads every stem of a manifest (the encoded files stay in memory; each lap re-reads them). IO thread. */
     static StemMixer open(LayerManifest m, ResourceProvider resources) throws IOException {
-        Track[] t = new Track[m.stems().size()];
+        OggLoop[] t = new OggLoop[m.stems().size()];
         for (int i = 0; i < t.length; i++) {
             Identifier file = m.stems().get(i).file();
             Identifier path = Identifier.fromNamespaceAndPath(file.getNamespace(), "sounds/" + file.getPath() + ".ogg");
@@ -69,7 +66,7 @@ final class StemMixer implements AudioStream {
             try (InputStream in = resources.open(path)) {
                 data = in.readAllBytes();
             }
-            t[i] = new Track(data, m.frames(), path);
+            t[i] = new OggLoop(data, m.frames(), path, CHUNK);
         }
         return new StemMixer(t);
     }
@@ -116,7 +113,7 @@ final class StemMixer implements AudioStream {
                 step[k] = 1F / (pubSeconds[k] * SR);
             }
         }
-        for (Track t : tracks) t.fill(n);
+        for (OggLoop t : tracks) t.fill(n);
         int soft = 0;
         for (int i = 0; i < n; i++) {
             float l = 0F, r = 0F;
@@ -128,7 +125,7 @@ final class StemMixer implements AudioStream {
                     gain[k] = g;
                 }
                 if (g > 0F) {
-                    Track t = tracks[k];
+                    OggLoop t = tracks[k];
                     int j = 2 * (t.start + i);
                     l += g * t.buf[j];
                     r += g * t.buf[j + 1];
@@ -138,7 +135,7 @@ final class StemMixer implements AudioStream {
             out.putShort(pcm(knee(l)));
             out.putShort(pcm(knee(r)));
         }
-        for (Track t : tracks) t.consume(n);
+        for (OggLoop t : tracks) t.consume(n);
         System.arraycopy(gain, 0, shown, 0, gain.length);
         frames += n;
         if (soft > 0) softened += soft;
@@ -161,99 +158,6 @@ final class StemMixer implements AudioStream {
     @Override
     public void close() throws IOException {
         closed = true;
-        for (Track t : tracks) t.closeDecoder();
-    }
-
-    /** One stem: its encoded bytes, a Vorbis decoder, and a FIFO of decoded stereo frames. */
-    private static final class Track implements FloatConsumer {
-        final byte[] data;
-        final long loop;
-        final Identifier path;
-        JOrbisAudioStream dec;
-        int channels;
-        float[] buf = new float[2 * (CHUNK + 32768)];
-        int start, end;
-        long lap;
-        boolean eof, odd;
-        float pendingL;
-
-        Track(byte[] data, long loop, Identifier path) throws IOException {
-            this.data = data;
-            this.loop = loop;
-            this.path = path;
-            reopen();
-            AudioFormat f = dec.getFormat();
-            if ((int) f.getSampleRate() != SR || f.getChannels() < 1 || f.getChannels() > 2) {
-                throw new IOException(path + ": " + f + " (layered stems are 44.1 kHz mono or stereo)");
-            }
-        }
-
-        private void reopen() throws IOException {
-            closeDecoder();
-            dec = new JOrbisAudioStream(new ByteArrayInputStream(data));
-            channels = dec.getFormat().getChannels();
-            lap = 0;
-            eof = odd = false;
-        }
-
-        void closeDecoder() {
-            if (dec == null) return;
-            try {
-                dec.close();
-            } catch (IOException e) {
-                Awaken.LOG.debug("[audio] closing {}: {}", path, e.toString());
-            }
-            dec = null;
-        }
-
-        /** Makes sure at least n frames are buffered: decodes, pads a short lap with silence, starts the next lap. */
-        void fill(int n) throws IOException {
-            while (end - start < n) {
-                if (lap >= loop) {
-                    reopen();
-                    continue;
-                }
-                if (eof) {
-                    push(0F, 0F); // a decoder that ends early: the lap still lasts exactly `loop` frames
-                    continue;
-                }
-                if (!dec.readChunk(this)) eof = true;
-            }
-        }
-
-        void consume(int n) {
-            start += n;
-            if (start == end) start = end = 0;
-        }
-
-        @Override
-        public void accept(float x) {
-            if (lap >= loop) return; // past the loop's length: dropped, so every lap is exact
-            if (channels == 1) {
-                push(x, x);
-            } else if (!odd) {
-                pendingL = x;
-                odd = true;
-            } else {
-                odd = false;
-                push(pendingL, x);
-            }
-        }
-
-        private void push(float l, float r) {
-            if (2 * (end + 1) > buf.length) {
-                int live = end - start;
-                if (start > 0) {
-                    System.arraycopy(buf, 2 * start, buf, 0, 2 * live);
-                    start = 0;
-                    end = live;
-                }
-                if (2 * (end + 1) > buf.length) buf = java.util.Arrays.copyOf(buf, buf.length * 2); // never in practice
-            }
-            buf[2 * end] = l;
-            buf[2 * end + 1] = r;
-            end++;
-            lap++;
-        }
+        for (OggLoop t : tracks) t.closeDecoder();
     }
 }

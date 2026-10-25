@@ -85,6 +85,12 @@ public final class LivingContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> XP_TICK = sound("living.xp_tick");
     public static final DeferredHolder<SoundEvent, SoundEvent> LEVEL_UP = sound("living.level_up");
     public static final DeferredHolder<SoundEvent, SoundEvent> REGION_ENTER = sound("living.region_enter");
+    // happenings heard from afar (living.client.PulseSound; tools/art/specs/audio_world.py)
+    public static final DeferredHolder<SoundEvent, SoundEvent> TELL_STAMPEDE = sound("living.tell.stampede");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TELL_WINGS = sound("living.tell.wings");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TELL_HORN = sound("living.tell.horn");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TELL_TIDE = sound("living.tell.tide");
+    public static final DeferredHolder<SoundEvent, SoundEvent> TELL_BELLS = sound("living.tell.bells");
 
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String path) {
         return SOUNDS.register(path, () -> SoundEvent.createVariableRangeEvent(Awaken.id(path)));

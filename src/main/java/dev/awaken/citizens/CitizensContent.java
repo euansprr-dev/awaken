@@ -38,6 +38,10 @@ public final class CitizensContent {
     public static final DeferredHolder<EntityType<?>, EntityType<CitizenBody>> CITIZEN = ENTITIES.registerEntityType("citizen",
             CitizenBody::new, MobCategory.MISC, b -> b.sized(0.6f, 1.95f).eyeHeight(1.62f).clientTrackingRange(5).noSave().noSummon());
 
+    /** Carillon's animals (M4 B3b): made and moved on the client only (citizens.client.CityCritters). */
+    public static final DeferredHolder<EntityType<?>, EntityType<CityCritter>> CRITTER = ENTITIES.registerEntityType("city_critter",
+            CityCritter::new, MobCategory.MISC, b -> b.sized(0.5f, 0.5f).clientTrackingRange(0).noSave().noSummon());
+
     public static final DeferredBlock<StreetLampBlock> STREET_LAMP = BLOCKS.registerBlock("street_lamp", StreetLampBlock::new,
             p -> p.mapColor(MapColor.METAL).strength(3.5f).sound(SoundType.LANTERN).noOcclusion().noLootTable()
                     .lightLevel(StreetLampBlock::light).pushReaction(PushReaction.POPPED));
@@ -75,6 +79,13 @@ public final class CitizensContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> BELL_DISTRICT = sound("city.bell.district");
     public static final DeferredHolder<SoundEvent, SoundEvent> BELL_ALARM = sound("city.bell.alarm");
     public static final DeferredHolder<SoundEvent, SoundEvent> HANDBELL = sound("city.handbell");
+    // (M4 B3b) the animals and the places that sound; the client plays them (citizens.client.CitySound, CitySounds)
+    public static final DeferredHolder<SoundEvent, SoundEvent> PIGEON_FLUTTER = sound("city.pigeon.flutter"), PIGEON_COO = sound("city.pigeon.coo"),
+            GULL_CALL = sound("city.gull.call"), CART_ROLL = sound("city.cart.roll"), CART_BELLS = sound("city.cart.bells"),
+            ANVIL = sound("city.anvil"), BELLOWS = sound("city.bellows"), STALL = sound("city.stall"), BOAT = sound("city.boat"),
+            SONGBIRD = sound("city.songbird"), FOUNTAIN = sound("city.fountain"), LAP = sound("city.lap"), MILL = sound("city.mill"),
+            TAVERN = sound("city.tavern"), CARILLON_DAWN = sound("city.carillon.dawn"), CARILLON_NOON = sound("city.carillon.noon"),
+            CARILLON_DUSK = sound("city.carillon.dusk");
 
     private static DeferredItem<Item> prop(String name) {
         return ITEMS.registerSimpleItem(name, p -> p.stacksTo(1));

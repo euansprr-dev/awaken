@@ -23,8 +23,15 @@ public final class CampTests {
         AwakenTests.registerIsolated("living_camp", 300, h -> {
             ServerLevel level = h.getLevel();
             Camps cs = Camps.get(level.getServer());
-            BlockPos base = h.absolutePos(new BlockPos(0, 1, 0));
-            AwakenTests.clearAbove(level, base, 14, 0, 48); // plots are reused: an old floor overhead would be the "ground"
+            // isolated tests land under real terrain (and plots are reused): the camp paints from the heightmap, so its
+            // floor goes above everything in every column it can touch, and nothing is left over it
+            BlockPos origin = h.absolutePos(new BlockPos(0, 1, 0));
+            int top = origin.getY();
+            for (int dx = -14; dx <= 14; dx++) for (int dz = -14; dz <= 14; dz++) {
+                top = Math.max(top, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, origin.getX() + dx, origin.getZ() + dz));
+            }
+            BlockPos base = new BlockPos(origin.getX(), Math.min(top + 2, level.getMaxY() - 20), origin.getZ());
+            AwakenTests.clearAbove(level, base, 14, 0, Math.max(16, top - base.getY()));
             for (int dx = -12; dx <= 12; dx++) for (int dz = -12; dz <= 12; dz++) level.setBlock(base.offset(dx, -1, dz), Blocks.GRASS_BLOCK.defaultBlockState(), 2);
             long day = PlayDays.current(level.getServer());
             Camps.Camp c = cs.add("riftborn", "awaken:ember_mines", base, true, "", 1234L);

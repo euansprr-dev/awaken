@@ -3,6 +3,8 @@ package dev.awaken.core.audio.client;
 import dev.awaken.core.audio.AudioNet;
 import dev.awaken.core.audio.Cue;
 import dev.awaken.core.audio.UiSound;
+import dev.awaken.core.audio.client.world.Conductor;
+import dev.awaken.core.audio.client.world.WorldSound;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -13,11 +15,24 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 
-/** Client entry of the audio module: cues through the music manager, the layered music, the System's UI rules, ambience beds. */
+/** Client entry of the audio module: cues through the music manager, the layered music, the System's UI rules, ambience beds, world sound. */
 public final class AudioClient {
     private AudioClient() {}
 
     public static void init(IEventBus modBus) {
+        WorldSound.init(modBus);
+        Conductor.music(() -> LayerPlayer.MUSIC.ownsChannel() ? LayerPlayer.MUSIC.level() : -1, CuePlayer::playingStage);
+        Conductor.register(new Conductor.Source() {
+            @Override
+            public int voices() {
+                return Ambience.voices();
+            }
+
+            @Override
+            public float emphasis() {
+                return Ambience.emphasis();
+            }
+        });
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(AudioNet.PlayCue.TYPE, (msg, ctx) -> CuePlayer.request(Cue.byOrdinal(msg.cue())));
             e.register(AudioNet.PlayUi.TYPE, (msg, ctx) -> AudioUi.server(UiSound.byOrdinal(msg.sound())));

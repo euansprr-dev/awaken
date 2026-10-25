@@ -1,0 +1,151 @@
+# Hands P2 (SPEC §24): the Runner's Kit in first person (run with PACK=feel). S3's course (/awaken body course) for the
+# wall-run, wall jump, hang (fists on the lip, feet to the wall), shimmy and ledge jump up; a ledge for the mantle; a
+# lane for the tactical sprint and the slide (legs out ahead); a stair run for the stair slide; a drop for a hard landing.
+# The HUD stays on: vanilla draws no hands with it hidden. Shots: anims_p2_*.
+world anims_runner survival 4248
+waitworld
+window 1440 900
+gui 0
+hud on
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule fall_damage false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd tp @s 0.5 201 0.5 0 12
+wait 100
+cmd fill -16 199 -4 42 199 44 minecraft:smooth_stone
+cmd fill -16 200 -4 42 214 44 minecraft:air
+cmd tp @s 0.5 200 0.5 0 12
+wait 40
+cmd awaken body course
+wait 100
+screen close
+camera first
+wait 10
+
+# ---- wall-run: the wall-side hand brushing the wall ----
+cmd awaken body try release
+cmd tp @s -11.68 202 0.5 0 12
+wait 15
+cmd awaken body try wallrun
+wait 22
+shotnow anims_p2_wallrun
+wait 50
+
+# ---- wall jump: a palm shoves off ----
+cmd awaken body try release
+cmd tp @s -11.68 202 0.5 0 12
+wait 15
+cmd awaken body try walljump
+wait 20
+shotnow anims_p2_walljump_a
+wait 3
+shotnow anims_p2_walljump_b
+wait 60
+
+# ---- hang: fists on the lip; then look down at the feet on the wall ----
+cmd awaken body try release
+cmd tp @s 3.5 200 18.2 0 12
+wait 15
+cmd awaken body try hang
+wait 10
+shotnow anims_p2_hang
+cmd awaken ascent pilot aim 0 65 4
+wait 6
+shotnow anims_p2_hang_feet
+cmd awaken ascent pilot aim 0 10 4
+wait 40
+
+# ---- shimmy ----
+cmd awaken body try release
+cmd tp @s 4.5 200 18.2 0 12
+wait 15
+cmd awaken body try shimmy
+wait 34
+shotnow anims_p2_shimmy
+wait 40
+
+# ---- ledge jump up: the reach for the next lip ----
+cmd awaken body try release
+cmd tp @s 3.5 200 18.2 0 12
+wait 15
+cmd awaken body try ledgeup
+wait 26
+shotnow anims_p2_ledgeup
+wait 40
+
+# ---- mantle: palms slap the lip ----
+cmd awaken body try release
+cmd fill 20 200 4 24 200 6 minecraft:stone_bricks
+cmd fill 20 201 4 24 201 6 minecraft:stone_brick_slab
+cmd tp @s 22.5 200 3.3 0 20
+wait 25
+cmd awaken body try mantle
+wait 3
+shotnow anims_p2_mantle
+wait 40
+
+# ---- tactical sprint and slide: legs out ahead ----
+cmd awaken body try release
+cmd tp @s 30.5 200 0.5 0 25
+wait 20
+cmd awaken body try sprint
+wait 30
+shotnow anims_p2_sprint
+wait 30
+cmd awaken body try release
+cmd tp @s 30.5 200 0.5 0 30
+wait 20
+cmd awaken body try slide
+wait 12
+shotnow anims_p2_slide
+wait 3
+shotnow anims_p2_slide_b
+wait 40
+
+# ---- stair slide: tipped down the run, a hand knocking the steps ----
+cmd awaken body try release
+cmd fill 36 200 1 40 209 20 minecraft:air
+cmd fill 36 205 1 40 205 9 minecraft:smooth_stone
+cmd fill 36 204 10 40 204 10 minecraft:stone_brick_stairs[facing=north]
+cmd fill 36 203 11 40 203 11 minecraft:stone_brick_stairs[facing=north]
+cmd fill 36 202 12 40 202 12 minecraft:stone_brick_stairs[facing=north]
+cmd fill 36 201 13 40 201 13 minecraft:stone_brick_stairs[facing=north]
+cmd fill 36 200 14 40 200 14 minecraft:stone_brick_stairs[facing=north]
+cmd fill 36 200 10 40 203 10 minecraft:stone_bricks
+cmd fill 36 200 11 40 202 11 minecraft:stone_bricks
+cmd fill 36 200 12 40 201 12 minecraft:stone_bricks
+cmd fill 36 200 13 40 200 13 minecraft:stone_bricks
+cmd fill 36 200 1 40 204 9 minecraft:stone_bricks
+cmd tp @s 38.5 206 4.5 0 25
+wait 30
+cmd awaken body try slide
+wait 14
+shotnow anims_p2_stairslide
+wait 4
+shotnow anims_p2_stairslide_b
+wait 40
+
+# ---- a hard landing: a hand to the ground ----
+cmd awaken body try release
+cmd tp @s 10.5 212 30.5 0 30
+wait 20
+shotnow anims_p2_land_1
+wait 3
+shotnow anims_p2_land_2
+wait 3
+shotnow anims_p2_land_3
+wait 3
+shotnow anims_p2_land_4
+wait 30
+info
+quit

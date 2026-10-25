@@ -61,9 +61,16 @@ public final class BodyPayloads {
     }
 
     /** Run flags: a hang's kind, a ledge jump's way, a shimmy's corner turn. */
-    public static final int HANG_GRAB = 0, HANG_LOWER = 1, JUMP_UP = 0, JUMP_CLIMB = 1, JUMP_SIDE = 2, JUMP_BACK = 3, SHIMMY_START = 0, SHIMMY_CORNER = 2,
+    public static final int HANG_GRAB = 0, HANG_LOWER = 1, HANG_EAVE = 2, JUMP_UP = 0, JUMP_CLIMB = 1, JUMP_SIDE = 2, JUMP_BACK = 3, SHIMMY_START = 0, SHIMMY_CORNER = 2,
             /** A shimmy starting to the right (as you face the wall); SHIMMY_START is to the left. */
             SHIMMY_START_RIGHT = 3;
+
+    /**
+     * Grip flags (SPEC §17.23): the first Run of a grip starts it (holding or climbing), later ones change what the
+     * hands do; the last four leave the line (a kick off the wall, a swing out left or right, a landing at its foot).
+     */
+    public static final int GRIP_HOLD = 0, GRIP_CLIMB = 1, GRIP_CLIMB_FAST = 2, GRIP_SLIDE = 3, GRIP_HOP = 4,
+            GRIP_KICK = 5, GRIP_SIDE_L = 6, GRIP_SIDE_R = 7, GRIP_LAND = 8;
 
     /** Client → server: a move ended early on the client (a wall, a jump out, a stop, a swing). */
     public record End(int move) implements CustomPacketPayload {

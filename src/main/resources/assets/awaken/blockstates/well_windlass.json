@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "awaken:block/well_windlass"
+    },
+    "axis=z": {
+      "model": "awaken:block/well_windlass",
+      "y": 90
+    }
+  }
+}

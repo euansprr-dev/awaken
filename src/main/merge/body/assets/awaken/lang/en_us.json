@@ -9,5 +9,7 @@
   "subtitles.awaken.body.grab": "Body catches a ledge",
   "subtitles.awaken.body.shimmy": "Hands slide along a ledge",
   "subtitles.awaken.body.climb": "Body climbs over a ledge",
-  "subtitles.awaken.body.drop": "Body lets go of a ledge"
+  "subtitles.awaken.body.drop": "Body lets go of a ledge",
+  "subtitles.awaken.body.pipe_slide": "Hands slide down a pipe",
+  "subtitles.awaken.body.pipe_brake": "Hands clamp on a pipe"
 }

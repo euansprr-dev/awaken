@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackSource;
@@ -16,6 +17,7 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddPackFindersEvent;
+import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.jspecify.annotations.Nullable;
 
@@ -34,6 +36,13 @@ public final class CityModule {
     private static final DeferredRegister<MapCodec<? extends Feature>> FEATURE_TYPES =
             DeferredRegister.create(Registries.FEATURE_TYPE, Awaken.MODID);
 
+    private static final DeferredRegister<TicketType> TICKET_TYPES =
+            DeferredRegister.create(Registries.TICKET_TYPE, Awaken.MODID);
+
+    /** Keeps a pregenerated city chunk loaded until the player's own tickets take over (CityPregen). */
+    static final DeferredHolder<TicketType, TicketType> HOLD_TICKET =
+            TICKET_TYPES.register("city_hold", () -> new TicketType(CityPregen.HOLD_TICKS, TicketType.FLAG_LOADING));
+
     static {
         FEATURE_TYPES.register("city", () -> CityFeature.CODEC);
     }
@@ -43,6 +52,7 @@ public final class CityModule {
 
     public static void init(IEventBus modBus) {
         FEATURE_TYPES.register(modBus);
+        TICKET_TYPES.register(modBus);
         dev.awaken.city.kit.CityKit.register(modBus);
         modBus.addListener(CityModule::onAddPackFinders);
         CityProtection.registerConfig();
@@ -55,6 +65,11 @@ public final class CityModule {
         CityHooks.install(new Hooks());
         CityCommands.register();
         CityTests.register();
+        // (M4 B3a) lit windows follow the time of day
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) -> {
+            CityLights.tick(e.getServer());
+            CityYard.tick(e.getServer()); // the High Gate's yard stays clear ground (decision 29)
+        });
     }
 
     private static void onAddPackFinders(AddPackFindersEvent e) {
