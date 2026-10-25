@@ -1691,6 +1691,11 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     still +1.5–1.6 ms p50 (+1.4–1.5 of it is the open screen itself, re-blitting the frozen picture: the blit, the glass
     card, Lens dimming), clouds at 60 Hz +1.9–2.0, orbiting +1.9–2.0 after the 60 Hz cap (+2.6 before); open 12–20 ms
     cold, 2–8 ms warm; the glance 0.23 ms a paint; sampler 10–18 µs a chunk (120 µs under the Nether's roof).
+  - Zoomed out (polish, 2026-10-25): a cloud cell of 64 or 256 blocks carries no cloud if any cell in it is known
+    (counted exactly, a word of bits a row), and one beside known land carries a half-size cloud that keeps to its own
+    cell, so the land you know shows at every zoom under a whole blanket. Region names keep clear of you, the pins, the
+    marks and each other (moved up or down by a line or two, else left for a closer zoom) and slide inside the panel
+    at its edges.
   - Frame cost is judged on OpenGL: on Vulkan, MoltenVK presents at the display's rate (120 Hz) even with vsync off, so
     a capped tour can't show it.
 
