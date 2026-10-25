@@ -1375,6 +1375,19 @@ https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
     tour, Euan's play 3), each step a fresh builder briefed from a file.
 26. Vanilla banners, signs and barrels stay out of the city's fabric (block entities); the kit carries the look. Light at
     night is mostly emissive, within the light-source budget.
+27. Additions to Phase B (Euan, 2026-10-25), all without costly entities where possible (animated textures, particles,
+    emissive layers, weighted model variants):
+    - The kit grows to about 60 blocks: furniture and wares (tables, shelves of goods, sacks, crates, market produce, shop
+      signs with icons) and random texture variants so walls and roofs never tile (variants in B1 for facade and roof
+      blocks; furniture and wares in B3).
+    - Movement for free (B3): waving banners and laundry, flickering lanterns, turning water wheels, chimney smoke, lit
+      windows at night.
+    - Animals (B3): cats on the roofs, pigeon flocks that lift as you run past, dogs following their owners, horses
+      pulling carts down the avenues, boats on the canals.
+    - Interiors you can glimpse (B4): lit rooms behind windows at night, plus full interiors for the tavern, the smithy,
+      the bakery and the Association.
+    - City light (B6/B7): Carillon's Lens looks, warm lamp bloom at night and morning haze over the river
+      (assets/awaken/lens/looks_carillon.json).
 
 ### 16.1 Modules (new packages; same module rules as §1)
 | Module | Owns |
