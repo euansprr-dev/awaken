@@ -33,6 +33,7 @@ public final class CityPainter {
         for (int lz = 0; lz < buf.d; lz++) {
             for (int lx = 0; lx < buf.w; lx++) ground(c, buf, buf.px0 + lx, buf.pz0 + lz);
         }
+        CityWall.approaches(c, buf); // the High Gate's yard and barbican, the roads' lamps and masts (after the ground)
         CityPlan plan = layout.plan;
         for (int id : pieces) {
             if (id < layout.nPlots) {
