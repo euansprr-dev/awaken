@@ -23,7 +23,8 @@ wait 50
 shot m2_light_roost
 cmd awaken opening status
 # ---- the run: the rooftop golden runs, act by act (each plays 20 ticks after its start, then its recorded length:
-# act1_roof 536, act2_roof 449, act3_roof 277). The Bell Bridge falls a few roofs into Act 2, in view ahead.
+# act1_roof 536, act2_roof 449, act3_roof 277). The Bell Bridge falls as Act 2's runner tops the last gable (its own
+# tour, carillon-m2-bridge.txt, looks at it).
 cmd awaken ascent pilot route play ../tools/opening/golden/act1_roof
 wait 150
 shot m2_act1_a
@@ -35,7 +36,7 @@ cmd awaken ascent pilot route play ../tools/opening/golden/act2_roof
 wait 100
 shot m2_act2_a
 wait 95
-shot m2_act2_bridge
+shot m2_act2_b
 wait 195
 shot m2_act2_crane
 wait 110
