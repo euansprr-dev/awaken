@@ -3,8 +3,8 @@
 # noon (pigeons in the bowl and on the square, gulls on the quay, carts and dogs in the Market), the moved laundry lane
 # at noon, dusk and night, cats on Bellwatch's roofs with their eyes at night, Choir Square's festoons from dusk, the
 # Watch's drawn lanterns, and the lantern A/B: frame times with drawn light (glow) against the old moving light blocks
-# (blocks) on the Watch's round (show watch picks a watchman each time), then the light-block writes each made. The log carries "[citizens] animals near you"
-# every 30 s and the ambience slot's "status: mixing" lines (the beds really play).
+# (blocks) on the Watch's round (show watch picks a watchman each time), then the light-block writes each made. The
+# log carries "[citizens] animals near you" every 30 s and the ambience slot's "status: mixing" lines (the beds play).
 # Run (it measures frame times: the tour slot, alone on the machine):
 #   PACK=perf,world,horizon TECTONIC=awakened DH=swift RD=20 SLOT_WHO=M4-B3b \
 #   /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/carillon-m4b3b.txt 900
