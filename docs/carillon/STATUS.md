@@ -180,3 +180,7 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   canopies, window boxes and lanterns; the roofscape breaks up (slate, ridges, colour). Short of the bar: one floor's
   rhythm repeated up a house, plain ground storeys (B3), dark 4-wide Bellwatch lanes, chunky drainpipes; four post-tour
   fixes unseen in game. Tags filled (runner_lines/soft partly → B3). B2 (relief and heights) started.
+- 2026-10-25: B1 landed on build/awaken-v1 (19afe05e, with CI flake fixes); build merged into carillon/main (e9202766).
+  Agreed with the Living Wilds (decision 29: the High Gate yard and CityHooks.spot, bounties as the board's first slice,
+  Bram's pan line, chain drafts for review). Said yes to Creature life's life layer for citizens (shared API, B3 wires it
+  into CitizenModel; client-only, ≤ ~0.1 ms for a crowd, clips win, head tracking only near the player or a partner).
