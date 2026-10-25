@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "title": "Stampede",
+  "family": "creature",
+  "behaviour": "stampede",
+  "when": {
+    "time": [
+      "day"
+    ]
+  },
+  "groups": [
+    "greenwild",
+    "frostwild",
+    "sunscorch",
+    "crag",
+    "blossom"
+  ],
+  "duration_s": 40,
+  "weight": 1.5,
+  "witness_radius": 40,
+  "tell": "dustline",
+  "tell_radius": 14,
+  "rumours": [
+    "Heard the thunder {dir}? Not thunder. Hooves. Stay out of their way.",
+    "A herd spooked and ran {dir}. Flattened a fence and a shepherd's pride."
+  ]
+}

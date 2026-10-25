@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "title": "Oren's First Steel",
+  "band": 0,
+  "requires": ["counter:awaken:carillon_registered"],
+  "scene": "resident",
+  "giver": "oren",
+  "summary": "Oren will teach you a blade, if you bring him the makings: iron from the hills, copper from the cuts, coal for the fire. Then you temper it yourself.",
+  "ask": [
+    "Oren: You're holding that like it owes you money. Who sold you that? Don't tell me. I'll only shout.",
+    "Oren: You want a blade that lasts? Then you make it. I'm not your mother and I'm not your smith. Yet.",
+    "Oren: Bring me the makings and I'll show you once. Once."
+  ],
+  "steps": [
+    {
+      "id": "iron",
+      "objective": { "type": "deliver", "target": "oren|minecraft:raw_iron", "count": 6 },
+      "text": "Bring Oren 6 Raw Iron from the hills",
+      "done": ["Oren: Iron. Good iron, even. Don't let it go to your head. The hills did the work."],
+      "reward": { "levels": 0.1 }
+    },
+    {
+      "id": "copper",
+      "objective": { "type": "deliver", "target": "oren|minecraft:raw_copper", "count": 6 },
+      "text": "Bring Oren 6 Raw Copper from the river cuts",
+      "done": ["Oren: Copper for the guard and the rivets. Green already. You carried it through every puddle in the Commons, didn't you."],
+      "reward": { "levels": 0.1 }
+    },
+    {
+      "id": "coal",
+      "objective": { "type": "deliver", "target": "oren|minecraft:coal", "count": 8 },
+      "text": "Bring Oren 8 Coal for the fire",
+      "done": [
+        "Oren: Now the fire. Watch the colour, not my face. My face is always like this.",
+        "Oren: There. That's a blade. Ugly. Honest. Now it needs a temper, and you're doing it, not me."
+      ],
+      "reward": { "levels": 0.1 }
+    },
+    {
+      "id": "temper",
+      "objective": { "type": "use", "target": "temper", "count": 1 },
+      "text": "Temper a blade at a Forge, or with Oren",
+      "done": ["You feel the edge settle. It rings a little longer than it did."]
+    },
+    {
+      "id": "show",
+      "objective": { "type": "talk", "target": "oren" },
+      "text": "Show Oren your work",
+      "done": [
+        "Oren: Hm. Hm. Give it here. ...Fine. It's fine. It's better than fine and I'm not saying it twice.",
+        "Oren: Take my mark. Anything you temper, it starts a step ahead. Don't make me regret it. You will. Don't."
+      ]
+    }
+  ],
+  "relic": "awaken:orens_mark",
+  "finish": { "levels": 0.4 }
+}

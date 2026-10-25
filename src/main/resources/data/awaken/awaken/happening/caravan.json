@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "title": "Caravan",
+  "family": "people",
+  "behaviour": "caravan",
+  "when": {
+    "time": [
+      "day"
+    ],
+    "moon": [
+      2,
+      6
+    ],
+    "moon_weight": 3.0
+  },
+  "duration_s": 360,
+  "weight": 1.5,
+  "witness_radius": 40,
+  "tell": "lanterns",
+  "tell_radius": 8,
+  "rumours": [
+    "A caravan on the road {dir}. Good stock, they say. Raiders say so too.",
+    "Lanterns on the road {dir} this morning. Traders, heading for the next camp."
+  ]
+}

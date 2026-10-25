@@ -2712,13 +2712,17 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   waiting on them moves on (or says what it needs), a delivery changes hands, Hale reads the bounty board, a chain they
   give is offered on a choice card (Help / Not now), else one of their idle lines. People: Wren, Hettie, Ilse, Gus,
   Pell, Hale, Marta (`Wayfarers.PEOPLE`).
-- **The first drop, six of eight chains**: Ten Sheep Short (Hettie, 1-8), Moth Lights (Ilse, 1-8), Wren's Rope (cliff,
+- **The first drop, all eight chains** (The Last Delivery is written and waits for Carillon's B3b to call
+  `Quests.talk` for Kestrel; it opens on `counter:awaken:carillon_registered`): Ten Sheep Short (Hettie, 1-8), Moth Lights (Ilse, 1-8), Wren's Rope (cliff,
   8-20), The Caravan Road (Marta, road, 8-20), The Hermit's Horn (Gus, crag, 8-20), Pell's Message (Pell, road, 8-20).
-  The Last Delivery (with Carillon's Kestrel) and Oren's First Steel (Oren's forge) wait for their hosts' hooks.
+  Oren's First Steel (Oren in Carillon via `Quests.talk`, ore, coal, a temper reported by hearth's
+  `Upgrades.offerTemper` as `awaken:use/temper`) also waits for B3b.
 - **Relics** (`living.quest.Relics`): stack of one, rare, kept through death (held back from the drops, returned on
   respawn), a perk while carried (`Progression.addPerkSource`): Shepherd's Lantern `awaken:night_ward` 8 (living reads
   it: at night hunters and monsters within 8 give up and back off; gate creatures, wardens and beasts don't), Wren's
-  Hook `awaken:rope_reach` 6, Caravan Writ `awaken:shop_discount` 0.15, Pell's Spurs `awaken:mount_sprint` 0.15 and
+  Hook `awaken:rope_reach` 6, Oren's Mark `awaken:temper_start` 1 (hearth: a fresh, untempered weapon starts at 1 + perk levels within the Forge's
+  cap, at that level's price), Courier's Knot `awaken:sprint_recharge` 0.25 (the Ascent takes it off the rank's tactical-sprint
+  recharge, perks capped at 0.5, never under S's 30 ticks), Caravan Writ `awaken:shop_discount` 0.15, Pell's Spurs `awaken:mount_sprint` 0.15 and
   `awaken:whistle_range` 80 (each read by its owning module when it adopts it). Used: Lumen Tonic (Night Vision 2 min,
   refills in 5), Herdcaller Horn (once a play-day: whatever targets you within 24 stops and slows; passive and neutral
   creatures within 32 run 24 blocks the way you face). Pell's Letter is an errand item.
@@ -2733,6 +2737,96 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - Tests: `living_quest_engine`, `living_bounty_board`, `living_scene_finder`. Dev (admin): `/awaken living wayfarer <who>`,
   `talk` (the nearest Wayfarer), `scene <chain>` (its scene now, close by), `view <distance>` (stand back from your
   newest scene, facing it), `camp`, `quests`. Tour `tools/autopilot/living-c.txt`.
+
+### 21.6 The World Pulse and happenings (Phase D, as built 2026-10-25)
+- **The Pulse** (`living.pulse.Pulse`, saved data `awaken:living_pulse`, schema 1): per player outdoors (overworld,
+  awakened, not in a gate, a Hearth's radius or the city), checked every 10 s: none near (256 blocks) and 90 s since
+  their last → one starts; one or two near → another after 10 minutes; never more than three near (the anomalies near
+  count too). The first comes about two minutes outdoors. Kinds by weight × the moon (`moon_weight` on favoured phases)
+  × 2 for a kind the player hasn't witnessed, never the same kind twice running; up to three kinds are tried for a
+  place. Happenings are world state, shared, and end on their own; their creatures are tagged `awaken_happening`,
+  persistent, and leave with them (any no player is within 24-48 of go; the rest stay as ordinary creatures).
+- **The calendar**: moon phase = (clock / 24000) mod 8 (0 full, 4 new); time of day dawn 23000-1500, day, dusk
+  11500-13500, night; weather clear/rain/thunder.
+- **Data** `data/<ns>/awaken/happening/<id>.json`, schema 1: `title`, `family`, `behaviour` (code), `when` {`time`,
+  `moon`, `moon_weight`, `moon_only`, `weather`}, `groups` (fauna biome groups), `bands`, `duration_s`, `weight`,
+  `witness_radius`, `tell` (haze, dustline, flock, circle, storm, ghost, fog, lanterns, roar), `tell_radius`,
+  `rumours` (with `{dir}`). No em dashes.
+- **The launch set** (behaviours in `Herds`, `Skies`, `Hunts`, `Tides`, `People`):
+  - The Great Migration (dawn/day, grazing lands): a herd of 10-14 of the land's grazer crosses 140 blocks in 5 min;
+    hunters come at the stragglers at a third and two thirds of the way. Stampede (day): 8-10 at a full run, 90 blocks
+    in 40 s; 4 damage and a shove to anyone in the way (once per 1.5 s).
+  - Murmuration (dusk, over water): client-drawn only; witnessing it gives `awaken:lucidity_start` +10 for that
+    play-day (a perk source). Carrion Circle: kites over a barrel of remains (bones, leather, arrows, 40% a creature
+    part, 25% a worn iron sword) and scattered bone blocks; the remains stay.
+  - The Rolling Storm (day/dusk): a cell crossing 180 blocks in 4 min; visual lightning near its centre about every
+    3 s; 3 damage within 4 blocks of a strike; struck sand turns to glass.
+  - The Wild Hunt (full moon only, night, bands 1+): five wisp hounds and the Huntmaster (an elite four levels up,
+    titled "Huntmaster of the Pale Moon") run 220 blocks; they go for anyone within 18; each hound drops 2 essence, the
+    Huntmaster 6. Beast Duel (bands 1+): two named beasts fight; the winner is left at 45% health.
+  - The Deep Tide (new moon only, dusk/night, 10 min): fog out of a broken gate within 300 (else open ground); while it's
+    up the night's hunters, elites and camps are two levels harder everywhere (`Regions.creatureLevel`).
+  - Caravan (day, ×3 on the half moons): a wandering trader ("Caravan Master") and 2-3 trader llamas walk 140 blocks in
+    6 min; trade as usual. 40% are ambushed halfway by 3-4 pillagers; if the master lives, everyone within 40 gets
+    0.15 of a level (budget "pulse", 0.15 per 10 min) and 4 emeralds.
+- **Tells** (payload `living_happenings`: id, tell, centre, radius, progress, line direction; to players within 512
+  every 2 s, an empty list once when the last goes). `living.client.PulseFx` draws them in an alpha pass (unfogged,
+  reads by day) and an additive pass, the centre eased over the 2 s; past 70% of the render distance a tell is pulled
+  in along its sight line and shrunk to match (as the gate pillars).
+- **The Almanac**: within a kind's `witness_radius` a player witnesses it once: counter `awaken:happenings_witnessed`;
+  the first time a discovery `happening/<id>` (0.1 of a level), a new thing for the Director, and "Witnessed · <title>".
+  The Codex tab lists them ("HAPPENINGS WITNESSED · n / ??").
+- **Rumours** (`Rumours`, attachment `awaken:rumours`, schema 1, synced to the owner, kept through death): half the
+  time a Wayfarer with nothing for you tells of a happening on now 160-2500 blocks away that you haven't witnessed, with
+  a compass direction; it leaves a "? <title>" mark on the Gate Map (MapMarks) for two play-days (at most 8).
+- Dev (admin): `/awaken living happen <kind>`, `happenings`, `calm`. Test `living_pulse`.
+
+### 21.7 Creatures live somewhere: the ledger (Phase D, as built 2026-10-25)
+- `living.population.Ledger` (saved data `awaken:living_world`, schema 1, only cells players reached): per 512×512 cell,
+  made once from the world seed the first time a player is within a cell of it (one cell a tick at most), from its
+  land at five points (the biome source; never loads a chunk): up to two herds (greenwild mossback, frostwild frost
+  stag, sunscorch dune ray, crag crag ram, blossom honey bear; 6-10 of 12), one pack linked to the first herd
+  (greenwild gloomstalker, frostwild wisp hound, canopy canopy prowler, duskwood thornling; 3-5 of 5), one roost
+  (frostwild frostfinch, crag peak kite, duskwood hollow owl; 4-6 of 6). A record: kind, species, home, three pastures,
+  count, max, last play-day, seed, linked herd.
+- Where (pure, from seed, play-day, time): a herd at pasture (day+seed) mod 3 → the next by 2000 (dawn walk) → the one
+  after from 12000-13500 (dusk walk), wandering ±10; a pack at its den 23000-13000, else 24 blocks off its herd toward
+  the den; a roost at home, out circling at 40 blocks at dawn and dusk.
+- Bodies: every 2 s, a population within 96 blocks of a player (its place loaded and dry) takes min(count, 12/5/6)
+  bodies (tags `awaken_ledger`, `awaken_ledger_<id>`, persistent; at most 24 near a player); they walk toward where
+  their population is (herds 0.9, packs 1.1; grazing within 12). No player within 128 of any body: they're discarded.
+  A death lowers the count; a body loaded from disk that isn't current is discarded (after a restart).
+- Catch-up (when a population takes bodies after days away): herds +1 a day (+2 while their pack is wiped out), packs
+  +1 per 2 days (+1 per 4 once wiped), roosts +1 a day; each night a pack lived its herd lost one (never under 2).
+- Natural spawning leaves the herd species to the ledger (`LivingHooks.ledgered`, read by `FaunaRules.verdict`:
+  "its herds live in the Living Wilds' ledger"); hunters and ambient creatures keep spawning as before. Game rule
+  `awaken:living_herds` (default on): off, herds spawn naturally again and the ledger keeps only packs and roosts; the
+  GameTest server starts with it off, so the fauna tests see natural herds as before (`living_ledger` checks the rule).
+- Dev: `/awaken living ledger`. Test `living_ledger`.
+
+### 21.8 Camps and nests (Phase D, as built 2026-10-25)
+- `living.camp.Camps` (saved data `awaken:living_camps`, schema 1): a riftborn camp (45%; gate creatures that got out,
+  an E-rank theme: Ember Mines, Bell Crypt, Fungal Hollow, Overgrown Temple or Hive) and a hollow den (30%; the
+  Hollows) seeded with each ledger cell whose centre is level 8+, and a blight nest at a broken gate nobody cleared for
+  two play-days (its theme). A seeded camp finds its ground (dry, level within 2 over 5 blocks, 120+ from a Hearth, 48
+  from a gate, never the city) within 48 of its seed spot the first time a player is within 160, else it never was.
+- Built (`CampPainter`, natural ground and air only, every block recorded) when a player is within 96: a riftborn camp
+  (coarse dirt and paths, a crying-obsidian rift scar, a palisade of fence posts and dripstone points with gaps, 1-3
+  wool tents, a lit campfire, two soul lanterns), a blight nest (blackstone, sculk and crying obsidian over the scar,
+  a heart pillar), a hollow den (mossy stone, bone blocks, webs); radius 3 + tier; three lights at most.
+- Awake within 40: the heart (an elite of the theme, "Heart of the <camp>", +2 levels) and a wave of 2 + tier
+  (max 9) at `Regions.creatureLevel(CAMP)` + 2 per tier above 1, through `Mobs.spawn` (stats at that level), tagged
+  `awaken_camp`, creature kind CAMP (kill XP by role); when a wave is down and the heart stands, another, tier - 1
+  more in all. Everyone gone past 104: it sleeps (its creatures go; whole again next time).
+- The heart killed: cleared. Its ground turns to coarse dirt (ash), what it stood up goes, for 5 play-days; then it
+  can return at tier 1. Players within 56 get 0.4 × (1 + 0.25 per tier above 1) of a level (budget "camp", 0.10 per 10 min, as
+  pacing_sim's CAMP_K), counter
+  `awaken:camps_cleared`, "Cleared · <camp>".
+- Each new play-day: with a player within 1500, a camp grows a tier every two days (max 5; rebuilt bigger next time).
+  At tier 4+ it picks the nearest Hearth or the Wayfarer camp within 800, warns players within 800 of it ("it raids
+  tomorrow night"), and the next night (14000-14400) 4 + tier of its creatures come 24 blocks short of the target,
+  toward it.
+- Dev: `/awaken living camps`, `nest <kind> <tier>`. Test `living_camp`.
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 

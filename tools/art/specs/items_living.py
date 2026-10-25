@@ -1,4 +1,4 @@
-"""The Living Wilds' items: seven 16x16 icons painted for the quests and Association errands.
+"""The Living Wilds' items: nine 16x16 icons painted for the quests and Association errands.
 
     python3 tools/art/build_all.py items_living          write src/main/resources/assets/awaken/textures/item/<id>.png
     python3 tools/art/specs/items_living.py preview DIR  contact sheet (x12, on mid grey and on night) + the checks
@@ -10,6 +10,8 @@
     herdcaller_horn    Gus's horn carved from a Stonehorn shard: ribbed grey stone, leather bands, a pale tip, a dark bell
     pells_spurs        Pell's worn riding spur, one drawn bold: brass heel band, strap stubs, verdigris, a bent star rowel
     pells_letter       the folded letter, blue wax at the flap's point, a road-worn corner and a rust-brown thumbprint
+    couriers_knot      a Runner's courier knot: red and cream cord braided into a tight round knot, a brass ring, two brass-tipped tails
+    orens_mark         Oren's smith's mark: a dark iron token on a leather thong, an O punched in it and still glowing from the strike
 
 Every icon is drawn by hand from the shared palette (pixelart.RAMPS) plus small local ramps, one pixel outline, light from
 the top left. Nothing is random: the same ids always give the same pixels.
@@ -436,9 +438,94 @@ def pells_letter() -> Canvas:
     return _outline(c)
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# couriers_knot
+
+def couriers_knot() -> Canvas:
+    """A Runner's courier knot: a tight round knot of red and cream cord, the wraps laid in chevrons so it reads as braid and
+    not a ball, a brass ring on the loop at the top right, two cord tails below tipped in brass."""
+    c = Canvas()
+    rd = [col("crimson", i) for i in range(6)]
+    cr = [col("bone", i) for i in range(6)]
+    br = [col("brass", i) for i in range(6)]
+    cx, cy, r = 6.5, 7.2, 4.5
+    for y in range(16):
+        for x in range(16):
+            u, v = (x + 0.5 - cx) / r, (y + 0.5 - cy) / r
+            d = u * u + v * v
+            if d > 1.0:
+                continue
+            band = (y + abs(x - 6)) // 2                     # chevrons: each wrap is two pixels thick, V-shaped round the crown
+            lit = -u * 0.6 - v * 0.8 - d * 0.5
+            tone = 4 if lit > 0.45 else 3 if lit > -0.1 else 2 if lit > -0.6 else 1
+            c.set(x, y, rd[tone] if band % 2 == 0 else cr[tone + 1])
+    # the ring: brass, bright on its upper left, the red loop of the knot running up into it
+    for (x, y, i) in ((10, 0, 5), (11, 0, 5), (12, 0, 4), (9, 1, 5), (13, 1, 3), (9, 2, 4), (13, 2, 2), (9, 3, 3),
+                      (13, 3, 1), (10, 4, 2), (11, 4, 2), (12, 4, 1)):
+        c.set(x, y, br[i])
+    c.set(10, 3, rd[4]); c.set(11, 2, rd[4]); c.set(10, 2, rd[3])
+    # two tails of 2 px cord, hanging together from the knot and parting at the ends: red to the left, cream to the right,
+    # each with a twist in it and a brass tip
+    for (x, y, i) in ((5, 11, 4), (6, 11, 3), (5, 12, 3), (6, 12, 4), (4, 13, 4), (5, 13, 3)):
+        c.set(x, y, rd[i])
+    for (x, y, i) in ((7, 11, 5), (8, 11, 4), (7, 12, 4), (8, 12, 5), (8, 13, 5), (9, 13, 4)):
+        c.set(x, y, cr[i])
+    c.set(4, 14, br[4]); c.set(5, 14, br[2])
+    c.set(8, 14, br[4]); c.set(9, 14, br[2])
+    return _outline(c)
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# orens_mark
+
+def orens_mark() -> Canvas:
+    """Oren's smith's mark: a small dark iron token hung on a leather thong, an O punched into its face and still glowing
+    from the strike (ember in the ring, a faint warm tint on the iron around it)."""
+    ir = [col("iron", i) for i in range(6)]
+    lt = [col("leather", i) for i in range(6)]
+    em = [col("ember", i) for i in range(6)]
+    # the plate, 9 x 9 with its corners knocked off: a bright bevel on the top and left, a dark lip on the bottom and right
+    rows = [R(0, "")] * 6 + [
+        R(3, ".hhhhhhd."),
+        R(3, "hHMMMMMmd"),
+        R(3, "hMMMMMMmd"),
+        R(3, "hMMMMMMmd"),
+        R(3, "hMMMMMMmd"),
+        R(3, "hMMMMMMmd"),
+        R(3, "hMMMMMMmd"),
+        R(3, "hMMMMMmmd"),
+        R(3, ".dmmmmmd."),
+    ]
+    leg = {"h": ir[5], "H": ir[5], "M": ir[3], "m": ir[2], "d": ir[1]}
+    c = art(rows, leg)
+    # it is not new iron: a scratch, two pits
+    for (x, y, i) in ((4, 12, 4), (5, 13, 4), (10, 9, 1), (4, 9, 2)):
+        c.set(x, y, ir[i])
+    # the glow first, so the ring sits on top of it: a faint warm tint on the iron round the strike, strongest at its corners
+    for y in range(7, 14):
+        for x in range(4, 11):
+            if (x, y) in ((4, 7), (10, 7), (4, 13), (10, 13)):
+                continue
+            inside = 5 <= x <= 9 and 8 <= y <= 12
+            c.blend(x, y, em[3], 0.30 if inside else 0.14)
+    # the O: punched deep, hot, brightest on the lower right where the iron keeps the heat
+    ring = {(6, 8): 3, (7, 8): 3, (8, 8): 4, (5, 9): 3, (9, 9): 4, (5, 10): 3, (9, 10): 4, (5, 11): 4, (9, 11): 5,
+            (6, 12): 4, (7, 12): 5, (8, 12): 5}
+    for (x, y), i in ring.items():
+        c.set(x, y, em[i])
+    for (x, y) in ((6, 9), (7, 9), (8, 9), (6, 10), (8, 10), (6, 11), (7, 11)):
+        c.set(x, y, hex_rgba("#552e22"))
+    c.set(7, 10, hex_rgba("#7a4026")); c.set(8, 11, em[2])
+    # the thong: a loop that rises from a small knot at the top of the plate, lit on its left
+    for (x, y, i) in ((5, 1, 5), (6, 1, 4), (7, 1, 4), (8, 1, 3), (9, 1, 3), (4, 2, 5), (10, 2, 2), (3, 3, 4), (11, 3, 2),
+                      (4, 4, 4), (10, 4, 2), (5, 5, 4), (9, 5, 2), (6, 6, 4), (7, 6, 3), (8, 6, 2)):
+        c.set(x, y, lt[i])
+    return _outline(c)
+
+
 ITEMS = {"shepherds_lantern": shepherds_lantern, "lumen_tonic": lumen_tonic, "wrens_hook": wrens_hook,
          "caravan_writ": caravan_writ, "herdcaller_horn": herdcaller_horn, "pells_spurs": pells_spurs,
-         "pells_letter": pells_letter}
+         "pells_letter": pells_letter, "couriers_knot": couriers_knot, "orens_mark": orens_mark}
 
 
 def build(out):
@@ -451,7 +538,7 @@ def build(out):
 
 def check(images=None):
     images = images or {n: f().image() for n, f in ITEMS.items()}
-    assert len(images) == 7
+    assert len(images) == len(ITEMS) == 9
     seen = {}
     for n, im in images.items():
         assert im.size == (16, 16) and im.mode == "RGBA", n
@@ -466,7 +553,9 @@ def check(images=None):
         assert h not in seen, f"{n} is identical to {seen[h]}"
         seen[h] = n
         print(f"  {n:18s} {len(solid):3d} px  {len(colours):2d} colours")
-    print("items ok: 16x16, opaque pixels only, distinct, every one multi-tone")
+    for n, f in ITEMS.items():
+        assert f().image().tobytes() == images[n].tobytes(), f"{n} is not deterministic"
+    print("items ok: 16x16, opaque pixels only, distinct, every one multi-tone, deterministic")
 
 
 def preview(directory):

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "title": "The Deep Tide",
+  "family": "sky",
+  "behaviour": "deep_tide",
+  "when": {
+    "time": [
+      "dusk",
+      "night"
+    ],
+    "moon": [
+      4
+    ],
+    "moon_weight": 8.0,
+    "moon_only": true
+  },
+  "duration_s": 600,
+  "weight": 0.6,
+  "witness_radius": 64,
+  "tell": "fog",
+  "tell_radius": 30,
+  "rumours": [
+    "New moon tonight. The fog comes up out of the old break {dir}. Stay in, or stay sharp.",
+    "When the moon's dark the Deep Tide rises. Grey fingers out of the ground {dir}, they say."
+  ]
+}

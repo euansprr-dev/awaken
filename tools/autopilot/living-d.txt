@@ -1,0 +1,102 @@
+# The Living Wilds, Phase D (SPEC §21.6-21.8): happenings told from afar and up close (the Great Migration's dust and
+# birds, a carrion circle, the rolling storm, a caravan, a beast duel, the Wild Hunt's ghost light, the Deep Tide's
+# fog), a riftborn camp built and awake, the ledger's populations, and the Almanac in the Codex.
+# Run: SLOT_WHO=living-wilds slot.sh light tools/autopilot.sh tools/autopilot/living-d.txt 900
+world autopilot_living_d creative 20261025
+waitworld
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd gamerule advance_time false
+cmd time set 1000
+cmd awaken admin levels 12
+cmd awaken living goto greenwild
+wait 240
+shot living_d00_land
+# ---- the Great Migration, from afar then close ----
+cmd awaken living happen great_migration
+wait 60
+cmd awaken living face
+wait 40
+shot living_d01_migration_far
+cmd awaken living near 36
+wait 60
+shot living_d02_migration_near
+wait 200
+shot living_d03_migration_moving
+cmd awaken living calm
+# ---- carrion ----
+cmd time set 6000
+cmd awaken living happen carrion_circle
+wait 40
+cmd awaken living face
+wait 20
+shot living_d04_carrion_far
+cmd awaken living near 10
+wait 40
+shot living_d05_carrion_near
+cmd awaken living calm
+# ---- the rolling storm ----
+cmd awaken living happen rolling_storm
+wait 60
+cmd awaken living face
+wait 60
+shot living_d06_storm_far
+wait 120
+shot living_d07_storm_far_b
+cmd awaken living calm
+# ---- a caravan ----
+cmd awaken living happen caravan
+wait 60
+cmd awaken living near 14
+wait 60
+shot living_d08_caravan
+cmd awaken living calm
+# ---- a beast duel ----
+cmd awaken living happen beast_duel
+wait 60
+cmd awaken living near 22
+wait 100
+shot living_d09_duel
+cmd awaken living calm
+# ---- the Wild Hunt at night ----
+cmd time set 18000
+cmd awaken living happen wild_hunt
+wait 60
+cmd awaken living face
+wait 40
+shot living_d10_hunt_far
+cmd awaken living near 30
+wait 60
+shot living_d11_hunt_near
+cmd awaken living calm
+# ---- the Deep Tide at dusk ----
+cmd time set 13000
+cmd awaken living happen deep_tide
+wait 80
+cmd awaken living face
+wait 40
+shot living_d12_tide
+cmd awaken living calm
+# ---- a camp ----
+cmd time set 6000
+cmd awaken living nest riftborn 3
+look 180 18
+wait 80
+cmd awaken living camps
+wait 40
+shot living_d13_camp_built
+cmd awaken living ledger
+wait 20
+shot living_d14_ledger
+screen holo codex
+wait 40
+shot living_d15_almanac
+screen close
+quit

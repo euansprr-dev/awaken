@@ -32,6 +32,14 @@ public final class LivingContent {
                     Codec.BOOL, b -> b ? 1 : 0, false, FeatureFlagSet.of()));
 
     /**
+     * {@code /gamerule awaken:living_herds false}: herds spawn naturally again and the ledger keeps only packs and roosts
+     * (SPEC §21.7). The GameTest server starts with it off, so the fauna tests see natural herds as they always did.
+     */
+    public static final DeferredHolder<GameRule<?>, GameRule<Boolean>> LIVING_HERDS = RULES.register("living_herds",
+            () -> new GameRule<>(GameRuleCategory.SPAWNING, GameRuleType.BOOL, BoolArgumentType.bool(), (visitor, rule) -> visitor.visitBoolean(rule),
+                    Codec.BOOL, b -> b ? 1 : 0, true, FeatureFlagSet.of()));
+
+    /**
      * A drop worth a light pillar (SPEC §21.1): 0 none, 1 rare (blue), 2 epic (violet), 3 a Power Core (white-gold).
      * Set on the dropped item entity when a creature dies; synced to everyone who sees it, never saved.
      */
@@ -50,6 +58,13 @@ public final class LivingContent {
             () -> AttachmentType.builder(dev.awaken.living.bounty.BountyState::new).serialize(dev.awaken.living.bounty.BountyState.CODEC.fieldOf("bounties"))
                     .copyOnDeath()
                     .sync((holder, to) -> holder == to, net.minecraft.network.codec.ByteBufCodecs.fromCodecWithRegistries(dev.awaken.living.bounty.BountyState.CODEC))
+                    .build());
+
+    /** What a player has heard of happenings (SPEC §21.6): "?" marks on their map, synced to them, kept through death. */
+    public static final Supplier<AttachmentType<dev.awaken.living.pulse.Rumours.State>> RUMOURS = ATTACHMENTS.register("rumours",
+            () -> AttachmentType.builder(() -> dev.awaken.living.pulse.Rumours.State.EMPTY).serialize(dev.awaken.living.pulse.Rumours.State.CODEC.fieldOf("rumours"))
+                    .copyOnDeath()
+                    .sync((holder, to) -> holder == to, net.minecraft.network.codec.ByteBufCodecs.fromCodecWithRegistries(dev.awaken.living.pulse.Rumours.State.CODEC))
                     .build());
 
     static final net.neoforged.neoforge.registries.DeferredRegister.Entities ENTITIES = net.neoforged.neoforge.registries.DeferredRegister.createEntities(Awaken.MODID);

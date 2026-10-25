@@ -103,6 +103,72 @@ final class LivingCommands {
                         c.getSource().sendSuccess(() -> Component.literal(at == null ? "No such chain." : "Scene at " + at.toShortString()), false);
                         return at == null ? 0 : 1;
                     })));
+            // the World Pulse (Phase D): start a kind here now, list what's on, end it all
+            l.then(Commands.literal("happen").requires(AwakenCommands.admin())
+                    .then(Commands.argument("kind", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        var h = dev.awaken.living.pulse.Pulse.force(p, com.mojang.brigadier.arguments.StringArgumentType.getString(c, "kind"));
+                        c.getSource().sendSuccess(() -> Component.literal(h == null ? "No place for it here (or no such kind)." : "Happening " + h.id + " at " + net.minecraft.core.BlockPos.containing(h.centre).toShortString()), false);
+                        return h == null ? 0 : 1;
+                    })));
+            // tours: stand in a fauna land, face the newest happening, or walk up to it
+            l.then(Commands.literal("goto").requires(AwakenCommands.admin())
+                    .then(Commands.argument("land", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        ServerLevel level = p.level().getServer().overworld();
+                        var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BIOME,
+                                dev.awaken.Awaken.id("fauna/" + com.mojang.brigadier.arguments.StringArgumentType.getString(c, "land")));
+                        var found = level.findClosestBiome3d(b -> b.is(tag), p.blockPosition().atY(64), 6400, 32, 64);
+                        if (found == null) {
+                            c.getSource().sendFailure(Component.literal("No such land within 6400 blocks."));
+                            return 0;
+                        }
+                        var at = found.getFirst();
+                        level.getChunk(at.getX() >> 4, at.getZ() >> 4);
+                        int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, at.getX(), at.getZ()) + 1;
+                        p.teleportTo(level, at.getX() + 0.5, y, at.getZ() + 0.5, java.util.Set.of(), p.getYRot(), 0F, true);
+                        c.getSource().sendSuccess(() -> Component.literal("At " + at.getX() + " " + y + " " + at.getZ()), false);
+                        return 1;
+                    })));
+            l.then(Commands.literal("face").requires(AwakenCommands.admin()).executes(c -> faceHappening(c.getSource().getPlayerOrException(), 0)));
+            l.then(Commands.literal("near").requires(AwakenCommands.admin())
+                    .then(Commands.argument("distance", IntegerArgumentType.integer(4, 200))
+                            .executes(c -> faceHappening(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "distance")))));
+            l.then(Commands.literal("happenings").requires(AwakenCommands.admin()).executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                var list = dev.awaken.living.pulse.Pulse.get(p.level().getServer()).active();
+                for (var h : list) {
+                    int d = (int) Math.sqrt(h.centre.distanceToSqr(p.position()));
+                    c.getSource().sendSuccess(() -> Component.literal(h.id + " " + h.kind + " · " + d + " m · " + Math.round(h.progress(p.level().getGameTime()) * 100) + "%"), false);
+                }
+                c.getSource().sendSuccess(() -> Component.literal(list.size() + " on · moon " + dev.awaken.living.pulse.Pulse.moon(p.level().getServer().overworld())), false);
+                return 1;
+            }));
+            l.then(Commands.literal("calm").requires(AwakenCommands.admin()).executes(c -> {
+                int n = dev.awaken.living.pulse.Pulse.endAll(c.getSource().getServer());
+                c.getSource().sendSuccess(() -> Component.literal(n + " happenings ended."), false);
+                return n;
+            }));
+            l.then(Commands.literal("ledger").requires(AwakenCommands.admin()).executes(c -> {
+                var lines = dev.awaken.living.population.Ledger.describe(c.getSource().getPlayerOrException());
+                for (String line : lines) c.getSource().sendSuccess(() -> Component.literal(line), false);
+                if (lines.isEmpty()) c.getSource().sendSuccess(() -> Component.literal("No populations near (yet)."), false);
+                return lines.size();
+            }));
+            l.then(Commands.literal("camps").requires(AwakenCommands.admin()).executes(c -> {
+                var lines = dev.awaken.living.camp.Camps.describe(c.getSource().getPlayerOrException());
+                for (String line : lines) c.getSource().sendSuccess(() -> Component.literal(line), false);
+                if (lines.isEmpty()) c.getSource().sendSuccess(() -> Component.literal("No camps near."), false);
+                return lines.size();
+            }));
+            l.then(Commands.literal("nest").requires(AwakenCommands.admin())
+                    .then(Commands.argument("kind", com.mojang.brigadier.arguments.StringArgumentType.word())
+                            .then(Commands.argument("tier", IntegerArgumentType.integer(1, 5)).executes(c -> {
+                                var camp = dev.awaken.living.camp.Camps.place(c.getSource().getPlayerOrException(),
+                                        com.mojang.brigadier.arguments.StringArgumentType.getString(c, "kind"), IntegerArgumentType.getInteger(c, "tier"));
+                                c.getSource().sendSuccess(() -> Component.literal(camp == null ? "No ground for a camp here." : camp.name() + " at " + camp.pos().toShortString()), false);
+                                return camp == null ? 0 : 1;
+                            }))));
             l.then(Commands.literal("quests").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 var s = dev.awaken.living.quest.QuestEngine.state(p);
@@ -115,6 +181,32 @@ final class LivingCommands {
             }));
             root.then(l);
         });
+    }
+
+    /** Turns the player toward the newest happening; with a distance, first walks them up to that far from it. */
+    private static int faceHappening(ServerPlayer p, int distance) {
+        var list = dev.awaken.living.pulse.Pulse.get(p.level().getServer()).active();
+        if (list.isEmpty()) return 0;
+        var h = list.getLast();
+        ServerLevel level = p.level().getServer().overworld();
+        double px = p.getX(), py, pz = p.getZ();
+        if (distance > 0) {
+            double dx = px - h.centre.x, dz = pz - h.centre.z, len = Math.max(1, Math.sqrt(dx * dx + dz * dz));
+            px = h.centre.x + dx / len * distance;
+            pz = h.centre.z + dz / len * distance;
+        }
+        // a tour's camera: on a small glass stand over the canopy (high for a view from afar, the Hilltop Test)
+        level.getChunk((int) px >> 4, (int) pz >> 4);
+        int top = 0;
+        for (int ox = -2; ox <= 2; ox++) for (int oz = -2; oz <= 2; oz++)
+            top = Math.max(top, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, (int) px + ox, (int) pz + oz));
+        py = top + (distance > 0 ? 3 : 20);
+        for (int ox = -1; ox <= 1; ox++) for (int oz = -1; oz <= 1; oz++)
+            level.setBlock(new net.minecraft.core.BlockPos((int) Math.floor(px) + ox, (int) py - 1, (int) Math.floor(pz) + oz), net.minecraft.world.level.block.Blocks.GLASS.defaultBlockState(), 3);
+        double dx = h.centre.x - px, dy = h.centre.y + 6 - (py + 1.6), dz = h.centre.z - pz;
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)), pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)));
+        p.teleportTo(level, px, py, pz, java.util.Set.of(), yaw, pitch, true);
+        return 1;
     }
 
     private static int region(ServerPlayer p) {
