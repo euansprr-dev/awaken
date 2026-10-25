@@ -1362,7 +1362,9 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
     are Tectonic's ridgelines.
   - With Tectonic, the pack lifts Tectonic's offset clamp (`tectonic:__constants/max_offset` 3.0; its own cut every high
     range flat near y 303) and `awaken:ridge_room` holds Tectonic's ridge strength (`jaggedness/continents`) to the room
-    under y 316 (the ridge term reaches about 1.6): no summit reaches the ceiling. World height stays -64..320: raising it
+    under y 316 (the ridge term reaches about 1.6): no summit reaches the ceiling. On high ground the ridges stand up to
+    1.6 times stronger (y 150-220, `RidgeRoomFunction.EMPHASIS`, 2026-10-26), still within that room, so a range's crest
+    rises as ridgelines and horns. World height stays -64..320: raising it
     per world needs Tectonic's noise settings copied or a mixin (decision 3, PLAN-2).
   - `awaken:alpine` material condition (`AlpineSurface`, shared with Far Sight): snow above a snow line at y 186 that
     wanders ±9 (160-block noise), drops 22 on north faces and lifts 14 on south ones, on slopes under 1.25 (51°); scree
@@ -1430,6 +1432,17 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   over the sea after a jump and the pale frame along a flight were these holes, found with `farsight debug 2`, which
   paints masked far terrain red. They were first taken for water walls and for vanilla's chunk fade-in; a Turbo
   fluid-renderer mixin and a fade override were built for those, removed nothing, and were dropped.)
+- **Water edges** (Turbo, `dev.awaken.turbo.wateredge`, 2026-10-26, orchestrator's approval): water sides facing a
+  chunk the client hasn't received are meshed (it reads as air), so the loaded area's edge stands in water walls,
+  thin pale lines over the far sea after a jump or in fast flight. The pack's chunks are meshed by Sodium, so the hook
+  is in Sodium 0.9.3's `DefaultFluidRenderer.isSideExposedOffset` (a `@Pseudo` HEAD inject, own config
+  `awaken.wateredge.mixins.json`, client only, not required): while Far Sight draws, a horizontal water side whose
+  neighbouring chunk the client lacks is not exposed; the chunk's arrival marks its neighbours' sections dirty, so the
+  face comes back where needed. Version lock Minecraft 26.3, NeoForge 26.3.0.95, Sodium 0.9.3-beta.1+mc26.3
+  (`WaterEdge`); probe: the fluid renderer reports when built with the hook; client setting `farSightWaterEdges`
+  (default on); off on the first failure; off, water meshes as Sodium's own. Measured (`farsight2-wateredge.txt`, the
+  same jump off and on): the 10-second shot's pale edge pixels 0.96% off, 0.21% on. A first, vanilla `FluidRenderer`
+  version reached nothing under Sodium and was dropped.
 - **Look** (`farsight_terrain.fsh`; Euan's playtest, 2026-10-25: "it feels like an extension of the world"): far ground
   is drawn in blocks at every distance. Each pixel walks its view ray through columns standing on the mesh's local
   plane, about a pixel wide (1 block by the real chunks, then 2, 4 .. 64, dithered between widths), tops rounded to
@@ -1444,9 +1457,10 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   rock by slope; water with shallows; forest floor tinted by its crowns, and from about 600 blocks out (full by 2.4 km)
   a forest is its canopy: crown colour over every face, speckled crown by crown.
 - **Bake** (fragment pass, `FarGpu`): per corner the normal, valley shade, and sunlight: a march toward the sun across
-  the ring (40 steps, growing), soft by how far under the ridge line. Changed rings at once, one more each frame.
+  the ring (40 steps, growing), soft by how far under the ridge line. Changed rings at once, one more every other frame
+  (the chunk mask refreshes on the frames between).
 - **Far forests** (`FarTrees`): rings 1-4 (half a kilometre to four) plant jittered candidate spots per cell (1, 2, 3,
-  2 by ring) taking a tree as often as the forest is dense (densest: about two in three), never on water, on slopes over
+  1 by ring; ring 4's trees are dots, the canopy shading carries the forest there) taking a tree as often as the forest is dense (densest: about two in three), never on water, on slopes over
   1.1, or above the treeline (14 under the alpine snow line); each a little taller or wider than the mean. Up to 512 a
   patch, 16 bytes each, in a persistent texel buffer (two runs per slot: predicted, real), stood as opaque voxel trees
   (crown top, two camera-facing crown sides narrowing by shape, two trunk sides): broadleaf, conifer, jungle, acacia.

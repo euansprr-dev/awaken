@@ -21,8 +21,9 @@ public final class FarTrees {
     public static final int MAX = 512, INTS = 4;
     /** The rings that plant trees. */
     public static final int FIRST_RING = 1, LAST_RING = 4;
-    /** Candidate spots per cell, by ring (more per cell as cells grow, so forests keep their look). */
-    private static final int[] SPOTS = {0, 1, 2, 3, 2};
+    /** Candidate spots per cell, by ring (more per cell as cells grow, so forests keep their look; ring 4's are dots, the
+     * canopy shading carries the forest there). */
+    private static final int[] SPOTS = {0, 1, 2, 3, 1};
 
     public static boolean plants(int ring) {
         return ring >= FIRST_RING && ring <= LAST_RING;

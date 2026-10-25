@@ -191,8 +191,10 @@ public final class FarSightClient {
         sun.set(0f, 1f, 0f).rotateX(sunAngle).rotateY((float) (-Math.PI / 2));
         boolean moon = sun.y < 0f;
         if (moon) sun.negate();
-        // the changed rings at once, and one more each frame in turn, so ridge shadows follow the sun
-        int bake = field.dirty | 1 << (bakeTurn++ % Rings.RINGS);
+        // the changed rings at once, and one more every other frame in turn, so ridge shadows follow the sun (the
+        // other frames refresh the chunk mask)
+        int bake = field.dirty | ((bakeTurn & 1) == 0 ? 1 << ((bakeTurn >> 1) % Rings.RINGS) : 0);
+        bakeTurn++;
         if ((partsOff & 8) == 0) gpu.bake(field, bake, sun, sun.y > 0.01f);
         field.dirty = 0;
         renderer.timeBaked();
@@ -315,6 +317,7 @@ public final class FarSightClient {
             debug = a.length() > 5 ? Integer.parseInt(a.substring(5).trim()) : 0;
             return "debug view " + debug;
         }
+        if (a.startsWith("wateredge")) return "water edges " + dev.awaken.turbo.wateredge.WaterEdge.autopilot(a.substring(9));
         if (a.startsWith("part ")) {
             String[] w = a.substring(5).trim().split("\\s+");
             for (int i = 0; i < PARTS.length; i++) {
