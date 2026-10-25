@@ -22,6 +22,8 @@ public final class CitizensClient {
         modBus.addListener(CritterRenderer::layers);
         CityCritters.init();
         CityGlow.source(CityCritters.LANTERNS);
+        CityGlow.source(CityFestoons.GLOW);
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent e) -> CityFestoons.submit(e));
         NeoForge.EVENT_BUS.addListener(CityCritters::tick);
         NeoForge.EVENT_BUS.addListener(CityCritters::onJoin);
         NeoForge.EVENT_BUS.addListener(CityCritters::onLeave);
@@ -49,6 +51,7 @@ public final class CitizensClient {
             CityLife.clear();
             CityCritters.clear();
             CitySound.clear();
+            CityFestoons.reset();
         });
     }
 }
