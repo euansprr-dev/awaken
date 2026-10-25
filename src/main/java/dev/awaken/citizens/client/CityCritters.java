@@ -54,6 +54,8 @@ public final class CityCritters {
     static final double BOAT_SPEED = 0.06, KEEP_RIVER = 3.5, KEEP_CANAL = 1.0, KEEP_ROAD = 1.6;
     /** A moored boat every this many blocks along each quay; none this near a bridge. */
     static final double MOOR_EVERY = 24, MOOR_CLEAR = 6;
+    /** How near the end of its river run a rowed boat drifts round (blocks). */
+    static final double TURN = 4;
     /** Where a boat's lantern hangs: forward of its middle and above the water (blocks; the rig's stem post). */
     static final double LANTERN_FWD = 2.03, LANTERN_UP = 1.06;
 
@@ -1091,9 +1093,11 @@ public final class CityCritters {
         double moved = Math.hypot(c.getX() - ox, c.getZ() - oz);
         c.speed = moved > 2 ? 0F : (float) moved;
         face(c, at[2], at[3], 5F);
-        clip(c, "walk");
+        // at either end of the river the boatman rests on his oars while the boat comes round
+        boolean turning = !h.loop && (at[4] < TURN || at[4] > h.length - TURN);
+        clip(c, turning ? "drift" : "walk");
         // the stroke is 2.4 s: the oarlocks at the catch
-        if ((c.tickCount + c.seed) % 48 == 0 && dist2Player(c) < 24 * 24) {
+        if (!turning && (c.tickCount + c.seed) % 48 == 0 && dist2Player(c) < 24 * 24) {
             sound(level, c, CitySounds.OARLOCK, 0.25F, 1.2F + c.getRandom().nextFloat() * 0.15F);
         }
     }
