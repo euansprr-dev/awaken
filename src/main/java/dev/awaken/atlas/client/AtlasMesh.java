@@ -85,6 +85,8 @@ final class AtlasMesh {
     private final Builder builder = new Builder(); // worker thread only
     private int inFlight;
     private Explored exploredSnapshot = new Explored();
+    /** The zones the worker colours by (set by the main thread before each update). */
+    volatile ZoneMap.View zones;
     private int snapshotVersion = -1;
     private final int[] windowCx = {Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE}, windowCz = new int[LODS];
     private int generation;
@@ -120,6 +122,11 @@ final class AtlasMesh {
                     if (s != null) s.dirty = true;
                 }
         }
+    }
+
+    /** Every built slice draws again (the zones' colours changed). */
+    void changedAll() {
+        for (var map : slices) for (Slice s : map.values()) s.dirty = true;
     }
 
     /** Everything is stale (a new dimension, a cleared cache). */
@@ -193,6 +200,7 @@ final class AtlasMesh {
         s.building = true;
         inFlight++;
         Explored ex = exploredSnapshot;
+        ZoneMap.View zv = zones;
         int gen = generation;
         worker.execute(() -> {
             long t0 = System.nanoTime();
@@ -200,7 +208,7 @@ final class AtlasMesh {
             int quads = 0;
             int[] lights = new int[0];
             try {
-                quads = builder.build(store, ex, s.lod, s.x0(), s.z0());
+                quads = builder.build(store, ex, zv, s.lod, s.x0(), s.z0());
                 if (quads > 0) {
                     data = builder.copyOut();
                     lights = builder.lights();
@@ -298,6 +306,7 @@ final class AtlasMesh {
         private final int[] gc = new int[GW * GH];
         private final byte[] gi = new byte[GW * GH];
         private final boolean[] gd = new boolean[GW * GH];
+        private final int[] gz = new int[GW * GH];
         private final int[] top = new int[S * S];
         private long vb = MemoryUtil.nmemAlloc(1 << 20);
         private long vbCap = 1 << 20, vbPos;
@@ -319,7 +328,7 @@ final class AtlasMesh {
             return out;
         }
 
-        int build(ColumnStore store, Explored explored, int lod, int x0, int z0) {
+        int build(ColumnStore store, Explored explored, ZoneMap.View zones, int lod, int x0, int z0) {
             int sh = STEP_SHIFT[lod];
             step = 1 << sh;
             int half = step >> 1;
@@ -344,6 +353,7 @@ final class AtlasMesh {
                         gh[gi0] = tile.height[i];
                         gc[gi0] = tile.color[i];
                         gi[gi0] = tile.info[i];
+                        gz[gi0] = zones == null || x < -1 ? 0 : zones.zone(wx, wz);
                         if (x >= 0 && x < S && z >= 0 && z < S) any = true;
                     }
                 }
@@ -381,7 +391,7 @@ final class AtlasMesh {
                         shade -= hemmed * 0.045f;
                         float shadow = clamp((level - h) * 0.5f, 0f, 1f);
                         shade *= 1f - 0.30f * shadow;
-                        top[z * S + x] = scale(c, shade);
+                        top[z * S + x] = zone(scale(c, shade), gg, zones);
                         if ((info & ColumnStore.LIT) != 0 && lit.size() < MAX_LIGHTS * 3) {
                             lit.add(x << sh);
                             lit.add(h);
@@ -422,6 +432,25 @@ final class AtlasMesh {
                 }
             }
             return quads;
+        }
+
+        /**
+         * The zone's colour over a column: a wash of its colour over the land, and where the next known column belongs
+         * to another zone, a bright line of it, so each side of a boundary carries its own colour and you see exactly
+         * where one district or region ends and the next begins.
+         */
+        private int zone(int c, int g, ZoneMap.View zones) {
+            int zn = gz[g];
+            if (zn == 0 || zones == null) return c;
+            int zc = zones.colour(zn);
+            if (zc == 0) return c;
+            boolean edge = differs(g + 1, zn) || differs(g - 1, zn) || differs(g + GW, zn) || differs(g - GW, zn);
+            if (edge) return mix(c, lighten(zc), 0.78f);
+            return mix(c, zc, 0.30f);
+        }
+
+        private boolean differs(int n, int zone) {
+            return gd[n] && gz[n] != zone && gz[n] != 0;
         }
 
         /** One vertical face between column g's top and its neighbour n; returns the quads written. */
@@ -480,6 +509,17 @@ final class AtlasMesh {
             MemoryUtil.memPutByte(p + 14, (byte) argb);
             MemoryUtil.memPutByte(p + 15, (byte) (argb >>> 24));
         }
+    }
+
+    static int mix(int a, int b, float t) {
+        int r = (int) (((a >> 16) & 255) * (1 - t) + ((b >> 16) & 255) * t);
+        int g = (int) (((a >> 8) & 255) * (1 - t) + ((b >> 8) & 255) * t);
+        int bl = (int) ((a & 255) * (1 - t) + (b & 255) * t);
+        return (a & 0xFF000000) | (r << 16) | (g << 8) | bl;
+    }
+
+    static int lighten(int argb) {
+        return mix(argb, 0xFFFFFFFF, 0.28f);
     }
 
     static int scale(int argb, float f) {

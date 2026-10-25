@@ -1,4 +1,5 @@
-# Carillon M5: the Atlas's polish check (after the merge review): zoomed out, the land you know stays clear of cloud at
+# Carillon M5: the Atlas's readability check (Euan, 2026-10-25): districts and regions coloured with their borders,
+# names on their own land, the legend; and zoomed out, the land you know stays clear of cloud at
 # both coarse levels, and region names keep clear of the pins, of you and of each other. Every tour starts from a
 # fresh world (tools/autopilot.sh), so it learns its own regions and drops its own pins first.
 # Run: PACK=perf,world TECTONIC=awakened RD=16 SLOT_WHO=atlas \
@@ -38,7 +39,13 @@ cmd awaken atlas reveal 96
 wait 40
 cmd awaken city view square
 wait 200
-cmd atlas open 20 50 0.4
+cmd atlas open 20 52 1
+wait 80
+shot m5_city_zones
+cmd atlas view 30 60 1.8
+wait 60
+shot m5_city_close
+cmd atlas view 20 50 0.4
 wait 80
 shot m5_edge
 cmd atlas view 20 56 0.18

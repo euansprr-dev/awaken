@@ -1727,6 +1727,22 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     cell, so the land you know shows at every zoom under a whole blanket. Region names keep clear of you, the pins, the
     marks and each other (moved up or down by a line or two, else left for a closer zoom) and slide inside the panel
     at its edges.
+  - Readability (Euan, 2026-10-25: "colour-coded sections … know where one thing starts and ends"; names in the clouds
+    read as "so what?"): every known column belongs to a zone, Carillon's district (block by block from the plan's
+    raster, placed from the square the server sends, `atlas_city`) or outside it the Living Wilds region of its 16×16
+    cell (the server names each explored cell with its region, 1-based into the known regions, sent with the tile;
+    `atlas_sync` channel version 2; a region you have explored land in is known). Zones are baked into the mesh: a 30%
+    wash of the zone's colour, and where the next known column is another zone a bright line of each side's colour.
+    Regions are coloured by danger (by their lowest level: 1–8 green, 8–20 yellow, 20–45 orange, 45–80 red, 80+
+    violet); districts each their own. Names are chips (dark glass, a bar in the zone's colour, the name, its levels or
+    "Carillon") on the known cell nearest the middle of the zone's known land, largest zones first, moved a line or two
+    to stay clear of you, pins, marks, the legend and each other; districts close in, regions at every zoom; the old
+    spaced lettering and the bell-position district labels are gone. The legend ("KNOWN LANDS", top left, L hides it)
+    lists the zone you're in first and the nearest others (districts close in, regions zoomed out) with the danger key;
+    clicking a row glides the table there. Hovering the table names the zone under the cursor.
+  - Clouds (same day): a puff's tone comes from its cell's hash (from its drifting position it changed every redraw and
+    the blanket flickered); the view redraws every frame while it moves (the 60 Hz cap made the table lag the mouse);
+    zooming across a level keeps drawing the built level until the new one is ready round the view (it blinked out).
   - Frame cost is judged on OpenGL: on Vulkan, MoltenVK presents at the display's rate (120 Hz) even with vsync off, so
     a capped tour can't show it.
 
