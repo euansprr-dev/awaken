@@ -1,0 +1,17 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "equipment",
+ "group": "awaken_arms_gauntlets",
+ "key": {
+  "C": "#awaken:hunter_core_s",
+  "X": "awaken:sovereign_blade",
+  "B": "#awaken:hunter_bind_s"
+ },
+ "pattern": [
+  "BXB",
+  " C "
+ ],
+ "result": {
+  "id": "awaken:sovereign_gauntlets"
+ }
+}

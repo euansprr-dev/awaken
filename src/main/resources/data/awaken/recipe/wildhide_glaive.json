@@ -1,0 +1,18 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "equipment",
+ "group": "awaken_arms_glaive",
+ "key": {
+  "C": "#awaken:hunter_core_e",
+  "X": "awaken:wildhide_blade",
+  "B": "#awaken:hunter_bind_e"
+ },
+ "pattern": [
+  " X",
+  " C",
+  "B "
+ ],
+ "result": {
+  "id": "awaken:wildhide_glaive"
+ }
+}
