@@ -1,0 +1,123 @@
+# Lens 2, step L4 (SPEC §22): volumetric clouds in place of the blocky ones (Euan, 2026-10-25). The same frames with
+# Lens on Swift (the game's own clouds) and on Cinematic/Ultra (Lens's clouds): noon, golden hour into the sun, from
+# above the cloud deck, under rain, at night, their shadows over Carillon; then the frame-time bench.
+# Run (alone on the machine, it measures):
+#   PACK=perf,world TECTONIC=awakened RD=32 LENS=cinematic SLOT_WHO=lens2 \
+#   /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/lens2-l4.txt 1200
+world lens2l4 creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1280 720
+info
+hud off
+cmd gamemode spectator
+lens cinematic
+# ---- noon over the land, looking up into the sky
+cmd time set 6000
+cmd awaken city view sky_nw_low
+wait 400
+look 30 -12
+wait 80
+lens swift
+wait 30
+shot l4_01_noon_classic
+lens cinematic
+wait 60
+shot l4_01_noon_cinematic
+lens ultra
+wait 60
+shot l4_01_noon_ultra
+lens cinematic
+# ---- golden hour into the sun: silver linings, beams through the gaps
+cmd time set 11900
+look 90 -4
+wait 80
+lens swift
+wait 30
+shot l4_02_golden_classic
+lens cinematic
+wait 60
+shot l4_02_golden_cinematic
+lens ultra
+wait 60
+shot l4_02_golden_ultra
+lens cinematic
+# ---- golden hour over Carillon, away from the sun: warmer and richer than the classic look, long shadows
+look -90 18
+wait 60
+lensdebug 8
+wait 20
+shot l4_02b_city_golden_classic
+lensdebug 0
+wait 40
+shot l4_02b_city_golden_cinematic
+# ---- the cloud shadows over Carillon
+cmd time set 7000
+look -60 30
+wait 80
+lens swift
+wait 30
+shot l4_03_shadows_classic
+lens cinematic
+wait 60
+shot l4_03_shadows_cinematic
+# ---- above the cloud deck
+cmd time set 10500
+cmd tp @s ~ 300 ~ 70 12
+wait 120
+lens swift
+wait 30
+shot l4_04_above_classic
+lens cinematic
+wait 60
+shot l4_04_above_cinematic
+# ---- overcast rain
+cmd tp @s ~ 150 ~ 30 -10
+cmd weather rain 1000000
+cmd time set 8000
+wait 200
+lens swift
+wait 30
+shot l4_05_rain_classic
+lens cinematic
+wait 60
+shot l4_05_rain_cinematic
+cmd weather clear 1000000
+# ---- night under the moon
+cmd time set 17000
+wait 200
+lens swift
+wait 30
+shot l4_06_night_classic
+lens cinematic
+wait 60
+shot l4_06_night_cinematic
+# ---- frame times on the L1 vista
+cmd time set 11900
+cmd awaken city view sky_nw_low
+look -90 18
+wait 300
+lens off
+wait 100
+perf l4_off 20
+lens swift
+wait 100
+perf l4_swift 20
+lens cinematic
+wait 100
+perf l4_cinematic 20
+lens ultra
+wait 100
+perf l4_ultra 20
+lens cinematic
+quit

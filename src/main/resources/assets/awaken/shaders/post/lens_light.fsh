@@ -13,6 +13,7 @@
 uniform sampler2D DepthSampler;     // the world's depth, full size (first input: InSize is the full frame)
 uniform sampler2D HeightSampler;
 uniform sampler2D SunmapSampler;    // lens_sunmap.fsh: the height above which the sun reaches each column
+uniform sampler2D CloudNoiseSampler; // Lens 2's clouds (L4): their shadows on the land and in the beams
 uniform sampler2D HistorySampler;   // last frame's light buffer (persistent)
 uniform sampler2D FrameSampler;
 uniform sampler2D ParamsSampler;
@@ -20,6 +21,7 @@ uniform sampler2D ParamsSampler;
 #include <awaken:lens_frame.glsl>
 #include <awaken:lens_height.glsl>
 #include <awaken:lens_normal.glsl>
+#include <awaken:lens_clouds.glsl>
 
 layout(location = 0) in vec2 texCoord;
 
@@ -126,11 +128,14 @@ float volume(vec3 v, float d, vec3 l, float strength, float jitter, bool ultra) 
     float cell = 1024.0 / float(textureSize(SunmapSampler, 0).x);
     int steps = ultra ? 16 : 8;
     float ground = heightAt(ivec2(floor(f12.xz)), 0).g;
+    vec4 cp = cloudParams();
     float floorY = ground > -1000.0 ? max(ground, 40.0) : 63.0;
     float dt = d / float(steps), scaleH = max(v19.g * 256.0, 4.0), acc = 0.0;
     for (int i = 0; i < steps; i++) {
         vec3 w = v * ((float(i) + jitter) * dt);
-        acc += litAt(w, f12, cell) * exp(-max(w.y + f12.y - floorY, 0.0) / scaleH);
+        // (on Ultra the clouds' shadows cut the beams too)
+        float cs = ultra ? mix(1.0, cloudShadow(w, l, cp, f12.y), 0.5) : 1.0;
+        acc += litAt(w, f12, cell) * cs * exp(-max(w.y + f12.y - floorY, 0.0) / scaleH);
     }
     const float g = 0.6;
     float phase = 0.06 + 4.0 * (1.0 - g * g) / (12.566 * pow(1.0 + g * g - 2.0 * g * dot(v, l), 1.5));
@@ -156,13 +161,15 @@ void main() {
     float zFar = max(p1.r * 255.0 * 256.0 + p1.g * 255.0, 16.0);
     float noise = ign(gl_FragCoord.xy, f12.w), noise2 = ign(gl_FragCoord.yx + 17.0, f12.w + 31.0);
     float vis = 1.0, ao = 1.0, vol = 0.0;
-    // the hand and the holo glass (within arm's reach) are never shadowed
-    if (!sky && dist >= 1.25) {
+    // the hand and the holo glass (within arm's reach, or a world plate over a creature) are never shadowed
+    if (!sky && dist >= 1.25 && !onPlate(p)) {
         vec3 n = normalAt(px, p, depth, inv, z01, InSize);
         mat4 vp = frameMat(4);
         if (f14.w > 0.0 && P(17).r > 0.0 && dot(n, f14.xyz) > -0.1) {
             vis = sunVisibility(p, n, f14.xyz, noise, ultra);
             if (vis > 0.0 && dist < 96.0) vis *= contactShadow(p, n, f14.xyz, dist, noise2, vp, z01, zFar, ultra);
+            // the clouds' moving shadows
+            if (vis > 0.0) vis *= cloudShadow(p, f14.xyz, cloudParams(), f12.y);
         }
         if (dist < 96.0) ao = ambient(p, n, noise, noise2, vp, z01, zFar, ultra);
     }
