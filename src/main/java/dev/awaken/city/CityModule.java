@@ -55,6 +55,11 @@ public final class CityModule {
         CityHooks.install(new Hooks());
         CityCommands.register();
         CityTests.register();
+        // (M4 B3a) lit windows follow the time of day
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) -> {
+            CityLights.tick(e.getServer());
+            CityYard.tick(e.getServer()); // the High Gate's yard stays clear ground (decision 29)
+        });
     }
 
     private static void onAddPackFinders(AddPackFindersEvent e) {

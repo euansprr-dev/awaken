@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "facing=north,part=arm": {
+      "model": "awaken:block/sign_bracket_arm"
+    },
+    "facing=north,part=end": {
+      "model": "awaken:block/sign_bracket_end"
+    },
+    "facing=east,part=arm": {
+      "model": "awaken:block/sign_bracket_arm",
+      "y": 90
+    },
+    "facing=east,part=end": {
+      "model": "awaken:block/sign_bracket_end",
+      "y": 90
+    },
+    "facing=south,part=arm": {
+      "model": "awaken:block/sign_bracket_arm",
+      "y": 180
+    },
+    "facing=south,part=end": {
+      "model": "awaken:block/sign_bracket_end",
+      "y": 180
+    },
+    "facing=west,part=arm": {
+      "model": "awaken:block/sign_bracket_arm",
+      "y": 270
+    },
+    "facing=west,part=end": {
+      "model": "awaken:block/sign_bracket_end",
+      "y": 270
+    }
+  }
+}

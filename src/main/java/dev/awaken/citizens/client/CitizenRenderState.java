@@ -22,4 +22,7 @@ public final class CitizenRenderState extends SkinRenderState {
     public net.minecraft.util.@org.jspecify.annotations.Nullable FormattedCharSequence label;
     public float labelWidth;
     public float height = 1.95f;
+    /** The life layer (breath, blinks, the slow head, idle glances) and which model's rig it was made for. */
+    public dev.awaken.mobs.client.life.@org.jspecify.annotations.Nullable Life life;
+    public boolean lifeSlim;
 }

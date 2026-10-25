@@ -11,8 +11,9 @@ import java.util.List;
  * The plan placed at one site: where its centre is in the world, its street height, and which pieces touch each chunk
  * (built once per server start; immutable after, so any worldgen thread may read it).
  *
- * <p>Pieces are numbered: plots first, then landmark parts, then trees, then lamps. Each is listed in every chunk its
- * box plus a 2-block margin touches, in that order, so every chunk paints them in the same order.
+ * <p>Pieces are numbered: plots first, then landmark parts, then trees, then lamps, then the street-life props. Each is
+ * listed in every chunk its box plus a margin touches (3 for plots, whose sign brackets reach three out), in that order,
+ * so every chunk paints them in the same order.
  */
 public final class CityLayout {
     public final CityPlan plan;
@@ -22,11 +23,13 @@ public final class CityLayout {
     public final int streetY;
     /** Whether terrain flattened the basin (else the painter carries its ground down to rock itself). */
     public final boolean carved;
-    final int nPlots, nParts, nTrees, nLamps;
+    final int nPlots, nParts, nTrees, nLamps, nProps;
     private final Long2ObjectOpenHashMap<int[]> byChunk = new Long2ObjectOpenHashMap<>();
     /** Every chunk the city writes into (inside the wall plus the fields and roads round it). */
     public final long[] chunks;
     static final int MARGIN = 2;
+    /** Plots paint up to three out from their walls (B3a: a sign bracket's end over the street). */
+    static final int PLOT_MARGIN = 3;
     /** How far out the painter reaches (the fields end at 318; the roads run to the basin's edge). */
     public final int reach;
 
@@ -42,12 +45,14 @@ public final class CityLayout {
         nParts = plan.parts.size();
         nTrees = plan.trees.size();
         nLamps = plan.lamps.size();
+        nProps = plan.props.size();
         Long2ObjectOpenHashMap<List<Integer>> lists = new Long2ObjectOpenHashMap<>();
         int id = 0;
-        for (CityPlan.Plot p : plan.plots) index(lists, id++, p.x0() - MARGIN, p.z0() - MARGIN, p.x1() + MARGIN, p.z1() + MARGIN);
+        for (CityPlan.Plot p : plan.plots) index(lists, id++, p.x0() - PLOT_MARGIN, p.z0() - PLOT_MARGIN, p.x1() + PLOT_MARGIN, p.z1() + PLOT_MARGIN);
         for (CityPlan.Part p : plan.parts) index(lists, id++, p.x0() - MARGIN, p.z0() - MARGIN, p.x1() + MARGIN, p.z1() + MARGIN);
         for (int[] t : plan.trees) index(lists, id++, t[0] - 4, t[1] - 4, t[0] + 4, t[1] + 4);
         for (int[] l : plan.lamps) index(lists, id++, l[0] - 1, l[1] - 1, l[0] + 1, l[1] + 1);
+        for (CityPlan.Prop p : plan.props) index(lists, id++, p.x0() - 1, p.z0() - 1, p.x1() + 1, p.z1() + 1);
         for (var e : lists.long2ObjectEntrySet()) {
             List<Integer> l = e.getValue();
             int[] a = new int[l.size()];

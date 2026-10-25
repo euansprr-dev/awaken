@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "awaken:block/fishing_net"
+    },
+    "axis=z": {
+      "model": "awaken:block/fishing_net",
+      "y": 90
+    }
+  }
+}

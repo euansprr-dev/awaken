@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "top=false": {
+      "model": "awaken:block/line_pole"
+    },
+    "top=true": {
+      "model": "awaken:block/line_pole_top"
+    }
+  }
+}

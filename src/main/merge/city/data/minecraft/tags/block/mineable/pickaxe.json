@@ -10,6 +10,9 @@
     "awaken:drainpipe",
     "awaken:plaster",
     "awaken:city_bricks",
-    "awaken:ashlar"
+    "awaken:ashlar",
+    "awaken:sign_bracket",
+    "awaken:wall_lantern",
+    "awaken:mooring_ring"
   ]
 }

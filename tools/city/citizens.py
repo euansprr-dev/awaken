@@ -113,6 +113,19 @@ def cc(v):
     return math.floor(v) + 0.5
 
 
+def prop_cells(pr):
+    """The ground cells a plan prop stands on: its whole box, or for a hang line only its pole cells (the end cell at x0/z0
+    when its poles contain 'a', the end at x1/z1 when they contain 'b')."""
+    if pr['kind'] == 'line':
+        out = []
+        if 'a' in pr['facing']:
+            out.append((pr['x0'], pr['z0']))
+        if 'b' in pr['facing']:
+            out.append((pr['x1'], pr['z1']))
+        return out
+    return [(x, z) for x in range(pr['x0'], pr['x1'] + 1) for z in range(pr['z0'], pr['z1'] + 1)]
+
+
 def jdump(obj):
     return json.dumps(obj, separators=(',', ':'), ensure_ascii=False)
 
@@ -154,15 +167,22 @@ class City:
                     continue
                 x0, z0, x1, z1 = part['box']
                 self.block[z0 + O:z1 + O + 1, x0 + O:x1 + O + 1] = True
-        # the lower quay is 4 below the street (ladders only): never a place to stand or walk to
+        # M4 B3a: the street-life props (plan.json "props"). Every street-level prop cell is an obstacle: no place's spot
+        # stands in one (except the spots a prop defines itself), and the keep-right lanes keep clear of its centre.
+        # A hang line has only its pole cells on the ground.
+        self.props = [dict(zip(P['propFields'], row)) for row in P.get('props', [])]
+        self.prop_mask = np.zeros((N, N), bool)
         self.stall_mask = np.zeros((N, N), bool)
-        for part in self.lm['stalls']['parts']:
-            x0, z0, x1, z1 = part['box']
-            self.stall_mask[z0 + O:z1 + O + 1, x0 + O:x1 + O + 1] = True
+        for pr in self.props:
+            for (x, z) in prop_cells(pr):
+                self.prop_mask[z + O, x + O] = True
+                if pr['kind'] == 'stall':
+                    self.stall_mask[z + O, x + O] = True
+        # the lower quay is 4 below the street (ladders only): never a place to stand or walk to
         walk = np.isin(self.kind, list(WALKABLE - {LOWQUAY}))
         self.bridge_walk = self.bridge_mask & np.isin(self.kind, list(WATER | {LOWQUAY}))
         self.walk = walk | self.bridge_walk                     # a body can stand or cross here
-        self.ground = walk & ~self.block & (self.plot_at < 0) & (self.kind != STAIR) & ~self.bridge_mask
+        self.ground = walk & ~self.block & (self.plot_at < 0) & (self.kind != STAIR) & ~self.bridge_mask & ~self.prop_mask
         self.water = np.isin(self.kind, list(WATER)) & ~self.bridge_walk
         # street graph
         g = P['graphs']['street']
@@ -427,6 +447,7 @@ class City:
         sx, sz = spot[0], spot[1]
         L = math.hypot(sx - nx, sz - nz)
         steps = max(2, int(L * 4))
+        last = self.cell(sx, sz)
         prev = None
         for k in range(steps + 1):
             x = nx + (sx - nx) * k / steps
@@ -438,6 +459,8 @@ class City:
                 continue
             if not self.walk[c[1], c[0]] and not (k == 0):
                 return 1
+            if self.prop_mask[c[1], c[0]] and not (k == 0) and c != last:
+                return 1     # a prop stands in the way (the spot's own cell excepted): the game must path round it
             if prev is not None and abs(int(self.lift[c[1], c[0]]) - int(self.lift[prev[1], prev[0]])) > 1:
                 return 1
             prev = c
@@ -497,6 +520,13 @@ class Builder:
 
     def spot_ok(self, x, z):
         return self.c.is_ground(x, z) and self.free(x, z) and self.c.lane_ok(x, z)
+
+    def step_ok(self, x, z):
+        """A free step (stair cell) to stand on, clear of the walking lane."""
+        c = self.c
+        i, j = c.cell(x, z)
+        return int(c.kind[j, i]) == STAIR and bool(c.walk[j, i]) and not c.prop_mask[j, i] and c.plot_at[j, i] < 0 \
+            and (i - O, j - O) not in c.door_cells and self.free(x, z) and c.lane_ok(x, z)
 
     def cells_around(self, cx, cz, rmax, pred=None):
         """Standing cells (centres) within rmax of (cx, cz), nearest first: [(d, x, z)]."""
@@ -581,17 +611,21 @@ class Builder:
             sq = c.kind_at(px, pz) in (SQUARE, PLAZA)
             seg = c.edge_near(px, pz)[1]
             best = None
-            for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)):
-                sx, sz = px + dx, pz + dz
-                if (math.floor(sx), math.floor(sz)) in posts or not self.spot_ok(sx, sz):
-                    continue
-                if sq or seg is None:
-                    score = math.hypot(sx, sz)
-                else:
-                    score = c.seg_dist(seg, sx, sz)
-                key = (abs(dx) + abs(dz) > 1, round(score, 3), -dx, -dz)
-                if best is None or key < best[0]:
-                    best = (key, sx, sz, dx, dz)
+            for step in (False, True):
+                # (a lamp hard by a flight of steps, on a lane too narrow to stand beside: the lamplighter takes the step)
+                for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)):
+                    sx, sz = px + dx, pz + dz
+                    if (math.floor(sx), math.floor(sz)) in posts or not (self.step_ok(sx, sz) if step else self.spot_ok(sx, sz)):
+                        continue
+                    if sq or seg is None:
+                        score = math.hypot(sx, sz)
+                    else:
+                        score = c.seg_dist(seg, sx, sz)
+                    key = (abs(dx) + abs(dz) > 1, round(score, 3), -dx, -dz)
+                    if best is None or key < best[0]:
+                        best = (key, sx, sz, dx, dz)
+                if best:
+                    break
             assert best, f'no spot for lamp {k}'
             _, sx, sz, dx, dz = best
             out.append(self.add('lamp', [(sx, sz, yaw_of(-dx, -dz))], ref=k))
@@ -599,20 +633,33 @@ class Builder:
 
     # -- stalls --------------------------------------------------------------------------------------------------------
     def build_stalls(self):
-        parts = [p for p in self.c.lm['stalls']['parts'] if p['kind'] == 'stall']
+        """The plan's stall props (M4 B3a: 4 along the counter x 2 deep, `facing` its customers; 24 on Choir Square's -2
+        ring, the rest on the district plazas), in plan order. The front row (depth 0, the `facing` side) has posts at 0 and 3
+        and the counter at 1 and 2; the back row has posts at 0 and 3 and the keeper's two cells at 1 and 2. The keeper
+        place is those two cells (yaw toward the counter), the front place the four cells just outside the front row."""
         self.stalls = []
-        rr = rng(0x57A11)
-        last = -1
-        for k, part in enumerate(parts):
-            x0, z0, x1, z1 = part['box']
-            keeper = self.add('stall_keeper', [(x0 + 1.5, z1 - 0.5, 0), (x1 - 0.5, z1 - 0.5, 0)], ref=k)
-            front = self.add('stall_front', [(x + 0.5, z1 + 1.5, 180) for x in range(x0, x1 + 1)], ref=k)
-            col = rr.randrange(8)
-            while col == last or (k == len(parts) - 1 and col == self.stalls[0]['colour']):
-                col = rr.randrange(8)
-            last = col
-            self.stalls.append({'part': k, 'box': [x0, z0, x1, z1], 'colour': col, 'keeper': keeper, 'front': front,
-                                'good': GOODS[k % len(GOODS)]})
+        self.square_stalls = []
+        for part, pr in enumerate(self.c.props):
+            if pr['kind'] != 'stall':
+                continue
+            x0, z0, x1, z1 = pr['x0'], pr['z0'], pr['x1'], pr['z1']
+            fx, fz = FRONT[pr['facing']]
+            if fx:    # counter along z; the front row is the column on the facing side
+                fcol, bcol = (x1, x0) if fx > 0 else (x0, x1)
+                back = [(bcol, z0 + k) for k in range(4)]
+                front = [(fcol, z0 + k) for k in range(4)]
+            else:
+                frow, brow = (z1, z0) if fz > 0 else (z0, z1)
+                back = [(x0 + k, brow) for k in range(4)]
+                front = [(x0 + k, frow) for k in range(4)]
+            k = len(self.stalls)
+            keeper = self.add('stall_keeper', [(x + .5, z + .5, yaw_of(fx, fz)) for x, z in back[1:3]], ref=k)
+            fr = self.add('stall_front', [(x + fx + .5, z + fz + .5, yaw_of(-fx, -fz)) for x, z in front], ref=k)
+            self.stalls.append({'part': part, 'box': [x0, z0, x1, z1], 'facing': pr['facing'], 'colour': pr['v'],
+                                'keeper': keeper, 'front': fr, 'good': pr['s']})
+            if pr['ry'] < 0:
+                self.square_stalls.append(k)     # on the bowl's -2 ring
+        assert len(self.stalls) >= 30 and len(self.square_stalls) >= 20, (len(self.stalls), len(self.square_stalls))
 
     # -- bells ---------------------------------------------------------------------------------------------------------
     def build_bells(self):
@@ -662,10 +709,28 @@ class Builder:
             p = c.plots[pid]
             if p['use'] == 'tavern' and pid in c.door_node:
                 d = self.door(pid)
-                spots = self.beside_door(pid, 5, face_out=False)
-                assert len(spots) == 5, f'tavern {pid} front has {len(spots)} cells'
+                table = next((pr for pr in c.props if pr['kind'] == 'tavern_table' and pr['s'] == str(pid)), None)
+                if table is None:
+                    spots = self.beside_door(pid, 5, face_out=False)
+                    assert len(spots) == 5, f'tavern {pid} front has {len(spots)} cells'
+                else:
+                    # M4 B3a: the table's four bench cells (the rows either side of the table, yaw toward it) and the two
+                    # cells beside the door: the evening spills into the lane
+                    ux, uz = FRONT[table['facing']]
+                    cells = prop_cells(table)
+                    key = lambda q: q[0] * ux + q[1] * uz   # noqa: E731
+                    lo, hi = min(key(q) for q in cells), max(key(q) for q in cells)
+                    spots = self.beside_door(pid, 2, face_out=False)
+                    assert len(spots) == 2, f'tavern {pid} has no cells beside the door'
+                    for q in cells:
+                        if key(q) == lo:
+                            spots.append((q[0] + .5, q[1] + .5, yaw_of(ux, uz)))
+                        elif key(q) == hi:
+                            spots.append((q[0] + .5, q[1] + .5, yaw_of(-ux, -uz)))
+                    assert len(spots) == 6, f'tavern {pid} table {table}'
                 out = self.add('tavern_out', spots, ref=pid)
-                self.taverns.append({'plot': pid, 'door': d, 'out': out, 'district': c.district_at(p['doorX'] + .5, p['doorZ'] + .5)})
+                self.taverns.append({'plot': pid, 'door': d, 'out': out, 'district': c.district_at(p['doorX'] + .5, p['doorZ'] + .5),
+                                     'table': table is not None})
         for pid in sorted(c.plots):
             p = c.plots[pid]
             if p['use'] == 'shop' and pid in c.door_node:
@@ -675,6 +740,95 @@ class Builder:
                 sd = self.add('shop_door', spots, ref=pid)
                 self.shops.append({'plot': pid, 'door': d, 'stand': sd})
         assert len(self.taverns) == 14 and len(self.shops) == 30, (len(self.taverns), len(self.shops))
+
+    # -- the props' places: benches, wells, fountains, notice boards, the square's steps, the taverns' overflow -----------------
+    def spread(self, cands, n, cx, cz, first=None):
+        """n of the (x, z) candidates spread round (cx, cz): the first nearest `first` (or the first listed), then each next
+        the one farthest from those taken (ties by position, so the choice is stable)."""
+        cands = sorted(set(cands))
+        if len(cands) <= n:
+            return list(cands)
+        if first is None:
+            got = [cands[0]]
+        else:
+            got = [min(cands, key=lambda q: (math.hypot(q[0] - first[0], q[1] - first[1]), q))]
+        while len(got) < n:
+            got.append(max((q for q in cands if q not in got),
+                           key=lambda q: (min(math.hypot(q[0] - g[0], q[1] - g[1]) for g in got), -q[0], -q[1])))
+        return got
+
+    def build_civic(self):
+        c = self.c
+        self.bench_places, self.well_places, self.fountain_places, self.notice_places, self.step_places = [], [], [], [], []
+        for k, pr in enumerate(c.props):
+            kind = pr['kind']
+            x0, z0, x1, z1 = pr['x0'], pr['z0'], pr['x1'], pr['z1']
+            if kind == 'bench':
+                yaw = yaw_of(*FRONT[pr['facing']])
+                self.bench_places.append(self.add('sit', [(x + .5, z + .5, yaw) for x, z in prop_cells(pr)]))
+            elif kind == 'well':
+                cx, cz = (x0 + x1 + 1) / 2.0, (z0 + z1 + 1) / 2.0
+                ring = [(x + .5, z + .5) for x in range(x0 - 1, x1 + 2) for z in range(z0 - 1, z1 + 2)
+                        if not (x0 <= x <= x1 and z0 <= z <= z1) and self.spot_ok(x + .5, z + .5)]
+                near = [q for q in ring if not (math.floor(q[0]) in (x0 - 1, x1 + 1) and math.floor(q[1]) in (z0 - 1, z1 + 1))] or ring   # not the corners
+                nd = c.nodes[c.nearest_node(cx, cz)[0]]
+                got = self.spread(near, 3, cx, cz, first=(nd[0], nd[2]))
+                assert len(got) == 3, f'well {k} has {len(got)} cells round it'
+                self.well_places.append(self.add('stand', [(x, z, yaw_of(cx - x, cz - z)) for x, z in got]))
+            elif kind == 'fountain':
+                cx, cz = (x0 + x1 + 1) / 2.0, (z0 + z1 + 1) / 2.0
+                ring = [(x + .5, z + .5) for x in range(x0 - 1, x1 + 2) for z in range(z0 - 1, z1 + 2)
+                        if not (x0 <= x <= x1 and z0 <= z <= z1) and self.spot_ok(x + .5, z + .5)]
+                clear = [q for q in ring if c.edge_dist(*q) >= 1.2] or ring        # off the aisles
+                got = self.spread(clear, 4, cx, cz)
+                assert len(got) == 4, f'fountain {k} has {len(got)} cells round it'
+                self.fountain_places.append(self.add('sit', [(x, z, yaw_of(cx - x, cz - z)) for x, z in got]))
+            elif kind == 'notice':
+                fx, fz = FRONT[pr['facing']]
+                tx, tz = (1, 0) if fz else (0, 1)
+                fcell = (x0 + fx + .5, z0 + fz + .5)
+                assert self.spot_ok(*fcell), f'notice board {k}: its front cell is not free'
+                spots = [fcell]
+                for off in (1, -1, 2, -2):
+                    q = (fcell[0] + tx * off, fcell[1] + tz * off)
+                    if self.spot_ok(*q) and c.kind_at(*q) == c.kind_at(*fcell):
+                        spots.append(q)
+                        break
+                assert len(spots) == 2, f'notice board {k}: no second cell'
+                self.notice_places.append(self.add('stand', [(x, z, yaw_of(-fx, -fz)) for x, z in spots]))
+
+    def build_steps(self):
+        """The bowl's ring steps in the south half (the stair cells between the -2 ring and the floor, and between the -1 and -2
+        rings): four sit places of 3 side by side, facing the Bell Stone, so a dozen sit in the bowl at noon."""
+        c = self.c
+        step_cells = {}
+        for lift in (-1, -2):
+            cl_ = []
+            for j in range(O + 6, O + 36):
+                for i in range(O - 34, O + 35):
+                    x, z = i - O + .5, j - O + .5
+                    if int(c.kind[j, i]) == STAIR and int(c.lift[j, i]) == lift and c.walk[j, i] and not c.prop_mask[j, i] \
+                            and self.free(x, z) and c.edge_dist(x, z) >= 1.0 and 12 <= math.hypot(x, z) <= 28:
+                        cl_.append((x, z))
+            step_cells[lift] = cl_
+        sites = [(-1, 35), (-1, -35), (-2, 38), (-2, -38)]     # (the step's lift, bearing off due south)
+        for lift, bearing in sites:
+            tx, tz = math.sin(math.radians(bearing)), math.cos(math.radians(bearing))
+            cl_ = sorted(step_cells[lift], key=lambda q: (math.hypot(q[0] / (math.hypot(*q)) - tx, q[1] / (math.hypot(*q)) - tz), q))
+            run = [cl_[0]]
+            for q in cl_[1:]:
+                if len(run) == 3:
+                    break
+                if all(math.hypot(q[0] - a, q[1] - b) >= 0.9 for a, b in run) and min(math.hypot(q[0] - a, q[1] - b) for a, b in run) <= 1.5:
+                    run.append(q)
+            assert len(run) == 3, f'step site {lift}/{bearing} has {len(run)} cells'
+            self.step_places.append(self.add('sit', [(x, z, yaw_of(-x, -z)) for x, z in run]))
+
+    def build_tavern_overflow(self):
+        """More cells in the lane outside every tavern (the same plot, kind tavern_out): the evening crowd's second place."""
+        for t in self.taverns:
+            got = self.beside_door(t['plot'], 6, face_out=False, rmax=10.0)
+            t['more'] = self.add('tavern_out', got, ref=t['plot']) if len(got) >= 3 else -1
 
     def house_candidates(self):
         c = self.c
@@ -1019,31 +1173,26 @@ class Builder:
                 col = x0 if ux < 0 else x1
                 spots = [(col + 0.5, z0 + 0.5), (col + 0.5, z1 + 0.5)]
             self.post_places.append(self.add('post', [(x, z, yaw_of(-ux, -uz)) for x, z in spots], ref=gid))
-        # benches for residents: cap 3 in a row against a wall of a plaza or the square
-        self.sit_places = []
-        stall_boxes = [p['box'] for p in c.lm['stalls']['parts']]
-        sites = []
-        for k in (2, 5, 8):
-            x0, z0, x1, z1 = stall_boxes[k]
-            mx, mz = (x0 + x1 + 1) / 2, (z0 + z1 + 1) / 2
-            ang = math.atan2(mz, mx)
-            sites.append(('market', (mx + 4.0 * math.cos(ang), mz + 4.0 * math.sin(ang))))
-        sites += [(dk, None) for dk in ('bellwatch', 'bellwatch', 'quay', 'quay', 'terrace', 'terrace', 'garden', 'garden',
+        # M3's benches for residents: cap 3 in a row against a wall of a plaza. M4 B3a keeps one only where no bench prop stands
+        # within 20 (the benches, the fountains' rims and the square's steps are the sit places now)
+        self.wall_sits = []
+        bench_xy = [((pr['x0'] + pr['x1'] + 1) / 2.0, (pr['z0'] + pr['z1'] + 1) / 2.0) for pr in c.props if pr['kind'] == 'bench']
+        sites = [(dk, None) for dk in ('bellwatch', 'bellwatch', 'quay', 'quay', 'terrace', 'terrace', 'garden', 'garden',
                                         'works', 'works')]
         taken = [(p['x'], p['z']) for b in self.bells for p in [self.places[b['place']]]]
         for k, (dk, at) in enumerate(sites):
-            if at is None:
-                bx, bz = centre[dk]
-                ang = math.radians(35 + 180 * (k % 2) + 20 * (k // 2))
-                at = (bx + 9 * math.cos(ang), bz + 9 * math.sin(ang))
+            bx, bz = centre[dk]
+            ang = math.radians(35 + 180 * (k % 2) + 20 * (k // 2))
+            at = (bx + 9 * math.cos(ang), bz + 9 * math.sin(ang))
             row = None
             for rr in (6, 10, 16, 24):
                 row = self.wall_row(at[0], at[1], 3, rr, (SQUARE, PLAZA), apart_from=taken)
                 if row:
                     break
-            assert row, f'no bench near {at}'
+            if not row or min(math.hypot(row[1][0] - a, row[1][1] - b) for a, b in bench_xy) < 20:
+                continue
             taken.append((row[1][0], row[1][1]))
-            self.sit_places.append(self.add('sit', row, ref=len(self.sit_places)))
+            self.wall_sits.append(self.add('sit', row, ref=-1))
         # mason yards: cap 4 along a wall in the Works
         self.yard_places = []
         for at in ((26, 150), (60, 160), (-20, 125)):
@@ -1279,9 +1428,10 @@ class Builder:
         return rid
 
     def build_lamp_routes(self):
-        """Cut one short walk through all 78 lamps into 8 tours of ~10 (cuts at the longest jumps between arms)."""
+        """Cut one short walk through all the lamps into ceil(lamps / 10) tours of 8-12 (cuts at the longest jumps between arms)."""
         L = self.lamp_places
         n = len(L)
+        K = -(-n // 10)
         D = [[self.wd(a, b) for b in L] for a in L]
 
         def two_opt(path):
@@ -1300,7 +1450,12 @@ class Builder:
                             improved = True
             return path
         best = None
-        for st in range(n):
+        px = [self.places[p]['x'] for p in L]
+        pz = [self.places[p]['z'] for p in L]
+        starts = {min(range(n), key=lambda q: (v(q), q)) for v in (lambda q: px[q], lambda q: pz[q], lambda q: px[q] + pz[q], lambda q: px[q] - pz[q])}
+        starts |= {max(range(n), key=lambda q: (v(q), -q)) for v in (lambda q: px[q], lambda q: pz[q], lambda q: px[q] + pz[q], lambda q: px[q] - pz[q])}
+        starts |= set(range(0, n, max(1, n // 8)))
+        for st in sorted(starts):
             path = [st]
             rest = set(range(n)) - {st}
             while rest:
@@ -1334,7 +1489,8 @@ class Builder:
                     bst = (val, ((i, j),) + sub[1])
             memo[(i, r)] = bst
             return bst
-        _, segs = f(0, 8)
+        _, segs = f(0, K)
+        assert segs, f'{n} lamps cannot be cut into {K} tours of 8-12'
         self.lamp_clusters = []
         for (i, j) in segs:
             members = [path[k] for k in range(i, j)]
@@ -2750,12 +2906,16 @@ def generate(verbose=False):
     B.build_stalls()
     B.build_bells()
     B.build_taverns_shops()
+    B.build_civic()
+    B.build_steps()
+    B.build_tavern_overflow()
     B.build_bakeries()
     B.build_smithies()
     B.build_washplaces()
     B.build_lines()
     B.build_quay()
     B.build_misc()
+    B.sit_places = B.bench_places + B.fountain_places + B.step_places + B.wall_sits
     B.build_patrols()
     B.build_scout_courier()
     B.build_errand_corners()

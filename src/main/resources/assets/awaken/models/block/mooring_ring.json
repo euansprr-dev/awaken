@@ -1,0 +1,144 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/mooring_ring",
+    "ring": "awaken:block/mooring_ring",
+    "iron": "awaken:block/street_iron"
+  },
+  "elements": [
+    {
+      "from": [
+        4,
+        4,
+        14.4
+      ],
+      "to": [
+        12,
+        12,
+        15.6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "texture": "#ring"
+        },
+        "south": {
+          "uv": [
+            8,
+            0,
+            0,
+            8
+          ],
+          "texture": "#ring"
+        }
+      }
+    },
+    {
+      "from": [
+        7,
+        11.4,
+        15
+      ],
+      "to": [
+        9,
+        13.6,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            2,
+            2
+          ],
+          "texture": "#iron"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            1,
+            2
+          ],
+          "texture": "#iron"
+        },
+        "west": {
+          "uv": [
+            1,
+            0,
+            2,
+            2
+          ],
+          "texture": "#iron"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            2,
+            1
+          ],
+          "texture": "#iron"
+        }
+      }
+    },
+    {
+      "from": [
+        7.2,
+        11,
+        14.2
+      ],
+      "to": [
+        8.8,
+        12.6,
+        15.2
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            4,
+            2,
+            6
+          ],
+          "texture": "#iron"
+        },
+        "east": {
+          "uv": [
+            0,
+            4,
+            1,
+            6
+          ],
+          "texture": "#iron"
+        },
+        "west": {
+          "uv": [
+            0,
+            4,
+            1,
+            6
+          ],
+          "texture": "#iron"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            2,
+            1
+          ],
+          "texture": "#iron"
+        }
+      }
+    }
+  ]
+}

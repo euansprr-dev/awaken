@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/banner_works_bottom",
+    "cloth": "awaken:block/banner_works_bottom",
+    "rod": "awaken:block/banner_rod"
+  },
+  "elements": [
+    {
+      "from": [
+        2,
+        0,
+        15.5
+      ],
+      "to": [
+        14,
+        16,
+        15.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            0,
+            14,
+            16
+          ],
+          "texture": "#cloth"
+        }
+      }
+    }
+  ]
+}

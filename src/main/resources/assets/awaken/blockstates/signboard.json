@@ -1,0 +1,424 @@
+{
+  "variants": {
+    "facing=north,mount=hanging,trade=bread": {
+      "model": "awaken:block/signboard_bread_hanging"
+    },
+    "facing=north,mount=flat,trade=bread": {
+      "model": "awaken:block/signboard_bread_flat"
+    },
+    "facing=east,mount=hanging,trade=bread": {
+      "model": "awaken:block/signboard_bread_hanging",
+      "y": 90
+    },
+    "facing=east,mount=flat,trade=bread": {
+      "model": "awaken:block/signboard_bread_flat",
+      "y": 90
+    },
+    "facing=south,mount=hanging,trade=bread": {
+      "model": "awaken:block/signboard_bread_hanging",
+      "y": 180
+    },
+    "facing=south,mount=flat,trade=bread": {
+      "model": "awaken:block/signboard_bread_flat",
+      "y": 180
+    },
+    "facing=west,mount=hanging,trade=bread": {
+      "model": "awaken:block/signboard_bread_hanging",
+      "y": 270
+    },
+    "facing=west,mount=flat,trade=bread": {
+      "model": "awaken:block/signboard_bread_flat",
+      "y": 270
+    },
+    "facing=north,mount=hanging,trade=fish": {
+      "model": "awaken:block/signboard_fish_hanging"
+    },
+    "facing=north,mount=flat,trade=fish": {
+      "model": "awaken:block/signboard_fish_flat"
+    },
+    "facing=east,mount=hanging,trade=fish": {
+      "model": "awaken:block/signboard_fish_hanging",
+      "y": 90
+    },
+    "facing=east,mount=flat,trade=fish": {
+      "model": "awaken:block/signboard_fish_flat",
+      "y": 90
+    },
+    "facing=south,mount=hanging,trade=fish": {
+      "model": "awaken:block/signboard_fish_hanging",
+      "y": 180
+    },
+    "facing=south,mount=flat,trade=fish": {
+      "model": "awaken:block/signboard_fish_flat",
+      "y": 180
+    },
+    "facing=west,mount=hanging,trade=fish": {
+      "model": "awaken:block/signboard_fish_hanging",
+      "y": 270
+    },
+    "facing=west,mount=flat,trade=fish": {
+      "model": "awaken:block/signboard_fish_flat",
+      "y": 270
+    },
+    "facing=north,mount=hanging,trade=produce": {
+      "model": "awaken:block/signboard_produce_hanging"
+    },
+    "facing=north,mount=flat,trade=produce": {
+      "model": "awaken:block/signboard_produce_flat"
+    },
+    "facing=east,mount=hanging,trade=produce": {
+      "model": "awaken:block/signboard_produce_hanging",
+      "y": 90
+    },
+    "facing=east,mount=flat,trade=produce": {
+      "model": "awaken:block/signboard_produce_flat",
+      "y": 90
+    },
+    "facing=south,mount=hanging,trade=produce": {
+      "model": "awaken:block/signboard_produce_hanging",
+      "y": 180
+    },
+    "facing=south,mount=flat,trade=produce": {
+      "model": "awaken:block/signboard_produce_flat",
+      "y": 180
+    },
+    "facing=west,mount=hanging,trade=produce": {
+      "model": "awaken:block/signboard_produce_hanging",
+      "y": 270
+    },
+    "facing=west,mount=flat,trade=produce": {
+      "model": "awaken:block/signboard_produce_flat",
+      "y": 270
+    },
+    "facing=north,mount=hanging,trade=cloth": {
+      "model": "awaken:block/signboard_cloth_hanging"
+    },
+    "facing=north,mount=flat,trade=cloth": {
+      "model": "awaken:block/signboard_cloth_flat"
+    },
+    "facing=east,mount=hanging,trade=cloth": {
+      "model": "awaken:block/signboard_cloth_hanging",
+      "y": 90
+    },
+    "facing=east,mount=flat,trade=cloth": {
+      "model": "awaken:block/signboard_cloth_flat",
+      "y": 90
+    },
+    "facing=south,mount=hanging,trade=cloth": {
+      "model": "awaken:block/signboard_cloth_hanging",
+      "y": 180
+    },
+    "facing=south,mount=flat,trade=cloth": {
+      "model": "awaken:block/signboard_cloth_flat",
+      "y": 180
+    },
+    "facing=west,mount=hanging,trade=cloth": {
+      "model": "awaken:block/signboard_cloth_hanging",
+      "y": 270
+    },
+    "facing=west,mount=flat,trade=cloth": {
+      "model": "awaken:block/signboard_cloth_flat",
+      "y": 270
+    },
+    "facing=north,mount=hanging,trade=pottery": {
+      "model": "awaken:block/signboard_pottery_hanging"
+    },
+    "facing=north,mount=flat,trade=pottery": {
+      "model": "awaken:block/signboard_pottery_flat"
+    },
+    "facing=east,mount=hanging,trade=pottery": {
+      "model": "awaken:block/signboard_pottery_hanging",
+      "y": 90
+    },
+    "facing=east,mount=flat,trade=pottery": {
+      "model": "awaken:block/signboard_pottery_flat",
+      "y": 90
+    },
+    "facing=south,mount=hanging,trade=pottery": {
+      "model": "awaken:block/signboard_pottery_hanging",
+      "y": 180
+    },
+    "facing=south,mount=flat,trade=pottery": {
+      "model": "awaken:block/signboard_pottery_flat",
+      "y": 180
+    },
+    "facing=west,mount=hanging,trade=pottery": {
+      "model": "awaken:block/signboard_pottery_hanging",
+      "y": 270
+    },
+    "facing=west,mount=flat,trade=pottery": {
+      "model": "awaken:block/signboard_pottery_flat",
+      "y": 270
+    },
+    "facing=north,mount=hanging,trade=candles": {
+      "model": "awaken:block/signboard_candles_hanging"
+    },
+    "facing=north,mount=flat,trade=candles": {
+      "model": "awaken:block/signboard_candles_flat"
+    },
+    "facing=east,mount=hanging,trade=candles": {
+      "model": "awaken:block/signboard_candles_hanging",
+      "y": 90
+    },
+    "facing=east,mount=flat,trade=candles": {
+      "model": "awaken:block/signboard_candles_flat",
+      "y": 90
+    },
+    "facing=south,mount=hanging,trade=candles": {
+      "model": "awaken:block/signboard_candles_hanging",
+      "y": 180
+    },
+    "facing=south,mount=flat,trade=candles": {
+      "model": "awaken:block/signboard_candles_flat",
+      "y": 180
+    },
+    "facing=west,mount=hanging,trade=candles": {
+      "model": "awaken:block/signboard_candles_hanging",
+      "y": 270
+    },
+    "facing=west,mount=flat,trade=candles": {
+      "model": "awaken:block/signboard_candles_flat",
+      "y": 270
+    },
+    "facing=north,mount=hanging,trade=flowers": {
+      "model": "awaken:block/signboard_flowers_hanging"
+    },
+    "facing=north,mount=flat,trade=flowers": {
+      "model": "awaken:block/signboard_flowers_flat"
+    },
+    "facing=east,mount=hanging,trade=flowers": {
+      "model": "awaken:block/signboard_flowers_hanging",
+      "y": 90
+    },
+    "facing=east,mount=flat,trade=flowers": {
+      "model": "awaken:block/signboard_flowers_flat",
+      "y": 90
+    },
+    "facing=south,mount=hanging,trade=flowers": {
+      "model": "awaken:block/signboard_flowers_hanging",
+      "y": 180
+    },
+    "facing=south,mount=flat,trade=flowers": {
+      "model": "awaken:block/signboard_flowers_flat",
+      "y": 180
+    },
+    "facing=west,mount=hanging,trade=flowers": {
+      "model": "awaken:block/signboard_flowers_hanging",
+      "y": 270
+    },
+    "facing=west,mount=flat,trade=flowers": {
+      "model": "awaken:block/signboard_flowers_flat",
+      "y": 270
+    },
+    "facing=north,mount=hanging,trade=spice": {
+      "model": "awaken:block/signboard_spice_hanging"
+    },
+    "facing=north,mount=flat,trade=spice": {
+      "model": "awaken:block/signboard_spice_flat"
+    },
+    "facing=east,mount=hanging,trade=spice": {
+      "model": "awaken:block/signboard_spice_hanging",
+      "y": 90
+    },
+    "facing=east,mount=flat,trade=spice": {
+      "model": "awaken:block/signboard_spice_flat",
+      "y": 90
+    },
+    "facing=south,mount=hanging,trade=spice": {
+      "model": "awaken:block/signboard_spice_hanging",
+      "y": 180
+    },
+    "facing=south,mount=flat,trade=spice": {
+      "model": "awaken:block/signboard_spice_flat",
+      "y": 180
+    },
+    "facing=west,mount=hanging,trade=spice": {
+      "model": "awaken:block/signboard_spice_hanging",
+      "y": 270
+    },
+    "facing=west,mount=flat,trade=spice": {
+      "model": "awaken:block/signboard_spice_flat",
+      "y": 270
+    },
+    "facing=north,mount=hanging,trade=tools": {
+      "model": "awaken:block/signboard_tools_hanging"
+    },
+    "facing=north,mount=flat,trade=tools": {
+      "model": "awaken:block/signboard_tools_flat"
+    },
+    "facing=east,mount=hanging,trade=tools": {
+      "model": "awaken:block/signboard_tools_hanging",
+      "y": 90
+    },
+    "facing=east,mount=flat,trade=tools": {
+      "model": "awaken:block/signboard_tools_flat",
+      "y": 90
+    },
+    "facing=south,mount=hanging,trade=tools": {
+      "model": "awaken:block/signboard_tools_hanging",
+      "y": 180
+    },
+    "facing=south,mount=flat,trade=tools": {
+      "model": "awaken:block/signboard_tools_flat",
+      "y": 180
+    },
+    "facing=west,mount=hanging,trade=tools": {
+      "model": "awaken:block/signboard_tools_hanging",
+      "y": 270
+    },
+    "facing=west,mount=flat,trade=tools": {
+      "model": "awaken:block/signboard_tools_flat",
+      "y": 270
+    },
+    "facing=north,mount=hanging,trade=cheese": {
+      "model": "awaken:block/signboard_cheese_hanging"
+    },
+    "facing=north,mount=flat,trade=cheese": {
+      "model": "awaken:block/signboard_cheese_flat"
+    },
+    "facing=east,mount=hanging,trade=cheese": {
+      "model": "awaken:block/signboard_cheese_hanging",
+      "y": 90
+    },
+    "facing=east,mount=flat,trade=cheese": {
+      "model": "awaken:block/signboard_cheese_flat",
+      "y": 90
+    },
+    "facing=south,mount=hanging,trade=cheese": {
+      "model": "awaken:block/signboard_cheese_hanging",
+      "y": 180
+    },
+    "facing=south,mount=flat,trade=cheese": {
+      "model": "awaken:block/signboard_cheese_flat",
+      "y": 180
+    },
+    "facing=west,mount=hanging,trade=cheese": {
+      "model": "awaken:block/signboard_cheese_hanging",
+      "y": 270
+    },
+    "facing=west,mount=flat,trade=cheese": {
+      "model": "awaken:block/signboard_cheese_flat",
+      "y": 270
+    },
+    "facing=north,mount=hanging,trade=tavern": {
+      "model": "awaken:block/signboard_tavern_hanging"
+    },
+    "facing=north,mount=flat,trade=tavern": {
+      "model": "awaken:block/signboard_tavern_flat"
+    },
+    "facing=east,mount=hanging,trade=tavern": {
+      "model": "awaken:block/signboard_tavern_hanging",
+      "y": 90
+    },
+    "facing=east,mount=flat,trade=tavern": {
+      "model": "awaken:block/signboard_tavern_flat",
+      "y": 90
+    },
+    "facing=south,mount=hanging,trade=tavern": {
+      "model": "awaken:block/signboard_tavern_hanging",
+      "y": 180
+    },
+    "facing=south,mount=flat,trade=tavern": {
+      "model": "awaken:block/signboard_tavern_flat",
+      "y": 180
+    },
+    "facing=west,mount=hanging,trade=tavern": {
+      "model": "awaken:block/signboard_tavern_hanging",
+      "y": 270
+    },
+    "facing=west,mount=flat,trade=tavern": {
+      "model": "awaken:block/signboard_tavern_flat",
+      "y": 270
+    },
+    "facing=north,mount=hanging,trade=boots": {
+      "model": "awaken:block/signboard_boots_hanging"
+    },
+    "facing=north,mount=flat,trade=boots": {
+      "model": "awaken:block/signboard_boots_flat"
+    },
+    "facing=east,mount=hanging,trade=boots": {
+      "model": "awaken:block/signboard_boots_hanging",
+      "y": 90
+    },
+    "facing=east,mount=flat,trade=boots": {
+      "model": "awaken:block/signboard_boots_flat",
+      "y": 90
+    },
+    "facing=south,mount=hanging,trade=boots": {
+      "model": "awaken:block/signboard_boots_hanging",
+      "y": 180
+    },
+    "facing=south,mount=flat,trade=boots": {
+      "model": "awaken:block/signboard_boots_flat",
+      "y": 180
+    },
+    "facing=west,mount=hanging,trade=boots": {
+      "model": "awaken:block/signboard_boots_hanging",
+      "y": 270
+    },
+    "facing=west,mount=flat,trade=boots": {
+      "model": "awaken:block/signboard_boots_flat",
+      "y": 270
+    },
+    "facing=north,mount=hanging,trade=books": {
+      "model": "awaken:block/signboard_books_hanging"
+    },
+    "facing=north,mount=flat,trade=books": {
+      "model": "awaken:block/signboard_books_flat"
+    },
+    "facing=east,mount=hanging,trade=books": {
+      "model": "awaken:block/signboard_books_hanging",
+      "y": 90
+    },
+    "facing=east,mount=flat,trade=books": {
+      "model": "awaken:block/signboard_books_flat",
+      "y": 90
+    },
+    "facing=south,mount=hanging,trade=books": {
+      "model": "awaken:block/signboard_books_hanging",
+      "y": 180
+    },
+    "facing=south,mount=flat,trade=books": {
+      "model": "awaken:block/signboard_books_flat",
+      "y": 180
+    },
+    "facing=west,mount=hanging,trade=books": {
+      "model": "awaken:block/signboard_books_hanging",
+      "y": 270
+    },
+    "facing=west,mount=flat,trade=books": {
+      "model": "awaken:block/signboard_books_flat",
+      "y": 270
+    },
+    "facing=north,mount=hanging,trade=keys": {
+      "model": "awaken:block/signboard_keys_hanging"
+    },
+    "facing=north,mount=flat,trade=keys": {
+      "model": "awaken:block/signboard_keys_flat"
+    },
+    "facing=east,mount=hanging,trade=keys": {
+      "model": "awaken:block/signboard_keys_hanging",
+      "y": 90
+    },
+    "facing=east,mount=flat,trade=keys": {
+      "model": "awaken:block/signboard_keys_flat",
+      "y": 90
+    },
+    "facing=south,mount=hanging,trade=keys": {
+      "model": "awaken:block/signboard_keys_hanging",
+      "y": 180
+    },
+    "facing=south,mount=flat,trade=keys": {
+      "model": "awaken:block/signboard_keys_flat",
+      "y": 180
+    },
+    "facing=west,mount=hanging,trade=keys": {
+      "model": "awaken:block/signboard_keys_hanging",
+      "y": 270
+    },
+    "facing=west,mount=flat,trade=keys": {
+      "model": "awaken:block/signboard_keys_flat",
+      "y": 270
+    }
+  }
+}

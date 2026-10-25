@@ -178,6 +178,8 @@ final class CityGrammar {
         final int doorT;
         final boolean trellis, shutters, balcony;
         final int shutterColour;
+        /** The awnings' stripe colour (0-5; varies by world: a detail). */
+        final int awningColour;
         /** An oriel's middle column on the front (up coordinates), or -1. */
         final int oriel;
 
@@ -194,6 +196,7 @@ final class CityGrammar {
             // shutters and their paint vary by world (they hold nothing)
             shutters = st.shutters().length > 0 && c.pct(p.id(), 0, 62) < st.shutterPct();
             shutterColour = st.shutters().length > 0 ? st.shutters()[c.pct(p.id(), 1, 63) % st.shutters().length] : 0;
+            awningColour = c.pct(p.id(), 2, 66) % 6;
             balcony = st.district() == MARKET && p.storeys() >= 3 && Ctx.shape(p.id(), 9, 95) < 34;
             if (st.loading() && !p.enter() && doorT >= 0) {
                 int len = up.length(p.front());
@@ -412,6 +415,8 @@ final class CityGrammar {
                 outside(f, b, x, z, g);
             }
         }
+        // (M4 B3a) signs on brackets out over the street, banners and flagpoles on the fronts
+        CityFacadeLife.paint(f, b, g);
     }
 
     /** Jetties (Bellwatch only): once, at the first floor, over a lane 6+ wide, or 4-5 wide on its south or east side only, so the lane never closes at the lips. */
@@ -712,12 +717,15 @@ final class CityGrammar {
             if (open == 2) put(f, b, x, g + 3, z, st.hood().straight()[in]);
             return;
         }
-        if (st.shopfront() && fc == F_STREET && t >= 1 && t <= len - 2) put(f, b, x, g + 3, z, CANOPY);
+        // (M4 B3a) a striped awning over every shopfront and over the doors of shops and taverns: a hold at the hood's
+        // row and a soft landing that bounces (bible §3.6); elsewhere the hood over each opening
+        boolean awning = CityFacadeLife.awning(f, sd, t, len, fc);
+        if (awning) put(f, b, x, g + 3, z, CityProps.AWNING_KIT[sd][f.awningColour][0]);
         else if (open != 0) put(f, b, x, g + 3, z, st.hood().straight()[in]);
-        // a lantern by the doors people go in by
-        if (sd == p.front() && p.hasDoor() && t == f.doorT + 1 && (p.enter() || p.use().equals("tavern"))) {
-            put(f, b, x, g + 4, z, FENCE_TO[in]);
-            put(f, b, x, g + 3, z, LANTERN_HANGING);
+        // a lantern by the doors people go in by, and by some house doors: it glows, it lights nothing (decision 26)
+        if (sd == p.front() && p.hasDoor() && t == f.doorT + 1
+                && (p.enter() || p.use().equals("tavern") || f.c.pct(p.id(), 3, 67) < 30)) {
+            put(f, b, x, g + (awning ? 2 : 3), z, CityFacadeLife.WALL_LANTERN[sd]);
         }
         // (a one-storey house's eave is its row 5: the roof carries it there)
         if (!f.jetty[sd] && !foreign && (p.eave() > 5 || !f.overhang(sd))) put(f, b, x, g + 5, z, st.cornice().straight()[in]);

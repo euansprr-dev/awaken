@@ -30,7 +30,7 @@ final class CityViews {
     }
 
     /** Street views that look along the street nearest the spot (the longest clear run), not at a fixed target. */
-    static final java.util.Set<String> ALONG = java.util.Set.of("market", "bellwatch", "works", "wallring", "garden");
+    static final java.util.Set<String> ALONG = java.util.Set.of("market", "bellwatch", "works", "wallring", "garden", "market_street");
 
     /** Views taken exactly where they say (indoors, underground): never moved onto open ground. */
     static final java.util.Set<String> EXACT = java.util.Set.of("cellar", "quay_ladder");
@@ -86,5 +86,11 @@ final class CityViews {
         add("cellar", -148.5, 1.0, -58.5, -155, 3, -66);
         // the 3D ladder: one up the river's lower quay wall, from the lower quay
         add("quay_ladder", -60.5, -3.0, 11.5, -57.5, -1.5, 15.5);
+        // M4 B3a: the street life. A Market street of displays under the awnings, signs on brackets and a lantern line;
+        // a Bellwatch lane of laundry looking up its lines; the bowl's stalls from the -1 ring; a quay's lantern strings
+        add("market_street", 44, 1.0, -62, 0, 6, 0);
+        add("laundry_lane", -155.5, 1.0, 68.5, -155.5, 11, 44);
+        add("bowl_stalls", -4, 2.0, 27, 8, -1, 12);
+        add("canal_lights", -124, 2.0, 23, -84, 6, 25);
     }
 }

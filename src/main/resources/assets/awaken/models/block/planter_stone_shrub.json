@@ -1,0 +1,190 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/planter_stone",
+    "t0": "awaken:block/planter_stone",
+    "t1": "awaken:block/planter_stone_1",
+    "t2": "awaken:block/planter_stone_2",
+    "t3": "awaken:block/planter_stone_3"
+  },
+  "elements": [
+    {
+      "from": [
+        1,
+        0,
+        2
+      ],
+      "to": [
+        15,
+        10,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            14,
+            10
+          ],
+          "texture": "#t0"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            14,
+            10
+          ],
+          "texture": "#t0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            12,
+            10
+          ],
+          "texture": "#t1"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            12,
+            10
+          ],
+          "texture": "#t1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            14,
+            12
+          ],
+          "texture": "#t2"
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        10,
+        3.5
+      ],
+      "to": [
+        14,
+        16,
+        12.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            10,
+            12,
+            16
+          ],
+          "texture": "#t0"
+        },
+        "south": {
+          "uv": [
+            0,
+            10,
+            12,
+            16
+          ],
+          "texture": "#t0"
+        },
+        "east": {
+          "uv": [
+            0,
+            10,
+            9,
+            16
+          ],
+          "texture": "#t1"
+        },
+        "west": {
+          "uv": [
+            0,
+            10,
+            9,
+            16
+          ],
+          "texture": "#t1"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            12,
+            9
+          ],
+          "texture": "#t3"
+        }
+      }
+    },
+    {
+      "from": [
+        3.5,
+        16,
+        5
+      ],
+      "to": [
+        12.5,
+        19,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            12,
+            9,
+            15
+          ],
+          "texture": "#t2"
+        },
+        "south": {
+          "uv": [
+            0,
+            12,
+            9,
+            15
+          ],
+          "texture": "#t2"
+        },
+        "east": {
+          "uv": [
+            9,
+            10,
+            15,
+            13
+          ],
+          "texture": "#t1"
+        },
+        "west": {
+          "uv": [
+            9,
+            10,
+            15,
+            13
+          ],
+          "texture": "#t1"
+        },
+        "up": {
+          "uv": [
+            0,
+            9,
+            9,
+            15
+          ],
+          "texture": "#t3"
+        }
+      }
+    }
+  ],
+  "ambientocclusion": false
+}
