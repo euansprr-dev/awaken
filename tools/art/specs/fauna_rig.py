@@ -347,56 +347,16 @@ class Painter:
         self.glow = Canvas(*rig.tex)
         self.rng = random.Random(seed)
         self.cubes = {c.name: c for c in rig.cubes}
-        self.eye_skin, self.eye_glow = {}, {}  # pixel -> what it was before the eyes went on
+        self.eye = EyeRec()
 
     # ---- eyes: the life layer's blink (SPEC §23) -----------------------------------------------------------------
     def eyes(self):
-        """``with P.eyes(): <paint the eyes>``: every pixel set inside the block is an eye pixel. The build then also
-        writes <id>_blink.png (the eyes shut: those pixels as they were before the eyes went on, so the lid is the skin
-        around them, with a darker lash line along their bottom edge) and <id>_glow_blink.png (the eyes' glow out).
-        Recording changes nothing else: the RNG and every other pixel stay as they were."""
-        return _Eyes(self)
+        """``with P.eyes(): <paint the eyes>`` (see EyeRec)."""
+        return self.eye.eyes(self.skin, self.glow)
 
     def blink(self):
         """(skin, glow) canvases with the eyes shut, or None when no eyes were painted in an eyes() block."""
-        if not self.eye_skin and not self.eye_glow:
-            return None
-        skin, glow = self.skin.copy(), self.glow.copy()
-        for (x, y), before in self.eye_skin.items():
-            col = before
-            if col[3] == 0:  # painted onto bare texture: borrow the nearest skin that isn't eye
-                for dx, dy in ((0, -1), (-1, 0), (1, 0), (0, 1), (0, -2)):
-                    n = (x + dx, y + dy)
-                    if n not in self.eye_skin and self.skin.get(*n)[3] > 0:
-                        col = self.skin.get(*n)
-                        break
-            if (x, y + 1) not in self.eye_skin and col[3] > 0:
-                col = mul(col, 0.62)  # the lash line where the lids meet
-            skin.set(x, y, col)
-        for (x, y), before in self.eye_glow.items():
-            glow.set(x, y, before)
-        return skin, glow
-
-
-class _Eyes:
-    def __init__(self, painter):
-        self.P = painter
-
-    def __enter__(self):
-        self.skin = [row[:] for row in self.P.skin.px]
-        self.glow = [row[:] for row in self.P.glow.px]
-        return self.P
-
-    def __exit__(self, *exc):
-        P = self.P
-        for y in range(P.skin.h):
-            rs, rg, s0, g0 = P.skin.px[y], P.glow.px[y], self.skin[y], self.glow[y]
-            for x in range(P.skin.w):
-                if rs[x] != s0[x]:
-                    P.eye_skin.setdefault((x, y), s0[x])
-                if rg[x] != g0[x]:
-                    P.eye_glow.setdefault((x, y), g0[x])
-        return False
+        return self.eye.shut(self.skin, self.glow)
 
     def face(self, cube, name, glow=False):
         c = self.cubes[cube] if isinstance(cube, str) else cube
@@ -458,6 +418,65 @@ class _Eyes:
             col = fn(f, i, j)
             if col is not None:
                 f.set(i, j, col)
+
+
+class EyeRec:
+    """The eyes of one creature's texture, for the life layer's blink (SPEC §23). Every pixel set inside
+    ``with rec.eyes(skin, glow):`` is an eye pixel; shut() gives the texture with the eyes closed (those pixels as they
+    were before the eyes went on, so the lid is the skin around them, with a darker lash line along their bottom edge)
+    and its glow with the eyes' light out. The build writes them as <id>_blink.png and <id>_glow_blink.png. Recording
+    changes nothing else: the RNG and every other pixel stay as they were."""
+
+    def __init__(self):
+        self.skin, self.glow = {}, {}  # pixel -> what it was before the eyes went on
+
+    def clear(self):
+        self.skin.clear()
+        self.glow.clear()
+
+    def eyes(self, skin, glow):
+        return _Eyes(self, skin, glow)
+
+    def shut(self, skin_c, glow_c):
+        if not self.skin and not self.glow:
+            return None
+        skin, glow = skin_c.copy(), glow_c.copy()
+        for (x, y), before in self.skin.items():
+            col = before
+            if col[3] == 0:  # painted onto bare texture: borrow the nearest skin that isn't eye
+                for dx, dy in ((0, -1), (-1, 0), (1, 0), (0, 1), (0, -2)):
+                    n = (x + dx, y + dy)
+                    if n not in self.skin and skin_c.get(*n)[3] > 0:
+                        col = skin_c.get(*n)
+                        break
+            if (x, y + 1) not in self.skin and col[3] > 0:
+                col = mul(col, 0.62)  # the lash line where the lids meet
+            skin.set(x, y, col)
+        for (x, y), before in self.glow.items():
+            glow.set(x, y, before)
+        return skin, glow
+
+
+class _Eyes:
+    def __init__(self, rec, skin, glow):
+        self.rec, self.skin_c, self.glow_c = rec, skin, glow
+
+    def __enter__(self):
+        self.skin = [row[:] for row in self.skin_c.px]
+        self.glow = [row[:] for row in self.glow_c.px]
+        return self.rec
+
+    def __exit__(self, *exc):
+        for y in range(self.skin_c.h):
+            rs, rg, s0, g0 = self.skin_c.px[y], self.glow_c.px[y], self.skin[y], self.glow[y]
+            for x in range(self.skin_c.w):
+                if rs[x] != s0[x]:
+                    self.rec.skin.setdefault((x, y), s0[x])
+                if rg[x] != g0[x]:
+                    self.rec.glow.setdefault((x, y), g0[x])
+        return False
+
+
 
 
 # ---- patterns: return a step offset for (face, i, j) --------------------------------------------------------------

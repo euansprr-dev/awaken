@@ -1238,12 +1238,13 @@ def paint_wickling(r, P):
             g = P.face(nm, "top", glow=True)
             if P.face(nm, "top").get(i, j)[:3] == hexc("#ff8a2a")[:3]:
                 g.set(i, j, hexc("#ffb45a", 225))
-    for fname in ("west", "east", "north"):
-        f = P.face("whead", fname)
-        g = P.face("whead", fname, glow=True)
-        e = 0 if fname != "east" else f.w - 1
-        f.set(e, 0, hexc("#ffd27a"))
-        g.set(e, 0, hexc("#ffe08a", 250))
+    with P.eyes():
+        for fname in ("west", "east", "north"):
+            f = P.face("whead", fname)
+            g = P.face("whead", fname, glow=True)
+            e = 0 if fname != "east" else f.w - 1
+            f.set(e, 0, hexc("#ffd27a"))
+            g.set(e, 0, hexc("#ffe08a", 250))
     # the crest, the frills and the tail's flame: candle-flame planes, hot at the root, pale at the tip
     for nm in ("crest0", "crest1", "wfrill0", "flame"):
         for fname in ("west", "east"):
