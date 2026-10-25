@@ -154,9 +154,15 @@ Built (all synthesised; no recordings):
   `living.tell.*` (living). Census now checks every place file; 38 tests (`audio_*`, `terrain_biome_table*`,
   `compat_*`, `living_*`) pass locally.
 
-Still ours to build (PLAN.md §6.3, §7): the gate rooms and the Lord's hush (needs the arena's position on the client),
-the Descent's tells (gameplay telegraphs: server events), the hunter's ear (lairs and caches near, by PER), Mirror
-Marsh's answer, the Awakened lands' harmony for the four biomes whose beds are still their biome's vanilla
-`ambient_sounds` loop, the Hearth's rooms. Tour for the Mac: add `/awaken living happen <kind>` stops to
+Then (78283142): Mirror Marsh answers (a place soundscape's `echo`), and a gate room's own one-shots fall silent under
+the Lord's music (half in combat). The Descent's tells already existed in the descent module (the wind howls 1.5 s
+before each gust, the Choir sings 10 s before the water rises), so nothing was added there.
+
+Still ours to build, each needing the server to tell the client something it doesn't today (a short design note to
+Euan first): **the hunter's ear** (by PER, hear an undiscovered lair or cache from its direction: the server would send
+nearby secrets to perceptive players, which the spoiler rule must allow), **the Hearth's rooms** (Sanctuary,
+Trophy Hall, Workshop as places: the client needs the room it stands in). The four Awakened biomes with beds keep them
+as their biome's own `ambient_sounds` loop (already magic: glass ringing, the faults' hum, ice chimes, the still drone).
+Tread Lightly's block map for our blocks waits on its spike. Tour for the Mac: add `/awaken living happen <kind>` stops to
 `tools/autopilot/world-sound.txt` when it is next run.
 
