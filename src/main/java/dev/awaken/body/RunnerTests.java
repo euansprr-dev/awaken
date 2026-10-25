@@ -5,12 +5,22 @@ import dev.awaken.body.net.BodyPayloads;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.progression.Rank;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.StairBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.SlabType;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Spike S3 GameTests: the Runner's Kit probes and server checks on the very course the S3 tour runs
@@ -26,6 +36,7 @@ final class RunnerTests {
         AwakenTests.registerIsolated("runner_wall_climb", 120, RunnerTests::wallClimb);
         AwakenTests.registerIsolated("runner_hang_no_float_kick", 400, RunnerTests::hangNoFloatKick);
         AwakenTests.registerIsolated("runner_probe_cost", 200, RunnerTests::probeCost);
+        AwakenTests.register("runner_roof_climb", 20, RunnerTests::roofClimb);
         // runner_hang_real_tick (hangRealTick below) is kept for W2 but not registered: its harness doesn't yet get its own
         // teleport accepted, so every move after it is ignored (see docs/carillon/spikes/S3-runner.md, Open issue)
     }
@@ -404,6 +415,121 @@ final class RunnerTests {
             }
             finish(h, o);
         });
+    }
+
+    // ---- roofs ------------------------------------------------------------------------------------------------------
+
+    /**
+     * Euan's roofs (SPEC §17.21): from a hang on a roof's eave the climb out lands on the stair's high back half (or the
+     * slab) and the slope goes on from there, on Carillon's overhanging eaves too (CityGrammar.roof: the eave stair one
+     * out at the eave row, the slope starting over the wall), and the server's re-check agrees; under a beam, no climb.
+     */
+    static void roofClimb(GameTestHelper h) {
+        BlockState stone = Blocks.STONE.defaultBlockState(), tiles = Blocks.DEEPSLATE_TILES.defaultBlockState();
+        BlockState slab = Blocks.DEEPSLATE_TILE_SLAB.defaultBlockState().setValue(SlabBlock.TYPE, SlabType.BOTTOM);
+        BlockState slabTop = slab.setValue(SlabBlock.TYPE, SlabType.TOP);
+        for (int[] dir : new int[][]{{2, 1}, {0, -1}}) {
+            String way = dir[0] == 2 ? " (facing +z)" : " (facing -x)";
+            // a stair eave on a 3-high wall, the stair slope going on up from it
+            Scene a = new Scene(dir[0], dir[1]).fill(2, 6, 64, 66, stone).put(2, 67, Scene.STAIR);
+            a.fill(3, 6, 67, 67, tiles).put(3, 68, Scene.STAIR).fill(4, 6, 68, 68, tiles).put(4, 69, Scene.STAIR);
+            roofCheck(h, "stair eave" + way, a, 2, 67.5, 68.0);
+            // Carillon's gentle gable: the wall up to the eave row, its stair one out, the slope's first stair over the wall
+            Scene g = new Scene(dir[0], dir[1]).fill(2, 6, 64, 67, stone).put(1, 67, Scene.STAIR);
+            g.put(2, 68, Scene.STAIR).fill(3, 6, 68, 68, tiles).put(3, 69, Scene.STAIR);
+            roofCheck(h, "Carillon's overhanging eave, gentle" + way, g, 1, 67.5, 68.0);
+        }
+        // a steep gable's overhang: a full step after the eave (the climb lands on the eave stair, the next is a jump)
+        Scene st = new Scene(2, 1).fill(2, 6, 64, 67, stone).put(1, 67, Scene.STAIR);
+        st.fill(2, 2, 68, 68, tiles).put(2, 69, Scene.STAIR).fill(3, 6, 68, 70, tiles).put(3, 71, Scene.STAIR);
+        roofCheck(h, "Carillon's overhanging eave, steep", st, 1, 67.5, 68.0);
+        // a slab eave under a slab slope
+        Scene s = new Scene(2, 1).fill(2, 6, 64, 66, stone).fill(2, 2, 67, 67, slab).fill(3, 3, 67, 67, slabTop);
+        s.fill(4, 6, 67, 67, tiles).fill(4, 4, 68, 68, slab);
+        roofCheck(h, "slab eave", s, 2, 67.5, 67.5);
+        // a beam a block over the eave: a hang, but no room to stand on the step
+        Scene b = new Scene(2, 1).fill(2, 6, 64, 66, stone).put(2, 67, Scene.STAIR).fill(2, 2, 69, 69, stone);
+        roofCheck(h, "stair eave under a beam", b, 2, 67.5, Double.NaN);
+        h.succeed();
+    }
+
+    /** A jump at the face catches the eave at {@code lip}; climbing out stands at {@code stand} (NaN: no climb), as the server finds. */
+    private static void roofCheck(GameTestHelper h, String what, Scene s, int u, double lip, double stand) {
+        CollisionContext ctx = CollisionContext.empty();
+        double face = s.sign * u, along = 1.5, c = face - s.sign * 0.4, py = lip - 1.8;
+        double px = s.axis == 0 ? c : along, pz = s.axis == 0 ? along : c;
+        RunnerRules.Edge e = RunnerRules.findEdge(s, ctx, M, px, py, pz, s.axis, s.sign, RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2);
+        h.assertTrue(e != null && Math.abs(e.top() - lip) < 1e-6, what + ": the eave is a hang at " + lip + ": "
+                + (e != null ? e : RunnerRules.whyNot(s, ctx, M, px, py, pz, s.axis, s.sign, RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI)));
+        double[] out = RunnerRules.climbOut(s, ctx, M, e);
+        if (Double.isNaN(stand)) {
+            h.assertTrue(out == null, what + ": no climb out, was " + (out == null ? "" : out[1]));
+            return;
+        }
+        h.assertTrue(out != null && Math.abs(out[1] - stand) < 1e-6, what + ": climbs out to stand at " + stand + ", was " + (out == null ? "none" : out[1]));
+        double past = ((s.axis == 0 ? out[0] : out[2]) - face) * s.sign;
+        h.assertTrue(past > 0.3 && past < 0.5, what + ": the feet land just past the face, " + past);
+        // the server's re-check (RunnerServer.ledgeJump, JUMP_CLIMB): the edge found again from the hold, the same stand
+        RunnerRules.Edge here = RunnerRules.edgeNear(s, ctx, M, e.hx(), e.hy(), e.hz(), s.axis, s.sign, e.top(), 0.3, 0.1 + RunnerRules.SERVER_TOL);
+        double[] again = here == null ? null : RunnerRules.climbOut(s, ctx, M, here);
+        h.assertTrue(again != null && Math.abs(again[0] - out[0]) < 1e-6 && Math.abs(again[1] - out[1]) < 1e-6 && Math.abs(again[2] - out[2]) < 1e-6,
+                what + ": the server's re-check agrees");
+    }
+
+    /**
+     * A few blocks held in memory and read like a level (pure geometry: no chunks or light to wait for). Laid out from
+     * the climber's side: depth u into the house (the block's near face at sign * u on the axis faced), height y, and a
+     * along the face (0..2); its stairs face inward, their high back half away from the climber.
+     */
+    private static final class Scene implements BlockGetter {
+        static final BlockState STAIR = Blocks.DEEPSLATE_TILE_STAIRS.defaultBlockState();
+        final int axis, sign;
+        private final Direction inward;
+        private final java.util.Map<Long, BlockState> blocks = new java.util.HashMap<>();
+
+        Scene(int axis, int sign) {
+            this.axis = axis;
+            this.sign = sign;
+            this.inward = axis == 0 ? (sign > 0 ? Direction.EAST : Direction.WEST) : (sign > 0 ? Direction.SOUTH : Direction.NORTH);
+        }
+
+        /** One block across the whole face. */
+        Scene put(int u, int y, BlockState s) {
+            if (s.getBlock() instanceof StairBlock) s = s.setValue(StairBlock.FACING, inward);
+            int c = sign > 0 ? u : -u - 1;
+            for (int t = 0; t < 3; t++) blocks.put(BlockPos.asLong(axis == 0 ? c : t, y, axis == 0 ? t : c), s);
+            return this;
+        }
+
+        Scene fill(int u0, int u1, int y0, int y1, BlockState s) {
+            for (int u = u0; u <= u1; u++) for (int y = y0; y <= y1; y++) put(u, y, s);
+            return this;
+        }
+
+        @Override
+        public @Nullable BlockEntity getBlockEntity(BlockPos p) {
+            return null;
+        }
+
+        @Override
+        public BlockState getBlockState(BlockPos p) {
+            return blocks.getOrDefault(p.asLong(), Blocks.AIR.defaultBlockState());
+        }
+
+        @Override
+        public FluidState getFluidState(BlockPos p) {
+            return getBlockState(p).getFluidState();
+        }
+
+        @Override
+        public int getHeight() {
+            return 384;
+        }
+
+        @Override
+        public int getMinY() {
+            return -64;
+        }
     }
 
     /** What one airborne tick beside a wall and under a ledge probes at most: the run's wall, its ground, the grab ahead. */
