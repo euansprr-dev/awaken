@@ -15,7 +15,9 @@ public enum Act {
     LAMP_LIGHT, BELL_PULL, CARRY_BACK, SET_DOWN, SHUTTER, SERVE, TRAY, HAMMER, HALBERD, HALBERD_STAND, PROCLAIM,
     SCRUB, HANG, TROWEL, RUN, READ, HAUL, PLAY,
     // reactions and events
-    WAVE, NOD, POINT_SHOUT, BUCKET_PASS, HURT, CHEER, THIEF_RUN, SURRENDER, TRAPPED;
+    WAVE, NOD, POINT_SHOUT, BUCKET_PASS, HURT, CHEER, THIEF_RUN, SURRENDER, TRAPPED,
+    // (M4 B3b) the boatmen's work at their berths and the nets
+    COIL, BAIL, MEND, POLE;
 
     private static final Act[] ALL = values();
 

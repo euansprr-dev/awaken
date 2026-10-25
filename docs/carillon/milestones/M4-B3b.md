@@ -173,3 +173,29 @@ cats' eyes, owls, taverns through walls) lands first; the noon Market is where t
 Client-only animals and boats with their reaches and caps; drawn lantern and lamp light; the beds' contexts, levels and
 loudness window; mono places; the carillon before the hour; synthesis with vanilla's animal voices and AmbientSounds'
 nature (the as/ beds for its players, the city's own zones from its recordings).
+
+## Euan's playtest on b5792700 (2026-10-25 evening)
+
+**The Watch's lantern in 3D.** An iron and bronze carriage lantern (bail, cap and ring, corner posts, leaded amber glass,
+a flame that stretches and leans; rig `city_hand_lantern` in tools/art/specs/city_fauna.py) hangs plumb from the off
+hand's fist and swings behind the arm, in place of the flat item. Its glass and flame glow with one flicker shared with
+the light. CityGlow throws the halo and the pool from the flame the lantern layer drew that frame (camera-relative,
+stamped with the frame), so the light follows the hand; the pool's edge eases out over six rings. No light blocks; one
+reused holder per bearer. Tour: tools/autopilot/carillon-m4b3b-lantern.txt (`show watch_front|watch_side|watch_far`).
+
+**"What are these people supposed to be doing?"** (three boatmen in a knot on the quay, all staring at him)
+- Boatmen have berths: tools/city/citizens.py lays out a mooring every ~22 blocks along both quays inside the wall (32,
+  none by a bridge: a place on the quay's edge facing the water, and where the boat lies; citizens.json "moorings"),
+  and each of the ten boatmen works his own. At the berth he cycles through coiling and making fast the lines, bailing
+  with a bucket, swinging a crate down into the boat, fending off with a pole and hauling a line (new clips coil, bail,
+  pole; Acts appended COIL, BAIL, MEND, POLE). Twice a day he mends a net of his own at the nets (clip mend). The
+  client moors its boats at exactly these berths. Not built: a boatman stepping into a moored boat and rowing off (the
+  rowed boats keep their own crew).
+- The crane pickups' four spots stand two apart (they were a 2x2 knot), and boatmen no longer share them with porters.
+- Tavernkeepers serve their lane tables (trays, a pour at the door, a word) instead of leaning; shopkeepers carry wares
+  out to the door between a word and a lean. The other "stand" days already play work (masons, archivists, bakers).
+- The look-at: a citizen you talk to, or stand right in front of (2.4 blocks, within 50°), looks at you; otherwise an
+  idle citizen glances in brief windows of its own (about one window in six, 2.5 s of every 4) and nobody at work looks
+  up. In a group of three, mostly nobody or one looks.
+- The generator's first resident on each stroll route walks it daily (moving the boatmen's anchors had left a bench's
+  route unwalked). Test: `citizens_boatmen_berths`.

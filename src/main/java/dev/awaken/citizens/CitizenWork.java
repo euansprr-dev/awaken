@@ -948,8 +948,43 @@ final class CitizenWork implements Ledger.Work {
                 case P_SIT -> act = Act.SIT;
                 case P_PLAY -> act = Act.PLAY;
                 case P_MILL -> act = Act.HAUL;
-                case P_TAVERN_OUT -> act = (i % 3) == 0 ? Act.LEAN : Act.TALK;
-                case P_SHOP_DOOR -> act = (i & 1) == 0 ? Act.LEAN : Act.ARMS_CROSSED;
+                case P_TAVERN_OUT -> {
+                    if (job == TAVERNKEEPER) {
+                        // (M4 B3b) the house serves its tables in the lane: trays out, a pour at the door, a word between
+                        int k = (int) Math.floorMod((now + i * 613L) / 400, 3L);
+                        act = k == 0 ? Act.TRAY : k == 1 ? Act.SERVE : Act.TALK;
+                        if (k == 0) main = Props.BREAD;
+                    } else act = (i % 3) == 0 ? Act.LEAN : Act.TALK;
+                }
+                case P_SHOP_DOOR -> {
+                    // (M4 B3b) a shopkeeper minds the door: wares carried out and set down, a word with a passer-by, a lean
+                    int k = (int) Math.floorMod(now / 600 + i * 7L, 4L);
+                    act = k == 0 ? Act.SET_DOWN : k == 1 ? Act.TALK : k == 2 ? Act.LEAN : Act.SET_DOWN;
+                    crate = k == 0;
+                }
+                case P_MOORING -> {
+                    // (M4 B3b) a boatman at his berth: the lines coiled and made fast, the boat bailed, a crate swung down
+                    // into it, the boat fended off the quay with the pole; each spell its own length, out of step with the
+                    // next berth's
+                    int k = (int) Math.floorMod((now + i * 977L) / 520, 5L);
+                    switch (k) {
+                        case 0 -> act = Act.COIL;
+                        case 1 -> {
+                            act = Act.BAIL;
+                            main = Props.BUCKET;
+                        }
+                        case 2 -> {
+                            act = Act.SET_DOWN;
+                            crate = true;
+                        }
+                        case 3 -> {
+                            act = Act.POLE;
+                            main = Props.POLE;
+                        }
+                        default -> act = Act.HAUL;
+                    }
+                }
+                case P_NET -> act = Act.MEND;
                 default -> {
                     if (job == MASON) {
                         act = Act.TROWEL;

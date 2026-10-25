@@ -13,6 +13,8 @@ public final class CitizenRenderState extends SkinRenderState {
     public float blend = 1f;
     public boolean hasPose, hasPrev;
     public boolean crate, hurt;
+    /** At work (a job clip, not standing about): looks up from it only when spoken to or crowded. */
+    public boolean working;
     public final ItemStackRenderState backItem = new ItemStackRenderState();
     /** What the citizen is saying (wrapped lines), how it fades, and its kind (0 to you, 1 aloud, 2 a shout). */
     public java.util.@org.jspecify.annotations.Nullable List<net.minecraft.util.FormattedCharSequence> speech;

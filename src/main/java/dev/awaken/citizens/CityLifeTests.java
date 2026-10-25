@@ -42,6 +42,33 @@ final class CityLifeTests {
         // decoding ten 48 s stems runs on its own thread; the test server ticks as fast as it can, so a generous ceiling
         AwakenTests.register("citizens_soundscape_beds", 20 * 60 * 60 * 12, CityLifeTests::beds);
         AwakenTests.register("citizens_fauna_rigs", 40, CityLifeTests::rigs);
+        AwakenTests.register("citizens_boatmen_berths", 40, CityLifeTests::berths);
+    }
+
+    /**
+     * (M4 B3b, Euan: a knot of boatmen staring at him) every boatman works a berth of his own on a quay's edge, not a
+     * shared pickup; every berth's boat lies on the river (the client moors its boats there).
+     */
+    private static void berths(GameTestHelper h) {
+        Roster r = Roster.get();
+        h.assertTrue(r != null, "no roster");
+        dev.awaken.city.CityPlan plan = dev.awaken.city.CityPlan.get();
+        java.util.Set<Integer> mine = new java.util.HashSet<>();
+        int boatmen = 0;
+        for (int i = 0; i < r.citizens; i++) {
+            if (r.job[i] != Roster.BOATMAN) continue;
+            boatmen++;
+            int w = r.work[i];
+            h.assertTrue(w >= 0 && r.pKind[w] == Roster.P_MOORING, "boatman " + i + " works place " + w + ", not a berth");
+            h.assertTrue(mine.add(w), "two boatmen share berth " + w);
+        }
+        h.assertTrue(boatmen >= 8 && r.moorings.size() >= boatmen, boatmen + " boatmen, " + r.moorings.size() + " berths");
+        for (Roster.Mooring m : r.moorings) {
+            byte k = plan.kind((int) Math.floor(m.boatX()), (int) Math.floor(m.boatZ()));
+            h.assertTrue(k == dev.awaken.city.CityPlan.RIVER, "the boat of berth " + m.place() + " lies on kind " + k + ", not the river");
+            h.assertTrue(r.pKind[m.place()] == Roster.P_MOORING, "berth " + m.place() + " is not a mooring place");
+        }
+        h.succeed();
     }
 
     // ---- lanterns ----------------------------------------------------------------------------------------------------

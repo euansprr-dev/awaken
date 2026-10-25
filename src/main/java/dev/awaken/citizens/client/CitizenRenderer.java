@@ -98,6 +98,10 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         Act cur = Act.of(body.cAct), prev = Act.of(body.pAct);
         float t = body.tickCount - body.cStart + partial;
         s.hasPose = cur != Act.NONE && CitizenClips.sample(cur, t + (rec & 7) * 3, s.pose);
+        s.working = switch (cur) {
+            case NONE, ARMS_CROSSED, HANDS_BEHIND, LEAN, SIT, LOOK_AROUND, TALK, HALBERD_STAND -> false;
+            default -> true;
+        };
         s.blend = Math.min(1f, t / BLEND);
         s.hasPrev = s.blend < 1f && prev != Act.NONE && CitizenClips.sample(prev, body.tickCount - body.pStart + partial, s.prevPose);
         if (s.crate) {
@@ -201,7 +205,13 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
             double dx = eye.x - s.x, dz = eye.z - s.z, dy = eye.y - (s.y + s.height * 0.92);
             float yaw = (float) (Mth.atan2(dz, dx) * Mth.RAD_TO_DEG) - 90f;
             float rel = Mth.wrapDegrees(yaw - s.bodyRot);
-            if (Math.abs(rel) < 80f) {
+            // (M4 B3b, Euan: a knot of boatmen all staring at him) only someone you talk to or stand right in front of
+            // looks at you for long; otherwise an idle citizen glances now and then, briefly, in a window of its own (about
+            // one window in six, 2.5 s of every 4), and nobody at work looks up from it
+            boolean close = s.distanceToCameraSq < 2.4 * 2.4 && Math.abs(rel) < 50f;
+            int window = (int) (s.ageInTicks / 80f) + body.getId() * 3;
+            boolean glance = !s.working && Math.floorMod(window * 0x9E3779B1, 6) == 0 && s.ageInTicks % 80f < 50f;
+            if (Math.abs(rel) < 80f && (talking || close || glance)) {
                 s.yRot = rel;
                 s.xRot = (float) (-Mth.atan2(dy, Math.sqrt(dx * dx + dz * dz)) * Mth.RAD_TO_DEG);
                 look = 1f;
