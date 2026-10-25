@@ -2252,19 +2252,34 @@ def yrot(deg, cx, cz):
     return ("y", deg, (cx, 0, cz))
 
 
+FISH_BACK = R("#1a2430", "#283848", "#3a5064", "#52687c", "#6c8496")
+FISH_FIN = R("#4a5a66", "#6e8492", "#98aebc")
+
+
 def M_fishbody(c, x, y, w, h, face, rng, dims):
+    """A fish seen from above: a dark blue-grey back down its middle, silver flanks, the head darker with an eye on each
+    side; from the side, the back on top and a pale belly under it."""
     for yy in range(h):
         for xx in range(w):
-            k = 3 if face != "U" else 2 + (1 if yy == h - 1 else 0)
-            if xx == 0 and face == "U":
-                k = 1                                                       # the head end, darker
-            if rng.random() < 0.1:
-                k += rng.choice([-1, 1])
-            c.set(x + xx, y + yy, step(SILVER, k))
-    if face == "U":
-        c.set(x, y + h // 2, step(SILVER, 0))
-        for yy in range(h):
-            c.set(x + w - 1, y + yy, step(SILVER, 1))
+            if face == "U":
+                mid = yy == h // 2
+                k = 2 if mid else 3
+                if xx == 0:
+                    k -= 1                                                  # the head end, darker
+                px = step(FISH_BACK if mid else SILVER, k + (1 if mid and rng.random() < 0.25 else 0))
+            else:
+                k = 2 if yy == 0 else 4 if yy == h - 1 else 3
+                px = step(FISH_BACK if yy == 0 else SILVER, k)
+            c.set(x + xx, y + yy, px)
+    if face == "U" and w >= 3 and h >= 3:
+        c.set(x + 1, y, step(FISH_BACK, 0))                                 # the eyes
+        c.set(x + 1, y + h - 1, step(FISH_BACK, 0))
+
+
+def M_fishtail(c, x, y, w, h, face, rng, dims):
+    for yy in range(h):
+        for xx in range(w):
+            c.set(x + xx, y + yy, step(FISH_FIN, 1 if (yy in (0, h - 1)) else 2))
 
 
 def M_mat_fix(c, x, y, w, h, face, rng, dims):
@@ -2291,8 +2306,11 @@ def wares_models(w):
     # --- fish: on crushed ice
     m = new("fish")
     tray(m, fill_ice)
-    for (x, z, ang) in ((1.8, 3.8, 6), (7.5, 4.5, -8), (2.5, 8, -5), (8.8, 8.6, 9)):
-        m.box((x, 2, z), (x + 6.4, 3.6, z + 3), M_fishbody, faces="NESWU", key="fish", rot=yrot(ang, x + 3, z + 1.5))
+    # five fish, slimmer than before so the ice shows between them, each with its tail fin
+    for (x, z, ang) in ((1.6, 3.6, 6), (7.6, 3.9, -8), (2.2, 6.6, -4), (8.0, 7.0, 7), (2.8, 9.8, 3)):
+        rot = yrot(ang, x + 3, z + 1.1)
+        m.box((x, 2, z), (x + 5.4, 3.4, z + 2.2), M_fishbody, faces="NESWU", key="fish", rot=rot)
+        m.box((x + 5.4, 2.1, z - 0.2), (x + 6.6, 2.9, z + 2.4), M_fishtail, faces="NSU", key="fishtail", rot=rot)
     m.box((13.2, 2, 4.4), (14.6, 3.2, 6), {"*": M_solid(R("#4a2808", "#a07a1c", "#e0c240", "#f6e47a"), 2)}, faces="NESWU")   # a lemon
     out["fish"] = m
     # --- produce: apples, pears, a melon
