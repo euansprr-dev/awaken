@@ -87,8 +87,9 @@ public final class CityGlow {
     // ---- the numbers ----------------------------------------------------------------------------------------------
 
     /** A carried lantern: pool radius and strength, halo size; a street lamp's pool is wider and softer. */
-    static final float LANTERN_POOL = 7.0F, LANTERN_POOL_A = 0.72F, LANTERN_HALO = 1.1F, LANTERN_CORE = 0.1F;
-    static final float LAMP_POOL = 9.0F, LAMP_POOL_A = 0.55F, LAMP_HALO = 1.6F, LAMP_CORE = 0.26F;
+    // (B3b lantern tour: 0.72 and 0.55 blew pale paving out to flat yellow where a lamp's pool met a lantern's)
+    static final float LANTERN_POOL = 6.0F, LANTERN_POOL_A = 0.40F, LANTERN_HALO = 1.1F, LANTERN_CORE = 0.1F;
+    static final float LAMP_POOL = 8.0F, LAMP_POOL_A = 0.26F, LAMP_HALO = 1.6F, LAMP_CORE = 0.26F;
     /** Lights further than this from the camera aren't drawn (the fog has them by then). */
     static final double RANGE = 88;
     /** Warm candle light (linear-ish sRGB): the pool's middle is warmer and dimmer than the flame. */
