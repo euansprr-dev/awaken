@@ -510,6 +510,8 @@ final class Ledger {
         byte st = d.state[i];
         if (st == INSIDE || st == ABSENT) return false;
         int a = d.at[i], b = d.next[i];
+        // (M4 Walls) on a tower's stair: inside the tower, out of sight
+        if (st != STAND && b >= 0 && g.hidden(a, b)) return false;
         if (st == STAND) {
             int s = d.spot[i];
             if (s >= 0) {

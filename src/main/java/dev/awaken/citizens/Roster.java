@@ -109,6 +109,12 @@ public final class Roster {
     public final int[][] routePlaces;
     /** Keep-right lane offset per street edge, in tenths of a block. */
     public final byte[] edgeLane;
+    /**
+     * The wall walk joined to the street graph (M4 Walls; tools/city/citizens.py "wallWalk"): nodes appended after the
+     * plan's (plan x, row, plan z) and edges after its (absolute node indices, the move; 9 is a tower's stair, hidden).
+     */
+    public final float[] wallX, wallZ;
+    public final int[] wallRy, wallA, wallB, wallMove;
 
     // stations
     public final int[] lampPlace, lampRoute;
@@ -245,6 +251,27 @@ public final class Roster {
             routePlaces[id] = ints(r.getAsJsonArray("places"));
         }
         for (int r = 0; r < nr; r++) if (routePlaces[r] == null) routePlaces[r] = new int[0];
+
+        JsonObject ww = o.has("wallWalk") ? o.getAsJsonObject("wallWalk") : null;
+        JsonArray wn = ww != null ? ww.getAsJsonArray("nodes") : new JsonArray(), we = ww != null ? ww.getAsJsonArray("edges") : new JsonArray();
+        wallX = new float[wn.size()];
+        wallZ = new float[wn.size()];
+        wallRy = new int[wn.size()];
+        for (int k = 0; k < wn.size(); k++) {
+            JsonArray q = wn.get(k).getAsJsonArray();
+            wallX[k] = q.get(0).getAsFloat();
+            wallRy[k] = q.get(1).getAsInt();
+            wallZ[k] = q.get(2).getAsFloat();
+        }
+        wallA = new int[we.size()];
+        wallB = new int[we.size()];
+        wallMove = new int[we.size()];
+        for (int k = 0; k < we.size(); k++) {
+            JsonArray q = we.get(k).getAsJsonArray();
+            wallA[k] = q.get(0).getAsInt();
+            wallB[k] = q.get(1).getAsInt();
+            wallMove[k] = q.get(2).getAsInt();
+        }
 
         int[] lanes = ints(o.getAsJsonArray("edgeLane"));
         edgeLane = new byte[lanes.length];
