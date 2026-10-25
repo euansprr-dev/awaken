@@ -31,5 +31,7 @@ public final class TerrainModule {
         dev.awaken.terrain.frost.FrostLands.init(modBus);
         dev.awaken.terrain.mire.MireLands.init(modBus);
         dev.awaken.terrain.landmark.Lands3Tests.register();
+        // Awakened Alpine (Far Sight 2): erosion, snow lines and mountain forests for new worlds
+        dev.awaken.terrain.alpine.AlpineLands.init(modBus);
     }
 }
