@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "facing=north,mount=floor": {
+      "model": "awaken:block/brazier_floor"
+    },
+    "facing=north,mount=wall": {
+      "model": "awaken:block/brazier_wall"
+    },
+    "facing=east,mount=floor": {
+      "model": "awaken:block/brazier_floor",
+      "y": 90
+    },
+    "facing=east,mount=wall": {
+      "model": "awaken:block/brazier_wall",
+      "y": 90
+    },
+    "facing=south,mount=floor": {
+      "model": "awaken:block/brazier_floor",
+      "y": 180
+    },
+    "facing=south,mount=wall": {
+      "model": "awaken:block/brazier_wall",
+      "y": 180
+    },
+    "facing=west,mount=floor": {
+      "model": "awaken:block/brazier_floor",
+      "y": 270
+    },
+    "facing=west,mount=wall": {
+      "model": "awaken:block/brazier_wall",
+      "y": 270
+    }
+  }
+}

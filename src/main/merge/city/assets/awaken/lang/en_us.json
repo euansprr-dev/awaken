@@ -45,5 +45,11 @@
   "block.awaken.fishing_net": "Fishing Net",
   "block.awaken.well_windlass": "Well Windlass",
   "block.awaken.mooring_ring": "Mooring Ring",
-  "block.awaken.wheel_face": "Wheel Face"
+  "block.awaken.wheel_face": "Wheel Face",
+  "block.awaken.arrow_loop": "Arrow Loop",
+  "block.awaken.wall_ivy": "Wall Ivy",
+  "block.awaken.portcullis": "Portcullis",
+  "block.awaken.brazier": "Brazier",
+  "block.awaken.wall_spout": "Wall Spout",
+  "block.awaken.wall_shield": "Wall Shield"
 }
