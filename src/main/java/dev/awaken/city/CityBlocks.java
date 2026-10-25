@@ -288,6 +288,28 @@ final class CityBlocks {
     static final Course C_VERDIGRIS = Course.of("minecraft:waxed_oxidized_cut_copper_stairs");
     static final Course C_ANDESITE = Course.of("minecraft:polished_andesite_stairs");
 
+    /**
+     * A step's stairs (bottom half) by the side they climb toward, straight or turning a corner: inner (two sides up)
+     * and outer (the corner of a landing), left meaning the second side is counter-clockwise of the first (M4 B2).
+     */
+    record Step(BlockState[] straight, BlockState[] innerLeft, BlockState[] innerRight, BlockState[] outerLeft, BlockState[] outerRight) {
+        static Step of(String stairs) {
+            return new Step(dirs(stairs + "[facing=%s,half=bottom,shape=straight]"),
+                    dirs(stairs + "[facing=%s,half=bottom,shape=inner_left]"), dirs(stairs + "[facing=%s,half=bottom,shape=inner_right]"),
+                    dirs(stairs + "[facing=%s,half=bottom,shape=outer_left]"), dirs(stairs + "[facing=%s,half=bottom,shape=outer_right]"));
+        }
+    }
+
+    static final Step STEP_STONE = Step.of("minecraft:stone_brick_stairs");
+    static final Step STEP_ANDESITE = Step.of("minecraft:polished_andesite_stairs");
+    static final Step STEP_DIORITE = Step.of("minecraft:polished_diorite_stairs");
+    static final Step STEP_MOSSY = Step.of("minecraft:mossy_stone_brick_stairs");
+    static final Step STEP_COBBLE = Step.of("minecraft:cobblestone_stairs");
+    static final Step STEP_BRICK = Step.of("minecraft:brick_stairs");
+    /** A retaining wall's coping where the fall is short (no parapet: a 2-4 drop is a step, not a "no"). */
+    static final BlockState COPING = of("minecraft:stone_brick_slab[type=bottom]");
+    static final BlockState[] MOSSY_WALLS = connected("minecraft:mossy_stone_brick_wall", true);
+
     /** A thin board canopy over a shopfront (B3 swaps in the striped awnings), and the sill board under a loading door. */
     static final BlockState CANOPY = of("minecraft:dark_oak_slab[type=top]");
     static final BlockState[] SILL_BOARD = dirs("minecraft:spruce_trapdoor[facing=%s,half=top,open=false]");

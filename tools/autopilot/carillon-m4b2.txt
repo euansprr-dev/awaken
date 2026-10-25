@@ -1,0 +1,147 @@
+# Carillon M4 step B2 (docs/carillon/briefs/M4-B2-relief.md): relief and heights, one light tour
+# (shots only, no perf). The same world, settings and cameras as M1's tour (carillon-m1.txt), so every shot pairs with
+# its B1 "after" (the B1 pairs' right halves); then the facades, the roofscapes, the new relief framings (knoll, bowl,
+# terrace_wall, gate_yard, the cellar under the old bell) and the sky again at dusk.
+# Run: PACK=perf,world,horizon TECTONIC=awakened DH=swift RD=20 SLOT_WHO=M4-B2 \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh tools/autopilot/carillon-m4b2.txt 900
+world carillonM4b2 creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 23700
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd awaken city info
+hud off
+look -45 12
+wait 60
+shot b2_spawn_roost
+cmd gamemode spectator
+# the sky at dawn: let Distant Horizons read the pregenerated city first
+cmd awaken city view sky_nw
+wait 900
+shot b2_sky_nw
+cmd awaken city view sky_nw_low
+wait 160
+shot b2_sky_nw_low
+cmd awaken city view sky_n
+wait 200
+shot b2_sky_n
+cmd awaken city view sky_w
+wait 200
+shot b2_sky_w
+cmd awaken city view sky_top
+wait 300
+shot b2_sky_top
+# morning light for the streets
+cmd time set 1500
+cmd awaken city view roost_start
+wait 160
+shot b2_roost_start
+cmd awaken city view square
+wait 120
+shot b2_square
+cmd awaken city view market
+wait 100
+shot b2_market
+cmd awaken city view bellwatch
+wait 120
+shot b2_bellwatch
+cmd awaken city view quay
+wait 120
+shot b2_quay
+cmd awaken city view terrace
+wait 120
+shot b2_terrace
+cmd awaken city view works
+wait 120
+shot b2_works
+cmd awaken city view garden
+wait 120
+shot b2_garden
+cmd awaken city view wallring
+wait 120
+shot b2_wallring
+# the facades, one per district, from across the street (new at B1; later steps keep these framings)
+cmd awaken city view facade_bellwatch
+wait 120
+shot b2_facade_bellwatch
+cmd awaken city view facade_quay
+wait 120
+shot b2_facade_quay
+cmd awaken city view facade_market
+wait 120
+shot b2_facade_market
+cmd awaken city view facade_terrace
+wait 120
+shot b2_facade_terrace
+cmd awaken city view facade_garden
+wait 120
+shot b2_facade_garden
+cmd awaken city view facade_works
+wait 120
+shot b2_facade_works
+cmd awaken city view facade_wallring
+wait 120
+shot b2_facade_wallring
+# the roofscape from just over the roofs
+cmd awaken city view roofs_bellwatch
+wait 160
+shot b2_roofs_bellwatch
+cmd awaken city view roofs_quay
+wait 160
+shot b2_roofs_quay
+# the relief (new at B2): the Knoll from the canal side, the square's bowl from the rim, the Terrace's wall from the
+# Choir Avenue, the gatehouse yard outside the High Gate, the cellar under the old bell (lit by its own lantern)
+cmd awaken city view knoll
+wait 160
+shot b2_knoll
+cmd awaken city view bowl
+wait 120
+shot b2_bowl
+cmd awaken city view terrace_wall
+wait 120
+shot b2_terrace_wall
+cmd awaken city view gate_yard
+wait 160
+shot b2_gate_yard
+cmd awaken city view cellar
+wait 100
+shot b2_cellar
+# the studio framings M1 recorded (the roofs and the fabric round each landmark)
+cmd awaken city view studio_spire
+wait 120
+shot b2_studio_spire
+cmd awaken city view studio_association
+wait 120
+shot b2_studio_association
+cmd awaken city view studio_roost
+wait 120
+shot b2_studio_roost
+cmd awaken city view studio_cranes
+wait 120
+shot b2_studio_cranes
+cmd awaken city view studio_bellwatch_tower
+wait 120
+shot b2_studio_bellwatch_tower
+cmd awaken city view studio_garden_tower
+wait 120
+shot b2_studio_garden_tower
+cmd awaken city view studio_terrace_tower
+wait 120
+shot b2_studio_terrace_tower
+# dusk over the old town, the same sky view (the roofscape against a low sun)
+cmd time set 12600
+cmd awaken city view sky_nw_low
+wait 160
+shot b2_sky_dusk
+quit
