@@ -2050,7 +2050,10 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   rope reach +0.4 a Tether level (44 → 48; the server's anchor check allows 48 + 6 = 54), pump +3% a Tether level, double jump +0.012 and
   dash +2% a Leaper level, glide drag −2% a Wings level.
 - **Perks** (`Progression.perk`; Living Wilds' relics): `awaken:rope_reach` adds its blocks to the rope's reach on
-  both sides (the throw in `AscentMoves.fire`, the server's anchor check; Wren's Hook gives 6).
+  both sides (the throw in `AscentMoves.fire`, the server's anchor check; Wren's Hook gives 6). `awaken:sprint_recharge`
+  takes its fraction off the tactical sprint's recharge for the rank, at most half and never under the S rank's 30
+  (`BodyRules.tacRecharge(player)`, read alike by the client, the server's check and the sprint line; the Courier's
+  Knot gives 0.25: 80 ticks at E become 60, an A rank's 40 the floor's 30).
 - **A level gained** shows as one quiet line over the hotbar for 5.5 s ("Tether mastery III · the line reaches
   further"; `AscentNotes`), never a toast; the first sync of a session only fills the client's copy. Runner mastery:
   a wall-run lasts a tick longer a level (both sides; ranks and Wall Stride still set the base).

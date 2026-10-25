@@ -522,6 +522,8 @@ final class BodyTests {
         h.assertTrue(RunnerRules.ledgeUp(Rank.B) == RunnerRules.LEDGE_UP + 1 && RunnerRules.ledgeSide(Rank.B) == RunnerRules.LEDGE_SIDE + 1, "ledge reach +1 from B");
         h.assertTrue(BodyRules.tacRecharge(Rank.E) == BodyRules.TAC_RECHARGE && BodyRules.tacRecharge(Rank.A) < BodyRules.tacRecharge(Rank.B)
                 && BodyRules.tacRecharge(Rank.SOVEREIGN) == 30, "the tactical sprint recharges faster by rank, to 30");
+        h.assertTrue(BodyRules.tacRecharge(Rank.E, 0.25) == 60 && BodyRules.tacRecharge(Rank.A, 0.25) == 30
+                && BodyRules.tacRecharge(Rank.E, 0.9) == 40, "a recharge perk takes its share of the rank's, at most half, never under 30");
         h.assertTrue(BodyRules.slideCooldown(Rank.E) == BodyRules.SLIDE_COOLDOWN && BodyRules.slideCooldown(Rank.SOVEREIGN) == 10, "the slide's cooldown by rank, to 10");
         // Wall Stride: 80 ticks, grip 50 lifting +0.04, then a sink to -0.14
         h.assertTrue(RunnerRules.runLength(0, Rank.E, true) == 80 && RunnerRules.runGrip(0, true) == 50, "Wall Stride runs 80, grips 50");

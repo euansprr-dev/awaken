@@ -141,7 +141,7 @@ final class BodyServer {
         AttributeInstance speed = p.getAttribute(Attributes.MOVEMENT_SPEED);
         if (speed != null) speed.removeModifier(BodyRules.TAC_ID);
         m.tacUntil = 0;
-        m.tacReadyAt = now + BodyRules.tacRecharge(Body.runnerRank(p));
+        m.tacReadyAt = now + BodyRules.tacRecharge(p);
         m.tacEndedAt = now;
         m.lastMove = now;
         if (tellClient) AwakenNet.send(p, new BodyPayloads.Refuse(Move.TACTICAL_SPRINT.ordinal()));
