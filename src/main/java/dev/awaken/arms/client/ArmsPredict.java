@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * The client's half of Arms (SPEC §24): it reads the three verbs, predicts the move with the same rules the server
+ * The client's half of Arms (SPEC §25): it reads the three verbs, predicts the move with the same rules the server
  * judges by ({@link ArmsRules}), starts it on the frame of the press, and takes the server's word when it comes back.
  * Strike: the attack key (tap = the chain, held = a heavy). Guard: the use key (vanilla's blocking, judged by the
  * server). Dodge: the sprint key with back, left, right or no direction, on the ground.
@@ -252,6 +252,13 @@ public final class ArmsPredict {
         if (heavy == null || heavy.charge().isEmpty()) return -1;
         Archetype.Charge c = heavy.charge().get();
         return Mth.clamp((c.min() + (ticks - chargeStart)) / (float) c.max(), 0, 1);
+    }
+
+    /** Whether a held heavy is on its glint right now (a release would be perfect). */
+    static boolean glinting() {
+        if (!charging || style == null) return false;
+        Archetype.MoveDef heavy = style.move(Archetype.Move.HEAVY);
+        return heavy != null && heavy.charge().isPresent() && heavy.charge().get().perfect(heavy.charge().get().min() + (ticks - chargeStart));
     }
 
     // ---- dodge --------------------------------------------------------------------------------------------------------

@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * A fighting style (SPEC §24): its moves on one timing table, its guard and its dodge. Every weapon of the style shares
+ * A fighting style (SPEC §25): its moves on one timing table, its guard and its dodge. Every weapon of the style shares
  * these rows, so the server's hits, both views' clips, the trails and the sounds stay in step. Read from
  * {@code data/awaken/arms/archetypes.json} on both sides ({@link Archetypes}).
  */

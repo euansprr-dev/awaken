@@ -11,7 +11,7 @@ import net.minecraft.world.entity.player.Player;
 import org.jspecify.annotations.Nullable;
 
 /**
- * What the fighter hears of their own fight (SPEC §24), on the frame it happens: the swish on the press, the impact
+ * What the fighter hears of their own fight (SPEC §25), on the frame it happens: the swish on the press, the impact
  * on the confirmed hit, the guard's answer, the dodge, the heavy's draw and glint, a blow landing on them. Everyone
  * else hears the server's copy of the same choice ({@link ArmsSounds}).
  */

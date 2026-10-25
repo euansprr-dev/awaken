@@ -27,6 +27,10 @@ stances that break, and the feel and sound of a blow. The plan is `docs/combat/P
 - `client/ArmsHands`: the weapon in first person (vanilla's arm placement, then the row's swing, charge and guard).
 - `client/ArmsFeel`: `core.api.CombatFeedback`'s implementation (freeze, hold, kick). Powers' hits use it too.
 - `client/ArmsHud`, `client/ArmsAudio`: the arc, the pips, the hurt shard; what the fighter hears of their own fight.
+- `ArmsItems`, `ArmsData` (generated): our weapons, one item per catalog row. `WeaponMesh`: a sculpted weapon's mesh as
+  plain data (read on either side). `client/WeaponRenderer` (the `awaken:weapon` special item model), `WeaponPipelines`
+  (the weapon shader `shaders/core/arms_weapon.*` and the stones' halo light, both optional), `WeaponMeshes` (loaded
+  with the resources).
 - Across modules: `core.api.Strikes` (blow classes, tells, stagger: the mobs module installs them), `core.api.BodyMaterial`
   (what a blade meets: `MobDef.material()` for ours), `core.api.CombatFeedback`.
 
@@ -43,6 +47,15 @@ stances that break, and the feel and sound of a blow. The plan is `docs/combat/P
 - **Sounds**: re-render with `python3 tools/art/specs/audio_arms.py` (all), `--json` (only sounds.json and the
   subtitles), `--check` (the checks on what is on disk) or name prefixes (`hit_ swish`). Every event needs a holder in
   `ArmsSounds` (`audio_events_resolve` fails otherwise).
+
+## Weapons
+
+A weapon is a design function in `tools/art/specs/arms_weapons.py` (its catalog row there too), built from the toolkit
+in `tools/art/mesh.py` (`blade`, `block`, `ribbon`, `orb`, `gem`, `ring`, `torus`, `spike`, `MS.sweep/lathe/tube`) and
+painted by the painters there (a material is a function of each texel's point, normal, tag and place). Run
+`python3 tools/art/specs/arms_weapons.py build`; check the look with `preview DIR` before the game. Keep
+`tools/art/mesh_render.py`'s `shade()` and `arms_weapon.fsh` in step: the preview is only worth trusting while they
+match.
 
 ## Tests and tours
 

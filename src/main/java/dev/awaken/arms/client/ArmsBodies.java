@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Fighters' bodies in third person (SPEC §24), for players with the Player Animation Library (optional): each move's
+ * Fighters' bodies in third person (SPEC §25), for players with the Player Animation Library (optional): each move's
  * clip ({@link ArmsClips}) on the fighter's own prediction and on everyone else's word, the guard held while it is
  * up, the heavy's draw held while it charges, the dodge by its way. Without the library {@link PlayerClips} plays
  * nothing and the fighter keeps vanilla's arm swing.

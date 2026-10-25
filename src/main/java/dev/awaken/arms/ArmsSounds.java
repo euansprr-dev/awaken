@@ -12,7 +12,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Arms' sounds (SPEC §24): the kit rendered by tools/art/specs/audio_arms.py, its sounds.json in src/main/merge/arms.
+ * Arms' sounds (SPEC §25): the kit rendered by tools/art/specs/audio_arms.py, its sounds.json in src/main/merge/arms.
  * Which sound a blow makes is chosen here for both sides, so the fighter's own prediction and everyone else's world
  * hear the same thing.
  */

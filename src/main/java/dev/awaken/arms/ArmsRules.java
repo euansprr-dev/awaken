@@ -7,7 +7,7 @@ import net.minecraft.util.Mth;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Arms' rules as pure functions (SPEC §24), shared by the client's prediction and the server's judgement so both
+ * Arms' rules as pure functions (SPEC §25), shared by the client's prediction and the server's judgement so both
  * decide the same move from the same press. Every number comes from the style's row ({@link Archetype}) or is named
  * here.
  */

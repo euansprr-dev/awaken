@@ -17,8 +17,12 @@
    }
   ],
   "fallback": {
-   "type": "minecraft:model",
-   "model": "awaken:item/veilwoven_longsword_in_hand"
+   "type": "minecraft:special",
+   "base": "awaken:item/veilwoven_longsword_in_hand",
+   "model": {
+    "type": "awaken:weapon",
+    "weapon": "veilwoven_longsword"
+   }
   }
  }
 }

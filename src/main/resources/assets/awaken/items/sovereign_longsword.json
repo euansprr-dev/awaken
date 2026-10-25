@@ -17,8 +17,12 @@
    }
   ],
   "fallback": {
-   "type": "minecraft:model",
-   "model": "awaken:item/sovereign_longsword_in_hand"
+   "type": "minecraft:special",
+   "base": "awaken:item/sovereign_longsword_in_hand",
+   "model": {
+    "type": "awaken:weapon",
+    "weapon": "sovereign_longsword"
+   }
   }
  }
 }

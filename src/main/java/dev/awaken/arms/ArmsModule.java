@@ -25,7 +25,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Arms (SPEC §24): weapons and combat. Three verbs on every melee weapon (strike, guard, dodge), told enemy blows
+ * Arms (SPEC §25): weapons and combat. Three verbs on every melee weapon (strike, guard, dodge), told enemy blows
  * answered by deflect, block and dodge, stances that break, and the styles' moves on one timing table. Owns package
  * {@code dev.awaken.arms}; reads blows' classes and creatures' tells through {@code core.api.Strikes}.
  */

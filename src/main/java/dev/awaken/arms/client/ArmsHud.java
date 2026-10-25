@@ -11,7 +11,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.util.Mth;
 
 /**
- * Arms' only HUD (SPEC §24), on surfaces the player already reads: a thin Resonance arc under the crosshair (filling,
+ * Arms' only HUD (SPEC §25), on surfaces the player already reads: a thin Resonance arc under the crosshair (filling,
  * gold and glowing when the Art is ready), the held heavy's charge on the same arc with the glint's flash, the
  * dodge's charges as two pips beside the sprint line, and a short red shard on a ring round the crosshair pointing
  * to where the last blow on you came from (whatever is in your hand). Nothing is drawn at rest.
@@ -38,7 +38,7 @@ final class ArmsHud {
         // the arc: 15 dots across the lower half-circle under the crosshair
         boolean full = res >= 1;
         float fill = charge >= 0 ? charge : res;
-        int colour = charge >= 0 ? (glinting() ? GOLD : HOLO) : full ? GOLD : HOLO;
+        int colour = charge >= 0 ? (ArmsPredict.glinting() ? GOLD : HOLO) : full ? GOLD : HOLO;
         for (int i = 0; i < ARC_DOTS; i++) {
             float f = i / (float) (ARC_DOTS - 1);
             float ang = Mth.PI * (0.85F - 0.7F * f); // fills left to right, like any meter
@@ -46,7 +46,7 @@ final class ArmsHud {
             boolean lit = f <= fill;
             dot(g, x, y, 1, lit ? colour : DIM, (lit ? 0.95F : 0.35F) * shown);
         }
-        if (full || glinting()) HudLook.glow(g, cx - 12, cy + 7, 24, 6, GOLD, 0.45F * shown);
+        if (full || ArmsPredict.glinting()) HudLook.glow(g, cx - 12, cy + 7, 24, 6, GOLD, 0.45F * shown);
         // the dodge's charges, beside the sprint line above the hotbar
         int charges = ArmsPredict.dodgeCharges;
         var style = ArmsPredict.style;
@@ -81,13 +81,5 @@ final class ArmsHud {
     private static void dot(GuiGraphicsExtractor g, int x, int y, int size, int colour, float alpha) {
         g.fill(x - 1, y - 1, x + size + 1, y + size + 1, Glass.a(0x000000, 0.22F * alpha));
         g.fill(x, y, x + size, y + size, Glass.a(colour, alpha));
-    }
-
-    private static boolean glinting() {
-        var style = ArmsPredict.style;
-        if (!ArmsPredict.charging || style == null) return false;
-        Archetype.MoveDef heavy = style.move(Archetype.Move.HEAVY);
-        return heavy != null && heavy.charge().isPresent()
-                && heavy.charge().get().perfect(heavy.charge().get().min() + (ArmsPredict.ticks - ArmsPredict.chargeStart));
     }
 }

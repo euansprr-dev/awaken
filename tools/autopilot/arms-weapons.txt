@@ -1,7 +1,7 @@
 # Arms' forged Longswords in the game (SPEC §24; tools/art/specs/arms_weapons.py): each one in first person at rest and
-# mid-blow, in third person, the six icons on the hotbar and dropped on the ground (a frame shows the same icon; 26.3's
-# summon needs a frame's absolute block_pos, which a relative tour can't give). Run it whenever the
-# weapon grammar, a look or the hands change; tools/art/model_preview.py shows the models without the game.
+# mid-blow, a charged heavy, on armor stands, the six icons on the hotbar, dropped on the ground, and at night (a frame
+# shows the same icon; 26.3's summon needs a frame's absolute block_pos, which a relative tour can't give). Run it whenever the
+# weapon designs, a look, the shader or the hands change; tools/art/mesh_render.py shows them without the game.
 world armsweapons creative 778
 waitworld
 gui 0
@@ -25,8 +25,11 @@ cmd fill ~-8 ~-1 ~-8 ~8 ~-1 ~12 minecraft:smooth_stone
 cmd fill ~-8 ~ ~-8 ~8 ~10 ~12 minecraft:air
 cmd fill ~-8 ~ ~9 ~8 ~7 ~9 minecraft:deepslate_tiles
 wait 40
+cmd item replace entity @s weapon.mainhand with minecraft:diamond_sword
+wait 30
+shot weapons_ref_diamond
 cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
-wait 10
+wait 20
 shot weapons_0_wildhide_fp
 arms pose strike_1 0.3
 shot weapons_0_wildhide_fp_blow
@@ -34,7 +37,7 @@ arms pose strike_3 0.23
 shot weapons_0_wildhide_fp_raised
 arms pose off
 cmd item replace entity @s weapon.mainhand with awaken:beastbound_longsword
-wait 10
+wait 20
 shot weapons_1_beastbound_fp
 arms pose strike_1 0.3
 shot weapons_1_beastbound_fp_blow
@@ -42,7 +45,7 @@ arms pose strike_3 0.23
 shot weapons_1_beastbound_fp_raised
 arms pose off
 cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
-wait 10
+wait 20
 shot weapons_2_gatewrought_fp
 arms pose strike_1 0.3
 shot weapons_2_gatewrought_fp_blow
@@ -50,7 +53,7 @@ arms pose strike_3 0.23
 shot weapons_2_gatewrought_fp_raised
 arms pose off
 cmd item replace entity @s weapon.mainhand with awaken:veilwoven_longsword
-wait 10
+wait 20
 shot weapons_3_veilwoven_fp
 arms pose strike_1 0.3
 shot weapons_3_veilwoven_fp_blow
@@ -58,7 +61,7 @@ arms pose strike_3 0.23
 shot weapons_3_veilwoven_fp_raised
 arms pose off
 cmd item replace entity @s weapon.mainhand with awaken:lordscale_longsword
-wait 10
+wait 20
 shot weapons_4_lordscale_fp
 arms pose strike_1 0.3
 shot weapons_4_lordscale_fp_blow
@@ -66,33 +69,32 @@ arms pose strike_3 0.23
 shot weapons_4_lordscale_fp_raised
 arms pose off
 cmd item replace entity @s weapon.mainhand with awaken:sovereign_longsword
-wait 10
+wait 20
 shot weapons_5_sovereign_fp
 arms pose strike_1 0.3
 shot weapons_5_sovereign_fp_blow
 arms pose strike_3 0.23
 shot weapons_5_sovereign_fp_raised
 arms pose off
-camera front
-wait 10
-cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
-wait 6
-shot weapons_0_wildhide_3p
-cmd item replace entity @s weapon.mainhand with awaken:beastbound_longsword
-wait 6
-shot weapons_1_beastbound_3p
-cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
-wait 6
-shot weapons_2_gatewrought_3p
-cmd item replace entity @s weapon.mainhand with awaken:veilwoven_longsword
-wait 6
-shot weapons_3_veilwoven_3p
-cmd item replace entity @s weapon.mainhand with awaken:lordscale_longsword
-wait 6
-shot weapons_4_lordscale_3p
 cmd item replace entity @s weapon.mainhand with awaken:sovereign_longsword
-wait 6
-shot weapons_5_sovereign_3p
+wait 10
+arms heavy 30
+wait 14
+shotnow weapons_charge
+wait 30
+cmd summon minecraft:armor_stand ~-3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],equipment:{mainhand:{id:"awaken:wildhide_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~-1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],equipment:{mainhand:{id:"awaken:beastbound_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~-0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],equipment:{mainhand:{id:"awaken:gatewrought_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~0.6 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],equipment:{mainhand:{id:"awaken:veilwoven_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~1.8 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],equipment:{mainhand:{id:"awaken:lordscale_longsword",count:1}}}
+cmd summon minecraft:armor_stand ~3.0 ~ ~3.2 {ShowArms:1b,NoBasePlate:1b,Rotation:[150f,0f],equipment:{mainhand:{id:"awaken:sovereign_longsword",count:1}}}
+cmd tp @s ~ ~ ~-1.5 0 12
+wait 20
+shot weapons_stands
+cmd tp @s ~2.6 ~ ~3.5 0 25
+wait 10
+shot weapons_stands_close
+cmd tp @s ~-2.6 ~ ~-2.0 0 8
 camera first
 gui 4
 cmd item replace entity @s hotbar.0 with awaken:wildhide_longsword
@@ -107,13 +109,21 @@ cmd item replace entity @s hotbar.8 with minecraft:diamond_sword
 wait 10
 shot weapons_hotbar
 gui 0
-cmd summon minecraft:item ~-2.5 ~0.2 ~3 {Item:{id:"awaken:wildhide_longsword",count:1},PickupDelay:32767,Age:-32768}
-cmd summon minecraft:item ~-1.5 ~0.2 ~3 {Item:{id:"awaken:beastbound_longsword",count:1},PickupDelay:32767,Age:-32768}
-cmd summon minecraft:item ~-0.5 ~0.2 ~3 {Item:{id:"awaken:gatewrought_longsword",count:1},PickupDelay:32767,Age:-32768}
-cmd summon minecraft:item ~0.5 ~0.2 ~3 {Item:{id:"awaken:veilwoven_longsword",count:1},PickupDelay:32767,Age:-32768}
-cmd summon minecraft:item ~1.5 ~0.2 ~3 {Item:{id:"awaken:lordscale_longsword",count:1},PickupDelay:32767,Age:-32768}
-cmd summon minecraft:item ~2.5 ~0.2 ~3 {Item:{id:"awaken:sovereign_longsword",count:1},PickupDelay:32767,Age:-32768}
-cmd tp @s ~ ~ ~ 0 35
+cmd summon minecraft:item ~-2.5 ~0.2 ~1.6 {Item:{id:"awaken:wildhide_longsword",count:1},PickupDelay:32767,Age:-32768}
+cmd summon minecraft:item ~-1.5 ~0.2 ~1.6 {Item:{id:"awaken:beastbound_longsword",count:1},PickupDelay:32767,Age:-32768}
+cmd summon minecraft:item ~-0.5 ~0.2 ~1.6 {Item:{id:"awaken:gatewrought_longsword",count:1},PickupDelay:32767,Age:-32768}
+cmd summon minecraft:item ~0.5 ~0.2 ~1.6 {Item:{id:"awaken:veilwoven_longsword",count:1},PickupDelay:32767,Age:-32768}
+cmd summon minecraft:item ~1.5 ~0.2 ~1.6 {Item:{id:"awaken:lordscale_longsword",count:1},PickupDelay:32767,Age:-32768}
+cmd summon minecraft:item ~2.5 ~0.2 ~1.6 {Item:{id:"awaken:sovereign_longsword",count:1},PickupDelay:32767,Age:-32768}
+cmd tp @s ~ ~ ~ 0 50
 wait 40
 shot weapons_ground
+cmd tp @s ~ ~ ~ 0 8
+cmd time set 18000
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_longsword
+wait 40
+shot weapons_night
+cmd tp @s ~1.0 ~ ~1.5 0 15
+wait 10
+shot weapons_night_close
 quit

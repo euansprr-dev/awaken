@@ -11,17 +11,21 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.state.level.PlayerRenderState;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
+import net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
@@ -33,7 +37,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Client entry of Arms (SPEC §24): the verbs' input and prediction, the weapon in first person, the feel, the HUD. */
+/** Client entry of Arms (SPEC §25): the verbs' input and prediction, the weapon in first person, the feel, the HUD. */
 public final class ArmsClient {
     private ArmsClient() {}
 
@@ -54,6 +58,11 @@ public final class ArmsClient {
         modBus.addListener((RegisterRenderStateModifiersEvent e) ->
                 e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, ArmsFeel::modify));
         modBus.addListener(ArmsClient::onExtensions);
+        // the sculpted weapons: their meshes, their shader, the item model type that draws them
+        modBus.addListener(AddClientReloadListenersEvent.class, e -> e.addListener(Awaken.id("arms_weapons"),
+                (ResourceManagerReloadListener) WeaponMeshes::reload));
+        modBus.addListener(RegisterRenderPipelinesEvent.class, WeaponPipelines::onRegister);
+        modBus.addListener(RegisterSpecialModelRendererEvent.class, e -> e.register(WeaponRenderer.TYPE, WeaponRenderer.Unbaked.MAP_CODEC));
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(EventPriority.HIGH, InputEvent.InteractionKeyMappingTriggered.class, ArmsPredict::onKey);
         bus.addListener(ClientTickEvent.Post.class, e -> {

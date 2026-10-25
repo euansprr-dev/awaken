@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Creatures' stances as this client knows them (SPEC §24), installed as {@link Stances} for the plates: the server's
+ * Creatures' stances as this client knows them (SPEC §25), installed as {@link Stances} for the plates: the server's
  * snapshot on every change, drained here by the server's own rule ({@link ArmsRules#drained}), so nothing is sent
  * while a stance only recovers. The focus is the creature this fighter last struck, held by the server's rule too
  * (it lets go after a second of looking well away).
