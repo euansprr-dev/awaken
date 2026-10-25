@@ -35,7 +35,7 @@ final class Soundscape {
     private static final double[] POS = new double[3];
 
     static void register() {
-        MusicLayers.register(MusicLayers.Slot.AMBIENCE, 60, "carillon", Soundscape::context);
+        MusicLayers.register(MusicLayers.Slot.AMBIENCE, 100, "carillon", Soundscape::context); // SPEC Plan v2 · audio: the city's reserved ids
     }
 
     /** Every 100 ticks: where the ledger's people stand, by district (no allocation: the plan's raster). */
