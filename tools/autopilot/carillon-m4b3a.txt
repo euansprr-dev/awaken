@@ -196,4 +196,7 @@ shot b3a_night_laundry_lane
 cmd awaken city view square
 wait 160
 shot b3a_night_square
+# the lit windows' cost so far (lists built, ms each) into the log
+cmd awaken city info
+wait 20
 quit
