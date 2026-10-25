@@ -51,6 +51,7 @@ public final class Awaken {
         dev.awaken.terrain.TerrainModule.init(modBus);
         dev.awaken.city.CityModule.init(modBus);
         dev.awaken.citizens.CitizensModule.init(modBus);
+        dev.awaken.opening.OpeningModule.init(modBus);
         dev.awaken.holo.HoloModule.init(modBus);
         dev.awaken.wilds.WildsModule.init(modBus);
     }

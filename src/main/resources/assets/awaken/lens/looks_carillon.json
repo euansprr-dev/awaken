@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "_about": "Carillon's looks (SPEC §16.4, the opening): story moments set by LensClient.override, never a dimension's or a biome's. Merged after looks.json by key.",
+  "looks": {
+    "awaken:carillon_dawn": {
+      "_name": "Carillon at first light: the sun low and gold on the spire and the roofs, cool blue in the streets' shadow, a pale haze over the far half of the city, the light in the square blooming",
+      "exposure": 1.04,
+      "contrast": 1.12,
+      "saturation": 1.08,
+      "warmth": 0.14,
+      "shadowTint": [0.36, 0.44, 0.66],
+      "highlightTint": [1.0, 0.84, 0.6],
+      "splitTone": 0.26,
+      "vignette": 0.2,
+      "bloom": 1.0,
+      "bloomThreshold": 0.55,
+      "skyBloom": 0.5,
+      "shafts": 0.85,
+      "haze": 0.42,
+      "hazeStart": 0.32,
+      "hazeTint": [0.86, 0.8, 0.82],
+      "hazeTintMix": 0.42,
+      "hazeDesaturate": 0.18,
+      "sunsetWarmth": 0.9,
+      "sunGlow": 1.0
+    },
+    "awaken:carillon_wake": {
+      "_name": "Waking in the infirmary: too bright, washed and soft, white linen glowing, the room's dark beams lifting slowly into focus",
+      "exposure": 1.32,
+      "contrast": 0.8,
+      "saturation": 0.72,
+      "warmth": 0.1,
+      "shadowTint": [0.62, 0.62, 0.66],
+      "highlightTint": [1.0, 0.96, 0.9],
+      "splitTone": 0.1,
+      "vignette": 0.42,
+      "bloom": 1.6,
+      "bloomThreshold": 0.32,
+      "skyBloom": 0.6,
+      "shafts": 0.0,
+      "haze": 0.5,
+      "hazeStart": 0.04,
+      "hazeTint": [0.96, 0.95, 0.92],
+      "hazeTintMix": 0.6,
+      "hazeDesaturate": 0.4,
+      "sunsetWarmth": 0.0,
+      "sunGlow": 0.2
+    }
+  }
+}
