@@ -30,7 +30,7 @@ final class People {
     static final class Caravan implements Behaviour {
         @Override
         public @Nullable Plan plan(ServerLevel level, ServerPlayer p, HappeningDef def, RandomSource r) {
-            BlockPos c = Behaviours.spot(level, p, def, 70, 150, r, at -> Behaviours.dry(level, at) && Behaviours.rough(level, at) <= 2);
+            BlockPos c = Behaviours.spot(level, p, def, 70, 150, r, at -> Behaviours.dry(level, at) && Behaviours.rough(level, at) <= 3);
             return c == null ? null : Behaviours.across(level, p, c, 70);
         }
 

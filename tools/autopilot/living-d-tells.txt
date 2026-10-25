@@ -1,0 +1,63 @@
+# Living Wilds Phase D, the tells from a vantage (SPEC §21.6): a migration's dust and birds, the rolling storm, the
+# Wild Hunt's light at night, the Deep Tide's fog at dusk, a caravan's lanterns at dusk, seen from 90-200 blocks.
+# Run: SLOT_WHO=living-wilds slot.sh light tools/autopilot.sh tools/autopilot/living-d-tells.txt 600
+world autopilot_living_d2 creative 20261025
+waitworld
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd gamerule advance_time false
+cmd time set 1500
+cmd awaken living goto greenwild
+wait 200
+cmd tp @s ~300 ~ ~300
+wait 200
+cmd awaken living happen great_migration
+wait 60
+cmd awaken living face
+wait 60
+shot tells_01_migration
+wait 200
+shot tells_02_migration_later
+cmd awaken living calm
+cmd time set 6000
+cmd awaken living happen rolling_storm
+wait 60
+cmd awaken living face
+wait 80
+shot tells_03_storm
+cmd awaken living calm
+cmd time set 12800
+cmd awaken living happen caravan
+wait 60
+cmd awaken living face
+wait 60
+shot tells_04_caravan_dusk
+cmd awaken living calm
+cmd time set 13200
+cmd awaken living happen deep_tide
+wait 120
+cmd awaken living face
+wait 60
+shot tells_05_tide
+cmd awaken living calm
+cmd time set 18000
+cmd awaken living happen wild_hunt
+wait 60
+cmd awaken living face
+wait 60
+shot tells_06_hunt
+cmd awaken living calm
+cmd time set 12600
+cmd awaken living happen murmuration
+wait 60
+cmd awaken living face
+wait 60
+shot tells_07_murmuration
+quit

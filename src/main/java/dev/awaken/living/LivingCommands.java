@@ -189,14 +189,20 @@ final class LivingCommands {
         if (list.isEmpty()) return 0;
         var h = list.getLast();
         ServerLevel level = p.level().getServer().overworld();
-        double px = p.getX(), py = p.getY(), pz = p.getZ();
+        double px = p.getX(), py, pz = p.getZ();
         if (distance > 0) {
             double dx = px - h.centre.x, dz = pz - h.centre.z, len = Math.max(1, Math.sqrt(dx * dx + dz * dz));
             px = h.centre.x + dx / len * distance;
             pz = h.centre.z + dz / len * distance;
-            level.getChunk((int) px >> 4, (int) pz >> 4);
-            py = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, (int) px, (int) pz) + 1;
         }
+        // a tour's camera: on a small glass stand over the canopy (high for a view from afar, the Hilltop Test)
+        level.getChunk((int) px >> 4, (int) pz >> 4);
+        int top = 0;
+        for (int ox = -2; ox <= 2; ox++) for (int oz = -2; oz <= 2; oz++)
+            top = Math.max(top, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, (int) px + ox, (int) pz + oz));
+        py = top + (distance > 0 ? 3 : 20);
+        for (int ox = -1; ox <= 1; ox++) for (int oz = -1; oz <= 1; oz++)
+            level.setBlock(new net.minecraft.core.BlockPos((int) Math.floor(px) + ox, (int) py - 1, (int) Math.floor(pz) + oz), net.minecraft.world.level.block.Blocks.GLASS.defaultBlockState(), 3);
         double dx = h.centre.x - px, dy = h.centre.y + 6 - (py + 1.6), dz = h.centre.z - pz;
         float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)), pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)));
         p.teleportTo(level, px, py, pz, java.util.Set.of(), yaw, pitch, true);

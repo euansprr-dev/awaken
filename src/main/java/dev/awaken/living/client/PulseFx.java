@@ -160,7 +160,7 @@ final class PulseFx {
                 }
                 double oy = 2 + (i % 4) * 2.2 + Mth.sin(now * 0.01F + i) * 0.8;
                 float size = r * (0.55F + 0.25F * ((i * 37) % 10) / 10F);
-                soft(vc, ox, oy, oz, size, argb(0.20F * a, 0xB89A6E));
+                soft(vc, ox, oy, oz, size, argb(0.27F * a, 0xB89A6E));
             }
             if (line) return;
             // the birds: dark wings wheeling in a loose ring over the dust
@@ -227,27 +227,32 @@ final class PulseFx {
     private static void ghost(VertexConsumer vc, Shown s, float a, boolean add) {
         float pulse = 0.75F + 0.25F * Mth.sin(now * 0.3F);
         if (!add) {
-            soft(vc, 0, 3, 0, s.radius * 0.9F, argb(0.14F * a, 0x6FA8D8));
+            soft(vc, 0, 3, 0, s.radius * 1.1F, argb(0.22F * a, 0x6FA8D8));
+            soft(vc, 0, 1.5, 0, 4F, argb(0.6F * a * pulse, 0xCFEFFF));
             return;
         }
-        column(vc, 0, 0, 0, 28, 1.6F, argb(0.35F * a * pulse, 0x8FD0FF));
-        soft(vc, 0, 2.5, 0, 6F, argb(0.5F * a * pulse, 0xA8E0FF));
-        soft(vc, 0, 10, 0, 14F, argb(0.16F * a, 0x6FB8FF));
+        column(vc, 0, 0, 0, 42, 2.6F, argb(0.65F * a * pulse, 0x8FD0FF));
+        column(vc, 0, 0, 0, 24, 0.8F, argb(0.9F * a * pulse, 0xE6F6FF));
+        soft(vc, 0, 2.5, 0, 9F, argb(0.6F * a * pulse, 0xA8E0FF));
+        soft(vc, 0, 12, 0, 20F, argb(0.2F * a, 0x6FB8FF));
     }
 
     /** The Deep Tide: grey fog fingers creeping out along the ground, longer as the night goes on. */
     private static void fog(VertexConsumer vc, Shown s, float a, boolean add) {
         if (add) return;
-        float grow = 0.3F + 0.7F * Mth.clamp(s.progress * 3, 0, 1);
-        for (int f = 0; f < 7; f++) {
-            float ang = f * Mth.TWO_PI / 7 + Mth.sin(now * 0.004F + f) * 0.3F;
-            for (int j = 0; j < 5; j++) {
-                float d = (j + 1) / 5F * s.radius * grow;
-                double ox = Mth.cos(ang) * d, oz = Mth.sin(ang) * d, oy = 1.2 + Mth.sin(now * 0.02F + j + f) * 0.4;
-                soft(vc, ox, oy, oz, 5.5F + j * 1.2F, argb(0.22F * a * (1 - j / 6F), 0x7C8590));
+        float grow = 0.65F + 0.35F * Mth.clamp(s.progress * 3, 0, 1);
+        for (int f = 0; f < 9; f++) {
+            float ang = f * Mth.TWO_PI / 9 + Mth.sin(now * 0.004F + f) * 0.35F;
+            for (int j = 0; j < 7; j++) {
+                float d = (j + 1) / 7F * s.radius * grow;
+                // fingers curl a little as they creep, hugging the ground
+                double curl = Mth.sin(now * 0.006F + f * 1.3F + j * 0.5F) * j * 0.6;
+                double ox = Mth.cos(ang) * d - Mth.sin(ang) * curl, oz = Mth.sin(ang) * d + Mth.cos(ang) * curl;
+                double oy = 0.7 + Mth.sin(now * 0.02F + j + f) * 0.3;
+                soft(vc, ox, oy, oz, 4.5F + j * 1.1F, argb(0.16F * a * (1 - j / 8F), 0x4A5058));
             }
         }
-        soft(vc, 0, 2, 0, s.radius * 0.5F, argb(0.25F * a, 0x6E7680));
+        soft(vc, 0, 1.2, 0, s.radius * 0.45F, argb(0.2F * a, 0x40464E));
     }
 
     /** A caravan: warm lanterns swinging on its wagons, a thin line of cook-smoke rising from it. */
