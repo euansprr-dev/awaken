@@ -41,7 +41,7 @@ public final class AscentSounds {
     static void tick() {
         Minecraft mc = Minecraft.getInstance();
         if (duck > 0) duck--;
-        double s = AscentMoves.speed();
+        double s = AscentMoves.windSpeed();
         boolean want = s > 0.25 && mc.player != null;
         if (want && (wind == null || wind.isStopped())) {
             wind = new Wind();
@@ -74,7 +74,7 @@ public final class AscentSounds {
 
         @Override
         public void tick() {
-            double s = AscentMoves.speed();
+            double s = AscentMoves.windSpeed();
             float norm = (float) Mth.clamp((s - 0.25) / 2.4, 0, 1);
             float target = (float) Math.pow(norm, 1.25) * 0.95F * duckLevel();
             // the silence before a crack is sudden; everything else eases

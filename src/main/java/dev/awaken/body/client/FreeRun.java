@@ -57,6 +57,12 @@ final class FreeRun {
             default -> null;
         };
         if (why == null) return false;
+        if (what == RunnerRules.AHEAD_VAULT && p.level() instanceof net.minecraft.client.multiplayer.ClientLevel cl) {
+            // the hand planted on the top: a slap and a puff off it (weight, SPEC §17.15)
+            double tx = p.getX() + fx * (0.3 + RunnerRules.AHEAD_REACH), tz = p.getZ() + fz * (0.3 + RunnerRules.AHEAD_REACH);
+            BodyFx.lip(cl, tx, p.getY() + OUT[0], tz, fx, fz);
+            BodyFx.sound(p, dev.awaken.body.BodyContent.GRAB.get(), 0.55F, 1.25F);
+        }
         p.jumpFromGround();
         groundJumpAt = now;
         ClientMoves.trace("free-run: " + why);

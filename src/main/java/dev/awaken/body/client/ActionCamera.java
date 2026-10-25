@@ -87,8 +87,27 @@ public final class ActionCamera {
     public static Vec3 shoulder(Vec3 base, float partial) {
         ActionRig.shape(base.x, base.y, base.z, ARM.get(ActionRig.BACK, partial), ARM.get(ActionRig.UP, partial),
                 ARM.get(ActionRig.OPEN, partial), ARM.get(ActionRig.CENTRE, partial), wallRight, SHAPE);
+        // the footsteps: vanilla's own bob (its setting, its stride), which first person has and this view lacked
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && mc.options.bobView().get() && !FeelConfig.reduced()) {
+            float w = mc.player.avatarState().getBackwardsInterpolatedWalkDistance(partial), bob = mc.player.avatarState().getInterpolatedBob(partial);
+            SHAPE[0] += Mth.sin(w * (float) Math.PI) * bob * BOB_SWAY;
+            SHAPE[1] -= Math.abs(Mth.cos(w * (float) Math.PI) * bob) * BOB_DIP;
+        }
         return new Vec3(SHAPE[0], SHAPE[1], SHAPE[2]);
     }
+
+    /** The bob's size in the shoulder view against vanilla's first person (0.5 sideways, 1 down). */
+    static final float BOB_SWAY = 0.3F, BOB_DIP = 0.6F;
+
+    /** A landing from a fall at {@code speed} (blocks a tick down): the camera drops with the body and springs back. */
+    static void land(double speed) {
+        if (speed < LAND_FROM || FeelConfig.reduced()) return;
+        ARM.kick(ActionRig.UP, -Math.min(0.32, (speed - LAND_FROM) * 0.35 + 0.08));
+    }
+
+    /** Falls under this (blocks a tick: about two blocks) land without a dip. */
+    static final double LAND_FROM = 0.55;
 
     /** Without Shoulder Surfing: vanilla's third person behind you pulls back as the arm does. */
     static void onDetached(CalculateDetachedCameraDistanceEvent e) {

@@ -93,6 +93,11 @@ public final class ActionRig {
             }
         }
 
+        /** A blow to one channel (a landing drops the camera; the spring brings it back). */
+        public void kick(int channel, double dv) {
+            v[channel] += dv;
+        }
+
         /** Between the last two ticks. */
         public double get(int channel, float partial) {
             return was[channel] + (at[channel] - was[channel]) * partial;

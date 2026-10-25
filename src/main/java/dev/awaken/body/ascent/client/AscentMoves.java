@@ -5,6 +5,7 @@ import dev.awaken.body.ascent.AscentContent;
 import dev.awaken.body.ascent.AscentPayloads;
 import dev.awaken.body.ascent.AscentRules;
 import dev.awaken.body.ascent.Windways;
+import dev.awaken.body.client.feel.FeelConfig;
 import dev.awaken.body.ascent.AscentState;
 import dev.awaken.body.client.feel.FeelDirector;
 import dev.awaken.core.client.AwakenKeys;
@@ -147,6 +148,13 @@ public final class AscentMoves {
     /** When the last rope was fired (client clock). */
     public static int fireTick() {
         return fireAt;
+    }
+
+    /** How fast the air goes past (blocks a tick): the state's speed, else the body's own motion (a fall, a sprint). */
+    public static double windSpeed() {
+        if (state != AscentState.NONE) return K.speed();
+        LocalPlayer p = Minecraft.getInstance().player;
+        return p == null || p.isPassenger() ? 0 : p.getDeltaMovement().length();
     }
 
     /** The speed the state keeps (blocks a tick), 0 on the ground. */
@@ -406,8 +414,26 @@ public final class AscentMoves {
 
     /** A tick of the carry; Flow keeps a little more of the speed. */
     private static void carry(float yaw, double fwd, double right) {
+        if (slowLeft > 0) {
+            slowLeft--;
+            AscentRules.carryStepSlow(K, AscentRules.SLOW);
+            return;
+        }
+        double vy0 = K.vy;
         AscentRules.carryStep(K, yaw, fwd, right, S, AscentRules.CARRY_DRAG_H + AscentRules.FLOW_CARRY * AscentFlow.flow);
+        // the top of a big leap's arc: a beat of slow time, the wind holding its breath (weight, SPEC §17.15)
+        LocalPlayer p = Minecraft.getInstance().player;
+        if (vy0 > 0 && K.vy <= 0 && K.hspeed() >= AscentRules.SLOW_SPEED && ticks - slowAt >= AscentRules.SLOW_EVERY && p != null
+                && !FeelConfig.reduced() && heightAboveGround(p) >= AscentRules.SLOW_HEIGHT) {
+            slowLeft = AscentRules.SLOW_TICKS;
+            slowAt = ticks;
+            AscentSounds.duck(AscentRules.SLOW_TICKS);
+            trace(String.format("slow beat at the apex, %.2f b/t", K.hspeed()));
+        }
     }
+
+    /** The slow beat: ticks left, and when the last one began. */
+    private static int slowLeft, slowAt = -1000;
 
     private static double glideDrag() {
         return 1 - AscentRules.MASTERY_GLIDE_DRAG * lv(dev.awaken.body.ascent.AscentMemory.Track.WINGS);
@@ -1021,13 +1047,17 @@ public final class AscentMoves {
         sent = false;
         // a vault ends with the landing (left set, the next carry would pull toward this one's ledge)
         pullTicks = 0;
+        slowLeft = 0;
         ClientPacketDistributor.sendToServer(new AscentPayloads.State(AscentState.NONE.ordinal(), 0, 0, 0, 0));
     }
 
     private static void setState(LocalPlayer p, AscentState s) {
         if (s == state) return;
         heldForYou = false;
-        if (s != AscentState.CARRY) pullTicks = 0;
+        if (s != AscentState.CARRY) {
+            pullTicks = 0;
+            slowLeft = 0;
+        }
         AscentState was = state;
         state = s;
         stateAge = 0;
@@ -1081,6 +1111,7 @@ public final class AscentMoves {
         stateAge = 0;
         sent = false;
         pullTicks = 0;
+        slowLeft = 0;
         tetherWas = jumpWas = sneakWas = false;
     }
 

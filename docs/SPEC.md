@@ -2282,6 +2282,21 @@ server checks every move exactly as before (a free-run move is the same claim a 
   collision and soft landings wait for the tags' contents.
 - Not yet: tuning against Euan's notes from his feel session; tips for the free-run (Carillon's TipHooks).
 
+### 17.15 The feel pass, part 3: weight
+- **Landings**: a fall of about two blocks or more (0.55 b/t down on the last airborne tick) outside an Ascent state
+  lands in the view: the Feel Director's pitch kick (2.5° + 2.1° per b/t of fall, at most 7°, its own spring; first person
+  and the shoulder view) and, in the shoulder view, the action camera's arm dropped 0.08-0.32 and sprung back. The
+  Ascent's own landings keep theirs (sound, kick, a roll on hard ones).
+- **Footsteps in the shoulder view**: vanilla's own bob (its view-bobbing setting, its stride and size), at 0.3 of its
+  sway and 0.6 of its dip, added to the shoulder offset; first person keeps vanilla's. Off under reduced motion.
+- **The hand plant**: a free-run vault slaps the top (the grab sound, higher) and puffs dust off it; a ledge caught by
+  a hang already does.
+- **Wind**: the rush of air follows the body's own speed too (a long fall, a fast run), not only an Ascent state's.
+- **The slow beat**: a carry flying 0.7 b/t or faster, 6 or more over the ground, hangs at the top of its arc: 8 ticks
+  at 0.45 of time (the same arc, slower; no steering for the beat), the wind holding its breath, once per 3 s. Big
+  rope launches and the Leaper's air moves get it; never under reduced motion. Test: `ascent_slow_beat`.
+- Not yet: Euan's feel check of the whole pass (camera, free-run, weight).
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)

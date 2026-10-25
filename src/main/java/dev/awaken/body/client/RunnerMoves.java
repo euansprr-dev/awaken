@@ -43,6 +43,8 @@ public final class RunnerMoves {
 
     // ground and jump timing
     private static boolean wasGround;
+    /** The last airborne tick's fall (the landing tick's own is already stopped). */
+    private static double fallVy;
     private static int groundAt = -100, airJumpAt = -100;
     private static boolean jumpedOff;
     // wall-run
@@ -117,9 +119,20 @@ public final class RunnerMoves {
         Input k = in.keyPresses;
         boolean ground = p.onGround();
         if (ground) {
-            if (!wasGround) landed(p, in, k, now);
+            if (!wasGround) {
+                landed(p, in, k, now);
+                // weight (SPEC §17.15): a fall lands in the view (the Ascent's own landings have their own)
+                if (dev.awaken.body.ascent.client.AscentMoves.state() == dev.awaken.body.ascent.AscentState.NONE && fallVy < -ActionCamera.LAND_FROM) {
+                    dev.awaken.body.client.feel.FeelDirector.land((float) (-fallVy * 0.6));
+                    ActionCamera.land(-fallVy);
+                }
+            }
             groundAt = now;
-        } else if (wasGround) {
+            fallVy = 0;
+        } else {
+            fallVy = p.getDeltaMovement().y;
+        }
+        if (!ground && wasGround) {
             jumpedOff = p.getDeltaMovement().y > 0.2;
             // a jump leaves the ground: the ledge it heads for pulls it a little (SPEC §17.14)
             if (jumpedOff) FreeRun.jumped(p, p.level(), CollisionContext.of(p));
