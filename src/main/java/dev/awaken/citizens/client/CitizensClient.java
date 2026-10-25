@@ -26,6 +26,7 @@ public final class CitizensClient {
         NeoForge.EVENT_BUS.addListener(CityCritters::onJoin);
         NeoForge.EVENT_BUS.addListener(CityCritters::onLeave);
         NeoForge.EVENT_BUS.addListener(CityCritters::onSound);
+        NeoForge.EVENT_BUS.addListener(CitySound::tick);
         modBus.addListener((RegisterParticleProvidersEvent e) -> {
             e.registerSpriteSet(CitizensContent.CHIMNEY_SMOKE.get(), CitizenParticles.Smoke.Provider::new);
             e.registerSpriteSet(CitizensContent.FORGE_SPARK.get(), CitizenParticles.Spark.Provider::new);
@@ -47,6 +48,7 @@ public final class CitizensClient {
             CityGlow.clear();
             CityLife.clear();
             CityCritters.clear();
+            CitySound.clear();
         });
     }
 }

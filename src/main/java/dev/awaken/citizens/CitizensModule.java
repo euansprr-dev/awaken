@@ -57,6 +57,7 @@ public final class CitizensModule {
         CitizenHooks.install(new CitizenAccess());
         RenownHooks.install(new RenownAccess());
         CitizensCommands.register();
+        Soundscape.register();
         CitizensTests.register();
     }
 

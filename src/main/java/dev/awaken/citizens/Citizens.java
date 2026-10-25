@@ -147,6 +147,7 @@ final class Citizens {
         events.tick(now, tod);
         recognition.tick(now, tod);
         lanterns.tick(now);
+        Soundscape.count(this, now);
         managerNs = System.nanoTime() - t0;
     }
 
