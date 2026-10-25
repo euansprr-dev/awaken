@@ -100,13 +100,14 @@ public final class CitizenFx {
             if (Math.floorMod(now / Math.max(1, pos.length / 64) + i, (long) every) != 0) continue;
             if (kind[i] == 4) {
                 // a fountain: water spilling over the upper bowl's lip into the basin
-                for (int k = 0; k < 3; k++) {
-                    double a = level.random.nextDouble() * Math.PI * 2;
+                var rnd = level.getRandom();
+                for (int j = 0; j < 3; j++) {
+                    double a = rnd.nextDouble() * Math.PI * 2;
                     level.addParticle(net.minecraft.core.particles.ParticleTypes.FALLING_WATER, x + 0.5 + Math.cos(a) * 0.55, y - 0.15,
                             z + 0.5 + Math.sin(a) * 0.55, 0, 0, 0);
                 }
-                level.addParticle(net.minecraft.core.particles.ParticleTypes.SPLASH, x + 0.5 + (level.random.nextDouble() - 0.5) * 2.4, y - 2.0,
-                        z + 0.5 + (level.random.nextDouble() - 0.5) * 2.4, 0, 0.05, 0);
+                level.addParticle(net.minecraft.core.particles.ParticleTypes.SPLASH, x + 0.5 + (rnd.nextDouble() - 0.5) * 2.4, y - 2.0,
+                        z + 0.5 + (rnd.nextDouble() - 0.5) * 2.4, 0, 0.05, 0);
                 continue;
             }
             double ya = kind[i] == 3 ? 0.03 : 0.0; // forges smoke darker
