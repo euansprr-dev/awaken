@@ -27,6 +27,7 @@ final class AscentTests {
         AwakenTests.register("ascent_windway", 20, AscentTests::windway);
         AwakenTests.register("ascent_slow_beat", 20, AscentTests::slowBeat);
         AwakenTests.register("ascent_hero_crowns", 100, AscentTests::heroCrowns);
+        AwakenTests.register("ascent_aerial_kill", 40, AscentTests::aerialKill);
     }
 
     /** A taut rope holds the hand on its sphere through a long swing, whatever the input. */
@@ -788,6 +789,24 @@ final class AscentTests {
             }
         }
         dev.awaken.Awaken.LOG.info("[ascent] hero crowns:\n{}", sb);
+        h.succeed();
+    }
+    /** Aerial kills (SPEC §17.18): a hostile killed in flight gives Skyborn mastery; on the ground, none. */
+    private static void aerialKill(GameTestHelper h) {
+        net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+        dev.awaken.progression.Progression.awaken(p);
+        Ascent.grant(p, Ascent.Tier.SKYBORN, "test");
+        int before = p.getData(AscentContent.MEMORY).points(AscentMemory.Track.SKYBORN);
+        var ground = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(1, 2, 1));
+        ground.hurtServer(h.getLevel(), p.damageSources().playerAttack(p), 1000F);
+        int afterGround = p.getData(AscentContent.MEMORY).points(AscentMemory.Track.SKYBORN);
+        AscentServer.motion(p).state = AscentState.SOAR;
+        var air = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(2, 2, 2));
+        air.hurtServer(h.getLevel(), p.damageSources().playerAttack(p), 1000F);
+        int afterAir = p.getData(AscentContent.MEMORY).points(AscentMemory.Track.SKYBORN);
+        AscentServer.motion(p).state = AscentState.NONE;
+        h.assertTrue(afterGround == before && afterAir - afterGround == AscentServer.AERIAL_KILL,
+                "a kill on the ground gives none, one in flight " + AscentServer.AERIAL_KILL + " (" + before + " -> " + afterGround + " -> " + afterAir + ")");
         h.succeed();
     }
 }

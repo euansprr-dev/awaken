@@ -2352,6 +2352,9 @@ Skyborn's earn path (the plan: "the Sky Archipelago Lord, rebuilt as a flight fi
 - Dev: `/awaken ascent trial skyborn` (opens it in front of you, whatever you hold). Test: `gates_sky_trial` (the
   plan and its floor, never breaking, the edge's Skyborn and the Leviathan rising, the trial done at its fall). Tour:
   `tools/autopilot/ascent-skytrial.txt` (PACK=feel).
+- **Aerial kills** (the plan's "Mastery: time aloft, aerial kills"): a hostile killed by a Skyborn player while soaring,
+  gliding or carried gives 3 Skyborn mastery and `awaken:ascent_aerial_kills` (`AscentServer.onKill`; test
+  `ascent_aerial_kill`). Powers cast in the air as on the ground; in the shoulder view they aim along the camera.
 - Not yet: the Leviathan's own flight-fight kit (its dives and wingbeats were made for an island fight), aerial combat's
   own enemies, and casting tuned for the air.
 
