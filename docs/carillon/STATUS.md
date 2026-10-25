@@ -18,7 +18,7 @@ S3 is its starting point. MMO-lite is deferred; party gates and shared credit la
 | M1 the city in blockout | City Architect (Opus xhigh) | carillon/m1-city · /Volumes/MEDIA/Awaken-city | **done, merged** into carillon/main (94de89a7); report docs/carillon/milestones/M1-city.md |
 | M2 the opening in blockout | Director (Opus xhigh) | carillon/m2-opening · /Volumes/MEDIA/Awaken-opening | **done, merged**; report docs/carillon/milestones/M2-opening.md; **Euan's play 1 next** |
 | M3 alive | Citizens (Opus xhigh + Sonnet data) | carillon/m3-alive · /Volumes/MEDIA/Awaken-alive | **done, merged** into carillon/main; report docs/carillon/milestones/M3-alive.md |
-| M4 detail | Phase A look bible + story (Opus xhigh) → Phase B one builder | carillon/m4-look · /Volumes/MEDIA/Awaken-m4-look | **Phase A running**; Euan approves the look bible + story before any M4 code |
+| M4 detail | Phase A look bible + story (Opus xhigh) → Phase B one builder | carillon/m4-look · /Volumes/MEDIA/Awaken-m4-look | **Phase A done**, awaiting Euan's approval: https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm |
 | M5 the Atlas | Atlas (Opus xhigh) | — | after M4 |
 
 ## Stage 0 (spikes): closed at G0
@@ -157,3 +157,7 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   off), the Registry as a guided walk with the officer (Holo band, K menu, map, first Directive, a camera pan to the city
   gate), and light guidance for the first stretch outside. Folded into Phase A (onboarding.md + story lines); built in
   Phase B. Carillon owns the tip system.
+- 2026-10-25: M4 Phase A done (carillon/m4-look, pushed: docs/carillon/m4/ README, look-bible, story, onboarding,
+  facade-grid.svg, 9 concept images) and published for approval: https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm.
+  Decisions asked: approve the package; Terrace 8 → 12; no Quay jetties and Market spokes 6 → 5; tips replace "found, not
+  told" (SPEC §17.2); one builder (B6 after B5) vs two; vanilla banners/signs/barrels out of the city fabric.
