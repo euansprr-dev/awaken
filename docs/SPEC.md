@@ -2258,6 +2258,30 @@ server checks every move exactly as before (a free-run move is the same claim a 
   rope launches and the Leaper's air moves get it; never under reduced motion. Test: `ascent_slow_beat`.
 - Not yet: Euan's feel check of the whole pass (camera, free-run, weight).
 
+### 17.16 The Wilds: the hero trees' crowns
+The Elder Colossus and the Lumen Spire (Awakened Lands' hero trees, terrain.hero) each get a route and a crown, once,
+when their chunks first load (`body.ascent.HeroCrowns`, like the sky platforms' rig): laid out from the tree's own
+blueprint (`HeroWorldgen.blueprint`, the cached shape the tree was built from), placed into air only.
+- **The crown**: on the highest cell over the trunk (within 6 of its foot), the Tether Spire's crown block (§17.11) with
+  its site (`SITE_COLOSSUS`, `SITE_LUMEN`; schema 2 saves the site and the foot's height): a climb is timed from the
+  tree's foot (within 22, from 1.5 under its ground to 4.5 over), reached only by moving, kept in the tree's records.
+  The first time: 10 Tether mastery, a fifth of a level (discovery XP) and `awaken:ascent_crowns_reached`; "The Elder
+  Colossus's crown · 23.4 s". A cache beside it (a chest on the same top or one lower; `chests/precursor_spire` for now).
+- **The route**: glowing anchor rings up the trunk, each on a short chain stub 2 out from the bark: the Colossus from 18
+  up every 13, the Lumen Spire from 12 up every 11, each turned round the trunk by the widest of 45°, 30°, 20°, 10°, 0
+  that keeps it a zip from the last (under 0.4 of the rise across), with room to hang under it and three over it;
+  past a tier or a branch it tries up to 6 higher, and it ends where the branches begin. At night the Lumen Spire's
+  rings are a spiral of light to its pads (its night route); on the Colossus they carry you into the dome, whose limbs
+  and masses are the swinging up to the crown. Eight seeds each: the Colossus gets 3-5 rings (to 44-70 up), the Lumen
+  Spire 3-4 (to 34-45 up).
+- **The ward**: placed blocks crumble in the column over the trunk (9 round the crown, from 10 over the foot to 6 over
+  the crown; a `WardHooks.Source` filled as the crowns' block entities load, so it survives restarts).
+- Dev: `/awaken ascent crown grow colossus|lumen [seed]` (grows the tree where you stand and crowns it).
+  Test: `ascent_hero_crowns`. Tour: `tools/autopilot/ascent-crowns.txt` (both trees crowned: a Lumen Spire's crown 53 up
+  over 3 rings, a Colossus's 74 up over 4; the night look of the Lumen's spiral still unseen on screen).
+- Not yet: the Horizon line and landmark finds for hero trees (they are terrain structures, not ruins); the Shard
+  Drift's stepping-stone course; a crown cache of its own.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
