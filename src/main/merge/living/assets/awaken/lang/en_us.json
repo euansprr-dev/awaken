@@ -19,6 +19,10 @@
   "item.awaken.herdcaller_horn.spent": "The horn is spent until tomorrow.",
   "item.awaken.pells_spurs": "Pell's Spurs",
   "item.awaken.pells_spurs.desc": "Your mount sprints 15% faster and its whistle carries 80 blocks further.",
+  "item.awaken.couriers_knot": "Courier's Knot",
+  "item.awaken.couriers_knot.desc": "Your tactical sprint recharges 25% faster (most while your rank is low).",
+  "item.awaken.orens_mark": "Oren's Mark",
+  "item.awaken.orens_mark.desc": "A fresh blade you temper starts one level up (weapons only, within the Forge's cap).",
   "item.awaken.pells_letter": "Pell's Letter",
   "item.awaken.pells_letter.desc": "Sealed. For Quartermaster Hale at the High Gate."
 }

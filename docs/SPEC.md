@@ -2680,13 +2680,17 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   waiting on them moves on (or says what it needs), a delivery changes hands, Hale reads the bounty board, a chain they
   give is offered on a choice card (Help / Not now), else one of their idle lines. People: Wren, Hettie, Ilse, Gus,
   Pell, Hale, Marta (`Wayfarers.PEOPLE`).
-- **The first drop, six of eight chains**: Ten Sheep Short (Hettie, 1-8), Moth Lights (Ilse, 1-8), Wren's Rope (cliff,
+- **The first drop, all eight chains** (The Last Delivery is written and waits for Carillon's B3b to call
+  `Quests.talk` for Kestrel; it opens on `counter:awaken:carillon_registered`): Ten Sheep Short (Hettie, 1-8), Moth Lights (Ilse, 1-8), Wren's Rope (cliff,
   8-20), The Caravan Road (Marta, road, 8-20), The Hermit's Horn (Gus, crag, 8-20), Pell's Message (Pell, road, 8-20).
-  The Last Delivery (with Carillon's Kestrel) and Oren's First Steel (Oren's forge) wait for their hosts' hooks.
+  Oren's First Steel (Oren in Carillon via `Quests.talk`, ore, coal, a temper reported by hearth's
+  `Upgrades.offerTemper` as `awaken:use/temper`) also waits for B3b.
 - **Relics** (`living.quest.Relics`): stack of one, rare, kept through death (held back from the drops, returned on
   respawn), a perk while carried (`Progression.addPerkSource`): Shepherd's Lantern `awaken:night_ward` 8 (living reads
   it: at night hunters and monsters within 8 give up and back off; gate creatures, wardens and beasts don't), Wren's
-  Hook `awaken:rope_reach` 6, Caravan Writ `awaken:shop_discount` 0.15, Pell's Spurs `awaken:mount_sprint` 0.15 and
+  Hook `awaken:rope_reach` 6, Oren's Mark `awaken:temper_start` 1 (hearth: a fresh, untempered weapon starts at 1 + perk levels within the Forge's
+  cap, at that level's price), Courier's Knot `awaken:sprint_recharge` 0.25 (the Ascent takes it off the rank's tactical-sprint
+  recharge, perks capped at 0.5, never under S's 30 ticks), Caravan Writ `awaken:shop_discount` 0.15, Pell's Spurs `awaken:mount_sprint` 0.15 and
   `awaken:whistle_range` 80 (each read by its owning module when it adopts it). Used: Lumen Tonic (Night Vision 2 min,
   refills in 5), Herdcaller Horn (once a play-day: whatever targets you within 24 stops and slows; passive and neutral
   creatures within 32 run 24 blocks the way you face). Pell's Letter is an errand item.

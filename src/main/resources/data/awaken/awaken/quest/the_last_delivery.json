@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "title": "The Last Delivery",
+  "band": 0,
+  "requires": ["counter:awaken:carillon_registered"],
+  "scene": "resident",
+  "giver": "kestrel",
+  "summary": "Kestrel wants word from the square, then one last bag of letters run out to the Wayfarer camp up the north road.",
+  "ask": [
+    "Kestrel: There you are. You owe me word from the square. You're late, Runner.",
+    "Kestrel: The Association said you died. I said you'd be late to your own funeral.",
+    "Kestrel: So? What did you see?"
+  ],
+  "steps": [
+    {
+      "id": "word",
+      "objective": { "type": "talk", "target": "kestrel" },
+      "text": "Tell Kestrel what you saw",
+      "done": [
+        "Kestrel: A gate. Under the bells. Right.",
+        "Kestrel: Well. You brought it. Late, but you brought it.",
+        "Kestrel: One last bag. The camp up the north road has waited a week for its letters.",
+        "Kestrel: Out the High Gate. Hale will wave you through. Don't stop for sheep."
+      ],
+      "reward": { "levels": 0.05 }
+    },
+    {
+      "id": "gate",
+      "objective": { "type": "reach", "target": "spot:high_gate_yard", "radius": 10 },
+      "text": "Out through the High Gate",
+      "done": ["Hale: Licence? Fine. The Commons bite less than they look. Mostly."]
+    },
+    {
+      "id": "camp",
+      "objective": { "type": "reach", "target": "camp", "radius": 16 },
+      "text": "Run the letters to the Wayfarer camp up the north road",
+      "reward": { "levels": 0.1 }
+    },
+    {
+      "id": "ilse",
+      "objective": { "type": "talk", "target": "ilse" },
+      "text": "Give Ilse the letters",
+      "done": [
+        "Ilse: Letters! With Kestrel's knot on them. She still ties them like she's angry at the string.",
+        "Ilse: Sit a minute. Nobody out here runs anywhere."
+      ]
+    },
+    {
+      "id": "home",
+      "objective": { "type": "talk", "target": "kestrel" },
+      "text": "Back to Kestrel on the Roost",
+      "done": [
+        "Kestrel: Delivered?",
+        "Kestrel: Good. That was your last bag. You don't run letters anymore.",
+        "Kestrel: You run at the things everyone else runs from. Come home when you can. The roof's still yours."
+      ]
+    }
+  ],
+  "relic": "awaken:couriers_knot",
+  "finish": { "levels": 0.4 }
+}

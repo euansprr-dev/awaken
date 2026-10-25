@@ -57,6 +57,10 @@ public final class Relics {
     public static final DeferredItem<Relic> CARAVAN_WRIT = relic("caravan_writ", new Perk("awaken:shop_discount", 0.15));
     public static final DeferredItem<Relic> HERDCALLER_HORN = ITEMS.registerItem("herdcaller_horn", p -> new Horn(p.stacksTo(1).rarity(Rarity.RARE)));
     public static final DeferredItem<Relic> PELLS_SPURS = relic("pells_spurs", new Perk("awaken:mount_sprint", 0.15), new Perk("awaken:whistle_range", 80));
+    /** Kestrel's (The Last Delivery): tactical sprint recharges faster (the Ascent: off the rank's time, capped). */
+    public static final DeferredItem<Relic> COURIERS_KNOT = relic("couriers_knot", new Perk("awaken:sprint_recharge", 0.25));
+    /** Oren's (Oren's First Steel): a fresh blade tempered at a Forge starts a level up (hearth Upgrades reads it). */
+    public static final DeferredItem<Relic> ORENS_MARK = relic("orens_mark", new Perk("awaken:temper_start", 1));
     public static final DeferredItem<Item> PELLS_LETTER = ITEMS.registerSimpleItem("pells_letter", p -> p.stacksTo(1));
 
     private static DeferredItem<Relic> relic(String id, Perk... perks) {
