@@ -2829,7 +2829,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 ### 21.9 Crafts (Phase E, as built 2026-10-25)
 - Six crafts (`living.craft.Craft`), levels 1-50, craft XP to the next level 40·c^1.3 + 40; attachment `awaken:crafts`
   (schema 1, kept through death, synced to its owner: craft XP per craft, kinds hunted). A craft level is a toast; a
-  perk opening is a toast that names it (counter `awaken:craft_perks`).
+  perk opening is a toast that names it, what it does is in the Crafts tab (counter `awaken:craft_perks`).
 - Each paying action also pays the Hunter level 0.008 of a level (pacing_sim CRAFT_ACTION) through its craft's budget
   (forage 0.012, mine 0.012, fish 0.012, cook 0.007, smith 0.007 per 10 min, × the rank's wild share), and the craft
   XP shrinks by the same share the budget kept back, so a farm levels off on both. Hunting rides the kill's "hunt"
@@ -2846,8 +2846,8 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   (Strength and Speed 120 s), forager's salad (Regeneration 30 s), miner's pasty (Haste 180 s), angler's chowder (Water
   Breathing 120 s, Dolphin's Grace 60 s), spirit tea (Luck 120 s).
 - Perks (5 · 10 · 20 · 30 · 40 · 50), all live:
-  - Hunting: Field Dressing (animals: a hide or more meat 33%), Tracks (client: glowing pawprints of creatures the band
-    read, 30 s), Weak Spot (crits ×1.15 on kinds killed 20+), Stalker (sneak attacks on a creature not targeting you
+  - Hunting: Field Dressing (animals: a hide or more meat 33%), Tracks (client: for 30 s after the band reads a creature it
+    leaves glowing amber prints, paws or cloven hooves, lying on top of grass and flowers, fading over 30 s), Weak Spot (crits ×1.15 on kinds killed 20+), Stalker (sneak attacks on a creature not targeting you
     ×1.5), Trophy (beast parts twice), Apex (×1.1 to elites and beasts).
   - Foraging: Herb Glint (client: a sea-green shimmer on ripe plants within 16), Wild Larder (+1 berries, glow berries,
     mushrooms), Root Sense (6% ripe), Seed Keeper (grass 4%: pumpkin, melon, beetroot or torchflower seeds), Bloom (by
@@ -2867,7 +2867,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   The plan's Tidewater bait, sigil slot, temper discount and an apex phase read moved out: they need other modules'
   systems; the replacements above are this module's own.
 - UI: CRAFTS in the K menu's Status tab (level, a bar, perks open, the next). Dev: `/awaken living craft <craft>
-  <level>`. Test `living_crafts`.
+  <level> [announce]` (announce: with the level and perk toasts, for tours). Test `living_crafts`.
 - Art: the 15 icons are drawn by `tools/art/specs/items_crafts.py` (16×16, our own palette, one wooden bowl shape shared
   by the bowl meals; the pasty stands on its flat side with a crimped rope; no vanilla pixels). Its `preview DIR` checks
   colour count, distinct colours and herb silhouettes.
