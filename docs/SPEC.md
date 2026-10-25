@@ -2664,8 +2664,8 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   (§12) is how other modules report uses and discoveries.
 - **Scenes** (`living.wayfarer.Scenes`, saved data `awaken:living_scenes`, schema 1). Residents are placed once when a
   player first comes within 96 blocks: Ilse and Hettie at the Wayfarer camp (Carillon worlds: 450 north of the city's
-  centre, up the High Gate road; classic worlds 300 north of spawn), Hale just outside the High Gate (classic: at the
-  camp). A found scene: per player every 25 minutes outdoors (the first after 12), never inside a Hearth's radius or the
+  centre, up the High Gate road; classic worlds 300 north of spawn; on the nearest dry, level ground, found once and
+  kept), Hale on Carillon's `CityHooks.spot("quartermaster")` by the High Gate yard (classic: at the camp). A found scene: per player every 25 minutes outdoors (the first after 12), never inside a Hearth's radius or the
   city reserve, for the lowest-band chain they can take that isn't a resident's; a spot 64-160 blocks off in loaded
   chunks only (cliff: a top with a 6+ drop beside it, its foot marked; crag: y 100+; road/camp: flat ground), plus a
   `site` 40-80 from it (plain ground 56 off if the land offers none). An untaken scene fades after two play-days; a

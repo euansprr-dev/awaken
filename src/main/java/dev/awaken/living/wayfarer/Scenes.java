@@ -397,11 +397,9 @@ public final class Scenes extends SavedData {
         return null;
     }
 
-    /** Hale's spot: just outside the High Gate (north) in a Carillon world, else at the camp. */
+    /** Hale's spot in a classic world: by the camp (a Carillon world uses the city's quartermaster spot). */
     static BlockPos haleColumn(MinecraftServer server) {
-        var map = RegionService.map(server);
-        if (CityBasin.site(server).isEmpty()) return campColumn(server).offset(-5, 0, 3);
-        return new BlockPos(map.centreX() - 6, 0, map.centreZ() - 262);
+        return campColumn(server).offset(-5, 0, 3);
     }
 
     private void residents(ServerLevel level) {
@@ -422,7 +420,20 @@ public final class Scenes extends SavedData {
                 place(level, "hettie", c.offset(9, 0, -4), 12, false);
             }
         }
-        place(level, "hale", haleColumn(server), 24, true);
+        // Hale stands on Carillon's quartermaster spot (kept clear by the city); in a classic world, by the camp
+        BlockPos post = dev.awaken.core.api.CityHooks.spot(level, "quartermaster");
+        if (post != null) placeAt(level, "hale", post);
+        else if (CityBasin.site(server).isEmpty()) place(level, "hale", haleColumn(server), 24, true);
+    }
+
+    /** A resident exactly here (a spot another module keeps clear), once a player is within 96. */
+    private void placeAt(ServerLevel level, String who, BlockPos at) {
+        if (residents.contains(who) || !level.hasChunkAt(at) || !near(level, at, 96)) return;
+        if (spawn(level, who, at, 2, 0) != null) {
+            residents.add(who);
+            setDirty();
+            Awaken.LOG.info("[living] resident {} placed on its spot {}", who, at.toShortString());
+        }
     }
 
     private static boolean near(ServerLevel level, BlockPos column, int dist) {
