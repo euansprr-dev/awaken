@@ -449,7 +449,8 @@ public final class AscentMoves {
         float aimYaw = view ? VIEW[0] : p.getYRot(), aimPitch = view ? VIEW[1] : p.getXRot();
         // a rope just let go of passes through the ring or branch it held: throw past it to the next one up
         AscentAnchors.Anchor a = AscentAnchors.find(p.level(), p, eye, aimYaw, aimPitch,
-                AscentRules.TETHER_RANGE + AscentRules.MASTERY_REACH * lv(dev.awaken.body.ascent.AscentMemory.Track.TETHER),
+                AscentRules.TETHER_RANGE + AscentRules.MASTERY_REACH * lv(dev.awaken.body.ascent.AscentMemory.Track.TETHER)
+                        + dev.awaken.progression.Progression.perk(p, AscentRules.ROPE_REACH_PERK),
                 ticks - leftAt <= 20 ? leftAnchor : null);
         fireAt = ticks;
         AscentSounds.local(p, AscentContent.ROPE_FIRE.get(), 0.8F, 0.95F + p.getRandom().nextFloat() * 0.1F);

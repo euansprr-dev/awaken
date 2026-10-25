@@ -2037,6 +2037,8 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   server agreeing where it checks; the Runner's wall-run +1 tick a level, below):
   rope reach +0.4 a Tether level (44 → 48; the server's anchor check allows 48 + 6 = 54), pump +3% a Tether level, double jump +0.012 and
   dash +2% a Leaper level, glide drag −2% a Wings level.
+- **Perks** (`Progression.perk`; Living Wilds' relics): `awaken:rope_reach` adds its blocks to the rope's reach on
+  both sides (the throw in `AscentMoves.fire`, the server's anchor check; Wren's Hook gives 6).
 - **A level gained** shows as one quiet line over the hotbar for 5.5 s ("Tether mastery III · the line reaches
   further"; `AscentNotes`), never a toast; the first sync of a session only fills the client's copy. Runner mastery:
   a wall-run lasts a tick longer a level (both sides; ranks and Wall Stride still set the base).
@@ -2458,8 +2460,18 @@ needing full Aether, with a 10-minute cooldown.
   away), the ground answers with rings of light and a low boom for everyone near. 4 Sovereign mastery.
 - Test: `ascent_sovereign` (refused without the tier or the Aether; hits struck 1.5 times; the Judgement strikes; it
   ends on its clock; the cooldown holds). Tour: `tools/autopilot/ascent-sovereign.txt` (PACK=feel). Pilot `ascend`.
+- The wings turn radiant gold while their bearer holds the form (your own and others' as seen: `WingLayer`, by
+  `SovereignClient.radiant`).
 - Not yet: slowed time for everything (only the field's hostiles are slowed), the ground shattering (the Judgement's
-  mark is light, not broken blocks), radiant (gold) wings of their own.
+  mark is light, not broken blocks).
+
+### 17.20 The Ascent's moments for quests
+The Living Wilds' quests (`living.api.Quests.advance`, SPEC §21; a no-op unless a step waits on the id) hear six of
+the Ascent's moments (`body.ascent.AscentQuests`): `awaken:use/ascent_zip` (a zip that ended within 3.5 of its anchor:
+a hang under it or the ledge vault, not a let-go), `awaken:discover/spire` and `awaken:discover/hero_crown` (a crown
+reached by movement), `awaken:use/windway` (one glide holding a lane from its first 60 blocks to its last 30),
+`awaken:use/gauntlet` (the Leaper's Gauntlet run to its far landing, every time) and `awaken:use/sky_trial` (the Sky
+Leviathan fallen in its trial). Not yet: `awaken:use/ascent_glide` with its length (waits for the API's amount).
 
 ---------------------------------------------------------------------------------------------------------------------
 
