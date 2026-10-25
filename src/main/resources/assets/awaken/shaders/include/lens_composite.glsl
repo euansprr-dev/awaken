@@ -13,6 +13,7 @@ uniform sampler2D ParamsSampler;
 uniform sampler2D LightSampler;      // Lens 2's light buffer (lens_light.fsh): sun, ambient occlusion, distance
 uniform sampler2D FrameSampler;      // the frame's matrices and light (LensFrame)
 uniform sampler2D HeightSampler;     // the terrain's heights (LensHeightfield)
+uniform sampler2D CloudsSampler;     // Lens 2's clouds (lens_clouds.fsh): rgb their light, a what shows through
 #endif
 
 layout(location = 0) in vec2 texCoord;
@@ -331,6 +332,20 @@ void main() {
         if (qm > 0.9) quick = step(vec3(qm), qa) * sign(quick);
     }
     if (!open && !classic) c = lensLight(c, pRel, quick, depth, rdEnd, clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0), p1, lightDbg);
+    // Lens 2's clouds (L4), over the sky and over anything farther than where this ray enters their layer
+    vec4 cp = F(18);
+    if (cp.x > 0.0 && !classic) {
+        vec4 cl = texture(CloudsSampler, texCoord);
+        bool behind = sky;
+        if (!sky) {
+            vec3 cv = farTerrain ? normalize(unproject(frameMat(0), texCoord, 1.0e-5, F(16).x > 0.5)) : normalize(pRel);
+            float base = cp.x - 6.0, camY = F(12).y, enter = 1.0e9;
+            if (camY >= base && camY <= base + 84.0) enter = 0.0;
+            else if (abs(cv.y) > 1.0e-4) enter = (camY < base ? base - camY : base + 84.0 - camY) / cv.y;
+            behind = enter >= 0.0 && (farTerrain ? d : length(pRel)) > enter;
+        }
+        if (behind) c = c * cl.a + cl.rgb;
+    }
 #endif
     float haze = sky ? h.r * 0.12 : smoothstep(h.g * rdEnd, rdEnd * 1.1, d) * h.r;
     // aerial perspective keeps deepening over far terrain: ridges fade layer by layer toward the horizon
@@ -368,6 +383,7 @@ void main() {
     if (p1.b > 0.0 && p12.r > 0.0) {
         vec2 sun = vec2((sunPos.r * 255.0 * 256.0 + sunPos.g * 255.0) / 65535.0, (sunPos.b * 255.0 * 256.0 + sunPos.a * 255.0) / 65535.0) * 3.0 - 1.0;
         float open = (texture(SkySampler, sun).a + texture(SkySampler, sun + vec2(0.01, 0.0)).a + texture(SkySampler, sun - vec2(0.01, 0.0)).a) / 3.0;
+        // (on Cinematic and Ultra the sky's alpha carries Lens 2's clouds too, so the halo dims behind them)
         float r = length((texCoord - sun) * vec2(OutSize.x / OutSize.y, 1.0));
         float halo = (exp(-r * 9.0) * 0.45 + exp(-r * 2.6) * 0.16) * p1.b * p12.r * clamp(open * 1.6, 0.0, 1.0);
         vec3 haloColor = mix(vec3(1.0, 0.93, 0.8), sunset.rgb, p1.a);

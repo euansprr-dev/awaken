@@ -2400,3 +2400,34 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
 - `glow` 0.9 for the Spirit and Charge themes and the Mirror Palace, 0.8 for the Ember Mines.
 - Tour: `tools/autopilot/lens2-l3.txt` (a pool in the lab into the sun, glowing creatures at dusk and night,
   Carillon's river, the Ember Mines' shimmer, the Frost Monastery's frost, the bench).
+- L3 measured (with L2's fixes; same vista, p50/p99 ms): off 8.00/12.39 (122 fps), Swift 7.93/11.94, Cinematic
+  11.02/16.67 (about 90 fps), Ultra 12.99/19.79 (77 fps): both tiers on budget. The tour harness's `gate interior
+  enter` landed in other themes' gates, so heat and frost weren't in its shots.
+
+**L4, volumetric clouds** (Euan, 2026-10-25: "the blocky clouds just aren't it")
+- On Cinematic and Ultra Lens draws its own clouds wherever the game would draw clouds (the frame's cloud colour has
+  alpha and the player's Clouds setting isn't Off) and the look's `clouds` (cover, default 0.45; 0 keeps the game's) is
+  above 0. In `ExtractLevelRenderStateEvent` Lens takes the frame's cloud height and colour and clears that colour's
+  alpha, so vanilla's clouds skip that frame; the setting itself is never touched (Swift, Off and a shaderpack keep the
+  game's clouds). Rain thickens the cover by up to 0.4. Frame texels 18-19: base height (0: none), cover, the camera's
+  x and z plus the wind's drift (0.04 blocks a game tick east) modulo 30720; the cloud colour.
+- Shape (`include/lens_clouds.glsl`): a cumulus layer from 6 blocks under the game's cloud height, 84 blocks thick.
+  One tileable noise texture, `awaken:lens_cloud_noise` (256×256 RGBA, made in the frequency domain by
+  `tools/art/specs/lens_clouds.py`: r coverage, g shape, b billows, a wisps), sampled at 3072, 960, 256 and 120 blocks
+  a repeat (all dividing 30720), the fine scales shifted with height for depth. Flat-ish bases, tops that rise where a
+  cloud is thick, billows and wisps eating the edges.
+- Pass `lens_clouds.fsh` (480×270 on Cinematic, 640×360 on Ultra; then a blit into the persistent
+  `awaken:lens_clouds_hist`): each ray marched through the layer (20 / 32 steps, up to 1200 / 1600 blocks of it, never
+  past nearer terrain), lit by 3 / 5 steps toward the light (doubling from 6 blocks): Beer's law, a powder term (thin
+  sunward edges glow, dense cores darken), a phase of 0.8 + 3 × HG(0.7) (white from every side, a silver lining toward
+  the sun), the sun's colour (warm at golden hour, the moon's at night) and the game's cloud colour as the sky's light
+  on them (brighter toward the tops). Distant cloud melts into the fog colour toward 3000 / 4000 blocks. Accumulated
+  over frames (0.25 / 0.2 new), reprojected where the ray entered the layer. Out: rgb their light (premultiplied), a
+  what shows through.
+- The composite lays them over the sky and over anything farther than where the ray enters their layer, before the
+  haze. The bloom prefilter (`lens_prefilter_lit.fsh`) folds them into the sky, so bright edges bloom, and the sky's
+  alpha (what the screen-space shafts and the sun's halo read) carries their transmittance: rays break through gaps and
+  the halo dims behind a cloud. The light pass darkens the sun on the land under them (to 28% under thick cloud, along
+  the light ray through the layer's middle) and in the volumetric beams: moving cloud shadows and beams through gaps.
+- Tour: `tools/autopilot/lens2-l4.txt` (Swift's clouds against Lens's: noon, golden hour into the sun, cloud shadows
+  over Carillon, above the deck, rain, night; the bench).

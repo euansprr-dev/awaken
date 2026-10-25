@@ -60,6 +60,10 @@ public final class LensClient {
     // toward the light (the sun, or the moon by night) and the sunrise colour (0xRRGGBB), for the ambient particles
     private static final Vector3f lightDir = new Vector3f(0f, 1f, 0f);
     private static int warm = 0xFFFFFF;
+    // Lens 2's clouds (L4): this frame's cloud layer height and colour (the game's own), whether Lens draws them here
+    private static float cloudHeight = 192.33f;
+    private static int cloudColour;
+    private static boolean cloudsHere;
     /**
      * Development (autopilot lensdebug): 0 normal; 1 pass-through; 2 depth masks; 3 far-terrain depth raw; 4 haze amount;
      * Lens 2 (Cinematic, Ultra): 5 light buffer, 6 normals and direct sun, 7 the light alone, 8 the classic Cinematic.
@@ -103,6 +107,7 @@ public final class LensClient {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ViewportEvent.RenderFog.class, LensClient::frame);
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.AfterLevel.class, LensClient::afterLevel);
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent.class, LensParticles::register);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, LensClient::extract);
         NeoForge.EVENT_BUS.addListener(ChunkEvent.Load.class, e -> {
             if (heightfield != null && e.getLevel().isClientSide()) heightfield.loaded(e.getChunk());
         });
@@ -274,11 +279,30 @@ public final class LensClient {
         Awaken.LOG.info("[lens] light ready (heightfield {}x{}, {} mips)", LensHeightfield.SIZE, LensHeightfield.SIZE, LensHeightfield.LEVELS);
     }
 
+    /**
+     * Lens 2's clouds (L4): where the game would draw its clouds this frame (its cloud colour has alpha; the player's
+     * Clouds setting isn't Off) and the place's look wants Lens's, Lens takes their height and colour and hides vanilla's
+     * for this frame only (the render state's colour loses its alpha; the setting itself is never touched).
+     */
+    private static void extract(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent e) {
+        var state = e.getRenderState();
+        cloudsHere = active && lit && current[Look.CLOUDS] > 0f && net.minecraft.util.ARGB.alpha(state.cloudColor) > 0
+                && e.getOptionsRenderState().cloudStatus != net.minecraft.client.CloudStatus.OFF;
+        if (!cloudsHere) return;
+        cloudColour = state.cloudColor;
+        cloudHeight = state.cloudHeight;
+        state.cloudColor &= 0x00FFFFFF;
+    }
+
     /** Just before the post effects: Lens 2's frame values (the exact matrices this frame drew with, the light). */
     private static void afterLevel(RenderLevelStageEvent.AfterLevel e) {
         if (!active || !lit || lensFrame == null) return;
         var state = e.getLevelRenderState();
         float lx = moonLight ? -sunDir.x : sunDir.x, ly = moonLight ? -sunDir.y : sunDir.y, lz = moonLight ? -sunDir.z : sunDir.z;
+        // the clouds' cover: the look's, thickening toward overcast in rain and storms
+        float cover = cloudsHere ? Math.min(0.95f, current[Look.CLOUDS] + rain * 0.4f) : 0f;
+        long ticks = Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getGameTime() : 0L;
+        lensFrame.clouds(cloudsHere ? cloudHeight : 0f, cover, (ticks % 768_000L) * 0.04, cloudColour);
         lensFrame.write(state.cameraRenderState, state.playerRenderState, zeroToOne, lx, ly, lz, lightStrength, moonLight, rain,
                 sunHere ? heightfield : null);
     }

@@ -46,6 +46,15 @@
     "awaken:lens_sunmap": {
       "width": 1024,
       "height": 1024
+    },
+    "awaken:lens_clouds": {
+      "width": 640,
+      "height": 360
+    },
+    "awaken:lens_clouds_hist": {
+      "width": 640,
+      "height": 360,
+      "persistent": true
     }
   },
   "passes": [
@@ -136,6 +145,13 @@
           "target": "awaken:lens_sunmap"
         },
         {
+          "sampler_name": "CloudNoise",
+          "location": "awaken:lens_cloud_noise",
+          "width": 256,
+          "height": 256,
+          "bilinear": true
+        },
+        {
           "sampler_name": "History",
           "target": "awaken:lens_hist"
         },
@@ -190,7 +206,77 @@
     },
     {
       "vertex_shader": "minecraft:core/screenquad",
-      "fragment_shader": "awaken:post/lens_prefilter",
+      "fragment_shader": "awaken:post/lens_clouds",
+      "inputs": [
+        {
+          "sampler_name": "Depth",
+          "target": "minecraft:main",
+          "use_depth_buffer": true
+        },
+        {
+          "sampler_name": "CloudNoise",
+          "location": "awaken:lens_cloud_noise",
+          "width": 256,
+          "height": 256,
+          "bilinear": true
+        },
+        {
+          "sampler_name": "History",
+          "target": "awaken:lens_clouds_hist",
+          "bilinear": true
+        },
+        {
+          "sampler_name": "Frame",
+          "location": "awaken:lens_frame",
+          "width": 24,
+          "height": 1
+        },
+        {
+          "sampler_name": "Params",
+          "location": "awaken:lens_params",
+          "width": 16,
+          "height": 1
+        }
+      ],
+      "output": "awaken:lens_clouds",
+      "uniforms": {
+        "LensConfig": [
+          {
+            "name": "Quality",
+            "type": "float",
+            "value": 2.0
+          }
+        ]
+      }
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "minecraft:post/blit",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "awaken:lens_clouds"
+        }
+      ],
+      "output": "awaken:lens_clouds_hist",
+      "uniforms": {
+        "BlitConfig": [
+          {
+            "name": "ColorModulate",
+            "type": "vec4",
+            "value": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "awaken:post/lens_prefilter_lit",
       "inputs": [
         {
           "sampler_name": "In",
@@ -217,6 +303,11 @@
           "location": "awaken:lens_params",
           "width": 16,
           "height": 1
+        },
+        {
+          "sampler_name": "Clouds",
+          "target": "awaken:lens_clouds",
+          "bilinear": true
         }
       ],
       "output": "awaken:lens_half"
@@ -356,6 +447,11 @@
           "location": "awaken:lens_height",
           "width": 1024,
           "height": 1024
+        },
+        {
+          "sampler_name": "Clouds",
+          "target": "awaken:lens_clouds",
+          "bilinear": true
         }
       ],
       "output": "swap",

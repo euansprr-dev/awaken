@@ -36,6 +36,18 @@ final class LensFrame {
     private int frame;
     private boolean hasPrev;
 
+    private float cloudBase, cloudCover;
+    private double cloudDrift;
+    private int cloudColour;
+
+    /** This frame's clouds (L4): the layer's base height (0: Lens draws none), cover 0..1, wind drift in blocks, colour. */
+    void clouds(float base, float cover, double drift, int colour) {
+        cloudBase = base;
+        cloudCover = cover;
+        cloudDrift = drift;
+        cloudColour = colour;
+    }
+
     /** Forget the previous frame (a new chain, a new place): the next frame starts its history fresh. */
     void reset() {
         hasPrev = false;
@@ -83,7 +95,12 @@ final class LensFrame {
         put(16, zeroToOne ? 1f : 0f, moon ? 1f : 0f, rain, 0.05f);
         // 17: x seconds (wrapping every hour) for what moves on its own: ripples, heat shimmer, frost
         put(17, (float) ((now - start) / 1.0e9 % 3600.0), 0f, 0f, 0f);
-        for (int i = 18; i < WIDTH; i++) put(i, 0f, 0f, 0f, 0f);
+        // 18-19: the clouds: base height (0 none), cover, the camera's x and z plus the wind's drift (modulo the noise's
+        // 30720-block repeat); their colour (the game's, by time and weather) and alpha
+        double period = 30720.0;
+        put(18, cloudBase, cloudCover, (float) floorMod(x + cloudDrift, period), (float) floorMod(z, period));
+        put(19, ((cloudColour >> 16) & 255) / 255f, ((cloudColour >> 8) & 255) / 255f, (cloudColour & 255) / 255f, ((cloudColour >>> 24) & 255) / 255f);
+        for (int i = 20; i < WIDTH; i++) put(i, 0f, 0f, 0f, 0f);
         RenderSystem.getDevice().createCommandEncoder().writeToTexture(texture.getTexture(), data, 0, 0, 0, 0, WIDTH, 1);
 
         prevViewProj.set(viewProj);
@@ -93,6 +110,10 @@ final class LensFrame {
         prevNs = now;
         hasPrev = true;
         frame = (frame + 1) & 0xFFFF;
+    }
+
+    private static double floorMod(double v, double m) {
+        return v - Math.floor(v / m) * m;
     }
 
     void close() {
