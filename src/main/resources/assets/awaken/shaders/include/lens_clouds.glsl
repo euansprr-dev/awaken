@@ -14,7 +14,8 @@ float cloudDensity(vec3 rel, vec4 cp, float camY, bool coarse) {
     if (h <= 0.0 || h >= 1.0) return 0.0;
     vec2 xz = rel.xz + cp.zw;
     float cov = texture(CloudNoiseSampler, fract(xz / 3072.0)).r * 0.7 + texture(CloudNoiseSampler, fract(xz / 960.0 + 0.37)).g * 0.3;
-    float c = clamp((cov - (1.0 - cp.y) * 0.62 - 0.19) / 0.22, 0.0, 1.0);
+    // cover 0.45 leaves most of the sky open between distinct clouds; toward 0.95 it closes into an overcast deck
+    float c = clamp((cov - (1.0 - cp.y * 0.72)) / 0.1, 0.0, 1.0);
     // flat-ish bases, rounded tops that rise where the cloud is thick
     float shape = smoothstep(0.0, 0.1, h) * (1.0 - smoothstep(0.25 + 0.7 * c, 0.3 + 0.7 * c + 0.05, h));
     float d = c * shape;

@@ -48,12 +48,12 @@
       "height": 512
     },
     "awaken:lens_clouds": {
-      "width": 480,
-      "height": 270
+      "width": 640,
+      "height": 360
     },
     "awaken:lens_clouds_hist": {
-      "width": 480,
-      "height": 270,
+      "width": 640,
+      "height": 360,
       "persistent": true
     }
   },

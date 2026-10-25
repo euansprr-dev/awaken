@@ -177,6 +177,7 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
     // the light buffer, upsampled by distance: of its 2x2 texels, the ones that saw this surface
     vec3 lr = upsample(LightSampler, packDistance8(dist));
     vec3 m = vec3(1.0);
+    float rich = 0.0;
     float sun = f14.w * l17.r;
     bool needNormal = sun > 0.0 || (m20.r > 0.0 && F(15).x > 0.0);
     // the screen-derivative normal where this pixel's 2x2 quad lies on one surface; the careful four taps across an edge
@@ -197,17 +198,23 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
         // golden hour: the key warms and the shade deepens as the sun lowers (by its height, or the sunrise colour's
         // strength, texel 1 a, whichever is more), never by moonlight
         float golden = max(p1.a, 1.0 - smoothstep(0.1, 0.5, f14.y)) * (1.0 - f16.y);
-        vec3 key = mix(vec3(1.04, 1.02, 0.97), vec3(1.24, 1.0, 0.74), golden * l18.a);
+        vec3 key = mix(vec3(1.04, 1.02, 0.97), vec3(1.30, 1.03, 0.72), golden * l18.a);
         key = mix(key, vec3(0.93, 0.98, 1.08), f16.y);
-        vec3 shade = l18.rgb * 2.0 * (1.0 - min(0.85, l17.g * (1.0 + 0.3 * golden)));
+        // the shade: cool, deeper as the sun lowers and with distance (long shadows stay readable across the land, not
+        // only up close), a little warmed at golden hour by light bounced off the sunlit ground
+        float depthOfShade = l17.g * (1.0 + 0.3 * golden) * (1.0 + 0.35 * smoothstep(24.0, 160.0, dist));
+        vec3 shade = l18.rgb * 2.0 * mix(vec3(1.0), vec3(1.08, 0.99, 0.9), golden * 0.6) * (1.0 - min(0.85, depthOfShade));
         // a glow is light, not a lit surface: it keeps its brightness in the shade
-        float k = open * sun * near * fogFade * (1.0 - smoothstep(0.75 * rdEnd, rdEnd, dist)) * (1.0 - glowness(c) * m20.a);
+        float k = open * sun * near * fogFade * (1.0 - smoothstep(0.85 * rdEnd, rdEnd, dist)) * (1.0 - glowness(c) * m20.a);
         m = mix(vec3(1.0), mix(shade, key, direct), k);
+        // golden light is rich light: sunlit colour gains a little saturation as the sun lowers
+        rich = golden * k * direct * 0.16;
         dbg = vec4(n * 0.5 + 0.5, direct);
     }
     // ambient occlusion everywhere, day or night (it only darkens), less of it far away
     m *= mix(1.0, lr.g, l17.b * near * (1.0 - smoothstep(48.0, 96.0, dist)));
     c *= sqrt(m);
+    c = max(mix(vec3(luma(c)), c, 1.0 + rich), 0.0);
     if (m20.r > 0.0) c = lensWater(c, p, n, lr.r, m20.r * fogFade);
     return c;
 }
@@ -357,6 +364,13 @@ void main() {
     // underwater, in lava or blind, the game's own fog already hides the distance
     haze *= clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0);
     vec3 hazeColor = mix(fogColor.rgb, hz.rgb, h.b);
+#ifdef LENS_LIGHT
+    // at golden hour the distance hazes warm, not grey: the sunrise colour lends the haze a share as the sun lowers
+    if (!classic) {
+        float goldenHaze = max(p1.a, 1.0 - smoothstep(0.1, 0.5, F(14).y)) * (1.0 - F(16).y) * step(0.0001, F(14).w);
+        hazeColor = mix(hazeColor, hazeColor * 0.6 + sunset.rgb * 0.5, goldenHaze * 0.35);
+    }
+#endif
     float l0 = luma(c);
     c = mix(c, mix(c, vec3(l0), h.a), haze);
     c = mix(c, hazeColor, haze * 0.55);

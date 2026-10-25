@@ -46,7 +46,7 @@ void main() {
     vec3 p = unproject(frameMat(0), (vec2(px) + 0.5) / InSize, sky ? 1.0e-5 : depth, z01);
     vec3 v = normalize(p);
     float scene = sky ? 1.0e9 : length(p), camY = f12.y;
-    float base = cp.x - 6.0, top = base + CLOUD_THICK, maxD = ultra ? 4000.0 : 3000.0;
+    float base = cp.x - 6.0, top = base + CLOUD_THICK, maxD = 5000.0;
     // where the ray is inside the layer
     float t0 = 0.0, t1 = 0.0;
     if (abs(v.y) > 1.0e-4) {
@@ -56,12 +56,12 @@ void main() {
     } else if (camY > base && camY < top) {
         t1 = maxD;
     }
-    t1 = min(min(t1, scene), min(maxD, t0 + (ultra ? 1600.0 : 1200.0)));
+    t1 = min(min(t1, scene), min(maxD, t0 + (ultra ? 1100.0 : 800.0)));
     if (t1 <= t0) {
         fragColor = vec4(0.0, 0.0, 0.0, 1.0);
         return;
     }
-    int steps = ultra ? 32 : 20, lightSteps = ultra ? 5 : 3;
+    int steps = ultra ? 40 : 28, lightSteps = ultra ? 5 : 3;
     float jitter = ign(gl_FragCoord.xy, f12.w), dt = (t1 - t0) / float(steps);
     vec3 l = f14.xyz;
     float mu = dot(v, l);
@@ -72,10 +72,11 @@ void main() {
     vec4 p1 = P(1), cc = F(19);
     vec3 sunCol = f16.y > 0.5 ? vec3(0.55, 0.65, 0.9) * 0.6 : mix(vec3(1.0, 0.96, 0.9), P(9).rgb * 1.15, p1.a * 0.9);
     sunCol *= f14.w * 1.25;
-    vec3 ambient = cc.rgb * mix(P(10).rgb, vec3(1.0), 0.55) * 0.55;
+    // the sky's light on them: a cool blue from above, a little of the horizon's colour, by the game's cloud colour
+    vec3 ambient = cc.rgb * mix(vec3(0.62, 0.72, 0.92), P(10).rgb, 0.35) * 0.85;
     float T = 1.0;
     vec3 L = vec3(0.0);
-    const float sigma = 0.045;
+    const float sigma = 0.03;
     for (int i = 0; i < steps; i++) {
         float t = t0 + (float(i) + jitter) * dt;
         vec3 w = v * t;
@@ -89,7 +90,9 @@ void main() {
             s *= 2.0;
         }
         float h = clamp((w.y + camY - base) / CLOUD_THICK, 0.0, 1.0);
-        float beer = exp(-od * sigma * 1.4);
+        // two octaves of Beer's law: the second, weaker and longer, stands in for light scattered many times inside the
+        // cloud, so its interior and base stay soft grey-white instead of storm-dark
+        float beer = max(exp(-od * sigma * 1.4), 0.55 * exp(-od * sigma * 0.3));
         // powder: the thin edges facing the sun glow, dense cores darken (a cheap stand-in for multiple scattering)
         float powder = 1.0 - exp(-d * 6.0);
         vec3 S = sunCol * beer * phase * mix(1.0, powder, 0.5) + ambient * (0.35 + 0.65 * h);
@@ -99,15 +102,16 @@ void main() {
         if (T < 0.02) break;
     }
     // far cloud melts into the haze toward the horizon
-    float far = smoothstep(maxD * 0.35, maxD, t0);
-    L = mix(L, P(10).rgb * (1.0 - T), far * 0.8);
-    T = mix(T, 1.0, far * far * 0.85);
+    // (to nothing at the march's reach, so the deck never ends in a line)
+    float far = smoothstep(1500.0, maxD, t0);
+    L = mix(L, P(10).rgb * (1.0 - T), far * 0.7) * (1.0 - far);
+    T = 1.0 - (1.0 - T) * (1.0 - far);
     vec4 res = vec4(L, T);
     // last frame's clouds along this ray, found where it entered them
     vec4 f13 = F(13);
     if (f13.w > 0.5) {
         vec3 s = project(frameMat(8), v * max(t0, 1.0) + f13.xyz, z01);
-        if (s.x > 0.0 && s.y > 0.0 && s.x < 1.0 && s.y < 1.0) res = mix(texture(HistorySampler, s.xy), res, ultra ? 0.2 : 0.25);
+        if (s.x > 0.0 && s.y > 0.0 && s.x < 1.0 && s.y < 1.0) res = mix(texture(HistorySampler, s.xy), res, ultra ? 0.12 : 0.15);
     }
     fragColor = clamp(res + (jitter - 0.5) / 255.0, 0.0, 1.0);
 }
