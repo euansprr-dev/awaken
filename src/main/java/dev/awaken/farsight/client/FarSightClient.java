@@ -156,8 +156,10 @@ public final class FarSightClient {
         // the real chunks are culled in 3D (Sodium: a sphere of the render distance), so from high up they cover less
         // ground than the render distance: horizontally only as far as reaches a sea floor under the camera (16-block
         // steps, so a climb doesn't churn the windows); the shader hides far terrain only where they are drawn
+        // the mask keeps a section clear of the render distance: chunks are culled whole, by their sections
+        float hidden = Math.max(0f, clipStart - 16f);
         double drop = Math.max(0.0, cam.y - (level.getSeaLevel() - SEA_FLOOR));
-        float covered = (float) (Math.floor(Math.sqrt(Math.max(0.0, clipStart * (double) clipStart - drop * drop)) / 16.0) * 16.0);
+        float covered = (float) (Math.floor(Math.sqrt(Math.max(0.0, hidden * (double) hidden - drop * drop)) / 16.0) * 16.0);
         // coarsest first: a window's first patches queue ahead of the finer rings'
         int far = shown - 1;
         long farWindow = field.valid[far] ? Rings.key(field.winX[far], field.winZ[far]) : Long.MIN_VALUE;
@@ -198,9 +200,9 @@ public final class FarSightClient {
         RenderTarget main = mc.gameRenderer.mainRenderTarget();
         var camera = mc.gameRenderer.mainCamera();
         float fov = Math.max(camera.getFov(), mc.options.fov().get()) + 10f;
-        renderer.plan(field, cam.x, cam.y, cam.z, e.getModelViewMatrix(), fov, (float) main.width / Math.max(1, main.height), covered,
+        renderer.plan(field, cam.x, cam.y, cam.z, e.getModelViewMatrix(), fov, (float) main.width / Math.max(1, main.height), covered, hidden,
                 mc.level.getMinY(), mc.level.getMaxY());
-        renderer.planTrees(field, cam.y, covered);
+        renderer.planTrees(field, cam.y, covered, hidden);
         if ((partsOff & 2) != 0) renderer.treeDraws = 0;
         // the key light: the sun's strength by its height (a faint moon by night), weaker in rain; warm as it lowers
         float rain = mc.level.getRainLevel(partialTick), thunder = mc.level.getThunderLevel(partialTick);
@@ -222,7 +224,7 @@ public final class FarSightClient {
         }
         renderer.draw(field, main, e.getModelViewMatrix(), cam.x, cam.y, cam.z, sun, strength, sunColour, golden, haze, rain,
                 level.getSeaLevel() + MIST_ABOVE_SEA, MIST_DEPTH, MIST_DENSITY, mistCover, fogStart, fogEnd,
-                clipStart, CLIP_BAND, level.getSeaLevel(), RenderSystem.getDevice().getDeviceInfo().isZZeroToOne(), mc.gameRenderer.levelLightmap(),
+                hidden, CLIP_BAND, level.getSeaLevel(), RenderSystem.getDevice().getDeviceInfo().isZZeroToOne(), mc.gameRenderer.levelLightmap(),
                 FarLandmarks.current(level.dimension()));
         renderer.timeEnd();
         FarTerrain.report(renderer.depthTexture(), FarRenderer.NEAR, FarRenderer.FAR, true, RenderSystem.getDevice().getDeviceInfo().isZZeroToOne());

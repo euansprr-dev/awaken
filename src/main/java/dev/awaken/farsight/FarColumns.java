@@ -56,6 +56,9 @@ public final class FarColumns {
     /** The terrain densities whose zero is the ground, first found wins: Tectonic's, then vanilla's. */
     private static final String[] TERRAIN = {"tectonic:sloped_cheese", "minecraft:overworld/sloped_cheese"};
     private static final TagKey<Biome> ALPINE_BIOMES = TagKey.create(Registries.BIOME, Awaken.id("alpine"));
+    /** Grass and forest biomes the terrain lifts into the mountains: alpine ground too, above {@link #UPLAND_FROM}. */
+    private static final TagKey<Biome> UPLAND_BIOMES = TagKey.create(Registries.BIOME, Awaken.id("upland"));
+    static final float UPLAND_FROM = 150f;
 
     private final ChunkGenerator generator;
     private final RandomState random;
@@ -239,7 +242,7 @@ public final class FarColumns {
                 FarPalette.Look look = FarPalette.look(biome);
                 int k = j * Rings.PATCH + i;
                 int flags = look.flags();
-                if (alpine && biome.is(ALPINE_BIOMES)) flags |= ALPINE;
+                if (alpine && (biome.is(ALPINE_BIOMES) || top >= UPLAND_FROM && biome.is(UPLAND_BIOMES))) flags |= ALPINE;
                 if (biome.value().coldEnoughToSnow(pos.set(x, (int) top, z), seaLevel)) flags |= COLD;
                 int rgb = water ? FarPalette.water(biome) : look.ground();
                 int depth = water ? Math.clamp(Math.round(seaLevel - ground), 1, MAX_DEPTH) : 0;

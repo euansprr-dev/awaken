@@ -1357,7 +1357,10 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   - `awaken:alpine` material condition (`AlpineSurface`, shared with Far Sight): snow above a snow line at y 186 that
     wanders ±9 (160-block noise), drops 22 on north faces and lifts 14 on south ones, on slopes under 1.25 (51°); scree
     from 1.45, bare rock from 1.8 (vanilla's two-block surface gradient, halved). Prepended to `minecraft:overworld/biome_surface`
-    for `#awaken:alpine` (the peaks, slopes, grove, windswept biomes, Frost Spires, Shattered Highlands).
+    for `#awaken:alpine` (the peaks, slopes, grove, windswept biomes, Frost Spires, Shattered Highlands), and above y 150
+    for `#awaken:upland` (grass and forest biomes the terrain lifts into the mountains: meadow, cherry grove, the
+    taigas, forests, plains, Elderwood, Lumen Forest; 2026-10-26, so high grassland wears snow and rock like the peaks
+    beside it, lowlands untouched). Far Sight flags those columns alpine the same way (`FarColumns.UPLAND_FROM`).
   - Mountain forests: spruce (`minecraft:trees_taiga`) 9-11 a chunk on windswept hills and forests, 1-3 on meadows
     (per-world biome modifiers), kept below the treeline (14 under the snow line) and off slopes over 1.1 by the
     `awaken:treeline` placement filter, `AlpineSurface.treeAllowed`, which Far Sight's far trees use too; the far forests

@@ -182,11 +182,12 @@ final class FarRenderer implements AutoCloseable {
     }
 
     /**
-     * Decides this frame's pieces: each ring's window minus the one inside it, in view, and not wholly inside
-     * {@code hiddenWithin} (horizontal blocks from the camera, where the real chunks cover everything).
+     * Decides this frame's pieces: each ring's window minus the one inside it, in view, and not wholly under the real
+     * chunks: inside {@code covered} (horizontal blocks, where the windows load nothing), or with its farthest corner
+     * nearer than {@code hiddenWithin} in 3D down to its own lowest ground (the shader's mask).
      */
     void plan(FarField field, double camX, double camY, double camZ, Matrix4fc viewRotation, float fovDegrees, float aspect,
-            float hiddenWithin, int minY, int maxY) {
+            float covered, float hiddenWithin, int minY, int maxY) {
         pieces = 0;
         cells = 0;
         cull.setPerspective(fovDegrees * (float) (Math.PI / 180.0), aspect, 0.5f, FAR).mul(viewRotation);
@@ -205,12 +206,12 @@ final class FarRenderer implements AutoCloseable {
                 hz1 = hz0 + Rings.SIZE / 2;
             }
             if (hx1 > hx0) {
-                rect(field, r, s, 0, 0, Rings.SIZE, hz0, camY, hiddenWithin, minY, maxY);
-                rect(field, r, s, 0, hz1, Rings.SIZE, Rings.SIZE, camY, hiddenWithin, minY, maxY);
-                rect(field, r, s, 0, hz0, hx0, hz1, camY, hiddenWithin, minY, maxY);
-                rect(field, r, s, hx1, hz0, Rings.SIZE, hz1, camY, hiddenWithin, minY, maxY);
+                rect(field, r, s, 0, 0, Rings.SIZE, hz0, camY, covered, hiddenWithin, minY, maxY);
+                rect(field, r, s, 0, hz1, Rings.SIZE, Rings.SIZE, camY, covered, hiddenWithin, minY, maxY);
+                rect(field, r, s, 0, hz0, hx0, hz1, camY, covered, hiddenWithin, minY, maxY);
+                rect(field, r, s, hx1, hz0, Rings.SIZE, hz1, camY, covered, hiddenWithin, minY, maxY);
             } else {
-                rect(field, r, s, 0, 0, Rings.SIZE, Rings.SIZE, camY, hiddenWithin, minY, maxY);
+                rect(field, r, s, 0, 0, Rings.SIZE, Rings.SIZE, camY, covered, hiddenWithin, minY, maxY);
             }
         }
     }
@@ -219,7 +220,7 @@ final class FarRenderer implements AutoCloseable {
      * Decides this frame's tree runs: for rings 1-4, every patch in view, not wholly under the real chunks and not wholly
      * inside the finer ring's window (its own trees stand there), draws its predicted run and its real chunks' run.
      */
-    void planTrees(FarField field, double camY, float hiddenWithin) {
+    void planTrees(FarField field, double camY, float covered, float hiddenWithin) {
         treeDraws = 0;
         treesDrawn = 0;
         for (int r = FarTrees.FIRST_RING; r <= FarTrees.LAST_RING; r++) {
@@ -241,8 +242,10 @@ final class FarRenderer implements AutoCloseable {
                     float ax = originX[r] + i * pb, az = originZ[r] + j * pb, bx = ax + pb, bz = az + pb;
                     if (ax >= ix0 && az >= iz0 && bx <= ix1 && bz <= iz1) continue;
                     float fx = Math.max(Math.abs(ax), Math.abs(bx)), fz = Math.max(Math.abs(az), Math.abs(bz));
-                    if (fx * fx + fz * fz < hiddenWithin * hiddenWithin) continue;
+                    if (fx * fx + fz * fz < covered * covered) continue;
                     int lo = (field.lo[r][slot] & 0xFFFF) - FarColumns.HEIGHT_BASE - 2, hi = field.top(r, slot) - FarColumns.HEIGHT_BASE + 40;
+                    double down = camY - lo;
+                    if (fx * fx + fz * fz + down * down < hiddenWithin * (double) hiddenWithin) continue;
                     if (!frustum.testAab(ax, (float) (lo - camY), az, bx, (float) (hi - camY), bz)) continue;
                     for (int layer = 0; layer < 2; layer++) {
                         int n = layer == 0 ? pred : gen;
@@ -257,20 +260,24 @@ final class FarRenderer implements AutoCloseable {
         }
     }
 
-    private void rect(FarField field, int r, int s, int x0, int z0, int x1, int z1, double camY, float hiddenWithin, int minY, int maxY) {
+    private void rect(FarField field, int r, int s, int x0, int z0, int x1, int z1, double camY, float covered, float hiddenWithin,
+            int minY, int maxY) {
         for (int z = z0; z < z1; z += PIECE) {
             for (int x = x0; x < x1; x += PIECE) {
                 int w = Math.min(PIECE, x1 - x), h = Math.min(PIECE, z1 - z);
                 if (w <= 0 || h <= 0 || pieces >= MAX_DRAWS) continue;
                 float ax = originX[r] + x * s, az = originZ[r] + z * s, bx = ax + w * s, bz = az + h * s;
-                // wholly under the real chunks: its farthest corner is nearer than where far terrain starts
+                // wholly under the real chunks: its farthest corner is nearer than where far terrain starts, in 3D down to
+                // its lowest ground (32 blocks under the patches' lowest top), or within what the windows leave unloaded
                 float fx = Math.max(Math.abs(ax), Math.abs(bx)), fz = Math.max(Math.abs(az), Math.abs(bz));
-                if (fx * fx + fz * fz < hiddenWithin * hiddenWithin) continue;
+                if (fx * fx + fz * fz < covered * covered) continue;
                 int lo = minY, hi = maxY;
                 long range = range(field, r, x, z, w, h);
                 if (range != Long.MIN_VALUE) {
                     lo = (int) (range >> 32);
                     hi = (int) range;
+                    double down = camY - lo;
+                    if (fx * fx + fz * fz + down * down < hiddenWithin * (double) hiddenWithin) continue;
                 }
                 if (!frustum.testAab(ax, (float) (lo - camY), az, bx, (float) (hi - camY), bz)) continue;
                 pRing[pieces] = r;
