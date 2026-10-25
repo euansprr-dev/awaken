@@ -198,6 +198,7 @@ public final class CityPainter {
             case PLOT -> FLOOR;
             default -> COBBLE;
         };
+        if (k == STREET || k == RING || k == LANE || k == ALLEY) top = wear(c, x, z, k, top);
         b.set(x, lift, z, top);
         b.column(x, lift + 1, CLEAR_TOP, z, AIR);
         if (railAt(p, x, z)) b.set(x, lift + 1, z, (dist == TERRACE ? DIORITE_WALLS : STONE_WALLS)[railMask(p, x, z)]);
@@ -407,6 +408,36 @@ public final class CityPainter {
 
     static boolean border(CityPlan p, int x, int z, byte k) {
         return p.kind(x + 1, z) != k || p.kind(x - 1, z) != k || p.kind(x, z + 1) != k || p.kind(x, z - 1) != k;
+    }
+
+    /**
+     * Paving wear by street rank (look bible §7, M4 B3a): a gutter of dressed stone along the foot of the facades on the
+     * streets, damp moss at the walls of the lanes and alleys, and a worn line down the middle where wheels and feet go.
+     */
+    static BlockState wear(Ctx c, int x, int z, byte k, BlockState base) {
+        CityPlan p = c.plan;
+        int h = c.pct(x, z, 540);
+        for (int[] d : NB) {
+            byte n = p.kind(x + d[0], z + d[1]);
+            if (n != PLOT && n != LANDMARK) continue;
+            return switch (k) {
+                case STREET, RING -> h < 60 ? POLISHED_ANDESITE : h < 78 ? MOSSY_STONE_BRICKS : base;
+                default -> h < 45 ? MOSSY_COBBLE : base;
+            };
+        }
+        if (k != ALLEY && middle(p, x, z, k)) return h < 65 ? ANDESITE : base;
+        return base;
+    }
+
+    /** Whether a street cell lies on its street's middle line (equally far from both sides, across its narrow way). */
+    static boolean middle(CityPlan p, int x, int z, byte k) {
+        for (int axis = 0; axis < 2; axis++) {
+            int dx = axis == 0 ? 1 : 0, dz = axis == 0 ? 0 : 1, a = 0, b = 0;
+            while (a < 7 && p.kind(x - dx * (a + 1), z - dz * (a + 1)) == k) a++;
+            while (b < 7 && p.kind(x + dx * (b + 1), z + dz * (b + 1)) == k) b++;
+            if (a + b + 1 <= 9 && Math.abs(a - b) <= (a + b + 1 > 4 ? 1 : 0)) return true;
+        }
+        return false;
     }
 
     static BlockState avenue(Ctx c, int x, int z) {
