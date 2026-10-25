@@ -42,7 +42,7 @@ Hard rules:
 | `wilds` | The Wilds (§17): Precursor wards, how you arrived (`core.api.ArrivalHooks`), biome discoveries; later spires, windways and chases |
 | `anims` | Hands (§24): the first-person system (the world body, the view layer, view clips), `core.api.FirstPerson` |
 | `living` | The Living Wilds (§21): regions, the Holo combat layer, Wayfarers and quests, bounties, the World Pulse and happenings, populations and camps, crafts, wonders, settlers and villages |
-| `arms` | Weapons and combat (§24): the three verbs (strike, guard, dodge) on every melee weapon, fighting styles on one timing table, deflect, block, posture, Resonance, the feel of a blow (`core.api.CombatFeedback`), its sounds |
+| `arms` | Weapons and combat (§25): the three verbs (strike, guard, dodge) on every melee weapon, fighting styles on one timing table, deflect, block, posture, Resonance, the feel of a blow (`core.api.CombatFeedback`), its sounds |
 
 Rules for builders:
 - Touch only your module's package, your module's resources (namespaced file names), and your merge folder
@@ -392,10 +392,20 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
 - `dev.awaken.core.api.BodyMaterial` (§24) — what a blade meets: `FLESH, ARMOR, BONE, WOOD, STONE, SPIRIT, SLIME`;
   `of(Entity)` (both sides; armour ≥ 10 over flesh or bone answers ARMOR), `install(Source)` (the mobs module answers for
   its bodies through `MobDef.material()`), vanilla defaults by type.
-- `dev.awaken.core.api.CombatFeedback` (client, §24) — every blow's one feel: `hitstop(entityId, ms)` (the body freezes
+- `dev.awaken.core.api.CombatFeedback` (client, §25) — every blow's one feel: `hitstop(entityId, ms)` (the body freezes
   and trembles), `hold(ms)` (the striker's hands and view), `kick(yaw, pitch, roll, ticks)` (follows camera shake).
-  Installed by Arms; no-op before that and on a dedicated server. Powers' hits use it.
-- `dev.awaken.powers.client.fx.FxClient` (client) — the effects engine for other modules' weapons (§24):
+  Installed by Arms; no-op before that and on a dedicated server. Powers' hits use it. Also `engaged` (the local player
+  is in a fight: the action camera's COMBAT pose) and `blow(entity, dirX, dirZ, strength)` / `blowOn(entity, out)` (a
+  blade's blow's way and weight, read by the Life layer's stagger).
+- `dev.awaken.core.api.WeaveHooks` (server, §25) — `costScale(player)` (a cast's energy share: 0.7 in a Weave's beat)
+  and `cast(player, family, force, level)` (a landed cast); Arms installs the weaver, the powers module's Casting calls
+  both.
+- `dev.awaken.core.api.Strikes` additions (§25): `delivering()` (the class of the blow being delivered now: a bolt
+  fired inside it carries it) and `installClassifier(source -> kind)` (the mobs module classes blows that land after
+  their ability ran: bolts, fangs).
+- `dev.awaken.powers.client.fx.FxClient` (client) — the effects engine for other modules' weapons (§25; also
+  `weaponMote(kind, …, near)`, the light off a weapon, and `tellMark(mark, …)`, an enemy tell's marks; `FxPool.NEAR`
+  draws a sprite close to the eye):
   `slash(wielder, offset, axis0, axis90, startDeg, sweepDeg, radius, band, sweepTicks, argb)` (a blade's crescent that
   moves with the wielder), `thrust(wielder, offset, dir, from, to, width, sweepTicks, argb)`, `bladeHit(at, dir, size,
   BodyMaterial)`. Same budget and settings as the powers' own effects.
