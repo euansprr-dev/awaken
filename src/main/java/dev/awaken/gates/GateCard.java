@@ -97,6 +97,14 @@ public final class GateCard {
             Signal.send(p, w.ttl(20 * 9).priority(3).build());
             return;
         }
+        if (plan.skybornTrial()) {
+            // an Ascension trial: the Lord of the sky, fought on the wing
+            w.body(Component.literal("The Sky Leviathan's trial. Past the antechamber the floor gives out to open sky, and the Leviathan circles in it."));
+            w.row("Trial", "Fight it in the air");
+            w.footer(Component.literal("Walk in to enter"));
+            Signal.send(p, w.ttl(20 * 9).priority(3).build());
+            return;
+        }
         if (plan.leaperTrial()) {
             // an Ascension trial: a course, not a dungeon; what it asks and what it gives
             w.body(Component.literal("The Leaper's Gauntlet. A course of the Foundry, and at its end a chasm no running jump will cross."));

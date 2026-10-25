@@ -155,6 +155,27 @@ public final class Gates {
                 1, GatePlan.LEAPER_TRIAL, Theme.OVERGROWN_TEMPLE, 0);
     }
 
+    /**
+     * The Sky Leviathan's trial (SPEC §17.18): an A-rank Sky Archipelago of one floor, the antechamber and the open-sky
+     * arena. Marked by its boss ({@link GatePlan#SKYBORN_TRIAL}). Opened for a player with {@link #openTrial}.
+     */
+    public static GatePlan skybornTrialPlan(long seed) {
+        return new GatePlan(Hash.mix(seed), GatePlan.CONTENT_VERSION, Rank.A, Theme.SKY_ARCHIPELAGO, Layout.LABYRINTH, List.of(), Twist.NONE,
+                1, GatePlan.SKYBORN_TRIAL, Theme.SKY_ARCHIPELAGO, 0);
+    }
+
+    /**
+     * Opens a trial gate in front of a player: a real gate at its plan's rank (its Lord fought at that level, not the
+     * story's first gate's), which never breaks (GateRecord.neverBreaks). Returns the gate id, or -1.
+     */
+    public static int openTrial(ServerPlayer p, GatePlan plan) {
+        var look = p.getLookAngle();
+        double len = Math.max(0.01, Math.hypot(look.x, look.z));
+        GateRecord g = createNear(p, plan, new BlockPos(p.getBlockX() + (int) Math.round(look.x / len * 20), p.getBlockY(),
+                p.getBlockZ() + (int) Math.round(look.z / len * 20)), false, "trial");
+        return g == null ? -1 : g.id;
+    }
+
     /** The ritual hall of a ritual gate, in world positions, or empty (no such gate, not a ritual gate, no gate world). */
     public static Optional<RitualHall> ritualHall(MinecraftServer s, int gateId) {
         return RitualHall.of(s, GateRegistry.get(s).gate(gateId));

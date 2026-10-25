@@ -455,6 +455,8 @@ public final class Runs {
             RunState run = run(p);
             if (run.gateId != g.id || run.area != f.area || run.floor != f.floor) continue;
             claimLord(p, g, run, f, killer == p, t);
+            // the Sky Leviathan's trial: the Lord fell, the sky is theirs (SPEC §17.18)
+            if (main && g.plan.skybornTrial()) dev.awaken.core.api.TrialHooks.done(p, dev.awaken.core.api.TrialHooks.SKYBORN, 0, 0);
         }
         Twists.lordDefeated(level, g, f, arena);
         GateRegistry.get(server).setDirty();
@@ -552,7 +554,7 @@ public final class Runs {
         if (diff != AwakenConfig.Difficulty.STORY) Progression.fracture(p, FRACTURE_TICKS);
         if (g != null) {
             FloorLayout f = GateLayout.of(g.plan).floor(run.area, run.floor);
-            if (f != null && f.bossFloor) Progression.addInsight(p, g.plan.boss());
+            if (f != null && f.bossFloor) Progression.addInsight(p, g.plan.lordId());
         }
         stashGear(p);
         DirectorLog.log(p, "gate", "died in gate " + run.gateId + " on floor " + label(run.area, run.floor) + " (" + diff + ")");

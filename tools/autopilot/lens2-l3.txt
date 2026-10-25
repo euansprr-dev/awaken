@@ -1,0 +1,140 @@
+# Lens 2, step L3 (SPEC §22): water and magic. Reflections and the sun's glint on a pool and Carillon's river at golden
+# hour, AWAKEN's glowing creatures at dusk and at night, heat shimmer in the Ember Mines and frost at the frame's edge in
+# the Frost Monastery (before: lensdebug 8, the classic Cinematic on the same frame), then the frame-time bench.
+# Run (alone on the machine, it measures):
+#   PACK=perf,world TECTONIC=awakened RD=32 LENS=cinematic SLOT_WHO=lens2 \
+#   /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/lens2-l3.txt 1500
+world lens2l3 creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1280 720
+info
+hud off
+cmd gamemode spectator
+lens cinematic
+# ---- a pool in the lab at golden hour, the sun beyond it
+cmd time set 11900
+cmd tp @s 600 255 560 0 30
+wait 200
+cmd fill 585 240 585 635 240 635 minecraft:grass_block
+cmd fill 595 240 595 625 240 625 minecraft:water
+cmd fill 594 239 594 626 239 626 minecraft:stone
+cmd place feature minecraft:fancy_oak 590 241 600
+cmd place feature minecraft:spruce 630 241 612
+cmd fill 606 241 590 606 248 590 minecraft:stone_bricks
+cmd fill 614 241 590 614 248 590 minecraft:stone_bricks
+cmd summon awaken:old_antler 600 241 590 {NoAI:1b,PersistenceRequired:1b,Rotation:[90f,0f]}
+cmd summon awaken:empress_moth 620 243 590 {NoAI:1b,PersistenceRequired:1b,Rotation:[90f,0f]}
+wait 300
+cmd tp @s 640 246 610 90 12
+wait 160
+lensdebug 8
+wait 20
+shot l3_01_pool_into_classic
+lensdebug 0
+wait 40
+shot l3_01_pool_into_cinematic
+lens ultra
+wait 60
+shot l3_01_pool_into_ultra
+lens cinematic
+# ---- the creatures' glow at dusk and at night
+cmd tp @s 610 244 578 0 10
+wait 60
+cmd time set 13200
+wait 40
+lensdebug 8
+wait 20
+shot l3_02_glow_dusk_classic
+lensdebug 0
+wait 40
+shot l3_02_glow_dusk_cinematic
+cmd time set 18000
+wait 40
+lensdebug 8
+wait 20
+shot l3_03_glow_night_classic
+lensdebug 0
+wait 40
+shot l3_03_glow_night_cinematic
+# ---- Carillon's river at golden hour
+cmd time set 11900
+cmd awaken city view sky_nw_low
+wait 400
+look 90 25
+wait 80
+lensdebug 8
+wait 20
+shot l3_04_river_classic
+lensdebug 0
+wait 40
+shot l3_04_river_cinematic
+lens ultra
+wait 60
+shot l3_04_river_ultra
+lens cinematic
+# ---- heat and frost in the gates
+cmd gamemode creative
+cmd time set 6000
+cmd awaken gate hop
+wait 60
+cmd awaken gate open E ember_mines
+wait 320
+cmd awaken gate interior enter
+wait 200
+cmd awaken gate interior goto piece
+wait 100
+lensdebug 8
+wait 20
+shot l3_05_ember_classic
+lensdebug 0
+wait 40
+shot l3_05_ember_cinematic
+cmd awaken gate leave
+wait 100
+cmd awaken gate hop
+wait 60
+cmd awaken gate open C frost_monastery
+wait 320
+cmd awaken gate interior enter
+wait 200
+cmd awaken gate interior goto piece
+wait 100
+lensdebug 8
+wait 20
+shot l3_06_frost_classic
+lensdebug 0
+wait 40
+shot l3_06_frost_cinematic
+cmd awaken gate leave
+wait 100
+# ---- frame times on the L1 vista
+cmd gamemode spectator
+cmd time set 11900
+cmd awaken city view sky_nw_low
+look -90 18
+wait 300
+lens off
+wait 100
+perf l3_off 20
+lens swift
+wait 100
+perf l3_swift 20
+lens cinematic
+wait 100
+perf l3_cinematic 20
+lens ultra
+wait 100
+perf l3_ultra 20
+lens cinematic
+quit

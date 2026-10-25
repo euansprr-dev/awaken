@@ -3,7 +3,7 @@ package dev.awaken.mobs.client.model;
 import dev.awaken.Awaken;
 import dev.awaken.mobs.entity.AwLook;
 import dev.awaken.mobs.entity.FaunaMob;
-import net.minecraft.client.model.EntityModel;
+import dev.awaken.mobs.client.life.LifeModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -49,7 +49,7 @@ public final class FaunaModels {
 
     // ---- Lumen Moth --------------------------------------------------------------------------------------------------
 
-    public static final class Moth extends EntityModel<LivingEntityRenderState> {
+    public static final class Moth extends LifeModel {
         private final ModelPart body, head, antL, antR, wingL, wingR, hindL, hindR;
 
         public Moth(ModelPart root) {
@@ -80,8 +80,7 @@ public final class FaunaModels {
         }
 
         @Override
-        public void setupAnim(LivingEntityRenderState s) {
-            super.setupAnim(s);
+        protected void pose(LivingEntityRenderState s) {
             float age = s.ageInTicks;
             float flap = Mth.sin(age * 1.45F);
             float hind = Mth.sin(age * 1.45F - 0.6F);
@@ -111,7 +110,7 @@ public final class FaunaModels {
 
     // ---- Stag (Frost Stag, the Old Antler) -----------------------------------------------------------------------------
 
-    public static final class Stag extends EntityModel<LivingEntityRenderState> {
+    public static final class Stag extends LifeModel {
         private final ModelPart neck, head, tail, legFL, legFR, legHL, legHR;
 
         public Stag(ModelPart root) {
@@ -162,8 +161,7 @@ public final class FaunaModels {
         }
 
         @Override
-        public void setupAnim(LivingEntityRenderState s) {
-            super.setupAnim(s);
+        protected void pose(LivingEntityRenderState s) {
             float w = walk(s, 1.0F, 1.3F);
             legFL.xRot = w;
             legHR.xRot = w;
@@ -194,7 +192,7 @@ public final class FaunaModels {
 
     // ---- Mossback (tortoise) -------------------------------------------------------------------------------------------
 
-    public static final class Tortoise extends EntityModel<LivingEntityRenderState> {
+    public static final class Tortoise extends LifeModel {
         private final ModelPart shell, head, legFL, legFR, legHL, legHR, tail, plantA, plantB;
 
         public Tortoise(ModelPart root) {
@@ -230,8 +228,7 @@ public final class FaunaModels {
         }
 
         @Override
-        public void setupAnim(LivingEntityRenderState s) {
-            super.setupAnim(s);
+        protected void pose(LivingEntityRenderState s) {
             boolean tucked = has(s, FaunaMob.P_GUARD) || has(s, FaunaMob.P_REST);
             float w = tucked ? 0 : walk(s, 0.7F, 0.9F);
             legFL.xRot = w;
@@ -260,7 +257,7 @@ public final class FaunaModels {
 
     // ---- Dune Ray --------------------------------------------------------------------------------------------------
 
-    public static final class Ray extends EntityModel<LivingEntityRenderState> {
+    public static final class Ray extends LifeModel {
         private final ModelPart body, wingL, wingR, tipL, tipR, tail1, tail2;
 
         public Ray(ModelPart root) {
@@ -290,8 +287,7 @@ public final class FaunaModels {
         }
 
         @Override
-        public void setupAnim(LivingEntityRenderState s) {
-            super.setupAnim(s);
+        protected void pose(LivingEntityRenderState s) {
             float age = s.ageInTicks;
             float speed = has(s, FaunaMob.P_ANGRY) ? 0.42F : 0.24F;
             float a = Mth.sin(age * speed);
@@ -318,7 +314,7 @@ public final class FaunaModels {
 
     // ---- Glass Scarab --------------------------------------------------------------------------------------------------
 
-    public static final class Scarab extends EntityModel<LivingEntityRenderState> {
+    public static final class Scarab extends LifeModel {
         private final ModelPart body, head;
         private final ModelPart[] legs = new ModelPart[6];
 
@@ -348,8 +344,7 @@ public final class FaunaModels {
         }
 
         @Override
-        public void setupAnim(LivingEntityRenderState s) {
-            super.setupAnim(s);
+        protected void pose(LivingEntityRenderState s) {
             float burrow = look(s).faunaAnim;
             float scuttle = s.walkAnimationPos * 1.8F;
             float amp = 0.45F * Math.min(1.0F, s.walkAnimationSpeed * 1.5F) + burrow * 0.4F;

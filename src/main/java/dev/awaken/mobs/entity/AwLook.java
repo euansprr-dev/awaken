@@ -22,6 +22,10 @@ public final class AwLook {
     public int fauna;
     /** Overworld creatures: a 0..1 progress for the current pose (burrowing, grazing). */
     public float faunaAnim;
-    /** Overworld creatures: 1 the moment it is hit, falling to 0 (the model's flinch). */
+    /** 1 the moment it is hit, falling to 0 (the model's flinch, the life layer's stagger). */
     public float hurt;
+    /** It has turned on someone (vanilla's aggressive flag): a Gate Lord's provocation. */
+    public boolean aggressive;
+    /** Client only: the creature's life-layer state ({@code mobs.client.life.Life}), made on its first draw. */
+    public Object life;
 }

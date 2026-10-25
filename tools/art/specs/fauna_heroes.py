@@ -379,17 +379,18 @@ def paint_briar_sow(r, P):
         f.set(i, j, snout.at(0))
     P.paint("nose", snout, 3.0, faces=("top", "bottom", "west", "east", "south"))
     # eyes: small, deep under the brow, near the front of the skull sides, glowing green
-    for fname, ex in (("west", None), ("east", None)):
-        f = P.face("skull", fname)
-        ex = f.w - 4 if fname == "west" else 2
-        for (dx, dy, col) in ((0, 0, hexc("#0a0806")), (1, 0, hexc("#0a0806")), (0, 1, hexc("#24401a")), (1, 1, hexc("#0a0806")), (-1, 0, hide.at(1)), (2, 0, hide.at(1))):
-            f.set(ex + dx, 2 + dy, col)
-        lit = ex + (1 if fname == "west" else 0)
-        f.set(lit, 3, hexc("#b8ff8a"))
-        g = P.face("skull", fname, glow=True)
-        g.set(lit, 3, hexc("#e0ffc0", 255))
-        g.set(ex + (0 if fname == "west" else 1), 3, hexc("#8aff6a", 200))
-        g.set(lit, 2, hexc("#6aff5a", 110))
+    with P.eyes():
+        for fname, ex in (("west", None), ("east", None)):
+            f = P.face("skull", fname)
+            ex = f.w - 4 if fname == "west" else 2
+            for (dx, dy, col) in ((0, 0, hexc("#0a0806")), (1, 0, hexc("#0a0806")), (0, 1, hexc("#24401a")), (1, 1, hexc("#0a0806")), (-1, 0, hide.at(1)), (2, 0, hide.at(1))):
+                f.set(ex + dx, 2 + dy, col)
+            lit = ex + (1 if fname == "west" else 0)
+            f.set(lit, 3, hexc("#b8ff8a"))
+            g = P.face("skull", fname, glow=True)
+            g.set(lit, 3, hexc("#e0ffc0", 255))
+            g.set(ex + (0 if fname == "west" else 1), 3, hexc("#8aff6a", 200))
+            g.set(lit, 2, hexc("#6aff5a", 110))
     for fname in ("west", "east"):
         f = P.face("jaw", fname)
         for i in range(f.w):
@@ -1231,16 +1232,17 @@ def paint_old_antler(r, P):
     f.set(f.w - 2, 1, muzzle.at(0))
     P.paint("ear_l", coat, 3.0)
     P.paint("tail", shag, 3.5)
-    for fname in ("west", "east"):
-        f = P.face("skull", fname)
-        g = P.face("skull", fname, glow=True)
-        ex = f.w - 3 if fname == "west" else 1
-        f.set(ex, 2, hexc("#08090c"))
-        f.set(ex + 1, 2, hexc("#08090c"))
-        f.set(ex + (1 if fname == "west" else 0), 3, hexc("#7fc3ff"))
-        f.set(ex + (0 if fname == "west" else 1), 3, hexc("#08090c"))
-        g.set(ex + (1 if fname == "west" else 0), 3, hexc("#d6f0ff", 255))
-        g.set(ex + (1 if fname == "west" else 0), 2, hexc("#7fc3ff", 120))
+    with P.eyes():
+        for fname in ("west", "east"):
+            f = P.face("skull", fname)
+            g = P.face("skull", fname, glow=True)
+            ex = f.w - 3 if fname == "west" else 1
+            f.set(ex, 2, hexc("#08090c"))
+            f.set(ex + 1, 2, hexc("#08090c"))
+            f.set(ex + (1 if fname == "west" else 0), 3, hexc("#7fc3ff"))
+            f.set(ex + (0 if fname == "west" else 1), 3, hexc("#08090c"))
+            g.set(ex + (1 if fname == "west" else 0), 3, hexc("#d6f0ff", 255))
+            g.set(ex + (1 if fname == "west" else 0), 2, hexc("#7fc3ff", 120))
     # bark grown over the shoulders, old runes in it glowing faintly
     P.paint("bark_l", bark, 2.6, combine(p_bands(2, 0.8, vertical=True), lambda f, i, j: 0.6 if j == 0 else 0))
     for fname in ("top", "west", "east"):
@@ -2338,16 +2340,17 @@ def paint_stonehorn(r, P):
     f.set(1, 2, dark.at(0))
     f.set(f.w - 2, 2, dark.at(0))
     P.paint("ear_l", wool, 2.8)
-    for fname in ("west", "east"):
-        f = P.face("skull", fname)
-        g = P.face("skull", fname, glow=True)
-        ex = f.w - 3 if fname == "west" else 1
-        f.set(ex, 3, hexc("#0c0c0e"))
-        f.set(ex + 1, 3, hexc("#0c0c0e"))
-        lit = ex + (1 if fname == "west" else 0)
-        f.set(lit, 4, hexc("#a8d8ff"))
-        f.set(ex + (0 if fname == "west" else 1), 4, hexc("#0c0c0e"))
-        g.set(lit, 4, hexc("#e0f4ff", 255))
+    with P.eyes():
+        for fname in ("west", "east"):
+            f = P.face("skull", fname)
+            g = P.face("skull", fname, glow=True)
+            ex = f.w - 3 if fname == "west" else 1
+            f.set(ex, 3, hexc("#0c0c0e"))
+            f.set(ex + 1, 3, hexc("#0c0c0e"))
+            lit = ex + (1 if fname == "west" else 0)
+            f.set(lit, 4, hexc("#a8d8ff"))
+            f.set(ex + (0 if fname == "west" else 1), 4, hexc("#0c0c0e"))
+            g.set(lit, 4, hexc("#e0f4ff", 255))
     for nm, fnames in (("skirt_l", ("west", "east")), ("skirt_f", ("north", "south")), ("beard", ("north", "south"))):
         for fname in fnames:
             ragged(P.face(nm, fname), rng, wool, 3.0, minlen=0.5)
@@ -2511,15 +2514,16 @@ def paint_mycelord(r, P):
     P.paint("brow", stem, 2.0)
     f = P.face("trunk", "north")
     g = P.face("trunk", "north", glow=True)
-    for (cx, cy) in ((2, 3), (6, 3)):
-        for dx in (-1, 0):
-            for dy in (0, 1, 2):
-                f.set(cx + dx, cy + dy, stem.at(0) if dy < 2 else hexc("#120810"))
-        f.set(cx, cy + 1, hexc("#ff9ae0"))
-        f.set(cx - 1, cy + 1, hexc("#ffd0ee"))
-        g.set(cx, cy + 1, hexc("#ff9ae0", 255))
-        g.set(cx - 1, cy + 1, hexc("#ffe0f4", 255))
-        g.set(cx - 1, cy + 2, hexc("#ff9ae0", 120))
+    with P.eyes():
+        for (cx, cy) in ((2, 3), (6, 3)):
+            for dx in (-1, 0):
+                for dy in (0, 1, 2):
+                    f.set(cx + dx, cy + dy, stem.at(0) if dy < 2 else hexc("#120810"))
+            f.set(cx, cy + 1, hexc("#ff9ae0"))
+            f.set(cx - 1, cy + 1, hexc("#ffd0ee"))
+            g.set(cx, cy + 1, hexc("#ff9ae0", 255))
+            g.set(cx - 1, cy + 1, hexc("#ffe0f4", 255))
+            g.set(cx - 1, cy + 2, hexc("#ff9ae0", 120))
     for i in range(f.w):  # wrinkles across the old face
         if i % 3 != 1:
             f.set(i, 1, stem.at(1.4))
@@ -2697,13 +2701,14 @@ def paint_hollow_owl(r, P):
         d = min(dl, dr)
         ring = int(d) % 2
         f.set(i, j, pale.at(3.6 - ring * 0.9 - (0.6 if d > 3 else 0)))
-    for cx in (1, 5):
-        for dx in (0, 1):
-            for dy in (2, 3):
-                f.set(cx + dx, dy, hexc("#f2c23a") if (dx, dy) != (1 if cx == 1 else 0, 3) else hexc("#1a1208"))
-                g.set(cx + dx, dy, hexc("#ffe08a", 230))
-        f.set(cx + (1 if cx == 1 else 0), 3, hexc("#120c04"))
-        g.set(cx + (1 if cx == 1 else 0), 3, (0, 0, 0, 0))
+    with P.eyes():
+        for cx in (1, 5):
+            for dx in (0, 1):
+                for dy in (2, 3):
+                    f.set(cx + dx, dy, hexc("#f2c23a") if (dx, dy) != (1 if cx == 1 else 0, 3) else hexc("#1a1208"))
+                    g.set(cx + dx, dy, hexc("#ffe08a", 230))
+            f.set(cx + (1 if cx == 1 else 0), 3, hexc("#120c04"))
+            g.set(cx + (1 if cx == 1 else 0), 3, (0, 0, 0, 0))
     for i in range(f.w):  # the disc's dark rim
         f.set(i, 0, dark.at(2))
     P.paint("disc", pale, 3.0, faces=("top", "bottom", "west", "east", "south"))

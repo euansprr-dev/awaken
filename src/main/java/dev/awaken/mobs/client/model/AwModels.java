@@ -1,7 +1,7 @@
 package dev.awaken.mobs.client.model;
 
 import dev.awaken.Awaken;
-import net.minecraft.client.model.EntityModel;
+import dev.awaken.mobs.client.life.LifeModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -48,7 +48,7 @@ public final class AwModels {
 
     // ---- Serpent ------------------------------------------------------------------------------------------------------
 
-    public static final class Serpent extends EntityModel<LivingEntityRenderState> {
+    public static final class Serpent extends LifeModel {
         private final ModelPart head, jaw;
         private final ModelPart[] segments = new ModelPart[6];
 
@@ -82,8 +82,7 @@ public final class AwModels {
 
 
         @Override
-        public void setupAnim(LivingEntityRenderState s) {
-            super.setupAnim(s);
+        protected void pose(LivingEntityRenderState s) {
             float age = s.ageInTicks;
             float tele = tele(s);
             head.yRot = Motion.yaw(s, 0.8F);
@@ -108,7 +107,7 @@ public final class AwModels {
 
     // ---- Listener -----------------------------------------------------------------------------------------------------
 
-    public static final class Listener extends EntityModel<LivingEntityRenderState> {
+    public static final class Listener extends LifeModel {
         private final ModelPart head, earL, earR, armL, armR, legL, legR, body;
 
         public Listener(ModelPart root) {
@@ -139,8 +138,7 @@ public final class AwModels {
 
 
         @Override
-        public void setupAnim(LivingEntityRenderState s) {
-            super.setupAnim(s);
+        protected void pose(LivingEntityRenderState s) {
             float age = s.ageInTicks;
             float tele = tele(s);
             head.yRot = s.yRot * Mth.DEG_TO_RAD;
@@ -161,7 +159,7 @@ public final class AwModels {
 
     // ---- Bell (the Bell Warden) ----------------------------------------------------------------------------------------
 
-    public static final class Bell extends EntityModel<LivingEntityRenderState> {
+    public static final class Bell extends LifeModel {
         private final ModelPart bell, clapper, armL, armR, legL, legR;
 
         public Bell(ModelPart root) {
@@ -191,8 +189,7 @@ public final class AwModels {
 
 
         @Override
-        public void setupAnim(LivingEntityRenderState s) {
-            super.setupAnim(s);
+        protected void pose(LivingEntityRenderState s) {
             float age = s.ageInTicks;
             float tele = tele(s);
             bell.yRot = s.yRot * Mth.DEG_TO_RAD * 0.5F;
@@ -209,7 +206,7 @@ public final class AwModels {
 
     // ---- Lantern (the Lantern Broker) ----------------------------------------------------------------------------------
 
-    public static final class Lantern extends EntityModel<LivingEntityRenderState> {
+    public static final class Lantern extends LifeModel {
         private final ModelPart head, core, armL, armR, robe;
 
         public Lantern(ModelPart root) {
@@ -235,8 +232,7 @@ public final class AwModels {
 
 
         @Override
-        public void setupAnim(LivingEntityRenderState s) {
-            super.setupAnim(s);
+        protected void pose(LivingEntityRenderState s) {
             float age = s.ageInTicks;
             float tele = tele(s);
             head.yRot = s.yRot * Mth.DEG_TO_RAD;
@@ -254,7 +250,7 @@ public final class AwModels {
 
     // ---- Shade (the Herald, the Seed Warden, the Signal's Shadow) ------------------------------------------------------
 
-    public static final class Shade extends EntityModel<LivingEntityRenderState> {
+    public static final class Shade extends LifeModel {
         private final ModelPart head, halo, armL, armR, torso, robe;
 
         public Shade(ModelPart root) {
@@ -283,8 +279,7 @@ public final class AwModels {
 
 
         @Override
-        public void setupAnim(LivingEntityRenderState s) {
-            super.setupAnim(s);
+        protected void pose(LivingEntityRenderState s) {
             float age = s.ageInTicks;
             float tele = tele(s);
             float bob = Mth.sin(age * 0.08F) * 1.2F;

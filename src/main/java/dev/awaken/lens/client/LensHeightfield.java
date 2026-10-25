@@ -20,7 +20,9 @@ import java.util.Arrays;
  * from the client chunks' own heightmaps, which the light pass marches toward the sun. A 1024×1024 RG16F texture,
  * addressed by world block coordinate modulo 1024 (a ring buffer, so moving never shifts it): r the top of everything
  * that blocks motion (leaves included), g the same without leaves (a roof). Mips 1-4 hold the maximum of their 2×2, so
- * far steps of the march test a whole cell at once. Built from a 64×64-chunk window centred on the camera's chunk,
+ * far steps of the march test a whole cell at once. Where the top is water, g sits at the block's base + 0.75 instead of
+ * its top (exactly representable in half floats to y 512): the shaders read that fraction as "water here" (Lens 2's
+ * reflections, L3) and lose nothing as an occluder. Built from a 64×64-chunk window centred on the camera's chunk,
  * nearest chunks first and a few each tick; block changes show within a few seconds (a rolling rescan). Uploads go up
  * as whole-width strips of the window, straight from an off-heap mirror, so nothing is allocated per tick.
  */
@@ -45,7 +47,7 @@ final class LensHeightfield {
     // slot offsets from the centre, nearest first (Chebyshev rings)
     private static final int[] ORDER = ringOrder();
     private final float[] all = new float[256], solid = new float[256];
-    private int centreX = Integer.MIN_VALUE, centreZ, rescan, clock, maxTop = -64;
+    private int centreX = Integer.MIN_VALUE, centreZ, rescan, clock, maxTop = -64, nextRow;
     private boolean maxDirty;
     private ClientLevel level;
 
@@ -72,6 +74,24 @@ final class LensHeightfield {
             maxDirty = false;
         }
         return maxTop;
+    }
+
+    /**
+     * Whether a point near the camera is in sunlight by the CPU mirror (Lens 2's dust only shows in sunlit air): a short
+     * march toward the light over level 0, leaves counting as shade.
+     */
+    boolean sunlit(double x, double y, double z, org.joml.Vector3fc l) {
+        if (l.y() <= 0.02f) return false;
+        int top = maxTop();
+        double t = 0.4;
+        for (int i = 0; i < 20; i++) {
+            double qy = y + l.y() * t;
+            if (qy > top) return true;
+            int ix = net.minecraft.util.Mth.floor(x + l.x() * t) & (SIZE - 1), iz = net.minecraft.util.Mth.floor(z + l.z() * t) & (SIZE - 1);
+            if (qy < Float.float16ToFloat(mirror[0].getShort((iz * SIZE + ix) * 4))) return false;
+            t += 0.5 + t * 0.25;
+        }
+        return true;
     }
 
     /** Once a client tick while Lens 2 draws in a place with a sun: follow the camera, read chunks, upload changes. */
@@ -154,9 +174,11 @@ final class LensHeightfield {
                 int a = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z) + 1;
                 int s = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) + 1;
                 all[x + z * 16] = a;
-                solid[x + z * 16] = s;
+                // open water on top: its column's solid top drops to base + 0.75, the shaders' water mark
+                boolean water = a == s && chunk.getFluidState(x, s - 1, z).getType().is(net.minecraft.tags.FluidTags.WATER);
+                solid[x + z * 16] = water ? s - 0.25f : s;
                 high = Math.max(high, a);
-                h = (h ^ (a * 4099L + s)) * 1099511628211L;
+                h = (h ^ (a * 4099L + s * 2L + (water ? 1L : 0L))) * 1099511628211L;
             }
         }
         if (h == hash[slot]) return true;
@@ -220,8 +242,11 @@ final class LensHeightfield {
     private void upload() {
         var encoder = RenderSystem.getDevice().createCommandEncoder();
         int done = 0;
-        for (int r = 0; r < CHUNKS && done < UPLOAD_ROWS_PER_TICK; r++) {
+        // round the ring from where the last tick stopped, so a busy row can't keep the others waiting
+        for (int i = 0; i < CHUNKS && done < UPLOAD_ROWS_PER_TICK; i++) {
+            int r = (nextRow + i) & (CHUNKS - 1);
             if (!dirtyRow[r]) continue;
+            nextRow = r + 1;
             dirtyRow[r] = false;
             done++;
             for (int k = 0; k < LEVELS; k++) {

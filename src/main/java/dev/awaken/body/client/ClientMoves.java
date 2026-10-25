@@ -89,6 +89,7 @@ public final class ClientMoves {
         boolean awakened = kit || Progression.profile(p).awakened();
         // the one-button free-run (SPEC §17.14): sprint held with forward reads the ground ahead
         FreeRun.begin(p, k);
+        FreeRun.climb(p);
         if (!awakened && (tac || sliding || mantling)) stopAll(p);
         if (jumpSuppressed) {
             if (jump) in.keyPresses = with(in.keyPresses, false, in.keyPresses.shift());

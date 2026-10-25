@@ -3,6 +3,9 @@ package dev.awaken.mobs.client.model;
 import dev.awaken.Awaken;
 import dev.awaken.mobs.client.anim.HeroRenderState;
 import dev.awaken.mobs.client.anim.HeroRig;
+import dev.awaken.mobs.client.life.Life;
+import dev.awaken.mobs.client.life.LifeProfile;
+import dev.awaken.mobs.client.life.LifeRig;
 import net.minecraft.client.animation.AnimationChannel;
 import net.minecraft.client.animation.AnimationDefinition;
 import net.minecraft.client.animation.Keyframe;
@@ -31,7 +34,8 @@ import java.util.Map;
  * {@link HeroRig} and every clip is baked into a vanilla {@link KeyframeAnimation}. setupAnim layers them like a
  * small animation graph: idle breathing, a distance-locked walk that blends into the run (or a flight loop), head look
  * toward what it watches, the cue clip (a move's wind-up, its strike, a roar, a warning), the melee bite, the flinch,
- * and the fall, which replaces everything else.
+ * and the fall, which the live pose crossfades into. The life layer (SPEC §23) goes on top: the creature's own idle
+ * clock (so a herd never breathes in step, faster when winded), eased graph weights, springs, blinks, the slow head.
  */
 public final class HeroModel extends EntityModel<HeroRenderState> {
     private final HeroRig rig;
@@ -41,6 +45,7 @@ public final class HeroModel extends EntityModel<HeroRenderState> {
     private final ModelPart[] lookParts;
     private final float[] lookYaw, lookPitch;
     private final int idle, walk, run, fly, air, death, hurt, bite, angry;
+    private final LifeRig life;
 
     public HeroModel(ModelPart root, HeroRig rig) {
         super(root, rig.translucent ? RenderTypes::entityTranslucent : RenderTypes::entityCutout);
@@ -69,6 +74,18 @@ public final class HeroModel extends EntityModel<HeroRenderState> {
         hurt = clip("hurt");
         bite = clip("bite");
         angry = clip("angry");
+        life = LifeRig.of(root, profile(rig.id), rig, idle >= 0);
+    }
+
+    /** The temperament of the creature a rig belongs to (its bestiary role), or "default". */
+    public static LifeProfile profile(String id) {
+        dev.awaken.mobs.def.MobDef d = dev.awaken.mobs.def.Bestiary.get(id);
+        if (d == null) return LifeProfile.temperament("default");
+        return LifeProfile.of(id, d.fauna != null ? d.fauna.name() : null, d.tier.name());
+    }
+
+    public LifeRig life() {
+        return life;
     }
 
     public static ModelLayerLocation layer(String id) {
@@ -137,24 +154,44 @@ public final class HeroModel extends EntityModel<HeroRenderState> {
         if (clip >= 0 && weight > 0.001F) baked.get(clip).apply((long) (seconds * 1000.0F), Math.min(1.0F, weight));
     }
 
+    /** Seconds a clip that just ended takes to let go of its last pose (no pop at its end). */
+    static final float LET_GO = 0.2F;
+
+    /** Plays a one-shot clip at {@code time}, holding its last frame while it fades for {@link #LET_GO} after it ends. */
+    private void once(int clip, float time, float weight) {
+        if (clip < 0 || time < 0) return;
+        float over = time - length(clip);
+        if (over < LET_GO) play(clip, Math.min(time, length(clip)), over <= 0 ? weight : weight * (1.0F - over / LET_GO));
+    }
+
     @Override
     public void setupAnim(HeroRenderState s) {
         super.setupAnim(s);
+        Life l = Life.from(s);
+        // the fall: the live pose lets go over a quarter second instead of snapping to the clip's first frame
+        float live = 1.0F;
         if (s.dying >= 0 && death >= 0) {
+            live = 1.0F - Mth.smoothstep(Math.min(1.0F, s.dying / 0.25F));
             play(death, s.dying, 1.0F);
-            return;
+            if (live <= 0) {
+                life.apply(l, s);
+                return;
+            }
         }
-        float t = s.ageInTicks / 20.0F;
+        float t = l != null ? l.idleTime() : s.ageInTicks / 20.0F;
         boolean grounded = !s.airborne || air < 0;
         float moving = grounded ? s.walk : 0.0F;
-        play(idle, t, 1.0F - 0.55F * moving);
-        if (angry >= 0) play(angry, t, s.angry * (1.0F - moving));
-        if (fly >= 0) play(fly, t * (1.0F + Math.min(2.0F, s.speed * 4.0F)), 1.0F);
-        if (air >= 0 && s.airborne) play(air, t, 1.0F);
+        float angryW = l != null ? l.ease(0, s.angry, 0.3F) : s.angry;
+        float airW = air < 0 ? 0.0F : l != null ? l.ease(1, s.airborne ? 1.0F : 0.0F, 0.2F) : s.airborne ? 1.0F : 0.0F;
+        play(idle, t, (1.0F - 0.55F * moving) * live);
+        if (angry >= 0) play(angry, t, angryW * (1.0F - moving) * live);
+        float flyRate = 1.0F + Math.min(2.0F, s.speed * 4.0F);
+        if (fly >= 0) play(fly, l != null ? l.clock(0, flyRate) : t * flyRate, live);
+        if (air >= 0) play(air, t, airW * live);
         if (moving > 0.01F) {
-            if (walk >= 0) play(walk, s.gait / rig.walkStride * length(walk), moving * (1.0F - s.run));
-            if (run >= 0) play(run, s.gait / rig.runStride * length(run), moving * s.run);
-            else if (walk >= 0 && s.run > 0) play(walk, s.gait / rig.walkStride * length(walk), moving * s.run);
+            if (walk >= 0) play(walk, s.gait / rig.walkStride * length(walk), moving * (1.0F - s.run) * live);
+            if (run >= 0) play(run, s.gait / rig.runStride * length(run), moving * s.run * live);
+            else if (walk >= 0 && s.run > 0) play(walk, s.gait / rig.walkStride * length(walk), moving * s.run * live);
         }
         // Look where the head is turned (the cue clips own the head while they play).
         float lookW = 1.0F - Mth.clamp(s.cueWeight, 0.0F, 1.0F) * 0.7F;
@@ -165,9 +202,10 @@ public final class HeroModel extends EntityModel<HeroRenderState> {
             lookParts[i].yRot += yaw * lookYaw[i];
             lookParts[i].xRot += pitch * lookPitch[i];
         }
-        play(s.prevClip, s.prevTime, s.prevWeight);
-        play(s.cueClip, s.cueTime, s.cueWeight);
-        if (s.melee >= 0 && bite >= 0 && s.melee <= length(bite)) play(bite, s.melee, 1.0F);
-        if (s.hurt >= 0 && hurt >= 0 && s.hurt <= length(hurt)) play(hurt, s.hurt, 1.0F);
+        play(s.prevClip, s.prevTime, s.prevWeight * live);
+        play(s.cueClip, s.cueTime, s.cueWeight * live);
+        once(bite, s.melee, live);
+        once(hurt, s.hurt, live);
+        life.apply(l, s);
     }
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "_about": "Lens looks per dimension (dev.awaken.lens.client). Missing fields inherit from default. Exposure is capped at 1.05 and shadows are never lifted, so dark places stay dark. Haze goes toward the game's own fog colour, mixed with hazeTint by hazeTintMix; it starts at hazeStart x the render distance. sunGlow scales the halo around the sun (0 where there is no sun). Cinematic and Ultra only (Lens 2, SPEC §22): light scales the sun's warm key and cool shade (0 off), shade how deep shadow goes (0..0.85), shadeTint its colour (x2 max), keyWarmth how warm the key turns at sunrise and sunset, ao the ambient occlusion, filmic the filmic curve in place of the plain contrast.",
+  "_about": "Lens looks per dimension (dev.awaken.lens.client). Missing fields inherit from default. Exposure is capped at 1.05 and shadows are never lifted, so dark places stay dark. Haze goes toward the game's own fog colour, mixed with hazeTint by hazeTintMix; it starts at hazeStart x the render distance. sunGlow scales the halo around the sun (0 where there is no sun). Cinematic and Ultra only (Lens 2, SPEC §22): light scales the sun's warm key and cool shade (0 off), shade how deep shadow goes (0..0.85), shadeTint its colour (x2 max), keyWarmth how warm the key turns at sunrise and sunset, ao the ambient occlusion, filmic the filmic curve in place of the plain contrast, mist the sunlit mist that volumetric light scatters in (thicker toward sea level, falling off over mistHeight blocks), fogGlow how far lights glow into fog, skyGlow the sky's scattering around the sun, water the reflections and sun glint on open water, heat a heat shimmer, frost frost creeping in at the frame's edges, glow how much more AWAKEN's glows (runes, vortices, the Signal's blue) bloom than lit surfaces and how far they keep their light in shade.",
   "looks": {
     "default": {
       "_name": "Golden clarity: cool shadows, warm light, a blue aerial haze over the distance, warm at sunrise and sunset",
@@ -36,7 +36,7 @@
       "sunsetWarmth": 0.6,
       "sunGlow": 0.8,
       "light": 1.0,
-      "shade": 0.38,
+      "shade": 0.32,
       "shadeTint": [
         0.86,
         0.93,
@@ -44,7 +44,15 @@
       ],
       "keyWarmth": 0.8,
       "ao": 0.65,
-      "filmic": 1.0
+      "filmic": 1.0,
+      "mist": 0.5,
+      "mistHeight": 48.0,
+      "fogGlow": 0.15,
+      "skyGlow": 0.6,
+      "water": 0.6,
+      "heat": 0.0,
+      "frost": 0.0,
+      "glow": 0.6
     },
     "minecraft:the_nether": {
       "_name": "Ember: heat haze, lava glow, rust shadows",
@@ -77,7 +85,8 @@
       "hazeTintMix": 0.25,
       "hazeDesaturate": 0.15,
       "sunsetWarmth": 0.0,
-      "sunGlow": 0.0
+      "sunGlow": 0.0,
+      "heat": 0.45
     },
     "minecraft:the_end": {
       "_name": "Void: violet shadows, pale light",

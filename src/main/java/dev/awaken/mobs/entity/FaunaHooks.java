@@ -28,6 +28,11 @@ public final class FaunaHooks {
             return 0;
         }
 
+        /** Whether a creature spawning here is an elite (the Living Wilds, SPEC §21: 5% of neutrals and hunters). */
+        default boolean elite(ServerLevel level, BlockPos pos, FaunaRole role, net.minecraft.util.RandomSource random) {
+            return false;
+        }
+
         /** A named beast reports where it is (every two seconds while loaded). */
         default void beastSeen(NamedBeast beast) {}
 

@@ -42,6 +42,12 @@ final class AscentCommands {
                 if (id < 0) c.getSource().sendFailure(Component.literal("No trial gate could form here"));
                 return Math.max(0, id);
             })));
+            // the Sky Leviathan's trial, opened in front of you now whatever you hold (tours)
+            ascent.then(Commands.literal("trial").then(Commands.literal("skyborn").executes(c -> {
+                int id = AscentTrials.openSkyborn(c.getSource().getPlayerOrException());
+                if (id < 0) c.getSource().sendFailure(Component.literal("No trial gate could form here"));
+                return Math.max(0, id);
+            })));
             // the nearest Tether Spire: you on its plaza beside the column (tours)
             ascent.then(Commands.literal("spire").then(Commands.literal("goto").executes(c -> spireGoto(c.getSource()))));
             // the nearest sky platform: rigged if it isn't yet, and you under its first ring (tours)
@@ -305,10 +311,13 @@ final class AscentCommands {
             case "wings" -> AscentPayloads.Tier.TETHER.bit() | AscentPayloads.Tier.LEAPER.bit() | AscentPayloads.Tier.WINGS.bit();
             case "skyborn" -> AscentPayloads.Tier.TETHER.bit() | AscentPayloads.Tier.LEAPER.bit() | AscentPayloads.Tier.WINGS.bit()
                     | AscentPayloads.Tier.SKYBORN.bit();
+            // the story's end's gift (SPEC §17.19): every tier
+            case "sovereign" -> AscentPayloads.Tier.TETHER.bit() | AscentPayloads.Tier.LEAPER.bit() | AscentPayloads.Tier.WINGS.bit()
+                    | AscentPayloads.Tier.SKYBORN.bit() | AscentPayloads.Tier.SOVEREIGN.bit();
             default -> -1;
         };
         if (bits < 0) {
-            src.sendFailure(Component.literal("grant all, none, tether, wings or skyborn"));
+            src.sendFailure(Component.literal("grant all, none, tether, wings, skyborn or sovereign"));
             return 0;
         }
         AscentServer.setTiers(p, bits);

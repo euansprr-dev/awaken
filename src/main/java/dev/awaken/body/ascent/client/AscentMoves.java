@@ -889,6 +889,33 @@ public final class AscentMoves {
         return true;
     }
 
+    /**
+     * The Sovereign's Judgement Fall (SPEC §17.19): from at least {@code minHeight} up, the body drops at {@code speed},
+     * a dive whose landing the server answers as Judgement. False when too low or held by a rope.
+     */
+    static boolean judgementDive(LocalPlayer p, double minHeight, double speed) {
+        if (state.rope || p.onGround() || heightAboveGround(p) < minHeight) return false;
+        if (state == AscentState.NONE) K.set(p.getX(), p.getY(), p.getZ(), p.getX() - p.xo, p.getDeltaMovement().y, p.getZ() - p.zo);
+        slamming = true;
+        K.vx *= 0.2;
+        K.vz *= 0.2;
+        K.vy = -speed;
+        setState(p, AscentState.CARRY);
+        event(AscentPayloads.EV_DIVE, 0);
+        FeelDirector.dive();
+        trace("a Judgement Fall");
+        return true;
+    }
+
+    /** The Sovereign form begun: off the ground (or out of a glide) into flight. */
+    static void sovereignLift(LocalPlayer p) {
+        if (state.rope || state == AscentState.SOAR || off(p)) return;
+        if (state == AscentState.NONE) {
+            K.set(p.getX(), p.getY(), p.getZ(), p.getX() - p.xo, 0.9, p.getZ() - p.zo);
+        }
+        startSoar(p);
+    }
+
     private static double heightAboveGround(LocalPlayer p) {
         return p.getY() - AscentAnchors.floorUnder(p.level(), p, p.getX(), p.getY() + 0.5, p.getZ(), 40);
     }

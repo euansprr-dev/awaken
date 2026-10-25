@@ -213,12 +213,25 @@ public class AwakenMob extends Monster {
     public void configure(int lv, MobRole role, Set<Forces.Tag> tags) {
         MobScaling.apply(this, lv, role, def().tier);
         entityData.set(DATA_ROLE, (byte) role.role().ordinal());
+        // what the band reads (SPEC §21.1): the living module adds titles
+        setData(CoreApi.CREATURE_TAG.get(), new dev.awaken.core.api.CreatureTag(Math.max(1, lv), tagKind(role.role()),
+                role.role() == MobRole.Role.ELITE, dev.awaken.core.api.CreatureTag.of(this).title()));
         for (Forces.Tag t : tags) Forces.tag(this, t);
         syncForceTags();
         if (role.role() == MobRole.Role.WARDEN || role.role() == MobRole.Role.BOSS || role.role() == MobRole.Role.NIGHTMARE) {
             setPersistenceRequired();
             ensureBar();
         }
+    }
+
+    /** What kind of creature the band says this is, for its role (fauna and beasts say their own). */
+    protected dev.awaken.core.api.CreatureTag.Kind tagKind(MobRole.Role role) {
+        return switch (role) {
+            case WARDEN -> dev.awaken.core.api.CreatureTag.Kind.WARDEN;
+            case BOSS, BREAK, NIGHTMARE -> dev.awaken.core.api.CreatureTag.Kind.BOSS;
+            case NONE, SPIRIT, RITUAL, ECHO -> dev.awaken.core.api.CreatureTag.Kind.NONE;
+            default -> dev.awaken.core.api.CreatureTag.Kind.GATE;
+        };
     }
 
     public MobRole role() {
@@ -839,6 +852,8 @@ public class AwakenMob extends Monster {
         l.squish = Mth.lerp(partialTicks, oSquish, squish);
         l.upsideDown = d.has(Trait.UPSIDE_DOWN);
         l.fallen = (flags & F_FALLEN) != 0;
+        l.hurt = hurtTime > 0 && hurtDuration > 0 ? Math.max(0.0F, (hurtTime - partialTicks) / hurtDuration) : 0.0F;
+        l.aggressive = isAggressive();
         return l;
     }
 

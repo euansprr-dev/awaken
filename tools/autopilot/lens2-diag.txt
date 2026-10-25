@@ -1,0 +1,52 @@
+# Lens 2 diagnostic: one pillar at golden hour, the light buffer (lensdebug 5) from four sides. Sun in the west: the
+# shadow must run east (right of the pillar when facing north).
+world lens2diag creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1280 720
+hud off
+cmd gamemode spectator
+lens cinematic
+cmd time set 11900
+cmd tp @s 600 255 560 0 30
+wait 200
+cmd fill 580 240 580 620 240 620 minecraft:grass_block
+cmd fill 600 241 600 600 250 600 minecraft:stone_bricks
+cmd fill 590 241 590 590 243 590 minecraft:gold_block
+wait 100
+cmd tp @s 600 252 625 180 25
+wait 100
+lensdebug 5
+wait 20
+shot diag_n
+cmd tp @s 600 252 575 0 25
+wait 100
+lensdebug 6
+lensdebug 5
+wait 20
+shot diag_s
+cmd tp @s 575 252 600 -90 25
+wait 100
+lensdebug 6
+lensdebug 5
+wait 20
+shot diag_e
+cmd tp @s 625 252 600 90 25
+wait 100
+lensdebug 6
+lensdebug 5
+wait 20
+shot diag_w
+lensdebug 0
+wait 20
+shot diag_w_lit
+quit
