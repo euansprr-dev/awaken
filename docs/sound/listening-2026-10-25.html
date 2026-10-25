@@ -1,0 +1,227 @@
+<title>World Sound Listening</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400&family=Silkscreen&display=swap">
+<style>
+/* Layout: one column of night glass; one row per clip: what it is, the player, two marks. */
+:root {
+  --bg: #0a1019; --glass: #0f1724; --line: #22344d; --fg: #e4f1ff; --muted: #8ea5bf; --accent: #7fc3ff;
+  --good: #8fdc9a; --not: #ffcf7a; --ink: #0a1019;
+  --display: "Chakra Petch", "Avenir Next Condensed", "Arial Narrow", sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --pixel: "Silkscreen", "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) { --bg: #eef3f8; --glass: #ffffff; --line: #cfdbe8; --fg: #0e1a2b; --muted: #4b5f76;
+    --accent: #1f6fb5; --good: #23884f; --not: #9a6100; --ink: #ffffff; color-scheme: light; }
+}
+:root[data-theme="light"] { --bg: #eef3f8; --glass: #ffffff; --line: #cfdbe8; --fg: #0e1a2b; --muted: #4b5f76;
+  --accent: #1f6fb5; --good: #23884f; --not: #9a6100; --ink: #ffffff; color-scheme: light; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 400 15px/1.55 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 80px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 32px; }
+h1, h2 { font-family: var(--display); margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(2rem, 6vw, 3rem); }
+h2 { font-size: 1.3rem; }
+p { margin: 0; }
+.eyebrow { font-family: var(--pixel); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+header { padding-top: 44px; display: grid; gap: 10px; max-width: 66ch; }
+.muted { color: var(--muted); }
+section { display: grid; gap: 10px; }
+.list { border-top: 1px solid var(--line); }
+.clip { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px) auto; gap: 8px 16px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.clip .t { font-weight: 600; }
+.clip .w { color: var(--muted); font-size: 0.88rem; }
+audio { width: 100%; min-width: 0; }
+.marks { display: flex; gap: 6px; }
+.marks button { font: 0.66rem var(--pixel); letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 10px; border: 1px solid var(--line);
+  background: var(--glass); color: var(--fg); cursor: pointer; }
+.marks button[aria-pressed="true"][data-mark="good"] { background: var(--good); border-color: var(--good); color: var(--ink); }
+.marks button[aria-pressed="true"][data-mark="not"] { background: var(--not); border-color: var(--not); color: var(--ink); }
+button:focus-visible, audio:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.bar button { font: 600 0.85rem var(--body); padding: 7px 12px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; }
+#out { width: 100%; min-height: 6em; font: 0.8rem ui-monospace, Menlo, monospace; background: var(--glass); color: var(--fg); border: 1px solid var(--line); padding: 8px; }
+@media (max-width: 640px) { .clip { grid-template-columns: 1fr; } }
+</style>
+<div class="wrap">
+<header>
+  <p class="eyebrow">AWAKEN · world sound · listening · 2026-10-25</p>
+  <h1>World Sound Listening</h1>
+  <p>AWAKEN's own synthesised places and moments, rendered from the game's files and data. Nature is AmbientSounds and
+    isn't here. Mark what holds the bar and what doesn't; nothing is required.</p>
+  <p class="muted">Clips are levelled for listening; in game they sit lower, under the music. In the place mixes the
+    one-off sounds come about three times as often as in game so 30 seconds holds several.</p>
+</header>
+<section><h2>Places</h2><div class="list"><div class="clip" data-id="place_stillpoint">
+  <div class="head"><p class="t">The Stillpoint</p><p class="w">Wind over the cloud sea, a held temple tone, chimes stirred by the wind, a far bell.</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/place_stillpoint.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="place_halo_orbit">
+  <div class="head"><p class="t">The Halo</p><p class="w">The station&#x27;s hum and ventilation, airlock hisses, far metal knocks, data chirps.</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/place_halo_orbit.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="place_lucidium_dream">
+  <div class="head"><p class="t">A dream (Lucidium), fully lucid</p><p class="w">A soft shimmering chord, breathing air, reversed glass swells.</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/place_lucidium_dream.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="place_elderwood">
+  <div class="head"><p class="t">Elderwood, a breezy morning</p><p class="w">The giant trees groaning in the gusts, great limbs creaking, gold glints. AmbientSounds&#x27; forest plays under this in game.</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/place_elderwood.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="place_lumen_forest">
+  <div class="head"><p class="t">Lumen Forest at night</p><p class="w">A low hum, and the specks chiming and answering each other. AmbientSounds&#x27; night plays under this in game.</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/place_lumen_forest.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="place_lucidium_dream_low">
+  <div class="head"><p class="t">The same dream at lucidity 0</p><p class="w">The same place, muffled: it clears as you become lucid.</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/place_lucidium_dream_low.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div></div></section>
+<section><h2>Moments</h2><div class="list"><div class="clip" data-id="veil">
+  <div class="head"><p class="t">The Veil, while you project</p><p class="w">A far choir on D and A and faint glints, the world muffled behind it.</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/veil.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="mirror_marsh">
+  <div class="head"><p class="t">Mirror Marsh answers</p><p class="w">Your own sound, then the marsh sending it back from across the water.</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/mirror_marsh.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div></div></section>
+<section><h2>Happenings</h2><div class="list"><div class="clip" data-id="tell_stampede">
+  <div class="head"><p class="t">A stampede, as you come near</p><p class="w">Hooves and a ground rumble, far off to one side, then close.</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/tell_stampede.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="tell_wings">
+  <div class="head"><p class="t">A murmuration</p><p class="w">A great flock turning overhead.</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/tell_wings.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="tell_tide">
+  <div class="head"><p class="t">The Deep Tide</p><p class="w">A low drone rolling in with the fog (in game the world falls quiet under it).</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/tell_tide.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="tell_bells">
+  <div class="head"><p class="t">A caravan</p><p class="w">Small bells at a walking pace.</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/tell_bells.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="tell_hunt">
+  <div class="head"><p class="t">The Wild Hunt</p><p class="w">Its horn far off, the hounds baying closer (in game everything else falls silent).</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/tell_hunt.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="tell_kites">
+  <div class="head"><p class="t">A carrion circle</p><p class="w">Kites crying overhead.</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/tell_kites.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div></div></section>
+<section><h2>Air beds alone (first 20 s)</h2><div class="list"><div class="clip" data-id="air_stillpoint_sea">
+  <div class="head"><p class="t">Stillpoint: the cloud sea</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/air_stillpoint_sea.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="air_stillpoint_tone">
+  <div class="head"><p class="t">Stillpoint: the temple tone</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/air_stillpoint_tone.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="air_halo_station">
+  <div class="head"><p class="t">Halo: the station</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/air_halo_station.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="air_halo_deep">
+  <div class="head"><p class="t">Halo: the deep quiet</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/air_halo_deep.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="air_dream_shimmer">
+  <div class="head"><p class="t">Dream: the shimmer</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/air_dream_shimmer.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="air_dream_air">
+  <div class="head"><p class="t">Dream: the air</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/air_dream_air.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="air_veil_choir">
+  <div class="head"><p class="t">Veil: the choir</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/air_veil_choir.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="air_elder_groan">
+  <div class="head"><p class="t">Elderwood: the groan</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/air_elder_groan.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="air_lumen_hum">
+  <div class="head"><p class="t">Lumen Forest: the hum</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/air_lumen_hum.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div></div></section>
+<section><h2>One-off sounds, every variant in a row</h2><div class="list"><div class="clip" data-id="shot_chime">
+  <div class="head"><p class="t">Stillpoint chimes</p><p class="w">6 variants</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/shot_chime.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="shot_bell_far">
+  <div class="head"><p class="t">The far bell</p><p class="w">2 variants</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/shot_bell_far.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="shot_halo_hiss">
+  <div class="head"><p class="t">Halo airlocks</p><p class="w">3 variants</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/shot_halo_hiss.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="shot_halo_clunk">
+  <div class="head"><p class="t">Halo metal</p><p class="w">3 variants</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/shot_halo_clunk.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="shot_halo_chirp">
+  <div class="head"><p class="t">Halo data chirps</p><p class="w">4 variants</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/shot_halo_chirp.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="shot_dream_swell">
+  <div class="head"><p class="t">Dream swells</p><p class="w">4 variants</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/shot_dream_swell.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="shot_elder_creak">
+  <div class="head"><p class="t">Elderwood creaks</p><p class="w">4 variants</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/shot_elder_creak.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="shot_elder_glint">
+  <div class="head"><p class="t">Elderwood glints</p><p class="w">4 variants</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/shot_elder_glint.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="shot_lumen_chime">
+  <div class="head"><p class="t">Lumen chimes</p><p class="w">6 variants</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/shot_lumen_chime.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div><div class="clip" data-id="shot_tell_horn">
+  <div class="head"><p class="t">The Hunt&#x27;s horn</p><p class="w">2 variants</p></div>
+  <audio controls preload="none" src="listening-2026-10-25/shot_tell_horn.mp3"></audio>
+  <div class="marks"><button type="button" data-mark="good" aria-pressed="false">Good</button><button type="button" data-mark="not" aria-pressed="false">Not yet</button></div>
+</div></div></section>
+<section><h2>Your marks</h2><div class="bar"><button type="button" id="copy">Copy marks</button><span class="muted" id="count"></span></div>
+<textarea id="out" readonly aria-label="Your marks"></textarea></section>
+</div>
+<script>
+const KEY = "awaken-world-listening-2026-10-25";
+let marks = {};
+try { marks = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { marks = {}; }
+function render() {
+  let g = 0, n = 0;
+  document.querySelectorAll(".clip").forEach(c => {
+    const m = marks[c.dataset.id];
+    c.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(m === b.dataset.mark)));
+    if (m === "good") g++; else if (m === "not") n++;
+  });
+  document.getElementById("count").textContent = g + " good · " + n + " not yet";
+  const lines = Object.entries(marks).filter(([, v]) => v).map(([k, v]) => k + ": " + v);
+  document.getElementById("out").value = lines.join("\n");
+}
+document.querySelectorAll(".clip").forEach(c => c.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+  marks[c.dataset.id] = marks[c.dataset.id] === b.dataset.mark ? undefined : b.dataset.mark;
+  try { localStorage.setItem(KEY, JSON.stringify(marks)); } catch (e) {}
+  render();
+})));
+document.querySelectorAll("audio").forEach(a => a.addEventListener("play", () => {
+  document.querySelectorAll("audio").forEach(o => { if (o !== a) o.pause(); });
+}));
+document.getElementById("copy").addEventListener("click", () => {
+  const t = document.getElementById("out");
+  navigator.clipboard.writeText(t.value).catch(() => { t.focus(); t.select(); });
+});
+render();
+</script>
