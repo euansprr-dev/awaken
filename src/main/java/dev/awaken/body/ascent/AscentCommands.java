@@ -46,6 +46,8 @@ final class AscentCommands {
             ascent.then(Commands.literal("spire").then(Commands.literal("goto").executes(c -> spireGoto(c.getSource()))));
             // the nearest sky platform: rigged if it isn't yet, and you under its first ring (tours)
             ascent.then(Commands.literal("sky").then(Commands.literal("goto").executes(c -> skyGoto(c.getSource()))));
+            ascent.then(Commands.literal("windway").executes(c -> windwayInfo(c.getSource()))
+                    .then(Commands.literal("goto").executes(c -> windwayGoto(c.getSource()))));
             ascent.then(Commands.literal("pilot").then(Commands.argument("line", StringArgumentType.greedyString())
                     .executes(c -> {
                         ServerPlayer p = c.getSource().getPlayerOrException();
@@ -103,6 +105,66 @@ final class AscentCommands {
         }
         src.sendFailure(Component.literal("Found a platform near " + at.toShortString() + " but no start in its chunks"));
         return 0;
+    }
+
+    /** The windways the server knows, and the nearest to you. */
+    private static int windwayInfo(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        WindwaysServer.scan(p, src.getServer().overworld().getGameTime(), 64);
+        var ways = Windways.serverWays();
+        Windways.Way near = null;
+        for (Windways.Way w : ways) if (near == null || w.reach(p.getX(), p.getZ()) < near.reach(p.getX(), p.getZ())) near = w;
+        Windways.Way n = near;
+        src.sendSuccess(() -> Component.literal(ways.size() + " windway lanes known" + (n == null ? "" : String.format(
+                "; the nearest %.0f blocks off, %.0f long, %s", n.reach(p.getX(), p.getZ()), n.length(),
+                Windways.holds(n, p.getX(), p.getY(), p.getZ()) ? "and you're in it" : "from " + (int) n.ax() + ", " + (int) n.ay() + ", " + (int) n.az())))
+                .withStyle(ChatFormatting.AQUA), false);
+        return ways.size();
+    }
+
+    /**
+     * Onto the deck of the platform the nearest windway starts from, at its rim on the lane's side, facing along it (a
+     * run off the edge and open wings drop into it). Checks the deck's height against the seed's prediction.
+     */
+    private static int windwayGoto(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        net.minecraft.server.level.ServerLevel level = src.getServer().overworld();
+        WindwaysServer.scan(p, level.getGameTime(), 64);
+        Windways.Way best = null;
+        double bd = Double.MAX_VALUE;
+        for (Windways.Way w : Windways.serverWays()) {
+            double d = Math.hypot(w.ax() - p.getX(), w.az() - p.getZ());
+            if (d < bd) {
+                bd = d;
+                best = w;
+            }
+        }
+        if (best == null) {
+            src.sendFailure(Component.literal("No windway within " + WindwaysServer.LOOK + " blocks (no two sky platforms within "
+                    + Windways.MAX_LINK + " of each other yet: run it again, the search finishes over a few calls)"));
+            return 0;
+        }
+        double hl = Math.hypot(best.bx() - best.ax(), best.bz() - best.az()), ux = (best.bx() - best.ax()) / hl, uz = (best.bz() - best.az()) / hl;
+        double rx = -uz, rz = ux;
+        int cx = (int) Math.floor(best.ax() - ux * Windways.OUT - rx * Windways.LANE);
+        int cz = (int) Math.floor(best.az() - uz * Windways.OUT - rz * Windways.LANE);
+        int deck = (int) Math.round(best.ay()) + Windways.BELOW;
+        level.getChunk(cx >> 4, cz >> 4);
+        level.getChunk((cx + 11) >> 4, cz >> 4);
+        boolean confirmed = level.getBlockState(new net.minecraft.core.BlockPos(cx + 11, deck, cz)).is(net.minecraft.world.level.block.Blocks.POLISHED_DEEPSLATE)
+                && level.getBlockState(new net.minecraft.core.BlockPos(cx + 11, deck - 1, cz)).isAir();
+        double x = cx + 0.5 + ux * 6 + rx * 8, z = cz + 0.5 + uz * 6 + rz * 8;
+        float yaw = (float) Math.toDegrees(Math.atan2(-ux, uz));
+        p.teleportTo(level, x, deck + 1, z, java.util.Set.of(), yaw, 0, true);
+        // the lanes round where they are now
+        WindwaysServer.forget(p.getUUID());
+        WindwaysServer.scan(p, level.getGameTime(), 64);
+        dev.awaken.Awaken.LOG.info("[ascent] windway goto: from the platform at {}, {} (deck {} predicted, {}), {} long, to {}, {}, {}",
+                cx, cz, deck, confirmed ? "confirmed" : "NOT where predicted", (int) best.length(), (int) best.bx(), (int) best.by(), (int) best.bz());
+        Windways.Way b = best;
+        src.sendSuccess(() -> Component.literal(String.format("On the deck at %d, %d: the windway runs %.0f blocks from here%s", cx, cz, b.length(),
+                confirmed ? "" : " (the deck isn't where the seed says!)")).withStyle(confirmed ? ChatFormatting.AQUA : ChatFormatting.RED), false);
+        return confirmed ? 1 : 0;
     }
 
     private static int spireGoto(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {

@@ -29,7 +29,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * the ground (over water, a buoy to stand on: the Ascent stands aside while swimming); glowing anchor rings sit round
  * the chain every {@link #RING_STEP} blocks, a quarter turn apart, each nearly overhead from under the last (a zip up
  * and a hang under it: AscentRules.ZIP_UP_*). The top ring stands in a small perch: a zip to its side pulls the body
- * onto it, and from it a zip to the pier's side does the same. The core sits in the cabin's middle.
+ * onto it, and from it a zip to the pier's side does the same. The core sits in the cabin's middle. Over a forest the
+ * canopy under the first ring is opened, so a throw from the ground sees it.
  */
 public final class SkyRig {
     private SkyRig() {}
@@ -45,6 +46,24 @@ public final class SkyRig {
     static final int DECK = 12, C = 24;
 
     private static final ConcurrentLinkedQueue<BoundingBox> PENDING = new ConcurrentLinkedQueue<>();
+
+    /** The deck's centre of a platform starting in this chunk (its blueprint is 49 across from the chunk's corner). */
+    public static BlockPos centre(net.minecraft.world.level.ChunkPos chunk) {
+        return new BlockPos(chunk.getMinBlockX() + C, 0, chunk.getMinBlockZ() + C);
+    }
+
+    /**
+     * The deck's height of a platform starting in this chunk, from the world's seed alone (the windways need it for
+     * platforms far beyond loaded chunks): PrecursorRuinStructure draws a seed, a turn, then the height, from the
+     * structure's own random (Structure.GenerationContext.makeRandom).
+     */
+    public static int deckY(long levelSeed, net.minecraft.world.level.ChunkPos chunk) {
+        var r = new net.minecraft.world.level.levelgen.WorldgenRandom(new net.minecraft.world.level.levelgen.LegacyRandomSource(0L));
+        r.setLargeFeatureSeed(levelSeed, chunk.x(), chunk.z());
+        r.nextLong();
+        r.nextInt(4);
+        return PrecursorRuinStructure.SKY_MIN_Y + r.nextInt(8) + DECK;
+    }
 
     /** What to place, as pure geometry from the deck's centre and height and the ground under the chain. */
     /** perch: the plates round the top ring (it stands in their middle). */
@@ -160,9 +179,26 @@ public final class SkyRig {
                 level.setBlock(new BlockPos(first.getX() + dx, ground - 1, first.getZ() + dz), rim ? plate : RuinBuilder.plating(), flags);
             }
         }
+        // over a forest: the canopy under the first ring opened (leaves and vines, 2 round its column) so a throw from
+        // the ground sees it
+        if (first != null) {
+            int opened = 0;
+            BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+            for (int y = ground; y < first.getY(); y++) for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) {
+                if (dx * dx + dz * dz > 5) continue;
+                m.set(first.getX() + dx, y, first.getZ() + dz);
+                if (!level.isLoaded(m)) continue;
+                BlockState b = level.getBlockState(m);
+                if (b.is(net.minecraft.tags.BlockTags.LEAVES) || b.is(Blocks.VINE)) {
+                    level.setBlock(m, Blocks.AIR.defaultBlockState(), flags);
+                    opened++;
+                }
+            }
+            if (opened > 0) dev.awaken.Awaken.LOG.info("[ascent] sky platform at {}, {}: {} leaves cleared under the first ring", cx, cz, opened);
+        }
         level.setBlock(l.core(), AscentContent.WING_CORE.get().defaultBlockState(), flags);
-        dev.awaken.Awaken.LOG.info("[ascent] sky platform rigged at {}, {}: {} rings down to {} (ground {})", cx, cz, l.rings().size(),
-                l.chainBottom(), ground);
+        dev.awaken.Awaken.LOG.info("[ascent] sky platform rigged at {}, {} (deck {}): {} rings down to {} (ground {})", cx, cz, deckY,
+                l.rings().size(), l.chainBottom(), ground);
     }
 
     public static void register(net.neoforged.bus.api.IEventBus bus) {

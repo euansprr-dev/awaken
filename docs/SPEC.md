@@ -291,6 +291,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   of the stretch in a rope, glide, flight, wall-run or hang, and no block placed: a tower never counts).
   `core.api.MovementHooks.wallRunning(Player)` / `hanging(Player)` read the Runner's moves. `core.api.AirHooks`
   (`register(Source)`, `Source.airAt(Level, x, y, z, double[] out)`): moving air the free states feel (§17.6).
+  `core.api.CameraHooks` (client): `installToggle(BooleanSupplier)`, `toggleView()` (the View key asks it first; with
+  Shoulder Surfing it flips first person and the shoulder view, §17.13).
 - `dev.awaken.terrain.api.BiomeTable` — `archetype(Holder<Biome>)` (the vanilla biome an Awakened one stands in for, else
   its own key), `tag(String path)` (the table's `awaken:` biome tags: `fauna/`, `has_lair/`, `lair_style/`, `cottage/`).
 - `dev.awaken.terrain.api.CityBasin` / `CitySite` — the city basin (§15): `request(Predicate<MinecraftServer>)` (the city's
@@ -1332,7 +1334,8 @@ below now cite what was measured; details in docs/carillon/spikes/G0-notes.md).
 9. Map: our own Atlas on the Holo. Diorama may join the pack as an optional client trial; Xaero's leaves the pack plan
    when the Atlas ships.
 10. Third person: vanilla's behind view plus our View key (flips first ↔ third, skips the front view); the shoulder view
-    (mixin or Shoulder Surfing) is decided at gate G1.
+    (mixin or Shoulder Surfing) is decided at gate G1. Settled 25 Oct 2026: Shoulder Surfing Reloaded (the pack's feel
+    profile), driven by the action camera (§17.13); without it, vanilla's behind view with the action camera's pull-back.
 11. Wall-run camera roll 5° by default, client option 0–7.5°.
 12. The forked planning session ("btw: kind of a side question…") is the orchestrator; docs/carillon/STATUS.md lets a
     fresh session take over at any gate.
@@ -2115,6 +2118,8 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   yet; puts you on the ground under the lowest ring); pilot `run climb` climbs the rings, the perch and the pier, walks
   round the cabin to its door and in, and ends when the core gives Wings (`tools/autopilot/ascent-sky.txt`: from a buoy
   at sea level to the pier in about 21 s, the core 7 s later; seed 4246).
+- Over a forest, rigging opens the canopy under the first ring (leaves and vines within 2 of its column, from the
+  ground up): a throw from the ground sees the ring (a tour stood under birches throwing into leaves).
 
 ### 17.10 Ascension trials: the Leaper's Gauntlet
 - **Opened for you** (`AscentTrials`): once you hold the rope (not the leap) and have swung enough to know it (Tether
@@ -2180,6 +2185,102 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   zip from the near rim onto a vaultable edge; the crown times a climb from the plaza and keeps it, a tower gets
   nothing, the first climb is 10 mastery).
 - Not yet: a race line's ghost on spires, and spires on cliffs and ravines.
+
+### 17.12 The Wilds: windways
+- **What**: streams of air between sky platforms (§17.9) that carry a glide from one deck to the next. Each platform
+  is linked to its nearest within 1,100 (`Windways.MAX_LINK`); a pair has two lanes, one each way, each 10 to the
+  right of the line between the centres (the two ways' tubes stay 20 apart). Never in Carillon's basin (no platform forms there).
+- **A lane** (`Windways.between`): from 34 out of the first platform's centre (past its islands, 19 out), 6 under its
+  deck, so a run off the deck's rim with wings open drops into it; to 5 short of the next platform's centre with the
+  side step (11.2 out: over its deck's rim), 6 over its deck (its islands rise 4 over it). Decks' heights come from
+  the seed alone (`SkyRig.deckY`: the structure's own random draws a seed, a turn, then the height), so a lane reaches
+  platforms far beyond loaded chunks.
+- **The air** (an AirHooks source, `Windways.airOf`; the glide takes it ×1.25, the carry ×1, flight ×0.6): a tube of
+  radius 6; along it 0.018 b/t², up 0.022 against a glide's sink, in toward its heart 0.008 at the rim; full in the
+  heart and 0.4 of it at the rim, rising from 0.15 over the first 40 blocks; over the last 64 it brakes (0.012 back),
+  so the glide comes out under 0.8 b/t over the deck and settles onto it.
+- **The hold** (`Windways.steer`, AscentMoves' glide): in a lane, a look within 35° of its way flies the line toward
+  its heart 16 ahead, bent by 0.35 of the look's offset; a look further off breaks out (the air still pushes). So a
+  glide is carried whatever its exact pitch: about 1.7 b/t (34 blocks a second), 1,000 blocks in about 30 s, set down at
+  about 0.5.
+- **Server**: every 5 s per player (staggered, overworld), the sky platforms within 1,400 (`RuinLocator`, 4 new terrain
+  samples a scan; cached, so later scans finish the search) are linked; the lanes of pairs seen in the last 5 min are the
+  server's, and the ones within 900 of a player (at most 64) go to them (`AscentPayloads.Lanes`) when that set changes.
+  Nothing saved; forgotten when the server stops.
+- **The look** (`WindwayRenderer`): along each lane within 280 of the camera, curls of pale mint-white air (5-11 long,
+  one every 3.2 with a fifth missing) flow at 1.25 b/t, each wavering as it goes and turned to face you, fading with
+  distance and at the lane's ends; a faint sheet of light down its heart shows the line from a deck's edge (gone within
+  10 of you). Brighter round you while it holds you; a rush of air as it takes you, its breath every 3.5 s while it carries you.
+- Dev: `/awaken ascent windway` (the lanes known, the nearest), `/awaken ascent windway goto` (onto the deck of the
+  platform the nearest lane starts from, at its rim on the lane's side, facing along it; checks the deck's height
+  against the seed's); `tools/autopilot/ascent-windway.txt` (Wings, the pilot's `glide` off the rim). Test:
+  `ascent_windway` (the lane's ends; carried the whole way and set down slowly looking along it, 15° under or 15° over;
+  a look 45° away breaks out; AirHooks hears the server's lanes).
+  Tour (seed 4246): the lane took the glide 2 s after the wings opened and carried it 667 blocks in 21 s, out at 0.34
+  b/t 7 over the next deck. From a deck in daylight the lane reads faintly (inside it, plainly).
+- Not yet: windways round spires and other heights, weather that turns them, a ride counted toward Wings mastery.
+
+### 17.13 The feel pass, part 1: the action camera
+Approved 25 Oct 2026 (Euan: the movement should feel "really, really, really good"; first person reads flat and
+vanilla's third person sits right behind you). The over-the-shoulder view follows what the body is doing.
+- **The view**: Shoulder Surfing Reloaded (pack feel profile, client only; `shouldersurfing_plugin.json` names
+  `body.client.feel.ShoulderSurfingPlugin`, the only class that names it). With it installed, a world starts in the
+  shoulder view the first moment after you join (after the opening's shots), once a session, if you're in first person
+  (`shoulderView`, feel settings, default on); first person stays one key away. The View key (the opening's, §16 decision
+  10) asks `core.api.CameraHooks` first, so with Shoulder Surfing it flips first person and the shoulder view and never
+  lands on vanilla's camera right behind you (before, it took every perspective press before Shoulder Surfing saw it).
+- **The arm** (`body.ActionRig`, pure; `body.client.ActionCamera` reads the body once a tick): a pose from the Ascent's
+  state, then the Runner's (a wall-run, a hang or climb), a slide, using an item (aim: nothing added), else the ground.
+  Each pose shapes the shoulder offset (x left, y up, z back), in blocks over the shoulder view's own:
+  ground: back 0.6 of the trail; slide: up -0.55, back half the trail less 0.2; wall-run: over to the open side (away
+  from the wall, 1.2 times the shoulder's width), up 0.2, back 0.6 + 0.6 of the trail; hang and climb: up 0.45, back 0.5;
+  rope: back 2.2 + trail, up 0.8, 0.6 of the way in behind you; zip: back 1.2 + half the trail, up 0.3, 0.3 in; the
+  carry: back 1.5 + trail, up 0.4, 0.4 in; wings: back 2.6 + trail, up 0.6, 0.7 in; flight: back 3.0 + trail, up 0.5,
+  0.8 in. The trail: 2 blocks per block a tick over 0.22 b/t, at most 3; never more than 5.5 back in all. A critically
+  damped spring (0.22 out, 0.32 back) carries it there: it trails out, never overshoots, and is home in under 1.5 s.
+  Reduced motion halves it. After Shoulder Surfing's own offset handlers (sprint, aim, flying), so its aim view holds.
+- **Where you look** in Shoulder Surfing's decoupled camera (its default: the mouse turns the camera, the body faces
+  where it walks): the rope aims along the camera (`ShoulderView.aim`), and in an Ascent state, or holding the rope
+  key, the body takes the camera's look each tick and Shoulder Surfing's interaction state turns it to what you look
+  at, so you steer a swing, a glide and flight with the view. (Found 25 Oct: the rope threw where the body faced.)
+  The autopilot's look is given to the camera too.
+- **Without Shoulder Surfing**: vanilla's third person (behind) takes the arm's pull-back as distance
+  (`CalculateDetachedCameraDistanceEvent`); first person is never touched.
+- **Stands aside** (the arm comes home): through the opening's shots (`OpeningCamera.active()`), as a Veil spirit or
+  possessing, riding, spectating, or with `actionCamera` off (feel settings). Camera Overhaul still pauses in Ascent
+  states (Feel Director); the Feel Director's roll and FOV and BodyCamera's first-person moves are unchanged.
+- Test: `body_action_camera` (each pose's shape in order, the open side, the trail's cap, the spring trailing out
+  without overshoot and coming home). Tour: `tools/autopilot/ascent-camera.txt` (PACK=feel).
+- Next in the feel pass: one-button free-run (§17.14), then weight (landing dip, grab sounds and dust, wind with
+  speed, footstep bob in the shoulder view, a slow beat at a big leap's apex).
+
+### 17.14 The feel pass, part 2: the one-button free-run
+Hold sprint with forward and the body reads the ground ahead and picks the move (`body.client.FreeRun`; the reading
+and the pull are `RunnerRules.ahead` and `RunnerRules.bend`, both sides). The keys still do every move by hand, and the
+server checks every move exactly as before (a free-run move is the same claim a key would make).
+- **On the ground, sprinting** (moving within 37° of the look, over 0.12 b/t; once per 6 ticks), the column 0.45 past
+  the body's front: a top 0.6-1.2 over the feet with two blocks of room over it and over the head is **vaulted** (the
+  jump); a ledge 1.1-1.6 up is **mantled** (when the mantle is yours: sprint held counts as the jump); a wall taller than
+  1.6 is **jumped at** when Wall Stride climbs it or its lip is a hang from the jump's height; with no floor 2 blocks
+  down two ticks ahead (not water) the edge is **leapt from** (the sprint jump). A fence or wall (1.5) is left alone, a
+  step down of one is run down.
+- **In the air**, sprint held counts as jump held: a wall beside you is run along (the wall-run's own rules: 1.5 off
+  the ground, under 35°), a wall ahead climbed with Wall Stride; a ledge passed is caught as always.
+- **Hanging**, sprint and forward held for 6 ticks climb (the ledge jump's own climb out, or up when looking up).
+- **Jump magnetism**: as any jump leaves the ground (yours or the free-run's), the first lip within 4.5 ahead (a lower
+  roof up to a hang over the jump's top) becomes its target; for 8 ticks the motion turns toward it at most 2.5° a tick,
+  14° in all, never faster, and only while it's within 30° of the way you're going.
+- Setting: `freeRun` (feel settings, default on). Dev: `/awaken body try freerun` (forward and sprint held 15 s).
+  Test: `body_free_run` (a block vaulted, a wall jumped at, a fence left, an edge leapt, a step down not; the pull
+  capped and only toward what's nearly ahead). Tour: `tools/autopilot/ascent-freerun.txt` (PACK=feel): with forward
+  and sprint held, nothing else, the body vaulted a low wall, leapt a 3-block gap, jumped at a 2-high wall, caught its
+  lip and climbed out (6 ticks after the grab), and leapt from the roof's far edge; then the rope zipped ring to ring
+  in the shoulder view.
+- Carillon's handhold roles (`#awaken:runner_ledges`, `runner_climbs`, `runner_lines`, `runner_soft`,
+  `runner_swings`, SPEC §16.9 on carillon/main): ledges and swing points already work by their collision shapes (a
+  sill, a cornice, a beam end is a lip; the rope bites anything solid). Climbs (drainpipes, ivy), lines without
+  collision and soft landings wait for the tags' contents.
+- Not yet: tuning against Euan's notes from his feel session; tips for the free-run (Carillon's TipHooks).
 
 ---------------------------------------------------------------------------------------------------------------------
 

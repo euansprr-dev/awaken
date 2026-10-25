@@ -1,0 +1,75 @@
+# The action camera (SPEC §17.13) with Shoulder Surfing (run with PACK=feel): the world should start in the shoulder
+# view; then one shot each of the close shoulder standing, a wall-run (the camera on the open side), a slide (low), a
+# hang (up), a glide in a windway (wide, behind) and the rope (wide). Light tour: shots only.
+world ascent_cam1 survival 4246
+waitworld
+window 1440 900
+gui 0
+hud off
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule fall_damage false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd fill -16 199 -4 42 199 44 minecraft:smooth_stone
+cmd tp @s 0.5 200 0.5 0 12
+wait 40
+cmd awaken body course
+wait 100
+info
+shotnow cam_stand
+
+cmd tp @s -11.68 202 0.5 0 12
+wait 15
+cmd awaken body try wallrun
+wait 26
+shotnow cam_wallrun
+wait 40
+cmd awaken body try release
+
+cmd tp @s 20.5 200 30.5 90 12
+wait 15
+cmd awaken body try slide
+wait 20
+shotnow cam_slide
+wait 30
+cmd awaken body try release
+
+cmd tp @s 3.5 200 18.2 0 12
+wait 15
+cmd awaken body try hang
+wait 40
+shotnow cam_hang
+wait 30
+cmd awaken body try release
+
+cmd awaken ascent grant wings
+cmd awaken ascent windway goto
+wait 120
+cmd awaken ascent windway goto
+wait 40
+cmd awaken ascent pilot run glide
+wait 160
+shotnow cam_glide
+wait 120
+cmd awaken ascent pilot stop
+
+cmd awaken ascent grant tether
+cmd awaken ascent sky goto
+wait 60
+cmd awaken ascent pilot run climb
+wait 70
+shotnow cam_rope
+wait 60
+shotnow cam_rope2
+cmd awaken ascent pilot stop
+info
+quit

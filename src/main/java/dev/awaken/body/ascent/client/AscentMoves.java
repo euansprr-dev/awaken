@@ -4,6 +4,7 @@ import dev.awaken.body.ascent.AscentAnchors;
 import dev.awaken.body.ascent.AscentContent;
 import dev.awaken.body.ascent.AscentPayloads;
 import dev.awaken.body.ascent.AscentRules;
+import dev.awaken.body.ascent.Windways;
 import dev.awaken.body.ascent.AscentState;
 import dev.awaken.body.client.feel.FeelDirector;
 import dev.awaken.core.client.AwakenKeys;
@@ -48,6 +49,8 @@ public final class AscentMoves {
     static int aetherOutAt = -100;
     static final AscentRules.Kin K = new AscentRules.Kin();
     private static final double[] S = new double[3], AIR = new double[3];
+    private static final float[] LINE = new float[2], VIEW = new float[2];
+    private static boolean windHeld;
 
     // the rope
     static double ax, ay, az, len, lenTarget;
@@ -186,6 +189,11 @@ public final class AscentMoves {
         }
         if (state != AscentState.NONE && !reconcile(p)) return;
         stateAge++;
+        // Shoulder Surfing's decoupled view: in the air the body looks where the camera looks (you steer with the view)
+        if (state != AscentState.NONE && dev.awaken.body.client.feel.ShoulderView.aim(VIEW)) {
+            p.setYRot(VIEW[0]);
+            p.setXRot(VIEW[1]);
+        }
         float yaw = p.getYRot(), pitch = p.getXRot();
         switch (state) {
             case NONE -> {
@@ -251,7 +259,13 @@ public final class AscentMoves {
                     toCarry(p, "wings folded");
                     carry(yaw, fwd, right);
                 } else {
-                    AscentRules.glideStep(K, yaw, pitch, glideDrag());
+                    // in a windway, looking roughly along it, the air holds your line (SPEC §17.12)
+                    Windways.Way way = Windways.inside(p.level(), K.x, K.y, K.z);
+                    boolean held = way != null && Windways.steer(way, K.x, K.y, K.z, yaw, pitch, LINE);
+                    AscentRules.glideStep(K, held ? LINE[0] : yaw, held ? LINE[1] : pitch, glideDrag());
+                    if (held != windHeld) trace(held ? "a windway holds the glide" : String.format("out of the windway at %.2f b/t", K.speed()));
+                    windHeld = held;
+                    WindwayRenderer.riding(held ? way : null);
                     boomCheck(p);
                 }
             }
@@ -404,8 +418,11 @@ public final class AscentMoves {
     /** Fires the rope; true when it found an anchor (the state is then TETHER or ZIP). */
     private static boolean fire(LocalPlayer p) {
         Vec3 eye = p.getEyePosition();
+        // where you look: the camera in Shoulder Surfing's decoupled view, else the body's own look
+        boolean view = dev.awaken.body.client.feel.ShoulderView.aim(VIEW);
+        float aimYaw = view ? VIEW[0] : p.getYRot(), aimPitch = view ? VIEW[1] : p.getXRot();
         // a rope just let go of passes through the ring or branch it held: throw past it to the next one up
-        AscentAnchors.Anchor a = AscentAnchors.find(p.level(), p, eye, p.getYRot(), p.getXRot(),
+        AscentAnchors.Anchor a = AscentAnchors.find(p.level(), p, eye, aimYaw, aimPitch,
                 AscentRules.TETHER_RANGE + AscentRules.MASTERY_REACH * lv(dev.awaken.body.ascent.AscentMemory.Track.TETHER),
                 ticks - leftAt <= 20 ? leftAnchor : null);
         fireAt = ticks;

@@ -105,6 +105,8 @@ final class BodyTests {
 
     static void register() {
         AwakenTests.register("body_clips", 20, BodyTests::clips);
+        AwakenTests.register("body_action_camera", 20, BodyTests::actionCamera);
+        AwakenTests.register("body_free_run", 20, BodyTests::freeRun);
         AwakenTests.registerIsolated("body_mantle_ledges", 100, BodyTests::mantleLedges);
         AwakenTests.register("body_mantle_gate_walls", 400, BodyTests::mantleGateWalls);
         AwakenTests.registerIsolated("body_slide_gap_and_wall", 100, BodyTests::slideGapAndWall);
@@ -704,5 +706,86 @@ final class BodyTests {
         pig.setNoAi(true);
         h.getLevel().addFreshEntity(pig);
         return pig;
+    }
+
+    /**
+     * The action camera's arm (SPEC §17.13): each pose's shape in order (the ground close, the rope wider, the wings and
+     * flight widest; a slide low; a wall-run over to the open side), the trail capped, and the spring reaching a pose
+     * without overshooting and coming home after.
+     */
+    private static void actionCamera(net.minecraft.gametest.framework.GameTestHelper h) {
+        double[] g = new double[ActionRig.N], rope = new double[ActionRig.N], glide = new double[ActionRig.N], fly = new double[ActionRig.N];
+        double[] slide = new double[ActionRig.N], wall = new double[ActionRig.N], fast = new double[ActionRig.N];
+        ActionRig.target(ActionRig.Pose.GROUND, 0.13, g);
+        ActionRig.target(ActionRig.Pose.ROPE, 0.8, rope);
+        ActionRig.target(ActionRig.Pose.GLIDE, 1.5, glide);
+        ActionRig.target(ActionRig.Pose.FLIGHT, 1.5, fly);
+        ActionRig.target(ActionRig.Pose.SLIDE, 0.4, slide);
+        ActionRig.target(ActionRig.Pose.WALL_RUN, 0.35, wall);
+        ActionRig.target(ActionRig.Pose.FLIGHT, 6, fast);
+        h.assertTrue(g[ActionRig.BACK] == 0 && rope[ActionRig.BACK] > 2 && glide[ActionRig.BACK] > rope[ActionRig.BACK]
+                        && fly[ActionRig.BACK] > glide[ActionRig.BACK] && fly[ActionRig.CENTRE] > 0.5 && slide[ActionRig.UP] < -0.4
+                        && wall[ActionRig.OPEN] == 1 && fast[ActionRig.BACK] == ActionRig.MAX_BACK,
+                "the poses' shapes: ground " + g[0] + ", rope " + rope[0] + ", glide " + glide[0] + ", flight " + fly[0] + ", slide up "
+                        + slide[1] + ", wall open " + wall[2] + ", fastest " + fast[0]);
+        // over to the open side: a wall on the right puts the camera left of you (x is left), on the left, right
+        double[] o = new double[3];
+        ActionRig.shape(-0.75, 0.2, 4, 0, 0, 1, 0, true, o);
+        double leftOf = o[0];
+        ActionRig.shape(-0.75, 0.2, 4, 0, 0, 1, 0, false, o);
+        h.assertTrue(leftOf > 0.75 && o[0] < -0.75, "the open side: " + leftOf + " / " + o[0]);
+        ActionRig.Arm arm = new ActionRig.Arm();
+        double peak = 0;
+        int reach = -1;
+        for (int t = 0; t < 60; t++) {
+            arm.step(glide);
+            peak = Math.max(peak, arm.at[ActionRig.BACK]);
+            if (reach < 0 && Math.abs(arm.at[ActionRig.BACK] - glide[ActionRig.BACK]) < 0.05) reach = t;
+        }
+        h.assertTrue(reach > 5 && reach < 40 && peak <= glide[ActionRig.BACK] + 1e-6, "it trails out to the glide's arm in " + reach
+                + " ticks, never past it (" + peak + ")");
+        int home = -1;
+        for (int t = 0; t < 60 && home < 0; t++) {
+            arm.step(g);
+            if (Math.abs(arm.at[ActionRig.BACK]) < 0.05 && arm.at[ActionRig.BACK] >= -1e-6) home = t;
+        }
+        h.assertTrue(home > 0 && home < 30, "and comes home in " + home + " ticks");
+        h.succeed();
+    }
+    /**
+     * The one-button free-run (SPEC §17.14): the ground ahead read right (a block to vault, a wall to jump at, a fence
+     * left alone, an edge to leap from, a one-block step down not), and jump magnetism's bend capped and only toward
+     * what's nearly ahead.
+     */
+    private static void freeRun(GameTestHelper h) {
+        // five lanes on a floor raised off the ground (an edge needs two blocks of air under it), all run toward +z
+        for (int x = 0; x <= 8; x += 2) {
+            for (int y = 0; y <= 7; y++) for (int z = 0; z <= 2; z++) h.setBlock(new BlockPos(x, y, z), Blocks.AIR);
+            h.setBlock(new BlockPos(x, 3, 0), Blocks.STONE);
+        }
+        h.setBlock(new BlockPos(0, 3, 1), Blocks.STONE);
+        h.setBlock(new BlockPos(0, 4, 1), Blocks.STONE);                         // 1.0: vault
+        for (int y = 3; y <= 6; y++) h.setBlock(new BlockPos(2, y, 1), Blocks.STONE); // 3.0: a wall
+        h.setBlock(new BlockPos(4, 3, 1), Blocks.STONE);
+        h.setBlock(new BlockPos(4, 4, 1), Blocks.OAK_FENCE);                     // 1.5, a fence: nothing
+        h.setBlock(new BlockPos(8, 2, 1), Blocks.STONE);                         // a step down of one: no leap
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        double[] out = new double[1];
+        Vec3 a = h.absoluteVec(new Vec3(0.5, 4, 0.5)), b = h.absoluteVec(new Vec3(0.5, 4, 1.5));
+        double fx = b.x - a.x, fz = b.z - a.z;
+        int[] got = new int[5];
+        for (int i = 0; i < 5; i++) {
+            Vec3 f = h.absoluteVec(new Vec3(i * 2 + 0.5, 4, 0.5));
+            got[i] = RunnerRules.ahead(h.getLevel(), CollisionContext.empty(), m, f.x, f.y, f.z, fx, fz, 0.28, out);
+        }
+        h.assertTrue(got[0] == RunnerRules.AHEAD_VAULT && got[1] == RunnerRules.AHEAD_WALL && got[2] == RunnerRules.AHEAD_NONE
+                        && got[3] == RunnerRules.AHEAD_LEAP && got[4] == RunnerRules.AHEAD_NONE,
+                "vault, wall, fence, edge, step down read as " + java.util.Arrays.toString(got));
+        double[] v = new double[2];
+        double turned = RunnerRules.bend(0, 0, 0, 0.3, 1, 4, RunnerRules.PULL_STEP, v);
+        h.assertTrue(Math.abs(turned - RunnerRules.PULL_STEP) < 1e-9 && Math.abs(Math.hypot(v[0], v[1]) - 0.3) < 1e-9 && v[0] > 0,
+                "a ledge 14° off bends the jump " + turned + "° its way, speed kept");
+        h.assertTrue(RunnerRules.bend(0, 0, 0, 0.3, 4, 4, RunnerRules.PULL_STEP, v) == 0, "one 45° off doesn't pull");
+        h.succeed();
     }
 }
