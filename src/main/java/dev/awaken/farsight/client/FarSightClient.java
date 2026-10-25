@@ -200,8 +200,9 @@ public final class FarSightClient {
         float golden = moon ? 0f : 1f - smooth(0.06f, 0.45f, elevation);
         if (moon) sunColour.set(0.70f, 0.80f, 1.00f);
         else sunColour.set(1.00f + 0.30f * golden, 0.98f - 0.12f * golden, 0.94f - 0.36f * golden);
-        // the air: clear alpine air sees about 40 km (density per block at sea level); rain and mist thicken it
-        float haze = 1.0e-4f * (1f + 3f * rain);
+        // the air: at sea level about 25 km of sight, thinning with height (scale height 500), so a ridge at y 250 sees
+        // about 40 km; rain thickens it
+        float haze = 1.5e-4f * (1f + 3f * rain);
         // valley cloud: lying low in the valleys among the mountains, more of it at dawn and dusk and in rain
         float mistCover = Math.min(1f, 0.34f + 0.26f * golden + 0.35f * rain);
         fogEnd = horizon();

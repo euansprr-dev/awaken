@@ -46,7 +46,7 @@ import java.util.OptionalDouble;
 final class FarRenderer implements AutoCloseable {
     static final float NEAR = 1f, FAR = 32768f;
     /** The far air's scale height (blocks) and how strongly it scatters sunlight toward the eye. */
-    static final float AIR_SCALE_HEIGHT = 1500f, AIR_SUN = 0.9f;
+    static final float AIR_SCALE_HEIGHT = 500f, AIR_SUN = 0.9f;
     static final int PIECE = 64, MAX_DRAWS = 256, STRIDE = PIECE + 1, WIDTHS = PIECE / 8;
     private static final int INDICES_PER_CELL = 6;
     static final int FRAME_SIZE = new Std140SizeCalculator().putMat4f().putVec4().putVec4().putVec4().putVec4().get()

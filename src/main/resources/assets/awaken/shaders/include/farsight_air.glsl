@@ -1,6 +1,6 @@
 // AWAKEN Far Sight 2: the air between the camera and far ground, shared by the terrain and the trees. Aerial perspective
-// from an exponential atmosphere at real scale (density FarAir.x per block at sea level, scale height FarAir.y), sun-
-// coloured toward the sun; then the game's own weather fog (rain, a gate's fog) and the horizon melting into the sky.
+// from an exponential atmosphere at real scale (density FarAir.x per block at sea level, scale height FarAir.y: low, so
+// valleys hold more haze than ridges and ranges stand out layer by layer), bluer by day, sun-coloured toward the sun; then the game's own weather fog (rain, a gate's fog) and the horizon melting into the sky.
 // Needs minecraft:fog.glsl and awaken:farsight.glsl.
 
 // smooth value noise on an exact integer lattice (cell blocks wide, a divisor of 256), in 0..1
@@ -58,7 +58,10 @@ vec3 farAir(vec3 c, vec3 rel) {
     float t = exp(-max(od, 0.0));
     float mu = dot(dir, FarSun.xyz);
     float phase = (1.0 - 0.72 * 0.72) / pow(1.0 + 0.72 * 0.72 - 1.44 * mu, 1.5) * 0.08;
-    vec3 air = FogColor.rgb + FarSunColor.rgb * FarAir.z * phase * FarSun.w;
+    // by day the air between far ridges is bluer than the horizon's pale fog (the sky's own blue, scattered toward the
+    // eye); at dusk it keeps the fog's warmth
+    vec3 blue = FogColor.rgb * vec3(0.82, 0.91, 1.10);
+    vec3 air = mix(FogColor.rgb, blue, FarSun.w * (1.0 - FarSunColor.a) * 0.8) + FarSunColor.rgb * FarAir.z * phase * FarSun.w;
     c = mix(air, c, t);
     float fog = max(linear_fog_value(dist, FogEnvironmentalStart, FogEnvironmentalEnd), linear_fog_value(length(rel.xz), FarFog.x, FarFog.y));
     return mix(c, FogColor.rgb, fog * FogColor.a);
