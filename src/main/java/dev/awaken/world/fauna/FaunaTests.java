@@ -294,6 +294,8 @@ final class FaunaTests {
             awaken(p);
             BlockPos start = h.absolutePos(new BlockPos(0, UP, 0));
             for (int dx = -6; dx <= 6; dx++) for (int dz = -6; dz <= 6; dz++) ground(level, start.offset(dx, 0, dz));
+            // plots are reused: an old floor above the patch roofed it on CI (as in the rules test), so clear to the roof reach
+            AwakenTests.clearAbove(level, start, 6, 7, FaunaRules.ROOF_REACH + 1);
             // The test world's biome is whatever the flat preset puts here: make this patch plains.
             BlockPos a = start.offset(-10, -4, -10), b = start.offset(10, 6, 10);
             level.getServer().getCommands().performPrefixedCommand(level.getServer().createCommandSourceStack().withLevel(level).withSuppressedOutput(),
