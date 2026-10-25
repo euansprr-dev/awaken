@@ -923,9 +923,9 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   `compat.client.FarTerrain` (texture `awaken:lens_far_depth`; DH's clip planes and depth convention in params texel 15
   and texel 0's b/a). Far terrain is hazed by its real distance (aerial perspective deepening to 8× the render
   distance), never counts as open sky for bloom, light shafts or the sun halo. Params texels: 13 the ritual, 14 Holo.
-- Comfort (stage 5): the `comfort` profile is JEI, Jade, AppleSkin, Mouse Tweaks, Controlling, Dynamic FPS and Xaero's
-  World Map. Xaero's World Map stays only until Carillon's own Atlas ships; no minimap, ever (direction comes from the
-  world). AppleSkin, Mouse Tweaks and Controlling need nothing from Awaken (the comfort tour checks they load with no
+- Comfort (stage 5): the `comfort` profile is JEI, Jade, AppleSkin, Mouse Tweaks, Controlling and Dynamic FPS. Xaero's
+  World Map left it when Carillon's own Atlas shipped (M5, §16.8; M opens the table); no minimap, ever (direction
+  comes from the world). `compat.WorldMaps` stays for a player who adds Xaero's themselves, and is silent without it. AppleSkin, Mouse Tweaks and Controlling need nothing from Awaken (the comfort tour checks they load with no
   log errors). Tours turn Dynamic FPS off in `run-autopilot/config/dynamic_fps.json` (it drops a background window to
   1 fps or none). JEI and Jade are compiled against as `compileOnly` from Modrinth's Maven by version id (the builds
   `pack/lock.json` pins); their plugins (`compat.client.jei`, `compat.jade`, `compat.client.jade`) are found by their
@@ -982,7 +982,7 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   "The map is disabled with a potion effect". Xaero still records those chunks into that dimension's own cache (the
   overworld map is never touched). The effect lives in the server's registry: single player always has it, a dedicated
   server needs Xaero's World Map installed (it is server-optional). Without Xaero nothing registers. Autopilot
-  `compat map` reports it. Test: `compat_world_map_rule`. Until Carillon's Atlas replaces Xaero.
+  `compat map` reports it. Test: `compat_world_map_rule`. Kept for a player who adds Xaero's (it left the pack at M5).
 - Lens and far terrain: Distant Horizons draws without the game's depth, so Lens samples DH's own depth texture
   through `compat.client.FarTerrain` (texture `awaken:lens_far_depth`), with no copy: DH 3.3.4's Blaze renderer (the
   default engine on 26.3) clears that texture only at the start of its own pass (right after
@@ -1653,6 +1653,18 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   - The table opens on M (Xaero's key), in the Holo's projected glass (`HudLook` FRAME | DRIFT, text as light), sets
     `UiHooks` focus while open, and plays the Holo's open and close sounds. C centres on you. Dev: `/awaken atlas
     stats|share|reveal <r>|ring <city|district>|clear` and the client's `/atlas open|view|spin|freeze|reveal|stats`.
+  - The look (phase 2): night lights from the lit bit (a light-emitting block in the top 6 of a column) as warm soft
+    sprites, flickering a little, at the two finer levels; cloud shadows on explored ground beside the blanket's edge
+    (east and south of each puff: the sun is low in the west); ambient occlusion on the top faces (darker for each
+    taller neighbour); three cloud sprites with sunlit rims and a tone per puff; zoomed out, a coarse cell that is
+    mostly known carries no cloud. Rumours (`MapMarks` labelled "? …") hang in the clouds as an amber "?" with their
+    name; every other mark shows only in an explored cell. You are a pin of light with a ring and a facing tick.
+  - Cost: slices outside the picture aren't drawn, and while only the clouds drift the picture is redrawn about 30
+    times a second (every frame while the view moves or the land prints in).
+  - The wrist glance: a section on the K menu's Status page right under NOW, the land round you (240 blocks across,
+    where you look is up) painted into the texture `awaken:atlas/glance` (480×280) at most once a second while the menu
+    shows it, or sooner once you've moved 4 blocks or turned 12°; the Holo draws it as one textured quad, with a button
+    to the table.
 
 ### 16.9 Public hooks (`core.api`, v0; signatures may change only through the orchestrator)
 - `CityHooks`: `inCity(Level, BlockPos)`, `district(Level, BlockPos)` (id or null), `isCivic(Level, BlockPos)`,

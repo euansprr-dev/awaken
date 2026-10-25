@@ -50,6 +50,8 @@ public final class AtlasClient {
             if (e.getLevel().isClientSide()) AtlasState.get().onChunkLoad(e.getChunk());
         });
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> tick());
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre.class, e -> AtlasGlance.frame());
+        AtlasGlance.register();
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> AtlasState.get().leave());
     }
 
@@ -88,6 +90,7 @@ public final class AtlasClient {
                 .then(Commands.literal("reveal").executes(c -> reveal()))
                 .then(Commands.literal("stats").executes(c -> {
                     for (String line : AtlasState.describe()) Awaken.LOG.info("[atlas] stats: {}", line);
+                    Awaken.LOG.info("[atlas] stats: glance paint {} ms", String.format(java.util.Locale.ROOT, "%.2f", AtlasGlance.paintNanos / 1e6));
                     return 1;
                 })));
     }

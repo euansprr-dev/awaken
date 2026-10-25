@@ -60,7 +60,23 @@ final class AtlasPipelines {
             .withCull(false)
             .build();
 
+    /** Night lights: a soft sprite added onto what's under it, depth-tested so a ridge hides a lamp behind it. */
+    static final RenderPipeline GLOW = RenderPipeline.builder(RenderPipelines.GLOBALS_SNIPPET)
+            .withLocation(Identifier.fromNamespaceAndPath(Awaken.MODID, "pipeline/atlas_glow"))
+            .withBindGroupLayout(BindGroupLayouts.PROJECTION)
+            .withBindGroupLayout(BindGroupLayouts.DYNAMIC_TRANSFORMS)
+            .withBindGroupLayout(BindGroupLayouts.SAMPLER0)
+            .withVertexShader("core/position_tex_color")
+            .withFragmentShader("core/position_tex_color")
+            .withColorTargetState(new ColorTargetState(BlendFunction.LIGHTNING))
+            .withVertexBinding(0, DefaultVertexFormat.POSITION_TEX_COLOR)
+            .withPrimitiveTopology(PrimitiveTopology.QUADS)
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
+            .withCull(false)
+            .build();
+
     static void register(RegisterRenderPipelinesEvent e) {
+        e.registerPipeline(GLOW);
         e.registerPipeline(TERRAIN);
         e.registerPipeline(OVERLAY);
         e.registerPipeline(CLOUDS);

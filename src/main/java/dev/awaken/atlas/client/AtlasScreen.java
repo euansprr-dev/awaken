@@ -153,9 +153,11 @@ public final class AtlasScreen extends Screen {
 
     private void chrome(GuiGraphicsExtractor g, Minecraft mc, int x0, int y0, int x1, int y1, int mouseX, int mouseY) {
         String where = place(mc);
-        String title = "ATLAS" + (where == null ? "" : "  ·  " + where.toUpperCase(Locale.ROOT));
-        HudLook.text(g, font, title, x0 + 2, MARGIN, INK, false);
         String count = String.format(Locale.ROOT, "%,d places known", Discovery.CLIENT.count());
+        int room = x1 - x0 - font.width(count) - 20;
+        String title = "ATLAS" + (where == null ? "" : "  ·  " + where.toUpperCase(Locale.ROOT));
+        if (font.width(title) > room) title = font.plainSubstrByWidth(title, room - font.width("…")) + "…";
+        HudLook.text(g, font, title, x0 + 2, MARGIN, INK, false);
         HudLook.text(g, font, count, x1 - font.width(count) - 2, MARGIN, Glass.LABEL | 0xFF000000, false);
         // compass: north turns with the table
         int ccx = x1 - 18, ccy = y0 + 18;
@@ -165,12 +167,17 @@ public final class AtlasScreen extends Screen {
         HudLook.text(g, font, "N", nx - 2, ny - 4, 0xFF7FC3FF, false);
         // hints and the two buttons
         buttonsY = height - MARGIN - 8;
-        HudLook.text(g, font, "drag: orbit  ·  right-drag: pan  ·  scroll: zoom  ·  C: you", x0 + 2, buttonsY, Glass.LABEL | 0xFF000000, false);
         String share = "Share with party", clear = "Clear Atlas cache";
         clearX1 = x1 - 2;
         clearX0 = clearX1 - font.width(clear);
         shareX1 = clearX0 - 14;
         shareX0 = shareX1 - font.width(share);
+        for (String hint : new String[]{"drag orbit  ·  right-drag pan  ·  scroll zoom  ·  C you", "drag · right-drag · scroll · C"}) {
+            if (x0 + 2 + font.width(hint) < shareX0 - 12) {
+                HudLook.text(g, font, hint, x0 + 2, buttonsY, Glass.LABEL | 0xFF000000, false);
+                break;
+            }
+        }
         boolean overShare = mouseY >= buttonsY - 2 && mouseY < buttonsY + 10 && mouseX >= shareX0 && mouseX < shareX1;
         boolean overClear = mouseY >= buttonsY - 2 && mouseY < buttonsY + 10 && mouseX >= clearX0 && mouseX < clearX1;
         HudLook.text(g, font, share, shareX0, buttonsY, overShare ? 0xFFFFFFFF : 0xFF7FC3FF, false);
@@ -215,6 +222,10 @@ public final class AtlasScreen extends Screen {
         if (mc.player != null) {
             for (MapMarks.Mark m : MapMarks.collect(mc.player)) {
                 BlockPos p = m.pos();
+                if (m.label().startsWith("? ")) { // a rumour: you've heard of it, not seen it, so it hangs in the clouds
+                    if (project(p.getX() + 0.5, atlas.store.groundY(p.getX(), p.getZ(), 64) + 34, p.getZ() + 0.5, x0, y0)) rumour(g, m.label().substring(2));
+                    continue;
+                }
                 if (!Discovery.CLIENT.explored(p.getX() >> 4, p.getZ() >> 4)) continue; // only what you know
                 if (!project(p.getX() + 0.5, atlas.store.groundY(p.getX(), p.getZ(), p.getY()), p.getZ() + 0.5, x0, y0)) continue;
                 int sx = Math.round(v.x), sy = Math.round(v.y), c = 0xFF000000 | m.colour();
@@ -225,7 +236,12 @@ public final class AtlasScreen extends Screen {
             if (project(px, atlas.store.groundY(px, pz, mc.player.getY()), pz, x0, y0)) {
                 int sx = Math.round(v.x), sy = Math.round(v.y);
                 float pulse = 0.5f + 0.5f * (float) Math.sin(age() * 3.0);
+                // a pin of light standing on the roofs, so you're found at a glance on the busiest street
+                g.fillGradient(sx, sy - 22, sx + 1, sy, 0x00E9F1FF, 0xF0E9F1FF);
+                g.fill(sx - 2, sy - 25, sx + 3, sy - 21, 0xFF0B1626);
+                g.fill(sx - 1, sy - 24, sx + 2, sy - 22, INK);
                 ring(g, sx, sy, 6 + Math.round(pulse * 2), Glass.a(0xE9F1FF, 0.5f + 0.5f * (1 - pulse)));
+                ring(g, sx, sy, 5, 0xB00B1626);
                 g.fill(sx - 1, sy - 1, sx + 2, sy + 2, INK);
                 // facing: a short tick on the table toward where you look
                 double f = Math.toRadians(mc.player.getYRot());
@@ -236,6 +252,19 @@ public final class AtlasScreen extends Screen {
             }
         }
         g.disableScissor();
+    }
+
+    /** An amber "?" riding the clouds over a place you've only heard of, with its name. */
+    private void rumour(GuiGraphicsExtractor g, String name) {
+        int sx = Math.round(v.x), sy = Math.round(v.y);
+        float pulse = 0.75f + 0.25f * (float) Math.sin(age() * 2.2);
+        int amber = Glass.a(Glass.AMBER, pulse);
+        g.pose().pushMatrix();
+        g.pose().translate(sx, sy);
+        g.pose().scale(2f, 2f);
+        HudLook.text(g, font, "?", -font.width("?") / 2, -8, amber, false);
+        g.pose().popMatrix();
+        if (zoom > 0.3f) label(g, name.toUpperCase(Locale.ROOT), sx, sy + 6, Glass.a(Glass.AMBER, 0.9f));
     }
 
     private boolean project(double x, double y, double z, int x0, int y0) {

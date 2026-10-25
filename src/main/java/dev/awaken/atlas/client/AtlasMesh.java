@@ -42,6 +42,8 @@ final class AtlasMesh {
         int quads;
         long bytes;
         boolean dirty = true, building;
+        /** Lit columns (x and z in blocks from the slice's corner, the column's top y), for the lights at night. */
+        int[] lights = new int[0];
         /** When the slice last changed on screen (for the rise of new land). */
         long builtAt;
 
@@ -64,7 +66,7 @@ final class AtlasMesh {
         }
     }
 
-    private record Done(Slice slice, ByteBuffer data, int quads, long nanos) {}
+    private record Done(Slice slice, ByteBuffer data, int quads, int[] lights, long nanos) {}
 
     @SuppressWarnings("unchecked")
     final Long2ObjectOpenHashMap<Slice>[] slices = new Long2ObjectOpenHashMap[]{new Long2ObjectOpenHashMap<>(), new Long2ObjectOpenHashMap<>(), new Long2ObjectOpenHashMap<>()};
@@ -191,13 +193,17 @@ final class AtlasMesh {
             long t0 = System.nanoTime();
             ByteBuffer data = null;
             int quads = 0;
+            int[] lights = new int[0];
             try {
                 quads = builder.build(store, ex, s.lod, s.x0(), s.z0());
-                if (quads > 0) data = builder.copyOut();
+                if (quads > 0) {
+                    data = builder.copyOut();
+                    lights = builder.lights();
+                }
             } catch (RuntimeException e) {
                 dev.awaken.Awaken.LOG.debug("[atlas] slice build failed: {}", e.toString());
             }
-            if (gen == generation) done.add(new Done(s, data, quads, System.nanoTime() - t0));
+            if (gen == generation) done.add(new Done(s, data, quads, lights, System.nanoTime() - t0));
             else if (data != null) MemoryUtil.memFree(data);
         });
     }
@@ -214,6 +220,7 @@ final class AtlasMesh {
                 s.buffer = RenderSystem.getDevice().createBuffer(() -> "Atlas slice", GpuBuffer.USAGE_VERTEX, d.data);
                 s.quads = d.quads;
                 s.bytes = d.data.remaining();
+                s.lights = d.lights;
                 totalQuads += s.quads;
                 totalBytes += s.bytes;
                 if (!had) s.builtAt = now;
@@ -233,6 +240,7 @@ final class AtlasMesh {
         totalBytes -= s.bytes;
         s.quads = 0;
         s.bytes = 0;
+        s.lights = new int[0];
     }
 
     /** Drops slices well outside the window, then the farthest while over the memory limit. */
@@ -289,6 +297,12 @@ final class AtlasMesh {
         private long vb = MemoryUtil.nmemAlloc(1 << 20);
         private long vbCap = 1 << 20, vbPos;
         private int step;
+        private final it.unimi.dsi.fastutil.ints.IntArrayList lit = new it.unimi.dsi.fastutil.ints.IntArrayList();
+        static final int MAX_LIGHTS = 1500;
+
+        int[] lights() {
+            return lit.toIntArray();
+        }
 
         private static int g(int x, int z) {
             return (z + 1) * GW + (x + PADW);
@@ -330,6 +344,7 @@ final class AtlasMesh {
                 }
             }
             vbPos = 0;
+            lit.clear();
             if (!any) return 0;
             int quads = 0;
             float drop = SUN_DROP * step;
@@ -351,9 +366,22 @@ final class AtlasMesh {
                             if (kind == ColumnStore.K_SOIL || kind == ColumnStore.K_LEAVES || kind == ColumnStore.K_SAND)
                                 shade += ((hash(x0 + (x << sh), z0 + (z << sh)) & 7) - 3.5f) * 0.008f;
                         }
+                        // ambient occlusion: ground hemmed in by taller neighbours (a forest floor, a lane between
+                        // houses) sits darker, so dense canopy reads as clumps instead of noise
+                        int e = g(x + 1, z), s2 = g(x, z + 1), w2 = g(x - 1, z), n2 = g(x, z - 1), hemmed = 0;
+                        if (gd[e] && gh[e] - h >= 2 * step) hemmed++;
+                        if (gd[s2] && gh[s2] - h >= 2 * step) hemmed++;
+                        if (gd[w2] && gh[w2] - h >= 2 * step) hemmed++;
+                        if (gd[n2] && gh[n2] - h >= 2 * step) hemmed++;
+                        shade -= hemmed * 0.045f;
                         float shadow = clamp((level - h) * 0.5f, 0f, 1f);
                         shade *= 1f - 0.30f * shadow;
                         top[z * S + x] = scale(c, shade);
+                        if ((info & ColumnStore.LIT) != 0 && lit.size() < MAX_LIGHTS * 3) {
+                            lit.add(x << sh);
+                            lit.add(h);
+                            lit.add(z << sh);
+                        }
                     }
                     if (gd[gg]) level = Math.max(level, gh[gg]);
                     level -= drop;
@@ -397,14 +425,14 @@ final class AtlasMesh {
             int low = edge ? BASE_Y - 1 : gh[n];
             if (low >= h) return 0;
             float yTop = h + 1 - Y_REF, yLow = low + 1 - Y_REF;
-            int lit = scale(topColor, dir);
+            int face = scale(topColor, dir);
             if (!edge && h - low <= 2) {
-                quad(ax, yTop, az, bx, yTop, bz, bx, yLow, bz, ax, yLow, az, lit, scale(lit, 0.84f));
+                quad(ax, yTop, az, bx, yTop, bz, bx, yLow, bz, ax, yLow, az, face, scale(face, 0.84f));
                 return 1;
             }
             // a one-block lip in the surface colour, then the ground under it, darkening downwards
             float yLip = yTop - 1;
-            quad(ax, yTop, az, bx, yTop, bz, bx, yLip, bz, ax, yLip, az, lit, scale(lit, 0.9f));
+            quad(ax, yTop, az, bx, yTop, bz, bx, yLip, bz, ax, yLip, az, face, scale(face, 0.9f));
             int under = scale(under(kind, topColor), dir);
             int bottom = edge ? scale(under, 0.42f) : scale(under, 0.72f);
             quad(ax, yLip, az, bx, yLip, bz, bx, yLow, bz, ax, yLow, az, under, bottom);

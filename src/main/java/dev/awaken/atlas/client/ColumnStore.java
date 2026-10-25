@@ -124,10 +124,12 @@ final class ColumnStore {
                                 : mc == MapColor.WOOD || mc == MapColor.TERRACOTTA_WHITE || mc == MapColor.COLOR_RED ? K_BUILT : K_STONE;
                     }
                 }
-                boolean lit = s.getLightEmission() >= 10;
-                if (!lit) { // a lamp or lantern just under a roof's eave still lights the street at night
-                    pos.setY(y + 1);
-                    lit = chunk.getBlockState(pos).getLightEmission() >= 10;
+                // lit: a lamp on top, or a light a few blocks down the column (a lantern under an eave, a lit
+                // window in the wall under a roof's edge), so the city glows at night
+                boolean lit = false;
+                for (int dy = 0; dy <= 5 && !lit; dy++) {
+                    pos.setY(y - dy);
+                    lit = chunk.getBlockState(pos).getLightEmission(chunk, pos) >= 10;
                 }
                 t.height[i] = (short) y;
                 t.color[i] = argb;

@@ -24,6 +24,8 @@ import java.util.Arrays;
 final class AtlasClouds {
     static final int R = 20, N = 2 * R + 1;           // cells either side of the centre cell
     static final int MAX_PUFFS = N * N * 2;
+    /** Puffs, and a shadow under each puff that hangs over explored land. */
+    static final int MAX_QUADS = MAX_PUFFS * 2;
     static final int VERTEX = 24;                     // POSITION_TEX_COLOR
     static final int VARIANTS = 3;
     private static final float FADE_NANOS = 1.0e9f;
@@ -42,6 +44,8 @@ final class AtlasClouds {
     private final long[] order = new long[MAX_PUFFS];
     private final byte[] look = new byte[MAX_PUFFS];
     private final Vector3f v = new Vector3f();
+    private final float[] sx = new float[MAX_PUFFS], sy = new float[MAX_PUFFS], sz = new float[MAX_PUFFS], sw = new float[MAX_PUFFS], sa = new float[MAX_PUFFS];
+    private int shadowCount;
 
     GpuTextureView texture() {
         if (view == null) {
@@ -131,8 +135,9 @@ final class AtlasClouds {
      * Writes this frame's puffs as view-space quads into {@code dst} (an address), far to near; returns the quad count.
      * {@code base} maps centre-relative world blocks to view pixels.
      */
-    int write(long dst, Explored explored, Long2LongOpenHashMap revealedAt, Matrix4f base, float pxPerBlock, float tiltDeg, int lod,
-              double cx, double cz, float time, float night, long now) {
+    int write(long dst, Explored explored, Long2LongOpenHashMap revealedAt, ColumnStore store, Matrix4f base, float pxPerBlock, float tiltDeg,
+              int lod, double cx, double cy, double cz, float time, float night, long now) {
+        shadowCount = 0;
         int shift = AtlasMesh.STEP_SHIFT[lod], cell = 16 << shift;
         int ccx = Math.floorDiv((int) Math.floor(cx), cell), ccz = Math.floorDiv((int) Math.floor(cz), cell);
         refresh(explored, revealedAt, ccx, ccz, lod);
@@ -157,7 +162,9 @@ final class AtlasClouds {
                 int own = j * W + i;
                 float ownU = unexplored[own];
                 if (revealNanos[own] != 0L) ownU = Math.max(ownU, 1f - (now - revealNanos[own]) / FADE_NANOS);
-                // an unexplored cell is always fully covered; the blur only spills soft cloud over explored edges
+                // an unexplored cell is always fully covered; the blur only spills soft cloud over explored edges. A
+                // coarse cell (zoomed out) that is mostly known stays clear, so the land you know isn't buried
+                if (lod > 0 && ownU < 0.6f) continue;
                 if (ownU >= 0.999f) f = Math.max(f, 1f);
                 if (f < 0.12f) continue;
                 int cellX = ccx + i - R - 1, cellZ = ccz + j - R - 1;
@@ -172,6 +179,18 @@ final class AtlasClouds {
                 int variant = (hsh >>> 24) % VARIANTS;
                 boolean flip = (hsh & 0x800000) != 0;
                 float size = (34f + 26f * r1) * (0.6f + 0.4f * a) * s;
+                // its shadow, on explored ground only: a little east and south of it
+                float shx = wx + 10f * s, shz = wz + 4f * s;
+                double gx = cx + shx, gz = cz + shz;
+                if (shadowCount < MAX_PUFFS && explored.explored((int) Math.floor(gx) >> 4, (int) Math.floor(gz) >> 4)) {
+                    base.transformPosition(shx, (float) (store.groundY(gx, gz, cy) - cy), shz, v);
+                    sx[shadowCount] = v.x;
+                    sy[shadowCount] = v.y;
+                    sz[shadowCount] = v.z + 8f * pxPerBlock;
+                    sw[shadowCount] = size * 1.15f;
+                    sa[shadowCount] = a * (1f - night * 0.6f);
+                    shadowCount++;
+                }
                 n = add(n, base, wx, 0f, wz, (30f + (r2 - 0.5f) * 6f) * lift, size, a, variant, flip);
                 if (r3 > 0.45f) // a smaller cap on top for volume, nudged up the screen
                     n = add(n, base, wx + (r2 - 0.5f) * 10f * s, (5f + r1 * 3f) * s, wz - 3f * s, (37f + r1 * 4f) * lift, size * 0.62f, a * 0.95f, (variant + 1) % VARIANTS, !flip);
@@ -187,24 +206,42 @@ final class AtlasClouds {
         float tr = 1f + (0.62f - 1f) * night, tg = 1f + (0.70f - 1f) * night, tb = 1f + (0.86f - 1f) * night;
         int r = (int) (tr * 255), g = (int) (tg * 255), b = (int) (tb * 255);
         float du = 1f / VARIANTS;
+        float tone0 = 1f;
         long p = dst;
+        float squash = 0.75f * (float) Math.sin(Math.toRadians(tiltDeg));
+        for (int k = 0; k < shadowCount; k++) { // lying on the ground: as flat as the table is tilted
+            float hw = sw[k] * pxPerBlock * 0.5f, hh = hw * squash;
+            int alpha = Math.min(255, (int) (sa[k] * 70));
+            p = vtx(p, sx[k] - hw, sy[k] - hh, sz[k], 0, 0, 12, 22, 44, alpha);
+            p = vtx(p, sx[k] + hw, sy[k] - hh, sz[k], du, 0, 12, 22, 44, alpha);
+            p = vtx(p, sx[k] + hw, sy[k] + hh, sz[k], du, 1, 12, 22, 44, alpha);
+            p = vtx(p, sx[k] - hw, sy[k] + hh, sz[k], 0, 1, 12, 22, 44, alpha);
+        }
         for (int o = 0; o < n; o++) {
             int k = (int) order[o];
             float hw = ps[k] * pxPerBlock * 0.5f, hh = hw * 0.75f, x = px[k], y = py[k], z = pz[k];
-            int alpha = Math.min(255, (int) (pa[k] * 255));
+            int alpha = Math.min(255, (int) (pa[k] * 238));
             int vv = look[k] & 3;
+            // a little tone per puff (lower and bigger ones greyer), so the blanket has depth instead of one white
+            float tone = tone0 - ((look[k] >> 3) & 7) * 0.022f;
+            int rr = (int) (r * tone), gg = (int) (g * tone), bb2 = (int) (b * Math.min(1f, tone + 0.03f));
             float u0 = vv * du, u1 = u0 + du;
             if ((look[k] & 4) != 0) {
                 float t = u0;
                 u0 = u1;
                 u1 = t;
             }
-            p = vtx(p, x - hw, y - hh, z, u0, 0, r, g, b, alpha);
-            p = vtx(p, x + hw, y - hh, z, u1, 0, r, g, b, alpha);
-            p = vtx(p, x + hw, y + hh, z, u1, 1, r, g, b, alpha);
-            p = vtx(p, x - hw, y + hh, z, u0, 1, r, g, b, alpha);
+            p = vtx(p, x - hw, y - hh, z, u0, 0, rr, gg, bb2, alpha);
+            p = vtx(p, x + hw, y - hh, z, u1, 0, rr, gg, bb2, alpha);
+            p = vtx(p, x + hw, y + hh, z, u1, 1, rr, gg, bb2, alpha);
+            p = vtx(p, x - hw, y + hh, z, u0, 1, rr, gg, bb2, alpha);
         }
-        return n;
+        return n + shadowCount;
+    }
+
+    /** How many of the last {@link #write}'s quads were shadows (they come first). */
+    int shadows() {
+        return shadowCount;
     }
 
     private int add(int n, Matrix4f base, float x, float y, float z, float depthLift, float size, float a, int variant, boolean flip) {
@@ -215,7 +252,7 @@ final class AtlasClouds {
         pz[n] = v.z + depthLift;
         ps[n] = size;
         pa[n] = a;
-        look[n] = (byte) (variant | (flip ? 4 : 0));
+        look[n] = (byte) (variant | (flip ? 4 : 0) | ((Float.floatToIntBits(x * 0.37f + z) >>> 7 & 7) << 3));
         return n + 1;
     }
 

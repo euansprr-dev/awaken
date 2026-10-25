@@ -1,5 +1,5 @@
-# Carillon M5: the Atlas (SPEC §16.8), phase 1's one tour. The Choir's bell clears the city, then a walk north out of
-# the High Gate clears a road into the wilds; the table opens over the city by day, orbits, closes in, zooms out to the
+# Carillon M5: the Atlas (SPEC §16.8), one tour per phase (phase 2 adds night lights, cloud shadows and the glance).
+# The Choir's bell clears the city, then a walk north out of the High Gate clears a road into the wilds; the table opens over the city by day, orbits, closes in, zooms out to the
 # coarser levels, goes to night, plays a bell's ripple over a cleared Bellwatch and the Registry reveal. Short perf
 # pairs (closed / open at the same spot) and the '[atlas]' lines carry open time, prepare() cost, mesh and memory.
 # Run: PACK=perf,world TECTONIC=awakened RD=16 SLOT_WHO=atlas \
@@ -78,15 +78,28 @@ shot m5_road
 cmd atlas view 20 58 0.18
 wait 80
 shot m5_far
+cmd atlas view 20 50 0.4
+wait 60
+shot m5_edge
 screen close
 perf m5_closed_2 10
-# night: the land goes blue
+# night: the land goes blue and the city's lamps come on
 cmd time set 18000
 cmd atlas open 20 52 1
 wait 80
 shot m5_night
+cmd atlas view 30 50 2.2
+wait 40
+shot m5_night_close
 screen close
 cmd time set 4000
+# the wrist glance on the K menu
+hud on
+screen holo
+wait 80
+shot m5_glance
+screen close
+hud off
 # a bell's ripple: forget the city, open the table, ring Bellwatch's bell
 cmd awaken atlas clear
 wait 20
