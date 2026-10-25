@@ -416,7 +416,7 @@ public final class Life {
                 float k = u < 0.35F * idleLen ? Mth.smoothstep(u / (0.25F * idleLen))
                         : u < 0.75F * idleLen ? 1.0F - 1.55F * Mth.smoothstep((u - 0.35F * idleLen) / (0.2F * idleLen))
                         : -0.55F * (1.0F - Mth.smoothstep((u - 0.75F * idleLen) / (0.25F * idleLen)));
-                fYaw = side * 0.6F * k * e;
+                fYaw = side * 0.5F * k * e;
                 fPitch = -0.08F * Math.abs(k) * e;
             }
             case SNIFF -> {
@@ -450,7 +450,7 @@ public final class Life {
             }
             case SCRATCH -> {
                 float k = envelope(u, idleLen, 0.25F, 0.3F) * e;
-                idleHeadRoll = side * 0.32F * k;
+                idleHeadRoll = side * 0.22F * k;
                 fPitch = 0.15F * k;
                 idleRoll = side * 0.07F * k;
                 scratch = (-0.5F + 0.35F * Mth.sin(u * 50.0F)) * k;
