@@ -1,0 +1,329 @@
+# Creature life (SPEC §23): our creatures idling, walking and turning, a named beast's attack and fall, a Gate Lord's
+# stagger and topple, and vanilla bodies under Fresh Animations beside ours. Clips: run-autopilot/clips/life_*
+# (python3 -I tools/ascent/clip.py <dir> makes an mp4 and a contact sheet). Run with PACK=perf,feel.
+world creaturelife creative 777
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+info
+cmd tp @s 0.5 201 0.5 0 0
+wait 100
+cmd fill -24 200 -12 24 200 40 minecraft:smooth_stone
+cmd fill -24 201 -12 24 214 40 minecraft:air
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 20
+# 1. idling: no AI, so every motion is the life layer's (breath, blinks, fidgets) on top of the idle clips
+cmd tp @s 0.5 201 0.5 0 0
+look 0 14
+cmd summon awaken:scree_marmot -4.5 201 6.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[160f,0f]}
+cmd summon awaken:frost_stag -1.0 201 9.0 {NoAI:1b,PersistenceRequired:1b,Rotation:[175f,0f]}
+cmd summon awaken:brook_otter 2.5 201 6.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[195f,0f]}
+cmd summon awaken:hollow_owl 5.5 201 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[210f,0f]}
+cmd summon awaken:shroomlet -6.5 201 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[150f,0f]}
+wait 40
+shot life_idle_row
+cmd awaken ascent pilot rec life_idle 220 3
+wait 110
+shot life_idle_row_b
+wait 115
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 10
+# 2. walking, turning, a run and a stop: the step's dip and sway, the lean into the turn, ears/tails/manes on springs
+cmd tp @s 10.5 203 12.5 90 18
+cmd summon awaken:frost_stag 0.5 201 2.5 {NoAI:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[0f,0f]}
+cmd summon awaken:briar_sow -4.5 201 2.5 {NoAI:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[0f,0f]}
+cmd summon awaken:scree_marmot 5.5 201 2.5 {NoAI:1b,PersistenceRequired:1b,Tags:["walker"],Rotation:[0f,0f]}
+wait 30
+cmd awaken ascent pilot rec life_walk 200 3
+wait 2
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.09
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.1 ~6 ~
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+cmd execute as @e[tag=walker] at @s run tp @s ^ ^ ^0.26
+wait 1
+shot life_walk_stop
+wait 90
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 10
+# 3. the Briar Sow turns on the player: wind-up (crouch, tremble), the strike, a blow's stagger; then its fall and thud
+cmd gamemode creative
+cmd tp @s 0.5 201 0.5 0 0
+look 0 12
+cmd summon awaken:briar_sow 0.5 201 9.5 {PersistenceRequired:1b,Rotation:[180f,0f]}
+wait 20
+cmd gamemode survival
+cmd awaken ascent pilot rec life_beast_attack 160 3
+cmd damage @e[type=awaken:briar_sow,limit=1] 1 minecraft:player_attack by @s
+wait 40
+shot life_beast_attack_1
+wait 30
+cmd damage @e[type=awaken:briar_sow,limit=1] 2 minecraft:player_attack by @s
+wait 6
+shot life_beast_stagger
+wait 90
+cmd gamemode creative
+cmd tp @s 4.5 202 2.5 30 14
+cmd awaken ascent pilot rec life_beast_death 70 3
+cmd kill @e[type=awaken:briar_sow]
+wait 24
+shot life_beast_death_mid
+wait 50
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 10
+# 4. Gate Lords: a blow's stagger, then the weighty topple (stagger back, accelerating fall, one bounce)
+cmd tp @s 0.5 201 0.5 0 8
+cmd summon awaken:bell_warden -3.0 201 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd summon awaken:the_sleeper 4.0 201 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+wait 30
+cmd awaken ascent pilot rec life_lords 110 3
+cmd damage @e[type=awaken:bell_warden,limit=1] 1 minecraft:player_attack by @s
+cmd damage @e[type=awaken:the_sleeper,limit=1] 1 minecraft:player_attack by @s
+wait 30
+cmd kill @e[type=awaken:bell_warden]
+cmd kill @e[type=awaken:the_sleeper]
+wait 13
+shot life_lords_falling
+wait 60
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 10
+# 5. Fresh Animations: vanilla zombie, cow, wolf, fox; our zombie-bodied gate mob (moss_shambler) and rib hound; our marmot
+cmd tp @s 0.5 201 0.5 0 10
+cmd summon minecraft:zombie -7.5 201 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd summon awaken:moss_shambler -4.5 201 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd summon minecraft:cow -1.0 201 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd summon minecraft:wolf 2.5 201 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd summon awaken:rib_hound 5.0 201 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd summon minecraft:fox 7.5 201 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd summon awaken:scree_marmot 9.5 201 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+wait 40
+shot life_fa_row
+cmd awaken ascent pilot rec life_fa 160 3
+wait 80
+shot life_fa_row_b
+wait 85
+cmd kill @e[type=!minecraft:player,distance=..80]
+wait 10
+# 6. compatibility: a third-person cast (Player Animation Library + Bendable Cuboids) with EMF, ETF and Fresh Animations in
+cmd summon minecraft:zombie 0.5 201 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+camera back
+wait 20
+cmd awaken admin power reset
+cmd awaken admin power cast haymaker
+wait 6
+shot life_compat_cast
+wait 30
+camera front
+wait 10
+shot life_compat_front
+camera first
+wait 10
+info
+quit

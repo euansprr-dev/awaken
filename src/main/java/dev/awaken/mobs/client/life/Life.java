@@ -80,13 +80,14 @@ public final class Life {
     private int flick = -1;
     private float flickX, flickY, flickZ;
     private float shakeAccel;
-    // the death: a root topple's angle and how fast it falls (for the springs' flop)
-    private float topple, toppleV, toppleA, deathSide = 1;
+    // the death: a root topple's angle and how fast it falls (for the springs' flop), and the thud when it lands
+    private float topple, toppleV, toppleA, deathSide = 1, thud, thudV, lastDying = -1;
+    private boolean landed;
     // springs
     final float[] ax, ay, az, avx, avy, avz, aacc;
     private final float[] drv, drvV, drvAccs;
     private boolean drvInit;
-    private float bodyLy, bodyLv, kick;
+    private float bodyLy, bodyLv, kick, thump;
     private float kickX, kickZ;
 
     Life(LifeRig rig, int seed) {
@@ -218,7 +219,22 @@ public final class Life {
         if (gaitPhase > 1024) gaitPhase -= 1024;
         float phase = stride > 0 ? gaitPhase : s.walkAnimationPos * 0.1591F; // a vanilla walk cycle is 2*pi in walkAnimationPos
         float stepWave = 0.5F - 0.5F * Mth.cos(Mth.TWO_PI * 2.0F * phase);
-        dip = (dead ? 0.0F : p.bob() * moving * stepWave) + idleDip;
+        // the fall lands with a thud: one bounce on its weight, and everything loose flops (see integrate)
+        float impact = deathLength > 0 ? rig.impact : 0.7F;
+        if (dead && impact > 0 && lastDying < impact && dying >= impact && !landed) {
+            landed = true;
+            thudV = -(14.0F + 4.0F * Math.min(3.0F, p.mass()));
+            kick = 1;
+            kickX = kickZ = 0;
+            thump = 1;
+        }
+        if (!dead) landed = false;
+        lastDying = dying;
+        float tw = Mth.TWO_PI * 3.2F;
+        thudV += (-tw * tw * thud - 2 * 0.35F * tw * thudV) * dt;
+        thud = Mth.clamp(thud + thudV * dt, -3.0F, 3.0F);
+        // a wind-up gathers the body low; a step dips it, heavier for heavier creatures
+        dip = (dead ? 0.0F : p.bob() * moving * stepWave) + idleDip + tension * 0.7F + thud;
         float sway = p.sway() * Mth.DEG_TO_RAD * moving * Mth.sin(Mth.TWO_PI * phase);
         float lean = Mth.clamp(-yawRate * Math.min(1.0F, speed / 4.0F) * 0.09F * p.lean(), -0.22F, 0.22F);
         float trem = tension * tension * (reduce ? 0.5F : 1.0F) * 0.03F * Mth.sin(t * 107.0F + tremPhase);
@@ -335,7 +351,7 @@ public final class Life {
             }
             float th = (180.0F - s.bodyRot) * Mth.DEG_TO_RAD, c = Mth.cos(th), sn = Mth.sin(th);
             float px = -(wx * c - wz * sn), pz = wx * sn + wz * c; // the push in model space
-            float v = 3.4F * p.stagger() / Mth.sqrt(Math.max(0.3F, p.mass())) * (reduce ? 0.5F : 1.0F);
+            float v = 2.6F * p.stagger() / Mth.sqrt(Math.max(0.3F, p.mass())) * (reduce ? 0.5F : 1.0F);
             stXv += -pz * v;
             stZv += px * v;
             headPitchV -= 2.2F * p.stagger();
@@ -613,8 +629,9 @@ public final class Life {
         drvInit = true;
         if (first) return;
         // the frame's acceleration in model space: the body's motion, the step's bob, a shake, a blow
-        float Ax = amx + shakeAccel + kick * kickX * 900.0F, Ay = amy + bAcc, Az = amz + kick * kickZ * 900.0F;
+        float Ax = amx + shakeAccel + kick * kickX * 900.0F, Ay = amy + bAcc - thump * 3200.0F, Az = amz + kick * kickZ * 900.0F;
         kick = 0;
+        thump = 0;
         float yawA = -yawAccel; // model y points down
         float toppleAcc = toppleA * Mth.DEG_TO_RAD * deathSide;
         int sub = Math.max(1, Mth.ceil(dt * 120.0F));

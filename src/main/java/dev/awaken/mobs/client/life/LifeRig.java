@@ -48,6 +48,8 @@ public final class LifeRig {
     final boolean idleClip;
     final boolean[] can = new boolean[Idle.values().length];
     final boolean hasEars, hasTail;
+    /** Seconds into the death clip when the body comes to rest on the ground (its thud), or 0 when there's no clip. */
+    final float impact;
 
     private LifeRig(LifeProfile p) {
         this.p = p;
@@ -66,6 +68,7 @@ public final class LifeRig {
         rootMotion = true;
         idleClip = false;
         hasEars = hasTail = false;
+        impact = 0;
     }
 
     /**
@@ -259,6 +262,7 @@ public final class LifeRig {
         drivers = drv.toArray(new ModelPart[0]);
         hasEars = ears;
         hasTail = tail;
+        impact = rig != null && b.body() >= 0 ? landing(rig, b.bones().get(b.body()).name()) : 0;
         // which fidgets this body can play
         boolean springs = n > 0, legs = countRole(b, Role.LEG) >= 2;
         can[Idle.LOOK.ordinal()] = head != null;
@@ -270,6 +274,31 @@ public final class LifeRig {
         can[Idle.SCRATCH.ordinal()] = head != null && hind.length > 0;
         can[Idle.PERK.ordinal()] = head != null;
         can[Idle.SETTLE.ordinal()] = body != null || rootMotion;
+    }
+
+    /**
+     * When the fall lands: the first moment the death clip's body has sunk 85% of the way it will (its position track),
+     * or the last third of the clip if the body only tilts.
+     */
+    static float landing(HeroRig rig, String body) {
+        HeroRig.Clip death = rig.clip("death");
+        if (death == null) return 0;
+        for (HeroRig.Track t : death.tracks()) {
+            if (!t.bone().equals(body) || t.target() != HeroRig.Target.POS) continue;
+            float max = 0;
+            for (HeroRig.Key k : t.keys()) max = Math.max(max, Math.abs(k.y()));
+            if (max < 1.0F) break;
+            HeroRig.Key prev = null;
+            for (HeroRig.Key k : t.keys()) {
+                if (Math.abs(k.y()) >= 0.85F * max) {
+                    if (prev == null || Math.abs(k.y() - prev.y()) < 1e-4F) return k.t();
+                    float u = (0.85F * max - Math.abs(prev.y())) / (Math.abs(k.y()) - Math.abs(prev.y()));
+                    return prev.t() + (k.t() - prev.t()) * Mth.clamp(u, 0.0F, 1.0F);
+                }
+                prev = k;
+            }
+        }
+        return death.length() * 0.66F;
     }
 
     private static int countRole(LifeBones.Binding b, Role r) {
