@@ -15,7 +15,17 @@ public final class CitizensClient {
     private CitizensClient() {}
 
     public static void init(IEventBus modBus) {
-        modBus.addListener((EntityRenderersEvent.RegisterRenderers e) -> e.registerEntityRenderer(CitizensContent.CITIZEN.get(), CitizenRenderer::new));
+        modBus.addListener((EntityRenderersEvent.RegisterRenderers e) -> {
+            e.registerEntityRenderer(CitizensContent.CITIZEN.get(), CitizenRenderer::new);
+            e.registerEntityRenderer(CitizensContent.CRITTER.get(), CritterRenderer::new);
+        });
+        modBus.addListener(CritterRenderer::layers);
+        CityCritters.init();
+        CityGlow.source(CityCritters.LANTERNS);
+        NeoForge.EVENT_BUS.addListener(CityCritters::tick);
+        NeoForge.EVENT_BUS.addListener(CityCritters::onJoin);
+        NeoForge.EVENT_BUS.addListener(CityCritters::onLeave);
+        NeoForge.EVENT_BUS.addListener(CityCritters::onSound);
         modBus.addListener((RegisterParticleProvidersEvent e) -> {
             e.registerSpriteSet(CitizensContent.CHIMNEY_SMOKE.get(), CitizenParticles.Smoke.Provider::new);
             e.registerSpriteSet(CitizensContent.FORGE_SPARK.get(), CitizenParticles.Spark.Provider::new);
@@ -36,6 +46,7 @@ public final class CitizensClient {
             CitizenFx.clear();
             CityGlow.clear();
             CityLife.clear();
+            CityCritters.clear();
         });
     }
 }

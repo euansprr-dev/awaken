@@ -38,6 +38,10 @@ public final class CitizensContent {
     public static final DeferredHolder<EntityType<?>, EntityType<CitizenBody>> CITIZEN = ENTITIES.registerEntityType("citizen",
             CitizenBody::new, MobCategory.MISC, b -> b.sized(0.6f, 1.95f).eyeHeight(1.62f).clientTrackingRange(5).noSave().noSummon());
 
+    /** Carillon's animals (M4 B3b): made and moved on the client only (citizens.client.CityCritters). */
+    public static final DeferredHolder<EntityType<?>, EntityType<CityCritter>> CRITTER = ENTITIES.registerEntityType("city_critter",
+            CityCritter::new, MobCategory.MISC, b -> b.sized(0.5f, 0.5f).clientTrackingRange(0).noSave().noSummon());
+
     public static final DeferredBlock<StreetLampBlock> STREET_LAMP = BLOCKS.registerBlock("street_lamp", StreetLampBlock::new,
             p -> p.mapColor(MapColor.METAL).strength(3.5f).sound(SoundType.LANTERN).noOcclusion().noLootTable()
                     .lightLevel(StreetLampBlock::light).pushReaction(PushReaction.POPPED));
