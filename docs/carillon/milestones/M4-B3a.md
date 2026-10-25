@@ -110,9 +110,6 @@ The orchestrator assigned these to B3b; none is fixed here.
 ## CI
 GameTests run 40183467058 on 43034a9d (the full suite): success in 4m49s.
 
-## Does it feel like a live city?
-TODO after the tour.
-
 ## For the Ascent: the movement tags
 - `runner_lines`: `awaken:hang_line` (a 3/16 bar at y 6.5-9.5 of its cell, the cloth under it has no collision).
 - `runner_soft`: `minecraft:hay_block`, `awaken:awning`, `awaken:hay_cart`.
