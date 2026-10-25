@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * The weapon shader (SPEC §24 "Weapons"; assets/awaken/shaders/core/arms_weapon.*, mirrored line for line by
+ * The weapon shader (SPEC §25 "Weapons"; assets/awaken/shaders/core/arms_weapon.*, mirrored line for line by
  * tools/art/mesh_render.py): vanilla's entity inputs and lights, the weapon's texture as its albedo beside its
  * material map (metal, gloss, emissive, flow), drawn as triangles. Registered as optional: if a shader pack or a
  * driver can't build it, the weapons draw with vanilla's entity cutout instead (the same mesh and albedo, plain light).

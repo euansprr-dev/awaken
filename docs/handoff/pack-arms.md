@@ -2,7 +2,7 @@
 
 Euan approved the plan (`docs/combat/PLAN.md`, `docs/combat/plan.html`): "Go ahead with the full plan", every §7
 decision as recommended. Then: "Do anything you can for the highest quality bar without me since I won't be checking
-here." So this session decides and writes every decision down: SPEC §24 holds them as built, the list below is the
+here." So this session decides and writes every decision down: SPEC §25 holds them as built, the list below is the
 short version. Branch `pack/arms` (CI runs the full suite on every push); the session's own branch
 `claude/kind-darwin-18uqmv` carries the same commits.
 
@@ -33,7 +33,7 @@ short version. Branch `pack/arms` (CI runs the full suite on every push); the se
   the stones). The fighter's own blade fills with light as a heavy charges and hums when the Art is ready. Their own
   first-person hold, icons drawn from the same meshes. Review sheet: `docs/combat/weapons-2026-10-25.png`.
 
-## Decided without Euan (each in SPEC §24)
+## Decided without Euan (each in SPEC §25)
 1. **Sounds are hybrid**: Kenney's CC0 Impact Sounds and RPG Audio for the physical transients, the kit's synthesis
    for the steel, the air, the weight and the tells. Unused recordings are pruned (renders stay byte-identical).
 2. **An `arms` loudness category** (−14 dBFS ±3, true peak −1), calibrated against vanilla's own combat sounds: at

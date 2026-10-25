@@ -21,7 +21,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Arms' weapons (SPEC §24): one item per {@link ArmsData} row (generated with their models by
+ * Arms' weapons (SPEC §25): one item per {@link ArmsData} row (generated with their models by
  * tools/art/specs/arms_weapons.py), each a sword of its row's numbers that fights with its row's style.
  */
 public final class ArmsItems {

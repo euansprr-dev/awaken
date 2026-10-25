@@ -1,7 +1,7 @@
 package dev.awaken.arms;
 
 /**
- * A creature's stance in a fight (SPEC §24; server only, never saved: a reload stands it back up; fighters near see
+ * A creature's stance in a fight (SPEC §25; server only, never saved: a reload stands it back up; fighters near see
  * a snapshot of it on every change, drained on their side by the same rule). Deflects, heavies,
  * finishers and Undercuts fill it; left alone it drains; full, it breaks. Lives on the struck creature itself, so the
  * patent rule holds: nothing done to one creature changes another.

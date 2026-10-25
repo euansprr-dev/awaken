@@ -37,7 +37,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Client entry of Arms (SPEC §24): the verbs' input and prediction, the weapon in first person, the feel, the HUD. */
+/** Client entry of Arms (SPEC §25): the verbs' input and prediction, the weapon in first person, the feel, the HUD. */
 public final class ArmsClient {
     private ArmsClient() {}
 

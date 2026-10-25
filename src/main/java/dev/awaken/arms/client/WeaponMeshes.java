@@ -12,7 +12,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-/** Every weapon's sculpted mesh (SPEC §24 "Weapons"), read with the resources and again on each reload. */
+/** Every weapon's sculpted mesh (SPEC §25 "Weapons"), read with the resources and again on each reload. */
 final class WeaponMeshes {
     private WeaponMeshes() {}
 

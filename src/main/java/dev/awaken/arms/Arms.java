@@ -11,7 +11,7 @@ import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Arms' public face (SPEC §12, §24): which fighting style a weapon fights with, whether it guards, a creature's
+ * Arms' public face (SPEC §12, §25): which fighting style a weapon fights with, whether it guards, a creature's
  * stance, and the sound of a told blow. Any melee weapon gets the three verbs: a sword (vanilla's, the Hunter blades, other mods' "_sword" items)
  * fights as a plain Longsword until its own style arrives.
  */

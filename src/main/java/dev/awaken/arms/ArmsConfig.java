@@ -14,7 +14,7 @@ public final class ArmsConfig {
 
     private static final ModConfigSpec.Builder B = new ModConfigSpec.Builder();
     public static final ModConfigSpec.BooleanValue ENABLED = B
-            .comment("Arms: guard, deflect and dodge on every melee weapon, told enemy blows, posture and the weapons' moves (SPEC §24).",
+            .comment("Arms: guard, deflect and dodge on every melee weapon, told enemy blows, posture and the weapons' moves (SPEC §25).",
                     "Off: vanilla melee everywhere; Arms weapons swing as plain swords.")
             .define("enabled", true);
     public static final ModConfigSpec SPEC = B.build();

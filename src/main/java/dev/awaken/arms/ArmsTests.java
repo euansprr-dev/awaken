@@ -28,7 +28,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Arms' rules and their server path (SPEC §24): the chain and its rhythm, the arc, the damage stack intact, the guard's
+ * Arms' rules and their server path (SPEC §25): the chain and its rhythm, the arc, the damage stack intact, the guard's
  * answers, the latency grace, the dodge's evade and perfect ticks, stances that break, and the world switch.
  */
 final class ArmsTests {

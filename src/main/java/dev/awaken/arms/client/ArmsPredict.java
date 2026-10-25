@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * The client's half of Arms (SPEC §24): it reads the three verbs, predicts the move with the same rules the server
+ * The client's half of Arms (SPEC §25): it reads the three verbs, predicts the move with the same rules the server
  * judges by ({@link ArmsRules}), starts it on the frame of the press, and takes the server's word when it comes back.
  * Strike: the attack key (tap = the chain, held = a heavy). Guard: the use key (vanilla's blocking, judged by the
  * server). Dodge: the sprint key with back, left, right or no direction, on the ground.

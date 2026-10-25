@@ -22,7 +22,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.function.Consumer;
 
 /**
- * A sculpted weapon in the hands, on a back, in a frame (SPEC §24 "Weapons"): its mesh drawn through the weapon shader
+ * A sculpted weapon in the hands, on a back, in a frame (SPEC §25 "Weapons"): its mesh drawn through the weapon shader
  * ({@link WeaponPipelines}), or vanilla's entity light if that shader didn't build. The fighter's own blade carries
  * the fight in it: a heavy's charge fills it with light, the glint flashes through it, a full Resonance (the Art
  * ready) keeps it humming. Item models name it as {@code {"type": "awaken:weapon", "weapon": "<id>"}}.

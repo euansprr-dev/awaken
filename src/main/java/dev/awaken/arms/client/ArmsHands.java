@@ -16,7 +16,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 
 /**
- * The weapon in first person (SPEC §24): every move's swing from its row (wind-up to the swing's start pose, the
+ * The weapon in first person (SPEC §25): every move's swing from its row (wind-up to the swing's start pose, the
  * blow through to its end pose, the recovery home), the guard across the body, a held heavy drawn back and
  * trembling. Drawn through the item's own hand transform (NeoForge's {@code applyForgeHandTransform}), so vanilla's
  * swing never plays over it. The clock is the hands' own: hit-stop holds it, so a swing freezes on the blow and

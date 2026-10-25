@@ -11,7 +11,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.util.Mth;
 
 /**
- * Arms' only HUD (SPEC §24), on surfaces the player already reads: a thin Resonance arc under the crosshair (filling,
+ * Arms' only HUD (SPEC §25), on surfaces the player already reads: a thin Resonance arc under the crosshair (filling,
  * gold and glowing when the Art is ready), the held heavy's charge on the same arc with the glint's flash, the
  * dodge's charges as two pips beside the sprint line, and a short red shard on a ring round the crosshair pointing
  * to where the last blow on you came from (whatever is in your hand). Nothing is drawn at rest.

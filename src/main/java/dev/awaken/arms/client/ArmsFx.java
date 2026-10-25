@@ -19,7 +19,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 
 /**
- * What a blow looks like in the world (SPEC §24), on the shared effects engine (powers' FxClient: its budget, its
+ * What a blow looks like in the world (SPEC §25), on the shared effects engine (powers' FxClient: its budget, its
  * settings): the blade's arc as the blow lands, a crescent the hand's own arc sweeps, pushed out ahead of the eye so
  * it faces whoever looks (a thrust a straight streak), tinted by the weapon and brighter with each rhythm step (gold
  * on a perfect heavy, an Execution and the Art, whose wave also rolls on along the ground); and where it lands, sparks

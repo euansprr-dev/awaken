@@ -13,7 +13,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * The feel of a blow (SPEC §24), installed as {@link CombatFeedback}: the struck body freezes and trembles for the
+ * The feel of a blow (SPEC §25), installed as {@link CombatFeedback}: the struck body freezes and trembles for the
  * blow's weight, the striker's hands and view hold for the same beat, and the view kicks along the blow and settles.
  * Visual only: the game's clock never stops. The view kick follows the camera-shake setting.
  */

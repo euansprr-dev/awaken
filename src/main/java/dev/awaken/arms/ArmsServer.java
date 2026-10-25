@@ -52,7 +52,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The server half of Arms (SPEC §24). Presses are judged against the server's own clock and the style's row; a
+ * The server half of Arms (SPEC §25). Presses are judged against the server's own clock and the style's row; a
  * move's active ticks sweep its arc and strike each creature in it once through vanilla's own attack (so every
  * damage listener, crit, enchantment and momentum hit still applies), scaled first by the move. Blows on a fighter
  * are answered here: a dodge's evade ticks, a deflect or block on the guard, and the latency grace that lets a guard

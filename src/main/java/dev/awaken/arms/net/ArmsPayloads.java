@@ -7,7 +7,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 /**
- * Arms' messages (SPEC §24). The client predicts every move and says what the player pressed; the server decides
+ * Arms' messages (SPEC §25). The client predicts every move and says what the player pressed; the server decides
  * what happened and answers with {@link Result}; everyone near sees it through {@link Seen}.
  */
 public final class ArmsPayloads {

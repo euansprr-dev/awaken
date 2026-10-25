@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A weapon's sculpted mesh (SPEC §24 "Weapons"), as tools/art/mesh.py writes it to
+ * A weapon's sculpted mesh (SPEC §25 "Weapons"), as tools/art/mesh.py writes it to
  * {@code assets/awaken/arms/weapons/<id>.mesh}: de-indexed triangles in item space (the 0..1 box of a JSON item model,
  * so vanilla's hand transforms hold it), each corner with its normal, its texel in the albedo half of the weapon's
  * texture and how far along the weapon it lies (the shader's sheen runs on it); then the points that glow.
