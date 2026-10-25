@@ -29,7 +29,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * the ground (over water, a buoy to stand on: the Ascent stands aside while swimming); glowing anchor rings sit round
  * the chain every {@link #RING_STEP} blocks, a quarter turn apart, each nearly overhead from under the last (a zip up
  * and a hang under it: AscentRules.ZIP_UP_*). The top ring stands in a small perch: a zip to its side pulls the body
- * onto it, and from it a zip to the pier's side does the same. The core sits in the cabin's middle.
+ * onto it, and from it a zip to the pier's side does the same. The core sits in the cabin's middle. Over a forest the
+ * canopy under the first ring is opened, so a throw from the ground sees it.
  */
 public final class SkyRig {
     private SkyRig() {}
@@ -177,6 +178,23 @@ public final class SkyRig {
                 boolean rim = Math.abs(dx) == 2 || Math.abs(dz) == 2;
                 level.setBlock(new BlockPos(first.getX() + dx, ground - 1, first.getZ() + dz), rim ? plate : RuinBuilder.plating(), flags);
             }
+        }
+        // over a forest: the canopy under the first ring opened (leaves and vines, 2 round its column) so a throw from
+        // the ground sees it
+        if (first != null) {
+            int opened = 0;
+            BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+            for (int y = ground; y < first.getY(); y++) for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) {
+                if (dx * dx + dz * dz > 5) continue;
+                m.set(first.getX() + dx, y, first.getZ() + dz);
+                if (!level.isLoaded(m)) continue;
+                BlockState b = level.getBlockState(m);
+                if (b.is(net.minecraft.tags.BlockTags.LEAVES) || b.is(Blocks.VINE)) {
+                    level.setBlock(m, Blocks.AIR.defaultBlockState(), flags);
+                    opened++;
+                }
+            }
+            if (opened > 0) dev.awaken.Awaken.LOG.info("[ascent] sky platform at {}, {}: {} leaves cleared under the first ring", cx, cz, opened);
         }
         level.setBlock(l.core(), AscentContent.WING_CORE.get().defaultBlockState(), flags);
         dev.awaken.Awaken.LOG.info("[ascent] sky platform rigged at {}, {} (deck {}): {} rings down to {} (ground {})", cx, cz, deckY,
