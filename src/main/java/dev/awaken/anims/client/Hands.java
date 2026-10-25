@@ -29,7 +29,7 @@ final class Hands implements FirstPerson.Player {
     private Hands() {}
 
     private static final FirstPerson.View VIEW = new FirstPerson.View();
-    private static final float[] M = new float[6], O = new float[6];
+    private static final float[] M = new float[6], O = new float[6], CLIP_MAIN = new float[4], CLIP_OFF = new float[4];
     private static Map<String, FpClipSet.Clip> clips;
 
     /** Clips playing: their clip, start (ticks), speed, events fired so far, a fade out (ticks, or 0). */
@@ -113,9 +113,42 @@ final class Hands implements FirstPerson.Player {
 
     // ---- the hand pass ----------------------------------------------------------------------------------------------
 
-    /** This frame's moves: every stance, then every clip (mirrored for a left main arm). */
+    // ---- the procedural layer: the hands trail fast turns of the view ------------------------------------------------
+
+    private static long lagNanos;
+    private static float lagYaw, lagPitch, lagX, lagY, lagRoll;
+
+    /** Look-lag: a damped spring toward a small offset against the view's turn (deg/s), stepped once a frame. */
+    private static void lookLag(float pt) {
+        var p = Minecraft.getInstance().player;
+        if (p == null) return;
+        float yaw = p.getViewYRot(pt), pitch = p.getViewXRot(pt);
+        long t = System.nanoTime();
+        float dt = lagNanos == 0 ? 0.016F : Math.min(0.1F, Math.max(0.001F, (t - lagNanos) / 1e9F));
+        float yawRate = net.minecraft.util.Mth.wrapDegrees(yaw - lagYaw) / dt, pitchRate = (pitch - lagPitch) / dt;
+        lagNanos = t;
+        lagYaw = yaw;
+        lagPitch = pitch;
+        float scale = FirstPerson.reducedMotion.getAsBoolean() ? 0.5F : 1F;
+        float tx = clamp(-yawRate * 0.00022F, 0.06F) * scale, ty = clamp(pitchRate * 0.00018F, 0.045F) * scale;
+        float tr = clamp(-yawRate * 0.005F, 4F) * scale;
+        float k = 1 - (float) Math.exp(-dt * 14);
+        lagX += (tx - lagX) * k;
+        lagY += (ty - lagY) * k;
+        lagRoll += (tr - lagRoll) * k;
+        FirstPerson.View.add(VIEW.both, 1, lagX, lagY, 0, 0, 0, lagRoll);
+    }
+
+    private static float clamp(float v, float max) {
+        return v < -max ? -max : v > max ? max : v;
+    }
+
+    /** This frame's moves: every stance, then every clip (mirrored for a left main arm), then the look-lag. */
     private static void compose(float pt, boolean leftMain) {
         VIEW.clear();
+        lookLag(pt);
+        java.util.Arrays.fill(CLIP_MAIN, 0F);
+        java.util.Arrays.fill(CLIP_OFF, 0F);
         List<FirstPerson.ViewPose> stances = FirstPerson.viewSources();
         for (int i = 0; i < stances.size(); i++) stances.get(i).pose(pt, VIEW);
         for (Playing p : PLAYING) {
@@ -124,10 +157,18 @@ final class Hands implements FirstPerson.Player {
             p.clip.sample(age, M, O);
             float k = p.stopAt < 0 ? 1 : Math.max(0, 1 - (ticks + pt - p.stopAt) / FADE);
             if (leftMain) mirror(M, O);
+            if (p.clip.fists) {
+                // a clip's fists take the hand from any stance's (a ledge jump over the hang's fists)
+                if (p.clip.hasMain()) FirstPerson.View.fist(CLIP_MAIN, k, M[0], M[1], M[2]);
+                if (p.clip.hasOff()) FirstPerson.View.fist(CLIP_OFF, k, O[0], O[1], O[2]);
+                continue;
+            }
             FirstPerson.View.add(VIEW.main, k, M[0], M[1], M[2], M[3], M[4], M[5]);
             FirstPerson.View.add(VIEW.off, k, O[0], O[1], O[2], O[3], O[4], O[5]);
             if (p.clip.both) VIEW.drawOff = true;
         }
+        if (CLIP_MAIN[3] > 0) System.arraycopy(CLIP_MAIN, 0, VIEW.fistMain, 0, 4);
+        if (CLIP_OFF[3] > 0) System.arraycopy(CLIP_OFF, 0, VIEW.fistOff, 0, 4);
     }
 
     private static void mirror(float[] a, float[] b) {
@@ -142,6 +183,7 @@ final class Hands implements FirstPerson.Player {
     /** First for each hand: the world layer's arms hide vanilla's; the moves go on. */
     static void first(RenderHandEvent e) {
         if (broken) return;
+        if (e.getHand() == InteractionHand.MAIN_HAND) WorldBody.drawNearLegs(e); // before any of the hands' moves
         if (WorldBody.armsThisFrame) {
             // the world layer's arms take the hand pass: vanilla's hands (and what they hold) step aside
             if (e.getHand() == InteractionHand.MAIN_HAND) WorldBody.drawArms(e);
@@ -157,10 +199,20 @@ final class Hands implements FirstPerson.Player {
             compose(e.getPartialTick(), leftMain);
             if (!VIEW.moved()) return;
             PoseStack ps = e.getPoseStack();
-            apply(ps, VIEW.both); // stays on the stack for the off hand too
-            if (VIEW.drawOff && avatar != null && Minecraft.getInstance().player != null && Minecraft.getInstance().player.getOffhandItem().isEmpty()) {
-                drawArm(e, avatar, !leftMain);
+            var pl = Minecraft.getInstance().player;
+            boolean offEmpty = pl != null && pl.getOffhandItem().isEmpty(), mainEmpty = pl != null && pl.getMainHandItem().isEmpty();
+            // fists first, before any offset: each empty hand with one has its arm drawn rising to it
+            if (VIEW.fistMain[3] > 0 && mainEmpty) {
+                fist(e, !leftMain, VIEW.fistMain);
+                VIEW.hideMain = true;
             }
+            boolean offFist = VIEW.fistOff[3] > 0 && offEmpty;
+            if (offFist) {
+                fist(e, leftMain, VIEW.fistOff);
+                VIEW.hideOff = true;
+            }
+            apply(ps, VIEW.both); // stays on the stack for the off hand too
+            if (VIEW.drawOff && !offFist && avatar != null && offEmpty) drawArm(e, avatar, !leftMain);
             if (VIEW.hideMain) {
                 e.setCanceled(true);
                 return;
@@ -188,6 +240,11 @@ final class Hands implements FirstPerson.Player {
             return;
         }
         apply(ps, VIEW.off); // the hand pass's stack is new every frame: nothing to undo after the last hand
+    }
+
+    private static void fist(RenderHandEvent e, boolean right, float[] f) {
+        float w = f[3];
+        WorldBody.drawFist(e, right, f[0] / w, f[1] / w, f[2] / w);
     }
 
     private static void apply(PoseStack ps, float[] m) {

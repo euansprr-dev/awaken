@@ -3256,7 +3256,28 @@ of the plan). No mixins.
   `anims.Ease` (the same curve names as the third-person clips), authored right-handed and mirrored for a left main arm;
   a one-shot ends at rest; `FirstPerson.play(name[, speed])`, `stop` (a 3-tick fade), `playing`; keyed events reach
   `FirstPerson.listen` listeners (sounds, hit-stops). Combat's animations use the same three layers.
-- Test: `anims_fp_clips` (the file reads, every clip the body plays is in it, every one-shot ends at rest).
-- P1 (built): the system and the grip (§17.23). Next: P2 the Runner's Kit in first person (the stair slide included),
-  P3 the Ascent, P4 touches, P5 station scenes, P6 the rest.
+- **Fists** (P2): a view clip (`"fists": true`) or a stance may key where each EMPTY hand is on screen (view space)
+  instead of moving vanilla's arm by offsets: its arm is drawn rising to the fist from under the frame's corner (from
+  view (±0.48, -0.84, -0.53), vanilla's own arm start), so a hand can be lifted anywhere without its forearm floating into
+  view (offsets that lift a vanilla arm show its end: the P2 preview). Vanilla's resting fist is
+  `FirstPerson.View.REST_FIST` (0.744, -0.455, -1.072); a clip's fists replace a stance's for that hand; a hand holding
+  an item ignores fists (vanilla draws it). A fist clip gives the hands back at rest (or the off hand out under the
+  frame), or, marked `toStance`, where its stance holds them (the hang's ledge jumps).
+- **Look-lag** (P2): the hands trail fast turns of the view on a damped spring (up to 0.06 sideways, 0.045 up, 4° of
+  roll), halved with reduced motion (`FirstPerson.reducedMotion`, the body's setting).
+- **Near legs** (P2): a foot nearer the eye than 1.15 (a slide's, out ahead under eyes 0.4 up) is drawn in the hand pass,
+  pushed out along its line of sight to that distance, as the arms are; farther legs stay in the world.
+- **The Runner's Kit in first person** (P2, `body.client.BodyFp`): each move's view clip starts from the same event as
+  its third-person clip (BodyAnims hands the clip's name over): `fp_roll`, `fp_mantle` (and every climb out),
+  `fp_grab`, `fp_lower`, `fp_ledge_up`, `fp_ledge_side_l/_r`, `fp_ledge_back`, `fp_walljump_l/_r` (the run's wall side),
+  `fp_vault` and `fp_leap` (the free-run), `fp_slide_jump`, `fp_land_soft` / `fp_land_hard` (a fall over 0.55 b/t,
+  hard over 0.95; never over a roll), `fp_stair_bump` (each half step a stair slide passes). Stances: the tactical
+  sprint's lowered hands pumping in step, the slide's brace with the off hand trailing, a wall-run's wall-side fist at
+  the frame's edge brushing the wall with each footfall, a wall climb's fists slapping up in turn, a hang's fists on the
+  lip (`BodyFp.HANG_*`, swaying; shimmying hand over hand). Legs (world source `body_moves`, 90): out ahead along the
+  ground in a slide (down the slope in a stair slide), feet to the wall in a hang. The stair slide tips the view 9°
+  down the run (`BodyCamera`).
+- Test: `anims_fp_clips` (the file reads, every clip the body plays is in it, every one-shot gives the hands back).
+  Tours: `tools/autopilot/anims-pipe.txt` (P1), `anims-runner.txt` (P2), both PACK=feel with the HUD on.
+- P1 and P2 built. Next: P3 the Ascent, P4 touches, P5 station scenes, P6 the rest.
 

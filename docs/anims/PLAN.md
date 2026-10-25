@@ -269,6 +269,17 @@ FirstPerson.view((partialTick, v) -> {
 ```
 Stances add every frame; keep them cheap and allocation-free.
 
+**Fists, for any empty hand that must go somewhere (P2).** Moving vanilla's arm up by offsets floats its forearm into
+view. Instead key where the fist is on screen (view space) and the arm is drawn rising to it from under the frame:
+```java
+FirstPerson.View.fist(v.fistMain, k, x, y, z);   // a stance's fist (weighted; a clip's fist replaces a stance's)
+```
+Clips: `clip(..., fists=True)` with keys `fist(x, y, z)`; vanilla's resting fist is `REST_FIST` (0.744, -0.455,
+-1.072); an off hand comes in from and goes back to `OFF_OUT` under the frame; `to_stance=True` for clips that end where
+a stance holds the hands. A hand holding an item ignores fists (combat: use offsets on the held weapon).
+
+**The procedural layer.** Look-lag (the hands trail fast turns) runs for everyone; `FirstPerson.reducedMotion` halves it.
+
 **Clips: one-shots and loops written in Python, with events.**
 ```java
 FirstPerson.play("fp_pipe_kick");           // from its start; FirstPerson.play(name, speed)

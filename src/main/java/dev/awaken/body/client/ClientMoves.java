@@ -332,6 +332,7 @@ public final class ClientMoves {
      */
     private static void applyStairs(LocalPlayer p, ClientInput in) {
         stairTicks++;
+        BodyFp.stairTick(p);
         WAY[0] = slideX;
         WAY[1] = slideZ;
         BodyRules.stairBend(WAY, stairFallX, stairFallZ);
@@ -357,6 +358,7 @@ public final class ClientMoves {
     /** The bottom of a run: the slide's last ticks, its own decay from the speed it has now, carry the body out. */
     private static void runOut() {
         if (!stairSliding) return;
+        BodyFp.stairEnd();
         stairSliding = false;
         slideAge = BodyRules.SLIDE_TICKS - BodyRules.STAIR_RUNOUT;
         slideV0 = stairV / (1 - BodyRules.SLIDE_FADE * slideAge / (double) BodyRules.SLIDE_TICKS);
@@ -387,6 +389,7 @@ public final class ClientMoves {
         if (riding) p.jumpFromGround();
         else if (!in.keyPresses.jump()) in.keyPresses = with(in.keyPresses, true, false);
         slideJumpAt = ticks;
+        BodyFp.slideJump();
         trace("slide-cancel jump");
         BodyFx.sound(p, BodyContent.SPRINT.get(), 0.6F, 1.25F);
         BodyFx.kick(p, slideX, slideZ);
@@ -397,6 +400,7 @@ public final class ClientMoves {
         trace("slide ends (" + why + ") after " + slideAge);
         sliding = false;
         stairSliding = false;
+        BodyFp.stairEnd();
         slideEnd = ticks;
         slideReadyAt = ticks + BodyRules.slideCooldown(Body.runnerRank(p));
         if (p.getForcedPose() == Pose.SWIMMING) p.setForcedPose(null); // vanilla keeps a crawl under a gap

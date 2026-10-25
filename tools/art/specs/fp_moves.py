@@ -42,7 +42,7 @@ def mirror(h):
     return (-h[0], h[1], h[2], h[3], -h[4], -h[5])
 
 
-def clip(name, length, main=(), off=(), both=False, loop=False, events=(), note=""):
+def clip(name, length, main=(), off=(), both=False, loop=False, events=(), note="", fists=False, to_stance=False):
     if name in CLIPS:
         raise ValueError(f"duplicate clip {name}")
     for track in (main, off):
@@ -53,9 +53,30 @@ def clip(name, length, main=(), off=(), both=False, loop=False, events=(), note=
             if t < last or t > length:
                 raise ValueError(f"{name}: keys out of order or past the length")
             last = t
-        if track and not loop and any(abs(v) > 1e-9 for v in track[-1][1]):
+        if track and not loop and not fists and any(abs(v) > 1e-9 for v in track[-1][1]):
             raise ValueError(f"{name}: a one-shot must end at rest")
-    CLIPS[name] = dict(length=length, loop=loop, both=both, main=list(main), off=list(off), events=list(events), note=note)
+    if fists and not loop and not to_stance:
+        # a fist clip gives the hands back: the main fist to vanilla's rest, the off one to its rest or out under the frame
+        if main and any(abs(a - b) > 1e-6 for a, b in zip(main[-1][1][:3], REST_FIST[:3])):
+            raise ValueError(f"{name}: the main fist must end at rest")
+        if off and off[-1][1][1] > -0.9 and any(abs(a - b) > 1e-6 for a, b in zip(off[-1][1][:3], (-REST_FIST[0],) + REST_FIST[1:3])):
+            raise ValueError(f"{name}: the off fist must end at rest or under the frame")
+    CLIPS[name] = dict(length=length, loop=loop, both=both, main=list(main), off=list(off), events=list(events), note=note, fists=fists,
+                       to_stance=to_stance)
+
+
+# Fist clips (FirstPerson.View fists): each empty hand keyed by where it is on screen, in view space (x right, y up, z
+# toward you), its arm drawn rising to it from under the frame's corner. Lifting a vanilla arm by offsets floats its
+# forearm into view; a fist never does. Vanilla's own resting empty fist is REST_FIST; an off hand comes in from and goes
+# back out to OFF_OUT (under the frame, where vanilla draws no empty off hand).
+def fist(x, y, z):
+    return (float(x), float(y), float(z), 0.0, 0.0, 0.0)
+
+
+REST_FIST = fist(0.744, -0.455, -1.072)
+OFF_OUT = fist(-0.62, -1.15, -0.85)
+# both hands on a lip in a hang (body.client.BodyFp.HANG_FIST: keep the same numbers)
+HANG_FIST = fist(0.26, -0.02, -0.82)
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -63,7 +84,7 @@ def clip(name, length, main=(), off=(), both=False, loop=False, events=(), note=
 # and for the first ticks after letting go they drop away there; these clips take the hands over from below.
 
 # Kicked off the wall: the hands come up from below thrown out for balance as you fly back, then settle.
-KICK_UP = hand(0.08, 0.1, -0.04, 14, 0, 12)
+KICK_UP = hand(0.08, 0.02, -0.04, 18, 0, 12)
 clip("fp_pipe_kick", 12,
      main=[(0, hand(0, -0.6), "linear"), (4, hand(0, -0.6), "linear"), (7, KICK_UP, "easeoutcubic"), (12, REST, "easeinoutsine")],
      off=[(0, mirror(hand(0, -0.6)), "linear"), (4, mirror(hand(0, -0.6)), "linear"), (7, mirror(KICK_UP), "easeoutcubic"),
@@ -98,12 +119,127 @@ clip("fp_pipe_land", 10,
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+# The Runner's Kit (P2; SPEC §16.3, §17). The held moves (the tactical sprint, a slide, a wall-run, a wall climb, a hang
+# and its shimmy) are stances in body.client.BodyFp, phase-locked to the move; these are the one-shots that start them
+# or end them. Each starts where the hands are (vanilla's rest, or the stance under it) and gives them back.
+BELOW = hand(0, -0.6)          # out of view under the frame (an arm that wasn't drawn comes in from here)
+# Lifting a hand is a pitch (the arm swings up about the eye), not a move up: moved up, the whole forearm floats into view.
+
+def mf(h):
+    """A fist on the other side (x mirrored)."""
+    return (-h[0], h[1], h[2], 0.0, 0.0, 0.0)
+
+
+# Landings: a soft one dips the hands and springs them back (offsets: a small move); a hard one puts the main hand down
+# to the ground and brings the off hand in low beside it.
+clip("fp_land_soft", 8, main=[(0, REST, "linear"), (2, hand(0, -0.1, 0.02, -10), "easeoutcubic"), (5, hand(0, 0.02, 0, 2), "easeinoutsine"),
+                              (8, REST, "easeinoutsine")], note="hands dip with the landing, spring back")
+clip("fp_land_hard", 12, fists=True,
+     main=[(0, REST_FIST, "linear"), (3, fist(0.22, -0.42, -0.8), "easeoutcubic"), (7, fist(0.24, -0.4, -0.82), "linear"), (12, REST_FIST, "easeinoutsine")],
+     off=[(0, OFF_OUT, "linear"), (3, fist(-0.4, -0.48, -0.82), "easeoutcubic"), (7, fist(-0.42, -0.46, -0.84), "linear"), (12, OFF_OUT, "easeinoutsine")],
+     events=[(3, "slap")], note="the main hand down to the ground, a three-point landing")
+
+# The roll: the forearms cross in front as the view turns over, then open out of it.
+clip("fp_roll", 17, fists=True,
+     main=[(0, REST_FIST, "linear"), (3, fist(-0.08, -0.3, -0.7), "easeoutcubic"), (10, fist(-0.06, -0.32, -0.7), "linear"), (17, REST_FIST, "easeinoutsine")],
+     off=[(0, OFF_OUT, "linear"), (3, fist(0.1, -0.24, -0.72), "easeoutcubic"), (10, fist(0.08, -0.26, -0.72), "linear"), (17, OFF_OUT, "easeinoutsine")],
+     note="forearms crossed through the roll")
+
+# The free-run's vault: the main palm plants on the top in the middle of the view, then pushes past as you go over.
+clip("fp_vault", 10, fists=True,
+     main=[(0, REST_FIST, "linear"), (2, fist(0.16, -0.4, -0.8), "easeoutcubic"), (5, fist(0.34, -0.66, -0.7), "easeinquad"), (10, REST_FIST, "easeinoutsine")],
+     events=[(2, "plant")], note="a palm planted on the top, pushed past")
+
+# The mantle (and every climb out over a lip): both hands slap up onto the lip, then press down as you rise over it.
+MN_REACH, MN_PRESS, MN_PUSH = fist(0.3, 0.1, -0.9), fist(0.28, -0.06, -0.85), fist(0.4, -0.4, -0.8)
+clip("fp_mantle", 12, fists=True,
+     main=[(0, REST_FIST, "linear"), (2, MN_REACH, "easeoutcubic"), (5, MN_PRESS, "easeinquad"), (9, MN_PUSH, "easeinoutsine"), (12, REST_FIST, "easeinoutsine")],
+     off=[(0, OFF_OUT, "linear"), (2, mf(MN_REACH), "easeoutcubic"), (5, mf(MN_PRESS), "easeinquad"), (9, mf(MN_PUSH), "easeinoutsine"), (12, OFF_OUT, "easeinoutsine")],
+     events=[(2, "slap")], note="palms slap the lip, press over it")
+
+# A leap from an edge: both arms swing forward and up with the jump.
+LP = fist(0.42, 0.02, -0.95)
+clip("fp_leap", 10, fists=True, main=[(0, REST_FIST, "linear"), (3, LP, "easeoutcubic"), (10, REST_FIST, "easeinoutsine")],
+     off=[(0, OFF_OUT, "linear"), (3, mf(LP), "easeoutcubic"), (10, OFF_OUT, "easeinoutsine")], note="arms swing with the leap")
+
+# Out of a slide with a jump: the hands thrown up, then open for the landing.
+SJ = fist(0.38, 0.18, -0.9)
+clip("fp_slide_jump", 13, fists=True,
+     main=[(0, REST_FIST, "linear"), (3, SJ, "easeoutcubic"), (9, fist(0.6, -0.25, -1.0), "easeinoutsine"), (13, REST_FIST, "easeinoutsine")],
+     off=[(0, OFF_OUT, "linear"), (3, mf(SJ), "easeoutcubic"), (9, mf(fist(0.6, -0.25, -1.0)), "easeinoutsine"), (13, OFF_OUT, "easeinoutsine")],
+     note="hands thrown up out of the slide")
+
+
+def walljump(wall_left):
+    """The wall-side palm shoves off the wall at the frame's edge; the other arm is thrown forward for the flight."""
+    shove = fist(-0.78, -0.08, -0.8)    # the left hand, out at the wall on the left
+    throw = fist(0.34, -0.06, -1.0)     # the right arm thrown forward
+    if wall_left:
+        main_keys = [(0, REST_FIST, "linear"), (2, throw, "easeoutcubic"), (12, REST_FIST, "easeinoutsine")]
+        off_keys = [(0, fist(-0.7, -0.3, -0.8), "linear"), (2, shove, "easeoutcubic"), (6, fist(-0.6, -0.5, -0.8), "easeinoutsine"), (12, OFF_OUT, "easeinoutsine")]
+    else:
+        main_keys = [(0, fist(0.75, -0.3, -0.85), "linear"), (2, mf(shove), "easeoutcubic"), (6, fist(0.7, -0.45, -0.95), "easeinoutsine"),
+                     (12, REST_FIST, "easeinoutsine")]
+        off_keys = [(0, OFF_OUT, "linear"), (2, mf(throw), "easeoutcubic"), (12, OFF_OUT, "easeinoutsine")]
+    return main_keys, off_keys
+
+
+m, o = walljump(True)
+clip("fp_walljump_l", 12, fists=True, main=m, off=o, events=[(2, "shove")], note="the left palm shoves off the wall")
+m, o = walljump(False)
+clip("fp_walljump_r", 12, fists=True, main=m, off=o, events=[(2, "shove")], note="the right palm shoves off the wall")
+
+# Hanging (body.client.BodyFp's hang stance holds both fists at HANG_FIST on the lip). These play over it, from the
+# hang's fists and back to them (or, leaving the lip, out to rest).
+# The catch: the hands come up from below and slam onto the lip, with a jolt.
+clip("fp_grab", 8, fists=True, to_stance=True,
+     main=[(0, fist(0.4, -0.5, -0.8), "linear"), (1.5, fist(0.26, 0.04, -0.82), "easeoutcubic"), (3.5, fist(0.26, -0.05, -0.82), "easeinoutsine"),
+           (8, HANG_FIST, "easeinoutsine")],
+     off=[(0, fist(-0.4, -0.5, -0.8), "linear"), (1.5, fist(-0.26, 0.03, -0.82), "easeoutcubic"), (3.5, fist(-0.26, -0.05, -0.82), "easeinoutsine"),
+          (8, mf(HANG_FIST), "easeinoutsine")], events=[(1.5, "catch")], note="hands slam onto the lip with a jolt")
+# Lowering over an edge into a hang: the hands go down to the edge first, then take the weight.
+clip("fp_lower", 8, fists=True, to_stance=True,
+     main=[(0, fist(0.3, -0.6, -0.7), "linear"), (5, fist(0.26, -0.04, -0.82), "easeinoutsine"), (8, HANG_FIST, "easeoutsine")],
+     off=[(0, fist(-0.3, -0.6, -0.7), "linear"), (5, fist(-0.26, -0.04, -0.82), "easeinoutsine"), (8, mf(HANG_FIST), "easeoutsine")],
+     note="down onto the hands at the edge")
+# The ledge jump up: a pull down, then both hands reach high for the next lip and catch it.
+LU = [(0, HANG_FIST, "linear"), (2, fist(0.26, -0.2, -0.8), "easeinquad"), (4, fist(0.24, 0.24, -0.85), "easeoutcubic"), (8, HANG_FIST, "easeinoutsine")]
+clip("fp_ledge_up", 8, fists=True, to_stance=True, main=LU, off=[(t, mf(h), e) for t, h, e in LU], events=[(4, "catch")], note="pull, reach high, catch")
+
+
+def ledge_side(left):
+    """A ledge jump sideways: the lead hand reaches out that way, the other lets go and follows."""
+    s = 1 if left else -1
+    lead = fist(-0.62, 0.0, -0.82)       # the left hand reaching left
+    main_keys = [(0, HANG_FIST, "linear"), (4, fist(0.0, -0.08, -0.85) if left else mf(lead), "easeoutcubic"), (9, HANG_FIST, "easeinoutsine")]
+    off_keys = [(0, mf(HANG_FIST), "linear"), (4, lead if left else fist(0.0, -0.08, -0.85), "easeoutcubic"), (9, mf(HANG_FIST), "easeinoutsine")]
+    return main_keys, off_keys
+
+
+m, o = ledge_side(True)
+clip("fp_ledge_side_l", 9, fists=True, to_stance=True, main=m, off=o, events=[(6, "catch")], note="the left hand reaches for the next lip")
+m, o = ledge_side(False)
+clip("fp_ledge_side_r", 9, fists=True, to_stance=True, main=m, off=o, events=[(6, "catch")], note="the right hand reaches for the next lip")
+# The ledge jump back: the hands leave the lip, thrown out wide as the body turns away, and drop back to rest.
+clip("fp_ledge_back", 12, fists=True,
+     main=[(0, HANG_FIST, "linear"), (3, fist(0.8, 0.0, -0.9), "easeoutcubic"), (12, REST_FIST, "easeinoutsine")],
+     off=[(0, mf(HANG_FIST), "linear"), (3, fist(-0.8, 0.0, -0.9), "easeoutcubic"), (12, OFF_OUT, "easeinoutsine")], note="hands thrown off the lip")
+# The stair slide (SPEC §17.22): the trailing hand knocks the edge of each step it passes (offsets on the slide's stance).
+clip("fp_stair_bump", 4, off=[(0, REST, "linear"), (1, hand(0, 0.04, 0, 5), "easeoutcubic"), (4, REST, "easeinoutsine")],
+     both=True, events=[(1, "step")], note="the trailing hand bumps a step's edge")
+
+
+# ---------------------------------------------------------------------------------------------------------------------
 # Output
 
 def document():
     out = {}
     for name, c in CLIPS.items():
         d = {"length": c["length"], "loop": c["loop"], "both": c["both"]}
+        if c["fists"]:
+            d["fists"] = True
+        if c["to_stance"]:
+            d["toStance"] = True
         for track in ("main", "off"):
             if c[track]:
                 d[track] = [[t] + [round(v, 4) for v in h] + [e] for t, h, e in c[track]]
@@ -196,6 +332,25 @@ def arm_quads(h, right):
     return [[c[i] for i in f] for f in faces]
 
 
+def fist_quads(fx, right, anchor=(0.48, -0.84, -0.53), reach=0.6):
+    """A fist clip's arm (anims.client.WorldBody.viewArm): from the anchor under the corner toward the fist, front up."""
+    side = 1 if right else -1
+    s = (side * anchor[0], anchor[1], anchor[2])
+    a = [fx[i] - s[i] for i in range(3)]
+    l = math.sqrt(sum(v * v for v in a))
+    d = [v / l for v in a]
+    root = [fx[i] - d[i] * reach for i in range(3)]
+    dot = d[1]
+    f = [-d[0] * dot, 1 - d[1] * dot, -d[2] * dot]
+    fl = math.sqrt(sum(v * v for v in f))
+    f = [v / fl for v in f]
+    r = [d[1] * f[2] - d[2] * f[1], d[2] * f[0] - d[0] * f[2], d[0] * f[1] - d[1] * f[0]]
+    pts = [[root[i] + d[i] * t + f[i] * u + r[i] * v for i in range(3)] for t in (-2 / 16, 10 / 16) for u in (-2 / 16, 2 / 16)
+           for v in (-2 / 16, 2 / 16)]
+    faces = [(0, 1, 3, 2), (4, 5, 7, 6), (0, 1, 5, 4), (2, 3, 7, 6), (0, 2, 6, 4), (1, 3, 7, 5)]
+    return [[pts[i] for i in fc] for fc in faces]
+
+
 def frame(c, tick, w=320, h=180):
     from PIL import Image, ImageDraw
     im = Image.new("RGB", (w, h), (24, 28, 36))
@@ -203,8 +358,16 @@ def frame(c, tick, w=320, h=180):
     f = 1 / math.tan(math.radians(35))
     quads = []
     mh, oh = sample(c["main"], tick), sample(c["off"], tick)
-    quads += [(q, (196, 150, 112)) for q in arm_quads(mh, True)]
-    if c["both"] or c["off"]:
+    if c.get("fists"):
+        if c["main"]:
+            quads += [(q, (196, 150, 112)) for q in fist_quads(mh, True)]
+        else:
+            quads += [(q, (196, 150, 112)) for q in arm_quads(REST, True)]
+        if c["off"]:
+            quads += [(q, (176, 132, 98)) for q in fist_quads(oh, False)]
+    else:
+        quads += [(q, (196, 150, 112)) for q in arm_quads(mh, True)]
+    if not c.get("fists") and (c["both"] or c["off"]):
         quads += [(q, (176, 132, 98)) for q in arm_quads(oh, False)]
     quads.sort(key=lambda qc: sum(p[2] for p in qc[0]) / 4)
     for q, col in quads:
