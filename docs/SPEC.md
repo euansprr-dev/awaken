@@ -2629,17 +2629,18 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
   upward into a dome and only the thickest rise tall (flat 2D cover read as vertical curtains). One tileable noise
   texture, `awaken:lens_cloud_noise` (256×256 RGBA, made in the frequency domain by
   `tools/art/specs/lens_clouds.py`: r coverage, g shape, b billows, a wisps), sampled at 3072, 960, 256 and 120 blocks
-  a repeat (all dividing 30720), the fine scales shifted with world height for depth. Flat-ish bases, tops that rise where a
-  cloud is thick, billows and wisps eating the edges.
+  a repeat (all dividing 30720) for where clouds stand and their outlines; their billows are two octaves of a cheap 3D
+  value noise in world space (46 and 17 blocks; flat noise slid with height drew vertical streaks). Flat-ish bases,
+  domes that rise where a cloud is thick, billows eating the edges.
 - Pass `lens_clouds.fsh` (640×360 on Cinematic, 960×540 on Ultra; then a blit into the persistent
-  `awaken:lens_clouds_hist`): each ray marched through the layer (28 / 40 steps, up to 800 / 1100 blocks of it, never
+  `awaken:lens_clouds_hist`): each ray marched through the layer (24 / 40 steps, up to 800 / 1100 blocks of it, never
   past nearer terrain), lit by 3 / 5 steps toward the light (doubling from 6 blocks): two octaves of Beer's law (the
   second, at 55% and a quarter of the extinction, stands in for light scattered many times inside, so bases stay soft
-  grey-white), σ 0.03 per block, a powder term (thin sunward edges glow, dense cores darken), a phase of 0.8 + 1.8 × HG(0.75) (white from every side, a silver lining
-  toward the sun; at 3 × HG(0.7) the clouds round the sun blew out into one white mass), the sun's colour (warm at
+  grey-white), σ 0.03 per block, a powder term (thin sunward edges glow, dense cores darken), a phase of 0.85 + 0.9 × HG(0.6) (white from every side, a modest silver
+  lining toward the sun; stronger forward lobes blew the sky round the sun out into one white mass), the sun's colour (warm at
   golden hour, the moon's at night) and the sky's light on them (a cool blue with a third of the horizon's colour, by
-  the game's cloud colour but never below half, so an overcast sky stays bright grey; 55% at the base to 100% at the
-  tops). Distant cloud melts into the
+  the game's cloud colour but never below half and up to 1.95× toward overcast, so a grey sky stays bright grey; 70% at
+  the base to 100% at the tops). Distant cloud melts into the
   fog colour from 1500 blocks and is gone at 5000, so the deck never ends in a line. Accumulated over frames (0.15 /
   0.12 new), reprojected where the ray entered the layer. Out: rgb their light (premultiplied), a
   what shows through.
@@ -2647,7 +2648,8 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
   haze. The bloom prefilter (`lens_prefilter_lit.fsh`) folds them into the sky, so bright edges bloom, and the sky's
   alpha (what the screen-space shafts and the sun's halo read) carries 60% of their transmittance: rays break through
   gaps and the halo dims behind a cloud (all of it streaked the whole sky like rain curtains; the shafts also drop to
-  0.35 in the composite). The light pass darkens the sun on the land under them (to 28% under thick cloud, along
+  0.35 in the composite). The shafts read the open sky's own brightness, not the clouds' (bright cloud tops seen from
+  above streaked into rays). The light pass darkens the sun on the land under them (to 28% under thick cloud, along
   the light ray through the layer's middle) and in the volumetric beams: moving cloud shadows and beams through gaps.
 - First tour (bad8a542, 480×270, 20 steps, the first cover curve; p50 ms off 7.74, Swift 7.85, Cinematic 10.73, Ultra
   13.20: the clouds cost no net frame time, since the game's are no longer drawn): too much cover (a stormy deck),

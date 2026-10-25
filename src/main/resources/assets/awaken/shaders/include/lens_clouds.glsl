@@ -4,6 +4,20 @@
 
 const float CLOUD_THICK = 84.0;
 
+// smooth 3D value noise (0..1) for the billows: real depth, where flat noise slid with height drew vertical streaks
+float cloudHash(vec3 p) {
+    p = fract(p * 0.3183099 + 0.1);
+    p *= 17.0;
+    return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+}
+
+float cloudNoise3(vec3 p) {
+    vec3 i = floor(p), f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(mix(cloudHash(i), cloudHash(i + vec3(1, 0, 0)), f.x), mix(cloudHash(i + vec3(0, 1, 0)), cloudHash(i + vec3(1, 1, 0)), f.x), f.y),
+               mix(mix(cloudHash(i + vec3(0, 0, 1)), cloudHash(i + vec3(1, 0, 1)), f.x), mix(cloudHash(i + vec3(0, 1, 1)), cloudHash(i + vec3(1, 1, 1)), f.x), f.y), f.z);
+}
+
 // x layer base (0: none), y cover, z/w the camera's x and z plus the wind (modulo 30720)
 vec4 cloudParams() { return F(18); }
 
@@ -22,11 +36,10 @@ float cloudDensity(vec3 rel, vec4 cp, float camY, bool coarse) {
     float shape = smoothstep(0.0, 0.08, h) * (1.0 - smoothstep(0.85, 1.0, h));
     float d = c * shape;
     if (coarse || d <= 0.0) return d;
-    // billows and wisps eat into the edges (shifted with height: a little depth from flat noise)
-    float y = rel.y + camY;
-    float b = texture(CloudNoiseSampler, fract(xz / 256.0 + y / 512.0)).b;
-    float w = texture(CloudNoiseSampler, fract(xz / 120.0 - y / 300.0)).a;
-    return clamp(d - (1.0 - b) * 0.45 * (1.0 - h * 0.4) - (1.0 - w) * 0.12, 0.0, 1.0);
+    // billows (two octaves of 3D noise, in world space, so they hold still as the camera moves) eat into the edges
+    vec3 wp = vec3(xz.x, rel.y + camY, xz.y);
+    float b = cloudNoise3(wp / 46.0) * 0.65 + cloudNoise3(wp / 17.0) * 0.35;
+    return clamp(d - (1.0 - b) * 0.55 * (1.0 - h * 0.35), 0.0, 1.0);
 }
 
 // how much sunlight the clouds let down to a camera-relative point (the light ray through the layer's middle)

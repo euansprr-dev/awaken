@@ -29,6 +29,8 @@ void main() {
 #ifdef LENS_LIGHT
     // the clouds are part of the sky that blooms and that the shafts are made of: bright edges glow, cloud cuts the rays
     vec4 cl = texture(CloudsSampler, texCoord);
+    // (the shafts read the open sky's own brightness: bright cloud tops below the camera mustn't streak into rays)
+    float openLuma = dot(c, vec3(0.2126, 0.7152, 0.0722));
     if (sky > 0.5) c = c * cl.a + cl.rgb;
 #endif
     vec4 p0 = P(0);
@@ -53,6 +55,7 @@ void main() {
 #ifdef LENS_LIGHT
     // (only partly: soft clouds cutting the rays fully streak the whole sky like rain curtains)
     sky *= mix(1.0, cl.a, 0.6);
+    luma = openLuma;
 #endif
     fragColor = vec4(c * w, sky * smoothstep(0.35, 0.95, luma));
 }
