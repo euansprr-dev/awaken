@@ -72,6 +72,8 @@ public class CitizenBody extends PathfinderMob implements Npc {
     public int speechStart, speechUntil, speechKind;
     /** The hand lantern a bearer carries, on the client (citizens.client.LanternHold: its model state, its flame). */
     public Object clientLantern;
+    /** What a citizen works with in hand on the client (citizens.client.HeldProp: a rope, a net, a parcel). */
+    public Object clientHeld;
     public net.minecraft.util.@org.jspecify.annotations.Nullable FormattedCharSequence label;
     public float labelWidth;
     /** The client's life layer for this body (mobs.client.life.Life; an Object so common code never names a client class). */

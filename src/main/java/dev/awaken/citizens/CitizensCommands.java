@@ -332,17 +332,18 @@ final class CitizensCommands {
             if (d.state[i] != CitizensData.INSIDE && own(job, pk, c.ledger.act(i))) score += 3;
             if (d.dwellUntil[i] > 0) score -= 1; // they'll walk on soon
             // (B3b) each call shows the next of the best-placed, not the same one again (tours frame several)
-            score = score * 1000 + (int) Math.floorMod(CitizenWork.mixHash(i + 7919L * showTurn), 997L);
+            score = score * 1000 + (int) Math.floorMod(CitizenWork.mixHash(i + 7919L * showTurn), 997L) - (i == lastShown ? 3000 : 0);
             if (score > bestScore) {
                 bestScore = score;
                 best = i;
             }
         }
         showTurn++;
+        lastShown = best;
         return best;
     }
 
-    private static int showTurn;
+    private static int showTurn, lastShown = -1;
 
     /** The job's own work: the place kind (or act) that shows it. */
     private static boolean own(int job, byte pk, byte act) {

@@ -313,15 +313,18 @@ final class CityLifeTests {
     // ---- the animals -------------------------------------------------------------------------------------------------
 
     /** The clips citizens.client.CityCritters plays for each animal, by name (the brain finds them by name). */
-    static final Map<String, List<String>> CLIPS = Map.of(
-            "city_pigeon", List.of("idle", "walk", "peck", "call", "fly", "glide", "flare"),
-            "city_gull", List.of("idle", "walk", "peck", "call", "fly", "glide", "flare"),
-            "city_cat", List.of("sit", "sleep", "loaf", "groom", "walk", "trot"),
-            "city_dog", List.of("idle", "walk", "trot", "sit", "pant", "sniff", "lie"),
-            "city_horse", List.of("idle", "walk", "toss"),
-            "city_cart", List.of(),
-            "city_boat", List.of("idle", "walk", "drift"),
-            "city_hand_lantern", List.of("idle"));
+    static final Map<String, List<String>> CLIPS = Map.ofEntries(
+            Map.entry("city_pigeon", List.of("idle", "walk", "peck", "call", "fly", "glide", "flare")),
+            Map.entry("city_gull", List.of("idle", "walk", "peck", "call", "fly", "glide", "flare")),
+            Map.entry("city_cat", List.of("sit", "sleep", "loaf", "groom", "walk", "trot")),
+            Map.entry("city_dog", List.of("idle", "walk", "trot", "sit", "pant", "sniff", "lie")),
+            Map.entry("city_horse", List.of("idle", "walk", "toss")),
+            Map.entry("city_cart", List.of()),
+            Map.entry("city_boat", List.of("idle", "walk", "drift")),
+            Map.entry("city_hand_lantern", List.of("idle")),
+            Map.entry("city_prop_rope", List.of("idle")),
+            Map.entry("city_prop_net", List.of("idle")),
+            Map.entry("city_prop_parcel", List.of("idle")));
 
     /** Every rig parses without problems, carries the clips its brain plays, and every coat (and its blink) is a texture. */
     private static void rigs(GameTestHelper h) {
@@ -332,7 +335,7 @@ final class CityLifeTests {
                 HeroRig r = HeroRig.parse(src);
                 rigs.put(r.id, r);
                 // a hand lantern has no gait: the rigs' walk-or-fly rule is for bodies
-                for (String q : r.problems()) if (!(r.id.equals("city_hand_lantern") && q.contains("neither walk nor fly"))) problems.add(q);
+                for (String q : r.problems()) if (!((r.id.equals("city_hand_lantern") || r.id.startsWith("city_prop_")) && q.contains("neither walk nor fly"))) problems.add(q);
             } catch (RuntimeException e) {
                 problems.add("a rig fails to parse: " + e.getMessage());
             }
@@ -353,14 +356,15 @@ final class CityLifeTests {
                 String base = "/assets/awaken/textures/entity/city/" + e.getKey() + (v.isEmpty() ? "" : "_" + v);
                 if (missing(base + ".png")) problems.add(base + ".png missing");
                 // living animals blink (the cart and the boats don't); cats' eyes and boats' lanterns glow in the dark
-                boolean thing = e.getKey().equals("city_cart") || e.getKey().equals("city_boat") || e.getKey().equals("city_hand_lantern");
+                boolean thing = e.getKey().equals("city_cart") || e.getKey().equals("city_boat") || e.getKey().equals("city_hand_lantern")
+                        || e.getKey().startsWith("city_prop_");
                 if (!thing && missing(base + "_blink.png")) problems.add(base + "_blink.png missing");
                 if (e.getKey().equals("city_cat") && missing(base + "_glow.png")) problems.add(base + "_glow.png missing (eyeshine)");
                 if (e.getKey().equals("city_boat") && missing(base + "_glow.png")) problems.add(base + "_glow.png missing (the bow lantern)");
                 if (e.getKey().equals("city_hand_lantern") && missing(base + "_glow.png")) problems.add(base + "_glow.png missing (glass and flame)");
             }
         }
-        h.assertTrue(rigs.size() == CLIPS.size(), "one rig per animal, the cart and the hand lantern (" + rigs.keySet() + ")");
+        h.assertTrue(rigs.size() == CLIPS.size(), "one rig per animal, the cart, the hand lantern and the held props (" + rigs.keySet() + ")");
         h.assertTrue(problems.isEmpty(), String.join("; ", problems));
         h.succeed();
     }
