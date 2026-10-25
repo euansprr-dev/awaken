@@ -13,8 +13,15 @@ public final class SceneTests {
     public static void register() {
         AwakenTests.registerIsolated("living_scene_finder", 200, h -> {
             ServerLevel level = h.getLevel();
-            BlockPos base = h.absolutePos(new BlockPos(0, 1, 0));
-            // a 7x7 stone tower ten high on open ground, and open ground 24 blocks off for the road
+            BlockPos origin = h.absolutePos(new BlockPos(0, 1, 0));
+            // isolated tests land under real terrain: build the scene on a floor above everything around, so the
+            // heightmap sees only what the test built
+            int top = origin.getY();
+            for (int dx = -16; dx <= 40; dx += 4) for (int dz = -16; dz <= 16; dz += 4) {
+                top = Math.max(top, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, origin.getX() + dx, origin.getZ() + dz));
+            }
+            BlockPos base = new BlockPos(origin.getX(), Math.min(top + 6, level.getMaxY() - 40), origin.getZ());
+            // a 7x7 stone tower ten high on a grass floor, and open floor 24 blocks off for the road
             AwakenTests.clearAbove(level, base, 30, 0, 30);
             for (int dx = -12; dx <= 36; dx++) for (int dz = -12; dz <= 12; dz++) level.setBlock(base.offset(dx, -1, dz), Blocks.GRASS_BLOCK.defaultBlockState(), 2);
             for (int dx = 0; dx < 7; dx++) for (int dz = 0; dz < 7; dz++) for (int dy = 0; dy < 10; dy++) {
