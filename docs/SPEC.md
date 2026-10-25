@@ -357,6 +357,12 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   call while the context holds), `done(tip)`, `hold(owner, held)` (cinematics hold every tip), `wants(tip)` (false once
   retired or tips are off: skip the probe). Installed by the signal module in M4 B6; until then every call does nothing.
   Tip text and triggers are data; any module may offer its own tips (the Ascent for its tiers).
+- `dev.awaken.mobs.client.life.CreatureLife` (client, §23) — the life layer for any module's bodies:
+  `LifeRig rig(ModelPart root, String temperament)` once per model; `Life life(Object held, LifeRig rig, int seed)` once
+  per creature (keep it on the entity's client data); `tick(Life, LivingEntityRenderState, boolean steerHead)` once a frame
+  in `extractRenderState`; `apply(LifeRig, Life, LivingEntityRenderState)` at the end of `setupAnim` (safe to run once per
+  layer); optional `rootPose(Life, PoseStack, state)` in `setupRotations`; `eyesClosed(Life)` 0..1 for a texture blink.
+  Per-frame inputs are public fields on `Life` (`hurt`, `walk`, `stride`, `busy`, `lookWeight`, `windup`, `roar`, `dying`).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -1421,6 +1427,17 @@ https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
       core/audio's layer system so it never fights the music.
     - The gate is Euan's ears: a listening page (each district at morning, noon and night, before/after) published for
       his approval before B3 merges.
+29. The Living Wilds (SPEC §21, approved by Euan) meets Carillon at the High Gate (agreed 2026-10-25): the city lays out
+    the gatehouse yard outside the High Gate with named spots (`CityHooks.spot`); the living module spawns Quartermaster
+    Hale and the bounty post there. Its bounties (`living.bounty`) are the first slice of the deferred contracts board
+    under decision 5's rules (three notices, known places only, no expiry offline, claim ids), shown at Hale's post and
+    on the Association board's spot; coin through `EconomyHooks.pay` once an economy exists, renown through
+    `RenownHooks.witness` at turn-in. Its chains "The Last Delivery" (the Roost's word, Kestrel) and "Bell Metal" (the
+    C-rank spine) are drafted by the Living Wilds session and reviewed by the Carillon session against
+    docs/carillon/m4/story.md. Its tips use TipHooks with tip files in the onboarding.md format.
+    The city also gives "Bell Metal" a rooftop chase: B5 (the opening from affordances, which brings citizens' rooftop
+    running) publishes named roof routes and a chase hook the Living Wilds calls for its fleeing buyer; until then that
+    step waits.
 
 ### 16.1 Modules (new packages; same module rules as §1)
 | Module | Owns |
@@ -1454,6 +1471,17 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   replace glass panes on closed houses. Roofs: Bellwatch mostly kit slate, the Market mostly clay. The chimney crown is
   `chimney_bricks` (the citizens' smoke finder). Avenue tree crowns fill only air. The kit's first 19 blocks carry no
   block entity and emit no light; walls and roofs use weighted texture variants.
+- Decided in M4 B2 (2026-10-25; details docs/carillon/milestones/M4-B2.md): plan.json schemaVersion 2 carries a signed
+  lift raster (every plot lift even; hash re-pinned). Streets follow the ground in single-step flights (no drop of 2+ on
+  the street graph); every plot stands at its street's level and two cells clear of landmarks. The Knoll rings +2..+8
+  to radius 46 round the bell square (the tower 54 tall); Choir Square's bowl is a level rim (the arcade's ground,
+  radius 31–36) with three rings down to −3, and CityHooks.square stands on its floor; the High Terrace at 12 with
+  its houses set back 3 (a parapet walk); Garden terraces +2/+4; the lower quay at −4 (raster lift 0). Parapets only
+  over drops of 6+, coping below that. Crossings over every avenue stretch and the Ring at least every 48: 7 enclosed
+  walkways built, 13 line sites in plan.json "crossings" for B3. Named spots placed (decision 29): high_gate_yard,
+  quartermaster, bounty_post, association_board (Terrace +12), bellwatch_cellar (a 9×9×5 room under the bell tower).
+  Ladders: a model override draws every minecraft:ladder as two rails and four round rungs inside vanilla's shape
+  (collision unchanged); `awaken:hanging_ladder` extends a ladder down or up with no wall behind.
 - Floating wood fix (2026-10-25): the city's vegetation sweep takes the lands' bark (elder wood) as well as leaves and
   logs, sweeps the whole neighbour chunk to full height, clears fields to the top, and removes tree groups left resting
   on nothing past the edge (`CityWriter.collectOrphans`). Dev: `/awaken city scan | floater <n> | tidy` (tidy repairs
@@ -1588,7 +1616,10 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
 
 ### 16.9 Public hooks (`core.api`, v0; signatures may change only through the orchestrator)
 - `CityHooks`: `inCity(Level, BlockPos)`, `district(Level, BlockPos)` (id or null), `isCivic(Level, BlockPos)`,
-  `startPoint(ServerPlayer)`, `square(Level)`. Graph types are added at G1.
+  `startPoint(ServerPlayer)`, `square(Level)`, `spot(Level, String id)` (named spots the city lays out for other modules:
+  `high_gate_yard`, `bounty_post`, `quartermaster` (the Living Wilds' Hale), `association_board`, `bellwatch_cellar` (the
+  melting room under the Knoll's bell tower, for the Living Wilds' "Bell Metal"); null until placed).
+  Graph types are added at G1.
 - `CitizenHooks`: `witnesses(ServerLevel, Vec3, double)` (citizen ids), `post(ServerLevel, Identifier event, BlockPos)`.
 - `RenownHooks`: `witness(ServerPlayer, Identifier deed, BlockPos, int weight)`, `tier(Player)`, `standing(Player,
   Identifier faction)`.
@@ -2318,6 +2349,9 @@ server checks every move exactly as before (a free-run move is the same claim a 
 - **In the air**, sprint held counts as jump held: a wall beside you is run along (the wall-run's own rules: 1.5 off
   the ground, under 35°), a wall ahead climbed with Wall Stride; a ledge passed is caught as always.
 - **Hanging**, sprint and forward held for 6 ticks climb (the ledge jump's own climb out, or up when looking up).
+- **Climb lines** (`#minecraft:climbable`: Carillon's drainpipes, trellises and hoist ropes, every ladder): pressed
+  against one with sprint held, the body goes up hand over hand at 0.3 a tick (a ladder's 0.2), a grip sound every
+  few pulls; at the eave the lip is caught as a hang and the hold climbs out.
 - **Jump magnetism**: as any jump leaves the ground (yours or the free-run's), the first lip within 4.5 ahead (a lower
   roof up to a hang over the jump's top) becomes its target; for 8 ticks the motion turns toward it at most 2.5° a tick,
   14° in all, never faster, and only while it's within 30° of the way you're going.
@@ -2329,8 +2363,9 @@ server checks every move exactly as before (a free-run move is the same claim a 
   in the shoulder view.
 - Carillon's handhold roles (`#awaken:runner_ledges`, `runner_climbs`, `runner_lines`, `runner_soft`,
   `runner_swings`, SPEC §16.9 on carillon/main): ledges and swing points already work by their collision shapes (a
-  sill, a cornice, a beam end is a lip; the rope bites anything solid). Climbs (drainpipes, ivy), lines without
-  collision and soft landings wait for the tags' contents.
+  sill, a cornice, a beam end is a lip; the rope bites anything solid: the hoist beam). Carillon's climbs are also in
+  `#minecraft:climbable`, so the free-run's climb takes them. Lines without collision (runner_lines is empty yet) and
+  soft landings (hay) keep vanilla's behaviour.
 - Not yet: tuning against Euan's notes from his feel session; tips for the free-run (Carillon's TipHooks).
 
 ### 17.15 The feel pass, part 3: weight
@@ -2346,6 +2381,11 @@ server checks every move exactly as before (a free-run move is the same claim a 
 - **The slow beat**: a carry flying 0.7 b/t or faster, 6 or more over the ground, hangs at the top of its arc: 8 ticks
   at 0.45 of time (the same arc, slower; no steering for the beat), the wind holding its breath, once per 3 s. Big
   rope launches and the Leaper's air moves get it; never under reduced motion. Test: `ascent_slow_beat`.
+- **The tactical sprint's line** (Euan, 25 Oct: "no way of knowing when your tactical sprint is recharged"):
+  `body.client.SprintBar`, a 2-pixel Holo-blue (#7FC3FF) line in the free gap just above the hotbar (Aether's gold line
+  sits over the XP bar, so the two never meet), filled from the middle like Aether's: it drains while the sprint
+  runs, fills as it recharges (80 ticks less 10 a rank, at least 30), flashes once with a tick of light when it's
+  ready (not under reduced motion), then fades; at rest, ready, nothing is drawn.
 - Not yet: Euan's feel check of the whole pass (camera, free-run, weight).
 
 ### 17.16 The Wilds: the hero trees' crowns
@@ -2381,6 +2421,57 @@ the Vow's rope, the Leaper's trial, a sky core's wings, Skyborn's flight) and co
 a low wall or an edge without holding sprint offers it (`FreeRun`, only while it can still teach), and a free-run move
 counts it done. A gift's scene (`AscentScene`) holds every tip back while it plays. Nothing shows until Carillon
 installs the system.
+
+### 17.18 Ascension trials: the Sky Leviathan's trial (Skyborn)
+Skyborn's earn path (the plan: "the Sky Archipelago Lord, rebuilt as a flight fight"); before it, a new world had none.
+- **Offered** (`AscentTrials.skybornDue`, every 5 s like the Leaper's): awake, rank A or above, in the overworld on the
+  ground, holding Wings and not Skyborn, Wings mastery 3+, not offered before (`AscentMemory.SKYBORN_TRIAL`). A gate opens
+  20 ahead: "A gate opens onto open sky: the Sky Leviathan's trial."
+- **The gate** (`Gates.skybornTrialPlan`, `Gates.openTrial`): an A-rank Sky Archipelago, one floor, marked by its boss
+  (`GatePlan.SKYBORN_TRIAL`; `GatePlan.lordId()` names the theme's own Lord for the arena, insight and spawns). A real
+  gate at its rank (not scripted: the story's first gate is fought at content level 0), which never breaks
+  (`GateRecord.neverBreaks`) and, like the story's, always forms: on water or a build it moves to the nearest clear
+  spot instead of failing (a tour's trial gate failed on water, and the offer, once spent, never came back). The floor (`FloorBuilder.skyTrialFloor`): the start, the antechamber, and the arena:
+  4x4 slots of islands over the cloud sea (`SetPiece.ARENA_SKY`) at the floor's whole height (27), room to fly the
+  fight. Its card and Now line say what it asks ("Fight it in the air").
+- **The edge**: stepping into the arena (the boss room's entry, and its re-entry) gives everyone on the floor Skyborn
+  (`TrialHooks.atEdge(p, TrialHooks.SKYBORN)`) with a short moment that plays at once: "The sky remembers you. · Open
+  your wings, then jump again: fly." Then the Leviathan rises as any Lord does.
+- **Done**: its fall (`Runs.lordDefeated`) completes the trial for everyone on the floor (`TrialHooks.done`): once, the
+  gift's scene ("The sky is yours. · Gliding, jump to fly · forward thrusts · sprint boosts · tap left or right twice to
+  roll"), 10 Skyborn mastery, a fifth of a level, `awaken:ascent_skyborn_trial`; the gate is cleared as any Lord's is.
+- Dev: `/awaken ascent trial skyborn` (opens it in front of you, whatever you hold). Test: `gates_sky_trial` (the
+  plan and its floor, never breaking, the edge's Skyborn and the Leviathan rising, the trial done at its fall). Tour:
+  `tools/autopilot/ascent-skytrial.txt` (PACK=feel).
+- **Aerial kills** (the plan's "Mastery: time aloft, aerial kills"): a hostile killed by a Skyborn player while soaring,
+  gliding or carried gives 3 Skyborn mastery and `awaken:ascent_aerial_kills` (`AscentServer.onKill`; test
+  `ascent_aerial_kill`). Powers cast in the air as on the ground; in the shoulder view they aim along the camera.
+- Not yet: the Leviathan's own flight-fight kit (its dives and wingbeats were made for an island fight), aerial combat's
+  own enemies, and casting tuned for the air.
+
+### 17.19 The Sovereign: the god form
+The ladder's top (the plan: "the angel overlord"). Euan chose its trigger on 25 Oct: its own Ascend key, default U,
+needing full Aether, with a 10-minute cooldown.
+- **Earned** at the story's end: the world's ending seen (`StoryHooks.gatesCalm(server, player)`: the Signal broken
+  and their gates calm; or `colourRestored`: the world awake), checked every 5 s; the tier with the gift's scene
+  ("Sovereign. · Aether full, press U: thirty seconds as the sky's own. Press it again high up: Judgement."), its tip,
+  every tier under it. Dev: `/awaken ascent grant sovereign`.
+- **The form** (`body.ascent.Sovereign`, server-kept; `client.SovereignClient` draws it): the Ascend key with the tier,
+  the Aether full (0.95+) and the cooldown passed (10 min, saved: `AscentMemory.sovereignAt`, schema 3; otherwise a
+  toast says why: "The sky gathers itself: 4 min", "Not yet: the Aether must be full") takes the form for 30 s: the
+  body lifts into flight (0.42 a tick up for its first 24 ticks, about ten blocks: a hover alone bleeds its rise away)
+  that never tires (Aether pinned full on both sides), every hit you land (blows and powers)
+  is struck 1.5 times as hard, and every hostile within 24 is slowed (Slowness III), loses you as its target and runs
+  16 blocks away (refreshed twice a second). Lens turns gold (`awaken:sovereign`, looks_ascent.json), the action camera
+  pulls far back and up (ActionRig's SOVEREIGN pose: 4.5 back, 1.4 up, in behind you), the wings stay open and a ring of
+  light breathes round you; others see the wings and the aura. 5 Sovereign mastery, `awaken:ascent_sovereign_forms`.
+- **The Judgement Fall**: in the form, Ascend again from 8 or more up: the body drops at 2.6 a tick (the Leaper's dive,
+  harder); its landing strikes everything within 9 (20 at a landing of 1, scaled 0.6-2.5 and by distance; thrown up and
+  away), the ground answers with rings of light and a low boom for everyone near. 4 Sovereign mastery.
+- Test: `ascent_sovereign` (refused without the tier or the Aether; hits struck 1.5 times; the Judgement strikes; it
+  ends on its clock; the cooldown holds). Tour: `tools/autopilot/ascent-sovereign.txt` (PACK=feel). Pilot `ascend`.
+- Not yet: slowed time for everything (only the field's hostiles are slowed), the ground shattering (the Judgement's
+  mark is light, not broken blocks), radiant (gold) wings of their own.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -2769,3 +2860,72 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
 - `glow` 0.9 for the Spirit and Charge themes and the Mirror Palace, 0.8 for the Ember Mines.
 - Tour: `tools/autopilot/lens2-l3.txt` (a pool in the lab into the sun, glowing creatures at dusk and night,
   Carillon's river, the Ember Mines' shimmer, the Frost Monastery's frost, the bench).
+
+## 23. Creature life (Fresh Animations in the pack, and a life layer on every body of ours; Euan 2026-10-25)
+
+Euan: every mob, ours included, "still feels a bit rigid and static". Approved: "Both: Fresh Animations + our life layer".
+
+**Vanilla bodies: Fresh Animations.** The pack's `feel` profile adds Entity Model Features 3.3.12, Entity Texture
+Features 7.2.6 and the Fresh Animations resource pack 1.11.1 (`tools/pack.py` now locks Modrinth resource packs like
+mods, under the `minecraft` loader; `install` puts them in `resourcepacks/` and appends them to options.txt's
+`resourcePacks` only if missing, never touching the player's own packs; `remove` switches off and deletes only what it
+put there; `export` ships them under `resourcepacks/`). EMF finds models by the vanilla layer a renderer bakes, so our
+gate monsters on vanilla bodies (zombie, wolf, hoglin, iron golem...) animate the Fresh Animations way too, which is
+wanted: Fresh Animations keeps the vanilla UV layout (it only adds a few eyelid pixels), so our skin layer still fits.
+Our own bodies live on `awaken:` layers with no .jem, so EMF leaves them alone; they get the life layer instead.
+
+**Our bodies: the life layer** (`mobs/client/life`). One procedural layer on every model of ours (hero rigs, P3 rigs,
+the 14 hand-built bodies), driven by bone names and a temperament, never by per-creature code:
+- **Bones by name** (`LifeBones`, plain data): head, neck, jaw, eyes, lids, body/chest (breath), and the springy roles:
+  ears (also tufts, crests, plumes, sails), antennae (whiskers, palps, a lure's rod), tails (flukes, streamers, fans),
+  dangling parts (manes, beards, ruffs, skirts, tentacles, reeds, brambles, lamps, a bell's clapper), wings, fins and
+  gills, arms (only where the temperament swings them: lords, spirits, the Mycelord, the Hushling, the Breathbell). A
+  part named only "tip" or "end" takes its parent's role; links of one role chain (follow-through down a tail).
+- **Temperaments** (`assets/awaken/life/creatures.json`, schemaVersion 1): cute, grazer, hunter, beast, lord, monster,
+  spirit, insect, swimmer, citizen; from the fauna role (ambient cute, neutral grazer, hunter, beast) or the tier (gate
+  monsters monster, wardens beast, lords and guardians lord, nightmares spirit), and per-creature entries on top. Fields:
+  breath (Hz) and depth, blink interval (0 = never: insects, fish, serpents, spiders, the eyeless and the faceless), head
+  speed and damping, eye lead, spring Hz, damping and gain, step bob (px), sway (deg), turn lean, fidget interval and
+  weights, arms, stagger, mass. Cute creatures are quick and bouncy (head 14 rad/s, underdamped, springs 3.4 Hz), hunters
+  smooth and still (critically damped, blink every 5-11 s), beasts slow and heavy (head 3.6, springs 1.4 Hz, bob 1.3 px).
+- **Per creature, per frame** (`Life`, made once, nothing allocated after): motion from the render state (velocity and
+  acceleration in model space, yaw rate); breathing (a quicker in-breath, faster and deeper after running or a blow,
+  decaying over ~9 s; on hero rigs it also speeds up the creature's own idle clip); blinks (0.16 s, 15% double); the head
+  follows its target on a damped spring (the AI's look, an idle's glance, a lead into a turn) and eye bones take the
+  rest (eyes first); springs integrated at up to 120 Hz substeps from the body's acceleration, the parent bone's clip
+  motion (a head toss swings the ears), the yaw, a blow and a fall, swing only (no twist), capped per role; the step's
+  dip (twice a stride, from the gait clip's own stride length) and weight sway; a lean into turns.
+- **Idle fidgets**, only when still, calm and within 32 blocks, chosen by weight from what the body has: look around (the
+  head lags the eyes), sniff (head down, quick nods), flick (an ear, a tail, a feeler or a wing), shake (body roll at
+  7.5 Hz, everything loose flops; a creature fresh out of water shakes itself dry once it stops), stretch, yawn (eyes
+  squint shut), scratch (a hind leg kicks), perk (head up, alert), settle (a weight shift). Herds never move in step:
+  each creature's timers, breath phase and rate (±10%) and idle clock start from its own seed.
+- **Graph blending, no pops**: the angry stance, held poses, swimming and the glide ease in and out (0.05-0.3 s); swim
+  and wing loops run on integrated clocks (age × speed jumped their phase when the speed changed); one-shot clips (bite,
+  flinch, strike, roar, warning) hold their last frame and let go over 0.2 s; the fall crossfades from the live pose over
+  0.25 s; a swimmer's pitch eases out of the water.
+- **Hero clips on top** (named beasts, Gate Lords): a wind-up gathers the body low (0.7 px) and trembles at 17 Hz as it
+  nears the strike (tension², the tell); a roar opens with a full chest and shudders through the head and every loose
+  part, and bodies without a roar clip rear back (a Gate Lord turning on you: vanilla's aggressive flag); a blow knocks
+  the body away from the camera and it sways back on its weight (a damped spring kicked once: heavy beasts reel less and
+  slower); the fall: the eyes close at 55% of it, one last breath, and when the body lands (85% of the death clip's drop,
+  `LifeRig.landing`) a thud: one bounce and every mane, ear and bramble flops. Bodies without a death clip (the hand-built
+  ones, every boss on a vanilla body: lords, guardians, sovereigns, the Shadow, wardens) topple instead of vanilla's
+  flip: a stagger back, an accelerating fall (90° by 0.7 s), one bounce, settled by 0.95 s, inside vanilla's 20 ticks.
+- **Blinking**: eyelid bones close the way the rig's own clips close them (the Mire Mother, the Seated One); eye bones
+  squash (the snails' stalks, the Lantern Maw); otherwise the closed-eye skin: `tools/art` records every pixel painted
+  inside `with P.eyes():` (`fauna_rig.EyeRec`) and writes `<id>_blink.png` (the skin under the eye with a lash line)
+  and `<id>_glow_blink.png` (the eyes' light out); the renderer draws them while the eyes are shut. 14 creatures have
+  them; existing textures are byte-identical.
+- **Cost and limits**: client only; nothing allocated per frame (render states carry a reference); springs and fidgets
+  off past 32 blocks (springs settle), blinks off past 32; breath and the slow head everywhere (cheap). Reduced motion
+  (`awaken-client` `reducedMotion`, the body module's) turns idle fidgets off and halves springs, tremble and stagger;
+  breathing and blinking stay.
+- **Other modules' bodies** use `CreatureLife` (§12). Carillon wires its citizens itself (M4 B3): temperament `citizen`
+  (no step bob or sway, gentle springs, look and settle fidgets), `lookWeight` for "only look at the player up close or
+  at whoever they talk to", clips win where they drive a bone (applied after the layer).
+- **Not here**: the Ritual of the Bell's cast (its model plays exactly the clip its stage asks for); humanoid gate
+  monsters on vanilla bodies (Fresh Animations' job, plus the boss topple and stagger above).
+- Test: `creature_life_binds` (every body of ours gets a temperament, every rig and hand-built naming with ears or a tail
+  gets springs on them, every creature that blinks has lids, eye bones or a closed-eye skin). Tour:
+  `tools/autopilot/creature-life.txt` (PACK=perf,feel; clips in run-autopilot/clips/life_*).

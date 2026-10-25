@@ -54,6 +54,7 @@ final class RigTests {
     static void register() {
         registerGauntlet();
         registerTrial();
+        dev.awaken.gates.run.SkyTrialTests.register();
         AwakenTests.register("gates_rig_collapse_run", 1200, h -> {
             int rooms = sweep(h, RigRoom.Kind.COLLAPSE_RUN, (rig) -> {
                 RigCollapse.Run run = rig.run;

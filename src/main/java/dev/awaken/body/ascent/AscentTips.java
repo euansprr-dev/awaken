@@ -15,7 +15,7 @@ public final class AscentTips {
     private AscentTips() {}
 
     public static final Identifier ROPE = Awaken.id("ascent/rope"), LEAPER = Awaken.id("ascent/leaper"), WINGS = Awaken.id("ascent/wings"),
-            FLIGHT = Awaken.id("ascent/flight"), FREERUN = Awaken.id("ascent/freerun");
+            FLIGHT = Awaken.id("ascent/flight"), FREERUN = Awaken.id("ascent/freerun"), SOVEREIGN = Awaken.id("ascent/sovereign");
 
     static @Nullable Identifier of(Ascent.Tier tier) {
         return switch (tier) {
@@ -23,6 +23,7 @@ public final class AscentTips {
             case LEAPER -> LEAPER;
             case WINGS -> WINGS;
             case SKYBORN -> FLIGHT;
+            case SOVEREIGN -> SOVEREIGN;
             default -> null;
         };
     }

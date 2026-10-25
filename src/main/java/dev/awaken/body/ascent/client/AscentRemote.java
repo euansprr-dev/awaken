@@ -93,6 +93,14 @@ public final class AscentRemote {
                 AscentSounds.local(e, AscentContent.LAUNCH.get(), 0.6F, 1.45F);
                 AscentAnims.roll(e.getId(), msg.speed() >= 0 ? 1 : -1);
             }
+            case AscentPayloads.EV_SOVEREIGN -> {
+                if (e == mc.player) SovereignClient.begin(mc.player, (int) msg.speed());
+                else SovereignClient.seen(e, true);
+            }
+            case AscentPayloads.EV_SOVEREIGN_END -> {
+                if (e == mc.player) SovereignClient.end();
+            }
+            case AscentPayloads.EV_JUDGEMENT -> SovereignClient.judgement(e, msg.speed(), e == mc.player);
             case AscentPayloads.EV_REMEMBER -> {
                 // someone's body remembering: the swell, light rising round them, their wings unfolding once
                 AscentSounds.local(e, AscentContent.REMEMBER.get(), 0.8F, 1F);

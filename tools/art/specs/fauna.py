@@ -24,6 +24,22 @@ sys.path.insert(0, os.path.abspath(os.path.join(ROOT, "tools/content")))
 from pixelart import *  # noqa: E402,F401
 from pixelart import _outline  # noqa: E402
 import mobs_bestiary as MB  # noqa: E402
+sys.path.insert(0, HERE)
+from fauna_rig import EyeRec  # noqa: E402
+
+# The eyes painted for the creature being built: the life layer's closed-eye textures (SPEC §23). Only bodies whose
+# temperament blinks get them (moths and scarabs are insects, rays and serpents don't blink, snails squash their stalks).
+EYE = EyeRec()
+BLINKERS = {"STAG", "TORTOISE", "LIZARD", "MUSHROOM", "MARMOT"}
+
+
+def write_blink(out, m, skin, glow):
+    if m["model"] not in BLINKERS:
+        return
+    shut = EYE.shut(skin, glow)
+    if shut is not None:
+        out.entity("mobs/" + m["id"] + "_blink", shut[0])
+        out.entity("mobs/" + m["id"] + "_glow_blink", shut[1])
 
 JAVA = os.path.join(ROOT, "src/main/java/dev/awaken/mobs/def/FaunaBestiary.java")
 RES = os.path.join(ROOT, "src/main/resources")
@@ -825,11 +841,12 @@ def paint_mossback(m, rng):
     # scaly olive skin; a calm eye
     paint_box(skin, head, rng, skinp, scale=2)
     fh = faces(head)
-    for name in ("west", "east"):
-        x, y, w, h = fh[name]
-        ex = x + (w - 2 if name == "west" else 1)
-        skin.set(ex, y + 1, rgba("#141210"))
-        glow.set(ex, y + 1, rgba("#9cff7a", 90))
+    with EYE.eyes(skin, glow):
+        for name in ("west", "east"):
+            x, y, w, h = fh[name]
+            ex = x + (w - 2 if name == "west" else 1)
+            skin.set(ex, y + 1, rgba("#141210"))
+            glow.set(ex, y + 1, rgba("#9cff7a", 90))
     x, y, w, h = fh["north"]
     for i in range(w):
         skin.set(x + i, y + h - 1, skinp[0])
@@ -871,11 +888,12 @@ def _stag_paint(m, rng, coat, mane, dark, belly, antler, tip_glow, eye_glow, mos
     # head, muzzle, eyes
     paint_box(skin, head, rng, coat[1:], scale=2)
     fh = faces(head)
-    for name in ("west", "east"):
-        x, y, w, h = fh[name]
-        ex = x + w - 2 if name == "west" else x + 1
-        skin.set(ex, y + 1, (12, 12, 16, 255))
-        glow.set(ex, y + 1, eye_glow)
+    with EYE.eyes(skin, glow):
+        for name in ("west", "east"):
+            x, y, w, h = fh[name]
+            ex = x + w - 2 if name == "west" else x + 1
+            skin.set(ex, y + 1, (12, 12, 16, 255))
+            glow.set(ex, y + 1, eye_glow)
     paint_box(skin, snout, rng, [shade(dark, 0.8), dark, shade(dark, 1.2)], scale=2)
     x, y, w, h = faces(snout)["north"]
     skin.set(x + 1, y + 1, (10, 10, 12, 255))
@@ -1366,9 +1384,11 @@ def build(out):
     for m in fauna():
         rng = rng_for("fauna", m["id"])
         if m["model"] in MODELS:  # hero bodies (the named beasts) are painted by heroes.py
+            EYE.clear()
             skin, glow = PAINTERS[m["id"]](m, rng)
             out.entity("mobs/" + m["id"], skin)
             out.entity("mobs/" + m["id"] + "_glow", glow)
+            write_blink(out, m, skin, glow)
         out.item(m["id"] + "_spawn_egg", egg(m["id"], m["role"] == "BEAST", rng_for("fauna_egg", m["id"])))
         for p in m["parts"]:
             out.item(p["id"], part_icon(p))

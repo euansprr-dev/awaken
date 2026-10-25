@@ -444,15 +444,16 @@ def _lizard_paint(m, rng, body_pal, belly, spot_cols, spot_glow, sail_fn, crest,
     skin.set(x, y + h - 1, (12, 10, 8, 255))
     skin.set(x + w - 1, y + h - 1, (12, 10, 8, 255))
     fh = faces(nb["head"])
-    for name in ("west", "east"):
-        x, y, w, h = fh[name]
-        ex = x + w - 2 if name == "west" else x + 1
-        eye(skin, glow, ex, y, eye_col, eye_glow, 1, 2, shine=False)
-        skin.set(ex, y + 1, (10, 8, 6, 255))
-    x, y, w, h = fh["top"]
-    for ex in (x, x + w - 1):
-        skin.set(ex, y + h - 2, eye_col)
-        glow.set(ex, y + h - 2, eye_glow)
+    with F.EYE.eyes(skin, glow):
+        for name in ("west", "east"):
+            x, y, w, h = fh[name]
+            ex = x + w - 2 if name == "west" else x + 1
+            eye(skin, glow, ex, y, eye_col, eye_glow, 1, 2, shine=False)
+            skin.set(ex, y + 1, (10, 8, 6, 255))
+        x, y, w, h = fh["top"]
+        for ex in (x, x + w - 1):
+            skin.set(ex, y + h - 2, eye_col)
+            glow.set(ex, y + h - 2, eye_glow)
     for name, r in faces(nb["leg"]).items():
         noise(skin, r, fin_pal, rng, 2)
     x, y, w, h = faces(nb["leg"])["east"]
@@ -1111,9 +1112,10 @@ def paint_scree_marmot(m, rng):
         for i in range(w):
             skin.set(x + i, y + j, cream.at(3.0 - (0.6 if i in (0, w - 1) else 0)))
     skin.set(x + w // 2, y + h - 2, rgba("#140e0a"))
-    for ex in (x + 1, x + w - 2):
-        skin.set(ex, y + 1, rgba("#0a0705"))
-        glow.set(ex, y + 1, rgba("#ffd27a", 70))
+    with F.EYE.eyes(skin, glow):
+        for ex in (x + 1, x + w - 2):
+            skin.set(ex, y + 1, rgba("#0a0705"))
+            glow.set(ex, y + 1, rgba("#ffd27a", 70))
     for name in ("west", "east"):
         x, y, w, h = faces(nb["head"])[name]
         for i in range(w):
@@ -1250,8 +1252,9 @@ def _mushroom_paint(m, rng, cap, spots_cols, spot_glow, gills, gill_glow, stem, 
                 for k in range(rng.randint(2, 4)):
                     skin.set(vx, vy + k, vein)
     x, y, w, h = faces(nb["stem"])["north"]
-    for ex in (x + 1, x + w - 2):
-        eye(skin, glow, ex, y + 2, eye_col, eye_glow, 1, 2 if big else 1, shine=False)
+    with F.EYE.eyes(skin, glow):
+        for ex in (x + 1, x + w - 2):
+            eye(skin, glow, ex, y + 2, eye_col, eye_glow, 1, 2 if big else 1, shine=False)
     for i in range(2, w - 2):
         skin.set(x + i, y + 5, shade(stem[0], 0.6))
     for name in ("west", "north", "east", "south"):
@@ -1482,9 +1485,11 @@ def build(out):
     for m in creatures():
         rng = rng_for("fauna2", m["id"])
         if m["model"] in MODELS:  # hero bodies (beasts, the owl, the bogwick) are painted by heroes.py
+            F.EYE.clear()
             skin, glow = PAINTERS[m["id"]](m, rng)
             out.entity("mobs/" + m["id"], skin)
             out.entity("mobs/" + m["id"] + "_glow", glow)
+            F.write_blink(out, m, skin, glow)
         out.item(m["id"] + "_spawn_egg", egg(m["id"], m["role"] == "BEAST", rng_for("fauna2_egg", m["id"])))
         for p in m["parts"]:
             out.item(p["id"], part_icon(p))

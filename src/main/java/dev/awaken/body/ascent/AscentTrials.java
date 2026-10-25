@@ -21,24 +21,78 @@ final class AscentTrials {
     /** Tether mastery that opens the Leaper's Gauntlet (level 2: 100 points of rope). */
     static final int LEAPER_FROM = 2;
 
+    /** Wings mastery that opens the Sky Leviathan's trial (with rank A: SPEC §17.18). */
+    static final int SKYBORN_FROM = 3;
+
     static void register() {
         TrialHooks.install(new TrialHooks.Trials() {
             @Override
             public boolean atEdge(ServerPlayer p, String trial) {
+                if (TrialHooks.SKYBORN.equals(trial)) return skyEdge(p);
                 return TrialHooks.LEAPER.equals(trial) && edge(p);
             }
 
             @Override
             public void done(ServerPlayer p, String trial, int ticks, int medal) {
                 if (TrialHooks.LEAPER.equals(trial)) leaperDone(p, ticks, medal);
+                else if (TrialHooks.SKYBORN.equals(trial)) skybornDone(p);
             }
         });
     }
 
-    /** Once every five seconds a player who has earned it is offered the trial (a gate opens in front of them). */
+    /** Once every five seconds a player who has earned one is offered its trial (a gate opens in front of them). */
     static void tick(ServerPlayer p, long now) {
-        if ((now + (p.getUUID().hashCode() & 127)) % 100 != 0 || !leaperDue(p)) return;
-        openLeaper(p);
+        if ((now + (p.getUUID().hashCode() & 127)) % 100 != 0) return;
+        if (leaperDue(p)) openLeaper(p);
+        else if (skybornDue(p)) openSkyborn(p);
+    }
+
+    // ---- the Sky Leviathan's trial (SPEC §17.18) -------------------------------------------------------------------------
+
+    /** Awake, rank A, on the ground in the overworld, holding Wings and not Skyborn, Wings mastery reached, not offered yet. */
+    static boolean skybornDue(ServerPlayer p) {
+        AscentMemory mem = p.getData(AscentContent.MEMORY);
+        return p.level().dimension() == Level.OVERWORLD && p.onGround() && !p.isSpectator() && !p.isPassenger()
+                && Progression.profile(p).awakened() && dev.awaken.body.BodyConfig.ascent()
+                && Progression.rank(p).ordinal() >= dev.awaken.progression.Rank.A.ordinal()
+                && Ascent.has(p, Ascent.Tier.WINGS) && !Ascent.has(p, Ascent.Tier.SKYBORN)
+                && (mem.flags() & AscentMemory.SKYBORN_TRIAL) == 0 && mem.level(AscentMemory.Track.WINGS) >= SKYBORN_FROM
+                && !TetherVow.running(p);
+    }
+
+    /** Opens the Sky Leviathan's trial in front of the player (a real A-rank gate that never breaks). The gate's id, or -1. */
+    static int openSkyborn(ServerPlayer p) {
+        long seed = p.getUUID().getMostSignificantBits() ^ p.level().getGameTime();
+        int id = dev.awaken.gates.Gates.openTrial(p, dev.awaken.gates.Gates.skybornTrialPlan(seed));
+        if (id < 0) return -1;
+        p.setData(AscentContent.MEMORY, p.getData(AscentContent.MEMORY).withFlag(AscentMemory.SKYBORN_TRIAL));
+        Signal.toast(p, Component.translatable("awaken.ascent.trial.skyborn.open"));
+        DirectorLog.log(p, "ascent", "the Sky Leviathan's trial opens (gate " + id + ")");
+        return id;
+    }
+
+    /** At the open sky's edge: flight, given the first time with its moment. */
+    private static boolean skyEdge(ServerPlayer p) {
+        if (Ascent.has(p, Ascent.Tier.SKYBORN)) return true;
+        Ascent.grant(p, Ascent.Tier.SKYBORN, "sky leviathan's trial");
+        AwakenNet.send(p, new AscentPayloads.Remember(AscentPayloads.Tier.SKYBORN.bit(), AscentPayloads.SKY_EDGE));
+        DirectorLog.log(p, "ascent", "the Sky Leviathan's trial: at the open sky, the sky remembers them");
+        return true;
+    }
+
+    /** The Leviathan fallen: the sky is theirs (once: the scene, mastery, a fifth of a level). */
+    private static void skybornDone(ServerPlayer p) {
+        AscentMemory mem = p.getData(AscentContent.MEMORY);
+        if ((mem.flags() & AscentMemory.SKYBORN_TRIAL_DONE) != 0) return;
+        Ascent.grant(p, Ascent.Tier.SKYBORN, "sky leviathan's trial");
+        p.setData(AscentContent.MEMORY, mem.withFlag(AscentMemory.SKYBORN_TRIAL_DONE));
+        AwakenNet.send(p, new AscentPayloads.Remember(AscentPayloads.Tier.SKYBORN.bit(), AscentPayloads.GIFT_SKY));
+        AscentServer.show(p, new AscentPayloads.SeenEvent(p.getId(), AscentPayloads.EV_REMEMBER, 0));
+        AscentServer.link(p, AscentMemory.Track.SKYBORN, 10);
+        double toNext = dev.awaken.progression.Curve.xpToNext(Progression.profile(p).level());
+        Progression.grantXp(p, toNext * 0.2, Progression.XpSource.DISCOVERY);
+        Progression.count(p, "awaken:ascent_skyborn_trial");
+        DirectorLog.log(p, "ascent", "the Sky Leviathan falls: the sky is theirs");
     }
 
     /** Awake, in the overworld on the ground, holding the rope and not the leap, its mastery reached, not offered yet. */
