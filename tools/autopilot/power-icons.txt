@@ -1,0 +1,40 @@
+# Power icons (SPEC §6): the first-power cards, the power bar (Z X C V R and movement), the K menu's powers and four
+# crystal Power Cores in the hotbar (one in hand), all at GUI scale auto. A shot-only tour, so it runs light:
+# SLOT_WHO=power-icons /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh tools/autopilot/power-icons.txt 600
+world autopilot_icons creative 4321
+waitworld
+cmd gamerule send_command_feedback false
+cmd time set 6000
+cmd weather clear
+look 20 4
+gui 0
+cmd awaken admin awaken
+wait 200
+shot icons_01_starter
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd awaken admin power learn haymaker
+cmd awaken admin power learn beam
+cmd awaken admin power learn storm_call
+cmd awaken admin power learn railgun
+cmd awaken admin power learn prism_lance
+cmd awaken admin power learn dash
+cmd awaken powers equip 1 haymaker
+cmd awaken powers equip 2 beam
+cmd awaken powers equip 3 storm_call
+cmd awaken powers equip 4 railgun
+cmd awaken powers equip 5 prism_lance
+cmd awaken powers equip 6 dash
+cmd clear @s
+cmd awaken admin power give shadow_step
+cmd awaken admin power give citadel
+cmd awaken admin power give drone_swarm
+cmd awaken admin power give foresight
+wait 60
+shot icons_02_hud
+screen holo
+wait 40
+shot icons_03_k_menu
+screen close
+quit

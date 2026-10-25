@@ -2,6 +2,7 @@
 
     python3 tools/art/power_sheet.py style <dir>      frames, samples at 1x/2x/4x, a HUD mock, the Power Core
     python3 tools/art/power_sheet.py contact <png>    all 63 icons grouped by family, with the Power Core crystals
+    python3 tools/art/power_sheet.py family <name> <png>   one family's icons at 4x and 1x, for drawing glyphs
 """
 import importlib.util
 import os
@@ -66,12 +67,30 @@ def label(im, text, xy, col=(200, 210, 225)):
 
 
 def power_family(mod):
-    return {p: fam for p, (fam, _g) in mod.POWERS.items()}
+    return dict(mod.POWERS)
+
+
+def _missing(g):
+    g.line(9, 9, 23, 23, 3)
+    g.line(23, 9, 9, 23, 3)
 
 
 def new_icon(power, fam, mod=None):
-    glow = mod.GLOW.get(power, fam in ("energy",)) if mod and hasattr(mod, "GLOW") else fam == "energy"
-    return K.icon(fam, GL.GLYPHS[power], glow=glow).image()
+    glow = power in mod.GLOW if mod is not None and hasattr(mod, "GLOW") else fam == "energy"
+    return K.icon(fam, GL.GLYPHS.get(power, _missing), glow=glow).image()
+
+
+def family(fam, out_png):
+    mod = _spec()
+    powers = [p for p, f in mod.POWERS.items() if f == fam]
+    im = Image.new("RGBA", (len(powers) * 140 + 8, 196), BG)
+    for i, p in enumerate(powers):
+        ic = new_icon(p, fam, mod)
+        im.alpha_composite(up(ic, 4), (i * 140 + 8, 8))
+        im.alpha_composite(ic, (i * 140 + 8, 142))
+        label(im, p, (i * 140 + 48, 150))
+    im.save(out_png)
+    print(fam, "->", out_png)
 
 
 def style(out_dir):
@@ -90,26 +109,22 @@ def style(out_dir):
         im.alpha_composite(fr, (i * cell + 59, 240))
         label(im, fam, (i * cell + 11 + (128 - 6 * len(fam)) // 2, 290))
     im.save(os.path.join(out_dir, "frames.png"))
-    # 2. samples: old (16px x4) | new 1x | 2x | 4x
-    samples = list(GL.GLYPHS)
-    old = {p: mod.icon(p, fam_of[p], mod.POWERS[p][1]).image() for p in samples}
+    # 2. samples: new 1x | 2x | 4x
+    samples = list(GL.GLYPHS)[:10]
     new = {p: new_icon(p, fam_of[p], mod) for p in samples}
     row = 150
     im = Image.new("RGBA", (5 * 160, row * ((len(samples) + 1) // 2)), BG)
     for i, p in enumerate(samples):
         ox, oy = (i % 2) * 400, (i // 2) * row
-        im.alpha_composite(up(old[p], 4), (ox + 8, oy + 12))
         im.alpha_composite(new[p], (ox + 88, oy + 12))
         im.alpha_composite(up(new[p], 2), (ox + 88, oy + 54))
         im.alpha_composite(up(new[p], 4), (ox + 160, oy + 12))
         label(im, p.replace("_", " "), (ox + 8, oy + 128))
-        label(im, "before", (ox + 18, oy + 80), (120, 130, 150))
     im.save(os.path.join(out_dir, "samples.png"))
     # 3. the HUD mock at GUI scale 2 and 4 (Retina Macs auto-pick 4 or more)
     pick = ["haymaker", "prism_lance", "storm_call", "railgun", "lightning_step", "meteor_dive"]
     hud([new[p] for p in pick], 2).save(os.path.join(out_dir, "hud_gui2.png"))
     hud([new[p] for p in pick], 4).save(os.path.join(out_dir, "hud_gui4.png"))
-    hud([old[p] for p in pick], 4).save(os.path.join(out_dir, "hud_gui4_before.png"))
     # 4. Power Core crystals: item size (16 units) at GUI 2 and 4, plus the glow layer alone
     cores = ["haymaker", "prism_lance", "shadow_step", "storm_call"]
     im = Image.new("RGBA", (len(cores) * 210, 170), BG)
@@ -126,7 +141,7 @@ def style(out_dir):
 
 def contact(out_png):
     mod = _spec()
-    by_fam = {f: [p for p, (fam, _g) in mod.POWERS.items() if fam == f] for f in FAMILIES}
+    by_fam = {f: [p for p, fam in mod.POWERS.items() if fam == f] for f in FAMILIES}
     cols, cell = 7, 112
     rows = sum(1 + (len(v) + cols - 1) // cols for v in by_fam.values())
     im = Image.new("RGBA", (cols * cell * 2 + 24, rows * cell // 1 + 20), BG)
@@ -140,7 +155,7 @@ def contact(out_png):
             ic = new_icon(p, fam, mod)
             im.alpha_composite(up(ic, 2), (x, yy))
             im.alpha_composite(ic, (x + 70, yy))
-            core = K.core(fam, GL.GLYPHS[p]).image()
+            core = K.core(fam, GL.GLYPHS.get(p, _missing)).image()
             im.alpha_composite(up(core, 2), (x + 110, yy))
             im.alpha_composite(core, (x + 180, yy))
             label(im, p, (x, yy + 68))
@@ -151,4 +166,4 @@ def contact(out_png):
 
 
 if __name__ == "__main__":
-    {"style": style, "contact": contact}[sys.argv[1]](sys.argv[2])
+    {"style": style, "contact": contact, "family": family}[sys.argv[1]](*sys.argv[2:])

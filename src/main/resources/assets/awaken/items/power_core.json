@@ -1,16 +1,453 @@
 {
   "model": {
-    "type": "minecraft:model",
-    "model": "awaken:item/power_core",
-    "tints": [
+    "type": "minecraft:select",
+    "property": "awaken:core_power",
+    "cases": [
       {
-        "type": "minecraft:constant",
-        "value": -1
+        "when": "ground_slam",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/ground_slam"
+        }
       },
       {
-        "type": "awaken:power_family",
-        "default": -8404993
+        "when": "leap",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/leap"
+        }
+      },
+      {
+        "when": "haymaker",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/haymaker"
+        }
+      },
+      {
+        "when": "terrain_rip",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/terrain_rip"
+        }
+      },
+      {
+        "when": "shockwave",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/shockwave"
+        }
+      },
+      {
+        "when": "brace",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/brace"
+        }
+      },
+      {
+        "when": "thunderclap",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/thunderclap"
+        }
+      },
+      {
+        "when": "dash",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/dash"
+        }
+      },
+      {
+        "when": "flow",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/flow"
+        }
+      },
+      {
+        "when": "afterimage",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/afterimage"
+        }
+      },
+      {
+        "when": "wall_run",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/wall_run"
+        }
+      },
+      {
+        "when": "water_run",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/water_run"
+        }
+      },
+      {
+        "when": "lightning_step",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/lightning_step"
+        }
+      },
+      {
+        "when": "hover",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/hover"
+        }
+      },
+      {
+        "when": "flight",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/flight"
+        }
+      },
+      {
+        "when": "gravity_well",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/gravity_well"
+        }
+      },
+      {
+        "when": "telekinesis",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/telekinesis"
+        }
+      },
+      {
+        "when": "meteor_dive",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/meteor_dive"
+        }
+      },
+      {
+        "when": "gravity_flip",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/gravity_flip"
+        }
+      },
+      {
+        "when": "beam",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/beam"
+        }
+      },
+      {
+        "when": "nova",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/nova"
+        }
+      },
+      {
+        "when": "barrier",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/barrier"
+        }
+      },
+      {
+        "when": "charged_shot",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/charged_shot"
+        }
+      },
+      {
+        "when": "overload",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/overload"
+        }
+      },
+      {
+        "when": "prism_lance",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/prism_lance"
+        }
+      },
+      {
+        "when": "shadow_step",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/shadow_step"
+        }
+      },
+      {
+        "when": "cloak",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/cloak"
+        }
+      },
+      {
+        "when": "echo_swap",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/echo_swap"
+        }
+      },
+      {
+        "when": "legion",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/legion"
+        }
+      },
+      {
+        "when": "danger_sense",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/danger_sense"
+        }
+      },
+      {
+        "when": "dominate",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/dominate"
+        }
+      },
+      {
+        "when": "read_intent",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/read_intent"
+        }
+      },
+      {
+        "when": "decoy",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/decoy"
+        }
+      },
+      {
+        "when": "foresight",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/foresight"
+        }
+      },
+      {
+        "when": "wall",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/wall"
+        }
+      },
+      {
+        "when": "ramp",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/ramp"
+        }
+      },
+      {
+        "when": "floor",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/floor"
+        }
+      },
+      {
+        "when": "cone",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/cone"
+        }
+      },
+      {
+        "when": "rampart",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/rampart"
+        }
+      },
+      {
+        "when": "spire",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/spire"
+        }
+      },
+      {
+        "when": "collapse",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/collapse"
+        }
+      },
+      {
+        "when": "citadel",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/citadel"
+        }
+      },
+      {
+        "when": "grapple",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/grapple"
+        }
+      },
+      {
+        "when": "jet_burst",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/jet_burst"
+        }
+      },
+      {
+        "when": "drone",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/drone"
+        }
+      },
+      {
+        "when": "turret",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/turret"
+        }
+      },
+      {
+        "when": "railgun",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/railgun"
+        }
+      },
+      {
+        "when": "nanite_skin",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/nanite_skin"
+        }
+      },
+      {
+        "when": "drone_swarm",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/drone_swarm"
+        }
+      },
+      {
+        "when": "aura",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/aura"
+        }
+      },
+      {
+        "when": "spirit_palm",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/spirit_palm"
+        }
+      },
+      {
+        "when": "mend",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/mend"
+        }
+      },
+      {
+        "when": "third_eye",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/third_eye"
+        }
+      },
+      {
+        "when": "cord_lash",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/cord_lash"
+        }
+      },
+      {
+        "when": "bulwark",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/bulwark"
+        }
+      },
+      {
+        "when": "hundred_palms",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/hundred_palms"
+        }
+      },
+      {
+        "when": "void_maw",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/void_maw"
+        }
+      },
+      {
+        "when": "waking_dream",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/waking_dream"
+        }
+      },
+      {
+        "when": "storm_call",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/storm_call"
+        }
+      },
+      {
+        "when": "ember_step",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/ember_step"
+        }
+      },
+      {
+        "when": "frost_nova",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/frost_nova"
+        }
+      },
+      {
+        "when": "ghost_step",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/ghost_step"
+        }
+      },
+      {
+        "when": "twin_strike",
+        "model": {
+          "type": "minecraft:model",
+          "model": "awaken:item/power_core/twin_strike"
+        }
       }
-    ]
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "awaken:item/power_core"
+    }
   }
 }
