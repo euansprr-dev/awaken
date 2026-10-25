@@ -536,14 +536,21 @@ final class CitizenWork implements Ledger.Work {
         d.setDirty();
     }
 
+    /**
+     * Ticks the hour waits at dawn, noon and dusk while the Choir's carillon plays its tune (citizens.client.CitySound,
+     * 10.6-13.6 s): the tune first, then the hour struck, as a clock tower does (M4 B3b).
+     */
+    static final int AFTER_TUNE = 300;
+
     /** On the hour: every tower whose ringer is at the bell rings the hour, the Choir first, the districts after it. */
     private void ringHour(long now, int tod) {
         int hour = (6 + tod / 1000) % 24;
         int strokes = hour % 12 == 0 ? 12 : hour % 12;
+        long wait = hour == 6 || hour == 12 || hour == 18 ? AFTER_TUNE : 0;
         for (int b = 0; b < r.bells.size(); b++) {
             if (!ringerAt(b)) continue;
             boolean choir = "choir".equals(r.bells.get(b).landmark());
-            long start = now + (choir ? 0 : 50 + 23L * b);
+            long start = now + wait + (choir ? 0 : 50 + 23L * b);
             peals.add(new long[]{b, start, strokes, choir ? 46 : 34, 0});
         }
     }

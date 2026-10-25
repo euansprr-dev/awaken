@@ -124,8 +124,8 @@ final class CityLifeTests {
 
     /**
      * Every district's key matches the plan, every bed (seven districts and the night) is an ambient context whose stems
-     * are equal-length 44.1 kHz loops, its crowd stems rise level by level, and a district's crowd picks calm when empty
-     * and packed at its busiest. The mixes are decoded and measured off-thread.
+     * are equal-length 44.1 kHz loops, its crowd stems rise level by level, every place's sound is mono, and a
+     * district's crowd picks calm when empty and packed at its busiest. The mixes are decoded and measured off-thread.
      */
     private static void beds(GameTestHelper h) {
         List<String> problems = new ArrayList<>();
@@ -165,6 +165,17 @@ final class CityLifeTests {
                 for (int l = 1; l < Intensity.NAMES.length; l++) {
                     if (m.gainsAt(l)[k] < m.gainsAt(l - 1)[k]) problems.add(ctx + ": " + m.stems().get(k).name() + " falls at " + Intensity.name(l));
                 }
+            }
+        }
+        // every place that sounds is mono, or OpenAL plays it unplaced at full volume wherever you are
+        JsonObject events = json("/assets/awaken/sounds.json");
+        h.assertTrue(events != null, "the merged sounds.json is on the classpath");
+        for (var en : events.entrySet()) {
+            if (!en.getKey().startsWith("city.")) continue;
+            for (var snd : en.getValue().getAsJsonObject().getAsJsonArray("sounds")) {
+                Identifier f = Identifier.parse(snd.isJsonPrimitive() ? snd.getAsString() : snd.getAsJsonObject().get("name").getAsString());
+                int ch = channels("/assets/" + f.getNamespace() + "/sounds/" + f.getPath() + ".ogg");
+                if (ch != 1) problems.add(en.getKey() + ": " + f + (ch < 0 ? " missing" : " has " + ch + " channels (a place's sound must be mono)"));
             }
         }
         h.assertTrue(problems.isEmpty(), String.join("; ", problems));
@@ -310,6 +321,20 @@ final class CityLifeTests {
 
     private static String file(LayerManifest.Stem s) {
         return "/assets/" + s.file().getNamespace() + "/sounds/" + s.file().getPath() + ".ogg";
+    }
+
+    /** The channel count in an Ogg Vorbis identification header (-1 if missing or not Vorbis). */
+    private static int channels(String resource) {
+        try (InputStream in = CityLifeTests.class.getResourceAsStream(resource)) {
+            if (in == null) return -1;
+            byte[] b = in.readNBytes(128);
+            for (int i = 0; i + 11 < b.length; i++) {
+                if (b[i] == 1 && b[i + 1] == 'v' && b[i + 2] == 'o' && b[i + 3] == 'r' && b[i + 4] == 'b' && b[i + 5] == 'i' && b[i + 6] == 's') return b[i + 11] & 0xFF;
+            }
+            return -1;
+        } catch (IOException e) {
+            return -1;
+        }
     }
 
     /** Total samples of an Ogg Vorbis file: the granule position of its last page (-1 if missing). */

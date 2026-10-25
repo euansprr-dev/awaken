@@ -13,7 +13,7 @@ Three kinds of file:
   - Place loops (sounds/amb_city_<name>.ogg, mono, seamless): played at their place by citizens.client.CitySound:
     fountains, water lapping at the quays, the mill wheels, a tavern's muffled evening.
   - One-shots (sounds/city/<name><n>.ogg, mono, several variants each): forges, stalls, boats, songbirds, the animals,
-    the carillon's three tunes (dawn, noon, dusk).
+    the carillon's three tunes (dawn, noon, dusk; mono like the rest, so the spire is where they come from).
 
 The crowd is the hard one: a murmur of formant voices (glottal harmonics shaped by vowel formants, syllables and
 phrases with falling intonation, consonant hiss between), placed at distances round the listener, darkened and
@@ -559,7 +559,7 @@ def cart_bells(seed):
     return x
 
 
-# ---- the carillon (stereo, from the Choir's spire) --------------------------------------------------------------
+# ---- the carillon (shipped mono, from the Choir's spire) ------------------------------------------------------------
 
 SMALL = [(1.0, 1.0, 1.0), (2.0, 0.7, 0.7), (2.4, 0.45, 0.45), (3.0, 0.35, 0.35), (4.0, 0.2, 0.25), (5.2, 0.12, 0.15)]
 # our own tunes: dawn rises, noon is the city's theme, dusk settles (MIDI notes, beats)
@@ -868,7 +868,8 @@ def render_shots():
         K.write_ogg(os.path.join(SOUNDS, name + ".ogg"), y, aq, None)
         print(f"  {name:20s} {len(y) / SR:5.1f} s  RMS {K.gated_rms(y):6.1f}")
     for eid, tune in CARILLON.items():
-        y = K.master(carillon(tune, 4400 + len(tune)), -21.0, ceil - 0.7)
+        # mono, so the spire is a place: its 320-block falloff applies (a stereo sound plays unplaced, as loud everywhere)
+        y = K.master(K.mono(carillon(tune, 4400 + len(tune))), -21.0, ceil - 0.7)
         K.write_ogg(os.path.join(SOUNDS, f"city/carillon_{tune}.ogg"), y, q, None)
         print(f"  carillon_{tune:5s} {len(y) / SR:5.1f} s")
 
