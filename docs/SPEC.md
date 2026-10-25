@@ -1426,6 +1426,15 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   (approved proposal; the gate opens in the square via `GateHooks.openScripted`) → the Void → the infirmary → the
   Registry (licence E-rank, the Holo wristband, the Atlas opens with the run revealed, first Directive) → free play.
 - No death in the opening (falls leave ≥ 1 heart). Relog at any beat resumes it. `/awaken opening skip`.
+- Decided in M2 (2026-10-25; details docs/carillon/milestones/M2-opening.md): the opening's beats SKY, RUN, ARRIVAL,
+  WAKE, REGISTRY are appended to `StoryProgress.Prologue` after DONE (schema 3; the story's GATE_OPEN, RITUAL and
+  ACCEPTING sit in between); in Carillon worlds the opening owns NOT_STARTED/GLITCHED and the prologue's own first beats
+  never run; Accept leads to WAKE (the infirmary) only during the opening. Skipping is a game rule plus hold-jump (after
+  one viewing) plus `/awaken opening skip`; `/awaken opening restart|beat` for testing. F5 skips the front view. Dawn is
+  set once per world. The run's stage (414 blocks, tools/opening/routes.py) is placed once, at version 1. The Bell Bridge
+  falls when a runner comes within 22 blocks across the ground, or on reaching the market. The Starter power offer and
+  the fauna reveal wait until the opening ends. The Ritual's end-black is cleared by `RitualClient.handOff`. Music is
+  borrowed from the Bell Crypt for now; the Atlas reveal at the Registry waits for M5. Proposed: `GateHooks.enter`.
 - Camera (G0, from spike S2): one client-only `OpeningCamera` on the marker entity type, never added to the level,
   carrying the player's eye height, set through `Minecraft.setCameraEntity` and placed every frame from
   `ViewportEvent.ComputeCameraAngles` at LOWEST priority (no mixin). Hands and the player's own name tag are hidden and

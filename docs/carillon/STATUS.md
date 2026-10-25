@@ -16,7 +16,7 @@ S3 is its starting point. MMO-lite is deferred; party gates and shared credit la
 | Milestone | Builder (model) | Branch / worktree | State |
 |---|---|---|---|
 | M1 the city in blockout | City Architect (Opus xhigh) | carillon/m1-city · /Volumes/MEDIA/Awaken-city | **done, merged** into carillon/main (94de89a7); report docs/carillon/milestones/M1-city.md |
-| M2 the opening in blockout | Director (Opus xhigh) | carillon/m2-opening · /Volumes/MEDIA/Awaken-opening | running (brief: briefs/M2-opening.md) |
+| M2 the opening in blockout | Director (Opus xhigh) | carillon/m2-opening · /Volumes/MEDIA/Awaken-opening | **done, merged**; report docs/carillon/milestones/M2-opening.md; **Euan's play 1 next** |
 | M3 alive | Citizens (Opus xhigh + Sonnet data) | carillon/m3-alive · /Volumes/MEDIA/Awaken-alive | **done, merged** into carillon/main; report docs/carillon/milestones/M3-alive.md |
 | M4 detail | City Architect + art (Opus xhigh + Sonnet) | — | after M3; perf at the end |
 | M5 the Atlas | Atlas (Opus xhigh) | — | after M4 |
@@ -126,3 +126,13 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
 - 2026-10-25: M3 is READY TO MERGE into build/awaken-v1 at carillon/main f6091499 (pushed). The pack session was not
   running when M3 finished, so it hasn't been told: whoever merges next, take f6091499 (or later) and check CI on
   carillon/main first. M2 (the opening) started in /Volumes/MEDIA/Awaken-opening.
+- 2026-10-25: M2 reviewed and merged. Checked: 19 commits, tree clean, CI green on 4c4ff9f (one unrelated fauna flake on
+  the first push); edits outside opening are hand-over points (story: StoryProgress beats appended after DONE with
+  schema 3 and a lenient codec, Story API, Prologue ownership only in Carillon worlds, RitualClient.handOff; powers
+  Starter and the fauna reveal wait for the opening; citizens CityEvents/Roles for the bell and the market rush). Shots
+  reviewed (sky frames with the title card, the light column from the Roost, Act 2 roofs, the arrival flare, the
+  infirmary with the Registry marker). Open items: (1) golden runs: roof routes stable (0.0–0.8, act3 ~6 by design), street
+  and canal playbacks vary between tours (citizens' bodies push the runner; or the Ascent's server-timed tactical
+  sprint) → make bodies pass through the player during route playback, then re-check; (2) the run is a fair course but
+  not yet a thrill ("nothing chases you") → Euan's play 1 decides what the threat is.
+- M1 + M3 + M2 are all on carillon/main and NOT yet on build/awaken-v1 beyond M1: the next merge into build takes all.
