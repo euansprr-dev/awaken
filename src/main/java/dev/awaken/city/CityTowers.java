@@ -325,7 +325,7 @@ final class CityTowers {
             boolean lower = ry == 12 || ry == 20 || ry == 28 || ry == t.eave - 13;
             return loop(face, lower ? 1 : 2, storey == 3 ? 1 : 0, stone);
         }
-        if (t.form == SQUARE && quoin(t, x, z, ry) && ry > 6) return t.district == TERRACE ? POLISHED_DIORITE : t.district == WORKS ? BRICKS : ASHLAR;
+        if (t.form == SQUARE && quoin(t, x, z, ry) && ry > 6) return t.district == TERRACE ? POLISHED_DIORITE : t.district == WORKS ? MUD_BRICKS : ASHLAR;
         return s;
     }
 
