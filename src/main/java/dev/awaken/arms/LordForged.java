@@ -138,7 +138,25 @@ public final class LordForged {
             return;
         }
         p.setData(ArmsContent.MEMORY, m.withLordsWithout(0));
-        reveal(p, new ItemStack(item), forged);
+        // the reveal waits for the next tick: the death event fires inside die(), before the kill is counted (an
+        // empty-handed kill counts as unarmed only while the hand is still empty when the Lord's death is tallied)
+        PENDING.add(new Pending(p, new ItemStack(item), forged));
+    }
+
+    private record Pending(ServerPlayer player, ItemStack stack, Forged forged) {}
+
+    private static final List<Pending> PENDING = new java.util.ArrayList<>();
+
+    /** The reveals the last tick's Lord deaths earned (ArmsServer, each server tick). */
+    static void revealPending() {
+        if (PENDING.isEmpty()) return;
+        List<Pending> due = List.copyOf(PENDING);
+        PENDING.clear();
+        for (Pending r : due) {
+            if (!r.player().isRemoved()) reveal(r.player(), r.stack(), r.forged());
+            else r.player().level().addFreshEntity(new net.minecraft.world.entity.item.ItemEntity(r.player().level(),
+                    r.player().getX(), r.player().getY(), r.player().getZ(), r.stack())); // gone that tick: it waits where they stood
+        }
     }
 
     /** The reveal: the Lord's light round the fighter, its name from the System, the weapon to the hand. */
