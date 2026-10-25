@@ -53,17 +53,46 @@ public final class AlpineSurface {
      */
     public static float snowLine(float x, float z, float gx, float gz) {
         float slope = (float) Math.sqrt(gx * gx + gz * gz);
-        float wander = SNOW_WANDER * (wobble(x / 160f, z / 160f) * 2f - 1f);
+        float wander = SNOW_WANDER * (valueNoise(x, z, 160f, 77) * 2f - 1f);
         float facing = slope < 1e-4f ? 0f : gz / slope * Erosion.smooth(0.08f, 0.45f, slope);
         float aspect = facing > 0f ? -NORTH_DROP * facing : -SOUTH_LIFT * facing;
         return SNOW_LINE + wander + aspect;
     }
 
-    /** Whether ground at height y with that slope holds snow; {@code jitter} (0..1) feathers the edge per block. */
+    /**
+     * Whether ground at height y with that slope holds snow: the snow line broken into drifts and bare patches over a
+     * band of about 20 blocks ({@link #patches}, the same noise Far Sight's shader lays), never one hard line;
+     * {@code jitter} (0..1) feathers the steepness limit per block.
+     */
     public static boolean snow(float x, float y, float z, float gx, float gz, float jitter) {
         float slope = (float) Math.sqrt(gx * gx + gz * gz);
         if (slope > SNOW_SLOPE + 0.3f * (jitter - 0.5f)) return false;
-        return y >= snowLine(x, z, gx, gz) + 8f * (jitter - 0.5f);
+        return y + patches(x, z) >= snowLine(x, z, gx, gz);
+    }
+
+    /** The snow edge's patches (blocks, about ±10): value noise on 24- and 7-block lattices, as farsight_terrain.fsh. */
+    public static float patches(float x, float z) {
+        return (valueNoise(x, z, 24f, 5) - 0.5f) * 14f + (valueNoise(x, z, 7f, 9) - 0.5f) * 6f;
+    }
+
+    /** Smooth value noise in 0..1 with the shaders' hash (farsight.glsl farHash), so both sides lay the same patches. */
+    static float valueNoise(float x, float z, float cell, int seed) {
+        float u = x / cell, v = z / cell;
+        int iu = (int) Math.floor(u), iv = (int) Math.floor(v);
+        float fu = u - iu, fv = v - iv;
+        fu = fu * fu * (3f - 2f * fu);
+        fv = fv * fv * (3f - 2f * fv);
+        float a = farHash(iu * 3 + seed, iv * 3 + seed), b = farHash((iu + 1) * 3 + seed, iv * 3 + seed);
+        float c = farHash(iu * 3 + seed, (iv + 1) * 3 + seed), d = farHash((iu + 1) * 3 + seed, (iv + 1) * 3 + seed);
+        float top = a + (b - a) * fu, bottom = c + (d - c) * fu;
+        return top + (bottom - top) * fv;
+    }
+
+    /** farsight.glsl's farHash: two ints to 0..1. */
+    static float farHash(int x, int z) {
+        int h = x * 374761393 + z * 668265263;
+        h = (h ^ (h >>> 13)) * 1274126177;
+        return Integer.toUnsignedLong(h ^ (h >>> 16)) / 4294967296f;
     }
 
     /** 0 soil, 1 scree (loose stone), 2 bare rock: by slope, feathered per block by {@code jitter} (0..1). */
@@ -72,16 +101,6 @@ public final class AlpineSurface {
         return slope >= ROCK_SLOPE ? 2 : slope >= SCREE_SLOPE ? 1 : 0;
     }
 
-    /** Smooth value noise in 0..1 (the snow line's wander): one lattice, cubic blend. */
-    static float wobble(float u, float v) {
-        int iu = (int) Math.floor(u), iv = (int) Math.floor(v);
-        float fu = u - iu, fv = v - iv;
-        fu = fu * fu * (3f - 2f * fu);
-        fv = fv * fv * (3f - 2f * fv);
-        float a = Erosion.unit(Erosion.hash(iu, iv, 77)), b = Erosion.unit(Erosion.hash(iu + 1, iv, 77));
-        float c = Erosion.unit(Erosion.hash(iu, iv + 1, 77)), d = Erosion.unit(Erosion.hash(iu + 1, iv + 1, 77));
-        return a + (b - a) * fu + (c - a) * fv + (a - b - c + d) * fu * fv;
-    }
 
     /** A per-block 0..1 for feathering edges. */
     public static float jitter(int x, int y, int z) {

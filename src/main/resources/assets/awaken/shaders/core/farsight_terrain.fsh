@@ -3,19 +3,19 @@
 
 #include <minecraft:fog.glsl>
 #include <awaken:farsight.glsl>
-#include <awaken:farsight_erosion.glsl>
 #include <awaken:farsight_air.glsl>
 
-// AWAKEN Far Sight 2: what far ground looks like, per pixel.
-// - Relief finer than the mesh: Awakened Alpine's erosion octaves between the ring's cell and a few pixels, lit.
-// - What it's made of, by the same rule the chunks use: snow above a snow line that drops on north faces, scree and
-//   bare rock by slope, badlands strata on steep faces, water with shallows; the real blocks' colour where seen.
-// - Minecraft while a block is still bigger than a pixel: a block-by-block colour grain and a line at every block of
-//   height on slopes (the terraces), both fading out once a block is under a pixel. Forests as a speckled canopy.
-// - Light: the game's sky light, faces shaded like block faces, a warm key where the sun reaches and a cool shade where
-//   a ridge hides it; valleys darker.
-// - Air: aerial perspective from an exponential atmosphere at real scale (km), sun-coloured toward the sun, and the
-//   game's own weather fog; at the horizon it fades into the sky. Under the real chunks it stays hidden, dithering in.
+// AWAKEN Far Sight 2: far ground as Minecraft draws ground, in blocks, at every distance (Euan, 2026-10-25: "it feels
+// like an extension of the world"). Each pixel walks its view ray through block columns standing on the ground here (the
+// mesh's local plane): a column as wide as about a pixel (one block near the real chunks, two, four, ... further out,
+// as Distant Horizons' and Voxy's levels of detail do), its top rounded to a whole block. Where the ray first meets a
+// column it shows that face: the top, or a side facing x or z. Faces shade as the game shades them (top 1, north and
+// south 0.8, east and west 0.6), grass tops stand over dirt risers, cliffs are stone, snow lies on the tops, and every
+// block has its own grain. No smooth gradients, no triangle facets: terraces, as on the real slopes beside it.
+// - What it's made of, by the rules the chunks use: the alpine snow line and the game's own cold line, both broken into
+//   patches at the edge; scree and bare rock by slope; badlands strata; water with shallows; forest floor under crowns.
+// - Light: the game's sky light, a warm key where the sun reaches past the ridges and a cool shade where it doesn't.
+// - Air: farsight_air.glsl. Under the real chunks it stays hidden, where they are there, dithering in at their edge.
 
 uniform sampler2D LightSampler;
 uniform sampler2D ChunkSampler;     // which real chunks the client has (64x64, chunk coordinate masked to 63)
@@ -27,10 +27,12 @@ layout(location = 3) in vec4 vInfo;
 layout(location = 4) in vec4 vCrown;
 layout(location = 5) flat in ivec2 vFlags;
 layout(location = 6) in float vCell;
+layout(location = 7) in float vCold;
 
 layout(location = 0) out vec4 fragColor;
 
-const vec3 STONE = vec3(0.50, 0.49, 0.47), SCREE = vec3(0.56, 0.54, 0.51), SNOW = vec3(0.93, 0.95, 0.98);
+const vec3 STONE = vec3(0.49, 0.48, 0.46), SCREE = vec3(0.55, 0.53, 0.50), SNOW = vec3(0.93, 0.95, 0.98);
+const vec3 DIRT = vec3(0.45, 0.32, 0.22);
 
 float bayer4(vec2 p) {
     ivec2 q = ivec2(p) & 3;
@@ -46,22 +48,95 @@ vec3 band(float y) {
     return c[int(floor(farHash(ivec2(int(floor(y / 2.0)), 77)) * 8.0))];
 }
 
-// AlpineSurface.wobble: smooth value noise on a 160-block lattice (the snow line's wander)
-float wobble(vec2 world) {
-    vec2 u = world / 160.0;
+// smooth value noise in 0..1 (the snow line's wander, the patches at the snow's edge)
+float valueNoise(vec2 world, float cell, int seed) {
+    vec2 u = world / cell;
     ivec2 i = ivec2(floor(u));
     vec2 f = fract(u);
     f = f * f * (3.0 - 2.0 * f);
-    float a = erosionUnit(erosionHash(i.x, i.y, 77)), b = erosionUnit(erosionHash(i.x + 1, i.y, 77));
-    float c = erosionUnit(erosionHash(i.x, i.y + 1, 77)), d = erosionUnit(erosionHash(i.x + 1, i.y + 1, 77));
+    float a = farHash(i * 3 + seed), b = farHash((i + ivec2(1, 0)) * 3 + seed);
+    float c = farHash((i + ivec2(0, 1)) * 3 + seed), d = farHash((i + ivec2(1, 1)) * 3 + seed);
     return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
 float snowLine(vec2 world, vec2 g) {
     float slope = length(g);
-    float wander = SNOW_WANDER * (wobble(world) * 2.0 - 1.0);
+    float wander = SNOW_WANDER * (valueNoise(world, 160.0, 77) * 2.0 - 1.0);
     float facing = slope < 1e-4 ? 0.0 : g.y / slope * smoothstep(0.08, 0.45, slope);
     return SNOW_LINE + wander + (facing > 0.0 ? -NORTH_DROP * facing : -SOUTH_LIFT * facing);
+}
+
+// how much snow lies on a top at height y: the alpine line and the game's cold line, each broken into patches over a
+// band (drifts reaching down, bare ground reaching up), never one hard line
+float snowOn(vec2 world, float y, vec2 g, float slope, bool alpine) {
+    float patch = (valueNoise(world, 24.0, 5) - 0.5) * 14.0 + (valueNoise(world, 7.0, 9) - 0.5) * 6.0;
+    float snow = 0.0;
+    if (alpine) snow = smoothstep(-1.5, 1.5, y + patch - snowLine(world, g));
+    snow = max(snow, smoothstep(-1.5, 1.5, vCold + patch * 0.7));
+    // snow slides off steep faces
+    return snow * (1.0 - smoothstep(SNOW_SLOPE - 0.1, SNOW_SLOPE + 0.25, slope));
+}
+
+struct Hit {
+    bool ok;
+    float t;        // along the ray from the camera
+    vec3 n;         // the face's normal
+    float below;    // blocks under its column's top (0 on a top face)
+    ivec2 cell;     // the column, in cells of the walk's width
+};
+
+// walks the ray through columns of width w (blocks) standing on the plane through this pixel's ground with slope g
+Hit columns(vec3 rel, vec2 g, float w) {
+    Hit h;
+    h.ok = false;
+    float tp = length(rel);
+    vec3 d = rel / tp;
+    // how fast the ray drops toward the plane per block along it, and where it stands well above the columns
+    float approach = d.y - dot(g, d.xz);
+    if (approach > -0.015) return h;
+    float slope = length(g);
+    float above = 0.6 + w * (0.5 + 0.75 * slope);
+    float t = max(tp + above / approach, tp * 0.5);
+    float tEnd = tp + (tp - t) * 1.5 + w * 4.0;
+    // the grid: columns at whole multiples of w in the world (FarCamInt is a multiple of 256, w divides it)
+    vec2 off = FarCam.xz;
+    vec2 p = d.xz * t + off;
+    ivec2 cell = ivec2(floor(p / w));
+    vec2 stepDir = sign(d.xz);
+    vec2 inv = 1.0 / max(abs(d.xz), vec2(1e-6));
+    vec2 next = (vec2(cell) + max(stepDir, 0.0)) * w;
+    vec2 tMax = t + (next - p) * stepDir * inv;
+    vec2 tDelta = w * inv;
+    int axis = -1;
+    float camY = FarFog.z;
+    for (int i = 0; i < 28; i++) {
+        float tOut = min(tMax.x, tMax.y);
+        // this column's top: the plane at its centre, rounded to a whole block
+        vec2 centre = (vec2(cell) + 0.5) * w - off;
+        float top = floor(rel.y + dot(g, centre - rel.xz) + camY + 0.5) - camY;
+        float yIn = d.y * t;
+        if (yIn <= top && axis >= 0) {
+            h.ok = true;
+            h.t = t;
+            h.n = axis == 0 ? vec3(-stepDir.x, 0.0, 0.0) : vec3(0.0, 0.0, -stepDir.y);
+            h.below = top - yIn;
+            h.cell = cell;
+            return h;
+        }
+        if (d.y < 0.0 && d.y * tOut <= top) {
+            h.ok = true;
+            h.t = max(t, top / d.y);
+            h.n = vec3(0.0, 1.0, 0.0);
+            h.below = 0.0;
+            h.cell = cell;
+            return h;
+        }
+        if (tOut > tEnd) break;
+        t = tOut;
+        if (tMax.x < tMax.y) { tMax.x += tDelta.x; cell.x += int(stepDir.x); axis = 0; }
+        else { tMax.y += tDelta.y; cell.y += int(stepDir.y); axis = 1; }
+    }
+    return h;
 }
 
 void main() {
@@ -72,83 +147,74 @@ void main() {
         ivec2 chunk = (FarCamInt.xz >> 4) + ivec2(floor(rel / 16.0));
         if (texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5) discard;
     }
-    float y = vRel.y + FarFog.z;
-    float footprint = max(fwidth(vRel.x), fwidth(vRel.z)); // blocks a pixel spans here
     int flags = vFlags.x;
     bool generated = (flags & 128) != 0, alpine = (flags & 1) != 0;
     float depth = vInfo.r * 255.0;
     bool water = depth > 0.5;
-
     vec3 n = normalize(vNormal);
-    vec2 g = -n.xz / max(n.y, 0.05);
-    // relief finer than this ring's mesh: erosion's octaves from two cells down to about four pixels
-    float strength = smoothstep(ERODE_FROM, ERODE_FULL, y) * (alpine ? 1.0 : 0.55);
-    if (!water && strength > 0.0 && footprint * 4.0 < vCell * 2.0 && (int(FarCam.y) & 1) == 0) {
-        g += erosionSlope(FarCamInt.xz, rel, g, strength, max(footprint * 4.0, 8.0), vCell * 2.0);
-        n = normalize(vec3(-g.x, 1.0, -g.y));
-    }
+    vec2 g = -n.xz / max(n.y, 0.12);
     float slope = length(g);
-    vec2 world = vec2(FarCamInt.xz) + rel;
-    ivec2 blk = FarCamInt.xz + ivec2(floor(rel));
-    float grain = 1.0 - smoothstep(0.6, 1.6, footprint);
-    float jitter = farHash(blk + ivec2(13, 7));
+    float footprint = max(fwidth(vRel.x), fwidth(vRel.z)); // blocks a pixel spans here
 
-    vec3 c = vColor;
+    // the columns: about a pixel wide, a power of two, dithered between widths so no ring of change shows
+    float level = clamp(log2(max(footprint * 1.3, 1.0)) + bayer4(gl_FragCoord.xy) - 0.5, 0.0, 6.0);
+    float w = exp2(floor(level));
+    Hit hit;
+    hit.ok = false;
+    if (!water) hit = columns(vRel, g, w);
+    vec3 pos = hit.ok ? normalize(vRel) * hit.t : vRel;
+    vec3 face = hit.ok ? hit.n : n;
+    float y = pos.y + FarFog.z;
+    vec2 world = vec2(FarCamInt.xz) + pos.xz + FarCam.xz;
+    ivec2 blk = hit.ok ? hit.cell : FarCamInt.xz + ivec2(floor(rel));
+    float grain = farHash(blk * 7 + ivec2(int(floor(y)), 3));
+
+    // the top's material, as the chunks choose it (the real chunks' colour where seen)
+    vec3 top = vColor;
     float density = vInfo.b;
+    float rock = 0.0, snow = 0.0;
     if (water) {
         // shallows show their sandy floor through the water; deep water keeps its colour
-        vec3 shallow = mix(vec3(0.80, 0.76, 0.58) * (c.r + c.g + c.b) / 1.2, c * 1.5, 0.5);
-        c = mix(shallow, c, smoothstep(1.0, 9.0, depth));
+        vec3 shallow = mix(vec3(0.80, 0.76, 0.58) * (top.r + top.g + top.b) / 1.2, top * 1.5, 0.5);
+        top = mix(shallow, top, smoothstep(1.0, 9.0, depth));
     } else {
-        // stone where the ground is too steep to hold soil; scree beneath the cliffs (the real chunks' colour where seen)
-        float edge = 0.25 * (jitter - 0.5) * grain;
-        float rock = generated ? 0.0 : smoothstep(ROCK_SLOPE - 0.2, ROCK_SLOPE + 0.1, slope + edge);
+        float jag = 0.25 * (grain - 0.5);
         if (!generated) {
-            float scree = smoothstep(SCREE_SLOPE - 0.15, SCREE_SLOPE + 0.1, slope + edge) * (1.0 - rock);
-            if ((flags & 4) != 0) c = mix(c, band(y), smoothstep(0.5, 1.2, slope) * 0.85);
-            else if ((flags & 8) != 0) c = mix(c, STONE, 0.6 + 0.4 * rock);
-            else c = mix(mix(c, SCREE, scree * 0.85), STONE, rock * 0.9);
+            rock = smoothstep(ROCK_SLOPE - 0.2, ROCK_SLOPE + 0.1, slope + jag);
+            float scree = smoothstep(SCREE_SLOPE - 0.15, SCREE_SLOPE + 0.1, slope + jag) * (1.0 - rock);
+            if ((flags & 4) != 0) top = mix(top, band(y), smoothstep(0.5, 1.2, slope) * 0.85);
+            else if ((flags & 8) != 0) top = mix(top, STONE, 0.6 + 0.4 * rock);
+            else top = mix(mix(top, SCREE, scree * 0.85), STONE, rock * 0.9);
         }
-        // forests: until trees stand here, a canopy of crowns speckled tree by tree (gone once a tree is under a pixel);
-        // the real chunks' trees where seen, the biome's where predicted
-        if (density > 0.0) {
-            float treeGrain = 1.0 - smoothstep(2.0, 5.0, footprint);
-            float t = farHash(FarCamInt.xz / 4 + ivec2(floor(rel / 4.0)));
-            vec3 crowns = vCrown.rgb * mix(1.0, 0.7 + 0.45 * t, treeGrain);
-            c = mix(c, crowns, density * 0.85 * (1.0 - rock));
-        }
-        // snow: the alpine snow line (by height, aspect and slope), or a cold biome's gentle ground
-        float snow = 0.0;
-        if (generated) {
-        } else if (alpine) {
-            float line = snowLine(world, g) + 8.0 * (jitter - 0.5) * grain;
-            snow = smoothstep(line - 3.0, line + 3.0, y) * (1.0 - smoothstep(SNOW_SLOPE - 0.15, SNOW_SLOPE + 0.15, slope + 0.3 * (jitter - 0.5) * grain));
-        } else if ((flags & 2) != 0) {
-            snow = 1.0 - smoothstep(SNOW_SLOPE - 0.2, SNOW_SLOPE + 0.2, slope);
-        }
-        c = mix(c, SNOW, snow);
-        // a block-by-block grain while blocks are bigger than a pixel
-        c *= 1.0 + (farHash(blk) - 0.5) * (generated ? 0.10 : 0.14) * grain;
+        // forests: the floor under them takes the crowns' tint (the trees themselves stand on it)
+        if (density > 0.0) top = mix(top, vCrown.rgb * (0.8 + 0.3 * grain), density * 0.6 * (1.0 - rock));
+        if (!generated) snow = snowOn(world, y, g, slope, alpine);
     }
-    if (FarCam.w > 0.5 && generated) c = vec3(1.0, 0.0, 1.0);
+    bool grassy = top.g > top.r * 1.05 && top.g > top.b && rock < 0.5;
+    vec3 c;
+    if (hit.ok && hit.n.y < 0.5) {
+        // a column's side: stone, sand, snow blocks and the like are the same all through; under grass, dirt with the
+        // grass's fringe along its top edge; snow on the top shows as a white fringe
+        vec3 side = grassy ? mix(DIRT, top * 0.9, step(hit.below, 0.19)) : top;
+        side = mix(side, SNOW, snow * step(hit.below, 0.22 + 0.6 * float(alpine && !grassy)));
+        if ((flags & 4) != 0 && !generated) side = band(y);
+        c = side;
+    } else {
+        c = mix(top, SNOW, snow);
+    }
+    // every block its own shade, as block textures vary
+    c *= 0.9 + 0.2 * grain;
 
-    // light: block-face shading, a warm key where the sun reaches past the ridges, a cool shade where it doesn't
-    vec3 light = farLight(n, max(dot(n, FarSun.xyz), 0.0) * vCrown.a);
+    // light: the game's face shading, a warm key where the sun reaches past the ridges, a cool shade where it doesn't
+    vec3 light = farLight(face, max(dot(face, FarSun.xyz), 0.0) * vCrown.a);
     light *= mix(1.0, vInfo.a, 0.8);
-    // the terraces: a line where the ground crosses each block of height, on slopes, while a block spans pixels
-    float fy = fwidth(y);
-    if (!water && fy < 0.6) {
-        float toInt = abs(fract(y + 0.5) - 0.5);
-        float line = (1.0 - smoothstep(fy * 0.5, fy * 1.5 + 0.02, toInt)) * smoothstep(0.12, 0.35, slope);
-        light *= 1.0 - 0.2 * line * (1.0 - smoothstep(0.25, 0.6, fy));
-    }
     if (water) {
         float facing = abs(normalize(vRel).y);
         light = mix(light, vec3(1.0), 0.4);
         c = mix(c, FogColor.rgb, pow(1.0 - facing, 5.0) * 0.55);
     }
+    if (FarCam.w > 0.5 && generated) c = vec3(1.0, 0.0, 1.0);
     c *= light * texture(LightSampler, vec2(0.5 / 16.0, 15.5 / 16.0)).rgb;
-
     // valley cloud fills hollows: the bake's valley shade (1 open, 0.65 a deep hollow) says how deep this one is
-    fragColor = vec4(farAir(farMist(c, vRel, smoothstep(0.96, 0.78, vInfo.a)), vRel), 1.0);
+    fragColor = vec4(farAir(farMist(c, pos, smoothstep(0.96, 0.78, vInfo.a)), pos), 1.0);
 }

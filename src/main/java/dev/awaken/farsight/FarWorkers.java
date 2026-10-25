@@ -41,6 +41,12 @@ public final class FarWorkers {
     public final AtomicLong columnCount = new AtomicLong(), columnNanos = new AtomicLong(), probes = new AtomicLong();
     private final int threads;
     private boolean started;
+    /**
+     * How long a worker rests after each patch nearer than the horizon rings, in microseconds: set by the render thread
+     * from how its frames are going (0 while they keep up). macOS ignores thread priorities, so this is how the far
+     * terrain makes room for frames while a new world fills in; the horizon (rings 5-6) never waits.
+     */
+    public volatile int restMicros;
 
     public FarWorkers(int threads) {
         this.threads = threads;
@@ -158,6 +164,8 @@ public final class FarWorkers {
                 p.range = -2;
             }
             done.add(p);
+            int rest = restMicros;
+            if (rest > 0 && job.ring() < Rings.RINGS - 2) java.util.concurrent.locks.LockSupport.parkNanos(rest * 1000L);
         }
     }
 }

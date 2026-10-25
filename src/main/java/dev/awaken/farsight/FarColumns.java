@@ -214,7 +214,8 @@ public final class FarColumns {
      * <ul>
      *   <li>{@code height}: 16 bits, (top + {@link #HEIGHT_BASE}) × {@link #HEIGHT_STEPS}; water stands at sea level;</li>
      *   <li>{@code colour} (ABGR): the ground's colour, flags in alpha ({@link #ALPINE}, {@link #COLD}, the palette's);</li>
-     *   <li>{@code info} (ABGR): r the water's depth, g the canopy's height × 4, b how densely trees stand, a 255;</li>
+     *   <li>{@code info} (ABGR): r the water's depth, g the canopy's height × 4, b how densely trees stand, a how far
+     *       above the snow-cold line the ground stands ({@link #coldness});</li>
      *   <li>{@code crown} (ABGR): the trees' crown colour, their shape in alpha.</li>
      * </ul>
      * Returns the lowest and highest top as {@code min << 16 | max} (whole blocks + {@link #HEIGHT_BASE}), for culling.
@@ -243,10 +244,11 @@ public final class FarColumns {
                 int rgb = water ? FarPalette.water(biome) : look.ground();
                 int depth = water ? Math.clamp(Math.round(seaLevel - ground), 1, MAX_DEPTH) : 0;
                 // Awakened Alpine plants spruce in the mountain biomes: the far forests stand there too
+                int cold = coldness(biome, x, (int) Math.floor(top), z);
                 int density = water ? 0 : Math.min(255, look.density() + (alpine ? AlpineSurface.mountainForest(look.archetype()) : 0));
                 height[k] = packHeight(top);
                 colour[k] = abgr(rgb, flags);
-                info[k] = abgr(depth, Math.min(255, look.canopy() * 4), density, 255);
+                info[k] = abgr(depth, Math.min(255, look.canopy() * 4), density, cold);
                 crown[k] = abgr(look.crown(), look.shape());
                 int whole = (int) Math.floor(top) + HEIGHT_BASE;
                 min = Math.min(min, whole);
@@ -254,6 +256,27 @@ public final class FarColumns {
             }
         }
         return Math.clamp(min, 0, 65535) << 16 | Math.clamp(max, 0, 65535);
+    }
+
+    /**
+     * How far above (or below) the height where the biome turns cold enough to snow this ground stands, as a byte: 128
+     * at the line, 4 a block, clamped to ±31 blocks. The game cools with height in a straight line, so a few probes of
+     * its own snow test find the line; the shaders then lay snow smoothly by it instead of by a flag per corner.
+     */
+    private int coldness(Holder<Biome> biome, int x, int y, int z) {
+        Biome b = biome.value();
+        boolean coldHere = b.coldEnoughToSnow(pos.set(x, y, z), seaLevel);
+        int lo = y - 32, hi = y + 32;
+        if (coldHere && b.coldEnoughToSnow(pos.set(x, lo, z), seaLevel)) return 255;
+        if (!coldHere && !b.coldEnoughToSnow(pos.set(x, hi, z), seaLevel)) return 0;
+        // bisect to the line: below it warm, above it cold
+        int warm = coldHere ? lo : y, cool = coldHere ? y : hi;
+        while (cool - warm > 1) {
+            int mid = (warm + cool) >>> 1;
+            if (b.coldEnoughToSnow(pos.set(x, mid, z), seaLevel)) cool = mid;
+            else warm = mid;
+        }
+        return Math.clamp(128 + (y - cool) * 4, 0, 255);
     }
 
     /** A height as its 16-bit texel (never 0, which means unknown). */

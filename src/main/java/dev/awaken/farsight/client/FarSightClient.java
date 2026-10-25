@@ -128,6 +128,7 @@ public final class FarSightClient {
             return;
         }
         long t0 = System.nanoTime();
+        pace(t0);
         if (field == null) {
             field = new FarField();
             renderer = new FarRenderer();
@@ -224,6 +225,22 @@ public final class FarSightClient {
         cpuFrames++;
     }
 
+    private static long lastFrameNanos;
+    private static float frameMs = 8f;
+
+    /**
+     * Paces the workers by the frames: a smoothed frame time over 13 ms (under ~75 fps) rests them after each near patch,
+     * up to 12 ms a patch (about half their time) by 18 ms; under it they run flat out.
+     */
+    private static void pace(long now) {
+        if (lastFrameNanos != 0) {
+            float ms = Math.min(100f, (now - lastFrameNanos) / 1e6f);
+            frameMs += (ms - frameMs) * 0.05f;
+        }
+        lastFrameNanos = now;
+        workers.restMicros = (partsOff & 16) != 0 ? 0 : Math.round(Math.clamp((frameMs - 13f) / 5f, 0f, 1f) * 12_000f);
+    }
+
     private static float smooth(float a, float b, float x) {
         float t = Math.clamp((x - a) / (b - a), 0f, 1f);
         return t * t * (3f - 2f * t);
@@ -276,10 +293,10 @@ public final class FarSightClient {
     static int debug;
     /**
      * Parts switched off for measuring (autopilot {@code farsight part <name> on|off}): 1 the per-pixel erosion detail,
-     * 2 the trees, 4 the valley cloud, 8 the bake.
+     * 2 the trees, 4 the valley cloud, 8 the bake, 16 the workers' pacing.
      */
     static int partsOff;
-    private static final String[] PARTS = {"detail", "trees", "mist", "bake"};
+    private static final String[] PARTS = {"detail", "trees", "mist", "bake", "pace"};
 
     /** Autopilot: {@code farsight on|off|status|debug <n>}. */
     public static String autopilot(String arg) {
@@ -296,7 +313,7 @@ public final class FarSightClient {
                 else partsOff &= ~(1 << i);
                 return "parts off " + partsOff;
             }
-            return "unknown part " + w[0] + " (detail|trees|mist|bake)";
+            return "unknown part " + w[0] + " (detail|trees|mist|bake|pace)";
         }
         switch (a) {
             case "on" -> {
@@ -329,8 +346,8 @@ public final class FarSightClient {
         cpuFrames = 0;
         double[] gpu = renderer.gpuMillis();
         return String.format(Locale.ROOT,
-                "%s gpu_ms=%.3f bake_ms=%.3f cpu_ms=%.3f missing=[%s] queued=%d pieces=%d cells=%d trees=%d (%d draws) column=%.1fus probes=%.1f/column (%d columns) generated=%d/%d vram=%dMB",
-                drawing() ? "drawing" : enabled() ? "on" : "off", gpu[0], gpu[1], cpu, rings, workers.queued(), renderer.pieces, renderer.cells, renderer.treesDrawn, renderer.treeDraws,
+                "%s gpu_ms=%.3f bake_ms=%.3f cpu_ms=%.3f rest_us=%d missing=[%s] queued=%d pieces=%d cells=%d trees=%d (%d draws) column=%.1fus probes=%.1f/column (%d columns) generated=%d/%d vram=%dMB",
+                drawing() ? "drawing" : enabled() ? "on" : "off", gpu[0], gpu[1], cpu, workers.restMicros, rings, workers.queued(), renderer.pieces, renderer.cells, renderer.treesDrawn, renderer.treeDraws,
                 cols == 0 ? 0.0 : workers.columnNanos.get() / 1000.0 / cols, cols == 0 ? 0.0 : workers.probes.get() / (double) cols, cols,
                 field.genUploaded, field.genAsked, (field.memoryBytes() + renderer.memoryBytes()) >> 20);
     }

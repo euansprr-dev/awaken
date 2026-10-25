@@ -144,7 +144,8 @@ public final class FarStore {
                 int density = sum.trees * 255 / sum.n;
                 height[k] = FarColumns.packHeight(top);
                 colour[k] = FarColumns.abgr((int) (sum.r / sum.n) << 16 | (int) (sum.g / sum.n) << 8 | (int) (sum.b / sum.n), FarColumns.GENERATED);
-                info[k] = FarColumns.abgr(depth, Math.min(255, canopy * 4), density, 255);
+                // coldness stays the prediction's (the shaders read it from there): the real colours already hold the snow
+                info[k] = FarColumns.abgr(depth, Math.min(255, canopy * 4), density, 0);
                 if (sum.trees > 0) crown[k] = FarColumns.abgr((int) (sum.cr / sum.trees) << 16 | (int) (sum.cg / sum.trees) << 8 | (int) (sum.cb / sum.trees), 255);
                 int whole = (int) Math.floor(top) + FarColumns.HEIGHT_BASE;
                 lo = Math.min(lo, whole);

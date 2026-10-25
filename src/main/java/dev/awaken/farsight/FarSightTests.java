@@ -95,7 +95,7 @@ final class FarSightTests {
                     h.assertTrue(top >= heights.getMinY() && top <= heights.getMaxY() + 1, "ring " + r + " corner " + i + " top " + top + " inside the world");
                     boolean water = (info[i] & 255) > 0;
                     h.assertTrue(!water || Math.abs(top - columns.seaLevel()) < 0.07f, "ring " + r + " water lies at sea level: " + top);
-                    h.assertTrue((info[i] >>> 24) == 255, "ring " + r + " corner " + i + " has its info");
+                    h.assertTrue(water || (info[i] >>> 16 & 255) == 0 || (crown[i] & 0xFFFFFF) != 0, "ring " + r + " corner " + i + ": a forest has a crown colour");
                 }
             }
             double us = (System.nanoTime() - t0) / 1000.0 / (Rings.RINGS * n);

@@ -32,6 +32,7 @@ layout(location = 3) out vec4 vInfo;         // water depth, canopy height, tree
 layout(location = 4) out vec4 vCrown;        // crown colour, sunlight (1 lit)
 layout(location = 5) flat out ivec2 vFlags;  // colour flags, crown shape
 layout(location = 6) out float vCell;        // this ring's cell size (blocks)
+layout(location = 7) out float vCold;        // blocks above the line where it turns cold enough to snow (smooth)
 
 const int STRIDE = 65;
 const float MORPH = 16.0;   // cells of the window's outer band over which a ring eases into the next
@@ -42,6 +43,7 @@ struct Corner {
     vec3 col;
     vec4 info;     // r depth, g canopy, b density, a valley
     vec4 crown;    // rgb, a sunlight
+    float cold;    // blocks above the snow-cold line
     int flags, shape;
 };
 
@@ -56,7 +58,7 @@ bool inWindow(ivec2 l) {
 
 // one corner's data: the generated layer where it has it, else the prediction; false if neither has arrived
 bool cornerAt(int r, ivec2 l, out Corner c) {
-    c.h = 0.0; c.n = vec2(0.0); c.col = vec3(0.0); c.info = vec4(0.0); c.crown = vec4(0.0, 0.0, 0.0, 1.0); c.flags = 0; c.shape = 0;
+    c.h = 0.0; c.n = vec2(0.0); c.col = vec3(0.0); c.info = vec4(0.0); c.crown = vec4(0.0, 0.0, 0.0, 1.0); c.cold = -32.0; c.flags = 0; c.shape = 0;
     if (!inWindow(l)) return false;
     ivec2 t = texelOf(r, l);
     float gh = texelFetch(GenHeightSampler, t, 0).r;
@@ -67,6 +69,8 @@ bool cornerAt(int r, ivec2 l, out Corner c) {
     vec4 col = gen ? texelFetch(GenColorSampler, t, 0) : texelFetch(ColorSampler, t, 0);
     vec4 info = gen ? texelFetch(GenInfoSampler, t, 0) : texelFetch(InfoSampler, t, 0);
     vec4 predCrown = texelFetch(CrownSampler, t, 0);
+    // how cold: always the prediction's (the real colours already hold their snow)
+    c.cold = (texelFetch(InfoSampler, t, 0).a * 255.0 - 128.0) / 4.0;
     vec4 crown = gen ? texelFetch(GenCrownSampler, t, 0) : predCrown;
     vec4 shade = texelFetch(ShadeSampler, t, 0);
     c.col = col.rgb;
@@ -101,6 +105,7 @@ bool surfaceAt(int r, vec2 p, out Corner c) {
         c.col = a.col * wa + b.col * wb + cc.col * wc + d.col * wd;
         c.info = a.info * wa + b.info * wb + cc.info * wc + d.info * wd;
         c.crown = a.crown * wa + b.crown * wb + cc.crown * wc + d.crown * wd;
+        c.cold = a.cold * wa + b.cold * wb + cc.cold * wc + d.cold * wd;
         c.flags = a.flags;
         c.shape = a.shape;
         return true;
@@ -117,6 +122,7 @@ Corner sea() {
     c.col = vec3(0.17, 0.27, 0.42);
     c.info = vec4(64.0 / 255.0, 0.0, 0.0, 1.0);
     c.crown = vec4(0.0, 0.0, 0.0, 1.0);
+    c.cold = -32.0;
     c.flags = 0;
     c.shape = 0;
     return c;
@@ -145,6 +151,7 @@ void main() {
                 c.col = mix(c.col, k.col, m);
                 c.info = mix(c.info, k.info, m);
                 c.crown = mix(c.crown, k.crown, m);
+                c.cold = mix(c.cold, k.cold, m);
                 if (m > 0.5) { c.flags = k.flags; c.shape = k.shape; }
             } else {
                 c = k;
@@ -162,6 +169,7 @@ void main() {
     vCrown = c.crown;
     vFlags = ivec2(c.flags, c.shape);
     vCell = s;
+    vCold = c.cold;
     vec4 clip = ProjMat * (FarViewRot * vec4(vRel, 1.0));
     clip.z = FarDepth.x + FarDepth.y * clip.w;
     gl_Position = clip;
