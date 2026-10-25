@@ -41,6 +41,10 @@ void main() {
     soft = soft * soft / (4.0 * knee + 1.0e-4);
     float w = max(soft, hi - b.g) / max(hi, 1.0e-4);
     w = clamp(w, 0.0, 1.0) * mix(0.45, 1.0, sat) * mix(1.0, b.b, sky);
+    // AWAKEN's glows (bright, saturated, not a warm hue: runes, vortices, the Signal's blue, eyes) bloom more than lit
+    // surfaces of the same brightness, by the look's glow (texel 20 a; Lens 2)
+    float cool = c.b >= c.g * 0.9 || (c.g > c.r && c.b > c.r) ? 1.0 : 0.0;
+    w *= 1.0 + 1.5 * P(20).a * smoothstep(0.6, 0.9, hi) * smoothstep(0.45, 0.8, sat) * cool;
     float luma = dot(c, vec3(0.2126, 0.7152, 0.0722));
     fragColor = vec4(c * w, sky * smoothstep(0.35, 0.95, luma));
 }
