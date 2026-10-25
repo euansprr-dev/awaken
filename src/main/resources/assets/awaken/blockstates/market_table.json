@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "awaken:block/market_table"
+    },
+    "axis=z": {
+      "model": "awaken:block/market_table",
+      "y": 90
+    }
+  }
+}

@@ -1,0 +1,364 @@
+{
+  "variants": {
+    "colour=red,facing=north,shape=slope": {
+      "model": "awaken:block/awning_red_slope"
+    },
+    "colour=red,facing=east,shape=slope": {
+      "model": "awaken:block/awning_red_slope",
+      "y": 90
+    },
+    "colour=red,facing=south,shape=slope": {
+      "model": "awaken:block/awning_red_slope",
+      "y": 180
+    },
+    "colour=red,facing=west,shape=slope": {
+      "model": "awaken:block/awning_red_slope",
+      "y": 270
+    },
+    "colour=red,facing=north,shape=upper": {
+      "model": "awaken:block/awning_red_upper"
+    },
+    "colour=red,facing=east,shape=upper": {
+      "model": "awaken:block/awning_red_upper",
+      "y": 90
+    },
+    "colour=red,facing=south,shape=upper": {
+      "model": "awaken:block/awning_red_upper",
+      "y": 180
+    },
+    "colour=red,facing=west,shape=upper": {
+      "model": "awaken:block/awning_red_upper",
+      "y": 270
+    },
+    "colour=red,facing=north,shape=lower": {
+      "model": "awaken:block/awning_red_lower"
+    },
+    "colour=red,facing=east,shape=lower": {
+      "model": "awaken:block/awning_red_lower",
+      "y": 90
+    },
+    "colour=red,facing=south,shape=lower": {
+      "model": "awaken:block/awning_red_lower",
+      "y": 180
+    },
+    "colour=red,facing=west,shape=lower": {
+      "model": "awaken:block/awning_red_lower",
+      "y": 270
+    },
+    "colour=red,facing=north,shape=flat": {
+      "model": "awaken:block/awning_red_flat"
+    },
+    "colour=red,facing=east,shape=flat": {
+      "model": "awaken:block/awning_red_flat",
+      "y": 90
+    },
+    "colour=red,facing=south,shape=flat": {
+      "model": "awaken:block/awning_red_flat",
+      "y": 180
+    },
+    "colour=red,facing=west,shape=flat": {
+      "model": "awaken:block/awning_red_flat",
+      "y": 270
+    },
+    "colour=blue,facing=north,shape=slope": {
+      "model": "awaken:block/awning_blue_slope"
+    },
+    "colour=blue,facing=east,shape=slope": {
+      "model": "awaken:block/awning_blue_slope",
+      "y": 90
+    },
+    "colour=blue,facing=south,shape=slope": {
+      "model": "awaken:block/awning_blue_slope",
+      "y": 180
+    },
+    "colour=blue,facing=west,shape=slope": {
+      "model": "awaken:block/awning_blue_slope",
+      "y": 270
+    },
+    "colour=blue,facing=north,shape=upper": {
+      "model": "awaken:block/awning_blue_upper"
+    },
+    "colour=blue,facing=east,shape=upper": {
+      "model": "awaken:block/awning_blue_upper",
+      "y": 90
+    },
+    "colour=blue,facing=south,shape=upper": {
+      "model": "awaken:block/awning_blue_upper",
+      "y": 180
+    },
+    "colour=blue,facing=west,shape=upper": {
+      "model": "awaken:block/awning_blue_upper",
+      "y": 270
+    },
+    "colour=blue,facing=north,shape=lower": {
+      "model": "awaken:block/awning_blue_lower"
+    },
+    "colour=blue,facing=east,shape=lower": {
+      "model": "awaken:block/awning_blue_lower",
+      "y": 90
+    },
+    "colour=blue,facing=south,shape=lower": {
+      "model": "awaken:block/awning_blue_lower",
+      "y": 180
+    },
+    "colour=blue,facing=west,shape=lower": {
+      "model": "awaken:block/awning_blue_lower",
+      "y": 270
+    },
+    "colour=blue,facing=north,shape=flat": {
+      "model": "awaken:block/awning_blue_flat"
+    },
+    "colour=blue,facing=east,shape=flat": {
+      "model": "awaken:block/awning_blue_flat",
+      "y": 90
+    },
+    "colour=blue,facing=south,shape=flat": {
+      "model": "awaken:block/awning_blue_flat",
+      "y": 180
+    },
+    "colour=blue,facing=west,shape=flat": {
+      "model": "awaken:block/awning_blue_flat",
+      "y": 270
+    },
+    "colour=yellow,facing=north,shape=slope": {
+      "model": "awaken:block/awning_yellow_slope"
+    },
+    "colour=yellow,facing=east,shape=slope": {
+      "model": "awaken:block/awning_yellow_slope",
+      "y": 90
+    },
+    "colour=yellow,facing=south,shape=slope": {
+      "model": "awaken:block/awning_yellow_slope",
+      "y": 180
+    },
+    "colour=yellow,facing=west,shape=slope": {
+      "model": "awaken:block/awning_yellow_slope",
+      "y": 270
+    },
+    "colour=yellow,facing=north,shape=upper": {
+      "model": "awaken:block/awning_yellow_upper"
+    },
+    "colour=yellow,facing=east,shape=upper": {
+      "model": "awaken:block/awning_yellow_upper",
+      "y": 90
+    },
+    "colour=yellow,facing=south,shape=upper": {
+      "model": "awaken:block/awning_yellow_upper",
+      "y": 180
+    },
+    "colour=yellow,facing=west,shape=upper": {
+      "model": "awaken:block/awning_yellow_upper",
+      "y": 270
+    },
+    "colour=yellow,facing=north,shape=lower": {
+      "model": "awaken:block/awning_yellow_lower"
+    },
+    "colour=yellow,facing=east,shape=lower": {
+      "model": "awaken:block/awning_yellow_lower",
+      "y": 90
+    },
+    "colour=yellow,facing=south,shape=lower": {
+      "model": "awaken:block/awning_yellow_lower",
+      "y": 180
+    },
+    "colour=yellow,facing=west,shape=lower": {
+      "model": "awaken:block/awning_yellow_lower",
+      "y": 270
+    },
+    "colour=yellow,facing=north,shape=flat": {
+      "model": "awaken:block/awning_yellow_flat"
+    },
+    "colour=yellow,facing=east,shape=flat": {
+      "model": "awaken:block/awning_yellow_flat",
+      "y": 90
+    },
+    "colour=yellow,facing=south,shape=flat": {
+      "model": "awaken:block/awning_yellow_flat",
+      "y": 180
+    },
+    "colour=yellow,facing=west,shape=flat": {
+      "model": "awaken:block/awning_yellow_flat",
+      "y": 270
+    },
+    "colour=green,facing=north,shape=slope": {
+      "model": "awaken:block/awning_green_slope"
+    },
+    "colour=green,facing=east,shape=slope": {
+      "model": "awaken:block/awning_green_slope",
+      "y": 90
+    },
+    "colour=green,facing=south,shape=slope": {
+      "model": "awaken:block/awning_green_slope",
+      "y": 180
+    },
+    "colour=green,facing=west,shape=slope": {
+      "model": "awaken:block/awning_green_slope",
+      "y": 270
+    },
+    "colour=green,facing=north,shape=upper": {
+      "model": "awaken:block/awning_green_upper"
+    },
+    "colour=green,facing=east,shape=upper": {
+      "model": "awaken:block/awning_green_upper",
+      "y": 90
+    },
+    "colour=green,facing=south,shape=upper": {
+      "model": "awaken:block/awning_green_upper",
+      "y": 180
+    },
+    "colour=green,facing=west,shape=upper": {
+      "model": "awaken:block/awning_green_upper",
+      "y": 270
+    },
+    "colour=green,facing=north,shape=lower": {
+      "model": "awaken:block/awning_green_lower"
+    },
+    "colour=green,facing=east,shape=lower": {
+      "model": "awaken:block/awning_green_lower",
+      "y": 90
+    },
+    "colour=green,facing=south,shape=lower": {
+      "model": "awaken:block/awning_green_lower",
+      "y": 180
+    },
+    "colour=green,facing=west,shape=lower": {
+      "model": "awaken:block/awning_green_lower",
+      "y": 270
+    },
+    "colour=green,facing=north,shape=flat": {
+      "model": "awaken:block/awning_green_flat"
+    },
+    "colour=green,facing=east,shape=flat": {
+      "model": "awaken:block/awning_green_flat",
+      "y": 90
+    },
+    "colour=green,facing=south,shape=flat": {
+      "model": "awaken:block/awning_green_flat",
+      "y": 180
+    },
+    "colour=green,facing=west,shape=flat": {
+      "model": "awaken:block/awning_green_flat",
+      "y": 270
+    },
+    "colour=orange,facing=north,shape=slope": {
+      "model": "awaken:block/awning_orange_slope"
+    },
+    "colour=orange,facing=east,shape=slope": {
+      "model": "awaken:block/awning_orange_slope",
+      "y": 90
+    },
+    "colour=orange,facing=south,shape=slope": {
+      "model": "awaken:block/awning_orange_slope",
+      "y": 180
+    },
+    "colour=orange,facing=west,shape=slope": {
+      "model": "awaken:block/awning_orange_slope",
+      "y": 270
+    },
+    "colour=orange,facing=north,shape=upper": {
+      "model": "awaken:block/awning_orange_upper"
+    },
+    "colour=orange,facing=east,shape=upper": {
+      "model": "awaken:block/awning_orange_upper",
+      "y": 90
+    },
+    "colour=orange,facing=south,shape=upper": {
+      "model": "awaken:block/awning_orange_upper",
+      "y": 180
+    },
+    "colour=orange,facing=west,shape=upper": {
+      "model": "awaken:block/awning_orange_upper",
+      "y": 270
+    },
+    "colour=orange,facing=north,shape=lower": {
+      "model": "awaken:block/awning_orange_lower"
+    },
+    "colour=orange,facing=east,shape=lower": {
+      "model": "awaken:block/awning_orange_lower",
+      "y": 90
+    },
+    "colour=orange,facing=south,shape=lower": {
+      "model": "awaken:block/awning_orange_lower",
+      "y": 180
+    },
+    "colour=orange,facing=west,shape=lower": {
+      "model": "awaken:block/awning_orange_lower",
+      "y": 270
+    },
+    "colour=orange,facing=north,shape=flat": {
+      "model": "awaken:block/awning_orange_flat"
+    },
+    "colour=orange,facing=east,shape=flat": {
+      "model": "awaken:block/awning_orange_flat",
+      "y": 90
+    },
+    "colour=orange,facing=south,shape=flat": {
+      "model": "awaken:block/awning_orange_flat",
+      "y": 180
+    },
+    "colour=orange,facing=west,shape=flat": {
+      "model": "awaken:block/awning_orange_flat",
+      "y": 270
+    },
+    "colour=plum,facing=north,shape=slope": {
+      "model": "awaken:block/awning_plum_slope"
+    },
+    "colour=plum,facing=east,shape=slope": {
+      "model": "awaken:block/awning_plum_slope",
+      "y": 90
+    },
+    "colour=plum,facing=south,shape=slope": {
+      "model": "awaken:block/awning_plum_slope",
+      "y": 180
+    },
+    "colour=plum,facing=west,shape=slope": {
+      "model": "awaken:block/awning_plum_slope",
+      "y": 270
+    },
+    "colour=plum,facing=north,shape=upper": {
+      "model": "awaken:block/awning_plum_upper"
+    },
+    "colour=plum,facing=east,shape=upper": {
+      "model": "awaken:block/awning_plum_upper",
+      "y": 90
+    },
+    "colour=plum,facing=south,shape=upper": {
+      "model": "awaken:block/awning_plum_upper",
+      "y": 180
+    },
+    "colour=plum,facing=west,shape=upper": {
+      "model": "awaken:block/awning_plum_upper",
+      "y": 270
+    },
+    "colour=plum,facing=north,shape=lower": {
+      "model": "awaken:block/awning_plum_lower"
+    },
+    "colour=plum,facing=east,shape=lower": {
+      "model": "awaken:block/awning_plum_lower",
+      "y": 90
+    },
+    "colour=plum,facing=south,shape=lower": {
+      "model": "awaken:block/awning_plum_lower",
+      "y": 180
+    },
+    "colour=plum,facing=west,shape=lower": {
+      "model": "awaken:block/awning_plum_lower",
+      "y": 270
+    },
+    "colour=plum,facing=north,shape=flat": {
+      "model": "awaken:block/awning_plum_flat"
+    },
+    "colour=plum,facing=east,shape=flat": {
+      "model": "awaken:block/awning_plum_flat",
+      "y": 90
+    },
+    "colour=plum,facing=south,shape=flat": {
+      "model": "awaken:block/awning_plum_flat",
+      "y": 180
+    },
+    "colour=plum,facing=west,shape=flat": {
+      "model": "awaken:block/awning_plum_flat",
+      "y": 270
+    }
+  }
+}

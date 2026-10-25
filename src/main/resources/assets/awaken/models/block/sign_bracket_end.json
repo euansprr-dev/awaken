@@ -1,0 +1,381 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/street_iron",
+    "iron": "awaken:block/street_iron",
+    "scroll": "awaken:block/sign_bracket_scroll",
+    "chain": "awaken:block/street_chain"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        13,
+        3
+      ],
+      "to": [
+        9,
+        15,
+        16
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            4,
+            0,
+            6,
+            13
+          ],
+          "texture": "#iron"
+        },
+        "down": {
+          "uv": [
+            6,
+            0,
+            8,
+            13
+          ],
+          "texture": "#iron"
+        },
+        "east": {
+          "uv": [
+            0,
+            4,
+            13,
+            6
+          ],
+          "texture": "#iron"
+        },
+        "west": {
+          "uv": [
+            0,
+            8,
+            13,
+            10
+          ],
+          "texture": "#iron"
+        },
+        "north": {
+          "uv": [
+            4,
+            4,
+            6,
+            6
+          ],
+          "texture": "#iron"
+        }
+      }
+    },
+    {
+      "from": [
+        6.5,
+        12.5,
+        1.5
+      ],
+      "to": [
+        9.5,
+        15.5,
+        3.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            2,
+            5,
+            5
+          ],
+          "texture": "#iron"
+        },
+        "east": {
+          "uv": [
+            2,
+            2,
+            4,
+            5
+          ],
+          "texture": "#iron"
+        },
+        "west": {
+          "uv": [
+            2,
+            6,
+            4,
+            9
+          ],
+          "texture": "#iron"
+        },
+        "up": {
+          "uv": [
+            4,
+            4,
+            7,
+            6
+          ],
+          "texture": "#iron"
+        },
+        "down": {
+          "uv": [
+            8,
+            4,
+            11,
+            6
+          ],
+          "texture": "#iron"
+        }
+      }
+    },
+    {
+      "from": [
+        8,
+        9,
+        0
+      ],
+      "to": [
+        8,
+        15,
+        5
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            0,
+            10,
+            5,
+            16
+          ],
+          "texture": "#scroll"
+        },
+        "west": {
+          "uv": [
+            5,
+            10,
+            0,
+            16
+          ],
+          "texture": "#scroll"
+        }
+      }
+    },
+    {
+      "from": [
+        7.5,
+        0,
+        4
+      ],
+      "to": [
+        8.5,
+        13,
+        5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            1,
+            13
+          ],
+          "texture": "#chain"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            1,
+            13
+          ],
+          "texture": "#chain"
+        },
+        "east": {
+          "uv": [
+            1,
+            0,
+            2,
+            13
+          ],
+          "texture": "#chain"
+        },
+        "west": {
+          "uv": [
+            1,
+            0,
+            2,
+            13
+          ],
+          "texture": "#chain"
+        }
+      }
+    },
+    {
+      "from": [
+        7,
+        12,
+        3.5
+      ],
+      "to": [
+        9,
+        13,
+        5.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1,
+            0,
+            3,
+            1
+          ],
+          "texture": "#iron"
+        },
+        "south": {
+          "uv": [
+            1,
+            0,
+            3,
+            1
+          ],
+          "texture": "#iron"
+        },
+        "east": {
+          "uv": [
+            1,
+            0,
+            3,
+            1
+          ],
+          "texture": "#iron"
+        },
+        "west": {
+          "uv": [
+            1,
+            0,
+            3,
+            1
+          ],
+          "texture": "#iron"
+        },
+        "up": {
+          "uv": [
+            2,
+            2,
+            4,
+            4
+          ],
+          "texture": "#iron"
+        }
+      }
+    },
+    {
+      "from": [
+        7.5,
+        0,
+        11
+      ],
+      "to": [
+        8.5,
+        13,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            1,
+            13
+          ],
+          "texture": "#chain"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            1,
+            13
+          ],
+          "texture": "#chain"
+        },
+        "east": {
+          "uv": [
+            1,
+            0,
+            2,
+            13
+          ],
+          "texture": "#chain"
+        },
+        "west": {
+          "uv": [
+            1,
+            0,
+            2,
+            13
+          ],
+          "texture": "#chain"
+        }
+      }
+    },
+    {
+      "from": [
+        7,
+        12,
+        10.5
+      ],
+      "to": [
+        9,
+        13,
+        12.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1,
+            0,
+            3,
+            1
+          ],
+          "texture": "#iron"
+        },
+        "south": {
+          "uv": [
+            1,
+            0,
+            3,
+            1
+          ],
+          "texture": "#iron"
+        },
+        "east": {
+          "uv": [
+            1,
+            0,
+            3,
+            1
+          ],
+          "texture": "#iron"
+        },
+        "west": {
+          "uv": [
+            1,
+            0,
+            3,
+            1
+          ],
+          "texture": "#iron"
+        },
+        "up": {
+          "uv": [
+            2,
+            2,
+            4,
+            4
+          ],
+          "texture": "#iron"
+        }
+      }
+    }
+  ]
+}

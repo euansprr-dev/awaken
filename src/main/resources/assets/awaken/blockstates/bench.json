@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "awaken:block/bench"
+    },
+    "facing=east": {
+      "model": "awaken:block/bench",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "awaken:block/bench",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "awaken:block/bench",
+      "y": 270
+    }
+  }
+}
