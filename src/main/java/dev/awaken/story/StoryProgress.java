@@ -12,9 +12,20 @@ public final class StoryProgress {
     /**
      * RITUAL: sealed in the Ritual of the Bell's hall (story/Ritual) until the Seated One's hand closes. Saved by name:
      * a save from before this state never holds it, a save from after it read by an older build falls back to NOT_STARTED.
+     *
+     * <p>Carillon's opening (SPEC §16.4, module {@code opening}) appends its own beats after DONE, so players already
+     * at DONE never see it: SKY (the card, the sky shot, into your eyes), RUN (the bell rang wrong; the three acts),
+     * ARRIVAL (in Choir Square: the wait and the cinematic), then the story's own GATE_OPEN, RITUAL and ACCEPTING, then
+     * WAKE (the infirmary) and REGISTRY (the licence and the Holo) before DONE.
      */
-    public enum Prologue { NOT_STARTED, GLITCHED, GATE_OPEN, RITUAL, ACCEPTING, DONE;
-        public static final Codec<Prologue> CODEC = dev.awaken.core.Codecs.lenientEnum(Prologue.class, NOT_STARTED); }
+    public enum Prologue { NOT_STARTED, GLITCHED, GATE_OPEN, RITUAL, ACCEPTING, DONE, SKY, RUN, ARRIVAL, WAKE, REGISTRY;
+        public static final Codec<Prologue> CODEC = dev.awaken.core.Codecs.lenientEnum(Prologue.class, NOT_STARTED);
+
+        /** One of the opening's own beats (the story's states in between belong to the story). */
+        public boolean opening() {
+            return ordinal() > DONE.ordinal();
+        }
+    }
 
     Prologue prologue = Prologue.NOT_STARTED;
     String prologueGate = "";
@@ -30,8 +41,11 @@ public final class StoryProgress {
     public Set<String> seen() { return seen; }
     public Set<String> sovereignsDefeated() { return sovereignsDefeated; }
 
-    /** 1: v2 adds the Bell Crypt floor tracker (defaults for older saves). 2: the RITUAL prologue state (no new fields). */
-    static final int SCHEMA = 2;
+    /**
+     * 1: v2 adds the Bell Crypt floor tracker (defaults for older saves). 2: the RITUAL prologue state (no new fields).
+     * 3: the opening's beats SKY..REGISTRY (no new fields).
+     */
+    static final int SCHEMA = 3;
 
     private record Crypt(int schema, int floor, int cleared, long counterSeen) {
         static final Crypt NONE = new Crypt(SCHEMA, 0, 0, -1);

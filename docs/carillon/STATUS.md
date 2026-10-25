@@ -16,8 +16,8 @@ S3 is its starting point. MMO-lite is deferred; party gates and shared credit la
 | Milestone | Builder (model) | Branch / worktree | State |
 |---|---|---|---|
 | M1 the city in blockout | City Architect (Opus xhigh) | carillon/m1-city · /Volumes/MEDIA/Awaken-city | **done, merged** into carillon/main (94de89a7); report docs/carillon/milestones/M1-city.md |
-| M2 the opening in blockout | Director (Opus xhigh) | — | starts as soon as the Ascent's Runner tier is on build/awaken-v1 |
-| M3 alive | Citizens (Opus xhigh + Sonnet data) | — | next after M1 if the Runner tier hasn't landed (decision 20) |
+| M2 the opening in blockout | Director (Opus xhigh) | carillon/m2-opening · /Volumes/MEDIA/Awaken-opening | **done, merged**; report docs/carillon/milestones/M2-opening.md; **Euan's play 1 next** |
+| M3 alive | Citizens (Opus xhigh + Sonnet data) | carillon/m3-alive · /Volumes/MEDIA/Awaken-alive | **done, merged** into carillon/main; report docs/carillon/milestones/M3-alive.md |
 | M4 detail | City Architect + art (Opus xhigh + Sonnet) | — | after M3; perf at the end |
 | M5 the Atlas | Atlas (Opus xhigh) | — | after M4 |
 
@@ -105,3 +105,38 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   slate mass from above, the wall one heavy grey, all vanilla blocks up close (→ M4). Interim: the prologue's Bell Crypt
   gate opens in Choir Square in Carillon worlds (until M2). Watch: a Distant Horizons + Sodium meshing glitch drew
   floating windows once (tour 1; not the city's blocks). New flake seen on CI: gates_build_break_hold.
+- 2026-10-25: the Ascent's Runner tier is done on pack/ascent (CI green d6d86e91; MovementHooks.wallRunning/hanging;
+  route replay `pilot route rec|play|stop`, SPEC §17.6); it reaches build/awaken-v1 through the pack session in ~1–3 h.
+  So by decision 20, M3 started now; M2 follows M3. M3 moved the Association wake/Registry scenes to M2 and leaves
+  rooftop runners and rooftop chases until the Ascent's moves are in.
+- 2026-10-25: M1 landed on build/awaken-v1 (a1110aec; SPEC now §16 Carillon, §17 The Ascent, §18 Pixels; §19–20
+  reserved). build/awaken-v1 merged into carillon/main (9fee4177: wilds-base wards, gate-rig, biomes-3, pixels). Wards
+  vs civic protection: no overlap (wards cover #awaken:warded sites + 12 blocks; terrain keeps those sites out of
+  CityBasin.reserved, which reaches well past the wall). Euan's test rule added: one GameTest per mechanism, suite once.
+- 2026-10-25: the Ascent's Runner tier landed on build/awaken-v1 (c5117925: Runner moves, MovementHooks.wallRunning/
+  hanging, routes + golden runs, SPEC §17) and is merged into carillon/main (c4210481). Kept decision 20's order: M3
+  (started shortly before) finishes first; M2 starts right after.
+- 2026-10-25: M3 reviewed and merged. Checked: 29 commits, tree clean, CI green on 4701a6d (401 tests; two earlier red
+  runs were its events test painting stalls into the shared GameTest world, fixed); outside citizens only the init lines
+  and SkinnedMobRenderer's constructor made protected. Ticks: ledger p95 0.02–0.06 ms, 40 bodies p95 0.59–0.65 ms. Shots
+  reviewed (market at noon, porters with crates, lamps before/after dusk, the Watch calling the hour, the Works fire): the
+  market quarter and the night lamps read as a living town; elsewhere thin (1–3 people a street), vanilla wares (→ M4:
+  roster ~400–480, lit windows, kit, crowd murmur). Open risk: the events test sprints the server ~9,000 ticks, which may
+  time out gate builds in tests running alongside (a simulated clock would fix it). M2 started.
+- 2026-10-25: M3 is READY TO MERGE into build/awaken-v1 at carillon/main f6091499 (pushed). The pack session was not
+  running when M3 finished, so it hasn't been told: whoever merges next, take f6091499 (or later) and check CI on
+  carillon/main first. M2 (the opening) started in /Volumes/MEDIA/Awaken-opening.
+- 2026-10-25: M2 reviewed and merged. Checked: 19 commits, tree clean, CI green on 4c4ff9f (one unrelated fauna flake on
+  the first push); edits outside opening are hand-over points (story: StoryProgress beats appended after DONE with
+  schema 3 and a lenient codec, Story API, Prologue ownership only in Carillon worlds, RitualClient.handOff; powers
+  Starter and the fauna reveal wait for the opening; citizens CityEvents/Roles for the bell and the market rush). Shots
+  reviewed (sky frames with the title card, the light column from the Roost, Act 2 roofs, the arrival flare, the
+  infirmary with the Registry marker). Open items: (1) golden runs: roof routes stable (0.0–0.8, act3 ~6 by design), street
+  and canal playbacks vary between tours (citizens' bodies push the runner; or the Ascent's server-timed tactical
+  sprint) → make bodies pass through the player during route playback, then re-check; (2) the run is a fair course but
+  not yet a thrill ("nothing chases you") → Euan's play 1 decides what the threat is.
+- M1 + M3 + M2 are all on carillon/main and NOT yet on build/awaken-v1 beyond M1: the next merge into build takes all.
+- 2026-10-25: NEXT = Euan's play 1 (the opening in blockout). The pack session was offline, so carillon/main (df903178:
+  M1 + M3 + M2) is not merged into build/awaken-v1 yet; Euan can play it directly with `tools/play.sh carillon/main --pack`
+  in a NEW world. Then one word per beat (sky, bell, run, bridge, arrival, Ritual, wake, Registry) decides M4's
+  priorities and the run's threat. M4 (Detail) is not started until play 1 is in, per the lean plan.

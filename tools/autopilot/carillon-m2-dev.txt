@@ -1,0 +1,87 @@
+# Carillon M2 development look (not the milestone's tour): the opening's cinematic beats in a fresh world.
+# Run: PACK=perf,world,horizon TECTONIC=awakened DH=swift RD=16 SLOT_WHO=M2-opening \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh tools/autopilot/carillon-m2-dev.txt 900
+# The opening starts on login: the card, the sky shot (its own shots m2_sky_*), the question (answered by the tour),
+# the bell and the light. Then jumps: the arrival cinematic, the infirmary, the Registry.
+world carillonM2dev survival 20261024
+waitworld
+gui 0
+window 1440 900
+info
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+wait 560
+shot m2_dev_landed
+wait 30
+shot m2_dev_bell_a
+wait 20
+shot m2_dev_bell_b
+wait 60
+shot m2_dev_roost_column
+cmd awaken opening status
+cmd gamerule advance_time false
+# the light over the roofs
+cmd gamemode spectator
+cmd awaken city view sky_nw_low
+wait 120
+shot m2_dev_column_sky
+cmd gamemode survival
+cmd awaken opening beat act2
+wait 160
+shot m2_dev_act2
+cmd awaken opening beat act3
+wait 120
+shot m2_dev_act3
+# the arrival: alone, the cinematic plays at once
+cmd awaken opening beat arrival
+wait 40
+shot m2_dev_arrive_a
+wait 50
+shot m2_dev_arrive_b
+wait 50
+shot m2_dev_arrive_c
+wait 50
+shot m2_dev_arrive_d
+wait 40
+shot m2_dev_arrive_e
+wait 140
+shot m2_dev_hall
+cmd awaken opening status
+# the infirmary (as the Accept leaves you)
+cmd awaken gate leave
+wait 20
+cmd awaken opening beat wake
+wait 60
+shot m2_dev_wake_a
+wait 70
+shot m2_dev_wake_b
+wait 120
+shot m2_dev_wake_c
+wait 200
+shot m2_dev_wake_d
+wait 140
+shot m2_dev_wake_e
+wait 100
+shot m2_dev_infirmary
+cmd awaken opening beat lens
+wait 30
+shot m2_dev_lens_a
+wait 60
+shot m2_dev_lens_b
+wait 100
+shot m2_dev_licence
+wait 100
+shot m2_dev_wristband
+wait 60
+shot m2_dev_status
+screen close
+wait 60
+shot m2_dev_power
+cmd awaken powers starter 1
+wait 120
+screen close
+wait 100
+shot m2_dev_yours
+cmd awaken opening status
+quit

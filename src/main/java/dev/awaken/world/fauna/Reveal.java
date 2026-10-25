@@ -58,6 +58,8 @@ final class Reveal {
     /** Plays a pending reveal if the player is now in the overworld. */
     static void tryReveal(ServerPlayer p) {
         if (p.isRemoved() || !p.isAlive() || !hasViewer(p)) return;
+        // Carillon's opening wakes you indoors (the infirmary): the layer steps out when the city is yours (SPEC §16.4)
+        if (dev.awaken.core.api.OpeningHooks.inOpening(p)) return;
         FaunaState s = p.getData(FaunaModule.STATE.get());
         if (!s.revealPending() || p.level().dimension() != Level.OVERWORLD) return;
         p.setData(FaunaModule.STATE.get(), s.done());

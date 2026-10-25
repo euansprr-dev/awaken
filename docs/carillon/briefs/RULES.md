@@ -13,6 +13,7 @@ The plan is docs/plan-carillon.html; the source of truth is docs/SPEC.md §16. T
   `-Ptests=<your prefix>`; the full suite runs on GitHub CI when you push your branch
   (`git -C <worktree> push -u origin <branch>`; CI runs on carillon/**; read the result with `gh run list --branch
   <branch>` / `gh run view`). Re-run the known flakes before blaming yourself.
+- Tests, Euan's rule: one GameTest per mechanism; run the full suite locally at most once (CI runs it on every push).
 - Tours: one short `slot.sh light` screenshot tour per milestone (≤ 15 min). A measuring `tour` only when the brief says.
 - Generate content with scripts: tokens go into a generator once, not into each of 800 buildings.
 
