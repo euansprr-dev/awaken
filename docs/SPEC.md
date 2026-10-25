@@ -333,6 +333,11 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   townsfolk drew as default Steve). `AvatarRenderState` is for hooks on real players only.
 - Carillon hooks (§16.9, v0): `CityHooks`, `CitizenHooks`, `RenownHooks`, `EconomyHooks`, `PartyHooks`, `OpeningHooks`,
   `AtlasHooks`. Defaults behave as a classic world with no city.
+- `dev.awaken.core.api.TipHooks` (v0, §16.0 decision 24; docs/carillon/m4/onboarding.md): just-in-time tips. Server:
+  `offer(ServerPlayer, Identifier tip)`, `done(ServerPlayer, Identifier tip)`. Client: `client().offer(tip)` (idempotent,
+  call while the context holds), `done(tip)`, `hold(owner, held)` (cinematics hold every tip), `wants(tip)` (false once
+  retired or tips are off: skip the probe). Installed by the signal module in M4 B6; until then every call does nothing.
+  Tip text and triggers are data; any module may offer its own tips (the Ascent for its tiers).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -1350,6 +1355,26 @@ Added for the lean build (approved by Euan, 2026-10-24):
 20. Order (Euan, 2026-10-24, via the pack session: "Sounds good. Do that."): if M1 finishes before the Ascent's Runner
     tier is on build/awaken-v1, M3 (Alive) runs next; M2 (the opening in blockout) starts as soon as the Runner tier
     lands. Still one builder at a time.
+Milestone 4, approved by Euan on 2026-10-25 ("Go ahead with the full plan and all recommendations"), from the Phase A
+package (docs/carillon/m4/: look-bible.md, story.md, onboarding.md; artifact
+https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
+21. The look bible is the source of truth for the city's look: the city is the course, climbable because of its
+    architecture (the climbing grid, running faces, the movement-tuned dimensions of look-bible §3.10, the seven
+    districts, the height plan, the street-life layer, ~35 kit blocks, twelve landmarks). The opening's routes come from
+    the city's own affordances; the placed stage shrinks to near zero.
+22. The High Terrace is raised from 8 to 12. No jetties on the Quay (its walls are running faces). Market spokes are 5
+    wide (were 6).
+23. The story of the first hour is docs/carillon/m4/story.md: the Void's line stays; the wake says the gate put you back
+    on the stones; new voices Kestrel (Roostmaster) and Bram (Association officer). docs/STORY.md gains a Carillon section.
+24. Onboarding is docs/carillon/m4/onboarding.md: just-in-time tips with the player's real keys through one shared
+    system, `core.api.TipHooks` (tips as data; retire after use; never during cinematics; client option `tips`), the
+    Registry as a walk with Bram ending in a pan to the High Gate, and first-stretch tips that retire at rank D or after
+    three play-days. This reverses §17.2's "the Runner's own moves are found, not told".
+25. One builder at a time: Phase B runs B1 (facade grammar + core kit) → B2 (relief and heights) → B3 (street life,
+    roster 400–480) → B4 (landmarks) → B5 (the opening from affordances) → B6 (story and onboarding) → B7 (quiet perf,
+    tour, Euan's play 3), each step a fresh builder briefed from a file.
+26. Vanilla banners, signs and barrels stay out of the city's fabric (block entities); the kit carries the look. Light at
+    night is mostly emissive, within the light-source budget.
 
 ### 16.1 Modules (new packages; same module rules as §1)
 | Module | Owns |
@@ -1641,7 +1666,8 @@ is what the Ascent decided while building it.
   jump), ranks improve them. Off: the old rule (vanilla until the awakening, ranks unlock roll/sprint E, slide D,
   mantle C; no Runner moves; the server refuses them). `ascent` (on) is the Ascent's feature flag in the same file.
 - The System announces the body's moves at the awakening, once, in one toast (roll, sprint, slide, mantle); never
-  before it, and the Runner's own moves are found, not told.
+  before it. (Superseded by §16.0 decision 24, Euan 2026-10-25: the Runner's moves are taught just in time through
+  `core.api.TipHooks`, with the player's real keys, once, then quiet.)
 - Ranks (`Body.runnerRank`: the rank, E before the awakening): wall-run 35 ticks, 40 from D; wall-jump links 4, 5 from
   C; shimmy 1.6 b/s, 2.2 from B; ledge jump reach up 2.5 / sideways 3, +1 each from B; tactical sprint recharge
   80 − 10 a rank (to 30); slide cooldown 20 − 2 a rank (to 10). Client and server use the same table.

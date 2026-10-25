@@ -18,7 +18,7 @@ S3 is its starting point. MMO-lite is deferred; party gates and shared credit la
 | M1 the city in blockout | City Architect (Opus xhigh) | carillon/m1-city · /Volumes/MEDIA/Awaken-city | **done, merged** into carillon/main (94de89a7); report docs/carillon/milestones/M1-city.md |
 | M2 the opening in blockout | Director (Opus xhigh) | carillon/m2-opening · /Volumes/MEDIA/Awaken-opening | **done, merged**; report docs/carillon/milestones/M2-opening.md; **Euan's play 1 next** |
 | M3 alive | Citizens (Opus xhigh + Sonnet data) | carillon/m3-alive · /Volumes/MEDIA/Awaken-alive | **done, merged** into carillon/main; report docs/carillon/milestones/M3-alive.md |
-| M4 detail | Phase A look bible + story (Opus xhigh) → Phase B one builder | carillon/m4-look · /Volumes/MEDIA/Awaken-m4-look | **Phase A done**, awaiting Euan's approval: https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm |
+| M4 detail | Phase B, one builder per step (Opus xhigh) | B1: carillon/m4-b1 · /Volumes/MEDIA/Awaken-m4-b1 | **Phase A approved** (decisions 21–26); **B1 running** (brief: briefs/M4-B1-facades.md); then B2…B7 |
 | M5 the Atlas | Atlas (Opus xhigh) | — | after M4 |
 
 ## Stage 0 (spikes): closed at G0
@@ -161,3 +161,6 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   facade-grid.svg, 9 concept images) and published for approval: https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm.
   Decisions asked: approve the package; Terrace 8 → 12; no Quay jetties and Market spokes 6 → 5; tips replace "found, not
   told" (SPEC §17.2); one builder (B6 after B5) vs two; vanilla banners/signs/barrels out of the city fabric.
+- 2026-10-25: Euan approved M4 Phase A directly: "Go ahead with the full plan and all recommendations". Recorded as SPEC
+  §16.0 decisions 21–26; §17.2's "found, not told" marked superseded; `core.api.TipHooks` v0 added (no-op until B6, so
+  the Ascent can wire its tips now). carillon/m4-look merged. B1 (facade grammar + core kit) started.
