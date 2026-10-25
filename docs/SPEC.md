@@ -1539,6 +1539,14 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
 - `OpeningHooks`: `inOpening(Player)`, `stage(Player)`, `skip(ServerPlayer)`.
 - `AtlasHooks`: `reveal(ServerPlayer, BlockPos, int radius)`, `explored(Player, BlockPos)`.
 - `MovementHooks` gains `wallRunning`, `hanging` (W2 adds them).
+- Movement block tags (the city's affordances for the Ascent's free-run and ledge reading; 2026-10-25): the city fills
+  them with every kit and vanilla block it places for each role, B1 for facades and roofs, B3 for street life.
+  `#awaken:runner_ledges` (hang and shimmy: cornices, string courses, sills, beam ends, balcony rails, trim),
+  `#awaken:runner_climbs` (climb up: drainpipes, ivy and trellis, scaffold poles, ladders),
+  `#awaken:runner_lines` (rope and Tether: laundry lines, bunting, crane ropes),
+  `#awaken:runner_soft` (soft landings and bounces: awnings, hay carts),
+  `#awaken:runner_swings` (swing points: bracket signs, flagpoles).
+  The "no" language (fences, spikes) is in none of them.
 
 ### 16.10 Budgets
 - Perf profile, RD 16, busiest market at noon: p50 ≤ 10 ms (platform 5.3 measured + city blocks ≤ 2.8 with solid cores
