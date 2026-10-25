@@ -86,6 +86,27 @@ nearest node and never an event's random junction. Old worlds keep their old wal
 
 No block entities, no loot.
 
+## Third pass (after the orchestrator's read of the first merge: "not on par yet")
+- **Colour and material by height.** A dark foot (cobbled deepslate, mossy cobble, deepslate bricks), rubble infill up to
+  the first course (stone bricks with cobble, andesite and tuff), dressed ashlar above with a tone per band. Warm
+  dressings in the district's stone (sandstone; the Terrace's diorite and calcite, the Works' brick) on the courses, the
+  bands behind them, the buttress caps, the quoins of the buttresses' lower stages, the corbels and the merlon caps, and
+  round the towers. The inner face's panels are plastered in the district's colour (white, cream, ochre, clay) where
+  lean-tos stood, with the render fallen away in patches. Dark drip streaks run under the spouts.
+- **Depth and shadow.** Buttresses step back from three deep at row 9, to two at 21, to one at 33. Their pitch follows the
+  side's slant (8 on the axis sides, 10 on the diagonals, 12 on the rest), for a calmer rhythm on the stepped faces.
+  Machicolations are three deep (corbels at rows 33, 34 and 35), with the slots open the full depth of the first two.
+  One tall loop per bay replaces the dots, and putlog holes stay only under the scaffold.
+- **Banners nine tall:** on every tower's field face, and down the curtain in every third bay, between the courses.
+- **Ivy as noisy patches** rooted at the foot. It wraps round the buttresses and spills over the courses (it clings to a
+  course's lip). Inside, it grows from the street up the piers and into the panels.
+- **The High Gate's yard and approach:** two stalls facing the road, a well, a hay cart and a cart of crates. Flag masts
+  stand at the yard's corners, keeping the Living Wilds' three spots clear. A barbican arch over the road has slate-capped
+  piers, the city's arms and a lantern hung beneath. Along all three roads in, lamp posts and flag masts with district
+  banners alternate every 14.
+- **The Watch on his round:** `/awaken citizens show wall_watch[_front|_side]` stands on the walk near a night watchman.
+  The tour catches him (walls_watch_round*: lantern, halberd, calling the hour, a dog at his heels).
+
 ## Tests (GameTests, one per mechanism; `-Ptests=city_wall_`)
 - `city_wall_grid`: every hold on the wall's faces below the walk sits in an odd row (9,841 holds), the outer courses
   (896 cells) and the inner (529) are whole along every clear stretch, and 23 of 24 sides have a climb line from the
@@ -113,11 +134,10 @@ Three light tours of `tools/autopilot/carillon-m4walls.txt` (B3a's world, seed a
 - `sheet_walls.jpg`, every shot of the last tour; `kit_sheet.png` and `kit_mock.png`, the wall kit.
 
 ## Where it still falls short
-- Ivy on the outer north faces is framed by the buttresses and cut by the courses, so a big patch still reads
-  rectangular from the fields; the inner panels' ivy reads better.
 - Close under the inner face of a slanted side, the panels' heads, the corbel table and the band step with the raster and
   read heavy.
-- The Watch's round wasn't seen in a shot (the tours fly as spectators at fixed hours); `citizens_day` walks it.
+- The Works' stretch in brick dressings is the busiest face of the ring: red courses and bands read strongly against the
+  grey; it's deliberate (the industrial district) but could take a lighter hand.
 
 ## CI
 GameTests on every push of `carillon/m4-walls`: 40217807842 (first pass) green, 40221579843 (the Watch's round, second
