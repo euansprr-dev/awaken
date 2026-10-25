@@ -91,7 +91,7 @@ public class LandmarkStructure extends Structure {
                 x += (rnd.nextInt(SEARCH * 2 + 1) - SEARCH) * 16 + rnd.nextInt(9) - 4;
                 z += (rnd.nextInt(SEARCH * 2 + 1) - SEARCH) * 16 + rnd.nextInt(9) - 4;
             }
-            if (cityNear(x, z, landmark.reach)) continue;
+            if (cityNear(x, z, landmark)) continue;
             int top = height(ctx, x, z, Heightmap.Types.WORLD_SURFACE_WG);
             if (!biome(ctx, x, top, z)) continue;
             if (top <= sea + want.aboveSea() || height(ctx, x, z, Heightmap.Types.OCEAN_FLOOR_WG) != top) continue;
@@ -160,7 +160,7 @@ public class LandmarkStructure extends Structure {
                 DRIFT_MISSES.incrementAndGet(2);
                 continue;
             }
-            if (cityNear(ix, iz, Landmark.SHARD_DRIFT.reach)) {
+            if (cityNear(ix, iz, Landmark.SHARD_DRIFT)) {
                 DRIFT_MISSES.incrementAndGet(3);
                 continue;
             }
@@ -200,13 +200,9 @@ public class LandmarkStructure extends Structure {
         return ctx.validBiome().test(b);
     }
 
-    /** The city reserve under the centre or under any edge of the landmark. */
-    private static boolean cityNear(int x, int z, int reach) {
-        if (dev.awaken.terrain.api.CityBasin.reserved(x, z)) return true;
-        for (int[] k : new int[][]{{reach, 0}, {-reach, 0}, {0, reach}, {0, -reach}}) {
-            if (dev.awaken.terrain.api.CityBasin.reserved(x + k[0], z + k[1])) return true;
-        }
-        return false;
+    /** Whether any part of this landmark, standing with its centre at (x, z), would reach the city reserve. */
+    public static boolean cityNear(int x, int z, Landmark landmark) {
+        return dev.awaken.terrain.api.CityBasin.reservedWithin(x, z, landmark.reach());
     }
 
     private static int height(GenerationContext ctx, int x, int z, Heightmap.Types type) {

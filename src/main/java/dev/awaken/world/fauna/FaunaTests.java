@@ -198,6 +198,8 @@ final class FaunaTests {
             ServerPlayer p = realPlayer(h, new BlockPos(0, UP, 30));
             BlockPos open = h.absolutePos(new BlockPos(0, UP, 0));
             ground(level, open);
+            // plots are reused: another test's floor left 15 up roofed this spot on CI, so clear its sky to the roof reach
+            for (int y = 7; y <= FaunaRules.ROOF_REACH + 1; y++) level.setBlock(open.above(y), Blocks.AIR.defaultBlockState(), 2);
             BlockPos dark = h.absolutePos(new BlockPos(6, UP, 0));
             BlockPos lit = h.absolutePos(new BlockPos(-6, UP, 0));
             box(level, dark, false);

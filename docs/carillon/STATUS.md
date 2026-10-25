@@ -18,7 +18,7 @@ S3 is its starting point. MMO-lite is deferred; party gates and shared credit la
 | M1 the city in blockout | City Architect (Opus xhigh) | carillon/m1-city · /Volumes/MEDIA/Awaken-city | **done, merged** into carillon/main (94de89a7); report docs/carillon/milestones/M1-city.md |
 | M2 the opening in blockout | Director (Opus xhigh) | carillon/m2-opening · /Volumes/MEDIA/Awaken-opening | **done, merged**; report docs/carillon/milestones/M2-opening.md; **Euan's play 1 next** |
 | M3 alive | Citizens (Opus xhigh + Sonnet data) | carillon/m3-alive · /Volumes/MEDIA/Awaken-alive | **done, merged** into carillon/main; report docs/carillon/milestones/M3-alive.md |
-| M4 detail | City Architect + art (Opus xhigh + Sonnet) | — | after M3; perf at the end |
+| M4 detail | Phase B, one builder per step (Opus xhigh) | B1: carillon/m4-b1 · /Volumes/MEDIA/Awaken-m4-b1 | **Phase A approved** (decisions 21–26); **B1 running** (brief: briefs/M4-B1-facades.md); then B2…B7 |
 | M5 the Atlas | Atlas (Opus xhigh) | — | after M4 |
 
 ## Stage 0 (spikes): closed at G0
@@ -140,3 +140,32 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   M1 + M3 + M2) is not merged into build/awaken-v1 yet; Euan can play it directly with `tools/play.sh carillon/main --pack`
   in a NEW world. Then one word per beat (sky, bell, run, bridge, arrival, Ritual, wake, Registry) decides M4's
   priorities and the run's threat. M4 (Detail) is not started until play 1 is in, per the lean plan.
+- 2026-10-25: carillon/main c3d4f735 (M1 + M3 + M2) is on build/awaken-v1 as d50ab96 (clean, compiles; CI running on
+  the combination). Euan's play 1 runs on build with `tools/play.sh --pack` in a NEW world. M4 waits for play 1.
+- 2026-10-25: Euan's play 1 is in (via the pack session; his words in the M4 Phase A brief): the city is flat, boring and
+  not alive; the run looks intentionally placed ("why would a city just have random wooden blocks in the middle of the
+  sky?"); the story doesn't hang together (the Void says you died in a gate, the wake says you walked out of one); floating
+  Elder Wood in the sky. Approved: "All of it, concept art first." M4 north star: the city is the course, climbable because
+  of its architecture (real elements, tuned to the movement envelope); routes derived from affordances (the 414-block
+  stage shrinks to ~0); a height plan; a street-life layer; tokens into the grammar's rules + ~12 hand-made landmarks.
+  Running: Phase A (Opus xhigh, docs only: look bible per district, ~8 concept images with gpt-image-2, story outline and
+  the exact opening lines) on carillon/m4-look; and a Sonnet bug fix for the floating Elder Wood on carillon/m4-elderfix
+  (likely source: HeroStructure.cityNear checks only 4 axis points of the crown, and the painter clears only 40 above
+  plots). Phase B (one builder) waits for Euan's approval of Phase A.
+- 2026-10-25: Euan added guided onboarding (via the pack session): just-in-time move tips (reverses SPEC §17.2's "found,
+  not told"; one shared tip system with a public API the Ascent will call; real key bindings; fades once done; option
+  off), the Registry as a guided walk with the officer (Holo band, K menu, map, first Directive, a camera pan to the city
+  gate), and light guidance for the first stretch outside. Folded into Phase A (onboarding.md + story lines); built in
+  Phase B. Carillon owns the tip system.
+- 2026-10-25: M4 Phase A done (carillon/m4-look, pushed: docs/carillon/m4/ README, look-bible, story, onboarding,
+  facade-grid.svg, 9 concept images) and published for approval: https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm.
+  Decisions asked: approve the package; Terrace 8 → 12; no Quay jetties and Market spokes 6 → 5; tips replace "found, not
+  told" (SPEC §17.2); one builder (B6 after B5) vs two; vanilla banners/signs/barrels out of the city fabric.
+- 2026-10-25: Euan approved M4 Phase A directly: "Go ahead with the full plan and all recommendations". Recorded as SPEC
+  §16.0 decisions 21–26; §17.2's "found, not told" marked superseded; `core.api.TipHooks` v0 added (no-op until B6, so
+  the Ascent can wire its tips now). carillon/m4-look merged. B1 (facade grammar + core kit) started.
+- 2026-10-25: floating Elder Wood fixed and merged (carillon/m4-elderfix f457c82e). Source: the city's vegetation sweep
+  skipped every *_wood block (the city's own trunks are vanilla bark), so elder trees' bark limbs stayed hanging when the
+  sweep cleared their trunks (33 floating groups on one seed, 7 inside the wall). Also closed: the 4-point crown probe
+  (CityBasin.reservedWithin). Scan after: 0 floaters in 1970 chunks. Existing worlds need `/awaken city tidy`. CI red only
+  on unrelated flakes (fauna_p2_families_spawn, fauna_natural_spawning_end_to_end, gates_hooks_view_stabilise_calm).

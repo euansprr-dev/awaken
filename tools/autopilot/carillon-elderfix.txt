@@ -1,0 +1,51 @@
+# Carillon: floating Elder Wood (branch carillon/m4-elderfix). Scans the pregenerated city and its reserve for tree wood
+# that hangs in the air (/awaken city scan, '[city-scan]' lines in the log) and stands beside the biggest groups for shots.
+# Run: PACK=perf,world,horizon TECTONIC=awakened DH=swift RD=16 SLOT_WHO=M4-elderfix \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh tools/autopilot/carillon-elderfix.txt 900
+world elderfix creative 20261024
+waitworld
+gui 0
+cmd gamerule advance_time false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd awaken city info
+wait 40
+cmd awaken city scan 400
+wait 400
+cmd gamemode spectator
+hud off
+# the four spots where the first scan (before the fix) found floating Elder Wood, same framing
+cmd tp @s 762.9 82 -1349.3 -160.6 0
+wait 160
+shot elder_after_1
+cmd tp @s 776.4 81 -1269.4 -149.7 0
+wait 160
+shot elder_after_2
+cmd tp @s 714.6 86 -1293.8 -168.1 0
+wait 160
+shot elder_after_3
+cmd tp @s 822.3 77 -1341.5 -149.1 0
+wait 160
+shot elder_after_4
+# /awaken city tidy on a world that has some: hang two elder blocks in the air over the Roost, then tidy
+cmd tp @s 505 118 -1235 0 -25
+wait 200
+cmd setblock 505 125 -1222 awaken:elder_wood
+cmd setblock 506 125 -1222 awaken:elder_log
+wait 100
+shot elder_planted
+cmd awaken city tidy 300
+wait 300
+shot elder_tidied
+cmd awaken city scan 300
+wait 300
+quit

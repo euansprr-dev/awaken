@@ -125,10 +125,8 @@ public final class Well {
 
     /** First candidate on dry, fairly flat land with no settlement near (estimated from the generator, no chunk loads). */
     static boolean inCity(BlockPos s) {
-        int r = RING_OUTER;
-        return dev.awaken.terrain.api.CityBasin.reserved(s.getX(), s.getZ()) || dev.awaken.terrain.api.CityBasin.reserved(s.getX() + r, s.getZ())
-                || dev.awaken.terrain.api.CityBasin.reserved(s.getX() - r, s.getZ()) || dev.awaken.terrain.api.CityBasin.reserved(s.getX(), s.getZ() + r)
-                || dev.awaken.terrain.api.CityBasin.reserved(s.getX(), s.getZ() - r);
+        // the whole ring's circle, not points on its edge (they miss the reserve between them)
+        return dev.awaken.terrain.api.CityBasin.reservedWithin(s.getX(), s.getZ(), RING_OUTER);
     }
 
     static BlockPos pick(List<BlockPos> sites, ChunkGenerator gen, RandomState rs, ServerLevel level) {

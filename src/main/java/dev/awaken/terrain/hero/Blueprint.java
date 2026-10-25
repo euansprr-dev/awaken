@@ -288,6 +288,18 @@ public final class Blueprint {
         return used;
     }
 
+    /** How far from the base the furthest column ever written lies, horizontally (the city reserve is kept this far off). */
+    public double reach() {
+        double m = 0;
+        for (int x = -extent; x <= extent; x++) {
+            for (int z = -extent; z <= extent; z++) {
+                int c = column(x, z);
+                if (colLo[c] <= colHi[c]) m = Math.max(m, Math.hypot(x, z));
+            }
+        }
+        return m;
+    }
+
     /** The cells' bounds: minX, minY, minZ, maxX, maxY, maxZ relative to the base. */
     public int[] bounds() {
         int[] b = {Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE};

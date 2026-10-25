@@ -33,7 +33,7 @@ final class GateHookTests {
                     Optional.empty(), 2, List.of("test"), false);
             ServerPlayer p = h.makeMockServerPlayerInLevel();
             h.startSequence()
-                    .thenWaitUntil(() -> h.assertTrue(g.state == GateState.READY, "gate became READY, was " + g.state))
+                    .thenWaitUntil(() -> h.assertTrue(g.state == GateState.READY, "gate became READY, was " + g.state + " (trace: " + g.trace + ")"))
                     .thenExecute(() -> {
                         var v = GateHooks.get(level, g.key());
                         h.assertTrue(v.isPresent(), "GateHooks.get finds the gate");

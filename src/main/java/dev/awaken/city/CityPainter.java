@@ -409,7 +409,8 @@ public final class CityPainter {
         if (!l.carved && !apron) return;
         b.plate(x, z);
         b.column(x, -4, -1, z, DIRT);
-        int clear = apron ? CLEAR_TOP : 40;
+        // all the way up: a tree's crown above 40 would hang over the cleared trunk
+        int clear = CLEAR_TOP;
         if (onRoad(p, x, z)) {
             int h = c.pct(x, z, 31);
             b.set(x, 0, z, h < 70 ? PATH : h < 85 ? GRAVEL : COARSE_DIRT);
