@@ -310,6 +310,11 @@ def render(src=None, out=None):
             y = K.master(K.highpass(K.mono(y) if y.ndim > 1 else y, 90, 2), -22.0, ceil - 0.7)
             K.write_ogg(os.path.join(sounds, f"city/{name}{k + 1}.ogg"), y, q, None)
         files[eid] = [f"awaken:city/{name}{k + 1}" for k in range(len(cuts))]
+        # the synthesised set may have had more variants: those files go (nothing refers to them any more)
+        for k in range(len(cuts) + 1, 21):
+            stale = os.path.join(sounds, f"city/{name}{k}.ogg")
+            if os.path.exists(stale):
+                os.remove(stale)
         print(f"  {name:15s} x{len(cuts)}")
 
     shots("city.gull.call", "gull_call", events(audio[468080], (900, 5000), 0.5, 2.4, 6))

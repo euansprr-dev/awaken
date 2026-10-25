@@ -78,7 +78,11 @@ DAY_SHOTS = {
 }
 # CitySound's clocks: anvils 900-10800, stalls 1000-11500, carts before 12600; at 06:00 (tod 0) the forges and stalls
 # are still shut, and the dawn chorus (before tod 1500) sings three times as often
-MORNING_SHUT = {"city.anvil", "city.bellows", "city.stall"}
+MORNING_SHUT = {"city.anvil", "city.bellows", "city.stall", "city.crier"}
+# the criers are recordings (tools/art/specs/audio_city_cc0.py): in the Market's scenes once they're in
+CRIERS = os.path.exists(os.path.join(SOUNDS, "city/crier1.ogg"))
+if CRIERS:
+    DAY_SHOTS["market"] += [("city.crier", 12, 70, 0.5, (5.0, 14.0), 0.1), ("city.crier", 20, -120, 0.5, (8.0, 18.0), 0.1)]
 LOOPS = {
     "market": [("city.fountain", 9, -75, 0.8)],
     "quay": [("city.lap", 6, 90, 0.8), ("city.lap", 15, -90, 0.8)],
@@ -271,6 +275,7 @@ EVENT_LINES = {
     "city.gull.call": "gulls over the river and on the nets",
     "city.cart.roll": "a cart's wheels on the stones (vanilla's hooves go with it in game)",
     "city.cart.bells": "a carthorse's harness bells when it tosses its head",
+    "city.crier": "a stallholder calling, now and then, through the busy middle of the day",
     "city.handbell": "the Watch's handbell on its rounds at night",
     "city.carillon.dawn": "the Choir's carillon at dawn, from the spire",
     "city.carillon.noon": "the Choir's carillon at noon",
@@ -308,6 +313,8 @@ def build(audio=True):
         stems.append(dict(id="stem." + name, name=name, line=line, file=f))
     evs = []
     for eid, line in EVENT_LINES.items():
+        if eid == "city.crier" and not CRIERS:
+            continue
         f = write(f"{eid.replace('.', '_')}.mp3", lambda eid=eid: alone(eid), 96)
         evs.append(dict(id=eid, name=eid.replace("city.", ""), line=line, file=f))
     page = render(cards, stems, evs)
