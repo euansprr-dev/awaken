@@ -35,7 +35,7 @@ final class CityViews {
     /** Views taken exactly where they say (indoors, underground): never moved onto open ground. */
     static final java.util.Set<String> EXACT = java.util.Set.of("cellar", "quay_ladder", "walls_out_w", "walls_out_nw", "walls_out_e",
             "walls_out_s", "walls_inner", "walls_inner_high", "walls_walk", "walls_walk_roofed", "walls_climb", "walls_tower",
-            "walls_passage", "walls_watergate", "walls_scaffold", "walls_approach");
+            "walls_passage", "walls_watergate", "walls_scaffold", "walls_approach", "walls_works_far");
 
     static {
         // the sky, at dawn in the tour: over the north-west half, across the spire
@@ -102,6 +102,7 @@ final class CityViews {
         add("walls_out_nw", -293.3, 10, -64.1, -232.1, 30, -72.5);
         add("walls_out_e", 236.4, 8, 166.5, 213.4, 26, 116.3);
         add("walls_out_s", 97.6, 6, 263.7, 57.1, 30, 236.2);
+        add("walls_works_far", 165.0, 14, 300.0, 78.0, 22, 222.0); // the Works' slanted sides from the fields
         add("walls_inner", 225.8, 1.0, 43.9, 223.9, 14, 68.3);
         add("walls_inner_high", -50.1, 20, 210.1, -66.6, 20, 225.4);
         add("walls_walk", 181.7, 40.0, 154.8, 161.2, 41, 175.3);
