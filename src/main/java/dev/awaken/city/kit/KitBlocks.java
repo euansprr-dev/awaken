@@ -322,4 +322,47 @@ public final class KitBlocks {
             b.add(TONE);
         }
     }
+
+    /**
+     * A ladder hung from a ladder (Euan, after Smart Ladders; M4 B2): placed by using a ladder on a ladder's bottom (or
+     * top) where no wall stands behind, it holds while its column reaches a ladder fixed to a wall, and drops a ladder
+     * when that goes. Vanilla's ladder in every other way: the same shape, collision and climb (the 3D ladder model).
+     */
+    public static final class HangingLadder extends net.minecraft.world.level.block.LadderBlock {
+        public HangingLadder(BlockBehaviour.Properties p) {
+            super(p);
+        }
+
+        /** Ladder-like (a ladder or a hung one) facing the same way. */
+        static boolean rung(BlockState s, Direction facing) {
+            return (s.is(net.minecraft.world.level.block.Blocks.LADDER) || s.getBlock() instanceof HangingLadder)
+                    && s.getValue(FACING) == facing;
+        }
+
+        @Override
+        protected boolean canSurvive(BlockState state, net.minecraft.world.level.LevelReader level, BlockPos pos) {
+            if (super.canSurvive(state, level, pos)) return true;
+            Direction f = state.getValue(FACING);
+            // up and down its column (64 at most) to a ladder fixed to a wall
+            for (Direction d : new Direction[]{Direction.UP, Direction.DOWN}) {
+                BlockPos.MutableBlockPos m = pos.mutable();
+                for (int i = 0; i < 64; i++) {
+                    m.move(d);
+                    BlockState s = level.getBlockState(m);
+                    if (!rung(s, f)) break;
+                    BlockPos behind = m.relative(f.getOpposite());
+                    if (level.getBlockState(behind).isFaceSturdy(level, behind, f)) return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        protected BlockState updateShape(BlockState state, net.minecraft.world.level.LevelReader level, net.minecraft.world.level.ScheduledTickAccess ticks,
+                                         BlockPos pos, Direction to, BlockPos neighbourPos, BlockState neighbourState, net.minecraft.util.RandomSource random) {
+            if ((to.getAxis() == Direction.Axis.Y || to.getOpposite() == state.getValue(FACING)) && !state.canSurvive(level, pos))
+                return net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+            return super.updateShape(state, level, ticks, pos, to, neighbourPos, neighbourState, random);
+        }
+    }
 }

@@ -3,6 +3,7 @@
     "awaken:drainpipe",
     "awaken:trellis",
     "awaken:rope",
-    "minecraft:ladder"
+    "minecraft:ladder",
+    "awaken:hanging_ladder"
   ]
 }

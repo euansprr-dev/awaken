@@ -345,6 +345,12 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   call while the context holds), `done(tip)`, `hold(owner, held)` (cinematics hold every tip), `wants(tip)` (false once
   retired or tips are off: skip the probe). Installed by the signal module in M4 B6; until then every call does nothing.
   Tip text and triggers are data; any module may offer its own tips (the Ascent for its tiers).
+- `dev.awaken.mobs.client.life.CreatureLife` (client, §23) — the life layer for any module's bodies:
+  `LifeRig rig(ModelPart root, String temperament)` once per model; `Life life(Object held, LifeRig rig, int seed)` once
+  per creature (keep it on the entity's client data); `tick(Life, LivingEntityRenderState, boolean steerHead)` once a frame
+  in `extractRenderState`; `apply(LifeRig, Life, LivingEntityRenderState)` at the end of `setupAnim` (safe to run once per
+  layer); optional `rootPose(Life, PoseStack, state)` in `setupRotations`; `eyesClosed(Life)` 0..1 for a texture blink.
+  Per-frame inputs are public fields on `Life` (`hurt`, `walk`, `stride`, `busy`, `lookWeight`, `windup`, `roar`, `dying`).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -1409,6 +1415,17 @@ https://claude.ai/artifact/9DmvY3bCg8FGMbJyCnbYBm):
       core/audio's layer system so it never fights the music.
     - The gate is Euan's ears: a listening page (each district at morning, noon and night, before/after) published for
       his approval before B3 merges.
+29. The Living Wilds (SPEC §21, approved by Euan) meets Carillon at the High Gate (agreed 2026-10-25): the city lays out
+    the gatehouse yard outside the High Gate with named spots (`CityHooks.spot`); the living module spawns Quartermaster
+    Hale and the bounty post there. Its bounties (`living.bounty`) are the first slice of the deferred contracts board
+    under decision 5's rules (three notices, known places only, no expiry offline, claim ids), shown at Hale's post and
+    on the Association board's spot; coin through `EconomyHooks.pay` once an economy exists, renown through
+    `RenownHooks.witness` at turn-in. Its chains "The Last Delivery" (the Roost's word, Kestrel) and "Bell Metal" (the
+    C-rank spine) are drafted by the Living Wilds session and reviewed by the Carillon session against
+    docs/carillon/m4/story.md. Its tips use TipHooks with tip files in the onboarding.md format.
+    The city also gives "Bell Metal" a rooftop chase: B5 (the opening from affordances, which brings citizens' rooftop
+    running) publishes named roof routes and a chase hook the Living Wilds calls for its fleeing buyer; until then that
+    step waits.
 
 ### 16.1 Modules (new packages; same module rules as §1)
 | Module | Owns |
@@ -1442,6 +1459,17 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   replace glass panes on closed houses. Roofs: Bellwatch mostly kit slate, the Market mostly clay. The chimney crown is
   `chimney_bricks` (the citizens' smoke finder). Avenue tree crowns fill only air. The kit's first 19 blocks carry no
   block entity and emit no light; walls and roofs use weighted texture variants.
+- Decided in M4 B2 (2026-10-25; details docs/carillon/milestones/M4-B2.md): plan.json schemaVersion 2 carries a signed
+  lift raster (every plot lift even; hash re-pinned). Streets follow the ground in single-step flights (no drop of 2+ on
+  the street graph); every plot stands at its street's level and two cells clear of landmarks. The Knoll rings +2..+8
+  to radius 46 round the bell square (the tower 54 tall); Choir Square's bowl is a level rim (the arcade's ground,
+  radius 31–36) with three rings down to −3, and CityHooks.square stands on its floor; the High Terrace at 12 with
+  its houses set back 3 (a parapet walk); Garden terraces +2/+4; the lower quay at −4 (raster lift 0). Parapets only
+  over drops of 6+, coping below that. Crossings over every avenue stretch and the Ring at least every 48: 7 enclosed
+  walkways built, 13 line sites in plan.json "crossings" for B3. Named spots placed (decision 29): high_gate_yard,
+  quartermaster, bounty_post, association_board (Terrace +12), bellwatch_cellar (a 9×9×5 room under the bell tower).
+  Ladders: a model override draws every minecraft:ladder as two rails and four round rungs inside vanilla's shape
+  (collision unchanged); `awaken:hanging_ladder` extends a ladder down or up with no wall behind.
 - Floating wood fix (2026-10-25): the city's vegetation sweep takes the lands' bark (elder wood) as well as leaves and
   logs, sweeps the whole neighbour chunk to full height, clears fields to the top, and removes tree groups left resting
   on nothing past the edge (`CityWriter.collectOrphans`). Dev: `/awaken city scan | floater <n> | tidy` (tidy repairs
@@ -1576,7 +1604,10 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
 
 ### 16.9 Public hooks (`core.api`, v0; signatures may change only through the orchestrator)
 - `CityHooks`: `inCity(Level, BlockPos)`, `district(Level, BlockPos)` (id or null), `isCivic(Level, BlockPos)`,
-  `startPoint(ServerPlayer)`, `square(Level)`. Graph types are added at G1.
+  `startPoint(ServerPlayer)`, `square(Level)`, `spot(Level, String id)` (named spots the city lays out for other modules:
+  `high_gate_yard`, `bounty_post`, `quartermaster` (the Living Wilds' Hale), `association_board`, `bellwatch_cellar` (the
+  melting room under the Knoll's bell tower, for the Living Wilds' "Bell Metal"); null until placed).
+  Graph types are added at G1.
 - `CitizenHooks`: `witnesses(ServerLevel, Vec3, double)` (citizen ids), `post(ServerLevel, Identifier event, BlockPos)`.
 - `RenownHooks`: `witness(ServerPlayer, Identifier deed, BlockPos, int weight)`, `tier(Player)`, `standing(Player,
   Identifier faction)`.
@@ -2775,3 +2806,72 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
 - `glow` 0.9 for the Spirit and Charge themes and the Mirror Palace, 0.8 for the Ember Mines.
 - Tour: `tools/autopilot/lens2-l3.txt` (a pool in the lab into the sun, glowing creatures at dusk and night,
   Carillon's river, the Ember Mines' shimmer, the Frost Monastery's frost, the bench).
+
+## 23. Creature life (Fresh Animations in the pack, and a life layer on every body of ours; Euan 2026-10-25)
+
+Euan: every mob, ours included, "still feels a bit rigid and static". Approved: "Both: Fresh Animations + our life layer".
+
+**Vanilla bodies: Fresh Animations.** The pack's `feel` profile adds Entity Model Features 3.3.12, Entity Texture
+Features 7.2.6 and the Fresh Animations resource pack 1.11.1 (`tools/pack.py` now locks Modrinth resource packs like
+mods, under the `minecraft` loader; `install` puts them in `resourcepacks/` and appends them to options.txt's
+`resourcePacks` only if missing, never touching the player's own packs; `remove` switches off and deletes only what it
+put there; `export` ships them under `resourcepacks/`). EMF finds models by the vanilla layer a renderer bakes, so our
+gate monsters on vanilla bodies (zombie, wolf, hoglin, iron golem...) animate the Fresh Animations way too, which is
+wanted: Fresh Animations keeps the vanilla UV layout (it only adds a few eyelid pixels), so our skin layer still fits.
+Our own bodies live on `awaken:` layers with no .jem, so EMF leaves them alone; they get the life layer instead.
+
+**Our bodies: the life layer** (`mobs/client/life`). One procedural layer on every model of ours (hero rigs, P3 rigs,
+the 14 hand-built bodies), driven by bone names and a temperament, never by per-creature code:
+- **Bones by name** (`LifeBones`, plain data): head, neck, jaw, eyes, lids, body/chest (breath), and the springy roles:
+  ears (also tufts, crests, plumes, sails), antennae (whiskers, palps, a lure's rod), tails (flukes, streamers, fans),
+  dangling parts (manes, beards, ruffs, skirts, tentacles, reeds, brambles, lamps, a bell's clapper), wings, fins and
+  gills, arms (only where the temperament swings them: lords, spirits, the Mycelord, the Hushling, the Breathbell). A
+  part named only "tip" or "end" takes its parent's role; links of one role chain (follow-through down a tail).
+- **Temperaments** (`assets/awaken/life/creatures.json`, schemaVersion 1): cute, grazer, hunter, beast, lord, monster,
+  spirit, insect, swimmer, citizen; from the fauna role (ambient cute, neutral grazer, hunter, beast) or the tier (gate
+  monsters monster, wardens beast, lords and guardians lord, nightmares spirit), and per-creature entries on top. Fields:
+  breath (Hz) and depth, blink interval (0 = never: insects, fish, serpents, spiders, the eyeless and the faceless), head
+  speed and damping, eye lead, spring Hz, damping and gain, step bob (px), sway (deg), turn lean, fidget interval and
+  weights, arms, stagger, mass. Cute creatures are quick and bouncy (head 14 rad/s, underdamped, springs 3.4 Hz), hunters
+  smooth and still (critically damped, blink every 5-11 s), beasts slow and heavy (head 3.6, springs 1.4 Hz, bob 1.3 px).
+- **Per creature, per frame** (`Life`, made once, nothing allocated after): motion from the render state (velocity and
+  acceleration in model space, yaw rate); breathing (a quicker in-breath, faster and deeper after running or a blow,
+  decaying over ~9 s; on hero rigs it also speeds up the creature's own idle clip); blinks (0.16 s, 15% double); the head
+  follows its target on a damped spring (the AI's look, an idle's glance, a lead into a turn) and eye bones take the
+  rest (eyes first); springs integrated at up to 120 Hz substeps from the body's acceleration, the parent bone's clip
+  motion (a head toss swings the ears), the yaw, a blow and a fall, swing only (no twist), capped per role; the step's
+  dip (twice a stride, from the gait clip's own stride length) and weight sway; a lean into turns.
+- **Idle fidgets**, only when still, calm and within 32 blocks, chosen by weight from what the body has: look around (the
+  head lags the eyes), sniff (head down, quick nods), flick (an ear, a tail, a feeler or a wing), shake (body roll at
+  7.5 Hz, everything loose flops; a creature fresh out of water shakes itself dry once it stops), stretch, yawn (eyes
+  squint shut), scratch (a hind leg kicks), perk (head up, alert), settle (a weight shift). Herds never move in step:
+  each creature's timers, breath phase and rate (±10%) and idle clock start from its own seed.
+- **Graph blending, no pops**: the angry stance, held poses, swimming and the glide ease in and out (0.05-0.3 s); swim
+  and wing loops run on integrated clocks (age × speed jumped their phase when the speed changed); one-shot clips (bite,
+  flinch, strike, roar, warning) hold their last frame and let go over 0.2 s; the fall crossfades from the live pose over
+  0.25 s; a swimmer's pitch eases out of the water.
+- **Hero clips on top** (named beasts, Gate Lords): a wind-up gathers the body low (0.7 px) and trembles at 17 Hz as it
+  nears the strike (tension², the tell); a roar opens with a full chest and shudders through the head and every loose
+  part, and bodies without a roar clip rear back (a Gate Lord turning on you: vanilla's aggressive flag); a blow knocks
+  the body away from the camera and it sways back on its weight (a damped spring kicked once: heavy beasts reel less and
+  slower); the fall: the eyes close at 55% of it, one last breath, and when the body lands (85% of the death clip's drop,
+  `LifeRig.landing`) a thud: one bounce and every mane, ear and bramble flops. Bodies without a death clip (the hand-built
+  ones, every boss on a vanilla body: lords, guardians, sovereigns, the Shadow, wardens) topple instead of vanilla's
+  flip: a stagger back, an accelerating fall (90° by 0.7 s), one bounce, settled by 0.95 s, inside vanilla's 20 ticks.
+- **Blinking**: eyelid bones close the way the rig's own clips close them (the Mire Mother, the Seated One); eye bones
+  squash (the snails' stalks, the Lantern Maw); otherwise the closed-eye skin: `tools/art` records every pixel painted
+  inside `with P.eyes():` (`fauna_rig.EyeRec`) and writes `<id>_blink.png` (the skin under the eye with a lash line)
+  and `<id>_glow_blink.png` (the eyes' light out); the renderer draws them while the eyes are shut. 14 creatures have
+  them; existing textures are byte-identical.
+- **Cost and limits**: client only; nothing allocated per frame (render states carry a reference); springs and fidgets
+  off past 32 blocks (springs settle), blinks off past 32; breath and the slow head everywhere (cheap). Reduced motion
+  (`awaken-client` `reducedMotion`, the body module's) turns idle fidgets off and halves springs, tremble and stagger;
+  breathing and blinking stay.
+- **Other modules' bodies** use `CreatureLife` (§12). Carillon wires its citizens itself (M4 B3): temperament `citizen`
+  (no step bob or sway, gentle springs, look and settle fidgets), `lookWeight` for "only look at the player up close or
+  at whoever they talk to", clips win where they drive a bone (applied after the layer).
+- **Not here**: the Ritual of the Bell's cast (its model plays exactly the clip its stage asks for); humanoid gate
+  monsters on vanilla bodies (Fresh Animations' job, plus the boss topple and stagger above).
+- Test: `creature_life_binds` (every body of ours gets a temperament, every rig and hand-built naming with ears or a tail
+  gets springs on them, every creature that blinks has lids, eye bones or a closed-eye skin). Tour:
+  `tools/autopilot/creature-life.txt` (PACK=perf,feel; clips in run-autopilot/clips/life_*).

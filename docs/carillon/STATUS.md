@@ -18,7 +18,7 @@ S3 is its starting point. MMO-lite is deferred; party gates and shared credit la
 | M1 the city in blockout | City Architect (Opus xhigh) | carillon/m1-city · /Volumes/MEDIA/Awaken-city | **done, merged** into carillon/main (94de89a7); report docs/carillon/milestones/M1-city.md |
 | M2 the opening in blockout | Director (Opus xhigh) | carillon/m2-opening · /Volumes/MEDIA/Awaken-opening | **done, merged**; report docs/carillon/milestones/M2-opening.md; **Euan's play 1 next** |
 | M3 alive | Citizens (Opus xhigh + Sonnet data) | carillon/m3-alive · /Volumes/MEDIA/Awaken-alive | **done, merged** into carillon/main; report docs/carillon/milestones/M3-alive.md |
-| M4 detail | Phase B, one builder per step (Opus xhigh) | B2: carillon/m4-b2 · /Volumes/MEDIA/Awaken-m4-b2 | B1 **done, merged**; **B2 running** (brief: briefs/M4-B2-relief.md); then B3…B7 |
+| M4 detail | Phase B, one builder per step (Opus xhigh) | B3a: carillon/m4-b3a · /Volumes/MEDIA/Awaken-m4-b3a | B1, B2 **done, merged**; **B3a running** (street life; brief: briefs/M4-B3a-street-life.md); then B3b (animals, soundscape), B4…B7 |
 | M5 the Atlas | Atlas (Opus xhigh) | — | after M4 |
 
 ## Stage 0 (spikes): closed at G0
@@ -180,3 +180,17 @@ Gate G0: every spike's numbers against SPEC §16.10, with shots; go / adjust / c
   canopies, window boxes and lanterns; the roofscape breaks up (slate, ridges, colour). Short of the bar: one floor's
   rhythm repeated up a house, plain ground storeys (B3), dark 4-wide Bellwatch lanes, chunky drainpipes; four post-tour
   fixes unseen in game. Tags filled (runner_lines/soft partly → B3). B2 (relief and heights) started.
+- 2026-10-25: B1 landed on build/awaken-v1 (19afe05e, with CI flake fixes); build merged into carillon/main (e9202766).
+  Agreed with the Living Wilds (decision 29: the High Gate yard and CityHooks.spot, bounties as the board's first slice,
+  Bram's pan line, chain drafts for review). Said yes to Creature life's life layer for citizens (shared API, B3 wires it
+  into CitizenModel; client-only, ≤ ~0.1 ms for a crowd, clips win, head tracking only near the player or a partner).
+- 2026-10-25: Euan asked for 3D ladders like the "Smart Ladders" mod (reference /Volumes/MEDIA/carillon-ref/smart-ladders.webp):
+  folded into B2. Required: a model override for minecraft:ladder (rails and rungs; vanilla collision and climb box
+  unchanged). If cheap: hanging ladders that extend down or up with no wall behind. Approved Living Wilds' two chains
+  with edits; added spot bellwatch_cellar (B2 reserves the room under the Knoll); B5 will publish a roof-route chase hook.
+- 2026-10-25: M4 B2 reviewed and merged (a7537a8f). Checked: tree clean, CI green on 109d50a9; outside city only
+  OpeningPlaces.TERRACE reads the lift and the citizens roster regenerated. Shots (the Knoll, the bowl, the Terrace's
+  stepped lane, the Quay ladder, the gate yard): depth reads from the street and roofs; from the sky only partly (a Knoll
+  of +8 against houses 9–25 tall; two more rings is a plan change, for B4 to consider with the Knoll's tower). Known: a
+  tree grew in the gate yard (B3a clears it). B5 inherits changed stage routes (act1_roof 30/35 points etc.). B3 split
+  into B3a (street life) and B3b (animals + soundscape + Euan's listening page).

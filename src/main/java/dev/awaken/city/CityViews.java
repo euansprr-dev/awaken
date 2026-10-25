@@ -32,6 +32,9 @@ final class CityViews {
     /** Street views that look along the street nearest the spot (the longest clear run), not at a fixed target. */
     static final java.util.Set<String> ALONG = java.util.Set.of("market", "bellwatch", "works", "wallring", "garden");
 
+    /** Views taken exactly where they say (indoors, underground): never moved onto open ground. */
+    static final java.util.Set<String> EXACT = java.util.Set.of("cellar", "quay_ladder");
+
     static {
         // the sky, at dawn in the tour: over the north-west half, across the spire
         add("sky_nw", -178, 188, -168, 30, 20, 40);
@@ -74,5 +77,14 @@ final class CityViews {
         // and the roofscape from just over the roofs: ridge caps, dormers, crow steps, chimneys
         add("roofs_bellwatch", -118, 42, -18, -165, 14, -70);
         add("roofs_quay", -60, 40, -60, -90, 15, -120);
+        // M4 B2: the relief. Bellwatch's Knoll from the canal side (the old town's roofs climbing to its tower), Choir
+        // Square's bowl from the rim, the High Terrace's west retaining wall from the end of a quay lane, the gatehouse yard
+        add("knoll", -95, 40, -110, -150, 14, -62);
+        add("bowl", 22, 12, 26, 0, -3, 0);
+        add("terrace_wall", -60, 2.0, -132.5, -44, 10, -134);
+        add("gate_yard", 0, 14, -268, 0, 8, -244);
+        add("cellar", -148.5, 1.0, -58.5, -155, 3, -66);
+        // the 3D ladder: one up the river's lower quay wall, from the lower quay
+        add("quay_ladder", -60.5, -3.0, 11.5, -57.5, -1.5, 15.5);
     }
 }
