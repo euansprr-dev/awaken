@@ -125,7 +125,7 @@ both at the same height, and the city says which:
 Two parallel running faces **2.5 to 3.5 apart** and 8+ tall: a wall jump (0.5 out) crosses in 5 to 8 ticks while still
 rising, and four links gain about 4 blocks, enough to reach a lip about 8 above the ground. They are the alleys between
 taller houses (ginnels), light wells, the slot between a warehouse and a crane tower, and the gap between the Choir's
-buttresses. Ginnels are 2 to 3 wide in the plan (§3.6).
+buttresses. Ginnels are 2 to 3 wide in the plan (§3.5); the ones meant as chimneys are 3.
 
 ### 3.4 Roofs that chain
 
@@ -220,7 +220,7 @@ The city has to say no clearly, or players will try everything and feel cheated:
 | Ginnel / lane / street / avenue | 2–3 / 3–4 / 5–6 / 8–10 | §3.5 |
 | Crossing over an avenue | every ≤ 48 | a line in every direction |
 | Climb line on a street face | every ≤ 12 | 2 s of sprint |
-| Lift (raised quarters) | even numbers only | keeps the grid's parity |
+| Lift (raised quarters) | even numbers only | neighbouring plots at different lifts keep their lips on one grid |
 
 ## 4. The affordance catalogue
 
