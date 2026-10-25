@@ -89,6 +89,8 @@ final class CityLifeTests {
         c.work.edits = false;
         CitizenBody b = new CitizenBody(CitizensContent.CITIZEN.get(), level);
         BlockPos feet = h.absolutePos(new BlockPos(2, 1, 2));
+        // isolated tests stand in real terrain: clear the bearer's way (the old path skips a head inside a solid block)
+        for (BlockPos q : BlockPos.betweenClosed(feet.offset(-1, 0, -1), feet.offset(5, 3, 1))) level.setBlock(q, Blocks.AIR.defaultBlockState(), 3);
         b.setPos(feet.getX() + 0.5, feet.getY(), feet.getZ() + 0.5);
         b.hold(EquipmentSlot.OFFHAND, Props.LANTERN);
         b.nearestSq = 4;
