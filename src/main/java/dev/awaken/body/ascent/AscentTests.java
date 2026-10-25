@@ -28,6 +28,7 @@ final class AscentTests {
         AwakenTests.register("ascent_slow_beat", 20, AscentTests::slowBeat);
         AwakenTests.register("ascent_hero_crowns", 100, AscentTests::heroCrowns);
         AwakenTests.register("ascent_aerial_kill", 40, AscentTests::aerialKill);
+        AwakenTests.register("ascent_sovereign", 40, AscentTests::sovereign);
     }
 
     /** A taut rope holds the hand on its sphere through a long swing, whatever the input. */
@@ -807,6 +808,35 @@ final class AscentTests {
         AscentServer.motion(p).state = AscentState.NONE;
         h.assertTrue(afterGround == before && afterAir - afterGround == AscentServer.AERIAL_KILL,
                 "a kill on the ground gives none, one in flight " + AscentServer.AERIAL_KILL + " (" + before + " -> " + afterGround + " -> " + afterAir + ")");
+        h.succeed();
+    }
+    /**
+     * The Sovereign (SPEC §17.19): refused without the tier or with the Aether low; taken, it strikes every hit
+     * harder, its Judgement Fall throws and strikes everything near; it ends on its clock and the cooldown holds.
+     */
+    private static void sovereign(GameTestHelper h) {
+        net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+        dev.awaken.progression.Progression.awaken(p);
+        AscentServer.motion(p).aether = 1;
+        h.assertFalse(Sovereign.ascend(p), "no form without the tier");
+        Ascent.grant(p, Ascent.Tier.SOVEREIGN, "test");
+        AscentServer.motion(p).aether = 0.5;
+        h.assertFalse(Sovereign.ascend(p), "nor with the Aether low");
+        AscentServer.motion(p).aether = 1;
+        h.assertTrue(Sovereign.ascend(p) && Sovereign.active(p), "the form, the Aether full");
+        var target = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(1, 2, 1));
+        var hit = new net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent(target,
+                new net.neoforged.neoforge.common.damagesource.DamageContainer(p.damageSources().playerAttack(p), 4F));
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(hit);
+        h.assertTrue(Math.abs(hit.getAmount() - 4F * Sovereign.AMPLIFY) < 1e-4, "every hit lands harder: " + hit.getAmount());
+        float before = target.getHealth();
+        p.teleportTo(target.getX() + 2, target.getY(), target.getZ());
+        h.assertTrue(Sovereign.judgement(p, 1.2F) && target.getHealth() < before, "the Judgement Fall strikes what's near ("
+                + before + " -> " + target.getHealth() + ")");
+        Sovereign.expireForTests(p);
+        Sovereign.tick(p, AscentServer.now(p));
+        h.assertFalse(Sovereign.active(p), "it ends on its clock");
+        h.assertFalse(Sovereign.ascend(p), "and the sky gathers itself before the next");
         h.succeed();
     }
 }

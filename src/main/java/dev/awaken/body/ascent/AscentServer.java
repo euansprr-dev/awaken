@@ -247,6 +247,10 @@ public final class AscentServer {
     }
 
     static void onEvent(ServerPlayer p, AscentPayloads.Event msg) {
+        if (msg.what() == AscentPayloads.EV_ASCEND) {
+            Sovereign.ascend(p);
+            return;
+        }
         if (msg.what() == AscentPayloads.EV_SLAM_LAND) slam(p, Math.min(3F, Math.max(0F, msg.speed())));
         // the moves that count as links, each only with the tier that has it and from a state it can come from (a
         // rope's is counted when its state lands)
@@ -291,6 +295,8 @@ public final class AscentServer {
      */
     static void slam(ServerPlayer p, float speed) {
         AscentMotion m = motion(p);
+        // in the Sovereign form a dive lands as the Judgement Fall (SPEC §17.19)
+        if ((m.state.airborne() || now(p) - m.endedAt < SOFT_LANDING) && Sovereign.judgement(p, speed)) return;
         if (!Ascent.has(p, Ascent.Tier.LEAPER) || !(m.state.airborne() || now(p) - m.endedAt < SOFT_LANDING)) return;
         ServerLevel level = p.level();
         double r = AscentRules.SLAM_RADIUS;
@@ -327,6 +333,7 @@ public final class AscentServer {
         TetherVow.tick(p, now(p));
         AscentTrials.tick(p, now(p));
         WindwaysServer.tick(p, now(p));
+        Sovereign.tick(p, now(p));
         aether(p, m);
         // the trail behind Ascent.arrivedByMovement: was this tick spent moving by rope, wings or Runner move
         boolean moving = Ascent.moving(p, m);

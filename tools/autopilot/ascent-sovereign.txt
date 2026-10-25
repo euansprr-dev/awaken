@@ -1,0 +1,47 @@
+# The Sovereign (SPEC §17.19), PACK=feel: every tier given; the Ascend key (pilot "ascend") on the ground lifts the body
+# into the form (Lens gold, the camera pulled far back, the wings and the aura); a few zombies near slow and run; then
+# Ascend again high up: the Judgement Fall, its landing striking them. Log: "[ascent] ... Sovereign / Judgement".
+# First, the tactical sprint's line above the hotbar, mid-recharge (sprint_bar).
+world ascent_sov2 survival 4246
+waitworld
+window 1440 900
+gui 0
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd tp @s 0.5 120 0.5 0 10
+wait 100
+hud on
+cmd awaken body try sprint
+wait 95
+shotnow sprint_bar
+cmd awaken body try release
+wait 80
+cmd awaken ascent grant sovereign
+wait 20
+cmd summon minecraft:zombie ~6 ~ ~6
+cmd summon minecraft:zombie ~-6 ~ ~6
+cmd summon minecraft:zombie ~8 ~ ~-4
+wait 20
+shotnow sov_before
+cmd awaken ascent pilot ascend
+wait 40
+shotnow sov_form
+cmd awaken ascent pilot ascend
+wait 12
+shotnow sov_fall
+wait 20
+shotnow sov_judgement
+wait 60
+shotnow sov_after
+info
+quit

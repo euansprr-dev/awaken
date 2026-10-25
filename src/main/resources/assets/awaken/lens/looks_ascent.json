@@ -35,6 +35,40 @@
       "hazeDesaturate": 0.2,
       "sunsetWarmth": 0.2,
       "sunGlow": 0.5
+    },
+    "awaken:sovereign": {
+      "_name": "The Sovereign form: gold light, warm and bright, the glow lines blooming, a soft halo of a vignette",
+      "exposure": 1.08,
+      "contrast": 1.08,
+      "saturation": 1.12,
+      "warmth": 0.32,
+      "shadowTint": [
+        0.42,
+        0.3,
+        0.16
+      ],
+      "highlightTint": [
+        1.0,
+        0.86,
+        0.52
+      ],
+      "splitTone": 0.3,
+      "vignette": 0.22,
+      "bloom": 1.45,
+      "bloomThreshold": 0.42,
+      "skyBloom": 0.45,
+      "shafts": 0.8,
+      "haze": 0.18,
+      "hazeStart": 0.4,
+      "hazeTint": [
+        1.0,
+        0.82,
+        0.5
+      ],
+      "hazeTintMix": 0.55,
+      "hazeDesaturate": 0.0,
+      "sunsetWarmth": 0.5,
+      "sunGlow": 0.9
     }
   }
 }

@@ -2306,6 +2306,9 @@ server checks every move exactly as before (a free-run move is the same claim a 
 - **In the air**, sprint held counts as jump held: a wall beside you is run along (the wall-run's own rules: 1.5 off
   the ground, under 35°), a wall ahead climbed with Wall Stride; a ledge passed is caught as always.
 - **Hanging**, sprint and forward held for 6 ticks climb (the ledge jump's own climb out, or up when looking up).
+- **Climb lines** (`#minecraft:climbable`: Carillon's drainpipes, trellises and hoist ropes, every ladder): pressed
+  against one with sprint held, the body goes up hand over hand at 0.3 a tick (a ladder's 0.2), a grip sound every
+  few pulls; at the eave the lip is caught as a hang and the hold climbs out.
 - **Jump magnetism**: as any jump leaves the ground (yours or the free-run's), the first lip within 4.5 ahead (a lower
   roof up to a hang over the jump's top) becomes its target; for 8 ticks the motion turns toward it at most 2.5° a tick,
   14° in all, never faster, and only while it's within 30° of the way you're going.
@@ -2317,8 +2320,9 @@ server checks every move exactly as before (a free-run move is the same claim a 
   in the shoulder view.
 - Carillon's handhold roles (`#awaken:runner_ledges`, `runner_climbs`, `runner_lines`, `runner_soft`,
   `runner_swings`, SPEC §16.9 on carillon/main): ledges and swing points already work by their collision shapes (a
-  sill, a cornice, a beam end is a lip; the rope bites anything solid). Climbs (drainpipes, ivy), lines without
-  collision and soft landings wait for the tags' contents.
+  sill, a cornice, a beam end is a lip; the rope bites anything solid: the hoist beam). Carillon's climbs are also in
+  `#minecraft:climbable`, so the free-run's climb takes them. Lines without collision (runner_lines is empty yet) and
+  soft landings (hay) keep vanilla's behaviour.
 - Not yet: tuning against Euan's notes from his feel session; tips for the free-run (Carillon's TipHooks).
 
 ### 17.15 The feel pass, part 3: weight
@@ -2334,6 +2338,11 @@ server checks every move exactly as before (a free-run move is the same claim a 
 - **The slow beat**: a carry flying 0.7 b/t or faster, 6 or more over the ground, hangs at the top of its arc: 8 ticks
   at 0.45 of time (the same arc, slower; no steering for the beat), the wind holding its breath, once per 3 s. Big
   rope launches and the Leaper's air moves get it; never under reduced motion. Test: `ascent_slow_beat`.
+- **The tactical sprint's line** (Euan, 25 Oct: "no way of knowing when your tactical sprint is recharged"):
+  `body.client.SprintBar`, a 2-pixel Holo-blue (#7FC3FF) line in the free gap just above the hotbar (Aether's gold line
+  sits over the XP bar, so the two never meet), filled from the middle like Aether's: it drains while the sprint
+  runs, fills as it recharges (80 ticks less 10 a rank, at least 30), flashes once with a tick of light when it's
+  ready (not under reduced motion), then fades; at rest, ready, nothing is drawn.
 - Not yet: Euan's feel check of the whole pass (camera, free-run, weight).
 
 ### 17.16 The Wilds: the hero trees' crowns
@@ -2396,6 +2405,30 @@ Skyborn's earn path (the plan: "the Sky Archipelago Lord, rebuilt as a flight fi
   `ascent_aerial_kill`). Powers cast in the air as on the ground; in the shoulder view they aim along the camera.
 - Not yet: the Leviathan's own flight-fight kit (its dives and wingbeats were made for an island fight), aerial combat's
   own enemies, and casting tuned for the air.
+
+### 17.19 The Sovereign: the god form
+The ladder's top (the plan: "the angel overlord"). Euan chose its trigger on 25 Oct: its own Ascend key, default U,
+needing full Aether, with a 10-minute cooldown.
+- **Earned** at the story's end: the world's ending seen (`StoryHooks.gatesCalm(server, player)`: the Signal broken
+  and their gates calm; or `colourRestored`: the world awake), checked every 5 s; the tier with the gift's scene
+  ("Sovereign. · Aether full, press U: thirty seconds as the sky's own. Press it again high up: Judgement."), its tip,
+  every tier under it. Dev: `/awaken ascent grant sovereign`.
+- **The form** (`body.ascent.Sovereign`, server-kept; `client.SovereignClient` draws it): the Ascend key with the tier,
+  the Aether full (0.95+) and the cooldown passed (10 min, saved: `AscentMemory.sovereignAt`, schema 3; otherwise a
+  toast says why: "The sky gathers itself: 4 min", "Not yet: the Aether must be full") takes the form for 30 s: the
+  body lifts into flight (0.42 a tick up for its first 24 ticks, about ten blocks: a hover alone bleeds its rise away)
+  that never tires (Aether pinned full on both sides), every hit you land (blows and powers)
+  is struck 1.5 times as hard, and every hostile within 24 is slowed (Slowness III), loses you as its target and runs
+  16 blocks away (refreshed twice a second). Lens turns gold (`awaken:sovereign`, looks_ascent.json), the action camera
+  pulls far back and up (ActionRig's SOVEREIGN pose: 4.5 back, 1.4 up, in behind you), the wings stay open and a ring of
+  light breathes round you; others see the wings and the aura. 5 Sovereign mastery, `awaken:ascent_sovereign_forms`.
+- **The Judgement Fall**: in the form, Ascend again from 8 or more up: the body drops at 2.6 a tick (the Leaper's dive,
+  harder); its landing strikes everything within 9 (20 at a landing of 1, scaled 0.6-2.5 and by distance; thrown up and
+  away), the ground answers with rings of light and a low boom for everyone near. 4 Sovereign mastery.
+- Test: `ascent_sovereign` (refused without the tier or the Aether; hits struck 1.5 times; the Judgement strikes; it
+  ends on its clock; the cooldown holds). Tour: `tools/autopilot/ascent-sovereign.txt` (PACK=feel). Pilot `ascend`.
+- Not yet: slowed time for everything (only the field's hostiles are slowed), the ground shattering (the Judgement's
+  mark is light, not broken blocks), radiant (gold) wings of their own.
 
 ---------------------------------------------------------------------------------------------------------------------
 

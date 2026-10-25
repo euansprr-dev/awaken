@@ -1,0 +1,10 @@
+{
+  "text": "With your Aether full, press {key.awaken.ascend}: thirty seconds as the sky's own. High up, press it again to fall as Judgement.",
+  "short": "{key.awaken.ascend}, Aether full",
+  "priority": 75,
+  "show_for": 220,
+  "retire_after_done": 2,
+  "retire_after_shown": 3,
+  "cooldown": 1200,
+  "awake": "after"
+}

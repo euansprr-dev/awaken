@@ -311,10 +311,13 @@ final class AscentCommands {
             case "wings" -> AscentPayloads.Tier.TETHER.bit() | AscentPayloads.Tier.LEAPER.bit() | AscentPayloads.Tier.WINGS.bit();
             case "skyborn" -> AscentPayloads.Tier.TETHER.bit() | AscentPayloads.Tier.LEAPER.bit() | AscentPayloads.Tier.WINGS.bit()
                     | AscentPayloads.Tier.SKYBORN.bit();
+            // the story's end's gift (SPEC §17.19): every tier
+            case "sovereign" -> AscentPayloads.Tier.TETHER.bit() | AscentPayloads.Tier.LEAPER.bit() | AscentPayloads.Tier.WINGS.bit()
+                    | AscentPayloads.Tier.SKYBORN.bit() | AscentPayloads.Tier.SOVEREIGN.bit();
             default -> -1;
         };
         if (bits < 0) {
-            src.sendFailure(Component.literal("grant all, none, tether, wings or skyborn"));
+            src.sendFailure(Component.literal("grant all, none, tether, wings, skyborn or sovereign"));
             return 0;
         }
         AscentServer.setTiers(p, bits);
