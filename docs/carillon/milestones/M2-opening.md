@@ -53,18 +53,18 @@ hands the player to at the start and takes back at the Void:
 
 ## CI
 
-Full GameTest suite on GitHub: **green on 7f9d206** (run 40146155107, 10 min). The push before it (f87a6a5, run
-40145129249) failed one test outside this milestone, `fauna_natural_spawning_end_to_end` ("under a roof" on tick 10;
-other branches show the same kind of fauna/terrain flake today); it passed on the next push with no fauna change.
-Locally: `-Ptests=opening_` 4/4. FINAL_CI
+Full GameTest suite on GitHub: **green on 4c4ff9f** (run 40147558158, the last code change included) and on 7f9d206
+(run 40146155107). The first push (f87a6a5, run 40145129249) failed one test outside this milestone,
+`fauna_natural_spawning_end_to_end` ("under a roof" on tick 10; other branches show the same kind of fauna/terrain
+flake today); it passed on the next push with no fauna change. Locally: `-Ptests=opening_` 4/4.
 
 ## Tour
 
-`tools/autopilot/carillon-m2.txt` (`slot.sh light`, about 7 minutes of game after world creation; run twice, the
-second after fixing what the first showed: the arrival's crane framed the gate from behind a stall's roof, and after
-the real Void the infirmary and the Registry stayed black under the ritual's end-black): a new world, the opening played through
-from the card, the rooftop acts played from their golden runs inside the opening, then the street and canal golden
-runs. Full-size shots (gitignored): /Volumes/MEDIA/Awaken-opening/run-autopilot/screenshots/m2_*.png. Curated copies
+`tools/autopilot/carillon-m2.txt` (`slot.sh light`, about 7 minutes of game after world creation). Run twice: the
+first showed the arrival's crane framing the gate from behind a stall's roof, and the infirmary and the Registry
+staying black after the real Void (the ritual's end-black waited for a tear the opening never sends); both fixed, the
+second run is the one shown. A new world, the opening played through from the card, the rooftop acts played from
+their golden runs inside the opening, then the street and canal golden runs. Full-size shots (gitignored): /Volumes/MEDIA/Awaken-opening/run-autopilot/screenshots/m2_*.png. Curated copies
 (800 px) in docs/carillon/milestones/m2/:
 
 - sky: m2_sky_a_top, _b_river, _c_market, _d_choir, _e_handoff (the four flight frames and the hand-off), _g_question,
