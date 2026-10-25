@@ -1,0 +1,42 @@
+{
+ "parent": "minecraft:item/handheld",
+ "textures": {
+  "particle": "awaken:item/arms/wildhide_glaive_icon"
+ },
+ "display": {
+  "firstperson_righthand": {
+   "rotation": [
+    0,
+    -72,
+    30
+   ],
+   "translation": [
+    -0.5,
+    -1.0,
+    -0.6
+   ],
+   "scale": [
+    0.36,
+    0.36,
+    0.36
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    0,
+    72,
+    -30
+   ],
+   "translation": [
+    -0.5,
+    -1.0,
+    -0.6
+   ],
+   "scale": [
+    0.36,
+    0.36,
+    0.36
+   ]
+  }
+ }
+}

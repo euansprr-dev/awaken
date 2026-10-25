@@ -53,6 +53,7 @@ final class ArmsTests {
         AwakenTests.register("arms_hand_pose", 20, ArmsTests::handPose);
         AwakenTests.register("arms_style_traits", 20, ArmsTests::styleTraits);
         AwakenTests.register("arms_weave", 40, ArmsTests::weave);
+        AwakenTests.register("arms_lord_forged", 40, ArmsTests::lordForged);
     }
 
     /** At most this many triangle corners in one weapon (6,000 triangles: a few weapons in view cost what a mob does). */
@@ -82,7 +83,9 @@ final class ArmsTests {
             };
             h.assertTrue(stack.is(tag), w.id() + " is in " + tag.location() + " to vanilla (its enchantments)");
             var recipe = ResourceKey.create(Registries.RECIPE, Awaken.id(w.id()));
-            h.assertTrue(h.getLevel().getServer().getRecipeManager().byKey(recipe).isPresent(), w.id() + " has its recipe");
+            boolean crafted = h.getLevel().getServer().getRecipeManager().byKey(recipe).isPresent();
+            if (LordForged.byWeapon(w.id()) != null) h.assertTrue(!crafted, w.id() + " only drops (a Lord-forged weapon has no recipe)");
+            else h.assertTrue(crafted, w.id() + " has its recipe");
             for (String file : new String[]{"items/" + w.id() + ".json", "models/item/" + w.id() + ".json", "models/item/" + w.id() + "_in_hand.json",
                     "textures/item/arms/" + w.id() + ".png", "textures/item/arms/" + w.id() + "_icon.png", "arms/weapons/" + w.id() + ".mesh"}) {
                 h.assertTrue(ArmsTests.class.getResource("/assets/awaken/" + file) != null, w.id() + ": " + file + " is on the classpath");
@@ -273,6 +276,34 @@ final class ArmsTests {
         int found = ArmsWeaves.found(p);
         ArmsWeaves.INSTANCE.cast(p, "SHADOW", null, 1);
         h.assertTrue(ArmsWeaves.found(p) == found, "past the beat nothing weaves");
+        h.succeed();
+    }
+
+    /** Lord-forged: fifteen weapons with their rows, the pity, the reveal to the hand and a Lord's move as the Art. */
+    static void lordForged(GameTestHelper h) {
+        h.assertTrue(LordForged.ALL.size() == 15, "one for each Gate Lord (" + LordForged.ALL.size() + ")");
+        java.util.Set<String> styles = new java.util.HashSet<>();
+        for (LordForged.Forged f : LordForged.ALL) {
+            ArmsData.Weapon w = ArmsData.WEAPONS.stream().filter(x -> x.id().equals(f.weapon())).findFirst().orElse(null);
+            h.assertTrue(w != null && ArmsItems.item(f.weapon()) != null, f.weapon() + " has its row and item");
+            h.assertTrue(Archetypes.get(w.style()) != null && w.style().equals(f.weapon().substring(f.weapon().lastIndexOf('_') + 1)),
+                    f.weapon() + " fights in its style");
+            styles.add(w.style());
+            h.assertTrue(LordForged.byBoss("awaken:" + f.lord()) == f, f.lord() + " gives it");
+        }
+        h.assertTrue(styles.size() == 15, "fifteen Lords, fifteen styles (" + styles.size() + ")");
+        h.assertTrue(!LordForged.falls(0, 0.9F) && LordForged.falls(0, 0.1F), "a 35% roll");
+        h.assertTrue(LordForged.falls(LordForged.PITY - 1, 0.99F), "certain on the third Lord without one");
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        LordForged.Forged bell = LordForged.byWeapon("bell_warden_maul");
+        p.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+        LordForged.reveal(p, new ItemStack(ArmsItems.item(bell.weapon())), bell);
+        h.assertTrue(LordForged.held(p) == bell, "the reveal puts it in the empty hand");
+        var zombie = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(1, 1, 4));
+        float before = zombie.getHealth();
+        LordForged.unleash(p, bell);
+        h.assertTrue(zombie.getHealth() < before && zombie.hasEffect(net.minecraft.world.effect.MobEffects.SLOWNESS),
+                "the Grand Peal strikes what's near and slows it");
         h.succeed();
     }
 

@@ -1,0 +1,42 @@
+{
+ "parent": "minecraft:item/handheld",
+ "textures": {
+  "particle": "awaken:item/arms/sky_leviathan_twinblades_icon"
+ },
+ "display": {
+  "firstperson_righthand": {
+   "rotation": [
+    0,
+    -72,
+    30
+   ],
+   "translation": [
+    -0.5,
+    0.5,
+    -0.6
+   ],
+   "scale": [
+    0.6,
+    0.6,
+    0.6
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    0,
+    72,
+    -30
+   ],
+   "translation": [
+    -0.5,
+    0.5,
+    -0.6
+   ],
+   "scale": [
+    0.6,
+    0.6,
+    0.6
+   ]
+  }
+ }
+}

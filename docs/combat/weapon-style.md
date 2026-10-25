@@ -40,6 +40,24 @@ bow...). The toolkit is `tools/art/voxel.py`, worked example `tools/art/specs/ar
    - **Twinblades:** two blades from a central grip with a hub. The far blade is `spin`-turned half round so its edge
      faces the other way, and a guard at each end keeps it from reading as a staff.
 
+   - **Glaive:** a 3×3 pole about 30 and a 5-wide curved blade of turned links, edge on the outside of the curve,
+     with a fluke on its back.
+   - **Scythe:** a 2×2 snath with a hand peg and a blade at right angles off its top, edge along the inside
+     (`flip`), glowing on B, A and S because it cuts spirits.
+   - **Gauntlets:** design +y is the punch and +z the back of the hand: a fist with three knuckle plates, curled
+     fingers, the stone on the back and a cuff. Its hold turns it to be worn, knuckles into the view and the back
+     of the hand up.
+   - **Chainblade:** an S of links alternating face-on and edge-on, coiled at the grip, and a short head set at the
+     chain's last angle (`turned`).
+   - **Shieldblade:** the face fills the outline (round, or kite: a squared top over a 45° point), with a rim, a
+     raised boss with the stone and a short blade on top.
+   - **Warstaff:** about 30, two wrapped grips, weighted caps and a glowing focus at the head.
+   - **Precursor Arm:** a cased hilt, an emitter, and hard light (the blade is the emissive) in three narrowing
+     stages that pulse in turn. Each tier is its own technology.
+
+   A swapped-in weapon rises over its attack delay (20 ÷ attack speed ticks: a maul 29, daggers 9). Tours wait
+   that long before a first-person shot.
+
    Links of one depth that overlap at a joint (a curve, a bow) take `stagger=0.05`: every other link sits a
    twentieth of a texel proud, which is unseen and keeps them out of one plane.
 

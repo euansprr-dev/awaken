@@ -4144,8 +4144,28 @@ a second longer; a rhythm finisher charges the next three blows within 5 s with 
 scale a little with the power's level (+8% a level). The family is the element (the power's own Force, else the
 family's: Energy and Tech Charge, Flight and Architect Gravity, Shadow, Mind and Spirit Spirit) and the look (the
 effects engine's style of the family). The first time each is woven the System names it ("WEAVE · Ember Riposte", a
-toast); after that the action bar does. Kept in `awaken:arms_memory` (schemaVersion 1, saved, kept through death; the
+toast); after that the action bar does. Kept in `awaken:arms_memory` (schemaVersion 2, saved, kept through death; the
 Codex's Weaves page counts it as N / ??, never naming the rest). Test `arms_weave`.
+
+**Lord-forged** (S7, `LordForged`, hand-written beside the generated ArmsData rows): one weapon for each Gate Lord, in
+the style that fits it, a step above the forged weapon of its home rank (that weapon's damage + 1, its speed, rarity
+EPIC; it only drops, never crafts). A Lord killed by a player (the death event; a decoy's role is NONE, so a reflection
+gives nothing) gives its weapon 35% of the time, and certainly on the third Lord in a row without one (the Power Cores'
+pity; the count, `lordsWithout`, is in `awaken:arms_memory`, schemaVersion 2). The reveal: a pillar, a ring and a nova of
+the Lord's family light round the fighter, the totem and beacon sounds, the System's toast "LORD-FORGED · <name>", and
+the weapon in the main hand if it is empty (else the inventory, else at the feet). Its Art is the style's own and then,
+on the Art's first active tick, the Lord's signature move: a shape on the effects engine in the family's look, the
+Lord's Force, a reach, ×power of the fighter's attack, what it leaves, and a pull in or a throw out (never on a body of
+150+ health, and a Lord takes at most 5% of its health from one). The fifteen (home rank, style, Art): Bell Warden (E,
+Maul, Grand Peal: a 9-block Spirit ring that slows), Mother of Spores (E, Scythe, Spore Rain: poison), Ember Tyrant (E,
+Axe, Eruption: a Heat slam that burns and throws), Hive Regent (E, Daggers, Royal Dive: a poisoning cone), Root Saint (E,
+War-staff, Root Lance: a Gravity ring that roots), Drowned Archivist (D, Spear, Tidal Page: a blinding cone that washes
+them back), Gearwright Colossus (D, Gauntlets, Piston Slam: a Charge slam that staggers), Glass Serpent (D, Rapier, Glass
+Storm: weakness), Lantern Broker (D, Chain-blade, Last Light: a Heat nova that burns and reels in), Abbot of Frost (C,
+Glaive, Glacial Vow: a Frost nova, deep slow), Mirror Knight (C, Shieldblade, Reflections: a Spirit ring that marks),
+Unit Zero (C, Precursor Arm, Zero Point: a Gravity vortex pulling in), Sleeper (C, Katana, Waking: a Spirit ring that
+all but stops them), Sky Leviathan (B, Twinblades, Storm Eye: a Charge nova that lifts them), Hollow Herald (A,
+Greatblade, Event Horizon: a Gravity vortex, darkness, the strongest pull). Test `arms_lord_forged`.
 
 **Item level** (PLAN §7.7, decided by the sim): a weapon's level is its tier. The forged Longswords' damage climbs by
 tier (4.5 to 9.5) and melee already rises with the player's strength, so on-level melee keeps pace with a Lord's

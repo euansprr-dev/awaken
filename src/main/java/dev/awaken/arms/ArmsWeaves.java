@@ -144,6 +144,8 @@ public final class ArmsWeaves implements WeaveHooks.Weaver {
                 s.edgeForce = force;
                 s.edgeFamily = fam;
                 Fx.at(level0, FxKind.CHARGE, style, p.getEyePosition()).caster(p).scale(0.6).ticks(10).send();
+                // seen from outside too: the family's light rings the fighter's feet as the edge takes it
+                Fx.at(level0, FxKind.RING, style, p.position().add(0, 0.1, 0)).caster(p).scale(2.2).ticks(8).send();
             }
             default -> { }
         }
@@ -202,25 +204,60 @@ public final class ArmsWeaves implements WeaveHooks.Weaver {
         ArmsMemory m = p.getData(ArmsContent.MEMORY);
         String id = id(opening, fam);
         boolean first = m.weaves().add(id);
-        if (first) p.setData(ArmsContent.MEMORY, m);
+        if (first) {
+            p.setData(ArmsContent.MEMORY, m);
+            sync(p);
+        }
         Component text = Component.literal("WEAVE · ").withStyle(Style.EMPTY.withColor(0xE2B450))
                 .append(Component.literal(name(opening, fam)).withStyle(Style.EMPTY.withColor(fam.colour)));
         if (first) Signal.toast(p, text);
         else p.sendOverlayMessage(text);
     }
 
-    /** What a fighter has woven (saved, kept through death; the Codex's Weaves page counts it, never naming the rest). */
-    public record ArmsMemory(int schemaVersion, Set<String> weaves) {
-        public static final int SCHEMA = 1;
+    /**
+     * What Arms remembers of a fighter (saved, kept through death): the Weaves woven (the Codex's Weaves page counts
+     * them, never naming the rest), and how many Lords have fallen since the last Lord-forged weapon.
+     */
+    public record ArmsMemory(int schemaVersion, Set<String> weaves, int lordsWithout) {
+        public static final int SCHEMA = 2; // 2: lordsWithout (the Lord-forged pity)
         static final MapCodec<ArmsMemory> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
                 Codec.INT.optionalFieldOf("schemaVersion", SCHEMA).forGetter(ArmsMemory::schemaVersion),
                 Codec.STRING.listOf().xmap(l -> (Set<String>) new HashSet<>(l), st -> List.copyOf(st)).optionalFieldOf("weaves", Set.of())
-                        .forGetter(ArmsMemory::weaves)
-        ).apply(i, (v, w) -> new ArmsMemory(SCHEMA, new HashSet<>(w))));
+                        .forGetter(ArmsMemory::weaves),
+                Codec.INT.optionalFieldOf("lordsWithout", 0).forGetter(ArmsMemory::lordsWithout)
+        ).apply(i, (v, w, l) -> new ArmsMemory(SCHEMA, new HashSet<>(w), l)));
 
         static ArmsMemory fresh() {
-            return new ArmsMemory(SCHEMA, new HashSet<>());
+            return new ArmsMemory(SCHEMA, new HashSet<>(), 0);
         }
+
+        ArmsMemory withLordsWithout(int n) {
+            return new ArmsMemory(SCHEMA, weaves, n);
+        }
+    }
+
+    /** Tells the fighter's client every Weave they have woven (on joining, after a new one). */
+    static void sync(ServerPlayer p) {
+        dev.awaken.core.AwakenNet.send(p, new dev.awaken.arms.net.ArmsPayloads.Woven(List.copyOf(p.getData(ArmsContent.MEMORY).weaves())));
+    }
+
+    /** The opening and family a Weave's id names, as {opening, family ordinal}, or null for an unknown id. */
+    public static int @Nullable [] parts(String id) {
+        for (int o = DEFLECT; o <= RHYTHM; o++) {
+            for (PowerType.Family f : PowerType.Family.values()) if (id(o, f).equals(id)) return new int[]{o, f.ordinal()};
+        }
+        return null;
+    }
+
+    /** What a Weave does, in a line (the Codex): its opening's shape and its family's element. */
+    public static String describe(int opening, PowerType.Family family) {
+        String shape = switch (opening) {
+            case DEFLECT -> "Deflect, then cast: a ring bursts off the meeting of the blades.";
+            case DODGE -> "Dodge perfectly, then cast: an echo strikes where you stood.";
+            case BREAK -> "Break a stance, then cast: the power goes through the broken body and holds it down.";
+            default -> "Finish a chain in full rhythm, then cast: your next three blows carry the power.";
+        };
+        return shape + " " + family.label + " is its element. A Weave's power costs 30% less.";
     }
 
     /** How many Weaves this fighter has found (the Codex: N / ??). */

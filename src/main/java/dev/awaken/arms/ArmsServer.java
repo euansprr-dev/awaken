@@ -201,6 +201,7 @@ final class ArmsServer {
         s.moveEnd = now + def.windup() + def.active() + s.recovery;
         s.hitCount = 0;
         s.perfectHeavy = false;
+        s.unleashed = false;
         s.buffered = null;
         s.fightAt = now;
         // a finisher reached with every press in rhythm (the chain starts at 0, each press in the window adds one, so
@@ -236,7 +237,14 @@ final class ArmsServer {
         if (s.move != null && s.style != null) {
             Archetype.MoveDef def = s.style.move(s.move);
             long rel = now - s.moveStart;
-            if (def != null && rel >= def.windup() && rel < def.activeEnd() && Arms.fights(p)) sweep(p, s, def, now);
+            if (def != null && rel >= def.windup() && rel < def.activeEnd() && Arms.fights(p)) {
+                if (s.move == Archetype.Move.ART && !s.unleashed) {
+                    s.unleashed = true;
+                    LordForged.Forged forged = LordForged.held(p);
+                    if (forged != null) LordForged.unleash(p, forged);
+                }
+                sweep(p, s, def, now);
+            }
         }
         if (s.focus >= 0 && (now & 3) == 0) holdFocus(p, s, now);
         if (s.echoAt != 0) ArmsWeaves.tick(p, s, now);

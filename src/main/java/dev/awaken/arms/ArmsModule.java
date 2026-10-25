@@ -46,6 +46,9 @@ public final class ArmsModule {
         bus.addListener(ArmsServer::onServerTick);
         bus.addListener(ArmsServer::onEntityTick);
         bus.addListener(ArmsServer::onLeave);
+        bus.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer sp) ArmsWeaves.sync(sp);
+        });
         bus.addListener(EventPriority.HIGHEST, ArmsServer::onIncomingDamage);
         bus.addListener(ArmsServer::onShieldBlock);
         bus.addListener(EventPriority.HIGHEST, ArmsServer::onAttack);
@@ -53,6 +56,7 @@ public final class ArmsModule {
         bus.addListener(ArmsServer::onSound);
         bus.addListener(ArmsServer::onDamaged);
         bus.addListener(ArmsServer::onFall);
+        bus.addListener(EventPriority.LOW, LordForged::onDeath);
         bus.addListener(EventPriority.HIGH, ArmsModule::onUseStartOff);
         bus.addListener(ArmsServer::onUseStart);
         bus.addListener(ArmsServer::onUseStop);
@@ -70,6 +74,7 @@ public final class ArmsModule {
         });
         r.playToClient(ArmsPayloads.Result.TYPE, ArmsPayloads.Result.STREAM_CODEC);
         r.playToClient(ArmsPayloads.Seen.TYPE, ArmsPayloads.Seen.STREAM_CODEC);
+        r.playToClient(ArmsPayloads.Woven.TYPE, ArmsPayloads.Woven.STREAM_CODEC);
     }
 
     /**
@@ -125,6 +130,25 @@ public final class ArmsModule {
                             String fam = com.mojang.brigadier.arguments.StringArgumentType.getString(c, "family").toUpperCase(java.util.Locale.ROOT);
                             ArmsWeaves.INSTANCE.cast(p, fam, null, 3);
                             return 1;
-                        }))))));
+                        }))))
+                // dev: a Lord-forged weapon's reveal (to the hand) or its Art letting go: /awaken arms lord <lord> reveal|art
+                .then(Commands.literal("lord").requires(AwakenCommands.admin())
+                        .then(Commands.argument("lord", com.mojang.brigadier.arguments.StringArgumentType.word())
+                                .then(Commands.literal("reveal").executes(c -> lordDev(c, true)))
+                                .then(Commands.literal("art").executes(c -> lordDev(c, false)))))));
+    }
+
+    private static int lordDev(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> c, boolean reveal)
+            throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = c.getSource().getPlayerOrException();
+        LordForged.Forged f = LordForged.byBoss("awaken:" + com.mojang.brigadier.arguments.StringArgumentType.getString(c, "lord"));
+        Item item = f == null ? null : ArmsItems.item(f.weapon());
+        if (item == null) {
+            c.getSource().sendFailure(Component.literal("No Lord-forged weapon for that Lord."));
+            return 0;
+        }
+        if (reveal) LordForged.reveal(p, new net.minecraft.world.item.ItemStack(item), f);
+        else LordForged.unleash(p, f);
+        return 1;
     }
 }

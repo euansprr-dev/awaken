@@ -40,6 +40,8 @@ public final class ArmsItems {
     private static final Map<String, ArmsData.Weapon> BY_ID = ArmsData.WEAPONS.stream()
             .collect(Collectors.toUnmodifiableMap(ArmsData.Weapon::id, Function.identity()));
     static final List<DeferredItem<Item>> ALL = ArmsData.WEAPONS.stream().map(ArmsItems::register).toList();
+    private static final Map<String, DeferredItem<Item>> ITEM_BY_ID = ALL.stream()
+            .collect(Collectors.toUnmodifiableMap(d -> d.getId().getPath(), Function.identity()));
 
     /**
      * Each style is the item vanilla's own of its kind is: an axe mines wood at its tier's speed and strips logs (the
@@ -87,6 +89,12 @@ public final class ArmsItems {
             case "A" -> 10F;
             default -> 11F;
         };
+    }
+
+    /** One of our weapons by its id (a row of ArmsData), or null if there is none. */
+    static @Nullable Item item(String id) {
+        DeferredItem<Item> d = ITEM_BY_ID.get(id);
+        return d == null ? null : d.get();
     }
 
     /** The row behind one of our weapons by its id, or null for any other item. */

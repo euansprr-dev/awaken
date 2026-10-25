@@ -63,6 +63,14 @@ public final class ArmsPayloads {
      * other = broken ticks left, aux = value in tenths, aux2 = its hold; also sent to the fighter), CHARGE (a heavy is
      * being held).
      */
+    /** Server → the fighter: every Weave they have woven (ids), on joining and after each new one (the Codex reads it). */
+    public record Woven(java.util.List<String> weaves) implements CustomPacketPayload {
+        public static final Type<Woven> TYPE = new Type<>(Awaken.id("arms_woven"));
+        public static final StreamCodec<ByteBuf, Woven> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list(64)), Woven::weaves, Woven::new);
+        @Override public Type<Woven> type() { return TYPE; }
+    }
+
     public record Seen(int entity, int what, int other, int aux, int aux2) implements CustomPacketPayload {
         public static final Type<Seen> TYPE = new Type<>(Awaken.id("arms_seen"));
         public static final StreamCodec<ByteBuf, Seen> STREAM_CODEC = StreamCodec.composite(
