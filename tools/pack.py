@@ -17,6 +17,9 @@ install writes the Swift Distant Horizons settings when the horizon profile goes
 API unless the player picked one (options.txt preferredGraphicsBackend left at "default" or missing); Vulkan measured
 15-33% faster than OpenGL on Apple Silicon with every pack mod working (docs/perf/vulkan/REPORT.md). install only ever uses the lock (no network lookups, exact SHA-512), keeps a record in <game-dir>/mods/.awaken-pack.json,
 never deletes a jar it didn't put there, and refuses to touch a game folder a client is running from.
+Resource packs (a Modrinth project of type resourcepack, e.g. Fresh Animations) lock like mods, install into
+<game-dir>/resourcepacks/ and are switched on in options.txt's resourcePacks list (added if missing, never taking
+out the player's own packs); remove switches off and deletes only the ones install put there.
 """
 import hashlib
 import json
@@ -104,7 +107,8 @@ def cmd_lock():
             if pin and not pin.startswith("~") and pin != e["versionId"]:
                 print(f"  warning: {parent} wants {slug} version {pin}, the lock has {e['version']} ({e['versionId']})")
             continue
-        v = best_version(project["id"], mc, loader, pin)
+        pack = project.get("project_type") == "resourcepack"
+        v = best_version(project["id"], mc, "minecraft" if pack else loader, pin)  # Modrinth lists packs under "minecraft"
         if v is None:
             missing.append(f"{slug} (needed by {parent})" if parent else slug)
             continue
@@ -117,6 +121,8 @@ def cmd_lock():
             "client": project.get("client_side"), "server": project.get("server_side"),
             "profiles": sorted(profiles), "dependencyOf": [parent] if parent else [], "why": why,
         }
+        if pack:
+            entries[slug]["kind"] = "resourcepack"
         by_id[project["id"]] = slug
         for d in v["dependencies"]:
             if d["dependency_type"] == "required" and d.get("project_id"):
@@ -189,6 +195,36 @@ def fetch(e):
     return path
 
 
+def place(game_dir, e):
+    """Where a locked file lives in a game folder: resource packs in resourcepacks/, everything else in mods/."""
+    return Path(game_dir) / ("resourcepacks" if e.get("kind") == "resourcepack" else "mods") / e["file"]
+
+
+def enable_packs(game_dir, add, drop):
+    """options.txt resourcePacks: switches on the pack files in add (if missing) and off the ones in drop, which install
+    put there and has just deleted. The player's own packs and their order are left as they are."""
+    if not add and not drop:
+        return
+    opts = Path(game_dir) / "options.txt"
+    lines = opts.read_text().splitlines() if opts.exists() else []
+    at = next((i for i, l in enumerate(lines) if l.startswith("resourcePacks:")), None)
+    packs = json.loads(lines[at].split(":", 1)[1]) if at is not None else []
+    before = list(packs)
+    packs = [p for p in packs if p not in {f"file/{n}" for n in drop} | set(drop)]
+    for n in add:
+        if f"file/{n}" not in packs and n not in packs:
+            packs.append(f"file/{n}")  # last in the list is the highest priority (below the mods' own resources)
+    if packs == before:
+        return
+    line = "resourcePacks:" + json.dumps(packs, separators=(",", ":"))
+    if at is None:
+        lines.append(line)
+    else:
+        lines[at] = line
+    opts.write_text("\n".join(lines) + "\n")
+    print(f"  resource packs on in {opts}: {', '.join(packs) or 'none'}")
+
+
 def marker_of(mods_dir):
     m = mods_dir / MARKER
     return load(m) if m.exists() else {"files": []}
@@ -230,17 +266,22 @@ def cmd_install(game_dir, profiles, reset_configs=False):
                          "Use a fresh game folder (tools/play.sh --pack uses run-pack).")
     mods_dir.mkdir(parents=True, exist_ok=True)
     keep = {e["file"] for e in chosen}
+    dropped = []
     for f in old["files"]:  # take out what an earlier install put here and this selection no longer wants
-        p = mods_dir / f["file"]
+        p = place(game_dir, f)
         if f["file"] not in keep and p.exists() and sha512(p) == f["sha512"]:
             p.unlink()
             print(f"  removed {f['file']}")
+            if f.get("kind") == "resourcepack":
+                dropped.append(f["file"])
     for e in chosen:
         src = fetch(e)
-        dst = mods_dir / e["file"]
+        dst = place(game_dir, e)
+        dst.parent.mkdir(parents=True, exist_ok=True)
         if not (dst.exists() and sha512(dst) == e["sha512"]):
             shutil.copyfile(src, dst)
             print(f"  installed {e['file']}")
+    enable_packs(game_dir, [e["file"] for e in chosen if e.get("kind") == "resourcepack"], dropped)
     if any(e["slug"] == "distanthorizons" for e in chosen):
         cmd_dhconfig(game_dir, "swift", only_if_missing=True)
     install_configs(game_dir, names, reset_configs)
@@ -249,7 +290,8 @@ def cmd_install(game_dir, profiles, reset_configs=False):
     culling_exemptions(game_dir)
     save(mods_dir / MARKER, {"schemaVersion": 1, "profiles": names, "installed": time.strftime("%Y-%m-%d %H:%M"),
                              "lockGenerated": lock["generated"],
-                             "files": [{"slug": e["slug"], "file": e["file"], "sha512": e["sha512"]} for e in chosen]})
+                             "files": [{"slug": e["slug"], "file": e["file"], "sha512": e["sha512"],
+                                        **({"kind": e["kind"]} if e.get("kind") else {})} for e in chosen]})
     foreign = sorted(p.name for p in mods_dir.glob("*.jar") if p.name not in keep)
     print(f"{len(chosen)} pack files in {mods_dir} ({', '.join(names)})" + (f"; not ours: {', '.join(foreign)}" if foreign else ""))
 
@@ -260,11 +302,15 @@ def cmd_remove(game_dir):
         raise SystemExit(f"a client is running from {game_dir}: close it first")
     mods_dir = game_dir / "mods"
     old = marker_of(mods_dir)
+    dropped = []
     for f in old["files"]:
-        p = mods_dir / f["file"]
+        p = place(game_dir, f)
         if p.exists() and sha512(p) == f["sha512"]:
             p.unlink()
             print(f"  removed {f['file']}")
+            if f.get("kind") == "resourcepack":
+                dropped.append(f["file"])
+    enable_packs(game_dir, [], dropped)
     if (mods_dir / MARKER).exists():
         (mods_dir / MARKER).unlink()
     print(f"pack removed from {mods_dir}")
@@ -276,7 +322,7 @@ def cmd_status(game_dir):
     print(f"profiles: {', '.join(old.get('profiles', [])) or 'none'}  installed: {old.get('installed', '-')}")
     ours = set()
     for f in old["files"]:
-        p = mods_dir / f["file"]
+        p = place(game_dir, f)
         state = "ok" if p.exists() and sha512(p) == f["sha512"] else ("changed" if p.exists() else "missing")
         ours.add(f["file"])
         print(f"  {state:8} {f['file']}")
@@ -396,7 +442,8 @@ def cmd_export(out, profiles, awaken_jar):
     index = {
         "formatVersion": 1, "game": "minecraft", "versionId": time.strftime("%Y.%m.%d"),
         "name": "The Awakened Pack", "summary": "Awaken and the mods chosen to frame it: " + ", ".join(names),
-        "files": [{"path": f"mods/{e['file']}", "hashes": {"sha1": e["sha1"], "sha512": e["sha512"]},
+        "files": [{"path": f"{'resourcepacks' if e.get('kind') == 'resourcepack' else 'mods'}/{e['file']}",
+                   "hashes": {"sha1": e["sha1"], "sha512": e["sha512"]},
                    "env": env(e), "downloads": [e["url"]], "fileSize": e["size"]} for e in chosen],
         "dependencies": {"minecraft": lock["minecraft"], "neoforge": lock["neoforge"]},
     }
