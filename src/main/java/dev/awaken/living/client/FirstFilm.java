@@ -112,6 +112,8 @@ final class FirstFilm {
         Cinema.bars(false);
         Cinema.hud(true);
         Cinema.prompt(null, "");
+        // her last words fade with the scene (on a slow client a line could outstay it by ten seconds)
+        Cinema.shortenLines(80);
         release();
         ilseId = -1;
         offering = false;
