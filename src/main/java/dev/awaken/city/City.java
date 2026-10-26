@@ -8,6 +8,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
@@ -82,6 +83,35 @@ public final class City {
     public static BlockPos square(CityLayout l) {
         CityPlan p = l.plan;
         return new BlockPos(l.cx + p.squareX, l.streetY + p.lift(p.squareX, p.squareZ) + 1, l.cz + p.squareZ);
+    }
+
+    private static final ThreadLocal<CityBuffer> SKYLINE = ThreadLocal.withInitial(() -> new CityBuffer(16, 16));
+
+    /**
+     * The city as planned over chunk (chunkX, chunkZ), from the plan alone (no chunk needed, any thread): for each column
+     * (index {@code z * 16 + x}) the world y of the highest block the city places there in {@code topY}, and that block in
+     * {@code top}; {@link Integer#MIN_VALUE} and null where the city leaves the column to the land. False where the city
+     * doesn't reach. Far Sight's far skyline (SPEC §20) reads it for city chunks it has never seen.
+     */
+    public static boolean skyline(CityLayout l, int chunkX, int chunkZ, long worldSeed, int[] topY, BlockState[] top) {
+        if (!l.touches(chunkX, chunkZ)) return false;
+        CityBuffer buf = SKYLINE.get();
+        CityPainter.paintChunk(l, chunkX, chunkZ, worldSeed, buf);
+        for (int lz = 0; lz < 16; lz++) {
+            for (int lx = 0; lx < 16; lx++) {
+                int i = lz * 16 + lx;
+                topY[i] = Integer.MIN_VALUE;
+                top[i] = null;
+                for (int ry = CityBuffer.YMAX; ry >= CityBuffer.YMIN; ry--) {
+                    BlockState s = buf.cells[buf.index(lx, ry, lz)];
+                    if (s == null || s.isAir()) continue;
+                    topY[i] = l.streetY + ry;
+                    top[i] = s;
+                    break;
+                }
+            }
+        }
+        return true;
     }
 
     /** A named spot the plan lays out for other modules (SPEC §16.9, decision 29), or null if the plan has none. */
