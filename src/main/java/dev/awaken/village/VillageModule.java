@@ -47,10 +47,18 @@ public final class VillageModule {
         // after terrain has chosen the city's site (default priority): plans cleared, the first hamlet's spot found
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, (ServerAboutToStartEvent e) -> {
             Plans.clear();
-            if (VillageService.enabled(e.getServer())) dev.awaken.village.world.FirstHamlet.find(e.getServer());
+            dev.awaken.village.road.RoadNet.clear();
+            dev.awaken.village.road.RoadWorld.close();
+            if (VillageService.enabled(e.getServer())) {
+                dev.awaken.village.world.FirstHamlet.find(e.getServer());
+                // (SPEC §28.9) the roads read the same land, the region map's hearts and the first town from here on
+                dev.awaken.village.road.RoadWorld.open(e.getServer());
+            }
         });
         NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> {
             Plans.clear();
+            dev.awaken.village.road.RoadNet.clear();
+            dev.awaken.village.road.RoadWorld.close();
             VillageService.serverStopped();
         });
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> VillageService.tick(e.getServer()));

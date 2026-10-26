@@ -24,7 +24,12 @@ final class VillagePainter {
             for (int z = c.z0(); z <= c.z1(); z++) for (int x = c.x0(); x <= c.x1(); x++) ground(p, c, x, z);
         } else {
             for (VillagePlan.Lamp l : p.lamps) lamp(p, c, l);
-            if (p.bell != null) bell(p, c, p.bell);
+            // (SPEC §28.9) a town's towers and gates, and its bell tower on the square
+            for (int[] t : p.towers) TownPainter.tower(p, c, t);
+            for (int[] gt : p.gates) TownPainter.gate(p, c, gt);
+            if (p.mine != null) MinePainter.head(p, c, p.mine);
+            if (p.bell != null && p.bell.x1() - p.bell.x0() >= 4) TownPainter.bellTower(p, c, p.bell);
+            else if (p.bell != null) bell(p, c, p.bell);
             if (p.forge != null) forge(p, c, p.forge);
             if (p.wheel != null) wheel(p, c, p.wheel);
             for (VillagePlan.Pen pen : p.pens) penFence(p, c, pen);
@@ -78,6 +83,7 @@ final class VillagePainter {
                 clear(c, x, g, z, CLEAR);
             }
             case VillagePlan.DOCK -> dock(p, c, x, z, g);
+            case CityPlan.WALL -> TownPainter.wall(p, c, x, z, g);
             case VillagePlan.KITCHEN -> kitchen(p, c, x, z, g);
             default -> {
             }
@@ -142,7 +148,7 @@ final class VillagePainter {
     static BlockState paving(VillagePlan p, Canvas c, int x, int z, boolean main) {
         int roll = c.pct(x, z, 701);
         double d = Math.hypot(x, z);
-        boolean village = p.kind == VillagePlan.Kind.VILLAGE;
+        boolean village = p.big();
         return switch (p.family) {
             case VillageStyles.DESERT -> main && d < 40 ? (roll < 55 ? SMOOTH_SANDSTONE : roll < 85 ? CUT_SANDSTONE : SANDSTONE) : roll < 60 ? SAND : roll < 85 ? SANDSTONE : COARSE_DIRT;
             case VillageStyles.MIRE, VillageStyles.JUNGLE -> main && village ? (roll < 50 ? MUD_BRICKS : roll < 80 ? PACKED_MUD : PATH) : roll < 70 ? PATH : PACKED_MUD;

@@ -80,6 +80,30 @@ public final class RegionMap {
         return nearest(wx, wz);
     }
 
+    /**
+     * The region of grid cell (gx, gz) (its heart, name and band), or the Commons when the Commons swallowed its heart.
+     * Roads are planned between neighbouring cells (SPEC §28.9).
+     */
+    public Region cellRegion(int gx, int gz) {
+        return swallowed(gx, gz) ? commons : cell(gx, gz);
+    }
+
+    /** Whether grid cell (gx, gz)'s heart lies in the Commons (the cell has no region of its own). */
+    public boolean swallowed(int gx, int gz) {
+        double dcx = heartX(gx, gz) - cx, dcz = heartZ(gx, gz) - cz;
+        return dcx * dcx + dcz * dcz <= (double) COMMONS_RADIUS * COMMONS_RADIUS;
+    }
+
+    /** The heart of grid cell (gx, gz), without naming it (no probe): {x, z}. */
+    public int[] heart(int gx, int gz) {
+        return new int[]{heartX(gx, gz), heartZ(gx, gz)};
+    }
+
+    /** A grid cell's own roll in [0, 1) for a salt (other modules' choices per region, e.g. which regions hold a town). */
+    public double roll(int gx, int gz, long salt) {
+        return unit(hash(gx, gz, salt));
+    }
+
     /** The region's level at a column: low at the edge, high at the heart (the Commons rises from its wall outward). */
     public int levelAt(int x, int z) {
         double wx = x + warpX(x, z), wz = z + warpZ(x, z);

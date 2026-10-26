@@ -33,6 +33,8 @@ public class VillageStructure extends Structure {
         if (p == null) return Optional.empty();
         return Optional.of(new Structure.GenerationStub(new BlockPos(p.ox, p.baseY, p.oz), b -> {
             b.addPiece(new VillagePiece(a, p));
+            // (SPEC §28.9) a mining town's workings, painted after its ground (the head's floor is cut by the shaft)
+            if (p.mine != null) b.addPiece(new MinePiece(p, p.mine));
             // a house's marker reaches two past its walls (no bank of earth at a back window), a street's every segment
             // has one (the land eases up or down to the paving instead of meeting it in a step)
             for (CityPlan.Plot q : p.plots) b.addPiece(VillageMarker.of(p, q.x0() - 2, q.z0() - 2, q.x1() + 2, q.z1() + 2, q.lift()));

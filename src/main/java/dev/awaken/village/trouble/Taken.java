@@ -656,7 +656,7 @@ final class Taken implements Plot {
         String person = l.settlement().personName(t.person);
         String family = l.plan().people.get(t.person).family();
         boolean child = l.settlement().age(t.person) == 0;
-        List<ServerPlayer> paid = TroubleDirector.pay(c, t, r.position(), 48, l.plan().kind == VillagePlan.Kind.VILLAGE ? 20 : 14, 25, 0.5,
+        List<ServerPlayer> paid = TroubleDirector.pay(c, t, r.position(), 48, l.plan().big() ? 20 : 14, 25, 0.5,
                 TroubleDirector.fill(c, t, "{person} is home"),
                 p -> Keepsake.make(child ? TroubleText.given(person) + "'s Whistle" : "The " + family + "s' Knot",
                         child ? TroubleText.given(person) + " carved it in the long hours in " + t.placeName + "." : "Red cord tied for luck, given by the " + family + "s.",

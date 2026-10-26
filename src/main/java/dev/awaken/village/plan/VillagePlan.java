@@ -22,7 +22,11 @@ public final class VillagePlan implements SettlementPaint.Layout {
     /** The planner's version: a plan made by another version is another plan (the piece remembers it). */
     public static final int VERSION = 1;
 
-    public enum Kind { HAMLET, VILLAGE }
+    /**
+     * A hamlet, a village, (SPEC §28.9) a walled town, a mining town over its own mine, a wayhouse (an inn and a stable on
+     * a crossroads). Ordinals are saved: add to the end.
+     */
+    public enum Kind { HAMLET, VILLAGE, TOWN, MINING, WAYHOUSE }
 
     // ground kinds beyond the city's (CityPlan.VOID .. LOWQUAY)
     public static final byte FIELD = 32, PEN = 33, DOCK = 34, KITCHEN = 35, WATER = CityPlan.RIVER;
@@ -58,6 +62,41 @@ public final class VillagePlan implements SettlementPaint.Layout {
     public final List<Household> households = new ArrayList<>();
     public final List<Person> people = new ArrayList<>();
     public final List<int[]> posts = new ArrayList<>(); // the Watch's posts at the street ends: x, z, lift
+    /** How many of {@link #posts} are the Watch's at the ways out (two street ends; a town's gates); the rest are work spots. */
+    public int gatePosts = 2;
+    /**
+     * (SPEC §28.9) A town's wall: its line's radius every degree round the centre (null: no wall), its towers ({x, z,
+     * lift, half-size}) and its gates ({x, z, lift, the side out (0 N .. 3 W), the street}).
+     */
+    public float @Nullable [] wallRing;
+    public final List<int[]> towers = new ArrayList<>(), gates = new ArrayList<>();
+    /** (SPEC §28.9) A mining town's mine under it, or null. */
+    public @Nullable Mine mine;
+
+    /**
+     * A mine (plan coordinates; heights are lifts over {@link #baseY}): the shaft head's centre and ground, the way the
+     * workings run (0 N .. 3 W), the floors of its two levels, where the first level's landing and the winze down to
+     * the second stand (along the way, blocks from the shaft), how far the second level runs to its face, the lode it
+     * was driven to ({ore name, x, y, z} or none), and the cavern behind the face it broke into (the Deep Mine's).
+     */
+    public record Mine(int x, int z, int lift, int side, int level1, int level2, int landing, int winze, int reach2, int side2, @Nullable String ore,
+                       int oreX, int oreY, int oreZ, int cavernX, int cavernY, int cavernZ) {
+        /** The cell along the way at distance d from the shaft's middle (plan x, z). */
+        public int[] along(int d) {
+            return new int[]{x + VillagePlanner.Work.STEP_X[side] * d, z + VillagePlanner.Work.STEP_Z[side] * d};
+        }
+
+        /** The winze's foot and the second level's cell at distance d beyond it. */
+        public int[] along2(int d) {
+            int[] w = along(winze);
+            return new int[]{w[0] + VillagePlanner.Work.STEP_X[side2] * d, w[1] + VillagePlanner.Work.STEP_Z[side2] * d};
+        }
+    }
+    /**
+     * (SPEC §28.9) The street ends roads leave by: {street, end (0 first point, 1 last)}. Empty: the main street's two
+     * ends (hamlets and villages).
+     */
+    public final List<int[]> exitList = new ArrayList<>();
     public @Nullable Dock dock;
     public @Nullable Bell bell;
     public @Nullable Wheel wheel;
@@ -136,6 +175,22 @@ public final class VillagePlan implements SettlementPaint.Layout {
      * and its index.
      */
     public record Person(String given, String family, String job, int age, int household, int build, String work, int workIndex) {}
+
+    /** Whether roads leave by this street. */
+    public boolean exits(Street st) {
+        if (exitList.isEmpty()) return !streets.isEmpty() && streets.getFirst() == st;
+        int s = streets.indexOf(st);
+        for (int[] e : exitList) if (e[0] == s) return true;
+        return false;
+    }
+
+    /** Whether a road leaves by this end (0 first point, 1 last) of a street. */
+    public boolean exitAt(Street st, int end) {
+        if (exitList.isEmpty()) return exits(st);
+        int s = streets.indexOf(st);
+        for (int[] e : exitList) if (e[0] == s && e[1] == end) return true;
+        return false;
+    }
 
     // ---- the raster ------------------------------------------------------------------------------------------------
 
@@ -231,6 +286,11 @@ public final class VillagePlan implements SettlementPaint.Layout {
         if (inRaster(x, z)) plotIds[idx(x, z)] = (short) id;
     }
 
+    /** A walled town, a mining town or a village (not a hamlet or a wayhouse): the bigger kinds share a village's ways. */
+    public boolean big() {
+        return kind == Kind.VILLAGE || kind == Kind.TOWN || kind == Kind.MINING;
+    }
+
     /** Whether a world column lies in the settlement's planned ground (its streets, plots, yards, fields: not the land round it). */
     public boolean owns(int worldX, int worldZ) {
         byte k = kind(worldX - ox, worldZ - oz);
@@ -302,6 +362,9 @@ public final class VillagePlan implements SettlementPaint.Layout {
             case "smithy" -> trade = "smith";
             case "mill" -> trade = "miller";
             case "barn", "granary" -> trade = use;
+            case "assay" -> trade = "miner";
+            case "scribe" -> trade = "scribe";
+            case "hall" -> trade = "elder";
             default -> {
             }
         }

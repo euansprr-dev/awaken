@@ -76,20 +76,35 @@ public final class SettlementGrid {
         if (dc < COMMONS) return null;
         Anchor f = first(worldSeed, centre);
         if (Math.hypot(x - f.x(), z - f.z()) < FIRST_CLEAR) return null;
+        // (SPEC §28.9) a town's region keeps its land round the heart for the town
+        if (dev.awaken.village.road.RoadNet.nearTown(x, z)) return null;
+        // some stand at a mountain's foot over their own mine (the planner tries; with no mountain near they're villages)
+        if (unit(mix(h + 5)) < (kind == Kind.VILLAGE ? 0.34 : 0.10)) kind = Kind.MINING;
         return new Anchor("v" + i + "_" + j, x, z, kind, false, mix(h + 3));
     }
 
-    /** The anchor whose chunk this is, or null. */
+    /** The anchor whose chunk this is (the grid's, the first hamlet's, a region's town or wayhouse), or null. */
     public static @Nullable Anchor inChunk(long worldSeed, int chunkX, int chunkZ, int[] centre) {
         Anchor f = first(worldSeed, centre);
         if (f.x() >> 4 == chunkX && f.z() >> 4 == chunkZ) return f;
         int i = Math.floorDiv((chunkX << 4) + 8, PITCH), j = Math.floorDiv((chunkZ << 4) + 8, PITCH);
         Anchor a = cell(worldSeed, i, j, centre);
-        return a != null && a.x() >> 4 == chunkX && a.z() >> 4 == chunkZ ? a : null;
+        if (a != null && a.x() >> 4 == chunkX && a.z() >> 4 == chunkZ) return a;
+        // (SPEC §28.9) the regions' towns and wayhouses, at the sites their land offers near each heart
+        List<Anchor> hubs = dev.awaken.village.road.RoadNet.anchorsInChunk(chunkX, chunkZ);
+        return hubs.isEmpty() ? null : hubs.getFirst();
     }
 
-    /** Every anchor within a radius of a point (the first hamlet included), nearest first. */
+    /** Every anchor within a radius of a point (the first hamlet, the grid's, the regions' towns and wayhouses), nearest first. */
     public static List<Anchor> near(long worldSeed, int x, int z, int radius, int[] centre) {
+        List<Anchor> out = gridNear(worldSeed, x, z, radius, centre);
+        out.addAll(dev.awaken.village.road.RoadNet.anchorsNear(x, z, radius));
+        out.sort((a, b) -> Double.compare(Math.hypot(a.x() - x, a.z() - z), Math.hypot(b.x() - x, b.z() - z)));
+        return out;
+    }
+
+    /** The grid's anchors and the first hamlet within a radius of a point, nearest first (no towns or wayhouses). */
+    public static List<Anchor> gridNear(long worldSeed, int x, int z, int radius, int[] centre) {
         List<Anchor> out = new ArrayList<>();
         Anchor f = first(worldSeed, centre);
         if (Math.hypot(f.x() - x, f.z() - z) <= radius) out.add(f);

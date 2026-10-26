@@ -1,0 +1,12 @@
+{
+  "structures": [
+    {
+      "structure": "awaken:road",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "awaken:road_lattice",
+    "salt": 0
+  }
+}

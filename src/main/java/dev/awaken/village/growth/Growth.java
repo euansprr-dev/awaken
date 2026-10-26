@@ -110,7 +110,7 @@ public final class Growth {
     public static void tick(ServerLevel level, VillageService.Live l, State g, long day, int tod, Runnable dirty, boolean busy) {
         switch (g.stage) {
             case NONE -> {
-                int cap = l.plan().kind == VillagePlan.Kind.VILLAGE ? 3 : 2;
+                int cap = l.plan().kind == VillagePlan.Kind.TOWN ? 4 : l.plan().big() ? 3 : 2;
                 if (busy || g.houses.size() >= cap || day - g.lastGrew < 6) return;
                 if (Villages.prosperity(level.getServer(), l.key()) < RICH) return;
                 if (begin(level, l, g, day)) dirty.run();

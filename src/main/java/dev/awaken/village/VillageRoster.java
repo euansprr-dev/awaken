@@ -37,6 +37,10 @@ public final class VillageRoster {
     private int[] doorPlace, doorNode, lotOf, lampPlace;
     private int green, wash = -1, bell = -1, notice = -1, play = -1, anvil = -1, net = -1, mill = -1, woods = -1, inn = -1, innOut = -1, stallKeeper = -1, stallFront = -1, greenEdge = -1;
     private int lampRoute = -1, watchRoute = -1, errands = -1, carterRoute = -1, eveningRoute = -1;
+    /** (SPEC §28.9) Every stall's keeper's place and its front, in the order of the plan's stalls. */
+    private final List<Integer> stallKeepers = new ArrayList<>(), stallFronts = new ArrayList<>();
+    /** The scribe's shop: a place inside its door. */
+    private int scribeShop = -1;
 
     public static RosterBuilder of(VillagePlan plan, long worldSeed) {
         return of(plan, worldSeed, java.util.List.of());
@@ -242,7 +246,7 @@ public final class VillageRoster {
         for (int k = 0; k < p.posts.size(); k++) {
             int[] po = p.posts.get(k);
             int node = spot(po[0] + 0.5, po[2], po[1] + 0.5);
-            if (k < 2) {
+            if (k < p.gatePosts) {
                 postPlaces.add(b.place("post", node, po[0] + 0.5, po[2], po[1] + 0.5).spot(po[0] + 0.5, po[1] + 0.5).id());
                 // the road out: where hunters, miners and carters leave and come back
                 roadPlaces.add(b.place("landmark", node, po[0] + 0.5, po[2], po[1] + 0.5).ref("road").cap(8).id());
@@ -262,6 +266,13 @@ public final class VillageRoster {
             switch (bd.use()) {
                 case "mill" -> {
                     mill = b.place("mill", doorNode[k], bd.outX() + 0.5, q.lift(), bd.outZ() + 0.5).spot(bd.outX() + 0.5, bd.outZ() + 0.5).id();
+                }
+                case "scribe" -> {
+                    int fx = bd.outX() - bd.doorX(), fz = bd.outZ() - bd.doorZ();
+                    int ix = bd.doorX() - fx, iz = bd.doorZ() - fz;
+                    int inner = b.junction(ix + 0.5, q.lift(), iz + 0.5);
+                    b.street(inner, doorNode[k]);
+                    scribeShop = b.place("stand", inner, ix + 0.5, q.lift(), iz + 0.5).yaw(yawTo(ix, iz, bd.doorX(), bd.doorZ())).spot(ix + 0.5, iz + 0.5).id();
                 }
                 case "inn" -> {
                     inn = k;
@@ -283,17 +294,31 @@ public final class VillageRoster {
                 }
             }
         }
-        // a market stall on a village's green, its keeper behind the counter
+        // the market's stalls (a village's one, a town's several), each keeper behind the counter, buyers in front
+        String[] goods = {"produce", "cloth", "bread", "pots", "tools", "jars"};
         for (CityPlan.Prop pr : p.props) {
             if (!pr.kind().equals("stall")) continue;
-            double kx = (pr.x0() + pr.x1()) / 2.0 + 0.5, kz = pr.z0() + 0.5, fx = kx, fz = pr.z1() + 1.5;
-            int keeperNode = spot(kx, 0, kz);
-            stallKeeper = b.place("stall_keeper", keeperNode, kx, 0, kz).yaw(0).spot(kx, kz).id();
-            RosterBuilder.Place sf = b.place("stall_front", spot(fx, 0, fz), fx, 0, fz).yaw(180).cap(4).spot(fx, fz).spot(fx - 1, fz);
-            for (int x = pr.x0() - 1; x <= pr.x1() + 1; x++) if (Math.abs(x + 0.5 - fx) >= 1.5 && open(x, pr.z1() + 1)) sf.spot(x + 0.5, fz);
-            stallFront = sf.id();
-            b.stall(pr.x0(), pr.z0(), pr.x1(), pr.z1(), 'S', stallKeeper, stallFront, "produce", Math.floorMod(pr.v(), 6));
-            break;
+            int fc = Math.max(0, pr.side());
+            int sx = fc == 1 ? 1 : fc == 3 ? -1 : 0, sz = fc == 2 ? 1 : fc == 0 ? -1 : 0;
+            double mx = (pr.x0() + pr.x1()) / 2.0 + 0.5, mz = (pr.z0() + pr.z1()) / 2.0 + 0.5;
+            // the keeper stands at the back row, the buyers a step out in front of the counter
+            double kx = sx != 0 ? (sx > 0 ? pr.x0() + 0.5 : pr.x1() + 0.5) : mx, kz = sz != 0 ? (sz > 0 ? pr.z0() + 0.5 : pr.z1() + 0.5) : mz;
+            double fx = sx != 0 ? (sx > 0 ? pr.x1() + 1.5 : pr.x0() - 0.5) : mx, fz = sz != 0 ? (sz > 0 ? pr.z1() + 1.5 : pr.z0() - 0.5) : mz;
+            int keeper = b.place("stall_keeper", spot(kx, 0, kz), kx, 0, kz).yaw(yawTo(kx, kz, fx, fz)).spot(kx, kz).id();
+            RosterBuilder.Place sf = b.place("stall_front", spot(fx, 0, fz), fx, 0, fz).yaw(yawTo(fx, fz, kx, kz)).cap(4).spot(fx, fz);
+            for (int d = -2; d <= 2; d++) {
+                double ax = fx + (sz != 0 ? d : 0), az = fz + (sx != 0 ? d : 0);
+                if (d != 0 && open((int) Math.floor(ax), (int) Math.floor(az))) sf.spot(ax, az);
+            }
+            int front = sf.id();
+            int k = stallKeepers.size();
+            b.stall(pr.x0(), pr.z0(), pr.x1(), pr.z1(), "NESW".charAt(fc), keeper, front, goods[Math.floorMod(pr.v() + k, goods.length)], Math.floorMod(pr.v(), 6));
+            stallKeepers.add(keeper);
+            stallFronts.add(front);
+            if (stallKeeper < 0) {
+                stallKeeper = keeper;
+                stallFront = front;
+            }
         }
         // the lamps: a place on the street beside each post, the lamplighter's round of them all (round the green by angle)
         lampPlace = new int[p.lamps.size()];
@@ -314,12 +339,20 @@ public final class VillageRoster {
             lampRoute = b.route("round", round);
             for (int k = 0; k < p.lamps.size(); k++) b.lamp(lampPlace[k], lampRoute, p.lamps.get(k).x() + 0.5, p.lamps.get(k).z() + 0.5);
         }
-        if (postPlaces.size() >= 2) watchRoute = b.route("round", postPlaces.get(0), notice, postPlaces.get(1), notice);
+        if (postPlaces.size() >= 2) {
+            // the Watch's round: gate to gate by the market (a village's two ends and the board between)
+            List<Integer> round = new ArrayList<>();
+            for (int post : postPlaces) {
+                round.add(post);
+                round.add(notice);
+            }
+            watchRoute = b.route("round", round.stream().mapToInt(Integer::intValue).toArray());
+        }
         // errands spread over the whole place, not round the well: the board, the benches, the stall, a neighbour's door,
         // a word on a street corner (the washer keeps the well)
         List<Integer> er = new ArrayList<>(List.of(notice, greenEdge));
         if (!benchPlaces.isEmpty()) er.add(benchPlaces.getFirst());
-        if (stallFront >= 0) er.add(stallFront);
+        er.addAll(stallFronts);
         for (int k = 0; k < p.buildings.size(); k += 2) if (p.buildings.get(k).use().equals("house")) er.add(doorPlace[k]);
         int far = p.radius() - 12;
         for (int s = 0; s < p.streets.size(); s++) {
@@ -397,13 +430,14 @@ public final class VillageRoster {
             hh[h] = b.household(ho.family(), doorPlace[ho.building()], lotOf[ho.building()]);
         }
         Map<String, Integer> groups = new HashMap<>();
-        boolean stallTaken = false;
+        int stallsTaken = 0;
         for (int i = 0; i < p.people.size(); i++) {
             VillagePlan.Person v = p.people.get(i);
             String job = v.job();
-            if (job.equals("resident") && stallKeeper >= 0 && !stallTaken && v.age() >= 1 && v.age() <= 2) {
+            int myStall = -1;
+            if (job.equals("resident") && stallsTaken < stallKeepers.size() && v.age() >= 1 && v.age() <= 2) {
                 job = "stallkeeper";
-                stallTaken = true;
+                myStall = stallsTaken++;
             }
             VillagePlan.Household ho = p.households.get(v.household());
             int home = doorPlace[ho.building()];
@@ -420,9 +454,13 @@ public final class VillageRoster {
             };
             pr.group(groups.computeIfAbsent(g, b::group));
             if (inn >= 0) pr.tavern(0);
+            stallOf = myStall;
             day(pr, i, job, v, home);
         }
     }
+
+    /** The stall the person being laid out keeps (index into the stalls), or -1. */
+    private int stallOf = -1;
 
     /** A segment start nudged by up to ±k ticks, per person (a village never moves as one). */
     private int at(int i, int start, int k) {
@@ -440,8 +478,8 @@ public final class VillageRoster {
             case "smith" -> work = anvil;
             case "fisher" -> work = net;
             case "miller" -> work = mill;
-            case "scribe" -> work = notice;
-            case "stallkeeper" -> work = stallKeeper;
+            case "scribe" -> work = scribeShop >= 0 ? scribeShop : notice;
+            case "stallkeeper" -> work = stallOf >= 0 && stallOf < stallKeepers.size() ? stallKeepers.get(stallOf) : stallKeeper;
             default -> {
             }
         }

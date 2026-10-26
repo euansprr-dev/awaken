@@ -45,6 +45,15 @@ public final class FirstHamlet {
         else Awaken.LOG.info("[village] no spot up the road takes the first hamlet ({} ms): the nominal one stands", System.currentTimeMillis() - t0);
     }
 
+    /** The studio: where this server found the first hamlet (or null), and to put another there for a while. */
+    public static SettlementGrid.@org.jspecify.annotations.Nullable Anchor found() {
+        return SettlementGrid.firstFound;
+    }
+
+    public static void use(SettlementGrid.@org.jspecify.annotations.Nullable Anchor a) {
+        SettlementGrid.firstFound = a;
+    }
+
     /**
      * The first spot up the road (nearest the nominal one first) whose land takes a hamlet, or null. North is the camp's
      * road; where the land north is sea or mountain the other roads out are tried (east, west, south), then a little
