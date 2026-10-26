@@ -58,8 +58,9 @@ on the Maul's charge (6 / 20 / 30 ticks), three blocks, x3 wear (x2 on the glint
 
 ## Tests
 
-`delve_lode_heart` (isolated: a chamber with an iron lode; the heart opens it once, the lump, the window, the cave-in
-refused under building and in a Hearth, then warned and fallen), `delve_tier_metals` (each metal tag; every D-S gear
+`delve_lode_heart` (isolated: a chamber with an iron lode; the heart opens it once, the lump, the window; a heavy strike
+on the glint bores three along the aim with the extra wear and a breath before the next; the cave-in refused under
+building and in a Hearth, then warned and fallen), `delve_tier_metals` (each metal tag; every D-S gear
 recipe and forged weapon has a metal-only slot; foci gold; Veilwoven amethyst; Gatewrought 20/2.0; lapis Blueprints;
 the five catalysts; 300 A-rank caches pay no raw ore; starmetal smelts, bell bronze casts a bell), `delve_tuning_fork`
 (tuned on iron ore; the nearest block of an iron lode 30 off; nothing for a gold lode 70 off), `progression_ore_xp` (ore
@@ -73,4 +74,6 @@ kinds, a diamond against coal, the deep budget after the shallow one is worn, di
 - The lamp's light is drawn, not real light: mobs don't see it and it doesn't stop spawns; its rays allocate a little per
   frame while someone wears one.
 - No zip line between pitons (the Ascent has nothing that rides a run of blocks yet).
-- Judged on the preview sheet and one tour; the sounds were checked by their loudness, not yet by ear in game.
+- Judged on the preview sheet and the tour (shots: /Volumes/MEDIA/tour-shots/world-depth-w2-2026-10-26); the sounds were
+  checked by their loudness, not yet by ear in game. The tour stages its chamber 700 blocks off Carillon: the city's
+  footprint is protected all the way down for survival players, so neither the heavy strike nor a cave-in happens there.
