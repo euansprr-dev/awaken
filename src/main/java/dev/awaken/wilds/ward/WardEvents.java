@@ -36,18 +36,12 @@ public final class WardEvents {
     static final int HOLD_TELL_EVERY = 100;
     /** The once-per-player flag for the first ward a player builds in. */
     static final String NOTICED = "awaken:ward_noticed";
-    /** The once-per-player flag for the first climb that refused a block (its card offered the Ascent page). */
-    static final String CLIMB_SHOWN = "awaken:climb_refused";
 
     private static final Map<UUID, Long> TOLD = new HashMap<>();
 
     public static void init() {
         var bus = NeoForge.EVENT_BUS;
         WardHooks.register(Wards::structureWards);
-        // a climb refuses before anything else hears the placement (the arrival tracker would log a block never placed)
-        bus.addListener(EventPriority.HIGH, false, BlockEvent.EntityPlaceEvent.class, WardEvents::onClimbPlace);
-        bus.addListener(EventPriority.HIGH, false, net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock.class, WardEvents::onClimbBucket);
-        bus.addListener(EventPriority.HIGH, false, net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock.class, WardEvents::onCacheOpen);
         bus.addListener(EventPriority.LOWEST, false, BlockEvent.EntityPlaceEvent.class, WardEvents::onPlace);
         bus.addListener(EventPriority.LOWEST, false, BreakBlockEvent.class, WardEvents::onBreak);
         bus.addListener(ExplosionEvent.Detonate.class, WardEvents::onExplode);
@@ -60,88 +54,6 @@ public final class WardEvents {
             Wards.clear();
             TOLD.clear();
         });
-    }
-
-    static void onClimbPlace(BlockEvent.EntityPlaceEvent e) {
-        if (e.getEntity() instanceof ServerPlayer p && e.getLevel() instanceof ServerLevel level && refusesClimb(p, level, e.getPos())) e.setCanceled(true);
-    }
-
-    /** Buckets fire no placement: a water column up a spire is a climb too. */
-    static void onClimbBucket(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock e) {
-        if (!(e.getEntity() instanceof ServerPlayer p) || !(e.getLevel() instanceof ServerLevel level)
-                || !(e.getItemStack().getItem() instanceof net.minecraft.world.item.BucketItem)) return;
-        BlockPos at = e.getPos().relative(e.getFace() == null ? net.minecraft.core.Direction.UP : e.getFace());
-        if (refusesClimb(p, level, at)) e.setCanceled(true);
-    }
-
-    /**
-     * A block (or a bucket) a player puts down at a climb (SPEC §27.5): refused at once, the ward's hold light where it
-     * would have gone, and the place says what it answers to, worded by what the player holds. Without the rope the
-     * lock is kept as a promise, and the first time ever a card offers to show the band's Ascent page. True if refused.
-     */
-    public static boolean refusesClimb(ServerPlayer p, ServerLevel level, BlockPos pos) {
-        var ward = Wards.climbAt(level, pos, p);
-        if (ward.isEmpty()) return false;
-        WardFx.play(level, WardFx.Kind.HOLD, pos, level.getBlockState(pos));
-        WardHooks.Ward w = ward.get();
-        String kind = w.kind().equals("hero_crown") ? "tree" : w.kind().contains("sky") ? "sky" : "spire";
-        boolean rope = dev.awaken.core.api.HorizonHooks.can(p, dev.awaken.core.api.HorizonHooks.TETHER);
-        if (dev.awaken.core.Throttle.allow(p, "ward_climb", 60)) {
-            p.sendOverlayMessage(rope ? Component.literal("Climb it by rope: hold ").append(Component.keybind("key.awaken.movement"))
-                    .append(Component.literal(kind.equals("sky") ? " at the lowest ring." : " at a ring."))
-                    : Component.literal(switch (kind) {
-                        case "sky" -> "Nothing you build reaches it. Its rings answer to a line.";
-                        case "tree" -> "The great tree sheds what you build. Its rings answer to a line.";
-                        default -> "The spire sheds what you build. Its platforms answer to a line.";
-                    }));
-        }
-        if (!rope) {
-            String key = (kind.equals("tree") ? "hero:" : "landmark:") + w.id();
-            dev.awaken.core.api.Promises.seen(p, key, w.box().getCenter(), dev.awaken.core.api.Promises.Need.tier(dev.awaken.core.api.HorizonHooks.TETHER),
-                    switch (kind) {
-                        case "sky" -> "A sky platform";
-                        case "tree" -> "A great tree's crown";
-                        default -> "A Tether Spire's crown";
-                    });
-            if (Progression.profile(p).counter(CLIMB_SHOWN) == 0) {
-                Progression.setCounter(p, CLIMB_SHOWN, 1);
-                Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(switch (kind) {
-                            case "sky" -> "A sky platform";
-                            case "tree" -> "A great tree";
-                            default -> "A Tether Spire";
-                        }))
-                        .body(Component.literal("It sheds what you build. Its way up answers to a line, and a Precursor vault keeps a line "
-                                + "for a hunter it opens to."))
-                        .choice(dev.awaken.progression.Progression.BAND_ACTION + ":ascent", "Show me", "Later").ttl(20 * 40).build());
-            }
-        }
-        DirectorLog.log(p, "wilds", "a climb refused a block (" + w.id() + ", " + w.kind() + (rope ? ", has the rope)" : ")"));
-        return true;
-    }
-
-    /**
-     * The cache's inner seal (SPEC §27.5): a site's unopened cache keeps its best roll for a player who came without
-     * building (`awaken:arrived_by_movement`), and vanilla rolls a chest once, for everyone. So for someone who built
-     * their way in, it stays shut and says so, rather than spending its prize on the wrong arrival. Opened once, it's a
-     * chest like any other.
-     */
-    static void onCacheOpen(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock e) {
-        if (e.getEntity() instanceof ServerPlayer p && e.getLevel() instanceof ServerLevel level && sealsCache(p, level, e.getPos())) e.setCanceled(true);
-    }
-
-    /** Whether the cache at {@code pos} stays shut for this player (and says so). */
-    public static boolean sealsCache(ServerPlayer p, ServerLevel level, BlockPos pos) {
-        if (!Wards.on() || !Wards.binds(p)) return false;
-        if (!(level.getBlockEntity(pos) instanceof net.minecraft.world.RandomizableContainer c) || c.getLootTable() == null) return false;
-        var ward = WardHooks.at(level, pos);
-        if (ward.isEmpty() || dev.awaken.core.api.ArrivalHooks.byMovement(p)) return false;
-        WardFx.play(level, WardFx.Kind.HOLD, pos, level.getBlockState(pos));
-        if (dev.awaken.core.Throttle.allow(p, "ward_cache", 40)) {
-            p.sendOverlayMessage(Component.literal(Wards.climb(ward.get())
-                    ? "The cache's inner seal holds: you built your way up. Come back by rope."
-                    : "The cache's inner seal holds: you built your way here. Come back without building."));
-        }
-        return true;
     }
 
     static void onPlace(BlockEvent.EntityPlaceEvent e) {
@@ -178,9 +90,7 @@ public final class WardEvents {
         Long last = TOLD.get(p.getUUID());
         if (last == null || now - last >= HOLD_TELL_EVERY || now < last) {
             TOLD.put(p.getUUID(), now);
-            boolean door = WardHooks.at(level, pos).map(Wards::rankDoored).orElse(false);
-            p.sendOverlayMessage(Component.literal(door ? "The ward holds. These walls answer only to their door."
-                    : "The ward holds. These walls were sealed to stay."));
+            p.sendOverlayMessage(Component.literal("The ward holds. These walls answer only to their door."));
         }
         return true;
     }

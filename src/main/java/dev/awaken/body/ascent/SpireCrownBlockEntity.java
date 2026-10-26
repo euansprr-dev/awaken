@@ -78,13 +78,13 @@ public class SpireCrownBlockEntity extends BlockEntity {
         this.site = site;
         this.ground = ground;
         setChanged();
-        if (site != SITE_SPIRE && level != null && !level.isClientSide()) HeroCrowns.ward(worldPosition, ground, site == SITE_COLOSSUS);
+        if (site != SITE_SPIRE && level != null && !level.isClientSide()) HeroCrowns.ward(worldPosition, ground);
     }
 
     @Override
     public void onLoad() {
         super.onLoad();
-        if (site != SITE_SPIRE && level != null && !level.isClientSide()) HeroCrowns.ward(worldPosition, ground, site == SITE_COLOSSUS);
+        if (site != SITE_SPIRE && level != null && !level.isClientSide()) HeroCrowns.ward(worldPosition, ground);
     }
 
     @Override
@@ -120,10 +120,13 @@ public class SpireCrownBlockEntity extends BlockEntity {
             p.sendSystemMessage(Component.translatable("awaken.ascent.spire.built"), true);
             return;
         }
-        // a spire's promise is kept (SPEC §27): its key is its landmark id, the start chunk's
+        // the climb's promise is kept (SPEC §27.1): a spire's key is its landmark id (the start chunk's), a hero crown's
+        // its ward's ("hero/" + the crown's packed position)
         if (site == SITE_SPIRE && level instanceof net.minecraft.server.level.ServerLevel sl) {
             var start = sl.structureManager().getStructureWithPieceAt(worldPosition, dev.awaken.above.Above.RUINS_TAG);
             if (start.isValid()) dev.awaken.core.api.Promises.kept(p, "landmark:ruin:" + start.getChunkPos().x() + "," + start.getChunkPos().z());
+        } else if (site != SITE_SPIRE) {
+            dev.awaken.core.api.Promises.kept(p, "landmark:hero/" + worldPosition.asLong());
         }
         Long start = leftPlaza.remove(p.getUUID());
         int ticks = start == null || now - start > LONGEST ? -1 : (int) (now - start);

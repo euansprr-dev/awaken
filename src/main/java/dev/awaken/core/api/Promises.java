@@ -20,7 +20,7 @@ public final class Promises {
     private Promises() {}
 
     /** Need kinds. */
-    public static final String RANK = "rank", LEVEL = "level", TIER = "tier";
+    public static final String RANK = "rank", LEVEL = "level", TIER = "tier", ITEM = "item";
 
     /**
      * What a lock waits for: a rank by its label ({@code rank:D}), a level ({@code level:20}) or a rung of the Ascent by
@@ -30,6 +30,8 @@ public final class Promises {
         public static Need rank(String label) { return new Need(RANK, label); }
         public static Need level(int level) { return new Need(LEVEL, Integer.toString(level)); }
         public static Need tier(String tier) { return new Need(TIER, tier); }
+        /** An item by its id ("awaken:core_shard"); no module answers it yet, so such a lock waits until it's kept. */
+        public static Need item(String id) { return new Need(ITEM, id); }
 
         /** In words, for a line of text: "D-rank", "level 20", "the Tether". */
         public String words() {

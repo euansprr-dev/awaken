@@ -57,11 +57,7 @@ public final class HeroCrowns {
     static final double[] TURNS = {Math.PI / 4, Math.PI / 6, Math.PI / 9, Math.PI / 18, 0};
     static final double ZIP_SIDE = 0.4;
     /** The ward over the trunk: this far round the crown, from this far over the foot to a little over the crown. */
-    /**
-     * The crown's ward: the whole canopy, from 10 over the tree's foot (a home under the tree still builds), so a tower
-     * beside the trunk meets it as it reaches the branches. It was a column of radius 9, under a canopy 24-30 wide.
-     */
-    static final int WARD_COLOSSUS = 32, WARD_LUMEN = 16, WARD_FROM = 10;
+    static final int WARD_R = 9, WARD_FROM = 10;
     static final ResourceKey<LootTable> CACHE = ResourceKey.create(Registries.LOOT_TABLE, dev.awaken.Awaken.id("chests/precursor_spire"));
 
     static boolean crowned(HeroTree tree) {
@@ -268,10 +264,9 @@ public final class HeroCrowns {
     }
 
     /** The crown's ward (its block entity calls this as it loads, so wards come back after a restart). */
-    static void ward(BlockPos crown, int ground, boolean colossus) {
-        int r = colossus ? WARD_COLOSSUS : WARD_LUMEN;
-        WARDS.put(crown.asLong(), new BoundingBox(crown.getX() - r, ground + WARD_FROM, crown.getZ() - r,
-                crown.getX() + r, crown.getY() + 6, crown.getZ() + r));
+    static void ward(BlockPos crown, int ground) {
+        WARDS.put(crown.asLong(), new BoundingBox(crown.getX() - WARD_R, ground + WARD_FROM, crown.getZ() - WARD_R,
+                crown.getX() + WARD_R, crown.getY() + 6, crown.getZ() + WARD_R));
     }
 
     static void unward(BlockPos crown) {

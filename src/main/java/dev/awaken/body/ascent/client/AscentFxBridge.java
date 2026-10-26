@@ -7,21 +7,6 @@ import net.minecraft.world.phys.Vec3;
 public final class AscentFxBridge {
     private AscentFxBridge() {}
 
-    /**
-     * A sealed rank door breathing its rank's colour (SPEC §27.5): a few motes lift off the core's face, so a door says
-     * which rank it waits for before anyone touches it.
-     */
-    public static void doorBreath(BlockPos pos, int colour) {
-        var mc = net.minecraft.client.Minecraft.getInstance();
-        if (mc.level == null) return;
-        var r = mc.level.getRandom();
-        for (int i = 0; i < 4; i++) {
-            double x = pos.getX() + 0.5 + (r.nextDouble() - 0.5) * 2.6, y = pos.getY() - 0.6 + r.nextDouble() * 2.4, z = pos.getZ() + 0.5 + (r.nextDouble() - 0.5) * 2.6;
-            MoteParticle.next(r.nextFloat() < 0.25F ? 0xEAF7FF : colour, 0.8F + r.nextFloat() * 0.5F, 40 + r.nextInt(20), -0.015F, false);
-            mc.level.addParticle(dev.awaken.body.ascent.AscentContent.MOTE.get(), x, y, z, 0, 0.01 + r.nextDouble() * 0.01, 0);
-        }
-    }
-
     /** One mote of the Signal's thread on the ground (SPEC §27.7): it lifts a little and thins out. */
     public static void threadMote(double x, double y, double z, double dx, double dz) {
         var mc = net.minecraft.client.Minecraft.getInstance();

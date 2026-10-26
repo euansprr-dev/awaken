@@ -76,7 +76,7 @@ public class DoorCoreBlock extends BaseEntityBlock {
 
     @Override
     public <T extends BlockEntity> @Nullable BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return createTickerHelper(type, AboveBlocks.DOOR_CORE_BE.get(), level.isClientSide() ? DoorCoreBlockEntity::clientTick : DoorCoreBlockEntity::serverTick);
+        return level.isClientSide() ? null : createTickerHelper(type, AboveBlocks.DOOR_CORE_BE.get(), DoorCoreBlockEntity::serverTick);
     }
 
     @Override

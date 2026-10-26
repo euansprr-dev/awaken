@@ -202,8 +202,7 @@ final class TetherVow {
             AwakenNet.send(p, top == null ? new AscentPayloads.Vow(LINE, Double.NaN, 0, 0, m.getX() + 0.5, m.getY() + 1.0, m.getZ() + 0.5)
                     : new AscentPayloads.Vow(LINE, top[0], top[1], top[2], m.getX() + 0.5, m.getY() + 1.0, m.getZ() + 0.5));
         } else if (v.stage == LINE) {
-            // kept by rope, never by a tower (the vault's ward makes placed blocks crumble; the visit remembers them)
-            if (atMast(v.site, p.getX(), p.getY(), p.getZ()) && dev.awaken.core.api.ArrivalHooks.byMovement(p)) {
+            if (atMast(v.site, p.getX(), p.getY(), p.getZ())) {
                 end(p, v, KEPT);
             } else if (age > CALL_TICKS + MAST_TICKS || p.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(v.site.box().getCenter())) > 64 * 64) {
                 end(p, v, LAPSED);

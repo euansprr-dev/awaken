@@ -298,9 +298,9 @@ public final class QuestEngine {
         }
     }
 
-    /** A tier-gated step at its place says what it waits for: on arrival, then every 20 s at most (not on the minute). */
+    /** A tier-gated step at its place says what it waits for, once a minute at most. */
     private static void waiting(ServerPlayer p, QuestDef.Step step) {
-        if (!blocked(p, step) || step.needsText().isEmpty() || !dev.awaken.core.Throttle.allow(p, "quest_needs", 400)) return;
+        if (!blocked(p, step) || step.needsText().isEmpty() || p.level().getGameTime() % 1200 >= 20) return;
         Signal.toast(p, Component.literal(step.needsText()));
     }
 

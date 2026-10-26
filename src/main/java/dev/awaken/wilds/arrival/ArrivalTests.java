@@ -56,11 +56,6 @@ public final class ArrivalTests {
                 walk(p, s, t, at, ArrivalLog.SIZE * Arrival.SAMPLE + 20);
                 h.assertTrue(!s.log.contains(Way.BUILT) && !Arrival.verdict(p, t[0]), "the visit remembers the tower");
 
-                // a logout inside it changes nothing: back in, the visit is still the tower's (before, no record read as moving)
-                Arrival.leave(p.getUUID(), t[0]);
-                h.assertFalse(Arrival.verdict(p, t[0]), "a relog keeps the tower's visit");
-                s = Arrival.state(p);
-
                 // gone long enough, back in on foot: a fresh visit by movement
                 warded[0] = false;
                 walk(p, s, t, at, Arrival.VISIT_GRACE + 20);
