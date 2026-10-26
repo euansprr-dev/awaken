@@ -18,9 +18,9 @@ import java.util.List;
 
 /**
  * The first thread out of Carillon, and chains on the Now line (SPEC §27.6). When the Association registers a player
- * (the opening ends or is skipped) Kestrel's errand, The Last Delivery, starts by itself and is tracked: tell Kestrel
- * what you saw, out the High Gate (a shot of the camp's smoke), run the letters to the Wayfarer camp, deliver them to
- * Ilse by her fire (a scene that ends with her coal, the Ember, in your hand). The thread lets go there: the Hearth's own
+ * (the opening ends or is skipped) the errand Bram gives you, The Last Delivery, starts by itself and is tracked: his
+ * letters for Ilse in your hand (handed over at the Registry like the band), out the High Gate (a shot of the camp's
+ * smoke), to the Wayfarer camp, the letters into Ilse's hands by her fire (a scene that ends with her ember in yours). The thread lets go there: the Hearth's own
  * line ("Place your Ember where you want your home") takes over and the rest of the chain waits in the Journal, so after it the
  * player chooses. The tracked chain's current step is on the Now line with a compass to its place, over bookkeeping
  * (points to spend, the next level's unlock).
@@ -47,6 +47,11 @@ public final class FirstThread {
         if (QuestEngine.start(p, id)) {
             QuestEngine.track(p, id);
             DirectorLog.log(p, "living", "the first thread: " + id + " starts by itself at registration");
+        }
+        // Bram hands the letters over at the Registry; a player who skipped it gets them now
+        var letters = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(dev.awaken.Awaken.id("ilse_letters"));
+        if (letters != net.minecraft.world.item.Items.AIR && !p.getInventory().contains(new net.minecraft.world.item.ItemStack(letters))) {
+            p.getInventory().placeItemBackInInventory(new net.minecraft.world.item.ItemStack(letters), net.minecraft.util.Prediction.SERVER_ONLY);
         }
         // the first tips (SPEC §27.7): the band, then the two lines at the top
         var server = p.level().getServer();

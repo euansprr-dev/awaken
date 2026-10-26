@@ -85,7 +85,7 @@ final class FirstFilm {
             }
             case LivingNet.FirstScene.DELIVERED -> {
                 Cinema.sound(SoundEvents.BOOK_PAGE_TURN, 0.9F, 0.9F);
-                Cinema.barNote("LETTERS DELIVERED  1/1", "THE LAST DELIVERY", 90);
+                Cinema.barNote("LETTERS DELIVERED  1/1", "BRAM'S LETTERS, INTO ILSE'S HANDS", 90);
             }
             case LivingNet.FirstScene.OFFER -> {
                 offering = true;

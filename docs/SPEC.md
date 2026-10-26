@@ -4995,12 +4995,19 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
 
 ### 27.6 The first thread (phase 1)
 - **Registered** (`core.api.OpeningHooks.onRegistered`, fired from `OpeningModule.afterOpening` when the opening ends or
-  is skipped): Kestrel's errand, **The Last Delivery**, starts by itself and is tracked (`living.FirstThread`; once;
-  never for a player who has it or did it): tell Kestrel what you saw at the Roost, out through the High Gate, run the
-  letters to the Wayfarer camp up the north road, deliver them to Ilse by her fire ("Deliver the letters · 0/1"), and
-  take the coal she gives you (the Ember, §28.2). The thread lets go there: its Now line ends once Ilse's step is done,
-  the Hearth's own line ("Place your Ember where you want your home", `hearth:ember`) takes over, and the chain's last two steps
-  (a `hearth` objective: done when you have a Hearth; then back to Kestrel) wait in the Journal. After it the player
+  is skipped): Bram's errand, **The Last Delivery**, starts by itself and is tracked (`living.FirstThread`; once;
+  never for a player who has it or did it). At the end of the Registry (its step `LETTERS`, after the Directive) Bram
+  says what a hunter is for ("Oh, and one more thing. As a hunter, your job is to protect the city from whatever is out
+  in the wilds, beyond the walls.") and where to go first ("Ilse runs a camp for new hunters up the north road. Take
+  these letters to her, and she'll explain the rest."), and holds out **Letters for Ilse** (`awaken:ilse_letters`, an
+  errand item; Bram's prop "letters"), which you take from his hand the way you took the band ("Take the letters").
+  A player who skipped the Registry is given them at registration. The steps: take the letters from Bram (done the
+  moment they're in your pack; it keeps the old first step's place, so saves hold), out through the High Gate, to the
+  Wayfarer camp up the north road, deliver them to Ilse by her fire ("Deliver the letters · 0/1"; she takes them from
+  your pack), and take the ember she gives you (the Ember, §28.2). The thread lets go there: its Now line ends once
+  Ilse's step is done, and the Hearth's own line ("Place your Ember where you want your home", `hearth:ember`) takes
+  over; the chain's last step (a `hearth` objective: done when you have a Hearth) waits in the Journal. Kestrel's
+  word-from-the-square opening and return were cut (Euan, 2026-10-26: Bram hands you the letters). After it the player
   chooses: it is one errand, not a chain that keeps leading (BotW's "lines" railroaded 80% of testers). Euan, after
   playing it (2026-10-26): guide them exactly to the Ember, then let them go and explore.
 - **Chains on the Now line**: the tracked chain's current step (else the first chain's), priority 68 (over points to
@@ -5111,7 +5118,7 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   `news.wilds_*`): the nearest standing gate within 900 of the city ("Hear ye! A gate's light stands past the High Gate,
   to the north!"), else the spawn vault ("…hums again! Its door reads a hunter's rank, they say!"), else the
   Wayfarers' camp. Before, every line in the city was flavour.
-- **Kestrel speaks** before you click her (`named.kestrel`: "Runner! You owe me word from the square.").
+- **Kestrel speaks** before you click her (`named.kestrel`: "Runner! You still haven't told me what happened in the square.").
 - **"Anything for me?"** (`progression.Advice.next`, after Terraria's Guide): a free Registry clerk you right-click says
   the one next step that fits you: a Reassessment waiting, a lock that answers you now, points to spend, the Directive
   you've taken, else the next rank and what it opens for you ("D-rank at level 10. It opens a sealed vault for you, and

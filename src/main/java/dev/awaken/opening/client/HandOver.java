@@ -49,12 +49,17 @@ final class HandOver {
 
     /** Whoever near you holds a Holo band out (Bram behind the desk), or null. */
     static @Nullable LivingEntity holder(double within) {
+        return holder(within, BandModule::isBand);
+    }
+
+    /** Whoever near you holds out what {@code what} matches (Bram with the band, then the letters), or null. */
+    static @Nullable LivingEntity holder(double within, java.util.function.Predicate<ItemStack> what) {
         LocalPlayer p = Minecraft.getInstance().player;
         if (p == null) return null;
         LivingEntity best = null;
         double bestD = within * within;
         for (Entity e : p.level().getEntities(p, new AABB(p.position(), p.position()).inflate(within))) {
-            if (!(e instanceof LivingEntity le) || !BandModule.isBand(le.getMainHandItem())) continue;
+            if (!(e instanceof LivingEntity le) || !what.test(le.getMainHandItem())) continue;
             double d = le.distanceToSqr(p);
             if (d < bestD) {
                 bestD = d;

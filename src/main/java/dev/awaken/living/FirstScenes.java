@@ -39,7 +39,7 @@ import java.util.UUID;
 /**
  * The first thread's two staged moments (SPEC §27.6), server side; the client films them ({@code living.client.FirstFilm}).
  * <ul>
- * <li><b>The High Gate.</b> The first time a player goes out through it on Kestrel's errand, a short shot from the gate to
+ * <li><b>The High Gate.</b> The first time a player goes out through it with Bram's letters, a short shot from the gate to
  * the Wayfarers' smoke rising over the trees, with Hale's line said over it. Once.</li>
  * <li><b>Ilse's fire.</b> Coming up to Ilse with the letters (or talking to her) starts a scene by her fire instead of a
  * bare click: she takes the letters, sits you down, says what a fire of your own is for, and holds a coal from hers out
@@ -59,7 +59,8 @@ public final class FirstScenes {
     static final int LAST = 30, END = LAST + 150;
     /** How long a gate shot shields (it lasts about ten seconds). */
     static final int GATE_SHIELD = 20 * 14;
-    static final Identifier EMBER = Identifier.fromNamespaceAndPath("awaken", "hearth_ember");
+    static final Identifier EMBER = Identifier.fromNamespaceAndPath("awaken", "hearth_ember"),
+            LETTERS = Identifier.fromNamespaceAndPath("awaken", "ilse_letters");
 
     private static final class Run {
         final Wayfarer ilse;
@@ -248,7 +249,7 @@ public final class FirstScenes {
         } else ilse.getNavigation().stop();
         ilse.getLookControl().setLookAt(p, 30, 30);
         int a = ++r.age;
-        if (a == L1) line(p, "Ilse", "You must be Kestrel's runner. Have you got our letters?", 70);
+        if (a == L1) line(p, "Ilse", "You must be one of Bram's new hunters. He said he'd send someone. Have you got our letters?", 70);
         if (a == DELIVER) delivered(p, r);
         if (a == DELIVER + 6) line(p, "Ilse", "Thank you! We've been waiting a whole week for these.", 85);
         if (a == L3) line(p, "Ilse", "Sit down for a minute and catch your breath. You've come a long way.", 60);
@@ -277,7 +278,16 @@ public final class FirstScenes {
 
     private static void delivered(ServerPlayer p, Run r) {
         r.delivered = true;
-        AwakenNet.send(p, new LivingNet.FirstScene(LivingNet.FirstScene.DELIVERED, r.ilse.getId(), r.fire, 0, "Kestrel's letters"));
+        // the letters leave your pack for her hands (none if they went missing on the way: she doesn't mind)
+        Item letters = BuiltInRegistries.ITEM.getValue(LETTERS);
+        var inv = p.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            if (inv.getItem(i).is(letters)) {
+                inv.getItem(i).shrink(1);
+                break;
+            }
+        }
+        AwakenNet.send(p, new LivingNet.FirstScene(LivingNet.FirstScene.DELIVERED, r.ilse.getId(), r.fire, 0, "Bram's letters"));
     }
 
     /** The coal in her hand, held out to you. */

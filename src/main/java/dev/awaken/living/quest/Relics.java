@@ -62,6 +62,8 @@ public final class Relics {
     /** Oren's (Oren's First Steel): a fresh blade tempered at a Forge starts a level up (hearth Upgrades reads it). */
     public static final DeferredItem<Relic> ORENS_MARK = relic("orens_mark", new Perk("awaken:temper_start", 1));
     public static final DeferredItem<Item> PELLS_LETTER = ITEMS.registerSimpleItem("pells_letter", p -> p.stacksTo(1));
+    /** Bram's letters for Ilse (SPEC §27.6): handed over at the Registry, taken by Ilse at the camp. An errand item. */
+    public static final DeferredItem<Item> ILSE_LETTERS = ITEMS.registerSimpleItem("ilse_letters", p -> p.stacksTo(1));
 
     private static DeferredItem<Relic> relic(String id, Perk... perks) {
         return ITEMS.registerItem(id, p -> new Relic(p.stacksTo(1).rarity(Rarity.RARE), List.of(perks)));

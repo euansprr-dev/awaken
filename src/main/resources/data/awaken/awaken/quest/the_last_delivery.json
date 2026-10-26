@@ -6,30 +6,19 @@
     "counter:awaken:carillon_registered"
   ],
   "scene": "resident",
-  "giver": "kestrel",
-  "summary": "Tell Kestrel what happened in the square, then take one last bag of letters to the Wayfarer camp up the north road.",
+  "giver": "bram",
+  "summary": "Bram asked you to take a bundle of letters to Ilse at the Wayfarer camp up the north road. She'll explain the rest.",
   "ask": [
-    "Kestrel: There you are! You were supposed to come and tell me what happened in the square. You're late, Runner.",
-    "Kestrel: The Association told me you'd died. I told them you were probably just running late, as usual.",
-    "Kestrel: So, what did you see?"
+    "Bram: Ilse runs a camp for new hunters up the north road. Take these letters to her, and she'll explain the rest."
   ],
   "steps": [
     {
-      "id": "word",
+      "id": "letters",
       "objective": {
-        "type": "talk",
-        "target": "kestrel"
+        "type": "collect",
+        "target": "awaken:ilse_letters"
       },
-      "text": "Tell Kestrel what you saw",
-      "done": [
-        "Kestrel: A gate opened right under the bells? I didn't think that was even possible.",
-        "Kestrel: Well, thanks for coming to tell me, even if you're late.",
-        "Kestrel: I've got one last delivery for you. The Wayfarer camp up the north road has been waiting a week for these letters.",
-        "Kestrel: Go out through the High Gate and follow the road north. Hale's on the gate, he'll let you through."
-      ],
-      "reward": {
-        "levels": 0.05
-      }
+      "text": "Take the letters from Bram"
     },
     {
       "id": "gate",
@@ -64,7 +53,7 @@
       "text": "Deliver the letters",
       "tally": true,
       "done": [
-        "Ilse: You must be Kestrel's runner. Have you got our letters?",
+        "Ilse: You must be one of Bram's new hunters. He said he'd send someone. Have you got our letters?",
         "Ilse: Thank you! We've been waiting a whole week for these.",
         "Ilse: Here, take an ember from our fire. Carry it with you, and when you find a spot you'd like to live, place it there. That'll be your home."
       ],
@@ -78,19 +67,6 @@
         "type": "hearth"
       },
       "text": "Place your Ember where you want your home"
-    },
-    {
-      "id": "home",
-      "objective": {
-        "type": "talk",
-        "target": "kestrel"
-      },
-      "text": "Go back to Kestrel at the Roost",
-      "done": [
-        "Kestrel: Did you deliver them?",
-        "Kestrel: Good. That was your last delivery. You're a hunter now, not a courier.",
-        "Kestrel: Come back and visit when you can. Your room on the roof is still yours."
-      ]
     }
   ],
   "relic": "awaken:couriers_knot",

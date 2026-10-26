@@ -34,7 +34,7 @@ final class LivingTests {
         dev.awaken.living.population.LedgerTests.register();
         dev.awaken.living.camp.CampTests.register();
         dev.awaken.living.craft.CraftTests.register();
-        // SPEC §27.6: registration starts Kestrel's errand, tracked and on the Now line over bookkeeping; the Registry's
+        // SPEC §27.6: registration starts Bram's errand (his letters for Ilse), tracked and on the Now line over bookkeeping; the Registry's
         // Directive is the first floor, already taken on, with its progress on the line; no gate forms before level 3
         // the Now line's order (SPEC §27.6): a tracked chain's step, then a taken Directive, then points, then the road
         AwakenTests.register("progression_now_priorities", 100, h -> {
@@ -70,11 +70,13 @@ final class LivingTests {
                 h.assertTrue(chain != null, "The Last Delivery is in the quest book");
                 dev.awaken.core.api.OpeningHooks.fireRegistered(p);
                 var qs = dev.awaken.living.quest.QuestEngine.state(p);
-                h.assertTrue(qs.has(chain) && qs.tracked().equals(chain), "registered: Kestrel's errand starts by itself, tracked");
+                h.assertTrue(qs.has(chain) && qs.tracked().equals(chain), "registered: Bram's errand starts by itself, tracked");
+                var letters = new net.minecraft.world.item.ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(FirstScenes.LETTERS));
+                h.assertTrue(p.getInventory().contains(letters), "his letters for Ilse in the pack (handed over at the Registry, or now if it was skipped)");
                 dev.awaken.core.api.OpeningHooks.fireRegistered(p);
                 h.assertTrue(qs.active().size() == 1, "and only once");
                 var now = FirstThread.now(p);
-                h.assertTrue(now.size() == 1 && now.getFirst().priority() > 55 && now.getFirst().text().getString().startsWith("Tell Kestrel"),
+                h.assertTrue(now.size() == 1 && now.getFirst().priority() > 55 && now.getFirst().text().getString().startsWith("Take the letters"),
                         "its step is on the Now line, over points to spend: " + now);
                 dev.awaken.progression.Directives.tryOffer(p, "opening");
                 var d = dev.awaken.progression.Progression.profile(p).directives();
@@ -109,6 +111,8 @@ final class LivingTests {
             ilse.snapTo(p.getX() + 2, p.getY(), p.getZ(), 90, 0);
             ilse.become("ilse", ilse.blockPosition(), 2, 0);
             h.getLevel().addFreshEntity(ilse);
+            var letters = new net.minecraft.world.item.ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(FirstScenes.LETTERS));
+            p.getInventory().add(letters.copy());
             FirstScenes.begin(p, ilse);
             h.assertTrue(FirstScenes.shielded(p), "her scene holds you: nothing hunts you by the fire");
             FirstScenes.ready(p, LivingNet.FirstSceneReady.SKIP);
@@ -116,6 +120,7 @@ final class LivingTests {
                 var ember = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(FirstScenes.EMBER);
                 try {
                     h.assertTrue(ilse.getMainHandItem().is(ember), "a held skip: she holds the coal out, in her hand");
+                    h.assertFalse(p.getInventory().contains(letters), "the letters went from your pack into her hands");
                     FirstScenes.ready(p, LivingNet.FirstSceneReady.TOOK);
                     var qs = dev.awaken.living.quest.QuestEngine.state(p);
                     var a = qs.active().stream().filter(x -> x.chain().equals(chain)).findFirst().orElseThrow();

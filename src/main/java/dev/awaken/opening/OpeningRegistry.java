@@ -39,9 +39,10 @@ final class OpeningRegistry {
     private OpeningRegistry() {}
 
     static final int WALK = 0, READ = 1, SIGN = 2, BAND = 3, WEAR = 4, BOOT = 5, BRIEF = 6, OPEN = 7, STATUS = 8, ATLAS = 9,
-            POWER = 10, DIRECTIVE = 11, YOURS = 12;
+            POWER = 10, DIRECTIVE = 11, YOURS = 12, LETTERS = 13;
     /** How long each clocked step plays, and the most a screen or a scene waits. */
-    static final int READ_TICKS = 110, BRIEF_TICKS = 20 * 28, SCREEN_MAX = 20 * 75, DIRECTIVE_TICKS = 220, YOURS_TICKS = 200,
+    static final int READ_TICKS = 110, BRIEF_TICKS = 20 * 28, SCREEN_MAX = 20 * 75, DIRECTIVE_TICKS = 220, YOURS_TICKS = 140,
+            LETTERS_OUT = 150,
             SCENE_MAX = 20 * 20, BOOT_MAX = 20 * 12;
     /** Close enough to the Lens to be read; to the desk to sign; to Bram to take the band. */
     static final double MARK = 2.2, DESK = 2.0, HAND = 3.4;
@@ -178,10 +179,20 @@ final class OpeningRegistry {
                     say(p, at, w, "The Signal will give you Directives. They're small jobs the Association pays you for, and you'll never have more than three at once. Think of them as suggestions, not orders.");
                 }
                 if (lead) toDesk(p, at, w, "", "");
-                if (age >= DIRECTIVE_TICKS) step(p, YOURS);
+                if (age >= DIRECTIVE_TICKS) step(p, LETTERS);
+            }
+            case LETTERS -> {
+                // what a hunter is for, and where to go first: Ilse's camp, with letters he hands you like the band
+                if (age == 10) say(p, at, w, "Oh, and one more thing. As a hunter, your job is to protect the city from whatever is out in the wilds, beyond the walls.");
+                if (age == LETTERS_OUT) say(p, at, w, "Ilse runs a camp for new hunters up the north road. Take these letters to her, and she'll explain the rest.");
+                if (lead) toDesk(p, at, w, age >= LETTERS_OUT ? "serve" : "hands_behind", age >= LETTERS_OUT ? "letters" : "");
+                if (w.ready || !client && age > LETTERS_OUT + 20 || age > LETTERS_OUT + SCREEN_MAX) {
+                    giveLetters(p);
+                    step(p, YOURS);
+                } else if (age > LETTERS_OUT) nudge(p, at, w, now, "Go on, take them.");
             }
             case YOURS -> {
-                if (age == 1) say(p, at, w, "That's everything. Your room at the Roost is still yours whenever you need to rest. And Kestrel wants to hear what happened in the square, so go and find her first.");
+                if (age == 1) say(p, at, w, "That's everything. Your room at the Roost is still yours whenever you need to rest. Good luck out there.");
                 if (lead) toDesk(p, at, w, "wave", "");
                 if (age >= YOURS_TICKS) {
                     WALKS.remove(p.getUUID());
@@ -212,6 +223,12 @@ final class OpeningRegistry {
                 // his hand is empty the moment yours closes on it
                 OpeningPlaces at = OpeningPlaces.get();
                 if (at != null && lead(p) && !anyOtherAt(p, BAND)) stage(p, at.bramDesk(), yawTo(at.bramDesk(), p.position()), "hands_behind", "");
+            }
+            case LETTERS -> {
+                if (p.position().distanceTo(bramOr(p)) > HAND + 1.5) return;
+                w.ready = true;
+                OpeningPlaces at = OpeningPlaces.get();
+                if (at != null && lead(p) && !anyOtherAt(p, LETTERS)) stage(p, at.bramDesk(), yawTo(at.bramDesk(), p.position()), "hands_behind", "");
             }
             case BOOT, OPEN, STATUS, ATLAS -> w.ready = true;
             case POWER -> step(p, DIRECTIVE);
@@ -357,6 +374,15 @@ final class OpeningRegistry {
         w.lastLine = OpeningDirector.now(p);
         Vec3 where = bramOr(p).add(0, 1.8, 0);
         AwakenNet.send(p, new OpeningPayloads.Cue(OpeningPayloads.CUE_LINE, where, 0F, 20 * 3 + line.length() * 2, "Bram|" + line));
+    }
+
+    // ---- the letters ------------------------------------------------------------------------------------------------
+
+    /** Bram's letters for Ilse (SPEC §27.6), into the pack once; the first thread's errand carries them to the camp. */
+    static void giveLetters(ServerPlayer p) {
+        var item = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(dev.awaken.Awaken.id("ilse_letters"));
+        if (item == net.minecraft.world.item.Items.AIR || p.getInventory().contains(new ItemStack(item))) return;
+        p.getInventory().placeItemBackInInventory(new ItemStack(item), net.minecraft.util.Prediction.SERVER_ONLY);
     }
 
     // ---- the licence -------------------------------------------------------------------------------------------------
