@@ -1941,6 +1941,10 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     respawn (the worn one never leaves the wrist); a dropped band never despawns and doesn't burn. `/awaken band
     status|wear|dark|give`. GameTests: `holo_band_dark_until_worn`, `holo_band_wearing_toggles`, `holo_band_slot_saves`,
     and `opening_skip` / `opening_state_machine` check the band.
+  - From Euan's watch of the tours (2026-10-26): Bram reaches the desk round the counter's far (north) end, never across
+    its front where you stand, and is put straight behind it when he has no body near; a staged citizen can't be pushed
+    (so never shoves you); the opening's speech shows one line at a time (a new line replaces the old, no stacking); the
+    key prompt sits just above the speech; the licence goes into the pack so the band lands in your hand.
   - **Proposed (Euan to confirm): the Atlas reveal right after the band's first K.** The Holo's boot is the natural
     moment: when the K menu closes the Atlas opens by itself with the run you made this morning (the land prints in, the
     bronze thread draws itself), and Bram says "Your band keeps a map. The city, the way you've run it." The run is sent

@@ -87,8 +87,9 @@ final class OpeningHud {
         l.ticks = Math.max(40, ticks);
         int w = Math.min(320, mc.getWindow().getGuiScaledWidth() - 40);
         l.text = mc.font.split(Component.literal(line), w);
+        // one line at a time (Euan, 2026-10-26: two stacked is too much): the new one replaces the old
+        LINES.clear();
         LINES.add(l);
-        while (LINES.size() > 2) LINES.removeFirst();
     }
 
     /** A prompt the scene waits on (the Registry: sign, take the band, your inventory, K): the key as a cap, then what
@@ -172,8 +173,8 @@ final class OpeningHud {
         if (bl > 0.003F) g.fill(0, 0, w, h, ((int) (Math.min(1F, bl) * 255) << 24));
         if (sky != null) card(g, font, w, h, pt, sky);
         if (title != null) title(g, font, w, h, pt, now);
-        lines(g, font, w, h, pt, now);
-        if (!OpeningCamera.active()) prompt(g, font, w, h, pt);
+        int speech = lines(g, font, w, h, pt, now);
+        if (!OpeningCamera.active()) prompt(g, font, w, Math.min(h - 96, speech - 20), pt);
         if (waiting > 0 && !OpeningCamera.active()) waitBanner(g, font, w, h, pt, now);
         if (sky != null && sky.canSkip && OpeningCamera.active()) skipHint(g, font, w, h, pt);
     }
@@ -271,7 +272,8 @@ final class OpeningHud {
         if (!tt.small.isEmpty()) spacedCentered(g, font, tt.small, w / 2, ly + 6, 1, ((int) (a * 220) << 24) | ASH);
     }
 
-    private static void lines(GuiGraphicsExtractor g, Font font, int w, int h, float pt, long now) {
+    /** The speech, stacked up from above the hotbar; returns the top of what it drew. */
+    private static int lines(GuiGraphicsExtractor g, Font font, int w, int h, float pt, long now) {
         int y = h - 68;
         for (int k = LINES.size() - 1; k >= 0; k--) {
             Line l = LINES.get(k);
@@ -287,16 +289,17 @@ final class OpeningHud {
                 g.text(font, s, w / 2 - font.width(s) / 2, y + 11 + i * 10, (ia << 24) | PAPER, true);
             }
         }
+        return y;
     }
 
     /** The prompt: a key cap in the Runners' bronze and paper, the words beside it, just above the speech. */
-    private static void prompt(GuiGraphicsExtractor g, Font font, int w, int h, float pt) {
+    private static void prompt(GuiGraphicsExtractor g, Font font, int w, int top, float pt) {
         float a = Mth.lerp(pt, promptAO, promptA);
         if (a <= 0.02F || promptText.isEmpty()) return;
         String key = promptKey != null ? promptKey : lastKey;
         if (promptKey != null) lastKey = promptKey;
         int kw = Math.max(13, font.width(key) + 8), tw = font.width(promptText), gap = 6;
-        int x = w / 2 - (kw + gap + tw) / 2, y = h - 60; // under the speech (it stacks up from h - 68), over the health bar
+        int x = w / 2 - (kw + gap + tw) / 2, y = top; // just above the speech (and clear of the held item's name)
         int ia = (int) (a * 255);
         float pulse = 0.75F + 0.25F * Mth.sin((OpeningClient.ticks() + pt) * 0.18F);
         g.fill(x, y - 2, x + kw, y + 11, ((int) (a * 170) << 24) | 0x0C0F14);

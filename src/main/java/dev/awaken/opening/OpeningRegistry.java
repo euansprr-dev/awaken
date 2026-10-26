@@ -205,7 +205,11 @@ final class OpeningRegistry {
                 w.ready = true;
             }
             case BAND -> {
-                if (p.position().distanceTo(bramOr(p)) <= HAND + 1.5) w.ready = true;
+                if (p.position().distanceTo(bramOr(p)) > HAND + 1.5) return;
+                w.ready = true;
+                // his hand is empty the moment yours closes on it
+                OpeningPlaces at = OpeningPlaces.get();
+                if (at != null && lead(p) && !anyOtherAt(p, BAND)) stage(p, at.bramDesk(), yawTo(at.bramDesk(), p.position()), "hands_behind", "");
             }
             case BOOT, OPEN, STATUS, ATLAS -> w.ready = true;
             case POWER -> step(p, DIRECTIVE);
@@ -297,6 +301,13 @@ final class OpeningRegistry {
         }
         String a = behind ? (act.isEmpty() && now - w.lastLine < 60 ? "talk" : act) : "";
         stage(p, t, behind ? yawTo(t, p.position()) : yawTo(bram == null ? t : bram, t), a, behind ? prop : "");
+    }
+
+    private static boolean anyOtherAt(ServerPlayer p, int step) {
+        for (ServerPlayer o : p.level().getServer().getPlayerList().getPlayers()) {
+            if (o != p && OpeningDirector.beat(o) == Prologue.REGISTRY && OpeningDirector.state(o).step == step) return true;
+        }
+        return false;
     }
 
     private static boolean anyAt(ServerPlayer p, int step) {
