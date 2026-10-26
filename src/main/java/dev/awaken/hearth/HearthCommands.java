@@ -65,7 +65,59 @@ final class HearthCommands {
             admin.then(Commands.literal("town").then(Commands.literal("arrive").then(Commands.argument("npc", StringArgumentType.word())
                     .suggests((c, b) -> SharedSuggestionProvider.suggest(Townsfolk.all().keySet(), b))
                     .executes(HearthCommands::arrive))));
-            admin.then(Commands.literal("hearth").then(Commands.literal("scan").executes(c -> {
+            // the carried flame (tours and tests): give an Ember, set it down here, raise the fire, read the room you're in
+            admin.then(Commands.literal("ember")
+                    .then(Commands.literal("give").executes(c -> {
+                        ServerPlayer sp = c.getSource().getPlayerOrException();
+                        boolean given = Embers.give(sp);
+                        c.getSource().sendSuccess(() -> Component.literal(given ? "Gave a Hearth Ember" : "No Ember: you have one, or a Hearth"), false);
+                        return given ? 1 : 0;
+                    }))
+                    .then(Commands.literal("set").executes(c -> {
+                        ServerPlayer sp = c.getSource().getPlayerOrException();
+                        ServerLevel level = sp.level();
+                        var ground = sp.blockPosition().below();
+                        Optional<String> why = Embers.refusal(sp, level, ground, ground.above());
+                        if (why.isPresent()) {
+                            c.getSource().sendFailure(Component.literal(why.get()));
+                            return 0;
+                        }
+                        var inv = sp.getInventory();
+                        for (int i = 0; i < inv.getContainerSize(); i++) if (inv.getItem(i).is(HearthContent.EMBER_ITEM.get())) inv.getItem(i).shrink(1);
+                        HearthRecord h = Embers.found(sp, level, ground.above());
+                        c.getSource().sendSuccess(() -> Component.literal("The coal took: " + h.name), false);
+                        return 1;
+                    }))
+                    .then(Commands.literal("raise").executes(c -> {
+                        ServerPlayer sp = c.getSource().getPlayerOrException();
+                        Optional<HearthRecord> h = HearthService.hearthOf(sp).filter(HearthRecord::hearthfire);
+                        if (h.isEmpty()) {
+                            c.getSource().sendFailure(Component.literal("You have no Hearthfire."));
+                            return 0;
+                        }
+                        Embers.raise(sp, HearthService.levelOf(sp.level().getServer(), h.get()), h.get());
+                        return 1;
+                    })));
+            admin.then(Commands.literal("hearth").then(Commands.literal("read").executes(c -> {
+                ServerPlayer sp = c.getSource().getPlayerOrException();
+                HearthService.homeOf(sp).ifPresent(h -> HearthService.scanNow(HearthService.levelOf(sp.level().getServer(), h), h));
+                Optional<Room> r = HearthService.roomHere(sp);
+                if (r.isEmpty()) {
+                    c.getSource().sendFailure(Component.literal("You're not in a room the Hearth has read."));
+                    return 0;
+                }
+                var g = r.get().reading();
+                c.getSource().sendSuccess(() -> Component.literal(g.name() + " · " + g.grade().label + " · closed " + g.closed() + " light " + g.light()
+                        + " warmth " + g.warmth() + " room " + g.space() + " care " + g.care() + " detail " + g.detail()
+                        + (g.lift().isEmpty() ? "" : " · lift: " + g.lift()) + " · " + r.get().types()), false);
+                return g.grade().ordinal() + 1;
+            })).then(Commands.literal("rested").executes(c -> {
+                ServerPlayer sp = c.getSource().getPlayerOrException();
+                Optional<HearthRecord> h = HearthService.homeOf(sp);
+                if (h.isEmpty()) return 0;
+                Rested.rest(sp, sp.level(), h.get());
+                return 1;
+            })).then(Commands.literal("scan").executes(c -> {
                 ServerPlayer sp = c.getSource().getPlayerOrException();
                 Optional<HearthRecord> h = HearthService.homeOf(sp);
                 if (h.isEmpty()) {

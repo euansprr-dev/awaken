@@ -2,22 +2,44 @@ package dev.awaken.hearth.room;
 
 import dev.awaken.hearth.HearthContent;
 import dev.awaken.hearth.HearthRecord;
-import dev.awaken.hearth.block.ForgeBlock;
-import dev.awaken.hearth.block.TrophyMountBlock;
+import dev.awaken.hearth.block.HearthfireBlock;
+import dev.awaken.hearth.block.RolePadBlock;
 import dev.awaken.hearth.block.TrophyMountBlockEntity;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.decoration.HangingEntity;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.block.BasePressurePlateBlock;
+import net.minecraft.world.level.block.BaseTorchBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ChainBlock;
+import net.minecraft.world.level.block.ComposterBlock;
+import net.minecraft.world.level.block.FlowerPotBlock;
+import net.minecraft.world.level.block.LanternBlock;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.StairBlock;
+import net.minecraft.world.level.block.entity.SignBlockEntity;
+import net.minecraft.world.level.block.entity.SignTextSlot;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.Half;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -25,6 +47,7 @@ import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.common.Tags;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,25 +55,31 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
- * Finds rooms inside a Hearth's radius. Cheap and budgeted: a palette sweep skips every chunk section that cannot hold
- * room furniture, then a bounded flood fill from each piece of furniture finds the enclosed space around it. Work is
- * spread across ticks ({@link #step}) so a scan never costs more than a fraction of a millisecond per tick.
+ * Finds and reads rooms inside a Hearth's radius. Cheap and budgeted: a palette sweep skips every chunk section that
+ * holds nothing a home is made of, then a flood fill from each piece of furniture (and each door, light, chest, sign,
+ * and the household standing in the radius) finds the enclosed space around it, and one pass over that space's cells
+ * and wall faces reads it ({@link Tally}, {@link Reading}). Every stage stops when the tick's budget is spent and goes
+ * on next tick, so a big hall never costs more than the budget in one tick.
  *
  * <p>When a flood leaks, a second bounded fill of the covered space around the furniture says why ({@link Miss}): it
  * sees the sky, a hole in the roof, a gap in a wall, or it is too big. Furniture in the same leaky space shares that
  * answer without another fill.
  */
 public final class RoomScanner {
-    /** A room is at most this many open cells and this wide; anything bigger is "outside". */
-    public static final int MAX_CELLS = 4096;
-    public static final int MAX_EXTENT = 32;
+    /** A room is at most this many open cells and this many blocks a side (a big hall fits); anything bigger is "outside". */
+    public static final int MAX_CELLS = 20_000;
+    public static final int MAX_EXTENT = 48;
     /** Explanations per scan, and per kind of furniture (each costs one more bounded fill; village beds can't use them up). */
     public static final int MAX_MISSES = 24, MAX_MISSES_PER_KIND = 4;
     /** How far above the heightmap a slab or trapdoor still counts as a roof. */
     private static final int ROOF_REACH = 24;
+    /** How far outside a room the ground is looked for (a tower's foot). */
+    private static final int GROUND_OUT = 4;
 
-    private static final Predicate<BlockState> FURNITURE = RoomScanner::isFurniture;
+    private static final Predicate<BlockState> INTEREST = RoomScanner::interesting;
     private static final Direction[] DIRS = Direction.values();
+    /** Seeds that aren't furniture (a door, a light, a person standing there). */
+    private static final int NO_KIND = -1, LIGHT_KIND = -2;
 
     private enum Phase { SWEEP, FLOOD, DONE }
 
@@ -64,17 +93,29 @@ public final class RoomScanner {
     private final IntArrayList seedKinds = new IntArrayList();
     private int seedIndex;
     private final LongSet claimed = new LongOpenHashSet();
+    /** Every cell of every closed room this scan (what counts as indoors for the yard's lights). */
+    private final LongSet indoors = new LongOpenHashSet();
     /** Cells of leaky spaces, mapped to the miss that explains them. */
     private final Long2IntOpenHashMap missOf = new Long2IntOpenHashMap();
     /** "miss index × furniture" pairs already reported, so ten beds in one leaky barn give one line per kind. */
     private final Set<Long> reported = new HashSet<>();
     private final List<Room> found = new ArrayList<>();
     private final List<Miss> misses = new ArrayList<>();
+    private final List<Scan.Pad> pads = new ArrayList<>();
+    private final LongArrayList lights = new LongArrayList();
     private final int[] furniture = new int[Furniture.COUNT];
     private final int[] diagnosed = new int[Furniture.COUNT];
     private int fills;
+    private int farmland, fences, walls, composters, flowers;
+    /** The seed being worked on (null between seeds). */
+    private Job job;
 
     public RoomScanner(ServerLevel level, HearthRecord hearth, Consumer<Scan> onDone) {
+        this(level, hearth, List.of(), onDone);
+    }
+
+    /** {@code people}: where the household stands in the radius (a room with nothing in it yet is still read). */
+    public RoomScanner(ServerLevel level, HearthRecord hearth, List<BlockPos> people, Consumer<Scan> onDone) {
         this.level = level;
         this.hearth = hearth;
         this.onDone = onDone;
@@ -90,6 +131,11 @@ public final class RoomScanner {
         cz = minCz;
         sy = minSy;
         missOf.defaultReturnValue(-1);
+        for (BlockPos p : people) {
+            if (!hearth.contains(p)) continue;
+            seeds.add(p.immutable());
+            seedKinds.add(NO_KIND);
+        }
     }
 
     public HearthRecord hearth() {
@@ -110,7 +156,7 @@ public final class RoomScanner {
         while (budget > 0 && phase != Phase.DONE) {
             budget -= switch (phase) {
                 case SWEEP -> sweepOne();
-                case FLOOD -> floodOne();
+                case FLOOD -> floodStep(budget);
                 default -> 0;
             };
         }
@@ -127,20 +173,15 @@ public final class RoomScanner {
         LevelChunk chunk = level.getChunkSource().getChunkNow(cx, cz);
         if (chunk != null) {
             LevelChunkSection section = chunk.getSection(chunk.getSectionIndexFromSectionY(sy));
-            if (!section.hasOnlyAir() && section.maybeHas(FURNITURE)) {
+            if (!section.hasOnlyAir() && section.maybeHas(INTEREST)) {
                 cost += 4096;
                 int bx = SectionPos.sectionToBlockCoord(cx), by = SectionPos.sectionToBlockCoord(sy), bz = SectionPos.sectionToBlockCoord(cz);
                 for (int y = 0; y < 16; y++) {
                     for (int z = 0; z < 16; z++) {
                         for (int x = 0; x < 16; x++) {
                             BlockState s = section.getBlockState(x, y, z);
-                            Furniture f = Furniture.of(s);
-                            if (f == null) continue;
-                            BlockPos p = new BlockPos(bx + x, by + y, bz + z);
-                            if (!hearth.contains(p)) continue;
-                            seeds.add(p);
-                            seedKinds.add(f.ordinal());
-                            if (f != Furniture.TROPHY || mountedTrophy(p) != null) furniture[f.ordinal()]++;
+                            if (s.isAir()) continue;
+                            sweepBlock(s, bx + x, by + y, bz + z);
                         }
                     }
                 }
@@ -156,7 +197,28 @@ public final class RoomScanner {
         return cost;
     }
 
-    /** Floods (and explains) the furniture nearest the Anchor first: that is most likely the owner's own. */
+    private void sweepBlock(BlockState s, int x, int y, int z) {
+        Furniture f = Furniture.of(s);
+        boolean seed = f != null || isSeed(s);
+        boolean land = s.is(BlockTags.FENCES) || s.is(BlockTags.WALLS) || s.getBlock() instanceof ComposterBlock || s.is(BlockTags.FLOWERS);
+        if (!seed && !land) return;
+        BlockPos p = new BlockPos(x, y, z);
+        if (!hearth.contains(p)) return;
+        if (s.is(BlockTags.FENCES)) fences++;
+        else if (s.is(BlockTags.WALLS)) walls++;
+        else if (s.getBlock() instanceof ComposterBlock) composters++;
+        else if (s.is(BlockTags.FLOWERS) && !(s.getBlock() instanceof FlowerPotBlock)) flowers++;
+        if (!seed) return;
+        if (f == Furniture.GROWING && !(s.getBlock() instanceof FlowerPotBlock)) farmland++;
+        if (f == Furniture.PAD && s.getBlock() instanceof RolePadBlock pad) pads.add(new Scan.Pad(p, pad.role));
+        boolean light = givesLight(s);
+        if (light) lights.add(p.asLong());
+        seeds.add(p);
+        seedKinds.add(f != null ? f.ordinal() : light ? LIGHT_KIND : NO_KIND);
+        if (f != null && (f != Furniture.TROPHY || mountedTrophy(p) != null)) furniture[f.ordinal()]++;
+    }
+
+    /** Floods (and explains) what is nearest the Anchor first: that is most likely the owner's own. */
     private int nearestFirst() {
         int n = seeds.size();
         if (n < 2) return 1;
@@ -177,84 +239,164 @@ public final class RoomScanner {
         return n;
     }
 
-    // ---- phase 2: flood fill the enclosed space around each piece of furniture ----------------------------------------
+    // ---- phase 2: flood fill the enclosed space around each seed, then read it --------------------------------------
 
-    private int floodOne() {
-        if (seedIndex >= seeds.size()) {
-            finish();
-            return 1;
+    /** One seed's work, carried across ticks: the fill, then the reading pass (a closed room) or the explanation. */
+    private final class Job {
+        final BlockPos seed;
+        final Furniture kind;
+        final LongArrayFIFOQueue queue = new LongArrayFIFOQueue();
+        final LongOpenHashSet visited = new LongOpenHashSet();
+        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
+        /** Why the fill stopped: null while filling or closed. */
+        Miss.Leak stopped;
+        boolean filled, side;
+        // the reading pass
+        LongIterator cells;
+        Tally tally;
+        LongOpenHashSet wallSeen;
+        Set<String> trophies;
+
+        Job(BlockPos seed, Furniture kind) {
+            this.seed = seed;
+            this.kind = kind;
         }
-        int si = seedIndex++;
-        BlockPos seed = seeds.get(si);
-        Furniture kind = Furniture.values()[seedKinds.getInt(si)];
-        LongArrayFIFOQueue queue = new LongArrayFIFOQueue();
-        LongOpenHashSet visited = new LongOpenHashSet();
+    }
+
+    private int floodStep(int budget) {
+        if (job == null) {
+            if (!sides.isEmpty()) {
+                // the other open sides of a door or a full-block piece: each floods on its own (inside and out never mix)
+                long side = sides.dequeueLong();
+                int k = sideKinds.removeInt(0);
+                BlockPos at = BlockPos.of(side);
+                if (claimed.contains(side)) {
+                    inherit(k >= 0 ? Furniture.values()[k] : null, sideSeed, side);
+                    return 1;
+                }
+                begin(at, k >= 0 ? Furniture.values()[k] : null, sideSeed);
+                job.side = true;
+                return 2;
+            }
+            if (seedIndex >= seeds.size()) {
+                finish();
+                return 1;
+            }
+            int si = seedIndex++;
+            int k = seedKinds.getInt(si);
+            return startJob(seeds.get(si), k >= 0 ? Furniture.values()[k] : null, k);
+        }
+        if (!job.filled) return fill(budget);
+        if (job.stopped == null) return read(budget);
+        int cost = diagnose(job.kind, job.seed, job.visited, job.stopped);
+        job = null;
+        return cost;
+    }
+
+    /** Open sides of the last solid seed still to flood, with its kind. */
+    private final LongArrayFIFOQueue sides = new LongArrayFIFOQueue();
+    private final IntArrayList sideKinds = new IntArrayList();
+    private BlockPos sideSeed = BlockPos.ZERO;
+    /** One of the solid seed's sides closed into a room: its other sides' leaks need no explaining. */
+    private boolean sideClosed;
+
+    private int startJob(BlockPos seed, Furniture kind, int k) {
         if (passable(seed)) {
             if (claimed.contains(seed.asLong())) {
                 inherit(kind, seed, seed.asLong());
                 return 1;
             }
-            queue.enqueue(seed.asLong());
-            visited.add(seed.asLong());
-        } else {
-            // Full-block furniture (a Forge, a machine) floods from the open cells around it. Cells another flood already
-            // covered are that room (counted from its walls) or that leak (explained once): skip them.
-            for (Direction d : DIRS) {
-                BlockPos n = seed.relative(d);
-                if (!level.isLoaded(n) || !passable(n)) continue;
-                long nl = n.asLong();
-                if (claimed.contains(nl)) {
-                    inherit(kind, seed, nl);
-                    continue;
-                }
-                if (visited.add(nl)) queue.enqueue(nl);
-            }
+            return begin(seed, kind, seed);
         }
-        if (queue.isEmpty()) return 6;
+        // Full-block furniture (a Forge, a machine) and doors flood from the open cells around them, one side at a time.
+        // Cells another flood already covered are that room (counted from its walls) or that leak (explained once).
+        sideSeed = seed;
+        sideClosed = false;
+        for (Direction d : DIRS) {
+            BlockPos n = seed.relative(d);
+            if (!level.isLoaded(n) || !passable(n)) continue;
+            long nl = n.asLong();
+            if (claimed.contains(nl)) {
+                inherit(kind, seed, nl);
+                continue;
+            }
+            sides.enqueue(nl);
+            sideKinds.add(k);
+        }
+        return 7;
+    }
+
+    /** Starts the fill from one open cell. {@code seed}: the furniture it explains (the cell itself or a solid piece beside it). */
+    private int begin(BlockPos start, Furniture kind, BlockPos seed) {
+        Job j = new Job(seed, kind);
+        j.queue.enqueue(start.asLong());
+        j.visited.add(start.asLong());
+        job = j;
+        return 2;
+    }
+
+    /** The fill, as far as the budget goes: open as soon as it sees the sky, meets unloaded land or outgrows a room. */
+    private int fill(int budget) {
+        Job j = job;
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         int cost = 0;
-        boolean open = false;
-        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
-        int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
-        while (!queue.isEmpty()) {
-            long l = queue.dequeueLong();
+        while (!j.queue.isEmpty() && cost < budget) {
+            long l = j.queue.dequeueLong();
             m.set(l);
             cost += 7;
             if (seesSky(m)) {
-                open = true;
-                break;
-            }
-            minX = Math.min(minX, m.getX()); maxX = Math.max(maxX, m.getX());
-            minY = Math.min(minY, m.getY()); maxY = Math.max(maxY, m.getY());
-            minZ = Math.min(minZ, m.getZ()); maxZ = Math.max(maxZ, m.getZ());
-            if (visited.size() > MAX_CELLS || maxX - minX > MAX_EXTENT || maxZ - minZ > MAX_EXTENT || maxY - minY > MAX_EXTENT) {
-                open = true;
+                j.stopped = Miss.Leak.SKY;
                 break;
             }
             int x = m.getX(), y = m.getY(), z = m.getZ();
+            j.minX = Math.min(j.minX, x); j.maxX = Math.max(j.maxX, x);
+            j.minY = Math.min(j.minY, y); j.maxY = Math.max(j.maxY, y);
+            j.minZ = Math.min(j.minZ, z); j.maxZ = Math.max(j.maxZ, z);
+            if (j.visited.size() > MAX_CELLS) {
+                j.stopped = Miss.Leak.TOO_BIG;
+                break;
+            }
+            if (j.maxX - j.minX >= MAX_EXTENT || j.maxZ - j.minZ >= MAX_EXTENT || j.maxY - j.minY >= MAX_EXTENT) {
+                j.stopped = Miss.Leak.TOO_WIDE;
+                break;
+            }
             for (Direction d : DIRS) {
                 m.set(x + d.getStepX(), y + d.getStepY(), z + d.getStepZ());
                 long nl = m.asLong();
-                if (visited.contains(nl)) continue;
+                if (j.visited.contains(nl)) continue;
                 if (!level.isLoaded(m)) {
-                    open = true;
+                    j.stopped = Miss.Leak.OPENING;
                     break;
                 }
                 if (passable(m)) {
-                    visited.add(nl);
-                    queue.enqueue(nl);
+                    j.visited.add(nl);
+                    j.queue.enqueue(nl);
                 }
             }
-            if (open) break;
+            if (j.stopped != null) break;
         }
-        claimed.addAll(visited);
-        if (open) return cost + diagnose(kind, seed, visited) + takeSkyReads();
-        found.add(build(visited, new BlockPos(minX, minY, minZ), new BlockPos(maxX, maxY, maxZ)));
-        return cost + visited.size() + takeSkyReads();
+        cost += takeSkyReads();
+        if (j.stopped == null && !j.queue.isEmpty()) return cost; // more next tick
+        j.filled = true;
+        claimed.addAll(j.visited);
+        if (j.stopped != null) {
+            // a leaky space: only the furniture the guide explains is worth a second fill; the rest just ends here. A solid
+            // piece is explained once, from its last side, and only when none of its sides is a room.
+            if (j.kind == null || !j.kind.explained() || j.side && (!sides.isEmpty() || sideClosed)) job = null;
+            return cost;
+        }
+        j.cells = j.visited.iterator();
+        j.tally = new Tally();
+        j.tally.bounds(j.minX, j.minZ, j.maxX, j.maxZ);
+        j.wallSeen = new LongOpenHashSet();
+        j.trophies = new HashSet<>();
+        return cost;
     }
 
     /** Furniture whose space another flood already found leaky gets that flood's answer. */
     private void inherit(Furniture kind, BlockPos seed, long cell) {
+        if (kind == null || !kind.explained()) return;
         int mi = missOf.get(cell);
         if (mi < 0 || !reported.add((long) mi * Furniture.COUNT + kind.ordinal())) return;
         Miss base = misses.get(mi);
@@ -266,31 +408,37 @@ public final class RoomScanner {
     /**
      * Fills the covered space around the furniture, treating open sky as a wall: a covered cell with sky right above it
      * means no roof; sky beside the space inside its footprint is a hole in the roof; sky beside it at the edge is a gap
-     * in a wall. Bounded like the room fill. Returns its cost.
+     * in a wall. A space that outgrew a room needs no second fill: it is too big or too wide. Returns its cost.
      */
-    private int diagnose(Furniture kind, BlockPos seed, LongOpenHashSet firstFill) {
+    private int diagnose(Furniture kind, BlockPos seed, LongOpenHashSet firstFill, Miss.Leak stopped) {
         if (fills >= MAX_MISSES || diagnosed[kind.ordinal()] >= MAX_MISSES_PER_KIND) return 1;
         fills++;
         diagnosed[kind.ordinal()]++;
-        List<BlockPos> starts = new ArrayList<>();
-        if (passable(seed)) starts.add(seed);
-        else for (Direction d : DIRS) {
-            BlockPos n = seed.relative(d);
-            if (level.isLoaded(n) && passable(n)) starts.add(n);
-        }
         int cost = 0;
         Miss.Leak leak = null;
         BlockPos at = null;
-        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
-        for (BlockPos s : starts) {
-            cost += 4;
-            if (seesSky(s)) {
-                leak = Miss.Leak.SKY;
-                at = s.immutable();
-                break;
+        LongOpenHashSet seen = new LongOpenHashSet();
+        if (stopped == Miss.Leak.TOO_BIG || stopped == Miss.Leak.TOO_WIDE) {
+            leak = stopped;
+            at = seed;
+        }
+        List<BlockPos> starts = new ArrayList<>();
+        if (leak == null) {
+            if (passable(seed)) starts.add(seed);
+            else for (Direction d : DIRS) {
+                BlockPos n = seed.relative(d);
+                if (level.isLoaded(n) && passable(n)) starts.add(n);
+            }
+            for (BlockPos s : starts) {
+                cost += 4;
+                if (seesSky(s)) {
+                    leak = Miss.Leak.SKY;
+                    at = s.immutable();
+                    break;
+                }
             }
         }
-        LongOpenHashSet seen = new LongOpenHashSet();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         if (leak == null) {
             LongArrayFIFOQueue queue = new LongArrayFIFOQueue();
             for (BlockPos s : starts) if (seen.add(s.asLong())) queue.enqueue(s.asLong());
@@ -298,7 +446,9 @@ public final class RoomScanner {
             LongArrayList sideFrom = new LongArrayList(), sideTo = new LongArrayList();
             int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
             int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
-            boolean big = false;
+            Miss.Leak big = null;
+            // the explanation is a cheaper fill than a room's: a space this size with a gap is told by its first gap
+            int cap = Math.min(MAX_CELLS, 6144);
             while (!queue.isEmpty()) {
                 long l = queue.dequeueLong();
                 m.set(l);
@@ -307,8 +457,12 @@ public final class RoomScanner {
                 minX = Math.min(minX, x); maxX = Math.max(maxX, x);
                 minY = Math.min(minY, y); maxY = Math.max(maxY, y);
                 minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
-                if (seen.size() > MAX_CELLS || maxX - minX > MAX_EXTENT || maxZ - minZ > MAX_EXTENT || maxY - minY > MAX_EXTENT) {
-                    big = true;
+                if (maxX - minX >= MAX_EXTENT || maxZ - minZ >= MAX_EXTENT || maxY - minY >= MAX_EXTENT) {
+                    big = Miss.Leak.TOO_WIDE;
+                    break;
+                }
+                if (seen.size() > cap) {
+                    big = Miss.Leak.TOO_BIG;
                     break;
                 }
                 for (Direction d : DIRS) {
@@ -334,10 +488,7 @@ public final class RoomScanner {
                     queue.enqueue(nl);
                 }
             }
-            if (big) {
-                leak = Miss.Leak.TOO_BIG;
-                at = seed;
-            } else if (up != Long.MIN_VALUE) {
+            if (up != Long.MIN_VALUE) {
                 leak = Miss.Leak.SKY;
                 at = BlockPos.of(up).above();
             } else {
@@ -354,9 +505,13 @@ public final class RoomScanner {
                         at = to;
                     }
                 }
-                if (leak == null) {
+                if (leak == null && !sideFrom.isEmpty()) {
                     leak = Miss.Leak.OPENING;
-                    at = sideFrom.isEmpty() ? seed : BlockPos.of(sideFrom.getLong(0));
+                    at = BlockPos.of(sideFrom.getLong(0));
+                }
+                if (leak == null) {
+                    leak = big != null ? big : Miss.Leak.OPENING;
+                    at = seed;
                 }
             }
         }
@@ -368,72 +523,235 @@ public final class RoomScanner {
         it = seen.iterator();
         while (it.hasNext()) missOf.put(it.nextLong(), mi);
         claimed.addAll(seen);
+        return cost + takeSkyReads();
+    }
+
+    // ---- the reading pass ---------------------------------------------------------------------------------------------
+
+    /**
+     * Walks the room's cells and every wall face once, as far as the budget goes: furniture, the floor and its light,
+     * what the walls, floor and roof are made of, windows, fire, detail, seats and tables. Then classifies and reads it.
+     */
+    private int read(int budget) {
+        Job j = job;
+        Tally t = j.tally;
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        int cost = 0;
+        while (j.cells.hasNext() && cost < budget) {
+            long l = j.cells.nextLong();
+            m.set(l);
+            cost += 8;
+            int x = m.getX(), y = m.getY(), z = m.getZ();
+            BlockState s = level.getBlockState(m);
+            cell(t, j, s, m);
+            if (!j.visited.contains(BlockPos.asLong(x, y - 1, z))) {
+                cost++;
+                t.floorCell(x, z, level.getBrightness(LightLayer.BLOCK, m) >= 8);
+                t.floorY = Math.min(t.floorY, y);
+            }
+            for (Direction d : DIRS) {
+                m.set(x + d.getStepX(), y + d.getStepY(), z + d.getStepZ());
+                long nl = m.asLong();
+                if (j.visited.contains(nl) || !j.wallSeen.add(nl)) continue;
+                cost += 2;
+                wall(t, j, level.getBlockState(m), m, d);
+            }
+        }
+        if (j.cells.hasNext()) return cost;
+        cost += finishRoom(j);
+        job = null;
         return cost;
+    }
+
+    /** One open cell: furniture that isn't a full block, and the room's soft things, lights and fire. */
+    private void cell(Tally t, Job j, BlockState s, BlockPos at) {
+        t.cells++;
+        if (s.isAir()) return;
+        Block b = s.getBlock();
+        Furniture f = Furniture.of(s);
+        if (f == Furniture.TROPHY) {
+            String boss = mountedTrophy(at);
+            if (boss != null) j.trophies.add(boss);
+        } else if (f != null) {
+            t.furniture[f.ordinal()]++;
+        }
+        if (s.is(BlockTags.WOOL_CARPETS) || b == Blocks.MOSS_CARPET || b == Blocks.PALE_MOSS_CARPET) t.detail(Tally.CARPET);
+        else if (s.is(BlockTags.BANNERS)) t.detail(Tally.BANNER);
+        else if (b instanceof FlowerPotBlock) t.detail(Tally.POT);
+        else if (s.is(BlockTags.CANDLES)) {
+            t.detail(Tally.CANDLE);
+            if (lit(s)) t.warm(Tally.WARM_EMBER);
+        } else if (b instanceof LanternBlock) t.detail(Tally.LANTERN);
+        else if (b instanceof ChainBlock) t.detail(Tally.CHAIN);
+        else if (s.is(BlockTags.CAMPFIRES)) {
+            if (lit(s)) t.warm(Tally.WARM_FIRE);
+        } else if (s.is(BlockTags.FIRE) || b instanceof HearthfireBlock || s.getFluidState().is(FluidTags.LAVA)) {
+            t.warm(Tally.WARM_FIRE);
+        } else if (t.sign.isEmpty() && s.is(BlockTags.ALL_SIGNS)) {
+            t.sign = signText(at);
+        }
+    }
+
+    /** One wall, floor or roof block, seen from the cell on side {@code from} of it. */
+    private void wall(Tally t, Job j, BlockState w, BlockPos at, Direction from) {
+        Block b = w.getBlock();
+        Furniture f = Furniture.of(w);
+        if (f == Furniture.TROPHY) {
+            String boss = mountedTrophy(at);
+            if (boss != null) j.trophies.add(boss);
+        } else if (f != null) {
+            t.furniture[f.ordinal()]++;
+        }
+        boolean glass = w.is(Tags.BlockItems.GLASS_BLOCKS.block()) || w.is(Tags.BlockItems.GLASS_PANES.block());
+        boolean seeThrough = w.is(BlockTags.LEAVES) || w.is(BlockTags.FENCES) || w.is(BlockTags.BARS);
+        t.face(Materials.of(w), b, seeThrough);
+        if (from.getAxis().isHorizontal()) {
+            if (glass) {
+                t.windows++;
+                t.windowDirs |= 1 << from.get2DDataValue();
+            }
+        } else if (from == Direction.UP) {
+            t.ceiling++;
+            if (glass) t.glassCeiling++;
+        }
+        if (w.is(BlockTags.STAIRS)) {
+            t.detail(Tally.STAIRS);
+            // a seat: a stair on the floor with room to sit on it
+            if (from == Direction.DOWN && w.hasProperty(StairBlock.HALF) && w.getValue(StairBlock.HALF) == Half.BOTTOM) t.seats++;
+        } else if (w.is(BlockTags.SLABS)) {
+            t.detail(Tally.SLAB);
+        } else if (w.is(BlockTags.TRAPDOORS)) {
+            t.detail(Tally.TRAPDOOR);
+        } else if (w.is(BlockTags.FENCES) || w.is(BlockTags.WALLS)) {
+            t.detail(Tally.POST);
+            // a table: a post with a carpet, a pressure plate or a slab on it
+            BlockState top = level.getBlockState(at.above());
+            if (top.is(BlockTags.WOOL_CARPETS) || top.getBlock() instanceof BasePressurePlateBlock
+                    || top.getBlock() instanceof SlabBlock && top.getValue(SlabBlock.TYPE) == SlabType.BOTTOM) t.tables++;
+        } else if (f == Furniture.BOOKSHELF) {
+            t.detail(Tally.BOOKS);
+        }
+        if (b == Blocks.FURNACE || b == Blocks.SMOKER || b == Blocks.BLAST_FURNACE) {
+            t.warm(lit(w) ? Tally.WARM_STOVE : Tally.WARM_EMBER);
+        } else if (f == Furniture.FORGE) {
+            t.warm(Tally.WARM_STOVE);
+        } else if (w.is(HearthContent.HEARTH_ANCHOR.get()) || w.getFluidState().is(FluidTags.LAVA) || b == Blocks.MAGMA_BLOCK) {
+            t.warm(Tally.WARM_FIRE);
+        } else if (t.sign.isEmpty() && w.is(BlockTags.ALL_SIGNS)) {
+            t.sign = signText(at);
+        }
+    }
+
+    private int finishRoom(Job j) {
+        Tally t = j.tally;
+        int cost = 0;
+        t.height = j.maxY - j.minY + 1;
+        t.width = j.maxX - j.minX + 1;
+        t.depth = j.maxZ - j.minZ + 1;
+        AABB box = new AABB(j.minX, j.minY, j.minZ, j.maxX + 1, j.maxY + 1, j.maxZ + 1);
+        for (ArmorStand a : level.getEntitiesOfClass(ArmorStand.class, box)) {
+            if (j.visited.contains(a.blockPosition().asLong())) t.furniture[Furniture.STAND.ordinal()]++;
+        }
+        // paintings and item frames hang in the wall but face into the room
+        if (!level.getEntitiesOfClass(HangingEntity.class, box.inflate(1)).isEmpty()) t.detail(Tally.PAINTING);
+        cost += 16;
+        // the ground a few blocks outside the room, its lowest side (a tower's foot)
+        int cxm = (j.minX + j.maxX) / 2, czm = (j.minZ + j.maxZ) / 2;
+        int[][] probes = {{j.minX - GROUND_OUT, czm}, {j.maxX + GROUND_OUT, czm}, {cxm, j.minZ - GROUND_OUT}, {cxm, j.maxZ + GROUND_OUT}};
+        int ground = Integer.MAX_VALUE;
+        for (int[] p : probes) {
+            if (!level.isLoaded(new BlockPos(p[0], j.minY, p[1]))) continue;
+            ground = Math.min(ground, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, p[0], p[1]));
+        }
+        t.ground = ground == Integer.MAX_VALUE ? Integer.MIN_VALUE : ground;
+        t.trophies.addAll(j.trophies);
+        int[] counts = t.furniture.clone();
+        counts[Furniture.SEAT.ordinal()] = t.seats;
+        counts[Furniture.TABLE.ordinal()] = t.tables;
+        counts[Furniture.TROPHY.ordinal()] = j.trophies.size();
+        int[] facts = t.facts();
+        EnumSet<RoomType> types = Room.classify(counts, facts);
+        Reading reading = Reading.of(t, types);
+        found.add(new Room(types, new BlockPos(j.minX, j.minY, j.minZ), new BlockPos(j.maxX, j.maxY, j.maxZ), j.visited, counts, facts,
+                Set.copyOf(j.trophies), reading));
+        familyTotals(t);
+        indoors.addAll(j.visited);
+        if (j.side) sideClosed = true;
+        return cost;
+    }
+
+    /** Faces per material family across every room this scan (the home's Style). */
+    private final int[] families = new int[Materials.FAMILIES];
+
+    private void familyTotals(Tally t) {
+        int[] f = t.families();
+        for (int i = 0; i < f.length; i++) families[i] += f[i];
     }
 
     // ---- the result -------------------------------------------------------------------------------------------------
 
     private void finish() {
         phase = Phase.DONE;
-        int stands = 0;
-        for (ArmorStand a : level.getEntitiesOfClass(ArmorStand.class, hearth.box())) if (hearth.contains(a.blockPosition())) stands++;
+        int stands = 0, animals = 0;
+        AABB box = hearth.box();
+        for (ArmorStand a : level.getEntitiesOfClass(ArmorStand.class, box)) if (hearth.contains(a.blockPosition())) stands++;
+        for (Animal a : level.getEntitiesOfClass(Animal.class, box)) {
+            if (!(a instanceof TamableAnimal) && hearth.contains(a.blockPosition()) && ++animals >= 8) break;
+        }
         furniture[Furniture.STAND.ordinal()] = stands;
-        onDone.accept(new Scan(List.copyOf(found), List.copyOf(misses), furniture.clone()));
-    }
-
-    private Room build(LongOpenHashSet cells, BlockPos min, BlockPos max) {
-        int beds = 0, mats = 0, anvils = 0, forges = 0, pads = 0, machines = 0;
-        Set<String> trophies = new HashSet<>();
-        LongOpenHashSet walls = new LongOpenHashSet();
-        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
-        var it = cells.iterator();
-        while (it.hasNext()) {
-            long l = it.nextLong();
-            m.set(l);
-            BlockState s = level.getBlockState(m);
-            Furniture f = Furniture.of(s);
-            if (f == Furniture.BED) beds++;
-            else if (f == Furniture.MAT) mats++;
-            else if (f == Furniture.ANVIL) anvils++;
-            else if (f == Furniture.PAD) pads++;
-            else if (f == Furniture.TROPHY) {
-                String boss = mountedTrophy(m);
-                if (boss != null) trophies.add(boss);
-            }
-            if (s.is(HearthContent.MACHINES)) machines++;
-            int x = m.getX(), y = m.getY(), z = m.getZ();
-            // Full-block furniture (the Forge, most machines) forms the room's walls: look at the faces around each cell.
-            for (Direction d : DIRS) {
-                m.set(x + d.getStepX(), y + d.getStepY(), z + d.getStepZ());
-                long nl = m.asLong();
-                if (cells.contains(nl) || !walls.add(nl)) continue;
-                BlockState w = level.getBlockState(m);
-                if (w.getBlock() instanceof ForgeBlock) forges++;
-                if (w.is(HearthContent.MACHINES)) machines++;
-                if (w.getBlock() instanceof TrophyMountBlock) {
-                    String boss = mountedTrophy(m);
-                    if (boss != null) trophies.add(boss);
-                }
-            }
-        }
-        int stands = 0;
-        AABB box = new AABB(min.getX(), min.getY(), min.getZ(), max.getX() + 1, max.getY() + 1, max.getZ() + 1);
-        for (ArmorStand a : level.getEntitiesOfClass(ArmorStand.class, box)) {
-            if (cells.contains(a.blockPosition().asLong())) stands++;
-        }
-        var types = Room.classify(beds, mats, anvils, forges, stands, trophies.size(), machines, pads);
-        return new Room(types, min, max, cells, beds, mats, anvils, forges, stands, pads, machines, Set.copyOf(trophies));
+        int outdoorLights = 0;
+        for (int i = 0; i < lights.size(); i++) if (!indoors.contains(lights.getLong(i))) outdoorLights++;
+        Scan.Land land = new Scan.Land(farmland, animals, fences, walls, composters, flowers, outdoorLights);
+        onDone.accept(new Scan(List.copyOf(found), List.copyOf(misses), furniture.clone(), land, List.copyOf(pads), families.clone()));
     }
 
     private String mountedTrophy(BlockPos p) {
         return level.getBlockEntity(p) instanceof TrophyMountBlockEntity be ? be.trophyBoss() : null;
     }
 
+    private String signText(BlockPos p) {
+        if (!(level.getBlockEntity(p) instanceof SignBlockEntity sign)) return "";
+        StringBuilder b = new StringBuilder();
+        for (SignTextSlot slot : new SignTextSlot[]{SignTextSlot.FRONT, SignTextSlot.BACK}) {
+            for (Component line : sign.getText(slot).getMessages(false)) {
+                String s = line.getString().strip();
+                if (s.isEmpty()) continue;
+                if (!b.isEmpty()) b.append(' ');
+                b.append(s);
+            }
+            if (!b.isEmpty()) break;
+        }
+        String out = b.toString();
+        return out.length() > 40 ? out.substring(0, 40).strip() : out;
+    }
+
     // ---- rules ------------------------------------------------------------------------------------------------------
 
-    /** Things that make a room something. The scan only floods from these. */
+    /** Things that make a room something. The scan only floods from these (and from seeds). */
     public static boolean isFurniture(BlockState s) {
         return Furniture.of(s) != null;
+    }
+
+    /** What a home has in it that isn't furniture: doors, lights, chests, signs, carpets, banners, the Hearth's fire. */
+    static boolean isSeed(BlockState s) {
+        Block b = s.getBlock();
+        return s.is(BlockTags.DOORS) || givesLight(s) || s.is(Tags.BlockItems.CHESTS.block()) || s.is(BlockTags.ALL_SIGNS)
+                || s.is(BlockTags.FLOWER_POTS) || s.is(BlockTags.WOOL_CARPETS) || s.is(BlockTags.BANNERS)
+                || b instanceof HearthfireBlock || s.is(HearthContent.HEARTH_ANCHOR.get());
+    }
+
+    /** Lights a player places (the yard's lights at night count these). */
+    static boolean givesLight(BlockState s) {
+        Block b = s.getBlock();
+        return b instanceof BaseTorchBlock || b instanceof LanternBlock || s.is(BlockTags.CANDLES) || s.is(BlockTags.CAMPFIRES);
+    }
+
+    private static boolean interesting(BlockState s) {
+        return Furniture.of(s) != null || isSeed(s) || s.is(BlockTags.FENCES) || s.is(BlockTags.WALLS) || s.getBlock() instanceof ComposterBlock;
+    }
+
+    private static boolean lit(BlockState s) {
+        return s.hasProperty(BlockStateProperties.LIT) && s.getValue(BlockStateProperties.LIT);
     }
 
     /**

@@ -9,7 +9,10 @@ import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.RandomSource;
 
-/** The module's particles: dark Echo wisps, warm Hearth embers and the Hearth guide's marks. */
+/**
+ * The module's particles: dark Echo wisps, warm Hearth embers, the Hearth guide's marks, and the carried flame's own:
+ * the warmth that runs out over the land when a coal takes, the Hearthfire's tongues of flame and fireflies at night.
+ */
 public final class HearthParticles {
     private HearthParticles() {}
 
@@ -152,6 +155,158 @@ public final class HearthParticles {
             @Override
             public Particle createParticle(SimpleParticleType o, ClientLevel level, double x, double y, double z, double xa, double ya, double za, RandomSource random) {
                 return new Ember(level, x, y, z, xa, ya, za, sprites);
+            }
+        }
+    }
+
+    /**
+     * Warmth running out over the land when a coal takes: a broad, soft, warm glow that sits on the ground, lifts a
+     * hand's width and fades. Spawned in rings travelling outward, on the ground's own height, so the land seems to
+     * brighten as the wave passes ({@code ya}: how bright, 0-1).
+     */
+    public static final class Warmth extends SingleQuadParticle {
+        private final SpriteSet sprites;
+        private final float peak, baseSize;
+
+        Warmth(ClientLevel level, double x, double y, double z, double ya, SpriteSet sprites) {
+            super(level, x, y, z, 0, 0, 0, sprites.first());
+            this.sprites = sprites;
+            this.xd = 0;
+            this.yd = 0.006 + random.nextDouble() * 0.006;
+            this.zd = 0;
+            this.friction = 0.97f;
+            this.gravity = 0;
+            this.hasPhysics = false;
+            this.lifetime = 26 + random.nextInt(14);
+            this.peak = (float) Math.max(0.15, Math.min(1.0, ya));
+            this.baseSize = quadSize * (2.6f + random.nextFloat() * 1.4f);
+            this.quadSize = baseSize;
+            // bell-gold into ember: the wave's front is brighter and paler
+            float w = random.nextFloat();
+            setColor(1.0f, 0.70f + 0.16f * w, 0.32f + 0.18f * w);
+            setSpriteFromAge(sprites);
+        }
+
+        @Override
+        protected Layer getLayer() {
+            return Layer.TRANSLUCENT;
+        }
+
+        @Override
+        protected int getLightCoords(float a) {
+            return LightCoordsUtil.FULL_BRIGHT;
+        }
+
+        @Override
+        public void tick() {
+            super.tick();
+            setSpriteFromAge(sprites);
+            float t = (float) age / lifetime;
+            alpha = peak * 0.42f * Math.min(1f, Math.min(t * 6f, (1f - t) * 1.6f));
+            quadSize = baseSize * (0.85f + 0.3f * t);
+        }
+
+        public record Provider(SpriteSet sprites) implements ParticleProvider<SimpleParticleType> {
+            @Override
+            public Particle createParticle(SimpleParticleType o, ClientLevel level, double x, double y, double z, double xa, double ya, double za, RandomSource random) {
+                return new Warmth(level, x, y, z, ya, sprites);
+            }
+        }
+    }
+
+    /** A tongue of the Hearthfire's flame: it licks up off the coal, leans, thins and is gone in under a second. */
+    public static final class Flame extends SingleQuadParticle {
+        private final SpriteSet sprites;
+        private final float baseSize;
+
+        Flame(ClientLevel level, double x, double y, double z, double ya, SpriteSet sprites) {
+            super(level, x, y, z, 0, 0, 0, sprites.first());
+            this.sprites = sprites;
+            this.xd = (random.nextDouble() - 0.5) * 0.006;
+            this.yd = ya;
+            this.zd = (random.nextDouble() - 0.5) * 0.006;
+            this.friction = 0.9f;
+            this.gravity = -0.002f;
+            this.hasPhysics = false;
+            this.lifetime = 10 + random.nextInt(8);
+            this.baseSize = quadSize * (0.9f + random.nextFloat() * 0.5f);
+            this.quadSize = baseSize;
+            setSpriteFromAge(sprites);
+        }
+
+        @Override
+        protected Layer getLayer() {
+            return Layer.TRANSLUCENT;
+        }
+
+        @Override
+        protected int getLightCoords(float a) {
+            return LightCoordsUtil.FULL_BRIGHT;
+        }
+
+        @Override
+        public void tick() {
+            super.tick();
+            setSpriteFromAge(sprites);
+            float t = (float) age / lifetime;
+            alpha = Math.min(1f, (1f - t) * 1.8f);
+            quadSize = baseSize * (1f - 0.55f * t);
+        }
+
+        public record Provider(SpriteSet sprites) implements ParticleProvider<SimpleParticleType> {
+            @Override
+            public Particle createParticle(SimpleParticleType o, ClientLevel level, double x, double y, double z, double xa, double ya, double za, RandomSource random) {
+                return new Flame(level, x, y, z, ya, sprites);
+            }
+        }
+    }
+
+    /** A firefly over a Hearth's land at night: it drifts on its own slow course and blinks, green-gold. */
+    public static final class Firefly extends SingleQuadParticle {
+        private final SpriteSet sprites;
+        private final float phase, rate;
+
+        Firefly(ClientLevel level, double x, double y, double z, SpriteSet sprites) {
+            super(level, x, y, z, 0, 0, 0, sprites.first());
+            this.sprites = sprites;
+            this.friction = 0.92f;
+            this.gravity = 0;
+            this.hasPhysics = false;
+            this.lifetime = 120 + random.nextInt(120);
+            this.quadSize *= 0.55f + random.nextFloat() * 0.25f;
+            this.phase = random.nextFloat() * 6.283f;
+            this.rate = 0.08f + random.nextFloat() * 0.06f;
+            setColor(0.86f, 1.0f, 0.46f);
+            setSpriteFromAge(sprites);
+        }
+
+        @Override
+        protected Layer getLayer() {
+            return Layer.TRANSLUCENT;
+        }
+
+        @Override
+        protected int getLightCoords(float a) {
+            return LightCoordsUtil.FULL_BRIGHT;
+        }
+
+        @Override
+        public void tick() {
+            super.tick();
+            setSpriteFromAge(sprites);
+            // a slow wander: small nudges that the friction smooths into curves
+            xd += (random.nextDouble() - 0.5) * 0.006;
+            yd += (random.nextDouble() - 0.5) * 0.004;
+            zd += (random.nextDouble() - 0.5) * 0.006;
+            float t = (float) age / lifetime;
+            float blink = Math.max(0f, (float) Math.sin(age * rate + phase));
+            alpha = Math.min(1f, Math.min(t * 8f, (1f - t) * 4f)) * (0.15f + 0.85f * blink * blink);
+        }
+
+        public record Provider(SpriteSet sprites) implements ParticleProvider<SimpleParticleType> {
+            @Override
+            public Particle createParticle(SimpleParticleType o, ClientLevel level, double x, double y, double z, double xa, double ya, double za, RandomSource random) {
+                return new Firefly(level, x, y, z, sprites);
             }
         }
     }

@@ -38,7 +38,10 @@ public final class HearthNow {
         if (!Progression.profile(p).awakened()) return out;
         var home = HearthService.homeOf(p);
         if (home.isEmpty()) {
-            if (holds(p, HearthContent.HEARTH_ANCHOR_ITEM.get())) {
+            // the carried flame: under a tracked chain's step (~68), over bookkeeping
+            if (holds(p, HearthContent.EMBER_ITEM.get())) {
+                out.add(NowHooks.Suggestion.of("hearth:ember", 66, "Set your Ember where you'd live"));
+            } else if (holds(p, HearthContent.HEARTH_ANCHOR_ITEM.get())) {
                 out.add(NowHooks.Suggestion.of("hearth:place", 72, "Place your Hearth Anchor where you want your home"));
             } else if (holds(p, CoreApi.LORD_HEART.get())) {
                 out.add(NowHooks.Suggestion.of("hearth:craft", 70, "Craft a Hearth Anchor: Lord's Heart, 4 stone bricks, 4 copper"));
@@ -54,9 +57,17 @@ public final class HearthNow {
         boolean atHome = p.level().dimension() == Level.OVERWORLD && h.contains(p.blockPosition());
         if (!atHome) return out;
         HearthPlayer hp = HearthService.player(p);
+        if (h.hearthfire() && h.rooms.isEmpty()) {
+            // the first night: walls and a roof (using the fire now would lift the coal again)
+            out.add(NowHooks.Suggestion.of("hearth:shelter", 58, "Build a shelter: walls and a roof"));
+            return out;
+        }
+        if (h.hearthfire() && holds(p, CoreApi.LORD_HEART.get())) {
+            out.add(NowHooks.Suggestion.at("hearth:heart", 64, "Use the Lord's Heart on your fire", h.pos));
+        }
         if (!hp.tips.contains(Guide.TIP_SEEN)) {
             boolean fresh = h.placedAt > 0 && now - h.placedAt < FRESH_TICKS;
-            out.add(NowHooks.Suggestion.of("hearth:guide", fresh ? 74 : 56, "Use the Anchor for a guide"));
+            out.add(NowHooks.Suggestion.of("hearth:guide", fresh ? 74 : 56, h.hearthfire() ? "Use your fire for a guide" : "Use the Anchor for a guide"));
             return out;
         }
         NowHooks.Suggestion why = whyLine(p, h);
@@ -93,7 +104,7 @@ public final class HearthNow {
         int present = 0;
         boolean vanilla = false;
         for (Furniture f : t.furniture) {
-            if (f == Furniture.BED || f == Furniture.ANVIL || f == Furniture.STAND) vanilla = true;
+            if (f.recipe == null && f != Furniture.MACHINE) vanilla = true; // beds, anvils, stoves: villages have them too
             if (h.furniture.length > f.ordinal() && h.furniture[f.ordinal()] > 0) present++;
         }
         return !vanilla || present >= 2;
@@ -104,18 +115,29 @@ public final class HearthNow {
         for (RoomType t : RoomType.values()) {
             if (h.hasRoom(t)) continue;
             boolean relevant = switch (t) {
-                case SANCTUARY, ARMORY -> true;
+                case SHELTER, BEDROOM -> true;
+                // the Anchor's rooms once there is an Anchor; the rest once you have what they're made of
+                case SANCTUARY, ARMORY -> !h.hearthfire();
                 case BARRACKS -> h.furniture[Furniture.PAD.ordinal()] > 0 || holdsPad(p);
                 case TROPHY_HALL -> h.furniture[Furniture.TROPHY.ordinal()] > 0 || holds(p, HearthContent.TROPHY_ITEM.get());
                 case WORKSHOP -> h.furniture[Furniture.MACHINE.ordinal()] > 0;
+                case KITCHEN, STUDY, GREENHOUSE, STABLE, HALL, BELL_TOWER -> started(t, h);
+                case LOOKOUT -> false;
             };
             if (relevant) return t;
         }
         return null;
     }
 
+    /** Some of this room's furniture is already in the radius (so suggesting it isn't a guess). */
+    static boolean started(RoomType t, HearthRecord h) {
+        for (Furniture f : t.furniture) if (h.furniture.length > f.ordinal() && h.furniture[f.ordinal()] > 0) return true;
+        return false;
+    }
+
     /** "Sanctuary: bed ✓ · mat ✗", shortened until it fits the tracker. Public for the tests. */
     public static String progress(RoomType t, HearthRecord h) {
+        if (t.furniture.isEmpty()) return Fit.first(Fit.TRACKER, t.label + ": " + t.needs, t.label);
         StringBuilder full = new StringBuilder(t.label).append(": "), tight = new StringBuilder(t.label).append(": "),
                 missing = new StringBuilder(t.label).append(": "), plain = new StringBuilder(t.label).append(": ");
         boolean first = true, firstMissing = true;

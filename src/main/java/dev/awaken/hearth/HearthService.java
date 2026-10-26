@@ -13,6 +13,7 @@ import dev.awaken.hearth.room.Room;
 import dev.awaken.hearth.room.RoomScanner;
 import dev.awaken.hearth.room.RoomType;
 import dev.awaken.hearth.room.Scan;
+import dev.awaken.hearth.player.RoomHere;
 import dev.awaken.hearth.town.Town;
 import dev.awaken.hearth.trophy.Trophies;
 import dev.awaken.progression.Perks;
@@ -108,6 +109,7 @@ public final class HearthService {
      */
     static void forgetPeople() {
         Breaks.clear();
+        Embers.forget(null);
         Duty.clear();
         Household.forgetAll();
         Offers.forgetAll();
@@ -168,9 +170,15 @@ public final class HearthService {
             sp.sendOverlayMessage(Component.literal("The Anchor only takes root in the waking world."));
             return false;
         }
+        if (dev.awaken.terrain.api.CityBasin.reserved(pos.getX(), pos.getZ())) {
+            sp.sendOverlayMessage(Component.literal("The city keeps its own ground. Raise your Anchor out past the walls."));
+            return false;
+        }
         HearthData d = data(level.getServer());
-        if (d.of(sp.getUUID()).isPresent()) {
-            sp.sendOverlayMessage(Component.literal("You already have a Hearth. Break your old Anchor to move home."));
+        Optional<HearthRecord> own = d.of(sp.getUUID());
+        if (own.isPresent()) {
+            sp.sendOverlayMessage(Component.literal(own.get().hearthfire() ? "Use the Anchor on your Hearthfire: it rises there."
+                    : "You already have a Hearth. Break your old Anchor to move home."));
             return false;
         }
         Optional<HearthRecord> other = d.containing(pos, OVERWORLD);
@@ -197,21 +205,29 @@ public final class HearthService {
         r.scanAt = level.getGameTime() + 20;
         r.announceFirstScan = true;
         r.placedAt = level.getGameTime();
+        r.name = Embers.suggestName(level, pos, sp.getUUID());
         d.put(r);
         Household.restoreKept(level.getServer(), d, r);
         if (base != null) Household.founded(level.getServer(), r, base);
-        HearthPlayer hp = player(sp);
-        hp.respawnAtHearth = true;
+        player(sp).respawnAtHearth = true;
         level.playSound(null, pos, HearthContent.SND_ANCHOR.get(), SoundSource.BLOCKS, 1f, 1f);
         level.sendParticles(HearthContent.HEARTH_EMBER.get(), pos.getX() + 0.5, pos.getY() + 1.2, pos.getZ() + 0.5, 40, 0.6, 0.6, 0.6, 0.02);
-        // A toast shows the title and the first sentence: keep both short. The rest is in Recent messages.
-        Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(base != null ? "A second home" : "Home exists"))
-                .body(Component.literal("Within " + r.radius() + " blocks: yours" + (base != null ? " and your household's" : "")
-                        + ". You wake here, you heal here, and people will come. Use the Anchor for a guide to your Hearth."))
+        anchorTookRoot(sp, level, r, base != null, base != null ? "A second home" : "Home exists",
+                "Within " + r.radius() + " blocks: yours" + (base != null ? " and your household's" : "")
+                        + ". You wake here, you heal here, and people will come. Use the Anchor for a guide to your Hearth.");
+    }
+
+    /**
+     * Tier I begins (an Anchor placed, or a Hearthfire raised by a Lord's Heart): the guide's toast, the furniture in the
+     * recipe book, the town's first arrival, Oren's cottage offer, the household told. A toast shows the title and the
+     * first sentence: keep both short. The rest is in Recent messages.
+     */
+    static void anchorTookRoot(ServerPlayer sp, ServerLevel level, HearthRecord r, boolean sister, String title, String body) {
+        Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(title)).body(Component.literal(body))
                 .ttl(20 * 8).priority(4).build());
         unlockFurnitureRecipes(sp);
         if (Progression.profile(sp).awakened()) Progression.markNewThing(sp, "hearth");
-        DirectorLog.log(sp, "hearth", "anchor placed at " + pos.toShortString() + (base != null ? " (a sister of " + base.ownerName + "'s)" : ""));
+        DirectorLog.log(sp, "hearth", "anchor at " + r.pos.toShortString() + (sister ? " (a sister home)" : ""));
         Town.onHearthCreated(sp, level, r);
         HearthViews.refresh(sp);
         Household.refresh(level.getServer(), r);
@@ -351,7 +367,7 @@ public final class HearthService {
     private static void onBreak(BreakBlockEvent e) {
         if (!(e.getLevel() instanceof ServerLevel level)) return;
         BlockState s = e.getState();
-        if (s.is(HearthContent.HEARTH_ANCHOR.get())) {
+        if (s.is(HearthContent.HEARTH_ANCHOR.get()) || s.is(HearthContent.HEARTHFIRE.get())) {
             Optional<HearthRecord> r = data(level.getServer()).at(e.getPos(), level.dimension().identifier().toString());
             Player p = e.getPlayer();
             boolean op = p instanceof ServerPlayer sp && sp.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER);
@@ -465,7 +481,9 @@ public final class HearthService {
 
     private static void onWake(PlayerWakeUpEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer sp) || e.wakeImmediately() || !enabled()) return;
-        if (!(sp.level() instanceof ServerLevel level) || !Hearth.isSanctuary(level, sp.blockPosition())) return;
+        if (!(sp.level() instanceof ServerLevel level)) return;
+        Rested.onWake(sp, level);
+        if (!Hearth.isSanctuary(level, sp.blockPosition())) return;
         boolean fractured = Progression.profile(sp).fractureUntil() > level.getGameTime();
         if (fractured) Progression.clearFracture(sp);
         sp.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 20 * 30, 0, true, true));
@@ -480,15 +498,17 @@ public final class HearthService {
 
     /** Seconds of quiet rest inside the radius that clear Fracture, by Anchor tier. */
     public static int restSeconds(int tier) {
-        return Math.max(10, 30 - 4 * (tier - 1));
+        return Math.max(10, 30 - 4 * (Math.max(1, tier) - 1));
     }
 
     private static void onPlayerTick(PlayerTickEvent.Post e) {
         if (!(e.getEntity() instanceof ServerPlayer sp) || sp.tickCount % 20 != 0 || !enabled()) return;
         if (!(sp.level() instanceof ServerLevel level) || level.dimension() != Level.OVERWORLD) {
             REST.remove(sp.getUUID());
+            if (sp.getData(HearthContent.HERE.get()).in()) sp.setData(HearthContent.HERE.get(), dev.awaken.hearth.player.RoomHere.NONE);
             return;
         }
+        trackRoom(sp);
         long now = level.getGameTime();
         if (Progression.profile(sp).fractureUntil() <= now) {
             REST.remove(sp.getUUID());
@@ -529,6 +549,8 @@ public final class HearthService {
         if (activeScan == null) {
             if (server.getTickCount() % 10 == 0) {
                 for (HearthRecord h : d.all()) {
+                    // a reading loaded from the save stands; its home is read again some time in the next few minutes
+                    if (h.lastScan < 0) h.lastScan = now - RESCAN_EVERY + 20 * 30 + Math.floorMod(h.owner.hashCode(), 20 * 240);
                     if (h.scanAt == 0 && now - h.lastScan > RESCAN_EVERY) h.scanAt = now;
                     if (h.scanAt != 0 && h.scanAt <= now && !scanQueue.contains(h.owner) && overworld.isLoaded(h.pos)) scanQueue.add(h.owner);
                 }
@@ -537,7 +559,7 @@ public final class HearthService {
             if (next != null) {
                 d.of(next).ifPresent(h -> {
                     h.scanAt = 0;
-                    activeScan = new RoomScanner(overworld, h, scan -> onRoomsScanned(server, h, scan));
+                    activeScan = new RoomScanner(overworld, h, people(server, h), scan -> onRoomsScanned(server, h, scan));
                 });
             }
         }
@@ -559,13 +581,16 @@ public final class HearthService {
 
     private static void upkeep(MinecraftServer server, ServerLevel level, HearthRecord h, long now) {
         boolean loaded = level.isPositionEntityTicking(h.pos);
-        if (loaded && !level.getBlockState(h.pos).is(HearthContent.HEARTH_ANCHOR.get())) {
-            onAnchorRemoved(level, h.pos); // broken by something that skipped the block callbacks
+        if (loaded && !level.getBlockState(h.pos).is(h.hearthfire() ? HearthContent.HEARTHFIRE.get() : HearthContent.HEARTH_ANCHOR.get())) {
+            // broken by something that skipped the block callbacks
+            if (h.hearthfire()) Embers.onFireRemoved(level, h.pos);
+            else onAnchorRemoved(level, h.pos);
             return;
         }
         ServerPlayer owner = server.getPlayerList().getPlayer(h.owner);
         if (loaded) {
-            Town.upkeep(level, h, owner, now);
+            if (!h.hearthfire()) Town.upkeep(level, h, owner, now);
+            RoomEffects.bells(level, h);
             // role pads are worked by the owner's Echoes (members' Echoes march with them)
             if (owner != null) Duty.upkeep(owner, level, h, now);
         }
@@ -575,7 +600,10 @@ public final class HearthService {
         }
     }
 
-    /** Called when a room scan finishes: store rooms, update trophy bonuses, tell the owner about new rooms. */
+    /**
+     * Called when a room scan finishes: store the rooms and their reading, Comfort, Style and the land; register pads
+     * placed before the Hearth knew them; update trophy bonuses; tell the owner about kinds of room new to this home.
+     */
     static void onRoomsScanned(MinecraftServer server, HearthRecord h, Scan scan) {
         List<Room> rooms = scan.rooms();
         EnumSet<RoomType> before = EnumSet.noneOf(RoomType.class);
@@ -584,6 +612,10 @@ public final class HearthService {
         h.misses = scan.misses();
         h.furniture = scan.furniture();
         h.lastScan = server.overworld().getGameTime();
+        h.land = Comfort.land(scan.land());
+        h.comfort = Comfort.of(rooms, h.land);
+        h.style = Comfort.style(scan.families());
+        dirty(server);
         Set<String> trophies = new java.util.HashSet<>();
         EnumSet<RoomType> after = EnumSet.noneOf(RoomType.class);
         for (Room r : rooms) {
@@ -591,33 +623,102 @@ public final class HearthService {
             if (r.types().contains(RoomType.TROPHY_HALL)) trophies.addAll(r.trophies());
         }
         h.hallTrophies = Set.copyOf(trophies);
+        registerPads(server, h, scan.pads());
         boolean announce = h.scannedOnce || h.announceFirstScan;
         h.scannedOnce = true;
         h.announceFirstScan = false;
         owner(server, h).ifPresent(sp -> {
-            if (announce) {
-                for (RoomType t : after) {
-                    if (before.contains(t)) continue;
-                    // toast: the title and its first sentence fit 144 px; the rest is kept in Recent messages
-                    Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(t.label + " recognised"))
-                            .body(Component.literal(t.toast + " " + t.does + " The Hearth noticed " + t.needs + " in a closed room."))
-                            .ttl(20 * 6).build());
-                }
+            if (!announce) return;
+            if (!before.contains(RoomType.SHELTER) && after.contains(RoomType.SHELTER)) {
+                // the first night's answer: walls and a roof, and from now on everything you build is read
+                Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("First shelter"))
+                        .body(Component.literal("Rest heals here. From now on the Hearth reads everything you build."))
+                        .topic("hearth_room").ttl(20 * 6).build());
+            }
+            for (RoomType t : after) {
+                if (t == RoomType.SHELTER || before.contains(t)) continue;
+                // toast: the title and its first sentence fit 144 px; the rest is kept in Recent messages
+                Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(t.label + " recognised"))
+                        .body(Component.literal(t.toast + " " + t.does + " The Hearth noticed " + t.needs + " in a closed room."))
+                        .topic("hearth_room").ttl(20 * 6).build());
             }
         });
-        // the Trophy Hall's bonus is everyone's who lives here
+        // the Trophy Hall's bonus is everyone's who lives here; a new Lookout fills in the Atlas round home
+        boolean lookout = after.contains(RoomType.LOOKOUT) && !before.contains(RoomType.LOOKOUT);
         for (ServerPlayer sp : Household.online(server, h)) {
             if (homeOf(sp).orElse(null) == h) Trophies.applyHallBonus(sp, h);
+            if (lookout) RoomEffects.lookout(sp);
             HearthViews.refresh(sp);
             Guide.refresh(sp);
         }
     }
 
+    /** Pads the Hearth found that it didn't know (placed before the fire took, or outside the old radius) join it now. */
+    static void registerPads(MinecraftServer server, HearthRecord h, List<Scan.Pad> found) {
+        boolean added = false;
+        for (Scan.Pad p : found) {
+            if (h.pads.containsKey(p.pos())) continue;
+            h.pads.put(p.pos().immutable(), p.role());
+            added = true;
+        }
+        if (!added) return;
+        dirty(server);
+        owner(server, h).ifPresent(sp -> Duty.reassign(sp, levelOf(server, h), h));
+    }
+
+    /** Where the household stands in the radius: a room with nothing in it yet is still read (the first night's shelter). */
+    static List<BlockPos> people(MinecraftServer server, HearthRecord h) {
+        List<BlockPos> out = new ArrayList<>(2);
+        for (ServerPlayer p : Household.online(server, h)) {
+            if (p.level().dimension() == Level.OVERWORLD && h.contains(p.blockPosition())) out.add(p.blockPosition());
+        }
+        return out;
+    }
+
+    /** A Hearth went: its scan, if one is running, stops. */
+    static void forgetScan(HearthRecord h) {
+        if (activeScan != null && activeScan.hearth() == h) activeScan = null;
+        scanQueue.remove(h.owner);
+    }
+
     /** Starts a full scan right now (commands and tests). */
     public static List<Room> scanNow(ServerLevel level, HearthRecord h) {
-        RoomScanner s = new RoomScanner(level, h, scan -> onRoomsScanned(level.getServer(), h, scan));
+        RoomScanner s = new RoomScanner(level, h, people(level.getServer(), h), scan -> onRoomsScanned(level.getServer(), h, scan));
         s.runToEnd();
         return h.rooms;
+    }
+
+    // ---- the room you stand in: the panel, and its name once as a caption ---------------------------------------------
+
+    /** The room of a Hearth this player belongs to at their feet, if any. */
+    public static Optional<Room> roomHere(ServerPlayer sp) {
+        if (sp.level().dimension() != Level.OVERWORLD) return Optional.empty();
+        BlockPos at = sp.blockPosition();
+        Optional<HearthRecord> h = sharedAt(sp, at);
+        if (h.isEmpty()) return Optional.empty();
+        for (Room r : h.get().rooms) if (r.contains(at) || r.contains(at.above())) return Optional.of(r);
+        return Optional.empty();
+    }
+
+    /**
+     * Once a second: the room panel's data, and the first time you walk into a room after it's recognised or regraded,
+     * its name as a quiet caption (AMBIENT, topic hearth_room: the director shows it when nothing else wants the screen).
+     */
+    static void trackRoom(ServerPlayer sp) {
+        Optional<Room> here = roomHere(sp);
+        dev.awaken.hearth.player.RoomHere view = here.map(dev.awaken.hearth.player.RoomHere::of).orElse(dev.awaken.hearth.player.RoomHere.NONE);
+        if (!view.equals(sp.getData(HearthContent.HERE.get()))) sp.setData(HearthContent.HERE.get(), view);
+        if (here.isEmpty()) return;
+        Room r = here.get();
+        HearthPlayer hp = player(sp);
+        int as = r.reading().grade().ordinal() | (r.reading().name().hashCode() << 2);
+        Integer told = hp.roomsTold.get(r.key());
+        if (told != null && told == as) return;
+        hp.roomsTold.remove(r.key());
+        hp.roomsTold.put(r.key(), as);
+        while (hp.roomsTold.size() > HearthPlayer.TOLD_MAX) hp.roomsTold.remove(hp.roomsTold.keySet().iterator().next());
+        dev.awaken.core.AwakenNet.send(sp, new dev.awaken.hearth.net.HomeNet.RoomCaption(r.reading().name(), r.reading().grade().ordinal(),
+                r.reading().purpose().label));
     }
 
     static String capitalise(String s) {

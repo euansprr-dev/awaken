@@ -69,7 +69,10 @@ public final class Upgrades {
         parts.add(part(Items.IRON_INGOT, 3 * level));
         if (level >= 3) parts.add(part(Items.GOLD_INGOT, 2 * (level - 2)));
         if (level >= 4) parts.add(part(Items.DIAMOND, level - 3));
-        if (!byOren) parts.add(part(CoreApi.ESSENCE_SHARD.get(), level));
+        if (!byOren) {
+            parts.add(part(CoreApi.ESSENCE_SHARD.get(), level));
+            parts.add(part(Items.COAL, 1)); // the Forge burns a coal a temper (Oren brings his own fire)
+        }
         return new Def("temper_" + level, "Temper " + roman(level), Rank.of((level - 1) / 2), parts);
     }
 
@@ -84,7 +87,7 @@ public final class Upgrades {
 
     public static void offerAnchor(ServerPlayer sp, ServerLevel level, HearthRecord h) {
         Rank rank = Progression.rank(sp);
-        var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Hearth · Tier " + roman(h.tier)));
+        var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(h.hearthfire() ? "Hearthfire" : "Hearth · Tier " + roman(h.tier)));
         w.row(Component.literal("Radius"), Component.literal(h.radius() + " blocks"));
         List<String> rooms = new ArrayList<>();
         for (Room r : h.rooms) for (RoomType t : r.types()) if (!rooms.contains(t.label)) rooms.add(t.label);
