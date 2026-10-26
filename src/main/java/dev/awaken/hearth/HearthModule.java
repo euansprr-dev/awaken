@@ -124,6 +124,20 @@ public final class HearthModule {
                 }
                 return out;
             }
+
+            @Override
+            public boolean greenhouse(net.minecraft.world.level.Level level, BlockPos pos) {
+                // the client knows only its own home's greenhouses (synced boxes); the server reads every Hearth's rooms
+                if (level.isClientSide()) return dev.awaken.hearth.player.ClientHome.home().inGreenhouse(pos);
+                if (!(level instanceof ServerLevel sl) || sl.dimension() != net.minecraft.world.level.Level.OVERWORLD) return false;
+                return HearthData.get(sl.getServer()).containing(pos, HearthService.OVERWORLD)
+                        .flatMap(h -> h.roomAt(pos, dev.awaken.hearth.room.RoomType.GREENHOUSE)).isPresent();
+            }
+
+            @Override
+            public boolean study(net.minecraft.server.level.ServerPlayer player) {
+                return HearthService.sharedAt(player, player.blockPosition()).map(h -> h.hasRoom(dev.awaken.hearth.room.RoomType.STUDY)).orElse(false);
+            }
         });
         Regimen.penaltyHandler = Trials::penalty;
         RankHooks.onRankUp((sp, rank) -> {

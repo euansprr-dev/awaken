@@ -1,7 +1,9 @@
 {
   "variants": {
-    "": {
-      "model": "awaken:block/hearth_anchor"
-    }
+    "tier=1": { "model": "awaken:block/hearth_anchor" },
+    "tier=2": { "model": "awaken:block/hearth_anchor" },
+    "tier=3": { "model": "awaken:block/hearth_anchor" },
+    "tier=4": { "model": "awaken:block/hearth_anchor" },
+    "tier=5": { "model": "awaken:block/hearth_anchor" }
   }
 }

@@ -41,12 +41,15 @@ public final class HearthClient {
             AuraFx.tick();
             GuideClient.tick();
             HomeClient.tick();
+            var mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.player != null && mc.player.tickCount % 20 == 0) dev.awaken.hearth.player.ClientHome.set(mc.player.getData(HearthContent.VIEW.get()).home());
         });
         NeoForge.EVENT_BUS.addListener(HearthClient::tooltip);
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             GuideClient.clear();
             HomeClient.clear();
             HomeHud.clear();
+            dev.awaken.hearth.player.ClientHome.set(null);
         });
         StatusSections.add(StatusSections.Tab.STATUS, new RoomSection());
         StatusSections.add(StatusSections.Tab.STATUS, new HearthSection());

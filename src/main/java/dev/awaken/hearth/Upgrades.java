@@ -145,6 +145,7 @@ public final class Upgrades {
         h.scanAt = sp.level().getGameTime() + 1;
         HearthService.dirty(sp.level().getServer());
         ServerLevel level = HearthService.levelOf(sp.level().getServer(), h);
+        HearthService.showTier(level, h);
         level.playSound(null, h.pos, HearthContent.SND_ANCHOR.get(), SoundSource.BLOCKS, 1f, 1.2f);
         level.sendParticles(HearthContent.HEARTH_EMBER.get(), h.pos.getX() + 0.5, h.pos.getY() + 1.5, h.pos.getZ() + 0.5, 60, 1.2, 1.2, 1.2, 0.03);
         Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Hearth Tier " + roman(h.tier)))
