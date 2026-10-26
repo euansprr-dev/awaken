@@ -120,13 +120,14 @@ public final class Pillars {
         if (light) {
             // the core: thin and hot, light added (Lens's bloom takes it); stronger at night; it reaches highest
             ribbon(vc, bell, bx, by, bz, rx, rz, h, d.solid() * 1.4F * k, brighten(d.core()), (0.55F + 0.45F * day) * breath, time, 0.6F, 1F);
-            ribbon(vc, bell, bx, by, bz, rx, rz, h, d.halo() * 3.5F * k, d.glow(), 0.35F * day * breath, time, 1.0F, 0.8F);
+            ribbon(vc, bell, bx, by, bz, rx, rz, h, d.halo() * 3.5F * k, airy(d.glow(), day), 0.35F * day * breath, time, 1.0F, 0.8F);
         } else {
             // the glow and the haze in the rank's colour: by day they carry the pillar, at night the light does (pillar
             // tour: added light vanished against a noon sky); they thin out sooner than the core
             float tint = 1.15F - day;
-            ribbon(vc, bell, bx, by, bz, rx, rz, h, d.halo() * 6F * k, d.glow(), 0.42F * tint * breath, time, 1.0F, 0.65F);
-            ribbon(vc, bell, bx, by, bz, rx, rz, h, d.halo() * 16F * k, d.glow(), 0.14F * tint, time, 0.4F, 0.5F);
+            int air = airy(d.glow(), day);
+            ribbon(vc, bell, bx, by, bz, rx, rz, h, d.halo() * 6F * k, air, 0.5F * tint * breath, time, 1.0F, 0.65F);
+            ribbon(vc, bell, bx, by, bz, rx, rz, h, d.halo() * 16F * k, air, 0.18F * tint, time, 0.4F, 0.5F);
         }
     }
 
@@ -173,6 +174,16 @@ public final class Pillars {
     /** The colour with the strength as its alpha (the additive blend weighs the colour by it). */
     private static int col(int rgb, float a) {
         return Mth.clamp((int) (a * 255F), 0, 255) << 24 | (rgb & 0xFFFFFF);
+    }
+
+    /**
+     * By day the glow is lit air, paler than the sky behind it: the rank's colour lifted toward white (CI tour: a C-rank
+     * haze in its own pale blue, darker than a noon sky, blended away to nothing and left a thread); at night its own.
+     */
+    private static int airy(int c, float day) {
+        float lift = 0.55F * Mth.clamp((1F - day) / 0.6F, 0F, 1F);
+        int r = c >> 16 & 255, g = c >> 8 & 255, b = c & 255;
+        return 0xFF000000 | (int) (r + (255 - r) * lift) << 16 | (int) (g + (255 - g) * lift) << 8 | (int) (b + (255 - b) * lift);
     }
 
     /** Toward white: the core burns hotter than its glow (a dark core, the S-rank's, stays dark). */

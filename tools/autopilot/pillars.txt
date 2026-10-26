@@ -3,7 +3,7 @@
 # roof 100-200 blocks off). A C-rank gate (pale blue) opened just east of Carillon (city site 671 -1090 in this seed,
 # reserve to ~380 blocks: the gate forms 18-30 blocks from 1110 -1090), framed by 'awaken gate frame <dist> <lift>' (the
 # camera on the line from the gate toward the city's centre, <lift> over the ground or roof there, facing the pillar):
-# about 7 and 12 blocks (looking up, inside the haze), 30, 100, 180 and 250 (inside the city), at noon, dusk and
+# about 7 and 12 blocks (looking up, inside the haze), 30, 100, 180 and 250 (over the city's roofs), at noon, dusk and
 # night, at street level and over roofs.
 # Run on GitHub's Mac runners:
 #   tools/tour-ci.sh tools/autopilot/pillars.txt 1200 TECTONIC=awakened PACK=perf,world,horizon
@@ -61,12 +61,9 @@ shot pillar_noon_100_roof
 cmd awaken gate frame 180 12
 wait 160
 shot pillar_noon_180_roof
-cmd awaken gate frame 250 0
+cmd awaken gate frame 250 50
 wait 200
-shot pillar_noon_250_street
-cmd awaken gate frame 250 20
-wait 60
-shot pillar_noon_250_roof
+shot pillar_noon_250_roofs
 # ---- dusk
 cmd time set 12500
 cmd awaken gate frame 30 0
@@ -85,15 +82,15 @@ shot pillar_dusk_7_up
 cmd awaken gate frame 100 14
 wait 100
 shot pillar_dusk_100_roof
-cmd awaken gate frame 250 20
+cmd awaken gate frame 250 50
 wait 120
-shot pillar_dusk_250_roof
+shot pillar_dusk_250_roofs
 # ---- night
 cmd time set 18000
 cmd awaken gate frame 100 14
 wait 120
 shot pillar_night_100_roof
-cmd awaken gate frame 250 20
+cmd awaken gate frame 250 50
 wait 120
-shot pillar_night_250_roof
+shot pillar_night_250_roofs
 quit
