@@ -68,7 +68,8 @@ public final class Pillars {
      * falloff across its width (several columns per side, the last at nothing with no slope, so no edge shows; a straight
      * ramp from the middle to the edge read as a hard-edged slab): a near-white core, the rank's glow, a wide haze. All
      * fade in at the foot and thin out with height to nothing well under the far plane, without the world's fog (it
-     * counts height as distance, and cut the column off flat at the fog line). The core and glow are light added, full at
+     * counts height as distance, and cut the column off flat at the fog line; its blend also greyed the haze), and each
+     * fades out as the camera comes inside its width. The core and glow are light added, full at
      * night; the haze is coloured air, alpha-blended, which carries the pillar against a daylight sky. One pass for every
      * pillar; nothing allocated here.
      */
@@ -136,6 +137,12 @@ public final class Pillars {
     private static void ribbon(VertexConsumer vc, float[] bell, float bx, float by, float bz, float rx, float rz, float h, float half,
                                int argb, float strength, float time, float shimmer, float reach) {
         int n = bell.length - 1;
+        // from inside or beside a ribbon it would hang across the view as a sheet (Euan, at Carillon and under the
+        // Wayfarers' canopy at dusk: planes and a cone in the sky): it fades out as the camera comes within twice its
+        // half-width, so up close only the core is left, a soft line
+        float cx = bx, cz = bz, near = Mth.clamp((float) (Math.sqrt(cx * cx + cz * cz) - half * 0.5F) / (half * 1.5F), 0F, 1F);
+        strength *= near * near * (3F - 2F * near);
+        if (strength < 0.004F) return;
         float pa = 0;
         for (int i = 0; i < ROWS.length; i++) {
             float f = ROWS[i];
