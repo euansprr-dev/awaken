@@ -43,7 +43,13 @@ public final class FpSwings {
     }
 
     /** A style's moves, and how a vanilla item held in it is turned to the same targets. */
-    public record Style(Map<Archetype.Move, Clip> moves, Quaternionf vanilla, Vector3f grip, Vector3f vanillaGrip, boolean twin) {}
+    /**
+     * A style's moves, how a vanilla item held in it is turned to the same targets, the grips (where its forged weapon's
+     * and a vanilla item's swing turn about) and where the hand closes on its weapon (hand space, from vanilla's rest: the
+     * arm drawn to it, FirstPerson.View's grips).
+     */
+    public record Style(Map<Archetype.Move, Clip> moves, Quaternionf vanilla, Vector3f grip, Vector3f vanillaGrip, boolean twin,
+                        Vector3f hand) {}
 
     private static final Map<String, Style> STYLES = new HashMap<>();
     private static float dt = 0.25F;
@@ -69,8 +75,9 @@ public final class FpSwings {
                         Hand h = hand == null ? Hand.MAIN : Hand.valueOf(hand.getAsString().toUpperCase(java.util.Locale.ROOT));
                         moves.put(m, new Clip(k, h));
                     }
-                    STYLES.put(e.getKey(), new Style(moves, quat(st.getAsJsonArray("vanilla")), vec(st.getAsJsonArray("grip")),
-                            vec(st.getAsJsonArray("vanillaGrip")), st.has("twin") && st.get("twin").getAsBoolean()));
+                    Vector3f grip = vec(st.getAsJsonArray("grip"));
+                    STYLES.put(e.getKey(), new Style(moves, quat(st.getAsJsonArray("vanilla")), grip, vec(st.getAsJsonArray("vanillaGrip")),
+                            st.has("twin") && st.get("twin").getAsBoolean(), st.has("handGrip") ? vec(st.getAsJsonArray("handGrip")) : grip));
                 }
             }
             Awaken.LOG.info("[arms] first-person swings for {} styles", STYLES.size());

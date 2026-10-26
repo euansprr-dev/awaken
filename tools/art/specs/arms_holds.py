@@ -97,6 +97,29 @@ def solve(pos, hold):
     return ([round(rx, 2), round(ry, 2), round(rz, 2)], [round(float(v), 3) for v in t16], round(sc, 3))
 
 
+M_X = np.diag([-1.0, 1.0, 1.0])
+
+
+def mirror_display(display):
+    """The left hand's display transform for a right hand's, so the weapon in the left hand is that hand's true mirror:
+    its length, its flat and where the hand closes mirrored across the view (only a detail on one side of the blade
+    stays on its side). 26.3 mirrors every left-hand transform itself as it applies it (ItemTransform.apply: x
+    translation, y and z rotation negated), so what is written here is the transform before that."""
+    (rx, ry, rz), t, sc = display
+    R = MR.euler(rx, ry, rz)
+    a = R @ AXIS_ITEM
+    f = R @ FACE_ITEM
+    a2, f2 = M_X @ a, M_X @ f
+    T = np.stack([a2, np.cross(a2, f2), f2], axis=1)
+    F = np.stack([AXIS_ITEM, np.cross(AXIS_ITEM, FACE_ITEM), FACE_ITEM], axis=1)
+    R_left = T @ F.T
+    grip_r = sc * (R @ (GRIP_ITEM - 0.5)) + np.asarray(t) / 16.0
+    t_left = M_X @ grip_r - sc * (R_left @ (GRIP_ITEM - 0.5))
+    jx, jy, jz = euler_xyz(M_X @ R_left @ M_X)  # applied, the engine's own mirror turns it back into R_left
+    return ([round(jx, 2), round(jy, 2), round(jz, 2)], [round(float(-t_left[0] * 16), 3), round(float(t_left[1] * 16), 3),
+                                                         round(float(t_left[2] * 16), 3)], sc)
+
+
 def describe(display):
     """A display transform back in these terms (for the report)."""
     (rx, ry, rz), t, sc = display
@@ -120,8 +143,9 @@ HOLDS = {
     # two hands at the middle, the edge up, the point toward the target (chudan)
     "katana": dict(yaw=10, pitch=36, roll=90, grip=(-0.14, 0.0, 0.04)),
     # the shaft across the lower view, gripped part way, the head forward and up, the butt back past the hand; held
-    # larger (nearer its size in F5) and turned so its head sits up and left of the aim point, not on it
-    "spear": dict(yaw=40, pitch=24, grip=(0.02, 0.0, 0.06), size=1.3),
+    # larger (nearer its size in F5) and turned so its head sits left of and under the aim point, not on it (the game
+    # draws the resting hand about an eighth of the frame higher than mesh_render does: judged in the game, 2026-10-26)
+    "spear": dict(yaw=46, pitch=13, grip=(0.02, -0.04, 0.06), size=1.3),
     # as the spear, the blade higher, its edge in toward the middle
     "glaive": dict(yaw=54, pitch=22, grip=(0.02, -0.02, 0.05), size=1.2, cut=LEFT),
     # the snath up, the blade at the top reaching in across the view

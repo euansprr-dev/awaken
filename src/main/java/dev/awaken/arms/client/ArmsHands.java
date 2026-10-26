@@ -42,7 +42,15 @@ final class ArmsHands {
         LocalPlayer p = mc.player;
         if (p == null || !ArmsPredict.fights(p)) return;
         trace(p);
-        if (lab(p, v)) return;
+        MAIN_D.zero();
+        MAIN_Q.identity();
+        OFF_D.zero();
+        OFF_Q.identity();
+        if (lab(p, v)) {
+            grips(p, v, partial);
+            return;
+        }
+        grips(p, v, partial);
         pose(POSE);
         float x = POSE[0], y = POSE[1], roll = POSE[2], lunge = POSE[3], tilt = POSE[4];
         if (x == 0 && y == 0 && roll == 0 && lunge == 0 && tilt == 0) return;
@@ -79,6 +87,7 @@ final class ArmsHands {
         LocalPlayer p = mc.player;
         if (p == null || stack != p.getMainHandItem() || arm != p.getMainArm() || !ArmsPredict.fights(p)) return false;
         int inv = arm == HumanoidArm.RIGHT ? 1 : -1;
+        ArmsHands.equip = equip;
         ps.translate(inv * HX, HY + equip * -0.6F, HZ);
         float g = guard(p, partial);
         if (g > 0) {
@@ -143,9 +152,55 @@ final class ArmsHands {
         }
         // which hand strikes: a weapon in each hand (the Daggers) strikes with the off hand too, the main's move mirrored
         FpSwings.Hand hand = preview != null ? FpSwings.Hand.MAIN : FpSwings.hand(FpSwings.style(style.id()), m);
-        if (hand != FpSwings.Hand.OFF) addMove(v.main, inv);
-        if (hand != FpSwings.Hand.MAIN) addMove(v.off, -inv);
+        if (hand != FpSwings.Hand.OFF) {
+            addMove(v.main, inv);
+            MAIN_D.set(D);
+            MAIN_Q.set(Q);
+        }
+        if (hand != FpSwings.Hand.MAIN) {
+            addMove(v.off, -inv);
+            OFF_D.set(D);
+            OFF_Q.set(Q);
+        }
         return true;
+    }
+
+    // each hand's move this frame (authored right-handed, before mirroring): where its grip is
+    private static final org.joml.Vector3f MAIN_D = new org.joml.Vector3f(), OFF_D = new org.joml.Vector3f(), G = new org.joml.Vector3f();
+    private static final org.joml.Quaternionf MAIN_Q = new org.joml.Quaternionf(), OFF_Q = new org.joml.Quaternionf(),
+            GUARD = new org.joml.Quaternionf();
+    /** The main item's equip rise this frame (vanilla's swap: the item sinks and comes back up), from its hand transform. */
+    private static float equip;
+
+    /**
+     * The arms that hold the weapon (FirstPerson.View's grips; Euan 2026-10-26: "it feels like the weapon is just floating
+     * and attacking on its own"): each hand's arm rises from the frame's corner to where it closes on the weapon, at
+     * rest, through every swing's turn and the guard, the off hand's on the twin of a pair. A vanilla item's hand is on
+     * its sprite's handle.
+     */
+    private static void grips(LocalPlayer p, FirstPerson.View v, float partial) {
+        Archetypes.Loaded style = Arms.styleOf(p.getMainHandItem());
+        FpSwings.Style st = style == null ? null : FpSwings.style(style.id());
+        if (st == null) return;
+        boolean ours = ArmsItems.of(p.getMainHandItem().getItem()) != null;
+        int inv = p.getMainArm() == HumanoidArm.RIGHT ? 1 : -1;
+        G.set(ours ? st.hand() : st.vanillaGrip());
+        float g = guard(p, partial);
+        if (g > 0) {
+            // the guard (transform below): across the body, edge out
+            GUARD.identity().rotateX(-102.25F * g * Mth.DEG_TO_RAD).rotateY(13.37F * g * Mth.DEG_TO_RAD).rotateZ(78.05F * g * Mth.DEG_TO_RAD);
+            GUARD.transform(G);
+            G.add(-0.141F * g, 0.08F * g, 0.141F * g);
+        }
+        MAIN_Q.transform(G);
+        G.add(MAIN_D).add(HX, HY + equip * -0.6F, HZ);
+        FirstPerson.View.fist(v.gripMain, 1, inv * G.x, G.y, G.z);
+        if (!ArmsOffHand.twinOf(p).isEmpty()) {
+            G.set(st.hand());
+            OFF_Q.transform(G);
+            G.add(OFF_D).add(HX, HY, HZ);
+            FirstPerson.View.fist(v.gripOff, 1, -inv * G.x, G.y, G.z);
+        }
     }
 
     private static final org.joml.Vector3f D2 = new org.joml.Vector3f();

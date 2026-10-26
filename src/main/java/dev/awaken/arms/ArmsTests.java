@@ -58,6 +58,7 @@ final class ArmsTests {
         AwakenTests.register("arms_lord_forged", 40, ArmsTests::lordForged);
         AwakenTests.register("arms_mastery", 20, ArmsTests::mastery);
         AwakenTests.register("arms_fp_swings", 20, ArmsTests::fpSwings);
+        AwakenTests.register("arms_grip", 20, ArmsTests::grip);
         AwakenTests.register("arms_marks", 40, ArmsTests::marks);
         AwakenTests.register("arms_forge", 20, ArmsTests::forge);
     }
@@ -364,6 +365,26 @@ final class ArmsTests {
             }
         }
         h.assertTrue(worst < 1e-3F, "a turn's view move matches the roll-and-tilt one (off by " + worst + ")");
+        h.succeed();
+    }
+
+    /**
+     * The arms that hold a weapon (FirstPerson.View's grips, drawn by Hands): unset, a view is untouched (nothing moves,
+     * no arm); set, it asks for the arm; cleared each frame, it is untouched again. Every style knows where its hand
+     * closes, near vanilla's resting hand.
+     */
+    static void grip(GameTestHelper h) {
+        dev.awaken.core.api.FirstPerson.View v = new dev.awaken.core.api.FirstPerson.View();
+        h.assertTrue(!v.moved() && v.gripMain[3] == 0 && v.gripOff[3] == 0, "an untouched view has no grip and moves nothing");
+        dev.awaken.core.api.FirstPerson.View.fist(v.gripMain, 1F, 0.5F, -0.5F, -0.7F);
+        h.assertTrue(v.moved() && v.gripMain[3] == 1F && Math.abs(v.gripMain[0] - 0.5F) < 1e-6, "a set grip asks for the arm");
+        h.assertTrue(v.fistMain[3] == 0 && !v.hideMain, "a grip is not a fist: the held item still draws");
+        v.clear();
+        h.assertTrue(!v.moved() && v.gripMain[3] == 0, "cleared each frame");
+        for (Archetypes.Loaded a : Archetypes.all()) {
+            FpSwings.Style st = FpSwings.style(a.id());
+            h.assertTrue(st != null && st.hand().length() < 0.45F, a.id() + " knows where its hand closes (" + (st == null ? "none" : st.hand()) + ")");
+        }
         h.succeed();
     }
 

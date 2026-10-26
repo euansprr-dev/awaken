@@ -3380,11 +3380,13 @@ def row_hold(row, pos):
     for its own mesh so it sits in the hand like every other of its style; the gauntlets keep their worn hold."""
     import arms_holds as AH
     d = AH.hold_for(row[8], pos)
-    if d is None:
-        return hold_of(hold_key(row))
+    if d is None:  # the style's own (the gauntlets' worn hold)
+        fp = hold_of(hold_key(row))["firstperson_righthand"]
+        d = (tuple(fp["rotation"]), tuple(fp["translation"]), fp["scale"][0])
     rot, tr, sc = d
-    return {"firstperson_righthand": {"rotation": rot, "translation": tr, "scale": [sc, sc, sc]},
-            "firstperson_lefthand": {"rotation": [rot[0], -rot[1], -rot[2]], "translation": tr, "scale": [sc, sc, sc]}}
+    lrot, ltr, _ = AH.mirror_display(d)  # the left hand holds its true mirror (a pair's twin, or a weapon in the off hand)
+    return {"firstperson_righthand": {"rotation": list(rot), "translation": list(tr), "scale": [sc, sc, sc]},
+            "firstperson_lefthand": {"rotation": lrot, "translation": ltr, "scale": [sc, sc, sc]}}
 
 
 def write_holds():

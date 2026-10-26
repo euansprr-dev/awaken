@@ -215,6 +215,9 @@ final class Hands implements FirstPerson.Player {
                 VIEW.hideOff = true;
             }
             apply(ps, VIEW.both); // stays on the stack for the off hand too
+            // grips: a held thing swung far from its resting place is held by an arm rising to its grip (it still draws)
+            if (VIEW.gripMain[3] > 0 && !VIEW.hideMain) fist(e, !leftMain, VIEW.gripMain);
+            if (VIEW.gripOff[3] > 0 && !offFist) fist(e, leftMain, VIEW.gripOff);
             if (VIEW.drawOff && !offFist && avatar != null && offEmpty) drawArm(e, avatar, !leftMain);
             if (VIEW.hideMain) {
                 e.setCanceled(true);

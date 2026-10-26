@@ -28,6 +28,7 @@ wait 40
 camera first
 look 0 4
 wait 12
+shot combo_daggers_rest_fp
 cmd awaken ascent pilot rec combo_daggers_fp 39 2
 wait 3
 arms strike
@@ -43,6 +44,7 @@ wait 40
 camera back
 look 0 4
 wait 12
+shot combo_daggers_rest_3p
 cmd awaken ascent pilot rec combo_daggers_3p 39 2
 wait 3
 arms strike
@@ -153,4 +155,13 @@ wait 10
 arms strike
 wait 46
 camera first
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_glaive
+wait 40
+camera first
+look 0 4
+wait 12
+shot combo_glaive_rest_fp
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_spear
+wait 40
+shot combo_spear_rest_fp
 quit

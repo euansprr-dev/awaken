@@ -330,7 +330,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
   Animation Library is installed; a no-op otherwise), `FirstPerson` (Hands, §24: the world body, view stances, view
-  clips and their events; every module's first person goes through it). The Wilds (§17): `WardHooks` (`register(Source)`, `at(level, pos)`:
+  clips and their events; every module's first person goes through it; `View.gripMain`/`gripOff` [x, y, z, weight]:
+  the arm drawn to a held thing's grip, additive, Arms 2026-10-26). The Wilds (§17): `WardHooks` (`register(Source)`, `at(level, pos)`:
   wards for sites placed by code; structures just join `#awaken:warded`), `ArrivalHooks` (`report(player, Way, ticks)` for
   movement systems, `byMovement(player)` for rewards, `history(player)`), `HorizonHooks` (`register(Source)` of sites,
   `addReach(Reach)` for needs such as `WINGS`, `collect(player)`, the pure `pick`).
@@ -3526,6 +3527,12 @@ of the plan). No mixins.
   `FirstPerson.View.REST_FIST` (0.744, -0.455, -1.072); a clip's fists replace a stance's for that hand; a hand holding
   an item ignores fists (vanilla draws it). A fist clip gives the hands back at rest (or the off hand out under the
   frame), or, marked `toStance`, where its stance holds them (the hang's ledge jumps).
+- **Grips** (Arms 2026-10-26, Euan: "it feels like the weapon is just floating and attacking on its own"): a source may
+  key where a hand that HOLDS something closes on it (`View.gripMain`/`gripOff`, view space, weighted as fists): that
+  hand's arm is drawn rising to the grip from under the frame's corner exactly as a fist's (after the moves for both
+  hands, so it sways with what it holds), and the held thing still draws (a grip never hides the hand). Unset (weight 0)
+  nothing changes. Arms keys them every frame a styled weapon is held: at rest, through each swing's turn, the guard
+  and the equip rise, the off hand's on a pair's twin. Test `arms_grip`.
 - **Look-lag** (P2): the hands trail fast turns of the view on a damped spring (up to 0.06 sideways, 0.045 up, 4° of
   roll), halved with reduced motion (`FirstPerson.reducedMotion`, the body's setting).
 - **Near legs** (P2): a foot nearer the eye than 1.15 is drawn in the hand pass, pushed out along its line of sight to
@@ -3788,6 +3795,24 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   holds` rewrites only the holds; the old check that kept every point inside the view (it shrank every style to the
   Longsword's outline) is gone. The swings are baked from these holds (they start and end at rest), and the lab's
   holds sheets (docs/combat/anim-lab/holds-*.png) show each style before, after and in F5.
+- **The wrist and the arm** (Euan 2026-10-26: "it should actually turn it like as if you had a wrist... or a forearm
+  that's turning... if you're gonna do an uppercut, you kind of turn it 180 degrees"): every cut turns the weapon about
+  its own handle as the swing gathers and back square just as it lands (a slash 35 degrees, a chop 40, a slam 75, a
+  hammer's swing 85, an uppercut 170: the head turned right over to drive it up), the wrist cocked so a heavy head
+  trails the hands (16 degrees at least) and whips through. The arm that holds the weapon is drawn to its grip
+  (§24 "Grips"): the hand closes where the style's hold puts it (arms_holds.py's grip, baked as fp_swings.json's
+  `handGrip`), a vanilla item's on its sprite's handle. The lab's `strip` shows one move frame by frame (a turn in the
+  hand reads there, not in an onion-skin).
+- **A pair, and the left hand** (Euan 2026-10-26: "the left hand... looks like it's just floating near the hand"; "the
+  gauntlet should be on the hand"): the Daggers and the Gauntlets are pairs (ArmsOffHand: the main hand's twin worn or
+  held in the empty off hand, first and third person); the Gauntlets' combo alternates fists (jab, cross, hook, the other
+  fist's uppercut, a straight; heavy both) and each fist closes inside its gauntlet (the mesh's centre), so the arm wears
+  it rather than holding it. Every weapon's left-hand hold is its right hand's true mirror (arms_holds.mirror_display):
+  26.3 mirrors any left-hand transform as it applies it (x translation, y and z rotation), so a left transform written
+  pre-mirrored, as old vanilla JSON was, came out unmirrored and the twin sat beside the hand the arm reached for. A
+  weapon's frame is its design's (along the item's diagonal, its flat across z), never a guess from its outline: a
+  maul's head is longest along its striking faces, so the outline's thinnest direction was the way it strikes and its
+  emblem side led; now the gold face leads in every direction it swings.
 - **The animation lab** (tools/art/anim_lab.py; SPEC §25, Euan's ask for a way to see the motion): `sheet` / `all`
   draw each strike's first-person frames as the game composes them (the swing, Hands' view layer, vanilla's rest, the
   weapon's hold and mesh, 70 degrees) as an onion-skin with the blade tip's path (wind-up blue, blow gold, recovery

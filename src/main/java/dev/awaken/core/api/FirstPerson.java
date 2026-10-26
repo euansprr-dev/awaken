@@ -141,6 +141,13 @@ public final class FirstPerson {
          * {@link #REST_FIST} (mirrored for the left hand).
          */
         public final float[] fistMain = new float[4], fistOff = new float[4];
+        /**
+         * Grips (a hand that holds something): where the held thing's grip is this frame, in view space (x, y, z, then the
+         * summed weight), as {@link #fistMain} is for an empty hand. While a hand has one, its arm is drawn rising to the
+         * grip from under the frame's corner, and what it holds still draws: a weapon swung far from vanilla's resting
+         * place is held, not floating. Unset (weight 0), nothing changes.
+         */
+        public final float[] gripMain = new float[4], gripOff = new float[4];
         public boolean drawOff, hideMain, hideOff;
         /** A colour the fists' arms are tinted (RGB; 0 for none): the Sovereign's gold. */
         public int tint;
@@ -156,6 +163,8 @@ public final class FirstPerson {
             java.util.Arrays.fill(off, 0F);
             java.util.Arrays.fill(fistMain, 0F);
             java.util.Arrays.fill(fistOff, 0F);
+            java.util.Arrays.fill(gripMain, 0F);
+            java.util.Arrays.fill(gripOff, 0F);
             drawOff = hideMain = hideOff = false;
             tint = 0;
             glow = 0;
@@ -182,7 +191,7 @@ public final class FirstPerson {
 
         public boolean moved() {
             for (int i = 0; i < 6; i++) if (both[i] != 0 || main[i] != 0 || off[i] != 0) return true;
-            return drawOff || hideMain || hideOff || fistMain[3] > 0 || fistOff[3] > 0;
+            return drawOff || hideMain || hideOff || fistMain[3] > 0 || fistOff[3] > 0 || gripMain[3] > 0 || gripOff[3] > 0;
         }
     }
 

@@ -10,6 +10,7 @@ the swing's path; 0: the flat face leads, a wave).
     python3 tools/art/anim_lab.py all OUT_DIR [--model old|new]       the review set: longsword, daggers, greatblade, maul
     python3 tools/art/anim_lab.py third OUT.png STYLE                 third person: the body's clips with the blade in hand
     python3 tools/art/anim_lab.py bake                                writes data/awaken/arms/fp_swings.json (the new model)
+    python3 tools/art/anim_lab.py strip OUT.png STYLE MOVE             one move frame by frame (a turn in the hand shows)
     python3 tools/art/anim_lab.py film FRAMES_DIR OUT.png             onion-skin of real frames (the clip recorder's PNGs)
 
 The game's own frames (Hands' clip recorder, in a tour) go through `film`: the same overlay from real frames, so a
@@ -208,12 +209,11 @@ class Held:
         self.P = (self.m["pos"] - 0.5) * sc @ R.T + np.asarray(t) / 16.0
         self.N = self.m["nrm"] @ R.T
         c = self.P.mean(axis=0)
-        _, _, vt = np.linalg.svd(self.P - c, full_matrices=False)
-        axis, thin = vt[0], vt[2]
-        # the business end is the one the hold raises (every first-person hold presents its weapon head-up): a heavy
-        # head sits nearer the centre than the pommel does, so which side is longer can't tell it
-        if axis[1] < 0:
-            axis = -axis
+        # every design lies along the item's diagonal, tip to the upper right, its flat across z (arms_weapons): the
+        # weapon's own frame, not a guess from its outline (a maul's head is longest along its striking faces, so the
+        # thinnest way through the whole mesh is the way it strikes)
+        axis = R @ (np.array([1.0, 1.0, 0.0]) / math.sqrt(2))
+        thin = R @ np.array([0.0, 0.0, 1.0])
         self.axis = axis  # grip to tip
         self.face = thin  # the flat's normal
         self.edge = np.cross(axis, thin)
@@ -386,8 +386,8 @@ def sweep(form, m, wt, u):
     right, from the off side) draws back less and carries further out to the right, where there is room."""
     heft = m["windup"] + m["active"]
     pre = {"slam": 72, "chop": 64, "swing": 70, "whirl": 74, "rise": 60, "lash": 58}.get(form, 50 + min(20, heft * 2.5))
-    post = {"slam": 9, "whirl": 32, "swing": 26, "lash": 10}.get(form, 14 + min(8, heft))
-    carry = {"slam": 5, "whirl": 14, "lash": 4}.get(form, 8 + min(8, heft)) * wt["carry"]
+    post = {"slam": 9, "whirl": 32, "swing": 26, "lash": 10, "rise": 10}.get(form, 14 + min(8, heft))
+    carry = {"slam": 5, "whirl": 14, "lash": 4, "rise": 3}.get(form, 8 + min(8, heft)) * wt["carry"]
     if u[0] > 0.3 and form not in ("slam", "chop", "rise"):
         pre, post, carry = pre * 0.62, post * 1.35, carry * 1.25
     return pre, post, post + carry
@@ -465,27 +465,39 @@ def rig_pose(style_row, m, held, t):
     tan_c /= np.linalg.norm(tan_c)
     arm = max(0.15, reach - MID * held.length)
     pre, post, stop = sweep(form, m, wt, u)
+    # the wrist: cocked back so the head trails the hands into the blow, then whipped through (a hammer's or an axe's
+    # head carries the most)
     lag_max = wt["lag"] * (2.0 if form == "lash" else 1.0)
+    if form in ("slam", "swing", "rise", "chop") and wt["home"] == "drag":
+        lag_max = max(lag_max, 16.0)
+    # the forearm: turned as the swing gathers (the weapon rolled about its own handle), and turned back square just as
+    # it lands, so the edge, bit or face comes round to lead; an uppercut turns the head right over to drive it up
+    roll0 = {"slam": 75.0, "swing": 85.0, "rise": 170.0, "chop": 40.0, "slash": 35.0, "reap": 30.0, "whirl": 60.0,
+             "lash": 50.0}.get(form, 30.0)
     step_dir = r_c * wt["step"] * (1.4 if form in ("slam", "whirl", "swing") else 1.0)
 
-    def at(theta, lag=0.0, step=0.0):
+    def at(theta, lag=0.0, step=0.0, roll=0.0):
         th, tb = math.radians(theta), math.radians(theta - lag)
         r = math.cos(th) * r_c + math.sin(th) * tan_c
         rb = math.cos(tb) * r_c + math.sin(tb) * tan_c
         tan = -math.sin(tb) * r_c + math.cos(tb) * tan_c
-        return g(PIVOT + step_dir * step + r * arm, frame_to(rb, tan, side, F))
+        R = frame_to(rb, tan, side, F)
+        if roll:
+            R = axis_rot(rb, roll) @ R
+        return g(PIVOT + step_dir * step + r * arm, R)
 
-    cocked = at(-pre, lag_max * 0.6)
-    creep = at(-pre - (8 if wt["draw"] < 1 else 0), lag_max)
+    cocked = at(-pre, lag_max * 0.6, 0.0, roll0 * 0.85)
+    creep = at(-pre - (8 if wt["draw"] < 1 else 0), lag_max, 0.0, roll0)
     if t < c:
         return windup_pose(cocked, creep)
     th0 = -pre - (8 if wt["draw"] < 1 else 0)
-    if t < hit:  # accelerating into the hit: the arm leads, the blade whips through after it
+    r_start = roll0 if wt["draw"] < 1 else roll0 * 0.85
+    if t < hit:  # accelerating into the hit: the arm leads, the forearm turning the blade square, the wrist whipping it
         x, p = drive(t, c, hit, wt)
-        return at(th0 * (1 - p), lag_max * (1 - x) ** 1.5, x)
-    if t < ea:  # through the target: the blade carries on, slowing, a touch ahead of the arm
+        return at(th0 * (1 - p), lag_max * (1 - x) ** 1.5, x, r_start * (1 - x) ** 1.6)
+    if t < ea:  # through the target: the blade carries on, slowing, a touch ahead of the arm, the forearm overturning
         x = (t - hit) / max(1e-6, ea - hit)
-        return at(post * (1 - (1 - x) ** 2), -lag_max * 0.35 * math.sin(math.pi * x), 1.0)
+        return at(post * (1 - (1 - x) ** 2), -lag_max * 0.35 * math.sin(math.pi * x), 1.0, -roll0 * 0.12 * math.sin(math.pi * x))
     if t < fe:  # the follow-through: the weight carries it on, settling
         x = (t - ea) / max(1e-6, fe - ea)
         return at(post + (stop - post) * ease_out_cubic(x), 0.0, 1.0 - 0.3 * x)
@@ -677,7 +689,13 @@ def bake(out=SWINGS):
                          "keys": keys}
         # a vanilla item held in this style: the same targets, from vanilla's own hold (R_vanilla = R . C)
         C = Fs @ Fv.T
+        import arms_holds as AH
+        # where the hand closes: the hold's grip; a worn weapon (the gauntlets) closes round the fist inside it
+        hand_grip = AH.HOLDS.get(sid, {}).get("grip")
+        if hand_grip is None:
+            hand_grip = held.P.mean(axis=0)
         styles[sid] = {"twin": any(v["hand"] != "main" for v in moves.values()),
+                       "handGrip": [round(float(v), 4) for v in (hand_grip if hand_grip is not None else held.grip)],
                        "vanilla": [round(float(v), 5) for v in mat_quat(C)],
                        "grip": [round(float(v), 4) for v in held.grip], "vanillaGrip": [round(float(v), 4) for v in grip_v],
                        "moves": moves}
@@ -1092,6 +1110,34 @@ def holds_sheet(out, styles=None, new=None, tier="gatewrought"):
     return out
 
 
+def strip(out, style, move, n=10, wid=None):
+    """One move frame by frame, in order (the lab's own frames): what an onion-skin can't show, a turn in the hand."""
+    st = table()[style]
+    m = st["moves"][move]
+    held = Held(wid or "gatewrought_" + style)
+    sw = load_swings()
+    total = m["windup"] + m["active"] + m["recovery"]
+    hit = hit_tick(m)
+    ts = sorted(set([round(x, 2) for x in np.linspace(0, min(total, hit + m["active"] + 4), n)] + [round(hit, 2)]))
+    cells = []
+    for t in ts:
+        d, R = new_pose(style, move, t, sw)
+        im = frame(held, d, R).resize((320, 180), Image.LANCZOS)
+        dr = ImageDraw.Draw(im)
+        dr.line([(154, 90), (166, 90)], fill=(255, 255, 255))
+        dr.line([(160, 84), (160, 96)], fill=(255, 255, 255))
+        dr.text((6, 4), f"t {t:.1f}" + ("  HIT" if abs(t - hit) < 1e-6 else ""), fill=(255, 120, 120) if abs(t - hit) < 1e-6 else (200, 205, 215))
+        cells.append(im)
+    W_ = 320 * min(6, len(cells))
+    rows = (len(cells) + 5) // 6
+    sheet = Image.new("RGB", (W_, rows * 180 + 18), (14, 15, 20))
+    ImageDraw.Draw(sheet).text((6, 3), f"{style} · {move} · {form_of(m)[0]} · frame by frame", fill=(230, 232, 240))
+    for i, c in enumerate(cells):
+        sheet.paste(c, ((i % 6) * 320, 18 + (i // 6) * 180))
+    sheet.save(out)
+    return out
+
+
 def film(frames_dir, out):
     """Onion-skin of the game's own frames (sorted by name), the moving pixels overlaid, later ones stronger."""
     names = sorted(n for n in os.listdir(frames_dir) if n.lower().endswith(".png"))
@@ -1143,6 +1189,9 @@ def main(argv):
         return 0
     if argv[0] == "bake":
         print(bake())
+        return 0
+    if argv[0] == "strip":
+        print(strip(argv[1], argv[2], argv[3]))
         return 0
     if argv[0] == "film":
         print(film(argv[1], argv[2]))

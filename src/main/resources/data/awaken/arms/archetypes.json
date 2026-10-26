@@ -4037,7 +4037,8 @@
               60
             ],
             "lunge": 0.6,
-            "form": "jab"
+            "form": "jab",
+            "hand": "off"
           },
           "swish": "thrust"
         },
@@ -4093,7 +4094,8 @@
               -20
             ],
             "lunge": 0.4,
-            "form": "upper"
+            "form": "upper",
+            "hand": "off"
           },
           "swish": "heavy"
         },
@@ -4156,7 +4158,8 @@
               75
             ],
             "lunge": 1.0,
-            "form": "jab"
+            "form": "jab",
+            "hand": "both"
           },
           "swish": "thrust"
         },

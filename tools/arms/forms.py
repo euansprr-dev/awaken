@@ -40,8 +40,9 @@ FORMS = {
                "strike_4": ("stab", "line"), "heavy": ("whirl", R2L)},
     "scythe": {"strike_1": ("reap", R2L), "strike_2": ("reap", L2R), "strike_3": ("chop", DOWN),
                "strike_4": ("whirl", R2L), "heavy": ("chop", DOWN)},
-    "gauntlets": {"strike_1": ("jab", None), "strike_2": ("jab", None), "strike_3": ("hook", None),
-                  "strike_4": ("upper", None), "strike_5": ("jab", None), "heavy": ("jab", None)},
+    # worn on both fists: a jab, the other fist's cross, a hook, the other's uppercut, a straight (heavy: both)
+    "gauntlets": {"strike_1": ("jab", None, "main"), "strike_2": ("jab", None, "off"), "strike_3": ("hook", None, "main"),
+                  "strike_4": ("upper", None, "off"), "strike_5": ("jab", None, "main"), "heavy": ("jab", None, "both")},
     "chainblade": {"strike_1": ("lash", DIAG), "strike_2": ("lash", DIAG_UP), "strike_3": ("whirl", R2L),
                    "strike_4": ("stab", "line"), "heavy": ("stab", "line")},
     "shieldblade": {"strike_1": ("slash", DIAG), "strike_2": ("bash", None), "strike_3": ("chop", DOWN),
