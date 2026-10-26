@@ -48,26 +48,6 @@ final class CityTests {
     }
 
     static void register() {
-        // TEMPORARY (W3): the whole city's painted cells as one number, before and after the grammar's generalisation
-        AwakenTests.register("city_paint_fingerprint_tmp", 2400, h -> {
-            CityLayout l = layoutAt(0, 0);
-            CityBuffer buf = new CityBuffer(16, 16);
-            long hash = 1469598103934665603L;
-            long cells = 0;
-            for (long ck : l.chunks) {
-                int cx = net.minecraft.world.level.ChunkPos.getX(ck), cz = net.minecraft.world.level.ChunkPos.getZ(ck);
-                CityPainter.paintChunk(l, cx, cz, 20261024L, buf);
-                for (int i = 0; i < buf.cells.length; i++) {
-                    BlockState s = buf.cells[i];
-                    int id = s == null ? -1 : net.minecraft.world.level.block.Block.getId(s);
-                    hash = (hash ^ id) * 1099511628211L;
-                    if (s != null) cells++;
-                }
-                for (boolean p : buf.plate) hash = (hash ^ (p ? 1 : 0)) * 1099511628211L;
-            }
-            dev.awaken.Awaken.LOG.info("[city] PAINT FINGERPRINT {} chunks {} cells {}", Long.toHexString(hash), l.chunks.length, cells);
-            h.succeed();
-        });
         AwakenTests.register("city_plan_hash", 40, h -> {
             CityPlan p = CityPlan.get();
             h.assertTrue(p.sha256.equals(PLAN_SHA256), "the plan's hash is pinned (got " + p.sha256 + "); a plan change must be deliberate");
