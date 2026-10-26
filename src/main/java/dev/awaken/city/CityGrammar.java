@@ -51,6 +51,8 @@ final class CityGrammar {
     static final int[] NO_SHUTTERS = {};
 
     static Style style(Plot p) {
+        // a settlement's house (SPEC §28.6): its land's and wealth's style, never a Carillon district's
+        if (VillageStyles.isVillage(p)) return VillageStyles.style(p);
         int v = p.variant();
         int r = (v * 37 + p.id() * 11) % 100;          // the roof
         int w = (v * 53 + p.id() * 7 + 13) % 100;      // the walls
@@ -165,7 +167,7 @@ final class CityGrammar {
      */
     static final class Facade {
         final Ctx c;
-        final CityPlan plan;
+        final PlanView plan;
         final Plot p;
         final Style st;
         final Box base, up;
@@ -185,7 +187,7 @@ final class CityGrammar {
 
         Facade(Ctx c, Plot p, Style st, Box base, Box up, boolean[] jetty) {
             this.c = c;
-            this.plan = c.plan;
+            this.plan = c.view;
             this.p = p;
             this.st = st;
             this.base = base;
@@ -373,7 +375,7 @@ final class CityGrammar {
      * Garden Ward's lawns the grid; alleys are running faces (windows, nothing proud), the Quay's warehouse flanks blind
      * running faces; walls against a neighbour, a landmark or the curtain show nothing.
      */
-    static int faceClass(CityPlan plan, Plot p, int sd, int x, int z) {
+    static int faceClass(PlanView plan, Plot p, int sd, int x, int z) {
         byte k = plan.kind(x, z);
         if (k == PLOT || k == LANDMARK || k == WALL || k == VOID || water(k) || k == WATERGATE) return F_NONE;
         // (M4 B2: ground in front standing at the eave or over it, a terrace above a house's back, hides the face)
@@ -397,7 +399,7 @@ final class CityGrammar {
         Style st = style(p);
         int x0 = p.x0(), z0 = p.z0(), x1 = p.x1(), z1 = p.z1();
         Box base = new Box(x0, z0, x1, z1);
-        boolean[] jetty = jetties(c.plan, p, st, base);
+        boolean[] jetty = jetties(c.view, p, st, base);
         Box up = new Box(x0 - (jetty[W] ? 1 : 0), z0 - (jetty[N] ? 1 : 0), x1 + (jetty[E] ? 1 : 0), z1 + (jetty[S] ? 1 : 0));
         Facade f = new Facade(c, p, st, base, up, jetty);
         int g = p.lift();
@@ -420,13 +422,13 @@ final class CityGrammar {
     }
 
     /** Jetties (Bellwatch only): once, at the first floor, over a lane 6+ wide, or 4-5 wide on its south or east side only, so the lane never closes at the lips. */
-    static boolean[] jetties(CityPlan plan, Plot p, Style st, Box base) {
+    static boolean[] jetties(PlanView plan, Plot p, Style st, Box base) {
         boolean[] j = new boolean[4];
         if (!st.jetties() || p.storeys() < 2) return j;
         return jettySides(plan, p, base, j);
     }
 
-    private static boolean[] jettySides(CityPlan plan, Plot p, Box base, boolean[] j) {
+    private static boolean[] jettySides(PlanView plan, Plot p, Box base, boolean[] j) {
         for (int sd = 0; sd < 4; sd++) {
             int w = openWidth(plan, base.x0, base.z0, base.x1, base.z1, sd);
             j[sd] = w >= 6 || w >= 4 && (sd == S || sd == E);
@@ -438,7 +440,7 @@ final class CityGrammar {
     static Facade facadeOf(Ctx c, Plot p) {
         Style st = style(p);
         Box base = new Box(p.x0(), p.z0(), p.x1(), p.z1());
-        boolean[] jetty = jetties(c.plan, p, st, base);
+        boolean[] jetty = jetties(c.view, p, st, base);
         Box up = new Box(p.x0() - (jetty[W] ? 1 : 0), p.z0() - (jetty[N] ? 1 : 0), p.x1() + (jetty[E] ? 1 : 0), p.z1() + (jetty[S] ? 1 : 0));
         return new Facade(c, p, st, base, up, jetty);
     }
@@ -447,12 +449,12 @@ final class CityGrammar {
      * Whether a cell next to plot p lies under a neighbour's jetty (the plan calls it street, but from row 5 up it is
      * that house's wall): nothing of p's goes there.
      */
-    static boolean underForeignJetty(CityPlan plan, Plot p, int x, int z) {
+    static boolean underForeignJetty(PlanView plan, Plot p, int x, int z) {
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 int q = plan.plotAt(x + dx, z + dz);
                 if (q < 0 || q == p.id()) continue;
-                Plot o = plan.plots.get(q);
+                Plot o = plan.plot(q);
                 if (o.district() != BELLWATCH || o.storeys() < 2) continue;
                 Box ob = new Box(o.x0(), o.z0(), o.x1(), o.z1());
                 boolean[] j = jettySides(plan, o, ob, new boolean[4]);
@@ -467,7 +469,7 @@ final class CityGrammar {
      * Whether the outside cell of side sd at (x, z) also stands in front of another house's wall (an inside corner where
      * two fronts meet, or a neighbour's jetty beside it): neither face puts anything there.
      */
-    static boolean shared(CityPlan plan, Plot p, int sd, int x, int z) {
+    static boolean shared(PlanView plan, Plot p, int sd, int x, int z) {
         int back = inward(sd);
         for (int d = 0; d < 4; d++) {
             if (d == back) continue;
@@ -480,7 +482,7 @@ final class CityGrammar {
     }
 
     /** Whether a cell lies in plot p's own upper storeys (its base box plus its jetties). */
-    private static boolean inUp(CityPlan plan, Plot p, int x, int z) {
+    private static boolean inUp(PlanView plan, Plot p, int x, int z) {
         if (p.district() != BELLWATCH || p.storeys() < 2) return x >= p.x0() && x <= p.x1() && z >= p.z0() && z <= p.z1();
         boolean[] j = jettySides(plan, p, new Box(p.x0(), p.z0(), p.x1(), p.z1()), new boolean[4]);
         return x >= p.x0() - (j[W] ? 1 : 0) && x <= p.x1() + (j[E] ? 1 : 0) && z >= p.z0() - (j[N] ? 1 : 0) && z <= p.z1() + (j[S] ? 1 : 0);
@@ -552,7 +554,7 @@ final class CityGrammar {
     }
 
     /** Open ground in front of a side, sampled at its middle (how wide the street is there). */
-    static int openWidth(CityPlan plan, int x0, int z0, int x1, int z1, int side) {
+    static int openWidth(PlanView plan, int x0, int z0, int x1, int z1, int side) {
         int x, z, dx = 0, dz = 0;
         switch (side) {
             case N -> { x = (x0 + x1) / 2; z = z0 - 1; dz = -1; }
@@ -600,7 +602,8 @@ final class CityGrammar {
             BlockState s;
             if (r == 5) s = st.timber() ? beam(st, axis) : corner ? st.quoin() : st.ground();
             else if (corner) s = ((r + 1) >> 1 & 1) == 1 ? st.quoin() : st.ground();
-            else if (open == 2 && r <= 2) s = (r == 1 ? DOOR_LOWER : DOOR_UPPER)[doorKind(p)][inward(sd)];
+            else if (open == 2 && r <= 2) s = VillageStyles.isVillage(p) ? VillageStyles.door(p, r == 2, inward(sd))
+                    : (r == 1 ? DOOR_LOWER : DOOR_UPPER)[doorKind(p)][inward(sd)];
             else if (open == 2 && r == 3) s = st.keystone();
             else if (open == 3 && r <= 2) s = window(f, W_SHOP, r - 1, axis);
             else if (open == 1 && st.smallGround() && r == 2) s = window(f, st.groundWin(), 2, axis);
@@ -834,7 +837,7 @@ final class CityGrammar {
         Plot p = f.p;
         Style st = f.st;
         Box up = f.up;
-        CityPlan plan = f.plan;
+        PlanView plan = f.plan;
         int e = g + p.eave();
         boolean inside = up.contains(x, z);
         if (!inside) {
