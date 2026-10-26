@@ -261,9 +261,10 @@ void main() {
     if (water) {
         float facing = abs(normalize(vRel).y);
         light = mix(light, vec3(1.0), 0.4);
-        // grazing far water takes the horizon's colour, but only out where it meets the horizon haze: nearer, it must look
-        // like the real water beside it (at dusk the fog colour is the afterglow, red slabs on a blue sea)
-        c = mix(c, FogColor.rgb, pow(1.0 - facing, 5.0) * 0.55 * smoothstep(1000.0, 4000.0, horizontal));
+        // grazing far water reflects the sky by the horizon, as Lens's real water beside it does at every distance (the
+        // dusk slabs were holes to the clear colour, not this; limiting it to the far distance left the far sea darker
+        // than the real water at the edge)
+        c = mix(c, FogColor.rgb, pow(1.0 - facing, 5.0) * 0.55);
     }
     if (FarCam.w > 0.5 && generated) c = vec3(1.0, 0.0, 1.0);
     c *= light * texture(LightSampler, vec2(0.5 / 16.0, 15.5 / 16.0)).rgb;
