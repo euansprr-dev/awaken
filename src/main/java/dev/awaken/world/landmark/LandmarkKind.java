@@ -53,11 +53,11 @@ public enum LandmarkKind {
     public String why() {
         return switch (this) {
             case WELL -> "the way down";
-            case VAULT -> "something waits inside";
+            case VAULT -> "a sealed vault";
             case MONOLITH -> "a chamber below";
-            case OCEAN_LAB -> "dry, under the sea";
+            case OCEAN_LAB -> "a dry lab under the sea";
             case SKY_PLATFORM -> "above the clouds";
-            case TETHER_SPIRE -> "a crown at the top";
+            case TETHER_SPIRE -> "a crown at the top of the spire";
             case GATE -> "";
         };
     }

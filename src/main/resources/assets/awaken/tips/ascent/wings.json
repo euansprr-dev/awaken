@@ -1,5 +1,5 @@
 {
-  "text": "Falling, press {key.jump} to open your wings. Look where you want to go: dive for speed, pull up to climb. {key.sneak} folds them.",
+  "text": "While falling, press {key.jump} to open your wings. Look where you want to go: dive for speed and pull up to climb. Press {key.sneak} to fold them.",
   "short": "{key.jump} while falling",
   "priority": 70,
   "show_for": 200,

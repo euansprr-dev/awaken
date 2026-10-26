@@ -4874,6 +4874,10 @@ The rules below replace that.
 - **Client lines through the director:** `Notices.client().claim(tier, topic)` before showing (true counts as shown);
   `file(...)` what can't wait. The region caption claims IMPORTANT (CRITICAL when dangerous), waits up to 200 ticks,
   then files "Entered · <name>"; the dangerous region's toast is IMPORTANT, topic `danger`.
+- **Fleeting** (`Builder.fleeting()`, 2026-10-26): shown now or never. A fleeting message that waits past its wait is
+  dropped, not filed: the System's first contact ("[ERROR] … candidate found.", the opening's and the prologue's), which
+  in the Journal read as a real bug. The awakening's first moves ("Your body remembers") are no longer a toast at all:
+  the checklist teaches them (§27.10). Nothing is filed for the city's own region while you're inside its walls (§27.6).
 
 ### 26.3 Discovery (`signal.Finds`)
 - **Intent.** A creature is studied when the crosshair rests on it (its angular size + 3°) for 3 looks in a row, 5
@@ -4945,8 +4949,11 @@ play it; the world remembers the locks you met and calls you back once when you 
   entries `{key, dim, where?, need kind, need value, what, answeredAt}`; the oldest go. A key is one per place
   (`door:x,y,z`, `landmark:ruin:x,z`, `wing_core:x,y,z`, `stratum:n`, `region:id`, `halo`, `possession`).
 - **`seen(player, key, where, need, what)`**: recorded once, only for an awakened player who doesn't already meet the
-  need. Silent, except the first lock a player ever meets: one NOTICE toast "What waits · <what> waits for <need>. Your
-  band keeps it (K), and the world will call you back when you're ready." (flag `awaken:promise_taught`).
+  need. Silent, except the first lock a player ever meets: one NOTICE toast "Saved for later · <what>: you'll need
+  <need> first. Your band (K) keeps a list of things like this, and you'll get a reminder when you're ready." (flag
+  `awaken:promise_taught`). The band's list is **SAVED FOR LATER**, each row "<what> · needs <need>" ("· ready now" once
+  answered); the call back says "<what> is open to you now". (Until 2026-10-26 it was "What waits · The Commons waits
+  for level 4", which Euan couldn't read; plain words now, §27.6.)
 - **Needs**: `rank:<label>` and `level:<n>` answered by progression; `tier:<tether|leaper|wings|skyborn>` answered by the
   Ascent (`Promises.addAnswer`). Words: "D-rank", "level 20", "the Tether".
 - **The call back**: on a rank-up, a level reached or a rung granted, every waiting lock the player now meets is
@@ -5031,7 +5038,14 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   Horizon raises it ("First gate · E-rank") until they've cleared a floor. Before, the first gate
   was rolled the moment they awakened, in the infirmary, at random 300-1500 out, unannounced.
 - **Out through the walls** is a moment: crossing the city reserve outward shows the region's caption ("THE COMMONS ·
-  1-8") once a play-day (the Commons spans the city's edge, so leaving had none).
+  1-8") once a play-day (the Commons spans the city's edge, so leaving had none). Inside the walls no region caption,
+  warning or promise is sent at all, and the Commons, the land everyone starts in, is never a "danger" region (it was:
+  a level-1 player read "Danger · The Commons" and "The Commons waits for level 4" in the Journal before leaving the
+  city). **The first time out through the High Gate, its shot names the land**: as the view lifts over the gate the
+  title "THE COMMONS · THE LAND AROUND THE CITY · CREATURES LEVEL 1 TO 8" (the region at the camp, from the server),
+  then the camp's caption ("THE WAYFARER CAMP · UP THE NORTH ROAD · 181 M AWAY · YOUR NEXT STOP"); the region caption
+  is skipped that time. A danger region's warning says it plainly: "The creatures here are level 20 to 28. That's well
+  above you, so be careful."
 - **The High Gate's shot** (`living.FirstScenes.gateShot`, filmed by `living.client.FirstFilm.GateShot` with the
   opening's camera and letterbox through `opening.client.Cinema`): the first time a player goes out through the High
   Gate on the errand (the step "Out through the High Gate" completes), ten seconds, letterboxed, hold jump to skip: a
@@ -5146,6 +5160,26 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
 - Test: `progression_capability_clock`.
 
 ---------------------------------------------------------------------------------------------------------------------
+
+### 27.10 The current task, top right (Euan's playtest, 2026-10-26)
+"Every time you have a goal and things to do, you actually have a small checklist top right." One small card, top right
+under the first two toast slots (`signal.client.TaskHud`; never over the crosshair, hidden with the HUD), in the band's
+glass: the task's title and done/total, then its steps, each ticked when done (a soft green flash as it ticks), the
+current one bright with ▸, keys drawn as key caps from "{key}" in the words, a count where a step has one ("0/10"),
+and a compass to a place nearby to do it ("↗ 9 m"). The Now line, top left, keeps the where; the card keeps the what.
+The server decides (`progression.Checklist`, sent only when it changes, payload `signal_task`; nothing while the
+opening runs):
+- **Your body remembers** first, from the awakening: "Hold [Shift] as you land from a jump to roll", "Double-tap
+  [Ctrl] to sprint harder", "Hold [Shift] while sprinting to slide", "Press [Space] at a chest-high ledge to climb it",
+  each ticked the first time you do it (the body module's counters `awaken:body_roll`, `_sprint`, `_slide`, `_mantle`);
+  the ledge row points at the nearest chest-high ledge within 10 blocks while it's current (every 2 s: a two-block step
+  up from standing ground with room on top). All four done: the list stays ticked for 4 s (`awaken:first/moves_done`),
+  then goes for good. It replaces the "Your body remembers" toast, which the director filed unread.
+- **Then the tracked chain** (`Checklist.register`; the living module's `FirstThread.task`): its title, its steps ticked
+  as they're done (at most six: the last done, the current, what follows), a count on a step that has one or a `tally`.
+  The first thread reads: Take the letters from Bram, Leave the city through the High Gate, Take the letters to the
+  Wayfarer camp up the north road, Deliver the letters 0/1, Place your Ember where you want your home.
+- Test: `progression_checklist` (the moves tick one by one, then the errand takes the card).
 
 ## 28. Between the Gates (home, people, below; plan docs/world-depth/PLAN.md, page https://claude.ai/artifact/ATZfZSczLg95kNSgnLF42M; Euan approved all of it 2026-10-26)
 

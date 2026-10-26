@@ -1,6 +1,8 @@
 # The first thread's staged moments (SPEC §27.6): the High Gate's shot of the camp's smoke, Ilse's scene by her fire
 # (the letters counted on the Now line, her lines, the coal taken from her hand), and the camp kept safe by night.
-# 1. Out through the High Gate: the view lifts over the gate onto the Wayfarers' smoke, names it, Hale says his line.
+# 0. The checklist, top right: Your body remembers ticking move by move, then the errand; the Journal kept clean.
+# 1. Out through the High Gate: the view lifts over the gate, names the land (THE COMMONS), then the camp's smoke and
+#    its caption, while Hale says his line.
 # 2. The camp by day: bedrolls feet to the fire, logs to sit on, the packs and lantern, the pot on its poles.
 # 3. Ten blocks off Ilse: "Deliver the letters · 0/1" on the Now line, its compass on her.
 # 4. Her scene: over your shoulder, Ilse and her fire; the letters delivered (1/1); her lines one at a time.
@@ -27,7 +29,28 @@ cmd gamerule advance_time false
 hud on
 camera first
 wait 60
-# 1. the High Gate's shot
+# 0. the current task, top right: Your body remembers, ticking move by move (the body module counts each move), then
+#    the errand; and the Journal with nothing confusing in it (no "Danger · The Commons", no "[ERROR]")
+shotnow first_0_checklist
+cmd awaken admin counter "awaken:body_roll" 1
+wait 24
+shotnow first_0_checklist_roll
+cmd awaken admin counter "awaken:body_sprint" 1
+cmd awaken admin counter "awaken:body_slide" 1
+cmd awaken admin counter "awaken:body_mantle" 1
+wait 20
+shotnow first_0_checklist_done
+wait 100
+shotnow first_0_checklist_errand
+key status
+wait 30
+shot first_0_journal
+scroll -4
+wait 10
+shot first_0_journal_more
+screen close
+wait 10
+# 1. the High Gate's shot (the land named as the view lifts: THE COMMONS)
 cmd awaken living first gate
 wait 22
 shotnow first_1_gate_turn

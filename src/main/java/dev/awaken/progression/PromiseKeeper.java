@@ -85,9 +85,9 @@ public final class PromiseKeeper {
         changed(p, b, "seen " + key + " (" + need.words() + ")");
         if (Progression.profile(p).counter(TAUGHT) == 0) {
             Progression.setCounter(p, TAUGHT, 1);
-            Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("What waits"))
-                    .body(Component.literal(what + " waits for " + need.words() + ". Your band keeps it (K), and the world will "
-                            + "call you back when you're ready."))
+            Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Saved for later"))
+                    .body(Component.literal(what + ": you'll need " + need.words() + " first. Your band (K) keeps a list of "
+                            + "things like this, and you'll get a reminder when you're ready."))
                     .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 9).build());
         }
     }
@@ -121,7 +121,7 @@ public final class PromiseKeeper {
             }
         }
         PromiseBook.Entry lead = near != null ? near : fresh.getFirst();
-        String body = lead.what() + " answers you now"
+        String body = lead.what() + " is open to you now"
                 + (near != null ? " · " + bearing(p.blockPosition(), near.where().get()) : "")
                 + (fresh.size() > 1 ? " · and " + (fresh.size() - 1) + " more in your band (K)" : "");
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Ready now"))

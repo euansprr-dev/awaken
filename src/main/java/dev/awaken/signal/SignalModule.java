@@ -47,6 +47,7 @@ public final class SignalModule {
         r.playToClient(SignalPayloads.Now.TYPE, SignalPayloads.Now.STREAM_CODEC);
         r.playToClient(SignalPayloads.Horizon.TYPE, SignalPayloads.Horizon.STREAM_CODEC);
         r.playToClient(SignalPayloads.Tip.TYPE, SignalPayloads.Tip.STREAM_CODEC);
+        r.playToClient(SignalPayloads.Task.TYPE, SignalPayloads.Task.STREAM_CODEC);
         r.playToServer(SignalPayloads.Answer.TYPE, SignalPayloads.Answer.STREAM_CODEC, (msg, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) Signal.answer(sp, msg.action(), msg.accepted());
         });

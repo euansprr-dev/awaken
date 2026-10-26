@@ -36,6 +36,33 @@ public final class FirstThread {
     static void init() {
         OpeningHooks.onRegistered(FirstThread::registered);
         NowHooks.register(FirstThread::now);
+        dev.awaken.progression.Checklist.register(FirstThread::task);
+    }
+
+    /** The checklist's most steps at once: the last done, the current, and what follows. */
+    static final int TASK_ROWS = 6;
+
+    /**
+     * The tracked chain as the current task (SPEC §27.10): its title, then its steps ticked as they're done, a count
+     * where a step has one ("Deliver the letters 0/1"). The Now line keeps the where.
+     */
+    static dev.awaken.progression.Checklist.@Nullable Task task(ServerPlayer p) {
+        if (GateHooks.inGate(p)) return null;
+        QuestState s = QuestEngine.state(p);
+        if (s.active().isEmpty()) return null;
+        QuestState.Active a = s.active().getFirst();
+        for (QuestState.Active x : s.active()) if (x.chain().equals(s.tracked())) a = x;
+        QuestDef d = QuestBook.get(a.chain());
+        if (d == null || a.step() >= d.steps().size()) return null;
+        List<dev.awaken.progression.Checklist.Row> rows = new java.util.ArrayList<>();
+        int from = Math.max(0, Math.min(a.step() - 1, d.steps().size() - TASK_ROWS));
+        for (int i = from; i < d.steps().size() && rows.size() < TASK_ROWS; i++) {
+            QuestDef.Step st = d.steps().get(i);
+            boolean done = i < a.step(), counted = st.tally() || st.objective().count() > 1;
+            int need = st.objective().count(), have = done ? need : i == a.step() ? a.progress() : 0;
+            rows.add(new dev.awaken.progression.Checklist.Row(st.text(), "", done, counted ? have : 0, counted ? need : 0, null));
+        }
+        return new dev.awaken.progression.Checklist.Task("chain:" + a.chain(), d.title(), rows);
     }
 
     /** The opening is over: Kestrel's errand starts, tracked (once; a player who already has it or did it is left be). */

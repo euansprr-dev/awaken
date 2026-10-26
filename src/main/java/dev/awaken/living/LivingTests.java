@@ -135,6 +135,36 @@ final class LivingTests {
                 h.succeed();
             });
         });
+        // SPEC §27.10: the current task, top right: Your body remembers ticks move by move, then the tracked errand
+        AwakenTests.register("progression_checklist", 100, h -> {
+            net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+            try {
+                dev.awaken.progression.Progression.awaken(p);
+                dev.awaken.progression.Progression.count(p, "awaken:carillon_registered");
+                var c = dev.awaken.progression.Checklist.now(p);
+                h.assertTrue(c != null && c.title().equals("Your body remembers") && c.rows().size() == 4
+                        && c.rows().stream().noneMatch(dev.awaken.progression.Checklist.Row::done), "first, the four moves, none done: " + c);
+                h.assertTrue(c.rows().get(1).key().equals("key.sprint") && c.rows().get(1).text().contains("{key}"), "each with its key, drawn as a key");
+                dev.awaken.progression.Progression.count(p, "awaken:body_roll");
+                c = dev.awaken.progression.Checklist.now(p);
+                h.assertTrue(c.rows().get(0).done() && !c.rows().get(1).done(), "a roll ticks the first");
+                for (String m : new String[]{"awaken:body_sprint", "awaken:body_slide", "awaken:body_mantle"}) dev.awaken.progression.Progression.count(p, m);
+                c = dev.awaken.progression.Checklist.now(p);
+                h.assertTrue(c != null && c.rows().stream().allMatch(dev.awaken.progression.Checklist.Row::done), "all four ticked, shown for a moment");
+                h.assertTrue(dev.awaken.progression.Progression.profile(p).counter(dev.awaken.progression.Checklist.MOVES_DONE) > 0, "and remembered as done");
+                // its moment over, the errand takes the panel: its title, its steps, the letters counted
+                dev.awaken.core.api.OpeningHooks.fireRegistered(p);
+                dev.awaken.progression.Progression.setCounter(p, dev.awaken.progression.Checklist.MOVES_DONE, Math.max(1, p.level().getGameTime() - 20 * 60));
+                c = dev.awaken.progression.Checklist.now(p);
+                var d = dev.awaken.living.quest.QuestBook.get(FirstThread.chainId());
+                h.assertTrue(c != null && c.title().equals(d.title()) && c.rows().getFirst().text().startsWith("Take the letters"),
+                        "then the errand you're on: " + c);
+                h.assertTrue(c.rows().stream().anyMatch(r -> r.text().equals("Deliver the letters") && r.need() == 1), "a step with a count shows it");
+            } finally {
+                h.getLevel().getServer().getPlayerList().remove(p);
+            }
+            h.succeed();
+        });
         AwakenTests.register("living_region_map", 200, h -> {
             RegionMap.Probe plain = (x, z) -> RegionMap.Land.PLAIN;
             RegionMap map = new RegionMap(1234L, 0, 0, plain);
