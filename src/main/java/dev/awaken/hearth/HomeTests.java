@@ -51,9 +51,11 @@ final class HomeTests {
                 // set down: a Tier 0 Hearthfire, radius 24, named from the land's words
                 clearEmbers(sp);
                 sp.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(HearthContent.EMBER_ITEM.get()));
+                String refused = Embers.refusal(sp, level, ground, at).orElse("");
                 Embers.setDown(sp, level, ground, InteractionHand.MAIN_HAND);
                 HearthRecord fire = data.of(sp.getUUID()).orElse(null);
-                h.assertTrue(fire != null && fire.hearthfire() && fire.radius() == HearthRecord.HEARTHFIRE_RADIUS, "a Tier 0 Hearth, radius 24");
+                h.assertTrue(fire != null && fire.hearthfire() && fire.radius() == HearthRecord.HEARTHFIRE_RADIUS,
+                        "a Tier 0 Hearth, radius 24" + (refused.isEmpty() ? "" : " (refused: " + refused + ")"));
                 h.assertTrue(level.getBlockState(at).is(HearthContent.HEARTHFIRE.get()), "the ring of stones stands");
                 h.assertFalse(Embers.carries(sp), "the coal went into the ring");
                 h.assertFalse(fire.name.isBlank(), "a name is offered from the land's words");

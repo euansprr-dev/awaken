@@ -347,7 +347,10 @@ final class OpeningTests {
                 serverTick(r);
                 h.assertTrue(w.firstArrival < 0 && w.cinematicAt < 0 && w.rushAt < 0, "a finished group's clock is cleared: " + w.firstArrival + " " + w.cinematicAt + " " + w.rushAt);
 
-                // stragglers: one arrives, the other keeps running
+                // stragglers: one arrives, the other keeps running. The clock moves five minutes on first, so "five
+                // minutes after the first arrival" is never before zero on a young test server (a negative first arrival
+                // reads as "nobody has arrived yet", and nothing is pulled)
+                OpeningDirector.clockOffset += OpeningDirector.STRAGGLERS;
                 run(r, c);
                 run(r, d);
                 toSquare(r, c);
