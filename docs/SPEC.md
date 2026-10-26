@@ -3111,8 +3111,8 @@ builds with vanilla's). Approved feel: the free-run is as before (§17.14), only
   crossed within ~53° of square on (a fence beside you is never one).
 - **What it does**, by shape and by what's beyond it:
   - a fence or gate 1.26-1.65 up (a rail narrower than 0.3) with floor beyond: running, **vaulted** (the off hand on
-    the rail, the legs swung flat over to the main side; a 1.5 fence: up 4 ticks, over 4, down 5); walking, **hopped**
-    (both hands, the knees tucked over; 15 ticks);
+    the rail, the legs swung flat over to the main side; a 1.5 fence: up 4 ticks, over 3 at the run's own pace, down 5);
+    walking, **hopped** (both hands, the knees tucked over; up 5, over 5, down 5);
   - a wall (a coping 0.3 wide or more): walked at, **climbed onto**, the body standing over its middle (a wall-walk);
     run at, vaulted;
   - a rail on a block (a garden wall, up to 2.6): **climbed over** in one motion (a foot up the block, the hands catch
@@ -3122,7 +3122,7 @@ builds with vanilla's). Approved feel: the free-run is as before (§17.14), only
     2.0 lower than the feet: a rail at a terrace's edge with a sliver of floor behind it, or over a drop, is **climbed
     onto** and held there, never crossed into the drop.
 - **The path** (`VaultRules.Vault.at`, the same on both sides): rising fast and easing onto the top while the body's front
-  stays 0.04 short of the face, the feet clearing it by 0.06; over it at the run's own speed (0.28-0.42, walking 0.2, a
+  stays 0.04 short of the face, the feet clearing it by 0.06; over it at about the run's own speed (0.28-0.42, walking 0.2, a
   rail on a block 0.24) with a small arc (0.08 running, 0.03 else); down beyond keeping 0.85 of that speed (0.45, or
   straight down, where only that fits), fast off the top and easing onto the floor. Up and over in the crawl box
   (`Pose.SWIMMING`, 0.6 high, forced on both sides): the eye rises only ~0.4 over a 1.5 rail, as a vaulter's does, not

@@ -107,7 +107,7 @@ final class BodyFp {
         LocalPlayer p = Minecraft.getInstance().player;
         dev.awaken.body.VaultRules.Vault v = ClientMoves.vault;
         if (p == null || v == null || !dev.awaken.body.client.feel.FeelConfig.fpMoves()) return;
-        float speed = BodyAnims.VAULT_LEN[Mth.clamp(kind, 0, BodyAnims.VAULT_LEN.length - 1)] / Math.max(1F, v.ticks());
+        float speed = BodyAnims.VAULT_LEN[Mth.clamp(kind, 0, BodyAnims.VAULT_LEN.length - 1)] / Math.max(1F, v.ticks()); // the clips' nominal length
         if (kind == dev.awaken.body.VaultRules.ONTO) {
             FirstPerson.play(BodyClips.FP_MANTLE, 12F / Math.max(1F, v.ticks()));
             return;

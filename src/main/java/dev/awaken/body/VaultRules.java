@@ -234,13 +234,16 @@ public final class VaultRules {
         Scratch sc = SCRATCH.get();
         BlockPos.MutableBlockPos m = sc.m;
         double[] t = sc.t;
-        // the far side: from the hold on along the way until the body clears the rail
+        // the far side: from the hold on along the way, over the rail (it may stand back from the face the body hangs
+        // against) until the body has cleared it
         double sClear = -1;
-        for (double s = 0; s <= 1.4; s += STEP_S) {
+        boolean seen = false;
+        for (double s = 0; s <= 1.8; s += STEP_S) {
             double cx = px + fx * s, cz = pz + fz * s;
             scan(level, ctx, m, cx - W + 1e-3, cz - W + 1e-3, cx + W - 1e-3, cz + W - 1e-3, top - 1.0, top + 0.01, t);
             if (t[0] == Double.POSITIVE_INFINITY) return null;
-            if (s > 0.1 && Double.isNaN(t[0])) {
+            if (!Double.isNaN(t[0])) seen = true;
+            else if (seen) {
                 sClear = s;
                 break;
             }
@@ -266,7 +269,7 @@ public final class VaultRules {
                                         double hx, double hy, double hz, double rail, boolean tall, boolean run) {
         double sA = Math.max(0, sFree - MARGIN), sB = sClear + MARGIN, topC = top + CLEAR;
         int rise = Math.max(2, (int) Math.ceil((topC - py) / (run ? RISE_RUN : RISE_WALK) - 1e-6));
-        int over = Math.max(2, (int) Math.ceil((sB - sA) / v - 1e-6));
+        int over = Math.max(2, (int) Math.round((sB - sA) / v)); // the run's own pace over the top, give or take
         double hump = kind == VAULT ? HUMP_RUN : HUMP_WALK;
         for (double keep : KEEPS) {
             double vDown = v * keep;

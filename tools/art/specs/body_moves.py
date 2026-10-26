@@ -281,7 +281,7 @@ clip("body_pipe_land", [(0, PS, "linear"), (2, PL_CROUCH, "easeoutcubic"), (5, P
 # Fences, gates and walls (SPEC §17.27). The body crosses a rail in a crawl-height box with its feet just over the top;
 # the figure is lowered (rise < 0) so its hips cross at the rail and the planted hand meets it, the legs swung out to the
 # side. Timings are the crossings' nominal plans (body.client.BodyAnims.VAULT_PLANT / VAULT_OVER / VAULT_LEN: the hand
-# meets the rail, the way over the top, the whole): a running vault 3 / 3-7 / 13, a hop 4 / 4-9 / 15, a rail on a block
+# meets the rail, the way over the top, the whole): a running vault 3 / 3-6 / 12, a hop 4 / 4-9 / 15, a rail on a block
 # 6 / 6-13 / 21, onto a top 4 / 4-8 / 11, over a rail from a hang 5 / 5-11 / 18. Authored right-handed: the off (left)
 # hand plants, the legs go over to the main (right) side, the top of the figure leans onto the planted hand (tilt < 0).
 
@@ -297,8 +297,8 @@ VT_CLEAR = pose(ground=False, rise=-8, lean=12, tilt=-32, rl=(-48, 0, 26), rk=30
                 ra=(-60, 0, 66), re=26, la=(22, 0, -34), le=10)
 VT_REACH = pose(ground=False, rise=-2, lean=10, tilt=-6, rl=(-36, 0, 6), rk=26, ll=(18, 0, -2), lk=44, ra=(-30, 0, 30), re=30, la=(-20, 0, -26), le=24)
 VT_LAND = pose(lean=18, rl=(-30, 0, 3), rk=58, ll=(26, 0, -3), lk=40, ra=(30, 0, 10), re=50, la=(-44, 0, -10), le=50)
-clip("body_vault", [(0, VT_TAKE, "linear"), (3, VT_PLANT, "easeoutcubic"), (5, VT_OVER, "easeinoutsine"), (7, VT_CLEAR, "easeinoutsine"),
-                    (10, VT_REACH, "easeoutquad"), (13, VT_LAND, "easeinoutsine")], 15,
+clip("body_vault", [(0, VT_TAKE, "linear"), (3, VT_PLANT, "easeoutcubic"), (4.5, VT_OVER, "easeinoutsine"), (6.5, VT_CLEAR, "easeinoutsine"),
+                    (9, VT_REACH, "easeoutquad"), (12, VT_LAND, "easeinoutsine")], 14,
      note="running vault: left hand on the rail, legs swung flat over to the right, right arm out, into the run")
 
 # A walking hop (a two-handed gate vault): both hands forward onto the rail, the weight onto them as the knees tuck up and
@@ -393,7 +393,7 @@ def moves_sheet(out_dir, px=5.0):
              "body_sprint": [0, 2, 4, 6], "body_wallrun_l": [0, 4], "body_wallclimb": [0, 4], "body_walljump": [0, 2, 6], "body_hang": [0],
              "body_grab": [1.5, 5], "body_ledge_up": [2, 4], "body_ledge_back": [2, 4],
              "body_pipe_hold": [0], "body_pipe_climb": [0, 4], "body_pipe_slide": [0], "body_pipe_kick": [2, 4], "body_pipe_land": [2],
-             "body_vault": [3, 5, 7, 10], "body_vault_hop": [4, 7, 10], "body_vault_high": [3, 6, 9, 12], "body_vault_onto": [3, 6, 8],
+             "body_vault": [3, 4.5, 6.5, 9], "body_vault_hop": [4, 7, 10], "body_vault_high": [3, 6, 9, 12], "body_vault_onto": [3, 6, 8],
              "body_vault_over": [3, 5, 9]}
     views = (("front", -35.0, 10.0), ("side", -90.0, 6.0))
     rows = []
