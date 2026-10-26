@@ -244,8 +244,10 @@ public final class Wildlife {
         double fx = -Mth.sin(yaw), fz = Mth.cos(yaw), rx = -fz, rz = fx;
         int n = 0;
         for (int k = 0; k < WildKinds.BODIES; k++) {
-            double off = (k - (WildKinds.BODIES - 1) / 2.0) * 2.2;
-            double x = px + fx * 7 + rx * off, z = pz + fz * 7 + rz * off, y = ground(level, x, z);
+            // two rows of six: the birds behind, the rest before them, side-on to the camera
+            int row = k < 6 ? 1 : 0, col = k % 6;
+            double off = (col - 2.5) * 1.7, d = row == 1 ? 6.0 : 3.8;
+            double x = px + fx * d + rx * off, z = pz + fz * d + rz * off, y = ground(level, x, z);
             if (Double.isNaN(y)) continue;
             WildCritter c = new WildCritter(WildlifeModule.CRITTER.get(), level);
             c.kind = k;
@@ -254,7 +256,7 @@ public final class Wildlife {
             c.home = net.minecraft.world.level.ChunkPos.pack(Mth.floor(px) >> 4, Mth.floor(pz) >> 4);
             c.state = SHOW;
             c.setPos(x, y, z);
-            c.setYRot((float) (Mth.atan2(pz - z, px - x) * Mth.RAD_TO_DEG) - 90F);
+            c.setYRot((float) (Mth.atan2(pz - z, px - x) * Mth.RAD_TO_DEG) - 90F - 70F);
             c.yRotO = c.getYRot();
             c.xo = x;
             c.yo = y;
@@ -381,6 +383,14 @@ public final class Wildlife {
                     .getType() == HitResult.Type.MISS) seen[c.kind]++;
         }
         Insects.counts(near, seen);
+        int ground = 0, low = 0, high = 0, air = 0;
+        for (WildCritter c : LIVE) {
+            if (c.isRemoved() || c.kind != WildKinds.SONGBIRD) continue;
+            if (Birds.airborne(c)) air++;
+            else if (c.state == Birds.GROUND || c.state == Birds.HOP) ground++;
+            else if (c.getY() - ground(level, c.getX(), c.getZ()) <= 6) low++;
+            else high++;
+        }
         int total = 0, inView = 0;
         for (int k = 0; k < WildKinds.COUNT; k++) {
             if (near[k] == 0) continue;
@@ -390,7 +400,7 @@ public final class Wildlife {
         }
         return "in view " + inView + " of " + total + " near: " + (b.isEmpty() ? "none" : b.substring(0, b.length() - 2))
                 + " (" + Sites.size() + " chunks read, " + String.format("%02d:%02d", (tod / 1000 + 6) % 24, tod % 1000 * 60 / 1000)
-                + (rain > 0.2F ? ", rain" : "") + ")";
+                + (rain > 0.2F ? ", rain" : "") + "; songbirds ground " + ground + ", low " + low + ", high " + high + ", air " + air + ")";
     }
 
     private static net.minecraft.world.phys.shapes.CollisionContext CollisionContext_empty() {

@@ -55,7 +55,8 @@ final class Birds {
                     if (s.perchLift[j] < s.perchLift[i] && (c.kind == WildKinds.SONGBIRD || s.perchKind[j] < Sites.FENCE)) i = j;
                 }
                 // by day many songbirds are down foraging on the forest floor, under the trees and at their edge
-                if (c.kind == WildKinds.SONGBIRD && s.h.canopy > 0.2F && Wildlife.tod < 11800 && r.nextFloat() < 0.45F) {
+                boolean day = Wildlife.tod < 11800 || Wildlife.tod > 22600;
+                if (c.kind == WildKinds.SONGBIRD && s.h.canopy > 0.2F && day && r.nextFloat() < 0.45F) {
                     long p = s.perch[i];
                     double gx = BlockPos.getX(p) + 0.5 + (r.nextFloat() - 0.5) * 4, gz = BlockPos.getZ(p) + 0.5 + (r.nextFloat() - 0.5) * 4;
                     double g = Wildlife.ground(level, gx, gz);
@@ -401,7 +402,7 @@ final class Birds {
 
     /** Down from the branch to forage on open ground below or near the tree. */
     private static boolean downToForage(WildCritter c, ClientLevel level, RandomSource r) {
-        if (Wildlife.tod > 11500 && Wildlife.tod < 23000) return false;
+        if (Wildlife.tod > 11800 && Wildlife.tod < 22600) return false;
         for (int k = 0; k < 4; k++) {
             double a = r.nextDouble() * Math.PI * 2, d = 1.5 + r.nextDouble() * 4;
             double x = c.getX() + Math.cos(a) * d, z = c.getZ() + Math.sin(a) * d;

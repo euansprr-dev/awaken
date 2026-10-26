@@ -127,31 +127,32 @@ final class InsectRender {
                         boolean rest = Insects.state[i] == Insects.REST;
                         float flap = rest ? 50F + 35F * Mth.sin(age * 0.12F + ph) : 30F + 55F * Mth.sin(age * 2.4F * rt + ph);
                         int v = Insects.variant[i];
-                        wings(dx, dy, dz, yaw, flap, 0.17F, 0.17F, v * 16, 0, alpha | 0xFFFFFF, light);
-                        body(dx, dy, dz, yaw, 0.15F, 0.03F, 23, 50, 25, 62, alpha | 0xFFFFFF, light);
+                        // drawn near twice life size, like the birds: at life size a butterfly is a few pixels at ten blocks
+                        wings(dx, dy, dz, yaw, flap, 0.3F, 0.3F, v * 16, 0, alpha | 0xFFFFFF, light);
+                        body(dx, dy, dz, yaw, 0.26F, 0.05F, 23, 50, 25, 62, alpha | 0xFFFFFF, light);
                     }
                     case WildKinds.MOTH -> {
                         float flap = 20F + 45F * Mth.sin(age * 3.1F * rt + ph);
-                        wings(dx, dy, dz, yaw, flap, 0.13F, 0.13F, 0, 16, alpha | 0xFFFFFF, light);
-                        body(dx, dy, dz, yaw, 0.11F, 0.03F, 23, 50, 25, 62, alpha | 0xFFFFFF, light);
+                        wings(dx, dy, dz, yaw, flap, 0.22F, 0.22F, 0, 16, alpha | 0xFFFFFF, light);
+                        body(dx, dy, dz, yaw, 0.19F, 0.045F, 23, 50, 25, 62, alpha | 0xFFFFFF, light);
                     }
                     case WildKinds.DRAGONFLY -> {
                         float flap = 6F + 10F * Mth.sin(age * 5.3F + ph);
-                        wings(dx, dy + 0.01, dz, yaw, flap, 0.17F, 0.19F, 16, 16, alpha | 0xFFFFFF, light);
+                        wings(dx, dy + 0.01, dz, yaw, flap, 0.3F, 0.32F, 16, 16, alpha | 0xFFFFFF, light);
                         int u = Insects.variant[i] % 2 == 0 ? 2 : 10;
-                        body(dx, dy, dz, yaw, 0.28F, 0.05F, u, 49, u + 4, 64, alpha | 0xFFFFFF, light);
+                        body(dx, dy, dz, yaw, 0.46F, 0.07F, u, 49, u + 4, 64, alpha | 0xFFFFFF, light);
                     }
                     case WildKinds.BEE -> {
-                        body(dx, dy, dz, yaw, 0.11F, 0.07F, 34, 20, 39, 29, alpha | 0xFFFFFF, light);
+                        body(dx, dy, dz, yaw, 0.17F, 0.11F, 34, 20, 39, 29, alpha | 0xFFFFFF, light);
                         float flap = (Wildlife.now + i) % 2 == 0 ? 15F : 55F;
-                        wingsCell(dx, dy + 0.02, dz, yaw, flap, 0.07F, 0.08F, 41, 19, 47, 26, alpha | 0xFFFFFF, light);
+                        wingsCell(dx, dy + 0.03, dz, yaw, flap, 0.11F, 0.12F, 41, 19, 47, 26, alpha | 0xFFFFFF, light);
                     }
                     case WildKinds.FIREFLY -> {
                         float b = blink(i);
-                        body(dx, dy, dz, yaw, 0.08F, 0.045F, 54, 21, 58, 28, alpha | 0xFFFFFF, b > 0.2F ? LightCoordsUtil.FULL_BRIGHT : light);
+                        body(dx, dy, dz, yaw, 0.11F, 0.06F, 54, 21, 58, 28, alpha | 0xFFFFFF, b > 0.2F ? LightCoordsUtil.FULL_BRIGHT : light);
                     }
-                    case WildKinds.GNATS -> gnats(dx, dy, dz, i, alpha | 0x2A2A24, light);
-                    case WildKinds.STRIDER -> flat(dx, dy, dz, yaw, 0.2F, 32, 32, 48, 48, alpha | 0xFFFFFF, light);
+                    case WildKinds.GNATS -> gnats(dx, dy, dz, i, (int) (a * 150) << 24 | 0x3A3830, light);
+                    case WildKinds.STRIDER -> flat(dx, dy, dz, yaw, 0.32F, 32, 32, 48, 48, alpha | 0xFFFFFF, light);
                     default -> { }
                 }
             }
@@ -265,7 +266,7 @@ final class InsectRender {
             float ox = Mth.sin(t * sa + a) * (0.25F + (j % 4) * 0.09F);
             float oy = Mth.sin(t * sb * 1.3F + a * 1.7F) * 0.32F;
             float oz = Mth.cos(t * sa * 1.1F + a * 0.6F) * (0.25F + (j % 3) * 0.1F);
-            speck((float) dx + ox, (float) dy + oy, (float) dz + oz, 0.018F, col, light);
+            speck((float) dx + ox, (float) dy + oy, (float) dz + oz, 0.007F, col, light);
         }
     }
 
