@@ -701,7 +701,7 @@ final class RunnerTests {
     }
 
     /**
-     * Shift in a hang drops to the ledge below (Euan, 2026-10-25; SPEC §17.24): hanging from a wall's top with a sill
+     * Shift in a hang drops to the ledge below (Euan, 2026-10-25; SPEC §17.25): hanging from a wall's top with a sill
      * sticking out a block lower down, the drop catches the sill (out from the wall first, then down), and the server
      * takes it; with no sill, there's nothing to catch (Shift lets go).
      */

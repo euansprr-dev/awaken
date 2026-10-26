@@ -10,16 +10,22 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 
 /**
- * The Ascension trials on the Ascent's side (SPEC §17.10). The Leaper's Gauntlet: once you hold the rope and have
- * swung enough to know it (Tether mastery {@link #LEAPER_FROM}), a trial gate opens near you, once. Its course is a
+ * The Ascension trials on the Ascent's side (SPEC §17.10). The Leaper's Gauntlet: once you hold the rope at D-rank and
+ * have swung enough to know it (Tether mastery {@link #LEAPER_FROM}, a few evenings of rope), a trial gate opens near
+ * you, once. Its course is a
  * Gauntlet whose last chasm no sprint jump crosses: at its edge your legs remember the air (the leap is given there, with
  * a short moment that says how), and at the far landing the leap is yours (the gift's scene).
  */
 final class AscentTrials {
     private AscentTrials() {}
 
-    /** Tether mastery that opens the Leaper's Gauntlet (level 2: 100 points of rope). */
-    static final int LEAPER_FROM = 2;
+    /**
+     * Tether mastery that opens the Leaper's Gauntlet (level 4: 400 points of rope, about 80-130 swings and launches),
+     * so the leap is its own rung, hours after the rope (progression plan decision 2), not minutes.
+     */
+    static final int LEAPER_FROM = 4;
+    /** The rank the Gauntlet waits for. */
+    static final dev.awaken.progression.Rank LEAPER_RANK = dev.awaken.progression.Rank.D;
 
     /** Wings mastery that opens the Sky Leviathan's trial (with rank A: SPEC §17.18). */
     static final int SKYBORN_FROM = 3;
@@ -96,11 +102,12 @@ final class AscentTrials {
         DirectorLog.log(p, "ascent", "the Sky Leviathan falls: the sky is theirs");
     }
 
-    /** Awake, in the overworld on the ground, holding the rope and not the leap, its mastery reached, not offered yet. */
+    /** Awake, D-rank, in the overworld on the ground, holding the rope and not the leap, its mastery reached, not offered yet. */
     static boolean leaperDue(ServerPlayer p) {
         AscentMemory mem = p.getData(AscentContent.MEMORY);
         return p.level().dimension() == Level.OVERWORLD && p.onGround() && !p.isSpectator() && !p.isPassenger()
                 && Progression.profile(p).awakened() && dev.awaken.body.BodyConfig.ascent()
+                && Progression.rank(p).ordinal() >= LEAPER_RANK.ordinal()
                 && Ascent.has(p, Ascent.Tier.TETHER) && !Ascent.has(p, Ascent.Tier.LEAPER)
                 && (mem.flags() & AscentMemory.LEAPER_TRIAL) == 0 && mem.level(AscentMemory.Track.TETHER) >= LEAPER_FROM
                 && !TetherVow.running(p);

@@ -31,10 +31,12 @@ final class ArmsBodies {
         String clip = ArmsClips.of(style.def().id(), move);
         if (clip == null) return;
         HELD.remove(e.getId());
-        PlayerClips.play(e.getId(), clip, 1);
+        if (PlayerClips.play(e.getId(), clip, 1)) ArmsWrist.start(e, style, move);
+        else ArmsWrist.stop(e);
     }
 
     static void charge(Entity e) {
+        ArmsWrist.stop(e);
         if (PlayerClips.play(e.getId(), ArmsClips.CHARGE, 2)) HELD.put(e.getId(), ArmsClips.CHARGE);
     }
 
@@ -44,11 +46,13 @@ final class ArmsBodies {
         float rel = Mth.wrapDegrees(way - e.getYRot());
         if (e instanceof LivingEntity l && l.getMainArm() == HumanoidArm.LEFT) rel = -rel; // the clip is mirrored for it
         HELD.remove(e.getId());
+        ArmsWrist.stop(e);
         PlayerClips.play(e.getId(), ArmsClips.dodge(rel), 1);
     }
 
     /** A refused or cancelled move: whatever is held settles. */
     static void settle(Entity e) {
+        ArmsWrist.stop(e);
         String held = HELD.remove(e.getId());
         if (held != null && !PlayerClips.play(e.getId(), held + "_end", 2)) PlayerClips.stop(e.getId());
     }
@@ -69,9 +73,11 @@ final class ArmsBodies {
             }
         }
         if (!HELD.isEmpty()) HELD.keySet().removeIf(id -> mc.level.getEntity(id) == null);
+        ArmsWrist.prune(mc.level);
     }
 
     static void reset() {
         HELD.clear();
+        ArmsWrist.reset();
     }
 }

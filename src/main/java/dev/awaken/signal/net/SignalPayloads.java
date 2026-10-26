@@ -40,6 +40,16 @@ public final class SignalPayloads {
         @Override public Type<Toast> type() { return TYPE; }
     }
 
+    /** Server → client: a tip's context came up ({@code offer}) or the player did what it teaches (SPEC §27.7). */
+    public record Tip(String id, boolean offer) implements CustomPacketPayload {
+        public static final Type<Tip> TYPE = new Type<>(Awaken.id("signal_tip"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Tip> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.STRING_UTF8, Tip::id,
+                ByteBufCodecs.BOOL, Tip::offer,
+                Tip::new);
+        @Override public Type<Tip> type() { return TYPE; }
+    }
+
     /** Client → server: the player answered a window's action (accepted = Y, false = N). */
     public record Answer(String action, boolean accepted) implements CustomPacketPayload {
         public static final Type<Answer> TYPE = new Type<>(Awaken.id("signal_answer"));

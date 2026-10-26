@@ -198,6 +198,7 @@ public final class Director {
     public static GateRecord upkeep(MinecraftServer server, ServerPlayer p, boolean force) {
         if (!Progression.profile(p).awakened() && !force) return null;
         if (p.level().dimension() != Level.OVERWORLD) return null;
+        if (!force && p.getData(GatesRegistry.MEMORY.get()).gatesRolled == 0) return firstGate(server, p);
         GateRegistry reg = GateRegistry.get(server);
         // the cap is per owner (SPEC "Together"): a friend's gates nearby don't use up yours, and yours aren't theirs
         int standing = 0;
@@ -212,6 +213,56 @@ public final class Director {
         }
         DirectorLog.log(p, "gate", String.format("%d open within %d blocks, chance %.0f%%, roll %.2f → spawn", standing, MAX_DIST, chance * 100, r));
         return spawnFor(server, p, null, null, MIN_DIST, MAX_DIST);
+    }
+
+    // ---- the first gate, placed on purpose (SPEC §27.6; §21.0.14 asked for it and it was never built) ---------------
+
+    /** A player's first gate's id + 1 (0: none yet), and how many Director passes it has waited. */
+    public static final String FIRST_GATE = "awaken:first_gate", FIRST_WAIT = "awaken:first_gate_wait";
+    /** Its distance out past the player, along the way they left the city. */
+    static final int FIRST_MIN = 250, FIRST_MAX = 400;
+
+    /**
+     * The first gate waits until the player is ready for it (level 3, or about half an hour after awakening) and out of
+     * the city, then forms 250-400 blocks further along the bearing from the city's centre to them, at their own rank,
+     * and says so ("A gate is drawing breath · 320 m N"); the Horizon raises it until they've cleared a floor. Before,
+     * the first gate was rolled at random 300-1500 blocks out the moment they awakened, in the infirmary, unannounced.
+     */
+    static GateRecord firstGate(MinecraftServer server, ServerPlayer p) {
+        var prof = Progression.profile(p);
+        long waited = prof.counter(FIRST_WAIT);
+        Progression.setCounter(p, FIRST_WAIT, waited + 1);
+        boolean inCity = dev.awaken.terrain.api.CityBasin.reserved(p.getBlockX(), p.getBlockZ());
+        boolean ready = prof.level() >= 3 || waited >= 36; // 36 passes of 50 s: half an hour
+        if (!ready || inCity && waited < 72 || dev.awaken.core.api.OpeningHooks.inOpening(p)) return null;
+        var city = dev.awaken.terrain.api.CityBasin.site(server);
+        BlockPos centre = city.map(c -> new BlockPos(c.x(), 0, c.z())).orElse(server.overworld().getRespawnData().pos());
+        double dx = p.getX() - centre.getX(), dz = p.getZ() - centre.getZ();
+        // out along the way they left; in the middle of it all, north (the High Gate's road)
+        double angle = dx * dx + dz * dz < 48 * 48 ? -Math.PI / 2 : Math.atan2(dz, dx);
+        GateRecord g = spawnFor(server, p, Progression.rank(p), null, FIRST_MIN, FIRST_MAX, false, angle, Math.toRadians(25));
+        // the way on is sea, a river or a beach: any way at all, rather than no first gate for someone on a coast
+        if (g == null) g = spawnFor(server, p, Progression.rank(p), null, FIRST_MIN, FIRST_MAX, false, angle, Math.PI);
+        if (g == null) return null;
+        Progression.setCounter(p, FIRST_GATE, g.id + 1L);
+        int dist = (int) Math.round(Math.sqrt(p.blockPosition().distSqr(g.pos.atY(p.getBlockY()))));
+        String dir = DIRS[(int) Math.round(((Math.toDegrees(Math.atan2(g.pos.getX() - p.getX(), -(g.pos.getZ() - p.getZ()))) + 360) % 360) / 45.0) % 8];
+        dev.awaken.signal.Signal.toast(p, net.minecraft.network.chat.Component.literal("A gate is drawing breath · " + dist + " m " + dir
+                + " · its floors make you stronger"), dev.awaken.core.api.Notices.Tier.IMPORTANT, "gate");
+        DirectorLog.log(p, "gate", "the first gate, on purpose: #" + g.id + " " + dist + " m " + dir + " after " + waited + " passes");
+        dev.awaken.core.api.TipHooks.offer(p, dev.awaken.Awaken.id("first/gate"));
+        return g;
+    }
+
+    /** The Horizon line: a player's first gate, raised while it stands and until they've cleared a floor. */
+    static java.util.List<dev.awaken.core.api.HorizonHooks.Site> firstGateSite(ServerPlayer p) {
+        var prof = Progression.profile(p);
+        long id = prof.counter(FIRST_GATE) - 1;
+        if (id < 0 || prof.counter("awaken:floors_cleared") > 0 || p.level().dimension() != Level.OVERWORLD) return java.util.List.of();
+        GateRecord g = GateRegistry.get(p.level().getServer()).gate((int) id);
+        if (g == null || !g.state.standing()) return java.util.List.of();
+        return java.util.List.of(new dev.awaken.core.api.HorizonHooks.Site("gate:first", "First gate · " + g.plan.rank().label + "-rank",
+                g.pos, "", true));
     }
 
     /** Picks a spot, rolls the gate and starts building it. */
@@ -232,13 +283,19 @@ public final class Director {
     /** As above; {@code wantRig} (tours): rolled again until the gate has a Gate Rig room on one of its floors. */
     public static GateRecord spawnFor(MinecraftServer server, ServerPlayer p, Rank forceRank, Theme forceTheme, int minDist, int maxDist,
                                       boolean wantRig) {
+        return spawnFor(server, p, forceRank, forceTheme, minDist, maxDist, wantRig, Double.NaN, 0);
+    }
+
+    /** As above, toward {@code towards} (radians, x = cos, z = sin) within {@code spread} either side; NaN: any way. */
+    static GateRecord spawnFor(MinecraftServer server, ServerPlayer p, Rank forceRank, Theme forceTheme, int minDist, int maxDist,
+                               boolean wantRig, double towards, double spread) {
         ServerLevel over = server.overworld();
         GateRegistry reg = GateRegistry.get(server);
         BlockPos spot = null;
         String dir = "";
         int dist = 0;
         for (int attempt = 0; attempt < 10 && spot == null; attempt++) {
-            double angle = p.getRandom().nextDouble() * Math.PI * 2;
+            double angle = Double.isNaN(towards) ? p.getRandom().nextDouble() * Math.PI * 2 : towards + (p.getRandom().nextDouble() * 2 - 1) * spread;
             dist = minDist + p.getRandom().nextInt(Math.max(1, maxDist - minDist));
             int x = p.getBlockX() + (int) Math.round(Math.cos(angle) * dist);
             int z = p.getBlockZ() + (int) Math.round(Math.sin(angle) * dist);

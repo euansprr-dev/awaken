@@ -1,0 +1,58 @@
+# Arms proof (short, light): the maul's gold face leading (slam, swing), the dagger and gauntlet pairs held and worn in
+# both hands (at rest, then the off hand's strike), the spear at rest. Every frame of each combo recorded.
+world armsrepro creative 778
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+hud on
+cmd gamemode creative
+wait 40
+screen close
+cmd tp @s ~ 200 ~ 0 0
+cmd fill ~-8 ~-1 ~-8 ~8 ~-1 ~10 minecraft:smooth_stone
+cmd kill @e[type=minecraft:husk]
+cmd summon minecraft:husk ~0 ~ ~2.6 {NoAI:1b,PersistenceRequired:1b,Health:4000f,attributes:[{id:"minecraft:max_health",base:4000d}]}
+camera first
+look 0 4
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_maul
+wait 36
+cmd awaken ascent pilot rec proof_maul 48 2
+wait 2
+arms strike
+wait 12
+arms strike
+wait 34
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_daggers
+wait 30
+shot proof_daggers_rest
+cmd awaken ascent pilot rec proof_daggers 22 2
+wait 2
+arms strike
+wait 5
+arms strike
+wait 16
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_gauntlets
+wait 30
+shot proof_gauntlets_rest
+cmd awaken ascent pilot rec proof_gauntlets 20 2
+wait 2
+arms strike
+wait 4
+arms strike
+wait 14
+camera back
+wait 10
+shot proof_gauntlets_f5
+camera first
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_spear
+wait 30
+shot proof_spear_rest
+quit

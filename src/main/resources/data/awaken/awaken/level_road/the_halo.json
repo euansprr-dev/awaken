@@ -1,0 +1,26 @@
+{
+  "schema": 2,
+  "level": 55,
+  "title": "The Halo",
+  "text": "Past the sky, a ring of light. An Observatory shows it to B-rank eyes. 20 essence.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:essence_shard",
+      "count": 20
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "See the Halo from an Observatory",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:story/halo_seen",
+      "value": 1
+    },
+    "toast": "Something in orbit",
+    "requires": [
+      "rank:B"
+    ]
+  }
+}

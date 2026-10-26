@@ -277,7 +277,8 @@ public final class Discovery {
                 d.trail.add(z);
             }
         }
-        if (l.stage != null && stage == null && !d.runShown) {
+        // the run is sent once it's over: at the Registry (where the band's first K shows it), or at the end
+        if (l.stage != null && (stage == null || stage.equals("registry")) && !d.runShown) {
             d.runShown = true;
             AwakenNet.send(p, new AtlasNet.Trail(List.copyOf(d.trail), true));
         }

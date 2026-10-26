@@ -125,8 +125,11 @@ def membrane():
 def door():
     c = plates("precursor", seed="door", size=16, rivets=False)
     for y in range(16):
-        c.set(0, y, PRE[1])
-        c.set(15, y, PRE[1])
+        # the panel's edges are its seal's seams: dark here, their light is the door's rank (door_glow)
+        c.set(0, y, PRE[0])
+        c.set(15, y, PRE[0])
+        c.set(1, y, PRE[1])
+        c.set(14, y, PRE[1])
         c.set(7, y, PRE[0])
         c.set(8, y, PRE[4])
     for x in range(16):
@@ -136,13 +139,67 @@ def door():
     return c
 
 
+GLOW = (255, 255, 255, 255)
+GLOW_DIM = (150, 150, 150, 255)
+GLOW_FAINT = (92, 92, 92, 255)
+
+
+def door_glow():
+    """The seal's light on a panel, white: the door tints it by its rank and draws it full bright (from afar, the
+    door's rank in its colour, SPEC §17.25). Seams down both edges, broken where the brass bands cross."""
+    c = Canvas(16, 16)
+    for y in range(16):
+        if y in (3, 4, 12, 13):
+            continue
+        c.set(0, y, GLOW)
+        c.set(15, y, GLOW)
+        c.set(1, y, GLOW_FAINT)
+        c.set(14, y, GLOW_FAINT)
+    return c
+
+
+def _glyph_mask(seed, size=5):
+    """The rune glyph() draws for this seed, as (bright, halo) cells."""
+    rng = rng_for("glyph", seed)
+    cx = cy = 8
+    half = size // 2
+    pattern = [[rng.random() < 0.45 for _ in range(half + 1)] for _ in range(size)]
+    pattern[half][half] = True
+    bright = set()
+    for j in range(size):
+        for i in range(half + 1):
+            if pattern[j][i]:
+                for xx in (cx - half + i, cx + half - i):
+                    bright.add((xx, cy - half + j))
+    halo = {(cx - half - 1 + i, cy - half - 1 + j) for j in range(size + 2) for i in range(size + 2)} - bright
+    return bright, halo
+
+
 def door_core():
     c = door()
     for y in range(4, 12):
         for x in range(4, 12):
             c.set(x, y, PRE[1])
-    glyph(c, "amber", seed="door_core", size=5)
+    bright, halo = _glyph_mask("door_core")
+    for (x, y) in bright:
+        c.set(x, y, PRE[0])
     frame_border(c, "brass")
+    return c
+
+
+def door_core_glow():
+    """The core's rune in a ring of light, and the seams over and under it: white, tinted by the door's rank and drawn
+    full bright."""
+    c = Canvas(16, 16)
+    for i in range(4, 12):
+        for (x, y) in ((i, 4), (i, 11), (4, i), (11, i)):
+            c.set(x, y, GLOW_DIM)
+    bright, _ = _glyph_mask("door_core")
+    for (x, y) in bright:
+        c.set(x, y, GLOW)
+    for y in (1, 2, 13, 14):
+        c.set(1, y, GLOW_DIM)
+        c.set(14, y, GLOW_DIM)
     return c
 
 
@@ -680,6 +737,8 @@ def build(out):
     out.block("precursor_membrane", membrane())
     out.block("precursor_door", door())
     out.block("precursor_door_core", door_core())
+    out.block("precursor_door_glow", door_glow())
+    out.block("precursor_door_core_glow", door_core_glow())
     out.block("launch_ring_frame", ring_frame())
     out.block("halo_return_pad_top", pad_top())
     out.block("precursor_log_terminal_screen", terminal_screen())

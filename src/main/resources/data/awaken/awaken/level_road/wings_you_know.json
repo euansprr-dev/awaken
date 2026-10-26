@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "level": 58,
+  "title": "Wings you know",
+  "text": "Glide often. Wings you know well are what the open sky asks for, at A-rank. 20 essence.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:essence_shard",
+      "count": 20
+    }
+  ],
+  "quiet": false
+}

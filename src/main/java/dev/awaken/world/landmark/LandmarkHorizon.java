@@ -61,7 +61,9 @@ final class LandmarkHorizon {
             if (Landmarks.reached(p, l.id())) continue; // reached since the cache was built
             boolean whispered = l.id().equals(c.whispered());
             String need = need(l.kind());
-            out.add(new HorizonHooks.Site("landmark:" + l.id(), (whispered ? "Whispered: " : "") + l.kind().display, l.pos(), need, whispered));
+            String why = l.kind().why();
+            out.add(new HorizonHooks.Site("landmark:" + l.id(), (whispered ? "Whispered: " : "") + l.kind().display + (why.isEmpty() ? "" : " · " + why),
+                    l.pos(), need, whispered));
         }
         return out;
     }

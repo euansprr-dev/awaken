@@ -62,6 +62,9 @@ final class Wrist {
     /** Autopilot: draw the arm with this skin (wide or slim) instead of the player's. */
     static PlayerSkin forcedSkin;
     private static float glow, flare;
+    /** The boot (HoloBoot): the light running round the band, the marks lit from the middle out, the ignition's ring
+     *  (all 1 outside a boot). */
+    private static float sweep = 1f, lit = 1f, ring = 1f;
     private static float armX0, armX1; // the arm's cross-section in model units (wide or slim)
     private static int inner;          // the inner face's side in model x: -1 on the left arm, +1 on the right
     private static float seconds;      // for the idle pulse
@@ -71,7 +74,15 @@ final class Wrist {
     static void band(float a, int side, Vector3f out) {
         float down = 1 - a;
         out.set(side < 0 ? WX : -WX, WY - 0.55f * down, WZ + 0.10f * down);
+        if (centre > 0) {
+            // the boot: the wrist comes further into view, so the band is the thing you look at
+            out.x *= 1 - 0.38f * centre;
+            out.y += 0.1f * centre;
+        }
     }
+
+    /** 1 while the band boots (the wrist nearer the middle of the frame), 0 for the panels. */
+    private static float centre;
 
     /** On the inside of the wrist, where the beams start and the panel grows from (hand-view space). */
     static void emitter(float a, int side, Vector3f out) {
@@ -104,12 +115,14 @@ final class Wrist {
     /** RenderHandEvent at HIGH: replaces both hands while a holo menu is open or animating. */
     static void onHand(RenderHandEvent e) {
         HoloPanel p = HoloClient.wristPanel();
-        if (p == null || !p.timeline.active() || p.anchor != HoloPanel.Anchor.WRIST) return;
+        // the band booting (it just went on, no panel holds the wrist) draws the same forearm
+        boolean boot = HoloBoot.active() && (p == null || !p.timeline.active());
+        if (!boot && (p == null || !p.timeline.active() || p.anchor != HoloPanel.Anchor.WRIST)) return;
         // the band draws in the holo pipelines: without them (the inventory can still be holo through its GUI ones)
         // the hands stay vanilla's
         if (!HoloPipelines.ok()) return;
         // from the first tick of a close the re-equip owns the hands' height: let the event (and the hooks after us) run
-        boolean handsBack = p.timeline.closing() && closeTicks >= 1;
+        boolean handsBack = boot ? HoloBoot.handsBack() : p.timeline.closing() && closeTicks >= 1;
         if (!handsBack) e.setCanceled(true);
         Minecraft mc = Minecraft.getInstance();
         long frame = HoloClient.frame();
@@ -120,8 +133,9 @@ final class Wrist {
         if (avatar == null || avatar.isInvisible) return;
         if (forcedSkin != null) avatar.skin = forcedSkin;
         AvatarRenderer<?> renderer = mc.getEntityRenderDispatcher().getRenderer(avatar);
-        HoloTimeline t = p.timeline;
-        float a = Math.max(0, Math.min(1.1f, t.arm()));
+        HoloTimeline t = boot ? null : p.timeline;
+        float pt = e.getPartialTick();
+        float a = boot ? HoloBoot.arm(pt) : Math.max(0, Math.min(1.1f, t.arm()));
         HumanoidArm wristArm = avatar.mainArm.getOpposite();
         int side = wristArm == HumanoidArm.LEFT ? -1 : 1;
         boolean slim = avatar.skin.model() == PlayerModelType.SLIM;
@@ -130,6 +144,7 @@ final class Wrist {
         PoseStack pose = e.getPoseStack();
 
         // the forearm
+        centre = boot ? 1f : 0f;
         armMatrix(a, side, slim);
         ModelPart arm = side < 0 ? renderer.getModel().leftArm : renderer.getModel().rightArm;
         PartPose ip = arm.getInitialPose();
@@ -147,9 +162,19 @@ final class Wrist {
         armX1 = slim ? (side < 0 ? 2f : 1f) : (side < 0 ? 3f : 1f);
         inner = side < 0 ? -1 : 1;
         seconds = (System.nanoTime() % 3_600_000_000_000L) / 1e9f;
-        float b = t.band();
-        glow = Math.min(1f, b) * Math.min(1f, a * 1.2f);
-        flare = Math.max(0f, b - 1f) * Math.min(1f, a * 1.2f);
+        if (boot) {
+            glow = HoloBoot.glow(pt) * Math.min(1f, a * 1.2f);
+            flare = HoloBoot.flare(pt) * Math.min(1f, a * 1.2f);
+            sweep = HoloBoot.sweep(pt);
+            lit = HoloBoot.lit(pt);
+            ring = HoloBoot.ring(pt);
+        } else {
+            float b = t.band();
+            glow = Math.min(1f, b) * Math.min(1f, a * 1.2f);
+            flare = Math.max(0f, b - 1f) * Math.min(1f, a * 1.2f);
+            sweep = lit = 1f;
+            ring = 1f;
+        }
         pose.pushPose();
         pose.mulPose(M);
         pose.scale(1 / 16f, 1 / 16f, 1 / 16f);
@@ -160,6 +185,7 @@ final class Wrist {
         // the main hand sinks out of view (vanilla's own transforms, at a lowered height)
         float drop = Math.min(1f, a);
         if (!handsBack && drop < 0.999f) mainHand(e, ps, avatar, renderer, -side, drop, light, skin);
+        centre = 0f;
     }
 
     /**
@@ -288,11 +314,18 @@ final class Wrist {
         int line = Glass.a(Glass.EDGE, Math.min(1f, 0.75f * k)), hot = Glass.a(0xD8EEFF, Math.min(1f, 0.45f * k));
         float th = 0.12f;
         for (int i = 0; i < 4; i++) {
-            if (!visible(m, f, i, ym)) continue;
+            // booting, the light runs round the band one face after another (the inside of the wrist first)
+            float run = Math.min(1f, Math.max(0f, sweep * 4f - i));
+            if (run <= 0f || !visible(m, f, i, ym)) continue;
             int o = i * 5;
-            float a0 = f[o + 2], a1 = f[o + 3];
-            onFace(vc, m, f, i, a0, a1, y0 - th, y0 + th, 0.05f, -0.8f, -1, 0.8f, 1, line, -2);
-            onFace(vc, m, f, i, a0, a1, y1 - th, y1 + th, 0.05f, -0.8f, -1, 0.8f, 1, line, -2);
+            float a0 = f[o + 2], a1 = f[o + 3], head = a0 + (a1 - a0) * run;
+            onFace(vc, m, f, i, a0, head, y0 - th, y0 + th, 0.05f, -0.8f, -1, 0.8f, 1, line, -2);
+            onFace(vc, m, f, i, a0, head, y1 - th, y1 + th, 0.05f, -0.8f, -1, 0.8f, 1, line, -2);
+            if (run < 1f) {
+                // the running light's head: a hot point crossing the band
+                int spark = Glass.a(0xE8F6FF, Math.min(1f, 0.9f * Math.max(k, 0.6f)));
+                onFace(vc, m, f, i, head - 0.35f, head + 0.05f, y0 - 0.2f, y1 + 0.2f, 0.07f, -1, -1, 1, 1, spark, -1);
+            }
         }
         if (visible(m, f, 0, ym)) {
             float a0 = f[2], a1 = f[3], mid = (a0 + a1) / 2, half = (a1 - a0) / 2;
@@ -304,10 +337,15 @@ final class Wrist {
                     float c = mid + side * (0.95f + j * 0.62f) * (half / 2.4f);
                     float d = j - phase;
                     float pulse = 0.25f + 0.75f * (float) Math.exp(-d * d * 1.6f);
-                    int col = Glass.a(Glass.EDGE, Math.min(1f, 0.95f * k * pulse));
+                    // booting: each mark lights in turn from the middle out, with a bright first moment
+                    float on = Math.min(1f, Math.max(0f, lit * 3.2f - j));
+                    if (on <= 0f) continue;
+                    if (lit < 1f) pulse = Math.max(pulse, 1.4f * on * (1f - on) + on * 0.6f);
+                    int col = Glass.a(Glass.EDGE, Math.min(1f, 0.95f * k * pulse * on));
                     onFace(vc, m, f, 0, c - 0.13f, c + 0.13f, ym - 0.13f, ym + 0.13f, 0.06f, -1, -1, 1, 1, col, -1);
                 }
             }
+            if (lit < 1f) return; // the diamond waits for the last mark
             // the diamond: four short strokes
             float r = 0.28f, w = 0.06f;
             diamondStroke(vc, m, f, mid, ym, r, w, 1, 1, hot);
@@ -319,6 +357,15 @@ final class Wrist {
             if (flare > 0.01f) {
                 onFace(vc, m, f, 0, mid - 2.4f, mid + 2.4f, ym - 2.4f, ym + 2.4f, 0.08f, -1, -1, 1, 1,
                         Glass.a(Glass.EDGE, Math.min(1f, 0.16f * flare)), -1);
+            }
+            if (ring < 1f) {
+                // the boot's ring of light spreading off the inside of the wrist, thinning as it goes
+                float rr = 0.6f + 5.4f * ring, tw = 0.16f * (1f - ring) + 0.03f;
+                int rc = Glass.a(0xD8EEFF, Math.min(1f, 0.85f * (1f - ring)));
+                onFace(vc, m, f, 0, mid - rr, mid + rr, ym + rr - tw, ym + rr, 0.09f, -1, -1, 1, 1, rc, -1);
+                onFace(vc, m, f, 0, mid - rr, mid + rr, ym - rr, ym - rr + tw, 0.09f, -1, -1, 1, 1, rc, -1);
+                onFace(vc, m, f, 0, mid - rr, mid - rr + tw, ym - rr, ym + rr, 0.09f, -1, -1, 1, 1, rc, -1);
+                onFace(vc, m, f, 0, mid + rr - tw, mid + rr, ym - rr, ym + rr, 0.09f, -1, -1, 1, 1, rc, -1);
             }
         }
     }

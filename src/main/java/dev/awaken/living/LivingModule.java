@@ -47,6 +47,7 @@ public final class LivingModule {
         LivingContent.register(modBus);
         dev.awaken.living.quest.Relics.register(modBus);
         dev.awaken.living.wayfarer.Scenes.init();
+        FirstThread.init(); // the first thread out of Carillon, and chains on the Now line (SPEC §27.6)
         modBus.addListener(LivingNet::register);
         XpBudget.register(HUNT, 0.10);
         XpBudget.register("pulse", 0.15);

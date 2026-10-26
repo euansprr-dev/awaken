@@ -69,6 +69,7 @@ public final class Possession {
         int level = Projection.possessLevel(sp);
         if (level == 0) {
             Signal.toast(sp, Component.literal("The living won't let you in yet. (C-rank)"));
+            dev.awaken.core.api.Promises.seen(sp, "possession", null, dev.awaken.core.api.Promises.Need.rank("C"), "Wearing a creature, in the Veil");
             return;
         }
         if (ownedByAnother(m, sp)) {

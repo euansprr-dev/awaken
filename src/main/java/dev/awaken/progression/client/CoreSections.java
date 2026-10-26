@@ -47,6 +47,8 @@ final class CoreSections {
     static void register() {
         StatusSections.add(StatusSections.Tab.STATUS, new Spine());
         StatusSections.add(StatusSections.Tab.STATUS, new Stats());
+        StatusSections.add(StatusSections.Tab.STATUS, new WaitingSection());
+        dev.awaken.core.api.MapMarks.register(WaitingSection::marks);
         StatusSections.add(StatusSections.Tab.STATUS, new RoadSection());
         StatusSections.add(StatusSections.Tab.STATUS, new DirectivesSection());
         StatusSections.add(StatusSections.Tab.STATUS, new RegimenSection());
@@ -104,6 +106,14 @@ final class CoreSections {
             } else {
                 int left = Math.max(0, next.levelRequired - p.level());
                 ui.text("◇ Next rank: " + next.label + " at level " + next.levelRequired + " (" + plural(left, "level") + " to go), then pass its Reassessment.", Glass.TEXT);
+            }
+            // the Far goal: what this player has met that the next rank opens (never a list of what they haven't)
+            if (next != null && mc.player != null) {
+                List<String> opens = WaitingSection.nextRankOpens(mc.player, next);
+                if (!opens.isEmpty()) {
+                    String list = String.join(" · ", opens.subList(0, Math.min(3, opens.size()))) + (opens.size() > 3 ? " · and more" : "");
+                    ui.text("◇ " + next.label + "-rank opens what waits for you: " + list + ".", Glass.HORIZON);
+                }
             }
             var level = mc.level;
             if (level != null && p.fractureUntil() > level.getGameTime()) {

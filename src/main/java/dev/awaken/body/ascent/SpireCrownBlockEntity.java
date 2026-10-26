@@ -78,13 +78,18 @@ public class SpireCrownBlockEntity extends BlockEntity {
         this.site = site;
         this.ground = ground;
         setChanged();
-        if (site != SITE_SPIRE && level != null && !level.isClientSide()) HeroCrowns.ward(worldPosition, ground);
+        if (site != SITE_SPIRE && level != null && !level.isClientSide()) HeroCrowns.ward(worldPosition, ground, site);
     }
 
     @Override
     public void onLoad() {
         super.onLoad();
-        if (site != SITE_SPIRE && level != null && !level.isClientSide()) HeroCrowns.ward(worldPosition, ground);
+        if (site != SITE_SPIRE && level != null && !level.isClientSide()) HeroCrowns.ward(worldPosition, ground, site);
+    }
+
+    /** Whether this player has reached this crown by a climb (the Horizon stops naming it then). */
+    boolean hasClimbed(UUID who) {
+        return climbed.contains(who);
     }
 
     @Override
@@ -116,9 +121,22 @@ public class SpireCrownBlockEntity extends BlockEntity {
     void reached(ServerPlayer p, long now) {
         Long last = arrived.put(p.getUUID(), now);
         if (last != null && now - last < 100) return;
+        // the crown answers only the line (SPEC §17.27): a pearl, elytra or a Runner hang still earns the view, not this
+        if (!ArrivalHooks.byLine(p)) {
+            p.sendSystemMessage(Component.translatable("awaken.ascent.spire.built"), true);
+            return;
+        }
         if (!ArrivalHooks.byMovement(p) || !Ascent.arrivedByMovement(p, 20)) {
             p.sendSystemMessage(Component.translatable("awaken.ascent.spire.built"), true);
             return;
+        }
+        // the climb's promise is kept (SPEC §27.1): a spire's key is its landmark id (the start chunk's), a hero crown's
+        // its ward's ("hero/" + the crown's packed position)
+        if (site == SITE_SPIRE && level instanceof net.minecraft.server.level.ServerLevel sl) {
+            var start = sl.structureManager().getStructureWithPieceAt(worldPosition, dev.awaken.above.Above.RUINS_TAG);
+            if (start.isValid()) dev.awaken.core.api.Promises.kept(p, "landmark:ruin:" + start.getChunkPos().x() + "," + start.getChunkPos().z());
+        } else if (site != SITE_SPIRE) {
+            dev.awaken.core.api.Promises.kept(p, "landmark:hero/" + worldPosition.asLong());
         }
         Long start = leftPlaza.remove(p.getUUID());
         int ticks = start == null || now - start > LONGEST ? -1 : (int) (now - start);

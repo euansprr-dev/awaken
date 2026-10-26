@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "level": 77,
+  "title": "Any creature",
+  "text": "At A-rank the Veil lets you wear any mob that walks. 24 essence.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:essence_shard",
+      "count": 24
+    }
+  ],
+  "quiet": false
+}

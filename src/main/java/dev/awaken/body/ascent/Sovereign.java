@@ -16,7 +16,6 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -63,10 +62,9 @@ public final class Sovereign {
         if (now % 10 == 0) field(p);
     }
 
-    /** The world's ending, as this player has met it: the Signal broken (their gates calm) or the world awake. */
+    /** The world's ending, as this player has met it: any of the three (Break, Wake or Become; plan decision 2). */
     static boolean endingSeen(ServerPlayer p) {
-        var server = p.level().getServer();
-        return dev.awaken.core.api.StoryHooks.gatesCalm(server, Optional.of(p.getUUID())) || dev.awaken.core.api.StoryHooks.colourRestored(server);
+        return dev.awaken.core.api.StoryHooks.endingSeen(p);
     }
 
     /** The tier, with its scene (once). */

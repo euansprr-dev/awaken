@@ -1,0 +1,25 @@
+{
+  "schema": 2,
+  "level": 122,
+  "title": "An empty court",
+  "text": "Every Sovereign fallen. The Seed waits under the Court. A Power Core.",
+  "grants": [
+    {
+      "type": "power_core",
+      "count": 1
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "All eight Sovereigns fallen",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:sovereigns_defeated",
+      "value": 8
+    },
+    "toast": "The Court is empty",
+    "requires": [
+      "rank:S"
+    ]
+  }
+}

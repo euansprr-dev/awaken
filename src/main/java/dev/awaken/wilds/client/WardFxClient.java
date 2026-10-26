@@ -12,7 +12,10 @@ import net.minecraft.world.level.block.state.BlockState;
 /**
  * Builds a ward event's particles on this client. Marked: a few threads of light lift off the block's top (the ward
  * has seen it). Crumbled: the block falls apart in grains of its own colour while light rises out of it. Held: light
- * sparks off the wall that refused the pick. The Signal's light is the System's edge blue (#7FC3FF).
+ * sparks off the wall that refused the pick. Shed (a climb refused a block): the block's ghost, its edges traced in
+ * grains of its own colour, falls away as a breath of light lifts off where it would have stood. Unsealed (a climb
+ * cache's inner seal opened): a ring of light rises off the lid and closes over it. The Signal's light is the System's
+ * edge blue (#7FC3FF).
  */
 final class WardFxClient {
     private WardFxClient() {}
@@ -43,6 +46,34 @@ final class WardFxClient {
                     spark(level, x + 0.25 + r.nextDouble() * 0.5, y + 0.3 + r.nextDouble() * 0.5, z + 0.25 + r.nextDouble() * 0.5,
                             (r.nextDouble() - 0.5) * 0.03, 0.04 + r.nextDouble() * 0.05, (r.nextDouble() - 0.5) * 0.03);
                 }
+            }
+            case SHED -> {
+                int grain = tint(level, Block.stateById(e.state()), pos);
+                // the ghost: its twelve edges traced in the ward's light, which hangs a moment, and in grains of the
+                // block's own colour that slip off it and fall, so the shape reads before it goes
+                for (int edge = 0; edge < 12; edge++) {
+                    int axis = edge / 4, a = edge & 1, b = (edge >> 1) & 1;
+                    for (int k = 0; k < 5; k++) {
+                        double t = (k + 0.5) / 5;
+                        // along x: (t, a, b); along y: (a, t, b); along z: (a, b, t)
+                        double gx = axis == 0 ? t : a, gy = axis == 0 ? a : axis == 1 ? t : b, gz = axis == 2 ? t : b;
+                        if (k % 2 == 0) spark(level, x + gx, y + gy, z + gz, 0, 0.004, 0);
+                        WardParticles.nextTint = grain;
+                        level.addParticle(WildsContent.WARD_GRAIN.get(), x + gx, y + gy, z + gz,
+                                (gx - 0.5) * 0.02, 0.004 + r.nextDouble() * 0.012, (gz - 0.5) * 0.02);
+                    }
+                }
+                for (int i = 0; i < 6; i++) {
+                    spark(level, x + 0.2 + r.nextDouble() * 0.6, y + 0.15 + r.nextDouble() * 0.7, z + 0.2 + r.nextDouble() * 0.6,
+                            (r.nextDouble() - 0.5) * 0.02, 0.05 + r.nextDouble() * 0.04, (r.nextDouble() - 0.5) * 0.02);
+                }
+            }
+            case UNSEAL -> {
+                for (int i = 0; i < 24; i++) {
+                    double a = i * Math.PI * 2 / 24, cx = x + 0.5 + Math.cos(a) * 0.62, cz = z + 0.5 + Math.sin(a) * 0.62;
+                    spark(level, cx, y + 0.95, cz, -Math.cos(a) * 0.012, 0.06 + r.nextDouble() * 0.03, -Math.sin(a) * 0.012);
+                }
+                for (int i = 0; i < 6; i++) spark(level, x + 0.5, y + 1.0, z + 0.5, (r.nextDouble() - 0.5) * 0.01, 0.1 + r.nextDouble() * 0.05, (r.nextDouble() - 0.5) * 0.01);
             }
             case HOLD -> {
                 for (int i = 0; i < 10; i++) {

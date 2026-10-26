@@ -1,0 +1,167 @@
+# Arms combos filmed (SPEC §25 "Forms"): each review style's whole chain against a still husk, the presses timed in
+# each strike's rhythm window, every frame recorded (run-autopilot/clips/<name>/); F5 too for the Daggers and the Maul.
+world armsrepro creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+cmd tp @s ~ 200 ~ 0 0
+cmd fill ~-12 ~-1 ~-12 ~12 ~-1 ~14 minecraft:smooth_stone
+cmd kill @e[type=minecraft:husk]
+cmd summon minecraft:husk ~0 ~ ~2.6 {NoAI:1b,PersistenceRequired:1b,Health:4000f,attributes:[{id:"minecraft:max_health",base:4000d}]}
+camera first
+look 0 4
+arms ribbonmode 0
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_daggers
+wait 40
+camera first
+look 0 4
+wait 12
+shot combo_daggers_rest_fp
+cmd awaken ascent pilot rec combo_daggers_fp 39 2
+wait 3
+arms strike
+wait 5
+arms strike
+wait 5
+arms strike
+wait 5
+arms strike
+wait 33
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_daggers
+wait 40
+camera back
+look 0 4
+wait 12
+shot combo_daggers_rest_3p
+cmd awaken ascent pilot rec combo_daggers_3p 39 2
+wait 3
+arms strike
+wait 5
+arms strike
+wait 5
+arms strike
+wait 5
+arms strike
+wait 33
+camera first
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_maul
+wait 40
+camera first
+look 0 4
+wait 12
+cmd awaken ascent pilot rec combo_maul_fp 62 2
+wait 3
+arms strike
+wait 11
+arms strike
+wait 12
+arms strike
+wait 56
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_maul
+wait 40
+camera back
+look 0 4
+wait 12
+cmd awaken ascent pilot rec combo_maul_3p 62 2
+wait 3
+arms strike
+wait 11
+arms strike
+wait 12
+arms strike
+wait 56
+camera first
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
+wait 40
+camera first
+look 0 4
+wait 12
+cmd awaken ascent pilot rec combo_longsword_fp 41 2
+wait 3
+arms strike
+wait 7
+arms strike
+wait 7
+arms strike
+wait 35
+camera first
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_greatblade
+wait 40
+camera first
+look 0 4
+wait 12
+cmd awaken ascent pilot rec combo_greatblade_fp 54 2
+wait 3
+arms strike
+wait 9
+arms strike
+wait 10
+arms strike
+wait 48
+camera first
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_spear
+wait 40
+camera first
+look 0 4
+wait 12
+cmd awaken ascent pilot rec combo_spear_fp 42 2
+wait 3
+arms strike
+wait 7
+arms strike
+wait 7
+arms strike
+wait 36
+camera first
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_gauntlets
+wait 40
+camera first
+look 0 4
+wait 12
+cmd awaken ascent pilot rec combo_gauntlets_fp 38 2
+wait 3
+arms strike
+wait 4
+arms strike
+wait 4
+arms strike
+wait 5
+arms strike
+wait 32
+camera first
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_axe
+wait 40
+camera first
+look 0 4
+wait 12
+cmd awaken ascent pilot rec combo_axe_fp 52 2
+wait 3
+arms strike
+wait 9
+arms strike
+wait 10
+arms strike
+wait 46
+camera first
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_glaive
+wait 40
+camera first
+look 0 4
+wait 12
+shot combo_glaive_rest_fp
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_spear
+wait 40
+shot combo_spear_rest_fp
+quit

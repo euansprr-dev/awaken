@@ -142,6 +142,9 @@ NAMED = {
     "teodor": {"stranger": ["Mind the stacks. Some of them bite."],
                "familiar": ["You've been reading. Your eyes do the squint."],
                "known": ["{name}, the Precursor logs disagree with each other. Isn't it wonderful?"]},
+    "kestrel": {"stranger": ["Runner! You owe me word from the square."],
+                "familiar": ["Letters for the camp, if you're going north. They're always waiting on something."],
+                "known": ["{name}. The roof's still yours. Come home when you can."]},
     "sun": {"stranger": ["You're bleeding a little. Everyone is, here."],
             "familiar": ["Eat something. Then come back."],
             "known": ["{name}. How's the rest of you?"]},
@@ -182,6 +185,13 @@ NEWS = {
     "lamp_broken": ["Hear ye! A lamp is out on the avenue! Walk in pairs after dark!"],
     "about": ["Hear ye! {name} caught a thief! Carillon thanks you!", "Hear ye! {name} fought the fire in the Works!",
               "Hear ye! {name}, hunter, walks among us! Mind your manners!"],
+    # the land past the walls (SPEC §27.8): real places, read from the world; {gate} is "past the High Gate, to the north"
+    "wilds_gate": ["Hear ye! A gate's light stands {gate}! The Association pays for every floor!",
+                   "Hear ye! A gate is open {gate}! Its Lord waits at the bottom, they say!"],
+    "wilds_vault": ["Hear ye! The old vault {gate} hums again! Its door reads a hunter's rank, they say!",
+                    "Hear ye! Something sealed {gate}! It opens for the right hunter, they say!"],
+    "wilds_camp": ["Hear ye! The Wayfarers up the north road have their fires lit! Kestrel has letters for them!",
+                   "Hear ye! Smoke on the north road: the Wayfarers' camp! They need hands, they say!"],
 }
 
 # Events: who shouts what.

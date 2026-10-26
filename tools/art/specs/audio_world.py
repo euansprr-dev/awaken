@@ -337,6 +337,39 @@ def tell_tide(seed):
     return _loop(0.6 * _norm(drone) + 0.4 * wash, 1.0)
 
 
+def tell_storm(seed):
+    """The Rolling Storm heard from afar: its rain a broad roar (the hiss of a curtain of drops a few hundred blocks off,
+    its highs gone with the distance), the wind ahead of it gusting under that, and a low growl that never stops."""
+    L = 13.0  # 12 s
+    n = K.ns(L)
+    roar = _norm(K.lowpass(K.bandpass(K.noise(n, "pink", seed), 1100, 0.5), 2600, 2)) * _swells(n, seed + 1, 0.12, 0.65, 1.2)
+    wind = _norm(K.lowpass(K.noise(n, "brown", seed + 2), 320, 2)) * _swells(n, seed + 3, 0.22, 0.25, 1.8)
+    growl = _norm(K.lowpass(K.noise(n, "brown", seed + 4), 60, 2)) * _swells(n, seed + 5, 0.08, 0.5)
+    return _loop(0.55 * roar + 0.3 * wind + 0.15 * growl, 1.0)
+
+
+def storm_roll(seed):
+    """Far thunder: no crack, only the roll: the channel's near end arrives first and its far reaches keep coming for
+    seconds, so a soft onset, then a run of uneven swells that tail off; low, the highs gone with the distance."""
+    L = 8.5
+    n = K.ns(L)
+    t = K.tvec(n)
+    r = K.rng(seed)
+    env = np.zeros(n)
+    at = r.uniform(0.15, 0.35)
+    for k in range(r.integers(6, 10)):
+        g = (0.85 ** k) * r.uniform(0.55, 1.0)
+        rise, fall = r.uniform(0.05, 0.18), r.uniform(0.5, 1.4)
+        x = np.clip(t - at, 0, None)
+        env += g * (1 - np.exp(-x / rise)) * np.exp(-x / fall) * (t >= at)
+        at += r.uniform(0.25, 0.9)
+    env = env / (np.max(env) + 1e-12)
+    body = _norm(K.lowpass(K.noise(n, "brown", seed + 1), 160, 2))
+    grit = _norm(K.lowpass(K.bandpass(K.noise(n, "pink", seed + 2), 320, 0.7), 700, 2)) * 0.35
+    x = (body + grit) * env * np.clip(t / 0.08, 0, 1) * np.clip((L - t) / 0.6, 0, 1)
+    return _room(_norm(x), 2.5, seed, wet=0.35, bright=0.2)
+
+
 def tell_bells(seed):
     """Pack-animal bells on a caravan: three bells of different sizes (hammered metal: clashing, inharmonic overtones,
     not one clean note), each swinging with its animal's walk so its clapper strikes twice a stride, unevenly, plus a
@@ -394,12 +427,14 @@ def sounds(Snd):
         Snd("amb_tell_wings", tell_wings, rms=-28.0, seed=402, mono=True),
         Snd("amb_tell_tide", tell_tide, rms=-28.0, seed=404, mono=True),
         Snd("amb_tell_bells", tell_bells, rms=-28.0, seed=405, mono=True),
+        Snd("amb_tell_storm", tell_storm, rms=-28.0, seed=406, mono=True),
     ]
     for name, fn, count, seed in (("amb_world_chime", chime, 6, 500), ("amb_world_bell_far", bell_far, 2, 510),
                                   ("amb_world_halo_hiss", halo_hiss, 3, 520), ("amb_world_halo_clunk", halo_clunk, 3, 530),
                                   ("amb_world_halo_chirp", halo_chirp, 4, 540), ("amb_world_dream_swell", dream_swell, 4, 550),
                                   ("amb_world_elder_creak", elder_creak, 4, 560), ("amb_world_elder_glint", elder_glint, 4, 570),
-                                  ("amb_world_lumen_chime", lumen_chime, 6, 580), ("amb_tell_horn", tell_horn, 2, 590)):
+                                  ("amb_world_lumen_chime", lumen_chime, 6, 580), ("amb_tell_horn", tell_horn, 2, 590),
+                                  ("amb_storm_roll", storm_roll, 3, 600)):
         out += _variants(name, fn, count, seed)
     return out
 
@@ -416,12 +451,14 @@ ONE_SHOTS = (
     ("world.elder_glint", "Gold light glints", "amb_world_elder_glint", 4, "audio"),
     ("world.lumen_chime", "Lumen specks chime", "amb_world_lumen_chime", 6, "audio"),
     ("living.tell.horn", "A hunting horn, far off", "amb_tell_horn", 2, "living"),
+    ("living.storm.roll", "Thunder rolls in the distance", "amb_storm_roll", 3, "living"),
 )
 LOOPS = (
     ("living.tell.stampede", "A stampede rumbles", "amb_tell_stampede"),
     ("living.tell.wings", "A great flock turns", "amb_tell_wings"),
     ("living.tell.tide", "The Deep Tide rolls in", "amb_tell_tide"),
     ("living.tell.bells", "Caravan bells", "amb_tell_bells"),
+    ("living.tell.storm", "A storm's rain roars", "amb_tell_storm"),
 )
 
 
