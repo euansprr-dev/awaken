@@ -1535,7 +1535,17 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   straight line (the real terrain interpolates its density over 8-block cells in y, so this is closer than halving:
   median 0.3 blocks from the generator's exact ground, p90 1.2, test `farsight_columns_predict`), plus half a block (the
   top face). 2.5 probes a column; 59 µs a column on the Awakened Tectonic terrain on the M4 (stage 0: 650-870 µs and
-  8-block steps). The city basin's `Shape.ground` applies on top. Water fills to sea level. Biome from the biome
+  8-block steps). Inside the city basin's blend (2026-10-26, Euan: a far wall east of Carillon "that isn't really
+  there", flat when he got close) the ground comes from the router's own final density, which the basin wraps
+  (`CityBasinFunction` round `final_density`; the lands pack's Lithostitched wrap swaps it into the generator's settings,
+  a router without it gets the same wrap): down from above the natural ground (or the street + 11) in 8-block steps to
+  the first solid, then the bracket's line. The basin blends densities, and inside hills the final density is held
+  small by the cave noise, so the real street runs flat out to about 560 blocks from the site and ends in a cliff
+  (sometimes undercut); blending heights (the old `Shape.ground`, still used for a generator without a terrain density)
+  drew a 230-block rise there. Test `farsight_columns_basin` (vanilla's overworld, seed 777, a hilly site, 910 columns
+  through the blend against the wrapped final density block by block): median 0.21 blocks, p90 0.46, none over 3 too
+  high (blending heights: median 2.1, p90 22.6); 86 µs and 7 probes a column, only in the ring 330–700 blocks from the
+  site. Water fills to sea level. Biome from the biome
   source, sampled per patch every second corner and at least every 8 blocks, each corner taking the nearest sample
   (2026-10-26, a JFR profile of the pack's world: one lookup a corner, through Lithostitched's injector over Tectonic's
   climate, was 86% of the workers' time, 178 µs a column); colour, forest (density, canopy height, shape, crown
