@@ -189,7 +189,7 @@ final class OpeningTests {
         Inventory inv = p.getInventory();
         for (int i = 0; i < inv.getContainerSize(); i++) {
             ItemStack s = inv.getItem(i);
-            if (!s.is(Items.PAPER)) continue;
+            if (!s.is(OpeningModule.LICENCE.get()) && !s.is(Items.PAPER)) continue; // paper: licences from before the desk
             CustomData d = s.get(DataComponents.CUSTOM_DATA);
             if (d != null && d.copyTag().getStringOr("awaken", "").equals("licence")) n += s.getCount();
         }
@@ -202,6 +202,9 @@ final class OpeningTests {
         h.assertTrue(Story.prologue(p) == Prologue.DONE, how + ": DONE, got " + Story.prologue(p));
         h.assertTrue(licences(p) == 1, how + ": the licence is in the inventory once, got " + licences(p));
         h.assertFalse(OpeningHooks.inOpening(p), how + ": not in the opening");
+        // the Registry ceremony (SPEC §16.4): the band on the wrist, none left over in the inventory
+        h.assertTrue(dev.awaken.core.api.HoloBand.worn(p) && dev.awaken.core.api.HoloBand.fitted(p), how + ": the Holo band worn");
+        h.assertFalse(p.getInventory().hasAnyMatching(dev.awaken.holo.band.BandModule::isBand), how + ": no spare band in the inventory");
     }
 
     static void register() {
@@ -293,8 +296,10 @@ final class OpeningTests {
                     OpeningDirector.clockOffset += 1;
                     tick(p);
                 }
-                h.assertTrue(steps.equals(List.of(OpeningRegistry.WALK, OpeningRegistry.READ, OpeningRegistry.LICENCE, OpeningRegistry.WRISTBAND,
-                        OpeningRegistry.STATUS, OpeningRegistry.POWER, OpeningRegistry.DIRECTIVE, OpeningRegistry.YOURS)), "every step in order: " + steps);
+                h.assertTrue(steps.equals(List.of(OpeningRegistry.WALK, OpeningRegistry.READ, OpeningRegistry.SIGN, OpeningRegistry.BAND,
+                        OpeningRegistry.WEAR, OpeningRegistry.BOOT, OpeningRegistry.BRIEF, OpeningRegistry.OPEN, OpeningRegistry.ATLAS,
+                        OpeningRegistry.POWER, OpeningRegistry.DIRECTIVE, OpeningRegistry.YOURS)), "every step in order: " + steps);
+                h.assertTrue(dev.awaken.core.api.HoloBand.worn(p), "the band on the wrist when it's over");
                 h.assertTrue(Story.prologue(p) == Prologue.DONE, "the city is yours: " + Story.prologue(p));
                 assertSkipped(h, p, "after the Registry");
                 h.assertTrue(OpeningHooks.stage(p) == null, "no stage once it's over");
@@ -407,8 +412,11 @@ final class OpeningTests {
                 MinecraftServer server = r.server();
                 ServerPlayer runner = r.players().get(0), fresh = r.players().get(1), commander = r.players().get(2);
 
-                // (a) mid-run, by the hook
+                // (a) mid-run, by the hook; a Runner has no band yet (the Holo is dark), and one handed over early is the
+                // one that goes on
                 run(r, runner);
+                h.assertFalse(dev.awaken.core.api.HoloBand.worn(runner), "a Runner's Holo is dark until the Registry");
+                dev.awaken.core.api.HoloBand.give(runner);
                 OpeningHooks.skip(runner);
                 assertSkipped(h, runner, "skipped mid-run");
                 OpeningHooks.skip(runner);

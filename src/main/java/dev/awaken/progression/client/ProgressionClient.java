@@ -59,7 +59,13 @@ public final class ProgressionClient {
     private static void onTick() {
         Minecraft mc = Minecraft.getInstance();
         while (AwakenKeys.STATUS.consumeClick()) {
-            if (mc.player != null && mc.gui.screen() == null) mc.gui.setScreen(statusOpener.get());
+            if (mc.player == null || mc.gui.screen() != null) continue;
+            // the Status is the Holo band's: off the wrist (SPEC §16.4, the Registry ceremony) K finds nothing to open
+            if (!dev.awaken.core.api.HoloBand.worn(mc.player)) {
+                mc.player.sendOverlayMessage(net.minecraft.network.chat.Component.translatable("gui.awaken.wrist.dark"));
+                continue;
+            }
+            mc.gui.setScreen(statusOpener.get());
         }
     }
 
@@ -68,7 +74,7 @@ public final class ProgressionClient {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.gui.hud.isHidden() || mc.player.isSpectator()) return;
         Profile p = Progression.profile(mc.player);
-        if (!p.awakened()) return;
+        if (!p.awakened() || !dev.awaken.core.api.HoloBand.worn(mc.player)) return; // the band shows it
         int x = g.guiWidth() / 2 - 91;
         int y = g.guiHeight() - 22 - 14;
         String s = "LV " + p.level() + " · " + p.rank().label;
