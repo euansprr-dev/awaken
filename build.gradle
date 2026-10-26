@@ -151,6 +151,15 @@ neoForge {
 // "optional", meaning it will not be pulled by dependents of this mod.
 configurations {
     runtimeClasspath.extendsFrom localRuntime
+    // Sodium's mod jar: its classes sit in a jar nested inside it (META-INF/jarjar), unpacked for compiling only
+    sodiumMod { transitive = false }
+}
+
+// Far Sight reads Sodium's own view of the frame (farsight.client.SodiumSight): its classes, compile only
+tasks.register("unpackSodium", Copy) {
+    from({ zipTree(configurations.sodiumMod.singleFile) }) { include "META-INF/jarjar/*.jar"; eachFile { path = name } }
+    includeEmptyDirs = false
+    into layout.buildDirectory.dir("sodium")
 }
 
 dependencies {
@@ -174,6 +183,10 @@ dependencies {
     // AmbientSounds 6.3.11 and CreativeCore 2.14.24, the builds pack/lock.json pins
     compileOnly "maven.modrinth:ambientsounds:dCMudV9Z"
     compileOnly "maven.modrinth:creativecore:Jyax6gDi"
+    // Far Sight asks Sodium which sections it draws this frame (farsight.client.SodiumSight): Sodium 0.9.3-beta.1, the
+    // build pack/lock.json pins, its inner jar
+    sodiumMod "maven.modrinth:sodium:SS023RVV"
+    compileOnly files(layout.buildDirectory.dir("sodium").map { it.asFileTree.matching { include "*.jar" } }).builtBy("unpackSodium")
 
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime

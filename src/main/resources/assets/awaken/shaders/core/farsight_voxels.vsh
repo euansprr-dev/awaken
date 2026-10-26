@@ -20,6 +20,7 @@ layout(location = 4) flat out vec3 vNormal;
 layout(location = 5) flat out vec2 vLight;  // block, sky (0..15)
 layout(location = 6) flat out int vLod;
 layout(location = 7) flat out float vFade;  // the chunk's dissolve in (0..1)
+layout(location = 8) flat out int vDetail;  // 1: the detail run (thin things, plants), which fades out at its own reach
 
 void main() {
     int quad = gl_VertexIndex >> 2, corner = gl_VertexIndex & 3;
@@ -29,26 +30,31 @@ void main() {
     int look = int(q.z & 65535u), slot = int(q.z >> 16);
     ivec4 origin = texelFetch(Chunks, slot);
     float cu = (corner == 1 || corner == 2) ? 1.0 : 0.0, cv = corner >= 2 ? 1.0 : 0.0;
-    vec3 U = dir < 4 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 0.0, 1.0);
+    vec3 U = dir < 4 ? vec3(1.0, 0.0, 0.0) : dir < 6 ? vec3(0.0, 0.0, 1.0) : dir == 6 ? vec3(1.0, 0.0, 1.0) : vec3(1.0, 0.0, -1.0);
     vec3 V = dir < 2 ? vec3(0.0, 0.0, 1.0) : vec3(0.0, 1.0, 0.0);
     vec3 local = (vec3(float(x16), float(y16), float(z16)) + U * (float(eu) * cu) + V * (float(ev) * cv)) / 16.0;
     // camera-relative: the chunk's origin less the camera's 256-block cell exactly, then the camera's remainder
     vec2 xz = vec2(origin.xz - FarCamInt.xz) + local.xz - FarCam.xz;
     vRel = vec3(xz.x, float(origin.y) + local.y - FarFog.z, xz.y);
     // texture space in blocks: across the face, and down its sides (a texture's top at the block's top)
-    vec2 uv = vec2(dot(local, U), dot(local, V));
+    // (a plant's diagonal carries its sprite once across)
+    vec2 uv = dir < 6 ? vec2(dot(local, U), dot(local, V)) : vec2(cu * 0.999, local.y);
     if (dir >= 2) uv.y = -uv.y;
     vUv = uv;
     vLookId = look;
     uint t = q.w;
     vTint = vec3(float((t >> 16) & 255u), float((t >> 8) & 255u), float(t & 255u)) / 255.0;
-    const vec3 NORMALS[6] = vec3[](vec3(0.0, -1.0, 0.0), vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, -1.0), vec3(0.0, 0.0, 1.0),
-            vec3(-1.0, 0.0, 0.0), vec3(1.0, 0.0, 0.0));
+    // (plants are lit as the game lights them: unshaded, as a top)
+    const vec3 NORMALS[8] = vec3[](vec3(0.0, -1.0, 0.0), vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, -1.0), vec3(0.0, 0.0, 1.0),
+            vec3(-1.0, 0.0, 0.0), vec3(1.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0), vec3(0.0, 1.0, 0.0));
     vNormal = NORMALS[dir];
+    vDetail = int((q.y >> 28) & 1u);
     vLight = vec2(float((t >> 28) & 15u), float((t >> 24) & 15u));
     vLod = int(q.x >> 30);
     vFade = float(origin.w) / 255.0;
     vec4 clip = ProjMat * (FarViewRot * vec4(vRel, 1.0));
+#ifndef FILL
     clip.z = FarDepth.x + FarDepth.y * clip.w;
+#endif
     gl_Position = clip;
 }

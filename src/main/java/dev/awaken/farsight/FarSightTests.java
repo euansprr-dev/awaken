@@ -221,7 +221,8 @@ final class FarSightTests {
 
         // City Sight's mesher (SPEC §20) on a real chunk: a 4-block stone cube shows each face once (merged, whatever
         // the light), a slab its top half a block up, a one-block pillar its top; at level 1 (2-block cells) the cube
-        // keeps its silhouette and the pillar, a quarter of its cells, thins out instead of swelling.
+        // keeps its silhouette and the pillar, a quarter of its cells, thins out instead of swelling. A fence and a poppy
+        // go in level 0's detail run only (perf build C): the fence as its boxes, the poppy as its cross.
         AwakenTests.registerIsolated("farsight_voxels_mesh", 100, h -> {
             ServerLevel level = h.getLevel();
             BlockPos o = h.absolutePos(BlockPos.ZERO);
@@ -236,6 +237,10 @@ final class FarSightTests {
             }
             for (int y = y0; y < y0 + 6; y++) level.setBlockAndUpdate(new BlockPos(x0 + 8, y, z0 + 1), Blocks.OAK_PLANKS.defaultBlockState());
             level.setBlockAndUpdate(new BlockPos(x0 + 6, y0, z0 + 6), Blocks.STONE_SLAB.defaultBlockState());
+            level.setBlockAndUpdate(new BlockPos(x0 + 10, y0, z0 + 6), Blocks.OAK_FENCE.defaultBlockState());
+            level.setBlockAndUpdate(new BlockPos(x0 + 10, y0, z0 + 2), Blocks.GRASS_BLOCK.defaultBlockState());
+            level.setBlockAndUpdate(new BlockPos(x0 + 10, y0 + 1, z0 + 2), Blocks.POPPY.defaultBlockState());
+            int poppy = Block.BLOCK_STATE_REGISTRY.getId(Blocks.POPPY.defaultBlockState());
             // faces carry the light in front of them (a dark room's aren't drawn): the light first
             AwakenTests.awaitLight(h, new BlockPos(x0 - 2, y0, z0 - 2), new BlockPos(x0 + 10, y0 + 8, z0 + 8));
             LevelChunk chunk = level.getChunkAt(new BlockPos(x0, y0, z0));
@@ -256,6 +261,11 @@ final class FarSightTests {
                 public int window(int id, int dir) {
                     return id & 0xFFFF;
                 }
+
+                @Override
+                public boolean cross(int id) {
+                    return id == poppy;
+                }
             });
             long t0 = System.nanoTime();
             VoxelMesh mesh = mesher.mesh(snap, 7);
@@ -272,6 +282,22 @@ final class FarSightTests {
             h.assertTrue(!any(mesh, 1, (lx + 8) * 16, (lz + 1) * 16, base + 16), "level 1 thins the pillar out");
             for (int l = 0; l < VoxelMesher.LEVELS; l++) {
                 for (int q = 0; q < mesh.quadCount(l); q++) h.assertTrue((mesh.quads()[l][q * 4 + 2] >>> 16) == 7, "every quad carries its slot");
+            }
+            // the detail run: the poppy's two diagonals and the fence's post, nothing of either among the faces
+            int[] st = mesh.starts()[0], q0 = mesh.quads()[0];
+            int crosses = 0, posts = 0;
+            for (int q = st[6]; q < st[7]; q++) {
+                int dir = q0[q * 4] >> 18 & 7, qx = (q0[q * 4] & 511) >> 4, qz = (q0[q * 4] >> 9 & 511) >> 4;
+                h.assertTrue((q0[q * 4 + 1] >>> 28 & 1) == 1, "a detail quad says so");
+                if (dir >= 6 && qx == lx + 10) crosses++;
+                else if (dir < 6 && qx == lx + 10 && qz == lz + 6) posts++;
+            }
+            h.assertTrue(crosses == 2, "the poppy as a cross: " + crosses);
+            h.assertTrue(posts >= 5, "the fence's post, its sides and top: " + posts);
+            for (int q = 0; q < st[6]; q++) {
+                int qx = (q0[q * 4] & 511) >> 4, qz = (q0[q * 4] >> 9 & 511) >> 4, y16 = q0[q * 4 + 1] & 16383;
+                h.assertTrue(!(qx == lx + 10 && qz == lz + 6 && y16 >= base && y16 < base + 16 && (q0[q * 4] >> 18 & 7) >= 2),
+                        "the fence isn't among the faces");
             }
             // kept on disk and read back, the same blocks and light
             try {

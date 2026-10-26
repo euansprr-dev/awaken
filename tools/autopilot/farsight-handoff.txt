@@ -1,0 +1,162 @@
+# Far blocks handed to City Sight (SPEC §20, perf build C): Sodium draws the near 12 chunks, City Sight the real chunks
+# past them (the world still loads to the render distance), with the hand-off off (Sodium to 24, as before) and on at
+# the same moment: the Roost (and its split by part, and vanilla's multi-draw-indirect off for one window), the market
+# avenue looking down its length (the border at 192 m in shot), the countryside 900 blocks out, a 20 s glide over the city; then the rim cave's void
+# in a copy of Euan's world (debug 2: City Sight's fill of what Sodium culls, orange). perf-26oct's set-up.
+# Run (alone on the Mac): WORLD_FROM="/Volumes/MEDIA/Awaken-play/run-pack/saves/New World (2)" XMX=8G ZGC=1 \
+#   PACK=perf,world TECTONIC=awakened RD=24 LENS=cinematic SLOT_WHO=far-sight \
+#   /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/farsight-handoff.txt 900
+world perf26 creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd gamemode spectator
+cmd time set 6000
+lookswitch cinematic
+pixels 0.95 sharp
+pixels steady on
+cmd awaken city view studio_roost
+# Far Sight's rings and City Sight's city take about a minute in a new world
+wait 1400
+farsight status
+pixels gpu on
+# ---- the Roost: Sodium to 24 (off), then the hand-off (Sodium 12, City Sight past); Sodium rebuilds on each change
+farsight near off
+wait 200
+pixels gpu reset
+perf roost_sodium24 10
+pixels gpu roost_sodium24
+farsight status
+shot fn_roost_off
+farsight near 12
+wait 200
+pixels gpu reset
+perf roost_near12 10
+pixels gpu roost_near12
+farsight status
+shot fn_roost_on
+farsight debug 3
+wait 10
+shot fn_roost_d3
+farsight debug 0
+farsight time parts on
+wait 40
+farsight status
+perf roost_parts 6
+farsight status
+farsight time parts off
+mdi off
+wait 40
+pixels gpu reset
+perf roost_mdi_off 8
+pixels gpu roost_mdi_off
+farsight status
+mdi on
+# ---- the market avenue, looking down its length: the border in shot
+cmd awaken city view market
+wait 200
+farsight near off
+wait 200
+pixels gpu reset
+perf market_sodium24 8
+pixels gpu market_sodium24
+farsight status
+shot fn_market_off
+farsight near 12
+wait 200
+pixels gpu reset
+perf market_near12 8
+pixels gpu market_near12
+farsight status
+shot fn_market_on
+farsight debug 3
+wait 10
+shot fn_market_d3
+farsight debug 0
+# ---- the countryside, 900 blocks out (perf-26oct's spot): off, then on
+cmd tp @s ~900 ~40 ~300
+wait 400
+farsight near off
+wait 200
+pixels gpu reset
+perf country_sodium24 8
+pixels gpu country_sodium24
+farsight status
+shot fn_country_off
+farsight near 12
+wait 200
+pixels gpu reset
+perf country_near12 8
+pixels gpu country_near12
+farsight status
+shot fn_country_on
+farsight debug 3
+wait 10
+shot fn_country_d3
+farsight debug 0
+# ---- a glide over the city, 20 blocks a second for 20 s, the hand-off on then off from the same spot
+cmd awaken city view sky_nw
+wait 100
+farsight near 12
+wait 200
+farsight status
+pixels gpu reset
+perfstart flight_near12
+glide 0.7 0 0.7 400
+wait 200
+shotnow fn_flight_near12
+wait 200
+perfend
+pixels gpu flight_near12
+farsight status
+cmd tp @s ~-279 ~ ~-279
+wait 60
+farsight near off
+wait 200
+farsight status
+pixels gpu reset
+perfstart flight_sodium24
+glide 0.7 0 0.7 400
+wait 200
+shotnow fn_flight_sodium24
+wait 200
+perfend
+pixels gpu flight_sodium24
+farsight status
+cmd tp @s ~-279 ~ ~-279
+wait 60
+# ---- the rim cave's void in Euan's world (a copy): over the Commons looking east, the hand-off on, debug 2 (the fill
+# orange), then off
+leave
+world copied
+waitworld
+wait 40
+screen close
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd time set 6000
+cmd gamemode spectator
+cmd tp @s 222 140 622 -90 8
+farsight near 12
+wait 500
+shot fn_void
+farsight debug 2
+wait 20
+shot fn_void_d2
+farsight debug 0
+farsight status
+farsight near off
+wait 200
+shot fn_void_off
+farsight near setting
+quit

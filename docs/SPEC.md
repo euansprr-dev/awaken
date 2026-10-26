@@ -1771,6 +1771,27 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
     its band; the per-patch band check that ends that came after the tour. The 2 ms target at the Roost isn't reached:
     the composite (0.34 ms), the live rings 0-1 (0.68) and the held rings' pieces that reach past the cone or into a
     stale slice are what's left. 102 MB of video memory.
+- **Far blocks handed to City Sight** (frame-budget build C, 2026-10-26; `FarNear`, setting `farSightNear` (chunks,
+  12; 0 off), autopilot `farsight near <n>|off|setting`). With Far Sight on in single player, in the overworld with
+  Carillon's City Sight, Sodium draws only the near 12 chunks and City Sight draws the real chunks past them from its
+  greedy meshes; the world still loads, simulates and sends everything to the render distance. Sodium and the rest of
+  the renderer read the client's effective render distance (the setting capped by the server's): at the start of each
+  frame (`RenderFrameEvent.Pre`, after the tick's packets, before anything reads it) the client's server value is set to
+  the near distance; the integrated server keeps loading to the setting. Lens gets the setting's render-distance fog
+  end (its haze was made for it). Entities draw to the game's own distance for the near one (the view scale it derives
+  from the effective distance has no hook short of a mixin): a one-block mob to 96 blocks at 12 against 160 at 24, none
+  past 12 chunks either way; the entity distance setting at 175% gives the 160 back (Awaken doesn't set it: that turns
+  the player's graphics preset to custom).
+  - **City Sight's detail run**: thin things (fences, walls, panes, bars, doors: their own shape's boxes, at most four)
+    and plants (a cross model: two crossed quads with the plant's sprite, cut out) go in a level-0 run of their own,
+    drawn with the discarding pipeline while a block spans at least 4 pixels (a fence post a pixel; past that they're
+    under a pixel, as City Sight always took them), fading out over the level band. They're the near world's that City
+    Sight left out past the render distance and must keep at 200-300 m.
+  - **City Sight fills in what Sodium culls**: a section Sodium has built but doesn't draw while it's on screen for
+    250 ms (`SodiumSight`, `SodiumWorldRenderer.isBoxVisible`; the section mask marks it 0.5) is drawn by City Sight
+    after Sodium's opaque terrain, into the main target with the game's own depth (`VOXELS_FILL`), so it shows only
+    where nothing nearer stands: the view into the basin rim's old undercut that Sodium's traversal misses, and nothing
+    behind a wall. Part `fill`.
 - **Ring 0's sea under the city**: a sea piece wholly inside the band where far water stays under real water, over
   chunks all shown and within Sodium's reach up and down, has every fragment hidden by the mask; it is no longer drawn
   (ring 0 at the Roost 0.70 → 0.15 ms: discarded fragments under Carillon's canals).

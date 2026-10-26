@@ -55,6 +55,11 @@ final class VoxelLayer implements AutoCloseable {
     private final IntArrayList fading = new IntArrayList();
     /** The cross-fade between two levels, as a share of the nearer one's reach. */
     static final float BAND = 0.15f;
+    /**
+     * Thin things and plants (the detail run, SPEC §20 C) draw while a block spans at least this many pixels: a fence's
+     * post (a quarter block) a pixel, a tuft of grass four. Past it they're under a pixel, as City Sight always took them.
+     */
+    static final float DETAIL_PIXELS = 4f;
 
     private static final class Page {
         final GpuBuffer buffer;
@@ -73,8 +78,8 @@ final class VoxelLayer implements AutoCloseable {
         long appeared;
         int fade;
         final int[] page = new int[VoxelMesher.LEVELS], first = new int[VoxelMesher.LEVELS], count = new int[VoxelMesher.LEVELS];
-        /** Per level, each face's first quad within the level's run (down, up, north, south, west, east, end). */
-        final int[][] starts = new int[VoxelMesher.LEVELS][7];
+        /** Per level, each face's first quad within the level's run (down, up, north, south, west, east, detail, end). */
+        final int[][] starts = new int[VoxelMesher.LEVELS][8];
     }
 
     private final List<Page> pages = new ArrayList<>();
@@ -134,6 +139,10 @@ final class VoxelLayer implements AutoCloseable {
     }
 
     private final Plan screen = new Plan("awaken city sight draws");
+    /** The fill: near chunks' sections Sodium has built but culls on screen, drawn after its terrain (FarRenderer.CULLED). */
+    private final Plan fill = new Plan("awaken city sight fill draws");
+    /** This frame's params buffer, which the fill (after the frame's ring buffers moved on) still binds. */
+    private GpuBuffer fillParams;
     private final Plan[] slices = new Plan[FarHorizon.MAX_RENDERS];
     /**
      * A draw near the render distance's edge or in a level's cross-fade, drawn by the pipeline that discards (Sodium's
@@ -145,6 +154,8 @@ final class VoxelLayer implements AutoCloseable {
     /** Chunks whose drawn blocks changed since the cached horizon last heard (a mesh up, a dissolve's step, one let go). */
     final it.unimi.dsi.fastutil.longs.LongArrayList changed = new it.unimi.dsi.fastutil.longs.LongArrayList();
     private final float[] reach = new float[VoxelMesher.LEVELS];
+    /** How far the detail run draws this frame (blocks). */
+    private float detailReach;
 
     VoxelLayer(int levelMinY) {
         this.levelMinY = levelMinY;
@@ -262,7 +273,7 @@ final class VoxelLayer implements AutoCloseable {
             int count = q.length / VoxelMesher.INTS;
             c.count[l] = count;
             quadsKept += count;
-            System.arraycopy(m.starts()[l], 0, c.starts[l], 0, 7);
+            System.arraycopy(m.starts()[l], 0, c.starts[l], 0, 8);
             if (count == 0) continue;
             int[] at = allocate(count);
             c.page[l] = at[0];
@@ -383,6 +394,10 @@ final class VoxelLayer implements AutoCloseable {
     void plan(FarRenderer renderer, double camX, double camY, double camZ, float pixelsPerBlockAt1, int realWithin, boolean on, float haze,
             FarHorizon horizon) {
         screen.clear();
+        // last frame's fill drew inside the level's pass, where no fence can be made: its ring buffer moves on here
+        if (fill.used) fill.commands.rotate();
+        fill.used = false;
+        fill.clear();
         java.util.Arrays.fill(cover, (byte) 0);
         planned = on;
         if (!on) return;
@@ -397,15 +412,86 @@ final class VoxelLayer implements AutoCloseable {
             for (int k = 0; k < 3; k++) d = (1 << l) * pixelsPerBlockAt1 / PIXELS * (float) Math.exp(-haze * d);
             reach[l] = d;
         }
+        float dr = pixelsPerBlockAt1 / DETAIL_PIXELS;
+        for (int k = 0; k < 3; k++) dr = pixelsPerBlockAt1 / DETAIL_PIXELS * (float) Math.exp(-haze * dr);
+        detailReach = dr;
         try (var view = params.currentBuffer().map(false, true)) {
             ByteBuffer d = view.data();
             d.putFloat(0, reach[0]).putFloat(4, reach[1]).putFloat(8, reach[2]).putFloat(12, BAND);
-            d.putFloat(16, levelMinY).putFloat(20, FarRenderer.SECTIONS).putFloat(24, 0f).putFloat(28, 0f);
+            d.putFloat(16, levelMinY).putFloat(20, FarRenderer.SECTIONS).putFloat(24, detailReach).putFloat(28, 0f);
         }
         collect(screen, renderer, null, horizon, camX, camY, camZ, realWithin);
         quadsDrawn = screen.quadsDrawn;
         chunksDrawn = screen.chunksDrawn;
+        planFill(renderer, camX, camY, camZ, realWithin);
     }
+
+    /**
+     * The fill's draws: chunks inside Sodium's distance, in view, with a section of theirs (from the ground up) that
+     * Sodium has built but doesn't draw on screen; every face toward the camera at level 0, the detail run too.
+     */
+    private void planFill(FarRenderer renderer, double camX, double camY, double camZ, int realWithin) {
+        fillParams = params.currentBuffer();
+        if ((FarSightClient.partsOff & 512) != 0) return;
+        for (int i = 0; i < live.size(); i++) {
+            Chunk c = chunks[live.getInt(i)];
+            float ax = (float) (c.cx * 16 - camX), az = (float) (c.cz * 16 - camZ), bx = ax + 16, bz = az + 16;
+            float ay = (float) (c.minY - camY), by = (float) (c.maxY - camY);
+            float fx = Math.max(Math.abs(ax), Math.abs(bx)), fz = Math.max(Math.abs(az), Math.abs(bz));
+            if (fx * fx + fz * fz >= (realWithin - 2f) * (realWithin - 2f) || c.count[0] == 0) continue;
+            if (!renderer.anyCulled(c.cx, c.cz, c.groundY, c.maxY, levelMinY) || !renderer.inView(ax, ay, az, bx, by, bz)) continue;
+            int faces = (camY < c.maxY ? 1 : 0) | (camY > c.minY ? 2 : 0) | (camZ < c.cz * 16 + 16 ? 4 : 0) | (camZ > c.cz * 16 ? 8 : 0)
+                    | (camX < c.cx * 16 + 16 ? 16 : 0) | (camX > c.cx * 16 ? 32 : 0);
+            int[] st = c.starts[0];
+            boolean fits = true;
+            for (int d = 0; d < 6; d++) if ((faces & 1 << d) != 0 && st[d + 1] > st[d]) fits &= add(fill, c.page[0] | EDGED, c.first[0] + st[d], st[d + 1] - st[d]);
+            if (st[7] > st[6]) fits &= add(fill, c.page[0] | EDGED, c.first[0] + st[6], st[7] - st[6]);
+            if (!fits) break;
+            fill.chunksDrawn++;
+        }
+        sortByPage(fill);
+    }
+
+    /** Fill chunks planned this frame (status). */
+    int fillChunks() {
+        return fill.chunksDrawn;
+    }
+
+    /**
+     * After Sodium's opaque terrain, into the main target and its depth: the fill (FarPipelines.VOXELS_FILL keeps only
+     * the culled sections' fragments, each where nothing nearer was drawn), inside the level's own pass.
+     */
+    void drawFill(RenderPass pass, GpuBufferSlice projection, GpuBufferSlice frame, GpuTextureView lightmap, GpuTextureView chunkMask) {
+        if (fill.page.isEmpty() || fillParams == null) return;
+        AbstractTexture atlas = Minecraft.getInstance().getTextureManager().getTexture(TextureAtlas.LOCATION_BLOCKS);
+        pass.setPipeline(RenderSystem.getCompiledPipeline(FarPipelines.VOXELS_FILL));
+        bindAll(pass, projection, frame, fillParams, atlas, lightmap, chunkMask);
+        GpuBuffer cmd = fill.commands.currentBuffer();
+        int n = fill.page.size();
+        if (indirect) {
+            try (var view = cmd.map(false, true)) {
+                ByteBuffer d = view.data();
+                for (int i = 0; i < n; i++) {
+                    int at = i * COMMAND_BYTES;
+                    d.putInt(at, fill.quads.getInt(i) * 6).putInt(at + 4, 1).putInt(at + 8, 0).putInt(at + 12, fill.first.getInt(i) * 4).putInt(at + 16, 0);
+                }
+            }
+        }
+        for (int i = 0; i < n; ) {
+            int key = fill.page.getInt(i), j = i;
+            while (j < n && fill.page.getInt(j) == key) j++;
+            pass.setUniform("Quads", pages.get(key & (EDGED - 1)).buffer);
+            if (indirect) {
+                pass.drawIndexedIndirect(cmd.slice((long) i * COMMAND_BYTES, (long) (j - i) * COMMAND_BYTES), j - i);
+            } else {
+                for (int k = i; k < j; k++) pass.drawIndexed(fill.quads.getInt(k) * 6, 1, 0, fill.first.getInt(k) * 4, 0);
+            }
+            i = j;
+        }
+        fill.used = true;
+    }
+
+
 
     private boolean planned;
 
@@ -471,6 +557,8 @@ final class VoxelLayer implements AutoCloseable {
                     if (st[e] > st[d]) fits &= add(p, c.page[l] | pageFlag, c.first[l] + st[d], st[e] - st[d]);
                     d = e;
                 }
+                // thin things and plants, while a block shows big enough for them (always the discarding pipeline: cut-outs)
+                if (l == 0 && st[7] > st[6] && near < detailReach * (1f + BAND)) fits &= add(p, c.page[l] | EDGED, c.first[l] + st[6], st[7] - st[6]);
                 drawn = true;
             }
             if (!fits) {
@@ -638,6 +726,7 @@ final class VoxelLayer implements AutoCloseable {
         lookTable.close();
         indices.close();
         screen.commands.close();
+        fill.commands.close();
         for (Plan p : slices) p.commands.close();
         params.close();
         coverageView.close();

@@ -14,11 +14,11 @@
 uniform samplerBuffer Looks;     // per look: u0 v0 u1 v1, then flags and the sprite's average colour
 uniform sampler2D AtlasSampler;
 uniform sampler2D LightSampler;
-uniform sampler2D SectionSampler; // which sections Sodium has built (FarRenderer.sectionTex)
+uniform sampler2D SectionSampler; // which sections Sodium has built (FarRenderer.sectionTex): 1, or 0.5 built but culled on screen
 
 layout(std140) uniform FarVoxel {
     vec4 VoxelReach;   // x, y, z: levels 0-2's reach (blocks); w the cross-fade band as a share of it
-    vec4 VoxelMore;    // x the level's floor (y), y sections in the section mask
+    vec4 VoxelMore;    // x the level's floor (y), y sections in the section mask, z the detail run's reach (blocks)
 };
 
 layout(location = 0) in vec3 vRel;
@@ -29,6 +29,7 @@ layout(location = 4) flat in vec3 vNormal;
 layout(location = 5) flat in vec2 vLight;
 layout(location = 6) flat in int vLod;
 layout(location = 7) flat in float vFade;
+layout(location = 8) flat in int vDetail;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -47,12 +48,21 @@ void main() {
         vec2 rel = vRel.xz + FarCam.xz;
         ivec2 chunk = (FarCamInt.xz >> 4) + ivec2(floor(rel / 16.0));
         int sy = int(floor((vRel.y + FarFog.z - VoxelMore.x) / 16.0)), sections = int(VoxelMore.y + 0.5);
-        if (sy >= 0 && sy < sections && texelFetch(SectionSampler, ivec2(chunk.x & 63, (chunk.y & 63) * sections + sy), 0).r > 0.5) {
+        float built = sy >= 0 && sy < sections ? texelFetch(SectionSampler, ivec2(chunk.x & 63, (chunk.y & 63) * sections + sy), 0).r : 0.0;
+#ifdef FILL
+        // the fill: only a section Sodium has built but culls on screen (the main depth keeps it where nothing's nearer)
+        if (abs(built - 0.5) > 0.1) discard;
+#else
+        if (built > 0.25) {
             // debug view 2: hidden here for the real chunks, red instead (red that shows is a hole they leave)
             if (FarCam.w > 1.5 && FarCam.w < 2.5) { fragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
             discard;
         }
+#endif
     }
+#ifdef FILL
+    else discard;
+#endif
     // a level fades in over the band past the finer level's reach and out over the band past its own
     float d = length(vRel.xz), dither = bayer4(gl_FragCoord.xy);
     // a chunk new to City Sight dissolves in as the far terrain under it dissolves out (the coverage mask's complement)
@@ -63,6 +73,11 @@ void main() {
     }
     if (vLod < 3) {
         float to = VoxelReach[vLod], band = to * VoxelReach.w;
+        if (d > to + band || (d > to && dither <= (d - to) / band)) discard;
+    }
+    // thin things and plants fade out over the band past their own reach (under a pixel there)
+    if (vDetail != 0) {
+        float to = VoxelMore.z, band = to * VoxelReach.w;
         if (d > to + band || (d > to && dither <= (d - to) / band)) discard;
     }
 #endif
@@ -88,5 +103,11 @@ void main() {
     vec3 c = albedo * vTint * farLight(vNormal, smoothstep(9.0, 15.0, vLight.y));
     c *= texture(LightSampler, (vec2(blockLight, vLight.y) + 0.5) / 16.0).rgb;
     if (FarCam.w > 2.5) { fragColor = vec4(0.1, 0.9, 0.2, 1.0); return; } // debug view 3: City Sight in green
+#ifdef FILL
+    // inside the real chunks' distance: Lens hazes it by the main depth, as the real blocks round it
+    if (FarCam.w > 1.5 && FarCam.w < 2.5) { fragColor = vec4(1.0, 0.5, 0.0, 1.0); return; } // debug view 2: the fill orange
+    fragColor = vec4(c, 1.0);
+#else
     fragColor = vec4(farAir(c, vRel), 1.0);
+#endif
 }
