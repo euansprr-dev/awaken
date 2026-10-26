@@ -11,6 +11,11 @@ cmd gamerule send_command_feedback false
 cmd weather clear 100000
 cmd gamerule awaken:fauna_spawning false
 cmd gamerule spawn_mobs false
+# the opening's sky flight holds the camera and ends on a question a closed screen never answers: skip it first
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
 cmd awaken admin awaken
 wait 200
 screen close
