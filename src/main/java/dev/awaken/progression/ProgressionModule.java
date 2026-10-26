@@ -361,7 +361,11 @@ public final class ProgressionModule {
         // banked before awakening
         if (ore != null && ore.weight > 0 && isHome(sp.level())) homeXp(sp, ore.deep(y) ? XpBudget.DEEP : XpBudget.ORE, ORE_XP * ore.weight, ore.contentLevel(y));
         if (ore != null && Progression.discover(sp, "ore/" + ore.id(), ORE_DISCOVERY) && Progression.profile(sp).awakened()) {
-            dev.awaken.signal.Finds.tell(sp, dev.awaken.signal.Finds.Find.of("ore", "New ore · " + ore.title, ore.title, ore.hint, ore.colour, false));
+            // a paced toast that says what the ore is for (ores aren't Journal entries, so not Finds' "kept in your Journal")
+            Signal.send(sp, dev.awaken.signal.SignalWindow.builder(dev.awaken.signal.SignalWindow.Kind.NOTICE,
+                            Component.literal("New ore · " + ore.title).withColor(ore.colour))
+                    .body(Component.literal(ore.hint)).presentation(dev.awaken.signal.SignalWindow.Presentation.TOAST)
+                    .tier(dev.awaken.core.api.Notices.Tier.IMPORTANT).topic("ore").ttl(20 * 6).build());
         }
         if (!Progression.profile(sp).awakened()) return;
         if (ore != null && ore != OreXp.AMETHYST) Progression.count(sp, Counters.ORES_MINED);

@@ -131,7 +131,7 @@ public final class Veins {
         String line = "LODE · " + l.ore().word() + " · " + count;
         boolean first = Progression.profile(p).counter("awaken:lodes_opened") <= 1;
         Progression.discover(p, "lode/" + l.id(), 0);
-        Finds.Find f = Finds.Find.of("lode", line, line, hint(l.ore()), l.ore().tint, true);
+        Finds.Find f = Finds.Find.of("lode", line, line, hint(l.ore()), l.ore().tint, false);
         Finds.tell(p, first ? f.big("Lode") : f);
         level.playSound(null, l.heartPos(), DelveContent.VEIN_GIVES.get(), SoundSource.BLOCKS, 1.6F, 1.0F);
         long[] cells = left.toLongArray();

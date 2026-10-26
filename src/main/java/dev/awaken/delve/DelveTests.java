@@ -129,6 +129,7 @@ final class DelveTests {
             h.assertTrue(CaveIns.consider(level, heart, p, true) && CaveIns.pending() == 1, "it comes down: warned first");
             BlockPos first = BlockPos.of(roof[0]);
             h.assertTrue(!level.getBlockState(first).isAir(), "not yet: dust first");
+            live.leave();
             h.succeedWhen(() -> h.assertTrue(level.getBlockState(first).isAir(), "after the warning the roof lets go"));
         } finally {
             LodePlans.EXTRA.remove(l);
@@ -309,6 +310,7 @@ final class DelveTests {
             h.assertTrue(Math.abs(rated - 15) < 1e-6, "awaken:craft_rate +50% makes it 15: " + rated);
         } finally {
             RATED.remove(p.getUUID());
+            live.leave();
         }
         h.succeed();
     }
