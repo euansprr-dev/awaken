@@ -1,0 +1,95 @@
+# Arms third person (SPEC §25 "Third person, the wrist"): each review style's chain from the front, nothing in the
+# way, as the pack shows it: run-autopilot/mods needs the pack's PlayerAnimationLibMerged and BendableCuboidsMerged
+# (the bent clips). Watch for a blade through the head, body or legs, and the gauntlets worn and punching knuckles first.
+world armsrepro creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+cmd tp @s ~ 200 ~ 0 0
+cmd fill ~-12 ~-1 ~-12 ~12 ~-1 ~14 minecraft:smooth_stone
+cmd kill @e[type=minecraft:husk]
+cmd summon minecraft:husk ~0 ~ ~2.6 {NoAI:1b,PersistenceRequired:1b,Health:4000f,attributes:[{id:"minecraft:max_health",base:4000d}]}
+camera front
+look 0 4
+arms ribbonmode 0
+cmd kill @e[type=minecraft:husk]
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_katana
+wait 40
+camera front
+look 0 4
+wait 12
+cmd awaken ascent pilot rec tp_katana 41 2
+wait 3
+arms strike
+wait 7
+arms strike
+wait 7
+arms strike
+wait 35
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_greatblade
+wait 40
+camera front
+look 0 4
+wait 12
+cmd awaken ascent pilot rec tp_greatblade 54 2
+wait 3
+arms strike
+wait 9
+arms strike
+wait 10
+arms strike
+wait 48
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_twinblades
+wait 40
+camera front
+look 0 4
+wait 12
+cmd awaken ascent pilot rec tp_twinblades 41 2
+wait 3
+arms strike
+wait 7
+arms strike
+wait 7
+arms strike
+wait 35
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_maul
+wait 40
+camera front
+look 0 4
+wait 12
+cmd awaken ascent pilot rec tp_maul 62 2
+wait 3
+arms strike
+wait 11
+arms strike
+wait 12
+arms strike
+wait 56
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_gauntlets
+wait 40
+camera front
+look 0 4
+wait 12
+cmd awaken ascent pilot rec tp_gauntlets 34 2
+wait 3
+arms strike
+wait 4
+arms strike
+wait 4
+arms strike
+wait 5
+arms strike
+wait 26
+quit
