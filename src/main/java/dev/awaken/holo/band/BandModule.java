@@ -226,6 +226,7 @@ public final class BandModule {
         boolean now = state(p).worn();
         if (was != now) {
             DirectorLog.log(p, "holo", "band " + (now ? "on" : "off") + " (" + why + ")");
+            Awaken.LOG.info("[holo] {}: band {} ({})", p.getPlainTextName(), now ? "on" : "off", why);
             HoloBand.fire(p, now);
         }
     }

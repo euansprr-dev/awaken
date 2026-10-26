@@ -78,6 +78,8 @@ final class OpeningHud {
 
     static void line(String who, String line, int ticks) {
         Minecraft mc = Minecraft.getInstance();
+        // the same words still on screen (a step played again): once is enough
+        for (Line l : LINES) if (l.raw.equals(line) && OpeningClient.ticks() < l.from + l.ticks) return;
         Line l = new Line();
         l.who = who;
         l.raw = line;
@@ -294,7 +296,7 @@ final class OpeningHud {
         String key = promptKey != null ? promptKey : lastKey;
         if (promptKey != null) lastKey = promptKey;
         int kw = Math.max(13, font.width(key) + 8), tw = font.width(promptText), gap = 6;
-        int x = w / 2 - (kw + gap + tw) / 2, y = h - 112;
+        int x = w / 2 - (kw + gap + tw) / 2, y = h / 2 + 14; // just under the crosshair, clear of the speech
         int ia = (int) (a * 255);
         float pulse = 0.75F + 0.25F * Mth.sin((OpeningClient.ticks() + pt) * 0.18F);
         g.fill(x, y - 2, x + kw, y + 11, ((int) (a * 170) << 24) | 0x0C0F14);

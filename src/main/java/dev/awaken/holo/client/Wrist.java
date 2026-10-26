@@ -74,7 +74,15 @@ final class Wrist {
     static void band(float a, int side, Vector3f out) {
         float down = 1 - a;
         out.set(side < 0 ? WX : -WX, WY - 0.55f * down, WZ + 0.10f * down);
+        if (centre > 0) {
+            // the boot: the wrist comes further into view, so the band is the thing you look at
+            out.x *= 1 - 0.38f * centre;
+            out.y += 0.1f * centre;
+        }
     }
+
+    /** 1 while the band boots (the wrist nearer the middle of the frame), 0 for the panels. */
+    private static float centre;
 
     /** On the inside of the wrist, where the beams start and the panel grows from (hand-view space). */
     static void emitter(float a, int side, Vector3f out) {
@@ -136,6 +144,7 @@ final class Wrist {
         PoseStack pose = e.getPoseStack();
 
         // the forearm
+        centre = boot ? 1f : 0f;
         armMatrix(a, side, slim);
         ModelPart arm = side < 0 ? renderer.getModel().leftArm : renderer.getModel().rightArm;
         PartPose ip = arm.getInitialPose();
@@ -176,6 +185,7 @@ final class Wrist {
         // the main hand sinks out of view (vanilla's own transforms, at a lowered height)
         float drop = Math.min(1f, a);
         if (!handsBack && drop < 0.999f) mainHand(e, ps, avatar, renderer, -side, drop, light, skin);
+        centre = 0f;
     }
 
     /**

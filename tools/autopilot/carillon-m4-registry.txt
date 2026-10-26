@@ -51,9 +51,9 @@ wait 14
 shotnow reg_sign_written
 wait 20
 shotnow reg_sign_blot
-wait 40
+wait 34
 shotnow reg_sign_seal
-wait 22
+wait 30
 shotnow reg_sign_fold
 wait 30
 shot reg_licence_title
@@ -82,11 +82,11 @@ shot reg_k_dark
 holo inv open
 wait 20
 shot reg_inventory_slot
-holo inv click 36
-wait 6
+holo wrist pick
+wait 8
 shot reg_inventory_carried
 holo wrist
-wait 4
+wait 6
 shotnow reg_inventory_worn
 # the inventory closes itself 14 ticks after; then the boot (raise 10, seated 8, the light round 20, marks 18, ignite)
 wait 18

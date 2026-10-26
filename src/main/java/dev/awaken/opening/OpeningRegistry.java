@@ -364,6 +364,14 @@ final class OpeningRegistry {
         tag.putString("holder", p.getUUID().toString());
         tag.putString("signed", p.getPlainTextName());
         s.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-        if (!p.addItem(s) && !s.isEmpty()) p.drop(s, false, net.minecraft.util.Prediction.SERVER_ONLY);
+        // into the pack, not the hand: the band goes into your hand next
+        var inv = p.getInventory();
+        for (int i = net.minecraft.world.entity.player.Inventory.SELECTION_SIZE; i < net.minecraft.world.entity.player.Inventory.INVENTORY_SIZE && !s.isEmpty(); i++) {
+            if (inv.getItem(i).isEmpty()) {
+                inv.setItem(i, s);
+                s = ItemStack.EMPTY;
+            }
+        }
+        if (!s.isEmpty() && !p.addItem(s) && !s.isEmpty()) p.drop(s, false, net.minecraft.util.Prediction.SERVER_ONLY);
     }
 }

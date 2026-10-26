@@ -140,6 +140,19 @@ public final class WristSlot {
         return "slot " + index + " holds " + slot.getItem() + ", carried " + s.getMenu().getCarried();
     }
 
+    /** The band picked up onto the cursor from its slot in the open plain inventory. */
+    static String devPickBand() {
+        Minecraft mc = Minecraft.getInstance();
+        if (!(mc.gui.screen() instanceof InventoryScreen s) || s instanceof HoloInventoryScreen) return "no plain inventory";
+        for (Slot slot : s.getMenu().slots) {
+            if (!BandModule.isBand(slot.getItem())) continue;
+            // the menu's own click (what a left click on the slot sends), so the server's cursor carries it
+            mc.gameMode.handleContainerInput(s.getMenu().containerId, slot.index, 0, net.minecraft.world.inventory.ContainerInput.PICKUP, mc.player);
+            return "picked up the band from slot " + slot.index;
+        }
+        return "no band in the inventory";
+    }
+
     /** A click on the wrist slot of the open inventory (what the mouse there does). */
     static String devClickWrist(boolean shift) {
         Minecraft mc = Minecraft.getInstance();

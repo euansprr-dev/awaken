@@ -46,8 +46,7 @@ import java.util.Optional;
  * signature line, the ring where the seal goes); your hand goes to the ink pot, takes the quill, dips it, and writes
  * your name across the line in ink, stroke by stroke with the quill's scratch, the ink glossy while it's wet; a flourish
  * under it and a blot where the nib rests; the quill goes back in the pot. Bram stamps it (the Association's blue seal
- * thumps into the ring); the paper is folded and handed to you (the licence goes into your inventory). The off hand holds
- * the paper's corner the whole time. About eight seconds for a short name. Drawn for you only (others see you at the
+ * thumps into the ring); the paper is folded and handed to you (the licence goes into your inventory). About eight seconds for a short name. Drawn for you only (others see you at the
  * desk, Bram stamping). The player's own look never moves; the view turns for the scene and back.
  */
 final class SigningScene {
@@ -62,7 +61,7 @@ final class SigningScene {
     // the timeline (ticks): lean in, reach the pot, dip, to the line, the name (per letter), the flourish, the blot,
     // the quill back, Bram's stamp, the seal shown, folded and handed over, lean out
     static final int LEAN = 12, REACH = 10, DIP = 7, TO_LINE = 8, PER_CHAR = 4, FLOURISH = 9, BLOT = 9, BACK = 10, REST = 6,
-            STAMP = 16, HOLD = 22, FOLD = 14, OUT = 10;
+            STAMP = 16, HOLD = 36, FOLD = 14, OUT = 10;
 
     private static boolean active;
     private static int age, inkAt, endAt, total;
@@ -187,7 +186,7 @@ final class SigningScene {
         Font f = Minecraft.getInstance().font;
         double w = Math.max(1, f.width(name));
         // the line runs 39 texels; the name fills most of it, never bigger than a bold hand
-        return (float) Math.min(0.0068, (34.0 / TW * PW) / w);
+        return (float) Math.min(0.011, (34.0 / TW * PW) / w);
     }
 
     /** The nib's place in the writing (texel coordinates on the paper) at {@code t}. */
@@ -224,7 +223,7 @@ final class SigningScene {
         Vec3 o = e.getCamera().position();
         // look at the paper's near half, where the writing is
         double[] t = new double[3];
-        at(TW * 0.46, TH * 0.62, 0, t, 0);
+        at(TW * 0.5, TH * 0.66, 0, t, 0);
         double ax = t[0] - o.x, ay = t[1] - o.y, az = t[2] - o.z;
         float yaw = (float) (Mth.atan2(-ax, az) * Mth.RAD_TO_DEG), pitch = (float) (-Mth.atan2(ay, Math.sqrt(ax * ax + az * az)) * Mth.RAD_TO_DEG);
         e.setYaw(e.getYaw() + Mth.wrapDegrees(yaw - e.getYaw()) * w);
@@ -235,7 +234,7 @@ final class SigningScene {
     private static void onFov(ComputeFovModifierEvent e) {
         if (!active) return;
         float w = weight(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
-        if (w > 0) e.setNewFovModifier(e.getNewFovModifier() * (1 - 0.3F * w));
+        if (w > 0) e.setNewFovModifier(e.getNewFovModifier() * (1 - 0.42F * w));
     }
 
     // ---- the hands ----------------------------------------------------------------------------------------------------
@@ -280,8 +279,8 @@ final class SigningScene {
         } else if (t < back) {
             nib(t, UV);
             at(UV[0], UV[1], 0, B, 0);
-            // the fist holds the quill above the nib, toward you
-            double nx = B[0] - fx * 0.07, ny = B[1] + 0.13, nz = B[2] - fz * 0.07;
+            // the fist holds the quill well above the nib and to its right, so the writing stays in view
+            double nx = B[0] - fx * 0.05 + rx * side * 0.11, ny = B[1] + 0.2, nz = B[2] - fz * 0.05 + rz * side * 0.11;
             if (t < write) {
                 float k = Ease.at(Ease.IN_OUT_SINE, (t - line) / TO_LINE);
                 x = Mth.lerp(k, potX, nx);
@@ -299,7 +298,7 @@ final class SigningScene {
             float k = Ease.at(Ease.IN_OUT_SINE, (t - back) / BACK);
             nib(write + name.length() * PER_CHAR + FLOURISH, UV);
             at(UV[0], UV[1], 0, B, 0);
-            double sx0 = B[0] - fx * 0.07, sy0 = B[1] + 0.13, sz0 = B[2] - fz * 0.07;
+            double sx0 = B[0] - fx * 0.05 + rx * side * 0.11, sy0 = B[1] + 0.2, sz0 = B[2] - fz * 0.05 + rz * side * 0.11;
             x = Mth.lerp(k, sx0, potX);
             y = Mth.lerp(k, sy0, potY) + 0.07 * Mth.sin(k * Mth.PI);
             z = Mth.lerp(k, sz0, potZ);
@@ -309,19 +308,12 @@ final class SigningScene {
             y = Mth.lerp(k, potY, restY);
             z = Mth.lerp(k, potZ, restZ);
         }
-        // the paper lifts and is folded toward you at the end: the off hand goes with it
-        float fold = Mth.clamp((t - (endAt - FOLD)) / FOLD, 0, 1);
         y -= (1 - w) * 0.6;
         double sx = eye.x + rx * side * 0.33 - fx * 0.1, sy = eye.y - 0.4, sz = eye.z + rz * side * 0.33 - fz * 0.1;
         FirstPerson.Limb main = leftMain ? FirstPerson.Limb.LEFT_ARM : FirstPerson.Limb.RIGHT_ARM;
-        FirstPerson.Limb off = leftMain ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM;
         rig.reach(main, sx, sy, sz, x, y, z, FirstPerson.Rig.ARM_REACH, 0, 1, 0, w);
         rig.held[leftMain ? 1 : 0] = holding ? quill() : ItemStack.EMPTY;
-        // the off hand holds the paper's near corner on its side, flat
-        at(leftMain ? TW - 6 : 6, TH - 5, 0.03, A, 0);
-        double ox = A[0] - fx * 0.05 * fold, oy = A[1] + 0.25 * Ease.at(Ease.IN_OUT_SINE, fold) - (1 - w) * 0.6, oz = A[2] - fz * 0.05 * fold;
-        double osx = eye.x - rx * side * 0.33 - fx * 0.1, osz = eye.z - rz * side * 0.33 - fz * 0.1;
-        rig.reach(off, osx, sy, osz, ox, oy, oz, FirstPerson.Rig.ARM_REACH, 0, 1, 0, w);
+        // the off hand stays down out of the frame (on the paper it hid the signature: tour 1)
         return true;
     }
 

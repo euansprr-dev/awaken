@@ -355,7 +355,9 @@ public final class HoloClient {
                 else if (p == INVENTORY && mc.player != null) mc.player.closeContainer();
                 else p.timeline.close();
             }
-            case "wrist" -> { // wrist [shift]: a click on the wrist slot of the open inventory, as a player's
+            case "wrist" -> { // wrist [shift|pick]: a click on the wrist slot of the open inventory, as a player's;
+                // pick: the band picked up from wherever it is in the inventory
+                if (a.length > 1 && a[1].equals("pick")) return WristSlot.devPickBand();
                 return WristSlot.devClickWrist(a.length > 1 && a[1].equals("shift"));
             }
             case "inv" -> {
