@@ -164,6 +164,11 @@ farsight on
 farsight part seaunder on
 farsight part seafloor on
 farsight part trees on
+wait 200
+lens off
+wait 20
+shot fs2f_lens_off
+lens cinematic
 farsight status
 info
 quit
