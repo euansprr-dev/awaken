@@ -88,6 +88,7 @@ final class HearthCommands {
                             // into the hand, the way it's carried
                             for (int i = 0; i < inv.getContainerSize(); i++) if (inv.getItem(i).is(HearthContent.EMBER_ITEM.get())) inv.setItem(i, net.minecraft.world.item.ItemStack.EMPTY);
                             sp.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new net.minecraft.world.item.ItemStack(HearthContent.EMBER_ITEM.get()));
+                            sp.inventoryMenu.sendAllDataToRemote(); // give() sent its own slot packet: resync after moving it
                         }
                         return given ? 1 : 0;
                     }))

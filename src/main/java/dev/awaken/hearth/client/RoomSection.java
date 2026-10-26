@@ -14,7 +14,7 @@ final class RoomSection extends dev.awaken.signal.client.UiSection {
 
     @Override
     public int order() {
-        return -20;
+        return -28; // right under NOW (-30), above the Atlas (-25): the room round you before the land round you
     }
 
     @Override

@@ -70,7 +70,14 @@ public final class WhyNot {
 
     static Reason condition(RoomType type, BlockPos at) {
         String card = "Closed and roofed, with all it holds, but not one yet: it must be " + type.condition + ".";
-        String tracker = Fit.first(Fit.TRACKER, type.label + ": " + type.condition, type.label + ": not yet");
+        String brief = switch (type) {
+            case GREENHOUSE -> "a glass roof";
+            case HALL -> "a bigger floor";
+            case BELL_TOWER -> "higher up";
+            case LOOKOUT -> "higher, windows round";
+            default -> "not yet";
+        };
+        String tracker = Fit.first(Fit.TRACKER, type.label + ": " + type.condition, type.label + ": " + brief, type.label + ": not yet");
         return new Reason(type, Kind.CONDITION, card, tracker, false, at, false);
     }
 

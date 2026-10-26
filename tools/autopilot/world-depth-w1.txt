@@ -16,6 +16,11 @@ cmd awaken powers starter 1
 wait 20
 screen close
 cmd awaken admin levels 3
+# the Ascent's gift card ("Your body remembers") holds the director while it's up: put it away so captions can show
+wait 40
+key dismiss
+wait 10
+screen close
 # the director holds paced lines for a world's first five minutes: run them through
 cmd tick sprint 6200
 wait 240

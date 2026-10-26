@@ -161,6 +161,23 @@ public final class HomeClient {
 
     // ---- drawn light ----------------------------------------------------------------------------------------------------
 
+    static final int WAVE_POOLS = 40;
+
+    /** {@code n} pools of light round a circle on the ground (each at the ground's height there). */
+    private static void groundRing(CityGlow.Out out, ClientLevel level, BlockPos c, float radius, float pool, float strength, int n) {
+        if (strength <= 0.01F) return;
+        int count = radius < 2 ? 1 : n;
+        for (int k = 0; k < count; k++) {
+            double a = k * Math.PI * 2 / count;
+            double x = c.getX() + 0.5 + Math.cos(a) * radius, z = c.getZ() + 0.5 + Math.sin(a) * radius;
+            int bx = Mth.floor(x), bz = Mth.floor(z);
+            if (!level.hasChunk(bx >> 4, bz >> 4)) continue;
+            int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bx, bz);
+            if (Math.abs(y - c.getY()) > 24 || out.far(x, y, z)) continue;
+            out.pool(x, y + 0.03, z, pool, strength);
+        }
+    }
+
     /** The Ember's light in a hand and every Hearthfire's glow, drawn in the city's light pass (allocation-free). */
     static final CityGlow.Source GLOW = (out, pt, cx, cy, cz) -> {
         Minecraft mc = Minecraft.getInstance();
@@ -179,6 +196,26 @@ public final class HomeClient {
             double hx = x + fx * 0.25 + lx * side, hy = y + (p.isCrouching() ? 0.62 : 0.78), hz = z + fz * 0.25 + lz * side;
             out.pool(hx, y + 0.03, hz, EMBER_POOL, EMBER_POOL_A * f);
             if (p != mc.player || !mc.options.getCameraType().isFirstPerson()) out.halo(hx, hy, hz, EMBER_HALO, EMBER_CORE, f);
+        }
+        // the warmth running out over the land (or drawn back in when the coal is lifted): a ring of light on the ground,
+        // each pool on the ground's own height at its spot, a fainter one behind the front
+        long now = level.getGameTime();
+        for (int i = 0; i < MOMENTS.size(); i++) {
+            Moment m = MOMENTS.get(i);
+            float age = now - m.start + pt;
+            float front, fade;
+            if (m.lifted) {
+                if (age > 30) continue;
+                front = (float) (1 - ease(age / 30.0)) * m.radius;
+                fade = 0.7F;
+            } else {
+                float w = age - WAVE_FROM;
+                if (w < 0 || w > WAVE_TICKS + 24) continue;
+                front = (float) ease(Math.min(1.0, w / WAVE_TICKS)) * m.radius;
+                fade = Mth.clamp(w / 6F, 0F, 1F) * (w > WAVE_TICKS ? 1F - (w - WAVE_TICKS) / 24F : 1F) * (1F - 0.45F * front / m.radius);
+            }
+            groundRing(out, level, m.pos, front, 2.8F, 0.30F * fade, WAVE_POOLS);
+            if (front > 4) groundRing(out, level, m.pos, front * 0.62F, 3.4F, 0.11F * fade, WAVE_POOLS / 2);
         }
         for (int i = 0; i < HearthfireBlockEntity.LOADED.size(); i++) {
             BlockPos b = HearthfireBlockEntity.LOADED.get(i);

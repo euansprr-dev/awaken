@@ -116,6 +116,7 @@ public final class Cottage {
     /** What the guide shows for the cottage (see {@link GuideData#cottage}). */
     static int state(ServerPlayer sp, HearthRecord h) {
         HearthPlayer hp = HearthService.player(sp);
+        if (h.hearthfire()) return GuideData.COTTAGE_NONE; // Oren comes with the Anchor
         if (JOBS.containsKey(sp.getUUID())) return GuideData.COTTAGE_BUILDING;
         if (h.cottage != null) return GuideData.COTTAGE_BUILT;
         if (hp.tips.contains(TIP_BUILT)) return GuideData.COTTAGE_NONE; // free once: it stands at an old home

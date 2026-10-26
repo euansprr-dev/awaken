@@ -179,7 +179,7 @@ public final class HearthParticles {
             this.hasPhysics = false;
             this.lifetime = 26 + random.nextInt(14);
             this.peak = (float) Math.max(0.15, Math.min(1.0, ya));
-            this.baseSize = quadSize * (2.6f + random.nextFloat() * 1.4f);
+            this.baseSize = quadSize * (3.4f + random.nextFloat() * 1.8f);
             this.quadSize = baseSize;
             // bell-gold into ember: the wave's front is brighter and paler
             float w = random.nextFloat();
@@ -202,7 +202,7 @@ public final class HearthParticles {
             super.tick();
             setSpriteFromAge(sprites);
             float t = (float) age / lifetime;
-            alpha = peak * 0.42f * Math.min(1f, Math.min(t * 6f, (1f - t) * 1.6f));
+            alpha = peak * 0.7f * Math.min(1f, Math.min(t * 6f, (1f - t) * 1.6f));
             quadSize = baseSize * (0.85f + 0.3f * t);
         }
 

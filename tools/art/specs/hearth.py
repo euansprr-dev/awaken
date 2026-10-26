@@ -686,20 +686,18 @@ def ember_lantern() -> Canvas:
     """The Ember's lantern, one 16x16 atlas for its model: the cage's side (u0-6 v0-7), its cap (u6-12 v0-6), plain
     iron for small faces (u12-16 v0-4), the bare coal (u0-4 v8-12) and the glow between the bars (u4-8 v8-12)."""
     c = Canvas(16, 16)
-    # the cage side: an iron frame, two thin bars, the coal's light filling it from below
+    # the cage side: an iron frame round a pane of glass lit gold from the coal low inside it (brightest at the foot,
+    # a white-hot spot where the coal sits), the way a lantern reads at night
     for y in range(7):
         for x in range(6):
             frame = x == 0 or x == 5 or y == 0 or y == 6
-            bar = x in (2, 3) and 0 < y < 6
             if frame:
                 c.set(x, y, iron(3 if y == 0 else 2 if x == 0 else 1))
-            elif bar:
-                c.set(x, y, iron(2 if x == 2 else 1))
             else:
-                # glass lit from a coal low in the cage: brightest just above it, cooler at the top
-                heat = 1 - y / 6
-                c.set(x, y, bell(3 + round(heat * 2)) if y > 1 else bell(3))
-    c.set(1, 5, bell(5)); c.set(4, 5, bell(5)); c.set(1, 4, bell(4)); c.set(4, 4, bell(4))
+                heat = (y - 1) / 4  # 0 at the top of the pane, 1 at its foot
+                c.set(x, y, bell(3 + round(heat * 2)))
+    c.set(2, 5, bell(5)); c.set(3, 5, bell(5)); c.set(2, 4, bell(5))
+    c.set(1, 1, bell(2)); c.set(4, 1, bell(2))  # the pane's top corners in the frame's shadow
     # the cap: a riveted iron plate, a vent ring in the middle with the glow coming through
     for y in range(6):
         for x in range(6, 12):

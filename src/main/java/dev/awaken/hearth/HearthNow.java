@@ -129,10 +129,15 @@ public final class HearthNow {
         return null;
     }
 
-    /** Some of this room's furniture is already in the radius (so suggesting it isn't a guess). */
+    /**
+     * Two kinds of this room's furniture are already in the radius, so suggesting it isn't a guess (a flower pot in a
+     * bedroom is not a greenhouse being built; a bell on its own isn't a tower).
+     */
     static boolean started(RoomType t, HearthRecord h) {
-        for (Furniture f : t.furniture) if (h.furniture.length > f.ordinal() && h.furniture[f.ordinal()] > 0) return true;
-        return false;
+        if (t.furniture.size() < 2) return false;
+        int kinds = 0;
+        for (Furniture f : t.furniture) if (h.furniture.length > f.ordinal() && h.furniture[f.ordinal()] > 0) kinds++;
+        return kinds >= 2;
     }
 
     /** "Sanctuary: bed ✓ · mat ✗", shortened until it fits the tracker. Public for the tests. */
