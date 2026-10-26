@@ -23,7 +23,8 @@ final class AscentSection extends UiSection {
 
     private static final Rung[] LADDER = {
             new Rung(AscentPayloads.Tier.TETHER, "The Tether",
-                    "Hold {key.awaken.movement} at a ring or a ledge above: the rope bites. {key.forward} pumps the swing; let go to fly.",
+                    "Hold {key.awaken.movement} at a ring or a ledge above: the rope bites. {key.forward} pumps the swing; let go to fly. "
+                            + "Over a drop, {key.sneak} with {key.jump} lowers you on it.",
                     "A Precursor vault keeps a line for a hunter it opens to: its door's rank, D at the least."),
             new Rung(AscentPayloads.Tier.LEAPER, "The Leaper",
                     "In the air: {key.jump} jumps again, {key.sprint} dashes, {key.sneak} high up dives to a slam.",
@@ -54,6 +55,9 @@ final class AscentSection extends UiSection {
             if (AscentMoves.has(r.tier())) {
                 ui.text(r.name(), Glass.a(Glass.TITLE, 1F));
                 ui.text(KeyText.resolve(r.how()), Glass.a(Glass.LABEL, 0.85F));
+                // the rope's fittings, once any is on it (SPEC §28.5)
+                String kit = r.tier() == AscentPayloads.Tier.TETHER ? AscentMoves.fittings() : null;
+                if (kit != null) ui.text(kit, Glass.a(Glass.HORIZON, 0.9F));
             } else if (next) {
                 // the next rung: named, with where it comes from, never how it plays
                 ui.text("◇ " + r.name() + " · next", Glass.a(Glass.HORIZON, 1F));

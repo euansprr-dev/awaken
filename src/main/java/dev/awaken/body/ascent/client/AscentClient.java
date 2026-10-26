@@ -99,6 +99,14 @@ public final class AscentClient {
         event.register(AscentPayloads.Vow.TYPE, (msg, ctx) -> VowScene.on(msg));
         event.register(AscentPayloads.Record.TYPE, (msg, ctx) -> AscentNotes.record(msg.chain()));
         event.register(AscentPayloads.Lanes.TYPE, (msg, ctx) -> dev.awaken.body.ascent.Windways.setClient(msg.ways()));
+        // the fittings on this player's rope (SPEC §28.5): prediction reads them, a fresh fit is told
+        event.register(AscentPayloads.Kit.TYPE, (msg, ctx) -> {
+            var kit = dev.awaken.body.ascent.RopeKit.ofBits(msg.bits());
+            if (msg.fitted()) AscentNotes.fitted(AscentMoves.kitLine, AscentMoves.kitReel, kit.line(), kit.reel());
+            AscentMoves.kitLine = kit.line();
+            AscentMoves.kitReel = kit.reel();
+            dev.awaken.body.ascent.RopeKit.client = kit;
+        });
     }
 
     private static void tick() {

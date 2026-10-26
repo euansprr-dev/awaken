@@ -17,6 +17,9 @@ import net.minecraft.util.Mth;
  * hold &lt;keys&gt; &lt;ticks&gt;      keys: forward,back,left,right,jump,sneak,sprint,tether (comma separated)
  * aim &lt;yaw&gt; &lt;pitch&gt; &lt;ticks&gt; turn smoothly to a view
  * run &lt;script&gt; [n]          a manoeuvre that watches the state: swing (n swings down the lane), glide, boom, soar
+ * run rappel &lt;n&gt; [shots]     down the rappel stage's shaft to its passage n blocks under the feet: walk down, a bound,
+ *                            a kick into the swing, let go in the passage; with [shots], screenshots named shots_&lt;moment&gt;
+ * rappel hang &lt;x&gt; &lt;y&gt; &lt;z&gt;    on a rope from that anchor at once, the line held (the rappel stage sends it)
  * rec &lt;name&gt; &lt;ticks&gt; [n]     film a clip (every n-th frame)
  * route rec|play|stop [name] record a run's keys and view, or play one back from its start ({@link AscentRoutes})
  * aether &lt;0..1&gt;              set this client's Aether (to film the meter and its empty)
@@ -69,9 +72,19 @@ public final class AscentPilot {
             case "run" -> {
                 script = a[1];
                 target = a.length > 2 ? Integer.parseInt(a[2]) : 4;
+                shots = a.length > 3 ? a[3] : "";
                 age = count = phase = mark = misses = 0;
                 laneYaw = p.getYRot();
                 core = null;
+            }
+            // on a line from an anchor at once (the rappel stage), the line held for half a minute (a script takes over)
+            case "rappel" -> {
+                if (a.length >= 5 && a[1].equals("hang")
+                        && AscentMoves.hangFrom(p, Double.parseDouble(a[2]), Double.parseDouble(a[3]), Double.parseDouble(a[4]))) {
+                    HOLD[TETHER] = 600;
+                } else {
+                    Awaken.LOG.warn("[ascent] pilot: couldn't hang ({})", line);
+                }
             }
             case "rec" -> ClipRecorder.start(a[1], Integer.parseInt(a[2]), a.length > 3 ? Integer.parseInt(a[3]) : 2);
             // the Ascend key, pressed once (the Sovereign form, or in it high up a Judgement Fall)
@@ -134,6 +147,7 @@ public final class AscentPilot {
                 case "climb" -> climb(p);
                 case "leap" -> leap(p);
                 case "spire" -> spire(p);
+                case "rappel" -> rappel(p);
                 default -> script = "";
             }
         }
@@ -541,6 +555,125 @@ public final class AscentPilot {
             }
         }
         if (age > 2400) script = "";
+    }
+
+    /** A script's screenshot names start with this (empty: none taken). */
+    private static String shots = "";
+    /** The rappel: where the feet started, and how far out from the wall the bound has gone (its far point is shot). */
+    private static double startFeet, boundOut;
+    private static boolean boundShot;
+
+    /** A screenshot now, named shots_moment (only when the script was given a name). */
+    private static void shot(String moment) {
+        if (shots.isEmpty()) return;
+        Minecraft mc = Minecraft.getInstance();
+        String name = shots + "_" + moment;
+        net.minecraft.client.Screenshot.grab(mc.gameDirectory, name + ".png", mc.gameRenderer.mainRenderTarget(), 1,
+                msg -> Awaken.LOG.info("[ascent] pilot screenshot {}", name));
+    }
+
+    /**
+     * Down the rappel stage's shaft (SPEC §28.5) to a passage {@code target} blocks under the feet: hang a moment; walk
+     * down the wall (sneak and jump) to 8 over it; brake; a kick (jump pressed again) and its bound, paying out, back onto
+     * the wall; a second kick paying out to the passage's floor, braked, so the swing comes back in through its mouth;
+     * let go of the line inside: the drop-in. Shots (with a name): hang, descent, kick, bound, swing, in.
+     */
+    private static void rappel(LocalPlayer p) {
+        AscentState st = AscentMoves.state();
+        double feet = st.rope ? AscentMoves.K.y - AscentRules.HAND_HEIGHT : p.getY();
+        double goal = startFeet - target;
+        // how far out from the wall (+) or in through the passage's mouth (-) the body is, by the last kick's wall
+        double out = (AscentMoves.K.x - AscentMoves.ax) * AscentMoves.kickNX + (AscentMoves.K.z - AscentMoves.az) * AscentMoves.kickNZ;
+        if (phase < 6 && !st.rope) {
+            Awaken.LOG.warn("[ascent] pilot: the rappel lost its rope ({} in phase {})", st, phase);
+            phase = 6;
+            mark = age;
+        }
+        switch (phase) {
+            case 0 -> {
+                if (age == 1) {
+                    startFeet = feet;
+                    boundShot = false;
+                    boundOut = 0;
+                }
+                press(TETHER, 2);
+                if (age == 14) shot("hang");
+                if (age >= 20) {
+                    phase = 1;
+                    mark = age;
+                }
+            }
+            case 1 -> {
+                // walking down the wall
+                press(TETHER, 2);
+                press(SNEAK, 2);
+                press(JUMP, 2);
+                if (age - mark == 30) shot("descent");
+                if (feet <= goal + 8) {
+                    phase = 2;
+                    mark = age;
+                }
+            }
+            case 2 -> {
+                // braked on the wall (jump let go, so the next press is a kick)
+                press(TETHER, 2);
+                press(SNEAK, 2);
+                if (age - mark >= 10) {
+                    phase = 3;
+                    mark = age;
+                }
+            }
+            case 3 -> {
+                // the kick and its bound, paying out to 3.5 over the passage
+                press(TETHER, 2);
+                press(SNEAK, 2);
+                if (feet > goal + 3.5) press(JUMP, 2);
+                if (age - mark == 3) shot("kick");
+                if (AscentMoves.kickAt > 0 && out > boundOut) boundOut = out;
+                if (!boundShot && boundOut > 0.6 && out < boundOut - 0.05) {
+                    boundShot = true;
+                    shot("bound");
+                }
+                if (AscentMoves.plantAt > AscentMoves.kickAt && age - mark > 6 || age - mark > 45) {
+                    phase = 4;
+                    mark = age;
+                }
+            }
+            case 4 -> {
+                press(TETHER, 2);
+                press(SNEAK, 2);
+                if (age - mark >= 3) {
+                    phase = 5;
+                    mark = age;
+                }
+            }
+            case 5 -> {
+                // the second kick, paying out to the passage's floor, then braked: the swing comes back in through its mouth
+                press(TETHER, 2);
+                press(SNEAK, 2);
+                if (feet > goal + 0.3) press(JUMP, 2);
+                boolean inside = out < -0.6 && (AscentMoves.K.hspeed() < 0.12 || out < -1.2);
+                if (inside || age - mark > 70) {
+                    if (inside) shot("swing");
+                    Awaken.LOG.info("[ascent] pilot: rappel lets go {} the passage ({} out, feet {} over its floor)", inside ? "in" : "short of",
+                            String.format("%.2f", out), String.format("%.2f", feet - goal));
+                    HOLD[TETHER] = 0;
+                    HOLD[SNEAK] = 0;
+                    HOLD[JUMP] = 0;
+                    phase = 6;
+                    mark = age;
+                }
+            }
+            default -> {
+                if (age - mark == 20) shot("in");
+                if (age - mark > 40) {
+                    Awaken.LOG.info("[ascent] pilot: rappel done, {} at {} {} {}", AscentMoves.state(), String.format("%.1f", p.getX()),
+                            String.format("%.1f", p.getY()), String.format("%.1f", p.getZ()));
+                    script = "";
+                }
+            }
+        }
+        if (age > 900) script = "";
     }
 
     /** The sky platform's core, if one is in sight (on the deck's level or just under it). */

@@ -24,6 +24,13 @@ public final class AscentAnims {
 
     static final String SWING = "ascent_swing", ZIP = "ascent_zip", FLIP = "ascent_flip", FALL = "ascent_fall", GLIDE = "ascent_glide",
             SOAR = "ascent_soar", HOVER = "ascent_hover";
+    /** The rappel (tools/art/specs/ascent_rappel.py): feet on the wall holding, walking down it, the kick and bound. */
+    static final String RAPPEL = "ascent_rappel", RAPPEL_WALK = "ascent_rappel_walk", RAPPEL_KICK = "ascent_rappel_kick";
+    /** How long the kick's clip plays (its bound), and how far the figure is drawn out from the wall it stands on. */
+    static final int KICK_TICKS = 14;
+    static final double RAPPEL_OUT = 0.5;
+    /** The figure leans back from the wall by this share of the rope's line (about 10° hanging against it). */
+    private static final double RAPPEL_LEAN_BACK = 0.18;
 
     private static final class Look {
         int entity = -1;
@@ -33,6 +40,8 @@ public final class AscentAnims {
         float heading = Float.NaN;
         /** A barrel roll: when it began (client clock) and its way (+1 right, -1 left). */
         int rollAt = -100, rollDir;
+        /** A rappel's kick off the wall (client clock). */
+        int kickAt = -100;
         AscentState state = AscentState.NONE;
     }
 
@@ -132,12 +141,74 @@ public final class AscentAnims {
         int age = AscentMoves.ticks - l.since;
         return switch (l.state) {
             case TETHER -> SWING;
+            case RAPPEL -> AscentMoves.ticks - l.kickAt < KICK_TICKS ? RAPPEL_KICK
+                    : !rappelWall(e, NRM) ? SWING
+                    : (e == Minecraft.getInstance().player ? AscentMoves.payNow > 0 : e.getY() - e.yo < -0.04) ? RAPPEL_WALK : RAPPEL;
             case ZIP -> ZIP;
             case CARRY -> age < 12 && l.clip != null && l.clip.equals(FLIP) || age < 2 ? FLIP : age < 12 ? l.clip : FALL;
             case GLIDE -> GLIDE;
             case SOAR -> speedOf(e) > 0.45 ? SOAR : HOVER;
             case NONE -> null;
         };
+    }
+
+    /** A rappel's kick for this entity (the local player's, or one heard from another): the kick's clip and bound. */
+    static void kick(int entityId) {
+        Look l = find(entityId);
+        if (l != null) l.kickAt = AscentMoves.ticks;
+    }
+
+    private static final double[] NRM = new double[2];
+    private static final net.minecraft.core.BlockPos.MutableBlockPos WALL_AT = new net.minecraft.core.BlockPos.MutableBlockPos();
+
+    /**
+     * A rappelling body's wall: its outward normal into out[0..1] (the local player's own probe, else away from the
+     * anchor's line, which runs down the wall's face), and whether there's rock that way at the feet. Without it the
+     * body hangs free and looks like any rope's swing.
+     */
+    static boolean rappelWall(Entity e, double[] out) {
+        Minecraft mc = Minecraft.getInstance();
+        double ax, az;
+        if (e == mc.player) {
+            if (AscentMoves.wallNX != 0 || AscentMoves.wallNZ != 0) {
+                out[0] = AscentMoves.wallNX;
+                out[1] = AscentMoves.wallNZ;
+                return true;
+            }
+            ax = AscentMoves.ax;
+            az = AscentMoves.az;
+        } else {
+            AscentRemote.Slot r = AscentRemote.of(e.getId());
+            if (r == null) return false;
+            ax = r.ax;
+            az = r.az;
+        }
+        double nx = e.getX() - ax, nz = e.getZ() - az, nl = Math.sqrt(nx * nx + nz * nz);
+        if (nl < 0.05) return false;
+        out[0] = nx / nl;
+        out[1] = nz / nl;
+        double wx = ax - out[0] * 0.2, wz = az - out[1] * 0.2;
+        return solid(e, wx, e.getY() + 0.4, wz) || solid(e, wx, e.getY() + 1.0, wz);
+    }
+
+    private static boolean solid(Entity e, double x, double y, double z) {
+        WALL_AT.set(Mth.floor(x), Mth.floor(y), Mth.floor(z));
+        return !e.level().getBlockState(WALL_AT).getCollisionShape(e.level(), WALL_AT).isEmpty();
+    }
+
+    /**
+     * Where a rappelling figure is drawn off its body: out from the wall by {@link #RAPPEL_OUT} (a body on the rope
+     * stands off the rock on its legs; the collision box sits against it). Into out[0..1]; false (zero) for any other.
+     */
+    static boolean rappelOffset(Entity e, AscentState st, double[] out) {
+        if (st != AscentState.RAPPEL || !rappelWall(e, out)) {
+            out[0] = 0;
+            out[1] = 0;
+            return false;
+        }
+        out[0] *= RAPPEL_OUT;
+        out[1] *= RAPPEL_OUT;
+        return true;
     }
 
     private static double speedOf(Entity e) {
@@ -187,7 +258,7 @@ public final class AscentAnims {
         // defaults: upright
         double ux = 0, uy = 1, uz = 0, cx = fx, cy = 0, cz = fz;
         switch (st) {
-            case TETHER, ZIP -> {
+            case TETHER, ZIP, RAPPEL -> {
                 double ax, ay, az;
                 if (e == mc.player) {
                     ax = AscentMoves.ax;
@@ -203,6 +274,16 @@ public final class AscentAnims {
                 double px = Mth.lerp(pt, e.xo, e.getX()), py = Mth.lerp(pt, e.yo, e.getY()) + 1.4, pz = Mth.lerp(pt, e.zo, e.getZ());
                 double dx = ax - px, dy = ay - py, dz = az - pz, d = Math.sqrt(dx * dx + dy * dy + dz * dz);
                 if (d < 1e-3) break;
+                if (st == AscentState.RAPPEL && rappelWall(e, NRM)) {
+                    // the rappel: along the rope, leaning back off the wall, facing it (the feet on the rock)
+                    ux = dx / d + NRM[0] * RAPPEL_LEAN_BACK;
+                    uy = dy / d;
+                    uz = dz / d + NRM[1] * RAPPEL_LEAN_BACK;
+                    cx = -NRM[0];
+                    cy = 0;
+                    cz = -NRM[1];
+                    break;
+                }
                 // a zip leans into the pull; a swing hangs straight from the rope
                 double k = st == AscentState.ZIP ? 0.65 : 0.9;
                 ux = dx / d * k;
@@ -331,6 +412,8 @@ public final class AscentAnims {
         PoseStack ps = e.getPoseStack();
         ps.pushPose();
         pushed++;
+        // a rappel stands off the rock on its legs
+        if (rappelOffset(ent, st, NRM)) ps.translate((float) NRM[0], 0, (float) NRM[1]);
         ps.translate(0, pivot, 0);
         ps.rotate(Q);
         if (flip != 0) ps.rotate(Q2.rotationAxis(flip * Mth.DEG_TO_RAD, Mth.cos(yaw), 0, Mth.sin(yaw)));

@@ -29,6 +29,26 @@ public final class AscentFp {
     static final float SLAM_X = 0.2F, SLAM_Y = 0.3F, SLAM_Z = -0.74F;
     /** The Sovereign's gold on the hands. */
     static final int GOLD = 0xFFD98A;
+    /**
+     * The rappel's brake hand, under the guiding one on the rope (AscentRender runs the rope down to it and its tail out
+     * of it), main hand's side: x times {@link #side()}.
+     */
+    static final float BRAKE_X = 0.16F, BRAKE_Y = -0.46F, BRAKE_Z = -0.6F;
+
+    /** The main hand's side in view space (1 right, -1 left). */
+    static float side() {
+        LocalPlayer p = Minecraft.getInstance().player;
+        return p != null && p.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT ? -1 : 1;
+    }
+
+    /** A kick off the wall (client clock): the arms take the push for a few ticks. */
+    private static int kickAt = -100;
+    /** Where the rappel's two fists are this frame, in view space (the rope is drawn through them). */
+    static final float[] guideNow = {ROPE_X, ROPE_Y, ROPE_Z}, brakeNow = {BRAKE_X, BRAKE_Y, BRAKE_Z};
+
+    static void kicked() {
+        kickAt = AscentMoves.ticks;
+    }
 
     private static AscentState was = AscentState.NONE;
     private static int since;
@@ -119,6 +139,31 @@ public final class AscentFp {
             case ZIP -> {
                 FirstPerson.View.fist(v.fistMain, 1, m * ROPE_X, ROPE_Y, ROPE_Z);
                 FirstPerson.View.fist(v.fistOff, in, m * (ROPE_X - 0.1F), ROPE_Y - 0.1F, ROPE_Z + 0.02F);
+            }
+            case RAPPEL -> {
+                // the guiding hand up on the rope, the brake hand under it at the hip feeding it through: in bites (the
+                // stroke up as it runs, a squeeze at each catch) or, on a Deepglass line, one smooth run
+                float k = Math.max(0F, 1F - (t - kickAt) / 7F); // the kick's push through the arms
+                float stroke = 0, slide = 0;
+                if (AscentMoves.payNow > 0) {
+                    if (AscentMoves.smoothLine()) {
+                        stroke = 0.03F + 0.006F * Mth.sin(t * 2.3F);
+                        slide = 0.015F;
+                    } else {
+                        float phase = (float) ((AscentMoves.paid % dev.awaken.body.ascent.AscentRules.RAPPEL_BITE) / dev.awaken.body.ascent.AscentRules.RAPPEL_BITE);
+                        stroke = 0.05F * Mth.sin(phase * Mth.PI);
+                        slide = 0.03F * phase;
+                    }
+                }
+                float squeeze = Math.max(0F, 1F - (t - AscentMoves.catchAt) / 3F) * 0.025F;
+                guideNow[0] = m * ROPE_X;
+                guideNow[1] = ROPE_Y - slide - k * 0.05F;
+                guideNow[2] = ROPE_Z + k * 0.08F;
+                brakeNow[0] = m * (BRAKE_X - squeeze);
+                brakeNow[1] = BRAKE_Y + stroke - squeeze - k * 0.04F;
+                brakeNow[2] = BRAKE_Z + k * 0.06F;
+                FirstPerson.View.fist(v.fistMain, 1, guideNow[0], guideNow[1], guideNow[2]);
+                FirstPerson.View.fist(v.fistOff, in, brakeNow[0], brakeNow[1], brakeNow[2]);
             }
             case CARRY -> {
                 if (AscentMoves.slamming) {
