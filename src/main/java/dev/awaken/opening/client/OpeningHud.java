@@ -48,6 +48,16 @@ final class OpeningHud {
 
     private static @Nullable Title title;
     private static final List<Line> LINES = new ArrayList<>();
+    /**
+     * One thing on screen at a time (Euan, 2026-10-26: "we should never be having two or three things pop up at the same
+     * time"): a line or a title waits until the one showing has finished, then takes its turn; the prompt shows only
+     * when nothing is speaking or waiting.
+     */
+    private record Next(@Nullable Title title, @Nullable Line line) {}
+    private static final java.util.ArrayDeque<Next> QUEUE = new java.util.ArrayDeque<>();
+    /** The thing on screen is done (its fade mostly through) at this tick; nothing new starts before. */
+    private static long busyUntil;
+    static final int MAX_WAITING = 6;
     /** A black over everything (0..1) the beats set and ease; the eyelids (0 shut .. 1 open) for the wake. */
     static float black, blackO, blackTarget, blackRate = 0.1F;
     static float lids = 1F, lidsO = 1F;
@@ -64,6 +74,8 @@ final class OpeningHud {
     static void reset() {
         title = null;
         LINES.clear();
+        QUEUE.clear();
+        busyUntil = 0;
         black = blackO = blackTarget = 0;
         lids = lidsO = 1;
         lidsOn = false;
@@ -73,23 +85,51 @@ final class OpeningHud {
     }
 
     static void title(String big, String small, int ticks) {
-        title = new Title(big, small, OpeningClient.ticks(), ticks);
+        enqueue(new Next(new Title(big, small, 0, ticks), null));
     }
 
     static void line(String who, String line, int ticks) {
         Minecraft mc = Minecraft.getInstance();
-        // the same words still on screen (a step played again): once is enough
+        // the same words on screen or waiting (a step played again): once is enough
         for (Line l : LINES) if (l.raw.equals(line) && OpeningClient.ticks() < l.from + l.ticks) return;
+        for (Next n : QUEUE) if (n.line() != null && n.line().raw.equals(line)) return;
         Line l = new Line();
         l.who = who;
         l.raw = line;
-        l.from = OpeningClient.ticks();
-        l.ticks = Math.max(40, ticks);
+        // long enough to read, never so long the scene stalls behind it
+        l.ticks = Mth.clamp(ticks, 50, 40 + line.length() * 2);
         int w = Math.min(320, mc.getWindow().getGuiScaledWidth() - 40);
         l.text = mc.font.split(Component.literal(line), w);
-        // one line at a time (Euan, 2026-10-26: two stacked is too much): the new one replaces the old
+        enqueue(new Next(null, l));
+    }
+
+    private static void enqueue(Next n) {
+        QUEUE.addLast(n);
+        while (QUEUE.size() > MAX_WAITING) QUEUE.removeFirst(); // fallen far behind: the oldest goes unsaid
+        pump();
+    }
+
+    /** The next thing takes the screen once the one before is done: the new replaces the old, never beside it. */
+    private static void pump() {
+        long now = OpeningClient.ticks();
+        if (now < busyUntil || QUEUE.isEmpty()) return;
+        Next n = QUEUE.removeFirst();
         LINES.clear();
-        LINES.add(l);
+        title = null;
+        if (n.title() != null) {
+            title = new Title(n.title().big(), n.title().small(), now, n.title().ticks());
+            busyUntil = now + n.title().ticks() + 12;
+        } else if (n.line() != null) {
+            Line l = n.line();
+            l.from = now;
+            LINES.add(l);
+            busyUntil = now + l.ticks + 12;
+        }
+    }
+
+    /** Something is on screen or waiting its turn. */
+    static boolean busy() {
+        return OpeningClient.ticks() < busyUntil || !QUEUE.isEmpty();
     }
 
     /** A prompt the scene waits on (the Registry: sign, take the band, your inventory, K): the key as a cap, then what
@@ -123,7 +163,8 @@ final class OpeningHud {
         bars += (barsTarget - bars) * (barsTarget > bars ? 0.14F : 0.08F);
         flash = Math.max(0, flash - 0.04F);
         promptAO = promptA;
-        promptA = Mth.clamp(promptA + (promptKey != null ? 0.18F : -0.12F), 0, 1);
+        promptA = Mth.clamp(promptA + (promptKey != null && !busy() ? 0.18F : -0.18F), 0, 1);
+        pump();
         long now = OpeningClient.ticks();
         LINES.removeIf(l -> now > l.from + l.ticks + 20);
         if (title != null && now > title.from + title.ticks + 20) title = null;
