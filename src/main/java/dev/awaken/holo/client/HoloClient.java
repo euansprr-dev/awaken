@@ -102,6 +102,7 @@ public final class HoloClient {
         bus.addListener(PlaySoundEvent.class, HoloAudio::onPlaySound);
         // reported each frame (UiHooks.setFocus); other sources (the Atlas) report beside it
         ProgressionClient.installStatusOpener(HoloClient::statusScreen);
+        dev.awaken.progression.client.StatusSections.installCues(HoloAudio::cue); // the band's page, spend, confirm, undo
         WristSlot.init();
     }
 

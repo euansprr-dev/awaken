@@ -68,9 +68,22 @@ public final class StatusSections {
     private static int ppu;
     private static @Nullable Tab request;
 
+    private static boolean still;
+
     /** Set by the screen each frame before its sections draw. */
     public static void drawingAt(int pixelsPerUnit) {
+        drawingAt(pixelsPerUnit, true);
+    }
+
+    /** As above; {@code reducedMotion} false lets sections animate what changed since you last looked. */
+    public static void drawingAt(int pixelsPerUnit, boolean reducedMotion) {
         ppu = pixelsPerUnit;
+        still = reducedMotion;
+    }
+
+    /** Whether the band should hold still (reduced motion, or the flat screen). */
+    public static boolean still() {
+        return still;
     }
 
     /** Small text: one framebuffer pixel fewer per font pixel than the body (4 at 5 px a unit); 1 on the flat screen. */

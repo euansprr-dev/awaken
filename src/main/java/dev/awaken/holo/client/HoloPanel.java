@@ -60,6 +60,20 @@ public final class HoloPanel {
     float sx = 1, sy = 1, edgeAlpha = 1, glassAlpha = 1, scan = -1, typeMs = Float.MAX_VALUE, band = 1, fade = 1;
     /** The last click on the panel (units) and how long ago it was, ms (-1: none). */
     float flashX, flashY, flashMs = -1;
+    /** A page change replays the scan line (SPEC §30.4): when it started (System.nanoTime, 0 for none). */
+    long rescanAt;
+
+    /** Replays the scan line down the panel: the band's page change (the new page prints in behind it). */
+    void rescan() {
+        rescanAt = System.nanoTime();
+    }
+
+    /** How far down the panel the new page has printed, in units ({@link #h} once it has). */
+    float revealed() {
+        if (rescanAt == 0) return h;
+        float ms = (System.nanoTime() - rescanAt) / 1e6f;
+        return Math.max(0, Math.min(1, (ms - 40) / 140f)) * h;
+    }
 
     private final Matrix4f m = new Matrix4f();
     private final Vector3f v = new Vector3f(), wrist = new Vector3f();
@@ -95,6 +109,12 @@ public final class HoloPanel {
         edgeAlpha = t.edges(reduced);
         glassAlpha = t.glass(reduced);
         scan = t.scan(reduced);
+        if (rescanAt != 0) {
+            // a page change: 40 ms of nothing, then the line sweeps the panel in 140 ms and fades just past the bottom
+            float ms = (System.nanoTime() - rescanAt) / 1e6f;
+            if (reduced || ms > 200) rescanAt = 0;
+            else if (scan < 0 || scan > 1.2f) scan = Math.max(0, (ms - 40) / 140f);
+        }
         typeMs = t.typing(reduced);
         band = t.band();
         beam = anchor == Anchor.WRIST ? t.beam(reduced) : 0;

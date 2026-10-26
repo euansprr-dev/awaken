@@ -99,6 +99,11 @@ final class StatusSheet {
         private List<Defs.LevelRoadDef> road = List.of();
         private int roadFrom = -1;
         private int sigilX, sigilY;
+        /** Motion reports change: the XP you gained since you last looked fills in when the band opens. */
+        private static double seenFraction = -1;
+        private static int seenLevel = -1;
+        private static long lastDrawn, fillFrom;
+        private static double fillStart;
 
         public String title() { return ""; }
         public int order() { return 0; }
@@ -157,7 +162,19 @@ final class StatusSheet {
                 String t = ellipsize(f, nextStep.title(), (sx - sigilR - 6) - (lx + pw), small);
                 text(g, f, t, lx + pw, y + 30, small, Glass.HORIZON, 1f);
             }
-            segments(g, nx, y + 41, Math.max(40, sx - sigilR - 8 - nx), 3, p.xp() / need, Glass.EDGE);
+            double frac = p.xp() / need;
+            long now = System.currentTimeMillis();
+            if (now - lastDrawn > 500) { // a new look: fill from what you saw last time (from empty after a level-up)
+                fillStart = seenLevel == p.level() ? Math.min(seenFraction, frac) : 0;
+                fillFrom = now + 300;
+                if (seenLevel < 0 || StatusSections.still()) fillStart = frac;
+            }
+            lastDrawn = now;
+            seenFraction = frac;
+            seenLevel = p.level();
+            float k = Math.max(0, Math.min(1, (now - fillFrom) / 250f));
+            double shown = fillStart + (frac - fillStart) * (1 - (1 - k) * (1 - k));
+            segments(g, nx, y + 41, Math.max(40, sx - sigilR - 8 - nx), 3, shown, Glass.EDGE);
             // the rank as a sigil: its letter in light inside a pixel diamond; the next rank under it
             int sy = y + 17;
             sigilX = sx;

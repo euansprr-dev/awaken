@@ -56,6 +56,9 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
     private int hoverX = -10000, hoverY = -10000;
     private final HoverTick hover = new HoverTick();
     private long lastNanos;
+    /** The rail's light travelling from the last page to this one (SPEC §30.4): from which node, since when. */
+    private int beadFrom = -1;
+    private long beadAt;
 
     public HoloStatusScreen() {
         this(Tab.STATUS);
@@ -106,13 +109,14 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
     private void draw(HoloGraphics gg, int mouseX, int mouseY, float a) {
         Tab asked = StatusSections.takeRequest();
         if (asked != null) selectTab(asked);
-        StatusSections.drawingAt(panel.ppu);
+        StatusSections.drawingAt(panel.ppu, HoloConfig.reducedMotion);
         rail(gg, mouseX, mouseY);
         Rect c = content;
         int cx = c.x(), cy = c.y(), cw = c.w(), ch = c.h();
         boolean inside = c.contains(mouseX, mouseY);
         int mx = inside ? mouseX : -10000, my = inside ? mouseY : -10000;
-        gg.enableScissor(cx, cy, cx + cw + BandLayout.SCROLLBAR, cy + ch);
+        // a new page prints in behind the scan line: nothing below the line yet
+        gg.enableScissor(cx, cy, cx + cw + BandLayout.SCROLLBAR, Math.min(cy + ch, Math.round(panel.revealed())));
         int i = tab.ordinal();
         int y = cy - SCROLL[i];
         boolean any = false;
@@ -168,13 +172,22 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
         gg.fill(r, 6, r + 1, H - 6, Glass.a(Glass.EDGE, 0.30f));
         float micro = BandLayout.microScale(panel.ppu);
         Tab[] tabs = Tab.values();
+        // the lit page: its light travels down (or up) the rail from the last page over 120 ms
+        Rect lit = BandLayout.node(tab.ordinal());
+        float litY = lit.y();
+        float bk = beadFrom < 0 ? 1f : Math.min(1f, (System.nanoTime() - beadAt) / 120e6f);
+        if (bk < 1f && !HoloConfig.reducedMotion) {
+            float e = 1f - (1f - bk) * (1f - bk) * (1f - bk);
+            litY = BandLayout.node(beadFrom).y() + (lit.y() - BandLayout.node(beadFrom).y()) * e;
+        }
+        gg.fill(lit.x(), Math.round(litY), lit.right(), Math.round(litY) + lit.h(), Glass.a(Glass.EDGE, 0.15f));
+        gg.fill(0, Math.round(litY) + 1, 2, Math.round(litY) + lit.h() - 1, Glass.a(HOT, 0.95f));
         for (int i = 0; i < tabs.length; i++) {
             Tab t = tabs[i];
             Rect n = BandLayout.node(i);
             boolean on = t == tab, over = n.contains(mouseX, mouseY);
             if (on) {
-                gg.fill(n.x(), n.y(), n.right(), n.bottom(), Glass.a(Glass.EDGE, 0.15f));
-                gg.fill(0, n.y() + 1, 2, n.bottom() - 1, Glass.a(HOT, 0.95f));
+                // drawn above, where the light is
             } else if (over) {
                 gg.fill(n.x(), n.y(), n.right(), n.bottom(), Glass.a(Glass.EDGE, 0.07f));
             }
@@ -287,7 +300,12 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
             action.open().run();
             return;
         }
-        if (t != tab) StatusSections.cue(StatusSections.Cue.PAGE);
+        if (t != tab) {
+            StatusSections.cue(StatusSections.Cue.PAGE);
+            beadFrom = tab.ordinal();
+            beadAt = System.nanoTime();
+            if (!HoloConfig.reducedMotion) panel.rescan();
+        }
         tab = t;
     }
 

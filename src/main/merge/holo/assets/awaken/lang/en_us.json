@@ -18,5 +18,9 @@
   "item.awaken.holo_band.desc": "The Hunter Association's wristband. Wear it on your wrist (the slot beside you in your inventory).",
   "gui.awaken.wrist": "Wrist",
   "gui.awaken.wrist.empty": "Put your Holo band here",
-  "gui.awaken.wrist.dark": "Your wrist is bare. Put the Holo band on (your inventory, the slot beside you)."
+  "gui.awaken.wrist.dark": "Your wrist is bare. Put the Holo band on (your inventory, the slot beside you).",
+  "subtitles.awaken.holo.page": "Band page turns",
+  "subtitles.awaken.holo.spend": "Stat point placed",
+  "subtitles.awaken.holo.confirm": "Stat points confirmed",
+  "subtitles.awaken.holo.undo": "Stat point taken back"
 }

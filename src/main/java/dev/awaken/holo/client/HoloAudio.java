@@ -34,6 +34,30 @@ final class HoloAudio {
         play(HoloSounds.HOVER.get(), 0.18f);
     }
 
+    /** D5 E5 F#5 A5 B5 D6: each point placed in a run plays one step higher, so a run of points climbs the scale. */
+    private static final float[] STEPS = {1f, 1.1225f, 1.2599f, 1.4983f, 1.6818f, 2f};
+    private static int run;
+
+    /** The band's own moments (SPEC §30.4), told by its sections through {@code StatusSections.cue}. */
+    static void cue(dev.awaken.progression.client.StatusSections.Cue c) {
+        var mc = Minecraft.getInstance();
+        switch (c) {
+            case PAGE -> play(HoloSounds.PAGE.get(), 0.16f);
+            case SPEND -> {
+                mc.getSoundManager().play(SimpleSoundInstance.forUI(HoloSounds.SPEND.get(), STEPS[Math.min(run, STEPS.length - 1)], 0.20f));
+                run++;
+            }
+            case UNDO -> {
+                run = Math.max(0, run - 1);
+                play(HoloSounds.UNDO.get(), 0.16f);
+            }
+            case CONFIRM -> {
+                run = 0;
+                play(HoloSounds.CONFIRM.get(), 0.30f);
+            }
+        }
+    }
+
     /**
      * Every sound about to play: a System card's arrival ({@code signal.open}, played by the signal module) takes the
      * projected card's voice while the projected look draws, so a card sounds the way it looks and never twice.
