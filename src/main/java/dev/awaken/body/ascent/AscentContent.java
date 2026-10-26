@@ -29,6 +29,18 @@ public final class AscentContent {
     public static final Supplier<AttachmentType<AscentMemory>> MEMORY = ATTACHMENTS.register("ascent_memory",
             () -> AttachmentType.builder(() -> AscentMemory.EMPTY).serialize(AscentMemory.MAP_CODEC, m -> !m.isEmpty()).copyOnDeath().build());
 
+    /** Saved with the player and kept through death: the fittings on the Tether (a line, a reel; SPEC §28.5). */
+    public static final Supplier<AttachmentType<RopeKit>> ROPE_KIT = ATTACHMENTS.register("rope_kit",
+            () -> AttachmentType.builder(() -> RopeKit.EMPTY).serialize(RopeKit.MAP_CODEC, k -> !k.isEmpty()).copyOnDeath().build());
+
+    /** The rope's fittings, forged from metal and used to fit them to the Tether (SPEC §28.5). */
+    public static final net.neoforged.neoforge.registries.DeferredItem<RopeFittingItem> IRON_LINE = ITEMS.registerItem("iron_line",
+            p -> new RopeFittingItem(p, RopeFittingItem.Kind.IRON_LINE), p -> p.stacksTo(4));
+    public static final net.neoforged.neoforge.registries.DeferredItem<RopeFittingItem> GOLD_REEL = ITEMS.registerItem("gold_reel",
+            p -> new RopeFittingItem(p, RopeFittingItem.Kind.GOLD_REEL), p -> p.stacksTo(4));
+    public static final net.neoforged.neoforge.registries.DeferredItem<RopeFittingItem> DEEPGLASS_LINE = ITEMS.registerItem("deepglass_line",
+            p -> new RopeFittingItem(p, RopeFittingItem.Kind.DEEPGLASS_LINE), p -> p.stacksTo(4).rarity(net.minecraft.world.item.Rarity.UNCOMMON));
+
     /** The state in progress (server only, never saved). */
     static final Supplier<AttachmentType<AscentMotion>> MOTION = ATTACHMENTS.register("ascent_motion",
             () -> AttachmentType.builder(AscentMotion::new).build());
@@ -48,6 +60,14 @@ public final class AscentContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> UPDRAFT = sound("ascent.updraft");
     public static final DeferredHolder<SoundEvent, SoundEvent> VOW_CALL = sound("ascent.vow_call");
     public static final DeferredHolder<SoundEvent, SoundEvent> VOW_LINE = sound("ascent.vow_line");
+    // the rappel and the fittings (tools/art/specs/audio_rappel.py)
+    public static final DeferredHolder<SoundEvent, SoundEvent> RAPPEL_PAY = sound("ascent.rappel_pay");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RAPPEL_PAY_GLASS = sound("ascent.rappel_pay_glass");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RAPPEL_CATCH = sound("ascent.rappel_catch");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RAPPEL_KICK = sound("ascent.rappel_kick");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RAPPEL_PLANT = sound("ascent.rappel_plant");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RAPPEL_REEL = sound("ascent.rappel_reel");
+    public static final DeferredHolder<SoundEvent, SoundEvent> RAPPEL_FIT = sound("ascent.rappel_fit");
 
     /** An anchor ring: a Precursor ring for the rope (the sky platforms' ladders, the spires); unbreakable, alight. */
     public static final net.neoforged.neoforge.registries.DeferredBlock<net.minecraft.world.level.block.Block> ANCHOR_RING = BLOCKS.registerSimpleBlock(
@@ -99,5 +119,11 @@ public final class AscentContent {
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
         BLOCK_ENTITIES.register(modBus);
+        modBus.addListener((net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent e) -> {
+            if (!e.getTabKey().equals(dev.awaken.core.CoreModule.TAB_KEY)) return;
+            e.accept(IRON_LINE.get());
+            e.accept(GOLD_REEL.get());
+            e.accept(DEEPGLASS_LINE.get());
+        });
     }
 }

@@ -6,9 +6,9 @@
  "display": {
   "firstperson_righthand": {
    "rotation": [
-    163.81,
-    29.18,
-    165.78
+    -90.0,
+    26.54,
+    101.98
    ],
    "translation": [
     -2.862,
@@ -23,9 +23,9 @@
   },
   "firstperson_lefthand": {
    "rotation": [
-    -16.19,
-    -29.18,
-    14.22
+    90.0,
+    -26.54,
+    78.02
    ],
    "translation": [
     -2.862,

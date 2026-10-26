@@ -1,0 +1,67 @@
+{
+  "ascent.rappel_pay": {
+    "subtitle": "subtitles.awaken.ascent.rappel_pay",
+    "sounds": [
+      {
+        "name": "awaken:ascent_rappel_pay",
+        "attenuation_distance": 16,
+        "stream": false
+      }
+    ]
+  },
+  "ascent.rappel_pay_glass": {
+    "subtitle": "subtitles.awaken.ascent.rappel_pay_glass",
+    "sounds": [
+      {
+        "name": "awaken:ascent_rappel_pay_glass",
+        "attenuation_distance": 16,
+        "stream": false
+      }
+    ]
+  },
+  "ascent.rappel_catch": {
+    "subtitle": "subtitles.awaken.ascent.rappel_catch",
+    "sounds": [
+      {
+        "name": "awaken:ascent_rappel_catch",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "ascent.rappel_kick": {
+    "subtitle": "subtitles.awaken.ascent.rappel_kick",
+    "sounds": [
+      {
+        "name": "awaken:ascent_rappel_kick",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "ascent.rappel_plant": {
+    "subtitle": "subtitles.awaken.ascent.rappel_plant",
+    "sounds": [
+      {
+        "name": "awaken:ascent_rappel_plant",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "ascent.rappel_reel": {
+    "subtitle": "subtitles.awaken.ascent.rappel_reel",
+    "sounds": [
+      {
+        "name": "awaken:ascent_rappel_reel",
+        "attenuation_distance": 12
+      }
+    ]
+  },
+  "ascent.rappel_fit": {
+    "subtitle": "subtitles.awaken.ascent.rappel_fit",
+    "sounds": [
+      {
+        "name": "awaken:ascent_rappel_fit",
+        "attenuation_distance": 12
+      }
+    ]
+  }
+}

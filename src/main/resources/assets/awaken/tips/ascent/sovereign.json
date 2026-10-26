@@ -1,5 +1,5 @@
 {
-  "text": "With your Aether full, press {key.awaken.ascend}: thirty seconds as the sky's own. High up, press it again to fall as Judgement.",
+  "text": "When your Aether is full, press {key.awaken.ascend} to take your sovereign form for thirty seconds. High in the air, press it again to dive down as Judgement.",
   "short": "{key.awaken.ascend}, Aether full",
   "priority": 75,
   "show_for": 220,

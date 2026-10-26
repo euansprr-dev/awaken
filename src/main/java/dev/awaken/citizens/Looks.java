@@ -23,12 +23,25 @@ final class Looks {
         if (carillon == null) return -1;
         if (pool == null) pool = build(carillon);
         boolean child = age == 0;
+        job = skinJob(job);
         int[] from = pool.get(bucket(job, child, build));
         if (from == null) from = pool.get(bucket(Roster.RESIDENT, child, build));
         if (from == null) from = pool.get(bucket(-1, child, -1));
         if (from == null || from.length == 0) return -1;
         long h = CitizenWork.mixHash(rec * 0x9E3779B97F4A7C15L ^ fnv(key));
         return from[(int) Math.floorMod(h, (long) from.length)];
+    }
+
+    /** The city trade whose clothes a village trade wears (SPEC §28.6): working clothes, not the Market's finery. */
+    static int skinJob(int job) {
+        return switch (job) {
+            case Roster.FARMER, Roster.WOODCUTTER, Roster.CARTER, Roster.HUNTER -> Roster.PORTER;
+            case Roster.MINER -> Roster.MASON;
+            case Roster.FISHER -> Roster.BOATMAN;
+            case Roster.SCRIBE -> Roster.CLERK;
+            case Roster.SHEPHERD, Roster.ELDER -> Roster.RESIDENT;
+            default -> job;
+        };
     }
 
     private static long bucket(int job, boolean child, int build) {

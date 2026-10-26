@@ -1,0 +1,202 @@
+# Between the Gates W5, "Caves worth entering" (SPEC §28.5): one look tour on GitHub's Mac runners, at the places this
+# world really made (`awaken delve goto <kind>` finds the nearest with each candidate's own site search and stands you at
+# its way in; with none within 1,600 it lays one). A sinkhole from the rim in the morning (its mist, the caption), across
+# at its shelves, from the diving lip, on a shelf, its vine cleft, its grotto's lode; the Delvers' mine (the adit, the
+# office, the drowned stope's cut walls, the minecart at the incline, the bridge); a chute from its mouth and from the
+# lake; a seep's violet hall, its heart asleep, awake and dying; a grotto's room, its geode and its curtain; the Crystal
+# Nest's tunnel out; a vent; the way home's thread; a rappel (the Ascent's pilot shoots its frames); the cave biomes' looks.
+# Run: tools/tour-ci.sh tools/autopilot/world-depth-w5.txt 1800 LENS=cinematic
+world autopilot_world_depth_w5 creative 52605260
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 40
+key dismiss
+wait 10
+screen close
+# the director holds paced lines for a world's first five minutes: run them through
+cmd tick sprint 6200
+wait 240
+cmd gamerule advance_time false
+cmd time set 1000
+cmd effect give @s minecraft:resistance 100000 4 true
+lens cinematic
+camera first
+# ---- the Horizon line at spawn: the first sinkhole, "The Opening · a way down" ----
+hud on
+wait 60
+shot w5_00_horizon_at_spawn
+
+# ---- a sinkhole: from the rim (its mist, its caption), its shelves, the lip, a shelf, the cleft, its grotto ----
+# goto keeps your pitch: look down into the hole from the rim (from eye height a level gaze sees only its far lip),
+# and shoot the caption while it shows (it holds about five seconds)
+look 0 32
+cmd awaken delve goto sinkhole
+wait 70
+shotnow w5_01_sinkhole_caption
+wait 80
+hud off
+shot w5_02_sinkhole_rim_mist
+cmd awaken delve place go view shelf
+wait 40
+shot w5_03_sinkhole_shelves
+cmd awaken delve place go dive pool
+wait 30
+shot w5_04_sinkhole_dive_lip
+cmd awaken delve place go shelf pool
+wait 30
+shot w5_05_sinkhole_on_a_shelf
+cmd awaken delve place go cleft view
+wait 30
+shot w5_06_sinkhole_vine_cleft_from_floor
+cmd awaken delve place go goal heart
+wait 40
+shot w5_07_sinkhole_grotto_lode
+
+# ---- the Delvers' mine: adit, office, stope, incline, bridge (night vision: the galleries' lanterns are far apart) ----
+cmd effect give @s minecraft:night_vision 100000 0 true
+cmd awaken delve goto mine
+wait 200
+shot w5_08_mine_adit
+cmd awaken delve place go office stope
+wait 30
+shot w5_09_mine_office
+cmd awaken delve place go stope incline
+wait 30
+shot w5_10_mine_stope_walls
+cmd awaken delve place go incline crawl
+wait 30
+shot w5_11_mine_incline_cart
+cmd awaken delve place go bridge goal
+wait 30
+shot w5_12_mine_bridge
+cmd awaken delve place go goal start
+wait 30
+shot w5_13_mine_breakthrough
+
+# ---- a chute: down from its mouth, up from the lake ----
+cmd awaken delve goto chute
+wait 160
+cmd awaken delve place go mouth lip
+# back out of the portal to see the draught breathe out of it
+cmd tp @s ^ ^ ^-5
+wait 30
+shot w5_14_chute_mouth_draught
+cmd awaken delve place go goal lip
+wait 30
+shot w5_15_chute_from_the_lake
+
+# ---- a seep below y 0 in its own light: the violet hall, its spires, the heart asleep, awake, dying, quiet ----
+cmd effect clear @s minecraft:night_vision
+cmd awaken delve goto seep
+wait 160
+cmd awaken delve place go hall spire1
+wait 60
+shot w5_16_seep_hall
+cmd awaken delve place go nest vent
+wait 30
+shot w5_17_seep_nest_and_vent
+cmd awaken delve place go goal socket
+wait 60
+shot w5_18_seep_heart
+cmd damage @e[type=awaken:seep_heart,limit=1,distance=..12] 1 minecraft:player_attack by @s
+wait 50
+shot w5_19_seep_heart_awake
+cmd kill @e[type=awaken:seep_heart,distance=..12]
+wait 14
+shot w5_20_seep_heart_dies
+wait 100
+shot w5_21_seep_quiet
+
+# ---- a grotto in its own light: the room and its geode, inside the geode, back at the curtain ----
+cmd awaken delve goto grotto
+wait 160
+cmd awaken delve place go room goal
+wait 40
+shot w5_22_grotto_room_geode
+cmd awaken delve place go goal pool
+wait 30
+shot w5_23_grotto_inside_geode
+cmd awaken delve place go room curtain
+wait 30
+shot w5_24_grotto_curtain_from_inside
+
+# ---- the Crystal Nest, joined to the caves ----
+cmd effect give @s minecraft:night_vision 100000 0 true
+cmd tp @s ~200 ~ ~ 90 0
+wait 160
+cmd spreadplayers ~ ~ 0 8 false @s
+wait 60
+cmd awaken fauna lair place thousandfoot
+wait 80
+look -90 5
+shot w5_25_crystal_nest_tunnel_out
+
+# ---- a vent's updraft over magma, and a glide up it ----
+cmd tp @s ~0 -30 ~200 0 0
+wait 160
+cmd awaken delve vent stage
+wait 40
+shot w5_26_vent_column
+cmd awaken ascent grant wings
+wait 10
+cmd tp @s ~0 ~4 ~6 180 -20
+camera back
+cmd awaken ascent pilot run glide
+wait 16
+shotnow w5_27_vent_glide
+wait 40
+camera first
+
+# ---- the way home underground: the Signal's thread on the floor ----
+cmd tp @s ~0 ~ ~200 0 0
+wait 160
+cmd spreadplayers ~ ~ 0 8 false @s
+wait 60
+cmd awaken delve home stage
+wait 60
+hud on
+cmd awaken delve home thread
+wait 14
+shotnow w5_28_way_home_thread
+wait 30
+shot w5_29_way_home_hud
+hud off
+
+# ---- the rappel: a shaft with a side passage, the pilot pays out, kicks, swings in (it shoots its own frames) ----
+cmd gamemode survival
+cmd tp @s ~300 160 ~ 180 20
+wait 120
+cmd awaken ascent rappel stage
+camera back
+look 90 15
+cmd awaken ascent pilot run rappel 17 w5_30_rappel
+wait 280
+camera first
+cmd gamemode creative
+
+# ---- the cave biomes' Lens looks ----
+cmd effect clear @s minecraft:night_vision
+cmd awaken delve senses goto lush_caves
+wait 200
+shot w5_31_look_lush
+cmd awaken delve senses goto dripstone_caves
+wait 200
+shot w5_32_look_dripstone
+cmd awaken delve senses goto deep_dark
+wait 200
+shot w5_33_look_deep_dark
+cmd awaken delve senses goto sulfur_caves
+wait 200
+shot w5_34_look_sulfur
+cmd awaken delve senses status
+quit

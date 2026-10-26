@@ -1,5 +1,5 @@
 {
-  "text": "{key.awaken.atlas} opens the Atlas: where you've been, and pins for what waits for you.",
+  "text": "Press {key.awaken.atlas} to open the Atlas. It shows where you've been and marks places worth coming back to.",
   "short": "{key.awaken.atlas}: the Atlas",
   "priority": 40,
   "show_for": 180,

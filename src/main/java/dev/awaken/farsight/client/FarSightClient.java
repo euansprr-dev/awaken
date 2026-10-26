@@ -208,6 +208,7 @@ public final class FarSightClient {
             unbind();
             if (level != voxelLevel) {
                 voxels.clear();
+                renderer.forgetSections();
                 voxelLevel = level;
             }
             bound = level;

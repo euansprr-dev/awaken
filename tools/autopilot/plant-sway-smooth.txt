@@ -1,0 +1,64 @@
+# Swaying plants stay smooth (SPEC 15). In the studio meadow at y 200 (built by plant-sway.txt; rebuilt here if
+# missing), the sway probe logs, frame by frame, the offsets the shader gives a few grass tips, a tall grass top, a
+# strand's end and a leaf, beside the same vertices on the old clock (raw game time):
+#   1. 20 consecutive frames at 60 fps, each also grabbed (screenshots/sway_frame_NN.png): sway-probe-frames.csv
+#   2. 30 s while the server is made to lag (256 new chunks force-loaded, big fills overhead), so the raw game clock
+#      is pulled back by the server's time syncs: sway-probe-seconds.csv
+#   3. 60 s around the next wind heading turn (the probe waits for it, up to 80 s): sway-probe-turn.csv
+# Charts: docs/spikes/plant-sway/plot_probe.py. Run: SLOT_WHO=grass-sway PACK=perf slot.sh tour tools/autopilot.sh
+# tools/autopilot/plant-sway-smooth.txt 600
+world sway779 creative 779
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+camera first
+hud off
+info
+cmd awaken terrain waving status
+cmd gamemode spectator
+cmd tp @s 988 203 772
+wait 300
+cmd fill 876 200 660 988 200 772 minecraft:grass_block keep
+cmd fill 989 200 660 1100 200 772 minecraft:grass_block keep
+cmd fill 876 200 773 988 200 884 minecraft:grass_block keep
+cmd fill 989 200 773 1100 200 884 minecraft:grass_block keep
+cmd fill 876 201 660 988 201 772 minecraft:short_grass replace air
+cmd fill 989 201 660 1100 201 772 minecraft:short_grass replace air
+cmd fill 876 201 773 988 201 884 minecraft:short_grass replace air
+cmd fill 989 201 773 1100 201 884 minecraft:short_grass replace air
+look 180 12
+wait 80
+# ---- 1. 20 consecutive frames
+cmd awaken terrain waving probe frames 20
+wait 80
+# ---- 2. 30 s with the server lagging
+cmd awaken terrain waving probe seconds 30
+wait 40
+cmd forceload add 3000 3000 3255 3255
+wait 60
+cmd fill 972 240 800 1003 271 831 minecraft:stone
+wait 40
+cmd fill 972 240 800 1003 271 831 minecraft:air
+wait 40
+cmd fill 972 240 800 1003 271 831 minecraft:stone
+wait 40
+cmd fill 972 240 800 1003 271 831 minecraft:air
+wait 200
+cmd forceload remove all
+wait 260
+# ---- 3. 60 s around the next heading turn
+cmd awaken terrain waving probe turn
+wait 2900
+cmd awaken terrain waving probe stop
+quit

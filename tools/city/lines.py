@@ -142,12 +142,12 @@ NAMED = {
     "teodor": {"stranger": ["Mind the stacks. Some of them bite."],
                "familiar": ["You've been reading. Your eyes do the squint."],
                "known": ["{name}, the Precursor logs disagree with each other. Isn't it wonderful?"]},
-    "kestrel": {"stranger": ["Runner! You owe me word from the square."],
-                "familiar": ["Letters for the camp, if you're going north. They're always waiting on something."],
-                "known": ["{name}. The roof's still yours. Come home when you can."]},
-    "sun": {"stranger": ["You're bleeding a little. Everyone is, here."],
-            "familiar": ["Eat something. Then come back."],
-            "known": ["{name}. How's the rest of you?"]},
+    "kestrel": {"stranger": ["Runner! You still haven't told me what happened in the square."],
+                "familiar": ["If you're heading north, I've got letters for the Wayfarer camp. They're always waiting on something."],
+                "known": ["{name}! Your room on the roof is still yours. Come home when you can."]},
+    "sun": {"stranger": ["You've got a few scrapes. Come and see me if you get hurt."],
+            "familiar": ["Make sure you eat something, and come back if you need patching up."],
+            "known": ["{name}! How are you feeling?"]},
 }
 
 # Said aloud to whoever is near (no name): the city's own noise.
@@ -186,12 +186,12 @@ NEWS = {
     "about": ["Hear ye! {name} caught a thief! Carillon thanks you!", "Hear ye! {name} fought the fire in the Works!",
               "Hear ye! {name}, hunter, walks among us! Mind your manners!"],
     # the land past the walls (SPEC §27.8): real places, read from the world; {gate} is "past the High Gate, to the north"
-    "wilds_gate": ["Hear ye! A gate's light stands {gate}! The Association pays for every floor!",
-                   "Hear ye! A gate is open {gate}! Its Lord waits at the bottom, they say!"],
-    "wilds_vault": ["Hear ye! The old vault {gate} hums again! Its door reads a hunter's rank, they say!",
-                    "Hear ye! Something sealed {gate}! It opens for the right hunter, they say!"],
-    "wilds_camp": ["Hear ye! The Wayfarers up the north road have their fires lit! Kestrel has letters for them!",
-                   "Hear ye! Smoke on the north road: the Wayfarers' camp! They need hands, they say!"],
+    "wilds_gate": ["Hear ye! A gate has opened {gate}! The Association pays for every floor you clear!",
+                   "Hear ye! There's a gate open {gate}! They say its Lord waits on the bottom floor!"],
+    "wilds_vault": ["Hear ye! The old vault {gate} has woken up! They say its door only opens for hunters of high enough rank!",
+                    "Hear ye! Something sealed has been found {gate}! They say it only opens for the right hunter!"],
+    "wilds_camp": ["Hear ye! The Wayfarers have set up camp up the north road! Kestrel has letters for them!",
+                   "Hear ye! There's smoke on the north road, it's the Wayfarer camp! They could use some help, they say!"],
 }
 
 # Events: who shouts what.

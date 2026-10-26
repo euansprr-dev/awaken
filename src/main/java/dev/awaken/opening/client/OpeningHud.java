@@ -73,6 +73,8 @@ final class OpeningHud {
 
     static void reset() {
         title = null;
+        barNote = null;
+        film = false;
         LINES.clear();
         QUEUE.clear();
         busyUntil = 0;
@@ -86,6 +88,16 @@ final class OpeningHud {
 
     static void title(String big, String small, int ticks) {
         enqueue(new Next(new Title(big, small, 0, ticks), null));
+    }
+
+    /** A scene outside a shot keeps the game's HUD out of the frame (a hand-over in your own eyes). */
+    static boolean film;
+
+    /** A caption in the lower bar, the way the sky shot names Carillon (a place, a step done), for n ticks. */
+    private static @Nullable Title barNote;
+
+    static void barNote(String big, String small, int ticks) {
+        barNote = new Title(big, small, OpeningClient.ticks(), ticks);
     }
 
     static void line(String who, String line, int ticks) {
@@ -168,6 +180,7 @@ final class OpeningHud {
         long now = OpeningClient.ticks();
         LINES.removeIf(l -> now > l.from + l.ticks + 20);
         if (title != null && now > title.from + title.ticks + 20) title = null;
+        if (barNote != null && now > barNote.from + barNote.ticks + 20) barNote = null;
     }
 
     /** The game's HUD steps aside while a shot holds the camera, under a black, or behind the eyelids. */
@@ -176,7 +189,7 @@ final class OpeningHud {
         if (id.equals(LAYER)) return;
         String path = id.getPath();
         if (path.equals("subtitle_overlay")) return;
-        boolean shot = OpeningCamera.active() || SkyShot.current != null;
+        boolean shot = OpeningCamera.active() || SkyShot.current != null || film;
         boolean hide = shot || black > 0.4F || lidsOn;
         // chat stays, except over a shot (it is a film then)
         if (path.equals("chat") && !shot) return;
@@ -218,6 +231,12 @@ final class OpeningHud {
         if (!OpeningCamera.active()) prompt(g, font, w, Math.min(h - 96, speech - 20), pt);
         if (waiting > 0 && !OpeningCamera.active()) waitBanner(g, font, w, h, pt, now);
         if (sky != null && sky.canSkip && OpeningCamera.active()) skipHint(g, font, w, h, pt);
+        else if (OpeningCamera.shot() instanceof OpeningCamera.Shot s && s.skippable() && OpeningCamera.age() > 10) {
+            float a = Mth.clamp((OpeningCamera.age() - 10) / 20F, 0, 1) * 0.7F;
+            String key = mc.options.keyJump.getTranslatedKeyMessage().getString();
+            String hint = "Hold " + key + " to skip";
+            g.text(font, hint, w - font.width(hint) - 14, h - 22, ((int) (a * 255) << 24) | ASH, false);
+        }
     }
 
     /** Feathered bars with a bronze hairline; as the flight lands, the place's name in the lower bar. */
@@ -231,6 +250,16 @@ final class OpeningHud {
         int hair = ((int) (0x55 * b) << 24) | BRONZE;
         g.fill(w / 6, bh - 1, w - w / 6, bh, hair);
         g.fill(w / 6, h - bh, w - w / 6, h - bh + 1, hair);
+        Title note = barNote;
+        if (note != null && bh > 12) {
+            float t = OpeningClient.ticks() - note.from;
+            float a = Mth.clamp(t / 16F, 0, 1) * Mth.clamp((note.ticks - t) / 16F + 1, 0, 1) * b;
+            if (a > 0.02F) {
+                Font font = Minecraft.getInstance().font;
+                spaced(g, font, note.big, 22, h - bh / 2 - (note.small.isEmpty() ? 4 : 8), 2, ((int) (a * 255) << 24) | PAPER, 1F);
+                if (!note.small.isEmpty()) spaced(g, font, note.small, 22, h - bh / 2 + 3, 1, ((int) (a * 200) << 24) | BRONZE, 1F);
+            }
+        }
         if (sky != null && OpeningCamera.active()) {
             int age = OpeningCamera.age();
             float a = Mth.clamp((age - (SkyShot.CARD + SkyShot.FLIGHT - 110)) / 20F, 0, 1)
@@ -238,7 +267,7 @@ final class OpeningHud {
             if (a > 0.02F && bh > 12) {
                 Font font = Minecraft.getInstance().font;
                 spaced(g, font, "CARILLON", 22, h - bh / 2 - 8, 2, ((int) (a * 255) << 24) | PAPER, 1F);
-                spaced(g, font, "THE RUNNERS' ROOST · FIRST LIGHT", 22, h - bh / 2 + 3, 1, ((int) (a * 200) << 24) | BRONZE, 1F);
+                spaced(g, font, "THE RUNNERS' ROOST · DAWN", 22, h - bh / 2 + 3, 1, ((int) (a * 200) << 24) | BRONZE, 1F);
             }
         }
     }
@@ -357,8 +386,8 @@ final class OpeningHud {
     private static void waitBanner(GuiGraphicsExtractor g, Font font, int w, int h, float pt, long now) {
         float a = Mth.clamp((now - waitingFrom + pt) / 20F, 0, 1);
         int ia = (int) (a * 230);
-        spacedCentered(g, font, "THE GATE IS DRAWING BREATH", w / 2, 26, 2, (ia << 24) | PAPER);
-        String n = waiting == 1 ? "Waiting for 1 hunter still running" : "Waiting for " + waiting + " hunters still running";
+        spacedCentered(g, font, "THE GATE IS OPENING", w / 2, 26, 2, (ia << 24) | PAPER);
+        String n = waiting == 1 ? "Waiting for 1 more hunter to get here" : "Waiting for " + waiting + " more hunters to get here";
         g.centeredText(font, Component.literal(n), w / 2, 40, ((int) (a * 200) << 24) | BRONZE);
     }
 

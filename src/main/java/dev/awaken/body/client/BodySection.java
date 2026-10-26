@@ -11,7 +11,7 @@ import net.minecraft.client.Minecraft;
 /** Status screen: the moves your body has and how to do them, so an unlock toast you missed can be found again. */
 final class BodySection extends UiSection {
     @Override public String title() { return "THE BODY"; }
-    @Override public int order() { return 330; }
+    @Override public int order() { return 30; } // right after the Ascent: the moves you have
 
     @Override
     public boolean visible() {

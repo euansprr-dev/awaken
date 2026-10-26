@@ -39,7 +39,8 @@ public final class GatesClient {
         bus.addListener(Blight::onFog);
         bus.addListener(GateHum::onTick);
         bus.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> ClientGates.clear());
-        StatusSections.add(StatusSections.Tab.GATE_MAP, new GateMapSection());
+        StatusSections.add(StatusSections.Tab.STATUS, new RunSection()); // a run's summary on the band's Status page
+        dev.awaken.core.api.MapMarks.registerGates(RunSection::marks); // the gates on the Atlas (the Gate Map is gone, SPEC §30)
         RigClient.init(modBus);
     }
 

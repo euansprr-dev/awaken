@@ -1,0 +1,44 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "awaken:block/banner_bellwatch_middle",
+    "cloth": "awaken:block/banner_bellwatch_middle",
+    "rod": "awaken:block/banner_rod",
+    "rope": "awaken:block/hang_rope"
+  },
+  "elements": [
+    {
+      "from": [
+        8,
+        0,
+        2
+      ],
+      "to": [
+        8,
+        16,
+        14
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            2,
+            0,
+            14,
+            16
+          ],
+          "texture": "#cloth"
+        },
+        "west": {
+          "uv": [
+            2,
+            0,
+            14,
+            16
+          ],
+          "texture": "#cloth"
+        }
+      }
+    }
+  ]
+}

@@ -187,7 +187,7 @@ public final class OpeningModule {
             if (w.cinematicAt >= 0) return List.of();
             int n = OpeningDirector.runners(p.level().getServer()).size();
             if (n == 0) return List.of();
-            return List.of(NowHooks.Suggestion.of("opening:waiting", 95, "The gate is drawing breath · waiting for " + n + " hunter" + (n == 1 ? "" : "s")));
+            return List.of(NowHooks.Suggestion.of("opening:waiting", 95, "The gate is opening · waiting for " + n + " hunter" + (n == 1 ? "" : "s")));
         }
         if (b == Prologue.REGISTRY && OpeningDirector.state(p).step == OpeningRegistry.WALK) {
             OpeningPlaces at = OpeningPlaces.get();
@@ -254,7 +254,7 @@ public final class OpeningModule {
             opening.then(Commands.literal("skip").executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 OpeningDirector.skip(p);
-                c.getSource().sendSuccess(() -> Component.literal("Opening skipped. The city is yours."), false);
+                c.getSource().sendSuccess(() -> Component.literal("Opening skipped. You're free to explore."), false);
                 return 1;
             }).then(Commands.argument("player", EntityArgument.player()).requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = EntityArgument.getPlayer(c, "player");
@@ -273,7 +273,7 @@ public final class OpeningModule {
                         ServerPlayer p = c.getSource().getPlayerOrException();
                         String b = StringArgumentType.getString(c, "beat");
                         boolean ok = jump(p, b);
-                        c.getSource().sendSuccess(() -> Component.literal(ok ? "Opening beat " + b : "No such beat (sky, run, act2, act3, square, arrival, wake, registry, lens, walk0..walk5, desk)"), false);
+                        c.getSource().sendSuccess(() -> Component.literal(ok ? "Opening beat " + b : "No such beat (sky, run, act2, act3, square, arrival, wake, registry, lens, walk0..walk5, desk, letters)"), false);
                         return ok ? 1 : 0;
                     })));
             opening.then(Commands.literal("reset").requires(AwakenCommands.admin()).executes(c -> {
@@ -379,6 +379,15 @@ public final class OpeningModule {
                 OpeningRegistry.step(p, OpeningRegistry.SIGN);
                 Vec3 to = at.deskStand();
                 p.teleportTo(server.overworld(), to.x, to.y, to.z, java.util.Set.of(), -90F, 30F, true);
+            }
+            case "letters" -> {
+                // the Registry's last beat (tours): Bram says what a hunter is for, then holds out the letters for Ilse
+                Progression.awaken(p);
+                OpeningStage.ensure(server.overworld(), at);
+                if (Story.prologue(p) != Prologue.REGISTRY) OpeningDirector.toRegistry(p);
+                OpeningRegistry.step(p, OpeningRegistry.LETTERS);
+                Vec3 to = at.deskStand();
+                p.teleportTo(server.overworld(), to.x, to.y, to.z, java.util.Set.of(), -90F, 10F, true);
             }
             case "registry", "lens" -> {
                 Progression.awaken(p);

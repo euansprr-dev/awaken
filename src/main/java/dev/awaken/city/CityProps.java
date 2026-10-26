@@ -45,6 +45,8 @@ final class CityProps {
     static final BlockState[][] PLANTER = new BlockState[2][BLOOM.length];
     static final BlockState[] NET = new BlockState[2], WINDLASS = new BlockState[2];
     static final BlockState POLE = of("awaken:line_pole[top=false]"), POLE_TOP = of("awaken:line_pole[top=true]");
+    /** A pole's top that ends a line, by the way the line leaves it (N E S W): its rope tied through and out to the line. */
+    static final BlockState[] POLE_ROPE = new BlockState[4];
     /** hang_line[axis][hang: rope laundry bunting lanterns][set][sag] */
     static final BlockState[][][][] LINE = new BlockState[2][4][4][3];
     static final BlockState COAL = of("minecraft:coal_block"), RAW_IRON = of("minecraft:raw_iron_block");
@@ -61,6 +63,7 @@ final class CityProps {
         String[] hangs = {"rope", "laundry", "bunting", "lanterns"};
         String[] loads = {"empty", "crates", "sacks", "casks", "produce"};
         for (int d = 0; d < 4; d++) {
+            POLE_ROPE[d] = of("awaken:line_pole[top=true,rope=" + SIDE[d] + "]");
             for (int c = 0; c < 6; c++)
                 for (int s = 0; s < 4; s++)
                     AWNING_KIT[d][c][s] = of("awaken:awning[facing=" + SIDE[d] + ",colour=" + AWNING_COLOURS[c] + ",shape=" + shapes[s] + "]");
@@ -115,7 +118,8 @@ final class CityProps {
     }
 
     static void prop(Ctx c, CityBuffer b, Prop p) {
-        if (p.x1() < b.px0 || p.x0() > b.x1() || p.z1() < b.pz0 || p.z0() > b.z1()) return;
+        int m = p.kind().equals("line") ? REACH : 0; // a line may run on to the facade (line())
+        if (p.x1() + m < b.px0 || p.x0() - m > b.x1() || p.z1() + m < b.pz0 || p.z0() - m > b.z1()) return;
         switch (p.kind()) {
             case "stall" -> stall(b, p);
             case "line" -> line(c, b, p);
@@ -198,21 +202,53 @@ final class CityProps {
             default -> 0;
         };
         int n = axis == 0 ? p.x1() - p.x0() + 1 : p.z1() - p.z0() + 1;
-        for (int k = 0; k < n; k++) {
-            int x = axis == 0 ? p.x0() + k : p.x0(), z = axis == 0 ? p.z0() : p.z0() + k;
-            boolean pole = k == 0 && p.facing().contains("a") || k == n - 1 && p.facing().contains("b");
+        boolean poleA = p.facing().contains("a"), poleB = p.facing().contains("b");
+        int ux = axis == 0 ? 1 : 0, uz = 1 - ux;
+        // an end without a pole runs on across the open cells to the building beyond (the plan can end a line a cell or
+        // two short of the facade, over the street before it: the rope hung there in the air)
+        int ea = poleA ? 0 : reach(c.plan, p.x0() - ux, p.z0() - uz, -ux, -uz);
+        int eb = poleB ? 0 : reach(c.plan, p.x0() + ux * n, p.z0() + uz * n, ux, uz);
+        for (int k = -ea; k < n + eb; k++) {
+            int x = p.x0() + ux * k, z = p.z0() + uz * k;
+            boolean pole = k == 0 && poleA || k == n - 1 && poleB;
             if (pole) {
-                int g = c.plan.lift(x, z);
+                int g = c.view.lift(x, z);
                 for (int ry = g + 1; ry < p.ry(); ry++) air(b, x, ry, z, POLE);
-                air(b, x, p.ry(), z, POLE_TOP);
+                // the line leaves end a toward its far end (east or south), end b back (west or north)
+                air(b, x, p.ry(), z, POLE_ROPE[k == 0 ? (axis == 0 ? E : S) : (axis == 0 ? W : N)]);
                 continue;
             }
-            double t = Math.sin(Math.PI * (k + 0.5) / n);
-            int sag = n >= 6 ? (t > 0.85 ? 2 : t > 0.45 ? 1 : 0) : n >= 3 && t > 0.8 ? 1 : 0;
+            int sag = 0;
+            if (k >= 0 && k < n) {
+                double t = Math.sin(Math.PI * (k + 0.5) / n);
+                sag = n >= 6 ? (t > 0.85 ? 2 : t > 0.45 ? 1 : 0) : n >= 3 && t > 0.8 ? 1 : 0;
+                // beside a pole the rope is level with the one tied out of its top (a sag-0 rope's height)
+                if (k == 1 && poleA || k == n - 2 && poleB) sag = 0;
+            }
             // laundry changes from world to world (decision 3): some days a line is only rope and pegs
             int s = hang == 1 ? Math.floorMod(set + c.pct(x, z, 520), 4) : set;
-            air(b, x, p.ry(), z, LINE[axis][hang][s][sag]);
+            // the run on to the facade is bare rope (nothing hangs over the street before the door)
+            air(b, x, p.ry(), z, k >= 0 && k < n ? LINE[axis][hang][s][sag] : LINE[axis][0][0][0]);
         }
+    }
+
+    /** How far a line runs on past its end (at most {@link #REACH}): across open cells, if a building stands beyond them. */
+    static final int REACH = 3;
+
+    private static int reach(CityPlan plan, int x, int z, int dx, int dz) {
+        int k = 0;
+        while (k < REACH && open(plan.kind(x, z))) {
+            x += dx;
+            z += dz;
+            k++;
+        }
+        byte beyond = plan.kind(x, z);
+        return beyond == PLOT || beyond == LANDMARK || beyond == WALL ? k : 0;
+    }
+
+    private static boolean open(byte kind) {
+        return kind == AVENUE || kind == STREET || kind == LANE || kind == ALLEY || kind == SQUARE || kind == PLAZA || kind == QUAY
+                || kind == YARD || kind == GARDEN || kind == FREE;
     }
 
     /** A cart and its shafts: the body at the end away from the way the shafts point. */

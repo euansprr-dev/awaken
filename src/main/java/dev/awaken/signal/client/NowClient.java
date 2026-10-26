@@ -23,13 +23,65 @@ public final class NowClient {
 
     static void accept(SignalPayloads.Now now) {
         version++;
-        String id = now.top().map(NowHooks.Suggestion::id).orElse("");
+        current = now;
+        joined = null;
+        String id = top().map(NowHooks.Suggestion::id).orElse("");
         if (!id.equals(topId)) {
             topId = id;
             changedAt = ticks;
-            dev.awaken.core.audio.client.AudioUi.nowChanged(now.top().map(NowHooks.Suggestion::priority).orElse(0));
+            dev.awaken.core.audio.client.AudioUi.nowChanged(top().map(NowHooks.Suggestion::priority).orElse(0));
         }
-        current = now;
+    }
+
+    // ---- a place the map points you at (SPEC §30.5) ------------------------------------------------------------------
+
+    /** The map's "Point me there": it leads the Now line until you're within {@link #PIN_REACHED} blocks of it. */
+    public static final String PIN_ID = "awaken:map_pin";
+    static final int PIN_PRIORITY = 86, PIN_REACHED = 12;
+    private static NowHooks.Suggestion pin;
+    private static net.minecraft.resources.Identifier pinDimension;
+    private static List<NowHooks.Suggestion> joined;
+
+    /** Points the Now line (and its compass and thread) at {@code at} in the player's dimension, until reached. */
+    public static void pin(String text, BlockPos at) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+        pin = NowHooks.Suggestion.at(PIN_ID, PIN_PRIORITY, text, at.immutable());
+        pinDimension = mc.player.level().dimension().identifier();
+        joined = null;
+        version++;
+        topId = PIN_ID;
+        changedAt = ticks;
+        threadFor = ""; // a new place: its thread may run
+        lastThread = -100_000;
+        dev.awaken.core.audio.client.AudioUi.nowChanged(PIN_PRIORITY);
+    }
+
+    public static void unpin() {
+        if (pin == null) return;
+        pin = null;
+        joined = null;
+        version++;
+        topId = current.top().map(NowHooks.Suggestion::id).orElse("");
+    }
+
+    /** Where the map's pin is, if one is set. */
+    public static Optional<BlockPos> pinned() {
+        return pin == null ? Optional.empty() : pin.where();
+    }
+
+    private static Optional<NowHooks.Suggestion> top() {
+        return pin != null ? Optional.of(pin) : current.top();
+    }
+
+    /** Reached (within 12 blocks, in its dimension): the pin has done its job. */
+    private static void checkPin() {
+        Minecraft mc = Minecraft.getInstance();
+        if (pin == null || mc.player == null || pin.where().isEmpty()) return;
+        if (!mc.player.level().dimension().identifier().equals(pinDimension)) return;
+        BlockPos at = pin.where().get();
+        double dx = at.getX() + 0.5 - mc.player.getX(), dz = at.getZ() + 0.5 - mc.player.getZ();
+        if (dx * dx + dz * dz < PIN_REACHED * PIN_REACHED) unpin();
     }
 
     /** Changes whenever new suggestions arrive (the tracker rebuilds its text then). */
@@ -39,6 +91,7 @@ public final class NowClient {
 
     static void tick() {
         ticks++;
+        if (ticks % 10 == 0) checkPin();
         thread();
     }
 
@@ -76,12 +129,15 @@ public final class NowClient {
         lastX = p.getX();
         lastZ = p.getZ();
         still = moved ? 0 : still + 1;
-        var top = current.top();
-        if (top.isEmpty() || top.get().where().isEmpty() || mc.gui.screen() != null || !p.level().dimension().identifier().equals(current.dimension())) return;
+        var top = top();
+        var dim = pin != null ? pinDimension : current.dimension();
+        if (top.isEmpty() || top.get().where().isEmpty() || ownsWay(top.get().id()) || mc.gui.screen() != null
+                || !p.level().dimension().identifier().equals(dim)) return;
         BlockPos at = top.get().where().get();
         double dx = at.getX() + 0.5 - p.getX(), dz = at.getZ() + 0.5 - p.getZ(), dist = Math.sqrt(dx * dx + dz * dz);
         if (dist < 12 || ticks - lastThread < THREAD_EVERY) return;
-        boolean fresh = !topId.equals(threadFor) && sinceChange() == 30;
+        // the map's pin runs its thread the first moment after the map has closed
+        boolean fresh = !topId.equals(threadFor) && (sinceChange() == 30 || topId.equals(PIN_ID) && sinceChange() >= 30);
         if (!fresh && still != IDLE) return;
         threadFor = topId;
         lastThread = runAt = ticks;
@@ -97,13 +153,41 @@ public final class NowClient {
         return ticks - changedAt;
     }
 
+    /** What the Now line offers, the map's pin first when one is set. */
     public static List<NowHooks.Suggestion> suggestions() {
-        return current.suggestions();
+        if (pin == null) return current.suggestions();
+        if (joined == null) {
+            var all = new java.util.ArrayList<NowHooks.Suggestion>(current.suggestions().size() + 1);
+            all.add(pin);
+            all.addAll(current.suggestions());
+            joined = List.copyOf(all);
+        }
+        return joined;
     }
 
     /** " ↗ 40 m" for a suggestion with a place in the player's dimension; empty otherwise. */
     public static Optional<String> compass(NowHooks.Suggestion s) {
-        return s.where().isEmpty() ? Optional.empty() : compass(s.where().get(), current.dimension());
+        if (s.where().isEmpty() || ownsWay(s.id())) return Optional.empty();
+        return compass(s.where().get(), s == pin ? pinDimension : current.dimension());
+    }
+
+    /** Ids (prefixes) of suggestions that show their own way: no straight thread, no compass after their text. */
+    private static volatile String[] ownWay = new String[0];
+
+    /**
+     * A suggestion whose text already says the way and whose module draws its own thread (the way home underground,
+     * SPEC §28.5: "Surface ↑ 34 · NE 60", its thread along the path you came by): the straight thread and the compass
+     * leave it alone.
+     */
+    public static synchronized void ownWay(String idPrefix) {
+        String[] next = java.util.Arrays.copyOf(ownWay, ownWay.length + 1);
+        next[ownWay.length] = idPrefix;
+        ownWay = next;
+    }
+
+    static boolean ownsWay(String id) {
+        for (String p : ownWay) if (id.startsWith(p)) return true;
+        return false;
     }
 
     /** " ↗ 40 m" toward {@code at}, when the player stands in {@code dimension} (the Horizon line uses it too). */
@@ -123,5 +207,7 @@ public final class NowClient {
         version++;
         current = new SignalPayloads.Now(current.dimension(), List.of());
         topId = "";
+        pin = null;
+        joined = null;
     }
 }

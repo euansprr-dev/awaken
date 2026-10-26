@@ -43,7 +43,7 @@ public final class WildModel extends EntityModel<WildRenderState> {
     private final float[] lookYaw, lookPitch;
     private final ModelPart[] bridle;
     private final int[] holds = new int[HOLD_BITS.length];
-    private final int idle, walk, run, fly, death, hurt, bite, angry;
+    private final int idle, walk, run, fly, death, hurt, bite, angry, sleep, beat;
     private final LifeRig life;
 
     public WildModel(ModelPart root, HeroRig rig) {
@@ -80,6 +80,8 @@ public final class WildModel extends EntityModel<WildRenderState> {
         hurt = clip("hurt");
         bite = clip("bite");
         angry = clip("angry");
+        sleep = clip("sleep");
+        beat = clip("beat");
         life = LifeRig.of(root, HeroModel.profile(rig.id), rig, idle >= 0);
     }
 
@@ -100,7 +102,8 @@ public final class WildModel extends EntityModel<WildRenderState> {
         return clip < 0 ? 0.0F : clips.get(clip).length();
     }
 
-    private static AnimationDefinition definition(HeroRig.Clip c) {
+    /** A rig clip as a vanilla animation definition (bake it against the model's root). */
+    public static AnimationDefinition definition(HeroRig.Clip c) {
         AnimationDefinition.Builder b = AnimationDefinition.Builder.withLength(c.length());
         if (c.loop()) b.looping();
         for (HeroRig.Track t : c.tracks()) {
@@ -175,6 +178,12 @@ public final class WildModel extends EntityModel<WildRenderState> {
             float w = l != null && i + 2 < 12 ? l.ease(i + 2, want, HOLD_BITS[i] == WildPose.S_HANG ? 0.05F : 0.3F) : want;
             if (w > 0.001F) play(holds[i], t, w * live);
         }
+        if (sleep >= 0) {
+            // asleep, the seep heart's plates close slowly round its core; waking, they open as slowly
+            float want = (s.wild & WildPose.S_SLEEP) != 0 ? 1.0F : 0.0F;
+            float w = l != null ? l.ease(12, want, 0.7F) : want;
+            if (w > 0.001F) play(sleep, t, w * live);
+        }
         float lookW = 1.0F - Mth.clamp(s.cueWeight, 0.0F, 1.0F) * 0.7F;
         if (hanging) lookW *= 0.3F;
         float yaw = Mth.clamp(s.yRot, -170.0F, 170.0F) * Mth.DEG_TO_RAD * lookW;
@@ -188,6 +197,7 @@ public final class WildModel extends EntityModel<WildRenderState> {
         play(s.cueClip, s.cueTime, s.cueWeight * live);
         once(bite, s.melee, live);
         once(hurt, s.hurt, live);
+        once(beat, s.beat, live);
         life.apply(l, s);
     }
 }

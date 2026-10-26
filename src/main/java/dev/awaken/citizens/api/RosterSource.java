@@ -19,16 +19,18 @@ public interface RosterSource {
 
     /** Carillon's roster from the jar ({@code data/awaken/city/citizens.json}); its graph is the plan's (null here). */
     static RosterSource jar() {
-        return () -> new Built(Roster.get(), null, List.of(), List.of(), List.of());
+        return () -> new Built(Roster.get(), null, List.of(), List.of(), List.of(), List.of());
     }
 
     /**
      * What a source yields. Everything but the roster is the settlement's ground, as offsets from its origin (x east,
      * z south, ry up): the street graph its people walk ({@code null}: Carillon's plan), its lots (plots an event can use,
-     * with their tags), water cells (a bucket line's source: a well, a pier) and district names (index = district id;
-     * id 0 is the settlement as a whole).
+     * with their tags), water cells (a bucket line's source: a well, a pier), district names (index = district id;
+     * id 0 is the settlement as a whole) and the client's emitters (chimneys and the places that sound: x, ry, z, kind;
+     * W3, SPEC §28.6).
      */
-    record Built(@Nullable Roster roster, @Nullable Graph graph, List<Lot> lots, List<int[]> water, List<String> districts) {}
+    record Built(@Nullable Roster roster, @Nullable Graph graph, List<Lot> lots, List<int[]> water, List<String> districts,
+                 List<int[]> emitters) {}
 
     /**
      * A street graph: node positions (x, z block centres; ry the paving's top block above the origin), kinds

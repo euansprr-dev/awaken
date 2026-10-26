@@ -345,6 +345,33 @@ styled("shieldblade", lean=3, sink=0.3)
 styled("warstaff", lean=3, sink=0.2)
 styled("precursor", lean=2)
 
+# Third person from first person's blade (arms_rig4.py): for its styles each move's weapon follows first person's own
+# path and the body follows it (the chest turning, both hands on the grip); every other move keeps its kind's poses.
+# BASE keeps every clip as its kind made it (the rig's bodies). A rigged style plays its own slide, fall and dodge
+# moves (ArmsClips.OWN_SHARED) and holds its own heavy's draw while it charges (arms_<style>_heavy_charge).
+BASE = dict(CLIPS)
+
+
+def _rig():
+    import arms_rig4 as R4
+    data = R4.load()
+    for style in R4.STYLES:
+        moves = data.get(style, {})
+        for move, d in moves.items():
+            own = f"arms_{style}_{move}"
+            base = own if own in BASE else f"arms_{move}"
+            if base not in BASE:
+                continue
+            CLIPS[own], CLIPS[own + "_bent"] = R4.make_clips(own, BASE[base], BASE[base + "_bent"], d,
+                                                             f"{style}: {move} (from first person's blade)")
+        if "heavy" in moves:
+            base = f"arms_{style}_heavy" if f"arms_{style}_heavy" in BASE else "arms_heavy"
+            for c_ in R4.charge_clips(style, BASE[base], BASE[base + "_bent"], moves["heavy"]):
+                CLIPS[c_.name] = c_
+
+
+_rig()
+
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Output, checks, previews

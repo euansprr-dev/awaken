@@ -75,8 +75,13 @@ public final class Scenes extends SavedData {
             Scene.CODEC.listOf().optionalFieldOf("scenes", List.of()).forGetter(s -> List.copyOf(s.scenes)),
             Codec.STRING.listOf().optionalFieldOf("residents", List.of()).forGetter(s -> List.copyOf(s.residents)),
             Codec.LONG.optionalFieldOf("next_id", 1L).forGetter(s -> s.nextId),
-            Codec.LONG.optionalFieldOf("camp").forGetter(s -> s.camp == NONE ? Optional.empty() : Optional.of(s.camp))
-    ).apply(i, (schema, scenes, residents, next, camp) -> new Scenes(scenes, residents, next, camp.orElse(NONE))));
+            Codec.LONG.optionalFieldOf("camp").forGetter(s -> s.camp == NONE ? Optional.empty() : Optional.of(s.camp)),
+            Codec.BOOL.optionalFieldOf("camp_built", false).forGetter(s -> s.campBuilt)
+    ).apply(i, (schema, scenes, residents, next, camp, built) -> {
+        Scenes s = new Scenes(scenes, residents, next, camp.orElse(NONE));
+        s.campBuilt = built;
+        return s;
+    }));
 
     public static final SavedDataType<Scenes> TYPE = new SavedDataType<>(Awaken.id("living_scenes"), Scenes::new, CODEC);
 
@@ -85,6 +90,8 @@ public final class Scenes extends SavedData {
     long nextId;
     /** The camp's ground once found (dry land nearest the nominal spot), else NONE. */
     long camp;
+    /** Whether the camp round the fire has been laid (bedrolls, logs, packs, the pot: {@link Camp#build}). */
+    boolean campBuilt;
     private final transient Map<UUID, Long> lastScene = new HashMap<>();
 
     public Scenes() {
@@ -131,6 +138,7 @@ public final class Scenes extends SavedData {
         ServerLevel level = server.overworld();
         Scenes s = get(server);
         s.residents(level);
+        Camp.rest(server);
         long day = PlayDays.current(server);
         boolean changed = s.scenes.removeIf(sc -> sc.owner.isPresent() && day - sc.day >= 2 && !taken(server, sc) && fade(level, sc));
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
@@ -138,8 +146,9 @@ public final class Scenes extends SavedData {
             changed |= s.maybeScene(level, p, day);
             dev.awaken.core.AwakenNet.send(p, new dev.awaken.living.LivingNet.Tells(s.tells(p)));
             // the camp's smoke, seen from afar (vanilla campfire smoke only rises within ~32 blocks of you)
-            if (s.camp != NONE && BlockPos.of(s.camp).distSqr(p.blockPosition().atY(BlockPos.of(s.camp).getY())) < 1000 * 1000) {
-                dev.awaken.core.AwakenNet.send(p, new dev.awaken.living.LivingNet.CampSmoke(BlockPos.of(s.camp)));
+            BlockPos smoke = s.camp == NONE ? null : Camp.fire(server);
+            if (smoke != null && smoke.distSqr(p.blockPosition().atY(smoke.getY())) < 1000 * 1000) {
+                dev.awaken.core.AwakenNet.send(p, new dev.awaken.living.LivingNet.CampSmoke(smoke));
             }
         }
         if (changed) s.setDirty();
@@ -362,6 +371,28 @@ public final class Scenes extends SavedData {
         return new BlockPos(map.centreX() + 6, 0, map.centreZ() - (city ? CAMP_DIST_CITY : CAMP_DIST_CLASSIC));
     }
 
+    /** A resident Wayfarer ({@code ilse}, {@code hettie}) in the loaded world near the camp, or null. */
+    public static @Nullable Wayfarer resident(MinecraftServer server, String who) {
+        ServerLevel level = server.overworld();
+        BlockPos at = marker(server, 0, "camp");
+        if (at == null || !level.hasChunkAt(at)) return null;
+        var near = level.getEntitiesOfClass(Wayfarer.class, new net.minecraft.world.phys.AABB(at).inflate(48, 24, 48), w -> w.who().equals(who) && w.isAlive());
+        return near.isEmpty() ? null : near.getFirst();
+    }
+
+    /** Dev and tours: the ground at a column near {@code at} (dry land within 6, else the top block). */
+    public static BlockPos ground(ServerLevel level, BlockPos at) {
+        level.getChunk(at.getX() >> 4, at.getZ() >> 4);
+        BlockPos dry = dryLand(level, at, 6);
+        return dry != null ? dry : at.atY(level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at.getX(), at.getZ()));
+    }
+
+    /** Where a resident stands now (the Now line's compass points at Ilse herself), or null. */
+    public static @Nullable BlockPos residentAt(MinecraftServer server, String who) {
+        Wayfarer w = resident(server, who);
+        return w == null ? null : w.blockPosition();
+    }
+
     /** Dev and tours: the player's newest open scene, or null. */
     public static @Nullable BlockPos newest(ServerPlayer p) {
         Scene best = null;
@@ -432,7 +463,15 @@ public final class Scenes extends SavedData {
                 place(level, "hettie", c.offset(9, 0, -4), 12, false);
             }
         }
-        if (camp != NONE) campFire(level, BlockPos.of(camp));
+        if (camp != NONE) {
+            campFire(level, BlockPos.of(camp));
+            BlockPos fire = campBuilt ? null : Camp.fire(server);
+            if (fire != null && near(level, fire, 96)) {
+                Camp.build(level, fire);
+                campBuilt = true;
+                setDirty();
+            }
+        }
         // Hale stands on Carillon's quartermaster spot (kept clear by the city); in a classic world, by the camp
         BlockPos post = dev.awaken.core.api.CityHooks.spot(level, "quartermaster");
         if (post != null) placeAt(level, "hale", post);
@@ -478,6 +517,7 @@ public final class Scenes extends SavedData {
         }
         BlockPos fire = dryLand(level, column, 6);
         if (fire == null) return;
+        Camp.forget();
         level.setBlock(fire.below(), net.minecraft.world.level.block.Blocks.HAY_BLOCK.defaultBlockState(), net.minecraft.world.level.block.Block.UPDATE_ALL);
         level.setBlock(fire, net.minecraft.world.level.block.Blocks.CAMPFIRE.defaultBlockState()
                 .setValue(net.minecraft.world.level.block.CampfireBlock.SIGNAL_FIRE, true), net.minecraft.world.level.block.Block.UPDATE_ALL);
@@ -499,7 +539,7 @@ public final class Scenes extends SavedData {
             BlockPos camp = marker(p.level().getServer(), 0, "camp");
             if (camp != null) {
                 if (camp.distSqr(p.blockPosition().atY(camp.getY())) < 24 * 24) dev.awaken.progression.Progression.setCounter(p, CAMP_REACHED, 1);
-                else if (camp.distSqr(p.blockPosition().atY(camp.getY())) < 1200 * 1200) out.add(new HorizonHooks.Site("living:camp", "Wayfarers' fire", camp, "", false));
+                else if (camp.distSqr(p.blockPosition().atY(camp.getY())) < 1200 * 1200) out.add(new HorizonHooks.Site("living:camp", "Wayfarer camp", camp, "", false));
             }
         }
         QuestState qs = QuestEngine.state(p);

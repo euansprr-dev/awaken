@@ -170,9 +170,9 @@ within 8 blocks) windows become a compact toast and queue. Actions answered with
 Visual: deep glass `#0F1724` at 88% alpha, edge `#7FC3FF`, corner brackets, title white, labels pale, "NOT TRUE YET" amber
 `#FFCF7A`, warnings `#FF8A7A`.
 
-Status screen (key **K**): tabs Status · Truths · Codex · Gate Map. Status shows level, rank, path, title, stats with
-+ buttons when points unspent, energy, Echoes, the Spine line, active Directives, and the power loadout section
-(provided by `powers` via `StatusSections`).
+The band (key **K**, §30): six pages, Status · Powers · Journal · Truths · Codex · Map. Status shows level, rank, path,
+title and XP, the stats with + buttons when points are unspent, then the Journal; Powers holds the loadout (provided by
+`powers` via `StatusSections`); the Map page is the Atlas.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -345,6 +345,22 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   lots, water, districts)`; `RosterSource.jar()` is Carillon's; `RosterBuilder` builds one in code (nodes, streets, lots,
   places with spots, routes, smithy, wash place, lamp, bell, bakery, tavern, stall, households, groups, people and their
   days, extras).
+  (W3, §28.6) `Settlements.onTalk(Talk)` (a settlement other than Carillon answers a player's talk first: `talk(ServerPlayer,
+  Settlement, rec)`), `Settlements.installVoice(Voice)` (`standing(Settlement, ServerPlayer)` "stranger|known|friend|kin",
+  `fill(Settlement, ServerPlayer, line)`); `Settlement.records()`, `job(rec)`, `personName(rec)`, `age(rec)`, `body(rec)`,
+  `say(ServerPlayer, rec, line, ticks)`, `acquaint(ServerPlayer, amount, ceiling)`; `RosterBuilder.emitter(x, ry, z, kind)`
+  (0 bakery, 1 house, 2 tavern, 3 forge, 6 mill, 7 well) and `RosterSource.Built.emitters`.
+- `dev.awaken.village.api.Villages` (§28.6) — AWAKEN's settlements: `record View(key, name, kind, family, origin, radius,
+  settlement, people)`, `settlementAt(Level, BlockPos)`, `nearest(Level, BlockPos, within)`, `all(Level)`,
+  `standing(ServerPlayer, key)` (STRANGER 0, KNOWN 1, FRIEND 2, KIN 3), `addStanding(ServerPlayer, key, points, why)`,
+  `damage(server, key)` (`record Damage(pos, original, day)`), `repaired(server, key, pos)`, `history(server, key)` and
+  `history(server, key, line)`, `prosperity`/`addProsperity`, `mood`/`addMood` (0-100), `reserved(Level, BlockPos,
+  margin)` (a settlement's ground, planned ones included: gates and Hearths keep off).
+- `dev.awaken.city.SettlementPaint` / `PlanView` / `VillageStyles` (§28.6) — the city's grammar for other settlements:
+  a `Layout` (a `PlanView` of ground kinds, heights and plots, its origin and street level, its own ground and pieces on a
+  `Canvas`, who lives in each plot as an `Interior`) painted per chunk by `paintChunk` into a proto chunk (`sweep` after);
+  `standingCells`, `chimneys`, `census`, `fingerprint`, `dump` for tests and the studio; styles keyed by land and wealth in
+  `Plot.district` (`VillageStyles.district(family, wealth)`).
 - `dev.awaken.core.audio.MusicLayers` — the layered music: `register(Slot, priority, name, Provider)` (a provider names a
   player's context `<ns>:<path>`, read from `assets/<ns>/music_layers/<path>.json`, or null; it may set the given
   `Intensity.Signals`' `pressure`, `forced` (0..3) and `arrival`), `current(ServerPlayer, Slot)`, `level(ServerPlayer,
@@ -448,7 +464,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   `broken(Entity)`, `focused(Entity)` (the local fighter's focus). Installed by Arms' client; zero until then.
 - `dev.awaken.arms.Arms` (§24) — `styleOf(ItemStack|Item)` (the fighting style, or null for tools and bare hands),
   `guards(ItemStack)`, `fights(LivingEntity)`, `posture(LivingEntity)` (0..1, server), `broken(LivingEntity)` (server),
-  `tellSound(Strikes.Kind)` (the class's one voice; the mobs module plays it with each tell).
+  `tellSound(Strikes.Kind)` (the class's one voice; the mobs module plays it with each tell), `untold(DamageSource)`
+  (a creature's own melee with no wind-up to read: not ours, not `#awaken:told_melee`; its guard window is wider, §25).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -614,7 +631,7 @@ Plan v2 · landmarks (details in docs/modules/landmarks.md):
 - Kinds: the Well, vaults (the spawn vault too), monoliths, ocean labs, sky platforms, gates by theme. Reaching the
   first of each kind is a discovery (0.15 of a level). Memory `awaken:landmark_memory` (schema 2, copied on death,
   synced to its owner).
-- The Gate Map marks every landmark reached (filled) or heard of (outlined): told by Mira, whispered by a spirit or first
+- The Atlas marks every landmark reached (filled) or heard of (outlined): told by Mira, whispered by a spirit or first
   named by the Now tracker.
 - The Horizon line (§17; until then the Now tracker) names the nearest unreached landmark once there is a reason to go
   (Well from level 10, vault and monolith 4, spawn vault 2, ocean lab 6; a sky platform once you have a way up, teased
@@ -849,7 +866,7 @@ Plan v2 · overworld structures (details in docs/modules/structures.md):
   rebuilt in place when loaded.
 - Ruin sizes: vault 23×24×23, monolith 17×46×17, ocean lab 31×22×31, sky platform 49×26×49; pieces carry a blueprint
   version. The Well: shaft radius 7, twelve pillars at radius 18, four lantern pylons.
-- The Gate Map shows lairs you've heard of or found (synced from `awaken:fauna_state`) beside gates.
+- The Atlas shows lairs you've heard of or found (synced from `awaken:fauna_state`) beside gates.
 - Doorways inside a gate (the exit after the Lord, the way back, inner gates, rifts) are one opening drawn as a single
   vortex in the gate's rank colours (rifts red-rimmed) by the anchor block's renderer (`awaken:gate_portal`, the bottom of
   the middle column); the other blocks are invisible and untargetable but still let you walk in. Doorways placed before
@@ -878,8 +895,8 @@ Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1, 
   and a faint steady link from 260, the panel grows out of the beams' origin 140–370, unfolds Y 160–280 then X 220–360,
   glass 230–380, scan line 250–390, text types from 300 (Signal speed ×4, all lines done by 450); clicks from 250;
   closing replays it backward in 250 ms; K while opening skips to open.
-- Panels: whole framebuffer pixels per unit (≈45% of the width, ≤80% of the height; the 272×228 K panel is 5 px/unit
-  at 3024×1964), placed from the real projection every frame (FOV compensated, vanilla bob undone), 0.62 m ahead at
+- Panels: whole framebuffer pixels per unit (≈45% of the width, ≤80% of the height; the 288×228 K panel, §30, is 5
+  px/unit at 2880×1800 and 3024×1964, 6 at 3840×2160), placed from the real projection every frame (FOV compensated, vanilla bob undone), 0.62 m ahead at
   (-0.455, +0.19) of the half-screen (left of the centre, up and right of the wrist, clear of the forearm; the crosshair
   is hidden while the holo menu is open), yawed 7° toward the wrist and
   leaning 3° back (third person: at least -0.50 aside, 80% size). Material: 38–50% glass (denser toward the wrist),
@@ -1388,9 +1405,9 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   sources of a known SHA-256, Iris is absent and client setting `waving_leaves` (`awaken-terrain-client.toml`, default
   on) is on; otherwise nothing is installed (vanilla renderer: no waving). Marker: every `LeavesBlock` model is wrapped
   after baking with vertex colour alpha 254 (textures untouched). Wind: texels at the block atlas's bottom-right
-  corner written each frame (signature, time mod 2048 s, camera, wind, the gust profile along the wind from
+  corner written each frame (signature, the sway clock mod 2048 s, camera, wind, the gust profile along the wind from
   `terrain.Wind`; since swaying plants also their amplitudes, the player's feet and whether the world has weather
-  wind): 27 texels.
+  wind): 45 texels, laid out by `terrain.SwayMath` (see "Smooth" below).
   Amplitude 0.11 blocks at full wind and gust. `/awaken terrain waving on|off|status` (client).
 - Swaying plants (2026-10-26, Euan: "all things sway with the same wind the trees get"): the same pack, gate, texels
   and setting as the leaves (`waving_leaves` now covers both and keeps its key, so older settings still apply; nothing
@@ -1436,7 +1453,31 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
     within noise against the shader finding no wind (+0.05, −0.03 ms) and the whole override +0.13 and +0.19 ms against
     Sodium's own shader; in a flower forest +0.30 and +0.16 ms against no wind, leaves' sway included (it has no
     distance fade). `/awaken terrain waving debug 3` stills and skips the plants alone, to split the two.
-  - Commands: `/awaken terrain waving on|off|status|debug <0..3>|plants ...` covers leaves and plants;
+  - Smooth (2026-10-26, Euan: "a bit jittery... as if they restarted the animation"). Three causes, all fixed for leaves
+    and plants alike:
+    - The clock: the client adds a tick per client tick and the server overwrites it every 20 server ticks, so a
+      lagging integrated server pulled the client's game time back every second or two, and the sway rewound. Now
+      `ClientWind` runs the wind (gust fronts, heading, steady strength; also the falling leaves and the rustle) on a
+      `terrain.SwayClock`: real frame time eased toward the game's clock, its pace changing by at most 35% for a small
+      error (up to 90% for one of seconds, so it follows a slow server), never backwards, snapping only on a jump of
+      over 4 s, still while paused. The to-and-fro itself runs on a separate clock of unpaused real time alone (whole
+      turns in 2048 s, so its wrap is seamless).
+    - The wrap: world positions are rebuilt modulo 4096 and the camera is written modulo 4096, so it wraps at x = 0 and
+      z = 0, right by spawn, and every spatial phase used to jump there. Spatial phases are now whole turns in 4096
+      blocks (coefficients rounded to multiples of 2π/4096, under 0.1% from before), and the leaf flutter's hash takes x
+      and z modulo 65536 sixteenths.
+    - Precision: every sine takes a phase in turns reduced with `fract` first (a GPU's sine is imprecise far from
+      zero); direction, steady strength and the 64 gust samples are 16-bit (they were 8-bit: tall grass ticked in
+      small steps as a gust or a turn moved them); the gust profile sits on a grid fixed in the world (multiples of 4
+      blocks along the wind; texel 7 holds its offset), so walking no longer slides it.
+    - `terrain.SwayMath` is a line-by-line Java mirror of the shader's sway and texel decoding. The GameTest
+      `terrain_sway_continuous` holds the clock against a server stuck at 15 ticks a second (it never rewinds or
+      lurches, stays within a second), the sway equal at t = 0 and t = 2048 and across 4096-block shifts, the gust at a
+      place still while the camera walks, and 16-bit round trips. `/awaken terrain waving probe frames <n> | seconds
+      <s> | turn | stop` logs, frame by frame, the offsets the shader gives a few fixed vertices (and the same vertices on
+      the raw game clock) to `sway-probe-<mode>.csv` (`frames` also grabs each frame at 60 fps);
+      `docs/spikes/plant-sway/plot_probe.py` charts them; `tools/autopilot/plant-sway-smooth.txt` films the proof.
+  - Commands: `/awaken terrain waving on|off|status|debug <0..3>|plants ...|probe ...` covers leaves and plants;
     `/awaken terrain wind front across|ahead` (showcase) launches one front across the view or from behind the camera,
     holding the heading the way it rolls, until `wind real`. Tests: `terrain_sway_markers` (every plant kind marked,
     leaves keep theirs, nothing else is), `terrain_sway_joined` (shared vertices agree for every run length; roots and
@@ -2093,6 +2134,34 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   Gate towers rise 4 over their plan height (eave 54) so their gallery clears the walk's hall; the walk passes every
   gatehouse through the room over the gate. No plan lamp stands in a gate passage or a drainpipe's column. Kit: arrow
   loop, wall ivy (climbable), portcullis, brazier (the kit's one light source, 14), wall spout, wall shield.
+- Decided in M4 Commons (2026-10-26; details docs/carillon/milestones/M4-commons.md; Euan's playtest: the walk out read
+  rough, too many monsters, banner poles broken): the plan is unchanged; the land outside the wall is painted by
+  `CityCommons` (the roads and the ground), `CityFarms` (the fields), `CityFarmsteads` (six farms) and `CityTrail` (the
+  High Gate road past the reach). The roads in keep their 8-wide line: setts to 22 from the gate, then cobble kerbs at
+  3.5 from the centre, gravel shoulders, wheel ruts of coarse dirt at 2.5 and a trodden crown; grass verges to 5.5, a
+  ditch (water a block down) at 6.5 and a hedge or spruce fence at 7.5 from 26 out, a field gate over a culvert every 48
+  (by turns either side). Lamps and pennant lines by turns every 14 from 24: a pennant line is two line poles at 5.5
+  with a bunting line across the road at row 7 and a district banner hung from it by each pole (the yard's two lines
+  replace its masts; the floating flagpole arms are gone). Every line ends at its anchor (Euan: "ropes still don't
+  connect to poles"): a line pole's top that ends a line (`rope=` the way the line leaves) has the line's rope tied
+  through its far ring and out to the line at a sag-0 rope's height, its rings turned along the line; the cell beside
+  a pole hangs at sag 0; a banner under a line hangs on two cords from it (`mount=line`); and a city line whose plan
+  end stops short of the facade runs on as bare rope across up to 3 open cells to the building (GameTests
+  `city_commons_poles`, `city_lines_anchored`: every end meets a pole facing it or a wall). Milestones every 64 from 40 on the right-hand verge. Fields
+  keep the lattice (bands 21 out from 252, cells about 26 round): boundaries are hedges, farm tracks or grass balks by
+  pair; fields are arable strips 5 wide (four rows of one crop at its own growth, then an irrigation channel or a balk;
+  wheat, carrots, potatoes, beetroot, pumpkins, ploughed or fallow; a scarecrow on the seed of half), reaped (stooks
+  every 4), orchards (apple, blossom, cherry, 5 apart), pasture (hay) or meadow, with lone oaks; bands 2 and out are more
+  pasture and meadow. Six farmsteads (box 22 by 26, three by the first field gate of each road): a farmhouse from the
+  grammar (use "farm": its faces over open ground are street faces), a timber barn with open doors and a loft, a
+  haystack, a well, a hay cart, a paddock, a kitchen garden, a woodpile and a lamp at the track. Past the reach the
+  High Gate road is laid on the ground as it lies to 424 north (a plank bridge over water, lamps and milestones, no
+  ditch or hedges), a fingerpost, then a footpath bending to 26 short of the Wayfarers' fire (450 north, 6 east; the camp
+  and its 32 of safe ground are the Wayfarers'). Monsters: outside the wall a natural spawn of anything hostile (MONSTER,
+  `Enemy`, or an Awakened creature that isn't peaceful) goes ahead with chance 0.10 to 330 from the centre, rising to
+  0.45 at 470 and 1 at 640, and never where three hostiles stand within 48 at about its height (to 470 out;
+  `CityMonsters`, at the natural spawner's position check); inside the wall the lamps decide. Kit: milestone, fingerpost, scarecrow,
+  stook (no light, no block entity). Dev: `/awaken city monsters [radius]`.
 - Floating wood fix (2026-10-25): the city's vegetation sweep takes the lands' bark (elder wood) as well as leaves and
   logs, sweeps the whole neighbour chunk to full height, clears fields to the top, and removes tree groups left resting
   on nothing past the edge (`CityWriter.collectOrphans`). Dev: `/awaken city scan | floater <n> | tidy` (tidy repairs
@@ -2294,7 +2363,7 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   the path; a district's bell tower clears the district, the Choir spire the city. Party sharing on request.
 - Client tile cache `<game>/awaken/atlas/<world>/<dim>/` (height + top colour per column; versioned; ≤ 64 MB, oldest
   first; "Clear Atlas cache" button).
-- Table view: a Screen with a picture-in-picture renderer (depth, orbit, zoom, tilt); wrist glance cached on the Holo.
+- Table view: a Screen with a picture-in-picture renderer (depth, orbit, zoom, tilt); the band's Map page (§30).
   ≤ 2 ms/frame open, ≤ 150 ms to open, glance ≤ 0.3 ms. Markers only for what the player knows.
 - Decided in M5 (2026-10-25; concept https://claude.ai/artifact/3QCvup43wuVW6t1wDfVroP, docs/carillon/m5/):
   - Discovery (`atlas.Discovery`, attachment `awaken:atlas`, `AtlasData` schemaVersion 1, copyOnDeath): per dimension,
@@ -2334,10 +2403,10 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     name; every other mark shows only in an explored cell. You are a pin of light with a ring and a facing tick.
   - Cost: slices outside the picture aren't drawn, and while only the clouds drift the picture is redrawn about 30
     times a second (every frame while the view moves or the land prints in).
-  - The wrist glance: a section on the K menu's Status page right under NOW, the land round you (240 blocks across,
-    where you look is up) painted into the texture `awaken:atlas/glance` (480×280) at most once a second while the menu
-    shows it, or sooner once you've moved 4 blocks or turned 12°; the Holo draws it as one textured quad, with a button
-    to the table.
+  - The wrist glance: the land round you (240 blocks across, where you look is up) painted into the texture
+    `awaken:atlas/glance` (480×280) at most once a second while something asks for it, or sooner once you've moved 4
+    blocks or turned 12°. It left the K menu with the band's pages (§30: the Map page is the table itself); its
+    painter is kept for the map scene (§30, phase 4), which will drive it from its own camera.
   - Phase 3 (`AtlasData` schemaVersion 2): the Living Wilds region you stand in (`living.api.Regions`, checked every 40
     ticks, overworld only) joins your Atlas once; zoomed out, each known region's name is lettered at its heart in
     spaced capitals with its levels under it. Party pins: double-click the table to drop a pin on ground you know (or
@@ -3577,7 +3646,7 @@ manual; stop the build at the first block; the payoff answers only the line; dan
     here." / "The tree sheds all you build.": a card holds 20% of the screen, and a two-line question drops the body),
     the body "Its platforms answer to a line." (the platform's, the tree's way), one choice
     **Show me** (Y) / Not now (action `ward:show_me:<kind>`, 30 s), with "A vault keeps a line for a hunter it opens to."
-    on the action bar under it. Y sends `awaken:ward_show_me`; the client opens the band (K › Status) scrolled to "THE
+    on the action bar under it. Y sends `awaken:ward_show_me`; the client opens the band (K › Powers, §30) scrolled to "THE
     ASCENT" (§27.2: the next rung as a silhouette, where it comes from), else "THE BODY"
     (`StatusScreen(Tab, String... titles)`).
   - After that: once a visit (a ward, until 5 minutes without a refusal there) a toast, the place's name and its way up
@@ -3835,7 +3904,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - **Scenes** (`living.wayfarer.Scenes`, saved data `awaken:living_scenes`, schema 1). Residents are placed once when a
   player first comes within 96 blocks: Ilse and Hettie at the Wayfarer camp (Carillon worlds: 450 north of the city's
   centre, up the High Gate road; classic worlds 300 north of spawn; on the nearest dry, level ground, found once and
-  kept), Hale on Carillon's `CityHooks.spot("quartermaster")` by the High Gate yard (classic: at the camp). A found scene: per player every 25 minutes outdoors (the first after 12), never inside a Hearth's radius or the
+  kept; the camp round Ilse's fire, its safe ground and Ilse's scene: §27.6), Hale on Carillon's `CityHooks.spot("quartermaster")` by the High Gate yard (classic: at the camp). A found scene: per player every 25 minutes outdoors (the first after 12), never inside a Hearth's radius or the
   city reserve, for the lowest-band chain they can take that isn't a resident's; a spot 64-160 blocks off in loaded
   chunks only (cliff: a top with a 6+ drop beside it, its foot marked; crag: y 100+; road/camp: flat ground), plus a
   `site` 40-80 from it (plain ground 56 off if the land offers none). An untaken scene fades after two play-days; a
@@ -3868,7 +3937,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   Read and turned in at Hale (choice card Take it / Next notice); a turn-in pays once (claim
   `awaken:claim/bounty/<id>/<n>`), counter `awaken:bounties_done`.
 - **Journal**: payload `living_journal` (chains taken, tracked first, and bounties taken, each with its current line),
-  sent on every change and on login; drawn as the JOURNAL section of the K menu's Status tab until the holo tab exists.
+  sent on every change and on login; drawn as the JOURNAL · CHAINS section of the band's Journal page (§30).
   Nothing undiscovered is ever listed (§21.0.7).
 - Tests: `living_quest_engine`, `living_bounty_board`, `living_scene_finder`. Dev (admin): `/awaken living wayfarer <who>`,
   `talk` (the nearest Wayfarer), `scene <chain>` (its scene now, close by), `view <distance>` (stand back from your
@@ -3916,7 +3985,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   The Codex tab lists them ("HAPPENINGS WITNESSED · n / ??").
 - **Rumours** (`Rumours`, attachment `awaken:rumours`, schema 1, synced to the owner, kept through death): half the
   time a Wayfarer with nothing for you tells of a happening on now 160-2500 blocks away that you haven't witnessed, with
-  a compass direction; it leaves a "? <title>" mark on the Gate Map (MapMarks) for two play-days (at most 8).
+  a compass direction; it leaves a "? <title>" mark on the Atlas (MapMarks) for two play-days (at most 8).
 - Dev (admin): `/awaken living happen <kind>`, `happenings`, `calm`, `strike <distance>` (a storm strike that far
   ahead of you, for tours). Tests `living_pulse`, `living_storm`.
 - **The Rolling Storm, as a real storm** (Euan's playtest, 2026-10-26: the cell read as round soft discs full of
@@ -4055,7 +4124,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
     +0.25 for 2 min after a cooked meal), Banquet (+the food's saturation again).
   The plan's Tidewater bait, sigil slot, temper discount and an apex phase read moved out: they need other modules'
   systems; the replacements above are this module's own.
-- UI: CRAFTS in the K menu's Status tab (level, a bar, perks open, the next). Dev: `/awaken living craft <craft>
+- UI: CRAFTS on the band's Powers page (§30; level, a bar, perks open, the next). Dev: `/awaken living craft <craft>
   <level> [announce]` (announce: with the level and perk toasts, for tours). Test `living_crafts`.
 - Art: the 15 icons are drawn by `tools/art/specs/items_crafts.py` (16×16, our own palette, one wooden bowl shape shared
   by the bowl meals; the pasty stands on its flat side with a crimped rope; no vanilla pixels). Its `preview DIR` checks
@@ -4561,18 +4630,47 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   as a new press, restarting the swing every tick; now only a press the key was not already down for counts, and the
   repeats are swallowed. Every new press strikes wherever it points; outside a fight (100 ticks) a block the weapon
   cuts faster than a bare hand (a web, bamboo, leaves; never in creative) is still cut. The old rule (any block under the
-  crosshair outside a fight is mined) meant a click at the ground mined with no swing at all. Held = a heavy (charges from 6 ticks, the glint at 16, auto-release at
-  24; a release within 2 ticks of the glint is perfect: motion 2.4, posture 20, 110 ms hit-stop). A block under the
+  crosshair outside a fight is mined) meant a click at the ground mined with no swing at all. Held = a heavy (charges from 6 ticks, the glint at 16, full at
+  24; a release within 2 ticks of the glint is perfect: motion 2.4, posture 20, 110 ms hit-stop). **Tap or hold**
+  (Euan 2026-10-26: "when you long click to power up your attack... on the first click, before letting go, it already
+  attacks"): the press starts the chain's strike at once, so a tap is never late, but for a style whose heavy charges
+  the strike's hit waits at its wind-up's end while the key stays down (the hands hold there, `ArmsPredict.waitHit`).
+  Let go before the charge's 6 ticks and it is a tap (`PRESS_TAP`): the strike lands then. Still down at 6 ticks and
+  the strike is dropped unlanded and the charge begins (`PRESS_CHARGE`; a strike the same press queued mid-combo is
+  dropped too). The charge holds at full for as long as the key is down, trembling, and goes only on the release (no
+  auto-release; held past full it counts as full). The server never holds a blow on the client's word alone: with no
+  tap or charge heard it lands `ArmsServer.HOLD_WAIT` (4) ticks after the charge's mark. Until the press is a tap the
+  waiting strike shows nothing but the first-person wind-up: no swish, no arc, no third-person clip, and nobody near
+  sees the arm swing or hears it (`ArmsServer.shown`, `ArmsPredict.show`); a hold never shows it, and a tapped one is
+  shown from the release, its arc on the blade's clock. A riposte, Slipcut, Undercut or Plunge starts as it always did.
+  Test `arms_tap_or_hold`. A block under the
   crosshair outside a fight (100 ticks since the last) is still mined. A move strikes each creature in its arc and reach
   once, through vanilla's own attack at full strength (crits, enchantments, momentum and every damage listener still
   apply), scaled first by the move; vanilla's immunity is cleared between one fighter's blows; it never sweeps. A sweep
-  only takes the aimed creature, hostiles and anything hunting the player: never a player, a villager or a pet.
+  only takes the aimed creature, hostiles and anything hunting the player: never a player, a villager or a pet. **What
+  isn't alive** (Euan 2026-10-26: "rifts can only be broken at the core with your hands"; vanilla's own attack, which
+  Arms stands aside from for its weapons, was the only way to strike one): what vanilla's attack would strike
+  (`isAttackable`, not `skipAttackInteraction`: a rift's core, an end crystal, a boat, a minecart, an item frame) is
+  struck when aimed, and in the arc only when tagged `#awaken:struck_by_sweeps` (the anomalies: the rift tear, the
+  shimmer, the falling star), through `damageSources().playerAttack` at the move's strength (`ArmsServer.strikeThing`),
+  with the impact sound, the hit-stop and the ribbon's flash; the thing decides what a blow does (a core loses a hit).
+  Test `arms_strikes_things`.
 - **Guard** (use key, the `blocks_attacks` component Arms gives every sword: no delay, 120° front): the first 4 ticks
   after the raise deflect a LIGHT or HEAVY (no damage, the attacker's stance takes 18 or 26, Resonance +20, a riposte
   for 12 ticks); after that LIGHT is blocked (70% less), HEAVY breaks the guard (50% less, the guard drops, 15 ticks
   before it can rise); PERILOUS and GRAB pass through. A raise within 8 ticks of lowering one that deflected nothing can
   only block (spamming is not deflecting). **Latency grace**: a guardable blow on an unguarded fighter waits up to
-  latency/2 ticks (0 under 50 ms, at most 3) for a raise already on its way.
+  latency/2 ticks (0 under 50 ms, at most 3) for a raise already on its way. **Untold blows** (Euan 2026-10-26, of
+  zombies: "you don't know when it's going to hit you... so it's very hard to time a parry"): a creature's own melee
+  (it strikes with its body, the direct attacker) with no wind-up to read is untold: anything not ours (every Awaken
+  creature tells its blows) and not in `#awaken:told_melee` (the iron golem, the ravager, the warden): a zombie, husk,
+  drowned, spider, cave spider, silverfish, endermite, piglin. Its deflect window is `ArmsRules.UNTOLD_DEFLECT` (4)
+  ticks longer (the Longsword's 4 → 8; only on the early side: a raise after the blow still lets it land), and its
+  deflect pays `UNTOLD_REWARD` (0.6) of a told one's Resonance and stance. Told blows keep the tight window, so reading
+  a tell stays the skill; shots and players are never untold; nothing on screen foretells a blow. The combat sim's
+  untold table (`combat_sim.py --untold`, docs/combat/untold-parry-2026-10-26.md): a Parrier against zombies, deflects
+  40% → 70% and damage taken 117 → 58 per 100 blows once they raise into the wider window (Resonance per blow 8.0 →
+  8.4); no Gate Lord or summon is untold, so the Lord table is unchanged. Test `arms_untold_parry`.
 - **Dodge** (sprint pressed with back, left, right or no direction, on the ground; sprint + forward still runs): 6
   ticks, 2.6 blocks, client-predicted, server-validated (position within 1.5 blocks, charges, not in a wind-up or blow:
   a recovery can be dodged out of, which drops the rhythm). Ticks 0–4 evade any class (**the SPEC amendment: the only
@@ -4677,15 +4775,19 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   where the hand closes, from vanilla's resting hand; for an axe, a glaive or a scythe the side its working edge faces)
   and solved for each weapon from its own mesh, so each is seated in the hand. One scale for all (0.5, the Longsword's;
   the Daggers 0.575 so their blade reads): a spear is as much longer in hand than a longsword as in F5 and a dagger as
-  much shorter, and a long point may leave the view. Longsword up and forward to the left, its flat to the eye
-  (18 left, 52 up); Rapier en garde, the point forward at the target's height (20, 18); Katana two-handed at the
-  middle, the edge down toward the target (10, 36); Spear the shaft across the lower view, gripped part way, the head forward and up
-  (24, 22); Glaive the same with the blade higher, its edge in (18, 34); Scythe the snath up, the blade reaching in
-  across the top (8, 64); War-staff at its middle across the body (58, 28); Greatblade two-handed, raised, near the
-  middle (20, 60); Maul two hands low on the haft, the head up (6, 58); Axe the head up, its bit in (10, 58); Daggers
-  short, the point forward (18, 34); Twinblades at the middle, the blades either way across (62, 34); Chain-blade the
-  head forward on its chain (18, 38); Shieldblade the shield to the front, the blade above it (30, 62); Precursor Arm
-  forward like a drawn arm (14, 24); the Gauntlets keep their worn hold. `python3 tools/art/specs/arms_weapons.py
+  much shorter, and a long point may leave the view. **Edge first** (Euan 2026-10-26: "You're never going to hold an
+  axe on its side like that. You're going to hold the sharp ends downwards, similar to a sword"): the Longsword, Greatblade,
+  Axe, Glaive and Daggers are held as the Katana is, turned a quarter about the length (roll 90), the working side down
+  and toward the foe (`arms_holds.DOWN`), the flat to the side and never to the eye; the Rapier, Chain-blade and
+  Precursor Arm are turned the same, an edge down; the Scythe's blade still reaches in across the top. Longsword up and forward to the left (18 left, 52
+  up); Rapier en garde, the point forward at the target's height (20, 18); Katana two-handed at the middle (10, 36);
+  Spear the shaft across the lower view, gripped part way, the head forward and up (46, 13); Glaive the same with the
+  blade higher (54, 22); Scythe the snath up, the blade reaching in across the top (8, 64); War-staff at its middle
+  across the body (58, 28); Greatblade two-handed, raised, near the middle (20, 60); Maul two hands low on the haft,
+  the head up (6, 58); Axe the head up, its bit down toward the foe (10, 58); Daggers short, the
+  point forward (14, 42); Twinblades at the middle, the blades either way across (62, 34); Chain-blade the head forward
+  on its chain (18, 38); Shieldblade the shield to the front, the blade above it (30, 62); Precursor Arm forward like a
+  drawn arm (14, 24); the Gauntlets keep their worn hold. `python3 tools/art/specs/arms_weapons.py
   holds` rewrites only the holds; the old check that kept every point inside the view (it shrank every style to the
   Longsword's outline) is gone. The swings are baked from these holds (they start and end at rest), and the lab's
   holds sheets (docs/combat/anim-lab/holds-*.png) show each style before, after and in F5.
@@ -4719,7 +4821,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   (the blade, -x), Twinblades (each blade's leading side, so the pair spins tips trailing), the Beastbound Longsword and
   Greatblade (tusk cleavers), the Wildhide skinning knife, the Beastbound tusk (honed on its inside) and the Veilwoven
   talon. A style whose forged (C) weapon is double-edged but has single-edged tiers (Longsword, Greatblade, Daggers)
-  cuts with the side its hold's cut turns in toward the middle, and each single-edged tier is turned so its edge is
+  cuts with the side its hold's cut turns down toward the foe, and each single-edged tier is turned so its edge is
   there: one baked swing cuts with every tier's edge (the wrist turns a backhand over, as a single edge needs). A turn
   can mirror only two of a weapon's three ways, so a single-edged weapon's left-hand hold keeps its length and its
   edge mirrored and shows its other flat (before, the Wildhide twin's off-hand cut led with its back). The scythe is
@@ -4727,7 +4829,9 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   blocks through it on the hit, its inside edge drawn through what it hooked; its blade, at the snath's top, is what
   crosses the target. Every punch lands knuckles first, square to the fist's travel (a jab and a hook palm down, an
   uppercut palm to the face, an overhand driven down); the Gauntlets' shared moves are punches too (riposte and undercut
-  uppercuts, the dodge's cut a hook, the Art a straight, the plunge and execution overhands; their server blows kept).
+  uppercuts, the dodge's cut a hook, the Art a straight, the plunge and execution overhands; their server blows kept;
+  `ArmsClips.OWN_SHARED`: the Gauntlets play their own Slipcut, Undercut and Plunge clips, where every other style shares
+  the Longsword's).
   The bash shoves the shield straight at the foe, its face square to the shove. Every move has a form in its row
   (tools/arms/forms.py writes the shared moves' too, read from their path as the lab always read them), so first and
   third person do the same thing (a spear's Art is a thrust in both).
@@ -4747,8 +4851,9 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   the bent forearm), looking ahead or down, then the least bend. The fighter's hand items are resolved again marked
   with their arm while a move turns them (the player's render-state modifier, last), so only a hand's weapon in third
   person turns, never one in first person, the hotbar or a frame; a left main arm keeps its hold (the keys are
-  right-handed). A single-edged tier on the other side from its style's lead (the Beastbound Longsword and Greatblade,
-  the Wildhide and Veilwoven Daggers) is turned over in its third-person hold. The Gauntlets are worn in third person
+  right-handed). A single-edged tier on the other side from its style's lead (since the edge-first holds, the
+  Beastbound Daggers; before them the Beastbound Longsword and Greatblade and the Wildhide and Veilwoven Daggers) is
+  turned over in its third-person hold. The Gauntlets are worn in third person
   too (`arms_holds.worn_third_person`: the knuckles down the forearm, the back of the hand out, the cuff round the
   forearm, 0.7 scale), never held out in front of the fist, and punch their own clips, each found in the lab (knuckles
   first at the hit, the bent twin 0.8 or more, nothing into the head or body): a jab with the arm level and the body
@@ -4766,6 +4871,36 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   poses for the longest and widest weapons (the Greatblade's, the Twinblades' far blade, some Longswords): those need
   their own third-person poses and two-handed grips, not a wrist. The scythe leads point first in third person; its haul back through
   the target is first person's.
+- **Third person from first person's blade** (Katana and Greatblade so far; Euan 2026-10-26: "how are we gonna get
+  that exactly the same as first person... so that it genuinely looks really, really good"; tools/art/specs/
+  arms_rig4.py). First person is designed from the blade (its path, the edge leading, through the target on the hit);
+  third person was designed from the arm (a few poses per kind, the weapon wherever the hand put it), so long blades
+  swept through the body and a two-handed weapon was held in one hand. Now third person takes each move's weapon from
+  first person's own baked keys (the grip's place and the blade's turn every quarter tick) and the body follows it:
+  first person's arc about its pivot is carried onto a point before the chest's middle (both hands meet on the hilt
+  there), turned as a whole so its line into the target runs from there to a point before the face, its lever scaled
+  to the figure's reach, level with the view (a slide's or a fall's lean doesn't tilt it). Through the drive, the hit
+  and the cut the blade is exactly first person's; in the wind-up and the follow-through only, the move may be turned
+  as a whole about the pivot (+36 to -30 degrees: first person cocks an overhead chop back past the top of the view
+  and carries a long blade down out of the frame, which in a figure are through the head and the legs). The grip
+  shifts a little where it must (out, ahead, up, in toward the middle), chosen over the whole move at once (Viterbi):
+  a blade by the face counts most, then any weapon in the body, then both hands reaching. The chest turns with the
+  lever, half a tick ahead of it (70% of its turn for the Katana, 80% for the Greatblade, at most 55 degrees); the
+  sword hand closes on the grip and the off hand on the handle toward the pommel by IK, elbows bent (Bendable Cuboids)
+  or, for the straight clips, solved straight with their own wrist keys (`wrist3s`; `ArmsWrist` plays them when
+  Bendable Cuboids isn't loaded); an arm may graze the body, never go into it. Where the off hand can't reach the
+  handle (a follow-through carried round to the far side, the low sweep out of a slide) it lets go cleanly rather
+  than float beside the hilt. These styles play their own Slipcut, Undercut and Plunge (`ArmsClips.OWN_SHARED`) and
+  hold their own heavy's first pose while charging (`arms_<style>_heavy_charge`, `ArmsClips.charge`), so the
+  release never snaps. Measured (`arms_rig4.py bake`, the lab's audits, every tier of the style, looking level and
+  down): every move leads with its edge or point at the hit; both hands on the hilt through 81-100% of every Katana
+  move and 73-100% of every Greatblade move but the Undercut (one-handed out of a slide); the blade more than 1.5 px
+  into the head, body or legs in 5 of their 22 moves (8 before; the Greatblade's from up to 3.7 px to about 1.3). What
+  still touches: a two-handed hilt's pommel by the belly (a figure's arms meet at most ~4 px before its chest, a hilt
+  reaches 5-9 px behind the hands: in 16 moves, mostly the Greatblade's longest tiers, past the blow), and the
+  Executions' first quarter tick out of rest, where the blade passes the head looking down. Review set:
+  docs/combat/anim-lab/third-<style>-blade-first.png (shipped against new, every move from behind-right) and
+  fp-third-<style>-<move>.png (first person over third person from behind-right and the side, at the same moments).
 - **The animation lab** (tools/art/anim_lab.py; SPEC §25, Euan's ask for a way to see the motion): `sheet` / `all`
   draw each strike's first-person frames as the game composes them (the swing, Hands' view layer, vanilla's rest, the
   weapon's hold and mesh, 70 degrees) as an onion-skin with the blade tip's path (wind-up blue, blow gold, recovery
@@ -4778,7 +4913,8 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
 - **Third person** (Player Animation Library, optional, through `core.api.PlayerClips`; `ArmsClips`, `ArmsBodies`):
   a full-body clip per move from tools/art/specs/arms_moves.py, its keys on the timing table's rows (cocked at the
   wind-up's end, through at the active ticks' end, home by the endTick), each with a bent twin; the guard held while
-  it is up, the heavy's draw held while it charges, the dodge back or to a side by its way (mirrored for a left
+  it is up, the heavy's draw held while it charges (a blade-first style's own: its heavy's first pose), the dodge back
+  or to a side by its way (mirrored for a left
   hand). The fighter's own from their prediction, everyone else's from `Seen` MOVE, CHARGE and DODGE. Every clip is
   checked for an arm through the head or body (under 1.25 px). Without the library: vanilla's arm swing.
 - **The blade's own ribbon** (S2, `BladeTrail`; PLAN §4.8's SWEEP): while a blow is in the air the blade lays a
@@ -4837,9 +4973,14 @@ against it, so a vanilla item plays its designed tempo).
   shortest dodge (5 ticks, 2.2 blocks, recharging in 16) and a Slipcut of 2.8 with an 8-tick window; a blow from
   behind (the striker more than 120° round from where the body faces) lands ×1.8.
 - **Katana** (1.5): a sweeping chain from the draw; the first strike after the blade has rested 2 s (40 ticks since
-  the last move ended) is drawn from the sheath: ×1.7 motion, ×1.8 posture. The deflect window 5 ticks.
+  the last move ended) is drawn from the sheath: ×1.7 motion, ×1.8 posture. The deflect window 5 ticks. Its first
+  strike winds up 3 ticks and recovers 5 (1 and 7 as first built: Euan 2026-10-26, "it starts off low, and then all of a
+  sudden he's already to the right side"; the cut from the right now reads before it lands, the move as long as
+  before). Every style's first strike was checked: each slash winds up 2 ticks or more; only the thrusts and jabs
+  (Rapier, Daggers, Gauntlets), short in travel, keep 1.
 - **Twinblades** (2.0, a double-ended blade): a fast four-strike chain on tight rhythm windows closing on a spin all
-  round, a fifth spinning back with mastery; its Art a whirl.
+  round, a fifth spinning back with mastery; its Art a whirl. Its first strike winds up 2 ticks and recovers 3 (1 and 4
+  as first built: a wide slash in one tick was a blur).
 - **Glaive** (1.0): sweeping arcs of 160° at 3.8 for crowds, a finisher all round, a thrust with mastery.
 - **Scythe** (0.9): wide reaps (150°) that rise and fall, a finisher reaping down across; a spirit struck ×1.6 (it
   cuts the Veil's spirits).
@@ -5095,6 +5236,13 @@ The rules below replace that.
 - **Client lines through the director:** `Notices.client().claim(tier, topic)` before showing (true counts as shown);
   `file(...)` what can't wait. The region caption claims IMPORTANT (CRITICAL when dangerous), waits up to 200 ticks,
   then files "Entered · <name>"; the dangerous region's toast is IMPORTANT, topic `danger`.
+- **Fleeting** (`Builder.fleeting()`, 2026-10-26): shown now or never. A fleeting message that waits past its wait is
+  dropped, not filed: the System's first contact ("[ERROR] … candidate found.", the opening's and the prologue's), which
+  in the Journal read as a real bug. The awakening's first moves ("Your body remembers") are no longer a toast at all:
+  the checklist teaches them (§27.10). The Signal's quips (`signal_line/lines.json`, `story.Beats.lineOnce`: "That's your
+  first power. Try it out once you're outside the city.") are fleeting too: a reaction read later in a list, out of its
+  moment, meant nothing ("There it is."). Nothing is filed for the city's own region while you're inside its walls
+  (§27.6).
 
 ### 26.3 Discovery (`signal.Finds`)
 - **Intent.** A creature is studied when the crosshair rests on it (its angular size + 3°) for 3 looks in a row, 5
@@ -5114,7 +5262,7 @@ The rules below replace that.
 - **The find cue** (`signal.client.FindCue`): a small diamond blooms 13 px right of the crosshair with the name in a
   whisper beside it (5 + 34 + 16 ticks), and `awaken:ui.find` at 0.32 (at most every 60 ticks); several at once read
   "N finds · Journal".
-- **The Journal** (`signal.client.Journal`, Status tab, order −10): filed lines newest first ("◆" unread), 60 kept per
+- **The Journal** (`signal.client.Journal`, the band's Status page right under the stats, and its Journal page, §30): filed lines newest first ("◆" unread), 60 kept per
   session, "JOURNAL · N NEW" until the K screen has shown them. The Codex keeps the finds themselves.
 - A lair rumour ("Heard of · …") is AMBIENT, topic `lair` (the Now tracker points at it).
 
@@ -5184,8 +5332,11 @@ play it; the world remembers the locks you met and calls you back once when you 
   entries `{key, dim, where?, need kind, need value, what, answeredAt}`; the oldest go. A key is one per place
   (`door:x,y,z`, `landmark:ruin:x,z`, `wing_core:x,y,z`, `stratum:n`, `region:id`, `halo`, `possession`).
 - **`seen(player, key, where, need, what)`**: recorded once, only for an awakened player who doesn't already meet the
-  need. Silent, except the first lock a player ever meets: one NOTICE toast "What waits · <what> waits for <need>. Your
-  band keeps it (K), and the world will call you back when you're ready." (flag `awaken:promise_taught`).
+  need. Silent, except the first lock a player ever meets: one NOTICE toast "Saved for later · <what>: you'll need
+  <need> first. Your band (K) keeps a list of things like this, and you'll get a reminder when you're ready." (flag
+  `awaken:promise_taught`). The band's list is **SAVED FOR LATER**, each row "<what> · needs <need>" ("· ready now" once
+  answered); the call back says "<what> is open to you now". (Until 2026-10-26 it was "What waits · The Commons waits
+  for level 4", which Euan couldn't read; plain words now, §27.6.)
 - **Needs**: `rank:<label>` and `level:<n>` answered by progression; `tier:<tether|leaper|wings|skyborn>` answered by the
   Ascent (`Promises.addAnswer`). Words: "D-rank", "level 20", "the Tether".
 - **The call back**: on a rank-up, a level reached or a rung granted, every waiting lock the player now meets is
@@ -5200,14 +5351,14 @@ play it; the world remembers the locks you met and calls you back once when you 
   ("<name>, in the Descent", its rank), the Observatory's Halo line ("Something past the sky", B), Veil possession
   refused ("Wearing a creature, in the Veil", C, no place), a dangerous region ("<region>", the level at which it stops
   being dangerous).
-- **In the band** (K › Status, "WHAT WAITS", order 5, `progression.client.WaitingSection`): up to 8 rows, answered
+- **In the band** (K › Journal, §30, "WHAT WAITS", order 5, `progression.client.WaitingSection`): up to 8 rows, answered
   first then nearest: a chip with the need in its colour (rank colour; the Horizon's green for a rung) or READY, what,
-  and "640 m NE". The same locks are pinned on the Atlas and the Gate Map (`MapMarks`), coloured by need.
+  and "640 m NE". The same locks are pinned on the Atlas (`MapMarks`), coloured by need.
 - **Far** (the next rank's promise): under "Next rank: D at level 10…" in the Spine section, "D-rank opens what waits
   for you: A sealed vault · Gardens, in the Descent." Only locks the player has met; never a list of spoilers.
 - Test: `progression_promises`.
 
-### 27.2 The band's Ascent page (`body.client.AscentSection`, K › Status, order 28)
+### 27.2 The band's Ascent page (`body.client.AscentSection`, K › Powers, §30, order 28)
 "Runner · yours from the start"; each rung held with how to use it (keys in the player's own bindings,
 `signal.client.KeyText`); the next rung as "◇ The Tether · next" with where it comes from ("A Precursor vault keeps a
 line for a hunter it opens to: its door's rank, D at the least."); the rest "???". What a rung does is only told once
@@ -5234,34 +5385,102 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
 
 ### 27.6 The first thread (phase 1)
 - **Registered** (`core.api.OpeningHooks.onRegistered`, fired from `OpeningModule.afterOpening` when the opening ends or
-  is skipped): Kestrel's errand, **The Last Delivery**, starts by itself and is tracked (`living.FirstThread`; once;
-  never for a player who has it or did it): tell Kestrel what you saw at the Roost, out through the High Gate, run the
-  letters to the Wayfarer camp up the north road, give Ilse the letters. It ends at the camp, a place with several pulls
-  (Hettie's and Ilse's level-1 asks, a gate's pillar, a vault), so after it the player chooses: it is one errand, not a
-  chain that keeps leading (BotW's "lines" railroaded 80% of testers).
+  is skipped): Bram's errand, **The Last Delivery**, starts by itself and is tracked (`living.FirstThread`; once;
+  never for a player who has it or did it). At the end of the Registry (its step `LETTERS`, after the Directive) Bram
+  says what a hunter is for ("Oh, and one more thing. As a hunter, your job is to protect the city from whatever is out
+  in the wilds, beyond the walls.") and where to go first ("Ilse runs a camp for new hunters up the north road. Take
+  these letters to her, and she'll explain the rest."), and holds out **Letters for Ilse** (`awaken:ilse_letters`, an
+  errand item; Bram's prop "letters"), which you take from his hand the way you took the band ("Take the letters").
+  A player who skipped the Registry is given them at registration. The steps: take the letters from Bram (done the
+  moment they're in your pack; it keeps the old first step's place, so saves hold), out through the High Gate, to the
+  Wayfarer camp up the north road, deliver them to Ilse by her fire ("Deliver the letters · 0/1"; she takes them from
+  your pack), and take the ember she gives you (the Ember, §28.2). The thread lets go there: its Now line ends once
+  Ilse's step is done, and the Hearth's own line ("Place your Ember where you want your home", `hearth:ember`) takes
+  over; the chain's last step (a `hearth` objective: done when you have a Hearth) waits in the Journal. Kestrel's
+  word-from-the-square opening and return were cut (Euan, 2026-10-26: Bram hands you the letters). After it the player
+  chooses: it is one errand, not a chain that keeps leading (BotW's "lines" railroaded 80% of testers). Euan, after
+  playing it (2026-10-26): guide them exactly to the Ember, then let them go and explore.
 - **Chains on the Now line**: the tracked chain's current step (else the first chain's), priority 68 (over points to
   spend 55 and the next level's unlock 15; under a waiting Reassessment 72, rifts and danger), with a compass to its
   place: a "reach" step's marker; a "talk" step's person (Kestrel: the Roost, `OpeningHooks.place("roost")`; Hale: his
   quartermaster spot; Ilse and Hettie: the camp; a Wayfarer: their scene). Before, tracked chains never reached the HUD.
 - **The camp is findable**: its marker falls back to its nominal spot until someone has come near (the compass knows the
-  way); a Horizon site "Wayfarers' fire" until the player has stood within 24 of it (counter
+  way); a Horizon site "Wayfarer camp" until the player has stood within 24 of it (counter
   `awaken:camp_reached`); and a signal fire on a bale by Ilse (`Scenes.campFire`), its smoke a column seen from the High
   Gate (vanilla smoke rises only near you, so the client draws its own column to 1000 out, 110 blocks tall to clear the
   Lumen canopy: `LivingNet.CampSmoke`, `PulseFx.campfire`), lit once a player is within 256 and lit again if it's gone; the camp itself is now founded within 256 (it was 112,
   so from the gate there was nothing there yet).
 - **The Registry's Directive fits** (`Directives.opening`, reason "opening"): "Clear a floor of any gate.", accepted for
-  the player (4 play-days), "Your first gate will show itself out past the walls." Accepted Directives show on the Now
+  the player (4 play-days), "Your first gate will open somewhere outside the city walls." Accepted Directives show on the Now
   line with their progress ("· 50%", priority 58). Before, the Registry's was a random roll offered quietly, its waiting
   line gone in 30 s, and accepted ones never showed outside K.
 - **The first gate, on purpose** (`Director.firstGate`, SPEC §21.0.14 finally built): a player's first gate waits until
   level 3 or about half an hour after awakening (36 Director passes), and until they're out of the city (or an hour),
   then forms 250-400 blocks further along the bearing from the city's centre to them (north from its middle; any way
-  if that way is sea, a river or a beach), at their own rank, with "A gate is drawing breath · 320 m N · its floors make you stronger" (IMPORTANT, topic `gate`); the
+  if that way is sea, a river or a beach), at their own rank, with "A gate has opened 320 m N · clear its floors to get stronger" (IMPORTANT, topic `gate`); the
   Horizon raises it ("First gate · E-rank") until they've cleared a floor. Before, the first gate
   was rolled the moment they awakened, in the infirmary, at random 300-1500 out, unannounced.
 - **Out through the walls** is a moment: crossing the city reserve outward shows the region's caption ("THE COMMONS ·
-  1-8") once a play-day (the Commons spans the city's edge, so leaving had none).
-- Tests: `progression_first_thread`, `progression_now_priorities`, `gates_first_gate_on_purpose`.
+  1-8") once a play-day (the Commons spans the city's edge, so leaving had none). Inside the walls no region caption,
+  warning or promise is sent at all, and the Commons, the land everyone starts in, is never a "danger" region (it was:
+  a level-1 player read "Danger · The Commons" and "The Commons waits for level 4" in the Journal before leaving the
+  city). **The first time out through the High Gate, its shot names the land**: as the view lifts over the gate the
+  title "THE COMMONS · THE LAND AROUND THE CITY · CREATURES LEVEL 1 TO 8" (the region at the camp, from the server),
+  then the camp's caption ("THE WAYFARER CAMP · UP THE NORTH ROAD · 181 M AWAY · YOUR NEXT STOP"); the region caption
+  is skipped that time. A danger region's warning says it plainly: "The creatures here are level 20 to 28. That's well
+  above you, so be careful."
+- **The High Gate's shot** (`living.FirstScenes.gateShot`, filmed by `living.client.FirstFilm.GateShot` with the
+  opening's camera and letterbox through `opening.client.Cinema`): the first time a player goes out through the High
+  Gate on the errand (the step "Out through the High Gate" completes), ten seconds, letterboxed, hold jump to skip: a
+  breath in your own eyes turning to the smoke, then the view lifts over the gate (the first clear spot of a fan, up to
+  15 up and 8 on) and narrows (FOV x0.6) onto the Wayfarers' smoke, which reads stronger while it's filmed; the lower
+  bar names it ("THE WAYFARER CAMP · UP THE NORTH ROAD · 330 M AWAY") while Hale says his line; then back down into
+  your eyes, left facing the camp. Once a player (counter `awaken:first/gate_shot`). Before the camp is founded the
+  smoke rises from its nominal spot at the generator's height. The step's done line is said in the shot, not as a
+  story line (`QuestEngine.Stager`: a scene that stages a step's ending takes its lines).
+- **Ilse's scene by the fire** (`FirstScenes`, `FirstFilm.IlseShot`): coming within 7 of Ilse with the letters (or
+  talking to her) starts it instead of a bare click. Letterboxed, over your shoulder on the side away from the fire, a
+  slow push while she talks; her lines one at a time in the Registry's speech (name above, the line under it): she asks
+  for the letters (the lower bar: "LETTERS DELIVERED 1/1"), sits you down, says why you'll want a home of your own ("It's
+  getting dark, and nights out here are dangerous"), then holds an ember from
+  hers out in her hand and brings it over to you (to within about two blocks). The view comes back to your own eyes
+  facing her, the HUD stays out of the frame, "Take the ember" with the use key (within 3.6), and your hand takes it from
+  hers (the Registry's hand-over, `HandOver`, now for any item): the step ends as your hand closes on
+  it, and its reward is the Ember (W1's rules kept: one a player, kept through death, Ilse or Hettie give a lost one
+  back). Her last line says plainly what it does ("Once it's placed, you can rest there, and if anything happens to you out
+  here, that's where you'll wake up."), the bars lift, and the Now line says "Place your Ember where you want your home"
+  (the Hearth's). About 20 s to the coal; hold jump to skip to it; after 30 s with her hand out she
+  presses it into yours. Someone with a Hearth or a coal already is told "Looks like you already have a home fire" and the step ends there. Walking
+  off (18 blocks) ends it; it starts again when you come back. Nothing hunts or hurts a player while either moment plays
+  (target changes cancelled, damage cancelled but for what bypasses invulnerability; the gate's for 14 s).
+- **The camp** (`living.wayfarer.Camp`): laid once round its fire when a player is within 96 (`Scenes.campBuilt`, saved,
+  optional field): what lies on the ground within 5 cleared (grass, flowers, mushrooms, moss and carpets: anything
+  that gives way underfoot), each piece set on the real ground under it, the ground within 3.5 trodden to coarse dirt
+  and path; two
+  **Wayfarer's Bedrolls** (`awaken:wayfarer_bedroll`, our own block on `AbstractBedBlock`, texture from
+  `tools/art/specs/camp.py`) feet to the fire, west and south; stripped spruce logs to sit on (north, east); a barrel of
+  packs with a lantern, a log of firewood; and the **Camp Pot** (`awaken:camp_pot`) hung by a chain from a bar on two
+  A-frames over the fire. Only on open ground: a trunk or a rock where something goes, and it's left out. Neither block
+  drops or has an item. **Its ground is safe**: no monster spawns (natural, chunk generation, patrols, reinforcements)
+  within 32 of the fire; a monster within 30 stops hunting and is sent back out past the edge (every half second); no
+  monster takes a player within 32 as its target. A **bedroll** sleeps the night through like a bed when it's dark (the
+  rule `WHEN_DARK`), never sets your spawn (that's the Hearth's), and when a step you're on needs the dark (a quest step's
+  `night`, e.g. Moth Lights' "The Lumen Moths only come out at night.") it says "You can't sleep yet. ..." instead. At night
+  Hettie lies down on the far bedroll and gets up at dawn; Ilse keeps the fire.
+- **Plain words, start to finish** (Euan, 2026-10-26, after playing it: "make it more human-like... not some poetic
+  riddle"): every line in the first sequence says plainly what it means, the way a person would say it: the infirmary
+  (Sun, Bram), Bram at the Registry and its cards, the ritual's prompts, the System's acceptance, Kestrel, Hale, Ilse,
+  Hettie, the clerk, the crier's news of the wilds, the first tips, the Ember's messages and tooltip, and the toasts
+  and captions on the way (e.g. Ilse: "Here, take an ember from our fire. Carry it with you, and when you find a spot
+  you'd like to live, place it there. That'll be your home."). Lines that grew got time to be read (Bram's briefing:
+  28 s, a line every 7; Ilse's beats 90 apart).
+- **Quest fields** (`QuestDef.Step`, schema 1, both optional): `tally` shows a step's count even when it's one ("· 0/1");
+  `night` says why a step needs the dark. Objective type `hearth`: done when the player has a Hearth.
+- Dev and tours: `/awaken living first gate|letters|ilse|took|camp`; tour `tools/autopilot/first-scenes.txt` (CI).
+- Tests: `progression_first_thread`, `progression_now_priorities`, `gates_first_gate_on_purpose`,
+  `progression_first_scenes` (the gate's shot once; the letters counted; Ilse's scene to the coal; the Ember; the thread
+  letting go), `living_camp_keeps` (laid round its fire; nothing hunts there; a monster sent out; the bedroll's rule; a
+  step that needs the night).
 
 ### 27.7 Tips, switched on, and the Signal's thread (phase 4)
 - **Tips** (docs/carillon/m4/onboarding.md §1, finally built; `TipHooks.install` had no caller, so every tip in the
@@ -5296,7 +5515,7 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   `news.wilds_*`): the nearest standing gate within 900 of the city ("Hear ye! A gate's light stands past the High Gate,
   to the north!"), else the spawn vault ("…hums again! Its door reads a hunter's rank, they say!"), else the
   Wayfarers' camp. Before, every line in the city was flavour.
-- **Kestrel speaks** before you click her (`named.kestrel`: "Runner! You owe me word from the square.").
+- **Kestrel speaks** before you click her (`named.kestrel`: "Runner! You still haven't told me what happened in the square.").
 - **"Anything for me?"** (`progression.Advice.next`, after Terraria's Guide): a free Registry clerk you right-click says
   the one next step that fits you: a Reassessment waiting, a lock that answers you now, points to spend, the Directive
   you've taken, else the next rank and what it opens for you ("D-rank at level 10. It opens a sealed vault for you, and
@@ -5324,6 +5543,27 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
 - Test: `progression_capability_clock`.
 
 ---------------------------------------------------------------------------------------------------------------------
+
+### 27.10 The current task, top right (Euan's playtest, 2026-10-26)
+"Every time you have a goal and things to do, you actually have a small checklist top right." One small card, top right
+under the first two toast slots (`signal.client.TaskHud`; never over the crosshair, hidden with the HUD), in the band's
+glass, a touch smaller than the Now card: the task's title and done/total, then its steps (a long one wraps to a second
+line), each ticked when done (a soft green flash as it ticks), the
+current one bright with ▸, keys drawn as key caps from "{key}" in the words, a count where a step has one ("0/10"),
+and a compass to a place nearby to do it ("↗ 9 m"). The Now line, top left, keeps the where; the card keeps the what.
+The server decides (`progression.Checklist`, sent only when it changes, payload `signal_task`; nothing while the
+opening runs):
+- **Your body remembers** first, from the awakening: "Hold [Shift] as you land to roll", "Double-tap [Ctrl] to sprint
+  harder", "Hold [Shift] while sprinting to slide", "Press [Space] at a ledge to climb it",
+  each ticked the first time you do it (the body module's counters `awaken:body_roll`, `_sprint`, `_slide`, `_mantle`);
+  the ledge row points at the nearest chest-high ledge within 10 blocks while it's current (every 2 s: a two-block step
+  up from standing ground with room on top). All four done: the list stays ticked for 4 s (`awaken:first/moves_done`),
+  then goes for good. It replaces the "Your body remembers" toast, which the director filed unread.
+- **Then the tracked chain** (`Checklist.register`; the living module's `FirstThread.task`): its title, its steps ticked
+  as they're done (at most six: the last done, the current, what follows), a count on a step that has one or a `tally`.
+  The first thread reads: Take the letters from Bram, Leave the city through the High Gate, Take the letters to the
+  Wayfarer camp up the north road, Deliver the letters 0/1, Place your Ember where you want your home.
+- Test: `progression_checklist` (the moves tick one by one, then the errand takes the card).
 
 ## 28. Between the Gates (home, people, below; plan docs/world-depth/PLAN.md, page https://claude.ai/artifact/ATZfZSczLg95kNSgnLF42M; Euan approved all of it 2026-10-26)
 
@@ -5403,7 +5643,7 @@ Given by: The Last Delivery's `ilse` step (reward `item: awaken:hearth_ember` an
 talking to Ilse or Hettie with no Ember and no Hearth, registered (classic worlds: always), and past that step or never on
 the chain (`PlayerInteractEvent.EntityInteract` on a `living.wayfarer.Wayfarer`, so living is unchanged; Ilse: "Lost your
 coal? Take another. The fire doesn't mind."); 60 ticks after awakening in a classic world (no `CityBasin` site). Now line
-`hearth:ember`, priority 66 (under a tracked chain step ~68): "Set your Ember where you'd live". **Bram's line is not
+`hearth:ember`, priority 66 (under a tracked chain step ~68): "Place your Ember where you want your home". **Bram's line is not
 added** (Carillon's code): for the orchestrator, Bram at the Registry: "The bells hold the city. Hunters hold the wilds.
 Ilse at the camp keeps a fire for new licences."
 
@@ -5484,7 +5724,7 @@ minutes, perks `awaken:energy_regen` +0.25 and `awaken:craft_rate` +0.25 (a perk
 
 **The room panel** (`client/RoomPanel`: `visible()`, `build(Ui)`; data: attachment `awaken:hearth_here`, `RoomHere`, synced
 to its player when it changes, checked once a second). Name, grade, six readings as three pips each, purpose, "Lift it:
-…". Shown as the K Status page's first section (`RoomSection`, order -28: right under NOW, above the Atlas) while you stand in a read room at home (PLAN
+…". Shown on the band's Status page above the Journal (`RoomSection`, order 17, §30) while you stand in a read room at home (PLAN
 said "hold the band key": K opens the band on press today, so the panel lives on that page until The Way Forward's glance
 takes it, through the two calls above); and as every room's card in Your Hearth, which also gained a HOME section (Comfort
 with its bar and the next point, Style, the land, Rested minutes), the kinds you have as chips, at most three suggestions
@@ -5705,6 +5945,355 @@ behaves as before (its `citizens_` and `city_` tests unchanged in what they asse
   loaded chunks, over air: W3's painter may place them itself), and a re-sent lamp list on re-registration (appended
   twice on clients).
 
+### 28.5 W5 as built
+Caves worth entering (PLAN section 8). Packages `delve.cave` (the places, their run-time rules, the Delvers' things),
+`delve.home` (a way home, the vents), `delve.sense` and `delve.client.Sense*`/`CaveSound`/`DeepHum`/`CaveLook` (sound and
+light below), the rappel and rope fittings in `body/ascent`, the seep heart in `mobs`. Branch `pack/world-depth-w5`. Tests
+`delve_cave_routes`, `delve_seep`, `ascent_rappel`, `delve_way_home`, `mobs_seep_heart`; tour `tools/autopilot/world-depth-w5.txt`.
+
+**The places** (`delve.cave`; structure type `awaken:cave_place`, one code-built `CavePiece` whose `Spec` builds the part in
+each chunk, drawn in the same order in every chunk; `Spec.STYLE` 1). Placed with the lair's cave placement and what the
+lairs never had: natural cave air nearby, read from the generator's own base columns (noise caves and aquifers, no chunk
+needed: `CaveSites.air`, rings at 8/14/20/27 out, 6 a ring, a floor under three of air), and a short tunnel carved to it
+(the joint). Every place keeps out of water and lava (its columns are read for fluid), out of the city's reserve, and
+inside 8 chunks of its start chunk (the generator links a structure only that far: `CaveSites.fits`). Structure sets
+(`data/awaken/worldgen/structure_set/delve/`, from `tools/art/specs/caves.py`): sinkholes spacing 44 / separation 18
+chunks, mines 52/22, seeps 26/10, chutes 34/13, grottos 28/11; biomes `#minecraft:is_overworld` (the sinkhole and the
+mine also refuse oceans, rivers and beaches at the surface). Names by seed (`CaveNames`).
+- **Sinkhole** (`Sinkhole`): a great round shaft radius 10-17, its floor 40-110 under the rim, laid beside a planned lode (W2's
+  `LodePlans`, any ore but Deepglass) with its floor one under the heart: at the bottom a passage to a grotto lit by glow
+  lichen and glow berries where the heart glints in a niche of its far wall. The wall has noise (±1.2); its top three blocks lean in (0.6 a block) so the lip is a
+  crisp edge with the dark opening under it, and the hole is cut 12 over the rim (a bump at its edge never caps it).
+  **The shelves** (the E route down): rows every 3 blocks stacked in one sector, a row one block thick where the next runs
+  under it (two high to walk), each row's end over the next one's start, alternating sides: walk a few blocks, drop 3.
+  **The cleft** (the way back up): a crack cut into the wall 100° round from the shelves, vines in one straight column from
+  the floor to the ground, step off the top onto it; vines and a mossy step stone at every drop too. **The dive**: opposite
+  the shelves the wall falls sheer (±0.45 rad) from a smooth jutting lip beside a spring in a notch under the rim, whose
+  water falls into a pool 5 deep. **The old rope**: a roped piton under the rim a quarter turn from the shelves, its line
+  32 down (`#awaken:runner_climbs`). The way in is a stony path (cobble, mossy cobble, stone, gravel) cut down from the ground onto
+  the top row; `goto` stands you on it at the edge of the drop. Vines hang in curtains from the lip down its first 14
+  blocks, then in strands through the upper half; hanging roots under the shelves, moss on the shelves and
+  floor. Mist by day and bats at dusk (below). The first sinkhole (`awaken:delve/first_sinkhole`, placement
+  `awaken:near_city`): 600-900 from Carillon's centre (world origin without the city), never within 40° of north (the camp
+  road), radius 14-16, "The Opening"; its joint may be missing (it ends in its grotto).
+- **The Delvers' mine** (`Mine`): an adit (20-27 long, timber sets every 4, rails) into a hillside that rises 9+ in 18,
+  the mine head (the winch over a 3x3 shaft, a foreman's office with a chest: the first Delver's log, the lode map, the old
+  pick, lapis), a ladder 21 down to the first gallery (3 wide, 5 high, 40 long: dressed walls of polished andesite or
+  deepslate, flat and on the grid, timber flush in them, so the Runner runs them), a drowned stope across it (9 long,
+  water 2 deep, 4 down: run its wall, or drop in and take the ladder out), a rail incline 14 down along its end with a
+  minecart at the top and stairs beside the rails, and the second gallery folding back under the hill (a fall of roof to
+  slide under, 5 long, one high; a camp with the second log; a chasm 26 deep with water at its bottom and a rope bridge,
+  planks that sag a block, fence rails, chains to the roof), ending in the breakthrough: stained rock, Deepglass coming
+  through, a half-built seal and the last log. Not every place ends in a fight: this one ends in a log. A site is taken
+  only when its galleries read dry in the generator's base columns: the head, the first gallery, five points along the
+  second and the chasm's ends and middle down to its floor (the tour's first real mine had its second gallery under an
+  aquifer near sea level, flooded to the roof).
+- **Seep** (`Seep`): round a region's Deepglass lode (the Tuning Fork tuned to Deepglass finds it): a hall 26 x 14 x 17
+  laid toward the lode, the rock that touches its air stained (blackstone, obsidian, crying obsidian, tuff), nine
+  Deepglass veins along its walls toward the heart, four Deepglass spires 5-9 high you climb by a ring of steps, a magma
+  vent with the Ascent's updraft in its floor, a ruined timber set where the Delvers' drift came in, a Hollows nest in a
+  side alcove (bone, shed chitin, dripstone), and through a curving throat the heart chamber: a Deepglass dais with the
+  socket, veins out across the floor, the lode's heart glinting in the wall behind.
+- **Chute** (`Chute`): from a timbered mouth joined to the caves, 48 steps falling half a block each (slab, block, slab:
+  the stair slide's rhythm), 3 wide between dressed walls, to a lip over a lake 4 deep in a cavern 5.5 below: the slide's
+  run-out throws you out over the water. The way back: a landing at the water and a stair up the cavern's side.
+- **Grotto** (`Grotto`): a passage from the caves to a curtain of falling water across a doorway (a slot of sources in the
+  roof, a trench under it; walk through, wade out), a room 14 across lit by lichen and glow berries, a pool glowing from
+  sea pickles in its bed, a geode half out of the wall (basalt, calcite, amethyst, clusters) cracked open, a fallen stone
+  to climb into it, and a cache under suspicious gravel by the pool (loot `awaken:chests/delve/grotto_cache`; opening it
+  first counts `awaken:secrets_found` and is a find). A third of grottos (by seed) are a legendary fishing spot: a third
+  of catches there bring something more up (glow ink, amethyst, Deepglass, lapis, prismarine crystals, glow berries or a
+  nautilus shell) and the first catch is a secret. **Its own light**, so it reads without a lamp: glow lichen on 16% of
+  the open cells against rock, glow berries hanging from 4% of the roof cells, sea pickles in 60% of the pool bed (85% at
+  a fishing spot) two to four to a cluster; and our drawn light (`delve.client.CaveFx`, sprites `delve_grotto_glow`
+  and `delve_grotto_glint` (the mist's soft lobes), full bright, never a light block): glints sliding down the curtain with a pale aqua glow behind it, a
+  sea-green halo over the pool with motes rising off it, for players within 40 (sites sent within 64). A grotto is taken
+  only when nine columns across its span (the room's rim, the geode, the passage) read dry, not only its middle (the
+  second tour's grotto was black: flooded to the roof by an aquifer beside it).
+- **Routes** (`Routes`, G46): a search over a built place's feet cells with only the Runner's Kit and the Ascent's numbers
+  (walk/step 0.6, jump 1.25 with three clear over you, grab and climb a lip 2.4, drop 3, lower into a hang and let go 4.5,
+  a running jump over a gap of one or two, ladders, vines and the place's own ropes, swim, falling into water from any
+  height, the slide's crawl under a one-high gap); never the Tether. `delve_cave_routes` builds every kind for four seeds
+  and turns, one chunk at a time as worldgen does, and needs a route from its way in to its end and back out (the mine also
+  to its office, stope, incline, crawl and bridge; the sinkhole's dive must land in the pool).
+- **Cost** (the test, M4 under load): building a place averages 0.25-0.9 ms a chunk it touches (sinkhole 0.9, worst chunk
+  ~6-8 ms; mine 0.3; seep 0.5-0.8; chute 0.2-0.4; grotto 0.35); one place in 800-2,700 chunks, so under 0.005 ms a
+  chunk across the world. A candidate's site search in a real (vanilla) overworld: 9-18 ms (20-42 base columns), once per candidate chunk
+  (one in 676-2,704 chunks); sites found for sinkholes 19 of 40 candidates, mines 7, seeps 13, chutes 23, grottos 27
+  (`delve_cave_routes` asserts every kind finds some): about one place every 500 blocks of cave.
+
+**At run time** (`CavePlaces`): places are known as their start chunks load, and a player's place is the structure piece
+round their feet (`StructureManager.getStructureWithPieceAt`; a place laid by a command or a test is `STAGED`). Twice a
+second each player's place is sent to their client (`CaveNet.Now`: kind, name, how strongly a live seep presses, 1 within
+15 of its hall or chamber fading over 9, quiet). The first time in a place is a discovery (`awaken:discovered/cave/...`,
+0.15 of a level for a big place, 0.08 small; counter `awaken:cave_places_found`); the first time each play-day, a caption.
+**A seep's rule**: inside a live seep creatures are 5 levels over the region (`living/api/Regions.addLevelExtra`, a hook
+added for this); within 40 of the socket the seep heart is rooted (`mobs.SeepHearts.spawn`, idempotent), and the Hollows'
+nest keeps up to three Hushlings or Drip Lurkers about it, one more every 30 s, while someone is within 28. The heart's
+death quiets the seep for everyone (`CaveData`, schemaVersion 1): no +5, no nest, no hum or violet; "<name> falls
+quiet" (IMPORTANT); counter `awaken:seeps_quieted`. **A sinkhole's bats**: at dusk (12,400-13,200) 7-12 come up from
+mid-shaft, once a play-day. Places within 160 are sent for their look from outside (`CaveNet.Near`): a sinkhole's mist
+rising by day (at dawn 0.3 + radius/28 wisps a tick, thinning through the day, gone at night; most born in the shaft's
+top so they clear the rim; 1.3-2.3 across, swelling 2.2x, peak alpha 0.28-0.38 on a soft sprite; fading out within
+2.5-8.5 of the camera so it never walls the view; our sprites `delve_mist`), a chute's draught at its mouth (`delve_draught`).
+Carving turns sand or gravel left hanging over the new air into sandstone or stone (a roof never pours in).
+`/awaken delve goto <kind>` (`CaveLocate`) stands you at the nearest place of a kind the world really made: each
+candidate's start chunk is generated to its structure starts and the start the world holds is taken (a disagreement with
+the search is logged, `[delve] locate ... the search says ..., the world holds ...`), and it passes (logging `[delve] goto
+passes`) a place whose goal is not its own, is solid rock or is under water. A sinkhole walls off a lava lake at the
+ground beside it (lava within 2.5 of the wall from 8 under the rim up is set to rock), so lava never falls down the shaft.
+
+**Names and captions** (`delve.client.CaveHud`): "THE DELVERS' DEEP" in spaced capitals under one hairline, "old mine"
+under it, quieter than a region's (smaller, dimmer, rising as it fades), through the notification director (topic
+"region"; IMPORTANT for sinkholes, mines and seeps, AMBIENT for chutes and grottos, filed in the Journal when it can't
+show); its cue `delve.cave.name` is the region caption's chime lower and quieter.
+
+**The Delvers' things** (`CaveItems`): three Delver's logs (use: the pages in the book screen; read, it joins the Codex as
+"The Delvers", attachment `awaken:delver_logs`): the foreman's (the Carillon's bell metal, the copper running down, the
+seams written in lapis), a Delver's notes (the lamps burn blue past the chasm, black glass in the wall), the last entry
+(they broke into it and sealed the drift; the Well goes down to where this comes from). The lode map: read with a lapis
+(used up), the three nearest lodes within 224 come up on the Gate Map and in a toast. The Delver's old pick (a relic):
+carried, the Tuning Fork reaches 16 further (perk `awaken:fork_reach`, read by `TuningForkItem`).
+
+**Joined lairs**: the Crystal Nest finds cave air within 20 past either tunnel (`delve.cave.CaveJoints`) and bores on to
+it (`DeepLairs.joinTunnel`; `LairPiece` saves the joint; older pieces keep none); one laid by `/awaken fauna lair place`
+opens into a pocket. The lair line says how far down or up ("Lair of the Thousandfoot · 1.2 km NE · 40 below", nothing
+within 8: `FaunaNow.depth`). **The Horizon** (`CaveHorizon`): from awakening, within 900, never at home or in a gate, until
+you've stood at one: "Sinkhole · a way down" ("The Opening · a way down", raised, for the first), found by walking the
+sinkholes' placement grid and running each candidate's own site search (the same answer worldgen gets; two new
+candidates a call, cached).
+
+**Moving through rock** (`body/ascent`): **the rappel** is its own state (`AscentState.RAPPEL`, ordinal 6: watchers get the
+pose from `Seen` alone, the server can bound a rope that grows, TETHER untouched). On a line, sneak then jump starts it;
+sneak held holds you, jump held with it pays out; a fresh jump with your feet on the wall kicks off (cooldown 8 ticks:
+0.26 out, 0.08 up; a lean of 0.02 and damping 0.015 bring a bound 1.4-1.7 out back in 15-20 ticks at any length, about 3
+blocks down); let go of sneak and you swing again; let go of the line by a roofed floor within 2 and the zip's vault
+steps you in. Pay-out without Deepglass in bites (0.24, 0.21, 0.05: half a block every 3 ticks, 3.3 b/s, a catch on the
+third), a Deepglass line smooth at 0.21 (4.2 b/s); down to the floor plus 0.3, six ticks standing lets go. Falls stay
+free. The server: length ≤ reach + 1, the hand within len + 2 of the anchor, a pay bank refilled at the line's rate x1.15
+(capped at 30 ticks' worth + 1, counting the larger of game and wall time so a lagging server doesn't refuse), a per-tick
+astray check; refusals go through Stop and the refusal counter and never move the body; a kick is a chain link.
+**Rope fittings** (crafting-table recipes: the Forge has no data-driven ones): an iron line (4 iron, 4 nuggets, a coil
+of Runner's rope: the rope reaches 6 further), a gold reel (4 gold, 1 iron: winds 1.5x, reel-in 0.51, fit-reel 1.8), a
+Deepglass line (4 shards, 4 iron, Runner's rope: smooth pay-out, keeps the +6); fitted by using them, one line and one
+reel (the old one comes back), saved as `awaken:rope_kit` (schema 1, kept through death), synced (`Kit`, and `Seen.kit`
+for watchers); the line drawn steel-grey or with a violet glint, the reel at the hand. Sounds `ascent.rappel_*`.
+
+**The senses** (`delve.client`): **sound** (`CaveSound`, `DeepHum`, a Conductor `Source` in its voice budget, honouring
+its hushes, ducking and `natureLevel()`; played beside AmbientSounds, whose cave ambience it doesn't double; and
+`soundscape/family/hollows.json` for players without it). Underground ("under": no sky, real ground 3-12 over you; full
+at sky light ≤ 4, none at 10; eases over ~2.5 s): drips at real dripstone tips and wet roofs (4 + 2.5 a tip found, capped
+at 4; dripstone x1.3, lush x1.1, deep dark x0.35; 40% fall again from the same tip 1.2-3.5 s later), stone settling (0.45
+a minute, 6-26 off, lower with depth), far water toward real water 8-32 off (a loop), a breath of air from the brightest
+sky-lit air 3-32 off at least 4 brighter than you (a loop, lower with depth); sulfur caves add a vent's hiss and acid's
+bubbles and their drips sizzle; every event x(1 - 0.45 depth) (depth 0 at y 48, 1 at y -64), lulls every 2-4 min.
+At most 10 block reads a tick. **The deep's hum** below y 0: nothing at 0, in over 8, 0.28 at y -30, 0.52 at y -60, plus
+0.48 x a seep's weight (deep dark x0.6); the seep's second voice at 0.85 x seep^1.3, and the world muffles (the air's
+filter to 20000 x (600/20000)^seep Hz, nature to 1 - 0.7 x seep). Ten events `delve.cave.*`, `delve.deep.*`
+(`tools/art/specs/audio_caves.py`). **Light**: a Lens look per cave biome (`assets/awaken/lens/looks_delve.json`: lush
+caves' green glow, dripstone's amber, the deep dark's ink, sulfur caves' yellow haze) and a seep's violet-black shadows and
+lilac Deepglass bloom through a new place-look hook (`LensClient.placeLook(layer, id, weight)`: two layers, nothing while
+Lens is off, a story override always wins); a plain cave under any other biome takes an underground look by "under", so
+it no longer wears its surface biome's grade. Dripstone's amber is opened up (it read only dark in the second tour):
+exposure 1.05 (the cap), contrast 1.03, vignette 0.16, bloom 1.1 from 0.46, an amber haze mixed 0.75 that lights glow
+into (fogGlow 1.1); shadows are still never lifted.
+
+**A way home** (`delve.home`): the server keeps your trail (a crumb every 4 blocks while out of the sky, at most 96, the
+older half thinned when full, loops cut; attachment `awaken:delve_home`, schemaVersion 1, not kept on death). After 15 s
+out of the sky with sky light ≤ 6, 6+ from where you last stood under open sky and 12+ below it or 32+ walked, a Now line
+"Surface ↑ 20 · NE 40" (priority 56; never outside the overworld, in a gate, the Descent, a Hearth or the opening) until
+you see the sky again. The Signal's thread runs back along the crumbs (never through rock), a block a tick for 40, when
+the line appears and when you stand still 5 s, at most every 30 s; NowClient's straight thread and arrow leave it alone
+(`NowClient.ownWay`). The Way Forward's glance plugs in with `delve.client.HomeClient.thread()`. **Vents** (`awaken:delve/vents`,
+biome modifier `delve_vents` at `underground_decoration`): a chunk in 8 tries 3 columns; over a floor in sulfur caves, or
+at y ≤ -28 with lava within 4, with 20+ of air above: the Ascent's updraft vent on a magma crust (a cinnabar ring in sulfur
+caves); 0.011 ms a chunk. **The Descent's tunnels**: five small grottos per tunnel stratum (a pool lit from below by the
+stratum's glow block, Deepglass in floor and roof, lichen, half with a cache from the stratum's loot table) and Deepglass
+seams along the tunnel walls in bands (the Rim and the Gardens get iron and gold seams and amethyst grottos); the tunnel
+forms lose W2's scattered Deepglass; no overworld cave reaches a stratum.
+
+**The seep heart** (`mobs`, `awaken:seep_heart`, `MobDef.placed()`: fauna kept out of the census, beast registry, codex and
+lairs): our own body (Deepglass and black-violet growth fused into the rock, a beating violet core, plates that open as it
+wakes, roots in the walls), rooted, hp 34, damage 4, armour 4, box 2.0 x 2.6, at a beast's level (the seep's +5 with it).
+Wakes for a survival player within 12 (7 up or down) or a blow (2 s); fights within 20, sleeps after 30 s alone and heals.
+Phase 1: Deep Shards, Rootfall (cracks, then roots), Root Lash; at 65%: Deep Pulse (radius 9, knockback, 4 s darkness),
+Call of the Deep (two Hushlings); at 30%: Shard Storm, Heartburst. Its own light (5 asleep, 10-12 awake, dark after death),
+its own sounds; drops Deepglass shards, a Chime Crystal, essence, a Heartglass part, 45% a Power Core.
+
+**Decisions made in W5** (not among the plan's 13; each the recommendation): the rappel as its own state; fittings as
+crafting-table recipes (the Forge has none data-driven); the Deepglass line keeps the iron line's +6; the way home's glance
+has no key (as The Way Forward's): its thread runs when the line appears and when you stand still; the thread follows the
+trail you came by; the seep heart's level is a beast's in the seep (region + 5 + 3); seeps form round a region's Deepglass
+lode, sinkholes beside a planned lode (so their grottos hold one); the climb back out of a sinkhole is a vine cleft (the
+shelves are the way down); the mine folds back into a U (a structure reaches only 8 chunks from its start); the first
+sinkhole may end in its grotto when no cave is near; a plain cave's own underground look; bats at dusk are vanilla bats
+(Minecraft's own life), the mist and the draught our own; the caption's cue reuses the region chime, lower.
+
+**Not done in W5**: the Hollows den in a dripstone hall and the beast's cave under a hill (PLAN 8.2's other lairs); the
+Taken trouble's destination (W4); an ice chute (the stair slide runs on steps only); the cave sound judged by ear (a Mac
+listening check: `delve.cave.*`, `delve.deep.*`, `ascent.rappel_*`, the seep heart's voice). Not yet seen in a shot
+(changed after the second tour, 40313392914): the great shaft's shape (radius 10-17, the leaning lip, the vine curtains,
+the stony way in), the mist's latest numbers, the place caption, the draught; the dripstone and deep-dark looks read
+only dimly (lush reads). The third tour (40316525458) saw the great shaft read from over its lip (the waterfall to the
+pool, the rings, mist), but its grotto, The Hush Pool, again came out black but for our drawn light: goto stood in solid
+rock where the search put the room (the search and the built world apparently disagree there; goto now takes the world's
+own start and refuses a goal that is rock), so a grotto in its own light is still unseen. The way home's Now line ranks under a tracked quest's line, so the tours saw its
+thread only.
+
+### 28.6 W3 as built (living villages, 2026-10-26)
+Branch `pack/world-depth-w3`. Module `village` (`dev.awaken.village`, `src/main/merge/village/`, `/awaken village ...`);
+module doc `docs/modules/village.md`. Tests `village_plan_deterministic`, `village_day`, `village_trade`. Tour
+`tools/autopilot/world-depth-w3.txt` (CI). Towns and mining towns wait for W7, troubles and growth for W4.
+
+**New worlds only.** A built-in pack, **Awakened Villages** (`datapacks/awakened_villages`, feature flag
+`awaken:awakened_villages`), holds the settlement structure, its set and biome tag, and empties vanilla's
+`minecraft:villages` set (no vanilla village, no villager, no iron golem of a village). Its own flag rather than the Lands
+pack's: worlds already made with the Lands keep vanilla's villages, and no settlement ever starts half-built at the edge
+of an old world's generated ground (decision recorded here). A cured zombie villager is untouched (W6 can settle it).
+
+**Where** (`village.world.SettlementGrid`, pure seed arithmetic). Cells of 640 (about two to a region of 900): one
+anchor each, a hamlet 65%, a village 25%, none 10%; none within 760 of the centre (Carillon's site, else the origin) or
+440 of the first hamlet. The planner moves an anchor up to 32 to the best ground; a village with no room becomes a hamlet;
+rough land drops it. On real overworld noise (seed 26102610, the 41 anchors within 2,600) 21 hold a settlement: about
+one per region, hamlets two times in three. **The first hamlet** (`FirstHamlet`) is found at the server's start, after
+terrain picks the city's site and before any chunk generates: up the road north 760-1,060 (the camp is at 450), then
+96 and 192 to either side, then the roads east, west and south, then 240 further out, the first spot whose land takes a
+hamlet of four homes or more. Clear of the city reserve (+8) by the planner; gates never open on a settlement's ground
+or within 64 of it, planned ones included (`Villages.reserved`, read by `gates/Director`); a Hearth can't be founded
+within 8 (`hearth/Embers`, `HearthService`).
+
+**Placed** as a structure (`awaken:settlement`, placement `awaken:settlement_grid`, step `top_layer_modification`:
+after the trees, which it clears; snow falls on its roofs after). The start is the anchor's chunk; the whole plan stays
+inside its eight-chunk reach (villages radius ≤ 88, hamlets ≤ 58). Pieces: one painter piece (the plan's box: each
+chunk it touches paints its share straight into the sections through the city's writer) and a thin-beard marker per
+building (reaching two past its walls: no bank of earth at a back window), field, pen, every four-block segment of every
+street, and the green (the land eases up or down to their floors and the paving instead of meeting them in a step).
+**The clearing:** before a chunk paints, the land's trees go from every free column within six of the settlement's
+ground (logs, leaves and what hangs on them; never grass, flowers, snow or a block entity; a felled trunk's dirt grows
+grass), so houses stand in a clearing, never in a wood; the planned trees are bark and persistent leaves and stay. The piece keeps only its anchor and the planner's
+version: after a restart the first chunk to paint makes the same plan again (`Plans`, cached per server). Pens get two to
+five beasts of the land (sheep, pigs, cows, chickens, goats), kept. A tree cut at the edge leaves nothing hanging
+(`SettlementPaint.sweep`, the city's sweep and orphan rule).
+
+**The planner** (`village.plan.VillagePlanner`, pure; reads the generator's estimate `GenTerrain`: each column once, a
+6-block grid, bilinear between). Site: the best-scoring of 25 centres (81 for the first hamlet) by flatness, dryness,
+water within 40 of the core, a moderate height. A green (paved, radius 5 or 7) with the well, the bell (a post in a
+hamlet, a stone tower with an open belfry and a lightning rod in a village), the notice board facing the street, benches
+round the well and, in a village, a market stall. A main street along the contour through the green (24-38 blocks each
+way in a hamlet, 40-65 in a village), lanes branching off it (0-1, 2-4); street heights never change more than one a
+four-block step, and where the paving climbs one the lower cell takes a slab of its own stone (a half step, never a
+cube of cobble with earth at its sides). Plots on the frontages, each facing its street with a yard round it, level with the paving at its door,
+a path out to the street; never more than 4.5 of cut or fill. A village has the inn (11-13 x 9, two storeys), the smithy
+with its forge shed (anvil, a lit blast furnace), the elder's two-storey house, often a granary and a barn, 8-17 homes;
+a hamlet 3-6 homes (the first 4-5), sometimes a smithy and a barn. Longhouses in the frost. The mill (9 x 9, two storeys)
+on the nearest water with its wheel turning in it; a pier where water is two deep near a street. Strip fields (2-3 a
+hamlet, 4-7 a village) with a channel down the middle and the land's crops; pens; kitchen gardens behind half the homes
+(fenced, a water hole, a gate to the house); 2-7 trees of the land's wood; washing lines in a third of the side yards;
+carts, crates, sacks, planters, a timber stack; street lamps (5 a hamlet, 14 a village). Names from the land
+(`Names`: "Kettleby", "Longvik", "Hollowstrand").
+
+**Painted by the city's grammar** (`dev.awaken.city`: `PlanView`, `SettlementPaint`, `VillageStyles`, `CityInteriors`).
+The grammar reads any `PlanView` (Carillon's plan is one); Carillon paints byte for byte as before (a fingerprint of all
+1,388 of its chunks, 7d384bdd423e85f6, the same before and after; its plan-hash test unchanged). A settlement's plot
+carries its style in `Plot.district` (16 + land x 4 + wealth): ten lands (temperate, frost, desert, savanna, mire,
+highland, elder, coast, jungle, cherry) by three wealths (poor, modest, prosperous), every house drawn on its own:
+rubble or ashlar below and plaster and timber above in the heartland, log longhouses under steep spruce in the frost,
+sandstone under flat roofs in the desert, whitewash and blue shutters by the sea. Lower and plainer than the city (one or
+two storeys, no jetties or shopfronts), with the same climbing grid. Every house is enterable (panes, real doors of the
+land's wood) and **furnished** by `CityInteriors` from who lives there (`SettlementPaint.Interior(adults, children,
+trade, seed)`): a bed each (a couple's double, the children's upstairs), a hearth under the chimney, a table and seats,
+storage, the trade's blocks (the smith's anvil and blast furnace, the inn's bar, tables and guest beds, the scribe's
+lectern and shelves, the miller's sacks), rugs, pots; a real staircase (five steps, the floor cut over it) or a ladder;
+at most two lights a house. Generic over plots, for Carillon's B4 to adopt.
+
+**The people** (`VillageRoster` on W0's `RosterBuilder`): a graph from the streets (a node every four blocks, lanes
+joined at their branch), a door for every building, places for the work (each field's edge, the pen's gate, the forge,
+the well's trough, the bell, the benches, the green's play, the woodlot, the pier's end, the mill, the inn's taproom
+inside its door with the guests' floor found by painting the inn alone, the lamps, the Watch's posts and the roads
+out). Errands spread over the whole place, never round the well: the board, the benches, the stall (buying), every other
+home's door (a visit), the green itself and a corner every sixteen blocks of street. A place holds as many people as it
+has spots (past them they'd stand in a heap), so the children's game spreads over twelve spots of the green, the green
+holds ten, the stall's front four, the board three. Households of 1-3 adults and 0-3 children per home, 8-16 people in a hamlet, 20-50 in a village. Village jobs
+appended to `Roster.JOBS` (21 farmer, 22 shepherd, 23 woodcutter, 24 miner, 25 fisher, 26 hunter, 27 carter, 28 elder,
+29 scribe) beside the city's smith, tavernkeeper, miller, washer, lamplighter, bellringer, Watch, healer, stallkeeper
+and children. **The day** (0 = 06:00): the bell at dawn and dusk (the ringer at the bell 05:18-06:42 and 17:30-18:36;
+it rings six with Minecraft's own bell sound); work 07:00-11:30 and 12:50-17:50 (farmers hoeing, the woodcutter's axe,
+the smith at the anvil, the fisher at the pier with his rod, the shepherd leaning on his crook); the midday meal at home;
+from half past six half the grown-ups at the inn or on the green till ten; hunters and miners out by the road at dawn and
+back at dusk, the hunter with a kill on his pole; the carter's round of the barn, granary, inn and mill with a crate;
+the lamplighter's round lighting the lamps at 18:10 and putting them out at 05:00; the Watch at the posts and walking
+the edge 17:30-04:50; the elder on a bench and, of an evening, at the inn. Clothes from the city's trades by hash (a
+farmer wears a porter's, a fisher a boatman's, a scribe a clerk's). Ledger cost with a village of 38 awake: 0.003-0.005
+ms a tick (`village_day`).
+
+**Speech** (`data/awaken/village/village_lines.json`, 729 lines, read by `citizens.Lines` under `village.`): greetings by
+job and standing (`village.greet.<job>.<stranger|known|friend|kin>`), calls at work, news of the village and the region,
+trade, the board, the inn's offer, room and rumours, the scribe, the elder, the bell, and what people say when struck,
+robbed or their fields trampled; `{village}`, `{region}`, `{elder}`, `{gate}` (the compass way to the nearest gate) filled
+by the village's `Settlements.Voice`. Talking to a trader opens their goods (`Settlements.Talk`); the elder tells news.
+
+**Trade in emeralds** (decision 5; `Trade`, `Emeralds`): `EconomyHooks` is installed with the emerald (balance,
+charge, and pay once per claim id; the claims are kept in `awaken:villages`). Every trade sells what it makes and buys
+what it needs (vanilla's merchant screen); every land's villages make something of their own (the frost's furs and
+berries, the desert's glass, the mire's slime and clay, the highland's copper, the coast's ink, prismarine and nautilus
+shells, honey in the heartland...). The scribe sells three enchanted books a day (the tradeable enchantments, 9-25
+emeralds by level), paper, books, maps, name tags. Prices show standing on the screen itself (the old price struck
+through): a stranger pays one over on anything of three or more, a friend a fifth under, kin a third under; what a
+village buys asks a stranger an eighth more goods and kin a fifth fewer, and is capped a play-day per player (nothing
+ever locks for good).
+
+**Standing** (`VillageState`, per settlement and player): points, Known at 10, Friend at 35, Kin at 80; a trade +1
+(four a day), a filled notice +4 to +8, a night at the inn +1, two blocks of a house broken -1 (three a day); the
+people's own recognition (W0) lifts a stranger to Known. Rising, every one of its people knows you better
+(`Settlement.acquaint`) and a line says so.
+
+**The notice board** (`Requests`, `client.NoticeBoardScreen`): right-click the board on the green: a timber board with up
+to three pinned notes from the village's real state (damage: timber and stone to mend it; a smithy: iron; the inn:
+bread; fields: bone meal; a pen: wheat; a frightened village: torches for the edge; a bell: copper; a pier: string;
+lamps: glass; leather), renewed every other play-day, kept six days at most, counts shown, "Hand over" gives what you
+carry; filled, it pays its emeralds once and its standing, lifts prosperity and mood, and goes into the history.
+
+**The inn** (`Inn`): the innkeeper sells a room for three emeralds (the key is the receipt): the inn's guest bed becomes
+where you wake if you fall, once (given back after you wake there, or after two play-days), and the night's rumour is
+told over the fire.
+
+**Sound and light.** The ambience slot in a settlement (`MusicLayers`, priority 90, under Carillon's):
+`awaken:village/day` (birds over a murmur that grows with the people out of doors) and `village/night` (crickets, the
+inn's voices till late), AmbientSounds' players the same without our birds and crickets; beds made from the city's
+stems. The client sounds the forge's hammer through the working day, the mill wheel and the inn of an evening
+(`citizens.client.VillageSound`), and puffs smoke from every chimney the grammar built (the roster's emitters, by hour
+as in the city). Street lamps are the citizens' lamp heads (no light block; their light drawn, decision 26).
+
+**Saved** (`awaken:villages`, schemaVersion 1): each settlement met (key, name, kind, land, origin, radius),
+prosperity and mood (0-100), each player's standing, damage (every block broken in its planned ground by a player or an
+explosion, with the block that stood there and the day, up to 2,048), buildings added, a short history (32 lines), the
+board's notices, the day's counts; the paid claims; tonight's inn beds. The people's records are W0's.
+
+**API** (§12): `dev.awaken.village.api.Villages` — `settlementAt`, `nearest`, `all`, `standing`/`addStanding`,
+`damage`/`repaired`, `history`, `prosperity`/`addProsperity`, `mood`/`addMood`, `reserved(level, pos, margin)`. Citizens
+gained `Settlements.onTalk(Talk)` and `installVoice(Voice)`, `Settlement.records/job/personName/age/body/say/acquaint`,
+`RosterBuilder.emitter(x, ry, z, kind)` and `RosterSource.Built.emitters`. City gained `PlanView`, `SettlementPaint`
+(`Layout`, `Canvas`, `Interior`, `paintChunk`, `sweep`, `standingCells`, `chimneys`, `dump`), `VillageStyles`.
+
+**Measured.** Planning on real overworld noise: 0.3-0.6 s a hamlet, 0.9-1.3 s a village, once per settlement on the
+worldgen thread that meets its start (the first hamlet's search at server start: a few tries). Painting: 0.35-1.5 ms a
+chunk (about 1,600 cells; the grammar, the rooms and the ground), at most 4 light sources a chunk. Ledger with a village
+awake: 0.0008-0.005 ms a tick. On GitHub's macOS runner (slower cores) the first hamlet planned in 5.2 s and a village
+in 2.2 s; look tour 40313778099.
+
+**Decisions taken here** (none of the plan's 13): the own pack and flag (above); the 640 grid and its odds; the first
+hamlet's search order; the structure's step and the plan rebuilt from its anchor; the clearing of six; beards on the
+streets and two past each house; half steps in the paving; spots spread over the green; styles keyed 16 + land x 4 + wealth;
+two lights a house; the standing thresholds and the price rule; the board's needs; the inn's one fall; the claims kept
+in the villages' file; village jobs appended to the city's list; the day's hours; the kit's civic blocks (they drop
+nothing) used in village walls and furniture; gates 64 and Hearths 8 off a settlement's ground.
+
+**Left.** W4: troubles (W0's director, `plannedEvents`), growth (prosperity raising buildings, `added`), the Rebuild
+from the damage record, the history in the Journal, festivals. W6: settlers to the Hearth (Friend and Kin), a refugee or a
+cured villager settling. W7: towns, mining towns, roads and caravans between settlements. Smaller: the Mire's houses
+want stilts and the caravanserai a courtyard (styles only today); village clothes are the city's; a house smokes by the
+hour, not by who is in; `/locate` can't find a settlement (`/awaken village list` does).
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 29. Wild life (the wild's small ambient life, client-only; Euan 2026-10-26, built without an approval page)
@@ -5811,3 +6400,190 @@ targets hold, rain and cold clear the insects, a chunk's draw is fixed and the l
 `wildlife_census` (the caps hold over 400 rich chunks at four hours; nothing is made inside the city and anything there
 leaves; nothing out of reach), `wildlife_rigs` (every rig parses and carries every clip its brain plays, every coat,
 blink and the insects' sheet exist); `audio_events_resolve` covers the 18 events.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 30. The band's pages (the K menu; plan docs/k-menu/PLAN.md, page https://claude.ai/artifact/49cQxv5y3CzXcJ3SG4jDN9; Euan approved all of it 2026-10-26)
+
+Euan, 2026-10-26: the K menu "just feels like a dashboard"; the Journal sat above the stats ("you have to scroll down a
+ton just to get to your stats"); merge the Gate Map and the Atlas. The Status tab stacked 22 sections in a 246×192
+window (stats 1.9 to 3.4 screens down, Powers 5 to 7). Approved: direction B, every recommended answer (PLAN §7):
+six pages; K always opens on Status; points placed then confirmed (phase 2); the panel 288 units wide; M opens the
+band's Map page; a denser tint by day (phase 3); your face on Status (phase 2); "Clear Atlas cache" to the settings
+(phase 4); phase 1 first; the map opens in the world (phase 4); others see a content-free projection (phase 4).
+
+### 30.1 Pages (phase 1, built)
+- **Six pages, in the rail's order:** Status · Powers · Journal · Truths · Codex · Map (`StatusSections.Tab`;
+  `Tab.label()`). `Tab.GATE_MAP` is gone.
+- **The rail** (holo, `holo.ui.BandLayout`, `HoloStatusScreen`):
+  - It runs down the panel's wrist edge, 30 units wide: six nodes 31 units tall, one every 34 from y 9.
+  - Each node has a 12×12 pixel icon and its label in spaced capitals at two framebuffer pixels fewer per font pixel
+    than the body text (3 at 5 px a unit, 4 at 6).
+  - The open page is lit (a fill and a bright bar on the wrist edge).
+  - Badges: points to spend on Status (amber), new Journal lines on Journal.
+  - The K key sits at its foot.
+- **The panel:** 288×228 units (was 272×228). That is still 5 px a unit at 2880×1800 and 3024×1964 and 6 at 3840×2160
+  (`holo_band_layout` checks it); the content is x 40, y 10, 232×208, with its scroll bar beside it.
+- **The flat fallback** (`StatusScreen`) has the same pages on its tab row.
+- **Keys:** K always opens on Status unless a link names a page. 1–6 open a page; Tab and Shift+Tab step through the
+  pages that show here; M opens the Map (the Atlas key, `StatusSections.pageForKey`).
+- **Map:** a page with an action (`StatusSections.setPageAction`; the atlas module registers `MapScene.openFromKey`,
+  key M). Picking it closes the band and opens the map in the world (§30.5), or the table where the scene can't open.
+- **Where each section lives** (order in brackets). Earlier sections of this SPEC that say "K › Status" mean these
+  pages now.
+
+  | Page | Sections |
+  |---|---|
+  | Status | STATUS (0), STATS (10), WAITING FOR YOU (14, only with a decision waiting), THIS GATE (15, only in a run: `gates.client.RunSection`, the run summary and View Satchel that were on the Gate Map), DEEP PACK (16), THIS ROOM (17), JOURNAL (20, the filed lines) |
+  | Powers | POWERS (0), THE ASCENT (28), THE BODY (30), CRAFTS (160), THE VEIL (320) |
+  | Journal | NOW (−30), JOURNAL · CHAINS (−20), DIRECTIVES (−15), DAILY REGIMEN (−12), WHAT WAITS / SAVED FOR LATER (5), HEARTH (40), ANCHOR REQUESTS (41), JOURNAL (700, the filed lines again), RECENT MESSAGES (800), RECORDS (900) |
+  | Truths | the Path choice (0), Truths (10–30), THE ROAD (35), TITLES (40), LATENTS (50) |
+  | Codex | THE BOARD (0), HAPPENINGS WITNESSED (460) |
+  | Map | the map in the world (§30.5), or the Atlas table |
+
+- **Gates on the Atlas** (`MapMarks.Gate`, `MapMarks.registerGates`, `MapMarks.gates`):
+  - Every gate whose pillar you can see (the gates module, from the synced beacons) and each gate your scanner read (the
+    above module, marked as a reading) stands on the table as a pillar of its rank's colour, with a dark core so it
+    reads over cloud.
+  - Its name ("D-rank gate", or the scanner's name) and how long it holds ("breaks in 2 days", "broken: its monsters
+    are out" in red, "calm") hang over it from zoom 0.3.
+  - Where you've explored, the pillar stands on the ground; elsewhere it rides the clouds, because you saw its light
+    from afar.
+  - A reading within 24 blocks of a pillar you can see is dropped. Overworld only.
+  - The Gate Map's radar and lists (gates and scanner) are gone.
+- **The Atlas picture** (the glance) left the Status page. `AtlasGlance` keeps its painter for the phase-4 scene.
+- **Links:**
+  - `ProgressionClient.openBand(Tab, String... focus)` opens the band on a page in the player's style (`BandOpener`,
+    installed by holo), scrolled to the first named section, only while the band is worn.
+  - `OpenBand(page)` carries the page (`Progression.openBand(player, page)`; `BAND_PAGE_ASCENT` = −1 opens Powers at THE
+    ASCENT).
+  - The ascent's "Show me" card and the climb ward's ShowMe both open Powers at THE ASCENT (else THE BODY).
+- **Words:** Bram's line at the Registry is now "That's your band. Your status and your stats are on the first page, and
+  the map is the last one. Press the same key to close it."
+- **Autopilot:** `screen holo status|powers|journal|truths|codex|map`; flat `screen status|powers|journal|codex`;
+  `screen map` (and `screen holo map`) opens what the Map page opens (the scene); `screen table` the flat table.
+  `holo clicktab <i>` clicks rail node i.
+- **Tests:** `holo_band_layout` (nodes inside the rail and apart, the K key clear, content clear of the rail, labels on
+  whole pixels, 5 and 6 px a unit kept on the owner's screens); `signal_status_screen_frame` now lays out the six
+  labels.
+
+### 30.2 Still to build (PLAN §6)
+- Nothing from the plan's five phases. Later: the Journal entry opening in place ("Show on map", "Open in the Codex"),
+  the full step list of the tracked chain (the living module sends only the step you're on), the adaptive tint sampled
+  from the backdrop (today it follows daylight and the camera's pitch), a controller map, and the map scene's later
+  items (§30.5).
+
+### 30.3 The Status sheet (phase 2, built: `progression.client.StatusSheet`)
+- **The hero** (Status order 0, no title row): your face (the skin's face and hat layers, 8×8 scaled up, in corner
+  ticks), your name, your title in amber, then LEVEL in spaced capitals with the number at twice the body size, the XP
+  to the next level as segments (3 units each, 1 apart, the one filling half lit), and "Level N opens X" from the level
+  road (`Content.LEVEL_ROAD`). The XP gained since you last looked fills in when the band opens (not with reduced
+  motion). Your rank stands at the right as a pixel diamond with its letter; hovering it says what the next rank opens,
+  or "TRIAL READY" when the trial is.
+- **The six stats in one line** (order 10): STR AGI VIT INT PER SEN, each a column with its value; the header reads
+  STATS with the points to place (amber) and any fracture chip.
+  - While points wait, a + diamond sits under each stat. Click it (or arrows to focus, Space) to place a point there.
+    Placed points show at once as +N in amber and in a PLACED list; nothing is sent yet.
+  - **Confirm** (Enter) sends one request for all of them (`StatusAction("spend_many", "STR:1,AGI:2")`); the server
+    places each through `Progression.spendPoint` and skips what you don't have (at most 500). **Undo** (Backspace)
+    takes the last one back. Placed points are kept while the band is shut. On a confirm the stats that rose flash amber
+    for 600 ms.
+  - The focused stat's line under the row says what it does in plain words.
+- **The context row:** the top Now suggestion with its compass sits under the stats (`NowRow`, order 18: "NOW · n more
+  on the Journal page ›"), then the decision waiting (14), this gate (15), the Deep Pack (16), this room (17), and the
+  newest Journal lines (20, four of them, "ALL n ›").
+- **Labels** (`BandHeader`): small capitals in the labels' colour, a hairline to the edge and a note on the right
+  ("ALL 23 ›", a click opens its page), instead of loud titles.
+- **Sounds:** `holo.spend` (a rising step per point), `holo.confirm`, `holo.undo` (`StatusSections.Cue`).
+- **Test:** `progression_spend_many` (a mixed request places what it can, skips nonsense and what you can't afford).
+
+### 30.4 The look and the motion (phase 3, built)
+- **Tint by daylight:** the band's glass is denser by day: 0.46 at night or under a roof, up to 0.60 in full daylight
+  looking at the sky (`HoloRender.tint`, from sky darkening and the camera's pitch), so text holds against bright sky
+  and snow.
+- **Light from the wrist:** a soft blob of the band's light (150 units, 0.10 alpha) at the panel's wrist corner, as if
+  the band lit the glass from below.
+- **Pages print in:** changing page sweeps the scan line down the content (40 ms, then 140 ms; `HoloPanel.rescan`), and
+  the rail's lit bead slides to the new page in 120 ms. Off with reduced motion.
+- **Type:** body text at the panel's pixel size, `small()` one framebuffer pixel fewer, `micro()` (labels) two fewer,
+  never under 2 (`StatusSections`).
+- **Sounds:** `holo.page` (one soft glass tick, a pitch step per page), `holo.spend`, `holo.confirm`, `holo.undo`, from
+  `tools/art/specs/audio_holo.py`, on the Interface slider.
+
+### 30.5 The map in the world (phase 4, built: `atlas.client.MapScene`, `MapCamera`, `AtlasScreen` scene mode)
+Euan's idea: the camera pulls back and you see your character looking at the map, a hologram from the band, "still
+really sharp, with the clouds and everything".
+- **Opening:** M (or the band's Map page) raises your wrist (120 ms), then the camera rises out of your eyes to a shot
+  2.4 m behind your feet, 2.2 m over your right shoulder and 4.6 m up, looking the way you face and 38° down
+  (`atlas.MapShot`), easing in over 320 ms after a 60 ms wait (190 ms after 30 ms when it opened in the last 12 s). The
+  map is usable at once; it is settled by 420 ms (220 ms again).
+  - The camera is a client-only marker entity the game's camera follows (as the opening's, `OpeningCamera`), placed
+    every frame from `ComputeCameraAngles` at LOWEST. It follows you if you're pushed; it never turns with you. While it
+    holds the view the hands, the block outline, your name tag and the HUD stand aside (chat, subtitles and the action
+    bar stay). The world never pauses.
+  - **Room:** the line from your eyes to a little past the camera's place must be clear; else the left shoulder (the
+    layout mirrors), then a higher, steeper shot (1.4 m back, 6 m up, 50° down), then the table.
+- **The card:** the Atlas's own picture (the same renderer as the table: land, zones, clouds, pins, gates, rumours) on
+  the band's projected glass (78% navy), on the far side of the frame from your shoulder (33.5% to 97.5% of the width,
+  7.5% to 68% of the height: it ends above and right of your raised wrist, so the beams show between them). Up the map is the way the camera looks. The cut edge fades into the glass; the world
+  behind dims (Lens through the focus, plus a soft veil that is darker at the top). Beams of the band's light fan from
+  your wrist to the card's near bottom edge (`holo.client.HoloScene`, drawn by the wrist layer). The card scans in from 120 ms
+  and the land prints in from the middle, faster than on the table.
+- **The legend** floats on its own glass over your head, on the near side: GATES (the four nearest you know, with
+  their distance; Tab steps through them, a click picks one and the map glides to it), the picked gate's **Point me
+  there** (T), KNOWN LANDS (click to fly there) and the DANGER key. It never reaches lower than 56% of the height.
+- **Point me there** (scene and table): the Now line leads with "Go to the D-rank gate" (`NowClient.pin`, id
+  `awaken:map_pin`, priority 86, client-side), with its compass and the Signal's thread, until you're within 12 blocks.
+- **Keys** (one line along the bottom): drag turns the map, right-drag or WASD moves across it (your body stays still),
+  scroll or +/- zooms, Q/E turn, R/F tilt, C comes back to you, Tab gates, T point me there, 1–5 open a band page, M,
+  Esc, K or Space close (250 ms back to your eyes). The table takes the same held keys and Tab/T.
+- **The table instead,** at once: Shift+M, or M again within 0.3 s of opening (from the scene); in a fight
+  (`SystemHud.inCombat`: hurt in the last 5 s or a hostile within 8); with reduced motion; with the setting "Map opens
+  as: Table" (`config/awaken-atlas-client.toml`, `mapOpens`); without the band; while another camera holds the view;
+  asleep or spectating; with no room. Inside a gate the Atlas's own message stands.
+- **The fight rule:** hit, or a hostile within 8 blocks, while the scene is open: it folds in 150 ms with a sharp glass
+  tick.
+- **What others see** (`holo_state` kind MAP = 3, relayed and rate-limited like STATUS and INVENTORY): your raised
+  wrist and, before you at the waist, a content-free disc of light (a ring with compass ticks, a few drifting points,
+  a cone from the wrist). Never your land, pins or labels.
+- **Settings moved:** "Clear Atlas cache" is a setting now (`clearAtlasCache`, turns itself off once done); "Share with
+  party" shows only while other players are online.
+- **Cost:** the Atlas picture costs what the table does; the scene adds your player model, the beams (two thin quads
+  and a fan) and the GUI glass. Nothing is loaded for the camera move: the same place, seen from 5 m back.
+- **Test:** `atlas_map_shot` (behind you, over a shoulder, 38° down, the left mirrors the right, the eases, the short
+  way round, the promised timings, the MAP kind).
+- **Later:** a real 3D mesh in the world you could walk round; party members within 8 blocks seeing the real map;
+  holding Shoulder Surfing and Camera Overhaul off while the scene runs (today they may fight the camera).
+
+### 30.6 The other pages, narration and Band size (phase 5, built)
+- **Powers** (`powers.client.PowersSection`, the page's lead): ON YOUR KEYS with your energy at the right ("ENERGY 120 /
+  120 · 6.0 A SECOND"); your six keys as 30-unit sockets with your own bindings on keycaps under them (R and Alt set
+  apart); YOUR POWERS · n, the grid (level pips, mastery under them, a blue dot when on a key, green when passive); then
+  a card for the power picked or under the cursor: its icon, name, KIND · SLOT · ENERGY · COOLDOWN in small capitals,
+  mastery as twelve segments and "Mastery 34% to level 4", what it does, and what to press next in amber ("Press Z, X,
+  C or V to put it on that key."). Pick a power, then press the key it should go on (your bindings) or click a socket;
+  the sockets it fits light amber with corner ticks. Esc lets go of a pick before it closes the band. The card's height
+  fits the longest description you own, so the page never jumps.
+- **Journal:**
+  - **Filters** across the top (`progression.client.JournalFilters`): EVERYTHING, TASKS, FINDS, MESSAGES; click one or
+    Q / E. Each section names its filter (`StatusSections.Section.shelf()`, TASKS by default; the filed lines and
+    RECORDS are FINDS, RECENT MESSAGES is MESSAGES; null shows under every filter). Screens ask
+    `StatusSections.shows(tab, section)`.
+  - **TRACKING** leads (`living.client.JournalSection`, order −40): the tracked chain's name in white on a lit horizon
+    bar and "▸" the step you're on; the other chains and bounties follow under ALSO ON, one line each with their step
+    in small type. With nothing tracked the heading is CHAINS.
+  - The page's filed lines are its **LOG** ("LOG · 2 NEW"); the Status page keeps "JOURNAL".
+- **Truths:** each Truth on its own card of glass, its bar amber while it waits on you and green once true; "Gives:"
+  instead of "Reward:".
+- **Narration** (`StatusSections.narrate`, spoken only when the vanilla narrator is on): a page change ("Journal
+  page"), a stat's focus ("Agility 22. You move faster, and Flow builds sooner. 3 points to place."), a power picked
+  (its name, what it does, what to press), a gate picked on the map (its name, distance, when it breaks, "Press T to be
+  pointed there.").
+- **Band size** (`config/awaken-holo-client.toml`, `bandSize`: SMALL, NORMAL, LARGE): one whole framebuffer pixel a
+  unit less or more than Normal (`HoloPanel.sizeStep`), never past 80% of the screen's height: 4 / 5 / 6 px a unit on
+  the MacBook, 5 / 6 / 7 on the 4K Dell. Every type size steps with it, so text stays sharp.
+- **The map's legend** says "You haven't seen a gate yet. Their light shows from far off: look for a pillar in the
+  sky." with no gates seen, "+ n further out" past the four nearest, and puts the danger key's colours on a line of
+  their own when they don't fit beside it.
+- **Autopilot:** `screenkey tab|t|m|c|space|q|e` (or `shift+` one) sends a key to the open screen.
+- **Tests:** `holo_band_layout` also checks the Band size steps on the owner's screens.

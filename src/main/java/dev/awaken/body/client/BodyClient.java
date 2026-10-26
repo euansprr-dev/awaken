@@ -94,8 +94,8 @@ public final class BodyClient {
                 return dev.awaken.body.ascent.client.AscentMoves.has(dev.awaken.body.ascent.AscentPayloads.Tier.TETHER);
             }
         });
-        StatusSections.add(StatusSections.Tab.STATUS, new BodySection());
-        StatusSections.add(StatusSections.Tab.STATUS, new AscentSection());
+        StatusSections.add(StatusSections.Tab.POWERS, new BodySection());
+        StatusSections.add(StatusSections.Tab.POWERS, new AscentSection());
         dev.awaken.body.ascent.client.AscentClient.init(modBus);
     }
 

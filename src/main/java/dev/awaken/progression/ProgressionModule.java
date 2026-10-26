@@ -120,9 +120,10 @@ public final class ProgressionModule {
         });
         ProgressionNow.register();
         PromiseKeeper.init(); // the locks you met, and the call back when you hold their key (SPEC §27)
+        Checklist.init(); // the current task, top right (SPEC §27.10)
         // "Show me" on a card (a climb site's first refusal): the band opens (SPEC §27)
         Signal.onAction(Progression.BAND_ACTION, (p, action, yes) -> {
-            if (yes) Progression.openBand(p);
+            if (yes) Progression.openBand(p, action.endsWith(":ascent") ? Progression.BAND_PAGE_ASCENT : 0);
         });
         Lessons.init(); // teaching in play and the level road's goals (P3)
         Signal.onAction(Directives.ACTION, Directives::answer);
@@ -154,6 +155,7 @@ public final class ProgressionModule {
                 case "spend" -> {
                     try { Progression.spendPoint(sp, Stat.valueOf(msg.arg())); } catch (IllegalArgumentException ignored) {}
                 }
+                case "spend_many" -> Progression.spendPoints(sp, msg.arg()); // the band's Confirm (SPEC §30.3)
                 case "declare" -> Progression.declareTruth(sp, msg.arg());
                 case "undeclare" -> Progression.undeclareTruth(sp, msg.arg());
                 case "title" -> Progression.equipTitle(sp, msg.arg());

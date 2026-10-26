@@ -53,7 +53,7 @@ public final class ActionCamera {
     private static ActionRig.Pose read(LocalPlayer p) {
         if (dev.awaken.body.ascent.client.SovereignClient.active()) return ActionRig.Pose.SOVEREIGN;
         switch (AscentMoves.state()) {
-            case TETHER -> {
+            case TETHER, RAPPEL -> {
                 return ActionRig.Pose.ROPE;
             }
             case ZIP -> {

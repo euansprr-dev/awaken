@@ -1,5 +1,5 @@
 {
-  "key.awaken.atlas": "Open the Atlas",
+  "key.awaken.atlas": "Open the map",
   "screen.awaken.atlas": "Atlas",
   "atlas.awaken.bell.district": "The bell of %s: the district is on your Atlas",
   "atlas.awaken.bell.city": "%s: all of Carillon is on your Atlas",
@@ -7,5 +7,10 @@
   "atlas.awaken.shared.out": "Your Atlas was shared with %s",
   "atlas.awaken.shared.none": "Nobody in your party to share with",
   "atlas.awaken.closed": "The Atlas can't see inside a gate",
-  "atlas.awaken.cleared": "Atlas cache cleared"
+  "atlas.awaken.cleared": "Atlas cache cleared",
+  "awaken.configuration.mapOpens": "Map opens as",
+  "awaken.configuration.mapOpens.tooltip": "SCENE: the camera pulls back over your shoulder and the band projects the map in front of you. TABLE: the flat table opens at once. Shift+M, or M pressed twice, always opens the table.",
+  "awaken.configuration.clearAtlasCache": "Clear the Atlas cache",
+  "awaken.configuration.clearAtlasCache.tooltip": "Turn this on to clear the Atlas's saved picture of the land on this computer. It fills in again as you explore, and the setting turns itself off once it's done.",
+  "atlas.awaken.point": "The map will point you there."
 }

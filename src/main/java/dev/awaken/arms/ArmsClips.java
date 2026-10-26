@@ -24,11 +24,28 @@ public final class ArmsClips {
             "arms_riposte", "arms_slipcut", "arms_execution", "arms_art", "arms_undercut", "arms_plunge", GUARD, GUARD + "_end", CHARGE, CHARGE + "_end", DODGE_BACK, DODGE_LEFT, DODGE_RIGHT);
 
     /**
+     * Styles with their own slide, fall and dodge moves (arms_<style>_<move>): the Gauntlets punch them (before, every
+     * style played the Longsword's sword sweeps there, so the fists' own never showed), and the styles third person
+     * takes from first person's blade (tools/art/specs/arms_rig4.py: both hands on the hilt) swing them as they swing
+     * the rest. Every other shares the Longsword's.
+     */
+    public static final java.util.Set<String> OWN_SHARED = java.util.Set.of("gauntlets", "katana", "greatblade");
+
+    /** Styles that hold their own heavy's draw while it charges (arms_<style>_heavy_charge: the very pose it is loosed from). */
+    public static final java.util.Set<String> OWN_CHARGE = java.util.Set.of("katana", "greatblade");
+
+    /** The held draw a style charges in. */
+    public static String charge(String style) {
+        return OWN_CHARGE.contains(style) ? "arms_" + style + "_heavy_charge" : CHARGE;
+    }
+
+    /**
      * The clip a move plays for a style: the style's own on its own row's ticks (arms_<style>_<move>, generated for
-     * every move but the slide's, the fall's and the dodge's, which every style shares), else the Longsword's.
+     * every move; the slide's, the fall's and the dodge's only for {@link #OWN_SHARED}), else the Longsword's.
      */
     public static @Nullable String of(String style, Archetype.Move move) {
-        if (style.equals(Arms.LONGSWORD) || move == Archetype.Move.UNDERCUT || move == Archetype.Move.PLUNGE || move == Archetype.Move.SLIPCUT) {
+        boolean shared = move == Archetype.Move.UNDERCUT || move == Archetype.Move.PLUNGE || move == Archetype.Move.SLIPCUT;
+        if (style.equals(Arms.LONGSWORD) || shared && !OWN_SHARED.contains(style)) {
             return of(move);
         }
         return "arms_" + style + "_" + move.key;
@@ -44,7 +61,7 @@ public final class ArmsClips {
     }
 
     public static boolean loops(String clip) {
-        return clip.equals(GUARD) || clip.equals(CHARGE);
+        return clip.equals(GUARD) || clip.endsWith("heavy_charge");
     }
 
     /** The dodge's clip for a way relative to where the body faces (degrees, 0 ahead, + toward the main hand). */

@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "awaken:delve/chute",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 34,
+    "separation": 13,
+    "salt": 365520049
+  }
+}
