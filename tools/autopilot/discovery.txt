@@ -1,0 +1,105 @@
+# How AWAKEN tells you things (SPEC §26): the rift by day and night from ~30 and ~60 blocks, the first discovery's
+# lesson moment, then a calm survival walk through forest whose messages are counted from the debug log
+# ("[herald] offer|show|file|response|critical|card|moment ..."; before = every offer was a toast, after = show+moment).
+# The world's first 5 minutes are quiet by design (Herald.SETTLE), so the rift scenes come first and fill them.
+world discovery creative 5150
+waitworld
+gui 0
+cmd awaken admin awaken
+wait 60
+screen close
+cmd awaken powers starter 1
+wait 20
+cmd gamerule awaken:fauna_spawning false
+cmd kill @e[type=!player,distance=..200]
+cmd time set 6000
+cmd time pause
+look 0 0
+wait 40
+
+# ---- the rift by day: it opens 14-26 blocks ahead (south) ----
+cmd awaken anomaly now rift_tear
+wait 6
+# the tear: a white flash, the crack growing, a ring running out over the ground (heard: the tear, to 128 blocks)
+shotnow 01_rift_opening_day
+wait 40
+# open: the jagged violet-magenta crack, halo, pool on the ground, column into the sky, motes spiralling in
+shot 02_rift_open_day_20m
+cmd tp @s ^ ^ ^-10
+wait 30
+look 0 -2
+shot 03_rift_day_30m
+cmd tp @s ^ ^ ^-30
+wait 60
+look 0 -2
+# ~60 blocks: it must still read (the column against the sky, the halo)
+shot 04_rift_day_60m
+cmd awaken anomaly clear
+wait 20
+
+# ---- the rift by night ----
+cmd time set 18000
+cmd tp @s ^ ^ ^40
+wait 60
+look 0 0
+cmd awaken anomaly now rift_tear
+wait 50
+shot 05_rift_night_20m
+cmd tp @s ^ ^ ^-10
+wait 30
+look 0 -2
+shot 06_rift_night_30m
+cmd tp @s ^ ^ ^-30
+wait 60
+look 0 -2
+shot 07_rift_night_60m
+cmd awaken anomaly clear
+cmd time set 6000
+wait 40
+
+# ---- the first discovery: the lesson moment (held until the world's first 5 minutes are past) ----
+cmd awaken admin counter awaken:finds_taught 0
+wait 2400
+look 0 0
+cmd awaken fauna summon mossback 1
+wait 10
+look 0 16
+wait 20
+# the centre banner: DISCOVERY, a line of light, MOSSBACK large, its hint and the lesson
+shot 08_first_find_lesson
+wait 60
+shot 09_first_find_lesson_held
+cmd kill @e[type=!player,distance=..30]
+wait 40
+
+# ---- a calm survival walk through the woods, 4 minutes (counted from the log) ----
+cmd gamemode survival
+cmd effect give @s resistance 600 4 true
+cmd effect give @s saturation 600 1 true
+cmd gamerule awaken:fauna_spawning true
+cmd awaken fauna goto greenwild
+wait 100
+info
+look 0 8
+turn 0.6 600
+wait 10
+cmd tp @s ^ ^ ^24
+wait 400
+shot 10_walk_1
+cmd tp @s ^ ^ ^24
+turn -0.8 400
+wait 400
+shot 11_walk_2
+cmd tp @s ^ ^ ^24
+turn 0.5 600
+wait 400
+shot 12_walk_3
+cmd tp @s ^ ^ ^24
+wait 400
+# the K screen: the Journal holds the quiet finds
+screen status
+wait 20
+shot 13_journal
+screen close
+wait 10
+quit

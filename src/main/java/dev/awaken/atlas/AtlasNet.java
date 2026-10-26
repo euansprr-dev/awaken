@@ -14,22 +14,45 @@ import java.util.List;
 public final class AtlasNet {
     private AtlasNet() {}
 
-    static final StreamCodec<ByteBuf, Explored.TileBits> TILE = StreamCodec.composite(
-            ByteBufCodecs.VAR_INT, Explored.TileBits::tx,
-            ByteBufCodecs.VAR_INT, Explored.TileBits::tz,
-            ByteBufCodecs.LONG_ARRAY, Explored.TileBits::bits,
-            Explored.TileBits::new);
+    /**
+     * A tile on the wire: its explored bits, and the zone of each explored cell (32×32 bytes: the Living Wilds region
+     * it lies in, 1-based into the player's known regions, 0 for none; empty where regions don't apply).
+     */
+    public record WireTile(int tx, int tz, long[] bits, byte[] zones) {
+        static final StreamCodec<ByteBuf, WireTile> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, WireTile::tx,
+                ByteBufCodecs.VAR_INT, WireTile::tz,
+                ByteBufCodecs.LONG_ARRAY, WireTile::bits,
+                ByteBufCodecs.BYTE_ARRAY, WireTile::zones,
+                WireTile::new);
+    }
+
+    /** Where Carillon's Choir Square is in this world (the city plan's origin), or {@code present} false. */
+    public record City(boolean present, int x, int y, int z) implements CustomPacketPayload {
+        public static final Type<City> TYPE = new Type<>(Awaken.id("atlas_city"));
+        public static final StreamCodec<ByteBuf, City> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.BOOL, City::present,
+                ByteBufCodecs.VAR_INT, City::x,
+                ByteBufCodecs.VAR_INT, City::y,
+                ByteBufCodecs.VAR_INT, City::z,
+                City::new);
+
+        @Override
+        public Type<City> type() {
+            return TYPE;
+        }
+    }
 
     /**
      * Explored tiles in {@code dim}, whole (16 longs each). {@code reset}: forget every other tile of that dimension
      * first (login, a new dimension). {@code ripple}: the reveal spreads from (ox, oz), a bell's ring.
      */
-    public record Sync(String dim, boolean reset, List<Explored.TileBits> tiles, boolean ripple, int ox, int oz) implements CustomPacketPayload {
+    public record Sync(String dim, boolean reset, List<WireTile> tiles, boolean ripple, int ox, int oz) implements CustomPacketPayload {
         public static final Type<Sync> TYPE = new Type<>(Awaken.id("atlas_sync"));
         public static final StreamCodec<ByteBuf, Sync> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.stringUtf8(256), Sync::dim,
                 ByteBufCodecs.BOOL, Sync::reset,
-                TILE.apply(ByteBufCodecs.list(4096)), Sync::tiles,
+                WireTile.STREAM_CODEC.apply(ByteBufCodecs.list(4096)), Sync::tiles,
                 ByteBufCodecs.BOOL, Sync::ripple,
                 ByteBufCodecs.VAR_INT, Sync::ox,
                 ByteBufCodecs.VAR_INT, Sync::oz,
@@ -128,11 +151,12 @@ public final class AtlasNet {
     }
 
     static void register(RegisterPayloadHandlersEvent e) {
-        var r = e.registrar("1");
+        var r = e.registrar("2");
         r.playToClient(Sync.TYPE, Sync.STREAM_CODEC);
         r.playToClient(Trail.TYPE, Trail.STREAM_CODEC);
         r.playToClient(Regions.TYPE, Regions.STREAM_CODEC);
         r.playToClient(Pins.TYPE, Pins.STREAM_CODEC);
+        r.playToClient(City.TYPE, City.STREAM_CODEC);
         r.playToServer(Pin.TYPE, Pin.STREAM_CODEC, (m, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) Discovery.pin(sp, m.x(), m.y(), m.z(), m.remove());
         });

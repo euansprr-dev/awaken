@@ -1,0 +1,26 @@
+{
+  "schema": 2,
+  "level": 90,
+  "title": "The Sovereigns",
+  "text": "Eight Sovereigns. They hold the Hollow Court, and each one that falls is a key to the Seed. 30 essence.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:essence_shard",
+      "count": 30
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Defeat a Sovereign",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:sovereigns_defeated",
+      "value": 1
+    },
+    "toast": "One key to the Seed",
+    "requires": [
+      "rank:S"
+    ]
+  }
+}

@@ -48,6 +48,16 @@ final class OpeningHud {
 
     private static @Nullable Title title;
     private static final List<Line> LINES = new ArrayList<>();
+    /**
+     * One thing on screen at a time (Euan, 2026-10-26: "we should never be having two or three things pop up at the same
+     * time"): a line or a title waits until the one showing has finished, then takes its turn; the prompt shows only
+     * when nothing is speaking or waiting.
+     */
+    private record Next(@Nullable Title title, @Nullable Line line) {}
+    private static final java.util.ArrayDeque<Next> QUEUE = new java.util.ArrayDeque<>();
+    /** The thing on screen is done (its fade mostly through) at this tick; nothing new starts before. */
+    private static long busyUntil;
+    static final int MAX_WAITING = 6;
     /** A black over everything (0..1) the beats set and ease; the eyelids (0 shut .. 1 open) for the wake. */
     static float black, blackO, blackTarget, blackRate = 0.1F;
     static float lids = 1F, lidsO = 1F;
@@ -64,6 +74,8 @@ final class OpeningHud {
     static void reset() {
         title = null;
         LINES.clear();
+        QUEUE.clear();
+        busyUntil = 0;
         black = blackO = blackTarget = 0;
         lids = lidsO = 1;
         lidsOn = false;
@@ -73,20 +85,64 @@ final class OpeningHud {
     }
 
     static void title(String big, String small, int ticks) {
-        title = new Title(big, small, OpeningClient.ticks(), ticks);
+        enqueue(new Next(new Title(big, small, 0, ticks), null));
     }
 
     static void line(String who, String line, int ticks) {
         Minecraft mc = Minecraft.getInstance();
+        // the same words on screen or waiting (a step played again): once is enough
+        for (Line l : LINES) if (l.raw.equals(line) && OpeningClient.ticks() < l.from + l.ticks) return;
+        for (Next n : QUEUE) if (n.line() != null && n.line().raw.equals(line)) return;
         Line l = new Line();
         l.who = who;
         l.raw = line;
-        l.from = OpeningClient.ticks();
-        l.ticks = Math.max(40, ticks);
+        // long enough to read, never so long the scene stalls behind it
+        l.ticks = Mth.clamp(ticks, 50, 40 + line.length() * 2);
         int w = Math.min(320, mc.getWindow().getGuiScaledWidth() - 40);
         l.text = mc.font.split(Component.literal(line), w);
-        LINES.add(l);
-        while (LINES.size() > 2) LINES.removeFirst();
+        enqueue(new Next(null, l));
+    }
+
+    private static void enqueue(Next n) {
+        QUEUE.addLast(n);
+        while (QUEUE.size() > MAX_WAITING) QUEUE.removeFirst(); // fallen far behind: the oldest goes unsaid
+        pump();
+    }
+
+    /** The next thing takes the screen once the one before is done: the new replaces the old, never beside it. */
+    private static void pump() {
+        long now = OpeningClient.ticks();
+        if (now < busyUntil || QUEUE.isEmpty()) return;
+        Next n = QUEUE.removeFirst();
+        LINES.clear();
+        title = null;
+        if (n.title() != null) {
+            title = new Title(n.title().big(), n.title().small(), now, n.title().ticks());
+            busyUntil = now + n.title().ticks() + 12;
+        } else if (n.line() != null) {
+            Line l = n.line();
+            l.from = now;
+            LINES.add(l);
+            busyUntil = now + l.ticks + 12;
+        }
+    }
+
+    /** Something is on screen or waiting its turn. */
+    static boolean busy() {
+        return OpeningClient.ticks() < busyUntil || !QUEUE.isEmpty();
+    }
+
+    /** A prompt the scene waits on (the Registry: sign, take the band, your inventory, K): the key as a cap, then what
+     *  it does. A null key clears it (it fades). */
+    private static @Nullable String promptKey;
+    private static String promptText = "";
+    private static float promptA, promptAO;
+
+    static void prompt(@Nullable String key, String text) {
+        if (key != null) {
+            promptKey = key;
+            promptText = text;
+        } else promptKey = null;
     }
 
     static void flash(int rgb, float strength) {
@@ -106,6 +162,9 @@ final class OpeningHud {
         barsO = bars;
         bars += (barsTarget - bars) * (barsTarget > bars ? 0.14F : 0.08F);
         flash = Math.max(0, flash - 0.04F);
+        promptAO = promptA;
+        promptA = Mth.clamp(promptA + (promptKey != null && !busy() ? 0.18F : -0.18F), 0, 1);
+        pump();
         long now = OpeningClient.ticks();
         LINES.removeIf(l -> now > l.from + l.ticks + 20);
         if (title != null && now > title.from + title.ticks + 20) title = null;
@@ -155,7 +214,8 @@ final class OpeningHud {
         if (bl > 0.003F) g.fill(0, 0, w, h, ((int) (Math.min(1F, bl) * 255) << 24));
         if (sky != null) card(g, font, w, h, pt, sky);
         if (title != null) title(g, font, w, h, pt, now);
-        lines(g, font, w, h, pt, now);
+        int speech = lines(g, font, w, h, pt, now);
+        if (!OpeningCamera.active()) prompt(g, font, w, Math.min(h - 96, speech - 20), pt);
         if (waiting > 0 && !OpeningCamera.active()) waitBanner(g, font, w, h, pt, now);
         if (sky != null && sky.canSkip && OpeningCamera.active()) skipHint(g, font, w, h, pt);
     }
@@ -253,7 +313,8 @@ final class OpeningHud {
         if (!tt.small.isEmpty()) spacedCentered(g, font, tt.small, w / 2, ly + 6, 1, ((int) (a * 220) << 24) | ASH);
     }
 
-    private static void lines(GuiGraphicsExtractor g, Font font, int w, int h, float pt, long now) {
+    /** The speech, stacked up from above the hotbar; returns the top of what it drew. */
+    private static int lines(GuiGraphicsExtractor g, Font font, int w, int h, float pt, long now) {
         int y = h - 68;
         for (int k = LINES.size() - 1; k >= 0; k--) {
             Line l = LINES.get(k);
@@ -269,7 +330,29 @@ final class OpeningHud {
                 g.text(font, s, w / 2 - font.width(s) / 2, y + 11 + i * 10, (ia << 24) | PAPER, true);
             }
         }
+        return y;
     }
+
+    /** The prompt: a key cap in the Runners' bronze and paper, the words beside it, just above the speech. */
+    private static void prompt(GuiGraphicsExtractor g, Font font, int w, int top, float pt) {
+        float a = Mth.lerp(pt, promptAO, promptA);
+        if (a <= 0.02F || promptText.isEmpty()) return;
+        String key = promptKey != null ? promptKey : lastKey;
+        if (promptKey != null) lastKey = promptKey;
+        int kw = Math.max(13, font.width(key) + 8), tw = font.width(promptText), gap = 6;
+        int x = w / 2 - (kw + gap + tw) / 2, y = top; // just above the speech (and clear of the held item's name)
+        int ia = (int) (a * 255);
+        float pulse = 0.75F + 0.25F * Mth.sin((OpeningClient.ticks() + pt) * 0.18F);
+        g.fill(x, y - 2, x + kw, y + 11, ((int) (a * 170) << 24) | 0x0C0F14);
+        g.fill(x, y - 2, x + kw, y - 1, ((int) (a * 230 * pulse) << 24) | BRONZE);
+        g.fill(x, y + 10, x + kw, y + 11, ((int) (a * 150) << 24) | BRONZE);
+        g.fill(x, y - 1, x + 1, y + 10, ((int) (a * 150) << 24) | BRONZE);
+        g.fill(x + kw - 1, y - 1, x + kw, y + 10, ((int) (a * 150) << 24) | BRONZE);
+        g.text(font, key, x + kw / 2 - font.width(key) / 2, y + 1, (ia << 24) | PAPER, false);
+        g.text(font, promptText, x + kw + gap, y + 1, (ia << 24) | PAPER, true);
+    }
+
+    private static String lastKey = "";
 
     private static void waitBanner(GuiGraphicsExtractor g, Font font, int w, int h, float pt, long now) {
         float a = Mth.clamp((now - waitingFrom + pt) / 20F, 0, 1);

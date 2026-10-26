@@ -1,0 +1,69 @@
+# The Rolling Storm's polish (SPEC §21.6, §22 "Storm cells"; the orchestrator's review of 26 Oct): the flat shelf base
+# from about 200 blocks at dusk, the anvil from about 500 at dusk and by day (looking up 17 degrees, so it's in frame),
+# and a night strike lighting the cell from within; each with Lens (Cinematic) and the cloud-cell fallback (Swift).
+# Shot-only, about 5 minutes, in storm.txt's world:
+#   PACK=perf,world TECTONIC=awakened RD=24 LENS=cinematic SLOT_WHO=storm \
+#   /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh tools/autopilot/storm-polish.txt 600
+world autopilot_storm creative 20261026
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+wait 100
+screen close
+window 1280 720
+info
+hud off
+lens cinematic
+cmd gamemode spectator
+cmd awaken living calm
+# open land away from the city and its gate pillars
+cmd awaken living goto greenwild_woods
+wait 200
+cmd tp @s ~400 ~ ~300
+wait 300
+cmd time set 12300
+cmd awaken living happen rolling_storm
+wait 320
+# ---- the base: a flat dark shelf, the turrets rising from it
+cmd awaken living near 190
+wait 140
+cmd tp @s ~ ~ ~ ~ -30
+wait 80
+shot polish_01_base_dusk200_cinematic
+lens swift
+wait 80
+shot polish_01_base_dusk200_swift
+lens cinematic
+# ---- the anvil, from about 500: spreading downwind, warm on top at dusk
+cmd tp @s ^ ^ ^-320
+wait 200
+cmd awaken living face
+wait 140
+cmd tp @s ~ ~ ~ ~ -17
+wait 80
+shot polish_02_anvil_dusk500_cinematic
+lens swift
+wait 80
+shot polish_02_anvil_dusk500_swift
+lens cinematic
+cmd time set 6000
+wait 80
+shot polish_03_anvil_day500_cinematic
+# ---- night: a strike lights the cell from within
+cmd time set 18000
+wait 80
+shot polish_04_night_dark
+cmd awaken living strike 480
+shotnow polish_04_night_strike_a
+wait 2
+shotnow polish_04_night_strike_b
+wait 60
+lens swift
+wait 60
+cmd awaken living strike 480
+shotnow polish_04_night_strike_swift
+lens cinematic
+wait 20
+quit

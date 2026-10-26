@@ -7,13 +7,11 @@ import dev.awaken.core.Playtest;
 import dev.awaken.core.api.GateHooks;
 import dev.awaken.progression.Progression;
 import dev.awaken.progression.Rank;
-import dev.awaken.signal.Signal;
-import dev.awaken.signal.SignalWindow;
+import dev.awaken.signal.Finds;
 import dev.awaken.world.anomaly.Spots;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestServer;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -59,6 +57,7 @@ final class LandmarkWatch {
     static int check(ServerPlayer p, boolean gates) {
         ServerLevel level = p.level();
         if (level.dimension() != Level.OVERWORLD || p.isSpectator() || !Progression.profile(p).awakened()) return 0;
+        if (!Finds.counts(p)) return 0; // the city's own gate and places are no discovery
         BlockPos me = p.blockPosition();
         int found = 0;
         var well = Landmarks.wellPos(level.getServer());
@@ -114,6 +113,12 @@ final class LandmarkWatch {
         LandmarkMemory m = Landmarks.memory(p);
         if (!m.reach(id)) return false;
         if (at != null) m.place(id, kind, at);
+        // a climb site reached without its key: the band keeps it, and the world calls you back with the rope (SPEC §27)
+        String need = LandmarkHorizon.need(kind);
+        if (!need.isEmpty() && !dev.awaken.core.api.HorizonHooks.can(p, need)) {
+            dev.awaken.core.api.Promises.seen(p, "landmark:" + id, at, dev.awaken.core.api.Promises.Need.tier(dev.awaken.core.api.HorizonHooks.TETHER),
+                    kind == LandmarkKind.SKY_PLATFORM ? "A sky platform" : "A Tether Spire's crown");
+        }
         Landmarks.sync(p);
         if (m.whispered.equals(id)) m.whispered = "";
         LandmarkHorizon.forget(p.getUUID());
@@ -123,8 +128,7 @@ final class LandmarkWatch {
         DirectorLog.log(p, "landmark", "reached " + kind.display + " (" + id + ")" + (fresh ? ": the first of its kind, a discovery" : ""));
         if (fresh) {
             Progression.markNewThing(p, kind.display);
-            Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("New landmark · " + kind.display))
-                    .body(Component.literal(kind.found + " · +XP")).presentation(SignalWindow.Presentation.TOAST).ttl(20 * 6).build());
+            Finds.tell(p, Finds.Find.of("landmark", "New landmark · " + kind.display, kind.display, kind.found, 0x9FE6D6, true));
             Playtest.log(p, "landmark", "kind", kind.id);
         }
         return true;
@@ -136,8 +140,7 @@ final class LandmarkWatch {
         String path = theme.indexOf(':') >= 0 ? theme.substring(theme.indexOf(':') + 1) : theme;
         if (!Progression.discover(p, LandmarkKind.GATE.discoveryKey() + "/" + path, Landmarks.DISCOVERY)) return false;
         Progression.markNewThing(p, g.themeName() + " gate");
-        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("New gate · " + g.themeName()))
-                .body(Component.literal(Rank.of(g.rank()).label + "-rank · +XP")).presentation(SignalWindow.Presentation.TOAST).ttl(20 * 6).build());
+        Finds.tell(p, Finds.Find.of("gate", "New gate · " + g.themeName(), g.themeName() + " gate", Rank.of(g.rank()).label + "-rank", 0x7FC3FF, true));
         DirectorLog.log(p, "landmark", "first " + g.themeName() + " gate (" + path + "): a discovery");
         Playtest.log(p, "landmark", "kind", "gate/" + path);
         return true;

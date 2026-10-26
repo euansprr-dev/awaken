@@ -42,12 +42,23 @@ public final class RigPipelines {
     public static final OitPipelineSet LIGHT_OIT = OitPipelineSet.builder(Awaken.id("rig_light"),
             RenderPipeline.builder(SNIPPET).withShaderDefine("OIT_ADDITIVE")).build();
 
+    /**
+     * (Gate pillars) additive light without the world's fog: vanilla's render-distance fog counts height as distance
+     * (max of the horizontal distance and |dy|), so a column hundreds of blocks tall came out cut off flat at the fog
+     * line. The pillar fades itself out instead.
+     */
+    public static final RenderPipeline GLOW = RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
+            .withLocation(Awaken.id("pipeline/rig_glow"))
+            .withColorTargetState(new ColorTargetState(BlendFunction.LIGHTNING))
+            .build();
+
     private static RenderType type;
     private static int ok = -1;
 
     static void onRegister(RegisterRenderPipelinesEvent e) {
         e.registerOptionalPipeline(LIGHT);
         e.registerOitPipelineSet(LIGHT_OIT);
+        e.registerOptionalPipeline(GLOW);
     }
 
     /** The rig's light, or vanilla lightning if the pipeline didn't build (never no light at all). */

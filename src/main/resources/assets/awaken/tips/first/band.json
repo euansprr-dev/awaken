@@ -1,0 +1,10 @@
+{
+  "text": "{key.awaken.status} opens your band: what you hold, what waits for you, and the way up.",
+  "short": "{key.awaken.status}: your band",
+  "priority": 55,
+  "show_for": 180,
+  "retire_after_done": 1,
+  "retire_after_shown": 2,
+  "cooldown": 1200,
+  "awake": "after"
+}

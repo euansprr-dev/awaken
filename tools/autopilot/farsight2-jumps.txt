@@ -1,0 +1,35 @@
+# Far Sight 2 pacing (P10): frames while a brand-new world fills in, with the workers paced by the frames and without.
+# Two jumps into fresh land each way, 4 km apart, perf from the moment of arrival; Lens Cinematic.
+# Run: PACK=perf,world TECTONIC=awakened RD=16 LENS=cinematic slot.sh tour tools/autopilot.sh tools/autopilot/farsight2-jumps.txt 1200
+world fs2jump creative 4242
+waitworld
+gui 0
+farsight on
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd gamerule advance_time false
+cmd time set 6000
+screen close
+window 1440 900
+hud off
+info
+cmd gamemode spectator
+lens cinematic
+wait 400
+farsight part pace off
+cmd tp @s 8000 260 0 90 8
+perf jump_unpaced_a 15
+farsight status
+cmd tp @s 16000 260 0 90 8
+perf jump_unpaced_b 15
+farsight status
+farsight part pace on
+cmd tp @s 24000 260 0 90 8
+perf jump_paced_a 15
+farsight status
+cmd tp @s 32000 260 0 90 8
+perf jump_paced_b 15
+farsight status
+info
+quit

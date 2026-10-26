@@ -106,8 +106,10 @@ public final class AscentPayloads {
     }
 
     /**
-     * Server → client: the Tether Vow's stage (TetherVow.CALL, LINE, KEPT, LAPSED). (ax, ay, az): where the line takes
-     * the body (LINE; NaN for none); (mx, my, mz): the beacon mast (CALL, LINE).
+     * Server → client: the Tether Vow's stage (TetherVow.CALL, LINE, KEPT, LAPSED, STIR). (ax, ay, az): where the line
+     * takes the body (LINE; NaN for none); (mx, my, mz): the beacon mast (CALL, LINE). STIR: ax is the rank the line
+     * waits for (a Rank ordinal), ay 1 if the player is short of it (the light falls back from the mast) or 0 if only the
+     * door is still sealed (the light drifts to the door); (mx, my, mz) is where the light goes.
      */
     public record Vow(int stage, double ax, double ay, double az, double mx, double my, double mz) implements CustomPacketPayload {
         public static final Type<Vow> TYPE = new Type<>(Awaken.id("ascent_vow"));

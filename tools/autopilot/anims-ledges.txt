@@ -1,0 +1,72 @@
+# The pipe's top and the ledge drop (SPEC §17.28 "the top", §17.25; run with PACK=feel, HUD on). A drainpipe up a wall
+# under a one-block cornice, a roof behind it: climb it, the top hangs you on the cornice's lip (out, then up), Jump
+# climbs out onto the roof. Then a wall's top over a sill one out: lower into a hang (Shift + forward at the edge),
+# Shift drops you to the sill, Shift again lets go. Filmed with the clip recorder. Clips: run-autopilot/clips/l_*.
+world anims_ledges survival 4262
+waitworld
+window 1440 900
+gui 0
+hud on
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule fall_damage false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:slow_falling 10 1 true
+cmd tp @s 0.5 201 0.5 0 0
+wait 200
+cmd fill -6 199 -6 14 199 12 minecraft:smooth_stone
+cmd fill -6 200 -6 14 212 12 minecraft:air
+
+# ---- the pipe under a cornice: wall z 6 (y 200-203), cornice one out at y 204, roof behind ----
+cmd fill -3 200 6 3 203 6 minecraft:stone_bricks
+cmd fill -3 204 5 3 204 5 minecraft:stone_brick_slab[type=top]
+cmd fill -3 204 5 3 204 5 minecraft:stone_bricks
+cmd fill -3 204 6 3 204 9 minecraft:stone_bricks
+cmd fill 0 200 5 0 203 5 awaken:drainpipe[facing=north,part=pipe]
+cmd clear @s
+camera first
+wait 10
+cmd tp @s 0.5 200 3.2 0 0
+wait 30
+cmd awaken ascent pilot aim 0 -15 5
+wait 10
+cmd awaken ascent pilot hold forward 70
+wait 10
+cmd awaken ascent pilot rec l_pipe_top 60 2
+wait 62
+cmd awaken ascent pilot rec l_climb_out 30 1
+cmd awaken ascent pilot hold jump 2
+wait 35
+shotnow anims_ledges_roof
+wait 20
+
+# ---- the ledge drop: a wall at x 10 (z 6, y 200-205) with a sill one out at y 203 ----
+cmd fill 8 200 6 12 205 6 minecraft:stone
+cmd fill 8 203 5 12 203 5 minecraft:stone_bricks
+cmd fill 8 206 6 12 206 9 minecraft:air
+cmd fill 8 205 7 12 205 9 minecraft:stone
+cmd tp @s 10.5 206 6.05 180 35
+wait 30
+cmd awaken ascent pilot rec l_lower 40 2
+cmd awaken ascent pilot hold forward,sneak 24
+wait 45
+cmd awaken ascent pilot aim 0 40 4
+wait 10
+cmd awaken ascent pilot rec l_drop 30 1
+cmd awaken ascent pilot hold sneak 1
+wait 35
+shotnow anims_ledges_sill
+cmd awaken ascent pilot rec l_letgo 24 1
+cmd awaken ascent pilot hold sneak 1
+wait 30
+info
+quit

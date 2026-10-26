@@ -1,11 +1,99 @@
 # HEARTH module
 
-Home base, town, trophies, the Echo army, the Training Grounds and the Reassessment trials. Package `dev.awaken.hearth`
+Home base from the Ember's first fire to a town, the reading of the rooms you build, trophies, the Echo army, the Training
+Grounds and the Reassessment trials. Package `dev.awaken.hearth`
 (client code in `dev.awaken.hearth.client`). Feature flag: `AwakenConfig.HEARTH` (off = Anchors refuse to root, no upkeep,
 no binding; registrations stay so worlds don't break).
 
 Nothing here needs assigning or babysitting: rooms are recognised from what's in them, the town arrives by itself,
 Echoes fill role pads by themselves, and every Y/N choice is optional.
+
+## The carried flame (W1, SPEC §28.2)
+
+The Hearth starts on the first evening, and from then on it reads what you build.
+
+- **The Hearth Ember** (`awaken:hearth_ember`, `ember/EmberItem`, `Embers`): a small iron lantern with a bell-gold coal,
+  a 3D item model (vanilla lantern proportions, its cage emissive). Carried in either hand its light is drawn on the
+  ground round you and as a halo at the lantern (`client/HomeClient.GLOW`, a `citizens.client.CityGlow` source: no light
+  block is ever placed). One per player: a spare goes out, and none is kept once your fire burns (`Embers.checkCarried`);
+  kept through death. Given by Ilse at the camp (The Last Delivery's `ilse` step reward and her line); by Ilse or Hettie
+  when you have no Ember and no Hearth (registered, and past that step or never on the chain; `PlayerInteractEvent` on a
+  `Wayfarer`); on awakening in classic worlds (no city site). Now line `hearth:ember` (66): "Set your Ember where you'd live".
+- **Setting it down** (use it on the top of a block): refused, each with a plain reason, on soft or open air, in the city
+  reserve (`CityBasin.reserved`), in a Precursor ward, within 64 of a gate, in another Hearth's radius, or when a
+  household rule refuses (members). The coal takes: the **Hearthfire** (`awaken:hearthfire`, light 14, a ring of river
+  stones with an ash bed, a cracked glowing coal and a crossed animated flame; our own flame tongues and embers; its own
+  crackle). **Tier 0**: radius 24, respawn, rest heals, calm land, and every rule that keys off any Hearth (no gates within
+  64, no camps within 120, no happenings, wards off). No town, no Spire, no requests, no cottage. The moment, on every
+  client within 96: sparks drawn down into the coal, a burst, then the warmth running out over 24 blocks as rings of soft
+  glow on the ground's own height (`hearth_warmth`), fireflies if it's dusk, and `hearth.take` (a settling thud, stone
+  clicks, a low hearth tone on D, a faint bell chord). 2.5 s later the **YOUR GROUND** card (`client/NameScreen`): a name
+  offered from the land's words (`Embers.suggestName`: biome-flavoured first words and home-place endings, "Ashford",
+  "Clover Rest"), editable, Enter keeps it. Walking onto your land shows the name as a place caption ("ASHFORD" over
+  "your hearth", IMPORTANT, topic `hearth_place`). Fireflies over your land at night.
+- **Lifting**: until the first room stands, using the fire empty-handed lifts the coal again (the warmth drawn back in,
+  `hearth.lift`). Breaking it (owner only) also gives the coal back. After the first room, using it opens the guide.
+- **Tier I**: a Lord's Heart (or the Anchor) used on your Hearthfire, or the guide's button, turns it into the Anchor in
+  place (`Embers.raise`): the town, requests, the cottage offer and the furniture recipes arrive as when an Anchor is placed
+  (`HearthService.anchorTookRoot`). Existing Anchors in old worlds are Tier I with the reading on.
+
+### The reading (`room/Reading`, `Tally`, `Materials`, `RoomScanner.read`)
+Every closed room is read in the pass the scanner already makes over its cells and wall faces (light is one engine read
+per floor cell): **closed** (fences, bars and leaves let the wind in), **light** (all the floor at block light 8+ and
+windows: 3; all lit: 2; most of it, or windows only: 1), **warmth** (a lit campfire, fire, lava or the Hearthfire 3; a lit
+stove or the Forge 2; a cold stove or candles 1), **room to live** (floor against the purpose's target, height 3, or 4 for
+halls; 2 high caps it at 1), **made with care** (share of worked blocks in walls, floor and roof: 25% → 1, 60% and two kinds
+→ 2, 85% and three kinds → 3; from tags and block names, never a named block), **detail** (trim: stairs, slabs, trapdoors,
+posts, chains, lanterns; soft: carpets, banners, paintings and frames, pots, candles, bookshelves; one kind of trim +1,
+three +1, one soft +1, two +1; never a stack). **Grade**: average ≥ 2.5 Grand, ≥ 1.75 Fine, ≥ 1.25 Snug, else Bare, and
+never more than one step above the weakest reading. **Name**: "the <grade> <material> <purpose>" (the main material
+family's word, the most particular kind), or a sign's words inside. **Lift**: the weakest reading's fix ("light the north
+end", "windows", "a fire", "something soft", "a higher ceiling"). Rooms now seed from doors, lights, chests, signs,
+carpets, banners, pots and the household standing in the radius, not only furniture; solid seeds flood each open side on
+its own. Caps: 48 a side, 20,000 cells; fills, readings and explanations all stop at the tick's budget and go on next tick.
+Saved without their cells (`HearthRecord` schema 3, `Room.CODEC`): after a restart a room answers by its box until a
+rescan, staggered 30 s to 4.5 min.
+
+### Room kinds (`RoomType`, effects in `RoomEffects`, `Breaks`, `Town`, `HomeCrafting`)
+Shelter (any closed room; the first one: "First shelter · Rest heals here"), Bedroom (a bed: Rested), Sanctuary, Kitchen
+(stove, crafting table, barrel: food crafted or smelted there is home-cooked, `awaken:home_cooked`, and what it gives lasts
+×1.5), Forge (today's Armory, id `ARMORY` kept), Study (lectern, six bookshelves; recognised), Greenhouse (soil or planted
+pots under a roof at least half glass; recognised), Stable (hay, a fence gate: `awaken:whistle_range` +160 within 512 of
+home, read by `world.fauna.Mounts`), Hall (six seats, a table, 48+ floor: a meal eaten in it feeds everyone in it), Bell
+tower (a bell, the floor 8+ over the ground outside: rings at dawn and dusk, warns of a break due within two play-days,
+Deep Tide's +2 skipped on your land via `HearthHooks.tideCalm`), Lookout (12+ up, glass on three sides: `AtlasHooks.reveal`
+256 round home, a second Mira rumour a play-day), Trophy Hall, Workshop (machines pay ×0.75 essence through
+`HearthHooks.machineCost` in `above.machine.MachineBlockEntity.draw`), Barracks.
+
+### Comfort, Style, Rested (`Comfort`, `Rested`)
+Comfort (0-12, best of each kind): your best bedroom's grade, a warm room, a table with seats, two kinds of soft things,
+plants, and the land (a field of 16 farmland, a pen of two farm animals by fences, a garden of a composter and six
+flowers, six lights outdoors, a wall of 40 fence or wall blocks). Style: the home's two main material families in words.
+Waking in your own bed in a read Bedroom at home: **Rested** for 8 + Comfort minutes, `awaken:energy_regen` +0.25 and
+`awaken:craft_rate` +0.25 (perk source on both sides, from the synced view), "◆ RESTED 14m" over the level line.
+
+### The room panel and captions (`client/RoomPanel`, `RoomSection`, `HomeHud`)
+The room you stand in at home (synced `hearth_here` attachment): name, grade, six pips, purpose, the lift. Today the K
+Status page's first section while you're in one; each room's card in Your Hearth (with Comfort and Style in a HOME section,
+kinds you have as chips, at most three suggestions as cards, the rest one dim line each). Entry point for The Way
+Forward's glance: `RoomPanel.visible()` / `RoomPanel.build(Ui)`. The first time you walk into a room after it's recognised
+or regraded, its name shows once as a quiet caption (AMBIENT, topic `hearth_room`, `ui.hearth_room`), filed to the Journal
+when the director is busy.
+
+### Chests at home (`HomeCrafting`)
+A crafting table inside a Hearth you belong to opens a `CraftingMenu` subclass whose recipe placement first moves what you
+lack from chests, barrels and shulker boxes within 8 blocks of the table into your inventory. No mixin: the client opens the
+vanilla screen and always sends the placement, so a recipe the book shows red (the chests hold it) still crafts.
+
+### Fixes (PLAN 4.9)
+Caps raised and "too big" says which cap (`Miss.Leak.TOO_BIG` / `TOO_WIDE`); role pads found by a scan join the Hearth
+(placed before it, or outside an old radius); Anchors and Embers refused in the city reserve; the town Spire comes as its
+Board and Monolith items to place (the Board placed inside your Hearth becomes its board), never stamped into the ground; a
+coal per temper at the Forge (Oren brings his own fire).
+
+### Commands (admin)
+`/awaken admin ember give|set|raise`, `/awaken admin hearth read` (rescan, then the room you stand in), `/awaken admin hearth
+rested`.
 
 ## How to try it
 

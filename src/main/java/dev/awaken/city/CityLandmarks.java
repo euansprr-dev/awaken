@@ -19,15 +19,16 @@ final class CityLandmarks {
 
     static void part(Ctx c, CityBuffer b, Part p) {
         Box box = new Box(p.x0(), p.z0(), p.x1(), p.z1());
-        int ax0 = Math.max(p.x0() - 2, b.px0), ax1 = Math.min(p.x1() + 2, b.x1());
-        int az0 = Math.max(p.z0() - 2, b.pz0), az1 = Math.min(p.z1() + 2, b.z1());
+        int m = CityLayout.margin(p);
+        int ax0 = Math.max(p.x0() - m, b.px0), ax1 = Math.min(p.x1() + m, b.x1());
+        int az0 = Math.max(p.z0() - m, b.pz0), az1 = Math.min(p.z1() + m, b.z1());
         if (ax0 > ax1 || az0 > az1) return;
         int g = c.plan.lift((p.x0() + p.x1()) / 2, (p.z0() + p.z1()) / 2);
         for (int x = ax0; x <= ax1; x++) {
             for (int z = az0; z <= az1; z++) {
                 switch (p.kind()) {
-                    case "tower", "gate_tower" -> tower(c, b, p, box, x, z);
-                    case "gate_passage" -> gatePassage(c, b, p, box, x, z);
+                    case "tower", "gate_tower" -> CityTowers.tower(c, b, p, box, x, z);
+                    case "gate_passage" -> CityTowers.gatePassage(c, b, p, box, x, z);
                     case "spire" -> spire(c, b, p, box, x, z, g);
                     case "nave" -> nave(c, b, p, box, x, z, g);
                     case "apse" -> apse(c, b, p, box, x, z, g);
@@ -93,82 +94,7 @@ final class CityLandmarks {
         return ax <= r && az <= r && ax + az <= 2 * r - k;
     }
 
-    // ---- the wall's towers and gates ------------------------------------------------------------------------
-
-    static void tower(Ctx c, CityBuffer b, Part p, Box box, int x, int z) {
-        if (!box.contains(x, z)) {
-            // machicolation: a corbel ring under the parapet
-            int os = box.outside(x, z);
-            if (os >= 0) b.set(x, p.h() - 5, z, STONE_CORBEL[CityGrammar.inward(os)]);
-            return;
-        }
-        int h = p.h();
-        int in = inset(box, x, z);
-        b.plate(x, z);
-        b.column(x, -4, -1, z, STONE);
-        for (int ry = 0; ry < h - 4; ry++) {
-            BlockState s = ry < 3 ? DEEPSLATE_BRICKS : masonry(c, x, ry, z);
-            if (in == 0 && ry > 6 && ry % 10 == 4 && ((box.along(box.side(x, z), x, z) + 2) % 7 == 3)) s = TINTED;
-            b.set(x, ry, z, s);
-        }
-        // the wall walk runs through: a hall at walk level with openings where the curtain meets the tower
-        int walk = c.plan.wallHeight;
-        if (in >= 1 && in <= 5) b.column(x, walk, walk + 2, z, AIR);
-        if (in == 0) {
-            int sd = box.side(x, z);
-            int nx = x + (sd == E ? 1 : sd == W ? -1 : 0), nz = z + (sd == S ? 1 : sd == N ? -1 : 0);
-            if (c.plan.kind(nx, nz) == WALL || c.plan.kind(nx, nz) == WATERGATE) b.column(x, walk, walk + 2, z, AIR);
-        }
-        // the top: a parapet platform, merlons, then the cap
-        int deck = h - 4;
-        b.set(x, deck, z, POLISHED_ANDESITE);
-        if (in == 0) {
-            b.set(x, deck + 1, z, STONE_BRICKS);
-            if (((x + z) & 1) == 0) b.set(x, deck + 2, z, STONE_BRICKS);
-        }
-        String style = p.style();
-        Roof roof = switch (style) {
-            case "1" -> GREEN;
-            case "3" -> COPPER;
-            default -> SLATE;
-        };
-        if (style.equals("2")) return; // an open fighting top
-        Box cap = new Box(box.x0() + 1, box.z0() + 1, box.x1() - 1, box.z1() - 1);
-        pyramid(b, cap, x, z, deck + 1, roof, 2);
-    }
-
-    static void gatePassage(Ctx c, CityBuffer b, Part p, Box box, int x, int z) {
-        if (!box.contains(x, z)) return;
-        int h = p.h();
-        boolean alongZ = p.axis().equals("z");
-        int across = alongZ ? x - box.x0() : z - box.z0();
-        int width = alongZ ? box.w() : box.d();
-        int along = alongZ ? z - box.z0() : x - box.x0();
-        int length = alongZ ? box.d() : box.w();
-        // a pointed arch over the road: open to 9 in the middle, 7 at the sides
-        int edge = Math.min(across, width - 1 - across);
-        int open = edge == 0 ? 0 : edge == 1 ? 7 : edge == 2 ? 8 : 9;
-        for (int ry = open + 1; ry < h; ry++) b.set(x, ry, z, masonry(c, x, ry, z));
-        if (open > 0) {
-            b.column(x, 1, open, z, AIR);
-            b.set(x, open + 1, z, edge == 1 ? STONE_SLAB_TOP : CHISELED_STONE_BRICKS);
-            // the portcullis, half raised
-            if (along == length / 2) b.column(x, open - 2, open, z, alongZ ? BARS[0] : BARS[1]);
-        } else {
-            b.column(x, 1, open, z, AIR);
-            b.column(x, 0, 9, z, masonry(c, x, 5, z));
-        }
-        b.set(x, h, z, POLISHED_ANDESITE);
-        if (inset(box, x, z) == 0 && ((x + z) & 1) == 0) b.set(x, h + 1, z, STONE_BRICKS);
-        // a bronze bell-gable over the gate's middle, the city's sign above every gate
-        if (edge >= 3 && along >= length / 2 - 1 && along <= length / 2 + 1) {
-            b.column(x, h + 1, h + 4, z, (along == length / 2 && edge == width / 2 - 1) ? BRONZE : AIR);
-            if (along == length / 2) {
-                b.set(x, h + 1, z, POLISHED_ANDESITE);
-                b.set(x, h + 5, z, edge == width / 2 - 1 ? GILDED : BRONZE);
-            }
-        }
-    }
+    // ---- the wall's towers and gates: CityTowers (the Walls step) ------------------------------------------------
 
     // ---- the Choir --------------------------------------------------------------------------------------------
 

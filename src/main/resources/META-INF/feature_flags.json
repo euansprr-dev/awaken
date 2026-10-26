@@ -1,6 +1,7 @@
 {
   "flags": [
     "awaken:awakened_lands",
-    "awaken:carillon"
+    "awaken:carillon",
+    "awaken:awakened_alpine"
   ]
 }

@@ -25,6 +25,8 @@ public final class StoryHooks {
         default boolean gatesCalm(MinecraftServer server, Optional<UUID> owner) { return gatesCalm(server); }
         /** The Ascension tier this player meets: the world's tier, never above the loops the player took part in. */
         default int ascension(ServerPlayer player) { return ascension(player.level().getServer()); }
+        /** Whether this player's story has reached an ending (any of them: Break, Wake or Become). */
+        default boolean endingSeen(ServerPlayer player) { return gatesCalm(player.level().getServer(), Optional.of(player.getUUID())) || colourRestored(player.level().getServer()); }
         /** Why the Seed (stratum 10) is still sealed for this player, or empty if the story allows it. */
         default Optional<String> seedSealed(ServerPlayer player) { return Optional.empty(); }
         /** Why this player may not walk into this scripted gate (the ritual's hall is sealed, or not theirs), or empty. */
@@ -48,5 +50,6 @@ public final class StoryHooks {
     /** min(world tier, the player's own tier), 0..10. */
     public static int ascensionOf(ServerPlayer player) { return Math.clamp(state.ascension(player), 0, 10); }
     public static Optional<String> seedSealed(ServerPlayer p) { return state.seedSealed(p); }
+    public static boolean endingSeen(ServerPlayer p) { return state.endingSeen(p); }
     public static Optional<String> refusesScriptedGate(ServerPlayer p, String gateId) { return state.refusesScriptedGate(p, gateId); }
 }

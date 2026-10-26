@@ -33,6 +33,7 @@ public final class WardTests {
     private WardTests() {}
 
     public static void register() {
+        ClimbTests.register();
         AwakenTests.registerIsolated("wilds_ward_rules", 200, h -> {
             ServerLevel level = h.getLevel();
             BlockPos at = h.absolutePos(new BlockPos(1, 2, 1));
@@ -86,7 +87,7 @@ public final class WardTests {
                 });
                 level.setBlock(spot, stone, 3);
                 h.assertFalse(WardEvents.placed(p, level, spot, stone), "a block placed inside a Hearth stays");
-                h.assertFalse(WardEvents.refuses(p, level, wall, plating), "and the Hearth's own walls are its owner's");
+                h.assertTrue(WardEvents.refuses(p, level, wall, plating), "but a vault's walls hold even there: its rank door can't be dug round");
             } finally {
                 HearthHooks.install(hearths);
                 chunk.setAllStarts(starts);

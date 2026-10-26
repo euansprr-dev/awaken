@@ -74,6 +74,7 @@ public final class Casting {
         if (type.isPassive() || type.behaviour == null) return PowerType.Result.fail("passive");
         if (player.isSpectator() || !player.isAlive()) return PowerType.Result.fail("cannot");
         dev.awaken.core.api.MovementHooks.castStarting(player); // a cast ends a tactical sprint; it is never held back
+        dev.awaken.core.api.TipHooks.done(player, dev.awaken.Awaken.id("first/power"));
         PowerState st = PowerState.of(player);
         long now = now(player);
         if (type.mode == PowerType.Mode.TOGGLE || type.mode == PowerType.Mode.CHANNEL) {

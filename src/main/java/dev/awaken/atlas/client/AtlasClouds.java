@@ -17,7 +17,7 @@ import java.util.Arrays;
 /**
  * Clouds over everything the player hasn't explored (SPEC §16.8), never a black fog of war. Each cloud cell carries one
  * or two soft puffs from a sheet of three generated sprites (sunlit crown, blue-grey belly), billboarded on the CPU
- * every frame, sorted far to near, drifting slowly. A cell is 16 blocks at the finest level and 64 or 256 when zoomed
+ * every frame, sorted far to near, the whole blanket drifting on one slow wind and breathing a little. A cell is 16 blocks at the finest level and 64 or 256 when zoomed
  * out, so the blanket keeps the same density on screen. The explored edge gets a soft spill of cloud; cells that just
  * cleared thin out over a second, and a bell's reveal ripples out from the tower.
  */
@@ -111,6 +111,32 @@ final class AtlasClouds {
         return 1f - e.countIn(cellX << shift, cellZ << shift, span) / (float) (span * span);
     }
 
+    /** The wind, blocks a second at the finest level (scaled with the cloud cell when zoomed out): slow, from the west. */
+    static final float WIND_X = 1.8f, WIND_Z = 0.55f;
+
+    /**
+     * How unexplored the land under a point is, 0..1, blended between cell centres (so a drifting puff thins smoothly,
+     * never in a step), with freshly cleared cells still fading. Zoomed out, a cell with any known land counts as known.
+     */
+    private float cover(double x, double z, int cell, int ccx, int ccz, int lod, long now) {
+        int W = N + 2;
+        double fx = x / cell - 0.5 - (ccx - R - 1), fz = z / cell - 0.5 - (ccz - R - 1);
+        int i0 = (int) Math.floor(fx), j0 = (int) Math.floor(fz);
+        float tx = (float) (fx - i0), tz = (float) (fz - j0);
+        float c00 = u(i0, j0, W, lod, now), c10 = u(i0 + 1, j0, W, lod, now), c01 = u(i0, j0 + 1, W, lod, now), c11 = u(i0 + 1, j0 + 1, W, lod, now);
+        return (c00 * (1 - tx) + c10 * tx) * (1 - tz) + (c01 * (1 - tx) + c11 * tx) * tz;
+    }
+
+    private float u(int i, int j, int W, int lod, long now) {
+        i = Math.clamp(i, 0, W - 1);
+        j = Math.clamp(j, 0, W - 1);
+        int k = j * W + i;
+        float u = unexplored[k];
+        if (lod > 0) return u >= 0.999f ? 1f : 0f;
+        if (revealNanos[k] != 0L) u = Math.max(u, 1f - (now - revealNanos[k]) / FADE_NANOS);
+        return u;
+    }
+
     private void refresh(Explored explored, Long2LongOpenHashMap revealedAt, int ccx, int ccz, int lod) {
         if (explored.version == cachedVersion && ccx == cachedCx && ccz == cachedCz && lod == cachedLod) return;
         cachedVersion = explored.version;
@@ -142,45 +168,32 @@ final class AtlasClouds {
         // height, the tilt would slide the blanket north of the cells it covers and open dark gaps on the north rim
         float lift = pxPerBlock * (float) Math.sin(Math.toRadians(tiltDeg)) * s;
         float rim = R * cell * 0.62f, rimSoft = R * cell * 0.22f;
-        for (int j = 1; j <= N; j++) {
-            for (int i = 1; i <= N; i++) {
-                // blurred fog: this cell weighted 4, its 8 neighbours 0.5 each, with fresh reveals still fading out
-                float f = 0f;
-                for (int dj = -1; dj <= 1; dj++)
-                    for (int di = -1; di <= 1; di++) {
-                        int k = (j + dj) * W + i + di;
-                        float u = unexplored[k];
-                        if (revealNanos[k] != 0L) u = Math.max(u, 1f - (now - revealNanos[k]) / FADE_NANOS);
-                        f += (di == 0 && dj == 0) ? u * 4f : u * 0.5f;
-                    }
-                f /= 8f;
-                int own = j * W + i;
-                float ownU = unexplored[own];
-                if (revealNanos[own] != 0L) ownU = Math.max(ownU, 1f - (now - revealNanos[own]) / FADE_NANOS);
-                // an unexplored cell is always fully covered; the blur only spills soft cloud over explored edges.
-                // Zoomed out a cloud cell is 64 or 256 blocks, so one with any known land in it carries no cloud, and
-                // one beside known land carries a small one: the land you know stays in view at every zoom
-                boolean beside = false;
-                if (lod > 0) {
-                    if (ownU < 0.999f) continue;
-                    beside = unexplored[own - 1] < 0.999f || unexplored[own + 1] < 0.999f || unexplored[own - W] < 0.999f || unexplored[own + W] < 0.999f;
-                    f = 1f;
-                }
-                if (ownU >= 0.999f) f = Math.max(f, 1f);
-                if (f < 0.12f) continue;
-                int cellX = ccx + i - R - 1, cellZ = ccz + j - R - 1;
-                int hsh = AtlasMesh.hash(cellX * 7 + 3 + lod * 101, cellZ * 13 + 5);
+        // the whole blanket drifts on one wind (a puff never wobbles on its own: puffs that move together keep their
+        // order, and nothing pops): puffs sit on a lattice that slides with the wind, and each takes its cover from
+        // the land under it as it goes, so it thins as it drifts out over land you know and fills in over the unknown
+        double ox = WIND_X * s * time, oz = WIND_Z * s * time;
+        int li0 = (int) Math.floor((cx - ox) / cell), lj0 = (int) Math.floor((cz - oz) / cell);
+        for (int j = -R; j <= R; j++) {
+            for (int i = -R; i <= R; i++) {
+                int li = li0 + i, lj = lj0 + j;
+                int hsh = AtlasMesh.hash(li * 7 + 3 + lod * 101, lj * 13 + 5);
                 float r1 = (hsh & 255) / 255f, r2 = ((hsh >> 8) & 255) / 255f, r3 = ((hsh >> 16) & 255) / 255f, ph = r3 * 6.28f;
-                float sway = beside ? 0.35f : 1f; // a small cloud beside known land keeps to its own cell
-                float wx = (float) ((double) cellX * cell + cell / 2.0 - cx) + ((r1 - 0.5f) * 12f + (float) Math.sin(time * 0.22f + ph) * 6f) * s * sway;
-                float wz = (float) ((double) cellZ * cell + cell / 2.0 - cz) + ((r2 - 0.5f) * 12f + (float) Math.cos(time * 0.17f + ph * 1.3f) * 3f) * s * sway;
+                double pxw = (double) li * cell + cell / 2.0 + ox + (r1 - 0.5f) * 12f * s;
+                double pzw = (double) lj * cell + cell / 2.0 + oz + (r2 - 0.5f) * 12f * s;
+                float wx = (float) (pxw - cx), wz = (float) (pzw - cz);
                 float dist = (float) Math.sqrt(wx * wx + wz * wz);
                 float edge = 1f - smooth((dist - rim) / rimSoft); // the blanket thins out at the table's rim
                 if (edge <= 0f) continue;
-                float a = smooth((f - 0.12f) / 0.5f) * edge;
+                float f = cover(pxw, pzw, cell, ccx, ccz, lod, now);
+                // close in, a soft spill of cloud over the edge of what you know; zoomed out (cells of 64 or 256), the
+                // cloud is gone before it reaches known land, so that land stays in view at every zoom
+                float a = (lod == 0 ? smooth((f - 0.12f) / 0.5f) : smooth((f - 0.55f) / 0.35f)) * edge;
+                if (a <= 0.01f) continue;
                 int variant = (hsh >>> 24) % VARIANTS;
                 boolean flip = (hsh & 0x800000) != 0;
-                float size = (34f + 26f * r1) * (0.6f + 0.4f * a) * s * (beside ? 0.5f : 1f);
+                // a slow breath, each puff on its own long phase
+                float breathe = 1f + 0.05f * (float) Math.sin(time * 0.3f + ph);
+                float size = (34f + 26f * r1) * (0.6f + 0.4f * a) * s * breathe * (lod == 0 ? 1f : 0.55f + 0.45f * f);
                 // its shadow, on explored ground only: a little east and south of it
                 float shx = wx + 10f * s, shz = wz + 4f * s;
                 double gx = cx + shx, gz = cz + shz;
@@ -193,9 +206,11 @@ final class AtlasClouds {
                     sa[shadowCount] = a * (1f - night * 0.6f);
                     shadowCount++;
                 }
-                n = add(n, base, wx, 0f, wz, (30f + (r2 - 0.5f) * 6f) * lift, size, a, variant, flip);
-                if (r3 > 0.45f) // a smaller cap on top for volume, nudged up the screen
-                    n = add(n, base, wx + (r2 - 0.5f) * 10f * s, (5f + r1 * 3f) * s, wz - 3f * s, (37f + r1 * 4f) * lift, size * 0.62f, a * 0.95f, (variant + 1) % VARIANTS, !flip);
+                int tone = (hsh >>> 4) & 7;
+                n = add(n, base, wx, 0f, wz, (30f + (r2 - 0.5f) * 6f) * lift, size, a, variant, flip, tone);
+                if (r3 > 0.45f) // a smaller cap on top for volume, nudged up the screen, a touch brighter
+                    n = add(n, base, wx + (r2 - 0.5f) * 10f * s, (5f + r1 * 3f) * s, wz - 3f * s, (37f + r1 * 4f) * lift, size * 0.62f, a * 0.95f,
+                            (variant + 1) % VARIANTS, !flip, Math.max(0, tone - 3));
             }
         }
         for (int k = 0; k < n; k++) {
@@ -246,7 +261,11 @@ final class AtlasClouds {
         return shadowCount;
     }
 
-    private int add(int n, Matrix4f base, float x, float y, float z, float depthLift, float size, float a, int variant, boolean flip) {
+    /**
+     * {@code tone} 0..7 comes from the cell's hash, never from where the puff is drawn: taken from its drifting position
+     * it changed every redraw and the whole blanket flickered.
+     */
+    private int add(int n, Matrix4f base, float x, float y, float z, float depthLift, float size, float a, int variant, boolean flip, int tone) {
         if (n >= MAX_PUFFS) return n;
         base.transformPosition(x, y, z, v);
         px[n] = v.x;
@@ -254,7 +273,7 @@ final class AtlasClouds {
         pz[n] = v.z + depthLift;
         ps[n] = size;
         pa[n] = a;
-        look[n] = (byte) (variant | (flip ? 4 : 0) | ((Float.floatToIntBits(x * 0.37f + z) >>> 7 & 7) << 3));
+        look[n] = (byte) (variant | (flip ? 4 : 0) | (tone << 3));
         return n + 1;
     }
 

@@ -29,7 +29,7 @@ import java.util.List;
 public final class Roster {
     public static final int SCHEMA = 1;
     public static final String RESOURCE = "/data/awaken/city/citizens.json";
-    /** Event actors (thieves) follow the 240 citizens in every per-record array. */
+    /** Event actors (thieves) follow the 240 citizens in every per-record array (a built roster may say how many: "extraCount"). */
     public static final int EXTRAS = 8;
 
     // jobs (the generator's order)
@@ -109,6 +109,12 @@ public final class Roster {
     public final int[][] routePlaces;
     /** Keep-right lane offset per street edge, in tenths of a block. */
     public final byte[] edgeLane;
+    /**
+     * The wall walk joined to the street graph (M4 Walls; tools/city/citizens.py "wallWalk"): nodes appended after the
+     * plan's (plan x, row, plan z) and edges after its (absolute node indices, the move; 9 is a tower's stair, hidden).
+     */
+    public final float[] wallX, wallZ;
+    public final int[] wallRy, wallA, wallB, wallMove;
 
     // stations
     public final int[] lampPlace, lampRoute;
@@ -130,7 +136,7 @@ public final class Roster {
     public final List<Group> groups;
 
     // citizens (then the extras)
-    public final int citizens, records;
+    public final int citizens, records, extras;
     public final String[] given, family, named;
     public final int[] job, household, home, work, group, tavern, build, age;
     public final float[] scale, speed;
@@ -162,6 +168,14 @@ public final class Roster {
             }
             return instance;
         }
+    }
+
+    /**
+     * A roster built in code (SPEC §28.4: a settlement's {@code RosterSource}, the same shape tools/city/citizens.py
+     * writes for Carillon); its sha256 ties its saved records to it as the jar file's does.
+     */
+    public static Roster parse(byte[] json) {
+        return new Roster(json);
     }
 
     private Roster(byte[] raw) {
@@ -245,6 +259,27 @@ public final class Roster {
             routePlaces[id] = ints(r.getAsJsonArray("places"));
         }
         for (int r = 0; r < nr; r++) if (routePlaces[r] == null) routePlaces[r] = new int[0];
+
+        JsonObject ww = o.has("wallWalk") ? o.getAsJsonObject("wallWalk") : null;
+        JsonArray wn = ww != null ? ww.getAsJsonArray("nodes") : new JsonArray(), we = ww != null ? ww.getAsJsonArray("edges") : new JsonArray();
+        wallX = new float[wn.size()];
+        wallZ = new float[wn.size()];
+        wallRy = new int[wn.size()];
+        for (int k = 0; k < wn.size(); k++) {
+            JsonArray q = wn.get(k).getAsJsonArray();
+            wallX[k] = q.get(0).getAsFloat();
+            wallRy[k] = q.get(1).getAsInt();
+            wallZ[k] = q.get(2).getAsFloat();
+        }
+        wallA = new int[we.size()];
+        wallB = new int[we.size()];
+        wallMove = new int[we.size()];
+        for (int k = 0; k < we.size(); k++) {
+            JsonArray q = we.get(k).getAsJsonArray();
+            wallA[k] = q.get(0).getAsInt();
+            wallB[k] = q.get(1).getAsInt();
+            wallMove[k] = q.get(2).getAsInt();
+        }
 
         int[] lanes = ints(o.getAsJsonArray("edgeLane"));
         edgeLane = new byte[lanes.length];
@@ -358,7 +393,8 @@ public final class Roster {
         JsonArray crow = cz.getAsJsonArray("rows");
         JsonArray ex = o.has("extras") ? o.getAsJsonArray("extras") : new JsonArray();
         citizens = crow.size();
-        records = citizens + EXTRAS;
+        extras = o.has("extraCount") ? Math.max(0, o.get("extraCount").getAsInt()) : EXTRAS;
+        records = citizens + extras;
         given = new String[records];
         family = new String[records];
         named = new String[records];
@@ -396,7 +432,7 @@ public final class Roster {
             look[i] = ints(a.get(cLook).getAsJsonArray());
             named[i] = cNamed < 0 || a.get(cNamed).isJsonNull() ? "" : a.get(cNamed).getAsString();
         }
-        for (int k = 0; k < EXTRAS; k++) {
+        for (int k = 0; k < extras; k++) {
             int i = citizens + k;
             JsonObject e = k < ex.size() ? ex.get(k).getAsJsonObject() : null;
             given[i] = "";

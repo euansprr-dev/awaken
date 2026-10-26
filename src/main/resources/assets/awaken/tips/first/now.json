@@ -1,0 +1,9 @@
+{
+  "text": "The line at the top is a good next thing to do. The one under it is a place worth the walk.",
+  "priority": 45,
+  "show_for": 200,
+  "retire_after_done": 1,
+  "retire_after_shown": 2,
+  "cooldown": 2400,
+  "awake": "after"
+}

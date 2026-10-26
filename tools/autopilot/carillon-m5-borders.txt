@@ -1,0 +1,100 @@
+# Carillon M5: the Atlas's region borders (Euan's readability notes): a continuous road east out of Carillon past the
+# Commons' edge (~700 from the city) into the next regions, then the table at the border close in and zoomed out, and
+# an orbit's frame cost against a closed pair, uncapped (OpenGL).
+# Run: BACKEND=opengl PACK=perf,world TECTONIC=awakened RD=16 SLOT_WHO=atlas \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/carillon-m5-borders.txt 900
+world carillonM5borders creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 4000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+hud off
+cmd awaken city view square
+wait 160
+cmd awaken atlas ring city
+wait 20
+cmd awaken city view studio_dawn_gate
+wait 120
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+cmd tp @s ~64 ~ ~
+wait 12
+# back to where the Commons ends, and the table there
+cmd tp @s ~-900 ~ ~
+wait 120
+cmd atlas open 20 55 1
+wait 80
+shot m5_border_close
+cmd atlas view 35 50 0.5
+wait 60
+shot m5_border_mid
+cmd atlas view 20 58 0.25
+wait 80
+shot m5_border_far
+perf m5b_open_still 8
+cmd atlas spin 30
+perf m5b_open_orbit 8
+cmd atlas spin 0
+screen close
+perf m5b_closed 8
+cmd atlas stats
+quit

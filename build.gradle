@@ -80,6 +80,11 @@ neoForge {
             // frame-time experiments (tools/autopilot.sh with XMX=6G ZGC=1): the client's heap and garbage collector
             if (project.hasProperty('xmx')) jvmArgument "-Xmx${project.property('xmx')}"
             if (project.hasProperty('zgc')) jvmArgument '-XX:+UseZGC'
+            // tools/autopilot.sh BACKEND=vulkan|opengl, as a launch argument: a fresh game folder (every CI tour, the first
+            // tour after a pack install) reads its new options.txt as "default", which tries OpenGL first
+            if (project.hasProperty('backend')) programArguments.addAll '--graphicsBackend', project.property('backend').toString().toUpperCase(Locale.ROOT)
+            // tools/autopilot.sh SETTLE=<s>: each shot first waits, at most that long, for the terrain to load and build
+            if (project.hasProperty('settle')) systemProperty 'awaken.autopilot.settle', project.property('settle').toString()
         }
 
         server {

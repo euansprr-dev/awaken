@@ -33,7 +33,7 @@ public final class GatesClient {
         modBus.addListener(GatesClient::layers);
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(Pillars::onExtract);
-        bus.addListener(Pillars::onSubmit);
+        bus.addListener(Pillars::onAfterLevel);
         bus.addListener(Blight::onTick);
         bus.addListener(Blight::onFogColour);
         bus.addListener(Blight::onFog);

@@ -29,7 +29,7 @@ final class CitizensTests {
     }
 
     private static StreetNet net(Roster r) {
-        return StreetNet.of(CityPlan.get(), 0, 0, 70, r.edgeLane);
+        return StreetNet.of(CityPlan.get(), 0, 0, 70, r.edgeLane).withWall(r, 0, 0, 70);
     }
 
     /** Two simulated play-days on the ledger alone: every segment of every citizen's day reaches its first target. */
@@ -93,7 +93,8 @@ final class CitizensTests {
                 if (dist > (r.pPath[p] ? 14.2 : 36)) bad.add("place " + p + " spot " + s + " is " + (int) dist + " blocks from its node");
                 byte k = plan.kind((int) Math.floor(r.spotX[s]), (int) Math.floor(r.spotZ[s]));
                 boolean door = r.pKind[p] == Roster.P_DOOR || r.pKind[p] == Roster.P_LANDMARK;
-                if (!door && !CityPlan.walkable(k)) bad.add("place " + p + " (" + Roster.PLACE_KINDS[r.pKind[p]] + ") spot " + s + " on " + k);
+                // (a stand on the wall walk: the plan's raster says wall there; the walk is painted at its row)
+                if (!door && !g.wall[node] && !CityPlan.walkable(k)) bad.add("place " + p + " (" + Roster.PLACE_KINDS[r.pKind[p]] + ") spot " + s + " on " + k);
             }
         }
         for (int route = 0; route < r.routePlaces.length; route++) {
@@ -157,14 +158,14 @@ final class CitizensTests {
         h.assertTrue(r != null, "the roster is in the jar");
         ServerLevel level = h.getLevel();
         var origin = h.absolutePos(net.minecraft.core.BlockPos.ZERO);
-        StreetNet g = StreetNet.of(CityPlan.get(), origin.getX(), origin.getZ(), origin.getY(), r.edgeLane);
-        Citizens before = Citizens.active;
-        Citizens c = new Citizens(level, r, g, new CitizensData(), origin.getX(), origin.getZ(), origin.getY());
-        c.crowd.on = false;
+        StreetNet g = StreetNet.of(CityPlan.get(), origin.getX(), origin.getZ(), origin.getY(), r.edgeLane).withWall(r, origin.getX(), origin.getZ(), origin.getY());
+        Settlement before = Citizens.carillon();
+        Settlement c = Settlement.carillon(level, r, g, new CitizensData(), origin.getX(), origin.getZ(), origin.getY());
+        c.embody = false;
         c.work.edits = false; // the shared test world is not Carillon: change no blocks there
         c.setClock(16000); // night: a burglary's hour
         c.events.noPlan();
-        Citizens.active = c;
+        Citizens.swapCarillon(c);
         long now = level.getGameTime();
         List<String> started = new ArrayList<>();
         for (String kind : List.of("burglary", "pickpocket", "fire", "cart")) {
@@ -177,8 +178,8 @@ final class CitizensTests {
         h.succeedWhen(() -> {
             long elapsed = level.getGameTime() - now;
             if (!c.data.events.isEmpty()) {
-                if (elapsed > 14500 && Citizens.active == c) {
-                    Citizens.active = before;
+                if (elapsed > 14500 && Citizens.carillon() == c) {
+                    Citizens.swapCarillon(before);
                     level.getServer().tickRateManager().stopSprinting();
                 }
                 throw new net.minecraft.gametest.framework.GameTestAssertException(net.minecraft.network.chat.Component.literal(
@@ -190,7 +191,7 @@ final class CitizensTests {
             for (int i = 0; i < r.citizens; i++) h.assertTrue(c.data.role[i] == 0, "citizen " + i + " is back to their day");
             Awaken.LOG.info("[citizens] events test: {} started, {} resolved in {} ticks, noRoute {}", c.events.started, c.events.resolved,
                     elapsed, c.ledger.noRoute);
-            Citizens.active = before;
+            Citizens.swapCarillon(before);
             level.getServer().tickRateManager().stopSprinting();
         });
     }

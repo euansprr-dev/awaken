@@ -80,6 +80,18 @@ public final class AwakenConfig {
                 .comment("Show the Horizon line under the Now tracker: the nearest place worth exploring, and now and then one you",
                         "can't reach yet.")
                 .define("horizonLine", true);
+        /** How much the System tells you unasked (SPEC §26). */
+        public enum Notifications { MINIMAL, STANDARD, GUIDED }
+
+        public static final ModConfigSpec.EnumValue<Notifications> NOTIFICATIONS = C
+                .comment("How much the System tells you unasked. STANDARD: decisions, danger and what you earned, spaced out;",
+                        "small finds go quietly to the Journal (K). MINIMAL: only decisions, danger and firsts. GUIDED: small finds",
+                        "show too, with shorter gaps.")
+                .defineEnum("notifications", Notifications.STANDARD);
+        public static final ModConfigSpec.BooleanValue TIPS = C
+                .comment("Just-in-time tips: a short line in your own keys the first time something comes up, gone when you do it,",
+                        "never more than a few times. Counts are kept in config/awaken-tips.json (delete it to see them again).")
+                .define("tips", true);
         public static final ModConfigSpec.DoubleValue SYSTEM_SCALE = C
                 .comment("Size of System cards, story lines and the Now tracker (toasts stay vanilla-sized).")
                 .defineInRange("systemScale", 1.0, 0.75, 1.5);
@@ -102,6 +114,19 @@ public final class AwakenConfig {
                         "CINEMATIC (adds sun shadows, ambient occlusion, warm and cool light and light shafts; 90+ fps) or ULTRA",
                         "(the same at higher quality; 60+ fps). It steps aside while an Iris shaderpack is on.")
                 .defineEnum("lens", LensLook.SWIFT);
+
+        /** Far Sight, AWAKEN's own far terrain (dev.awaken.farsight, SPEC §20): how far it draws. */
+        public enum FarSight { OFF, NEAR, FULL }
+
+        public static final ModConfigSpec.EnumValue<FarSight> FAR_SIGHT = C
+                .comment("Far Sight, AWAKEN's own far terrain past your render distance: mountains, forests and air to the horizon.",
+                        "FULL draws to 16 km, NEAR to 4 km, OFF none. Single-player worlds; it steps aside while Distant Horizons",
+                        "is installed.")
+                .defineEnum("farSight", FarSight.FULL);
+        public static final ModConfigSpec.BooleanValue FAR_SIGHT_WATER_EDGES = C
+                .comment("While Far Sight draws, leave out the water walls at the edge of the loaded chunks (thin pale lines over the",
+                        "far sea after a teleport or in fast flight). Needs Sodium; off: water meshes exactly as Sodium's.")
+                .define("farSightWaterEdges", true);
         public static final ModConfigSpec SPEC = C.build();
 
         private Client() {}

@@ -342,8 +342,10 @@ public final class AscentServer {
         // the trail behind Ascent.arrivedByMovement: was this tick spent moving by rope, wings or Runner move
         boolean moving = Ascent.moving(p, m);
         m.mark(moving);
-        // the Wilds' "how you arrived" hears the ladder's states (a swing, a leap, a glide, flight, a wall-run, a hang)
-        if (moving) dev.awaken.core.api.ArrivalHooks.report(p, dev.awaken.core.api.ArrivalHooks.Way.ASCENT, 5);
+        // the Wilds' "how you arrived" hears the ladder's states: the line itself (a rope, a zip, the carry, wings)
+        // apart from a Runner move (a wall-run, a hang), since a climb site's payoff answers only the line (SPEC §17.29)
+        if (moving) dev.awaken.core.api.ArrivalHooks.report(p, m.state.airborne() ? dev.awaken.core.api.ArrivalHooks.Way.LINE
+                : dev.awaken.core.api.ArrivalHooks.Way.ASCENT, 5);
         if (m.chain > 0 && now(p) - m.lastLinkAt > CHAIN_GAP) payChain(p, m, now(p));
         if (!m.state.airborne()) return;
         if (p.isPassenger() || p.isSpectator() || !p.isAlive()) {

@@ -36,6 +36,10 @@ public final class HearthHooks {
         default List<BlockPos> within(ServerLevel level, BlockPos pos, int radius) {
             return nearest(level, pos, radius).map(List::of).orElse(List.of());
         }
+        /** Whether Deep Tide nights stay calm at {@code pos} (a Hearth with a bell tower, SPEC §28.2). */
+        default boolean tideCalm(ServerLevel level, BlockPos pos) { return false; }
+        /** Essence a machine at {@code pos} pays for {@code amount} (a Workshop at home pays a quarter less). */
+        default int machineCost(ServerLevel level, BlockPos pos, int amount) { return amount; }
     }
 
     private static Lookup lookup = new Lookup() {
@@ -84,6 +88,16 @@ public final class HearthHooks {
     /** Whether two players share at least one Hearth (one owns it and the other is a member, or both are members). */
     public static boolean shareHearth(ServerPlayer a, UUID b) {
         return !a.getUUID().equals(b) && household(a).contains(b);
+    }
+
+    /** Whether Deep Tide nights stay calm at {@code pos}: inside a Hearth whose bell tower stands. */
+    public static boolean tideCalm(ServerLevel level, BlockPos pos) {
+        return lookup.tideCalm(level, pos);
+    }
+
+    /** Essence a machine at {@code pos} pays for {@code amount}: a quarter less in a Workshop at home. */
+    public static int machineCost(ServerLevel level, BlockPos pos, int amount) {
+        return lookup.machineCost(level, pos, amount);
     }
 
     /** Every Hearth Anchor within {@code radius} blocks of {@code pos}, whoever owns it. */

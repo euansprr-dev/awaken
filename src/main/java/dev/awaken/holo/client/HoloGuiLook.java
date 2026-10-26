@@ -42,6 +42,9 @@ final class HoloGuiLook implements HudLook.Look {
 
     @Override
     public boolean enabled() {
+        // the projected look is the band's: dark while it's off the wrist (the System's cards fall back to flat glass)
+        var p = net.minecraft.client.Minecraft.getInstance().player;
+        if (p != null && !dev.awaken.core.api.HoloBand.worn(p)) return false;
         return HoloConfig.statusStyle == HoloConfig.StatusStyle.HOLO && HoloPipelines.guiOk();
     }
 

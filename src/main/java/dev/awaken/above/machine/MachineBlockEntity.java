@@ -107,7 +107,7 @@ public class MachineBlockEntity extends BlockEntity {
     }
 
     public boolean draw(int amount) {
-        return level instanceof ServerLevel sl && Power.draw(sl, worldPosition, amount, power);
+        return level instanceof ServerLevel sl && Power.draw(sl, worldPosition, dev.awaken.core.api.HearthHooks.machineCost(sl, worldPosition, amount), power);
     }
 
     // ---- lifecycle ------------------------------------------------------------------------------------------------

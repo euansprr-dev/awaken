@@ -45,7 +45,8 @@ public final class AtlasClient {
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(AtlasNet.Sync.TYPE, (m, ctx) -> AtlasState.get().onSync(m));
             e.register(AtlasNet.Trail.TYPE, (m, ctx) -> AtlasState.get().onTrail(m));
-            e.register(AtlasNet.Regions.TYPE, (m, ctx) -> AtlasState.get().regions = List.copyOf(m.regions()));
+            e.register(AtlasNet.Regions.TYPE, (m, ctx) -> AtlasState.get().onRegions(m.regions()));
+            e.register(AtlasNet.City.TYPE, (m, ctx) -> AtlasState.get().onCity(m));
             e.register(AtlasNet.Pins.TYPE, (m, ctx) -> AtlasState.get().pins = List.copyOf(m.pins()));
         });
         NeoForge.EVENT_BUS.addListener(RegisterClientCommandsEvent.class, AtlasClient::commands);
@@ -64,7 +65,10 @@ public final class AtlasClient {
         boolean open = mc.gui.screen() instanceof AtlasScreen;
         AtlasState.get().tick(mc, open);
         while (KEY.consumeClick()) {
-            if (mc.gui.screen() == null && mc.player != null) AtlasScreen.open(20f, 52f, 1f);
+            if (mc.gui.screen() == null && mc.player != null) {
+                AtlasScreen.open(20f, 52f, 1f);
+                dev.awaken.core.api.TipHooks.client().done(dev.awaken.Awaken.id("first/atlas"));
+            }
         }
     }
 
@@ -92,12 +96,18 @@ public final class AtlasClient {
                     return 1;
                 })))
                 .then(Commands.literal("reveal").executes(c -> reveal()))
+                .then(Commands.literal("prof").then(Commands.argument("bits", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 127)).executes(c -> {
+                    AtlasScreen.prof = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "bits");
+                    AtlasState.stats.reset();
+                    return 1;
+                })))
                 .then(Commands.literal("drift").then(Commands.argument("hz", FloatArgumentType.floatArg(1f, 240f)).executes(c -> {
                     AtlasRenderer.DRIFT_NANOS = (long) (1e9 / f(c, "hz"));
                     return 1;
                 })))
                 .then(Commands.literal("stats").executes(c -> {
                     for (String line : AtlasState.describe()) Awaken.LOG.info("[atlas] stats: {}", line);
+                    AtlasState.stats.reset();
                     Awaken.LOG.info("[atlas] stats: glance paint {} ms", String.format(java.util.Locale.ROOT, "%.2f", AtlasGlance.paintNanos / 1e6));
                     return 1;
                 })));
@@ -143,6 +153,25 @@ public final class AtlasClient {
         }
         a.revealPending = true;
         return open(20f, 52f, 1f);
+    }
+
+    /**
+     * The Registry reveal opened for you (SPEC §16.4, the Registry ceremony: right after the band's first K, as a
+     * proposal): the table opens and the run you made draws itself across the city. False (nothing opens) without a
+     * recorded run or with a screen up.
+     */
+    public static boolean openReveal() {
+        Minecraft mc = Minecraft.getInstance();
+        AtlasState a = AtlasState.get();
+        if (mc.player == null || mc.gui.screen() != null || a.trail.length < 6) return false;
+        a.revealPending = true;
+        AtlasScreen.open(20f, 52f, 1f);
+        return true;
+    }
+
+    /** Whether the Atlas table is the open screen. */
+    public static boolean isOpen() {
+        return Minecraft.getInstance().gui.screen() instanceof AtlasScreen;
     }
 
     private static AtlasScreen screen() {

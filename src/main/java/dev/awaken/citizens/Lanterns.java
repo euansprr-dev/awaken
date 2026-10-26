@@ -21,13 +21,13 @@ final class Lanterns {
     static final int MAX = 12, LEVEL = 11;
     private static final BlockState LIGHT = Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, LEVEL);
 
-    private final Citizens c;
+    private final Settlement c;
     private final ServerLevel level;
     /** Per record: where its lantern's light is (BlockPos.asLong), or Long.MIN_VALUE. */
     private final long[] at;
     private int active;
 
-    Lanterns(Citizens c) {
+    Lanterns(Settlement c) {
         this.c = c;
         this.level = c.level;
         at = new long[c.ledger.n];

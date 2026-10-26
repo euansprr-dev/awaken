@@ -39,15 +39,23 @@ final class RunnerTests {
         AwakenTests.register("runner_roof_climb", 20, RunnerTests::roofClimb);
         AwakenTests.registerIsolated("runner_pipe_grip", 120, RunnerTests::pipeGrip);
         AwakenTests.registerIsolated("runner_pipe_cornice", 120, RunnerTests::pipeCornice);
+        AwakenTests.registerIsolated("runner_ledge_drop", 120, RunnerTests::ledgeDrop);
+        AwakenTests.registerIsolated("runner_pipe_tops", 120, RunnerTests::pipeTops);
+        AwakenTests.registerIsolated("runner_rail_hang", 120, RunnerTests::railHang);
         // runner_hang_real_tick (hangRealTick below) is kept for W2 but not registered: its harness doesn't yet get its own
         // teleport accepted, so every move after it is ignored (see docs/carillon/spikes/S3-runner.md, Open issue)
     }
 
     private static final BlockPos.MutableBlockPos M = new BlockPos.MutableBlockPos();
 
-    /** The course's origin (feet level) for a test: up in the air, clear of the terrain other tests stand on. */
+    /**
+     * The course's origin (feet level) for a test: up in the air, and the box every course here fits in (the S3 course,
+     * the row of seven pipe tops) cleared to the sky first, whatever another test's course left up there.
+     */
     private static BlockPos origin(GameTestHelper h) {
-        return h.absolutePos(new BlockPos(20, 1, 6)).above(80);
+        BlockPos o = h.absolutePos(new BlockPos(20, 1, 6)).above(80);
+        AwakenTests.clearToSky(h.getLevel(), o.offset(-16, -2, -6), o.offset(72, 24, 46));
+        return o;
     }
 
     private static void finish(GameTestHelper h, BlockPos o, ServerPlayer... ps) {
@@ -118,10 +126,10 @@ final class RunnerTests {
             RunnerRules.Edge open = RunnerRules.edgeNear(level, ctx, M, c.x, c.y, c.z, 2, 1, o.getY() + 3, 0.3, 0.2);
             double[] stand = open == null ? null : RunnerRules.climbOut(level, ctx, M, open);
             h.assertTrue(stand != null && Math.abs(stand[1] - (o.getY() + 3)) < 1e-6, "trim 1b is open above: climb out onto it");
-            // a fence-topped wall and a plain face are never edges
+            // a fence on the floor you stand on is no hang (it's crossed, SPEC §17.27), and a plain face has no edge
             Vec3 fw = at(o, 33.95, 0.5, 10);
             h.assertTrue(RunnerRules.findEdge(level, ctx, M, fw.x, fw.y, fw.z, 0, -1, RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2) == null,
-                    "a fence is never grabbed");
+                    "a low fence beside you is no hang");
             Vec3 face = at(o, -11.68, 2, 14);
             h.assertTrue(RunnerRules.findEdge(level, ctx, M, face.x, face.y, face.z, 0, -1, RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2) == null,
                     "a plain wall face has no edge");
@@ -548,7 +556,7 @@ final class RunnerTests {
         return k;
     }
 
-    // ---- the grip on a climb line (SPEC §17.23) -----------------------------------------------------------------------
+    // ---- the grip on a climb line (SPEC §17.28) -----------------------------------------------------------------------
 
     /**
      * A drainpipe on a wall and a free hoist rope: where the body holds each and which way it faces; the server takes a
@@ -632,7 +640,7 @@ final class RunnerTests {
     }
 
     /**
-     * The top of a pipe always leads somewhere (Euan, 2026-10-25: "the last block doesn't let me through"; SPEC §17.23):
+     * The top of a pipe always leads somewhere (Euan, 2026-10-25: "the last block doesn't let me through"; SPEC §17.28):
      * a drainpipe up a wall under a one-block cornice, a roof behind it. At the pipe's top, the head under the cornice,
      * the lip over it is a hang from its outer face (out, then up), the server takes it only from a grip, and the hang
      * climbs out onto the roof. A ceiling with no lip in reach, or open air, is no hang.
@@ -696,5 +704,244 @@ final class RunnerTests {
                 level.setBlockAndUpdate(o.offset(x, y, z), Blocks.AIR.defaultBlockState());
             BodyTests.done(h, a, b);
         });
+    }
+
+    /**
+     * Rails at a roof's edge (SPEC §17.27): a fence or wall on a wall's top row stands back from the face under it, so a
+     * hang on its top holds from that face (the hands reaching in). From a fence's rail the climb out goes over it, down
+     * onto the roof beyond, and the server takes it with the crawl box; a wall's coping is stood on, the body over its
+     * middle.
+     */
+    static void railHang(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = origin(h);
+        BlockState stone = Blocks.STONE.defaultBlockState();
+        // its own air first, wherever the test lands (inside a mountain too)
+        for (int x = -2; x <= 8; x++) for (int y = -1; y <= 9; y++) for (int z = -4; z <= 6; z++)
+            level.setBlockAndUpdate(o.offset(x, y, z), Blocks.AIR.defaultBlockState());
+        // a 3-high wall at z 1 under a roof (top y 3) running back to z 4; a fence on its top row at x -1..2, a wall at 4..7
+        for (int x = -1; x <= 7; x++) {
+            for (int z = -3; z <= 4; z++) level.setBlockAndUpdate(o.offset(x, -1, z), stone);
+            for (int y = 0; y <= 2; y++) level.setBlockAndUpdate(o.offset(x, y, 1), stone);
+            for (int z = 2; z <= 4; z++) level.setBlockAndUpdate(o.offset(x, 2, z), stone);
+        }
+        for (int x = -1; x <= 2; x++) level.setBlockAndUpdate(o.offset(x, 3, 1), Blocks.OAK_FENCE.defaultBlockState());
+        for (int x = 4; x <= 7; x++) level.setBlockAndUpdate(o.offset(x, 3, 1), Blocks.COBBLESTONE_WALL.defaultBlockState());
+        for (int x = -1; x <= 7; x++) {
+            BlockPos a = o.offset(x, 3, 1);
+            level.setBlock(a, net.minecraft.world.level.block.Block.updateFromNeighbourShapes(level.getBlockState(a), level, a), net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+        }
+        RunnerServer.fromHistory = true;
+        RunnerServer.latencyTicks = 0;
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            var m0 = new BlockPos.MutableBlockPos();
+            CollisionContext ctx = CollisionContext.empty();
+            double top = o.getY() + 4.5, hold = o.getZ() + 1 - BodyRules.HALF_WIDTH - RunnerRules.HANG_GAP;
+            RunnerRules.Edge fence = RunnerRules.findEdge(level, ctx, m0, o.getX() + 0.5, top - RunnerRules.HANG_DROP, hold, 2, 1,
+                    RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2);
+            h.assertTrue(fence != null && Math.abs(fence.top() - top) < 1e-6 && Math.abs(fence.hz() - hold) < 0.03,
+                    "a hang on the fence, held from the wall's face under it: " + fence);
+            h.assertTrue(RunnerRules.climbOut(level, ctx, m0, fence) == null, "a fence's rail is no place to stand");
+            VaultRules.Vault over = VaultRules.over(level, ctx, fence.hx(), fence.hy(), fence.hz(), fence.fx(), fence.fz(), fence.top());
+            h.assertTrue(over != null && over.kind() == VaultRules.OVER && Math.abs(over.floor() - (o.getY() + 3)) < 1e-6
+                    && over.endZ() > o.getZ() + 1.625 + 0.3, "over the rail, down onto the roof beyond: " + over);
+            String fault = BodyTests.pathFault(h, over);
+            h.assertTrue(fault == null, "climbing over: " + fault);
+            RunnerRules.Edge wall = RunnerRules.findEdge(level, ctx, m0, o.getX() + 5.5, top - RunnerRules.HANG_DROP, hold, 2, 1,
+                    RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2);
+            double[] stand = wall == null ? null : RunnerRules.climbOut(level, ctx, m0, wall);
+            h.assertTrue(stand != null && Math.abs(stand[1] - top) < 1e-6 && Math.abs(stand[2] - (o.getZ() + 1.5)) < 0.02,
+                    "a wall's coping: climbed out onto, over its middle: " + (stand == null ? null : java.util.Arrays.toString(stand)));
+
+            long now = level.getServer().overworld().getGameTime();
+            ServerPlayer a = BodyTests.player(h, null);
+            Vec3 s = new Vec3(fence.hx(), fence.hy(), fence.hz());
+            a.snapTo(s.x, s.y, s.z, 0F, 0F);
+            a.setOnGround(false);
+            BodyMotion m = BodyServer.motion(a);
+            h.assertTrue(RunnerServer.startHang(a, m, run(Move.LEDGE_HANG, BodyPayloads.HANG_GRAB, 0F, s, fence.hx(), fence.hy(), fence.hz(), 2, 1), now)
+                    && m.hanging, "the server holds the hang on the fence");
+            h.assertFalse(RunnerServer.ledgeJump(a, m, run(Move.LEDGE_JUMP, BodyPayloads.JUMP_OVER, 0F, s, over.endX(), over.floor() + 2, over.endZ(), 2, 1), now + 5),
+                    "a climb over to somewhere else is refused");
+            RunnerServer.startHang(a, m, run(Move.LEDGE_HANG, BodyPayloads.HANG_GRAB, 0F, s, fence.hx(), fence.hy(), fence.hz(), 2, 1), now + 6);
+            h.assertTrue(RunnerServer.ledgeJump(a, m, run(Move.LEDGE_JUMP, BodyPayloads.JUMP_OVER, 0F, s, over.endX(), over.floor(), over.endZ(), 2, 1), now + 10)
+                    && !m.hanging && m.vaultUntil != 0 && a.getForcedPose() == net.minecraft.world.entity.Pose.SWIMMING,
+                    "and takes the climb over the rail, with the crawl box");
+            for (int x = -2; x <= 8; x++) for (int y = -1; y <= 9; y++) for (int z = -4; z <= 6; z++)
+                level.setBlockAndUpdate(o.offset(x, y, z), Blocks.AIR.defaultBlockState());
+            BodyTests.done(h, a);
+        });
+    }
+
+    /**
+     * Shift in a hang drops to the ledge below (Euan, 2026-10-25; SPEC §17.25): hanging from a wall's top with a sill
+     * sticking out a block lower down, the drop catches the sill (out from the wall first, then down), and the server
+     * takes it; with no sill, there's nothing to catch (Shift lets go).
+     */
+    static void ledgeDrop(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = origin(h);
+        BlockState stone = Blocks.STONE.defaultBlockState();
+        for (int x = -1; x <= 2; x++) for (int z = -3; z <= 3; z++) level.setBlockAndUpdate(o.offset(x, -1, z), stone);
+        for (int x = -1; x <= 2; x++) {
+            for (int y = 0; y <= 5; y++) level.setBlockAndUpdate(o.offset(x, y, 1), stone);
+            level.setBlockAndUpdate(o.offset(x, 3, 0), Blocks.STONE_BRICKS.defaultBlockState()); // the sill, one out
+        }
+        RunnerServer.fromHistory = true;
+        RunnerServer.latencyTicks = 0;
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            var m0 = new BlockPos.MutableBlockPos();
+            CollisionContext ctx = CollisionContext.empty();
+            int axis = 2, sign = 1;
+            double x = o.getX() + 0.5, hold = o.getZ() + 1 - BodyRules.HALF_WIDTH - RunnerRules.HANG_GAP;
+            RunnerRules.Edge top = RunnerRules.findEdge(level, ctx, m0, x, o.getY() + 6 - RunnerRules.HANG_DROP, hold, axis, sign,
+                    RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2);
+            h.assertTrue(top != null && Math.abs(top.top() - (o.getY() + 6)) < 1e-6, "a hang on the wall's top: " + top);
+            RunnerRules.Edge below = RunnerRules.edgeBelow(level, ctx, m0, top.hx(), top.hy(), top.hz(), top, 0);
+            h.assertTrue(below != null && Math.abs(below.top() - (o.getY() + 4)) < 1e-6, "Shift drops to the sill below: " + below);
+            h.assertTrue(below.hz() < top.hz() - 0.9, "hung from the sill's own face, out from the wall: " + below);
+            // standing on the wall's top facing out, Shift + forward lowers into that hang: the sill below is worth it
+            RunnerRules.Edge lowered = RunnerRules.lowerEdge(level, ctx, m0, x, o.getY() + 6, o.getZ() + 1.0, 180F); // at the very edge, as sneaking leaves you
+            h.assertTrue(lowered != null && Math.abs(lowered.top() - top.top()) < 1e-6, "a lower onto the top over the sill: " + lowered);
+
+            long now = level.getServer().overworld().getGameTime();
+            ServerPlayer a = BodyTests.player(h, null);
+            Vec3 s = new Vec3(top.hx(), top.hy(), top.hz());
+            a.snapTo(s.x, s.y, s.z, 0F, 0F);
+            a.setOnGround(false);
+            BodyMotion m = BodyServer.motion(a);
+            h.assertTrue(RunnerServer.startHang(a, m, run(Move.LEDGE_HANG, BodyPayloads.HANG_GRAB, 0F, s, top.hx(), top.hy(), top.hz(), axis, sign), now)
+                    && m.hanging, "the server holds the hang on the top");
+            h.assertTrue(RunnerServer.ledgeJump(a, m, run(Move.LEDGE_JUMP, BodyPayloads.JUMP_DOWN, 0F, s, below.hx(), below.hy(), below.hz(), axis, sign), now + 10)
+                    && m.hanging && Math.abs(m.hangTop - below.top()) < 1e-6, "and takes the drop to the sill");
+
+            // no sill: nothing below to catch, and the server won't hang you on thin air
+            for (int xx = -1; xx <= 2; xx++) level.setBlockAndUpdate(o.offset(xx, 3, 0), Blocks.AIR.defaultBlockState());
+            h.assertTrue(RunnerRules.edgeBelow(level, ctx, m0, top.hx(), top.hy(), top.hz(), top, 0) == null, "no sill, no drop to catch");
+            ServerPlayer b = BodyTests.player(h, null);
+            b.snapTo(s.x, s.y, s.z, 0F, 0F);
+            BodyMotion mb = BodyServer.motion(b);
+            RunnerServer.startHang(b, mb, run(Move.LEDGE_HANG, BodyPayloads.HANG_GRAB, 0F, s, top.hx(), top.hy(), top.hz(), axis, sign), now + 20);
+            h.assertFalse(RunnerServer.ledgeJump(b, mb, run(Move.LEDGE_JUMP, BodyPayloads.JUMP_DOWN, 0F, s, below.hx(), below.hy(), below.hz(), axis, sign), now + 30),
+                    "the server refuses a drop to no ledge");
+            for (int xx = -1; xx <= 2; xx++) for (int y = -1; y <= 5; y++) for (int z = -3; z <= 3; z++)
+                level.setBlockAndUpdate(o.offset(xx, y, z), Blocks.AIR.defaultBlockState());
+            BodyTests.done(h, a, b);
+        });
+    }
+
+    /**
+     * Every kind of pipe top Carillon paints (Euan, 2026-10-26: "I still get stuck on the final upper part of a drain
+     * pipe"), each climbed from the street on a real drainpipe with its deeper head (CityGrammar's facades and roofs,
+     * CityPainter's retaining walls, CityWall's inner face): the climb reaches the top, the top has a lip, and the hang
+     * on it climbs out onto the roof, the terrace or the wall walk.
+     */
+    static void pipeTops(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = origin(h);
+        String[] names = {"flat roof, balustrade open at the pipe", "gable eave (the head in the eave stairs' row)", "full-block cornice",
+                "upside-down stair cornice", "slab cornice", "retaining wall, parapet gap", "city wall inner face: corbels, band, parapet gap"};
+        double[] stands = new double[names.length];
+        for (int i = 0; i < names.length; i++) stands[i] = pipeTop(level, o.offset(10 * i, 0, 0), i);
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            var m0 = new BlockPos.MutableBlockPos();
+            CollisionContext ctx = CollisionContext.empty();
+            for (int i = 0; i < names.length; i++) {
+                int ox = o.getX() + 10 * i;
+                GripRules.Line l = GripRules.find(level, m0, ox + 0.5, o.getY() + 0.5, o.getZ() + 0.2, 0F);
+                h.assertTrue(l != null && l.fz() == 1, names[i] + ": a drainpipe line: " + l);
+                double y = GripRules.climbTop(level, ctx, m0, l, o.getY());
+                h.assertTrue(y > o.getY() + 2, names[i] + ": the climb gets up the pipe, to " + (y - o.getY()));
+                RunnerRules.Edge lip = GripRules.topLip(level, ctx, m0, l.x(), y, l.z(), 2, 1, 0);
+                h.assertTrue(lip != null, names[i] + ": a lip at the top (feet at " + (y - o.getY()) + "): "
+                        + RunnerRules.whyNot(level, ctx, m0, l.x(), y, l.z(), 2, 1, RunnerRules.HANG_REACH, GripRules.LIP_LO, GripRules.LIP_HI));
+                double[] stand = RunnerRules.climbOut(level, ctx, m0, lip);
+                h.assertTrue(stand != null && stand[1] >= stands[i] - 1e-6, names[i] + ": climbs out on top, at "
+                        + (stand == null ? "none" : stand[1] - o.getY()) + " (lip " + (lip.top() - o.getY()) + ", wanted " + (stands[i] - o.getY()) + ")");
+            }
+            for (int i = 0; i < names.length; i++) for (int x = -4; x <= 4; x++) for (int y = -1; y <= 12; y++) for (int z = -3; z <= 6; z++)
+                level.setBlockAndUpdate(o.offset(10 * i + x, y, z), Blocks.AIR.defaultBlockState());
+            h.succeed();
+        });
+    }
+
+    /** Builds pipe-top scene {@code kind} with its pipe at (o.x, o.z) against a wall to the south; returns the lowest stand. */
+    private static double pipeTop(ServerLevel level, BlockPos o, int kind) {
+        BlockState stone = Blocks.STONE.defaultBlockState(), bricks = Blocks.STONE_BRICKS.defaultBlockState();
+        BlockState wallTop = Blocks.STONE_BRICK_WALL.defaultBlockState();
+        BlockState stair = Blocks.DEEPSLATE_TILE_STAIRS.defaultBlockState().setValue(StairBlock.FACING, Direction.SOUTH);
+        BlockState course = Blocks.STONE_BRICK_STAIRS.defaultBlockState().setValue(StairBlock.FACING, Direction.SOUTH)
+                .setValue(StairBlock.HALF, net.minecraft.world.level.block.state.properties.Half.TOP);
+        BlockState slabTop = Blocks.STONE_BRICK_SLAB.defaultBlockState().setValue(SlabBlock.TYPE, SlabType.TOP);
+        int e = 5;
+        for (int x = -4; x <= 4; x++) for (int z = -3; z <= 6; z++) put(level, o, x, -1, z, stone);
+        int head; // the pipe's head row; the pipe runs from the street to it
+        double stand;
+        switch (kind) {
+            case 0 -> { // a flat roof: the house to the eave row, the balustrade on its wall cells, open at the climb column
+                box(level, o, -3, 3, 0, e, 1, 4, stone);
+                for (int x = -3; x <= 3; x++) if (Math.abs(x) > 1) put(level, o, x, e + 1, 1, wallTop);
+                head = e;
+                stand = e + 1;
+            }
+            case 1 -> { // a gable: the wall to the eave row, its stair one out (the head takes it at the pipe), the slope over the wall
+                box(level, o, -3, 3, 0, e, 1, 4, stone);
+                for (int x = -3; x <= 3; x++) {
+                    if (x != 0) put(level, o, x, e, 0, stair);
+                    put(level, o, x, e + 1, 1, stair);
+                    for (int z = 2; z <= 4; z++) put(level, o, x, e + 1, z, Blocks.DEEPSLATE_TILES.defaultBlockState());
+                    put(level, o, x, e + 2, 2, stair);
+                }
+                head = e;
+                stand = e + 1;
+            }
+            case 2, 3, 4 -> { // a cornice one out over the wall's top, over the pipe too, the roof behind it
+                box(level, o, -3, 3, 0, e, 1, 4, stone);
+                BlockState c = kind == 2 ? bricks : kind == 3 ? course : slabTop;
+                for (int x = -3; x <= 3; x++) put(level, o, x, e, 0, c);
+                head = e - 1;
+                stand = e + 1;
+            }
+            case 5 -> { // a retaining wall: the terrace behind, the parapet on its edge, open where the pipe arrives
+                box(level, o, -3, 3, 0, e - 1, 1, 5, stone);
+                for (int x = -3; x <= 3; x++) if (Math.abs(x) > 1) put(level, o, x, e, 1, wallTop);
+                head = e - 1;
+                stand = e;
+            }
+            default -> { // the city wall's inner face: the corbel table, the parapet's band, the inner parapet open at the pipe
+                int top = 8;
+                box(level, o, -3, 3, 0, top, 1, 5, stone);
+                for (int x = -3; x <= 3; x++) {
+                    if (x == 0) continue;
+                    if ((x & 1) == 0) put(level, o, x, top - 3, 0, course);
+                    for (int y = top - 2; y <= top; y++) put(level, o, x, y, 0, Blocks.POLISHED_ANDESITE.defaultBlockState());
+                    if (Math.abs(x) > 1) put(level, o, x, top + 1, 0, bricks);
+                }
+                head = top;
+                stand = top + 1;
+            }
+        }
+        var pipeBlock = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getValue(dev.awaken.Awaken.id("drainpipe"));
+        BlockState pipe = pipeBlock.defaultBlockState().setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH);
+        for (int y = 0; y <= head; y++) put(level, o, 0, y, 0, part(pipe, y == 0 ? "shoe" : y == head ? "head" : "pipe"));
+        return o.getY() + stand;
+    }
+
+    private static void put(ServerLevel level, BlockPos o, int x, int y, int z, BlockState s) {
+        level.setBlockAndUpdate(o.offset(x, y, z), s);
+    }
+
+    private static void box(ServerLevel level, BlockPos o, int x0, int x1, int y0, int y1, int z0, int z1, BlockState s) {
+        for (int x = x0; x <= x1; x++) for (int y = y0; y <= y1; y++) for (int z = z0; z <= z1; z++) put(level, o, x, y, z, s);
+    }
+
+    /** The drainpipe's part ("pipe", "head", "shoe") by its property's own name (the block lives in the city module). */
+    private static BlockState part(BlockState s, String name) {
+        for (var prop : s.getProperties()) if (prop.getName().equals("part")) return withValue(s, prop, name);
+        return s;
+    }
+
+    private static <T extends Comparable<T>> BlockState withValue(BlockState s, net.minecraft.world.level.block.state.properties.Property<T> prop, String name) {
+        return prop.getValue(name).map(v -> s.setValue(prop, v)).orElse(s);
     }
 }

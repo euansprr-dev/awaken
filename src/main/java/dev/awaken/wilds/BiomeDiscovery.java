@@ -3,8 +3,7 @@ package dev.awaken.wilds;
 import dev.awaken.core.DirectorLog;
 import dev.awaken.core.Playtest;
 import dev.awaken.progression.Progression;
-import dev.awaken.signal.Signal;
-import dev.awaken.signal.SignalWindow;
+import dev.awaken.signal.Finds;
 import net.minecraft.gametest.framework.GameTestServer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -52,6 +51,10 @@ public final class BiomeDiscovery {
     public static boolean check(ServerPlayer p) {
         if (p.isSpectator() || !Progression.profile(p).awakened()) return false;
         if (!p.level().dimension().identifier().getNamespace().equals(Identifier.DEFAULT_NAMESPACE)) return false;
+        if (!Finds.counts(p)) { // the city's ground is no discovery: forget the biome so the first step outside is checked
+            LAST.remove(p.getUUID());
+            return false;
+        }
         var key = p.level().getBiome(p.blockPosition()).unwrapKey();
         if (key.isEmpty() || key.get().equals(LAST.put(p.getUUID(), key.get()))) return false;
         Identifier id = key.get().identifier();
@@ -59,8 +62,8 @@ public final class BiomeDiscovery {
         Progression.count(p, COUNTER);
         Progression.markNewThing(p, "biome");
         Component name = Component.translatableWithFallback(id.toLanguageKey("biome"), pretty(id.getPath()));
-        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("New biome · ").append(name))
-                .body(Component.literal("First steps here · +XP")).presentation(SignalWindow.Presentation.TOAST).ttl(20 * 5).build());
+        // a biome is big and in plain view: standing in it is enough, but it is a quiet find (SPEC §26.3)
+        Finds.tell(p, Finds.Find.of("biome", "New biome · " + name.getString(), name.getString(), "First steps here", 0x9FE6D6, false));
         DirectorLog.log(p, "wilds", "first steps in " + id);
         Playtest.log(p, "biome", "id", id.toString());
         return true;

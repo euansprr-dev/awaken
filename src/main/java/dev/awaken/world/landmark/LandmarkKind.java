@@ -49,6 +49,19 @@ public enum LandmarkKind {
         this.rumour = rumour;
     }
 
+    /** Why it's worth the walk, a few words after its name on the Horizon line (progression plan §5.3: "says why"). */
+    public String why() {
+        return switch (this) {
+            case WELL -> "the way down";
+            case VAULT -> "something waits inside";
+            case MONOLITH -> "a chamber below";
+            case OCEAN_LAB -> "dry, under the sea";
+            case SKY_PLATFORM -> "above the clouds";
+            case TETHER_SPIRE -> "a crown at the top";
+            case GATE -> "";
+        };
+    }
+
     /** The {@code Progression.discover} key for the first time a player reaches this kind. */
     public String discoveryKey() {
         return "landmark/" + id;

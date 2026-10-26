@@ -1,0 +1,539 @@
+<title>The Way Forward</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=Silkscreen&display=swap">
+<style>
+/* Layout: one reading column of night glass (the house look of AWAKEN's plan pages); diagrams and tables break wider and
+   scroll inside their own frames. */
+:root {
+  --bg: #0a1019;          /* the night behind the Holo */
+  --glass: #0f1724;       /* the System's glass (SPEC §5) */
+  --glass-2: #142033;
+  --line: #22344d;
+  --fg: #e4f1ff;
+  --muted: #8ea5bf;
+  --accent: #7fc3ff;      /* System blue */
+  --horizon: #9fe6d6;     /* the Horizon line's sea-green */
+  --amber: #ffcf7a;       /* what waits, warnings */
+  --ember: #ff8a7a;       /* broken, missing */
+  --rank-e: #f4f6fb; --rank-d: #5fd08f; --rank-c: #6fb3ff; --rank-b: #b48cff; --rank-a: #f2a541; --rank-s: #ff5a6a; --rank-x: #d4af37;
+  --chip-ink: #0a1019;
+  --display: "Chakra Petch", "Avenir Next Condensed", "Arial Narrow", sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --pixel: "Silkscreen", "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #eef3f8; --glass: #ffffff; --glass-2: #f4f8fc; --line: #cfdbe8;
+    --fg: #0e1a2b; --muted: #4b5f76; --accent: #1f6fb5; --horizon: #157a68; --amber: #9a6100; --ember: #b8402f;
+    --rank-e: #6b7787; --rank-d: #23884f; --rank-c: #2468b3; --rank-b: #6f46c4; --rank-a: #a8610a; --rank-s: #c42a3d; --rank-x: #8a6d12;
+    --chip-ink: #ffffff;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #eef3f8; --glass: #ffffff; --glass-2: #f4f8fc; --line: #cfdbe8;
+  --fg: #0e1a2b; --muted: #4b5f76; --accent: #1f6fb5; --horizon: #157a68; --amber: #9a6100; --ember: #b8402f;
+  --rank-e: #6b7787; --rank-d: #23884f; --rank-c: #2468b3; --rank-b: #6f46c4; --rank-a: #a8610a; --rank-s: #c42a3d; --rank-x: #8a6d12;
+  --chip-ink: #ffffff;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #0a1019; --glass: #0f1724; --glass-2: #142033; --line: #22344d;
+  --fg: #e4f1ff; --muted: #8ea5bf; --accent: #7fc3ff; --horizon: #9fe6d6; --amber: #ffcf7a; --ember: #ff8a7a;
+  --rank-e: #f4f6fb; --rank-d: #5fd08f; --rank-c: #6fb3ff; --rank-b: #b48cff; --rank-a: #f2a541; --rank-s: #ff5a6a; --rank-x: #d4af37;
+  --chip-ink: #0a1019;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font: 400 16px/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 64px;
+}
+.wrap { max-width: 1040px; margin: 0 auto; }
+.prose { max-width: 70ch; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; letter-spacing: 0.01em; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2.6rem, 7vw, 4.4rem); font-weight: 700; }
+h2 { font-size: clamp(1.6rem, 3.6vw, 2.2rem); font-weight: 600; }
+h3 { font-size: 1.2rem; font-weight: 600; color: var(--accent); }
+p { margin: 0; }
+a { color: var(--accent); }
+strong, b { font-weight: 600; }
+.eyebrow { font-family: var(--pixel); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.muted { color: var(--muted); }
+.mono, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+code { font-family: var(--mono); font-size: 0.86em; color: var(--horizon); overflow-wrap: anywhere; }
+
+header { padding-block: 56px 28px; display: grid; gap: 18px; }
+header .lede { font-size: 1.15rem; max-width: 62ch; }
+header .meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 0.85rem; color: var(--muted); }
+blockquote.euan { margin: 0; padding: 14px 18px; border-left: 3px solid var(--accent); background: var(--glass-2); font-style: italic; max-width: 70ch; }
+blockquote.euan cite { display: block; margin-top: 6px; font-style: normal; font-size: 0.82rem; color: var(--muted); }
+
+/* a projected frame: hairline rim with corner brackets, the Holo's language */
+.frame { position: relative; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); background: var(--glass); }
+.frame::before, .frame::after { content: ""; position: absolute; width: 14px; height: 14px; border: 2px solid var(--accent); pointer-events: none; }
+.frame::before { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
+.frame::after { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
+
+section { padding-block: 44px 8px; display: grid; gap: 18px; border-top: 1px solid var(--line); margin-top: 36px; }
+section > .head { display: grid; gap: 6px; }
+
+/* decisions */
+.decisions { padding: 26px clamp(16px, 3vw, 30px); display: grid; gap: 16px; }
+.decisions .go { font-size: 1.05rem; }
+.decisions .go b { color: var(--horizon); }
+ol.dec { list-style: none; counter-reset: d; margin: 0; padding: 0; display: grid; }
+ol.dec li { counter-increment: d; display: grid; grid-template-columns: 2.4rem 1fr; gap: 4px 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+ol.dec li::before { content: counter(d, decimal-leading-zero); font-family: var(--mono); color: var(--accent); font-size: 0.95rem; padding-top: 2px; grid-row: span 2; }
+ol.dec .q { font-weight: 600; }
+ol.dec .rec { color: var(--muted); font-size: 0.93rem; }
+ol.dec .rec b { color: var(--horizon); }
+
+/* findings */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 14px; }
+.cards > div { padding: 14px 16px; background: var(--glass-2); border: 1px solid var(--line); display: grid; gap: 6px; align-content: start; min-width: 0; }
+.cards b.t { font-family: var(--display); font-size: 1.05rem; }
+.cards span { font-size: 0.92rem; color: var(--muted); }
+.cards em { font-style: normal; font-family: var(--mono); font-size: 0.78rem; color: var(--horizon); }
+.cards .sev { font-family: var(--pixel); font-size: 0.66rem; letter-spacing: 0.1em; }
+.sev.hi { color: var(--ember); } .sev.mid { color: var(--amber); } .sev.lo { color: var(--horizon); }
+
+ul.points { margin: 0; padding-left: 1.1rem; display: grid; gap: 8px; }
+ul.points li::marker { color: var(--accent); content: "◇  "; }
+
+/* tables */
+.tbl { overflow-x: auto; border: 1px solid var(--line); background: var(--glass); }
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+th { font-family: var(--display); font-weight: 600; font-size: 0.82rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); background: var(--glass-2); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.num { white-space: nowrap; }
+td.bad { color: var(--ember); } td.ok { color: var(--horizon); } td.meh { color: var(--amber); }
+.chip { display: inline-block; font-family: var(--pixel); font-size: 0.7rem; letter-spacing: 0.06em; padding: 1px 7px 0; color: var(--chip-ink); white-space: nowrap; }
+.r-e { background: var(--rank-e); } .r-d { background: var(--rank-d); } .r-c { background: var(--rank-c); }
+.r-b { background: var(--rank-b); } .r-a { background: var(--rank-a); } .r-s { background: var(--rank-s); } .r-x { background: var(--rank-x); }
+.callout { padding: 14px 18px; border-left: 3px solid var(--amber); background: var(--glass-2); font-size: 0.93rem; }
+.callout b { color: var(--amber); }
+
+/* before / after */
+.ba { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 20px; }
+.ba > div { min-width: 0; display: grid; gap: 10px; align-content: start; padding: 18px; }
+.ba .lab { font-family: var(--pixel); font-size: 0.72rem; letter-spacing: 0.12em; }
+.ba .before .lab { color: var(--ember); } .ba .after .lab { color: var(--horizon); }
+ol.tl { list-style: none; margin: 0; padding: 0; display: grid; }
+ol.tl li { display: grid; grid-template-columns: 3.6rem 1fr; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 0.92rem; }
+ol.tl .t { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); padding-top: 2px; }
+ol.tl .gap { color: var(--ember); }
+
+/* the HUD mock */
+.hud { font-family: var(--mono); font-size: 0.8rem; display: grid; gap: 6px; padding: 12px; background: color-mix(in srgb, var(--bg) 70%, transparent); border: 1px solid var(--line); }
+.hud .row { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.hud .k { font-family: var(--pixel); font-size: 0.62rem; letter-spacing: 0.1em; color: var(--muted); min-width: 3.6rem; }
+.hud .now { color: var(--fg); } .hud .next { color: var(--horizon); } .hud .far { color: var(--amber); }
+
+/* diagrams */
+.dia { overflow-x: auto; border: 1px solid var(--line); background: var(--glass); padding: 12px; }
+.dia svg { display: block; min-width: 860px; width: 100%; height: auto; }
+.dia svg text { font-family: var(--body); fill: var(--fg); }
+.dia .lbl { font-family: var(--display); font-weight: 600; }
+.dia .sm { font-size: 11px; fill: var(--muted); }
+.dia .mono { font-family: var(--mono); }
+
+ol.steps { list-style: none; margin: 0; padding: 0; counter-reset: s; display: grid; }
+ol.steps li { counter-increment: s; display: grid; grid-template-columns: 2.4rem 1fr; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+ol.steps li::before { content: counter(s); font-family: var(--display); font-weight: 700; color: var(--horizon); font-size: 1.2rem; line-height: 1.3; }
+
+.split { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 20px; align-items: start; }
+.split > * { min-width: 0; }
+footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 0.85rem; color: var(--muted); display: grid; gap: 6px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 560px) {
+  ol.dec li, ol.steps li { grid-template-columns: 2rem 1fr; }
+  th, td { padding: 8px 9px; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">Awaken · progression and guidance · plan for approval · 26 Oct 2026</span>
+  <h1>The Way Forward</h1>
+  <p class="lede">Out of Carillon's gate, the world should already be pulling you somewhere: smoke from a camp up the road,
+  a gate's pillar past the trees, a vault that stirs as you pass and tells you what it waits for. No guidebook. Every lock
+  you meet says what it wants, the world remembers it for you, and when you hold the key it calls you back.</p>
+  <div class="meta"><span>From a code audit of the build you play, the pacing sims, and 30 sourced AAA references</span><span>Five phases after the fix that's already in</span><span>Plan: docs/progression/PLAN.md</span><span>Approved 26 Oct, all eleven · phases 0-5 built on pack/progression (SPEC §27)</span></div>
+  <blockquote class="euan">"I just got out of the city, I go into the forest, and I'm like, okay, so what's next?… If I was
+  someone who didn't know about the grapple, I'd just look at that and use blocks to build up. So we should probably
+  block that… I got the grapple thing when my rank is too low to actually open the vault."
+  <cite>Euan, survival playtest, 26 Oct 2026</cite></blockquote>
+</header>
+
+<div class="decisions frame" id="decisions">
+  <span class="eyebrow">What your yes covers</span>
+  <p class="go">Eleven decisions, each with my recommendation. <b>"Go with your recommendations"</b> says yes to all of them.</p>
+  <ol class="dec">
+    <li><span class="q">The Tether's rank: the vault's own door rank (D near Carillon, about 5-6 h in) rather than a flat C (about 18 h).</span><span class="rec"><b>D.</b> You said C, and C is what's built today. But the vaults near home have D doors, so "open the vault and it gives you its line" is your rule at D. At C there are 17 hours with no new movement, then the whole ladder lands at once.</span></li>
+    <li><span class="q">Spread the ladder: Leaper at D after real rope practice (8-12 h), Wings at C (20-25 h), Skyborn at A as approved, the Sovereign form on any ending.</span><span class="rec"><b>Yes.</b> Today Leaper and Wings have no rank check, so they follow the rope within minutes, and the "Become" ending gives no Sovereign form.</span></li>
+    <li><span class="q">Building up to a climb site (a Tether Spire, a sky platform, a hero tree's crown): refuse the first block and name what the place needs.</span><span class="rec"><b>Refuse at climb sites,</b> keep the crumble at vaults and ruins, and let the crown, the core and the cache's best loot answer only the line. Today's three-second crumble is exactly what makes pillaring work.</span></li>
+    <li><span class="q">How the need is said: the place names the key and where it comes from, once. The first time, a "Show me" card opens your band at the Ascent page, with the next rung as a silhouette.</span><span class="rec"><b>Name it.</b> A hidden "you need to unlock something" or "a higher level" gives you nothing to aim for, and a stack of dirt proves it wrong. Danger stays the gate for terrain.</span></li>
+    <li><span class="q">The first thread: the Registry clerk hands you Kestrel's letters, and the compass walks you out of the High Gate to the Wayfarer camp. The first gate is placed on purpose beyond it.</span><span class="rec"><b>Yes.</b> It ends at the camp, a place with several pulls (a rift, two small asks, a gate pillar, a vault). After that you choose.</span></li>
+    <li><span class="q">Three goals on the HUD you already have. Now: places outrank bookkeeping. Next: the Horizon line says why. Far: the next rank's promise on the band. Plus a glance that sends a thread of the Signal's light toward your goal.</span><span class="rec"><b>Yes.</b></span></li>
+    <li><span class="q">Promises: every lock you meet is kept in the Journal under "Waiting" and pinned on the Atlas, and the world calls you back once when you hold its key.</span><span class="rec"><b>Yes.</b> This is the "that way you know for the future" you described.</span></li>
+    <li><span class="q">Switch the tips on. They have never been installed, so no tip in the game has ever shown.</span><span class="rec"><b>Yes,</b> through discovery-ux's notification director once it merges.</span></li>
+    <li><span class="q">People who point: the crier and the gate guards name real places, the named people get idle lines, the clerk answers "Anything for me?", a level-1 flare, smoke over the camp.</span><span class="rec"><b>Yes.</b></span></li>
+    <li><span class="q">Phase 5, the long middle: weapon mastery (switched off in code today), a capability clock, the level road re-timed and extended to 135, and Wilds content past level 20.</span><span class="rec"><b>Yes,</b> as its own short brief after phases 1-3, folded into Living Wilds F where they overlap.</span></li>
+    <li><span class="q">Rename the E-rank power called "Grapple", so "the grapple" only ever means the Tether.</span><span class="rec"><b>Yes:</b> "Snap Cable".</span></li>
+  </ol>
+</div>
+
+<section id="fix">
+  <div class="head"><span class="eyebrow">Already in · Phase 0 · branch pack/progression</span><h2>The vault answers your rank</h2></div>
+  <div class="split">
+    <div class="prose" style="display:grid; gap:12px">
+      <p>The line is no longer given in the forecourt. It now needs <span class="chip r-c">C</span> (or the vault's own door rank, if
+      higher) <b>and</b> the sealed door open. So you open the door, go in, and the vault calls as you come back out under its
+      pylons. The thrown line, the pull onto the pylon and the mast are unchanged.</p>
+      <p>Short of that, the vault <b>stirs</b>: its light lifts off the paving in the rank's colour, stalls and settles
+      back. "The vault stirs, and stills." then "Its line waits for a C-rank hunter." If you have the rank but the door is still shut,
+      the light drifts toward the door instead: "The vault stirs. Its door will know you."</p>
+      <p>The sealed door now <b>reads</b> anyone short of its rank who walks up to it, touches it or strikes it: the ward's
+      light holds on the core, a refusing tone plays, and it says "Sealed. It reads you and stays shut. Come back at C-rank." Before, a
+      strike did nothing at all, which read as a dead block.</p>
+      <p>A second hole the audit found: a Hearth Anchor beside a vault switched its ward off, so an E-rank player could dig
+      round the door. A vault's walls now hold even inside a Hearth.</p>
+    </div>
+    <div class="tbl">
+      <table>
+        <tr><th>Commit</th><th>What</th><th>CI</th></tr>
+        <tr><td class="num">5bbe162e</td><td>The line answers C and an open door; the stir; the door reads you</td><td class="ok num">green · 40260191638</td></tr>
+        <tr><td class="num">945be930</td><td>A vault's walls hold inside a Hearth</td><td class="ok num">green · 40260773307</td></tr>
+        <tr><td colspan="3" class="muted">GameTests <code>ascent_tether_vow</code> (E stirs; the door reads once and stays shut; D opens it but the line waits; a B door waits for B; C with the door open runs the vow) and <code>wilds_ward_rules</code>. Your own world keeps the rope you already have.</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="forest">
+  <div class="head"><span class="eyebrow">Your moment, rebuilt from the code</span><h2>Out of the High Gate, into a forest: before and after</h2></div>
+  <p class="prose">Level 2, E-rank, one power, just registered. The left column is what today's build does in the first
+  fifteen minutes outside the walls, step by step. The right column is the same fifteen minutes after phases 1-4.</p>
+  <div class="ba">
+    <div class="before frame">
+      <span class="lab">Before · today</span>
+      <ol class="tl">
+        <li><span class="t">0:00</span><span>"THE CITY IS YOURS." Three bells. <span class="gap">Then nothing: no compass, no map, no one to see.</span></span></li>
+        <li><span class="t">0:05</span><span>Through the High Gate. Hale stands by his board, an unmarked figure. <span class="gap">The camp 210 blocks up the road has no fire and no marker.</span></span></li>
+        <li><span class="t">0:06</span><span>The Now line: "◇ Spend 3 points · K". <span class="gap">The Registry's Directive went quiet 30 seconds after it was offered.</span></span></li>
+        <li><span class="t">0:07</span><span>"Something tore open nearby · 54 m NE." A rift, the only short goal, for a minute.</span></li>
+        <li><span class="t">0:12</span><span>Level 3: three toasts at once, then lair rumours in a burst.</span></li>
+        <li><span class="t">0:15</span><span>The Horizon line: "△ Sealed Vault ↗ 420 m". <span class="gap">It never says why.</span></span></li>
+        <li><span class="t">0:20</span><span>Walk into the vault's forecourt: <span class="gap">the rope is given at E-rank.</span> (Fixed.)</span></li>
+        <li><span class="t">later</span><span>A Tether Spire. <span class="gap">Pillar up beside it; each block crumbles three seconds later, but you're always standing on a newer one.</span></span></li>
+      </ol>
+      <div class="hud" aria-label="The HUD before">
+        <div class="row"><span class="k">NOW</span><span class="now">◇ Spend 3 points · K</span></div>
+        <div class="row"><span class="k">HORIZON</span><span class="next">△ Sealed Vault ↗ 420 m</span></div>
+        <div class="row"><span class="k">FAR</span><span class="muted">nothing</span></div>
+      </div>
+    </div>
+    <div class="after frame">
+      <span class="lab">After · phases 1-4</span>
+      <ol class="tl">
+        <li><span class="t">0:00</span><span>The clerk, over your licence: "Kestrel at the Roost has letters for the camp up the north road. You're going that way." The errand starts itself.</span></li>
+        <li><span class="t">0:05</span><span>The High Gate: "THE COMMONS · outside the walls". Hale at a real board: "Work for any rank. Read it on your way back." A smoke column rises above the trees ahead.</span></li>
+        <li><span class="t">0:07</span><span>A rift tears off the road: the first fight, and the first find, taught once.</span></li>
+        <li><span class="t">0:12</span><span>The camp. Ilse takes the letters. Hettie has lost ten sheep. From the camp's rise you can see a gate's pillar to the north and a vault's pylons to the east.</span></li>
+        <li><span class="t">0:15</span><span>The vault stirs as you pass: its light rises in D's green and settles. "Its line waits for a D-rank hunter." That goes into your Journal under "Waiting", with a pin on the Atlas.</span></li>
+        <li><span class="t">0:20</span><span>"A gate is drawing breath · north." The Registry's first Directive: clear a floor.</span></li>
+        <li><span class="t">later</span><span>A Tether Spire. The first block won't hold: "The spire sheds what you build. Its platforms answer to a line." <b>Show me</b> opens your band's Ascent page, with the next rung as a silhouette.</span></li>
+        <li><span class="t">~5 h</span><span>D-rank. "The vault's line answers you now · ↗ 640 m." You go back, open its door, and the line pulls you up.</span></li>
+      </ol>
+      <div class="hud" aria-label="The HUD after">
+        <div class="row"><span class="k">NOW</span><span class="now">◇ The Wayfarer camp ↑ 210 m</span></div>
+        <div class="row"><span class="k">NEXT</span><span class="next">△ E-rank gate · its floors make you stronger ↗ 380 m</span></div>
+        <div class="row"><span class="k">FAR</span><span class="far">D-rank · level 10 · the vault's line, Gardens, D gates</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="findings">
+  <div class="head"><span class="eyebrow">The audit · four reports, every claim checked in code</span><h2>What's actually wrong</h2></div>
+  <div class="cards">
+    <div><span class="sev hi">Biggest · 1</span><b class="t">After the opening, nothing points anywhere</b><span>No thread, no compass, no map. The Now line's only slot goes to "Spend 3 points". Quests, bounties and Directives never reach the HUD. The camp and Kestrel's errand (the designed way out) are unreachable. The first gate is random and never announced. And <b>the tip system was never installed</b>, so no tip in the game has ever shown.</span><em>audit-journey.md</em></div>
+    <div><span class="sev hi">Biggest · 2</span><b class="t">The movement ladder is in the wrong place either way</b><span>Before the fix: rope, Leaper and Wings all in the first evening, then nothing until 69 h. At C: 17 hours with no new movement, then those three on top of the Path, Truths, strata and Teodor, 8-10 unlocks in 2-3 hours. And nothing says how any rung is earned.</span><em>audit-spine.md · pacing_sim.py</em></div>
+    <div><span class="sev hi">Biggest · 3</span><b class="t">The locks leak, and don't say what they want</b><span>The ward's three-second crumble is what makes pillaring work. A relog wipes the "you built your way here" record (that's Wings without the rope). Hero-tree wards cover a radius of 9 under a 30-block canopy. A builder silently spends a cache's best roll for everyone, forever.</span><em>audit-locks.md</em></div>
+    <div><span class="sev mid">Pacing</span><b class="t">Weapons stop at about 6 h</b><span>Weapon mastery is switched off in code, named weapons were never built, and nothing in Arms counts as a "new thing". The 96 forged weapons are found only by the recipe book, which lights all 16 at once.</span><em>ArmsServer.java:169</em></div>
+    <div><span class="sev mid">Pacing</span><b class="t">The long, empty middle</b><span>The C band (18-47 h) runs about 1.5 h a level, mostly on shards. Wilds quests and bounties end at level 20. The first Ultimate comes at 31 h, and the level road stops at 51 h.</span><em>audit-spine.md §d</em></div>
+    <div><span class="sev mid">Readability</span><b class="t">Locks that speak late or wrong</b><span>The Wings core answers once a minute, on the minute. "Sky Platform · needs Wings" is circular (its ladder needs the rope; its core <i>gives</i> Wings). "These walls answer only to their door" plays at doorless sites. Spires leave the Horizon and never come back.</span><em>audit-locks.md §c</em></div>
+    <div><span class="sev lo">Good, keep it</span><b class="t">The best locks already exist</b><span>The Descent: "Gardens is sealed. It opens at D-rank. Grow, and come back." The Halo: "Your eyes aren't ready yet (B-rank)." Wren's ledge: "You'll need the Tether." Each one names its key and gates the ability, not the route.</span><em>the model for every fix</em></div>
+    <div><span class="sev lo">Risk under it all</span><b class="t">Lords decide the clock</b><span>The combat sim finds home-rank Gate Lords won about 5% of the time as built, and the Hearth, Lord-forged weapons and core pity all hang on Lord kills. Land the combat fixes before tuning these numbers.</span><em>docs/combat/sim-2026-10-26.md</em></div>
+  </div>
+</section>
+
+<section id="ladder">
+  <div class="head"><span class="eyebrow">The Ascent ladder on the real clock · balanced player, pacing_sim, 300 runs</span><h2>When each rung arrives</h2></div>
+  <p class="prose">The same ladder three ways: as you played it, as it is since this morning's fix, and as proposed. The
+  axis is hours played (square-root scale, so the early hours have room). The coloured bands are when each rank arrives.</p>
+  <div class="dia" role="img" aria-label="Three timelines of the movement ladder: before the fix, the rope, Leaper and Wings all come within four hours and then nothing until 69 hours; at C they all come at 18 to 21 hours after 17 hours with no new movement; proposed, the rope at about 5.5 hours, the Leaper at about 10, Wings at about 22, Skyborn at 69 and the Sovereign at 102.">
+    <svg viewBox="0 0 1000 300" xmlns="http://www.w3.org/2000/svg">
+      <style>
+        .s-band { opacity: 0.13; } .s-bl { font-family: var(--pixel); font-size: 10px; letter-spacing: 1px; }
+        .s-ax { stroke: var(--line); stroke-width: 1; } .s-tick { font-family: var(--mono); font-size: 10px; fill: var(--muted); }
+        .s-rail { stroke: var(--line); stroke-width: 2; } .s-rung { stroke: var(--bg); stroke-width: 2; }
+        .s-desert { fill: var(--ember); opacity: 0.16; } .s-dl { font-size: 11px; fill: var(--ember); }
+        .s-rl { font-family: var(--display); font-weight: 600; font-size: 13px; fill: var(--fg); }
+        .s-rs { font-size: 11px; fill: var(--muted); } .s-nm { font-size: 11px; fill: var(--fg); }
+        .s-ok { fill: var(--horizon); } .s-hi { fill: var(--accent); } .s-mut { fill: var(--muted); }
+      </style>
+      <!-- rank bands: E 0-5.1, D 5.1-17.9, C 17.9-47.5, B 47.5-69.3, A 69.3-84.6, S 84.6-102 -->
+      <rect class="s-band" x="160" y="30" width="183.4" height="250" style="fill:var(--rank-e)"/>
+      <rect class="s-band" x="343.4" y="30" width="160.1" height="250" style="fill:var(--rank-d)"/>
+      <rect class="s-band" x="503.5" y="30" width="216.1" height="250" style="fill:var(--rank-c)"/>
+      <rect class="s-band" x="719.6" y="30" width="116.3" height="250" style="fill:var(--rank-b)"/>
+      <rect class="s-band" x="835.9" y="30" width="70.9" height="250" style="fill:var(--rank-a)"/>
+      <rect class="s-band" x="906.8" y="30" width="73.2" height="250" style="fill:var(--rank-s)"/>
+      <text class="s-bl" x="166" y="44" style="fill:var(--rank-e)">E</text>
+      <text class="s-bl" x="349" y="44" style="fill:var(--rank-d)">D 5.1 H</text>
+      <text class="s-bl" x="509" y="44" style="fill:var(--rank-c)">C 17.9 H</text>
+      <text class="s-bl" x="725" y="44" style="fill:var(--rank-b)">B 47.5 H</text>
+      <text class="s-bl" x="841" y="44" style="fill:var(--rank-a)">A 69 H</text>
+      <text class="s-bl" x="912" y="44" style="fill:var(--rank-s)">S 85 H</text>
+
+      <!-- row 1: before the fix -->
+      <text class="s-rl" x="8" y="86">Before the fix</text><text class="s-rs" x="8" y="101">as you played it</text>
+      <line class="s-rail" x1="160" y1="90" x2="980" y2="90"/>
+      <rect class="s-desert" x="300.6" y="80" width="535.3" height="20"/>
+      <text class="s-dl" x="470" y="115">66 hours with no new rung</text>
+      <circle class="s-rung s-mut" cx="160" cy="90" r="6"/>
+      <circle class="s-rung s-hi" cx="241.2" cy="90" r="6"/><circle class="s-rung s-hi" cx="259.5" cy="90" r="6"/><circle class="s-rung s-hi" cx="300.6" cy="90" r="6"/>
+      <text class="s-nm" x="232" y="73">rope · Leaper · Wings, ~1-3 h</text>
+      <circle class="s-rung s-hi" cx="835.9" cy="90" r="6"/><text class="s-nm" x="812" y="73">Skyborn</text>
+      <circle class="s-rung s-hi" cx="980" cy="90" r="6"/><text class="s-nm" x="917" y="73">Sovereign*</text>
+
+      <!-- row 2: now, C -->
+      <text class="s-rl" x="8" y="156">Today, at C</text><text class="s-rs" x="8" y="171">since 5bbe162e</text>
+      <line class="s-rail" x1="160" y1="160" x2="980" y2="160"/>
+      <rect class="s-desert" x="217.4" y="150" width="287.1" height="20"/>
+      <text class="s-dl" x="262" y="185">17 hours with no new movement</text>
+      <circle class="s-rung s-mut" cx="160" cy="160" r="6"/>
+      <circle class="s-rung s-hi" cx="504.5" cy="160" r="6"/><circle class="s-rung s-hi" cx="509.2" cy="160" r="6"/><circle class="s-rung s-hi" cx="523.1" cy="160" r="6"/>
+      <text class="s-nm" x="470" y="143">rope · Leaper · Wings + Path + strata, all at C</text>
+      <circle class="s-rung s-hi" cx="835.9" cy="160" r="6"/><text class="s-nm" x="812" y="143">Skyborn</text>
+      <circle class="s-rung s-hi" cx="980" cy="160" r="6"/><text class="s-nm" x="917" y="143">Sovereign*</text>
+
+      <!-- row 3: proposed -->
+      <text class="s-rl" x="8" y="236">Proposed</text><text class="s-rs" x="8" y="251">decisions 1-2</text>
+      <line class="s-rail" x1="160" y1="240" x2="980" y2="240"/>
+      <circle class="s-rung s-mut" cx="160" cy="240" r="6"/><text class="s-nm" x="152" y="223">Runner</text>
+      <circle class="s-rung s-ok" cx="350.4" cy="240" r="7"/><text class="s-nm" x="330" y="223">the line</text>
+      <circle class="s-rung s-ok" cx="416.7" cy="240" r="7"/><text class="s-nm" x="399" y="263">Leaper</text>
+      <circle class="s-rung s-ok" cx="545.2" cy="240" r="7"/><text class="s-nm" x="528" y="223">Wings</text>
+      <text class="s-rs" x="590" y="263">Wings mastery · windways · Jet Boots</text>
+      <circle class="s-rung s-ok" cx="835.9" cy="240" r="7"/><text class="s-nm" x="812" y="223">Skyborn</text>
+      <circle class="s-rung s-ok" cx="980" cy="240" r="7"/><text class="s-nm" x="917" y="223">Sovereign</text>
+
+      <!-- axis -->
+      <line class="s-ax" x1="160" y1="282" x2="980" y2="282"/>
+      <text class="s-tick" x="156" y="296">0</text><text class="s-tick" x="238" y="296">1</text><text class="s-tick" x="337" y="296">5</text>
+      <text class="s-tick" x="410" y="296">10</text><text class="s-tick" x="498" y="296">18</text><text class="s-tick" x="598" y="296">30</text>
+      <text class="s-tick" x="712" y="296">47</text><text class="s-tick" x="828" y="296">69</text><text class="s-tick" x="899" y="296">85</text>
+      <text class="s-tick" x="958" y="296">102 h</text>
+    </svg>
+  </div>
+  <p class="muted" style="font-size:0.85rem">* Today the Sovereign form comes only on the Break or Wake ending; "Become" never grants it. Dash at
+  0.5 h and a mount at about 5 h are the only other movement before the rope.</p>
+</section>
+
+<section id="spine">
+  <div class="head"><span class="eyebrow">The unlock map · proposed</span><h2>Ranks are the spine. The body is the reward.</h2></div>
+  <p class="prose">Each rank opens one rung, one weapon tier and new places. The band's Far line shows the next column,
+  built only from locks you've already met, so it's never a list of spoilers.</p>
+  <div class="tbl">
+    <table>
+      <tr><th></th><th><span class="chip r-e">E</span> 0 h</th><th><span class="chip r-d">D</span> ~5 h</th><th><span class="chip r-c">C</span> ~18 h</th><th><span class="chip r-b">B</span> ~47 h</th><th><span class="chip r-a">A</span> ~69 h</th><th><span class="chip r-s">S</span> → <span class="chip r-x">SOV</span></th></tr>
+      <tr><td><b>Body</b></td><td>Runner, taught · Dash (L3)</td><td><b>the line</b>, at a vault you open · <b>Leaper</b> after rope practice (8-12 h)</td><td><b>Wings</b> at a sky core (20-25 h)</td><td>Wings mastery, windways</td><td>Skyborn</td><td>the Sovereign form, any ending</td></tr>
+      <tr><td><b>Powers</b></td><td>first power (0:08) · a core (L4)</td><td>a core (L9)</td><td>your Path and its signature</td><td></td><td></td><td></td></tr>
+      <tr><td><b>Arms</b></td><td>Wildhide weapons from the first shard · first Lord-forged (3-6 h)</td><td>Beastbound tier · mastery steps (phase 5)</td><td>Gatewrought tier</td><td></td><td>Lordscale</td><td>Sovereign Weave</td></tr>
+      <tr><td><b>Places and people</b></td><td>the camp · the first gate · the spawn vault met and read</td><td>strata 2-3 · Mira · Wren's Rope · spires and hero crowns become yours</td><td>strata 4-5 · Teodor · possessing animals</td><td>the Halo · strata 6-7 · Sun</td><td>stratum 8 · Vael · possessing any mob</td><td>the Court · the Seed</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="guidance">
+  <div class="head"><span class="eyebrow">The guidance design</span><h2>The world pulls you forward</h2></div>
+  <ol class="steps prose">
+    <li><div><b>Every lock is seen before it opens, and says what it waits for,</b> in the world's own words: a rank, a level, or the ability's in-world name ("a line", "wings"). It names the key and never explains how to play it.</div></li>
+    <li><div><b>The world remembers what you saw.</b> A lock you met becomes a promise, kept in the Journal under "Waiting" and pinned on the Atlas.</div></li>
+    <li><div><b>When you get the key, the world calls you back, once.</b> "The spire you passed answers you now · ↗ 640 m."</div></li>
+    <li><div><b>Three goals at all times, never nagging:</b> Now (minutes, with a compass), Next (an evening, a place), Far (the next rank and what it opens).</div></li>
+    <li><div><b>The world pulls, the HUD confirms.</b> Smoke, light, sound, people and pillars come first; text is the receipt.</div></li>
+    <li><div><b>Teach once, by doing, in the place.</b> The Vow's thrown line is the model. Then never again.</div></li>
+    <li><div><b>Building round a designed lock is answered by the place, at the first block,</b> not by a wall of text.</div></li>
+  </ol>
+
+  <h3>The promise loop</h3>
+  <div class="dia" role="img" aria-label="A loop of four steps: meet a lock that names its key; it is kept in the Journal and on the Atlas; you earn the key; the world calls you back to the place.">
+    <svg viewBox="0 0 1000 200" xmlns="http://www.w3.org/2000/svg">
+      <style>
+        .s-node { fill: var(--glass-2); stroke: var(--accent); stroke-width: 1.2; }
+        .s-nt { font-family: var(--display); font-weight: 600; font-size: 14px; fill: var(--fg); }
+        .s-ns { font-size: 11.5px; fill: var(--muted); } .s-q { font-family: var(--mono); font-size: 11px; fill: var(--horizon); }
+        .s-arr { stroke: var(--accent); stroke-width: 1.6; fill: none; } .s-ah { fill: var(--accent); }
+      </style>
+      <rect class="s-node" x="10" y="30" width="220" height="120"/>
+      <text class="s-nt" x="24" y="56">1 · Meet the lock</text>
+      <text class="s-ns" x="24" y="78">a vault stirs, a spire sheds</text>
+      <text class="s-ns" x="24" y="94">your blocks, a stratum is sealed</text>
+      <text class="s-q" x="24" y="122">"Its platforms answer</text><text class="s-q" x="24" y="137">to a line."</text>
+
+      <rect class="s-node" x="262" y="30" width="220" height="120"/>
+      <text class="s-nt" x="276" y="56">2 · It's kept for you</text>
+      <text class="s-ns" x="276" y="78">Journal · Waiting</text>
+      <text class="s-ns" x="276" y="94">an Atlas pin in the need's colour</text>
+      <text class="s-q" x="276" y="122">"A spire's crown waits</text><text class="s-q" x="276" y="137">for a line · 380 m NE"</text>
+
+      <rect class="s-node" x="514" y="30" width="220" height="120"/>
+      <text class="s-nt" x="528" y="56">3 · Earn the key</text>
+      <text class="s-ns" x="528" y="78">rank up, pass a trial,</text>
+      <text class="s-ns" x="528" y="94">keep a vow (Far shows which)</text>
+      <text class="s-q" x="528" y="122">"D-rank · the vault's line,</text><text class="s-q" x="528" y="137">Gardens, D gates"</text>
+
+      <rect class="s-node" x="766" y="30" width="220" height="120"/>
+      <text class="s-nt" x="780" y="56">4 · Called back, once</text>
+      <text class="s-ns" x="780" y="78">the Horizon raises the nearest</text>
+      <text class="s-ns" x="780" y="94">kept promise for 10 minutes</text>
+      <text class="s-q" x="780" y="122">"The spire answers you</text><text class="s-q" x="780" y="137">now · ↗ 640 m"</text>
+
+      <path class="s-arr" d="M230 90 L258 90"/><path class="s-ah" d="M262 90 l-8 -4 v8 z"/>
+      <path class="s-arr" d="M482 90 L510 90"/><path class="s-ah" d="M514 90 l-8 -4 v8 z"/>
+      <path class="s-arr" d="M734 90 L762 90"/><path class="s-ah" d="M766 90 l-8 -4 v8 z"/>
+      <path class="s-arr" d="M876 150 L876 182 L120 182 L120 154"/><path class="s-ah" d="M120 150 l-4 8 h8 z"/>
+      <text class="s-ns" x="420" y="196">and the next lock is somewhere you can now reach</text>
+    </svg>
+  </div>
+
+  <div class="split">
+    <div style="display:grid; gap:10px; min-width:0">
+      <h3>The first thread</h3>
+      <p>One short errand, led by the compass, that ends at a hub. BotW's first layout tied places together with routes,
+      and about 80% of testers felt railroaded. Points with pull fixed it. So the thread stops at the camp, and after that you choose.</p>
+      <ul class="points">
+        <li>The clerk starts Kestrel's errand: the Roost, then the High Gate, then the camp.</li>
+        <li>Leaving the walls is a moment: "THE COMMONS · outside the walls".</li>
+        <li>The camp gets a fire and a smoke column, two people with level-1 asks, and a view of a gate's pillar and a vault.</li>
+        <li>The first gate is placed on purpose (registered, level 3, 300-500 blocks out along your road) and announced.</li>
+        <li>The Registry's first Directive fits the moment ("clear a floor") and shows its progress on the Now line.</li>
+      </ul>
+    </div>
+    <div style="display:grid; gap:10px; min-width:0">
+      <h3>Building up to a lock</h3>
+      <p>At a Tether Spire, a sky platform or a hero tree's crown, your first block won't hold. The place says what it
+      answers to, worded by what you already have.</p>
+      <ul class="points">
+        <li>No rope yet: "The spire sheds what you build. Its platforms answer to a line." Once: "A vault keeps a line for a hunter it opens to."</li>
+        <li>Rope in hand: a tip instead. "Climb it by rope: hold [key] at a ring."</li>
+        <li>The first time only, <b>Show me</b> opens your band's Ascent page: the rungs you hold, the next as a silhouette, the rest "???".</li>
+        <li>The crown, the core and a cache's best loot answer only the line. A clever climb with pearls still earns the view.</li>
+        <li>Terrain that's too dangerous stays gated by danger, never by a "higher level" message.</li>
+      </ul>
+    </div>
+    <div style="display:grid; gap:10px; min-width:0">
+      <h3>People who point, tips that show</h3>
+      <ul class="points">
+        <li>The crier and the gate guards name real places. Named people get idle lines. The clerk answers "Anything for me?" with the one next step that fits you.</li>
+        <li>A level-1 flare can rise in the first 15 minutes. The E-rank pillar gets a look of its own.</li>
+        <li>Three "?" marks seeded on the Atlas at the Registry: the camp, the first gate, the spawn vault.</li>
+        <li>The tip system, finally switched on, through discovery-ux's director: K, M, your power's key, how XP comes, the first gate, the first night, each rung's how-to. Each shows once, in its place.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="locks">
+  <div class="head"><span class="eyebrow">Every lock, every way round it · audit-locks.md</span><h2>Cheeses, by how likely you'd find them</h2></div>
+  <div class="tbl">
+    <table>
+      <tr><th>Route</th><th>Where</th><th>What it gets you today</th><th>The fix</th><th>Phase</th></tr>
+      <tr><td>Pillar up, block on block</td><td>Tether Spire (your case), vault roof</td><td>the cache; the best roll silently spent for everyone</td><td>refuse the first block, name the need, inner seal on the best roll</td><td class="num">3</td></tr>
+      <tr><td>A tower beside the trunk</td><td>hero-tree crowns</td><td>the best roll; with a 7 s ledge hang, the crown's XP</td><td>ward the whole canopy; a Horizon site</td><td class="num">3</td></tr>
+      <tr><td>Ring to ring</td><td>sky platforms</td><td>the ordinary sky roll</td><td>refuse at climb sites; the rings stay the rope's</td><td class="num">3</td></tr>
+      <tr><td>A Hearth Anchor beside a site</td><td>vaults, spires, platforms</td><td>digging round a rank door; permanent stairs</td><td class="ok">vaults fixed (945be930); climb sites in phase 3</td><td class="num">0 / 3</td></tr>
+      <tr><td>Relog after building up</td><td>any warded site</td><td>the best roll; Wings without ever holding the rope</td><td>the visit's verdict persists 10 minutes</td><td class="num">3</td></tr>
+      <tr><td>Pearls, elytra, riptide, wind charges</td><td>spires, platforms</td><td>the best roll (crown and core refuse)</td><td>the payoff answers only the line; the climb still earns the view</td><td class="num">3</td></tr>
+      <tr><td>Walk into the forecourt at E</td><td>vaults</td><td>the rope (your case)</td><td class="ok">done: C (or the door's rank) and an open door</td><td class="num">0</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="pacing">
+  <div class="head"><span class="eyebrow">Reward pacing · from the sims</span><h2>The first hour, the first evening, week one</h2></div>
+  <div class="tbl">
+    <table>
+      <tr><th>Window</th><th>Today</th><th>Proposed</th></tr>
+      <tr><td><b>Hour 1</b><br><span class="muted num">L5 at 1 h</span></td><td>Dense but pointless outside: power 0:08, Dash 0:30, a core 0:50, Truths 1:00, a random gate. No thread. Tips silent.</td><td>The same unlocks, now taught. The thread to the camp, the first floor by about 45 minutes, and the spawn vault met, its door read and its line promised.</td></tr>
+      <tr><td><b>Evening 1</b><br><span class="muted num">1-5 h · D at 5.1 h</span></td><td>First Lord about 2 h, Lord-forged at 3-6 h, scenes from L8. D opens doors and strata. Movement silent.</td><td>The same, plus Wren's Rope and the spires as visible D promises. <b>D keeps the promise from hour 1: the vault's line.</b></td></tr>
+      <tr><td><b>Week 1</b><br><span class="muted num">5-20 h · C at 17.9 h</span></td><td>No new movement for 17 hours, then 8-10 unlocks stacked on C.</td><td>Leaper at 8-12 h (spires and crowns as D content). C brings your Path on its own. Wings at 20-25 h, inside the C band.</td></tr>
+      <tr><td><b>Beyond</b></td><td>The C band empty to 47 h; weapons stop at about 6 h; the road ends at 51 h.</td><td>Phase 5: weapon mastery, a capability clock, the road re-timed and extended to 135, Wilds content past level 20.</td></tr>
+    </table>
+  </div>
+  <p class="callout"><b>The test after each phase,</b> from the sims: in the first 50 hours, never more than 3 hours without a new
+  capability (a verb, a power, a rung, a weapon, a kind of place), and no rank-up bringing more than four at once.</p>
+</section>
+
+<section id="research">
+  <div class="head"><span class="eyebrow">How the best open worlds do it · 30 sourced entries in research.md</span><h2>What the research says</h2></div>
+  <div class="tbl">
+    <table>
+      <tr><th>Principle</th><th>Source</th><th>For AWAKEN</th></tr>
+      <tr><td>Places with gravity pull; "lines" railroad 80% of testers</td><td>Fujibayashi and Yonezu, CEDEC, 31 Aug 2017</td><td>the first thread ends at a hub with several pulls</td></tr>
+      <tr><td>"If you can see it in the distance, you should be able to go there"</td><td>Pearl Abyss (Crimson Desert), Gamescom dev, 27 Aug 2026</td><td>whatever Far Sight draws is reachable, and says what reaches it</td></tr>
+      <tr><td>Even "no guidance" needs a readable first lock</td><td>Crimson Desert's day-one patch to its first sky puzzle, Mar 2026</td><td>play-test the first vault, the first spire, the first platform</td></tr>
+      <tr><td>The Guiding Wind on a button; rumours capped at two per type</td><td>Connell, VFX Voice, Sep 2020; Hamilton, GDC 2021</td><td>the glance's Signal thread; people point, capped</td></tr>
+      <tr><td>Icons for things you haven't seen were "a mistake"</td><td>Philipp Weber (The Witcher 3), 21 Jul 2022</td><td>the Atlas shows only what you saw or were told</td></tr>
+      <tr><td>The Old Man names the paraglider, and how to earn it</td><td>BotW's Great Plateau (Fujibayashi, IGN, Mar 2017)</td><td>your "it says you need a grapple" has the best precedent</td></tr>
+      <tr><td>The hookshot "completely breaks the climbing mechanic"</td><td>Aonuma and Fujibayashi, IGN, 9 Dec 2017</td><td>the Tether's locks need what blocks can't fake</td></tr>
+      <tr><td>Danger is the soft gate: "this is not the right way"</td><td>Miyazaki, DICE, 28 Feb 2023</td><td>region levels gate terrain, never a text</td></tr>
+      <tr><td>One tip at a time, chosen from your state</td><td>Terraria's Guide</td><td>the clerk's "Anything for me?"</td></tr>
+      <tr><td>The vault drops nothing when broken; only its key opens it</td><td>Minecraft 1.21, Trial Chambers</td><td>the payoff answers only the line</td></tr>
+      <tr><td>A no-build rule works as a law of the place, with a visible cause</td><td>Valheim (Svensson, 2021)</td><td>the ward refuses at the first block, and shows it</td></tr>
+      <tr><td>The ship log as a detective board</td><td>Outer Wilds (Mobius, 2017; MCV, 2020)</td><td>the Journal's "Waiting" list and the Atlas pins</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="phases">
+  <div class="head"><span class="eyebrow">Phases · effort is builder time at AI pace</span><h2>How it gets built</h2></div>
+  <div class="tbl">
+    <table>
+      <tr><th>Phase</th><th>What</th><th>Effort</th><th>Gate to the next</th></tr>
+      <tr><td><b>0</b></td><td>The vault's lock</td><td class="ok num">done</td><td>CI green</td></tr>
+      <tr><td><b>1 · The first thread</b></td><td>Kestrel's errand from the desk; Now sources for chains and Directives; the camp's fire and smoke; the first gate on purpose; places outrank bookkeeping</td><td class="num">2-3 h</td><td>three GameTests, a "leave Carillon" tour, and <b>your 10 minutes: leave the city in survival</b></td></tr>
+      <tr><td><b>2 · The ladder you can see</b></td><td>The ladder at D / D / C / A; promises and the call-back; the Far line; the band's Ascent page; the Horizon says why; tiers and Arms count as new things</td><td class="num">2-3 h</td><td>tests; the pacing sim re-run</td></tr>
+      <tr><td><b>3 · Locks that hold and speak</b></td><td>Refuse at climb sites; the need in the place's voice; relog keeps the verdict; the inner seal; the canopy ward; refusals on first contact; door ranks in colour; gate cards compare ranks</td><td class="num">2 h</td><td>tests; a tour at a spire and a platform</td></tr>
+      <tr><td><b>4 · Teach once, point with people</b></td><td>Tips through discovery-ux's director; the glance; the crier, guards and idle lines; the clerk's next step; a level-1 flare; day-time pulls; one Journal</td><td class="num">2-3 h</td><td>tests; a first-hour tour</td></tr>
+      <tr><td><b>5 · The long middle</b></td><td>Weapon mastery; a capability clock; the road to 135; Wilds past level 20; the Reassessment easy to find</td><td class="num">3-4 h</td><td>the sim test above</td></tr>
+    </table>
+  </div>
+  <ul class="points prose">
+    <li><b>Order:</b> phases 1 and 3 touch different files and can run as two builders at once. Phase 2 follows 1. Phase 4 needs discovery-ux merged. Phase 5 can run beside 4. About 12-15 builder hours, or a day with two builders.</li>
+    <li><b>Shared files:</b> phase 1 touches the opening (Carillon), the Wilds (Living Wilds), gates and the Signal (discovery-ux). discovery-ux and the Registry ceremony land first; phase 1 is built on top of them.</li>
+    <li><b>Over-guiding:</b> the thread ends at the camp, and nothing tracks itself after that.</li>
+    <li><b>Lords:</b> if home-rank Lords really win 95% of fights, everything behind a Lord kill slips. Land the combat fixes first.</li>
+    <li><b>Tours</b> wait until the machine is free.</li>
+  </ul>
+</section>
+
+<footer>
+  <span>AWAKEN · The Way Forward · plan by the progression lead · 26 Oct 2026</span>
+  <span>In the repo: docs/progression/PLAN.md, audit-journey.md, audit-spine.md, audit-locks.md, research.md · branch pack/progression</span>
+</footer>
+
+</div>

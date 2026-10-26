@@ -110,6 +110,7 @@ final class BodyTests {
         AwakenTests.registerIsolated("body_mantle_ledges", 100, BodyTests::mantleLedges);
         AwakenTests.registerIsolated("body_mantle_stair_tops", 100, BodyTests::mantleStairTops);
         AwakenTests.register("body_mantle_gate_walls", 400, BodyTests::mantleGateWalls);
+        AwakenTests.registerIsolated("body_vault_rails", 100, BodyTests::vaultRails);
         AwakenTests.registerIsolated("body_slide_gap_and_wall", 100, BodyTests::slideGapAndWall);
         AwakenTests.registerIsolated("body_stair_slide", 100, BodyTests::stairSlide);
         AwakenTests.registerIsolated("body_land_slide", 100, BodyTests::landSlide);
@@ -165,7 +166,10 @@ final class BodyTests {
 
     // ---- mantle -----------------------------------------------------------------------------------------------------
 
-    /** A block and a slab (1.5) is a ledge; two blocks, a low ceiling, a fence, a wall, a plain step or a far one are not. */
+    /**
+     * A block and a slab (1.5) is a ledge; two blocks, a low ceiling, a plain step or a far one are not. A fence and a
+     * wall are no ledge to mantle either: they're crossings (VaultRules, SPEC §17.27; body_vault_rails).
+     */
     static void mantleLedges(GameTestHelper h) {
         floor(h, -1, 15, -1, 6, 5);
         BlockState slab = Blocks.SMOOTH_STONE_SLAB.defaultBlockState();
@@ -192,8 +196,8 @@ final class BodyTests {
             h.assertTrue(Math.abs(ok.height() - 1.5) < 1e-3, "it is 1.5 above the feet, was " + ok.height());
             h.assertTrue(ledge(h, 2.5, 0.5, BodyRules.MANTLE_REACH) == null, "a 2-block ledge is too high");
             h.assertTrue(ledge(h, 4.5, 0.5, BodyRules.MANTLE_REACH) == null, "one block of room over the ledge is not enough");
-            h.assertTrue(ledge(h, 6.5, 0.5, BodyRules.MANTLE_REACH) == null, "never onto a fence");
-            h.assertTrue(ledge(h, 8.5, 0.5, BodyRules.MANTLE_REACH) == null, "never onto a wall");
+            h.assertTrue(ledge(h, 6.5, 0.5, BodyRules.MANTLE_REACH) == null, "a fence is no ledge to mantle (it's vaulted)");
+            h.assertTrue(ledge(h, 8.5, 0.5, BodyRules.MANTLE_REACH) == null, "a wall is no ledge to mantle (it's vaulted or climbed onto)");
             h.assertTrue(ledge(h, 10.5, 0.5, BodyRules.MANTLE_REACH) == null, "a plain block step stays a vanilla jump");
             h.assertTrue(ledge(h, 12.5, 0.5, BodyRules.MANTLE_REACH) == null, "a ledge more than reach away is not grabbed");
             h.assertTrue(ledge(h, 14.5, 0.5, BodyRules.MANTLE_REACH) == null, "a ceiling over the head stops the climb");
@@ -263,9 +267,118 @@ final class BodyTests {
     }
 
     /**
+     * Fences, gates and walls (SPEC §17.27; Euan, 2026-10-26: "make every fence and wall of every type mantleable"): a
+     * fence, a closed gate and a nether brick fence are hopped walking and vaulted running, down on the floor beyond and
+     * never on a post; a cobblestone wall walked at is climbed onto (the body over its middle) and vaulted running; a
+     * fence on a block (a garden wall) is climbed over in one motion; a fence over a drop is climbed onto, never crossed
+     * into the drop. Every path is clear of blocks tick by tick (the crawl box up and over, standing down beyond) with the
+     * eye low over the rail. The server takes the client's crossing with the crawl box, and refuses a landing that isn't.
+     */
+    static void vaultRails(GameTestHelper h) {
+        // its own floor and 7 of air over it wherever the test lands (underground too: a garden wall's climb over comes
+        // down beyond it standing, its head 5.4 over the floor)
+        floor(h, -1, 17, -1, 7, 7);
+        // lanes along +z, each obstacle on the row z = 2
+        rail(h, -1, 1, 1, 2, Blocks.OAK_FENCE.defaultBlockState());                                       // lane 0: a fence
+        h.setBlock(new BlockPos(3, 1, 2), Blocks.OAK_FENCE_GATE.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.FenceGateBlock.FACING, net.minecraft.core.Direction.SOUTH)); // lane 3: a closed gate
+        rail(h, 5, 7, 1, 2, Blocks.COBBLESTONE_WALL.defaultBlockState());                                // lane 6: a wall
+        rail(h, 8, 10, 1, 2, Blocks.NETHER_BRICK_FENCE.defaultBlockState());                             // lane 9: a nether brick fence
+        for (int x = 11; x <= 13; x++) h.setBlock(new BlockPos(x, 1, 2), Blocks.STONE_BRICKS);           // lane 12: a garden wall
+        rail(h, 11, 13, 2, 2, Blocks.OAK_FENCE.defaultBlockState());
+        rail(h, 14, 16, 1, 2, Blocks.SPRUCE_FENCE.defaultBlockState());                                   // lane 15: a fence over a drop
+        for (int x = 14; x <= 16; x++) for (int z = 3; z <= 7; z++) for (int y = -3; y <= 0; y++) h.setBlock(new BlockPos(x, y, z), Blocks.AIR);
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            double floorY = h.absoluteVec(new Vec3(0, 1, 0)).y, farFace = h.absoluteVec(new Vec3(0, 0, 2.625)).z;
+            String[] names = {"a fence", "a closed gate", "a nether brick fence"};
+            int[] lanes = {0, 3, 9};
+            for (int i = 0; i < 3; i++) {
+                VaultRules.Vault hop = cross(h, lanes[i] + 0.5, 1.5, false), run = cross(h, lanes[i] + 0.5, 0.8, true);
+                h.assertTrue(hop != null && hop.kind() == VaultRules.HOP, names[i] + " walked at is hopped: " + hop);
+                h.assertTrue(run != null && run.kind() == VaultRules.VAULT, names[i] + " run at is vaulted: " + run);
+                h.assertTrue(Math.abs(run.top() - floorY - 1.5) < 1e-6 && run.tall(), names[i] + " is a 1.5 rail taller than its block");
+                for (VaultRules.Vault v : new VaultRules.Vault[]{hop, run}) {
+                    h.assertTrue(Math.abs(v.floor() - floorY) < 1e-6 && v.endZ() > farFace + 0.3,
+                            names[i] + ": down on the floor beyond, never on the post (" + v.endZ() + ", " + v.floor() + ")");
+                    String fault = pathFault(h, v);
+                    h.assertTrue(fault == null, names[i] + ": " + fault);
+                }
+            }
+            // a wall: walked at, up onto its coping with the body over its middle; run at, vaulted
+            VaultRules.Vault onto = cross(h, 6.5, 1.5, false), wallRun = cross(h, 6.5, 0.8, true);
+            double wallMid = h.absoluteVec(new Vec3(0, 0, 2.5)).z;
+            h.assertTrue(onto != null && onto.kind() == VaultRules.ONTO && Math.abs(onto.floor() - floorY - 1.5) < 1e-6
+                    && Math.abs(onto.endZ() - wallMid) < 0.1, "a wall walked at: up onto its middle " + onto);
+            h.assertTrue(wallRun != null && wallRun.kind() == VaultRules.VAULT, "a wall run at is vaulted " + wallRun);
+            h.assertTrue(pathFault(h, onto) == null && pathFault(h, wallRun) == null, "the wall's paths: " + pathFault(h, onto) + " / " + pathFault(h, wallRun));
+            // a fence on a block (a garden wall): over it in one motion, walking or running
+            VaultRules.Vault high = cross(h, 12.5, 1.3, false), highRun = cross(h, 12.5, 0.8, true);
+            h.assertTrue(high != null && high.kind() == VaultRules.HIGH && Math.abs(high.floor() - floorY) < 1e-6, "a garden wall: climbed over " + high);
+            h.assertTrue(highRun != null && highRun.kind() == VaultRules.HIGH && pathFault(h, highRun) == null,
+                    "a garden wall run at: " + highRun + " " + (highRun == null ? "" : pathFault(h, highRun)));
+            // a fence over a drop: up onto its rail and stop there, never over into the drop
+            VaultRules.Vault perch = cross(h, 15.5, 1.5, false), perchRun = cross(h, 15.5, 0.8, true);
+            h.assertTrue(perch != null && perch.kind() == VaultRules.ONTO && Math.abs(perch.floor() - floorY - 1.5) < 1e-6, "a fence over a drop: onto it " + perch);
+            h.assertTrue(perchRun != null && perchRun.kind() == VaultRules.ONTO && pathFault(h, perchRun) == null, "running at it too " + perchRun);
+            Awaken.LOG.info("[body] crossings: fence hop {}, fence vault {}, wall onto {}, garden wall {}, perch {}", plan(cross(h, 0.5, 1.5, false)),
+                    plan(cross(h, 0.5, 0.8, true)), plan(onto), plan(highRun), plan(perchRun));
+            // the server: the client's crossing, with the crawl box, a mantle to everyone else; a landing that isn't there
+            ServerPlayer a = player(h, null), b = player(h, null);
+            at(h, a, 0.5, 1, 0.8, 0F);
+            at(h, b, 0.5, 1, 0.8, 0F);
+            VaultRules.Vault v = cross(h, 0.5, 0.8, true);
+            h.assertTrue(BodyServer.startVault(a, 0F, v.endX(), v.floor(), v.endZ(), 0.3F, true), "the server takes the vault");
+            h.assertTrue(a.getForcedPose() == Pose.SWIMMING && Body.isMantling(a), "with the crawl box, a mantle to everyone else");
+            BodyServer.onEnd(a, new dev.awaken.body.net.BodyPayloads.End(Move.VAULT.ordinal()));
+            h.assertTrue(a.getForcedPose() == null && !Body.isMantling(a), "and stands again at its end");
+            h.assertFalse(BodyServer.startVault(b, 0F, v.endX(), v.floor(), v.endZ() + 2, 0.3F, true), "a landing that isn't there is refused");
+            done(h, a, b);
+        });
+    }
+
+    private static String plan(VaultRules.@Nullable Vault v) {
+        return v == null ? "none" : String.format("(up %d, over %d, down %d ticks; over at %.2f b/t)", v.rise(), v.over(), v.down(),
+                (v.sB() - v.sA()) / v.over());
+    }
+
+    /** A rail along x from x0 to x1 at (y, z), its pieces joined as a builder's would be. */
+    private static void rail(GameTestHelper h, int x0, int x1, int y, int z, BlockState s) {
+        for (int x = x0; x <= x1; x++) h.setBlock(new BlockPos(x, y, z), s);
+        ServerLevel level = h.getLevel();
+        for (int x = x0; x <= x1; x++) {
+            BlockPos a = h.absolutePos(new BlockPos(x, y, z));
+            level.setBlock(a, net.minecraft.world.level.block.Block.updateFromNeighbourShapes(level.getBlockState(a), level, a),
+                    net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+        }
+    }
+
+    private static VaultRules.@Nullable Vault cross(GameTestHelper h, double x, double z, boolean run) {
+        Vec3 v = h.absoluteVec(new Vec3(x, 1, z));
+        return VaultRules.find(h.getLevel(), CollisionContext.empty(), v.x, v.y, v.z, 0F, run ? VaultRules.REACH_RUN : VaultRules.REACH_WALK, run, 0.3);
+    }
+
+    /** The first fault of a crossing's path, eight steps a tick (a box meeting a block, the eye high over the rail), or null. */
+    static @Nullable String pathFault(GameTestHelper h, VaultRules.Vault v) {
+        double[] p = new double[3];
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        double eye = -1e9;
+        int up = v.rise() + v.over();
+        for (int i = 0; i <= v.ticks() * 8; i++) {
+            double k = i / 8.0;
+            v.at(k, p);
+            double tall = k <= up ? VaultRules.CRAWL : 1.8;
+            if (BodyRules.blocked(h.getLevel(), CollisionContext.empty(), m, p[0] - 0.299, p[1] + 1e-3, p[2] - 0.299, p[0] + 0.299, p[1] + tall - 1e-3, p[2] + 0.299))
+                return "the body meets a block at tick " + k;
+            if (k >= v.rise() && k <= up) eye = Math.max(eye, p[1] + 0.4);
+        }
+        return eye > v.top() + 0.6 ? String.format("the eye %.2f over the rail's top", eye - v.top()) : null;
+    }
+
+    /**
      * Real gate floors (the generator's own blocks, several themes and layouts): from every spot a player can stand in
-     * a room, in eight directions, every ledge the mantle accepts is inside a room (or a doorway's tunnel) and under
-     * its ceiling. Players can't break gate interiors, so the mantle must never be a way out or onto a roof.
+     * a room, in eight directions, every ledge the mantle accepts and every crossing of a fence or wall (SPEC §17.27)
+     * ends inside a room (or a doorway's tunnel) and under its ceiling. Players can't break gate interiors, so neither
+     * may ever be a way out or onto a roof.
      */
     static void mantleGateWalls(GameTestHelper h) {
         ServerLevel level = h.getLevel();
@@ -300,6 +413,12 @@ final class BodyTests {
                         for (int a = 0; a < 8; a++) {
                             checked++;
                             BodyRules.Ledge ledge = BodyRules.findLedge(view, CollisionContext.empty(), px, y, pz, a * 45F, BodyRules.MANTLE_REACH);
+                            // and every crossing of a fence, gate or wall (SPEC §17.27), running and walking
+                            for (int run = 0; run < 2 && ledge == null; run++) {
+                                VaultRules.Vault v = VaultRules.find(view, CollisionContext.empty(), px, y, pz, a * 45F,
+                                        run == 1 ? VaultRules.REACH_RUN : VaultRules.REACH_WALK, run == 1, 0.3);
+                                if (v != null) ledge = new BodyRules.Ledge(v.endX(), v.floor(), v.endZ(), v.floor() - y, 0);
+                            }
                             if (ledge == null) continue;
                             accepted++;
                             String why = inside(f, ox, oz, ledge);
@@ -923,8 +1042,8 @@ final class BodyTests {
     }
     /**
      * The one-button free-run (SPEC §17.14): the ground ahead read right (a block to vault, a wall to jump at, a fence
-     * left alone, an edge to leap from, a one-block step down not), and jump magnetism's bend capped and only toward
-     * what's nearly ahead.
+     * not jumped at (it's crossed: VaultRules, SPEC §17.27), an edge to leap from, a one-block step down not), and jump
+     * magnetism's bend capped and only toward what's nearly ahead.
      */
     private static void freeRun(GameTestHelper h) {
         // five lanes on a floor raised off the ground (an edge needs two blocks of air under it), all run toward +z
@@ -936,7 +1055,7 @@ final class BodyTests {
         h.setBlock(new BlockPos(0, 4, 1), Blocks.STONE);                         // 1.0: vault
         for (int y = 3; y <= 6; y++) h.setBlock(new BlockPos(2, y, 1), Blocks.STONE); // 3.0: a wall
         h.setBlock(new BlockPos(4, 3, 1), Blocks.STONE);
-        h.setBlock(new BlockPos(4, 4, 1), Blocks.OAK_FENCE);                     // 1.5, a fence: nothing
+        h.setBlock(new BlockPos(4, 4, 1), Blocks.OAK_FENCE);                     // 1.5, a fence: not jumped at (crossed)
         h.setBlock(new BlockPos(8, 2, 1), Blocks.STONE);                         // a step down of one: no leap
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         double[] out = new double[1];

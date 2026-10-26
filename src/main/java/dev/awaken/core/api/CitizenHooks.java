@@ -21,6 +21,15 @@ public final class CitizenHooks {
         default List<UUID> witnesses(ServerLevel level, Vec3 at, double radius) { return List.of(); }
         /** A city event (e.g. {@code awaken:gate_tremor}) at a place; the citizens module decides who reacts. */
         default void post(ServerLevel level, Identifier event, BlockPos pos) {}
+        /**
+         * A named citizen ({@code "bram"}) staged for a scene: walks to {@code at} and stands facing {@code yaw}, doing
+         * {@code act} once there (an act name: "talk", "serve", "set_down", "nod", "wave", "hands_behind"; "" none) with
+         * {@code prop} in hand ("holo_band", "licence", "book"; "" none). Call again to move them on; {@code at} null
+         * hands them back to their day. Lapses if not renewed for 30 s. The Registry ceremony (SPEC §16.4).
+         */
+        default void stage(ServerLevel level, String who, @org.jspecify.annotations.Nullable Vec3 at, float yaw, String act, String prop) {}
+        /** Where a named citizen's body is now (null: no body near any player). */
+        default @org.jspecify.annotations.Nullable Vec3 where(ServerLevel level, String who) { return null; }
     }
 
     private static Access access = new Access() {};
@@ -39,5 +48,13 @@ public final class CitizenHooks {
 
     public static void post(ServerLevel level, Identifier event, BlockPos pos) {
         access.post(level, event, pos);
+    }
+
+    public static void stage(ServerLevel level, String who, @org.jspecify.annotations.Nullable Vec3 at, float yaw, String act, String prop) {
+        access.stage(level, who, at, yaw, act, prop);
+    }
+
+    public static @org.jspecify.annotations.Nullable Vec3 where(ServerLevel level, String who) {
+        return access.where(level, who);
     }
 }

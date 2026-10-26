@@ -5,16 +5,14 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.awaken.Awaken;
 import dev.awaken.core.AwakenNet;
 import dev.awaken.core.DirectorLog;
-import dev.awaken.core.PlayDays;
 import dev.awaken.core.api.GateHooks;
 import dev.awaken.core.api.HearthHooks;
 import dev.awaken.living.LivingNet;
 import dev.awaken.living.api.Regions;
 import dev.awaken.progression.Progression;
-import dev.awaken.signal.Signal;
+import dev.awaken.signal.Finds;
 import dev.awaken.terrain.api.CityBasin;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -112,6 +110,8 @@ public final class Pulse extends SavedData {
         Pulse p = get(server);
         if (t % 20 == 0) p.run(level);
         if (t % 40 == 0) p.sendTells(level);
+        // GameTests start happenings themselves: none comes to a test's player on its own, across other tests' plots
+        if (server instanceof net.minecraft.gametest.framework.GameTestServer) return;
         for (ServerPlayer pl : server.getPlayerList().getPlayers()) {
             if ((t + (pl.getUUID().hashCode() & 0xFF)) % 200 == 0) p.consider(level, pl);
         }
@@ -136,7 +136,8 @@ public final class Pulse extends SavedData {
             safely(() -> b.tick(level, h, def, now));
             if (!h.centre.equals(before)) h.changed = true;
             for (ServerPlayer pl : level.players()) {
-                if (h.witnessed.contains(pl.getUUID()) || pl.isSpectator()) continue;
+                // seen from inside Carillon's walls it isn't witnessed yet (SPEC §26.3): stepping out still can
+                if (h.witnessed.contains(pl.getUUID()) || pl.isSpectator() || !Finds.counts(pl)) continue;
                 if (pl.position().distanceToSqr(h.centre) <= (double) def.witnessRadius() * def.witnessRadius()) {
                     h.witnessed.add(pl.getUUID());
                     witness(pl, h, def);
@@ -161,7 +162,8 @@ public final class Pulse extends SavedData {
         Progression.count(p, "awaken:happenings_witnessed");
         if (Progression.discover(p, "happening/" + path, 0.1)) {
             Progression.markNewThing(p, "happening/" + path);
-            Signal.toast(p, Component.literal("Witnessed · " + def.title()));
+            // a happening is big and in plain view: witnessing it is enough (SPEC §26.3)
+            Finds.tell(p, Finds.Find.of("happening", "Witnessed · " + def.title(), def.title(), "", 0xFFCF7A, false));
         }
         Behaviour b = Behaviours.get(def.behaviour());
         if (b != null) b.witnessed(p, h, def);

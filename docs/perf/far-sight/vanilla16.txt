@@ -1,0 +1,43 @@
+[lens] 2 files: 10 dimension looks, 1 prefixes, 38 biome looks
+[lens] ready (zero-to-one depth)
+[autopilot] farsight off: off
+[autopilot] farsight off
+[autopilot] info backend=Vulkan driver=1.2.350 MoltenVK 1.4.2 device=Apple M4 fb=2880x1800 window=1440x900 rd=16 sd=12 heapMax=4096MB gc=G1 Young Generation,G1 Concurrent GC,G1 Old Generation mods=minecraft,lithium,sodium,entityculling,trender,cloth_config,moreculling,immediatelyfast,awaken,ferritecore,neoforge,conditional_mixin,transition
+[autopilot] info
+[autopilot] farsight status: off
+[autopilot] farsight status
+[autopilot] farsight status: off
+[autopilot] farsight status
+[autopilot] perf vista_noon_west 10
+[autopilot] perf vista_noon_west frames=1205 avg_fps=120.0 p50=8.33ms p95=11.68ms p99=14.07ms max=17.38ms tick_p95=4.86ms heap=1720/4096MB fb=2880x1800 load=6.2 occluded=false minimized=false
+[autopilot] farsight status: off
+[autopilot] farsight status
+[autopilot] farsight status: off
+[autopilot] farsight status
+[autopilot] perf vista_noon_east 10
+[autopilot] perf vista_noon_east frames=1204 avg_fps=119.9 p50=8.34ms p95=10.67ms p99=13.67ms max=16.73ms tick_p95=4.97ms heap=1364/4096MB fb=2880x1800 load=5.8 occluded=false minimized=false
+[autopilot] farsight status: off
+[autopilot] farsight status
+[autopilot] farsight status: off
+[autopilot] farsight status
+[autopilot] perf vista_sunset_west 10
+[autopilot] perf vista_sunset_west frames=1201 avg_fps=119.6 p50=8.28ms p95=9.59ms p99=13.33ms max=90.02ms tick_p95=6.08ms heap=1000/4096MB fb=2880x1800 load=5.4 occluded=false minimized=false
+[autopilot] farsight status: off
+[autopilot] farsight status
+[autopilot] farsight status: off
+[autopilot] farsight status
+[autopilot] perf low 10
+[autopilot] perf low frames=1206 avg_fps=120.3 p50=8.26ms p95=9.62ms p99=10.07ms max=13.69ms tick_p95=4.64ms heap=1344/4096MB fb=2880x1800 load=5.0 occluded=false minimized=false
+[autopilot] farsight status: off
+[autopilot] farsight status
+[autopilot] farsight status: off
+[autopilot] farsight status
+[autopilot] perfstart flight
+[autopilot] perf flight frames=3940 avg_fps=118.7 p50=8.29ms p95=10.23ms p99=15.55ms max=86.35ms tick_p95=23.29ms heap=1852/4096MB fb=2880x1800 load=7.0 occluded=false minimized=false
+[autopilot] perfend
+[autopilot] farsight status: off
+[autopilot] farsight status
+[autopilot] farsight status: off
+[autopilot] farsight status
+[autopilot] info backend=Vulkan driver=1.2.350 MoltenVK 1.4.2 device=Apple M4 fb=2880x1800 window=1440x900 rd=16 sd=12 heapMax=4096MB gc=G1 Young Generation,G1 Concurrent GC,G1 Old Generation mods=minecraft,lithium,sodium,entityculling,trender,cloth_config,moreculling,immediatelyfast,awaken,ferritecore,neoforge,conditional_mixin,transition
+[autopilot] info

@@ -47,6 +47,7 @@ public final class LivingModule {
         LivingContent.register(modBus);
         dev.awaken.living.quest.Relics.register(modBus);
         dev.awaken.living.wayfarer.Scenes.init();
+        FirstThread.init(); // the first thread out of Carillon, and chains on the Now line (SPEC §27.6)
         modBus.addListener(LivingNet::register);
         XpBudget.register(HUNT, 0.10);
         XpBudget.register("pulse", 0.15);
@@ -124,11 +125,14 @@ public final class LivingModule {
             if (e.getServer().getTickCount() % 20 == 0) for (ServerPlayer p : e.getServer().getPlayerList().getPlayers()) dev.awaken.living.quest.QuestEngine.poll(p);
             XpStream.tick(e.getServer());
             shownTick(e.getServer());
+            // the GameTest server keeps the land quiet: no scene, ledger body or camp comes to a test's players on its own
+            // (the tests drive them); happenings already under way still move on
+            boolean quiet = e.getServer() instanceof net.minecraft.gametest.framework.GameTestServer;
             if (shown(e.getServer())) {
-                dev.awaken.living.wayfarer.Scenes.tick(e.getServer());
+                if (!quiet) dev.awaken.living.wayfarer.Scenes.tick(e.getServer());
                 dev.awaken.living.pulse.Pulse.tick(e.getServer());
-                dev.awaken.living.population.Ledger.tick(e.getServer());
-                dev.awaken.living.camp.Camps.tick(e.getServer());
+                if (!quiet) dev.awaken.living.population.Ledger.tick(e.getServer());
+                if (!quiet) dev.awaken.living.camp.Camps.tick(e.getServer());
             }
             dev.awaken.living.quest.Relics.wardTick(e.getServer());
             if (shown(e.getServer())) dev.awaken.living.craft.CraftEvents.tick(e.getServer());

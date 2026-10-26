@@ -60,7 +60,7 @@ final class Soundscape {
     }
 
     /** Every 100 ticks: where the ledger's people stand, by district (no allocation: the plan's raster). */
-    static void count(Citizens c, long now) {
+    static void count(Settlement c, long now) {
         if (now % 100 != 7) return;
         java.util.Arrays.fill(OUTDOORS, 0);
         CityPlan plan = CityPlan.get();
@@ -90,7 +90,7 @@ final class Soundscape {
     }
 
     private static @Nullable Identifier context(ServerPlayer p, Intensity.Signals s) {
-        Citizens c = Citizens.active;
+        Settlement c = Citizens.carillon();
         if (c == null || p.level() != c.level || !CityHooks.inCity(p.level(), p.blockPosition())) return null;
         int tod = (int) Math.floorMod(p.level().getOverworldClockTime(), 24000L);
         boolean nature = NATURE.contains(p.getUUID());

@@ -1,0 +1,64 @@
+# Carillon M5: where the open table's frame cost goes. In Carillon (the densest land, the most names), each part of
+# the table switched off in turn (/atlas prof bits: 1 glass frame, 2 glowing text, 4 names, legend and hover, 8 Lens
+# dimming, 16 clouds, 32 land, 64 the whole picture), 8 s each between closed baselines, uncapped (OpenGL).
+# Run: BACKEND=opengl PACK=perf,world TECTONIC=awakened RD=16 SLOT_WHO=atlas \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/carillon-m5-profile.txt 900
+world carillonM5profile creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 4000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+hud off
+cmd awaken city view square
+wait 200
+cmd awaken atlas ring city
+wait 60
+perf m5p_closed_a 8
+cmd atlas open 20 52 1
+wait 80
+perf m5p_full 8
+cmd atlas stats
+cmd atlas prof 64
+wait 10
+perf m5p_prof_64 8
+cmd atlas prof 1
+wait 10
+perf m5p_prof_1 8
+cmd atlas prof 2
+wait 10
+perf m5p_prof_2 8
+cmd atlas prof 4
+wait 10
+perf m5p_prof_4 8
+cmd atlas stats
+cmd atlas prof 8
+wait 10
+perf m5p_prof_8 8
+cmd atlas prof 16
+wait 10
+perf m5p_prof_16 8
+cmd atlas prof 32
+wait 10
+perf m5p_prof_32 8
+cmd atlas prof 0
+wait 10
+perf m5p_prof_0 8
+cmd atlas prof 0
+cmd atlas spin 30
+perf m5p_orbit 8
+cmd atlas stats
+cmd atlas spin 0
+screen close
+perf m5p_closed_b 8
+quit

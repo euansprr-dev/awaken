@@ -80,10 +80,11 @@ final class AtlasPainter {
 
     /** Paints {@code s} into the given targets, {@code w}×{@code h} pixels; {@code px} multiplies line widths. */
     void paint(GpuDevice device, AtlasRenderState s, GpuTexture color, GpuTextureView colorView, GpuTexture depth, GpuTextureView depthView,
-               int w, int h, int guiScale, boolean thread) {
+               int w, int h, float guiScale, boolean thread, boolean moving) {
         AtlasState atlas = AtlasState.get();
         long now = System.nanoTime();
         // finished slices go up first: an upload inside the pass would end the frame
+        atlas.mesh.zones = atlas.zoneView();
         atlas.mesh.update(s.cx(), s.cz(), s.lod(), Discovery.CLIENT, now);
         CommandEncoder enc = device.createCommandEncoder();
         enc.clearColorAndDepthTextures(color, new Vector4f(0f), depth, 0.0);
@@ -132,7 +133,7 @@ final class AtlasPainter {
             pass.setPipeline(RenderSystem.getCompiledPipeline(AtlasPipelines.TERRAIN));
             int drawn = 0;
             for (AtlasMesh.Slice sl : map.values()) {
-                if (sl.buffer == null) continue;
+                if (sl.buffer == null || (AtlasScreen.prof & AtlasScreen.PROF_NO_LAND) != 0) continue;
                 double ox = sl.x0() - s.cx(), oz = sl.z0() - s.cz();
                 double mx = ox + blocks / 2.0, mz = oz + blocks / 2.0;
                 if (mx * mx + mz * mz > r2 || !onScreen(ox, oz, blocks, s.cy(), w, h)) continue;
@@ -159,12 +160,14 @@ final class AtlasPainter {
                 pass.setVertexBuffer(0, lightBuf.slice(0, (long) lightQuads * 4 * 24));
                 pass.drawIndexed(lightQuads * 6, 1, 0, 0, 0);
             }
-            if (cloudQuads > 0) { // shadows first (on the ground), then the puffs far to near
+            if (cloudQuads > 0 && (AtlasScreen.prof & AtlasScreen.PROF_NO_CLOUDS) == 0) { // shadows first (on the ground), then the puffs far to near
                 pass.setPipeline(RenderSystem.getCompiledPipeline(AtlasPipelines.CLOUDS));
                 pass.setUniform("DynamicTransforms", RenderSystem.getDynamicUniforms().writeTransform(new Matrix4f()));
                 pass.setUniform("Sampler0", puff, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
-                pass.setVertexBuffer(0, cloudBuf.slice(0, (long) cloudQuads * 4 * AtlasClouds.VERTEX));
-                pass.drawIndexed(cloudQuads * 6, 1, 0, 0, 0);
+                // while the view moves, the puffs only: their shadows are a still picture's detail
+                int skip = moving ? shadowQuads : 0;
+                pass.setVertexBuffer(0, cloudBuf.slice((long) skip * 4 * AtlasClouds.VERTEX, (long) (cloudQuads - skip) * 4 * AtlasClouds.VERTEX));
+                pass.drawIndexed((cloudQuads - skip) * 6, 1, 0, 0, 0);
             }
             AtlasState.stats.puffs = cloudQuads - shadowQuads;
         }
@@ -267,7 +270,7 @@ final class AtlasPainter {
     }
 
     /** The opening run's path as a glowing bronze thread on the roofs: a wide soft band and a bright core. */
-    private int trail(long p, AtlasRenderState s, AtlasState atlas, int guiScale) {
+    private int trail(long p, AtlasRenderState s, AtlasState atlas, float guiScale) {
         int[] t = atlas.trail;
         if (t.length < 6) return 0;
         int points = t.length / 3, upto = Math.max(1, (int) Math.ceil(atlas.trailProgress() * (points - 1)));

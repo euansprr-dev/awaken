@@ -19,7 +19,8 @@ import java.util.UUID;
 
 /**
  * The gate card (SPEC section 7): within 24 blocks of a gate you see its rank, when it breaks and its omen. PER 20 adds
- * the layout, PER 40 the modifiers, PER 60 the floor count; a gate scouted from the Veil shows everything.
+ * the layout, PER 40 the modifiers, PER 60 the floor count; a gate scouted from the Veil shows everything. A gate of
+ * another rank says how it stands to yours: above it, or below it and paying less (×0.3, {@code Curve.BELOW_RANK_FACTOR}).
  */
 public final class GateCard {
     private GateCard() {}
@@ -64,6 +65,13 @@ public final class GateCard {
         }
     }
 
+    /** The card's line for a gate of {@code gate} rank to a hunter of {@code hunter} rank, or null at their own rank. */
+    static String compare(dev.awaken.progression.Rank gate, dev.awaken.progression.Rank hunter) {
+        if (gate.ordinal() > hunter.ordinal()) return "above your rank";
+        if (gate.ordinal() < hunter.ordinal()) return "below your rank · pays less";
+        return null;
+    }
+
     public static void send(ServerPlayer p, GateRecord g) {
         GatePlan plan = g.plan;
         // the story's hall says nothing once its ritual is done (the bell's last toll and its collapse say it)
@@ -78,6 +86,11 @@ public final class GateCard {
             case CLEARED -> w.body(Component.literal("Spent. Whatever lived here is gone."));
             case BUILDING -> w.body(Component.literal("Still forming."));
             default -> {}
+        }
+        // how the gate stands to the hunter: a lock that says what it is (the progression plan §5.5, item 19)
+        if (g.state.enterable() && !plan.ritual()) {
+            String compare = compare(plan.rank(), Progression.rank(p));
+            if (compare != null) w.row("For you", compare);
         }
         if (g.state.standing()) {
             long in = g.breaksIn(today);

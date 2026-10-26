@@ -48,6 +48,7 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         this.wideModel = wide;
         this.slimModel = slim;
         addLayer(new BackLayer(this));
+        addLayer(new HeldLayer(this, ctx));
         addLayer(new LanternLayer(this, new CritterModel(ctx.bakeLayer(CritterRenderer.layer("city_hand_lantern")),
                 CritterRenderer.rigs().get("city_hand_lantern"), "citizen")));
     }
@@ -86,7 +87,9 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         skins();
         int rec = body.record();
         s.rec = rec;
-        if (rec >= 0 && rec < skins.length) s.wear(skins[rec], slim[rec]);
+        // (SPEC §28.4) outside Carillon a body wears the Carillon skin the server picked for it from the pool
+        int skin = body.look();
+        if (skin >= 0 && skin < skins.length) s.wear(skins[skin], slim[skin]);
         else s.wear(FALLBACK, false);
         float age = body.tickCount + partial;
         float a = Math.min(1f, age / FADE_IN);
@@ -98,6 +101,26 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         Act cur = Act.of(body.cAct), prev = Act.of(body.pAct);
         float t = body.tickCount - body.cStart + partial;
         s.hasPose = cur != Act.NONE && CitizenClips.sample(cur, t + (rec & 7) * 3, s.pose);
+        // (M4 B3b, Euan: "the boatman isn't holding anything") the work in hand for clips that mime it empty-handed
+        int heldKind = switch (cur) {
+            case COIL, HAUL -> HeldProp.ROPE;
+            case MEND -> HeldProp.NET;
+            case SERVE -> body.getMainHandItem().isEmpty() ? HeldProp.PARCEL : HeldProp.NONE;
+            default -> HeldProp.NONE;
+        };
+        s.held = null;
+        if (heldKind != HeldProp.NONE && s.hasPose) {
+            HeldProp hp;
+            if (body.clientHeld instanceof HeldProp got) hp = got;
+            else body.clientHeld = hp = new HeldProp();
+            hp.kind = heldKind;
+            hp.state.ageInTicks = age;
+            hp.state.clip = 0;
+            hp.state.clipTime = age / 20F + (rec & 7) * 0.27F;
+            hp.state.prevWeight = 0F;
+            hp.state.life = null;
+            s.held = hp;
+        }
         s.working = switch (cur) {
             case NONE, ARMS_CROSSED, HANDS_BEHIND, LEAN, SIT, LOOK_AROUND, TALK, HALBERD_STAND -> false;
             default -> true;
@@ -142,7 +165,7 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         Minecraft mc = Minecraft.getInstance();
         life(body, s, mc, rec, partial);
         s.label = null;
-        if (mc.crosshairPickEntity == body && s.distanceToCameraSq < 9 * 9 && s.speech == null) {
+        if (mc.crosshairPickEntity == body && s.distanceToCameraSq < 9 * 9 && s.speech == null && !body.staged()) {
             s.label = CitizenFx.label(body);
             s.labelWidth = body.labelWidth;
         }
@@ -254,6 +277,66 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         if (lean != 0f) pose.rotateDegrees(Axis.XP, -lean);
         if (tilt != 0f) pose.rotateDegrees(Axis.ZP, tilt);
         pose.translate(0f, -0.75f, 0f);
+    }
+
+    /**
+     * What citizens work with, in 3D (M4 B3b, Euan): a coil of rope over the off hand while coiling or hauling, a net
+     * hanging from the hand while mending, a paper parcel in the hand while serving. Rope and net hang plumb from the fist
+     * (they swing with the hand, not its turn); the parcel is held as the hand holds it.
+     */
+    private static final class HeldLayer extends RenderLayer<CitizenRenderState, dev.awaken.core.client.skin.SkinModel<CitizenRenderState>> {
+        private final CritterModel rope, netModel, parcel;
+        private static final Identifier ROPE = Awaken.id("textures/entity/city/city_prop_rope.png"),
+                NET = Awaken.id("textures/entity/city/city_prop_net.png"), PARCEL = Awaken.id("textures/entity/city/city_prop_parcel.png");
+
+        HeldLayer(CitizenRenderer parent, EntityRendererProvider.Context ctx) {
+            super(parent);
+            rope = model(ctx, "city_prop_rope");
+            netModel = model(ctx, "city_prop_net");
+            parcel = model(ctx, "city_prop_parcel");
+        }
+
+        private static CritterModel model(EntityRendererProvider.Context ctx, String id) {
+            return new CritterModel(ctx.bakeLayer(CritterRenderer.layer(id)), CritterRenderer.rigs().get(id), "citizen");
+        }
+
+        @Override
+        public void submit(PoseStack pose, SubmitNodeCollector collector, int light, CitizenRenderState s, float yRot, float xRot) {
+            HeldProp h = s.held;
+            if (h == null || s.alpha < 0.1F) return;
+            var m = getParentModel();
+            boolean left = h.kind == HeldProp.ROPE;
+            var arm = left ? m.leftArm : m.rightArm;
+            pose.pushPose();
+            m.root().translateAndRotate(pose);
+            arm.translateAndRotate(pose);
+            pose.translate((left ? 1F : -1F) / 16F, 10F / 16F, 0F); // the fist
+            CritterModel model;
+            Identifier tex;
+            float sc;
+            if (h.kind == HeldProp.PARCEL) {
+                // in the hand, as the hand holds it: the parcel sits in the palm, in front of the fist
+                pose.rotate(Axis.XP.rotation((float) Math.PI / 2F));
+                pose.translate(0F, -1F / 16F, -1.5F / 16F);
+                model = parcel;
+                tex = PARCEL;
+                sc = 0.8F;
+            } else {
+                // plumb from the fist: undo the arm's own turn (applied Z, Y, X)
+                pose.rotate(Axis.XP.rotation(-arm.xRot));
+                pose.rotate(Axis.YP.rotation(-arm.yRot));
+                pose.rotate(Axis.ZP.rotation(-arm.zRot));
+                model = h.kind == HeldProp.ROPE ? rope : netModel;
+                tex = h.kind == HeldProp.ROPE ? ROPE : NET;
+                sc = h.kind == HeldProp.ROPE ? 1.0F : 0.9F; // (props tour: the coil read small at seven blocks)
+                if (h.kind == HeldProp.NET) pose.translate(left ? 0F : 0.25F, 0F, -0.12F); // between the hands, in front
+            }
+            pose.scale(sc, sc, sc);
+            int a = Math.round(s.alpha * 255F);
+            collector.submitModel(model, h.state, pose, net.minecraft.client.renderer.rendertype.RenderTypes.entityCutout(tex), light,
+                    OverlayTexture.NO_OVERLAY, a << 24 | 0xFFFFFF, null, s.outlineColor);
+            pose.popPose();
+        }
     }
 
     /**

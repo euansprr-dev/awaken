@@ -35,13 +35,24 @@ public class CitizenBody extends PathfinderMob implements Npc {
     static final EntityDataAccessor<Integer> DATA_REC = SynchedEntityData.defineId(CitizenBody.class, EntityDataSerializers.INT);
     static final EntityDataAccessor<Integer> DATA_ACT = SynchedEntityData.defineId(CitizenBody.class, EntityDataSerializers.INT);
     static final EntityDataAccessor<Byte> DATA_FLAGS = SynchedEntityData.defineId(CitizenBody.class, EntityDataSerializers.BYTE);
+    /**
+     * (SPEC §28.4) Its settlement (0 Carillon, whose roster the client reads by record); for any other, the Carillon
+     * skin it wears (a record of the jar roster, picked by hash) and its "name|job" label, which the client can't look up.
+     */
+    static final EntityDataAccessor<Integer> DATA_SETTLEMENT = SynchedEntityData.defineId(CitizenBody.class, EntityDataSerializers.INT);
+    static final EntityDataAccessor<Integer> DATA_LOOK = SynchedEntityData.defineId(CitizenBody.class, EntityDataSerializers.INT);
+    static final EntityDataAccessor<String> DATA_LABEL = SynchedEntityData.defineId(CitizenBody.class, EntityDataSerializers.STRING);
     /** Flags: fading out (leaving view or going in), carrying a crate on the back, hurt. */
-    public static final int F_FADING = 1, F_CRATE = 2, F_HURT = 4, F_BAG = 8;
+    public static final int F_FADING = 1, F_CRATE = 2, F_HURT = 4, F_BAG = 8,
+            // staged for a scene (CitizenHooks.stage): never shoves the player it's playing to
+            F_STAGED = 16;
     static final double BASE_SPEED = 0.25;
     private static final double ARRIVE = 0.5 * 0.5, DOOR_ARRIVE = 1.05 * 1.05;
     static final int FADE_TICKS = 14;
 
     int rec = -1;
+    /** The settlement whose record this body walks (server only; null once detached). */
+    @org.jspecify.annotations.Nullable Settlement home;
     private int thinkAt;
     private int fadeOut;
     // final approach and unstick with a vanilla path
@@ -72,6 +83,8 @@ public class CitizenBody extends PathfinderMob implements Npc {
     public int speechStart, speechUntil, speechKind;
     /** The hand lantern a bearer carries, on the client (citizens.client.LanternHold: its model state, its flame). */
     public Object clientLantern;
+    /** What a citizen works with in hand on the client (citizens.client.HeldProp: a rope, a net, a parcel). */
+    public Object clientHeld;
     public net.minecraft.util.@org.jspecify.annotations.Nullable FormattedCharSequence label;
     public float labelWidth;
     /** The client's life layer for this body (mobs.client.life.Life; an Object so common code never names a client class). */
@@ -93,10 +106,28 @@ public class CitizenBody extends PathfinderMob implements Npc {
         b.define(DATA_REC, -1);
         b.define(DATA_ACT, 0);
         b.define(DATA_FLAGS, (byte) 0);
+        b.define(DATA_SETTLEMENT, 0);
+        b.define(DATA_LOOK, -1);
+        b.define(DATA_LABEL, "");
     }
 
     public int record() {
         return entityData.get(DATA_REC);
+    }
+
+    /** Its settlement's id (0 Carillon). */
+    public int settlement() {
+        return entityData.get(DATA_SETTLEMENT);
+    }
+
+    /** The Carillon record whose skin it wears: its own record in Carillon, the pool's pick elsewhere (-1 none). */
+    public int look() {
+        return settlement() == 0 ? record() : entityData.get(DATA_LOOK);
+    }
+
+    /** "Given Family|job" outside Carillon (empty in Carillon: the client reads the jar roster). */
+    public String label() {
+        return entityData.get(DATA_LABEL);
     }
 
     public Act act() {
@@ -138,9 +169,16 @@ public class CitizenBody extends PathfinderMob implements Npc {
         if (entityData.get(DATA_ACT) != a.ordinal()) entityData.set(DATA_ACT, a.ordinal());
     }
 
-    void bind(int rec, float scale) {
+    void bind(Settlement home, int rec, float scale) {
+        this.home = home;
         this.rec = rec;
         entityData.set(DATA_REC, rec);
+        if (home.id != 0) {
+            Roster r = home.roster;
+            entityData.set(DATA_SETTLEMENT, home.id);
+            entityData.set(DATA_LOOK, Looks.pick(home.key, rec, r.job[rec], r.build[rec], r.age[rec]));
+            entityData.set(DATA_LABEL, r.isCitizen(rec) ? r.name(rec) + "|" + Roster.JOBS[r.job[rec]] : "");
+        }
         AttributeInstance s = getAttribute(Attributes.SCALE);
         if (s != null) s.setBaseValue(scale);
         thinkAt = 0;
@@ -223,8 +261,8 @@ public class CitizenBody extends PathfinderMob implements Npc {
             if (--fadeOut == 0) discard();
             return;
         }
-        Citizens c = Citizens.active;
-        if (c == null || rec < 0 || c.ledger.body[rec] != this) {
+        Settlement c = home;
+        if (c == null || !c.live || rec < 0 || c.ledger.body[rec] != this) {
             discard();
             return;
         }
@@ -235,7 +273,7 @@ public class CitizenBody extends PathfinderMob implements Npc {
     }
 
     /** Every tick, cheap: aim the move control at the next lane point or the spot; step the record on arrival. */
-    private void steer(Citizens c, Ledger l, long now) {
+    private void steer(Settlement c, Ledger l, long now) {
         StreetNet g = l.g;
         CitizensData d = l.d;
         byte st = d.state[rec];
@@ -307,6 +345,11 @@ public class CitizenBody extends PathfinderMob implements Npc {
             }
             d.next[rec] = h;
             d.prog[rec] = 0;
+            if (g.hidden(at, h)) {
+                // a tower's stair to the wall walk (M4 Walls): in at the tower's door, the ledger climbs it
+                c.crowd.entered(this);
+                return;
+            }
         }
         int nx = d.next[rec];
         double tx = g.x[nx], tz = g.z[nx];
@@ -351,7 +394,7 @@ public class CitizenBody extends PathfinderMob implements Npc {
     }
 
     /** The last few blocks onto a spot, or back off one, with a vanilla path (≤ 4 at once; else wait, then go straight). */
-    private boolean approach(Citizens c, Ledger l, int place, double tx, double ty, double tz) {
+    private boolean approach(Settlement c, Ledger l, int place, double tx, double ty, double tz) {
         double d2 = sq(getX() - tx) + sq(getZ() - tz);
         if (d2 < 0.5 * 0.5) {
             releasePath();
@@ -390,7 +433,7 @@ public class CitizenBody extends PathfinderMob implements Npc {
 
     private void releasePath() {
         if (hasToken) {
-            Citizens c = Citizens.active;
+            Settlement c = home;
             if (c != null) c.crowd.releasePath();
             hasToken = false;
             getNavigation().stop();
@@ -401,7 +444,7 @@ public class CitizenBody extends PathfinderMob implements Npc {
     }
 
     /** Throttled: progress, unsticking, what the body shows, who it looks at. Every max(1, d²/256) ticks. */
-    private void think(Citizens c, Ledger l, ServerLevel level, long now) {
+    private void think(Settlement c, Ledger l, ServerLevel level, long now) {
         long t0 = System.nanoTime();
         double best = Double.MAX_VALUE;
         ServerPlayer near = null;
@@ -477,7 +520,7 @@ public class CitizenBody extends PathfinderMob implements Npc {
         return sq(getX() - l.tmp[0]) + sq(getZ() - l.tmp[2]) > 0.6 * 0.6;
     }
 
-    private void rescue(Citizens c, Ledger l) {
+    private void rescue(Settlement c, Ledger l) {
         releasePath();
         CitizensData d = l.d;
         if (d.state[rec] == STAND && d.spot[rec] >= 0) {
@@ -494,7 +537,7 @@ public class CitizenBody extends PathfinderMob implements Npc {
 
     /** The clock jumped: the ledger re-seats everyone; this body goes and one comes back where the ledger says. */
     void discardForJump() {
-        Citizens c = Citizens.active;
+        Settlement c = home;
         if (c != null) c.crowd.despawn(this, false);
     }
 
@@ -515,7 +558,7 @@ public class CitizenBody extends PathfinderMob implements Npc {
     public void remove(Entity.RemovalReason reason) {
         releasePath();
         super.remove(reason);
-        Citizens c = Citizens.active;
+        Settlement c = home;
         if (c != null) c.crowd.forget(this);
     }
 
@@ -529,7 +572,7 @@ public class CitizenBody extends PathfinderMob implements Npc {
     public void setHealth(float health) {
         if (!level().isClientSide() && health < 1f && !isRemoved()) {
             super.setHealth(1f);
-            Citizens c = Citizens.active;
+            Settlement c = home;
             if (c != null && rec >= 0) c.knockedDown(this, rec);
             return;
         }
@@ -539,7 +582,7 @@ public class CitizenBody extends PathfinderMob implements Npc {
     @Override
     public boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
         boolean hit = super.hurtServer(level, source, damage);
-        Citizens c = Citizens.active;
+        Settlement c = home;
         if (hit && c != null && rec >= 0) c.hurt(this, rec, source);
         return hit;
     }
@@ -565,9 +608,14 @@ public class CitizenBody extends PathfinderMob implements Npc {
         // the crowd decides who has a body
     }
 
+    /** Staged for a scene (the Registry's Bram): his name doesn't float over the scene. */
+    public boolean staged() {
+        return (entityData.get(DATA_FLAGS) & F_STAGED) != 0;
+    }
+
     @Override
     public boolean isPushable() {
-        return !fading() && super.isPushable();
+        return !fading() && (entityData.get(DATA_FLAGS) & F_STAGED) == 0 && super.isPushable();
     }
 
     @Override

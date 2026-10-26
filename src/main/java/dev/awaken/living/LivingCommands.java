@@ -61,6 +61,13 @@ final class LivingCommands {
                         dev.awaken.living.wayfarer.Scenes.summon(p.level(), who, net.minecraft.core.BlockPos.containing(at));
                         return 1;
                     })));
+            // tours of the first thread (SPEC §27.6): outside the High Gate facing the camp; halfway up the road; at the
+            // camp facing the nearest standing gate (the first gate, once it has formed)
+            l.then(Commands.literal("way").requires(AwakenCommands.admin())
+                    .then(Commands.argument("step", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        return way(p, com.mojang.brigadier.arguments.StringArgumentType.getString(c, "step")) ? 1 : 0;
+                    })));
             l.then(Commands.literal("camp").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 var at = dev.awaken.living.wayfarer.Scenes.campStand(p.level().getServer());
@@ -131,6 +138,18 @@ final class LivingCommands {
                         return 1;
                     })));
             l.then(Commands.literal("face").requires(AwakenCommands.admin()).executes(c -> faceHappening(c.getSource().getPlayerOrException(), 0)));
+            // tours: a Rolling Storm strike this far ahead of you (seen, lighting the cloud, heard late)
+            l.then(Commands.literal("strike").requires(AwakenCommands.admin())
+                    .then(Commands.argument("distance", IntegerArgumentType.integer(0, 1000)).executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        ServerLevel level = p.level().getServer().overworld();
+                        var ahead = p.getLookAngle().multiply(1, 0, 1).normalize().scale(IntegerArgumentType.getInteger(c, "distance"));
+                        int x = (int) Math.floor(p.getX() + ahead.x), z = (int) Math.floor(p.getZ() + ahead.z);
+                        level.getChunk(x >> 4, z >> 4);
+                        int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+                        dev.awaken.living.pulse.StormCell.strike(level, new net.minecraft.core.BlockPos(x, y, z));
+                        return 1;
+                    })));
             l.then(Commands.literal("near").requires(AwakenCommands.admin())
                     .then(Commands.argument("distance", IntegerArgumentType.integer(4, 200))
                             .executes(c -> faceHappening(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "distance")))));
@@ -299,5 +318,44 @@ final class LivingCommands {
         }
         dev.awaken.living.craft.Crafts.setLevel(c.getSource().getPlayerOrException(), craft, IntegerArgumentType.getInteger(c, "level"), announce);
         return 1;
+    }
+
+    /** Stands the player for a tour of the first thread; false if the world has no such place. */
+    static boolean way(ServerPlayer p, String step) {
+        var server = p.level().getServer();
+        ServerLevel level = server.overworld();
+        net.minecraft.core.BlockPos gate = dev.awaken.core.api.CityHooks.spot(level, "high_gate_yard");
+        net.minecraft.core.BlockPos camp = dev.awaken.living.wayfarer.Scenes.marker(server, 0, "camp");
+        if (gate == null || camp == null) return false;
+        net.minecraft.core.BlockPos at, look;
+        float pitch = 4F;
+        switch (step) {
+            case "gate" -> {
+                at = gate.offset((camp.getX() - gate.getX()) / 12, 0, (camp.getZ() - gate.getZ()) / 12);
+                look = camp;
+            }
+            case "road" -> {
+                // two thirds of the way: past the city's reserve, where the Commons' caption shows
+                at = new net.minecraft.core.BlockPos(gate.getX() + (camp.getX() - gate.getX()) * 2 / 3, 0, gate.getZ() + (camp.getZ() - gate.getZ()) * 2 / 3);
+                look = camp;
+            }
+            case "rise" -> {
+                at = camp.offset(0, 0, 6);
+                look = camp.offset(0, 0, -400);
+                pitch = -18F; // over the canopy, to the pillar
+                for (var g : dev.awaken.core.api.GateHooks.near(level, camp, 900)) {
+                    if (java.util.Set.of("BUILDING", "READY", "ACTIVE", "OPEN").contains(g.state())) look = g.pos();
+                }
+            }
+            default -> {
+                return false;
+            }
+        }
+        level.getChunk(at.getX() >> 4, at.getZ() >> 4);
+        int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at.getX(), at.getZ());
+        double dx = look.getX() - at.getX(), dz = look.getZ() - at.getZ();
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+        p.teleportTo(level, at.getX() + 0.5, y, at.getZ() + 0.5, java.util.Set.of(), yaw, pitch, true);
+        return true;
     }
 }

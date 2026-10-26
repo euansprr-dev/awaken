@@ -1,5 +1,6 @@
-# The Tether Vow at the world's spawn vault: a fresh, awakened player without the rope is stood in the forecourt and the
-# vow runs by itself (the call, the line up onto the pylon, the words). Recorded in third person with the HUD on.
+# The Tether Vow at the world's spawn vault (SPEC §17.7). First at E-rank with the door sealed: the vault only stirs (its
+# light rises in D's green and settles back, "Its line waits for a D-rank hunter."). Then at D-rank with the door opened:
+# the vow runs by itself (the call, the line up onto the pylon, the words). Recorded in third person with the HUD on.
 world ascent_vow survival 4245
 waitworld
 window 1440 900
@@ -21,8 +22,16 @@ cmd effect give @s minecraft:saturation 100000 10 true
 cmd awaken ascent grant none
 camera back
 hud on
-cmd awaken ascent pilot rec vow_tp 330 3
 cmd awaken ascent vow goto
+wait 30
+shotnow ascent_vow_stir_rise
+wait 45
+shotnow ascent_vow_stir_words
+wait 120
+cmd awaken admin rankup
+wait 20
+cmd awaken ascent pilot rec vow_tp 330 3
+cmd awaken ascent vow open
 wait 340
 info
 quit

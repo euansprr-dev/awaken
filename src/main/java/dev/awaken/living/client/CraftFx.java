@@ -32,15 +32,23 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The crafts' perks you see (SPEC §21.9), all from blocks and creatures the client already has: Herb Glint (a thin
- * sea-green shimmer standing up from ripe plants within 16), Ore Sense (every 4 s with a pick in hand, the ore within 6,
- * or 10 with Vein Sight, pulses through the stone as projected glass outlines, then fades), Tracks (a creature the band
- * read leaves glowing pawprints for 30 s).
+ * The crafts' perks you see and hear (SPEC §21.9, §28.3), all from blocks and creatures the client already has: Herb
+ * Glint (a thin sea-green shimmer standing up from ripe plants within 16), Ore Sense (every 4 s with a pick or mattock in
+ * hand, the ore within 6 pulses through the stone as projected glass outlines, then fades; with Vein Sight the whole vein
+ * of each ore it finds), Deep Ear (underground, now and then, a soft sound from the way of an open cave or Deepglass
+ * behind the rock), Tracks (a creature the band read leaves glowing pawprints for 30 s).
  */
 final class CraftFx {
     private CraftFx() {}
 
     static final int HERB_RADIUS = 16, MAX_HERBS = 48, ORE_EVERY = 80, ORE_SHOW = 60, TRACK_TICKS = 600, TRACK_EVERY = 8;
+    /** Vein Sight follows a vein this far from you, this many blocks in all. */
+    static final int VEIN_REACH = 20, VEIN_MAX = 192;
+    /** Deep Ear listens every 3 s, this far through the rock, and names a place again only after 30 s. */
+    static final int EAR_EVERY = 60, EAR_REACH = 12, EAR_AGAIN = 600;
+    /** Picks and the Hunter mattocks (the deep module's tag, read by id). */
+    static final net.minecraft.tags.TagKey<net.minecraft.world.item.Item> MINING_TOOLS =
+            net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, Awaken.id("mining_tools"));
 
     private static final List<BlockPos> HERBS = new ArrayList<>();
     private record Ore(BlockPos pos, int rgb) {}
@@ -67,6 +75,7 @@ final class CraftFx {
         long now = level.getGameTime();
         if (now % 20 == 0) herbs(level, p);
         ores(level, p, now);
+        if ((now + p.getId()) % EAR_EVERY == 0) ear(level, p, now);
         tracks(level, p, now);
     }
 
@@ -93,11 +102,11 @@ final class CraftFx {
 
     private static void ores(ClientLevel level, Player p, long now) {
         if (now - oreAt > ORE_SHOW) ORES.clear();
-        boolean pick = p.getMainHandItem().is(ItemTags.PICKAXES);
+        boolean pick = p.getMainHandItem().is(ItemTags.PICKAXES) || p.getMainHandItem().is(MINING_TOOLS);
         if (pick && Crafts.has(p, Craft.MINING, "ore_sense") && (now - oreAt >= ORE_EVERY || now < oreAt)) {
             oreAt = now;
             ORES.clear();
-            int r = Crafts.has(p, Craft.MINING, "vein_sight") ? 10 : 6;
+            int r = 6;
             BlockPos c = p.blockPosition();
             BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
             for (int dx = -r; dx <= r; dx++) for (int dy = -r; dy <= r; dy++) for (int dz = -r; dz <= r; dz++) {
@@ -106,6 +115,7 @@ final class CraftFx {
                 BlockState s = level.getBlockState(m);
                 if (Herbs.ore(s)) ORES.add(new Ore(m.immutable(), tint(s)));
             }
+            if (Crafts.has(p, Craft.MINING, "vein_sight")) veins(level, c);
         }
         if (ORES.isEmpty()) return;
         // a pulse in, a slow fade out: projected glass, edges only, through the stone
@@ -117,6 +127,97 @@ final class CraftFx {
         for (Ore o : ORES) Gizmos.cuboid(o.pos(), 0.02F, GizmoStyle.strokeAndFill(alpha | o.rgb(), 2.2F, fill | o.rgb())).setAlwaysOnTop();
     }
 
+    /**
+     * Vein Sight: from each ore Ore Sense found, the rest of its vein (the same ore, block to block through any of the 26
+     * neighbours, as a lode's seam steps), out to {@link #VEIN_REACH} from you.
+     */
+    private static void veins(ClientLevel level, BlockPos c) {
+        it.unimi.dsi.fastutil.longs.LongOpenHashSet seen = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+        it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue q = new it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue();
+        for (Ore o : ORES) {
+            seen.add(o.pos().asLong());
+            q.enqueue(o.pos().asLong());
+        }
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        while (!q.isEmpty() && ORES.size() < VEIN_MAX) {
+            long at = q.dequeueLong();
+            int x = BlockPos.getX(at), y = BlockPos.getY(at), z = BlockPos.getZ(at);
+            int rgb = tint(level.getBlockState(m.set(x, y, z)));
+            for (int dx = -1; dx <= 1; dx++) for (int dy = -1; dy <= 1; dy++) for (int dz = -1; dz <= 1; dz++) {
+                long n = BlockPos.asLong(x + dx, y + dy, z + dz);
+                if (seen.contains(n)) continue;
+                seen.add(n);
+                m.set(n);
+                if (Math.abs(m.getX() - c.getX()) > VEIN_REACH || Math.abs(m.getY() - c.getY()) > VEIN_REACH || Math.abs(m.getZ() - c.getZ()) > VEIN_REACH) continue;
+                BlockState s = level.getBlockState(m);
+                if (!Herbs.ore(s) || tint(s) != rgb) continue;
+                ORES.add(new Ore(m.immutable(), rgb));
+                q.enqueue(n);
+            }
+        }
+    }
+
+    // ---- Deep Ear ---------------------------------------------------------------------------------------------------
+
+    private static final int[][] EAR_DIRS = {{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1},
+            {1, 0, 1}, {1, 0, -1}, {-1, 0, 1}, {-1, 0, -1}, {1, -1, 0}, {-1, -1, 0}, {0, -1, 1}, {0, -1, -1}};
+    private static long heardAt = NEVER;
+    private static long heard = Long.MIN_VALUE;
+
+    /**
+     * Deep Ear: underground with a pick or mattock, listen through the rock along fourteen ways for an open cave (air
+     * two blocks deep at least, past two of rock or more) or Deepglass, and play its soft sound from there, so you hear
+     * which way it lies. The nearest wins; a place already heard waits 30 s.
+     */
+    private static void ear(ClientLevel level, Player p, long now) {
+        if (!Crafts.has(p, Craft.MINING, "deep_ear") || !(p.getMainHandItem().is(ItemTags.PICKAXES) || p.getMainHandItem().is(MINING_TOOLS))) return;
+        BlockPos c = p.blockPosition();
+        if (c.getY() > 56 || level.canSeeSky(c)) return;
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        long best = Long.MIN_VALUE;
+        boolean glass = false;
+        int bestD = Integer.MAX_VALUE;
+        for (int[] d : EAR_DIRS) {
+            int rock = 0;
+            for (int i = 1; i <= EAR_REACH && i < bestD; i++) {
+                m.set(c.getX() + d[0] * i, c.getY() + 1 + d[1] * i, c.getZ() + d[2] * i);
+                BlockState s = level.getBlockState(m);
+                if (isDeepglass(s) && rock >= 1) {
+                    best = m.asLong();
+                    bestD = i;
+                    glass = true;
+                    break;
+                }
+                if (!s.isAir()) {
+                    rock++;
+                    continue;
+                }
+                if (rock < 2) break;   // open right here: that's the cave you're in
+                BlockPos.MutableBlockPos n = new BlockPos.MutableBlockPos(m.getX() + d[0], m.getY() + d[1], m.getZ() + d[2]);
+                if (level.getBlockState(n).isAir() && level.getBlockState(n.move(d[0], d[1], d[2])).isAir()) {
+                    best = m.asLong();
+                    bestD = i;
+                    glass = false;
+                }
+                break;
+            }
+        }
+        if (best == Long.MIN_VALUE) return;
+        if (Math.abs(BlockPos.getX(best) - BlockPos.getX(heard)) + Math.abs(BlockPos.getY(best) - BlockPos.getY(heard))
+                + Math.abs(BlockPos.getZ(best) - BlockPos.getZ(heard)) < 6 && now - heardAt < EAR_AGAIN) return;
+        heard = best;
+        heardAt = now;
+        var sound = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.getValue(Awaken.id(glass ? "delve.deep_ear_glass" : "delve.deep_ear_cave"));
+        if (sound == null) return;
+        level.playLocalSound(BlockPos.getX(best) + 0.5, BlockPos.getY(best) + 0.5, BlockPos.getZ(best) + 0.5, sound,
+                net.minecraft.sounds.SoundSource.AMBIENT, 0.7F, 0.9F + level.getRandom().nextFloat() * 0.2F, false);
+    }
+
+    private static boolean isDeepglass(BlockState s) {
+        var id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(s.getBlock());
+        return id.getNamespace().equals(Awaken.MODID) && id.getPath().equals("deepglass");
+    }
+
     private static int tint(BlockState s) {
         if (s.is(BlockTags.GOLD_ORES)) return 0xFFE27A;
         if (s.is(BlockTags.IRON_ORES)) return 0xEAD2BC;
@@ -126,6 +227,7 @@ final class CraftFx {
         if (s.is(net.minecraft.tags.BlockItemTags.REDSTONE_ORES.block())) return 0xFF7A7A;
         if (s.is(net.minecraft.tags.BlockItemTags.LAPIS_ORES.block())) return 0x7FA0FF;
         if (s.is(net.minecraft.tags.BlockItemTags.COAL_ORES.block())) return 0xB8C2CE;
+        if (isDeepglass(s)) return 0xB48CFF;
         return 0xBFE3FF;
     }
 
@@ -171,6 +273,8 @@ final class CraftFx {
         TRACKS.clear();
         SIGHTED.clear();
         oreAt = NEVER;
+        heardAt = NEVER;
+        heard = Long.MIN_VALUE;
     }
 
     // ---- drawing ----------------------------------------------------------------------------------------------------

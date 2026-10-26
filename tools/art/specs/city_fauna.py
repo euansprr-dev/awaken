@@ -34,7 +34,8 @@ JAVA_OUT = os.path.join(ROOT, "src/main/java/dev/awaken/citizens/client/CityFaun
 
 # render scale per animal (the body is designed this much larger than it stands in the world)
 SCALE = {"city_pigeon": 0.6, "city_gull": 0.75, "city_cat": 0.7, "city_dog": 0.8, "city_horse": 1.0, "city_cart": 1.0,
-         "city_boat": 1.0, "city_hand_lantern": 0.9}
+         "city_boat": 1.0, "city_hand_lantern": 0.9,
+         "city_prop_rope": 0.8, "city_prop_net": 0.9, "city_prop_parcel": 0.8}
 
 
 def build_hook():
@@ -1125,14 +1126,113 @@ def paint_lantern(r, P, v):
             g.set(i, j, hexc("#fff6d8", 255))
     return P.skin, P.glow
 
+
+# =====================================================================================================================
+# What citizens work with (M4 B3b, Euan: "the boatman isn't holding anything... they are just moving their hands around"):
+# drawn in the hand by CitizenRenderer's held layer for the clips that need them. A coil of hemp rope over the hand
+# (coil, haul), a fishing net with corks hanging from it (mend), a parcel in brown paper tied with string (serve). Each
+# bone's pivot is the grip.
+# =====================================================================================================================
+
+def prop_rope():
+    r = Rig("city_prop_rope", (32, 32))
+    r.walk_stride, r.run_stride, r.run_speed, r.shadow = 1.0, 2.0, (0.1, 0.2), 0.0
+    root = r.bone("rope", (0, 0, 0))
+    # loops hanging from the hand: a ring of rope in the body's plane, a second loop behind, the tail hanging free
+    root.cube("top", -3, -0.5, -1, 6, 1, 2)
+    root.cube("left", 2.5, 0, -1, 1, 7, 2, inflate=0.0)
+    root.cube("right", -3.5, 0, -1, 1, 7, 2, share="left")
+    root.cube("bottom", -3, 6.5, -1, 6, 1, 2, share="top")
+    # a second loop behind the first, hanging a little lower and askew
+    l2 = root.bone("loop2", (0, 0.5, 1.2), (0, 0, 9))
+    l2.cube("l2top", -2.5, -0.5, -0.5, 5, 1, 1)
+    l2.cube("l2side", 2, 0, -0.5, 1, 7, 1)
+    l2.cube("l2side_r", -3, 0, -0.5, 1, 7, 1, share="l2side")
+    l2.cube("l2bottom", -2.5, 6.5, -0.5, 5, 1, 1, share="l2top")
+    tail = root.bone("tail", (-3, 7, 0))
+    tail.cube("otail", -0.5, 0, -0.5, 1, 5, 1, inflate=-0.1)
+    r.pack()
+    idle = r.clip("idle", 2.0, loop=True)
+    idle.rot("tail", [(0, 0, 0, 0), (1.0, 6, 0, 8), (2.0, 0, 0, 0)])
+    for nm in ("hurt", "death"):
+        r.clip(nm, 0.3).rot("rope", [(0, 0, 0, 0), (0.3, 0, 0, 0)])
+    return r
+
+
+def prop_net():
+    r = Rig("city_prop_net", (64, 32))
+    r.walk_stride, r.run_stride, r.run_speed, r.shadow = 1.0, 2.0, (0.1, 0.2), 0.0
+    root = r.bone("net", (0, 0, 0))
+    root.cube("headrope", -7, -0.5, -0.5, 14, 1, 1)
+    root.cube("sheet", -7, 0.5, 0, 14, 11, 0)
+    for k, x in enumerate((-6, -2, 2, 6)):
+        root.cube(f"cork{k}", x - 0.5, -1, -1, 1, 2, 2, share=None if k == 0 else "cork0")
+    r.pack()
+    idle = r.clip("idle", 2.4, loop=True)
+    idle.rot("net", [(0, 0, 0, 0), (1.2, 4, 0, 2), (2.4, 0, 0, 0)])
+    for nm in ("hurt", "death"):
+        r.clip(nm, 0.3).rot("net", [(0, 0, 0, 0), (0.3, 0, 0, 0)])
+    return r
+
+
+def prop_parcel():
+    r = Rig("city_prop_parcel", (32, 32))
+    r.walk_stride, r.run_stride, r.run_speed, r.shadow = 1.0, 2.0, (0.1, 0.2), 0.0
+    root = r.bone("parcel", (0, 0, 0))
+    root.cube("box", -2.5, 0, -2, 5, 4, 4)
+    root.cube("knot", -0.5, -0.8, -0.5, 1, 1, 1, inflate=-0.1)
+    r.pack()
+    r.clip("idle", 1.0, loop=True).rot("parcel", [(0, 0, 0, 0), (1.0, 0, 0, 0)])
+    for nm in ("hurt", "death"):
+        r.clip(nm, 0.3).rot("parcel", [(0, 0, 0, 0), (0.3, 0, 0, 0)])
+    return r
+
+
+def paint_rope(r, P, v):
+    hemp = Ramp("#4a3418", "#6e5026", "#94723a", "#b8944e", "#d6b468")
+    strands = lambda f, i, j: 0.9 if (i + j) % 3 == 0 else (-0.6 if (i + j) % 3 == 2 else 0)  # noqa: E731
+    for nm in ("top", "left", "l2top", "l2side", "otail"):
+        P.paint(nm, hemp, 2.4 if not nm.startswith("l2") else 1.9, strands)
+    return P.skin, P.glow
+
+
+def paint_net(r, P, v):
+    twine = hexc("#8a7a58")
+    knot = hexc("#5e5238")
+    for nm in ("sheet",):
+        for fname in ("north", "south"):
+            f = P.face(nm, fname)
+            for i, j in f.each():
+                # a diamond mesh: twine on the diagonals, holes between (cutout)
+                # a knotted mesh (square, so the sheet's two mirrored faces agree), the knots darker
+                on = i % 3 == 1 or j % 3 == 1
+                f.set(i, j, (knot if i % 3 == 1 and j % 3 == 1 else twine) if on else (0, 0, 0, 0))
+    P.paint("headrope", Ramp("#3e2c14", "#5e4420", "#7e5c2e"), 1.4)
+    P.paint("cork0", Ramp("#7a4a20", "#a46a30", "#c88a44", "#e0a858"), 2.2)
+    return P.skin, P.glow
+
+
+def paint_parcel(r, P, v):
+    paper = Ramp("#5e4428", "#7e5e38", "#9e7c4c", "#bc9a64", "#d6b880")
+    def tied(f, i, j):
+        mid_i, mid_j = f.w // 2, f.h // 2
+        if (f.name in ("top", "bottom") and (i == mid_i or j == mid_j)) or (f.name in SIDES and i == mid_i):
+            return (232, 220, 196, 255)  # the string
+        return 0.4 if (i * 5 + j * 3) % 7 == 0 else 0
+    P.paint("box", paper, 2.6, tied)
+    P.paint("knot", Ramp("#b8a888", "#e0d2b4", "#f4ead4"), 1.8)
+    return P.skin, P.glow
+
 # =====================================================================================================================
 
 VARIANTS = {"city_pigeon": ["slate", "slate", "white", "brown"], "city_gull": ["gull"], "city_cat": list(CAT),
             "city_dog": list(DOG), "city_horse": list(HORSE), "city_cart": ["cart"],
-            "city_boat": list(BOAT), "city_hand_lantern": ["lantern"]}
+            "city_boat": list(BOAT), "city_hand_lantern": ["lantern"],
+            "city_prop_rope": ["rope"], "city_prop_net": ["net"], "city_prop_parcel": ["parcel"]}
 DESIGNS = {"city_pigeon": (pigeon, paint_bird), "city_gull": (gull, paint_bird), "city_cat": (cat, paint_cat),
            "city_dog": (dog, paint_dog), "city_horse": (horse, paint_horse), "city_cart": (cart, paint_cart),
-           "city_boat": (boat, paint_boat), "city_hand_lantern": (hand_lantern, paint_lantern)}
+           "city_boat": (boat, paint_boat), "city_hand_lantern": (hand_lantern, paint_lantern),
+           "city_prop_rope": (prop_rope, paint_rope), "city_prop_net": (prop_net, paint_net), "city_prop_parcel": (prop_parcel, paint_parcel)}
 
 
 def rigs(only=None):
@@ -1172,15 +1272,15 @@ def java(all_rigs):
            " * rigs' format ({@link dev.awaken.mobs.client.anim.HeroRig#parse}); textures in textures/entity/city/.",
            " */", "public final class CityFaunaData {", "    private CityFaunaData() {}", "",
            "    /** Each animal's variants (texture suffixes, weighted by repetition). */",
-           "    public static final java.util.Map<String, List<String>> VARIANTS = java.util.Map.of("]
-    vs = [f'            "{rid}", List.of({", ".join(chr(34) + (v if len(set(VARIANTS[rid])) > 1 else "") + chr(34) for v in VARIANTS[rid])})'
+           "    public static final java.util.Map<String, List<String>> VARIANTS = java.util.Map.ofEntries("]
+    vs = [f'            java.util.Map.entry("{rid}", List.of({", ".join(chr(34) + (v if len(set(VARIANTS[rid])) > 1 else "") + chr(34) for v in VARIANTS[rid])}))'
           for rid, _, _ in all_rigs]
     src.append(",\n".join(vs))
     src.append("    );")
     src.append("")
     src.append("    /** Render scale per animal (designed larger than it stands). */")
-    src.append("    static final java.util.Map<String, Float> SCALE = java.util.Map.of(")
-    src.append(",\n".join(f'            "{rid}", {SCALE[rid]}F' for rid, _, _ in all_rigs))
+    src.append("    static final java.util.Map<String, Float> SCALE = java.util.Map.ofEntries(")
+    src.append(",\n".join(f'            java.util.Map.entry("{rid}", {SCALE[rid]}F)' for rid, _, _ in all_rigs))
     src.append("    );")
     src.append("")
     src.append("    /** Every rig's source text, in order. */")

@@ -14,6 +14,13 @@ Design: `docs/plan.html` (player-facing plan) and `docs/SPEC.md` (implementation
   - In a GameTest never wait a fixed number of ticks for chunks or light: the test server never waits between ticks.
     Tests start on entity-ticking ground; read light after `AwakenTests.awaitLight` (SPEC §13, "Tests").
 - Never launch the game client (`runClient`) without asking the owner first: it steals focus and plays sound on his Mac.
+- Tours (autopilot screenshots): look tours run on GitHub's macOS runners, several at once, never in the Mac's queue.
+  Push your branch, then `tools/tour-ci.sh tools/autopilot/<x>.txt [timeout] [KEY=VAL ...]` (tools/autopilot.sh's knobs;
+  shots, log and summary land in `run-autopilot/screenshots-ci/<x>-<run id>/`). The runner starts from a fresh game
+  folder on a virtual display like the MacBook's (same pixels, same GUI scale), waits for the terrain before each shot,
+  and always has Far Sight off. These stay on the Mac under `slot.sh tour`: perf and frame-time tours (`perf-*`, the Lens
+  bench, anything measuring ms), Far Sight's tours, sound listening, and anything needing a real GPU's timing (SPEC §13,
+  "Tours"). Every tour script picks a starter power (`cmd awaken powers starter 1`), or a slower machine shows its screen.
 - The project lives on the external SSD. Don't write big files to the internal disk.
 
 ## Verifying APIs (important)
@@ -47,12 +54,21 @@ tools/                   gradle.sh, sim/ (pacing simulator), art/ (texture + sou
 
 ## Code style
 - Java 25, records for data, `final` classes where sensible, no reflection hacks, no mixins unless unavoidable
-  (if needed: `src/main/resources/awaken.mixins.json`, coordinate first).
+  (if needed: the Turbo contract below, coordinate first).
 - Codecs for everything saved; `StreamCodec` for everything sent. Version every saved structure (`schemaVersion`).
 - Server is authoritative. Client code lives in `...client` subpackages or `XxxClient` classes, never referenced from
   common code paths that run on a dedicated server.
 - Performance budgets: SPEC header. No per-tick allocations in hot paths; spread heavy work across ticks.
 - Comments: short, explain why. Match surrounding code.
+
+## Turbo (reaching into the renderer)
+Mixins only under the Turbo contract, each feature approved first: internals only in `dev.awaken.turbo.<feature>`, its
+own client mixin config (not required, `defaultRequire` 0) listed in `neoforge.mods.toml`, `@Pseudo` when the target is
+another mod's, version-locked to the exact Minecraft, NeoForge (and target mod) it was read against, a probe that the
+mixin applied, a client setting, off on the first failure, and with it off the game behaves exactly as without it.
+Kept only with a measured win; access transformer before mixin, never reflection. Only mixin classes in the mixin
+package (anything else there can't be referenced and crashes the client). Record each in SPEC. Today: Pixels (§18,
+`awaken.pixels.mixins.json`), Water edges (§20, `awaken.wateredge.mixins.json`, in Sodium's fluid renderer).
 
 ## Commits
 Small, focused commits on the current branch. End every commit message with:

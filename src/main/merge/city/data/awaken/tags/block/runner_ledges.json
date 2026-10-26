@@ -14,6 +14,10 @@
     "minecraft:waxed_oxidized_cut_copper_stairs",
     "minecraft:dark_oak_slab",
     "minecraft:spruce_trapdoor",
-    "awaken:awning"
+    "awaken:awning",
+    "minecraft:mossy_stone_brick_stairs",
+    "minecraft:polished_andesite_stairs",
+    "minecraft:mossy_cobblestone_stairs",
+    "minecraft:mud_brick_stairs"
   ]
 }

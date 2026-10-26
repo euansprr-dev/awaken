@@ -1,6 +1,7 @@
 package dev.awaken.wilds.ward;
 
 import dev.awaken.Awaken;
+import dev.awaken.above.ruin.RuinKind;
 import dev.awaken.core.AwakenConfig;
 import dev.awaken.core.api.HearthHooks;
 import dev.awaken.core.api.WardHooks;
@@ -28,8 +29,9 @@ import java.util.function.Consumer;
  * {@code #awaken:warded_sky} gets. A ward is the site's own box grown by {@link #MARGIN} on every side (a sky site's
  * reaches {@link #SKY_BELOW} further down, so a tower stalls well under the deck). Inside it, outside any Hearth's
  * radius, blocks a survival player places crumble ({@link Crumble}) and {@code #awaken:ward_sealed} blocks (the site's
- * walls) can't be broken by hand, explosion or piston. Existing ruins get wards as soon as this loads: the box comes
- * from the structure start already saved with the chunk.
+ * walls) can't be broken by hand, explosion or piston. At a {@link #climb climb} (a Tether Spire, a sky platform, a hero
+ * tree's crown) a block is refused outright instead ({@link ClimbWard}), and no Hearth suspends it. Existing ruins get
+ * wards as soon as this loads: the box comes from the structure start already saved with the chunk.
  */
 public final class Wards {
     private Wards() {}
@@ -58,17 +60,43 @@ public final class Wards {
         return !p.isCreative() && !p.isSpectator();
     }
 
-    /** The ward whose rules hold at {@code pos}: none with wards off, and none inside a Hearth's radius (home is home). */
+    /**
+     * The ward whose rules hold at {@code pos}: none with wards off, and none inside a Hearth's radius (home is home),
+     * except a climb's: a Hearth Anchor on a spire's plaza must not make stairs to its crown (SPEC §17.29).
+     */
     public static Optional<WardHooks.Ward> enforced(ServerLevel level, BlockPos pos) {
         if (!on()) return Optional.empty();
         Optional<WardHooks.Ward> w = WardHooks.at(level, pos);
-        if (w.isEmpty() || HearthHooks.inside(level, pos)) return Optional.empty();
+        if (w.isEmpty() || !climb(w.get()) && HearthHooks.inside(level, pos)) return Optional.empty();
         return w;
     }
 
-    /** Whether this block is part of a site's walls and stands inside an enforced ward. */
+    /**
+     * Whether this block is part of a site's walls and stands inside a ward that holds them. A Hearth's radius gives
+     * the walls to its owner, except a vault's: they keep its rank door honest, so they hold even there (Euan,
+     * 2026-10-26: an under-ranked hunter must not get into a vault; a Hearth Anchor beside one let them dig round it).
+     */
     public static boolean sealed(ServerLevel level, BlockPos pos, BlockState state) {
-        return state.is(SEALED) && enforced(level, pos).isPresent();
+        if (!state.is(SEALED) || !on()) return false;
+        Optional<WardHooks.Ward> w = WardHooks.at(level, pos);
+        return w.isPresent() && (!HearthHooks.inside(level, pos) || rankDoored(w.get()) || climb(w.get()));
+    }
+
+    /** Ward kinds of the climbs (a hero tree's crown registers its own, {@link #HERO_CROWN}). */
+    public static final String SPIRE = "precursor_tether_spire", SKY = "precursor_sky_platform", HERO_CROWN = "hero_crown";
+
+    /**
+     * A climb: a site whose way up is the line (a Tether Spire's petals, a sky platform's rings, a hero tree's crown).
+     * A survival player's block is refused there at once, not crumbled: the crumble's three seconds are a nerd-pole.
+     */
+    public static boolean climb(WardHooks.Ward w) {
+        return w.kind().equals(SPIRE) || w.kind().equals(SKY) || w.kind().equals(HERO_CROWN);
+    }
+
+    /** A site whose sealed chamber waits behind a rank door: the vaults. */
+    static boolean rankDoored(WardHooks.Ward w) {
+        return w.kind().equals(RuinKind.VAULT.structure.identifier().getPath())
+                || w.kind().equals(RuinKind.SPAWN_VAULT.structure.identifier().getPath());
     }
 
     // ---- the structure source -------------------------------------------------------------------------------------

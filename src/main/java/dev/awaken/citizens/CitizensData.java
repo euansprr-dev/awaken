@@ -2,12 +2,9 @@ package dev.awaken.citizens;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.awaken.Awaken;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.saveddata.SavedDataType;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,13 +14,15 @@ import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
 /**
- * The city's people as this world keeps them ({@code awaken:citizens}, world-global SavedData, schemaVersion 1): every
- * record's place in its day (struct of arrays: segment, node, edge progress, goal, spot, state), the city's state that
- * citizens change (lamps, stalls and their stock, laundry, district safety and gratitude, repairs waiting for a
- * mason, the chimneys and bells found so far), the events running, and what citizens remember of each player. Bodies
- * are never saved: the ledger is the truth (SPEC §16.5).
+ * One settlement's people as this world keeps them (schemaVersion 1; since W0 one entry of {@link CitizensSave}, the
+ * world's {@code awaken:citizens}, which was Carillon's whole file before): every record's place in its day (struct of
+ * arrays: segment, node, edge progress, goal, spot, state), the settlement's state that citizens change (lamps, stalls
+ * and their stock, laundry, district safety and gratitude, repairs waiting for a mason, the chimneys and bells found so
+ * far), the events running, and what its citizens remember of each player. Bodies are never saved: the ledger is the
+ * truth (SPEC §16.5). Its sizes are its roster's (the record arrays) and its site's (a safety and a gratitude per
+ * district).
  */
-public final class CitizensData extends SavedData {
+public final class CitizensData {
     public static final int SCHEMA = 1;
 
     // record states
@@ -133,9 +132,9 @@ public final class CitizensData extends SavedData {
         }
     }
 
-    public static final SavedDataType<CitizensData> TYPE = new SavedDataType<>(Awaken.id("citizens"), CitizensData::new, CODEC);
-
     public int schemaVersion = SCHEMA;
+    /** The saved data this settlement's state lives in (null while a test holds it on its own). */
+    @Nullable CitizensSave owner;
     /** The roster's sha256 these records belong to ("" = not set up yet). */
     public String roster = "";
 
@@ -196,12 +195,16 @@ public final class CitizensData extends SavedData {
         nextEventId = days.length > 3 ? days[3] : 1;
     }
 
-    public static CitizensData get(MinecraftServer server) {
-        return server.getDataStorage().computeIfAbsent(TYPE);
+    /** The world's file is written at its next save. */
+    void setDirty() {
+        if (owner != null) owner.setDirty();
     }
 
-    /** Sizes every per-record array for {@code n} records and the city's stations (a fresh ledger, or a new roster). */
-    void size(int n, int lampCount, int stallCount, int lineCount, int bellCount) {
+    /**
+     * Sizes every per-record array for {@code n} records and the settlement's stations and districts (a fresh ledger,
+     * or a new roster).
+     */
+    void size(int n, int lampCount, int stallCount, int lineCount, int bellCount, int districts) {
         seg = filled(n, -1);
         at = new int[n];
         next = filled(n, -1);
@@ -223,8 +226,8 @@ public final class CitizensData extends SavedData {
         Arrays.fill(stock, (byte) 70);
         cloths = new byte[lineCount];
         bellPos = new long[bellCount];
-        safety = new byte[8];
-        gratitude = new byte[8];
+        safety = new byte[Math.max(1, districts)];
+        gratitude = new byte[Math.max(1, districts)];
         Arrays.fill(safety, (byte) 80);
         repairs.clear();
         furnished = new long[0];
@@ -328,8 +331,9 @@ public final class CitizensData extends SavedData {
             d.stallOpen = toBytes(stallOpen);
             d.stock = toBytes(stock);
             d.cloths = toBytes(cloths);
-            d.safety = toBytes(safety.length == 8 ? safety : Arrays.copyOf(safety, 8));
-            d.gratitude = toBytes(gratitude.length == 8 ? gratitude : Arrays.copyOf(gratitude, 8));
+            // each settlement's own district count (Carillon's eight, as schema 1 always had); never none
+            d.safety = toBytes(safety.length > 0 ? safety : new int[]{80});
+            d.gratitude = toBytes(gratitude.length == d.safety.length ? gratitude : Arrays.copyOf(gratitude, d.safety.length));
             d.repairs.clear();
             d.repairs.addAll(repairs);
             d.furnished = furnished.clone();

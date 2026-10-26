@@ -36,6 +36,7 @@ layout(location = 0) out vec4 fragColor;
 #include <awaken:lens_frame.glsl>
 #include <awaken:lens_height.glsl>
 #include <awaken:lens_normal.glsl>
+#include <awaken:lens_storm_frame.glsl>
 #endif
 
 // The parameter texture (LensParams, 32x1): 0 flags and debug, 1-2 far plane and sun, 3-8 the look, 9 sunset, 10-11 fog,
@@ -215,6 +216,18 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
     m *= mix(1.0, lr.g, l17.b * near * (1.0 - smoothstep(48.0, 96.0, dist)));
     c *= sqrt(m);
     c = max(mix(vec3(luma(c)), c, 1.0 + rich), 0.0);
+    // rain wets what it falls on (open to the sky in its column; under leaves, a little): darker and a touch richer, and
+    // what faces up takes a dull sheen of the sky at a glancing angle (a Rolling Storm's local rain too)
+    if (f16.z > 0.0 && F(15).x > 0.0) {
+        vec3 hp = p + f12.xyz + n * 0.1;
+        vec2 top = heightAt(ivec2(floor(hp.xz)), 0);
+        float exposed = max(1.0 - smoothstep(0.3, 1.5, top.r - hp.y), 0.4 * (1.0 - smoothstep(0.3, 1.5, top.g - hp.y)));
+        float wet = f16.z * exposed * near * fogFade * (1.0 - smoothstep(0.85 * rdEnd, rdEnd, dist)) * (1.0 - glowness(c));
+        c *= 1.0 - 0.16 * wet;
+        c = max(mix(vec3(luma(c)), c, 1.0 + 0.1 * wet), 0.0);
+        float up = smoothstep(0.6, 0.95, n.y), fres = pow(1.0 - clamp(dot(-p / dist, n), 0.0, 1.0), 4.0);
+        c += P(10).rgb * fres * up * wet * 0.22;
+    }
     if (m20.r > 0.0) c = lensWater(c, p, n, lr.r, m20.r * fogFade);
     return c;
 }
@@ -342,23 +355,34 @@ void main() {
     }
     if (!open && !classic && !plate) c = lensLight(c, pRel, quick, depth, rdEnd, clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0), p1, lightDbg);
     // Lens 2's clouds (L4), over the sky and over anything farther than where this ray enters their layer
+    // and the storm cells marched with them (lens_storm.glsl): over anything farther than where the ray enters a cell's
+    // bounds, never nearer than 16 blocks (its rain fades in from there; nearer, the game's own rain falls)
     vec4 cp = F(18);
-    if (cp.x > 0.0 && !classic) {
+    int storms = stormCount();
+    if ((cp.x > 0.0 || storms > 0) && !classic) {
         vec4 cl = texture(CloudsSampler, texCoord);
         bool behind = sky;
         if (!sky) {
             vec3 cv = farTerrain ? normalize(unproject(frameMat(0), texCoord, 1.0e-5, F(16).x > 0.5)) : normalize(pRel);
-            float base = cp.x - 6.0, camY = F(12).y, enter = 1.0e9;
-            if (camY >= base && camY <= base + 84.0) enter = 0.0;
-            else if (abs(cv.y) > 1.0e-4) enter = (camY < base ? base - camY : base + 84.0 - camY) / cv.y;
-            behind = enter >= 0.0 && (farTerrain ? d : length(pRel)) > enter;
+            float camY = F(12).y, dist = farTerrain ? d : length(pRel);
+            if (cp.x > 0.0) {
+                float base = cp.x - 6.0, enter = 1.0e9;
+                if (camY >= base && camY <= base + 84.0) enter = 0.0;
+                else if (abs(cv.y) > 1.0e-4) enter = (camY < base ? base - camY : base + 84.0 - camY) / cv.y;
+                behind = enter >= 0.0 && dist > enter;
+            }
+            for (int k = 0; k < 2; k++) {
+                if (k >= storms) break;
+                behind = behind || dist > max(stormEntry(cv, k, camY), 16.0);
+            }
         }
         if (behind) c = c * cl.a + cl.rgb;
     }
 #endif
     float haze = sky ? h.r * 0.12 : smoothstep(h.g * rdEnd, rdEnd * 1.1, d) * h.r;
     // aerial perspective keeps deepening over far terrain: ridges fade layer by layer toward the horizon
-    if (farTerrain) haze = min(1.0, haze + smoothstep(rdEnd, rdEnd * 8.0, d) * 0.45 * step(0.001, h.r));
+    // (unless the far renderer draws its own aerial perspective at real distances, flag 8: Far Sight 2)
+    if (farTerrain && (flags & 8) == 0) haze = min(1.0, haze + smoothstep(rdEnd, rdEnd * 8.0, d) * 0.45 * step(0.001, h.r));
     // While far terrain draws, distance haze needs its depth. With none shared (DH's OpenGL engine, DH on Vulkan) or
     // none proven yet (a depth that reads as one value everywhere) distance is the far renderer's own fog: hazing only
     // the near terrain would draw a ring where it ends. A depth that proves itself eases the haze in (trust g).

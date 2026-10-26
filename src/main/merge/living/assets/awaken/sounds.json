@@ -81,5 +81,27 @@
         "name": "awaken:amb_tell_bells"
       }
     ]
+  },
+  "living.storm.roll": {
+    "subtitle": "subtitles.awaken.living.storm.roll",
+    "sounds": [
+      {
+        "name": "awaken:amb_storm_roll_1"
+      },
+      {
+        "name": "awaken:amb_storm_roll_2"
+      },
+      {
+        "name": "awaken:amb_storm_roll_3"
+      }
+    ]
+  },
+  "living.tell.storm": {
+    "subtitle": "subtitles.awaken.living.tell.storm",
+    "sounds": [
+      {
+        "name": "awaken:amb_tell_storm"
+      }
+    ]
   }
 }

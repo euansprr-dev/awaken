@@ -1,0 +1,19 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "tectonic"
+    }
+  ],
+  "type": "lithostitched:wrap_density_function",
+  "target_function": "tectonic:terrain_spline/offset/final",
+  "wrapper_function": {
+    "type": "minecraft:cache",
+    "input": {
+      "type": "awaken:eroded",
+      "input": {
+        "type": "lithostitched:wrapped_marker"
+      }
+    }
+  }
+}

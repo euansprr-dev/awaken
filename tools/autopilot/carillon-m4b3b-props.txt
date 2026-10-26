@@ -1,0 +1,69 @@
+# Carillon M4 B3b, what citizens hold (Euan: "the boatman isn't holding anything"): boatmen at their berths through a
+# morning (coiling and hauling the rope, bailing, loading, fending off; each spell 26 s), one mending his net with its
+# corks, stallkeepers serving with a paper parcel, and the Watch's lantern from the side (the framing that hit a head).
+# Run (shots only, short):
+#   PACK=perf,world,horizon TECTONIC=awakened DH=swift RD=20 SLOT_WHO=b3b \
+#   /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh tools/autopilot/carillon-m4b3b-props.txt 600
+world carillonM4b3a creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+hud off
+cmd gamemode spectator
+# ---- boatmen at their berths (800-3000): several spells of work, a boatman each time
+cmd time set 1500
+cmd awaken citizens show boatman
+wait 160
+shot b3b_props_boatman_1
+wait 200
+shot b3b_props_boatman_1b
+cmd awaken citizens show boatman
+wait 140
+shot b3b_props_boatman_2
+wait 200
+shot b3b_props_boatman_2b
+cmd awaken citizens show boatman
+wait 140
+shot b3b_props_boatman_3
+wait 200
+shot b3b_props_boatman_3b
+# ---- the nets (3000-4400): mending
+cmd time set 3600
+cmd awaken citizens show boatman
+wait 200
+shot b3b_props_mend_1
+cmd awaken citizens show boatman
+wait 140
+shot b3b_props_mend_2
+# ---- the stalls: serving
+cmd time set 4200
+cmd awaken citizens show stallkeeper
+wait 140
+shot b3b_props_serve_1
+cmd awaken citizens show stallkeeper
+wait 120
+shot b3b_props_serve_2
+cmd awaken citizens show stallkeeper
+wait 120
+shot b3b_props_serve_3
+# ---- the Watch's lantern from the side
+cmd time set 18000
+wait 300
+cmd awaken citizens show watch_side
+wait 40
+shot b3b_props_lantern_side
+cmd awaken citizens show watch_side
+wait 40
+shot b3b_props_lantern_side_2
+quit
