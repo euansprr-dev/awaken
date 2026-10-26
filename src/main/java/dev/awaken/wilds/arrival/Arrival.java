@@ -3,6 +3,7 @@ package dev.awaken.wilds.arrival;
 import dev.awaken.core.api.ArrivalHooks;
 import dev.awaken.core.api.ArrivalHooks.Way;
 import dev.awaken.core.api.WardHooks;
+import dev.awaken.wilds.WildsContent;
 import dev.awaken.wilds.WildsModule;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestServer;
@@ -31,7 +32,9 @@ import java.util.UUID;
  * <p>Sites judge a visit, not a moment: walking into a ward ({@link WardHooks}) freezes the verdict from the 20 seconds
  * that led there, and anything built while inside spoils it until the player has left for {@link #VISIT_GRACE}. So
  * towering up, waiting 20 s and then opening the chest still reads as a tower. Outside any ward, the window itself is
- * the verdict. Nothing here is saved: the history is short on purpose, and a fresh login has built nothing.
+ * the verdict. A visit also knows whether the Ascent's line carried the player ({@link Way#LINE}, on the way in or
+ * since): what a climb site's payoff answers (SPEC §17.25). The history is short on purpose and never saved; the open
+ * visit is, for {@link #VISIT_KEPT}, so a relog in a ward keeps a tower a tower ({@link Visit}).
  */
 public final class Arrival implements ArrivalHooks.Tracker {
     /** Ticks per sample. */
@@ -42,19 +45,21 @@ public final class Arrival implements ArrivalHooks.Tracker {
     static final int VISIT_GRACE = 100;
     /** Under this many blocks a tick, a player on the ground is standing still. */
     static final double MOVED = 0.03;
+    /** A visit saved at logout comes back with the player this long after (ten minutes), if they are still in its ward. */
+    static final long VISIT_KEPT = 20 * 60 * 10;
 
     static final class State {
         final ArrivalLog log = new ArrivalLog();
         final PlacedBlocks placed = new PlacedBlocks();
         /** The highest way ordinal seen in the sample being filled. */
         int slot;
-        long powerUntil = Long.MIN_VALUE, ascentUntil = Long.MIN_VALUE;
+        long powerUntil = Long.MIN_VALUE, ascentUntil = Long.MIN_VALUE, lineUntil = Long.MIN_VALUE;
         double lastX, lastZ;
         boolean seen;
-        /** A BUILT sample went into the log since the last visit check. */
-        boolean builtSince;
+        /** A BUILT (LINE) sample went into the log since the last visit check. */
+        boolean builtSince, lineSince;
         @Nullable String visit;
-        boolean visitByMovement;
+        boolean visitByMovement, visitLine;
         long visitSeen;
     }
 
@@ -72,7 +77,13 @@ public final class Arrival implements ArrivalHooks.Tracker {
             State s = e.getPlayer() == null ? null : STATES.get(e.getPlayer().getUUID());
             if (s != null && !e.isCanceled()) s.placed.remove(e.getPos().asLong());
         });
-        bus.addListener(PlayerEvent.PlayerLoggedOutEvent.class, e -> STATES.remove(e.getEntity().getUUID()));
+        bus.addListener(PlayerEvent.PlayerLoggedOutEvent.class, e -> {
+            if (e.getEntity() instanceof ServerPlayer p) keep(p);
+            STATES.remove(e.getEntity().getUUID());
+        });
+        bus.addListener(PlayerEvent.PlayerLoggedInEvent.class, e -> {
+            if (e.getEntity() instanceof ServerPlayer p) resume(p, p.level().getGameTime());
+        });
         bus.addListener(ServerStoppingEvent.class, e -> STATES.clear());
     }
 
@@ -101,6 +112,7 @@ public final class Arrival implements ArrivalHooks.Tracker {
             Way sample = ArrivalLog.WAYS[s.slot];
             s.log.push(sample);
             if (sample == Way.BUILT) s.builtSince = true;
+            else if (sample == Way.LINE) s.lineSince = true;
             s.slot = 0;
         }
         if (Math.floorMod(now + p.getUUID().hashCode(), (long) VISIT_EVERY) == 0) visit(p, s, now);
@@ -113,6 +125,7 @@ public final class Arrival implements ArrivalHooks.Tracker {
         s.lastZ = p.getZ();
         s.seen = true;
         if (onPlaced(p, s, now)) return Way.BUILT;
+        if (s.lineUntil > now) return Way.LINE;
         if (s.ascentUntil > now) return Way.ASCENT;
         if (s.powerUntil > now) return Way.POWER;
         if (p.isPassenger()) return Way.RIDE;
@@ -147,14 +160,47 @@ public final class Arrival implements ArrivalHooks.Tracker {
             if (!id.equals(s.visit) || now - s.visitSeen > VISIT_GRACE) {
                 s.visit = id;
                 s.visitByMovement = !s.log.contains(Way.BUILT) && s.slot != Way.BUILT.ordinal();
+                s.visitLine = s.visitByMovement && (s.log.contains(Way.LINE) || s.slot == Way.LINE.ordinal());
             } else if (s.builtSince || s.slot == Way.BUILT.ordinal()) {
                 s.visitByMovement = false;
+                s.visitLine = false;
+            } else if (s.lineSince || s.slot == Way.LINE.ordinal()) {
+                // the line carried them on from inside (a plaza walked onto, then the rope up): still by movement only
+                s.visitLine = s.visitByMovement;
             }
             s.visitSeen = now;
         } else if (s.visit != null && now - s.visitSeen > VISIT_GRACE) {
             s.visit = null;
         }
         s.builtSince = false;
+        s.lineSince = false;
+    }
+
+    // ---- a visit kept over a relog ---------------------------------------------------------------------------------
+
+    /** Logging out inside a visit: it is saved with the player (a tower stays a tower over a relog). */
+    static void keep(ServerPlayer p) {
+        State s = STATES.get(p.getUUID());
+        if (s == null || s.visit == null) {
+            if (p.hasData(WildsContent.VISIT)) p.removeData(WildsContent.VISIT);
+            return;
+        }
+        p.setData(WildsContent.VISIT, new Visit(Visit.SCHEMA, s.visit, s.visitByMovement, s.visitLine, p.level().getGameTime()));
+    }
+
+    /** Logging in: the saved visit comes back if it is under {@link #VISIT_KEPT} old and they stand in its ward still. */
+    static void resume(ServerPlayer p, long now) {
+        Visit v = p.getExistingDataOrNull(WildsContent.VISIT);
+        if (v == null) return;
+        p.removeData(WildsContent.VISIT);
+        if (now - v.at() > VISIT_KEPT || now < v.at()) return;
+        var ward = WardHooks.at(p.level(), p.blockPosition());
+        if (ward.isEmpty() || !ward.get().id().equals(v.ward())) return;
+        State s = state(p);
+        s.visit = v.ward();
+        s.visitByMovement = v.byMovement();
+        s.visitLine = v.byLine();
+        s.visitSeen = now;
     }
 
     private static void onPlace(BlockEvent.EntityPlaceEvent e) {
@@ -171,6 +217,7 @@ public final class Arrival implements ArrivalHooks.Tracker {
         switch (way) {
             case POWER -> s.powerUntil = Math.max(s.powerUntil, until);
             case ASCENT -> s.ascentUntil = Math.max(s.ascentUntil, until);
+            case LINE -> s.lineUntil = Math.max(s.lineUntil, until);
             default -> {
                 if (way.ordinal() > s.slot) s.slot = way.ordinal();
             }
@@ -192,6 +239,20 @@ public final class Arrival implements ArrivalHooks.Tracker {
     }
 
     @Override
+    public boolean byLine(ServerPlayer p) {
+        return !WildsModule.on() || lineVerdict(p, p.level().getGameTime());
+    }
+
+    /** The open visit's line, else the window's: the line in it and nothing built. No record at all: no line. */
+    static boolean lineVerdict(ServerPlayer p, long now) {
+        State s = STATES.get(p.getUUID());
+        if (s == null) return false;
+        visit(p, s, now);
+        if (s.visit != null) return s.visitByMovement && s.visitLine;
+        return !s.log.contains(Way.BUILT) && s.slot != Way.BUILT.ordinal() && (s.log.contains(Way.LINE) || s.slot == Way.LINE.ordinal());
+    }
+
+    @Override
     public List<Way> history(ServerPlayer p) {
         State s = STATES.get(p.getUUID());
         return s == null ? List.of() : s.log.toList();
@@ -201,6 +262,6 @@ public final class Arrival implements ArrivalHooks.Tracker {
     public static @Nullable String describeVisit(ServerPlayer p) {
         State s = STATES.get(p.getUUID());
         if (s == null || s.visit == null) return null;
-        return s.visit + (s.visitByMovement ? " by movement" : " built");
+        return s.visit + (s.visitByMovement ? s.visitLine ? " by the line" : " by movement" : " built");
     }
 }
