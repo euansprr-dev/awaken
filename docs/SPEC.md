@@ -5454,6 +5454,19 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   and captions on the way (e.g. Ilse: "Here, take an ember from our fire. Carry it with you, and when you find a spot
   you'd like to live, place it there. That'll be your home."). Lines that grew got time to be read (Bram's briefing:
   28 s, a line every 7; Ilse's beats 90 apart).
+- **Control comes back** (Euan, 2026-10-26: "right after the cutscene, you can't move"; he had to /kill). Every scene
+  that holds the player still goes through one lock, `core.client.InputLock` (bookkeeping `core.InputHolds`): the camera
+  shots, the Registry's waits, Ilse's ember, the ritual. The real input is saved once, by the first holder, and put back
+  only when the last lets go; a holder never saves another's stand-in. (Ilse's hand-over saved the camera's empty
+  stand-in, the camera then gave the real keys back, and the scene's end put the stand-in back for good.) Every hold has
+  a deadline (a shot's own length + 2 s, re-asserted while it plays; Ilse's ember 45 s; a shot of unknown length 2 min):
+  past it the lock lets go and logs `[input]`. A respawn's new player object is held in turn and given its own keys; a
+  logout lets everything go. Ilse's scene also ends server side on walking off (18 blocks), death, logout or her being
+  gone, and her hand empties. Tests: `core_input_holds`, `progression_first_scene_exits`; tour `camp-exit.txt` walks
+  away after the scene.
+- **The far smoke is far only**: the column (`PulseFx.campfire`) fades out within 48 blocks of the fire (gone at 48,
+  whole from 96), where vanilla's campfire smoke is the real thing. Drawn up close its puffs, up to 15 blocks across and
+  110 up, read as a dark dome over the camp and a pale facet in the sky (Euan, 2026-10-26).
 - **Quest fields** (`QuestDef.Step`, schema 1, both optional): `tally` shows a step's count even when it's one ("· 0/1");
   `night` says why a step needs the dark. Objective type `hearth`: done when the player has a Hearth.
 - Dev and tours: `/awaken living first gate|letters|ilse|took|camp`; tour `tools/autopilot/first-scenes.txt` (CI).
