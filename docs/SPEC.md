@@ -976,7 +976,15 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   done on other threads. Every test starts once its force-loaded 5x5 chunks entity-tick, and light levels are read
   after `AwakenTests.awaitLight` (the light engine has taken every block change so far); both wait in real time, at
   most 30 s, by running the chunk system's main-thread queue. Timing budgets assert on the fastest of a few runs.
-  A test that needs untouched ground owns fresh ground away from the test grid (plots sit 6 blocks apart).
+  The test world is superflat (grass at y -61) and tests stand at y 5, so any rock, water or roof a test meets there was
+  left by another test. Every test is padded by 24 (`AwakenTests.PADDING`): plots sit 54 blocks apart instead of 6, and
+  vanilla clears the padded box (blocks and creatures) as it places the test. Every batch starts in a world nobody else is
+  using: the first test of a batch removes every player and every non-player entity left in the overworld and puts back
+  the first batch's game rules, time of day and clear sky (the runner keeps neither; before 2026-10-26 some 240 finished
+  tests' players stood about the grid and the world's directors acted round them). On the GameTest server the world's own
+  directors stay quiet and the tests drive them: no anomaly, gate, happening, ledger body, camp or scene comes to a test's
+  players by itself. A test that builds above its padded box, or reads a column's top, clears its own site to the sky
+  first (`AwakenTests.site`, `clearToSky`).
 - `-Ptests=<name prefixes>` (comma-separated) registers only those GameTests; a filter that matches none fails.
 
 Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools/autopilot.sh`):
