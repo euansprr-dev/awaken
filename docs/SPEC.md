@@ -2063,6 +2063,12 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     its front where you stand, and is put straight behind it when he has no body near; a staged citizen can't be pushed
     (so never shoves you); the opening's speech shows one line at a time (a new line replaces the old, no stacking); the
     key prompt sits just above the speech; the licence goes into the pack so the band lands in your hand.
+  - One thing on screen at a time (Euan, 2026-10-26): the opening's lines and titles wait in one queue and each takes
+    the screen only when the one before has finished (a line stays 50 ticks to 40 + 2 per character; at most 6 wait,
+    the oldest goes unsaid past that); a prompt shows only when nothing is speaking or waiting. Through the infirmary
+    and the Registry the System's notices (`Notices` hold), the tip system (`TipHooks` hold; the scene's own prompts are
+    its tips there) and vanilla toasts are held; the toasts come back one at a time, 2 s apart, after the scene. A
+    staged citizen's name label doesn't show.
   - **Proposed (Euan to confirm): the Atlas reveal right after the band's first K.** The Holo's boot is the natural
     moment: when the K menu closes the Atlas opens by itself with the run you made this morning (the land prints in, the
     bronze thread draws itself), and Bram says "Your band keeps a map. The city, the way you've run it." The run is sent
