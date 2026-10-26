@@ -66,6 +66,11 @@ public final class OpeningModule {
             .copyOnDeath()
             .build());
 
+    static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Awaken.MODID);
+    /** The Hunter's Licence (SPEC §16.4): signed at the Registry desk, your name on it in your own ink. */
+    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> LICENCE = ITEMS.registerSimpleItem(
+            "hunters_licence", p -> p.stacksTo(1).rarity(net.minecraft.world.item.Rarity.UNCOMMON));
+
     static final DeferredRegister<GameRule<?>> RULES = DeferredRegister.create(Registries.GAME_RULE, Awaken.MODID);
     /** World option "Skip the opening" (Create World → Game Rules): new players start awakened on the Roost. */
     public static final DeferredHolder<GameRule<?>, GameRule<Boolean>> SKIP = RULES.register("skip_opening",
@@ -83,6 +88,7 @@ public final class OpeningModule {
 
     public static void init(IEventBus modBus) {
         ATTACHMENTS.register(modBus);
+        ITEMS.register(modBus);
         RULES.register(modBus);
         modBus.addListener(OpeningModule::payloads);
         var bus = NeoForge.EVENT_BUS;

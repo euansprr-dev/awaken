@@ -140,6 +140,47 @@ public final class OpeningPlaces {
         return atV(LENS_X + 0.5, TERRACE + 1, LENS_Z + 3.5);
     }
 
+    // ---- the Registry ceremony (SPEC §16.4): the desk, and where Bram walks you ------------------------------------
+
+    /** The clerk's counter runs north-south at this plan x (OpeningStage.registry); the desk is its free south end. */
+    static final int COUNTER_X = REG_X1 - 3, DESK_Z = LENS_Z + 3;
+
+    /** The middle of the paper laid on the desk (the counter's top). */
+    Vec3 deskPaper() {
+        return atV(COUNTER_X + 0.5, TERRACE + 2.0, DESK_Z + 0.5);
+    }
+
+    /** Where you stand to sign: before the desk, facing east across it. */
+    Vec3 deskStand() {
+        return atV(COUNTER_X - 0.62, TERRACE + 1, DESK_Z + 0.5);
+    }
+
+    /** Bram behind the counter, facing you (west). */
+    Vec3 bramDesk() {
+        return atV(COUNTER_X + 1.5, TERRACE + 1, DESK_Z + 0.5);
+    }
+
+    /** Bram beside the Lens while it reads you (west of the mark, clear of its light). */
+    Vec3 bramLens() {
+        return atV(LENS_X - 2.0, TERRACE + 1, LENS_Z + 2.6);
+    }
+
+    /**
+     * Bram's way from the infirmary to the Lens, through the doorways (straight lines between these: the halls have no
+     * street graph): the infirmary by its door, the atrium either side of its middle, the Registry inside its door.
+     */
+    Vec3[] walk() {
+        double z = DOOR_Z0 + 0.95, y = TERRACE + 1;
+        return new Vec3[]{atV(INF_X1 - 2.5, y, z), atV(ATRIUM_X0 + 2.0, y, z), atV((ATRIUM_X0 + ATRIUM_X1) / 2.0 + 0.5, y, z + 0.6),
+                atV(ATRIUM_X1 - 1.5, y, z), atV(REG_X0 + 2.0, y, z), bramLens()};
+    }
+
+    /** Round the counter's south end to behind it (the counter runs z LENS_Z-2..DESK_Z+1). */
+    Vec3[] toDesk() {
+        double y = TERRACE + 1, z = DESK_Z + 2.65;
+        return new Vec3[]{atV(COUNTER_X - 1.0, y, z), atV(COUNTER_X + 1.5, y, z), bramDesk()};
+    }
+
     /** Inside the Registry hall (the walk there is over). */
     boolean inRegistry(Vec3 p) {
         double px = p.x - cx, pz = p.z - cz, ry = p.y - streetY;

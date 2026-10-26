@@ -9,7 +9,8 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  * the scene).
  */
 public final class OpeningState {
-    public static final int SCHEMA = 1;
+    /** 2 (2026-10-26): the Registry ceremony renumbered the Registry's steps; an older save walks the Registry again. */
+    public static final int SCHEMA = 2;
 
     /** Came through Choir Square to the story's gate: the Ritual and the Void are still the opening's. */
     boolean arrived;
@@ -19,7 +20,7 @@ public final class OpeningState {
     int skyViews;
     /** The infirmary bed (party beds lie side by side). */
     int bed = -1;
-    /** The Registry's step reached (0 walking there, then the Lens, the licence, the wristband, the Status, ...). */
+    /** The Registry's step reached (OpeningRegistry: 0 the walk, the Lens, the desk, the band, wearing it, ...). */
     int step;
     /** When the bell rang and when the square was reached (game time; -1 unknown): the first run's time. */
     long runStart = -1, runEnd = -1;
@@ -42,7 +43,7 @@ public final class OpeningState {
         s.act = act;
         s.skyViews = views;
         s.bed = bed;
-        s.step = step;
+        s.step = schema < 2 ? 0 : step;
         s.runStart = start;
         s.runEnd = end;
         s.pulled = pulled;

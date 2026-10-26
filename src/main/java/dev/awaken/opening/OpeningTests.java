@@ -293,8 +293,10 @@ final class OpeningTests {
                     OpeningDirector.clockOffset += 1;
                     tick(p);
                 }
-                h.assertTrue(steps.equals(List.of(OpeningRegistry.WALK, OpeningRegistry.READ, OpeningRegistry.LICENCE, OpeningRegistry.WRISTBAND,
-                        OpeningRegistry.STATUS, OpeningRegistry.POWER, OpeningRegistry.DIRECTIVE, OpeningRegistry.YOURS)), "every step in order: " + steps);
+                h.assertTrue(steps.equals(List.of(OpeningRegistry.WALK, OpeningRegistry.READ, OpeningRegistry.SIGN, OpeningRegistry.BAND,
+                        OpeningRegistry.WEAR, OpeningRegistry.BOOT, OpeningRegistry.BRIEF, OpeningRegistry.OPEN, OpeningRegistry.ATLAS,
+                        OpeningRegistry.POWER, OpeningRegistry.DIRECTIVE, OpeningRegistry.YOURS)), "every step in order: " + steps);
+                h.assertTrue(dev.awaken.core.api.HoloBand.worn(p), "the band on the wrist when it's over");
                 h.assertTrue(Story.prologue(p) == Prologue.DONE, "the city is yours: " + Story.prologue(p));
                 assertSkipped(h, p, "after the Registry");
                 h.assertTrue(OpeningHooks.stage(p) == null, "no stage once it's over");

@@ -188,6 +188,8 @@ final class OpeningDirector {
         }
         OpeningStage.ensure(server.overworld(), at);
         placeOnRoost(p, at);
+        // a Runner has no band: the Registry hands you one (the Holo is dark until you wear it)
+        dev.awaken.core.api.HoloBand.takeAway(p);
         Story.openingBeat(p, Prologue.SKY, now(p));
         DirectorLog.log(p, "opening", "begins: the card, then the sky");
         sendScene(p);
@@ -559,6 +561,7 @@ final class OpeningDirector {
 
     /** "The city is yours." The opening is over: free play. */
     static void finish(ServerPlayer p) {
+        OpeningRegistry.release(p);
         Story.openingBeat(p, Prologue.DONE, now(p));
         Progression.count(p, REGISTERED); // the Association has you: chains that wait on registration open (SPEC §16.4)
         AwakenNet.send(p, OpeningPayloads.Scene.none());
@@ -588,6 +591,9 @@ final class OpeningDirector {
             p.teleportTo(p.level().getServer().overworld(), r.getX() + 0.5, r.getY(), r.getZ() + 0.5, Set.<Relative>of(), at.roostYaw(), 0F, true);
         }
         OpeningRegistry.giveLicence(p);
+        // the band on your wrist (from your inventory if the Registry already handed it over)
+        dev.awaken.core.api.HoloBand.wear(p);
+        OpeningRegistry.release(p);
         Progression.count(p, REGISTERED); // skipping registers you too
         AwakenNet.send(p, OpeningPayloads.Scene.none());
         OpeningModule.afterOpening(p);

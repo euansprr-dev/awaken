@@ -102,6 +102,7 @@ public final class HoloClient {
         bus.addListener(PlaySoundEvent.class, HoloAudio::onPlaySound);
         // reported each frame (UiHooks.setFocus); other sources (the Atlas) report beside it
         ProgressionClient.installStatusOpener(HoloClient::statusScreen);
+        WristSlot.init();
     }
 
     private static void onPayloads(RegisterClientPayloadHandlersEvent e) {
@@ -191,6 +192,7 @@ public final class HoloClient {
 
     /** Whether E opens the holo inventory: chosen, and the projected look is drawing (its GUI shaders compiled). */
     static boolean holoInventory() {
+        // (the look is dark while the band is off the wrist: then E opens vanilla's inventory, where you put it on)
         return HoloConfig.inventoryStyle == HoloConfig.InventoryStyle.HOLO && HoloGuiLook.INSTANCE.enabled();
     }
 
@@ -244,6 +246,11 @@ public final class HoloClient {
     private static void onTick() {
         HoloConfig.refresh();
         CalmHud.tick();
+        HoloBoot.tick();
+        Minecraft m0 = Minecraft.getInstance();
+        // the band came off with the K menu open: the menu has nothing to stand on
+        if (m0.player != null && !dev.awaken.core.api.HoloBand.worn(m0.player)
+                && (m0.gui.screen() instanceof HoloStatusScreen || m0.gui.screen() instanceof StatusScreen)) m0.gui.setScreen(null);
         Wrist.tickEnd(wristClosing());
         // tell the server which panel the wrist shows (it relays to whoever can see us, at most 4 a second)
         HoloKind want = opening(STATUS) ? HoloKind.STATUS : opening(INVENTORY) ? HoloKind.INVENTORY
@@ -444,5 +451,6 @@ public final class HoloClient {
         DEMO.timeline.close();
         sent = HoloKind.NONE;
         CalmHud.reset();
+        HoloBoot.reset();
     }
 }
