@@ -147,7 +147,9 @@ public final class VillageService {
         Live had = LIVE.get(plan.key);
         if (had != null) return had;
         long t0 = System.nanoTime();
-        var source = VillageRoster.of(plan, level.getSeed());
+        // (SPEC §28.7) with the families of the houses it has grown
+        var mem = dev.awaken.village.trouble.TroubleState.get(level.getServer()).peek(plan.key);
+        var source = VillageRoster.of(plan, level.getSeed(), mem == null ? java.util.List.of() : mem.growth().houses());
         SettlementSpec spec = new SettlementSpec("village:" + plan.key, plan.name, new BlockPos(plan.ox, plan.baseY, plan.oz), plan.radius(), source, false);
         Settlement s = Settlements.register(level, spec).orElse(null);
         if (s == null) {

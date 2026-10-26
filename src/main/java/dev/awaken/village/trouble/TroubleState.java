@@ -44,10 +44,13 @@ public final class TroubleState extends SavedData {
         final List<Integer> homeless;
         final List<Long> camp;
         final List<Integer> charred;
+        /** How it has grown, and the plot rising now (SPEC §28.7, PLAN 6.4). */
+        final dev.awaken.village.growth.Growth.State growth;
 
         Memory(long lastEnd, long festival, int bell, String bellBy, boolean grey, List<String> sealed, List<Integer> left, List<Integer> hollowed,
                Map<Long, String> tokens, List<Long> beams, int grown, Map<String, Long> data, List<Integer> homeless, List<Long> camp,
-               List<Integer> charred) {
+               List<Integer> charred, dev.awaken.village.growth.Growth.State growth) {
+            this.growth = growth;
             this.homeless = new ArrayList<>(homeless);
             this.camp = new ArrayList<>(camp);
             this.charred = new ArrayList<>(charred);
@@ -66,7 +69,8 @@ public final class TroubleState extends SavedData {
         }
 
         static Memory fresh() {
-            return new Memory(-100, -1, 0, "", false, List.of(), List.of(), List.of(), Map.of(), List.of(), 0, Map.of(), List.of(), List.of(), List.of());
+            return new Memory(-100, -1, 0, "", false, List.of(), List.of(), List.of(), Map.of(), List.of(), 0, Map.of(), List.of(), List.of(), List.of(),
+                    dev.awaken.village.growth.Growth.State.fresh());
         }
 
         private static final Codec<Map<Long, String>> TOKENS = Codec.unboundedMap(Codec.STRING, Codec.STRING).xmap(
@@ -102,11 +106,16 @@ public final class TroubleState extends SavedData {
                 Codec.unboundedMap(Codec.STRING, Codec.LONG).optionalFieldOf("data", Map.of()).forGetter(m -> m.data),
                 Codec.INT.listOf().optionalFieldOf("homeless", List.of()).forGetter(m -> m.homeless),
                 Codec.LONG.listOf().optionalFieldOf("camp", List.of()).forGetter(m -> m.camp),
-                Codec.INT.listOf().optionalFieldOf("charred", List.of()).forGetter(m -> m.charred)
+                Codec.INT.listOf().optionalFieldOf("charred", List.of()).forGetter(m -> m.charred),
+                dev.awaken.village.growth.Growth.State.CODEC.optionalFieldOf("growth", dev.awaken.village.growth.Growth.State.fresh()).forGetter(m -> m.growth)
         ).apply(i, Memory::new));
 
         public int bell() {
             return bell;
+        }
+
+        public dev.awaken.village.growth.Growth.State growth() {
+            return growth;
         }
 
         public boolean grey() {
@@ -175,7 +184,7 @@ public final class TroubleState extends SavedData {
         return List.copyOf(troubles);
     }
 
-    Memory memory(String village) {
+    public Memory memory(String village) {
         return memory.computeIfAbsent(village, k -> {
             setDirty();
             return Memory.fresh();

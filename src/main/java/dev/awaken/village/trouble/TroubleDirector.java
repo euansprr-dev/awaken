@@ -159,7 +159,15 @@ public final class TroubleDirector {
         }
         if (!st.clear.isEmpty() && server.getTickCount() % 100 == 13) clearLaid(level, st);
         // what troubles left: the fire's work, smoke over the ruins, the survivors by the well
-        for (VillageService.Live l : VillageService.all()) if (l.settlement().awake()) Lasting.tick(ctx(level, l.key()), l);
+        for (VillageService.Live l : VillageService.all()) {
+            if (!l.settlement().awake()) continue;
+            Plot.Ctx c = ctx(level, l.key());
+            Lasting.tick(c, l);
+            // growth: prosperity raising a house, a family moving in (it goes on with calm villages on)
+            TroubleState.Memory mem = st.memory(l.key());
+            dev.awaken.village.growth.Growth.tick(level, l, mem.growth, day, c.tod(), st::setDirty, st.of(l.key()) != null);
+            dev.awaken.village.growth.Growth.restartIfAlone(level, l);
+        }
         if (server.getTickCount() % 200 == 13 && !quiet) consider(level, st, day);
     }
 

@@ -93,6 +93,21 @@ public class Rescuee extends PathfinderMob implements Npc {
         goalSelector.addGoal(0, new FloatGoal(this));
     }
 
+    /** Not a trouble's: a new family's member walking up the lane to their new house (growth); gone indoors on arrival. */
+    public static final int ARRIVAL = -2;
+
+    /** A new family's member (growth, SPEC §28.7): walks from {@code from} to the door and goes in. */
+    public static @Nullable Rescuee arrival(ServerLevel level, Vec3 from, Vec3 door, String name, Identifier skin, boolean slim, boolean child) {
+        Rescuee r = TroubleContent.RESCUEE.get().create(level, net.minecraft.world.entity.EntitySpawnReason.EVENT);
+        if (r == null) return null;
+        r.become(ARRIVAL, "", -1, name, skin, slim, child);
+        r.snapTo(from.x, from.y, from.z, 0, 0);
+        r.home = door;
+        r.mode(HOME);
+        level.addFreshEntity(r);
+        return r;
+    }
+
     // ---- who they are ---------------------------------------------------------------------------------------------------
 
     /** Who this is: their trouble, village and record, their name, their look, a child or not. */
@@ -263,6 +278,13 @@ public class Rescuee extends PathfinderMob implements Npc {
         super.customServerAiStep(level);
         int m = mode();
         // their trouble ended while this body slept in an unloaded chunk: they've long since gone home
+        if (trouble == ARRIVAL) {
+            // a new family's member: at their door, they go in (their village holds them from its next waking)
+            if (m == EMBRACE || tickCount > 20 * 90) discard();
+            else if (m == HOME && home != null && tickCount % 10 == 0) getNavigation().moveTo(home.x, home.y, home.z, 1.0);
+            if (m == HOME && home != null && distanceToSqr(home) < 1.6 * 1.6) mode(EMBRACE);
+            return;
+        }
         if (tickCount % 200 == 17 && TroubleState.get(level.getServer()).byId(trouble) == null) {
             if (carried()) setDown(false);
             discard();
