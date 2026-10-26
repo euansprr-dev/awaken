@@ -26,7 +26,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * A climb refuses what you build (SPEC §17.25; the progression plan §5.5, Euan: "If I was someone who didn't know about
+ * A climb refuses what you build (SPEC §17.27; the progression plan §5.5, Euan: "If I was someone who didn't know about
  * the grapple, I'd just look at that and use blocks to build up. So we should probably block that."). At a Tether
  * Spire, a sky platform or a hero tree's crown, a survival player's block (or bucket) is refused at the first one:
  * its ghost falls away in grains of its own colour ({@link WardFx.Kind#SHED}) and the place answers, worded by what

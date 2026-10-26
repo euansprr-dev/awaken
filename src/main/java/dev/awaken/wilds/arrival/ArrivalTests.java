@@ -99,7 +99,7 @@ public final class ArrivalTests {
         });
     }
 
-    /** A built visit kept over a relog (SPEC §17.25), and the line's verdict. */
+    /** A built visit kept over a relog (SPEC §17.27), and the line's verdict. */
     static void relog() {
         AwakenTests.registerIsolated("wilds_arrival_survives_relog", 200, h -> {
             ServerLevel level = h.getLevel();

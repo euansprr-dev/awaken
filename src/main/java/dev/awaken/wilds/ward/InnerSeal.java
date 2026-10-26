@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * A climb cache's inner seal (SPEC §17.25), kept on the chest's block entity: the best roll's table, and everyone it has
+ * A climb cache's inner seal (SPEC §17.27), kept on the chest's block entity: the best roll's table, and everyone it has
  * opened to. Each climber by the line gets the best roll once; nobody else's open spends it. Schema 1.
  */
 public record InnerSeal(int schemaVersion, String best, List<UUID> opened) {

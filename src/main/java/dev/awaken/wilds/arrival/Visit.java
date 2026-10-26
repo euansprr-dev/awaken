@@ -5,7 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.mojang.serialization.Codec;
 
 /**
- * A ward visit saved at logout (SPEC §17.25): which ward, how the player came into it, and when. A relog inside the
+ * A ward visit saved at logout (SPEC §17.27): which ward, how the player came into it, and when. A relog inside the
  * ward within {@link Arrival#VISIT_KEPT} picks it back up, so towering up and relogging no longer reads as a fresh
  * arrival by movement. Saved with the player, schema 1; taken off again at the next login.
  */

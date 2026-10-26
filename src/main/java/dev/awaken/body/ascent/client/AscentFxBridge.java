@@ -17,7 +17,7 @@ public final class AscentFxBridge {
     }
 
     /**
-     * A sealed rank door breathing its rank's colour (SPEC §17.25): a few motes lift off the core's face, so a door says
+     * A sealed rank door breathing its rank's colour (SPEC §17.27): a few motes lift off the core's face, so a door says
      * which rank it waits for before anyone touches it.
      */
     public static void doorBreath(BlockPos pos, int colour) {

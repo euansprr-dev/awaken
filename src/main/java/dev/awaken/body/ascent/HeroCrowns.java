@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * the Lumen Spire the rings are its night route, a spiral of light up to the pads; on the Colossus they carry you into
  * the dome, whose limbs and masses are the swinging. The layout comes from the tree's own blueprint
  * ({@link HeroWorldgen#blueprint}), so it fits the tree exactly; nothing is placed but into air. A ward covers the
- * whole canopy from a little over the foot (a climb: a block is refused there, SPEC §17.25), and the Horizon line names
+ * whole canopy from a little over the foot (a climb: a block is refused there, SPEC §17.27), and the Horizon line names
  * each crowned tree near you as a rope's climb ("Elder Colossus · needs Tether") until you have reached its crown.
  */
 public final class HeroCrowns {

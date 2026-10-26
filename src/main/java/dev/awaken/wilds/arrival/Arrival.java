@@ -33,7 +33,7 @@ import java.util.UUID;
  * that led there, and anything built while inside spoils it until the player has left for {@link #VISIT_GRACE}. So
  * towering up, waiting 20 s and then opening the chest still reads as a tower. Outside any ward, the window itself is
  * the verdict. A visit also knows whether the Ascent's line carried the player ({@link Way#LINE}, on the way in or
- * since): what a climb site's payoff answers (SPEC §17.25). The history is short on purpose and never saved; the open
+ * since): what a climb site's payoff answers (SPEC §17.27). The history is short on purpose and never saved; the open
  * visit is, for {@link #VISIT_KEPT}, so a relog in a ward keeps a tower a tower ({@link Visit}).
  */
 public final class Arrival implements ArrivalHooks.Tracker {

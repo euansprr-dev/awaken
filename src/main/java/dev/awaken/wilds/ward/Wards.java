@@ -62,7 +62,7 @@ public final class Wards {
 
     /**
      * The ward whose rules hold at {@code pos}: none with wards off, and none inside a Hearth's radius (home is home),
-     * except a climb's: a Hearth Anchor on a spire's plaza must not make stairs to its crown (SPEC §17.25).
+     * except a climb's: a Hearth Anchor on a spire's plaza must not make stairs to its crown (SPEC §17.27).
      */
     public static Optional<WardHooks.Ward> enforced(ServerLevel level, BlockPos pos) {
         if (!on()) return Optional.empty();

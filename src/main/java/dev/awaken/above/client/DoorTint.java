@@ -10,7 +10,7 @@ import net.minecraft.world.level.block.state.properties.Property;
 import java.util.Set;
 
 /**
- * A sealed door's light (SPEC §17.25): the seams of its panels and the rune on its core are drawn full bright in the
+ * A sealed door's light (SPEC §17.27): the seams of its panels and the rune on its core are drawn full bright in the
  * colour of the rank the door waits for, so a hunter reads it from across the forecourt before touching it. A panel
  * that doesn't know its rank yet (an older door, until its core paints it) keeps the old brass amber. One source per
  * block: each names only its own block's rank property (the two blocks' "rank" are different properties).

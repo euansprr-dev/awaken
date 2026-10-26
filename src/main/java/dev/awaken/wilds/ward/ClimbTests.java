@@ -22,7 +22,7 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import java.util.Optional;
 import java.util.UUID;
 
-/** The climbs' GameTests (SPEC §17.25): a block refused at the first one, and a cache's inner seal. */
+/** The climbs' GameTests (SPEC §17.27): a block refused at the first one, and a cache's inner seal. */
 final class ClimbTests {
     private ClimbTests() {}
 
