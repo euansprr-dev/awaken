@@ -187,7 +187,7 @@ void main() {
         ivec2 chunk = (FarCamInt.xz >> 4) + ivec2(floor(rel / 16.0));
         if (underReal && texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5) {
             // debug view 2: where the mask hides far terrain, red instead (red that shows is a hole the chunks leave)
-            if (FarCam.w > 1.5) { fragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
+            if (FarCam.w > 1.5 && FarCam.w < 2.5) { fragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
             discard;
         }
     }
@@ -224,7 +224,7 @@ void main() {
     float density = vInfo.b;
     float rock = 0.0, snow = 0.0, canopy = 0.0;
     if (water) {
-        top = seaFloor(top, world, normalize(vRel), depth, horizontal);
+        if ((int(FarCam.y) & 128) == 0) top = seaFloor(top, world, normalize(vRel), depth, horizontal);
     } else {
         float jag = 0.25 * (grain - 0.5);
         vec3 STONE = ROCKS[min((flags >> 4) & 7, 4)];
@@ -272,7 +272,9 @@ void main() {
         // than the real water at the edge)
         c = mix(c, FogColor.rgb, pow(1.0 - facing, 5.0) * 0.55);
     }
-    if (FarCam.w > 0.5 && generated) c = vec3(1.0, 0.0, 1.0);
+    if (FarCam.w > 0.5 && FarCam.w < 1.5 && generated) c = vec3(1.0, 0.0, 1.0);
+    // debug view 3: all far terrain blue (with its far trees red), so any far piece over the loaded world is plain
+    if (FarCam.w > 2.5) { fragColor = vec4(0.0, 0.3, 1.0, 1.0); return; }
     c *= light * texture(LightSampler, vec2(0.5 / 16.0, 15.5 / 16.0)).rgb;
     // valley cloud fills hollows: the bake's valley shade (1 open, 0.65 a deep hollow) says how deep this one is
     fragColor = vec4(farAir(farMist(c, pos, smoothstep(0.96, 0.78, vInfo.a)), pos), 1.0);

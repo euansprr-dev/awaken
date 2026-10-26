@@ -43,4 +43,5 @@ void main() {
     vec3 n = vFace.xyz;
     c *= farLight(n, vFace.w) * texture(LightSampler, vec2(0.5 / 16.0, 15.5 / 16.0)).rgb;
     fragColor = vec4(farAir(farMist(c, vRel, vValley), vRel), 1.0);
+    if (FarCam.w > 2.5) fragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }

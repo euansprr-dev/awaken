@@ -128,7 +128,42 @@ shot fs2t_dusk_market_street_off
 cmd awaken city view laundry_lane
 wait 40
 shot fs2t_dusk_laundry_lane_off
+# the quay again with every far piece tinted (debug 3: far terrain blue, far trees red): none may stand in the loaded city
+cmd awaken city view quay
 farsight on
+wait 300
+shot fs2t_dusk_quay_debug_before
+farsight debug 3
+wait 4
+shot fs2t_dusk_quay_debug
+farsight debug 0
+# a Lumen Forest outside the city at dusk, looking up through the canopy (Euan: far shapes over the trees); then each of
+# today's far-water changes off in turn, the far trees off, and Far Sight off: what changes shows whose the shapes are
+cmd awaken terrain visit awaken:lumen_forest
+wait 300
+cmd tp @s ~ ~2 ~ 0 -35
+wait 200
+shot fs2f_all
+farsight debug 3
+wait 4
+shot fs2f_debug
+farsight debug 0
+farsight part seaunder off
+wait 120
+shot fs2f_no_seaunder
+farsight part seafloor off
+wait 20
+shot fs2f_no_seafloor
+farsight part trees off
+wait 20
+shot fs2f_no_trees
+farsight off
+wait 20
+shot fs2f_farsight_off
+farsight on
+farsight part seaunder on
+farsight part seafloor on
+farsight part trees on
 farsight status
 info
 quit

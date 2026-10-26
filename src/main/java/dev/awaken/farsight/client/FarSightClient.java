@@ -177,7 +177,7 @@ public final class FarSightClient {
         int far = shown - 1;
         long farWindow = field.valid[far] ? Rings.key(field.winX[far], field.winZ[far]) : Long.MIN_VALUE;
         // ring 0 (the render distance's own) loads all its patches: its sea is drawn under the real water (FarRenderer.rect)
-        for (int r = far; r >= 0; r--) field.place(r, cam.x, cam.z, r == 0 ? 0f : covered, level, store, workers);
+        for (int r = far; r >= 0; r--) field.place(r, cam.x, cam.z, r == 0 && (partsOff & 64) == 0 ? 0f : covered, level, store, workers);
         for (int i = 0; i < CHANGES_PER_FRAME; i++) {
             long chunk = store.pollChanged();
             if (chunk == Long.MIN_VALUE) break;
@@ -315,14 +315,15 @@ public final class FarSightClient {
         }
     }
 
-    /** Development view: 0 normal, 1 generated-layer cells tinted magenta, 2 far terrain under the chunk mask red (autopilot {@code farsight debug <n>}). */
+    /** Development view: 0 normal, 1 generated-layer cells tinted magenta, 2 far terrain under the chunk mask red, 3 every far tree red and far terrain blue (autopilot {@code farsight debug <n>}). */
     static int debug;
     /**
      * Parts switched off for measuring (autopilot {@code farsight part <name> on|off}): 1 the per-pixel erosion detail,
      * 2 the trees, 4 the valley cloud, 8 the bake, 16 the workers' pacing.
      */
     static int partsOff;
-    private static final String[] PARTS = {"detail", "trees", "mist", "bake", "pace", "steady"};
+    // seaunder: ring 0's sea drawn under the real chunks (4aa1b25f); seafloor: the far water's own floor (0cbdd9e8)
+    private static final String[] PARTS = {"detail", "trees", "mist", "bake", "pace", "steady", "seaunder", "seafloor"};
 
     /** Autopilot: {@code farsight on|off|status|debug <n>}. */
     public static String autopilot(String arg) {
@@ -340,7 +341,7 @@ public final class FarSightClient {
                 else partsOff &= ~(1 << i);
                 return "parts off " + partsOff;
             }
-            return "unknown part " + w[0] + " (detail|trees|mist|bake|pace|steady)";
+            return "unknown part " + w[0] + " (detail|trees|mist|bake|pace|steady|seaunder|seafloor)";
         }
         switch (a) {
             case "on" -> {

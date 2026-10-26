@@ -289,7 +289,7 @@ final class FarRenderer implements AutoCloseable {
                 // shows the sea, never the sky
                 float fx = Math.max(Math.abs(ax), Math.abs(bx)), fz = Math.max(Math.abs(az), Math.abs(bz));
                 long range = range(field, r, x, z, w, h);
-                boolean sea = r == 0 && range != Long.MIN_VALUE && (int) (range >> 32) + 32 <= seaLevel + 1;
+                boolean sea = r == 0 && (FarSightClient.partsOff & 64) == 0 && range != Long.MIN_VALUE && (int) (range >> 32) + 32 <= seaLevel + 1;
                 // (and only where every chunk under it is shown: a chunk still meshing leaves the far land to cover it)
                 boolean shown = range != Long.MIN_VALUE && (r > 0 || allShown(ax, az, bx, bz));
                 if (!sea && shown && fx * fx + fz * fz < covered * covered) continue;
