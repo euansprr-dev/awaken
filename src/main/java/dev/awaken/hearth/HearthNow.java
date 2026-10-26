@@ -75,6 +75,15 @@ public final class HearthNow {
             out.add(why);
             return out;
         }
+        // (W6) someone you know waits for a bed, or a room for their work: "Oren will come when there's a bed for him"
+        if (!h.hearthfire() && p.level() instanceof net.minecraft.server.level.ServerLevel sl) {
+            for (var w : dev.awaken.hearth.settle.Settlers.waiting(sl, h)) {
+                if (w.why().startsWith("Tier") || w.why().startsWith("on the")) continue;
+                out.add(NowHooks.Suggestion.of("hearth:people/" + w.who().id(), 52, dev.awaken.hearth.guide.Fit.first(dev.awaken.hearth.guide.Fit.TRACKER,
+                        w.line(), w.who().given() + " needs a room", w.who().given() + ": a room")));
+                return out;
+            }
+        }
         RoomType next = nextRoom(p, h);
         if (next != null) out.add(NowHooks.Suggestion.of("hearth:room/" + next.name().toLowerCase(java.util.Locale.ROOT), 50, progress(next, h)));
         return out;

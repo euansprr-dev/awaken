@@ -157,6 +157,7 @@ public final class HearthModule {
         HearthCommands.register();
         HearthTests.register();
         HomeTests.register();
+        dev.awaken.hearth.settle.SettleTests.register();
         TogetherHearthTests.register();
         dev.awaken.hearth.guide.GuideTests.register();
     }

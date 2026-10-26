@@ -55,6 +55,12 @@ public final class HearthClient {
         StatusSections.add(StatusSections.Tab.STATUS, new HearthSection());
         dev.awaken.citizens.client.CityGlow.source(HomeClient.GLOW);
         CodexEntries.addSource(HearthClient::rumours);
+        // (W6) from Tier IV your village has its name on the Atlas, as the settlements of the world do
+        dev.awaken.core.api.MapMarks.register(p -> {
+            var v = p.getData(HearthContent.VIEW.get());
+            if (!v.has() || v.tier() < 4 || v.home().name().isEmpty()) return List.of();
+            return List.of(new dev.awaken.core.api.MapMarks.Mark(v.pos(), 0xFFE2B450, v.home().name() + (v.tier() >= 5 ? " · your town" : " · your village"), true));
+        });
     }
 
     private static void renderers(EntityRenderersEvent.RegisterRenderers e) {

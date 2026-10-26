@@ -254,7 +254,7 @@ final class Categories {
         @Override
         void drawRecipe(Recipes.Duty r, GuiGraphicsExtractor g, double mx, double my) {
             JeiLook.title(g, "Mine Echo", 9, 8, Glass.TITLE);
-            String chip = "ANCHOR " + Upgrades.roman(r.tier());
+            String chip = "SHAFT TO Y " + new int[]{48, 24, 8, -12, -40}[Math.max(0, Math.min(4, r.tier() - 1))];
             int cw = JeiLook.font().width(chip) + 8;
             JeiLook.chip(g, chip, W - 8 - cw, 6, Glass.LANTERN);
             JeiLook.slot(g, 9, 23);
@@ -265,8 +265,8 @@ final class Categories {
                 int pw = JeiLook.font().width(pct);
                 JeiLook.text(g, pct, 37 + 19 * i + 9 - pw / 2, 44, Glass.TEXT);
             }
-            JeiLook.wrap(g, "One haul every " + dev.awaken.hearth.echo.Duty.MINE_TICKS / 1200 + " minutes, into a chest by the pad (a level "
-                    + Recipes.DUTY_ECHO_LEVEL + " Echo)", 9, 56, W - 18, Glass.LABEL, 2);
+            JeiLook.wrap(g, "Each evening from your Mine head's shaft, into a chest by its hatch; a lode's ore too if the shaft cut one",
+                    9, 56, W - 18, Glass.LABEL, 2);
         }
     }
 

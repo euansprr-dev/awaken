@@ -335,8 +335,9 @@ public final class HearthService {
             String who = Duty.workerName(level, h.get(), pos);
             w.row(Component.literal("Working"), Component.literal(who == null ? "Nobody yet: bind another Echo" : who));
             if (role == EchoRole.MINE) {
-                int prog = h.get().mineProgress.getOrDefault(pos, 0);
-                w.row(Component.literal("Next haul"), Component.literal(Math.max(0, (Duty.MINE_TICKS - prog) / 20) + "s of work"));
+                // (W6) a Mine Echo works your Mine head's shaft: its haul comes up with the evening's
+                w.row(Component.literal("Works"), Component.literal(h.get().hasRoom(RoomType.MINE_HEAD)
+                        ? "your shaft · the haul comes up each evening" : "nothing yet · needs a Mine head (a hatch over a shaft 16 deep, with a ladder)"));
             }
         }
         Signal.send(sp, w.ttl(20 * 6).build());

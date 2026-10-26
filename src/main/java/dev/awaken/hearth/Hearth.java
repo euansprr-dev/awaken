@@ -101,4 +101,28 @@ public final class Hearth {
     public static boolean atHome(ServerPlayer player) {
         return player.level().dimension() == Level.OVERWORLD && HearthService.sharedAt(player, player.blockPosition()).isPresent();
     }
+
+    /**
+     * (W6, SPEC §28.8) A home grown into a village (Tier IV, or a town at V): its name (on the Atlas), its owner, its Anchor
+     * and land, how many live there, and where a festival would gather (its hall's middle, else the Anchor's yard) and
+     * its bell tower. The hook W4's festival and W7's caravans use; the people engine's settlement for it is
+     * {@code hearth:<owner>} (Settlements).
+     */
+    public record Village(UUID owner, String name, BlockPos anchor, int radius, int tier, int people, BlockPos gather,
+                          Optional<BlockPos> bell) {}
+
+    public static List<Village> villages(net.minecraft.server.MinecraftServer server) {
+        List<Village> out = new java.util.ArrayList<>();
+        for (HearthRecord h : HearthData.get(server).all()) {
+            if (!TierRules.village(h)) continue;
+            BlockPos gather = h.pos;
+            Optional<BlockPos> bell = Optional.empty();
+            for (dev.awaken.hearth.room.Room r : h.rooms) {
+                if (r.types().contains(RoomType.HALL)) gather = r.centre();
+                if (r.types().contains(RoomType.BELL_TOWER)) bell = Optional.of(r.centre());
+            }
+            out.add(new Village(h.owner, h.displayName(), h.pos, h.radius(), h.tier, h.folk.living(), gather, bell));
+        }
+        return out;
+    }
 }

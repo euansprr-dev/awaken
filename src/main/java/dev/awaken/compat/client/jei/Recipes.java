@@ -143,13 +143,17 @@ final class Recipes {
     static List<Duty> duties() {
         List<Duty> out = new ArrayList<>();
         ItemStack pad = new ItemStack(HearthContent.ROLE_PAD_ITEMS.get(EchoRole.MINE).get());
+        // (W6) a Mine Echo works your Mine head's shaft: what comes up is the shaft's depth (five depths, high to deep)
+        int[] feet = {48, 24, 8, -12, -40};
         for (int tier = 1; tier <= 5; tier++) {
             Map<Item, int[]> counts = new LinkedHashMap<>();
             Map<Item, Integer> amount = new LinkedHashMap<>();
+            net.minecraft.util.RandomSource rnd = net.minecraft.util.RandomSource.create(tier * 7919L);
             for (int roll = 0; roll < 1000; roll++) {
-                ItemStack s = dev.awaken.hearth.echo.Duty.rollOre(roll, DUTY_ECHO_LEVEL, tier);
-                counts.computeIfAbsent(s.getItem(), k -> new int[1])[0]++;
-                amount.put(s.getItem(), s.getCount());
+                for (ItemStack s : dev.awaken.hearth.settle.MineHead.haul(rnd, feet[tier - 1], null, 0)) {
+                    counts.computeIfAbsent(s.getItem(), k -> new int[1])[0]++;
+                    amount.merge(s.getItem(), s.getCount(), Math::max);
+                }
             }
             List<ItemStack> ores = new ArrayList<>();
             List<Integer> chance = new ArrayList<>();

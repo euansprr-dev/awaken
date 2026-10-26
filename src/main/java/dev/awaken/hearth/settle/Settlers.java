@@ -101,6 +101,11 @@ public final class Settlers {
     private static final Set<String> HE = Set.of("Oren", "Teodor", "Pell", "Aldo", "Dunstan", "Fen", "Garrick", "Ivo", "Jory", "Maddox",
             "Osric", "Rowan", "Ulric", "Tobin");
 
+    /** The word for their work ("smith", "herbalist", "miner"). */
+    public static String title(Folk.Person p) {
+        return Work.title(p);
+    }
+
     /** "him", "her" or "them", for the guide's lines ("Oren will come when there's a bed for him"). */
     public static String them(Folk.Person p) {
         return SHE.contains(p.given()) ? "her" : HE.contains(p.given()) ? "him" : "them";

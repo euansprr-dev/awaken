@@ -74,7 +74,7 @@ public final class HomePeople {
     }
 
     /** The people or rooms changed: rebuild at the next check. */
-    static void changed(HearthRecord h) {
+    public static void changed(HearthRecord h) {
         HOMES.computeIfAbsent(h.owner, k -> new Home()).dirty = true;
     }
 
