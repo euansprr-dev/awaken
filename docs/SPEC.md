@@ -3746,6 +3746,30 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   model). Lab numbers (the review set, 2026-10-26): every slash and chop crosses within 0.11 of the half-frame of the
   crosshair (most within 0.05; the Chain-blade's and War-staff's long blades +0.11..0.13), edge lead 0.87-1.00 through
   the blow (before: Longsword strikes 1 and 2 at 0.41 and 0.17, crossing 0.45 above). Test `arms_fp_swings`.
+- **Forms** (tools/arms/forms.py writes them into archetypes.json's swing rows; Euan 2026-10-26: "a dagger should feel
+  like you're actually stabbing forwards... a hammer... from up to down, or side to side... the big thing first...
+  everything is just being swiped... very floaty"): every strike is done as its weapon is really used. Cuts turn the
+  arm and weapon about the pivot: slash, chop (raised above the view, down), slam (the hammer raised overhead, crashed
+  down head first), swing (level, a hammer's or axe's head leading), rise, whirl (the 360-degree finishers), reap (the
+  scythe), lash (the chain-blade: the wrist whips twice as hard). Thrusts drive the point along the aim to the target
+  (stab: a straight line, from below, overhand, or reverse-grip edge-down); the gauntlets punch (jab, hook on an arc,
+  upper); the twinblades and war-staff spin about their middle; the shieldblade bashes with its shield. The combos:
+  Daggers stab, rising stab, a reverse-grip rip, an overhand plunge, a spinning backhand (heavy: a deep stab); Maul an
+  overhead slam, a head-first side swing, a ground-shaking slam, an uppercut; Axe a diagonal chop, a level backhand, an
+  overhead chop, a wide swing; Longsword forehand, rising backhand, overhead chop, thrust; Greatblade a diagonal cleave,
+  a level sweep, a whirl, an overhead chop; Spear and Rapier thrusts with a haft sweep or a flick cut third; Katana a
+  level draw cut, a rising cut, a chop, a thrust; Glaive wide swings and a whirl; Scythe reaps, an overhead reap and a
+  whirl; Gauntlets jab, cross, hook, uppercut, straight; Chain-blade lashes and a lasso whirl; Shieldblade cut, bash,
+  chop, stab; War-staff swings, a chop and spins; Precursor Arm cuts and a thrust. A stab, jab or bash strikes narrow on
+  the server (arc at most 30 degrees, the thrust's whoosh; the Daggers' stabs became single-target, their rip and
+  backhand 90 degrees). Weight by style (snap: Daggers, Rapier, Gauntlets; blade; heavy: Axe, Maul, Greatblade, Glaive,
+  Scythe, War-staff): how much of the wind-up reaches the cocked pose and how long it hangs there creeping back (heavy
+  70%), the drive's curve (progress to the power 1.25 snap, 2.2 blade, 3.4 heavy: a heavy blow starts slow and
+  arrives explosively on the hit), how far it carries past (0.45 / 1 / 1.5), the wrist's whip (6 / 18 / 7 degrees), the
+  step in (0.04 / 0.07 / 0.13 blocks), how it comes home (snapped back, eased, hauled back after a beat). The view leans
+  with every blow (FpSwings' camera keys, first person, scaled by the kick setting): a slam pitches it down on the
+  crash (4.5 degrees heavy), a cut turns and leans it the way the blade travels, a whirl turns it furthest; heavy blows
+  draw it the other way first. The third-person body of each move is picked by its form (arms_moves.py styled()).
 - **First person, the hold** (tools/art/specs/arms_holds.py; Euan 2026-10-26: "a spear should still feel like you're
   holding a spear. Right now in first person, it just looks like a sword"): every style is held as that weapon really
   is, written in view terms (where the business end points: degrees left of ahead and up; its roll about its length;

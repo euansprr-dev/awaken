@@ -158,18 +158,30 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null) return null;
-        if (stack != p.getMainHandItem()) return other(mc, stack);
         boolean hand = mc.options.getCameraType().isFirstPerson();
+        if (stack != p.getMainHandItem()) {
+            // the off hand's twin (a pair, the Daggers): it lays the ribbon while it strikes, at rest otherwise
+            if (stack == ArmsOffHand.twinOf(p)) return ArmsHands.offStrikes() ? twin(p, hand) : null;
+            return other(mc, stack);
+        }
+        int wielder = ArmsHands.offStrikes() ? -1 : p.getId();
         int energy = 0, flash = 0;
         if (ArmsPredict.fights(p)) {
             float charge = ArmsPredict.charge();
             energy = charge >= 0 ? Math.round(charge * 255) : ArmsPredict.resonance >= ArmsRules.RESONANCE_MAX ? 150 : 0;
             flash = ArmsPredict.glinting() || ArmsPredict.perfectHeavy && ArmsPredict.move == Archetype.Move.HEAVY ? 255 : 0;
         }
-        if (last == null || last.energy() != energy || last.flash() != flash || last.hand() != hand || last.wielder() != p.getId()) {
-            last = new State(energy, flash, hand, p.getId());
+        if (last == null || last.energy() != energy || last.flash() != flash || last.hand() != hand || last.wielder() != wielder) {
+            last = new State(energy, flash, hand, wielder);
         }
         return last;
+    }
+
+    private static @Nullable State twinState;
+
+    private static State twin(LocalPlayer p, boolean hand) {
+        if (twinState == null || twinState.hand() != hand || twinState.wielder() != p.getId()) twinState = new State(0, 0, hand, p.getId());
+        return twinState;
     }
 
     /** Someone else's blade: at rest, but its holder known, so its blows trace (a few kept, nothing made per frame). */

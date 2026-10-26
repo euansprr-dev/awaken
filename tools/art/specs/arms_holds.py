@@ -119,10 +119,11 @@ HOLDS = {
     "rapier": dict(yaw=20, pitch=18, grip=(-0.04, 0.03, -0.02)),
     # two hands at the middle, the edge up, the point toward the target (chudan)
     "katana": dict(yaw=10, pitch=36, roll=90, grip=(-0.14, 0.0, 0.04)),
-    # the shaft across the lower view, gripped part way, the head forward and up, the butt back past the hand
-    "spear": dict(yaw=24, pitch=22, grip=(0.0, 0.02, 0.08)),
+    # the shaft across the lower view, gripped part way, the head forward and up, the butt back past the hand; held
+    # larger (nearer its size in F5) and turned so its head sits up and left of the aim point, not on it
+    "spear": dict(yaw=40, pitch=24, grip=(0.02, 0.0, 0.06), size=1.3),
     # as the spear, the blade higher, its edge in toward the middle
-    "glaive": dict(yaw=18, pitch=34, grip=(0.0, 0.0, 0.06), cut=LEFT),
+    "glaive": dict(yaw=54, pitch=22, grip=(0.02, -0.02, 0.05), size=1.2, cut=LEFT),
     # the snath up, the blade at the top reaching in across the view
     "scythe": dict(yaw=8, pitch=64, grip=(0.02, -0.04, 0.03), cut=LEFT),
     # held at its middle across the body, one end low right, the other up to the left
@@ -133,8 +134,9 @@ HOLDS = {
     "maul": dict(yaw=6, pitch=58, roll=90, grip=(-0.04, -0.10, 0.04)),
     # one hand, the head up, its bit in toward the middle
     "axe": dict(yaw=10, pitch=58, grip=(0.02, -0.04, 0.02), cut=LEFT),
-    # short, the point forward, a little larger than true so its blade reads
-    "daggers": dict(yaw=18, pitch=34, grip=(0.0, 0.0, 0.0), size=1.15),
+    # short, the point forward, a little larger than true so its blade reads; one in each hand (the off hand's twin,
+    # ArmsOffHand), held up enough that both blades show whole
+    "daggers": dict(yaw=14, pitch=42, grip=(-0.02, 0.07, -0.02), size=1.15),
     # held at the middle, the blades either way across the view
     "twinblades": dict(yaw=62, pitch=34, grip=(-0.04, 0.02, 0.0)),
     # the head forward on its coiled chain

@@ -141,13 +141,32 @@ final class ArmsHands {
             float k = Mth.sin(c * 2.7F) * Math.min(1F, c / 10F);
             D.add(k * 0.008F, k * 0.012F, 0);
         }
-        if (inv < 0) {
-            D.x = -D.x;
-            Q.set(Q.x, -Q.y, -Q.z, Q.w); // the turn mirrored across the view's vertical plane
-        }
-        HandPose.viewMove(inv * HX, HY, HZ, D.x, D.y, D.z, Q, MOVE);
-        FirstPerson.View.add(v.main, 1, MOVE[0], MOVE[1], MOVE[2], MOVE[3], MOVE[4], MOVE[5]);
+        // which hand strikes: a weapon in each hand (the Daggers) strikes with the off hand too, the main's move mirrored
+        FpSwings.Hand hand = preview != null ? FpSwings.Hand.MAIN : FpSwings.hand(FpSwings.style(style.id()), m);
+        if (hand != FpSwings.Hand.OFF) addMove(v.main, inv);
+        if (hand != FpSwings.Hand.MAIN) addMove(v.off, -inv);
         return true;
+    }
+
+    private static final org.joml.Vector3f D2 = new org.joml.Vector3f();
+    private static final org.joml.Quaternionf Q2 = new org.joml.Quaternionf();
+
+    /** The sampled move (D, Q, authored for a right hand) onto one hand's view move, mirrored for a left one. */
+    private static void addMove(float[] to, int side) {
+        D2.set(D);
+        Q2.set(Q);
+        if (side < 0) {
+            D2.x = -D2.x;
+            Q2.set(Q2.x, -Q2.y, -Q2.z, Q2.w); // the turn mirrored across the view's vertical plane
+        }
+        HandPose.viewMove(side * HX, HY, HZ, D2.x, D2.y, D2.z, Q2, MOVE);
+        FirstPerson.View.add(to, 1, MOVE[0], MOVE[1], MOVE[2], MOVE[3], MOVE[4], MOVE[5]);
+    }
+
+    /** The move now in play strikes with the off hand alone (its blade lays the ribbon, the main's rests). */
+    static boolean offStrikes() {
+        var style = ArmsPredict.style;
+        return style != null && ArmsPredict.move != null && FpSwings.hand(FpSwings.style(style.id()), ArmsPredict.move) == FpSwings.Hand.OFF;
     }
 
     /** Autopilot only: hold the hands at a fraction (0..1) through a move, for a still review frame. */
