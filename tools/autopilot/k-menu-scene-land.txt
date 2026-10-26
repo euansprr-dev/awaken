@@ -1,0 +1,59 @@
+# The map in the world, proven on real land (SPEC §30.5): away from Carillon (no gate forms in its basin and the hop
+# doesn't leave it; fall damage off so the teleport can't kill you, which turned the 26 Oct hand-back tour's map shots
+# into the death screen's fallback table), a D-rank gate near, the land round you revealed and loaded, then: the scene
+# by day (the voxel diorama and the gate's pillar), zoomed out (the clouds over what you haven't explored, the far gate
+# riding them), a gate picked (Tab), after Point me there (T) back to your eyes, and the scene at night.
+# Run on CI: tools/tour-ci.sh tools/autopilot/k-menu-scene-land.txt 1200 PACK=perf,world TECTONIC=awakened
+world kmenuSceneLand survival 20261026
+waitworld
+gui 0
+window 1440 900
+info
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd weather clear 1000000
+cmd time set 5000
+cmd awaken opening skip
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance infinite 4 true
+cmd awaken admin xp 4000
+wait 20
+cmd tp @s 3000 200 3000
+wait 240
+cmd awaken gate hop
+wait 200
+cmd awaken gate open D
+wait 120
+cmd awaken atlas reveal 260
+wait 400
+screen close
+wait 10
+screen map
+wait 40
+shot s01_scene_day
+scroll -6
+wait 100
+shot s01b_scene_clouds
+scroll 6
+wait 40
+screenkey tab
+wait 30
+shot s02_gate_picked
+screenkey t
+wait 10
+screenkey m
+wait 40
+shot s03_pointed
+cmd time set 18000
+wait 60
+screen close
+wait 10
+screen map
+wait 40
+shot s04_scene_night
+screen close
+quit

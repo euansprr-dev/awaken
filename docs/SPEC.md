@@ -1722,13 +1722,63 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   speed (at most 300 blocks ahead), so in fast flight the land ahead comes first.
 - **The opening's card** waits, while City Sight draws, for the far rings and the whole city meshed and up, not for
   the real chunks round the player (the flight's camera is far from them and Sodium doesn't build them for it).
-- **Known gap: Sodium's cave culling** (2026-10-26, Euan's world over the Commons, `tools/autopilot/farsight3-euan-hole.txt`):
-  sections inside the render distance that Sodium has built but culls this frame (its occlusion traversal can miss a
-  view through a narrow opening, e.g. under the basin rim's old undercut) show the sky colour, with Far Sight off as
-  well; the far land is hidden there because the mask counts built sections, not drawn ones. Closing it needs Sodium's
-  per-frame visibility (`SodiumWorldRenderer.isBoxVisible`, its classes in a nested jar) for each built section, on
-  the path the 26 Oct perf pass trimmed; City Sight drawing past 12 chunks (perf idea C) makes it moot out there, and
-  the soft rim (§15) leaves no such cave in new worlds. Open, for a decision.
+- **Known gap: Sodium's cave culling** (2026-10-26, Euan's world over the Commons, `tools/autopilot/farsight3-euan-hole.txt`,
+  `farsight-split.txt`): sections inside the render distance that Sodium has built but culls this frame (its occlusion
+  traversal misses the view into the basin rim's old undercut cave) show the sky colour, with Far Sight off as well.
+  Tried and taken out (same day): hiding the far land per chunk only where Sodium draws the chunk's surface section
+  this frame (`SodiumWorldRenderer.isBoxVisible`). The cave lies under an overhang whose top Sodium does draw, so the
+  chunk still counts as drawn (debug view 2 stayed red there); and a per-chunk "not drawn" would bring back far land
+  standing over streets wherever Sodium culls sections behind houses. The fix that fits is per section: City Sight
+  drawing the real blocks of sections Sodium has built but culls (it has them), at a cost to measure. Open, for a
+  decision; new worlds have the soft rim (§15) and no such cave.
+- **Cached horizon** (frame-budget build A, 2026-10-26; `FarHorizon`, setting `farSightHorizon`, autopilot
+  `farsight horizon on|off|setting|split <n>`). The split by part (`farsight time parts on`: each ring, City Sight and the
+  trees in their own GPU passes; `split_ms` in `farsight status`) at the Roost in Euan's world, Cinematic, RD 24: 6.3 ms =
+  rings 0.70 / 0.46 / 0.80 / 0.72 / 0.27 / 0.47 / 0.13, City Sight 1.54, trees 1.18; 900 blocks out 9.3 ms, City Sight
+  4.7 of it. The far rings alone hold too little for the 2 ms target, so the panorama holds the far land and its trees
+  from ring 2 (the first ring whose window's edge lies past the render distance + 48 blocks, about 450-512 m) and City
+  Sight's chunks past the render distance + 48 blocks (they needn't follow the rings: at the Roost the city lies inside
+  ring 1's window).
+  - **What it holds**: 24 flat slices (15° each) around the eye in one row of an atlas, colour (RGBA8) and depth (D32),
+    at 1.5× the screen centre's pixels per radian, the band from the held land's lowest ground to the world's top and the
+    tallest treetops, seen from the nearest held distance; at most 100 MB (less density past that). The slices draw with
+    the screen's frame block but their own rotation and projection, and `FarFrame.FarView.x` scales the shaders' pixel
+    footprint so columns, tree grain and City Sight's mips are chosen as on screen. Each slice draws through the pass's
+    own viewport (the whole atlas) with its projection squeezed onto its strip and a scissor: the Vulkan backend's
+    `RenderPass.setViewport` leaves the depth range at 0..0, so slices drawn through it held no depth (the first tour:
+    the far land vanished wherever the panorama served).
+  - **When it serves**: only while the eye is still: a panorama is begun after 15 frames without moving and dropped as
+    soon as the eye moves (parallax: 30 blocks sideways moves a ridge 3 km out about 12 pixels on a 1710-pixel world,
+    not under one), the windows of the live ring or past move, the render distance, the target's size or the FOV (by
+    a quarter) change. A slice is served while the light and air it was drawn under still hold: sun (about 0.7°),
+    strength, colour, haze, rain, valley cloud, Far Sight's fog, the fog's colour (it turns with the view at dawn and
+    dusk), the sky's light (lightning), the weather fog, gamma, debug views and parts; a sight effect never matches. A
+    far patch or a City Sight chunk (a mesh up, a dissolve's step, one let go) stales the slices it spans (or starts
+    the panorama over, if that patch's land seen from its own distance leaves the band), which stay
+    live until that land has been quiet 30 frames (a world still filling in is drawn live, never redrawn again and
+    again). Stale slices in view are drawn first (two a frame), then one out of view a frame, and one older than 600
+    frames every 8th frame.
+  - **The frame**: the composite comes first in Far Sight's pass (its depth just cleared), a quad over the screen rows
+    the band covers: each pixel's ray finds its slice and texel; where there's land, its colour (the four nearest
+    texels, sky left out, so ridges keep their edge) and Far Sight's depth for that point as the screen sees it, 2e-4
+    nearer, so the same land drawn live loses the depth test. The live draw leaves out what the served slices hold
+    (pieces, tree runs and City Sight chunks whose whole box lies in served slices and inside the cone where a slice
+    holds enough pixels: the screen's radial pixels per radian are f / cos² off its axis, so its corners need more than
+    the slices hold and stay live, as the composite leaves them). Lens reads the same depth. Moving, it's exactly the
+    old path. Debug view 5 paints where it serves (land magenta, none cyan), 6 the panorama itself.
+  - **Result** (2026-10-26, `tools/autopilot/farsight-horizon.txt` on build with temporal Lens, a new world from seed
+    20261024, Cinematic, RD 24, render scale 0.95; sheet `docs/perf/far-sight/fs3-horizon.jpg`): at the Roost standing,
+    Far Sight 3.65 → 2.60 ms and the GPU's world pass 12.38 → 11.05 ms (frame p50 14.12 → 12.91 ms, 71 → 77 fps), the
+    same-moment frames on and off differing by 0.95 of 765 on average; turning at the Roost, Far Sight 4.42 → 3.21 ms,
+    world pass 14.03 → 12.41; the day running, about 12 slices a second redrawn as the sun moves; a 30 s glide at 40
+    blocks a second, live throughout (5 of 1683 frames served), 14.45 vs 14.93 ms. The countryside in the new world
+    (still generating) measured Far Sight 6.05 ms either way, with the panorama starting over ten times a second on
+    its band; the per-patch band check that ends that came after the tour. The 2 ms target at the Roost isn't reached:
+    the composite (0.34 ms), the live rings 0-1 (0.68) and the held rings' pieces that reach past the cone or into a
+    stale slice are what's left. 102 MB of video memory.
+- **Ring 0's sea under the city**: a sea piece wholly inside the band where far water stays under real water, over
+  chunks all shown and within Sodium's reach up and down, has every fragment hidden by the mask; it is no longer drawn
+  (ring 0 at the Roost 0.70 → 0.15 ms: discarded fragments under Carillon's canals).
 - **Seam audit** (`tools/farsight/seam_audit.py`): pairs of tour frames, normal and debug view 2 (far terrain and City
   Sight hidden for the real chunks paint red); red only in the debug frame, eroded by 5 pixels (outline slivers where
   City Sight's cubes are hidden for thinner real blocks are expected), is a hole. Tour `farsight3-city.txt` takes the
