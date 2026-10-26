@@ -12,6 +12,12 @@ folds back into it.
   ui_holo_hover_1/2   the cursor comes onto something: one tiny glass tick (A6 / D7, picked at random by the event)
   ui_holo_card        a System card projected in (the projected look's voice for signal.open): ui_card's own rising
                       D5 A5 E6, with the scan sweeping down through the card and a small fizz at its edge
+  The band's pages (SPEC §30.4):
+  ui_holo_page        a page prints in behind the scan line: A5 then D6, light, with the air of the line running down
+  ui_holo_spend       a stat point placed: one D5 struck; the band plays it higher for each point you place (E5, F#5,
+                      A5, B5, D6: the pitch is set in code), so a run of points climbs the scale
+  ui_holo_confirm     the points confirmed: D5 A5 D6 together with a little shimmer on top, a settled sound
+  ui_holo_undo        a placed point taken back: B5 falling to F#5, soft
 """
 import os
 import sys
@@ -87,8 +93,36 @@ def card(seed):
     return K.declick(y + scan + K.pan(fizz, 0.35))
 
 
+def page(seed):
+    L = 0.6
+    y = U.notes([(0.0, "A5", 0.22, 0.30, 0.6), (0.045, "D6", 0.30, 0.40, 0.65)], L, wet=0.18, spread=0.2)
+    air = sweep(L, 0.03, 0.14, 7000, 2400, 0.020, q=3.0, seed=seed + 17)  # the scan line running down the panel
+    return K.declick(y + air)
+
+
+def spend(seed):
+    L = 0.5
+    return K.declick(U.notes([(0.0, "D5", 0.42, 0.30, 0.6)], L, wet=0.16, spread=0.0))
+
+
+def confirm(seed):
+    L = 1.1
+    y = U.notes([(0.0, "D5", 0.36, 0.70, 0.55), (0.012, "A5", 0.34, 0.75, 0.6), (0.024, "D6", 0.34, 0.85, 0.7),
+                 (0.090, "F#6", 0.10, 0.45, 0.8)], L, wet=0.22, spread=0.3)
+    return K.declick(y + U.warm("D4", L, 0.0, 0.08, t60=0.6, attack=0.01))
+
+
+def undo(seed):
+    L = 0.55
+    return K.declick(U.notes([(0.0, "B5", 0.26, 0.20, 0.5), (0.06, "F#5", 0.24, 0.28, 0.45)], L, wet=0.14, spread=0.15, lp=6000))
+
+
 def sounds(Snd):
     return [
+        Snd("ui_holo_page", page, rms=-26.5),
+        Snd("ui_holo_spend", spend, rms=-26.5),
+        Snd("ui_holo_confirm", confirm, rms=-25.0),
+        Snd("ui_holo_undo", undo, rms=-26.5),
         Snd("ui_holo_open", open_k, rms=-25.0),
         Snd("ui_holo_open_quick", open_quick, rms=-26.5),
         Snd("ui_holo_close", close, rms=-26.0),
@@ -105,4 +139,8 @@ def events(Evt):
         Evt("holo.close", "Holo panel folds away", files=["ui_holo_close"], folder="holo"),
         Evt("holo.hover", "Holo panel ticks", files=["ui_holo_hover_1", "ui_holo_hover_2"], folder="holo"),
         Evt("holo.card", "System card projected", files=["ui_holo_card"], folder="holo"),
+        Evt("holo.page", "Band page turns", files=["ui_holo_page"], folder="holo"),
+        Evt("holo.spend", "Stat point placed", files=["ui_holo_spend"], folder="holo"),
+        Evt("holo.confirm", "Stat points confirmed", files=["ui_holo_confirm"], folder="holo"),
+        Evt("holo.undo", "Stat point taken back", files=["ui_holo_undo"], folder="holo"),
     ]

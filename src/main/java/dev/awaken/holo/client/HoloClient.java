@@ -102,6 +102,7 @@ public final class HoloClient {
         bus.addListener(PlaySoundEvent.class, HoloAudio::onPlaySound);
         // reported each frame (UiHooks.setFocus); other sources (the Atlas) report beside it
         ProgressionClient.installStatusOpener(HoloClient::statusScreen);
+        dev.awaken.progression.client.StatusSections.installCues(HoloAudio::cue); // the band's page, spend, confirm, undo
         WristSlot.init();
     }
 
@@ -124,10 +125,10 @@ public final class HoloClient {
 
     // ---- what K opens ---------------------------------------------------------------------------------------------
 
-    /** The K menu: holo when chosen and the shaders loaded, otherwise the flat screen. */
-    public static Screen statusScreen() {
-        if (HoloConfig.statusStyle == HoloConfig.StatusStyle.HOLO && HoloPipelines.ok()) return new HoloStatusScreen();
-        return new StatusScreen();
+    /** The K menu on a page: holo when chosen and the shaders loaded, otherwise the flat screen. */
+    public static Screen statusScreen(dev.awaken.progression.client.StatusSections.Tab page, String... focus) {
+        if (HoloConfig.statusStyle == HoloConfig.StatusStyle.HOLO && HoloPipelines.ok()) return new HoloStatusScreen(page, focus);
+        return new StatusScreen(page, focus);
     }
 
     static HoloPanel statusPanel() {
@@ -245,6 +246,7 @@ public final class HoloClient {
 
     private static void onTick() {
         HoloConfig.refresh();
+        STATUS.sizeStep = HoloConfig.bandSize.step; // the Band size setting (SPEC §30.6)
         CalmHud.tick();
         HoloBoot.tick();
         Minecraft m0 = Minecraft.getInstance();
@@ -253,7 +255,7 @@ public final class HoloClient {
                 && (m0.gui.screen() instanceof HoloStatusScreen || m0.gui.screen() instanceof StatusScreen)) m0.gui.setScreen(null);
         Wrist.tickEnd(wristClosing());
         // tell the server which panel the wrist shows (it relays to whoever can see us, at most 4 a second)
-        HoloKind want = opening(STATUS) ? HoloKind.STATUS : opening(INVENTORY) ? HoloKind.INVENTORY
+        HoloKind want = HoloScene.mapOpen() ? HoloKind.MAP : opening(STATUS) ? HoloKind.STATUS : opening(INVENTORY) ? HoloKind.INVENTORY
                 : DEMO.anchor == HoloPanel.Anchor.WRIST && opening(DEMO) ? HoloKind.STATUS : HoloKind.NONE;
         Minecraft mc = Minecraft.getInstance();
         if (want != sent && mc.getConnection() != null && mc.getConnection().hasChannel(HoloNet.State.TYPE)) {
@@ -454,6 +456,7 @@ public final class HoloClient {
     private static void reset() {
         UiHooks.setFocus(FOCUS_OWNER, 0f);
         HoloOthers.clear();
+        HoloScene.reset();
         demoMode = 0;
         DEMO.timeline.hold(false);
         DEMO.timeline.close();

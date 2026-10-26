@@ -51,7 +51,7 @@ public final class PowersClient {
             var p = Minecraft.getInstance().player;
             return p == null ? null : p.getData(PowerContent.LOADOUT.get());
         };
-        StatusSections.add(StatusSections.Tab.STATUS, new PowersSection());
+        StatusSections.add(StatusSections.Tab.POWERS, new PowersSection());
         StarterClient.init(modBus);
         dev.awaken.powers.client.fx.FxClient.init(modBus);
     }

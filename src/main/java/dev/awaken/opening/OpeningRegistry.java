@@ -153,7 +153,7 @@ final class OpeningRegistry {
                 else nudge(p, at, w, now, "Try opening your band.");
             }
             case STATUS -> {
-                if (age == 10) say(p, at, w, "That's your status, your Truths, the Codex and the gate map. Press the same key to close it.");
+                if (age == 10) say(p, at, w, "That's your band. Your status and your stats are on the first page, and the map is the last one. Press the same key to close it.");
                 if (lead) toDesk(p, at, w, "hands_behind", "");
                 if (w.ready || !client || age > SCREEN_MAX) step(p, ATLAS);
             }

@@ -24,7 +24,7 @@ final class RoadSection extends UiSection {
     private boolean all;
 
     public String title() { return "THE ROAD"; }
-    public int order() { return 15; }
+    public int order() { return 35; } // the Truths page: after the Truths, before Titles
 
     private List<Defs.LevelRoadDef> steps() {
         var map = Content.LEVEL_ROAD.map;

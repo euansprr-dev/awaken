@@ -59,10 +59,17 @@ public final class Progression {
 
     /** The action prefix of a card whose yes opens the band ("band:ascent"). */
     public static final String BAND_ACTION = "band";
+    /** {@link #openBand(ServerPlayer, int)}'s page for the ascent: Powers, scrolled to the Ascent (SPEC §30). */
+    public static final int BAND_PAGE_ASCENT = -1;
 
-    /** Opens the band (the Status screen) on this player's client. */
+    /** Opens the band (its Status page) on this player's client. */
     public static void openBand(ServerPlayer player) {
-        dev.awaken.core.AwakenNet.send(player, new dev.awaken.progression.net.ProgressionPayloads.OpenBand(0));
+        openBand(player, 0);
+    }
+
+    /** Opens the band on a page (the rail's order, 0 Status; {@link #BAND_PAGE_ASCENT} for the Ascent). */
+    public static void openBand(ServerPlayer player, int page) {
+        dev.awaken.core.AwakenNet.send(player, new dev.awaken.progression.net.ProgressionPayloads.OpenBand(page));
     }
 
     /** Queue a sync of the profile to its owner (batched once per second). */
@@ -274,6 +281,28 @@ public final class Progression {
         evaluate(player, Counters.STATS);
         markDirty(player);
         return true;
+    }
+
+    /**
+     * Spends points placed on the band and confirmed in one go ("STR:1,AGI:2", SPEC §30.3): each as {@link #spendPoint},
+     * so never more than you have; unknown stats and nonsense are skipped. Returns how many were spent.
+     */
+    public static int spendPoints(ServerPlayer player, String spec) {
+        int spent = 0;
+        for (String part : spec.split(",", 12)) {
+            String[] kv = part.split(":", 2);
+            if (kv.length != 2) continue;
+            Stat stat;
+            int n;
+            try {
+                stat = Stat.valueOf(kv[0].trim());
+                n = Math.min(500, Integer.parseInt(kv[1].trim()));
+            } catch (IllegalArgumentException e) {
+                continue;
+            }
+            for (int i = 0; i < n && spendPoint(player, stat); i++) spent++;
+        }
+        return spent;
     }
 
     public static void addStat(ServerPlayer player, Stat stat, int amount) {

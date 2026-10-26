@@ -162,13 +162,27 @@ final class HoloRender {
         // one even tint over the whole content area, feathered out toward the rim (no per-line boxes), so the light
         // text reads over any sky, grass or night while the edges stay light
         float in = 3f, f = 14f;
-        softQuad(vc, m, in + f, in + f, p.w - in - f, p.h - in - f, f, mulAlpha(0xFF040912, 0.38f * ga), 0x00040912);
+        softQuad(vc, m, in + f, in + f, p.w - in - f, p.h - in - f, f, mulAlpha(0xFF040912, tint() * ga), 0x00040912);
         HoloCanvas cv = p.canvas;
         for (int i = 0; i < cv.fills; i++) {
             int o = i * 4;
             int top = mulAlpha(cv.fillTop[i], ga), bottom = mulAlpha(cv.fillBottom[i], ga);
             quad(vc, m, cv.fill[o], cv.fill[o + 1], cv.fill[o + 2], cv.fill[o + 3], 0, 0, 0, 0, top, bottom, 0, 0);
         }
+    }
+
+    /**
+     * The content tint (SPEC §30.4): 0.46, rising to 0.60 by day when the panel sits on sky (the camera looking level
+     * or up), so labels hold their contrast over a bright sky and the glass stays sheer at night and over ground.
+     */
+    static float tint() {
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        var level = mc.level;
+        if (level == null || level.dimensionType().hasFixedTime()) return 0.46f;
+        float day = Math.max(0f, Math.min(1f, 1f - level.getSkyDarken() / 11f));
+        float pitch = mc.gameRenderer.mainCamera().xRot(); // negative: looking up
+        float sky = Math.max(0f, Math.min(1f, (10f - pitch) / 40f));
+        return 0.46f + 0.14f * day * sky;
     }
 
     /** A flat rectangle whose outer ring of {@code f} units fades to clear (a 3×3 grid; glass pipeline, flat mode). */
@@ -262,6 +276,11 @@ final class HoloRender {
             int wakeTop = p.accent & 0xFFFFFF, wakeBottom = mulAlpha(p.accent | 0xFF000000, 0.10f * fadeOut * fade);
             float wy = Math.max(0, y - 46);
             quad(vc, m, 0, wy, w, y, 0, 0, 0, 0, wakeTop, wakeBottom, 0, 0);
+        }
+        // light comes from the band: a soft glow where the beams meet the glass, its lower corner on the wrist's side
+        if (p.anchor == HoloPanel.Anchor.WRIST) {
+            float wl = 0.10f * p.glassAlpha * fade;
+            if (wl > 0.004f) blob(vc, m, 0, h, 150 * kx, 150 * ky, mulAlpha(p.accent | 0xFF000000, wl));
         }
         // a press: a ring of light opening where the click landed
         if (p.flashMs >= 0 && p.flashMs < 260) {

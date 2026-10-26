@@ -1,0 +1,51 @@
+# K menu design (docs/k-menu): base frames for the "map in the world" concept. Outside the High Gate, the band raised
+# in third person as others see it (holo peek: no panel), HUD off, the third-person camera tilted down so you see your
+# character from above and behind. Facing the walls and facing the wilds, by day and by night, and from the front.
+# Run on CI: tools/tour-ci.sh tools/autopilot/k-menu-map.txt 1200 PACK=perf,world TECTONIC=awakened
+world kmenuMap survival 20261024
+waitworld
+gui 0
+window 1440 900
+info
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 5000
+cmd awaken opening skip
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd awaken city view studio_high_gate
+wait 240
+info
+shot m00_first
+hud off
+holo peek on
+screen holo
+wait 20
+camera back
+cmd tp @s ~ ~ ~ ~ 40
+wait 60
+shot m01_back40_walls
+cmd tp @s ~ ~ ~ ~ 28
+wait 30
+shot m02_back28_walls
+cmd tp @s ~ ~ ~ ~180 40
+wait 160
+shot m03_back40_wilds
+cmd tp @s ~ ~ ~ ~ 28
+wait 30
+shot m04_back28_wilds
+camera front
+cmd tp @s ~ ~ ~ ~ 10
+wait 40
+shot m05_front_others
+camera back
+cmd tp @s ~ ~ ~ ~ 40
+cmd time set 18000
+wait 160
+shot m06_back40_wilds_night
+screen close
+camera first
+quit
