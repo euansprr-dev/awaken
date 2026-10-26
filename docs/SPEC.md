@@ -4256,6 +4256,14 @@ never outside the overworld.
 An animal no longer wanted leaves the way it would (a bird flies off, a rabbit bolts, a frog plops in, a squirrel climbs
 away) and is dropped once out of sight.
 
+**Seen, not just near** (the tours, 2026-10-26): in a forest the census logged nine songbirds near and none in view,
+all on the canopy's roof, above the leaf ceiling a walker stands under. So songbirds take the lowest of three perches
+(the outer rings of the trees' lower leaves, fences), and by day 75% of those in a closed forest (45% under an open
+canopy) start on the forest floor, forage there, flit low through the understory to another patch of floor (the flight
+hugs the ground ahead instead of climbing over the trees), and only now and then go up. Insects are drawn near twice
+life size (a butterfly 0.3 blocks a wing, a dragonfly 0.46 long), as the birds are: at life size a butterfly was a
+few pixels at ten blocks. Fireflies glow two fifths of their rhythm with a 0.75-block halo.
+
 **Behaviour** (`Birds`, `Critters`, `Insects`). Songbirds never still on a perch (glances, tail and wing flicks, a bow,
 hops along the branch), sing from it (the dawn chorus three times as often), preen, flit to the next tree in a bounding
 flight (three beats, wings shut, a dip), drop to forage on open ground and hop about pecking. Woodpeckers hitch up a
@@ -4293,8 +4301,10 @@ hundred glow quads, culled by distance and view.
 
 **API additions** (§12): `core.audio.client.Soundscape.hushAt(x, y, z)` (what is left of birds and insects at a point);
 `citizens.client.CityLife.inside(x, z, margin)` (within Carillon's wall plus a margin). Client command
-`/awaken wildlife [on|off|count|dial <x>]` (`count`: what's near and what the camera can see); tours log the same line
-every 30 s as `[wildlife] in view N of M near: ...`.
+`/awaken wildlife [on|off|count|dial <x>|lineup [clip|insects|off] [variant]]` (`count`: what's near, what the camera
+can see, and where the songbirds are; `lineup`: every body, or every insect, posed before the camera on a stage); tours
+log the census every 30 s as `[wildlife] in view N of M near: ...`. Tours: `tools/autopilot/wild-life.txt` (the stage by
+day and night, then forest, rain, flowers, river, Mirror Marsh, Lumen Forest), `wild-forest.txt` (the quick loop).
 
 **Tests** (`wildlife_`): `wildlife_density` (the tables reach every sound family, the hours run in order, the walk's
 targets hold, rain and cold clear the insects, a chunk's draw is fixed and the land averages the expected number),

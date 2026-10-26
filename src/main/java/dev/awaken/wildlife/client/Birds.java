@@ -56,7 +56,9 @@ final class Birds {
                 }
                 // by day many songbirds are down foraging on the forest floor, under the trees and at their edge
                 boolean day = Wildlife.tod < 11800 || Wildlife.tod > 22600;
-                if (c.kind == WildKinds.SONGBIRD && s.h.canopy > 0.2F && day && r.nextFloat() < 0.45F) {
+                // (the tour: under a closed canopy the leaf tops are above the ceiling you stand under; the floor is where
+                // a walker sees them)
+                if (c.kind == WildKinds.SONGBIRD && s.h.canopy > 0.2F && day && r.nextFloat() < (s.h.canopy > 0.45F ? 0.75F : 0.45F)) {
                     long p = s.perch[i];
                     double gx = BlockPos.getX(p) + 0.5 + (r.nextFloat() - 0.5) * 4, gz = BlockPos.getZ(p) + 0.5 + (r.nextFloat() - 0.5) * 4;
                     double g = Wildlife.ground(level, gx, gz);
@@ -218,10 +220,13 @@ final class Birds {
                 } else if (roll < 0.8F) {
                     Wildlife.replay(c, "peck");
                     c.timer = 22 + r.nextInt(30);
-                } else if (roll < 0.93F || now - c.since < 300) {
+                } else if (roll < 0.88F || now - c.since < 300) {
                     clip(c, "idle");
                     c.timer = 20 + r.nextInt(40);
                     if (r.nextInt(5) == 0) WildSound.play(c, WildlifeModule.CHIP.get(), 0.4F, 0.9F + r.nextFloat() * 0.3F);
+                } else if (roll < 0.96F || underCanopy(level, c)) {
+                    // a low flit through the understory to another patch of floor
+                    if (!lowFlit(c, level, r)) upToPerch(c, level, r, 8);
                 } else {
                     upToPerch(c, level, r, 8);
                 }
@@ -420,6 +425,34 @@ final class Birds {
         return false;
     }
 
+    /** Under leaves: the canopy closes overhead within a few blocks. */
+    private static boolean underCanopy(ClientLevel level, WildCritter c) {
+        double t = Wildlife.top(level, c.getX(), c.getZ());
+        return !Double.isNaN(t) && t - c.getY() > 2.5 && leafAbove(level, c);
+    }
+
+    private static boolean leafAbove(ClientLevel level, WildCritter c) {
+        for (int dy = 2; dy <= 7; dy++) if (level.getBlockState(BlockPos.containing(c.getX(), c.getY() + dy, c.getZ())).is(BlockTags.LEAVES)) return true;
+        return false;
+    }
+
+    /** Off along the forest floor, 3-8 blocks, low under the leaves, to forage there. */
+    private static boolean lowFlit(WildCritter c, ClientLevel level, RandomSource r) {
+        for (int k = 0; k < 4; k++) {
+            double a = r.nextDouble() * Math.PI * 2, d = 3 + r.nextDouble() * 5;
+            double x = c.getX() + Math.cos(a) * d, z = c.getZ() + Math.sin(a) * d, g = Wildlife.ground(level, x, z);
+            if (Double.isNaN(g) || Math.abs(g - c.getY()) > 3) continue;
+            if (!level.getFluidState(BlockPos.containing(x, g - 1, z)).isEmpty()) continue;
+            c.tx = x;
+            c.ty = g;
+            c.tz = z;
+            takeOff(c, GROUND, r, false);
+            c.vy = 0.08;
+            return true;
+        }
+        return false;
+    }
+
     private static void takeOff(WildCritter c, int then, RandomSource r, boolean burst) {
         c.next = then;
         c.state = FLY;
@@ -488,10 +521,12 @@ final class Birds {
             return;
         }
         // climb over what's in the way: aim above the target while far, to clear the trees between
-        double clearance = c.leaving ? 0 : Math.min(4, h * 0.25);
+        boolean low = c.next == GROUND && !c.leaving && Math.abs(c.ty - c.getY()) < 3.5;
+        double clearance = c.leaving ? 0 : low ? Math.min(1.6, h * 0.3) : Math.min(4, h * 0.25);
         double ty = c.ty + clearance;
         double gx = c.getX() + c.vx * 6, gz = c.getZ() + c.vz * 6;
-        double floor = Wildlife.top(level, gx, gz);
+        // over the trees between, or (a low flit through the understory) just over the ground ahead
+        double floor = low ? Wildlife.ground(level, gx, gz) - 0.7 : Wildlife.top(level, gx, gz);
         if (!Double.isNaN(floor) && floor + 1.5 > ty && h > 3) ty = floor + 1.5;
         double sp = Math.min(cruise, 0.06 + d * 0.08);
         double wx = dx / Math.max(1e-3, d) * sp, wy = (ty - c.getY()) / Math.max(1e-3, d) * sp * 1.4, wz = dz / Math.max(1e-3, d) * sp;
