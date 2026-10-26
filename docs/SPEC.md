@@ -2998,12 +2998,16 @@ A of the Hands plan): "Shift takes you down, Jump takes you off".
   0.12 out, 0.36 up). The foot of the line lands you (no fall damage at any slide speed); with no keys at the foot you
   step off. **The top** always leads somewhere (Euan, 2026-10-25: "the last block doesn't let me through"): it is
   reached when there's no line where the hands would go (1.75 over the feet) or the head meets something over it (a
-  cornice, an eave, a coping row). With forward held: (1) a lip over the head, its face out past the body within 1.5
-  of it, its top 1.6-3.2 over the feet, with the way out level and then up to the hold free (`GripRules.topLip`), is a
-  hang from that face: the body goes out from under it, then up (7 ticks, `HANG_EAVE`), and the hang's own climb out
-  (§17.21) puts you on the roof or coping; (2) else, open air over the head hands the body to vanilla's climb, whose
-  eave is caught as a hang as before (§17.14); (3) else the hands hold still at the top (no climb, no jitter) until
-  forward is let go. The server takes the eave hang only from a grip held or ended within 6 ticks, with the same
+  cornice, an eave, a coping row). The body stands off the column where it sticks out most (a drainpipe's head is 2 px
+  deeper than its pipe; off the pipe alone the climb ran into the head and stopped a block short: Euan, 2026-10-26).
+  With forward held (or Jump): (1) a lip over the head, its top 1.6-3.2 over the feet, from right in front out to 1.5
+  out, with the way out level and then up to the hold free, the nearest one the hang can climb out from
+  (`GripRules.topLip`): the line's own head or a wall's top in front (a flat roof's balustrade gap, a terrace's
+  parapet gap, the city wall's walk), or an eave or cornice it runs up under (block, stair or slab), is a hang (out,
+  then up, 7 ticks, `HANG_EAVE`), and the hang's own climb out (§17.21) puts you on top; (2) else, open air over the
+  head hands the body to vanilla's climb, whose eave is caught as a hang as before (§17.14); (3) else the hands hold
+  still at the top (no climb, no jitter) until forward is let go. A jump at the top always does something: the lip, or
+  a kick off the wall. The server takes the eave hang only from a grip held or ended within 6 ticks, with the same
   `topLip` from where it has the body (plus its tolerance). A screen open holds the grip. The rope key still cuts in.
 - **Motion**: the grip moves the body itself (`move`), its velocity zeroed, so vanilla's ladder cap (0.15 down) doesn't
   hold back the slide on any line, vanilla's ladder included; sideways it eases onto the line at most 0.15 a tick.
@@ -3026,7 +3030,11 @@ A of the Hands plan): "Shift takes you down, Jump takes you off".
   sliding, sparks off a metal line at speed; a faint judder in the view.
 - Tests: `runner_pipe_grip`; `runner_pipe_cornice` (a drainpipe under a one-block cornice with a roof behind: the lip is
   the way on, hung from its outer face, taken by the server only from the grip, climbed out onto the roof; a deep
-  ceiling and open air give no lip). Tour: `tools/autopilot/anims-pipe.txt` (PACK=feel).
+  ceiling and open air give no lip). `runner_pipe_tops` (every kind of top Carillon paints, each climbed on a real drainpipe
+  with its head from the street: a flat roof with its balustrade open at the pipe, a gable eave with the head in the
+  eave stairs' row, block, upside-down stair and slab cornices, a retaining wall's parapet gap, the city wall's inner
+  face with its corbel table, band and parapet gap: the climb reaches the top, there's a lip, and the hang climbs out on
+  top). Tour: `tools/autopilot/anims-pipe.txt` (PACK=feel).
 
 ### 17.24 Dropping to the ledge below (Euan, 2026-10-25: "I'm on an edge already holding it, and there's one below")
 In a hang, **Shift** lets go and catches the next ledge below when there is one (`RunnerRules.edgeBelow`): the same

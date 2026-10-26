@@ -40,6 +40,7 @@ final class RunnerTests {
         AwakenTests.registerIsolated("runner_pipe_grip", 120, RunnerTests::pipeGrip);
         AwakenTests.registerIsolated("runner_pipe_cornice", 120, RunnerTests::pipeCornice);
         AwakenTests.registerIsolated("runner_ledge_drop", 120, RunnerTests::ledgeDrop);
+        AwakenTests.registerIsolated("runner_pipe_tops", 120, RunnerTests::pipeTops);
         // runner_hang_real_tick (hangRealTick below) is kept for W2 but not registered: its harness doesn't yet get its own
         // teleport accepted, so every move after it is ignored (see docs/carillon/spikes/S3-runner.md, Open issue)
     }
@@ -754,5 +755,120 @@ final class RunnerTests {
                 level.setBlockAndUpdate(o.offset(xx, y, z), Blocks.AIR.defaultBlockState());
             BodyTests.done(h, a, b);
         });
+    }
+
+    /**
+     * Every kind of pipe top Carillon paints (Euan, 2026-10-26: "I still get stuck on the final upper part of a drain
+     * pipe"), each climbed from the street on a real drainpipe with its deeper head (CityGrammar's facades and roofs,
+     * CityPainter's retaining walls, CityWall's inner face): the climb reaches the top, the top has a lip, and the hang
+     * on it climbs out onto the roof, the terrace or the wall walk.
+     */
+    static void pipeTops(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = origin(h);
+        String[] names = {"flat roof, balustrade open at the pipe", "gable eave (the head in the eave stairs' row)", "full-block cornice",
+                "upside-down stair cornice", "slab cornice", "retaining wall, parapet gap", "city wall inner face: corbels, band, parapet gap"};
+        double[] stands = new double[names.length];
+        for (int i = 0; i < names.length; i++) stands[i] = pipeTop(level, o.offset(10 * i, 0, 0), i);
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            var m0 = new BlockPos.MutableBlockPos();
+            CollisionContext ctx = CollisionContext.empty();
+            for (int i = 0; i < names.length; i++) {
+                int ox = o.getX() + 10 * i;
+                GripRules.Line l = GripRules.find(level, m0, ox + 0.5, o.getY() + 0.5, o.getZ() + 0.2, 0F);
+                h.assertTrue(l != null && l.fz() == 1, names[i] + ": a drainpipe line: " + l);
+                double y = GripRules.climbTop(level, ctx, m0, l, o.getY());
+                h.assertTrue(y > o.getY() + 2, names[i] + ": the climb gets up the pipe, to " + (y - o.getY()));
+                RunnerRules.Edge lip = GripRules.topLip(level, ctx, m0, l.x(), y, l.z(), 2, 1, 0);
+                h.assertTrue(lip != null, names[i] + ": a lip at the top (feet at " + (y - o.getY()) + "): "
+                        + RunnerRules.whyNot(level, ctx, m0, l.x(), y, l.z(), 2, 1, RunnerRules.HANG_REACH, GripRules.LIP_LO, GripRules.LIP_HI));
+                double[] stand = RunnerRules.climbOut(level, ctx, m0, lip);
+                h.assertTrue(stand != null && stand[1] >= stands[i] - 1e-6, names[i] + ": climbs out on top, at "
+                        + (stand == null ? "none" : stand[1] - o.getY()) + " (lip " + (lip.top() - o.getY()) + ", wanted " + (stands[i] - o.getY()) + ")");
+            }
+            for (int i = 0; i < names.length; i++) for (int x = -4; x <= 4; x++) for (int y = -1; y <= 12; y++) for (int z = -3; z <= 6; z++)
+                level.setBlockAndUpdate(o.offset(10 * i + x, y, z), Blocks.AIR.defaultBlockState());
+            h.succeed();
+        });
+    }
+
+    /** Builds pipe-top scene {@code kind} with its pipe at (o.x, o.z) against a wall to the south; returns the lowest stand. */
+    private static double pipeTop(ServerLevel level, BlockPos o, int kind) {
+        BlockState stone = Blocks.STONE.defaultBlockState(), bricks = Blocks.STONE_BRICKS.defaultBlockState();
+        BlockState wallTop = Blocks.STONE_BRICK_WALL.defaultBlockState();
+        BlockState stair = Blocks.DEEPSLATE_TILE_STAIRS.defaultBlockState().setValue(StairBlock.FACING, Direction.SOUTH);
+        BlockState course = Blocks.STONE_BRICK_STAIRS.defaultBlockState().setValue(StairBlock.FACING, Direction.SOUTH)
+                .setValue(StairBlock.HALF, net.minecraft.world.level.block.state.properties.Half.TOP);
+        BlockState slabTop = Blocks.STONE_BRICK_SLAB.defaultBlockState().setValue(SlabBlock.TYPE, SlabType.TOP);
+        int e = 5;
+        for (int x = -4; x <= 4; x++) for (int z = -3; z <= 6; z++) put(level, o, x, -1, z, stone);
+        int head; // the pipe's head row; the pipe runs from the street to it
+        double stand;
+        switch (kind) {
+            case 0 -> { // a flat roof: the house to the eave row, the balustrade on its wall cells, open at the climb column
+                box(level, o, -3, 3, 0, e, 1, 4, stone);
+                for (int x = -3; x <= 3; x++) if (Math.abs(x) > 1) put(level, o, x, e + 1, 1, wallTop);
+                head = e;
+                stand = e + 1;
+            }
+            case 1 -> { // a gable: the wall to the eave row, its stair one out (the head takes it at the pipe), the slope over the wall
+                box(level, o, -3, 3, 0, e, 1, 4, stone);
+                for (int x = -3; x <= 3; x++) {
+                    if (x != 0) put(level, o, x, e, 0, stair);
+                    put(level, o, x, e + 1, 1, stair);
+                    for (int z = 2; z <= 4; z++) put(level, o, x, e + 1, z, Blocks.DEEPSLATE_TILES.defaultBlockState());
+                    put(level, o, x, e + 2, 2, stair);
+                }
+                head = e;
+                stand = e + 1;
+            }
+            case 2, 3, 4 -> { // a cornice one out over the wall's top, over the pipe too, the roof behind it
+                box(level, o, -3, 3, 0, e, 1, 4, stone);
+                BlockState c = kind == 2 ? bricks : kind == 3 ? course : slabTop;
+                for (int x = -3; x <= 3; x++) put(level, o, x, e, 0, c);
+                head = e - 1;
+                stand = e + 1;
+            }
+            case 5 -> { // a retaining wall: the terrace behind, the parapet on its edge, open where the pipe arrives
+                box(level, o, -3, 3, 0, e - 1, 1, 5, stone);
+                for (int x = -3; x <= 3; x++) if (Math.abs(x) > 1) put(level, o, x, e, 1, wallTop);
+                head = e - 1;
+                stand = e;
+            }
+            default -> { // the city wall's inner face: the corbel table, the parapet's band, the inner parapet open at the pipe
+                int top = 8;
+                box(level, o, -3, 3, 0, top, 1, 5, stone);
+                for (int x = -3; x <= 3; x++) {
+                    if (x == 0) continue;
+                    if ((x & 1) == 0) put(level, o, x, top - 3, 0, course);
+                    for (int y = top - 2; y <= top; y++) put(level, o, x, y, 0, Blocks.POLISHED_ANDESITE.defaultBlockState());
+                    if (Math.abs(x) > 1) put(level, o, x, top + 1, 0, bricks);
+                }
+                head = top;
+                stand = top + 1;
+            }
+        }
+        var pipeBlock = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getValue(dev.awaken.Awaken.id("drainpipe"));
+        BlockState pipe = pipeBlock.defaultBlockState().setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH);
+        for (int y = 0; y <= head; y++) put(level, o, 0, y, 0, part(pipe, y == 0 ? "shoe" : y == head ? "head" : "pipe"));
+        return o.getY() + stand;
+    }
+
+    private static void put(ServerLevel level, BlockPos o, int x, int y, int z, BlockState s) {
+        level.setBlockAndUpdate(o.offset(x, y, z), s);
+    }
+
+    private static void box(ServerLevel level, BlockPos o, int x0, int x1, int y0, int y1, int z0, int z1, BlockState s) {
+        for (int x = x0; x <= x1; x++) for (int y = y0; y <= y1; y++) for (int z = z0; z <= z1; z++) put(level, o, x, y, z, s);
+    }
+
+    /** The drainpipe's part ("pipe", "head", "shoe") by its property's own name (the block lives in the city module). */
+    private static BlockState part(BlockState s, String name) {
+        for (var prop : s.getProperties()) if (prop.getName().equals("part")) return withValue(s, prop, name);
+        return s;
+    }
+
+    private static <T extends Comparable<T>> BlockState withValue(BlockState s, net.minecraft.world.level.block.state.properties.Property<T> prop, String name) {
+        return prop.getValue(name).map(v -> s.setValue(prop, v)).orElse(s);
     }
 }
