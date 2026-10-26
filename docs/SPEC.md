@@ -1592,8 +1592,11 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   City Sight hides per section: a 64×64-chunk × 32-section mask from the game's own `isSectionCompiledAndVisible`,
   which Sodium answers with its exact built state (so the approved Turbo hook into Sodium isn't needed); all-air
   sections count as built unasked, half the chunks are refreshed a call, a section counts 250 ms after it first is. A
-  section Sodium hasn't built keeps City Sight's copy of the same blocks. The plan still skips chunks the chunk mask
-  calls shown (drawing every chunk with an unbuilt section, mostly hidden behind others, cost 2 ms at the Roost).
+  section Sodium hasn't built keeps City Sight's copy of the same blocks. The plan skips a chunk only when Sodium has
+  built every section from the chunk's lowest ground (without leaves) to its top: not the sealed sections under the
+  ground, which Sodium never builds (counting those drew most chunks, 2 ms more at the Roost), and not by the settling
+  timer (on a busy machine Sodium builds late, and land it hadn't built yet stood empty). Same cost at the Roost as the
+  timer (876 chunks, 0.75 M quads).
   City Sight's meshes stay across Far Sight off and on in the same world (the capture starts over; unchanged chunks
   hash the same and are skipped).
 - **City Sight on disk** (`VoxelDisk`, schema 1): every snapshot taken is kept, deflated (sections in the game's own
