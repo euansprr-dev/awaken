@@ -83,11 +83,18 @@ public final class Herald {
         String label = w.footer().map(Component::getString).map(SignalText::stripKeyHints).orElse("");
         Item item = new Item(w.title().getString(), SignalText.toastDetail(w), SystemHud.accent(w), label.isBlank() ? "Discovery" : label, body, w);
         PACE.offer(ticks, item, w.tier(), w.topic(), w.moment());
+        log("offer", w.tier(), w.topic(), item.title());
     }
 
     /** A one-line toast. */
     static void offer(Component text, Notices.Tier tier, String topic, int colour) {
         PACE.offer(ticks, new Item(text.getString(), "", colour, "", "", null), tier, topic, false);
+        log("offer", tier, topic, text.getString());
+    }
+
+    /** One line per decision in the debug log (tours count messages a minute from it: "[herald] show ..."). */
+    static void log(String what, Notices.Tier tier, String topic, String title) {
+        dev.awaken.Awaken.LOG.debug("[herald] {} {} {} t={} '{}'", what, tier, topic.isEmpty() ? "-" : topic, ticks, title);
     }
 
     /** The player clicked, used or pressed something (an input event): what comes back now is a response. */
@@ -142,8 +149,12 @@ public final class Herald {
                 for (Item i : o.items()) {
                     Journal.add(i.title(), i.detail(), i.colour(), o.tier());
                     filed.add(i);
+                    log("file", o.tier(), "", i.title());
                 }
-            } else if (o.moment()) {
+                continue;
+            }
+            log(o.moment() ? "moment" : "show", o.tier(), "", o.first().title() + (o.merged() ? " +" + (o.items().size() - 1) : ""));
+            if (o.moment()) {
                 Item i = o.first();
                 Moment.show(i.label(), i.title(), i.body(), i.colour());
                 Journal.add(i.title(), i.body(), i.colour(), o.tier());

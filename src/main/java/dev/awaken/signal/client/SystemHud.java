@@ -94,6 +94,7 @@ public final class SystemHud {
         boolean critical = w.tier() == Notices.Tier.CRITICAL;
         switch (p) {
             case CHOICE -> {
+                Herald.log("card", w.tier(), w.topic(), w.title().getString());
                 DECK.offer(w, w.ttlTicks());
                 Herald.took();
                 // a revelation that asks something ("Will you accept?") is also spoken in full beside its card
@@ -112,6 +113,7 @@ public final class SystemHud {
             default -> {
                 // decisions' neighbours and answers to what the player just did show at once; the rest are paced
                 if (critical || Herald.responding(w)) {
+                    Herald.log(critical ? "critical" : "response", w.tier(), w.topic(), w.title().getString());
                     BURST.offer(ticks, item(w));
                     if (!critical) Herald.took();
                 } else {
@@ -126,7 +128,10 @@ public final class SystemHud {
     static void toast(Component text, int colour, Notices.Tier tier, String topic) {
         RecentLog.add(text);
         boolean response = tier == Notices.Tier.IMPORTANT && topic.isEmpty() && Herald.responding();
-        if (tier == Notices.Tier.CRITICAL || response) BURST.offer(ticks, new ToastItem(text.getString(), "", colour));
+        if (tier == Notices.Tier.CRITICAL || response) {
+            Herald.log(response ? "response" : "critical", tier, topic, text.getString());
+            BURST.offer(ticks, new ToastItem(text.getString(), "", colour));
+        }
         else Herald.offer(text, tier, topic, colour);
         if (response) Herald.took();
     }
