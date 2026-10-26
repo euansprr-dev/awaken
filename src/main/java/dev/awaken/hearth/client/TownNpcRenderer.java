@@ -17,7 +17,8 @@ public final class TownNpcRenderer extends SkinnedMobRenderer<TownNpc, SkinRende
     private static final Identifier FALLBACK = Awaken.id("textures/entity/townsfolk/oren.png");
 
     private static final Map<String, Identifier> WORN = new HashMap<>();
-    private static final net.minecraft.world.item.ItemStack BUNDLE = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BUNDLE);
+    // Built on first use: renderers are made before item components are bound, and a stack made then throws.
+    private static net.minecraft.world.item.ItemStack bundle;
 
     public TownNpcRenderer(EntityRendererProvider.Context ctx) {
         super(ctx, 0.5f);
@@ -43,7 +44,10 @@ public final class TownNpcRenderer extends SkinnedMobRenderer<TownNpc, SkinRende
         state.wear(worn.isEmpty() ? skin(npc.kind()) : WORN.computeIfAbsent(worn, w -> Awaken.id("textures/entity/" + w + ".png")), slim);
         if (state instanceof State s) {
             s.bundle = (npc.looks() & TownNpc.L_BUNDLE) != 0;
-            if (s.bundle) itemModelResolver.updateForLiving(s.back, BUNDLE, net.minecraft.world.item.ItemDisplayContext.NONE, npc);
+            if (s.bundle) {
+                if (bundle == null) bundle = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BUNDLE);
+                itemModelResolver.updateForLiving(s.back, bundle, net.minecraft.world.item.ItemDisplayContext.NONE, npc);
+            }
             else s.back.clear();
         }
     }
