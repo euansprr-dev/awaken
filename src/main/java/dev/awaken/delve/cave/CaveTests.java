@@ -80,6 +80,7 @@ final class CaveTests {
                 Routes.Result out = Routes.find(g, goal, start);
                 if (!in.found()) fails.add(k.id + " seed " + seed + " in: " + Routes.describe(in));
                 if (!out.found()) fails.add(k.id + " seed " + seed + " back out: " + Routes.describe(out));
+                if (!in.found() || !out.found()) dump(g, k, seed, in.found() ? out : in);
                 if (k == CaveKind.SINKHOLE && !diveLands(g, s)) fails.add("sinkhole seed " + seed + ": the dive from the lip misses the pool");
                 if (k == CaveKind.MINE) {
                     for (String m : new String[]{"office", "stope", "incline", "crawl", "bridge"}) {
@@ -107,6 +108,31 @@ final class CaveTests {
         }
         dev.awaken.Awaken.LOG.info("[delve] cave places' site search: {}", sites);
         h.succeed();
+    }
+
+    /** A failing place's slices round where the search stopped, for reading without the game (run/delve-routes-*.txt). */
+    private static void dump(Grid g, CaveKind k, int seed, Routes.Result r) {
+        try {
+            java.nio.file.Path out = java.nio.file.Path.of("delve-routes-" + k.id + "-" + seed + ".txt");
+            StringBuilder sb = new StringBuilder(r.why()).append('\n').append("x from ").append(g.minX()).append(", z from ").append(g.minZ()).append('\n');
+            int y0 = r.stuck() == null ? g.minY() : r.stuck()[1] - 3;
+            for (int y = Math.max(g.minY(), y0); y <= Math.min(g.maxY(), y0 + 6); y++) {
+                sb.append("y ").append(y).append('\n');
+                for (int z = g.minZ(); z <= g.maxZ(); z++) {
+                    for (int x = g.minX(); x <= g.maxX(); x++) {
+                        var b = g.get(x, y, z);
+                        char ch = Routes.reached(g, r.seen(), x, y, z) ? 'o' : b.isAir() ? '.' : Routes.water(b) ? '~' : Routes.climbable(b) ? 'H'
+                                : b.getBlock() instanceof net.minecraft.world.level.block.StairBlock ? '/' : b.getBlock() instanceof net.minecraft.world.level.block.SlabBlock ? '_'
+                                : b.is(net.minecraft.world.level.block.Blocks.MOSS_CARPET) ? ',' : b.is(net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE) ? 'S' : '#';
+                        sb.append(ch);
+                    }
+                    sb.append('\n');
+                }
+            }
+            java.nio.file.Files.writeString(out, sb.toString());
+        } catch (java.io.IOException ignored) {
+            // only a debugging aid
+        }
     }
 
     /** The column under the lip (and a step in from it) falls into the pool's water. */

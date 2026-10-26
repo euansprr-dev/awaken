@@ -29,7 +29,11 @@ final class Routes {
 
     static final double STEP = 0.6, JUMP = 1.25, HANG = 2.4, DROP = 3.0, HANG_DROP = 4.5, HEAD = 1.8, CRAWL = 0.6, JUMP_CLEAR = 3.05;
 
-    record Result(boolean found, int explored, String why) {}
+    record Result(boolean found, int explored, String why, int[] stuck, boolean[] seen) {
+        Result(boolean found, int explored, String why) {
+            this(found, explored, why, null, null);
+        }
+    }
 
     private static final TagKey<Block> RUNNER_CLIMBS = TagKey.create(net.minecraft.core.registries.Registries.BLOCK, dev.awaken.Awaken.id("runner_climbs"));
 
@@ -91,7 +95,14 @@ final class Routes {
             expand(g, c[0], c[1], c[2], seen, q);
         }
         cell(g, best, c);
-        return new Result(false, explored, "got no closer than " + c[0] + " " + c[1] + " " + c[2] + " (goal " + to[0] + " " + to[1] + " " + to[2] + ")");
+        return new Result(false, explored, "got no closer than " + c[0] + " " + c[1] + " " + c[2] + " (goal " + to[0] + " " + to[1] + " " + to[2] + ")",
+                new int[]{c[0], c[1], c[2]}, seen);
+    }
+
+    /** Whether the search reached cell (x, y, z) (a failed search's {@code seen}). */
+    static boolean reached(Grid g, boolean[] seen, int x, int y, int z) {
+        int i = index(g, x, y, z);
+        return seen != null && i >= 0 && seen[i];
     }
 
     private static int index(Grid g, int x, int y, int z) {

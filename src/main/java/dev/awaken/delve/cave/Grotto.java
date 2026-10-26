@@ -45,6 +45,8 @@ final class Grotto {
         int door = -ROOM;
         f.carve(k, -1, 0, door - 7, 1, 2, door);
         for (int lz = door - 7; lz <= door + 1; lz++) for (int lx = -1; lx <= 1; lx++) f.put(k, lx, -1, lz, Carve.rock(f.y(-1)));
+        // the doorway opens into the room whatever the room's rough wall does there
+        f.carve(k, -1, 0, door + 1, 1, 2, door + 3);
         // the slot in the roof the spring falls from, closed round its sides so it only falls
         for (int lx = -2; lx <= 2; lx++) {
             f.put(k, lx, 4, door, Carve.rock(f.y(4)));

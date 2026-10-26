@@ -83,6 +83,11 @@ final class CaveSites {
         }
     }
 
+    /** As the search below, for any structure's site (the Crystal Nest's tunnel). */
+    static int @Nullable [] air(Structure.GenerationContext ctx, int x, int y, int z, int reach) {
+        return air(new Columns(ctx), x, y, z, reach, 10, 12, ctx.random());
+    }
+
     /** A floor of natural cave air near (x, y, z): feet cell with three of air over solid rock; within reach; or null. */
     static int @Nullable [] air(Columns cols, int x, int y, int z, int reach, int below, int above, WorldgenRandom rnd) {
         int[] best = null;

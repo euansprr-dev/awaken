@@ -218,6 +218,11 @@ final class Mine {
         if (!f.touches(k, 0, z0 - 1, 7, z1 + 1)) return;
         f.carve(k, 2, G1, z0, 4, G1 + 4, z1);
         dress(f, k, 1, 5, G1, z0 + 3, z1, G1 + 4);
+        // the shaft's ladder runs on down to the gallery floor (the gallery's bore took its foot)
+        for (int ly = G1; ly <= G1 + 4; ly++) {
+            f.put(k, 5, ly, L + 10, Carve.dressed(f.y(ly)));
+            f.put(k, 4, ly, L + 10, Blocks.LADDER.defaultBlockState().setValue(LadderBlock.FACING, Direction.WEST));
+        }
         // floor, rails down its middle
         for (int lz = z0; lz <= z1; lz++) {
             for (int lx = 2; lx <= 4; lx++) f.put(k, lx, G1 - 1, lz, lx == 3 ? Blocks.GRAVEL.defaultBlockState() : Carve.rock(f.y(G1 - 1)));
@@ -392,6 +397,11 @@ final class Mine {
                 else if (n < 0.325) k.set(x, y, z, dev.awaken.delve.DelveContent.DEEPGLASS.get().defaultBlockState());
                 else if (n < 0.36) k.set(x, y, z, Blocks.AMETHYST_BLOCK.defaultBlockState());
             }
+        }
+        // the last of the drift, cut through into the chamber
+        f.carve(k, gx, G2, z1 + 1, gx + 2, G2 + 3, z1 + 5);
+        for (int lz = z1 + 1; lz <= z1 + 5; lz++) for (int lx = gx; lx <= gx + 2; lx++) {
+            if (f.inside(k, lx, G2 - 1, lz) && !f.get(k, lx, G2 - 1, lz).isSolidRender()) f.put(k, lx, G2 - 1, lz, Carve.rubble(f.y(G2 - 1)));
         }
         // the seal they began across the drift's mouth, a gap left where they ran out of stone
         for (int lx = gx - 1; lx <= gx + 3; lx++) for (int ly = G2; ly <= G2 + 4; ly++) {

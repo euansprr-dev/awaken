@@ -30,14 +30,21 @@ public class LairPiece extends StructurePiece implements PieceBeardifierModifier
     private final int variant;
     /** Which blueprint built it ({@link LairBuilder#STYLE}); pieces saved before the redesign have none. */
     private final int look;
+    /** W5: the natural cave air a cave lair's tunnel runs to (absolute), or null (older pieces, or none found). */
+    private final int @org.jspecify.annotations.Nullable [] joint;
 
     public LairPiece(LairStyle style, BlockPos centre, long seed, int variant) {
-        super(LairWorldgen.PIECE.get(), 0, box(centre));
+        this(style, centre, seed, variant, null);
+    }
+
+    public LairPiece(LairStyle style, BlockPos centre, long seed, int variant, int @org.jspecify.annotations.Nullable [] joint) {
+        super(LairWorldgen.PIECE.get(), 0, box(centre, joint));
         this.style = style;
         this.centre = centre.immutable();
         this.seed = seed;
         this.variant = variant;
         this.look = LairBuilder.STYLE;
+        this.joint = joint;
         setOrientation(null);
     }
 
@@ -51,12 +58,19 @@ public class LairPiece extends StructurePiece implements PieceBeardifierModifier
         this.seed = tag.getLongOr("seed", 0L);
         this.variant = tag.getIntOr("variant", 0);
         this.look = tag.getIntOr("look", 1);
+        this.joint = tag.getIntArray("joint").filter(a -> a.length == 3).orElse(null);
         setOrientation(null);
     }
 
     static BoundingBox box(BlockPos c) {
         int e = LairStyle.EXTENT;
         return new BoundingBox(c.getX() - e, c.getY() - LairStyle.DEPTH, c.getZ() - e, c.getX() + e, c.getY() + LairStyle.HEIGHT, c.getZ() + e);
+    }
+
+    static BoundingBox box(BlockPos c, int @org.jspecify.annotations.Nullable [] joint) {
+        BoundingBox b = box(c);
+        if (joint != null) b.encapsulate(new BoundingBox(joint[0] - 4, joint[1] - 2, joint[2] - 4, joint[0] + 4, joint[1] + 5, joint[2] + 4));
+        return b;
     }
 
     @Override
@@ -68,6 +82,7 @@ public class LairPiece extends StructurePiece implements PieceBeardifierModifier
         tag.putLong("seed", seed);
         tag.putInt("variant", variant);
         tag.putInt("look", look);
+        if (joint != null) tag.putIntArray("joint", joint);
     }
 
     public LairStyle style() {
@@ -117,6 +132,11 @@ public class LairPiece extends StructurePiece implements PieceBeardifierModifier
             @Override
             public boolean here(int x, int z) {
                 return clip.isInside(cx + x, clip.minY(), cz + z);
+            }
+
+            @Override
+            public int @org.jspecify.annotations.Nullable [] joint() {
+                return joint == null ? null : new int[]{joint[0] - cx, joint[1] - fy, joint[2] - cz};
             }
 
             @Override

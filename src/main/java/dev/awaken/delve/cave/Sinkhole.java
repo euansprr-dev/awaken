@@ -146,8 +146,8 @@ final class Sinkhole {
         }
 
         // ---- the step stones: where a row's drop lands, a stone to climb back up from -------------------------------
-        for (int m = 1; m < nRows; m++) {
-            int h = rowY(s, m);
+        for (int m = 0; m < nRows; m++) {
+            int h = rowY(s, m); // m 0: the floor itself, under the lowest row's drop
             boolean upperEven = ((m + 1) & 1) == 0;
             // the row above ends on +half (even) or -half (odd); its drop lands just past that end, on this row
             double end = upperEven ? half : -half;
@@ -157,6 +157,44 @@ final class Sinkhole {
             int sx = Mth.floor(cx + Math.cos(a) * (r - 1.1)), sz = Mth.floor(cz + Math.sin(a) * (r - 1.1));
             Carve.put(k, sx, h, sz, Blocks.MOSSY_COBBLESTONE.defaultBlockState());
             Carve.put(k, sx, h + 1, sz, Carve.AIR);
+            // and the way back up: vines on the wall from this row to the end of the one above, a strand or three wide
+            // round where it ends (climb them, step off onto its lip)
+            double dir = upperEven ? 1 : -1;
+            for (double b = -0.6; b <= 2.6; b += 0.25) {
+                double va = shelf + end + dir * b / Math.max(5, rad - 0.5);
+                Direction toWall = inward(va).getOpposite();
+                for (int y = h; y <= h + ROW - 1; y++) {
+                    float rv = wall(w, s, y, va);
+                    int vx = Mth.floor(cx + Math.cos(va) * (rv - 0.5)), vz = Mth.floor(cz + Math.sin(va) * (rv - 0.5));
+                    if (Carve.solidAt(k, vx + toWall.getStepX(), y, vz + toWall.getStepZ())) Carve.vine(k, vx, y, vz, toWall);
+                }
+            }
+        }
+
+        // ---- the cleft: a crack in the wall from the floor to the rim, roots and vines all the way up (the way back) ---
+        {
+            double a = shelf - Math.toRadians(100);
+            double ux = Math.cos(a), uz = Math.sin(a), tx = -uz, tz = ux;
+            Direction toWall = inward(a).getOpposite();
+            // the vines hang in one straight column, against the cleft's back wall
+            int vx = Mth.floor(cx + 0.5 + ux * (rad + 3.5)), vz = Mth.floor(cz + 0.5 + uz * (rad + 3.5));
+            for (int y = yf; y <= rim + 1; y++) {
+                for (double rr = rad - 2; rr <= rad + 3.6; rr += 0.5) {
+                    for (double side = -1.0; side <= 1.0; side += 0.5) {
+                        int x = Mth.floor(cx + 0.5 + ux * rr + tx * side), z = Mth.floor(cz + 0.5 + uz * rr + tz * side);
+                        if (x == vx + toWall.getStepX() && z == vz + toWall.getStepZ()) continue;
+                        Carve.air(k, x, y, z);
+                    }
+                }
+                if (y < rim) {
+                    // the back wall the vines hang on, up to the ground (you step off the top onto it)
+                    Carve.solid(k, vx + toWall.getStepX(), y, vz + toWall.getStepZ());
+                    Carve.vine(k, vx, y, vz, toWall);
+                } else {
+                    Carve.air(k, vx + toWall.getStepX(), y, vz + toWall.getStepZ());
+                }
+            }
+            k.mark("cleft", vx, yf, vz);
         }
 
         // ---- the way in at the rim: a cut path down onto the top row --------------------------------------------------
