@@ -1,32 +1,51 @@
 package dev.awaken.opening.client;
 
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.renderpearl.api.buffers.GpuBuffer;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
+import com.mojang.renderpearl.api.commands.RenderPass;
+import com.mojang.renderpearl.api.pipeline.BlendFunction;
+import com.mojang.renderpearl.api.pipeline.ColorTargetState;
+import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import dev.awaken.Awaken;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.MappableRingBuffer;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
 import org.jspecify.annotations.Nullable;
+import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import org.lwjgl.system.MemoryUtil;
+
+import java.util.Optional;
+import java.util.OptionalDouble;
 
 /**
- * The opening's light in the world, drawn camera-relative as additive meshes (vanilla's lightning render type, so Lens
- * blooms them): the column falling into Choir Square and standing there through the run (visible from anywhere in the
- * city), the shockwaves that cross the roofs (the light landing, the pulse that drops the Bell Bridge, the arrival's
- * bursts), the portal blooming at the arrival, the Runner's eye on a hold, and the Assessment Lens's shard with its scan.
- * Fixed pools; a frame allocates only a few small vectors while something is drawn.
+ * The opening's light in the world: the column falling into Choir Square and standing there through the run (visible
+ * from anywhere in the city), the shockwaves that cross the roofs (the light landing, the pulse that drops the Bell
+ * Bridge, the arrival's bursts), the portal blooming at the arrival, the Runner's eye on a hold, and the Assessment
+ * Lens's shard with its scan. Fixed pools; a frame allocates only a few small vectors while something is drawn.
+ * <p>Drawn after the level, camera-relative, in a pass of its own on the main target (depth-tested, no depth written, no
+ * fog), as the gate pillars are (SPEC §7): inside the level the column's translucent body read to Lens as solid, a
+ * pale slab with hard sides and a flat top over Choir Square where its clouds and sky gave way (Euan, from the Roost at
+ * noon: "the light pillar is STILL not fixed"), and the fog cut its light off flat. Its haze is alpha-blended (it
+ * carries the column against a daylight sky); everything else is light added (Lens blooms it).
  */
 final class OpeningFx {
     private OpeningFx() {}
 
-    private static @Nullable RenderType add, glass;
     private static double cx, cy, cz;
     private static float pt;
     private static final Quaternionf CAM = new Quaternionf();
@@ -118,7 +137,38 @@ final class OpeningFx {
 
     // ---- drawing ----------------------------------------------------------------------------------------------------
 
+    /** The light added, without the world's fog (it counts height as distance and cut the column off flat). */
+    static final RenderPipeline GLOW = RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
+            .withLocation(Awaken.id("pipeline/opening_glow"))
+            .withColorTargetState(new ColorTargetState(BlendFunction.LIGHTNING))
+            .build();
+
+    static void registerPipelines(RegisterRenderPipelinesEvent e) {
+        e.registerOptionalPipeline(GLOW);
+    }
+
+    /** The key glyph over the Runner's eye: text, so it stays in the level's own pass. */
     static void submit(SubmitCustomGeometryEvent e) {
+        if (glyph == null || eyeAt == null) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) return;
+        var state = e.getLevelRenderState();
+        Vec3 cam = state.cameraRenderState.pos;
+        cx = cam.x;
+        cy = cam.y;
+        cz = cam.z;
+        pt = state.worldPartialTicks;
+        CAM.set(state.cameraRenderState.orientation);
+        glyphText(e.getPoseStack(), e.getSubmitNodeCollector(), mc);
+    }
+
+    /** Room for every quad of a frame (the column ~1300, a wide ring ~320, twelve of them at most); past it, left out. */
+    private static final int MAX_QUADS = 16384;
+    private static @Nullable MappableRingBuffer ring;
+    /** Where the next vertex goes in the mapped buffer, and where it ends. */
+    private static long at, end;
+
+    static void afterLevel(RenderLevelStageEvent.AfterLevel e) {
         boolean any = columnOn || lens != null || eyeAt != null && OpeningClient.ticks() - eyeFrom < 60 || ringsLive();
         if (!any) return;
         Minecraft mc = Minecraft.getInstance();
@@ -133,27 +183,52 @@ final class OpeningFx {
         RIGHT.set(1, 0, 0).rotate(CAM);
         UP.set(0, 1, 0).rotate(CAM);
         LOOK.set(0, 0, -1).rotate(CAM);
-        if (add == null) add = RenderTypes.lightning();
-        if (glass == null) glass = RenderTypes.debugQuads();
-        PoseStack ps = e.getPoseStack();
-        SubmitNodeCollector out = e.getSubmitNodeCollector();
-        // the column's body: translucent and unfogged, so it reads against a bright dawn sky from across the city
-        // (additive light vanishes against the sky, and the lightning type fades with the fog)
-        if (columnOn) out.submitCustomGeometry(ps, glass, (pose, vc) -> {
+        float t = OpeningClient.ticks() + pt;
+        // 0.4 at noon, 1 at night: by day the haze carries the column (light added vanishes against the sky)
+        float day = 0.4F + 0.6F * mc.level.getSkyDarken() / 11F;
+        // the far plane is at least four render distances out (Camera.update): every vertex stays well inside it
+        float far = mc.options.getEffectiveRenderDistance() * 16 * 4 * 0.85F;
+        if (ring == null) ring = new MappableRingBuffer(() -> "awaken opening light", GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_MAP_WRITE, MAX_QUADS * 64);
+        GpuBuffer buf = ring.currentBuffer();
+        int hazeQuads, allQuads;
+        try (GpuBufferSlice.MappedView view = buf.map(false, true)) {
+            long base = MemoryUtil.memAddress(view.data());
+            at = base;
+            end = base + (long) MAX_QUADS * 64;
             try {
-                columnBody(vc, OpeningClient.ticks() + pt);
+                if (columnOn) column(t, day, far, true);
+                hazeQuads = (int) ((at - base) / 64);
+                if (columnOn) column(t, day, far, false);
+                draw(t);
             } catch (RuntimeException ex) {
-                dev.awaken.Awaken.LOG.error("[opening] fx failed", ex);
+                Awaken.LOG.error("[opening] fx failed", ex);
+                hazeQuads = 0;
+                at = base;
             }
-        });
-        out.submitCustomGeometry(ps, add, (pose, vc) -> {
-            try {
-                draw(vc);
-            } catch (RuntimeException ex) {
-                dev.awaken.Awaken.LOG.error("[opening] fx failed", ex);
+            allQuads = (int) ((at - base) / 64);
+        }
+        if (allQuads > 0) {
+            var glow = RenderSystem.getCompiledPipelineNullable(GLOW);
+            RenderTarget main = mc.gameRenderer.mainRenderTarget();
+            RenderSystem.AutoStorageIndexBuffer quadIndex = RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
+            GpuBuffer indices = quadIndex.getBuffer(allQuads * 6);
+            try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "awaken opening light",
+                    main.getColorTextureView(), Optional.empty(), main.getDepthTextureView(), OptionalDouble.empty())) {
+                RenderSystem.bindDefaultUniforms(pass);
+                pass.setUniform("DynamicTransforms", RenderSystem.getDynamicUniforms().writeTransform(new Matrix4f(e.getModelViewMatrix())));
+                pass.setIndexBuffer(indices, quadIndex.type());
+                pass.setVertexBuffer(0, buf.slice());
+                if (hazeQuads > 0) {
+                    pass.setPipeline(RenderSystem.getCompiledPipeline(RenderPipelines.DEBUG_QUADS));
+                    pass.drawIndexed(hazeQuads * 6, 1, 0, 0, 0);
+                }
+                if (allQuads > hazeQuads) {
+                    pass.setPipeline(glow != null ? glow : RenderSystem.getCompiledPipeline(RenderPipelines.DEBUG_QUADS));
+                    pass.drawIndexed((allQuads - hazeQuads) * 6, 1, 0, hazeQuads * 4, 0);
+                }
             }
-        });
-        if (glyph != null && eyeAt != null) glyphText(ps, out, mc);
+        }
+        ring.rotate();
     }
 
     private static boolean ringsLive() {
@@ -162,10 +237,8 @@ final class OpeningFx {
         return false;
     }
 
-    private static void draw(VertexConsumer vc) {
-        long now = OpeningClient.ticks();
-        float t = now + pt;
-        if (columnOn) column(vc, t);
+    /** The light added beside the column's: the rings, the eye, the shard. */
+    private static void draw(float t) {
         for (int i = 0; i < RINGS; i++) {
             if (rLife[i] <= 0) continue;
             float age = t - rFrom[i];
@@ -173,14 +246,19 @@ final class OpeningFx {
             float r = Math.min(rMax[i], r0[i] + rSpeed[i] * age);
             float a = 1 - age / rLife[i];
             int argb = scaleAlpha(rColour[i], a * a);
-            flatRing(vc, rx[i], ry[i], rz[i], r, Math.max(0.6F, r * 0.035F), argb);
+            flatRing(rx[i], ry[i], rz[i], r, Math.max(0.6F, r * 0.035F), argb);
         }
-        if (eyeAt != null) runnersEye(vc, t);
-        if (lens != null) lensShard(vc, t);
+        if (eyeAt != null) runnersEye(t);
+        if (lens != null) lensShard(t);
     }
 
-    /** The column: a white core, a blue glow and a wide haze, from the sky to the square, beating slowly. */
-    private static void column(VertexConsumer vc, float t) {
+    /**
+     * The column, from the sky to the square, beating slowly: a near-white core and a blue glow (light added), and a wide
+     * haze (alpha-blended: by day, lit air paler than the sky). Each is a ribbon turned to the camera about the column's
+     * axis with a bell-shaped falloff across it, so it melts into the sky with no edge; each thins to nothing with height
+     * and fades out as the camera comes inside its width, so from the square only the core is left, a soft line.
+     */
+    private static void column(float t, float day, float far, boolean haze) {
         float since = t - fellAt;
         double baseY = column.y;
         // falling: the bottom races down from the sky in eight ticks
@@ -188,75 +266,119 @@ final class OpeningFx {
         float beat = 0.82F + 0.18F * Mth.sin(t * 0.13F) + surge + bloom * 0.8F;
         float land = since >= 8 && since < 30 ? 1 - (since - 8) / 22F : 0;
         // the column widens a little with distance so it reads from the far side of the city
-        double d = Math.sqrt((column.x - cx) * (column.x - cx) + (column.z - cz) * (column.z - cz));
-        float far = (float) Mth.clamp(d / 120.0, 1.0, 2.6);
-        Vec3 a = new Vec3(column.x, bottom, column.z), b = new Vec3(column.x, TOP, column.z);
-        beam(vc, a, b, (2.4F + land * 6 + bloom * 4) * far * 0.7F, argb(Math.min(1F, 0.85F * beat), 0xF4FAFF));
-        beam(vc, a, b, (8F + land * 14 + bloom * 9) * far, argb(Math.min(0.6F, 0.30F * beat), 0x8FC8FF));
-        beam(vc, a, b, (26F + bloom * 14) * far, argb(Math.min(0.12F, 0.07F * beat), 0x6FA8FF));
+        double vx = column.x - cx, vz = column.z - cz, d = Math.sqrt(vx * vx + vz * vz);
+        float wide = (float) Mth.clamp(d / 120.0, 1.0, 2.6);
+        if (d < 1e-4) return;
+        float rxv = (float) (-vz / d), rzv = (float) (vx / d);
+        // its top stays inside the far plane
+        double top = Math.min(TOP, cy + Math.sqrt(Math.max(0, far * far - d * d)));
+        float h = (float) (top - bottom);
+        if (h < 4) return;
+        float bx = (float) (column.x - cx), by = (float) (bottom - cy), bz = (float) (column.z - cz);
+        float foot = since < 8 ? 2F : 6F;
+        if (haze) {
+            float tint = 1.15F - day;
+            int air = airy(0x8FC8FF, day);
+            ribbon(NEAR, bx, by, bz, rxv, rzv, h, (5.5F + land * 5 + bloom * 4) * wide, air, Math.min(0.6F, 0.5F * tint * beat), t, 1F, 0.6F, foot);
+            ribbon(NEAR, bx, by, bz, rxv, rzv, h, (13F + bloom * 7) * wide, air, Math.min(0.25F, 0.18F * tint * beat), t, 0.4F, 0.45F, foot);
+            return;
+        }
+        ribbon(NEAR, bx, by, bz, rxv, rzv, h, (1.2F + land * 3 + bloom * 2) * wide * 0.7F, 0xFFF4FAFF, Math.min(1F, (0.6F + 0.4F * day) * beat), t, 0.6F, 1F, foot);
+        ribbon(NEAR, bx, by, bz, rxv, rzv, h, (4F + land * 7 + bloom * 4.5F) * wide, airy(0x8FC8FF, day), Math.min(0.8F, 0.35F * day * beat + land * 0.3F), t, 1F, 0.85F, foot);
         if (since >= 8) {
             // where it meets the ground: a pool of light and a flare
             float pool = 4.5F + 1.2F * Mth.sin(t * 0.21F) + land * 10 + bloom * 9;
-            disc(vc, column.x, baseY + 0.08, column.z, pool, argb(Math.min(1F, 0.5F * beat), 0xCFE8FF));
-            flare(vc, column.x, baseY + 1.2, column.z, 3.5F + land * 14 + bloom * 6, argb(Math.min(0.8F, 0.5F * beat + land), 0xFFFFFF));
+            disc(column.x, baseY + 0.08, column.z, pool, argb(Math.min(1F, 0.5F * beat), 0xCFE8FF));
+            flare(column.x, baseY + 1.2, column.z, 3.5F + land * 14 + bloom * 6, argb(Math.min(0.8F, 0.5F * beat + land), 0xFFFFFF));
             // motes rising along it
             for (int i = 0; i < 26; i++) {
                 float k = (i * 0.618034F + t * 0.006F * (1 + (i % 3))) % 1F;
                 double y = baseY + k * 90;
                 double ang = i * 2.39996 + t * 0.03;
                 double rr = 1.2 + (i % 5) * 0.7 + bloom * 3;
-                flare(vc, column.x + Math.cos(ang) * rr, y, column.z + Math.sin(ang) * rr, 0.25F + (i % 4) * 0.08F,
-                        argb(0.7F * (1 - k), 0xDDEEFF));
+                flare(column.x + Math.cos(ang) * rr, y, column.z + Math.sin(ang) * rr, 0.25F + (i % 4) * 0.08F, argb(0.7F * (1 - k), 0xDDEEFF));
             }
         }
     }
 
-    /** The column's body (translucent pass): a pale core and a wide blue glow, soft at the edges, faded at the top. */
-    private static void columnBody(VertexConsumer vc, float t) {
-        float since = t - fellAt;
-        double baseY = column.y;
-        double bottom = since < 8 ? TOP - (TOP - baseY) * Mth.clamp(since / 8F, 0, 1) : baseY;
-        float beat = 0.85F + 0.15F * Mth.sin(t * 0.13F) + surge * 0.6F + bloom * 0.5F;
-        double d = Math.sqrt((column.x - cx) * (column.x - cx) + (column.z - cz) * (column.z - cz));
-        float far = (float) Mth.clamp(d / 120.0, 1.0, 2.6);
-        // camera-facing across the column
-        double vx = column.x - cx, vz = column.z - cz;
-        double vl = Math.sqrt(vx * vx + vz * vz);
-        double nx = vl < 1e-6 ? 1 : -vz / vl, nz = vl < 1e-6 ? 0 : vx / vl;
-        ribbon(vc, bottom, nx, nz, (3.0F + bloom * 3) * far, argb(Math.min(0.9F, 0.62F * beat), 0xF0F8FF));
-        ribbon(vc, bottom, nx, nz, (11F + bloom * 7) * far, argb(Math.min(0.45F, 0.2F * beat), 0xA6D2FF));
-    }
+    /** Rows up the column (denser near the foot, where it is seen from close by). */
+    private static final float[] ROWS = {0F, 0.004F, 0.012F, 0.025F, 0.045F, 0.07F, 0.1F, 0.14F, 0.19F, 0.25F, 0.32F, 0.4F, 0.5F, 0.6F,
+            0.7F, 0.8F, 0.9F, 1F};
+    /** The falloff across a ribbon, (1 - x²)³ at x = i / 6 from the middle out: bell-shaped, nothing and flat at the edge. */
+    private static final float[] NEAR = new float[7];
 
-    /** A vertical ribbon on the column, bright on its axis and clear at its edges, thinning toward the sky. */
-    private static void ribbon(VertexConsumer vc, double bottom, double nx, double nz, float width, int argb) {
-        double h = width * 0.5;
-        int r = rim(argb);
-        int top = scaleAlpha(argb, 0.35F);
-        double y0 = bottom, y1 = TOP;
-        // two halves: centre to each edge
-        for (int sgn = -1; sgn <= 1; sgn += 2) {
-            double ex = nx * h * sgn, ez = nz * h * sgn;
-            vt(vc, column.x, y0, column.z, argb);
-            vt(vc, column.x, y1, column.z, top);
-            vt(vc, column.x + ex, y1, column.z + ez, rim(top));
-            vt(vc, column.x + ex, y0, column.z + ez, r);
+    static {
+        for (int i = 0; i <= 6; i++) {
+            float x = i / 6F, v = 1F - x * x;
+            NEAR[i] = v * v * v;
         }
     }
 
-    /** Single winding (the translucent pass draws both faces itself). */
-    private static void vt(VertexConsumer vc, double x, double y, double z, int argb) {
-        vc.addVertex((float) (x - cx), (float) (y - cy), (float) (z - cz)).setColor(argb);
+    /**
+     * One soft ribbon up the column: per row, the bell's columns from the middle out on each side, fading in over the
+     * foot, thinning to nothing at {@code reach} of the height (no slope there, so no top shows), rising bands of light.
+     */
+    private static void ribbon(float[] bell, float bx, float by, float bz, float rx, float rz, float h, float half, int argb,
+                               float strength, float t, float shimmer, float reach, float footLen) {
+        int n = bell.length - 1;
+        // from inside or beside it, it would hang across the view as a sheet: it fades out as the camera comes within
+        // twice its half-width
+        float near = Mth.clamp(((float) Math.sqrt(bx * bx + bz * bz) - half * 0.5F) / (half * 1.5F), 0F, 1F);
+        strength *= near * near * (3F - 2F * near);
+        if (strength < 0.004F) return;
+        float pa = 0;
+        for (int i = 0; i < ROWS.length; i++) {
+            float f = ROWS[i];
+            if (i > 0 && ROWS[i - 1] >= reach) break;
+            float y = by + f * h;
+            float foot = Mth.clamp(f * h / footLen, 0F, 1F), up = Mth.clamp(1F - f / reach, 0F, 1F);
+            float bands = 1F - shimmer * 0.22F * (0.5F + 0.5F * Mth.sin(f * h * 0.08F - t * 0.09F));
+            float a = strength * foot * up * up * (3F - 2F * up) * bands;
+            if (i > 0) {
+                if (at + (long) n * 128 > end) return;
+                float y0 = by + ROWS[i - 1] * h;
+                for (int j = 0; j < n; j++) {
+                    float x0 = half * j / n, x1 = half * (j + 1) / n;
+                    int b0 = scaleAlpha(argb, pa * bell[j]), b1 = scaleAlpha(argb, a * bell[j]);
+                    int o0 = scaleAlpha(argb, pa * bell[j + 1]), o1 = scaleAlpha(argb, a * bell[j + 1]);
+                    for (int side = -1; side <= 1; side += 2) {
+                        float ix = rx * x0 * side, iz = rz * x0 * side, ox = rx * x1 * side, oz = rz * x1 * side;
+                        put(bx + ix, y0, bz + iz, b0);
+                        put(bx + ox, y0, bz + oz, o0);
+                        put(bx + ox, y, bz + oz, o1);
+                        put(bx + ix, y, bz + iz, b1);
+                    }
+                }
+            }
+            pa = a;
+        }
+    }
+
+    /** By day the column's glow is lit air, its colour lifted toward white (paler than the sky); at night its own. */
+    private static int airy(int c, float day) {
+        float lift = 0.55F * Mth.clamp((1F - day) / 0.6F, 0F, 1F);
+        int r = c >> 16 & 255, g = c >> 8 & 255, b = c & 255;
+        return 0xFF000000 | (int) (r + (255 - r) * lift) << 16 | (int) (g + (255 - g) * lift) << 8 | (int) (b + (255 - b) * lift);
+    }
+
+    /** One vertex, camera-relative: position and colour (r, g, b, a bytes), as POSITION_COLOR lays them out. */
+    private static void put(float x, float y, float z, int argb) {
+        MemoryUtil.memPutFloat(at, x);
+        MemoryUtil.memPutFloat(at + 4, y);
+        MemoryUtil.memPutFloat(at + 8, z);
+        MemoryUtil.memPutInt(at + 12, (argb & 0xFF00FF00) | (argb >> 16 & 0xFF) | (argb & 0xFF) << 16);
+        at += 16;
     }
 
     /** The bronze pulse on the next hold: twice, soft, then gone (2.5 s); the key glyph floats over it. */
-    private static void runnersEye(VertexConsumer vc, float t) {
+    private static void runnersEye(float t) {
         float age = t - eyeFrom;
         if (age > 60 || eyeAt == null) return;
         float pulse = Mth.sin(Math.min(1, age / 60F) * Mth.PI * 2.5F);
         float a = Math.max(0, pulse) * Mth.clamp((60 - age) / 12F, 0, 1);
         Vec3 p = eyeAt;
-        flare(vc, p.x, p.y, p.z, 0.9F + 0.6F * a, argb(0.9F * a, 0xE0B070));
-        flatRing(vc, p.x, p.y - 0.45, p.z, 0.6F + age * 0.03F, 0.08F, argb(0.8F * a, 0xE0B070));
+        flare(p.x, p.y, p.z, 0.9F + 0.6F * a, argb(0.9F * a, 0xE0B070));
+        flatRing(p.x, p.y - 0.45, p.z, 0.6F + age * 0.03F, 0.08F, argb(0.8F * a, 0xE0B070));
     }
 
     private static void glyphText(PoseStack ps, SubmitNodeCollector out, Minecraft mc) {
@@ -277,7 +399,7 @@ final class OpeningFx {
     }
 
     /** The shard of the Choir over its pedestal: a turning octahedron of light; the scan sweeps head to foot. */
-    private static void lensShard(VertexConsumer vc, float t) {
+    private static void lensShard(float t) {
         Vec3 c = lens;
         if (c == null) return;
         double bob = Math.sin(t * 0.07) * 0.08;
@@ -293,13 +415,13 @@ final class OpeningFx {
         int face = argb(0.55F * glow, 0xB8D8FF), edge = argb(0.9F * glow, 0xEAF4FF);
         for (int i = 0; i < 4; i++) {
             Vec3 r1 = ring[i], r2 = ring[(i + 1) % 4];
-            tri(vc, top, r1, r2, face);
-            tri(vc, bot, r2, r1, face);
-            beam(vc, top, r1, 0.03F, edge);
-            beam(vc, bot, r1, 0.03F, edge);
-            beam(vc, r1, r2, 0.03F, edge);
+            tri(top, r1, r2, face);
+            tri(bot, r2, r1, face);
+            beam(top, r1, 0.03F, edge);
+            beam(bot, r1, 0.03F, edge);
+            beam(r1, r2, 0.03F, edge);
         }
-        flare(vc, c.x, c.y + bob, c.z, 1.4F + lensGlow * 2.5F, argb(0.45F * glow, 0x9ED2FF));
+        flare(c.x, c.y + bob, c.z, 1.4F + lensGlow * 2.5F, argb(0.45F * glow, 0x9ED2FF));
         // the scan: a ring of light sweeping down over whoever stands to be read, twice
         float age = t - scanFrom;
         if (age >= 0 && age < 90) {
@@ -308,8 +430,8 @@ final class OpeningFx {
                 float k = (age % 45F) / 45F;
                 double py = mc.player.getY() + 2.0 - k * 2.1;
                 double px = Mth.lerp(pt, mc.player.xo, mc.player.getX()), pz = Mth.lerp(pt, mc.player.zo, mc.player.getZ());
-                flatRing(vc, px, py, pz, 0.75F, 0.07F, argb(0.85F * (1 - Math.abs(k - 0.5F)), 0xBFE3FF));
-                beam(vc, c.add(0, bob, 0), new Vec3(px, py, pz), 0.05F, argb(0.35F, 0xBFE3FF));
+                flatRing(px, py, pz, 0.75F, 0.07F, argb(0.85F * (1 - Math.abs(k - 0.5F)), 0xBFE3FF));
+                beam(c.add(0, bob, 0), new Vec3(px, py, pz), 0.05F, argb(0.35F, 0xBFE3FF));
             }
         }
     }
@@ -320,23 +442,23 @@ final class OpeningFx {
     private static final int[] QC = new int[4];
     private static int qn;
 
-    /** Quads in both windings: they read from above, below and behind. */
-    private static void v(VertexConsumer vc, double x, double y, double z, int argb) {
+    /** A quad's corner, camera-relative; a whole quad goes in at once (the pass draws both faces: no culling). */
+    private static void v(double x, double y, double z, int argb) {
         QX[qn] = (float) (x - cx);
         QY[qn] = (float) (y - cy);
         QZ[qn] = (float) (z - cz);
         QC[qn] = argb;
         if (++qn < 4) return;
         qn = 0;
-        for (int i = 0; i < 4; i++) vc.addVertex(QX[i], QY[i], QZ[i]).setColor(QC[i]);
-        for (int i = 3; i >= 0; i--) vc.addVertex(QX[i], QY[i], QZ[i]).setColor(QC[i]);
+        if (at + 64 > end) return;
+        for (int i = 0; i < 4; i++) put(QX[i], QY[i], QZ[i], QC[i]);
     }
 
-    private static void tri(VertexConsumer vc, Vec3 a, Vec3 b, Vec3 c, int argb) {
-        v(vc, a.x, a.y, a.z, argb);
-        v(vc, b.x, b.y, b.z, argb);
-        v(vc, c.x, c.y, c.z, argb);
-        v(vc, c.x, c.y, c.z, argb);
+    private static void tri(Vec3 a, Vec3 b, Vec3 c, int argb) {
+        v(a.x, a.y, a.z, argb);
+        v(b.x, b.y, b.z, argb);
+        v(c.x, c.y, c.z, argb);
+        v(c.x, c.y, c.z, argb);
     }
 
     private static int argb(float a, int rgb) {
@@ -353,7 +475,7 @@ final class OpeningFx {
     }
 
     /** A ribbon between two points turned to the camera, bright on its line, nothing at its edges. */
-    private static void beam(VertexConsumer vc, Vec3 a, Vec3 b, float width, int argb) {
+    private static void beam(Vec3 a, Vec3 b, float width, int argb) {
         if (width <= 0.001F || (argb >>> 24) == 0) return;
         double dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
         // the view toward the beam's nearest point (a long column: the part in front of the camera)
@@ -368,46 +490,46 @@ final class OpeningFx {
         ny *= s;
         nz *= s;
         int r = rim(argb);
-        v(vc, a.x, a.y, a.z, argb);
-        v(vc, b.x, b.y, b.z, argb);
-        v(vc, b.x + nx, b.y + ny, b.z + nz, r);
-        v(vc, a.x + nx, a.y + ny, a.z + nz, r);
-        v(vc, a.x - nx, a.y - ny, a.z - nz, r);
-        v(vc, b.x - nx, b.y - ny, b.z - nz, r);
-        v(vc, b.x, b.y, b.z, argb);
-        v(vc, a.x, a.y, a.z, argb);
+        v(a.x, a.y, a.z, argb);
+        v(b.x, b.y, b.z, argb);
+        v(b.x + nx, b.y + ny, b.z + nz, r);
+        v(a.x + nx, a.y + ny, a.z + nz, r);
+        v(a.x - nx, a.y - ny, a.z - nz, r);
+        v(b.x - nx, b.y - ny, b.z - nz, r);
+        v(b.x, b.y, b.z, argb);
+        v(a.x, a.y, a.z, argb);
     }
 
     /** A soft round glow facing the camera. */
-    private static void flare(VertexConsumer vc, double px, double py, double pz, float r, int argb) {
+    private static void flare(double px, double py, double pz, float r, int argb) {
         if (r <= 0.001F || (argb >>> 24) == 0) return;
         int rr = rim(argb);
         int n = r < 1.0F ? 6 : r < 4F ? 10 : 14;
         for (int i = 0; i < n; i++) {
             float a0 = i * Mth.TWO_PI / n, a1 = (i + 1) * Mth.TWO_PI / n;
             float c0 = Mth.cos(a0) * r, s0 = Mth.sin(a0) * r, c1 = Mth.cos(a1) * r, s1 = Mth.sin(a1) * r;
-            v(vc, px, py, pz, argb);
-            v(vc, px, py, pz, argb);
-            v(vc, px + RIGHT.x * c1 + UP.x * s1, py + RIGHT.y * c1 + UP.y * s1, pz + RIGHT.z * c1 + UP.z * s1, rr);
-            v(vc, px + RIGHT.x * c0 + UP.x * s0, py + RIGHT.y * c0 + UP.y * s0, pz + RIGHT.z * c0 + UP.z * s0, rr);
+            v(px, py, pz, argb);
+            v(px, py, pz, argb);
+            v(px + RIGHT.x * c1 + UP.x * s1, py + RIGHT.y * c1 + UP.y * s1, pz + RIGHT.z * c1 + UP.z * s1, rr);
+            v(px + RIGHT.x * c0 + UP.x * s0, py + RIGHT.y * c0 + UP.y * s0, pz + RIGHT.z * c0 + UP.z * s0, rr);
         }
     }
 
     /** A flat glowing disc on the ground (bright middle). */
-    private static void disc(VertexConsumer vc, double px, double py, double pz, float r, int argb) {
+    private static void disc(double px, double py, double pz, float r, int argb) {
         int rr = rim(argb);
         int n = 20;
         for (int i = 0; i < n; i++) {
             double a0 = i * Math.PI * 2 / n, a1 = (i + 1) * Math.PI * 2 / n;
-            v(vc, px, py, pz, argb);
-            v(vc, px, py, pz, argb);
-            v(vc, px + Math.cos(a1) * r, py, pz + Math.sin(a1) * r, rr);
-            v(vc, px + Math.cos(a0) * r, py, pz + Math.sin(a0) * r, rr);
+            v(px, py, pz, argb);
+            v(px, py, pz, argb);
+            v(px + Math.cos(a1) * r, py, pz + Math.sin(a1) * r, rr);
+            v(px + Math.cos(a0) * r, py, pz + Math.sin(a0) * r, rr);
         }
     }
 
     /** A flat ring (a shockwave): bright on its circle, soft either side. */
-    private static void flatRing(VertexConsumer vc, double px, double py, double pz, float r, float half, int argb) {
+    private static void flatRing(double px, double py, double pz, float r, float half, int argb) {
         if (r <= 0.01F || (argb >>> 24) == 0) return;
         int rr = rim(argb);
         int n = Math.max(24, Math.min(160, (int) (r * 2)));
@@ -415,14 +537,14 @@ final class OpeningFx {
         for (int i = 0; i < n; i++) {
             double a0 = i * Math.PI * 2 / n, a1 = (i + 1) * Math.PI * 2 / n;
             double c0 = Math.cos(a0), s0 = Math.sin(a0), c1 = Math.cos(a1), s1 = Math.sin(a1);
-            v(vc, px + c0 * ri, py, pz + s0 * ri, rr);
-            v(vc, px + c1 * ri, py, pz + s1 * ri, rr);
-            v(vc, px + c1 * r, py, pz + s1 * r, argb);
-            v(vc, px + c0 * r, py, pz + s0 * r, argb);
-            v(vc, px + c0 * r, py, pz + s0 * r, argb);
-            v(vc, px + c1 * r, py, pz + s1 * r, argb);
-            v(vc, px + c1 * ro, py, pz + s1 * ro, rr);
-            v(vc, px + c0 * ro, py, pz + s0 * ro, rr);
+            v(px + c0 * ri, py, pz + s0 * ri, rr);
+            v(px + c1 * ri, py, pz + s1 * ri, rr);
+            v(px + c1 * r, py, pz + s1 * r, argb);
+            v(px + c0 * r, py, pz + s0 * r, argb);
+            v(px + c0 * r, py, pz + s0 * r, argb);
+            v(px + c1 * r, py, pz + s1 * r, argb);
+            v(px + c1 * ro, py, pz + s1 * ro, rr);
+            v(px + c0 * ro, py, pz + s0 * ro, rr);
         }
     }
 }
