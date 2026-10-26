@@ -99,6 +99,9 @@ public final class SettleTests {
                 int r = HomePeople.recordOf(rec, oren.id());
                 h.assertTrue(r >= 0 && settlement.personName(r).equals("Oren") && settlement.job(r).equals("smith"),
                         "Oren is its smith (" + (r < 0 ? "no record" : settlement.personName(r) + ", " + settlement.job(r)) + ")");
+                // the walk graph lies on the Hearth's own land (a roster is offsets from its origin, the Anchor, not the world's)
+                float reach = HomePeople.graphReach(rec);
+                h.assertTrue(reach > 0 && reach < 48, "the walk graph lies round the Anchor (furthest node " + reach + " off)");
                 // saved with the Hearth
                 var json = HearthRecord.CODEC.encodeStart(JsonOps.INSTANCE, rec).getOrThrow();
                 HearthRecord back = HearthRecord.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow();

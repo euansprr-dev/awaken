@@ -65,6 +65,21 @@ public final class HomePeople {
         /** Each record's settler id, in roster order. */
         String[] people = new String[0];
         long nextTry;
+        /** The roster handed to the engine (tests read its graph back). */
+        @Nullable RosterBuilder roster;
+    }
+
+    /**
+     * How far the walk graph handed to the engine reaches from the Anchor (a roster is offsets from its origin); -1
+     * before the home is on the engine. Tests only: it builds the roster again.
+     */
+    static float graphReach(HearthRecord h) {
+        Home home = HOMES.get(h.owner);
+        if (home == null || home.settlement < 0 || home.roster == null) return -1;
+        var g = home.roster.build().graph();
+        float far = 0;
+        if (g != null) for (int i = 0; i < g.nodes(); i++) far = (float) Math.max(far, Math.hypot(g.x()[i], g.z()[i]));
+        return far;
     }
 
     private static final Map<UUID, Home> HOMES = new HashMap<>();
@@ -192,6 +207,7 @@ public final class HomePeople {
         home.settlement = s.get().id();
         home.people = built.people;
         home.built = job.signature;
+        home.roster = built.roster;
         Awaken.LOG.info("[hearth] {}'s home: {} people, {} places, {} cells walked, {} unreached", h.ownerName, built.people.length,
                 built.places, job.walk.cells(), built.unreached);
     }
@@ -498,13 +514,16 @@ public final class HomePeople {
         return out == null ? null : new Where("stand", List.of(out), null);
     }
 
-    /** Meals: the hall's seats (a stair on its floor), else the kitchen's (or room beside its stove), else by the fire. */
+    /**
+     * Meals: at the hall's table (else beside its benches), else the kitchen's, else beside its stove, else by the fire.
+     * They stand to eat: the people engine has no seated pose, and someone stood on a bench reads as wrong.
+     */
     static @Nullable Where meal(ServerLevel level, HearthRecord h) {
         for (RoomType t : new RoomType[]{RoomType.HALL, RoomType.KITCHEN}) {
             for (Room r : h.rooms) {
                 if (!r.types().contains(t)) continue;
                 List<Spot> seats = seats(level, r);
-                if (!seats.isEmpty()) return new Where("sit", seats, r);
+                if (!seats.isEmpty()) return new Where("stand", seats, r);
                 Spot s = besideIn(level, r, st -> st.getBlock() instanceof net.minecraft.world.level.block.CraftingTableBlock
                         || st.getBlock() instanceof net.minecraft.world.level.block.AbstractFurnaceBlock);
                 if (s != null) return new Where("stand", List.of(s), r);
@@ -513,20 +532,44 @@ public final class HomePeople {
         return null;
     }
 
-    /** The cells over the room's bottom stairs (seats), facing out of the stair's back, at most eight. */
+    /**
+     * Places at the room's table: floor cells beside a table (a fence or wall with something on it, a top slab, an
+     * upside-down stair), facing it; with no table, the cells beside its benches (bottom stairs), facing the bench. At
+     * most eight, spread along the table.
+     */
     static List<Spot> seats(ServerLevel level, Room r) {
-        List<Spot> out = new ArrayList<>();
-        if (r.cells().isEmpty()) return out;
+        List<Spot> table = new ArrayList<>(), bench = new ArrayList<>();
+        if (r.cells().isEmpty()) return table;
         LongIterator it = r.cells().iterator();
-        while (it.hasNext() && out.size() < 8) {
+        while (it.hasNext()) {
             BlockPos c = BlockPos.of(it.nextLong());
-            BlockState below = level.getBlockState(c.below());
-            if (!(below.getBlock() instanceof StairBlock) || below.getValue(StairBlock.HALF) != Half.BOTTOM) continue;
             if (!HomeWalk.stand(level, c)) continue;
-            Direction back = below.getValue(StairBlock.FACING);
-            out.add(new Spot(c, yaw(c, c.relative(back.getOpposite()))));
+            for (Direction d : Direction.Plane.HORIZONTAL) {
+                BlockPos n = c.relative(d);
+                BlockState ns = level.getBlockState(n);
+                if (tableTop(level, n, ns)) {
+                    table.add(new Spot(c, yaw(c, n)));
+                    break;
+                }
+                if (ns.getBlock() instanceof StairBlock && ns.getValue(StairBlock.HALF) == Half.BOTTOM && bench.size() < 64) bench.add(new Spot(c, yaw(c, n)));
+            }
         }
+        List<Spot> from = table.isEmpty() ? bench : table;
+        if (from.size() <= 8) return from;
+        // every so many along, so the eight stand the table's length rather than bunched at one end
+        from.sort(java.util.Comparator.comparingLong(sp -> sp.feet().asLong()));
+        List<Spot> out = new ArrayList<>();
+        for (int i = 0; i < 8; i++) out.add(from.get(i * from.size() / 8));
         return out;
+    }
+
+    private static boolean tableTop(ServerLevel level, BlockPos p, BlockState s) {
+        Block b = s.getBlock();
+        if (b instanceof net.minecraft.world.level.block.FenceBlock || b instanceof net.minecraft.world.level.block.WallBlock) {
+            return !level.getBlockState(p.above()).isAir();
+        }
+        if (b instanceof net.minecraft.world.level.block.SlabBlock) return s.getValue(net.minecraft.world.level.block.SlabBlock.TYPE) == net.minecraft.world.level.block.state.properties.SlabType.TOP;
+        return b instanceof StairBlock && s.getValue(StairBlock.HALF) == Half.TOP;
     }
 
     /** Spots round a point at a ring's distance, spread by angle, facing it. */
@@ -618,10 +661,11 @@ public final class HomePeople {
             Map<Long, Integer> nodes = new HashMap<>();
             Set<Long> edges = new HashSet<>();
             int[] unreached = {0};
-            // a node for a cell (feet), a door's for the places people go in at
+            // a node for a cell (feet), a door's for the places people go in at; like everything in a roster, offsets from
+            // the settlement's origin (the Anchor)
             java.util.function.BiFunction<BlockPos, Boolean, Integer> node = (cell, door) -> nodes.computeIfAbsent(cell.asLong(), k -> door
-                    ? b.door(cell.getX() + 0.5, cell.getY() - 1 - o.getY(), cell.getZ() + 0.5, -1)
-                    : b.junction(cell.getX() + 0.5, cell.getY() - 1 - o.getY(), cell.getZ() + 0.5));
+                    ? b.door(cell.getX() + 0.5 - o.getX(), cell.getY() - 1 - o.getY(), cell.getZ() + 0.5 - o.getZ(), -1)
+                    : b.junction(cell.getX() + 0.5 - o.getX(), cell.getY() - 1 - o.getY(), cell.getZ() + 0.5 - o.getZ()));
             node.apply(p.hub, false);
             // the places people go in at are door nodes (made first: a node's kind is fixed when it's made)
             for (Where w : p.all()) if (w.kind.equals("door") && walk.reached(w.at())) node.apply(w.at(), true);
