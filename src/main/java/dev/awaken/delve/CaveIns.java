@@ -26,7 +26,8 @@ import java.util.List;
  * chamber shakes its roof loose. Dust trickles from the stones that will fall for three seconds (the client's warning,
  * with a creak), then they come down as falling blocks and land as rubble: run, slide or wall-run out. Rare, warned and
  * fair: only a chamber at least {@link #MIN_SPAN} across both ways with real headroom, only natural rock, never inside a
- * Hearth, the city or a ward, and never a roof anyone built or propped (a section with player-placed solid blocks).
+ * Hearth, the city (or within {@link #CITY_DEPTH} under its square) or a ward, and never a roof anyone built or propped
+ * (a section with player-placed solid blocks).
  */
 public final class CaveIns {
     private CaveIns() {}
@@ -73,7 +74,7 @@ public final class CaveIns {
      * (too small or narrow, low, built in, or somewhere a cave-in never happens).
      */
     static long[] roof(ServerLevel level, BlockPos heart) {
-        if (HearthHooks.inside(level, heart) || CityHooks.inCity(level, heart) || WardHooks.at(level, heart).isPresent()) return new long[0];
+        if (HearthHooks.inside(level, heart) || underCity(level, heart) || WardHooks.at(level, heart).isPresent()) return new long[0];
         // the chamber: air reached from beside the heart, within a box round it
         LongOpenHashSet air = new LongOpenHashSet();
         LongArrayFIFOQueue queue = new LongArrayFIFOQueue();
@@ -126,6 +127,16 @@ public final class CaveIns {
         if (roof.size() < MIN_ROOF) return new long[0];
         roof.sort((long a, long b) -> Double.compare(dist2(heart, a), dist2(heart, b)));
         return roof.subList(0, Math.min(MAX_ROOF, roof.size())).toLongArray();
+    }
+
+    /** Depth under the city's square within which no roof comes down (the city's foundations and its undercroft). */
+    static final int CITY_DEPTH = 48;
+
+    /** In the city, or close enough under it to reach its foundations. */
+    static boolean underCity(ServerLevel level, BlockPos pos) {
+        if (!CityHooks.inCity(level, pos)) return false;
+        BlockPos square = CityHooks.square(level);
+        return square == null || pos.getY() > square.getY() - CITY_DEPTH;
     }
 
     private static double dist2(BlockPos h, long c) {

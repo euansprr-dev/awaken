@@ -47,6 +47,7 @@ final class HeavyCharge {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null || mc.gui.screen() != null || !wants(p)) return;
+        if (!charging && mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult) return;   // a sneaking swing at a creature stays a swing
         e.setCanceled(true);
         e.setSwingHand(false);
         if (!charging) {

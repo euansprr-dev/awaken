@@ -128,26 +128,42 @@ final class ForkSong {
         update(mc.player, dt.getGameTimeDeltaPartialTick(false));
         float a = Math.min(1F, age / 4F) * Math.min(1F, (life - age) / 18F);
         int w = g.guiWidth();
-        int cx = w / 2, cy = 34, r = 44;
-        // the arc: a fine dotted half-ring, dim, the ore's colour washed toward white
-        int arc = argb(0.32F * a, mix(ore.tint, 0xFFFFFF, 0.5F));
-        for (int i = 0; i <= 40; i++) {
-            double ang = Math.toRadians(-80 + i * 4);
-            int x = cx + (int) Math.round(Math.sin(ang) * r), y = cy - (int) Math.round(Math.cos(ang) * r * 0.42);
-            g.fill(x, y, x + 1, y + 1, arc);
+        int cx = w / 2, cy = 30, r = 58;
+        int tone = mix(ore.tint, 0xFFFFFF, 0.45F);
+        // the arc: a soft band of fine dots, brighter toward its middle (where you face), a notch at the top
+        for (int i = 0; i <= 56; i++) {
+            float k = -80F + i * (160F / 56F);
+            double ang = Math.toRadians(k);
+            int x = cx + (int) Math.round(Math.sin(ang) * r), y = cy - (int) Math.round(Math.cos(ang) * r * 0.36);
+            float mid = 1F - Math.abs(k) / 80F;
+            g.fill(x, y, x + 1, y + 1, argb((0.18F + 0.32F * mid) * a, tone));
         }
+        g.fill(cx, cy - (int) (r * 0.36) - 4, cx + 1, cy - (int) (r * 0.36) - 1, argb(0.7F * a, tone));
         if (!found) return;
-        // the bead: where the lode lies, pinned at the arc's end when it's behind you
+        // the bead: where the lode lies, sliding to the notch as you turn to it (pinned at the end when it's behind you)
         float b = Mth.clamp(bearing, -90F, 90F) / 90F * 80F;
         double ang = Math.toRadians(b);
-        int bx = cx + (int) Math.round(Math.sin(ang) * r), by = cy - (int) Math.round(Math.cos(ang) * r * 0.42);
-        float lit = Math.abs(bearing) > 90F ? 0.35F : 0.45F + 0.55F * align;
-        g.fill(bx - 4, by - 4, bx + 5, by + 5, argb(0.10F * a * lit, ore.tint));
-        g.fill(bx - 2, by - 2, bx + 3, by + 3, argb(0.35F * a * lit, ore.tint));
-        g.fill(bx - 1, by - 1, bx + 2, by + 2, argb(0.95F * a * lit, mix(ore.tint, 0xFFFFFF, 0.35F * align)));
-        // up or down: a small mark over or under the bead
-        if (rise > 4) g.fill(bx, by - 8, bx + 1, by - 5, argb(0.7F * a, ore.tint));
-        else if (rise < -4) g.fill(bx, by + 6, bx + 1, by + 9, argb(0.7F * a, ore.tint));
+        int bx = cx + (int) Math.round(Math.sin(ang) * r), by = cy - (int) Math.round(Math.cos(ang) * r * 0.36);
+        float lit = Math.abs(bearing) > 90F ? 0.4F : 0.55F + 0.45F * align;
+        int glow = mix(ore.tint, 0xFFFFFF, 0.25F + 0.5F * align * align);
+        g.fill(bx - 6, by - 6, bx + 7, by + 7, argb(0.07F * a * lit, ore.tint));
+        g.fill(bx - 4, by - 4, bx + 5, by + 5, argb(0.16F * a * lit, ore.tint));
+        g.fill(bx - 2, by - 2, bx + 3, by + 3, argb(0.55F * a * lit, glow));
+        g.fill(bx - 1, by - 1, bx + 2, by + 2, argb(1F * a * lit, glow));
+        // its rays when you face it squarely: the fork is singing at its highest
+        if (align > 0.92F && Math.abs(bearing) < 12F) {
+            float s = (align - 0.92F) / 0.08F;
+            g.fill(bx - 9, by, bx - 4, by + 1, argb(0.5F * a * s, glow));
+            g.fill(bx + 5, by, bx + 10, by + 1, argb(0.5F * a * s, glow));
+        }
+        // up or down: a small chevron over or under the bead
+        if (rise > 4) {
+            g.fill(bx, by - 10, bx + 1, by - 9, argb(0.8F * a, glow));
+            g.fill(bx - 1, by - 9, bx + 2, by - 8, argb(0.8F * a, glow));
+        } else if (rise < -4) {
+            g.fill(bx - 1, by + 8, bx + 2, by + 9, argb(0.8F * a, glow));
+            g.fill(bx, by + 9, bx + 1, by + 10, argb(0.8F * a, glow));
+        }
     }
 
     private static int argb(float a, int rgb) {

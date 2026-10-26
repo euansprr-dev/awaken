@@ -92,8 +92,8 @@ final class StrikeFeel {
             boolean hard = s.is(BlockTags.MINEABLE_WITH_PICKAXE) && s.getDestroySpeed(level, pos) >= 1F;
             boolean soft = s.is(BlockTags.MINEABLE_WITH_SHOVEL);
             if (hard && tool) {
-                int n = (last ? 12 : 4) * density / 2;
-                sparks(level, at, face, n, ore == null ? 0xFFC98A : ore.tint, last ? 1.25F : 1F, r);
+                int n = (last ? 16 : 6) * density / 2;
+                sparks(level, at, face, n, ore == null ? 0xFFC98A : ore.tint, last ? 1.4F : 1.15F, r);
             } else if (soft || hard) {
                 int n = (last ? 9 : 4) * density / 2;
                 grit(level, at, face, n, s.getMapColor(level, pos).col, r);

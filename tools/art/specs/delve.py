@@ -176,6 +176,36 @@ def heart_frames(ore):
     return frames
 
 
+def glow_of(c, keep):
+    """The pixels that glow (their colour among {@code keep}), the rest clear: the model's emissive overlay."""
+    keep = {k[:3] for k in keep}
+    out = Canvas(c.w, c.h)
+    for y in range(c.h):
+        for x in range(c.w):
+            p = c.get(x, y)
+            if p[3] and p[:3] in keep:
+                out.set(x, y, p)
+    return out
+
+
+def deepglass_glow():
+    g = [hx(h) for h in P.RAMPS["deepglass"]]
+    return glow_of(deepglass(), [g[5], g[6]])
+
+
+def heart_glow_frames(ore):
+    cols = [hx(h) for h in HEART[ore]]
+    out = []
+    for f in heart_frames(ore):
+        # the core and the facets' lit edges, and whatever the pulse brightened past them
+        keep = {(x, y) for y in range(16) for x in range(16) if f.get(x, y)[3] and sum(f.get(x, y)[:3]) >= sum(cols[-2][:3]) - 6}
+        g = Canvas()
+        for (x, y) in keep:
+            g.set(x, y, f.get(x, y))
+        out.append(g)
+    return out
+
+
 # ---- items -----------------------------------------------------------------------------------------------------------
 
 def outline(c):
@@ -443,8 +473,10 @@ PARTICLES = {"delve_spark": spark_frames, "delve_grit": grit_frames, "delve_dust
 
 def build(out):
     out.block("deepglass", deepglass())
+    out.block("deepglass_glow", deepglass_glow())
     for o in ORES:
         out.block(o + "_lode_heart", heart_frames(o), frametime=20)
+        out.block(o + "_lode_heart_glow", heart_glow_frames(o), frametime=20)
     out.block("piton", piton_block())
     out.block("runner_line", rope_block())
     out.item("deepglass_shard", shard_icon("deepglass", "dg"))
@@ -472,6 +504,18 @@ def write(path, data):
 
 def cube(name):
     write(os.path.join(ASSETS, "models/block", name + ".json"), {"parent": "minecraft:block/cube_all", "textures": {"all": "awaken:block/" + name}})
+
+
+def glowing_cube(name):
+    """A cube in its texture with a second skin of just its glowing pixels at full light (the crystal's light shows in
+    the dark, the rock round it stays lit by the world)."""
+    faces = lambda tex: {d: {"uv": [0, 0, 16, 16], "texture": tex, "cullface": d} for d in ("down", "up", "north", "south", "west", "east")}  # noqa: E731
+    write(os.path.join(ASSETS, "models/block", name + ".json"), {
+        "parent": "minecraft:block/block", "render_type": "minecraft:cutout",
+        "textures": {"all": "awaken:block/" + name, "glow": "awaken:block/" + name + "_glow", "particle": "awaken:block/" + name},
+        "elements": [{"from": [0, 0, 0], "to": [16, 16, 16], "faces": faces("#all")},
+                     {"from": [0, 0, 0], "to": [16, 16, 16], "light_emission": 15, "shade_direction_override": "up",
+                      "neoforge_data": {"ambient_occlusion": False}, "faces": faces("#glow")}]})
 
 
 def piton_models():
@@ -617,7 +661,7 @@ def fallen_star():
 def content():
     lang = {}
     # Deepglass
-    cube("deepglass")
+    glowing_cube("deepglass")
     write(os.path.join(ASSETS, "blockstates/deepglass.json"), {"variants": {"": {"model": "awaken:block/deepglass"}}})
     item_block("deepglass")
     loot("deepglass", [{"rolls": 1, "entries": [{"type": "minecraft:alternatives", "children": [
@@ -627,7 +671,7 @@ def content():
     # the hearts
     for o in ORES:
         name = o + "_lode_heart"
-        cube(name)
+        glowing_cube(name)
         write(os.path.join(ASSETS, "blockstates", name + ".json"), {"variants": {"": {"model": "awaken:block/" + name}}})
         item_block(name)
         item, lo, hi = HEART_DROP[o]

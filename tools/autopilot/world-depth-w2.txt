@@ -7,12 +7,14 @@
 world autopilot_w2 creative 70712
 waitworld
 gui 0
+cmd gamerule send_command_feedback false
 cmd weather clear 100000
 cmd time set 6000
 cmd gamerule awaken:fauna_spawning false
-cmd gamerule doMobSpawning false
+cmd gamerule spawn_mobs false
 cmd awaken admin awaken
-wait 60
+wait 200
+screen close
 cmd awaken powers starter 1
 wait 20
 screen close
@@ -22,6 +24,7 @@ cmd tp @s ~ -30 ~
 wait 100
 cmd awaken delve stage cave iron
 wait 60
+screen close
 camera first
 look 180 6
 wait 30
