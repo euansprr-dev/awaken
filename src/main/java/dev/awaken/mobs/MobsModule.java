@@ -26,6 +26,7 @@ public final class MobsModule {
         MobTypes.init(modBus);
         Ritual.init(modBus);
         MobSounds.init(modBus);
+        MobParticles.init(modBus);
         MobLoot.init(modBus);
         MobsEvents.init(modBus);
         MobHooks.install(new MobsSpawner());
