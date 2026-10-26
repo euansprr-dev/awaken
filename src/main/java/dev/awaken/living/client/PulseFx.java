@@ -276,18 +276,19 @@ final class PulseFx {
     }
 
     /**
-     * The Wayfarers' fire (SPEC §27.6): a column of pale smoke you see from the High Gate, rising forty blocks, widening
-     * and leaning with the wind as it goes, over a warm glow at its foot. Its own look, drawn from afar: vanilla's campfire
-     * smoke only rises within a few dozen blocks of you.
+     * The Wayfarers' fire (SPEC §27.6): a column of smoke you see from the High Gate, rising a hundred and ten blocks (the
+     * Lumen canopy hides anything under about sixty at that range), widening, paling and leaning with the wind as it goes,
+     * over a warm glow at its foot. Its own look, drawn from afar: vanilla's campfire smoke only rises near you.
      */
     private static void campfire(VertexConsumer vc, boolean add) {
         if (!add) {
-            for (int i = 0; i < 16; i++) {
-                float rise = (now * 0.0035F + i / 16F) % 1F;
+            for (int i = 0; i < 28; i++) {
+                float rise = (now * 0.0025F + i / 28F) % 1F;
                 float lean = rise * rise;
-                double ox = Mth.sin(now * 0.004F + i * 0.7F) * 0.9 * rise + lean * 7, oz = Mth.cos(now * 0.005F + i) * 0.9 * rise + lean * 3;
-                float a = 0.34F * (1 - rise) * Mth.clamp(rise * 8, 0, 1);
-                soft(vc, ox, 1.5 + rise * 40, oz, 1.4F + rise * 6.5F, argb(a, 0xC9C4BA));
+                double ox = Mth.sin(now * 0.004F + i * 0.7F) * 1.4 * rise + lean * 18, oz = Mth.cos(now * 0.005F + i) * 1.4 * rise + lean * 7;
+                float a = 0.42F * (float) Math.pow(1 - rise, 0.8) * Mth.clamp(rise * 10, 0, 1);
+                int grey = (int) Mth.lerp(rise, 0x9E, 0xD2);
+                soft(vc, ox, 1.5 + rise * 110, oz, 1.6F + rise * 11F, argb(a, grey << 16 | (grey - 4) << 8 | (grey - 10)));
             }
             return;
         }

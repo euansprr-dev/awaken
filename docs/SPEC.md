@@ -4550,8 +4550,8 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
 - **The camp is findable**: its marker falls back to its nominal spot until someone has come near (the compass knows the
   way); a Horizon site "Wayfarers' fire" until the player has stood within 24 of it (counter
   `awaken:camp_reached`); and a signal fire on a bale by Ilse (`Scenes.campFire`), its smoke a column seen from the High
-  Gate (vanilla smoke rises only near you, so the client draws its own column to 1000 out: `LivingNet.CampSmoke`,
-  `PulseFx.campfire`), lit once a player is within 256 and lit again if it's gone; the camp itself is now founded within 256 (it was 112,
+  Gate (vanilla smoke rises only near you, so the client draws its own column to 1000 out, 110 blocks tall to clear the
+  Lumen canopy: `LivingNet.CampSmoke`, `PulseFx.campfire`), lit once a player is within 256 and lit again if it's gone; the camp itself is now founded within 256 (it was 112,
   so from the gate there was nothing there yet).
 - **The Registry's Directive fits** (`Directives.opening`, reason "opening"): "Clear a floor of any gate.", accepted for
   the player (4 play-days), "Your first gate will show itself out past the walls." Accepted Directives show on the Now
@@ -4581,7 +4581,8 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
     at once when done. Client option `tips` (on).
   - Server (`TipHooks.Server` in the signal module): `offer` and `done` are one small payload (`signal_tip`); a server
     offer waits up to 5 minutes for a quiet moment (the director holds tips in a fight, a scene or the world's first
-    minutes), then shows for its `show_for`.
+    minutes; those first minutes don't count against the 5, or a tip offered at registration lapses as the world
+    settles), then shows for its `show_for`.
   - The first stretch (`assets/awaken/tips/first/`): `band` (registration + 6 s: "K opens your band: what you hold, what
     waits for you, and the way up."; done when K opens), `now` (registration + 26 s: the two lines at the top), `atlas`
     (the first way out through the walls; done when the Atlas opens), `power` (the first power chosen; done at the first

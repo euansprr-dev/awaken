@@ -75,7 +75,12 @@ public final class Tips {
      */
     static void serverOffer(String id) {
         TipRules.Def d = defs.get(id);
-        if (on() && d != null && !TipRules.retired(d, count(id))) keep(id, Math.max(d.showFor(), SERVER_WAIT), true);
+        if (!on() || d == null || TipRules.retired(d, count(id))) return;
+        // a new world's first minutes don't count against the wait: the Herald holds everything then, and a tip offered
+        // at registration would otherwise lapse just as the world settles
+        var level = Minecraft.getInstance().level;
+        long unsettled = level == null ? 0 : Math.max(0, Herald.SETTLE - level.getGameTime());
+        keep(id, (int) (Math.max(d.showFor(), SERVER_WAIT) + unsettled), true);
     }
 
     static final int SERVER_WAIT = 20 * 60 * 5;
