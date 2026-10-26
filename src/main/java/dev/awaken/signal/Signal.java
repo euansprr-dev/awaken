@@ -4,6 +4,8 @@ import dev.awaken.signal.net.SignalPayloads;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import dev.awaken.core.AwakenNet;
+import dev.awaken.core.api.GateHooks;
+import dev.awaken.core.api.Notices;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +29,8 @@ public final class Signal {
     private static final Map<String, ActionHandler> HANDLERS = new HashMap<>();
 
     public static void send(ServerPlayer player, SignalWindow window) {
+        // a gate run is the action itself: its untagged messages are its live feedback, never paced (SPEC §26.2)
+        if (window.untagged() && GateHooks.inGate(player)) window = window.withTier(Notices.Tier.CRITICAL);
         if (window.action().isPresent()) PendingChoices.add(player, window);
         AwakenNet.send(player, new SignalPayloads.Show(window));
         if (window.action().isPresent()) PendingChoices.sync(player);
@@ -46,8 +50,14 @@ public final class Signal {
         toast(player, toast);
     }
 
+    /** A one-line toast: IMPORTANT, paced by the client's director (SPEC §26); inside a gate run, CRITICAL. */
     public static void toast(ServerPlayer player, Component text) {
-        AwakenNet.send(player, new SignalPayloads.Toast(text));
+        toast(player, text, GateHooks.inGate(player) ? Notices.Tier.CRITICAL : Notices.Tier.IMPORTANT, "");
+    }
+
+    /** A one-line toast of this tier; waiting toasts with the same {@code topic} arrive as one. */
+    public static void toast(ServerPlayer player, Component text, Notices.Tier tier, String topic) {
+        AwakenNet.send(player, new SignalPayloads.Toast(text, tier.ordinal(), topic));
     }
 
     /** Register the handler for actions whose id starts with {@code prefix + ":"}. */
