@@ -15,17 +15,17 @@ import net.minecraft.network.chat.Component;
 import java.util.List;
 
 /**
- * The Status screen (K). Four tabs and never more: Status, Truths, Codex, Gate Map. Each tab is a scrolling stack of
- * {@link StatusSections.Section}s contributed by modules. On narrow screens (auto GUI scale on a laptop) the tabs move
- * to a row on top so the content gets the width; every section is clipped to the content area and gets the mouse only
- * while it is over that area.
+ * The band, flat (K with {@code statusStyle = FLAT}, or when the holo shaders fail): the same six pages as the holo band
+ * (SPEC §30: Status, Powers, Journal, Truths, Codex, Map), each a scrolling stack of {@link StatusSections.Section}s
+ * contributed by modules. K always opens on Status unless a link names a page; the Map page (and M) opens the Atlas
+ * table. On narrow screens (auto GUI scale on a laptop) the tabs move to a row on top so the content gets the width;
+ * every section is clipped to the content area and gets the mouse only while it is over that area.
  */
 public final class StatusScreen extends Screen implements dev.awaken.signal.client.QuietScreen {
-    private static StatusSections.Tab lastTab = StatusSections.Tab.STATUS;
     private static final int[] SCROLL = new int[StatusSections.Tab.values().length];
     private static final int SECTION_GAP = 12, SCROLLBAR = StatusLayout.SCROLLBAR;
 
-    private StatusSections.Tab tab = lastTab;
+    private StatusSections.Tab tab = StatusSections.Tab.STATUS;
     private int px, py, pw, ph, cx, cy, cw, ch;
     private boolean topTabs;
     private StatusLayout.Frame frame;
@@ -35,11 +35,10 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
         super(Component.translatable("screen.awaken.status"));
     }
 
-    /** Opens on a given tab (the Gate Map from a hint, screenshots). */
+    /** Opens on a given page (a link, screenshots). */
     public StatusScreen(StatusSections.Tab open) {
         this();
         tab = open;
-        lastTab = open;
     }
 
     /** The first of these section titles that shows, scrolled to on the first frame (a link: the ward's "Show me"). */
@@ -73,12 +72,7 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
     }
 
     private static String label(StatusSections.Tab t) {
-        return switch (t) {
-            case STATUS -> "Status";
-            case TRUTHS -> "Truths";
-            case CODEX -> "Codex";
-            case GATE_MAP -> "Gate Map";
-        };
+        return t.label();
     }
 
     /** Where tab {@code i}'s button is. */
@@ -124,6 +118,9 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
         }
 
         // content
+        StatusSections.Tab asked = StatusSections.takeRequest();
+        if (asked != null) select(asked);
+        StatusSections.drawingAt(0);
         boolean inside = overContent(mouseX, mouseY);
         int mx = inside ? mouseX : -10000, my = inside ? mouseY : -10000;
         g.enableScissor(cx, cy, cx + cw + SCROLLBAR, cy + ch);
@@ -132,12 +129,10 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
         int[] focusAt = focus == null ? null : new int[focus.length];
         if (focusAt != null) java.util.Arrays.fill(focusAt, -1);
         for (StatusSections.Section s : StatusSections.of(tab)) {
-            if (!s.visible()) continue;
+            if (!StatusSections.shows(tab, s)) continue;
             any = true;
             if (focusAt != null) for (int i = 0; i < focus.length; i++) if (focusAt[i] < 0 && focus[i].equals(s.title())) focusAt[i] = y + SCROLL[tab.ordinal()] - cy;
-            Ui title = Ui.draw(g, font, cx, y, cw, mx, my);
-            title.text(s.title(), Glass.a(Glass.EDGE, 0.85f));
-            y += title.height() + 2;
+            y += BandHeader.draw(g, font, s, cx, y, cw);
             int h = s.height(cw);
             if (y + h >= cy && y <= cy + ch) s.render(g, cx, y, cw, mx, my, a);
             y += h + SECTION_GAP;
@@ -145,7 +140,8 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
         if (!any) {
             String empty = switch (tab) {
                 case CODEX -> "Nothing yet. What you hear, see and dream will gather here.";
-                case GATE_MAP -> "No gates detected.";
+                case JOURNAL -> "Nothing yet. What you take on, and what the System tells you, will be kept here.";
+                case POWERS -> "No powers yet. Your first one comes soon after you awaken.";
                 default -> "";
             };
             Ui ui = Ui.draw(g, font, cx, y, cw, mx, my);
@@ -180,8 +176,7 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
         StatusSections.Tab[] tabs = StatusSections.Tab.values();
         for (int i = 0; i < tabs.length; i++) {
             if (tabRect(i).contains(mx, my)) {
-                tab = tabs[i];
-                lastTab = tab;
+                select(tabs[i]);
                 return true;
             }
         }
@@ -189,10 +184,12 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
             int y = cy - SCROLL[tab.ordinal()];
             List<StatusSections.Section> sections = StatusSections.of(tab);
             for (StatusSections.Section s : sections) {
-                if (!s.visible()) continue;
-                Ui title = Ui.measure(font, cw);
-                title.text(s.title(), 0);
-                y += title.height() + 2;
+                if (!StatusSections.shows(tab, s)) continue;
+                if (s.notePage() != null && BandHeader.onNote(font, s, cx, y, cw, mx, my)) {
+                    select(s.notePage());
+                    return true;
+                }
+                y += BandHeader.height(s);
                 int h = s.height(cw);
                 if (my >= y && my < y + h && s.click(mx, my, cx, y, cw)) return true;
                 y += h + SECTION_GAP;
@@ -209,10 +206,33 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
         return true;
     }
 
+    /** Shows a page; one that opens something of its own (the Map: the Atlas) closes the band and opens it. */
+    private void select(StatusSections.Tab t) {
+        StatusSections.PageAction action = StatusSections.action(t);
+        if (action != null) {
+            minecraft.gui.setScreen(null);
+            action.open().run();
+            return;
+        }
+        if (t != tab) StatusSections.narrate(t.label() + " page");
+        tab = t;
+    }
+
     @Override
     public boolean keyPressed(KeyEvent event) {
         if (AwakenKeys.STATUS.matches(event)) {
             onClose();
+            return true;
+        }
+        for (StatusSections.Section s : StatusSections.of(tab)) if (StatusSections.shows(tab, s) && s.key(event)) return true;
+        StatusSections.Tab keyed = StatusSections.pageForKey(event);
+        if (keyed != null) {
+            select(keyed);
+            return true;
+        }
+        StatusSections.Tab[] tabs = StatusSections.Tab.values();
+        if (event.key() >= com.mojang.blaze3d.platform.InputConstants.KEY_1 && event.key() < com.mojang.blaze3d.platform.InputConstants.KEY_1 + tabs.length) {
+            select(tabs[event.key() - com.mojang.blaze3d.platform.InputConstants.KEY_1]);
             return true;
         }
         return super.keyPressed(event);

@@ -173,6 +173,51 @@ final class LivingTests {
                 if (!handedOn) h.getLevel().getServer().getPlayerList().remove(p);
             }
         });
+        // SPEC §27.6, "Control comes back": Ilse's scene ends whatever way you leave it, and lets go of you
+        AwakenTests.register("progression_first_scene_exits", 200, h -> {
+            var server = h.getLevel().getServer();
+            var level = h.getLevel();
+            var ember = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(FirstScenes.EMBER);
+            net.minecraft.server.level.ServerPlayer walker = h.makeMockServerPlayerInLevel(), dier = h.makeMockServerPlayerInLevel(),
+                    leaver = h.makeMockServerPlayerInLevel(), lost = h.makeMockServerPlayerInLevel();
+            dev.awaken.living.wayfarer.Wayfarer ilse = LivingContent.WAYFARER.get().create(level, net.minecraft.world.entity.EntitySpawnReason.EVENT),
+                    gone = LivingContent.WAYFARER.get().create(level, net.minecraft.world.entity.EntitySpawnReason.EVENT);
+            ilse.snapTo(walker.getX() + 2, walker.getY(), walker.getZ(), 90, 0);
+            ilse.become("ilse", ilse.blockPosition(), 2, 0);
+            gone.snapTo(lost.getX() - 2, lost.getY(), lost.getZ(), 90, 0);
+            gone.become("ilse", gone.blockPosition(), 2, 0);
+            level.addFreshEntity(ilse);
+            level.addFreshEntity(gone);
+            for (var p : java.util.List.of(walker, dier, leaver)) FirstScenes.begin(p, ilse);
+            FirstScenes.begin(lost, gone);
+            h.assertTrue(FirstScenes.shielded(walker) && FirstScenes.shielded(dier) && FirstScenes.shielded(leaver) && FirstScenes.shielded(lost),
+                    "four scenes running");
+            // the walker skips to the ember held out, then walks off mid-hand-over
+            FirstScenes.ready(walker, LivingNet.FirstSceneReady.SKIP);
+            h.runAfterDelay(4, () -> {
+                h.assertTrue(ilse.getMainHandItem().is(ember), "the ember held out");
+                walker.teleportTo(walker.getX() + 40, walker.getY(), walker.getZ());
+                dier.setHealth(0);
+                server.getPlayerList().remove(leaver);
+                gone.discard();
+                h.runAfterDelay(4, () -> {
+                    try {
+                        h.assertFalse(FirstScenes.shielded(walker), "walked off: the scene ends");
+                        h.assertTrue(ilse.getMainHandItem().isEmpty(), "and her hand is empty again (the ember stays hers)");
+                        h.assertFalse(FirstScenes.shielded(dier), "died: the scene ends");
+                        h.assertFalse(FirstScenes.shielded(leaver), "logged out: the scene ends");
+                        h.assertFalse(FirstScenes.shielded(lost), "Ilse gone: the scene ends");
+                        // walking back starts it over from the top, and it can still be finished
+                        FirstScenes.begin(walker, ilse);
+                        h.assertTrue(FirstScenes.shielded(walker), "back again: her scene starts over");
+                    } finally {
+                        ilse.discard();
+                        for (var p : java.util.List.of(walker, dier, lost)) server.getPlayerList().remove(p);
+                    }
+                    h.succeed();
+                });
+            });
+        });
         AwakenTests.register("living_region_map", 200, h -> {
             RegionMap.Probe plain = (x, z) -> RegionMap.Land.PLAIN;
             RegionMap map = new RegionMap(1234L, 0, 0, plain);

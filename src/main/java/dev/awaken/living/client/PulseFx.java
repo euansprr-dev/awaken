@@ -139,11 +139,15 @@ final class PulseFx {
         if (camp != null && (LivingClient.ticks - campSeen < 300 || LivingClient.ticks < featuredUntil)) {
             double x = camp.getX() + 0.5, y = camp.getY(), z = camp.getZ() + 0.5;
             double dist = Math.sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy) + (z - cz) * (z - cz));
+            // a column for seeing the camp from afar: it fades out as you come near (gone within NEAR), where the fire's own
+            // smoke is the real thing; drawn up close its puffs were a dark dome over the camp (Euan, 2026-10-26)
+            double hd = Math.sqrt((x - cx) * (x - cx) + (z - cz) * (z - cz));
+            far = (float) Mth.clamp((hd - NEAR) / NEAR, 0, 1);
             k = dist > clamp ? clamp / dist : 1;
             ax = x;
             ay = y;
             az = z;
-            campfire(vc, add);
+            if (far > 0) campfire(vc, add);
         }
         if (!LivingClient.shown) return;
         for (Shown s : SHOWN.values()) {
@@ -270,6 +274,11 @@ final class PulseFx {
      * Lumen canopy hides anything under about sixty at that range), widening, paling and leaning with the wind as it goes,
      * over a warm glow at its foot. Its own look, drawn from afar: vanilla's campfire smoke only rises near you.
      */
+    /** Within this many blocks of the fire the far column is gone, and it's whole from twice that. */
+    static final double NEAR = 48;
+    /** The column's strength for the camera this frame (0 near the fire .. 1 far). */
+    private static float far = 1F;
+
     private static void campfire(VertexConsumer vc, boolean add) {
         if (!add) {
             // billows: each puff its own size, drift and shade, the plume bending downwind as it thins
@@ -281,15 +290,15 @@ final class PulseFx {
                 float r = (1.6F + rise * 10F) * (0.7F + 0.6F * h1);
                 double ox = Mth.sin(now * 0.004F + i * 0.7F) * 1.6 * rise + lean * 24 + (h2 - 0.5) * r * 0.5;
                 double oz = Mth.cos(now * 0.005F + i) * 1.6 * rise + lean * 9 + (h3 - 0.5) * r * 0.5;
-                float a = 0.46F * (float) Math.pow(1 - rise, 0.7) * Mth.clamp(rise * 10, 0, 1) * (0.75F + 0.5F * h3) * boost;
+                float a = 0.46F * (float) Math.pow(1 - rise, 0.7) * Mth.clamp(rise * 10, 0, 1) * (0.75F + 0.5F * h3) * boost * far;
                 int grey = (int) Mth.lerp(rise, 0x86, 0xC4) + (int) ((h2 - 0.5F) * 18);
                 soft(vc, ox, 1.5 + rise * 110 + (h1 - 0.5) * 3, oz, r, argb(Math.min(0.85F, a), grey << 16 | (grey - 3) << 8 | (grey - 8)));
             }
             return;
         }
         float flick = 0.8F + 0.2F * Mth.sin(now * 0.6F) * Mth.sin(now * 0.23F + 1);
-        soft(vc, 0, 0.8, 0, 0.9F, argb(0.9F * flick, 0xFFD27A));
-        soft(vc, 0, 1.0, 0, 4.0F, argb(0.22F * flick, 0xFFA040));
+        soft(vc, 0, 0.8, 0, 0.9F, argb(0.9F * flick * far, 0xFFD27A));
+        soft(vc, 0, 1.0, 0, 4.0F, argb(0.22F * flick * far, 0xFFA040));
     }
 
     private static float hash(int n) {

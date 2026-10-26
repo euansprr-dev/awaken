@@ -291,6 +291,11 @@ public final class SystemHud {
         FindCue.tick();
     }
 
+    /** How many of the System's toasts are on screen now (the task card steps down under them). */
+    static int liveToasts() {
+        return LIVE_TOASTS.size();
+    }
+
     private static void tickToasts(Minecraft mc) {
         for (ToastBurst.Out<ToastItem> out : BURST.poll(ticks)) TOAST_WAIT.addLast(out);
         LIVE_TOASTS.removeIf(t -> t[0] <= ticks);

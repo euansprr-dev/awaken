@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "awaken:sunleaf",
+    "awaken:moonmoss",
+    "minecraft:glass_bottle"
+  ],
+  "result": {
+    "id": "awaken:grey_remedy",
+    "count": 1
+  }
+}

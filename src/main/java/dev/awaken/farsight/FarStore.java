@@ -39,7 +39,8 @@ import java.util.stream.Stream;
  * Chunks that changed queue up in {@link #pollChanged} for whoever draws them.
  */
 public final class FarStore {
-    public static final int SCHEMA = 2, REGION = 32, RESIDENT = 64;
+    /** 3 (2026-10-26): ice read as its textures' pale blue, not its lavender map colour (purple far ice); 2's are re-learned. */
+    public static final int SCHEMA = 3, REGION = 32, RESIDENT = 64;
 
     private record RegionFile(int schemaVersion, List<FarChunk> chunks) {
         static final Codec<RegionFile> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -100,6 +101,10 @@ public final class FarStore {
 
     public void put(FarChunk chunk) {
         Region r = region(Math.floorDiv(chunk.x(), REGION), Math.floorDiv(chunk.z(), REGION), true);
+        // most saves (block entities, random ticks) change no height, colour or crown: no patch rebuilds in seven rings
+        FarChunk was = r.chunks.get(index(chunk.x(), chunk.z()));
+        if (was != null && java.util.Arrays.equals(was.cell(), chunk.cell()) && java.util.Arrays.equals(was.colour(), chunk.colour())
+                && java.util.Arrays.equals(was.crown(), chunk.crown())) return;
         r.chunks.set(index(chunk.x(), chunk.z()), chunk);
         r.dirty = true;
         changed.add(ChunkPos.pack(chunk.x(), chunk.z()));

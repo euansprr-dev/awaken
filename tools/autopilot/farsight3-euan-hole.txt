@@ -1,0 +1,52 @@
+# The pale void by the rim's cave in Euan's world (WORLD_FROM, a copy): from over the Commons looking east, at render
+# distance 15 from the start, then after a drop from 24 to 15 (as he played). Debug 2 (red: a mask hides far land or City
+# Sight there), debug 4 (magenta: far land stepping aside for City Sight), City Sight off, Far Sight off, steady off.
+world copied
+waitworld
+window 1440 900
+wait 40
+screen close
+gui 0
+hud off
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+opt renderDistance 15
+cmd gamemode spectator
+cmd tp @s 222 140 622 -90 8
+wait 700
+shot fh_e15
+farsight status
+farsight debug 2
+wait 10
+shot fh_e15_d2
+farsight debug 4
+wait 10
+shot fh_e15_d4
+farsight debug 0
+farsight part city off
+wait 60
+shot fh_e15_nocity
+farsight part city on
+farsight off
+wait 60
+shot fh_e15_nofar
+farsight on
+pixels steady off
+wait 60
+shot fh_e15_nosteady
+pixels steady on
+opt renderDistance 24
+wait 500
+shot fh_e24
+opt renderDistance 15
+wait 500
+shot fh_e24to15
+farsight debug 2
+wait 10
+shot fh_e24to15_d2
+farsight debug 0
+farsight status
+info
+quit

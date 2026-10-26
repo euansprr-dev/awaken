@@ -32,16 +32,25 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * the vertex shader pulls them by index. A chunk table gives each slot's origin, a look table each look's atlas
  * rectangle. Each frame every chunk picks its level by how big its blocks look (a block under {@link #PIXELS} pixels
  * goes to the next level), the levels cross-fading over a band, and chunks Sodium draws whole are skipped. A coverage
- * mask (256×256 chunks, toroidal) tells the far terrain and far trees where City Sight stands, so they step aside.
+ * mask (256×256 chunks, toroidal) tells the far terrain and far trees where City Sight stands, so they step aside: the
+ * chunks it draws this frame, never just the ones it holds (a chunk held but not drawn left the far land stepping
+ * aside for nothing, a hole to the sky: Euan, 2026-10-26, the city seen from the Commons).
  */
 final class VoxelLayer implements AutoCloseable {
-    static final int PAGE_QUADS = 1 << 18, MAX_SLOTS = 1 << 16, DRAW_QUADS = 1 << 16, MAX_COMMANDS = 8192, COMMAND_BYTES = 20;
+    static final int PAGE_QUADS = 1 << 18, MAX_SLOTS = 1 << 16, DRAW_QUADS = 1 << 16, MAX_COMMANDS = 32768, COMMAND_BYTES = 20;
     /** A level's blocks give way to the next coarser level once they look this many pixels or fewer. */
     static final float PIXELS = 2.0f;
     /** Chunks are kept this far (blocks) and drawn in the coverage mask this far; the city's are kept at any distance. */
     static final float KEEP = 1900f, COVER = 2000f;
     /** At most this many quads kept (256 MB of pages): past it, the farthest chunks go first. */
     static final long MAX_QUADS = 16L << 20;
+    /**
+     * A chunk new to City Sight dissolves in over this long (ms) while the far terrain and far trees it replaces
+     * dissolve out in the same dither, so wherever the prediction differed from the real blocks it changes gently,
+     * never pops (Euan: gradual, imperceptible change).
+     */
+    static final long FADE_MS = 1000L;
+    private final IntArrayList fading = new IntArrayList();
     /** The cross-fade between two levels, as a share of the nearer one's reach. */
     static final float BAND = 0.15f;
 
@@ -57,7 +66,10 @@ final class VoxelLayer implements AutoCloseable {
     }
 
     private static final class Chunk {
-        int cx, cz, minY, maxY;
+        int cx, cz, minY, maxY, groundY;
+        /** When it first came up (ms), and how far its dissolve in has gone (0..255). */
+        long appeared;
+        int fade;
         final int[] page = new int[VoxelMesher.LEVELS], first = new int[VoxelMesher.LEVELS], count = new int[VoxelMesher.LEVELS];
         /** Per level, each face's first quad within the level's run (down, up, north, south, west, east, end). */
         final int[][] starts = new int[VoxelMesher.LEVELS][7];
@@ -79,7 +91,9 @@ final class VoxelLayer implements AutoCloseable {
     private final GpuTexture coverage;
     final GpuTextureView coverageView;
     private final ByteBuffer coverageBytes = MemoryUtil.memCalloc(256 * 256);
-    private boolean coverageDirty = true;
+    /** This frame's coverage (the chunks drawn, at their dissolve's share) and the one on the GPU. */
+    private final byte[] cover = new byte[256 * 256], coverShown = new byte[256 * 256];
+    private boolean coverageDirty = true, cappedLogged;
     private final ByteBuffer staging = MemoryUtil.memAlloc(PAGE_QUADS * 16).order(ByteOrder.LITTLE_ENDIAN);
     private final ByteBuffer one = MemoryUtil.memAlloc(16).order(ByteOrder.LITTLE_ENDIAN);
     final VoxelLooks looks = new VoxelLooks();
@@ -88,7 +102,8 @@ final class VoxelLayer implements AutoCloseable {
     /** Each slot's last meshed snapshot's hash (workers write, so a chunk taken again unchanged isn't meshed again). */
     final long[] hashes = new long[MAX_SLOTS];
     /** Time spent meshing and chunks meshed (status). */
-    final java.util.concurrent.atomic.AtomicLong meshNanos = new java.util.concurrent.atomic.AtomicLong(), meshed = new java.util.concurrent.atomic.AtomicLong();
+    final java.util.concurrent.atomic.AtomicLong meshNanos = new java.util.concurrent.atomic.AtomicLong(), meshed = new java.util.concurrent.atomic.AtomicLong(),
+            empty = new java.util.concurrent.atomic.AtomicLong();
     /** Meshing jobs on the workers. */
     final java.util.concurrent.atomic.AtomicInteger inFlight = new java.util.concurrent.atomic.AtomicInteger();
     final ConcurrentLinkedQueue<VoxelMesh> finished = new ConcurrentLinkedQueue<>();
@@ -160,11 +175,39 @@ final class VoxelLayer implements AutoCloseable {
         while (sent < budget && (m = finished.poll()) != null) {
             sent += put(enc, m);
         }
-        if (coverageDirty) {
-            coverageDirty = false;
-            coverageBytes.clear();
-            enc.writeToTexture(coverage, coverageBytes, 0, 0, 0, 0, 256, 256);
+        // the dissolves under way: each chunk's share in the chunk table (City Sight's dither) and the coverage mask (the
+        // far terrain's, its complement)
+        if (!fading.isEmpty()) {
+            long now = net.minecraft.util.Util.getMillis();
+            for (int i = fading.size() - 1; i >= 0; i--) {
+                int s = fading.getInt(i);
+                Chunk c = chunks[s];
+                if (c == null) {
+                    fading.removeInt(i);
+                    continue;
+                }
+                int f = (int) Math.min(255L, (now - c.appeared) * 255L / FADE_MS);
+                if (f == c.fade) continue;
+                c.fade = f;
+                one.clear();
+                one.putInt(c.cx * 16).putInt(levelMinY).putInt(c.cz * 16).putInt(f).flip();
+                enc.writeToBuffer(chunkTable.slice((long) s * 16, 16), one);
+                if (f == 255) fading.removeInt(i);
+            }
         }
+    }
+
+    /**
+     * After {@link #plan}: the coverage mask for this frame, the chunks the plan draws (each at its dissolve's share),
+     * uploaded when it changed. Before the far terrain draws.
+     */
+    void cover() {
+        if (!coverageDirty && java.util.Arrays.equals(cover, coverShown)) return;
+        coverageDirty = false;
+        System.arraycopy(cover, 0, coverShown, 0, cover.length);
+        coverageBytes.clear();
+        coverageBytes.put(cover).flip();
+        RenderSystem.getDevice().createCommandEncoder().writeToTexture(coverage, coverageBytes, 0, 0, 0, 0, 256, 256);
     }
 
     private int put(CommandEncoder enc, VoxelMesh m) {
@@ -176,16 +219,15 @@ final class VoxelLayer implements AutoCloseable {
             c = new Chunk();
             chunks[s] = c;
             live.add(s);
-            double dx = m.chunkX() * 16 + 8 - lastCamX, dz = m.chunkZ() * 16 + 8 - lastCamZ;
-            if (dx * dx + dz * dz < COVER * COVER) {
-                coverageBytes.put((m.chunkZ() & 255) << 8 | (m.chunkX() & 255), (byte) 255);
-                coverageDirty = true;
-            }
+            c.appeared = net.minecraft.util.Util.getMillis();
+            c.fade = 0;
+            fading.add(s);
         }
         c.cx = m.chunkX();
         c.cz = m.chunkZ();
         c.minY = m.minY();
         c.maxY = m.maxY();
+        c.groundY = m.groundY();
         int bytes = 0;
         for (int l = 0; l < VoxelMesher.LEVELS; l++) {
             int[] q = m.quads()[l];
@@ -197,14 +239,15 @@ final class VoxelLayer implements AutoCloseable {
             int[] at = allocate(count);
             c.page[l] = at[0];
             c.first[l] = at[1];
+            // one bulk copy (an int at a time was ~1.5M calls a frame at the upload budget)
             staging.clear();
-            for (int v : q) staging.putInt(v);
-            staging.flip();
+            staging.asIntBuffer().put(q);
+            staging.limit(q.length * 4);
             enc.writeToBuffer(pages.get(at[0]).buffer.slice((long) at[1] * 16, (long) count * 16), staging);
             bytes += count * 16;
         }
         one.clear();
-        one.putInt(m.chunkX() * 16).putInt(levelMinY).putInt(m.chunkZ() * 16).putInt(0).flip();
+        one.putInt(m.chunkX() * 16).putInt(levelMinY).putInt(m.chunkZ() * 16).putInt(c.fade).flip();
         enc.writeToBuffer(chunkTable.slice((long) s * 16, 16), one);
         return bytes + 16;
     }
@@ -279,13 +322,6 @@ final class VoxelLayer implements AutoCloseable {
             hashes[s] = 0;
             forgotten.accept(key);
         }
-        MemoryUtil.memSet(coverageBytes, 0);
-        for (int i = 0; i < live.size(); i++) {
-            Chunk c = chunks[live.getInt(i)];
-            double dx = c.cx * 16 + 8 - camX, dz = c.cz * 16 + 8 - camZ;
-            if (dx * dx + dz * dz < COVER * COVER) coverageBytes.put((c.cz & 255) << 8 | (c.cx & 255), (byte) 255);
-        }
-        coverageDirty = true;
     }
 
     /** Forgets every chunk (a new world, a resource reload). */
@@ -306,7 +342,8 @@ final class VoxelLayer implements AutoCloseable {
             p.free.clear();
         }
         finished.clear();
-        MemoryUtil.memSet(coverageBytes, 0);
+        fading.clear();
+        java.util.Arrays.fill(cover, (byte) 0);
         coverageDirty = true;
     }
 
@@ -320,7 +357,9 @@ final class VoxelLayer implements AutoCloseable {
         drawFirst.clear();
         quadsDrawn = 0;
         chunksDrawn = 0;
+        java.util.Arrays.fill(cover, (byte) 0);
         if (!on) return;
+        boolean capped = false;
         // a level-l cell (2^l blocks) looks PIXELS pixels at this distance, more where the air has dimmed it (detail
         // follows the air: a cell's error counts for what shows through the haze, so hazier distance needs less of it)
         for (int l = 0; l < VoxelMesher.LEVELS; l++) {
@@ -340,22 +379,25 @@ final class VoxelLayer implements AutoCloseable {
             float near = (float) Math.sqrt(nx * nx + nz * nz);
             float fx = Math.max(Math.abs(ax), Math.abs(bx)), fz = Math.max(Math.abs(az), Math.abs(bz));
             float far = (float) Math.sqrt(fx * fx + fz * fz);
-            // Sodium draws all of it: inside its distance (with a block's margin, as it culls) and shown (loaded, settled
-            // or built: sections it hasn't built there are hidden behind others, and drawing them cost 2 ms at the Roost);
-            // the chunks drawn hide per section (the section mask)
-            if (far < realWithin - 2 && renderer.shown(c.cx, c.cz) && Math.max(Math.abs(ay), Math.abs(by)) < realWithin - 2) continue;
+            // Sodium draws all of it: inside its distance (with a block's margin, as it culls) and every section it can be
+            // seen in built, from the chunk's lowest ground up (not the sealed ones under it, which Sodium never builds:
+            // counting those drew most chunks for 2 ms more at the Roost; nor a timer: on a busy machine Sodium builds
+            // late, and land it hadn't built stood as a hole). The chunks drawn hide per section (the section mask)
+            if (far < realWithin - 2 && Math.max(Math.abs(ay), Math.abs(by)) < realWithin - 2
+                    && renderer.sectionsBuilt(c.cx, c.cz, c.groundY, c.maxY, levelMinY)) continue;
             if (!renderer.inView(ax, ay, az, bx, by, bz)) continue;
             // faces turned away from the camera across the whole chunk aren't drawn: down, up, north, south, west, east
             int faces = (camY < c.maxY ? 1 : 0) | (camY > c.minY ? 2 : 0) | (camZ < c.cz * 16 + 16 ? 4 : 0) | (camZ > c.cz * 16 ? 8 : 0)
                     | (camX < c.cx * 16 + 16 ? 16 : 0) | (camX > c.cx * 16 ? 32 : 0);
-            boolean drawn = false;
+            boolean drawn = false, fits = true;
+            int mark = drawPage.size(), quadsMark = quadsDrawn;
             boolean edge = near < realWithin + 2;
             for (int l = 0; l < VoxelMesher.LEVELS; l++) {
                 float from = l == 0 ? 0f : reach[l - 1], to = reach[l] * (1f + BAND);
                 if (far < from || near > to) continue;
                 if (c.count[l] == 0) continue;
                 // in a fade: inside the band past the finer level's reach, or past its own
-                boolean fading = (l > 0 && near < from * (1f + BAND)) || (l < VoxelMesher.LEVELS - 1 && far > reach[l]);
+                boolean fading = (l > 0 && near < from * (1f + BAND)) || (l < VoxelMesher.LEVELS - 1 && far > reach[l]) || c.fade < 255;
                 int pageFlag = edge || fading ? EDGED : 0;
                 int[] st = c.starts[l];
                 for (int d = 0; d < 6; ) {
@@ -366,29 +408,52 @@ final class VoxelLayer implements AutoCloseable {
                     // a run of visible faces in one range
                     int e = d;
                     while (e < 6 && (faces & 1 << e) != 0) e++;
-                    if (st[e] > st[d]) add(c.page[l] | pageFlag, c.first[l] + st[d], st[e] - st[d]);
+                    if (st[e] > st[d]) fits &= add(c.page[l] | pageFlag, c.first[l] + st[d], st[e] - st[d]);
                     d = e;
                 }
                 drawn = true;
             }
-            if (drawn) chunksDrawn++;
+            if (!fits) {
+                // out of room for this frame's draws: the chunk isn't drawn at all (never in part), so the far land
+                // stands in for it
+                drawPage.size(mark);
+                drawQuads.size(mark);
+                drawFirst.size(mark);
+                quadsDrawn = quadsMark;
+                drawn = false;
+                capped = true;
+            }
+            if (!drawn) continue;
+            chunksDrawn++;
+            if (near < COVER) cover[(c.cz & 255) << 8 | (c.cx & 255)] = (byte) c.fade;
+        }
+        if (capped && !cappedLogged) {
+            cappedLogged = true;
+            dev.awaken.Awaken.LOG.warn("[farsight] city sight: more than {} draws in a frame; the rest fall back to the far land", MAX_COMMANDS);
         }
         sortByPage();
     }
 
-    private void add(int page, int first, int count) {
+    /** Adds one range's draws; false (and nothing added past the room left) when this frame's draws are full. */
+    private boolean add(int page, int first, int count) {
         for (int at = 0; at < count; at += DRAW_QUADS) {
-            if (drawPage.size() >= MAX_COMMANDS) return;
+            if (drawPage.size() >= MAX_COMMANDS) return false;
             int n = Math.min(DRAW_QUADS, count - at);
             drawPage.add(page);
             drawQuads.add(n);
             drawFirst.add(first + at);
             quadsDrawn += n;
         }
+        return true;
     }
 
     boolean any() {
         return !drawPage.isEmpty();
+    }
+
+    /** This frame's draw commands (status). */
+    int commands() {
+        return drawPage.size();
     }
 
     /** Draws the planned chunks into the open pass (Far Sight's targets), page by page. */
@@ -461,14 +526,18 @@ final class VoxelLayer implements AutoCloseable {
         commands.rotate();
     }
 
+    // sortByPage's scratch, sized for the most draws a plan holds (add() stops at MAX_COMMANDS): nothing per frame
+    private final long[] sortKeys = new long[MAX_COMMANDS];
+    private final int[] sortPage = new int[MAX_COMMANDS], sortQuads = new int[MAX_COMMANDS], sortFirst = new int[MAX_COMMANDS];
+
     /** Groups the plan's draws by page, so each page's indirect commands are one run. */
     private void sortByPage() {
         int n = drawPage.size();
         if (n < 2) return;
-        long[] keys = new long[n];
+        long[] keys = sortKeys;
         for (int i = 0; i < n; i++) keys[i] = (long) drawPage.getInt(i) << 32 | i;
-        java.util.Arrays.sort(keys);
-        int[] p = new int[n], q = new int[n], f = new int[n];
+        java.util.Arrays.sort(keys, 0, n);
+        int[] p = sortPage, q = sortQuads, f = sortFirst;
         for (int i = 0; i < n; i++) {
             int k = (int) keys[i];
             p[i] = drawPage.getInt(k);

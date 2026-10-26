@@ -12,9 +12,9 @@ import static dev.awaken.city.CityBlocks.*;
 import static dev.awaken.city.CityPlan.*;
 
 /**
- * The Commons step's GameTests, one per mechanism: pennant lines whole (nothing floats), the road's cross-section and
- * its culverts, every painted water still (nothing to flow into), the roadside farms joined to their roads, and the
- * monsters thinned round the city.
+ * The Commons step's GameTests, one per mechanism: pennant lines whole and tied to their poles (nothing floats), the
+ * city's lines ending at a wall or a pole, the road's cross-section and its culverts, every painted water still (nothing
+ * to flow into), the roadside farms joined to their roads, and the monsters thinned round the city.
  */
 final class CityCommonsTests {
     private CityCommonsTests() {}
@@ -24,15 +24,21 @@ final class CityCommonsTests {
 
     /** A painted rectangle of the commons (plan coordinates), rows -2..14, painted chunk by chunk as worldgen does. */
     static final class Area {
-        final int x0, z0, x1, z1;
+        final int x0, z0, x1, z1, ylo, yhi;
         final BlockState[] cells;
 
         Area(CityLayout l, int x0, int z0, int x1, int z1) {
+            this(l, x0, z0, x1, z1, YLO, YHI);
+        }
+
+        Area(CityLayout l, int x0, int z0, int x1, int z1, int ylo, int yhi) {
             this.x0 = x0;
             this.z0 = z0;
             this.x1 = x1;
             this.z1 = z1;
-            cells = new BlockState[(x1 - x0 + 1) * (z1 - z0 + 1) * (YHI - YLO + 1)];
+            this.ylo = ylo;
+            this.yhi = yhi;
+            cells = new BlockState[(x1 - x0 + 1) * (z1 - z0 + 1) * (yhi - ylo + 1)];
             CityBuffer buf = new CityBuffer(16, 16);
             for (int cx = (l.cx + x0) >> 4; cx <= (l.cx + x1) >> 4; cx++)
                 for (int cz = (l.cz + z0) >> 4; cz <= (l.cz + z1) >> 4; cz++) {
@@ -40,16 +46,16 @@ final class CityCommonsTests {
                     CityPainter.paintChunk(l, cx, cz, SEED, buf);
                     for (int x = Math.max(x0, buf.px0); x <= Math.min(x1, buf.x1()); x++)
                         for (int z = Math.max(z0, buf.pz0); z <= Math.min(z1, buf.z1()); z++)
-                            for (int y = YLO; y <= YHI; y++) cells[index(x, y, z)] = buf.get(x, y, z);
+                            for (int y = ylo; y <= yhi; y++) cells[index(x, y, z)] = buf.get(x, y, z);
                 }
         }
 
         int index(int x, int y, int z) {
-            return ((x - x0) * (z1 - z0 + 1) + (z - z0)) * (YHI - YLO + 1) + (y - YLO);
+            return ((x - x0) * (z1 - z0 + 1) + (z - z0)) * (yhi - ylo + 1) + (y - ylo);
         }
 
         BlockState get(int x, int y, int z) {
-            if (x < x0 || x > x1 || z < z0 || z > z1 || y < YLO || y > YHI) return null;
+            if (x < x0 || x > x1 || z < z0 || z > z1 || y < ylo || y > yhi) return null;
             return cells[index(x, y, z)];
         }
 
@@ -63,6 +69,43 @@ final class CityCommonsTests {
             return s != null && !s.isAir() && s.getFluidState().isEmpty()
                     && !s.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty();
         }
+    }
+
+    /**
+     * Every rope cell inside the area (its edge cells aside) runs on into the next along its axis, or ends at a sag-0
+     * rope against a pole top whose rope is tied out toward it, or against something solid (a wall, an eave). Returns
+     * the first loose end, or null; {@code ends[0]} counts the ends met at poles.
+     */
+    static String ropeEnds(Area a, int[] ends) {
+        var lineAxis = dev.awaken.city.kit.StreetBlocks.HangLine.AXIS;
+        var rope = dev.awaken.city.kit.StreetBlocks.LinePole.ROPE;
+        for (int x = a.x0 + 1; x < a.x1; x++)
+            for (int z = a.z0 + 1; z < a.z1; z++)
+                for (int y = a.ylo; y <= a.yhi; y++) {
+                    if (!a.is(x, y, z, "awaken:hang_line")) continue;
+                    BlockState s = a.get(x, y, z);
+                    boolean alongX = s.getValue(lineAxis) == net.minecraft.core.Direction.Axis.X;
+                    for (int d = -1; d <= 1; d += 2) {
+                        int nx = alongX ? x + d : x, nz = alongX ? z : z + d;
+                        BlockState n = a.get(nx, y, nz);
+                        if (n == null) continue;
+                        if (a.is(nx, y, nz, "awaken:hang_line") && n.getValue(lineAxis) == s.getValue(lineAxis)) continue;
+                        String at = " at " + x + " " + y + " " + z + (alongX ? (d > 0 ? " east" : " west") : (d > 0 ? " south" : " north"));
+                        if (a.is(nx, y, nz, "awaken:line_pole")) {
+                            var want = alongX ? (d > 0 ? dev.awaken.city.kit.StreetBlocks.LinePole.Rope.WEST : dev.awaken.city.kit.StreetBlocks.LinePole.Rope.EAST)
+                                    : (d > 0 ? dev.awaken.city.kit.StreetBlocks.LinePole.Rope.NORTH : dev.awaken.city.kit.StreetBlocks.LinePole.Rope.SOUTH);
+                            if (n.getValue(rope) != want) return "the pole's rope is tied " + n.getValue(rope) + ", not to the line" + at;
+                            if (s.getValue(dev.awaken.city.kit.StreetBlocks.HangLine.SAG) != 0) return "the line meets its pole sagging" + at;
+                            ends[0]++;
+                            continue;
+                        }
+                        // a shutter or a banner on the facade, the wall right behind it
+                        boolean onWall = (a.is(nx, y, nz, "awaken:shutter") || a.is(nx, y, nz, "awaken:banner_cloth"))
+                                && a.solid(alongX ? nx + d : nx, y, alongX ? nz : nz + d);
+                        if (!a.solid(nx, y, nz) && !onWall) return "the line ends in the air" + at + " (by " + n + ")";
+                    }
+                }
+        return null;
     }
 
     static void register() {
@@ -86,6 +129,15 @@ final class CityCommonsTests {
                 }
             }
             h.assertTrue(lines >= 2, "two or more pennant lines across the High Gate road (" + lines + ")");
+            // both ends of every line meet their anchors (Euan: "ropes still don't connect to poles"): the road's lines
+            // and the yard's, each end at a pole whose rope is tied out toward it (or a wall)
+            int[] ends = new int[1];
+            String miss = ropeEnds(a, ends);
+            h.assertTrue(miss == null, miss == null ? "" : miss);
+            Area yard = new Area(l, -18, -257, 17, -243);
+            miss = ropeEnds(yard, ends);
+            h.assertTrue(miss == null, miss == null ? "" : miss);
+            h.assertTrue(ends[0] >= 8, "line ends checked at poles (" + ends[0] + ")");
             for (int x = a.x0; x <= a.x1; x++)
                 for (int z = a.z0; z <= a.z1; z++)
                     for (int y = 0; y < YHI; y++) {
@@ -94,8 +146,29 @@ final class CityCommonsTests {
                         while (a.is(x, top + 1, z, "awaken:banner_cloth")) top++;
                         h.assertTrue(a.is(x, top + 1, z, "awaken:hang_line") || a.solid(x, top + 1, z) || a.is(x, top + 1, z, "awaken:flagpole"),
                                 "the banner at " + x + " " + y + " " + z + " hangs from something");
+                        if (a.is(x, top + 1, z, "awaken:hang_line"))
+                            h.assertTrue(a.get(x, top, z).getValue(dev.awaken.city.kit.StreetBlocks.BannerCloth.MOUNT)
+                                    == dev.awaken.city.kit.StreetBlocks.BannerCloth.Mount.LINE, "the banner at " + x + " " + top + " " + z + " hangs on cords from the line");
                         h.assertFalse(a.is(x, y, z, "awaken:flagpole"), "no flagpole arm out of the air");
                     }
+            h.succeed();
+        });
+
+        // the city's own lines across its lanes and yards (every one, all heights): both ends of each meet a
+        // wall or eave, or a pole whose rope is tied out to it (Euan: the ropes don't connect, "also in the city")
+        AwakenTests.register("city_lines_anchored", 900, h -> {
+            CityLayout l = CityTests.layoutAt(0, 0);
+            int[] ends = new int[1];
+            int checked = 0;
+            for (CityPlan.Prop pr : l.plan.props) {
+                if (!pr.kind().equals("line")) continue;
+                int m = CityProps.REACH + 2;
+                Area a = new Area(l, pr.x0() - m, pr.z0() - m, pr.x1() + m, pr.z1() + m, pr.ry() - 1, pr.ry() + 1);
+                String miss = ropeEnds(a, ends);
+                h.assertTrue(miss == null, miss == null ? "" : "line " + pr.x0() + " " + pr.z0() + ".." + pr.x1() + " " + pr.z1() + ": " + miss);
+                checked++;
+            }
+            h.assertTrue(checked >= 200, "city lines checked (" + checked + ")");
             h.succeed();
         });
 

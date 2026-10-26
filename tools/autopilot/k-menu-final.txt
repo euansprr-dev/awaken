@@ -1,0 +1,73 @@
+# The band's pages, hand-back (SPEC §30): every page as built, then the map in the world. Away from Carillon (no gate
+# forms in its basin and the hop doesn't leave it), a D-rank gate near, every power owned (a full Powers page), points
+# to spend. Shots: Status; Powers; Journal (EVERYTHING, then TASKS with E); Truths; the scene by day; a gate picked
+# (Tab); after Point me there (T), back to your eyes with the Now line pointing; the scene at night; the flat table.
+# Run on CI: tools/tour-ci.sh tools/autopilot/k-menu-final.txt 1200 PACK=perf,world TECTONIC=awakened
+world kmenuFinal survival 20261026
+waitworld
+gui 0
+window 1440 900
+info
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 5000
+cmd awaken opening skip
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd awaken admin xp 4000
+cmd awaken admin power all
+wait 20
+cmd tp @s 3000 120 3000
+wait 240
+cmd awaken gate hop
+wait 160
+cmd awaken gate open D
+wait 120
+cmd awaken atlas reveal 260
+wait 160
+screen holo status
+wait 40
+shot f01_status
+screen holo powers
+wait 40
+shot f02_powers
+screen holo journal
+wait 40
+shot f03_journal
+screenkey e
+wait 20
+shot f04_journal_tasks
+screenkey q
+wait 10
+screen holo truths
+wait 40
+shot f05_truths
+screen close
+wait 20
+screen map
+wait 30
+shot f06_scene_day
+screenkey tab
+wait 30
+shot f07_gate_picked
+screenkey t
+wait 10
+screenkey m
+wait 40
+shot f08_pointed
+cmd time set 18000
+wait 60
+screen map
+wait 40
+shot f09_scene_night
+screen close
+wait 30
+cmd time set 5000
+screen table
+wait 80
+shot f10_table
+screen close
+quit

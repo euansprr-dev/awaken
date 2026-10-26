@@ -33,6 +33,10 @@ layout(location = 4) out vec4 vCrown;        // crown colour, sunlight (1 lit)
 layout(location = 5) flat out ivec2 vFlags;  // colour flags, crown shape
 layout(location = 6) out float vCell;        // this ring's cell size (blocks)
 layout(location = 7) out float vCold;        // blocks above the line where it turns cold enough to snow (smooth)
+// the biome's materials, blended between corners (flat per triangle, a border across a steep face drew whole triangles
+// in one biome's rock or the other's: grey spikes, Euan 2026-10-26)
+layout(location = 8) out vec4 vRocks;        // shares of the rocks steep faces show: stone, hoarfrost, shale, glass (mirepeat the rest)
+layout(location = 9) out vec4 vBiome;        // alpine, badlands, stony (its own block on steep faces)
 
 const int STRIDE = 65;
 const float MORPH = 16.0;   // cells of the window's outer band over which a ring eases into the next
@@ -44,8 +48,16 @@ struct Corner {
     vec4 info;     // r depth, g canopy, b density, a valley
     vec4 crown;    // rgb, a sunlight
     float cold;    // blocks above the snow-cold line
+    vec4 rocks;    // the rock its steep faces show (one-hot: stone, hoarfrost, shale, glass; none: mirepeat)
+    vec4 biome;    // alpine, badlands, stony (as weights)
     int flags, shape;
 };
+
+void materials(inout Corner c) {
+    int rock = min((c.flags >> 4) & 7, 4);
+    c.rocks = vec4(float(rock == 0), float(rock == 1), float(rock == 2), float(rock == 3));
+    c.biome = vec4(float((c.flags & 1) != 0), float((c.flags & 4) != 0), float((c.flags & 8) != 0), 0.0);
+}
 
 ivec2 texelOf(int r, ivec2 l) {
     ivec4 t = FarTexel[r];
@@ -59,6 +71,7 @@ bool inWindow(ivec2 l) {
 // one corner's data: the generated layer where it has it, else the prediction; false if neither has arrived
 bool cornerAt(int r, ivec2 l, out Corner c) {
     c.h = 0.0; c.n = vec2(0.0); c.col = vec3(0.0); c.info = vec4(0.0); c.crown = vec4(0.0, 0.0, 0.0, 1.0); c.cold = -32.0; c.flags = 0; c.shape = 0;
+    c.rocks = vec4(1.0, 0.0, 0.0, 0.0); c.biome = vec4(0.0);
     if (!inWindow(l)) return false;
     ivec2 t = texelOf(r, l);
     float gh = texelFetch(GenHeightSampler, t, 0).r;
@@ -81,6 +94,7 @@ bool cornerAt(int r, ivec2 l, out Corner c) {
     c.crown = vec4(crown.rgb, shade.a);
     c.shape = int(predCrown.a * 255.0 + 0.5);
     c.n = shade.rg * 2.0 - 1.0;
+    materials(c);
     return true;
 }
 
@@ -106,6 +120,8 @@ bool surfaceAt(int r, vec2 p, out Corner c) {
         c.info = a.info * wa + b.info * wb + cc.info * wc + d.info * wd;
         c.crown = a.crown * wa + b.crown * wb + cc.crown * wc + d.crown * wd;
         c.cold = a.cold * wa + b.cold * wb + cc.cold * wc + d.cold * wd;
+        c.rocks = a.rocks * wa + b.rocks * wb + cc.rocks * wc + d.rocks * wd;
+        c.biome = a.biome * wa + b.biome * wb + cc.biome * wc + d.biome * wd;
         c.flags = a.flags;
         c.shape = a.shape;
         return true;
@@ -125,6 +141,7 @@ Corner sea() {
     c.cold = -32.0;
     c.flags = 0;
     c.shape = 0;
+    materials(c);
     return c;
 }
 
@@ -152,6 +169,8 @@ void main() {
                 c.info = mix(c.info, k.info, m);
                 c.crown = mix(c.crown, k.crown, m);
                 c.cold = mix(c.cold, k.cold, m);
+                c.rocks = mix(c.rocks, k.rocks, m);
+                c.biome = mix(c.biome, k.biome, m);
                 if (m > 0.5) { c.flags = k.flags; c.shape = k.shape; }
             } else {
                 c = k;
@@ -170,6 +189,8 @@ void main() {
     vFlags = ivec2(c.flags, c.shape);
     vCell = s;
     vCold = c.cold;
+    vRocks = c.rocks;
+    vBiome = c.biome;
     vec4 clip = ProjMat * (FarViewRot * vec4(vRel, 1.0));
     clip.z = FarDepth.x + FarDepth.y * clip.w;
     gl_Position = clip;

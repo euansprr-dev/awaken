@@ -17,6 +17,6 @@ public final class RequestClient {
 
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(() -> StatusSections.add(StatusSections.Tab.STATUS, new RequestSection()));
+        event.enqueueWork(() -> StatusSections.add(StatusSections.Tab.JOURNAL, new RequestSection()));
     }
 }

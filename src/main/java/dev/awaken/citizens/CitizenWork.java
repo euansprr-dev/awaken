@@ -591,13 +591,17 @@ final class CitizenWork implements Ledger.Work {
             boolean alarm = p[4] != 0;
             if (d.bellPos[b] > 0) {
                 BlockPos pos = BlockPos.of(d.bellPos[b]);
-                if (level.isLoaded(pos)) {
+                // (SPEC §28.7) a bell taken down (stolen, cracked) rings nothing: the ringer pulls at nothing
+                if (level.isLoaded(pos) && level.getBlockState(pos).is(Blocks.BELL)) {
                     if (level.getBlockEntity(pos) instanceof BellBlockEntity be) be.onHit(Direction.from2DDataValue((int) (p[2] & 3)));
                     boolean choir = "choir".equals(r.bells.get(b).landmark());
                     float pitch = alarm ? 1.15f : choir ? 0.84f : 0.92f + 0.05f * (b % 4);
                     if (!c.site.carillon() && !alarm) {
                         // (SPEC §28.6) a village's bell is Minecraft's own, heard across the fields
                         level.playSound(null, pos, net.minecraft.sounds.SoundEvents.BELL_BLOCK, SoundSource.AMBIENT, 3.5f, 0.94f + 0.03f * (b % 3));
+                    } else if (!c.site.carillon()) {
+                        // (SPEC §28.7) a village's alarm: fast, heard to 256 blocks (the sound reaches players within 16 x volume)
+                        level.playSound(null, pos, CitizensContent.VILLAGE_ALARM.get(), SoundSource.AMBIENT, 16f, 1.05f + 0.04f * (p[2] & 1));
                     } else {
                         level.playSound(null, pos, alarm ? CitizensContent.BELL_ALARM.get() : choir ? CitizensContent.BELL_HOUR.get()
                                 : CitizensContent.BELL_DISTRICT.get(), SoundSource.AMBIENT, choir ? 6f : 4f, pitch);

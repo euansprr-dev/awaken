@@ -64,6 +64,14 @@ public final class FpSwings {
     /** Where the fist closes on a weapon held down its haft in third person (item space; the rest at the item's grip). */
     private static final Map<String, Vector3f> GRIP3 = new HashMap<>();
 
+    /**
+     * Loads the swings now (the client calls this on a worker at start): reading the 1.1 MB file on first use cost a
+     * 30-80 ms hitch on the render thread the first time anyone with a blade was drawn.
+     */
+    public static void warm() {
+        // the static block below has run by the time this returns
+    }
+
     static {
         try (InputStream in = FpSwings.class.getResourceAsStream(PATH)) {
             if (in != null) {

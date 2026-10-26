@@ -31,6 +31,12 @@ public final class PixelsConfig {
                     "FSR: AMD FidelityFX FSR 1 (MIT licence), edge-adaptive upscale plus sharpening, two passes: a little crisper",
                     "block edges, about five times SHARP's cost. BILINEAR: a plain stretch (softest, cheapest).")
             .defineEnum("upscaler", Upscaler.SHARP);
+    public static final ModConfigSpec.BooleanValue STEADY = B
+            .comment("Steady: each frame builds on the last one, carried to where it now lies on screen, so detail about a pixel",
+                    "wide (far land, far trees, crop rows) stops shimmering as the camera moves; the upscaler then sharpens a steady",
+                    "image. Runs at native resolution too. About 0.4 ms at 0.75 on a 5-megapixel screen, 0.8 ms at native. Needs a",
+                    "post effect such as Lens: without one the game clears the world's depth first, and the pass steps aside.")
+            .define("steady", true);
     public static final ModConfigSpec SPEC = B.build();
 
     static void register() {

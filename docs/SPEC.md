@@ -170,9 +170,9 @@ within 8 blocks) windows become a compact toast and queue. Actions answered with
 Visual: deep glass `#0F1724` at 88% alpha, edge `#7FC3FF`, corner brackets, title white, labels pale, "NOT TRUE YET" amber
 `#FFCF7A`, warnings `#FF8A7A`.
 
-Status screen (key **K**): tabs Status · Truths · Codex · Gate Map. Status shows level, rank, path, title, stats with
-+ buttons when points unspent, energy, Echoes, the Spine line, active Directives, and the power loadout section
-(provided by `powers` via `StatusSections`).
+The band (key **K**, §30): six pages, Status · Powers · Journal · Truths · Codex · Map. Status shows level, rank, path,
+title and XP, the stats with + buttons when points are unspent, then the Journal; Powers holds the loadout (provided by
+`powers` via `StatusSections`); the Map page is the Atlas.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -356,6 +356,15 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   `damage(server, key)` (`record Damage(pos, original, day)`), `repaired(server, key, pos)`, `history(server, key)` and
   `history(server, key, line)`, `prosperity`/`addProsperity`, `mood`/`addMood` (0-100), `reserved(Level, BlockPos,
   margin)` (a settlement's ground, planned ones included: gates and Hearths keep off).
+- `dev.awaken.village.api.Troubles` (§28.7, W4) — who a player brought home from a trouble: `rescued(ServerPlayer)` →
+  `List<Rescued>` oldest first, `record Rescued(village, villageName, rec, name, trade, age, day, trouble, settled)` (`rec`
+  is the person's record in that settlement's roster; `trade` a `Roster.JOBS` name; `trouble` "taken" or "missing";
+  remembered for the carrier and every party member within 48 of the reunion); `settle(ServerPlayer, Rescued, hearthName)`
+  (W6: they moved to a Hearth; the village's history says so and `settled` reads true after). For other modules' worlds:
+  `raidComing(ServerLevel, village, camp, campName, tier, raidDay)` (Living Wilds' camps: true when the village takes the
+  raid as its Burning) and `lairSealed(ServerLevel, den)` (fauna: a lair a Taken ended in stays empty for good).
+  The citizens' `Settlement` gained `stage(rec, at, yaw, act, prop)`, `away(rec, bool)`/`isAway`, `alarm(near, strokes)`,
+  `where(rec)`, `look(rec)` (§28.7); `core.api.MovementHooks.addBurden`/`burdened(Player)` (both sides: no body moves).
 - `dev.awaken.city.SettlementPaint` / `PlanView` / `VillageStyles` (§28.6) — the city's grammar for other settlements:
   a `Layout` (a `PlanView` of ground kinds, heights and plots, its origin and street level, its own ground and pieces on a
   `Canvas`, who lives in each plot as an `Interior`) painted per chunk by `paintChunk` into a proto chunk (`sweep` after);
@@ -631,7 +640,7 @@ Plan v2 · landmarks (details in docs/modules/landmarks.md):
 - Kinds: the Well, vaults (the spawn vault too), monoliths, ocean labs, sky platforms, gates by theme. Reaching the
   first of each kind is a discovery (0.15 of a level). Memory `awaken:landmark_memory` (schema 2, copied on death,
   synced to its owner).
-- The Gate Map marks every landmark reached (filled) or heard of (outlined): told by Mira, whispered by a spirit or first
+- The Atlas marks every landmark reached (filled) or heard of (outlined): told by Mira, whispered by a spirit or first
   named by the Now tracker.
 - The Horizon line (§17; until then the Now tracker) names the nearest unreached landmark once there is a reason to go
   (Well from level 10, vault and monolith 4, spawn vault 2, ocean lab 6; a sky platform once you have a way up, teased
@@ -866,7 +875,7 @@ Plan v2 · overworld structures (details in docs/modules/structures.md):
   rebuilt in place when loaded.
 - Ruin sizes: vault 23×24×23, monolith 17×46×17, ocean lab 31×22×31, sky platform 49×26×49; pieces carry a blueprint
   version. The Well: shaft radius 7, twelve pillars at radius 18, four lantern pylons.
-- The Gate Map shows lairs you've heard of or found (synced from `awaken:fauna_state`) beside gates.
+- The Atlas shows lairs you've heard of or found (synced from `awaken:fauna_state`) beside gates.
 - Doorways inside a gate (the exit after the Lord, the way back, inner gates, rifts) are one opening drawn as a single
   vortex in the gate's rank colours (rifts red-rimmed) by the anchor block's renderer (`awaken:gate_portal`, the bottom of
   the middle column); the other blocks are invisible and untargetable but still let you walk in. Doorways placed before
@@ -895,8 +904,8 @@ Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1, 
   and a faint steady link from 260, the panel grows out of the beams' origin 140–370, unfolds Y 160–280 then X 220–360,
   glass 230–380, scan line 250–390, text types from 300 (Signal speed ×4, all lines done by 450); clicks from 250;
   closing replays it backward in 250 ms; K while opening skips to open.
-- Panels: whole framebuffer pixels per unit (≈45% of the width, ≤80% of the height; the 272×228 K panel is 5 px/unit
-  at 3024×1964), placed from the real projection every frame (FOV compensated, vanilla bob undone), 0.62 m ahead at
+- Panels: whole framebuffer pixels per unit (≈45% of the width, ≤80% of the height; the 288×228 K panel, §30, is 5
+  px/unit at 2880×1800 and 3024×1964, 6 at 3840×2160), placed from the real projection every frame (FOV compensated, vanilla bob undone), 0.62 m ahead at
   (-0.455, +0.19) of the half-screen (left of the centre, up and right of the wrist, clear of the forearm; the crosshair
   is hidden while the holo menu is open), yawed 7° toward the wrist and
   leaning 3° back (third person: at least -0.50 aside, 80% size). Material: 38–50% glass (denser toward the wrist),
@@ -1506,7 +1515,17 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   river carved to y 57 and 18 wide (water to sea level 63: the surface estimate reads 8 below the floor there, the aquifer's test for open
   sea-level water),
   continuing straight past the core and fading out 160 blocks beyond it; everything eases back to the natural terrain
-  by 700. No site (old worlds, Classic start, no Lithostitched) means the function is its input. Lairs and Precursor
+  by 700. The rim (2026-10-26, Euan: "that's a bit weird terrain generation"): across the blend the basin aims not at
+  the street but at a rise from it to the land's own height (`aim = street + (land − street) × (1 − w)`, the land being
+  where the router's `depth` crosses zero, linear in y in both routers: the ground without its peaks and noise; the
+  lands pack passes `"depth": "minecraft:overworld/depth"`). Aiming at the street everywhere, the land held until the
+  blend outweighed it and gave way at once: a sheer cliff about 560 blocks out, often undercut into a cave tens of blocks
+  tall. Now near the edge the aim and the land agree on where the ground is and it eases in as a slope. New worlds only:
+  `<world>/awaken/terrain_rim` records "soft" for a world with no overworld chunks at its first start, "steep" otherwise,
+  so an old world never grows a slope beside its cliff (`CityBasin.softRim`). Far Sight samples the same wrapped final
+  density, so far and near agree. Test `terrain_city_basin_rim` (vanilla, seed 777, a hilly site, 36 rays from 330 to 600
+  every 8 blocks: no more than 2% of steps rise over 8 blocks, no more than 2% of columns have an air gap of 3 or more
+  under their top; the street aim logged beside it). No site (old worlds, Classic start, no Lithostitched) means the function is its input. Lairs and Precursor
   ruins skip `reserved(x, z)`; the city wires its runtime systems (gates, anomalies, landmarks, spawn vault, the Well).
   Terrain never sets spawn (the city does, through `LevelEvent.CreateSpawnPosition`). Dev switch for tours before the
   city exists: `CITY=on` (writes `config/awaken-terrain-dev.properties`); `/awaken terrain city` goes to the site.
@@ -1576,7 +1595,20 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   straight line (the real terrain interpolates its density over 8-block cells in y, so this is closer than halving:
   median 0.3 blocks from the generator's exact ground, p90 1.2, test `farsight_columns_predict`), plus half a block (the
   top face). 2.5 probes a column; 59 µs a column on the Awakened Tectonic terrain on the M4 (stage 0: 650-870 µs and
-  8-block steps). The city basin's `Shape.ground` applies on top. Water fills to sea level. Biome from the biome
+  8-block steps). Under the world's ceiling Tectonic's final density slides to air (`tectonic:__constants/slope_upper`,
+  1 thirty blocks under the ceiling to 0 ten under it, lerped toward −0.1), so its peaks are cut flat about y 308; the
+  height model applies the same slide (2026-10-26, Euan: a massif standing flat at the ceiling itself, y 320, with a
+  sheer wall down). Inside the city basin's blend (2026-10-26, Euan: a far wall east of Carillon "that isn't really
+  there", flat when he got close) the ground comes from the router's own final density, which the basin wraps
+  (`CityBasinFunction` round `final_density`; the lands pack's Lithostitched wrap swaps it into the generator's settings,
+  a router without it gets the same wrap): down from above the natural ground (or the street + 11) in 8-block steps to
+  the first solid, then the bracket's line. The basin blends densities, and inside hills the final density is held
+  small by the cave noise, so the real street runs flat out to about 560 blocks from the site and ends in a cliff
+  (sometimes undercut); blending heights (the old `Shape.ground`, still used for a generator without a terrain density)
+  drew a 230-block rise there. Test `farsight_columns_basin` (vanilla's overworld, seed 777, a hilly site, 910 columns
+  through the blend against the wrapped final density block by block): median 0.21 blocks, p90 0.46, none over 3 too
+  high (blending heights: median 2.1, p90 22.6); 86 µs and 7 probes a column, only in the ring 330–700 blocks from the
+  site. Water fills to sea level. Biome from the biome
   source, sampled per patch every second corner and at least every 8 blocks, each corner taking the nearest sample
   (2026-10-26, a JFR profile of the pack's world: one lookup a corner, through Lithostitched's injector over Tectonic's
   climate, was 86% of the workers' time, 178 µs a column); colour, forest (density, canopy height, shape, crown
@@ -1608,18 +1640,29 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   game's lightmap at the face's own light (dark under roofs, lit windows by night), `farLight` and the same air.
   A level gives way to the next once its cells span 1.5 pixels or fewer, cross-fading over 15% of its reach
   (dithered). Hidden where Sodium draws the section (`farRealSection` and the chunk mask); chunks Sodium draws whole are
-  not planned. The far terrain and far trees step aside where City Sight stands (a 256×256-chunk toroidal coverage mask,
-  read within 2 km) and under it carry only the city's ground, a block under its streets (`FarCity.underCitySight`,
-  `CityLayout.groundY`). The opening's card waits for the whole city to be meshed and up. Debug view 3 tints City
+  not planned. The far terrain and far trees step aside where City Sight draws this frame (a 256×256-chunk toroidal
+  coverage mask, read within 2 km, rebuilt from the frame's plan after it and uploaded when it changes) and under it
+  carry only the city's ground, a block under its streets (`FarCity.underCitySight`, `CityLayout.groundY`). Never where
+  it only holds a chunk: a chunk held but not drawn left the far land stepping aside for nothing (2026-10-26, Euan from
+  the Commons, build 3e1f9d11: where Carillon stood, a pale grid to the sky and tall dark slabs, the solid dark-oak cores
+  of the houses cut open at the edges of the chunks that were drawn). A frame's draws are capped at 32768 (was 8192,
+  silently: past it chunks went undrawn, likeliest after a render distance drop hands Sodium's chunks to City Sight); a
+  chunk is planned whole or not at all, and one past the cap falls back to the far land, logged once. Coarse levels
+  light a face by the brightest air a block out across the whole face (one block at its middle was often a wall of the
+  cell beside, which holds no light: whole faces black). Status line: `drawn=… draws`. Tour `farsight3-commons.txt`
+  (Euan's world, his seed). The opening's card waits for the whole city to be meshed and up. Debug view 3 tints City
   Sight green; `farsight part city off` hides it. Test `farsight_voxels_mesh`.
   Also (2026-10-26, Euan's tours): every overworld chunk the server loads is captured too, after the city's (kept
-  within 1.9 km, the city's at any distance, at most 16 M quads, farthest first; the coverage mask redrawn each second
-  for chunks within 2 km, so its 4 km torus never stands a far chunk in for a near one). A snapshot starts just under
-  the chunk's lowest ground (OCEAN_FLOOR - 8): deeper never shows. A chunk is taken again 2 s after its last block
+  within 1.9 km, the city's at any distance, at most 16 M quads, farthest first; the coverage mask holds chunks within
+  2 km only, so its 4 km torus never stands a far chunk in for a near one). A snapshot starts just under
+  the chunk's lowest ground (MOTION_BLOCKING_NO_LEAVES - 8; OCEAN_FLOOR counts leaves, and under a closed canopy the
+  cut fell at the leaves: trees floating over a hole): deeper never shows. A chunk is taken again 2 s after its last block
   change (the neighbour-update event), not on save (the city's hold saves every chunk as it lets go: the city
   "loaded twice"), and a worker skips a snapshot that hashes as the mesh already up. Faces into dark rooms (no sky
   light, block light ≤ 2) aren't drawn; panes, doors and bars between such a room and the light draw their outward
-  face as a window (dark glass). Light steps by three for merging. Each chunk's quads are grouped by face; faces turned
+  face as a window (dark glass), and where a dark room opens to the light (an undercut, a cave's mouth) its air gets an
+  unlit stone curtain facing the light (past the chunk's side counts as light, so no slit at chunk borders): a hole
+  through to the sky otherwise (2026-10-26, under the ledge at the basin's rim). Light steps by three for merging. Each chunk's quads are grouped by face; faces turned
   away across the whole chunk aren't drawn. Chunks clear of the render distance's edge and of a level's fade draw with
   a pipeline that never discards (cut-out holes take the room's darkness, leaves' their colour), so Apple GPUs'
   hidden-surface removal works. Measured at the Roost: about 1.1 M quads, 1.6 to 4.7 ms on a loaded M4.
@@ -1632,8 +1675,11 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   City Sight hides per section: a 64×64-chunk × 32-section mask from the game's own `isSectionCompiledAndVisible`,
   which Sodium answers with its exact built state (so the approved Turbo hook into Sodium isn't needed); all-air
   sections count as built unasked, half the chunks are refreshed a call, a section counts 250 ms after it first is. A
-  section Sodium hasn't built keeps City Sight's copy of the same blocks. The plan still skips chunks the chunk mask
-  calls shown (drawing every chunk with an unbuilt section, mostly hidden behind others, cost 2 ms at the Roost).
+  section Sodium hasn't built keeps City Sight's copy of the same blocks. The plan skips a chunk only when Sodium has
+  built every section from the chunk's lowest ground (without leaves) to its top: not the sealed sections under the
+  ground, which Sodium never builds (counting those drew most chunks, 2 ms more at the Roost), and not by the settling
+  timer (on a busy machine Sodium builds late, and land it hadn't built yet stood empty). Same cost at the Roost as the
+  timer (876 chunks, 0.75 M quads).
   City Sight's meshes stay across Far Sight off and on in the same world (the capture starts over; unchanged chunks
   hash the same and are skipped).
 - **City Sight on disk** (`VoxelDisk`, schema 1): every snapshot taken is kept, deflated (sections in the game's own
@@ -1641,12 +1687,30 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   on its own thread at each level save and, waited for (at most 10 s), when the server stops. A start, and every 10 s
   after, reads back what lies within 1.7 km of the player and isn't tracked (the world's own copy wins), handed over
   as the client takes them.
+- **Real land ahead** (`VoxelAhead`, Far Sight 3's shadow generator as built): where trees will stand can't be
+  replayed without growing them (the game's placement and a tree's growth draw from one random stream in turn), so
+  the exact way is the real chunks. While City Sight draws and the server's smoothed tick stays under 30 ms, every 10
+  ticks it asks for the two best chunks (nearest, ahead before behind) in a band 3 chunks past the view distance and a
+  35° cone 12 further along the player's heading, at most 6 waiting, held by Awaken's own ticket (`farsight_ahead`:
+  loading only, never ticking, timing out 40 ticks after the chunk is ready to save). City Sight captures them on load,
+  once the light engine has finished the chunk (`isLightCorrect`; else 2 s later): without its sky light every face
+  reads as a dark room's and the chunk would stand as a hole.
+- **Dissolves**: a chunk new to City Sight dissolves in over 1 s (its share in the chunk table) while the far terrain
+  and far trees under it dissolve out in the complementary 4×4 dither (the coverage mask carries the same share), so
+  wherever the far view's guess differed from the real land it changes gently, never pops.
 - **Levels follow the air**: a City Sight level gives way once its cells span `PIXELS` / transmittance pixels (the air's
   haze at that distance, 4× in rain): hazier distance needs less detail.
 - **Work ahead of the camera**: the far patches' queue ranks from where the camera will be in 1.5 s at its smoothed
   speed (at most 300 blocks ahead), so in fast flight the land ahead comes first.
 - **The opening's card** waits, while City Sight draws, for the far rings and the whole city meshed and up, not for
   the real chunks round the player (the flight's camera is far from them and Sodium doesn't build them for it).
+- **Known gap: Sodium's cave culling** (2026-10-26, Euan's world over the Commons, `tools/autopilot/farsight3-euan-hole.txt`):
+  sections inside the render distance that Sodium has built but culls this frame (its occlusion traversal can miss a
+  view through a narrow opening, e.g. under the basin rim's old undercut) show the sky colour, with Far Sight off as
+  well; the far land is hidden there because the mask counts built sections, not drawn ones. Closing it needs Sodium's
+  per-frame visibility (`SodiumWorldRenderer.isBoxVisible`, its classes in a nested jar) for each built section, on
+  the path the 26 Oct perf pass trimmed; City Sight drawing past 12 chunks (perf idea C) makes it moot out there, and
+  the soft rim (§15) leaves no such cave in new worlds. Open, for a decision.
 - **Seam audit** (`tools/farsight/seam_audit.py`): pairs of tour frames, normal and debug view 2 (far terrain and City
   Sight hidden for the real chunks paint red); red only in the debug frame, eroded by 5 pixels (outline slivers where
   City Sight's cubes are hidden for thinner real blocks are expected), is a hole. Tour `farsight3-city.txt` takes the
@@ -1696,24 +1760,35 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   world cell of the wider picks one, anchored to the land: 2026-10-26, pixel-wide columns dithered on the screen made far
   slopes glitter in motion, Euan's play; part "steady" off restores them for measuring), tops rounded to
   whole blocks, and shows the face it meets: the top, or a side facing x or z, shaded as the game shades faces (1, 0.8,
-  0.6) under a light matched to Lens 2's on the chunks (`farLight`: a warm key where the sun reaches, Lens's cool shade
+  0.6; a side by the way the slope faces, between 0.6 and 0.8, not by the axis its column shows: a steep slope's
+  staircase shows x and z sides by turns, and read per triangle that flip drew dark spikes down far mountains and
+  grooves down their walls, 2026-10-26) under a light matched to Lens 2's on the chunks (`farLight`: a warm key where the sun reaches, Lens's cool shade
   behind ridges, faces turned from the sun shaded only as it lowers). Grass tops stand over dirt risers (the dirt
   texture's average, a grass fringe along the top), cliffs show stone or an Awakened biome's own block (hoarfrost, riven
   shale, fused glass, mirepeat: palette rock kinds in colour flags bits 4-6), badlands their strata, every block its own
-  grain. Snow lies by the alpine snow line and by a smooth coldness (each corner's blocks above the game's own cold
+  grain. The biome's materials (its rock, badlands, stony, alpine) are weights blended between corners (`vRocks`,
+  `vBiome`), and where biomes meet each block takes one rock with the blend as its odds (world-anchored): with the flags
+  flat per triangle, a border across a steep face drew whole triangles in one rock or the other (2026-10-26, Euan: grey
+  spikes on the basin's rim cliff and the mountains behind it, riven shale against stone; `docs/perf/far-sight/fs3-rim.jpg`,
+  tour `farsight3-rim.txt`). Snow lies by the alpine snow line and by a smooth coldness (each corner's blocks above the game's own cold
   line, info alpha, found by bisecting `coldEnoughToSnow`), both broken into patches over a ~20-block band
   (`AlpineSurface.patches`, the same noise the chunks' snow uses), on tops and as a fringe on risers. Scree and bare
-  rock by slope; water over its own sea floor (2026-10-26, Euan's idea: the real water shows its floor, the far water
+  rock by slope; water where it's cold enough to snow (colour flag COLD) is ice, opaque, as the chunks freeze it
+  (2026-10-26: frozen rivers' indigo water drew far valleys purple and see-through), and the generated layer reads ice's
+  lavender map colour as ice's textures' pale blue (`FarPalette.ICE`; the generated layer's store went to schema 3 so
+  the lavender kept on disk is re-learned as chunks load); water over its own sea floor (2026-10-26, Euan's idea: the real water shows its floor, the far water
   showed none, so the floor ended at the chunks): the floor lies the water's depth down along the view ray, blocks of
   sand, gravel in the deep and seagrass patches, anchored to the world, showing by the water's absorption over the path
   (shallows and steep views, not deep water or grazing ones) and fading out over 700 blocks past the render distance's
   edge, so the open sea further out is only water; forest floor tinted by its crowns, and from about 600 blocks out (full by 2.4 km)
   a forest is its canopy: crown colour over every face, speckled crown by crown.
 - **Bake** (fragment pass, `FarGpu`): per corner the normal, valley shade, and sunlight: a march toward the sun across
-  the ring (40 steps, growing), soft by how far under the ridge line. Changed rings at once, one more every other frame
+  the ring (40 steps, growing), soft by how far under the ridge line, never sharper than a cell and a half (a shadow's
+  edge stepping corner to corner drew a saw). Valley shade only where the ground rises on both sides (the lower side
+  of four directions, one and two corners out): a cliff's foot or a face under a summit isn't a hollow. Changed rings at once, one more every other frame
   (the chunk mask refreshes on the frames between).
 - **Far forests** (`FarTrees`): rings 1-4 (half a kilometre to four) plant jittered candidate spots per cell (1, 2, 3,
-  1 by ring; ring 4's trees are dots, the canopy shading carries the forest there) taking a tree as often as the forest is dense (densest: about two in three), never on water, on slopes over
+  1 by ring; ring 4's trees are dots, the canopy shading carries the forest there) taking a tree as often as the forest is dense (densest: about two in three), its crown and height from the cell's densest corner (a forest's edge on open ground took that ground's blank crown: flat black trees, 2026-10-26), never on water, on slopes over
   1.1, or above the treeline (14 under the alpine snow line); each a little taller or wider than the mean. Up to 512 a
   patch, 16 bytes each, in a persistent texel buffer (two runs per slot: predicted, real), stood as opaque voxel trees
   (crown top, two camera-facing crown sides narrowing by shape, two trunk sides): broadleaf, conifer, jungle, acacia.
@@ -2089,7 +2164,12 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   ditch (water a block down) at 6.5 and a hedge or spruce fence at 7.5 from 26 out, a field gate over a culvert every 48
   (by turns either side). Lamps and pennant lines by turns every 14 from 24: a pennant line is two line poles at 5.5
   with a bunting line across the road at row 7 and a district banner hung from it by each pole (the yard's two lines
-  replace its masts; the floating flagpole arms are gone). Milestones every 64 from 40 on the right-hand verge. Fields
+  replace its masts; the floating flagpole arms are gone). Every line ends at its anchor (Euan: "ropes still don't
+  connect to poles"): a line pole's top that ends a line (`rope=` the way the line leaves) has the line's rope tied
+  through its far ring and out to the line at a sag-0 rope's height, its rings turned along the line; the cell beside
+  a pole hangs at sag 0; a banner under a line hangs on two cords from it (`mount=line`); and a city line whose plan
+  end stops short of the facade runs on as bare rope across up to 3 open cells to the building (GameTests
+  `city_commons_poles`, `city_lines_anchored`: every end meets a pole facing it or a wall). Milestones every 64 from 40 on the right-hand verge. Fields
   keep the lattice (bands 21 out from 252, cells about 26 round): boundaries are hedges, farm tracks or grass balks by
   pair; fields are arable strips 5 wide (four rows of one crop at its own growth, then an irrigation channel or a balk;
   wheat, carrots, potatoes, beetroot, pumpkins, ploughed or fallow; a scarecrow on the seed of half), reaped (stooks
@@ -2172,6 +2252,11 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   (approved proposal; the gate opens in the square via `GateHooks.openScripted`) → the Void → the infirmary → the
   Registry (licence E-rank, the Holo wristband, the Atlas opens with the run revealed, first Directive) → free play.
 - No death in the opening (falls leave ≥ 1 heart). Relog at any beat resumes it. `/awaken opening skip`.
+- The light column and the opening's other light in the world (rings, the Runner's eye, the Lens shard) are drawn as
+  the gate pillars are (§7): after the level in a pass of their own (depth-tested, no depth written, no fog), the
+  column as camera-facing ribbons with a bell-shaped falloff (a near-white core and a blue glow added as light, a wide
+  haze alpha-blended in lit-air blue by day), thinning to nothing with height, faded as the camera comes inside each
+  ribbon's width (Euan, 2026-10-26, from the Roost at noon: the column read as a pale glass slab with a flat top).
 - Registration (2026-10-25): when the opening ends, or is skipped, the counter `awaken:carillon_registered` is counted
   once (`OpeningDirector.REGISTERED`). Chains and content that wait on "after the Registry" require it.
 - Decided in M2 (2026-10-25; details docs/carillon/milestones/M2-opening.md): the opening's beats SKY, RUN, ARRIVAL,
@@ -2305,7 +2390,7 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   the path; a district's bell tower clears the district, the Choir spire the city. Party sharing on request.
 - Client tile cache `<game>/awaken/atlas/<world>/<dim>/` (height + top colour per column; versioned; ≤ 64 MB, oldest
   first; "Clear Atlas cache" button).
-- Table view: a Screen with a picture-in-picture renderer (depth, orbit, zoom, tilt); wrist glance cached on the Holo.
+- Table view: a Screen with a picture-in-picture renderer (depth, orbit, zoom, tilt); the band's Map page (§30).
   ≤ 2 ms/frame open, ≤ 150 ms to open, glance ≤ 0.3 ms. Markers only for what the player knows.
 - Decided in M5 (2026-10-25; concept https://claude.ai/artifact/3QCvup43wuVW6t1wDfVroP, docs/carillon/m5/):
   - Discovery (`atlas.Discovery`, attachment `awaken:atlas`, `AtlasData` schemaVersion 1, copyOnDeath): per dimension,
@@ -2345,10 +2430,10 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     name; every other mark shows only in an explored cell. You are a pin of light with a ring and a facing tick.
   - Cost: slices outside the picture aren't drawn, and while only the clouds drift the picture is redrawn about 30
     times a second (every frame while the view moves or the land prints in).
-  - The wrist glance: a section on the K menu's Status page right under NOW, the land round you (240 blocks across,
-    where you look is up) painted into the texture `awaken:atlas/glance` (480×280) at most once a second while the menu
-    shows it, or sooner once you've moved 4 blocks or turned 12°; the Holo draws it as one textured quad, with a button
-    to the table.
+  - The wrist glance: the land round you (240 blocks across, where you look is up) painted into the texture
+    `awaken:atlas/glance` (480×280) at most once a second while something asks for it, or sooner once you've moved 4
+    blocks or turned 12°. It left the K menu with the band's pages (§30: the Map page is the table itself); its
+    painter is kept for the map scene (§30, phase 4), which will drive it from its own camera.
   - Phase 3 (`AtlasData` schemaVersion 2): the Living Wilds region you stand in (`living.api.Regions`, checked every 40
     ticks, overworld only) joins your Atlas once; zoomed out, each known region's name is lettered at its heart in
     spaced capitals with its levels under it. Party pins: double-click the table to drop a pin on ground you know (or
@@ -3588,7 +3673,7 @@ manual; stop the build at the first block; the payoff answers only the line; dan
     here." / "The tree sheds all you build.": a card holds 20% of the screen, and a two-line question drops the body),
     the body "Its platforms answer to a line." (the platform's, the tree's way), one choice
     **Show me** (Y) / Not now (action `ward:show_me:<kind>`, 30 s), with "A vault keeps a line for a hunter it opens to."
-    on the action bar under it. Y sends `awaken:ward_show_me`; the client opens the band (K › Status) scrolled to "THE
+    on the action bar under it. Y sends `awaken:ward_show_me`; the client opens the band (K › Powers, §30) scrolled to "THE
     ASCENT" (§27.2: the next rung as a silhouette, where it comes from), else "THE BODY"
     (`StatusScreen(Tab, String... titles)`).
   - After that: once a visit (a ward, until 5 minutes without a refusal there) a toast, the place's name and its way up
@@ -3674,6 +3759,29 @@ Plan: the Far Sight page, path 4 (https://claude.ai/artifact/LvAoTbYB82o6ggcHS73
   3456×2234 is 7.7), `upscaler` SHARP. 1.0 on the MacBook's own screen (about 1 ms, and nothing once a scene sits at
   120 Hz or on the CPU, doesn't pay for the softer textures); at 4K Lens 2 and the world's pixel-bound part cost the
   most (estimated 3–6 ms saved on Cinematic/Ultra, docs/perf/CITY-FPS.md). The autopilot's `pixels <scale>` sets both.
+- **Steady** (`PixelsSteady`, `core/pixels_steady.fsh`; 2026-10-26, Euan: distant edges, far trees and mountains
+  crawl as the camera breathes, red dots flicker): a temporal stabiliser before the upscale, at the world's resolution.
+  Each frame last frame's steady image is carried to where it now lies (this frame's NDC through the inverse
+  view-projection, the camera's step since, last frame's view-projection: one matrix; the projection as Lens reads it,
+  bob and hurt tilt included), sampled Catmull-Rom (five bilinear taps), clamped to this frame's pixel and its four
+  neighbours (a moving mob or a newly seen place never smears), and this frame mixed in at 0.1. No jitter: it steadies,
+  it adds no resolution. The hand (its own depth target) keeps no history; a teleport (24 blocks), a gap over 250 ms,
+  a resize or a frame without the pass starts it afresh. History: two RGB10A2 targets (a tenth's steps round away in
+  8 bits). Then the upscaler as before (SHARP's RCAS now sharpens a steady image); at native the world draws into a
+  same-size target and is copied out unsharpened. Needs a post effect (Lens): without one the game's hand pass clears
+  the main depth before Pixels' end hook, so the pass steps aside (`getRequestedPostEffects()` empty). Setting
+  `steady` (default on); autopilot `pixels steady on|off`.
+  Attribution first (tour `farsight3-shimmer.txt`, `tools/farsight/shimmer.py`: night over Carillon's east wall,
+  12-frame bursts under a scripted sway, fine flicker / hard-flicker share in the far, mid and near bands): SHARP
+  roughly quadrupled hard flicker against bilinear (far 0.42% vs 0.10%); Far Sight's far land and trees were most of
+  the far band (Far Sight off: 0.04%), City Sight added some in the middle band, the near fields' crop rows (Sodium)
+  flickered too, and native was worse than 0.75. The red dots (not in the tour's view): most likely the pale biome's
+  one-block crystal spires, real blocks about two pixels wide, tinted by the moonlight; the pass steadies them too. Proof (tour `farsight3-steady.txt`, M4 at 2880×1800, Vulkan, RD 16, Lens
+  Cinematic; `docs/perf/far-sight/fs3-steady.jpg`): under a slow continuous turn (as Camera Overhaul's breathing
+  moves the camera every frame) hard-flicker pixels 0.064% → 0.010% at 0.75 SHARP and 0.170% → 0.012% at native;
+  under the old tour's one-tick tp steps (a jump, then still frames) 0.106% → 0.086% and 0.351% → 0.235%. GPU: the
+  upscale 0.27 → 0.64 ms at 0.75 (world 2160×1350), steady plus the copy 0.84 ms at native. A first cut at the
+  screen's resolution with RCAS after cost 1.5 ms and sharpened native: dropped.
 - Holo: panels draw inside the world (the level's always-on-top phase), so at render scale their text would be
   upscaled with it (measured: softer, with RCAS fringes at 0.67). While a panel holds the player's attention
   (`UiHooks.focus() > 0`: the K menu, a reading screen) the world renders native, so panel text, Lens's bloom on the
@@ -3681,9 +3789,9 @@ Plan: the Far Sight page, path 4 (https://claude.ai/artifact/LvAoTbYB82o6ggcHS73
   cards and the HUD are GUI and always native.
 - Safety: both hooks must be seen in one frame before the first swap; a frame that ends with the target still lent
   (`RenderFrameEvent.Post`) gets it back and turns Pixels off for the session, as does any exception in a pass.
-- Client config `awaken-pixels-client.toml`: `renderScale` 0.5..1.0 (1.0 = native, off) and `upscaler` SHARP |
-  FSR | BILINEAR. Autopilot `pixels <scale> [sharp|fsr|bilinear] | config | state` overrides them for a tour (not
-  saved). Tours:
+- Client config `awaken-pixels-client.toml`: `renderScale` 0.5..1.0 (1.0 = native, off), `upscaler` SHARP |
+  FSR | BILINEAR and `steady` (on). Autopilot `pixels <scale> [sharp|fsr|bilinear] | steady on|off | config | state`
+  overrides them for a tour (not saved). Tours:
   `tools/autopilot/pixels.txt` (the measurement), `pixels-smoke.txt`, `pixels-dh.txt`; crops: `tools/pixels-crops.py`.
   `pixels gpu on|reset|<label>` (measurement only) writes GPU timestamps before the world, after the post effects and
   after the upscale, and logs the world pass's and the upscale's GPU time per label (`PixelsTiming`): on a busy Mac
@@ -3856,7 +3964,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   Read and turned in at Hale (choice card Take it / Next notice); a turn-in pays once (claim
   `awaken:claim/bounty/<id>/<n>`), counter `awaken:bounties_done`.
 - **Journal**: payload `living_journal` (chains taken, tracked first, and bounties taken, each with its current line),
-  sent on every change and on login; drawn as the JOURNAL section of the K menu's Status tab until the holo tab exists.
+  sent on every change and on login; drawn as the JOURNAL · CHAINS section of the band's Journal page (§30).
   Nothing undiscovered is ever listed (§21.0.7).
 - Tests: `living_quest_engine`, `living_bounty_board`, `living_scene_finder`. Dev (admin): `/awaken living wayfarer <who>`,
   `talk` (the nearest Wayfarer), `scene <chain>` (its scene now, close by), `view <distance>` (stand back from your
@@ -3904,7 +4012,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   The Codex tab lists them ("HAPPENINGS WITNESSED · n / ??").
 - **Rumours** (`Rumours`, attachment `awaken:rumours`, schema 1, synced to the owner, kept through death): half the
   time a Wayfarer with nothing for you tells of a happening on now 160-2500 blocks away that you haven't witnessed, with
-  a compass direction; it leaves a "? <title>" mark on the Gate Map (MapMarks) for two play-days (at most 8).
+  a compass direction; it leaves a "? <title>" mark on the Atlas (MapMarks) for two play-days (at most 8).
 - Dev (admin): `/awaken living happen <kind>`, `happenings`, `calm`, `strike <distance>` (a storm strike that far
   ahead of you, for tours). Tests `living_pulse`, `living_storm`.
 - **The Rolling Storm, as a real storm** (Euan's playtest, 2026-10-26: the cell read as round soft discs full of
@@ -4043,7 +4151,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
     +0.25 for 2 min after a cooked meal), Banquet (+the food's saturation again).
   The plan's Tidewater bait, sigil slot, temper discount and an apex phase read moved out: they need other modules'
   systems; the replacements above are this module's own.
-- UI: CRAFTS in the K menu's Status tab (level, a bar, perks open, the next). Dev: `/awaken living craft <craft>
+- UI: CRAFTS on the band's Powers page (§30; level, a bar, perks open, the next). Dev: `/awaken living craft <craft>
   <level> [announce]` (announce: with the level and perk toasts, for tours). Test `living_crafts`.
 - Art: the 15 icons are drawn by `tools/art/specs/items_crafts.py` (16×16, our own palette, one wooden bowl shape shared
   by the bowl meals; the pasty stands on its flat side with a crimped rope; no vanilla pixels). Its `preview DIR` checks
@@ -4308,6 +4416,36 @@ hands Lens the plates drawn this frame (up to 6: centre, half-width and half-hei
 texture carries them (texel 20 x the count, texels 24-41, three a plate; it grew to 48×1), and a surface point within
 0.15 block of a plate's plane and inside its rectangle (`onPlate` in lens_frame.glsl) gets no shadow, AO, key or shade
 and no haze. With the K panel open they dim with the rest of the world (the focus dim stays).
+
+**Temporal clouds and light** (Euan, 2026-10-26: "Start all three ideas now", docs/perf/IDEAS-26OCT.md B; setting
+`lensTemporal`, default on; autopilot `lens temporal on|off|setting`):
+- Why: at the Roost, Lens Cinematic cost ~5.4 ms of a ~21 ms frame (docs/perf/PERF-26OCT.md). Its marches (the clouds
+  at 560×315 / 800×450, the light buffer at 960×540 / 1440×810) already blend into a reprojected history, but every
+  pixel marched every frame.
+- The clouds: a pixel marches one frame in four, a 2×2 pattern of 8×8-pixel tiles turning with the frame counter
+  (frame texel 12 w). Whole tiles, so the GPU's SIMD groups skip together: the first, per-pixel pattern left a marching
+  pixel in every group and saved nothing (Cinematic 13.22 ms off, 13.25 on).
+  - On the other three frames it keeps last frame's clouds, reprojected to where its ray enters the layer (or the
+    nearer storm cell; 150 blocks when the camera is inside the layer).
+  - A march blends in at 1 - (1 - f)^4 of the old weight f, so the clouds answer over time as before.
+  - It marches anyway with no history (a cut, a teleport, a long gap), off screen, or while lightning flashes.
+- The light buffer (sun visibility, contact shadows, AO, volumetric light): a checkerboard of 8×8 tiles marches each
+  frame, alternating.
+  - On its off frame a pixel keeps its reprojected history where at least 0.4 of the 2×2 taps saw the same distance.
+  - A new surface (disocclusion) marches.
+  - A march blends in at 1 - (1 - f)^2.
+- Frame texel 17 y carries the switch; with it off, both passes are exactly as before.
+- Measured (perf tour `tools/autopilot/lens-temporal-perf.txt`, 26 Oct; MacBook at Euan's 4.7 MP world, the Roost,
+  noon, a quiet machine; GPU world pass p50):
+
+  | | off | on |
+  |---|---|---|
+  | Ultra | 17.02 ms | **15.12 ms** (frame p50 19.4 → 17.3, 51 → 58 fps) |
+  | Cinematic (paired windows) | 13.95, 13.53 ms | 13.70, 13.13 ms (−0.25 to −0.4) |
+
+  - Lens Swift is 9.29 ms, so the whole of Lens Cinematic is ~4.2 ms over Swift and the marches are a small part of
+    it. The rest is the full-size passes; time them per pass next.
+  - Look tour `tools/autopilot/lens-temporal-look.txt` (CI): no smear and no tile blocks, at rest or in a 180° turn.
 
 ## 23. Creature life (Fresh Animations in the pack, and a life layer on every body of ours; Euan 2026-10-25)
 
@@ -5194,7 +5332,7 @@ The rules below replace that.
 - **The find cue** (`signal.client.FindCue`): a small diamond blooms 13 px right of the crosshair with the name in a
   whisper beside it (5 + 34 + 16 ticks), and `awaken:ui.find` at 0.32 (at most every 60 ticks); several at once read
   "N finds · Journal".
-- **The Journal** (`signal.client.Journal`, Status tab, order −10): filed lines newest first ("◆" unread), 60 kept per
+- **The Journal** (`signal.client.Journal`, the band's Status page right under the stats, and its Journal page, §30): filed lines newest first ("◆" unread), 60 kept per
   session, "JOURNAL · N NEW" until the K screen has shown them. The Codex keeps the finds themselves.
 - A lair rumour ("Heard of · …") is AMBIENT, topic `lair` (the Now tracker points at it).
 
@@ -5283,14 +5421,14 @@ play it; the world remembers the locks you met and calls you back once when you 
   ("<name>, in the Descent", its rank), the Observatory's Halo line ("Something past the sky", B), Veil possession
   refused ("Wearing a creature, in the Veil", C, no place), a dangerous region ("<region>", the level at which it stops
   being dangerous).
-- **In the band** (K › Status, "WHAT WAITS", order 5, `progression.client.WaitingSection`): up to 8 rows, answered
+- **In the band** (K › Journal, §30, "WHAT WAITS", order 5, `progression.client.WaitingSection`): up to 8 rows, answered
   first then nearest: a chip with the need in its colour (rank colour; the Horizon's green for a rung) or READY, what,
-  and "640 m NE". The same locks are pinned on the Atlas and the Gate Map (`MapMarks`), coloured by need.
+  and "640 m NE". The same locks are pinned on the Atlas (`MapMarks`), coloured by need.
 - **Far** (the next rank's promise): under "Next rank: D at level 10…" in the Spine section, "D-rank opens what waits
   for you: A sealed vault · Gardens, in the Descent." Only locks the player has met; never a list of spoilers.
 - Test: `progression_promises`.
 
-### 27.2 The band's Ascent page (`body.client.AscentSection`, K › Status, order 28)
+### 27.2 The band's Ascent page (`body.client.AscentSection`, K › Powers, §30, order 28)
 "Runner · yours from the start"; each rung held with how to use it (keys in the player's own bindings,
 `signal.client.KeyText`); the next rung as "◇ The Tether · next" with where it comes from ("A Precursor vault keeps a
 line for a hunter it opens to: its door's rank, D at the least."); the rest "???". What a rung does is only told once
@@ -5406,6 +5544,19 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   and captions on the way (e.g. Ilse: "Here, take an ember from our fire. Carry it with you, and when you find a spot
   you'd like to live, place it there. That'll be your home."). Lines that grew got time to be read (Bram's briefing:
   28 s, a line every 7; Ilse's beats 90 apart).
+- **Control comes back** (Euan, 2026-10-26: "right after the cutscene, you can't move"; he had to /kill). Every scene
+  that holds the player still goes through one lock, `core.client.InputLock` (bookkeeping `core.InputHolds`): the camera
+  shots, the Registry's waits, Ilse's ember, the ritual. The real input is saved once, by the first holder, and put back
+  only when the last lets go; a holder never saves another's stand-in. (Ilse's hand-over saved the camera's empty
+  stand-in, the camera then gave the real keys back, and the scene's end put the stand-in back for good.) Every hold has
+  a deadline (a shot's own length + 2 s, re-asserted while it plays; Ilse's ember 45 s; a shot of unknown length 2 min):
+  past it the lock lets go and logs `[input]`. A respawn's new player object is held in turn and given its own keys; a
+  logout lets everything go. Ilse's scene also ends server side on walking off (18 blocks), death, logout or her being
+  gone, and her hand empties. Tests: `core_input_holds`, `progression_first_scene_exits`; tour `camp-exit.txt` walks
+  away after the scene.
+- **The far smoke is far only**: the column (`PulseFx.campfire`) fades out within 48 blocks of the fire (gone at 48,
+  whole from 96), where vanilla's campfire smoke is the real thing. Drawn up close its puffs, up to 15 blocks across and
+  110 up, read as a dark dome over the camp and a pale facet in the sky (Euan, 2026-10-26).
 - **Quest fields** (`QuestDef.Step`, schema 1, both optional): `tally` shows a step's count even when it's one ("· 0/1");
   `night` says why a step needs the dark. Objective type `hearth`: done when the player has a Hearth.
 - Dev and tours: `/awaken living first gate|letters|ilse|took|camp`; tour `tools/autopilot/first-scenes.txt` (CI).
@@ -5477,12 +5628,15 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
 ---------------------------------------------------------------------------------------------------------------------
 
 ### 27.10 The current task, top right (Euan's playtest, 2026-10-26)
-"Every time you have a goal and things to do, you actually have a small checklist top right." One small card, top right
-under the first two toast slots (`signal.client.TaskHud`; never over the crosshair, hidden with the HUD), in the band's
-glass, a touch smaller than the Now card: the task's title and done/total, then its steps (a long one wraps to a second
-line), each ticked when done (a soft green flash as it ticks), the
-current one bright with ▸, keys drawn as key caps from "{key}" in the words, a count where a step has one ("0/10"),
-and a compass to a place nearby to do it ("↗ 9 m"). The Now line, top left, keeps the where; the card keeps the what.
+"Every time you have a goal and things to do, you actually have a small checklist top right." One small card tucked
+into the top-right corner (`signal.client.TaskHud`; the Now card's margin, 4 GUI px), in the Now card's glass, at about
+half its size (Euan, 2026-10-26, after the first version: "WAY too big, 2x smaller and closer to the corner"): 0.45 of
+the System scale, never under two screen pixels a font pixel, widest line 185 px before a step is shortened. Its title
+and done/total, then only what matters now, one line each: the current step bright with ▸, the next two dim, and a step
+that just ticked (a soft green flash, then it fades out over 2.5 s); a long step is shortened with "…" (the Journal has
+the whole of it). Keys are drawn as key caps from "{key}" in the words, a count where a step has one ("0/10"), and a
+compass to a place nearby ("↗ 9 m"). While the System's toasts are up it eases down under them. Hidden with the HUD.
+The Now line, top left, keeps the where; the card keeps the what.
 The server decides (`progression.Checklist`, sent only when it changes, payload `signal_task`; nothing while the
 opening runs):
 - **Your body remembers** first, from the awakening: "Hold [Shift] as you land to roll", "Double-tap [Ctrl] to sprint
@@ -5656,7 +5810,7 @@ minutes, perks `awaken:energy_regen` +0.25 and `awaken:craft_rate` +0.25 (a perk
 
 **The room panel** (`client/RoomPanel`: `visible()`, `build(Ui)`; data: attachment `awaken:hearth_here`, `RoomHere`, synced
 to its player when it changes, checked once a second). Name, grade, six readings as three pips each, purpose, "Lift it:
-…". Shown as the K Status page's first section (`RoomSection`, order -28: right under NOW, above the Atlas) while you stand in a read room at home (PLAN
+…". Shown on the band's Status page above the Journal (`RoomSection`, order 17, §30) while you stand in a read room at home (PLAN
 said "hold the band key": K opens the band on press today, so the panel lives on that page until The Way Forward's glance
 takes it, through the two calls above); and as every room's card in Your Hearth, which also gained a HOME section (Comfort
 with its bar and the next point, Style, the land, Rested minutes), the kinds you have as chips, at most three suggestions
@@ -6226,6 +6380,192 @@ cured villager settling. W7: towns, mining towns, roads and caravans between set
 want stilts and the caravanserai a courtyard (styles only today); village clothes are the city's; a house smokes by the
 hour, not by who is in; `/locate` can't find a settlement (`/awaken village list` does).
 
+### 28.7 W4 as built (troubles and growth, 2026-10-26)
+Branch `pack/world-depth-w4`. Packages `village.trouble`, `village.growth`, the troubles' client in `village.client`;
+module doc `docs/modules/village.md` ("Troubles"). Tests `village_trouble_taken`, `village_burning_rebuild`,
+`village_director_caps`. Tour `tools/autopilot/world-depth-w4.txt` (CI): `/awaken village trouble` moves each trouble
+along by hand, `view <name>` stands at a framing (the eye moved as little as it takes to one with sky over it, room to
+stand and nothing between it and its mark), and `site` stands you past the village's edge on even, open ground facing out,
+so a lair built in front of you (`/awaken fauna lair place`) is in a Taken's reach. The Deep Mine waits for W7's mining
+towns.
+
+**The director** (`TroubleDirector`, saved data `awaken:village_troubles` `TroubleState`, schemaVersion 1). Every 10 s,
+for each village that is awake (a player within its radius + 192): its festival's calendar first; then, unless the world
+option is on, the world is in its first two hours of play (`PlayDays.playTicks`), the village is already in trouble, its
+last ended under two play-days ago, it stands inside a Hearth, or some player within 1,500 of it already has two troubles
+within 1,500, the first cause the world holds, in order: a gate within 500 due to break in one or two play-days (the Grey
+Fields); its bell gone, a gate broken within 600 (cracks it, once per gate), or a riftborn camp of tier 2+ within 800 on
+one night in eight (the Bell); a surface lair within 400 whose beast is home, else a Hollows den or riftborn camp within
+400, on one night in four (Taken); a storm at dusk, one in three (Gone Missing); 24+ blocks of damage (the Rebuild). The
+Burning comes from the camps (below). Each trouble runs on its own play-day clock (`due`) and ends without you when it
+runs out, unless someone is mid-deed (carrying someone home, at the lair, the raid's night, the masons at work, a bell
+being cast); its plot ticks each second while its village is awake (its once-in-a-while beats, a line said, the runner,
+the smoke, counted in seconds of the world's clock, so a loaded world's clock offset never silences them). **World option**: game rule `awaken:calm_villages`
+(off by default; in the world screen's rules): no troubles; festivals and growth go on.
+
+**Found, never listed.** The call is in the world: the village bell rings the alarm fast and is heard to 256 (a new
+event `village.alarm` played at volume 16 from the bell the ringer pulls; players 256 out get a quiet AMBIENT line naming
+whose bell it is); scouts at the treeline; smoke columns over burned roofs sent to 512; the bell silent at dusk; lanterns
+and the jig. While nobody has said Help, a villager (a hunter, farmer or carter) runs to the village's edge toward a player
+the village knows (Known or better) coming within 180, waves, and tells them (`Runner`). The one who asks shows a choice
+card (Help / Not now). The Journal holds a trouble only once you said Help: a row on the band's Journal page through
+`living.api.Quests.addJournal` (the newest tracked), and the Now tracker points the way (for Taken the trail's next point,
+not the lair). Up to three villages where you're Known show their latest history line in the Journal.
+
+**Always paid** (`TroubleDirector.pay`): emeralds once per trouble and player (EconomyHooks claim), standing, XP through
+the new budget `village` (0.5 of a level per 10 minutes), a keepsake (`awaken:keepsake`: named and inscribed), counter
+`awaken:village_troubles_helped`, the village's prosperity +4 and mood +10. **Multiplayer**: saying Help counts the party
+within 48; a payout reaches every helper and any party member of one within its radius; a raider felled, a flame beaten or
+a person cut free counts you in whether you said Help or not.
+
+**Taken** (`Taken`). At night the beast takes a child (else a young one) whose household has a grown-up: their record goes
+away from the village's day (`Settlement.away`), the bell rings the alarm (36 strokes, again every 100 s up to three
+times), the parent weeps by the well with the household round them, the Watch and neighbours stand at the green's edge
+with lanterns and halberds looking the way it went. From dawn the parent stands in the square pointing that way and asks.
+The trail: points every 6-8 blocks from the village's edge to 7 short of the den, wandering ±4 (seeded), laid as their
+ground loads: two or three scuffs of drag marks along the way (`awaken:drag_marks`, flat, four looks, facing the trail) and
+every fifth a strip of their clothes (`awaken:torn_cloth`, four colours); use a clue to read it ("A strip of Bren's
+clothes, caught here. The way runs north-east."). With the Tracks perk (hunting 10) the trail glows for its helpers:
+paired smears in the perk's teal every 1.3 blocks, a pulse running along them toward the lair. Within 56 of the den the
+taken one is in the nest beside it, bound (arms tied behind, head down, tugging now and then, calling for help) in
+cobwebs. They can't be cut free while the beast (its lair's resident, alive within 64) or the den's heart stands ("Not
+while the Old Antler is here"). Holding use cuts the bonds (0.12 a use: about a second and a half; cobweb bits and shears),
+then they **hold on to your back**: drawn behind your shoulders, legs round your waist, arms round your neck, leaning in
+on your shoulder; you're 15% slower, can't sprint, and the body's moves stop (`core.api.MovementHooks.burdened`); your
+arms reach back under their knees (the carry arm pose, `AWAKEN_CARRY`); in first person only their hands show at your
+chest. Sneak a second to set them down: they walk behind you, climb a Runner's rope or ladder after you (they wait at
+the foot and say so when there's none), and wait where they are if you go too far; use them to take them on your back
+again. In the square they run to their parent's arms, the green cheers round them, a ring of light runs out; paid (14
+emeralds a hamlet, 20 a village, standing +25, half a level, a keepsake: the child's carved whistle or the family's
+knot), the village's history, the lair cleared for good (its beast never comes back: `Troubles.lairSealed`, read by
+fauna's `Lairs.wake`; a den sealed by `Camps.sealForGood`), a carved token (`awaken:carved_token`) by the family's door
+with your name on it, and from then on they greet you by name the first time you speak each play-day. Missed (three
+play-days): they get out alone days later and the family leaves for Carillon (its people away for good, the house
+empty), mood -12, prosperity -6, and whoever said Help and didn't come loses 4 standing.
+
+**The Burning** (`Burning`; Living Wilds' camps, §21.8). A camp at tier 4+ whose nearest target within 800 is a village
+asks the village (`Troubles.raidComing`): it takes it as its Burning unless calm, already troubled or crowded (otherwise
+the camp raids a Hearth or the Wayfarer camp as before). The camp records `raid_village` and leaves the raid to it. The
+ladder: the warning a play-day ahead (an IMPORTANT line to everyone within 800 and the history; the elder at the green
+looking the camp's way, asking), scouts at the treeline at dusk (three of the camp's creatures 30 past the edge, slowed,
+gone after 80 s), then the raid's night (13,600). If a player is within 90 of the green: the alarm, the camp's 4 + tier
+creatures from 34 past the edge toward the green, the Watch lining the green facing out with halberds and lanterns; every
+10-15 s while raiders live a fire arrow (a real flaming arrow) sets the nearest house's roof alight (up to four): up to
+seven flames (Carillon's `city_fire`) on its ridge that grow on their own (+9 a second to 1,000), a bucket line of six
+forming from the well to its door (Carillon's bucket pass, the bucket in hand) holding it back (-2 a second each: a full
+line only slowly wins, a short one loses; a player in the line with a bucket counts twice), and beaten out by players
+(-140 a flame: the player decides it); a fire at full for 20 s eats the roof, at 40
+s guts the house. It ends when the raiders are dead and the fires out (paid by how many houses stood: 18 or 10 emeralds,
+standing, a bucket token) or at dawn (the rest withdraw and what burns burns). Missed (nobody there, or the village not
+awake: then it burns when it next wakes): the 2-3 houses nearest the camp (3-5 at tier 5) are charred (`Char`: roofs fall
+in, timber blackens to stripped dark oak, basalt, coal and blackstone, glass, doors and cloth gone, floors to ash; stone
+stands but soot blackens its walls and roof (not the paving), a sixth at the footings rising to most under the eaves,
+into its deepslate or tuff kin, shape kept; burned footings up, so a charred remnant only stands on what's under it, never
+floating; chests untouched; every block into the damage record with what stood there), a fire smoulders in each gutted
+house (a signal campfire on its ash floor: Minecraft's own tall smoke, seen from far off; cold once the smoke's days are
+done, cleared by the Rebuild), smoke columns rise over them for three play-days, the survivors camp by the well (a
+campfire and bedrolls, sitting at night) until the Rebuild, mood -25, prosperity -12.
+
+**The Rebuild** (`Rebuild`): 24+ blocks of damage (after a Burning, or any). The elder at the board asks; three notices
+go up first on it (timber: the land's logs, a fifth of the wooden blocks lost, 12-64; cobblestone, a quarter of the rest,
+12-64; iron, 3 + 2 a house, 4-12), filled by anyone. Then the masons raise scaffolding round each damaged house (corners
+and every third block of the long sides, to the eaves) and put it back over three play-days, footings up, 40 blocks a
+second at most, caught up when the village wakes, exactly as it stood (blocks someone else put there since stay); three
+villagers at the house hammering and laying by day. Done: a beam of your colour over each charred house's door (the
+lintel in the terracotta of your dye, by UUID), the first family that had left for Carillon comes back, the survivors'
+camp is struck, mood +15, prosperity +6, a ring of light. Missed (five play-days without the materials): the village mends
+what it can and the worst house stays a shell (its damage kept: a later Rebuild can still come). W3's own mending notices
+now put back 24 blocks each (they had only forgotten the damage) and wait while a trouble runs.
+
+**The Bell** (`BellTrouble`): the bell (Minecraft's own, in the tower or on the post) is taken down. At dusk the ringer
+pulls at the empty rope and says so; the elder at the tower's foot asks. Stolen: once the camp's heart falls the bell lies
+in its ashes (`awaken:village_bell`, named for its village). Either way the smith casts a new one from five ingots of bell
+bronze (W2: copper and amethyst) handed to him: twelve seconds at the forge (sparks, the anvil) and it's in your hands.
+It's heavy (slowed while in a hand: haul it up the tower yourself). Used in the belfry it hangs, rings, and a ring of light
+runs out 160 blocks over the land at 20 blocks a second (three golden bands on the ground with a veil of light rising off
+them, thinning as they go, CityGlow's pools under them nearby). Paid (16 emeralds, standing +20, the bell-pin keepsake). From then on: gate breaks within 600 of the
+village are warned two play-days ahead (IMPORTANT, within 500), and the Grey Fields' blight keeps off its fields. A missing
+bell rings nothing (citizens' peal checks the block). Missed (six play-days): the smith casts a thin one himself
+(prosperity -8). Night hunters' boldness is left to Living Wilds (not built here).
+
+**Gone Missing** (`Missing`): a storm at dusk and someone out (a hunter, woodcutter, miner, shepherd, else a child) doesn't
+come home: away from the village, somewhere 50-180 out at the foot of the deepest drop (5+) the land shows, else in the
+woods. The search party (five, with lanterns) at the village's edge that way calling the name; the parent at the well.
+Clues: three strips of their clothes on the way; what they carried (a bow, an axe, a pick, shears, a lantern) dropped where
+they fell. Within 40 they're there, sitting hurt; on your back or (sneak) walking behind you up a rope. Home as Taken
+(Friend standing +30, 10 emeralds, a lucky stone; recorded for `Troubles.rescued` as "missing"). Missed: they limp home at
+dawn two days on.
+
+**The Grey Fields** (`GreyFields`): a gate within 500 due to break in one or two play-days. The elder at the green's edge
+facing it asks ("It breaks tomorrow."). Cleared or released: nothing happens, the best ending, and they say so (14
+emeralds, standing +15). Broken: the fields grey (farmland to coarse dirt, crops withered to dead bushes or gone) and two or
+three grown-ups are Hollowed (abed: away from the day), mood -20, prosperity -10. The cure: an herb remedy
+(`awaken:grey_remedy`, shapeless from sunleaf, moonmoss and a glass bottle) given to the healer or the elder brings one
+back (standing +6); the last one back and the fields are tilled and sown again. A village whose bell a player hung keeps
+the blight out.
+
+**The Festival** (`Festival`, `Race`): every ten or eleven play-days per village (the first two to six days after it's met),
+at dusk: the harvest, the first snow in the frost, the bell's day where a hunter hung its bell. Five or six poles round the
+green (a fence post four high, a lantern on top) with paper lanterns on strings between them and across the green (drawn
+on the client like Carillon's square, `village_festoons`; lit from dusk with CityGlow's halos and pools), a bonfire across
+the green from the board, a jig on note blocks (flute over guitar, a bass drum and a hat: 48 eighths in D, heard to about
+55) played from the musicians by the fire, ten of the village ring-dancing round it (the new `dance` clip), children
+running the green's edge, the old cheering from the benches; fireworks at 14,500 and 16,200. The elder judges the fishing
+and cooking (hand him your best fish or dish: fish by rarity and cooking, craft meals most; the best wins 8 emeralds,
+standing and the village's ribbon). The rooftop race: the village's best runner at the well offers it; five roofs round
+the green in order and back to the well (gold columns of light, the next one tall; the clock in the action bar), against
+their time (the route at 5.5 blocks a second plus three); beat it for 6 emeralds and standing. Over at 18,600. Calm
+villages keeps festivals.
+
+**Growth** (`village.growth.Growth`): prosperity 72+ (it costs 14), no trouble, six play-days since the last, at most two
+new houses a hamlet and three a village: past the end of a lane, on free level ground within the village's radius + 22,
+the smallest house of the village is copied (its blocks read from the world, chests empty) turned to face the lane. The
+plot is fenced with a gate and the land cleared, timber and stone stacked in it; the next morning scaffolding goes up at
+its corners and the masons build it over 2.5 play-days, course by course from the floor; a path is laid to the lane.
+Then a carter brings the family's cart to the door and the family (three) walk up the lane and in. From the village's
+next waking (it restarts once nobody is within its radius + 80) they live there on the people engine: a door, a household,
+two grown-ups and a child, records after the plan's own (the settlement's saved people reset with the new roster: its
+standing is the village's and is kept). Saved in the trouble state's memory (`growth`).
+
+**The person you bring home** (`Rescuee`, `awaken:village_rescuee`): wears their record's own skin (`Settlement.look`),
+a child at 0.68; never hurt; saved; modes BOUND, CARRIED, FOLLOW, WAIT, HOME, EMBRACE, LOST; says lines over their head.
+Players can't be ridden in 26.3 (the player's type is never saved, so `Entity.startRiding` refuses it as a vehicle on the
+server): on a back they're held in place each tick behind the carrier's shoulders, and each client draws them from the
+carrier's own position that frame. Their trouble gone (a body in an unloaded chunk), they go.
+
+**History**: every trouble and its ending go into the village's history (W3's 32 lines): taken, warned, burned, rebuilt,
+cast, festivals and their winners, families leaving and coming back.
+
+**API** (§12): `dev.awaken.village.api.Troubles` (`rescued`, `settle`; `raidComing` for Living Wilds' camps;
+`lairSealed` for fauna's lairs).
+
+**Other modules touched (small, additive)**: `citizens` (api `Settlement`: `stage`, `away`/`isAway`, `alarm`, `where`,
+`look`; `Roles.AWAY`; `CityEvents.stage` by record and `away`; the village alarm's far sound; a missing bell rings
+nothing; more props by name; staged villagers answer talk; acts `DANCE`, `EMBRACE`, `WEEP` with their clips in
+tools/art/specs/citizen_clips.py), `living` (`api.Quests` Journal rows, QuestEngine appends them (16 at most); `Camps`:
+village raid targets with `raid_village` saved, `resolved`, `raidDay`, `byId`, `heartStanding`, `sealForGood`,
+`placeAt`, `raidAt`), `world.fauna.Lairs.wake` (one line: a sealed lair), `body` (`BodyServer`, `ClientMoves`,
+`AscentMoves`: `off()` reads the burden, one line each), `core.api.MovementHooks` (`addBurden`, `burdened`),
+META-INF/enumextensions.json (`AWAKEN_CARRY`).
+
+**Decisions taken here** (none of the plan's 13): the director's cause order and odds (one night in four, one in eight,
+one dusk in three); two play-days' rest after a trouble; the young-world rule read from play time; the runner's 180 and
+Known; a party member within 48 counts; the `village` XP budget at 0.5 per 10 minutes and the payouts above; a cut needs
+the guard down; the held carry instead of riding (26.3 can't ride players) and its 15% slow; sneak to set down; the
+nest within 56 of the den, cobwebs for every lair; the lair cleared for good through `Troubles.lairSealed`; missed Taken
+sends the family to Carillon (the house empty) and costs the no-show 4 standing; a raid on a village is the village's
+Burning (the camp hands it over); raids needing someone within 90 to be held, else burned (when next awake if asleep);
+four fires at most, fire numbers above; char palette; the Rebuild's counts, three play-days and the beam in terracotta
+by UUID dye; mending notices put blocks back; the bell taken down (not a cracked block); five bell bronze, cast in 12 s;
+the bell's warning two days ahead within 600; Gone Missing from storms only; the Grey Fields' cure as an herb remedy (no
+Sun's Cure exists yet) and the Hollowed as away from the day; festival every 10-11 days, its contests and race as above;
+growth by copying the village's own smallest house, its thresholds, and the roster reset on growth.
+
+**Left.** The Deep Mine (W7's mining towns). Night hunters bolder round a silent bell (Living Wilds). A hamlet becoming a
+village through growth (W7's towns). The Hollowed's grey look on their bodies (they're abed instead). Settlers choosing to
+go home with you at a festival, and your Hall's festival (W6 reads `Troubles`; a festival hook for the Hearth is W6's). A
+GameTest for growth (its mechanism is exercised by `/awaken village grow`).
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 29. Wild life (the wild's small ambient life, client-only; Euan 2026-10-26, built without an approval page)
@@ -6332,3 +6672,190 @@ targets hold, rain and cold clear the insects, a chunk's draw is fixed and the l
 `wildlife_census` (the caps hold over 400 rich chunks at four hours; nothing is made inside the city and anything there
 leaves; nothing out of reach), `wildlife_rigs` (every rig parses and carries every clip its brain plays, every coat,
 blink and the insects' sheet exist); `audio_events_resolve` covers the 18 events.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 30. The band's pages (the K menu; plan docs/k-menu/PLAN.md, page https://claude.ai/artifact/49cQxv5y3CzXcJ3SG4jDN9; Euan approved all of it 2026-10-26)
+
+Euan, 2026-10-26: the K menu "just feels like a dashboard"; the Journal sat above the stats ("you have to scroll down a
+ton just to get to your stats"); merge the Gate Map and the Atlas. The Status tab stacked 22 sections in a 246×192
+window (stats 1.9 to 3.4 screens down, Powers 5 to 7). Approved: direction B, every recommended answer (PLAN §7):
+six pages; K always opens on Status; points placed then confirmed (phase 2); the panel 288 units wide; M opens the
+band's Map page; a denser tint by day (phase 3); your face on Status (phase 2); "Clear Atlas cache" to the settings
+(phase 4); phase 1 first; the map opens in the world (phase 4); others see a content-free projection (phase 4).
+
+### 30.1 Pages (phase 1, built)
+- **Six pages, in the rail's order:** Status · Powers · Journal · Truths · Codex · Map (`StatusSections.Tab`;
+  `Tab.label()`). `Tab.GATE_MAP` is gone.
+- **The rail** (holo, `holo.ui.BandLayout`, `HoloStatusScreen`):
+  - It runs down the panel's wrist edge, 30 units wide: six nodes 31 units tall, one every 34 from y 9.
+  - Each node has a 12×12 pixel icon and its label in spaced capitals at two framebuffer pixels fewer per font pixel
+    than the body text (3 at 5 px a unit, 4 at 6).
+  - The open page is lit (a fill and a bright bar on the wrist edge).
+  - Badges: points to spend on Status (amber), new Journal lines on Journal.
+  - The K key sits at its foot.
+- **The panel:** 288×228 units (was 272×228). That is still 5 px a unit at 2880×1800 and 3024×1964 and 6 at 3840×2160
+  (`holo_band_layout` checks it); the content is x 40, y 10, 232×208, with its scroll bar beside it.
+- **The flat fallback** (`StatusScreen`) has the same pages on its tab row.
+- **Keys:** K always opens on Status unless a link names a page. 1–6 open a page; Tab and Shift+Tab step through the
+  pages that show here; M opens the Map (the Atlas key, `StatusSections.pageForKey`).
+- **Map:** a page with an action (`StatusSections.setPageAction`; the atlas module registers `MapScene.openFromKey`,
+  key M). Picking it closes the band and opens the map in the world (§30.5), or the table where the scene can't open.
+- **Where each section lives** (order in brackets). Earlier sections of this SPEC that say "K › Status" mean these
+  pages now.
+
+  | Page | Sections |
+  |---|---|
+  | Status | STATUS (0), STATS (10), WAITING FOR YOU (14, only with a decision waiting), THIS GATE (15, only in a run: `gates.client.RunSection`, the run summary and View Satchel that were on the Gate Map), DEEP PACK (16), THIS ROOM (17), JOURNAL (20, the filed lines) |
+  | Powers | POWERS (0), THE ASCENT (28), THE BODY (30), CRAFTS (160), THE VEIL (320) |
+  | Journal | NOW (−30), JOURNAL · CHAINS (−20), DIRECTIVES (−15), DAILY REGIMEN (−12), WHAT WAITS / SAVED FOR LATER (5), HEARTH (40), ANCHOR REQUESTS (41), JOURNAL (700, the filed lines again), RECENT MESSAGES (800), RECORDS (900) |
+  | Truths | the Path choice (0), Truths (10–30), THE ROAD (35), TITLES (40), LATENTS (50) |
+  | Codex | THE BOARD (0), HAPPENINGS WITNESSED (460) |
+  | Map | the map in the world (§30.5), or the Atlas table |
+
+- **Gates on the Atlas** (`MapMarks.Gate`, `MapMarks.registerGates`, `MapMarks.gates`):
+  - Every gate whose pillar you can see (the gates module, from the synced beacons) and each gate your scanner read (the
+    above module, marked as a reading) stands on the table as a pillar of its rank's colour, with a dark core so it
+    reads over cloud.
+  - Its name ("D-rank gate", or the scanner's name) and how long it holds ("breaks in 2 days", "broken: its monsters
+    are out" in red, "calm") hang over it from zoom 0.3.
+  - Where you've explored, the pillar stands on the ground; elsewhere it rides the clouds, because you saw its light
+    from afar.
+  - A reading within 24 blocks of a pillar you can see is dropped. Overworld only.
+  - The Gate Map's radar and lists (gates and scanner) are gone.
+- **The Atlas picture** (the glance) left the Status page. `AtlasGlance` keeps its painter for the phase-4 scene.
+- **Links:**
+  - `ProgressionClient.openBand(Tab, String... focus)` opens the band on a page in the player's style (`BandOpener`,
+    installed by holo), scrolled to the first named section, only while the band is worn.
+  - `OpenBand(page)` carries the page (`Progression.openBand(player, page)`; `BAND_PAGE_ASCENT` = −1 opens Powers at THE
+    ASCENT).
+  - The ascent's "Show me" card and the climb ward's ShowMe both open Powers at THE ASCENT (else THE BODY).
+- **Words:** Bram's line at the Registry is now "That's your band. Your status and your stats are on the first page, and
+  the map is the last one. Press the same key to close it."
+- **Autopilot:** `screen holo status|powers|journal|truths|codex|map`; flat `screen status|powers|journal|codex`;
+  `screen map` (and `screen holo map`) opens what the Map page opens (the scene); `screen table` the flat table.
+  `holo clicktab <i>` clicks rail node i.
+- **Tests:** `holo_band_layout` (nodes inside the rail and apart, the K key clear, content clear of the rail, labels on
+  whole pixels, 5 and 6 px a unit kept on the owner's screens); `signal_status_screen_frame` now lays out the six
+  labels.
+
+### 30.2 Still to build (PLAN §6)
+- Nothing from the plan's five phases. Later: the Journal entry opening in place ("Show on map", "Open in the Codex"),
+  the full step list of the tracked chain (the living module sends only the step you're on), the adaptive tint sampled
+  from the backdrop (today it follows daylight and the camera's pitch), a controller map, and the map scene's later
+  items (§30.5).
+
+### 30.3 The Status sheet (phase 2, built: `progression.client.StatusSheet`)
+- **The hero** (Status order 0, no title row): your face (the skin's face and hat layers, 8×8 scaled up, in corner
+  ticks), your name, your title in amber, then LEVEL in spaced capitals with the number at twice the body size, the XP
+  to the next level as segments (3 units each, 1 apart, the one filling half lit), and "Level N opens X" from the level
+  road (`Content.LEVEL_ROAD`). The XP gained since you last looked fills in when the band opens (not with reduced
+  motion). Your rank stands at the right as a pixel diamond with its letter; hovering it says what the next rank opens,
+  or "TRIAL READY" when the trial is.
+- **The six stats in one line** (order 10): STR AGI VIT INT PER SEN, each a column with its value; the header reads
+  STATS with the points to place (amber) and any fracture chip.
+  - While points wait, a + diamond sits under each stat. Click it (or arrows to focus, Space) to place a point there.
+    Placed points show at once as +N in amber and in a PLACED list; nothing is sent yet.
+  - **Confirm** (Enter) sends one request for all of them (`StatusAction("spend_many", "STR:1,AGI:2")`); the server
+    places each through `Progression.spendPoint` and skips what you don't have (at most 500). **Undo** (Backspace)
+    takes the last one back. Placed points are kept while the band is shut. On a confirm the stats that rose flash amber
+    for 600 ms.
+  - The focused stat's line under the row says what it does in plain words.
+- **The context row:** the top Now suggestion with its compass sits under the stats (`NowRow`, order 18: "NOW · n more
+  on the Journal page ›"), then the decision waiting (14), this gate (15), the Deep Pack (16), this room (17), and the
+  newest Journal lines (20, four of them, "ALL n ›").
+- **Labels** (`BandHeader`): small capitals in the labels' colour, a hairline to the edge and a note on the right
+  ("ALL 23 ›", a click opens its page), instead of loud titles.
+- **Sounds:** `holo.spend` (a rising step per point), `holo.confirm`, `holo.undo` (`StatusSections.Cue`).
+- **Test:** `progression_spend_many` (a mixed request places what it can, skips nonsense and what you can't afford).
+
+### 30.4 The look and the motion (phase 3, built)
+- **Tint by daylight:** the band's glass is denser by day: 0.46 at night or under a roof, up to 0.60 in full daylight
+  looking at the sky (`HoloRender.tint`, from sky darkening and the camera's pitch), so text holds against bright sky
+  and snow.
+- **Light from the wrist:** a soft blob of the band's light (150 units, 0.10 alpha) at the panel's wrist corner, as if
+  the band lit the glass from below.
+- **Pages print in:** changing page sweeps the scan line down the content (40 ms, then 140 ms; `HoloPanel.rescan`), and
+  the rail's lit bead slides to the new page in 120 ms. Off with reduced motion.
+- **Type:** body text at the panel's pixel size, `small()` one framebuffer pixel fewer, `micro()` (labels) two fewer,
+  never under 2 (`StatusSections`).
+- **Sounds:** `holo.page` (one soft glass tick, a pitch step per page), `holo.spend`, `holo.confirm`, `holo.undo`, from
+  `tools/art/specs/audio_holo.py`, on the Interface slider.
+
+### 30.5 The map in the world (phase 4, built: `atlas.client.MapScene`, `MapCamera`, `AtlasScreen` scene mode)
+Euan's idea: the camera pulls back and you see your character looking at the map, a hologram from the band, "still
+really sharp, with the clouds and everything".
+- **Opening:** M (or the band's Map page) raises your wrist (120 ms), then the camera rises out of your eyes to a shot
+  2.4 m behind your feet, 2.2 m over your right shoulder and 4.6 m up, looking the way you face and 38° down
+  (`atlas.MapShot`), easing in over 320 ms after a 60 ms wait (190 ms after 30 ms when it opened in the last 12 s). The
+  map is usable at once; it is settled by 420 ms (220 ms again).
+  - The camera is a client-only marker entity the game's camera follows (as the opening's, `OpeningCamera`), placed
+    every frame from `ComputeCameraAngles` at LOWEST. It follows you if you're pushed; it never turns with you. While it
+    holds the view the hands, the block outline, your name tag and the HUD stand aside (chat, subtitles and the action
+    bar stay). The world never pauses.
+  - **Room:** the line from your eyes to a little past the camera's place must be clear; else the left shoulder (the
+    layout mirrors), then a higher, steeper shot (1.4 m back, 6 m up, 50° down), then the table.
+- **The card:** the Atlas's own picture (the same renderer as the table: land, zones, clouds, pins, gates, rumours) on
+  the band's projected glass (78% navy), on the far side of the frame from your shoulder (33.5% to 97.5% of the width,
+  7.5% to 68% of the height: it ends above and right of your raised wrist, so the beams show between them). Up the map is the way the camera looks. The cut edge fades into the glass; the world
+  behind dims (Lens through the focus, plus a soft veil that is darker at the top). Beams of the band's light fan from
+  your wrist to the card's near bottom edge (`holo.client.HoloScene`, drawn by the wrist layer). The card scans in from 120 ms
+  and the land prints in from the middle, faster than on the table.
+- **The legend** floats on its own glass over your head, on the near side: GATES (the four nearest you know, with
+  their distance; Tab steps through them, a click picks one and the map glides to it), the picked gate's **Point me
+  there** (T), KNOWN LANDS (click to fly there) and the DANGER key. It never reaches lower than 56% of the height.
+- **Point me there** (scene and table): the Now line leads with "Go to the D-rank gate" (`NowClient.pin`, id
+  `awaken:map_pin`, priority 86, client-side), with its compass and the Signal's thread, until you're within 12 blocks.
+- **Keys** (one line along the bottom): drag turns the map, right-drag or WASD moves across it (your body stays still),
+  scroll or +/- zooms, Q/E turn, R/F tilt, C comes back to you, Tab gates, T point me there, 1–5 open a band page, M,
+  Esc, K or Space close (250 ms back to your eyes). The table takes the same held keys and Tab/T.
+- **The table instead,** at once: Shift+M, or M again within 0.3 s of opening (from the scene); in a fight
+  (`SystemHud.inCombat`: hurt in the last 5 s or a hostile within 8); with reduced motion; with the setting "Map opens
+  as: Table" (`config/awaken-atlas-client.toml`, `mapOpens`); without the band; while another camera holds the view;
+  asleep or spectating; with no room. Inside a gate the Atlas's own message stands.
+- **The fight rule:** hit, or a hostile within 8 blocks, while the scene is open: it folds in 150 ms with a sharp glass
+  tick.
+- **What others see** (`holo_state` kind MAP = 3, relayed and rate-limited like STATUS and INVENTORY): your raised
+  wrist and, before you at the waist, a content-free disc of light (a ring with compass ticks, a few drifting points,
+  a cone from the wrist). Never your land, pins or labels.
+- **Settings moved:** "Clear Atlas cache" is a setting now (`clearAtlasCache`, turns itself off once done); "Share with
+  party" shows only while other players are online.
+- **Cost:** the Atlas picture costs what the table does; the scene adds your player model, the beams (two thin quads
+  and a fan) and the GUI glass. Nothing is loaded for the camera move: the same place, seen from 5 m back.
+- **Test:** `atlas_map_shot` (behind you, over a shoulder, 38° down, the left mirrors the right, the eases, the short
+  way round, the promised timings, the MAP kind).
+- **Later:** a real 3D mesh in the world you could walk round; party members within 8 blocks seeing the real map;
+  holding Shoulder Surfing and Camera Overhaul off while the scene runs (today they may fight the camera).
+
+### 30.6 The other pages, narration and Band size (phase 5, built)
+- **Powers** (`powers.client.PowersSection`, the page's lead): ON YOUR KEYS with your energy at the right ("ENERGY 120 /
+  120 · 6.0 A SECOND"); your six keys as 30-unit sockets with your own bindings on keycaps under them (R and Alt set
+  apart); YOUR POWERS · n, the grid (level pips, mastery under them, a blue dot when on a key, green when passive); then
+  a card for the power picked or under the cursor: its icon, name, KIND · SLOT · ENERGY · COOLDOWN in small capitals,
+  mastery as twelve segments and "Mastery 34% to level 4", what it does, and what to press next in amber ("Press Z, X,
+  C or V to put it on that key."). Pick a power, then press the key it should go on (your bindings) or click a socket;
+  the sockets it fits light amber with corner ticks. Esc lets go of a pick before it closes the band. The card's height
+  fits the longest description you own, so the page never jumps.
+- **Journal:**
+  - **Filters** across the top (`progression.client.JournalFilters`): EVERYTHING, TASKS, FINDS, MESSAGES; click one or
+    Q / E. Each section names its filter (`StatusSections.Section.shelf()`, TASKS by default; the filed lines and
+    RECORDS are FINDS, RECENT MESSAGES is MESSAGES; null shows under every filter). Screens ask
+    `StatusSections.shows(tab, section)`.
+  - **TRACKING** leads (`living.client.JournalSection`, order −40): the tracked chain's name in white on a lit horizon
+    bar and "▸" the step you're on; the other chains and bounties follow under ALSO ON, one line each with their step
+    in small type. With nothing tracked the heading is CHAINS.
+  - The page's filed lines are its **LOG** ("LOG · 2 NEW"); the Status page keeps "JOURNAL".
+- **Truths:** each Truth on its own card of glass, its bar amber while it waits on you and green once true; "Gives:"
+  instead of "Reward:".
+- **Narration** (`StatusSections.narrate`, spoken only when the vanilla narrator is on): a page change ("Journal
+  page"), a stat's focus ("Agility 22. You move faster, and Flow builds sooner. 3 points to place."), a power picked
+  (its name, what it does, what to press), a gate picked on the map (its name, distance, when it breaks, "Press T to be
+  pointed there.").
+- **Band size** (`config/awaken-holo-client.toml`, `bandSize`: SMALL, NORMAL, LARGE): one whole framebuffer pixel a
+  unit less or more than Normal (`HoloPanel.sizeStep`), never past 80% of the screen's height: 4 / 5 / 6 px a unit on
+  the MacBook, 5 / 6 / 7 on the 4K Dell. Every type size steps with it, so text stays sharp.
+- **The map's legend** says "You haven't seen a gate yet. Their light shows from far off: look for a pillar in the
+  sky." with no gates seen, "+ n further out" past the four nearest, and puts the danger key's colours on a line of
+  their own when they don't fit beside it.
+- **Autopilot:** `screenkey tab|t|m|c|space|q|e` (or `shift+` one) sends a key to the open screen.
+- **Tests:** `holo_band_layout` also checks the Band size steps on the owner's screens.

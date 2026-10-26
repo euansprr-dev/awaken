@@ -14,6 +14,31 @@ final class AtlasTests {
     private AtlasTests() {}
 
     static void register() {
+        // the map scene's camera (SPEC §30.5): behind you, up and over the shoulder, looking your way 38° down; the left
+        // shoulder mirrors it; the move eases from your eyes to the shot, the short way round; the MAP relay kind exists
+        AwakenTests.register("atlas_map_shot", 20, h -> {
+            double[] r = new double[5], l = new double[5], hi = new double[5];
+            for (float yaw : new float[]{0f, 90f, -135f, 300f}) {
+                MapShot.pose(10, 64, -20, yaw, 1, false, r);
+                MapShot.pose(10, 64, -20, yaw, -1, false, l);
+                MapShot.pose(10, 64, -20, yaw, 1, true, hi);
+                double fx = -Math.sin(Math.toRadians(yaw)), fz = Math.cos(Math.toRadians(yaw));
+                double along = (r[0] - 10) * fx + (r[2] + 20) * fz, across = (r[0] - 10) * fz - (r[2] + 20) * fx;
+                h.assertTrue(Math.abs(along + MapShot.BACK) < 1e-6, "behind you at yaw " + yaw + ": " + along);
+                h.assertTrue(Math.abs(Math.abs(across) - MapShot.SIDE) < 1e-6, "to one side at yaw " + yaw);
+                h.assertTrue(Math.abs((l[0] - 10) + (r[0] - 10) - 2 * fx * -MapShot.BACK) < 1e-6 && Math.abs((l[2] + 20) + (r[2] + 20) - 2 * fz * -MapShot.BACK) < 1e-6,
+                        "the left shoulder mirrors the right at yaw " + yaw);
+                h.assertTrue(r[1] == 64 + MapShot.UP && r[3] == yaw && r[4] == MapShot.PITCH && hi[1] > r[1] && hi[4] > r[4], "up, your way, 38° down; the high shot steeper");
+            }
+            h.assertTrue(MapShot.ease(0) == 0 && MapShot.ease(1) == 1 && Math.abs(MapShot.ease(0.5) - 0.5) < 1e-9 && MapShot.ease(-1) == 0 && MapShot.ease(2) == 1, "ease 0..1, clamped");
+            double[] a = {0, 0, 0, 170, 0}, b = {4, 2, -4, -170, 38}, out = new double[5];
+            MapShot.blend(a, b, 0.5, out);
+            h.assertTrue(Math.abs(out[3] - 180) < 1e-6 && out[0] == 2 && out[4] == 19, "half way, the short way round: " + out[3]);
+            h.assertTrue(MapShot.CLOSE_MS <= 250 && MapShot.FOLD_MS <= 150 && MapShot.DELAY_MS + MapShot.MOVE_MS <= 420
+                    && MapShot.QUICK_DELAY_MS + MapShot.QUICK_MOVE_MS <= 220, "the timings SPEC §30.5 promises");
+            h.assertTrue(dev.awaken.holo.HoloKind.byId(3) == dev.awaken.holo.HoloKind.MAP && dev.awaken.holo.HoloKind.byId(4) == null, "the MAP relay kind");
+            h.succeed();
+        });
         // the record: cells mark once, tiles merge, and the saved form round-trips with its schema
         AwakenTests.register("atlas_bits_codec", 20, h -> {
             Explored e = new Explored();

@@ -40,9 +40,11 @@ public final class ProgressionClient {
             if (!Minecraft.getInstance().hasSingleplayerServer()) msg.apply();
         });
         event.register(ProgressionPayloads.OpenBand.TYPE, (msg, ctx) -> {
-            Minecraft mc = Minecraft.getInstance();
-            // the Status is the band's: off the wrist, a card's "Show me" has nothing to open (SPEC §16.4)
-            if (mc.player != null && dev.awaken.core.api.HoloBand.worn(mc.player)) mc.gui.setScreen(statusOpener.get());
+            // the Status is the band's: off the wrist, a card's "Show me" has nothing to open (SPEC §16.4); a page the server
+            // names opens there (the ascent's card: Powers, at the Ascent), anything else on Status (SPEC §30)
+            StatusSections.Tab[] pages = StatusSections.Tab.values();
+            if (msg.tab() == Progression.BAND_PAGE_ASCENT) openBand(StatusSections.Tab.POWERS, "THE ASCENT", "THE BODY");
+            else openBand(msg.tab() > 0 && msg.tab() < pages.length ? pages[msg.tab()] : StatusSections.Tab.STATUS);
         });
     }
 
@@ -50,11 +52,27 @@ public final class ProgressionClient {
         event.registerAbove(VanillaGuiLayers.HOTBAR, Awaken.id("level"), ProgressionClient::renderLevel);
     }
 
-    /** What K opens: the flat StatusScreen unless the holo module installs its own (statusStyle = HOLO). */
-    private static java.util.function.Supplier<net.minecraft.client.gui.screens.Screen> statusOpener = StatusScreen::new;
+    /** Builds the band's screen on a page, scrolled to the first of some section titles that shows there. */
+    public interface BandOpener {
+        net.minecraft.client.gui.screens.Screen open(StatusSections.Tab page, String... focus);
+    }
 
-    public static void installStatusOpener(java.util.function.Supplier<net.minecraft.client.gui.screens.Screen> opener) {
+    /** What K opens: the flat StatusScreen unless the holo module installs its own (statusStyle = HOLO). */
+    private static BandOpener statusOpener = StatusScreen::new;
+
+    public static void installStatusOpener(BandOpener opener) {
         statusOpener = opener;
+    }
+
+    /** Opens the band on a page (K opens Status; a link may name another, SPEC §30), only while it's on the wrist. */
+    public static void openBand(StatusSections.Tab page, String... focus) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || !dev.awaken.core.api.HoloBand.worn(mc.player)) return;
+        StatusSections.PageAction action = StatusSections.action(page);
+        if (action != null) {
+            mc.gui.setScreen(null);
+            action.open().run();
+        } else mc.gui.setScreen(statusOpener.open(page, focus));
     }
 
     private static void onTick() {
@@ -66,7 +84,7 @@ public final class ProgressionClient {
                 mc.player.sendOverlayMessage(net.minecraft.network.chat.Component.translatable("gui.awaken.wrist.dark"));
                 continue;
             }
-            mc.gui.setScreen(statusOpener.get());
+            mc.gui.setScreen(statusOpener.open(StatusSections.Tab.STATUS));
         }
     }
 

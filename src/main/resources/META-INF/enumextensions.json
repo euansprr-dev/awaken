@@ -17,6 +17,12 @@
       "name": "AWAKEN_HOLO_WRIST",
       "constructor": "(ZZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
       "parameters": {"class": "dev/awaken/holo/client/HoloArmPose", "field": "WRIST_POSE"}
+    },
+    {
+      "enum": "net/minecraft/client/model/HumanoidModel$ArmPose",
+      "name": "AWAKEN_CARRY",
+      "constructor": "(ZZLnet/neoforged/neoforge/client/IArmPoseTransformer;)V",
+      "parameters": {"class": "dev/awaken/village/client/CarryArmPose", "field": "CARRY_POSE"}
     }
   ]
 }

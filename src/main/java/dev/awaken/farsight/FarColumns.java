@@ -41,7 +41,9 @@ import java.util.Set;
  * worked out once per column, not once per probe), starting from the last column's ground, steps 8 blocks to bracket
  * the crossing and places the ground on the bracket's straight line, as the real terrain's own 8-block interpolation
  * does. Caves, overhangs and structures are left to the real chunks. Awakened Alpine's erosion is in
- * the terrain's offset, so it is followed for free, and the city basin is applied by its own shape.
+ * the terrain's offset, so it is followed for free. Round the city, inside the basin's blend, the ground is found in the
+ * router's own final density (which the basin wraps), down from above the natural ground: the basin flattens by
+ * blending densities, and the terrain's density alone can't say where that leaves the street flat up to a cliff.
  *
  * <p>Samples sit on the ring's grid corners ({@code i · cell} blocks), so a coarse ring's corners are exactly every
  * other corner of the finer ring inside it and the rings meet without a crack. One instance per worker thread: it
@@ -68,11 +70,21 @@ public final class FarColumns {
     private final RandomState random;
     private final LevelHeightAccessor heights;
     private final @Nullable DensitySampler terrain, estimate;
+    /**
+     * Tectonic's slide under the world's ceiling ({@code tectonic:__constants/slope_upper}: 1 well below it, 0 ten blocks
+     * under it), which its final density lerps toward air: peaks that would pass the ceiling are cut there, flat. The far
+     * height model solves the terrain density without it, so such a peak stood flat at the ceiling itself with a sheer
+     * wall down (Euan, 2026-10-26: "big issue on this mountain"). Null without Tectonic.
+     */
+    private final @Nullable DensitySampler slopeUpper;
+    /** The final density as the chunks are built from it, the city's basin included (null without a carved basin). */
+    private final @Nullable DensitySampler finalDensity;
     private final SamplerContext context = SamplerContext.builder().enableCaches().build();
     private final BiomeResolver biomes;
     private final int seaLevel, minY, maxY;
     private final boolean alpine;
     private final CityBasinFunction.@Nullable Shape city;
+    private final int streetY;
     /** The world's seed (the city plan paints with it); 0 for the tests' generators. */
     private final long seed;
     private final int[] cityY = new int[1];
@@ -111,6 +123,23 @@ public final class FarColumns {
             }
         }
         terrain = t;
+        DensitySampler slope = null;
+        if (t != null) {
+            var holder = registries.lookupOrThrow(Registries.DENSITY_FUNCTION)
+                    .get(ResourceKey.create(Registries.DENSITY_FUNCTION, Identifier.parse("tectonic:__constants/slope_upper")));
+            if (holder.isPresent()) slope = random.getSampler(holder.get().value());
+        }
+        slopeUpper = slope;
+        DensitySampler b = null;
+        if (t != null && site != null && site.basinCarved() && generator instanceof NoiseBasedChunkGenerator noise) {
+            // the lands pack's Lithostitched wrap puts the basin round the settings' final density; a router without it
+            // (the tests' vanilla one) gets the same wrap here
+            DensityFunction fin = noise.generatorSettings().value().noiseRouter().finalDensity();
+            b = random.getSampler(fin instanceof CityBasinFunction ? fin
+                    : new CityBasinFunction(fin, CityBasinFunction.Mode.DENSITY, java.util.Optional.of(noise.generatorSettings().value().noiseRouter().depth())));
+        }
+        finalDensity = b;
+        streetY = site != null ? site.streetY() : 0;
         estimate = e;
         biomes = generator.getBiomeSource().createUncachedResolver(random);
         seaLevel = generator.getSeaLevel();
@@ -145,8 +174,46 @@ public final class FarColumns {
 
     /** The same, halving the bracket to one block first when {@code fine} (the test compares the two). */
     public float ground(int x, int z, boolean fine) {
-        float h = terrain == null ? fallback(x, z) : solve(x, z, fine);
-        return city == null ? h : city.ground(h, x, z);
+        if (terrain == null) {
+            float h = fallback(x, z);
+            return city == null ? h : city.ground(h, x, z);
+        }
+        float natural = solve(x, z, fine);
+        if (city == null || city.weight(x, z) <= 0f) return natural;
+        // inside the basin's blend: blending heights drew a long rise where the real street runs flat out to a cliff
+        // (Euan, 2026-10-26: "showing stuff that isn't really there")
+        return finalDensity != null ? builtGround(x, z, natural) : city.ground(natural, x, z);
+    }
+
+    /**
+     * The ground as the chunks are built: down through the final density in 8-block steps from above anything that can
+     * stand there (the natural ground, or the basin's fill just over the street), to the first solid, then the bracket's
+     * straight line. Where a ledge overhangs, its top (what shows from afar); a solid run thinner than 8 blocks can be
+     * stepped over (the ground then shows lower, never higher).
+     */
+    private float builtGround(int x, int z, float natural) {
+        int air = Math.min(Math.floorDiv((int) Math.ceil(Math.max(natural, streetY + 11)), 8) * 8 + 8, maxY - 8);
+        float da = finalAt(x, air, z);
+        // not above everything after all (an overhang the natural solve stepped under): climb to the air first. Never
+        // the natural ground as it is: inside the blend that stood a hill where the basin had flattened it
+        for (int up = 0; da > 0f && up < 24 && air + 8 <= maxY - 8; up++) {
+            air += 8;
+            da = finalAt(x, air, z);
+        }
+        if (da > 0f) return city.ground(natural, x, z);
+        while (true) {
+            int solid = air - 8;
+            if (solid < minY) return minY;
+            float ds = finalAt(x, solid, z);
+            if (ds > 0f) return solid + 8 * ds / Math.max(1e-6f, ds - da) + 0.5f;
+            air = solid;
+            da = ds;
+        }
+    }
+
+    private float finalAt(int x, int y, int z) {
+        probes++;
+        return finalDensity.sampleValue(context, x, y, z);
     }
 
     // a generator without a terrain density (flat, debug, another mod's own): its base height, whole blocks
@@ -218,7 +285,9 @@ public final class FarColumns {
 
     private float density(int x, int y, int z) {
         probes++;
-        return terrain.sampleValue(context, x, y, z);
+        float d = terrain.sampleValue(context, x, y, z);
+        // under the ceiling the terrain slides to air as Tectonic's final density makes it (lerp(slope, -0.1, d))
+        return slopeUpper == null ? d : -0.1f + slopeUpper.sampleValue(context, x, y, z) * (d + 0.1f);
     }
 
     public Holder<Biome> biome(int x, int y, int z) {

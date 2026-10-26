@@ -1,0 +1,31 @@
+# Euan's snowy peak in his own world (WORLD_FROM, a copy): the flat-topped massif with its grooved wall and spiky shading
+# (Euan, 2026-10-26: "big issue on this mountain as well"), toward the Frost Spires' ice, and toward Carillon.
+world copied
+waitworld
+window 1440 900
+wait 40
+screen close
+gui 0
+hud off
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+opt renderDistance 15
+cmd gamemode spectator
+cmd tp @s 192 306 -80 -48 12
+wait 600
+shot fm_peak_ice
+farsight debug 3
+wait 10
+shot fm_peak_ice_d3
+farsight debug 0
+cmd tp @s 192 306 -80 -1 10
+wait 100
+shot fm_peak_city
+cmd tp @s 192 306 -80 -100 14
+wait 100
+shot fm_peak_e
+farsight status
+info
+quit

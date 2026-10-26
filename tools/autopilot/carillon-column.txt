@@ -1,0 +1,78 @@
+# The opening's light column (Euan, 2026-10-26, from the Runners' Roost at noon: "The light pillar is STILL not fixed":
+# a thin core in a tall pale glass slab with hard sides and a flat top over Choir Square). Now drawn after the level as
+# the gate pillars are: a hot core, a soft glow and haze melting into the sky, thinning with height, faded up close.
+# A fresh world, the opening's run jumped to (the bell, the column falling into the square), Carillon at 671 -1090 in
+# this seed (street 70; the Roost terrace at plan -170 -130, row 40; the east avenue open to 95 out):
+#   noon from the Roost, from the east avenue (50 out) and over the square (18 up, so the run doesn't count it an arrival:
+#   looking at the column from 12 out, and up it); dusk from the
+#   Roost and the avenue; then the arrival's cinematic (the portal's bloom on the column, the rings); then the Registry by
+#   day, the Assessment Lens's shard over its pedestal with the tall windows behind it (Euan: the windows behind the
+#   crystal read black, "like the shadow of the crystal's shape"), at the Lens and from a few steps back.
+# Run: tools/tour-ci.sh tools/autopilot/carillon-column.txt 1500 TECTONIC=awakened PACK=perf,world,horizon
+world carillonColumn survival 20261024
+waitworld
+gui 0
+window 1440 900
+info
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 400
+cmd awaken opening tour true
+cmd gamerule advance_time false
+cmd time set 6000
+cmd awaken opening beat run
+wait 6
+shot col_fall
+wait 60
+hud off
+# spectating: framing the column never walks into the square (that is the arrival)
+cmd gamemode spectator
+# ---- noon
+cmd tp @s 501 110 -1220 facing 671 125 -1090
+wait 160
+shot col_noon_roost
+cmd tp @s 721 71.6 -1090 facing 671 120 -1090
+wait 160
+shot col_noon_street
+cmd tp @s 683 88 -1082 facing 671 95 -1090
+wait 80
+shot col_noon_square
+cmd tp @s 680 88 -1086 facing 671 170 -1090
+wait 20
+shot col_noon_square_up
+# ---- dusk
+cmd time set 12500
+cmd tp @s 501 110 -1220 facing 671 125 -1090
+wait 120
+shot col_dusk_roost
+cmd tp @s 721 71.6 -1090 facing 671 120 -1090
+wait 120
+shot col_dusk_street
+cmd tp @s 683 88 -1082 facing 671 95 -1090
+wait 60
+shot col_dusk_square
+# ---- the arrival (alone, the cinematic plays at once), at noon; out of the gate before the Void
+cmd gamemode survival
+cmd time set 6000
+cmd awaken opening beat arrival
+wait 40
+shot col_arrive_a
+wait 50
+shot col_arrive_b
+wait 50
+shot col_arrive_c
+cmd awaken gate leave
+wait 20
+# ---- the Registry by day: the shard and the windows behind it
+cmd awaken opening beat lens
+wait 60
+shot col_registry_lens
+cmd tp @s ^ ^ ^-3
+wait 20
+shot col_registry_windows
+cmd tp @s ^ ^1 ^-2
+wait 20
+shot col_registry_hall
+quit

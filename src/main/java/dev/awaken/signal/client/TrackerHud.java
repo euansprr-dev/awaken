@@ -98,6 +98,8 @@ final class TrackerHud {
         bossBottom = 0;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.gui.hud.isHidden() || mc.getDebugOverlay().showDebugScreen()) return;
+        // the band and the Atlas show where you're going themselves; the cards would sit on their top edge (SPEC §30)
+        if (mc.gui.screen() instanceof QuietScreen) return;
         Rect now = enabled() ? renderNow(g, dt, mc, bars) : null;
         if (horizonEnabled()) renderHorizon(g, dt, mc, bars, now);
     }

@@ -9,6 +9,7 @@ import dev.awaken.farsight.voxel.VoxelMesher;
 import dev.awaken.farsight.voxel.VoxelSnapshot;
 import dev.awaken.terrain.api.CityBasin;
 import dev.awaken.terrain.api.CitySite;
+import dev.awaken.terrain.city.CityBasinFunction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
@@ -26,6 +27,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -138,6 +140,82 @@ final class FarSightTests {
             float coarseMedian = coarseErrors.get(coarseErrors.size() / 2), coarseP90 = coarseErrors.get(coarseErrors.size() * 9 / 10);
             Awaken.LOG.info("[farsight] the bracket's line: median {}, p90 {}", coarseMedian, coarseP90);
             h.assertTrue(coarseMedian <= 1.0f && coarseP90 <= 3f, "the bracket's line: median " + coarseMedian + ", p90 " + coarseP90);
+            h.succeed();
+        });
+
+        // Round Carillon the far ground is the basin as the real terrain builds it (CityBasinFunction wraps the final
+        // density): the street runs flat out to where the blend lets the hills stand, then a cliff, never the long rise
+        // that blending heights drew there (Euan, 2026-10-26: a far wall that turned out flat). Against the wrapped final
+        // density itself, column by column through the blend, on a site among vanilla's hills (seed 777).
+        AwakenTests.register("farsight_columns_basin", 600, h -> {
+            ServerLevel level = h.getLevel();
+            var access = level.registryAccess();
+            Holder<NoiseGeneratorSettings> settings = access.lookupOrThrow(Registries.NOISE_SETTINGS).getOrThrow(NoiseGeneratorSettings.OVERWORLD);
+            var preset = access.lookupOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST).getOrThrow(MultiNoiseBiomeSourceParameterLists.OVERWORLD);
+            NoiseBasedChunkGenerator gen = new NoiseBasedChunkGenerator(MultiNoiseBiomeSource.createFromPreset(preset), settings);
+            LevelHeightAccessor heights = LevelHeightAccessor.create(settings.value().noiseSettings().minY(), settings.value().noiseSettings().height());
+            CitySite before = CityBasin.current();
+            try {
+                // the site whose blend has the most ground standing well above the street
+                RandomState plain = RandomState.create(access.lookupOrThrow(Registries.NOISE), 777L, settings.value());
+                FarColumns natural = new FarColumns(gen, plain, access, heights, false, null);
+                int bestX = 0, bestZ = 0, best = -1;
+                for (int sz = -4000; sz <= 4000; sz += 1000) {
+                    for (int sx = -4000; sx <= 4000; sx += 1000) {
+                        int high = 0;
+                        for (int a = 0; a < 24; a++) {
+                            double t = a * Math.PI / 12;
+                            if (natural.ground(sx + (int) (Math.cos(t) * 560), sz + (int) (Math.sin(t) * 560)) > CityBasin.STREET_Y + 20) high++;
+                        }
+                        if (high > best) {
+                            best = high;
+                            bestX = sx;
+                            bestZ = sz;
+                        }
+                    }
+                }
+                CitySite site = new CitySite(bestX, bestZ, CityBasin.CORE_RADIUS, CityBasin.BLEND_RADIUS, CityBasin.STREET_Y, List.of(), 0, 0, true);
+                CityBasin.set(site);
+                // samplers compile with the basin set
+                RandomState rs = RandomState.create(access.lookupOrThrow(Registries.NOISE), 777L, settings.value());
+                var real = rs.getSampler(new CityBasinFunction(settings.value().noiseRouter().finalDensity(),
+                        CityBasinFunction.Mode.DENSITY, java.util.Optional.of(settings.value().noiseRouter().depth())));
+                var ctx = SamplerContext.builder().enableCaches().build();
+                FarColumns columns = new FarColumns(gen, rs, access, heights, false, site);
+                var shape = new CityBasinFunction.Shape(site);
+                List<Float> errors = new ArrayList<>(), old = new ArrayList<>();
+                int above = 0, solved = 0;
+                long nanos = 0, p0 = columns.probes;
+                for (int a = 0; a < 24; a++) {
+                    double t = a * Math.PI / 12;
+                    for (int d = 340; d <= 720; d += 10) {
+                        int x = bestX + (int) (Math.cos(t) * d), z = bestZ + (int) (Math.sin(t) * d);
+                        int y = 260;
+                        while (y > heights.getMinY() && real.sampleValue(ctx, x, y, z) <= 0f) y--;
+                        long t0 = System.nanoTime();
+                        float predicted = columns.ground(x, z);
+                        nanos += System.nanoTime() - t0;
+                        solved++;
+                        float top = y + 1, blended = shape.ground(natural.ground(x, z), x, z);
+                        if (top <= columns.seaLevel() && predicted <= columns.seaLevel()) continue;
+                        errors.add(Math.abs(predicted - top));
+                        old.add(Math.abs(blended - top));
+                        if (predicted > top + 3) above++;
+                    }
+                }
+                h.assertTrue(best >= 6 && errors.size() >= 300, "a hilly site and enough land: " + best + " high, " + errors.size() + " columns");
+                java.util.Collections.sort(errors);
+                java.util.Collections.sort(old);
+                float median = errors.get(errors.size() / 2), p90 = errors.get(errors.size() * 9 / 10);
+                Awaken.LOG.info("[farsight] the basin's blend on {} columns (site {} {}, {} of 24 high, {} us and {} probes a column): median {}, p90 {}, {} stand over 3 blocks too high; blending heights: median {}, p90 {}",
+                        errors.size(), bestX, bestZ, best, String.format(java.util.Locale.ROOT, "%.1f", nanos / 1000.0 / solved),
+                        String.format(java.util.Locale.ROOT, "%.1f", (columns.probes - p0) / (double) solved), median, p90, above,
+                        old.get(old.size() / 2), old.get(old.size() * 9 / 10));
+                h.assertTrue(median <= 1f && p90 <= 2f, "the far ground follows the basin: median " + median + ", p90 " + p90);
+                h.assertTrue(above * 100 <= errors.size(), "no ground stands where it isn't: " + above + " of " + errors.size() + " over 3 blocks too high");
+            } finally {
+                CityBasin.set(before);
+            }
             h.succeed();
         });
 

@@ -29,12 +29,16 @@ layout(location = 4) in vec4 vCrown;
 layout(location = 5) flat in ivec2 vFlags;
 layout(location = 6) in float vCell;
 layout(location = 7) in float vCold;
+layout(location = 8) in vec4 vRocks;
+layout(location = 9) in vec4 vBiome;
 
 layout(location = 0) out vec4 fragColor;
 
 const vec3 SCREE = vec3(0.55, 0.53, 0.50), SNOW = vec3(0.93, 0.95, 0.98);
 // the dirt texture's own average: risers as bright as the real ones beside them
 const vec3 DIRT = vec3(0.53, 0.38, 0.27);
+// ice's textures' average (FarPalette.ICE)
+const vec3 ICE = vec3(0.557, 0.702, 0.925);
 // what steep faces show, by the biome (colour flags bits 4-6): stone, or an Awakened biome's own block
 const vec3 ROCKS[5] = vec3[](vec3(0.49, 0.48, 0.46), vec3(0.68, 0.80, 0.86), vec3(0.23, 0.23, 0.28), vec3(0.78, 0.74, 0.65), vec3(0.24, 0.22, 0.18));
 
@@ -72,10 +76,10 @@ float snowLine(vec2 world, vec2 g) {
 
 // how much snow lies on a top at height y: the alpine line and the game's cold line, each broken into patches over a
 // band (drifts reaching down, bare ground reaching up), never one hard line
-float snowOn(vec2 world, float y, vec2 g, float slope, bool alpine) {
+float snowOn(vec2 world, float y, vec2 g, float slope, float alpine) {
     float patch = (valueNoise(world, 24.0, 5) - 0.5) * 14.0 + (valueNoise(world, 7.0, 9) - 0.5) * 6.0;
     float snow = 0.0;
-    if (alpine) snow = smoothstep(-1.5, 1.5, y + patch - snowLine(world, g));
+    if (alpine > 0.0) snow = alpine * smoothstep(-1.5, 1.5, y + patch - snowLine(world, g));
     snow = max(snow, smoothstep(-1.5, 1.5, vCold + patch * 0.7));
     // snow slides off steep faces
     return snow * (1.0 - smoothstep(SNOW_SLOPE - 0.1, SNOW_SLOPE + 0.25, slope));
@@ -167,7 +171,9 @@ void main() {
     float horizontal = length(vRel.xz);
     vec2 rel = vRel.xz + FarCam.xz;                       // blocks from FarCamInt: exact cells, any distance out
     int flags = vFlags.x;
-    bool generated = (flags & 128) != 0, alpine = (flags & 1) != 0;
+    bool generated = (flags & 128) != 0;
+    // the biome's materials as weights, blended between the corners (vBiome)
+    float alpine = vBiome.x, badlands = vBiome.y, stony = vBiome.z * (1.0 - vBiome.y);
     float depth = vInfo.r * 255.0;
     // water is a flat surface: a steep far triangle whose corners hold water (a canal's corner joined to a roof's, a
     // river below a bank) is the bank or the quay wall, not a blue wall of water (Euan, Carillon's river district)
@@ -175,6 +181,9 @@ void main() {
     bool flatWater = abs(facet.y) > 0.9 * length(facet);
     bool water = depth > 0.5 && flatWater;
     bool bank = depth > 0.5 && !flatWater;
+    // water where it's cold enough to snow is frozen over, as the chunks freeze it: ice, never open water with its floor
+    // showing (frozen rivers' indigo water drew far valleys purple and see-through, Euan 2026-10-26)
+    bool frozen = water && (flags & 2) != 0;
     // under the real chunks it stays hidden, but only where they are drawn: where they are loaded (a fresh teleport, a
     // fast flight) and in a section Sodium draws (farRealSection: seen from high up, the sea floor falls out of its reach
     // well inside the horizontal render distance); far water keeps to its own floor's reach,
@@ -182,7 +191,12 @@ void main() {
     // City Sight draws the real blocks there: the far land steps aside (its coverage holds for 2 km)
     if ((int(FarCam.y + 0.5) & 256) == 0 && length(vRel.xz) < 2000.0) {
         ivec2 world = (FarCamInt.xz >> 4) + ivec2(floor((vRel.xz + FarCam.xz) / 16.0));
-        if (texelFetch(VoxelSampler, world & 255, 0).r > 0.5) discard;
+        // (a chunk dissolving in stands at its share: this land gives way in the complement of its dither)
+        if (texelFetch(VoxelSampler, world & 255, 0).r > bayer4(gl_FragCoord.xy)) {
+            // debug view 4: where the far land stepped aside for City Sight, magenta instead
+            if (FarCam.w > 3.5 && FarCam.w < 4.5) { fragColor = vec4(1.0, 0.0, 1.0, 1.0); return; }
+            discard;
+        }
     }
     vec3 reach = vec3(vRel.x, vRel.y - (water ? depth : 0.0), vRel.z);
     // far water stays under the real water too (unless the camera is under the sea): wherever a real section isn't drawn
@@ -224,6 +238,10 @@ void main() {
     if (!water) hit = columns(vRel, g, w);
     vec3 pos = hit.ok ? normalize(vRel) * hit.t : vRel;
     vec3 face = hit.ok ? hit.n : n;
+    // a column's side is lit by the way the slope faces, not by the axis its column happens to show: a steep slope's
+    // staircase shows x sides and z sides by turns as the slope turns, and with the slope read per triangle those turns
+    // drew dark spikes down far mountains and grooves down their walls (Euan, 2026-10-26)
+    if (hit.ok && hit.n.y < 0.5 && dot(n.xz, n.xz) > 1e-4) face = normalize(vec3(n.x, 0.0, n.z));
     float y = pos.y + FarFog.z;
     vec2 world = vec2(FarCamInt.xz) + pos.xz + FarCam.xz;
     ivec2 blk = hit.ok ? hit.cell : FarCamInt.xz + ivec2(floor(rel));
@@ -237,17 +255,25 @@ void main() {
         density = 0.0;
     }
     float rock = 0.0, snow = 0.0, canopy = 0.0;
-    if (water) {
+    if (frozen) {
+        top = ICE * (0.92 + 0.16 * grain);
+    } else if (water) {
         if ((int(FarCam.y) & 128) == 0) top = seaFloor(top, world, normalize(vRel), depth, horizontal);
     } else {
         float jag = 0.25 * (grain - 0.5);
-        vec3 STONE = ROCKS[min((flags >> 4) & 7, 4)];
+        // the rock of the biome this block stands in: where biomes meet, block by block, each biome's share its odds
+        // (never one rock per triangle: a border across a steep face drew grey spikes, Euan 2026-10-26)
+        float pick = farHash(blk * 13 + ivec2(int(floor(y)), 41));
+        float r0 = vRocks.x, r1 = r0 + vRocks.y, r2 = r1 + vRocks.z, r3 = r2 + vRocks.w;
+        int ri = pick < r0 ? 0 : pick < r1 ? 1 : pick < r2 ? 2 : pick < r3 ? 3 : 4;
+        vec3 STONE = ROCKS[ri];
         if (!generated) {
             rock = smoothstep(ROCK_SLOPE - 0.2, ROCK_SLOPE + 0.1, slope + jag);
-            float scree = smoothstep(SCREE_SLOPE - 0.15, SCREE_SLOPE + 0.1, slope + jag) * (1.0 - rock) * float(((flags >> 4) & 7) == 0);
-            if ((flags & 4) != 0) top = mix(top, band(y), smoothstep(0.5, 1.2, slope) * 0.85);
-            else if ((flags & 8) != 0) top = mix(top, STONE, 0.6 + 0.4 * rock);
-            else top = mix(mix(top, SCREE, scree * 0.85), STONE, rock * 0.9);
+            float scree = smoothstep(SCREE_SLOPE - 0.15, SCREE_SLOPE + 0.1, slope + jag) * (1.0 - rock) * float(ri == 0);
+            vec3 plain = mix(mix(top, SCREE, scree * 0.85), STONE, rock * 0.9);
+            vec3 own = mix(top, STONE, 0.6 + 0.4 * rock);
+            vec3 banded = badlands > 0.0 ? mix(top, band(y), smoothstep(0.5, 1.2, slope) * 0.85) : top;
+            top = mix(mix(plain, own, stony), banded, badlands);
         }
         // forests: the floor under them takes the crowns' tint (the trees themselves stand on it)
         if (density > 0.0) top = mix(top, vCrown.rgb * (0.8 + 0.3 * grain), density * 0.6 * (1.0 - rock));
@@ -262,8 +288,8 @@ void main() {
         // a column's side: stone, sand, snow blocks and the like are the same all through; under grass, dirt with the
         // grass's fringe along its top edge; snow on the top shows as a white fringe
         vec3 side = grassy ? mix(DIRT, top * 0.9, step(hit.below, 0.19)) : top;
-        side = mix(side, SNOW, snow * step(hit.below, 0.22 + 0.6 * float(alpine && !grassy)));
-        if ((flags & 4) != 0 && !generated) side = band(y);
+        side = mix(side, SNOW, snow * step(hit.below, 0.22 + 0.6 * alpine * float(!grassy)));
+        if (badlands > 0.0 && !generated) side = mix(side, band(y), badlands);
         c = side;
     } else {
         c = mix(top, SNOW, snow);
@@ -278,7 +304,7 @@ void main() {
     // light: the game's face shading, a warm key where the sun reaches past the ridges, a cool shade where it doesn't
     vec3 light = farLight(face, vCrown.a);
     light *= mix(1.0, vInfo.a, 0.8);
-    if (water) {
+    if (water && !frozen) {
         float facing = abs(normalize(vRel).y);
         light = mix(light, vec3(1.0), 0.4);
         // grazing far water reflects the sky by the horizon, as Lens's real water beside it does at every distance (the

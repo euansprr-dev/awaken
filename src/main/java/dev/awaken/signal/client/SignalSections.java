@@ -14,9 +14,56 @@ final class SignalSections {
     private SignalSections() {}
 
     static void register() {
-        StatusSections.add(StatusSections.Tab.STATUS, new NowSection());
+        StatusSections.add(StatusSections.Tab.JOURNAL, new NowSection());
+        StatusSections.add(StatusSections.Tab.STATUS, new NowRow()); // the context row above the Journal (SPEC §30.3)
         StatusSections.add(StatusSections.Tab.STATUS, new WaitingSection());
-        StatusSections.add(StatusSections.Tab.STATUS, new RecentSection());
+        StatusSections.add(StatusSections.Tab.JOURNAL, new RecentSection());
+    }
+
+    /**
+     * The Status page's context row: the one thing you're doing (the Now line's first), its compass, and how many more
+     * wait on the Journal page; a click opens it. The decisions waiting, a gate run, the Deep Pack and the room you stand
+     * in show above it when they apply.
+     */
+    static final class NowRow implements StatusSections.Section {
+        static final int H = 22;
+
+        public String title() { return ""; }
+        public int order() { return 18; }
+        public boolean visible() { return !NowClient.suggestions().isEmpty(); }
+        public int height(int width) { return H; }
+
+        public void render(net.minecraft.client.gui.GuiGraphicsExtractor g, int x, int y, int w, int mx, int my, float pt) {
+            var f = net.minecraft.client.Minecraft.getInstance().font;
+            List<NowHooks.Suggestion> list = NowClient.suggestions();
+            if (list.isEmpty()) return;
+            NowHooks.Suggestion s = list.get(0);
+            int bar = s.priority() >= 90 ? Glass.WARN : 0xC4E6FF;
+            boolean over = mx >= x && mx < x + w && my >= y && my < y + H;
+            g.fillGradient(x, y, x + w, y + H, Glass.a(bar, over ? 0.16f : 0.10f), Glass.a(bar, 0.02f));
+            g.fill(x, y, x + 2, y + H, Glass.a(bar, 0.95f));
+            String t = SignalText.ellipsize(s.text().getString(), w - 10, f::width);
+            g.text(f, t, x + 6, y + 3, Glass.a(0xFFFFFF, 1f), false);
+            float small = StatusSections.small();
+            String more = list.size() > 1 ? "NOW · " + (list.size() - 1) + " more on the Journal page ›" : "NOW · on the Journal page ›";
+            g.pose().pushMatrix();
+            g.pose().translate(x + 6, y + 12.5f);
+            g.pose().scale(small, small);
+            g.text(f, more, 0, 0, Glass.a(Glass.LABEL, 1f), false);
+            g.pose().popMatrix();
+            NowClient.compass(s).ifPresent(c -> {
+                g.pose().pushMatrix();
+                g.pose().translate(x + w - 4 - f.width(c) * small, y + 12.5f);
+                g.pose().scale(small, small);
+                g.text(f, c, 0, 0, Glass.a(0xC4E6FF, 1f), false);
+                g.pose().popMatrix();
+            });
+        }
+
+        public boolean click(double mx, double my, int x, int y, int w) {
+            StatusSections.go(StatusSections.Tab.JOURNAL);
+            return true;
+        }
     }
 
     /** The Now card: up to three things you could do, best first, with a compass for the ones that have a place. */
@@ -42,7 +89,7 @@ final class SignalSections {
     /** Decisions that folded away (or arrived while you were offline), with a button for each answer. */
     static final class WaitingSection extends UiSection {
         public String title() { return "WAITING FOR YOU"; }
-        public int order() { return -20; }
+        public int order() { return 14; } // the Status page, above the Journal
         public boolean visible() { return !SystemHud.pendingChoices().isEmpty(); }
 
         @Override
@@ -72,7 +119,10 @@ final class SignalSections {
         private static final int SHORT = 6;
 
         public String title() { return "RECENT MESSAGES"; }
-        public int order() { return 950; }
+
+        @Override
+        public StatusSections.Shelf shelf() { return StatusSections.Shelf.MESSAGES; }
+        public int order() { return 800; } // the Journal page, after the log, before Records
         public boolean visible() { return !RecentLog.entries().isEmpty(); }
 
         @Override

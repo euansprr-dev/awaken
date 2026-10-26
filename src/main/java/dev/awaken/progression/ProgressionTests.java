@@ -12,6 +12,25 @@ final class ProgressionTests {
     private ProgressionTests() {}
 
     static void register() {
+        // SPEC §30.3: the band's Confirm spends every point placed in one request, never more than you have, and skips
+        // what isn't a stat
+        AwakenTests.register("progression_spend_many", 40, h -> {
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            try {
+                Progression.awaken(p);
+                Profile pr = Progression.profile(p);
+                pr.unspent = 3;
+                int str = pr.stat(Stat.STR), agi = pr.stat(Stat.AGI);
+                int spent = Progression.spendPoints(p, "STR:1,AGI:5,NOPE:2,PER:x");
+                h.assertTrue(spent == 3, "spent what was there, no more: " + spent);
+                h.assertTrue(pr.unspent() == 0, "nothing left over");
+                h.assertTrue(pr.stat(Stat.STR) == str + 1 && pr.stat(Stat.AGI) == agi + 2, "STR +1, AGI the rest");
+                h.assertTrue(Progression.spendPoints(p, "STR:1") == 0, "no points, nothing spent");
+            } finally {
+                h.getLevel().getServer().getPlayerList().remove(p);
+            }
+            h.succeed();
+        });
         // SPEC §27.9: only things you can do reset the capability clock; after 75 minutes the Now line offers the next
         AwakenTests.register("progression_capability_clock", 40, h -> {
             ServerPlayer p = h.makeMockServerPlayerInLevel();

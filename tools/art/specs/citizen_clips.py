@@ -238,6 +238,21 @@ TP = pose(lean=-4, ra=(-170, 0, -24), la=(-150, 0, 30))
 clip("trapped", [(0, TP, "linear"), (5, pose(TP, ra=(-150, 0, -32), la=(-172, 0, 22)), "easeinoutsine"),
                  (10, TP, "easeinoutsine")], 10, note="waving frantically with both arms")
 
+# (SPEC §28.7) A village's troubles and festivals: the ring dance round the fire, the reunion, a parent's grief.
+DA_A = pose(rise=0.3, twist=-5, ra=(-28, 0, 66), la=(-28, 0, -66), rl=(-22, 0, 4), ll=(8, 0, -2), lean=-2)
+DA_B = pose(rise=1.5, twist=0, ra=(-40, 0, 72), la=(-40, 0, -72), rl=(2, 0, 5), ll=(2, 0, -5), lean=-4)
+DA_C = pose(rise=0.3, twist=5, ra=(-28, 0, 66), la=(-28, 0, -66), rl=(8, 0, 2), ll=(-22, 0, -4), lean=-2)
+clip("dance", [(0, DA_A, "linear"), (5, DA_B, "easeoutquad"), (10, DA_C, "easeinquad"), (15, DA_B, "easeoutquad"),
+               (20, DA_A, "easeinquad")], 20, note="the ring dance: hands out to the neighbours', a hop and a kick each beat")
+EM = pose(lean=9, ra=(-82, -38, 0), la=(-82, 38, 0), head_z=-5)
+idle("embrace", EM, [nudge(EM, lean=2, rise=0.1, twist=-5), nudge(EM, lean=1, twist=5)], 44,
+     "holding someone close: arms round them, leaning in, rocking a little")
+WP = pose(lean=14, ra=(-148, -34, 0), la=(-148, 34, 0), rl=(0, 0, 2), ll=(4, 0, -3))
+clip("weep", [(0, WP, "linear"), (4, nudge(WP, rise=-0.25, lean=2), "easeinoutsine"), (8, WP, "easeinoutsine"),
+              (12, nudge(WP, rise=-0.25, lean=2), "easeinoutsine"), (16, WP, "easeinoutsine"),
+              (40, nudge(WP, lean=-4, ra=(18, 0, 0), la=(18, 0, 0)), "easeinoutsine"), (52, WP, "easeinoutsine")], 52,
+     note="hands over the face, shoulders shaking, then a breath")
+
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Export

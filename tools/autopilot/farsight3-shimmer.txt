@@ -1,0 +1,252 @@
+# Shimmer under the camera's sway (Euan, 2026-10-26: distant edges, far trees and mountains crawl as the camera
+# breathes, red dots flicker on a pale patch). Night, high on Carillon's east wall looking out over the Commons. One
+# view, six set-ups, each a burst of 12 frames under the same scripted sway (yaw 0.03 deg, pitch 0.02 deg steps, under
+# a pixel): Pixels 0.75 with SHARP (Euan's 4K default), 0.75 bilinear, native, then on SHARP 0.75: City Sight off,
+# Far Sight off, Lens off. tools/farsight/shimmer.py scores each burst and draws its flicker map.
+# Run: PACK=perf,world TECTONIC=awakened RD=16 LENS=cinematic SLOT_WHO=far-sight \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/farsight3-shimmer.txt 600
+world fs3shim survival 20261024
+waitworld
+window 1440 900
+cmd awaken opening skip
+wait 60
+cmd awaken powers starter 1
+wait 20
+screen close
+gui 0
+hud off
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 18000
+cmd awaken city view walls_walk
+wait 20
+cmd gamemode spectator
+cmd tp @s ~ ~20 ~
+look -49.6 24
+pixels 0.75 sharp
+wait 400
+shot fs3s_ref
+farsight status
+wait 60
+shotnow fs3s_sharp075_00
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_sharp075_01
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_sharp075_02
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3s_sharp075_03
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_sharp075_04
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_sharp075_05
+cmd tp @s ~ ~ ~ ~-0.03 ~0.0
+wait 2
+shotnow fs3s_sharp075_06
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_sharp075_07
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_sharp075_08
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3s_sharp075_09
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_sharp075_10
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_sharp075_11
+pixels 0.75 bilinear
+wait 60
+shotnow fs3s_bilin075_00
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_bilin075_01
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_bilin075_02
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3s_bilin075_03
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_bilin075_04
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_bilin075_05
+cmd tp @s ~ ~ ~ ~-0.03 ~0.0
+wait 2
+shotnow fs3s_bilin075_06
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_bilin075_07
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_bilin075_08
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3s_bilin075_09
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_bilin075_10
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_bilin075_11
+pixels 1.0
+wait 60
+shotnow fs3s_native_00
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_native_01
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_native_02
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3s_native_03
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_native_04
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_native_05
+cmd tp @s ~ ~ ~ ~-0.03 ~0.0
+wait 2
+shotnow fs3s_native_06
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_native_07
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_native_08
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3s_native_09
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_native_10
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_native_11
+pixels 0.75 sharp
+farsight part city off
+wait 60
+shotnow fs3s_nocity_00
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_nocity_01
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_nocity_02
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3s_nocity_03
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_nocity_04
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_nocity_05
+cmd tp @s ~ ~ ~ ~-0.03 ~0.0
+wait 2
+shotnow fs3s_nocity_06
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_nocity_07
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_nocity_08
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3s_nocity_09
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_nocity_10
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_nocity_11
+farsight part city on
+farsight off
+wait 60
+shotnow fs3s_nofar_00
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_nofar_01
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_nofar_02
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3s_nofar_03
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_nofar_04
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_nofar_05
+cmd tp @s ~ ~ ~ ~-0.03 ~0.0
+wait 2
+shotnow fs3s_nofar_06
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_nofar_07
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_nofar_08
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3s_nofar_09
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_nofar_10
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_nofar_11
+farsight on
+wait 100
+lens off
+wait 60
+shotnow fs3s_nolens_00
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_nolens_01
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_nolens_02
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3s_nolens_03
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_nolens_04
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_nolens_05
+cmd tp @s ~ ~ ~ ~-0.03 ~0.0
+wait 2
+shotnow fs3s_nolens_06
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_nolens_07
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3s_nolens_08
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3s_nolens_09
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_nolens_10
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3s_nolens_11
+lens cinematic
+info
+quit

@@ -4,6 +4,7 @@ import dev.awaken.citizens.api.RosterBuilder;
 import dev.awaken.city.CityPlan;
 import dev.awaken.city.SettlementPaint;
 import dev.awaken.village.plan.VillagePlan;
+import net.minecraft.core.BlockPos;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,14 +39,51 @@ public final class VillageRoster {
     private int lampRoute = -1, watchRoute = -1, errands = -1, carterRoute = -1, eveningRoute = -1;
 
     public static RosterBuilder of(VillagePlan plan, long worldSeed) {
+        return of(plan, worldSeed, java.util.List.of());
+    }
+
+    /** (SPEC §28.7) With the families of the houses it has grown since it was planned, after its own people (their records follow). */
+    public static RosterBuilder of(VillagePlan plan, long worldSeed, java.util.List<dev.awaken.village.growth.Growth.Grown> grown) {
         VillageRoster r = new VillageRoster();
         r.p = plan;
         r.worldSeed = worldSeed;
         r.ground();
         r.placesAndStations();
         r.people();
+        r.grown(grown);
         r.emitters();
         return r.b;
+    }
+
+    /** The families of houses the village has grown: a door off the nearest street, a household, two grown-ups and a child. */
+    private void grown(java.util.List<dev.awaken.village.growth.Growth.Grown> houses) {
+        if (houses.isEmpty()) return;
+        int i = p.people.size();
+        int g = b.group("village");
+        String[] given = {"Wenna", "Abel", "Marit", "Coll", "Isolde", "Pell", "Rue", "Tam", "Orrin", "Lys"};
+        for (var gh : houses) {
+            BlockPos door = BlockPos.of(gh.door()), out = BlockPos.of(gh.out());
+            BlockPos b0 = BlockPos.of(gh.box0()), b1 = BlockPos.of(gh.box1());
+            int ry = door.getY() - 1 - p.baseY;
+            double ox = out.getX() - p.ox + 0.5, oz = out.getZ() - p.oz + 0.5;
+            int lot = b.lot(b0.getX() - p.ox, b0.getZ() - p.oz, b1.getX() - p.ox, b1.getZ() - p.oz, 8, out.getX() - p.ox, out.getZ() - p.oz, "house", "house");
+            int dn = b.door(ox, ry, oz, lot);
+            int[] n = nearest(ox, oz);
+            link(dn, ox, ry, oz, streetNode[n[0]][n[1]], n[0], n[1]);
+            int home = b.place("door", dn, ox, ry, oz).ref(lot).cap(8).id();
+            int hh = b.household(gh.family(), home, lot);
+            String[] jobs = {"farmer", "resident", "child"};
+            for (int k = 0; k < Math.min(3, gh.people()); k++) {
+                int age = k == 2 ? 0 : k + 1;
+                String name = given[(int) Math.floorMod(hash(i, 91), (long) given.length)];
+                RosterBuilder.Person pr = b.person(name, gh.family(), jobs[k]).household(hh).home(home).build(k % 2).age(age);
+                if (age == 0) pr.scale(0.68f).speed(1.08f);
+                pr.group(g);
+                if (inn >= 0) pr.tavern(0);
+                day(pr, i, jobs[k], new VillagePlan.Person(name, gh.family(), jobs[k], age, -1, k % 2, k == 0 ? "field" : "", i), home);
+                i++;
+            }
+        }
     }
 
     private long hash(long a, long b) {

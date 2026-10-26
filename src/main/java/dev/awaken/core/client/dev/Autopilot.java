@@ -59,6 +59,7 @@ import java.util.Map;
  * window &lt;width&gt; &lt;height&gt;                       windowed at that size in points (Retina doubles the pixels)
  * opt renderDistance|simulationDistance &lt;n&gt;     changes a video option for the following scenes
  * lens off|swift|cinematic|ultra                switches Awaken's light layer, for same-moment A/B shots
+ * lens temporal on|off|setting                  Lens 2's clouds and light spread over frames, or every pixel every frame
  * lookswitch swift|cinematic|ultra              picks a Look tier as a click on its card would (the open Look screen's,
  *                                                else straight through the switch)
  * pixels &lt;scale&gt; [fsr|sharp|bilinear]|config|state  Pixels' render scale and upscaler for the following scenes (not saved)
@@ -90,6 +91,7 @@ public final class Autopilot {
     private static String shotPending;
     private static float turnStep;
     private static int turnTicks;
+    private static int walkTicks;
     // perf: frame-to-frame times of the scene being measured, preallocated so measuring costs no allocation per frame
     private static final long[] FRAMES = new long[1 << 15];
     private static int frameCount;
@@ -265,6 +267,11 @@ public final class Autopilot {
         }
         // the window lost focus (the owner is using the Mac): never photograph the pause menu
         if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.PauseScreen && mc.level != null) mc.gui.setScreen(null);
+        // walk: forward held down for a while (proves the player can move, e.g. after a scene let go)
+        if (walkTicks > 0) {
+            mc.options.keyUp.setDown(--walkTicks > 0);
+            if (walkTicks == 0 && mc.player != null) Awaken.LOG.info("[autopilot] walked to {}", mc.player.blockPosition().toShortString());
+        }
         if (turnTicks > 0 && mc.player != null) {
             turnTicks--;
             mc.player.setYRot(mc.player.getYRot() + turnStep);
@@ -375,6 +382,11 @@ public final class Autopilot {
                 Awaken.LOG.info("[autopilot] compat {}: {}", arg.trim(), dev.awaken.compat.client.CompatClient.autopilot(arg));
                 waitTicks = 10;
             }
+            case "walk" -> { // walk <ticks>: hold forward that long, logging where you started and where you got to
+                walkTicks = Integer.parseInt(arg.trim());
+                if (mc.player != null) Awaken.LOG.info("[autopilot] walk from {}", mc.player.blockPosition().toShortString());
+                mc.options.keyUp.setDown(true);
+            }
             case "use" -> { // the use key once (right click): places the held block where the crosshair rests
                 KeyMapping.click(mc.options.keyUse.getKey());
                 waitTicks = 2;
@@ -385,10 +397,34 @@ public final class Autopilot {
                 else KeyMapping.click(k.getKey());
                 waitTicks = 2;
             }
+            case "screenkey" -> { // a key straight to the open screen: tab, t, m, c, space, q, e, or shift+ one of them
+                String k = arg.trim();
+                boolean shift = k.startsWith("shift+");
+                int code = switch (shift ? k.substring(6) : k) {
+                    case "tab" -> com.mojang.blaze3d.platform.InputConstants.KEY_TAB;
+                    case "t" -> com.mojang.blaze3d.platform.InputConstants.KEY_T;
+                    case "m" -> com.mojang.blaze3d.platform.InputConstants.KEY_M;
+                    case "c" -> com.mojang.blaze3d.platform.InputConstants.KEY_C;
+                    case "space" -> com.mojang.blaze3d.platform.InputConstants.KEY_SPACE;
+                    case "q" -> com.mojang.blaze3d.platform.InputConstants.KEY_Q;
+                    case "e" -> com.mojang.blaze3d.platform.InputConstants.KEY_E;
+                    default -> -1;
+                };
+                if (code < 0) Awaken.LOG.warn("[autopilot] unknown screen key {}", k);
+                else if (mc.gui.screen() != null)
+                    mc.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(code, 0, shift ? com.mojang.blaze3d.platform.InputConstants.MOD_SHIFT : 0));
+                waitTicks = 2;
+            }
             case "screen" -> {
                 if (arg.trim().equals("close")) mc.gui.setScreen(null);
                 else if (arg.trim().equals("status")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.STATUS));
-                else if (arg.trim().equals("map")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.GATE_MAP));
+                else if (arg.trim().equals("powers")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.POWERS));
+                else if (arg.trim().equals("journal")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.JOURNAL));
+                else if (arg.trim().equals("map")) openMapPage(mc); // the band's Map page: the map in the world (SPEC §30.5)
+                else if (arg.trim().equals("table")) {
+                    mc.gui.setScreen(null);
+                    dev.awaken.atlas.client.AtlasClient.openTable();
+                }
                 else if (arg.trim().equals("codex")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.CODEX));
                 else if (arg.trim().equals("uiprobe")) mc.gui.setScreen(new UiProbeScreen());
                 else if (arg.trim().equals("look")) mc.gui.setScreen(new dev.awaken.compat.client.LookScreen(null));
@@ -406,12 +442,15 @@ public final class Autopilot {
                 else if (arg.trim().startsWith("holo")) {
                     String t = arg.trim().length() > 4 ? arg.trim().substring(4).trim() : "status";
                     var tab = switch (t) {
-                        case "map" -> dev.awaken.progression.client.StatusSections.Tab.GATE_MAP;
+                        case "powers" -> dev.awaken.progression.client.StatusSections.Tab.POWERS;
+                        case "journal" -> dev.awaken.progression.client.StatusSections.Tab.JOURNAL;
+                        case "map" -> dev.awaken.progression.client.StatusSections.Tab.MAP;
                         case "codex" -> dev.awaken.progression.client.StatusSections.Tab.CODEX;
                         case "truths" -> dev.awaken.progression.client.StatusSections.Tab.TRUTHS;
                         default -> dev.awaken.progression.client.StatusSections.Tab.STATUS;
                     };
-                    mc.gui.setScreen(new dev.awaken.holo.client.HoloStatusScreen(tab));
+                    if (tab == dev.awaken.progression.client.StatusSections.Tab.MAP) openMapPage(mc);
+                    else mc.gui.setScreen(new dev.awaken.holo.client.HoloStatusScreen(tab));
                 }
                 else if (arg.trim().equals("experimental")) {
                     // vanilla's own world-creation prompt, as a new world would show it: ExperimentalWarning should answer it
@@ -497,6 +536,11 @@ public final class Autopilot {
                 waitTicks = 20;
             }
             case "lens" -> {
+                if (arg.trim().startsWith("temporal")) {
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.temporal(arg.trim().substring(8)));
+                    waitTicks = 20;
+                    return true;
+                }
                 dev.awaken.core.AwakenConfig.Client.LENS.set(dev.awaken.core.AwakenConfig.Client.LensLook.valueOf(arg.trim().toUpperCase(java.util.Locale.ROOT)));
                 waitTicks = 40; // Lens re-asserts itself on the next tick, then eases in
             }
@@ -523,12 +567,16 @@ public final class Autopilot {
                 dev.awaken.compat.client.CompatClient.shareFarDepthEverywhere("share".equals(arg.trim()));
                 waitTicks = 10;
             }
-            case "opt" -> { // opt renderDistance|simulationDistance <n>
+            case "opt" -> { // opt renderDistance|simulationDistance|guiScale <n> (guiScale 0: auto)
                 String[] o = arg.trim().split("\\s+");
                 int v = Integer.parseInt(o[1]);
                 switch (o[0]) {
                     case "renderDistance" -> mc.options.renderDistance().set(v);
                     case "simulationDistance" -> mc.options.simulationDistance().set(v);
+                    case "guiScale" -> {
+                        mc.options.guiScale().set(v);
+                        mc.resizeGui();
+                    }
                     default -> Awaken.LOG.warn("[autopilot] unknown option {}", o[0]);
                 }
                 waitTicks = 20;
@@ -548,6 +596,14 @@ public final class Autopilot {
         }
         Awaken.LOG.info("[autopilot] {}", line);
         return true;
+    }
+
+    /** The band's Map page: whatever it opens (the Atlas table), as picking it on the rail would. */
+    private static void openMapPage(Minecraft mc) {
+        var action = dev.awaken.progression.client.StatusSections.action(dev.awaken.progression.client.StatusSections.Tab.MAP);
+        mc.gui.setScreen(null);
+        if (action != null) action.open().run();
+        else Awaken.LOG.warn("[autopilot] the Map page opens nothing");
     }
 
     private static final Map<String, KeyMapping> KEYS = Map.of(

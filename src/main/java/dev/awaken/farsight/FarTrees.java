@@ -49,14 +49,21 @@ public final class FarTrees {
                 int k = j * Rings.PATCH + i;
                 float density = 0f;
                 boolean known = true;
+                int forest = k;
                 for (int q = 0; q < 4; q++) {
                     int c = k + (q & 1) + (q >> 1) * Rings.PATCH;
                     if (height[c] == 0) known = false;
-                    density = Math.max(density, (info[c] >> 16 & 255) / 255f);
+                    float dq = (info[c] >> 16 & 255) / 255f;
+                    // the corner the forest is densest at gives the trees (a forest's edge on open ground took that
+                    // ground's blank crown: flat black trees, Euan 2026-10-26)
+                    if (dq > density) {
+                        density = dq;
+                        forest = c;
+                    }
                     // water anywhere in the cell: no trees on it
                     if ((info[c] & 255) > 0) known = false;
                 }
-                if (!known || density <= 0f) continue;
+                if (!known || density <= 0f || (crown[forest] & 0xFFFFFF) == 0) continue;
                 float h00 = FarColumns.unpackHeight(height[k]), h10 = FarColumns.unpackHeight(height[k + 1]);
                 float h01 = FarColumns.unpackHeight(height[k + Rings.PATCH]), h11 = FarColumns.unpackHeight(height[k + Rings.PATCH + 1]);
                 // the cell's slope (rise per block): too steep for soil, no trees
@@ -79,8 +86,8 @@ public final class FarTrees {
                     if ((flags & FarColumns.ALPINE) != 0 && !AlpineSurface.treeAllowed(wx, ground, wz, gx, gz)) continue;
                     int at = n * INTS;
                     int lx = Math.round((i + u) * s * 16), lz = Math.round((j + v) * s * 16);
-                    int c = crown[k];
-                    int canopy = info[k] >> 8 & 255;
+                    int c = crown[forest];
+                    int canopy = info[forest] >> 8 & 255;
                     // each tree a little taller or shorter than the forest's mean
                     float tall = 0.75f + 0.5f * Erosion.unit(hash >>> 3);
                     int canopyQuarter = Math.clamp(Math.round(Math.max(canopy, 16) * tall), 8, 255);

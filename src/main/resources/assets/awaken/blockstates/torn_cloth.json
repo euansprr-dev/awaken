@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "facing=north,look=0": {
+      "model": "awaken:block/torn_cloth_0"
+    },
+    "facing=north,look=1": {
+      "model": "awaken:block/torn_cloth_1"
+    },
+    "facing=north,look=2": {
+      "model": "awaken:block/torn_cloth_2"
+    },
+    "facing=north,look=3": {
+      "model": "awaken:block/torn_cloth_3"
+    },
+    "facing=east,look=0": {
+      "model": "awaken:block/torn_cloth_0",
+      "y": 90
+    },
+    "facing=east,look=1": {
+      "model": "awaken:block/torn_cloth_1",
+      "y": 90
+    },
+    "facing=east,look=2": {
+      "model": "awaken:block/torn_cloth_2",
+      "y": 90
+    },
+    "facing=east,look=3": {
+      "model": "awaken:block/torn_cloth_3",
+      "y": 90
+    },
+    "facing=south,look=0": {
+      "model": "awaken:block/torn_cloth_0",
+      "y": 180
+    },
+    "facing=south,look=1": {
+      "model": "awaken:block/torn_cloth_1",
+      "y": 180
+    },
+    "facing=south,look=2": {
+      "model": "awaken:block/torn_cloth_2",
+      "y": 180
+    },
+    "facing=south,look=3": {
+      "model": "awaken:block/torn_cloth_3",
+      "y": 180
+    },
+    "facing=west,look=0": {
+      "model": "awaken:block/torn_cloth_0",
+      "y": 270
+    },
+    "facing=west,look=1": {
+      "model": "awaken:block/torn_cloth_1",
+      "y": 270
+    },
+    "facing=west,look=2": {
+      "model": "awaken:block/torn_cloth_2",
+      "y": 270
+    },
+    "facing=west,look=3": {
+      "model": "awaken:block/torn_cloth_3",
+      "y": 270
+    }
+  }
+}
