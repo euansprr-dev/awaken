@@ -23,20 +23,21 @@ final class AscentSection extends UiSection {
 
     private static final Rung[] LADDER = {
             new Rung(AscentPayloads.Tier.TETHER, "The Tether",
-                    "Hold {key.awaken.movement} at a ring or a ledge above: the rope bites. {key.forward} pumps the swing; let go to fly.",
-                    "A Precursor vault keeps a line for a hunter it opens to: its door's rank, D at the least."),
+                    "Hold {key.awaken.movement} while looking at a ring or a ledge above you to throw your rope. Press {key.forward} to swing, and let go to fly off. "
+                            + "Over a drop, press {key.sneak} with {key.jump} to lower yourself on it.",
+                    "You get it from a Precursor vault once your rank is high enough to open its door (D-rank at least)."),
             new Rung(AscentPayloads.Tier.LEAPER, "The Leaper",
                     "In the air: {key.jump} jumps again, {key.sprint} dashes, {key.sneak} high up dives to a slam.",
-                    "Swing your rope until it knows you, at D-rank, and a gate will open for you: the Leaper's Gauntlet."),
+                    "Get good with your rope and reach D-rank, and a special gate opens for you: the Leaper's Gauntlet."),
             new Rung(AscentPayloads.Tier.WINGS, "Wings",
-                    "Falling, press {key.jump} to open them. Dive for speed, pull up to climb. {key.sneak} folds them.",
-                    "A sky platform's core gives them to a C-rank hunter who climbs its rings."),
+                    "While falling, press {key.jump} to open your wings. Dive for speed and pull up to climb. Press {key.sneak} to fold them.",
+                    "Climb the rings of a sky platform at C-rank, and its core gives you wings."),
             new Rung(AscentPayloads.Tier.SKYBORN, "The open sky",
                     "Gliding, press {key.jump} to fly: {key.forward} thrusts, {key.sprint} boosts.",
-                    "At A-rank, with wings you know well, the sky will ask for you."),
+                    "Reach A-rank with plenty of practice on your wings, and the sky calls you to a trial."),
             new Rung(AscentPayloads.Tier.SOVEREIGN, "The Sovereign",
-                    "With your Aether full, press {key.awaken.ascend}: thirty seconds as the sky's own.",
-                    "The story's end."),
+                    "When your Aether is full, press {key.awaken.ascend} to take your sovereign form for thirty seconds.",
+                    "Finish the story to unlock it."),
     };
 
     @Override
@@ -47,13 +48,16 @@ final class AscentSection extends UiSection {
 
     @Override
     protected void build(Ui ui) {
-        ui.text("Runner · yours from the start: run at walls and edges.", Glass.a(Glass.LABEL, 0.85F));
+        ui.text("Runner moves: you've had these from the start. Run at walls and edges to use them.", Glass.a(Glass.LABEL, 0.85F));
         ui.gap(2);
         boolean next = true;
         for (Rung r : LADDER) {
             if (AscentMoves.has(r.tier())) {
                 ui.text(r.name(), Glass.a(Glass.TITLE, 1F));
                 ui.text(KeyText.resolve(r.how()), Glass.a(Glass.LABEL, 0.85F));
+                // the rope's fittings, once any is on it (SPEC §28.5)
+                String kit = r.tier() == AscentPayloads.Tier.TETHER ? AscentMoves.fittings() : null;
+                if (kit != null) ui.text(kit, Glass.a(Glass.HORIZON, 0.9F));
             } else if (next) {
                 // the next rung: named, with where it comes from, never how it plays
                 ui.text("◇ " + r.name() + " · next", Glass.a(Glass.HORIZON, 1F));

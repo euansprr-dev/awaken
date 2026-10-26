@@ -18,14 +18,16 @@ import java.util.Map;
  * tier, the named four's own voices, street calls, the crier's news and event shouts. Picked with a seeded hash, never
  * at random, and filtered by the hour's time tag ([m] [d] [e] [n]).
  */
-final class Lines {
+public final class Lines {
     static final String RESOURCE = "/data/awaken/city/citizen_lines.json";
+    /** (SPEC §28.6) the villages' pools, read under the prefix "village." (village.greet.farmer.friend, village.inn.rumour). */
+    static final String VILLAGE = "/data/awaken/village/village_lines.json";
     static final String[] TIERS = {"stranger", "familiar", "known"};
 
     private final Map<String, List<String>> pools = new HashMap<>();
     private static Lines instance;
 
-    static synchronized Lines get() {
+    public static synchronized Lines get() {
         if (instance == null) instance = new Lines();
         return instance;
     }
@@ -40,6 +42,11 @@ final class Lines {
             flatten("", o, pools);
         } catch (Exception e) {
             Awaken.LOG.error("[citizens] cannot read {}", RESOURCE, e);
+        }
+        try (InputStream in = Lines.class.getResourceAsStream(VILLAGE)) {
+            if (in != null) flatten("village", JsonParser.parseString(new String(in.readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject(), pools);
+        } catch (Exception e) {
+            Awaken.LOG.error("[citizens] cannot read {}", VILLAGE, e);
         }
     }
 
@@ -70,7 +77,7 @@ final class Lines {
     }
 
     /** A seeded line from the pools that fits this hour ("" when none). */
-    String pick(long seed, int tod, String... keys) {
+    public String pick(long seed, int tod, String... keys) {
         char part = part(tod);
         int total = 0;
         for (String k : keys) for (String s : pool(k)) if (fits(s, part)) total++;
@@ -93,7 +100,7 @@ final class Lines {
         return s.length() >= 3 && s.charAt(0) == '[' && s.charAt(2) == ']' ? s.substring(3) : s;
     }
 
-    static String fill(String line, String name, String district, String gate, int hour) {
+    public static String fill(String line, String name, String district, String gate, int hour) {
         return line.replace("{name}", name).replace("{district}", district).replace("{gate}", gate)
                 .replace("{hour}", Integer.toString(hour));
     }

@@ -131,7 +131,8 @@ public final class NowClient {
         still = moved ? 0 : still + 1;
         var top = top();
         var dim = pin != null ? pinDimension : current.dimension();
-        if (top.isEmpty() || top.get().where().isEmpty() || mc.gui.screen() != null || !p.level().dimension().identifier().equals(dim)) return;
+        if (top.isEmpty() || top.get().where().isEmpty() || ownsWay(top.get().id()) || mc.gui.screen() != null
+                || !p.level().dimension().identifier().equals(dim)) return;
         BlockPos at = top.get().where().get();
         double dx = at.getX() + 0.5 - p.getX(), dz = at.getZ() + 0.5 - p.getZ(), dist = Math.sqrt(dx * dx + dz * dz);
         if (dist < 12 || ticks - lastThread < THREAD_EVERY) return;
@@ -166,8 +167,27 @@ public final class NowClient {
 
     /** " ↗ 40 m" for a suggestion with a place in the player's dimension; empty otherwise. */
     public static Optional<String> compass(NowHooks.Suggestion s) {
-        if (s.where().isEmpty()) return Optional.empty();
+        if (s.where().isEmpty() || ownsWay(s.id())) return Optional.empty();
         return compass(s.where().get(), s == pin ? pinDimension : current.dimension());
+    }
+
+    /** Ids (prefixes) of suggestions that show their own way: no straight thread, no compass after their text. */
+    private static volatile String[] ownWay = new String[0];
+
+    /**
+     * A suggestion whose text already says the way and whose module draws its own thread (the way home underground,
+     * SPEC §28.5: "Surface ↑ 34 · NE 60", its thread along the path you came by): the straight thread and the compass
+     * leave it alone.
+     */
+    public static synchronized void ownWay(String idPrefix) {
+        String[] next = java.util.Arrays.copyOf(ownWay, ownWay.length + 1);
+        next[ownWay.length] = idPrefix;
+        ownWay = next;
+    }
+
+    static boolean ownsWay(String id) {
+        for (String p : ownWay) if (id.startsWith(p)) return true;
+        return false;
     }
 
     /** " ↗ 40 m" toward {@code at}, when the player stands in {@code dimension} (the Horizon line uses it too). */

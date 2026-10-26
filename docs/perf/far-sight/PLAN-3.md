@@ -1,4 +1,4 @@
-# Far Sight 3: within a pixel (plan for Euan's approval, 2026-10-26)
+# Far Sight 3: within a pixel (approved in full by Euan, 2026-10-26: "Go with all recommendations")
 
 Page: PLAN-3.html (published as an artifact). Every far shape should stay within about a pixel of the real thing, so
 loading it in changes nothing you can see. Carillon first: the whole city drawn from its real blocks, at any render

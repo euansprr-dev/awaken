@@ -108,13 +108,15 @@ public enum Model {
     WICKLING("", Move.GROUND, 0.5F, 0.35F, Voice.LIZARD),
     DRIP_LURKER("", Move.GROUND, 0.8F, 1.1F, Voice.SPIDER),
     HUSHLING("", Move.GROUND, 0.6F, 0.75F, Voice.LISTENER),
-    THOUSANDFOOT("", Move.GROUND, 2.0F, 1.1F, Voice.SPIDER);
+    THOUSANDFOOT("", Move.GROUND, 2.0F, 1.1F, Voice.SPIDER),
+    // W5 (Between the Gates): the Deep grown through the rock at a seep's heart; rooted, it never walks (mobs.entity.SeepHeart)
+    SEEP_HEART("", Move.GROUND, 2.0F, 2.6F, Voice.WARDEN);
 
     /** Bodies drawn by a hero rig (mobs.client.anim.HeroRenderer). */
     public boolean hero() {
         return switch (this) {
             case BRIAR_SOW, DUNE_WYRM, OLD_ANTLER, MIRE_MOTHER, PLUMED_COIL, WEAVER_QUEEN, EMPRESS_MOTH, STONEHORN, MYCELORD, OWL, FIREFLY -> true;
-            case GLIMMERFIN, BROOK_OTTER, BREATHBELL, TIDESTEED, LANTERN_MAW, CHIME_CRICKET, WICKLING, DRIP_LURKER, HUSHLING, THOUSANDFOOT -> true;
+            case GLIMMERFIN, BROOK_OTTER, BREATHBELL, TIDESTEED, LANTERN_MAW, CHIME_CRICKET, WICKLING, DRIP_LURKER, HUSHLING, THOUSANDFOOT, SEEP_HEART -> true;
             default -> false;
         };
     }
@@ -125,7 +127,7 @@ public enum Model {
     /** P3 bodies drawn by mobs.client.anim.WildRenderer (a hero rig with swim pitch and hold poses). */
     public boolean wild() {
         return switch (this) {
-            case GLIMMERFIN, BROOK_OTTER, BREATHBELL, TIDESTEED, LANTERN_MAW, CHIME_CRICKET, WICKLING, DRIP_LURKER, HUSHLING, THOUSANDFOOT -> true;
+            case GLIMMERFIN, BROOK_OTTER, BREATHBELL, TIDESTEED, LANTERN_MAW, CHIME_CRICKET, WICKLING, DRIP_LURKER, HUSHLING, THOUSANDFOOT, SEEP_HEART -> true;
             default -> false;
         };
     }

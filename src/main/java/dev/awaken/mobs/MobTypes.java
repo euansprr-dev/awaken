@@ -61,6 +61,10 @@ public final class MobTypes {
     public static final DeferredHolder<EntityType<?>, EntityType<AwBolt>> BOLT = ENTITIES.registerEntityType("mob_bolt", AwBolt::new, MobCategory.MISC,
             b -> b.sized(0.4F, 0.4F).clientTrackingRange(4).updateInterval(10).noLootTable());
 
+    /** The seep heart's burst of roots out of the floor (a look, no creature): mobs.client.SeepRootRenderer draws it. */
+    public static final DeferredHolder<EntityType<?>, EntityType<dev.awaken.mobs.entity.SeepRoot>> SEEP_ROOT = ENTITIES.registerEntityType("seep_root",
+            dev.awaken.mobs.entity.SeepRoot::new, MobCategory.MISC, b -> b.sized(0.9F, 1.2F).clientTrackingRange(6).updateInterval(20).noLootTable().noSave().noSummon());
+
     private static final Map<String, DeferredHolder<EntityType<?>, ? extends EntityType<? extends AwakenMob>>> TYPES = new LinkedHashMap<>();
     private static final Map<String, DeferredItem<SpawnEggItem>> EGGS = new LinkedHashMap<>();
     private static final Map<String, DeferredItem<Item>> PARTS = new LinkedHashMap<>();
@@ -71,8 +75,11 @@ public final class MobTypes {
             DeferredHolder<EntityType<?>, ? extends EntityType<? extends AwakenMob>> holder;
             if (d.isFauna()) {
                 // The Awakened layer's overworld creatures: their own spawn category and cap.
-                var p3 = dev.awaken.mobs.entity.Fauna3Kinds.register(ENTITIES, d, MobTypes::configureFauna); // P3: water, caves, mounts
-                if (p3 != null) {
+                var p3 = d.model == dev.awaken.mobs.def.Model.SEEP_HEART ? null
+                        : dev.awaken.mobs.entity.Fauna3Kinds.register(ENTITIES, d, MobTypes::configureFauna); // P3: water, caves, mounts
+                if (d.model == dev.awaken.mobs.def.Model.SEEP_HEART) { // W5: placed at a seep's socket by the world
+                    holder = ENTITIES.registerEntityType(d.id, dev.awaken.mobs.entity.SeepHeart::new, FAUNA, b -> configureFauna(b, d));
+                } else if (p3 != null) {
                     holder = p3;
                 } else if (d.fauna == FaunaRole.BEAST) {
                     holder = ENTITIES.registerEntityType(d.id, NamedBeast::new, FAUNA, b -> configureFauna(b, d));

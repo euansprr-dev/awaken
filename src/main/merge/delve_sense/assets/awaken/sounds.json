@@ -1,0 +1,166 @@
+{
+  "delve.cave.drip": {
+    "subtitle": "subtitles.awaken.delve.cave.drip",
+    "sounds": [
+      {
+        "name": "awaken:amb_cave_drip_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:amb_cave_drip_2",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:amb_cave_drip_3",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:amb_cave_drip_4",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:amb_cave_drip_5",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:amb_cave_drip_6",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "delve.cave.drip_pool": {
+    "subtitle": "subtitles.awaken.delve.cave.drip_pool",
+    "sounds": [
+      {
+        "name": "awaken:amb_cave_drip_pool_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:amb_cave_drip_pool_2",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:amb_cave_drip_pool_3",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:amb_cave_drip_pool_4",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "delve.cave.drip_acid": {
+    "subtitle": "subtitles.awaken.delve.cave.drip_acid",
+    "sounds": [
+      {
+        "name": "awaken:amb_cave_drip_acid_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:amb_cave_drip_acid_2",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:amb_cave_drip_acid_3",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "delve.cave.settle": {
+    "subtitle": "subtitles.awaken.delve.cave.settle",
+    "sounds": [
+      {
+        "name": "awaken:amb_cave_settle_1",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "awaken:amb_cave_settle_2",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "awaken:amb_cave_settle_3",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "awaken:amb_cave_settle_4",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "delve.cave.far_water": {
+    "subtitle": "subtitles.awaken.delve.cave.far_water",
+    "sounds": [
+      {
+        "name": "awaken:amb_cave_far_water",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "delve.cave.breath": {
+    "subtitle": "subtitles.awaken.delve.cave.breath",
+    "sounds": [
+      {
+        "name": "awaken:amb_cave_breath",
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "delve.cave.sulfur_vent": {
+    "subtitle": "subtitles.awaken.delve.cave.sulfur_vent",
+    "sounds": [
+      {
+        "name": "awaken:amb_cave_sulfur_vent_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:amb_cave_sulfur_vent_2",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:amb_cave_sulfur_vent_3",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "delve.cave.sulfur_bubble": {
+    "subtitle": "subtitles.awaken.delve.cave.sulfur_bubble",
+    "sounds": [
+      {
+        "name": "awaken:amb_cave_sulfur_bubble_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:amb_cave_sulfur_bubble_2",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:amb_cave_sulfur_bubble_3",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:amb_cave_sulfur_bubble_4",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "delve.deep.hum": {
+    "subtitle": "subtitles.awaken.delve.deep.hum",
+    "sounds": [
+      {
+        "name": "awaken:delve_deep_hum",
+        "attenuation_distance": 16,
+        "stream": true
+      }
+    ]
+  },
+  "delve.deep.seep": {
+    "subtitle": "subtitles.awaken.delve.deep.seep",
+    "sounds": [
+      {
+        "name": "awaken:delve_deep_seep",
+        "attenuation_distance": 16,
+        "stream": true
+      }
+    ]
+  }
+}

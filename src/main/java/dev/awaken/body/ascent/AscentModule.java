@@ -95,5 +95,6 @@ public final class AscentModule {
         r.playToClient(AscentPayloads.Record.TYPE, AscentPayloads.Record.STREAM_CODEC);
         r.playToClient(AscentPayloads.Stop.TYPE, AscentPayloads.Stop.STREAM_CODEC);
         r.playToClient(AscentPayloads.Lanes.TYPE, AscentPayloads.Lanes.STREAM_CODEC);
+        r.playToClient(AscentPayloads.Kit.TYPE, AscentPayloads.Kit.STREAM_CODEC);
     }
 }

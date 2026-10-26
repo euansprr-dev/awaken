@@ -67,6 +67,16 @@ final class AscentCommands {
                                             com.mojang.brigadier.arguments.LongArgumentType.getLong(c, "seed")))))));
             ascent.then(Commands.literal("windway").executes(c -> windwayInfo(c.getSource()))
                     .then(Commands.literal("goto").executes(c -> windwayGoto(c.getSource()))));
+            // the rappel (SPEC §28.5): a shaft round you with a side passage, you on a line at its lip (tours); fittings set
+            // straight onto your rope (tours: the iron line's steel, the Deepglass line's smooth run)
+            ascent.then(Commands.literal("rappel")
+                    .then(Commands.literal("stage").executes(c -> rappelStage(c.getSource(), "none"))
+                            .then(Commands.argument("line", StringArgumentType.word())
+                                    .suggests((c, b) -> SharedSuggestionProvider.suggest(LINES, b))
+                                    .executes(c -> rappelStage(c.getSource(), StringArgumentType.getString(c, "line")))))
+                    .then(Commands.literal("fit").then(Commands.argument("what", StringArgumentType.word())
+                            .suggests((c, b) -> SharedSuggestionProvider.suggest(FITS, b))
+                            .executes(c -> rappelFit(c.getSource(), StringArgumentType.getString(c, "what"))))));
             ascent.then(Commands.literal("pilot").then(Commands.argument("line", StringArgumentType.greedyString())
                     .executes(c -> {
                         ServerPlayer p = c.getSource().getPlayerOrException();
@@ -75,6 +85,40 @@ final class AscentCommands {
                     })));
             root.then(ascent);
         });
+    }
+
+    private static final String[] LINES = {"none", "iron", "deepglass"}, FITS = {"iron", "gold", "deepglass", "clear"};
+
+    private static int lineOf(String s) {
+        return switch (s) {
+            case "iron" -> RopeKit.LINE_IRON;
+            case "deepglass" -> RopeKit.LINE_DEEPGLASS;
+            default -> RopeKit.LINE_NONE;
+        };
+    }
+
+    private static int rappelStage(CommandSourceStack src, String line) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        double[] a = RappelStage.build(p, lineOf(line));
+        src.sendSuccess(() -> Component.literal(String.format(java.util.Locale.ROOT,
+                "Rappel stage: a %d-deep shaft, the passage %d under the lip. Hold Left Alt (the line), Shift with Space to pay it out, "
+                        + "Space again with your feet on the wall to kick off it, let go of Left Alt by the passage to drop in. Anchor %.1f %.1f %.1f.",
+                RappelStage.DEPTH, RappelStage.PASSAGE, a[0], a[1], a[2])).withStyle(ChatFormatting.AQUA), false);
+        return 1;
+    }
+
+    private static int rappelFit(CommandSourceStack src, String what) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        RopeKit kit = p.getData(AscentContent.ROPE_KIT);
+        RopeKit next = switch (what) {
+            case "gold" -> kit.withReel(RopeKit.REEL_GOLD);
+            case "clear" -> RopeKit.EMPTY;
+            default -> kit.withLine(lineOf(what));
+        };
+        p.setData(AscentContent.ROPE_KIT, next);
+        AscentServer.syncKit(p, !what.equals("clear"));
+        src.sendSuccess(() -> Component.literal("Rope kit: line " + next.line() + ", reel " + next.reel()).withStyle(ChatFormatting.AQUA), false);
+        return 1;
     }
 
     private static int show(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {

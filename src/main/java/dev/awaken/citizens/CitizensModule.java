@@ -69,6 +69,7 @@ public final class CitizensModule {
         CitizensTests.register();
         CityLifeTests.register();
         SettlementTests.register();
+        VillageDayTests.register();
     }
 
     /** A Carillon citizen's stable id for other modules (CitizenHooks.witnesses). */
@@ -138,6 +139,15 @@ public final class CitizensModule {
         if (c.data.role[b.rec] == Roles.TRAPPED && c.events.rescue(p, b.blockPosition())) {
             e.setCanceled(true);
             return;
+        }
+        // (SPEC §28.6) in a village, its people answer first: a trader's goods, the inn's rooms, the notice's news
+        if (!c.site.carillon() && c.roster.isCitizen(b.rec) && c.data.role[b.rec] == 0) {
+            for (Settlements.Talk t : Settlements.talkers()) {
+                if (t.talk(p, c, b.rec)) {
+                    e.setCanceled(true);
+                    return;
+                }
+            }
         }
         // a named citizen (Kestrel, Bram, Oren, Mira, Teodor, Sun) answers a Wayfarer chain first; then their own words
         String who = c.roster.named[b.rec];

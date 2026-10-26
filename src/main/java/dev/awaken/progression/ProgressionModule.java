@@ -120,6 +120,7 @@ public final class ProgressionModule {
         });
         ProgressionNow.register();
         PromiseKeeper.init(); // the locks you met, and the call back when you hold their key (SPEC §27)
+        Checklist.init(); // the current task, top right (SPEC §27.10)
         // "Show me" on a card (a climb site's first refusal): the band opens (SPEC §27)
         Signal.onAction(Progression.BAND_ACTION, (p, action, yes) -> {
             if (yes) Progression.openBand(p, action.endsWith(":ascent") ? Progression.BAND_PAGE_ASCENT : 0);

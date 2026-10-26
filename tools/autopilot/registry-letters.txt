@@ -1,0 +1,45 @@
+# The Registry's last beat (SPEC §27.6, Euan 2026-10-26): Bram says what a hunter is for, then holds out letters for
+# Ilse and you take them from his hand the way you took the band; the opening ends and the errand's first lines show.
+# Run: tools/tour-ci.sh tools/autopilot/registry-letters.txt 1500 PACK=perf,world TECTONIC=awakened
+world registryLetters survival 20261024
+waitworld
+gui 0
+window 1440 900
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+hud on
+camera first
+cmd clear @s awaken:ilse_letters
+wait 20
+# into the Registry once to load it (the runner's client stalls on the way in), then the beat again from its start
+cmd awaken opening beat letters
+wait 300
+cmd clear @s awaken:ilse_letters
+cmd awaken opening beat letters
+wait 70
+shot letters_1_hunters_job
+wait 110
+shot letters_2_offer
+wait 30
+shotnow letters_3_prompt
+cmd awaken ascent pilot use
+wait 8
+shotnow letters_4_reach
+wait 12
+shotnow letters_4_bring
+wait 30
+shot letters_5_in_hand
+wait 60
+shot letters_6_good_luck
+wait 200
+shot letters_7_now
+info
+quit

@@ -59,7 +59,21 @@ public final class OpeningCamera {
         default boolean hideBody(double camDistSq) {
             return false;
         }
+
+        /** Holding jump for a second skips it ("Hold Space to skip" shows); the sky shot keeps its own rule. */
+        default boolean skippable() {
+            return false;
+        }
+
+        /** Jump was held: by default the shot ends as a skip. */
+        default void skip() {
+            finish("skip");
+        }
     }
+
+    /** Holding jump this long skips a skippable shot. */
+    static final int SKIP_HOLD = 20;
+    private static int jumpHeld;
 
     private static @Nullable Cam cam;
     private static @Nullable Shot shot;
@@ -186,6 +200,12 @@ public final class OpeningCamera {
             // F5 mid-shot would orbit the camera entity
             if (!mc.options.getCameraType().isFirstPerson()) mc.options.setCameraType(CameraType.FIRST_PERSON);
             age++;
+            jumpHeld = s.skippable() && mc.options.keyJump.isDown() ? jumpHeld + 1 : 0;
+            if (jumpHeld >= SKIP_HOLD) {
+                jumpHeld = 0;
+                s.skip();
+                if (shot != s) return;
+            }
             s.tick(age);
             if (shot == s && s.length() >= 0 && age >= s.length()) finish("done");
         } catch (RuntimeException e) {

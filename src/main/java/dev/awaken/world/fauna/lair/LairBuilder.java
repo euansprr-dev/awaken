@@ -49,6 +49,11 @@ public final class LairBuilder {
 
         /** {@code state} from y downwards until something solid, at most {@code depth} blocks (foundations). */
         void fillDown(int x, int y, int z, BlockState state, int depth);
+
+        /** W5: natural cave air the lair opens into, relative to its centre (x, y, z), or null (PLAN 8.2, joined lairs). */
+        default int @org.jspecify.annotations.Nullable [] joint() {
+            return null;
+        }
     }
 
     /** The blueprint's version, saved on each piece (1 = before the structures redesign). */

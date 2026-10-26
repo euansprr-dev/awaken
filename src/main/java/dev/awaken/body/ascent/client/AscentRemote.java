@@ -19,6 +19,9 @@ public final class AscentRemote {
         AscentState state = AscentState.NONE;
         double ax, ay, az;
         int since;
+        /** The fittings on their rope (RopeKit.bits), and the hand's distance from the anchor last tick (winding in?). */
+        int kit;
+        double ropeLen = -1, ropeLenO = -1;
     }
 
     static final Slot[] SLOTS = new Slot[32];
@@ -61,7 +64,14 @@ public final class AscentRemote {
         s.ay = msg.y();
         s.az = msg.z();
         s.since = AscentMoves.ticks;
+        s.kit = msg.kit();
+        s.ropeLen = s.ropeLenO = -1;
         AscentAnims.play(msg.entityId(), st, was);
+    }
+
+    /** Someone's rope shortening by more than a little a tick: they're winding it in (their gold reel shows). */
+    static boolean winding(Slot s) {
+        return s.ropeLen >= 0 && s.ropeLenO >= 0 && s.ropeLenO - s.ropeLen > 0.12;
     }
 
     static void event(AscentPayloads.SeenEvent msg) {
@@ -102,6 +112,17 @@ public final class AscentRemote {
                 else SovereignClient.seen(e, false);
             }
             case AscentPayloads.EV_JUDGEMENT -> SovereignClient.judgement(e, msg.speed(), e == mc.player);
+            case AscentPayloads.EV_RAPPEL_KICK, AscentPayloads.EV_RAPPEL_PLANT -> {
+                boolean kick = msg.what() == AscentPayloads.EV_RAPPEL_KICK;
+                AscentSounds.local(e, kick ? AscentContent.RAPPEL_KICK.get() : AscentContent.RAPPEL_PLANT.get(), kick ? 0.75F : 0.5F, 1F);
+                if (kick) AscentAnims.kick(e.getId());
+                // the rope runs down their wall: grit off it at their feet
+                Slot s = of(e.getId());
+                if (s != null) {
+                    double nx = e.getX() - s.ax, nz = e.getZ() - s.az, nl = Math.sqrt(nx * nx + nz * nz);
+                    if (nl > 0.05) AscentFx.grit(e, e.getX() - nx / nl * 0.45, e.getY() + 0.35, e.getZ() - nz / nl * 0.45, nx / nl, nz / nl, kick ? 8 : 4);
+                }
+            }
             case AscentPayloads.EV_REMEMBER -> {
                 // someone's body remembering: the swell, light rising round them, their wings unfolding once
                 AscentSounds.local(e, AscentContent.REMEMBER.get(), 0.8F, 1F);
@@ -138,7 +159,15 @@ public final class AscentRemote {
         for (Slot s : SLOTS) {
             if (s.entity < 0) continue;
             Entity e = mc.level == null ? null : mc.level.getEntity(s.entity);
-            if (e == null || e.isRemoved()) s.entity = -1;
+            if (e == null || e.isRemoved()) {
+                s.entity = -1;
+                continue;
+            }
+            if (s.state.rope) {
+                double dx = e.getX() - s.ax, dy = e.getY() + dev.awaken.body.ascent.AscentRules.HAND_HEIGHT - s.ay, dz = e.getZ() - s.az;
+                s.ropeLenO = s.ropeLen;
+                s.ropeLen = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            }
         }
         for (int i = 0; i < REMEMBERING.length; i++) {
             if (REMEMBERING[i] < 0) continue;

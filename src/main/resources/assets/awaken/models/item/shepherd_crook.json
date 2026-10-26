@@ -1,0 +1,42 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "awaken:item/shepherd_crook"
+  },
+  "display": {
+    "thirdperson_righthand": {
+      "rotation": [
+        0,
+        -90,
+        55
+      ],
+      "translation": [
+        0,
+        6.2,
+        0.5
+      ],
+      "scale": [
+        1.785,
+        1.785,
+        1.785
+      ]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [
+        0,
+        90,
+        -55
+      ],
+      "translation": [
+        0,
+        6.2,
+        0.5
+      ],
+      "scale": [
+        1.785,
+        1.785,
+        1.785
+      ]
+    }
+  }
+}

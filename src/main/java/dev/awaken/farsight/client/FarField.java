@@ -216,6 +216,8 @@ final class FarField implements AutoCloseable {
     }
 
     private int frame;
+    /** Where the camera will be in a moment, less where it is (blocks): the queue ranks patches from there. */
+    double leadX, leadZ;
 
     /**
      * Whether the next finer ring draws all of this patch: inside its window, clear of the outer 16 cells where it eases
@@ -237,9 +239,10 @@ final class FarField implements AutoCloseable {
      * camera, nearest first: the near far land is the most seen, and with the coarser rings first it waited behind every
      * patch they queued as the camera moved (in the opening's flight ring 0 never arrived).
      */
-    private static float priority(int ring, int px, int pz, double camX, double camZ) {
+    private float priority(int ring, int px, int pz, double camX, double camZ) {
         int pb = Rings.patchBlocks(ring);
-        double dx = (px + 0.5) * pb - camX, dz = (pz + 0.5) * pb - camZ;
+        // from where the camera is heading (FarSightClient's lead), so in fast flight the land ahead comes first
+        double dx = (px + 0.5) * pb - (camX + leadX), dz = (pz + 0.5) * pb - (camZ + leadZ);
         float blocks = (float) Math.sqrt(dx * dx + dz * dz);
         return (ring == Rings.RINGS - 1 ? 0f : 1.0e6f) + blocks;
     }

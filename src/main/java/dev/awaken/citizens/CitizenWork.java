@@ -545,7 +545,8 @@ final class CitizenWork implements Ledger.Work {
     private void ringHour(long now, int tod) {
         int hour = (6 + tod / 1000) % 24;
         int strokes = hour % 12 == 0 ? 12 : hour % 12;
-        long wait = hour == 6 || hour == 12 || hour == 18 ? AFTER_TUNE : 0;
+        // (Carillon waits for the carillon's tune at dawn, noon and dusk; a village bell has none)
+        long wait = c.site.carillon() && (hour == 6 || hour == 12 || hour == 18) ? AFTER_TUNE : 0;
         for (int b = 0; b < r.bells.size(); b++) {
             if (!ringerAt(b)) continue;
             boolean choir = "choir".equals(r.bells.get(b).landmark());
@@ -594,8 +595,13 @@ final class CitizenWork implements Ledger.Work {
                     if (level.getBlockEntity(pos) instanceof BellBlockEntity be) be.onHit(Direction.from2DDataValue((int) (p[2] & 3)));
                     boolean choir = "choir".equals(r.bells.get(b).landmark());
                     float pitch = alarm ? 1.15f : choir ? 0.84f : 0.92f + 0.05f * (b % 4);
-                    level.playSound(null, pos, alarm ? CitizensContent.BELL_ALARM.get() : choir ? CitizensContent.BELL_HOUR.get()
-                            : CitizensContent.BELL_DISTRICT.get(), SoundSource.AMBIENT, choir ? 6f : 4f, pitch);
+                    if (!c.site.carillon() && !alarm) {
+                        // (SPEC §28.6) a village's bell is Minecraft's own, heard across the fields
+                        level.playSound(null, pos, net.minecraft.sounds.SoundEvents.BELL_BLOCK, SoundSource.AMBIENT, 3.5f, 0.94f + 0.03f * (b % 3));
+                    } else {
+                        level.playSound(null, pos, alarm ? CitizensContent.BELL_ALARM.get() : choir ? CitizensContent.BELL_HOUR.get()
+                                : CitizensContent.BELL_DISTRICT.get(), SoundSource.AMBIENT, choir ? 6f : 4f, pitch);
+                    }
                     strokes++;
                 }
             }
@@ -803,12 +809,19 @@ final class CitizenWork implements Ledger.Work {
      * added to whatever the player's client has (Carillon's list replaces; this never does).
      */
     void sendLamps(ServerPlayer p) {
-        if (c.site.carillon() || lampHead.length == 0) return;
-        long[] pa = new long[lampHead.length];
-        byte[] ka = new byte[lampHead.length];
-        for (int k = 0; k < pa.length; k++) {
+        // (SPEC §28.6) and its chimneys and the places that sound, from what its builder laid out
+        java.util.List<int[]> em = c.site.emitters();
+        if (c.site.carillon() || lampHead.length + em.size() == 0) return;
+        long[] pa = new long[lampHead.length + em.size()];
+        byte[] ka = new byte[pa.length];
+        for (int k = 0; k < lampHead.length; k++) {
             pa[k] = lampHead[k].asLong();
             ka[k] = 5;
+        }
+        for (int k = 0; k < em.size(); k++) {
+            int[] e = em.get(k);
+            pa[lampHead.length + k] = BlockPos.asLong(cx + e[0], sy + e[1], cz + e[2]);
+            ka[lampHead.length + k] = (byte) e[3];
         }
         CitizensNet.emitters(java.util.List.of(p), false, pa, ka);
     }
@@ -1026,6 +1039,49 @@ final class CitizenWork implements Ledger.Work {
                     } else {
                         act = (i % 4) == 0 ? Act.LOOK_AROUND : (i % 4) == 1 ? Act.HANDS_BEHIND : Act.ARMS_CROSSED;
                     }
+                }
+            }
+        }
+        // (SPEC §28.6) the villages' trades: the tool on the shoulder walking out, the work at their place, the hunter's
+        // kill on its pole walking home at dusk
+        if (!hurt && job >= Roster.FARMER) {
+            boolean walking = st == WALK, spell = Math.floorMod((now + i * 389L) / 360, 3L) != 0;
+            switch (job) {
+                case Roster.FARMER -> {
+                    main = Props.HOE;
+                    if (!walking && pk == P_STAND) act = spell ? Act.HAMMER : Act.LOOK_AROUND;
+                }
+                case Roster.WOODCUTTER -> {
+                    main = Props.AXE;
+                    if (!walking && pk == P_STAND) act = spell ? Act.HAMMER : Act.ARMS_CROSSED;
+                }
+                case Roster.MINER -> main = Props.PICK;
+                case Roster.FISHER -> {
+                    if (walking || pk != P_NET) main = Props.ROD;
+                    else if (!spell) {
+                        act = Act.LEAN;
+                        main = Props.ROD;
+                    }
+                }
+                case Roster.HUNTER -> main = walking && (tod >= 10000 || tod < 600) ? Props.CARCASS : Props.BOW;
+                case Roster.SHEPHERD -> {
+                    main = Props.CROOK;
+                    if (!walking && pk == P_STAND) act = spell ? Act.LEAN : Act.LOOK_AROUND;
+                }
+                case Roster.CARTER -> {
+                    act = walking ? Act.CARRY_BACK : Act.SET_DOWN;
+                    crate = true;
+                }
+                case Roster.ELDER -> {
+                    if (walking) main = Props.CANE;
+                }
+                case Roster.SCRIBE -> {
+                    if (!walking && pk == P_STAND) {
+                        act = Act.READ;
+                        main = Props.BOOK;
+                    } else off = Props.BOOK;
+                }
+                default -> {
                 }
             }
         }

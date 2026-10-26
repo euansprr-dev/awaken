@@ -174,6 +174,10 @@ public final class HearthService {
             sp.sendOverlayMessage(Component.literal("The city keeps its own ground. Raise your Anchor out past the walls."));
             return false;
         }
+        if (dev.awaken.village.api.Villages.reserved(level, pos, 8)) {
+            sp.sendOverlayMessage(Component.literal("People live here. Raise your Anchor out past the last fence."));
+            return false;
+        }
         HearthData d = data(level.getServer());
         Optional<HearthRecord> own = d.of(sp.getUUID());
         if (own.isPresent()) {

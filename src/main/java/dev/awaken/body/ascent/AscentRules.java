@@ -304,6 +304,141 @@ public final class AscentRules {
         return false;
     }
 
+    // ---- the rappel and the rope's fittings (SPEC §28.5) -----------------------------------------------------------
+
+    /** An iron line (and the Deepglass line, which keeps it) lengthens the rope this much. */
+    public static final double LINE_REACH = 6;
+    /** The gold reel winds this many times faster: reeling in, and the rope's fit as it bites. */
+    public static final double GOLD_REEL = 1.5;
+    /**
+     * Without the Deepglass line the rope pays out in bites: half a block over {@link #BITE}'s three ticks, the last
+     * one slow (the catch: the hand grips again), so about 3.3 blocks a second walking down a wall.
+     */
+    public static final double RAPPEL_BITE = 0.5;
+    private static final double[] BITE = {0.24, 0.21, 0.05};
+    /** With the Deepglass line it runs smooth and a little faster: 4.2 blocks a second. */
+    public static final double RAPPEL_SMOOTH = 0.21;
+    /** The kick off the wall: out from it and a little up; another needs the feet back on the wall and this many ticks. */
+    public static final double KICK_OUT = 0.26, KICK_UP = 0.08;
+    public static final int KICK_COOLDOWN = 8;
+    /**
+     * On the rappel the body leans back to the wall the rope runs down: a pull toward the line under the anchor (per
+     * block off it, each tick) and a little damping, so a bound comes back in about a second at any length of rope (a
+     * bare pendulum on 30 blocks of it would take three).
+     */
+    public static final double RAPPEL_LEAN = 0.02, RAPPEL_DAMP = 0.015;
+    /** The rope pays out to the floor and this little past it (the feet set down), never further. */
+    public static final double RAPPEL_FLOOR_SLACK = 0.3;
+    /**
+     * The server's checks: a length within the reach and this much; paid out no faster than the line's rate times
+     * the tolerance, from a bank of at most {@link #RAPPEL_BANK_TICKS} ticks' worth plus the slack (lag bursts); the
+     * hand within the rope's length of the anchor and this much, plus what the rope could have paid since.
+     */
+    public static final double RAPPEL_LENGTH_TOLERANCE = 1.0, RAPPEL_RATE_TOLERANCE = 1.15, RAPPEL_SLACK = 1.0,
+            RAPPEL_BODY_TOLERANCE = 2.0;
+    public static final int RAPPEL_BANK_TICKS = 30;
+
+    /** Blocks a line adds to the reach (RopeKit.LINE_*: none, iron, Deepglass). */
+    public static double lineReach(int line) {
+        return line == RopeKit.LINE_IRON || line == RopeKit.LINE_DEEPGLASS ? LINE_REACH : 0;
+    }
+
+    /** The rope's longest: its reach, the Tether's mastery, the {@link #ROPE_REACH_PERK} and the line. */
+    public static double reach(int tetherLevel, double perk, int line) {
+        return TETHER_RANGE + MASTERY_REACH * tetherLevel + perk + lineReach(line);
+    }
+
+    /** Reeling in (sneak on a swing), a tick. */
+    public static double reelRate(boolean gold) {
+        return TETHER_REEL * (gold ? GOLD_REEL : 1);
+    }
+
+    /** The rope's fit as it bites (too long to clear the floor), a tick. */
+    public static double fitReelRate(boolean gold) {
+        return TETHER_FIT_REEL * (gold ? GOLD_REEL : 1);
+    }
+
+    /** What a line pays out a tick on average (the bites: half a block in three ticks). */
+    public static double payRate(boolean smooth) {
+        return smooth ? RAPPEL_SMOOTH : RAPPEL_BITE / BITE.length;
+    }
+
+    /** How far into its bite the rope is, {@code paid} blocks into a rappel (0 at a bite's start). */
+    private static double intoBite(double paid) {
+        double into = paid - Math.floor(paid / RAPPEL_BITE + 1e-6) * RAPPEL_BITE;
+        return into < 1e-6 || into > RAPPEL_BITE - 1e-6 ? 0 : into;
+    }
+
+    /** This tick's pay-out, {@code paid} blocks into the rappel: the steady run, or the bite's step. */
+    public static double payStep(double paid, boolean smooth) {
+        if (smooth) return RAPPEL_SMOOTH;
+        double into = intoBite(paid);
+        if (into < BITE[0] * 0.5) return BITE[0];
+        if (into < BITE[0] + BITE[1] * 0.5) return BITE[1];
+        return RAPPEL_BITE - into;
+    }
+
+    /** Whether paying {@code step} now ends a bite (the catch), {@code paid} blocks in. Never for a smooth line. */
+    public static boolean payCatch(double paid, double step, boolean smooth) {
+        return !smooth && step > 0 && intoBite(paid) + step >= RAPPEL_BITE - 1e-6;
+    }
+
+    /**
+     * The longest the rope may be paid out to here: the reach, or the length that lets the feet down onto the floor
+     * under the hand (x, z) and {@link #RAPPEL_FLOOR_SLACK} past it, whichever is less.
+     */
+    public static double payLimit(double reach, double ax, double ay, double az, double hx, double hz, double floor) {
+        double dx = ax - hx, dy = ay - (floor + HAND_HEIGHT), dz = az - hz;
+        return Math.min(reach, Math.sqrt(dx * dx + dy * dy + dz * dz) + RAPPEL_FLOOR_SLACK);
+    }
+
+    /**
+     * Pays {@code pay} of rope out: a taut rope lets the body down along it at that speed (the hand on the rope sets
+     * its outward speed, whatever it was) and is that much longer. Returns the new length.
+     */
+    public static double payOut(Kin k, double ax, double ay, double az, double len, double pay) {
+        if (pay <= 0) return len;
+        double rx = k.x - ax, ry = k.y - ay, rz = k.z - az, r = Math.sqrt(rx * rx + ry * ry + rz * rz);
+        if (r > 1e-6 && r >= len - 0.05) {
+            double ux = rx / r, uy = ry / r, uz = rz / r, out = k.vx * ux + k.vy * uy + k.vz * uz;
+            k.vx += ux * (pay - out);
+            k.vy += uy * (pay - out);
+            k.vz += uz * (pay - out);
+        }
+        return len + pay;
+    }
+
+    /** The rappel's lean: the body drawn back under the anchor, toward the wall the rope runs down, the swing damped. */
+    public static void lean(Kin k, double ax, double az) {
+        k.vx += (ax - k.x) * RAPPEL_LEAN;
+        k.vz += (az - k.z) * RAPPEL_LEAN;
+        k.vx *= 1 - RAPPEL_DAMP;
+        k.vz *= 1 - RAPPEL_DAMP;
+    }
+
+    /** A kick off the wall whose outward normal is (nx, nz): what the body carried into it is gone, then the push. */
+    public static void kick(Kin k, double nx, double nz) {
+        double into = k.vx * nx + k.vz * nz;
+        if (into < 0) {
+            k.vx -= nx * into;
+            k.vz -= nz * into;
+        }
+        k.vx += nx * KICK_OUT;
+        k.vz += nz * KICK_OUT;
+        k.vy += KICK_UP;
+    }
+
+    /** The server's bank of rope a rappel may pay out, {@code ticks} after it was last drawn on: refilled, capped. */
+    public static double payBank(double bank, long ticks, boolean smooth) {
+        double rate = payRate(smooth) * RAPPEL_RATE_TOLERANCE;
+        return Math.min(rate * RAPPEL_BANK_TICKS + RAPPEL_SLACK, bank + rate * Math.max(0, ticks));
+    }
+
+    /** The farthest the hand may be from a rappel's anchor, {@code ticks} after its length {@code len} was heard. */
+    public static double rappelBodyLimit(double len, long ticks, boolean smooth) {
+        return len + RAPPEL_BODY_TOLERANCE + payRate(smooth) * RAPPEL_RATE_TOLERANCE * Math.min(RAPPEL_BANK_TICKS, Math.max(0, ticks));
+    }
+
     /**
      * Straight up (SPEC §17.6): a rope thrown at something more than {@link #ZIP_UP_MIN_RISE} above and nearly overhead
      * (sideways under {@link #ZIP_UP_SLOPE} of the rise) zips up to it; arriving under its underside the body hangs on a

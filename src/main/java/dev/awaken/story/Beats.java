@@ -83,7 +83,9 @@ final class Beats {
         if (!condition || !s.seen.add("line:" + key)) return;
         Prologue.sync(p);
         String line = StoryContent.SIGNAL_LINES.get(key);
-        if (line != null) Signal.toast(p, Component.literal(line));
+        // a quip belongs to its moment: shown then or not at all, never read later in the Journal without its context
+        if (line != null) Signal.send(p, dev.awaken.signal.SignalWindow.builder(dev.awaken.signal.SignalWindow.Kind.NOTICE, Component.literal(line))
+                .presentation(dev.awaken.signal.SignalWindow.Presentation.TOAST).ttl(20 * 5).fleeting().build());
     }
 
     /** Progression "new thing" moments that have their own line. */

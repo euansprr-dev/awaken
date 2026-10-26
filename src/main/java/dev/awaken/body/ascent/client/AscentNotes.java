@@ -35,6 +35,20 @@ final class AscentNotes {
         }
     }
 
+    /**
+     * The fittings changed (SPEC §28.5): a note for what was just fitted ("Iron line fitted · the rope reaches 6
+     * further"), from the kit before and after.
+     */
+    static void fitted(int lineBefore, int reelBefore, int line, int reel) {
+        String what = line != lineBefore ? (line == dev.awaken.body.ascent.RopeKit.LINE_IRON ? "iron_line"
+                : line == dev.awaken.body.ascent.RopeKit.LINE_DEEPGLASS ? "deepglass_line" : null)
+                : reel != reelBefore && reel == dev.awaken.body.ascent.RopeKit.REEL_GOLD ? "gold_reel" : null;
+        if (what == null) return;
+        note = Component.translatable("awaken.ascent.fitted", Component.translatable("item.awaken." + what),
+                Component.translatable("item.awaken." + what + ".gain"));
+        at = clock;
+    }
+
     /** A new longest chain. */
     static void record(int chain) {
         note = Component.translatable("awaken.ascent.record", chain);

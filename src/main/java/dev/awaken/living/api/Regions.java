@@ -61,9 +61,22 @@ public final class Regions {
         // the Deep Tide (new moon): the night's hunters, elites and camps run two levels harder
         if ((role == Role.HUNTER || role == Role.ELITE || role == Role.CAMP) && !HearthHooks.tideCalm(level, pos)) lv += dev.awaken.living.pulse.Pulse.tideExtra(level);
         if (pos.getY() < 0 && level.getBiome(pos).is(Biomes.DEEP_DARK)) lv += DEEP_DARK;
+        for (LevelExtra e : EXTRAS) lv += e.extra(level, pos);
         int calm = hearthCalm(level, pos);
         if (calm > 0) lv = Math.min(lv, calm + Math.max(0, role.offset));
         return Math.max(1, Math.min(RegionMap.MAX_LEVEL, lv));
+    }
+
+    /** A place that is harder than its region (W5: inside a live seep, +5; SPEC §28.5). Keep it cheap: it runs at every spawn. */
+    @FunctionalInterface
+    public interface LevelExtra {
+        int extra(ServerLevel level, BlockPos pos);
+    }
+
+    private static final java.util.List<LevelExtra> EXTRAS = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    public static void addLevelExtra(LevelExtra extra) {
+        EXTRAS.add(extra);
     }
 
     /** The cap a Hearth puts on its land (its household's highest level among players online), or 0 for none. */

@@ -128,9 +128,24 @@ public final class ArmsRules {
      * blow waited in the latency grace; grace: that grace; lockedOut: this raise follows a failed deflect.
      */
     public static Answer guard(Archetype.Guard g, Strikes.Kind kind, int sinceRaise, int held, int grace, boolean lockedOut, boolean inArc) {
+        return guard(g, kind, sinceRaise, held, grace, lockedOut, inArc, false);
+    }
+
+    /**
+     * An untold blow (a creature with no wind-up: it lands the moment it's in reach, a zombie's, a spider's) is deflected
+     * by a guard raised up to {@link #UNTOLD_DEFLECT} ticks earlier than a told one's window allows (Euan 2026-10-26:
+     * "you don't know when it's going to hit you... so it's very hard to time a parry"); a told blow keeps the tight
+     * window, so the skill stays in reading a tell. An untold deflect is worth {@link #UNTOLD_REWARD} of a told one.
+     */
+    public static final int UNTOLD_DEFLECT = 4;
+    public static final float UNTOLD_REWARD = 0.6F;
+
+    public static Answer guard(Archetype.Guard g, Strikes.Kind kind, int sinceRaise, int held, int grace, boolean lockedOut, boolean inArc,
+                               boolean untold) {
         if (!inArc || !kind.blockable()) return Answer.PASS;
         int rel = sinceRaise - held; // ticks between the raise and the blow as the player saw it
-        if (kind.deflectable() && !lockedOut && rel >= -grace && rel < g.deflect()) return Answer.DEFLECT;
+        int window = g.deflect() + (untold ? UNTOLD_DEFLECT : 0);
+        if (kind.deflectable() && !lockedOut && rel >= -grace && rel < window) return Answer.DEFLECT;
         return kind == Strikes.Kind.HEAVY ? Answer.GUARD_BREAK : Answer.BLOCK;
     }
 

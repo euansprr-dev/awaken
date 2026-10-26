@@ -18,7 +18,10 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 import java.util.function.Supplier;
 
-/** The living module's registries: its game rule, attachments and sounds (SPEC §21). Its light is drawn as geometry. */
+/**
+ * The living module's registries: its game rule, attachments, sounds and the Wayfarers' camp's two blocks (SPEC §21,
+ * §27.6). Its light is drawn as geometry.
+ */
 public final class LivingContent {
     private LivingContent() {}
 
@@ -80,6 +83,17 @@ public final class LivingContent {
             ENTITIES.registerEntityType("wayfarer", dev.awaken.living.wayfarer.Wayfarer::new, net.minecraft.world.entity.MobCategory.MISC,
                     b -> b.sized(0.6f, 1.95f).eyeHeight(1.62f).clientTrackingRange(8));
 
+    static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(Awaken.MODID);
+    /** The Wayfarers' camp (SPEC §27.6): a bedroll by the fire, and the pot hung over it. Laid by the camp; no items, no drops. */
+    public static final net.neoforged.neoforge.registries.DeferredBlock<dev.awaken.living.wayfarer.Bedroll> BEDROLL = BLOCKS.registerBlock("wayfarer_bedroll",
+            dev.awaken.living.wayfarer.Bedroll::new, p -> p.mapColor(net.minecraft.world.level.material.MapColor.WOOL)
+                    .sound(net.minecraft.world.level.block.SoundType.WOOL).strength(0.2f).noOcclusion().noLootTable()
+                    .pushReaction(net.minecraft.world.level.material.PushReaction.POPPED));
+    public static final net.neoforged.neoforge.registries.DeferredBlock<dev.awaken.living.wayfarer.CampPot> CAMP_POT = BLOCKS.registerBlock("camp_pot",
+            dev.awaken.living.wayfarer.CampPot::new, p -> p.mapColor(net.minecraft.world.level.material.MapColor.METAL)
+                    .sound(net.minecraft.world.level.block.SoundType.LANTERN).strength(0.5f).noOcclusion().noLootTable()
+                    .pushReaction(net.minecraft.world.level.material.PushReaction.POPPED));
+
     public static final DeferredHolder<SoundEvent, SoundEvent> SCAN = sound("living.scan");
     public static final DeferredHolder<SoundEvent, SoundEvent> CRIT = sound("living.crit");
     public static final DeferredHolder<SoundEvent, SoundEvent> XP_TICK = sound("living.xp_tick");
@@ -104,5 +118,6 @@ public final class LivingContent {
         ATTACHMENTS.register(modBus);
         SOUNDS.register(modBus);
         ENTITIES.register(modBus);
+        BLOCKS.register(modBus);
     }
 }

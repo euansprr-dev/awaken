@@ -1,0 +1,9 @@
+{
+  "type": "awaken:cave_place",
+  "place": "sinkhole",
+  "first": true,
+  "biomes": "#minecraft:is_overworld",
+  "step": "underground_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none"
+}

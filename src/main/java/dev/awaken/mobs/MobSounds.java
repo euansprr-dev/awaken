@@ -31,6 +31,12 @@ public final class MobSounds {
      * come from tools/art/specs/fauna_sounds.py; sounds.json lives in src/main/merge/fauna.
      */
     public static final java.util.List<String> FAUNA_KINDS = java.util.List.of("ambient", "hurt", "death", "step");
+    /**
+     * A creature's voices beyond those (fauna.<id>.<kind> too): the seep heart's heartbeat, the rock groaning as its
+     * roots push through, the roots bursting out, its shards, its pulse and its call to the walls.
+     */
+    public static final java.util.Map<String, java.util.List<String>> EXTRA = java.util.Map.of("seep_heart",
+            java.util.List.of("beat", "rumble", "roots", "shards", "pulse", "call"));
     private static final java.util.Map<String, DeferredHolder<SoundEvent, SoundEvent>> FAUNA = faunaSounds();
 
     private static java.util.Map<String, DeferredHolder<SoundEvent, SoundEvent>> faunaSounds() {
@@ -39,6 +45,7 @@ public final class MobSounds {
             if (!d.isFauna()) continue;
             for (String kind : FAUNA_KINDS) m.put(d.id + "." + kind, sound("fauna." + d.id + "." + kind));
             if (d.fauna == dev.awaken.mobs.def.FaunaRole.BEAST) m.put(d.id + ".roar", sound("fauna." + d.id + ".roar"));
+            for (String kind : EXTRA.getOrDefault(d.id, java.util.List.of())) m.put(d.id + "." + kind, sound("fauna." + d.id + "." + kind));
         }
         return java.util.Map.copyOf(m);
     }

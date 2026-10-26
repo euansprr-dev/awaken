@@ -79,6 +79,10 @@ final class CityTests {
             int[][] at = {{0, -46}, {(int) (240 * Math.cos(Math.toRadians(7.5))), (int) (240 * Math.sin(Math.toRadians(7.5)))},
                     {-72, -10}, {-190, -146}, {-174, -133}, {-58, -26}, {-63, 118}, {0, -238}, {-150, -62}, {0, -150}, {30, 30}};
             for (int[] a : at) samples.add(new long[]{a[0] >> 4, a[1] >> 4});
+            // the commons: the High Gate road, each farmstead, the fields, a hedgerow oak's stretch, the meadow's edge
+            int[][] commons = {{0, -300}, {20, -275}, {270, -20}, {-20, 265}, {185, -205}, {-290, 30}, {185, 195}, {-150, -250},
+                    {8, -290}, {230, 170}, {300, 40}};
+            for (int[] a : commons) samples.add(new long[]{a[0] >> 4, a[1] >> 4});
             for (int i = 0; i < 40; i++) {
                 long hsh = CityPainter.hash(77, i, 5);
                 samples.add(new long[]{Math.floorMod(hsh, 30) - 15, Math.floorMod(hsh >>> 20, 30) - 15});
