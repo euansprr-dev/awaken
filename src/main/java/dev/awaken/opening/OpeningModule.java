@@ -273,7 +273,7 @@ public final class OpeningModule {
                         ServerPlayer p = c.getSource().getPlayerOrException();
                         String b = StringArgumentType.getString(c, "beat");
                         boolean ok = jump(p, b);
-                        c.getSource().sendSuccess(() -> Component.literal(ok ? "Opening beat " + b : "No such beat (sky, run, act2, act3, square, arrival, wake, registry, lens, walk0..walk5, desk)"), false);
+                        c.getSource().sendSuccess(() -> Component.literal(ok ? "Opening beat " + b : "No such beat (sky, run, act2, act3, square, arrival, wake, registry, lens, walk0..walk5, desk, letters)"), false);
                         return ok ? 1 : 0;
                     })));
             opening.then(Commands.literal("reset").requires(AwakenCommands.admin()).executes(c -> {
@@ -379,6 +379,15 @@ public final class OpeningModule {
                 OpeningRegistry.step(p, OpeningRegistry.SIGN);
                 Vec3 to = at.deskStand();
                 p.teleportTo(server.overworld(), to.x, to.y, to.z, java.util.Set.of(), -90F, 30F, true);
+            }
+            case "letters" -> {
+                // the Registry's last beat (tours): Bram says what a hunter is for, then holds out the letters for Ilse
+                Progression.awaken(p);
+                OpeningStage.ensure(server.overworld(), at);
+                if (Story.prologue(p) != Prologue.REGISTRY) OpeningDirector.toRegistry(p);
+                OpeningRegistry.step(p, OpeningRegistry.LETTERS);
+                Vec3 to = at.deskStand();
+                p.teleportTo(server.overworld(), to.x, to.y, to.z, java.util.Set.of(), -90F, 10F, true);
             }
             case "registry", "lens" -> {
                 Progression.awaken(p);
