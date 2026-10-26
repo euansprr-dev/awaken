@@ -5452,12 +5452,12 @@ behaves as before (its `citizens_` and `city_` tests unchanged in what they asse
 - **Also.** Citizens' payloads go through `AwakenNet.send` (a test or fake player is skipped, not thrown at); the hurt
   go home where a settlement has no infirmary; `/awaken citizens settlements` lists them and the pool.
 - **API** (§12): `dev.awaken.citizens.api.Settlements`, `Settlement`, `SettlementSpec`, `RosterSource`, `RosterBuilder`.
-- **Measured** (GameTest: Carillon's plan with 40 bodies round one player at its square at noon, 600 ticks; the old
-  code's probe and this one run side by side at machine load ~19 from other builds): ledger p50 0.014 ms before, 0.021
-  after for Carillon alone and 0.017 with the hamlet beside it (the hamlet's own ledger 0.0009 ms a tick); bodies (40)
-  p50 1.78 ms before, 2.53 after alone and 3.15 with the hamlet (per-body work is the same code; at that load single
-  windows spread 2-5x run to run: an earlier pair read 0.96 at load 9 and 4.67 at load 21). The quiet in-game measure
-  stays with Carillon's next perf tour.
+- **Measured** (GameTest: Carillon's plan with 40 bodies round one player at its square at noon, 600-tick windows, the
+  machine at load 17-19 from other builds): before W0 ledger p50 0.014 / avg 0.066 ms, bodies p50 1.78 / avg 2.70 ms;
+  after, Carillon alone, ledger 0.016 / 0.047, bodies 1.35 / 2.04; with the hamlet beside it, ledger 0.012 / 0.025
+  (the hamlet's own 0.0009 ms a tick), bodies 1.78 / 2.04. Per-body work is the same code; at this load a single window
+  spreads 2-3x run to run (another after-run read bodies p50 2.5). The quiet in-game measure stays with Carillon's next
+  perf tour.
 - **Tests:** `citizens_many_settlements` (the hamlet beside Carillon's engine: shared caps nearest first, come and go,
   sleep and wake, events by tag, both saved and read back; logs the costs), `citizens_save_v1_loads`.
 - **Left for W3:** the village builder on `RosterBuilder` (households from plots, jobs from stations, day templates,
