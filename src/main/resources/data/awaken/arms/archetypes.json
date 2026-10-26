@@ -2580,9 +2580,9 @@
       },
       "moves": {
         "strike_1": {
-          "windup": 1,
+          "windup": 3,
           "active": 2,
-          "recovery": 7,
+          "recovery": 5,
           "cadence": [
             7,
             10
@@ -2935,9 +2935,9 @@
       "late": 5,
       "moves": {
         "strike_1": {
-          "windup": 1,
+          "windup": 2,
           "active": 2,
-          "recovery": 4,
+          "recovery": 3,
           "cadence": [
             4,
             7

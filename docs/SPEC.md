@@ -4533,15 +4533,19 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   where the hand closes, from vanilla's resting hand; for an axe, a glaive or a scythe the side its working edge faces)
   and solved for each weapon from its own mesh, so each is seated in the hand. One scale for all (0.5, the Longsword's;
   the Daggers 0.575 so their blade reads): a spear is as much longer in hand than a longsword as in F5 and a dagger as
-  much shorter, and a long point may leave the view. Longsword up and forward to the left, its flat to the eye
-  (18 left, 52 up); Rapier en garde, the point forward at the target's height (20, 18); Katana two-handed at the
-  middle, the edge down toward the target (10, 36); Spear the shaft across the lower view, gripped part way, the head forward and up
-  (24, 22); Glaive the same with the blade higher, its edge in (18, 34); Scythe the snath up, the blade reaching in
-  across the top (8, 64); War-staff at its middle across the body (58, 28); Greatblade two-handed, raised, near the
-  middle (20, 60); Maul two hands low on the haft, the head up (6, 58); Axe the head up, its bit in (10, 58); Daggers
-  short, the point forward (18, 34); Twinblades at the middle, the blades either way across (62, 34); Chain-blade the
-  head forward on its chain (18, 38); Shieldblade the shield to the front, the blade above it (30, 62); Precursor Arm
-  forward like a drawn arm (14, 24); the Gauntlets keep their worn hold. `python3 tools/art/specs/arms_weapons.py
+  much shorter, and a long point may leave the view. **Edge first** (Euan 2026-10-26: "You're never going to hold an
+  axe on its side like that. You're going to hold the sharp ends downwards, similar to a sword"): the Longsword, Greatblade,
+  Axe, Glaive and Daggers are held as the Katana is, turned a quarter about the length (roll 90), the working side down
+  and toward the foe (`arms_holds.DOWN`), the flat to the side and never to the eye; the Rapier, Chain-blade and
+  Precursor Arm are turned the same, an edge down; the Scythe's blade still reaches in across the top. Longsword up and forward to the left (18 left, 52
+  up); Rapier en garde, the point forward at the target's height (20, 18); Katana two-handed at the middle (10, 36);
+  Spear the shaft across the lower view, gripped part way, the head forward and up (46, 13); Glaive the same with the
+  blade higher (54, 22); Scythe the snath up, the blade reaching in across the top (8, 64); War-staff at its middle
+  across the body (58, 28); Greatblade two-handed, raised, near the middle (20, 60); Maul two hands low on the haft,
+  the head up (6, 58); Axe the head up, its bit down toward the foe (10, 58); Daggers short, the
+  point forward (14, 42); Twinblades at the middle, the blades either way across (62, 34); Chain-blade the head forward
+  on its chain (18, 38); Shieldblade the shield to the front, the blade above it (30, 62); Precursor Arm forward like a
+  drawn arm (14, 24); the Gauntlets keep their worn hold. `python3 tools/art/specs/arms_weapons.py
   holds` rewrites only the holds; the old check that kept every point inside the view (it shrank every style to the
   Longsword's outline) is gone. The swings are baked from these holds (they start and end at rest), and the lab's
   holds sheets (docs/combat/anim-lab/holds-*.png) show each style before, after and in F5.
@@ -4575,7 +4579,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   (the blade, -x), Twinblades (each blade's leading side, so the pair spins tips trailing), the Beastbound Longsword and
   Greatblade (tusk cleavers), the Wildhide skinning knife, the Beastbound tusk (honed on its inside) and the Veilwoven
   talon. A style whose forged (C) weapon is double-edged but has single-edged tiers (Longsword, Greatblade, Daggers)
-  cuts with the side its hold's cut turns in toward the middle, and each single-edged tier is turned so its edge is
+  cuts with the side its hold's cut turns down toward the foe, and each single-edged tier is turned so its edge is
   there: one baked swing cuts with every tier's edge (the wrist turns a backhand over, as a single edge needs). A turn
   can mirror only two of a weapon's three ways, so a single-edged weapon's left-hand hold keeps its length and its
   edge mirrored and shows its other flat (before, the Wildhide twin's off-hand cut led with its back). The scythe is
@@ -4583,7 +4587,9 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   blocks through it on the hit, its inside edge drawn through what it hooked; its blade, at the snath's top, is what
   crosses the target. Every punch lands knuckles first, square to the fist's travel (a jab and a hook palm down, an
   uppercut palm to the face, an overhand driven down); the Gauntlets' shared moves are punches too (riposte and undercut
-  uppercuts, the dodge's cut a hook, the Art a straight, the plunge and execution overhands; their server blows kept).
+  uppercuts, the dodge's cut a hook, the Art a straight, the plunge and execution overhands; their server blows kept;
+  `ArmsClips.OWN_SHARED`: the Gauntlets play their own Slipcut, Undercut and Plunge clips, where every other style shares
+  the Longsword's).
   The bash shoves the shield straight at the foe, its face square to the shove. Every move has a form in its row
   (tools/arms/forms.py writes the shared moves' too, read from their path as the lab always read them), so first and
   third person do the same thing (a spear's Art is a thrust in both).
@@ -4603,8 +4609,9 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   the bent forearm), looking ahead or down, then the least bend. The fighter's hand items are resolved again marked
   with their arm while a move turns them (the player's render-state modifier, last), so only a hand's weapon in third
   person turns, never one in first person, the hotbar or a frame; a left main arm keeps its hold (the keys are
-  right-handed). A single-edged tier on the other side from its style's lead (the Beastbound Longsword and Greatblade,
-  the Wildhide and Veilwoven Daggers) is turned over in its third-person hold. The Gauntlets are worn in third person
+  right-handed). A single-edged tier on the other side from its style's lead (since the edge-first holds, the
+  Beastbound Daggers; before them the Beastbound Longsword and Greatblade and the Wildhide and Veilwoven Daggers) is
+  turned over in its third-person hold. The Gauntlets are worn in third person
   too (`arms_holds.worn_third_person`: the knuckles down the forearm, the back of the hand out, the cuff round the
   forearm, 0.7 scale), never held out in front of the fist, and punch their own clips, each found in the lab (knuckles
   first at the hit, the bent twin 0.8 or more, nothing into the head or body): a jab with the arm level and the body
@@ -4693,9 +4700,14 @@ against it, so a vanilla item plays its designed tempo).
   shortest dodge (5 ticks, 2.2 blocks, recharging in 16) and a Slipcut of 2.8 with an 8-tick window; a blow from
   behind (the striker more than 120° round from where the body faces) lands ×1.8.
 - **Katana** (1.5): a sweeping chain from the draw; the first strike after the blade has rested 2 s (40 ticks since
-  the last move ended) is drawn from the sheath: ×1.7 motion, ×1.8 posture. The deflect window 5 ticks.
+  the last move ended) is drawn from the sheath: ×1.7 motion, ×1.8 posture. The deflect window 5 ticks. Its first
+  strike winds up 3 ticks and recovers 5 (1 and 7 as first built: Euan 2026-10-26, "it starts off low, and then all of a
+  sudden he's already to the right side"; the cut from the right now reads before it lands, the move as long as
+  before). Every style's first strike was checked: each slash winds up 2 ticks or more; only the thrusts and jabs
+  (Rapier, Daggers, Gauntlets), short in travel, keep 1.
 - **Twinblades** (2.0, a double-ended blade): a fast four-strike chain on tight rhythm windows closing on a spin all
-  round, a fifth spinning back with mastery; its Art a whirl.
+  round, a fifth spinning back with mastery; its Art a whirl. Its first strike winds up 2 ticks and recovers 3 (1 and 4
+  as first built: a wide slash in one tick was a blur).
 - **Glaive** (1.0): sweeping arcs of 160° at 3.8 for crowds, a finisher all round, a thrust with mastery.
 - **Scythe** (0.9): wide reaps (150°) that rise and fall, a finisher reaping down across; a spirit struck ×1.6 (it
   cuts the Veil's spirits).
