@@ -388,7 +388,9 @@ public final class Autopilot {
             case "screen" -> {
                 if (arg.trim().equals("close")) mc.gui.setScreen(null);
                 else if (arg.trim().equals("status")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.STATUS));
-                else if (arg.trim().equals("map")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.GATE_MAP));
+                else if (arg.trim().equals("powers")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.POWERS));
+                else if (arg.trim().equals("journal")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.JOURNAL));
+                else if (arg.trim().equals("map")) openMapPage(mc); // the band's Map page is the Atlas table (SPEC §30)
                 else if (arg.trim().equals("codex")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.CODEX));
                 else if (arg.trim().equals("uiprobe")) mc.gui.setScreen(new UiProbeScreen());
                 else if (arg.trim().equals("look")) mc.gui.setScreen(new dev.awaken.compat.client.LookScreen(null));
@@ -406,12 +408,15 @@ public final class Autopilot {
                 else if (arg.trim().startsWith("holo")) {
                     String t = arg.trim().length() > 4 ? arg.trim().substring(4).trim() : "status";
                     var tab = switch (t) {
-                        case "map" -> dev.awaken.progression.client.StatusSections.Tab.GATE_MAP;
+                        case "powers" -> dev.awaken.progression.client.StatusSections.Tab.POWERS;
+                        case "journal" -> dev.awaken.progression.client.StatusSections.Tab.JOURNAL;
+                        case "map" -> dev.awaken.progression.client.StatusSections.Tab.MAP;
                         case "codex" -> dev.awaken.progression.client.StatusSections.Tab.CODEX;
                         case "truths" -> dev.awaken.progression.client.StatusSections.Tab.TRUTHS;
                         default -> dev.awaken.progression.client.StatusSections.Tab.STATUS;
                     };
-                    mc.gui.setScreen(new dev.awaken.holo.client.HoloStatusScreen(tab));
+                    if (tab == dev.awaken.progression.client.StatusSections.Tab.MAP) openMapPage(mc);
+                    else mc.gui.setScreen(new dev.awaken.holo.client.HoloStatusScreen(tab));
                 }
                 else if (arg.trim().equals("experimental")) {
                     // vanilla's own world-creation prompt, as a new world would show it: ExperimentalWarning should answer it
@@ -548,6 +553,14 @@ public final class Autopilot {
         }
         Awaken.LOG.info("[autopilot] {}", line);
         return true;
+    }
+
+    /** The band's Map page: whatever it opens (the Atlas table), as picking it on the rail would. */
+    private static void openMapPage(Minecraft mc) {
+        var action = dev.awaken.progression.client.StatusSections.action(dev.awaken.progression.client.StatusSections.Tab.MAP);
+        mc.gui.setScreen(null);
+        if (action != null) action.open().run();
+        else Awaken.LOG.warn("[autopilot] the Map page opens nothing");
     }
 
     private static final Map<String, KeyMapping> KEYS = Map.of(

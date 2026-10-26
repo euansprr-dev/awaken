@@ -14,9 +14,9 @@ final class SignalSections {
     private SignalSections() {}
 
     static void register() {
-        StatusSections.add(StatusSections.Tab.STATUS, new NowSection());
+        StatusSections.add(StatusSections.Tab.JOURNAL, new NowSection());
         StatusSections.add(StatusSections.Tab.STATUS, new WaitingSection());
-        StatusSections.add(StatusSections.Tab.STATUS, new RecentSection());
+        StatusSections.add(StatusSections.Tab.JOURNAL, new RecentSection());
     }
 
     /** The Now card: up to three things you could do, best first, with a compass for the ones that have a place. */
@@ -42,7 +42,7 @@ final class SignalSections {
     /** Decisions that folded away (or arrived while you were offline), with a button for each answer. */
     static final class WaitingSection extends UiSection {
         public String title() { return "WAITING FOR YOU"; }
-        public int order() { return -20; }
+        public int order() { return 14; } // the Status page, above the Journal
         public boolean visible() { return !SystemHud.pendingChoices().isEmpty(); }
 
         @Override
@@ -72,7 +72,7 @@ final class SignalSections {
         private static final int SHORT = 6;
 
         public String title() { return "RECENT MESSAGES"; }
-        public int order() { return 950; }
+        public int order() { return 800; } // the Journal page, after the log, before Records
         public boolean visible() { return !RecentLog.entries().isEmpty(); }
 
         @Override

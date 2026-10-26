@@ -2,44 +2,55 @@ package dev.awaken.holo.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.awaken.core.client.AwakenKeys;
+import dev.awaken.holo.ui.BandLayout;
 import dev.awaken.holo.ui.HoverTick;
+import dev.awaken.progression.Progression;
 import dev.awaken.progression.client.StatusSections;
+import dev.awaken.progression.client.StatusSections.Tab;
 import dev.awaken.signal.client.Glass;
+import dev.awaken.signal.client.Journal;
 import dev.awaken.signal.client.QuietScreen;
 import dev.awaken.signal.client.Ui;
 import dev.awaken.signal.ui.Rect;
-import dev.awaken.signal.ui.SignalText;
-import dev.awaken.signal.ui.StatusLayout;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 /**
- * The K menu on the wrist (docs/proposals/holo-ui.md §5): the same four tabs and sections as the flat
- * {@code StatusScreen}, laid out by the same {@link StatusLayout} inside a {@link HoloPanel} that unfolds from the
- * forearm band. Every section draws through {@link HoloGraphics}, the {@code Ui} sections and the ones written straight
- * against the vanilla graphics alike. The mouse is a ray into the panel ({@link HoloPanel#pick}); clicks land from
- * 250 ms on. Esc or K closes (K while it opens skips to open); Tab and 1–4 switch tabs. The world keeps running, and
- * toasts wait ({@link QuietScreen}).
+ * The band on the wrist (docs/proposals/holo-ui.md §5; its pages, SPEC §30): a rail of six pages down the panel's wrist
+ * edge (Status, Powers, Journal, Truths, Codex, Map) and the open page's sections beside it, inside a {@link HoloPanel}
+ * that unfolds from the forearm band. Every section draws through {@link HoloGraphics}. The mouse is a ray into the
+ * panel ({@link HoloPanel#pick}); clicks land from 250 ms on. K always opens on Status unless a link names a page. Esc
+ * or K closes (K while it opens skips to open); 1–6 open a page, Tab and Shift+Tab step through them, and a page's own
+ * key (M for the Map) opens it. The Map page is the Atlas table: picking it closes the band and opens the table. The
+ * world keeps running, and toasts wait ({@link QuietScreen}).
  */
 public final class HoloStatusScreen extends Screen implements QuietScreen {
-    /** Panel units: 5 framebuffer pixels per unit at 45% of a 3024-wide screen, so body text is 45 px tall there. */
-    static final int W = 272, H = 228;
-    private static StatusSections.Tab lastTab = StatusSections.Tab.STATUS;
-    private static final int[] SCROLL = new int[StatusSections.Tab.values().length];
-    private static final int SECTION_GAP = 12, SCROLLBAR = StatusLayout.SCROLLBAR;
+    /** Panel units: 5 framebuffer pixels per unit at about half of a 2880- or 3024-wide screen (6 on a 4K one). */
+    static final int W = BandLayout.W, H = BandLayout.H;
+    private static final int[] SCROLL = new int[Tab.values().length];
+    private static final int SECTION_GAP = 12;
+    /** The light of the active page (the System's blue, brighter). */
+    private static final int HOT = 0xC4E6FF;
+
+    /** The pages' icons, 12×12, one panel unit a pixel. */
+    private static final String[][] ICONS = {
+            {".....##.....", "....####....", "....####....", "....####....", ".....##.....", "............", "...######...", "..########..", ".##########.", ".##########.", ".##########.", "............"},
+            {".......###..", "......###...", ".....###....", "....###.....", "...#######..", ".......##...", "......##....", ".....##.....", "....##......", "...##.......", "..##........", "............"},
+            {"............", ".####..####.", "#....##....#", "#.##.##.##.#", "#....##....#", "#.##.##.##.#", "#....##....#", "#.##.##.##.#", "#....##....#", ".####..####.", ".....##.....", "............"},
+            {".....##.....", ".....##.....", "....####....", "....####....", "..########..", "############", "############", "..########..", "....####....", "....####....", ".....##.....", ".....##....."},
+            {"#####..#####", "#...#..#...#", "#.#.#..#.#.#", "#...#..#...#", "#####..#####", "............", "#####..#####", "#...#..#...#", "#.#.#..#...#", "#...#..#...#", "#####..#####", "............"},
+            {"....####....", "...######...", "..###..###..", "..##....##..", "..###..###..", "...######...", "....####....", ".....##.....", ".....##.....", "............", ".##########.", "............"},
+    };
 
     private final HoloPanel panel;
     private final HoloGraphics g = HoloGraphics.create();
-    private StatusSections.Tab tab = lastTab;
-    private StatusLayout.Frame frame;
-    private Rect[] tabRects = new Rect[0];
-    private int cx, cy, cw, ch;
+    private Tab tab;
+    private String @Nullable [] focus;
+    private final Rect content = BandLayout.content();
     private int contentHeight;
     private final float[] hit = new float[2];
     private int hoverX = -10000, hoverY = -10000;
@@ -47,54 +58,20 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
     private long lastNanos;
 
     public HoloStatusScreen() {
-        this(lastTab);
+        this(Tab.STATUS);
     }
 
-    public HoloStatusScreen(StatusSections.Tab open) {
+    /** Opens on a page, scrolled to the first of {@code titles} that shows there (a link: the ward's "Show me"). */
+    public HoloStatusScreen(Tab open, String... titles) {
         super(Component.translatable("screen.awaken.status"));
         tab = open;
-        lastTab = open;
+        focus = titles.length == 0 ? null : titles;
         panel = HoloClient.statusPanel();
     }
 
     @Override
     protected void init() {
-        List<String> labels = new ArrayList<>();
-        for (StatusSections.Tab t : StatusSections.Tab.values()) labels.add(label(t));
-        // the flat layout for a panel exactly W×H (it insets by OUTER on every side)
-        frame = StatusLayout.of(W + 2 * StatusLayout.OUTER, H + 2 * StatusLayout.OUTER, labels, closeHint(), font::width);
-        tabRects = new Rect[frame.tabs().size()];
-        for (int i = 0; i < tabRects.length; i++) {
-            Rect r = frame.tabs().get(i);
-            tabRects[i] = new Rect(r.x() - StatusLayout.OUTER, r.y() - StatusLayout.OUTER, r.w(), r.h());
-        }
-        Rect c = frame.content();
-        cx = c.x() - StatusLayout.OUTER;
-        cy = c.y() - StatusLayout.OUTER;
-        cw = c.w();
-        ch = c.h();
         HoloClient.openStatusPanel();
-    }
-
-    private static String closeHint() {
-        return AwakenKeys.STATUS.getTranslatedKeyMessage().getString() + " to close";
-    }
-
-    private static String label(StatusSections.Tab t) {
-        return switch (t) {
-            case STATUS -> "Status";
-            case TRUTHS -> "Truths";
-            case CODEX -> "Codex";
-            case GATE_MAP -> "Gate Map";
-        };
-    }
-
-    private Rect tabRect(int i) {
-        return tabRects[i];
-    }
-
-    private boolean overContent(double mx, double my) {
-        return mx >= cx && my >= cy && mx < cx + cw && my < cy + ch;
     }
 
     @Override
@@ -108,7 +85,7 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
         boolean picked = panel.pick(mouseX, mouseY, hit);
         hoverX = picked ? Math.round(hit[0] - 0.5f) : -10000;
         hoverY = picked ? Math.round(hit[1] - 0.5f) : -10000;
-        tickTabs();
+        tickRail();
         HoloCanvas canvas = panel.canvas;
         canvas.begin(W, H);
         canvas.tooltipsTo(screen, mouseX, mouseY);
@@ -116,48 +93,32 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
         draw(gg, hoverX, hoverY, a);
     }
 
-    /** A glass tick as the cursor comes onto a tab (once the panel takes clicks). */
-    private void tickTabs() {
+    /** A glass tick as the cursor comes onto a page's node (once the panel takes clicks). */
+    private void tickRail() {
         long now = System.nanoTime();
         float dt = lastNanos == 0 ? 0f : (now - lastNanos) / 1e6f;
         lastNanos = now;
         int target = HoverTick.NONE;
-        for (int i = 0; i < tabRects.length; i++) if (tabRects[i].contains(hoverX, hoverY)) target = i;
+        for (int i = 0; i < BandLayout.PAGES; i++) if (BandLayout.node(i).contains(hoverX, hoverY)) target = i;
         if (hover.update(target, dt, !panel.timeline.clickable())) HoloAudio.hover();
     }
 
     private void draw(HoloGraphics gg, int mouseX, int mouseY, float a) {
-        StatusSections.Tab[] tabs = StatusSections.Tab.values();
-        for (int i = 0; i < tabs.length; i++) {
-            StatusSections.Tab t = tabs[i];
-            Rect r = tabRect(i);
-            boolean on = t == tab;
-            boolean hover = r.contains(mouseX, mouseY);
-            if (on) gg.fill(r.x(), r.y(), r.right(), r.bottom(), Glass.a(Glass.EDGE, 0.16f));
-            else if (hover) gg.fill(r.x(), r.y(), r.right(), r.bottom(), Glass.a(Glass.EDGE, 0.07f));
-            if (on && frame.topTabs()) gg.horizontalLine(r.x(), r.right() - 1, r.bottom() - 1, Glass.a(Glass.EDGE, 1f));
-            if (on && !frame.topTabs()) gg.verticalLine(r.x(), r.y(), r.bottom() - 1, Glass.a(Glass.EDGE, 1f));
-            gg.text(font, label(t), r.x() + 8, r.y() + (r.h() - 8) / 2, Glass.a(on ? Glass.TITLE : Glass.LABEL, 1f), false);
-        }
-        Rect close = frame.close();
-        if (frame.topTabs()) {
-            if (close != null) gg.text(font, closeHint(), close.x() - StatusLayout.OUTER, close.y() - StatusLayout.OUTER, Glass.a(Glass.LABEL, 0.7f), false);
-            gg.horizontalLine(8, W - 8, 23, Glass.a(Glass.EDGE, 0.18f));
-        } else {
-            gg.text(font, "◇ SIGNAL", 12, 12, Glass.a(Glass.EDGE, 1f), false);
-            gg.verticalLine(98, 8, H - 8, Glass.a(Glass.EDGE, 0.18f));
-            gg.text(font, SignalText.ellipsize(closeHint(), close.w(), font::width), close.x() - StatusLayout.OUTER,
-                    close.y() - StatusLayout.OUTER, Glass.a(Glass.LABEL, 0.7f), false);
-        }
-
-        boolean inside = overContent(mouseX, mouseY);
+        rail(gg, mouseX, mouseY);
+        Rect c = content;
+        int cx = c.x(), cy = c.y(), cw = c.w(), ch = c.h();
+        boolean inside = c.contains(mouseX, mouseY);
         int mx = inside ? mouseX : -10000, my = inside ? mouseY : -10000;
-        gg.enableScissor(cx, cy, cx + cw + SCROLLBAR, cy + ch);
-        int y = cy - SCROLL[tab.ordinal()];
+        gg.enableScissor(cx, cy, cx + cw + BandLayout.SCROLLBAR, cy + ch);
+        int i = tab.ordinal();
+        int y = cy - SCROLL[i];
         boolean any = false;
+        int[] focusAt = focus == null ? null : new int[focus.length];
+        if (focusAt != null) java.util.Arrays.fill(focusAt, -1);
         for (StatusSections.Section s : StatusSections.of(tab)) {
             if (!s.visible()) continue;
             any = true;
+            if (focusAt != null) for (int k = 0; k < focus.length; k++) if (focusAt[k] < 0 && focus[k].equals(s.title())) focusAt[k] = y + SCROLL[i] - cy;
             Ui title = Ui.draw((GuiGraphicsExtractor) gg, font, cx, y, cw, mx, my);
             title.text(s.title(), Glass.a(Glass.EDGE, 0.85f));
             y += title.height() + 2;
@@ -166,23 +127,104 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
             y += h + SECTION_GAP;
         }
         if (!any) {
-            String empty = switch (tab) {
-                case CODEX -> "Nothing yet. What you hear, see and dream will gather here.";
-                case GATE_MAP -> "No gates detected.";
-                default -> "";
-            };
             Ui ui = Ui.draw((GuiGraphicsExtractor) gg, font, cx, y, cw, mx, my);
-            ui.text(empty, Glass.a(Glass.LABEL, 1f));
+            ui.text(empty(tab), Glass.a(Glass.LABEL, 1f));
             y += ui.height();
         }
-        contentHeight = y + SCROLL[tab.ordinal()] - cy;
+        contentHeight = y + SCROLL[i] - cy;
+        if (focusAt != null) {
+            // the link lands on its section: the first named that shows, else where the page was
+            for (int at : focusAt) {
+                if (at < 0) continue;
+                SCROLL[i] = Math.max(0, at - 4);
+                break;
+            }
+            focus = null;
+        }
         gg.disableScissor();
-        SCROLL[tab.ordinal()] = Math.min(SCROLL[tab.ordinal()], Math.max(0, contentHeight - ch));
+        SCROLL[i] = Math.min(SCROLL[i], Math.max(0, contentHeight - ch));
         if (contentHeight > ch) {
             int barH = Math.max(20, ch * ch / contentHeight);
-            int barY = cy + (ch - barH) * SCROLL[tab.ordinal()] / Math.max(1, contentHeight - ch);
+            int barY = cy + (ch - barH) * SCROLL[i] / Math.max(1, contentHeight - ch);
             gg.fill(cx + cw + 3, barY, cx + cw + 5, barY + barH, Glass.a(Glass.EDGE, 0.5f));
         }
+    }
+
+    /** What an empty page says. */
+    static String empty(Tab t) {
+        return switch (t) {
+            case CODEX -> "Nothing yet. What you hear, see and dream will gather here.";
+            case JOURNAL -> "Nothing yet. What you take on, and what the System tells you, will be kept here.";
+            case POWERS -> "No powers yet. Your first one comes soon after you awaken.";
+            default -> "";
+        };
+    }
+
+    /** The rail: the six pages down the wrist edge, the open one lit like the band's emitter; the K key at its foot. */
+    private void rail(HoloGraphics gg, int mouseX, int mouseY) {
+        int r = BandLayout.RAIL;
+        gg.fillGradient(0, 0, r, H, Glass.a(0x05080F, 0.30f), Glass.a(0x05080F, 0.30f));
+        gg.fill(r, 6, r + 1, H - 6, Glass.a(Glass.EDGE, 0.30f));
+        float micro = BandLayout.microScale(panel.ppu);
+        Tab[] tabs = Tab.values();
+        for (int i = 0; i < tabs.length; i++) {
+            Tab t = tabs[i];
+            Rect n = BandLayout.node(i);
+            boolean on = t == tab, over = n.contains(mouseX, mouseY);
+            if (on) {
+                gg.fill(n.x(), n.y(), n.right(), n.bottom(), Glass.a(Glass.EDGE, 0.15f));
+                gg.fill(0, n.y() + 1, 2, n.bottom() - 1, Glass.a(HOT, 0.95f));
+            } else if (over) {
+                gg.fill(n.x(), n.y(), n.right(), n.bottom(), Glass.a(Glass.EDGE, 0.07f));
+            }
+            Rect ic = BandLayout.icon(i);
+            int col = on ? Glass.a(HOT, 1f) : Glass.a(Glass.LABEL, over ? 1f : 0.85f);
+            String[] rows = ICONS[i];
+            for (int y = 0; y < rows.length; y++)
+                for (int x = 0; x < rows[y].length(); x++)
+                    if (rows[y].charAt(x) == '#') gg.fill(ic.x() + x, ic.y() + y, ic.x() + x + 1, ic.y() + y + 1, col);
+            String label = t.label().toUpperCase(java.util.Locale.ROOT);
+            float lw = font.width(label) * micro;
+            gg.pose().pushMatrix();
+            gg.pose().translate(r / 2f - lw / 2f, n.y() + 20);
+            gg.pose().scale(micro, micro);
+            gg.text(font, label, 0, 0, on ? Glass.a(Glass.TITLE, 1f) : Glass.a(Glass.LABEL, 0.95f), false);
+            gg.pose().popMatrix();
+            badge(gg, t, n, micro);
+        }
+        Rect k = BandLayout.close();
+        String key = AwakenKeys.STATUS.getTranslatedKeyMessage().getString();
+        gg.fill(k.x(), k.y(), k.right(), k.bottom(), Glass.a(0x05080F, 0.6f));
+        gg.outline(k.x(), k.y(), k.w(), k.h(), Glass.a(Glass.LABEL, 0.55f));
+        float kw = font.width(key) * micro;
+        gg.pose().pushMatrix();
+        gg.pose().translate(k.x() + k.w() / 2f - kw / 2f, k.y() + 2);
+        gg.pose().scale(micro, micro);
+        gg.text(font, key, 0, 0, Glass.a(Glass.TEXT, 1f), false);
+        gg.pose().popMatrix();
+    }
+
+    /** A count on a page that waits on you: points to spend on Status (amber), new Journal lines (light). */
+    private void badge(HoloGraphics gg, Tab t, Rect n, float micro) {
+        var mc = minecraft;
+        int count = 0, colour = 0;
+        if (t == Tab.STATUS && mc != null && mc.player != null) {
+            count = Progression.profile(mc.player).unspent();
+            colour = Glass.AMBER;
+        } else if (t == Tab.JOURNAL) {
+            count = Journal.unread();
+            colour = HOT;
+        }
+        if (count <= 0) return;
+        String s = count > 9 ? "9+" : String.valueOf(count);
+        int w = Math.max(7, Math.round(font.width(s) * micro) + 3);
+        int x = n.x() + 17, y = n.y() + 1;
+        gg.fill(x, y, x + w, y + 8, Glass.a(colour, 0.95f));
+        gg.pose().pushMatrix();
+        gg.pose().translate(x + 2, y + 1.5f);
+        gg.pose().scale(micro, micro);
+        gg.text(font, s, 0, 0, Glass.a(0x05080F, 1f), false);
+        gg.pose().popMatrix();
     }
 
     @Override
@@ -191,22 +233,23 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
         if (!panel.pick(event.x(), event.y(), hit)) return true;
         double mx = hit[0], my = hit[1];
         HoloClient.pressFlash(mx, my);
-        StatusSections.Tab[] tabs = StatusSections.Tab.values();
+        Tab[] tabs = Tab.values();
         for (int i = 0; i < tabs.length; i++) {
-            if (tabRect(i).contains(mx, my)) {
+            if (BandLayout.node(i).contains(mx, my)) {
                 selectTab(tabs[i]);
                 return true;
             }
         }
-        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT && overContent(mx, my)) {
-            int y = cy - SCROLL[tab.ordinal()];
+        Rect c = content;
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT && c.contains(mx, my)) {
+            int y = c.y() - SCROLL[tab.ordinal()];
             for (StatusSections.Section s : StatusSections.of(tab)) {
                 if (!s.visible()) continue;
-                Ui title = Ui.measure(font, cw);
+                Ui title = Ui.measure(font, c.w());
                 title.text(s.title(), 0);
                 y += title.height() + 2;
-                int h = s.height(cw);
-                if (my >= y && my < y + h && s.click(mx, my, cx, y, cw)) return true;
+                int h = s.height(c.w());
+                if (my >= y && my < y + h && s.click(mx, my, c.x(), y, c.w())) return true;
                 y += h + SECTION_GAP;
             }
         }
@@ -215,27 +258,33 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
 
     @Override
     public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
-        int max = Math.max(0, contentHeight - ch);
+        int max = Math.max(0, contentHeight - content.h());
         int i = tab.ordinal();
         SCROLL[i] = (int) Math.max(0, Math.min(max, SCROLL[i] - scrollY * 18));
         return true;
     }
 
-    /** The open tab (the autopilot logs it after a click). */
-    public StatusSections.Tab tab() {
+    /** The open page (the autopilot logs it after a click). */
+    public Tab tab() {
         return tab;
     }
 
-    /** Where tab {@code i}'s centre is on the screen, in GUI coordinates (for the autopilot's click). */
+    /** Where page {@code i}'s node is on the screen, in GUI coordinates (for the autopilot's click). */
     public boolean tabCentreOnScreen(int i, float[] out) {
-        if (i < 0 || i >= tabRects.length) return false;
-        Rect r = tabRects[i];
+        if (i < 0 || i >= BandLayout.PAGES) return false;
+        Rect r = BandLayout.node(i);
         return panel.project(r.x() + r.w() / 2f, r.y() + r.h() / 2f, out);
     }
 
-    private void selectTab(StatusSections.Tab t) {
+    /** Shows a page; a page that opens something of its own (the Map: the Atlas) closes the band and opens it. */
+    private void selectTab(Tab t) {
+        StatusSections.PageAction action = StatusSections.action(t);
+        if (action != null) {
+            if (minecraft != null) minecraft.gui.setScreen(null);
+            action.open().run();
+            return;
+        }
         tab = t;
-        lastTab = t;
     }
 
     @Override
@@ -245,9 +294,17 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
             else onClose();
             return true;
         }
-        StatusSections.Tab[] tabs = StatusSections.Tab.values();
+        Tab keyed = StatusSections.pageForKey(event);
+        if (keyed != null) {
+            selectTab(keyed);
+            return true;
+        }
+        Tab[] tabs = Tab.values();
         if (event.key() == InputConstants.KEY_TAB) {
-            int n = (tab.ordinal() + (event.hasShiftDown() ? tabs.length - 1 : 1)) % tabs.length;
+            // Tab steps through the pages that show here; the Map has its own key and its own screen
+            int n = tab.ordinal();
+            do n = (n + (event.hasShiftDown() ? tabs.length - 1 : 1)) % tabs.length;
+            while (StatusSections.action(tabs[n]) != null && n != tab.ordinal());
             selectTab(tabs[n]);
             return true;
         }

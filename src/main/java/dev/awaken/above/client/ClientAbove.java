@@ -29,6 +29,20 @@ public final class ClientAbove {
         gateMarks = List.of();
     }
 
+    /** The Gate Scanner's last reading, for the Atlas: each gate it read, marked as a reading (SPEC §30). */
+    static List<dev.awaken.core.api.MapMarks.Gate> gates(net.minecraft.world.entity.player.Player player) {
+        var mc = Minecraft.getInstance();
+        if (mc.level == null || mc.level.dimension() != net.minecraft.world.level.Level.OVERWORLD) return List.of();
+        List<dev.awaken.core.api.MapMarks.Gate> out = new ArrayList<>();
+        for (AboveNet.GateMark m : gateMarks) {
+            var rank = dev.awaken.progression.Rank.of(m.rank());
+            String when = "your scanner read it · breaks in " + m.breaksIn() + (m.breaksIn() == 1 ? " day" : " days");
+            out.add(new dev.awaken.core.api.MapMarks.Gate(new net.minecraft.core.BlockPos(m.x(), 64, m.z()), rank.label, rank.colour,
+                    m.name().isEmpty() ? rank.label + "-rank gate" : m.name(), when, false, true));
+        }
+        return out;
+    }
+
     private static List<CodexEntries.Entry> cached = List.of();
     private static Object cachedData, cachedLogs;
     private static boolean cachedReached;

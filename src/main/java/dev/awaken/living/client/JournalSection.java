@@ -18,7 +18,7 @@ final class JournalSection implements StatusSections.Section {
     static final int ROW = 22;
 
     static void register() {
-        StatusSections.add(StatusSections.Tab.STATUS, new JournalSection());
+        StatusSections.add(StatusSections.Tab.JOURNAL, new JournalSection());
     }
 
     @Override
@@ -28,7 +28,7 @@ final class JournalSection implements StatusSections.Section {
 
     @Override
     public int order() {
-        return 150; // above the loadout and the gate lists: what you're doing out there
+        return -20; // the Journal page: what you're doing out there, under NOW
     }
 
     @Override

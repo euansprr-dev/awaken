@@ -47,12 +47,12 @@ final class CoreSections {
     static void register() {
         StatusSections.add(StatusSections.Tab.STATUS, new Spine());
         StatusSections.add(StatusSections.Tab.STATUS, new Stats());
-        StatusSections.add(StatusSections.Tab.STATUS, new WaitingSection());
+        StatusSections.add(StatusSections.Tab.JOURNAL, new WaitingSection());
         dev.awaken.core.api.MapMarks.register(WaitingSection::marks);
-        StatusSections.add(StatusSections.Tab.STATUS, new RoadSection());
-        StatusSections.add(StatusSections.Tab.STATUS, new DirectivesSection());
-        StatusSections.add(StatusSections.Tab.STATUS, new RegimenSection());
-        StatusSections.add(StatusSections.Tab.STATUS, new Records());
+        StatusSections.add(StatusSections.Tab.TRUTHS, new RoadSection());
+        StatusSections.add(StatusSections.Tab.JOURNAL, new DirectivesSection());
+        StatusSections.add(StatusSections.Tab.JOURNAL, new RegimenSection());
+        StatusSections.add(StatusSections.Tab.JOURNAL, new Records());
         StatusSections.add(StatusSections.Tab.TRUTHS, new PathChoice());
         StatusSections.add(StatusSections.Tab.TRUTHS, new TruthList(TruthList.Kind.DECLARED));
         StatusSections.add(StatusSections.Tab.TRUTHS, new TruthList(TruthList.Kind.OFFERED));
@@ -162,7 +162,7 @@ final class CoreSections {
 
     static final class DirectivesSection extends UiSection {
         public String title() { return "DIRECTIVES"; }
-        public int order() { return 20; }
+        public int order() { return -15; } // the Journal page: right after what you track
 
         @Override
         protected void build(Ui ui) {
@@ -204,7 +204,7 @@ final class CoreSections {
 
     static final class RegimenSection extends UiSection {
         public String title() { return "DAILY REGIMEN"; }
-        public int order() { return 25; }
+        public int order() { return -12; }
         public boolean visible() { return !profile().regimen().drills().isEmpty(); }
 
         @Override

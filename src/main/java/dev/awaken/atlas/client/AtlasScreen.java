@@ -290,6 +290,9 @@ public final class AtlasScreen extends Screen {
             if (project(p.getX() + 0.5, atlas.store.groundY(p.getX(), p.getZ(), p.getY()), p.getZ() + 0.5, x0, y0))
                 placed = box(placed, Math.round(v.x) - 8, Math.round(v.y) - 8, Math.round(v.x) + 8, Math.round(v.y) + 8);
         }
+        if (mc.player != null) for (MapMarks.Gate gate : MapMarks.gates(mc.player))
+            if (project(gate.pos().getX() + 0.5, gateY(atlas, gate), gate.pos().getZ() + 0.5, x0, y0))
+                placed = box(placed, Math.round(v.x) - 40, Math.round(v.y) - PILLAR - 26, Math.round(v.x) + 40, Math.round(v.y) + 2);
         placed = box(placed, legendX0, legendY0, legendX1, legendY1); // the legend's corner of the table
         // every zone you know, named on its own known land (never out in the clouds): a chip in its colour with its
         // levels or its city under the name. Districts close in; regions at every zoom. Largest first, so when two
@@ -329,6 +332,10 @@ public final class AtlasScreen extends Screen {
                 diamond(g, sx, sy, 4, c, m.visited());
                 if (zoom > 0.6f) label(g, m.label(), sx, sy - 14, c);
             }
+            // the gates you know: a pillar of each one's light, over the land or riding the clouds (SPEC §30)
+            for (MapMarks.Gate gate : MapMarks.gates(mc.player))
+                if (project(gate.pos().getX() + 0.5, gateY(atlas, gate), gate.pos().getZ() + 0.5, x0, y0))
+                    pillar(g, Math.round(v.x), Math.round(v.y), gate);
             // your party's pins (and yours, ringed), standing on the table
             for (dev.awaken.atlas.AtlasNet.PinView pin : atlas.pins) {
                 if (!project(pin.x() + 0.5, pin.y() + 1, pin.z() + 0.5, x0, y0)) continue;
@@ -482,6 +489,28 @@ public final class AtlasScreen extends Screen {
             int sx = Math.min(mouseX + 12, x1 - 4 - w), sy = Math.min(mouseY + 12, y1 - 26);
             chip(g, name, z.sub(), z.colour(), sx, sy, w, 22, 1f);
             return;
+        }
+    }
+
+    static final int PILLAR = 30;
+
+    /** Where a gate's pillar stands: on its ground where you've been, else on the clouds (you saw its light from afar). */
+    private static double gateY(AtlasState atlas, MapMarks.Gate gate) {
+        BlockPos p = gate.pos();
+        return Discovery.CLIENT.explored(p.getX() >> 4, p.getZ() >> 4) ? atlas.store.groundY(p.getX(), p.getZ(), p.getY())
+                : atlas.store.groundY(p.getX(), p.getZ(), 64) + 34;
+    }
+
+    /** A gate's pillar of light in its rank's colour, its rank and how long it holds over it (a scanner's reading paler). */
+    private void pillar(GuiGraphicsExtractor g, int sx, int sy, MapMarks.Gate gate) {
+        float a = gate.read() ? 0.6f : 1f;
+        int c = gate.colour();
+        g.fill(sx - 2, sy - PILLAR, sx + 2, sy, Glass.a(0x0B1626, 0.55f * a)); // a dark core: the light reads over white cloud
+        g.fillGradient(sx - 1, sy - PILLAR, sx + 1, sy, Glass.a(c, 0.15f * a), Glass.a(c, a));
+        g.fill(sx - 3, sy - 1, sx + 4, sy + 1, Glass.a(c, a));
+        if (zoom > 0.3f) {
+            label(g, (gate.broken() ? "! " : "") + gate.name(), sx, sy - PILLAR - 24, Glass.a(c, a));
+            if (!gate.when().isEmpty()) label(g, gate.when(), sx, sy - PILLAR - 12, Glass.a(gate.broken() ? Glass.WARN : Glass.LABEL, a));
         }
     }
 

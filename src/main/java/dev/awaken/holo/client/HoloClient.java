@@ -124,10 +124,10 @@ public final class HoloClient {
 
     // ---- what K opens ---------------------------------------------------------------------------------------------
 
-    /** The K menu: holo when chosen and the shaders loaded, otherwise the flat screen. */
-    public static Screen statusScreen() {
-        if (HoloConfig.statusStyle == HoloConfig.StatusStyle.HOLO && HoloPipelines.ok()) return new HoloStatusScreen();
-        return new StatusScreen();
+    /** The K menu on a page: holo when chosen and the shaders loaded, otherwise the flat screen. */
+    public static Screen statusScreen(dev.awaken.progression.client.StatusSections.Tab page, String... focus) {
+        if (HoloConfig.statusStyle == HoloConfig.StatusStyle.HOLO && HoloPipelines.ok()) return new HoloStatusScreen(page, focus);
+        return new StatusScreen(page, focus);
     }
 
     static HoloPanel statusPanel() {

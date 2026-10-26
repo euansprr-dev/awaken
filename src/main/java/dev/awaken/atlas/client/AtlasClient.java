@@ -56,7 +56,11 @@ public final class AtlasClient {
         });
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> tick());
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre.class, e -> AtlasGlance.frame());
-        AtlasGlance.register();
+        // the band's Map page opens the table (SPEC §30); M opens it from anywhere, the band included
+        dev.awaken.progression.client.StatusSections.setPageAction(dev.awaken.progression.client.StatusSections.Tab.MAP, () -> {
+            AtlasScreen.open(20f, 52f, 1f);
+            dev.awaken.core.api.TipHooks.client().done(dev.awaken.Awaken.id("first/atlas"));
+        }, KEY);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> AtlasState.get().leave());
     }
 

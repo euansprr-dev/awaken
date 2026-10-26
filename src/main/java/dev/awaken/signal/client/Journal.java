@@ -57,20 +57,27 @@ public final class Journal {
     }
 
     static void register() {
-        StatusSections.add(StatusSections.Tab.STATUS, new Section());
+        // right under your stats on the Status page (Euan, 2026-10-26), and again on the Journal page under your tasks
+        StatusSections.add(StatusSections.Tab.STATUS, new Section(20));
+        StatusSections.add(StatusSections.Tab.JOURNAL, new Section(700));
     }
 
-    /** The Status tab's Journal: newest first; opening it reads them. */
+    /** The band's Journal: newest first; opening it reads them. */
     static final class Section extends UiSection {
         private static boolean all;
         private static final int SHORT = 8;
+        private final int order;
+
+        Section(int order) {
+            this.order = order;
+        }
 
         public String title() {
             int n = unread();
             return n > 0 ? "JOURNAL · " + n + " NEW" : "JOURNAL";
         }
 
-        public int order() { return -10; }
+        public int order() { return order; }
 
         public boolean visible() { return !ENTRIES.isEmpty(); }
 

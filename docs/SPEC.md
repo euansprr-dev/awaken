@@ -170,9 +170,9 @@ within 8 blocks) windows become a compact toast and queue. Actions answered with
 Visual: deep glass `#0F1724` at 88% alpha, edge `#7FC3FF`, corner brackets, title white, labels pale, "NOT TRUE YET" amber
 `#FFCF7A`, warnings `#FF8A7A`.
 
-Status screen (key **K**): tabs Status · Truths · Codex · Gate Map. Status shows level, rank, path, title, stats with
-+ buttons when points unspent, energy, Echoes, the Spine line, active Directives, and the power loadout section
-(provided by `powers` via `StatusSections`).
+The band (key **K**, §30): six pages, Status · Powers · Journal · Truths · Codex · Map. Status shows level, rank, path,
+title and XP, the stats with + buttons when points are unspent, then the Journal; Powers holds the loadout (provided by
+`powers` via `StatusSections`); the Map page is the Atlas.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -614,7 +614,7 @@ Plan v2 · landmarks (details in docs/modules/landmarks.md):
 - Kinds: the Well, vaults (the spawn vault too), monoliths, ocean labs, sky platforms, gates by theme. Reaching the
   first of each kind is a discovery (0.15 of a level). Memory `awaken:landmark_memory` (schema 2, copied on death,
   synced to its owner).
-- The Gate Map marks every landmark reached (filled) or heard of (outlined): told by Mira, whispered by a spirit or first
+- The Atlas marks every landmark reached (filled) or heard of (outlined): told by Mira, whispered by a spirit or first
   named by the Now tracker.
 - The Horizon line (§17; until then the Now tracker) names the nearest unreached landmark once there is a reason to go
   (Well from level 10, vault and monolith 4, spawn vault 2, ocean lab 6; a sky platform once you have a way up, teased
@@ -849,7 +849,7 @@ Plan v2 · overworld structures (details in docs/modules/structures.md):
   rebuilt in place when loaded.
 - Ruin sizes: vault 23×24×23, monolith 17×46×17, ocean lab 31×22×31, sky platform 49×26×49; pieces carry a blueprint
   version. The Well: shaft radius 7, twelve pillars at radius 18, four lantern pylons.
-- The Gate Map shows lairs you've heard of or found (synced from `awaken:fauna_state`) beside gates.
+- The Atlas shows lairs you've heard of or found (synced from `awaken:fauna_state`) beside gates.
 - Doorways inside a gate (the exit after the Lord, the way back, inner gates, rifts) are one opening drawn as a single
   vortex in the gate's rank colours (rifts red-rimmed) by the anchor block's renderer (`awaken:gate_portal`, the bottom of
   the middle column); the other blocks are invisible and untargetable but still let you walk in. Doorways placed before
@@ -878,8 +878,8 @@ Holo UI (details in docs/modules/holo.md; design docs/proposals/holo-ui.md, P1, 
   and a faint steady link from 260, the panel grows out of the beams' origin 140–370, unfolds Y 160–280 then X 220–360,
   glass 230–380, scan line 250–390, text types from 300 (Signal speed ×4, all lines done by 450); clicks from 250;
   closing replays it backward in 250 ms; K while opening skips to open.
-- Panels: whole framebuffer pixels per unit (≈45% of the width, ≤80% of the height; the 272×228 K panel is 5 px/unit
-  at 3024×1964), placed from the real projection every frame (FOV compensated, vanilla bob undone), 0.62 m ahead at
+- Panels: whole framebuffer pixels per unit (≈45% of the width, ≤80% of the height; the 288×228 K panel, §30, is 5
+  px/unit at 2880×1800 and 3024×1964, 6 at 3840×2160), placed from the real projection every frame (FOV compensated, vanilla bob undone), 0.62 m ahead at
   (-0.455, +0.19) of the half-screen (left of the centre, up and right of the wrist, clear of the forearm; the crosshair
   is hidden while the holo menu is open), yawed 7° toward the wrist and
   leaning 3° back (third person: at least -0.50 aside, 80% size). Material: 38–50% glass (denser toward the wrist),
@@ -2173,7 +2173,7 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   the path; a district's bell tower clears the district, the Choir spire the city. Party sharing on request.
 - Client tile cache `<game>/awaken/atlas/<world>/<dim>/` (height + top colour per column; versioned; ≤ 64 MB, oldest
   first; "Clear Atlas cache" button).
-- Table view: a Screen with a picture-in-picture renderer (depth, orbit, zoom, tilt); wrist glance cached on the Holo.
+- Table view: a Screen with a picture-in-picture renderer (depth, orbit, zoom, tilt); the band's Map page (§30).
   ≤ 2 ms/frame open, ≤ 150 ms to open, glance ≤ 0.3 ms. Markers only for what the player knows.
 - Decided in M5 (2026-10-25; concept https://claude.ai/artifact/3QCvup43wuVW6t1wDfVroP, docs/carillon/m5/):
   - Discovery (`atlas.Discovery`, attachment `awaken:atlas`, `AtlasData` schemaVersion 1, copyOnDeath): per dimension,
@@ -2213,10 +2213,10 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     name; every other mark shows only in an explored cell. You are a pin of light with a ring and a facing tick.
   - Cost: slices outside the picture aren't drawn, and while only the clouds drift the picture is redrawn about 30
     times a second (every frame while the view moves or the land prints in).
-  - The wrist glance: a section on the K menu's Status page right under NOW, the land round you (240 blocks across,
-    where you look is up) painted into the texture `awaken:atlas/glance` (480×280) at most once a second while the menu
-    shows it, or sooner once you've moved 4 blocks or turned 12°; the Holo draws it as one textured quad, with a button
-    to the table.
+  - The wrist glance: the land round you (240 blocks across, where you look is up) painted into the texture
+    `awaken:atlas/glance` (480×280) at most once a second while something asks for it, or sooner once you've moved 4
+    blocks or turned 12°. It left the K menu with the band's pages (§30: the Map page is the table itself); its
+    painter is kept for the map scene (§30, phase 4), which will drive it from its own camera.
   - Phase 3 (`AtlasData` schemaVersion 2): the Living Wilds region you stand in (`living.api.Regions`, checked every 40
     ticks, overworld only) joins your Atlas once; zoomed out, each known region's name is lettered at its heart in
     spaced capitals with its levels under it. Party pins: double-click the table to drop a pin on ground you know (or
@@ -3456,7 +3456,7 @@ manual; stop the build at the first block; the payoff answers only the line; dan
     here." / "The tree sheds all you build.": a card holds 20% of the screen, and a two-line question drops the body),
     the body "Its platforms answer to a line." (the platform's, the tree's way), one choice
     **Show me** (Y) / Not now (action `ward:show_me:<kind>`, 30 s), with "A vault keeps a line for a hunter it opens to."
-    on the action bar under it. Y sends `awaken:ward_show_me`; the client opens the band (K › Status) scrolled to "THE
+    on the action bar under it. Y sends `awaken:ward_show_me`; the client opens the band (K › Powers, §30) scrolled to "THE
     ASCENT" (§27.2: the next rung as a silhouette, where it comes from), else "THE BODY"
     (`StatusScreen(Tab, String... titles)`).
   - After that: once a visit (a ward, until 5 minutes without a refusal there) a toast, the place's name and its way up
@@ -3724,7 +3724,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   Read and turned in at Hale (choice card Take it / Next notice); a turn-in pays once (claim
   `awaken:claim/bounty/<id>/<n>`), counter `awaken:bounties_done`.
 - **Journal**: payload `living_journal` (chains taken, tracked first, and bounties taken, each with its current line),
-  sent on every change and on login; drawn as the JOURNAL section of the K menu's Status tab until the holo tab exists.
+  sent on every change and on login; drawn as the JOURNAL · CHAINS section of the band's Journal page (§30).
   Nothing undiscovered is ever listed (§21.0.7).
 - Tests: `living_quest_engine`, `living_bounty_board`, `living_scene_finder`. Dev (admin): `/awaken living wayfarer <who>`,
   `talk` (the nearest Wayfarer), `scene <chain>` (its scene now, close by), `view <distance>` (stand back from your
@@ -3772,7 +3772,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   The Codex tab lists them ("HAPPENINGS WITNESSED · n / ??").
 - **Rumours** (`Rumours`, attachment `awaken:rumours`, schema 1, synced to the owner, kept through death): half the
   time a Wayfarer with nothing for you tells of a happening on now 160-2500 blocks away that you haven't witnessed, with
-  a compass direction; it leaves a "? <title>" mark on the Gate Map (MapMarks) for two play-days (at most 8).
+  a compass direction; it leaves a "? <title>" mark on the Atlas (MapMarks) for two play-days (at most 8).
 - Dev (admin): `/awaken living happen <kind>`, `happenings`, `calm`, `strike <distance>` (a storm strike that far
   ahead of you, for tours). Tests `living_pulse`, `living_storm`.
 - **The Rolling Storm, as a real storm** (Euan's playtest, 2026-10-26: the cell read as round soft discs full of
@@ -3911,7 +3911,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
     +0.25 for 2 min after a cooked meal), Banquet (+the food's saturation again).
   The plan's Tidewater bait, sigil slot, temper discount and an apex phase read moved out: they need other modules'
   systems; the replacements above are this module's own.
-- UI: CRAFTS in the K menu's Status tab (level, a bar, perks open, the next). Dev: `/awaken living craft <craft>
+- UI: CRAFTS on the band's Powers page (§30; level, a bar, perks open, the next). Dev: `/awaken living craft <craft>
   <level> [announce]` (announce: with the level and perk toasts, for tours). Test `living_crafts`.
 - Art: the 15 icons are drawn by `tools/art/specs/items_crafts.py` (16×16, our own palette, one wooden bowl shape shared
   by the bowl meals; the pasty stands on its flat side with a crimped rope; no vanilla pixels). Its `preview DIR` checks
@@ -4970,7 +4970,7 @@ The rules below replace that.
 - **The find cue** (`signal.client.FindCue`): a small diamond blooms 13 px right of the crosshair with the name in a
   whisper beside it (5 + 34 + 16 ticks), and `awaken:ui.find` at 0.32 (at most every 60 ticks); several at once read
   "N finds · Journal".
-- **The Journal** (`signal.client.Journal`, Status tab, order −10): filed lines newest first ("◆" unread), 60 kept per
+- **The Journal** (`signal.client.Journal`, the band's Status page right under the stats, and its Journal page, §30): filed lines newest first ("◆" unread), 60 kept per
   session, "JOURNAL · N NEW" until the K screen has shown them. The Codex keeps the finds themselves.
 - A lair rumour ("Heard of · …") is AMBIENT, topic `lair` (the Now tracker points at it).
 
@@ -5056,14 +5056,14 @@ play it; the world remembers the locks you met and calls you back once when you 
   ("<name>, in the Descent", its rank), the Observatory's Halo line ("Something past the sky", B), Veil possession
   refused ("Wearing a creature, in the Veil", C, no place), a dangerous region ("<region>", the level at which it stops
   being dangerous).
-- **In the band** (K › Status, "WHAT WAITS", order 5, `progression.client.WaitingSection`): up to 8 rows, answered
+- **In the band** (K › Journal, §30, "WHAT WAITS", order 5, `progression.client.WaitingSection`): up to 8 rows, answered
   first then nearest: a chip with the need in its colour (rank colour; the Horizon's green for a rung) or READY, what,
-  and "640 m NE". The same locks are pinned on the Atlas and the Gate Map (`MapMarks`), coloured by need.
+  and "640 m NE". The same locks are pinned on the Atlas (`MapMarks`), coloured by need.
 - **Far** (the next rank's promise): under "Next rank: D at level 10…" in the Spine section, "D-rank opens what waits
   for you: A sealed vault · Gardens, in the Descent." Only locks the player has met; never a list of spoilers.
 - Test: `progression_promises`.
 
-### 27.2 The band's Ascent page (`body.client.AscentSection`, K › Status, order 28)
+### 27.2 The band's Ascent page (`body.client.AscentSection`, K › Powers, §30, order 28)
 "Runner · yours from the start"; each rung held with how to use it (keys in the player's own bindings,
 `signal.client.KeyText`); the next rung as "◇ The Tether · next" with where it comes from ("A Precursor vault keeps a
 line for a hunter it opens to: its door's rank, D at the least."); the rest "???". What a rung does is only told once
@@ -5340,7 +5340,7 @@ minutes, perks `awaken:energy_regen` +0.25 and `awaken:craft_rate` +0.25 (a perk
 
 **The room panel** (`client/RoomPanel`: `visible()`, `build(Ui)`; data: attachment `awaken:hearth_here`, `RoomHere`, synced
 to its player when it changes, checked once a second). Name, grade, six readings as three pips each, purpose, "Lift it:
-…". Shown as the K Status page's first section (`RoomSection`, order -28: right under NOW, above the Atlas) while you stand in a read room at home (PLAN
+…". Shown on the band's Status page above the Journal (`RoomSection`, order 17, §30) while you stand in a read room at home (PLAN
 said "hold the band key": K opens the band on press today, so the panel lives on that page until The Way Forward's glance
 takes it, through the two calls above); and as every room's card in Your Hearth, which also gained a HOME section (Comfort
 with its bar and the next point, Style, the land, Rested minutes), the kinds you have as chips, at most three suggestions
@@ -5667,3 +5667,79 @@ targets hold, rain and cold clear the insects, a chunk's draw is fixed and the l
 `wildlife_census` (the caps hold over 400 rich chunks at four hours; nothing is made inside the city and anything there
 leaves; nothing out of reach), `wildlife_rigs` (every rig parses and carries every clip its brain plays, every coat,
 blink and the insects' sheet exist); `audio_events_resolve` covers the 18 events.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 30. The band's pages (the K menu; plan docs/k-menu/PLAN.md, page https://claude.ai/artifact/49cQxv5y3CzXcJ3SG4jDN9; Euan approved all of it 2026-10-26)
+
+Euan, 2026-10-26: the K menu "just feels like a dashboard"; the Journal sat above the stats ("you have to scroll down a
+ton just to get to your stats"); merge the Gate Map and the Atlas. The Status tab stacked 22 sections in a 246×192
+window (stats 1.9 to 3.4 screens down, Powers 5 to 7). Approved: direction B, every recommended answer (PLAN §7):
+six pages; K always opens on Status; points placed then confirmed (phase 2); the panel 288 units wide; M opens the
+band's Map page; a denser tint by day (phase 3); your face on Status (phase 2); "Clear Atlas cache" to the settings
+(phase 4); phase 1 first; the map opens in the world (phase 4); others see a content-free projection (phase 4).
+
+### 30.1 Pages (phase 1, built)
+- **Six pages, in the rail's order:** Status · Powers · Journal · Truths · Codex · Map (`StatusSections.Tab`;
+  `Tab.label()`). `Tab.GATE_MAP` is gone.
+- **The rail** (holo, `holo.ui.BandLayout`, `HoloStatusScreen`):
+  - It runs down the panel's wrist edge, 30 units wide: six nodes 31 units tall, one every 34 from y 9.
+  - Each node has a 12×12 pixel icon and its label in spaced capitals at two framebuffer pixels fewer per font pixel
+    than the body text (3 at 5 px a unit, 4 at 6).
+  - The open page is lit (a fill and a bright bar on the wrist edge).
+  - Badges: points to spend on Status (amber), new Journal lines on Journal.
+  - The K key sits at its foot.
+- **The panel:** 288×228 units (was 272×228). That is still 5 px a unit at 2880×1800 and 3024×1964 and 6 at 3840×2160
+  (`holo_band_layout` checks it); the content is x 40, y 10, 232×208, with its scroll bar beside it.
+- **The flat fallback** (`StatusScreen`) has the same pages on its tab row.
+- **Keys:** K always opens on Status unless a link names a page. 1–6 open a page; Tab and Shift+Tab step through the
+  pages that show here; M opens the Map (the Atlas key, `StatusSections.pageForKey`).
+- **Map:** a page with an action (`StatusSections.setPageAction`; the atlas module registers "open the table", key M).
+  Picking it closes the band and opens the Atlas table. The map scene replaces this in phase 4.
+- **Where each section lives** (order in brackets). Earlier sections of this SPEC that say "K › Status" mean these
+  pages now.
+
+  | Page | Sections |
+  |---|---|
+  | Status | STATUS (0), STATS (10), WAITING FOR YOU (14, only with a decision waiting), THIS GATE (15, only in a run: `gates.client.RunSection`, the run summary and View Satchel that were on the Gate Map), DEEP PACK (16), THIS ROOM (17), JOURNAL (20, the filed lines) |
+  | Powers | POWERS (0), THE ASCENT (28), THE BODY (30), CRAFTS (160), THE VEIL (320) |
+  | Journal | NOW (−30), JOURNAL · CHAINS (−20), DIRECTIVES (−15), DAILY REGIMEN (−12), WHAT WAITS / SAVED FOR LATER (5), HEARTH (40), ANCHOR REQUESTS (41), JOURNAL (700, the filed lines again), RECENT MESSAGES (800), RECORDS (900) |
+  | Truths | the Path choice (0), Truths (10–30), THE ROAD (35), TITLES (40), LATENTS (50) |
+  | Codex | THE BOARD (0), HAPPENINGS WITNESSED (460) |
+  | Map | the Atlas table |
+
+- **Gates on the Atlas** (`MapMarks.Gate`, `MapMarks.registerGates`, `MapMarks.gates`):
+  - Every gate whose pillar you can see (the gates module, from the synced beacons) and each gate your scanner read (the
+    above module, marked as a reading) stands on the table as a pillar of its rank's colour, with a dark core so it
+    reads over cloud.
+  - Its name ("D-rank gate", or the scanner's name) and how long it holds ("breaks in 2 days", "broken: its monsters
+    are out" in red, "calm") hang over it from zoom 0.3.
+  - Where you've explored, the pillar stands on the ground; elsewhere it rides the clouds, because you saw its light
+    from afar.
+  - A reading within 24 blocks of a pillar you can see is dropped. Overworld only.
+  - The Gate Map's radar and lists (gates and scanner) are gone.
+- **The Atlas picture** (the glance) left the Status page. `AtlasGlance` keeps its painter for the phase-4 scene.
+- **Links:**
+  - `ProgressionClient.openBand(Tab, String... focus)` opens the band on a page in the player's style (`BandOpener`,
+    installed by holo), scrolled to the first named section, only while the band is worn.
+  - `OpenBand(page)` carries the page (`Progression.openBand(player, page)`; `BAND_PAGE_ASCENT` = −1 opens Powers at THE
+    ASCENT).
+  - The ascent's "Show me" card and the climb ward's ShowMe both open Powers at THE ASCENT (else THE BODY).
+- **Words:** Bram's line at the Registry is now "That's your band. Your status and your stats are on the first page, and
+  the map is the last one. Press the same key to close it."
+- **Autopilot:** `screen holo status|powers|journal|truths|codex|map`; flat `screen status|powers|journal|codex`;
+  `screen map` (and `screen holo map`) opens what the Map page opens, the Atlas table. `holo clicktab <i>` clicks rail
+  node i.
+- **Tests:** `holo_band_layout` (nodes inside the rail and apart, the K key clear, content clear of the rail, labels on
+  whole pixels, 5 and 6 px a unit kept on the owner's screens); `signal_status_screen_frame` now lays out the six
+  labels.
+
+### 30.2 Still to build (PLAN §6)
+- **Phase 2, the Status sheet:** the hero (face, rank sigil, LEVEL, segmented XP, the next unlock), the six stats in one
+  line with a focus line, points placed then confirmed (one checked request), and the context row (decision > gate run
+  > Deep Pack > room > tracked task).
+- **Phase 3, the look:** the type ramp, tokens, tint 0.46 adaptive to 0.60, the wrist light, the scan-line page change,
+  motion that reports change, `holo.page`, `holo.spend`, `holo.confirm`, `holo.undo`, reduced motion.
+- **Phase 4, the map scene** (with the Atlas builder): the camera over your shoulder, the band projecting the Atlas's own
+  picture, the legend as a panel of the band, the quick table on Shift+M, the fight rule, `holo_state` kind MAP.
+- **Phase 5:** the Powers and Journal pages composed, Truths and Codex restyled, narration, Band size.

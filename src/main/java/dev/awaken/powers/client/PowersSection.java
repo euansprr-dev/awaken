@@ -37,7 +37,7 @@ final class PowersSection implements StatusSections.Section {
 
     @Override
     public int order() {
-        return 300;
+        return 0; // first on the Powers page
     }
 
     @Override

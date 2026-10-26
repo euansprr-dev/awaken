@@ -32,6 +32,34 @@ final class HoloTests {
     }
 
     static void register() {
+        // the band's panel (SPEC §30): the rail's six pages inside it and apart, the K key clear of them, the content
+        // clear of the rail; its labels on whole pixels; and 288 units wide keeps the owner's screens at 5 and 6 px a unit
+        AwakenTests.register("holo_band_layout", 20, h -> {
+            dev.awaken.signal.ui.Rect content = dev.awaken.holo.ui.BandLayout.content(), close = dev.awaken.holo.ui.BandLayout.close();
+            int W = dev.awaken.holo.ui.BandLayout.W, H = dev.awaken.holo.ui.BandLayout.H, rail = dev.awaken.holo.ui.BandLayout.RAIL;
+            for (int i = 0; i < dev.awaken.holo.ui.BandLayout.PAGES; i++) {
+                var n = dev.awaken.holo.ui.BandLayout.node(i);
+                h.assertTrue(n.x() >= 0 && n.right() <= rail && n.y() >= 0 && n.bottom() <= H, "page " + i + " inside the rail: " + n);
+                var ic = dev.awaken.holo.ui.BandLayout.icon(i);
+                h.assertTrue(ic.x() >= n.x() && ic.right() <= n.right() && ic.y() >= n.y() && ic.bottom() + 9 <= n.bottom(), "icon and label inside page " + i);
+                h.assertFalse(n.intersects(close), "the K key clear of page " + i);
+                for (int j = i + 1; j < dev.awaken.holo.ui.BandLayout.PAGES; j++) h.assertFalse(n.intersects(dev.awaken.holo.ui.BandLayout.node(j)), "pages " + i + " and " + j + " apart");
+            }
+            h.assertTrue(close.right() <= rail && close.bottom() <= H, "the K key on the rail");
+            h.assertTrue(content.x() > rail && content.right() + dev.awaken.holo.ui.BandLayout.SCROLLBAR <= W && content.bottom() <= H,
+                    "content clear of the rail and inside the panel: " + content);
+            h.assertTrue(content.w() >= 220 && content.h() >= 200, "content keeps a usable size: " + content);
+            for (int ppu = 2; ppu <= 8; ppu++) {
+                float px = dev.awaken.holo.ui.BandLayout.microScale(ppu) * ppu;
+                h.assertTrue(Math.abs(px - Math.round(px)) < 1e-4f && px >= 2 - 1e-4f, "rail labels on whole pixels at " + ppu + ": " + px);
+            }
+            // HoloPanel.choosePpu's rule: about 45% of the width, at most 80% of the height
+            for (int[] s : new int[][]{{2880, 1800, 5}, {3024, 1964, 5}, {3840, 2160, 6}}) {
+                int ppu = Math.max(1, Math.min(Math.round(0.45f * s[0] / W), (int) Math.floor(0.80f * s[1] / H)));
+                h.assertTrue(ppu == s[2], s[0] + "x" + s[1] + " keeps " + s[2] + " px a unit (got " + ppu + ")");
+            }
+            h.succeed();
+        });
         // world plates (HoloWorld): their own size up close, and never under the readable minimum however far
         AwakenTests.register("holo_plate_scale", 20, h -> {
             float tanY = (float) Math.tan(Math.toRadians(35)); // 70° vertical

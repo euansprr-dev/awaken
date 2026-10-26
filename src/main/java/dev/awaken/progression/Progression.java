@@ -59,10 +59,17 @@ public final class Progression {
 
     /** The action prefix of a card whose yes opens the band ("band:ascent"). */
     public static final String BAND_ACTION = "band";
+    /** {@link #openBand(ServerPlayer, int)}'s page for the ascent: Powers, scrolled to the Ascent (SPEC §30). */
+    public static final int BAND_PAGE_ASCENT = -1;
 
-    /** Opens the band (the Status screen) on this player's client. */
+    /** Opens the band (its Status page) on this player's client. */
     public static void openBand(ServerPlayer player) {
-        dev.awaken.core.AwakenNet.send(player, new dev.awaken.progression.net.ProgressionPayloads.OpenBand(0));
+        openBand(player, 0);
+    }
+
+    /** Opens the band on a page (the rail's order, 0 Status; {@link #BAND_PAGE_ASCENT} for the Ascent). */
+    public static void openBand(ServerPlayer player, int page) {
+        dev.awaken.core.AwakenNet.send(player, new dev.awaken.progression.net.ProgressionPayloads.OpenBand(page));
     }
 
     /** Queue a sync of the profile to its owner (batched once per second). */

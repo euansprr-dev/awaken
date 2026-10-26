@@ -90,7 +90,7 @@ final class SignalTests {
         });
 
         AwakenTests.register("signal_status_screen_frame", 20, h -> {
-            List<String> tabs = List.of("Status", "Truths", "Codex", "Gate Map");
+            List<String> tabs = List.of("Status", "Powers", "Journal", "Truths", "Codex", "Map"); // the band's pages (SPEC §30)
             for (int[] s : SIZES) {
                 String at = s[0] + "x" + s[1];
                 StatusLayout.Frame f = StatusLayout.of(s[0], s[1], tabs, "K to close", SignalText::approxWidth);

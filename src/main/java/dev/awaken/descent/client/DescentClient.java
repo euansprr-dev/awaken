@@ -95,7 +95,7 @@ public final class DescentClient {
 
         @Override
         public int order() {
-            return 420;
+            return 16; // the Status page, above the Journal, while you carry one
         }
 
         private static DeepPack pack() {
