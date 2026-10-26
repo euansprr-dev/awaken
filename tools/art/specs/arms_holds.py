@@ -226,42 +226,45 @@ def describe(display):
 # ---- the holds ------------------------------------------------------------------------------------------------------
 
 LEFT = (-1.0, 0.0, -0.3)  # a working side toward the middle of the view
+# a working side down and toward the foe: how a blade, an axe's bit, a glaive's edge is really held at rest (Euan
+# 2026-10-26: "You're never going to hold an axe on its side like that. You're going to hold the sharp ends downwards,
+# similar to a sword"): the weapon turned a quarter about its length (roll 90), its flat to the side, never to the eye
+DOWN = (0.0, -0.8, -0.6)
 
 HOLDS = {
-    # one hand, the blade up and forward to the left, its flat to the eye; a cleaver's edge in toward the middle, the
-    # side the style's cuts lead with
-    "longsword": dict(yaw=18, pitch=52, grip=(0.02, 0.0, 0.02), cut=LEFT),
+    # one hand, the blade up and forward to the left, an edge down toward the foe (a cleaver's own), its flat to the side
+    "longsword": dict(yaw=18, pitch=52, roll=90, grip=(0.02, 0.0, 0.02), cut=DOWN),
     # en garde: the point forward at the target's height, the hand a little in
-    "rapier": dict(yaw=20, pitch=18, grip=(-0.04, 0.03, -0.02)),
+    "rapier": dict(yaw=20, pitch=18, roll=90, grip=(-0.04, 0.03, -0.02)),
     # two hands at the middle, the edge down toward the target, the point at it (chudan)
     "katana": dict(yaw=10, pitch=36, roll=90, grip=(-0.14, 0.0, 0.04)),
     # the shaft across the lower view, gripped part way, the head forward and up, the butt back past the hand; held
     # larger (nearer its size in F5) and turned so its head sits left of and under the aim point, not on it (the game
     # draws the resting hand about an eighth of the frame higher than mesh_render does: judged in the game, 2026-10-26)
     "spear": dict(yaw=46, pitch=13, grip=(0.02, -0.04, 0.06), size=1.3),
-    # as the spear, the blade higher, its edge in toward the middle
-    "glaive": dict(yaw=54, pitch=22, grip=(0.02, -0.02, 0.05), size=1.2, cut=LEFT),
+    # as the spear, the blade higher, its edge down toward the foe
+    "glaive": dict(yaw=54, pitch=22, roll=90, grip=(0.02, -0.02, 0.05), size=1.2, cut=DOWN),
     # the snath up, the blade at the top reaching in across the view
     "scythe": dict(yaw=8, pitch=64, grip=(0.02, -0.04, 0.03), cut=LEFT),
     # held at its middle across the body, one end low right, the other up to the left
     "warstaff": dict(yaw=58, pitch=28, grip=(-0.08, -0.06, 0.0)),
-    # two hands, raised, big and near the middle; a single edge in toward the middle
-    "greatblade": dict(yaw=20, pitch=60, grip=(-0.10, -0.08, 0.04), cut=LEFT),
+    # two hands, raised, big and near the middle; an edge down toward the foe, its broad flat to the side
+    "greatblade": dict(yaw=20, pitch=60, roll=90, grip=(-0.10, -0.08, 0.04), cut=DOWN),
     # two hands low on the haft, the head up at the right
     "maul": dict(yaw=6, pitch=58, roll=90, grip=(-0.04, -0.10, 0.04)),
-    # one hand, the head up, its bit in toward the middle
-    "axe": dict(yaw=10, pitch=58, grip=(0.02, -0.04, 0.02), cut=LEFT),
+    # one hand, the head up, its bit down toward the foe (never its flat to the eye)
+    "axe": dict(yaw=10, pitch=58, roll=90, grip=(0.02, -0.04, 0.02), cut=DOWN),
     # short, the point forward, a little larger than true so its blade reads; one in each hand (the off hand's twin,
     # ArmsOffHand), held up enough that both blades show whole
-    "daggers": dict(yaw=14, pitch=42, grip=(-0.02, 0.07, -0.02), size=1.15, cut=LEFT),
+    "daggers": dict(yaw=14, pitch=42, roll=90, grip=(-0.02, 0.07, -0.02), size=1.15, cut=DOWN),
     # held at the middle, the blades either way across the view
     "twinblades": dict(yaw=62, pitch=34, grip=(-0.04, 0.02, 0.0)),
     # the head forward on its coiled chain
-    "chainblade": dict(yaw=18, pitch=38, grip=(0.02, 0.0, 0.02)),
+    "chainblade": dict(yaw=18, pitch=38, roll=90, grip=(0.02, 0.0, 0.02)),
     # the shield to the front on the forearm, the blade above it
     "shieldblade": dict(yaw=30, pitch=62, grip=(-0.02, -0.02, 0.02)),
     # the energy blade forward like a drawn arm
-    "precursor": dict(yaw=14, pitch=24, grip=(0.0, 0.0, 0.0)),
+    "precursor": dict(yaw=14, pitch=24, roll=90, grip=(0.0, 0.0, 0.0)),
     # gauntlets keep their worn hold (arms_weapons.HOLDS["gauntlets"]): they were never a blade in the hand
 }
 
