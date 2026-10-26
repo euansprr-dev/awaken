@@ -1465,7 +1465,17 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   river carved to y 57 and 18 wide (water to sea level 63: the surface estimate reads 8 below the floor there, the aquifer's test for open
   sea-level water),
   continuing straight past the core and fading out 160 blocks beyond it; everything eases back to the natural terrain
-  by 700. No site (old worlds, Classic start, no Lithostitched) means the function is its input. Lairs and Precursor
+  by 700. The rim (2026-10-26, Euan: "that's a bit weird terrain generation"): across the blend the basin aims not at
+  the street but at a rise from it to the land's own height (`aim = street + (land − street) × (1 − w)`, the land being
+  where the router's `depth` crosses zero, linear in y in both routers: the ground without its peaks and noise; the
+  lands pack passes `"depth": "minecraft:overworld/depth"`). Aiming at the street everywhere, the land held until the
+  blend outweighed it and gave way at once: a sheer cliff about 560 blocks out, often undercut into a cave tens of blocks
+  tall. Now near the edge the aim and the land agree on where the ground is and it eases in as a slope. New worlds only:
+  `<world>/awaken/terrain_rim` records "soft" for a world with no overworld chunks at its first start, "steep" otherwise,
+  so an old world never grows a slope beside its cliff (`CityBasin.softRim`). Far Sight samples the same wrapped final
+  density, so far and near agree. Test `terrain_city_basin_rim` (vanilla, seed 777, a hilly site, 36 rays from 330 to 600
+  every 8 blocks: no more than 2% of steps rise over 8 blocks, no more than 2% of columns have an air gap of 3 or more
+  under their top; the street aim logged beside it). No site (old worlds, Classic start, no Lithostitched) means the function is its input. Lairs and Precursor
   ruins skip `reserved(x, z)`; the city wires its runtime systems (gates, anomalies, landmarks, spawn vault, the Well).
   Terrain never sets spawn (the city does, through `LevelEvent.CreateSpawnPosition`). Dev switch for tours before the
   city exists: `CITY=on` (writes `config/awaken-terrain-dev.properties`); `/awaken terrain city` goes to the site.
@@ -1701,7 +1711,9 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   tour `farsight3-rim.txt`). Snow lies by the alpine snow line and by a smooth coldness (each corner's blocks above the game's own cold
   line, info alpha, found by bisecting `coldEnoughToSnow`), both broken into patches over a ~20-block band
   (`AlpineSurface.patches`, the same noise the chunks' snow uses), on tops and as a fringe on risers. Scree and bare
-  rock by slope; water over its own sea floor (2026-10-26, Euan's idea: the real water shows its floor, the far water
+  rock by slope; water where it's cold enough to snow (colour flag COLD) is ice, opaque, as the chunks freeze it
+  (2026-10-26: frozen rivers' indigo water drew far valleys purple and see-through), and the generated layer reads ice's
+  lavender map colour as ice's textures' pale blue (`FarPalette.ICE`); water over its own sea floor (2026-10-26, Euan's idea: the real water shows its floor, the far water
   showed none, so the floor ended at the chunks): the floor lies the water's depth down along the view ray, blocks of
   sand, gravel in the deep and seagrass patches, anchored to the world, showing by the water's absorption over the path
   (shallows and steep views, not deep water or grazing ones) and fading out over 700 blocks past the render distance's
@@ -1713,7 +1725,7 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   of four directions, one and two corners out): a cliff's foot or a face under a summit isn't a hollow. Changed rings at once, one more every other frame
   (the chunk mask refreshes on the frames between).
 - **Far forests** (`FarTrees`): rings 1-4 (half a kilometre to four) plant jittered candidate spots per cell (1, 2, 3,
-  1 by ring; ring 4's trees are dots, the canopy shading carries the forest there) taking a tree as often as the forest is dense (densest: about two in three), never on water, on slopes over
+  1 by ring; ring 4's trees are dots, the canopy shading carries the forest there) taking a tree as often as the forest is dense (densest: about two in three), its crown and height from the cell's densest corner (a forest's edge on open ground took that ground's blank crown: flat black trees, 2026-10-26), never on water, on slopes over
   1.1, or above the treeline (14 under the alpine snow line); each a little taller or wider than the mean. Up to 512 a
   patch, 16 bytes each, in a persistent texel buffer (two runs per slot: predicted, real), stood as opaque voxel trees
   (crown top, two camera-facing crown sides narrowing by shape, two trunk sides): broadleaf, conifer, jungle, acacia.
