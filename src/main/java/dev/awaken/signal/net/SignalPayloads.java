@@ -29,12 +29,25 @@ public final class SignalPayloads {
         @Override public Type<Show> type() { return TYPE; }
     }
 
-    /** Server → client: a small toast line (combat-safe). */
-    public record Toast(Component text) implements CustomPacketPayload {
+    /** Server → client: a small toast line (combat-safe), with its tier (SPEC §26) and merge topic. */
+    public record Toast(Component text, int tier, String topic) implements CustomPacketPayload {
         public static final Type<Toast> TYPE = new Type<>(Awaken.id("signal_toast"));
-        public static final StreamCodec<RegistryFriendlyByteBuf, Toast> STREAM_CODEC =
-                ComponentSerialization.TRUSTED_STREAM_CODEC.map(Toast::new, Toast::text);
+        public static final StreamCodec<RegistryFriendlyByteBuf, Toast> STREAM_CODEC = StreamCodec.composite(
+                ComponentSerialization.TRUSTED_STREAM_CODEC, Toast::text,
+                ByteBufCodecs.VAR_INT, Toast::tier,
+                ByteBufCodecs.STRING_UTF8, Toast::topic,
+                Toast::new);
         @Override public Type<Toast> type() { return TYPE; }
+    }
+
+    /** Server → client: a tip's context came up ({@code offer}) or the player did what it teaches (SPEC §27.7). */
+    public record Tip(String id, boolean offer) implements CustomPacketPayload {
+        public static final Type<Tip> TYPE = new Type<>(Awaken.id("signal_tip"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Tip> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.STRING_UTF8, Tip::id,
+                ByteBufCodecs.BOOL, Tip::offer,
+                Tip::new);
+        @Override public Type<Tip> type() { return TYPE; }
     }
 
     /** Client → server: the player answered a window's action (accepted = Y, false = N). */

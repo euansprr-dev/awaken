@@ -10,8 +10,8 @@
 //   16   x 1 for zero-to-one depth, y 1 when the light is the moon, z rain, w the near plane
 //   17   x seconds, wrapping every hour (ripples, shimmer)
 //   18-19 the clouds (lens_clouds.glsl)
-//   20   x the Holo world plates drawn this frame; 24-41 each plate: camera-relative centre, half-width and
-//        half-height vectors (3 texels a plate)
+//   20   x the Holo world plates drawn this frame, y the storm cells; 24-41 each plate: camera-relative centre,
+//        half-width and half-height vectors (3 texels a plate); 42-47 the storm cells (lens_storm_frame.glsl)
 
 vec4 F(int i) { return texelFetch(FrameSampler, ivec2(i, 0), 0); }
 

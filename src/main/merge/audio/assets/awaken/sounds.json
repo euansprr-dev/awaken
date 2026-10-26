@@ -688,5 +688,30 @@
         "name": "awaken:amb_world_lumen_chime_6"
       }
     ]
+  },
+  "ui.find": {
+    "subtitle": "subtitles.awaken.ui.find",
+    "sounds": [
+      {
+        "name": "awaken:ui_find"
+      }
+    ]
+  },
+  "ui.moment": {
+    "subtitle": "subtitles.awaken.ui.moment",
+    "sounds": [
+      {
+        "name": "awaken:ui_moment"
+      }
+    ]
+  },
+  "amb.rift_rumble": {
+    "subtitle": "subtitles.awaken.amb.rift_rumble",
+    "sounds": [
+      {
+        "name": "awaken:amb_rift_rumble",
+        "attenuation_distance": 72
+      }
+    ]
   }
 }

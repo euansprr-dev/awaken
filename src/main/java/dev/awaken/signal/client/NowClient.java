@@ -39,6 +39,57 @@ public final class NowClient {
 
     static void tick() {
         ticks++;
+        thread();
+    }
+
+    // ---- the Signal's thread (SPEC §27.7) -----------------------------------------------------------------------------
+
+    /** How far the thread runs along the ground, how fast (blocks a tick), and how often at most. */
+    static final int THREAD_LEN = 26, THREAD_EVERY = 2400, IDLE = 160;
+    private static String threadFor = "";
+    private static int lastThread = -100_000, still, runAt = -1;
+    private static double lastX, lastZ, runX, runY, runZ, runDx, runDz;
+
+    /**
+     * Toward the top suggestion's place, a thread of the Signal's light runs low along the ground for a few seconds: once
+     * when that place is new, and once more if the player stands still outdoors for 8 s with it. At most every two
+     * minutes, never in a screen. The guiding wind, in our blue: nothing stays on screen.
+     */
+    private static void thread() {
+        Minecraft mc = Minecraft.getInstance();
+        var p = mc.player;
+        if (p == null || mc.level == null) return;
+        if (runAt >= 0) {
+            int t = ticks - runAt;
+            if (t > THREAD_LEN) runAt = -1;
+            else if (t >= 2) {
+                for (int k = 0; k < 2; k++) {
+                    double d = t + k * 0.5;
+                    double x = runX + runDx * d, z = runZ + runDz * d;
+                    int top = mc.level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(x), Mth.floor(z));
+                    double y = Math.abs(top - runY) < 6 ? top + 0.15 : runY + 0.15;
+                    dev.awaken.body.ascent.client.AscentFxBridge.threadMote(x, y, z, runDx, runDz);
+                }
+            }
+        }
+        boolean moved = (p.getX() - lastX) * (p.getX() - lastX) + (p.getZ() - lastZ) * (p.getZ() - lastZ) > 0.0025;
+        lastX = p.getX();
+        lastZ = p.getZ();
+        still = moved ? 0 : still + 1;
+        var top = current.top();
+        if (top.isEmpty() || top.get().where().isEmpty() || mc.gui.screen() != null || !p.level().dimension().identifier().equals(current.dimension())) return;
+        BlockPos at = top.get().where().get();
+        double dx = at.getX() + 0.5 - p.getX(), dz = at.getZ() + 0.5 - p.getZ(), dist = Math.sqrt(dx * dx + dz * dz);
+        if (dist < 12 || ticks - lastThread < THREAD_EVERY) return;
+        boolean fresh = !topId.equals(threadFor) && sinceChange() == 30;
+        if (!fresh && still != IDLE) return;
+        threadFor = topId;
+        lastThread = runAt = ticks;
+        runX = p.getX();
+        runY = p.getY();
+        runZ = p.getZ();
+        runDx = dx / dist;
+        runDz = dz / dist;
     }
 
     /** Ticks since the top suggestion last changed (the tracker fades a new one in). */

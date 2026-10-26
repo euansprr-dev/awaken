@@ -12,6 +12,7 @@ The palette is cloth, skin, boots and grit, never the System's glass: the body i
 - slide:   a hip dropping onto the ground and a long friction slide, its pitch falling as it slows, gravel under it
 - mantle:  two palms slapping onto stone, cloth scraping over the lip, a boot setting down on top
 - impact:  the weight behind a moving hit: a low punch and a short crack, under vanilla's own hit sound
+- vault:   a palm slapped onto a rail, the legs' cloth whipping over it, two feet down running (SPEC §17.27)
 """
 import json
 import os
@@ -223,6 +224,22 @@ def pipe_brake(seed):
     return finish(x)
 
 
+def vault(seed):
+    """Over a fence or wall: one palm slapped onto the rail, the legs' cloth whipping over it, the feet coming down one
+    after the other into the run (the rail's own knock is the block's hit sound, played with it in the game)."""
+    n = K.ns(0.62)
+    slap = K.bandpass(K.noise(K.ns(0.05), "white", seed + 1), 1350, 0.75) * K.perc(K.ns(0.05), 0.0005, 0.028)
+    x = at(n, 0.0, slap) * 1.2
+    x += at(n, 0.004, thump(150, 105, 0.08, 0.04, 0.35, 340, seed + 2)) * 0.35                  # the weight on the hand
+    x += at(n, 0.03, swish(0.24, 700, 2100, 0.8, seed + 3, 0.45, 1.2)) * 0.32                   # the legs whip over
+    x += at(n, 0.06, K.highpass(burst(0.03, 5200, 0.8, 0.012, seed + 4), 3000, 2)) * 0.25      # a cloth snap at the top
+    x += at(n, 0.33, thump(105, 70, 0.12, 0.06, 0.55, 300, seed + 5)) * 0.7                    # the first foot down
+    x += at(n, 0.335, burst(0.05, 2400, 1.3, 0.03, seed + 6)) * 0.2
+    x += at(n, 0.41, thump(95, 65, 0.12, 0.06, 0.5, 280, seed + 7)) * 0.5                      # and the second, running on
+    x += at(n, 0.415, grit(0.12, 60, seed + 8, 0.3)) * 0.1
+    return finish(x)
+
+
 SOUNDS_SPEC = [
     # file, render, rms (dBFS, sfx -20 ± 4), event, subtitle, volume, attenuation
     ("body_roll", roll, -20.0, "body.roll", "Body rolls", 1.0, 16),
@@ -238,6 +255,7 @@ SOUNDS_SPEC = [
     ("body_drop", drop, -23.0, "body.drop", "Body lets go of a ledge", 1.0, 12),
     ("body_pipe_slide", pipe_slide, -23.5, "body.pipe_slide", "Hands slide down a pipe", 1.0, 14),
     ("body_pipe_brake", pipe_brake, -21.5, "body.pipe_brake", "Hands clamp on a pipe", 1.0, 14),
+    ("body_vault", vault, -21.0, "body.vault", "Body vaults", 1.0, 16),
 ]
 
 

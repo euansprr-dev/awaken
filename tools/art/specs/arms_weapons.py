@@ -3101,20 +3101,12 @@ def write_all(only=None):
         # the hands' base: a particle, no geometry of its own (the mesh draws itself), vanilla's third-person hold and
         # our own first-person one (FIRST_PERSON below)
         _write(os.path.join(RES, "assets/awaken/models/item", wid + "_in_hand.json"), {
-            "parent": "minecraft:item/handheld", "textures": {"particle": tex + "_icon"}, "display": hold_of(hold_key(row))})
+            "parent": "minecraft:item/handheld", "textures": {"particle": tex + "_icon"}, "display": row_hold(row, built.pos / 16.0)})
         _write(os.path.join(RES, "assets/awaken/items", wid + ".json"), {"model": {
             "type": "minecraft:select", "property": "minecraft:display_context",
             "cases": [{"when": ["gui", "ground", "fixed", "on_shelf"], "model": {"type": "minecraft:model", "model": "awaken:item/" + wid}}],
             "fallback": {"type": "minecraft:special", "base": "awaken:item/" + wid + "_in_hand", "model": {"type": "awaken:weapon", "weapon": wid}}}})
-        recipe = os.path.join(RES, "data/awaken/recipe", wid + ".json")
-        if wid in LORD_COLOUR:  # the Lord-forged only drop
-            if os.path.exists(recipe):
-                os.remove(recipe)
-        else:
-            _write(recipe, {
-                "type": "minecraft:crafting_shaped", "category": "equipment", "group": "awaken_arms_" + style,
-                "key": {"C": "#awaken:hunter_core_" + tier.lower(), "X": "awaken:" + G.SET[tier] + "_blade", "B": "#awaken:hunter_bind_" + tier.lower()},
-                "pattern": STYLES[style][4], "result": {"id": "awaken:" + wid}})
+        write_recipe(wid, style, tier)
         for stale in (wid + "_icon_glow.png",):
             if os.path.exists(os.path.join(tex_dir, stale)):
                 os.remove(os.path.join(tex_dir, stale))
@@ -3130,6 +3122,44 @@ def write_all(only=None):
         fh.write("\n")
     with open(JAVA, "w") as fh:
         fh.write(JAVA_HEAD + ",\n".join(java_rows) + "\n    );\n}\n")
+
+
+def blueprint_pattern(pattern):
+    """The style's own shape with its Blueprint (P) in the first free cell (a column or row added when there is none)."""
+    w = max(len(r) for r in pattern)
+    rows = [list(r.ljust(w)) for r in pattern]
+    for r in rows:
+        for i, c in enumerate(r):
+            if c == " ":
+                r[i] = "P"
+                return ["".join(x) for x in rows]
+    if w < 3:
+        return ["".join(r) + ("P" if i == 0 else " ") for i, r in enumerate(rows)]
+    assert len(rows) < 3, pattern
+    return ["".join(r) for r in rows] + ["P".ljust(w)]
+
+
+def write_recipe(wid, style, tier):
+    """A forged weapon's recipe at the crafting table: the tier's Hunter blade, core and bind in the style's shape, and
+    every style but the Longsword needs its Blueprint, drawn at the Forge and kept (it comes back out of the grid). The
+    Lord-forged only drop."""
+    recipe = os.path.join(RES, "data/awaken/recipe", wid + ".json")
+    if wid in LORD_COLOUR:
+        if os.path.exists(recipe):
+            os.remove(recipe)
+        return
+    key = {"C": "#awaken:hunter_core_" + tier.lower(), "X": "awaken:" + G.SET[tier] + "_blade", "B": "#awaken:hunter_bind_" + tier.lower()}
+    pattern = STYLES[style][4]
+    if style != "longsword":
+        key["P"] = "awaken:" + style + "_blueprint"
+        pattern = blueprint_pattern(pattern)
+    _write(recipe, {"type": "minecraft:crafting_shaped", "category": "equipment", "group": "awaken_arms_" + style,
+                    "key": key, "pattern": pattern, "result": {"id": "awaken:" + wid}})
+
+
+def write_recipes():
+    for row in CATALOG:
+        write_recipe(row[0], row[8], row[2])
 
 
 # First person, at rest: the weapon presented, not a slab of blade (vanilla's sword sits so close that a longsword shows
@@ -3345,6 +3375,37 @@ def contact_sheet(out, style="longsword"):
     return out
 
 
+def row_hold(row, pos):
+    """A weapon's first-person hold: its style's real hold (arms_holds.HOLDS, written as the weapon is really held) solved
+    for its own mesh so it sits in the hand like every other of its style; the gauntlets keep their worn hold."""
+    import arms_holds as AH
+    edge = AH.edge_of(row[8], None if row[0] in LORD_COLOUR else row[2])
+    d = AH.hold_for(row[8], pos, edge)
+    if d is None:  # the style's own (the gauntlets' worn hold)
+        fp = hold_of(hold_key(row))["firstperson_righthand"]
+        d = (tuple(fp["rotation"]), tuple(fp["translation"]), fp["scale"][0])
+    rot, tr, sc = d
+    # the left hand holds its true mirror (a pair's twin, or a weapon in the off hand), a single-edged one edge and all
+    lrot, ltr, _ = AH.mirror_display(d, keep_edge=edge != 0)
+    out = {"firstperson_righthand": {"rotation": list(rot), "translation": list(tr), "scale": [sc, sc, sc]},
+           "firstperson_lefthand": {"rotation": lrot, "translation": ltr, "scale": [sc, sc, sc]}}
+    third = AH.third_person(row[8], edge)  # a single edge on the other side from its style's: turned over in F5 too
+    if third is not None:
+        out["thirdperson_righthand"], out["thirdperson_lefthand"] = third
+    return out
+
+
+def write_holds():
+    """Only the holds (models/item/<id>_in_hand.json), from the meshes already built: no mesh or texture is re-made."""
+    for row in CATALOG:
+        wid = row[0]
+        m = MS.read(os.path.join(RES, "assets/awaken/arms/weapons", wid + ".mesh"))
+        path = os.path.join(RES, "assets/awaken/models/item", wid + "_in_hand.json")
+        model = json.load(open(path))
+        model["display"] = row_hold(row, m["pos"])
+        _write(path, model)
+
+
 def held_as(style):
     """A style's first-person hold as mesh_render takes it: (rotation, translation, scale)."""
     fp = hold_of(style)["firstperson_righthand"]
@@ -3402,13 +3463,8 @@ def check():
             q = np.array(pts) / 16.0
             if (q < lo - 0.05).any() or (q > hi + 0.05).any() or rate <= 0 or radius <= 0:
                 bad.append(f"{row[0]}: a stream off the weapon, or with no rate or spread")
-        if True:
-            sx, sy, height = fp_screen(built, hold_key(row))
-            g1 = look.get("grip", (-1, 3))[1]
-            above = height > g1 + (height.max() - g1) / 2  # the outer half of its reach
-            if (sx[above] < 0.02).any() or (sx[above] > 0.98).any() or (sy[above] < FP_TOP).any() or (sy[above] > 0.98).any():
-                bad.append(f"{row[0]}: in first person the outer half of its reach leaves the view "
-                           f"(x {sx[above].min():.2f}..{sx[above].max():.2f}, y {sy[above].min():.2f}..{sy[above].max():.2f})")
+        # (the old rule, every point inside the view, shrank every style to the Longsword's outline; the holds are now
+        # each weapon's own, true to its size, and a spear's point may leave the view: arms_holds.py)
         if (row[2] in ("B", "A", "S")) != bool(built.streams):
             bad.append(f"{row[0]}: light lifts off the B, A and S blades and only those")
         alpha = np.asarray(icon(make(row, clean=True)[0], look))[..., 3]
@@ -3431,6 +3487,14 @@ def main(argv):
         if cmd == "build":
             write_all(argv[1:] or None)
             print("written")
+        return 0
+    if cmd == "holds":  # only the first-person holds (models/item/<id>_in_hand.json)
+        write_holds()
+        print("holds written")
+        return 0
+    if cmd == "recipes":  # only the recipes (no meshes or textures re-made)
+        write_recipes()
+        print("recipes written")
         return 0
     if cmd == "preview":
         print("\n".join(preview(argv[1] if len(argv) > 1 else ".", argv[2:] or None)))

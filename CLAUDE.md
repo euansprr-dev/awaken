@@ -14,6 +14,13 @@ Design: `docs/plan.html` (player-facing plan) and `docs/SPEC.md` (implementation
   - In a GameTest never wait a fixed number of ticks for chunks or light: the test server never waits between ticks.
     Tests start on entity-ticking ground; read light after `AwakenTests.awaitLight` (SPEC §13, "Tests").
 - Never launch the game client (`runClient`) without asking the owner first: it steals focus and plays sound on his Mac.
+- Tours (autopilot screenshots): look tours run on GitHub's macOS runners, several at once, never in the Mac's queue.
+  Push your branch, then `tools/tour-ci.sh tools/autopilot/<x>.txt [timeout] [KEY=VAL ...]` (tools/autopilot.sh's knobs;
+  shots, log and summary land in `run-autopilot/screenshots-ci/<x>-<run id>/`). The runner starts from a fresh game
+  folder on a virtual display like the MacBook's (same pixels, same GUI scale), waits for the terrain before each shot,
+  and always has Far Sight off. These stay on the Mac under `slot.sh tour`: perf and frame-time tours (`perf-*`, the Lens
+  bench, anything measuring ms), Far Sight's tours, sound listening, and anything needing a real GPU's timing (SPEC §13,
+  "Tours"). Every tour script picks a starter power (`cmd awaken powers starter 1`), or a slower machine shows its screen.
 - The project lives on the external SSD. Don't write big files to the internal disk.
 
 ## Verifying APIs (important)

@@ -7,6 +7,7 @@ import dev.awaken.progression.client.StatusSections;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
 import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -17,6 +18,11 @@ public final class AboveClient {
 
     public static void init(IEventBus modBus) {
         modBus.addListener(AboveClient::onPayloads);
+        // a sealed door's seams and rune glow in its rank's colour, so the rank reads from afar (SPEC §17.29)
+        modBus.addListener(RegisterColorHandlersEvent.BlockTintSources.class, e -> {
+            e.register(java.util.List.of(DoorTint.CORE), dev.awaken.above.AboveBlocks.DOOR_CORE.get());
+            e.register(java.util.List.of(DoorTint.PANEL), dev.awaken.above.AboveBlocks.DOOR.get());
+        });
         CodexEntries.addSource(ClientAbove::codex);
         StatusSections.add(StatusSections.Tab.GATE_MAP, new GateMapSection());
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> JetBoots.tick());

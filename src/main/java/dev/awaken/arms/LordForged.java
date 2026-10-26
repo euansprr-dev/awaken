@@ -93,6 +93,22 @@ public final class LordForged {
                     MobEffects.DARKNESS, 60, 0, false, 2.6F))
     );
 
+    /** Each Lord-forged weapon's Mark (Marks), something of its Lord in the hand that holds it. */
+    static final Map<String, String> MARK = Map.ofEntries(
+            Map.entry("bell_warden", "rebuke"), Map.entry("mother_of_spores", "feast"), Map.entry("ember_tyrant", "chain_reaction"),
+            Map.entry("hive_regent", "windrunner"), Map.entry("root_saint", "steady_breath"), Map.entry("drowned_archivist", "echo_return"),
+            Map.entry("gearwright_colossus", "earthsplitter"), Map.entry("glass_serpent", "counterspark"), Map.entry("lantern_broker", "harvest"),
+            Map.entry("abbot_of_frost", "parry_ward"), Map.entry("mirror_knight", "mercy"), Map.entry("unit_zero", "overcharge"),
+            Map.entry("the_sleeper", "phantom_cut"), Map.entry("sky_leviathan", "crescendo"), Map.entry("hollow_herald", "sunder"));
+
+    /** A Lord-forged weapon as it falls: with its Lord's Mark. */
+    static ItemStack stack(Forged f, Item item) {
+        ItemStack s = new ItemStack(item);
+        String mark = MARK.get(f.lord());
+        if (mark != null) s.set(ArmsContent.INSTANCE.get(), Marks.Instance.EMPTY.withMark(mark));
+        return s;
+    }
+
     private static final Map<String, Forged> BY_WEAPON = ALL.stream().collect(Collectors.toUnmodifiableMap(Forged::weapon, Function.identity()));
     private static final Map<String, Forged> BY_BOSS = ALL.stream().collect(Collectors.toUnmodifiableMap(x -> "awaken:" + x.lord(), Function.identity()));
 
@@ -140,7 +156,7 @@ public final class LordForged {
         p.setData(ArmsContent.MEMORY, m.withLordsWithout(0));
         // the reveal waits for the next tick: the death event fires inside die(), before the kill is counted (an
         // empty-handed kill counts as unarmed only while the hand is still empty when the Lord's death is tallied)
-        PENDING.add(new Pending(p, new ItemStack(item), forged));
+        PENDING.add(new Pending(p, stack(forged, item), forged));
     }
 
     private record Pending(ServerPlayer player, ItemStack stack, Forged forged) {}
@@ -172,6 +188,8 @@ public final class LordForged {
                 .append(stack.getHoverName().copy().withStyle(Style.EMPTY.withColor(forged.art().look().colour))));
         if (p.getMainHandItem().isEmpty()) p.setItemInHand(InteractionHand.MAIN_HAND, stack);
         else if (!p.getInventory().add(stack)) p.drop(stack, false, Prediction.SERVER_ONLY);
+        // a new weapon is a new capability: the Director's rhythm hears it (progression plan item 10)
+        dev.awaken.progression.Progression.markNewThing(p, "lord-forged weapon");
     }
 
     // ---- its Art ------------------------------------------------------------------------------------------------------

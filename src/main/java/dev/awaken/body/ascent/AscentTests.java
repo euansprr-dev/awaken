@@ -363,7 +363,8 @@ final class AscentTests {
     /**
      * The Tether Vow on a real vault built from its blueprint in each of the four turns: the turn is read back from the
      * pylons, the forecourt is where the blueprint says, the line's anchor on the pylon top is real to the server's check
-     * and clear from the forecourt; then the director: the call, the line (the rope given), the vow kept at the mast.
+     * and clear from the forecourt. Then the lock: under the door's rank (D at the least), or with the sealed door shut,
+     * the vault only stirs and the door reads them; at D with the door open, the director: the call, the line, the mast.
      */
     private static void tetherVow(GameTestHelper h) {
         net.minecraft.server.level.ServerLevel level = h.getLevel();
@@ -374,7 +375,7 @@ final class AscentTests {
         net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
         try {
             for (int rot = 0; rot < 4; rot++) {
-                TetherVow.Site site = new TetherVow.Site(box, rot);
+                TetherVow.Site site = new TetherVow.Site(box, rot, 1);
                 wipe(level, box);
                 dev.awaken.above.ruin.RuinBuilder.build(dev.awaken.above.ruin.RuinKind.VAULT, 4242L + rot, 1, new dev.awaken.above.ruin.RuinBuilder.Sink() {
                     @Override
@@ -412,23 +413,62 @@ final class AscentTests {
                 h.assertTrue(TetherVow.atMast(site, site.mast().getX() + 0.5, box.minY() + 16, site.mast().getZ() + 1.5)
                         && !TetherVow.atMast(site, fore.getX() + 0.5, fore.getY(), fore.getZ() + 0.5), "the mast in turn " + rot);
             }
-            // the director: awake, no rope, in the forecourt of the last vault built
+            // the lock (Euan, 2026-10-26): awake and without the rope, but E-rank, in the forecourt of a D-door vault
             dev.awaken.progression.Progression.awaken(p);
-            h.assertTrue(TetherVow.eligible(p), "an awakened player without the rope is offered the vow");
-            TetherVow.Site site = new TetherVow.Site(box, 3);
+            h.assertTrue(TetherVow.eligible(p), "an awakened player without the rope may be offered the vow");
+            TetherVow.Site site = new TetherVow.Site(box, 3, 1);
+            BlockPos fore = site.world(11, 1, 2), door = site.door();
+            p.snapTo(fore.getX() + 0.5, fore.getY(), fore.getZ() + 0.5, 0, 0);
             long now = AscentServer.now(p);
-            TetherVow.begin(p, site, now);
+            h.assertTrue(site.needs() == dev.awaken.progression.Rank.D && !site.doorOpen(level), "a D door's line answers D, and its door is sealed");
+            TetherVow.look(p, site, now);
+            h.assertTrue(!TetherVow.running(p) && TetherVow.stirred(p) && !Ascent.has(p, Ascent.Tier.TETHER),
+                    "under-ranked, the vault only stirs: no rope");
+            // its sealed door reads them: shut, it says so, and it won't say it again at once on approach
+            var core = level.getBlockState(door);
+            h.assertTrue(core.is(dev.awaken.above.AboveBlocks.DOOR_CORE.get()) && !dev.awaken.above.block.DoorCoreBlock.canOpen(p, core),
+                    "the sealed door is shut to E-rank");
+            dev.awaken.above.block.DoorCoreBlock.forget(p.getUUID());
+            h.assertTrue(dev.awaken.above.block.DoorCoreBlock.readOnApproach(p, level, door, core)
+                    && !dev.awaken.above.block.DoorCoreBlock.readOnApproach(p, level, door, core), "the door reads them once, not every check");
+            dev.awaken.above.block.DoorCoreBlock.tryOpen(p, level, door);
+            h.assertFalse(site.doorOpen(level), "touched by E-rank, it stays shut");
+            // D-rank: a C door's line still waits; the D door opens, and with it open the vault calls
+            dev.awaken.progression.Progression.passReassessment(p);
+            h.assertTrue(dev.awaken.progression.Progression.rank(p) == dev.awaken.progression.Rank.D, "D-rank");
+            h.assertFalse(TetherVow.ready(p, new TetherVow.Site(box, 3, 2)), "a C door's line waits for C");
+            TetherVow.look(p, site, now + 20);
+            h.assertTrue(!TetherVow.running(p) && !Ascent.has(p, Ascent.Tier.TETHER), "at D with the door still sealed, the vault waits");
+            dev.awaken.above.block.DoorCoreBlock.tryOpen(p, level, door);
+            h.assertTrue(site.doorOpen(level), "D-rank opens a D door");
+            TetherVow.look(p, site, now + 40);
+            h.assertTrue(TetherVow.running(p), "at D, with the door open, the vault calls");
+            now += 40;
             TetherVow.tick(p, now + TetherVow.CALL_TICKS - 1);
             h.assertFalse(Ascent.has(p, Ascent.Tier.TETHER), "the call comes before the line");
             TetherVow.tick(p, now + TetherVow.CALL_TICKS);
             h.assertTrue(Ascent.has(p, Ascent.Tier.TETHER) && !Ascent.has(p, Ascent.Tier.LEAPER), "the line gives the rope (only)");
             BlockPos m = site.mast();
             p.snapTo(m.getX() + 0.5, box.minY() + 16, m.getZ() + 0.5, 0, 0);
-            TetherVow.tick(p, now + TetherVow.CALL_TICKS + 40);
+            // the mast keeps the vow only by the line (SPEC §17.29): a tower up to it waits
+            dev.awaken.core.api.ArrivalHooks.Tracker arrival = dev.awaken.core.api.ArrivalHooks.installed();
+            boolean[] line = {false};
+            dev.awaken.core.api.ArrivalHooks.install(new dev.awaken.core.api.ArrivalHooks.Tracker() {
+                @Override public boolean byLine(net.minecraft.server.level.ServerPlayer q) { return line[0]; }
+            });
+            try {
+                TetherVow.tick(p, now + TetherVow.CALL_TICKS + 30);
+                h.assertTrue(TetherVow.running(p), "at the mast without the line, the vow waits");
+                line[0] = true;
+                TetherVow.tick(p, now + TetherVow.CALL_TICKS + 40);
+            } finally {
+                dev.awaken.core.api.ArrivalHooks.install(arrival);
+            }
             h.assertTrue(!TetherVow.running(p) && (p.getData(AscentContent.MEMORY).flags() & AscentMemory.VOW_KEPT) != 0, "the vow is kept at the mast");
             h.assertFalse(TetherVow.eligible(p), "and never offered again");
         } finally {
             TetherVow.forget(p);
+            dev.awaken.above.block.DoorCoreBlock.forget(p.getUUID());
             wipe(level, box);
             level.getServer().getPlayerList().remove(p);
         }
@@ -540,7 +580,9 @@ final class AscentTests {
             for (int i = 0; i < 400; i++) m.mark(true);
             h.assertFalse(WingCoreBlockEntity.reached(p, placed.core()) || Ascent.has(p, Ascent.Tier.WINGS), "a tower gets nothing");
             moved[0] = true;
-            h.assertTrue(WingCoreBlockEntity.reached(p, placed.core()) && Ascent.has(p, Ascent.Tier.WINGS), "the long way gets wings");
+            h.assertFalse(WingCoreBlockEntity.reached(p, placed.core()) || Ascent.has(p, Ascent.Tier.WINGS), "the long way at E: the core waits for C");
+            while (dev.awaken.progression.Progression.rank(p).ordinal() < WingCoreBlockEntity.RANK.ordinal()) dev.awaken.progression.Progression.passReassessment(p);
+            h.assertTrue(WingCoreBlockEntity.reached(p, placed.core()) && Ascent.has(p, Ascent.Tier.WINGS), "the long way at C gets wings");
         } finally {
             dev.awaken.core.api.ArrivalHooks.install(real);
             level.getServer().getPlayerList().remove(p);

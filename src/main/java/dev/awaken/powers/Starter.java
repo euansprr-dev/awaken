@@ -156,6 +156,7 @@ public final class Starter {
         }
         dev.awaken.core.Playtest.log(p, "first_power", "power", id);
         DirectorLog.log(p, "powers", "first power chosen: " + id);
+        dev.awaken.core.api.TipHooks.offer(p, dev.awaken.Awaken.id("first/power")); // which key casts it (SPEC §27.7)
         AwakenNet.send(p, new StarterPayloads.Done(id));
         return true;
     }

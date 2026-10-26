@@ -4,6 +4,7 @@ import dev.awaken.body.Body;
 import dev.awaken.body.BodyContent;
 import dev.awaken.body.BodyRules;
 import dev.awaken.body.Move;
+import dev.awaken.body.VaultRules;
 import dev.awaken.body.net.BodyPayloads;
 import dev.awaken.core.api.MovementHooks;
 import dev.awaken.progression.Progression;
@@ -63,6 +64,14 @@ public final class ClientMoves {
     static int mantleStart = -100, mantleEnd = -100, mantleAge;
     private static double msx, msy, msz;
     private static BodyRules.@Nullable Ledge ledge;
+    // a crossing (SPEC §17.27): a fence, gate or wall vaulted, climbed over or onto
+    static boolean vaulting;
+    static int vaultStart = -100, vaultEnd = -100, vaultAge;
+    static VaultRules.@Nullable Vault vault;
+    private static boolean vaultWasSprinting, vaultPlanted;
+    /** Up onto a top: forward is held back until it's let go, so the body stops there (over a drop too). */
+    static boolean perchHold;
+    private static final double[] RAIL = new double[2];
     // roll
     static int rollAt = -100;
     // a power's flight or an elytra just now: their landings are never rolls
@@ -115,7 +124,7 @@ public final class ClientMoves {
         // the one-button free-run (SPEC §17.14): sprint held with forward reads the ground ahead
         FreeRun.begin(p, k);
         FreeRun.climb(p);
-        if (!awakened && (tac || sliding || mantling)) stopAll(p);
+        if (!awakened && (tac || sliding || mantling || vaulting)) stopAll(p);
         if (jumpSuppressed) {
             if (jump) in.keyPresses = with(in.keyPresses, false, in.keyPresses.shift());
             else jumpSuppressed = false;
@@ -124,6 +133,12 @@ public final class ClientMoves {
             mantleTick(p);
             return;
         }
+        if (vaulting) {
+            in.keyPresses = with(in.keyPresses, false, false); // no hop out of it, no edge-sneak backing off the rail
+            vaultTick(p, in);
+            return;
+        }
+        if (perchHold) perch(p, in, k, jumpPressed);
         if (sliding) {
             slideTick(p, in, jumpPressed);
             return;
@@ -146,6 +161,12 @@ public final class ClientMoves {
                     }
                 }
                 if ((jumpPressed || FreeRun.held) && !k.backward() && canMantle(p)) {
+                    // a fence, gate or wall (SPEC §17.27): over it, or up onto it
+                    VaultRules.Vault v = vaultAhead(p, jumpPressed);
+                    if (v != null) {
+                        startVault(p, in, v);
+                        return;
+                    }
                     BodyRules.Ledge l = BodyRules.findLedge(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ(), p.getYRot(), BodyRules.MANTLE_REACH);
                     if (l != null) {
                         startMantle(p, in, l);
@@ -161,7 +182,8 @@ public final class ClientMoves {
                     startSlide(p, in);
                     return;
                 }
-                if (kit && FreeRun.ground(p, p.level(), CollisionContext.of(p), ticks)) return;
+                if (kit && !perchHold && FreeRun.ground(p, p.level(), CollisionContext.of(p), ticks)) return;
+                if (kit) balance(p, in, k);
             }
         }
         if (kit) RunnerMoves.onInput(p, in, jumpPressed, shiftPressed);
@@ -455,7 +477,8 @@ public final class ClientMoves {
     // ---- mantle -----------------------------------------------------------------------------------------------------
 
     private static boolean canMantle(LocalPlayer p) {
-        return Body.unlocked(p, Move.MANTLE) && p.onGround() && !p.isInLiquid() && !p.isUsingItem() && !p.isBlocking() && !mantling && !sliding;
+        return Body.unlocked(p, Move.MANTLE) && p.onGround() && !p.isInLiquid() && !p.isUsingItem() && !p.isBlocking() && !mantling && !sliding
+                && !vaulting;
     }
 
     private static void startMantle(LocalPlayer p, ClientInput in, BodyRules.Ledge l) {
@@ -512,6 +535,176 @@ public final class ClientMoves {
         p.resetFallDistance();
     }
 
+    // ---- fences, gates and walls (SPEC §17.27) ----------------------------------------------------------------------
+
+    /**
+     * The crossing in front of the body, when the keys ask for one: jump pressed facing it (any pace: walking is a hop,
+     * a wall walked at is climbed onto), or the free-run held while running at it, roughly where you look. Never while
+     * the body stands held on a top it just climbed onto.
+     */
+    private static VaultRules.@Nullable Vault vaultAhead(LocalPlayer p, boolean jumpPressed) {
+        if (perchHold || !Body.unlocked(p, Move.VAULT)) return null;
+        Vec3 v = p.getDeltaMovement();
+        double h = v.horizontalDistance();
+        float yaw = p.getYRot();
+        if (!jumpPressed) {
+            if (!p.isSprinting() || h < 0.12) return null;
+            double fx = -Mth.sin(yaw * Mth.DEG_TO_RAD), fz = Mth.cos(yaw * Mth.DEG_TO_RAD);
+            if ((v.x * fx + v.z * fz) / h < 0.8) return null;
+        }
+        boolean run = FreeRun.held || p.isSprinting();
+        // the ground's friction is already off the stored motion: the pace the body actually runs at
+        double speed = h / 0.546;
+        return VaultRules.find(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ(), yaw,
+                run ? VaultRules.REACH_RUN : VaultRules.REACH_WALK, run, speed);
+    }
+
+    private static void startVault(LocalPlayer p, ClientInput in, VaultRules.Vault v) {
+        boolean run = FreeRun.held || p.isSprinting(); // as vaultAhead asked: the server asks the same
+        in.keyPresses = with(in.keyPresses, false, false);
+        float yaw = p.getYRot();
+        send(Move.VAULT, yaw, v.endX(), v.floor(), v.endZ(), p.getDeltaMovement().horizontalDistance() / 0.546, run);
+        beginVault(p, in, v, yaw);
+    }
+
+    /** From a hang on a rail, over it (the hang's climb out; RunnerMoves told the server, a ledge jump). */
+    static void overFromHang(LocalPlayer p, VaultRules.Vault v, float yaw) {
+        beginVault(p, null, v, yaw);
+    }
+
+    private static void beginVault(LocalPlayer p, @Nullable ClientInput in, VaultRules.Vault v, float yaw) {
+        vaulting = true;
+        vault = v;
+        vaultAge = 0;
+        vaultStart = ticks;
+        vaultPlanted = false;
+        vaultWasSprinting = p.isSprinting();
+        // the crossing's box: crawl height over the rail, so the eye rises only a little over it
+        p.setForcedPose(Pose.SWIMMING);
+        p.setPose(Pose.SWIMMING);
+        jumpSuppressed = true; // holding jump through it doesn't hop on landing
+        trace(String.format("vault (%s) over %.2f, rail %.2f%s, %d ticks, down %.2f", kindName(v.kind()), v.top() - v.y(), v.rail(),
+                v.tall() ? " tall" : "", v.ticks(), v.y() - v.floor()));
+        BodyAnims.vault(p.getId(), v.kind(), yaw);
+        BodyFx.sound(p, BodyContent.VAULT.get(), v.kind() == VaultRules.ONTO ? 0.6F : 0.8F, v.kind() == VaultRules.HOP ? 1.08F : 1F);
+        dev.awaken.body.ascent.client.AscentFlow.gain(0.05F);
+        vaultTick(p, in);
+    }
+
+    static String kindName(int kind) {
+        return switch (kind) {
+            case VaultRules.VAULT -> "vault";
+            case VaultRules.HOP -> "hop";
+            case VaultRules.HIGH -> "climb over";
+            case VaultRules.ONTO -> "onto the top";
+            default -> "over";
+        };
+    }
+
+    /** One tick of the crossing's path: the body is moved exactly there (the path is clear: the server agrees). */
+    private static void vaultTick(LocalPlayer p, @Nullable ClientInput in) {
+        VaultRules.Vault v = vault;
+        if (v == null) {
+            endVault(p, true, "lost");
+            return;
+        }
+        vaultAge++;
+        if (vaultAge > 1) {
+            // something moved the body off the path (a blow, a push): let go, vanilla takes it from here
+            v.at(vaultAge - 1, PATH);
+            double ex = PATH[0] - p.getX(), ey = PATH[1] - p.getY(), ez = PATH[2] - p.getZ();
+            if (ex * ex + ey * ey + ez * ez > 0.5 * 0.5) {
+                endVault(p, true, "blocked");
+                return;
+            }
+        }
+        if (vaultAge > v.ticks()) {
+            endVault(p, true, "done");
+            return;
+        }
+        // the hand meets the rail as the body comes level with it: a slap, the rail's own knock and a puff off it
+        if (!vaultPlanted && vaultAge >= v.plantTick() && p.level() instanceof net.minecraft.client.multiplayer.ClientLevel cl) {
+            vaultPlanted = true;
+            BodyFx.plant(cl, p, v);
+        }
+        // past the top: standing again for the way down (the path was checked for the standing box from here)
+        if (vaultAge == v.rise() + v.over() + 1 && p.getForcedPose() == Pose.SWIMMING) p.setForcedPose(null);
+        v.at(vaultAge, PATH);
+        // the last tick sets the feet a hair into the floor: vanilla's move stops them on it, standing
+        double y = vaultAge == v.ticks() ? PATH[1] - 0.02 : PATH[1];
+        if (in != null) groundAccel(p, in, ACC);
+        else ACC[0] = ACC[1] = 0;
+        p.setDeltaMovement(PATH[0] - p.getX() - ACC[0], y - p.getY(), PATH[2] - p.getZ() - ACC[1]);
+        p.resetFallDistance();
+    }
+
+    static void endVault(LocalPlayer p, boolean tellServer, String why) {
+        if (!vaulting) return;
+        trace("vault ends (" + why + ") after " + vaultAge);
+        VaultRules.Vault v = vault;
+        vaulting = false;
+        vaultEnd = ticks;
+        if (p.getForcedPose() == Pose.SWIMMING && !sliding) p.setForcedPose(null); // vanilla stands the body up
+        BodyAnims.stop(p.getId(), Move.VAULT);
+        if (tellServer) sendEnd(Move.VAULT);
+        if (!why.equals("done") || v == null) return;
+        if (v.kind() == VaultRules.ONTO) {
+            // up on the top: it stops there until forward is let go (never on over into a drop)
+            p.setDeltaMovement(0, 0, 0);
+            perchHold = true;
+            return;
+        }
+        // down beyond: the run goes on at the pace it came down with
+        p.setDeltaMovement(v.dx() * v.vDown(), 0, v.dz() * v.vDown());
+        if (vaultWasSprinting && p.input.hasForwardImpulse() && !p.isInLiquid()) p.setSprinting(true);
+    }
+
+    /** Standing on a top just climbed onto, forward still held from the climb: the body stays put until it's let go. */
+    private static void perch(LocalPlayer p, ClientInput in, Input k, boolean jumpPressed) {
+        if (!k.forward() || !p.onGround() || jumpPressed || off(p)) {
+            perchHold = false;
+            return;
+        }
+        groundAccel(p, in, ACC);
+        Vec3 v = p.getDeltaMovement();
+        p.setDeltaMovement(-ACC[0], v.y, -ACC[1]);
+    }
+
+    /**
+     * Walking the top of a wall or a fence (narrower than the body): drawn back over its middle a little each tick
+     * while going along it (within 45°), so a wall-walk holds its line; turning off it, or crouching, is yours.
+     */
+    private static void balance(LocalPlayer p, ClientInput in, Input k) {
+        if (!p.onGround() || k.shift() || sliding || mantling || vaulting) return;
+        double frac = p.getY() - Math.floor(p.getY());
+        if (Math.abs(frac - 0.5) > 0.02) return; // fence and wall tops stand half a block up
+        if (!VaultRules.railUnder(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ(), RAIL)) return;
+        groundAccel(p, in, ACC);
+        boolean alongX = RAIL[0] == 0;
+        double along = Math.abs(alongX ? ACC[0] : ACC[1]), across = Math.abs(alongX ? ACC[1] : ACC[0]);
+        if (across > along && across > 1e-4) return; // stepping off it sideways: your call
+        double off = RAIL[1] - (alongX ? p.getZ() : p.getX());
+        double pull = Mth.clamp(off * 0.5, -VaultRules.BALANCE, VaultRules.BALANCE);
+        Vec3 v = p.getDeltaMovement();
+        // the input's sideways part is taken out, the pull put in its place
+        if (alongX) p.setDeltaMovement(v.x, v.y, pull - ACC[1]);
+        else p.setDeltaMovement(pull - ACC[0], v.y, v.z);
+    }
+
+    /** What vanilla's own move adds from the keys this tick (on the ground its walking push, in the air its air control). */
+    static void groundAccel(LocalPlayer p, ClientInput in, double[] out) {
+        RunnerMoves.inputAccel(p, in, out);
+        if (!p.onGround() || out[0] == 0 && out[1] == 0) return;
+        // on the ground vanilla pushes with the body's speed instead of the air's (LivingEntity.getFrictionInfluencedSpeed)
+        var below = p.getBlockPosBelowThatAffectsMyMovement();
+        float f = p.level().getBlockState(below).getFriction(p.level(), below, p);
+        f = Mth.clamp(1F - (1F - f) * (float) p.getAttributeValue(Attributes.FRICTION_MODIFIER), 0F, 1F);
+        double ground = f > 0.6F ? p.getSpeed() * (0.21600002F / (f * f * f)) : p.getSpeed();
+        double air = p.isSprinting() ? 0.026F : 0.02F;
+        out[0] *= ground / air;
+        out[1] *= ground / air;
+    }
+
     // ---- soft landing -----------------------------------------------------------------------------------------------
 
     /** The client half of the one fall path: this client's own landing. The server decides the damage. */
@@ -553,6 +746,7 @@ public final class ClientMoves {
                 mantling = false;
                 mantleEnd = ticks;
             }
+            case VAULT -> endVault(p, false, "refused");
             case ROLL -> {
             }
             default -> RunnerMoves.refused(move);
@@ -580,13 +774,15 @@ public final class ClientMoves {
     static void stopAll(LocalPlayer p) {
         endTac(p, true);
         endSlide(p, true, "stop");
+        endVault(p, true, "stop");
         mantling = false;
+        perchHold = false;
     }
 
     /** The player entity was replaced (respawn, dimension change): moves stop, cooldowns and the clock stay. */
     static void forgetMoves() {
         RunnerMoves.reset();
-        tac = sliding = mantling = stairSliding = false;
+        tac = sliding = mantling = stairSliding = vaulting = perchHold = false;
         jumpSuppressed = false;
         if (tacEnd < tacStart) tacEnd = ticks;
         if (slideEnd < slideStart) slideEnd = ticks;
@@ -595,10 +791,10 @@ public final class ClientMoves {
     /** Forget everything (logout, a new world). */
     static void reset() {
         RunnerMoves.reset();
-        tac = sliding = mantling = stairSliding = false;
+        tac = sliding = mantling = stairSliding = vaulting = perchHold = false;
         jumpSuppressed = false;
         tacReadyAt = slideReadyAt = 0;
-        rollAt = tacStart = tacEnd = slideStart = slideEnd = mantleStart = mantleEnd = slideJumpAt = -100;
+        rollAt = tacStart = tacEnd = slideStart = slideEnd = mantleStart = mantleEnd = slideJumpAt = vaultStart = vaultEnd = -100;
         ticks = 0;
     }
 

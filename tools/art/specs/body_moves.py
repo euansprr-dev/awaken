@@ -182,8 +182,10 @@ clip("body_shimmy_r_end", [(0, shimmy(False)[0][1], "linear")], 5, end=0, note="
 # Ledge jump up: pull, kick, reach high for the next lip, catch.
 LU_PULL = pose(ground=False, ra=(-150, 0, -24), re=90, la=(-150, 0, 24), le=90, rl=(-50, 0, 4), rk=80, ll=(-30, 0, -4), lk=60)
 LU_REACH = pose(ground=False, ra=(-166, 0, -26), re=5, la=(-166, 0, 26), le=5, rl=(10, 0, 3), rk=10, ll=(-6, 0, -3), lk=20)
-clip("body_ledge_up", [(0, HG, "linear"), (2, LU_PULL, "easeinquad"), (4, LU_REACH, "easeoutcubic"), (7, HG, "easeinoutsine")], 8,
-     note="pull, kick, reach high, catch")
+# On the leap's beats (RunnerMoves: load 2, launch, apex, the fall into the catch): pull and tuck on the load, kick and
+# stretch on the launch, held long at the apex, the catch's weight.
+clip("body_ledge_up", [(0, HG, "linear"), (2, LU_PULL, "easeinquad"), (5, LU_REACH, "easeoutcubic"), (7, LU_REACH, "linear"),
+                       (9, HG, "easeinquad")], 10, note="pull and tuck, kick and stretch, hang at the apex, catch")
 
 # Ledge jump sideways: push off the hands, swing across, reach out with the lead hand, catch.
 def ledge_side(left):
@@ -211,7 +213,7 @@ clip("body_lower", [(0, LO_CROUCH, "linear"), (3, pose(LO_CROUCH, ground=False, 
 
 
 # ---------------------------------------------------------------------------------------------------------------------
-# The grip on a climb line (SPEC §17.23): facing a drainpipe, rope or ladder close in front, both hands on it, the
+# The grip on a climb line (SPEC §17.28): facing a drainpipe, rope or ladder close in front, both hands on it, the
 # knees bent and the insteps clamping it. The game turns the body to the line and leans it in a touch; these clips pose
 # the limbs. A line is narrow, so both hands meet in front of the chest (arms turned in across, y < 0 for the right).
 
@@ -278,6 +280,75 @@ clip("body_pipe_land", [(0, PS, "linear"), (2, PL_CROUCH, "easeoutcubic"), (5, P
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+# Fences, gates and walls (SPEC §17.27). The body crosses a rail in a crawl-height box with its feet just over the top;
+# the figure is lowered (rise < 0) so its hips cross at the rail and the planted hand meets it, the legs swung out to the
+# side. Timings are the crossings' nominal plans (body.client.BodyAnims.VAULT_PLANT / VAULT_OVER / VAULT_LEN: the hand
+# meets the rail, the way over the top, the whole): a running vault 3 / 4-7 / 12, a hop 4 / 5-10 / 15, a rail on a block
+# 2 / 7-14 / 21 (the hands catch the rail at the eyes and the body rises past them: its feet are near the top by tick 4),
+# onto a top 4 / 5-9 / 11, over a rail from a hang 1 / 6-11 / 18. Authored right-handed: the off (left)
+# hand plants, the legs go over to the main (right) side, the top of the figure leans onto the planted hand (tilt < 0).
+
+# A running vault (a speed vault): the stride takes off, the left hand reaches down onto the rail as the knees tuck up and
+# to the right, the figure rolls onto that hand with the legs swung flat over the rail, the right arm out for balance;
+# the hand pushes off, the figure rights itself and the legs reach down into the run.
+VT_TAKE = pose(ground=False, lean=18, rl=(-62, 0, 4), rk=72, ll=(28, 0, -4), lk=46, ra=(38, 0, 14), re=40, la=(-58, 4, -10), le=24)
+VT_PLANT = pose(ground=False, rise=-9, lean=30, tilt=-26, rl=(-104, 0, 30), rk=112, ll=(-96, 0, 20), lk=118,
+                ra=(-46, 0, 52), re=30, la=(-34, 0, -8), le=4)
+VT_OVER = pose(ground=False, rise=-12, lean=18, tilt=-56, rl=(-84, 0, 42), rk=22, ll=(-76, 0, 34), lk=36,
+               ra=(-70, 0, 84), re=24, la=(-6, 0, -16), le=0)
+VT_CLEAR = pose(ground=False, rise=-8, lean=12, tilt=-32, rl=(-48, 0, 26), rk=30, ll=(-26, 0, 16), lk=48,
+                ra=(-60, 0, 66), re=26, la=(22, 0, -34), le=10)
+VT_REACH = pose(ground=False, rise=-2, lean=10, tilt=-6, rl=(-36, 0, 6), rk=26, ll=(18, 0, -2), lk=44, ra=(-30, 0, 30), re=30, la=(-20, 0, -26), le=24)
+VT_LAND = pose(lean=18, rl=(-30, 0, 3), rk=58, ll=(26, 0, -3), lk=40, ra=(30, 0, 10), re=50, la=(-44, 0, -10), le=50)
+clip("body_vault", [(0, VT_TAKE, "linear"), (3, VT_PLANT, "easeoutcubic"), (4.5, VT_OVER, "easeinoutsine"), (6.5, VT_CLEAR, "easeinoutsine"),
+                    (9, VT_REACH, "easeoutquad"), (12, VT_LAND, "easeinoutsine")], 14,
+     note="running vault: left hand on the rail, legs swung flat over to the right, right arm out, into the run")
+
+# A walking hop (a two-handed gate vault): both hands forward onto the rail, the weight onto them as the knees tuck up and
+# a little to the right, over, the hands pushing off as the feet reach down, a soft two-footed landing.
+VH_REACH = pose(lean=14, rl=(-20, 0, 3), rk=24, ll=(8, 0, -3), lk=14, ra=(-62, -6, 10), re=20, la=(-62, 6, -10), le=20)
+VH_PLANT = pose(ground=False, rise=-10, lean=44, tilt=-12, rl=(-96, 0, 18), rk=118, ll=(-90, 0, 10), lk=120,
+                ra=(-26, -8, 8), re=6, la=(-26, 8, -8), le=6)
+VH_OVER = pose(ground=False, rise=-12, lean=34, tilt=-22, rl=(-76, 0, 34), rk=96, ll=(-72, 0, 26), lk=100, ra=(-4, -8, 10), re=0, la=(-4, 8, -10), le=0)
+VH_PUSH = pose(ground=False, rise=-6, lean=16, tilt=-8, rl=(-30, 0, 10), rk=34, ll=(-24, 0, 4), lk=40, ra=(26, 0, 18), re=6, la=(26, 0, -18), le=6)
+VH_LAND = pose(lean=22, rl=(-30, 0, 4), rk=64, ll=(-22, 0, -4), lk=58, ra=(-34, 0, 14), re=40, la=(-34, 0, -14), le=40)
+clip("body_vault_hop", [(0, VH_REACH, "linear"), (4, VH_PLANT, "easeoutcubic"), (7, VH_OVER, "easeinoutsine"), (10, VH_PUSH, "easeinoutsine"),
+                        (15, VH_LAND, "easeinoutsine")], 17,
+     note="two-handed hop: palms on the rail, knees tucked over, a soft landing")
+
+# A rail on a block (a garden wall): a foot steps up the block's face, both hands reach high for the rail and catch it,
+# pull the body up past it, press with straight arms as the legs swing over to the right, and drop down beyond.
+VR_STEP = pose(lean=-2, rl=(-92, 0, 4), rk=96, ll=(10, 0, -3), lk=20, ra=(-128, -6, -8), re=20, la=(-132, 6, 8), le=16)
+VR_CATCH = pose(ground=False, lean=6, rl=(-70, 0, 4), rk=110, ll=(-20, 0, -3), lk=60, ra=(-104, -4, -10), re=12, la=(-104, 4, 10), le=12)
+VR_PULL = pose(ground=False, rise=-4, lean=26, rl=(-96, 0, 8), rk=122, ll=(-60, 0, -2), lk=110, ra=(-96, -18, 4), re=110, la=(-96, 18, -4), le=110)
+VR_PRESS = pose(ground=False, rise=-12, lean=38, tilt=-18, rl=(-90, 0, 36), rk=104, ll=(-80, 0, 26), lk=110, ra=(-14, -6, 10), re=4, la=(-14, 6, -10), le=4)
+VR_OVER = pose(ground=False, rise=-12, lean=24, tilt=-34, rl=(-56, 0, 52), rk=60, ll=(-48, 0, 40), lk=72, ra=(-4, -6, 14), re=0, la=(-4, 6, -14), le=0)
+VR_DROP = pose(ground=False, rise=-2, lean=10, tilt=-6, rl=(-30, 0, 10), rk=30, ll=(-14, 0, 2), lk=40, ra=(-90, 0, 40), re=20, la=(-90, 0, -40), le=20)
+VR_LAND = pose(lean=24, rl=(-34, 0, 4), rk=74, ll=(-24, 0, -4), lk=66, ra=(-40, 0, 16), re=44, la=(-40, 0, -16), le=44)
+clip("body_vault_high", [(0, VR_STEP, "linear"), (1.5, VR_CATCH, "easeoutcubic"), (3, VR_PULL, "easeinoutsine"), (5, VR_PRESS, "easeinoutsine"),
+                         (10.5, VR_OVER, "easeinoutsine"), (15, VR_DROP, "easeinquad"), (21, VR_LAND, "easeoutcubic")], 23,
+     note="a foot up the block, hands catch the rail, pull, press, legs over, drop beyond")
+
+# Up onto a top (a wall's coping to walk, a rail over a drop): reach, pull with a knee driving up onto it, set the feet on
+# the narrow top in a low crouch, arms out for balance, and rise to stand.
+VO_REACH = pose(lean=-4, rl=(-24, 0, 4), rk=34, ll=(8, 0, -4), lk=14, ra=(-158, -6, -6), re=18, la=(-158, 6, 6), le=18)
+VO_PULL = pose(ground=False, rise=-6, lean=28, rl=(-94, 0, 4), rk=124, ll=(-10, 0, -4), lk=40, ra=(-76, -16, 18), re=110, la=(-76, 16, -18), le=110)
+VO_KNEE = pose(ground=False, rise=-8, lean=34, rl=(-80, 0, 4), rk=118, ll=(-74, 0, -4), lk=120, ra=(-20, -6, 18), re=20, la=(-20, 6, -18), le=20)
+VO_CROUCH = pose(lean=24, rl=(-62, 0, 6), rk=96, ll=(-56, 0, -6), lk=92, ra=(-30, 0, 62), re=24, la=(-30, 0, -62), le=24)
+VO_STAND = pose(lean=6, rl=(-8, 0, 4), rk=14, ll=(4, 0, -4), lk=10, ra=(-10, 0, 40), re=20, la=(-10, 0, -40), le=20)
+clip("body_vault_onto", [(0, VO_REACH, "linear"), (3, VO_PULL, "easeoutcubic"), (6, VO_KNEE, "easeinoutsine"), (8, VO_CROUCH, "easeoutquad"),
+                         (11, VO_CROUCH, "linear"), (16, VO_STAND, "easeinoutsine")], 20,
+     note="reach, pull with a knee up, a low crouch on the top, arms out, rise")
+
+# Over a rail from a hang on it: the hang's arms pull, the knees come up, the arms lock over the rail as the legs swing
+# over to the right, and the body drops down beyond.
+VV_PULL = pose(ground=False, rise=-2, lean=10, rl=(-60, 0, 4), rk=90, ll=(-40, 0, -4), lk=70, ra=(-130, -14, -4), re=96, la=(-130, 14, 4), le=96)
+clip("body_vault_over", [(0, HG, "linear"), (3, VV_PULL, "easeinquad"), (5, VR_PRESS, "easeoutcubic"), (9, VR_OVER, "easeinoutsine"),
+                         (13, VR_DROP, "easeinquad"), (18, VR_LAND, "easeoutcubic")], 20,
+     note="from the hang: pull, press over the rail, legs over, drop beyond")
+
+
+# ---------------------------------------------------------------------------------------------------------------------
 # Output, checks, previews
 
 def document():
@@ -324,7 +395,9 @@ def moves_sheet(out_dir, px=5.0):
     beats = {"body_slide": [0], "body_slide_jump": [0, 3, 7], "body_roll": [2, 4.5, 7, 12], "body_mantle": [0, 2, 4, 6],
              "body_sprint": [0, 2, 4, 6], "body_wallrun_l": [0, 4], "body_wallclimb": [0, 4], "body_walljump": [0, 2, 6], "body_hang": [0],
              "body_grab": [1.5, 5], "body_ledge_up": [2, 4], "body_ledge_back": [2, 4],
-             "body_pipe_hold": [0], "body_pipe_climb": [0, 4], "body_pipe_slide": [0], "body_pipe_kick": [2, 4], "body_pipe_land": [2]}
+             "body_pipe_hold": [0], "body_pipe_climb": [0, 4], "body_pipe_slide": [0], "body_pipe_kick": [2, 4], "body_pipe_land": [2],
+             "body_vault": [3, 4.5, 6.5, 9], "body_vault_hop": [4, 7, 10], "body_vault_high": [1.5, 3, 5, 10.5], "body_vault_onto": [3, 6, 8],
+             "body_vault_over": [3, 5, 9]}
     views = (("front", -35.0, 10.0), ("side", -90.0, 6.0))
     rows = []
     for suffix in ("", "_bent"):

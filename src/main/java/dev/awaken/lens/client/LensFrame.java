@@ -42,6 +42,8 @@ final class LensFrame {
     private int plateCount;
     private double cloudDrift;
     private int cloudColour;
+    // the Living Wilds' storm cells this frame (StormSky.lensCells), marched in the cloud pass
+    private final float[] storms = new float[dev.awaken.living.client.StormSky.MAX * dev.awaken.living.pulse.StormCell.FLOATS];
 
     /** This frame's clouds (L4): the layer's base height (0: Lens draws none), cover 0..1, wind drift in blocks, colour. */
     void clouds(float base, float cover, double drift, int colour) {
@@ -106,7 +108,8 @@ final class LensFrame {
         // 20: x the Holo world plates drawn this frame (up to 6); 24-41: each plate's camera-relative centre, half its
         // width and half its height as vectors (3 texels a plate)
         plateCount = dev.awaken.holo.client.HoloWorld.lensPlates(plates);
-        put(20, plateCount, 0f, 0f, 0f);
+        int stormCount = dev.awaken.living.client.StormSky.lensCells(storms, x, y, z);
+        put(20, plateCount, stormCount, 0f, 0f);
         for (int i = 21; i < 24; i++) put(i, 0f, 0f, 0f, 0f);
         for (int k = 0; k < dev.awaken.holo.client.HoloWorld.MAX; k++) {
             int o = k * 9, t = 24 + k * 3;
@@ -115,7 +118,14 @@ final class LensFrame {
             put(t + 1, on ? plates[o + 3] : 0f, on ? plates[o + 4] : 0f, on ? plates[o + 5] : 0f, 0f);
             put(t + 2, on ? plates[o + 6] : 0f, on ? plates[o + 7] : 0f, on ? plates[o + 8] : 0f, 0f);
         }
-        for (int i = 42; i < WIDTH; i++) put(i, 0f, 0f, 0f, 0f);
+        // 42-47: up to two storm cells, three texels each (layout in lens_storm_frame.glsl)
+        for (int k = 0; k < dev.awaken.living.client.StormSky.MAX; k++) {
+            int o = k * dev.awaken.living.pulse.StormCell.FLOATS, t = 42 + k * 3;
+            for (int j = 0; j < 3; j++) {
+                boolean on = k < stormCount;
+                put(t + j, on ? storms[o + j * 4] : 0f, on ? storms[o + j * 4 + 1] : 0f, on ? storms[o + j * 4 + 2] : 0f, on ? storms[o + j * 4 + 3] : 0f);
+            }
+        }
         RenderSystem.getDevice().createCommandEncoder().writeToTexture(texture.getTexture(), data, 0, 0, 0, 0, WIDTH, 1);
 
         prevViewProj.set(viewProj);

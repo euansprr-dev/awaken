@@ -23,7 +23,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The grip on a climb line, predicted here (SPEC §17.23; Euan: "it just looks like the boring vanilla ladder ... you
+ * The grip on a climb line, predicted here (SPEC §17.28; Euan: "it just looks like the boring vanilla ladder ... you
  * just float up"). A Runner state ({@link RunnerMoves.State#GRIP}): the body holds a drainpipe, trellis, rope or ladder
  * from in front of it and moves only as the grip says. No keys holds still; forward climbs hand over hand (the free-run's
  * pace with it held); Shift held slides down, faster and faster, and letting go brakes; Jump with back kicks off the
@@ -141,6 +141,7 @@ public final class GripMoves {
         boolean fwd = !screen && k.forward(), shift = !screen && k.shift();
         if (mode == HOP) {
             if (++hopAge > GripRules.HOP_TICKS) mode = fwd ? CLIMB : HOLD;
+            else if (hopAge == 3) dev.awaken.body.client.feel.FeelDirector.leapLaunch(0.7F); // off the hop's load
         } else if (shift) {
             mode = SLIDE;
         } else if (mode == SLIDE) {
@@ -168,7 +169,7 @@ public final class GripMoves {
         // outer face (out, then up), and the hang climbs out onto the roof; open air over it hands the body to
         // vanilla's own climb, up to the eave where the hang's catch takes the lip; under something with neither, the
         // hands hold still at the top
-        boolean headBlocked = v > 0 && !p.level().noCollision(p, p.getBoundingBox().move(0, v, 0));
+        boolean headBlocked = v > 0 && !GripRules.canRise(level, CollisionContext.of(p), M, p.getX(), p.getY(), p.getZ(), v);
         if (v > 0 && (headBlocked || !GripRules.goesOn(level, M, l.bx(), l.bz(), p.getY() + v))) {
             if (fwd) {
                 RunnerRules.Edge lip = GripRules.topLip(level, CollisionContext.of(p), M, p.getX(), p.getY(), p.getZ(), axis(l), sign(l), 0);
@@ -250,14 +251,7 @@ public final class GripMoves {
     /** Jump: with back, kick off the wall; with left or right, swing out; alone, lunge up the line. True when it left. */
     private static boolean leave(LocalPlayer p, Input k, GripRules.Line l, int now) {
         if (k.backward()) {
-            double nx = -l.fx(), nz = -l.fz();
-            leaving(p, l, BodyPayloads.GRIP_KICK, BodyClips.PIPE_KICK, now);
-            p.setDeltaMovement(nx * GripRules.KICK_OUT, GripRules.KICK_UP, nz * GripRules.KICK_OUT);
-            RunnerMoves.turnTo(RunnerMoves.yawOf(nx, nz), 5);
-            ClientMoves.suppressJump();
-            BodyFx.sound(p, BodyContent.WALLJUMP.get(), 0.75F, 1.05F);
-            BodyFp.play(BodyClips.FP_PIPE_KICK);
-            ClientMoves.trace("grip: kick off");
+            kick(p, l, now);
             return true;
         }
         if (k.left() != k.right()) {
@@ -273,6 +267,20 @@ public final class GripMoves {
             ClientMoves.trace("grip: swing " + (dir > 0 ? "left" : "right"));
             return true;
         }
+        // at the top a jump always does something: it takes the lip over it, else kicks off (never a dead key)
+        boolean top = !GripRules.goesOn(level(p), M, l.bx(), l.bz(), p.getY() + 0.05)
+                || !GripRules.canRise(level(p), CollisionContext.of(p), M, p.getX(), p.getY(), p.getZ(), 0.3);
+        if (top) {
+            RunnerRules.Edge lip = GripRules.topLip(level(p), CollisionContext.of(p), M, p.getX(), p.getY(), p.getZ(), axis(l), sign(l), 0);
+            if (lip != null) {
+                end(p, true, "eave");
+                RunnerMoves.eaveHang(p, lip, now);
+                ClientMoves.suppressJump();
+            } else {
+                kick(p, l, now);
+            }
+            return true;
+        }
         if (now >= hopReadyAt && GripRules.goesOn(level(p), M, l.bx(), l.bz(), p.getY() + GripRules.HOP * 0.5)) {
             mode = HOP;
             hopAge = 1;
@@ -280,9 +288,22 @@ public final class GripMoves {
             modeSince = now;
             changed(p, l);
             BodyFx.sound(p, BodyContent.GRAB.get(), 0.6F, 1.25F);
-            dev.awaken.body.client.feel.FeelDirector.bite(-0.9F);
+            dev.awaken.body.client.feel.FeelDirector.leapLoad(); // the hop loads first, then launches (tick 3)
         }
         return false;
+    }
+
+    /** Jump + back (or a jump at a top with nothing to take): kicked off the wall. */
+    private static void kick(LocalPlayer p, GripRules.Line l, int now) {
+        double nx = -l.fx(), nz = -l.fz();
+        leaving(p, l, BodyPayloads.GRIP_KICK, BodyClips.PIPE_KICK, now);
+        p.setDeltaMovement(nx * GripRules.KICK_OUT, GripRules.KICK_UP, nz * GripRules.KICK_OUT);
+        RunnerMoves.turnTo(RunnerMoves.yawOf(nx, nz), 5);
+        ClientMoves.suppressJump();
+        BodyFx.sound(p, BodyContent.WALLJUMP.get(), 0.75F, 1.05F);
+        BodyFp.play(BodyClips.FP_PIPE_KICK);
+        dev.awaken.body.client.feel.FeelDirector.leapLaunch(0.8F);
+        ClientMoves.trace("grip: kick off");
     }
 
     private static BlockGetter level(LocalPlayer p) {

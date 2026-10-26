@@ -61,7 +61,11 @@ public final class ArmsClient {
         modBus.addListener(ArmsClient::onPayloads);
         modBus.addListener((RegisterGuiLayersEvent e) -> e.registerAbove(VanillaGuiLayers.CROSSHAIR, Awaken.id("arms_hud"), ArmsHud::render));
         modBus.addListener((RegisterRenderStateModifiersEvent e) ->
-                e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, ArmsFeel::modify));
+                e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, (entity, state) -> {
+                    ArmsFeel.modify(entity, state);
+                    ArmsOffHand.modify(entity, state);
+                    ArmsWrist.modify(entity, state); // last: its hands' items as the others left them, marked with their arm
+                }));
         modBus.addListener(ArmsClient::onExtensions);
         // vanilla blades seen from outside lay their ribbon from the posed hand
         modBus.addListener((net.neoforged.neoforge.client.event.EntityRenderersEvent.AddLayers e) -> {
@@ -76,6 +80,9 @@ public final class ArmsClient {
         modBus.addListener(RegisterRenderPipelinesEvent.class, WeaponPipelines::onRegister);
         modBus.addListener(RegisterSpecialModelRendererEvent.class, e -> e.register(WeaponRenderer.TYPE, WeaponRenderer.Unbaked.MAP_CODEC));
         var bus = NeoForge.EVENT_BUS;
+        bus.addListener(ArmsTooltip::onTooltip);
+        // the off hand's twin (a pair): after Hands' own off-hand pass (Anims registers before Arms, both LOWEST)
+        bus.addListener(net.neoforged.bus.api.EventPriority.LOWEST, net.neoforged.neoforge.client.event.RenderHandEvent.class, ArmsOffHand::onRenderHand);
         bus.addListener(EventPriority.HIGH, InputEvent.InteractionKeyMappingTriggered.class, ArmsPredict::onKey);
         bus.addListener(ClientTickEvent.Post.class, e -> {
             ArmsPredict.tick();
@@ -96,6 +103,7 @@ public final class ArmsClient {
         event.register(ArmsPayloads.Result.TYPE, (msg, ctx) -> ArmsPredict.onResult(msg));
         event.register(ArmsPayloads.Seen.TYPE, (msg, ctx) -> ArmsPredict.onSeen(msg));
         event.register(ArmsPayloads.Woven.TYPE, (msg, ctx) -> ArmsCodex.onWoven(msg));
+        event.register(ArmsPayloads.Mastery.TYPE, (msg, ctx) -> ArmsPredict.onMastery(msg));
     }
 
     private static void onExtensions(RegisterClientExtensionsEvent event) {

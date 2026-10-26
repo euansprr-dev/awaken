@@ -23,7 +23,7 @@ final class JournalSection implements StatusSections.Section {
 
     @Override
     public String title() {
-        return "JOURNAL";
+        return "JOURNAL · CHAINS"; // beside the System's filed finds ("JOURNAL"): one Journal, two headings (SPEC §27.8)
     }
 
     @Override

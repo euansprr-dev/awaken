@@ -12,6 +12,8 @@ public final class BodyPayloads {
 
     /** What a {@link Seen} shows besides the moves themselves (their codes are the {@code Move} ordinals). */
     public static final int SEEN_TRIP = 16, SEEN_MOMENTUM = 17, SEEN_SLIDE_JUMP = 18;
+    /** A crossing (SPEC §17.27): SEEN_VAULT + its kind (VaultRules.VAULT .. OVER), so others see the right one. */
+    public static final int SEEN_VAULT = 19;
     /** A Runner move ended (its loop settles); a Runner clip started: SEEN_CLIP + its index in BodyClips.RUNNER. */
     public static final int SEEN_RUNNER_END = 31, SEEN_CLIP = 32;
 
@@ -61,12 +63,12 @@ public final class BodyPayloads {
     }
 
     /** Run flags: a hang's kind, a ledge jump's way, a shimmy's corner turn. */
-    public static final int HANG_GRAB = 0, HANG_LOWER = 1, HANG_EAVE = 2, JUMP_UP = 0, JUMP_CLIMB = 1, JUMP_SIDE = 2, JUMP_BACK = 3, JUMP_DOWN = 4, SHIMMY_START = 0, SHIMMY_CORNER = 2,
+    public static final int HANG_GRAB = 0, HANG_LOWER = 1, HANG_EAVE = 2, JUMP_UP = 0, JUMP_CLIMB = 1, JUMP_SIDE = 2, JUMP_BACK = 3, JUMP_DOWN = 4, JUMP_OVER = 5, SHIMMY_START = 0, SHIMMY_CORNER = 2,
             /** A shimmy starting to the right (as you face the wall); SHIMMY_START is to the left. */
             SHIMMY_START_RIGHT = 3;
 
     /**
-     * Grip flags (SPEC §17.23): the first Run of a grip starts it (holding or climbing), later ones change what the
+     * Grip flags (SPEC §17.28): the first Run of a grip starts it (holding or climbing), later ones change what the
      * hands do; the last four leave the line (a kick off the wall, a swing out left or right, a landing at its foot).
      */
     public static final int GRIP_HOLD = 0, GRIP_CLIMB = 1, GRIP_CLIMB_FAST = 2, GRIP_SLIDE = 3, GRIP_HOP = 4,

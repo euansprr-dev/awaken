@@ -55,7 +55,9 @@ public final class AnomalyContent {
     public static final DeferredHolder<EntityType<?>, EntityType<AnomalyMote>> MOTE = ENTITIES.registerEntityType("anomaly_mote",
             AnomalyMote::new, MobCategory.MISC, b -> b.sized(0.35F, 0.35F).clientTrackingRange(8).updateInterval(2).noSave().noSummon().fireImmune());
 
-    public static final DeferredHolder<SoundEvent, SoundEvent> RIFT_OPEN = sound("anomaly.rift_open");
+    /** Heard to 128 blocks wherever it opens (a fixed range: a variable one stops at 16 × volume). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> RIFT_OPEN = SOUNDS.register("anomaly.rift_open",
+            () -> SoundEvent.createFixedRangeEvent(Awaken.id("anomaly.rift_open"), 128F));
     public static final DeferredHolder<SoundEvent, SoundEvent> RIFT_HUM = sound("anomaly.rift_hum");
     public static final DeferredHolder<SoundEvent, SoundEvent> RIFT_HIT = sound("anomaly.rift_hit");
     public static final DeferredHolder<SoundEvent, SoundEvent> RIFT_CLOSE = sound("anomaly.rift_close");

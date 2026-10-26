@@ -66,9 +66,13 @@ import java.util.Map;
  * lensdebug 0..8                                 Lens debug views: normal, pass-through, depth masks, far depth, haze;
  *                                                Cinematic and Ultra: 5 light buffer, 6 normals, 7 the light alone,
  *                                                8 the classic Cinematic (before Lens 2) on the same frame
+ * mdi on|off                                     vanilla terrain's multi-draw-indirect (the F3 debug toggle; on by
+ *                                                default): off, GitHub's macOS runners (a paravirtual GPU) misplace sections
  * fardepth share|auto                           Distant Horizons shares its depth with Lens on every graphics API (to
  *                                                check it on Vulkan), or again only on the one it was checked on
- * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder
+ * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder; with
+ *                                                -Dawaken.autopilot.settle=&lt;s&gt; (CI tours) it first waits, at most that
+ *                                                long, until the terrain around is loaded and built
  * shotnow &lt;name&gt;                                  the same this tick (no settle; for short moments)
  * leave                                          save and quit to the title (a following "world" line rejoins)
  * quit                                           save and quit to the title, then close the game
@@ -92,6 +96,10 @@ public final class Autopilot {
     private static long lastFrameNanos;
     private static String perfLabel;
     private static boolean perfTimed;
+    // settle before shots: a slower machine (GitHub's 3-core runners) is still loading and building chunks after the
+    // waits a script was written with on the Mac
+    private static final int SETTLE_TICKS = Integer.getInteger("awaken.autopilot.settle", 0) * 20;
+    private static int settleWaited, settleBuilt, settleQuiet, settleChunks, settleSpent;
 
     public static void init() {
         String path = System.getProperty("awaken.autopilot");
@@ -198,6 +206,45 @@ public final class Autopilot {
         perfTimed = timed;
         frameCount = 0;
         lastFrameNanos = 0;
+    }
+
+    /**
+     * With settling on: true at once if every chunk within the render distance has arrived (or none has come for 10 s: a
+     * void cell, the world's edge) and every section the renderer knows is built (Sodium answers this too); else once
+     * that has held for a second, past the sections' fade-in; or after SETTLE_TICKS. At most ten minutes a tour, so a world
+     * that never settles costs a long tour no more than that. Called once a tick until true.
+     */
+    private static boolean settled(Minecraft mc, String shot) {
+        if (SETTLE_TICKS <= 0 || mc.level == null || mc.player == null || settleSpent >= 20 * 600) return true;
+        settleSpent++;
+        int chunks = mc.level.getChunkSource().getLoadedChunksCount();
+        settleQuiet = chunks == settleChunks ? settleQuiet + 1 : 0;
+        settleChunks = chunks;
+        boolean now = (settleQuiet >= 200 || chunksArrived(mc)) && mc.levelRenderer.hasRenderedAllSections();
+        if (now && settleWaited == 0) { // nothing loading: the shot keeps the script's own timing
+            settleQuiet = 0;
+            return true;
+        }
+        settleBuilt = now ? settleBuilt + 1 : 0;
+        boolean ready = settleBuilt >= 20;
+        if (!ready && ++settleWaited < SETTLE_TICKS) return false;
+        if (settleWaited > 20) {
+            Awaken.LOG.info("[autopilot] settle {}: {} s{}", shot, settleWaited / 20, ready ? "" : " (gave up)");
+        }
+        settleWaited = settleBuilt = settleQuiet = 0;
+        return true;
+    }
+
+    /** Every chunk within the render distance (less one, the edge the server sends last) is on the client. */
+    private static boolean chunksArrived(Minecraft mc) {
+        int r = Math.max(1, mc.options.getEffectiveRenderDistance() - 1);
+        int cx = mc.player.chunkPosition().x(), cz = mc.player.chunkPosition().z();
+        for (int dx = -r; dx <= r; dx++) {
+            for (int dz = -r; dz <= r; dz++) {
+                if (dx * dx + dz * dz <= r * r && !mc.level.getChunkSource().hasChunk(cx + dx, cz + dz)) return false;
+            }
+        }
+        return true;
     }
 
     private static double pct(long[] sorted, double q) {
@@ -328,6 +375,10 @@ public final class Autopilot {
                 Awaken.LOG.info("[autopilot] compat {}: {}", arg.trim(), dev.awaken.compat.client.CompatClient.autopilot(arg));
                 waitTicks = 10;
             }
+            case "use" -> { // the use key once (right click): places the held block where the crosshair rests
+                KeyMapping.click(mc.options.keyUse.getKey());
+                waitTicks = 2;
+            }
             case "key" -> {
                 KeyMapping k = KEYS.get(arg.trim());
                 if (k == null) Awaken.LOG.warn("[autopilot] unknown key {}", arg);
@@ -386,6 +437,7 @@ public final class Autopilot {
                 if (mc.gui.hud.isHidden() != arg.trim().equals("off")) mc.gui.hud.toggle();
             }
             case "shot" -> {
+                if (shotPending == null && !settled(mc, arg.trim())) return false;
                 // command feedback is not part of the picture: clear the chat, let a few frames render without it
                 if (shotPending == null) {
                     mc.gui.hud.getChat().clearMessages(false);
@@ -461,6 +513,10 @@ public final class Autopilot {
             }
             case "lensdebug" -> {
                 dev.awaken.lens.client.LensClient.debug(Integer.parseInt(arg.trim()));
+                waitTicks = 10;
+            }
+            case "mdi" -> {
+                mc.multiDrawIndirect = arg.trim().equals("on");
                 waitTicks = 10;
             }
             case "fardepth" -> {

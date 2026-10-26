@@ -3,8 +3,10 @@ package dev.awaken.body.client;
 import dev.awaken.body.Body;
 import dev.awaken.body.BodyClips;
 import dev.awaken.body.BodyContent;
+import dev.awaken.body.GripRules;
 import dev.awaken.body.Move;
 import dev.awaken.body.RunnerRules;
+import dev.awaken.body.VaultRules;
 import dev.awaken.body.net.BodyPayloads;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.ClientInput;
@@ -70,6 +72,18 @@ public final class RunnerMoves {
     static int pathKind, pathAge, pathLen, pathStart = -100;
     private static boolean pathToHang;
     private static double ax, ay, az, bx, by, bz, cx, cz;
+    /**
+     * A leap's shape (a ledge jump up or sideways; Euan, 2026-10-26: "it just feels like I'm basically floating up"):
+     * the load (ticks, how far the body dips), the launch (ticks) to the apex (world y), a tick of hang there, then
+     * the fall into the catch. The rise decelerates and the fall accelerates as under gravity.
+     */
+    private static int leapLoad, leapRise;
+    private static double leapDip, leapApex;
+    /** The catch on a new edge: when, how hard (the body jolts down and settles; the view with it). */
+    private static int catchAt = -100;
+    private static double catchJolt;
+    static final int LEAP_LOAD = 2;
+    static final double LEAP_DIP = 0.12, LEAP_OVER = 0.2, LEAP_SIDE_OVER = 0.35, CATCH_JOLT = 0.08;
     private static RunnerRules.@Nullable Edge pathEdge;
     // a view turned by a move (the lower, a corner, a back jump)
     private static int turnLeft;
@@ -178,7 +192,7 @@ public final class RunnerMoves {
         if (!ground) {
             if (jumpPressed) airJumpAt = now;
             FreeRun.air(p);
-            // a climb line in reach: the grip takes it (SPEC §17.23)
+            // a climb line in reach: the grip takes it (SPEC §17.28)
             if (GripMoves.tryStart(p, in, k, level, false, now)) return true;
             if (now >= regrabAt && tryGrab(p, in, level, ctx, now)) return true;
             boolean chain = now <= chainUntil && links > 0;
@@ -544,7 +558,7 @@ public final class RunnerMoves {
     }
 
     /**
-     * From a climb line's top up to the lip of an eave or cornice over it (GripRules.topLip; SPEC §17.23): out from the
+     * From a climb line's top up to the lip of an eave or cornice over it (GripRules.topLip; SPEC §17.28): out from the
      * line under the overhang, then up into the hang on its outer face. From there the hang's own climb out (Jump, or
      * forward) puts you on the roof.
      */
@@ -612,7 +626,10 @@ public final class RunnerMoves {
 
     private static void holdApply(LocalPlayer p, ClientInput in) {
         inputAccel(p, in, ACC);
-        p.setDeltaMovement(holdX - p.getX() - ACC[0], holdY - p.getY(), holdZ - p.getZ() - ACC[1]);
+        // just caught: the weight comes onto the hands, down and back up (a damped bob)
+        int since = ClientMoves.ticks - catchAt;
+        double jolt = since >= 0 && since < 10 ? catchJolt * Math.exp(-since / 2.2) * Math.cos(since * 1.25) : 0;
+        p.setDeltaMovement(holdX - p.getX() - ACC[0], holdY - jolt - p.getY(), holdZ - p.getZ() - ACC[1]);
         p.resetFallDistance();
     }
 
@@ -680,6 +697,7 @@ public final class RunnerMoves {
             regrabAt = now + 3;
             ClientMoves.suppressJump();
             ClientMoves.trace("ledge jump back");
+            dev.awaken.body.client.feel.FeelDirector.leapLaunch(0.9F);
             BodyAnims.runner(p.getId(), BodyClips.LEDGE_BACK);
             BodyFx.sound(p, BodyContent.WALLJUMP.get(), 0.75F, 1.05F);
             return true;
@@ -707,7 +725,7 @@ public final class RunnerMoves {
             send(Move.LEDGE_JUMP, BodyPayloads.JUMP_SIDE, p, target.hx(), target.hy(), target.hz(), target.axis(), target.sign());
             ClientMoves.trace(String.format("ledge jump sideways %.2f", Math.abs(e.axis() == 0 ? target.hz() - holdZ : target.hx() - holdX)));
             leaveHold(p);
-            startPath(p, SIDE, target.hx(), target.hy(), target.hz(), 9, target, now);
+            startLeap(p, SIDE, target, 3, 3, Math.max(holdY, target.hy()) + LEAP_SIDE_OVER, level, ctx, now);
             BodyAnims.runner(p.getId(), dir > 0 ? BodyClips.LEDGE_SIDE_L : BodyClips.LEDGE_SIDE_R);
             BodyFx.sound(p, BodyContent.SHIMMY.get(), 0.5F, 0.85F);
             return true;
@@ -720,19 +738,39 @@ public final class RunnerMoves {
             send(Move.LEDGE_JUMP, BodyPayloads.JUMP_CLIMB, p, stand[0], stand[1], stand[2], e.axis(), e.sign());
             ClientMoves.trace("climb out");
             leaveHold(p);
-            startPath(p, CLIMB, stand[0], stand[1], stand[2], 8, null, now);
+            // a load before the push up (set before the path: its first tick runs at once)
+            leapLoad = LEAP_LOAD;
+            leapDip = clearBelow(level, ctx, 0.1) ? 0.1 : 0;
+            startPath(p, CLIMB, stand[0], stand[1], stand[2], 8 + LEAP_LOAD, null, now);
+            dev.awaken.body.client.feel.FeelDirector.leapLoad();
             ClientMoves.suppressJump();
             BodyAnims.runner(p.getId(), BodyClips.MANTLE);
             BodyFx.sound(p, BodyContent.CLIMB.get(), 0.85F, 1F);
             return true;
         }
+        if (stand == null && !(lookUp && up != null)) {
+            // a fence's or gate's rail (SPEC §17.27): no top to stand on, so over it, down to the floor beyond
+            VaultRules.Vault over = VaultRules.over(level, ctx, holdX, holdY, holdZ, e.fx(), e.fz(), e.top());
+            if (over != null) {
+                send(Move.LEDGE_JUMP, BodyPayloads.JUMP_OVER, p, over.endX(), over.floor(), over.endZ(), e.axis(), e.sign());
+                ClientMoves.trace("climb over the rail");
+                leaveHold(p);
+                state = State.NONE;
+                edge = null;
+                ClientMoves.suppressJump();
+                ClientMoves.overFromHang(p, over, yawOf(e.fx(), e.fz()));
+                return true;
+            }
+        }
         if (up != null) {
             send(Move.LEDGE_JUMP, BodyPayloads.JUMP_UP, p, up.hx(), up.hy(), up.hz(), up.axis(), up.sign());
             ClientMoves.trace(String.format("ledge jump up %.2f", up.top() - e.top()));
             leaveHold(p);
-            startPath(p, UP, up.hx(), up.hy(), up.hz(), 6 + (int) Math.round(2 * (up.top() - e.top())), up, now);
+            int rise = 3 + (int) Math.round(up.top() - e.top());
+            startLeap(p, UP, up, rise, 2, up.hy() + LEAP_OVER, level, ctx, now);
+            BodyFp.speed = 10F / pathLen; // its first-person clip lands its catch with the body's
             BodyAnims.runner(p.getId(), BodyClips.LEDGE_UP);
-            BodyFx.sound(p, BodyContent.SHIMMY.get(), 0.5F, 0.8F);
+            BodyFx.sound(p, BodyContent.SHIMMY.get(), 0.4F, 0.75F);
             return true;
         }
         ClientMoves.trace("ledge jump: nothing up there");
@@ -768,7 +806,32 @@ public final class RunnerMoves {
 
     // ---- paths ------------------------------------------------------------------------------------------------------
 
+    /**
+     * A leap from the hold to another edge: the load ({@link #LEAP_DIP} down, when there's room under the body), the
+     * launch over {@code rise} ticks to {@code apex} (when there's room up there, else the target's own height), a tick
+     * of hang, the fall over {@code fall} ticks into the catch.
+     */
+    private static void startLeap(LocalPlayer p, int kind, RunnerRules.Edge to, int rise, int fall, double apex, BlockGetter level,
+                                  CollisionContext ctx, int now) {
+        leapLoad = LEAP_LOAD;
+        leapRise = rise;
+        leapDip = clearBelow(level, ctx, LEAP_DIP) ? LEAP_DIP : 0;
+        boolean room = GripRules.free(level, ctx, M, to.hx(), to.hz(), apex, apex + 1.8);
+        leapApex = room ? Math.max(apex, to.hy()) : Math.max(to.hy(), holdY);
+        startPath(p, kind, to.hx(), to.hy(), to.hz(), LEAP_LOAD + rise + 1 + fall, to, now);
+        dev.awaken.body.client.feel.FeelDirector.leapLoad();
+    }
+
+    /** Room for the hanging body to dip this far under the hold (a sill below it would take the dip away). */
+    private static boolean clearBelow(BlockGetter level, CollisionContext ctx, double dip) {
+        return GripRules.free(level, ctx, M, holdX, holdZ, holdY - dip, holdY);
+    }
+
     private static void startPath(LocalPlayer p, int kind, double x, double y, double z, int len, RunnerRules.@Nullable Edge then, int now) {
+        if (kind != UP && kind != SIDE && kind != CLIMB) {
+            leapLoad = 0;
+            leapDip = 0;
+        }
         state = State.PATH;
         pathKind = kind;
         pathAge = 0;
@@ -798,6 +861,12 @@ public final class RunnerMoves {
                 return;
             }
         }
+        // the launch: off the load, the body springs (a push's sound, the view lifts with it)
+        boolean leap = pathKind == UP || pathKind == SIDE;
+        if ((leap || pathKind == CLIMB) && pathAge == leapLoad + 1) {
+            BodyFx.sound(p, BodyContent.WALLJUMP.get(), leap ? 0.45F : 0.3F, leap ? 1.15F : 1.3F);
+            dev.awaken.body.client.feel.FeelDirector.leapLaunch(leap ? 1F : 0.6F);
+        }
         pathAt(Math.min(pathAge, pathLen), P);
         if (in != null) inputAccel(p, in, ACC);
         else ACC[0] = ACC[1] = 0;
@@ -812,8 +881,11 @@ public final class RunnerMoves {
             holdZ = bz;
             if (pathKind != GRAB && pathKind != LOWER && pathKind != EAVE) {
                 hangStart = now;
-                // caught the next edge
-                BodyFx.sound(p, BodyContent.GRAB.get(), 0.75F, 1.05F);
+                // caught the next edge: with weight (the body jolts down on the hands and settles, the view with it)
+                BodyFx.sound(p, BodyContent.GRAB.get(), 0.85F, 0.95F);
+                catchAt = now;
+                catchJolt = pathKind == DROP ? CATCH_JOLT * 1.4 : CATCH_JOLT;
+                dev.awaken.body.client.feel.FeelDirector.leapCatch(pathKind == DROP ? 1.3F : 1F);
             }
             // the catch settles into the hang once its clip has played (the grab and lower clips run 8 ticks)
             settleAt = now + (pathKind == GRAB || pathKind == LOWER || pathKind == EAVE ? 5 : 1);
@@ -849,19 +921,47 @@ public final class RunnerMoves {
                     h = smooth((u - 0.7) / 0.3);
                 }
             }
-            case CLIMB -> { // up the face first, then over the lip
+            case UP, SIDE -> { // a leap: the load, the launch to the apex, a tick of hang, the fall into the catch
+                double t = k, tl = leapLoad, ta = leapLoad + leapRise, th = ta + 1, y0 = ay - leapDip, y;
+                double hh;
+                if (t <= tl) {
+                    y = ay - leapDip * smooth(t / tl);
+                    hh = 0;
+                } else if (t <= ta) {
+                    double s = (t - tl) / leapRise, e = 1 - (1 - s) * (1 - s);
+                    y = y0 + (leapApex - y0) * e;
+                    hh = 0.85 * e;
+                } else if (t <= th) {
+                    y = leapApex;
+                    hh = 0.85 + 0.05 * (t - ta);
+                } else {
+                    double s = (t - th) / Math.max(1, pathLen - th);
+                    y = leapApex + (by - leapApex) * s * s;
+                    hh = 0.9 + 0.1 * s;
+                }
+                if (k >= pathLen) {
+                    y = by;
+                    hh = 1;
+                }
+                out[0] = ax + (bx - ax) * hh;
+                out[1] = y;
+                out[2] = az + (bz - az) * hh;
+                return;
+            }
+            case CLIMB -> { // a load, then up the face first, then over the lip
+                if (k <= leapLoad) {
+                    out[0] = ax;
+                    out[1] = ay - leapDip * smooth(k / (double) Math.max(1, leapLoad));
+                    out[2] = az;
+                    return;
+                }
+                u = (k - leapLoad) / (double) Math.max(1, pathLen - leapLoad);
                 h = smooth((u - 0.5) / 0.5);
                 double r = Math.min(1, u / 0.55);
                 v = 1 - (1 - r) * (1 - r);
                 out[0] = ax + (bx - ax) * h;
-                out[1] = ay + (by + 0.02 - ay) * v - (k >= pathLen ? 0.02 : 0);
-                out[2] = az + (bz - az) * h;
-                return;
-            }
-            case SIDE -> {
-                h = smooth(u);
-                out[0] = ax + (bx - ax) * h;
-                out[1] = ay + (by - ay) * h + 0.45 * Mth.sin((float) (u * Math.PI));
+                double y0 = ay - leapDip;
+                out[1] = y0 + (by + 0.02 - y0) * v - (k >= pathLen ? 0.02 : 0);
                 out[2] = az + (bz - az) * h;
                 return;
             }
@@ -903,6 +1003,7 @@ public final class RunnerMoves {
             }
             case LEDGE_JUMP -> {
                 if (state == State.PATH) state = State.NONE;
+                ClientMoves.endVault(p, false, "refused"); // a climb over a rail is the crossing's path
             }
             case GRIP -> GripMoves.end(p, false, "refused");
             default -> {

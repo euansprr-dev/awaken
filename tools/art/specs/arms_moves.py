@@ -16,6 +16,7 @@ has a _bent twin for Bendable Cuboids. The game plays them through core.api.Play
 the JSON.
 """
 import json
+import math
 import os
 import sys
 
@@ -84,6 +85,24 @@ def strike(name, move, cocked, through, note, settle=None, via=None, style="long
     clip(name, keys, end + 4, note=note)
 
 
+def rolled(ra, phi):
+    """The blade arm (x, y, z) turned phi degrees about its own length: the forearm's roll, which turns the held blade's
+    flat. A cut leads with its edge only if the flat lies across the swing (the lab's third-person edge lead,
+    tools/art/anim_lab.py third); the rolls below were found there, each pose's arm turned to the one that leads best."""
+    x, y, z = (math.radians(v) for v in ra)
+    cx, sx, cy, sy, cz, sz = math.cos(x), math.sin(x), math.cos(y), math.sin(y), math.cos(z), math.sin(z)
+    Rx = ((1, 0, 0), (0, cx, -sx), (0, sx, cx))
+    Ry = ((cy, 0, sy), (0, 1, 0), (-sy, 0, cy))
+    Rz = ((cz, -sz, 0), (sz, cz, 0), (0, 0, 1))
+    mm = lambda a, b: tuple(tuple(sum(a[i][k] * b[k][j] for k in range(3)) for j in range(3)) for i in range(3))
+    p = math.radians(phi)
+    R = mm(mm(mm(Rz, Ry), Rx), ((math.cos(p), 0, math.sin(p)), (0, 1, 0), (-math.sin(p), 0, math.cos(p))))
+    ny = math.asin(max(-1.0, min(1.0, -R[2][0])))
+    nx = math.atan2(R[2][1], R[2][2])
+    nz = math.atan2(R[1][0], R[0][0])
+    return (round(math.degrees(nx), 2), round(math.degrees(ny), 2), round(math.degrees(nz), 2))
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 # The ready stance between moves: knees soft, blade arm low and forward, off hand up for balance.
 READY = pose(lean=6, rl=(-10, 0, 4), rk=12, ll=(8, 0, -4), lk=10, ra=(-38, 6, 10), re=30, la=(-26, 0, -14), le=40)
@@ -94,17 +113,17 @@ READY = pose(lean=6, rl=(-10, 0, 4), rk=12, ll=(8, 0, -4), lk=10, ra=(-38, 6, 10
 S1_COCK = pose(lean=2, twist=16, rl=(-14, 0, 6), rk=14, ll=(14, 0, -4), lk=12, ra=(-140, 65, 40), re=60, la=(-40, 0, -22), le=46)
 # (the shoulders turn right through and the arm finishes out past the off side, so the blade reads from behind: the
 # shoulder view is behind you, and a finish across the chest hid the whole blow behind the body)
-S1_THRU = pose(lean=14, twist=-48, rl=(-26, 0, 4), rk=24, ll=(16, 0, -6), lk=10, ra=(-50, -90, 65), re=8, la=(-6, 0, -40), le=26)
+S1_THRU = pose(lean=14, twist=-48, rl=(-26, 0, 4), rk=24, ll=(16, 0, -6), lk=10, ra=rolled((-50, -90, 65), -60), re=8, la=(-6, 0, -40), le=26)
 # the arm lifts out to the side on its way up (straight up, it would pass in front of the face)
 S1_VIA = pose(lean=4, twist=18, rl=(-12, 0, 5), rk=13, ll=(11, 0, -4), lk=11, ra=(-84, 48, 74), re=44, la=(-34, 0, -18), le=44)
 # half way through the blow: the arm out level in front, the chest turning through
-S1_ARC = pose(lean=8, twist=-10, rl=(-20, 0, 5), rk=18, ll=(15, 0, -5), lk=11, ra=(-80, -35, 75), re=20, la=(-24, 0, -26), le=36)
+S1_ARC = pose(lean=8, twist=-10, rl=(-20, 0, 5), rk=18, ll=(15, 0, -5), lk=11, ra=rolled((-80, -35, 75), 30), re=20, la=(-24, 0, -26), le=36)
 strike("arms_strike_1", "strike_1", S1_COCK, S1_THRU, "forehand diagonal: drawn up behind the shoulder, swept down across", via=S1_VIA,
        arc=S1_ARC)
 
 # Strike 2, a backhand sweep (left to right): the blade arm crosses the chest to the off side, then sweeps out wide.
 S2_COCK = pose(lean=8, twist=-36, rl=(-12, 0, 4), rk=16, ll=(10, 0, -4), lk=12, ra=(-98, -58, 12), re=30, la=(-20, 0, -26), le=36)
-S2_THRU = pose(lean=10, twist=34, rl=(-20, 0, 6), rk=18, ll=(14, 0, -4), lk=12, ra=(-88, 54, 52), re=10, la=(-40, 0, -14), le=44)
+S2_THRU = pose(lean=10, twist=34, rl=(-20, 0, 6), rk=18, ll=(14, 0, -4), lk=12, ra=rolled((-88, 54, 52), 75), re=10, la=(-40, 0, -14), le=44)
 strike("arms_strike_2", "strike_2", S2_COCK, S2_THRU, "backhand sweep: across the chest, then out wide")
 
 # Strike 3, the overhead finisher: both hands up over the head, leaning back, then a chop down through the front with
@@ -115,22 +134,33 @@ strike("arms_strike_3", "strike_3", S3_COCK, S3_THRU, "overhead: both hands up, 
 
 # Strike 4 (mastery) and the riposte: a thrust. The blade arm draws back bent at the elbow, the chest turned to the
 # blade side; the blow drives the arm straight with the chest turning in and a lunge onto the lead foot.
-T_COCK = pose(lean=-2, twist=26, rl=(-8, 0, 6), rk=12, ll=(12, 0, -4), lk=12, ra=(-74, 22, 12), re=96, la=(-38, 0, -20), le=40)
-T_THRU = pose(lean=18, twist=-14, shift=2, rl=(-48, 0, 4), rk=44, ll=(26, 0, -4), lk=8, ra=(-94, -8, 2), re=0, la=(8, 0, -26), le=20)
+# (a vanilla arm can't bend its wrist: a straight arm raised forward points the blade at the sky, so the arm keeps the
+# angle that lays the blade level, ahead, and the body drives it, the stance drawn back and the lunge going in; the
+# lab's point lead, tools/art/anim_lab.py third)
+# (the arm and chest stay on the thrust's line from cocked to through, so the point drives straight along it, never
+# swinging across: a turn of the chest or the arm swept a long point's tip sideways, 45 degrees off its line; the body
+# leans in less than it lunges, its lean arcing a long point off the line too)
+T_COCK = pose(lean=-3, twist=0, shift=-3, rl=(-8, 0, 6), rk=12, ll=(12, 0, -4), lk=12, ra=(-12, 0, 4), re=50, la=(-38, 0, -20), le=40)
+T_THRU = pose(lean=6, twist=0, shift=5, rl=(-48, 0, 4), rk=44, ll=(26, 0, -4), lk=8, ra=(-15, 0, 4), re=0, la=(8, 0, -26), le=20)
 strike("arms_strike_4", "strike_4", T_COCK, T_THRU, "thrust: drawn back, then driven straight with a lunge")
+
+# A shield bash: the shield raised square in front of the chest (the arm up, so the weapon stands upright and its face,
+# turned by the wrist, looks ahead), the body drawn back and then driven in behind it with a lunge.
+BS_COCK = pose(lean=-6, twist=-6, shift=-3, rl=(-8, 0, 6), rk=12, ll=(12, 0, -4), lk=12, ra=(-84, 8, 8), re=40, la=(-38, 0, -20), le=40)
+BS_THRU = pose(lean=10, twist=0, shift=5, rl=(-48, 0, 4), rk=44, ll=(26, 0, -4), lk=8, ra=(-88, 0, 4), re=0, la=(8, 0, -26), le=20)
 strike("arms_riposte", "riposte", T_COCK, nudge(T_THRU, shift=1, lean=4, rl=(-8, 0, 0)), "riposte: the thrust, deeper")
 
 # The Slipcut, out of a dodge: low and wide, the chest whipping round, the blade flat across the front.
-SC_COCK = pose(lean=14, rise=-1, twist=44, rl=(-20, 0, 8), rk=40, ll=(14, 0, -6), lk=30, ra=(-84, 70, 22), re=24, la=(-30, 0, -30), le=30)
+SC_COCK = pose(lean=14, rise=-1, twist=44, rl=(-20, 0, 8), rk=40, ll=(14, 0, -6), lk=30, ra=rolled((-84, 70, 22), 60), re=24, la=(-30, 0, -30), le=30)
 SC_THRU = pose(lean=18, rise=-1, twist=-40, rl=(-30, 0, 6), rk=44, ll=(18, 0, -6), lk=26, ra=(-102, -54, 20), re=8, la=(-10, 0, -40), le=20)
 strike("arms_slipcut", "slipcut", SC_COCK, SC_THRU, "low and wide out of a dodge, the chest whipping round")
 
 # The heavy: held, the blade drawn down and back to the blade side, knees sunk, trembling; released, a rising cut up
 # across to the off side, the body rising with it.
-HV_DRAW = pose(lean=12, rise=-1.5, twist=40, rl=(-24, 0, 8), rk=38, ll=(16, 0, -6), lk=34, ra=(-12, 62, 30), re=34, la=(-56, 0, -18), le=44)
+HV_DRAW = pose(lean=12, rise=-1.5, twist=40, rl=(-24, 0, 8), rk=38, ll=(16, 0, -6), lk=34, ra=rolled((-12, 62, 30), -90), re=34, la=(-56, 0, -18), le=44)
 held("arms_heavy_charge", HV_DRAW, [nudge(HV_DRAW, ra=(2, 1, 0), rise=0.2), nudge(HV_DRAW, ra=(-2, -1, 0), rise=-0.2)], 4,
      "the heavy held: blade drawn down and back, knees sunk, trembling")
-HV_THRU = pose(lean=-4, rise=1, twist=-30, rl=(-18, 0, 4), rk=10, ll=(22, 0, -6), lk=12, ra=(-138, -18, 52), re=6, la=(-30, 0, -34), le=30)
+HV_THRU = pose(lean=-4, rise=1, twist=-30, rl=(-18, 0, 4), rk=10, ll=(22, 0, -6), lk=12, ra=rolled((-138, -18, 52), -15), re=6, la=(-30, 0, -34), le=30)
 strike("arms_heavy", "heavy", HV_DRAW, HV_THRU, "the heavy released: a rising cut up across to the off side")
 
 # The Execution on a broken foe: both hands high, then the whole weight down into it, the knees nearly to the ground.
@@ -141,7 +171,7 @@ strike("arms_execution", "execution", EX_COCK, EX_THRU, "both hands high, then t
 
 # The Art, the Resonance let go: drawn lower and further than a heavy, both hands on the grip, then a great level
 # sweep round the front with a stride into it (the wave goes on from the blade).
-AR_DRAW = pose(lean=16, rise=-2, twist=48, rl=(-30, 0, 8), rk=52, ll=(18, 0, -6), lk=40, ra=(-18, 66, 34), re=30, la=(-30, 40, -6), le=70)
+AR_DRAW = pose(lean=16, rise=-2, twist=48, rl=(-30, 0, 8), rk=52, ll=(18, 0, -6), lk=40, ra=rolled((-18, 66, 34), -120), re=30, la=(-30, 40, -6), le=70)
 AR_THRU = pose(lean=12, rise=-0.5, twist=-52, shift=2, rl=(-44, 0, 6), rk=40, ll=(30, 0, -6), lk=12, ra=(-100, -46, 10), re=6,
                la=(-80, -30, -30), le=20)
 strike("arms_art", "art", AR_DRAW, AR_THRU, "the Art: drawn low with both hands, a great level sweep with a stride")
@@ -180,6 +210,32 @@ dodge("arms_dodge_right", dict(rl=(0, 0, 30), ll=(-6, 0, -14)), 14, 6, "a quick 
 # overhead (S3/EX), a thrust (T), a whole sweep round (the Art's). Heavier styles lean further into their blows and
 # sink lower. Named arms_<style>_<move>; a move a style has no clip for plays the Longsword's.
 
+def _mirror_limb(v):
+    return (v[0], -v[1], -v[2])
+
+
+def mirrored(p):
+    """A pose mirrored left for right: the off hand does what the main hand did (a weapon in each hand)."""
+    q = dict(p)
+    q["ra"], q["la"] = _mirror_limb(p["la"]), _mirror_limb(p["ra"])
+    q["rl"], q["ll"] = _mirror_limb(p["ll"]), _mirror_limb(p["rl"])
+    q["re"], q["le"], q["rk"], q["lk"] = p["le"], p["re"], p["lk"], p["rk"]
+    for key in ("twist", "tilt", "side", "head_z"):
+        q[key] = -p[key]
+    return q
+
+
+def paired(p):
+    """Both arms strike together: the off arm the blade arm's mirror."""
+    q = dict(p)
+    q["la"], q["le"] = _mirror_limb(p["ra"]), p["re"]
+    q["twist"] = 0.0
+    return q
+
+
+PUNCHES = ("jab", "hook", "upper", "over")
+
+
 def styled(style, lean=0.0, sink=0.0):
     k = lambda p: nudge(p, lean=lean, rise=-sink) if (lean or sink) else p
     table = json.load(open(TABLE))
@@ -187,14 +243,32 @@ def styled(style, lean=0.0, sink=0.0):
     kinds = {
         "side1": (S1_COCK, S1_THRU, S1_VIA, S1_ARC), "side2": (S2_COCK, S2_THRU, None, None), "over": (S3_COCK, S3_THRU, None, None),
         "thrust": (T_COCK, T_THRU, None, None), "round": (AR_DRAW, AR_THRU, None, None), "exec": (EX_COCK, EX_THRU, None, None),
-        "rise": (HV_DRAW, HV_THRU, None, None),
+        "rise": (HV_DRAW, HV_THRU, None, None), "bash": (BS_COCK, BS_THRU, None, None),
     }
     for move, m in a["moves"].items():
-        if move in ("undercut", "plunge", "slipcut"):
-            continue  # the Longsword's own (out of a slide, a fall, a dodge) fit every style
         sw = m.get("swing", {})
+        if move in ("undercut", "plunge", "slipcut") and sw.get("form") not in PUNCHES:
+            continue  # the Longsword's own (out of a slide, a fall, a dodge) fit every blade; a fist punches its own
         tilt_from = sw.get("from", [0, 0, 0])[3] if len(sw.get("from", [])) > 3 else 0
-        if m.get("swish") == "thrust":
+        form = sw.get("form")
+        if form is not None:
+            # the move's form (tools/arms/forms.py): the body that does it
+            if form == "bash":
+                kind = "bash"
+            elif form in ("stab", "jab", "over"):
+                # over: a fist's overhand; a vanilla arm can't turn a fist knuckles-down as it comes over, so the body
+                # drives a straight punch into it
+                kind = "thrust"
+            elif form in ("slam", "chop"):
+                kind = "exec" if (form == "slam" and m.get("arc", 0) >= 300) or move == "execution" else "over"
+            elif form in ("whirl", "spin"):
+                kind = "round"
+            elif form in ("rise", "upper"):
+                kind = "rise"
+            else:
+                d = sw.get("dir") or [sw.get("to", [0])[0] - sw.get("from", [0])[0], 0]
+                kind = "side1" if d[0] < 0 else "side2"
+        elif m.get("swish") == "thrust":
             kind = "thrust"
         elif move == "execution":
             kind = "exec"
@@ -208,7 +282,16 @@ def styled(style, lean=0.0, sink=0.0):
             # which way the hand travels: right to left is the forehand, left to right the backhand
             kind = "side1" if sw.get("to", [0])[0] < sw.get("from", [0])[0] else "side2"
         cocked, thru, via, arc = kinds[kind]
-        strike(f"arms_{style}_{move}", move, k(cocked), k(thru), f"{a['name']}: {move} ({kind})", via=via, style=style,
+        hand = sw.get("hand", "main")
+        if hand == "off":  # a weapon in each hand: the off hand's strike is the main's, mirrored
+            cocked, thru = mirrored(cocked), mirrored(thru)
+            via = None if via is None else mirrored(via)
+            arc = None if arc is None else mirrored(arc)
+        elif hand == "both":  # both blades at once: the off arm does what the blade arm does
+            cocked, thru = paired(cocked), paired(thru)
+            via = None if via is None else paired(via)
+            arc = None if arc is None else paired(arc)
+        strike(f"arms_{style}_{move}", move, k(cocked), k(thru), f"{a['name']}: {move} ({kind}, {hand})", via=via, style=style,
                arc=None if arc is None else k(arc))
 
 

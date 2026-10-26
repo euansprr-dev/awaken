@@ -1,0 +1,111 @@
+# Arms swings filmed (SPEC §25 "The animation lab"): each review style's first strike in first person and in F5 against
+# a still husk, every frame recorded (the clip recorder, run-autopilot/clips/<name>/), then onion-skinned with
+# tools/art/anim_lab.py film. The Longsword's whole chain once more in first person.
+world armsrepro creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+cmd tp @s ~ 200 ~ 0 0
+cmd fill ~-12 ~-1 ~-12 ~12 ~-1 ~14 minecraft:smooth_stone
+cmd kill @e[type=minecraft:husk]
+cmd summon minecraft:husk ~0 ~ ~2.6 {NoAI:1b,PersistenceRequired:1b,Health:400f,attributes:[{id:"minecraft:max_health",base:400d}]}
+camera first
+look 0 4
+arms ribbonmode 0
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
+wait 40
+camera first
+look 0 4
+wait 10
+shot film_longsword_rest_fp
+cmd awaken ascent pilot rec film_longsword_fp 22 2
+wait 2
+arms strike
+wait 30
+camera back
+wait 14
+shot film_longsword_rest_3p
+cmd awaken ascent pilot rec film_longsword_3p 22 2
+wait 2
+arms strike
+wait 30
+camera first
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_daggers
+wait 40
+camera first
+look 0 4
+wait 10
+shot film_daggers_rest_fp
+cmd awaken ascent pilot rec film_daggers_fp 22 2
+wait 2
+arms strike
+wait 30
+camera back
+wait 14
+shot film_daggers_rest_3p
+cmd awaken ascent pilot rec film_daggers_3p 22 2
+wait 2
+arms strike
+wait 30
+camera first
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_greatblade
+wait 40
+camera first
+look 0 4
+wait 10
+shot film_greatblade_rest_fp
+cmd awaken ascent pilot rec film_greatblade_fp 22 2
+wait 2
+arms strike
+wait 30
+camera back
+wait 14
+shot film_greatblade_rest_3p
+cmd awaken ascent pilot rec film_greatblade_3p 22 2
+wait 2
+arms strike
+wait 30
+camera first
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_maul
+wait 40
+camera first
+look 0 4
+wait 10
+shot film_maul_rest_fp
+cmd awaken ascent pilot rec film_maul_fp 22 2
+wait 2
+arms strike
+wait 30
+camera back
+wait 14
+shot film_maul_rest_3p
+cmd awaken ascent pilot rec film_maul_3p 22 2
+wait 2
+arms strike
+wait 30
+camera first
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
+wait 40
+look 0 4
+cmd awaken ascent pilot rec film_longsword_chain 40 2
+wait 2
+arms strike
+wait 7
+arms strike
+wait 7
+arms strike
+wait 30
+quit

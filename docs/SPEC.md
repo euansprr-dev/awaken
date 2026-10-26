@@ -193,6 +193,9 @@ Feel: hit-stop 40–80 ms on heavy hits (client time scale on the hit entity's r
 
 Launch power list (≥45): see `powers/PowerCatalog.java` header for the authoritative list with numbers.
 
+The Tech movement power `awaken:grapple` is shown as **Snap Cable** (2026-10-26, progression plan decision 11), so
+"the grapple" only ever means the Tether; its id, and saved worlds, are unchanged.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 7. Gates
@@ -201,6 +204,8 @@ Overworld: `awaken:gate` block structure (frame + core) at a surface position; c
 rank (E #F4F6FB, D #5FD08F, C #6FB3FF, B #B48CFF, A #F2A541, S #FF5A6A, Sovereign black-gold), visible up to 1500 blocks
 (drawn at clamped distance beyond render distance).
 Gate card shows rank, breaks-in, omen; PER ≥20 adds layout, ≥40 modifiers, ≥60 floor count; Veil scouting shows all.
+A gate of another rank than the hunter's says so in a "For you" row: "above your rank", or "below your rank · pays less"
+(floors below your rank pay ×0.3, `Curve.BELOW_RANK_FACTOR`; §17.25).
 
 Dimension `awaken:gates`: cells of 512×512 aligned to region files, cell origin = ((i mod 64)·1024, (i div 64)·1024).
 Floors stacked vertically: floor f at y = 200 − 32·(f−1) (f = 1..6), each floor a grid of room slots (16-block pitch).
@@ -277,7 +282,11 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
 
 ## 12. Cross-module public API (stable)
 
-- `dev.awaken.signal.Signal` — `send(ServerPlayer, SignalWindow)`, `toast(ServerPlayer, Component)`.
+- `dev.awaken.signal.Signal` — `send(ServerPlayer, SignalWindow)`, `toast(ServerPlayer, Component)`,
+  `toast(ServerPlayer, Component, Notices.Tier, String topic)`; `SignalWindow.Builder.tier/topic/moment` (§26).
+  `dev.awaken.signal.Finds` — `tell(ServerPlayer, Find)`: how a new find is told (lesson, moment, first of kind, filed).
+- `dev.awaken.core.api.Notices` (§26) — `enum Tier {CRITICAL, IMPORTANT, AMBIENT}`; client: `claim(tier, topic)` before
+  a module's own HUD line takes the screen, `file(tier, title, line)` into the Journal, `quiet()`, `hold(owner, bool)`.
 - `dev.awaken.progression.Progression` — `profile(Player)`, `grantXp(ServerPlayer, double, XpSource)`, `count(ServerPlayer,
   Identifier, long)`, `markNewThing(ServerPlayer, String what)`, `rank(Player)`, `stat(Player, Stat)`, `contentLevel(rank)`.
 - `dev.awaken.powers.Powers` — `learn(ServerPlayer, Identifier power, int variant)`, `energy(Player)`, `forcesOf(DamageSource)`.
@@ -311,6 +320,9 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
 - `dev.awaken.terrain.alpine.Erosion` / `AlpineSurface` — Awakened Alpine's erosion and snow-and-rock rule as pure,
   allocation-free maths (§15): `Erosion.erode(x, z, gx, gz, strength, finestCell, out)`, `AlpineSurface.snowLine/snow/
   stone/erosionStrength`. Far Sight predicts and shades with the same numbers; its shaders mirror them.
+- `dev.awaken.city.City.skyline(layout, chunkX, chunkZ, worldSeed, topY[256], top[256])` — the city as planned over one
+  chunk, from the plan alone (any thread): each column's highest placed block and its world y, or none where the city
+  leaves the land; false outside the city. Far Sight's far skyline reads it (§20).
 - `dev.awaken.terrain.city.CityBasinFunction.Shape.ground(natural, x, z)` — the basin's ground height over a column
   whose natural ground stands at `natural` (what the density mode builds), for far terrain.
 - `dev.awaken.hearth.Hearth` — a Hearth's owner and members ("Together"): `record HearthInfo(owner, ownerName, anchor,
@@ -322,7 +334,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   `Intensity.Signals`' `pressure`, `forced` (0..3) and `arrival`), `current(ServerPlayer, Slot)`, `level(ServerPlayer,
   Slot)` (-1 without a context). `dev.awaken.gates.Gates.pressure(ServerPlayer)` — the floor's pressure stage (0..3).
 - `dev.awaken.core.audio.client.Soundscape` (client, world sound): `hush(Object owner, Vec3 at, float radius, float
-  depth, int ticks)` (birds and insects quiet within the radius; depth = what is left), `register(Conductor.Source)`
+  depth, int ticks)` (birds and insects quiet within the radius; depth = what is left), `hushAt(x, y, z)` (what is left
+  at a point; the wild's visible animals read it), `register(Conductor.Source)`
   (another module's ambient voices, `voices()`, counted in the Conductor's budget of 16), `yieldWeight(Conductor.Yield)`
   (`at(x, y, z)` 0..1: how much of the world bed gives way there; the city), `natureLevel()` (0..1, how much nature
   ambience to let through now; AmbientSounds follows it), `overlay(owner, Identifier soundscape, weight, ticks)` (a
@@ -335,7 +348,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
   Animation Library is installed; a no-op otherwise), `FirstPerson` (Hands, §24: the world body, view stances, view
-  clips and their events; every module's first person goes through it). The Wilds (§17): `WardHooks` (`register(Source)`, `at(level, pos)`:
+  clips and their events; every module's first person goes through it; `View.gripMain`/`gripOff` [x, y, z, weight]:
+  the arm drawn to a held thing's grip, additive, Arms 2026-10-26). The Wilds (§17): `WardHooks` (`register(Source)`, `at(level, pos)`:
   wards for sites placed by code; structures just join `#awaken:warded`), `ArrivalHooks` (`report(player, Way, ticks)` for
   movement systems, `byMovement(player)` for rewards, `history(player)`), `HorizonHooks` (`register(Source)` of sites,
   `addReach(Reach)` for needs such as `WINGS`, `collect(player)`, the pure `pick`).
@@ -684,7 +698,7 @@ Awakened Body (module `body`, docs/modules/body.md; approved 2026-10-24, widened
   (the slide-cancel); 0.1 exhaustion; cooldown 20 ticks after it ends. A cast mid-slide keeps it; a power's motion ends it
   (snapped onto the slide's way within 60°; a Velocity power's ×1.3).
 - Mantle: jump facing a ledge whose top is 1.1–1.6 above the feet, face within 0.6 (server 1.1), 2 free blocks over it, a clear
-  way up and over; never onto a collision taller than its block (fences, walls, gates); 6 ticks; 0.05 exhaustion; not while
+  way up and over; never onto a collision taller than its block (fences, walls, gates: those are crossings, §17.27); 6 ticks; 0.05 exhaustion; not while
   using an item or a shield. The server finds the ledge again and teleports a claim > 1 block or 0.25 high off back.
 - Momentum hit: a melee hit at attack strength ≥ 0.9 while sprinting or sliding deals ×(1 + m), m = clamp((v − 0.2)/0.25, 0, 1)
   × 0.3 of horizontal speed v (sprint ~+10%, tactical ~+18%, slide +30%), knockback +2m; the swing's own target only.
@@ -963,6 +977,37 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   most 30 s, by running the chunk system's main-thread queue. Timing budgets assert on the fastest of a few runs.
   A test that needs untouched ground owns fresh ground away from the test grid (plots sit 6 blocks apart).
 - `-Ptests=<name prefixes>` (comma-separated) registers only those GameTests; a filter that matches none fails.
+
+Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools/autopilot.sh`):
+- Look tours run on GitHub's macOS runners (`.github/workflows/tours.yml`, dispatched by `tools/tour-ci.sh`, decided
+  2026-10-26 when the Mac's one-at-a-time queue ran for hours). Perf and frame-time tours, Far Sight's tours and sound
+  listening stay on the Mac under `slot.sh tour`.
+- The runner is macos-15 on arm64 (3 cores of a virtual M1, 7 GB): Vulkan through MoltenVK 1.4.2 on Apple's
+  paravirtual GPU, client heap 4 GB. macOS 14's paravirtual GPU aborts MoltenVK (`newArgumentEncoderWithLayout:`) or
+  runs out of device memory; macOS 26 renders at half the frame rate and scrambles more. OpenGL there is Apple's
+  software renderer (0.1 fps), and Lens Cinematic fails on OpenGL anyway.
+- The autopilot run takes the graphics API as a launch argument (`--graphicsBackend`, tools/autopilot.sh `BACKEND`,
+  Vulkan unless `default`): a fresh game folder read its new options.txt's Vulkan as "default", which tries OpenGL first
+  (on the Mac, the first tour after a pack install).
+- On the paravirtual GPU, draws that each bind another slice of one uniform buffer come out wrong: Far Sight's far mesh
+  (slabs across the sky) and vanilla terrain without multi-draw-indirect (sections misplaced; it is on by default, and
+  autopilot `mdi on|off` switches it). Chunks (vanilla and Sodium), entities, the HUD and holo screens, and Lens Swift
+  and Cinematic render as on the Mac. So CI tours run with Far Sight off (`FARSIGHT=off`, the client config's
+  farSight) and refuse a script with `farsight on`.
+- Display: the runner boots a 1x 1024x768 screen. `tools/ci-retina.m` (CoreGraphics' private CGVirtualDisplay) adds a
+  display like the owner's MacBook, 1512x982 points at 2x, as the main one, with the Dock hidden: the same pixels and
+  GUI scale as the Mac, so a script's GUI clicks land as there. If macOS refuses it, the runner's display goes to
+  1920x1080 (1x: the Mac's framing at half its pixels) and the summary says so.
+- Shots settle (`SETTLE=<s>`, `-Dawaken.autopilot.settle`; CI 90 s): before each `shot` (not `shotnow`) the autopilot
+  waits until every chunk within the render distance less one is on the client (or none has come for 10 s), then a
+  second of built sections (`LevelRenderer.hasRenderedAllSections`, which Sodium answers too), past the fade-in. Waits
+  written on the Mac run out on 3 cores. Moments on the game's own clock still differ: the opening's sky shots, toasts,
+  a creature's tracks, anything after a fixed wait that isn't a shot.
+- Every tour picks a starter power (`cmd awaken powers starter 1`): on a slower machine the first-power screen can open
+  after the script's last `screen close` and cover every shot.
+- The run's artifact (7 days) holds the shots, the client's log, options.txt, awaken-client.toml, summary.txt and
+  tour.json (`tools/tour-report.py`: the verdict, renderer, display, settles, warnings, the first ERROR lines), and the
+  clip recorder's frames as a second artifact. Never Mojang's assets: they are downloaded on the runner and cached.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -1427,7 +1472,9 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   chunk counts once its surface section and the three below are built) and within the render distance in 3D from the
   camera, as Sodium culls them (a sphere of the render distance). Seen from high up the real sea ends well inside the
   horizontal render distance, and its floor sooner, so far water tests its own floor's distance and stays under a real
-  water surface whose floor is too far to draw. The planner and the windows count as covered only the ground the
+  water surface whose floor is too far to draw. Far water is never hidden under the real chunks unless the camera is
+  under the sea (2026-10-26, Euan's play: sky-coloured slabs on the sea where Sodium skipped a section), and grazing far
+  water reflects the sky by the horizon at every distance, as Lens's real water beside it does. The planner and the windows count as covered only the ground the
   sphere reaches at a sea floor (40 under sea level) below the camera, in 16-block steps. (2026-10-26: the pale squares
   over the sea after a jump and the pale frame along a flight were these holes, found with `farsight debug 2`, which
   paints masked far terrain red. They were first taken for water walls and for vanilla's chunk fade-in; a Turbo
@@ -1445,7 +1492,9 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   version reached nothing under Sodium and was dropped.
 - **Look** (`farsight_terrain.fsh`; Euan's playtest, 2026-10-25: "it feels like an extension of the world"): far ground
   is drawn in blocks at every distance. Each pixel walks its view ray through columns standing on the mesh's local
-  plane, about a pixel wide (1 block by the real chunks, then 2, 4 .. 64, dithered between widths), tops rounded to
+  plane, at least a pixel and a half wide (1 block by the real chunks, then 2, 4 .. 64; between two widths each
+  world cell of the wider picks one, anchored to the land: 2026-10-26, pixel-wide columns dithered on the screen made far
+  slopes glitter in motion, Euan's play; part "steady" off restores them for measuring), tops rounded to
   whole blocks, and shows the face it meets: the top, or a side facing x or z, shaded as the game shades faces (1, 0.8,
   0.6) under a light matched to Lens 2's on the chunks (`farLight`: a warm key where the sun reaches, Lens's cool shade
   behind ridges, faces turned from the sun shaded only as it lowers). Grass tops stand over dirt risers (the dirt
@@ -1454,7 +1503,11 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   grain. Snow lies by the alpine snow line and by a smooth coldness (each corner's blocks above the game's own cold
   line, info alpha, found by bisecting `coldEnoughToSnow`), both broken into patches over a ~20-block band
   (`AlpineSurface.patches`, the same noise the chunks' snow uses), on tops and as a fringe on risers. Scree and bare
-  rock by slope; water with shallows; forest floor tinted by its crowns, and from about 600 blocks out (full by 2.4 km)
+  rock by slope; water over its own sea floor (2026-10-26, Euan's idea: the real water shows its floor, the far water
+  showed none, so the floor ended at the chunks): the floor lies the water's depth down along the view ray, blocks of
+  sand, gravel in the deep and seagrass patches, anchored to the world, showing by the water's absorption over the path
+  (shallows and steep views, not deep water or grazing ones) and fading out over 700 blocks past the render distance's
+  edge, so the open sea further out is only water; forest floor tinted by its crowns, and from about 600 blocks out (full by 2.4 km)
   a forest is its canopy: crown colour over every face, speckled crown by crown.
 - **Bake** (fragment pass, `FarGpu`): per corner the normal, valley shade, and sunlight: a march toward the sun across
   the ring (40 steps, growing), soft by how far under the ridge line. Changed rings at once, one more every other frame
@@ -1466,6 +1519,11 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   (crown top, two camera-facing crown sides narrowing by shape, two trunk sides): broadleaf, conifer, jungle, acacia.
   One `drawIndexedIndirect` of a command per visible run on Vulkan (multi-draw indirect, public API); a draw per run on
   OpenGL 4.1, which has no multi-draw indirect. A predicted tree steps aside where the real chunks' trees are known.
+  Every tree stands on the far mesh exactly as drawn under it (the tree shader rebuilds the cell's vertices as the
+  terrain's do: real corners where known, eased into the coarser ring, split on the index buffer's diagonals), never at
+  its planting height, and none is planted inside `CityBasin.reserved` (2026-10-26, Euan's play: trees hung over the
+  basin's edge). Test `farsight_trees_basin`. A tree patch's view-culling box reaches the tallest far tree (72 over its highest ground;
+  at 40, a patch whose ground sat just below the frame dropped its treetops: far trees flickered with the camera's pitch).
 - **Air** (`farsight_air.glsl`): aerial perspective from an exponential atmosphere at real scale (1e-4 per block at sea
   level, ×4 in rain; scale height 1500), toward the sun tinted by the sunlight; valley cloud, a patchy slab 40-86 above
   sea level lying among the mountains (a sea of it at dawn, dusk and in rain), sunlit on top, over far ground only; the
@@ -1475,6 +1533,14 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
 - **Lens**: Far Sight reports its depth through `compat.client.FarTerrain.report` and `FarTerrain.selfHazed`; Lens then
   hazes far terrain only as much as the end of the real chunks (flag 8 in params texel 0) and leaves the kilometres past
   them to Far Sight. Lens's light pass doesn't touch far pixels; its clouds composite over far terrain past their layer.
+- **The city** (`FarCity`, 2026-10-26, Euan's play: the ring wall vanished past the render distance): the far store
+  learns real chunks as they load or save while far terrain collects, and `FarCollector` keeps track of every loaded
+  chunk all along, so those loaded before (Carillon's pregeneration holds ~1,700 through the join, never saving them)
+  are taken in when collecting starts, nearest first. City chunks never seen are laid out from the plan
+  (`City.skyline`, top block per column, its map colour) after the real ones, and a real chunk replaces its planned one.
+  Cells the city builds on (real ones above the street + 3, planned ones) carry `FarCity.BUILT` in their colour's top
+  byte, and a far corner over them takes the highest built cell and its colour, not the average, so walls, towers and
+  spires keep their silhouette at any distance. Test `farsight_city`; tour `farsight2-city.txt`.
 - **Landmarks** (`FarLandmarks`): unchanged from stage 1 (gate pillars from `Gates.near` from 1500 blocks, the city's
   towers), drawn after the terrain and trees.
 - **Budgets** (measured): Lens Ultra at sunset on the jagged peaks, 2880×1800 (11% more pixels than 4K at 0.75): Far
@@ -1795,7 +1861,7 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   along it, the rhythm counted in face cells so diagonal sides keep it), the towers and gatehouses by `CityTowers`
   (parts paint a margin of 4). Outside: a talus in three steps, buttresses 3 wide every 8 with set-offs at 13 and 33,
   courses at rows 15 and 27, two-block loops and putlog holes, spouts under a machicolated parapet two deep on corbels
-  (merlons 3 high, a breastwork 1 high, crenel sills are walls: a "no"). Sides 1, 3, 10, 11, 19, 21 roof the walk over a
+  (merlons 3 high, a breastwork 1 high, crenel sills are walls: a "no"; since §17.27 climbed onto, never crossed). Sides 1, 3, 10, 11, 19, 21 roof the walk over a
   timber hoarding. Inside: an arcade of bays 7 apart (deep 3, open to row 5) holding the wall's life, a course at row 9,
   recessed panels to row 31 with ivy, a drainpipe on every third pier and near each end of every stretch (the climb lines
   to the walk), banners, flagpoles at row 13, awnings at row 3 over stalls and workshops, a corbelled parapet band over
@@ -1904,7 +1970,8 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   doorways; he walks on when you're within 4.5 of him, waits and nudges past 9, says "Habit, I know" once if you run
   ahead) → READ (as before) → SIGN (at the desk, the counter's free south end; use signs) → BAND (Bram holds it out over
   the counter; use takes it) → WEAR (the band is in your hands, the Holo dark until you put it on the wrist slot) → BOOT
-  (the boot on the wrist; the inventory closes itself 0.7 s after it goes on) → BRIEF (his three lines) → OPEN ("Go on,
+  (the boot on the wrist; the inventory closes itself 0.7 s after it goes on) → BRIEF (his three lines, then the camp: "The bells hold the city. Hunters hold the wilds. Ilse at the camp
+  keeps a fire for new licences.", whose Ember founds a Hearth, §28) → OPEN ("Go on,
   open it": the K prompt and `TipHooks` tip `awaken:holo/open` show only now) → STATUS → ATLAS → POWER → DIRECTIVE →
   YOURS. Waiting steps nudge every 30 s (at most three); without a client every step moves on by itself.
   - Bram is staged through `CitizenHooks.stage(level, "bram", at, yaw, act, prop)` (citizens role STAGED; lapses if not
@@ -2123,7 +2190,8 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   `#awaken:runner_lines` (rope and Tether: laundry lines, bunting, crane ropes),
   `#awaken:runner_soft` (soft landings and bounces: awnings, hay carts),
   `#awaken:runner_swings` (swing points: bracket signs, flagpoles).
-  The "no" language (fences, spikes) is in none of them.
+  The "no" language (fences, spikes) is in none of them. (Since §17.27, Euan 2026-10-26, fences and walls are crossed
+  everywhere, the city included: still no ledge, line or swing, but a crossing.)
 
 ### 16.10 Budgets
 - Perf profile, RD 16, busiest market at noon: p50 ≤ 10 ms (platform 5.3 measured + city blocks ≤ 2.8 with solid cores
@@ -2313,6 +2381,8 @@ Precursor wards (`wilds.ward`, config `features.wards`):
   box grown by 12 blocks on every side. `#awaken:warded_sky` (sky platforms) reaches 48 further down, so a tower stalls
   well under the deck. New structure sites (Tether Spires) join a tag; sites placed by code (hero-tree caches) register
   a `core.api.WardHooks.Source`. Existing ruins have wards at once: the box comes from the saved structure start.
+- At a **climb** (a Tether Spire, a sky platform, a hero tree's crown) a block is refused outright instead, and no
+  Hearth suspends the ward or its walls (§17.25).
 - Inside a ward, outside every Hearth's radius, a block a survival or adventure player places crumbles 3 s (60 ticks)
   later: still the same block, it is removed (water stays where it was waterlogged) and the item that placed it goes back
   to them (inventory, else at their feet; if they left, where it stood). Containers drop what was put in them, as
@@ -2322,18 +2392,24 @@ Precursor wards (`wilds.ward`, config `features.wards`):
 - Inside a ward a block in `#awaken:ward_sealed` (every Precursor building block plus the deepslate and blackstone
   dressing ruins build with) can't be broken by a player, an explosion or a piston (pistons inside a ward never move).
   The vault's sealed chamber is enclosed in those blocks, so a rank door can't be dug around. Natural ground still digs.
+  A Hearth's radius gives a site's walls to its owner, **except a vault's** (vault and spawn vault): those hold even
+  inside a Hearth, or a Hearth Anchor beside a vault would let an under-ranked hunter dig round its rank door (2026-10-26,
+  with the Tether Vow's rank lock, §17.7). Placed blocks still stay inside a Hearth.
 - Its own look and sound, never vanilla: `awaken:ward_spark` (a thread of the Signal's #7FC3FF light) and `awaken:ward_grain`
   (a chip tinted by the block's map colour), built on the client from one `ward_fx` event (mark, crumble, hold); sounds
   `wilds.ward_mark`, `wilds.ward_crumble`, `wilds.ward_hold` (tools/art/specs/audio_wilds.py; sprites tools/art/specs/wilds.py).
 
 How you arrived (`wilds.arrival`, behind `core.api.ArrivalHooks`; config `features.wilds`):
 - Every tick the server reads each player's way of moving; a quarter second keeps its most telling way (in `Way` order:
-  STILL < WALK < SPRINT < SWIM < CLIMB < RIDE < AIRBORNE < POWER < ASCENT < BUILT) and 80 of them (20 s) are kept.
+  STILL < WALK < SPRINT < SWIM < CLIMB < RIDE < AIRBORNE < POWER < ASCENT < LINE < BUILT) and 80 of them (20 s) are kept.
   BUILT: standing on (any corner of the feet) or climbing a block the player placed in the last 10 minutes (last 512
   placements). POWER: 2 s after a cast of a movement-slot power, a dash or Hover, and every tick Flight or Hover runs.
-  ASCENT is for the movement tiers to report. Nothing is saved.
+  ASCENT: a Runner move (wall-run, ledge hang); LINE: the Ascent's own ladder (a rope out, a zip, the carry, wings;
+  §17.25). The history is never saved.
 - A visit: stepping into a ward opens it with the window's verdict (no BUILT in the 20 s that led there); a BUILT sample
   while inside spoils it; it ends after 5 s outside. Outside any ward the window is the verdict. No record: movement.
+  A visit also knows if the line carried the player (`ArrivalHooks.byLine`); a visit open at logout is saved and comes
+  back if they log in inside the same ward within 10 minutes (§17.25).
 - `awaken:arrived_by_movement` (loot condition, the chest's opener) gates a site's best roll. Route records and Flow XP
   pay through `ArrivalHooks.byMovement` too when they land.
 
@@ -2607,9 +2683,28 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   broke. Record from standing still; at most five minutes.
 
 ### 17.7 The Tether Vow (the rope, earned at the first vault)
-- Who: awake, in the overworld, without the rope, the `ascent` option on. Where: a Precursor vault's forecourt (local
-  x 4-18, z 0-3, feet 1-5 over the floor: between the pylons, before the sealed door, which no low rank can open; every
-  vault qualifies until one is kept, so the first one reached is where it happens). Checked once a second per player.
+- Who: awake, in the overworld, without the rope, the `ascent` option on, **at the vault's line rank: its own door
+  rank, D at the least** (`TetherVow.RANK` = D since Euan approved the progression plan, decision 1, 2026-10-26; it was
+  C for a few hours; the door rank is the piece's saved `rank`: D within 1200 of the origin and at the spawn vault),
+  **with its sealed door open** (no door panel or core left at local x 10-12, y 1-3, z 12). Euan, 2026-10-26: "I got the grapple thing when my
+  rank is too low to actually open the vault. I just walked into the vault and got it... you actually need the C rank
+  to get into the vault to unlock it." Where: a Precursor vault's forecourt (local x 4-18, z 0-3, feet 1-5 over the
+  floor: between the pylons; every vault qualifies until one is kept). So the order is: open the door, go in, and the
+  vault calls as you come back out under its pylons. Checked once a second per player.
+- Short of that, the vault stirs (stage `STIR`, at most once in 5 minutes per vault and state): short of the rank, a
+  low, quiet version of the call's note, the vault's light rising off the paving in the rank's colour, stalling and
+  settling back, "The vault stirs, and stills." then "Its line waits for a D-rank hunter."; ranked but with the door
+  still sealed, the light drifts low toward the door: "The vault stirs. Its door will know you." No Lens look, no hush:
+  it only half wakes. The rank is named; what the line is stays unsaid until it is given.
+- The sealed door answers (`DoorCoreBlock`, all ruins with a rank door): someone short of its rank who comes within 5
+  blocks (read at most every 20 s), touches it or strikes it is read: the ward's HOLD light on the core
+  (`WardFx.hold`), the door's refusing tone, and "Sealed. It reads you and stays shut. Come back at C-rank." A strike
+  used to do nothing (the door can't be broken), which read as a dead block. The hum for those who can open it is as
+  before.
+- Worlds where the rope was already given under the old rule keep it (nothing is taken back).
+- Pacing (docs/progression/PLAN.md §4): D arrives about 5 h in (pacing_sim, balanced), so the rope is the first
+  rank-up's reward, at the vault the player met in the first hour. The Leaper follows hours later (§17.10), Wings at C
+  (§17.9).
 - The vault's turn is read from its pylons' own blocks at the front corners (the amber lights at local y 20, the trim at
   19, the polished cornice at 11: at least 4 of the 6); terrain can't fake them, and a vault dug into a hill keeps them
   (open air at the back corners, the first try, failed on the first real spawn vault). The vault's box is its piece's
@@ -2628,7 +2723,9 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   Flow, "Vow kept.", 10 Tether mastery, a fifth of a level's XP (DISCOVERY), counter `awaken:ascent_vow_kept`, flag
   `VOW_KEPT` in the record. Lapsed: "The mast will wait." (the rope stays; nothing is lost).
 - `ascent_tether_vow` builds a vault from its blueprint in each turn and checks the turn, the forecourt, the pylon
-  anchor (real to the server, the line clear) and the mast, then runs the director: call, line, kept.
+  anchor (real to the server, the line clear) and the mast; then the lock: at E the vault only stirs and its door reads
+  the player once and stays shut; at D a C door's line still waits, and the D door's vault waits until its door is
+  open; then the director runs: call, line, kept.
 
 ### 17.8 Phase 4a: Aether (Skyborn's flight meter)
 - Flight (SOAR) runs on Aether, 0..1: cruising drains a full meter in 60 s, boosting in ~19 s, hovering in ~38 s, each
@@ -2669,11 +2766,15 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   under the ring below, a zip to the perch's underside near its edge vaults the body onto it; from it, a zip to the side
   of the pier's end (7 up) pulls the body onto the pier.
 - **The core** (`awaken:wing_core`, unbreakable, in the cabin's middle on the deck): twice a second, a player within 3
-  without Wings who came up by moving (`ArrivalHooks.byMovement` and `Ascent.arrivedByMovement(p, 20)`: a third of the
+  without Wings, **at C-rank or above** (`WingCoreBlockEntity.RANK`, progression plan decision 2, 2026-10-26), who came
+  up by moving (`ArrivalHooks.byMovement` and `Ascent.arrivedByMovement(p, 20)`: a third of the
   last 20 s in a ladder state or a Runner move and no block placed) is given Wings (`Ascent.grant`, "sky platform core")
   with the gift's scene (`Remember` mode `GIFT_WINGS`: "Wings of light.", the wings unfold round the body, then the
-  hint to open them), `ascent.vow_call`, counter `awaken:ascent_wings_core`. Anyone else is told, at most once a minute,
-  that the core answers only to the long way (`awaken.ascent.core.dark`). It breathes a ring of light every 3 s. The
+  hint to open them), `ascent.vow_call`, counter `awaken:ascent_wings_core`. Anyone else is told why on arrival, then at
+  most every 10 s (`Throttle`): "The core stays dark. It answers only to a climb up its rings." or "The core stirs, and
+  stays dark. It waits for a C-rank hunter." (before: once a minute, on the minute, so a refused player could wait 60 s
+  in silence). The Horizon's "wings" need is reached by Wings or the rope alone (the rings are a rope ladder) and reads
+  "· needs a rope or wings". It breathes a ring of light every 3 s. The
   platform's `#awaken:warded_sky` ward, its loot table and the Horizon's "wings" reach are unchanged.
 - **The rope's moves for a ladder** (§17.6 rope, both sides):
   - *Vertical zip*: a throw at something more than 6 above and nearly overhead (sideways under 0.45 of the rise) zips
@@ -2696,8 +2797,9 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   ground up): a throw from the ground sees the ring (a tour stood under birches throwing into leaves).
 
 ### 17.10 Ascension trials: the Leaper's Gauntlet
-- **Opened for you** (`AscentTrials`): once you hold the rope (not the leap) and have swung enough to know it (Tether
-  mastery level 2: 100 points), awake, in the overworld on the ground, checked every 5 s: a scripted gate opens in front
+- **Opened for you** (`AscentTrials`): once you hold the rope (not the leap) at **D-rank** and have swung enough to
+  know it (Tether mastery **level 4: 400 points**, about 80-130 swings and launches; it was level 2 until the
+  progression plan's decision 2, 2026-10-26, which made the leap its own rung hours after the rope), awake, in the overworld on the ground, checked every 5 s: a scripted gate opens in front
   of you (`Gates.openScripted`, `Gates.leaperTrialPlan`), once (`AscentMemory` flag `LEAPER_TRIAL` = 4), with "A gate
   is beating like a running heart: the Leaper's Gauntlet." It never breaks. Its card: "The Leaper's Gauntlet. A course
   of the Foundry, and at its end a chasm no running jump will cross." · Trial: run it to the far side.
@@ -2836,7 +2938,7 @@ server checks every move exactly as before (a free-run move is the same claim a 
   the body's front: a top 0.6-1.2 over the feet with two blocks of room over it and over the head is **vaulted** (the
   jump); a ledge 1.1-1.6 up is **mantled** (when the mantle is yours: sprint held counts as the jump); a wall taller than
   1.6 is **jumped at** when Wall Stride climbs it or its lip is a hang from the jump's height; with no floor 2 blocks
-  down two ticks ahead (not water) the edge is **leapt from** (the sprint jump). A fence or wall (1.5) is left alone, a
+  down two ticks ahead (not water) the edge is **leapt from** (the sprint jump). A fence or wall (1.5) is crossed (§17.27), a
   step down of one is run down.
 - **In the air**, sprint held counts as jump held: a wall beside you is run along (the wall-run's own rules: 1.5 off
   the ground, under 35°), a wall ahead climbed with Wall Stride; a ledge passed is caught as always.
@@ -2848,7 +2950,7 @@ server checks every move exactly as before (a free-run move is the same claim a 
   roof up to a hang over the jump's top) becomes its target; for 8 ticks the motion turns toward it at most 2.5° a tick,
   14° in all, never faster, and only while it's within 30° of the way you're going.
 - Setting: `freeRun` (feel settings, default on). Dev: `/awaken body try freerun` (forward and sprint held 15 s).
-  Test: `body_free_run` (a block vaulted, a wall jumped at, a fence left, an edge leapt, a step down not; the pull
+  Test: `body_free_run` (a block vaulted, a wall jumped at, a fence not jumped at, an edge leapt, a step down not; the pull
   capped and only toward what's nearly ahead). Tour: `tools/autopilot/ascent-freerun.txt` (PACK=feel): with forward
   and sprint held, nothing else, the body vaulted a low wall, leapt a 3-block gap, jumped at a 2-high wall, caught its
   lip and climbed out (6 ticks after the grab), and leapt from the roof's far edge; then the rope zipped ring to ring
@@ -2944,8 +3046,8 @@ Skyborn's earn path (the plan: "the Sky Archipelago Lord, rebuilt as a flight fi
 ### 17.19 The Sovereign: the god form
 The ladder's top (the plan: "the angel overlord"). Euan chose its trigger on 25 Oct: its own Ascend key, default U,
 needing full Aether, with a 10-minute cooldown.
-- **Earned** at the story's end: the world's ending seen (`StoryHooks.gatesCalm(server, player)`: the Signal broken
-  and their gates calm; or `colourRestored`: the world awake), checked every 5 s; the tier with the gift's scene
+- **Earned** at the story's end: any ending this player's story has reached (`StoryHooks.endingSeen`: the Break, the
+  Wake or the Become; before the progression plan's decision 2 the Become never gave it), checked every 5 s; the tier with the gift's scene
   ("Sovereign. · Aether full, press U: thirty seconds as the sky's own. Press it again high up: Judgement."), its tip,
   every tier under it. Dev: `/awaken ascent grant sovereign`.
 - **The form** (`body.ascent.Sovereign`, server-kept; `client.SovereignClient` draws it): the Ascend key with the tier,
@@ -2979,8 +3081,8 @@ wings opened to where the glide ended, glides of 8 or more; `Quests.advance(play
 ### 17.21 Roofs: climbing out onto a stair or slab eave (Euan's playtest, 2026-10-25)
 Hanging from a roof's eave, the climb out (the ledge jump's, and the free-run's from the hang) lands on whatever is
 walkable just past the face: the lip's own top or a step up to 0.6 over it (`RunnerRules.CLIMB_STEP`, vanilla's step),
-so a stair eave puts you on its high back half and you walk on up the slope. Never onto a fence or wall top, never
-down a drop behind a thin lip. The standing body (from that height to 1.8 over it) and the way over the lip must be
+so a stair eave puts you on its high back half and you walk on up the slope; onto a wall's coping over its middle, over a
+fence's rail (§17.27); never down a drop behind a thin lip. The standing body (from that height to 1.8 over it) and the way over the lip must be
 free, and the way up in front of the face from the hold to standing height. The server re-checks with the same
 `climbOut`. Covered by `runner_roof_climb`: a stair eave on a 3-high wall under a stair slope, a slab eave under a
 slab slope, Carillon's overhanging eave stair on a gentle and a steep gable (`CityGrammar.roof`), and a step with a
@@ -3023,7 +3125,7 @@ the slide's own controls (jump out, a power's motion, a push, water) end it as b
 The mantle's lip is the lowest top along the face's edge across the body's width, by the real collision shapes (a
 stair's low half, a slab, any kit block), within 1.1-1.6 over the feet; nothing on that edge more than a step (0.6,
 `BodyRules.MANTLE_STEP`) over it. The feet land a body width past the face on whatever top is there, from the lip's
-height up to a step over it, never lower (no drop behind a thin lip), never a fence or wall top, with 2 blocks of room
+height up to a step over it, never lower (no drop behind a thin lip), never a fence or wall top (a crossing, §17.27), with 2 blocks of room
 over it. So a 1-block wall topped with a stair facing away or sideways is climbed by its low half (1.5) and stood on by
 its high half (2.0): a body 0.6 wide can't stand on a half 0.5 deep. A stair facing you is a 2-block face and an
 upside-down one a 2-block top: not mantled (the wall-run, the hang and the climb-out take those). Client and server run
@@ -3047,7 +3149,125 @@ floor within 0.6 under a point 0.6 ahead (vanilla's edge-sneak stays), not in wa
 - Test: `body_land_slide` (a sprint jump's landing speed slides farther than a run's slide, a walk's doesn't, an edge
   with a drop is no slide, the server takes a sprinted landing and refuses a body that never ran).
 
-### 17.23 The grip on a climb line (Hands P1; Euan, 2026-10-25: "you just float up")
+### 17.25 Dropping to the ledge below (Euan, 2026-10-25: "I'm on an edge already holding it, and there's one below")
+In a hang, **Shift** lets go and catches the next ledge below when there is one (`RunnerRules.edgeBelow`): the same
+face direction, its top 0.9-3.2 under the held one (the nearest), its face up to 1.4 out from the hanging body (a sill
+or a balcony sticking out) or a little in, and the way to it free. The body goes out first when the lower face sticks
+out, else down first then in, falling slow off the lip and fast into the catch (4-8 ticks by the drop), the grab's
+clip and sound at the catch (first person: the hands slam onto the lower lip). **Shift + Back**, or Shift with no
+ledge below, lets go as before. Lowering into a hang over an edge (Shift + forward) is also allowed when the ground
+under it is near but there's a ledge below for the drop to catch (`RunnerRules.lowerWorth`), so a facade's ledges can be
+worked down one by one. The server takes the drop as a ledge jump (`JUMP_DOWN`): the target edge found again near
+the claimed hold, its top within the drop's band of the held one. Test: `runner_ledge_drop` (a wall's top over a sill
+one out: the drop catches the sill from its own face and the server takes it; no sill, nothing to catch and the server
+refuses).
+
+### 17.26 Leaps with momentum (Euan, 2026-10-26: "it just feels like I'm basically floating up. So it doesn't feel like a jump")
+Every jump out of a hold has beats: a load, a launch that slows like a throw against gravity, a moment at the top, and a
+catch with weight. The body's own path (client, `RunnerMoves`; the server checks only where it lands, as before):
+- **Ledge jump up and sideways** (`startLeap`): the load, the body dipping 0.12 under the hold over 2 ticks (none when
+  something is under it); the launch, an ease-out (1 - (1 - s)², a constant deceleration) to the apex, 0.2 over the
+  target hold up (0.35 over the higher hold sideways; the target's own height when there's no room over it), over 3
+  ticks + one per block up (3 sideways), 85% of the way across by then; one tick of hang there; the fall into the hold
+  over 2 ticks (3 sideways), accelerating (s²). A jump up of 2 is 10 ticks (was 10 on one smoothstep curve).
+- **The catch**: the body jolts down on the hands and settles (0.08 × e^(-t/2.2) × cos(1.25 t) under the hold for 10
+  ticks; 1.4× after a drop), the grab's sound a little deeper.
+- **The climb out**: a 2-tick load (0.1 down) before the push up and over (10 ticks).
+- **The pipe hop**: a load 0.08 down, a launch that slows to 0.12 over the 1.2, a settle (8 ticks).
+- **The view** (`FeelDirector`, off with reduced motion): it sinks with the load (1.1°), lifts on the launch (2.4°, the
+  frame opening 2.5%), jolts down on the catch (2.6°, a touch of shake); the jump back off a ledge and the kick off a
+  pipe lift it (0.9, 0.8), the hop's launch too (0.7).
+- **Sound**: a push on the launch (the wall jump's, quiet), the catch's grab.
+- **Hands and figure**: first person's `fp_ledge_up` (10 ticks, played at the speed that lands its catch with the body)
+  pulls down on the load, flies up past the lip, hangs, slams onto the new lip; third person's `body_ledge_up` (10
+  ticks) pulls and tucks, kicks and stretches, holds at the apex, takes the catch. The kick, the swing out and the jump
+  back were already thrown by real velocity.
+- Tour: `tools/autopilot/anims-leaps.txt` (first person and the shoulder view).
+
+### 17.27 Fences, gates and walls (Euan, 2026-10-26: "Make every fence and wall of every type mantleable, everywhere, the city included")
+Every fence, fence gate and wall, of every wood, stone, brick and mud, vanilla's and any mod's (any collision taller than
+its block), and a pane or bar row standing on a block, is movement you use: read by its real collision shape
+(`body.VaultRules`, both sides), so a new kind needs nothing. AWAKEN has no fence or wall blocks of its own (the city
+builds with vanilla's). Approved feel: the free-run is as before (§17.14), only faster over these.
+- **A crossing** (`Move.VAULT`, appended; no new key): jump facing one, or the free-run held while running at it (moving
+  within 37° of the look, as §17.14). It is what the legs would run into, above a step, within 0.6 of the body's front
+  walking or 1.3 running (a running vault takes off early in its stride; the server 0.6 more), with its top 1.26-2.6
+  over the feet (vanilla's jump clears 1.25): a top no wider than 0.62 across where your line crosses it (a fence 0.25,
+  a wall 0.375-0.5; a slab-topped wall, 1.0, stays the mantle's ledge, §17.23), standing on something solid from a step's
+  height (never a beam over open space), the whole no deeper than a rail on a block (1.1 past the body's own width),
+  crossed within ~53° of square on (a fence beside you is never one).
+- **What it does**, by shape and by what's beyond it:
+  - a fence or gate 1.26-1.65 up (a rail narrower than 0.3) with floor beyond: running, **vaulted** (the off hand on
+    the rail, the legs swung flat over to the main side; a 1.5 fence: up 4 ticks, over 3 at the run's own pace, down 5);
+    walking, **hopped** (both hands, the knees tucked over; up 5, over 5, down 5);
+  - a wall (a coping 0.3 wide or more): walked at, **climbed onto**, the body standing over its middle (a wall-walk);
+    run at, vaulted;
+  - a rail on a block (a garden wall, up to 2.6): **climbed over** in one motion (a foot up the block, the hands catch
+    the rail, press, the legs swing over; 21 ticks running); a wall on a block walked at is climbed onto instead (the
+    block juts out under it where a hanging body would be, so there'd be no hang to climb out of);
+  - beyond, the floor must take the whole standing body, every corner within a step of the landing, from 0.6 higher to
+    2.0 lower than the feet: a rail at a terrace's edge with a sliver of floor behind it, or over a drop, is **climbed
+    onto** and held there, never crossed into the drop.
+- **The path** (`VaultRules.Vault.at`, the same on both sides): rising fast and easing onto the top while the body's front
+  stays 0.04 short of the face, the feet clearing it by 0.06; over it at about the run's own speed (0.28-0.42, walking 0.2, a
+  rail on a block 0.24) with a small arc (0.08 running, 0.03 else); down beyond keeping 0.85 of that speed (0.45, or
+  straight down, where only that fits), fast off the top and easing onto the floor. Up and over in the crawl box
+  (`Pose.SWIMMING`, 0.6 high, forced on both sides): the eye rises only ~0.4 over a 1.5 rail, as a vaulter's does, not
+  the 1.6 a standing body needs; down beyond standing again, so vanilla's camera eases the eye up as the feet drop and
+  the view comes down level and lands without a dip. Every quarter tick is clear of blocks for the box it has, and the
+  standing box at the end (nothing pushes the body out where it lands); the server's own move follows the same path and
+  never corrects it (its box stays the crawl's to the end, never bigger than the client's). The last tick sets the
+  feet into the floor (vanilla's move stops them on it). Running, the run goes on at that speed, the sprint kept.
+- **The hold on top**: up onto a top, forward is held back (the keys' push cancelled) until it's let go or jump is
+  pressed, so a parapet climbed at a run never walks you on off its far side; then it's yours. **Balance**: walking
+  the top of a rail narrower than the body (a coping, a fence) along its run (within 45°), the body is drawn back over
+  its middle, at most 0.05 a tick; crouching or turning off it is yours.
+- **Edges** (§17.2's hang): a fence's, gate's or wall's top is a lip like any other. A rail standing back on what's
+  under it (on a block, at a roof's edge: a fence 0.375 in, a wall 0.3125) is held from the face under it, the hands
+  reaching in, up to 0.45 back (`RunnerRules.RAIL_INSET`); a fence on the floor you stand on never is (the hanging feet
+  would be in that floor). From the hang the climb out stands on a wall's coping (over its middle) and goes **over** a
+  fence's or gate's rail (`VaultRules.over`: up from the hold, over, down to the floor beyond, up to 3.5 under the top;
+  18 ticks onto a roof 1.5 below), told to the server as a ledge jump (`JUMP_OVER`) and checked the same way.
+- **Server** (`BodyServer.startVault`): the Runner's Kit, not riding, sleeping, in water, using an item or blocking, no
+  other move running; the same probe from where it has the body (0.6 more reach), or from up to 3 blocks ahead of it
+  along the way (a server running behind its client hasn't seen the run-up's last steps: the tour's integrated server
+  ran a second behind once), must end within 1.0 (0.3 high) of the client's. A refused crossing is stopped, never put
+  back: its path passes through nothing and vanilla's own move checks hold it to that. Then the crawl box and the fall forgotten each tick until the client's end or
+  the path's length plus 4; 0.05 exhaustion, counted (`awaken:body_vault`), a Runner link, Flow +0.05. Others are sent
+  `Seen` 19 + the kind (`VaultRules.VAULT` .. `OVER`). `Body.isMantling` (`MovementHooks.mantling`) is true through it.
+- **The free-run** (§17.14) asks for a crossing before anything else on the ground; a fence or wall is no longer left
+  alone. The accident lanes keep their purpose: a fence beside you is never a wall to run on, a hang or a crossing (the
+  S3 course's fence lane), and a rail at foot height below you is vanilla's step, never a crossing.
+- **Look**: third person (Player Animation Library), `body_vault` (a speed vault), `body_vault_hop`, `body_vault_high`,
+  `body_vault_onto` (a low crouch on the top, arms out, rising), `body_vault_over` (out of the hang), `_bent` twins
+  (tools/art/specs/body_moves.py): the figure lowered so its hips cross at the rail and the planted hand meets it.
+  Without the library: standing (never a crawl), the arms reaching then braced, the figure lowered and rolled onto the
+  planted hand. First person: the planting hands are drawn on the rail in the world (`BodyFp`, world source
+  `body_moves`): up from under the frame onto the rail a hand's width to their side of your line, held there in the
+  world as the body goes over it (the hand slides back under you), peeled off as you come down; the free hand over a
+  running vault, empty, thrown up and out wide for balance, drawn in the world too (while the world body has an arm the
+  view's own moves stand aside); a held item stays as it is. Up onto a top, the mantle's `fp_mantle`. The hands meet
+  the rail as the body comes level with it, a rail on a block's at the eyes (2 ticks in: the body rises past them), a
+  rail hung from at once. The view dips 16° toward a low rail as the hand meets it, so it's seen landing (the rail is
+  about 45° under the eye then), rolls 4° toward the legs over a running vault and takes the landing with a 4° dip; at a
+  rail on a block it looks up 12° to the catch, then down 10° onto the pressing hands (`BodyCamera`, all halved under
+  reduced motion). Sound: `body.vault` (a palm on the rail, the legs' cloth whipping over it, two feet down
+  running; tools/art/specs/audio_body.py), and as the hand meets the rail its own hit sound (a wooden fence's knock, a
+  stone wall's) with chips and dust off its top.
+- **City**: Carillon's fences and walls (the wall's parapets and crenel sills, the terraces' rails, the towers' rings,
+  the stalls' posts) are crossed like any others; over the wall's or a tower's drop they're climbed onto and held, never
+  crossed. The opening run's routes never cross one: its planner treats fences and walls as blocking, and its driver
+  lets go of sprint 1.2 from each point, beyond a running crossing's reach of any rail next to it.
+- Tests: `body_vault_rails` (a fence, a closed gate and a nether brick fence hopped and vaulted onto the floor beyond,
+  never a post; a cobblestone wall climbed onto over its middle and vaulted running; a fence on a block climbed over; a
+  fence over a drop climbed onto, running too; every path clear tick by tick with the eye ≤ 0.6 over the rail; the
+  server takes the client's vault with the crawl box and refuses a landing that isn't there); `runner_rail_hang` (a
+  fence and a wall on a roof's edge hung from the face under them; over the fence onto the roof, onto the wall's coping;
+  the server takes the climb over); `body_mantle_gate_walls` (every crossing from a gate room ends inside one);
+  `body_mantle_ledges`, `body_free_run` and `runner_course_probes` keep their fence lanes (no ledge, nothing to jump at,
+  no hang). Tour: `tools/autopilot/fence-mantle.txt`.
+
+### 17.28 The grip on a climb line (Hands P1; Euan, 2026-10-25: "you just float up")
 A Runner move (`Move.GRIP`, appended; `GripRules`, client `body.client.GripMoves`) on every `#awaken:runner_climbs`
 block: Carillon's drainpipes, trellises, hoist ropes and hanging ladders, and every ladder. Approved controls (decision
 A of the Hands plan): "Shift takes you down, Jump takes you off".
@@ -3057,17 +3277,22 @@ A of the Hands plan): "Shift takes you down, Jump takes you off".
   that brakes into the hold.
 - **On it**: no keys holds still (vanilla drifts down); forward climbs at 0.2 b/t, 0.3 with the free-run held (the
   free-run's pace, unchanged); Shift held slides, +0.06 a tick to 0.65 b/t; letting go of Shift brakes to a hold over 4
-  ticks; Jump alone lunges 1.2 up the line (6 ticks, once per 10); Jump + back kicks off the wall (0.5 out, 0.42 up,
+  ticks; Jump alone lunges 1.2 up the line (8 ticks, once per 12: a load 0.08 down, a launch that slows like a throw to
+  0.12 over, a settle; §17.26); Jump + back kicks off the wall (0.5 out, 0.42 up,
   turning to face out over 5 ticks: the ledge back-jump's numbers); Jump + left/right swings out sideways (0.42 along,
   0.12 out, 0.36 up). The foot of the line lands you (no fall damage at any slide speed); with no keys at the foot you
   step off. **The top** always leads somewhere (Euan, 2026-10-25: "the last block doesn't let me through"): it is
   reached when there's no line where the hands would go (1.75 over the feet) or the head meets something over it (a
-  cornice, an eave, a coping row). With forward held: (1) a lip over the head, its face out past the body within 1.5
-  of it, its top 1.6-3.2 over the feet, with the way out level and then up to the hold free (`GripRules.topLip`), is a
-  hang from that face: the body goes out from under it, then up (7 ticks, `HANG_EAVE`), and the hang's own climb out
-  (§17.21) puts you on the roof or coping; (2) else, open air over the head hands the body to vanilla's climb, whose
-  eave is caught as a hang as before (§17.14); (3) else the hands hold still at the top (no climb, no jitter) until
-  forward is let go. The server takes the eave hang only from a grip held or ended within 6 ticks, with the same
+  cornice, an eave, a coping row). The body stands off the column where it sticks out most (a drainpipe's head is 2 px
+  deeper than its pipe; off the pipe alone the climb ran into the head and stopped a block short: Euan, 2026-10-26).
+  With forward held (or Jump): (1) a lip over the head, its top 1.6-3.2 over the feet, from right in front out to 1.5
+  out, with the way out level and then up to the hold free, the nearest one the hang can climb out from
+  (`GripRules.topLip`): the line's own head or a wall's top in front (a flat roof's balustrade gap, a terrace's
+  parapet gap, the city wall's walk), or an eave or cornice it runs up under (block, stair or slab), is a hang (out,
+  then up, 7 ticks, `HANG_EAVE`), and the hang's own climb out (§17.21) puts you on top; (2) else, open air over the
+  head hands the body to vanilla's climb, whose eave is caught as a hang as before (§17.14); (3) else the hands hold
+  still at the top (no climb, no jitter) until forward is let go. A jump at the top always does something: the lip, or
+  a kick off the wall. The server takes the eave hang only from a grip held or ended within 6 ticks, with the same
   `topLip` from where it has the body (plus its tolerance). A screen open holds the grip. The rope key still cuts in.
 - **Motion**: the grip moves the body itself (`move`), its velocity zeroed, so vanilla's ladder cap (0.15 down) doesn't
   hold back the slide on any line, vanilla's ladder included; sideways it eases onto the line at most 0.15 a tick.
@@ -3090,20 +3315,75 @@ A of the Hands plan): "Shift takes you down, Jump takes you off".
   sliding, sparks off a metal line at speed; a faint judder in the view.
 - Tests: `runner_pipe_grip`; `runner_pipe_cornice` (a drainpipe under a one-block cornice with a roof behind: the lip is
   the way on, hung from its outer face, taken by the server only from the grip, climbed out onto the roof; a deep
-  ceiling and open air give no lip). Tour: `tools/autopilot/anims-pipe.txt` (PACK=feel).
+  ceiling and open air give no lip). `runner_pipe_tops` (every kind of top Carillon paints, each climbed on a real drainpipe
+  with its head from the street: a flat roof with its balustrade open at the pipe, a gable eave with the head in the
+  eave stairs' row, block, upside-down stair and slab cornices, a retaining wall's parapet gap, the city wall's inner
+  face with its corbel table, band and parapet gap: the climb reaches the top, there's a lip, and the hang climbs out on
+  top). Tour: `tools/autopilot/anims-pipe.txt` (PACK=feel).
 
-### 17.24 Dropping to the ledge below (Euan, 2026-10-25: "I'm on an edge already holding it, and there's one below")
-In a hang, **Shift** lets go and catches the next ledge below when there is one (`RunnerRules.edgeBelow`): the same
-face direction, its top 0.9-3.2 under the held one (the nearest), its face up to 1.4 out from the hanging body (a sill
-or a balcony sticking out) or a little in, and the way to it free. The body goes out first when the lower face sticks
-out, else down first then in, falling slow off the lip and fast into the catch (4-8 ticks by the drop), the grab's
-clip and sound at the catch (first person: the hands slam onto the lower lip). **Shift + Back**, or Shift with no
-ledge below, lets go as before. Lowering into a hang over an edge (Shift + forward) is also allowed when the ground
-under it is near but there's a ledge below for the drop to catch (`RunnerRules.lowerWorth`), so a facade's ledges can be
-worked down one by one. The server takes the drop as a ledge jump (`JUMP_DOWN`): the target edge found again near
-the claimed hold, its top within the drop's band of the held one. Test: `runner_ledge_drop` (a wall's top over a sill
-one out: the drop catches the sill from its own face and the server takes it; no sill, nothing to catch and the server
-refuses).
+### 17.29 Locks that hold and speak (the progression plan §5.5, Phase 3; Euan approved it 2026-10-26)
+Euan: "If I was someone who didn't know about the grapple, I'd just look at that and use blocks to build up. So we
+should probably block that." · "I don't want a guidebook... you still get guided somehow." Name the need, never the
+manual; stop the build at the first block; the payoff answers only the line; danger stays the gate for terrain (never a
+"you need a higher level" text, which a stack of dirt disproves).
+- **Climbs refuse, they don't crumble** (`wilds.ward.ClimbWard`; ward kinds `precursor_tether_spire`,
+  `precursor_sky_platform`, `hero_crown`, `Wards.climb`). A survival player's block placement (at HIGH priority, so the
+  arrival tracker never logs it) and a fluid bucket are cancelled at the first block; the ghost of the block falls away
+  (`ward_fx` SHED: its twelve edges traced in the Signal's light, which hangs a moment, and in grains of its own colour
+  that slip off and fall, a breath of light rising; the crumble's sound pitched down ×0.72). The 3 s crumble stays at walk-in sites (vaults, monoliths, labs). No Hearth suspends a climb's
+  ward or its walls (`Wards.enforced`, `Wards.sealed`).
+- **The place answers**, worded by what the player holds (`HorizonHooks.can(p, "tether")`), lang `awaken.wilds.climb.*`:
+  without the rope, "The spire sheds what you build. Its platforms answer to a line." / "The platform sheds what you
+  build. Its rings climb to it by rope." / "The great tree sheds what you build. Its crown answers to a line."; with it,
+  "Climb it by rope: hold <the player's own rope key> at a ring." (a platform: "at the lowest ring"). Each line also
+  comes in two halves (`.sheds`, `.way`; the tip `.short`), because a card's question and a toast's detail hold about 28
+  letters a line (`SignalLayout.CARD_W` 170, `TOAST_W` 160).
+  - The first refusal at each kind of climb, without the rope (flag `awaken:climb_shown/<spire|sky|tree>`): a choice
+    card, the question on one line so its body shows ("The spire sheds all you build." / "Nothing you build holds
+    here." / "The tree sheds all you build.": a card holds 20% of the screen, and a two-line question drops the body),
+    the body "Its platforms answer to a line." (the platform's, the tree's way), one choice
+    **Show me** (Y) / Not now (action `ward:show_me:<kind>`, 30 s), with "A vault keeps a line for a hunter it opens to."
+    on the action bar under it. Y sends `awaken:ward_show_me`; the client opens the band (K › Status) scrolled to "THE
+    ASCENT" (§27.2: the next rung as a silhouette, where it comes from), else "THE BODY"
+    (`StatusScreen(Tab, String... titles)`).
+  - After that: once a visit (a ward, until 5 minutes without a refusal there) a toast, the place's name and its way up
+    (or the short tip), sent untagged so the director shows it at once as the answer to the click (§26.2), and the
+    whole line on the action bar; further refusals in the visit: the shed and the action-bar line, at most every 3 s.
+  - Without the rope each refusal records a promise (§27.1): key `landmark:<ward id>` (`landmark:ruin:x,z`,
+    `landmark:hero/<crown>`), need `tier:tether`, "A Tether Spire" / "A sky platform" / "A great tree's crown". Kept
+    when the climb is made: a spire's or great tree's crown (§27.1), or a climb cache's inner seal opening.
+- **The payoff answers only the line** (`ArrivalHooks.byLine`: by movement, and a LINE sample in the visit or the 20 s
+  before it, nothing built): a spire's or great tree's crown, a sky platform's Wings core, a climb cache's best roll.
+  A clever climb (pearls, elytra, a power's flight, a Runner hang) still earns the view and the ordinary roll; the
+  crown says "The crown stays dark. It answers only to a line."; the core "The core stays dark. It answers only to a
+  line up its rings." (at once, then at most every 10 s). The Tether Vow is kept only at the mast by the line.
+- **A climb cache's inner seal** (`wilds.ward.Caches`, attachment `awaken:inner_seal` on the chest: schema 1, the best
+  table, who it opened to). A spire's, sky platform's or hero crown's chest keeps its ordinary roll in its own table
+  (`chests/precursor_spire`, `chests/precursor_sky`) and its best roll in `…_best` (spire: 1 Power Core Shard + a
+  1000-essence cell or a shard or nothing; sky: 2 shards + a cell, Jet Boots or nothing). Built arrival: the cache
+  stays shut ("The cache's inner seal holds. It opens to a climb.", the hold light). Any other arrival: the ordinary
+  roll unpacks (shared, once) and the seal is stamped; the best roll is filled into the chest for each climber the line
+  carried, once each ("The inner seal opens to your climb.", a ring of light off the lid, the mark's glass low).
+  Without the line the seal's line is said instead. Nobody's open spends anyone's best roll; the ward keeps the cache
+  from breaks and blasts. Vault, monolith and lab chests keep `awaken:arrived_by_movement`.
+- **Relog keeps the verdict**: the open visit (`wilds.arrival.Visit`, attachment `awaken:ward_visit`, schema 1) is saved at
+  logout and resumed at login if under 10 minutes old (game time) and the player is still in that ward.
+- **The hero trees**: the crown's ward covers the canopy (radius 32 round a Colossus's crown, 16 round a Lumen Spire's,
+  from 10 over the foot to 6 over the crown; radii from the progression builder's draft), and each crowned tree
+  within 640 blocks is on the Horizon line, "Elder Colossus · a light in its crown" / "Lumen Spire · …", need the
+  Tether, id `landmark:hero/<crown>`, until the player has reached its crown.
+- **Walls speak per site** (`awaken.wilds.ward.hold.*`): only a vault's say "These walls answer only to their door."; a
+  spire "The spire keeps its stones.", a platform "…its plates.", a tree "The crown keeps its own.", a monolith or lab
+  "The ruin keeps its walls."
+- **Sealed doors show their rank from afar**: a door's panels carry its rank (`precursor_door` `rank` 0-6, 7 = not
+  painted yet; the core paints its panels once each load, so older doors light up), and the panels' seams and the
+  core's rune and ring are an emissive layer (`light_emission` 15, `precursor_door_glow`, `precursor_door_core_glow`)
+  tinted with the rank's colour (`above.client.DoorTint`): E white, D green, C blue, B violet, A amber, S red. Within 24
+  blocks the core also breathes four of the Ascent's motes in that colour every 2 s (`AscentFxBridge.doorBreath`,
+  from the progression builder's draft).
+- **Gate cards compare ranks** (§7).
+- Tests: `wilds_ward_refuses_climb`, `wilds_arrival_survives_relog`, `wilds_cache_inner_seal` (and `wilds_ward_rules`,
+  `wilds_arrival_history`, `progression_promises`).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -3358,8 +3638,9 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   - Murmuration (dusk, over water): client-drawn only; witnessing it gives `awaken:lucidity_start` +10 for that
     play-day (a perk source). Carrion Circle: kites over a barrel of remains (bones, leather, arrows, 40% a creature
     part, 25% a worn iron sword) and scattered bone blocks; the remains stay.
-  - The Rolling Storm (day/dusk): a cell crossing 180 blocks in 4 min; visual lightning near its centre about every
-    3 s; 3 damage within 4 blocks of a strike; struck sand turns to glass.
+  - The Rolling Storm (day/dusk): a cell crossing 180 blocks in 4 min; visual lightning out of its rain core (within 20
+    blocks of a point 12 downwind of its centre) about every 3 s; 3 damage within 4 blocks of a strike; struck sand
+    turns to glass. Its look, local weather and thunder: "The Rolling Storm, as a real storm" below.
   - The Wild Hunt (full moon only, night, bands 1+): five wisp hounds and the Huntmaster (an elite four levels up,
     titled "Huntmaster of the Pale Moon") run 220 blocks; they go for anyone within 18; each hound drops 2 essence, the
     Huntmaster 6. Beast Duel (bands 1+): two named beasts fight; the winner is left at 45% health.
@@ -3371,14 +3652,62 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - **Tells** (payload `living_happenings`: id, tell, centre, radius, progress, line direction; to players within 512
   every 2 s, an empty list once when the last goes). `living.client.PulseFx` draws them in an alpha pass (unfogged,
   reads by day) and an additive pass, the centre eased over the 2 s; past 70% of the render distance a tell is pulled
-  in along its sight line and shrunk to match (as the gate pillars).
+  in along its sight line and shrunk to match (as the gate pillars). The storm tell is a cell of its own (below), never
+  pulled in.
 - **The Almanac**: within a kind's `witness_radius` a player witnesses it once: counter `awaken:happenings_witnessed`;
   the first time a discovery `happening/<id>` (0.1 of a level), a new thing for the Director, and "Witnessed · <title>".
   The Codex tab lists them ("HAPPENINGS WITNESSED · n / ??").
 - **Rumours** (`Rumours`, attachment `awaken:rumours`, schema 1, synced to the owner, kept through death): half the
   time a Wayfarer with nothing for you tells of a happening on now 160-2500 blocks away that you haven't witnessed, with
   a compass direction; it leaves a "? <title>" mark on the Gate Map (MapMarks) for two play-days (at most 8).
-- Dev (admin): `/awaken living happen <kind>`, `happenings`, `calm`. Test `living_pulse`.
+- Dev (admin): `/awaken living happen <kind>`, `happenings`, `calm`, `strike <distance>` (a storm strike that far
+  ahead of you, for tours). Tests `living_pulse`, `living_storm`.
+- **The Rolling Storm, as a real storm** (Euan's playtest, 2026-10-26: the cell read as round soft discs full of
+  artifacts, its rain as moving white pillars of light, and it wasn't a real storm; he liked the bolts and their sound).
+  One model both sides share, `living.pulse.StormCell` (sizes match `lens_storm.glsl`):
+  - **The cell, a cumulonimbus**: its base 92 blocks over the ground its centre first stood on (140-215), 300 blocks
+    from base to the anvil's top. A flat dark shelf at the base (the condensation level, flat to a block or two),
+    125 in radius with a ragged rim, wider than the tower that rises from it and 14-34 deep (the orchestrator's review:
+    the underside read as rounded and lumpy). A broad tower (95 radius at the base, narrowing a third toward the top,
+    leaning 35 downwind) of cauliflower turrets (cellular "puffs" at 50 and 20 blocks, rising 0.35 blocks a second through it,
+    so it boils), its axis wandering and its girth swelling and pinching with height, big lobes on some sides; an
+    overshooting dome over the updraft; a flanking line of three smaller towers stepping down upwind (170, 118, 78
+    high); a flat-topped anvil plate reaching 340 downwind, 70 upwind and 185 across, 78 deep where the tower spreads
+    into it and thin at its rim (underside at 230 + 58 × r^0.55, top at 308 − 3r), its edges fibrous streaks along the
+    wind (ice, not puffs); 260 by 150 read as a pale blob in profile. Its rain: a core of soft shafts 58 in radius, 12 downwind
+    of the centre, slanting downwind as it falls (0.3 blocks a block), to the ground. Downwind is the way it travels.
+    It builds over its first 12 s and rains itself out over its last 15 (the client times the end by the storm's 240 s).
+  - **Drawn by Lens 2 on Cinematic and Ultra** (§22 "Storm cells"): marched in Lens's cloud volume. Elsewhere (Lens off,
+    Swift, a shaderpack) by `living.client.StormFallback`: the same shape, built off-thread once per storm into 12-block
+    cloud cells, 8 blocks (96 × 45 × 96, density over 0.45), opaque and face-shaded as the game's clouds are (top 1,
+    sides 0.8-0.9, base 0.62), each lit by how much cloud lies eight cells toward the sun (exp(-0.45 per cell)), the sky's
+    light mostly the game's cloud brightness (30% of its hue: its sunset tint on every face read as terracotta), dim and
+    cold at the base, the sun's warm colour on faces turned to it, lit from inside by its lightning, hazed toward the sky colour
+    with distance (1400 blocks); only outer faces turned to the camera are sent (about 3,000-4,000 quads). It grows from the
+    base up as it builds and rains out from the top down (each cell's threshold by its height and a hash; faces rebuilt
+    off-thread per 32nd of strength). Its rain: nine curved sheets fixed in the world round the core (arcs at set radii
+    and angles), slanting downwind, the texture `living/storm_rain` (soft streaks, `tools/art/specs/storm_rain.py`)
+    sliding down at about 19 blocks a second (Euan saw it flow up at first), faded at their ends, top and foot, dark grey, in the game's own fog (the weather pipeline). No
+    camera-facing discs or billboards (the old `PulseFx.storm` is gone); nothing popped in from beyond the render
+    distance either: the cell stands where it is, as the game's clouds do.
+  - **Its local weather** (`living.client.StormSky`): this client's rain and thunder levels rise to
+    `weatherAt(d)` (full within 45 blocks of the rain core's centre, none past 110, smooth between) × its strength,
+    never below the server's own weather (followed if the server changes it while overriding) and handed back as you
+    leave. So under and near it the game's own rain falls on you and sounds, the sky, fog, clouds and light darken as in
+    a vanilla thunderstorm, terrain's wind steadies higher (rain and thunder lift it), the world sound hears rain, and
+    Lens dims its sun. Lens's cloud layer doesn't thicken for this rain (`StormSky.localRain`): the cell is the cloud
+    over you. Storms show only in the overworld while the Living Wilds are shown.
+  - **Its thunder**: the server's visual bolts stay (and the game's sky flash). The game sends a bolt only to 256 blocks,
+    so each strike also sends `living_storm_strike` (its position) to players within 640 (`StormCell.HEARD`): a far
+    storm still flashes and thunders. On the client a bolt or that word within 90 blocks of a cell is its strike (the
+    second of the two for one strike changes nothing): it lights the cell from inside (a burst and up to two restrikes over half a second, 25
+    blocks over the base), and its own thunder and impact (played at once, everywhere, at full volume) are silenced and
+    played again late by the distance at 130 blocks a second (the world's scale: a strike on the horizon rolls in a few
+    seconds later). Within 70 blocks: the crack (the impact, pitch 0.55-0.7) and the thunder; farther: the thunder lower
+    and softer (volume 1.15 - d/520, pitch 0.95 - d/1400) and a long low roll after it (`living.storm.roll`, three
+    synthesised takes). Every 2.5-7 s lightning flickers inside the cloud (50-210 over the base, a quarter to two fifths
+    of a strike's brightness) and rumbles far off. Each flash is a burst and its restrikes, each fading over 0.11 s.
+    The storm's rain roars from its core for 340 blocks (`living.tell.storm`, a loop; PulseSound).
 
 ### 21.7 Creatures live somewhere: the ledger (Phase D, as built 2026-10-25)
 - `living.population.Ledger` (saved data `awaken:living_world`, schema 1, only cells players reached): per 512×512 cell,
@@ -3687,6 +4016,43 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
   over Carillon, above the deck, rain, night; the bench). Final (f53b8bf4, p50 ms): off 6.80, Swift 6.79, Cinematic
   9.96 (100 fps), Ultra 13.46 (74 fps).
 
+**Storm cells** (the Living Wilds' Rolling Storm, 2026-10-26; §21.6): Lens 2 marches each cell in its cloud pass.
+- `living.client.StormSky.lensCells` hands Lens up to two cells a frame (as `HoloWorld.lensPlates` does the plates):
+  frame texel 20 y their count; texels 42-47, three a cell (`lens_storm_frame.glsl`): centre x, z camera-relative,
+  base y, strength; downwind x, z, the ground under it, noise time; the latest flash camera-relative and its strength.
+  `LensClient.drawsStormCells()` says whether Lens draws them this frame (Cinematic or Ultra under an overworld sky);
+  otherwise the fallback does. Storms draw whether or not the game's clouds are on.
+- Shape (`lens_storm.glsl`, §21.6's numbers): cheap cellular puffs (the nearest of 8 jittered points; one octave on
+  Cinematic, two on Ultra), the body's wobble, girth and lobes from the cloud noise texture, the anvil's fibres from its
+  wisps channel. Light steps (and the land's shadow) keep the big forms only.
+- March (`lens_clouds.fsh`): a ray meets a cell in bands, marched in the ray's order, each its own steps by its length:
+  rain (ground to base; 18 / 16 blocks a step, at most 10 / 12), body (12 / 10.5, at most 22 / 26), anvil (8 / 7, at
+  most 10 / 12), Cinematic / Ultra, so the thin anvil is never stepped over. A turret's surface turns solid within 4
+  blocks (9 read as a soft ball at 200 blocks); σ 0.085 a block (a solid mass); 3 light steps (6 blocks, ×2.3); Beer's
+  law with a weak multiple-scatter floor (0.22) so the base and the shadowed side go dark; the layer's phase; the sky's
+  light as a cool grey-blue of the layer's ambient brightness (its sunset hue turned the shadowed side brown), by height
+  from 0.16 at the base (cold and bruised, bluer) to 1 on the tops; rain σ 0.016, its colour that sky light × 0.4 (a
+  grey veil, darker than the sky), fading in from 16 to 40 blocks from the camera (nearer, the game's rain falls).
+  Lightning lights the cell from within: 3 × exp(-d/55) × exp(-τ) + 0.1 × exp(-d/180) of a cool white from the flash,
+  where τ is the cloud between the flash and the point (its density at their midpoint × d × σ × 0.35, one sample, only
+  while a flash shows), in the cloud and (half) in its rain; the core round the bolt glows and the cell's shape still
+  reads (an even glow over the whole cell blew a night strike out to a white disc); while a flash shows, the pixel takes up to 85% of this
+  frame instead of 12-15%, so it lights at once and fades as an afterglow. The layer's clouds thin to nothing within
+  330-450 blocks of a cell (it clears the sky round it), so the layer's march can skip the cell's bounds without a cut.
+  History reprojects where the ray first met cloud (was: where it entered the layer).
+- The composite lays the cloud buffer over anything farther than where the ray enters a cell's bounds (320 radius
+  round 60 downwind of its centre, ground to 48 over the top; the anvil band 245 round 150 downwind, from 72 under
+  the top), never nearer than 16 blocks; the light pass darkens the
+  sun on the land under a cell, sampled where the light ray crosses three heights of its body (long shadows at dusk).
+  Its bright, flashing edges bloom and cut the screen-space shafts like the layer's clouds.
+- It builds from its base up (the density cut at a height rising with its strength, softened over 40 blocks) and rains
+  out from the top down, as the fallback's cells do; its rain starts once the base has formed (strength 0.1-0.4).
+- Lens dims its sun by the world's own weather, not the storm's local rain (`StormSky.serverRain/serverThunder`): the
+  sun still lights its towers and the land beside it, and the cell's own shadow darkens the land under it.
+- **Wet surfaces** (Cinematic, Ultra; any rain, the storm's local rain included): in the composite, a surface open to the
+  sky in its column (the heightfield's top with leaves; under leaves 40%) gets wet by the rain level: 16% darker, 10%
+  richer, and what faces up a dull sheen of the haze colour at glancing angles (Schlick-like, power 4, × 0.22).
+
 **Holo world plates** (the Living Wilds' creature plates, 2026-10-25): plates write their depth at a creature's
 distance (4-40 blocks), beyond the 1.25-block rule that keeps the panels and the hand out. `HoloWorld.lensPlates`
 hands Lens the plates drawn this frame (up to 6: centre, half-width and half-height vectors, camera-relative); the frame
@@ -3794,6 +4160,12 @@ of the plan). No mixins.
   `FirstPerson.View.REST_FIST` (0.744, -0.455, -1.072); a clip's fists replace a stance's for that hand; a hand holding
   an item ignores fists (vanilla draws it). A fist clip gives the hands back at rest (or the off hand out under the
   frame), or, marked `toStance`, where its stance holds them (the hang's ledge jumps).
+- **Grips** (Arms 2026-10-26, Euan: "it feels like the weapon is just floating and attacking on its own"): a source may
+  key where a hand that HOLDS something closes on it (`View.gripMain`/`gripOff`, view space, weighted as fists): that
+  hand's arm is drawn rising to the grip from under the frame's corner exactly as a fist's (after the moves for both
+  hands, so it sways with what it holds), and the held thing still draws (a grip never hides the hand). Unset (weight 0)
+  nothing changes. Arms keys them every frame a styled weapon is held: at rest, through each swing's turn, the guard
+  and the equip rise, the off hand's on a pair's twin. Test `arms_grip`.
 - **Look-lag** (P2): the hands trail fast turns of the view on a damped spring (up to 0.06 sideways, 0.045 up, 4° of
   roll), halved with reduced motion (`FirstPerson.reducedMotion`, the body's setting).
 - **Near legs** (P2): a foot nearer the eye than 1.15 is drawn in the hand pass, pushed out along its line of sight to
@@ -3996,17 +4368,137 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   starts half the active before it (`ArmsHands.blowStart`: never before half a tick) and the recovery takes up the
   difference; the move ends when its row says. In first person, in third person (`arms_moves.py` keys the cocked pose
   there too) and in the trails. Before, the hit, its freeze and its red flash came while the blade was still cocked.
-- **First person** (`ArmsHands`, a source on Hands' view layer, `FirstPerson.view`, every styled item): the row's
-  swing from the click frame. A pose is the hand's place on screen (blocks from vanilla's resting hand), the blade's
-  roll in the screen's plane and an optional tilt of the tip forward (a chop, a thrust). The blade stays flat to the
-  eye: a flat item sprite turned about the vertical goes edge-on and vanishes mid-cut (seen in the first tour), so the
-  hand travels across the view instead, on an arc about the shoulder during the blow (eased out hard, with its lunge)
-  and on straight eased lines into the wind-up and home (an arc there lifts the blade back over the top of the view).
-  The Longsword: strike 1 a forehand diagonal (upper right to lower left), strike 2 a backhand sweep, strike 3 an
-  overhead chop, strike 4 and the riposte thrusts, the heavy a rising cut, the Slipcut a low wide sweep, the Execution
-  a raised chop. A held heavy draws back to its start pose and trembles finely as it charges; the guard is vanilla's
-  blocking pose eased in over 2 ticks. Reviewed frame by frame with `tools/autopilot/arms-poses.txt` (the autopilot's
-  `arms pose <move> <0..1>` holds the hands still).
+- **First person** (`ArmsHands`, a source on Hands' view layer, `FirstPerson.view`, every styled item; Euan
+  2026-10-26: "like you're waving the sword instead of slicing... a bit too high"): every move plays a swing baked by
+  the animation lab (tools/art/anim_lab.py `bake` -> `data/awaken/arms/fp_swings.json`, read by `FpSwings`): keys every
+  0.25 ticks of the hand's move from vanilla's rest and its turn about its own place. A cut is a lever, the arm and
+  blade turning as one about a pivot low and right of the view (0.80, -0.64, -0.48 from the eye), in the plane that
+  holds the blade and the cut's direction on the screen (the row's swing.from -> swing.to: a slash flattened 0.6, a
+  chop down, a rising cut up), the blade's flat across that plane so its edge leads (its cutting side toward the motion
+  for an axe, a scythe or a glaive; a symmetric blade takes the side that turns least). On the hit tick (the server's
+  first active tick; mid-blow for a released heavy) the blade crosses the target, a point just under the crosshair
+  (0, -0.10, -1.20), at 78% along its length: seen along its length rising from the frame's lower right, not down it
+  from the hilt. Drawn back to 50-74 degrees before it (heavier rows further), accelerating into the hit, the edge
+  biting and slowing 14-22 degrees past it, a follow-through, then home. Thrusts drive straight along the aim, the flat
+  level. The keys are for the style's forged weapon; a vanilla item in the style takes the same targets from its own
+  hold (`vanilla` turn and grips in the file). A held heavy waits at its drawn-back start and trembles; an armed
+  Plunge at the Plunge's; mirrored for a left main arm. Without keys a move falls back to the row's own slide (the old
+  model). Lab numbers (the review set, 2026-10-26): every slash and chop crosses within 0.11 of the half-frame of the
+  crosshair (most within 0.05; the Chain-blade's and War-staff's long blades +0.11..0.13), edge lead 0.87-1.00 through
+  the blow (before: Longsword strikes 1 and 2 at 0.41 and 0.17, crossing 0.45 above). Test `arms_fp_swings`.
+- **Forms** (tools/arms/forms.py writes them into archetypes.json's swing rows; Euan 2026-10-26: "a dagger should feel
+  like you're actually stabbing forwards... a hammer... from up to down, or side to side... the big thing first...
+  everything is just being swiped... very floaty"): every strike is done as its weapon is really used. Cuts turn the
+  arm and weapon about the pivot: slash, chop (raised above the view, down), slam (the hammer raised overhead, crashed
+  down head first), swing (level, a hammer's or axe's head leading), rise, whirl (the 360-degree finishers), reap (the
+  scythe), lash (the chain-blade: the wrist whips twice as hard). Thrusts drive the point along the aim to the target
+  (stab: a straight line, from below, overhand, or reverse-grip edge-down); the gauntlets punch (jab, hook on an arc,
+  upper); the twinblades and war-staff spin about their middle; the shieldblade bashes with its shield. The combos:
+  Daggers stab, rising stab, a reverse-grip rip, an overhand plunge, a spinning backhand (heavy: a deep stab); Maul an
+  overhead slam, a head-first side swing, a ground-shaking slam, an uppercut; Axe a diagonal chop, a level backhand, an
+  overhead chop, a wide swing; Longsword forehand, rising backhand, overhead chop, thrust; Greatblade a diagonal cleave,
+  a level sweep, a whirl, an overhead chop; Spear and Rapier thrusts with a haft sweep or a flick cut third; Katana a
+  level draw cut, a rising cut, a chop, a thrust; Glaive wide swings and a whirl; Scythe reaps, an overhead reap and a
+  whirl; Gauntlets jab, cross, hook, uppercut, straight; Chain-blade lashes and a lasso whirl; Shieldblade cut, bash,
+  chop, stab; War-staff swings, a chop and spins; Precursor Arm cuts and a thrust. A stab, jab or bash strikes narrow on
+  the server (arc at most 30 degrees, the thrust's whoosh; the Daggers' stabs became single-target, their rip and
+  backhand 90 degrees). Weight by style (snap: Daggers, Rapier, Gauntlets; blade; heavy: Axe, Maul, Greatblade, Glaive,
+  Scythe, War-staff): how much of the wind-up reaches the cocked pose and how long it hangs there creeping back (heavy
+  70%), the drive's curve (progress to the power 1.25 snap, 2.2 blade, 3.4 heavy: a heavy blow starts slow and
+  arrives explosively on the hit), how far it carries past (0.45 / 1 / 1.5), the wrist's whip (6 / 18 / 7 degrees), the
+  step in (0.04 / 0.07 / 0.13 blocks), how it comes home (snapped back, eased, hauled back after a beat). The view leans
+  with every blow (FpSwings' camera keys, first person, scaled by the kick setting): a slam pitches it down on the
+  crash (4.5 degrees heavy), a cut turns and leans it the way the blade travels, a whirl turns it furthest; heavy blows
+  draw it the other way first. The third-person body of each move is picked by its form (arms_moves.py styled()).
+- **First person, the hold** (tools/art/specs/arms_holds.py; Euan 2026-10-26: "a spear should still feel like you're
+  holding a spear. Right now in first person, it just looks like a sword"): every style is held as that weapon really
+  is, written in view terms (where the business end points: degrees left of ahead and up; its roll about its length;
+  where the hand closes, from vanilla's resting hand; for an axe, a glaive or a scythe the side its working edge faces)
+  and solved for each weapon from its own mesh, so each is seated in the hand. One scale for all (0.5, the Longsword's;
+  the Daggers 0.575 so their blade reads): a spear is as much longer in hand than a longsword as in F5 and a dagger as
+  much shorter, and a long point may leave the view. Longsword up and forward to the left, its flat to the eye
+  (18 left, 52 up); Rapier en garde, the point forward at the target's height (20, 18); Katana two-handed at the
+  middle, the edge down toward the target (10, 36); Spear the shaft across the lower view, gripped part way, the head forward and up
+  (24, 22); Glaive the same with the blade higher, its edge in (18, 34); Scythe the snath up, the blade reaching in
+  across the top (8, 64); War-staff at its middle across the body (58, 28); Greatblade two-handed, raised, near the
+  middle (20, 60); Maul two hands low on the haft, the head up (6, 58); Axe the head up, its bit in (10, 58); Daggers
+  short, the point forward (18, 34); Twinblades at the middle, the blades either way across (62, 34); Chain-blade the
+  head forward on its chain (18, 38); Shieldblade the shield to the front, the blade above it (30, 62); Precursor Arm
+  forward like a drawn arm (14, 24); the Gauntlets keep their worn hold. `python3 tools/art/specs/arms_weapons.py
+  holds` rewrites only the holds; the old check that kept every point inside the view (it shrank every style to the
+  Longsword's outline) is gone. The swings are baked from these holds (they start and end at rest), and the lab's
+  holds sheets (docs/combat/anim-lab/holds-*.png) show each style before, after and in F5.
+- **The wrist and the arm** (Euan 2026-10-26: "it should actually turn it like as if you had a wrist... or a forearm
+  that's turning... if you're gonna do an uppercut, you kind of turn it 180 degrees"): every cut turns the weapon about
+  its own handle as the swing gathers and back square just as it lands (a slash 35 degrees, a chop 40, a slam 75, a
+  hammer's swing 85, an uppercut 170: the head turned right over to drive it up), the wrist cocked so a heavy head
+  trails the hands (16 degrees at least) and whips through. The arm that holds the weapon is drawn to its grip
+  (§24 "Grips"): the hand closes where the style's hold puts it (arms_holds.py's grip, baked as fp_swings.json's
+  `handGrip`), a vanilla item's on its sprite's handle. The lab's `strip` shows one move frame by frame (a turn in the
+  hand reads there, not in an onion-skin).
+- **A pair, and the left hand** (Euan 2026-10-26: "the left hand... looks like it's just floating near the hand"; "the
+  gauntlet should be on the hand"): the Daggers and the Gauntlets are pairs (ArmsOffHand: the main hand's twin worn or
+  held in the empty off hand, first and third person); the Gauntlets' combo alternates fists (jab, cross, hook, the other
+  fist's uppercut, a straight; heavy both) and each fist closes inside its gauntlet (the mesh's centre), so the arm wears
+  it rather than holding it. Every weapon's left-hand hold is its right hand's true mirror (arms_holds.mirror_display):
+  26.3 mirrors any left-hand transform as it applies it (x translation, y and z rotation), so a left transform written
+  pre-mirrored, as old vanilla JSON was, came out unmirrored and the twin sat beside the hand the arm reached for. A
+  weapon's frame is its design's (along the item's diagonal, its flat across z), never a guess from its outline: a
+  maul's head is longest along its striking faces, so the outline's thinnest direction was the way it strikes and its
+  emblem side led; now the gold face leads in every direction it swings.
+- **Working parts** (Euan 2026-10-26: "when it's a blade, it's the sharp end that's cutting. When it's a dagger, it's the
+  sharp end that's stabbing. When it's the hammer, it's that end... think logically"): every move strikes with the part
+  of its weapon that does the work, and the lab's `audit` holds it to that at the hit, on every weapon of the style in
+  its own hold and in the hand that strikes (the off hand's twin in its left-hand hold, the move mirrored): a blade's
+  edge, an axe's bit, a hammer's faces (never its emblem flat), a staff's ends, a point for a thrust, the knuckles for a
+  punch, the shield's face for a bash, and a scythe's inner edge drawn back through. Which side cuts is read from each
+  design (arms_holds.EDGES), never guessed from the outline: the katana's edge is on the outside of its curve, the tip
+  curving back toward the spine, and the glaive's fluke weighs down its back, so the old guess (the heavier side) had
+  every katana and glaive cut leading with the spine. Single-edged: Katana and Glaive (+x), Axe (the bit, -x), Scythe
+  (the blade, -x), Twinblades (each blade's leading side, so the pair spins tips trailing), the Beastbound Longsword and
+  Greatblade (tusk cleavers), the Wildhide skinning knife, the Beastbound tusk (honed on its inside) and the Veilwoven
+  talon. A style whose forged (C) weapon is double-edged but has single-edged tiers (Longsword, Greatblade, Daggers)
+  cuts with the side its hold's cut turns in toward the middle, and each single-edged tier is turned so its edge is
+  there: one baked swing cuts with every tier's edge (the wrist turns a backhand over, as a single edge needs). A turn
+  can mirror only two of a weapon's three ways, so a single-edged weapon's left-hand hold keeps its length and its
+  edge mirrored and shows its other flat (before, the Wildhide twin's off-hand cut led with its back). The scythe is
+  swept round, its blade's point leading, until the blade is past the target (0.12 blocks out), then hauled back 0.34
+  blocks through it on the hit, its inside edge drawn through what it hooked; its blade, at the snath's top, is what
+  crosses the target. Every punch lands knuckles first, square to the fist's travel (a jab and a hook palm down, an
+  uppercut palm to the face, an overhand driven down); the Gauntlets' shared moves are punches too (riposte and undercut
+  uppercuts, the dodge's cut a hook, the Art a straight, the plunge and execution overhands; their server blows kept).
+  The bash shoves the shield straight at the foe, its face square to the shove. Every move has a form in its row
+  (tools/arms/forms.py writes the shared moves' too, read from their path as the lab always read them), so first and
+  third person do the same thing (a spear's Art is a thrust in both).
+- **Third person, the wrist** (Euan 2026-10-26: "hold third person to the same working parts"): vanilla's
+  third-person hold sets a weapon across the fist, square to the forearm, and a vanilla arm has no wrist, so the
+  forearm's roll swings the blade round rather than turning its edge; before, a chop led with the other side of the
+  blade from a forehand (a katana's chop with its spine), the axe's swings with the back of the head and the
+  undercut with the flat. Now through each move's clip the weapon turns about its own length in the fist, through its
+  grip (`ArmsWrist`; FpSwings' `wrist3` keys, per arm, every 0.5 ticks, baked by the lab from the clip and the style's
+  forged weapon): from the hand's rest to the turn that lays its working side square into the blow by the wind-up's
+  end, held through the blow, home by the clip's end (median 34 degrees; a single edge turned right over, 180, where a
+  shared clip leads with its other side). The fighter's hand items are resolved again marked with their arm while a
+  move turns them (the player's render-state modifier, last), so only a hand's weapon in third person turns, never
+  one in first person, the hotbar or a frame; a left main arm keeps its hold (the keys are right-handed). A
+  single-edged tier on the other side from its style's lead (the Beastbound Longsword and Greatblade, the Wildhide and
+  Veilwoven Daggers) is turned over in its third-person hold (`thirdperson_right/lefthand`). The thrust keeps its arm
+  and chest on the line from cocked to through and leans in less than it lunges (a turn or a lean had swept a long
+  point's tip 45 degrees off its line); the shield bash raises the shield square in front of the chest, the body
+  driving in behind it; the Gauntlets punch their own dodge, slide and fall moves (a hook, an uppercut, a straight:
+  a vanilla arm can't turn a fist knuckles-down as it comes over). The lab's `audit` holds every clip to the working
+  part on every weapon in the arm that strikes (0 of 176 fail; 78 did); `wrist` draws a move's blow in third person
+  with and without the turn (docs/combat/anim-lab/wrist-3p.png). The scythe leads point first in third person; its
+  haul back through the target is first person's.
+- **The animation lab** (tools/art/anim_lab.py; SPEC §25, Euan's ask for a way to see the motion): `sheet` / `all`
+  draw each strike's first-person frames as the game composes them (the swing, Hands' view layer, vanilla's rest, the
+  weapon's hold and mesh, 70 degrees) as an onion-skin with the blade tip's path (wind-up blue, blow gold, recovery
+  grey), the hit ringed and the crosshair; under it the tip's height on screen and the edge lead over the move; beside
+  it top and side views of the grip and tip paths against the view cone (`--model old` shows the row's slide).
+  `third` draws the body's clip (arms_moves.py) with the blade in its hand as vanilla's ItemInHandLayer holds it, two
+  views and the third-person edge lead (a thrust: the point lead). `audit` checks every move's working part ("Working
+  parts" above; exit 1 when one fails). `film` overlays the game's own frames (the clip
+  recorder's, in a tour) the same way. Sheets for the review set in docs/combat/anim-lab/.
 - **Third person** (Player Animation Library, optional, through `core.api.PlayerClips`; `ArmsClips`, `ArmsBodies`):
   a full-body clip per move from tools/art/specs/arms_moves.py, its keys on the timing table's rows (cocked at the
   wind-up's end, through at the active ticks' end, home by the endTick), each with a bent twin; the guard held while
@@ -4231,6 +4723,45 @@ Glaive, Glacial Vow: a Frost nova, deep slow), Mirror Knight (C, Shieldblade, Re
 Unit Zero (C, Precursor Arm, Zero Point: a Gravity vortex pulling in), Sleeper (C, Katana, Waking: a Spirit ring that
 all but stops them), Sky Leviathan (B, Twinblades, Storm Eye: a Charge nova that lifts them), Hollow Herald (A,
 Greatblade, Event Horizon: a Gravity vortex, darkness, the strongest pull). Test `arms_lord_forged`.
+Each Lord-forged weapon also carries one Mark of its Lord (Bell Warden Rebuke, Mother of Spores Feast, Ember Tyrant
+Chain Reaction, Hive Regent Windrunner, Root Saint Steady Breath, Drowned Archivist Echo Return, Gearwright Colossus
+Earthsplitter, Glass Serpent Counterspark, Lantern Broker Harvest, Abbot of Frost Parry Ward, Mirror Knight Mercy, Unit
+Zero Overcharge, Sleeper Phantom Cut, Sky Leviathan Crescendo, Hollow Herald Sunder).
+
+**Mastery** (S7, `ArmsMastery`): five steps for each style, from the kills made with it (20, 60, 150, 350, 800; a kill
+of a foe with the style in the main hand; kept in `awaken:arms_memory` `kills`, schemaVersion 3). Each adds to the same
+presses: I the chain's mastery strike (the style's `masteryChain`, the 4th or the 5th: a press from 2 ticks after the
+finisher's blow until its recovery ends chains on, a chain in full rhythm staying in it, so that strike can be a
+full-rhythm finisher too), II a Slipcut window 3 ticks longer, III a charged deflect (posture to the attacker and the
+deflect's Resonance ×1.5), IV every Resonance gain ×1.2, V the Art at 80 Resonance instead of 100. A new step is named
+by the System ("MASTERY · Longsword II · a longer Slipcut"); the steps go to the client (`arms_mastery` payload, by
+style index) for the prediction of I, II and V, and show under a weapon's name. Dev: `/awaken arms mastery <style>
+<kills>`. Test `arms_mastery` (and `arms_timeline`'s mastered finisher).
+
+**Marks** (S7, `Marks`): 48, every trigger with every effect, in `data/awaken/arms/marks.json` (written by
+tools/arms/marks.py; read once on both sides, like the styles). Triggers: a landed hit, a finisher in full rhythm, a
+deflect, a perfect dodge, a Break, a kill, a blow guarded (blocked, not deflected), a perfect heavy. Effects: a rider (×
+the fighter's attack as a second blow of the weapon's attuned Force, else the Mark's own, else plain; on a Lord at most 2%
+of its health), posture (points; a Break's: the Break held longer), a heal (share of max health), power energy, Speed I
+or Resistance I (ticks). A kill's rider and posture go to the foes within 4 blocks. A weapon carries at most two, with
+its attunement, in the item component `awaken:arms` (`Marks.Instance`, schemaVersion 1, saved and synced, moves with the
+item). Until the named weapons (S9), an Elite a player kills drops a forged weapon of its rank (the content level's) in a
+style at random 4% of the time (a Warden 10%), glowing, with one Mark (a second 20% of the time), and the System names
+it ("MARKED · Gatewrought Glaive · Rebuke"). Tooltips list each Mark and what it does. Dev: `/awaken arms mark <id>`.
+Test `arms_marks`.
+
+**The Forge** (S7, `ArmsForge`): sneak and use Hearth's Forge (any placed `awaken:forge`; a plain use stays Hearth's
+tempering and upgrades). Holding one of our weapons: attune it to a Force named by the catalyst in the off hand (Blaze
+Powder Heat, a Copper Ingot Charge, an Ender Pearl Gravity, a Ghast Tear Spirit, Packed Ice Frost) for 6 essence, a
+Core Shard and the catalyst; re-attuning replaces it. An attuned weapon's Mark riders take its Force, and it primes both
+ways: a landed hit makes the next power within 3 s cost 15% less (with a Weave's 30%: ×0.7×0.85), and a landed power of
+its Force makes the next blow within 3 s land ×1.25 with the Force's touch (Heat burns 3 s, Frost slows, Charge 6
+posture, Gravity lifts, Spirit heals 1.5). With an empty hand: the Blueprints, one design each use in turn, each for 4
+paper, 2 iron and an essence shard. Every style but the Longsword needs its Blueprint at the crafting table: the
+Blueprint sits in a free cell of the style's own shape (tools/art/specs/arms_weapons.py `blueprint_pattern`; `python3
+tools/art/specs/arms_weapons.py recipes` rewrites only the recipes) and comes back out of the grid. Blueprint art: the
+style's Wildhide silhouette in white line on blueprint paper (tools/arms/blueprints.py). Dev: `/awaken arms attune
+<force>`. Test `arms_forge`.
 
 **Item level** (PLAN §7.7, decided by the sim): a weapon's level is its tier. The forged Longswords' damage climbs by
 tier (4.5 to 9.5) and melee already rises with the player's strength, so on-level melee keeps pace with a Lord's
@@ -4241,3 +4772,366 @@ in 1–2 hits from D up) and let a Tank win at C and A. No extra level is carrie
 kill switch, sounds, stance rules, clips, the Art, the Plunge, assets; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
 `audio_events_resolve` covers the kit's files and subtitles. S2/S3: `arms_hand_pose` (the swing on Hands' view layer),
 `arms_assets` (the streams), `mobs_bolt_class`, `mobs_answered_no_burn`, `mobs_broken_idle`.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 26. How AWAKEN tells you things (the notification director, discovery, the rift; Euan's playtest 2026-10-26)
+
+Euan, at level 3 in a forest: a lair rumour, "Something tore open nearby" and a "New creature" toast whose hint named a
+plant arrived seconds apart; he hadn't looked at anything, barely heard the rift and could hardly see it. The audit
+(26.6) found ~400 Signal call sites, a dozen client HUD channels that ignore each other, and no global pace at all.
+The rules below replace that.
+
+### 26.1 Principles
+- **World first, HUD second.** A happening announces itself in the world first: sound with distance and direction,
+  light, motion. Text is the last resort. A rift's word follows its tear by 2.5 s (`AnomalyDirector.WORD_AFTER = 50`).
+- **One director.** Every System message that isn't a decision, and every module's own HUD line that wants the
+  player's eye, goes through the Signal client's `Herald` (pure pacing logic in `signal.ui.Pace`, GameTested).
+- **Discovery is earned and understood.** Intent, never proximity alone; the first find teaches; the rest are quiet.
+- **Nothing is lost.** What isn't shown is filed in the Journal (K), and finds stay in the Codex for good.
+
+### 26.2 Tiers, pace and context (`core.api.Notices`, `SignalWindow.tier/topic/moment`)
+- **CRITICAL** bypasses everything: a decision (any window with an action), a WARNING kind, a GATE panel, a dangerous
+  region's caption, a level-up pane, an Ascent gift scene (those two claim the moment so what follows waits its gap).
+- **IMPORTANT** (the default for everything else) is paced. **AMBIENT** never interrupts at Standard: filed with a cue.
+- A **moment** (`Builder.moment()`): a first of its kind, a wonder, the first rift. Shown as the centre banner
+  (`signal.client.Moment`: spaced label = the window's footer, a line of light, the name ×1.8, ≤2 lines; ~5 s +6 ticks a
+  word, at most +6 s; sound `awaken:ui.moment`), at 20% of the screen height; shows at every density.
+- **Pace** (ticks; density `notifications` in `awaken-client.toml`, `AwakenConfig.Client.NOTIFICATIONS`):
+
+  | density | gap | calm gap | burst / window | ordinary waits | moment waits | IMPORTANT | AMBIENT |
+  |---|---|---|---|---|---|---|---|
+  | MINIMAL | 600 | 900 | 1 / 2400 | 600 | 3600 | filed | filed |
+  | STANDARD (default) | 160 | 280 | 3 / 1800 | 900 | 3600 | shown | filed |
+  | GUIDED | 80 | 120 | 5 / 1200 | 1200 | 3600 | shown | shown |
+
+  Calm = no fight for 60 s. Waiting messages of the same `topic` merge into one toast ("Mossback · +2"). A message that
+  waited past its wait is filed, not shown late. Moments go first, then the higher tier, then the oldest.
+- **Held** (nothing paced shows): any screen open, a fight (hurt in 5 s or a hostile within 8), `UiHooks.focus > 0.2`,
+  a choice card or info panel up, a moment up, a scene holding (`Notices.client().hold`, the Ascent gift scene), not yet
+  awakened, or the world's first 5 minutes (`Herald.SETTLE`; onboarding speaks through story lines and its own HUD).
+- **Responses and runs stay live.** An *untagged* message (IMPORTANT, no topic, not a moment: most of the ~400 call
+  sites) that arrives within 60 ticks of the player's own click (attack/use/pick, or a click in a screen) answers it and
+  shows at once; inside a gate run the server raises untagged messages to CRITICAL (`Signal.send/toast`). The pace is
+  for what arrives unasked.
+- **Look and place per tier:** CRITICAL = the choice/warning card or panel (right slot) and the warning sound;
+  IMPORTANT = the System toast, top right, chime; moment = the centre banner; AMBIENT = the find cue (below).
+- **Client lines through the director:** `Notices.client().claim(tier, topic)` before showing (true counts as shown);
+  `file(...)` what can't wait. The region caption claims IMPORTANT (CRITICAL when dangerous), waits up to 200 ticks,
+  then files "Entered · <name>"; the dangerous region's toast is IMPORTANT, topic `danger`.
+
+### 26.3 Discovery (`signal.Finds`)
+- **Intent.** A creature is studied when the crosshair rests on it (its angular size + 3°) for 3 looks in a row, 5
+  ticks apart (~0.5 s), within 24 blocks (48 for a named beast), in line of sight; or when it is hit or touched
+  (`AttackEntityEvent`, `EntityInteract`). Proximity alone never counts, except something big in plain view: a named
+  beast or a creature ≥2.5 blocks tall, within 16 blocks and within 60° of the view (`Sightings`). Biomes and
+  happenings are big and in plain view: standing in one, witnessing one counts (but they never carry the lesson).
+  Lairs (reach the den), landmarks and gates (reach them) are found by going there.
+- **Telling** (`Finds.tell(player, Find)` after `Progression.discover` returned true):
+  1. the first find ever made on purpose (`intent`) is the **lesson**: a moment with the name, its hint, and "A
+     discovery. You studied something new: it pays a little XP, and what you learned is kept in your Journal and Codex
+     (K). Look closely at what you meet." (counter `awaken:finds_taught`);
+  2. a **big** one (a named beast; later wonders) is a moment with its own label;
+  3. the **first of each kind** (`awaken:finds/<kind>`: creature, biome, happening, lair, landmark, gate) is an
+     IMPORTANT toast ending "kept in your Journal (K)";
+  4. **every later one** is AMBIENT: filed with the cue.
+- **The find cue** (`signal.client.FindCue`): a small diamond blooms 13 px right of the crosshair with the name in a
+  whisper beside it (5 + 34 + 16 ticks), and `awaken:ui.find` at 0.32 (at most every 60 ticks); several at once read
+  "N finds · Journal".
+- **The Journal** (`signal.client.Journal`, Status tab, order −10): filed lines newest first ("◆" unread), 60 kept per
+  session, "JOURNAL · N NEW" until the K screen has shown them. The Codex keeps the finds themselves.
+- A lair rumour ("Heard of · …") is AMBIENT, topic `lair` (the Now tracker points at it).
+
+### 26.4 "Nearby" alerts and the rift
+- Anomaly words are IMPORTANT, topic `nearby` (merged, paced, never several at once), sent 50 ticks after the anomaly's
+  own cue, and dropped if it ended meanwhile. The first rift a player meets is a moment ("Something tore open", label
+  "Rift", what it is and how to close it).
+- **The tear's sound:** `anomaly.rift_open` is our own `sfx_rift_tear` (tools/art/specs/audio_discovery.py: air pulled
+  in, a falling rip with crackle, a sub boom 62→27 Hz, glass splinters, a crackling tail; mono), a fixed-range event
+  heard to 128 blocks with linear falloff (`attenuation_distance` 128). Before: vanilla respawn-anchor sounds that a
+  variable-range event at volume 3 sent only within 48 blocks of a tear that opens 32–96 away.
+- **While open:** the near crackle bed (40 blocks, as before), a new far bed `amb.rift_rumble` (`amb_rift_rumble`,
+  started within 72 blocks, attenuation 72), the hum, and a hush of birds and insects within 40 blocks to 20%
+  (`Soundscape.hush`, renewed every 40 ticks).
+- **The look** (`world.anomaly.client.RiftGlow`; the CityGlow way: one additive lightning-blend pass, depth-tested, no
+  depth written, Lens-friendly; replaces the 0.8 × 3.6 textured quad and the vanilla portal particles): a jagged crack
+  7 blocks tall (16 nodes whose edges crawl) in three ribbons (violet glow ×2.8, magenta body, white core ×0.3), four
+  flickering side cracks, a halo of radius 6.5, a violet pool of radius 11 on the ground, a faint column 56 blocks into
+  the sky (so it reads against the sky from 60 blocks by day), 28 motes spiralling in, the core at its foot. It opens
+  over 30 ticks with a flash and a ring running out along the ground, flares when struck, folds as it closes. Drawn to
+  160 blocks.
+
+### 26.5 Tests
+`notice_pace_gap_and_burst`, `notice_critical_bypasses_queue`, `notice_ambient_files_to_journal` (signal),
+`notice_discovery_needs_intent` (fauna: beside the crosshair is never a find, a glance isn't, a rest is; the first find
+teaches). `fauna_sighting_discovery` studies for `Sightings.DWELL` looks.
+
+### 26.6 The audit (2026-10-26) and what is still outside the director
+Routed: every Signal toast/panel/window (server tier tags: anomalies, creatures, biomes, happenings, lairs, landmarks,
+gates, crafts, the danger toast; the rest default IMPORTANT/CRITICAL by kind), the region caption, the level pane, the
+Ascent gift scene. What Euan saw: reaching level 3 (and a first sighting) queues lair rumours for every family met
+(`Lairs.onLevel`) → a toast "Heard of · <lair>"; a rift opened (toast at once, sound to 48 blocks only); a creature
+in the 60° cone at 24 blocks counted as a sighting and its toast's hint named plants ("Plants mushrooms", "Crops it
+hovers over grow"). Not yet routed (follow-ups): the vanilla action bar (102 server call sites, three throttled), boss
+chat lines, the XP pop, Ascent notes and the Vow scene, citizens' speech; TipHooks has no implementation (the onboarding
+spec's `TipHud`/`TipRules` were never built), so Carillon's and the Ascent's tips show nothing today.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 27. The Way Forward (progression and guidance; plan docs/progression/PLAN.md, page https://claude.ai/artifact/RjzQ2SNdst8vbXPrZrvx1P; Euan approved all of it 2026-10-26)
+
+Euan, in survival: "I just got out of the city, I go into the forest, and I'm like, okay, so what's next?" The rules: every
+lock is seen before it opens and names what it waits for (a rank, a level, a rung by its in-world name), never how to
+play it; the world remembers the locks you met and calls you back once when you hold the key; three goals at all times
+(Now, Next, Far); the world pulls first and the HUD confirms. Builds on §26 (the notification director) where it lands.
+
+### 27.1 Promises (`core.api.Promises`, `progression.PromiseKeeper`, `PromiseBook`)
+- **The book** (attachment `awaken:promises`, schema 1, saved, kept through death, synced to its owner): at most 64
+  entries `{key, dim, where?, need kind, need value, what, answeredAt}`; the oldest go. A key is one per place
+  (`door:x,y,z`, `landmark:ruin:x,z`, `wing_core:x,y,z`, `stratum:n`, `region:id`, `halo`, `possession`).
+- **`seen(player, key, where, need, what)`**: recorded once, only for an awakened player who doesn't already meet the
+  need. Silent, except the first lock a player ever meets: one NOTICE toast "What waits · <what> waits for <need>. Your
+  band keeps it (K), and the world will call you back when you're ready." (flag `awaken:promise_taught`).
+- **Needs**: `rank:<label>` and `level:<n>` answered by progression; `tier:<tether|leaper|wings|skyborn>` answered by the
+  Ascent (`Promises.addAnswer`). Words: "D-rank", "level 20", "the Tether".
+- **The call back**: on a rank-up, a level reached or a rung granted, every waiting lock the player now meets is
+  answered. The nearest one with a place in this dimension leads one NOTICE toast "Ready now · <what> answers you now ·
+  640 m NE" (+ "and N more in your band (K)"), and for 10 minutes (`RAISED_FOR`) the Horizon line raises it over
+  everything near as "<what> · answers you" (a raised site). `markNewThing("promise_answered")`.
+- **`kept` / `keptAll(prefix)`**: a rank door opened (`door:`), a spire's crown climbed (`landmark:ruin:`), Wings from
+  a sky core (`wing_core:`).
+- **Sources today**: the Tether Vow's stir and every rank door's reading ("A sealed vault" / "A sealed door", the door's
+  rank), a Tether Spire or sky platform reached without the rope (`LandmarkWatch.reach`: "A Tether Spire's crown" / "A
+  sky platform", need the Tether), a sky core refusing a climber under C ("A sky core's wings"), a sealed Descent stratum
+  ("<name>, in the Descent", its rank), the Observatory's Halo line ("Something past the sky", B), Veil possession
+  refused ("Wearing a creature, in the Veil", C, no place), a dangerous region ("<region>", the level at which it stops
+  being dangerous).
+- **In the band** (K › Status, "WHAT WAITS", order 5, `progression.client.WaitingSection`): up to 8 rows, answered
+  first then nearest: a chip with the need in its colour (rank colour; the Horizon's green for a rung) or READY, what,
+  and "640 m NE". The same locks are pinned on the Atlas and the Gate Map (`MapMarks`), coloured by need.
+- **Far** (the next rank's promise): under "Next rank: D at level 10…" in the Spine section, "D-rank opens what waits
+  for you: A sealed vault · Gardens, in the Descent." Only locks the player has met; never a list of spoilers.
+- Test: `progression_promises`.
+
+### 27.2 The band's Ascent page (`body.client.AscentSection`, K › Status, order 28)
+"Runner · yours from the start"; each rung held with how to use it (keys in the player's own bindings,
+`signal.client.KeyText`); the next rung as "◇ The Tether · next" with where it comes from ("A Precursor vault keeps a
+line for a hunter it opens to: its door's rank, D at the least."); the rest "???". What a rung does is only told once
+it's yours.
+
+### 27.3 The ladder (decisions 1-2; details in §17.7, §17.9, §17.10, §17.19)
+Tether at the vault's door rank, D at the least (~5 h, balanced); Leaper at D with Tether mastery 4 (~8-12 h); Wings
+at C from a sky core (~20-25 h); Skyborn at A; the Sovereign form with any ending. Wren's Rope (`requires`
+`tier:tether`, a new requirement token answered by the Horizon's reach) is no longer offered before the rope, so it
+can't block every later found scene. Rungs, Lord-forged weapons and first Weaves now count as new things for the
+Director's rhythm.
+
+### 27.4 The Horizon line says why
+A landmark's site name carries a few words of why (`LandmarkKind.why`): "Sealed Vault · something waits inside", "The
+Well · the way down", "Tether Spire · a crown at the top". The sky's need reads "· needs a rope or wings" (the rig's
+rings are a rope ladder), the Tether's "· needs the Tether".
+
+### 27.5 Locks that hold and speak (phase 3)
+Built by the locks builder on `pack/locks` (the orchestrator's split, 2026-10-26): climbs refusing the first block and
+naming their key, the cache's inner seal, a relog keeping a built visit, the hero trees' canopy wards, the crown and core
+by the line, door colours, gate cards comparing ranks, refusals on first contact. It uses `core.api.Promises` (§27.1)
+and answers its "Show me" card through `Progression.BAND_ACTION` ("band:ascent", `ProgressionPayloads.OpenBand`).
+A first draft of it is on `pack/progression-p3-wip` (48d09e19).
+
+### 27.6 The first thread (phase 1)
+- **Registered** (`core.api.OpeningHooks.onRegistered`, fired from `OpeningModule.afterOpening` when the opening ends or
+  is skipped): Kestrel's errand, **The Last Delivery**, starts by itself and is tracked (`living.FirstThread`; once;
+  never for a player who has it or did it): tell Kestrel what you saw at the Roost, out through the High Gate, run the
+  letters to the Wayfarer camp up the north road, give Ilse the letters. It ends at the camp, a place with several pulls
+  (Hettie's and Ilse's level-1 asks, a gate's pillar, a vault), so after it the player chooses: it is one errand, not a
+  chain that keeps leading (BotW's "lines" railroaded 80% of testers).
+- **Chains on the Now line**: the tracked chain's current step (else the first chain's), priority 68 (over points to
+  spend 55 and the next level's unlock 15; under a waiting Reassessment 72, rifts and danger), with a compass to its
+  place: a "reach" step's marker; a "talk" step's person (Kestrel: the Roost, `OpeningHooks.place("roost")`; Hale: his
+  quartermaster spot; Ilse and Hettie: the camp; a Wayfarer: their scene). Before, tracked chains never reached the HUD.
+- **The camp is findable**: its marker falls back to its nominal spot until someone has come near (the compass knows the
+  way); a Horizon site "Wayfarers' fire" until the player has stood within 24 of it (counter
+  `awaken:camp_reached`); and a signal fire on a bale by Ilse (`Scenes.campFire`), its smoke a column seen from the High
+  Gate (vanilla smoke rises only near you, so the client draws its own column to 1000 out, 110 blocks tall to clear the
+  Lumen canopy: `LivingNet.CampSmoke`, `PulseFx.campfire`), lit once a player is within 256 and lit again if it's gone; the camp itself is now founded within 256 (it was 112,
+  so from the gate there was nothing there yet).
+- **The Registry's Directive fits** (`Directives.opening`, reason "opening"): "Clear a floor of any gate.", accepted for
+  the player (4 play-days), "Your first gate will show itself out past the walls." Accepted Directives show on the Now
+  line with their progress ("· 50%", priority 58). Before, the Registry's was a random roll offered quietly, its waiting
+  line gone in 30 s, and accepted ones never showed outside K.
+- **The first gate, on purpose** (`Director.firstGate`, SPEC §21.0.14 finally built): a player's first gate waits until
+  level 3 or about half an hour after awakening (36 Director passes), and until they're out of the city (or an hour),
+  then forms 250-400 blocks further along the bearing from the city's centre to them (north from its middle; any way
+  if that way is sea, a river or a beach), at their own rank, with "A gate is drawing breath · 320 m N · its floors make you stronger" (IMPORTANT, topic `gate`); the
+  Horizon raises it ("First gate · E-rank") until they've cleared a floor. Before, the first gate
+  was rolled the moment they awakened, in the infirmary, at random 300-1500 out, unannounced.
+- **Out through the walls** is a moment: crossing the city reserve outward shows the region's caption ("THE COMMONS ·
+  1-8") once a play-day (the Commons spans the city's edge, so leaving had none).
+- Tests: `progression_first_thread`, `progression_now_priorities`, `gates_first_gate_on_purpose`.
+
+### 27.7 Tips, switched on, and the Signal's thread (phase 4)
+- **Tips** (docs/carillon/m4/onboarding.md §1, finally built; `TipHooks.install` had no caller, so every tip in the
+  game, the Ascent's, the Living Wilds' and the free-run's, showed nothing):
+  - Rules (`signal.ui.TipRules`, pure): one tip at a time, the highest priority whose context has held 6 ticks; 80 ticks
+    between any two; `cooldown` between showings of one; retired after `retire_after_done` dones or `retire_after_shown`
+    showings; the `short` text (just the keys) once it's been done.
+  - Client (`signal.client.Tips`, `TipHooks.Client`): data from `assets/awaken/tips/<group>/<name>.json` (reloaded with
+    resources), `{key.<mapping>}` in the player's own bindings (`KeyText`), other placeholders dropped; counts per person
+    in `config/awaken-tips.json`; shown only when the notification director allows (`Notices.claim(IMPORTANT, "tip")`)
+    and never over a screen, while held (`hold(owner)`: the Ascent's scenes) or while the director is quiet. Drawn
+    centred above the story line's slot, one line (two at most), in the System's glass; it fades when its context ends,
+    at once when done. Client option `tips` (on).
+  - Server (`TipHooks.Server` in the signal module): `offer` and `done` are one small payload (`signal_tip`); a server
+    offer waits up to 5 minutes for a quiet moment (the director holds tips in a fight, a scene or the world's first
+    minutes; those first minutes don't count against the 5, or a tip offered at registration lapses as the world
+    settles), then shows for its `show_for`.
+  - The first stretch (`assets/awaken/tips/first/`): `band` (registration + 6 s: "K opens your band: what you hold, what
+    waits for you, and the way up."; done when K opens), `now` (registration + 26 s: the two lines at the top), `atlas`
+    (the first way out through the walls; done when the Atlas opens), `power` (the first power chosen; done at the first
+    cast), `level` (a level-up with points; done when a point is spent: "You grow by finding new things, hunting, and
+    clearing gate floors."), `gate` (the first gate placed; done on entering a gate), `night` (the first dusk outside
+    the walls, once).
+- **The Signal's thread** (`NowClient.thread`): toward the Now line's place, a thread of the Signal's light runs low
+  along the ground, 26 blocks in a little over a second (`AscentFxBridge.threadMote`, two motes a tick), once when that
+  place is new and once more if the player stands still outdoors for 8 s with it; at most every 2 minutes, never in a
+  screen, never within 12 blocks of the place. No key, nothing that stays on screen (Ghost of Tsushima's guiding wind,
+  in our blue).
+
+### 27.8 People who point (phase 4)
+- **The crier names real places** (`CityEvents.wildsNews`, lines in `tools/city/lines.py` → `citizen_lines.json`
+  `news.wilds_*`): the nearest standing gate within 900 of the city ("Hear ye! A gate's light stands past the High Gate,
+  to the north!"), else the spawn vault ("…hums again! Its door reads a hunter's rank, they say!"), else the
+  Wayfarers' camp. Before, every line in the city was flavour.
+- **Kestrel speaks** before you click her (`named.kestrel`: "Runner! You owe me word from the square.").
+- **"Anything for me?"** (`progression.Advice.next`, after Terraria's Guide): a free Registry clerk you right-click says
+  the one next step that fits you: a Reassessment waiting, a lock that answers you now, points to spend, the Directive
+  you've taken, else the next rank and what it opens for you ("D-rank at level 10. It opens a sealed vault for you, and
+  more.").
+- **A level-1 found scene**: Marta's Wheel (`quest/martas_wheel.json`, band 0, a road scene): eight sticks for her
+  wagon, paid in road news (gates' light, vaults' doors, the camp). Found scenes all needed level 8, so a new player
+  never saw a flare; now the first one can rise in the first quarter hour.
+- **One Journal**: the Living Wilds' chains read "JOURNAL · CHAINS" beside the System's filed finds ("JOURNAL").
+
+### 27.9 The long middle (phase 5)
+- **The capability clock** (`Progression.CAPABILITY_AT`, set inside `markNewThing` for things you can *do*: a power
+  learned, a rank, a Path, a rung, a Lord-forged weapon, a first Weave, a machine or blueprint, an Echo, a Hearth or its
+  tier, a latent, a townsperson; never a sight or a core). After 75 minutes without one, outdoors and out of a gate, the
+  Now line offers the nearest one in reach: a lock that answers you now, with its place (57), else "D-rank at level 10 ·
+  gate floors pay best" (50).
+- **The Reassessment says where**: "Reassessment ready · D-rank trial at your Spire" with a compass to your Hearth, or
+  "· craft a Monolith" without one.
+- **The level road goes on to 135** (it had two steps in levels 51-135): The Precursor Foundry (52), The Halo (55, goal:
+  see it from an Observatory), Wings you know (58), The Inverted Sea (62, a core), A-rank trial (70), The open sky (73,
+  goal: the Sky Leviathan's trial), Any creature (77), The Dreaming Stratum (80, a core), The Sovereigns (90, goal: one
+  falls), S-rank trial (100), The Court opens (105, a core), Half the Court (112, goal: four), An empty court (122, goal:
+  eight, a core), The Seed (135).
+- **Weapon mastery** is wired by Arms S7 (`ArmsMastery.strikes`); Wilds content past level 20 belongs to Living Wilds
+  phase F.
+- Test: `progression_capability_clock`.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 29. Wild life (the wild's small ambient life, client-only; Euan 2026-10-26, built without an approval page)
+
+Euan, after a forest walk: "I barely saw any insects or birds, so the sounds felt a bit off ... when you're exploring and
+walking in the forest, it should feel very real, very alive. Not too much either." Module `wildlife` (package
+`dev.awaken.wildlife`, client half `wildlife.client`). Everything that moves lives on the client: the server registers
+one entity type (`awaken:wild_critter`, never saved, never tracked, never summoned) and 18 sound events, and pays
+nothing. Nothing is huntable. Herds, packs, roosts and deer are the Living Wilds' (§21) server mobs; this layer never
+makes a deer.
+
+**Who.** Twelve bodies, hero rigs with the life layer (§23), from `tools/art/specs/wild_fauna.py` (textures
+`textures/entity/wild/`, data `wildlife.client.WildFaunaData`): songbirds (robin, blue tit, chaffinch, wren, blackbird;
+drawn at 0.42), woodpeckers (great spotted, green), crows, owls (tawny, barn; eyes catch the light at night), buzzards
+and kestrels, gulls (Carillon's gull design), ducks (mallard drake and hen), grey herons, squirrels (red, grey),
+rabbits, red foxes (eyeshine), frogs. Folded wings show their upper side; a spread wing hangs from the shoulder (the
+spec's `FOLD` and wing lift). Seven insects drawn as real little bodies from one sprite sheet (`insects.png`): butterflies
+(white, brimstone, peacock, common blue), bees, dragonflies (blue, green), fireflies (Lumen Forest's burn blue), moths,
+gnat swarms, water striders; plus ripples on water and far flocks (finches by day, a small murmuration of starlings at
+dusk) crossing the sky.
+
+**Where and how many** (`Density`, pure; numbers are first numbers, tuned on tours). Each chunk near the player is read
+once from the client's own heightmaps (`Sites`, one chunk a tick, re-read after 2 minutes): leaf tops (and the canopy's
+edge), fences and walls, bare rock, trunks (a log under the canopy with 2+ blocks of clear bark), open ground, flowers,
+still water, its shore (land beside water, facing it), lights. Expected animals per chunk = peak (per kind) × the
+family's affinity (the 16 sound families, `#awaken:soundscape/<family>`) × the hour × the weather × the cold × the
+habitat × an Awakened biome's flavour (Elderwood: woodpeckers ×2, owls ×1.5; Lumen Forest: fireflies ×1.6; Glass
+Steppe and Shattered Highlands: raptors ×1.6; Mirror Marsh: herons and dragonflies ×1.6). Peaks: songbird 0.55,
+woodpecker 0.06, crow 0.12, owl 0.05, raptor 0.006, gull 0.5, duck 0.6, heron 0.12, squirrel 0.22, rabbit 0.25, fox
+0.025, frog 0.8; butterfly 2.5, bee 1.5, dragonfly 1.5, firefly 7, moth 2.5 a light, gnats 1 swarm, strider 2. The
+hours (0 = 06:00): songbirds busiest at dawn (×1.5) and dusk, 0.75 at noon, none from 19:20 to 04:20; owls, moths and
+fireflies at night (fireflies from 18:12, full by 20:00); rabbits and foxes at dawn and dusk; raptors 07:30-17:00;
+butterflies 07:30-16:30; gnats at dusk. Rain: insects none (none in thunder), small birds ×0.4 and sheltering (fluffed
+up, no song), raptors none, frogs ×1.5. Cold land (biome temperature < 0.15): no insects or frogs, songbirds ×0.5.
+Targets the test holds: a temperate forest at noon 0.2-0.6 songbirds a chunk (one to three in view), a flowery meadow
+1-3 butterflies a chunk, nothing but owls and fireflies in a forest at night. The count is the expected number made
+whole by the chunk's fixed draw (`Density.count`), so a place keeps the same animals as the hours turn and looks alike
+when you return; each animal's spot and coat come from the chunk's draw too.
+
+**Reach and caps** (`WildKinds`, `Census`): made within (blocks) songbird 40, woodpecker 40, crow 64, owl 52, raptor 120,
+gull 80, duck 56, heron 64, squirrel 32, rabbit 40, fox 56, frog 22; butterfly 28, bee 16, dragonfly 28, firefly 40,
+moth 24, gnats 24, strider 16; dropped 16 past that (out of sight). At most 9 songbirds, 2 woodpeckers, 4 crows, 2 owls,
+2 raptors, 6 gulls, 6 ducks, 2 herons, 3 squirrels, 4 rabbits, 1 fox, 4 frogs, 14 butterflies, 10 bees, 8 dragonflies,
+64 fireflies, 12 moths, 5 swarms, 10 striders; 18 bodies and 140 insects in all. Chunks are walked nearest first, so the
+caps keep what is close. Never inside Carillon's walls (+24 blocks; `CityLife.inside`, the city's animals are B3b's),
+never outside the overworld.
+
+**Never popping.** A body appears only out of view or 26+ blocks off (48 for one in the sky); insects fade in and out.
+An animal no longer wanted leaves the way it would (a bird flies off, a rabbit bolts, a frog plops in, a squirrel climbs
+away) and is dropped once out of sight.
+
+**Seen, not just near** (the tours, 2026-10-26): in a forest the census logged nine songbirds near and none in view,
+all on the canopy's roof, above the leaf ceiling a walker stands under. So songbirds take the lowest of three perches
+(the outer rings of the trees' lower leaves, fences), and by day 75% of those in a closed forest (45% under an open
+canopy) start on the forest floor, forage there, flit low through the understory to another patch of floor (the flight
+hugs the ground ahead instead of climbing over the trees), and only now and then go up. Insects are drawn near twice
+life size (a butterfly 0.3 blocks a wing, a dragonfly 0.46 long), as the birds are: at life size a butterfly was a
+few pixels at ten blocks. Fireflies glow two fifths of their rhythm with a 0.75-block halo.
+
+**Behaviour** (`Birds`, `Critters`, `Insects`). Songbirds never still on a perch (glances, tail and wing flicks, a bow,
+hops along the branch), sing from it (the dawn chorus three times as often), preen, flit to the next tree in a bounding
+flight (three beats, wings shut, a dip), drop to forage on open ground and hop about pecking. Woodpeckers hitch up a
+trunk, peck, drum (more in the morning), slip round to the far side as you come within 9, fly off at 3. Crows stride,
+peck and caw on open ground, wary at 10. Owls perch at night, follow you with their heads, hoot, and fly off without a
+sound. Buzzards circle on a drifting thermal 24-40 above the ground, banked, beating now and then, mewing; kestrels drop
+to hover over the meadow (head still, quick shallow beats) and stoop. Gulls ride the air over the shore. Ducks paddle,
+dabble tail up, preen, quack, leave rings, paddle away from you and fly off at 3.5. Herons stand like statues at the
+shore, stalk, strike, turn alert at 20 and leave at 12 with a croak and slow heavy wings. Squirrels run up and down
+their trunk in bursts, scold, forage at its foot and race back up when you come. Rabbits graze, groom, sit up tall
+with ears high at 11 and bolt in a zigzag at 5. A fox trots its ground at dusk, sits and watches you, listens and
+pounces on something in the grass, curls up at night, slips away at 10. Frogs croak at dusk and in the rain and plop
+into the water at 3.5. Flushes are away from you, a burst of wings; sprinting doubles the distance, sneaking halves it.
+Birds bank into their turns and pitch with their climb. Butterflies flutter (seven beats a second) between flowers and
+settle with wings opening and closing slowly; bees zip flower to flower; dragonflies hover and dart low over still
+water; fireflies drift and blink each to its own rhythm (some answering with a second flash) in an additive glow pass;
+moths circle lamps; gnat swarms bob by the water at dusk; striders skate in strokes, a ring at each.
+
+**Sound** (`WildSound`; voices from `tools/art/specs/audio_wild.py`, synthesised, mono, placed; 18 events `wild.*`): a
+call comes from the animal you can see calling, its clip in step: songs (robin, tit, finch, wren; a blackbird sings the
+robin's phrases lower), contact chips, a flush's whirr, big wings, the woodpecker's drum and taps, caws, the buzzard's
+mew, hoots, quacks, the heron's croak, a squirrel's scolding, a frog's plop (its croak is vanilla's `entity.frog.ambient`,
+a bee's buzz vanilla's `entity.bee.loop`), rustles; the gulls use Carillon's `city.gull.call`. At most 6 at once and 3
+new a second, counted in the Conductor's voice budget, quieter where the world is hushed. AmbientSounds' bed plays as
+before; these sit on top. Crickets at night: three voices placed in the grass 7-16 blocks off, each silent while you walk
+within 6 of it and singing again 6-10 s after. Predators: every monster within 24 of the player hushes the birds and
+insects within 24 of it to a quarter (the Conductor's hush, renewed every second; docs/sound/PLAN.md's reaction), and
+every visible animal reads `Soundscape.hushAt`: no song below 0.67, leaving below 0.35, none made below 0.6 (so open
+gates and the Living Wilds' happenings quiet them too).
+
+**Budget.** Client only; the server pays nothing. Per tick: one chunk read (256 columns, three heightmaps), the brains
+of at most 18 bodies, the insects' arrays (no allocation per tick or frame; the director's half-second pass allocates
+nothing but a new animal), at most 6 sounds. Per frame: at most 18 small hero models, about 900 insect quads and a few
+hundred glow quads, culled by distance and view.
+
+**API additions** (§12): `core.audio.client.Soundscape.hushAt(x, y, z)` (what is left of birds and insects at a point);
+`citizens.client.CityLife.inside(x, z, margin)` (within Carillon's wall plus a margin). Client command
+`/awaken wildlife [on|off|count|dial <x>|lineup [clip|insects|off] [variant]]` (`count`: what's near, what the camera
+can see, and where the songbirds are; `lineup`: every body, or every insect, posed before the camera on a stage); tours
+log the census every 30 s as `[wildlife] in view N of M near: ...`. Tours: `tools/autopilot/wild-life.txt` (the stage by
+day and night, then forest, rain, flowers, river, Mirror Marsh, Lumen Forest), `wild-forest.txt` (the quick loop).
+
+**Tests** (`wildlife_`): `wildlife_density` (the tables reach every sound family, the hours run in order, the walk's
+targets hold, rain and cold clear the insects, a chunk's draw is fixed and the land averages the expected number),
+`wildlife_census` (the caps hold over 400 rich chunks at four hours; nothing is made inside the city and anything there
+leaves; nothing out of reach), `wildlife_rigs` (every rig parses and carries every clip its brain plays, every coat,
+blink and the insects' sheet exist); `audio_events_resolve` covers the 18 events.

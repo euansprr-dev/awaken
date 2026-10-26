@@ -21,6 +21,7 @@ public final class GatesModule {
         GateAccess.install();
         GateParty.install();
         GatesNow.register();
+        dev.awaken.core.api.HorizonHooks.register(Director::firstGateSite); // the first gate, raised (SPEC §27.6)
         PlayDays.onNewPlayDay(Breaks::onNewPlayDay);
         DaysEnd.addWaiting(Breaks::waitingLine);
         Signal.onAction(Interactions.ACTION, Interactions::answer);

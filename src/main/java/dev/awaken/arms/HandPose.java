@@ -36,5 +36,22 @@ public final class HandPose {
         out[5] = pz / DEG;
     }
 
+    /**
+     * The same for any turn {@code q} of the hand about its own place (the lab's swings, FpSwings): the move that puts
+     * the turned hand's pivot at rest + d, and the turn as Hands' pitch, yaw and roll. Client thread only.
+     */
+    public static void viewMove(float hx, float hy, float hz, float dx, float dy, float dz, Quaternionf q, float[] out) {
+        q.getEulerAnglesXYZ(V);
+        float px = V.x, py = V.y, pz = V.z;
+        V.set(hx, hy, hz);
+        q.transform(V);
+        out[0] = hx + dx - V.x;
+        out[1] = hy + dy - V.y;
+        out[2] = hz + dz - V.z;
+        out[3] = px / DEG;
+        out[4] = py / DEG;
+        out[5] = pz / DEG;
+    }
+
     private static final float DEG = (float) (Math.PI / 180);
 }

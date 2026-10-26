@@ -1,9 +1,11 @@
 package dev.awaken.signal;
 
+import dev.awaken.core.api.Notices;
 import dev.awaken.core.api.NowHooks;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.signal.ui.ChoiceDeck;
 import dev.awaken.signal.ui.Glossary;
+import dev.awaken.signal.ui.Pace;
 import dev.awaken.signal.ui.Rect;
 import dev.awaken.signal.ui.SignalLayout;
 import dev.awaken.signal.ui.SignalText;
@@ -40,6 +42,29 @@ final class SignalTests {
     static void register() {
         Signal.onAction("signaltest", (p, action, accepted) -> ANSWERS.incrementAndGet());
         NowHooks.register(p -> TEST_NOW.getOrDefault(p.getUUID(), List.of()));
+
+        // SPEC §27.7: tips, the pure rules: the context settles, the higher priority wins, a gap between tips, a cooldown
+        // for the same one, retired after its dones or showings, the short text once done, and only if the director allows
+        AwakenTests.register("signal_tip_rules", 20, h -> {
+            var a = new dev.awaken.signal.ui.TipRules.Def("Hold {key.jump}", "{key.jump}", 60, 140, 2, 3, 600, "after");
+            var b = new dev.awaken.signal.ui.TipRules.Def("Press K", "", 40, 140, 1, 2, 600, "any");
+            java.util.Map<String, dev.awaken.signal.ui.TipRules.Def> defs = java.util.Map.of("a", a, "b", b);
+            java.util.Map<String, dev.awaken.signal.ui.TipRules.Count> counts = new java.util.HashMap<>();
+            java.util.Map<String, Long> since = new java.util.HashMap<>(java.util.Map.of("a", 100L, "b", 100L)), last = new java.util.HashMap<>();
+            h.assertTrue(dev.awaken.signal.ui.TipRules.pick(103, since, defs, counts, last, -1000, true, x -> true) == null, "a context settles first");
+            h.assertTrue("a".equals(dev.awaken.signal.ui.TipRules.pick(106, since, defs, counts, last, -1000, true, x -> true)), "the higher priority wins");
+            h.assertTrue("b".equals(dev.awaken.signal.ui.TipRules.pick(106, since, defs, counts, last, -1000, false, x -> true)), "an 'after' tip waits for the awakening");
+            h.assertTrue(dev.awaken.signal.ui.TipRules.pick(106, since, defs, counts, last, 50, true, x -> true) == null, "a gap after the last tip");
+            h.assertTrue(dev.awaken.signal.ui.TipRules.pick(106, since, defs, counts, last, -1000, true, x -> false) == null, "never past the director");
+            last.put("a", 106L);
+            h.assertTrue("b".equals(dev.awaken.signal.ui.TipRules.pick(300, since, defs, counts, last, -1000, true, x -> true)), "a cooldown for the same tip");
+            counts.put("a", new dev.awaken.signal.ui.TipRules.Count(1, 1));
+            h.assertTrue(dev.awaken.signal.ui.TipRules.text(a, counts.get("a")).equals("{key.jump}"), "done once: the short text");
+            counts.put("a", new dev.awaken.signal.ui.TipRules.Count(1, 2));
+            h.assertTrue(dev.awaken.signal.ui.TipRules.retired(a, counts.get("a")), "done enough: retired");
+            h.assertTrue(dev.awaken.signal.ui.TipRules.retired(b, new dev.awaken.signal.ui.TipRules.Count(2, 0)), "shown enough: retired");
+            h.succeed();
+        });
 
         AwakenTests.register("signal_layout_every_gui_size", 20, h -> {
             List<String> bad = layoutViolations();
@@ -215,6 +240,89 @@ final class SignalTests {
             for (int i = 0; i < 5; i++) trickle.offer(i, "t" + i);
             var merged = trickle.poll(4 + ToastBurst.QUIET);
             h.assertTrue(merged.size() == 1 && merged.get(0).items().size() == 5, "a trickle merges: " + merged);
+            h.succeed();
+        });
+
+        // SPEC §26: the director's pace. A burst of paced messages comes out one at a time, a gap apart, at most the
+        // burst limit per window; same-topic messages waiting merge into one
+        AwakenTests.register("notice_pace_gap_and_burst", 20, h -> {
+            Pace.Rules r = Pace.Rules.of(Pace.Density.STANDARD);
+            Pace<String> pace = new Pace<>(r);
+            for (int i = 0; i < 6; i++) pace.offer(0, "m" + i, Notices.Tier.IMPORTANT, "", false);
+            List<Long> shownAt = new ArrayList<>();
+            for (long t = 0; t < r.window(); t++) {
+                for (Pace.Out<String> o : pace.poll(t, false, false)) if (o.act() == Pace.Act.SHOW) shownAt.add(t);
+            }
+            h.assertTrue(!shownAt.isEmpty() && shownAt.get(0) == 0, "the first shows at once: " + shownAt);
+            for (int i = 1; i < shownAt.size(); i++) h.assertTrue(shownAt.get(i) - shownAt.get(i - 1) >= r.gap(), "a gap between messages: " + shownAt);
+            h.assertTrue(shownAt.size() == r.burst(), "at most " + r.burst() + " in a window: " + shownAt);
+            // calm exploration waits longer
+            Pace<String> calm = new Pace<>(r);
+            calm.offer(0, "a", Notices.Tier.IMPORTANT, "", false);
+            calm.offer(0, "b", Notices.Tier.IMPORTANT, "", false);
+            long second = -1;
+            for (long t = 0; t < 2 * r.calmGap() && second < 0; t++) {
+                for (Pace.Out<String> o : calm.poll(t, false, true)) if (o.act() == Pace.Act.SHOW && o.first().equals("b")) second = t;
+            }
+            h.assertTrue(second >= r.calmGap(), "the calm gap applies: " + second);
+            // held: nothing paced shows
+            Pace<String> held = new Pace<>(r);
+            held.offer(0, "x", Notices.Tier.IMPORTANT, "", false);
+            for (long t = 0; t < 100; t++) h.assertTrue(held.poll(t, true, false).isEmpty(), "held at " + t);
+            // a topic merges while waiting
+            Pace<String> topic = new Pace<>(r);
+            topic.offer(0, "first", Notices.Tier.IMPORTANT, "", false);
+            topic.poll(0, false, false);
+            for (int i = 0; i < 3; i++) topic.offer(1, "craft" + i, Notices.Tier.IMPORTANT, "craft", false);
+            Pace.Out<String> merged = null;
+            for (long t = 1; t < r.gap() + 5 && merged == null; t++) {
+                for (Pace.Out<String> o : topic.poll(t, false, false)) if (o.act() == Pace.Act.SHOW) merged = o;
+            }
+            h.assertTrue(merged != null && merged.items().size() == 3, "three of a topic arrive as one: " + merged);
+            h.succeed();
+        });
+
+        AwakenTests.register("notice_critical_bypasses_queue", 20, h -> {
+            Pace<String> pace = new Pace<>(Pace.Rules.of(Pace.Density.MINIMAL));
+            for (int i = 0; i < 4; i++) pace.offer(0, "info" + i, Notices.Tier.IMPORTANT, "", true);
+            pace.poll(0, false, false); // one moment takes the screen
+            pace.offer(1, "danger", Notices.Tier.CRITICAL, "", false);
+            List<Pace.Out<String>> out = pace.poll(1, true, false); // even held, even right after another
+            h.assertTrue(out.size() == 1 && out.get(0).act() == Pace.Act.SHOW && out.get(0).first().equals("danger"),
+                    "a critical message shows at once: " + out);
+            h.assertTrue(pace.free(1, Notices.Tier.CRITICAL, true, false), "critical is always free");
+            h.assertFalse(pace.free(1, Notices.Tier.IMPORTANT, false, false), "a paced one is not, right after");
+            h.succeed();
+        });
+
+        AwakenTests.register("notice_ambient_files_to_journal", 20, h -> {
+            Pace.Rules r = Pace.Rules.of(Pace.Density.STANDARD);
+            Pace<String> pace = new Pace<>(r);
+            for (int i = 0; i < 5; i++) pace.offer(0, "find" + i, Notices.Tier.AMBIENT, "creature", false);
+            int filed = 0, shown = 0;
+            for (Pace.Out<String> o : pace.poll(0, false, false)) {
+                if (o.act() == Pace.Act.FILE) filed += o.items().size();
+                else shown++;
+            }
+            h.assertTrue(filed == 5 && shown == 0, "ambient finds never interrupt at Standard: filed " + filed + ", shown " + shown);
+            // GUIDED shows them (paced); a moment shows at any density
+            Pace<String> guided = new Pace<>(Pace.Rules.of(Pace.Density.GUIDED));
+            guided.offer(0, "find", Notices.Tier.AMBIENT, "creature", false);
+            h.assertTrue(guided.poll(0, false, false).stream().anyMatch(o -> o.act() == Pace.Act.SHOW), "GUIDED shows ambient finds");
+            Pace<String> minimal = new Pace<>(Pace.Rules.of(Pace.Density.MINIMAL));
+            minimal.offer(0, "level", Notices.Tier.IMPORTANT, "", false);
+            minimal.offer(0, "first", Notices.Tier.IMPORTANT, "", true);
+            List<Pace.Out<String>> m = minimal.poll(0, false, false);
+            h.assertTrue(m.stream().anyMatch(o -> o.act() == Pace.Act.FILE && o.first().equals("level")), "MINIMAL files the ordinary: " + m);
+            h.assertTrue(m.stream().anyMatch(o -> o.act() == Pace.Act.SHOW && o.first().equals("first")), "MINIMAL still shows a first: " + m);
+            // what waits too long to still be news is filed, not shown late
+            Pace<String> stale = new Pace<>(r);
+            stale.offer(0, "old", Notices.Tier.IMPORTANT, "", false);
+            boolean filedLate = false;
+            for (long t = 0; t <= r.maxWait() + 1; t++) {
+                for (Pace.Out<String> o : stale.poll(t, true, false)) if (o.act() == Pace.Act.FILE && o.first().equals("old")) filedLate = t > r.maxWait() - 1;
+            }
+            h.assertTrue(filedLate, "a message held past its wait goes to the Journal");
             h.succeed();
         });
 

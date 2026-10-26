@@ -35,7 +35,9 @@ final class AscentCommands {
                 return 1;
             }));
             // the Tether Vow at the world's spawn vault: there, wait for its chunks, then stand in its forecourt (tours)
-            ascent.then(Commands.literal("vow").then(Commands.literal("goto").executes(c -> vowGoto(c.getSource()))));
+            ascent.then(Commands.literal("vow").then(Commands.literal("goto").executes(c -> vowGoto(c.getSource(), false))));
+            // the same, with the vault's sealed door opened first (the vow needs it open: tours at C-rank)
+            ascent.then(Commands.literal("vow").then(Commands.literal("open").executes(c -> vowGoto(c.getSource(), true))));
             // the Leaper's Gauntlet, opened in front of you now whatever you hold (tours)
             ascent.then(Commands.literal("trial").then(Commands.literal("leaper").executes(c -> {
                 int id = AscentTrials.openLeaper(c.getSource().getPlayerOrException());
@@ -51,7 +53,9 @@ final class AscentCommands {
             // the nearest Tether Spire: you on its plaza beside the column (tours)
             ascent.then(Commands.literal("spire").then(Commands.literal("goto").executes(c -> spireGoto(c.getSource()))));
             // the nearest sky platform: rigged if it isn't yet, and you under its first ring (tours)
-            ascent.then(Commands.literal("sky").then(Commands.literal("goto").executes(c -> skyGoto(c.getSource()))));
+            ascent.then(Commands.literal("sky").then(Commands.literal("goto").executes(c -> skyGoto(c.getSource(), false))
+                    // tours: on the deck beside the core instead (its ward refuses a block there, SPEC §17.29)
+                    .then(Commands.literal("deck").executes(c -> skyGoto(c.getSource(), true)))));
             ascent.then(Commands.literal("crown").then(Commands.literal("grow")
                     .then(Commands.literal("colossus").executes(c -> crownGrow(c.getSource(), dev.awaken.terrain.hero.HeroTree.ELDER_COLOSSUS, 7919L))
                             .then(Commands.argument("seed", com.mojang.brigadier.arguments.LongArgumentType.longArg())
@@ -82,7 +86,7 @@ final class AscentCommands {
         return t;
     }
 
-    private static int skyGoto(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+    private static int skyGoto(CommandSourceStack src, boolean deck) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer p = src.getPlayerOrException();
         net.minecraft.server.level.ServerLevel level = src.getServer().overworld();
         // vanilla's own search: only starts that really generated
@@ -112,7 +116,8 @@ final class AscentCommands {
                 var l = dev.awaken.above.ruin.SkyRig.layout(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz));
                 var first = l.rings().getLast();
                 int fg = dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz);
-                p.teleportTo(level, first.getX() + 0.5, fg, first.getZ() + 0.5, java.util.Set.of(), 0, -80, true);
+                if (deck) p.teleportTo(level, cx + 5.5, deckY + 1, cz + 0.5, java.util.Set.of(), 90, 35, true);
+                else p.teleportTo(level, first.getX() + 0.5, fg, first.getZ() + 0.5, java.util.Set.of(), 0, -80, true);
                 dev.awaken.Awaken.LOG.info("[ascent] sky goto: the platform at {}, {} (deck {}), under its first ring {}", cx, cz, deckY,
                         first.toShortString());
                 return 1;
@@ -253,7 +258,7 @@ final class AscentCommands {
         return 0;
     }
 
-    private static int vowGoto(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+    private static int vowGoto(CommandSourceStack src, boolean open) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer p = src.getPlayerOrException();
         net.minecraft.server.level.ServerLevel level = src.getServer().overworld();
         var chunk = dev.awaken.above.ruin.RuinLocator.spawnVault(level);
@@ -270,6 +275,7 @@ final class AscentCommands {
                 for (int dz = -24; dz <= 24; dz += 6) {
                     TetherVow.Site site = TetherVow.siteAt(level, new net.minecraft.core.BlockPos(cx + dx, ground + dy, cz + dz));
                     if (site == null) continue;
+                    if (open && !site.doorOpen(level)) dev.awaken.above.block.DoorCoreBlock.open(level, site.door());
                     net.minecraft.core.BlockPos f = site.world(11, 1, 2);
                     float yaw = switch (site.rot()) {
                         case 1 -> 90F;

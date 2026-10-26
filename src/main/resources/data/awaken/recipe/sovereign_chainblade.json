@@ -5,11 +5,12 @@
  "key": {
   "C": "#awaken:hunter_core_s",
   "X": "awaken:sovereign_blade",
-  "B": "#awaken:hunter_bind_s"
+  "B": "#awaken:hunter_bind_s",
+  "P": "awaken:chainblade_blueprint"
  },
  "pattern": [
   "XB",
-  " B",
+  "PB",
   " C"
  ],
  "result": {

@@ -1,9 +1,12 @@
 package dev.awaken.body.ascent;
 
 import dev.awaken.above.Above;
+import dev.awaken.above.AboveBlocks;
+import dev.awaken.above.ruin.PrecursorRuinPiece;
 import dev.awaken.above.ruin.PrecursorRuinStructure;
 import dev.awaken.core.AwakenNet;
 import dev.awaken.progression.Progression;
+import dev.awaken.progression.Rank;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,19 +20,31 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * The Tether Vow (SPEC §17.7): the rope is earned at the first Precursor vault a player reaches. Stepping into a
- * vault's forecourt (between its two pylons, before the sealed door, which no low rank can open) without the rope,
- * the vault notices them (the call, 3 s), then the line is given and pulls them up onto the nearer pylon (the line),
- * and the vow is kept by reaching the beacon mast over the roof by rope within two minutes (kept, or the mast waits).
+ * The Tether Vow (SPEC §17.7): the rope is earned at a Precursor vault the player has the rank to open. Its line answers
+ * the vault's own door rank, D at the least (Euan, 2026-10-26: walking into a vault under-ranked must not give it; the
+ * progression plan's decision 1 set the floor at D, the door rank of every vault near home), and only once the sealed
+ * door stands open. Then, stepping into the forecourt (between its two pylons) without
+ * the rope, the vault notices them (the call, 3 s), the line is given and pulls them up onto the nearer pylon (the
+ * line), and the vow is kept by reaching the beacon mast over the roof by rope within two minutes (kept, or the mast
+ * waits). Short of that the vault only stirs: its light rises and falls back, and it says what it waits for.
  * The vault's blueprint is fixed (RuinBuilder); its turn is read from the pylons, which stand only at the front.
  */
 final class TetherVow {
     private TetherVow() {}
 
-    /** Stages sent to the client ({@link AscentPayloads.Vow}). */
-    static final int CALL = 0, LINE = 1, KEPT = 2, LAPSED = 3;
+    /** Stages sent to the client ({@link AscentPayloads.Vow}). STIR: the vault notices someone it isn't ready for. */
+    static final int CALL = 0, LINE = 1, KEPT = 2, LAPSED = 3, STIR = 4;
     /** Ticks of the call before the line, and how long the mast waits. */
     static final int CALL_TICKS = 60, MAST_TICKS = 2400;
+    /** The lowest rank the line answers (a vault whose door asks more asks more). */
+    static final Rank RANK = Rank.D;
+    /** The same vault stirs for the same player, in the same state, at most this often. */
+    static final int STIR_EVERY = 20 * 60 * 5;
+
+    /** The last stir per player: which vault, whether they were short of its rank, and when. */
+    private record Stirred(BlockPos vault, boolean short_, long at) {}
+
+    private static final Map<UUID, Stirred> STIRRED = new HashMap<>();
 
     private static final class Live {
         final Site site;
@@ -43,8 +58,11 @@ final class TetherVow {
 
     private static final Map<UUID, Live> LIVE = new HashMap<>();
 
-    /** A vault in the world: its box (the blueprint's 23 x 24 x 23, local y 0 = the floor) and its turn (0-3). */
-    record Site(BoundingBox box, int rot) {
+    /**
+     * A vault in the world: its box (the blueprint's 23 x 24 x 23, local y 0 = the floor), its turn (0-3) and the rank its
+     * door was built for (a {@link Rank} ordinal).
+     */
+    record Site(BoundingBox box, int rot, int doorRank) {
         /** Local blueprint coordinates to world (PrecursorRuinPiece's own turn inside the square footprint). */
         BlockPos world(int x, int y, int z) {
             int w = box.getXSpan() - 1, lx, lz;
@@ -79,6 +97,27 @@ final class TetherVow {
         BlockPos mast() {
             return world(11, 21, 12);
         }
+
+        /** The sealed door's core (RuinBuilder: the 3 x 3 door in the wall at z 12). */
+        BlockPos door() {
+            return world(11, 2, 12);
+        }
+
+        /** The rank this vault's line answers: its door's rank, {@link #RANK} at the least. */
+        Rank needs() {
+            return Rank.of(Math.max(RANK.ordinal(), doorRank));
+        }
+
+        /** The sealed door has been opened (no panel or core left in its place). */
+        boolean doorOpen(Level level) {
+            for (int x = 10; x <= 12; x++) {
+                for (int y = 1; y <= 3; y++) {
+                    var s = level.getBlockState(world(x, y, 12));
+                    if (s.is(AboveBlocks.DOOR.get()) || s.is(AboveBlocks.DOOR_CORE.get())) return false;
+                }
+            }
+            return true;
+        }
     }
 
     /** The vault whose blueprint holds {@code pos}, or null (not a vault, or its turn can't be read: an old layout). */
@@ -86,9 +125,11 @@ final class TetherVow {
         StructureStart start = level.structureManager().getStructureWithPieceAt(pos, Above.RUINS_TAG);
         if (!start.isValid() || !(start.getStructure() instanceof PrecursorRuinStructure prs) || !prs.kind().isVault()) return null;
         // the piece's own box (the blueprint's): the start's is padded on every side
-        BoundingBox box = start.getPieces().isEmpty() ? start.getBoundingBox() : start.getPieces().getFirst().getBoundingBox();
+        var piece = start.getPieces().isEmpty() ? null : start.getPieces().getFirst();
+        BoundingBox box = piece == null ? start.getBoundingBox() : piece.getBoundingBox();
+        int doorRank = piece instanceof PrecursorRuinPiece prp ? prp.doorRank() : RANK.ordinal();
         int rot = rotationOf(level, box);
-        return rot < 0 ? null : new Site(box, rot);
+        return rot < 0 ? null : new Site(box, rot, doorRank);
     }
 
     /**
@@ -99,11 +140,11 @@ final class TetherVow {
     static int rotationOf(Level level, BoundingBox box) {
         int best = -1, bestHits = 3;
         for (int rot = 0; rot < 4; rot++) {
-            Site s = new Site(box, rot);
+            Site s = new Site(box, rot, RANK.ordinal());
             int hits = 0;
             for (int px : new int[]{2, 20}) {
-                if (level.getBlockState(s.world(px, 20, 1)).is(dev.awaken.above.AboveBlocks.WARNING_LIGHT.get())) hits++;
-                if (level.getBlockState(s.world(px, 19, 1)).is(dev.awaken.above.AboveBlocks.TRIM.get())) hits++;
+                if (level.getBlockState(s.world(px, 20, 1)).is(AboveBlocks.WARNING_LIGHT.get())) hits++;
+                if (level.getBlockState(s.world(px, 19, 1)).is(AboveBlocks.TRIM.get())) hits++;
                 if (level.getBlockState(s.world(px, 11, 1)).is(net.minecraft.world.level.block.Blocks.POLISHED_DEEPSLATE)) hits++;
             }
             if (hits > bestHits) {
@@ -149,7 +190,7 @@ final class TetherVow {
             // a look once a second, staggered by player
             if ((now + (p.getUUID().hashCode() & 15)) % 20 != 0 || !eligible(p)) return;
             Site s = siteAt(p.level(), p.blockPosition());
-            if (s != null && s.inForecourt(p.getX(), p.getY(), p.getZ())) begin(p, s, now);
+            if (s != null) look(p, s, now);
             return;
         }
         long age = now - v.start;
@@ -161,12 +202,47 @@ final class TetherVow {
             AwakenNet.send(p, top == null ? new AscentPayloads.Vow(LINE, Double.NaN, 0, 0, m.getX() + 0.5, m.getY() + 1.0, m.getZ() + 0.5)
                     : new AscentPayloads.Vow(LINE, top[0], top[1], top[2], m.getX() + 0.5, m.getY() + 1.0, m.getZ() + 0.5));
         } else if (v.stage == LINE) {
-            if (atMast(v.site, p.getX(), p.getY(), p.getZ())) {
+            // kept by rope: a tower to the mast reaches it, but the vow waits for the line (SPEC §17.29)
+            if (atMast(v.site, p.getX(), p.getY(), p.getZ()) && dev.awaken.core.api.ArrivalHooks.byLine(p)) {
                 end(p, v, KEPT);
             } else if (age > CALL_TICKS + MAST_TICKS || p.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(v.site.box().getCenter())) > 64 * 64) {
                 end(p, v, LAPSED);
             }
         }
+    }
+
+    /** In a vault's forecourt: the vow begins if the line is theirs to take, else the vault stirs. */
+    static void look(ServerPlayer p, Site s, long now) {
+        if (!s.inForecourt(p.getX(), p.getY(), p.getZ())) return;
+        if (ready(p, s)) begin(p, s, now);
+        else stir(p, s, now);
+    }
+
+    /** The vault's line is theirs to take: their rank answers it and the door stands open. */
+    static boolean ready(ServerPlayer p, Site s) {
+        return Progression.rank(p).ordinal() >= s.needs().ordinal() && s.doorOpen(p.level());
+    }
+
+    /**
+     * The vault notices someone it isn't ready for: short of its rank, its light rises toward the mast and falls back
+     * ("Its line waits for a D-rank hunter."); ranked but with the door still sealed, its light drifts to the door. At
+     * most once in {@link #STIR_EVERY} per vault and state.
+     */
+    static void stir(ServerPlayer p, Site s, long now) {
+        boolean short_ = Progression.rank(p).ordinal() < s.needs().ordinal();
+        BlockPos vault = s.box().getCenter();
+        Stirred last = STIRRED.get(p.getUUID());
+        if (last != null && last.vault().equals(vault) && last.short_() == short_ && now - last.at() < STIR_EVERY && now >= last.at()) return;
+        STIRRED.put(p.getUUID(), new Stirred(vault, short_, now));
+        if (short_) dev.awaken.core.api.Promises.seen(p, dev.awaken.above.block.DoorCoreBlock.key(s.door()), s.door(), dev.awaken.core.api.Promises.Need.rank(s.needs().label), "A sealed vault");
+        BlockPos to = short_ ? s.mast() : s.door();
+        AwakenNet.send(p, new AscentPayloads.Vow(STIR, s.needs().ordinal(), short_ ? 1 : 0, 0, to.getX() + 0.5, to.getY() + 0.5, to.getZ() + 0.5));
+        dev.awaken.core.DirectorLog.log(p, "ascent", "a vault stirs at " + vault.toShortString() + (short_
+                ? ": its line waits for " + s.needs().label + "-rank" : ": its door is still sealed"));
+    }
+
+    static boolean stirred(ServerPlayer p) {
+        return STIRRED.containsKey(p.getUUID());
     }
 
     /** The vault notices the player (the call). */
@@ -198,6 +274,7 @@ final class TetherVow {
 
     static void forget(ServerPlayer p) {
         LIVE.remove(p.getUUID());
+        STIRRED.remove(p.getUUID());
     }
 
     static boolean running(ServerPlayer p) {

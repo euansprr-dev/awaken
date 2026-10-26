@@ -85,6 +85,7 @@ public final class LivingClient {
             e.register(LivingNet.Shown.TYPE, (m, ctx) -> shown = m.shown());
             e.register(LivingNet.Journal.TYPE, (m, ctx) -> JournalSection.entries = List.copyOf(m.entries()));
             e.register(LivingNet.Tells.TYPE, (m, ctx) -> TELLS = List.copyOf(m.at()));
+            e.register(LivingNet.CampSmoke.TYPE, (m, ctx) -> PulseFx.camp(m.at()));
             e.register(LivingNet.Happenings.TYPE, (m, ctx) -> PulseFx.onTells(m));
         });
         var bus = NeoForge.EVENT_BUS;
@@ -125,10 +126,37 @@ public final class LivingClient {
 
     // ---- events -----------------------------------------------------------------------------------------------------
 
+    /** A place caption waiting for its moment (SPEC §26): the director decides; past {@link #CAPTION_WAIT} it is filed. */
+    private static LivingNet.RegionMsg pendingCaption;
+    private static long captionSince;
+    static final int CAPTION_WAIT = 200;
+
     private static void onRegion(LivingNet.RegionMsg m) {
-        LivingHud.region(m);
-        if (m.caption()) play(LivingContent.REGION_ENTER.get(), 1.0F, 0.7F);
-        if (m.caption() && dev.awaken.core.api.TipHooks.client().wants(TIP_REGION)) dev.awaken.core.api.TipHooks.client().offer(TIP_REGION);
+        if (!m.caption()) {
+            pendingCaption = null; // walked on before it showed: the newer place wins
+            return;
+        }
+        pendingCaption = m;
+        captionSince = ticks;
+        caption();
+    }
+
+    /** Shows the waiting caption if the director gives it the moment (danger always gets it), or files it when stale. */
+    private static void caption() {
+        LivingNet.RegionMsg m = pendingCaption;
+        if (m == null) return;
+        var notices = dev.awaken.core.api.Notices.client();
+        var tier = m.danger() ? dev.awaken.core.api.Notices.Tier.CRITICAL : dev.awaken.core.api.Notices.Tier.IMPORTANT;
+        if (notices.claim(tier, "region")) {
+            pendingCaption = null;
+            LivingHud.region(m);
+            play(LivingContent.REGION_ENTER.get(), 1.0F, 0.7F);
+            if (dev.awaken.core.api.TipHooks.client().wants(TIP_REGION)) dev.awaken.core.api.TipHooks.client().offer(TIP_REGION);
+        } else if (ticks - captionSince > CAPTION_WAIT) {
+            pendingCaption = null;
+            notices.file(dev.awaken.core.api.Notices.Tier.AMBIENT, net.minecraft.network.chat.Component.literal("Entered · " + m.name()),
+                    net.minecraft.network.chat.Component.literal(m.commons() ? "Home · Lv " + m.low() + "–" + m.high() : "Lv " + m.low() + "–" + m.high()));
+        }
     }
 
     private static void onHit(LivingNet.HitFx m) {
@@ -184,6 +212,7 @@ public final class LivingClient {
         Player p = mc.player;
         if (p == null || mc.level == null) return;
         moment(mc, p);
+        if (pendingCaption != null && ticks % 5 == 0) caption();
         if (ticks % 5 == 0) pillars(mc, p);
         plates(mc, p);
         if (ticks % 100 == 0) forgetOld();
@@ -194,6 +223,9 @@ public final class LivingClient {
         if (momentAt != Long.MIN_VALUE / 2 && ticks - momentAt == 44) LensClient.clearOverride(20);
         if (pendingSince < 0) return;
         if (ticks - lastFight < 100 && ticks - pendingSince < 600) return;
+        // the director's quiet (a screen, a scene, a moment on screen) also waits, as long as the fight rule does
+        if (dev.awaken.core.api.Notices.client().quiet() && ticks - pendingSince < 600) return;
+        dev.awaken.core.api.Notices.client().claim(dev.awaken.core.api.Notices.Tier.CRITICAL, "level"); // takes the moment
         boolean full = LivingClientConfig.moment == LivingClientConfig.Moment.FULL;
         LivingHud.pane(pendingLevel, pendingPoints, pendingRank);
         if (full) {

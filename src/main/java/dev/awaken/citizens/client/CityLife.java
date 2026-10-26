@@ -57,6 +57,16 @@ public final class CityLife {
     }
 
     /**
+     * Whether (x, z) lies within {@code margin} blocks outside Carillon's wall (or inside it); false outside a Carillon
+     * world. Wild life (SPEC "Wild life") keeps out: the city's animals are B3b's own.
+     */
+    public static boolean inside(double x, double z, double margin) {
+        if (!known) return false;
+        CityPlan plan = plan();
+        return plan != null && Math.hypot(x - cx, z - cz) < plan.wallRadius + margin;
+    }
+
+    /**
      * A path in the plan file that CityPlan doesn't keep (plan.json's "canal", "millRace": [[x, z], ...] in plan
      * coordinates), read once by whoever needs it; empty if it's missing.
      */
