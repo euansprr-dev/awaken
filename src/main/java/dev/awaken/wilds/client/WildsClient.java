@@ -18,9 +18,14 @@ public final class WildsClient {
         });
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(WardFx.Event.TYPE, (msg, ctx) -> WardFxClient.play(msg));
-            // the band's Ascent page (the progression plan's ladder) if it is there, else the moves the body has
-            e.register(ClimbWard.ShowMe.TYPE, (msg, ctx) -> net.minecraft.client.Minecraft.getInstance().gui.setScreen(
-                    new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.STATUS, "THE ASCENT", "THE BODY")));
+            // the band's Ascent page (the progression plan's ladder) if it is there, else the moves the body has; never
+            // before the Registry has put the band on the wrist (SPEC §16, the ceremony)
+            e.register(ClimbWard.ShowMe.TYPE, (msg, ctx) -> {
+                var mc = net.minecraft.client.Minecraft.getInstance();
+                if (mc.player == null || !dev.awaken.core.api.HoloBand.worn(mc.player)) return;
+                mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(
+                        dev.awaken.progression.client.StatusSections.Tab.STATUS, "THE ASCENT", "THE BODY"));
+            });
         });
     }
 }
