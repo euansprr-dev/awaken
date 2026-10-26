@@ -1,0 +1,159 @@
+# Far Sight 3 in flight over new land (SPEC §20): from Carillon east at about 32 blocks a second, 60 blocks up, for
+# about 2 km, a frame every 5 s and the status (chunks asked for ahead, City Sight's dissolves in as real land
+# replaces the far view's guess). Run: PACK=perf,world TECTONIC=awakened RD=16 LENS=cinematic SLOT_WHO=far-sight \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/farsight3-flight.txt 600
+world fs3fly survival 20261024
+waitworld
+window 1440 900
+cmd awaken opening skip
+wait 60
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd gamemode spectator
+gui 0
+hud off
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd time set 5000
+cmd tp @s ~ ~60 ~ -90 12
+wait 300
+farsight status
+shot fs3f_000
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+shotnow fs3f_010
+farsight status
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+shotnow fs3f_020
+farsight status
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+shotnow fs3f_030
+farsight status
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+shotnow fs3f_040
+farsight status
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+shotnow fs3f_050
+farsight status
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+cmd tp @s ~16 ~ ~ -90 12
+wait 10
+shotnow fs3f_060
+farsight status
+farsight debug 3
+wait 4
+shotnow fs3f_debug
+farsight debug 0
+quit

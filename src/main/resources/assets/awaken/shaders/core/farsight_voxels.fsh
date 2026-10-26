@@ -28,6 +28,7 @@ layout(location = 3) flat in vec3 vTint;
 layout(location = 4) flat in vec3 vNormal;
 layout(location = 5) flat in vec2 vLight;
 layout(location = 6) flat in int vLod;
+layout(location = 7) flat in float vFade;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -54,6 +55,8 @@ void main() {
     }
     // a level fades in over the band past the finer level's reach and out over the band past its own
     float d = length(vRel.xz), dither = bayer4(gl_FragCoord.xy);
+    // a chunk new to City Sight dissolves in as the far terrain under it dissolves out (the coverage mask's complement)
+    if (dither >= vFade) discard;
     if (vLod > 0) {
         float from = VoxelReach[vLod - 1], band = from * VoxelReach.w;
         if (d < from || (d < from + band && dither > (d - from) / band)) discard;

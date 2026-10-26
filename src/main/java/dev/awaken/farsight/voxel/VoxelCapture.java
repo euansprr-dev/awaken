@@ -64,6 +64,7 @@ public final class VoxelCapture {
     /** An overworld chunk loaded (server thread): tracked, and taken if City Sight is drawing. */
     public static void loaded(ChunkPos pos) {
         long key = pos.pack();
+        VoxelAhead.loaded(key);
         synchronized (PENDING) {
             LOADED.add(key);
             if (wanted && started && CITY.add(key)) PENDING.add(key);
@@ -114,6 +115,7 @@ public final class VoxelCapture {
             PENDING.clear();
             CITY.clear();
             DIRTY.clear();
+            VoxelAhead.reset();
             started = false;
             captured = 0;
         }
@@ -166,6 +168,8 @@ public final class VoxelCapture {
         }
         // what was seen before and kept: read back around the player, now and every 10 s as it moves
         int now = overworld.getServer().getTickCount();
+        // and the real land ahead: a couple of chunks past the render distance at a time, while the server keeps up
+        VoxelAhead.tick(overworld, now);
         if (now - lastDiskTick >= 200 && !overworld.players().isEmpty()) {
             lastDiskTick = now;
             var p = overworld.players().getFirst().position();

@@ -42,6 +42,13 @@ final class VoxelLayer implements AutoCloseable {
     static final float KEEP = 1900f, COVER = 2000f;
     /** At most this many quads kept (256 MB of pages): past it, the farthest chunks go first. */
     static final long MAX_QUADS = 16L << 20;
+    /**
+     * A chunk new to City Sight dissolves in over this long (ms) while the far terrain and far trees it replaces
+     * dissolve out in the same dither, so wherever the prediction differed from the real blocks it changes gently,
+     * never pops (Euan: gradual, imperceptible change).
+     */
+    static final long FADE_MS = 1000L;
+    private final IntArrayList fading = new IntArrayList();
     /** The cross-fade between two levels, as a share of the nearer one's reach. */
     static final float BAND = 0.15f;
 
@@ -58,6 +65,9 @@ final class VoxelLayer implements AutoCloseable {
 
     private static final class Chunk {
         int cx, cz, minY, maxY;
+        /** When it first came up (ms), and how far its dissolve in has gone (0..255). */
+        long appeared;
+        int fade;
         final int[] page = new int[VoxelMesher.LEVELS], first = new int[VoxelMesher.LEVELS], count = new int[VoxelMesher.LEVELS];
         /** Per level, each face's first quad within the level's run (down, up, north, south, west, east, end). */
         final int[][] starts = new int[VoxelMesher.LEVELS][7];
@@ -160,6 +170,31 @@ final class VoxelLayer implements AutoCloseable {
         while (sent < budget && (m = finished.poll()) != null) {
             sent += put(enc, m);
         }
+        // the dissolves under way: each chunk's share in the chunk table (City Sight's dither) and the coverage mask (the
+        // far terrain's, its complement)
+        if (!fading.isEmpty()) {
+            long now = net.minecraft.util.Util.getMillis();
+            for (int i = fading.size() - 1; i >= 0; i--) {
+                int s = fading.getInt(i);
+                Chunk c = chunks[s];
+                if (c == null) {
+                    fading.removeInt(i);
+                    continue;
+                }
+                int f = (int) Math.min(255L, (now - c.appeared) * 255L / FADE_MS);
+                if (f == c.fade) continue;
+                c.fade = f;
+                one.clear();
+                one.putInt(c.cx * 16).putInt(levelMinY).putInt(c.cz * 16).putInt(f).flip();
+                enc.writeToBuffer(chunkTable.slice((long) s * 16, 16), one);
+                double dx = c.cx * 16 + 8 - lastCamX, dz = c.cz * 16 + 8 - lastCamZ;
+                if (dx * dx + dz * dz < COVER * COVER) {
+                    coverageBytes.put((c.cz & 255) << 8 | (c.cx & 255), (byte) f);
+                    coverageDirty = true;
+                }
+                if (f == 255) fading.removeInt(i);
+            }
+        }
         if (coverageDirty) {
             coverageDirty = false;
             coverageBytes.clear();
@@ -176,11 +211,9 @@ final class VoxelLayer implements AutoCloseable {
             c = new Chunk();
             chunks[s] = c;
             live.add(s);
-            double dx = m.chunkX() * 16 + 8 - lastCamX, dz = m.chunkZ() * 16 + 8 - lastCamZ;
-            if (dx * dx + dz * dz < COVER * COVER) {
-                coverageBytes.put((m.chunkZ() & 255) << 8 | (m.chunkX() & 255), (byte) 255);
-                coverageDirty = true;
-            }
+            c.appeared = net.minecraft.util.Util.getMillis();
+            c.fade = 0;
+            fading.add(s);
         }
         c.cx = m.chunkX();
         c.cz = m.chunkZ();
@@ -204,7 +237,7 @@ final class VoxelLayer implements AutoCloseable {
             bytes += count * 16;
         }
         one.clear();
-        one.putInt(m.chunkX() * 16).putInt(levelMinY).putInt(m.chunkZ() * 16).putInt(0).flip();
+        one.putInt(m.chunkX() * 16).putInt(levelMinY).putInt(m.chunkZ() * 16).putInt(c.fade).flip();
         enc.writeToBuffer(chunkTable.slice((long) s * 16, 16), one);
         return bytes + 16;
     }
@@ -283,7 +316,7 @@ final class VoxelLayer implements AutoCloseable {
         for (int i = 0; i < live.size(); i++) {
             Chunk c = chunks[live.getInt(i)];
             double dx = c.cx * 16 + 8 - camX, dz = c.cz * 16 + 8 - camZ;
-            if (dx * dx + dz * dz < COVER * COVER) coverageBytes.put((c.cz & 255) << 8 | (c.cx & 255), (byte) 255);
+            if (dx * dx + dz * dz < COVER * COVER) coverageBytes.put((c.cz & 255) << 8 | (c.cx & 255), (byte) c.fade);
         }
         coverageDirty = true;
     }
@@ -306,6 +339,7 @@ final class VoxelLayer implements AutoCloseable {
             p.free.clear();
         }
         finished.clear();
+        fading.clear();
         MemoryUtil.memSet(coverageBytes, 0);
         coverageDirty = true;
     }
@@ -355,7 +389,7 @@ final class VoxelLayer implements AutoCloseable {
                 if (far < from || near > to) continue;
                 if (c.count[l] == 0) continue;
                 // in a fade: inside the band past the finer level's reach, or past its own
-                boolean fading = (l > 0 && near < from * (1f + BAND)) || (l < VoxelMesher.LEVELS - 1 && far > reach[l]);
+                boolean fading = (l > 0 && near < from * (1f + BAND)) || (l < VoxelMesher.LEVELS - 1 && far > reach[l]) || c.fade < 255;
                 int pageFlag = edge || fading ? EDGED : 0;
                 int[] st = c.starts[l];
                 for (int d = 0; d < 6; ) {

@@ -182,7 +182,8 @@ void main() {
     // City Sight draws the real blocks there: the far land steps aside (its coverage holds for 2 km)
     if ((int(FarCam.y + 0.5) & 256) == 0 && length(vRel.xz) < 2000.0) {
         ivec2 world = (FarCamInt.xz >> 4) + ivec2(floor((vRel.xz + FarCam.xz) / 16.0));
-        if (texelFetch(VoxelSampler, world & 255, 0).r > 0.5) discard;
+        // (a chunk dissolving in stands at its share: this land gives way in the complement of its dither)
+        if (texelFetch(VoxelSampler, world & 255, 0).r > bayer4(gl_FragCoord.xy)) discard;
     }
     vec3 reach = vec3(vRel.x, vRel.y - (water ? depth : 0.0), vRel.z);
     // far water stays under the real water too (unless the camera is under the sea): wherever a real section isn't drawn
