@@ -103,19 +103,26 @@ public final class Embers {
     private static void onInteract(PlayerInteractEvent.EntityInteract e) {
         if (!(e.getEntity() instanceof ServerPlayer sp) || e.getHand() != InteractionHand.MAIN_HAND) return;
         if (!(e.getTarget() instanceof dev.awaken.living.wayfarer.Wayfarer w)) return;
-        String who = w.who();
-        if (!who.equals("ilse") && !who.equals("hettie")) return;
-        if (!wants(sp) || !Progression.profile(sp).awakened()) return;
+        if (!Progression.profile(sp).awakened()) return;
         boolean classic = CityBasin.site(sp.level().getServer()).isEmpty();
         if (!classic && Progression.profile(sp).counter("awaken:carillon_registered") <= 0) return;
         boolean chainAhead = dev.awaken.living.api.Quests.active(sp).contains("the_last_delivery")
                 && Progression.profile(sp).counter("awaken:claim/quest/the_last_delivery/ilse") <= 0;
-        if (chainAhead) return;
-        boolean again = HearthService.player(sp).emberGiven;
-        if (!give(sp)) return;
-        say(sp, who.equals("hettie") ? HETTIE_LINE : again ? ILSE_AGAIN : ILSE_LINE);
+        if (chainAhead || !campGives(sp, w.who(), false)) return;
         e.setCanceled(true);
         e.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
+    }
+
+    /**
+     * A camp resident ({@code who}: ilse or hettie) hands over a coal if this player should have one, with their line.
+     * {@code first}: say Ilse's first-night line whatever came before (tours). True when one was given.
+     */
+    public static boolean campGives(ServerPlayer sp, String who, boolean first) {
+        if (!who.equals("ilse") && !who.equals("hettie")) return false;
+        boolean again = HearthService.player(sp).emberGiven && !first;
+        if (!give(sp)) return false;
+        say(sp, who.equals("hettie") ? HETTIE_LINE : again ? ILSE_AGAIN : ILSE_LINE);
+        return true;
     }
 
     /** Classic worlds (no Carillon, no camp errand): the Ember is part of the awakening's kit. */

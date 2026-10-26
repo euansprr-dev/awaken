@@ -31,7 +31,7 @@ final class HomeHud {
         e.registerAbove(VanillaGuiLayers.HOTBAR, Awaken.id("hearth_home"), HomeHud::render);
     }
 
-    static final int WAIT = 200;
+    static final int WAIT = 200, ROOM_WAIT = 600;
     static final float PLACE_IN = 10, PLACE_HOLD = 60, PLACE_OUT = 22, ROOM_IN = 8, ROOM_HOLD = 56, ROOM_OUT = 18;
     private static long ticks;
 
@@ -97,13 +97,16 @@ final class HomeHud {
             }
         }
         if (pendingRoom != null && ticks % 5 == 2) {
-            if (notices.claim(Notices.Tier.AMBIENT, "hearth_room")) {
+            // a room's name waits for its moment while you're still in that room (up to half a minute), else it's filed
+            // (the first two seconds count as there: the room's sync and its caption may arrive in either order)
+            boolean stillThere = ticks - roomSince < 40 || pendingRoom.equals(RoomPanel.here().name());
+            if (stillThere && notices.claim(Notices.Tier.AMBIENT, "hearth_room")) {
                 roomName = RoomPanel.capitalise(pendingRoom);
                 roomGrade = pendingGrade.toUpperCase(java.util.Locale.ROOT) + (pendingPurpose.isEmpty() ? "" : " · " + pendingPurpose.toUpperCase(java.util.Locale.ROOT));
                 roomFrom = ticks;
                 pendingRoom = null;
                 mc.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(HearthContent.SND_ROOM.get(), 1f, 0.35f));
-            } else if (ticks - roomSince > WAIT) {
+            } else if (!stillThere || ticks - roomSince > ROOM_WAIT) {
                 notices.file(Notices.Tier.AMBIENT, Component.literal(RoomPanel.capitalise(pendingRoom)), Component.literal(pendingGrade + " · " + pendingPurpose));
                 pendingRoom = null;
             }

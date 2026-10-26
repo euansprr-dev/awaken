@@ -73,10 +73,31 @@ final class HearthCommands {
                         c.getSource().sendSuccess(() -> Component.literal(given ? "Gave a Hearth Ember" : "No Ember: you have one, or a Hearth"), false);
                         return given ? 1 : 0;
                     }))
+                    .then(Commands.literal("camp").executes(c -> {
+                        // the nearest camp resident hands the coal over as a talk would (the tour's "Ilse gives the Ember")
+                        ServerPlayer sp = c.getSource().getPlayerOrException();
+                        var near = sp.level().getEntitiesOfClass(dev.awaken.living.wayfarer.Wayfarer.class, sp.getBoundingBox().inflate(32),
+                                w -> w.who().equals("ilse") || w.who().equals("hettie"));
+                        near.sort(java.util.Comparator.comparingDouble(w -> w.distanceToSqr(sp)));
+                        var inv = sp.getInventory();
+                        for (int i = 0; i < inv.getContainerSize(); i++) if (inv.getItem(i).is(HearthContent.EMBER_ITEM.get())) inv.setItem(i, net.minecraft.world.item.ItemStack.EMPTY);
+                        String who = near.isEmpty() ? "ilse" : near.getFirst().who();
+                        if (!near.isEmpty()) near.getFirst().getLookControl().setLookAt(sp);
+                        boolean given = Embers.campGives(sp, who, true);
+                        if (given) {
+                            // into the hand, the way it's carried
+                            for (int i = 0; i < inv.getContainerSize(); i++) if (inv.getItem(i).is(HearthContent.EMBER_ITEM.get())) inv.setItem(i, net.minecraft.world.item.ItemStack.EMPTY);
+                            sp.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new net.minecraft.world.item.ItemStack(HearthContent.EMBER_ITEM.get()));
+                        }
+                        return given ? 1 : 0;
+                    }))
                     .then(Commands.literal("set").executes(c -> {
+                        // three blocks ahead, on the ground there (as if used on it)
                         ServerPlayer sp = c.getSource().getPlayerOrException();
                         ServerLevel level = sp.level();
-                        var ground = sp.blockPosition().below();
+                        var ahead = sp.blockPosition().relative(sp.getDirection(), 3);
+                        int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ahead.getX(), ahead.getZ());
+                        var ground = new net.minecraft.core.BlockPos(ahead.getX(), y - 1, ahead.getZ());
                         Optional<String> why = Embers.refusal(sp, level, ground, ground.above());
                         if (why.isPresent()) {
                             c.getSource().sendFailure(Component.literal(why.get()));
