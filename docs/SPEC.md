@@ -1363,8 +1363,58 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   on) is on; otherwise nothing is installed (vanilla renderer: no waving). Marker: every `LeavesBlock` model is wrapped
   after baking with vertex colour alpha 254 (textures untouched). Wind: texels at the block atlas's bottom-right
   corner written each frame (signature, time mod 2048 s, camera, wind, the gust profile along the wind from
-  `terrain.Wind`): 22 texels.
+  `terrain.Wind`; since swaying plants also their amplitudes, the player's feet and whether the world has weather
+  wind): 27 texels.
   Amplitude 0.11 blocks at full wind and gust. `/awaken terrain waving on|off|status` (client).
+- Swaying plants (2026-10-26, Euan: "all things sway with the same wind the trees get"): the same pack, gate, texels
+  and setting as the leaves (`waving_leaves` now covers both and keeps its key, so older settings still apply; nothing
+  moves when the gate says no). Everything rooted that a breeze would move bends in the same wind and gust fronts as
+  the canopy, so a front rolls across a meadow and on through the trees.
+  - Marker (`terrain.PlantSway`, common; baked by `terrain.client.WavingModel` after model baking, parts cached per rule
+    and variant, nothing allocated per block): vertex colour alpha `253 − code`, `code = mode × 8 + level − 1` (the
+    vertex moves level/4 of its mode's amplitude, levels 1–8), 40 for a pad on water; vertices that must not move
+    (a plant's base, a hanging plant's anchor) keep 255, leaves keep 254. Modes: rooted (tips dip as they lean),
+    hanging (tips rise as they swing), water, and wall vines held in the wall's plane (normal x or z, from the quad's
+    face; a vine's ceiling face stays put).
+  - Weight from where a vertex is in its plant, never from the quad, so vertices two parts share agree: rooted
+    `2 (h/2)^1.4` for height h over the root (short grass tip 0.75, tall grass middle 0.75 and top 2: the top half
+    sways more and stays joined), hanging h below the anchor; times the rule's gain (sugar cane 0.45, bamboo 0.5,
+    vines 0.5, azalea 0.5, hanging strands 0.9, twisting vines 0.8, flower beds 3). Stalks and strands count the same
+    run up to 2 blocks below and above while meshing (Sodium's snapshot reaches 2 blocks past its section; further
+    would disagree across section borders): kelp, sugar cane and twisting vines saturate 2 blocks over the root, weeping
+    and cave vines, hanging moss and vines 2 blocks under the anchor, and only bamboo's top 2 blocks bend.
+  - Which blocks (by class: tags are not bound when models bake): short and tall grass, ferns, every flower and tall
+    flower, flower beds, dead and dry bushes, bushes, firefly bushes, saplings and propagules (hanging ones hang),
+    azaleas, crops and stems, nether wart, roots and sprouts, sweet berries, small dripleaf, pitcher plants, cactus
+    flowers, sugar cane, bamboo, vines, cave, weeping and twisting vines, hanging moss, hanging roots, spore blossoms,
+    seagrass, tall seagrass, kelp, lily pads; Awaken's saplings, lumen vines, weepwood tendrils and moonblooms (they
+    extend those classes). Waterlogged plants sway in the current. Still: mushrooms, fungi, sea pickles, leaf litter,
+    corals, cactus, big dripleaf, potted plants, crystal clusters, lumen caps.
+  - Motion (the shader): the offset is a function of world position, weight and time only (no cracks, the base never
+    slides). Air: a lean downwind `s (0.35 + 0.65 s)` plus a swing `(0.3 + 0.5 s)` of 0.72 × 0.75 Hz + 0.28 × 1.3 Hz
+    and a cross-sway at 0.57 Hz (strands 0.45, 0.78 and 0.34 Hz, rippling 0.7 rad a block down their length), × 0.2
+    blocks × weight, s being `Wind.strength` with the gust from the profile the leaves read; phases are fixed in the
+    world (about a radian from one clump to the next, warped, never tied to the turning wind); tips dip or rise by
+    `d²/2w`. Below y 50, fading out by y 30, and in worlds without sky light the wind gives way to a faint draught
+    (s 0.12, no gusts). Grass tips brighten by up to 10% while a gust bends them, a sheen that shows the front rolling
+    across a meadow. Within 1.3 blocks of the player's feet (not a spectator) rooted tips part away (up to 0.32
+    blocks) and press down. Water: a 0.2 Hz surge (and a 0.35 Hz roll) along an axis that turns slowly across the
+    seabed, a wave climbing kelp, 0.16 blocks × weight; never the air wind. Pads bob 0.006–0.016 blocks, rocking a
+    little. All amplitudes are a texel (`/awaken terrain waving plants <air> <water> <sheen> <push>` tunes them live).
+  - Cost: plants sway out to 112 blocks from the camera, fading from 72 (cross models have no faces to cull, so every
+    plant quad is drawn and far ones are most of a meadow's vertices; with no fade a sparse meadow cost +0.3 ms p50).
+    A plant vertex past 112 reads no texel; one inside reads nine (four more within 10 blocks of the camera, for the
+    feet); with both plant amplitudes 0 it stops after five. Texels 22 (air and water amplitude, sheen, weather wind
+    here), 23–25 (the player's feet), 26 (the push). Measured 2026-10-26 (docs/spikes/plant-sway.md; Vulkan, 2880×1800,
+    render distance 16, machine at load 12–18): in a studio meadow with every plant inside the sway radius, the sway
+    within noise against the shader finding no wind (+0.05, −0.03 ms) and the whole override +0.13 and +0.19 ms against
+    Sodium's own shader; in a flower forest +0.30 and +0.16 ms against no wind, leaves' sway included (it has no
+    distance fade). `/awaken terrain waving debug 3` stills and skips the plants alone, to split the two.
+  - Commands: `/awaken terrain waving on|off|status|debug <0..3>|plants ...` covers leaves and plants;
+    `/awaken terrain wind front across|ahead` (showcase) launches one front across the view or from behind the camera,
+    holding the heading the way it rolls, until `wind real`. Tests: `terrain_sway_markers` (every plant kind marked,
+    leaves keep theirs, nothing else is), `terrain_sway_joined` (shared vertices agree for every run length; roots and
+    anchors still).
 - Budgets: forest p50 within the Swift budget at 2880×1800 (the darkest Tectonic forest already measured 8.7 ms on
   2026-10-24, so new foliage pays for itself); any feature ≤ 0.5 ms per chunk on average, hero-tree structures ≤ 2 ms;
   chunk generation and a 64-chunk Distant Horizons build within 20% of plain Tectonic. Features are safe off the main
@@ -2038,6 +2088,12 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     its front where you stand, and is put straight behind it when he has no body near; a staged citizen can't be pushed
     (so never shoves you); the opening's speech shows one line at a time (a new line replaces the old, no stacking); the
     key prompt sits just above the speech; the licence goes into the pack so the band lands in your hand.
+  - One thing on screen at a time (Euan, 2026-10-26): the opening's lines and titles wait in one queue and each takes
+    the screen only when the one before has finished (a line stays 50 ticks to 40 + 2 per character; at most 6 wait,
+    the oldest goes unsaid past that); a prompt shows only when nothing is speaking or waiting. Through the infirmary
+    and the Registry the System's notices (`Notices` hold), the tip system (`TipHooks` hold; the scene's own prompts are
+    its tips there) and vanilla toasts are held; the toasts come back one at a time, 2 s apart, after the scene. A
+    staged citizen's name label doesn't show.
   - **Proposed (Euan to confirm): the Atlas reveal right after the band's first K.** The Holo's boot is the natural
     moment: when the K menu closes the Atlas opens by itself with the run you made this morning (the land prints in, the
     bronze thread draws itself), and Bram says "Your band keeps a map. The city, the way you've run it." The run is sent
@@ -5300,8 +5356,12 @@ light so it glows in the dark, glinting), loot a lump (iron 4-7 raw, diamond
 **The vein gives** (`Veins.give`, client `VeinFx`): breaking a planned heart (after every protection, LOW) opens its
 lode once for the world (`DelveData`, schemaVersion 1): `LODE · <ore> · <blocks left>` through `Finds` (the first a
 moment), a lump of 0.08 of a level × the ore weight's square root × the taper, counters `awaken:lodes_opened`, the
-client's reveal (glass outline in the ore's colour lighting outward with white cracks from the heart at 32 blocks a
-second, a travelling crackle, a kick and hold), and for 30 s the breaker's blows take the lode's blocks in two (speed =
+client's reveal (no outline, no boxes: light runs out from the heart along the vein at 32 blocks a second with a
+travelling crackle; each vein block it reaches flashes from inside its own texture, its faces redrawn additively in the
+ore's colour, whiter in the 7-tick flash, with glowing cracks (`vein_cracks_0..3`) across them and a soft pool on the
+face; rock in front of a buried vein block shows the light bleeding through, its own face lit 42/20/9% through 1/2/3
+blocks, cracked too through one; 3 s full, settling over 2.5 s to a 30% pulse that lasts the window, fading over its
+last 1.2 s; grit and a glint off each open block as the front passes; a kick and hold), and for 30 s the breaker's blows take the lode's blocks in two (speed =
 hardness × 30 / 8, mirrored on the client). The lodes within 64 are sent to each client when the set changes, for the
 glints: a lode block open to the air glints in its ore's colour where block light ≥ 8 or the miner's lamp's beam falls.
 
@@ -5311,8 +5371,14 @@ roof = the natural rock over the top air of each such column within 6 of the hea
 gravel, calcite, dripstone), 10 to 40 of them, nearest first. Never inside a Hearth, a ward, or the city's footprint
 within 48 under its square (its foundations); never if any
 roof block's section holds a solid block a player placed underground (`DelveData` keeps sections below y 64). Warning:
-3 s of dust threads and grit from those stones, a creak, a tremble within 18, "The roof is giving way"; then each stone
-still unchanged falls as a falling block (1.5 damage a block fallen, at most 8) with a rumble.
+3 s: cracks spread over those stones (the game's breaking stages, the first to fall cracking first, all broken through
+by the fall), dust pours from up to 14 seams between them in streams that open and thicken as it nears, grit, a creak
+and a second higher one at 55%, a tremble within 20, "The roof is giving way". Then they let go one after another over
+1.5 s (`SPREAD` 30 ticks, stone i of n at i × 30 / n, nearest the heart first), each still unchanged as a falling block
+(1.5 damage a block fallen, at most 8): a rumble at the first and the last, and on the client a crack and a burst of
+dust where each tore free, a thud and a cloud rolling out along the floor where it lands (its landing time from the
+fall's height), and the view shaking within 20 (hardest as stones hit; the player's camera-kick comfort setting
+scales it). Dust takes at least block light 6 so the cloud reads in an unlit cave.
 
 **The strike's feel** (client `StrikeFeel`): a bite every 4 ticks held (vanilla's rhythm, from NeoForge's client mine
 hold): each ore its own sound (`delve.strike.<ore>`), sparks off hard rock with a pick or mattock (white-hot cooling to

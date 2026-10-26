@@ -574,6 +574,11 @@ public class CitizenBody extends PathfinderMob implements Npc {
         // the crowd decides who has a body
     }
 
+    /** Staged for a scene (the Registry's Bram): his name doesn't float over the scene. */
+    public boolean staged() {
+        return (entityData.get(DATA_FLAGS) & F_STAGED) != 0;
+    }
+
     @Override
     public boolean isPushable() {
         return !fading() && (entityData.get(DATA_FLAGS) & F_STAGED) == 0 && super.isPushable();

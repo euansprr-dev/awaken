@@ -327,6 +327,7 @@ public final class OpeningClient {
         WakeShot.tickPost();
         RegistryScene.tick();
         if (beat == OpeningPayloads.RUN) RunnerEye.tick(mc);
+        holdOthers();
         releaseToasts(mc);
     }
 
@@ -354,7 +355,24 @@ public final class OpeningClient {
     private static long nextToast;
 
     static boolean quiet() {
-        return OpeningCamera.active() || OpeningHud.black > 0.4F || OpeningHud.lidsOn;
+        // the infirmary and the Registry are one scene: nothing else talks over it (Euan, 2026-10-26)
+        return OpeningCamera.active() || OpeningHud.black > 0.4F || OpeningHud.lidsOn || inScene();
+    }
+
+    static boolean inScene() {
+        return beat == OpeningPayloads.WAKE || beat == OpeningPayloads.REGISTRY;
+    }
+
+    private static final Object SCENE = new Object();
+    private static boolean sceneHeld;
+
+    /** The System's notices and the tip system hold for the scene; held toasts come back one at a time after it. */
+    private static void holdOthers() {
+        boolean want = inScene();
+        if (want == sceneHeld) return;
+        sceneHeld = want;
+        dev.awaken.core.api.Notices.client().hold(SCENE, want);
+        dev.awaken.core.api.TipHooks.client().hold(SCENE, want);
     }
 
     private static void onToast(net.neoforged.neoforge.client.event.ToastAddEvent e) {
@@ -366,7 +384,7 @@ public final class OpeningClient {
     private static void releaseToasts(Minecraft mc) {
         if (TOASTS.isEmpty() || quiet() || ticks < nextToast) return;
         mc.gui.toastManager().addToast(TOASTS.removeFirst());
-        nextToast = ticks + 10;
+        nextToast = ticks + 40; // one at a time, room to read each
     }
 
     /** A dimension change shows the loading screen: under the arrival's black it stays black. */
