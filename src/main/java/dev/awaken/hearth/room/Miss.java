@@ -14,8 +14,10 @@ public record Miss(Furniture furniture, BlockPos seed, Leak leak, BlockPos at) {
         ROOF_HOLE,
         /** The covered space runs out through a gap in a wall (or into unloaded land). */
         OPENING,
-        /** Closed, but bigger than a room can be. */
-        TOO_BIG
+        /** Closed, but more open space than a room can hold ({@link RoomScanner#MAX_CELLS}). */
+        TOO_BIG,
+        /** Closed, but wider or taller than a room can be ({@link RoomScanner#MAX_EXTENT} a side). */
+        TOO_WIDE
     }
 
     /** True when {@code at} is a spot worth marking in the world (a gap or a hole), not just the furniture. */

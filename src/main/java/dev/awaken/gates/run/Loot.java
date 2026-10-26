@@ -12,18 +12,24 @@ import net.minecraft.world.item.Items;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Gate loot, by rank and theme. Fortune doubles the rolls; loot bonus perks add a chance of an extra roll. */
+/**
+ * Gate loot, by rank and theme. Fortune doubles the rolls; loot bonus perks add a chance of an extra roll. Gates pay
+ * light (essence, cores, parts, Hearts, gear) and no raw ore beyond their theme's flavour item (SPEC §28.0 decision 8:
+ * metal comes from the deep); the shares the ores had went to essence, Core Shards and provisions.
+ */
 public final class Loot {
     private Loot() {}
 
     private record Entry(Item item, int min, int max, int weight, int minRank) {}
 
     private static final List<Entry> TABLE = List.of(
-            new Entry(Items.IRON_INGOT, 2, 6, 12, 0), new Entry(Items.GOLD_INGOT, 1, 4, 9, 0), new Entry(Items.ARROW, 8, 16, 7, 0),
-            new Entry(Items.COOKED_BEEF, 3, 6, 8, 0), new Entry(Items.BREAD, 3, 6, 6, 0), new Entry(Items.EXPERIENCE_BOTTLE, 2, 5, 6, 0),
-            new Entry(Items.EMERALD, 1, 4, 6, 1), new Entry(Items.GOLDEN_CARROT, 2, 5, 5, 1), new Entry(Items.ENDER_PEARL, 1, 3, 4, 1),
-            new Entry(Items.DIAMOND, 1, 2, 4, 2), new Entry(Items.GOLDEN_APPLE, 1, 2, 3, 2), new Entry(Items.LAPIS_LAZULI, 4, 10, 4, 1),
-            new Entry(Items.DIAMOND, 2, 4, 3, 4), new Entry(Items.NETHERITE_SCRAP, 1, 1, 2, 4), new Entry(Items.NETHERITE_SCRAP, 1, 2, 2, 5));
+            new Entry(Items.ARROW, 8, 16, 7, 0), new Entry(Items.COOKED_BEEF, 3, 6, 8, 0), new Entry(Items.BREAD, 3, 6, 6, 0),
+            new Entry(Items.EXPERIENCE_BOTTLE, 2, 5, 6, 0), new Entry(Items.TORCH, 8, 16, 5, 0),
+            new Entry(Items.GOLDEN_CARROT, 2, 5, 5, 1), new Entry(Items.ENDER_PEARL, 1, 3, 4, 1), new Entry(Items.GOLDEN_APPLE, 1, 2, 3, 2));
+    /** Essence shards in place of the ores the table paid before (by rank, like the cache's own). */
+    private static final int ESSENCE_WEIGHT = 14;
+    /** A Power Core Shard (the Forge's attunement price) from C up. */
+    private static final int CORE_SHARD_WEIGHT = 4, CORE_SHARD_RANK = 2;
 
     static Item themeItem(Theme t) {
         return switch (t) {
@@ -47,15 +53,20 @@ public final class Loot {
 
     private static ItemStack rollOne(Rank rank, Theme theme, RandomSource r) {
         if (r.nextInt(6) == 0) return new ItemStack(themeItem(theme), 1 + r.nextInt(3 + rank.ordinal()));
-        int tot = 0;
+        Item coreShard = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(dev.awaken.Awaken.id("core_shard"));
+        boolean shards = coreShard != Items.AIR && rank.ordinal() >= CORE_SHARD_RANK;
+        int tot = ESSENCE_WEIGHT + (shards ? CORE_SHARD_WEIGHT : 0);
         for (Entry e : TABLE) if (e.minRank <= rank.ordinal()) tot += e.weight;
         int x = r.nextInt(Math.max(1, tot));
+        x -= ESSENCE_WEIGHT;
+        if (x < 0) return new ItemStack(CoreApi.ESSENCE_SHARD.get(), 1 + r.nextInt(2 + rank.ordinal()));
+        if (shards && (x -= CORE_SHARD_WEIGHT) < 0) return new ItemStack(coreShard);
         for (Entry e : TABLE) {
             if (e.minRank > rank.ordinal()) continue;
             x -= e.weight;
             if (x < 0) return new ItemStack(e.item, e.min + r.nextInt(e.max - e.min + 1));
         }
-        return new ItemStack(Items.IRON_INGOT, 2);
+        return new ItemStack(Items.ARROW, 8);
     }
 
     private static ItemStack shards(Rank rank, RandomSource r, int base) {
@@ -107,12 +118,11 @@ public final class Loot {
         return out;
     }
 
-    /** The Treasure Gate's runaway hoard. */
+    /** The Treasure Gate's runaway hoard: a purse of emeralds (the world's coin) and essence, never metal. */
     public static List<ItemStack> treasure(Rank rank, Theme theme, RandomSource r) {
         List<ItemStack> out = new ArrayList<>();
         out.add(new ItemStack(Items.EMERALD, 4 + r.nextInt(6) + rank.ordinal()));
-        out.add(new ItemStack(Items.GOLD_INGOT, 3 + r.nextInt(5)));
-        out.add(shards(rank, r, 4));
+        out.add(shards(rank, r, 7));
         for (int i = 0; i < 3; i++) out.add(rollOne(rank, theme, r));
         if (r.nextDouble() < 0.35) addCore(out, rank, r);
         return out;

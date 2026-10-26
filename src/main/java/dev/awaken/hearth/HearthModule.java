@@ -32,8 +32,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * HEARTH: the home base that grows into a town, the Echo army, trophies, the Training Grounds and the Reassessment
- * trials. See docs/modules/hearth.md and SPEC sections 4.4 and 10.
+ * HEARTH: the home base that grows into a town, from the Ember's first fire to the Anchor; the reading of the rooms you
+ * build, Comfort and Rested; the Echo army, trophies, the Training Grounds and the Reassessment trials. See
+ * docs/modules/hearth.md and SPEC sections 4.4, 10 and 28.
  */
 public final class HearthModule {
     private HearthModule() {}
@@ -43,6 +44,7 @@ public final class HearthModule {
         modBus.addListener(HearthModule::attributes);
         modBus.addListener(HearthModule::creativeTab);
         modBus.addListener(HearthNet::register);
+        modBus.addListener(dev.awaken.hearth.net.HomeNet::register);
 
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(Townsfolk::onReloadListeners);
@@ -51,6 +53,10 @@ public final class HearthModule {
         bus.addListener(HearthModule::onServerTick);
 
         HearthService.init();
+        Embers.init();
+        Rested.init();
+        RoomEffects.init();
+        HomeCrafting.init();
         HearthNow.register();
         dev.awaken.hearth.guide.Guide.init(modBus);
         Offers.init();
@@ -97,6 +103,16 @@ public final class HearthModule {
             }
 
             @Override
+            public boolean tideCalm(ServerLevel level, BlockPos pos) {
+                return RoomEffects.tideCalm(level, pos);
+            }
+
+            @Override
+            public int machineCost(ServerLevel level, BlockPos pos, int amount) {
+                return RoomEffects.machineCost(level, pos, amount);
+            }
+
+            @Override
             public java.util.List<BlockPos> within(ServerLevel level, BlockPos pos, int radius) {
                 java.util.List<BlockPos> out = new java.util.ArrayList<>(1);
                 String dim = level.dimension().identifier().toString();
@@ -122,6 +138,7 @@ public final class HearthModule {
                 .orElse(null));
         HearthCommands.register();
         HearthTests.register();
+        HomeTests.register();
         TogetherHearthTests.register();
         dev.awaken.hearth.guide.GuideTests.register();
     }

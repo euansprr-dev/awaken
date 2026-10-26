@@ -667,6 +667,208 @@ def hearth_ember(frame) -> Canvas:
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+# The carried flame (W1): the Hearth Ember's lantern, the Hearthfire, and their particles.
+# Bell-gold coal light against black iron and soot-dark river stone: warm, small, hand-made.
+
+BELL = ["#3b1a06", "#7a3a0c", "#c2661a", "#f0a23a", "#ffd27a", "#fff1c6"]  # the coal: ember red into bell-gold white
+IRON = ["#0e0d10", "#1a181d", "#26232b", "#35313b", "#4a4552", "#655f6f"]
+
+
+def bell(i):
+    return hex_rgba(BELL[max(0, min(len(BELL) - 1, i))])
+
+
+def iron(i):
+    return hex_rgba(IRON[max(0, min(len(IRON) - 1, i))])
+
+
+def ember_lantern() -> Canvas:
+    """The Ember's lantern, one 16x16 atlas for its model: the cage's side (u0-6 v0-7), its cap (u6-12 v0-6), plain
+    iron for small faces (u12-16 v0-4), the bare coal (u0-4 v8-12) and the glow between the bars (u4-8 v8-12)."""
+    c = Canvas(16, 16)
+    # the cage side: an iron frame round a pane of glass lit gold from the coal low inside it (brightest at the foot,
+    # a white-hot spot where the coal sits), the way a lantern reads at night
+    for y in range(7):
+        for x in range(6):
+            frame = x == 0 or x == 5 or y == 0 or y == 6
+            if frame:
+                c.set(x, y, iron(3 if y == 0 else 2 if x == 0 else 1))
+            else:
+                heat = (y - 1) / 4  # 0 at the top of the pane, 1 at its foot
+                c.set(x, y, bell(3 + round(heat * 2)))
+    c.set(2, 5, bell(5)); c.set(3, 5, bell(5)); c.set(2, 4, bell(5))
+    c.set(1, 1, bell(2)); c.set(4, 1, bell(2))  # the pane's top corners in the frame's shadow
+    # the cap: a riveted iron plate, a vent ring in the middle with the glow coming through
+    for y in range(6):
+        for x in range(6, 12):
+            lx, ly = x - 6, y
+            edge = lx in (0, 5) or ly in (0, 5)
+            c.set(x, y, iron(3 if edge and (lx + ly) % 2 == 0 else 2 if edge else 1))
+    for x, y in ((8, 2), (9, 2), (8, 3), (9, 3)):
+        c.set(x, y, bell(3))
+    for x, y in ((7, 1), (10, 1), (7, 4), (10, 4)):
+        c.set(x, y, iron(4))
+    # plain iron with a worn highlight
+    for y in range(4):
+        for x in range(12, 16):
+            c.set(x, y, iron(2 if (x + y) % 3 else 3))
+    # the bare coal: cracked, bell-gold at its heart
+    rng = rng_for("ember_coal")
+    for y in range(8, 12):
+        for x in range(0, 4):
+            d = math.hypot(x - 1.5, y - 9.5)
+            c.set(x, y, bell(5 if d < 0.8 else 4 if d < 1.5 else 3 if rng.random() < 0.7 else 2))
+    # the glow between the bars (inner faces)
+    for y in range(8, 12):
+        for x in range(4, 8):
+            c.set(x, y, bell(4 if (x + y) % 2 else 3))
+    return c
+
+
+def hearthfire_stones() -> Canvas:
+    """River stones laid in a ring: rounded grey stones, soot in the joints, their tops warmed by the fire."""
+    st = ramp("stone")
+    rng = rng_for("hearthfire_stones")
+    c = Canvas(16, 16)
+    for y in range(16):
+        for x in range(16):
+            c.set(x, y, iron(1))
+    # pack rounded stones of a few sizes into the square
+    stones = []
+    for _ in range(140):
+        cx, cy = rng.uniform(0, 16), rng.uniform(0, 16)
+        r = rng.uniform(1.6, 3.2)
+        if all(math.hypot(cx - sx, cy - sy) > (r + sr) * 0.82 for sx, sy, sr in stones):
+            stones.append((cx, cy, r))
+    for sx, sy, r in stones:
+        tone = rng.choice((2, 3, 3, 4))
+        for y in range(16):
+            for x in range(16):
+                d = math.hypot(x + 0.5 - sx, y + 0.5 - sy) / r
+                if d >= 1:
+                    continue
+                i = tone + (1 if d < 0.45 and y + 0.5 < sy else 0) - (1 if d > 0.8 or y + 0.5 > sy + r * 0.5 else 0)
+                col = st[max(0, min(5, i))]
+                # the fire's warmth on the upper faces
+                if y < 7 and d < 0.85:
+                    col = tuple(round(col[k] + (bell(3)[k] - col[k]) * (0.18 - y * 0.02)) for k in range(3)) + (255,)
+                c.set(x, y, col)
+    return c
+
+
+def hearthfire_ash() -> Canvas:
+    """The fire's bed: dark ash with a few embers still alive in it."""
+    rng = rng_for("hearthfire_ash")
+    n = value_noise(16, 16, rng, scale=4, octaves=2)
+    c = Canvas(16, 16)
+    for y in range(16):
+        for x in range(16):
+            v = n[y][x]
+            c.set(x, y, iron(1 + quantize(v, 3)))
+            if rng.random() < 0.05:
+                c.set(x, y, bell(2 + rng.randrange(2)))
+    return c
+
+
+def hearthfire_coal() -> Canvas:
+    """The Ember's coal in the ring: a black crust split into plates, bell-gold heat showing through the cracks, the
+    plates themselves faintly red where they're thinnest (the middle)."""
+    rng = rng_for("hearthfire_coal")
+    seeds = [(rng.uniform(0, 16), rng.uniform(0, 16)) for _ in range(9)]
+    c = Canvas(16, 16)
+    for y in range(16):
+        for x in range(16):
+            px, py = x + 0.5, y + 0.5
+            ds = sorted(math.hypot(px - sx, py - sy) for sx, sy in seeds)
+            edge = ds[1] - ds[0]
+            centre = math.hypot(px - 8, py - 8) / 8
+            if edge < 0.55:
+                c.set(x, y, bell(5 if centre < 0.45 else 4))
+            elif edge < 1.1:
+                c.set(x, y, bell(3 if centre < 0.6 else 2))
+            else:
+                c.set(x, y, bell(1) if centre < 0.35 and rng.random() < 0.5 else iron(1 + (1 if rng.random() < 0.3 else 0)))
+    return c
+
+
+def hearthfire_flame(frame, frames=8) -> Canvas:
+    """One frame of the Hearthfire's living flame, drawn for crossed planes: three tongues that sway and lick up,
+    bell-gold white at the root, orange, then red at the tips, fading out above."""
+    c = Canvas(16, 16)
+    t = frame / frames * math.tau
+    tongues = ((5.0, 0.0, 9.5), (8.5, 2.1, 12.5), (11.5, 4.2, 8.0))
+    for y in range(16):
+        h = 15 - y  # height above the root
+        for x in range(16):
+            best = 0.0
+            for bx, ph, top in tongues:
+                height = top + 1.6 * math.sin(t * 2 + ph)
+                if h > height:
+                    continue
+                sway = 1.2 * math.sin(t + ph + h * 0.35) * (h / max(1.0, height))
+                width = 2.6 * (1 - (h / max(1.0, height)) ** 1.6) + 0.4
+                d = abs(x + 0.5 - (bx + sway)) / width
+                if d < 1:
+                    best = max(best, (1 - d) * (1 - 0.55 * h / max(1.0, height)))
+            if best <= 0.02:
+                continue
+            i = 5 if best > 0.72 else 4 if best > 0.5 else 3 if best > 0.32 else 2
+            r, g, b, _ = bell(i)
+            c.set(x, y, (r, g, b, int(255 * min(1.0, best * 1.6))))
+    return c
+
+
+def warmth_mote(frame) -> Canvas:
+    """The warmth on the ground: a soft round glow, near white (tinted gold in game), a little different each frame."""
+    c = Canvas(16, 16)
+    rng = rng_for("warmth", frame)
+    r = 7.2 - frame * 0.5
+    for y in range(16):
+        for x in range(16):
+            d = math.hypot(x - 7.5 + rng.uniform(-0.15, 0.15), y - 7.5) / r
+            if d >= 1:
+                continue
+            a = (1 - d) ** 1.8
+            c.set(x, y, (255, 246, 226, int(255 * a)))
+    return c
+
+
+def flame_tongue(frame) -> Canvas:
+    """A tongue of flame for the Hearthfire's particles: tall and bright at first, short and red as it dies."""
+    c = Canvas(8, 8)
+    life = frame / 5
+    height = 7.5 - life * 4
+    for y in range(8):
+        h = 7 - y
+        for x in range(8):
+            if h > height:
+                continue
+            width = 2.4 * (1 - (h / height) ** 1.5) + 0.3
+            d = abs(x + 0.5 - 4) / width
+            if d >= 1:
+                continue
+            v = (1 - d) * (1 - 0.6 * h / height) * (1 - 0.5 * life)
+            i = 5 if v > 0.6 else 4 if v > 0.4 else 3 if v > 0.25 else 2
+            r, g, b, _ = bell(i)
+            c.set(x, y, (r, g, b, int(255 * min(1.0, v * 1.8))))
+    return c
+
+
+def firefly(frame) -> Canvas:
+    """A firefly: a white-hot point in a soft halo (tinted green-gold in game)."""
+    c = Canvas(8, 8)
+    r = (2.6, 1.9)[frame]
+    for y in range(8):
+        for x in range(8):
+            d = math.hypot(x - 3.5, y - 3.5) / r
+            if d >= 1:
+                continue
+            a = (1 - d) ** 1.4
+            c.set(x, y, (255, 255, 240, int(255 * min(1.0, a * 1.4))))
+    return c
+
+
+# ---------------------------------------------------------------------------------------------------------------------
 # 64x64 player skins (classic wide arms)
 
 PARTS = {
@@ -1430,3 +1632,16 @@ def build(out):
         out.particle(f"echo_wisp_{i}", echo_wisp(i))
     for i in range(3):
         out.particle(f"hearth_ember_{i}", hearth_ember(i))
+
+    # the carried flame (W1)
+    out.item("hearth_ember", ember_lantern())
+    out.block("hearthfire_stones", hearthfire_stones())
+    out.block("hearthfire_ash", hearthfire_ash())
+    out.block("hearthfire_coal", hearthfire_coal())
+    out.block("hearthfire_flame", [hearthfire_flame(i) for i in range(8)], frametime=2)
+    for i in range(4):
+        out.particle(f"hearth_warmth_{i}", warmth_mote(i))
+    for i in range(6):
+        out.particle(f"hearth_flame_{i}", flame_tongue(i))
+    for i in range(2):
+        out.particle(f"hearth_firefly_{i}", firefly(i))

@@ -19,13 +19,13 @@ import net.neoforged.neoforge.common.NeoForge;
 
 import java.util.Locale;
 
-/** Client side of the living land (SPEC 15): the wind as this client sees it, waving leaves, falling leaves, rustle. */
+/** Client side of the living land (SPEC 15): the wind as this client sees it, waving leaves and plants, falling leaves, rustle. */
 public final class TerrainClient {
     private TerrainClient() {}
 
     public static void init(IEventBus modBus) {
         TerrainClientConfig.register();
-        WavingLeaves.init(modBus);
+        Waving.init(modBus);
         modBus.addListener(AddClientReloadListenersEvent.class, e -> e.addListener(Awaken.id("lands_air"),
                 (ResourceManagerReloadListener) manager -> {
                     AirTable.reload(manager);
@@ -39,8 +39,9 @@ public final class TerrainClient {
     private static void frame(RenderFrameEvent.Pre e) {
         Minecraft mc = Minecraft.getInstance();
         long t0 = System.nanoTime();
-        ClientWind.update(mc, e.getPartialTick().getGameTimeDeltaPartialTick(false));
-        WavingLeaves.frame(mc);
+        float partialTick = e.getPartialTick().getGameTimeDeltaPartialTick(false);
+        ClientWind.update(mc, partialTick);
+        Waving.frame(mc, partialTick);
         FallingLeaves.windNanos += System.nanoTime() - t0;
         FallingLeaves.frame();
     }
@@ -52,8 +53,8 @@ public final class TerrainClient {
 
     /**
      * {@code /awaken terrain leaves status|amount <off|low|normal|high>|biome <id|clear>} and
-     * {@code /awaken terrain wind status|force <steady> <gust>|real} (client side; the biome and force lines are
-     * measuring and showcase aids).
+     * {@code /awaken terrain wind status|force <steady> <gust>|front <across|ahead>|real} (client side; the biome, force
+     * and front lines are measuring and showcase aids).
      */
     private static void commands(RegisterClientCommandsEvent e) {
         e.getDispatcher().register(Commands.literal(Awaken.MODID).then(Commands.literal("terrain")
@@ -81,16 +82,30 @@ public final class TerrainClient {
                 .then(Commands.literal("wind")
                         .then(Commands.literal("status").executes(c -> say(windStatus())))
                         .then(Commands.literal("real").executes(c -> {
-                            ClientWind.forceSteady = -1F;
-                            ClientWind.forceGust = 0F;
+                            ClientWind.real();
                             return say("Wind: the real wind");
                         }))
+                        // one gust front, for showing the sway: across the view from the left, or ahead from behind you
+                        .then(Commands.literal("front")
+                                .then(Commands.literal("across").executes(c -> front(false)))
+                                .then(Commands.literal("ahead").executes(c -> front(true))))
                         .then(Commands.literal("force").then(Commands.argument("steady", FloatArgumentType.floatArg(0F, 1F))
                                 .then(Commands.argument("gust", FloatArgumentType.floatArg(0F, 1F)).executes(c -> {
                                     ClientWind.forceSteady = FloatArgumentType.getFloat(c, "steady");
                                     ClientWind.forceGust = FloatArgumentType.getFloat(c, "gust");
                                     return say("Wind: forced " + windStatus());
                                 })))))));
+    }
+
+    private static int front(boolean ahead) {
+        Minecraft mc = Minecraft.getInstance();
+        if (ClientWind.field() == null) return say("Wind: no world");
+        var cam = mc.gameRenderer.mainCamera();
+        double yaw = Math.toRadians(cam.yRot());
+        float fx = (float) -Math.sin(yaw), fz = (float) Math.cos(yaw); // where the camera looks
+        float dx = ahead ? fx : -fz, dz = ahead ? fz : fx;              // ahead, or to the camera's right
+        ClientWind.front(cam.position().x, cam.position().z, dx, dz, ahead ? 8 : 28);
+        return say(String.format(Locale.ROOT, "Wind: a front rolls toward %.0f deg", Math.toDegrees(Math.atan2(dz, dx))));
     }
 
     private static String windStatus() {

@@ -132,10 +132,26 @@ public final class CraftEvents {
             Crafts.gain(p, Craft.FORAGING, 4, 0.5);
             return;
         }
-        if (Herbs.ore(s)) Crafts.gain(p, Craft.MINING, Herbs.deep(s) ? 15 : 10, 1);
+        if (Herbs.ore(s)) Crafts.gain(p, Craft.MINING, oreXp(s), 1);
     }
 
-    /** Clean Strike and Deep Vein: an ore's drops, sometimes one more; Wild Larder: mushrooms one more. */
+    /**
+     * Mining craft XP for an ore: 10 (15 in deepslate) by its rarity (the square root of its Hunter XP weight, so coal
+     * pays 7 and diamond 25); a lode's heart pays 60.
+     */
+    static double oreXp(BlockState s) {
+        if (BuiltInRegistries.BLOCK.getKey(s.getBlock()).getPath().endsWith("_lode_heart")) return 60;
+        var kind = dev.awaken.progression.ProgressionModule.OreXp.of(s);
+        double rarity = kind == null ? 1 : Math.max(0.7, Math.min(2.5, Math.sqrt(kind.weight)));
+        return (Herbs.deep(s) || kind == dev.awaken.progression.ProgressionModule.OreXp.DEEPGLASS ? 15 : 10) * rarity;
+    }
+
+    private static boolean deepglass(BlockState s) {
+        var id = BuiltInRegistries.BLOCK.getKey(s.getBlock());
+        return id.getNamespace().equals(dev.awaken.Awaken.MODID) && id.getPath().equals("deepglass");
+    }
+
+    /** Clean Strike: an ore's drops, sometimes one more; Deepglass Cutter: a shard more; Wild Larder: mushrooms one more. */
     public static void onBlockDrops(BlockDropsEvent e) {
         if (!(e.getBreaker() instanceof ServerPlayer p) || e.getDrops().isEmpty()) return;
         BlockState s = e.getState();
@@ -143,7 +159,7 @@ public final class CraftEvents {
         boolean extra = false;
         if (Herbs.ore(s)) {
             extra = Crafts.has(p, Craft.MINING, "clean_strike") && r.nextFloat() < 0.15F
-                    || Herbs.deep(s) && Crafts.has(p, Craft.MINING, "deep_vein") && r.nextFloat() < 0.25F;
+                    || deepglass(s) && Crafts.has(p, Craft.MINING, "deepglass_cutter");
         } else if (s.is(Blocks.RED_MUSHROOM) || s.is(Blocks.BROWN_MUSHROOM)) {
             extra = Crafts.has(p, Craft.FORAGING, "wild_larder");
         }
@@ -153,10 +169,10 @@ public final class CraftEvents {
         }
     }
 
-    /** Deep Ear: stone and deepslate break a tenth faster. */
+    /** Deepglass Cutter: Deepglass breaks twice as fast (both sides read the synced crafts, so bar and break agree). */
     public static void onBreakSpeed(PlayerEvent.BreakSpeed e) {
         BlockState s = e.getState();
-        if ((s.is(BlockTags.BASE_STONE_OVERWORLD)) && Crafts.has(e.getEntity(), Craft.MINING, "deep_ear")) e.setNewSpeed(e.getNewSpeed() * 1.1F);
+        if (deepglass(s) && Crafts.has(e.getEntity(), Craft.MINING, "deepglass_cutter")) e.setNewSpeed(e.getNewSpeed() * 2F);
     }
 
     /** Berry bushes and glow berries picked by hand: foraging, and Wild Larder's one more. */

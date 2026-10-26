@@ -3,16 +3,16 @@
   "category": "equipment",
   "group": "awaken_hunter_chestplate",
   "key": {
-    "B": "#awaken:hunter_bind_a",
     "C": "#awaken:hunter_core_a",
     "H": "#awaken:hunter_hide_a",
     "L": "awaken:lord_heart",
+    "M": "#awaken:tier_metal_a",
     "S": "awaken:essence_shard"
   },
   "pattern": [
     "HLH",
     "CSC",
-    "HBH"
+    "MMM"
   ],
   "result": {
     "id": "awaken:lordscale_chestplate"

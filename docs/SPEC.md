@@ -665,7 +665,8 @@ Plan v2 · Hunter gear (details in docs/modules/gear.md):
   Numbers live in `gear/SetBonus`.
 - A focus adds +6/9/12/15% power damage in either hand (+2% per temper level), under the boss cap.
 - Crafting-table recipes with hook tags `#awaken:hunter_<hide|core|bind>_<e|d|c|b>`; new creature families add their
-  materials to these tags from their own merge folders. E-tier is craftable from first-hour creature drops.
+  materials to these tags from their own merge folders. E-tier is craftable from first-hour creature drops. From D up
+  every piece also needs its tier's metal from the deep (`#awaken:tier_metal_<t>`, §28.3).
 - Level road `hunter_gear_e/d/c/b` at 3, 13, 22, 42. Now line priority 25, only for an upgrade.
 
 Plan v2 · power targeting and visuals (details in docs/modules/powers.md, power-fx.md):
@@ -1371,8 +1372,58 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   on) is on; otherwise nothing is installed (vanilla renderer: no waving). Marker: every `LeavesBlock` model is wrapped
   after baking with vertex colour alpha 254 (textures untouched). Wind: texels at the block atlas's bottom-right
   corner written each frame (signature, time mod 2048 s, camera, wind, the gust profile along the wind from
-  `terrain.Wind`): 22 texels.
+  `terrain.Wind`; since swaying plants also their amplitudes, the player's feet and whether the world has weather
+  wind): 27 texels.
   Amplitude 0.11 blocks at full wind and gust. `/awaken terrain waving on|off|status` (client).
+- Swaying plants (2026-10-26, Euan: "all things sway with the same wind the trees get"): the same pack, gate, texels
+  and setting as the leaves (`waving_leaves` now covers both and keeps its key, so older settings still apply; nothing
+  moves when the gate says no). Everything rooted that a breeze would move bends in the same wind and gust fronts as
+  the canopy, so a front rolls across a meadow and on through the trees.
+  - Marker (`terrain.PlantSway`, common; baked by `terrain.client.WavingModel` after model baking, parts cached per rule
+    and variant, nothing allocated per block): vertex colour alpha `253 − code`, `code = mode × 8 + level − 1` (the
+    vertex moves level/4 of its mode's amplitude, levels 1–8), 40 for a pad on water; vertices that must not move
+    (a plant's base, a hanging plant's anchor) keep 255, leaves keep 254. Modes: rooted (tips dip as they lean),
+    hanging (tips rise as they swing), water, and wall vines held in the wall's plane (normal x or z, from the quad's
+    face; a vine's ceiling face stays put).
+  - Weight from where a vertex is in its plant, never from the quad, so vertices two parts share agree: rooted
+    `2 (h/2)^1.4` for height h over the root (short grass tip 0.75, tall grass middle 0.75 and top 2: the top half
+    sways more and stays joined), hanging h below the anchor; times the rule's gain (sugar cane 0.45, bamboo 0.5,
+    vines 0.5, azalea 0.5, hanging strands 0.9, twisting vines 0.8, flower beds 3). Stalks and strands count the same
+    run up to 2 blocks below and above while meshing (Sodium's snapshot reaches 2 blocks past its section; further
+    would disagree across section borders): kelp, sugar cane and twisting vines saturate 2 blocks over the root, weeping
+    and cave vines, hanging moss and vines 2 blocks under the anchor, and only bamboo's top 2 blocks bend.
+  - Which blocks (by class: tags are not bound when models bake): short and tall grass, ferns, every flower and tall
+    flower, flower beds, dead and dry bushes, bushes, firefly bushes, saplings and propagules (hanging ones hang),
+    azaleas, crops and stems, nether wart, roots and sprouts, sweet berries, small dripleaf, pitcher plants, cactus
+    flowers, sugar cane, bamboo, vines, cave, weeping and twisting vines, hanging moss, hanging roots, spore blossoms,
+    seagrass, tall seagrass, kelp, lily pads; Awaken's saplings, lumen vines, weepwood tendrils and moonblooms (they
+    extend those classes). Waterlogged plants sway in the current. Still: mushrooms, fungi, sea pickles, leaf litter,
+    corals, cactus, big dripleaf, potted plants, crystal clusters, lumen caps.
+  - Motion (the shader): the offset is a function of world position, weight and time only (no cracks, the base never
+    slides). Air: a lean downwind `s (0.35 + 0.65 s)` plus a swing `(0.3 + 0.5 s)` of 0.72 × 0.75 Hz + 0.28 × 1.3 Hz
+    and a cross-sway at 0.57 Hz (strands 0.45, 0.78 and 0.34 Hz, rippling 0.7 rad a block down their length), × 0.2
+    blocks × weight, s being `Wind.strength` with the gust from the profile the leaves read; phases are fixed in the
+    world (about a radian from one clump to the next, warped, never tied to the turning wind); tips dip or rise by
+    `d²/2w`. Below y 50, fading out by y 30, and in worlds without sky light the wind gives way to a faint draught
+    (s 0.12, no gusts). Grass tips brighten by up to 10% while a gust bends them, a sheen that shows the front rolling
+    across a meadow. Within 1.3 blocks of the player's feet (not a spectator) rooted tips part away (up to 0.32
+    blocks) and press down. Water: a 0.2 Hz surge (and a 0.35 Hz roll) along an axis that turns slowly across the
+    seabed, a wave climbing kelp, 0.16 blocks × weight; never the air wind. Pads bob 0.006–0.016 blocks, rocking a
+    little. All amplitudes are a texel (`/awaken terrain waving plants <air> <water> <sheen> <push>` tunes them live).
+  - Cost: plants sway out to 112 blocks from the camera, fading from 72 (cross models have no faces to cull, so every
+    plant quad is drawn and far ones are most of a meadow's vertices; with no fade a sparse meadow cost +0.3 ms p50).
+    A plant vertex past 112 reads no texel; one inside reads nine (four more within 10 blocks of the camera, for the
+    feet); with both plant amplitudes 0 it stops after five. Texels 22 (air and water amplitude, sheen, weather wind
+    here), 23–25 (the player's feet), 26 (the push). Measured 2026-10-26 (docs/spikes/plant-sway.md; Vulkan, 2880×1800,
+    render distance 16, machine at load 12–18): in a studio meadow with every plant inside the sway radius, the sway
+    within noise against the shader finding no wind (+0.05, −0.03 ms) and the whole override +0.13 and +0.19 ms against
+    Sodium's own shader; in a flower forest +0.30 and +0.16 ms against no wind, leaves' sway included (it has no
+    distance fade). `/awaken terrain waving debug 3` stills and skips the plants alone, to split the two.
+  - Commands: `/awaken terrain waving on|off|status|debug <0..3>|plants ...` covers leaves and plants;
+    `/awaken terrain wind front across|ahead` (showcase) launches one front across the view or from behind the camera,
+    holding the heading the way it rolls, until `wind real`. Tests: `terrain_sway_markers` (every plant kind marked,
+    leaves keep theirs, nothing else is), `terrain_sway_joined` (shared vertices agree for every run length; roots and
+    anchors still).
 - Budgets: forest p50 within the Swift budget at 2880×1800 (the darkest Tectonic forest already measured 8.7 ms on
   2026-10-24, so new foliage pays for itself); any feature ≤ 0.5 ms per chunk on average, hero-tree structures ≤ 2 ms;
   chunk generation and a 64-chunk Distant Horizons build within 20% of plain Tectonic. Features are safe off the main
@@ -1979,7 +2030,8 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   doorways; he walks on when you're within 4.5 of him, waits and nudges past 9, says "Habit, I know" once if you run
   ahead) → READ (as before) → SIGN (at the desk, the counter's free south end; use signs) → BAND (Bram holds it out over
   the counter; use takes it) → WEAR (the band is in your hands, the Holo dark until you put it on the wrist slot) → BOOT
-  (the boot on the wrist; the inventory closes itself 0.7 s after it goes on) → BRIEF (his three lines) → OPEN ("Go on,
+  (the boot on the wrist; the inventory closes itself 0.7 s after it goes on) → BRIEF (his three lines, then the camp: "The bells hold the city. Hunters hold the wilds. Ilse at the camp
+  keeps a fire for new licences.", whose Ember founds a Hearth, §28) → OPEN ("Go on,
   open it": the K prompt and `TipHooks` tip `awaken:holo/open` show only now) → STATUS → ATLAS → POWER → DIRECTIVE →
   YOURS. Waiting steps nudge every 30 s (at most three); without a client every step moves on by itself.
   - Bram is staged through `CitizenHooks.stage(level, "bram", at, yaw, act, prop)` (citizens role STAGED; lapses if not
@@ -3793,9 +3845,13 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   - Foraging: Herb Glint (client: a sea-green shimmer on ripe plants within 16), Wild Larder (+1 berries, glow berries,
     mushrooms), Root Sense (6% ripe), Seed Keeper (grass 4%: pumpkin, melon, beetroot or torchflower seeds), Bloom (by
     day among 3+ flowers, a Bloom Sprite comes, 30% each 10 s, none within 16), Wildheart (Regeneration in forests).
-  - Mining: Clean Strike (ores +1 15%), Ore Sense (client: every 4 s with a pick in hand, ores within 6 pulse through
-    stone as glass outlines, 3 s), Vein Sight (Ore Sense 10), Deep Ear (stone and deepslate ×1.1 break speed), Deep Vein
-    (deepslate ores +1 25%), Heart of Stone (below y 0, damage ×0.85).
+  - Mining (fixed by W2, §28.3): Clean Strike (ores +1 15%), Ore Sense (client: every 4 s with a pick or Hunter mattock
+    in hand, ores within 6 pulse through stone as glass outlines, 3 s), Vein Sight (each ore Ore Sense finds, its whole
+    vein outlined: same ore through the 26 neighbours, 20 out, 192 blocks), Deep Ear (client: underground with a pick,
+    every 3 s, an open cave or Deepglass behind two or more blocks of rock within 12 plays a soft sound from where it
+    is), Deepglass Cutter (Deepglass breaks ×2 and gives a shard more; replaces Deep Vein and the planned "alloy from
+    deepslate"), Heart of Stone (below y 0, damage ×0.85). Mining keeps its own pace: only its Hunter-level share is
+    budgeted (`mine`), its craft XP is not cut; every craft's XP is × (1 + perk `awaken:craft_rate`).
   - Fishing: Calm Water (+1 fish 20%), Shimmer (a treasure 10%: name tag, saddle, nautilus shell, book, bottle o'
     enchanting), Deep Lungs (air lasts twice as long), Storm Caller (+1 in the rain), Pearl Diver (prismarine shard 8%,
     ender pearl 2%), Leviathan Line (catches pay the Hunter level twice).
@@ -4764,13 +4820,13 @@ it ("MARKED · Gatewrought Glaive · Rebuke"). Tooltips list each Mark and what 
 Test `arms_marks`.
 
 **The Forge** (S7, `ArmsForge`): sneak and use Hearth's Forge (any placed `awaken:forge`; a plain use stays Hearth's
-tempering and upgrades). Holding one of our weapons: attune it to a Force named by the catalyst in the off hand (Blaze
-Powder Heat, a Copper Ingot Charge, an Ender Pearl Gravity, a Ghast Tear Spirit, Packed Ice Frost) for 6 essence, a
-Core Shard and the catalyst; re-attuning replaces it. An attuned weapon's Mark riders take its Force, and it primes both
+tempering and upgrades). Holding one of our weapons: attune it to a Force named by the catalyst in the off hand (since
+W2, §28.3: Sunshard Heat, Frostspar Frost, a Fault Seam Gravity, a Copper Ingot Charge, a Deepglass Shard Spirit) for 6
+essence, a Core Shard and the catalyst; re-attuning replaces it. An attuned weapon's Mark riders take its Force, and it primes both
 ways: a landed hit makes the next power within 3 s cost 15% less (with a Weave's 30%: ×0.7×0.85), and a landed power of
 its Force makes the next blow within 3 s land ×1.25 with the Force's touch (Heat burns 3 s, Frost slows, Charge 6
 posture, Gravity lifts, Spirit heals 1.5). With an empty hand: the Blueprints, one design each use in turn, each for 4
-paper, 2 iron and an essence shard. Every style but the Longsword needs its Blueprint at the crafting table: the
+paper, a lapis (ink, since W2) and an essence shard. Every style but the Longsword needs its Blueprint at the crafting table: the
 Blueprint sits in a free cell of the style's own shape (tools/art/specs/arms_weapons.py `blueprint_pattern`; `python3
 tools/art/specs/arms_weapons.py recipes` rewrites only the recipes) and comes back out of the grid. Blueprint art: the
 style's Wildhide silhouette in white line on blueprint paper (tools/arms/blueprints.py). Dev: `/awaken arms attune
@@ -5169,6 +5225,312 @@ behaves as before (its `citizens_` and `city_` tests unchanged in what they asse
   loaded chunks, over air: W3's painter may place them itself), and a re-sent lamp list on re-registration (appended
   twice on clients).
 
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 28. Between the Gates (home, people, below; plan docs/world-depth/PLAN.md, page https://claude.ai/artifact/ATZfZSczLg95kNSgnLF42M; Euan approved all of it 2026-10-26)
+
+Euan, 2026-10-26: "Go ahead with all recommendations." PLAN.md is the long form and its audits (`docs/world-depth/
+audit-*.md`) are the facts it was designed against; this section is what builders hold to. (§27 is The Way Forward, on
+pack/progression.)
+
+### 28.0 Decisions (approved)
+1. The Hearth starts on the first evening: Ilse gives the **Hearth Ember** at the Wayfarer camp (the end of The Way
+   Forward's first thread); setting it down founds a **Tier 0 Hearthfire** (radius 24). The Lord's Heart still makes the
+   Anchor (Tier I) on that fire.
+2. The Hearth reads what you build: every closed room read on six readings (closed, light, warmth, room to live, made
+   with care, detail and comfort; best of each kind counts), graded Bare / Snug / Fine / Grand (the average, never more
+   than one step above the weakest), named (grade, main material, purpose, or a sign inside), its name shown once as an
+   AMBIENT caption; the glance reads the room you stand in; Comfort sets Rested; rooms do things (PLAN 4.6); people move
+   in when you know them, a spare Snug bedroom stands and their trade has its room.
+3. AWAKEN's own settlements replace vanilla villages in new worlds (hamlet, village, town, special kinds), built on
+   Carillon's people engine made multi-settlement (with the Carillon session) and the city's grammar, with interiors
+   (shared with Carillon B4); the first hamlet placed on purpose 700-1,100 from Carillon up the camp road.
+4. Village people are citizens, not vanilla villagers; vanilla villagers leave new worlds (iron farms and trading halls
+   with them); a town scribe sells enchanted books.
+5. The emerald is the coin of the world; Carillon's planned bell marks are dropped; `EconomyHooks` is installed with it.
+6. Troubles: caused by world state, found never listed, ≤ 1 per village and ≤ 2 within 1,500 of a player, none in a
+   world's first two hours or inside a Hearth; missable with a lasting cost, never a dead end or a named death; always
+   paid; world option "calm villages". Launch set of eight (PLAN 6.3).
+7. Hide from the hunt, metal from the deep, light from the gates: from D up every forged weapon, Hunter armour piece and
+   mattock needs its tier's mineral with no alternative: D iron, C diamond, B amethyst + Deepglass, A netherite,
+   S starmetal; E stays hide and bone. Gatewrought rises to 20 armour and 2.0 toughness.
+8. Gates pay no raw ore beyond their theme's flavour; the gate market stops selling diamonds; the Mine Echo works a real
+   mine head (W6) instead of rolling dice.
+9. New finds: Deepglass (seeps below y 0 and the Descent's walls; diamond edge to cut), starmetal (fallen stars), bell
+   bronze (copper + amethyst), lodes with a heart (vanilla ores in 20-120-block veins). The Lands' crystals become
+   attunement catalysts (Heat Sunshard, Frost Frostspar, Gravity Fault Seam; Charge copper; Spirit Deepglass); lapis is
+   ink (Blueprints: 4 paper, 1 lapis, 1 essence).
+10. Mining's feel: every ore its own strike sound, sparks, a hit on the last blow; the vein gives when a heart breaks;
+    the charged heavy strike (bore three along the aim); rare, warned cave-ins (never in a Hearth or on placed blocks);
+    the Tuning Fork, pitons and Runner's rope, the miner's lamp, rope fittings (W5).
+11. Caves: vanilla's generator stays; cave places (sinkholes, the Delvers' mines, seeps, chutes, grottos, joined lairs,
+    vents), the rappel (with the Ascent), cave sound and Lens looks, names, a way home; every place has a route that
+    needs no rope and passes M44's five tests (a rule, a resource, a sensory set, a story entrance, a route).
+12. This plan takes Living Wilds G (settlers, your named village, roads) and F's underground secrets and treasure maps;
+    Living Wilds F keeps wonders and legendary beasts.
+13. Order: W1 and W2 now as two builders; then W0 and W3 with Carillon, W5 alongside; W4, W6; W7 last.
+
+### 28.1 Phases and who touches what (keep two builders off the same files)
+| Phase | Owns (writes) | Reads / asks |
+|---|---|---|
+| **W1 The carried flame** | `hearth/**` (the Ember, Tier 0, the reading, room kinds of PLAN 4.6 except the Mine head, the room glance's data, Comfort, Rested, chests-at-home crafting, the 4.9 fixes, a coal per temper in `hearth/Upgrades`), `src/main/merge/hearth/`, the Ember's line and reward in `data/awaken/awaken/quest/the_last_delivery.json` (agreed with the progression session, which builds the first thread), the room glance's client panel | `core.api.Notices` (captions), `Progression.addPerkSource` (Rested: `awaken:energy_regen`, `awaken:craft_rate`), The Way Forward's glance when it exists |
+| **W2 Metal from the deep** | new module `delve` (`dev.awaken.delve`, `src/main/merge/delve/`): lodes and hearts, Deepglass, starmetal, bell bronze, the strike's feel (client), Tuning Fork, pitons and Runner's rope, miner's lamp; tier metals in `gear/**` and Arms' rows and recipes (agreed with the Arms session); `arms/ArmsForge` catalysts and Blueprints; `gates/run/Loot.java`, `gates/run/Rooms.java` (handouts); ore XP in `progression/ProgressionModule.java`; `living/craft/**` and `living/client/CraftFx.java` (Mining craft fixes, reading `awaken:craft_rate`); fallen-star loot; Deepglass in `descent/world/Palette.java` | nothing of W1's |
+| W0, W3 | `citizens`, `city` (with Carillon); new module `village` | |
+| W4 | `village`; `living/pulse`, `living/camp` targets (with Living Wilds) | |
+| W5 | `delve` cave places; `body/ascent` rappel and rope fittings (with the Ascent); Lens looks; core audio's cave soundscape | |
+| W6 | `hearth` settlers, tiers by reading, the Mine head and the Mine Echo's rework, the named village, the kit craftable | |
+| W7 | `village` roads, inns, towns | |
+
+Shared ids (fixed now so parallel builders agree): items `awaken:hearth_ember`, `awaken:deepglass` (the block's item),
+`awaken:deepglass_shard`, `awaken:raw_starmetal`, `awaken:starmetal_ingot`, `awaken:bell_bronze_ingot`,
+`awaken:tuning_fork`, `awaken:piton`, `awaken:runner_rope`, `awaken:miners_lamp`; tags `#awaken:tier_metal_<d|c|b|a|s>`
+(the signature minerals, used by gear and Arms recipes); perks `awaken:craft_rate` (a craft-XP multiplier, read by
+`living.craft`) and the existing `awaken:energy_regen`; test prefixes `hearth_` (W1) and `delve_` (W2).
+
+Wired after both W1 and W2 merge (one small follow-up, never inside either phase, so neither builder edits the
+other's files): the Study halves the Blueprints' paper (`arms/ArmsForge`), the Greenhouse triples herb ripeness
+(`living/craft/Herbs`). W2 reads the perk `awaken:craft_rate` by its id, so Rested's craft bonus needs no wiring.
+
+### 28.2 W1 as built
+Branch `pack/world-depth-w1`. Module doc: `docs/modules/hearth.md` ("The carried flame"). Tests: `hearth_ember_founds`,
+`hearth_room_grades`, `hearth_rested` (and every older `hearth_` test, `hearth_guide_matches_roomtype` updated to the new
+kinds). Tour: `tools/autopilot/world-depth-w1.txt`.
+
+**The Hearth Ember** (`awaken:hearth_ember`, `hearth/ember/EmberItem`, `hearth/Embers`). A 3D item (vanilla lantern
+proportions, its cage emissive: `models/item/hearth_ember.json`, texture from `tools/art/specs/hearth.py`). Carried in
+either hand: a pool of light on the ground (radius 5.2, 0.34) and a halo at the lantern, drawn as a source of
+`citizens.client.CityGlow` (`hearth/client/HomeClient.GLOW`; no light block). One per player: a spare goes out and none is
+kept once your fire burns (checked every 2 s while carried); kept through death (`LivingDropsEvent`, back on respawn).
+Given by: The Last Delivery's `ilse` step (reward `item: awaken:hearth_ember` and Ilse's line, the progression session told);
+talking to Ilse or Hettie with no Ember and no Hearth, registered (classic worlds: always), and past that step or never on
+the chain (`PlayerInteractEvent.EntityInteract` on a `living.wayfarer.Wayfarer`, so living is unchanged; Ilse: "Lost your
+coal? Take another. The fire doesn't mind."); 60 ticks after awakening in a classic world (no `CityBasin` site). Now line
+`hearth:ember`, priority 66 (under a tracked chain step ~68): "Set your Ember where you'd live". **Bram's line is not
+added** (Carillon's code): for the orchestrator, Bram at the Registry: "The bells hold the city. Hunters hold the wilds.
+Ilse at the camp keeps a fire for new licences."
+
+**Setting it down** (use on the top of a block). Refused, each with its reason: soft ground or no room, the city reserve
+(`CityBasin.reserved`), a Precursor ward (`WardHooks.at`), any gate not released within 64 (`GateHooks.near`), another
+Hearth's radius, a household rule (`Household.refusesOwnAnchor`). Founds a **Tier 0 Hearthfire** (`awaken:hearthfire`,
+`HearthfireBlock` + an empty block entity that lists loaded fires for the client's glow; light 14; strength 2 / 1200,
+immovable, owner-only to break; loot table empty: the code returns the coal). `HearthRecord.tier` 0, radius 24
+(`HEARTHFIRE_RADIUS`), respawn, rest heals (30 s), calm land and every rule that keys off any Hearth record (gates 64,
+camps 120, happenings, wards, the Living Wilds' calm). No town (`Town.arrivals` returns), no Spire, no requests, no cottage,
+no furniture recipes. The moment (`HomeNet.Kindled` to clients within 96): sparks drawn down into the coal for 14 ticks
+and a burst; from tick 10 the warmth runs out over 44 ticks as rings of `hearth_warmth` motes on the ground's height
+(eased out, brightness 1 → 0.45) with a ring of 40 light pools (radius 2.8, 0.30, and a fainter ring behind at 0.62 of
+it) drawn on the ground at the front through `CityGlow`; fireflies if it's night; `hearth.take` (`sfx_hearth_take`: a settling thud, stone
+clicks, a low hearth tone on D with its fifth, a faint D-A-F# bell chord; mono, 32 blocks). The grass tint itself is not
+changed (that needs a mixin into the biome tint cache); the warm wash of motes over the ground stands in for it. 50 ticks
+later the **YOUR GROUND** card (`client/NameScreen`, low on the screen, no dimming) with a name offered by
+`Embers.suggestName` (first words by biome: forest, plains, snow, dry, wet, high, water; joined endings ford, stead,
+holm, wick, cote, ley, by, worth, combe, field, hearth, burn, or apart: Rest, Hollow, End, Green, Hearth; deterministic per
+place and owner); the name is cleaned (letters, digits, spaces, ' and -, 24 at most). Walking onto your land: a place
+caption, the name spaced over "your hearth" (IMPORTANT, topic `hearth_place`, filed after 200 ticks). Fireflies over your
+land at night (one every 8 ticks round you). **Lifting**: empty hand on your fire while no room is read → the record ends
+(its household kept), the coal comes back, `hearth.lift`. Breaking it (owner) or losing it any other way returns the coal
+(to an owner within 16, else dropped there). **Tier I**: a Lord's Heart or the Anchor used on your fire, or the guide's
+button with a Heart in your pack, sets the Anchor block in place, tier 1, and runs what an Anchor placed runs
+(`HearthService.anchorTookRoot`: the toast, the furniture recipes, the town, the cottage offer).
+
+**The reading** (`room/Reading`, `room/Tally`, `room/Materials`, `RoomScanner.read`). As PLAN 4.5, numbers:
+closed 3 with no see-through faces, 2 up to 15% (fences, bars, leaves), else 1; light 3 = every floor cell at block light
+8+ (97%) and a window (glass or pane in a side wall), 2 = all lit, 1 = 60% lit or a window, 0; warmth = the best fire (lit
+campfire, fire, lava, magma, the Hearthfire or the Anchor 3; lit furnace/smoker/blast furnace or the Forge 2; cold stove
+or lit candles 1); room = floor / the purpose's target (Shelter 6, Bedroom and Sanctuary 12, Kitchen, Forge, Study,
+Workshop 16, Greenhouse, Stable, Barracks 20, Trophy Hall 24, Hall 64, Bell tower 4, Lookout 9): <0.5 → 0, <1 → 1,
+<1.75 → 2, else 3, capped at 1 when 2 high and 2 under the target height (3; halls and trophy halls 4); care = worked share
+of wall, floor and roof faces (tags and the block's name: planks, stripped logs, glass, wool, bricks, polished, cut, smooth,
+chiseled, tiles, terracotta, concrete, quartz, pillars, and every stair, slab, wall, fence, door and trapdoor) 25% → 1,
+60% with 2 kinds → 2, 85% with 3 kinds → 3; detail = trim kinds (stairs, slabs, trapdoors, fence and wall posts, chains,
+lanterns) ≥1 +1, ≥3 +1, soft kinds (carpets, banners, paintings or frames, flower pots, candles, bookshelves) ≥1 +1, ≥2 +1,
+at most 3. Grade: mean ≥2.5 Grand, ≥1.75 Fine, ≥1.25 Snug, else Bare, never above the weakest + 1. Name: "the <grade>
+<family word> <purpose noun>" (families: timber, log, stone, fieldstone, deepslate, brick, mud-brick, sandstone,
+blackstone, tuff, quartz, copper, sea-stone, clay, concrete, glass, earthen, end-stone, nether-brick, wool, leaf, snow), or a
+sign's words inside (front, else back; 40 characters). Lift: the weakest reading's fix, light first, then warmth, detail,
+care, room, closed. Seeds: furniture, doors, lights, chests, signs, carpets, banners, pots, the Hearthfire and Anchor, and
+the household's feet in the radius; a solid seed floods each open side on its own (a door no longer joins inside and
+out). Only the old eight pieces of furniture get "why not" fills. Caps 48 a side and 20,000 cells (`TOO_WIDE`,
+`TOO_BIG`, each worded); the explanation fill is capped at 6,144 cells. Every stage (fill, read, explain) stops at the
+tick's budget (12,000 reads) and goes on next tick. Saved: `HearthRecord` part `home`, schema 3 (name, rooms without cells,
+Comfort, Style, land); a loaded room answers by its box until the next scan, which comes 30 s to 4.5 min after the server
+starts (spread by owner). The first time a player stands in a room after it's recognised or regraded (key = its box,
+grade and name; 96 remembered per player in `HearthPlayer` schema 3), its name as a quiet caption (`HomeNet.RoomCaption`,
+AMBIENT, topic `hearth_room`, `ui.hearth_room`), waiting while they stay in the room up to 600 ticks, else filed.
+
+**Room kinds** (`RoomType`; effects in `RoomEffects`, `Breaks`, `Town`). Shelter (every closed room; the first: toast
+"First shelter · Rest heals here. From now on the Hearth reads everything you build."), Bedroom (a bed), Sanctuary,
+Kitchen (furnace or smoker, crafting table, barrel: food crafted or smelted while you stand in it gets component
+`awaken:home_cooked`; eating one stretches every effect it gave or lengthened ×1.5; tooltip "Home-cooked"), Forge
+(`ARMORY`, id kept, label "Forge"), Study (lectern, 6 bookshelves: recognised only; Blueprints after W2 merges),
+Greenhouse (farmland or a planted pot under a ceiling at least half glass: recognised only; herbs after W2 merges), Stable
+(hay bale, fence gate: perk `awaken:whistle_range` +160 within 512 of the home, read by `world.fauna.Mounts` (one line);
+Pell's Spurs' +80 now counts too), Hall (6 seats = bottom stairs on the floor with room above, a table = a fence or wall
+post with a carpet, pressure plate or bottom slab on it, floor 48+: a meal eaten in it feeds every other player in it
+nutrition and half its saturation), Bell tower (a bell, the floor 8+ over the lowest ground 4 blocks outside: rings at
+dawn and dusk; `Breaks` warns once of a standing gate within 256 due to break within 2 play-days; Deep Tide's +2 skipped
+inside a Hearth with one, via `HearthHooks.tideCalm` in `living.api.Regions` (one line)), Lookout (12+ up, glass in three
+directions: `AtlasHooks.reveal` 256 round home when first recognised and on login; Mira tells a second rumour a play-day),
+Trophy Hall, Workshop (machines in it or in its walls pay ⌈×0.75⌉ essence: `HearthHooks.machineCost` in
+`above.machine.MachineBlockEntity.draw`, one line), Barracks. Toasts per new kind, topic `hearth_room`. The Now line suggests a kind with two or more kinds of furniture
+only once two of them are in the radius (never from one flower pot or one bell); a kind with all its furniture but not its
+condition says so briefly ("Greenhouse: a glass roof").
+
+**Comfort, Style, Rested** (`Comfort`, `Rested`). Comfort 0-12: best bedroom grade (0-3) + a room with warmth 2+ + a table
+with 2+ seats + a room with two soft kinds + growing things indoors + the land: field (16 farmland), pen (2 untamed animals
+and 8 fences), garden (a composter and 6 flowers), lit yard (6 placed lights outside rooms), wall (40 wall or fence
+blocks), each 1. Style: the two families with the most faces, the second named when it is a fifth of the first ("timber and
+fieldstone"). Rested: waking (not shaken awake) in a bed inside a read Bedroom of a Hearth you belong to: 8 + Comfort
+minutes, perks `awaken:energy_regen` +0.25 and `awaken:craft_rate` +0.25 (a perk source on both sides reading the synced
+`HearthView.home.restedUntil`); toast topic `rested`; "◆ RESTED Nm" over the level line, pulsing in its last minute.
+
+**The room panel** (`client/RoomPanel`: `visible()`, `build(Ui)`; data: attachment `awaken:hearth_here`, `RoomHere`, synced
+to its player when it changes, checked once a second). Name, grade, six readings as three pips each, purpose, "Lift it:
+…". Shown as the K Status page's first section (`RoomSection`, order -28: right under NOW, above the Atlas) while you stand in a read room at home (PLAN
+said "hold the band key": K opens the band on press today, so the panel lives on that page until The Way Forward's glance
+takes it, through the two calls above); and as every room's card in Your Hearth, which also gained a HOME section (Comfort
+with its bar and the next point, Style, the land, Rested minutes), the kinds you have as chips, at most three suggestions
+as full cards (what you've started first, then Shelter, Bedroom, Kitchen, Sanctuary) and the rest one dim line each; a
+Hearthfire's header chip, town line and its Tier I step ("Feed the fire the Heart").
+
+**Chests at home** (`HomeCrafting`): done without a mixin. A crafting table inside a Hearth you belong to opens
+`HomeCrafting.HomeMenu` (a `CraftingMenu` on the vanilla menu type, so the client opens the vanilla screen); its
+`handlePlacement` first moves what you lack for one craft (shift: a stack's worth) from chests, barrels and shulker boxes
+you may open within 8 blocks of the table into your inventory, nearest first, then places as vanilla does. The client's
+book can show such a recipe red (it can't see the chests) but clicking it always asks the server, so it crafts. A one-time
+toast says so.
+
+**Fixes**: caps and their reasons as above; pads a scan finds join the Hearth (`HearthService.registerPads`); Anchors
+refused in the city reserve (and on your own Hearthfire's land: "Use the Anchor on your Hearthfire: it rises there.");
+the town Spire's Board and Monolith are given as items when the first townsperson arrives (retried by upkeep while the
+owner is away; the Board placed inside your Hearth becomes its board); a temper at the Forge costs a coal (`Items.COAL`;
+Oren's tempers don't).
+
+**Other modules touched (one line each)**: `core.api.HearthHooks` (+`tideCalm`, `machineCost`, defaults),
+`living.api.Regions` (Deep Tide skip), `above.machine.MachineBlockEntity` (Workshop cost), `world.fauna.Mounts` (whistle
+range perk). Read only: `citizens.client.CityGlow.source`, `living.wayfarer.Wayfarer.who()`, `living.api.Quests`.
+
+**Not done / left**: the grass tint (mixin territory, see above); the Study's and the Greenhouse's effects (after W2, per
+§28.1); Bram's line (Carillon); the room panel on a held band key (The Way Forward's glance); a stable's bonded mount
+"coming home here" (the whistle range is in); the Hall's festival (W4/W6).
+
+### 28.3 W2 as built
+Module `delve` (`dev.awaken.delve`, `delve.client`, `delve.api.Lodes`; doc `docs/modules/delve.md`), and the seams it was
+given. Branch `pack/world-depth-w2`. Tests `delve_lode_heart`, `delve_tier_metals`, `delve_tuning_fork`,
+`progression_ore_xp`; tour `tools/autopilot/world-depth-w2.txt`.
+
+**Hide, metal, light.** Item tags `#awaken:tier_metal_<d|c|b|a|s>` (in `src/main/merge/delve`): D `iron_ingot`, C
+`diamond`, B `awaken:deepglass_shard`, A `netherite_scrap`, S `awaken:starmetal_ingot`, one item each. Every gear piece
+from D up has a slot `M` that takes only its metal (tools/art/specs/gear.py RECIPES: 2 helmet, 3 chest, 2 legs, 2 boots,
+1 blade, 1 focus, 2 mattock, about 13 a tier); every focus from D up a gold ingot (`G`, two from C); every Veilwoven piece
+an amethyst shard (`Y`). Forged Arms weapons from D up take the metal in their bind cell (tools/art/specs/arms_weapons.py
+`write_recipe`). E is unchanged. `hunter_hide_s` is starmetal (S's recipes take it through `M`). Gatewrought: 3/6/8/3 =
+20 armour, toughness 2.0, durability multiplier 33 (diamond's); to keep every stat climbing, Veilwoven 3/7/8/3 = 21 and
+Lordscale 3/7/9/3 = 22. `HunterTier.metalTag()`.
+
+**Every ore's job.** Blueprints: 4 paper, 1 lapis, 1 essence (`ArmsForge.BLUEPRINT_LAPIS`). Attunement catalysts by id
+(`ArmsForge.CATALYST_ID`, `catalystItem`): Heat `awaken:sunshard`, Frost `awaken:frostspar`, Gravity `awaken:fault_seam`,
+Charge `copper_ingot`, Spirit `awaken:deepglass_shard` (each Lands crystal is its own block item, dropped by its block).
+Bell bronze: 3 copper + 1 amethyst = 3 ingots (shapeless); a vanilla bell from 5 bell bronze and a stick.
+
+**The handouts stop.** `gates/run/Loot.java`: the table pays no iron, gold, emerald, lapis, diamond or netherite; their
+weight went to essence shards (weight 14, 1-2+rank), torches, and a Core Shard from C (weight 4); the theme item stays
+(the Night Market's emerald, the Foundry's copper...). The Treasure Gate pays emeralds (the coin) and more essence, no
+gold. `gates/run/Rooms.java` market: the diamond (5 essence) became a coil of Runner's rope (2 essence), the netherite
+scrap (6) four pitons (2); selling gold and emeralds for essence stays. The Mine Echo is W6's.
+
+**Ore XP** (`ProgressionModule.OreXp`, `XpBudget.DEEP`): 0.01 of a level × coal 0.5, copper 0.7, iron 1, gold/redstone/
+lapis 1.5, emerald 4, diamond/Deepglass/ancient debris 6 (quartz 1; amethyst 0, a discovery only). Under y 0 (and
+Deepglass always) through the budget `deep_mining` (0.08 a 10 min) instead of `ore` (0.06), so the deep isn't worn by the
+coal on the way down; the taper starts at content level 15 under y 0 and 25 for diamond and Deepglass. The first of each
+ore is a discovery (`awaken:discovered/ore/<id>`, 0.1 of a level; a `Finds` toast, kind "ore", no lesson). A lode's heart
+pays its own lump (below).
+
+**The Mining craft** (`living/craft`, `living/client/CraftFx`): see §21.9 (Ore Sense with mattocks via
+`#awaken:mining_tools`, Vein Sight's whole vein, Deep Ear's sound, Deepglass Cutter). Craft XP per ore: 10 (15 in
+deepslate or Deepglass) × the ore's weight's square root clamped 0.7-2.5 (coal 7, diamond 25), a heart 60.
+
+**Lodes** (`LodePlans`, `LodeFeature`, `Veins`, `api.Lodes`): 256 x 256 regions; per region coal 2 (y 6..40, 50-110
+blocks), copper 2 (0..40, 50-110), iron 3 (-20..36, 40-100), gold 1 (-54..16, 30-70), redstone 1 (-58..-4, 40-90),
+lapis 1 (-48..8, 30-60), emerald 35% (-8..30, 20-32), diamond 80% (-58..-18, 20-40), Deepglass 1 (-58..-12, 25-50)
+(`delve.Ore`). A lode is a seam walked out from its heart in two arms along a gently wandering, mostly level heading, a
+cell and a cell beside it each step (1-2 thick), within 48 of the heart; pure SplitMix64 from the seed, cached per
+region. `awaken:lodes` (feature, `worldgen/feature/delve/lodes`, biome modifier `delve` on `#minecraft:is_overworld` at
+`underground_ores`) writes each chunk's cells into stone (the ore), deepslate (its deep twin) or another ore, never air,
+water or a build; the heart at the centre. New chunks only. `Lodes.nearest(level, pos, ore[, radius])` answers from the
+plan; a planned lode whose loaded blocks are plainly not its ore (old terrain, mined out) is passed over. One block per
+ore's heart (`<ore>_lode_heart`, its ore's tool tier, light 4, a slow pulse, its core and lit facets an overlay at full
+light so it glows in the dark, glinting), loot a lump (iron 4-7 raw, diamond
+2-4, Deepglass 4-7 shards..., Fortune applies), in `#c:ores`, `#c:ores/<ore>` and `#minecraft:<ore>_ores`.
+
+**The vein gives** (`Veins.give`, client `VeinFx`): breaking a planned heart (after every protection, LOW) opens its
+lode once for the world (`DelveData`, schemaVersion 1): `LODE · <ore> · <blocks left>` through `Finds` (the first a
+moment), a lump of 0.08 of a level × the ore weight's square root × the taper, counters `awaken:lodes_opened`, the
+client's reveal (glass outline in the ore's colour lighting outward with white cracks from the heart at 32 blocks a
+second, a travelling crackle, a kick and hold), and for 30 s the breaker's blows take the lode's blocks in two (speed =
+hardness × 30 / 8, mirrored on the client). The lodes within 64 are sent to each client when the set changes, for the
+glints: a lode block open to the air glints in its ore's colour where block light ≥ 8 or the miner's lamp's beam falls.
+
+**Cave-ins** (`CaveIns`, client `CaveInFx`): after a heart breaks, 60% of the time if the chamber qualifies: air reached
+from beside the heart (box ±12 x, -5..+12 y) at least 160 blocks, at least 7 across both ways, 30% of its columns 3+ high;
+roof = the natural rock over the top air of each such column within 6 of the heart (stone, deepslate and kin, ores, dirt,
+gravel, calcite, dripstone), 10 to 40 of them, nearest first. Never inside a Hearth, a ward, or the city's footprint
+within 48 under its square (its foundations); never if any
+roof block's section holds a solid block a player placed underground (`DelveData` keeps sections below y 64). Warning:
+3 s of dust threads and grit from those stones, a creak, a tremble within 18, "The roof is giving way"; then each stone
+still unchanged falls as a falling block (1.5 damage a block fallen, at most 8) with a rumble.
+
+**The strike's feel** (client `StrikeFeel`): a bite every 4 ticks held (vanilla's rhythm, from NeoForge's client mine
+hold): each ore its own sound (`delve.strike.<ore>`), sparks off hard rock with a pick or mattock (white-hot cooling to
+the ore's colour), grit off soft ground (tinted by the block), the last blow a crack (`delve.strike_last`), a 50-70 ms
+hold and a small kick on ores (`CombatFeedback`). **The heavy strike** (`HeavyStrikes`, client `HeavyCharge`): sneak and
+hold the attack with a pick or mattock (holding attack alone is vanilla mining, so the heavy takes sneak); the Maul's
+charge (starts at 6 ticks, glints at 20, 30 at most): a strain, grit off the head, a ring on the glint; let go to bore
+3 blocks along the aim. Server: a mining tool, charge ≥ 6, 14 ticks since the last, food ≥ 6, not in a gate; each block
+breakable by that tool (and dropping), outside the city's build (its civic blocks, the city's own protection rule; the
+rock under its streets is free), a ward and anyone else's Hearth, broken through the game's own
+`destroyBlock` (so every protection still applies); 2 more durability a block (1 on the glint), 1.0 exhaustion a block.
+
+**New finds.** `awaken:deepglass` (strength 5.5, diamond tool, light 3, its facets' violet edges an overlay at full
+light, hums now and then, motes off open faces; drops 1-2
+shards, Fortune, silk touch the block; in `#c:ores`, so the Veil sees it violet) as veins below y 0
+(`worldgen/feature/delve/deepglass`: ore, size 5, 3 a chunk from 4 above the bottom to y 0, open to caves) and in the
+Descent's strata walls from the Choir (form 3) down, one of each wall's ores (`descent/world/Palette`). Starmetal: the
+fallen star's loot table adds 1-3 `awaken:raw_starmetal`; smelts (400 ticks) or blasts (200) to `starmetal_ingot`.
+Bell bronze as above.
+
+**Tools.** The Tuning Fork (2 amethyst shards and 3 copper ingots; 256 uses): touched to an ore or
+heart it takes that ore's note (`awaken:tuned`); struck on stone (1.5 s cooldown) it rings toward the nearest lode of
+that ore within 48 (`TuningForkItem.target`): the client's ring climbs from the ore's note ×0.72 to ×1.34 as you face
+it (cubed alignment), lasting 4.5 s; a soft arc on the band with a bead of the ore's colour at its bearing (pinned at
+the end when behind you), a mark over or under when it's up or down; nothing within 48, a short flat note. Pitons (4 from
+2 iron and a nugget) go on a wall; a coil of Runner's rope (8 string and a nugget) used on one hangs a rope straight
+down to 32 blocks or the ground (`awaken:runner_line`, a free rope in `#awaken:runner_climbs`: the pipe grip climbs it);
+breaking any of it or the piton gives the coil back. **No two-piton zip line**: the Ascent's line traversal (the pipe
+grip) rides vertical climb lines only, and its zip is the Tether pulling to a point, so there is nothing to ride a run of
+blocks with yet. The miner's lamp (leather, copper, glowstone) is worn on the head (its equipment layer: a band and a
+brass lamp); its light is drawn, never placed (no light blocks): 17 rays in a 24° cone from the brow find the faces
+ahead (each ray's face and its eight neighbours on that plane, at most 260); each lit face is drawn again over itself
+with its own block quads (the model variant the world chose there, so it lines up), additively in a warm colour, ×0.95
+at the beam's 9° core falling to its edge and to nothing at 22 blocks, so the rock's own texture comes up out of the
+dark; a faint additive haze on the faces the inner rays hit (`CityGlow`'s pass) and, seen from outside, a small flame
+on the brow; for every wearer within 40 (`LampGlow`; the lit pass is skipped if its pipeline doesn't compile).
+
+**Sounds and art.** 25 events `delve.*` synthesised by `tools/art/specs/audio_delve.py`; textures, models, loot,
+recipes, tags, worldgen and the star's loot by `tools/art/specs/delve.py` (`build_all.py delve`, `delve.py content`,
+`delve.py preview DIR`). Own particles `delve_spark`, `delve_grit`, `delve_dust`, `delve_glint`, `delve_mote`.
+
+**Pacing** (`tools/sim/pacing_sim.py`, the deep's metal; balanced player, medians of 300 runs): the D kit's iron (14 and
+a gold) is in hand at 1.1 h, long before level 13 (6.3 h); the C kit's diamonds (14 and 2 gold) at 12.9 h against level
+22 at 13.8 h, wait after the level 0 h median, 2.1 h at p90 (careful 0 / 2.0, greedy 0 / 1.6, builder 0 / 2.1). That
+assumes the player goes after the metal once within 3 levels of the tier (15-30 min a cycle, the Tuning Fork tuned to
+diamond: a diamond lode found every ~50 deep minutes with the fork, every ~150 without). Every level target still passes
+(level 25 at 16.8 h, 50 at 51.5 h, 135 at 102 h).
+
+**Not done in W2** (left for later phases or a follow-up): the deep's soundscape below y 0 ("the deep presses") is W5's
+cave audio; the rope fittings and rappel are W5's; the Mine head and the Mine Echo's rework are W6's; the Tuning Fork
+from the hamlet's smith waits for villages (W3), it's craftable now; no zip line (above).
 
 ---------------------------------------------------------------------------------------------------------------------
 

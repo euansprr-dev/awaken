@@ -64,6 +64,7 @@ public class SpireBoardBlock extends BaseEntityBlock {
         super.setPlacedBy(level, pos, state, by, stack);
         if (by instanceof ServerPlayer sp && level.getBlockEntity(pos) instanceof SpireBoardBlockEntity be) {
             be.setOwner(sp.getUUID());
+            Town.boardPlaced(sp, (net.minecraft.server.level.ServerLevel) level, pos);
             Town.refreshBoard(sp, be);
         }
     }
