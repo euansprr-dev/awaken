@@ -72,6 +72,11 @@ public class PrecursorRuinPiece extends StructurePiece implements PieceBeardifie
         tag.putInt("style", style);
     }
 
+    /** The rank its sealed door waits for (a {@link dev.awaken.progression.Rank} ordinal; ruins without a door keep 1). */
+    public int doorRank() {
+        return doorRank;
+    }
+
     public RuinKind kind() {
         return kind;
     }

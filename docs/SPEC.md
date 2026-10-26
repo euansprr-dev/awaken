@@ -2563,9 +2563,27 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   broke. Record from standing still; at most five minutes.
 
 ### 17.7 The Tether Vow (the rope, earned at the first vault)
-- Who: awake, in the overworld, without the rope, the `ascent` option on. Where: a Precursor vault's forecourt (local
-  x 4-18, z 0-3, feet 1-5 over the floor: between the pylons, before the sealed door, which no low rank can open; every
-  vault qualifies until one is kept, so the first one reached is where it happens). Checked once a second per player.
+- Who: awake, in the overworld, without the rope, the `ascent` option on, **at the vault's line rank: C, or the vault's
+  own door rank if higher** (`TetherVow.RANK`; the door rank is the piece's saved `rank`), **with its sealed door
+  open** (no door panel or core left at local x 10-12, y 1-3, z 12). Euan, 2026-10-26: "I got the grapple thing when my
+  rank is too low to actually open the vault. I just walked into the vault and got it... you actually need the C rank
+  to get into the vault to unlock it." Where: a Precursor vault's forecourt (local x 4-18, z 0-3, feet 1-5 over the
+  floor: between the pylons; every vault qualifies until one is kept). So the order is: open the door, go in, and the
+  vault calls as you come back out under its pylons. Checked once a second per player.
+- Short of that, the vault stirs (stage `STIR`, at most once in 5 minutes per vault and state): short of the rank, a
+  low, quiet version of the call's note, the vault's light rising off the paving in the rank's colour, stalling and
+  settling back, "The vault stirs, and stills." then "Its line waits for a C-rank hunter."; ranked but with the door
+  still sealed, the light drifts low toward the door: "The vault stirs. Its door will know you." No Lens look, no hush:
+  it only half wakes. The rank is named; what the line is stays unsaid until it is given.
+- The sealed door answers (`DoorCoreBlock`, all ruins with a rank door): someone short of its rank who comes within 5
+  blocks (read at most every 20 s), touches it or strikes it is read: the ward's HOLD light on the core
+  (`WardFx.hold`), the door's refusing tone, and "Sealed. It reads you and stays shut. Come back at C-rank." A strike
+  used to do nothing (the door can't be broken), which read as a dead block. The hum for those who can open it is as
+  before.
+- Worlds where the rope was already given under the old rule keep it (nothing is taken back).
+- Pacing note: C is level 25 plus the Reassessment (about 17 h at the default story length, Rank.java). Leaper and
+  Wings both follow the rope, so this moves the whole ladder after C; the progression plan
+  (docs/progression/PLAN.md) proposes the rank Euan decides on.
 - The vault's turn is read from its pylons' own blocks at the front corners (the amber lights at local y 20, the trim at
   19, the polished cornice at 11: at least 4 of the 6); terrain can't fake them, and a vault dug into a hill keeps them
   (open air at the back corners, the first try, failed on the first real spawn vault). The vault's box is its piece's
@@ -2584,7 +2602,9 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   Flow, "Vow kept.", 10 Tether mastery, a fifth of a level's XP (DISCOVERY), counter `awaken:ascent_vow_kept`, flag
   `VOW_KEPT` in the record. Lapsed: "The mast will wait." (the rope stays; nothing is lost).
 - `ascent_tether_vow` builds a vault from its blueprint in each turn and checks the turn, the forecourt, the pylon
-  anchor (real to the server, the line clear) and the mast, then runs the director: call, line, kept.
+  anchor (real to the server, the line clear) and the mast; then the lock: at E the vault only stirs and its door reads
+  the player once and stays shut; at D the door opens but the line waits; a B door's line waits for B; at C with the door
+  open the director runs: call, line, kept.
 
 ### 17.8 Phase 4a: Aether (Skyborn's flight meter)
 - Flight (SOAR) runs on Aether, 0..1: cruising drains a full meter in 60 s, boosting in ~19 s, hovering in ~38 s, each
