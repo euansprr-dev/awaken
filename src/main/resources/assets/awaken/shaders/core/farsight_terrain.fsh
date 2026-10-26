@@ -176,7 +176,13 @@ void main() {
     vec3 reach = vec3(vRel.x, vRel.y - (water ? depth : 0.0), vRel.z);
     // far water stays under the real water too (unless the camera is under the sea): wherever a real section isn't drawn
     // this frame (Sodium's culling, a chunk still meshing) the sea shows, never the clear colour through a hole
-    bool underReal = !(water && FarFog.z >= FarFog.w);
+    // ...but only where the far mesh lies flat as a water surface does (a steep far triangle joining a canal's corner to a
+    // roof's counts as water by its corners, and would stand in the loaded city as a wall), and only in the render
+    // distance's outer band, where a real floor can be missing: nearer, the real floor is always drawn, and far water
+    // there would show as boxes on the city's canals
+    vec3 facet = cross(dFdx(vRel), dFdy(vRel));
+    bool surface = abs(facet.y) > 0.97 * length(facet) && horizontal > FarDepth.z - 80.0;
+    bool underReal = !(water && surface && FarFog.z >= FarFog.w);
     if (length(reach) < FarDepth.z + FarDepth.w * bayer4(gl_FragCoord.xy)) {
         ivec2 chunk = (FarCamInt.xz >> 4) + ivec2(floor(rel / 16.0));
         if (underReal && texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5) {

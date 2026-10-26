@@ -1,7 +1,8 @@
 # Far Sight over the opening's flight (SPEC §16.4, §20; Euan's play: a far hill stood over Carillon, the sky showed
 # through the ground): a new Carillon world, the opening from its first frame, a frame every second through the card,
 # its wait for the view to warm, and the whole flight to the landing. Far Sight on (its default), Lens as the opening
-# sets it. Run: PACK=perf,world TECTONIC=awakened RD=16 LENS=cinematic SLOT_WHO=far-sight \
+# sets it. Then Carillon's streets and the river quay at noon and dusk, each frame with Far Sight on and then off (no
+# blue wall, grey box or sky hole, and what the far view adds is all it changes). Run: PACK=perf,world TECTONIC=awakened RD=16 LENS=cinematic SLOT_WHO=far-sight \
 #      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/farsight2-opening.txt 900
 world fs2open survival 20261024
 waitworld
@@ -75,6 +76,59 @@ shotnow fs2o_32
 wait 20
 shotnow fs2o_33
 wait 20
+farsight status
+cmd awaken opening skip
+wait 60
+cmd gamemode spectator
+gui 0
+hud off
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd time set 6000
+farsight on
+wait 300
+cmd awaken city view quay
+wait 100
+shot fs2t_noon_quay_on
+cmd awaken city view market_street
+wait 100
+shot fs2t_noon_market_street_on
+cmd awaken city view laundry_lane
+wait 100
+shot fs2t_noon_laundry_lane_on
+farsight off
+cmd awaken city view quay
+wait 40
+shot fs2t_noon_quay_off
+cmd awaken city view market_street
+wait 40
+shot fs2t_noon_market_street_off
+cmd awaken city view laundry_lane
+wait 40
+shot fs2t_noon_laundry_lane_off
+cmd time set 12400
+farsight on
+wait 300
+cmd awaken city view quay
+wait 100
+shot fs2t_dusk_quay_on
+cmd awaken city view market_street
+wait 100
+shot fs2t_dusk_market_street_on
+cmd awaken city view laundry_lane
+wait 100
+shot fs2t_dusk_laundry_lane_on
+farsight off
+cmd awaken city view quay
+wait 40
+shot fs2t_dusk_quay_off
+cmd awaken city view market_street
+wait 40
+shot fs2t_dusk_market_street_off
+cmd awaken city view laundry_lane
+wait 40
+shot fs2t_dusk_laundry_lane_off
+farsight on
 farsight status
 info
 quit

@@ -1473,7 +1473,10 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   chunk counts once its surface section and the three below are built) and within the render distance in 3D from the
   camera, as Sodium culls them (a sphere of the render distance). Seen from high up the real sea ends well inside the
   horizontal render distance, and its floor sooner, so far water tests its own floor's distance and stays under a real
-  water surface whose floor is too far to draw. Far water is never hidden under the real chunks unless the camera is
+  water surface whose floor is too far to draw. Far water is not hidden under the real chunks in the render distance's outer band (the last 80 blocks), where the
+  mesh lies flat and the camera is above the sea (2026-10-26: a steep far triangle from a canal to a roof stood as a blue
+  wall in the loaded city, and nearer far water showed as boxes on its canals; the real floor is always drawn nearer),
+  unless the camera is
   under the sea (2026-10-26, Euan's play: sky-coloured slabs on the sea where Sodium skipped a section), and grazing far
   water reflects the sky by the horizon at every distance, as Lens's real water beside it does. The planner and the windows count as covered only the ground the
   sphere reaches at a sea floor (40 under sea level) below the camera, in 16-block steps. (2026-10-26: the pale squares
