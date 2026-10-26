@@ -75,9 +75,13 @@ public final class Pillars {
         Minecraft mc = Minecraft.getInstance();
         float time = (e.getLevelRenderState().gameTime % 24000) + e.getLevelRenderState().worldPartialTicks;
         float dark = mc.level == null ? 1F : mc.level.getSkyDarken() / 11F;
-        float day = 0.55F + 0.45F * dark;
+        float day = 0.4F + 0.6F * dark; // 0.4 at noon, 1 at night
+        // the glow and the haze are coloured air (alpha-blended: they show against a daylight sky); the core is light
+        e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), RigPipelines.haze(), (pose, vc) -> {
+            for (Draw d : draws) pillar(vc, d, time, day, false);
+        });
         e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), RigPipelines.light(), (pose, vc) -> {
-            for (Draw d : draws) pillar(vc, d, time, day);
+            for (Draw d : draws) pillar(vc, d, time, day, true);
         });
     }
 
@@ -85,7 +89,7 @@ public final class Pillars {
     private static final float[] ROWS = {0F, 0.004F, 0.012F, 0.025F, 0.045F, 0.07F, 0.1F, 0.14F, 0.19F, 0.25F, 0.32F, 0.4F, 0.5F, 0.6F,
             0.7F, 0.8F, 0.9F, 1F};
 
-    private static void pillar(VertexConsumer vc, Draw d, float time, float day) {
+    private static void pillar(VertexConsumer vc, Draw d, float time, float day, boolean light) {
         float k = d.scale();
         float bx = (float) d.dx() + 0.5F * k, by = (float) d.dy(), bz = (float) d.dz() + 0.5F * k;
         // the ribbons turn about the pillar's axis to face the camera (the camera is at the origin)
@@ -94,11 +98,17 @@ public final class Pillars {
         float rx = -tz / tl, rz = tx / tl;
         float h = d.height() * k;
         float breath = 0.9F + 0.1F * Mth.sin(time * 0.045F + bx * 0.01F);
-        int core = brighten(d.core()), glow = d.glow();
-        // core: thin and hot; glow: the rank's colour; haze: wide and faint (widths grow with distance, as before)
-        ribbon(vc, bx, by, bz, rx, rz, h, d.solid() * 0.55F * k, core, 0.95F * day * breath, time, 0.6F);
-        ribbon(vc, bx, by, bz, rx, rz, h, d.halo() * 2.4F * k, glow, 0.42F * day * breath, time, 1.0F);
-        ribbon(vc, bx, by, bz, rx, rz, h, d.halo() * 7.5F * k, glow, 0.12F * day, time, 0.4F);
+        if (light) {
+            // the core: thin and hot, light added (Lens's bloom takes it); stronger at night
+            ribbon(vc, bx, by, bz, rx, rz, h, d.solid() * 1.1F * k, brighten(d.core()), (0.55F + 0.45F * day) * breath, time, 0.6F);
+            ribbon(vc, bx, by, bz, rx, rz, h, d.halo() * 3.0F * k, d.glow(), 0.35F * day * breath, time, 1.0F);
+        } else {
+            // the glow and the haze in the rank's colour, fading to clear at their edges (a tint, never a box); by day
+            // they carry the pillar, at night the light does (pillar tour: added light vanished against a noon sky)
+            float tint = 1.15F - day;
+            ribbon(vc, bx, by, bz, rx, rz, h, d.halo() * 5.0F * k, d.glow(), 0.5F * tint * breath, time, 1.0F);
+            ribbon(vc, bx, by, bz, rx, rz, h, d.halo() * 14F * k, d.glow(), 0.16F * tint, time, 0.4F);
+        }
     }
 
     /** One soft ribbon: two halves per row, the centre line at its strength, each outer edge at nothing. */
