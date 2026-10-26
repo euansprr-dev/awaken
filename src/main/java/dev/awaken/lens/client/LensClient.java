@@ -358,7 +358,11 @@ public final class LensClient {
             rain = mc.level.getRainLevel(partial);
             float day = smooth((sunDir.y + 0.02f) / 0.14f), night = smooth((-sunDir.y + 0.02f) / 0.14f) * 0.4f;
             moonLight = night > day;
-            lightStrength = Math.max(day, night) * (1f - 0.85f * rain) * (1f - 0.5f * mc.level.getThunderLevel(partial));
+            // dimmed by the world's weather, not by a Rolling Storm's local rain: the sun still lights its towers and the
+            // land beside it, and its own shadow darkens the land under it (SPEC §22 "Storm cells")
+            float skyRain = dev.awaken.living.client.StormSky.serverRain(rain), skyThunder = dev.awaken.living.client.StormSky.serverThunder(
+                    mc.level.getThunderLevel(partial));
+            lightStrength = Math.max(day, night) * (1f - 0.85f * skyRain) * (1f - 0.5f * skyThunder);
             Vector4fc glow = camera.attributeProbe().getValue(EnvironmentAttributes.SUNRISE_SUNSET_COLOR, partial);
             sr = glow.x();
             sg = glow.y();

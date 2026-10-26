@@ -216,6 +216,18 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
     m *= mix(1.0, lr.g, l17.b * near * (1.0 - smoothstep(48.0, 96.0, dist)));
     c *= sqrt(m);
     c = max(mix(vec3(luma(c)), c, 1.0 + rich), 0.0);
+    // rain wets what it falls on (open to the sky in its column; under leaves, a little): darker and a touch richer, and
+    // what faces up takes a dull sheen of the sky at a glancing angle (a Rolling Storm's local rain too)
+    if (f16.z > 0.0 && F(15).x > 0.0) {
+        vec3 hp = p + f12.xyz + n * 0.1;
+        vec2 top = heightAt(ivec2(floor(hp.xz)), 0);
+        float exposed = max(1.0 - smoothstep(0.3, 1.5, top.r - hp.y), 0.4 * (1.0 - smoothstep(0.3, 1.5, top.g - hp.y)));
+        float wet = f16.z * exposed * near * fogFade * (1.0 - smoothstep(0.85 * rdEnd, rdEnd, dist)) * (1.0 - glowness(c));
+        c *= 1.0 - 0.16 * wet;
+        c = max(mix(vec3(luma(c)), c, 1.0 + 0.1 * wet), 0.0);
+        float up = smoothstep(0.6, 0.95, n.y), fres = pow(1.0 - clamp(dot(-p / dist, n), 0.0, 1.0), 4.0);
+        c += P(10).rgb * fres * up * wet * 0.22;
+    }
     if (m20.r > 0.0) c = lensWater(c, p, n, lr.r, m20.r * fogFade);
     return c;
 }

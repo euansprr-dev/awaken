@@ -108,9 +108,9 @@ void stormPiece(vec2 span, int steps, int k) {
         if (i >= steps) break;
         float t = span.x + (float(i) + jitter) * dt;
         vec3 w = v * t, q = w - centre;
-        float d = stormCell(q, b.xy, b.w, detail) * a.w;
+        float d = stormCell(q, b.xy, b.w, a.w, detail);
         // the rain fades in from 16 blocks off: nearer, the game's own rain falls on you
-        float rn = q.y < 0.0 ? stormRain(q, b.xy, groundH) * a.w * smoothstep(16.0, 40.0, t) : 0.0;
+        float rn = q.y < 0.0 ? stormRain(q, b.xy, groundH) * smoothstep(0.1, 0.4, a.w) * smoothstep(16.0, 40.0, t) : 0.0;
         if (d + rn <= 0.002) continue;
         // lightning: a glow round the flash inside the cell, and a faint wash through all of it
         float fd = length(w - c.xyz);
@@ -122,10 +122,9 @@ void stormPiece(vec2 span, int steps, int k) {
             float od = 0.0, s = 6.0, lt = 0.0;
             for (int j = 0; j < lightSteps; j++) {
                 lt += s;
-                od += stormCell(q + l * lt, b.xy, b.w, 0) * s;
+                od += stormCell(q + l * lt, b.xy, b.w, a.w, 0) * s;
                 s *= 2.3;
             }
-            od *= a.w;
             // little light scattered deep inside: its base and its shadowed side go dark
             float beer = max(exp(-od * STORM_SIGMA * 1.1), 0.18 * exp(-od * STORM_SIGMA * 0.22));
             float powder = 1.0 - exp(-d * 4.0);

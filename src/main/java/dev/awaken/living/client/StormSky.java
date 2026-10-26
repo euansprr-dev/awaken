@@ -120,6 +120,16 @@ public final class StormSky {
         return setRain < 0F ? 0F : Math.max(0F, setRain - serverRain);
     }
 
+    /** The world's own rain level under a storm's local rain ({@code level}: the level's rain now). */
+    public static float serverRain(float level) {
+        return setRain < 0F ? level : serverRain;
+    }
+
+    /** The world's own thunder level (as the level reports it, times its rain) under a storm's ({@code level}: now). */
+    public static float serverThunder(float level) {
+        return setRain < 0F ? level : serverThunder * serverRain;
+    }
+
     /** Storms show only in the overworld, while the Living Wilds are shown. */
     private static boolean here() {
         Minecraft mc = Minecraft.getInstance();

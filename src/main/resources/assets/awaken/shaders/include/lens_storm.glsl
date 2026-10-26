@@ -40,11 +40,13 @@ float stormFlank(vec2 aw, float h, vec4 f, float puff, float base) {
     return stormBlob(length(d), f.z, puff) * base;
 }
 
-// the cell's density at q (relative to its centre on the base plane), w downwind; detail 0 (light steps and shadows)
-// keeps the big forms and skips the puffs and the anvil's fibres
-float stormCell(vec3 q, vec2 w, float time, int detail) {
+// the cell's density at q (relative to its centre on the base plane), w downwind; grow 0..1 how far it has built (it
+// rises from its base as it builds and rains out from the top down); detail 0 (light steps and shadows) keeps the big
+// forms and skips the puffs and the anvil's fibres
+float stormCell(vec3 q, vec2 w, float time, float grow, int detail) {
     float h = q.y;
-    if (h < -6.0 || h > STORM_H + 46.0) return 0.0;
+    float cut = mix(-10.0, STORM_H + 50.0, grow);
+    if (h < -6.0 || h > min(STORM_H + 46.0, cut)) return 0.0;
     vec2 aw = vec2(dot(q.xz, w), dot(q.xz, vec2(-w.y, w.x)));   // along the wind, across it
     float hn = clamp(h / STORM_H, 0.0, 1.0);
     // the turrets: two octaves of puffs carried with the cell, rising slowly through it (the cloud boils)
@@ -79,7 +81,7 @@ float stormCell(vec3 q, vec2 w, float time, int detail) {
         float a = clamp((1.0 - ra) * 5.0, 0.0, 1.0) * clamp((h - lo) / 6.0, 0.0, 1.0) * clamp((top - h) / 3.0, 0.0, 1.0);
         d = max(d, a * smoothstep(0.0, 0.25, 1.2 - ra));
     }
-    return d;
+    return d * (1.0 - smoothstep(cut - 40.0, cut, h)) * min(1.0, grow * 3.0);
 }
 
 // rain under the base: a core of soft shafts a little downwind of the centre, slanting downwind as it falls, with a
@@ -114,7 +116,7 @@ float stormShadow(vec3 p, vec3 l, float camY) {
             if (t <= 0.0) continue;
             vec3 q = vec3(rel.x + l.x * t, hh, rel.y + l.z * t);
             if (dot(q.xz, q.xz) > 330.0 * 330.0) continue;
-            od += stormCell(q, b.xy, b.w, 0) * a.w * 105.0;
+            od += stormCell(q, b.xy, b.w, a.w, 0) * 105.0;
         }
     }
     return exp(-od * STORM_SIGMA * 0.35);
