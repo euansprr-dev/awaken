@@ -553,6 +553,11 @@ public final class Autopilot {
                 waitTicks = 20;
             }
             case "lens" -> {
+                if (arg.trim().startsWith("tiles")) {
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.turbo.tiles.Tiles.autopilot(arg.trim().substring(5)));
+                    waitTicks = 20;
+                    return true;
+                }
                 if (arg.trim().startsWith("chain")) {
                     Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.chain(arg.trim().substring(5)));
                     waitTicks = 20;
