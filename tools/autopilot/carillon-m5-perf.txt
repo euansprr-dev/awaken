@@ -33,6 +33,12 @@ perf m5q_orbit_a 8
 cmd atlas spin 0
 wait 10
 shot m5_after_orbit
+cmd atlas view 20 52 0.45
+wait 60
+shot m5_drift_a
+wait 40
+shot m5_drift_b
+cmd atlas view 20 52 1
 screen close
 perf m5q_closed_b 8
 cmd atlas open 20 52 1
