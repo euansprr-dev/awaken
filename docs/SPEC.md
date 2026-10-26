@@ -5516,6 +5516,32 @@ Shared ids (fixed now so parallel builders agree): items `awaken:hearth_ember`, 
 Wired after both W1 and W2 merge (one small follow-up, never inside either phase, so neither builder edits the
 other's files): the Study halves the Blueprints' paper (`arms/ArmsForge`), the Greenhouse triples herb ripeness
 (`living/craft/Herbs`). W2 reads the perk `awaken:craft_rate` by its id, so Rested's craft bonus needs no wiring.
+**Wired (the W6 kit helper):** at a Hearth with a Study a Blueprint takes 2 paper instead of 4 (`ArmsForge.blueprintPrice(player)`,
+`HearthHooks.study`; the Forge window shows a "Your Study: halves the paper" row); in a Greenhouse the herb threshold is three
+times as high (`Herbs.ripe(pos, day, rootSense, greenhouse)`, 9% a day, 18% with Root Sense; the harvest and the client's glint
+both pass `HearthHooks.greenhouse(level, pos)`).
+
+**The craftable kit** (W6, `hearth/kit/HomeKit`; test `hearth_home_kit`). Carillon's climbable pieces, which have no items and
+no loot, become items of the same ids so a home can be a movement course: `awaken:drainpipe`, `trellis`, `flower_box` (shown
+as the Window Box), `wall_ivy`, `hoist_beam` (`awaken:hanging_ladder` already drops a ladder and is untouched). Nothing in
+`city/` changed: the blocks are named by id and their states by property name. FACING on every one is a ladder's: it points
+away from the wall the piece hangs on (the models are drawn for facing=north with the wall at z 16), so the placed facing is
+the face you click on a wall; a click on a floor or ceiling takes the way you look, as a ladder does; a click on the top or
+bottom of the same piece continues it the same way. It needs a wall solid on that side (a pipe may also hang off the next
+pipe, a beam off the last beam); nothing floats on placing. Drainpipe columns keep a shoe at the foot, a head at the top and
+plain pipe between (re-set on placing and, a tick later, on breaking; a lone pipe is plain). A trellis is placed with ivy,
+wall ivy at density 1 in green, a hoist beam with its pulley at the tip (a beam grown from a beam moves it out, and back when the tip is broken), a window box
+wooden with the bloom on the item (`minecraft:block_state` `{"bloom": ...}`, set by the recipe; a box with none gets one of
+red, yellow, blue, pink or white seeded by its position). Recipes (`data/awaken/recipe/home_kit_*`): drainpipe 3 from
+3 iron nuggets in a column, or 4 from 2 copper ingots; trellis 2 from 4 sticks and a vine (a lattice, the vine at its heart);
+window box 2 from three planks, three dirt and a flower on top (one recipe per bloom: red poppy/red tulip/rose bush, yellow
+dandelion/golden dandelion/sunflower/orange tulip, blue cornflower/blue orchid, pink pink tulip/peony/allium/lilac, white
+oxeye/lily of the valley/white tulip/azure bluet, herbs fern/the land's herbs; no flower, a bare box); wall ivy 3 from 2 vines;
+hoist beam 4 from two logs and an iron nugget. A piece a player breaks drops itself (`BlockDropsEvent`; a box keeps its
+bloom) unless it is Carillon's: inside the walls (`CityHooks.inCity`) or the city reserve (`CityBasin.reserved`), where
+nothing ever drops. Items sit in the shared AWAKEN creative tab (every bloom of the box). Client: `items/<id>.json` with
+item models `home_kit_*` that wrap the block models with a block's display transforms (the box picks its model from its
+bloom). Not done: pieces do not pop when their wall goes (the blocks have no survival rule, and `city/` is Carillon's).
 
 ### 28.2 W1 as built
 Branch `pack/world-depth-w1`. Module doc: `docs/modules/hearth.md` ("The carried flame"). Tests: `hearth_ember_founds`,

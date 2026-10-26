@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "home_kit_drainpipe",
+  "key": {
+    "N": "minecraft:iron_nugget"
+  },
+  "pattern": [
+    "N",
+    "N",
+    "N"
+  ],
+  "result": {
+    "id": "awaken:drainpipe",
+    "count": 3
+  }
+}
