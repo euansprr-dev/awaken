@@ -5925,8 +5925,11 @@ rising by day (at dawn 0.3 + radius/28 wisps a tick, thinning through the day, g
 top so they clear the rim; 1.3-2.3 across, swelling 2.2x, peak alpha 0.28-0.38 on a soft sprite; fading out within
 2.5-8.5 of the camera so it never walls the view; our sprites `delve_mist`), a chute's draught at its mouth (`delve_draught`).
 Carving turns sand or gravel left hanging over the new air into sandstone or stone (a roof never pours in).
-`/awaken delve goto <kind>` (`CaveLocate`) stands you at the nearest place of a kind the world really made; it passes
-(and logs `[delve] goto passes`) a candidate whose goal the world lacks or has under water.
+`/awaken delve goto <kind>` (`CaveLocate`) stands you at the nearest place of a kind the world really made: each
+candidate's start chunk is generated to its structure starts and the start the world holds is taken (a disagreement with
+the search is logged, `[delve] locate ... the search says ..., the world holds ...`), and it passes (logging `[delve] goto
+passes`) a place whose goal is not its own, is solid rock or is under water. A sinkhole walls off a lava lake at the
+ground beside it (lava within 2.5 of the wall from 8 under the rim up is set to rock), so lava never falls down the shaft.
 
 **Names and captions** (`delve.client.CaveHud`): "THE DELVERS' DEEP" in spaced capitals under one hairline, "old mine"
 under it, quieter than a region's (smaller, dimmer, rising as it fades), through the notification director (topic
@@ -6018,9 +6021,11 @@ sinkhole may end in its grotto when no cave is near; a plain cave's own undergro
 Taken trouble's destination (W4); an ice chute (the stair slide runs on steps only); the cave sound judged by ear (a Mac
 listening check: `delve.cave.*`, `delve.deep.*`, `ascent.rappel_*`, the seep heart's voice). Not yet seen in a shot
 (changed after the second tour, 40313392914): the great shaft's shape (radius 10-17, the leaning lip, the vine curtains,
-the stony way in), the mist's latest numbers, the place caption, the draught; the grotto lit (that tour's grotto shots
-came out black round a placed lantern, the chunks or their light not yet on the client); the dripstone and deep-dark
-looks read only dimly (lush reads). The way home's Now line ranks under a tracked quest's line, so the tours saw its
+the stony way in), the mist's latest numbers, the place caption, the draught; the dripstone and deep-dark looks read
+only dimly (lush reads). The third tour (40316525458) saw the great shaft read from over its lip (the waterfall to the
+pool, the rings, mist), but its grotto, The Hush Pool, again came out black but for our drawn light: goto stood in solid
+rock where the search put the room (the search and the built world apparently disagree there; goto now takes the world's
+own start and refuses a goal that is rock), so a grotto in its own light is still unseen. The way home's Now line ranks under a tracked quest's line, so the tours saw its
 thread only.
 
 ### 28.6 W3 as built (living villages, 2026-10-26)
