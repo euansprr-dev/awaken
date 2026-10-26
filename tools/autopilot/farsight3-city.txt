@@ -41,16 +41,17 @@ shotnow fs3o_15
 wait 40
 shotnow fs3o_16
 farsight status
-# City Sight's own cost here: Far Sight's GPU time over 5 s with it, then 5 s without
-wait 100
-farsight status
-farsight part city off
-wait 100
-farsight status
-farsight part city on
 farsight debug 3
 wait 4
 shotnow fs3o_roost_debug
+farsight debug 0
+# the seam audit: the same view, then debug view 2 (far terrain and City Sight hidden for the real chunks paint red
+# instead): red only in the second frame is a hole (tools/farsight/seam_audit.py)
+wait 4
+shotnow fs3a_roost
+farsight debug 2
+wait 4
+shotnow fs3a_roost_holes
 farsight debug 0
 farsight off
 wait 40
@@ -71,6 +72,11 @@ wait 200
 cmd awaken city view quay
 wait 100
 shot fs3t_quay_on
+shot fs3a_quay
+farsight debug 2
+wait 4
+shot fs3a_quay_holes
+farsight debug 0
 farsight off
 wait 40
 shot fs3t_quay_off
@@ -78,6 +84,11 @@ farsight on
 cmd tp @s ~ ~120 ~
 wait 200
 shot fs3t_high_on
+shot fs3a_high
+farsight debug 2
+wait 4
+shot fs3a_high_holes
+farsight debug 0
 farsight debug 3
 wait 4
 shot fs3t_high_debug
@@ -87,5 +98,13 @@ wait 40
 shot fs3t_high_off
 farsight on
 farsight status
+# City Sight's own cost over the city: Far Sight's GPU time over 5 s with it, then 5 s without (it vanishes meanwhile)
+cmd tp @s ~ ~-120 ~
+wait 100
+farsight status
+farsight part city off
+wait 100
+farsight status
+farsight part city on
 info
 quit

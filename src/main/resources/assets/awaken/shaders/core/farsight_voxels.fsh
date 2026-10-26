@@ -46,7 +46,11 @@ void main() {
         vec2 rel = vRel.xz + FarCam.xz;
         ivec2 chunk = (FarCamInt.xz >> 4) + ivec2(floor(rel / 16.0));
         int sy = int(floor((vRel.y + FarFog.z - VoxelMore.x) / 16.0)), sections = int(VoxelMore.y + 0.5);
-        if (sy >= 0 && sy < sections && texelFetch(SectionSampler, ivec2(chunk.x & 63, (chunk.y & 63) * sections + sy), 0).r > 0.5) discard;
+        if (sy >= 0 && sy < sections && texelFetch(SectionSampler, ivec2(chunk.x & 63, (chunk.y & 63) * sections + sy), 0).r > 0.5) {
+            // debug view 2: hidden here for the real chunks, red instead (red that shows is a hole they leave)
+            if (FarCam.w > 1.5 && FarCam.w < 2.5) { fragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
+            discard;
+        }
     }
     // a level fades in over the band past the finer level's reach and out over the band past its own
     float d = length(vRel.xz), dither = bayer4(gl_FragCoord.xy);
