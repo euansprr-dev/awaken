@@ -193,6 +193,73 @@ def deepglass_glow():
     return glow_of(deepglass(), [g[5], g[6]])
 
 
+def vein_cracks(k):
+    """The vein's light breaking through a face (white: the game tints it the ore's light and adds it over the rock): a
+    crack edge to edge (midpoint-displaced, so it wanders like split rock) with a branch and hairline spurs, a faint
+    halo round it. Four shapes; the game turns them per face."""
+    rnd = rng_for("vein_cracks", k)
+    core = {}
+
+    def put(x, y, v):
+        x, y = int(math.floor(x)), int(math.floor(y))
+        if 0 <= x < 16 and 0 <= y < 16:
+            core[(x, y)] = max(core.get((x, y), 0), v)
+
+    def path(a, b, rough=0.45, depth=4):
+        pts = [a, b]
+        for _ in range(depth):
+            nxt = [pts[0]]
+            for p, q in zip(pts, pts[1:]):
+                dx, dy = q[0] - p[0], q[1] - p[1]
+                n = math.hypot(dx, dy) or 1
+                off = (rnd.random() - 0.5) * rough * n
+                nxt += [((p[0] + q[0]) / 2 - dy / n * off, (p[1] + q[1]) / 2 + dx / n * off), q]
+            pts = nxt
+        return pts
+
+    def draw(pts, hot, fall=0.0):
+        total = len(pts) - 1
+        for i, (p, q) in enumerate(zip(pts, pts[1:])):
+            v = int(hot - fall * i / max(1, total))
+            steps = int(max(abs(q[0] - p[0]), abs(q[1] - p[1])) * 2) + 1
+            for s in range(steps + 1):
+                t = s / steps
+                put(p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, v)
+
+    def crack(a, b, hot, branch_to=None, at=0.45):
+        pts = path(a, b)
+        draw(pts, hot, 40)
+        if branch_to:
+            o = pts[int(len(pts) * at)]
+            draw(path(o, branch_to, 0.5, 3), int(hot * 0.82), 50)
+        # hairline spurs, dim
+        for _ in range(3):
+            o = pts[rnd.randrange(2, len(pts) - 2)]
+            ang = rnd.random() * math.tau
+            ln = rnd.uniform(1.5, 3.2)
+            draw([o, (o[0] + math.cos(ang) * ln, o[1] + math.sin(ang) * ln)], int(hot * 0.5))
+
+    if k == 0:
+        crack((0, rnd.uniform(5, 11)), (16, rnd.uniform(5, 11)), 255, (rnd.uniform(9, 14), 0))
+    elif k == 1:
+        crack((rnd.uniform(5, 11), 0), (rnd.uniform(5, 11), 16), 255, (0, rnd.uniform(10, 15)))
+    elif k == 2:
+        crack((0, 0), (16, 16), 255, (16, rnd.uniform(3, 7)), 0.55)
+    else:
+        c0 = (rnd.uniform(6.5, 9), rnd.uniform(6.5, 9))
+        crack(c0, (0, rnd.uniform(4, 12)), 255)
+        crack(c0, (16, rnd.uniform(0, 5)), 235)
+        crack(c0, (rnd.uniform(6, 12), 16), 220)
+    c = Canvas()
+    for (x, y) in core:
+        for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if 0 <= nx < 16 and 0 <= ny < 16 and (nx, ny) not in core:
+                c.set(nx, ny, (255, 255, 255, 48))
+    for (x, y), v in core.items():
+        c.set(x, y, (255, 255, 255, v))
+    return c
+
+
 def heart_glow_frames(ore):
     cols = [hx(h) for h in HEART[ore]]
     out = []
@@ -477,6 +544,8 @@ def build(out):
     for o in ORES:
         out.block(o + "_lode_heart", heart_frames(o), frametime=20)
         out.block(o + "_lode_heart_glow", heart_glow_frames(o), frametime=20)
+    for k in range(4):
+        out.block(f"vein_cracks_{k}", vein_cracks(k))
     out.block("piton", piton_block())
     out.block("runner_line", rope_block())
     out.item("deepglass_shard", shard_icon("deepglass", "dg"))
