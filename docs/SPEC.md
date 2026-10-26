@@ -4928,6 +4928,24 @@ The rules below replace that.
   session, "JOURNAL · N NEW" until the K screen has shown them. The Codex keeps the finds themselves.
 - A lair rumour ("Heard of · …") is AMBIENT, topic `lair` (the Now tracker points at it).
 
+### 26.3b The city is not a discovery (Euan, 2026-10-26)
+Carillon is where you start, not something you find: inside its walls (`CityHooks.inCity`, the wall included) nothing
+counts as a discovery. One rule, `Finds.counts(player)`, checked by every source before it records anything, so the
+first find outside is still a first:
+- **Biomes** (`BiomeDiscovery`): no first steps inside; the remembered biome is dropped there, so the first step past
+  the wall into the same biome is the discovery (the Commons' caption is the moment).
+- **Creatures** (`Sightings`): the city's animals and citizens are never studied, by look or by touch.
+- **Landmarks and gates** (`LandmarkWatch`): the city's own gate and places are not landmarks found.
+- **Happenings** (`Pulse`): one seen from inside the walls isn't witnessed; stepping out while it runs still is.
+- **Anomalies** (`AnomalyDirector.discovered`).
+What the city keeps, because the city needs it: the Registry's band and licence, the first power, the city's own places
+on the Atlas (its discovery and bells), the opening's story lines and revelations, Carillon's quests and requests, region
+captions (a place name is not an achievement). Ores and lodes are found by mining, not by standing there, and stay.
+The K menu in a fresh world, by this rule (checked 2026-10-26): Journal and Codex creatures empty until the first step
+outside; Almanac empty; Truths none (they wait for level 5, `LevelRoad` flag `awaken:truths`); "Your body remembers"
+never plays in a fresh world (old worlds only, from rank B); Records (time awake) and Recent messages (the opening's
+own words) stay. Test `notice_city_discovers_nothing`.
+
 ### 26.4 "Nearby" alerts and the rift
 - Anomaly words are IMPORTANT, topic `nearby` (merged, paced, never several at once), sent 50 ticks after the anomaly's
   own cue, and dropped if it ended meanwhile. The first rift a player meets is a moment ("Something tore open", label
@@ -4950,7 +4968,7 @@ The rules below replace that.
 ### 26.5 Tests
 `notice_pace_gap_and_burst`, `notice_critical_bypasses_queue`, `notice_ambient_files_to_journal` (signal),
 `notice_discovery_needs_intent` (fauna: beside the crosshair is never a find, a glance isn't, a rest is; the first find
-teaches). `fauna_sighting_discovery` studies for `Sightings.DWELL` looks.
+teaches), `notice_city_discovers_nothing` (wilds: walking the city finds no biome; one step past the wall, it does). `fauna_sighting_discovery` studies for `Sightings.DWELL` looks.
 
 ### 26.6 The audit (2026-10-26) and what is still outside the director
 Routed: every Signal toast/panel/window (server tier tags: anomalies, creatures, biomes, happenings, lairs, landmarks,

@@ -134,7 +134,8 @@ public final class Pulse extends SavedData {
             safely(() -> b.tick(level, h, def, now));
             if (!h.centre.equals(before)) h.changed = true;
             for (ServerPlayer pl : level.players()) {
-                if (h.witnessed.contains(pl.getUUID()) || pl.isSpectator()) continue;
+                // seen from inside Carillon's walls it isn't witnessed yet (SPEC §26.3): stepping out still can
+                if (h.witnessed.contains(pl.getUUID()) || pl.isSpectator() || !Finds.counts(pl)) continue;
                 if (pl.position().distanceToSqr(h.centre) <= (double) def.witnessRadius() * def.witnessRadius()) {
                     h.witnessed.add(pl.getUUID());
                     witness(pl, h, def);

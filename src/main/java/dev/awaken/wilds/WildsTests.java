@@ -1,5 +1,6 @@
 package dev.awaken.wilds;
 
+import dev.awaken.core.api.CityHooks;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.progression.Profile;
 import dev.awaken.progression.Progression;
@@ -22,6 +23,39 @@ final class WildsTests {
     static void register() {
         WardTests.register();
         ArrivalTests.register();
+        // SPEC §26.3 (Euan, 2026-10-26): inside Carillon's walls nothing is a discovery; one step outside, the biome is.
+        // The city is a stand-in here (the walls end 8 blocks east of the start), put back in finally; isolated, so no
+        // other test sees it.
+        AwakenTests.registerIsolated("notice_city_discovers_nothing", 100, h -> {
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            BlockPos at = h.absolutePos(new BlockPos(1, 2, 1));
+            int wall = at.getX() + 8;
+            var real = CityHooks.installed();
+            CityHooks.install(new CityHooks.Access() {
+                @Override public boolean inCity(net.minecraft.world.level.Level level, BlockPos pos) {
+                    return level == h.getLevel() && pos.getX() < wall;
+                }
+            });
+            try {
+                Progression.awaken(p);
+                Profile prof = Progression.profile(p);
+                BiomeDiscovery.forget(p.getUUID());
+                for (int step = 0; step < 6; step++) {
+                    p.teleportTo(h.getLevel(), at.getX() + step + 0.5, at.getY(), at.getZ() + 0.5, Set.of(), 0, 0, true);
+                    h.assertFalse(BiomeDiscovery.check(p), "walking the city discovers no biome (step " + step + ")");
+                }
+                h.assertTrue(prof.counter(BiomeDiscovery.COUNTER) == 0 && prof.counter("awaken:discoveries") == 0,
+                        "nothing counted inside the walls: " + prof.counter("awaken:discoveries"));
+                // the same biome, one step past the wall: now it is a first
+                p.teleportTo(h.getLevel(), wall + 1.5, at.getY(), at.getZ() + 0.5, Set.of(), 0, 0, true);
+                h.assertTrue(BiomeDiscovery.check(p), "one step outside the walls, the biome underfoot is a first");
+                h.assertTrue(prof.counter(BiomeDiscovery.COUNTER) == 1, "counted once outside");
+            } finally {
+                CityHooks.install(real);
+            }
+            h.succeed();
+        });
+
         AwakenTests.register("wilds_discovery_pays", 100, h -> {
             ServerPlayer p = h.makeMockServerPlayerInLevel();
             BlockPos at = h.absolutePos(new BlockPos(1, 2, 1));
