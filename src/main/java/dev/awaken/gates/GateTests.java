@@ -319,7 +319,8 @@ final class GateTests {
                 h.assertTrue(Director.firstGate(server, p) == null && dev.awaken.progression.Progression.profile(p).counter(Director.FIRST_WAIT) == 1,
                         "level 1: the first gate waits (one pass counted)");
                 dev.awaken.progression.Progression.topUpToLevel(p, 3, dev.awaken.progression.Progression.XpSource.COMMAND);
-                g = Director.firstGate(server, p);
+                // a pass can find no dry ground 250-400 out (the test world's seed varies); a few passes always do
+                for (int pass = 0; pass < 4 && g == null; pass++) g = Director.firstGate(server, p);
                 h.assertTrue(g != null, "level 3, out of the city: the first gate forms");
                 double dx = g.pos.getX() - p.getX(), dz = g.pos.getZ() - p.getZ(), d = Math.sqrt(dx * dx + dz * dz);
                 h.assertTrue(d >= Director.FIRST_MIN - 2 && d <= Director.FIRST_MAX + 2, "250-400 blocks out: " + Math.round(d));

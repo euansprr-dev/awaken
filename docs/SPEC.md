@@ -4559,8 +4559,8 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   line gone in 30 s, and accepted ones never showed outside K.
 - **The first gate, on purpose** (`Director.firstGate`, SPEC §21.0.14 finally built): a player's first gate waits until
   level 3 or about half an hour after awakening (36 Director passes), and until they're out of the city (or an hour),
-  then forms 250-400 blocks further along the bearing from the city's centre to them (north from its middle), at their
-  own rank, with "A gate is drawing breath · 320 m N · its floors make you stronger" (IMPORTANT, topic `gate`); the
+  then forms 250-400 blocks further along the bearing from the city's centre to them (north from its middle; any way
+  if that way is sea, a river or a beach), at their own rank, with "A gate is drawing breath · 320 m N · its floors make you stronger" (IMPORTANT, topic `gate`); the
   Horizon raises it ("First gate · E-rank") until they've cleared a floor. Before, the first gate
   was rolled the moment they awakened, in the infirmary, at random 300-1500 out, unannounced.
 - **Out through the walls** is a moment: crossing the city reserve outward shows the region's caption ("THE COMMONS ·

@@ -241,6 +241,8 @@ public final class Director {
         // out along the way they left; in the middle of it all, north (the High Gate's road)
         double angle = dx * dx + dz * dz < 48 * 48 ? -Math.PI / 2 : Math.atan2(dz, dx);
         GateRecord g = spawnFor(server, p, Progression.rank(p), null, FIRST_MIN, FIRST_MAX, false, angle, Math.toRadians(25));
+        // the way on is sea, a river or a beach: any way at all, rather than no first gate for someone on a coast
+        if (g == null) g = spawnFor(server, p, Progression.rank(p), null, FIRST_MIN, FIRST_MAX, false, angle, Math.PI);
         if (g == null) return null;
         Progression.setCounter(p, FIRST_GATE, g.id + 1L);
         int dist = (int) Math.round(Math.sqrt(p.blockPosition().distSqr(g.pos.atY(p.getBlockY()))));
