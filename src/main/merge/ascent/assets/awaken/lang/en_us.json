@@ -66,7 +66,8 @@
   "awaken.ascent.sovereign.gathering": "The sky gathers itself: %s min",
   "awaken.ascent.sovereign.aether": "Not yet: the Aether must be full.",
   "awaken.ascent.spire.climbed": "Tether Spire climbed%s",
-  "awaken.ascent.spire.built": "The crown stays dark. It answers only to a climb.",
+  "awaken.ascent.spire.built": "The crown stays dark. It answers only to a line.",
+  "awaken.ascent.core.line": "The core stays dark. It answers only to a line up its rings.",
   "awaken.ascent.crown.colossus": "The Elder Colossus's crown%s",
   "awaken.ascent.crown.lumen": "The Lumen Spire's crown%s",
   "block.awaken.spire_crown": "Spire Crown"

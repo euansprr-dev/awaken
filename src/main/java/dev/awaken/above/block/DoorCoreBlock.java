@@ -76,7 +76,7 @@ public class DoorCoreBlock extends BaseEntityBlock {
 
     @Override
     public <T extends BlockEntity> @Nullable BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide() ? null : createTickerHelper(type, AboveBlocks.DOOR_CORE_BE.get(), DoorCoreBlockEntity::serverTick);
+        return createTickerHelper(type, AboveBlocks.DOOR_CORE_BE.get(), level.isClientSide() ? DoorCoreBlockEntity::clientTick : DoorCoreBlockEntity::serverTick);
     }
 
     @Override
@@ -161,6 +161,17 @@ public class DoorCoreBlock extends BaseEntityBlock {
     /** Forgets a player (logout, tests). */
     public static void forget(UUID player) {
         READ.remove(player);
+    }
+
+    /** Gives every panel of this door its rank (their light is the rank's colour); only panels that differ change. */
+    static void paint(ServerLevel level, BlockPos core, BlockState coreState) {
+        int rank = coreState.getValue(RANK);
+        for (BlockPos p : doorBlocks(level, core)) {
+            BlockState s = level.getBlockState(p);
+            if (s.is(AboveBlocks.DOOR.get()) && s.getValue(PrecursorDoorBlock.RANK) != rank) {
+                level.setBlock(p, s.setValue(PrecursorDoorBlock.RANK, rank), Block.UPDATE_CLIENTS);
+            }
+        }
     }
 
     /** Folds the whole door away (no drops). */

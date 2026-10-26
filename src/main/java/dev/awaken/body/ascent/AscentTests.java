@@ -450,7 +450,20 @@ final class AscentTests {
             h.assertTrue(Ascent.has(p, Ascent.Tier.TETHER) && !Ascent.has(p, Ascent.Tier.LEAPER), "the line gives the rope (only)");
             BlockPos m = site.mast();
             p.snapTo(m.getX() + 0.5, box.minY() + 16, m.getZ() + 0.5, 0, 0);
-            TetherVow.tick(p, now + TetherVow.CALL_TICKS + 40);
+            // the mast keeps the vow only by the line (SPEC §17.25): a tower up to it waits
+            dev.awaken.core.api.ArrivalHooks.Tracker arrival = dev.awaken.core.api.ArrivalHooks.installed();
+            boolean[] line = {false};
+            dev.awaken.core.api.ArrivalHooks.install(new dev.awaken.core.api.ArrivalHooks.Tracker() {
+                @Override public boolean byLine(net.minecraft.server.level.ServerPlayer q) { return line[0]; }
+            });
+            try {
+                TetherVow.tick(p, now + TetherVow.CALL_TICKS + 30);
+                h.assertTrue(TetherVow.running(p), "at the mast without the line, the vow waits");
+                line[0] = true;
+                TetherVow.tick(p, now + TetherVow.CALL_TICKS + 40);
+            } finally {
+                dev.awaken.core.api.ArrivalHooks.install(arrival);
+            }
             h.assertTrue(!TetherVow.running(p) && (p.getData(AscentContent.MEMORY).flags() & AscentMemory.VOW_KEPT) != 0, "the vow is kept at the mast");
             h.assertFalse(TetherVow.eligible(p), "and never offered again");
         } finally {

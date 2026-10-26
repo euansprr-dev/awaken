@@ -78,13 +78,18 @@ public class SpireCrownBlockEntity extends BlockEntity {
         this.site = site;
         this.ground = ground;
         setChanged();
-        if (site != SITE_SPIRE && level != null && !level.isClientSide()) HeroCrowns.ward(worldPosition, ground);
+        if (site != SITE_SPIRE && level != null && !level.isClientSide()) HeroCrowns.ward(worldPosition, ground, site);
     }
 
     @Override
     public void onLoad() {
         super.onLoad();
-        if (site != SITE_SPIRE && level != null && !level.isClientSide()) HeroCrowns.ward(worldPosition, ground);
+        if (site != SITE_SPIRE && level != null && !level.isClientSide()) HeroCrowns.ward(worldPosition, ground, site);
+    }
+
+    /** Whether this player has reached this crown by a climb (the Horizon stops naming it then). */
+    boolean hasClimbed(UUID who) {
+        return climbed.contains(who);
     }
 
     @Override
@@ -116,6 +121,11 @@ public class SpireCrownBlockEntity extends BlockEntity {
     void reached(ServerPlayer p, long now) {
         Long last = arrived.put(p.getUUID(), now);
         if (last != null && now - last < 100) return;
+        // the crown answers only the line (SPEC §17.25): a pearl, elytra or a Runner hang still earns the view, not this
+        if (!ArrivalHooks.byLine(p)) {
+            p.sendSystemMessage(Component.translatable("awaken.ascent.spire.built"), true);
+            return;
+        }
         if (!ArrivalHooks.byMovement(p) || !Ascent.arrivedByMovement(p, 20)) {
             p.sendSystemMessage(Component.translatable("awaken.ascent.spire.built"), true);
             return;
