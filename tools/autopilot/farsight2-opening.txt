@@ -1,7 +1,8 @@
 # Far Sight over the opening's flight (SPEC §16.4, §20; Euan's play: a far hill stood over Carillon, the sky showed
 # through the ground): a new Carillon world, the opening from its first frame, a frame every second through the card,
 # its wait for the view to warm, and the whole flight to the landing. Far Sight on (its default), Lens as the opening
-# sets it; at the landing the same view with every far piece tinted and with Far Sight off. Then Carillon's streets and the river quay at noon and dusk, each frame with Far Sight on and then off (no
+# sets it; at the landing the same view with every far piece tinted and with Far Sight off; at the end the fill time
+# after a jump. Then Carillon's streets and the river quay at noon and dusk, each frame with Far Sight on and then off (no
 # blue wall, grey box or sky hole, and what the far view adds is all it changes). Run: PACK=perf,world TECTONIC=awakened RD=16 LENS=cinematic SLOT_WHO=far-sight \
 #      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/farsight2-opening.txt 900
 world fs2open survival 20261024
@@ -181,6 +182,16 @@ lens off
 wait 20
 shot fs2f_lens_off
 lens cinematic
+farsight status
+# fill time: one jump back across to the city, then Far Sight's status every 10 s (every ring's missing patches)
+cmd awaken city view laundry_lane
+wait 200
+farsight status
+wait 200
+farsight status
+wait 200
+farsight status
+wait 200
 farsight status
 info
 quit

@@ -225,6 +225,35 @@ public final class FarColumns {
         return biomes.getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(y), QuartPos.fromBlock(z));
     }
 
+    // Biomes change over tens of blocks, so a patch samples them on a sparser grid (at least 8 blocks and two corners
+    // apart) and each corner takes the nearest sample: a biome edge moves by under two pixels at any ring's distance.
+    // (2026-10-26 profile in the pack's world: the biome source, Tectonic's climate behind Lithostitched's injector, was
+    // 86% of the workers' time at one lookup a corner, 178 us a column, and rings 1-5 took minutes to fill.)
+    private static final int BIOME_SIDE = Rings.PATCH / 2 + 1;
+    @SuppressWarnings("unchecked")
+    private final Holder<Biome>[] patchBiomes = new Holder[BIOME_SIDE * BIOME_SIDE];
+    private int biomeX, biomeZ, biomeStep, biomeCell;
+
+    /** Starts a patch's biome samples afresh: patch (px, pz) of ring {@code ring}. */
+    public void biomesFor(int ring, int px, int pz) {
+        java.util.Arrays.fill(patchBiomes, null);
+        biomeCell = Rings.cellSize(ring);
+        biomeStep = Math.max(2, 8 / biomeCell);
+        biomeX = px * Rings.PATCH;
+        biomeZ = pz * Rings.PATCH;
+    }
+
+    /** The biome at corner (i, j) of the patch {@link #biomesFor} named: its nearest sample's, sampled at height y. */
+    public Holder<Biome> patchBiome(int i, int j, int y) {
+        int bi = Math.round((float) i / biomeStep), bj = Math.round((float) j / biomeStep), b = bj * BIOME_SIDE + bi;
+        Holder<Biome> biome = patchBiomes[b];
+        if (biome == null) {
+            biome = biome((biomeX + bi * biomeStep) * biomeCell, y, (biomeZ + bj * biomeStep) * biomeCell);
+            patchBiomes[b] = biome;
+        }
+        return biome;
+    }
+
     /**
      * Fills one patch of ring {@code ring}: its 16×16 grid corners, row by row, as the texels the client uploads:
      * <ul>
@@ -240,6 +269,7 @@ public final class FarColumns {
         int s = Rings.cellSize(ring);
         int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
         float rowStart = Float.NaN;
+        biomesFor(ring, px, pz);
         guess = Float.NaN;
         for (int j = 0; j < Rings.PATCH; j++) {
             // each row starts from the corner above its first, the nearest solved neighbour
@@ -256,7 +286,7 @@ public final class FarColumns {
                 // the sea fills to just under sea level: its surface is the top face of the block below it
                 boolean water = ground < seaLevel;
                 float top = water ? seaLevel : ground;
-                Holder<Biome> biome = biome(x, (int) top, z);
+                Holder<Biome> biome = patchBiome(i, j, (int) top);
                 FarPalette.Look look = FarPalette.look(biome);
                 int k = j * Rings.PATCH + i;
                 int flags = look.flags();

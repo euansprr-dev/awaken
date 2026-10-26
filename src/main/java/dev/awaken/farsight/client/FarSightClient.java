@@ -65,7 +65,7 @@ public final class FarSightClient {
     private static FarField field;
     private static FarRenderer renderer;
     private static FarGpu gpu;
-    private static final FarWorkers workers = new FarWorkers(FarWorkers.defaultThreads());
+    private static final FarWorkers workers = new FarWorkers(FarWorkers.defaultThreads(), FarWorkers.burstThreads());
     private static ServerLevel bound;
     private static int boundRd, boundRings = Rings.RINGS;
     private static long joinNanos, bindNanos, lastDrawNanos;
@@ -183,6 +183,12 @@ public final class FarSightClient {
         float sea = (partsOff & 64) == 0 ? Math.max(0f, covered - SEA_BAND - 32f) : covered;
         field.place(far, cam.x, cam.z, covered, level, store, workers);
         for (int r = 0; r < far; r++) field.place(r, cam.x, cam.z, r == 0 ? sea : covered, level, store, workers);
+        // much of the view missing (a new world, a jump, the opening's card, fast flight): every burst worker, unpaced,
+        // so the middle rings never stand empty for long (Euan, 2026-10-26: see-through ground outside Carillon)
+        int gaps = 0;
+        for (int r = 0; r < Rings.RINGS; r++) gaps += field.missing[r];
+        cold = gaps > COLD_GAPS;
+        workers.active = cold ? workers.burst() : workers.threads();
         for (int i = 0; i < CHANGES_PER_FRAME; i++) {
             long chunk = store.pollChanged();
             if (chunk == Long.MIN_VALUE) break;
@@ -257,6 +263,9 @@ public final class FarSightClient {
     }
 
     private static long lastFrameNanos;
+    /** Missing patches past which the view counts as cold (about a quarter of one ring). */
+    static final int COLD_GAPS = 64;
+    private static boolean cold;
     private static float frameMs = 8f;
 
     /**
@@ -269,7 +278,7 @@ public final class FarSightClient {
             frameMs += (ms - frameMs) * 0.05f;
         }
         lastFrameNanos = now;
-        workers.restMicros = (partsOff & 16) != 0 ? 0 : Math.round(Math.clamp((frameMs - 13f) / 5f, 0f, 1f) * 12_000f);
+        workers.restMicros = (partsOff & 16) != 0 || cold ? 0 : Math.round(Math.clamp((frameMs - 13f) / 5f, 0f, 1f) * 12_000f);
     }
 
     private static float smooth(float a, float b, float x) {
@@ -379,8 +388,8 @@ public final class FarSightClient {
         cpuFrames = 0;
         double[] gpu = renderer.gpuMillis();
         return String.format(Locale.ROOT,
-                "%s gpu_ms=%.3f bake_ms=%.3f cpu_ms=%.3f rest_us=%d missing=[%s] queued=%d pieces=%d cells=%d trees=%d (%d draws) column=%.1fus probes=%.1f/column (%d columns) generated=%d/%d vram=%dMB",
-                drawing() ? "drawing" : enabled() ? "on" : "off", gpu[0], gpu[1], cpu, workers.restMicros, rings, workers.queued(), renderer.pieces, renderer.cells, renderer.treesDrawn, renderer.treeDraws,
+                "%s gpu_ms=%.3f bake_ms=%.3f cpu_ms=%.3f rest_us=%d missing=[%s] queued=%d workers=%d pieces=%d cells=%d trees=%d (%d draws) column=%.1fus probes=%.1f/column (%d columns) generated=%d/%d vram=%dMB",
+                drawing() ? "drawing" : enabled() ? "on" : "off", gpu[0], gpu[1], cpu, workers.restMicros, rings, workers.queued(), workers.active, renderer.pieces, renderer.cells, renderer.treesDrawn, renderer.treeDraws,
                 cols == 0 ? 0.0 : workers.columnNanos.get() / 1000.0 / cols, cols == 0 ? 0.0 : workers.probes.get() / (double) cols, cols,
                 field.genUploaded, field.genAsked, (field.memoryBytes() + renderer.memoryBytes()) >> 20);
     }
