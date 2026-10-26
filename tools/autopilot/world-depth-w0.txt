@@ -16,10 +16,17 @@ cmd gamerule spawn_mobs false
 cmd gamerule advance_time false
 cmd weather clear 1000000
 cmd time set 6000
-cmd awaken admin awaken
-wait 200
+# a fresh client's first flight over the city ends on the view question, holding the camera on the Roost: skip the
+# opening (as world-depth-w1.txt does), then the starter pick and the Ascent's gift card
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
 cmd awaken powers starter 1
 wait 20
+screen close
+key dismiss
+wait 10
 screen close
 window 1440 900
 info
@@ -83,8 +90,8 @@ cmd time set 17000
 cmd awaken citizens show watch_side
 wait 260
 shot w0_night_watch_lantern
-cmd awaken citizens show watch_far
-wait 160
+cmd awaken citizens show wall_watch_front
+wait 200
 shot w0_night_watch_round
 # ---- the second settlement: the test hamlet at noon, 700 blocks east of the square on a studio platform
 cmd time set 6000
