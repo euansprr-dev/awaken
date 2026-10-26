@@ -38,10 +38,27 @@ public record GenTerrain(ChunkGenerator generator, LevelHeightAccessor heights, 
         return Math.max(0, top - floor);
     }
 
+    /**
+     * Both heights from one noise column: the generator samples the whole column either way, so asking twice (once per
+     * heightmap) cost two full columns per read, and a hamlet's plan reads ~1,600 columns inside world generation.
+     * Scanned top down with each heightmap's own test, it gives exactly what {@code getFirstOccupiedHeight} gives.
+     */
     @Override
     public long both(int x, int z) {
-        int top = top(x, z);
-        int floor = generator.getFirstOccupiedHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, heights, random);
+        net.minecraft.world.level.NoiseColumn col = generator.getBaseColumn(x, z, heights, random);
+        int min = heights.getMinY(), top = min - 1, floor = min - 1;
+        if (col != null) {
+            var surface = Heightmap.Types.WORLD_SURFACE_WG.isOpaque();
+            var solid = Heightmap.Types.OCEAN_FLOOR_WG.isOpaque();
+            for (int y = heights.getMaxY(); y >= min; y--) {
+                var state = col.getBlock(y);
+                if (top < min && surface.test(state)) top = y;
+                if (solid.test(state)) {
+                    floor = y;
+                    break;
+                }
+            }
+        }
         return ((long) top << 32) | (Math.max(0, top - floor) & 0xffffffffL);
     }
 

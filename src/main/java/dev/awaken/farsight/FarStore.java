@@ -100,6 +100,10 @@ public final class FarStore {
 
     public void put(FarChunk chunk) {
         Region r = region(Math.floorDiv(chunk.x(), REGION), Math.floorDiv(chunk.z(), REGION), true);
+        // most saves (block entities, random ticks) change no height, colour or crown: no patch rebuilds in seven rings
+        FarChunk was = r.chunks.get(index(chunk.x(), chunk.z()));
+        if (was != null && java.util.Arrays.equals(was.cell(), chunk.cell()) && java.util.Arrays.equals(was.colour(), chunk.colour())
+                && java.util.Arrays.equals(was.crown(), chunk.crown())) return;
         r.chunks.set(index(chunk.x(), chunk.z()), chunk);
         r.dirty = true;
         changed.add(ChunkPos.pack(chunk.x(), chunk.z()));

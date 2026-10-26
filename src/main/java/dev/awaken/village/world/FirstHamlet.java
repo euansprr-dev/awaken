@@ -34,8 +34,12 @@ public final class FirstHamlet {
         LevelHeightAccessor heights = LevelHeightAccessor.create(type.minY(), type.height());
         GenTerrain t = GenTerrain.of(gen, heights, rs);
         int[] centre = SettlementGrid.centre();
-        SettlementGrid.Anchor a = search(seed, centre, t);
+        VillagePlan[] found = new VillagePlan[1];
+        SettlementGrid.Anchor a = search(seed, centre, t, found);
         SettlementGrid.firstFound = a;
+        // the plan the search just made is the one world generation would make (a pure function of anchor and land):
+        // kept, so the structure start doesn't plan it again inside generation (5.5 s on the worldgen queue, 26 Oct)
+        if (found[0] != null) Plans.put(found[0]);
         if (a != null) Awaken.LOG.info("[village] the first hamlet's spot: {} {} ({} blocks up the road, {} to the side) found in {} ms", a.x(), a.z(),
                 centre[1] - a.z(), a.x() - centre[0], System.currentTimeMillis() - t0);
         else Awaken.LOG.info("[village] no spot up the road takes the first hamlet ({} ms): the nominal one stands", System.currentTimeMillis() - t0);
@@ -47,6 +51,11 @@ public final class FirstHamlet {
      * further out.
      */
     public static SettlementGrid.@org.jspecify.annotations.Nullable Anchor search(long seed, int[] centre, dev.awaken.village.plan.Terrain t) {
+        return search(seed, centre, t, new VillagePlan[1]);
+    }
+
+    /** As {@link #search}, handing back the winning spot's plan in {@code found[0]}. */
+    static SettlementGrid.@org.jspecify.annotations.Nullable Anchor search(long seed, int[] centre, dev.awaken.village.plan.Terrain t, VillagePlan[] found) {
         SettlementGrid.Anchor nominal = SettlementGrid.nominalFirst(seed, centre);
         int[][] roads = {{0, -1}, {1, 0}, {-1, 0}, {0, 1}};
         for (int pass = 0; pass < 2; pass++) {
@@ -57,10 +66,13 @@ public final class FirstHamlet {
                         int x = centre[0] + road[0] * far + (road[0] == 0 ? 6 + side : 0), z = centre[1] + road[1] * far + (road[1] == 0 ? side : 0);
                         boolean nominalSpot = pass == 0 && road[1] == -1 && out == OUT[0] && side == 0;
                         SettlementGrid.Anchor a = nominalSpot ? nominal : new SettlementGrid.Anchor("first", x, z, VillagePlan.Kind.HAMLET, true, nominal.seed());
-                        if (!VillagePlanner.hasSite(Plans.request(a), t)) continue;
-                        // and room for a proper hamlet there: four homes at least
+                        // a site, and room for a proper hamlet there: four homes at least (plan() is null without a site, so the
+                        // site isn't read twice)
                         VillagePlan p = VillagePlanner.plan(Plans.request(a), t);
-                        if (p != null && p.buildings.stream().filter(b -> b.use().equals("house")).count() >= 4) return a;
+                        if (p != null && p.buildings.stream().filter(b -> b.use().equals("house")).count() >= 4) {
+                            found[0] = p;
+                            return a;
+                        }
                     }
                 }
             }

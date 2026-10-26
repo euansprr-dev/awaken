@@ -55,6 +55,10 @@ public final class Pillars {
             if (dist > GatePayloads.BEACON_RANGE + 100) continue;
             float k = dist > clamp ? (float) (clamp / dist) : 1F;
             float widen = (float) Math.max(1.0, Math.sqrt(rx * rx + rz * rz) / 96.0);
+            // off screen (behind the camera, say): no pass of its own on the main target this frame, which on a tiled
+            // GPU costs a load and store of colour and depth at 4K. The box holds the widest ribbon (the haze, 16 × halo)
+            double r = 0.32 * widen * 16 * k + 2, px = cam.x + rx * k, py = cam.y + ry * k, pz = cam.z + rz * k;
+            if (!e.getFrustum().isVisible(new net.minecraft.world.phys.AABB(px - r, py - 2, pz - r, px + r, py + HEIGHT * k, pz + r))) continue;
             int colour = ClientGates.rankColour(b.rank());
             int core = colour, glow = colour;
             if (b.rank() == 6) {

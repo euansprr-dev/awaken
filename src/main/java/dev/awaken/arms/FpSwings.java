@@ -62,6 +62,14 @@ public final class FpSwings {
     /** Weapons turned over in their third-person hold (their single edge on the other side from their style's). */
     private static final java.util.Set<String> FLIPPED = new java.util.HashSet<>();
 
+    /**
+     * Loads the swings now (the client calls this on a worker at start): reading the 1.1 MB file on first use cost a
+     * 30-80 ms hitch on the render thread the first time anyone with a blade was drawn.
+     */
+    public static void warm() {
+        // the static block below has run by the time this returns
+    }
+
     static {
         try (InputStream in = FpSwings.class.getResourceAsStream(PATH)) {
             if (in != null) {
