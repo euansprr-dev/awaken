@@ -90,8 +90,8 @@ public final class TownPlanner {
 
     /** A town's raster reaches this far (its structure's reach less the beard). */
     static final int TOWN_R = 112;
-    /** The wall stands this far inside the raster's edge: fields and pens lie outside it. */
-    static final int OUTSIDE = 30;
+    /** The wall's mean radius: about what thirty to forty homes, their lanes, the square and the civic buildings fill. */
+    static final int WALL = 60;
 
     /**
      * The town's plan: inside a wall that follows the land round it, a market square where two main streets cross (each
@@ -158,7 +158,7 @@ public final class TownPlanner {
         // ---- the wall's line ------------------------------------------------------------------------------------------
 
         void ring() {
-            int w0 = r - OUTSIDE;
+            int w0 = Math.min(WALL, r - 30);
             double p1 = rnd.nextDouble() * Math.PI * 2, p2 = rnd.nextDouble() * Math.PI * 2;
             ring = new float[360];
             for (int a = 0; a < 360; a++) {
@@ -194,7 +194,7 @@ public final class TownPlanner {
 
         @Override
         int[] fieldBand() {
-            return new int[]{r - OUTSIDE + 13, r - 9};
+            return new int[]{Math.min(WALL, r - 30) + 13, r - 9};
         }
 
         @Override
@@ -226,7 +226,7 @@ public final class TownPlanner {
             mainWalk = true;
             for (int m = 0; m < 2; m++) {
                 double h = heading + m * Math.PI / 2;
-                int len = r - OUTSIDE + 14;
+                int len = Math.min(WALL, r - 30) + 14;
                 java.util.List<float[]> a = through(walk(0, 0, h, len, 1.2)), b = through(walk(0, 0, h + Math.PI, len, 1.2));
                 if (a.size() < 3 && b.size() < 3) continue;
                 java.util.List<float[]> main = new java.util.ArrayList<>();
@@ -344,7 +344,7 @@ public final class TownPlanner {
                     tower(x, z, lift[(int) Math.floorMod(Math.round(Math.toDegrees(Math.atan2(z, x))), 360L)], 2);
                 }
             }
-            double step = Math.toDegrees(30.0 / (r - OUTSIDE));
+            double step = Math.toDegrees(30.0 / Math.min(WALL, r - 30));
             for (double a = rnd.nextDouble() * step; a < 360; a += step) {
                 boolean nearGate = false;
                 for (int ga : gateAngles) nearGate |= Math.abs(((a - ga + 540) % 360) - 180) < step * 0.6;

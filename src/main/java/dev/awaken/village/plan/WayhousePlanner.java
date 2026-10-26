@@ -140,17 +140,18 @@ public final class WayhousePlanner {
             for (VillagePlan.Building b : plan.buildings) {
                 if (!b.use().equals("barn")) continue;
                 dev.awaken.city.CityPlan.Plot p = plan.plots.get(b.plot());
-                for (int turn : new int[]{1, 3, 2}) {
+                for (int k = 0; k < 9; k++) {
+                    int turn = new int[]{1, 3, 2}[k % 3], gap = 3 + k / 3 * 2;
                     int sd = (p.front() + turn) & 3;
                     int x0, z0, x1, z1;
-                    // past the stable's yard (its ring of one), the paddock's own ring free
+                    // past the stable's yard (its ring of one), the paddock's own ring free; further out if it must
                     switch (sd) {
-                        case 0 -> { x0 = p.x0(); x1 = p.x0() + 6; z1 = p.z0() - 3; z0 = z1 - 5; }
-                        case 2 -> { x0 = p.x0(); x1 = p.x0() + 6; z0 = p.z1() + 3; z1 = z0 + 5; }
-                        case 1 -> { z0 = p.z0(); z1 = p.z0() + 6; x0 = p.x1() + 3; x1 = x0 + 5; }
-                        default -> { z0 = p.z0(); z1 = p.z0() + 6; x1 = p.x0() - 3; x0 = x1 - 5; }
+                        case 0 -> { x0 = p.x0(); x1 = p.x0() + 6; z1 = p.z0() - gap; z0 = z1 - 5; }
+                        case 2 -> { x0 = p.x0(); x1 = p.x0() + 6; z0 = p.z1() + gap; z1 = z0 + 5; }
+                        case 1 -> { z0 = p.z0(); z1 = p.z0() + 6; x0 = p.x1() + gap; x1 = x0 + 5; }
+                        default -> { z0 = p.z0(); z1 = p.z0() + 6; x1 = p.x0() - gap; x0 = x1 - 5; }
                     }
-                    if (!rect(x0, z0, x1, z1, 1, 3)) continue;
+                    if (!rect(x0, z0, x1, z1, 1, 4)) continue;
                     int lift = p.lift();
                     for (int z = z0; z <= z1; z++) for (int x = x0; x <= x1; x++) plan.set(x, z, VillagePlan.PEN, lift);
                     int gx = (x0 + x1) / 2, gz = (z0 + z1) / 2, side;
