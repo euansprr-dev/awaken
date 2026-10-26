@@ -1,0 +1,49 @@
+# Gate pillars, our own soft light (Euan: vanilla's beacon beam read as "a weird boxed outline" over Carillon): the
+# D-rank gate 490 blocks south-east of the city in the B3 tour world (822 69 -625), its pillar from about 50 blocks and
+# from about 300 (inside the wall, looking out over the roofs), by day and at dusk.
+# Run (shots only, short):
+#   PACK=perf,world,horizon TECTONIC=awakened DH=swift RD=20 SLOT_WHO=pillars \
+#   /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh tools/autopilot/pillars.txt 600
+world carillonM4b3a creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+hud off
+cmd gamemode spectator
+cmd time set 6000
+# ---- by day: about 300 blocks off, from the city's roofs
+cmd tp @s 729 104 -910 facing 822 150 -625
+wait 200
+shot pillar_day_300
+# ---- about 50 blocks off
+cmd tp @s 790 92 -665 facing 822 120 -625
+wait 200
+shot pillar_day_50
+cmd tp @s 792 75 -628 facing 822 160 -625
+wait 60
+shot pillar_day_50_up
+# ---- dusk
+cmd time set 12400
+cmd tp @s 729 104 -910 facing 822 150 -625
+wait 160
+shot pillar_dusk_300
+cmd tp @s 790 92 -665 facing 822 120 -625
+wait 100
+shot pillar_dusk_50
+cmd time set 18000
+wait 40
+shot pillar_night_50
+cmd tp @s 729 104 -910 facing 822 150 -625
+wait 120
+shot pillar_night_300
+quit
