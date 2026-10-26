@@ -15,10 +15,11 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Who has a body (SPEC §16.5): every 10 ticks, nearest first, at most 40 bodies per player and 96 in the world, spawned
- * within 56 blocks and kept to 64, at most 8 new ones a pass. Bodies fade in on the client and fade out here before
- * they go, and go in and out through real doors (opened and shut behind them). Holds the vanilla path slots (4, or 6
- * above 60 bodies) and the per-tick timings.
+ * Who has a body (SPEC §16.5, §28.4): one pool for the world, shared by every settlement. Every 10 ticks, nearest first
+ * across all of them, at most 40 bodies per player and 96 in the world, spawned within 56 blocks and kept to 64, at
+ * most 8 new ones a pass; a village's people never take the city's bodies by being registered, only by being nearer.
+ * Bodies fade in on the client and fade out here before they go, and go in and out through real doors (opened and shut
+ * behind them). Holds the vanilla path slots (4, or 6 above 60 bodies: shared too) and the per-tick timings.
  */
 final class Crowd {
     /** Accumulated by every body's tick between the server tick's Pre and Post. */
@@ -26,17 +27,15 @@ final class Crowd {
     static final int SPAWNS_PER_PASS = 8, MAX_PLAYERS = 16;
     static final double EMBODY = 56, KEEP = 64;
 
-    final Citizens c;
     final ServerLevel level;
-    final Ledger l;
     int capPlayer = 40, capWorld = 96;
     boolean on = true;
 
     final List<CitizenBody> bodies = new ArrayList<>(128);
     private final CitizenBody[] scratch = new CitizenBody[256];
-    private final int[] candIdx, candPlayer;
-    private final double[] candDist;
-    private final boolean[] want;
+    /** Candidates this pass: settlement (index into the live list), record, nearest player, squared distance. */
+    private int[] candSet = new int[0], candIdx = new int[0], candPlayer = new int[0];
+    private double[] candDist = new double[0];
     private final int[] perPlayer = new int[MAX_PLAYERS];
     private final double[] tmp = new double[3];
     private int pathsActive;
@@ -48,14 +47,8 @@ final class Crowd {
     long pathNanos, thinkNanos;
     final CrowdStats stats = new CrowdStats();
 
-    Crowd(Citizens c, ServerLevel level, Ledger l) {
-        this.c = c;
+    Crowd(ServerLevel level) {
         this.level = level;
-        this.l = l;
-        candIdx = new int[l.n];
-        candPlayer = new int[l.n];
-        candDist = new double[l.n];
-        want = new boolean[l.n];
     }
 
     int maxPaths() {
@@ -74,58 +67,79 @@ final class Crowd {
 
     // ---- embodiment ---------------------------------------------------------------------------------------------------
 
+    /** Room for every running settlement's records (grows only when settlements are added). */
+    private void capacity(List<Settlement> live) {
+        int total = 0;
+        for (int s = 0; s < live.size(); s++) total += live.get(s).ledger.n;
+        if (candIdx.length >= total) return;
+        candSet = new int[total];
+        candIdx = new int[total];
+        candPlayer = new int[total];
+        candDist = new double[total];
+    }
+
     void rebalance() {
+        List<Settlement> live = Citizens.live();
+        capacity(live);
         List<ServerPlayer> players = level.players();
         int np = Math.min(players.size(), MAX_PLAYERS);
         int cc = 0;
-        for (int i = 0; i < l.n; i++) {
-            CitizenBody b = l.body[i];
-            if (b != null && (b.isRemoved() || b.fading())) {
-                l.body[i] = null;
-                b = null;
-            }
-            if (!on || np == 0) continue;
-            double x, y, z;
-            if (b != null) {
-                x = b.getX();
-                y = b.getY();
-                z = b.getZ();
-            } else {
-                if (!l.position(i, tmp)) continue;
-                x = tmp[0];
-                y = tmp[1];
-                z = tmp[2];
-            }
-            int bp = -1;
-            double bd = Double.MAX_VALUE;
-            for (int p = 0; p < np; p++) {
-                ServerPlayer sp = players.get(p);
-                if (sp.isSpectator() && !c.spectatorsEmbody) continue;
-                double dx = sp.getX() - x, dy = (sp.getY() - y) * 0.5, dz = sp.getZ() - z, dd = dx * dx + dy * dy + dz * dz;
-                if (dd < bd) {
-                    bd = dd;
-                    bp = p;
+        for (int si = 0; si < live.size(); si++) {
+            Settlement c = live.get(si);
+            Ledger l = c.ledger;
+            boolean embodies = on && c.embody && c.awake && c.level == level;
+            for (int i = 0; i < l.n; i++) {
+                CitizenBody b = l.body[i];
+                if (b != null && (b.isRemoved() || b.fading())) {
+                    l.body[i] = null;
+                    b = null;
+                }
+                if (!embodies || np == 0) continue;
+                double x, y, z;
+                if (b != null) {
+                    x = b.getX();
+                    y = b.getY();
+                    z = b.getZ();
+                } else {
+                    if (!l.position(i, tmp)) continue;
+                    x = tmp[0];
+                    y = tmp[1];
+                    z = tmp[2];
+                }
+                int bp = -1;
+                double bd = Double.MAX_VALUE;
+                for (int p = 0; p < np; p++) {
+                    ServerPlayer sp = players.get(p);
+                    if (sp.isSpectator() && !c.spectatorsEmbody) continue;
+                    double dx = sp.getX() - x, dy = (sp.getY() - y) * 0.5, dz = sp.getZ() - z, dd = dx * dx + dy * dy + dz * dz;
+                    if (dd < bd) {
+                        bd = dd;
+                        bp = p;
+                    }
+                }
+                double lim = b != null ? KEEP * KEEP : EMBODY * EMBODY;
+                if (bp >= 0 && bd < lim) {
+                    candSet[cc] = si;
+                    candIdx[cc] = i;
+                    candDist[cc] = bd;
+                    candPlayer[cc] = bp;
+                    cc++;
                 }
             }
-            double lim = b != null ? KEEP * KEEP : EMBODY * EMBODY;
-            if (bp >= 0 && bd < lim) {
-                candIdx[cc] = i;
-                candDist[cc] = bd;
-                candPlayer[cc] = bp;
-                cc++;
-            }
         }
-        // nearest first (insertion sort: a few hundred at most, nearly sorted from the last pass)
+        // nearest first, whichever settlement (insertion sort: a few hundred at most, nearly sorted from the last pass)
         for (int a = 1; a < cc; a++) {
-            int ki = candIdx[a], kp = candPlayer[a];
+            int ks = candSet[a], ki = candIdx[a], kp = candPlayer[a];
             double kd = candDist[a];
             int b = a - 1;
             while (b >= 0 && candDist[b] > kd) {
+                candSet[b + 1] = candSet[b];
                 candIdx[b + 1] = candIdx[b];
                 candDist[b + 1] = candDist[b];
                 candPlayer[b + 1] = candPlayer[b];
                 b--;
             }
+            candSet[b + 1] = ks;
             candIdx[b + 1] = ki;
             candDist[b + 1] = kd;
             candPlayer[b + 1] = kp;
@@ -135,7 +149,7 @@ final class Crowd {
         for (int k = 0; k < cc; k++) {
             int p = candPlayer[k];
             if (perPlayer[p] < capPlayer && world < capWorld) {
-                want[candIdx[k]] = true;
+                live.get(candSet[k]).ledger.want[candIdx[k]] = true;
                 perPlayer[p]++;
                 world++;
             }
@@ -146,16 +160,18 @@ final class Crowd {
             CitizenBody b = scratch[k];
             scratch[k] = null;
             if (b.fading()) continue;
-            if (b.rec < 0 || !want[b.rec]) despawn(b, true);
+            Settlement home = b.home;
+            if (b.rec < 0 || home == null || !home.live || !live.contains(home) || !home.ledger.want[b.rec]) despawn(b, true);
         }
         int spawned = 0;
         for (int k = 0; k < cc && spawned < SPAWNS_PER_PASS; k++) {
+            Settlement c = live.get(candSet[k]);
             int i = candIdx[k];
-            if (want[i] && l.body[i] == null) {
-                if (spawn(i)) spawned++;
+            if (c.ledger.want[i] && c.ledger.body[i] == null) {
+                if (spawn(c, i)) spawned++;
             }
         }
-        for (int k = 0; k < cc; k++) want[candIdx[k]] = false;
+        for (int k = 0; k < cc; k++) live.get(candSet[k]).ledger.want[candIdx[k]] = false;
         // shut the doors people went through
         long now = level.getGameTime();
         for (int k = doors.size() - 1; k >= 0; k--) {
@@ -167,7 +183,8 @@ final class Crowd {
         }
     }
 
-    boolean spawn(int i) {
+    boolean spawn(Settlement c, int i) {
+        Ledger l = c.ledger;
         if (!l.position(i, tmp)) return false;
         CitizenBody b = CitizensContent.CITIZEN.get().create(level, EntitySpawnReason.MOB_SUMMONED);
         if (b == null) return false;
@@ -186,12 +203,12 @@ final class Crowd {
             tmp[0] = g.x[a] + (g.x[out] - g.x[a]) / len * step;
             tmp[2] = g.z[a] + (g.z[out] - g.z[a]) / len * step;
             yaw = (float) (Math.toDegrees(Math.atan2(g.z[out] - g.z[a], g.x[out] - g.x[a])) - 90.0);
-            openDoorAt(a, 30);
+            openDoorAt(g, a, 30);
         }
         b.snapTo(tmp[0], tmp[1], tmp[2], yaw, 0f);
         b.setYHeadRot(yaw);
         b.setYBodyRot(yaw);
-        b.bind(i, l.r.scale[i]);
+        b.bind(c, i, l.r.scale[i]);
         l.body[i] = b;
         bodies.add(b);
         c.work.dress(b, i, level.getGameTime());
@@ -203,9 +220,10 @@ final class Crowd {
     /** Takes the body away (out of range, or the clock jumped); its record walks on in the ledger. */
     void despawn(CitizenBody b, boolean fade) {
         int i = b.rec;
-        if (i >= 0 && l.body[i] == b) {
-            b.writeBack(l);
-            l.body[i] = null;
+        Settlement c = b.home;
+        if (c != null && i >= 0 && c.ledger.body[i] == b) {
+            b.writeBack(c.ledger);
+            c.ledger.body[i] = null;
         }
         bodies.remove(b);
         despawns++;
@@ -220,10 +238,11 @@ final class Crowd {
     void entered(CitizenBody b) {
         enters++;
         int i = b.rec;
-        if (i >= 0 && l.body[i] == b) {
-            int at = l.d.at[i];
-            if (at >= 0 && l.g.kind[at] == StreetNet.DOOR) openDoorAt(at, 24);
-            l.body[i] = null;
+        Settlement c = b.home;
+        if (c != null && i >= 0 && c.ledger.body[i] == b) {
+            int at = c.ledger.d.at[i];
+            if (at >= 0 && c.net.kind[at] == StreetNet.DOOR) openDoorAt(c.net, at, 24);
+            c.ledger.body[i] = null;
         }
         bodies.remove(b);
         b.fadeAway(8);
@@ -232,9 +251,10 @@ final class Crowd {
     /** A body left the level some other way (chunk unload, a command): the ledger takes the record back as it was. */
     void forget(CitizenBody b) {
         int i = b.rec;
-        if (i >= 0 && l.body[i] == b) {
-            b.writeBack(l);
-            l.body[i] = null;
+        Settlement c = b.home;
+        if (c != null && i >= 0 && c.ledger.body[i] == b) {
+            b.writeBack(c.ledger);
+            c.ledger.body[i] = null;
         }
         bodies.remove(b);
     }
@@ -243,8 +263,13 @@ final class Crowd {
         for (CitizenBody b : bodies.toArray(new CitizenBody[0])) despawn(b, false);
     }
 
-    private void openDoorAt(int node, int ticks) {
-        BlockPos pos = BlockPos.containing(l.g.x[node], l.g.y[node] + 1, l.g.z[node]);
+    /** One settlement's bodies go (it stopped or fell asleep). */
+    void despawnAll(Settlement c) {
+        for (CitizenBody b : bodies.toArray(new CitizenBody[0])) if (b.home == c) despawn(b, false);
+    }
+
+    private void openDoorAt(StreetNet g, int node, int ticks) {
+        BlockPos pos = BlockPos.containing(g.x[node], g.y[node] + 1, g.z[node]);
         if (door(pos, true)) doors.add(new long[]{pos.asLong(), level.getGameTime() + ticks});
     }
 
@@ -284,6 +309,13 @@ final class Crowd {
             double dx = b.getX() - ex, dy = b.getY() + 1.0 - ey, dz = b.getZ() - ez, dd = Math.sqrt(dx * dx + dy * dy + dz * dz);
             if (dd < 1e-6 || (dx * look.x + dy * look.y + dz * look.z) / dd > Math.cos(Math.toRadians(50))) n++;
         }
+        return n;
+    }
+
+    /** Bodies of one settlement now. */
+    int bodiesOf(Settlement c) {
+        int n = 0;
+        for (int k = 0; k < bodies.size(); k++) if (bodies.get(k).home == c) n++;
         return n;
     }
 
