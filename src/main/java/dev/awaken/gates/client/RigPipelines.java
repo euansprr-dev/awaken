@@ -42,22 +42,27 @@ public final class RigPipelines {
     public static final OitPipelineSet LIGHT_OIT = OitPipelineSet.builder(Awaken.id("rig_light"),
             RenderPipeline.builder(SNIPPET).withShaderDefine("OIT_ADDITIVE")).build();
 
-    /** (Gate pillars) the same, alpha-blended: a colour that shows against a bright daytime sky, where light added can't. */
-    public static final RenderPipeline HAZE = RenderPipeline.builder(SNIPPET)
-            .withLocation(Awaken.id("pipeline/rig_haze"))
-            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+    /**
+     * (Gate pillars) additive light without the world's fog: vanilla's render-distance fog counts height as distance
+     * (max of the horizontal distance and |dy|), so a column hundreds of blocks tall came out cut off flat at the fog
+     * line. The pillar fades itself out instead.
+     */
+    public static final RenderPipeline GLOW = RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
+            .withLocation(Awaken.id("pipeline/rig_glow"))
+            .withColorTargetState(new ColorTargetState(BlendFunction.LIGHTNING))
             .build();
 
-    public static final OitPipelineSet HAZE_OIT = OitPipelineSet.builder(Awaken.id("rig_haze"), RenderPipeline.builder(SNIPPET)).build();
+    public static final OitPipelineSet GLOW_OIT = OitPipelineSet.builder(Awaken.id("rig_glow"),
+            RenderPipeline.builder(RenderPipelines.OIT_DEBUG_FILLED_SNIPPET).withShaderDefine("OIT_ADDITIVE")).build();
 
-    private static RenderType type, hazeType;
-    private static int ok = -1, hazeOk = -1;
+    private static RenderType type, glowType;
+    private static int ok = -1, glowOk = -1;
 
     static void onRegister(RegisterRenderPipelinesEvent e) {
         e.registerOptionalPipeline(LIGHT);
         e.registerOitPipelineSet(LIGHT_OIT);
-        e.registerOptionalPipeline(HAZE);
-        e.registerOitPipelineSet(HAZE_OIT);
+        e.registerOptionalPipeline(GLOW);
+        e.registerOitPipelineSet(GLOW_OIT);
     }
 
     /** The rig's light, or vanilla lightning if the pipeline didn't build (never no light at all). */
@@ -74,17 +79,22 @@ public final class RigPipelines {
         return type;
     }
 
-    /** The haze (alpha-blended), or vanilla's debug quads if the pipeline didn't build. */
-    public static RenderType haze() {
-        if (hazeOk < 0) {
+    /** The pillars' light (additive, no fog), or the rig's light if it didn't build. */
+    public static RenderType glow() {
+        if (glowOk < 0) {
             try {
-                hazeOk = RenderSystem.getCompiledPipelineNullable(HAZE) != null ? 1 : 0;
+                glowOk = RenderSystem.getCompiledPipelineNullable(GLOW) != null ? 1 : 0;
             } catch (RuntimeException ex) {
-                hazeOk = 0;
+                glowOk = 0;
             }
         }
-        if (hazeOk == 0) return RenderTypes.debugQuads();
-        if (hazeType == null) hazeType = RenderType.create("awaken_rig_haze", RenderSetup.builder(HAZE).setOitPipelines(HAZE_OIT).sortOnUpload().createRenderSetup());
-        return hazeType;
+        if (glowOk == 0) return light();
+        if (glowType == null) glowType = RenderType.create("awaken_rig_glow", RenderSetup.builder(GLOW).setOitPipelines(GLOW_OIT).createRenderSetup());
+        return glowType;
+    }
+
+    /** The pillars' haze: alpha-blended, no fog, depth-tested, no depth written (vanilla's debug quads are exactly that). */
+    public static RenderType haze() {
+        return RenderTypes.debugQuads();
     }
 }

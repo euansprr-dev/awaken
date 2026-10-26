@@ -202,7 +202,12 @@ The Tech movement power `awaken:grapple` is shown as **Snap Cable** (2026-10-26,
 
 Overworld: `awaken:gate` block structure (frame + core) at a surface position; client renders a light pillar coloured by
 rank (E #F4F6FB, D #5FD08F, C #6FB3FF, B #B48CFF, A #F2A541, S #FF5A6A, Sovereign black-gold), visible up to 1500 blocks
-(drawn at clamped distance beyond render distance).
+(drawn at clamped distance beyond render distance). Our own soft light, never vanilla's beacon beam: camera-facing
+ribbons with a bell-shaped falloff across their width ((1 - x²)³, nothing and flat at the edge), a near-white core and
+the rank's glow added as light, a wide haze in the rank's colour alpha-blended (it carries the pillar by day), all
+thinning to nothing with height; no world fog (it counts height as distance and cut the column off flat), the top kept
+inside the far plane. Admin `/awaken gate frame <dist> <lift>` puts the camera on the line from the nearest gate toward
+Carillon's centre, facing the pillar (tours).
 Gate card shows rank, breaks-in, omen; PER ≥20 adds layout, ≥40 modifiers, ≥60 floor count; Veil scouting shows all.
 A gate of another rank than the hunter's says so in a "For you" row: "above your rank", or "below your rank · pays less"
 (floors below your rank pay ×0.3, `Curve.BELOW_RANK_FACTOR`; §17.25).
