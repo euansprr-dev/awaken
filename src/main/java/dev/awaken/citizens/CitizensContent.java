@@ -67,6 +67,9 @@ public final class CitizensContent {
     public static final DeferredItem<Item> COURIER_SATCHEL = prop("courier_satchel");
     /** The crate on a porter's back (drawn from the cargo crate's block model). */
     public static final DeferredItem<Item> PORTER_CRATE = prop("porter_crate");
+    /** (SPEC §28.6) the village hunter's kill slung from a pole on the walk home at dusk, and the shepherd's crook. */
+    public static final DeferredItem<Item> CARCASS_POLE = prop("carcass_pole");
+    public static final DeferredItem<Item> SHEPHERD_CROOK = prop("shepherd_crook");
     /** What a thief runs off with; a player who catches the thief gets it, and gives it back to its owners. */
     public static final DeferredItem<Item> STOLEN_BAG = ITEMS.registerSimpleItem("stolen_bag", p -> p.stacksTo(1));
 

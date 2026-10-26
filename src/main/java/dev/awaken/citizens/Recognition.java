@@ -1,6 +1,7 @@
 package dev.awaken.citizens;
 
 import dev.awaken.Awaken;
+import dev.awaken.citizens.api.Settlements;
 import dev.awaken.city.CityPlan;
 import dev.awaken.core.PlayDays;
 import dev.awaken.core.api.RenownHooks;
@@ -124,7 +125,23 @@ final class Recognition {
         String job = Roster.JOBS[r.job[rec]];
         String t = Lines.TIERS[Math.min(2, tier)];
         Lines lines = Lines.get();
-        String line = !r.named[rec].isEmpty() ? lines.pick(seed, tod, "named." + r.named[rec] + "." + t)
+        String line;
+        Settlements.Voice voice = c.site.carillon() ? null : Settlements.voice();
+        if (voice != null) {
+            // (SPEC §28.6) a village speaks by its own standing: stranger, known, friend, kin
+            String st = voice.standing(c, p);
+            line = lines.pick(seed, tod, "village.greet." + job + "." + st, "village.greet." + job + "." + st, "village.greet.any." + st);
+            if (line.isEmpty()) line = lines.pick(seed, tod, "greet." + job + "." + t, "greet.any." + t);
+            if (st.equals("stranger") && !force && Math.floorMod(CitizenWork.mixHash(seed + 7), 10) >= 6) return;
+            line = voice.fill(c, p, Lines.fill(line, p.getName().getString(), district(b), "", hour(tod)));
+            if (line.isEmpty()) return;
+            b.gesture(st.equals("kin") || st.equals("friend") ? Act.WAVE : st.equals("known") ? Act.NOD : Act.NONE, 32);
+            CitizensNet.say(p, b, line, 70, 0);
+            lastTalk.put(p.getUUID(), now);
+            greetings++;
+            return;
+        }
+        line = !r.named[rec].isEmpty() ? lines.pick(seed, tod, "named." + r.named[rec] + "." + t)
                 : lines.pick(seed, tod, "greet." + job + "." + t, "greet." + job + "." + t, "greet.any." + t);
         if (line.isEmpty()) return;
         line = Lines.fill(line, p.getName().getString(), district(b), "", hour(tod));
@@ -312,7 +329,9 @@ final class Recognition {
             boolean caller = job == Roster.STALLKEEPER && a == Act.SERVE || job == Roster.CRIER && a == Act.PROCLAIM
                     || job == Roster.WATCH && tod % 1000 < 40 && tod > 15000 || job == Roster.CHILD && a == Act.PLAY
                     || job == Roster.PORTER && a == Act.CARRY_BACK || job == Roster.SMITH && a == Act.HAMMER
-                    || job == Roster.BAKER && tod < 4000 && a != Act.NONE;
+                    || job == Roster.BAKER && tod < 4000 && a != Act.NONE
+                    || job >= Roster.FARMER && !c.site.carillon() && (a == Act.HAMMER || a == Act.LEAN || a == Act.SIT || a == Act.SET_DOWN
+                    || job == Roster.HUNTER && a == Act.NONE && tod >= 10000);
             if (!caller) continue;
             long phase = CitizenWork.mixHash(b.rec * 131L + now / 20);
             int every = job == Roster.CRIER ? 9 : job == Roster.WATCH ? 2 : 22;
@@ -332,7 +351,8 @@ final class Recognition {
             }
             case Roster.WATCH -> lines.pick(seed, tod, "calls.watch_night");
             case Roster.CRIER -> c.events.news(seed, tod);
-            default -> lines.pick(seed, tod, "calls." + Roster.JOBS[job]);
+            default -> c.site.carillon() ? lines.pick(seed, tod, "calls." + Roster.JOBS[job])
+                    : lines.pick(seed, tod, "village.calls." + Roster.JOBS[job], "calls." + Roster.JOBS[job]);
         };
         line = Lines.fill(line, c.events.aboutName(), district(pick), "", hour(tod));
         int kind = job == Roster.CRIER ? 2 : 1;

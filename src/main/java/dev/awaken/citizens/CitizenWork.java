@@ -803,12 +803,19 @@ final class CitizenWork implements Ledger.Work {
      * added to whatever the player's client has (Carillon's list replaces; this never does).
      */
     void sendLamps(ServerPlayer p) {
-        if (c.site.carillon() || lampHead.length == 0) return;
-        long[] pa = new long[lampHead.length];
-        byte[] ka = new byte[lampHead.length];
-        for (int k = 0; k < pa.length; k++) {
+        // (SPEC §28.6) and its chimneys and the places that sound, from what its builder laid out
+        java.util.List<int[]> em = c.site.emitters();
+        if (c.site.carillon() || lampHead.length + em.size() == 0) return;
+        long[] pa = new long[lampHead.length + em.size()];
+        byte[] ka = new byte[pa.length];
+        for (int k = 0; k < lampHead.length; k++) {
             pa[k] = lampHead[k].asLong();
             ka[k] = 5;
+        }
+        for (int k = 0; k < em.size(); k++) {
+            int[] e = em.get(k);
+            pa[lampHead.length + k] = BlockPos.asLong(cx + e[0], sy + e[1], cz + e[2]);
+            ka[lampHead.length + k] = (byte) e[3];
         }
         CitizensNet.emitters(java.util.List.of(p), false, pa, ka);
     }
@@ -1026,6 +1033,49 @@ final class CitizenWork implements Ledger.Work {
                     } else {
                         act = (i % 4) == 0 ? Act.LOOK_AROUND : (i % 4) == 1 ? Act.HANDS_BEHIND : Act.ARMS_CROSSED;
                     }
+                }
+            }
+        }
+        // (SPEC §28.6) the villages' trades: the tool on the shoulder walking out, the work at their place, the hunter's
+        // kill on its pole walking home at dusk
+        if (!hurt && job >= Roster.FARMER) {
+            boolean walking = st == WALK, spell = Math.floorMod((now + i * 389L) / 360, 3L) != 0;
+            switch (job) {
+                case Roster.FARMER -> {
+                    main = Props.HOE;
+                    if (!walking && pk == P_STAND) act = spell ? Act.HAMMER : Act.LOOK_AROUND;
+                }
+                case Roster.WOODCUTTER -> {
+                    main = Props.AXE;
+                    if (!walking && pk == P_STAND) act = spell ? Act.HAMMER : Act.ARMS_CROSSED;
+                }
+                case Roster.MINER -> main = Props.PICK;
+                case Roster.FISHER -> {
+                    if (walking || pk != P_NET) main = Props.ROD;
+                    else if (!spell) {
+                        act = Act.LEAN;
+                        main = Props.ROD;
+                    }
+                }
+                case Roster.HUNTER -> main = walking && (tod >= 10000 || tod < 600) ? Props.CARCASS : Props.BOW;
+                case Roster.SHEPHERD -> {
+                    main = Props.CROOK;
+                    if (!walking && pk == P_STAND) act = spell ? Act.LEAN : Act.LOOK_AROUND;
+                }
+                case Roster.CARTER -> {
+                    act = walking ? Act.CARRY_BACK : Act.SET_DOWN;
+                    crate = true;
+                }
+                case Roster.ELDER -> {
+                    if (walking) main = Props.CANE;
+                }
+                case Roster.SCRIBE -> {
+                    if (!walking && pk == P_STAND) {
+                        act = Act.READ;
+                        main = Props.BOOK;
+                    } else off = Props.BOOK;
+                }
+                default -> {
                 }
             }
         }

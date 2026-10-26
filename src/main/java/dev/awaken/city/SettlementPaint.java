@@ -155,6 +155,50 @@ public final class SettlementPaint {
         return h;
     }
 
+    /**
+     * The cells of a house's ground storey a body can stand in (floor below, two clear rows over it, never the door's own
+     * cell), from painting the plot and its rooms alone: where an inn's guests stand at night (SPEC §28.6). Plan cells.
+     */
+    public static java.util.List<int[]> standingCells(Layout l, int plotId, long worldSeed) {
+        CityPlan.Plot p = l.plot(plotId);
+        CityBuffer buf = new CityBuffer(p.x1() - p.x0() + 7, p.z1() - p.z0() + 7);
+        buf.reset(p.x0() - 3, p.z0() - 3);
+        CityPainter.Ctx ctx = new CityPainter.Ctx(l, worldSeed);
+        CityGrammar.plot(ctx, buf, p);
+        Interior who = l.interior(plotId);
+        if (who != null && p.enter()) CityInteriors.furnish(ctx, buf, p, who);
+        java.util.List<int[]> out = new java.util.ArrayList<>();
+        int g = p.lift();
+        for (int z = p.z0() + 1; z <= p.z1() - 1; z++) {
+            for (int x = p.x0() + 1; x <= p.x1() - 1; x++) {
+                BlockState f = buf.get(x, g, z), a = buf.get(x, g + 1, z), b = buf.get(x, g + 2, z);
+                if (f == null || f.isAir()) continue;
+                boolean low = a == null || a.isAir() || a.getBlock() instanceof net.minecraft.world.level.block.CarpetBlock;
+                if (low && (b == null || b.isAir())) out.add(new int[]{x, z});
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Where a settlement's chimneys stand (plan x, the row the smoke rises from, z, and the plot), from the grammar's own
+     * chimney rule: the client puffs smoke there (SPEC §28.6).
+     */
+    public static java.util.List<int[]> chimneys(Layout l, int plots) {
+        java.util.List<int[]> out = new java.util.ArrayList<>();
+        CityPainter.Ctx ctx = new CityPainter.Ctx(l, 0L);
+        for (int id = 0; id < plots; id++) {
+            CityPlan.Plot p = l.plot(id);
+            CityGrammar.Facade f = CityGrammar.facadeOf(ctx, p);
+            int[] cs = CityGrammar.chimneySpot(f);
+            if (cs == null) continue;
+            int span = p.ridgeX() ? f.up.d() : f.up.w();
+            int top = p.lift() + p.eave() + CityGrammar.rise(p.steep(), (span + 1) / 2) + 2;
+            out.add(new int[]{cs[0], top + 2, cs[1], id});
+        }
+        return out;
+    }
+
     /** How high over its ground a settlement clears trees off the ground it uses. */
     public static final int CLEAR = 12;
 

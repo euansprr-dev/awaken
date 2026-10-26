@@ -210,6 +210,7 @@ public final class Embers {
             return Optional.of("Set it on firm, open ground.");
         }
         if (CityBasin.reserved(at.getX(), at.getZ())) return Optional.of("The city keeps its own fires. Carry it out past the walls.");
+        if (dev.awaken.village.api.Villages.reserved(level, at, 8)) return Optional.of("People live here. Carry it out past the last fence.");
         if (WardHooks.at(level, at).isPresent()) return Optional.of("Old Precursor stone wards this ground. The coal won't take here.");
         for (GateHooks.GateView g2 : GateHooks.near(level, at, GATE_CLEARANCE)) {
             if (!"RELEASED".equals(g2.state())) return Optional.of("A gate is too close. The ground is restless within " + GATE_CLEARANCE + " blocks of one.");
