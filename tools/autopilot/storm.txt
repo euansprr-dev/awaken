@@ -1,0 +1,172 @@
+# The Rolling Storm (SPEC §21.6, §22 "Storm cells"), Euan's playtest of 2026-10-26: the cell as a cumulonimbus in Lens's
+# clouds (Cinematic, Ultra) and in its cloud-cell fallback (Swift), the same frames each way: from ~200 blocks at dusk
+# looking up out of a forest (his view) with a slow pan; from ~500 at dusk and day; under it in the rain; a strike close
+# by and one far off; at night with lightning in it. Then frame times with and without the storm in the same view.
+# Run (alone on the machine, it measures):
+#   PACK=perf,world TECTONIC=awakened RD=24 LENS=cinematic SLOT_WHO=storm \
+#   /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/storm.txt 1500
+world autopilot_storm creative 20261026
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1280 720
+info
+hud off
+lens cinematic
+cmd awaken living goto greenwild_woods
+wait 200
+cmd tp @s ~300 ~ ~300
+wait 300
+cmd gamemode spectator
+cmd time set 12300
+# ---- dusk, about 200 blocks off, looking up at it out of the forest (Euan's view)
+cmd awaken living happen rolling_storm
+wait 320
+cmd awaken living near 190
+wait 160
+cmd tp @s ~ ~ ~ ~ -26
+wait 80
+shot storm_01_dusk200_cinematic
+lens swift
+wait 80
+shot storm_01_dusk200_swift
+lens ultra
+wait 80
+shot storm_01_dusk200_ultra
+lens cinematic
+wait 40
+# ---- a slow pan across it: nothing swings, pops or sorts
+cmd tp @s ~ ~ ~ ~-30 -20
+wait 40
+shot storm_02_pan_a
+turn 0.6 50
+wait 52
+shot storm_02_pan_b
+turn 0.6 50
+wait 52
+shot storm_02_pan_c
+lens swift
+wait 60
+shot storm_02_pan_c_swift
+turn -0.6 50
+wait 52
+shot storm_02_pan_b_swift
+lens cinematic
+# ---- frame times with it in view, then the same view with the sky clear
+cmd tp @s ~ ~ ~ ~-30 ~
+wait 60
+perf storm_on_cinematic 12
+lens ultra
+wait 80
+perf storm_on_ultra 12
+cmd awaken living calm
+wait 120
+perf storm_off_ultra 12
+lens cinematic
+wait 80
+perf storm_off_cinematic 12
+# ---- dusk from about 500 blocks
+cmd awaken living happen rolling_storm
+wait 320
+cmd awaken living near 190
+wait 100
+cmd tp @s ^ ^ ^-310
+wait 200
+cmd awaken living face
+wait 160
+cmd tp @s ~ ~ ~ ~ -17
+wait 60
+shot storm_03_dusk500_cinematic
+lens swift
+wait 80
+shot storm_03_dusk500_swift
+lens cinematic
+# ---- day, 500 and 200
+cmd time set 6000
+wait 80
+shot storm_04_day500_cinematic
+lens swift
+wait 60
+shot storm_04_day500_swift
+lens cinematic
+cmd awaken living near 190
+wait 140
+cmd tp @s ~ ~ ~ ~ -22
+wait 80
+shot storm_05_day200_cinematic
+lens swift
+wait 60
+shot storm_05_day200_swift
+lens cinematic
+# ---- under it, in the rain (the game's rain falls on you, the light drops)
+cmd awaken living near 24
+wait 200
+cmd tp @s ~ ~ ~ ~ -8
+wait 60
+shot storm_06_under_rain_cinematic
+lens swift
+wait 60
+shot storm_06_under_rain_swift
+lens cinematic
+cmd tp @s ~ ~ ~ ~ -55
+wait 60
+shot storm_07_under_base_cinematic
+lens swift
+wait 60
+shot storm_07_under_base_swift
+lens cinematic
+wait 40
+perf storm_under_cinematic 10
+lens ultra
+wait 80
+perf storm_under_ultra 10
+lens cinematic
+# ---- a strike close by: the flash in the cloud, the bolt
+cmd tp @s ~ ~ ~ ~ -18
+wait 40
+cmd awaken living strike 34
+shotnow storm_08_strike_close_a
+wait 2
+shotnow storm_08_strike_close_b
+wait 40
+lens swift
+wait 40
+cmd awaken living strike 34
+shotnow storm_08_strike_close_swift
+wait 40
+lens cinematic
+# ---- a strike far off, from 200
+cmd awaken living near 190
+wait 120
+cmd tp @s ~ ~ ~ ~ -22
+wait 60
+cmd awaken living strike 150
+shotnow storm_09_strike_far_a
+wait 2
+shotnow storm_09_strike_far_b
+wait 60
+# ---- night: the cell shows by its lightning
+cmd time set 18000
+wait 80
+shot storm_10_night_dark
+cmd awaken living strike 150
+shotnow storm_10_night_strike_a
+wait 2
+shotnow storm_10_night_strike_b
+wait 40
+lens swift
+wait 40
+cmd awaken living strike 150
+shotnow storm_10_night_strike_swift
+lens cinematic
+wait 20
+quit

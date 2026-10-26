@@ -35,7 +35,7 @@ final class AtlasRenderer extends PictureInPictureRenderer<AtlasRenderState> {
     static final float LIVE_SCALE = 0.6f;
     static final long SETTLE_NANOS = 110_000_000L;
     /** How often drifting clouds redraw the picture (dev: {@code /atlas drift <hz>}). */
-    static long DRIFT_NANOS = 33_000_000L;
+    static long DRIFT_NANOS = 16_000_000L;
 
     /** Same picture apart from the clouds' clock. */
     private static boolean sameView(AtlasRenderState a, AtlasRenderState b) {
@@ -76,8 +76,8 @@ final class AtlasRenderer extends PictureInPictureRenderer<AtlasRenderState> {
         if (moved && last != null) lastMove = now;
         // the view is moving (an orbit, a drag, a zoom): draw every frame, or the table lags the mouse, but at 60% of
         // the resolution (the picture is in motion; the full-size one at Retina scale cost +2.2 ms orbiting). A tenth
-        // of a second after it stops, one full-resolution picture. Still: only the clouds drift, redrawn about 30 times
-        // a second (well under a pixel a step); nothing moving, the last picture is still right
+        // of a second after it stops, one full-resolution picture. Still: only the clouds drift, redrawn about 60 times
+        // a second, so the wind reads as smooth motion; nothing moving, the last picture is still right
         boolean live = now - lastMove < SETTLE_NANOS;
         GpuTextureView shown;
         boolean redraw;

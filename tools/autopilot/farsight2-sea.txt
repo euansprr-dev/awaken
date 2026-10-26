@@ -1,6 +1,6 @@
 # Far Sight over the sea at dusk (SPEC §20, Euan's play): no slabs of the sky's colour on the water where far and real
 # water meet, and far islands' trees and spires steady as the view turns. The A/B seed's coast (fs2ab), low over the
-# water in the afterglow, then a slow turn past the islands, 3 degrees every 4 ticks.
+# water at noon (the far sea floor fading out past the chunks) and in the afterglow, then a slow turn past the islands, 3 degrees every 4 ticks.
 world fs2sea creative 777
 waitworld
 gui 0
@@ -21,9 +21,17 @@ info
 cmd gamemode spectator
 lens cinematic
 cmd time set 13300
+cmd time set 6000
 cmd tp @s 0.5 72 0.5 90 3
 wait 600
 farsight status
+shot fs2w_noon_w
+look 90 14
+wait 20
+shot fs2w_noon_w_down
+cmd time set 13300
+look 90 3
+wait 40
 shot fs2w_sea_w
 look 60 3
 wait 20

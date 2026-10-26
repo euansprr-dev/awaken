@@ -112,6 +112,12 @@ final class LandmarkWatch {
         LandmarkMemory m = Landmarks.memory(p);
         if (!m.reach(id)) return false;
         if (at != null) m.place(id, kind, at);
+        // a climb site reached without its key: the band keeps it, and the world calls you back with the rope (SPEC §27)
+        String need = LandmarkHorizon.need(kind);
+        if (!need.isEmpty() && !dev.awaken.core.api.HorizonHooks.can(p, need)) {
+            dev.awaken.core.api.Promises.seen(p, "landmark:" + id, at, dev.awaken.core.api.Promises.Need.tier(dev.awaken.core.api.HorizonHooks.TETHER),
+                    kind == LandmarkKind.SKY_PLATFORM ? "A sky platform" : "A Tether Spire's crown");
+        }
         Landmarks.sync(p);
         if (m.whispered.equals(id)) m.whispered = "";
         LandmarkHorizon.forget(p.getUUID());

@@ -24,8 +24,12 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 public final class WardFx {
     private WardFx() {}
 
-    /** MARK: the ward took note of a placed block. CRUMBLE: it came apart. HOLD: a site's wall refused a pick. */
-    public enum Kind { MARK, CRUMBLE, HOLD }
+    /**
+     * MARK: the ward took note of a placed block. CRUMBLE: it came apart. HOLD: a site's wall refused a pick. SHED: a
+     * climb refused a block outright (its ghost falls away in grains). UNSEAL: a climb cache's inner seal opened.
+     * Ordinals go on the wire: new kinds only on the end.
+     */
+    public enum Kind { MARK, CRUMBLE, HOLD, SHED, UNSEAL }
 
     /** Players this close see the effect. */
     static final double RANGE = 48;
@@ -51,7 +55,8 @@ public final class WardFx {
     }
 
     public static void register(RegisterPayloadHandlersEvent e) {
-        e.registrar("1").playToClient(Event.TYPE, Event.STREAM_CODEC);
+        e.registrar("1").playToClient(Event.TYPE, Event.STREAM_CODEC)
+                .playToClient(ClimbWard.ShowMe.TYPE, ClimbWard.ShowMe.STREAM_CODEC);
     }
 
     /** A sealed thing holds (a rank door that won't open for someone): the ward's own look and sound on that block. */
@@ -69,8 +74,13 @@ public final class WardFx {
             case MARK -> WildsContent.WARD_MARK.get();
             case CRUMBLE -> WildsContent.WARD_CRUMBLE.get();
             case HOLD -> WildsContent.WARD_HOLD.get();
+            case SHED -> WildsContent.WARD_CRUMBLE.get();
+            case UNSEAL -> WildsContent.WARD_MARK.get();
         };
         float pitch = 0.92f + level.getRandom().nextFloat() * 0.16f;
-        level.playSound(null, pos, sound, SoundSource.BLOCKS, kind == Kind.MARK ? 0.45f : 0.8f, pitch);
+        // a shed block falls apart deeper than a crumble; a seal opening is the mark's glass, low and full
+        if (kind == Kind.SHED) pitch *= 0.72f;
+        else if (kind == Kind.UNSEAL) pitch *= 0.6f;
+        level.playSound(null, pos, sound, SoundSource.BLOCKS, kind == Kind.MARK ? 0.45f : kind == Kind.UNSEAL ? 1.0f : 0.8f, pitch);
     }
 }

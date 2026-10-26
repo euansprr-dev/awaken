@@ -1,6 +1,9 @@
 package dev.awaken.arms.client;
 
+import dev.awaken.arms.Archetype;
+import dev.awaken.arms.Archetypes;
 import dev.awaken.arms.ArmsSounds;
+import dev.awaken.arms.FpSwings;
 import dev.awaken.core.api.CombatFeedback;
 import dev.awaken.lens.client.LensClient;
 import net.minecraft.client.Minecraft;
@@ -192,14 +195,37 @@ final class ArmsFeel implements CombatFeedback.Sink {
         if (!FROZEN.isEmpty()) for (Iterator<Freeze> it = FROZEN.values().iterator(); it.hasNext(); ) if (it.next().until < now) it.remove();
     }
 
+    private static final float[] LEAN = new float[3];
+
     static void onCameraAngles(ViewportEvent.ComputeCameraAngles e) {
-        if (kickTicks <= 0 || Minecraft.getInstance().level == null) return;
+        if (Minecraft.getInstance().level == null) return;
+        lean(e);
+        if (kickTicks <= 0) return;
         // eased out, never past where it came from (a critically damped settle)
         float t = (kickTicks - (float) e.getPartialTick()) / kickTotal;
         float w = Math.max(0, t) * Math.max(0, t);
         e.setYaw(e.getYaw() + kickYaw * w);
         e.setPitch(e.getPitch() + kickPitch * w);
         e.setRoll(e.getRoll() + kickRoll * w);
+    }
+
+    /**
+     * The swing's own lean (FpSwings, first person only): the eye goes with the blow, a slam pitching it down on the
+     * crash, a cut leaning it the way the blade travels, held through a hit-stop with the hands. The kick setting scales it.
+     */
+    private static void lean(ViewportEvent.ComputeCameraAngles e) {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer p = mc.player;
+        float k = ArmsComfort.kick();
+        if (p == null || k <= 0 || !mc.options.getCameraType().isFirstPerson() || !ArmsPredict.fights(p)) return;
+        Archetypes.Loaded style = ArmsPredict.style;
+        Archetype.Move m = ArmsPredict.move;
+        if (style == null || m == null || ArmsPredict.charging) return;
+        if (!FpSwings.camera(FpSwings.style(style.id()), m, ArmsPredict.moveTime(), LEAN)) return;
+        float inv = p.getMainArm() == net.minecraft.world.entity.HumanoidArm.RIGHT ? 1F : -1F;
+        e.setYaw(e.getYaw() + LEAN[0] * inv * k);
+        e.setPitch(e.getPitch() + LEAN[1] * k);
+        e.setRoll(e.getRoll() + LEAN[2] * inv * k);
     }
 
     /** Render-state modifier for every entity: a frozen body holds its pose and trembles. */

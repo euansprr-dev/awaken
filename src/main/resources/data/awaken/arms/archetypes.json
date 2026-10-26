@@ -58,7 +58,12 @@
               0.2,
               60
             ],
-            "lunge": 0.15
+            "lunge": 0.15,
+            "form": "slash",
+            "dir": [
+              -0.9,
+              -0.55
+            ]
           }
         },
         "strike_2": {
@@ -85,7 +90,12 @@
               0.45,
               -85
             ],
-            "lunge": 0.15
+            "lunge": 0.15,
+            "form": "slash",
+            "dir": [
+              0.9,
+              0.45
+            ]
           }
         },
         "strike_3": {
@@ -111,7 +121,12 @@
               -18,
               95
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "chop",
+            "dir": [
+              -0.22,
+              -1.0
+            ]
           }
         },
         "strike_4": {
@@ -137,7 +152,9 @@
               -18,
               75
             ],
-            "lunge": 0.6
+            "lunge": 0.6,
+            "form": "stab",
+            "variant": "line"
           },
           "swish": "thrust"
         },
@@ -169,7 +186,8 @@
               0.75,
               30
             ],
-            "lunge": 0.4
+            "lunge": 0.4,
+            "form": "rise"
           },
           "swish": "heavy"
         },
@@ -196,7 +214,8 @@
               -18,
               80
             ],
-            "lunge": 0.7
+            "lunge": 0.7,
+            "form": "stab"
           },
           "swish": "thrust"
         },
@@ -221,7 +240,8 @@
               0.15,
               85
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "slash"
           }
         },
         "execution": {
@@ -247,7 +267,8 @@
               -18,
               105
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "chop"
           },
           "swish": "heavy"
         },
@@ -276,7 +297,8 @@
               0.25,
               90
             ],
-            "lunge": 0.6
+            "lunge": 0.6,
+            "form": "slash"
           },
           "swish": "art"
         },
@@ -300,7 +322,8 @@
               -0.05,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "slash"
           }
         },
         "plunge": {
@@ -325,7 +348,8 @@
               -18,
               120
             ],
-            "lunge": 0.0
+            "lunge": 0.0,
+            "form": "chop"
           },
           "swish": "heavy"
         }
@@ -389,7 +413,12 @@
               -20,
               70
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "chop",
+            "dir": [
+              -0.5,
+              -1.0
+            ]
           }
         },
         "strike_2": {
@@ -416,7 +445,12 @@
               0.6,
               -70
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "swing",
+            "dir": [
+              1.0,
+              0.15
+            ]
           }
         },
         "strike_3": {
@@ -442,7 +476,12 @@
               -15,
               110
             ],
-            "lunge": 0.35
+            "lunge": 0.35,
+            "form": "chop",
+            "dir": [
+              -0.22,
+              -1.0
+            ]
           },
           "swish": "heavy"
         },
@@ -467,7 +506,12 @@
               0.35,
               -90
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "swing",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           },
           "swish": "heavy"
         },
@@ -501,7 +545,12 @@
               -20,
               110
             ],
-            "lunge": 0.45
+            "lunge": 0.45,
+            "form": "chop",
+            "dir": [
+              0.0,
+              -1.0
+            ]
           },
           "swish": "heavy"
         },
@@ -528,7 +577,8 @@
               -25,
               85
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "slash"
           },
           "swish": "heavy"
         },
@@ -557,7 +607,8 @@
               0.2,
               100
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "slash"
           },
           "swish": "art"
         },
@@ -582,7 +633,8 @@
               0.15,
               85
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "slash"
           }
         },
         "undercut": {
@@ -605,7 +657,8 @@
               -0.05,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "slash"
           }
         },
         "plunge": {
@@ -630,7 +683,8 @@
               -18,
               120
             ],
-            "lunge": 0.0
+            "lunge": 0.0,
+            "form": "chop"
           },
           "swish": "heavy"
         },
@@ -657,7 +711,8 @@
               -18,
               105
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "chop"
           },
           "swish": "heavy"
         }
@@ -719,7 +774,12 @@
               -0.07,
               70
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "slam",
+            "dir": [
+              -0.22,
+              -1.0
+            ]
           },
           "swish": "heavy"
         },
@@ -747,7 +807,12 @@
               0.23,
               -80
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "swing",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           },
           "swish": "heavy"
         },
@@ -774,7 +839,12 @@
               -10,
               125
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "slam",
+            "dir": [
+              0.0,
+              -1.0
+            ]
           },
           "swish": "heavy"
         },
@@ -801,7 +871,8 @@
               -10,
               -40
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "rise"
           },
           "swish": "heavy"
         },
@@ -835,7 +906,12 @@
               -10,
               125
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "slam",
+            "dir": [
+              0.0,
+              -1.0
+            ]
           },
           "swish": "heavy"
         },
@@ -862,7 +938,8 @@
               -30,
               80
             ],
-            "lunge": 0.35
+            "lunge": 0.35,
+            "form": "slash"
           },
           "swish": "heavy"
         },
@@ -893,7 +970,8 @@
               -10,
               130
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "chop"
           },
           "swish": "art"
         },
@@ -918,7 +996,8 @@
               0.15,
               85
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "slash"
           }
         },
         "undercut": {
@@ -941,7 +1020,8 @@
               -0.05,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "slash"
           }
         },
         "plunge": {
@@ -966,7 +1046,8 @@
               -18,
               120
             ],
-            "lunge": 0.0
+            "lunge": 0.0,
+            "form": "chop"
           },
           "swish": "heavy"
         },
@@ -993,7 +1074,8 @@
               -18,
               105
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "chop"
           },
           "swish": "heavy"
         }
@@ -1057,7 +1139,9 @@
               -18,
               70
             ],
-            "lunge": 0.8
+            "lunge": 0.8,
+            "form": "stab",
+            "variant": "line"
           },
           "swish": "thrust"
         },
@@ -1087,7 +1171,9 @@
               -15,
               65
             ],
-            "lunge": 0.85
+            "lunge": 0.85,
+            "form": "stab",
+            "variant": "low"
           },
           "swish": "thrust"
         },
@@ -1112,7 +1198,12 @@
               0.3,
               70
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "swing",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           }
         },
         "strike_4": {
@@ -1138,7 +1229,9 @@
               -18,
               75
             ],
-            "lunge": 1.0
+            "lunge": 1.0,
+            "form": "stab",
+            "variant": "line"
           },
           "swish": "thrust"
         },
@@ -1172,7 +1265,9 @@
               -18,
               80
             ],
-            "lunge": 1.2
+            "lunge": 1.2,
+            "form": "stab",
+            "variant": "line"
           },
           "swish": "thrust"
         },
@@ -1199,7 +1294,8 @@
               -18,
               80
             ],
-            "lunge": 1.0
+            "lunge": 1.0,
+            "form": "stab"
           },
           "swish": "thrust"
         },
@@ -1230,7 +1326,8 @@
               -18,
               85
             ],
-            "lunge": 1.3
+            "lunge": 1.3,
+            "form": "stab"
           },
           "swish": "art"
         },
@@ -1255,7 +1352,8 @@
               0.15,
               85
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "slash"
           }
         },
         "undercut": {
@@ -1278,7 +1376,8 @@
               -0.05,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "slash"
           }
         },
         "plunge": {
@@ -1303,7 +1402,8 @@
               -18,
               120
             ],
-            "lunge": 0.0
+            "lunge": 0.0,
+            "form": "chop"
           },
           "swish": "heavy"
         },
@@ -1330,7 +1430,8 @@
               -18,
               105
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "chop"
           },
           "swish": "heavy"
         }
@@ -1392,7 +1493,12 @@
               0.15,
               65
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "slash",
+            "dir": [
+              -0.9,
+              -0.55
+            ]
           },
           "swish": "heavy"
         },
@@ -1420,7 +1526,12 @@
               0.5,
               -80
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "swing",
+            "dir": [
+              1.0,
+              0.15
+            ]
           },
           "swish": "heavy"
         },
@@ -1445,7 +1556,12 @@
               0.2,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "whirl",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           },
           "swish": "heavy"
         },
@@ -1472,7 +1588,12 @@
               -18,
               105
             ],
-            "lunge": 0.4
+            "lunge": 0.4,
+            "form": "chop",
+            "dir": [
+              -0.22,
+              -1.0
+            ]
           },
           "swish": "heavy"
         },
@@ -1504,7 +1625,8 @@
               0.75,
               30
             ],
-            "lunge": 0.4
+            "lunge": 0.4,
+            "form": "rise"
           },
           "swish": "heavy"
         },
@@ -1529,7 +1651,8 @@
               0.2,
               60
             ],
-            "lunge": 0.4
+            "lunge": 0.4,
+            "form": "slash"
           },
           "swish": "heavy"
         },
@@ -1558,7 +1681,8 @@
               0.25,
               90
             ],
-            "lunge": 0.6
+            "lunge": 0.6,
+            "form": "slash"
           },
           "swish": "art"
         },
@@ -1583,7 +1707,8 @@
               0.15,
               85
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "slash"
           }
         },
         "undercut": {
@@ -1606,7 +1731,8 @@
               -0.05,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "slash"
           }
         },
         "plunge": {
@@ -1631,7 +1757,8 @@
               -18,
               120
             ],
-            "lunge": 0.0
+            "lunge": 0.0,
+            "form": "chop"
           },
           "swish": "heavy"
         },
@@ -1658,7 +1785,8 @@
               -18,
               105
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "chop"
           },
           "swish": "heavy"
         }
@@ -1722,7 +1850,9 @@
               -18,
               70
             ],
-            "lunge": 0.6
+            "lunge": 0.6,
+            "form": "stab",
+            "variant": "line"
           },
           "swish": "thrust"
         },
@@ -1752,7 +1882,9 @@
               -12,
               65
             ],
-            "lunge": 0.65
+            "lunge": 0.65,
+            "form": "stab",
+            "variant": "low"
           },
           "swish": "thrust"
         },
@@ -1777,7 +1909,12 @@
               0.2,
               55
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "slash",
+            "dir": [
+              -0.9,
+              -0.55
+            ]
           }
         },
         "strike_4": {
@@ -1803,7 +1940,9 @@
               -18,
               80
             ],
-            "lunge": 0.9
+            "lunge": 0.9,
+            "form": "stab",
+            "variant": "line"
           },
           "swish": "thrust"
         },
@@ -1837,7 +1976,9 @@
               -18,
               82
             ],
-            "lunge": 1.0
+            "lunge": 1.0,
+            "form": "stab",
+            "variant": "line"
           },
           "swish": "thrust"
         },
@@ -1864,7 +2005,8 @@
               -18,
               82
             ],
-            "lunge": 0.9
+            "lunge": 0.9,
+            "form": "stab"
           },
           "swish": "thrust"
         },
@@ -1895,7 +2037,8 @@
               -18,
               85
             ],
-            "lunge": 1.2
+            "lunge": 1.2,
+            "form": "stab"
           },
           "swish": "art"
         },
@@ -1920,7 +2063,8 @@
               0.15,
               85
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "slash"
           }
         },
         "undercut": {
@@ -1943,7 +2087,8 @@
               -0.05,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "slash"
           }
         },
         "plunge": {
@@ -1968,7 +2113,8 @@
               -18,
               120
             ],
-            "lunge": 0.0
+            "lunge": 0.0,
+            "form": "chop"
           },
           "swish": "heavy"
         },
@@ -1995,7 +2141,8 @@
               -18,
               85
             ],
-            "lunge": 0.9
+            "lunge": 0.9,
+            "form": "stab"
           },
           "swish": "thrust"
         }
@@ -2047,7 +2194,7 @@
           ],
           "motion": 0.6,
           "posture": 2,
-          "arc": 70,
+          "arc": 30,
           "reach": 2.5,
           "hitstop": 35,
           "swing": {
@@ -2061,8 +2208,11 @@
               0.1,
               50
             ],
-            "lunge": 0.2
-          }
+            "lunge": 0.2,
+            "form": "stab",
+            "variant": "line"
+          },
+          "swish": "thrust"
         },
         "strike_2": {
           "windup": 1,
@@ -2074,7 +2224,7 @@
           ],
           "motion": 0.62,
           "posture": 2,
-          "arc": 70,
+          "arc": 30,
           "reach": 2.5,
           "hitstop": 35,
           "swing": {
@@ -2088,8 +2238,12 @@
               0.35,
               -60
             ],
-            "lunge": 0.2
-          }
+            "lunge": 0.2,
+            "form": "stab",
+            "hand": "off",
+            "variant": "low"
+          },
+          "swish": "thrust"
         },
         "strike_3": {
           "windup": 1,
@@ -2101,7 +2255,7 @@
           ],
           "motion": 0.65,
           "posture": 3,
-          "arc": 20,
+          "arc": 90,
           "reach": 2.7,
           "hitstop": 40,
           "swing": {
@@ -2117,9 +2271,14 @@
               -18,
               70
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "slash",
+            "dir": [
+              1.0,
+              0.15
+            ]
           },
-          "swish": "thrust"
+          "swish": "light"
         },
         "strike_4": {
           "windup": 2,
@@ -2127,7 +2286,7 @@
           "recovery": 6,
           "motion": 1.1,
           "posture": 6,
-          "arc": 90,
+          "arc": 30,
           "reach": 2.6,
           "hitstop": 55,
           "finisher": true,
@@ -2142,8 +2301,12 @@
               0.0,
               70
             ],
-            "lunge": 0.3
-          }
+            "lunge": 0.3,
+            "form": "stab",
+            "hand": "both",
+            "variant": "reverse"
+          },
+          "swish": "thrust"
         },
         "strike_5": {
           "windup": 2,
@@ -2151,7 +2314,7 @@
           "recovery": 7,
           "motion": 1.4,
           "posture": 8,
-          "arc": 20,
+          "arc": 90,
           "reach": 2.8,
           "hitstop": 65,
           "finisher": true,
@@ -2168,9 +2331,15 @@
               -18,
               75
             ],
-            "lunge": 0.6
+            "lunge": 0.6,
+            "form": "slash",
+            "hand": "off",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           },
-          "swish": "thrust"
+          "swish": "light"
         },
         "heavy": {
           "windup": 0,
@@ -2202,7 +2371,10 @@
               -18,
               80
             ],
-            "lunge": 0.8
+            "lunge": 0.8,
+            "form": "stab",
+            "hand": "both",
+            "variant": "line"
           },
           "swish": "thrust"
         },
@@ -2229,7 +2401,8 @@
               -18,
               80
             ],
-            "lunge": 0.7
+            "lunge": 0.7,
+            "form": "stab"
           },
           "swish": "thrust"
         },
@@ -2258,7 +2431,8 @@
               0.2,
               100
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "slash"
           },
           "swish": "art"
         },
@@ -2283,7 +2457,8 @@
               0.15,
               85
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "slash"
           }
         },
         "undercut": {
@@ -2306,7 +2481,8 @@
               -0.05,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "slash"
           }
         },
         "plunge": {
@@ -2331,7 +2507,8 @@
               -18,
               120
             ],
-            "lunge": 0.0
+            "lunge": 0.0,
+            "form": "chop"
           },
           "swish": "heavy"
         },
@@ -2358,7 +2535,8 @@
               -18,
               105
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "chop"
           },
           "swish": "heavy"
         }
@@ -2425,7 +2603,12 @@
               0.25,
               80
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "slash",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           }
         },
         "strike_2": {
@@ -2452,7 +2635,12 @@
               0.05,
               -80
             ],
-            "lunge": 0.15
+            "lunge": 0.15,
+            "form": "slash",
+            "dir": [
+              0.9,
+              0.45
+            ]
           }
         },
         "strike_3": {
@@ -2478,7 +2666,12 @@
               -18,
               98
             ],
-            "lunge": 0.35
+            "lunge": 0.35,
+            "form": "chop",
+            "dir": [
+              -0.22,
+              -1.0
+            ]
           }
         },
         "strike_4": {
@@ -2504,7 +2697,9 @@
               -18,
               75
             ],
-            "lunge": 0.7
+            "lunge": 0.7,
+            "form": "stab",
+            "variant": "line"
           },
           "swish": "thrust"
         },
@@ -2536,7 +2731,12 @@
               0.3,
               85
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "slash",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           },
           "swish": "heavy"
         },
@@ -2561,7 +2761,8 @@
               0.25,
               80
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "slash"
           }
         },
         "art": {
@@ -2589,7 +2790,8 @@
               0.25,
               92
             ],
-            "lunge": 0.8
+            "lunge": 0.8,
+            "form": "slash"
           },
           "swish": "art"
         },
@@ -2614,7 +2816,8 @@
               0.15,
               85
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "slash"
           }
         },
         "undercut": {
@@ -2637,7 +2840,8 @@
               -0.05,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "slash"
           }
         },
         "plunge": {
@@ -2662,7 +2866,8 @@
               -18,
               120
             ],
-            "lunge": 0.0
+            "lunge": 0.0,
+            "form": "chop"
           },
           "swish": "heavy"
         },
@@ -2689,7 +2894,8 @@
               -18,
               105
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "chop"
           },
           "swish": "heavy"
         }
@@ -2752,7 +2958,12 @@
               0.2,
               60
             ],
-            "lunge": 0.15
+            "lunge": 0.15,
+            "form": "slash",
+            "dir": [
+              -0.9,
+              -0.55
+            ]
           }
         },
         "strike_2": {
@@ -2779,7 +2990,12 @@
               0.45,
               -75
             ],
-            "lunge": 0.15
+            "lunge": 0.15,
+            "form": "slash",
+            "dir": [
+              0.9,
+              0.45
+            ]
           }
         },
         "strike_3": {
@@ -2806,7 +3022,12 @@
               0.15,
               85
             ],
-            "lunge": 0.15
+            "lunge": 0.15,
+            "form": "slash",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           }
         },
         "strike_4": {
@@ -2830,7 +3051,12 @@
               0.2,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "spin",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           }
         },
         "strike_5": {
@@ -2854,7 +3080,12 @@
               0.3,
               -95
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "spin",
+            "dir": [
+              1.0,
+              0.15
+            ]
           }
         },
         "heavy": {
@@ -2885,7 +3116,12 @@
               0.2,
               95
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "spin",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           },
           "swish": "heavy"
         },
@@ -2910,7 +3146,8 @@
               0.15,
               85
             ],
-            "lunge": 0.4
+            "lunge": 0.4,
+            "form": "slash"
           }
         },
         "art": {
@@ -2938,7 +3175,8 @@
               0.2,
               100
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "slash"
           },
           "swish": "art"
         },
@@ -2963,7 +3201,8 @@
               0.15,
               85
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "slash"
           }
         },
         "undercut": {
@@ -2986,7 +3225,8 @@
               -0.05,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "slash"
           }
         },
         "plunge": {
@@ -3011,7 +3251,8 @@
               -18,
               120
             ],
-            "lunge": 0.0
+            "lunge": 0.0,
+            "form": "chop"
           },
           "swish": "heavy"
         },
@@ -3038,7 +3279,8 @@
               -18,
               105
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "chop"
           },
           "swish": "heavy"
         }
@@ -3100,7 +3342,12 @@
               0.25,
               90
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "swing",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           },
           "swish": "heavy"
         },
@@ -3128,7 +3375,12 @@
               0.35,
               -95
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "swing",
+            "dir": [
+              1.0,
+              0.15
+            ]
           },
           "swish": "heavy"
         },
@@ -3153,7 +3405,12 @@
               0.2,
               100
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "whirl",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           },
           "swish": "heavy"
         },
@@ -3180,7 +3437,9 @@
               -18,
               78
             ],
-            "lunge": 1.0
+            "lunge": 1.0,
+            "form": "stab",
+            "variant": "line"
           },
           "swish": "thrust"
         },
@@ -3212,7 +3471,12 @@
               0.2,
               100
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "whirl",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           },
           "swish": "heavy"
         },
@@ -3237,7 +3501,8 @@
               0.25,
               90
             ],
-            "lunge": 0.35
+            "lunge": 0.35,
+            "form": "slash"
           },
           "swish": "heavy"
         },
@@ -3266,7 +3531,8 @@
               0.2,
               100
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "slash"
           },
           "swish": "art"
         },
@@ -3291,7 +3557,8 @@
               0.15,
               85
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "slash"
           }
         },
         "undercut": {
@@ -3314,7 +3581,8 @@
               -0.05,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "slash"
           }
         },
         "plunge": {
@@ -3339,7 +3607,8 @@
               -18,
               120
             ],
-            "lunge": 0.0
+            "lunge": 0.0,
+            "form": "chop"
           },
           "swish": "heavy"
         },
@@ -3366,7 +3635,8 @@
               -18,
               105
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "chop"
           },
           "swish": "heavy"
         }
@@ -3430,7 +3700,12 @@
               70,
               20
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "reap",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           },
           "swish": "heavy"
         },
@@ -3460,7 +3735,12 @@
               -80,
               -10
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "reap",
+            "dir": [
+              1.0,
+              0.15
+            ]
           },
           "swish": "heavy"
         },
@@ -3487,7 +3767,12 @@
               60,
               60
             ],
-            "lunge": 0.45
+            "lunge": 0.45,
+            "form": "chop",
+            "dir": [
+              -0.22,
+              -1.0
+            ]
           },
           "swish": "heavy"
         },
@@ -3512,7 +3797,12 @@
               0.2,
               100
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "whirl",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           },
           "swish": "heavy"
         },
@@ -3546,7 +3836,12 @@
               60,
               60
             ],
-            "lunge": 0.45
+            "lunge": 0.45,
+            "form": "chop",
+            "dir": [
+              -0.22,
+              -1.0
+            ]
           },
           "swish": "heavy"
         },
@@ -3573,7 +3868,8 @@
               70,
               20
             ],
-            "lunge": 0.4
+            "lunge": 0.4,
+            "form": "slash"
           },
           "swish": "heavy"
         },
@@ -3602,7 +3898,8 @@
               0.2,
               100
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "slash"
           },
           "swish": "art"
         },
@@ -3627,7 +3924,8 @@
               0.15,
               85
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "slash"
           }
         },
         "undercut": {
@@ -3650,7 +3948,8 @@
               -0.05,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "slash"
           }
         },
         "plunge": {
@@ -3675,7 +3974,8 @@
               -18,
               120
             ],
-            "lunge": 0.0
+            "lunge": 0.0,
+            "form": "chop"
           },
           "swish": "heavy"
         },
@@ -3702,7 +4002,8 @@
               -18,
               105
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "chop"
           },
           "swish": "heavy"
         }
@@ -3770,7 +4071,8 @@
               0,
               60
             ],
-            "lunge": 0.6
+            "lunge": 0.6,
+            "form": "jab"
           },
           "swish": "thrust"
         },
@@ -3800,7 +4102,9 @@
               8,
               60
             ],
-            "lunge": 0.6
+            "lunge": 0.6,
+            "form": "jab",
+            "hand": "off"
           },
           "swish": "thrust"
         },
@@ -3828,7 +4132,8 @@
               0.25,
               30
             ],
-            "lunge": 0.35
+            "lunge": 0.35,
+            "form": "hook"
           }
         },
         "strike_4": {
@@ -3854,7 +4159,9 @@
               -10,
               -20
             ],
-            "lunge": 0.4
+            "lunge": 0.4,
+            "form": "upper",
+            "hand": "off"
           },
           "swish": "heavy"
         },
@@ -3864,7 +4171,7 @@
           "recovery": 8,
           "motion": 1.5,
           "posture": 12,
-          "arc": 40,
+          "arc": 30,
           "reach": 2.6,
           "hitstop": 80,
           "finisher": true,
@@ -3881,7 +4188,8 @@
               0,
               70
             ],
-            "lunge": 0.9
+            "lunge": 0.9,
+            "form": "jab"
           },
           "swish": "thrust"
         },
@@ -3891,7 +4199,7 @@
           "recovery": 9,
           "motion": 1.8,
           "posture": 16,
-          "arc": 40,
+          "arc": 30,
           "reach": 2.6,
           "hitstop": 95,
           "charge": {
@@ -3915,9 +4223,11 @@
               0,
               75
             ],
-            "lunge": 1.0
+            "lunge": 1.0,
+            "form": "jab",
+            "hand": "both"
           },
-          "swish": "heavy"
+          "swish": "thrust"
         },
         "riposte": {
           "windup": 1,
@@ -3942,7 +4252,8 @@
               -10,
               -20
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "upper"
           },
           "swish": "heavy"
         },
@@ -3973,7 +4284,8 @@
               0,
               80
             ],
-            "lunge": 1.2
+            "lunge": 1.2,
+            "form": "jab"
           },
           "swish": "art"
         },
@@ -3998,7 +4310,8 @@
               0.15,
               85
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "hook"
           }
         },
         "undercut": {
@@ -4021,7 +4334,8 @@
               -0.05,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "upper"
           }
         },
         "plunge": {
@@ -4046,7 +4360,8 @@
               -18,
               120
             ],
-            "lunge": 0.0
+            "lunge": 0.0,
+            "form": "over"
           },
           "swish": "heavy"
         },
@@ -4073,7 +4388,8 @@
               -18,
               105
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "over"
           },
           "swish": "heavy"
         }
@@ -4138,7 +4454,12 @@
               0.2,
               60
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "lash",
+            "dir": [
+              -0.9,
+              -0.55
+            ]
           }
         },
         "strike_2": {
@@ -4165,7 +4486,12 @@
               0.45,
               -75
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "lash",
+            "dir": [
+              0.9,
+              0.45
+            ]
           }
         },
         "strike_3": {
@@ -4189,7 +4515,12 @@
               0.2,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "whirl",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           },
           "swish": "heavy"
         },
@@ -4216,7 +4547,9 @@
               -18,
               75
             ],
-            "lunge": 1.1
+            "lunge": 1.1,
+            "form": "stab",
+            "variant": "line"
           },
           "swish": "thrust"
         },
@@ -4250,7 +4583,9 @@
               -18,
               80
             ],
-            "lunge": 1.2
+            "lunge": 1.2,
+            "form": "stab",
+            "variant": "line"
           },
           "swish": "thrust"
         },
@@ -4275,7 +4610,8 @@
               0.2,
               60
             ],
-            "lunge": 0.4
+            "lunge": 0.4,
+            "form": "slash"
           }
         },
         "art": {
@@ -4303,7 +4639,8 @@
               0.2,
               100
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "slash"
           },
           "swish": "art"
         },
@@ -4328,7 +4665,8 @@
               0.15,
               85
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "slash"
           }
         },
         "undercut": {
@@ -4351,7 +4689,8 @@
               -0.05,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "slash"
           }
         },
         "plunge": {
@@ -4376,7 +4715,8 @@
               -18,
               120
             ],
-            "lunge": 0.0
+            "lunge": 0.0,
+            "form": "chop"
           },
           "swish": "heavy"
         },
@@ -4403,7 +4743,8 @@
               -18,
               105
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "chop"
           },
           "swish": "heavy"
         }
@@ -4468,7 +4809,12 @@
               0.2,
               55
             ],
-            "lunge": 0.15
+            "lunge": 0.15,
+            "form": "slash",
+            "dir": [
+              -0.9,
+              -0.55
+            ]
           }
         },
         "strike_2": {
@@ -4481,7 +4827,7 @@
           ],
           "motion": 0.95,
           "posture": 8,
-          "arc": 60,
+          "arc": 30,
           "reach": 2.6,
           "hitstop": 60,
           "swing": {
@@ -4497,7 +4843,8 @@
               -10,
               40
             ],
-            "lunge": 0.7
+            "lunge": 0.7,
+            "form": "bash"
           },
           "swish": "heavy"
         },
@@ -4524,7 +4871,12 @@
               -18,
               95
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "chop",
+            "dir": [
+              -0.22,
+              -1.0
+            ]
           }
         },
         "strike_4": {
@@ -4550,7 +4902,9 @@
               -18,
               75
             ],
-            "lunge": 0.6
+            "lunge": 0.6,
+            "form": "stab",
+            "variant": "line"
           },
           "swish": "thrust"
         },
@@ -4560,7 +4914,7 @@
           "recovery": 10,
           "motion": 1.9,
           "posture": 20,
-          "arc": 70,
+          "arc": 30,
           "reach": 2.8,
           "hitstop": 100,
           "charge": {
@@ -4584,7 +4938,8 @@
               -10,
               45
             ],
-            "lunge": 0.9
+            "lunge": 0.9,
+            "form": "bash"
           },
           "swish": "heavy"
         },
@@ -4611,7 +4966,8 @@
               -10,
               45
             ],
-            "lunge": 0.8
+            "lunge": 0.8,
+            "form": "stab"
           },
           "swish": "heavy"
         },
@@ -4642,7 +4998,8 @@
               -10,
               50
             ],
-            "lunge": 1.0
+            "lunge": 1.0,
+            "form": "stab"
           },
           "swish": "art"
         },
@@ -4667,7 +5024,8 @@
               0.15,
               85
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "slash"
           }
         },
         "undercut": {
@@ -4690,7 +5048,8 @@
               -0.05,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "slash"
           }
         },
         "plunge": {
@@ -4715,7 +5074,8 @@
               -18,
               120
             ],
-            "lunge": 0.0
+            "lunge": 0.0,
+            "form": "chop"
           },
           "swish": "heavy"
         },
@@ -4742,7 +5102,8 @@
               -18,
               105
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "chop"
           },
           "swish": "heavy"
         }
@@ -4807,7 +5168,12 @@
               0.2,
               80
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "swing",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           },
           "swish": "heavy"
         },
@@ -4835,7 +5201,12 @@
               0.35,
               -85
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "swing",
+            "dir": [
+              1.0,
+              0.15
+            ]
           },
           "swish": "heavy"
         },
@@ -4862,7 +5233,12 @@
               -10,
               110
             ],
-            "lunge": 0.35
+            "lunge": 0.35,
+            "form": "chop",
+            "dir": [
+              -0.22,
+              -1.0
+            ]
           },
           "swish": "heavy"
         },
@@ -4887,7 +5263,12 @@
               0.2,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "spin",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           },
           "swish": "heavy"
         },
@@ -4921,7 +5302,12 @@
               -10,
               110
             ],
-            "lunge": 0.35
+            "lunge": 0.35,
+            "form": "spin",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           },
           "swish": "heavy"
         },
@@ -4946,7 +5332,8 @@
               0.2,
               80
             ],
-            "lunge": 0.35
+            "lunge": 0.35,
+            "form": "slash"
           },
           "swish": "heavy"
         },
@@ -4977,7 +5364,8 @@
               -10,
               115
             ],
-            "lunge": 0.3
+            "lunge": 0.3,
+            "form": "chop"
           },
           "swish": "art"
         },
@@ -5002,7 +5390,8 @@
               0.15,
               85
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "slash"
           }
         },
         "undercut": {
@@ -5025,7 +5414,8 @@
               -0.05,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "slash"
           }
         },
         "plunge": {
@@ -5050,7 +5440,8 @@
               -18,
               120
             ],
-            "lunge": 0.0
+            "lunge": 0.0,
+            "form": "chop"
           },
           "swish": "heavy"
         },
@@ -5077,7 +5468,8 @@
               -18,
               105
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "chop"
           },
           "swish": "heavy"
         }
@@ -5142,7 +5534,12 @@
               0.2,
               60
             ],
-            "lunge": 0.15
+            "lunge": 0.15,
+            "form": "slash",
+            "dir": [
+              -0.9,
+              -0.55
+            ]
           }
         },
         "strike_2": {
@@ -5169,7 +5566,12 @@
               0.45,
               -85
             ],
-            "lunge": 0.15
+            "lunge": 0.15,
+            "form": "slash",
+            "dir": [
+              0.9,
+              0.45
+            ]
           }
         },
         "strike_3": {
@@ -5193,7 +5595,12 @@
               0.15,
               85
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "slash",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           },
           "swish": "heavy"
         },
@@ -5220,7 +5627,9 @@
               -18,
               75
             ],
-            "lunge": 0.6
+            "lunge": 0.6,
+            "form": "stab",
+            "variant": "line"
           },
           "swish": "thrust"
         },
@@ -5252,7 +5661,12 @@
               0.75,
               30
             ],
-            "lunge": 0.4
+            "lunge": 0.4,
+            "form": "slash",
+            "dir": [
+              -1.0,
+              -0.2
+            ]
           },
           "swish": "heavy"
         },
@@ -5279,7 +5693,8 @@
               -18,
               80
             ],
-            "lunge": 0.7
+            "lunge": 0.7,
+            "form": "stab"
           },
           "swish": "thrust"
         },
@@ -5308,7 +5723,8 @@
               0.25,
               90
             ],
-            "lunge": 0.6
+            "lunge": 0.6,
+            "form": "slash"
           },
           "swish": "art"
         },
@@ -5333,7 +5749,8 @@
               0.15,
               85
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "slash"
           }
         },
         "undercut": {
@@ -5356,7 +5773,8 @@
               -0.05,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "slash"
           }
         },
         "plunge": {
@@ -5381,7 +5799,8 @@
               -18,
               120
             ],
-            "lunge": 0.0
+            "lunge": 0.0,
+            "form": "chop"
           },
           "swish": "heavy"
         },
@@ -5408,7 +5827,8 @@
               -18,
               105
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "chop"
           },
           "swish": "heavy"
         }

@@ -1,0 +1,49 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "name": "inner_seal",
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:core_shard",
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "min": 2,
+              "max": 2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "inner_seal_extra",
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "awaken:essence_cell",
+          "modifier": {
+            "type": "minecraft:set_components",
+            "components": {
+              "awaken:essence": 1000
+            }
+          },
+          "weight": 5
+        },
+        {
+          "type": "minecraft:item",
+          "name": "awaken:frame_module_jet_boots",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:empty",
+          "weight": 4
+        }
+      ]
+    }
+  ]
+}

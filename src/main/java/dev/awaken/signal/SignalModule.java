@@ -28,6 +28,15 @@ public final class SignalModule {
         });
         SignalCommands.register();
         SignalTests.register();
+        // tips (SPEC §27.7): the server's side only says a context came up or the move was done; the client decides
+        dev.awaken.core.api.TipHooks.install(new dev.awaken.core.api.TipHooks.Server() {
+            @Override public void offer(net.minecraft.server.level.ServerPlayer p, net.minecraft.resources.Identifier tip) {
+                dev.awaken.core.AwakenNet.send(p, new SignalPayloads.Tip(tip.toString(), true));
+            }
+            @Override public void done(net.minecraft.server.level.ServerPlayer p, net.minecraft.resources.Identifier tip) {
+                dev.awaken.core.AwakenNet.send(p, new SignalPayloads.Tip(tip.toString(), false));
+            }
+        });
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
@@ -37,6 +46,7 @@ public final class SignalModule {
         r.playToClient(SignalPayloads.Pending.TYPE, SignalPayloads.Pending.STREAM_CODEC);
         r.playToClient(SignalPayloads.Now.TYPE, SignalPayloads.Now.STREAM_CODEC);
         r.playToClient(SignalPayloads.Horizon.TYPE, SignalPayloads.Horizon.STREAM_CODEC);
+        r.playToClient(SignalPayloads.Tip.TYPE, SignalPayloads.Tip.STREAM_CODEC);
         r.playToServer(SignalPayloads.Answer.TYPE, SignalPayloads.Answer.STREAM_CODEC, (msg, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) Signal.answer(sp, msg.action(), msg.accepted());
         });

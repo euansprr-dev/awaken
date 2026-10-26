@@ -235,6 +235,10 @@ public final class DescentTravel {
         if (cd != null && now < cd) return;
         SEALED_COOLDOWN.put(player.getUUID(), now + 200);
         player.level().playSound(null, player.blockPosition(), DescentContent.SND_SEALED.get(), SoundSource.PLAYERS, 1.0F, 0.7F);
+        if (access == Strata.Access.SEALED_RANK) {
+            dev.awaken.core.api.Promises.seen(player, "stratum:" + target, pit, dev.awaken.core.api.Promises.Need.rank(Strata.def(target).opensAt().label),
+                    Strata.shortName(target) + ", in the Descent");
+        }
         Signal.send(player, SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("The way down is sealed"))
                 .body(Component.literal(Strata.sealedMessage(access, target)))
                 .footer(Component.literal(access == Strata.Access.SEALED_SEED ? "The story ends at the Seed" : "Grow, and come back"))

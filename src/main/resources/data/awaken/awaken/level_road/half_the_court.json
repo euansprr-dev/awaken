@@ -1,0 +1,26 @@
+{
+  "schema": 2,
+  "level": 112,
+  "title": "Half the Court",
+  "text": "Half the Court. Four Sovereigns down, four to go. 40 essence.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:essence_shard",
+      "count": 40
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "Four Sovereigns fallen",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:sovereigns_defeated",
+      "value": 4
+    },
+    "toast": "Half the Court",
+    "requires": [
+      "rank:S"
+    ]
+  }
+}

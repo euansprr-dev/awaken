@@ -1,0 +1,10 @@
+{
+  "text": "Your power is on {key.awaken.power_1}. Try it out past the walls.",
+  "short": "{key.awaken.power_1}: your power",
+  "priority": 60,
+  "show_for": 180,
+  "retire_after_done": 1,
+  "retire_after_shown": 3,
+  "cooldown": 1200,
+  "awake": "after"
+}

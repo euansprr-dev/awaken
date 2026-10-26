@@ -79,7 +79,7 @@ public final class BodyClient {
         Body.installClient(new Body.ClientQuery() {
             @Override public boolean sliding() { return ClientMoves.sliding; }
             @Override public boolean tacticalSprinting() { return ClientMoves.tac; }
-            @Override public boolean mantling() { return ClientMoves.mantling; }
+            @Override public boolean mantling() { return ClientMoves.mantling || ClientMoves.vaulting; }
             @Override public @Nullable Vec3 slideDirection() { return ClientMoves.slideDirection(); }
             @Override public boolean wallRunning() { return RunnerMoves.state == RunnerMoves.State.RUN; }
             @Override public boolean hanging() { return RunnerMoves.hanging(); }
@@ -95,6 +95,7 @@ public final class BodyClient {
             }
         });
         StatusSections.add(StatusSections.Tab.STATUS, new BodySection());
+        StatusSections.add(StatusSections.Tab.STATUS, new AscentSection());
         dev.awaken.body.ascent.client.AscentClient.init(modBus);
     }
 
@@ -129,6 +130,17 @@ public final class BodyClient {
             case BodyPayloads.SEEN_MOMENTUM -> BodyFx.hitBurst(e, dx, dz, false);
             case BodyPayloads.SEEN_RUNNER_END -> {
                 if (e != mc.player) BodyAnims.runnerEnd(e.getId());
+            }
+            case BodyPayloads.SEEN_VAULT, BodyPayloads.SEEN_VAULT + 1, BodyPayloads.SEEN_VAULT + 2, BodyPayloads.SEEN_VAULT + 3,
+                 BodyPayloads.SEEN_VAULT + 4 -> {
+                // someone else's crossing (SPEC §17.27): its kind's clip, and the dust off the rail their hand meets
+                if (e == mc.player) return;
+                int kind = msg.what() - BodyPayloads.SEEN_VAULT;
+                BodyAnims.vault(e.getId(), kind, msg.yaw());
+                if (mc.level instanceof net.minecraft.client.multiplayer.ClientLevel cl) {
+                    double up = kind == dev.awaken.body.VaultRules.HIGH ? 2.5 : kind == dev.awaken.body.VaultRules.OVER ? 1.6 : 1.5;
+                    BodyFx.lip(cl, e.getX() + dx * 0.8, e.getY() + up, e.getZ() + dz * 0.8, dx, dz);
+                }
             }
             default -> {
                 int clip = msg.what() - BodyPayloads.SEEN_CLIP;

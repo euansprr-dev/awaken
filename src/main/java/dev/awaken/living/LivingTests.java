@@ -34,6 +34,61 @@ final class LivingTests {
         dev.awaken.living.population.LedgerTests.register();
         dev.awaken.living.camp.CampTests.register();
         dev.awaken.living.craft.CraftTests.register();
+        // SPEC §27.6: registration starts Kestrel's errand, tracked and on the Now line over bookkeeping; the Registry's
+        // Directive is the first floor, already taken on, with its progress on the line; no gate forms before level 3
+        // the Now line's order (SPEC §27.6): a tracked chain's step, then a taken Directive, then points, then the road
+        AwakenTests.register("progression_now_priorities", 100, h -> {
+            net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+            try {
+                dev.awaken.progression.Progression.awaken(p);
+                dev.awaken.progression.Progression.count(p, "awaken:carillon_registered");
+                dev.awaken.core.api.OpeningHooks.fireRegistered(p);
+                dev.awaken.progression.Directives.tryOffer(p, "opening");
+                dev.awaken.progression.Progression.topUpToLevel(p, 3, dev.awaken.progression.Progression.XpSource.COMMAND);
+                List<String> ids = dev.awaken.core.api.NowHooks.collect(p, 20).stream().map(dev.awaken.core.api.NowHooks.Suggestion::id).toList();
+                int chain = -1, directive = -1, points = -1, road = -1;
+                for (int i = 0; i < ids.size(); i++) {
+                    String id = ids.get(i);
+                    if (id.startsWith("living:chain/") && chain < 0) chain = i;
+                    if (id.startsWith("progression:directive/") && directive < 0) directive = i;
+                    if (id.equals("progression:points")) points = i;
+                    if (id.startsWith("progression:road/") && road < 0) road = i;
+                }
+                h.assertTrue(chain >= 0 && directive > chain && points > directive && (road < 0 || road > points),
+                        "the chain's step, then the Directive, then points, then the road: " + ids);
+            } finally {
+                h.getLevel().getServer().getPlayerList().remove(p);
+            }
+            h.succeed();
+        });
+        AwakenTests.register("progression_first_thread", 100, h -> {
+            net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+            try {
+                dev.awaken.progression.Progression.awaken(p);
+                dev.awaken.progression.Progression.count(p, "awaken:carillon_registered");
+                String chain = FirstThread.chainId();
+                h.assertTrue(chain != null, "The Last Delivery is in the quest book");
+                dev.awaken.core.api.OpeningHooks.fireRegistered(p);
+                var qs = dev.awaken.living.quest.QuestEngine.state(p);
+                h.assertTrue(qs.has(chain) && qs.tracked().equals(chain), "registered: Kestrel's errand starts by itself, tracked");
+                dev.awaken.core.api.OpeningHooks.fireRegistered(p);
+                h.assertTrue(qs.active().size() == 1, "and only once");
+                var now = FirstThread.now(p);
+                h.assertTrue(now.size() == 1 && now.getFirst().priority() > 55 && now.getFirst().text().getString().startsWith("Tell Kestrel"),
+                        "its step is on the Now line, over points to spend: " + now);
+                dev.awaken.progression.Directives.tryOffer(p, "opening");
+                var d = dev.awaken.progression.Progression.profile(p).directives();
+                h.assertTrue(d.size() == 1 && d.getFirst().id().equals("awaken:first_floor") && d.getFirst().accepted(),
+                        "the Registry's Directive: the first floor, taken on: " + d);
+                h.assertTrue(dev.awaken.core.api.NowHooks.collect(p, 10).stream().anyMatch(s -> s.id().equals("progression:directive/awaken:first_floor")),
+                        "and on the Now line");
+                h.assertTrue(dev.awaken.gates.Director.upkeep(h.getLevel().getServer(), p, false) == null
+                        && p.getData(dev.awaken.gates.GatesRegistry.MEMORY.get()).gatesRolled == 0, "no gate at level 1: the first one waits for you");
+            } finally {
+                h.getLevel().getServer().getPlayerList().remove(p);
+            }
+            h.succeed();
+        });
         AwakenTests.register("living_region_map", 200, h -> {
             RegionMap.Probe plain = (x, z) -> RegionMap.Land.PLAIN;
             RegionMap map = new RegionMap(1234L, 0, 0, plain);

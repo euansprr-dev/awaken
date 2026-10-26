@@ -13,8 +13,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.special.SpecialModelRenderer;
+import net.minecraft.util.Mth;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.jspecify.annotations.Nullable;
@@ -32,9 +34,10 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
 
     /**
      * The blade's live state (0..255 each): its energy and its flash; whether it is the fighter's own in first person;
-     * who holds it (an entity id, -1 for nobody: a stand, a frame).
+     * who lays its ribbon (an entity id, -1 for nobody: a stand, a frame); and in third person, the arm it is in (0 not
+     * a hand's, 1 right, 2 left) and whose, so a move's wrist turns it ({@link ArmsWrist}).
      */
-    record State(int energy, int flash, boolean hand, int wielder) {}
+    record State(int energy, int flash, boolean hand, int wielder, int arm, int holder) {}
 
     private final String weapon;
     private final Identifier texture;
@@ -49,6 +52,13 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
                        int outlineColor) {
         WeaponMesh mesh = WeaponMeshes.get(weapon);
         if (mesh == null) return;
+        // third person: the wrist turns the weapon about its own length through its grip (the item's diagonal), its
+        // working side into the blow
+        float turn = state == null || state.arm() == 0 ? 0F : ArmsWrist.angle(state.holder(), state.arm() == 2);
+        if (turn != 0F) {
+            poseStack.pushPose();
+            poseStack.rotateAround(WRIST.rotationAxis(turn * Mth.DEG_TO_RAD, Mth.SQRT_OF_TWO / 2, Mth.SQRT_OF_TWO / 2, 0F), GRIP, GRIP, 0.5F);
+        }
         boolean ours = WeaponPipelines.ok();
         int packed = ours ? (state == null ? 0 : state.energy()) | ((state == null ? 0 : state.flash()) | (foil ? 256 : 0)) << 16 : overlay;
         collector.submitCustomGeometry(poseStack, ours ? WeaponPipelines.weapon(texture) : WeaponPipelines.fallback(texture),
@@ -67,7 +77,12 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
             float energy = state == null ? 0 : state.energy() / 255F, flash = state == null ? 0 : state.flash() / 255F;
             collector.submitCustomGeometry(poseStack, WeaponPipelines.glow(), (pose, buffer) -> halos(mesh, pose, buffer, energy, flash));
         }
+        if (turn != 0F) poseStack.popPose();
     }
+
+    /** Where the hand closes on every weapon (arms_weapons.HAND: along the item's diagonal, item space). */
+    private static final float GRIP = 3F / 16F;
+    private static final Quaternionf WRIST = new Quaternionf();
 
     private static final int HALO_SIDES = 10;
     private static final Vector3f AT = new Vector3f(), RIGHT = new Vector3f(), UP = new Vector3f(), SCALE = new Vector3f();
@@ -155,21 +170,51 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
     /** The fighter's own main-hand blade carries the fight; anyone else's (and one in a frame) is at rest. */
     @Override
     public @Nullable State extractArgument(ItemStack stack) {
+        State s = resting(stack);
+        return ArmsWrist.marking == 0 ? s : inArm(s, ArmsWrist.marking, ArmsWrist.markedHolder);
+    }
+
+    private static final State[] ARMS = new State[16];
+
+    /** A hand's weapon in third person, marked with its arm and holder (a few kept, nothing made per frame). */
+    private static State inArm(@Nullable State s, int arm, int holder) {
+        int energy = s == null ? 0 : s.energy(), flash = s == null ? 0 : s.flash(), wielder = s == null ? -1 : s.wielder();
+        int slot = Math.floorMod(holder * 2 + arm, ARMS.length);
+        State st = ARMS[slot];
+        if (st == null || st.energy() != energy || st.flash() != flash || st.wielder() != wielder || st.arm() != arm || st.holder() != holder) {
+            ARMS[slot] = st = new State(energy, flash, false, wielder, arm, holder);
+        }
+        return st;
+    }
+
+    private @Nullable State resting(ItemStack stack) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null) return null;
-        if (stack != p.getMainHandItem()) return other(mc, stack);
         boolean hand = mc.options.getCameraType().isFirstPerson();
+        if (stack != p.getMainHandItem()) {
+            // the off hand's twin (a pair, the Daggers): it lays the ribbon while it strikes, at rest otherwise
+            if (stack == ArmsOffHand.twinOf(p)) return ArmsHands.offStrikes() ? twin(p, hand) : null;
+            return other(mc, stack);
+        }
+        int wielder = ArmsHands.offStrikes() ? -1 : p.getId();
         int energy = 0, flash = 0;
         if (ArmsPredict.fights(p)) {
             float charge = ArmsPredict.charge();
             energy = charge >= 0 ? Math.round(charge * 255) : ArmsPredict.resonance >= ArmsRules.RESONANCE_MAX ? 150 : 0;
             flash = ArmsPredict.glinting() || ArmsPredict.perfectHeavy && ArmsPredict.move == Archetype.Move.HEAVY ? 255 : 0;
         }
-        if (last == null || last.energy() != energy || last.flash() != flash || last.hand() != hand || last.wielder() != p.getId()) {
-            last = new State(energy, flash, hand, p.getId());
+        if (last == null || last.energy() != energy || last.flash() != flash || last.hand() != hand || last.wielder() != wielder) {
+            last = new State(energy, flash, hand, wielder, 0, -1);
         }
         return last;
+    }
+
+    private static @Nullable State twinState;
+
+    private static State twin(LocalPlayer p, boolean hand) {
+        if (twinState == null || twinState.hand() != hand || twinState.wielder() != p.getId()) twinState = new State(0, 0, hand, p.getId(), 0, -1);
+        return twinState;
     }
 
     /** Someone else's blade: at rest, but its holder known, so its blows trace (a few kept, nothing made per frame). */
@@ -179,7 +224,7 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
             if (o.getMainHandItem() != stack) continue;
             int slot = Math.floorMod(o.getId(), OTHERS.length);
             State st = OTHERS[slot];
-            if (st == null || st.wielder() != o.getId()) OTHERS[slot] = st = new State(0, 0, false, o.getId());
+            if (st == null || st.wielder() != o.getId()) OTHERS[slot] = st = new State(0, 0, false, o.getId(), 0, -1);
             return st;
         }
         return null;

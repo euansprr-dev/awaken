@@ -85,6 +85,7 @@ public final class LivingClient {
             e.register(LivingNet.Shown.TYPE, (m, ctx) -> shown = m.shown());
             e.register(LivingNet.Journal.TYPE, (m, ctx) -> JournalSection.entries = List.copyOf(m.entries()));
             e.register(LivingNet.Tells.TYPE, (m, ctx) -> TELLS = List.copyOf(m.at()));
+            e.register(LivingNet.CampSmoke.TYPE, (m, ctx) -> PulseFx.camp(m.at()));
             e.register(LivingNet.Happenings.TYPE, (m, ctx) -> PulseFx.onTells(m));
         });
         var bus = NeoForge.EVENT_BUS;

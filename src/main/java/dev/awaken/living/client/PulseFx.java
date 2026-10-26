@@ -18,8 +18,9 @@ import java.util.Map;
 
 /**
  * Happenings told from afar (SPEC §21.6), drawn from their tells alone: a dust haze with birds wheeling over a
- * migration, a dust line behind a stampede, a murmuration's living cloud, kites circling carrion, a storm cell with its
- * rain, the Wild Hunt's ghost light, the Deep Tide's creeping fog, a caravan's lanterns and smoke, a duel's dust.
+ * migration, a dust line behind a stampede, a murmuration's living cloud, kites circling carrion, the Wild Hunt's ghost
+ * light, the Deep Tide's creeping fog, a caravan's lanterns and smoke, a duel's dust. A storm is a cell of its own
+ * ({@link StormSky}): Lens 2 marches it in its clouds, or {@link StormFallback} builds it of cloud cells.
  * Each in two passes: alpha-blended and unfogged (so it reads against a noon sky), then additive light. A tell past
  * the render distance is pulled in along its line of sight and shrunk to match, like the gate pillars, so it sits on
  * the horizon where it really is. Nothing allocates per frame but the per-tell state when a tell first arrives.
@@ -38,6 +39,15 @@ final class PulseFx {
 
     static final Map<Integer, Shown> SHOWN = new HashMap<>();
     static final float LERP = 40;
+
+    /** The Wayfarer camp's fire (SPEC §27.6), and when the server last said it burns (it's drawn for 15 s after). */
+    private static net.minecraft.core.BlockPos camp;
+    private static float campSeen = -1000;
+
+    static void camp(net.minecraft.core.BlockPos at) {
+        camp = at;
+        campSeen = LivingClient.ticks;
+    }
 
     static void onTells(LivingNet.Happenings msg) {
         float now = LivingClient.ticks;
@@ -88,7 +98,8 @@ final class PulseFx {
     private static double k, ax, ay, az;
 
     static void submit(SubmitCustomGeometryEvent e) {
-        if (SHOWN.isEmpty() || !LivingClient.shown) return;
+        boolean fire = camp != null && LivingClient.ticks - campSeen < 300;
+        if ((SHOWN.isEmpty() || !LivingClient.shown) && !fire) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
         var state = e.getLevelRenderState();
@@ -105,6 +116,7 @@ final class PulseFx {
         float clamp = Math.max(64, mc.options.getEffectiveRenderDistance() * 16 * 0.7F);
         e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), alpha, (pose, vc) -> guard(() -> pass(vc, clamp, false)));
         e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), light, (pose, vc) -> guard(() -> pass(vc, clamp, true)));
+        if (!dev.awaken.lens.client.LensClient.drawsStormCells()) StormFallback.submit(e);
     }
 
     private static void guard(Runnable r) {
@@ -116,6 +128,16 @@ final class PulseFx {
     }
 
     private static void pass(VertexConsumer vc, float clamp, boolean add) {
+        if (camp != null && LivingClient.ticks - campSeen < 300) {
+            double x = camp.getX() - 3 + 0.5, y = camp.getY(), z = camp.getZ() + 3 + 0.5;
+            double dist = Math.sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy) + (z - cz) * (z - cz));
+            k = dist > clamp ? clamp / dist : 1;
+            ax = x;
+            ay = y;
+            az = z;
+            campfire(vc, add);
+        }
+        if (!LivingClient.shown) return;
         for (Shown s : SHOWN.values()) {
             float lk = Mth.clamp((now - s.since) / LERP, 0, 1);
             double x = Mth.lerp(lk, s.px, s.x), y = Mth.lerp(lk, s.py, s.y), z = Mth.lerp(lk, s.pz, s.z);
@@ -131,7 +153,7 @@ final class PulseFx {
                 case "dustline" -> haze(vc, s, a, add, true);
                 case "flock" -> flock(vc, s, a, add);
                 case "circle" -> circle(vc, s, a, add);
-                case "storm" -> storm(vc, s, a, add);
+                case "storm" -> {} // its own cell: StormSky
                 case "ghost" -> ghost(vc, s, a, add);
                 case "fog" -> fog(vc, s, a, add);
                 case "lanterns" -> lanterns(vc, s, a, add);
@@ -203,26 +225,6 @@ final class PulseFx {
         }
     }
 
-    /** A storm cell: a towering dark cloud body, rain hanging from it in sheets, a cold glow inside. */
-    private static void storm(VertexConsumer vc, Shown s, float a, boolean add) {
-        float r = s.radius;
-        if (!add) {
-            for (int i = 0; i < 16; i++) {
-                double ox = Mth.sin(i * 2.1F + now * 0.004F) * r * 0.8, oz = Mth.cos(i * 1.3F + now * 0.003F) * r * 0.8;
-                double oy = 44 + (i % 5) * 4 + Mth.sin(i + now * 0.01F) * 2;
-                soft(vc, ox, oy, oz, r * (0.55F + (i % 4) * 0.1F), argb(0.55F * a, i % 3 == 0 ? 0x2A2F38 : 0x3A404B));
-            }
-            // rain: grey sheets from the cloud's belly to the ground
-            for (int i = 0; i < 10; i++) {
-                double ox = Mth.sin(i * 3.3F) * r * 0.6, oz = Mth.cos(i * 2.7F) * r * 0.6;
-                streak(vc, ox, 0, oz, ox + 1.5, 42, oz, 2.2F + (i % 3), argb(0.16F * a, 0x8A97A8));
-            }
-            return;
-        }
-        float flick = Mth.sin(now * 0.9F) * Mth.sin(now * 0.37F);
-        if (flick > 0.85F) soft(vc, 0, 46, 0, r * 0.9F, argb(0.35F * a, 0xBFD8FF));
-    }
-
     /** The Wild Hunt: a cold blue light running over the land, a ghost glow round it, a ring at its feet. */
     private static void ghost(VertexConsumer vc, Shown s, float a, boolean add) {
         float pulse = 0.75F + 0.25F * Mth.sin(now * 0.3F);
@@ -253,6 +255,28 @@ final class PulseFx {
             }
         }
         soft(vc, 0, 1.2, 0, s.radius * 0.45F, argb(0.2F * a, 0x40464E));
+    }
+
+    /**
+     * The Wayfarers' fire (SPEC §27.6): a column of smoke you see from the High Gate, rising a hundred and ten blocks (the
+     * Lumen canopy hides anything under about sixty at that range), widening, paling and leaning with the wind as it goes,
+     * over a warm glow at its foot. Its own look, drawn from afar: vanilla's campfire smoke only rises near you.
+     */
+    private static void campfire(VertexConsumer vc, boolean add) {
+        if (!add) {
+            for (int i = 0; i < 28; i++) {
+                float rise = (now * 0.0025F + i / 28F) % 1F;
+                float lean = rise * rise;
+                double ox = Mth.sin(now * 0.004F + i * 0.7F) * 1.4 * rise + lean * 18, oz = Mth.cos(now * 0.005F + i) * 1.4 * rise + lean * 7;
+                float a = 0.42F * (float) Math.pow(1 - rise, 0.8) * Mth.clamp(rise * 10, 0, 1);
+                int grey = (int) Mth.lerp(rise, 0x9E, 0xD2);
+                soft(vc, ox, 1.5 + rise * 110, oz, 1.6F + rise * 11F, argb(a, grey << 16 | (grey - 4) << 8 | (grey - 10)));
+            }
+            return;
+        }
+        float flick = 0.8F + 0.2F * Mth.sin(now * 0.6F) * Mth.sin(now * 0.23F + 1);
+        soft(vc, 0, 0.8, 0, 0.9F, argb(0.9F * flick, 0xFFD27A));
+        soft(vc, 0, 1.0, 0, 4.0F, argb(0.22F * flick, 0xFFA040));
     }
 
     /** A caravan: warm lanterns swinging on its wagons, a thin line of cook-smoke rising from it. */

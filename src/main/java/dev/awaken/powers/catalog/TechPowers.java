@@ -46,7 +46,8 @@ final class TechPowers {
     static final double RAIL_WIDTH = 0.6;
 
     static void register() {
-        PowerType.builder("grapple", "Grapple", Family.TECH, Slot.MOVEMENT)
+        // shown as "Snap Cable" so "the grapple" only ever means the Tether (progression plan decision 11); the id stays
+        PowerType.builder("grapple", "Snap Cable", Family.TECH, Slot.MOVEMENT)
                 .cost(10).cooldown(50).damage(3).unlock(Rank.E).icon("grapple")
                 .desc("Fire a hook up to 28 blocks. Hook a wall and you're yanked to it; hook a mob and it's yanked to you.")
                 .variant(Variant.of("Zipline", "A faster, flatter pull").radius(1.25f))

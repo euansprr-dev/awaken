@@ -57,6 +57,14 @@ public final class Progression {
         return rank.contentLevel;
     }
 
+    /** The action prefix of a card whose yes opens the band ("band:ascent"). */
+    public static final String BAND_ACTION = "band";
+
+    /** Opens the band (the Status screen) on this player's client. */
+    public static void openBand(ServerPlayer player) {
+        dev.awaken.core.AwakenNet.send(player, new dev.awaken.progression.net.ProgressionPayloads.OpenBand(0));
+    }
+
     /** Queue a sync of the profile to its owner (batched once per second). */
     public static void markDirty(ServerPlayer player) {
         DIRTY.add(player);
@@ -238,6 +246,7 @@ public final class Progression {
                         Component.literal(gained > 1 ? "Level " + (p.level - gained) + " → " + p.level : "Level " + p.level))
                 .body(Component.literal("+" + gained * Curve.POINTS_PER_LEVEL + " points to spend · K"))
                 .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 5).build());
+        if (p.unspent > 0) dev.awaken.core.api.TipHooks.offer(player, dev.awaken.Awaken.id("first/level")); // where points go, and how you grow (SPEC §27.7)
         // after the level toast, so each level's unlock (the level road) reads as its consequence
         int top = p.level;
         for (int lv = top - gained + 1; lv <= top; lv++) {
@@ -258,6 +267,7 @@ public final class Progression {
     public static boolean spendPoint(ServerPlayer player, Stat stat) {
         Profile p = profile(player);
         if (p.unspent <= 0) return false;
+        dev.awaken.core.api.TipHooks.done(player, dev.awaken.Awaken.id("first/level"));
         p.unspent--;
         p.stats[stat.ordinal()]++;
         applyAttributes(player);
@@ -546,8 +556,27 @@ public final class Progression {
         dev.awaken.core.Playtest.log(player, "new_thing", "what", what);
         for (var l : NEW_THING_LISTENERS) l.accept(player, what);
         profile(player).lastNewThing = player.level().getGameTime();
+        if (capability(what)) profile(player).counters.put(CAPABILITY_AT, player.level().getGameTime());
         DirectorLog.log(player, "new-thing", what);
         markDirty(player);
+    }
+
+    /**
+     * The capability clock (SPEC §27.9): the game time of the last new thing the player can *do* (a power learned, a
+     * rank, a Path, a rung of the Ascent, a Lord-forged weapon, a first Weave, a machine or blueprint, an Echo, a Hearth
+     * or its tier, a latent, a townsperson). The new-thing clock above also counts sights (biomes, craft levels,
+     * happenings), so it never noticed a player starved of new abilities.
+     */
+    public static final String CAPABILITY_AT = "awaken:capability_at";
+
+    static boolean capability(String what) {
+        if (what.startsWith("power core")) return false;
+        String kind = what.split("[ :/]", 2)[0];
+        return switch (kind) {
+            case "power", "rank", "path", "ascent", "lord-forged", "weave", "machine", "blueprint", "echo", "hearth", "hearth_tier",
+                 "latent", "townsfolk" -> true;
+            default -> false;
+        };
     }
 
     /** Minutes of play since the last new thing. */

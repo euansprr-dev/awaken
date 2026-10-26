@@ -27,6 +27,7 @@ public final class ArrivalTests {
     private ArrivalTests() {}
 
     public static void register() {
+        relog();
         AwakenTests.registerIsolated("wilds_arrival_history", 200, h -> {
             ServerLevel level = h.getLevel();
             ServerPlayer p = h.makeMockServerPlayerInLevel();
@@ -68,10 +69,10 @@ public final class ArrivalTests {
                 walk(p, s, t, at, 10);
                 h.assertTrue(s.log.toList().getLast() == Way.POWER, "a dash reads as a power's move: " + s.log.toList());
 
-                // the sky platform's best roll pays only by movement
+                // a walk-in site's best roll pays only by movement (a climb's waits behind its cache's inner seal instead)
                 Item shard = BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath("awaken", "core_shard"));
-                LootTable sky = level.getServer().reloadableRegistries().getLootTable(RuinBuilder.loot("precursor_sky"));
-                h.assertTrue(sky != LootTable.EMPTY, "the sky platform has its own table");
+                LootTable sky = level.getServer().reloadableRegistries().getLootTable(RuinBuilder.loot("precursor_vault"));
+                h.assertTrue(sky != LootTable.EMPTY, "the vault has its own table");
                 ArrivalHooks.Tracker real = ArrivalHooks.installed();
                 for (boolean moved : new boolean[]{true, false}) {
                     ArrivalHooks.install(new ArrivalHooks.Tracker() {
@@ -90,6 +91,53 @@ public final class ArrivalTests {
                         ArrivalHooks.install(real);
                     }
                 }
+            } finally {
+                WardHooks.unregister(stand);
+                Arrival.forget(p.getUUID());
+            }
+            h.succeed();
+        });
+    }
+
+    /** A built visit kept over a relog (SPEC §17.29), and the line's verdict. */
+    static void relog() {
+        AwakenTests.registerIsolated("wilds_arrival_survives_relog", 200, h -> {
+            ServerLevel level = h.getLevel();
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            BlockPos at = h.absolutePos(new BlockPos(1, 2, 1));
+            p.setPos(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+            Arrival.forget(p.getUUID());
+            long[] t = {Math.floorDiv(level.getGameTime(), Arrival.SAMPLE) * Arrival.SAMPLE + 1000};
+            WardHooks.Source stand = (l, pos, out) -> out.accept(new WardHooks.Ward("test:site", "test", new BoundingBox(at).inflatedBy(40)));
+            WardHooks.register(stand);
+            try {
+                // walked in, then the line carried them on from inside: by the line
+                Arrival.State s = Arrival.state(p);
+                walk(p, s, t, at, 40);
+                Arrival.visit(p, s, t[0]);
+                h.assertTrue(Arrival.verdict(p, t[0]) && !Arrival.lineVerdict(p, t[0]), "walking in is movement, not the line");
+                s.lineUntil = t[0] + 40; // what ArrivalHooks.report(p, LINE, 40) sets: a rope out
+                walk(p, s, t, at, 20);
+                h.assertTrue(Arrival.lineVerdict(p, t[0]), "the rope from inside the visit is the line");
+
+                // a tower inside the visit spoils both, and a relog keeps it spoiled
+                s.placed.add(BlockPos.asLong(at.getX(), at.getY() - 1, at.getZ()), t[0]);
+                stand(p, s, t, at, 10);
+                Arrival.visit(p, s, t[0]);
+                h.assertFalse(Arrival.verdict(p, t[0]) || Arrival.lineVerdict(p, t[0]), "a tower is neither");
+                Arrival.keep(p);
+                Arrival.forget(p.getUUID());
+                Arrival.resume(p, t[0] + 20 * 60);
+                h.assertFalse(Arrival.verdict(p, t[0] + 20 * 60), "a minute after a relog the tower is still a tower");
+                // ten minutes on, the visit is forgotten (as the placed blocks are)
+                Arrival.forget(p.getUUID());
+                Arrival.state(p).visit = "test:site";
+                Arrival.state(p).visitByMovement = false;
+                Arrival.state(p).visitSeen = t[0];
+                Arrival.keep(p);
+                Arrival.forget(p.getUUID());
+                Arrival.resume(p, t[0] + Arrival.VISIT_KEPT + 1);
+                h.assertTrue(Arrival.describeVisit(p) == null, "past ten minutes nothing comes back");
             } finally {
                 WardHooks.unregister(stand);
                 Arrival.forget(p.getUUID());

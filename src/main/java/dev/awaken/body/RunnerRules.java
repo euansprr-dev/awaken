@@ -270,8 +270,9 @@ public final class RunnerRules {
     /**
      * The edge in front of a body with feet at (px, py, pz), facing +sign along axis: a face within reach under the
      * hands (a band {@code hw} wide around the body's middle plus {@code tOff} along the edge), whose top is between
-     * lo and hi above the feet, is not a fence, wall or gate (collision taller than its block), has
-     * {@link #HANG_HEADROOM} free over the lip, and where the hanging body fits flush with the face.
+     * lo and hi above the feet, has {@link #HANG_HEADROOM} free over the lip, and where the hanging body fits flush with
+     * the face. A fence's, gate's or wall's top is an edge like any other (SPEC §17.27): one standing on the floor you
+     * stand on never is (the hanging feet would be in that floor).
      */
     public static @Nullable Edge findEdge(BlockGetter level, CollisionContext ctx, BlockPos.MutableBlockPos m,
                                           double px, double py, double pz, int axis, int sign, double reach,
@@ -286,7 +287,7 @@ public final class RunnerRules {
         // the lip: a top in the band with room for the hands over it, the one nearest where a hold would put it
         if (axis == 0) ledgeTop(level, ctx, m, a0, t - hw, a1, t + hw, py + lo, py + hi, py + HANG_DROP, top);
         else ledgeTop(level, ctx, m, t - hw, a0, t + hw, a1, py + lo, py + hi, py + HANG_DROP, top);
-        if (Double.isNaN(top[0]) || top[1] != 0) return null;
+        if (Double.isNaN(top[0])) return null;
         double ty = top[0];
         // room for the hands over the lip (out to half a block from the face)
         double b0 = sign > 0 ? face + 0.01 : face - 0.5, b1 = sign > 0 ? face + 0.5 : face - 0.01;
@@ -294,9 +295,22 @@ public final class RunnerRules {
         // the hanging body, flush with the face
         double hc = face - sign * (W + HANG_GAP), hy = ty - HANG_DROP;
         double bt = axis == 0 ? pz : px;
-        if (blockedAxis(level, ctx, m, axis, hc - W + 1e-3, hc + W - 1e-3, hy + 1e-3, hy + H - 1e-3, bt - W + 1e-3, bt + W - 1e-3)) return null;
+        if (blockedAxis(level, ctx, m, axis, hc - W + 1e-3, hc + W - 1e-3, hy + 1e-3, hy + H - 1e-3, bt - W + 1e-3, bt + W - 1e-3)) {
+            // a rail standing back on what's under it (a fence or wall on a block, at a roof's edge; SPEC §17.27): the body
+            // hangs flush with that face instead, the hands reaching in to the rail
+            if (top[1] == 0) return null;
+            double d = 0.025;
+            for (; d <= RAIL_INSET + 1e-6; d += 0.025) {
+                hc = face - sign * (W + HANG_GAP + d);
+                if (!blockedAxis(level, ctx, m, axis, hc - W + 1e-3, hc + W - 1e-3, hy + 1e-3, hy + H - 1e-3, bt - W + 1e-3, bt + W - 1e-3)) break;
+            }
+            if (d > RAIL_INSET + 1e-6) return null;
+        }
         return axis == 0 ? new Edge(hc, hy, bt, ty, 0, sign, face) : new Edge(bt, hy, hc, ty, 2, sign, face);
     }
+
+    /** How far a rail may stand back from the face under it for a hang on it (a fence's post is 0.375 in, a wall's 0.25). */
+    public static final double RAIL_INSET = 0.45;
 
     /** Why {@link #findEdge} says no (diagnostics for the spike's server re-checks), or "ok". */
     public static String whyNot(BlockGetter level, CollisionContext ctx, BlockPos.MutableBlockPos m,
@@ -310,7 +324,6 @@ public final class RunnerRules {
         if (axis == 0) ledgeTop(level, ctx, m, a0, t - hw, a1, t + hw, py + lo, py + hi, py + HANG_DROP, top);
         else ledgeTop(level, ctx, m, t - hw, a0, t + hw, a1, py + lo, py + hi, py + HANG_DROP, top);
         if (Double.isNaN(top[0])) return String.format("face %.3f: no top with room over it in y %.2f..%.2f", face, py + lo, py + hi);
-        if (top[1] != 0) return "a fence, wall or gate top";
         double b0 = sign > 0 ? face + 0.01 : face - 0.5, b1 = sign > 0 ? face + 0.5 : face - 0.01;
         if (blockedAxis(level, ctx, m, axis, b0, b1, top[0] + 1e-3, top[0] + HANG_HEADROOM, t - hw, t + hw)) return "no room over the lip";
         double hc = face - sign * (W + HANG_GAP), hy = top[0] - HANG_DROP;
@@ -321,8 +334,8 @@ public final class RunnerRules {
     /**
      * The lip in a column just inside a face: of every collision top in (yLo, yHi] with {@link #HANG_HEADROOM} of air
      * over it in the column, the one nearest {@code prefer}; out[0] = its y (NaN: none), out[1] = 1 when it is a fence,
-     * wall or gate top (collision taller than its block). Unlike the mantle's surface, a ledge with another one a block
-     * above it is still a ledge.
+     * wall or gate top (collision taller than its block: an edge too since SPEC §17.27). Unlike the mantle's surface, a
+     * ledge with another one a block above it is still a ledge.
      */
     static void ledgeTop(BlockGetter level, CollisionContext ctx, BlockPos.MutableBlockPos m,
                          double x0, double z0, double x1, double z1, double yLo, double yHi, double prefer, double[] out) {
@@ -352,11 +365,11 @@ public final class RunnerRules {
         out[1] = tall ? 1 : 0;
     }
 
-    /** A drop from a hang to the ledge below (Shift; SPEC §17.24): its top this far under the held one, the most. */
+    /** A drop from a hang to the ledge below (Shift; SPEC §17.25): its top this far under the held one, the most. */
     public static final double DROP_MIN = 0.9, DROP_MAX = 3.2, DROP_OUT = 1.4;
 
     /**
-     * The ledge under a hang that a drop catches (Shift; SPEC §17.24), the nearest one below: the same face direction,
+     * The ledge under a hang that a drop catches (Shift; SPEC §17.25), the nearest one below: the same face direction,
      * its top {@link #DROP_MIN}-{@link #DROP_MAX} under the held one, its face up to {@link #DROP_OUT} out from the
      * hanging body (a sill or a balcony sticking out) or a little in; and the way to it free: out (or down) first, then
      * down (or in). Null for none. The body hangs at (hx, hy, hz) from {@code held}.
@@ -393,16 +406,28 @@ public final class RunnerRules {
      * Where the feet go when climbing out over an edge, or null: something to stand on just past the face (the edge's
      * own top, or a walkable step up to {@link #CLIMB_STEP} over it: a stair eave's back half, a roof's next slab),
      * a standing body fits there, and the way up in front of the face and over the lip is clear to standing height.
+     * A wall's coping (SPEC §17.27) is stood on with the body over its middle; a fence's or gate's rail is no place to
+     * stand (VaultRules.over climbs over it instead).
      */
     public static double @Nullable [] climbOut(BlockGetter level, CollisionContext ctx, BlockPos.MutableBlockPos m, Edge e) {
         probes++;
         double sc = e.plane() + e.sign() * (W + 0.08), t = e.along();
         double hc = e.axis() == 0 ? e.hx() : e.hz();
-        // what the feet land on: not a drop behind a thin lip, not a fence top
+        // what the feet land on: not a drop behind a thin lip
         double[] top = SCRATCH.get();
         if (e.axis() == 0) BodyRules.surface(level, ctx, m, sc - W + 0.02, t - W + 0.02, sc + W - 0.02, t + W - 0.02, e.top() - 0.5, e.top() + CLIMB_STEP, top);
         else BodyRules.surface(level, ctx, m, t - W + 0.02, sc - W + 0.02, t + W - 0.02, sc + W - 0.02, e.top() - 0.5, e.top() + CLIMB_STEP, top);
-        if (Double.isNaN(top[0]) || top[1] != 0 || top[0] < e.top() - 0.05) return null;
+        if (Double.isNaN(top[0]) || top[0] < e.top() - 0.05) return null;
+        if (top[1] != 0) {
+            // a fence, wall or gate top: only a wall's coping takes the feet, the body centred on it
+            double lx = e.axis() == 0 ? e.plane() + e.sign() * 0.05 : t, lz = e.axis() == 0 ? t : e.plane() + e.sign() * 0.05;
+            VaultRules.rail(level, ctx, m, lx, lz, e.top() - 0.5, e.top() + 0.01, e.fx(), e.fz(), top);
+            if (Double.isNaN(top[0]) || top[1] < VaultRules.WALL_MIN || top[1] > VaultRules.RAIL_MAX) return null;
+            sc = e.plane() + e.sign() * top[1] / 2;
+            if (e.axis() == 0) BodyRules.surface(level, ctx, m, sc - W + 0.02, t - W + 0.02, sc + W - 0.02, t + W - 0.02, e.top() - 0.5, e.top() + CLIMB_STEP, top);
+            else BodyRules.surface(level, ctx, m, t - W + 0.02, sc - W + 0.02, t + W - 0.02, sc + W - 0.02, e.top() - 0.5, e.top() + CLIMB_STEP, top);
+            if (Double.isNaN(top[0]) || top[0] < e.top() - 0.05) return null;
+        }
         double sy = top[0];
         // the standing body there and the way over the lip to it, from the hold's column on
         double o0 = Math.min(hc, sc) - W + 1e-3, o1 = Math.max(hc, sc) + W - 1e-3;
@@ -462,14 +487,14 @@ public final class RunnerRules {
 
     /**
      * Whether lowering into a hang on this edge is worth it: a real drop under it, or a ledge below for a drop to catch
-     * (a facade's ledges are about three apart: SPEC §17.24). Ground near under an edge with no ledge is a step down.
+     * (a facade's ledges are about three apart: SPEC §17.25). Ground near under an edge with no ledge is a step down.
      */
     public static boolean lowerWorth(BlockGetter level, CollisionContext ctx, BlockPos.MutableBlockPos m, Edge e) {
         return !groundWithin(level, ctx, m, e.hx(), e.top(), e.hz(), LOWER_DROP) || edgeBelow(level, ctx, m, e.hx(), e.hy(), e.hz(), e, 0) != null;
     }
 
     /** Scratch for surface tops, per thread (the integrated server and the client probe at the same time). */
-    private static final ThreadLocal<double[]> SCRATCH = ThreadLocal.withInitial(() -> new double[2]);
+    private static final ThreadLocal<double[]> SCRATCH = ThreadLocal.withInitial(() -> new double[3]);
 
     // ---- the one-button free-run (SPEC §17.14) -------------------------------------------------------------------------
 

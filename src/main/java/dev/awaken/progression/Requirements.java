@@ -19,6 +19,7 @@ import java.util.function.BiPredicate;
  * level:8               level 8 or more            hearth     has a Hearth Anchor
  * counter:awaken:x      counter x is at least 1
  * rank:C                rank C or higher           path       has chosen a Path (Second Awakening)
+ * tier:tether           a movement need the Horizon's reach answers (the Ascent's rungs, movement powers)
  * </pre>
  * Unknown tokens count as unmet (and are logged once), so a typo hides a directive rather than offering the impossible.
  */
@@ -45,6 +46,7 @@ public final class Requirements {
             if (token.equals("hearth")) return dev.awaken.core.api.HearthHooks.hearthOf(player).isPresent();
             if (token.equals("path")) return !p.path().isEmpty();
             if (token.startsWith("rank:")) return p.rank().ordinal() >= Rank.valueOf(token.substring("rank:".length())).ordinal();
+            if (token.startsWith("tier:")) return dev.awaken.core.api.HorizonHooks.can(player, token.substring("tier:".length()));
         } catch (RuntimeException bad) {
             warn(token);
             return false;
@@ -78,6 +80,7 @@ public final class Requirements {
                 return false;
             }
         }
+        if (token.startsWith("tier:")) return token.length() > 5;
         return (token.startsWith("unlock:") || token.startsWith("counter:")) && token.indexOf(':', token.indexOf(':') + 1) > 0;
     }
 

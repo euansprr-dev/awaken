@@ -417,7 +417,7 @@ public final class RuinBuilder {
                 BlockState s;
                 if (door) s = x == 11 && y == 2
                         ? AboveBlocks.DOOR_CORE.get().defaultBlockState().setValue(DoorCoreBlock.RANK, Math.max(0, Math.min(6, doorRank)))
-                        : AboveBlocks.DOOR.get().defaultBlockState();
+                        : AboveBlocks.DOOR.get().defaultBlockState().setValue(dev.awaken.above.block.PrecursorDoorBlock.RANK, Math.max(0, Math.min(6, doorRank)));
                 else if (ring < 0.5) s = (x + y) % 2 == 0 ? glow() : trim();
                 else if (y == 8) s = trim();
                 else s = b.plate(x, y, WALL, 0.2);

@@ -1,0 +1,81 @@
+# Locks that hold and speak (SPEC §17.25): at E-rank with no rope. The spawn vault's sealed door at dusk, its rank's
+# colour read from across the forecourt; a D gate's card ("above your rank"); a Tether Spire's plaza: the first block
+# refused (its ghost sheds) with the card offering Show me, and Y opening the band at The Ascent; a sky platform's deck:
+# its own first refusal; then with the rope, the tip in the action bar. First person for the blocks, the HUD on.
+world locks2 survival 20261026
+waitworld
+window 1440 900
+gui 0
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 12800
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd awaken ascent grant none
+hud on
+camera first
+# the sealed door at night: from the forecourt, then from out past its pylons (the vault's front), a little higher
+cmd time set 15000
+cmd awaken ascent vow goto
+wait 60
+shot locks_01_door_forecourt
+cmd tp @s ^ ^2 ^-7
+wait 30
+cmd tp @s ~ ~ ~ ~ 6
+wait 10
+shot locks_02_door_far
+cmd time set 12800
+# a gate of a higher rank: its card says so
+cmd awaken gate open D
+wait 160
+cmd awaken gate card
+wait 6
+shotnow locks_03_gate_above
+wait 200
+# the spire: a block on its plaza
+cmd awaken ascent spire goto
+wait 80
+cmd item replace entity @s weapon.mainhand with minecraft:stone 16
+cmd tp @s ~ ~ ~ ~ 62
+wait 10
+use
+wait 1
+shotnow locks_04_spire_shed
+wait 8
+shotnow locks_05_spire_card
+key accept
+wait 24
+shotnow locks_06_showme_band
+wait 10
+screen close
+wait 20
+# the sky platform's deck: its own first refusal, without the rope
+cmd awaken ascent sky goto deck
+wait 100
+cmd item replace entity @s weapon.mainhand with minecraft:stone 16
+use
+wait 1
+shotnow locks_07_sky_shed
+wait 8
+shotnow locks_08_sky_card
+key dismiss
+wait 20
+# with the rope: how to climb it
+cmd awaken ascent grant tether
+wait 70
+use
+wait 4
+shotnow locks_09_sky_rope_tip
+wait 20
+info
+quit

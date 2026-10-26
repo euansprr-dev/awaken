@@ -33,6 +33,7 @@ public final class WardTests {
     private WardTests() {}
 
     public static void register() {
+        ClimbTests.register();
         AwakenTests.registerIsolated("wilds_ward_rules", 200, h -> {
             ServerLevel level = h.getLevel();
             BlockPos at = h.absolutePos(new BlockPos(1, 2, 1));

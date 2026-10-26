@@ -25,6 +25,12 @@ public final class ProgressionClient {
         modBus.addListener(ProgressionClient::onPayloads);
         modBus.addListener(ProgressionClient::onLayers);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> onTick());
+        // the band opened: its tip has done its job (SPEC §27.7)
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ScreenEvent.Opening.class, e -> {
+            if (e.getNewScreen() instanceof StatusScreen || e.getNewScreen() instanceof dev.awaken.holo.client.HoloStatusScreen) {
+                dev.awaken.core.api.TipHooks.client().done(Awaken.id("first/band"));
+            }
+        });
         CoreSections.register();
     }
 
@@ -32,6 +38,11 @@ public final class ProgressionClient {
         // In single player the integrated server already filled these shared maps; replacing them here would race it.
         event.register(ProgressionPayloads.ContentSync.TYPE, (msg, ctx) -> {
             if (!Minecraft.getInstance().hasSingleplayerServer()) msg.apply();
+        });
+        event.register(ProgressionPayloads.OpenBand.TYPE, (msg, ctx) -> {
+            Minecraft mc = Minecraft.getInstance();
+            // the Status is the band's: off the wrist, a card's "Show me" has nothing to open (SPEC §16.4)
+            if (mc.player != null && dev.awaken.core.api.HoloBand.worn(mc.player)) mc.gui.setScreen(statusOpener.get());
         });
     }
 
@@ -49,7 +60,13 @@ public final class ProgressionClient {
     private static void onTick() {
         Minecraft mc = Minecraft.getInstance();
         while (AwakenKeys.STATUS.consumeClick()) {
-            if (mc.player != null && mc.gui.screen() == null) mc.gui.setScreen(statusOpener.get());
+            if (mc.player == null || mc.gui.screen() != null) continue;
+            // the Status is the Holo band's: off the wrist (SPEC §16.4, the Registry ceremony) K finds nothing to open
+            if (!dev.awaken.core.api.HoloBand.worn(mc.player)) {
+                mc.player.sendOverlayMessage(net.minecraft.network.chat.Component.translatable("gui.awaken.wrist.dark"));
+                continue;
+            }
+            mc.gui.setScreen(statusOpener.get());
         }
     }
 
@@ -58,7 +75,7 @@ public final class ProgressionClient {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.gui.hud.isHidden() || mc.player.isSpectator()) return;
         Profile p = Progression.profile(mc.player);
-        if (!p.awakened()) return;
+        if (!p.awakened() || !dev.awaken.core.api.HoloBand.worn(mc.player)) return; // the band shows it
         int x = g.guiWidth() / 2 - 91;
         int y = g.guiHeight() - 22 - 14;
         String s = "LV " + p.level() + " · " + p.rank().label;

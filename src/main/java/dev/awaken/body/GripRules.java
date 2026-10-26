@@ -15,7 +15,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The grip on a climb line (SPEC §17.23; Euan's pipes): the numbers and the probe both sides run. A climb line is a
+ * The grip on a climb line (SPEC §17.28; Euan's pipes): the numbers and the probe both sides run. A climb line is a
  * block in {@code #awaken:runner_climbs} (Carillon's drainpipes, trellises, hoist ropes and hanging ladders, every
  * ladder); a line with a facing sits against a wall (its facing points away from it, as a ladder's does), a rope hangs
  * free. The body holds the line from in front of it, centred on it. Nothing here touches a player.
@@ -32,7 +32,9 @@ public final class GripRules {
     public static final int BRAKE_TICKS = 4;
     /** Jump alone: a lunge up the line, over these ticks, at most once per {@link #HOP_EVERY}. */
     public static final double HOP = 1.2;
-    public static final int HOP_TICKS = 6, HOP_EVERY = 10;
+    public static final int HOP_TICKS = 8, HOP_EVERY = 12;
+    /** A hop's load under its start, and how far over its top it goes before settling (blocks). */
+    public static final double HOP_DIP = 0.08, HOP_OVER = 0.12;
     /** Jump with back: kicked off the wall (the ledge back-jump's numbers); with left or right: swung out sideways. */
     public static final double KICK_OUT = RunnerRules.LEDGE_BACK_OUT, KICK_UP = RunnerRules.LEDGE_BACK_UP;
     public static final double SIDE_OUT = 0.42, SIDE_AWAY = 0.12, SIDE_UP = 0.36;
@@ -133,6 +135,12 @@ public final class GripRules {
         return best;
     }
 
+    /** Whether a body-wide column at (x, z) is free of blocks from y0 up to y1 (entities don't count). */
+    public static boolean free(BlockGetter level, CollisionContext ctx, BlockPos.MutableBlockPos m, double x, double z, double y0, double y1) {
+        double w = BodyRules.HALF_WIDTH - 1e-3;
+        return !BodyRules.blocked(level, ctx, m, x - w, y0 + 1e-3, z - w, x + w, y1 - 1e-3, z + w);
+    }
+
     /** Whether a body with its feet at (x, y, z) can rise by v: no block in the way (entities don't count). */
     public static boolean canRise(BlockGetter level, CollisionContext ctx, BlockPos.MutableBlockPos m, double x, double y, double z, double v) {
         double w = BodyRules.HALF_WIDTH - 1e-3;
@@ -169,7 +177,7 @@ public final class GripRules {
     public static final double LIP_LO = 1.6, LIP_HI = 3.2, LIP_OUT = 1.5;
 
     /**
-     * Where the top of a line leads (SPEC §17.23, "the top"): a lip over the head as a hang, or null. The nearest one the
+     * Where the top of a line leads (SPEC §17.28, "the top"): a lip over the head as a hang, or null. The nearest one the
      * hang climbs out from, first:
      * the line's own top or a wall's top right in front (a flat roof's edge, a parapet's gap, a terrace), then an eave
      * or cornice the line runs up under, hung from its outer face (out from the line, then up). Feet at (x, y, z) in
@@ -230,7 +238,22 @@ public final class GripRules {
 
     /** The hop's rise from tick {@code age - 1} to {@code age} (smoothstep over its ticks; HOP in all). */
     public static double hopStep(int age) {
-        return HOP * (smooth(age / (double) HOP_TICKS) - smooth((age - 1) / (double) HOP_TICKS));
+        return hopY(age) - hopY(age - 1);
+    }
+
+    /**
+     * Where a hop has the body after {@code age} ticks, over where it started: a load (down {@link #HOP_DIP}), a launch
+     * that slows like a throw against gravity to {@link #HOP_OVER} over the top, then settles onto it. Ends at
+     * {@link #HOP} exactly.
+     */
+    static double hopY(int age) {
+        double u = Mth.clamp(age / (double) HOP_TICKS, 0, 1);
+        if (u <= 0.25) return -HOP_DIP * smooth(u / 0.25);
+        if (u <= 0.85) {
+            double s = (u - 0.25) / 0.6, e = 1 - (1 - s) * (1 - s);
+            return -HOP_DIP + (HOP + HOP_OVER + HOP_DIP) * e;
+        }
+        return HOP + HOP_OVER - HOP_OVER * smooth((u - 0.85) / 0.15);
     }
 
     static double smooth(double u) {
