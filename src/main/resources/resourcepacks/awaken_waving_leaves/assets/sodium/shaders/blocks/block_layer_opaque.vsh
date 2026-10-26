@@ -2,15 +2,17 @@
 #extension GL_ARB_separate_shader_objects : require
 
 // Sodium 0.9.3-beta.1+mc26.3's terrain vertex shader (CaffeineMC, PolyForm Shield 1.0.0:
-// https://polyformproject.org/licenses/shield/1.0.0) with AWAKEN's waving leaves added. Every change is marked AWAKEN.
-// Awaken only enables this pack when the loaded Sodium is exactly that version and its own terrain shaders hash to
-// what this file was written against (dev.awaken.terrain.client.WaveSupport); otherwise Sodium's file is used.
+// https://polyformproject.org/licenses/shield/1.0.0) with AWAKEN's waving leaves and swaying plants added. Every change
+// is marked AWAKEN. Awaken only enables this pack when the loaded Sodium is exactly that version and its own terrain
+// shaders hash to what this file was written against (dev.awaken.terrain.client.WaveSupport); otherwise Sodium's file
+// is used.
 //
-// AWAKEN: leaf vertices carry colour alpha 254 (baked into leaf models by WavingLeavesModel; the colour pipeline keeps
-// alpha, AO and shade only touch RGB). The wind lives in 22 texels in the block atlas's bottom-right corner, outside
-// every sprite, written by Awaken once a frame from dev.awaken.terrain.Wind (WindTexels): time, camera, direction,
-// steady strength and the gust along the wind, so the canopy sways with the same gust fronts the falling leaves ride.
-// Without its signature nothing moves.
+// AWAKEN: leaf vertices carry colour alpha 254 and plant vertices 213..253 (baked into models by WavingModel from
+// dev.awaken.terrain.PlantSway; the colour pipeline keeps alpha, AO and shade only touch RGB). The wind lives in 27
+// texels in the block atlas's bottom-right corner, outside every sprite, written by Awaken once a frame from
+// dev.awaken.terrain.Wind (WindTexels): time, camera, direction, steady strength, the gust along the wind, the plants'
+// amplitudes and the player's feet, so the canopy and every plant sway with the same gust fronts the falling leaves
+// ride. Without its signature nothing moves.
 
 #include <sodium:globals.glsl>
 #include <sodium:fog.glsl>
@@ -59,7 +61,7 @@ const float AWK_LEAF_ALPHA = 254.0 / 255.0;
 const uint AWK_SIGNATURE = 0x444E5741u; // "AWND", little-endian
 const float AWK_TAU_P = 6.28318530718 / 2048.0; // time wraps every 2048 s, so every frequency is a whole number of turns
 const vec3 AWK_REGION = vec3(128.0, 64.0, 128.0); // Sodium's render region: 8 x 4 x 8 sections
-const int AWK_TEXELS = 22;
+const int AWK_TEXELS = 27;
 
 uint _awk_u32(ivec2 p) {
     uvec4 b = uvec4(round(texelFetch(u_BlockTex, p, 0) * 255.0));
@@ -122,6 +124,104 @@ vec3 _awk_leaf_offset(vec3 regionPos) {
     offset.y = 0.3 * crossSway * sway + 0.25 * flutter;
     return offset * (amp * push);
 }
+
+// AWAKEN: swaying plants -----------------------------------------------------------------------------------------
+// A plant vertex's alpha is 253 - code (PlantSway): code = mode * 8 + level - 1, the vertex moving level / 4 of its
+// mode's amplitude, or 40 for a pad floating on water. Bases and anchors keep 255 and never move. Like the leaves, the
+// offset is a function of the vertex's world position, its weight and time only, so vertices two parts share (the
+// halves of tall grass, the blocks of a stalk) move together and nothing cracks.
+const float AWK_PLANT_MIN = 212.5; // alpha * 255 above this and below 253.5: a plant
+const int AWK_MODE_ROOTED = 0;
+const int AWK_MODE_HANGING = 1;
+const int AWK_MODE_WATER = 2;
+const int AWK_MODE_WALL_X = 3;
+const int AWK_MODE_WALL_Z = 4;
+const int AWK_FLOAT_CODE = 40;
+
+// The gust passing a place: the profile along the wind through the camera, 4 blocks a sample (as for the leaves).
+float _awk_gust_at(ivec2 base, vec3 cam, vec2 dir, vec2 xz) {
+    float gi = clamp(dot(xz - cam.xz, dir) * 0.25 + 31.5, 0.0, 63.0);
+    int i0 = int(gi);
+    return mix(_awk_gust_sample(base, i0), _awk_gust_sample(base, min(i0 + 1, 63)), gi - float(i0));
+}
+
+// Offset for one plant vertex; tint comes back above 1 on grass tips while a gust front bends them (the sheen that
+// shows a front rolling across a meadow).
+vec3 _awk_plant_offset(vec3 regionPos, int code, out float tint) {
+    tint = 1.0;
+    ivec2 base = textureSize(u_BlockTex, 0) - ivec2(AWK_TEXELS, 1);
+    if (_awk_u32(base) != AWK_SIGNATURE) return vec3(0.0);
+    float t = _awk_f32(base + ivec2(1, 0));
+    vec3 cam = vec3(_awk_f32(base + ivec2(2, 0)), _awk_f32(base + ivec2(3, 0)), _awk_f32(base + ivec2(4, 0)));
+    vec4 wind = texelFetch(u_BlockTex, base + ivec2(5, 0), 0);   // direction x, z (0..1 for -1..1), steady, leaf amplitude
+    vec4 plant = texelFetch(u_BlockTex, base + ivec2(22, 0), 0); // air and water amplitude, sheen (x 0.5), push (x 1 block)
+    vec3 origin = round((u_RegionOffset + cam) / AWK_REGION) * AWK_REGION;
+    vec3 wp = origin + regionPos; // x, z modulo 4096; y is the true height
+
+    if (code == AWK_FLOAT_CODE) {
+        // a pad rides the ripples: a small bob, out of step across the pad so it rocks a little, more in a wind
+        float bob = sin(t * AWK_TAU_P * 717.0 + dot(wp.xz, vec2(1.3, 0.9))) + 0.4 * sin(t * AWK_TAU_P * 1311.0 + dot(wp.xz, vec2(-0.7, 1.1)));
+        return vec3(0.0, bob * (0.006 + 0.01 * wind.z), 0.0);
+    }
+
+    int mode = code >> 3;
+    float weight = float((code & 7) + 1) * 0.25;
+    vec3 off = vec3(0.0);
+
+    if (mode == AWK_MODE_WATER) {
+        // a slow surge, never the air wind: each stretch of seabed sways along its own axis, and a wave climbs a kelp
+        // stalk (the phase falls with height)
+        float a = 1.1 * sin(dot(wp.xz, vec2(0.021, 0.017))) + 0.7 * sin(dot(wp.xz, vec2(-0.013, 0.029)));
+        vec2 axis = vec2(cos(a), sin(a));
+        float ph = dot(wp.xz, vec2(0.31, 0.23)) - wp.y * 0.45;
+        float surge = sin(t * AWK_TAU_P * 410.0 + ph);
+        float roll = sin(t * AWK_TAU_P * 717.0 + 1.6 * ph + 1.3);
+        off.xz = (axis * (0.8 * surge + 0.2 * roll) + vec2(-axis.y, axis.x) * (0.3 * roll)) * (plant.y * 0.5 * weight);
+        off.y = -0.5 * dot(off.xz, off.xz) / max(weight, 0.5);
+        return off;
+    }
+
+    vec2 dir = wind.xy * 2.0 - 1.0;
+    dir *= inversesqrt(max(dot(dir, dir), 1e-4));
+    // deep underground (and in a world without weather) the wind gives way to a faint draught
+    float expo = smoothstep(30.0, 50.0, wp.y) * texelFetch(u_BlockTex, base + ivec2(26, 0), 0).x;
+    float gust = _awk_gust_at(base, cam, dir, wp.xz) * expo;
+    float s = mix(0.12, min(1.0, wind.z * (0.6 + 0.8 * gust) + 0.25 * gust), expo); // Wind.strength
+
+    // spatial phases fixed in the world (never tied to the turning wind): about a radian from one clump to the next,
+    // warped so no row moves in step; strands ripple down their length and swing slower than grass
+    float ph = dot(wp.xz, vec2(0.83, 0.47)) + 1.7 * sin(dot(wp.xz, vec2(-0.29, 0.41)));
+    bool hanging = mode != AWK_MODE_ROOTED;
+    if (hanging) ph += wp.y * 0.7;
+    float sway = 0.72 * sin(t * AWK_TAU_P * (hanging ? 922.0 : 1536.0) + ph) + 0.28 * sin(t * AWK_TAU_P * (hanging ? 1597.0 : 2662.0) + 1.37 * ph + 2.1);
+    float crossSway = sin(t * AWK_TAU_P * (hanging ? 700.0 : 1167.0) + dot(wp.xz, vec2(-0.61, 0.77)) + 0.5 * ph);
+    float lean = s * (0.35 + 0.65 * s);       // a lean downwind that deepens as a front passes
+    float swing = (0.3 + 0.5 * s) * (0.4 + 0.6 * expo); // and the to-and-fro around it
+    vec2 side = vec2(-dir.y, dir.x);
+    off.xz = (dir * (lean + swing * sway) + side * (0.4 * swing * crossSway)) * (plant.x * 0.5 * weight);
+
+    if (mode == AWK_MODE_ROOTED) {
+        // parted by the player's feet: tips within about a block lean away and down
+        vec3 feet = vec3(_awk_f32(base + ivec2(23, 0)), _awk_f32(base + ivec2(24, 0)), _awk_f32(base + ivec2(25, 0)));
+        vec3 d = wp - feet;
+        d.xz -= round(d.xz / 4096.0) * 4096.0;
+        float r = length(d.xz);
+        if (r < 1.3 && d.y > -0.5 && d.y < 2.6) {
+            float k = 1.0 - r / 1.3;
+            k *= k;
+            float w = min(weight, 1.0);
+            off.xz += d.xz / max(r, 0.05) * (k * plant.w * w);
+            off.y -= k * plant.w * 0.35 * w;
+        }
+        tint = 1.0 + plant.z * 0.5 * gust * min(weight, 1.0);
+    }
+    // a bending stem's tip dips as it leans; a swinging strand's rises
+    off.y += (hanging ? 0.5 : -0.5) * dot(off.xz, off.xz) / max(weight, 0.5);
+    // a vine stays flat on its wall
+    if (mode == AWK_MODE_WALL_X) off.x = 0.0;
+    if (mode == AWK_MODE_WALL_Z) off.z = 0.0;
+    return off;
+}
 // ----------------------------------------------------------------------------------------------------------------
 
 void main() {
@@ -131,10 +231,18 @@ void main() {
     vec3 translation = u_RegionOffset + _get_draw_translation(_draw_id);
     vec3 position = _vert_position + translation;
 
-    // AWAKEN: leaves sway; their marker alpha goes back to opaque so nothing downstream sees it
+    // AWAKEN: leaves and plants sway; their marker alpha goes back to opaque so nothing downstream sees it
     vec4 vertColor = _vert_color;
-    if (abs(vertColor.a - AWK_LEAF_ALPHA) < (0.5 / 255.0)) {
-        position += _awk_leaf_offset(_vert_position + _get_draw_translation(_draw_id));
+    float awkA = vertColor.a * 255.0;
+    if (awkA > AWK_PLANT_MIN && awkA < 254.5) {
+        vec3 regionPos = _vert_position + _get_draw_translation(_draw_id);
+        if (abs(vertColor.a - AWK_LEAF_ALPHA) < (0.5 / 255.0)) {
+            position += _awk_leaf_offset(regionPos);
+        } else {
+            float tint;
+            position += _awk_plant_offset(regionPos, 253 - int(awkA + 0.5), tint);
+            vertColor.rgb = min(vertColor.rgb * tint, vec3(1.0));
+        }
         vertColor.a = 1.0;
     }
 

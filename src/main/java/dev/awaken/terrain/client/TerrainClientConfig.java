@@ -10,9 +10,11 @@ public final class TerrainClientConfig {
     private TerrainClientConfig() {}
 
     private static final ModConfigSpec.Builder B = new ModConfigSpec.Builder();
-    public static final ModConfigSpec.BooleanValue WAVING_LEAVES = B
-            .comment("Leaves sway in the wind. Needs Sodium 0.9.3-beta.1 (Awaken's terrain shader is written for that version",
-                    "only and steps aside for any other, for Iris and for the vanilla renderer). Changing it reloads resources.")
+    /** Leaves and plants together; the key keeps its first name ({@code waving_leaves}) so older settings still apply. */
+    public static final ModConfigSpec.BooleanValue WAVING = B
+            .comment("Leaves, grass and every plant sway in the wind (kelp and seagrass in a slow current). Needs Sodium",
+                    "0.9.3-beta.1 (Awaken's terrain shader is written for that version only and steps aside for any other, for",
+                    "Iris and for the vanilla renderer). Changing it reloads resources.")
             .define("waving_leaves", true);
 
     /** How many leaves fall: the cap alive at once, spots tried per tick, and a spawn chance multiplier. */
@@ -46,9 +48,9 @@ public final class TerrainClientConfig {
         }
     }
 
-    static boolean wavingLeaves() {
+    static boolean waving() {
         try {
-            return !SPEC.isLoaded() || WAVING_LEAVES.get();
+            return !SPEC.isLoaded() || WAVING.get();
         } catch (RuntimeException e) {
             return true;
         }
@@ -77,9 +79,9 @@ public final class TerrainClientConfig {
         }
     }
 
-    static void setWavingLeaves(boolean on) {
+    static void setWaving(boolean on) {
         if (!SPEC.isLoaded()) return;
-        WAVING_LEAVES.set(on);
-        WAVING_LEAVES.save();
+        WAVING.set(on);
+        WAVING.save();
     }
 }

@@ -1325,8 +1325,49 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   on) is on; otherwise nothing is installed (vanilla renderer: no waving). Marker: every `LeavesBlock` model is wrapped
   after baking with vertex colour alpha 254 (textures untouched). Wind: texels at the block atlas's bottom-right
   corner written each frame (signature, time mod 2048 s, camera, wind, the gust profile along the wind from
-  `terrain.Wind`): 22 texels.
+  `terrain.Wind`; since swaying plants also their amplitudes, the player's feet and whether the world has weather
+  wind): 27 texels.
   Amplitude 0.11 blocks at full wind and gust. `/awaken terrain waving on|off|status` (client).
+- Swaying plants (2026-10-26, Euan: "all things sway with the same wind the trees get"): the same pack, gate, texels
+  and setting as the leaves (`waving_leaves` now covers both and keeps its key, so older settings still apply; nothing
+  moves when the gate says no). Everything rooted that a breeze would move bends in the same wind and gust fronts as
+  the canopy, so a front rolls across a meadow and on through the trees.
+  - Marker (`terrain.PlantSway`, common; baked by `terrain.client.WavingModel` after model baking, parts cached per rule
+    and variant, nothing allocated per block): vertex colour alpha `253 − code`, `code = mode × 8 + level − 1` (the
+    vertex moves level/4 of its mode's amplitude, levels 1–8), 40 for a pad on water; vertices that must not move
+    (a plant's base, a hanging plant's anchor) keep 255, leaves keep 254. Modes: rooted (tips dip as they lean),
+    hanging (tips rise as they swing), water, and wall vines held in the wall's plane (normal x or z, from the quad's
+    face; a vine's ceiling face stays put).
+  - Weight from where a vertex is in its plant, never from the quad, so vertices two parts share agree: rooted
+    `2 (h/2)^1.4` for height h over the root (short grass tip 0.75, tall grass middle 0.75 and top 2: the top half
+    sways more and stays joined), hanging h below the anchor; times the rule's gain (sugar cane 0.45, bamboo 0.5,
+    vines 0.5, azalea 0.5, hanging strands 0.9, twisting vines 0.8, flower beds 3). Stalks and strands count the same
+    run up to 2 blocks below and above while meshing (Sodium's snapshot reaches 2 blocks past its section; further
+    would disagree across section borders): kelp, sugar cane and twisting vines saturate 2 blocks over the root, weeping
+    and cave vines, hanging moss and vines 2 blocks under the anchor, and only bamboo's top 2 blocks bend.
+  - Which blocks (by class: tags are not bound when models bake): short and tall grass, ferns, every flower and tall
+    flower, flower beds, dead and dry bushes, bushes, firefly bushes, saplings and propagules (hanging ones hang),
+    azaleas, crops and stems, nether wart, roots and sprouts, sweet berries, small dripleaf, pitcher plants, cactus
+    flowers, sugar cane, bamboo, vines, cave, weeping and twisting vines, hanging moss, hanging roots, spore blossoms,
+    seagrass, tall seagrass, kelp, lily pads; Awaken's saplings, lumen vines, weepwood tendrils and moonblooms (they
+    extend those classes). Waterlogged plants sway in the current. Still: mushrooms, fungi, sea pickles, leaf litter,
+    corals, cactus, big dripleaf, potted plants, crystal clusters, lumen caps.
+  - Motion (the shader): the offset is a function of world position, weight and time only (no cracks, the base never
+    slides). Air: a lean downwind `s (0.35 + 0.65 s)` plus a swing `(0.3 + 0.5 s)` of 0.72 × 0.75 Hz + 0.28 × 1.3 Hz
+    and a cross-sway at 0.57 Hz (strands 0.45, 0.78 and 0.34 Hz, rippling 0.7 rad a block down their length), × 0.2
+    blocks × weight, s being `Wind.strength` with the gust from the profile the leaves read; phases are fixed in the
+    world (about a radian from one clump to the next, warped, never tied to the turning wind); tips dip or rise by
+    `d²/2w`. Below y 50, fading out by y 30, and in worlds without sky light the wind gives way to a faint draught
+    (s 0.12, no gusts). Grass tips brighten by up to 10% while a gust bends them, a sheen that shows the front rolling
+    across a meadow. Within 1.3 blocks of the player's feet (not a spectator) rooted tips part away (up to 0.32
+    blocks) and press down. Water: a 0.2 Hz surge (and a 0.35 Hz roll) along an axis that turns slowly across the
+    seabed, a wave climbing kelp, 0.16 blocks × weight; never the air wind. Pads bob 0.006–0.016 blocks, rocking a
+    little. All amplitudes are a texel (`/awaken terrain waving plants <air> <water> <sheen> <push>` tunes them live).
+  - Commands: `/awaken terrain waving on|off|status|debug <0..2>|plants ...` covers leaves and plants;
+    `/awaken terrain wind front across|ahead` (showcase) launches one front across the view or from behind the camera,
+    holding the heading the way it rolls, until `wind real`. Tests: `terrain_sway_markers` (every plant kind marked,
+    leaves keep theirs, nothing else is), `terrain_sway_joined` (shared vertices agree for every run length; roots and
+    anchors still).
 - Budgets: forest p50 within the Swift budget at 2880×1800 (the darkest Tectonic forest already measured 8.7 ms on
   2026-10-24, so new foliage pays for itself); any feature ≤ 0.5 ms per chunk on average, hero-tree structures ≤ 2 ms;
   chunk generation and a 64-chunk Distant Horizons build within 20% of plain Tectonic. Features are safe off the main

@@ -8,6 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.system.MemoryUtil;
 
@@ -15,7 +16,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
- * The wind, handed to Awaken's terrain shader through 22 texels in the block atlas's bottom-right corner (Sodium binds
+ * The wind, handed to Awaken's terrain shader through 27 texels in the block atlas's bottom-right corner (Sodium binds
  * only its own uniforms, the atlas and the lightmap; the atlas is the one thing Awaken can write that the shader can
  * read). The stitcher fills the atlas from the top left, so that corner lies outside every sprite; it is checked at
  * each stitch and nothing is written if a sprite is there. Written once a frame, before terrain draws.
@@ -27,20 +28,27 @@ import java.nio.ByteOrder;
  * texel 5      wind direction x, z (-1..1 as 0..1), steady strength, amplitude (x 0.25 blocks)
  * texels 6..21 the gust along the wind through the camera: 64 samples 4 blocks apart, 4 to a texel, sample i at
  *              (i - 31.5) x 4 blocks downwind of the camera
+ * texel 22     plants: amplitude in air and under water (x 0.5 blocks), sheen (x 0.5), push by the feet (x 1 block)
+ * texels 23..25 the player's feet x, y, z (x and z modulo 4096; y far below the world when there is no one to push)
+ * texel 26     weather wind here (1, or 0 in a world without sky light: plants feel only a draught), 3 spare bytes
  * </pre>
  * The shader rounds (region offset + camera) to whole render regions to find each region's world position modulo 4096,
- * and reads the gust passing each leaf from the profile, so the canopy sways with the same fronts {@link Wind} gives the
- * falling leaves and the rustle. Seven fetches per leaf vertex, none for any other vertex.
+ * and reads the gust passing each leaf and plant from the profile, so the canopy and the meadow sway with the same
+ * fronts {@link Wind} gives the falling leaves and the rustle. Seven fetches per leaf vertex and about a dozen per plant
+ * vertex, none for any other vertex.
  */
 final class WindTexels {
     private WindTexels() {}
 
-    static final int TEXELS = 22;
+    static final int TEXELS = 27;
     static final int PROFILE = 64;
     static final float PROFILE_STEP = 4F;
     private static final int SIGNATURE = 0x444E5741; // "AWND" little-endian
     /** Full sway at strength 1, in blocks (a few hundredths in a breeze). */
     private static final float AMPLITUDE = 0.11F;
+    /** Plants, per unit of weight (a short grass tip has 0.75, a tall grass tip 2): blocks of sway in air and in water,
+     * the brightening of grass tips at a full gust, and how far the feet push tips aside. */
+    static float plantAmplitude = 0.2F, waterAmplitude = 0.16F, sheen = 0.1F, push = 0.32F;
 
     private static final ByteBuffer BUF = MemoryUtil.memAlloc(TEXELS * 4).order(ByteOrder.LITTLE_ENDIAN);
     private static GpuTexture cornerOf; // the atlas texture whose corner was found free
@@ -73,7 +81,7 @@ final class WindTexels {
     }
 
     /** Writes this frame's wind (from {@link ClientWind}). Render thread, before the level draws. */
-    static void write(Minecraft mc) {
+    static void write(Minecraft mc, float partialTick) {
         Wind.Field wind = ClientWind.field();
         if (wind == null || !cornerFree) return;
         GpuTexture tex = mc.getTextureManager().getTexture(TextureAtlas.LOCATION_BLOCKS).getTexture();
@@ -90,6 +98,16 @@ final class WindTexels {
             float along = (i - (PROFILE - 1) * 0.5F) * PROFILE_STEP;
             b.put(unorm(wind.gust(cam.x + wind.dirX * along, cam.z + wind.dirZ * along)));
         }
+        boolean still = debugMode == 2;
+        b.put(still ? 0 : unorm(plantAmplitude / 0.5F)).put(still ? 0 : unorm(waterAmplitude / 0.5F)).put(unorm(sheen / 0.5F)).put(still ? 0 : unorm(push));
+        Player p = mc.player;
+        if (p != null && !p.isSpectator() && p.level() == mc.level) {
+            Vec3 feet = p.getPosition(partialTick);
+            b.putFloat((float) wrap(feet.x)).putFloat((float) feet.y).putFloat((float) wrap(feet.z));
+        } else {
+            b.putFloat(0F).putFloat(-1.0E6F).putFloat(0F);
+        }
+        b.put(mc.level != null && mc.level.dimensionType().hasSkyLight() ? (byte) 255 : 0).put((byte) 0).put((byte) 0).put((byte) 0);
         b.flip();
         RenderSystem.getDevice().createCommandEncoder().writeToTexture(tex, b, 0, 0, tex.getWidth(0) - TEXELS, tex.getHeight(0) - 1, TEXELS, 1);
     }
