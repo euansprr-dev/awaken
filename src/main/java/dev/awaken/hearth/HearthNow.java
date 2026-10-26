@@ -122,7 +122,7 @@ public final class HearthNow {
                 case TROPHY_HALL -> h.furniture[Furniture.TROPHY.ordinal()] > 0 || holds(p, HearthContent.TROPHY_ITEM.get());
                 case WORKSHOP -> h.furniture[Furniture.MACHINE.ordinal()] > 0;
                 case KITCHEN, STUDY, GREENHOUSE, STABLE, HALL, BELL_TOWER -> started(t, h);
-                case LOOKOUT -> false;
+                case LOOKOUT, MINE_HEAD -> false;
             };
             if (relevant) return t;
         }

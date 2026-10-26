@@ -301,6 +301,7 @@ public final class RosterBuilder implements RosterSource {
         int household = -1, home = -1, work = -1, group = -1, tavern = -1, build, age = 2;
         float scale = 1f, speed = 1f;
         int[] look = {0, 0, 0, 0, 0, 0};
+        String named = "";
         final List<int[]> day = new ArrayList<>();
 
         private Person(int id, String given, String family, String job) {
@@ -359,6 +360,17 @@ public final class RosterBuilder implements RosterSource {
 
         public Person speed(float s) {
             speed = s;
+            return this;
+        }
+
+        /**
+         * (SPEC §28.8, W6) Someone with a face of their own outside Carillon: {@code skin:<texture under textures/entity/>}
+         * with {@code :slim} for slim arms and {@code ;<title>} for the word under their name ("skin:wayfarer/ilse:slim;herbalist"),
+         * or {@code as:<settlement key>#<record>} for the face that record wears in its own settlement. Written to the
+         * roster's {@code named} field; a named body is left out of the city's events as Carillon's named are.
+         */
+        public Person face(String face) {
+            named = face == null ? "" : face;
             return this;
         }
 
@@ -496,7 +508,8 @@ public final class RosterBuilder implements RosterSource {
             a.add(p.scale);
             a.add(p.speed);
             a.add(ints(p.look));
-            a.add(com.google.gson.JsonNull.INSTANCE);
+            if (p.named.isEmpty()) a.add(com.google.gson.JsonNull.INSTANCE);
+            else a.add(p.named);
             crow.add(a);
             JsonArray day = new JsonArray();
             List<int[]> segs = new ArrayList<>(p.day);

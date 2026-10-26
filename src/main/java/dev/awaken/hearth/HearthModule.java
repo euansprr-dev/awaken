@@ -54,6 +54,9 @@ public final class HearthModule {
         bus.addListener(HearthModule::onServerTick);
 
         HearthService.init();
+        // (W6) the people who live with you answer on the people engine; the household is kin to them
+        dev.awaken.hearth.settle.HomeTalk.init();
+        bus.addListener((net.neoforged.neoforge.event.server.ServerAboutToStartEvent e) -> dev.awaken.hearth.settle.HomeTalk.installVoice());
         Embers.init();
         Rested.init();
         RoomEffects.init();

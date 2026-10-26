@@ -98,10 +98,18 @@ public final class Town {
     }
 
     /**
-     * Lets everyone in who belongs at the household's rank, and sees off anyone whose time is over (Vael at S). Every
-     * online member of the household hears who came.
+     * (W6, SPEC §28.8) The townsfolk no longer arrive by rank and wander round the Anchor: they're known by rank (and a
+     * rank early once Carillon trusts you) and wait for a bed ({@code settle.Settlers}); this only keeps the household's
+     * knowing up to date at once (a new home, a rank-up) instead of at the next ten-second check.
      */
     public static void arrivals(ServerLevel level, HearthRecord h, boolean newHome) {
+        if (h.hearthfire()) return;
+        dev.awaken.hearth.settle.Settlers.upkeep(level, h, level.getGameTime());
+    }
+
+    /** The old arrivals (kept for nothing but the record of who came, in old worlds): see {@link #arrivals}. */
+    @SuppressWarnings("unused")
+    private static void oldArrivals(ServerLevel level, HearthRecord h, boolean newHome) {
         if (h.hearthfire()) return; // a Hearthfire's first nights are yours alone: the town comes with the Anchor
         MinecraftServer server = level.getServer();
         Rank rank = householdRank(server, h);
@@ -145,16 +153,11 @@ public final class Town {
         }
     }
 
-    /** Admin: someone arrives now, whatever the rank. */
+    /** Admin: someone is known now whatever the rank (and comes when there's a bed for them). */
     public static void forceArrive(ServerPlayer owner, ServerLevel level, HearthRecord h, String id) {
-        if (h.arrived.add(id) || h.npcs.get(id) == null || !(level.getEntity(h.npcs.get(id)) instanceof TownNpc)) {
-            if (level.isLoaded(h.pos)) spawn(level, h, id);
-        }
-        if (h.spire == null) raiseSpire(level, h);
+        h.arrived.add(id);
+        dev.awaken.hearth.settle.Settlers.forceKnow(level, h, id);
         HearthService.dirty(level.getServer());
-        Townsfolk.get(id).ifPresent(d -> Signal.send(owner, SignalWindow.builder(SignalWindow.Kind.NOTICE,
-                        Component.literal(Townsfolk.displayName(id) + " arrived"))
-                .body(Component.literal("“" + d.line(Progression.rank(owner)) + "”")).ttl(20 * 8).build()));
         HearthViews.refresh(owner);
     }
 
@@ -189,8 +192,15 @@ public final class Town {
         return npc;
     }
 
-    /** Townsfolk loaded from disk check they're still the one their Hearth expects; duplicates quietly leave. */
+    /**
+     * Townsfolk loaded from disk check they're still the one their Hearth expects; duplicates quietly leave. (W6) Nobody
+     * wanders as a townsperson any more and an arrival is one walk, so every townsperson's body from the disk goes.
+     */
     public static void onJoin(EntityJoinLevelEvent e) {
+        if (e.getEntity() instanceof TownNpc && e.getLevel() instanceof ServerLevel && e.loadedFromDisk()) {
+            e.setCanceled(true);
+            return;
+        }
         if (!(e.getEntity() instanceof TownNpc npc) || !(e.getLevel() instanceof ServerLevel level) || !e.loadedFromDisk()) return;
         UUID owner = npc.hearthOwner();
         Optional<HearthRecord> h = owner == null ? Optional.empty() : HearthData.get(level.getServer()).of(owner);
@@ -208,21 +218,14 @@ public final class Town {
     // ---- upkeep -----------------------------------------------------------------------------------------------------
 
     public static void upkeep(ServerLevel level, HearthRecord h, ServerPlayer owner, long now) {
-        // Bring back anyone missing (only when the whole home area is loaded, so we never duplicate an unloaded NPC).
-        if (now % 100 < 20 && areaLoaded(level, h.pos, NPC_HOME_RADIUS + 8)) {
-            for (String id : List.copyOf(h.arrived)) {
-                UUID u = h.npcs.get(id);
-                Entity e = u == null ? null : level.getEntity(u);
-                if (e == null || !e.isAlive()) spawn(level, h, id);
-                else if (e.distanceToSqr(Vec3.atCenterOf(h.pos)) > 48 * 48 && e instanceof TownNpc npc) {
-                    Vec3 at = HearthService.safeSpotNear(level, h.pos);
-                    npc.teleportTo(at.x, at.y, at.z);
-                }
-            }
+        // (W6) the townsfolk who wandered round the Anchor in older worlds have homes now: their old bodies go
+        if (!h.npcs.isEmpty()) {
+            for (UUID u : List.copyOf(h.npcs.values())) if (level.getEntity(u) instanceof TownNpc npc && npc.arrival() == null) npc.discard();
+            h.npcs.clear();
+            HearthService.dirty(level.getServer());
         }
         if (now % 200 < 20) {
-            arrivals(level, h, false);
-            if (owner != null && h.spire == null && !h.arrived.isEmpty()) raiseSpire(level, h);
+            dev.awaken.hearth.settle.Settlers.upkeep(level, h, now);
             if (owner != null) refreshBoards(owner, level, h);
         }
         if (owner != null && h.pendingCelebration >= 0 && owner.level() == level && h.contains(owner.blockPosition())) celebrateWaiting(owner, level, h);
@@ -243,6 +246,20 @@ public final class Town {
         List<TownNpc> out = new ArrayList<>();
         for (UUID u : h.npcs.values()) if (level.getEntity(u) instanceof TownNpc npc && npc.isAlive()) out.add(npc);
         return out;
+    }
+
+    /** What each kind of settler says when the household ranks up (the townsfolk have their own lines by rank). */
+    static String cheer(dev.awaken.hearth.settle.Folk.Person p, Rank rank) {
+        Optional<Townsfolk.Def> d = Townsfolk.get(p.id());
+        if (d.isPresent()) return d.get().line(rank);
+        return switch (p.role()) {
+            case "ilse" -> "Rank suits you. Sit. Eat something before you go and prove it.";
+            case "hettie", "farmer" -> "Well. The ewes are impressed. I'm nearly impressed.";
+            case "wren" -> "Higher! Everything's better higher.";
+            case "pell" -> "I'll have that on every road by Tuesday.";
+            case "miner" -> "Rank's nice. Rock doesn't care. I like that about rock.";
+            default -> rank.label + "-rank. Good. The house is proud of you.";
+        };
     }
 
     // ---- recognition: the rank-up celebration -------------------------------------------------------------------------
@@ -268,18 +285,17 @@ public final class Town {
             int n = i;
             Later.run(level.getServer(), 10 + i * 12, () -> firework(level, h.pos, colour, n));
         }
-        List<TownNpc> npcs = present(level, h);
-        Vec3 at = who.position();
-        for (TownNpc npc : npcs) npc.gather(at, 20 * 15);
+        // (W6) the people who live here cheer from wherever their day has them; the nearest says so out loud
+        List<dev.awaken.hearth.settle.Folk.Settler> people = new ArrayList<>();
+        for (var s : h.folk.settlers) if (s.home()) people.add(s);
         level.playSound(null, h.pos, SoundEvents.PLAYER_LEVELUP, SoundSource.AMBIENT, 1f, 0.7f);
         boolean owner = who.getUUID().equals(h.owner);
-        var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(npcs.isEmpty() ? "The Hearth burns brighter" : "The town gathers"))
+        var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(people.isEmpty() ? "The Hearth burns brighter" : "The house cheers"))
                 .body(Component.literal(who.getGameProfile().name() + ", " + rank.label + "-rank." + (owner ? " Your name goes on the Spire." : "")));
         int rows = 0;
-        for (TownNpc npc : npcs) {
-            Optional<Townsfolk.Def> d = Townsfolk.get(npc.kind());
-            if (d.isEmpty() || rows >= 4) continue;
-            w.row(Component.literal(d.get().name()), Component.literal("“" + d.get().line(rank) + "”"));
+        for (var s : people) {
+            if (rows >= 4) break;
+            w.row(Component.literal(s.who.given()), Component.literal("“" + cheer(s.who, rank) + "”"));
             rows++;
         }
         Later.run(level.getServer(), 30, () -> Signal.send(who, w.priority(6).ttl(20 * 14).build()));
@@ -300,16 +316,19 @@ public final class Town {
     // ---- talking ----------------------------------------------------------------------------------------------------
 
     public static void talk(ServerPlayer sp, TownNpc npc) {
+        if (npc.arrival() != null) return; // on the road in with their things: they'll talk once they're home
+        serve(sp, (ServerLevel) sp.level(), npc.kind(), npc.blockPosition(), npc.hearthOwner());
+    }
+
+    /** (W6) A townsperson's own words and service, wherever they stand (their body on the people engine at home). */
+    public static void serve(ServerPlayer sp, ServerLevel at, String id, BlockPos where, @org.jspecify.annotations.Nullable UUID home) {
         long now = sp.level().getGameTime();
         Long last = TALK_COOLDOWN.get(sp.getUUID());
         if (last != null && now - last < 10) return;
         TALK_COOLDOWN.put(sp.getUUID(), now);
-        String id = npc.kind();
         Optional<Townsfolk.Def> od = Townsfolk.get(id);
         if (od.isEmpty()) return;
         Townsfolk.Def d = od.get();
-        // the townsfolk serve everyone who shares their Hearth (SPEC "Together")
-        UUID home = npc.hearthOwner();
         boolean mine = home != null && (sp.getUUID().equals(home)
                 || HearthData.get(sp.level().getServer()).of(home).map(r -> r.belongs(sp.getUUID())).orElse(false));
         Rank rank = Progression.rank(sp);
@@ -322,7 +341,7 @@ public final class Town {
         }
         ServerLevel level = (ServerLevel) sp.level();
         switch (Townsfolk.skin(id)) {
-            case "oren" -> oren(sp, level, npc, d, line);
+            case "oren" -> oren(sp, level, where, d, line);
             case "mira" -> mira(sp, level, d, line);
             case "teodor" -> teodor(sp, level, d, line);
             case "sun" -> sun(sp, level, d, line);
@@ -331,9 +350,14 @@ public final class Town {
         }
     }
 
-    private static void oren(ServerPlayer sp, ServerLevel level, TownNpc npc, Townsfolk.Def d, String line) {
+    /** Mira's rumour for the day (Pell brings one with the post too). */
+    public static void rumour(ServerPlayer sp, ServerLevel level) {
+        Rumours.give(sp, level);
+    }
+
+    private static void oren(ServerPlayer sp, ServerLevel level, BlockPos where, Townsfolk.Def d, String line) {
         if (Upgrades.isTemperable(sp.getMainHandItem())) {
-            Upgrades.offerTemper(sp, level, npc.blockPosition(), InteractionHand.MAIN_HAND, "oren");
+            Upgrades.offerTemper(sp, level, where, InteractionHand.MAIN_HAND, "oren");
             return;
         }
         Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(Townsfolk.displayName("oren_blacksmith")))
@@ -447,28 +471,36 @@ public final class Town {
     public static void commentTrophy(ServerPlayer sp, ServerLevel level, BlockPos pos, TrophyData d) {
         Optional<HearthRecord> h = HearthService.sharedAt(sp, pos);
         if (h.isEmpty()) return;
-        TownNpc nearest = null;
+        // (W6) the nearest of the people who live here, wherever their day has them
+        var s = dev.awaken.hearth.settle.HomePeople.settlement(h.get());
+        if (s == null) return;
+        Entity nearest = null;
+        dev.awaken.hearth.settle.Folk.Settler who = null;
         double best = 32 * 32;
-        for (TownNpc npc : present(level, h.get())) {
-            double dist = npc.distanceToSqr(Vec3.atCenterOf(pos));
+        for (var st : h.get().folk.settlers) {
+            Entity b = dev.awaken.hearth.settle.HomePeople.body(h.get(), st.who.id());
+            if (b == null) continue;
+            double dist = b.distanceToSqr(Vec3.atCenterOf(pos));
             if (dist < best) {
                 best = dist;
-                nearest = npc;
+                nearest = b;
+                who = st;
             }
         }
-        if (nearest == null) return;
-        String who = Townsfolk.skin(nearest.kind());
+        if (nearest == null || who == null) return;
         String boss = d.bossName();
-        String line = switch (who) {
-            case "oren" -> boss + "? I'd have mounted it higher. Looks good though.";
+        String line = switch (who.who.role()) {
+            case "oren", "smith" -> boss + "? I'd have mounted it higher. Looks good though.";
             case "mira" -> "I saw " + boss + " once. From very, very far away.";
             case "teodor" -> boss + ". I'll need to write that down. All of it.";
             case "sun" -> "Every one of these was someone's bad day. Glad it wasn't yours.";
             case "vael" -> "Nice. I have two of those.";
+            case "hettie", "farmer" -> "Don't let the ewes see that.";
+            case "wren" -> boss + "! Did it climb? Tell me it climbed.";
             default -> "That's " + boss + ".";
         };
-        nearest.getLookControl().setLookAt(sp);
-        Signal.toast(sp, Component.literal(Townsfolk.shortName(nearest.kind()) + ": “" + line + "”"));
+        int rec = dev.awaken.hearth.settle.HomePeople.recordOf(h.get(), who.who.id());
+        if (rec >= 0) s.say(sp, rec, line, 90);
     }
 
     // ---- the Spire --------------------------------------------------------------------------------------------------

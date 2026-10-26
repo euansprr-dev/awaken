@@ -170,25 +170,21 @@ public final class Duty {
         }
     }
 
+    /**
+     * (W6, decision 8) A Mine Echo works your Mine head's shaft: no more dice. Its haul comes up with the evening's
+     * (settle.Work), the ore of the shaft's depth and the lode it cuts; with no Mine head it has nothing to work.
+     */
     private static void mine(ServerPlayer owner, ServerLevel level, HearthRecord h, BlockPos pad, Mob m, EchoRecord rec) {
-        int prog = h.mineProgress.merge(pad, 20, Integer::sum);
+        if (!h.hasRoom(dev.awaken.hearth.room.RoomType.MINE_HEAD)) return;
         if (m.tickCount % 3 == 0) {
             level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.STONE.defaultBlockState()), m.getX(), m.getY() + 0.1, m.getZ(),
                     4, 0.3, 0.05, 0.3, 0.05);
         }
-        if (prog < MINE_TICKS) return;
-        h.mineProgress.put(pad, 0);
-        ItemStack ore = rollOre(level.getRandom().nextInt(1000), rec.level(), h.tier);
-        h.oresBrought += ore.getCount();
-        level.playSound(null, pad, SoundEvents.STONE_BREAK, SoundSource.BLOCKS, 0.8f, 0.8f);
-        level.sendParticles(HearthContent.ECHO_WISP.get(), m.getX(), m.getY() + 0.5, m.getZ(), 20, 0.3, 0.5, 0.3, 0.02);
-        store(level, h, ore, pad);
-        HearthService.dirty(level.getServer());
     }
 
     /**
-     * What a Mine Echo brings up from below (pure). {@code roll} in [0,1000). Stronger Echoes and higher Anchor tiers
-     * find better ore more often.
+     * The old Mine Echo's table (pure), kept for the JEI page's sample of what a mine can bring up. {@code roll} in
+     * [0,1000). Duty no longer rolls it: a real shaft decides (settle.MineHead).
      */
     public static ItemStack rollOre(int roll, int echoLevel, int tier) {
         int bonus = Math.min(150, echoLevel * 2 + tier * 10);
@@ -287,6 +283,42 @@ public final class Duty {
             if (ItemStack.isSameItemSameComponents(s, stack) && s.getCount() < s.getMaxStackSize()) return true;
         }
         return false;
+    }
+
+    /**
+     * (W6) Puts a stack in the chests within {@code reach} of {@code near} (one already holding it first): what didn't fit
+     * comes back (the settlers keep it to hand over, rather than drop it).
+     */
+    public static ItemStack put(ServerLevel level, HearthRecord h, ItemStack stack, BlockPos near, int reach) {
+        ItemStack left = stack;
+        for (int tries = 0; tries < 3 && !left.isEmpty(); tries++) {
+            BlockPos best = null;
+            double bd = Double.MAX_VALUE;
+            for (BlockPos p : containers(level, h)) {
+                double d = p.distSqr(near);
+                if (d > (double) reach * reach || !(level.getBlockEntity(p) instanceof Container c) || !hasRoom(c, left)) continue;
+                if (holds(c, left.getItem())) d -= 10_000; // a chest that already holds it, if one's in reach
+                if (d < bd) {
+                    bd = d;
+                    best = p;
+                }
+            }
+            if (best == null || !(level.getBlockEntity(best) instanceof Container c)) break;
+            left = HopperBlockEntity.addItem(null, c, left, null);
+            c.setChanged();
+        }
+        return left;
+    }
+
+    /** (W6) Mine Echoes on duty now (they work the Mine head's shaft each evening). */
+    public static int mineEchoes(ServerLevel level, HearthRecord h) {
+        int n = 0;
+        for (var e : h.pads.entrySet()) {
+            if (e.getValue() != EchoRole.MINE) continue;
+            UUID u = h.padEchoes.get(e.getKey());
+            if (u != null && level.getEntity(u) instanceof Mob m && m.isAlive()) n++;
+        }
+        return n;
     }
 
     /** Puts a stack away (sorting by what's already in the chests) and drops what doesn't fit at {@code near}. */
