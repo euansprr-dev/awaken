@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * The infirmary (SPEC §16.4): after the Void, you wake. Black, a heartbeat, bells far off; the eyes open and close and
  * open again on white linen and dark beams, blurred, washed in Lens's wake look, slowly coming into focus. Sun the healer
- * and an Association officer at the bedside say their lines ("You walked out of a gate nobody walks out of."); then you
+ * and an Association officer at the bedside say their lines (the gate put you back on the stones; most people stay dead); then you
  * sit up and stand, and the body is yours again, beside the bed, facing the door to the Registry. About thirty seconds.
  */
 final class WakeShot implements OpeningCamera.Shot {
@@ -86,10 +86,13 @@ final class WakeShot implements OpeningCamera.Shot {
             blur = 0;
             LensClient.clearOverride(140);
         }
+        // story.md, "The wake": Sun the healer and Bram, the Association officer who walks you to the Registry
         if (age == 150) OpeningHud.line("Sun", "Easy. You're back with us. Don't try to sit up yet.", 90);
-        if (age == 250) OpeningHud.line("Officer", "You walked out of a gate nobody walks out of.", 90);
-        if (age == 350) OpeningHud.line("Sun", party ? "Your friends came through with you. They're waking too." : "Breathe. The bells have rung twice since they carried you in.", 90);
-        if (age == 450) OpeningHud.line("Officer", "When you can stand, the Registry's across the hall. They'll want to see what came back.", 100);
+        if (age == 240) OpeningHud.line("Bram", "The gate shut with you inside. At the next bell it opened and put you on the stones.", 100);
+        if (age == 340) OpeningHud.line("Sun", party ? "Your friends came through with you. They're waking too." : "Breathe. The bells have rung twice since they carried you in.", 90);
+        if (age == 430) OpeningHud.line("Bram", "You died in there. Most people stay that way.", 80);
+        if (age == 505) OpeningHud.line("Sun", "So. How's the rest of you?", 60);
+        if (age == 565) OpeningHud.line("Bram", "Up you get, when you can. You're due for the assessment. I'll walk you.", 100);
     }
 
     /** Re-asserts the blur every tick while it plays (the server replaces the post-effect list when it syncs). */

@@ -102,6 +102,7 @@ public final class HoloClient {
         bus.addListener(PlaySoundEvent.class, HoloAudio::onPlaySound);
         // reported each frame (UiHooks.setFocus); other sources (the Atlas) report beside it
         ProgressionClient.installStatusOpener(HoloClient::statusScreen);
+        WristSlot.init();
     }
 
     private static void onPayloads(RegisterClientPayloadHandlersEvent e) {
@@ -191,6 +192,7 @@ public final class HoloClient {
 
     /** Whether E opens the holo inventory: chosen, and the projected look is drawing (its GUI shaders compiled). */
     static boolean holoInventory() {
+        // (the look is dark while the band is off the wrist: then E opens vanilla's inventory, where you put it on)
         return HoloConfig.inventoryStyle == HoloConfig.InventoryStyle.HOLO && HoloGuiLook.INSTANCE.enabled();
     }
 
@@ -244,6 +246,11 @@ public final class HoloClient {
     private static void onTick() {
         HoloConfig.refresh();
         CalmHud.tick();
+        HoloBoot.tick();
+        Minecraft m0 = Minecraft.getInstance();
+        // the band came off with the K menu open: the menu has nothing to stand on
+        if (m0.player != null && !dev.awaken.core.api.HoloBand.worn(m0.player)
+                && (m0.gui.screen() instanceof HoloStatusScreen || m0.gui.screen() instanceof StatusScreen)) m0.gui.setScreen(null);
         Wrist.tickEnd(wristClosing());
         // tell the server which panel the wrist shows (it relays to whoever can see us, at most 4 a second)
         HoloKind want = opening(STATUS) ? HoloKind.STATUS : opening(INVENTORY) ? HoloKind.INVENTORY
@@ -348,6 +355,11 @@ public final class HoloClient {
                 else if (p == INVENTORY && mc.player != null) mc.player.closeContainer();
                 else p.timeline.close();
             }
+            case "wrist" -> { // wrist [shift|pick]: a click on the wrist slot of the open inventory, as a player's;
+                // pick: the band picked up from wherever it is in the inventory
+                if (a.length > 1 && a[1].equals("pick")) return WristSlot.devPickBand();
+                return WristSlot.devClickWrist(a.length > 1 && a[1].equals("shift"));
+            }
             case "inv" -> {
                 Minecraft mc = Minecraft.getInstance();
                 switch (a[1]) {
@@ -357,6 +369,9 @@ public final class HoloClient {
                         return "opened " + mc.gui.screen().getClass().getSimpleName();
                     }
                     case "click" -> { // click <menu slot> [shift]: through the screen's own input path
+                        if (mc.gui.screen() instanceof InventoryScreen plain && !(plain instanceof HoloInventoryScreen)) {
+                            return WristSlot.devClickSlot(plain, Integer.parseInt(a[2]), a.length > 3 && a[3].equals("shift"));
+                        }
                         if (!(mc.gui.screen() instanceof HoloInventoryScreen inv)) return "no holo inventory";
                         return inv.autopilotClick(Integer.parseInt(a[2]), a.length > 3 && a[3].equals("shift"));
                     }
@@ -444,5 +459,6 @@ public final class HoloClient {
         DEMO.timeline.close();
         sent = HoloKind.NONE;
         CalmHud.reset();
+        HoloBoot.reset();
     }
 }
