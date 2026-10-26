@@ -308,6 +308,33 @@ final class GateTests {
             h.succeed();
         });
 
+        // SPEC §27.6: the first gate waits for level 3, then forms 250-400 blocks out along the way the player left,
+        // is counted as theirs and raised on the Horizon until a floor is cleared
+        AwakenTests.registerIsolated("gates_first_gate_on_purpose", 100, h -> {
+            var server = h.getLevel().getServer();
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            GateRecord g = null;
+            try {
+                dev.awaken.progression.Progression.awaken(p);
+                h.assertTrue(Director.firstGate(server, p) == null && dev.awaken.progression.Progression.profile(p).counter(Director.FIRST_WAIT) == 1,
+                        "level 1: the first gate waits (one pass counted)");
+                dev.awaken.progression.Progression.topUpToLevel(p, 3, dev.awaken.progression.Progression.XpSource.COMMAND);
+                // a pass can find no dry ground 250-400 out (the test world's seed varies); a few passes always do
+                for (int pass = 0; pass < 4 && g == null; pass++) g = Director.firstGate(server, p);
+                h.assertTrue(g != null, "level 3, out of the city: the first gate forms");
+                double dx = g.pos.getX() - p.getX(), dz = g.pos.getZ() - p.getZ(), d = Math.sqrt(dx * dx + dz * dz);
+                h.assertTrue(d >= Director.FIRST_MIN - 2 && d <= Director.FIRST_MAX + 2, "250-400 blocks out: " + Math.round(d));
+                h.assertTrue(g.plan.rank() == dev.awaken.progression.Progression.rank(p), "at the player's own rank");
+                h.assertTrue(dev.awaken.progression.Progression.profile(p).counter(Director.FIRST_GATE) == g.id + 1L, "remembered as their first");
+                var site = Director.firstGateSite(p);
+                h.assertTrue(site.size() == 1 && site.getFirst().raised() && site.getFirst().where().equals(g.pos), "raised on the Horizon: " + site);
+            } finally {
+                if (g != null) GateService.release(server, g);
+                server.getPlayerList().remove(p);
+            }
+            h.succeed();
+        });
+
         AwakenTests.registerIsolated("gates_build_break_hold", 900, h -> {
             var level = h.getLevel();
             var server = level.getServer();

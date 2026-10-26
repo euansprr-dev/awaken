@@ -47,16 +47,35 @@ public final class AscentModule {
         AscentTrials.register();
         // each tier's tip as it's given (Carillon's tip system; SPEC §17.17)
         AscentTips.register();
+        // promises (SPEC §27): the Ascent answers a rung's need, and a rung given re-reads the locks the player met
+        dev.awaken.core.api.Promises.addAnswer((p, need) -> need.kind().equals(dev.awaken.core.api.Promises.TIER) && heldByName(p, need.value()));
+        Ascent.onGranted((p, t) -> {
+            dev.awaken.core.api.Promises.recheck(p);
+            // a rung is the biggest new thing there is: the Director's rhythm hears it (progression plan item 10)
+            dev.awaken.progression.Progression.markNewThing(p, "ascent " + t.name().toLowerCase(java.util.Locale.ROOT));
+        });
         // updraft vents are moving air for the free states (the list is filled on the client only)
         dev.awaken.core.api.AirHooks.register(Updrafts::airAt);
         // windways between sky platforms: lanes found round each player, synced to them (SPEC §17.12)
         dev.awaken.core.api.AirHooks.register(Windways::airAt);
         bus.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent e) -> WindwaysServer.clear());
-        // the Horizon's sky sites ("needs Wings"): Wings, or a rope and the Leaper's air moves, get you up there
+        // the Horizon's sky sites: Wings, or the rope alone (the rig's rings are climbed by rope: SPEC §17.9; the core
+        // itself waits for C-rank, so a D-rank climber finds the loot and the core's promise)
         dev.awaken.core.api.HorizonHooks.addReach((p, need) -> need.equals(dev.awaken.core.api.HorizonHooks.WINGS)
-                && (Ascent.has(p, Ascent.Tier.WINGS) || Ascent.has(p, Ascent.Tier.TETHER) && Ascent.has(p, Ascent.Tier.LEAPER)));
+                && (Ascent.has(p, Ascent.Tier.WINGS) || Ascent.has(p, Ascent.Tier.TETHER)));
         // a Tether Spire's climb needs the rope
         dev.awaken.core.api.HorizonHooks.addReach((p, need) -> need.equals(dev.awaken.core.api.HorizonHooks.TETHER) && Ascent.has(p, Ascent.Tier.TETHER));
+    }
+
+    /** A rung by its need name ("tether", "leaper", "wings", "skyborn"), held by the player. */
+    static boolean heldByName(net.minecraft.server.level.ServerPlayer p, String name) {
+        return switch (name) {
+            case "tether" -> Ascent.has(p, Ascent.Tier.TETHER);
+            case "leaper" -> Ascent.has(p, Ascent.Tier.LEAPER);
+            case "wings" -> Ascent.has(p, Ascent.Tier.WINGS);
+            case "skyborn" -> Ascent.has(p, Ascent.Tier.SKYBORN);
+            default -> false;
+        };
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {

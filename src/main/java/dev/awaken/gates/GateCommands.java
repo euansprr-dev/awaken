@@ -91,6 +91,16 @@ final class GateCommands {
                 c.getSource().sendSuccess(() -> Component.literal(g == null ? "The Director found no spot." : "Rolled gate " + g.id + " (see /awaken why)"), false);
                 return g == null ? 0 : 1;
             }));
+            // tours: your first gate, on purpose, now (level 3 if you're under it; SPEC §27.6)
+            gate.then(Commands.literal("first").requires(AwakenCommands.admin()).executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                if (dev.awaken.progression.Progression.profile(p).level() < 3) {
+                    dev.awaken.progression.Progression.topUpToLevel(p, 3, dev.awaken.progression.Progression.XpSource.COMMAND);
+                }
+                GateRecord g = Director.firstGate(c.getSource().getServer(), p);
+                c.getSource().sendSuccess(() -> Component.literal(g == null ? "No first gate: not ready, in the city, or no dry ground." : "First gate " + g.id + " at " + g.pos.toShortString()), false);
+                return g == null ? 0 : 1;
+            }));
             root.then(gate);
         });
     }

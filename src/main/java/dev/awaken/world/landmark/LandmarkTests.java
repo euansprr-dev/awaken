@@ -177,7 +177,7 @@ final class LandmarkTests {
                 Progression.topUpToLevel(p, 10, Progression.XpSource.COMMAND);
                 LandmarkHorizon.forget(p.getUUID());
                 List<HorizonHooks.Site> s = LandmarkHorizon.sites(p);
-                h.assertTrue(s.size() == 1 && s.get(0).id().equals("landmark:well") && s.get(0).name().equals("The Well") && s.get(0).need().isEmpty(),
+                h.assertTrue(s.size() == 1 && s.get(0).id().equals("landmark:well") && s.get(0).name().equals("The Well · the way down") && s.get(0).need().isEmpty(),
                         "level 10: " + s);
                 var line = HorizonHooks.pick(s, p.blockPosition(), n -> false, 1000, 0);
                 h.assertTrue(line.isPresent() && !line.get().tease() && line.get().where().equals(at.offset(400, 0, 300)), "the Horizon line names it: " + line);
@@ -194,7 +194,7 @@ final class LandmarkTests {
                 var w = Landmarks.whisper(p);
                 h.assertTrue(w.isPresent() && w.get().contains("500 m SE"), "the spirit whispers: " + w);
                 List<HorizonHooks.Site> ws = LandmarkHorizon.sites(p);
-                h.assertTrue(ws.size() == 1 && ws.get(0).raised() && ws.get(0).name().equals("Whispered: The Well"), "whispered: " + ws);
+                h.assertTrue(ws.size() == 1 && ws.get(0).raised() && ws.get(0).name().equals("Whispered: The Well · the way down"), "whispered: " + ws);
                 // reached: gone
                 LandmarkWatch.reach(p, LandmarkKind.WELL, "well");
                 h.assertTrue(LandmarkHorizon.sites(p).isEmpty(), "once you've been there, the line goes");

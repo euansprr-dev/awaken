@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "level": 100,
+  "title": "S-rank trial",
+  "text": "A Sovereign's echo: Monolith or Spire.",
+  "grants": [
+    {
+      "type": "flag",
+      "id": "awaken:rank_s"
+    }
+  ],
+  "quiet": false
+}

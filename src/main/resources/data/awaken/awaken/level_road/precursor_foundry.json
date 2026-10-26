@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "level": 52,
+  "title": "The Precursor Foundry",
+  "text": "Stratum 6 opens to B-rank, past the Silent Halls. 16 essence.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:essence_shard",
+      "count": 16
+    }
+  ],
+  "quiet": false
+}

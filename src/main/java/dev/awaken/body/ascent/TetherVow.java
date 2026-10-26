@@ -21,8 +21,9 @@ import java.util.UUID;
 
 /**
  * The Tether Vow (SPEC §17.7): the rope is earned at a Precursor vault the player has the rank to open. Its line answers
- * C-rank (Euan, 2026-10-26: walking into a vault under-ranked must not give it), or the vault's own door rank if
- * higher, and only once the sealed door stands open. Then, stepping into the forecourt (between its two pylons) without
+ * the vault's own door rank, D at the least (Euan, 2026-10-26: walking into a vault under-ranked must not give it; the
+ * progression plan's decision 1 set the floor at D, the door rank of every vault near home), and only once the sealed
+ * door stands open. Then, stepping into the forecourt (between its two pylons) without
  * the rope, the vault notices them (the call, 3 s), the line is given and pulls them up onto the nearer pylon (the
  * line), and the vow is kept by reaching the beacon mast over the roof by rope within two minutes (kept, or the mast
  * waits). Short of that the vault only stirs: its light rises and falls back, and it says what it waits for.
@@ -36,7 +37,7 @@ final class TetherVow {
     /** Ticks of the call before the line, and how long the mast waits. */
     static final int CALL_TICKS = 60, MAST_TICKS = 2400;
     /** The lowest rank the line answers (a vault whose door asks more asks more). */
-    static final Rank RANK = Rank.C;
+    static final Rank RANK = Rank.D;
     /** The same vault stirs for the same player, in the same state, at most this often. */
     static final int STIR_EVERY = 20 * 60 * 5;
 
@@ -102,7 +103,7 @@ final class TetherVow {
             return world(11, 2, 12);
         }
 
-        /** The rank this vault's line answers: C, or its door's rank if that is higher. */
+        /** The rank this vault's line answers: its door's rank, {@link #RANK} at the least. */
         Rank needs() {
             return Rank.of(Math.max(RANK.ordinal(), doorRank));
         }
@@ -223,7 +224,7 @@ final class TetherVow {
 
     /**
      * The vault notices someone it isn't ready for: short of its rank, its light rises toward the mast and falls back
-     * ("Its line waits for a C-rank hunter."); ranked but with the door still sealed, its light drifts to the door. At
+     * ("Its line waits for a D-rank hunter."); ranked but with the door still sealed, its light drifts to the door. At
      * most once in {@link #STIR_EVERY} per vault and state.
      */
     static void stir(ServerPlayer p, Site s, long now) {
@@ -232,6 +233,7 @@ final class TetherVow {
         Stirred last = STIRRED.get(p.getUUID());
         if (last != null && last.vault().equals(vault) && last.short_() == short_ && now - last.at() < STIR_EVERY && now >= last.at()) return;
         STIRRED.put(p.getUUID(), new Stirred(vault, short_, now));
+        if (short_) dev.awaken.core.api.Promises.seen(p, dev.awaken.above.block.DoorCoreBlock.key(s.door()), s.door(), dev.awaken.core.api.Promises.Need.rank(s.needs().label), "A sealed vault");
         BlockPos to = short_ ? s.mast() : s.door();
         AwakenNet.send(p, new AscentPayloads.Vow(STIR, s.needs().ordinal(), short_ ? 1 : 0, 0, to.getX() + 0.5, to.getY() + 0.5, to.getZ() + 0.5));
         dev.awaken.core.DirectorLog.log(p, "ascent", "a vault stirs at " + vault.toShortString() + (short_

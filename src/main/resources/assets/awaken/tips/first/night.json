@@ -1,0 +1,9 @@
+{
+  "text": "Monsters walk in the dark out here. Carillon's lamps keep its streets safe.",
+  "priority": 40,
+  "show_for": 180,
+  "retire_after_done": 1,
+  "retire_after_shown": 1,
+  "cooldown": 2400,
+  "awake": "after"
+}

@@ -37,6 +37,9 @@ public final class SignalClient {
         SignalSections.register();
         Journal.register();
         Herald.install();
+        Tips.install();
+        modBus.addListener(net.neoforged.neoforge.client.event.AddClientReloadListenersEvent.class, e -> e.addListener(dev.awaken.Awaken.id("tips"),
+                (net.minecraft.server.packs.resources.ResourceManagerReloadListener) Tips::load));
     }
 
     static boolean classic() {
@@ -67,6 +70,10 @@ public final class SignalClient {
         event.register(SignalPayloads.Pending.TYPE, (msg, ctx) -> SystemHud.pending(msg.entries()));
         event.register(SignalPayloads.Now.TYPE, (msg, ctx) -> NowClient.accept(msg));
         event.register(SignalPayloads.Horizon.TYPE, (msg, ctx) -> HorizonClient.accept(msg));
+        event.register(SignalPayloads.Tip.TYPE, (msg, ctx) -> {
+            if (msg.offer()) Tips.serverOffer(msg.id());
+            else Tips.done(msg.id());
+        });
     }
 
     private static void onLayers(RegisterGuiLayersEvent event) {
@@ -77,10 +84,12 @@ public final class SignalClient {
         if (classic()) ClassicHud.render(g, dt);
         else SystemHud.render(g, dt);
         TrackerHud.render(g, dt);
+        Tips.render(g, dt);
     }
 
     private static void tick() {
         NowClient.tick();
+        Tips.tick();
         HorizonClient.tick();
         boolean c = classic();
         if (c != wasClassic) { // switched style in the settings: drop what the other one had on screen

@@ -118,6 +118,15 @@ public final class OpeningModule {
             @Override public @Nullable String stage(net.minecraft.world.entity.player.Player p) {
                 return p instanceof ServerPlayer sp ? OpeningDirector.stage(sp) : null;
             }
+            @Override public net.minecraft.core.@Nullable BlockPos place(String name) {
+                OpeningPlaces at = OpeningPlaces.get();
+                if (at == null) return null;
+                return switch (name) {
+                    case "roost" -> at.roost();
+                    case "registry" -> net.minecraft.core.BlockPos.containing(at.lensMark());
+                    default -> null;
+                };
+            }
             @Override public void skip(ServerPlayer p) {
                 OpeningDirector.skip(p);
             }
@@ -232,6 +241,7 @@ public final class OpeningModule {
     /** The city is yours: the Awakened layer steps out, the first power waits if it wasn't chosen. */
     static void afterOpening(ServerPlayer p) {
         dev.awaken.world.fauna.FaunaModule.revealIfPending(p);
+        OpeningHooks.fireRegistered(p); // the first thread out of the city starts here (SPEC §27.6)
         if (Progression.profile(p).awakened()) dev.awaken.core.Later.run(p.level().getServer(), 60, () -> dev.awaken.powers.Starter.offer(p));
     }
 
