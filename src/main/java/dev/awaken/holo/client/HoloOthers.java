@@ -194,7 +194,7 @@ public final class HoloOthers {
             showCard = !map && (r != SELF || peekSelf);
             collector.submitCustomGeometry(poseStack, RenderTypes.lightning(), CARD);
             poseStack.popPose();
-            if (map && r == SELF && HoloScene.hasBeams()) {
+            if (map && r == SELF && HoloScene.hasBeams() && !peekSelf) {
                 BEAMS.set(T, p);
                 collector.submitCustomGeometry(ROOT, RenderTypes.lightning(), BEAMS);
             } else if (map && (r != SELF || peekSelf)) {

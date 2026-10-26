@@ -385,6 +385,22 @@ public final class Autopilot {
                 else KeyMapping.click(k.getKey());
                 waitTicks = 2;
             }
+            case "screenkey" -> { // a key straight to the open screen: tab, t, m, c, space, or shift+ one of them
+                String k = arg.trim();
+                boolean shift = k.startsWith("shift+");
+                int code = switch (shift ? k.substring(6) : k) {
+                    case "tab" -> com.mojang.blaze3d.platform.InputConstants.KEY_TAB;
+                    case "t" -> com.mojang.blaze3d.platform.InputConstants.KEY_T;
+                    case "m" -> com.mojang.blaze3d.platform.InputConstants.KEY_M;
+                    case "c" -> com.mojang.blaze3d.platform.InputConstants.KEY_C;
+                    case "space" -> com.mojang.blaze3d.platform.InputConstants.KEY_SPACE;
+                    default -> -1;
+                };
+                if (code < 0) Awaken.LOG.warn("[autopilot] unknown screen key {}", k);
+                else if (mc.gui.screen() != null)
+                    mc.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(code, 0, shift ? com.mojang.blaze3d.platform.InputConstants.MOD_SHIFT : 0));
+                waitTicks = 2;
+            }
             case "screen" -> {
                 if (arg.trim().equals("close")) mc.gui.setScreen(null);
                 else if (arg.trim().equals("status")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.STATUS));
