@@ -21,6 +21,10 @@ info
 hud off
 wait 200
 shot probe_swift
+mdi off
+wait 40
+shot probe_swift_nomdi
+mdi on
 lens cinematic
 wait 60
 shot probe_cinematic

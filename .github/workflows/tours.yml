@@ -139,6 +139,7 @@ jobs:
             echo "cpus: $(sysctl -n hw.ncpu)  memory: $(( $(sysctl -n hw.memsize) / 1073741824 )) GB  cpu: $(sysctl -n machdep.cpu.brand_string)"
             echo "session: $(launchctl managername)  console user: $(stat -f %Su /dev/console)"
             system_profiler SPDisplaysDataType SPAudioDataType 2>/dev/null
+            swift tools/ci-display.swift 2>&1 || true
           } | tee tour-out/runner.txt
 
       - name: Build

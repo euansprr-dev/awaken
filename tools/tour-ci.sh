@@ -57,10 +57,11 @@ done
 CONCLUSION=${S#completed }
 DIR=run-autopilot/screenshots-ci/$NAME-$RUN
 mkdir -p $DIR
-gh run download $RUN -R $REPO -n tour-$NAME -D $DIR > /dev/null 2>&1 || echo "no artifact (the run failed before the tour: see $URL)"
+gh run download $RUN -R $REPO -n tour-$NAME -D $DIR > /dev/null 2>&1 \
+  || { rmdir $DIR 2>/dev/null; echo "no artifact (the run stopped before the tour: see $URL)"; }
 [ -f $DIR/summary.txt ] && cat $DIR/summary.txt
 SHOTS=($DIR/*.png(N))
-print -l -- $SHOTS
+(( ${#SHOTS} )) && print -l -- $SHOTS
 gh api "repos/$REPO/actions/runs/$RUN/artifacts" -q '.artifacts[].name' 2>/dev/null | grep -qx "tour-$NAME-clips" \
   && echo "clips: gh run download $RUN -R $REPO -n tour-$NAME-clips -D run-autopilot/clips-ci/$NAME-$RUN"
 echo "$CONCLUSION after $(( ($(date +%s) - STARTED) / 60 )) min: ${#SHOTS} shots in $DIR"

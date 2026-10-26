@@ -1,6 +1,7 @@
 [
- {"name": "probe-m15-vk", "script": "tools/autopilot/ci-probe.txt", "timeout": "1200", "os": "macos-15"},
- {"name": "probe-m26-vk", "script": "tools/autopilot/ci-probe.txt", "timeout": "1200", "os": "macos-26"},
- {"name": "probe-m15-vk-noab", "script": "tools/autopilot/ci-probe.txt", "timeout": "1200", "os": "macos-15", "mvk": "0"},
- {"name": "probe-m14-vk-noab", "script": "tools/autopilot/ci-probe.txt", "timeout": "1200", "os": "macos-14", "mvk": "0"}
+ {"name": "probe-m15", "script": "tools/autopilot/ci-probe.txt", "timeout": "1200", "os": "macos-15"},
+ {"name": "probe-m26", "script": "tools/autopilot/ci-probe.txt", "timeout": "1200", "os": "macos-26"},
+ {"name": "probe-m15-sodium", "script": "tools/autopilot/ci-probe.txt", "timeout": "1200", "os": "macos-15", "knobs": "PACK=perf"},
+ {"name": "probe-m26-sodium", "script": "tools/autopilot/ci-probe.txt", "timeout": "1200", "os": "macos-26", "knobs": "PACK=perf"},
+ {"name": "farsight2-city-m15", "script": "tools/autopilot/farsight2-city.txt", "timeout": "1800", "os": "macos-15", "knobs": "PACK=perf,world TECTONIC=awakened RD=16 LENS=cinematic"}
 ]
