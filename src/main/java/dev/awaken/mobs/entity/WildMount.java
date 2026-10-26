@@ -80,6 +80,8 @@ public class WildMount extends FaunaMob implements PlayerRideableJumping, WildPo
 
     public WildMount(EntityType<? extends WildMount> type, Level level) {
         super(type, level);
+        // never fed: a world's first ticks aren't "still eating" (0 refused every feeding before game time 30)
+        lastFeed = -FEED_GAP;
     }
 
     /** Its mount table entry, or null for a creature that is never ridden (fish, jellies, otters). */
