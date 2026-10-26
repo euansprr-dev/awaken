@@ -19,6 +19,10 @@ hud on
 camera first
 cmd clear @s awaken:ilse_letters
 wait 20
+# into the Registry once to load it (the runner's client stalls on the way in), then the beat again from its start
+cmd awaken opening beat letters
+wait 300
+cmd clear @s awaken:ilse_letters
 cmd awaken opening beat letters
 wait 70
 shot letters_1_hunters_job

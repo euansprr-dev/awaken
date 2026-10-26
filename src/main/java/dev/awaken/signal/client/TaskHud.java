@@ -22,8 +22,10 @@ import java.util.Locale;
 final class TaskHud {
     private TaskHud() {}
 
-    /** The card sits below two toast slots, so a toast never lands on it. */
-    static final int TOP = SignalLayout.TOAST_H * 2 + 6, MAX_W = 176, FLASH = 24;
+    /** The card sits just under the first toast slot; its words wrap at MAX_W (unscaled), two lines a step at most. */
+    static final int TOP = SignalLayout.TOAST_H + 4, MAX_W = 190, FLASH = 24;
+    /** A touch smaller than the Now card: it's a companion, not the headline. */
+    static final float SIZE = 0.85F;
 
     private static SignalPayloads.Task task = new SignalPayloads.Task("", "", List.of());
     private static long since, ticks;
@@ -55,15 +57,17 @@ final class TaskHud {
         Font font = mc.font;
         float pt = dt.getGameTimeDeltaPartialTick(false);
         float fade = Mth.clamp((ticks - since + pt) / 10F, 0, 1);
-        double s = SystemHud.scale();
+        double s = SystemHud.scale() * SIZE;
         int done = 0;
         for (SignalPayloads.TaskRow r : t.rows()) if (r.done()) done++;
         String title = t.title().toUpperCase(Locale.ROOT), count = done + "/" + t.rows().size();
-        // the widest line decides the card (unscaled)
+        // the widest line decides the card (unscaled); a step longer than the card wraps once
         int w = font.width(title) + 10 + font.width(count);
-        for (SignalPayloads.TaskRow r : t.rows()) w = Math.max(w, 12 + rowWidth(font, r, mc));
+        for (SignalPayloads.TaskRow r : t.rows()) w = Math.max(w, 13 + rowWidth(font, r, mc));
         w = Math.min(MAX_W, w) + 8;
-        int h = 6 + 11 + t.rows().size() * 10 + 2;
+        int room = w - 17;
+        int h = 6 + 11 + 2;
+        for (SignalPayloads.TaskRow r : t.rows()) h += 10 * lines(font, r, mc, room).size();
         int sw = g.guiWidth();
         int x = (int) Math.round(sw - w * s - SignalLayout.MARGIN), y = TOP;
 
@@ -90,10 +94,43 @@ final class TaskHud {
             int markColour = r.done() ? Glass.GOOD : now ? Glass.AMBER : Glass.LABEL;
             HudLook.text(g, font, mark, 4, ry, Glass.a(markColour, fade), true);
             int textColour = r.done() || !now ? Glass.LABEL : Glass.TEXT;
-            drawRow(g, font, r, 13, ry, Glass.a(textColour, fade * (r.done() || now ? 1f : 0.8f)), fade, mc);
-            ry += 10;
+            int argb = Glass.a(textColour, fade * (r.done() || now ? 1f : 0.8f));
+            if (r.text().contains("{key}")) {
+                drawRow(g, font, r, 13, ry, argb, fade, mc);
+                ry += 10;
+            } else {
+                // a plain step wraps (two lines at most), its count and compass in the band's blue at the end
+                List<String> ls = lines(font, r, mc, room);
+                for (int k = 0; k < ls.size(); k++) {
+                    String l = ls.get(k);
+                    int tail = k == ls.size() - 1 ? l.indexOf("  ") : -1;
+                    if (tail >= 0) {
+                        String words = l.substring(0, tail);
+                        HudLook.text(g, font, words, 13, ry, argb, true);
+                        HudLook.text(g, font, l.substring(tail + 2), 13 + font.width(words + "  "), ry, Glass.a(Glass.EDGE, fade), true);
+                    } else HudLook.text(g, font, l, 13, ry, argb, true);
+                    ry += 10;
+                }
+            }
         }
         g.pose().popMatrix();
+    }
+
+    /**
+     * A plain step's lines in {@code room}: its words wrapped at a word break (two lines at most, the second shortened
+     * if it must), its count and compass after a no-break marker so they draw in blue.
+     */
+    private static List<String> lines(Font font, SignalPayloads.TaskRow r, Minecraft mc, int room) {
+        if (r.text().contains("{key}")) return List.of(r.text());
+        String extra = (r.need() > 0 ? r.have() + "/" + r.need() : "") + (r.marked() ? (r.need() > 0 ? "  " : "") + compass(mc, r) : "");
+        String full = r.text() + (extra.isEmpty() ? "" : "  " + extra);
+        if (font.width(full) <= room) return List.of(full);
+        int cut = full.lastIndexOf(' ', full.length() - 1);
+        while (cut > 0 && font.width(full.substring(0, cut)) > room) cut = full.lastIndexOf(' ', cut - 1);
+        if (cut <= 0) cut = Math.max(1, full.length() / 2);
+        String first = full.substring(0, cut).trim(), second = full.substring(cut).trim();
+        while (font.width(second) > room && second.length() > 2) second = second.substring(0, second.length() - 2) + "…";
+        return List.of(first, second);
     }
 
     /** The row's width: its words, a key cap for "{key}", its count and its compass. */

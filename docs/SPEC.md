@@ -4877,7 +4877,10 @@ The rules below replace that.
 - **Fleeting** (`Builder.fleeting()`, 2026-10-26): shown now or never. A fleeting message that waits past its wait is
   dropped, not filed: the System's first contact ("[ERROR] … candidate found.", the opening's and the prologue's), which
   in the Journal read as a real bug. The awakening's first moves ("Your body remembers") are no longer a toast at all:
-  the checklist teaches them (§27.10). Nothing is filed for the city's own region while you're inside its walls (§27.6).
+  the checklist teaches them (§27.10). The Signal's quips (`signal_line/lines.json`, `story.Beats.lineOnce`: "That's your
+  first power. Try it out once you're outside the city.") are fleeting too: a reaction read later in a list, out of its
+  moment, meant nothing ("There it is."). Nothing is filed for the city's own region while you're inside its walls
+  (§27.6).
 
 ### 26.3 Discovery (`signal.Finds`)
 - **Intent.** A creature is studied when the crosshair rests on it (its angular size + 3°) for 3 looks in a row, 5
@@ -5164,13 +5167,14 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
 ### 27.10 The current task, top right (Euan's playtest, 2026-10-26)
 "Every time you have a goal and things to do, you actually have a small checklist top right." One small card, top right
 under the first two toast slots (`signal.client.TaskHud`; never over the crosshair, hidden with the HUD), in the band's
-glass: the task's title and done/total, then its steps, each ticked when done (a soft green flash as it ticks), the
+glass, a touch smaller than the Now card: the task's title and done/total, then its steps (a long one wraps to a second
+line), each ticked when done (a soft green flash as it ticks), the
 current one bright with ▸, keys drawn as key caps from "{key}" in the words, a count where a step has one ("0/10"),
 and a compass to a place nearby to do it ("↗ 9 m"). The Now line, top left, keeps the where; the card keeps the what.
 The server decides (`progression.Checklist`, sent only when it changes, payload `signal_task`; nothing while the
 opening runs):
-- **Your body remembers** first, from the awakening: "Hold [Shift] as you land from a jump to roll", "Double-tap
-  [Ctrl] to sprint harder", "Hold [Shift] while sprinting to slide", "Press [Space] at a chest-high ledge to climb it",
+- **Your body remembers** first, from the awakening: "Hold [Shift] as you land to roll", "Double-tap [Ctrl] to sprint
+  harder", "Hold [Shift] while sprinting to slide", "Press [Space] at a ledge to climb it",
   each ticked the first time you do it (the body module's counters `awaken:body_roll`, `_sprint`, `_slide`, `_mantle`);
   the ledge row points at the nearest chest-high ledge within 10 blocks while it's current (every 2 s: a two-block step
   up from standing ground with room on top). All four done: the list stays ticked for 4 s (`awaken:first/moves_done`),

@@ -60,10 +60,10 @@ public final class Checklist {
     static final int DONE_HOLD = 20 * 4;
     /** The first moves: the counter the body module keeps, the words, the key. */
     static final String[][] MOVES = {
-            {"awaken:body_roll", "Hold {key} as you land from a jump to roll", "key.sneak"},
+            {"awaken:body_roll", "Hold {key} as you land to roll", "key.sneak"},
             {"awaken:body_sprint", "Double-tap {key} to sprint harder", "key.sprint"},
             {"awaken:body_slide", "Hold {key} while sprinting to slide", "key.sneak"},
-            {"awaken:body_mantle", "Press {key} at a chest-high ledge to climb it", "key.jump"},
+            {"awaken:body_mantle", "Press {key} at a ledge to climb it", "key.jump"},
     };
     static final String MOVES_TITLE = "Your body remembers";
 

@@ -45,9 +45,12 @@ shotnow first_0_checklist_errand
 key status
 wait 30
 shot first_0_journal
-scroll -4
+scroll -7
 wait 10
 shot first_0_journal_more
+scroll -5
+wait 10
+shot first_0_journal_end
 screen close
 wait 10
 # 1. the High Gate's shot (the land named as the view lifts: THE COMMONS)
