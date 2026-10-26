@@ -48,19 +48,22 @@ final class WardFxClient {
                 }
             }
             case SHED -> {
-                WardParticles.nextTint = tint(level, Block.stateById(e.state()), pos);
-                // the ghost: its twelve edges in grains, each falling a little outward, so the shape reads as it goes
+                int grain = tint(level, Block.stateById(e.state()), pos);
+                // the ghost: its twelve edges traced in the ward's light, which hangs a moment, and in grains of the
+                // block's own colour that slip off it and fall, so the shape reads before it goes
                 for (int edge = 0; edge < 12; edge++) {
-                    for (int k = 0; k < 4; k++) {
-                        double t = (k + r.nextDouble()) / 4;
-                        int axis = edge / 4, a = edge & 1, b = (edge >> 1) & 1;
+                    int axis = edge / 4, a = edge & 1, b = (edge >> 1) & 1;
+                    for (int k = 0; k < 5; k++) {
+                        double t = (k + 0.5) / 5;
                         // along x: (t, a, b); along y: (a, t, b); along z: (a, b, t)
                         double gx = axis == 0 ? t : a, gy = axis == 0 ? a : axis == 1 ? t : b, gz = axis == 2 ? t : b;
+                        if (k % 2 == 0) spark(level, x + gx, y + gy, z + gz, 0, 0.004, 0);
+                        WardParticles.nextTint = grain;
                         level.addParticle(WildsContent.WARD_GRAIN.get(), x + gx, y + gy, z + gz,
-                                (gx - 0.5) * 0.05, 0.01 + r.nextDouble() * 0.03, (gz - 0.5) * 0.05);
+                                (gx - 0.5) * 0.02, 0.004 + r.nextDouble() * 0.012, (gz - 0.5) * 0.02);
                     }
                 }
-                for (int i = 0; i < 7; i++) {
+                for (int i = 0; i < 6; i++) {
                     spark(level, x + 0.2 + r.nextDouble() * 0.6, y + 0.15 + r.nextDouble() * 0.7, z + 0.2 + r.nextDouble() * 0.6,
                             (r.nextDouble() - 0.5) * 0.02, 0.05 + r.nextDouble() * 0.04, (r.nextDouble() - 0.5) * 0.02);
                 }

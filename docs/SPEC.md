@@ -3111,8 +3111,8 @@ manual; stop the build at the first block; the payoff answers only the line; dan
 - **Climbs refuse, they don't crumble** (`wilds.ward.ClimbWard`; ward kinds `precursor_tether_spire`,
   `precursor_sky_platform`, `hero_crown`, `Wards.climb`). A survival player's block placement (at HIGH priority, so the
   arrival tracker never logs it) and a fluid bucket are cancelled at the first block; the ghost of the block falls away
-  (`ward_fx` SHED: its twelve edges in grains of its own colour, a breath of the Signal's light; the crumble's sound
-  pitched down ×0.72). The 3 s crumble stays at walk-in sites (vaults, monoliths, labs). No Hearth suspends a climb's
+  (`ward_fx` SHED: its twelve edges traced in the Signal's light, which hangs a moment, and in grains of its own colour
+  that slip off and fall, a breath of light rising; the crumble's sound pitched down ×0.72). The 3 s crumble stays at walk-in sites (vaults, monoliths, labs). No Hearth suspends a climb's
   ward or its walls (`Wards.enforced`, `Wards.sealed`).
 - **The place answers**, worded by what the player holds (`HorizonHooks.can(p, "tether")`), lang `awaken.wilds.climb.*`:
   without the rope, "The spire sheds what you build. Its platforms answer to a line." / "The platform sheds what you
@@ -3121,7 +3121,9 @@ manual; stop the build at the first block; the payoff answers only the line; dan
   comes in two halves (`.sheds`, `.way`; the tip `.short`), because a card's question and a toast's detail hold about 28
   letters a line (`SignalLayout.CARD_W` 170, `TOAST_W` 160).
   - The first refusal at each kind of climb, without the rope (flag `awaken:climb_shown/<spire|sky|tree>`): a choice
-    card, the question "The spire sheds what you build.", the body "Its platforms answer to a line.", one choice
+    card, the question on one line so its body shows ("The spire sheds all you build." / "Nothing you build holds
+    here." / "The tree sheds all you build.": a card holds 20% of the screen, and a two-line question drops the body),
+    the body "Its platforms answer to a line." (the platform's, the tree's way), one choice
     **Show me** (Y) / Not now (action `ward:show_me:<kind>`, 30 s), with "A vault keeps a line for a hunter it opens to."
     on the action bar under it. Y sends `awaken:ward_show_me`; the client opens the band (K › Status) scrolled to "THE
     ASCENT" (§27.2: the next rung as a silhouette, where it comes from), else "THE BODY"

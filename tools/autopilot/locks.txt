@@ -2,7 +2,7 @@
 # colour read from across the forecourt; a D gate's card ("above your rank"); a Tether Spire's plaza: the first block
 # refused (its ghost sheds) with the card offering Show me, and Y opening the band at The Ascent; a sky platform's deck:
 # its own first refusal; then with the rope, the tip in the action bar. First person for the blocks, the HUD on.
-world locks1 survival 20261026
+world locks2 survival 20261026
 waitworld
 window 1440 900
 gui 0
@@ -24,15 +24,17 @@ cmd effect give @s minecraft:resistance 100000 4 true
 cmd awaken ascent grant none
 hud on
 camera first
-# the sealed door, from the forecourt's far edge and then from 30 blocks back and above
+# the sealed door at night: from the forecourt, then from out past its pylons (the vault's front), a little higher
+cmd time set 15000
 cmd awaken ascent vow goto
 wait 60
 shot locks_01_door_forecourt
-cmd tp @s ^ ^6 ^-26
-wait 40
-cmd tp @s ~ ~ ~ ~ 12
+cmd tp @s ^ ^2 ^-7
+wait 30
+cmd tp @s ~ ~ ~ ~ 6
 wait 10
 shot locks_02_door_far
+cmd time set 12800
 # a gate of a higher rank: its card says so
 cmd awaken gate open D
 wait 160
