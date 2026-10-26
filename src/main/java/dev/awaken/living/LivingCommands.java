@@ -133,7 +133,7 @@ final class LivingCommands {
             l.then(Commands.literal("face").requires(AwakenCommands.admin()).executes(c -> faceHappening(c.getSource().getPlayerOrException(), 0)));
             // tours: a Rolling Storm strike this far ahead of you (seen, lighting the cloud, heard late)
             l.then(Commands.literal("strike").requires(AwakenCommands.admin())
-                    .then(Commands.argument("distance", IntegerArgumentType.integer(0, 400)).executes(c -> {
+                    .then(Commands.argument("distance", IntegerArgumentType.integer(0, 1000)).executes(c -> {
                         ServerPlayer p = c.getSource().getPlayerOrException();
                         ServerLevel level = p.level().getServer().overworld();
                         var ahead = p.getLookAngle().multiply(1, 0, 1).normalize().scale(IntegerArgumentType.getInteger(c, "distance"));

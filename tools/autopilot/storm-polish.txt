@@ -18,6 +18,11 @@ hud off
 lens cinematic
 cmd gamemode spectator
 cmd awaken living calm
+# open land away from the city and its gate pillars
+cmd awaken living goto greenwild_woods
+wait 200
+cmd tp @s ~400 ~ ~300
+wait 300
 cmd time set 12300
 cmd awaken living happen rolling_storm
 wait 320
@@ -50,14 +55,14 @@ shot polish_03_anvil_day500_cinematic
 cmd time set 18000
 wait 80
 shot polish_04_night_dark
-cmd awaken living strike 500
+cmd awaken living strike 480
 shotnow polish_04_night_strike_a
 wait 2
 shotnow polish_04_night_strike_b
 wait 60
 lens swift
 wait 60
-cmd awaken living strike 500
+cmd awaken living strike 480
 shotnow polish_04_night_strike_swift
 lens cinematic
 wait 20

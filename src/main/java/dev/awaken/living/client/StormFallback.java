@@ -151,7 +151,8 @@ final class StormFallback {
         if (h < 40) {
             // the shelf: a flat dark base wider than the tower, its rim ragged
             double rim = SHELF * (0.82 + 0.36 * tex(qx / 300, qz / 300, 1)) + 14 * (puff - 0.6), sx = along - 8;
-            d = Mth.clamp((rim - Math.sqrt(sx * sx + across * across)) / 5, 0, 1) * base * (1 - smooth(14, 34, h + 12 * (puff - 0.55)));
+            double rd = Math.sqrt(sx * sx + across * across) / Math.max(rim, 1), deep = 32 - 26 * smooth(0.55, 1, rd);
+            d = Mth.clamp((1 - rd) * rim / 5, 0, 1) * base * (1 - smooth(deep - 12, deep, h + 12 * (puff - 0.55)));
         }
         if (h < H - 28) {
             double sr = tex(h / 900 + 0.13, 0.37, 0), sg = tex(h / 900 + 0.13, 0.37, 1), sb = tex(h / 900 + 0.13, 0.37, 2);

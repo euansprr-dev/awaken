@@ -58,9 +58,12 @@ float stormCell(vec3 q, vec2 w, float time, float grow, int detail) {
     float base = smoothstep(-1.0, 1.5, h + 1.5 * (puff - 0.6));
     float d = 0.0;
     if (h < 40.0) {
-        // the shelf: a flat dark base wider than the tower, its rim ragged; the turrets rise from it
+        // the shelf: a flat dark base wider than the tower, thinning toward its ragged rim (a rim the shelf's full depth,
+        // ragged only across, read as tall flutes when backlit); the turrets rise from it
         float rim = STORM_SHELF * (0.82 + 0.36 * texture(CloudNoiseSampler, fract(q.xz / 300.0)).g) + 14.0 * (puff - 0.6);
-        d = clamp((rim - length(vec2(aw.x - 8.0, aw.y))) / 5.0, 0.0, 1.0) * base * (1.0 - smoothstep(14.0, 34.0, h + 12.0 * (puff - 0.55)));
+        float rd = length(vec2(aw.x - 8.0, aw.y)) / max(rim, 1.0);
+        float deep = mix(32.0, 6.0, smoothstep(0.55, 1.0, rd));
+        d = clamp((1.0 - rd) * rim / 5.0, 0.0, 1.0) * base * (1.0 - smoothstep(deep - 12.0, deep, h + 12.0 * (puff - 0.55)));
     }
     if (h < STORM_H - 28.0) {
         // the body: broad and flat-based, narrowing a little as it towers, leaning downwind; its axis wanders and its
