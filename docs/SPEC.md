@@ -5622,8 +5622,9 @@ mine also refuse oceans, rivers and beaches at the surface). Names by seed (`Cav
   to its office, stope, incline, crawl and bridge; the sinkhole's dive must land in the pool).
 - **Cost** (the test, M4 under load): building a place averages 0.25-0.9 ms a chunk it touches (sinkhole 0.9, worst chunk
   ~6-8 ms; mine 0.3; seep 0.5-0.8; chute 0.2-0.4; grotto 0.35); one place in 800-2,700 chunks, so under 0.005 ms a
-  chunk across the world. A candidate's site search: sinkhole ~4.5 ms (24 columns), mine ~2 ms (up to 77), seep, chute and
-  grotto under 0.5 ms, once per candidate chunk (one in 676-2,704 chunks).
+  chunk across the world. A candidate's site search in a real (vanilla) overworld: 9-18 ms (20-42 base columns), once per candidate chunk
+  (one in 676-2,704 chunks); sites found for sinkholes 19 of 40 candidates, mines 7, seeps 13, chutes 23, grottos 27
+  (`delve_cave_routes` asserts every kind finds some): about one place every 500 blocks of cave.
 
 **At run time** (`CavePlaces`): places are known as their start chunks load, and a player's place is the structure piece
 round their feet (`StructureManager.getStructureWithPieceAt`; a place laid by a command or a test is `STAGED`). Twice a

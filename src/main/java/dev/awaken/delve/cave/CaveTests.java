@@ -93,20 +93,25 @@ final class CaveTests {
         }
         dev.awaken.Awaken.LOG.info("[delve] cave places' build cost: {}", costs);
         h.assertTrue(fails.isEmpty(), "every place has a route with no rope, both ways: " + String.join("; ", fails));
-        // a candidate's search: the generator's base columns, the lodes beside it
+        // a candidate's search, in a real overworld (the test server's own world is flat): the generator's base columns,
+        // the lodes beside it; every kind must find sites, or no place would ever generate
         ServerLevel level = h.getLevel();
         StringBuilder sites = new StringBuilder();
+        List<String> none = new ArrayList<>();
+        Overworld ow = new Overworld(level, 0x5EED_CAFEL);
         for (CaveKind k : CaveKind.values()) {
             long t0 = System.nanoTime();
-            int found = 0, cols = 0;
-            for (int i = 0; i < 6; i++) {
-                ChunkPos c = new ChunkPos(i * 37 + 400, -i * 29 + 300);
-                if (CaveSites.find(context(level, c), k, false) != null) found++;
+            int found = 0, cols = 0, n = 40;
+            for (int i = 0; i < n; i++) {
+                ChunkPos c = new ChunkPos(i * 53 - 900, i * 47 - 700);
+                if (CaveSites.find(ow.context(c), k, false) != null) found++;
                 cols += CaveSites.lastSampled;
             }
-            sites.append(String.format(Locale.ROOT, "%s %.2f ms a candidate (%d columns, %d of 6 found); ", k.id, (System.nanoTime() - t0) / 6e6, cols / 6, found));
+            sites.append(String.format(Locale.ROOT, "%s %.2f ms a candidate (%d columns, %d of %d found); ", k.id, (System.nanoTime() - t0) / (n * 1e6), cols / n, found, n));
+            if (found == 0) none.add(k.id);
         }
-        dev.awaken.Awaken.LOG.info("[delve] cave places' site search: {}", sites);
+        dev.awaken.Awaken.LOG.info("[delve] cave places' site search (vanilla overworld): {}", sites);
+        h.assertTrue(none.isEmpty(), "every kind finds sites in a real overworld: none for " + none);
         h.succeed();
     }
 
@@ -147,6 +152,34 @@ final class CaveTests {
             return Routes.water(b);
         }
         return false;
+    }
+
+    /** The vanilla overworld's own generator and noise for a seed, beside the test server's flat world. */
+    private static final class Overworld {
+        final ServerLevel level;
+        final long seed;
+        final net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator gen;
+        final net.minecraft.world.level.levelgen.RandomState rs;
+        final net.minecraft.world.level.biome.Climate.Sampler sampler;
+        final net.minecraft.world.level.LevelHeightAccessor height = net.minecraft.world.level.LevelHeightAccessor.create(-64, 384);
+
+        Overworld(ServerLevel level, long seed) {
+            this.level = level;
+            this.seed = seed;
+            var ra = level.registryAccess();
+            var settings = ra.lookupOrThrow(net.minecraft.core.registries.Registries.NOISE_SETTINGS)
+                    .getOrThrow(net.minecraft.world.level.levelgen.NoiseGeneratorSettings.OVERWORLD);
+            var preset = ra.lookupOrThrow(net.minecraft.core.registries.Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST)
+                    .getOrThrow(net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists.OVERWORLD);
+            gen = new net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator(net.minecraft.world.level.biome.MultiNoiseBiomeSource.createFromPreset(preset), settings);
+            rs = net.minecraft.world.level.levelgen.RandomState.create(ra.lookupOrThrow(net.minecraft.core.registries.Registries.NOISE), seed, settings.value());
+            sampler = rs.createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.builder().enableCaches().build());
+        }
+
+        Structure.GenerationContext context(ChunkPos c) {
+            return new Structure.GenerationContext(level.registryAccess(), gen, gen.getBiomeSource(), sampler, rs,
+                    level.getServer().getStructureTemplateManager(), seed, c, height, b -> true);
+        }
     }
 
     static Structure.GenerationContext context(ServerLevel level, ChunkPos c) {
