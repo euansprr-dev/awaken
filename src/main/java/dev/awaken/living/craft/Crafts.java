@@ -1,5 +1,6 @@
 package dev.awaken.living.craft;
 
+import dev.awaken.core.api.Notices;
 import dev.awaken.living.LivingContent;
 import dev.awaken.living.LivingModule;
 import dev.awaken.progression.Progression;
@@ -61,10 +62,10 @@ public final class Crafts {
     }
 
     private static void levelled(ServerPlayer p, Craft c, int before, int after) {
-        Signal.toast(p, Component.literal(c.title + " · level " + after));
+        Signal.toast(p, Component.literal(c.title + " · level " + after), Notices.Tier.IMPORTANT, "craft");
         for (Craft.Perk perk : c.perks) {
             if (perk.level() > before && perk.level() <= after) {
-                Signal.toast(p, Component.literal("New perk · " + perk.title())); // what it does: the Crafts tab
+                Signal.toast(p, Component.literal("New perk · " + perk.title()), Notices.Tier.IMPORTANT, "craft"); // what it does: the Crafts tab
                 Progression.count(p, "awaken:craft_perks");
             }
         }

@@ -5,6 +5,7 @@ import dev.awaken.core.DirectorLog;
 import dev.awaken.core.Forces;
 import dev.awaken.core.Playtest;
 import dev.awaken.core.api.MobRole;
+import dev.awaken.core.api.Notices;
 import dev.awaken.mobs.MobTypes;
 import dev.awaken.mobs.Mobs;
 import dev.awaken.mobs.def.Bestiary;
@@ -14,6 +15,7 @@ import dev.awaken.mobs.def.Theme;
 import dev.awaken.mobs.entity.AwakenMob;
 import dev.awaken.progression.Profile;
 import dev.awaken.progression.Progression;
+import dev.awaken.signal.Finds;
 import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
 import dev.awaken.world.fauna.lair.LairPiece;
@@ -204,9 +206,10 @@ public final class Lairs {
         MobDef d = Bestiary.get(e.beast());
         LairStyle style = LairStyle.byBeast(e.beast());
         String place = style != null ? capital(style.title) : "A lair";
-        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Lair found · " + place).withColor(d != null ? d.glow : 0xFFFFFF))
-                .body(Component.literal((d != null ? possessive(d.name) + " den" : "A beast's den") + (fresh ? " · +XP" : "")))
-                .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 6).build());
+        if (fresh) {
+            Finds.tell(p, Finds.Find.of("lair", "Lair found · " + place, place, d != null ? possessive(d.name) + " den" : "A beast's den",
+                    d != null ? d.glow : 0xFFFFFF, true));
+        }
         Playtest.log(p, "lair", "found", e.beast());
         DirectorLog.log(p, "fauna", "found the lair of " + e.beast() + " at " + e.den().toShortString());
         return true;
@@ -268,7 +271,7 @@ public final class Lairs {
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Heard of · " + (style != null ? capital(style.title) : "a lair"))
                         .withColor(d != null ? d.glow : 0xFFFFFF))
                 .body(Component.literal((d != null ? possessive(d.name) + " lair" : "A lair") + " · " + where))
-                .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 6).build());
+                .presentation(SignalWindow.Presentation.TOAST).tier(Notices.Tier.AMBIENT).topic("lair").ttl(20 * 6).build());
         DirectorLog.log(p, "fauna", "heard of the lair of " + beast + " near " + pos.toShortString());
         return pos;
     }

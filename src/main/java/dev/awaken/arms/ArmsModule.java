@@ -39,6 +39,7 @@ public final class ArmsModule {
         ArmsItems.register(modBus);
         Archetypes.all(); // fail fast on a broken timing table
         dev.awaken.core.api.WeaveHooks.install(ArmsWeaves.INSTANCE);
+        ArmsForge.init();
         modBus.addListener(ArmsModule::registerPayloads);
         modBus.addListener(EventPriority.LOW, ArmsModule::guardComponents);
         var bus = NeoForge.EVENT_BUS;
@@ -47,7 +48,10 @@ public final class ArmsModule {
         bus.addListener(ArmsServer::onEntityTick);
         bus.addListener(ArmsServer::onLeave);
         bus.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent e) -> {
-            if (e.getEntity() instanceof ServerPlayer sp) ArmsWeaves.sync(sp);
+            if (e.getEntity() instanceof ServerPlayer sp) {
+                ArmsWeaves.sync(sp);
+                ArmsMastery.sync(sp);
+            }
         });
         bus.addListener(EventPriority.HIGHEST, ArmsServer::onIncomingDamage);
         bus.addListener(ArmsServer::onShieldBlock);
@@ -57,6 +61,10 @@ public final class ArmsModule {
         bus.addListener(ArmsServer::onDamaged);
         bus.addListener(ArmsServer::onFall);
         bus.addListener(EventPriority.LOW, LordForged::onDeath);
+        bus.addListener(EventPriority.LOW, ArmsMastery::onDeath);
+        bus.addListener(EventPriority.LOW, MarkedDrops::onDeath);
+        bus.addListener(EventPriority.HIGH, ArmsForge::onUseBlock);
+        bus.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> ArmsForge.forget(e.getEntity().getUUID()));
         bus.addListener(EventPriority.HIGH, ArmsModule::onUseStartOff);
         bus.addListener(ArmsServer::onUseStart);
         bus.addListener(ArmsServer::onUseStop);
@@ -75,6 +83,7 @@ public final class ArmsModule {
         r.playToClient(ArmsPayloads.Result.TYPE, ArmsPayloads.Result.STREAM_CODEC);
         r.playToClient(ArmsPayloads.Seen.TYPE, ArmsPayloads.Seen.STREAM_CODEC);
         r.playToClient(ArmsPayloads.Woven.TYPE, ArmsPayloads.Woven.STREAM_CODEC);
+        r.playToClient(ArmsPayloads.Mastery.TYPE, ArmsPayloads.Mastery.STREAM_CODEC);
     }
 
     /**
@@ -131,6 +140,40 @@ public final class ArmsModule {
                             ArmsWeaves.INSTANCE.cast(p, fam, null, 3);
                             return 1;
                         }))))
+                // dev: kills with a style (mastery), a Mark on the weapon in hand, its attunement
+                .then(Commands.literal("mastery").requires(AwakenCommands.admin())
+                        .then(Commands.argument("style", com.mojang.brigadier.arguments.StringArgumentType.word())
+                                .then(Commands.argument("kills", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1)).executes(c -> {
+                                    ServerPlayer p = c.getSource().getPlayerOrException();
+                                    Archetypes.Loaded st = Archetypes.get(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "style"));
+                                    if (st == null) return 0;
+                                    int step = ArmsMastery.count(p, st, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "kills"));
+                                    c.getSource().sendSuccess(() -> Component.literal(st.def().name() + " mastery " + step), false);
+                                    return 1;
+                                }))))
+                .then(Commands.literal("mark").requires(AwakenCommands.admin())
+                        .then(Commands.argument("mark", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
+                            ServerPlayer p = c.getSource().getPlayerOrException();
+                            String id = com.mojang.brigadier.arguments.StringArgumentType.getString(c, "mark");
+                            var stack = p.getMainHandItem();
+                            if (Marks.get(id) == null || Arms.styleOf(stack) == null) return 0;
+                            stack.set(ArmsContent.INSTANCE.get(), Marks.of(stack).withMark(id));
+                            return 1;
+                        })))
+                .then(Commands.literal("attune").requires(AwakenCommands.admin())
+                        .then(Commands.argument("force", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> {
+                            ServerPlayer p = c.getSource().getPlayerOrException();
+                            var stack = p.getMainHandItem();
+                            dev.awaken.core.Forces.Force f;
+                            try {
+                                f = dev.awaken.core.Forces.Force.valueOf(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "force").toUpperCase(java.util.Locale.ROOT));
+                            } catch (IllegalArgumentException e) {
+                                return 0;
+                            }
+                            if (Arms.styleOf(stack) == null) return 0;
+                            stack.set(ArmsContent.INSTANCE.get(), Marks.of(stack).attuned(f));
+                            return 1;
+                        })))
                 // dev: a Lord-forged weapon's reveal (to the hand) or its Art letting go: /awaken arms lord <lord> reveal|art
                 .then(Commands.literal("lord").requires(AwakenCommands.admin())
                         .then(Commands.argument("lord", com.mojang.brigadier.arguments.StringArgumentType.word())
@@ -147,7 +190,7 @@ public final class ArmsModule {
             c.getSource().sendFailure(Component.literal("No Lord-forged weapon for that Lord."));
             return 0;
         }
-        if (reveal) LordForged.reveal(p, new net.minecraft.world.item.ItemStack(item), f);
+        if (reveal) LordForged.reveal(p, LordForged.stack(f, item), f);
         else LordForged.unleash(p, f);
         return 1;
     }

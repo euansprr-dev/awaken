@@ -35,11 +35,15 @@ public final class AudioSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> UI_ANSWER_NO = reg("ui.answer_no");
     public static final DeferredHolder<SoundEvent, SoundEvent> UI_STORY = reg("ui.story");
     public static final DeferredHolder<SoundEvent, SoundEvent> UI_NOW = reg("ui.now");
+    /** The director's cues (SPEC §26): a filed find's soft chime, and a discovery moment. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> UI_FIND = reg("ui.find");
+    public static final DeferredHolder<SoundEvent, SoundEvent> UI_MOMENT = reg("ui.moment");
     public static final DeferredHolder<SoundEvent, SoundEvent> UI_QUEST_DONE = reg("ui.quest_done");
     public static final DeferredHolder<SoundEvent, SoundEvent> UI_REQUEST_DELIVERED = reg("ui.request_delivered");
 
     // ambience beds
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_RIFT = reg("amb.rift");
+    public static final DeferredHolder<SoundEvent, SoundEvent> AMB_RIFT_RUMBLE = reg("amb.rift_rumble");
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_GROVE = reg("amb.grove");
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_STAR_WHISTLE = reg("amb.star_whistle");
     public static final DeferredHolder<SoundEvent, SoundEvent> AMB_STAR_COOLING = reg("amb.star_cooling");

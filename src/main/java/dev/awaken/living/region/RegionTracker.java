@@ -1,6 +1,7 @@
 package dev.awaken.living.region;
 
 import dev.awaken.core.PlayDays;
+import dev.awaken.core.api.Notices;
 import dev.awaken.living.LivingNet;
 import dev.awaken.living.api.Regions;
 import dev.awaken.progression.Progression;
@@ -72,7 +73,7 @@ public final class RegionTracker {
         WARNED.put(p.getUUID(), now);
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("Danger · " + r.name()))
                 .body(Component.literal("Creatures here are level " + r.low() + " to " + r.high() + "."))
-                .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 6).build());
+                .presentation(SignalWindow.Presentation.TOAST).tier(Notices.Tier.IMPORTANT).topic("danger").ttl(20 * 6).build());
     }
 
     public static void forget(UUID id) {

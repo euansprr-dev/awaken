@@ -5,12 +5,13 @@
  "key": {
   "C": "#awaken:hunter_core_e",
   "X": "awaken:wildhide_blade",
-  "B": "#awaken:hunter_bind_e"
+  "B": "#awaken:hunter_bind_e",
+  "P": "awaken:rapier_blueprint"
  },
  "pattern": [
-  "X",
-  "B",
-  "C"
+  "XP",
+  "B ",
+  "C "
  ],
  "result": {
   "id": "awaken:wildhide_rapier"

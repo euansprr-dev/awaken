@@ -23,6 +23,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.Set;
 
@@ -78,13 +79,16 @@ public final class ArmsWeaves implements WeaveHooks.Weaver {
     @Override
     public float costScale(ServerPlayer player) {
         ArmsState s = player.getExistingDataOrNull(ArmsContent.STATE);
-        return s != null && inBeat(s, ArmsServer.now(player)) ? COST : 1F;
+        if (s == null) return 1F;
+        long now = ArmsServer.now(player);
+        return (inBeat(s, now) ? COST : 1F) * ArmsForge.costScale(s, now);
     }
 
     @Override
     public void cast(ServerPlayer p, String family, @Nullable String force, int level) {
         ArmsState s = p.getExistingDataOrNull(ArmsContent.STATE);
         long now = ArmsServer.now(p);
+        if (s != null) ArmsForge.cast(p, s, force, now);
         if (s == null || !inBeat(s, now)) return;
         PowerType.Family fam;
         try {
@@ -220,21 +224,22 @@ public final class ArmsWeaves implements WeaveHooks.Weaver {
      * What Arms remembers of a fighter (saved, kept through death): the Weaves woven (the Codex's Weaves page counts
      * them, never naming the rest), and how many Lords have fallen since the last Lord-forged weapon.
      */
-    public record ArmsMemory(int schemaVersion, Set<String> weaves, int lordsWithout) {
-        public static final int SCHEMA = 2; // 2: lordsWithout (the Lord-forged pity)
+    public record ArmsMemory(int schemaVersion, Set<String> weaves, int lordsWithout, Map<String, Integer> kills) {
+        public static final int SCHEMA = 3; // 2: lordsWithout (the Lord-forged pity); 3: kills by style (mastery)
         static final MapCodec<ArmsMemory> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
                 Codec.INT.optionalFieldOf("schemaVersion", SCHEMA).forGetter(ArmsMemory::schemaVersion),
                 Codec.STRING.listOf().xmap(l -> (Set<String>) new HashSet<>(l), st -> List.copyOf(st)).optionalFieldOf("weaves", Set.of())
                         .forGetter(ArmsMemory::weaves),
-                Codec.INT.optionalFieldOf("lordsWithout", 0).forGetter(ArmsMemory::lordsWithout)
-        ).apply(i, (v, w, l) -> new ArmsMemory(SCHEMA, new HashSet<>(w), l)));
+                Codec.INT.optionalFieldOf("lordsWithout", 0).forGetter(ArmsMemory::lordsWithout),
+                Codec.unboundedMap(Codec.STRING, Codec.INT).optionalFieldOf("kills", Map.of()).forGetter(ArmsMemory::kills)
+        ).apply(i, (v, w, l, k) -> new ArmsMemory(SCHEMA, new HashSet<>(w), l, new java.util.HashMap<>(k))));
 
         static ArmsMemory fresh() {
-            return new ArmsMemory(SCHEMA, new HashSet<>(), 0);
+            return new ArmsMemory(SCHEMA, new HashSet<>(), 0, new java.util.HashMap<>());
         }
 
         ArmsMemory withLordsWithout(int n) {
-            return new ArmsMemory(SCHEMA, weaves, n);
+            return new ArmsMemory(SCHEMA, weaves, n, kills);
         }
     }
 

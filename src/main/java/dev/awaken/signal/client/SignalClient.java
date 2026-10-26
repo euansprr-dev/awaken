@@ -2,6 +2,7 @@ package dev.awaken.signal.client;
 
 import dev.awaken.Awaken;
 import dev.awaken.core.AwakenConfig;
+import dev.awaken.core.api.Notices;
 import dev.awaken.signal.net.SignalPayloads;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -30,7 +31,12 @@ public final class SignalClient {
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> tick());
         NeoForge.EVENT_BUS.addListener(CustomizeGuiOverlayEvent.BossEventProgress.class, TrackerHud::onBossBar);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> clear());
+        // the player's own clicks and keys: what the server says right after answers them (SPEC §26.2)
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.InputEvent.InteractionKeyMappingTriggered.class, e -> Herald.acted());
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ScreenEvent.MouseButtonPressed.Post.class, e -> Herald.acted());
         SignalSections.register();
+        Journal.register();
+        Herald.install();
     }
 
     static boolean classic() {
@@ -55,7 +61,7 @@ public final class SignalClient {
                 RecentLog.add(msg.text());
                 ClassicHud.toast(msg.text(), Glass.EDGE);
             } else {
-                SystemHud.toast(msg.text(), Glass.EDGE);
+                SystemHud.toast(msg.text(), Glass.EDGE, Notices.Tier.byId(msg.tier()), msg.topic());
             }
         });
         event.register(SignalPayloads.Pending.TYPE, (msg, ctx) -> SystemHud.pending(msg.entries()));

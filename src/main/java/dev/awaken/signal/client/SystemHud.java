@@ -2,6 +2,7 @@ package dev.awaken.signal.client;
 
 import dev.awaken.core.AwakenConfig;
 import dev.awaken.core.CoreModule;
+import dev.awaken.core.api.Notices;
 import dev.awaken.core.client.AwakenKeys;
 import dev.awaken.signal.SignalWindow;
 import dev.awaken.signal.net.SignalPayloads;
@@ -89,32 +90,74 @@ public final class SystemHud {
 
     static void show(SignalWindow w) {
         RecentLog.add(w);
-        switch (effective(w)) {
+        SignalWindow.Presentation p = effective(w);
+        boolean critical = w.tier() == Notices.Tier.CRITICAL;
+        switch (p) {
             case CHOICE -> {
+                Herald.log("card", w.tier(), w.topic(), w.title().getString());
                 DECK.offer(w, w.ttlTicks());
+                Herald.took();
                 // a revelation that asks something ("Will you accept?") is also spoken in full beside its card
                 if (w.kind() == SignalWindow.Kind.REVELATION) STORIES.addLast(w);
             }
             case STORY -> {
                 STORIES.addLast(w);
                 while (STORIES.size() > MAX_STORIES) STORIES.removeFirst(); // kept in the log and the Codex
+                Herald.took();
             }
             case PANEL -> {
-                if (inCombat() || DECK.current() != null) BURST.offer(ticks, item(w));
-                else {
-                    PANELS.addLast(w);
-                    while (PANELS.size() > MAX_PANELS) PANELS.removeFirst();
+                if (!critical && !Herald.responding(w)) Herald.offer(w); // an info card is paced like a toast (SPEC §26)
+                else if (inCombat() || DECK.current() != null) BURST.offer(ticks, item(w));
+                else panelNow(w);
+            }
+            default -> {
+                // decisions' neighbours and answers to what the player just did show at once; the rest are paced
+                if (critical || Herald.responding(w)) {
+                    Herald.log(critical ? "critical" : "response", w.tier(), w.topic(), w.title().getString());
+                    BURST.offer(ticks, item(w));
+                    if (!critical) Herald.took();
+                } else {
+                    Herald.offer(w);
                 }
             }
-            default -> BURST.offer(ticks, item(w));
         }
         // a decision's card plays its own sound when it opens
         if (w.kind() == SignalWindow.Kind.WARNING && w.action().isEmpty()) play(CoreModule.SIGNAL_WARNING.get(), 0.6f);
     }
 
-    static void toast(Component text, int colour) {
+    static void toast(Component text, int colour, Notices.Tier tier, String topic) {
         RecentLog.add(text);
-        BURST.offer(ticks, new ToastItem(text.getString(), "", colour));
+        boolean response = tier == Notices.Tier.IMPORTANT && topic.isEmpty() && Herald.responding();
+        if (tier == Notices.Tier.CRITICAL || response) {
+            Herald.log(response ? "response" : "critical", tier, topic, text.getString());
+            BURST.offer(ticks, new ToastItem(text.getString(), "", colour));
+        }
+        else Herald.offer(text, tier, topic, colour);
+        if (response) Herald.took();
+    }
+
+    /** An info panel the director let through. */
+    static void panelNow(SignalWindow w) {
+        PANELS.addLast(w);
+        while (PANELS.size() > MAX_PANELS) PANELS.removeFirst();
+    }
+
+    /** Toasts the director let through: one, or several of a topic as one ("Mossback · +2"). */
+    static void toastNow(List<Herald.Item> items) {
+        if (items.size() == 1) {
+            Herald.Item i = items.get(0);
+            TOAST_WAIT.addLast(new ToastBurst.Out<>(List.of(new ToastItem(i.title(), i.detail(), i.colour()))));
+            return;
+        }
+        List<String> names = new ArrayList<>();
+        for (Herald.Item i : items) names.add(i.title());
+        Herald.Item first = items.get(0);
+        TOAST_WAIT.addLast(new ToastBurst.Out<>(List.of(new ToastItem(first.title() + " · +" + (items.size() - 1), String.join(" · ", names.subList(1, names.size())), first.colour()))));
+    }
+
+    /** A choice card or an info panel holds the card slot. */
+    static boolean cardUp() {
+        return DECK.current() != null || panel != null;
     }
 
     static void pending(List<SignalPayloads.PendingEntry> entries) {
@@ -189,6 +232,10 @@ public final class SystemHud {
     }
 
     static void clear() {
+        Herald.clear();
+        Journal.clear();
+        Moment.clear();
+        FindCue.clear();
         DECK.clear();
         BURST.clear();
         TOAST_WAIT.clear();
@@ -236,9 +283,12 @@ public final class SystemHud {
             cardAge++;
         }
 
+        Herald.tick(mc);
         tickToasts(mc);
         tickPanel();
         tickStory(mc);
+        Moment.tick();
+        FindCue.tick();
     }
 
     private static void tickToasts(Minecraft mc) {
@@ -448,6 +498,8 @@ public final class SystemHud {
         if (cur != null) slot = drawChoice(g, font, cur, sw, sh, s, pt);
         else if (panel != null) slot = drawPanel(g, font, panel, sw, sh, s, pt);
         if (story != null) drawStory(g, font, sw, sh, s, slot, pt);
+        Moment.render(g, dt);
+        FindCue.render(g, dt);
     }
 
     private static Rect drawChoice(GuiGraphicsExtractor g, Font font, ChoiceDeck.Choice c, int sw, int sh, double s, float pt) {

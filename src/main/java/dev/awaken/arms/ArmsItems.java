@@ -40,6 +40,14 @@ public final class ArmsItems {
     private static final Map<String, ArmsData.Weapon> BY_ID = ArmsData.WEAPONS.stream()
             .collect(Collectors.toUnmodifiableMap(ArmsData.Weapon::id, Function.identity()));
     static final List<DeferredItem<Item>> ALL = ArmsData.WEAPONS.stream().map(ArmsItems::register).toList();
+    /**
+     * The Blueprints, one for each style but the Longsword: drawn at the Forge (ArmsForge), laid in the crafting grid
+     * with a forged weapon's parts, and kept (each comes back out of the grid).
+     */
+    static final Map<String, DeferredItem<Item>> BLUEPRINTS = Archetypes.all().stream().map(Archetypes.Loaded::id)
+            .filter(id -> !id.equals(Arms.LONGSWORD))
+            .collect(Collectors.toUnmodifiableMap(id -> id, id -> ITEMS.registerItem(id + "_blueprint", BlueprintItem::new,
+                    p -> p.stacksTo(1).rarity(net.minecraft.world.item.Rarity.UNCOMMON))));
     private static final Map<String, DeferredItem<Item>> ITEM_BY_ID = ALL.stream()
             .collect(Collectors.toUnmodifiableMap(d -> d.getId().getPath(), Function.identity()));
 
@@ -107,6 +115,18 @@ public final class ArmsItems {
         return byId(BuiltInRegistries.ITEM.getKey(item));
     }
 
+    /** A Blueprint: the crafting grid gives it back (it is a drawing, not a part). */
+    static final class BlueprintItem extends Item {
+        BlueprintItem(Item.Properties p) {
+            super(p);
+        }
+
+        @Override
+        public net.minecraft.world.item.@Nullable ItemStackTemplate getCraftingRemainder(net.minecraft.world.item.ItemInstance instance) {
+            return new net.minecraft.world.item.ItemStackTemplate(this);
+        }
+    }
+
     static void register(IEventBus modBus) {
         ITEMS.register(modBus);
         modBus.addListener(ArmsItems::creativeTab);
@@ -115,5 +135,6 @@ public final class ArmsItems {
     private static void creativeTab(BuildCreativeModeTabContentsEvent event) {
         if (!event.getTabKey().equals(CoreModule.TAB_KEY)) return;
         for (DeferredItem<Item> item : ALL) event.accept(item.get());
+        BLUEPRINTS.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> event.accept(e.getValue().get()));
     }
 }

@@ -1,0 +1,347 @@
+{
+ "schemaVersion": 1,
+ "marks": [
+  {
+   "id": "bite",
+   "name": "Bite",
+   "trigger": "hit",
+   "effect": "rider",
+   "amount": 0.15
+  },
+  {
+   "id": "weight",
+   "name": "Weight",
+   "trigger": "hit",
+   "effect": "posture",
+   "amount": 2
+  },
+  {
+   "id": "leech",
+   "name": "Leech",
+   "trigger": "hit",
+   "effect": "heal",
+   "amount": 0.005
+  },
+  {
+   "id": "siphon",
+   "name": "Siphon",
+   "trigger": "hit",
+   "effect": "energy",
+   "amount": 1
+  },
+  {
+   "id": "flicker",
+   "name": "Flicker",
+   "trigger": "hit",
+   "effect": "swift",
+   "amount": 20
+  },
+  {
+   "id": "bark",
+   "name": "Bark",
+   "trigger": "hit",
+   "effect": "ward",
+   "amount": 20
+  },
+  {
+   "id": "crescendo",
+   "name": "Crescendo",
+   "trigger": "finisher",
+   "effect": "rider",
+   "amount": 0.5,
+   "force": "CHARGE"
+  },
+  {
+   "id": "hammerfall",
+   "name": "Hammerfall",
+   "trigger": "finisher",
+   "effect": "posture",
+   "amount": 8
+  },
+  {
+   "id": "second_wind",
+   "name": "Second Wind",
+   "trigger": "finisher",
+   "effect": "heal",
+   "amount": 0.02
+  },
+  {
+   "id": "overflow",
+   "name": "Overflow",
+   "trigger": "finisher",
+   "effect": "energy",
+   "amount": 4
+  },
+  {
+   "id": "tempo",
+   "name": "Tempo",
+   "trigger": "finisher",
+   "effect": "swift",
+   "amount": 40
+  },
+  {
+   "id": "bulwark_chord",
+   "name": "Bulwark Chord",
+   "trigger": "finisher",
+   "effect": "ward",
+   "amount": 60
+  },
+  {
+   "id": "counterspark",
+   "name": "Counterspark",
+   "trigger": "deflect",
+   "effect": "rider",
+   "amount": 0.8,
+   "force": "CHARGE"
+  },
+  {
+   "id": "rebuke",
+   "name": "Rebuke",
+   "trigger": "deflect",
+   "effect": "posture",
+   "amount": 10
+  },
+  {
+   "id": "mercy",
+   "name": "Mercy",
+   "trigger": "deflect",
+   "effect": "heal",
+   "amount": 0.04
+  },
+  {
+   "id": "echo_return",
+   "name": "Echo Return",
+   "trigger": "deflect",
+   "effect": "energy",
+   "amount": 6
+  },
+  {
+   "id": "sidestep_grace",
+   "name": "Sidestep Grace",
+   "trigger": "deflect",
+   "effect": "swift",
+   "amount": 60
+  },
+  {
+   "id": "parry_ward",
+   "name": "Parry Ward",
+   "trigger": "deflect",
+   "effect": "ward",
+   "amount": 60
+  },
+  {
+   "id": "phantom_cut",
+   "name": "Phantom Cut",
+   "trigger": "perfect_dodge",
+   "effect": "rider",
+   "amount": 0.6,
+   "force": "SPIRIT"
+  },
+  {
+   "id": "unbalance",
+   "name": "Unbalance",
+   "trigger": "perfect_dodge",
+   "effect": "posture",
+   "amount": 8
+  },
+  {
+   "id": "second_breath",
+   "name": "Second Breath",
+   "trigger": "perfect_dodge",
+   "effect": "heal",
+   "amount": 0.03
+  },
+  {
+   "id": "updraft",
+   "name": "Updraft",
+   "trigger": "perfect_dodge",
+   "effect": "energy",
+   "amount": 5
+  },
+  {
+   "id": "windrunner",
+   "name": "Windrunner",
+   "trigger": "perfect_dodge",
+   "effect": "swift",
+   "amount": 60
+  },
+  {
+   "id": "veil_step",
+   "name": "Veil Step",
+   "trigger": "perfect_dodge",
+   "effect": "ward",
+   "amount": 50
+  },
+  {
+   "id": "sunder",
+   "name": "Sunder",
+   "trigger": "break",
+   "effect": "rider",
+   "amount": 1.0,
+   "force": "GRAVITY"
+  },
+  {
+   "id": "long_fall",
+   "name": "Long Fall",
+   "trigger": "break",
+   "effect": "posture",
+   "amount": 15
+  },
+  {
+   "id": "reaping_gift",
+   "name": "Reaping Gift",
+   "trigger": "break",
+   "effect": "heal",
+   "amount": 0.05
+  },
+  {
+   "id": "shatterlight",
+   "name": "Shatterlight",
+   "trigger": "break",
+   "effect": "energy",
+   "amount": 8
+  },
+  {
+   "id": "hunters_pace",
+   "name": "Hunter's Pace",
+   "trigger": "break",
+   "effect": "swift",
+   "amount": 60
+  },
+  {
+   "id": "spoils_of_iron",
+   "name": "Spoils of Iron",
+   "trigger": "break",
+   "effect": "ward",
+   "amount": 80
+  },
+  {
+   "id": "chain_reaction",
+   "name": "Chain Reaction",
+   "trigger": "kill",
+   "effect": "rider",
+   "amount": 0.6,
+   "force": "HEAT"
+  },
+  {
+   "id": "dread",
+   "name": "Dread",
+   "trigger": "kill",
+   "effect": "posture",
+   "amount": 10
+  },
+  {
+   "id": "feast",
+   "name": "Feast",
+   "trigger": "kill",
+   "effect": "heal",
+   "amount": 0.04
+  },
+  {
+   "id": "harvest",
+   "name": "Harvest",
+   "trigger": "kill",
+   "effect": "energy",
+   "amount": 6
+  },
+  {
+   "id": "momentum",
+   "name": "Momentum",
+   "trigger": "kill",
+   "effect": "swift",
+   "amount": 80
+  },
+  {
+   "id": "trophy_shell",
+   "name": "Trophy Shell",
+   "trigger": "kill",
+   "effect": "ward",
+   "amount": 80
+  },
+  {
+   "id": "thorns",
+   "name": "Thorns",
+   "trigger": "guard",
+   "effect": "rider",
+   "amount": 0.3
+  },
+  {
+   "id": "stonewall",
+   "name": "Stonewall",
+   "trigger": "guard",
+   "effect": "posture",
+   "amount": 5
+  },
+  {
+   "id": "steady_breath",
+   "name": "Steady Breath",
+   "trigger": "guard",
+   "effect": "heal",
+   "amount": 0.015
+  },
+  {
+   "id": "stored_force",
+   "name": "Stored Force",
+   "trigger": "guard",
+   "effect": "energy",
+   "amount": 2
+  },
+  {
+   "id": "riposte_haste",
+   "name": "Riposte Haste",
+   "trigger": "guard",
+   "effect": "swift",
+   "amount": 30
+  },
+  {
+   "id": "bastion",
+   "name": "Bastion",
+   "trigger": "guard",
+   "effect": "ward",
+   "amount": 30
+  },
+  {
+   "id": "thunderclap",
+   "name": "Thunderclap",
+   "trigger": "perfect_heavy",
+   "effect": "rider",
+   "amount": 0.7,
+   "force": "CHARGE"
+  },
+  {
+   "id": "earthsplitter",
+   "name": "Earthsplitter",
+   "trigger": "perfect_heavy",
+   "effect": "posture",
+   "amount": 10
+  },
+  {
+   "id": "lifesong",
+   "name": "Lifesong",
+   "trigger": "perfect_heavy",
+   "effect": "heal",
+   "amount": 0.03
+  },
+  {
+   "id": "overcharge",
+   "name": "Overcharge",
+   "trigger": "perfect_heavy",
+   "effect": "energy",
+   "amount": 5
+  },
+  {
+   "id": "follow_through",
+   "name": "Follow-through",
+   "trigger": "perfect_heavy",
+   "effect": "swift",
+   "amount": 50
+  },
+  {
+   "id": "iron_skin",
+   "name": "Iron Skin",
+   "trigger": "perfect_heavy",
+   "effect": "ward",
+   "amount": 60
+  }
+ ]
+}

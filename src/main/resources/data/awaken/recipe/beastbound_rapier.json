@@ -5,12 +5,13 @@
  "key": {
   "C": "#awaken:hunter_core_d",
   "X": "awaken:beastbound_blade",
-  "B": "#awaken:hunter_bind_d"
+  "B": "#awaken:hunter_bind_d",
+  "P": "awaken:rapier_blueprint"
  },
  "pattern": [
-  "X",
-  "B",
-  "C"
+  "XP",
+  "B ",
+  "C "
  ],
  "result": {
   "id": "awaken:beastbound_rapier"
