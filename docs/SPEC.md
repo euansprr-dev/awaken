@@ -5098,134 +5098,6 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   phase F.
 - Test: `progression_capability_clock`.
 
-## 28. Between the Gates (home, people, below; plan docs/world-depth/PLAN.md, page https://claude.ai/artifact/ATZfZSczLg95kNSgnLF42M; Euan approved all of it 2026-10-26)
-
-Euan, 2026-10-26: "Go ahead with all recommendations." PLAN.md is the long form and its audits (`docs/world-depth/
-audit-*.md`) are the facts it was designed against; this section is what builders hold to. (§27 is The Way Forward, on
-pack/progression.)
-
-### 28.0 Decisions (approved)
-1. The Hearth starts on the first evening: Ilse gives the **Hearth Ember** at the Wayfarer camp (the end of The Way
-   Forward's first thread); setting it down founds a **Tier 0 Hearthfire** (radius 24). The Lord's Heart still makes the
-   Anchor (Tier I) on that fire.
-2. The Hearth reads what you build: every closed room read on six readings (closed, light, warmth, room to live, made
-   with care, detail and comfort; best of each kind counts), graded Bare / Snug / Fine / Grand (the average, never more
-   than one step above the weakest), named (grade, main material, purpose, or a sign inside), its name shown once as an
-   AMBIENT caption; the glance reads the room you stand in; Comfort sets Rested; rooms do things (PLAN 4.6); people move
-   in when you know them, a spare Snug bedroom stands and their trade has its room.
-3. AWAKEN's own settlements replace vanilla villages in new worlds (hamlet, village, town, special kinds), built on
-   Carillon's people engine made multi-settlement (with the Carillon session) and the city's grammar, with interiors
-   (shared with Carillon B4); the first hamlet placed on purpose 700-1,100 from Carillon up the camp road.
-4. Village people are citizens, not vanilla villagers; vanilla villagers leave new worlds (iron farms and trading halls
-   with them); a town scribe sells enchanted books.
-5. The emerald is the coin of the world; Carillon's planned bell marks are dropped; `EconomyHooks` is installed with it.
-6. Troubles: caused by world state, found never listed, ≤ 1 per village and ≤ 2 within 1,500 of a player, none in a
-   world's first two hours or inside a Hearth; missable with a lasting cost, never a dead end or a named death; always
-   paid; world option "calm villages". Launch set of eight (PLAN 6.3).
-7. Hide from the hunt, metal from the deep, light from the gates: from D up every forged weapon, Hunter armour piece and
-   mattock needs its tier's mineral with no alternative: D iron, C diamond, B amethyst + Deepglass, A netherite,
-   S starmetal; E stays hide and bone. Gatewrought rises to 20 armour and 2.0 toughness.
-8. Gates pay no raw ore beyond their theme's flavour; the gate market stops selling diamonds; the Mine Echo works a real
-   mine head (W6) instead of rolling dice.
-9. New finds: Deepglass (seeps below y 0 and the Descent's walls; diamond edge to cut), starmetal (fallen stars), bell
-   bronze (copper + amethyst), lodes with a heart (vanilla ores in 20-120-block veins). The Lands' crystals become
-   attunement catalysts (Heat Sunshard, Frost Frostspar, Gravity Fault Seam; Charge copper; Spirit Deepglass); lapis is
-   ink (Blueprints: 4 paper, 1 lapis, 1 essence).
-10. Mining's feel: every ore its own strike sound, sparks, a hit on the last blow; the vein gives when a heart breaks;
-    the charged heavy strike (bore three along the aim); rare, warned cave-ins (never in a Hearth or on placed blocks);
-    the Tuning Fork, pitons and Runner's rope, the miner's lamp, rope fittings (W5).
-11. Caves: vanilla's generator stays; cave places (sinkholes, the Delvers' mines, seeps, chutes, grottos, joined lairs,
-    vents), the rappel (with the Ascent), cave sound and Lens looks, names, a way home; every place has a route that
-    needs no rope and passes M44's five tests (a rule, a resource, a sensory set, a story entrance, a route).
-12. This plan takes Living Wilds G (settlers, your named village, roads) and F's underground secrets and treasure maps;
-    Living Wilds F keeps wonders and legendary beasts.
-13. Order: W1 and W2 now as two builders; then W0 and W3 with Carillon, W5 alongside; W4, W6; W7 last.
-
-### 28.1 Phases and who touches what (keep two builders off the same files)
-| Phase | Owns (writes) | Reads / asks |
-|---|---|---|
-| **W1 The carried flame** | `hearth/**` (the Ember, Tier 0, the reading, room kinds of PLAN 4.6 except the Mine head, the room glance's data, Comfort, Rested, chests-at-home crafting, the 4.9 fixes, a coal per temper in `hearth/Upgrades`), `src/main/merge/hearth/`, the Ember's line and reward in `data/awaken/awaken/quest/the_last_delivery.json` (agreed with the progression session, which builds the first thread), the room glance's client panel | `core.api.Notices` (captions), `Progression.addPerkSource` (Rested: `awaken:energy_regen`, `awaken:craft_rate`), The Way Forward's glance when it exists |
-| **W2 Metal from the deep** | new module `delve` (`dev.awaken.delve`, `src/main/merge/delve/`): lodes and hearts, Deepglass, starmetal, bell bronze, the strike's feel (client), Tuning Fork, pitons and Runner's rope, miner's lamp; tier metals in `gear/**` and Arms' rows and recipes (agreed with the Arms session); `arms/ArmsForge` catalysts and Blueprints; `gates/run/Loot.java`, `gates/run/Rooms.java` (handouts); ore XP in `progression/ProgressionModule.java`; `living/craft/**` and `living/client/CraftFx.java` (Mining craft fixes, reading `awaken:craft_rate`); fallen-star loot; Deepglass in `descent/world/Palette.java` | nothing of W1's |
-| W0, W3 | `citizens`, `city` (with Carillon); new module `village` | |
-| W4 | `village`; `living/pulse`, `living/camp` targets (with Living Wilds) | |
-| W5 | `delve` cave places; `body/ascent` rappel and rope fittings (with the Ascent); Lens looks; core audio's cave soundscape | |
-| W6 | `hearth` settlers, tiers by reading, the Mine head and the Mine Echo's rework, the named village, the kit craftable | |
-| W7 | `village` roads, inns, towns | |
-
-Shared ids (fixed now so parallel builders agree): items `awaken:hearth_ember`, `awaken:deepglass` (the block's item),
-`awaken:deepglass_shard`, `awaken:raw_starmetal`, `awaken:starmetal_ingot`, `awaken:bell_bronze_ingot`,
-`awaken:tuning_fork`, `awaken:piton`, `awaken:runner_rope`, `awaken:miners_lamp`; tags `#awaken:tier_metal_<d|c|b|a|s>`
-(the signature minerals, used by gear and Arms recipes); perks `awaken:craft_rate` (a craft-XP multiplier, read by
-`living.craft`) and the existing `awaken:energy_regen`; test prefixes `hearth_` (W1) and `delve_` (W2).
-
-Wired after both W1 and W2 merge (one small follow-up, never inside either phase, so neither builder edits the
-other's files): the Study halves the Blueprints' paper (`arms/ArmsForge`), the Greenhouse triples herb ripeness
-(`living/craft/Herbs`). W2 reads the perk `awaken:craft_rate` by its id, so Rested's craft bonus needs no wiring.
-
-### 28.2 W1 as built
-(The W1 builder writes this subsection.)
-
-### 28.3 W2 as built
-(The W2 builder writes this subsection.)
-
-### 28.4 W0 as built (many settlements, 2026-10-26)
-Carillon's people engine (`dev.awaken.citizens`) is one engine with many settlements; Carillon is settlement 0 and
-behaves as before (its `citizens_` and `city_` tests unchanged in what they assert).
-- **Settlements.** `citizens.Settlement` is one place's people: its `Site` (origin, districts and names, ground, water,
-  tagged lots), roster, street graph (`StreetNet`), saved state (`CitizensData`), `Ledger`, `CitizenWork`, `CityEvents`,
-  `Recognition`, `Lanterns`. `citizens.Citizens` is the per-server registry that replaces the `Citizens.active`
-  singleton: it starts Carillon on the first tick after the city exists (jar roster, CityData or plan graph, plan hash
-  check), registers the others, and each tick runs every settlement's ledger, then the crowd once, then every
-  settlement's work, events and memory. Overworld only.
-- **One body pool.** `Crowd` is one per world: every 10 ticks it gathers every settlement's candidates, sorts them
-  nearest first whichever settlement they belong to, and applies the caps once (40 a player, 96 a world, 8 spawns a
-  pass); path slots (4, 6 above 60 bodies) and the next-hop bake budget (3 a tick, `StreetNet.newServerTick`) are shared
-  the same way. `CitizenBody` carries its settlement (`home`, synced `DATA_SETTLEMENT`; 0 Carillon).
-- **Saved data v2.** `awaken:citizens` (`CitizensSave`, schemaVersion 2) is a list of `{key, id, schemaVersion 1,
-  records, districts, data}`; `data` is the per-settlement `CitizensData` exactly as schema 1 wrote it (safety and
-  gratitude sized by the settlement's own district count). A schemaVersion 1 file (Carillon's alone) is read as entry
-  `carillon` #0 and written back as v2. Ids: Carillon 0, others from 1 in order of first registration, kept by key,
-  never reused. Entries of settlements not running this session are kept.
-- **Coordinates.** Each settlement has an origin (x, street y, z); its roster and graph are offsets from it; node y is
-  per node as before. `Site.ground(x, z)` replaces the plan's lift (Carillon: the plan; built: the nearest node's y).
-- **Rosters from code.** `citizens.api.RosterSource` (`jar()` is Carillon's); `citizens.api.RosterBuilder` lays out a
-  settlement in code and writes its roster in citizens.json's shape (schema 1, plus `extraCount`: how many event actors
-  follow the citizens; absent = Carillon's 8), parsed by `Roster.parse`; its sha256 ties the saved records as the jar's
-  does. The builder checks indices at registration (`Citizens.check`). The test hamlet (`SettlementTests.hamlet`) is the
-  smallest example; W3 writes the village builder on it.
-- **Events and work by tag.** Events pick by `Site` tags: `fire` (a lot that is a house with a door; Carillon: the Works'
-  houses), `cart` (a lane a cart can spill across; Carillon: the Quay's), `stall` (Carillon: the Market's). Each reports
-  in `Site.districtFor(tag, …)`'s district (Carillon: the tag's district, so its safety, news and lines are as before;
-  others: where it happened). Burglaries need households and an event actor, pickpockets a stall; bucket lines draw on
-  `Site.water` (a built settlement's water cells: its well). The gate tremor, the opening's posts, the Bell Bridge, the
-  crier's wilds news, chimneys and the Site packet stay Carillon's. Planned daily events run only where the spec asks
-  (`plannedEvents`: Carillon yes; villages no until W4's director); started events work in any settlement.
-- **Names and memory per settlement.** Each settlement's `CitizensData` holds its own memories; `{district}`, deeds'
-  districts and the crier read its `Site` names (a built settlement's district 0 is its own name). Its standing tiers
-  need a quarter of its people where that is fewer than Carillon's 30 and 24 (a hamlet of six: two). `RenownHooks.tier`
-  stays Carillon's; `RenownHooks.witness` and `CitizenHooks.witnesses` reach every awake settlement within reach
-  (citizen UUIDs: Carillon's unchanged, others `awaken:citizen/<key>/<rec>`). A stolen bag remembers its settlement.
-- **Skins.** A body outside Carillon wears a Carillon skin picked by hash of (key, record) from those of its job, age
-  class and build, else residents', else anyone's (`citizens.Looks`), synced as `DATA_LOOK`; its name and job reach the
-  client as `DATA_LABEL` (no village roster on the client). No dogs follow them.
-- **Predicates.** Carillon's spawn rule, civic repairs and lamps' monster rule stay Carillon's (`CityHooks`); a
-  settlement exposes `inside(pos)` (Carillon: the plan's inside; built: its radius).
-- **Sleeping.** A settlement other than Carillon ticks only while a player is within radius + 192 (it sleeps again past
-  + 256); waking (and re-registering a saved one) seats everyone where the hour wants them (`Ledger.reseat`, like a
-  clock jump), so a world of villages costs only the ones near players.
-- **Also.** Citizens' payloads go through `AwakenNet.send` (a test or fake player is skipped, not thrown at); the hurt
-  go home where a settlement has no infirmary; `/awaken citizens settlements` lists them and the pool.
-- **API** (§12): `dev.awaken.citizens.api.Settlements`, `Settlement`, `SettlementSpec`, `RosterSource`, `RosterBuilder`.
-- **Tests:** `citizens_many_settlements` (the hamlet beside Carillon's engine: shared caps nearest first, come and go,
-  sleep and wake, events by tag, both saved and read back; logs the costs), `citizens_save_v1_loads`.
-- **Left for W3:** the village builder on `RosterBuilder` (households from plots, jobs from stations, day templates,
-  village jobs appended to `Roster.JOBS`), village speech pools and soundscape beds (Soundscape is Carillon's),
-  chimneys and client life for built settlements (`CitizenWork.chimneys` reads Carillon's plan), village skins if the
-  Carillon pool reads wrong, station furniture (`CitizenWork.furnish` places a smithy's anvil and a wash tub once, in
-  loaded chunks, over air: W3's painter may place them itself), and a re-sent lamp list on re-registration (appended
-  twice on clients).
-
-
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 28. Between the Gates (home, people, below; plan docs/world-depth/PLAN.md, page https://claude.ai/artifact/ATZfZSczLg95kNSgnLF42M; Euan approved all of it 2026-10-26)
@@ -5531,6 +5403,69 @@ diamond: a diamond lode found every ~50 deep minutes with the fork, every ~150 w
 **Not done in W2** (left for later phases or a follow-up): the deep's soundscape below y 0 ("the deep presses") is W5's
 cave audio; the rope fittings and rappel are W5's; the Mine head and the Mine Echo's rework are W6's; the Tuning Fork
 from the hamlet's smith waits for villages (W3), it's craftable now; no zip line (above).
+
+### 28.4 W0 as built (many settlements, 2026-10-26)
+Carillon's people engine (`dev.awaken.citizens`) is one engine with many settlements; Carillon is settlement 0 and
+behaves as before (its `citizens_` and `city_` tests unchanged in what they assert).
+- **Settlements.** `citizens.Settlement` is one place's people: its `Site` (origin, districts and names, ground, water,
+  tagged lots), roster, street graph (`StreetNet`), saved state (`CitizensData`), `Ledger`, `CitizenWork`, `CityEvents`,
+  `Recognition`, `Lanterns`. `citizens.Citizens` is the per-server registry that replaces the `Citizens.active`
+  singleton: it starts Carillon on the first tick after the city exists (jar roster, CityData or plan graph, plan hash
+  check), registers the others, and each tick runs every settlement's ledger, then the crowd once, then every
+  settlement's work, events and memory. Overworld only.
+- **One body pool.** `Crowd` is one per world: every 10 ticks it gathers every settlement's candidates, sorts them
+  nearest first whichever settlement they belong to, and applies the caps once (40 a player, 96 a world, 8 spawns a
+  pass); path slots (4, 6 above 60 bodies) and the next-hop bake budget (3 a tick, `StreetNet.newServerTick`) are shared
+  the same way. `CitizenBody` carries its settlement (`home`, synced `DATA_SETTLEMENT`; 0 Carillon).
+- **Saved data v2.** `awaken:citizens` (`CitizensSave`, schemaVersion 2) is a list of `{key, id, schemaVersion 1,
+  records, districts, data}`; `data` is the per-settlement `CitizensData` exactly as schema 1 wrote it (safety and
+  gratitude sized by the settlement's own district count). A schemaVersion 1 file (Carillon's alone) is read as entry
+  `carillon` #0 and written back as v2. Ids: Carillon 0, others from 1 in order of first registration, kept by key,
+  never reused. Entries of settlements not running this session are kept.
+- **Coordinates.** Each settlement has an origin (x, street y, z); its roster and graph are offsets from it; node y is
+  per node as before. `Site.ground(x, z)` replaces the plan's lift (Carillon: the plan; built: the nearest node's y).
+- **Rosters from code.** `citizens.api.RosterSource` (`jar()` is Carillon's); `citizens.api.RosterBuilder` lays out a
+  settlement in code and writes its roster in citizens.json's shape (schema 1, plus `extraCount`: how many event actors
+  follow the citizens; absent = Carillon's 8), parsed by `Roster.parse`; its sha256 ties the saved records as the jar's
+  does. The builder checks indices at registration (`Citizens.check`). The test hamlet (`SettlementTests.hamlet`) is the
+  smallest example; W3 writes the village builder on it.
+- **Events and work by tag.** Events pick by `Site` tags: `fire` (a lot that is a house with a door; Carillon: the Works'
+  houses), `cart` (a lane a cart can spill across; Carillon: the Quay's), `stall` (Carillon: the Market's). Each reports
+  in `Site.districtFor(tag, …)`'s district (Carillon: the tag's district, so its safety, news and lines are as before;
+  others: where it happened). Burglaries need households and an event actor, pickpockets a stall; bucket lines draw on
+  `Site.water` (a built settlement's water cells: its well). The gate tremor, the opening's posts, the Bell Bridge, the
+  crier's wilds news, chimneys and the Site packet stay Carillon's. Planned daily events run only where the spec asks
+  (`plannedEvents`: Carillon yes; villages no until W4's director); started events work in any settlement.
+- **Names and memory per settlement.** Each settlement's `CitizensData` holds its own memories; `{district}`, deeds'
+  districts and the crier read its `Site` names (a built settlement's district 0 is its own name). Its standing tiers
+  need a quarter of its people where that is fewer than Carillon's 30 and 24 (a hamlet of six: two). `RenownHooks.tier`
+  stays Carillon's; `RenownHooks.witness` and `CitizenHooks.witnesses` reach every awake settlement within reach
+  (citizen UUIDs: Carillon's unchanged, others `awaken:citizen/<key>/<rec>`). A stolen bag remembers its settlement.
+- **Skins.** A body outside Carillon wears a Carillon skin picked by hash of (key, record) from those of its job, age
+  class and build, else residents', else anyone's (`citizens.Looks`), synced as `DATA_LOOK`; its name and job reach the
+  client as `DATA_LABEL` (no village roster on the client). No dogs follow them.
+- **Predicates.** Carillon's spawn rule, civic repairs and lamps' monster rule stay Carillon's (`CityHooks`); a
+  settlement exposes `inside(pos)` (Carillon: the plan's inside; built: its radius).
+- **Sleeping.** A settlement other than Carillon ticks only while a player is within radius + 192 (it sleeps again past
+  + 256); waking (and re-registering a saved one) seats everyone where the hour wants them (`Ledger.reseat`, like a
+  clock jump), so a world of villages costs only the ones near players.
+- **Also.** Citizens' payloads go through `AwakenNet.send` (a test or fake player is skipped, not thrown at); the hurt
+  go home where a settlement has no infirmary; `/awaken citizens settlements` lists them and the pool.
+- **API** (§12): `dev.awaken.citizens.api.Settlements`, `Settlement`, `SettlementSpec`, `RosterSource`, `RosterBuilder`.
+- **Measured** (GameTest: Carillon's plan with 40 bodies round one player at its square at noon, 600 ticks; the old
+  code's probe and this one run side by side at machine load ~19 from other builds): ledger p50 0.014 ms before, 0.021
+  after for Carillon alone and 0.017 with the hamlet beside it (the hamlet's own ledger 0.0009 ms a tick); bodies (40)
+  p50 1.78 ms before, 2.53 after alone and 3.15 with the hamlet (per-body work is the same code; at that load single
+  windows spread 2-5x run to run: an earlier pair read 0.96 at load 9 and 4.67 at load 21). The quiet in-game measure
+  stays with Carillon's next perf tour.
+- **Tests:** `citizens_many_settlements` (the hamlet beside Carillon's engine: shared caps nearest first, come and go,
+  sleep and wake, events by tag, both saved and read back; logs the costs), `citizens_save_v1_loads`.
+- **Left for W3:** the village builder on `RosterBuilder` (households from plots, jobs from stations, day templates,
+  village jobs appended to `Roster.JOBS`), village speech pools and soundscape beds (Soundscape is Carillon's),
+  chimneys and client life for built settlements (`CitizenWork.chimneys` reads Carillon's plan), village skins if the
+  Carillon pool reads wrong, station furniture (`CitizenWork.furnish` places a smithy's anvil and a wash tub once, in
+  loaded chunks, over air: W3's painter may place them itself), and a re-sent lamp list on re-registration (appended
+  twice on clients).
 
 ---------------------------------------------------------------------------------------------------------------------
 
