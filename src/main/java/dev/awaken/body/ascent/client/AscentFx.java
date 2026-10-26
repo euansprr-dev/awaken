@@ -26,6 +26,8 @@ final class AscentFx {
         int entity;
         double x, y, z, nx, ny, nz;
         int age, life;
+        /** A rope's line (RopeKit.LINE_*), for its look as it falls away. */
+        int line;
         float size;
     }
 
@@ -93,6 +95,39 @@ final class AscentFx {
         }
     }
 
+    private static final net.minecraft.core.BlockPos.MutableBlockPos GRIT_AT = new net.minecraft.core.BlockPos.MutableBlockPos();
+
+    /**
+     * Grit knocked off a wall by the feet (the rappel's kick and its landing back on the rock): the rock's own colour,
+     * dulled toward dust, lit by the world (it's stone, not light), thrown out along the wall's normal (nx, nz) and
+     * falling.
+     */
+    static void grit(Entity who, double x, double y, double z, double nx, double nz, int count) {
+        if (!(who.level() instanceof ClientLevel level)) return;
+        RandomSource r = level.getRandom();
+        GRIT_AT.set(net.minecraft.util.Mth.floor(x - nx * 0.3), net.minecraft.util.Mth.floor(y), net.minecraft.util.Mth.floor(z - nz * 0.3));
+        var s = level.getBlockState(GRIT_AT);
+        int col = s.isAir() ? 0x8A8378 : s.getMapColor(level, GRIT_AT).col;
+        if (col == 0) col = 0x8A8378;
+        int tint = (((col >> 16) & 255) * 7 / 10 + 0x8E * 3 / 10) << 16 | (((col >> 8) & 255) * 7 / 10 + 0x88 * 3 / 10) << 8
+                | ((col & 255) * 7 / 10 + 0x7C * 3 / 10);
+        for (int i = 0; i < count; i++) {
+            MoteParticle.nextGrit(tint, 0.9F + r.nextFloat() * 0.6F, 14 + r.nextInt(8), 0.7F);
+            level.addParticle(dev.awaken.body.ascent.AscentContent.MOTE.get(), x + (r.nextDouble() - 0.5) * 0.4, y + r.nextDouble() * 0.3,
+                    z + (r.nextDouble() - 0.5) * 0.4, nx * (0.05 + r.nextDouble() * 0.08) + (r.nextDouble() - 0.5) * 0.06,
+                    0.02 + r.nextDouble() * 0.05, nz * (0.05 + r.nextDouble() * 0.08) + (r.nextDouble() - 0.5) * 0.06);
+        }
+    }
+
+    /** A Deepglass line paying out: a violet glint shed where the rope runs through the hand, drifting off it. */
+    static void glint(Entity who, double x, double y, double z) {
+        if (!(who.level() instanceof ClientLevel level)) return;
+        RandomSource r = level.getRandom();
+        MoteParticle.next(r.nextInt(3) == 0 ? 0xF4ECFF : 0xB48CFF, 0.45F + r.nextFloat() * 0.3F, 9 + r.nextInt(6), -0.01F, false);
+        level.addParticle(dev.awaken.body.ascent.AscentContent.MOTE.get(), x, y, z, (r.nextDouble() - 0.5) * 0.03, 0.02 + r.nextDouble() * 0.02,
+                (r.nextDouble() - 0.5) * 0.03);
+    }
+
     /** A rope let go: it stays on its anchor and falls away from where the hand was, fading (the follow-through). */
     static void loose(int entityId, double ax, double ay, double az) {
         Minecraft mc = Minecraft.getInstance();
@@ -100,6 +135,8 @@ final class AscentFx {
         if (e == null) return;
         Shot s = shot(LOOSE, 9);
         s.entity = entityId;
+        AscentRemote.Slot slot = e == mc.player ? null : AscentRemote.of(entityId);
+        s.line = e == mc.player ? AscentMoves.kitLine : slot == null ? 0 : slot.kit & 3;
         s.x = ax;
         s.y = ay;
         s.z = az;

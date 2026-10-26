@@ -10,6 +10,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CaveVinesBlock;
 import net.minecraft.world.level.block.LanternBlock;
 import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.MultifaceBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
@@ -26,6 +27,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * (Waystone + straw bed) and the pit to the next stratum. Forms add their own shapes: hanging islands, flooded halls,
  * giant ribs, silent corridors, machine halls, an open sea cavern, shifting dream rooms, a black court and the Seed.
  *
+ * <p>The forms with tunnels (1, 2, 3, 4, 8, 10) dress them (SPEC §28.5; PLAN 8.5, a mining job for the strata): seams
+ * of Deepglass (the stratum's best ore in the Rim and the Gardens, which the Deep doesn't reach) run in level bands along
+ * the tunnels' walls and a few blocks into the rock, in patches, so a seam is something to follow; and
+ * {@link #GROTTOS} small grottos open off the tunnels, each a pocket with a glowing pool, glow lichen, Deepglass growing
+ * from its floor and roof and glittering in its walls, half of them with a cache from the stratum's own loot table.
+ *
  * <p>Thread-safe: instances are immutable after construction; scratch buffers are per thread. Cost is a few ms per
  * chunk (coarse 4x8x4 noise lattice, trilinear interpolation, no per-block allocation).
  */
@@ -34,7 +41,7 @@ public final class Terrain {
     public final long seed;
     final Palette pal;
 
-    private final SimplexNoise n1, n2;
+    private final SimplexNoise n1, n2, n3;
     // Shape
     final boolean square;
     final int rTop, rBottom, helixR, pitch, helixW, maxR;
@@ -46,6 +53,9 @@ public final class Terrain {
     private final double[][] trunks;   // x, z, height, radius
     private final double[][] veins;    // x0,y0,z0,x1,y1,z1
     private final List<BlockPos> caches = new ArrayList<>();
+    private final Grotto[] grottos;
+    /** The tunnels' seam, and what grows in a grotto. */
+    final BlockState seam, crystal;
 
     // States
     private final BlockState AIR = Blocks.AIR.defaultBlockState();
@@ -61,6 +71,20 @@ public final class Terrain {
     private final BlockState BONE_Y = Blocks.BONE_BLOCK.defaultBlockState();
     private final BlockState BONE_X = Blocks.BONE_BLOCK.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.X);
     private final BlockState BONE_Z = Blocks.BONE_BLOCK.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.Z);
+    private final BlockState LICHEN_UP = Blocks.GLOW_LICHEN.defaultBlockState().setValue(MultifaceBlock.getFaceProperty(Direction.UP), true);
+    private final BlockState LICHEN_DOWN = Blocks.GLOW_LICHEN.defaultBlockState().setValue(MultifaceBlock.getFaceProperty(Direction.DOWN), true);
+
+    // Tunnels and their dressing (SPEC §28.5)
+    /** A tunnel is where both cave noises are under this. */
+    static final float TUNNEL = 0.085F;
+    /** Seams run this far past a tunnel's edge in noise (about two to three blocks of rock). */
+    static final float SEAM_SHELL = 0.12F;
+    /** Seam patches: where the patch noise is over this (about a quarter of the stratum). */
+    static final float SEAM_PATCH = 0.22F;
+    /** A seam band every this many blocks up, this thick each side of its middle (1-2 blocks). */
+    static final double SEAM_EVERY = 12, SEAM_HALF = 0.8;
+    /** Grottos a stratum with tunnels holds. */
+    public static final int GROTTOS = 5;
 
     // Gallery levels
     static final int[] HALLS_3 = {44, 94, 144};
@@ -93,6 +117,7 @@ public final class Terrain {
         this.pal = Palette.of(form);
         this.n1 = new SimplexNoise(new XoroshiroRandomSource(seed ^ 0xA5A5A5A5L));
         this.n2 = new SimplexNoise(new XoroshiroRandomSource(seed ^ 0x5A5A5A5AL));
+        this.n3 = new SimplexNoise(new XoroshiroRandomSource(seed ^ 0x3C3C5EA3L));
         switch (form) {
             case 1 -> { square = false; rTop = 36; rBottom = 48; helixR = 0; pitch = 30; helixW = 7; ledges = true; caves = true; }
             case 2 -> { square = false; rTop = 54; rBottom = 54; helixR = 0; pitch = 36; helixW = 5; ledges = false; caves = true; }
@@ -106,6 +131,9 @@ public final class Terrain {
             default -> { square = false; rTop = 40; rBottom = 40; helixR = 0; pitch = 32; helixW = 7; ledges = false; caves = true; }
         }
         this.maxR = form == 7 ? 124 : 150;
+        boolean deep = form >= 3 && pal.deepglass != null;
+        this.seam = deep ? pal.deepglass : pal.ores[Math.min(1, pal.ores.length - 1)];
+        this.crystal = deep ? pal.deepglass : Blocks.AMETHYST_BLOCK.defaultBlockState();
 
         XoroshiroRandomSource r = new XoroshiroRandomSource(seed ^ 0x1234ABCDL);
         // Hanging islands (2) and floating islands (7)
@@ -181,6 +209,170 @@ public final class Terrain {
                 caches.add(new BlockPos((int) Math.floor(Math.cos(th) * rr), (int) Math.floor(yS) + 1, (int) Math.floor(Math.sin(th) * rr)));
             }
         }
+        this.grottos = caves ? placeGrottos() : new Grotto[0];
+        for (Grotto g : grottos) if (g.cache()) caches.add(new BlockPos(cacheX(g), g.floorY(), cacheZ(g)));
+    }
+
+    /** Where a grotto's cache stands: beside its pool. */
+    static int cacheX(Grotto g) {
+        return (int) Math.floor(g.x() + Math.cos(g.turn()) * (g.pool() + 1.7));
+    }
+
+    static int cacheZ(Grotto g) {
+        return (int) Math.floor(g.z() + Math.sin(g.turn()) * (g.pool() + 1.7));
+    }
+
+    // ---- grottos (SPEC §28.5) ------------------------------------------------------------------------------------------
+
+    /**
+     * A grotto: a pocket off a tunnel, centred (x, y, z) a block over a tunnel's point, {@code a} across and {@code b}
+     * up (half-axes), its flat floor's first air at {@code floorY}, a pool of radius {@code pool} in it; {@code cache}:
+     * a chest by the pool; {@code turn}: which side of it.
+     */
+    public record Grotto(int x, int y, int z, double a, double b, int floorY, double pool, boolean cache, double turn) {}
+
+    /** The stratum's grottos (local coordinates), from the seed. */
+    public List<Grotto> grottos() {
+        return List.of(grottos);
+    }
+
+    /** Whether a form carves tunnels (and so dresses them with seams and grottos). */
+    public static boolean hasTunnels(int form) {
+        return switch (form) {
+            case 5, 6, 7, 9 -> false;
+            default -> true;
+        };
+    }
+
+    /**
+     * Up to {@link #GROTTOS} grottos, each centred on a tunnel (found down a column of the lattice the chunks are cut
+     * with: a tube's crossing, its middle), beyond the galleries and the shaft's wobble (36 past its widest wall), inside
+     * the rock's edge, and 48 or more apart. A handful of columns of noise nodes: well under a millisecond.
+     */
+    private Grotto[] placeGrottos() {
+        XoroshiroRandomSource g = new XoroshiroRandomSource(seed ^ 0x6A0770C5L);
+        List<Grotto> out = new ArrayList<>();
+        int floor = Layout.floorY(form), lo = floor + 16, hi = 196;
+        double rMin = Math.max(rTop, rBottom) + 36, rMax = maxR - 22;
+        Scratch s = new Scratch();
+        int[] runs = new int[32];
+        for (int attempt = 0; attempt < 40 && out.size() < GROTTOS && rMax > rMin; attempt++) {
+            double ang = g.nextDouble() * Math.PI * 2, rr = rMin + g.nextDouble() * (rMax - rMin);
+            int x = (int) Math.floor(Math.cos(ang) * rr), z = (int) Math.floor(Math.sin(ang) * rr);
+            tunnelNoise(x, z, s);
+            // the tubes this column crosses: each run's middle
+            int nRuns = 0, start = -1;
+            for (int y = lo; y <= hi + 1 && nRuns < runs.length; y++) {
+                boolean in = y <= hi && Math.abs(s.cA[y]) < TUNNEL && Math.abs(s.cB[y]) < TUNNEL;
+                if (in && start < 0) start = y;
+                if (!in && start >= 0) {
+                    if (y - start >= 2) runs[nRuns++] = (start + y - 1) / 2;
+                    start = -1;
+                }
+            }
+            if (nRuns == 0) continue;
+            int y = runs[g.nextInt(nRuns)];
+            boolean near = false;
+            for (Grotto o : out) near |= (o.x() - x) * (o.x() - x) + (o.y() - y) * (o.y() - y) + (o.z() - z) * (o.z() - z) < 48 * 48;
+            if (near) continue;
+            double a = 5 + g.nextDouble() * 2.5, b = 3.6 + g.nextDouble() * 1.2;
+            int cy = y + 1;
+            out.add(new Grotto(x, cy, z, a, b, (int) Math.round(cy - b * 0.55), a * 0.34, g.nextDouble() < 0.5, g.nextDouble() * Math.PI * 2));
+        }
+        return out.toArray(Grotto[]::new);
+    }
+
+    /** The two cave noises down column (x, z) into {@code s.cA}/{@code s.cB}, exactly as the chunks interpolate them. */
+    private void tunnelNoise(int x, int z, Scratch s) {
+        int nx = Math.floorDiv(x, 4) * 4, nz = Math.floorDiv(z, 4) * 4;
+        nodeColumn(nx, nz, s.single[0]);
+        nodeColumn(nx + 4, nz, s.single[1]);
+        nodeColumn(nx, nz + 4, s.single[2]);
+        nodeColumn(nx + 4, nz + 4, s.single[3]);
+        interpolate(s.single[0], s.single[1], s.single[2], s.single[3], (x - nx) / 4.0F, (z - nz) / 4.0F, s);
+    }
+
+    /** The grottos whose shell reaches column (x, z), into the scratch. */
+    private void collectGrottos(int x, int z, Scratch s) {
+        s.nGrotto = 0;
+        for (int i = 0; i < grottos.length && s.nGrotto < s.grotto.length; i++) {
+            Grotto g = grottos[i];
+            double dx = x - g.x(), dz = z - g.z(), reach = g.a() * 1.2 + 1;
+            if (dx * dx + dz * dz < reach * reach) s.grotto[s.nGrotto++] = i;
+        }
+    }
+
+    /** A grotto's room and its floor at (x, y, z): its air, its floor and pool, or null (the rock and tunnels as ever). */
+    private BlockState grottoBase(int x, int y, int z, Scratch s) {
+        for (int c = 0; c < s.nGrotto; c++) {
+            Grotto g = grottos[s.grotto[c]];
+            double dx = x - g.x(), dz = z - g.z(), h2 = (dx * dx + dz * dz) / (g.a() * g.a());
+            if (h2 >= 1) continue;
+            int fy = g.floorY();
+            if (y < fy) {
+                double foot = (fy - g.y()) / g.b();
+                if (y < fy - 3 || h2 >= 1 - foot * foot) continue;
+                // a flat floor under the room, the pool in it: two deep in its middle, its bed the stratum's glow
+                double d = Math.sqrt(dx * dx + dz * dz);
+                if (d < g.pool()) {
+                    boolean mid = d < g.pool() - 0.9;
+                    if (y == fy - 1) return WATER;
+                    if (y == fy - 2) return mid ? WATER : pal.light;
+                    return mid ? pal.light : pal.rock;
+                }
+                return y == fy - 1 ? pal.floor : pal.rock;
+            }
+            double dy = (y - g.y()) / g.b();
+            if (h2 + dy * dy + (Strata.hash01(seed + 31, x >> 1, y >> 1, z >> 1) - 0.5) * 0.16 < 1) return AIR;
+        }
+        return null;
+    }
+
+    /**
+     * What grows in a grotto, once its column is cut: Deepglass glittering in its walls, little spires of it on the
+     * floor and hanging from the roof, and glow lichen on the roof and here and there on the floor.
+     */
+    private void dressGrottos(int x, int z, BlockState[] col, Scratch s) {
+        for (int c = 0; c < s.nGrotto; c++) {
+            Grotto g = grottos[s.grotto[c]];
+            double dx = x - g.x(), dz = z - g.z(), r2 = dx * dx + dz * dz, h2 = r2 / (g.a() * g.a());
+            int fy = g.floorY(), top = Math.min(Layout.HEIGHT - 2, (int) Math.ceil(g.y() + g.b() * 1.2) + 1);
+            // the walls: Deepglass in the rock round the room
+            for (int y = Math.max(1, fy - 1); y <= top; y++) {
+                if (!isRock(col[y])) continue;
+                double dy = (y - g.y()) / g.b(), e = h2 + dy * dy;
+                if (e >= 1 && e < 1.32 && Strata.hash01(seed + 33, x, y, z) < 0.2) col[y] = crystal;
+            }
+            if (h2 >= 1) continue;
+            // the roof: lichen on it, and now and then a spire of crystal hanging from it
+            int roof = -1;
+            for (int y = top; y > fy; y--) {
+                if (col[y] == AIR && isSolidCeiling(col[y + 1])) {
+                    roof = y;
+                    break;
+                }
+            }
+            if (roof > 0) {
+                double h = Strata.hash01(seed + 43, x, 1, z);
+                if (h < 0.09) {
+                    col[roof] = crystal;
+                    if (h < 0.045 && col[roof - 1] == AIR) col[roof - 1] = crystal;
+                } else if (Strata.hash01(seed + 37, x, roof, z) < 0.38) {
+                    col[roof] = LICHEN_UP;
+                }
+            }
+            // the floor (not the pool, not where the cache stands): spires of crystal, lichen
+            boolean dry = col[fy] == AIR && isSolidCeiling(col[fy - 1]);
+            if (!dry || r2 < (g.pool() + 1) * (g.pool() + 1) || (g.cache() && x == cacheX(g) && z == cacheZ(g))) continue;
+            double h = Strata.hash01(seed + 41, x, 0, z);
+            if (h < 0.07) {
+                col[fy] = crystal;
+                if (h < 0.04 && col[fy + 1] == AIR) col[fy + 1] = crystal;
+                if (h < 0.016 && col[fy + 2] == AIR) col[fy + 2] = crystal;
+            } else if (h < 0.17) {
+                col[fy] = LICHEN_DOWN;
+            }
+        }
     }
 
     // ---- shape helpers ---------------------------------------------------------------------------------------------
@@ -254,6 +446,10 @@ public final class Terrain {
         final int[] cand = new int[64];
         int nCand;
         double seaWall;
+        final int[] grotto = new int[4];
+        int nGrotto;
+        boolean seamOn;
+        double seamShift;
     }
 
     static final ThreadLocal<Scratch> SCRATCH = ThreadLocal.withInitial(Scratch::new);
@@ -335,8 +531,17 @@ public final class Terrain {
         a -= Math.floor(a);
         collectCandidates(x, z, s);
         if (form == 7) s.seaWall = rTop + 5 * n1.get(x / 34.0, z / 34.0);
+        if (caves) {
+            collectGrottos(x, z, s);
+            s.seamOn = n3.get(x / 80.0, z / 80.0) > SEAM_PATCH;
+            s.seamShift = s.seamOn ? n3.get(x / 30.0 + 41.3, z / 30.0 - 17.9) * 3.0 : 0;
+        } else {
+            s.nGrotto = 0;
+            s.seamOn = false;
+        }
         for (int y = 0; y < Layout.HEIGHT; y++) col[y] = base(x, y, z, r, dist, a, s.cA[y], s.cB[y], s);
         decorate(x, z, r, dist, col);
+        if (s.nGrotto > 0) dressGrottos(x, z, col, s);
         landmarks(x, z, col);
     }
 
@@ -407,7 +612,19 @@ public final class Terrain {
         }
         BlockState g = gallery(x, y, z, r, dist, a, R);
         if (g != null) return g;
-        if (caves && r < maxR - 8 && y > floor + 1 && y < 226 && Math.abs(cA) < 0.085 && Math.abs(cB) < 0.085) return AIR;
+        if (s.nGrotto > 0) {
+            BlockState gr = grottoBase(x, y, z, s);
+            if (gr != null) return gr;
+        }
+        if (caves && r < maxR - 8 && y > floor + 1 && y < 226) {
+            float m = Math.max(Math.abs(cA), Math.abs(cB));
+            if (m < TUNNEL) return AIR;
+            // a seam: a level band along the tunnel's wall and a few blocks into the rock, where a patch runs
+            if (s.seamOn && m < TUNNEL + SEAM_SHELL) {
+                double v = y + s.seamShift, f = v - Math.floor(v / SEAM_EVERY) * SEAM_EVERY;
+                if (Math.abs(f - SEAM_EVERY * 0.5) < SEAM_HALF) return seam;
+            }
+        }
         return rock(x, y, z, dist, edge);
     }
 

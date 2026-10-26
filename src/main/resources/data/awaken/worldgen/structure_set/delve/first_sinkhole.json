@@ -1,0 +1,15 @@
+{
+  "structures": [
+    {
+      "structure": "awaken:delve/first_sinkhole",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "awaken:near_city",
+    "min_distance": 600,
+    "max_distance": 900,
+    "avoid_north": 40,
+    "salt": 1336077101
+  }
+}

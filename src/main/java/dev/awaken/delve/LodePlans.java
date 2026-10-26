@@ -124,6 +124,12 @@ public final class LodePlans {
     }
 
     /** A lode laid by hand along the given blocks, the first being its heart (tests and the tour's demo lode). */
+    /** Lays a handmade lode for commands and tests (W5's staged places): answered by every query until the server stops. */
+    public static void stage(Lode l) {
+        EXTRA.removeIf(x -> x.heartPos().distManhattan(l.heartPos()) < 64);
+        EXTRA.add(l);
+    }
+
     public static Lode handmade(Ore ore, long[] cells) {
         int x0 = Integer.MAX_VALUE, y0 = Integer.MAX_VALUE, z0 = Integer.MAX_VALUE, x1 = Integer.MIN_VALUE, y1 = Integer.MIN_VALUE, z1 = Integer.MIN_VALUE;
         for (long c : cells) {

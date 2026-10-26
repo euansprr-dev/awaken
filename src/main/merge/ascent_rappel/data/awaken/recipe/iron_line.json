@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "N": "minecraft:iron_nugget",
+    "I": "minecraft:iron_ingot",
+    "R": "awaken:runner_rope"
+  },
+  "pattern": [
+    "NIN",
+    "IRI",
+    "NIN"
+  ],
+  "result": {
+    "id": "awaken:iron_line"
+  }
+}
