@@ -41,6 +41,7 @@ public final class VillageModule {
 
     public static void init(IEventBus modBus) {
         VillageWorldgen.init(modBus);
+        dev.awaken.village.road.RoadAtlas.init(modBus);
         VillageContent.register(modBus);
         modBus.addListener(VillageModule::onAddPackFinders);
         modBus.addListener(VillageNet::register);
@@ -62,6 +63,7 @@ public final class VillageModule {
             VillageService.serverStopped();
         });
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> VillageService.tick(e.getServer()));
+        NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> dev.awaken.village.road.RoadAtlas.tick(e.getServer()));
         NeoForge.EVENT_BUS.addListener(Inn::onRespawn);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, VillageModule::onBroken);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, VillageModule::onExploded);
@@ -73,6 +75,8 @@ public final class VillageModule {
         Settlements.installVoice(new VillageService.Voice());
         EconomyHooks.install(new Emeralds());
         Villages.install(new VillagesAccess());
+        // (SPEC §28.9) the roads for the World Pulse's caravans
+        dev.awaken.core.api.RoadHooks.install(new dev.awaken.village.road.RoadAccess());
         MusicLayers.register(MusicLayers.Slot.AMBIENCE, 90, "village", VillageModule::soundscape);
         VillageCommands.register();
         VillageTests.register();

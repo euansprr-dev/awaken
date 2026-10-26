@@ -363,6 +363,8 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         float w = x1 - x0, h = y1 - y0;
         AtlasRenderState.view(gui, w, h, zoom, yaw, tilt);
         g.enableScissor(x0, y0, x1, y1);
+        // (SPEC §28.9) the roads you've walked, drawn on the land you know, under everything else
+        if (mc.player != null) roads(g, atlas, MapMarks.lines(mc.player), x0, y0);
         // first what stands on the table (you, pins, marks): names keep clear of them
         int placed = 0;
         placedCount = 0;
@@ -738,6 +740,41 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         v.x += x0;
         v.y += y0;
         return v.x > x0 - 20 && v.x < px1() + 20 && v.y > y0 - 20 && v.y < py1() + 20;
+    }
+
+    /** Each walked road's line over known land: a dark casing under its colour, stepped a pixel at a time between points. */
+    private void roads(GuiGraphicsExtractor g, AtlasState atlas, java.util.List<MapMarks.Line> lines, int x0, int y0) {
+        for (int pass = 0; pass < 2; pass++) {
+            for (MapMarks.Line l : lines) {
+                int[] xz = l.xz();
+                float px = Float.NaN, py = Float.NaN;
+                for (int i = 0; i + 1 < xz.length; i += 2) {
+                    int x = xz[i], z = xz[i + 1];
+                    if (!Discovery.CLIENT.explored(x >> 4, z >> 4) || !project(x + 0.5, atlas.store.groundY(x, z, cy) + 0.6, z + 0.5, x0, y0)) {
+                        px = Float.NaN;
+                        continue;
+                    }
+                    float sx = v.x, sy = v.y;
+                    if (!Float.isNaN(px)) {
+                        int w = pass == 0 ? l.width() + 2 : l.width();
+                        int c = pass == 0 ? 0xA00B1626 : 0xFF000000 | l.colour();
+                        float dx = sx - px, dy = sy - py;
+                        int steps = Math.max(1, (int) Math.ceil(Math.max(Math.abs(dx), Math.abs(dy))));
+                        if (steps > 400) {
+                            px = sx;
+                            py = sy;
+                            continue;
+                        }
+                        for (int k = 0; k <= steps; k++) {
+                            int qx = Math.round(px + dx * k / steps), qy = Math.round(py + dy * k / steps);
+                            g.fill(qx - w / 2, qy - w / 2, qx - w / 2 + w, qy - w / 2 + w, c);
+                        }
+                    }
+                    px = sx;
+                    py = sy;
+                }
+            }
+        }
     }
 
     private void label(GuiGraphicsExtractor g, String text, int cx, int y, int color) {

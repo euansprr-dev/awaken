@@ -149,7 +149,7 @@ final class Highroads {
                 VillagePlan p = ps[i];
                 int dx = x - p.ox, dz = z - p.oz;
                 if (dx * dx + dz * dz > (p.r + 8) * (p.r + 8)) continue;
-                if (p.owns(x, z) || p.owns(x + 3, z) || p.owns(x - 3, z) || p.owns(x, z + 3) || p.owns(x, z - 3)) return true;
+                if (built(p, x, z) || built(p, x + 3, z) || built(p, x - 3, z) || built(p, x, z + 3) || built(p, x, z - 3)) return true;
             }
             if (w.city) {
                 int dx = x - campX, dz = z - campZ;
@@ -162,6 +162,14 @@ final class Highroads {
             }
             return false;
         };
+    }
+
+    /** A settlement's built ground: its houses, streets, square, walls and landmarks (a road may pass its fields and pens). */
+    static boolean built(VillagePlan p, int wx, int wz) {
+        byte k = p.kind(wx - p.ox, wz - p.oz);
+        return k == dev.awaken.city.CityPlan.PLOT || k == dev.awaken.city.CityPlan.STREET || k == dev.awaken.city.CityPlan.LANE
+                || k == dev.awaken.city.CityPlan.SQUARE || k == dev.awaken.city.CityPlan.WALL || k == dev.awaken.city.CityPlan.LANDMARK
+                || k == VillagePlan.DOCK || k == VillagePlan.KITCHEN || k == dev.awaken.city.CityPlan.GARDEN;
     }
 
     /** Lays one road between two ends, with its waymarkers and lanterns; null where no way is found. */

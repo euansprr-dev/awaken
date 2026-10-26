@@ -141,6 +141,7 @@ public final class TroubleCommands {
             case GREY_FIELDS -> GreyFields.cause(ctx, l);
             case REBUILD -> "damage";
             case FESTIVAL -> "calendar";
+            case DEEP_MINE -> l.plan().mine == null ? null : "nest";
         };
         if (cause == null) return fail(c, "Nothing in the world here could cause " + kind.title + " (no lair, den, camp or gate near).");
         Trouble t = TroubleDirector.start(level, l, kind, cause);

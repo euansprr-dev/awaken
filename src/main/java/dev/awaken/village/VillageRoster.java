@@ -39,8 +39,8 @@ public final class VillageRoster {
     private int lampRoute = -1, watchRoute = -1, errands = -1, carterRoute = -1, eveningRoute = -1;
     /** (SPEC §28.9) Every stall's keeper's place and its front, in the order of the plan's stalls. */
     private final List<Integer> stallKeepers = new ArrayList<>(), stallFronts = new ArrayList<>();
-    /** The scribe's shop: a place inside its door. */
-    private int scribeShop = -1;
+    /** The scribe's shop and the assayer's store: a place inside each door; a mining town's shaft head. */
+    private int scribeShop = -1, assayShop = -1, mineHead = -1;
 
     public static RosterBuilder of(VillagePlan plan, long worldSeed) {
         return of(plan, worldSeed, java.util.List.of());
@@ -89,6 +89,8 @@ public final class VillageRoster {
             }
         }
     }
+
+    private static final int[] STEP_X = {0, 1, 0, -1}, STEP_Z = {-1, 0, 1, 0};
 
     private long hash(long a, long b) {
         long z = p.seed ^ (a * 0x9E3779B97F4A7C15L) ^ (b * 0xC2B2AE3D27D4EB4FL);
@@ -267,12 +269,14 @@ public final class VillageRoster {
                 case "mill" -> {
                     mill = b.place("mill", doorNode[k], bd.outX() + 0.5, q.lift(), bd.outZ() + 0.5).spot(bd.outX() + 0.5, bd.outZ() + 0.5).id();
                 }
-                case "scribe" -> {
+                case "scribe", "assay" -> {
                     int fx = bd.outX() - bd.doorX(), fz = bd.outZ() - bd.doorZ();
                     int ix = bd.doorX() - fx, iz = bd.doorZ() - fz;
                     int inner = b.junction(ix + 0.5, q.lift(), iz + 0.5);
                     b.street(inner, doorNode[k]);
-                    scribeShop = b.place("stand", inner, ix + 0.5, q.lift(), iz + 0.5).yaw(yawTo(ix, iz, bd.doorX(), bd.doorZ())).spot(ix + 0.5, iz + 0.5).id();
+                    int shop = b.place("stand", inner, ix + 0.5, q.lift(), iz + 0.5).yaw(yawTo(ix, iz, bd.doorX(), bd.doorZ())).spot(ix + 0.5, iz + 0.5).id();
+                    if (bd.use().equals("scribe")) scribeShop = shop;
+                    else assayShop = shop;
                 }
                 case "inn" -> {
                     inn = k;
@@ -293,6 +297,13 @@ public final class VillageRoster {
                 default -> {
                 }
             }
+        }
+        // (SPEC §28.9) a mining town's shaft head: where its miners go down at dawn and come up at dusk
+        if (p.mine != null) {
+            VillagePlan.Mine mn = p.mine;
+            int back = (mn.side() + 2) & 3;
+            double hx = mn.x() + STEP_X[back] * 4 + 0.5, hz = mn.z() + STEP_Z[back] * 4 + 0.5;
+            mineHead = b.place("landmark", spot(hx, mn.lift(), hz), hx, mn.lift(), hz).ref("road").cap(8).id();
         }
         // the market's stalls (a village's one, a town's several), each keeper behind the counter, buyers in front
         String[] goods = {"produce", "cloth", "bread", "pots", "tools", "jars"};
@@ -479,12 +490,13 @@ public final class VillageRoster {
             case "fisher" -> work = net;
             case "miller" -> work = mill;
             case "scribe" -> work = scribeShop >= 0 ? scribeShop : notice;
+            case "assayer" -> work = assayShop >= 0 ? assayShop : notice;
             case "stallkeeper" -> work = stallOf >= 0 && stallOf < stallKeepers.size() ? stallKeepers.get(stallOf) : stallKeeper;
             default -> {
             }
         }
         switch (job) {
-            case "farmer", "shepherd", "woodcutter", "smith", "fisher", "miller", "scribe", "stallkeeper" -> {
+            case "farmer", "shepherd", "woodcutter", "smith", "fisher", "miller", "scribe", "stallkeeper", "assayer" -> {
                 if (work < 0) {
                     resident(pr, i, home, evening);
                     return;
@@ -501,6 +513,8 @@ public final class VillageRoster {
             }
             case "hunter", "miner" -> {
                 int road = roadPlaces.isEmpty() ? home : roadPlaces.get(Math.floorMod(i, roadPlaces.size()));
+                // a mining town's miners go down its own shaft
+                if (job.equals("miner") && mineHead >= 0) road = mineHead;
                 pr.work(road);
                 // out by the road at dawn (inside: gone into the wilds), back at dusk with the day's take
                 pr.segment(0, "home", -1).segment(at(i, job.equals("hunter") ? 300 : 700, 200), "inside", road)

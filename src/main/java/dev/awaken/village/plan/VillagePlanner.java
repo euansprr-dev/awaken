@@ -1356,7 +1356,8 @@ public final class VillagePlanner {
                 }
             }
             for (int f = 0; f < plan.fields.size(); f++) jobs.add(new String[]{"farmer", "field", String.valueOf(f)});
-            for (int p = 0; p < plan.pens.size(); p++) jobs.add(new String[]{"shepherd", "pen", String.valueOf(p)});
+            // a wayhouse's paddock is kept by its stable hand (leads, saddles, hay), every other pen by a shepherd
+            for (int p = 0; p < plan.pens.size(); p++) jobs.add(new String[]{plan.pens.get(p).beast().equals("horse") ? "carter" : "shepherd", "pen", String.valueOf(p)});
             if (plan.dock != null) jobs.add(new String[]{"fisher", "dock", "0"});
             if (woods >= 0) jobs.add(new String[]{"woodcutter", "post", String.valueOf(woods)});
             jobs.add(new String[]{"hunter", "post", "0"});

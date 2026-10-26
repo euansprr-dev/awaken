@@ -31,6 +31,7 @@ public final class VillageClient {
             e.register(TroubleNet.Trail.TYPE, (msg, ctx) -> TroubleFx.trail(msg));
             e.register(TroubleNet.Festoons.TYPE, (msg, ctx) -> TroubleFx.festoons(msg));
             e.register(TroubleNet.Marks.TYPE, (msg, ctx) -> TroubleFx.marks(msg));
+            e.register(dev.awaken.village.road.RoadAtlas.Sync.TYPE, (msg, ctx) -> RoadAtlasClient.sync(msg));
         });
         modBus.addListener((EntityRenderersEvent.RegisterRenderers e) -> e.registerEntityRenderer(TroubleContent.RESCUEE.get(), RescueeRenderer::new));
         modBus.addListener((RegisterRenderStateModifiersEvent e) -> e.registerAvatarEntityModifier(
@@ -44,5 +45,6 @@ public final class VillageClient {
         NeoForge.EVENT_BUS.addListener(TroubleFx::tick);
         NeoForge.EVENT_BUS.addListener(SubmitCustomGeometryEvent.class, TroubleFx::submit);
         CityGlow.source(TroubleFx.GLOW);
+        RoadAtlasClient.init();
     }
 }

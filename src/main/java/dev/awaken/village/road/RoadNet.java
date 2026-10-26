@@ -62,6 +62,10 @@ public final class RoadNet {
         ROADS.clear();
         SITES.clear();
         LEGS.clear();
+        synchronized (ALL) {
+            ALL.clear();
+            BY_CHUNK.clear();
+        }
         planNanos = planned = reads = 0;
     }
 
@@ -173,6 +177,13 @@ public final class RoadNet {
         return out;
     }
 
+    /** The first town a player meets: its anchor, or null (no town in reach of the road north, or no city). */
+    public static SettlementGrid.@Nullable Anchor firstTown() {
+        RoadWorld w = RoadWorld.get();
+        if (w == null || w.firstTown == null) return null;
+        return sites(w, w.firstTown[0], w.firstTown[1])[0];
+    }
+
     /** A region's hub (made once). */
     public static Hub hub(RoadWorld w, int gx, int gz) {
         return once(HUBS, cellKey(gx, gz), () -> makeHub(w, gx, gz));
@@ -214,6 +225,13 @@ public final class RoadNet {
                 if (t.water(px, pz) > 0) continue;
                 int h0 = t.top(px, pz);
                 if (Math.abs(t.top(px + 8, pz) - h0) > 3 || Math.abs(t.top(px, pz + 8) - h0) > 3) continue;
+                // real land round it, not an islet in the shallows
+                int dry = 0;
+                for (int k = 0; k < 8; k++) {
+                    double a = k * Math.PI / 4;
+                    if (t.water(px + (int) Math.round(Math.cos(a) * 40), pz + (int) Math.round(Math.sin(a) * 40)) == 0) dry++;
+                }
+                if (dry < 6) continue;
                 best = new int[]{px, pz};
                 bd = d;
             }
@@ -282,17 +300,17 @@ public final class RoadNet {
 
     /** The highroad from region (gx, gz) east (dir 0) or south (dir 1): its pieces between the settlements on its way. */
     public static List<Road> trunk(RoadWorld w, int gx, int gz, int dir) {
-        return once(ROADS, "T" + gx + "," + gz + "," + dir, () -> Highroads.trunk(w, gx, gz, dir));
+        return once(ROADS, "T" + gx + "," + gz + "," + dir, () -> index(Highroads.trunk(w, gx, gz, dir)));
     }
 
     /** Carillon's road out (0 north past the camp and the first hamlet, 1 east, 2 south) to the region beyond. */
     public static List<Road> port(RoadWorld w, int which) {
-        return once(ROADS, "P" + which, () -> Highroads.port(w, which));
+        return once(ROADS, "P" + which, () -> index(Highroads.port(w, which)));
     }
 
     /** A settlement's lane to the nearest road, or nothing (it lies on a highroad, or no road is near). */
     public static List<Road> branch(RoadWorld w, SettlementGrid.Anchor a) {
-        return once(ROADS, "B" + a.key(), () -> Highroads.branch(w, a));
+        return once(ROADS, "B" + a.key(), () -> index(Highroads.branch(w, a)));
     }
 
     // ---- legs on the lattice -------------------------------------------------------------------------------------------
@@ -378,6 +396,46 @@ public final class RoadNet {
     }
 
     public record Nearest(Road road, int point, double distance) {}
+
+    // ---- the laid roads by chunk (who walks where, for the Atlas) ---------------------------------------------------------
+
+    private static final List<Road> ALL = new ArrayList<>();
+    private static final ConcurrentHashMap<Long, List<int[]>> BY_CHUNK = new ConcurrentHashMap<>();
+
+    /** Files a newly laid road's points by chunk. */
+    static List<Road> index(List<Road> roads) {
+        synchronized (ALL) {
+            for (Road r : roads) {
+                int id = ALL.size();
+                ALL.add(r);
+                for (int i = 0; i < r.points(); i++) {
+                    long k = net.minecraft.world.level.ChunkPos.pack((int) Math.floor(r.x()[i]) >> 4, (int) Math.floor(r.z()[i]) >> 4);
+                    BY_CHUNK.computeIfAbsent(k, kk -> new java.util.concurrent.CopyOnWriteArrayList<>()).add(new int[]{id, i});
+                }
+            }
+        }
+        return roads;
+    }
+
+    /** The laid road point nearest (x, z) within {@code reach} (a few blocks: the chunk and its neighbours), or null. */
+    public static @Nullable Nearest indexed(double x, double z, double reach) {
+        int cx = (int) Math.floor(x) >> 4, cz = (int) Math.floor(z) >> 4;
+        Nearest best = null;
+        for (int dx = -1; dx <= 1; dx++)
+            for (int dz = -1; dz <= 1; dz++) {
+                List<int[]> l = BY_CHUNK.get(net.minecraft.world.level.ChunkPos.pack(cx + dx, cz + dz));
+                if (l == null) continue;
+                for (int[] e : l) {
+                    Road r;
+                    synchronized (ALL) {
+                        r = ALL.get(e[0]);
+                    }
+                    double d = Math.hypot(r.x()[e[1]] - x, r.z()[e[1]] - z);
+                    if (d <= reach && (best == null || d < best.distance())) best = new Nearest(r, e[1], d);
+                }
+            }
+        return best;
+    }
 
     /** The seed mixer the grid uses (a stable hash). */
     static final class SettlementGridMix {
