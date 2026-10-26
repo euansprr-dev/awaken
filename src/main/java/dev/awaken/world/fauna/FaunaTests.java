@@ -388,6 +388,50 @@ final class FaunaTests {
                     .thenSucceed();
         });
 
+        // SPEC §26.3: a creature at the edge of your view, however close, is not a discovery; the crosshair on it is,
+        // and the first find ever is the lesson
+        AwakenTests.registerIsolated("notice_discovery_needs_intent", 200, h -> {
+            ServerLevel level = h.getLevel();
+            boolean spawning = level.getGameRules().get(FaunaModule.SPAWNING.get());
+            level.getGameRules().set(FaunaModule.SPAWNING.get(), false, level.getServer());
+            ServerPlayer p = realPlayer(h, new BlockPos(0, UP, 0));
+            p.setYRot(0.0F);
+            p.setXRot(0.0F);
+            p.setYHeadRot(0.0F);
+            clearFauna(level, p);
+            BlockPos at = h.absolutePos(new BlockPos(0, UP, 0));
+            for (int dx = -8; dx <= 8; dx++) for (int dz = -2; dz <= 10; dz++) ground(level, at.offset(dx, 0, dz));
+            List<AwakenMob> made = new ArrayList<>();
+            try {
+                awaken(p);
+                Progression.setCounter(p, dev.awaken.signal.Finds.TAUGHT, 0);
+                MobDef moss = Bestiary.get("mossback");
+                // 7 blocks off, 35 degrees to the side: in plain sight, not studied
+                AwakenMob side = Mobs.spawn(level, moss, Vec3.atBottomCenterOf(at.south(6).west(4)), 1, new MobRole(MobRole.Role.NORMAL, 1, moss.theme.id, Optional.empty(), ""), Set.of());
+                side.setNoAi(true);
+                made.add(side);
+                for (FaunaMob m : List.copyOf(FaunaCensus.in(level))) if (!made.contains(m) && m.distanceToSqr(p) < 200 * 200) m.discard();
+                for (int i = 0; i < Sightings.DWELL * 6; i++) h.assertTrue(Sightings.check(p) == null, "a creature beside the crosshair is not discovered (look " + i + ")");
+                h.assertTrue(Progression.profile(p).counter("awaken:discovered/creature/mossback") == 0, "no discovery from proximity");
+                // a glance that crosses it is not a study either
+                look(p, side);
+                h.assertTrue(Sightings.check(p) == null, "one look is a glance");
+                p.setYRot(0.0F);
+                p.setYHeadRot(0.0F);
+                p.setXRot(0.0F);
+                h.assertTrue(Sightings.check(p) == null, "the glance moved on");
+                // the crosshair rests on it: a study
+                look(p, side);
+                h.assertTrue(study(p) == moss, "resting the crosshair on it studies it");
+                h.assertTrue(Progression.profile(p).counter(dev.awaken.signal.Finds.TAUGHT) == 1, "the first find taught the system");
+            } finally {
+                level.getGameRules().set(FaunaModule.SPAWNING.get(), spawning, level.getServer());
+                made.forEach(AwakenMob::discard);
+                level.getServer().getPlayerList().remove(p);
+            }
+            h.succeed();
+        });
+
         AwakenTests.registerIsolated("fauna_sighting_discovery", 200, h -> {
             ServerLevel level = h.getLevel();
             // only the creatures this test places: natural spawns near the awakened player would be seen first
@@ -407,35 +451,37 @@ final class FaunaTests {
                 AwakenMob seen = Mobs.spawn(level, moss, Vec3.atBottomCenterOf(at.south(6)), 1, new MobRole(MobRole.Role.NORMAL, 1, moss.theme.id, Optional.empty(), ""), Set.of());
                 seen.setNoAi(true);
                 made.add(seen);
-                h.assertTrue(Sightings.check(p) == null, "not awakened: nothing is discovered yet");
+                h.assertTrue(study(p) == null, "not awakened: nothing is discovered yet");
                 awaken(p);
                 for (FaunaMob m : List.copyOf(FaunaCensus.in(level))) if (!made.contains(m) && m.distanceToSqr(p) < 200 * 200) m.discard();
                 double xp = Progression.profile(p).xp();
                 int lv = Progression.profile(p).level();
-                h.assertTrue(Sightings.check(p) == moss, "the mossback in front of the player is discovered");
+                look(p, seen);
+                h.assertTrue(study(p) == moss, "the mossback in front of the player is discovered");
                 h.assertTrue(Progression.profile(p).counter("awaken:discovered/creature/mossback") == 1, "the discovery counter");
                 h.assertTrue(Progression.profile(p).level() > lv || Progression.profile(p).xp() > xp, "discovery XP paid");
                 Sightings.forget(p.getUUID());
-                h.assertTrue(Sightings.check(p) == null, "a second look is nothing new");
+                h.assertTrue(study(p) == null, "a second look is nothing new");
                 // behind a wall: not seen
                 MobDef stag = Bestiary.get("frost_stag");
                 AwakenMob hidden = Mobs.spawn(level, stag, Vec3.atBottomCenterOf(at.south(10).east(3)), 1, new MobRole(MobRole.Role.NORMAL, 1, stag.theme.id, Optional.empty(), ""), Set.of());
                 hidden.setNoAi(true);
                 made.add(hidden);
                 for (int x = -1; x <= 7; x++) for (int y = 0; y <= 4; y++) level.setBlock(at.south(8).east(x).above(y), Blocks.STONE.defaultBlockState(), 3);
+                look(p, hidden);
                 Sightings.forget(p.getUUID());
-                h.assertTrue(Sightings.check(p) == null, "a creature behind a wall isn't seen");
+                h.assertTrue(study(p) == null, "a creature behind a wall isn't seen");
+                look(p, seen);
                 // behind the player: not seen either
                 MobDef moth = Bestiary.get("lumen_moth");
                 AwakenMob behind = Mobs.spawn(level, moth, Vec3.atBottomCenterOf(at.north(8)).add(0, 1, 0), 0, new MobRole(MobRole.Role.NORMAL, 0, moth.theme.id, Optional.empty(), ""), Set.of());
                 behind.setNoAi(true);
                 made.add(behind);
                 Sightings.forget(p.getUUID());
-                h.assertTrue(Sightings.check(p) == null, "a creature behind your back isn't seen");
-                p.setYRot(180.0F);
-                p.setYHeadRot(180.0F);
+                h.assertTrue(study(p) == null, "a creature behind your back isn't seen");
+                look(p, behind);
                 Sightings.forget(p.getUUID());
-                h.assertTrue(Sightings.check(p) == moth, "turn around and you see it");
+                h.assertTrue(study(p) == moth, "turn around and you see it");
             } finally {
                 level.getGameRules().set(FaunaModule.SPAWNING.get(), spawning, level.getServer());
                 made.forEach(AwakenMob::discard);
@@ -616,5 +662,18 @@ final class FaunaTests {
         if (player.level() != level) player.teleportTo(level, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, Set.of(), 0, 0, true);
         player.setPos(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
         return player;
+    }
+
+    /** Looks for as long as a study takes (the crosshair on a creature for {@link Sightings#DWELL} looks in a row). */
+    static MobDef study(ServerPlayer p) {
+        MobDef d = null;
+        for (int i = 0; i < Sightings.DWELL && d == null; i++) d = Sightings.check(p);
+        return d;
+    }
+
+    /** Turns the player's eyes on a creature's middle. */
+    static void look(ServerPlayer p, net.minecraft.world.entity.Entity e) {
+        p.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, e.getBoundingBox().getCenter());
+        p.setYHeadRot(p.getYRot());
     }
 }
