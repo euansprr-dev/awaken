@@ -23,6 +23,7 @@ import org.jspecify.annotations.Nullable;
  * hand closes on it (the band now in your fist, his hand empty), and you bring it back up into view, turning it once to
  * look at it, before it settles where your hand holds things (the server has put it in your selected slot by then, so
  * vanilla's hand takes over holding it). The view turns a little to him while the hand is out. Your feet never move.
+ * Ilse's coal at the Wayfarers' fire is handed over the same way (SPEC §27.6, through {@link Cinema}).
  */
 final class HandOver {
     private HandOver() {}
@@ -34,7 +35,8 @@ final class HandOver {
     private static int age;
     private static @Nullable Entity giver;
     private static Vec3 from = Vec3.ZERO;
-    private static @Nullable ItemStack band;
+    private static @Nullable ItemStack item;
+    private static @Nullable Runnable took;
 
     static void init() {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, ViewportEvent.ComputeCameraAngles.class, HandOver::onAngles);
@@ -63,6 +65,13 @@ final class HandOver {
     }
 
     static void begin(LivingEntity from) {
+        begin(from, new ItemStack(BandModule.HOLO_BAND.get()), RegistryScene::tookBand);
+    }
+
+    /** Takes {@code what} from {@code from}'s hand; {@code onTook} runs as your hand closes on it. */
+    static void begin(LivingEntity from, ItemStack what, Runnable onTook) {
+        item = what;
+        took = onTook;
         giver = from;
         HandOver.from = hand(from);
         age = 0;
@@ -83,7 +92,7 @@ final class HandOver {
             OpeningSounds.ui(SoundEvents.ARMOR_EQUIP_CHAIN.value(), 1.6F, 0.4F);
             if (!told) {
                 told = true;
-                RegistryScene.tookBand();
+                if (took != null) took.run();
             }
         }
         if (age == REACH + GRASP + BRING) OpeningSounds.ui(dev.awaken.holo.HoloSounds.HOVER.get(), 0.6F, 0.35F);
@@ -162,8 +171,7 @@ final class HandOver {
         }
         double sx = eye.x + rx * side * 0.33 - fx * 0.1, sy = eye.y - 0.4, sz = eye.z + rz * side * 0.33 - fz * 0.1;
         rig.reach(leftMain ? FirstPerson.Limb.LEFT_ARM : FirstPerson.Limb.RIGHT_ARM, sx, sy, sz, x, y, z, FirstPerson.Rig.ARM_REACH, 0, 1, 0, w);
-        if (band == null) band = new ItemStack(BandModule.HOLO_BAND.get());
-        if (t >= REACH) rig.held[leftMain ? 1 : 0] = band;
+        if (t >= REACH && item != null) rig.held[leftMain ? 1 : 0] = item;
         return w > 0.01F;
     }
 }
