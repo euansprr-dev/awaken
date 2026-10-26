@@ -58,6 +58,8 @@ public final class RoadAccess implements RoadHooks.Access {
                 }
             }
         }
+        // W6's call site (SPEC §28.9): the roads to Tier IV Hearth villages, once W6 installs its hook
+        found.addAll(RoadHooks.hearthStretches(level, pos, min, max, length));
         if (found.isEmpty()) return Optional.empty();
         // a stretch that arrives first, else any
         List<RoadHooks.Route> arriving = found.stream().filter(RoadHooks.Route::arrives).toList();

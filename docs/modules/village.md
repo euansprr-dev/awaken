@@ -102,3 +102,52 @@ Lines: `data/awaken/village/village_lines.json` under `trouble` (`village.troubl
   well; the Rebuild's three notices, scaffolding, the house put back exactly, the camp struck.
 - `village_director_caps` — none in a young world, none with calm villages on (a festival still comes), two near a
   player and one a village, the Journal only after Help.
+- `village_deep_mine` (in `trouble.TroubleTests`) — a mining town over its mine on a test mountain: the Deep Mine
+  started, Help and its Journal row, the nest woken (Hollows round the miners), cleared, the miners following up the
+  workings while the roof comes down, home at the head and paid; a second town that nobody helps seals its shaft.
+
+## Roads and towns (Between the Gates W7, SPEC §28.9)
+
+The world joined up: roads between Carillon, the Wayfarer camp and the settlements, in each region's own blocks,
+following the land, with bridges, waymarkers naming the next place, lanterns into each settlement; an inn about a day's
+walk apart; walled towns (about one region in five); mining towns at a mountain's foot over their own mine, and the
+Deep Mine; the Living Wilds caravan walking a real road; the Atlas showing the roads you've walked and the places
+you've found. New worlds with the Awakened Villages pack only.
+
+| Part | Classes | Notes |
+|---|---|---|
+| The network | `road.RoadNet`, `road.Highroads`, `road.FirstTown`, `road.RoadWorld`, `road.Road` | a hub per region (town, settlement near its heart, wayhouse, crossroads); highroads between neighbouring regions through the settlements on their way; Carillon's three ports; lanes to every other settlement; made once, planned ahead of players on a low-priority thread |
+| The line | `road.RoadPlanner` | pure from the ends and the generator's estimate of the land; A* on a coarse lattice, cut corners, a profile that never climbs more than a block a point; bridges, boardwalks, causeways |
+| Worldgen | `road.RoadStructure`, `road.RoadPlacement`, `road.RoadPiece` (`world.VillageWorldgen` registers them) | legs of ≤ 72 points starting on a lattice of every eighth chunk; thin-beard markers under the dry points; the piece takes no beard |
+| Painting | `road.RoadPaint`, `road.RoadMarks`, `road.Waymarks` | through the settlement painter (fell, sweep, fill); the land's paving, half-step slabs, bridges, lantern posts; waymarkers with a hanging-sign arm per way, the cairn at the pass |
+| Towns | `plan.TownPlanner`, `plan.TownPainter` | wall ring 64 out with towers and gates, the market square where two main streets cross, a lane grid, about 30-40 homes, the inn, hall, scribe, smithy, a bell tower, stalls |
+| Wayhouses | `plan.WayhousePlanner` | an inn and stable on a crossroads at a region's heart, a horse paddock, a carter |
+| Mining towns | `plan.MinePlanner`, `plan.MinePainter`, `world.MinePiece` | the shaft head with its winch, the assayer's store, two levels down to a lode, the cavern behind the face |
+| The Deep Mine | `trouble.DeepMine` | the bell at the shaft head, the families at the mouth, the nest, the roof coming down behind, the miners brought up; or the shaft sealed |
+| Caravans | `road.RoadAccess` (`core.api.RoadHooks`) | a stretch of a laid road for the World Pulse's caravan; trade and news when it comes in; W6's Tier IV call site (`RoadHooks.HearthRoads`) |
+| The Atlas | `road.RoadAtlas` (`awaken:road_atlas`), `client.RoadAtlasClient` | stretches walked and places found per player; lines through `MapMarks.registerLines` |
+| The studio | `road.RoadStudio`, `tools/city/roadmap.py` | `run/road-survey.request` ("seed radius") surveys the real overworld's roads, hubs and settlements with their cost; dumps towns, wayhouses, mines, the first town and legs for `tools/city/render.py` |
+
+Lines: `village_lines.json` under `trouble.deep_mine`, `greet.assayer`, `calls.assayer`.
+
+### Commands
+
+- `/awaken village road info` — the road you're on (class, ends, point, flags) and the network's cost so far;
+  `plan [radius]` — plan every road within a radius now and say what was laid; `camp` — stand on the road north out of
+  the Wayfarer camp (else a port's road, else the nearest), facing along it; `walk <points>` — move that many points
+  along the road you're on; `marker` — stand before the nearest waymarker; `watch` — stand ahead of the nearest
+  caravan, facing it.
+- `/awaken village view <key|first_town|nearest_town|nearest_mine|nearest_wayhouse|...> <name>` — W7's framings:
+  `gate`, `gate_out`, `market`, `scribe`, `wall`, `pass` (the cairn, the town below), `head`, `shaft`, `level1`, `winze`,
+  `face`, `cavern`, `assay`, `stable`, `marker`.
+- `/awaken village trouble start deep_mine`, then `trouble mine <wake|clear|lead|fall|up>` — move the Deep Mine along.
+
+### Tests
+
+- `village_roads` — a road across a test valley's river: deterministic, bridged, no step over two, cuttings ≤ 7, legs
+  within reach of their lattice starts, painted (the first leg) with a waymarker naming the next place.
+- `village_town_plan` — a town fits the test valley (25-45 homes, 60-120 people, two gates or more, six towers, the
+  inn, hall, scribe and smithy, three stalls and the 5x5 bell tower, plots inside the wall, fields outside, pure, ≤ 10
+  lights a chunk); a wayhouse (inn, stable, horse paddock, three exits); a mining town on a test mountain (the assay, the
+  levels, the workings inside the square, three miners or more).
+- `village_deep_mine` — above.

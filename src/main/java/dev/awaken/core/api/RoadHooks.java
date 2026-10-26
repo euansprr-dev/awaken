@@ -46,6 +46,37 @@ public final class RoadHooks {
     }
 
     public static void arrived(ServerLevel level, String settlementKey, String from, boolean defended) {
+        if (settlementKey.startsWith(HEARTH) && hearths != null) {
+            hearths.arrived(level, settlementKey, from, defended);
+            return;
+        }
         access.arrived(level, settlementKey, from, defended);
+    }
+
+    // ---- W6's call site: caravans on the roads to a Tier IV Hearth's village ---------------------------------------------
+
+    /** The settlement key a Hearth's village goes by on a route ({@code "hearth:" + its id}). */
+    public static final String HEARTH = "hearth:";
+
+    /**
+     * (SPEC §28.9) At Tier IV, roads to a player's Hearth village get caravans too. W6 isn't in this build, so nothing
+     * installs this yet: when it lands, the Hearth module installs one offering stretches of the road to each Tier IV
+     * Hearth (bound for it, toKey {@link #HEARTH} + id) and takes their arrival; the Caravan's road search already asks.
+     */
+    public interface HearthRoads {
+        List<Route> stretches(ServerLevel level, BlockPos pos, int min, int max, int length);
+
+        void arrived(ServerLevel level, String hearthKey, String from, boolean defended);
+    }
+
+    private static HearthRoads hearths;
+
+    public static void installHearths(HearthRoads h) {
+        hearths = h;
+    }
+
+    /** The stretches bound for Tier IV Hearth villages near {@code pos} (none until W6 installs its hook). */
+    public static List<Route> hearthStretches(ServerLevel level, BlockPos pos, int min, int max, int length) {
+        return hearths == null ? List.of() : hearths.stretches(level, pos, min, max, length);
     }
 }
