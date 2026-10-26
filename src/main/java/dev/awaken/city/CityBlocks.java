@@ -252,8 +252,6 @@ final class CityBlocks {
 
     // fields outside the wall
     static final BlockState FARMLAND = of("minecraft:farmland[moisture=7]");
-    static final BlockState[] CROPS = {of("minecraft:wheat[age=7]"), of("minecraft:carrots[age=7]"),
-            of("minecraft:potatoes[age=7]"), of("minecraft:beetroots[age=3]"), of("minecraft:wheat[age=5]")};
 
     // ---- Milestone 4: the climbing grid's courses and the kit ----------------------------------------------------
 

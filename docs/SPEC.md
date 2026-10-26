@@ -2040,6 +2040,29 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   Gate towers rise 4 over their plan height (eave 54) so their gallery clears the walk's hall; the walk passes every
   gatehouse through the room over the gate. No plan lamp stands in a gate passage or a drainpipe's column. Kit: arrow
   loop, wall ivy (climbable), portcullis, brazier (the kit's one light source, 14), wall spout, wall shield.
+- Decided in M4 Commons (2026-10-26; details docs/carillon/milestones/M4-commons.md; Euan's playtest: the walk out read
+  rough, too many monsters, banner poles broken): the plan is unchanged; the land outside the wall is painted by
+  `CityCommons` (the roads and the ground), `CityFarms` (the fields), `CityFarmsteads` (six farms) and `CityTrail` (the
+  High Gate road past the reach). The roads in keep their 8-wide line: setts to 22 from the gate, then cobble kerbs at
+  3.5 from the centre, gravel shoulders, wheel ruts of coarse dirt at 2.5 and a trodden crown; grass verges to 5.5, a
+  ditch (water a block down) at 6.5 and a hedge or spruce fence at 7.5 from 26 out, a field gate over a culvert every 48
+  (by turns either side). Lamps and pennant lines by turns every 14 from 24: a pennant line is two line poles at 5.5
+  with a bunting line across the road at row 7 and a district banner hung from it by each pole (the yard's two lines
+  replace its masts; the floating flagpole arms are gone). Milestones every 64 from 40 on the right-hand verge. Fields
+  keep the lattice (bands 21 out from 252, cells about 26 round): boundaries are hedges, farm tracks or grass balks by
+  pair; fields are arable strips 5 wide (four rows of one crop at its own growth, then an irrigation channel or a balk;
+  wheat, carrots, potatoes, beetroot, pumpkins, ploughed or fallow; a scarecrow on the seed of half), reaped (stooks
+  every 4), orchards (apple, blossom, cherry, 5 apart), pasture (hay) or meadow, with lone oaks; bands 2 and out are more
+  pasture and meadow. Six farmsteads (box 22 by 26, three by the first field gate of each road): a farmhouse from the
+  grammar (use "farm": its faces over open ground are street faces), a timber barn with open doors and a loft, a
+  haystack, a well, a hay cart, a paddock, a kitchen garden, a woodpile and a lamp at the track. Past the reach the
+  High Gate road is laid on the ground as it lies to 424 north (a plank bridge over water, lamps and milestones, no
+  ditch or hedges), a fingerpost, then a footpath bending to 26 short of the Wayfarers' fire (450 north, 6 east; the camp
+  and its 32 of safe ground are the Wayfarers'). Monsters: outside the wall a natural spawn of anything hostile (MONSTER,
+  `Enemy`, or an Awakened creature that isn't peaceful) goes ahead with chance 0.10 to 330 from the centre, rising to
+  0.45 at 470 and 1 at 640, and never where three hostiles stand within 48 at about its height (to 470 out;
+  `CityMonsters`, at the natural spawner's position check); inside the wall the lamps decide. Kit: milestone, fingerpost, scarecrow,
+  stook (no light, no block entity). Dev: `/awaken city monsters [radius]`.
 - Floating wood fix (2026-10-25): the city's vegetation sweep takes the lands' bark (elder wood) as well as leaves and
   logs, sweeps the whole neighbour chunk to full height, clears fields to the top, and removes tree groups left resting
   on nothing past the edge (`CityWriter.collectOrphans`). Dev: `/awaken city scan | floater <n> | tidy` (tidy repairs

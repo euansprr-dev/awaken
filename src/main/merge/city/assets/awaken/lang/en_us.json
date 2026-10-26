@@ -51,5 +51,9 @@
   "block.awaken.portcullis": "Portcullis",
   "block.awaken.brazier": "Brazier",
   "block.awaken.wall_spout": "Wall Spout",
-  "block.awaken.wall_shield": "Wall Shield"
+  "block.awaken.wall_shield": "Wall Shield",
+  "block.awaken.milestone": "Milestone",
+  "block.awaken.fingerpost": "Fingerpost",
+  "block.awaken.scarecrow": "Scarecrow",
+  "block.awaken.stook": "Wheat Stook"
 }

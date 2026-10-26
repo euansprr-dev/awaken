@@ -1136,7 +1136,7 @@ final class CityWall {
                 || Math.abs(x + 10) <= 2 && Math.abs(z + 249) <= 2;
     }
 
-    /** The gate's dressing outside the wall, after the ground: the yard's props, the barbican, the roads' lamps and masts. */
+    /** The gate's dressing outside the wall, after the ground: the yard's props, its pennant lines, the barbican. */
     static void approaches(Ctx c, CityBuffer b) {
         for (Prop p : YARD) {
             if (p.x1() < b.px0 || p.x0() > b.x1() || p.z1() < b.pz0 || p.z0() > b.z1()) continue;
@@ -1154,45 +1154,8 @@ final class CityWall {
     static final BlockState SPRUCE_FENCE_ = of("minecraft:spruce_fence");
 
     static void approach(Ctx c, CityBuffer b, int x, int z) {
-        CityPlan p = c.plan;
-        // the yard's flag masts at its four corners, their banners toward the road; lamps either side of the road out
-        if ((x == -16 || x == 15) && (z == -255 || z == -245)) mast(b, x, z, x < 0 ? E : W, 9);
-        if ((x == -15 || x == 14) && (z == -255 || z == -245)) {
-            for (int i = 0; i < 3; i++) b.set(x, 8 - i, z, CityFacadeLife.BANNER[N][3][i][1]);
-            b.set(x, 9, z, CityFacadeLife.FLAGPOLE[x < 0 ? E : W]);
-        }
+        CityCommons.yardLines(b, x, z); // the yard's pennant lines down its sides (the Commons step)
         barbican(c, b, x, z);
-        // the roads in: lamps on posts and flag masts by turns either side, every 14 from the yard (the barbican) out
-        if (p.kind(x, z) != VOID) return;
-        double half = p.roadWidth / 2.0;
-        for (int[] r : p.roads) {
-            double dx = r[2] - r[0], dz = r[3] - r[1], len = Math.hypot(dx, dz);
-            double t = ((x + 0.5 - r[0]) * dx + (z + 0.5 - r[1]) * dz) / (len * len);
-            if (t < 0 || t > 1) continue;
-            double along = t * len, off = CityPainter.segDist(x + 0.5, z + 0.5, r[0], r[1], r[2], r[3]);
-            if (off <= half + 0.5 || off > half + 3.5 || along < 24) continue;
-            int step = (int) Math.floor(along);
-            if (Math.floorMod(step - 24, 14) != 0) continue;
-            boolean lamp = Math.floorMod((step - 24) / 14, 2) == 0;
-            int away = CityWall.dominant((x + 0.5) - (r[0] + dx * t), (z + 0.5) - (r[1] + dz * t));
-            if (off <= half + 1.5) {
-                if (lamp) {
-                    b.set(x, 1, z, WALL_POST);
-                    b.column(x, 2, 3, z, FENCE);
-                    b.set(x, 4, z, LANTERN);
-                } else mast(b, x, z, away, 8);
-            } else if (!lamp && off <= half + 2.5) b.set(x, 8, z, CityFacadeLife.FLAGPOLE[away]);
-            else if (!lamp) {
-                int design = designOf(dominant(x, z) == N ? TERRACE : dominant(x, z) == E ? GARDEN_D : WORKS);
-                for (int i = 0; i < 3; i++) b.set(x, 7 - i, z, CityFacadeLife.BANNER[(away + 1) & 3][design][i][1]);
-            }
-        }
-    }
-
-    /** A flag mast: a pole with a flagpole at its head pointing one way (its banner hangs in the next cell, painted there). */
-    static void mast(CityBuffer b, int x, int z, int toward, int head) {
-        for (int ry = 1; ry < head + 1; ry++) b.set(x, ry, z, CityProps.POLE);
-        b.set(x, head + 1, z, CityProps.POLE_TOP);
     }
 
     /**

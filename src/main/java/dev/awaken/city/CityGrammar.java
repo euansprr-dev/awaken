@@ -375,6 +375,7 @@ final class CityGrammar {
      */
     static int faceClass(CityPlan plan, Plot p, int sd, int x, int z) {
         byte k = plan.kind(x, z);
+        if (k == VOID && p.use().equals("farm")) return F_STREET; // a farmhouse faces its yard and the fields (the Commons step)
         if (k == PLOT || k == LANDMARK || k == WALL || k == VOID || water(k) || k == WATERGATE) return F_NONE;
         // (M4 B2: ground in front standing at the eave or over it, a terrace above a house's back, hides the face)
         if (plan.lift(x, z) >= p.lift() + p.eave() - 1) return F_NONE;
