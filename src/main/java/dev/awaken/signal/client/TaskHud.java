@@ -25,7 +25,7 @@ final class TaskHud {
     private TaskHud() {}
 
     /** The widest line (unscaled px) before a step is shortened; how long a ticked step lingers; the flash. */
-    static final int MAX_W = 150, LINGER = 50, FLASH = 24;
+    static final int MAX_W = 185, LINGER = 50, FLASH = 24;
     /** Half the Now card's size, but never so small a font pixel is under two screen pixels. */
     static final float SIZE = 0.45F, MIN_PIXEL = 2.0F;
     /** Rows after the current one. */

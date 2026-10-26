@@ -5541,7 +5541,7 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
 "Every time you have a goal and things to do, you actually have a small checklist top right." One small card tucked
 into the top-right corner (`signal.client.TaskHud`; the Now card's margin, 4 GUI px), in the Now card's glass, at about
 half its size (Euan, 2026-10-26, after the first version: "WAY too big, 2x smaller and closer to the corner"): 0.45 of
-the System scale, never under two screen pixels a font pixel, widest line 150 px before a step is shortened. Its title
+the System scale, never under two screen pixels a font pixel, widest line 185 px before a step is shortened. Its title
 and done/total, then only what matters now, one line each: the current step bright with ▸, the next two dim, and a step
 that just ticked (a soft green flash, then it fades out over 2.5 s); a long step is shortened with "…" (the Journal has
 the whole of it). Keys are drawn as key caps from "{key}" in the words, a count where a step has one ("0/10"), and a
