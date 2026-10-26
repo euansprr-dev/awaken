@@ -31,18 +31,31 @@ hud off
 lens cinematic
 cmd gamemode spectator
 cmd time set 6000
-# Awaken alone has vanilla terrain (no Tectonic): open the gate by spawn, with fallbacks (a gate refuses to form
-# within 96 blocks of another, nor in the city reserve; frame picks the gate nearest the camera)
+# Awaken alone has vanilla terrain (no Tectonic; Carillon at 1290 -639, spawn in its reserve): try a ring of spots about
+# 470 blocks out until one finds dry ground (any that also do stand too, 96+ apart); frame picks the gate nearest the camera
+cmd tp @s 1760 140 -639
+wait 60
 cmd awaken gate open C
-wait 20
+cmd tp @s 1622 140 -307
+wait 60
 cmd awaken gate open C
-wait 20
-cmd tp @s ~450 140 ~
-wait 100
+cmd tp @s 1290 140 -169
+wait 60
 cmd awaken gate open C
-wait 20
-cmd tp @s ~-450 140 ~450
-wait 100
+cmd tp @s 958 140 -307
+wait 60
+cmd awaken gate open C
+cmd tp @s 820 140 -639
+wait 60
+cmd awaken gate open C
+cmd tp @s 958 140 -971
+wait 60
+cmd awaken gate open C
+cmd tp @s 1290 140 -1109
+wait 60
+cmd awaken gate open C
+cmd tp @s 1622 140 -971
+wait 60
 cmd awaken gate open C
 wait 200
 cmd awaken gate list
