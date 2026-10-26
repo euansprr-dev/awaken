@@ -15,13 +15,31 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jspecify.annotations.Nullable;
 
-/** The heart of a home. One per player; defines the Hearth's radius, respawn point and the warmth that mends Fracture. */
+/**
+ * The heart of a home. One per player; defines the Hearth's radius, respawn point and the warmth that mends Fracture. Its
+ * flame shows the Hearth's tier (SPEC §28.8, PLAN 4.8): {@link #TIER} 1-5, set whenever the tier changes.
+ */
 public class HearthAnchorBlock extends Block {
+    public static final IntegerProperty TIER = IntegerProperty.create("tier", 1, 5);
+
     public HearthAnchorBlock(BlockBehaviour.Properties p) {
         super(p);
+        registerDefaultState(stateDefinition.any().setValue(TIER, 1));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+        b.add(TIER);
+    }
+
+    /** The Anchor as it burns at a tier (1-5). */
+    public BlockState atTier(int tier) {
+        return defaultBlockState().setValue(TIER, Math.max(1, Math.min(5, tier)));
     }
 
     @Override

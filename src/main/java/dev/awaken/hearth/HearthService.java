@@ -580,6 +580,18 @@ public final class HearthService {
         DUE.clear();
     }
 
+    /**
+     * The Anchor's flame shows the tier (SPEC §28.8): its block state follows the record (an upgrade, an old world's Anchor
+     * loaded at tier I's state). One state read a second; a change only when they differ.
+     */
+    public static void showTier(ServerLevel level, HearthRecord h) {
+        if (h.hearthfire() || !level.isLoaded(h.pos)) return;
+        BlockState s = level.getBlockState(h.pos);
+        if (!(s.getBlock() instanceof dev.awaken.hearth.block.HearthAnchorBlock a)) return;
+        int want = Math.max(1, Math.min(5, h.tier));
+        if (s.getValue(dev.awaken.hearth.block.HearthAnchorBlock.TIER) != want) level.setBlock(h.pos, a.atTier(want), 3);
+    }
+
     /** Reused every tick so upkeep never allocates (and Hearths removed during upkeep don't break the loop). */
     private static final List<HearthRecord> DUE = new ArrayList<>();
 
@@ -593,6 +605,7 @@ public final class HearthService {
         }
         ServerPlayer owner = server.getPlayerList().getPlayer(h.owner);
         if (loaded) {
+            if (!h.hearthfire()) showTier(level, h);
             if (!h.hearthfire()) Town.upkeep(level, h, owner, now);
             RoomEffects.bells(level, h);
             // role pads are worked by the owner's Echoes (members' Echoes march with them)
