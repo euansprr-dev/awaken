@@ -28,8 +28,8 @@ final class CityFacadeLife {
     /** signboard[facing][trade][hanging, flat] */
     static final BlockState[][][] SIGN = new BlockState[4][TRADES.length][2];
     static final String[] DESIGN = {"bellwatch", "quay", "market", "terrace", "works", "garden", "wallring", "association"};
-    /** banner_cloth[facing][design][top, middle, bottom][wall, pole] */
-    static final BlockState[][][][] BANNER = new BlockState[4][DESIGN.length][3][2];
+    /** banner_cloth[facing][design][top, middle, bottom][wall, pole, line (hung from a pennant line on two cords)] */
+    static final BlockState[][][][] BANNER = new BlockState[4][DESIGN.length][3][3];
     static final BlockState[] FLAGPOLE = dirs("awaken:flagpole[facing=%s]");
 
     static {
@@ -46,6 +46,7 @@ final class CityFacadeLife {
                 for (int p = 0; p < 3; p++) {
                     BANNER[d][k][p][0] = of("awaken:banner_cloth[facing=" + f + ",design=" + DESIGN[k] + ",part=" + parts[p] + ",mount=wall]");
                     BANNER[d][k][p][1] = of("awaken:banner_cloth[facing=" + f + ",design=" + DESIGN[k] + ",part=" + parts[p] + ",mount=pole]");
+                    BANNER[d][k][p][2] = of("awaken:banner_cloth[facing=" + f + ",design=" + DESIGN[k] + ",part=" + parts[p] + ",mount=line]");
                 }
         }
     }
@@ -130,9 +131,8 @@ final class CityFacadeLife {
         }
     }
 
-    static boolean lampNear(CityPlan plan, int x, int z) {
-        for (int[] l : plan.lamps) if (Math.abs(l[0] - x) <= 1 && Math.abs(l[1] - z) <= 1) return true;
-        return false;
+    static boolean lampNear(PlanView plan, int x, int z) {
+        return plan.lampNear(x, z);
     }
 
     /** The column (up coordinates) of a side nearest `want` that has no window, climb line or bay, or -1. */

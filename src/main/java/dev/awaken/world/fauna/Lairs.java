@@ -312,7 +312,17 @@ public final class Lairs {
 
     /** Builds a lair with its floor centre at {@code centre} and registers it; returns its den. */
     static BlockPos placeAt(ServerLevel level, LairStyle style, BlockPos centre, long seed) {
-        LairPiece piece = new LairPiece(style, centre, seed, style.variant(level.getBiome(centre)));
+        // W5: a cave lair laid by hand opens into a pocket of cave as worldgen's opens into the natural caves
+        int[] joint = null;
+        if (style.placement == LairStyle.Placement.CAVE) {
+            joint = new int[]{centre.getX() + LairStyle.EXTENT + 12, centre.getY() + 2, centre.getZ() + 5};
+            BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+            for (int dx = -4; dx <= 4; dx++) for (int dz = -3; dz <= 3; dz++) for (int dy = 0; dy <= 3; dy++) {
+                if (dx * dx / 16.0 + dz * dz / 9.0 + (dy - 1.5) * (dy - 1.5) / 4.0 > 1.1) continue;
+                level.setBlock(m.set(joint[0] + dx, joint[1] + dy, joint[2] + dz), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
+            }
+        }
+        LairPiece piece = new LairPiece(style, centre, seed, style.variant(level.getBiome(centre)), joint);
         piece.build(level, piece.getBoundingBox());
         LairRegistry.get(level.getServer()).add(ChunkPos.containing(centre).pack(), style.beast, piece.den());
         return piece.den();

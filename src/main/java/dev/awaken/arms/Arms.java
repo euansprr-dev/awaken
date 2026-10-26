@@ -49,6 +49,21 @@ public final class Arms {
         return null;
     }
 
+    /** Melee bodies whose blows are told by a wind-up though not ours (a ravager's, an iron golem's, a warden's). */
+    public static final net.minecraft.tags.TagKey<net.minecraft.world.entity.EntityType<?>> TOLD_MELEE =
+            net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ENTITY_TYPE, dev.awaken.Awaken.id("told_melee"));
+
+    /**
+     * Whether a blow came untold: a creature's own melee (it strikes the body it is), from one with no
+     * wind-up to read: anything but ours (every Awaken creature tells its blows, SPEC §24) and #awaken:told_melee.
+     */
+    public static boolean untold(net.minecraft.world.damagesource.DamageSource src) {
+        net.minecraft.world.entity.Entity by = src.getEntity();
+        if (!(by instanceof LivingEntity) || by instanceof net.minecraft.world.entity.player.Player || src.getDirectEntity() != by) return false;
+        net.minecraft.resources.Identifier key = net.minecraft.world.entity.EntityType.getKey(by.getType());
+        return !dev.awaken.Awaken.MODID.equals(key.getNamespace()) && !by.getType().builtInRegistryHolder().is(TOLD_MELEE);
+    }
+
     /** Whether this stack raises a guard on right mouse (a style and the blocking component). */
     public static boolean guards(ItemStack stack) {
         return styleOf(stack) != null && stack.has(DataComponents.BLOCKS_ATTACKS);

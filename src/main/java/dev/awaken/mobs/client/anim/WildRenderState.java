@@ -23,4 +23,6 @@ public final class WildRenderState extends LivingEntityRenderState {
     public int wild;
     /** Body pitch while swimming (degrees, positive nose down). */
     public float pitch;
+    /** Seconds since its last heartbeat (WildPose#beatTime), -1 for none. */
+    public float beat = -1;
 }

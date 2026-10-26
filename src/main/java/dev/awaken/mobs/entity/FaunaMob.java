@@ -78,7 +78,8 @@ public class FaunaMob extends AwakenMob {
             java.util.Map.entry("briar_sow", "Bramble Charge"), java.util.Map.entry("dune_wyrm", "Surface"), java.util.Map.entry("old_antler", "Antler Rush"),
             java.util.Map.entry("mire_mother", "Tongue Lash"), java.util.Map.entry("plumed_coil", "Coil Strike"), java.util.Map.entry("weaver_queen", "Pounce"),
             java.util.Map.entry("empress_moth", "Wingbeat"), java.util.Map.entry("stonehorn", "Ram Charge"), java.util.Map.entry("mycelord", "Cap Slam"),
-            java.util.Map.entry("lantern_maw", "Maw Lunge"), java.util.Map.entry("thousandfoot", "Coil Strike")); // P3
+            java.util.Map.entry("lantern_maw", "Maw Lunge"), java.util.Map.entry("thousandfoot", "Coil Strike"), // P3
+            java.util.Map.entry("seep_heart", "Deep Pulse")); // W5
 
     // Server state. No field initialisers: registerGoals runs inside the super constructor.
     int scareTicks;
@@ -352,13 +353,26 @@ public class FaunaMob extends AwakenMob {
     @Override
     public void onAddedToLevel() {
         super.onAddedToLevel();
-        if (level() instanceof ServerLevel) FaunaHooks.server().added(this);
+        if (censused() && level() instanceof ServerLevel) FaunaHooks.server().added(this);
     }
 
     @Override
     public void onRemovedFromLevel() {
         super.onRemovedFromLevel();
-        if (level() instanceof ServerLevel) FaunaHooks.server().removed(this);
+        if (censused() && level() instanceof ServerLevel) FaunaHooks.server().removed(this);
+    }
+
+    /**
+     * Whether the world's fauna census counts this creature (the spawn caps and sightings read it). A creature the world
+     * places at its own spot (the seep heart) stays out: no cap is filled, no family sighting made.
+     */
+    protected boolean censused() {
+        return !def().placed;
+    }
+
+    /** Called out of the walls by a beast (the seep heart's call): it fights where it was sent, torchlight or not. */
+    boolean summoned() {
+        return getPersistentData().getIntOr("awaken_summoner", -1) >= 0;
     }
 
     // ---- ticking -------------------------------------------------------------------------------------------------
@@ -456,7 +470,7 @@ public class FaunaMob extends AwakenMob {
     /** Night hunters: hunt only in the dark, back off from light, help their pack, fade at dawn. */
     private void tickHunter(ServerLevel level) {
         LivingEntity t = getTarget();
-        if (t instanceof Player p && !inDarkness(p)) {
+        if (t instanceof Player p && !inDarkness(p) && !summoned()) {
             boolean provoked = getLastHurtByMob() == p && tickCount - getLastHurtByMobTimestamp() < 100;
             if (!provoked) {
                 setTarget(null);

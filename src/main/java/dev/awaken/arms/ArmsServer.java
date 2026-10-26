@@ -114,10 +114,25 @@ final class ArmsServer {
             case ArmsPayloads.PRESS_STRIKE -> {
                 s.seq = msg.seq();
                 s.aimed = msg.target();
+                // the press is down: if it is held into a charge, the strike it begins must never land (Euan
+                // 2026-10-26: "when you're charging up, it attacks once and then charges up")
+                s.holdSeq = msg.seq();
+                s.holdFrom = now;
+                s.holdOpen = chargeable(style);
                 strike(p, s, style, now, msg.seq());
+            }
+            case ArmsPayloads.PRESS_TAP -> {
+                if (msg.seq() != s.holdSeq) return;
+                s.holdOpen = false;
+                s.waitHit = false; // a tap: the strike lands as it comes
+                if (s.waitSeen) shown(p, s);
             }
             case ArmsPayloads.PRESS_CHARGE -> {
                 if (msg.seq() != s.seq) return;
+                if (s.waitHit && s.moveSeq == msg.seq()) s.clearMove(); // held: the strike never landed, the charge is all
+                if (s.buffered != null && s.bufferedSeq == msg.seq()) s.buffered = null; // nor will one queued mid-combo
+                s.holdOpen = false;
+                s.waitHit = false;
                 s.chargeStart = now;
                 s.chargeSeq = msg.seq();
                 seen(p, new ArmsPayloads.Seen(p.getId(), ArmsPayloads.CHARGE, -1, 0, 0));
@@ -188,9 +203,24 @@ final class ArmsServer {
         s.perfectHeavy = heavy.charge().isPresent() && heavy.charge().get().perfect(held);
     }
 
+    /** Whether a style's press can be held into a charge (its heavy charges). */
+    static boolean chargeable(Archetypes.Loaded style) {
+        Archetype.MoveDef heavy = style.move(Archetype.Move.HEAVY);
+        return heavy != null && heavy.charge().isPresent();
+    }
+
+    /**
+     * Ticks a press may stay down with its strike waiting at the hit before the strike lands anyway (the client says
+     * tap or charge well before: the charge at its heavy's min, ArmsPredict): no word from it never holds a blow back.
+     */
+    static final int HOLD_WAIT = 4;
+
     static void begin(ServerPlayer p, ArmsState s, Archetypes.Loaded style, Archetype.Move move, int step, int cadence, long now, int seq) {
         Archetype.MoveDef def = style.move(move);
         if (def == null) return;
+        // a chain strike begun by a press still down waits at its hit for the press's end: a tap lands it, a hold
+        // becomes the charge instead (the swing starts at once either way: a tap is never late)
+        s.waitHit = move.strike() && s.holdOpen && seq == s.holdSeq;
         s.drawn = ArmsRules.drawn(style.def().traits(), move, now - s.moveEnd);
         s.style = style;
         s.move = move;
@@ -215,9 +245,18 @@ final class ArmsServer {
             s.rhythm = true;
         }
         AwakenNet.send(p, new ArmsPayloads.Result(seq, ArmsPayloads.MOVE, -1, move.ordinal(), cadence));
-        p.swing(InteractionHand.MAIN_HAND, net.minecraft.world.item.component.SwingAnimation.DEFAULT, true); // the vanilla arm for anyone without the clips
-        soundForOthers(p, ArmsSounds.swish(def), 1.0F, ArmsSounds.swishPitch(cadence));
-        seen(p, new ArmsPayloads.Seen(p.getId(), ArmsPayloads.MOVE, -1, style.index(), move.ordinal()));
+        s.waitSeen = s.waitHit; // a strike waiting on its press shows itself only once the press is a tap
+        if (!s.waitHit) shown(p, s);
+    }
+
+    /** The running move as everyone near sees and hears it: the vanilla arm (without the clips), the swish, the clip. */
+    static void shown(ServerPlayer p, ArmsState s) {
+        s.waitSeen = false;
+        Archetype.MoveDef def = s.style == null || s.move == null ? null : s.style.move(s.move);
+        if (def == null) return;
+        p.swing(InteractionHand.MAIN_HAND, net.minecraft.world.item.component.SwingAnimation.DEFAULT, true);
+        soundForOthers(p, ArmsSounds.swish(def), 1.0F, ArmsSounds.swishPitch(s.cadence));
+        seen(p, new ArmsPayloads.Seen(p.getId(), ArmsPayloads.MOVE, -1, s.style.index(), s.move.ordinal()));
     }
 
     static void refuse(ServerPlayer p, int seq) {
@@ -237,18 +276,7 @@ final class ArmsServer {
             s.buffered = null;
             if (style != null && Arms.fights(p) && !off(p)) begin(p, s, style, d.move(), d.step(), d.cadence(), now, s.bufferedSeq);
         }
-        if (s.move != null && s.style != null) {
-            Archetype.MoveDef def = s.style.move(s.move);
-            long rel = now - s.moveStart;
-            if (def != null && rel >= def.windup() && rel < def.activeEnd() && Arms.fights(p)) {
-                if (s.move == Archetype.Move.ART && !s.unleashed) {
-                    s.unleashed = true;
-                    LordForged.Forged forged = LordForged.held(p);
-                    if (forged != null) LordForged.unleash(p, forged);
-                }
-                sweep(p, s, def, now);
-            }
-        }
+        moveTick(p, s, now);
         if (s.focus >= 0 && (now & 3) == 0) holdFocus(p, s, now);
         if (s.echoAt != 0) ArmsWeaves.tick(p, s, now);
         if (s.plungeSeq >= 0) plunge(p, s, now);
@@ -261,6 +289,36 @@ final class ArmsServer {
             s.dodgeRechargeAt = now + s.style.def().dodge().recharge();
         }
         if (s.resonance > 0 && now - s.fightAt > 100 && (now & 19) == 0) resonance(p, s, -ArmsRules.RESONANCE_DRAIN);
+    }
+
+    /**
+     * The running move's tick: a strike waiting on its press holds at the hit (its clock stopped there) until the press
+     * ends as a tap, becomes a charge, or has waited HOLD_WAIT past the charge's mark; then each active tick sweeps.
+     */
+    static void moveTick(ServerPlayer p, ArmsState s, long now) {
+        if (s.move == null || s.style == null) return;
+        Archetype.MoveDef def = s.style.move(s.move);
+        if (def == null) return;
+        long rel = now - s.moveStart;
+        if (s.waitHit && rel >= def.windup()) {
+            Archetype.MoveDef heavy = s.style.move(Archetype.Move.HEAVY);
+            int limit = heavy != null && heavy.charge().isPresent() ? heavy.charge().get().min() + HOLD_WAIT : 0;
+            if (s.holdOpen && now - s.holdFrom < limit) {
+                s.moveStart++;
+                s.moveEnd++;
+                return;
+            }
+            s.waitHit = false;
+            if (s.waitSeen) shown(p, s);
+        }
+        if (rel >= def.windup() && rel < def.activeEnd() && Arms.fights(p)) {
+            if (s.move == Archetype.Move.ART && !s.unleashed) {
+                s.unleashed = true;
+                LordForged.Forged forged = LordForged.held(p);
+                if (forged != null) LordForged.unleash(p, forged);
+            }
+            sweep(p, s, def, now);
+        }
     }
 
     /** The arc's work for one active tick: every creature in reach and in the arc, once. */
@@ -285,6 +343,44 @@ final class ArmsServer {
             s.markHit(t.getId());
             hit(p, s, def, t, now);
         }
+        // what isn't alive but takes a blow, as vanilla's attack strikes it (Euan 2026-10-26: "rifts can only be broken
+        // at the core with your hands"): the aimed one (a rift's core, an end crystal, a boat, a minecart, an item
+        // frame), and in the arc only what a sweep is meant to strike (#awaken:struck_by_sweeps: the anomalies)
+        for (Entity t : level.getEntities(p, box, t -> !(t instanceof LivingEntity) && t.isAlive() && !s.hasHit(t.getId())
+                && t.isAttackable() && !t.skipAttackInteraction(p))) {
+            boolean aimed = t.getId() == s.aimed;
+            if (!aimed && !t.getType().builtInRegistryHolder().is(STRUCK_BY_SWEEPS)) continue;
+            Vec3 closest = new Vec3(Mth.clamp(eye.x, t.getBoundingBox().minX, t.getBoundingBox().maxX),
+                    Mth.clamp(eye.y, t.getBoundingBox().minY, t.getBoundingBox().maxY), Mth.clamp(eye.z, t.getBoundingBox().minZ, t.getBoundingBox().maxZ));
+            if (closest.distanceTo(eye) > reach) continue;
+            Vec3 c = t.getBoundingBox().getCenter();
+            float toward = (float) (Mth.atan2(c.z - p.getZ(), c.x - p.getX()) * Mth.RAD_TO_DEG) - 90F;
+            if (!aimed && !ArmsRules.inArc(toward - yaw, def.arc())) continue;
+            s.markHit(t.getId());
+            strikeThing(p, s, def, t, now);
+        }
+    }
+
+    /** The anomalies a sweep strikes in its arc (anything else not alive is struck only when aimed, as vanilla's is). */
+    static final net.minecraft.tags.TagKey<net.minecraft.world.entity.EntityType<?>> STRUCK_BY_SWEEPS =
+            net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ENTITY_TYPE, dev.awaken.Awaken.id("struck_by_sweeps"));
+
+    /**
+     * Strikes something not alive through the same source vanilla's attack does (the player's attack, at the move's
+     * strength): it decides what a blow does to it (a rift's core loses a hit, a crystal bursts, a boat breaks). Landed,
+     * it is felt as any blow is: the impact, the hit-stop, the ribbon's flash.
+     */
+    static void strikeThing(ServerPlayer p, ArmsState s, Archetype.MoveDef def, Entity t, long now) {
+        float damage = (float) p.getAttributeValue(Attributes.ATTACK_DAMAGE) * ArmsRules.motion(def, s.cadence, s.perfectHeavy);
+        if (!t.hurtServer(p.level(), p.damageSources().playerAttack(p), Math.max(1F, damage))) return;
+        p.level().playSound(p, t.getX(), t.getY(0.6), t.getZ(), ArmsSounds.impact(t, s.move, def, s.style == null ? null : s.style.id()),
+                SoundSource.PLAYERS, 1.0F, ArmsSounds.impactPitch(t, def));
+        s.fightAt = now;
+        int ms = def.hitstop();
+        if (now - s.lastHitstopAt < ArmsRules.HITSTOP_GAP) ms = 0;
+        else s.lastHitstopAt = now;
+        AwakenNet.send(p, new ArmsPayloads.Result(s.moveSeq, ArmsPayloads.HIT, t.getId(), ms, s.move == null ? 0 : s.move.ordinal()));
+        seen(p, new ArmsPayloads.Seen(t.getId(), ArmsPayloads.HIT, p.getId(), ms, s.move == null ? 0 : s.move.ordinal()));
     }
 
     /** A Plunge in the air: it lands as the move (all round, harder the further it fell), or gives up in water or after 5 s. */
@@ -475,7 +571,8 @@ final class ArmsServer {
         int grace = grace(p);
         boolean inArc = e.getOriginalBlockedDamage() > 0;
         Archetype.Guard g = style.def().guard();
-        ArmsRules.Answer a = ArmsRules.guard(g, kind, p.getTicksUsingItem(), heldTicks, grace, s.lockedOut, inArc);
+        boolean untold = Arms.untold(e.getDamageSource());
+        ArmsRules.Answer a = ArmsRules.guard(g, kind, p.getTicksUsingItem(), heldTicks, grace, s.lockedOut, inArc, untold);
         float incoming = e.getDamageContainer().getNewDamage();
         Entity by = e.getDamageSource().getEntity();
         long now = now(p);
@@ -486,7 +583,8 @@ final class ArmsServer {
                 s.raiseDeflected = true;
                 s.deflectAt = now;
                 s.deflected = by == null ? -1 : by.getId();
-                float charged = ArmsMastery.deflect(ArmsMastery.step(p, style)); // mastery III: a charged deflect
+                // mastery III: a charged deflect; an untold blow's wider window pays a little less
+                float charged = ArmsMastery.deflect(ArmsMastery.step(p, style)) * (untold ? ArmsRules.UNTOLD_REWARD : 1F);
                 resonance(p, s, ArmsRules.RESONANCE_DEFLECT * charged);
                 if (by instanceof LivingEntity attacker && e.getDamageSource().getDirectEntity() == by) {
                     addPosture(attacker, (int) ((kind == Strikes.Kind.HEAVY ? ArmsRules.DEFLECT_POSTURE_HEAVY : ArmsRules.DEFLECT_POSTURE_LIGHT) * charged), p);

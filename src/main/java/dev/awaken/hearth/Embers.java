@@ -210,6 +210,7 @@ public final class Embers {
             return Optional.of("Place it on solid, open ground.");
         }
         if (CityBasin.reserved(at.getX(), at.getZ())) return Optional.of("You can't make your home inside the city. Take it outside the walls.");
+        if (dev.awaken.village.api.Villages.reserved(level, at, 8)) return Optional.of("You can't make your home inside a village. Take it past the last house.");
         if (WardHooks.at(level, at).isPresent()) return Optional.of("Old Precursor stone protects this ground, so your ember won't work here.");
         for (GateHooks.GateView g2 : GateHooks.near(level, at, GATE_CLEARANCE)) {
             if (!"RELEASED".equals(g2.state())) return Optional.of("There's a gate too close. Your home has to be at least " + GATE_CLEARANCE + " blocks from a gate.");

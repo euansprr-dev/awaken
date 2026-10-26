@@ -25,6 +25,8 @@ final class Listener {
     static final int COLUMNS = 24, INNER = 16;
     static final int KIND_NONE = 0, KIND_LEAVES = 1, KIND_GROUND = 2, KIND_WATER = 3;
     private static final int PER_TICK = 3;
+    /** The Hollows' family: any biome deep under the rock sounds like a cave (docs/sound/PLAN.md §6.2). */
+    private static final int HOLLOWS = java.util.Arrays.asList(Families.NAMES).indexOf("hollows");
     private static final float[] RADIUS = {5F, 11F, 20F};
 
     // the ring, refreshed a few columns a tick
@@ -39,6 +41,10 @@ final class Listener {
     private final float[] familyTarget = new float[Families.COUNT];
     double x, y, z;
     float canopy, open, underwater, rain, thunder, strength, gust, height;
+    /** 0 under open sky .. 1 well under the rock (no sky, the surface 4 to 14 blocks above): the Hollows take over. */
+    float under;
+    /** 0 down to y 48 .. 1 at y -64 (the Hollows' air: the deeper, the lower). */
+    float depth;
     long dayTime;
     boolean valid;
     /** The camera's biome (the place soundscape's key). */
@@ -51,7 +57,7 @@ final class Listener {
         java.util.Arrays.fill(familyWeight, 0F);
         java.util.Arrays.fill(family, (byte) -1);
         java.util.Arrays.fill(kind, KIND_NONE);
-        canopy = open = underwater = 0F;
+        canopy = open = underwater = under = depth = 0F;
         biome = null;
         next = 0;
     }
@@ -78,6 +84,16 @@ final class Listener {
         canopy = fresh ? canopyGoal : canopy + (canopyGoal - canopy) * 0.1F;
         open = fresh ? openGoal : open + (openGoal - open) * 0.05F;
         underwater = fresh ? waterGoal : underwater + (waterGoal - underwater) * 0.25F;
+        // under the rock the ring's columns still report the surface's biomes: the Hollows take their weight instead
+        // (under the land itself, not leaves or a roof, and out of daylight's reach)
+        int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(x), Mth.floor(z));
+        float cover = top - (float) y;
+        BlockState over = level.getBlockState(pos.set(Mth.floor(x), top - 1, Mth.floor(z)));
+        boolean land = over.is(BlockTags.SCULK_REPLACEABLE) || over.is(BlockTags.SNOW) || over.is(BlockTags.ICE) || !over.getFluidState().isEmpty();
+        int skyLight = level.getBrightness(net.minecraft.world.level.LightLayer.SKY, pos.set(Mth.floor(x), Mth.floor(y), Mth.floor(z)));
+        float underGoal = openGoal >= 1F || !land ? 0F : Mth.clamp((cover - 4F) / 10F, 0F, 1F) * (1F - Mth.clamp((skyLight - 4F) / 6F, 0F, 1F));
+        under = fresh ? underGoal : under + (underGoal - under) * 0.02F;
+        depth = Mth.clamp((48F - (float) y) / 112F, 0F, 1F);
 
         // the families: the camera's biome counts four columns' worth, so the ground you stand on leads
         java.util.Arrays.fill(familyTarget, 0F);
@@ -87,6 +103,11 @@ final class Listener {
             float w = i == COLUMNS ? 4F : 1F;
             if (f >= 0) familyTarget[f] += w;
             total += w;
+        }
+        // (only where the ground has a family: the overworld; the Nether and Awaken's dimensions keep their own places)
+        if (HOLLOWS >= 0 && under > 0F && family[COLUMNS] >= 0) {
+            for (int f = 0; f < Families.COUNT; f++) familyTarget[f] *= 1F - under;
+            familyTarget[HOLLOWS] += under * total;
         }
         for (int f = 0; f < Families.COUNT; f++) {
             float goal = familyTarget[f] / total;

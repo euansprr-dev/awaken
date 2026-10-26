@@ -51,10 +51,15 @@ public final class CityPainter {
         }
     }
 
-    /** What every painter call shares: the layout and the seed's detail hashes. */
+    /**
+     * What every painter call shares: the layout and the seed's detail hashes. The grammar, the facades and the props
+     * read the ground through {@link #view} (Carillon's plan, or a settlement's raster: SPEC §28.6); only Carillon's own
+     * painters (its ground, wall, landmarks) read {@link #plan}, which a settlement's context doesn't have.
+     */
     static final class Ctx {
         final CityLayout layout;
         final CityPlan plan;
+        final PlanView view;
         final long seed;
         /** Scratch for the commons' painters (a road's frame, a field's cell), one set per paint call. */
         final double[] rd = new double[2], rd2 = new double[2], fc = new double[9], fc2 = new double[9];
@@ -62,6 +67,15 @@ public final class CityPainter {
         Ctx(CityLayout layout, long worldSeed) {
             this.layout = layout;
             this.plan = layout.plan;
+            this.view = plan;
+            this.seed = worldSeed ^ 0x5EEDC17EL;
+        }
+
+        /** A settlement's context (no city layout): the grammar reads its raster. */
+        Ctx(PlanView view, long worldSeed) {
+            this.layout = null;
+            this.plan = null;
+            this.view = view;
             this.seed = worldSeed ^ 0x5EEDC17EL;
         }
 

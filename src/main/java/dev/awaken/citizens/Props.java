@@ -11,7 +11,9 @@ final class Props {
     static final int NONE = 0, POLE = 1, HAMMER = 2, TROWEL = 3, SCROLL = 4, HALBERD = 5, LANTERN = 6, BREAD = 7, LAUNDRY = 8,
             BOOK = 9, SATCHEL = 10, BAG = 11, BUCKET = 12,
             // the Registry ceremony (SPEC §16.4): what Bram hands over, by item id (other modules' items)
-            HOLO_BAND = 13, LICENCE = 14, LETTERS = 15;
+            HOLO_BAND = 13, LICENCE = 14, LETTERS = 15,
+            // (SPEC §28.6) the villages' trades: hoe, axe, pick, rod, bow, the carcass pole, the crook, a stick for the old
+            HOE = 16, AXE = 17, PICK = 18, ROD = 19, BOW = 20, CARCASS = 21, CROOK = 22, CANE = 23;
 
     static ItemStack stack(int code) {
         Item item = switch (code) {
@@ -27,6 +29,14 @@ final class Props {
             case SATCHEL -> CitizensContent.COURIER_SATCHEL.get();
             case BAG -> CitizensContent.STOLEN_BAG.get();
             case BUCKET -> Items.WATER_BUCKET;
+            case HOE -> Items.IRON_HOE;
+            case AXE -> Items.IRON_AXE;
+            case PICK -> Items.IRON_PICKAXE;
+            case ROD -> Items.FISHING_ROD;
+            case BOW -> Items.BOW;
+            case CARCASS -> CitizensContent.CARCASS_POLE.get();
+            case CROOK -> CitizensContent.SHEPHERD_CROOK.get();
+            case CANE -> Items.STICK;
             case HOLO_BAND -> byId("holo_band");
             case LICENCE -> byId("hunters_licence");
             case LETTERS -> byId("ilse_letters");

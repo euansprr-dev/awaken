@@ -61,6 +61,9 @@ final class ArmsTests {
         AwakenTests.register("arms_grip", 20, ArmsTests::grip);
         AwakenTests.register("arms_marks", 40, ArmsTests::marks);
         AwakenTests.register("arms_forge", 20, ArmsTests::forge);
+        AwakenTests.register("arms_tap_or_hold", 40, ArmsTests::tapOrHold);
+        AwakenTests.register("arms_strikes_things", 40, ArmsTests::strikesThings);
+        AwakenTests.register("arms_untold_parry", 40, ArmsTests::untoldParry);
     }
 
     /** At most this many triangle corners in one weapon (6,000 triangles: a few weapons in view cost what a mob does). */
@@ -694,6 +697,143 @@ final class ArmsTests {
         runActive(p);
         h.assertTrue(aimed.getHealth() == was, "one hit per creature per move");
         done(h, p);
+    }
+
+    /**
+     * A press held into a charge never strikes on the way: its strike starts on the press but waits at its hit, and the
+     * charge takes its place; a charge held long past full goes only when let go. A tap lands its strike on time, and
+     * with no word from the client at all the strike lands at the charge's mark plus {@link ArmsServer#HOLD_WAIT}.
+     */
+    static void tapOrHold(GameTestHelper h) {
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        LivingEntity pig = put(h, EntityTypes.PIG, 1.5, 2.3, 200);
+        ArmsState s = ArmsServer.state(p);
+        Archetype.MoveDef s1 = longsword().move(Archetype.Move.STRIKE_1);
+        Archetype.Charge c = longsword().move(Archetype.Move.HEAVY).charge().orElseThrow();
+        // held: strike 1 starts at once, then waits at its hit until the hold turns into the charge
+        long t0 = ArmsServer.now(p);
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_STRIKE, 0F, 0F, pig.getId()));
+        h.assertTrue(s.move == Archetype.Move.STRIKE_1 && s.waitHit, "the press starts strike 1 at once, its hit waiting on the press");
+        h.assertTrue(s.waitSeen, "and nobody near is shown it yet (no swing, swish or clip for a press that may be a hold)");
+        for (int t = 0; t < c.min(); t++) ArmsServer.moveTick(p, s, t0 + t);
+        h.assertTrue(pig.getHealth() == 200, "held to the charge's mark: no strike landed first (took " + (200 - pig.getHealth()) + ")");
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_CHARGE, 0F, 0F, -1));
+        h.assertTrue(s.move == null && s.chargeSeq == 1 && !s.waitSeen, "the hold becomes the charge, the waiting strike dropped unshown (" + s.move + ")");
+        // held ten seconds past full: still charging (nothing goes at the max); it goes on the release
+        s.chargeStart = ArmsServer.now(p) - 200;
+        h.assertTrue(s.move == null && s.chargeStart != ArmsState.NO_CHARGE, "still held at full charge");
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_RELEASE, 0F, 0F, pig.getId()));
+        h.assertTrue(s.move == Archetype.Move.HEAVY, "let go: the heavy (" + s.move + ")");
+        runActive(p);
+        h.assertTrue(pig.getHealth() < 200, "the released heavy strikes");
+        // a tap: the strike lands at its hit, on the tick an unheld strike would
+        s.clearMove();
+        pig.setHealth(200);
+        long t1 = ArmsServer.now(p);
+        ArmsServer.onPress(p, new ArmsPayloads.Press(2, ArmsPayloads.PRESS_STRIKE, 0F, 0F, pig.getId()));
+        ArmsServer.onPress(p, new ArmsPayloads.Press(2, ArmsPayloads.PRESS_TAP, 0F, 0F, -1));
+        h.assertTrue(!s.waitHit && !s.waitSeen, "a tap: the strike goes on, shown to everyone near");
+        int landed = -1;
+        for (int t = 0; t < s1.activeEnd() && landed < 0; t++) {
+            ArmsServer.moveTick(p, s, t1 + t);
+            if (pig.getHealth() < 200) landed = t;
+        }
+        h.assertTrue(landed == s1.windup(), "a tap's strike lands at its wind-up's end, " + s1.windup() + " ticks in (landed at " + landed + ")");
+        // no word from the client: the strike never waits past the charge's mark and a little
+        s.clearMove();
+        pig.setHealth(200);
+        long t2 = ArmsServer.now(p);
+        ArmsServer.onPress(p, new ArmsPayloads.Press(3, ArmsPayloads.PRESS_STRIKE, 0F, 0F, pig.getId()));
+        int limit = c.min() + ArmsServer.HOLD_WAIT;
+        landed = -1;
+        for (int t = 0; t <= limit + s1.active() && landed < 0; t++) {
+            ArmsServer.moveTick(p, s, t2 + t);
+            if (pig.getHealth() < 200) landed = t;
+        }
+        h.assertTrue(landed == limit, "unanswered, the waiting strike lands " + limit + " ticks in (landed at " + landed + ")");
+        done(h, p);
+    }
+
+    /**
+     * What isn't alive but takes a blow is struck by a styled weapon as vanilla's attack strikes it (Euan 2026-10-26: a
+     * rift's core broke only to bare hands): the aimed core loses a hit through the player's attack, a core in the arc
+     * too (#awaken:struck_by_sweeps), and a boat only when it is the one aimed. An owned core closes at zero on that same
+     * attack (anomaly_rift_close_pays_once); these have no anomaly, so a core collapses on its first hit.
+     */
+    static void strikesThings(GameTestHelper h) {
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F); // facing +z
+        dev.awaken.world.anomaly.RiftEntity core = core(h, 1.5, 2.2);
+        dev.awaken.world.anomaly.RiftEntity side = core(h, 2.7, 2.0);
+        net.minecraft.world.entity.vehicle.boat.Boat boat = EntityTypes.OAK_BOAT.create(h.getLevel(), EntitySpawnReason.COMMAND);
+        Vec3 b = h.absoluteVec(new Vec3(0.3, 1, 2.0));
+        boat.snapTo(b.x, b.y, b.z, 0F, 0F);
+        h.getLevel().addFreshEntity(boat);
+        int hits = core.hitsLeft();
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_STRIKE, 0F, 0F, core.getId()));
+        runActive(p);
+        h.assertTrue(core.hitsLeft() == hits - 1, "the aimed core takes the styled strike: " + hits + " → " + core.hitsLeft());
+        h.assertTrue(side.hitsLeft() == hits - 1, "a core in the arc is struck too: " + hits + " → " + side.hitsLeft());
+        h.assertTrue(core.closing(), "with no anomaly behind it, the struck core collapses");
+        h.assertTrue(!boat.isRemoved() && boat.getDamage() == 0, "a boat in the arc, not aimed: left alone");
+        ArmsServer.state(p).clearMove();
+        ArmsServer.onPress(p, new ArmsPayloads.Press(2, ArmsPayloads.PRESS_STRIKE, 0F, 0F, boat.getId()));
+        runActive(p);
+        h.assertTrue(boat.isRemoved(), "aimed, the boat breaks as vanilla's blow breaks it");
+        core.discard();
+        side.discard();
+        done(h, p);
+    }
+
+    static dev.awaken.world.anomaly.RiftEntity core(GameTestHelper h, double x, double z) {
+        dev.awaken.world.anomaly.RiftEntity e = dev.awaken.world.anomaly.AnomalyContent.RIFT.get().create(h.getLevel(), EntitySpawnReason.COMMAND);
+        Vec3 v = h.absoluteVec(new Vec3(x, 1, z));
+        e.snapTo(v.x, v.y, v.z, 0F, 0F);
+        h.getLevel().addFreshEntity(e);
+        return e;
+    }
+
+    /**
+     * A blow with no wind-up to read (a zombie's, a spider's) deflects over a wider window and pays less for it; a told
+     * one (an iron golem's, any of ours) keeps the tight window. Shots and players are never untold.
+     */
+    static void untoldParry(GameTestHelper h) {
+        Archetype.Guard g = longsword().def().guard();
+        int w = g.deflect(), u = w + ArmsRules.UNTOLD_DEFLECT;
+        h.assertTrue(ArmsRules.guard(g, Strikes.Kind.LIGHT, w, 0, 0, false, true, false) == ArmsRules.Answer.BLOCK, "told: past its window, a block");
+        h.assertTrue(ArmsRules.guard(g, Strikes.Kind.LIGHT, u - 1, 0, 0, false, true, true) == ArmsRules.Answer.DEFLECT, "untold: still a deflect " + (u - 1) + " ticks after the raise");
+        h.assertTrue(ArmsRules.guard(g, Strikes.Kind.LIGHT, u, 0, 0, false, true, true) == ArmsRules.Answer.BLOCK, "untold: its window ends too");
+        h.assertTrue(ArmsRules.guard(g, Strikes.Kind.LIGHT, 0, 3, 2, false, true, true) == ArmsRules.Answer.BLOCK, "the grace is the same: a raise late past it blocks");
+        h.assertTrue(ArmsRules.guard(g, Strikes.Kind.LIGHT, 0, 0, 0, true, true, true) == ArmsRules.Answer.BLOCK, "a spammed raise stays locked out");
+        h.assertTrue(ArmsRules.guard(g, Strikes.Kind.PERILOUS, 0, 0, 0, false, true, true) == ArmsRules.Answer.PASS, "a perilous blow passes either way");
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        ServerPlayer q = fighter(h, 4.5, 0.5, 0F);
+        Mob z = put(h, EntityTypes.ZOMBIE, 1.5, 1.9, 60);
+        Mob golem = put(h, EntityTypes.IRON_GOLEM, 4.5, 2.2, 100);
+        Mob skeleton = put(h, EntityTypes.SKELETON, -1.5, 4.5, 60);
+        var src = h.getLevel().damageSources();
+        var arrow = EntityTypes.ARROW.create(h.getLevel(), EntitySpawnReason.COMMAND);
+        h.assertTrue(Arms.untold(src.mobAttack(z)), "a zombie's blow is untold");
+        h.assertTrue(!Arms.untold(src.mobAttack(golem)), "an iron golem's is told (#awaken:told_melee)");
+        h.assertTrue(!Arms.untold(src.arrow(arrow, skeleton)), "a shot is never untold");
+        h.assertTrue(!Arms.untold(src.playerAttack(q)), "nor a player's blow");
+        // the reward: an untold deflect pays UNTOLD_REWARD of a told one
+        z.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(6);
+        float untoldGain = deflectGain(h, p, z), toldGain = deflectGain(h, q, golem);
+        h.assertTrue(toldGain > 0 && Math.abs(untoldGain - toldGain * ArmsRules.UNTOLD_REWARD) < 1e-3,
+                "an untold deflect pays " + ArmsRules.UNTOLD_REWARD + " of a told one: " + untoldGain + " vs " + toldGain);
+        done(h, p, q);
+    }
+
+    /** Raises p's guard, lets {@code by} strike it on the raise's first tick, and returns the Resonance the deflect paid. */
+    private static float deflectGain(GameTestHelper h, ServerPlayer p, Mob by) {
+        p.startUsingItem(InteractionHand.MAIN_HAND);
+        ArmsServer.onUseStart(new net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent.Start(p, p.getMainHandItem(), InteractionHand.MAIN_HAND, 72000));
+        ArmsState s = ArmsServer.state(p);
+        float was = s.resonance;
+        float hp = p.getHealth();
+        Strikes.deliver(by, Strikes.Kind.LIGHT, () -> by.doHurtTarget(h.getLevel(), p));
+        h.assertTrue(s.raiseDeflected && p.getHealth() == hp, by.getType().getDescription().getString() + "'s blow on the raise is deflected");
+        return s.resonance - was;
     }
 
     /** Every listener after the Arms stage still applies: the momentum hit's +30% from a slide-speed run. */

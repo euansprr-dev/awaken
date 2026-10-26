@@ -33,9 +33,13 @@ final class AscentRender {
     static final Identifier GLOW = Awaken.id("textures/ascent/glow.png");
     static final Identifier RING = Awaken.id("textures/ascent/ring.png");
     static final Identifier STAR = Awaken.id("textures/ascent/star.png");
+    /** The fitted lines (tools/art/specs/ascent_rappel.py): grey-steel strands; black glass with violet light in it. */
+    static final Identifier ROPE_IRON = Awaken.id("textures/ascent/rope_iron.png"), ROPE_DEEP = Awaken.id("textures/ascent/rope_deepglass.png");
+    /** The gold reel, face on: a spool in a gold rim, spokes, a hub (spun at the hand while it winds). */
+    static final Identifier REEL = Awaken.id("textures/ascent/reel.png");
     private static final boolean FIRST_PERSON_WINGS = true;
 
-    private static RenderType ropeType, glowType, ringType, starType;
+    private static RenderType ropeType, glowType, ringType, starType, ropeIronType, ropeDeepType, reelType;
     private static float pt;
     private static double cx, cy, cz;
     // camera right / up / back (toward the viewer)
@@ -52,13 +56,25 @@ final class AscentRender {
     private static final int MAX_ROPES = 48;
     private static final double[] RH = new double[MAX_ROPES * 3], RA = new double[MAX_ROPES * 3];
     private static final float[] RSAG = new float[MAX_ROPES], RREACH = new float[MAX_ROPES], RALPHA = new float[MAX_ROPES];
+    /** Each rope's line (RopeKit.LINE_*), the scroll of its strands (a rappel's rope runs through the hand), and whether
+     * a gold reel winds at its hand. */
+    private static final int[] RLINE = new int[MAX_ROPES];
+    private static final float[] RFLOW = new float[MAX_ROPES];
+    private static final boolean[] RREEL = new boolean[MAX_ROPES];
     private static int ropes;
+    /** The rope's line for the next rope() call, its flow and its reel. */
+    private static int nextLine;
+    private static float nextFlow;
+    private static boolean nextReel;
     private static final double[] PTS = new double[3 * 24];
     private static final double[] F = new double[9];
     private static final double[] E = new double[6];
 
-    private static final SubmitNodeCollector.CustomGeometryRenderer ROPES = (pose, vc) -> safe(() -> drawRopes(vc, pose, false));
-    private static final SubmitNodeCollector.CustomGeometryRenderer ROPE_GLOWS = (pose, vc) -> safe(() -> drawRopes(vc, pose, true));
+    private static final SubmitNodeCollector.CustomGeometryRenderer ROPES = (pose, vc) -> safe(() -> drawRopes(vc, pose, false, 0));
+    private static final SubmitNodeCollector.CustomGeometryRenderer ROPES_IRON = (pose, vc) -> safe(() -> drawRopes(vc, pose, false, 1));
+    private static final SubmitNodeCollector.CustomGeometryRenderer ROPES_DEEP = (pose, vc) -> safe(() -> drawRopes(vc, pose, false, 2));
+    private static final SubmitNodeCollector.CustomGeometryRenderer ROPE_GLOWS = (pose, vc) -> safe(() -> drawRopes(vc, pose, true, -1));
+    private static final SubmitNodeCollector.CustomGeometryRenderer REELS = (pose, vc) -> safe(() -> drawReels(vc, pose));
     private static final SubmitNodeCollector.CustomGeometryRenderer GLOWS = (pose, vc) -> safe(() -> drawGlows(vc, pose));
     private static final SubmitNodeCollector.CustomGeometryRenderer RINGS = (pose, vc) -> safe(() -> drawRings(vc, pose));
     private static final SubmitNodeCollector.CustomGeometryRenderer STARS = (pose, vc) -> safe(() -> drawStars(vc, pose));
@@ -101,6 +117,9 @@ final class AscentRender {
         bz = V.z;
         if (ropeType == null) {
             ropeType = RenderTypes.entityTranslucentEmissive(ROPE);
+            ropeIronType = RenderTypes.entityTranslucentEmissive(ROPE_IRON);
+            ropeDeepType = RenderTypes.entityTranslucentEmissive(ROPE_DEEP);
+            reelType = RenderTypes.entityTranslucentEmissive(REEL);
             glowType = RenderTypes.energySwirl(GLOW, 0, 0);
             ringType = RenderTypes.energySwirl(RING, 0, 0);
             starType = RenderTypes.energySwirl(STAR, 0, 0);
@@ -115,7 +134,18 @@ final class AscentRender {
         PoseStack ps = e.getPoseStack();
         SubmitNodeCollector out = e.getSubmitNodeCollector();
         if (ropes > 0) {
-            out.order(2).submitCustomGeometry(ps, ropeType, ROPES);
+            // one draw per line's look (each its own texture), only for the looks out this frame
+            boolean plain = false, iron = false, deep = false, reel = false;
+            for (int i = 0; i < ropes; i++) {
+                plain |= RLINE[i] == 0;
+                iron |= RLINE[i] == 1;
+                deep |= RLINE[i] == 2;
+                reel |= RREEL[i];
+            }
+            if (plain) out.order(2).submitCustomGeometry(ps, ropeType, ROPES);
+            if (iron) out.order(2).submitCustomGeometry(ps, ropeIronType, ROPES_IRON);
+            if (deep) out.order(2).submitCustomGeometry(ps, ropeDeepType, ROPES_DEEP);
+            if (reel) out.order(2).submitCustomGeometry(ps, reelType, REELS);
             out.order(3).submitCustomGeometry(ps, glowType, ROPE_GLOWS);
         }
         out.order(3).submitCustomGeometry(ps, glowType, GLOWS);
@@ -134,22 +164,38 @@ final class AscentRender {
         boolean first = mc.options.getCameraType().isFirstPerson();
         AscentState st = AscentMoves.state();
         if (st.rope) {
-            if (first) cameraHand(RH, 0);
+            if (first && st == AscentState.RAPPEL) cameraPoint(AscentFp.guideNow[0], AscentFp.guideNow[1], AscentFp.guideNow[2], RH);
+            else if (first) cameraHand(RH, 0);
             else bodyHand(me, RH, 0);
             double hx = RH[0], hy = RH[1], hz = RH[2];
             double d = Math.sqrt(sq(AscentMoves.ax - hx) + sq(AscentMoves.ay - hy) + sq(AscentMoves.az - hz));
             float reach = AscentMoves.ropeTravel > 0 ? Mth.clamp(1F - (AscentMoves.ropeTravel - pt) / 3F, 0.15F, 1F) : 1F;
             float sag = AscentMoves.ropeTaut ? 0 : (float) Math.min(2.5, Math.max(0, AscentMoves.len - d) * 0.5 + 0.15);
             if (AscentMoves.ropeTravel > 0) sag = 0.2F;
+            // the line's look; a rappel's rope runs through the hands as it pays out; the gold reel winds at the hand
+            nextLine = AscentMoves.kitLine;
+            nextFlow = (float) (AscentMoves.paid * 0.9);
+            nextReel = AscentMoves.reeling && AscentMoves.kitReel == dev.awaken.body.ascent.RopeKit.REEL_GOLD;
             rope(hx, hy, hz, AscentMoves.ax, AscentMoves.ay, AscentMoves.az, sag, reach, 1F);
+            if (st == AscentState.RAPPEL) {
+                if (first) cameraPoint(AscentFp.brakeNow[0], AscentFp.brakeNow[1], AscentFp.brakeNow[2], TMP);
+                else brakeHand(me, TMP, 0);
+                tail(hx, hy, hz, AscentMoves.kitLine, (float) (AscentMoves.paid * 0.9));
+            }
         }
         for (AscentRemote.Slot r : AscentRemote.SLOTS) {
             if (r.entity < 0 || !r.state.rope || ropes >= MAX_ROPES) continue;
             Entity e = mc.level.getEntity(r.entity);
             if (e == null) continue;
             bodyHand(e, RH, ropes * 3);
-            rope(RH[ropes * 3], RH[ropes * 3 + 1], RH[ropes * 3 + 2], r.ax, r.ay, r.az, 0.1F,
-                    Mth.clamp((AscentMoves.ticks - r.since + pt) / 2F, 0.2F, 1F), 1F);
+            double hx = RH[ropes * 3], hy = RH[ropes * 3 + 1], hz = RH[ropes * 3 + 2];
+            nextLine = r.kit & 3;
+            nextReel = (r.kit >> 2 & 1) == 1 && AscentRemote.winding(r);
+            rope(hx, hy, hz, r.ax, r.ay, r.az, 0.1F, Mth.clamp((AscentMoves.ticks - r.since + pt) / 2F, 0.2F, 1F), 1F);
+            if (r.state == AscentState.RAPPEL) {
+                brakeHand(e, TMP, 0);
+                tail(hx, hy, hz, r.kit & 3, (float) (-Mth.lerp(pt, e.yo, e.getY()) * 0.9));
+            }
         }
         for (AscentFx.Shot s : AscentFx.SHOTS) {
             if (ropes >= MAX_ROPES) break;
@@ -157,6 +203,7 @@ final class AscentRender {
                 float u = Mth.clamp((s.age + pt) / s.life, 0, 1);
                 // the free end falls and swings in toward the anchor
                 double fx = Mth.lerp(u * 0.6, s.nx, s.x), fy = s.ny - 4.0 * u * u, fz = Mth.lerp(u * 0.6, s.nz, s.z);
+                nextLine = s.line;
                 rope(fx, fy, fz, s.x, s.y, s.z, 1.2F * u, 1F, (1 - u) * (1 - u));
             } else if (s.kind == AscentFx.MISS) {
                 Entity e = mc.level.getEntity(s.entity);
@@ -172,9 +219,44 @@ final class AscentRender {
         }
     }
 
+    private static final double[] TMP = new double[3];
+
+    /**
+     * A rappel's rope below the guiding hand at (hx, hy, hz): down to the brake hand (in TMP), then its tail hanging
+     * out of that hand, swaying; the same line, running through both hands as it pays out ({@code flow}).
+     */
+    private static void tail(double hx, double hy, double hz, int line, float flow) {
+        double tx = TMP[0], ty = TMP[1], tz = TMP[2];
+        float t = AscentMoves.ticks + pt;
+        nextLine = line;
+        nextFlow = flow;
+        rope(hx, hy, hz, tx, ty, tz, 0.05F, 1F, 1F);
+        nextLine = line;
+        nextFlow = flow;
+        rope(tx, ty, tz, tx + Mth.sin(t * 0.13F) * 0.14, ty - 2.1, tz + Mth.cos(t * 0.11F) * 0.14, 0.12F, 1F, 0.95F);
+    }
+
+    /** A point in view space (x right, y up, z ahead negative) in the world, into out[0..2]. */
+    private static void cameraPoint(double x, double y, double z, double[] out) {
+        out[0] = cx + rx * x + ux * y + bx * z;
+        out[1] = cy + ry * x + uy * y + by * z;
+        out[2] = cz + rz * x + uz * y + bz * z;
+    }
+
     private static void rope(double hx, double hy, double hz, double ax, double ay, double az, float sag, float reach, float alpha) {
-        if (ropes >= MAX_ROPES) return;
+        if (ropes >= MAX_ROPES) {
+            nextLine = 0;
+            nextFlow = 0;
+            nextReel = false;
+            return;
+        }
         int i = ropes++;
+        RLINE[i] = nextLine;
+        RFLOW[i] = nextFlow;
+        RREEL[i] = nextReel;
+        nextLine = 0;
+        nextFlow = 0;
+        nextReel = false;
         RH[i * 3] = hx;
         RH[i * 3 + 1] = hy;
         RH[i * 3 + 2] = hz;
@@ -201,10 +283,32 @@ final class AscentRender {
     private static void bodyHand(Entity e, double[] out, int at) {
         AscentAnims.frame(e, pt, F);
         double x = Mth.lerp(pt, e.xo, e.getX()), y = Mth.lerp(pt, e.yo, e.getY()) + 1.4, z = Mth.lerp(pt, e.zo, e.getZ());
+        // a rappelling figure is drawn off the rock (AscentAnims.rappelOffset)
+        AscentState st = e == Minecraft.getInstance().player ? AscentMoves.state() : AscentRemote.stateOf(e);
+        if (AscentAnims.rappelOffset(e, st, OFF)) {
+            x += OFF[0];
+            z += OFF[1];
+        }
         out[at] = x + F[6] * 0.34 + F[3] * 0.72;
         out[at + 1] = y + F[7] * 0.34 + F[4] * 0.72;
         out[at + 2] = z + F[8] * 0.34 + F[5] * 0.72;
     }
+
+    /** A rappelling body's brake hand (the left, low at the hip, where the rope's tail runs out of it). */
+    private static void brakeHand(Entity e, double[] out, int at) {
+        AscentAnims.frame(e, pt, F);
+        double x = Mth.lerp(pt, e.xo, e.getX()), y = Mth.lerp(pt, e.yo, e.getY()) + 1.4, z = Mth.lerp(pt, e.zo, e.getZ());
+        if (AscentAnims.rappelOffset(e, AscentState.RAPPEL, OFF)) {
+            x += OFF[0];
+            z += OFF[1];
+        }
+        // the left hand: off the body's left side, down by the hip, a little in front
+        out[at] = x - F[6] * 0.32 - F[3] * 0.5 + F[0] * 0.18;
+        out[at + 1] = y - F[7] * 0.32 - F[4] * 0.5 + F[1] * 0.18;
+        out[at + 2] = z - F[8] * 0.32 - F[5] * 0.5 + F[2] * 0.18;
+    }
+
+    private static final double[] OFF = new double[2];
 
     private static double sq(double v) {
         return v * v;
@@ -212,9 +316,14 @@ final class AscentRender {
 
     // ---- drawing ----------------------------------------------------------------------------------------------------------
 
-    private static void drawRopes(VertexConsumer vc, PoseStack.Pose pose, boolean glow) {
+    /**
+     * The ropes of one line's look ({@code look}: RopeKit.LINE_*), or every rope's glow ({@code glow}): the light
+     * rope's cyan halo, a faint cool sheen on steel, the Deepglass line's violet.
+     */
+    private static void drawRopes(VertexConsumer vc, PoseStack.Pose pose, boolean glow, int look) {
         float time = AscentMoves.ticks + pt;
         for (int i = 0; i < ropes; i++) {
+            if (!glow && RLINE[i] != look) continue;
             double hx = RH[i * 3], hy = RH[i * 3 + 1], hz = RH[i * 3 + 2];
             double ax = RA[i * 3], ay = RA[i * 3 + 1], az = RA[i * 3 + 2];
             int n = RSAG[i] > 0.05F || RREACH[i] < 1 ? 16 : 2;
@@ -237,8 +346,21 @@ final class AscentRender {
             float a = RALPHA[i];
             // close to the eye a rope thins and its glow fades, or it would fill the frame from your own hand
             nearFade = true;
-            if (glow) ribbon(vc, pose, PTS, n + 1, 0.16F, 0.16F, (int) (a * 100), 0xA8DCFF, 0F, 1F);
-            else ribbon(vc, pose, PTS, n + 1, 0.05F, 0.05F, (int) (a * 255), 0xFFFFFF, (time * 0.35F) % 1F, (float) (reach * 3));
+            int line = RLINE[i];
+            if (glow) {
+                ribbon(vc, pose, PTS, n + 1, line == 1 ? 0.11F : 0.16F, line == 1 ? 0.11F : 0.16F, (int) (a * (line == 1 ? 34 : line == 2 ? 92 : 100)),
+                        line == 1 ? 0xA9BCCC : line == 2 ? 0xA77CFF : 0xA8DCFF, 0F, 1F);
+            } else {
+                // the light rope's strands run on their own; steel only moves as the rope runs through the hand; the
+                // Deepglass line's light drifts slowly along it
+                float run = line == 1 ? 0F : line == 2 ? time * 0.06F : time * 0.35F;
+                // a fitted line's strands keep their lay at any length (a repeat every 1.2 blocks); the light rope's
+                // stretch with it as they always have
+                float span = line == 0 ? (float) (reach * 3)
+                        : (float) (Math.sqrt(sq(ax - hx) + sq(ay - hy) + sq(az - hz)) * reach / 1.2);
+                ribbon(vc, pose, PTS, n + 1, line == 1 ? 0.045F : 0.05F, line == 1 ? 0.045F : 0.05F, (int) (a * 255), 0xFFFFFF,
+                        (run + RFLOW[i]) % 1F, span);
+            }
             nearFade = false;
         }
     }
@@ -342,6 +464,50 @@ final class AscentRender {
                     x + rx * size - ux * size, y + ry * size - uy * size, z + rz * size - uz * size, 1, 1,
                     x + rx * size + ux * size, y + ry * size + uy * size, z + rz * size + uz * size, 1, 0,
                     x - rx * size + ux * size, y - ry * size + uy * size, z - rz * size + uz * size, 0, 0);
+        }
+        // the Deepglass line: violet glints of the light inside it, travelling down toward the hand (faster as it pays out)
+        float time = AscentMoves.ticks + pt;
+        for (int i = 0; i < ropes; i++) {
+            if (RLINE[i] != 2 || RREACH[i] < 1 || RALPHA[i] < 0.5F) continue;
+            double hx = RH[i * 3], hy = RH[i * 3 + 1], hz = RH[i * 3 + 2], ax = RA[i * 3], ay = RA[i * 3 + 1], az = RA[i * 3 + 2];
+            double len = Math.sqrt(sq(ax - hx) + sq(ay - hy) + sq(az - hz));
+            int glints = Mth.clamp((int) (len / 6), 1, 6);
+            for (int k = 0; k < glints; k++) {
+                float t = 1F - ((time * 0.012F + RFLOW[i] * 0.04F + k / (float) glints + i * 0.37F) % 1F);
+                double x = ax + (hx - ax) * (1 - t), y = ay + (hy - ay) * (1 - t), z = az + (hz - az) * (1 - t);
+                float size = 0.07F + 0.05F * Mth.sin((time * 0.4F + k * 2.1F));
+                int a = (int) (230 * Mth.sin(t * Mth.PI) * RALPHA[i]);
+                quad2(vc, pose, a, k % 3 == 0 ? 0xF4ECFF : 0xB48CFF,
+                        x - rx * size - ux * size, y - ry * size - uy * size, z - rz * size - uz * size, 0, 1,
+                        x + rx * size - ux * size, y + ry * size - uy * size, z + rz * size - uz * size, 1, 1,
+                        x + rx * size + ux * size, y + ry * size + uy * size, z + rz * size + uz * size, 1, 0,
+                        x - rx * size + ux * size, y - ry * size + uy * size, z - rz * size + uz * size, 0, 0);
+            }
+        }
+    }
+
+    /**
+     * The gold reel at a winding hand: a disc face on to the camera, spinning, a little under the fist (smaller in your
+     * own first-person hand, which is close to the eye).
+     */
+    private static void drawReels(VertexConsumer vc, PoseStack.Pose pose) {
+        float time = AscentMoves.ticks + pt;
+        boolean first = Minecraft.getInstance().options.getCameraType().isFirstPerson();
+        for (int i = 0; i < ropes; i++) {
+            if (!RREEL[i]) continue;
+            boolean mine = i == 0 && first && AscentMoves.state().rope;
+            float size = mine ? 0.055F : 0.13F;
+            double x = RH[i * 3] - ux * size * 0.6, y = RH[i * 3 + 1] - uy * size * 0.6, z = RH[i * 3 + 2] - uz * size * 0.6;
+            float ang = time * 0.9F;
+            float c = Mth.cos(ang) * size, s = Mth.sin(ang) * size;
+            // the quad's corners turned in the view plane: (±1, ±1) rotated by the spin
+            double ax = rx * c + ux * s, ay = ry * c + uy * s, az = rz * c + uz * s;
+            double bx2 = -rx * s + ux * c, by2 = -ry * s + uy * c, bz2 = -rz * s + uz * c;
+            quad2(vc, pose, 255, 0xFFFFFF,
+                    x - ax - bx2, y - ay - by2, z - az - bz2, 0, 1,
+                    x + ax - bx2, y + ay - by2, z + az - bz2, 1, 1,
+                    x + ax + bx2, y + ay + by2, z + az + bz2, 1, 0,
+                    x - ax + bx2, y - ay + by2, z - az + bz2, 0, 0);
         }
     }
 

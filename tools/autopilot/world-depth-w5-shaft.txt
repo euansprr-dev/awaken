@@ -1,0 +1,91 @@
+# Between the Gates W5 (SPEC §28.5), the lead's second look after tour 40309178471: the sinkhole from its rim on foot
+# and over the lip looking down the shaft (mist rising, the waterfall, the pool, the rings), one shot from a ring
+# partway down, the grotto in the miner's lamp and a placed lantern, and the lush, dripstone and deep-dark looks.
+# Same seed as world-depth-w5.txt, so the same places (Rook's Well, The Quiet Water).
+# Run: tools/tour-ci.sh tools/autopilot/world-depth-w5-shaft.txt 900 LENS=cinematic
+world autopilot_world_depth_w5s creative 52605260
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 40
+key dismiss
+wait 10
+screen close
+# the director holds paced lines for a world's first five minutes: run them through
+cmd tick sprint 6200
+wait 240
+cmd gamerule advance_time false
+# dawn: the mist is thickest
+cmd time set 600
+cmd effect give @s minecraft:resistance 100000 4 true
+lens cinematic
+camera first
+
+# ---- the sinkhole on foot, the way a player meets it: goto keeps your pitch, so look down first ----
+hud on
+look 0 40
+cmd awaken delve goto sinkhole
+wait 70
+shotnow w5s_01_rim_on_foot_caption
+hud off
+wait 30
+shot w5s_02_rim_on_foot
+
+# ---- over the lip (a spectator's camera hovers): down the shaft at the waterfall, the pool, the rings ----
+cmd gamemode spectator
+cmd execute rotated ~ 0 run tp @s ^ ^1 ^6
+wait 30
+shot w5s_03_over_the_lip
+cmd tp @s ~ ~ ~ ~ 72
+wait 20
+shot w5s_04_down_the_shaft
+# from the spring's lip across at the rings
+cmd awaken delve place go dive shelf
+cmd execute rotated ~ 0 run tp @s ^ ^1 ^-1
+wait 30
+shot w5s_05_across_from_the_spring
+# ---- a ring partway down, looking across ----
+cmd awaken delve place go shelf pool
+cmd tp @s ~ ~ ~ ~ 25
+wait 30
+shot w5s_06_on_a_ring
+
+# ---- the grotto in the miner's lamp, then a lantern set down ----
+cmd gamemode creative
+cmd item replace entity @s armor.head with awaken:miners_lamp
+cmd awaken delve goto grotto
+wait 160
+cmd awaken delve place go room goal
+wait 40
+shot w5s_07_grotto_room_lamp
+cmd execute rotated ~ 0 run setblock ^ ^ ^2 minecraft:lantern
+wait 20
+shot w5s_08_grotto_room_lantern
+cmd awaken delve place go goal pool
+wait 30
+shot w5s_09_grotto_geode_lamp
+cmd awaken delve place go room curtain
+wait 30
+shot w5s_10_grotto_curtain_lamp
+
+# ---- the cave biomes' Lens looks, lamp on ----
+cmd awaken delve senses goto lush_caves
+wait 200
+shot w5s_11_look_lush
+cmd awaken delve senses goto dripstone_caves
+wait 200
+shot w5s_12_look_dripstone
+cmd awaken delve senses goto deep_dark
+wait 200
+shot w5s_13_look_deep_dark
+cmd awaken delve senses status
+quit

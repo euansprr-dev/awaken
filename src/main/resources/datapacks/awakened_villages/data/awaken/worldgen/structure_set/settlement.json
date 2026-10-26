@@ -1,0 +1,12 @@
+{
+  "structures": [
+    {
+      "structure": "awaken:settlement",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "awaken:settlement_grid",
+    "salt": 0
+  }
+}
