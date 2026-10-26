@@ -88,11 +88,18 @@ public final class Journal {
         }
 
         public String title() {
+            // the Status page's few are the JOURNAL; the Journal page's whole list is its LOG (SPEC §30.6)
+            String name = limit < SHORT ? "JOURNAL" : "LOG";
             int n = unread();
-            return n > 0 ? "JOURNAL · " + n + " NEW" : "JOURNAL";
+            return n > 0 ? name + " · " + n + " NEW" : name;
         }
 
         public int order() { return order; }
+
+        @Override
+        public dev.awaken.progression.client.StatusSections.Shelf shelf() {
+            return dev.awaken.progression.client.StatusSections.Shelf.FINDS;
+        }
 
         public boolean visible() { return !ENTRIES.isEmpty(); }
 

@@ -123,7 +123,7 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
         int[] focusAt = focus == null ? null : new int[focus.length];
         if (focusAt != null) java.util.Arrays.fill(focusAt, -1);
         for (StatusSections.Section s : StatusSections.of(tab)) {
-            if (!s.visible()) continue;
+            if (!StatusSections.shows(tab, s)) continue;
             any = true;
             if (focusAt != null) for (int k = 0; k < focus.length; k++) if (focusAt[k] < 0 && focus[k].equals(s.title())) focusAt[k] = y + SCROLL[i] - cy;
             y += dev.awaken.progression.client.BandHeader.draw(gg, font, s, cx, y, cw);
@@ -258,7 +258,7 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
         if (event.button() == InputConstants.MOUSE_BUTTON_LEFT && c.contains(mx, my)) {
             int y = c.y() - SCROLL[tab.ordinal()];
             for (StatusSections.Section s : StatusSections.of(tab)) {
-                if (!s.visible()) continue;
+                if (!StatusSections.shows(tab, s)) continue;
                 if (s.notePage() != null && dev.awaken.progression.client.BandHeader.onNote(font, s, c.x(), y, c.w(), mx, my)) {
                     selectTab(s.notePage());
                     return true;
@@ -302,6 +302,7 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
         }
         if (t != tab) {
             StatusSections.cue(StatusSections.Cue.PAGE);
+            StatusSections.narrate(t.label() + " page");
             beadFrom = tab.ordinal();
             beadAt = System.nanoTime();
             if (!HoloConfig.reducedMotion) panel.rescan();
@@ -316,7 +317,7 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
             else onClose();
             return true;
         }
-        for (StatusSections.Section s : StatusSections.of(tab)) if (s.visible() && s.key(event)) return true;
+        for (StatusSections.Section s : StatusSections.of(tab)) if (StatusSections.shows(tab, s) && s.key(event)) return true;
         Tab keyed = StatusSections.pageForKey(event);
         if (keyed != null) {
             selectTab(keyed);

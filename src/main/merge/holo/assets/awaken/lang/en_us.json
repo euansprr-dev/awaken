@@ -22,5 +22,7 @@
   "subtitles.awaken.holo.page": "Band page turns",
   "subtitles.awaken.holo.spend": "Stat point placed",
   "subtitles.awaken.holo.confirm": "Stat points confirmed",
-  "subtitles.awaken.holo.undo": "Stat point taken back"
+  "subtitles.awaken.holo.undo": "Stat point taken back",
+  "awaken.configuration.bandSize": "Band size",
+  "awaken.configuration.bandSize.tooltip": "How large the band's panel (K) and its text are. Each step is one whole pixel, so text stays sharp. LARGE never grows past 80% of the screen's height."
 }

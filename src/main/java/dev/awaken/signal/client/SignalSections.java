@@ -119,6 +119,9 @@ final class SignalSections {
         private static final int SHORT = 6;
 
         public String title() { return "RECENT MESSAGES"; }
+
+        @Override
+        public StatusSections.Shelf shelf() { return StatusSections.Shelf.MESSAGES; }
         public int order() { return 800; } // the Journal page, after the log, before Records
         public boolean visible() { return !RecentLog.entries().isEmpty(); }
 

@@ -5735,7 +5735,10 @@ band's Map page; a denser tint by day (phase 3); your face on Status (phase 2); 
   labels.
 
 ### 30.2 Still to build (PLAN §6)
-- **Phase 5:** the Powers and Journal pages composed, Truths and Codex restyled, narration, Band size.
+- Nothing from the plan's five phases. Later: the Journal entry opening in place ("Show on map", "Open in the Codex"),
+  the full step list of the tracked chain (the living module sends only the step you're on), the adaptive tint sampled
+  from the backdrop (today it follows daylight and the camera's pitch), a controller map, and the map scene's later
+  items (§30.5).
 
 ### 30.3 The Status sheet (phase 2, built: `progression.client.StatusSheet`)
 - **The hero** (Status order 0, no title row): your face (the skin's face and hat layers, 8×8 scaled up, in corner
@@ -5788,10 +5791,10 @@ really sharp, with the clouds and everything".
   - **Room:** the line from your eyes to a little past the camera's place must be clear; else the left shoulder (the
     layout mirrors), then a higher, steeper shot (1.4 m back, 6 m up, 50° down), then the table.
 - **The card:** the Atlas's own picture (the same renderer as the table: land, zones, clouds, pins, gates, rumours) on
-  the band's projected glass (78% navy), on the far side of the frame from your shoulder (31% to 97.5% of the width,
-  7.5% to 74% of the height). Up the map is the way the camera looks. The cut edge fades into the glass; the world
+  the band's projected glass (78% navy), on the far side of the frame from your shoulder (33.5% to 97.5% of the width,
+  7.5% to 68% of the height: it ends above and right of your raised wrist, so the beams show between them). Up the map is the way the camera looks. The cut edge fades into the glass; the world
   behind dims (Lens through the focus, plus a soft veil that is darker at the top). Beams of the band's light fan from
-  your wrist to the card's near edge (`holo.client.HoloScene`, drawn by the wrist layer). The card scans in from 120 ms
+  your wrist to the card's near bottom edge (`holo.client.HoloScene`, drawn by the wrist layer). The card scans in from 120 ms
   and the land prints in from the middle, faster than on the table.
 - **The legend** floats on its own glass over your head, on the near side: GATES (the four nearest you know, with
   their distance; Tab steps through them, a click picks one and the map glides to it), the picked gate's **Point me
@@ -5818,3 +5821,36 @@ really sharp, with the clouds and everything".
   way round, the promised timings, the MAP kind).
 - **Later:** a real 3D mesh in the world you could walk round; party members within 8 blocks seeing the real map;
   holding Shoulder Surfing and Camera Overhaul off while the scene runs (today they may fight the camera).
+
+### 30.6 The other pages, narration and Band size (phase 5, built)
+- **Powers** (`powers.client.PowersSection`, the page's lead): ON YOUR KEYS with your energy at the right ("ENERGY 120 /
+  120 · 6.0 A SECOND"); your six keys as 30-unit sockets with your own bindings on keycaps under them (R and Alt set
+  apart); YOUR POWERS · n, the grid (level pips, mastery under them, a blue dot when on a key, green when passive); then
+  a card for the power picked or under the cursor: its icon, name, KIND · SLOT · ENERGY · COOLDOWN in small capitals,
+  mastery as twelve segments and "Mastery 34% to level 4", what it does, and what to press next in amber ("Press Z, X,
+  C or V to put it on that key."). Pick a power, then press the key it should go on (your bindings) or click a socket;
+  the sockets it fits light amber with corner ticks. Esc lets go of a pick before it closes the band. The card's height
+  fits the longest description you own, so the page never jumps.
+- **Journal:**
+  - **Filters** across the top (`progression.client.JournalFilters`): EVERYTHING, TASKS, FINDS, MESSAGES; click one or
+    Q / E. Each section names its filter (`StatusSections.Section.shelf()`, TASKS by default; the filed lines and
+    RECORDS are FINDS, RECENT MESSAGES is MESSAGES; null shows under every filter). Screens ask
+    `StatusSections.shows(tab, section)`.
+  - **TRACKING** leads (`living.client.JournalSection`, order −40): the tracked chain's name in white on a lit horizon
+    bar and "▸" the step you're on; the other chains and bounties follow under ALSO ON, one line each with their step
+    in small type. With nothing tracked the heading is CHAINS.
+  - The page's filed lines are its **LOG** ("LOG · 2 NEW"); the Status page keeps "JOURNAL".
+- **Truths:** each Truth on its own card of glass, its bar amber while it waits on you and green once true; "Gives:"
+  instead of "Reward:".
+- **Narration** (`StatusSections.narrate`, spoken only when the vanilla narrator is on): a page change ("Journal
+  page"), a stat's focus ("Agility 22. You move faster, and Flow builds sooner. 3 points to place."), a power picked
+  (its name, what it does, what to press), a gate picked on the map (its name, distance, when it breaks, "Press T to be
+  pointed there.").
+- **Band size** (`config/awaken-holo-client.toml`, `bandSize`: SMALL, NORMAL, LARGE): one whole framebuffer pixel a
+  unit less or more than Normal (`HoloPanel.sizeStep`), never past 80% of the screen's height: 4 / 5 / 6 px a unit on
+  the MacBook, 5 / 6 / 7 on the 4K Dell. Every type size steps with it, so text stays sharp.
+- **The map's legend** says "You haven't seen a gate yet. Their light shows from far off: look for a pillar in the
+  sky." with no gates seen, "+ n further out" past the four nearest, and puts the danger key's colours on a line of
+  their own when they don't fit beside it.
+- **Autopilot:** `screenkey tab|t|m|c|space|q|e` (or `shift+` one) sends a key to the open screen.
+- **Tests:** `holo_band_layout` also checks the Band size steps on the owner's screens.

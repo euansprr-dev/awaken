@@ -60,6 +60,41 @@ public final class StatusSections {
 
         /** A key while this section's page is open (place a point, confirm, undo). Return true if consumed. */
         default boolean key(net.minecraft.client.input.KeyEvent event) { return false; }
+
+        /** Which of the Journal page's filters shows it (SPEC §30.6); null shows it under every filter. */
+        default @Nullable Shelf shelf() { return Shelf.TASKS; }
+    }
+
+    // ---- the Journal page's filters (SPEC §30.6) -------------------------------------------------------------------
+
+    /** The Journal page's filters past EVERYTHING: what you're doing, what you've found, what you were told. */
+    public enum Shelf {
+        TASKS("TASKS"), FINDS("FINDS"), MESSAGES("MESSAGES");
+
+        public final String label;
+
+        Shelf(String label) {
+            this.label = label;
+        }
+    }
+
+    /** The filter picked on the Journal page, null for everything; kept for the session. */
+    private static @Nullable Shelf journalFilter;
+
+    public static @Nullable Shelf journalFilter() {
+        return journalFilter;
+    }
+
+    public static void journalFilter(@Nullable Shelf f) {
+        journalFilter = f;
+    }
+
+    /** Whether a section shows on its page now: visible, and on the Journal page under the filter picked. */
+    public static boolean shows(Tab tab, Section s) {
+        if (!s.visible()) return false;
+        if (tab != Tab.JOURNAL || journalFilter == null) return true;
+        Shelf on = s.shelf();
+        return on == null || on == journalFilter;
     }
 
     // ---- what the open band tells its sections ------------------------------------------------------------------
@@ -118,6 +153,12 @@ public final class StatusSections {
 
     public static void cue(Cue c) {
         cues.accept(c);
+    }
+
+    /** One plain sentence for the narrator as focus moves (SPEC §30.6); spoken only when the vanilla narrator is on. */
+    public static void narrate(String sentence) {
+        var n = net.minecraft.client.Minecraft.getInstance().getNarrator();
+        if (n.isActive()) n.saySystemNow(sentence);
     }
 
     /** What a page opens instead of its sections, and the key that opens it from anywhere (the Map: the Atlas, M). */

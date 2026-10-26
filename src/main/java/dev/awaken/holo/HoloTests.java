@@ -57,6 +57,10 @@ final class HoloTests {
             for (int[] s : new int[][]{{2880, 1800, 5}, {3024, 1964, 5}, {3840, 2160, 6}}) {
                 int ppu = Math.max(1, Math.min(Math.round(0.45f * s[0] / W), (int) Math.floor(0.80f * s[1] / H)));
                 h.assertTrue(ppu == s[2], s[0] + "x" + s[1] + " keeps " + s[2] + " px a unit (got " + ppu + ")");
+                // Band size (SPEC §30.6): a whole pixel a unit less or more, never past 80% of the height
+                int byH = (int) Math.floor(0.80f * s[1] / H);
+                int small = Math.max(1, Math.min(Math.round(0.45f * s[0] / W) - 1, byH)), large = Math.max(1, Math.min(Math.round(0.45f * s[0] / W) + 1, byH));
+                h.assertTrue(small == ppu - 1 && large > ppu && large * H <= 0.80f * s[1], s[0] + "x" + s[1] + ": Band size steps " + small + " / " + ppu + " / " + large);
             }
             h.succeed();
         });

@@ -168,13 +168,14 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
     }
 
     // the table fills the screen; the scene's card stands beside you, on the far side of the frame from your shoulder
-    private int px0() { return scene ? (MapScene.side() > 0 ? Math.round(width * 0.31f) : Math.round(width * 0.025f)) : MARGIN; }
+    // (the card ends above and right of your raised wrist, so the beams show between them)
+    private int px0() { return scene ? (MapScene.side() > 0 ? Math.round(width * 0.335f) : Math.round(width * 0.025f)) : MARGIN; }
     private int py0() { return scene ? Math.round(height * 0.075f) : MARGIN + 14; }
-    private int px1() { return scene ? (MapScene.side() > 0 ? Math.round(width * 0.975f) : Math.round(width * 0.69f)) : width - MARGIN; }
-    private int py1() { return scene ? Math.round(height * 0.74f) : height - MARGIN - 14; }
+    private int px1() { return scene ? (MapScene.side() > 0 ? Math.round(width * 0.975f) : Math.round(width * 0.665f)) : width - MARGIN; }
+    private int py1() { return scene ? Math.round(height * 0.68f) : height - MARGIN - 14; }
     /** The scene's legend glass: over your head, on the near side. */
-    private int sideX0() { return MapScene.side() > 0 ? Math.round(width * 0.025f) : Math.round(width * 0.71f); }
-    private int sideX1() { return MapScene.side() > 0 ? Math.round(width * 0.29f) : Math.round(width * 0.975f); }
+    private int sideX0() { return MapScene.side() > 0 ? Math.round(width * 0.02f) : Math.round(width * 0.685f); }
+    private int sideX1() { return MapScene.side() > 0 ? Math.round(width * 0.315f) : Math.round(width * 0.98f); }
 
     @Override
     protected void init() {
@@ -330,11 +331,12 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         }
     }
 
-    /** Where the band's beams land: two points down the card's near edge, so the light fans up into the map. */
+    /** Where the band's beams land: two points along the card's near bottom edge, so the light fans up into the map. */
     private void beams(int x0, int y0, int x1, int y1) {
-        float ex = MapScene.side() > 0 ? x0 + 2 : x1 - 2, nx = ex / width * 2f - 1f;
-        float ay = y0 + (y1 - y0) * 0.42f, by = y1 - 6;
-        dev.awaken.holo.client.HoloScene.beams(nx, 1f - ay / height * 2f, nx, 1f - by / height * 2f, 4.5f);
+        boolean right = MapScene.side() > 0;
+        float w = x1 - x0, ax = right ? x0 + w * 0.06f : x1 - w * 0.06f, bx = right ? x0 + w * 0.30f : x1 - w * 0.30f;
+        float ny = 1f - (y1 - 2) / (float) height * 2f;
+        dev.awaken.holo.client.HoloScene.beams(ax / width * 2f - 1f, ny, bx / width * 2f - 1f, ny, 4.5f);
     }
 
     /** The district or "Carillon" under the table's centre, if known. */
@@ -510,6 +512,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         java.util.List<MapMarks.Gate> gates = new java.util.ArrayList<>(MapMarks.gates(mc.player));
         gates.sort(java.util.Comparator.comparingDouble((MapMarks.Gate gt) -> gt.pos().distToCenterSqr(px, gt.pos().getY(), pz)));
         for (int i = 0; i < Math.min(GATE_ROWS, gates.size()); i++) gateRows.add(gates.get(i));
+        moreGates = gates.size() - gateRows.size();
         if (chosen != null && gateRows.stream().noneMatch(gt -> gt.pos().equals(chosen))) chosen = null;
         java.util.List<AtlasState.ZoneLabel> all = atlas.zoneLabels();
         int here = atlas.zoneView().zone(mc.player.getBlockX(), mc.player.getBlockZ());
@@ -517,19 +520,27 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         sorted.sort(java.util.Comparator.comparingDouble((AtlasState.ZoneLabel z) -> z.zone() == here ? -1 : (z.x() - px) * (z.x() - px) + (z.z() - pz) * (z.z() - pz)));
         // in the scene the legend stays over your head; on the table, inside the table's corner
         int maxY = scene ? Math.round(height * 0.56f) : py1() - 6;
-        int fixed = 4 + (gateRows.isEmpty() ? 0 : 12 + gateRows.size() * ROW + (chosen != null ? ROW + 2 : 0) + 6) + 12 + 22;
+        // the scene always shows its GATES heading: with none seen yet, it says how they're found
+        noGates = scene && gateRows.isEmpty() ? font.split(Component.literal(NO_GATES), Math.max(40, (scene ? sideX1() - sideX0() : LEGEND_W) - 12)) : java.util.List.of();
+        int gateBlock = !gateRows.isEmpty() ? 12 + gateRows.size() * ROW + (moreGates > 0 ? ROW : 0) + (chosen != null ? ROW + 2 : 0) + 6
+                : noGates.isEmpty() ? 0 : 12 + noGates.size() * 10 + 6;
+        int fixed = 4 + gateBlock + 12 + 22;
         int lands = Math.max(0, (maxY - (scene ? py0() : y0 + 6) - fixed) / ROW);
         // close in, the city's districts and the land round you; zoomed out, the regions (their danger matters there)
         for (AtlasState.ZoneLabel z : sorted)
             if (legendRows.size() < Math.min(LEGEND_ROWS, lands) && (lod == 0 || z.zone() < ZoneMap.DISTRICT)) legendRows.add(z);
-        if (legendRows.isEmpty() && gateRows.isEmpty()) return;
+        if (legendRows.isEmpty() && gateRows.isEmpty() && noGates.isEmpty()) return;
         legendX0 = scene ? sideX0() : x0 + 6;
         legendY0 = scene ? py0() : y0 + 6;
         legendX1 = scene ? sideX1() : legendX0 + LEGEND_W;
         int y = legendY0 + 4;
+        if (!noGates.isEmpty()) {
+            gateRowY0 = y + 12;
+            y = gateRowY0 + noGates.size() * 10 + 6;
+        }
         if (!gateRows.isEmpty()) {
             gateRowY0 = y + 12;
-            y = gateRowY0 + gateRows.size() * ROW;
+            y = gateRowY0 + gateRows.size() * ROW + (moreGates > 0 ? ROW : 0);
             if (chosen != null) {
                 pointY = y + 1;
                 y += ROW + 2;
@@ -539,22 +550,35 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         legendRowY0 = legendRows.isEmpty() ? -1000 : y + 12;
         if (!legendRows.isEmpty()) y = legendRowY0 + legendRows.size() * ROW;
         dangerY = y + 6;
-        legendY1 = dangerY + 14;
+        // the danger key on one line when it fits, else its colours on a line of their own
+        int keyW = font.width("DANGER") + 6;
+        for (String lv : DANGER_LEVELS) keyW += 8 + font.width(lv) + 6;
+        dangerWrap = keyW > legendX1 - legendX0 - 10;
+        legendY1 = dangerY + (dangerWrap ? 25 : 14);
     }
 
-    private int dangerY;
+    private int dangerY, moreGates;
+    private boolean dangerWrap;
+    private static final String[] DANGER_LEVELS = {"1", "8", "20", "45", "80"};
+    private java.util.List<net.minecraft.util.FormattedCharSequence> noGates = java.util.List.of();
+    private static final String NO_GATES = "You haven't seen a gate yet. Their light shows from far off: look for a pillar in the sky.";
 
     /** The legend: the gates you know (pick one, then "Point me there"), the lands and what their colours mean. */
     private void legend(GuiGraphicsExtractor g, Minecraft mc, AtlasState atlas, int mouseX, int mouseY) {
-        if (legendRows.isEmpty() && gateRows.isEmpty()) return;
+        if (legendRows.isEmpty() && gateRows.isEmpty() && noGates.isEmpty()) return;
         int x = legendX0, y = legendY0, w = legendX1 - legendX0;
         if (scene) HudLook.card(g, x, y, w, legendY1 - y, Glass.EDGE, 0.86f, Math.clamp((age() - 0.18f) / 0.25f, 0f, 1f), 0f, HudLook.FRAME);
         else {
             g.fill(x, y, x + w, legendY1, 0xC80B1626);
             g.fill(x, y, x + w, y + 1, 0x667FC3FF);
         }
+        if (!noGates.isEmpty()) {
+            plain(g, "GATES", x + 6, gateRowY0 - 12, Glass.LABEL | 0xFF000000);
+            for (int i = 0; i < noGates.size(); i++) g.text(font, noGates.get(i), x + 6, gateRowY0 + i * 10, Glass.a(Glass.LABEL, 1f), false);
+        }
         if (!gateRows.isEmpty()) {
             plain(g, "GATES", x + 6, gateRowY0 - 12, Glass.LABEL | 0xFF000000);
+            if (moreGates > 0) plain(g, "+ " + moreGates + " further out", x + 17, gateRowY0 + gateRows.size() * ROW, Glass.a(Glass.LABEL, 0.8f));
             String tab = "Tab";
             plain(g, tab, x + w - 6 - font.width(tab), gateRowY0 - 12, Glass.a(Glass.LABEL, 0.7f));
             for (int i = 0; i < gateRows.size(); i++) {
@@ -603,7 +627,11 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         int ky = dangerY;
         plain(g, "DANGER", x + 6, ky + 1, Glass.LABEL | 0xFF000000);
         int kx = x + 6 + font.width("DANGER") + 6;
-        String[] lv = {"1", "8", "20", "45", "80"};
+        if (dangerWrap) {
+            kx = x + 6;
+            ky += 11;
+        }
+        String[] lv = DANGER_LEVELS;
         for (int b = 0; b < ZoneMap.BAND_COLOUR.length; b++) {
             g.fill(kx, ky + 2, kx + 6, ky + 8, ZoneMap.BAND_COLOUR[b]);
             plain(g, lv[b], kx + 8, ky + 1, Glass.LABEL | 0xFF000000);
@@ -626,6 +654,8 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
     /** Picks a gate: the map glides to it and the legend offers "Point me there". */
     private void choose(MapMarks.Gate gt) {
         chosen = gt.pos();
+        dev.awaken.progression.client.StatusSections.narrate(gt.name() + ", " + gateDistance(Minecraft.getInstance(), gt)
+                + (gt.when().isEmpty() ? "" : ", " + gt.when()) + ". Press T to be pointed there.");
         flyX = gt.pos().getX() + 0.5;
         flyZ = gt.pos().getZ() + 0.5;
         Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(HoloSounds.HOVER.get(), 1.1f, 0.7f));

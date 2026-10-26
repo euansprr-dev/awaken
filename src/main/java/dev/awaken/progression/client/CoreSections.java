@@ -45,6 +45,7 @@ final class CoreSections {
         // the Status page is a sheet about you: the hero, then the six stats (SPEC §30.3)
         StatusSections.add(StatusSections.Tab.STATUS, new StatusSheet.Hero());
         StatusSections.add(StatusSections.Tab.STATUS, new StatusSheet.StatLine());
+        StatusSections.add(StatusSections.Tab.JOURNAL, new JournalFilters());
         StatusSections.add(StatusSections.Tab.JOURNAL, new WaitingSection());
         dev.awaken.core.api.MapMarks.register(WaitingSection::marks);
         StatusSections.add(StatusSections.Tab.TRUTHS, new RoadSection());
@@ -167,6 +168,9 @@ final class CoreSections {
         }
 
         public String title() { return "RECORDS"; }
+
+        @Override
+        public StatusSections.Shelf shelf() { return StatusSections.Shelf.FINDS; }
         public int order() { return 900; }
         public boolean visible() { return !lines().isEmpty(); }
 
@@ -265,36 +269,40 @@ final class CoreSections {
                         : "None yet. Live one of your declared Truths.", Glass.LABEL);
                 return;
             }
+            // each Truth on its own card (SPEC §30.6): the words in white, how to make it true, what it gives, and its key;
+            // the card's bar says where it stands (amber waits on you, green is true)
             for (int i = 0; i < ids.size(); i++) {
                 String id = ids.get(i);
                 var d = Content.TRUTHS.get(id);
-                ui.text(d == null ? id : "“" + d.text() + "”", kind == Kind.TRUE ? Glass.GOOD : Glass.TITLE, 0, true);
-                if (d != null && kind != Kind.TRUE) d.hint().ifPresent(h -> ui.text(h, Glass.LABEL, 4, false));
-                if (d != null) {
-                    ui.text((kind == Kind.TRUE ? "Granted: " : "Reward: ") + Rewards.describe(d.reward()), kind == Kind.TRUE ? Glass.LABEL : Glass.AMBER, 4, false);
-                }
-                switch (kind) {
-                    case DECLARED -> {
-                        if (d != null) ui.bar(d.condition().progress(p, null), Glass.AMBER);
-                        Ui.Flow row = ui.flow();
-                        row.chip("NOT TRUE YET", Glass.AMBER);
-                        if (row.button("Withdraw", Glass.LABEL, true)) send("undeclare", id);
-                        row.end();
+                int accent = kind == Kind.TRUE ? Glass.GOOD : Glass.AMBER;
+                ui.card(accent, c -> {
+                    c.text(d == null ? id : "“" + d.text() + "”", kind == Kind.TRUE ? Glass.GOOD : Glass.TITLE, 0, true);
+                    if (d != null && kind != Kind.TRUE) d.hint().ifPresent(h -> c.text(h, Glass.LABEL));
+                    if (d != null)
+                        c.text((kind == Kind.TRUE ? "Granted: " : "Gives: ") + Rewards.describe(d.reward()), kind == Kind.TRUE ? Glass.LABEL : Glass.AMBER);
+                    switch (kind) {
+                        case DECLARED -> {
+                            if (d != null) c.bar(d.condition().progress(p, null), Glass.AMBER);
+                            Ui.Flow row = c.flow();
+                            row.chip("NOT TRUE YET", Glass.AMBER);
+                            if (row.button("Withdraw", Glass.LABEL, true)) send("undeclare", id);
+                            row.end();
+                        }
+                        case OFFERED -> {
+                            boolean can = p.truthsDeclared().size() < 3;
+                            Ui.Flow row = c.flow();
+                            if (row.button("Declare", Glass.AMBER, can)) send("declare", id);
+                            if (!can) row.text("3 of 3 declared: withdraw one first", Glass.LABEL);
+                            row.end();
+                        }
+                        case TRUE -> {
+                            Ui.Flow row = c.flow();
+                            row.chip("TRUE", Glass.GOOD);
+                            row.end();
+                        }
                     }
-                    case OFFERED -> {
-                        boolean can = p.truthsDeclared().size() < 3;
-                        Ui.Flow row = ui.flow();
-                        if (row.button("Declare", Glass.AMBER, can)) send("declare", id);
-                        if (!can) row.text("3 of 3 declared: withdraw one first", Glass.LABEL);
-                        row.end();
-                    }
-                    case TRUE -> {
-                        Ui.Flow row = ui.flow();
-                        row.chip("TRUE", Glass.GOOD);
-                        row.end();
-                    }
-                }
-                if (i < ids.size() - 1) ui.rule();
+                });
+                if (i < ids.size() - 1) ui.gap(4);
             }
         }
     }

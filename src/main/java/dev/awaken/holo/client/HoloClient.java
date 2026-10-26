@@ -246,6 +246,7 @@ public final class HoloClient {
 
     private static void onTick() {
         HoloConfig.refresh();
+        STATUS.sizeStep = HoloConfig.bandSize.step; // the Band size setting (SPEC §30.6)
         CalmHud.tick();
         HoloBoot.tick();
         Minecraft m0 = Minecraft.getInstance();

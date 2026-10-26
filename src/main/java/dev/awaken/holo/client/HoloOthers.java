@@ -327,12 +327,13 @@ public final class HoloOthers {
         @Override
         public void render(PoseStack.Pose pose, VertexConsumer vc) {
             Matrix4f m = pose.pose();
-            int near = Glass.a(Glass.EDGE, 0.55f * alpha), far = Glass.a(Glass.EDGE, 0.10f * alpha), clear = Glass.a(Glass.EDGE, 0);
+            int near = Glass.a(Glass.EDGE, 0.85f * alpha), far = Glass.a(Glass.EDGE, 0.25f * alpha), clear = Glass.a(Glass.EDGE, 0);
             // the sheet of light between the two beams, then each beam as a bright thread
-            vc.addVertex(m, wrist.x, wrist.y, wrist.z).setColor(Glass.a(Glass.EDGE, 0.22f * alpha));
-            vc.addVertex(m, a.x, a.y, a.z).setColor(clear);
-            vc.addVertex(m, b.x, b.y, b.z).setColor(clear);
-            vc.addVertex(m, wrist.x, wrist.y, wrist.z).setColor(Glass.a(Glass.EDGE, 0.22f * alpha));
+            int sheet = Glass.a(Glass.EDGE, 0.30f * alpha), edge = Glass.a(Glass.EDGE, 0.06f * alpha);
+            vc.addVertex(m, wrist.x, wrist.y, wrist.z).setColor(sheet);
+            vc.addVertex(m, a.x, a.y, a.z).setColor(edge);
+            vc.addVertex(m, b.x, b.y, b.z).setColor(edge);
+            vc.addVertex(m, wrist.x, wrist.y, wrist.z).setColor(sheet);
             thread(vc, m, wrist, a, near, far);
             thread(vc, m, wrist, b, near, far);
         }
@@ -342,7 +343,7 @@ public final class HoloOthers {
             q.sub(p, w).cross(p.x + q.x, p.y + q.y, p.z + q.z);
             float len = w.length();
             if (len < 1e-5f) return;
-            w.mul(0.012f / len);
+            w.mul(0.016f / len);
             vc.addVertex(m, p.x - w.x, p.y - w.y, p.z - w.z).setColor(c0);
             vc.addVertex(m, q.x - w.x * 3, q.y - w.y * 3, q.z - w.z * 3).setColor(c1);
             vc.addVertex(m, q.x + w.x * 3, q.y + w.y * 3, q.z + w.z * 3).setColor(c1);

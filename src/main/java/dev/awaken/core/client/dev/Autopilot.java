@@ -385,7 +385,7 @@ public final class Autopilot {
                 else KeyMapping.click(k.getKey());
                 waitTicks = 2;
             }
-            case "screenkey" -> { // a key straight to the open screen: tab, t, m, c, space, or shift+ one of them
+            case "screenkey" -> { // a key straight to the open screen: tab, t, m, c, space, q, e, or shift+ one of them
                 String k = arg.trim();
                 boolean shift = k.startsWith("shift+");
                 int code = switch (shift ? k.substring(6) : k) {
@@ -394,6 +394,8 @@ public final class Autopilot {
                     case "m" -> com.mojang.blaze3d.platform.InputConstants.KEY_M;
                     case "c" -> com.mojang.blaze3d.platform.InputConstants.KEY_C;
                     case "space" -> com.mojang.blaze3d.platform.InputConstants.KEY_SPACE;
+                    case "q" -> com.mojang.blaze3d.platform.InputConstants.KEY_Q;
+                    case "e" -> com.mojang.blaze3d.platform.InputConstants.KEY_E;
                     default -> -1;
                 };
                 if (code < 0) Awaken.LOG.warn("[autopilot] unknown screen key {}", k);

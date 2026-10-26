@@ -361,9 +361,20 @@ final class StatusSheet {
             }
             int col = column(mx, my);
             if (col < 0) return false;
-            focus = col;
+            focusOn(col);
             if (my >= ly + 9 + 28) return place(Stat.values()[col]); // the + under the value
             return true;
+        }
+
+        /** Focus moves to a stat: the narrator says what it is and does ("Agility 22. You move faster..."). */
+        private void focusOn(int col) {
+            if (col == focus) return;
+            focus = col;
+            Profile p = profile();
+            Stat s = Stat.values()[col];
+            int left = p.unspent() - PLACED.size();
+            StatusSections.narrate(s.displayName + " " + (p.stat(s) + placed(s)) + ". " + SAYS[col]
+                    + (left > 0 ? " " + left + (left == 1 ? " point" : " points") + " to place." : ""));
         }
 
         public boolean key(KeyEvent e) {
@@ -371,7 +382,7 @@ final class StatusSheet {
             if (!p.awakened()) return false;
             int k = e.key();
             if (k == InputConstants.KEY_LEFT || k == InputConstants.KEY_RIGHT) {
-                focus = focus < 0 ? 0 : Math.floorMod(focus + (k == InputConstants.KEY_LEFT ? -1 : 1), 6);
+                focusOn(focus < 0 ? 0 : Math.floorMod(focus + (k == InputConstants.KEY_LEFT ? -1 : 1), 6));
                 return true;
             }
             if ((k == InputConstants.KEY_SPACE || k == InputConstants.KEY_EQUALS || k == InputConstants.KEY_ADD) && focus >= 0) return place(Stat.values()[focus]);

@@ -129,7 +129,7 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
         int[] focusAt = focus == null ? null : new int[focus.length];
         if (focusAt != null) java.util.Arrays.fill(focusAt, -1);
         for (StatusSections.Section s : StatusSections.of(tab)) {
-            if (!s.visible()) continue;
+            if (!StatusSections.shows(tab, s)) continue;
             any = true;
             if (focusAt != null) for (int i = 0; i < focus.length; i++) if (focusAt[i] < 0 && focus[i].equals(s.title())) focusAt[i] = y + SCROLL[tab.ordinal()] - cy;
             y += BandHeader.draw(g, font, s, cx, y, cw);
@@ -184,7 +184,7 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
             int y = cy - SCROLL[tab.ordinal()];
             List<StatusSections.Section> sections = StatusSections.of(tab);
             for (StatusSections.Section s : sections) {
-                if (!s.visible()) continue;
+                if (!StatusSections.shows(tab, s)) continue;
                 if (s.notePage() != null && BandHeader.onNote(font, s, cx, y, cw, mx, my)) {
                     select(s.notePage());
                     return true;
@@ -214,6 +214,7 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
             action.open().run();
             return;
         }
+        if (t != tab) StatusSections.narrate(t.label() + " page");
         tab = t;
     }
 
@@ -223,7 +224,7 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
             onClose();
             return true;
         }
-        for (StatusSections.Section s : StatusSections.of(tab)) if (s.visible() && s.key(event)) return true;
+        for (StatusSections.Section s : StatusSections.of(tab)) if (StatusSections.shows(tab, s) && s.key(event)) return true;
         StatusSections.Tab keyed = StatusSections.pageForKey(event);
         if (keyed != null) {
             select(keyed);
