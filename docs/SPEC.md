@@ -3133,7 +3133,7 @@ manual; stop the build at the first block; the payoff answers only the line; dan
     whole line on the action bar; further refusals in the visit: the shed and the action-bar line, at most every 3 s.
   - Without the rope each refusal records a promise (§27.1): key `landmark:<ward id>` (`landmark:ruin:x,z`,
     `landmark:hero/<crown>`), need `tier:tether`, "A Tether Spire" / "A sky platform" / "A great tree's crown". Kept
-    when the climb is made: a spire's crown (§27.1), a great tree's crown, or a climb cache's inner seal opening.
+    when the climb is made: a spire's or great tree's crown (§27.1), or a climb cache's inner seal opening.
 - **The payoff answers only the line** (`ArrivalHooks.byLine`: by movement, and a LINE sample in the visit or the 20 s
   before it, nothing built): a spire's or great tree's crown, a sky platform's Wings core, a climb cache's best roll.
   A clever climb (pearls, elytra, a power's flight, a Runner hang) still earns the view and the ordinary roll; the

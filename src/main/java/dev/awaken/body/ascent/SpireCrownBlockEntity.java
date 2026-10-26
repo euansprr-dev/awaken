@@ -146,8 +146,6 @@ public class SpireCrownBlockEntity extends BlockEntity {
         AscentServer.link(p, AscentMemory.Track.TETHER, first ? 10 : 2);
         dev.awaken.progression.Progression.count(p, site == SITE_SPIRE ? "awaken:ascent_spires_climbed" : "awaken:ascent_crowns_reached");
         AscentQuests.advance(p, site == SITE_SPIRE ? AscentQuests.SPIRE : AscentQuests.HERO_CROWN);
-        // a great tree's climb, waited for since its ward refused a block, is made (SPEC §17.25)
-        if (site != SITE_SPIRE) dev.awaken.core.api.Promises.kept(p, "landmark:hero/" + worldPosition.asLong());
         if (first && site != SITE_SPIRE) {
             // a hero tree's crown the first time: a find, and a fifth of a level
             dev.awaken.progression.Progression.grantXp(p, dev.awaken.progression.Curve.xpToNext(dev.awaken.progression.Progression.profile(p).level()) * 0.2,
