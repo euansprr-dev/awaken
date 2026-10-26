@@ -48,6 +48,22 @@ final class TogetherHearthTests {
         return r;
     }
 
+    /**
+     * A spot about (dx, dz) from {@code from} where an Anchor could take root for someone with no Hearth and no household
+     * (so only the household's own rule decides there for a member): the first of a few tries, stepping on when a city,
+     * a settlement's ground or another Hearth refuses it.
+     */
+    private static BlockPos open(GameTestHelper h, ServerPlayer probe, BlockPos from, int dx, int dz) {
+        for (int k = 0; k < 16; k++) {
+            BlockPos p = from.offset(dx + Integer.signum(dx) * k * 41, 0, dz + k * 67);
+            h.getLevel().getChunkAt(p);
+            if (HearthService.canPlaceAnchor(probe, h.getLevel(), p)) return p;
+        }
+        BlockPos p = from.offset(dx, 0, dz);
+        h.getLevel().getChunkAt(p);
+        return p;
+    }
+
     /** Levels and the fraction of the next one: rises with any XP, across a level-up too. */
     private static double progress(ServerPlayer p) {
         var prof = Progression.profile(p);
@@ -145,18 +161,20 @@ final class TogetherHearthTests {
 
         AwakenTests.registerIsolated("together_hearth_sister_home", 100, h -> {
             ServerLevel level = h.getLevel();
-            ServerPlayer owner = null, a = null, b = null;
+            ServerPlayer owner = null, a = null, b = null, probe = null;
             HearthRecord[] made = new HearthRecord[3];
             try {
                 owner = player(h, new BlockPos(1, 1, 1));
                 a = player(h, new BlockPos(3, 1, 1));
                 b = player(h, new BlockPos(5, 1, 1));
+                probe = player(h, new BlockPos(7, 1, 1));
                 HearthRecord home = hearth(h, owner, new BlockPos(2, 1, 4));
                 made[0] = home;
                 Household.join(level.getServer(), home, a);
                 Household.join(level.getServer(), home, b);
-                BlockPos far = home.pos.offset(200, 0, 0);
-                level.getChunkAt(far);
+                // ground nothing but the household's rule could refuse (no city, settlement or other Hearth there: the
+                // test's spot moves run to run, and a planned village's ground 200 off refused it now and then)
+                BlockPos far = open(h, probe, home.pos, 200, 0);
                 h.assertFalse(HearthService.canPlaceAnchor(a, level, far), "at tier I a member shares; no second home yet");
                 h.assertTrue(Household.sisterSlots(home) == 0, "no sister slots below tier III");
                 home.tier = 3;
@@ -169,8 +187,7 @@ final class TogetherHearthTests {
                 h.assertTrue(sister != null && owner.getUUID().equals(sister.foundedFrom), "a sister home of the first Hearth");
                 h.assertTrue(sister.belongs(owner.getUUID()) && sister.belongs(b.getUUID()), "the whole household shares it");
                 h.assertTrue(home.belongs(a.getUUID()), "its founder still shares the first");
-                BlockPos farther = home.pos.offset(-200, 0, 0);
-                level.getChunkAt(farther);
+                BlockPos farther = open(h, probe, home.pos, -200, 0);
                 h.assertFalse(HearthService.canPlaceAnchor(b, level, farther), "tier III allows one sister: the slot is taken");
                 home.tier = 4;
                 h.assertTrue(HearthService.canPlaceAnchor(b, level, farther), "tier IV allows another");
@@ -186,7 +203,7 @@ final class TogetherHearthTests {
                 made[2] = back;
                 h.assertTrue(back != null && back.belongs(a.getUUID()) && back.belongs(b.getUUID()), "the household shares the new home");
             } finally {
-                cleanup(h, made, owner, a, b);
+                cleanup(h, made, owner, a, b, probe);
             }
             h.succeed();
         });
