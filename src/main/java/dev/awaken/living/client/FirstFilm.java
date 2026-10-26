@@ -85,7 +85,7 @@ final class FirstFilm {
             }
             case LivingNet.FirstScene.DELIVERED -> {
                 Cinema.sound(SoundEvents.BOOK_PAGE_TURN, 0.9F, 0.9F);
-                Cinema.barNote("DELIVER THE LETTERS  1/1", "KESTREL'S BAG, INTO ILSE'S HANDS", 90);
+                Cinema.barNote("LETTERS DELIVERED  1/1", "THE LAST DELIVERY", 90);
             }
             case LivingNet.FirstScene.OFFER -> {
                 offering = true;
@@ -110,7 +110,6 @@ final class FirstFilm {
         release();
         ilseId = -1;
         offering = false;
-        if (taken) Cinema.barNote("SET YOUR EMBER WHERE YOU'D LIVE", "A COAL FROM THE WAYFARERS' FIRE", 120);
     }
 
     static void tick() {
@@ -132,7 +131,7 @@ final class FirstFilm {
         if (ilse != null && !Cinema.filming() && !Cinema.handing() && ilse.distanceTo(p) > 2.4) face(p, ilse.position().add(0, 1.1, 0));
         boolean can = ilse != null && ilse.distanceTo(p) < REACH && !Cinema.handing() && !Cinema.filming();
         String use = mc.options.keyUse.getTranslatedKeyMessage().getString();
-        Cinema.prompt(can ? use : null, can ? "Take the coal" : "");
+        Cinema.prompt(can ? use : null, can ? "Take the ember" : "");
     }
 
     /** Use takes the coal from Ilse's hand; nothing else happens with a click while her scene runs. */
@@ -253,7 +252,7 @@ final class FirstFilm {
         public void tick(int age) {
             if (age == 2) Cinema.bars(true);
             if (age == RISE + 6) {
-                Cinema.barNote("THE WAYFARERS' FIRE", "THE CAMP UP THE NORTH ROAD  ·  " + metres + " M", HOLD - RISE + 10);
+                Cinema.barNote("THE WAYFARER CAMP", "UP THE NORTH ROAD  ·  " + metres + " M AWAY", HOLD - RISE + 10);
                 Cinema.sound(LivingContent.REGION_ENTER.get(), 0.9F, 0.7F);
             }
             if (age == RISE + 16 && !line.isEmpty()) Cinema.line(who, line, 20 * 4 + line.length());

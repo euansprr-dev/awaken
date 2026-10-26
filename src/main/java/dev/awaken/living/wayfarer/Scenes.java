@@ -539,7 +539,7 @@ public final class Scenes extends SavedData {
             BlockPos camp = marker(p.level().getServer(), 0, "camp");
             if (camp != null) {
                 if (camp.distSqr(p.blockPosition().atY(camp.getY())) < 24 * 24) dev.awaken.progression.Progression.setCounter(p, CAMP_REACHED, 1);
-                else if (camp.distSqr(p.blockPosition().atY(camp.getY())) < 1200 * 1200) out.add(new HorizonHooks.Site("living:camp", "Wayfarers' fire", camp, "", false));
+                else if (camp.distSqr(p.blockPosition().atY(camp.getY())) < 1200 * 1200) out.add(new HorizonHooks.Site("living:camp", "Wayfarer camp", camp, "", false));
             }
         }
         QuestState qs = QuestEngine.state(p);

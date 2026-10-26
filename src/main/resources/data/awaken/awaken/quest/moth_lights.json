@@ -14,7 +14,7 @@
       "id": "moths",
       "objective": { "type": "reach", "target": "site", "radius": 10 },
       "text": "Follow the Lumen Moths to where they circle",
-      "night": "The Lumen Moths only gather in the dark.",
+      "night": "The Lumen Moths only come out at night.",
       "spawn": { "entity": "awaken:lumen_moth", "count": 4, "at": "site" },
       "start": ["Ilse: They gather out that way most nights. Go softly. They startle."],
       "done": ["The moths spiral low over one patch of ground, as if they're listening to it."],

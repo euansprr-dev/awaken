@@ -49,7 +49,7 @@ public class EmberItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, TooltipDisplay display, Consumer<Component> out, TooltipFlag flag) {
-        out.accept(Component.literal("A coal from the Wayfarers' fire.").withStyle(ChatFormatting.GOLD));
-        out.accept(Component.literal("Set it down where you'd live: it founds your Hearth.").withStyle(ChatFormatting.GRAY));
+        out.accept(Component.literal("An ember from the Wayfarer camp's fire.").withStyle(ChatFormatting.GOLD));
+        out.accept(Component.literal("Place it where you want your home. It starts your Hearth.").withStyle(ChatFormatting.GRAY));
     }
 }

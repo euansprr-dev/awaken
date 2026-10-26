@@ -211,7 +211,7 @@ final class Prologue {
                     BlockPos pos = BlockPos.containing(p.getX() + Math.cos(a) * 5, p.getY(), p.getZ() + Math.sin(a) * 5);
                     MobHooks.spawnThemed(level, "awaken:bell_crypt", MobRole.Role.ELITE, pos, role.contentLevel() + 6, Set.of(), role.gateId());
                 }
-                Signal.toast(p, Component.literal("The statues move."));
+                Signal.toast(p, Component.literal("The statues are moving!"));
             }
         }
     }
@@ -271,7 +271,7 @@ final class Prologue {
     /** What the System says in the black: the revelation's body without its question (the card asks it). */
     static String voidWords() {
         var r = StoryContent.revelation("prologue_accept");
-        String body = r == null ? "You died inside a gate and kept thinking. Few do." : r.body().strip();
+        String body = r == null ? "You died inside a gate, but your mind kept going. That almost never happens." : r.body().strip();
         if (body.endsWith(QUESTION)) body = body.substring(0, body.length() - QUESTION.length()).strip();
         return body;
     }
@@ -309,7 +309,7 @@ final class Prologue {
         // what's true: the old three-floor Bell Crypt is scripted and never breaks, so there's no hurry to go back in;
         // the ritual's hall is spent (it comes down behind you), so there's nothing to add
         var accept = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(accepted ? "Accepted." : "Accepted anyway."));
-        if (!ritual) accept.body(Component.literal("The gate will wait. It never breaks."));
+        if (!ritual) accept.body(Component.literal("The gate will wait for you. This one never breaks."));
         Signal.send(p, accept.presentation(SignalWindow.Presentation.TOAST).ttl(20 * 8).priority(9).build());
     }
 

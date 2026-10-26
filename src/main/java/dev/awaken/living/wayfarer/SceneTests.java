@@ -112,7 +112,7 @@ public final class SceneTests {
                 String moths = dev.awaken.living.quest.QuestBook.get("awaken:moth_lights") != null ? "awaken:moth_lights" : "moth_lights";
                 h.assertTrue(Camp.nightNeeded(p) == null, "no step needs the night yet");
                 h.assertTrue(dev.awaken.living.quest.QuestEngine.devStep(p, moths, "moths"), "Moth Lights at its first step");
-                h.assertTrue(Camp.nightNeeded(p) != null && Camp.nightNeeded(p).contains("dark"), "the moths need the dark: " + Camp.nightNeeded(p));
+                h.assertTrue(Camp.nightNeeded(p) != null && Camp.nightNeeded(p).contains("night"), "the moths need the night: " + Camp.nightNeeded(p));
             } catch (RuntimeException e) {
                 z.discard();
                 restore.run();

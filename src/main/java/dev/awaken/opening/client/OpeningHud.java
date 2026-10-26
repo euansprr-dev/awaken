@@ -226,7 +226,7 @@ final class OpeningHud {
             if (a > 0.02F && bh > 12) {
                 Font font = Minecraft.getInstance().font;
                 spaced(g, font, "CARILLON", 22, h - bh / 2 - 8, 2, ((int) (a * 255) << 24) | PAPER, 1F);
-                spaced(g, font, "THE RUNNERS' ROOST · FIRST LIGHT", 22, h - bh / 2 + 3, 1, ((int) (a * 200) << 24) | BRONZE, 1F);
+                spaced(g, font, "THE RUNNERS' ROOST · DAWN", 22, h - bh / 2 + 3, 1, ((int) (a * 200) << 24) | BRONZE, 1F);
             }
         }
     }
@@ -345,8 +345,8 @@ final class OpeningHud {
     private static void waitBanner(GuiGraphicsExtractor g, Font font, int w, int h, float pt, long now) {
         float a = Mth.clamp((now - waitingFrom + pt) / 20F, 0, 1);
         int ia = (int) (a * 230);
-        spacedCentered(g, font, "THE GATE IS DRAWING BREATH", w / 2, 26, 2, (ia << 24) | PAPER);
-        String n = waiting == 1 ? "Waiting for 1 hunter still running" : "Waiting for " + waiting + " hunters still running";
+        spacedCentered(g, font, "THE GATE IS OPENING", w / 2, 26, 2, (ia << 24) | PAPER);
+        String n = waiting == 1 ? "Waiting for 1 more hunter to get here" : "Waiting for " + waiting + " more hunters to get here";
         g.centeredText(font, Component.literal(n), w / 2, 40, ((int) (a * 200) << 24) | BRONZE);
     }
 

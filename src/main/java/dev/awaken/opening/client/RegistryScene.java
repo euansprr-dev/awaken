@@ -89,10 +89,10 @@ final class RegistryScene {
                 OpeningFx.lensGlow = 1;
                 OpeningSounds.ui(dev.awaken.holo.HoloSounds.CARD.get(), 0.7F, 0.9F);
                 OpeningSounds.ui(SoundEvents.BEACON_ACTIVATE, 1.4F, 0.5F);
-                OpeningHud.title("ASSESSING", "the Lens reads what came back", 60);
+                OpeningHud.title("ASSESSING", "the Lens is reading you", 60);
                 OpeningClient.later(70, () -> {
                     if (step == READ) {
-                        OpeningHud.title("AWAKENED", "rank E · the Signal's newest", 50);
+                        OpeningHud.title("AWAKENED", "rank E · a new hunter", 50);
                         OpeningSounds.ui(SoundEvents.AMETHYST_BLOCK_RESONATE, 0.8F, 1F);
                     }
                 });
@@ -114,7 +114,7 @@ final class RegistryScene {
                 else ready(ATLAS);
             });
             case YOURS -> {
-                OpeningHud.title("THE CITY IS YOURS.", "", 110);
+                OpeningHud.title("WELCOME TO CARILLON", "you're a hunter now · go wherever you like", 110);
                 OpeningSounds.ui(CitizensContent.BELL_HOUR.get(), 1.0F, 0.8F);
                 OpeningClient.later(14, () -> OpeningSounds.ui(CitizensContent.BELL_DISTRICT.get(), 1.12F, 0.5F));
                 OpeningClient.later(26, () -> OpeningSounds.ui(CitizensContent.BELL_DISTRICT.get(), 1.26F, 0.5F));
@@ -148,7 +148,7 @@ final class RegistryScene {
                 String inv = mc.options.keyInventory.getTranslatedKeyMessage().getString();
                 if (!worn) {
                     if (TipHooks.client().wants(TIP_WEAR)) TipHooks.client().offer(TIP_WEAR);
-                    OpeningHud.prompt(sc == null ? inv : null, sc == null ? "Open your inventory · put the band on your wrist" : "");
+                    OpeningHud.prompt(sc == null ? inv : null, sc == null ? "Open your inventory and put the band on your wrist" : "");
                 } else stepAside(sc, worn);
                 bootTitle(mc, worn);
             }
@@ -209,7 +209,7 @@ final class RegistryScene {
     private static void bootTitle(Minecraft mc, boolean worn) {
         if (bootTitled || !worn || mc.gui.screen() != null) return;
         bootTitled = true;
-        OpeningClient.later(14, () -> OpeningHud.title("THE HOLO", "fitted to your wrist · booting", 70));
+        OpeningClient.later(14, () -> OpeningHud.title("THE HOLO BAND", "on your wrist · starting up", 70));
     }
 
     private static boolean isStatus(@Nullable Screen sc) {

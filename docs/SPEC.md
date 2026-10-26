@@ -4999,7 +4999,7 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   never for a player who has it or did it): tell Kestrel what you saw at the Roost, out through the High Gate, run the
   letters to the Wayfarer camp up the north road, deliver them to Ilse by her fire ("Deliver the letters · 0/1"), and
   take the coal she gives you (the Ember, §28.2). The thread lets go there: its Now line ends once Ilse's step is done,
-  the Hearth's own line ("Set your Ember where you'd live", `hearth:ember`) takes over, and the chain's last two steps
+  the Hearth's own line ("Place your Ember where you want your home", `hearth:ember`) takes over, and the chain's last two steps
   (a `hearth` objective: done when you have a Hearth; then back to Kestrel) wait in the Journal. After it the player
   chooses: it is one errand, not a chain that keeps leading (BotW's "lines" railroaded 80% of testers). Euan, after
   playing it (2026-10-26): guide them exactly to the Ember, then let them go and explore.
@@ -5008,19 +5008,19 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   place: a "reach" step's marker; a "talk" step's person (Kestrel: the Roost, `OpeningHooks.place("roost")`; Hale: his
   quartermaster spot; Ilse and Hettie: the camp; a Wayfarer: their scene). Before, tracked chains never reached the HUD.
 - **The camp is findable**: its marker falls back to its nominal spot until someone has come near (the compass knows the
-  way); a Horizon site "Wayfarers' fire" until the player has stood within 24 of it (counter
+  way); a Horizon site "Wayfarer camp" until the player has stood within 24 of it (counter
   `awaken:camp_reached`); and a signal fire on a bale by Ilse (`Scenes.campFire`), its smoke a column seen from the High
   Gate (vanilla smoke rises only near you, so the client draws its own column to 1000 out, 110 blocks tall to clear the
   Lumen canopy: `LivingNet.CampSmoke`, `PulseFx.campfire`), lit once a player is within 256 and lit again if it's gone; the camp itself is now founded within 256 (it was 112,
   so from the gate there was nothing there yet).
 - **The Registry's Directive fits** (`Directives.opening`, reason "opening"): "Clear a floor of any gate.", accepted for
-  the player (4 play-days), "Your first gate will show itself out past the walls." Accepted Directives show on the Now
+  the player (4 play-days), "Your first gate will open somewhere outside the city walls." Accepted Directives show on the Now
   line with their progress ("· 50%", priority 58). Before, the Registry's was a random roll offered quietly, its waiting
   line gone in 30 s, and accepted ones never showed outside K.
 - **The first gate, on purpose** (`Director.firstGate`, SPEC §21.0.14 finally built): a player's first gate waits until
   level 3 or about half an hour after awakening (36 Director passes), and until they're out of the city (or an hour),
   then forms 250-400 blocks further along the bearing from the city's centre to them (north from its middle; any way
-  if that way is sea, a river or a beach), at their own rank, with "A gate is drawing breath · 320 m N · its floors make you stronger" (IMPORTANT, topic `gate`); the
+  if that way is sea, a river or a beach), at their own rank, with "A gate has opened 320 m N · clear its floors to get stronger" (IMPORTANT, topic `gate`); the
   Horizon raises it ("First gate · E-rank") until they've cleared a floor. Before, the first gate
   was rolled the moment they awakened, in the infirmary, at random 300-1500 out, unannounced.
 - **Out through the walls** is a moment: crossing the city reserve outward shows the region's caption ("THE COMMONS ·
@@ -5030,22 +5030,23 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   Gate on the errand (the step "Out through the High Gate" completes), ten seconds, letterboxed, hold jump to skip: a
   breath in your own eyes turning to the smoke, then the view lifts over the gate (the first clear spot of a fan, up to
   15 up and 8 on) and narrows (FOV x0.6) onto the Wayfarers' smoke, which reads stronger while it's filmed; the lower
-  bar names it ("THE WAYFARERS' FIRE · THE CAMP UP THE NORTH ROAD · 330 M") while Hale says his line; then back down into
+  bar names it ("THE WAYFARER CAMP · UP THE NORTH ROAD · 330 M AWAY") while Hale says his line; then back down into
   your eyes, left facing the camp. Once a player (counter `awaken:first/gate_shot`). Before the camp is founded the
   smoke rises from its nominal spot at the generator's height. The step's done line is said in the shot, not as a
   story line (`QuestEngine.Stager`: a scene that stages a step's ending takes its lines).
 - **Ilse's scene by the fire** (`FirstScenes`, `FirstFilm.IlseShot`): coming within 7 of Ilse with the letters (or
   talking to her) starts it instead of a bare click. Letterboxed, over your shoulder on the side away from the fire, a
   slow push while she talks; her lines one at a time in the Registry's speech (name above, the line under it): she asks
-  for the letters (the lower bar: "DELIVER THE LETTERS 1/1"), sits you down, says what a fire of your own is for ("First
-  night out, and it's coming on dark"; by day "It gets dark quicker out here than you'd think"), then holds a coal from
+  for the letters (the lower bar: "LETTERS DELIVERED 1/1"), sits you down, says why you'll want a home of your own ("It's
+  getting dark, and nights out here are dangerous"), then holds an ember from
   hers out in her hand and brings it over to you (to within about two blocks). The view comes back to your own eyes
-  facing her, the HUD stays out of the frame, "Take the coal" with the use key (within 3.6), and your hand takes it from
+  facing her, the HUD stays out of the frame, "Take the ember" with the use key (within 3.6), and your hand takes it from
   hers (the Registry's hand-over, `HandOver`, now for any item): the step ends as your hand closes on
   it, and its reward is the Ember (W1's rules kept: one a player, kept through death, Ilse or Hettie give a lost one
-  back). Her last line ("Somewhere you'd want to wake up. That's all a fire asks."), the bars lift, the lower bar says
-  "SET YOUR EMBER WHERE YOU'D LIVE". About 20 s to the coal; hold jump to skip to it; after 30 s with her hand out she
-  presses it into yours. Someone with a Hearth or a coal already is told "Keep it fed" and the step ends there. Walking
+  back). Her last line says plainly what it does ("Once it's placed, you can rest there, and if anything happens to you out
+  here, that's where you'll wake up."), the bars lift, and the Now line says "Place your Ember where you want your home"
+  (the Hearth's). About 20 s to the coal; hold jump to skip to it; after 30 s with her hand out she
+  presses it into yours. Someone with a Hearth or a coal already is told "Looks like you already have a home fire" and the step ends there. Walking
   off (18 blocks) ends it; it starts again when you come back. Nothing hunts or hurts a player while either moment plays
   (target changes cancelled, damage cancelled but for what bypasses invulnerability; the gate's for 14 s).
 - **The camp** (`living.wayfarer.Camp`): laid once round its fire when a player is within 96 (`Scenes.campBuilt`, saved,
@@ -5060,8 +5061,15 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   within 32 of the fire; a monster within 30 stops hunting and is sent back out past the edge (every half second); no
   monster takes a player within 32 as its target. A **bedroll** sleeps the night through like a bed when it's dark (the
   rule `WHEN_DARK`), never sets your spawn (that's the Hearth's), and when a step you're on needs the dark (a quest step's
-  `night`, e.g. Moth Lights' "The Lumen Moths only gather in the dark.") it says "Not tonight: ..." instead. At night
+  `night`, e.g. Moth Lights' "The Lumen Moths only come out at night.") it says "You can't sleep yet. ..." instead. At night
   Hettie lies down on the far bedroll and gets up at dawn; Ilse keeps the fire.
+- **Plain words, start to finish** (Euan, 2026-10-26, after playing it: "make it more human-like... not some poetic
+  riddle"): every line in the first sequence says plainly what it means, the way a person would say it: the infirmary
+  (Sun, Bram), Bram at the Registry and its cards, the ritual's prompts, the System's acceptance, Kestrel, Hale, Ilse,
+  Hettie, the clerk, the crier's news of the wilds, the first tips, the Ember's messages and tooltip, and the toasts
+  and captions on the way (e.g. Ilse: "Here, take an ember from our fire. Carry it with you, and when you find a spot
+  you'd like to live, place it there. That'll be your home."). Lines that grew got time to be read (Bram's briefing:
+  28 s, a line every 7; Ilse's beats 90 apart).
 - **Quest fields** (`QuestDef.Step`, schema 1, both optional): `tally` shows a step's count even when it's one ("· 0/1");
   `night` says why a step needs the dark. Objective type `hearth`: done when the player has a Hearth.
 - Dev and tours: `/awaken living first gate|letters|ilse|took|camp`; tour `tools/autopilot/first-scenes.txt` (CI).
@@ -5210,7 +5218,7 @@ Given by: The Last Delivery's `ilse` step (reward `item: awaken:hearth_ember` an
 talking to Ilse or Hettie with no Ember and no Hearth, registered (classic worlds: always), and past that step or never on
 the chain (`PlayerInteractEvent.EntityInteract` on a `living.wayfarer.Wayfarer`, so living is unchanged; Ilse: "Lost your
 coal? Take another. The fire doesn't mind."); 60 ticks after awakening in a classic world (no `CityBasin` site). Now line
-`hearth:ember`, priority 66 (under a tracked chain step ~68): "Set your Ember where you'd live". **Bram's line is not
+`hearth:ember`, priority 66 (under a tracked chain step ~68): "Place your Ember where you want your home". **Bram's line is not
 added** (Carillon's code): for the orchestrator, Bram at the Registry: "The bells hold the city. Hunters hold the wilds.
 Ilse at the camp keeps a fire for new licences."
 

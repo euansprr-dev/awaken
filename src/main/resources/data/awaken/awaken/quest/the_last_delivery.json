@@ -2,68 +2,99 @@
   "schemaVersion": 1,
   "title": "The Last Delivery",
   "band": 0,
-  "requires": ["counter:awaken:carillon_registered"],
+  "requires": [
+    "counter:awaken:carillon_registered"
+  ],
   "scene": "resident",
   "giver": "kestrel",
-  "summary": "Kestrel wants word from the square, then one last bag of letters run out to the Wayfarer camp up the north road.",
+  "summary": "Tell Kestrel what happened in the square, then take one last bag of letters to the Wayfarer camp up the north road.",
   "ask": [
-    "Kestrel: There you are. You owe me word from the square. You're late, Runner.",
-    "Kestrel: The Association said you died. I said you'd be late to your own funeral.",
-    "Kestrel: So? What did you see?"
+    "Kestrel: There you are! You were supposed to come and tell me what happened in the square. You're late, Runner.",
+    "Kestrel: The Association told me you'd died. I told them you were probably just running late, as usual.",
+    "Kestrel: So, what did you see?"
   ],
   "steps": [
     {
       "id": "word",
-      "objective": { "type": "talk", "target": "kestrel" },
+      "objective": {
+        "type": "talk",
+        "target": "kestrel"
+      },
       "text": "Tell Kestrel what you saw",
       "done": [
-        "Kestrel: A gate. Under the bells. Right.",
-        "Kestrel: Well. You brought it. Late, but you brought it.",
-        "Kestrel: One last bag. The camp up the north road has waited a week for its letters.",
-        "Kestrel: Out the High Gate. Hale will wave you through. Don't stop for sheep."
+        "Kestrel: A gate opened right under the bells? I didn't think that was even possible.",
+        "Kestrel: Well, thanks for coming to tell me, even if you're late.",
+        "Kestrel: I've got one last delivery for you. The Wayfarer camp up the north road has been waiting a week for these letters.",
+        "Kestrel: Go out through the High Gate and follow the road north. Hale's on the gate, he'll let you through."
       ],
-      "reward": { "levels": 0.05 }
+      "reward": {
+        "levels": 0.05
+      }
     },
     {
       "id": "gate",
-      "objective": { "type": "reach", "target": "spot:high_gate_yard", "radius": 10 },
-      "text": "Out through the High Gate",
-      "done": ["Hale: Licence? Fine. The Commons bite less than they look. Mostly."]
+      "objective": {
+        "type": "reach",
+        "target": "spot:high_gate_yard",
+        "radius": 10
+      },
+      "text": "Leave the city through the High Gate",
+      "done": [
+        "Hale: Got your licence? Good, go on through. It's not too dangerous out here near the city, but keep your eyes open."
+      ]
     },
     {
       "id": "camp",
-      "objective": { "type": "reach", "target": "camp", "radius": 16 },
-      "text": "Run the letters to the Wayfarer camp up the north road",
-      "reward": { "levels": 0.1 }
+      "objective": {
+        "type": "reach",
+        "target": "camp",
+        "radius": 16
+      },
+      "text": "Take the letters to the Wayfarer camp up the north road",
+      "reward": {
+        "levels": 0.1
+      }
     },
     {
       "id": "ilse",
-      "objective": { "type": "talk", "target": "ilse" },
+      "objective": {
+        "type": "talk",
+        "target": "ilse"
+      },
       "text": "Deliver the letters",
       "tally": true,
       "done": [
-        "Ilse: Letters! With Kestrel's knot on them. She still ties them like she's angry at the string.",
-        "Ilse: Sit a minute. Nobody out here runs anywhere.",
-        "Ilse: First night out? Take a coal from our fire. Carry it till you find your ground, then set it down. It'll know."
+        "Ilse: You must be Kestrel's runner. Have you got our letters?",
+        "Ilse: Thank you! We've been waiting a whole week for these.",
+        "Ilse: Here, take an ember from our fire. Carry it with you, and when you find a spot you'd like to live, place it there. That'll be your home."
       ],
-      "reward": { "item": "awaken:hearth_ember" }
+      "reward": {
+        "item": "awaken:hearth_ember"
+      }
     },
     {
       "id": "ember",
-      "objective": { "type": "hearth" },
-      "text": "Set your Ember where you'd live"
+      "objective": {
+        "type": "hearth"
+      },
+      "text": "Place your Ember where you want your home"
     },
     {
       "id": "home",
-      "objective": { "type": "talk", "target": "kestrel" },
-      "text": "Back to Kestrel on the Roost",
+      "objective": {
+        "type": "talk",
+        "target": "kestrel"
+      },
+      "text": "Go back to Kestrel at the Roost",
       "done": [
-        "Kestrel: Delivered?",
-        "Kestrel: Good. That was your last bag. You don't run letters anymore.",
-        "Kestrel: You run at the things everyone else runs from. Come home when you can. The roof's still yours."
+        "Kestrel: Did you deliver them?",
+        "Kestrel: Good. That was your last delivery. You're a hunter now, not a courier.",
+        "Kestrel: Come back and visit when you can. Your room on the roof is still yours."
       ]
     }
   ],
   "relic": "awaken:couriers_knot",
-  "finish": { "levels": 0.4 }
+  "finish": {
+    "levels": 0.4
+  }
 }

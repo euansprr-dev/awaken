@@ -41,7 +41,7 @@ final class OpeningRegistry {
     static final int WALK = 0, READ = 1, SIGN = 2, BAND = 3, WEAR = 4, BOOT = 5, BRIEF = 6, OPEN = 7, STATUS = 8, ATLAS = 9,
             POWER = 10, DIRECTIVE = 11, YOURS = 12;
     /** How long each clocked step plays, and the most a screen or a scene waits. */
-    static final int READ_TICKS = 110, BRIEF_TICKS = 20 * 19, SCREEN_MAX = 20 * 75, DIRECTIVE_TICKS = 150, YOURS_TICKS = 150,
+    static final int READ_TICKS = 110, BRIEF_TICKS = 20 * 28, SCREEN_MAX = 20 * 75, DIRECTIVE_TICKS = 220, YOURS_TICKS = 200,
             SCENE_MAX = 20 * 20, BOOT_MAX = 20 * 12;
     /** Close enough to the Lens to be read; to the desk to sign; to Bram to take the band. */
     static final double MARK = 2.2, DESK = 2.0, HAND = 3.4;
@@ -93,10 +93,10 @@ final class OpeningRegistry {
         boolean lead = lead(p);
         switch (st.step) {
             case WALK -> {
-                if (age == 1) say(p, at, w, "This way. Slowly. Nobody's timing you, for once.");
+                if (age == 1) say(p, at, w, "This way. No need to rush, nobody's timing you today.");
                 if (lead) escort(p, at, w, now);
                 if (p.tickCount % 5 == 0 && p.position().distanceTo(at.lensMark()) < MARK) {
-                    say(p, at, w, "Stand on the mark. Look at the light. It doesn't hurt.");
+                    say(p, at, w, "Stand on that mark and look into the light. It won't hurt, it just reads you.");
                     step(p, READ);
                 }
                 // no client to walk it (a test player): Bram fetches you
@@ -104,32 +104,32 @@ final class OpeningRegistry {
             }
             case READ -> {
                 if (lead && age % 10 == 1) stage(p, at.bramLens(), yawTo(at.bramLens(), p.position()), "hands_behind", "");
-                if (age == READ_TICKS - 20) say(p, at, w, "E. Nothing too interesting. Don't take it personally. The Lens doesn't.");
+                if (age == READ_TICKS - 20) say(p, at, w, "Rank E. That's where everyone starts, so don't take it personally.");
                 if (age >= READ_TICKS) step(p, SIGN);
             }
             case SIGN -> {
-                if (age == 30) say(p, at, w, "The register. Sign there; the Lens already has.");
+                if (age == 30) say(p, at, w, "Now the register. Sign your name there and you're officially a hunter.");
                 if (lead) toDesk(p, at, w, w.stamped ? "set_down" : "hands_behind", "");
                 if (w.ready || !client && age > 60 || age > SCREEN_MAX) {
                     giveLicence(p);
                     step(p, BAND);
-                } else nudge(p, at, w, now, "At the desk. The quill's in the pot.");
+                } else nudge(p, at, w, now, "It's on the desk. The quill is in the pot next to it.");
             }
             case BAND -> {
-                if (age == 10) say(p, at, w, "And this. Your band.");
+                if (age == 10) say(p, at, w, "And this is yours. It's your Holo band.");
                 if (lead) toDesk(p, at, w, "serve", "holo_band");
                 if (w.ready || !client && age > 40 || age > SCREEN_MAX) {
                     if (!HoloBand.has(p)) HoloBand.give(p);
                     step(p, HoloBand.worn(p) ? BOOT : WEAR);
-                } else nudge(p, at, w, now, "Go on, take it. It doesn't bite.");
+                } else nudge(p, at, w, now, "Go on, take it.");
             }
             case WEAR -> {
-                if (age == 1) say(p, at, w, "Wrist. Open your inventory and put it on. Cold for a second, then it's yours.");
+                if (age == 1) say(p, at, w, "Open your inventory and put it on your wrist. It'll feel cold for a second, then it settles.");
                 if (lead) toDesk(p, at, w, "hands_behind", "");
                 if (!HoloBand.has(p)) HoloBand.give(p); // dropped it: the Association has spares
                 if (HoloBand.worn(p)) step(p, BOOT);
                 else if (!client && age > 20) HoloBand.wear(p);
-                else nudge(p, at, w, now, "The slot beside you, in there. It only works on the wrist.");
+                else nudge(p, at, w, now, "There's a wrist slot next to you in your inventory. The band only works when you wear it there.");
             }
             case BOOT -> {
                 if (lead) toDesk(p, at, w, "hands_behind", "");
@@ -137,51 +137,51 @@ final class OpeningRegistry {
             }
             case BRIEF -> {
                 if (lead) toDesk(p, at, w, "", "");
-                if (age == 10) say(p, at, w, "It keeps track of you. What you can do, what you've done, what you're owed.");
-                if (age == 100) say(p, at, w, "You get better at what you use. Run, and you run better. Fight, and you hit harder.");
-                if (age == 190) say(p, at, w, "Gates are how hunters grow. Go in, clear it, come out heavier. Clear enough and the Lens moves you up.");
+                if (age == 10) say(p, at, w, "The band keeps track of everything about you: what you can do, what you've done, and what you've earned.");
+                if (age == 140) say(p, at, w, "You get better at whatever you practise. The more you run, the faster you get. The more you fight, the harder you hit.");
+                if (age == 280) say(p, at, w, "Gates are how hunters get stronger. Every floor you clear makes you tougher, and once you've cleared enough, the Lens raises your rank.");
                 // where new hunters go first: Ilse's camp, whose Ember founds a Hearth (SPEC §28, W1)
-                if (age == 285) say(p, at, w, "The bells hold the city. Hunters hold the wilds. Ilse at the camp keeps a fire for new licences.");
+                if (age == 430) say(p, at, w, "The bells keep the city safe, but outside the walls it's up to hunters. Ilse runs a camp up the north road, and she looks after new hunters.");
                 if (age >= BRIEF_TICKS) step(p, OPEN);
             }
             case OPEN -> {
-                if (age == 1) say(p, at, w, "Go on, open it.");
+                if (age == 1) say(p, at, w, "Go ahead and open it.");
                 if (lead) toDesk(p, at, w, "hands_behind", "");
                 if (!HoloBand.worn(p)) step(p, WEAR); // took it off again
                 else if (w.ready || !client || age > SCREEN_MAX) step(p, w.ready ? STATUS : ATLAS);
-                else nudge(p, at, w, now, "Your band. It'll open for you.");
+                else nudge(p, at, w, now, "Try opening your band.");
             }
             case STATUS -> {
-                if (age == 10) say(p, at, w, "Status, Truths, the Codex, the gate map. Same key closes it.");
+                if (age == 10) say(p, at, w, "That's your status, your Truths, the Codex and the gate map. Press the same key to close it.");
                 if (lead) toDesk(p, at, w, "hands_behind", "");
                 if (w.ready || !client || age > SCREEN_MAX) step(p, ATLAS);
             }
             case ATLAS -> {
-                if (age == 14) say(p, at, w, "Your band keeps a map. The city, the way you've run it. The clouds clear where you go.");
+                if (age == 14) say(p, at, w, "Your band keeps a map too. It fills in as you explore, so for now it only shows the parts of the city you've run through.");
                 if (lead) toDesk(p, at, w, "", "");
                 if (w.ready || !client || age > SCREEN_MAX) step(p, POWER);
             }
             case POWER -> {
                 if (age == 1) {
-                    say(p, at, w, "It'll offer you something now. Everyone gets one. Pick what you'd actually use.");
+                    say(p, at, w, "Now it'll offer you your first power. Everyone gets one, so pick the one you think you'll actually use.");
                     OpeningModule.offerFirstPower(p);
                 }
                 if (lead) toDesk(p, at, w, "hands_behind", "");
                 if (!client || age >= SCREEN_MAX || age > 40 && OpeningModule.firstPowerChosen(p)) {
-                    if (client) say(p, at, w, "Try it outside. Not on me.");
+                    if (client) say(p, at, w, "Try it out once you're outside. Not on me, please.");
                     step(p, DIRECTIVE);
                 }
             }
             case DIRECTIVE -> {
                 if (age == 40) {
                     OpeningModule.offerDirective(p);
-                    say(p, at, w, "The Signal sets your Directives. The Association pays for them. Never more than three. It isn't a list. It's a nudge.");
+                    say(p, at, w, "The Signal will give you Directives. They're small jobs the Association pays you for, and you'll never have more than three at once. Think of them as suggestions, not orders.");
                 }
                 if (lead) toDesk(p, at, w, "", "");
                 if (age >= DIRECTIVE_TICKS) step(p, YOURS);
             }
             case YOURS -> {
-                if (age == 1) say(p, at, w, "Come back when you're tired. The Roost still has your room. And Kestrel wants her word from the square. Off you go.");
+                if (age == 1) say(p, at, w, "That's everything. Your room at the Roost is still yours whenever you need to rest. And Kestrel wants to hear what happened in the square, so go and find her first.");
                 if (lead) toDesk(p, at, w, "wave", "");
                 if (age >= YOURS_TICKS) {
                     WALKS.remove(p.getUUID());
@@ -261,7 +261,7 @@ final class OpeningRegistry {
             while (w.wp < last && way[w.wp].distanceTo(at.lensMark()) > mine) w.wp++;
             if (!w.ahead) {
                 w.ahead = true;
-                say(p, at, w, "Wrong way, Runner. Habit, I know. This way.");
+                say(p, at, w, "Wrong way, Runner. Old habits, I know. It's this way.");
             }
         }
         if (toBram > LAG && there) {
@@ -280,7 +280,7 @@ final class OpeningRegistry {
         if (w.wp >= 2 && !w.archive && !w.ahead && now - w.lastLine > 80) {
             // the atrium, past the archive's door
             w.archive = true;
-            say(p, at, w, "A gate inside the walls. Under the bells. The archive's been up all night about it.");
+            say(p, at, w, "A gate opened inside the city walls, right under the bells. The archive has been up all night trying to work out how.");
         }
     }
 

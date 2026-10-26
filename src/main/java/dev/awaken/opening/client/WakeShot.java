@@ -87,12 +87,12 @@ final class WakeShot implements OpeningCamera.Shot {
             LensClient.clearOverride(140);
         }
         // story.md, "The wake": Sun the healer and Bram, the Association officer who walks you to the Registry
-        if (age == 150) OpeningHud.line("Sun", "Easy. You're back with us. Don't try to sit up yet.", 90);
-        if (age == 240) OpeningHud.line("Bram", "The gate shut with you inside. At the next bell it opened and put you on the stones.", 100);
-        if (age == 340) OpeningHud.line("Sun", party ? "Your friends came through with you. They're waking too." : "Breathe. The bells have rung twice since they carried you in.", 90);
-        if (age == 430) OpeningHud.line("Bram", "You died in there. Most people stay that way.", 80);
-        if (age == 505) OpeningHud.line("Sun", "So. How's the rest of you?", 60);
-        if (age == 565) OpeningHud.line("Bram", "Up you get, when you can. You're due for the assessment. I'll walk you.", 100);
+        if (age == 150) OpeningHud.line("Sun", "Easy, easy. You're awake. Don't try to sit up just yet.", 90);
+        if (age == 240) OpeningHud.line("Bram", "The gate closed with you still inside. When the bell rang again, it opened and dropped you back out on the square.", 100);
+        if (age == 340) OpeningHud.line("Sun", party ? "Your friends made it out with you. They're waking up in the other beds." : "Take your time. You've been out for a couple of hours.", 90);
+        if (age == 430) OpeningHud.line("Bram", "You died in there. Most people who die in a gate don't come back.", 80);
+        if (age == 505) OpeningHud.line("Sun", "So, how are you feeling?", 60);
+        if (age == 565) OpeningHud.line("Bram", "When you're ready, get up. You need to be assessed at the Registry, and I'll walk you there.", 100);
     }
 
     /** Re-asserts the blur every tick while it plays (the server replaces the post-effect list when it syncs). */

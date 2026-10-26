@@ -39,7 +39,7 @@ public final class Bedroll extends AbstractBedBlock {
 
     /** Sleep when it's dark; never the spawn. */
     static final BedRule RULE = new BedRule(BedRule.Rule.WHEN_DARK, BedRule.Rule.NEVER, false, false,
-            Optional.of(Component.literal("The Wayfarers sleep when it's dark. Sit by the fire till then.")));
+            Optional.of(Component.literal("You can only sleep here at night.")));
 
     public Bedroll(BlockBehaviour.Properties properties) {
         super(properties);
@@ -78,7 +78,7 @@ public final class Bedroll extends AbstractBedBlock {
         if (!level.isClientSide() && player instanceof ServerPlayer sp) {
             String night = Camp.nightNeeded(sp);
             if (night != null && level.isDarkOutside()) {
-                sp.sendOverlayMessage(Component.literal("Not tonight: " + night));
+                sp.sendOverlayMessage(Component.literal("You can't sleep yet. " + night));
                 return InteractionResult.SUCCESS_SERVER;
             }
         }

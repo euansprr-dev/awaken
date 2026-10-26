@@ -187,7 +187,7 @@ public final class OpeningModule {
             if (w.cinematicAt >= 0) return List.of();
             int n = OpeningDirector.runners(p.level().getServer()).size();
             if (n == 0) return List.of();
-            return List.of(NowHooks.Suggestion.of("opening:waiting", 95, "The gate is drawing breath · waiting for " + n + " hunter" + (n == 1 ? "" : "s")));
+            return List.of(NowHooks.Suggestion.of("opening:waiting", 95, "The gate is opening · waiting for " + n + " hunter" + (n == 1 ? "" : "s")));
         }
         if (b == Prologue.REGISTRY && OpeningDirector.state(p).step == OpeningRegistry.WALK) {
             OpeningPlaces at = OpeningPlaces.get();
@@ -254,7 +254,7 @@ public final class OpeningModule {
             opening.then(Commands.literal("skip").executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 OpeningDirector.skip(p);
-                c.getSource().sendSuccess(() -> Component.literal("Opening skipped. The city is yours."), false);
+                c.getSource().sendSuccess(() -> Component.literal("Opening skipped. You're free to explore."), false);
                 return 1;
             }).then(Commands.argument("player", EntityArgument.player()).requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = EntityArgument.getPlayer(c, "player");

@@ -225,7 +225,7 @@ public final class Director {
     /**
      * The first gate waits until the player is ready for it (level 3, or about half an hour after awakening) and out of
      * the city, then forms 250-400 blocks further along the bearing from the city's centre to them, at their own rank,
-     * and says so ("A gate is drawing breath · 320 m N"); the Horizon raises it until they've cleared a floor. Before,
+     * and says so ("A gate has opened 320 m N"); the Horizon raises it until they've cleared a floor. Before,
      * the first gate was rolled at random 300-1500 blocks out the moment they awakened, in the infirmary, unannounced.
      */
     static GateRecord firstGate(MinecraftServer server, ServerPlayer p) {
@@ -247,8 +247,8 @@ public final class Director {
         Progression.setCounter(p, FIRST_GATE, g.id + 1L);
         int dist = (int) Math.round(Math.sqrt(p.blockPosition().distSqr(g.pos.atY(p.getBlockY()))));
         String dir = DIRS[(int) Math.round(((Math.toDegrees(Math.atan2(g.pos.getX() - p.getX(), -(g.pos.getZ() - p.getZ()))) + 360) % 360) / 45.0) % 8];
-        dev.awaken.signal.Signal.toast(p, net.minecraft.network.chat.Component.literal("A gate is drawing breath · " + dist + " m " + dir
-                + " · its floors make you stronger"), dev.awaken.core.api.Notices.Tier.IMPORTANT, "gate");
+        dev.awaken.signal.Signal.toast(p, net.minecraft.network.chat.Component.literal("A gate has opened " + dist + " m " + dir
+                + " · clear its floors to get stronger"), dev.awaken.core.api.Notices.Tier.IMPORTANT, "gate");
         DirectorLog.log(p, "gate", "the first gate, on purpose: #" + g.id + " " + dist + " m " + dir + " after " + waited + " passes");
         dev.awaken.core.api.TipHooks.offer(p, dev.awaken.Awaken.id("first/gate"));
         return g;

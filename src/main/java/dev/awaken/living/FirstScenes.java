@@ -54,9 +54,9 @@ public final class FirstScenes {
     /** The gate's shot was sent (once a player). */
     static final String GATE_SEEN = "awaken:first/gate_shot";
     /** Ilse's beats (ticks into the scene): her lines, the letters, the coal held out; then she waits for your hand. */
-    static final int L1 = 16, DELIVER = 86, L3 = 176, L4 = 236, L5 = 306, OFFER = 376, WAIT = 20 * 30;
+    static final int L1 = 16, DELIVER = 90, L3 = 180, L4 = 270, L5 = 360, OFFER = 450, WAIT = 20 * 30;
     /** After the coal is taken: her last line, then the scene ends. */
-    static final int LAST = 30, END = LAST + 90;
+    static final int LAST = 30, END = LAST + 150;
     /** How long a gate shot shields (it lasts about ten seconds). */
     static final int GATE_SHIELD = 20 * 14;
     static final Identifier EMBER = Identifier.fromNamespaceAndPath("awaken", "hearth_ember");
@@ -248,18 +248,18 @@ public final class FirstScenes {
         } else ilse.getNavigation().stop();
         ilse.getLookControl().setLookAt(p, 30, 30);
         int a = ++r.age;
-        if (a == L1) line(p, "Ilse", "Kestrel's runner. You've got the look about you. And our letters, I hope.", 70);
+        if (a == L1) line(p, "Ilse", "You must be Kestrel's runner. Have you got our letters?", 70);
         if (a == DELIVER) delivered(p, r);
-        if (a == DELIVER + 6) line(p, "Ilse", "With her knot on them. She still ties them like she's angry at the string.", 85);
-        if (a == L3) line(p, "Ilse", "Sit a minute. Nobody out here runs anywhere.", 60);
+        if (a == DELIVER + 6) line(p, "Ilse", "Thank you! We've been waiting a whole week for these.", 85);
+        if (a == L3) line(p, "Ilse", "Sit down for a minute and catch your breath. You've come a long way.", 60);
         if (!r.coal) {
-            if (a == L4) line(p, "Ilse", "You've a fire of your own already. Good. Keep it fed.", 70);
-            if (a == L4 + 80) complete(p, r);
-            return a < L4 + 90;
+            if (a == L4) line(p, "Ilse", "Looks like you already have a home fire. Good, then you're all set.", 70);
+            if (a == L4 + 90) complete(p, r);
+            return a < L4 + 100;
         }
-        if (a == L4) line(p, "Ilse", p.level().isDarkOutside() ? "First night out, and it's coming on dark."
-                : "First night out? It gets dark quicker out here than you'd think.", 70);
-        if (a == L5) line(p, "Ilse", "The wilds are kinder to people with a fire of their own.", 70);
+        if (a == L4) line(p, "Ilse", p.level().isDarkOutside() ? "It's getting dark, and nights out here are dangerous."
+                : "It'll be dark sooner than you think, and nights out here are dangerous.", 70);
+        if (a == L5) line(p, "Ilse", "You'll want a place of your own out here. Somewhere safe to sleep and come back to.", 70);
         if (a == OFFER) offer(p, r);
         if (r.tookAt < 0) {
             // her hand stays out; after half a minute she presses the coal into yours
@@ -267,7 +267,7 @@ public final class FirstScenes {
             return true;
         }
         int b = a - r.tookAt;
-        if (b == LAST) line(p, "Ilse", "Somewhere you'd want to wake up. That's all a fire asks.", 80);
+        if (b == LAST) line(p, "Ilse", "Once it's placed, you can rest there, and if anything happens to you out here, that's where you'll wake up. Good luck!", 80);
         return b < END;
     }
 
@@ -285,7 +285,7 @@ public final class FirstScenes {
         r.offered = true;
         Item ember = BuiltInRegistries.ITEM.getValue(EMBER);
         if (ember != Items.AIR) r.ilse.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(ember));
-        line(p, "Ilse", "Take a coal from ours. Carry it till you find your ground, then set it down. It'll know.", 20 * 8);
+        line(p, "Ilse", "Here, take an ember from our fire. Carry it with you, and when you find a spot you'd like to live, place it there. That'll be your home.", 20 * 8);
         AwakenNet.send(p, new LivingNet.FirstScene(LivingNet.FirstScene.OFFER, r.ilse.getId(), r.fire, 0, ""));
     }
 

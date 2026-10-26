@@ -153,7 +153,7 @@ public final class OpeningClient {
                     ArrivalShot.start(s);
                 } else {
                     OpeningHud.waiting(s.n());
-                    if (fresh && s.n() > 0) OpeningHud.title("CHOIR SQUARE", "the gate is drawing breath", 70);
+                    if (fresh && s.n() > 0) OpeningHud.title("CHOIR SQUARE", "a gate is opening", 70);
                 }
             }
             case OpeningPayloads.WAKE -> {
@@ -228,7 +228,7 @@ public final class OpeningClient {
         later(64, () -> OpeningSounds.ui(CitizensContent.BELL_HOUR.get(), 0.9F, 0.6F));
         later(66, () -> OpeningSounds.ui(CitizensContent.BELL_HOUR.get(), 0.85F, 0.45F));
         later(150, () -> OpeningSounds.ui(CitizensContent.BELL_HOUR.get(), 0.87F, 0.45F));
-        later(70, () -> OpeningHud.title("THE BELL RINGS WRONG", "", 60));
+        later(70, () -> OpeningHud.title("SOMETHING IS WRONG WITH THE BELL", "", 60));
     }
 
     private static void tremor(Vec3 square, float strength) {

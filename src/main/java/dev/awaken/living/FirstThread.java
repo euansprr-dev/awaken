@@ -21,7 +21,7 @@ import java.util.List;
  * (the opening ends or is skipped) Kestrel's errand, The Last Delivery, starts by itself and is tracked: tell Kestrel
  * what you saw, out the High Gate (a shot of the camp's smoke), run the letters to the Wayfarer camp, deliver them to
  * Ilse by her fire (a scene that ends with her coal, the Ember, in your hand). The thread lets go there: the Hearth's own
- * line ("Set your Ember where you'd live") takes over and the rest of the chain waits in the Journal, so after it the
+ * line ("Place your Ember where you want your home") takes over and the rest of the chain waits in the Journal, so after it the
  * player chooses. The tracked chain's current step is on the Now line with a compass to its place, over bookkeeping
  * (points to spend, the next level's unlock).
  */
