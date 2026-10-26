@@ -115,5 +115,14 @@
         "attenuation_distance": 14
       }
     ]
+  },
+  "body.vault": {
+    "subtitle": "subtitles.awaken.body.vault",
+    "sounds": [
+      {
+        "name": "awaken:body_vault",
+        "attenuation_distance": 16
+      }
+    ]
   }
 }

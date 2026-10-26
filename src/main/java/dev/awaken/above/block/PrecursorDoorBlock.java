@@ -16,7 +16,7 @@ import net.minecraft.world.phys.BlockHitResult;
 /**
  * A panel of a sealed Precursor door. The door core among the panels decides who may pass; touching a panel asks it.
  * Each panel carries its door's rank ({@link #RANK}) only for its light: its seams glow in that rank's colour (SPEC
- * §17.27). {@link #UNKNOWN} until its core paints it (doors built before panels knew).
+ * §17.29). {@link #UNKNOWN} until its core paints it (doors built before panels knew).
  */
 public class PrecursorDoorBlock extends Block {
     /** The door's rank (a {@link dev.awaken.progression.Rank} ordinal), or {@link #UNKNOWN}. */

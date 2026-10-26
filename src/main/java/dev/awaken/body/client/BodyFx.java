@@ -90,6 +90,23 @@ final class BodyFx {
         }
     }
 
+    /**
+     * A hand planted on a rail (SPEC §17.27): a palm's slap, the rail's own knock under it (a wooden fence's, a stone
+     * wall's, an iron bar's), chips and dust off its top.
+     */
+    static void plant(ClientLevel level, Entity e, dev.awaken.body.VaultRules.Vault v) {
+        lip(level, v.hx(), v.hy(), v.hz(), v.dx(), v.dz());
+        // the block the top belongs to: a fence's or wall's top stands half a block into the one above it
+        for (int dy = 0; dy <= 1; dy++) {
+            BlockState s = level.getBlockState(POS.set(Mth.floor(v.hx()), Mth.floor(v.hy() - 0.02) - dy, Mth.floor(v.hz())));
+            if (s.isAir()) continue;
+            net.minecraft.world.level.block.SoundType st = s.getSoundType();
+            level.playLocalSound(v.hx(), v.hy(), v.hz(), st.getHitSound(), SoundSource.PLAYERS, st.getVolume() * 0.7F, st.getPitch() * 0.85F, false);
+            break;
+        }
+        sound(e, BodyContent.GRAB.get(), 0.42F, v.twoHands() ? 1.12F : 1.3F);
+    }
+
     /** A burst at a body that took a moving hit or was tripped: dust off its feet, thrown along the blow. */
     static void hitBurst(Entity e, double dirX, double dirZ, boolean trip) {
         if (!(e.level() instanceof ClientLevel level)) return;

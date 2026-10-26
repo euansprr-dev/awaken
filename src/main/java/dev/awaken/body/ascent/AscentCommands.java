@@ -54,7 +54,7 @@ final class AscentCommands {
             ascent.then(Commands.literal("spire").then(Commands.literal("goto").executes(c -> spireGoto(c.getSource()))));
             // the nearest sky platform: rigged if it isn't yet, and you under its first ring (tours)
             ascent.then(Commands.literal("sky").then(Commands.literal("goto").executes(c -> skyGoto(c.getSource(), false))
-                    // tours: on the deck beside the core instead (its ward refuses a block there, SPEC §17.27)
+                    // tours: on the deck beside the core instead (its ward refuses a block there, SPEC §17.29)
                     .then(Commands.literal("deck").executes(c -> skyGoto(c.getSource(), true)))));
             ascent.then(Commands.literal("crown").then(Commands.literal("grow")
                     .then(Commands.literal("colossus").executes(c -> crownGrow(c.getSource(), dev.awaken.terrain.hero.HeroTree.ELDER_COLOSSUS, 7919L))

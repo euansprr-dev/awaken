@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.state.BlockState;
 /**
  * Makes a sealed door hum for anyone near it whose rank is high enough, and read anyone who comes close who isn't (it
  * says the rank it waits for). Checks every 2 seconds. Once after it loads it paints its panels with its rank (their
- * seams glow in its colour, SPEC §17.27), so doors built before panels knew their rank light up too.
+ * seams glow in its colour, SPEC §17.29), so doors built before panels knew their rank light up too.
  */
 public class DoorCoreBlockEntity extends BlockEntity {
     /** Not saved: a door checks its panels once each time it loads, and that is cheap. */

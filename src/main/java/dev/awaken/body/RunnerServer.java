@@ -163,7 +163,7 @@ final class RunnerServer {
             // a real drop under the hold (the column in front of the face)
             if (e != null && !RunnerRules.lowerWorth(p.level(), ctx, M, e)) return false;
         } else if (msg.flag() == BodyPayloads.HANG_EAVE) {
-            // from a climb line's top up to the lip over it (SPEC §17.23): only from a grip held or just let go
+            // from a climb line's top up to the lip over it (SPEC §17.28): only from a grip held or just let go
             if (!m.gripping && now - m.gripEndedAt > 6) return false;
             e = GripRules.topLip(p.level(), ctx, M, s[0], s[1], s[2], msg.axis(), msg.sign(), RunnerRules.SERVER_TOL);
         } else {
@@ -248,6 +248,20 @@ final class RunnerServer {
             BodyServer.didClip(p, m, Move.LEDGE_JUMP, msg.yaw(), BodyContent.CLIMB, 0.8F, now, BodyClips.MANTLE);
             return true;
         }
+        if (way == BodyPayloads.JUMP_OVER) {
+            // over a fence's or gate's rail from a hang on it (SPEC §17.27): the same crossing from the hold, landing where
+            // the client's does
+            RunnerRules.Edge here = RunnerRules.edgeNear(p.level(), ctx, M, msg.sx(), msg.sy(), msg.sz(), m.hangAxis, m.hangSign, m.hangTop, 0.3,
+                    0.1 + RunnerRules.SERVER_TOL);
+            if (here == null || RunnerRules.climbOut(p.level(), ctx, M, here) != null) return false;
+            VaultRules.Vault v = VaultRules.over(p.level(), ctx, here.hx(), here.hy(), here.hz(), here.fx(), here.fz(), here.top());
+            if (v == null) return false;
+            double dx = v.endX() - msg.tx(), dz = v.endZ() - msg.tz();
+            if (dx * dx + dz * dz > VaultRules.LAND_TOL * VaultRules.LAND_TOL || Math.abs(v.floor() - msg.ty()) > 0.3) return false;
+            endHang(m, now);
+            BodyServer.vaultFrom(p, m, v, msg.yaw(), now);
+            return true;
+        }
         // up, sideways or down: the target edge is there (found again within a block) and within the jump's (or the drop's) reach
         double topLo = way == BodyPayloads.JUMP_UP ? m.hangTop + 0.4 : way == BodyPayloads.JUMP_DOWN ? m.hangTop - RunnerRules.DROP_MAX - 0.25 : m.hangTop - 1.25;
         double topHi = way == BodyPayloads.JUMP_UP ? m.hangTop + RunnerRules.ledgeUp(Body.runnerRank(p)) + 0.25
@@ -283,7 +297,7 @@ final class RunnerServer {
         });
     }
 
-    // ---- the grip on a climb line (SPEC §17.23) ------------------------------------------------------------------------
+    // ---- the grip on a climb line (SPEC §17.28) ------------------------------------------------------------------------
 
     /** The clip others see for a grip flag. */
     static String gripClip(int flag) {
@@ -522,7 +536,8 @@ final class RunnerServer {
      * Builds the S3 course with its floor top at {@code o} (feet level), facing +z. Lane A: two parallel walls 4 apart
      * with a 2-high launch platform (wall-run, wall jumps). Shaft S: two walls with trims 3 apart (back jumps). The
      * warehouse W: a face with a low trim (gap, corner wrap), an upper trim, a crane arm and a crate; its roof for the
-     * sneak-lower. Accident lanes: a 2-wide alley, an alley with crates, a wall with a low fence, a 2-high garden wall.
+     * sneak-lower. Accident lanes: a 2-wide alley, an alley with crates, a wall with a low fence (never run on, grabbed or
+     * crossed: it's beside you, SPEC §17.27), a 2-high garden wall.
      */
     static void build(ServerLevel level, BlockPos o) {
         course = o.immutable();
@@ -620,7 +635,7 @@ final class RunnerServer {
         int si, trial;
         int target = -1, flag = -1;
         // per script
-        int noStart, accepted, refused, ended, corrected, unwantedRuns, unwantedGrabs, fallbacks;
+        int noStart, accepted, refused, ended, corrected, unwantedRuns, unwantedGrabs, unwantedVaults, fallbacks;
 
         Bench(ServerPlayer p, String[] scripts, int count) {
             this.p = p;
@@ -669,7 +684,7 @@ final class RunnerServer {
             report(b);
             b.si++;
             b.trial = 0;
-            b.noStart = b.accepted = b.refused = b.ended = b.corrected = b.unwantedRuns = b.unwantedGrabs = b.fallbacks = 0;
+            b.noStart = b.accepted = b.refused = b.ended = b.corrected = b.unwantedRuns = b.unwantedGrabs = b.unwantedVaults = b.fallbacks = 0;
             if (b.si >= b.scripts.length) {
                 bench = null;
                 Runnable next = QUEUE.poll();
@@ -700,7 +715,7 @@ final class RunnerServer {
             if (bench != b) return;
             m.tStarted = m.tAccepted = m.tRefused = m.tEnded = m.tCorrected = false;
             m.hangFallbacks = 0;
-            m.tRuns = m.tGrabs = 0;
+            m.tRuns = m.tGrabs = m.tVaults = 0;
             AwakenNet.send(p, new BodyPayloads.Try(what, 0));
         });
         Later.run(p.level().getServer(), 8 + s.ticks + 6, () -> {
@@ -708,6 +723,7 @@ final class RunnerServer {
             if (s.target < 0) {
                 if (m.tRuns > 0) b.unwantedRuns++;
                 if (m.tGrabs > 0) b.unwantedGrabs++;
+                if (m.tVaults > 0) b.unwantedVaults++; // a fence beside you is never crossed (SPEC §17.27)
             } else if (!m.tStarted) b.noStart++;
             else if (m.tRefused) b.refused++;
             else b.accepted++;
@@ -730,8 +746,8 @@ final class RunnerServer {
     private static void report(Bench b) {
         String s = b.scripts[b.si];
         String line = spec(s).target < 0
-                ? String.format("%s latency %d ms, trigger %s: %d passes, unwanted wall-runs %d, unwanted grabs %d", s, latencyTicks * 50,
-                airPress ? "press" : "held", b.count, b.unwantedRuns, b.unwantedGrabs)
+                ? String.format("%s latency %d ms, trigger %s: %d passes, unwanted wall-runs %d, unwanted grabs %d, unwanted vaults %d", s,
+                latencyTicks * 50, airPress ? "press" : "held", b.count, b.unwantedRuns, b.unwantedGrabs, b.unwantedVaults)
                 : String.format("%s latency %d ms (%s, trigger %s): %d trials, accepted %d, refused %d, no start %d, ended by server %d, corrected %d, hang fallbacks %d",
                 s, latencyTicks * 50, fromHistory ? "history" : "now", airPress ? "press" : "held", b.count, b.accepted, b.refused, b.noStart, b.ended,
                 b.corrected, b.fallbacks);

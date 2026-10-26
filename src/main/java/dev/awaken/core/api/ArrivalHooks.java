@@ -24,7 +24,7 @@ public final class ArrivalHooks {
         ASCENT,
         /**
          * The Ascent's own ladder: a rope out, a zip, the carry after a swing or a leap, wings. A climb site's payoff
-         * answers only this (SPEC §17.27): never a pearl, a tower or a hang.
+         * answers only this (SPEC §17.29): never a pearl, a tower or a hang.
          */
         LINE,
         /** Standing on or climbing blocks the player placed: a tower or a bridge. Always outranks the rest. */
@@ -45,7 +45,7 @@ public final class ArrivalHooks {
 
         /**
          * Whether the player reached where they stand by the line: by movement, and the Ascent's ladder carried them
-         * ({@link Way#LINE}) on the way in or since. What a climb site's crown, core and inner seal answer (SPEC §17.27).
+         * ({@link Way#LINE}) on the way in or since. What a climb site's crown, core and inner seal answer (SPEC §17.29).
          */
         default boolean byLine(ServerPlayer p) { return byMovement(p); }
 
