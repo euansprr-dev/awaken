@@ -61,7 +61,8 @@ public final class TuningForkItem extends Item {
     static Optional<BlockPos> strike(ServerLevel level, ServerPlayer p, ItemStack fork, BlockPos pos, Ore tuned) {
         p.getCooldowns().addCooldown(fork, COOLDOWN);
         level.playSound(null, pos, DelveContent.FORK_STRIKE.get(), SoundSource.PLAYERS, 1.0F, pitch(tuned));
-        Optional<BlockPos> target = target(level, pos, tuned);
+        int reach = RANGE + (int) dev.awaken.progression.Progression.perk(p, REACH_PERK);
+        Optional<BlockPos> target = target(level, pos, tuned, reach);
         DelveNet.send(p, new DelveNet.ForkRing(tuned.ordinal(), target.isPresent(), target.map(BlockPos::asLong).orElse(0L)));
         dev.awaken.progression.Progression.count(p, "awaken:fork_strikes");
         return target;
@@ -69,8 +70,16 @@ public final class TuningForkItem extends Item {
 
     /** The block of the nearest lode of {@code ore} within reach of where the fork was struck, if any. */
     public static Optional<BlockPos> target(ServerLevel level, BlockPos struck, Ore ore) {
-        return Lodes.nearest(level, struck, ore, RANGE).filter(v -> !v.heartBroken() || v.size() > 1).map(Lodes.View::nearest);
+        return target(level, struck, ore, RANGE);
     }
+
+    /** As {@link #target(ServerLevel, BlockPos, Ore)}, within {@code reach} (a Delver's old pick carried adds to it). */
+    public static Optional<BlockPos> target(ServerLevel level, BlockPos struck, Ore ore, int reach) {
+        return Lodes.nearest(level, struck, ore, reach).filter(v -> !v.heartBroken() || v.size() > 1).map(Lodes.View::nearest);
+    }
+
+    /** A perk that lengthens the fork's reach (blocks; W5: the Delver's old pick, carried). */
+    public static final String REACH_PERK = "awaken:fork_reach";
 
     /** Stone rings it: overworld rock, deepslate and their kin, and ore. */
     static boolean rings(BlockState s) {

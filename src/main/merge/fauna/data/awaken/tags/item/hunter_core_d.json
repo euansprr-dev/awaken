@@ -31,6 +31,10 @@
     {
       "id": "awaken:thousandfoot_mandible",
       "required": false
+    },
+    {
+      "id": "awaken:seep_heartglass",
+      "required": false
     }
   ]
 }

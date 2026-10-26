@@ -91,14 +91,23 @@ public class NamedBeast extends FaunaMob {
         super.customServerAiStep(level);
         if (abilities != null && abilities.active() == null) checkPhase(level);
         if ((tickCount + getId()) % 10 == 0) territory(level);
-        if ((tickCount + getId()) % 40 == 0) FaunaHooks.server().beastSeen(this);
+        if (registered() && (tickCount + getId()) % 40 == 0) FaunaHooks.server().beastSeen(this);
         if (bar != null) {
             boolean show = getTarget() != null;
             if (bar.isVisible() != show) bar.setVisible(show);
         }
     }
 
-    private void territory(ServerLevel level) {
+    /**
+     * Whether this beast reports to the world's beast registry (sightings, rumours, the Now tracker, lairs, its warning
+     * and its turning on a player). A beast the world places itself (the seep heart) does not.
+     */
+    protected boolean registered() {
+        return true;
+    }
+
+    /** Every half second: hold the territory (warn, provoke, leash, heal and reset). Overridable. */
+    protected void territory(ServerLevel level) {
         MobDef d = def();
         if (!hasHome()) setHomeTo(blockPosition(), d.arena);
         if (warnCooldown > 0) warnCooldown -= 10;
@@ -168,10 +177,15 @@ public class NamedBeast extends FaunaMob {
     public static final int DEATH_TICKS = 36;
     private int deathHold;
 
+    /** How long this beast's fall lasts, in ticks (its death clip). */
+    protected int deathTicks() {
+        return DEATH_TICKS;
+    }
+
     @Override
     protected void tickDeath() {
         // Hold just before vanilla's removal tick (19) for the rest of the fall, on both sides alike.
-        if (deathTime == 19 && deathHold < DEATH_TICKS - 20) {
+        if (deathTime == 19 && deathHold < deathTicks() - 20) {
             deathHold++;
             return;
         }
@@ -182,7 +196,7 @@ public class NamedBeast extends FaunaMob {
     public void setTarget(@Nullable LivingEntity target) {
         LivingEntity before = getTarget();
         super.setTarget(target);
-        if (target instanceof ServerPlayer sp && before != target && level() instanceof ServerLevel) FaunaHooks.server().beastAngered(this, sp);
+        if (registered() && target instanceof ServerPlayer sp && before != target && level() instanceof ServerLevel) FaunaHooks.server().beastAngered(this, sp);
     }
 
     private void checkPhase(ServerLevel level) {
@@ -193,6 +207,13 @@ public class NamedBeast extends FaunaMob {
         if (want <= phase) return;
         phase = want;
         enterPhase(level, true);
+    }
+
+    /** Back to the first phase (healed whole, left alone). */
+    protected void resetPhase(ServerLevel level) {
+        if (phase == 0) return;
+        phase = 0;
+        enterPhase(level, false);
     }
 
     private void enterPhase(ServerLevel level, boolean announce) {
@@ -212,14 +233,24 @@ public class NamedBeast extends FaunaMob {
         if (!announce) return;
         setTelegraph(24, true);
         roar();
+        phaseFx(level);
+        String line = d.phases.get(phase).line();
+        if (!line.isEmpty()) {
+            for (ServerPlayer sp : level.players()) {
+                if (sp.distanceToSqr(this) < 40 * 40) sp.sendOverlayMessage(Component.literal(line).withColor(d.glow));
+            }
+        }
+        onPhase(level, phase);
+    }
+
+    /** The look and sound of a new phase (a blast and the boss phase sting). Overridable. */
+    protected void phaseFx(ServerLevel level) {
         level.sendParticles(ParticleTypes.EXPLOSION, getX(), getY() + getBbHeight() * 0.5, getZ(), 2, 0.4, 0.4, 0.4, 0);
         playLevelSound(MobSounds.BOSS_PHASE.get(), 1.6F, 0.9F);
-        String line = d.phases.get(phase).line();
-        if (line.isEmpty()) return;
-        for (ServerPlayer sp : level.players()) {
-            if (sp.distanceToSqr(this) < 40 * 40) sp.sendOverlayMessage(Component.literal(line).withColor(d.glow));
-        }
     }
+
+    /** A new phase began in a fight (after its roar and line). */
+    protected void onPhase(ServerLevel level, int phase) {}
 
     // ---- death and drops -------------------------------------------------------------------------------------------
 
@@ -228,7 +259,7 @@ public class NamedBeast extends FaunaMob {
         super.onDied(level, source);
         ServerPlayer killer = source.getEntity() instanceof ServerPlayer sp ? sp : getKillCredit() instanceof ServerPlayer sp2 ? sp2 : null;
         FaunaHooks.server().beastFelled(level, this, killer);
-        FaunaHooks.server().beastGone(this);
+        if (registered()) FaunaHooks.server().beastGone(this);
         if (bar != null) bar.removeAllPlayers();
     }
 
@@ -245,7 +276,7 @@ public class NamedBeast extends FaunaMob {
     @Override
     public void onRemoval(RemovalReason reason) {
         super.onRemoval(reason);
-        if (reason == RemovalReason.DISCARDED && level() instanceof ServerLevel) FaunaHooks.server().beastGone(this);
+        if (reason == RemovalReason.DISCARDED && registered() && level() instanceof ServerLevel) FaunaHooks.server().beastGone(this);
     }
 
     @Override

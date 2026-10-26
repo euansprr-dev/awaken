@@ -542,6 +542,23 @@ public class AwakenMob extends Monster {
         }
     }
 
+    // ---- abilities a creature tells and lands in its own look (AbilityRunner keeps the choosing, timing and classes) ----
+
+    /** Fills {@code marks} for an ability about to wind up (where it will land); false keeps the runner's own spots. */
+    protected boolean abilityMarks(ServerLevel level, dev.awaken.mobs.def.Ability a, LivingEntity target, java.util.List<Vec3> marks) {
+        return false;
+    }
+
+    /** Every tick of a wind-up ({@code left} of {@code total} ticks to go): true when the creature draws its own tell. */
+    protected boolean abilityTell(ServerLevel level, dev.awaken.mobs.def.Ability a, int left, int total, Vec3 aim, java.util.List<Vec3> marks) {
+        return false;
+    }
+
+    /** The blow itself (inside its Strikes class): true when the creature lands it its own way. */
+    protected boolean abilityStrike(ServerLevel level, dev.awaken.mobs.def.Ability a, @Nullable LivingEntity target, Vec3 aim, java.util.List<Vec3> marks) {
+        return false;
+    }
+
     public boolean isHeld() {
         return flag(F_FALLEN) || flag(F_DORMANT) || flag(F_FUSING) || watched || staggerTicks > 0 || (abilities != null && abilities.holdsStill());
     }
@@ -704,7 +721,8 @@ public class AwakenMob extends Monster {
         playSound(MobSounds.RISE.get(), 1.2F, 1.1F);
     }
 
-    private void wake(ServerLevel level) {
+    /** A dormant creature wakes (a player near, or struck). Overridable: the seep heart wakes with a moment of its own. */
+    protected void wake(ServerLevel level) {
         if (!flag(F_DORMANT)) return;
         setFlag(F_DORMANT, false);
         level.sendParticles(ParticleTypes.ELECTRIC_SPARK, getX(), getY() + getBbHeight() * 0.6, getZ(), 20, 0.5, 0.6, 0.5, 0.1);

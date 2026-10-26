@@ -69,6 +69,11 @@ final class Looks {
         }
     }
 
+    /** True when a look has this exact key (a dimension's, a story moment's or a place look's id). */
+    static boolean has(String key) {
+        return key != null && EXACT.containsKey(key);
+    }
+
     /** True when some look is keyed on this biome. */
     static boolean hasBiome(String biome) {
         return biome != null && BIOME.containsKey(biome);

@@ -3,7 +3,6 @@ package dev.awaken.above.client;
 import dev.awaken.above.logs.PrecursorLogs;
 import dev.awaken.above.net.AboveNet;
 import dev.awaken.progression.client.CodexEntries;
-import dev.awaken.progression.client.StatusSections;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -24,7 +23,7 @@ public final class AboveClient {
             e.register(java.util.List.of(DoorTint.PANEL), dev.awaken.above.AboveBlocks.DOOR.get());
         });
         CodexEntries.addSource(ClientAbove::codex);
-        StatusSections.add(StatusSections.Tab.GATE_MAP, new GateMapSection());
+        dev.awaken.core.api.MapMarks.registerGates(ClientAbove::gates); // the scanner's last reading, on the Atlas (SPEC §30)
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> JetBoots.tick());
         NeoForge.EVENT_BUS.addListener(SubmitCustomGeometryEvent.class, HaloSky::onSubmit);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> ClientAbove.reset());

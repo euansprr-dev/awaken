@@ -47,6 +47,52 @@ public final class AscentSounds {
             wind = new Wind();
             mc.getSoundManager().play(wind);
         }
+        // the rope paying out through the hand: its own loop for each line (a rasp of bites; the Deepglass line's glassy run)
+        boolean glass = AscentMoves.smoothLine();
+        if (AscentMoves.payNow > 0 && mc.player != null && (pay == null || pay.isStopped() || pay.glass != glass)) {
+            if (pay != null) pay.end();
+            pay = new Pay(glass);
+            mc.getSoundManager().play(pay);
+        }
+    }
+
+    private static Pay pay;
+
+    /** The rope running out through the hand while it pays out, at the hand, fading a moment after it stops. */
+    static final class Pay extends AbstractTickableSoundInstance {
+        final boolean glass;
+        private float level;
+        private boolean ending;
+
+        Pay(boolean glass) {
+            super((glass ? AscentContent.RAPPEL_PAY_GLASS : AscentContent.RAPPEL_PAY).get(), SoundSource.PLAYERS, SoundInstance.createUnseededRandom());
+            this.glass = glass;
+            this.looping = true;
+            this.delay = 0;
+            this.volume = 0.001F;
+            this.relative = true;
+            this.attenuation = SoundInstance.Attenuation.NONE;
+            this.x = this.y = this.z = 0;
+        }
+
+        void end() {
+            ending = true;
+        }
+
+        @Override
+        public boolean canStartSilent() {
+            return true;
+        }
+
+        @Override
+        public void tick() {
+            float rate = (float) Mth.clamp(AscentMoves.payNow / dev.awaken.body.ascent.AscentRules.RAPPEL_SMOOTH, 0, 1.2);
+            float target = ending ? 0F : 0.55F * rate;
+            level += (target - level) * (target > level ? 0.5F : 0.25F);
+            volume = Math.max(0.0005F, level);
+            pitch = (glass ? 1.0F : 0.92F) + 0.12F * rate;
+            if (level < 0.004F && (ending || AscentMoves.payNow <= 0)) stop();
+        }
     }
 
     static float duckLevel() {

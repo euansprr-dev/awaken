@@ -21,6 +21,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.PlayerModelType;
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 /**
@@ -36,7 +37,11 @@ public final class HoloOthers {
     static final class Raise {
         int entity = -1;
         HoloKind kind = HoloKind.NONE;
+        /** The last kind it showed, so a closing map fades as a map. */
+        HoloKind shown = HoloKind.NONE;
         float progress;
+        /** Its map disc (SPEC §30.5), drawn after the frame's submits, so it keeps its own copy of what to draw. */
+        final Disc disc = new Disc();
     }
 
     private static final Raise[] SLOTS = new Raise[64];
@@ -65,6 +70,7 @@ public final class HoloOthers {
         for (Raise r : SLOTS) {
             if (r.entity == msg.entityId()) {
                 r.kind = kind;
+                if (kind != HoloKind.NONE) r.shown = kind;
                 return;
             }
             if (free == null && r.entity < 0) free = r;
@@ -72,6 +78,7 @@ public final class HoloOthers {
         if (free != null && kind != HoloKind.NONE) {
             free.entity = msg.entityId();
             free.kind = kind;
+            free.shown = kind;
             free.progress = 0;
         }
     }
@@ -112,7 +119,14 @@ public final class HoloOthers {
         if (!(state instanceof HumanoidRenderState s) || !(entity instanceof AbstractClientPlayer player)) return;
         Minecraft mc = Minecraft.getInstance();
         Raise r;
-        if (player == mc.player) {
+        if (player == mc.player && HoloScene.raise() > 0f) {
+            // the map scene holds the camera (first person on its own camera entity): the wrist stays up for it
+            SELF.entity = player.getId();
+            SELF.kind = SELF.shown = HoloKind.MAP;
+            SELF.progress = HoloScene.raise();
+            r = SELF;
+        } else if (player == mc.player) {
+            SELF.kind = SELF.shown = HoloKind.NONE;
             HoloPanel p = HoloClient.wristPanel();
             if (p == null || !p.timeline.active() || mc.options.getCameraType().isFirstPerson()) {
                 s.setRenderData(KEY, null);
@@ -176,13 +190,26 @@ public final class HoloOthers {
             cam.transformInverse(CARD_OFFSET); // into the billboard's own axes
             m.translation(T).rotate(cam).scale(S.x);
             card = p;
-            showCard = r != SELF || peekSelf;
+            boolean map = r != null && r.shown == HoloKind.MAP;
+            showCard = !map && (r != SELF || peekSelf);
             collector.submitCustomGeometry(poseStack, RenderTypes.lightning(), CARD);
             poseStack.popPose();
+            if (map && r == SELF && HoloScene.hasBeams() && !peekSelf) {
+                BEAMS.set(T, p);
+                collector.submitCustomGeometry(ROOT, RenderTypes.lightning(), BEAMS);
+            } else if (map && (r != SELF || peekSelf)) {
+                // a disc of light before the body at the waist, the cone from the wrist: never the map itself
+                float dx = fx * 0.95f, dz = fz * 0.95f;
+                r.disc.set(T, dx, -0.32f, dz, cam, p, HoloClient.frame());
+                collector.submitCustomGeometry(ROOT, RenderTypes.lightning(), r.disc);
+            }
         }
     }
 
     private static final Vector3f T = new Vector3f(), S = new Vector3f(), CARD_OFFSET = new Vector3f();
+    /** Camera-relative world space: the beams and discs are placed in it directly. */
+    private static final PoseStack ROOT = new PoseStack();
+    private static final Beams BEAMS = new Beams();
     private static final Matrix4f M2 = new Matrix4f(), M3 = new Matrix4f();
     private static final float[] XS = new float[4], YS = new float[4];
     private static float band, bandX0, bandX1, card;
@@ -282,5 +309,114 @@ public final class HoloOthers {
         vc.addVertex(m, x1, y0, 0).setColor(colour);
         vc.addVertex(m, x1, y1, 0).setColor(colour);
         vc.addVertex(m, x0, y1, 0).setColor(colour);
+    }
+
+    // ---- the map scene (SPEC §30.5) -------------------------------------------------------------------------------
+
+    /** Your own beams in the map scene: two fans of light from the band to the map's near edge. */
+    static final class Beams implements SubmitNodeCollector.CustomGeometryRenderer {
+        private final Vector3f wrist = new Vector3f(), a = new Vector3f(), b = new Vector3f(), w = new Vector3f();
+        private float alpha;
+
+        void set(Vector3f wrist, float alpha) {
+            this.wrist.set(wrist);
+            this.alpha = alpha;
+            HoloScene.beamEnds(a, b);
+        }
+
+        @Override
+        public void render(PoseStack.Pose pose, VertexConsumer vc) {
+            Matrix4f m = pose.pose();
+            int near = Glass.a(Glass.EDGE, 0.85f * alpha), far = Glass.a(Glass.EDGE, 0.25f * alpha), clear = Glass.a(Glass.EDGE, 0);
+            // the sheet of light between the two beams, then each beam as a bright thread
+            int sheet = Glass.a(Glass.EDGE, 0.30f * alpha), edge = Glass.a(Glass.EDGE, 0.06f * alpha);
+            vc.addVertex(m, wrist.x, wrist.y, wrist.z).setColor(sheet);
+            vc.addVertex(m, a.x, a.y, a.z).setColor(edge);
+            vc.addVertex(m, b.x, b.y, b.z).setColor(edge);
+            vc.addVertex(m, wrist.x, wrist.y, wrist.z).setColor(sheet);
+            thread(vc, m, wrist, a, near, far);
+            thread(vc, m, wrist, b, near, far);
+        }
+
+        /** A thin quad from p to q, turned to face the eye (the camera sits at the origin of this space). */
+        private void thread(VertexConsumer vc, Matrix4f m, Vector3f p, Vector3f q, int c0, int c1) {
+            q.sub(p, w).cross(p.x + q.x, p.y + q.y, p.z + q.z);
+            float len = w.length();
+            if (len < 1e-5f) return;
+            w.mul(0.016f / len);
+            vc.addVertex(m, p.x - w.x, p.y - w.y, p.z - w.z).setColor(c0);
+            vc.addVertex(m, q.x - w.x * 3, q.y - w.y * 3, q.z - w.z * 3).setColor(c1);
+            vc.addVertex(m, q.x + w.x * 3, q.y + w.y * 3, q.z + w.z * 3).setColor(c1);
+            vc.addVertex(m, p.x + w.x, p.y + w.y, p.z + w.z).setColor(c0);
+        }
+    }
+
+    /**
+     * What anyone else sees of a player's map: a round sheet of light before them at the waist, a ring with compass
+     * ticks, a few points of light drifting over it, and a cone down from the wrist. Content-free (SPEC §30.5).
+     */
+    static final class Disc implements SubmitNodeCollector.CustomGeometryRenderer {
+        private final Vector3f wrist = new Vector3f(), centre = new Vector3f(), lo = new Vector3f(), hi = new Vector3f();
+        private final Quaternionf rot = new Quaternionf();
+        private final Matrix4f local = new Matrix4f();
+        private float alpha;
+        private long frame;
+
+        void set(Vector3f wrist, float dx, float dy, float dz, Quaternionf cam, float alpha, long frame) {
+            this.wrist.set(wrist);
+            centre.set(wrist.x + dx, wrist.y + dy, wrist.z + dz);
+            rot.set(cam);
+            this.alpha = alpha;
+            this.frame = frame;
+        }
+
+        @Override
+        public void render(PoseStack.Pose pose, VertexConsumer vc) {
+            float a = alpha, r = 0.48f * (0.4f + 0.6f * a);
+            int clear = Glass.a(Glass.EDGE, 0);
+            Matrix4f m = pose.pose();
+            // the cone from the wrist to the disc's lower rim (world space)
+            local.set(m).translate(centre.x, centre.y, centre.z).rotate(rot);
+            local.transformPosition(lo.set(-r * 0.8f, -r * 0.35f, 0));
+            local.transformPosition(hi.set(r * 0.8f, -r * 0.35f, 0));
+            int coneNear = Glass.a(Glass.EDGE, 0.40f * a);
+            vc.addVertex(m, wrist.x, wrist.y, wrist.z).setColor(coneNear);
+            vc.addVertex(m, lo.x, lo.y, lo.z).setColor(clear);
+            vc.addVertex(m, hi.x, hi.y, hi.z).setColor(clear);
+            vc.addVertex(m, wrist.x, wrist.y, wrist.z).setColor(coneNear);
+            // the disc, flattened as a table seen from a little above, in the billboard's plane
+            Matrix4f d = local;
+            float squash = 0.42f;
+            int fill = Glass.a(Glass.EDGE, 0.20f * a), rim = Glass.a(0xE2F2FF, 0.95f * a);
+            int seg = 40;
+            for (int i = 0; i < seg; i++) {
+                double t0 = i * Math.PI * 2 / seg, t1 = (i + 1) * Math.PI * 2 / seg;
+                float x0 = (float) Math.cos(t0) * r, y0 = (float) Math.sin(t0) * r * squash;
+                float x1 = (float) Math.cos(t1) * r, y1 = (float) Math.sin(t1) * r * squash;
+                vc.addVertex(d, 0, 0, 0).setColor(fill);
+                vc.addVertex(d, x0, y0, 0).setColor(fill);
+                vc.addVertex(d, x1, y1, 0).setColor(fill);
+                vc.addVertex(d, 0, 0, 0).setColor(fill);
+                // the rim: a band of light round the edge, soft outside
+                float o = 1.07f;
+                vc.addVertex(d, x0, y0, 0).setColor(rim);
+                vc.addVertex(d, x1, y1, 0).setColor(rim);
+                vc.addVertex(d, x1 * o, y1 * o, 0).setColor(clear);
+                vc.addVertex(d, x0 * o, y0 * o, 0).setColor(clear);
+                if (i % 5 == 0) { // compass ticks
+                    vc.addVertex(d, x0 * 0.90f, y0 * 0.90f, 0).setColor(rim);
+                    vc.addVertex(d, x0 * 0.90f + 0.008f, y0 * 0.90f, 0).setColor(rim);
+                    vc.addVertex(d, x0 * 0.99f + 0.008f, y0 * 0.99f, 0).setColor(rim);
+                    vc.addVertex(d, x0 * 0.99f, y0 * 0.99f, 0).setColor(rim);
+                }
+            }
+            // a few points of light drifting over it (cloud wisps and places, never real ones)
+            float time = frame / 60f;
+            for (int k = 0; k < 5; k++) {
+                float ang = k * 1.7f + time * (0.15f + k * 0.03f), rr = r * (0.25f + 0.13f * k);
+                float px = (float) Math.cos(ang) * rr, py = (float) Math.sin(ang) * rr * squash + 0.03f;
+                softRect(vc, d, px, py, 0.012f, 0.012f, 0.03f, Glass.a(k == 2 ? Glass.AMBER : 0xE2F2FF, 0.85f * a), clear);
+            }
+        }
     }
 }

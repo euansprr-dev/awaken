@@ -47,11 +47,15 @@ public class LairStructure extends Structure {
         Site site = findSite(ctx, style);
         if (site == null) return Optional.empty();
         long seed = site.seed;
-        return Optional.of(new Structure.GenerationStub(site.centre, builder -> builder.addPiece(new LairPiece(style, site.centre, seed, site.variant))));
+        return Optional.of(new Structure.GenerationStub(site.centre, builder -> builder.addPiece(new LairPiece(style, site.centre, seed, site.variant, site.joint))));
     }
 
     /** Where a lair goes in this candidate chunk (or null): the floor layer's centre, the look and the build seed. */
-    record Site(BlockPos centre, int variant, long seed) {}
+    record Site(BlockPos centre, int variant, long seed, int @org.jspecify.annotations.Nullable [] joint) {
+        Site(BlockPos centre, int variant, long seed) {
+            this(centre, variant, seed, null);
+        }
+    }
 
     static Site findSite(Structure.GenerationContext ctx, LairStyle style) {
         ChunkPos c = ctx.chunkPos();
@@ -140,7 +144,9 @@ public class LairStructure extends Structure {
         if (!ctx.validBiome().test(b)) return null;
         int top = height(ctx, x, z, Heightmap.Types.WORLD_SURFACE_WG);
         if (top - y < 24) return null;
-        return new Site(new BlockPos(x, y, z), style.variant(b), seed);
+        // W5: joined to the natural caves (PLAN 8.2): the nearest cave air past either tunnel's end, within reach
+        int[] joint = dev.awaken.delve.cave.CaveJoints.air(ctx, x, y + 1, z, 20);
+        return new Site(new BlockPos(x, y, z), style.variant(b), seed, joint);
     }
 
     private static int height(Structure.GenerationContext ctx, int x, int z, Heightmap.Types type) {

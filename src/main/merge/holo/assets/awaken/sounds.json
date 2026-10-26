@@ -41,5 +41,37 @@
         "name": "awaken:ui_holo_card"
       }
     ]
+  },
+  "holo.page": {
+    "subtitle": "subtitles.awaken.holo.page",
+    "sounds": [
+      {
+        "name": "awaken:ui_holo_page"
+      }
+    ]
+  },
+  "holo.spend": {
+    "subtitle": "subtitles.awaken.holo.spend",
+    "sounds": [
+      {
+        "name": "awaken:ui_holo_spend"
+      }
+    ]
+  },
+  "holo.confirm": {
+    "subtitle": "subtitles.awaken.holo.confirm",
+    "sounds": [
+      {
+        "name": "awaken:ui_holo_confirm"
+      }
+    ]
+  },
+  "holo.undo": {
+    "subtitle": "subtitles.awaken.holo.undo",
+    "sounds": [
+      {
+        "name": "awaken:ui_holo_undo"
+      }
+    ]
   }
 }

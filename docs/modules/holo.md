@@ -17,14 +17,16 @@ motion, the pack perf tour with panels open).
   beams' origin into its place, unfolding (height, then width); its frame draws itself, a scan line sweeps down and the
   text types in with a caret. It rests up and to the right of the band, left of the crosshair (about 45% of the
   screen's width), yawed toward the wrist, and trails your view when the camera turns. Esc or K folds it back into the
-  band (250 ms). K while it opens skips to open. Tab and 1–4 switch tabs. The main hand (or its item) sinks out of view
+  band (250 ms). K while it opens skips to open. The panel's wrist edge carries the rail of the band's six pages (SPEC §30:
+  Status, Powers, Journal, Truths, Codex, Map; `holo.ui.BandLayout`); 1–6 open a page, Tab and Shift+Tab step through
+  them, and M (the Map) closes the band and opens the Atlas table. K always opens on Status. The main hand (or its item) sinks out of view
   while the arm is up, exactly as vanilla lowers it on an item swap.
 - **The panel is light, not a slab**: 38–50% glass (denser toward the bottom, where it is projected from), static scan
   lines three units apart, a slow two-wave shimmer (no strobing), a hairline emissive edge with corner brackets and an
   additive halo around it. Text is emitted light, not print: no drop shadow; each line has four faint cyan copies
   half a unit off diagonally under it (20% alpha, a soft halo on every stroke), body text cyan-white, labels pale blue,
   headers System blue with a soft additive glow. Readability comes from one even tint over the whole content area
-  (38% near-black on top of the glass, feathered over 14 units toward the rim, no per-line boxes); content is 272×228 GUI units at
+  (38% near-black on top of the glass, feathered over 14 units toward the rim, no per-line boxes); the panel is 288×228 GUI units (SPEC §30; content beside a 30-unit rail) at
   5 framebuffer px per unit on the owner's 3024×1964 (25% larger than the flat menu's GUI scale 4). Checked over a
   bright sky, grass and the night with Lens on its default (holo.txt shots 25–27).
 - **Other players** see your forearm come up across your chest (a third-person pose on the vanilla model), a brighter
@@ -53,7 +55,7 @@ panel has landed and hands over to the flat screen (`HoloTimeline.landed()`).
 ## Placement and the spring
 - A panel's size is chosen in **whole framebuffer pixels per unit** (about 45% of the screen width, at most 80% of the
   height): 1 unit = 1 GUI pixel of layout, so `Ui` sections fit unchanged and text stays crisp (at 3024×1964 the
-  272×228 K panel draws at 5 px per unit). Recomputed every frame from the level projection, so sprint FOV and cast
+  288×228 K panel draws at 5 px per unit, 6 at 3840×2160). Recomputed every frame from the level projection, so sprint FOV and cast
   punches never swell it; vanilla's view bob and hurt tilt (folded into the level projection) are undone.
 - Rest: centre at (-0.455, +0.19) of the half-screen, 0.62 m ahead, parallel to the screen and then yawed 7° toward the
   wrist and leaned back 3° (the yaw reads as a panel turned to the arm that casts it; text stays crisp). That keeps its
@@ -105,7 +107,7 @@ panel has landed and hands over to the flat screen (`HoloTimeline.landed()`).
   the old `GuiGraphicsExtractor` ones delegate. `Ui.fill` / `Ui.item` / `Ui.canvas()` replace the three `ui.g()` uses.
 - `HoloGraphics` is a `GuiGraphicsExtractor` that records onto a panel (fills, gradients, lines, outlines, text,
   sprites, items and their decorations, scissors, tooltips, pose translate and scale). Every Status section runs on the
-  panel through it unchanged, including the three that draw straight to the vanilla graphics (the Gate Map, Powers, the
+  panel through it unchanged, including the three that draw straight to the vanilla graphics (the gates' run summary, Powers, the
   Descent ledger). Calls it doesn't record go to a private render state that is never drawn.
 
 ## Input
@@ -135,9 +137,12 @@ While the K menu is open the camera holds still. The cursor is a ray through the
 - The wrist is the off-hand arm (left for right-handed players).
 
 ## Network: `awaken:holo_state`
-- C2S `{kind}` (NONE 0, STATUS 1, INVENTORY 2) as a raw VarInt; unknown ids are refused. Sent when the K menu (or the
-  wrist demo) or the holo inventory opens or closes, only to a server that knows the channel. Others see the same
-  raised wrist and content-free card for either kind.
+- C2S `{kind}` (NONE 0, STATUS 1, INVENTORY 2, MAP 3) as a raw VarInt; unknown ids are refused. Sent when the K menu
+  (or the wrist demo), the holo inventory or the map scene (SPEC §30.5) opens or closes, only to a server that knows the
+  channel. Others see the same raised wrist and content-free card for STATUS and INVENTORY; for MAP a content-free disc
+  of light before you at the waist (a ring with compass ticks, a few drifting points, a cone from the wrist).
+- The map scene drives your own wrist through `holo.client.HoloScene` (public): `map(raise, open)` keeps the wrist up in
+  third person while its camera holds the view, and `beams(...)` fans the band's light to the map card's near edge.
 - Server: at most 4 changes per 20 ticks per player; a change over the limit waits and goes out when the window frees
   (the last state always arrives). Relayed as `awaken:holo_state_relay {entityId, kind}` to players tracking the sender
   (never the sender, never players without the channel), and to a player who starts tracking someone with a panel open.

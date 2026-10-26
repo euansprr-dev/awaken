@@ -10,7 +10,7 @@
 // Each slot's origin comes from the chunk table, each look's atlas rectangle from the look table.
 
 uniform usamplerBuffer Quads;
-uniform isamplerBuffer Chunks;   // per slot: block x, the level's floor y, block z
+uniform isamplerBuffer Chunks;   // per slot: block x, the level's floor y, block z, its dissolve in (0..255)
 
 layout(location = 0) out vec3 vRel;
 layout(location = 1) out vec2 vUv;          // blocks along the face's u and v (the texture repeats per block)
@@ -19,6 +19,7 @@ layout(location = 3) flat out vec3 vTint;
 layout(location = 4) flat out vec3 vNormal;
 layout(location = 5) flat out vec2 vLight;  // block, sky (0..15)
 layout(location = 6) flat out int vLod;
+layout(location = 7) flat out float vFade;  // the chunk's dissolve in (0..1)
 
 void main() {
     int quad = gl_VertexIndex >> 2, corner = gl_VertexIndex & 3;
@@ -46,6 +47,7 @@ void main() {
     vNormal = NORMALS[dir];
     vLight = vec2(float((t >> 28) & 15u), float((t >> 24) & 15u));
     vLod = int(q.x >> 30);
+    vFade = float(origin.w) / 255.0;
     vec4 clip = ProjMat * (FarViewRot * vec4(vRel, 1.0));
     clip.z = FarDepth.x + FarDepth.y * clip.w;
     gl_Position = clip;

@@ -18,6 +18,17 @@ public final class HoloConfig {
 
     public enum InventoryStyle { HOLO, VANILLA }
 
+    /** The band's text size (SPEC §30.6): one framebuffer pixel a unit less or more than Normal. */
+    public enum BandSize {
+        SMALL(-1), NORMAL(0), LARGE(1);
+
+        public final int step;
+
+        BandSize(int step) {
+            this.step = step;
+        }
+    }
+
     private static final ModConfigSpec.Builder B = new ModConfigSpec.Builder();
     public static final ModConfigSpec.EnumValue<StatusStyle> STATUS_STYLE = B
             .comment("The Status screen (K): HOLO floats it in front of you from your wrist; FLAT is the classic flat screen.",
@@ -35,6 +46,10 @@ public final class HoloConfig {
             .comment("Awaken's power bar and level readout fade to 35% when nothing needs them (out of combat, energy full,",
                     "no cooldown running, no fresh XP) and come back the moment something does.")
             .define("hudFade", true);
+    public static final ModConfigSpec.EnumValue<BandSize> BAND_SIZE = B
+            .comment("How large the band's panel (K) and its text are: SMALL, NORMAL or LARGE. Each step is one whole pixel",
+                    "per unit, so text stays sharp; LARGE never grows past 80% of the screen's height.")
+            .defineEnum("bandSize", BandSize.NORMAL);
     public static final ModConfigSpec.BooleanValue REDUCED_MOTION = B
             .comment("Panels follow your view directly instead of trailing it, and open with a short fade.")
             .define("reducedMotion", false);
@@ -46,6 +61,7 @@ public final class HoloConfig {
     static boolean reducedMotion;
     static InventoryStyle inventoryStyle = InventoryStyle.HOLO;
     static boolean hudFade = true;
+    static BandSize bandSize = BandSize.NORMAL;
     /** Overrides for the autopilot (null = use the config). */
     static HudMotion forcedHudMotion;
     static StatusStyle forcedStyle;
@@ -68,6 +84,7 @@ public final class HoloConfig {
             reducedMotion = REDUCED_MOTION.get();
             inventoryStyle = forcedInventory != null ? forcedInventory : INVENTORY_STYLE.get();
             hudFade = forcedHudFade != null ? forcedHudFade : HUD_FADE.get();
+            bandSize = BAND_SIZE.get();
         } catch (RuntimeException e) {
             // keep the last good values
         }

@@ -273,7 +273,9 @@ final class CityCommons {
         if (!lines) return;
         if (aoff > 5 && aoff <= 6) {
             for (int ry = y + 1; ry < y + LINE_ROW; ry++) b.set(x, ry, z, CityProps.POLE);
-            b.set(x, y + LINE_ROW, z, CityProps.POLE_TOP);
+            // the line leaves the pole across the road: away from the side it stands on
+            int sd = side(p, ri);
+            b.set(x, y + LINE_ROW, z, CityProps.POLE_ROPE[off > 0 ? (sd + 2) & 3 : sd]);
             return;
         }
         if (aoff > 5) return;
@@ -288,7 +290,7 @@ final class CityCommons {
         if (aoff > 4) {
             // a district banner hung from the line by each pole, its cloth to the walker leaving the city
             int design = CityWall.designOf(o == N ? TERRACE : o == E ? GARDEN_D : WORKS);
-            for (int i = 0; i < 3; i++) b.set(x, y + LINE_ROW - 1 - i, z, CityFacadeLife.BANNER[(o + 2) & 3][design][i][1]);
+            for (int i = 0; i < 3; i++) b.set(x, y + LINE_ROW - 1 - i, z, CityFacadeLife.BANNER[(o + 2) & 3][design][i][2]);
         }
     }
 
@@ -352,7 +354,7 @@ final class CityCommons {
         int ry0 = 9;
         if (z == -255 || z == -245) {
             for (int ry = 1; ry < ry0; ry++) b.set(x, ry, z, CityProps.POLE);
-            b.set(x, ry0, z, CityProps.POLE_TOP);
+            b.set(x, ry0, z, CityProps.POLE_ROPE[z == -255 ? S : N]);
             return;
         }
         int k = z + 255; // 1..9 along the line
@@ -361,7 +363,7 @@ final class CityCommons {
         b.set(x, ry0, z, CityProps.LINE[1][2][x < 0 ? 1 : 2][sag]);
         if (k == 1 || k == 9) {
             int design = CityWall.designOf(TERRACE);
-            for (int i = 0; i < 3; i++) b.set(x, ry0 - 1 - i, z, CityFacadeLife.BANNER[x < 0 ? E : W][design][i][1]);
+            for (int i = 0; i < 3; i++) b.set(x, ry0 - 1 - i, z, CityFacadeLife.BANNER[x < 0 ? E : W][design][i][2]);
         }
     }
 

@@ -51,6 +51,11 @@ public final class MobDef {
     public final Model.@Nullable Voice voice;
     /** What an overworld creature does (NONE for everything else). */
     public final FaunaTalent talent;
+    /**
+     * Placed by the world at its own spot (the seep heart at a seep's socket), never by the biome spawner: an overworld
+     * creature, but outside the biome families' lists ({@link Bestiary#fauna()}), their caps, codex and lairs.
+     */
+    public final boolean placed;
 
     /** A boss phase: entered when health falls below {@code below} (phase 0 uses 1.0). */
     public record Phase(float below, String line, List<Ability> abilities, float speedBonus) {}
@@ -95,6 +100,7 @@ public final class MobDef {
         this.fauna = b.fauna;
         this.voice = b.voice;
         this.talent = b.talent;
+        this.placed = b.placed;
     }
 
     public boolean isFauna() {
@@ -109,6 +115,7 @@ public final class MobDef {
             case IRON_GOLEM, BELL, TORTOISE -> BodyMaterial.STONE;
             case CREAKING -> BodyMaterial.WOOD;
             case SLIME, MAGMA -> BodyMaterial.SLIME;
+            case SEEP_HEART -> BodyMaterial.STONE;
             case VEX, BLAZE, BREEZE, ALLAY, SHADE -> BodyMaterial.SPIRIT;
             default -> BodyMaterial.FLESH;
         };
@@ -157,6 +164,7 @@ public final class MobDef {
         FaunaRole fauna;
         Model.Voice voice;
         FaunaTalent talent = FaunaTalent.NONE;
+        boolean placed;
 
         B(String id, String name, Theme theme, Tier tier, Model model, String signature) {
             this.id = id;
@@ -192,6 +200,8 @@ public final class MobDef {
         public B fauna(FaunaRole role) { fauna = role; return this; }
         public B voice(Model.Voice v) { voice = v; return this; }
         public B talent(FaunaTalent t) { talent = t; return this; }
+        /** Spawned only from code at its own place (see {@link MobDef#placed}). */
+        public B placed() { placed = true; return this; }
 
         /** Abilities for a non-boss (or a boss's opening phase). */
         public B ab(Ability.Builder... abilities) {

@@ -42,8 +42,10 @@ server already generates every city chunk at world creation, so Far Sight can dr
    2-3 px), 2-block levels past that; edits update their section.
 2. **Spans** for the rest: a few vertical runs per column (bottom, top, block, colour), from every chunk ever
    generated, kept on disk.
-3. **Shadow generator** for unvisited land: height (within 0.6 blocks today), the surface rules' blocks, trees at the
-   spots the game's seeded placement picks (replayed without growing them).
+3. **Real land ahead, and dissolves** (built in place of the first draft's shadow generator: the game picks where the
+   next tree goes from the same random stream a tree grows from, so tree spots can't be replayed without growing
+   trees): the server generates the real chunks in a thin band past the render distance and a cone ahead of the
+   player while it keeps up, and every swap from the far view's guess to the real land dissolves in over a second.
 4. **Size-true, pixel-chosen levels**: a coarser level keeps a block where at least half its finer cells do; each tile
    uses the coarsest level whose error stays under ~1 px at its distance; levels cross-fade.
 5. **Work toward where you're heading**: the queue ranks land by the camera's path; workers burst while the view is

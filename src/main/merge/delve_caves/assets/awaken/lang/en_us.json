@@ -1,0 +1,22 @@
+{
+  "item.awaken.delvers_log": "Delver's Log",
+  "item.awaken.delvers_log.0.page0": "The Carillon wants more bell metal than any hill has given it. The copper here runs down, so we follow it down. Twelve picks, two carts, a winch that squeals like the Watch's gulls.",
+  "item.awaken.delvers_log.0.page1": "Third gallery opened. Good copper, a little tin. The men say the rock is warmer than it ought to be this deep. I told them that is the price of good copper. I wrote the seams on the map in lapis, so the next crew finds them.",
+  "item.awaken.delvers_log.0.title": "Foreman Hessel's Log",
+  "item.awaken.delvers_log.1.page0": "Past the chasm the lamps burn blue and the rock hums when you lay a hand on it. Hessel says it is the water. It is not the water.",
+  "item.awaken.delvers_log.1.page1": "Ott found black glass in the wall today, glass that holds a light of its own. He would not put it in the cart. We left it where it grew. Nobody sleeps near the far drift now.",
+  "item.awaken.delvers_log.1.title": "A Delver's Notes",
+  "item.awaken.delvers_log.2.page0": "We broke into it. Violet, all of it, and warm, and something in there is breathing. Ott went in with a lamp. The lamp came back out on its own.",
+  "item.awaken.delvers_log.2.page1": "We are sealing the drift. Tell the Carillon to find its metal somewhere else. The old ones said the Well goes down to where this comes from. I believe them now.",
+  "item.awaken.delvers_log.2.title": "The Last Entry",
+  "item.awaken.delvers_log.desc": "Use to read it. Read, it joins your Codex.",
+  "item.awaken.delvers_log.named": "Delver's Log: %s",
+  "item.awaken.delvers_pick": "Delver's Old Pick",
+  "item.awaken.delvers_pick.desc": "Worn smooth where the hands went. It knows where the metal is.",
+  "item.awaken.delvers_pick.perk": "Carried: the Tuning Fork reaches %s further",
+  "item.awaken.lode_map": "Lode Map",
+  "item.awaken.lode_map.desc": "Read it with a lapis (used up): the nearest lodes come up on your Gate Map.",
+  "item.awaken.lode_map.needs": "The map's lines are drawn in lapis: carry one to read it",
+  "item.awaken.lode_map.none": "No lode within the map's reach of here",
+  "subtitles.awaken.delve.cave.name": "A place is named"
+}

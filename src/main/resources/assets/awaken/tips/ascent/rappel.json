@@ -1,0 +1,10 @@
+{
+  "text": "Over a drop, hold {key.sneak} and {key.jump} on the line: it pays out and lowers you. Let go of {key.jump} to hold where you are; press it again with your feet on the wall to kick off. Let go of {key.awaken.movement} by a passage to step in.",
+  "short": "{key.sneak} + {key.jump} lowers you",
+  "priority": 60,
+  "show_for": 220,
+  "retire_after_done": 3,
+  "retire_after_shown": 3,
+  "cooldown": 900,
+  "awake": "after"
+}

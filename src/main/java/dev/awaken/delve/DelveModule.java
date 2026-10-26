@@ -46,6 +46,11 @@ public final class DelveModule {
         });
         DelveCommands.register();
         DelveTests.register();
+        // W5, caves worth entering (SPEC §28.5): the places, a way home (with the vents and the Descent's dressing),
+        // the senses' sound events
+        dev.awaken.delve.cave.CaveModule.init(modBus);
+        dev.awaken.delve.home.HomeModule.init(modBus);
+        dev.awaken.delve.sense.SenseModule.init(modBus);
     }
 
     /** A solid block a player built underground: that section's roof never caves in. */
