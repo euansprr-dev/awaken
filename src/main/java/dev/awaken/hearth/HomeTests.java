@@ -47,7 +47,7 @@ final class HomeTests {
                 h.assertTrue(Embers.give(sp) && Embers.carries(sp), "an Ember is given");
                 h.assertFalse(Embers.give(sp), "only one Ember a player");
                 // refused on thin air, with a plain reason
-                h.assertTrue(Embers.refusal(sp, level, ground.above(3), ground.above(4)).orElse("").contains("firm"), "not on air");
+                h.assertTrue(Embers.refusal(sp, level, ground.above(3), ground.above(4)).orElse("").contains("solid"), "not on air");
                 // set down: a Tier 0 Hearthfire, radius 24, named from the land's words
                 clearEmbers(sp);
                 sp.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(HearthContent.EMBER_ITEM.get()));
