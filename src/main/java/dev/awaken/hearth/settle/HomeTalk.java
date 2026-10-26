@@ -74,7 +74,9 @@ public final class HomeTalk {
             case "oren", "ilse", "hettie", "wren", "pell" -> who.role();
             default -> "";
         };
-        if (!chainName.isEmpty() && dev.awaken.living.api.Quests.talk(p, chainName)) return true;
+        // ...unless you came to Oren with the forge's business in hand (a piece to temper, the makings of one)
+        boolean business = ("oren".equals(who.role()) || "smith".equals(who.role())) && forgeBusiness(p);
+        if (!chainName.isEmpty() && !business && dev.awaken.living.api.Quests.talk(p, chainName)) return true;
         switch (who.role()) {
             case "oren", "smith" -> oren(p, level, h, s, rec, who, at);
             case "mira", "teodor", "sun", "vael" -> Town.serve(p, level, who.id(), at, h.owner);
@@ -89,6 +91,17 @@ public final class HomeTalk {
     }
 
     // ---- Oren: tempering, commissions -------------------------------------------------------------------------------
+
+    /** In the main hand: something to temper, or an ingredient of the piece Oren would make from what you carry. */
+    static boolean forgeBusiness(ServerPlayer p) {
+        ItemStack hand = p.getMainHandItem();
+        if (hand.isEmpty()) return false;
+        if (Upgrades.isTemperable(hand)) return true;
+        RecipeHolder<CraftingRecipe> r = Work.commissionFor(p);
+        if (r == null) return false;
+        for (var ing : r.value().placementInfo().ingredients()) if (ing.test(hand)) return true;
+        return false;
+    }
 
     static void oren(ServerPlayer p, ServerLevel level, HearthRecord h, Settlement s, int rec, Folk.Person who, BlockPos at) {
         int got = Work.handOver(p, h, "oren");
