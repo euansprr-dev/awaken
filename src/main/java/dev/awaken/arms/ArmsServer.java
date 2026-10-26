@@ -332,6 +332,44 @@ final class ArmsServer {
             s.markHit(t.getId());
             hit(p, s, def, t, now);
         }
+        // what isn't alive but takes a blow, as vanilla's attack strikes it (Euan 2026-10-26: "rifts can only be broken
+        // at the core with your hands"): the aimed one (a rift's core, an end crystal, a boat, a minecart, an item
+        // frame), and in the arc only what a sweep is meant to strike (#awaken:struck_by_sweeps: the anomalies)
+        for (Entity t : level.getEntities(p, box, t -> !(t instanceof LivingEntity) && t.isAlive() && !s.hasHit(t.getId())
+                && t.isAttackable() && !t.skipAttackInteraction(p))) {
+            boolean aimed = t.getId() == s.aimed;
+            if (!aimed && !t.getType().builtInRegistryHolder().is(STRUCK_BY_SWEEPS)) continue;
+            Vec3 closest = new Vec3(Mth.clamp(eye.x, t.getBoundingBox().minX, t.getBoundingBox().maxX),
+                    Mth.clamp(eye.y, t.getBoundingBox().minY, t.getBoundingBox().maxY), Mth.clamp(eye.z, t.getBoundingBox().minZ, t.getBoundingBox().maxZ));
+            if (closest.distanceTo(eye) > reach) continue;
+            Vec3 c = t.getBoundingBox().getCenter();
+            float toward = (float) (Mth.atan2(c.z - p.getZ(), c.x - p.getX()) * Mth.RAD_TO_DEG) - 90F;
+            if (!aimed && !ArmsRules.inArc(toward - yaw, def.arc())) continue;
+            s.markHit(t.getId());
+            strikeThing(p, s, def, t, now);
+        }
+    }
+
+    /** The anomalies a sweep strikes in its arc (anything else not alive is struck only when aimed, as vanilla's is). */
+    static final net.minecraft.tags.TagKey<net.minecraft.world.entity.EntityType<?>> STRUCK_BY_SWEEPS =
+            net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ENTITY_TYPE, dev.awaken.Awaken.id("struck_by_sweeps"));
+
+    /**
+     * Strikes something not alive through the same source vanilla's attack does (the player's attack, at the move's
+     * strength): it decides what a blow does to it (a rift's core loses a hit, a crystal bursts, a boat breaks). Landed,
+     * it is felt as any blow is: the impact, the hit-stop, the ribbon's flash.
+     */
+    static void strikeThing(ServerPlayer p, ArmsState s, Archetype.MoveDef def, Entity t, long now) {
+        float damage = (float) p.getAttributeValue(Attributes.ATTACK_DAMAGE) * ArmsRules.motion(def, s.cadence, s.perfectHeavy);
+        if (!t.hurtServer(p.level(), p.damageSources().playerAttack(p), Math.max(1F, damage))) return;
+        p.level().playSound(p, t.getX(), t.getY(0.6), t.getZ(), ArmsSounds.impact(t, s.move, def, s.style == null ? null : s.style.id()),
+                SoundSource.PLAYERS, 1.0F, ArmsSounds.impactPitch(t, def));
+        s.fightAt = now;
+        int ms = def.hitstop();
+        if (now - s.lastHitstopAt < ArmsRules.HITSTOP_GAP) ms = 0;
+        else s.lastHitstopAt = now;
+        AwakenNet.send(p, new ArmsPayloads.Result(s.moveSeq, ArmsPayloads.HIT, t.getId(), ms, s.move == null ? 0 : s.move.ordinal()));
+        seen(p, new ArmsPayloads.Seen(t.getId(), ArmsPayloads.HIT, p.getId(), ms, s.move == null ? 0 : s.move.ordinal()));
     }
 
     /** A Plunge in the air: it lands as the move (all round, harder the further it fell), or gives up in water or after 5 s. */

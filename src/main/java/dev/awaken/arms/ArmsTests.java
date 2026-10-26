@@ -62,6 +62,7 @@ final class ArmsTests {
         AwakenTests.register("arms_marks", 40, ArmsTests::marks);
         AwakenTests.register("arms_forge", 20, ArmsTests::forge);
         AwakenTests.register("arms_tap_or_hold", 40, ArmsTests::tapOrHold);
+        AwakenTests.register("arms_strikes_things", 40, ArmsTests::strikesThings);
     }
 
     /** At most this many triangle corners in one weapon (6,000 triangles: a few weapons in view cost what a mob does). */
@@ -748,6 +749,44 @@ final class ArmsTests {
         }
         h.assertTrue(landed == limit, "unanswered, the waiting strike lands " + limit + " ticks in (landed at " + landed + ")");
         done(h, p);
+    }
+
+    /**
+     * What isn't alive but takes a blow is struck by a styled weapon as vanilla's attack strikes it (Euan 2026-10-26: a
+     * rift's core broke only to bare hands): the aimed core loses a hit through the player's attack, a core in the arc
+     * too (#awaken:struck_by_sweeps), and a boat only when it is the one aimed. An owned core closes at zero on that same
+     * attack (anomaly_rift_close_pays_once); these have no anomaly, so a core collapses on its first hit.
+     */
+    static void strikesThings(GameTestHelper h) {
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F); // facing +z
+        dev.awaken.world.anomaly.RiftEntity core = core(h, 1.5, 2.2);
+        dev.awaken.world.anomaly.RiftEntity side = core(h, 2.7, 2.0);
+        net.minecraft.world.entity.vehicle.boat.Boat boat = EntityTypes.OAK_BOAT.create(h.getLevel(), EntitySpawnReason.COMMAND);
+        Vec3 b = h.absoluteVec(new Vec3(0.3, 1, 2.0));
+        boat.snapTo(b.x, b.y, b.z, 0F, 0F);
+        h.getLevel().addFreshEntity(boat);
+        int hits = core.hitsLeft();
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_STRIKE, 0F, 0F, core.getId()));
+        runActive(p);
+        h.assertTrue(core.hitsLeft() == hits - 1, "the aimed core takes the styled strike: " + hits + " → " + core.hitsLeft());
+        h.assertTrue(side.hitsLeft() == hits - 1, "a core in the arc is struck too: " + hits + " → " + side.hitsLeft());
+        h.assertTrue(core.closing(), "with no anomaly behind it, the struck core collapses");
+        h.assertTrue(!boat.isRemoved() && boat.getDamage() == 0, "a boat in the arc, not aimed: left alone");
+        ArmsServer.state(p).clearMove();
+        ArmsServer.onPress(p, new ArmsPayloads.Press(2, ArmsPayloads.PRESS_STRIKE, 0F, 0F, boat.getId()));
+        runActive(p);
+        h.assertTrue(boat.isRemoved(), "aimed, the boat breaks as vanilla's blow breaks it");
+        core.discard();
+        side.discard();
+        done(h, p);
+    }
+
+    static dev.awaken.world.anomaly.RiftEntity core(GameTestHelper h, double x, double z) {
+        dev.awaken.world.anomaly.RiftEntity e = dev.awaken.world.anomaly.AnomalyContent.RIFT.get().create(h.getLevel(), EntitySpawnReason.COMMAND);
+        Vec3 v = h.absoluteVec(new Vec3(x, 1, z));
+        e.snapTo(v.x, v.y, v.z, 0F, 0F);
+        h.getLevel().addFreshEntity(e);
+        return e;
     }
 
     /** Every listener after the Arms stage still applies: the momentum hit's +30% from a slide-speed run. */

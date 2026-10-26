@@ -4431,7 +4431,14 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   crosshair outside a fight (100 ticks since the last) is still mined. A move strikes each creature in its arc and reach
   once, through vanilla's own attack at full strength (crits, enchantments, momentum and every damage listener still
   apply), scaled first by the move; vanilla's immunity is cleared between one fighter's blows; it never sweeps. A sweep
-  only takes the aimed creature, hostiles and anything hunting the player: never a player, a villager or a pet.
+  only takes the aimed creature, hostiles and anything hunting the player: never a player, a villager or a pet. **What
+  isn't alive** (Euan 2026-10-26: "rifts can only be broken at the core with your hands"; vanilla's own attack, which
+  Arms stands aside from for its weapons, was the only way to strike one): what vanilla's attack would strike
+  (`isAttackable`, not `skipAttackInteraction`: a rift's core, an end crystal, a boat, a minecart, an item frame) is
+  struck when aimed, and in the arc only when tagged `#awaken:struck_by_sweeps` (the anomalies: the rift tear, the
+  shimmer, the falling star), through `damageSources().playerAttack` at the move's strength (`ArmsServer.strikeThing`),
+  with the impact sound, the hit-stop and the ribbon's flash; the thing decides what a blow does (a core loses a hit).
+  Test `arms_strikes_things`.
 - **Guard** (use key, the `blocks_attacks` component Arms gives every sword: no delay, 120° front): the first 4 ticks
   after the raise deflect a LIGHT or HEAVY (no damage, the attacker's stance takes 18 or 26, Resonance +20, a riposte
   for 12 ticks); after that LIGHT is blocked (70% less), HEAVY breaks the guard (50% less, the guard drops, 15 ticks
