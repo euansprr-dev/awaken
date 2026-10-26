@@ -25,7 +25,7 @@ import java.util.zip.Inflater;
  * and its hash is pinned by a GameTest). Plan coordinates are blocks from the site centre, x east, z south; heights
  * are relative to the street (ry 0 is the paving's top block).
  */
-public final class CityPlan {
+public final class CityPlan implements PlanView {
     /** 2 (M4 B2): the lift raster is signed (Choir Square's bowl), plus crossings, named spots and the relief. */
     public static final int SCHEMA = 2;
     public static final String RESOURCE = "/data/awaken/city/plan.json";
@@ -430,6 +430,7 @@ public final class CityPlan {
         return i >= 0 && j >= 0 && i < size && j < size;
     }
 
+    @Override
     public byte kind(int x, int z) {
         int i = x - origin, j = z - origin;
         if (i < 0 || j < 0 || i >= size || j >= size) return VOID;
@@ -443,6 +444,7 @@ public final class CityPlan {
     }
 
     /** The ground's top block at a cell, relative to the street (signed: Choir Square's bowl goes below it). */
+    @Override
     public int lift(int x, int z) {
         int i = x - origin, j = z - origin;
         if (i < 0 || j < 0 || i >= size || j >= size) return 0;
@@ -454,11 +456,24 @@ public final class CityPlan {
     }
 
     /** Whether a tree's trunk stands in this cell. */
+    @Override
     public boolean treeAt(int x, int z) {
         return treeCells.contains(cellKey(x, z));
     }
 
+    @Override
+    public CityPlan.Plot plot(int id) {
+        return plots.get(id);
+    }
+
+    @Override
+    public boolean lampNear(int x, int z) {
+        for (int[] l : lamps) if (Math.abs(l[0] - x) <= 1 && Math.abs(l[1] - z) <= 1) return true;
+        return false;
+    }
+
     /** The id of the plot on this cell, or -1. */
+    @Override
     public int plotAt(int x, int z) {
         int i = x - origin, j = z - origin;
         if (i < 0 || j < 0 || i >= size || j >= size) return -1;

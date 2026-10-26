@@ -130,9 +130,8 @@ final class CityFacadeLife {
         }
     }
 
-    static boolean lampNear(CityPlan plan, int x, int z) {
-        for (int[] l : plan.lamps) if (Math.abs(l[0] - x) <= 1 && Math.abs(l[1] - z) <= 1) return true;
-        return false;
+    static boolean lampNear(PlanView plan, int x, int z) {
+        return plan.lampNear(x, z);
     }
 
     /** The column (up coordinates) of a side nearest `want` that has no window, climb line or bay, or -1. */

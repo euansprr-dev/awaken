@@ -345,6 +345,22 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   lots, water, districts)`; `RosterSource.jar()` is Carillon's; `RosterBuilder` builds one in code (nodes, streets, lots,
   places with spots, routes, smithy, wash place, lamp, bell, bakery, tavern, stall, households, groups, people and their
   days, extras).
+  (W3, §28.6) `Settlements.onTalk(Talk)` (a settlement other than Carillon answers a player's talk first: `talk(ServerPlayer,
+  Settlement, rec)`), `Settlements.installVoice(Voice)` (`standing(Settlement, ServerPlayer)` "stranger|known|friend|kin",
+  `fill(Settlement, ServerPlayer, line)`); `Settlement.records()`, `job(rec)`, `personName(rec)`, `age(rec)`, `body(rec)`,
+  `say(ServerPlayer, rec, line, ticks)`, `acquaint(ServerPlayer, amount, ceiling)`; `RosterBuilder.emitter(x, ry, z, kind)`
+  (0 bakery, 1 house, 2 tavern, 3 forge, 6 mill, 7 well) and `RosterSource.Built.emitters`.
+- `dev.awaken.village.api.Villages` (§28.6) — AWAKEN's settlements: `record View(key, name, kind, family, origin, radius,
+  settlement, people)`, `settlementAt(Level, BlockPos)`, `nearest(Level, BlockPos, within)`, `all(Level)`,
+  `standing(ServerPlayer, key)` (STRANGER 0, KNOWN 1, FRIEND 2, KIN 3), `addStanding(ServerPlayer, key, points, why)`,
+  `damage(server, key)` (`record Damage(pos, original, day)`), `repaired(server, key, pos)`, `history(server, key)` and
+  `history(server, key, line)`, `prosperity`/`addProsperity`, `mood`/`addMood` (0-100), `reserved(Level, BlockPos,
+  margin)` (a settlement's ground, planned ones included: gates and Hearths keep off).
+- `dev.awaken.city.SettlementPaint` / `PlanView` / `VillageStyles` (§28.6) — the city's grammar for other settlements:
+  a `Layout` (a `PlanView` of ground kinds, heights and plots, its origin and street level, its own ground and pieces on a
+  `Canvas`, who lives in each plot as an `Interior`) painted per chunk by `paintChunk` into a proto chunk (`sweep` after);
+  `standingCells`, `chimneys`, `census`, `fingerprint`, `dump` for tests and the studio; styles keyed by land and wealth in
+  `Plot.district` (`VillageStyles.district(family, wealth)`).
 - `dev.awaken.core.audio.MusicLayers` — the layered music: `register(Slot, priority, name, Provider)` (a provider names a
   player's context `<ns>:<path>`, read from `assets/<ns>/music_layers/<path>.json`, or null; it may set the given
   `Intensity.Signals`' `pressure`, `forced` (0..3) and `arrival`), `current(ServerPlayer, Slot)`, `level(ServerPlayer,
@@ -1388,9 +1404,9 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   sources of a known SHA-256, Iris is absent and client setting `waving_leaves` (`awaken-terrain-client.toml`, default
   on) is on; otherwise nothing is installed (vanilla renderer: no waving). Marker: every `LeavesBlock` model is wrapped
   after baking with vertex colour alpha 254 (textures untouched). Wind: texels at the block atlas's bottom-right
-  corner written each frame (signature, time mod 2048 s, camera, wind, the gust profile along the wind from
+  corner written each frame (signature, the sway clock mod 2048 s, camera, wind, the gust profile along the wind from
   `terrain.Wind`; since swaying plants also their amplitudes, the player's feet and whether the world has weather
-  wind): 27 texels.
+  wind): 45 texels, laid out by `terrain.SwayMath` (see "Smooth" below).
   Amplitude 0.11 blocks at full wind and gust. `/awaken terrain waving on|off|status` (client).
 - Swaying plants (2026-10-26, Euan: "all things sway with the same wind the trees get"): the same pack, gate, texels
   and setting as the leaves (`waving_leaves` now covers both and keeps its key, so older settings still apply; nothing
@@ -1436,7 +1452,31 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
     within noise against the shader finding no wind (+0.05, −0.03 ms) and the whole override +0.13 and +0.19 ms against
     Sodium's own shader; in a flower forest +0.30 and +0.16 ms against no wind, leaves' sway included (it has no
     distance fade). `/awaken terrain waving debug 3` stills and skips the plants alone, to split the two.
-  - Commands: `/awaken terrain waving on|off|status|debug <0..3>|plants ...` covers leaves and plants;
+  - Smooth (2026-10-26, Euan: "a bit jittery... as if they restarted the animation"). Three causes, all fixed for leaves
+    and plants alike:
+    - The clock: the client adds a tick per client tick and the server overwrites it every 20 server ticks, so a
+      lagging integrated server pulled the client's game time back every second or two, and the sway rewound. Now
+      `ClientWind` runs the wind (gust fronts, heading, steady strength; also the falling leaves and the rustle) on a
+      `terrain.SwayClock`: real frame time eased toward the game's clock, its pace changing by at most 35% for a small
+      error (up to 90% for one of seconds, so it follows a slow server), never backwards, snapping only on a jump of
+      over 4 s, still while paused. The to-and-fro itself runs on a separate clock of unpaused real time alone (whole
+      turns in 2048 s, so its wrap is seamless).
+    - The wrap: world positions are rebuilt modulo 4096 and the camera is written modulo 4096, so it wraps at x = 0 and
+      z = 0, right by spawn, and every spatial phase used to jump there. Spatial phases are now whole turns in 4096
+      blocks (coefficients rounded to multiples of 2π/4096, under 0.1% from before), and the leaf flutter's hash takes x
+      and z modulo 65536 sixteenths.
+    - Precision: every sine takes a phase in turns reduced with `fract` first (a GPU's sine is imprecise far from
+      zero); direction, steady strength and the 64 gust samples are 16-bit (they were 8-bit: tall grass ticked in
+      small steps as a gust or a turn moved them); the gust profile sits on a grid fixed in the world (multiples of 4
+      blocks along the wind; texel 7 holds its offset), so walking no longer slides it.
+    - `terrain.SwayMath` is a line-by-line Java mirror of the shader's sway and texel decoding. The GameTest
+      `terrain_sway_continuous` holds the clock against a server stuck at 15 ticks a second (it never rewinds or
+      lurches, stays within a second), the sway equal at t = 0 and t = 2048 and across 4096-block shifts, the gust at a
+      place still while the camera walks, and 16-bit round trips. `/awaken terrain waving probe frames <n> | seconds
+      <s> | turn | stop` logs, frame by frame, the offsets the shader gives a few fixed vertices (and the same vertices on
+      the raw game clock) to `sway-probe-<mode>.csv` (`frames` also grabs each frame at 60 fps);
+      `docs/spikes/plant-sway/plot_probe.py` charts them; `tools/autopilot/plant-sway-smooth.txt` films the proof.
+  - Commands: `/awaken terrain waving on|off|status|debug <0..3>|plants ...|probe ...` covers leaves and plants;
     `/awaken terrain wind front across|ahead` (showcase) launches one front across the view or from behind the camera,
     holding the heading the way it rolls, until `wind real`. Tests: `terrain_sway_markers` (every plant kind marked,
     leaves keep theirs, nothing else is), `terrain_sway_joined` (shared vertices agree for every run length; roots and
@@ -2040,6 +2080,29 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   Gate towers rise 4 over their plan height (eave 54) so their gallery clears the walk's hall; the walk passes every
   gatehouse through the room over the gate. No plan lamp stands in a gate passage or a drainpipe's column. Kit: arrow
   loop, wall ivy (climbable), portcullis, brazier (the kit's one light source, 14), wall spout, wall shield.
+- Decided in M4 Commons (2026-10-26; details docs/carillon/milestones/M4-commons.md; Euan's playtest: the walk out read
+  rough, too many monsters, banner poles broken): the plan is unchanged; the land outside the wall is painted by
+  `CityCommons` (the roads and the ground), `CityFarms` (the fields), `CityFarmsteads` (six farms) and `CityTrail` (the
+  High Gate road past the reach). The roads in keep their 8-wide line: setts to 22 from the gate, then cobble kerbs at
+  3.5 from the centre, gravel shoulders, wheel ruts of coarse dirt at 2.5 and a trodden crown; grass verges to 5.5, a
+  ditch (water a block down) at 6.5 and a hedge or spruce fence at 7.5 from 26 out, a field gate over a culvert every 48
+  (by turns either side). Lamps and pennant lines by turns every 14 from 24: a pennant line is two line poles at 5.5
+  with a bunting line across the road at row 7 and a district banner hung from it by each pole (the yard's two lines
+  replace its masts; the floating flagpole arms are gone). Milestones every 64 from 40 on the right-hand verge. Fields
+  keep the lattice (bands 21 out from 252, cells about 26 round): boundaries are hedges, farm tracks or grass balks by
+  pair; fields are arable strips 5 wide (four rows of one crop at its own growth, then an irrigation channel or a balk;
+  wheat, carrots, potatoes, beetroot, pumpkins, ploughed or fallow; a scarecrow on the seed of half), reaped (stooks
+  every 4), orchards (apple, blossom, cherry, 5 apart), pasture (hay) or meadow, with lone oaks; bands 2 and out are more
+  pasture and meadow. Six farmsteads (box 22 by 26, three by the first field gate of each road): a farmhouse from the
+  grammar (use "farm": its faces over open ground are street faces), a timber barn with open doors and a loft, a
+  haystack, a well, a hay cart, a paddock, a kitchen garden, a woodpile and a lamp at the track. Past the reach the
+  High Gate road is laid on the ground as it lies to 424 north (a plank bridge over water, lamps and milestones, no
+  ditch or hedges), a fingerpost, then a footpath bending to 26 short of the Wayfarers' fire (450 north, 6 east; the camp
+  and its 32 of safe ground are the Wayfarers'). Monsters: outside the wall a natural spawn of anything hostile (MONSTER,
+  `Enemy`, or an Awakened creature that isn't peaceful) goes ahead with chance 0.10 to 330 from the centre, rising to
+  0.45 at 470 and 1 at 640, and never where three hostiles stand within 48 at about its height (to 470 out;
+  `CityMonsters`, at the natural spawner's position check); inside the wall the lamps decide. Kit: milestone, fingerpost, scarecrow,
+  stook (no light, no block entity). Dev: `/awaken city monsters [radius]`.
 - Floating wood fix (2026-10-25): the city's vegetation sweep takes the lands' bark (elder wood) as well as leaves and
   logs, sweeps the whole neighbour chunk to full height, clears fields to the top, and removes tree groups left resting
   on nothing past the edge (`CityWriter.collectOrphans`). Dev: `/awaken city scan | floater <n> | tidy` (tidy repairs
@@ -5917,6 +5980,160 @@ the stony way in), the mist's latest numbers, the place caption, the draught; th
 came out black round a placed lantern, the chunks or their light not yet on the client); the dripstone and deep-dark
 looks read only dimly (lush reads). The way home's Now line ranks under a tracked quest's line, so the tours saw its
 thread only.
+
+### 28.6 W3 as built (living villages, 2026-10-26)
+Branch `pack/world-depth-w3`. Module `village` (`dev.awaken.village`, `src/main/merge/village/`, `/awaken village ...`);
+module doc `docs/modules/village.md`. Tests `village_plan_deterministic`, `village_day`, `village_trade`. Tour
+`tools/autopilot/world-depth-w3.txt` (CI). Towns and mining towns wait for W7, troubles and growth for W4.
+
+**New worlds only.** A built-in pack, **Awakened Villages** (`datapacks/awakened_villages`, feature flag
+`awaken:awakened_villages`), holds the settlement structure, its set and biome tag, and empties vanilla's
+`minecraft:villages` set (no vanilla village, no villager, no iron golem of a village). Its own flag rather than the Lands
+pack's: worlds already made with the Lands keep vanilla's villages, and no settlement ever starts half-built at the edge
+of an old world's generated ground (decision recorded here). A cured zombie villager is untouched (W6 can settle it).
+
+**Where** (`village.world.SettlementGrid`, pure seed arithmetic). Cells of 640 (about two to a region of 900): one
+anchor each, a hamlet 65%, a village 25%, none 10%; none within 760 of the centre (Carillon's site, else the origin) or
+440 of the first hamlet. The planner moves an anchor up to 32 to the best ground; a village with no room becomes a hamlet;
+rough land drops it. On real overworld noise (seed 26102610, the 41 anchors within 2,600) 21 hold a settlement: about
+one per region, hamlets two times in three. **The first hamlet** (`FirstHamlet`) is found at the server's start, after
+terrain picks the city's site and before any chunk generates: up the road north 760-1,060 (the camp is at 450), then
+96 and 192 to either side, then the roads east, west and south, then 240 further out, the first spot whose land takes a
+hamlet of four homes or more. Clear of the city reserve (+8) by the planner; gates never open on a settlement's ground
+or within 64 of it, planned ones included (`Villages.reserved`, read by `gates/Director`); a Hearth can't be founded
+within 8 (`hearth/Embers`, `HearthService`).
+
+**Placed** as a structure (`awaken:settlement`, placement `awaken:settlement_grid`, step `top_layer_modification`:
+after the trees, which it clears; snow falls on its roofs after). The start is the anchor's chunk; the whole plan stays
+inside its eight-chunk reach (villages radius ≤ 88, hamlets ≤ 58). Pieces: one painter piece (the plan's box: each
+chunk it touches paints its share straight into the sections through the city's writer) and a thin-beard marker per
+building (reaching two past its walls: no bank of earth at a back window), field, pen, every four-block segment of every
+street, and the green (the land eases up or down to their floors and the paving instead of meeting them in a step).
+**The clearing:** before a chunk paints, the land's trees go from every free column within six of the settlement's
+ground (logs, leaves and what hangs on them; never grass, flowers, snow or a block entity; a felled trunk's dirt grows
+grass), so houses stand in a clearing, never in a wood; the planned trees are bark and persistent leaves and stay. The piece keeps only its anchor and the planner's
+version: after a restart the first chunk to paint makes the same plan again (`Plans`, cached per server). Pens get two to
+five beasts of the land (sheep, pigs, cows, chickens, goats), kept. A tree cut at the edge leaves nothing hanging
+(`SettlementPaint.sweep`, the city's sweep and orphan rule).
+
+**The planner** (`village.plan.VillagePlanner`, pure; reads the generator's estimate `GenTerrain`: each column once, a
+6-block grid, bilinear between). Site: the best-scoring of 25 centres (81 for the first hamlet) by flatness, dryness,
+water within 40 of the core, a moderate height. A green (paved, radius 5 or 7) with the well, the bell (a post in a
+hamlet, a stone tower with an open belfry and a lightning rod in a village), the notice board facing the street, benches
+round the well and, in a village, a market stall. A main street along the contour through the green (24-38 blocks each
+way in a hamlet, 40-65 in a village), lanes branching off it (0-1, 2-4); street heights never change more than one a
+four-block step, and where the paving climbs one the lower cell takes a slab of its own stone (a half step, never a
+cube of cobble with earth at its sides). Plots on the frontages, each facing its street with a yard round it, level with the paving at its door,
+a path out to the street; never more than 4.5 of cut or fill. A village has the inn (11-13 x 9, two storeys), the smithy
+with its forge shed (anvil, a lit blast furnace), the elder's two-storey house, often a granary and a barn, 8-17 homes;
+a hamlet 3-6 homes (the first 4-5), sometimes a smithy and a barn. Longhouses in the frost. The mill (9 x 9, two storeys)
+on the nearest water with its wheel turning in it; a pier where water is two deep near a street. Strip fields (2-3 a
+hamlet, 4-7 a village) with a channel down the middle and the land's crops; pens; kitchen gardens behind half the homes
+(fenced, a water hole, a gate to the house); 2-7 trees of the land's wood; washing lines in a third of the side yards;
+carts, crates, sacks, planters, a timber stack; street lamps (5 a hamlet, 14 a village). Names from the land
+(`Names`: "Kettleby", "Longvik", "Hollowstrand").
+
+**Painted by the city's grammar** (`dev.awaken.city`: `PlanView`, `SettlementPaint`, `VillageStyles`, `CityInteriors`).
+The grammar reads any `PlanView` (Carillon's plan is one); Carillon paints byte for byte as before (a fingerprint of all
+1,388 of its chunks, 7d384bdd423e85f6, the same before and after; its plan-hash test unchanged). A settlement's plot
+carries its style in `Plot.district` (16 + land x 4 + wealth): ten lands (temperate, frost, desert, savanna, mire,
+highland, elder, coast, jungle, cherry) by three wealths (poor, modest, prosperous), every house drawn on its own:
+rubble or ashlar below and plaster and timber above in the heartland, log longhouses under steep spruce in the frost,
+sandstone under flat roofs in the desert, whitewash and blue shutters by the sea. Lower and plainer than the city (one or
+two storeys, no jetties or shopfronts), with the same climbing grid. Every house is enterable (panes, real doors of the
+land's wood) and **furnished** by `CityInteriors` from who lives there (`SettlementPaint.Interior(adults, children,
+trade, seed)`): a bed each (a couple's double, the children's upstairs), a hearth under the chimney, a table and seats,
+storage, the trade's blocks (the smith's anvil and blast furnace, the inn's bar, tables and guest beds, the scribe's
+lectern and shelves, the miller's sacks), rugs, pots; a real staircase (five steps, the floor cut over it) or a ladder;
+at most two lights a house. Generic over plots, for Carillon's B4 to adopt.
+
+**The people** (`VillageRoster` on W0's `RosterBuilder`): a graph from the streets (a node every four blocks, lanes
+joined at their branch), a door for every building, places for the work (each field's edge, the pen's gate, the forge,
+the well's trough, the bell, the benches, the green's play, the woodlot, the pier's end, the mill, the inn's taproom
+inside its door with the guests' floor found by painting the inn alone, the lamps, the Watch's posts and the roads
+out). Errands spread over the whole place, never round the well: the board, the benches, the stall (buying), every other
+home's door (a visit), the green itself and a corner every sixteen blocks of street. A place holds as many people as it
+has spots (past them they'd stand in a heap), so the children's game spreads over twelve spots of the green, the green
+holds ten, the stall's front four, the board three. Households of 1-3 adults and 0-3 children per home, 8-16 people in a hamlet, 20-50 in a village. Village jobs
+appended to `Roster.JOBS` (21 farmer, 22 shepherd, 23 woodcutter, 24 miner, 25 fisher, 26 hunter, 27 carter, 28 elder,
+29 scribe) beside the city's smith, tavernkeeper, miller, washer, lamplighter, bellringer, Watch, healer, stallkeeper
+and children. **The day** (0 = 06:00): the bell at dawn and dusk (the ringer at the bell 05:18-06:42 and 17:30-18:36;
+it rings six with Minecraft's own bell sound); work 07:00-11:30 and 12:50-17:50 (farmers hoeing, the woodcutter's axe,
+the smith at the anvil, the fisher at the pier with his rod, the shepherd leaning on his crook); the midday meal at home;
+from half past six half the grown-ups at the inn or on the green till ten; hunters and miners out by the road at dawn and
+back at dusk, the hunter with a kill on his pole; the carter's round of the barn, granary, inn and mill with a crate;
+the lamplighter's round lighting the lamps at 18:10 and putting them out at 05:00; the Watch at the posts and walking
+the edge 17:30-04:50; the elder on a bench and, of an evening, at the inn. Clothes from the city's trades by hash (a
+farmer wears a porter's, a fisher a boatman's, a scribe a clerk's). Ledger cost with a village of 38 awake: 0.003-0.005
+ms a tick (`village_day`).
+
+**Speech** (`data/awaken/village/village_lines.json`, 729 lines, read by `citizens.Lines` under `village.`): greetings by
+job and standing (`village.greet.<job>.<stranger|known|friend|kin>`), calls at work, news of the village and the region,
+trade, the board, the inn's offer, room and rumours, the scribe, the elder, the bell, and what people say when struck,
+robbed or their fields trampled; `{village}`, `{region}`, `{elder}`, `{gate}` (the compass way to the nearest gate) filled
+by the village's `Settlements.Voice`. Talking to a trader opens their goods (`Settlements.Talk`); the elder tells news.
+
+**Trade in emeralds** (decision 5; `Trade`, `Emeralds`): `EconomyHooks` is installed with the emerald (balance,
+charge, and pay once per claim id; the claims are kept in `awaken:villages`). Every trade sells what it makes and buys
+what it needs (vanilla's merchant screen); every land's villages make something of their own (the frost's furs and
+berries, the desert's glass, the mire's slime and clay, the highland's copper, the coast's ink, prismarine and nautilus
+shells, honey in the heartland...). The scribe sells three enchanted books a day (the tradeable enchantments, 9-25
+emeralds by level), paper, books, maps, name tags. Prices show standing on the screen itself (the old price struck
+through): a stranger pays one over on anything of three or more, a friend a fifth under, kin a third under; what a
+village buys asks a stranger an eighth more goods and kin a fifth fewer, and is capped a play-day per player (nothing
+ever locks for good).
+
+**Standing** (`VillageState`, per settlement and player): points, Known at 10, Friend at 35, Kin at 80; a trade +1
+(four a day), a filled notice +4 to +8, a night at the inn +1, two blocks of a house broken -1 (three a day); the
+people's own recognition (W0) lifts a stranger to Known. Rising, every one of its people knows you better
+(`Settlement.acquaint`) and a line says so.
+
+**The notice board** (`Requests`, `client.NoticeBoardScreen`): right-click the board on the green: a timber board with up
+to three pinned notes from the village's real state (damage: timber and stone to mend it; a smithy: iron; the inn:
+bread; fields: bone meal; a pen: wheat; a frightened village: torches for the edge; a bell: copper; a pier: string;
+lamps: glass; leather), renewed every other play-day, kept six days at most, counts shown, "Hand over" gives what you
+carry; filled, it pays its emeralds once and its standing, lifts prosperity and mood, and goes into the history.
+
+**The inn** (`Inn`): the innkeeper sells a room for three emeralds (the key is the receipt): the inn's guest bed becomes
+where you wake if you fall, once (given back after you wake there, or after two play-days), and the night's rumour is
+told over the fire.
+
+**Sound and light.** The ambience slot in a settlement (`MusicLayers`, priority 90, under Carillon's):
+`awaken:village/day` (birds over a murmur that grows with the people out of doors) and `village/night` (crickets, the
+inn's voices till late), AmbientSounds' players the same without our birds and crickets; beds made from the city's
+stems. The client sounds the forge's hammer through the working day, the mill wheel and the inn of an evening
+(`citizens.client.VillageSound`), and puffs smoke from every chimney the grammar built (the roster's emitters, by hour
+as in the city). Street lamps are the citizens' lamp heads (no light block; their light drawn, decision 26).
+
+**Saved** (`awaken:villages`, schemaVersion 1): each settlement met (key, name, kind, land, origin, radius),
+prosperity and mood (0-100), each player's standing, damage (every block broken in its planned ground by a player or an
+explosion, with the block that stood there and the day, up to 2,048), buildings added, a short history (32 lines), the
+board's notices, the day's counts; the paid claims; tonight's inn beds. The people's records are W0's.
+
+**API** (§12): `dev.awaken.village.api.Villages` — `settlementAt`, `nearest`, `all`, `standing`/`addStanding`,
+`damage`/`repaired`, `history`, `prosperity`/`addProsperity`, `mood`/`addMood`, `reserved(level, pos, margin)`. Citizens
+gained `Settlements.onTalk(Talk)` and `installVoice(Voice)`, `Settlement.records/job/personName/age/body/say/acquaint`,
+`RosterBuilder.emitter(x, ry, z, kind)` and `RosterSource.Built.emitters`. City gained `PlanView`, `SettlementPaint`
+(`Layout`, `Canvas`, `Interior`, `paintChunk`, `sweep`, `standingCells`, `chimneys`, `dump`), `VillageStyles`.
+
+**Measured.** Planning on real overworld noise: 0.3-0.6 s a hamlet, 0.9-1.3 s a village, once per settlement on the
+worldgen thread that meets its start (the first hamlet's search at server start: a few tries). Painting: 0.35-1.5 ms a
+chunk (about 1,600 cells; the grammar, the rooms and the ground), at most 4 light sources a chunk. Ledger with a village
+awake: 0.0008-0.005 ms a tick. On GitHub's macOS runner (slower cores) the first hamlet planned in 5.2 s and a village
+in 2.2 s; look tour 40313778099.
+
+**Decisions taken here** (none of the plan's 13): the own pack and flag (above); the 640 grid and its odds; the first
+hamlet's search order; the structure's step and the plan rebuilt from its anchor; the clearing of six; beards on the
+streets and two past each house; half steps in the paving; spots spread over the green; styles keyed 16 + land x 4 + wealth;
+two lights a house; the standing thresholds and the price rule; the board's needs; the inn's one fall; the claims kept
+in the villages' file; village jobs appended to the city's list; the day's hours; the kit's civic blocks (they drop
+nothing) used in village walls and furniture; gates 64 and Hearths 8 off a settlement's ground.
+
+**Left.** W4: troubles (W0's director, `plannedEvents`), growth (prosperity raising buildings, `added`), the Rebuild
+from the damage record, the history in the Journal, festivals. W6: settlers to the Hearth (Friend and Kin), a refugee or a
+cured villager settling. W7: towns, mining towns, roads and caravans between settlements. Smaller: the Mire's houses
+want stilts and the caravanserai a courtyard (styles only today); village clothes are the city's; a house smokes by the
+hour, not by who is in; `/locate` can't find a settlement (`/awaken village list` does).
 
 ---------------------------------------------------------------------------------------------------------------------
 

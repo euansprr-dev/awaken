@@ -29,6 +29,7 @@ public final class CitizensClient {
         NeoForge.EVENT_BUS.addListener(CityCritters::onLeave);
         NeoForge.EVENT_BUS.addListener(CityCritters::onSound);
         NeoForge.EVENT_BUS.addListener(CitySound::tick);
+        NeoForge.EVENT_BUS.addListener(VillageSound::tick);
         NeoForge.EVENT_BUS.addListener(CityNature::tick);
         // the server picks the beds by what this game hears with (AmbientSounds plays the birds and crickets itself)
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingIn e) ->
@@ -55,6 +56,7 @@ public final class CitizensClient {
             CityLife.clear();
             CityCritters.clear();
             CitySound.clear();
+            VillageSound.clear();
             CityFestoons.reset();
         });
     }

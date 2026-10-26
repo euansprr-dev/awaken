@@ -68,6 +68,8 @@ and on through the trees. Bases and anchors never move; stalks and strands count
 meshing, so every shared vertex agrees. Hanging plants swing from their anchor, wall vines stay in their wall's
 plane, underwater plants sway in a slow current, pads bob, grass tips brighten as a gust bends them and part round
 the player's feet; deep underground and in the Nether and End only a faint draught moves them.
+The wind follows a smooth clock (`terrain.SwayClock`), never the raw game time, which a lagging server pulls back;
+phases are whole turns in 2048 s and 4096 blocks, so no wrap shows (SPEC 15, "Smooth").
 
 **Falling leaves** (`terrain.client.FallingLeaves`, `FallingLeafParticle`): Awaken's own particle, never vanilla's.
 - *Spawning*: each tick 12 random spots (normal) 6-32 blocks from the camera, 70% within ±70° of where it looks; the
@@ -100,8 +102,8 @@ strength) × (1 − 0.6 canopy). Both ease in and out and stop when silent. Sett
 
 **Commands** (client): `/awaken terrain leaves status|amount <off|low|normal|high>|biome <id|clear>` (the biome line
 treats every spot as that biome: a showcase aid), `/awaken terrain wind status|force <steady> <gust>|real`,
-`/awaken terrain waving on|off|status|debug <0..3>|plants <air> <water> <sheen> <push>` (leaves and plants
-together), `/awaken terrain wind front across|ahead` (one showcase front, until `wind real`).
+`/awaken terrain waving on|off|status|debug <0..3>|plants <air> <water> <sheen> <push>|probe frames <n>|probe seconds <s>|probe turn` (leaves and plants
+together; the probe logs the shader's offsets frame by frame), `/awaken terrain wind front across|ahead` (one showcase front, until `wind real`).
 
 **Measured** (2026-10-24, M4, OpenGL, framebuffer 2880×1658, `PACK=perf,world TECTONIC=awakened`, the heart of the
 nearest dark forest by `/awaken terrain visit minecraft:dark_forest`, seed 777; the Mac carried other builders' work,
