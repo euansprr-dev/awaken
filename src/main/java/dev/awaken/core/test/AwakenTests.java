@@ -330,6 +330,7 @@ public final class AwakenTests {
     public static void init(IEventBus modBus) {
         RegistryDump.register();
         WorldgenTests.register();
+        InputHoldTests.register();
         FUNCTIONS.register(modBus);
         modBus.addListener(AwakenTests::onRegisterTests);
         NeoForge.EVENT_BUS.addListener(AwakenTests::onDespawnCheck);

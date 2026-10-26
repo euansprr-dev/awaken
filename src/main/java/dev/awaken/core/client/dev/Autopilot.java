@@ -90,6 +90,7 @@ public final class Autopilot {
     private static String shotPending;
     private static float turnStep;
     private static int turnTicks;
+    private static int walkTicks;
     // perf: frame-to-frame times of the scene being measured, preallocated so measuring costs no allocation per frame
     private static final long[] FRAMES = new long[1 << 15];
     private static int frameCount;
@@ -265,6 +266,11 @@ public final class Autopilot {
         }
         // the window lost focus (the owner is using the Mac): never photograph the pause menu
         if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.PauseScreen && mc.level != null) mc.gui.setScreen(null);
+        // walk: forward held down for a while (proves the player can move, e.g. after a scene let go)
+        if (walkTicks > 0) {
+            mc.options.keyUp.setDown(--walkTicks > 0);
+            if (walkTicks == 0 && mc.player != null) Awaken.LOG.info("[autopilot] walked to {}", mc.player.blockPosition().toShortString());
+        }
         if (turnTicks > 0 && mc.player != null) {
             turnTicks--;
             mc.player.setYRot(mc.player.getYRot() + turnStep);
@@ -374,6 +380,11 @@ public final class Autopilot {
             case "compat" -> {
                 Awaken.LOG.info("[autopilot] compat {}: {}", arg.trim(), dev.awaken.compat.client.CompatClient.autopilot(arg));
                 waitTicks = 10;
+            }
+            case "walk" -> { // walk <ticks>: hold forward that long, logging where you started and where you got to
+                walkTicks = Integer.parseInt(arg.trim());
+                if (mc.player != null) Awaken.LOG.info("[autopilot] walk from {}", mc.player.blockPosition().toShortString());
+                mc.options.keyUp.setDown(true);
             }
             case "use" -> { // the use key once (right click): places the held block where the crosshair rests
                 KeyMapping.click(mc.options.keyUse.getKey());

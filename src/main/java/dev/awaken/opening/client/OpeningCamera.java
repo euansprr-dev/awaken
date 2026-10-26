@@ -79,8 +79,10 @@ public final class OpeningCamera {
     private static @Nullable Shot shot;
     private static int age;
     private static @Nullable CameraType before;
-    private static @Nullable ClientInput heldInput;
-    private static @Nullable LocalPlayer heldPlayer;
+    /** The lock's owner while a shot holds the player (the shared input lock: core.client.InputLock). */
+    private static final Object HOLD = "opening camera";
+    /** A shot that never says how long it is still gives the controls back after this long. */
+    static final int HOLD_MAX = 20 * 120;
     private static final double[] P = new double[7];
     private static float fovScale = 1F;
 
@@ -124,16 +126,13 @@ public final class OpeningCamera {
     }
 
     private static void hold(LocalPlayer p) {
-        if (heldInput != null) return;
-        heldInput = p.input;
-        heldPlayer = p;
-        p.input = new ClientInput();
+        Shot s = shot;
+        int len = s == null || s.length() < 0 ? HOLD_MAX : s.length() - age + 40;
+        dev.awaken.core.client.InputLock.hold(HOLD, len);
     }
 
     private static void release() {
-        if (heldInput != null && heldPlayer != null && heldPlayer.input != heldInput) heldPlayer.input = heldInput;
-        heldInput = null;
-        heldPlayer = null;
+        dev.awaken.core.client.InputLock.release(HOLD);
     }
 
     /** The one way back to the player's own eyes. */
@@ -191,15 +190,13 @@ public final class OpeningCamera {
                 finish("taken");
                 return;
             }
-            if (heldPlayer != p) {
-                // a respawn or clone gave us a new player object: hold its input too
-                release();
-                hold(p);
-            }
+            // a respawn or clone: the shared lock takes the new player object over itself
             if (mc.isPaused()) return;
             // F5 mid-shot would orbit the camera entity
             if (!mc.options.getCameraType().isFirstPerson()) mc.options.setCameraType(CameraType.FIRST_PERSON);
             age++;
+            // a shot that knows its length keeps its hold to its end (+2 s); one that doesn't (-1) lets go after HOLD_MAX
+            if (s.length() >= 0) hold(p);
             jumpHeld = s.skippable() && mc.options.keyJump.isDown() ? jumpHeld + 1 : 0;
             if (jumpHeld >= SKIP_HOLD) {
                 jumpHeld = 0;
