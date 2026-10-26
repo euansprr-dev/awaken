@@ -295,14 +295,14 @@ final class RoadPaint implements SettlementPaint.Layout {
                     : rut ? (roll < 55 ? PATH : roll < 85 ? PACKED_MUD : MUD) : (roll < 40 ? PACKED_MUD : roll < 70 ? MUD : roll < 90 ? PATH : MOSSY_COBBLE);
             case VillageStyles.FROST -> crown ? (roll < 45 ? COARSE_DIRT : roll < 80 ? GRAVEL : PODZOL)
                     : rut ? (roll < 70 ? PATH : GRAVEL) : (roll < 50 ? GRAVEL : roll < 80 ? COARSE_DIRT : PATH);
-            case VillageStyles.HIGHLAND -> crown ? (roll < 40 ? GRASS : roll < 75 ? GRAVEL : COARSE_DIRT)
-                    : rut ? (roll < 55 ? GRAVEL : roll < 85 ? PATH : ANDESITE) : (roll < 35 ? COBBLE : roll < 70 ? GRAVEL : roll < 85 ? ANDESITE : STONE);
+            case VillageStyles.HIGHLAND -> crown ? (roll < 45 ? GRASS : roll < 80 ? GRAVEL : COARSE_DIRT)
+                    : rut ? (roll < 70 ? GRAVEL : roll < 92 ? PATH : ANDESITE) : (roll < 55 ? GRAVEL : roll < 75 ? COBBLE : roll < 90 ? ANDESITE : STONE);
             case VillageStyles.ELDER -> crown ? (roll < 45 ? PODZOL : roll < 80 ? GRASS : COARSE_DIRT)
                     : rut ? (roll < 75 ? PATH : COARSE_DIRT) : (roll < 40 ? PODZOL : roll < 75 ? COARSE_DIRT : PATH);
             case VillageStyles.COAST -> crown ? (roll < 45 ? GRASS : roll < 75 ? SAND : PATH)
                     : rut ? (roll < 65 ? PATH : roll < 90 ? GRAVEL : SAND) : (roll < 45 ? GRAVEL : roll < 80 ? SAND : PATH);
-            default -> crown ? (roll < 65 ? GRASS : roll < 90 ? PATH : COARSE_DIRT)
-                    : rut ? (roll < 82 ? PATH : roll < 94 ? COARSE_DIRT : GRAVEL) : (roll < 40 ? COARSE_DIRT : roll < 70 ? PATH : roll < 85 ? GRAVEL : GRASS);
+            default -> crown ? (roll < 68 ? GRASS : roll < 92 ? PATH : COARSE_DIRT)
+                    : rut ? (roll < 86 ? PATH : roll < 96 ? COARSE_DIRT : GRAVEL) : (roll < 55 ? PATH : roll < 75 ? GRASS : roll < 92 ? COARSE_DIRT : GRAVEL);
         };
     }
 
@@ -314,7 +314,7 @@ final class RoadPaint implements SettlementPaint.Layout {
             case VillageStyles.ELDER -> roll < 40 ? PODZOL : GRASS;
             case VillageStyles.HIGHLAND -> roll < 25 ? GRAVEL : roll < 40 ? COARSE_DIRT : GRASS;
             case VillageStyles.SAVANNA -> roll < 35 ? COARSE_DIRT : GRASS;
-            default -> roll < 22 ? COARSE_DIRT : roll < 30 ? PATH : GRASS;
+            default -> roll < 10 ? COARSE_DIRT : roll < 16 ? PATH : GRASS;
         };
     }
 

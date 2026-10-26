@@ -186,8 +186,10 @@ final class VillageCommands {
             case "nearest_wayhouse" -> VillagePlan.Kind.WAYHOUSE;
             default -> null;
         };
-        List<SettlementGrid.Anchor> near = SettlementGrid.near(seed, p.getBlockX(), p.getBlockZ(), want == VillagePlan.Kind.TOWN || want == VillagePlan.Kind.MINING
-                ? 3200 : 4000, centre);
+        List<SettlementGrid.Anchor> near = new java.util.ArrayList<>(SettlementGrid.near(seed, p.getBlockX(), p.getBlockZ(),
+                want == VillagePlan.Kind.TOWN || want == VillagePlan.Kind.MINING ? 3200 : 4000, centre));
+        // the nearest first: each one asked may have to be planned
+        near.sort(java.util.Comparator.comparingDouble(a -> Math.hypot(a.x() - p.getX(), a.z() - p.getZ())));
         for (SettlementGrid.Anchor a : near) {
             if (!key.equals("nearest") && !key.equals(a.key()) && want == null) continue;
             // the kind a plan takes may differ from its anchor's (a village with no room is a hamlet; a mining town with no
@@ -309,6 +311,11 @@ final class VillageCommands {
             }
             case "gate", "gate_out", "market", "wall", "pass", "head", "shaft", "level1", "winze", "face", "cavern", "stable", "marker" -> {
                 return dev.awaken.village.road.RoadCommands.frame(p, name);
+            }
+            case "scribe", "assay" -> {
+                // (SPEC §28.9) in a town's packed streets the nearest street point may be behind the shop: frame its door
+                if (p.kind == VillagePlan.Kind.TOWN || p.kind == VillagePlan.Kind.MINING) return dev.awaken.village.road.RoadCommands.frame(p, name);
+                return frameBuilding(p, name);
             }
             default -> {
                 return frameBuilding(p, name);

@@ -272,12 +272,24 @@ public final class RoadCommands {
                 return new double[]{f[0] + 0.5, m.level2() + 2.62, f[1] + 0.5, m.cavernX() + 0.5, m.cavernY(), m.cavernZ() + 0.5};
             }
             case "stable" -> {
+                // from across the crossroads, raised: the stable, its paddock and the inn beside it
                 for (VillagePlan.Building b : p.buildings) {
                     if (!b.use().equals("barn")) continue;
                     CityPlan.Plot q = p.plots.get(b.plot());
                     double mx = (q.x0() + q.x1()) / 2.0, mz = (q.z0() + q.z1()) / 2.0;
-                    double a = Math.atan2(mz, mx);
-                    return new double[]{Math.cos(a) * 3 + 0.5, 3.2, Math.sin(a) * 3 + 0.5, mx + 0.5, q.lift() + 3, mz + 0.5};
+                    double a = Math.atan2(-mz, -mx) + 0.35;
+                    return new double[]{Math.cos(a) * 9 + 0.5, 7.5, Math.sin(a) * 9 + 0.5, mx + 0.5, q.lift() + 2, mz + 0.5};
+                }
+                return null;
+            }
+            case "scribe", "assay" -> {
+                // in the street before the shop's door, a little to one side
+                for (VillagePlan.Building b : p.buildings) {
+                    if (!b.use().equals(name)) continue;
+                    CityPlan.Plot q = p.plots.get(b.plot());
+                    int fx = b.outX() - b.doorX(), fz = b.outZ() - b.doorZ();
+                    return new double[]{b.outX() + fx * 6 - fz * 2.5 + 0.5, q.lift() + 2.8, b.outZ() + fz * 6 + fx * 2.5 + 0.5,
+                            b.doorX() + 0.5, q.lift() + 2.4, b.doorZ() + 0.5};
                 }
                 return null;
             }

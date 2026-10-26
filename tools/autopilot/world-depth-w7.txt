@@ -52,14 +52,16 @@ wait 260
 cmd awaken village start
 wait 100
 shot w7_05_a_hamlet_you_didnt_know
+# a slow runner's server falls behind starting a settlement and laying what's round it: let it catch up
+wait 600
 cmd gamemode spectator
 # ---- a wayhouse and its waymarker at dusk ----
 # (the server plans what a framing needs on its own thread while the client waits on: there first, then the roads round it)
 cmd time set 12650
 cmd awaken village view nearest_wayhouse stable
-wait 600
+wait 1200
 cmd awaken village view nearest_wayhouse marker
-wait 900
+wait 1200
 cmd awaken village start
 wait 100
 shot w7_06_the_wayhouse_and_its_waymarker_at_dusk
@@ -85,7 +87,7 @@ shot w7_09_the_town_from_the_pass
 cmd awaken village view first_town gate
 wait 300
 cmd awaken village start
-wait 120
+wait 400
 shot w7_10_the_town_gate
 cmd awaken village view first_town market
 wait 120
@@ -99,16 +101,16 @@ shot w7_13_on_the_wall
 # ---- a mining town at a mountain's foot over its mine ----
 cmd time set 5200
 cmd awaken village view nearest_mine hill
-wait 1200
+wait 2400
 cmd awaken village start
-wait 100
+wait 400
 shot w7_14_the_mining_town_at_the_mountains_foot
 cmd awaken village view nearest_mine head
 wait 100
 shot w7_15_the_shaft_head
 # ---- the Deep Mine: the bell, the families at the mouth, down, the nest, the roof, up ----
 cmd awaken village trouble start deep_mine
-wait 120
+wait 300
 cmd awaken village trouble info
 cmd awaken village view nearest_mine head
 wait 100
@@ -144,3 +146,4 @@ cmd atlas open 20 60 0.35
 wait 120
 shot w7_22_the_atlas_roads_walked
 screen close
+quit
