@@ -163,7 +163,7 @@ final class RunnerServer {
             // a real drop under the hold (the column in front of the face)
             if (e != null && !RunnerRules.lowerWorth(p.level(), ctx, M, e)) return false;
         } else if (msg.flag() == BodyPayloads.HANG_EAVE) {
-            // from a climb line's top up to the lip over it (SPEC §17.23): only from a grip held or just let go
+            // from a climb line's top up to the lip over it (SPEC §17.25): only from a grip held or just let go
             if (!m.gripping && now - m.gripEndedAt > 6) return false;
             e = GripRules.topLip(p.level(), ctx, M, s[0], s[1], s[2], msg.axis(), msg.sign(), RunnerRules.SERVER_TOL);
         } else {
@@ -248,6 +248,20 @@ final class RunnerServer {
             BodyServer.didClip(p, m, Move.LEDGE_JUMP, msg.yaw(), BodyContent.CLIMB, 0.8F, now, BodyClips.MANTLE);
             return true;
         }
+        if (way == BodyPayloads.JUMP_OVER) {
+            // over a fence's or gate's rail from a hang on it (SPEC §17.27): the same crossing from the hold, landing where
+            // the client's does
+            RunnerRules.Edge here = RunnerRules.edgeNear(p.level(), ctx, M, msg.sx(), msg.sy(), msg.sz(), m.hangAxis, m.hangSign, m.hangTop, 0.3,
+                    0.1 + RunnerRules.SERVER_TOL);
+            if (here == null || RunnerRules.climbOut(p.level(), ctx, M, here) != null) return false;
+            VaultRules.Vault v = VaultRules.over(p.level(), ctx, here.hx(), here.hy(), here.hz(), here.fx(), here.fz(), here.top());
+            if (v == null) return false;
+            double dx = v.endX() - msg.tx(), dz = v.endZ() - msg.tz();
+            if (dx * dx + dz * dz > VaultRules.LAND_TOL * VaultRules.LAND_TOL || Math.abs(v.floor() - msg.ty()) > 0.3) return false;
+            endHang(m, now);
+            BodyServer.vaultFrom(p, m, v, msg.yaw(), now);
+            return true;
+        }
         // up, sideways or down: the target edge is there (found again within a block) and within the jump's (or the drop's) reach
         double topLo = way == BodyPayloads.JUMP_UP ? m.hangTop + 0.4 : way == BodyPayloads.JUMP_DOWN ? m.hangTop - RunnerRules.DROP_MAX - 0.25 : m.hangTop - 1.25;
         double topHi = way == BodyPayloads.JUMP_UP ? m.hangTop + RunnerRules.ledgeUp(Body.runnerRank(p)) + 0.25
@@ -283,7 +297,7 @@ final class RunnerServer {
         });
     }
 
-    // ---- the grip on a climb line (SPEC §17.23) ------------------------------------------------------------------------
+    // ---- the grip on a climb line (SPEC §17.25) ------------------------------------------------------------------------
 
     /** The clip others see for a grip flag. */
     static String gripClip(int flag) {

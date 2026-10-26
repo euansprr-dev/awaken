@@ -23,7 +23,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The grip on a climb line, predicted here (SPEC §17.23; Euan: "it just looks like the boring vanilla ladder ... you
+ * The grip on a climb line, predicted here (SPEC §17.25; Euan: "it just looks like the boring vanilla ladder ... you
  * just float up"). A Runner state ({@link RunnerMoves.State#GRIP}): the body holds a drainpipe, trellis, rope or ladder
  * from in front of it and moves only as the grip says. No keys holds still; forward climbs hand over hand (the free-run's
  * pace with it held); Shift held slides down, faster and faster, and letting go brakes; Jump with back kicks off the

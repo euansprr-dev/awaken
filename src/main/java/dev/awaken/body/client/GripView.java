@@ -7,7 +7,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
 
 /**
- * The grip in first person (SPEC §17.23, §24): both hands closed round the line in the world, where the world has it
+ * The grip in first person (SPEC §17.25, §24): both hands closed round the line in the world, where the world has it
  * (P1.1): each hand's heel at its own side of the pipe, the fingers across it and the thumb over its near side, drawn
  * at the size that makes the hand span the pipe on screen. Climbing, a hand stays where it gripped while the body rises
  * past it, then opens, lets go and reaches up past the other for a new hold (hand over hand); held still, both stay put

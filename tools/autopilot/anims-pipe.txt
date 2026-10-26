@@ -1,4 +1,4 @@
-# Hands P1 (SPEC §17.23, §24): the grip on a drainpipe, in first person and in the shoulder view (run with PACK=feel).
+# Hands P1 (SPEC §17.25, §24): the grip on a drainpipe, in first person and in the shoulder view (run with PACK=feel).
 # A stone-brick wall with a drainpipe up its face. Walk into it (grip, climb hand over hand), stop and look down (the
 # feet on the pipe), Shift to slide (hands loose, grit), let go (brake), Jump + back (kick off). Then the same in the
 # shoulder view. Log: "grip ...". Shots: anims_p1_*. The HUD stays on: vanilla draws no hands at all with it hidden.

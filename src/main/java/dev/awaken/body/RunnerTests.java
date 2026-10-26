@@ -41,6 +41,7 @@ final class RunnerTests {
         AwakenTests.registerIsolated("runner_pipe_cornice", 120, RunnerTests::pipeCornice);
         AwakenTests.registerIsolated("runner_ledge_drop", 120, RunnerTests::ledgeDrop);
         AwakenTests.registerIsolated("runner_pipe_tops", 120, RunnerTests::pipeTops);
+        AwakenTests.registerIsolated("runner_rail_hang", 120, RunnerTests::railHang);
         // runner_hang_real_tick (hangRealTick below) is kept for W2 but not registered: its harness doesn't yet get its own
         // teleport accepted, so every move after it is ignored (see docs/carillon/spikes/S3-runner.md, Open issue)
     }
@@ -120,10 +121,10 @@ final class RunnerTests {
             RunnerRules.Edge open = RunnerRules.edgeNear(level, ctx, M, c.x, c.y, c.z, 2, 1, o.getY() + 3, 0.3, 0.2);
             double[] stand = open == null ? null : RunnerRules.climbOut(level, ctx, M, open);
             h.assertTrue(stand != null && Math.abs(stand[1] - (o.getY() + 3)) < 1e-6, "trim 1b is open above: climb out onto it");
-            // a fence-topped wall and a plain face are never edges
+            // a fence on the floor you stand on is no hang (it's crossed, SPEC §17.27), and a plain face has no edge
             Vec3 fw = at(o, 33.95, 0.5, 10);
             h.assertTrue(RunnerRules.findEdge(level, ctx, M, fw.x, fw.y, fw.z, 0, -1, RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2) == null,
-                    "a fence is never grabbed");
+                    "a low fence beside you is no hang");
             Vec3 face = at(o, -11.68, 2, 14);
             h.assertTrue(RunnerRules.findEdge(level, ctx, M, face.x, face.y, face.z, 0, -1, RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2) == null,
                     "a plain wall face has no edge");
@@ -550,7 +551,7 @@ final class RunnerTests {
         return k;
     }
 
-    // ---- the grip on a climb line (SPEC §17.23) -----------------------------------------------------------------------
+    // ---- the grip on a climb line (SPEC §17.25) -----------------------------------------------------------------------
 
     /**
      * A drainpipe on a wall and a free hoist rope: where the body holds each and which way it faces; the server takes a
@@ -634,7 +635,7 @@ final class RunnerTests {
     }
 
     /**
-     * The top of a pipe always leads somewhere (Euan, 2026-10-25: "the last block doesn't let me through"; SPEC §17.23):
+     * The top of a pipe always leads somewhere (Euan, 2026-10-25: "the last block doesn't let me through"; SPEC §17.25):
      * a drainpipe up a wall under a one-block cornice, a roof behind it. At the pipe's top, the head under the cornice,
      * the lip over it is a hang from its outer face (out, then up), the server takes it only from a grip, and the hang
      * climbs out onto the roof. A ceiling with no lip in reach, or open air, is no hang.
@@ -701,7 +702,71 @@ final class RunnerTests {
     }
 
     /**
-     * Shift in a hang drops to the ledge below (Euan, 2026-10-25; SPEC §17.24): hanging from a wall's top with a sill
+     * Rails at a roof's edge (SPEC §17.27): a fence or wall on a wall's top row stands back from the face under it, so a
+     * hang on its top holds from that face (the hands reaching in). From a fence's rail the climb out goes over it, down
+     * onto the roof beyond, and the server takes it with the crawl box; a wall's coping is stood on, the body over its
+     * middle.
+     */
+    static void railHang(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = origin(h);
+        BlockState stone = Blocks.STONE.defaultBlockState();
+        // a 3-high wall at z 1 under a roof (top y 3) running back to z 4; a fence on its top row at x -1..2, a wall at 4..7
+        for (int x = -1; x <= 7; x++) {
+            for (int z = -3; z <= 4; z++) level.setBlockAndUpdate(o.offset(x, -1, z), stone);
+            for (int y = 0; y <= 2; y++) level.setBlockAndUpdate(o.offset(x, y, 1), stone);
+            for (int z = 2; z <= 4; z++) level.setBlockAndUpdate(o.offset(x, 2, z), stone);
+        }
+        for (int x = -1; x <= 2; x++) level.setBlockAndUpdate(o.offset(x, 3, 1), Blocks.OAK_FENCE.defaultBlockState());
+        for (int x = 4; x <= 7; x++) level.setBlockAndUpdate(o.offset(x, 3, 1), Blocks.COBBLESTONE_WALL.defaultBlockState());
+        for (int x = -1; x <= 7; x++) {
+            BlockPos a = o.offset(x, 3, 1);
+            level.setBlock(a, net.minecraft.world.level.block.Block.updateFromNeighbourShapes(level.getBlockState(a), level, a), net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+        }
+        RunnerServer.fromHistory = true;
+        RunnerServer.latencyTicks = 0;
+        h.startSequence().thenIdle(2).thenExecute(() -> {
+            var m0 = new BlockPos.MutableBlockPos();
+            CollisionContext ctx = CollisionContext.empty();
+            double top = o.getY() + 4.5, hold = o.getZ() + 1 - BodyRules.HALF_WIDTH - RunnerRules.HANG_GAP;
+            RunnerRules.Edge fence = RunnerRules.findEdge(level, ctx, m0, o.getX() + 0.5, top - RunnerRules.HANG_DROP, hold, 2, 1,
+                    RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2);
+            h.assertTrue(fence != null && Math.abs(fence.top() - top) < 1e-6 && Math.abs(fence.hz() - hold) < 0.03,
+                    "a hang on the fence, held from the wall's face under it: " + fence);
+            h.assertTrue(RunnerRules.climbOut(level, ctx, m0, fence) == null, "a fence's rail is no place to stand");
+            VaultRules.Vault over = VaultRules.over(level, ctx, fence.hx(), fence.hy(), fence.hz(), fence.fx(), fence.fz(), fence.top());
+            h.assertTrue(over != null && over.kind() == VaultRules.OVER && Math.abs(over.floor() - (o.getY() + 3)) < 1e-6
+                    && over.endZ() > o.getZ() + 1.625 + 0.3, "over the rail, down onto the roof beyond: " + over);
+            String fault = BodyTests.pathFault(h, over);
+            h.assertTrue(fault == null, "climbing over: " + fault);
+            RunnerRules.Edge wall = RunnerRules.findEdge(level, ctx, m0, o.getX() + 5.5, top - RunnerRules.HANG_DROP, hold, 2, 1,
+                    RunnerRules.HANG_REACH, RunnerRules.HANG_LO, RunnerRules.HANG_HI, 0, 0.2);
+            double[] stand = wall == null ? null : RunnerRules.climbOut(level, ctx, m0, wall);
+            h.assertTrue(stand != null && Math.abs(stand[1] - top) < 1e-6 && Math.abs(stand[2] - (o.getZ() + 1.5)) < 0.02,
+                    "a wall's coping: climbed out onto, over its middle: " + (stand == null ? null : java.util.Arrays.toString(stand)));
+
+            long now = level.getServer().overworld().getGameTime();
+            ServerPlayer a = BodyTests.player(h, null);
+            Vec3 s = new Vec3(fence.hx(), fence.hy(), fence.hz());
+            a.snapTo(s.x, s.y, s.z, 0F, 0F);
+            a.setOnGround(false);
+            BodyMotion m = BodyServer.motion(a);
+            h.assertTrue(RunnerServer.startHang(a, m, run(Move.LEDGE_HANG, BodyPayloads.HANG_GRAB, 0F, s, fence.hx(), fence.hy(), fence.hz(), 2, 1), now)
+                    && m.hanging, "the server holds the hang on the fence");
+            h.assertFalse(RunnerServer.ledgeJump(a, m, run(Move.LEDGE_JUMP, BodyPayloads.JUMP_OVER, 0F, s, over.endX(), over.floor() + 2, over.endZ(), 2, 1), now + 5),
+                    "a climb over to somewhere else is refused");
+            RunnerServer.startHang(a, m, run(Move.LEDGE_HANG, BodyPayloads.HANG_GRAB, 0F, s, fence.hx(), fence.hy(), fence.hz(), 2, 1), now + 6);
+            h.assertTrue(RunnerServer.ledgeJump(a, m, run(Move.LEDGE_JUMP, BodyPayloads.JUMP_OVER, 0F, s, over.endX(), over.floor(), over.endZ(), 2, 1), now + 10)
+                    && !m.hanging && m.vaultUntil != 0 && a.getForcedPose() == net.minecraft.world.entity.Pose.SWIMMING,
+                    "and takes the climb over the rail, with the crawl box");
+            for (int x = -1; x <= 7; x++) for (int y = -1; y <= 3; y++) for (int z = -3; z <= 4; z++)
+                level.setBlockAndUpdate(o.offset(x, y, z), Blocks.AIR.defaultBlockState());
+            BodyTests.done(h, a);
+        });
+    }
+
+    /**
+     * Shift in a hang drops to the ledge below (Euan, 2026-10-25; SPEC §17.26): hanging from a wall's top with a sill
      * sticking out a block lower down, the drop catches the sill (out from the wall first, then down), and the server
      * takes it; with no sill, there's nothing to catch (Shift lets go).
      */

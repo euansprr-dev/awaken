@@ -80,7 +80,7 @@ HANG_FIST = fist(0.26, -0.02, -0.82)
 
 
 # ---------------------------------------------------------------------------------------------------------------------
-# Leaving a climb line (SPEC §17.23). On the line itself the hands are drawn on it in the world (body.client.GripView),
+# Leaving a climb line (SPEC §17.25). On the line itself the hands are drawn on it in the world (body.client.GripView),
 # and for the first ticks after letting go they drop away there; these clips take the hands over from below.
 
 # Kicked off the wall: the hands come up from below thrown out for balance as you fly back, then settle.
@@ -227,6 +227,21 @@ clip("fp_ledge_back", 12, fists=True,
 # The stair slide (SPEC §17.22): the trailing hand knocks the edge of each step it passes (offsets on the slide's stance).
 clip("fp_stair_bump", 4, off=[(0, REST, "linear"), (1, hand(0, 0.04, 0, 5), "easeoutcubic"), (4, REST, "easeinoutsine")],
      both=True, events=[(1, "step")], note="the trailing hand bumps a step's edge")
+
+
+# Fences, gates and walls (SPEC §17.27). The planted hands are drawn on the rail in the world (body.client.BodyFp, the
+# crossing's world pose); these are the hand that doesn't plant. Lengths are the nominal crossing's (a running vault, 13
+# ticks: the hand meets the rail at 3, over the top to 7); the game plays them at the crossing's own pace.
+# A running vault: the free (main) hand swings up and forward with the take-off, out wide to its side for balance as the
+# legs go over, and comes back down into the run.
+clip("fp_vault_run", 13, fists=True,
+     main=[(0, REST_FIST, "linear"), (3, fist(0.46, 0.04, -0.92), "easeoutcubic"), (6, fist(0.82, 0.06, -0.8), "easeinoutsine"),
+           (9, fist(0.74, -0.24, -0.92), "easeinoutsine"), (13, REST_FIST, "easeinoutsine")],
+     note="the free hand up with the take-off, out wide for balance over the rail")
+# A held item over any crossing: carried clear of the rail, dipped and turned out, then back.
+VI = hand(0.08, -0.1, 0.05, -16, 6, -10)
+clip("fp_vault_item", 13, main=[(0, REST, "linear"), (3, VI, "easeoutcubic"), (8, hand(0.1, -0.06, 0.04, -10, 8, -14), "easeinoutsine"),
+                                (13, REST, "easeinoutsine")], note="a held item carried clear of the rail")
 
 
 # ---------------------------------------------------------------------------------------------------------------------

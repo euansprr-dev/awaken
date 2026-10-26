@@ -53,6 +53,27 @@ final class BodyCamera {
             if (u < 0.5F) pitch -= 9F * Mth.sin(u / 0.5F * Mth.HALF_PI);
             else pitch += -9F * Mth.cos(Math.min(1, (u - 0.5F) / 0.35F) * Mth.HALF_PI) + 8F * Mth.sin(Math.min(1, (u - 0.5F) / 1.1F) * Mth.PI);
         }
+        // a crossing (SPEC §17.27): the view dips to the rail as the hand meets it, comes up over the top (rolling a
+        // little toward the legs' side over a running vault), and takes the landing with a small dip
+        dev.awaken.body.VaultRules.Vault v = ClientMoves.vault;
+        float vt = t - ClientMoves.vaultStart;
+        if (v != null && ClientMoves.vaultStart > -50 && vt >= 0 && vt < v.ticks() + 6) {
+            float plant = Math.max(1, v.rise() - 1), down = v.rise() + v.over(), end = v.ticks();
+            float comfort = dev.awaken.body.client.feel.FeelConfig.reduced() ? 0.5F : 1F;
+            if (v.kind() == dev.awaken.body.VaultRules.ONTO) {
+                float u = vt / end; // as the mantle's: eyes up to the lip, then over it
+                if (u < 0.5F) pitch -= 7F * Mth.sin(u / 0.5F * Mth.HALF_PI) * comfort;
+                else pitch += (-7F * Mth.cos(Math.min(1, (u - 0.5F) / 0.35F) * Mth.HALF_PI) + 6F * Mth.sin(Math.min(1, (u - 0.5F) / 1.1F) * Mth.PI)) * comfort;
+            } else {
+                boolean high = v.kind() == dev.awaken.body.VaultRules.HIGH || v.kind() == dev.awaken.body.VaultRules.OVER;
+                pitch += (high ? -6F : 6F) * pulse(vt, plant - 3, plant, down) * comfort;  // to the rail (up at a high one)
+                pitch += 4F * pulse(vt, end - 1, end, end + 5) * comfort;                     // the landing
+                if (v.kind() == dev.awaken.body.VaultRules.VAULT) {
+                    float sideR = mc.player.getMainArm() == net.minecraft.world.entity.HumanoidArm.RIGHT ? 1 : -1;
+                    roll += 4F * sideR * pulse(vt, plant, down - 1, end) * comfort;
+                }
+            }
+        }
         // slide: low, tilted, a faint judder from the ground
         float s = hold(t, ClientMoves.slideStart, ClientMoves.slideEnd, ClientMoves.sliding, 2.5F, 4F);
         if (s > 0) {
@@ -66,7 +87,7 @@ final class BodyCamera {
         // the slide-cancel: a kick up as you come out
         float j = t - ClientMoves.slideJumpAt;
         if (j >= 0 && j < 7) pitch -= 5F * Mth.sin(j / 7F * Mth.PI);
-        // the grip's slide (SPEC §17.23): a faint judder from the line running through the hands
+        // the grip's slide (SPEC §17.25): a faint judder from the line running through the hands
         if (GripMoves.active() && GripMoves.mode == GripMoves.SLIDE) {
             pitch += 0.4F * Mth.sin(t * 3.3F) * (float) (-GripMoves.v / dev.awaken.body.GripRules.SLIDE_MAX);
         }
@@ -87,6 +108,13 @@ final class BodyCamera {
         }
         if (pitch != 0) e.setPitch(e.getPitch() + pitch);
         if (roll != 0) e.setRoll(e.getRoll() + roll);
+    }
+
+    /** A swell: 0 before a, up to 1 at b, back to 0 at c (smoothstepped). */
+    private static float pulse(float t, float a, float b, float c) {
+        if (t <= a || t >= c) return 0;
+        float u = t < b ? (t - a) / Math.max(1e-3F, b - a) : 1 - (t - b) / Math.max(1e-3F, c - b);
+        return u * u * (3 - 2 * u);
     }
 
     static void onFov(ComputeFovModifierEvent e) {

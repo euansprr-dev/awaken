@@ -691,7 +691,7 @@ Awakened Body (module `body`, docs/modules/body.md; approved 2026-10-24, widened
   (the slide-cancel); 0.1 exhaustion; cooldown 20 ticks after it ends. A cast mid-slide keeps it; a power's motion ends it
   (snapped onto the slide's way within 60°; a Velocity power's ×1.3).
 - Mantle: jump facing a ledge whose top is 1.1–1.6 above the feet, face within 0.6 (server 1.1), 2 free blocks over it, a clear
-  way up and over; never onto a collision taller than its block (fences, walls, gates); 6 ticks; 0.05 exhaustion; not while
+  way up and over; never onto a collision taller than its block (fences, walls, gates: those are crossings, §17.27); 6 ticks; 0.05 exhaustion; not while
   using an item or a shield. The server finds the ledge again and teleports a claim > 1 block or 0.25 high off back.
 - Momentum hit: a melee hit at attack strength ≥ 0.9 while sprinting or sliding deals ×(1 + m), m = clamp((v − 0.2)/0.25, 0, 1)
   × 0.3 of horizontal speed v (sprint ~+10%, tactical ~+18%, slide +30%), knockback +2m; the swing's own target only.
@@ -1819,7 +1819,7 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   along it, the rhythm counted in face cells so diagonal sides keep it), the towers and gatehouses by `CityTowers`
   (parts paint a margin of 4). Outside: a talus in three steps, buttresses 3 wide every 8 with set-offs at 13 and 33,
   courses at rows 15 and 27, two-block loops and putlog holes, spouts under a machicolated parapet two deep on corbels
-  (merlons 3 high, a breastwork 1 high, crenel sills are walls: a "no"). Sides 1, 3, 10, 11, 19, 21 roof the walk over a
+  (merlons 3 high, a breastwork 1 high, crenel sills are walls: a "no"; since §17.27 climbed onto, never crossed). Sides 1, 3, 10, 11, 19, 21 roof the walk over a
   timber hoarding. Inside: an arcade of bays 7 apart (deep 3, open to row 5) holding the wall's life, a course at row 9,
   recessed panels to row 31 with ivy, a drainpipe on every third pier and near each end of every stretch (the climb lines
   to the walk), banners, flagpoles at row 13, awnings at row 3 over stalls and workshops, a corbelled parapet band over
@@ -2083,7 +2083,8 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   `#awaken:runner_lines` (rope and Tether: laundry lines, bunting, crane ropes),
   `#awaken:runner_soft` (soft landings and bounces: awnings, hay carts),
   `#awaken:runner_swings` (swing points: bracket signs, flagpoles).
-  The "no" language (fences, spikes) is in none of them.
+  The "no" language (fences, spikes) is in none of them. (Since §17.27, Euan 2026-10-26, fences and walls are crossed
+  everywhere, the city included: still no ledge, line or swing, but a crossing.)
 
 ### 16.10 Budgets
 - Perf profile, RD 16, busiest market at noon: p50 ≤ 10 ms (platform 5.3 measured + city blocks ≤ 2.8 with solid cores
@@ -2819,7 +2820,7 @@ server checks every move exactly as before (a free-run move is the same claim a 
   the body's front: a top 0.6-1.2 over the feet with two blocks of room over it and over the head is **vaulted** (the
   jump); a ledge 1.1-1.6 up is **mantled** (when the mantle is yours: sprint held counts as the jump); a wall taller than
   1.6 is **jumped at** when Wall Stride climbs it or its lip is a hang from the jump's height; with no floor 2 blocks
-  down two ticks ahead (not water) the edge is **leapt from** (the sprint jump). A fence or wall (1.5) is left alone, a
+  down two ticks ahead (not water) the edge is **leapt from** (the sprint jump). A fence or wall (1.5) is crossed (§17.27), a
   step down of one is run down.
 - **In the air**, sprint held counts as jump held: a wall beside you is run along (the wall-run's own rules: 1.5 off
   the ground, under 35°), a wall ahead climbed with Wall Stride; a ledge passed is caught as always.
@@ -2831,7 +2832,7 @@ server checks every move exactly as before (a free-run move is the same claim a 
   roof up to a hang over the jump's top) becomes its target; for 8 ticks the motion turns toward it at most 2.5° a tick,
   14° in all, never faster, and only while it's within 30° of the way you're going.
 - Setting: `freeRun` (feel settings, default on). Dev: `/awaken body try freerun` (forward and sprint held 15 s).
-  Test: `body_free_run` (a block vaulted, a wall jumped at, a fence left, an edge leapt, a step down not; the pull
+  Test: `body_free_run` (a block vaulted, a wall jumped at, a fence not jumped at, an edge leapt, a step down not; the pull
   capped and only toward what's nearly ahead). Tour: `tools/autopilot/ascent-freerun.txt` (PACK=feel): with forward
   and sprint held, nothing else, the body vaulted a low wall, leapt a 3-block gap, jumped at a 2-high wall, caught its
   lip and climbed out (6 ticks after the grab), and leapt from the roof's far edge; then the rope zipped ring to ring
@@ -2962,8 +2963,8 @@ wings opened to where the glide ended, glides of 8 or more; `Quests.advance(play
 ### 17.21 Roofs: climbing out onto a stair or slab eave (Euan's playtest, 2026-10-25)
 Hanging from a roof's eave, the climb out (the ledge jump's, and the free-run's from the hang) lands on whatever is
 walkable just past the face: the lip's own top or a step up to 0.6 over it (`RunnerRules.CLIMB_STEP`, vanilla's step),
-so a stair eave puts you on its high back half and you walk on up the slope. Never onto a fence or wall top, never
-down a drop behind a thin lip. The standing body (from that height to 1.8 over it) and the way over the lip must be
+so a stair eave puts you on its high back half and you walk on up the slope; onto a wall's coping over its middle, over a
+fence's rail (§17.27); never down a drop behind a thin lip. The standing body (from that height to 1.8 over it) and the way over the lip must be
 free, and the way up in front of the face from the hold to standing height. The server re-checks with the same
 `climbOut`. Covered by `runner_roof_climb`: a stair eave on a 3-high wall under a stair slope, a slab eave under a
 slab slope, Carillon's overhanging eave stair on a gentle and a steep gable (`CityGrammar.roof`), and a step with a
@@ -3006,7 +3007,7 @@ the slide's own controls (jump out, a power's motion, a push, water) end it as b
 The mantle's lip is the lowest top along the face's edge across the body's width, by the real collision shapes (a
 stair's low half, a slab, any kit block), within 1.1-1.6 over the feet; nothing on that edge more than a step (0.6,
 `BodyRules.MANTLE_STEP`) over it. The feet land a body width past the face on whatever top is there, from the lip's
-height up to a step over it, never lower (no drop behind a thin lip), never a fence or wall top, with 2 blocks of room
+height up to a step over it, never lower (no drop behind a thin lip), never a fence or wall top (a crossing, §17.27), with 2 blocks of room
 over it. So a 1-block wall topped with a stair facing away or sideways is climbed by its low half (1.5) and stood on by
 its high half (2.0): a body 0.6 wide can't stand on a half 0.5 deep. A stair facing you is a 2-block face and an
 upside-down one a 2-block top: not mantled (the wall-run, the hang and the climb-out take those). Client and server run
@@ -3030,7 +3031,7 @@ floor within 0.6 under a point 0.6 ahead (vanilla's edge-sneak stays), not in wa
 - Test: `body_land_slide` (a sprint jump's landing speed slides farther than a run's slide, a walk's doesn't, an edge
   with a drop is no slide, the server takes a sprinted landing and refuses a body that never ran).
 
-### 17.23 The grip on a climb line (Hands P1; Euan, 2026-10-25: "you just float up")
+### 17.25 The grip on a climb line (Hands P1; Euan, 2026-10-25: "you just float up")
 A Runner move (`Move.GRIP`, appended; `GripRules`, client `body.client.GripMoves`) on every `#awaken:runner_climbs`
 block: Carillon's drainpipes, trellises, hoist ropes and hanging ladders, and every ladder. Approved controls (decision
 A of the Hands plan): "Shift takes you down, Jump takes you off".
@@ -3083,7 +3084,7 @@ A of the Hands plan): "Shift takes you down, Jump takes you off".
   face with its corbel table, band and parapet gap: the climb reaches the top, there's a lip, and the hang climbs out on
   top). Tour: `tools/autopilot/anims-pipe.txt` (PACK=feel).
 
-### 17.24 Dropping to the ledge below (Euan, 2026-10-25: "I'm on an edge already holding it, and there's one below")
+### 17.26 Dropping to the ledge below (Euan, 2026-10-25: "I'm on an edge already holding it, and there's one below")
 In a hang, **Shift** lets go and catches the next ledge below when there is one (`RunnerRules.edgeBelow`): the same
 face direction, its top 0.9-3.2 under the held one (the nearest), its face up to 1.4 out from the hanging body (a sill
 or a balcony sticking out) or a little in, and the way to it free. The body goes out first when the lower face sticks
@@ -3095,6 +3096,84 @@ worked down one by one. The server takes the drop as a ledge jump (`JUMP_DOWN`):
 the claimed hold, its top within the drop's band of the held one. Test: `runner_ledge_drop` (a wall's top over a sill
 one out: the drop catches the sill from its own face and the server takes it; no sill, nothing to catch and the server
 refuses).
+
+### 17.27 Fences, gates and walls (Euan, 2026-10-26: "Make every fence and wall of every type mantleable, everywhere, the city included")
+Every fence, fence gate and wall, of every wood, stone, brick and mud, vanilla's and any mod's (any collision taller than
+its block), and a pane or bar row standing on a block, is movement you use: read by its real collision shape
+(`body.VaultRules`, both sides), so a new kind needs nothing. AWAKEN has no fence or wall blocks of its own (the city
+builds with vanilla's). Approved feel: the free-run is as before (§17.14), only faster over these.
+- **A crossing** (`Move.VAULT`, appended; no new key): jump facing one, or the free-run held while running at it (moving
+  within 37° of the look, as §17.14). It is what the legs would run into, above a step, within 0.6 of the body's front
+  walking or 1.3 running (a running vault takes off early in its stride; the server 0.6 more), with its top 1.26-2.6
+  over the feet (vanilla's jump clears 1.25): a top no wider than 0.62 across where your line crosses it (a fence 0.25,
+  a wall 0.375-0.5; a slab-topped wall, 1.0, stays the mantle's ledge, §17.23), standing on something solid from a step's
+  height (never a beam over open space), the whole no deeper than a rail on a block (1.1 past the body's own width),
+  crossed within ~53° of square on (a fence beside you is never one).
+- **What it does**, by shape and by what's beyond it:
+  - a fence or gate 1.26-1.65 up (a rail narrower than 0.3) with floor beyond: running, **vaulted** (the off hand on
+    the rail, the legs swung flat over to the main side; a 1.5 fence: up 4 ticks, over 4, down 5); walking, **hopped**
+    (both hands, the knees tucked over; 15 ticks);
+  - a wall (a coping 0.3 wide or more): walked at, **climbed onto**, the body standing over its middle (a wall-walk);
+    run at, vaulted;
+  - a rail on a block (a garden wall, up to 2.6): **climbed over** in one motion (a foot up the block, the hands catch
+    the rail, press, the legs swing over; 21 ticks running); a wall on a block walked at is climbed onto instead (the
+    block juts out under it where a hanging body would be, so there'd be no hang to climb out of);
+  - beyond, the floor must take the whole standing body, every corner within a step of the landing, from 0.6 higher to
+    2.0 lower than the feet: a rail at a terrace's edge with a sliver of floor behind it, or over a drop, is **climbed
+    onto** and held there, never crossed into the drop.
+- **The path** (`VaultRules.Vault.at`, the same on both sides): rising fast and easing onto the top while the body's front
+  stays 0.04 short of the face, the feet clearing it by 0.06; over it at the run's own speed (0.28-0.42, walking 0.2, a
+  rail on a block 0.24) with a small arc (0.08 running, 0.03 else); down beyond keeping 0.85 of that speed (0.45, or
+  straight down, where only that fits), fast off the top and easing onto the floor. Up and over in the crawl box
+  (`Pose.SWIMMING`, 0.6 high, forced on both sides): the eye rises only ~0.4 over a 1.5 rail, as a vaulter's does, not
+  the 1.6 a standing body needs; down beyond standing again, so vanilla's camera eases the eye up as the feet drop and
+  the view comes down level and lands without a dip. Every quarter tick is clear of blocks for the box it has, and the
+  standing box at the end (nothing pushes the body out where it lands); the server's own move follows the same path and
+  never corrects it (its box stays the crawl's to the end, never bigger than the client's). The last tick sets the
+  feet into the floor (vanilla's move stops them on it). Running, the run goes on at that speed, the sprint kept.
+- **The hold on top**: up onto a top, forward is held back (the keys' push cancelled) until it's let go or jump is
+  pressed, so a parapet climbed at a run never walks you on off its far side; then it's yours. **Balance**: walking
+  the top of a rail narrower than the body (a coping, a fence) along its run (within 45°), the body is drawn back over
+  its middle, at most 0.05 a tick; crouching or turning off it is yours.
+- **Edges** (§17.2's hang): a fence's, gate's or wall's top is a lip like any other. A rail standing back on what's
+  under it (on a block, at a roof's edge: a fence 0.375 in, a wall 0.3125) is held from the face under it, the hands
+  reaching in, up to 0.45 back (`RunnerRules.RAIL_INSET`); a fence on the floor you stand on never is (the hanging feet
+  would be in that floor). From the hang the climb out stands on a wall's coping (over its middle) and goes **over** a
+  fence's or gate's rail (`VaultRules.over`: up from the hold, over, down to the floor beyond, up to 3.5 under the top;
+  18 ticks onto a roof 1.5 below), told to the server as a ledge jump (`JUMP_OVER`) and checked the same way.
+- **Server** (`BodyServer.startVault`): the Runner's Kit, not riding, sleeping, in water, using an item or blocking, no
+  other move running; the same probe from where it has the body, with 0.6 more reach, must end within 1.0 (0.3 high) of
+  the client's, else refused and put back. Then the crawl box and the fall forgotten each tick until the client's end or
+  the path's length plus 4; 0.05 exhaustion, counted (`awaken:body_vault`), a Runner link, Flow +0.05. Others are sent
+  `Seen` 19 + the kind (`VaultRules.VAULT` .. `OVER`). `Body.isMantling` (`MovementHooks.mantling`) is true through it.
+- **The free-run** (§17.14) asks for a crossing before anything else on the ground; a fence or wall is no longer left
+  alone. The accident lanes keep their purpose: a fence beside you is never a wall to run on, a hang or a crossing (the
+  S3 course's fence lane), and a rail at foot height below you is vanilla's step, never a crossing.
+- **Look**: third person (Player Animation Library), `body_vault` (a speed vault), `body_vault_hop`, `body_vault_high`,
+  `body_vault_onto` (a low crouch on the top, arms out, rising), `body_vault_over` (out of the hang), `_bent` twins
+  (tools/art/specs/body_moves.py): the figure lowered so its hips cross at the rail and the planted hand meets it.
+  Without the library: standing (never a crawl), the arms reaching then braced, the figure lowered and rolled onto the
+  planted hand. First person: the planting hands are drawn on the rail in the world (`BodyFp`, world source
+  `body_moves`): up from under the frame onto the rail a hand's width to their side of your line, held there in the
+  world as the body goes over it (the hand slides back under you), peeled off as you come down; the free hand over a
+  running vault thrown up and out for balance (`fp_vault_run`), a held item carried clear (`fp_vault_item`), both at the
+  crossing's own pace; up onto a top, the mantle's `fp_mantle`. The view dips to the rail as the hand meets it (looks up
+  at a high one), rolls 4° toward the legs over a running vault and takes the landing with a 4° dip (`BodyCamera`,
+  halved under reduced motion). Sound: `body.vault` (a palm on the rail, the legs' cloth whipping over it, two feet down
+  running; tools/art/specs/audio_body.py), and as the hand meets the rail its own hit sound (a wooden fence's knock, a
+  stone wall's) with chips and dust off its top.
+- **City**: Carillon's fences and walls (the wall's parapets and crenel sills, the terraces' rails, the towers' rings,
+  the stalls' posts) are crossed like any others; over the wall's or a tower's drop they're climbed onto and held, never
+  crossed. The opening run's routes never cross one: its planner treats fences and walls as blocking, and its driver
+  lets go of sprint 1.2 from each point, beyond a running crossing's reach of any rail next to it.
+- Tests: `body_vault_rails` (a fence, a closed gate and a nether brick fence hopped and vaulted onto the floor beyond,
+  never a post; a cobblestone wall climbed onto over its middle and vaulted running; a fence on a block climbed over; a
+  fence over a drop climbed onto, running too; every path clear tick by tick with the eye ≤ 0.6 over the rail; the
+  server takes the client's vault with the crawl box and refuses a landing that isn't there); `runner_rail_hang` (a
+  fence and a wall on a roof's edge hung from the face under them; over the fence onto the roof, onto the wall's coping;
+  the server takes the climb over); `body_mantle_gate_walls` (every crossing from a gate room ends inside one);
+  `body_mantle_ledges`, `body_free_run` and `runner_course_probes` keep their fence lanes (no ledge, nothing to jump at,
+  no hang). Tour: `tools/autopilot/fence-mantle.txt`.
 
 ---------------------------------------------------------------------------------------------------------------------
 

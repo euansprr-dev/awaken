@@ -15,7 +15,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The grip on a climb line (SPEC §17.23; Euan's pipes): the numbers and the probe both sides run. A climb line is a
+ * The grip on a climb line (SPEC §17.25; Euan's pipes): the numbers and the probe both sides run. A climb line is a
  * block in {@code #awaken:runner_climbs} (Carillon's drainpipes, trellises, hoist ropes and hanging ladders, every
  * ladder); a line with a facing sits against a wall (its facing points away from it, as a ladder's does), a rope hangs
  * free. The body holds the line from in front of it, centred on it. Nothing here touches a player.
@@ -169,7 +169,7 @@ public final class GripRules {
     public static final double LIP_LO = 1.6, LIP_HI = 3.2, LIP_OUT = 1.5;
 
     /**
-     * Where the top of a line leads (SPEC §17.23, "the top"): a lip over the head as a hang, or null. The nearest one the
+     * Where the top of a line leads (SPEC §17.25, "the top"): a lip over the head as a hang, or null. The nearest one the
      * hang climbs out from, first:
      * the line's own top or a wall's top right in front (a flat roof's edge, a parapet's gap, a terrace), then an eave
      * or cornice the line runs up under, hung from its outer face (out from the line, then up). Feet at (x, y, z) in

@@ -1,0 +1,173 @@
+# Fences, gates and walls (SPEC §17.27), one tour (run with PACK=feel, HUD on). A lane on a flat floor: an oak fence
+# vaulted running and hopped walking, a fence gate, a nether brick fence, a cobblestone wall vaulted, a fence on a block
+# (a garden wall) climbed over, a long mossy wall climbed onto and walked along its top, a spruce fence over a drop
+# climbed onto and held; one running vault again in third person. Then Carillon: the nearest real fence or wall to a
+# street, run at. Every move is filmed by the pilot's clip recorder (the pilot's keys and the recorder start together:
+# a command reaches the client a few ticks late; the recorder goes first), full size; tools/ascent/clip.py makes each a
+# sheet. Clips: fm_*.
+# Run: PACK=feel SLOT_WHO=fence-mantle /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour \
+#      tools/autopilot.sh tools/autopilot/fence-mantle.txt 900
+world fence_mantle survival 4251
+waitworld
+window 1440 900
+gui 0
+hud on
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule fall_damage false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd tp @s 0.5 201 0.5 0 12
+wait 100
+cmd fill -4 199 -4 46 199 20 minecraft:smooth_stone
+cmd fill -4 200 -4 46 210 20 minecraft:air
+wait 10
+# the lane: every rail on the row z 8
+cmd fill -1 200 8 1 200 8 minecraft:oak_fence
+cmd setblock 4 200 8 minecraft:oak_fence
+cmd setblock 5 200 8 minecraft:oak_fence_gate[facing=south]
+cmd setblock 6 200 8 minecraft:oak_fence
+cmd fill 9 200 8 11 200 8 minecraft:nether_brick_fence
+cmd fill 14 200 8 16 200 8 minecraft:stone_bricks
+cmd fill 14 201 8 16 201 8 minecraft:oak_fence
+cmd fill 19 200 8 21 200 8 minecraft:cobblestone_wall
+cmd fill 24 200 8 36 200 8 minecraft:mossy_stone_brick_wall
+cmd fill 38 199 -2 42 203 8 minecraft:stone
+cmd fill 39 204 8 41 204 8 minecraft:spruce_fence
+wait 20
+camera first
+wait 10
+
+# ---- a running vault over an oak fence ----
+cmd tp @s 0.5 200 3.5 0 8
+wait 15
+cmd awaken ascent pilot rec fm_fence_run 35 1
+cmd awaken ascent pilot hold forward,sprint 30
+wait 45
+
+# ---- a walking hop over it ----
+cmd tp @s 0.5 200 7.5 0 20
+wait 15
+cmd awaken ascent pilot rec fm_fence_hop 29 1
+cmd awaken ascent pilot hold forward,jump 3
+cmd awaken ascent pilot hold forward 14
+wait 40
+
+# ---- a fence gate, running ----
+cmd tp @s 5.5 200 3.5 0 8
+wait 15
+cmd awaken ascent pilot rec fm_gate_run 35 1
+cmd awaken ascent pilot hold forward,sprint 30
+wait 45
+
+# ---- a nether brick fence, running ----
+cmd tp @s 10.5 200 3.5 0 8
+wait 15
+cmd awaken ascent pilot rec fm_nether_run 35 1
+cmd awaken ascent pilot hold forward,sprint 30
+wait 45
+
+# ---- a garden wall (a fence on a block), running: climbed over in one motion ----
+cmd tp @s 15.5 200 3.0 0 0
+wait 15
+cmd awaken ascent pilot rec fm_garden_run 41 1
+cmd awaken ascent pilot hold forward,sprint 34
+wait 50
+
+# ---- a cobblestone wall, running ----
+cmd tp @s 20.5 200 3.5 0 8
+wait 15
+cmd awaken ascent pilot rec fm_wall_run 35 1
+cmd awaken ascent pilot hold forward,sprint 30
+wait 45
+
+# ---- a long wall walked at: up onto its coping, then along its top ----
+cmd tp @s 26.5 200 7.6 0 25
+wait 15
+cmd awaken ascent pilot rec fm_wall_onto 27 1
+cmd awaken ascent pilot hold forward,jump 3
+wait 30
+cmd awaken ascent pilot aim -90 10 6
+wait 10
+cmd awaken ascent pilot rec fm_wall_walk 41 2
+cmd awaken ascent pilot hold forward 40
+wait 50
+
+# ---- a spruce fence over a drop, running at it: up onto the rail and held there ----
+cmd tp @s 40.5 204 2.0 0 10
+wait 15
+cmd awaken ascent pilot rec fm_perch 45 1
+cmd awaken ascent pilot hold forward,sprint 40
+wait 55
+
+# ---- third person: the running vault over the oak fence again ----
+camera back
+wait 10
+cmd tp @s 0.5 200 3.5 0 8
+wait 15
+cmd awaken ascent pilot rec fm_fence_run_3p 35 1
+cmd awaken ascent pilot hold forward,sprint 30
+wait 45
+cmd tp @s 15.5 200 3.0 0 0
+wait 15
+cmd awaken ascent pilot rec fm_garden_run_3p 41 1
+cmd awaken ascent pilot hold forward,sprint 34
+wait 50
+camera first
+info
+leave
+
+# ---- Carillon: the nearest real fence or wall to a street, run at ----
+world fence_mantle_city survival 20261024
+waitworld
+window 1440 900
+gui 0
+hud on
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule fall_damage false
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd awaken city view terrace_wall
+wait 300
+cmd awaken body rail 40 vault
+wait 30
+camera first
+wait 10
+cmd awaken ascent pilot rec fm_city_vault 35 1
+cmd awaken ascent pilot hold forward,sprint 30
+wait 50
+shot fm_city_after
+cmd awaken city view market_street
+wait 200
+cmd awaken body rail 40 any
+wait 30
+cmd awaken ascent pilot rec fm_city_rail 35 1
+cmd awaken ascent pilot hold forward,sprint 30
+wait 50
+camera back
+wait 10
+cmd awaken body rail 40 any
+wait 30
+cmd awaken ascent pilot rec fm_city_rail_3p 35 1
+cmd awaken ascent pilot hold forward,sprint 30
+wait 50
+info
+quit

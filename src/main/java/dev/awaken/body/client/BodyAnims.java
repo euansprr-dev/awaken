@@ -44,6 +44,8 @@ final class BodyAnims {
         boolean ending;
         /** A slide down a run tips the whole figure to the slope (degrees, eased; last tick's and this tick's). */
         float tilt, tiltO;
+        /** A crossing's kind (VaultRules.VAULT .. OVER). */
+        int kind;
     }
 
     private static final Anim[] SLOTS = new Anim[32];
@@ -70,6 +72,31 @@ final class BodyAnims {
         a.tilt = a.tiltO = 0;
         String clip = BodyClips.of(move);
         a.clip = clip != null && PlayerClips.available() && PlayerClips.play(entityId, clip, move == Move.TACTICAL_SPRINT ? 3 : move == Move.SLIDE ? 2 : 1);
+    }
+
+    /**
+     * A crossing (SPEC §17.27): its kind's clip, from the prediction (ours) or the server's Seen (others'). The body is
+     * in the crawl box while it goes over: the render state still draws a standing figure (the clip, or the fallback's
+     * tilt), never a crawl.
+     */
+    static void vault(int entityId, int kind, float yaw) {
+        if (isLocal(entityId)) BodyFp.vault(kind);
+        // a Runner clip on the same entity steps aside (a climb over from a hang)
+        for (int i = 0; i < RUN_ENTITY.length; i++) {
+            if (RUN_ENTITY[i] != entityId) continue;
+            RUN_ENTITY[i] = -1;
+            RUN_CLIP[i] = null;
+        }
+        Anim a = find(entityId);
+        if (a == null) a = free();
+        a.entity = entityId;
+        a.move = Move.VAULT.ordinal();
+        a.kind = kind;
+        a.start = ClientMoves.ticks;
+        a.yaw = yaw;
+        a.ending = false;
+        a.tilt = a.tiltO = 0;
+        a.clip = PlayerClips.available() && PlayerClips.play(entityId, BodyClips.VAULTS.get(Mth.clamp(kind, 0, BodyClips.VAULTS.size() - 1)), 1);
     }
 
     static void stop(int entityId, Move move) {
@@ -105,6 +132,13 @@ final class BodyAnims {
             } else if (age > length(a.move) + 2) {
                 a.entity = -1;
                 continue;
+            } else if (a.move == Move.VAULT.ordinal() && (mc.player == null || a.entity != mc.player.getId()) && age >= 4) {
+                // others' crossings end as their crawl box does (ours through stop())
+                Entity e = mc.level == null ? null : mc.level.getEntity(a.entity);
+                if (e == null || !e.hasPose(Pose.SWIMMING)) {
+                    a.entity = -1;
+                    continue;
+                }
             }
             if (a.move == Move.SLIDE.ordinal()) slope(a, mc.level == null ? null : mc.level.getEntity(a.entity));
             // other players' slides throw their grit every tick (ours do it as they move)
@@ -148,6 +182,7 @@ final class BodyAnims {
             // a slide down a run goes on (ours ends through stop(), others' with their crawl pose)
             case SLIDE -> BodyRules.SLIDE_TICKS + BodyRules.SLIDE_GRACE + BodyRules.STAIR_MAX_TICKS + BodyRules.STAIR_RUNOUT;
             case MANTLE -> BodyRules.MANTLE_TICKS + 3;
+            case VAULT -> 28; // the longest crossing (a rail on a block, walked at); ours end through stop()
             // spike S3: other players' runner poses last this long (the local player's follow its own state)
             case WALL_RUN -> dev.awaken.body.RunnerRules.RUN_TICKS;
             case WALL_CLIMB -> dev.awaken.body.RunnerRules.CLIMB_TICKS + 2;
@@ -174,7 +209,7 @@ final class BodyAnims {
     /** The slot drawing this player now, or null; a remote slide ends with its crawl pose. */
     private static Anim live(Entity e) {
         Anim a = find(e.getId());
-        if (a == null || a.clip) return a; // a clip's end is decided in tick()
+        if (a == null || a.clip || a.move == Move.VAULT.ordinal()) return a; // a clip's (and a crossing's) end is decided in tick()
         if (a.move == Move.SLIDE.ordinal() && !e.hasPose(Pose.SWIMMING)) {
             a.entity = -1;
             return null;
@@ -197,6 +232,14 @@ final class BodyAnims {
             // the clip poses every limb; vanilla still must not draw a crawl or a crouch under it, and a slide faces its way
             if (a.ending) return;
             s.isCrouching = false;
+            if (a.move == Move.VAULT.ordinal()) {
+                // over the rail the box is the crawl's: the clip draws the figure, facing the way it crosses
+                s.swimAmount = 0;
+                s.isVisuallySwimming = false;
+                s.yRot = Mth.clamp(Mth.wrapDegrees(s.yRot + s.bodyRot - a.yaw), -80F, 80F);
+                s.bodyRot = a.yaw;
+                return;
+            }
             if (a.move == Move.SLIDE.ordinal() && entity.hasPose(Pose.SWIMMING)) {
                 s.swimAmount = 0;
                 s.isVisuallySwimming = false;
@@ -233,6 +276,26 @@ final class BodyAnims {
                     s.isCrouching = u < 1.2F;
                 }
                 s.walkAnimationSpeed = 0;
+            }
+            case VAULT -> {
+                // without the clips: standing (never a crawl), facing the way; the arms reach for the rail, then the
+                // figure is tilted over it (onPre)
+                s.swimAmount = 0;
+                s.isVisuallySwimming = false;
+                s.yRot = Mth.clamp(Mth.wrapDegrees(s.yRot + s.bodyRot - a.yaw), -80F, 80F);
+                s.bodyRot = a.yaw;
+                s.walkAnimationSpeed = 0;
+                boolean reach = age < VAULT_PLANT[Mth.clamp(a.kind, 0, VAULT_PLANT.length - 1)];
+                HumanoidModel.ArmPose arms = reach ? HumanoidModel.ArmPose.THROW_TRIDENT : HumanoidModel.ArmPose.BLOCK;
+                if (a.kind == dev.awaken.body.VaultRules.VAULT) {
+                    // one hand on the rail (the off hand), the main arm out for balance
+                    if (right) s.leftArmPose = arms;
+                    else s.rightArmPose = arms;
+                } else {
+                    s.rightArmPose = arms;
+                    s.leftArmPose = arms;
+                }
+                s.isCrouching = !reach;
             }
             case ROLL -> {
                 if (age < BodyRules.ROLL_TICKS) {
@@ -316,10 +379,39 @@ final class BodyAnims {
                 pushed++;
                 tip(ps, 0F, 18F * in, yaw);
             }
+            case VAULT -> {
+                // the figure lowered so its hips cross at the rail, leaning over it; a running vault rolls onto its side
+                // with the legs swung out to the main hand's side
+                int k = Mth.clamp(a.kind, 0, VAULT_PLANT.length - 1);
+                float plant = VAULT_PLANT[k], len = VAULT_LEN[k];
+                float in = Mth.clamp(age / plant, 0, 1), out = Mth.clamp((len - age) / (len - plant - VAULT_OVER[k]), 0, 1);
+                float w = Math.min(in, out);
+                w = w * w * (3 - 2 * w);
+                if (w <= 0) return;
+                float side = s.mainArm == HumanoidArm.RIGHT ? 1 : -1;
+                ps.pushPose();
+                pushed++;
+                if (k == dev.awaken.body.VaultRules.ONTO) {
+                    tip(ps, 0.9F, 34F * w, yaw);
+                    return;
+                }
+                ps.translate(0, -0.72F * w, 0);
+                tip(ps, 0.9F, (k == dev.awaken.body.VaultRules.VAULT ? 28F : 40F) * w, yaw);
+                if (k == dev.awaken.body.VaultRules.VAULT || k == dev.awaken.body.VaultRules.HOP) {
+                    // roll about the way, the top onto the planted (off) hand, the legs swung out to the main side (a turn
+                    // about forward (fx, fz) by a positive angle takes the top to the right)
+                    ps.translate(0, 0.9F, 0);
+                    ps.rotate(Q.rotationAxis(-(k == dev.awaken.body.VaultRules.VAULT ? 58F : 30F) * side * w * Mth.DEG_TO_RAD, fx, 0, fz));
+                    ps.translate(0, -0.9F, 0);
+                }
+            }
             case null, default -> {
             }
         }
     }
+
+    /** A crossing's nominal timing by kind (VaultRules.VAULT .. OVER, ticks): the hand meets the rail, over the top, the whole. */
+    static final float[] VAULT_PLANT = {3, 4, 6, 4, 5}, VAULT_OVER = {4, 5, 7, 4, 5}, VAULT_LEN = {13, 15, 21, 11, 18};
 
     static void onPost(RenderPlayerEvent.Post<?> e) {
         if (pushed > 0) {

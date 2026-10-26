@@ -19,6 +19,8 @@ final class BodyMotion {
     int trippedCount;
     // mantle
     long mantleUntil;
+    /** A crossing (SPEC §17.27): until when the server holds the crawl box (the path's length plus its grace). */
+    long vaultUntil;
     // ---- spike S3: the Runner's Kit ----
     // wall-run
     long runUntil, runEndedAt = Long.MIN_VALUE / 2, lastWallJumpAt = Long.MIN_VALUE / 2;
@@ -37,7 +39,7 @@ final class BodyMotion {
     double hangX, hangY, hangZ;
     int hangFallbacks;
     boolean hangExplained;
-    // grip on a climb line (SPEC §17.23): the line's column, since when, misses of the re-check
+    // grip on a climb line (SPEC §17.25): the line's column, since when, misses of the re-check
     boolean gripping;
     int gripBx, gripBz, gripMiss;
     long gripSince, gripEndedAt = Long.MIN_VALUE / 2;
@@ -85,7 +87,7 @@ final class BodyMotion {
     long assistUntil;
 
     boolean active() {
-        return tacUntil != 0 || slideUntil != 0 || mantleUntil != 0 || runUntil != 0 || hanging;
+        return tacUntil != 0 || slideUntil != 0 || mantleUntil != 0 || vaultUntil != 0 || runUntil != 0 || hanging;
     }
 
     boolean assisted(Move m, long now) {

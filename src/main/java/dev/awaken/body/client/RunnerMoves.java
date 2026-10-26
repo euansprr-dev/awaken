@@ -5,6 +5,7 @@ import dev.awaken.body.BodyClips;
 import dev.awaken.body.BodyContent;
 import dev.awaken.body.Move;
 import dev.awaken.body.RunnerRules;
+import dev.awaken.body.VaultRules;
 import dev.awaken.body.net.BodyPayloads;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.ClientInput;
@@ -178,7 +179,7 @@ public final class RunnerMoves {
         if (!ground) {
             if (jumpPressed) airJumpAt = now;
             FreeRun.air(p);
-            // a climb line in reach: the grip takes it (SPEC §17.23)
+            // a climb line in reach: the grip takes it (SPEC §17.25)
             if (GripMoves.tryStart(p, in, k, level, false, now)) return true;
             if (now >= regrabAt && tryGrab(p, in, level, ctx, now)) return true;
             boolean chain = now <= chainUntil && links > 0;
@@ -544,7 +545,7 @@ public final class RunnerMoves {
     }
 
     /**
-     * From a climb line's top up to the lip of an eave or cornice over it (GripRules.topLip; SPEC §17.23): out from the
+     * From a climb line's top up to the lip of an eave or cornice over it (GripRules.topLip; SPEC §17.25): out from the
      * line under the overhang, then up into the hang on its outer face. From there the hang's own climb out (Jump, or
      * forward) puts you on the roof.
      */
@@ -726,6 +727,20 @@ public final class RunnerMoves {
             BodyFx.sound(p, BodyContent.CLIMB.get(), 0.85F, 1F);
             return true;
         }
+        if (stand == null && !(lookUp && up != null)) {
+            // a fence's or gate's rail (SPEC §17.27): no top to stand on, so over it, down to the floor beyond
+            VaultRules.Vault over = VaultRules.over(level, ctx, holdX, holdY, holdZ, e.fx(), e.fz(), e.top());
+            if (over != null) {
+                send(Move.LEDGE_JUMP, BodyPayloads.JUMP_OVER, p, over.endX(), over.floor(), over.endZ(), e.axis(), e.sign());
+                ClientMoves.trace("climb over the rail");
+                leaveHold(p);
+                state = State.NONE;
+                edge = null;
+                ClientMoves.suppressJump();
+                ClientMoves.overFromHang(p, over, yawOf(e.fx(), e.fz()));
+                return true;
+            }
+        }
         if (up != null) {
             send(Move.LEDGE_JUMP, BodyPayloads.JUMP_UP, p, up.hx(), up.hy(), up.hz(), up.axis(), up.sign());
             ClientMoves.trace(String.format("ledge jump up %.2f", up.top() - e.top()));
@@ -903,6 +918,7 @@ public final class RunnerMoves {
             }
             case LEDGE_JUMP -> {
                 if (state == State.PATH) state = State.NONE;
+                ClientMoves.endVault(p, false, "refused"); // a climb over a rail is the crossing's path
             }
             case GRIP -> GripMoves.end(p, false, "refused");
             default -> {

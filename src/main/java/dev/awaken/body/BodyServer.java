@@ -88,6 +88,7 @@ final class BodyServer {
             case TACTICAL_SPRINT -> startTactical(p);
             case SLIDE -> startSlide(p, msg.yaw(), msg.flag());
             case MANTLE -> startMantle(p, msg.yaw(), msg.x(), msg.y(), msg.z());
+            case VAULT -> startVault(p, msg.yaw(), msg.x(), msg.y(), msg.z(), msg.speed(), msg.flag());
             default -> false; // ROLL, and the Runner's Kit (its own Run payload)
         };
         if (!ok) refuse(p, move);
@@ -100,6 +101,7 @@ final class BodyServer {
         long now = now(p);
         if (move == Move.TACTICAL_SPRINT) endTactical(p, m, now, false);
         else if (move == Move.SLIDE) endSlide(p, m, now, false);
+        else if (move == Move.VAULT) endVault(p, m, now);
         else if (move.runner()) RunnerServer.onEnd(p, move);
     }
 
@@ -107,7 +109,7 @@ final class BodyServer {
     static void refuse(ServerPlayer p, Move move) {
         AwakenNet.send(p, new BodyPayloads.Refuse(move.ordinal()));
         if (p.connection == null) return;
-        if (move == Move.MANTLE) {
+        if (move == Move.MANTLE || move == Move.VAULT) {
             p.connection.teleport(p.getX(), p.getY(), p.getZ(), p.getYRot(), p.getXRot());
         } else if (move == Move.SLIDE) {
             Vec3 v = new Vec3(0, p.getDeltaMovement().y, 0);
@@ -271,6 +273,49 @@ final class BodyServer {
         return true;
     }
 
+    // ---- fences, gates and walls (SPEC §17.27) ----------------------------------------------------------------------
+
+    /**
+     * A crossing the client started: the same probe from where the server has the body (a little more reach: it may be
+     * a tick behind) must find a crossing that ends where the client's does. The crawl box on this side too for the
+     * path's length (its move is the client's and never collides), the fall forgotten each tick.
+     */
+    static boolean startVault(ServerPlayer p, float yaw, double x, double y, double z, float speed, boolean run) {
+        if (!Body.unlocked(p, Move.VAULT) || off(p) || p.isInLiquid() || p.isUsingItem() || p.isBlocking()) return false;
+        BodyMotion m = motion(p);
+        long now = now(p);
+        if (m.vaultUntil != 0 || m.mantleUntil != 0 || m.slideUntil != 0 || m.runner()) return false;
+        VaultRules.Vault v = VaultRules.find(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ(), yaw,
+                (run ? VaultRules.REACH_RUN : VaultRules.REACH_WALK) + VaultRules.REACH_SERVER, run, speed);
+        if (v == null) return false;
+        double ddx = v.endX() - x, ddz = v.endZ() - z;
+        if (Math.abs(v.floor() - y) > 0.3 || ddx * ddx + ddz * ddz > VaultRules.LAND_TOL * VaultRules.LAND_TOL) return false; // not the client's
+        vaultFrom(p, m, v, yaw, now);
+        return true;
+    }
+
+    /** A crossing accepted (from the ground, or over a rail from a hang): the crawl box here too, counted, shown. */
+    static void vaultFrom(ServerPlayer p, BodyMotion m, VaultRules.Vault v, float yaw, long now) {
+        m.vaultUntil = now + v.ticks() + VaultRules.GRACE;
+        p.setForcedPose(Pose.SWIMMING);
+        p.setPose(Pose.SWIMMING);
+        p.causeFoodExhaustion(VaultRules.EXHAUSTION);
+        p.resetFallDistance();
+        m.lastMove = now;
+        Progression.count(p, "awaken:body_" + Move.VAULT.key);
+        dev.awaken.body.ascent.AscentServer.link(p, dev.awaken.body.ascent.AscentMemory.Track.RUNNER, 1);
+        p.level().playSound(p, p.getX(), p.getY(), p.getZ(), BodyContent.VAULT, SoundSource.PLAYERS, v.kind() == VaultRules.ONTO ? 0.6F : 0.8F, 1.0F);
+        show(p, p, new BodyPayloads.Seen(p.getId(), BodyPayloads.SEEN_VAULT + v.kind(), yaw));
+    }
+
+    /** The crossing is over (the client's end, its length run out, or a stop): the body stands again. */
+    static void endVault(ServerPlayer p, BodyMotion m, long now) {
+        if (m.vaultUntil == 0) return;
+        m.vaultUntil = 0;
+        m.lastMove = now;
+        if (m.slideUntil == 0 && p.getForcedPose() == Pose.SWIMMING) p.setForcedPose(null); // a slide out of it keeps the crawl
+    }
+
     // ---- shared -----------------------------------------------------------------------------------------------------
 
     /** A move happened: count it, let everyone else see and hear it (the mover's own client already did). */
@@ -359,6 +404,11 @@ final class BodyServer {
         if (m.mantleUntil != 0) {
             p.resetFallDistance();
             if (now >= m.mantleUntil) m.mantleUntil = 0;
+            else m.lastMove = now;
+        }
+        if (m.vaultUntil != 0) {
+            p.resetFallDistance();
+            if (now >= m.vaultUntil || off(p)) endVault(p, m, now);
             else m.lastMove = now;
         }
         if (m.runner()) RunnerServer.tick(p, m, now);
