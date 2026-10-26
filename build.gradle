@@ -83,6 +83,8 @@ neoForge {
             // tools/autopilot.sh BACKEND=vulkan|opengl, as a launch argument: a fresh game folder (every CI tour, the first
             // tour after a pack install) reads its new options.txt as "default", which tries OpenGL first
             if (project.hasProperty('backend')) programArguments.addAll '--graphicsBackend', project.property('backend').toString().toUpperCase(Locale.ROOT)
+            // tools/autopilot.sh SETTLE=<s>: each shot first waits, at most that long, for the terrain to load and build
+            if (project.hasProperty('settle')) systemProperty 'awaken.autopilot.settle', project.property('settle').toString()
         }
 
         server {

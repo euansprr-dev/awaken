@@ -70,7 +70,9 @@ import java.util.Map;
  *                                                default): off, GitHub's macOS runners (a paravirtual GPU) misplace sections
  * fardepth share|auto                           Distant Horizons shares its depth with Lens on every graphics API (to
  *                                                check it on Vulkan), or again only on the one it was checked on
- * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder
+ * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder; with
+ *                                                -Dawaken.autopilot.settle=&lt;s&gt; (CI tours) it first waits, at most that
+ *                                                long, until the terrain around is loaded and built
  * shotnow &lt;name&gt;                                  the same this tick (no settle; for short moments)
  * leave                                          save and quit to the title (a following "world" line rejoins)
  * quit                                           save and quit to the title, then close the game
@@ -94,6 +96,10 @@ public final class Autopilot {
     private static long lastFrameNanos;
     private static String perfLabel;
     private static boolean perfTimed;
+    // settle before shots: a slower machine (GitHub's 3-core runners) is still loading and building chunks after the
+    // waits a script was written with on the Mac
+    private static final int SETTLE_TICKS = Integer.getInteger("awaken.autopilot.settle", 0) * 20;
+    private static int settleWaited, settleBuilt, settleSteady, settleChunks = -1;
 
     public static void init() {
         String path = System.getProperty("awaken.autopilot");
@@ -200,6 +206,26 @@ public final class Autopilot {
         perfTimed = timed;
         frameCount = 0;
         lastFrameNanos = 0;
+    }
+
+    /**
+     * With settling on: true once every section the renderer knows is built (Sodium answers this too) for half a second
+     * and the client's loaded chunks have held steady for two, or after SETTLE_TICKS. Called once a tick until true.
+     */
+    private static boolean settled(Minecraft mc, String shot) {
+        if (SETTLE_TICKS <= 0 || mc.level == null) return true;
+        int chunks = mc.level.getChunkSource().getLoadedChunksCount();
+        settleBuilt = mc.levelRenderer.hasRenderedAllSections() ? settleBuilt + 1 : 0;
+        settleSteady = chunks == settleChunks ? settleSteady + 1 : 0;
+        settleChunks = chunks;
+        boolean ready = settleBuilt >= 10 && settleSteady >= 40;
+        if (!ready && ++settleWaited < SETTLE_TICKS) return false;
+        if (settleWaited > 40) {
+            Awaken.LOG.info("[autopilot] settle {}: {} s for {} chunks{}", shot, settleWaited / 20, chunks, ready ? "" : " (gave up)");
+        }
+        settleWaited = settleBuilt = settleSteady = 0;
+        settleChunks = -1;
+        return true;
     }
 
     private static double pct(long[] sorted, double q) {
@@ -388,6 +414,7 @@ public final class Autopilot {
                 if (mc.gui.hud.isHidden() != arg.trim().equals("off")) mc.gui.hud.toggle();
             }
             case "shot" -> {
+                if (shotPending == null && !settled(mc, arg.trim())) return false;
                 // command feedback is not part of the picture: clear the chat, let a few frames render without it
                 if (shotPending == null) {
                     mc.gui.hud.getChat().clearMessages(false);

@@ -10,6 +10,7 @@
 #   LENS=off|swift|cinematic  Awaken's light layer (unset: whatever run-autopilot's client config says)
 #   DH=swift|cinematic|default  Distant Horizons settings (pack/dh/); unset leaves them
 #   RD=<chunks>             vanilla render distance for this run
+#   SETTLE=<seconds>        each shot first waits, at most that long, for the terrain to load and build (CI tours: 90)
 #   FARSIGHT=off|near|full  Far Sight's reach (unset: whatever run-autopilot's client config says; CI tours: off)
 #   TECTONIC=<preset>       Tectonic settings from pack/tectonic/<preset>.json (unset: Tectonic's defaults)
 #   CITY=on                 ask for the city basin before Carillon exists (terrain's dev switch)
@@ -65,6 +66,7 @@ GRADLE_ARGS=()
 [ -n "$XMX" ] && GRADLE_ARGS+=("-Pxmx=$XMX")
 [ -n "$ZGC" ] && GRADLE_ARGS+=("-Pzgc")
 [ "${BACKEND:-vulkan}" != default ] && GRADLE_ARGS+=("-Pbackend=${BACKEND:-vulkan}")
+[ -n "$SETTLE" ] && GRADLE_ARGS+=("-Psettle=$SETTLE")
 cp "$SCRIPT" run-autopilot/script.txt
 rm -f run-autopilot/screenshots/*.png(N)
 rm -rf run-autopilot/saves   # every tour starts from a fresh world

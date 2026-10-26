@@ -105,6 +105,10 @@ def main(out):
     perf = [l.split("[autopilot] perf ", 1)[1] for l in lines if "[autopilot] perf " in l]
     sound = "off (no audio device)" if "Error starting SoundSystem" in text else (
         "started" if "Sound engine started" in text else "?")
+    settles = [l.split("[autopilot] settle ", 1)[1].strip() for l in lines if "[autopilot] settle " in l]
+    warnings += [f"shot taken before the terrain settled: {x}" for x in settles if "gave up" in x]
+    display = next((l.split("display: ", 1)[1].strip() for l in (out / "runner.txt").read_text().splitlines()
+                    if l.startswith("display: ")), "?") if (out / "runner.txt").exists() else "?"
     for l in lines:
         if re.search(r"/WARN\] \[[^]]*\]: \[autopilot\]", l):
             warnings.append(l.split("[autopilot] ", 1)[1].strip())
@@ -123,7 +127,8 @@ def main(out):
         "schemaVersion": 1, "verdict": verdict, "script": script, "knobs": os.environ.get("KNOBS", ""),
         "runner": os.environ.get("TOUR_RUNNER", "?"), "buildSeconds": os.environ.get("BUILD_SECONDS"),
         "tourSeconds": os.environ.get("TOUR_SECONDS"), "backend": " ".join(backend[-1]) if backend else None,
-        "device": device[-1] if device else None, "sound": sound, "info": info, "perf": perf, "shots": shots,
+        "device": device[-1] if device else None, "display": display, "sound": sound, "info": info, "perf": perf,
+        "settles": settles, "shots": shots,
         "problems": problems, "warnings": warnings, "errors": errors[:40],
     }
     (out / "tour.json").write_text(json.dumps(report, indent=1) + "\n")
@@ -132,11 +137,13 @@ def main(out):
     head = (f"{verdict.upper()}: {name} on {report['runner']}, {len(shots)} shots; tour {mins(report['tourSeconds'])},"
             f" build {mins(report['buildSeconds'])}")
     rows = [("script", script), ("knobs", report["knobs"] or "none (Awaken alone, defaults)"),
-            ("backend", report["backend"] or "?"), ("device", report["device"] or "?"), ("sound", sound),
+            ("backend", report["backend"] or "?"), ("device", report["device"] or "?"), ("display", display), ("sound", sound),
             ("far sight", "off (on CI always; its tours run on the Mac)")]
     txt = [head] + [f"  {k}: {v}" for k, v in rows]
     txt += [f"  info: {i}" for i in info]
     txt += [f"  perf (the runner's VM, not a Mac): {p}" for p in perf]
+    if settles:
+        txt.append("  settled before shots: " + "; ".join(settles))
     txt += [f"  PROBLEM: {p}" for p in problems] + [f"  warning: {w}" for w in warnings]
     if errors:
         txt.append(f"  {len(errors)} distinct ERROR lines in tour.log; first: {errors[0][:200]}")

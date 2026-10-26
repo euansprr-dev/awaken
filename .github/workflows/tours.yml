@@ -102,8 +102,10 @@ jobs:
           key: awaken-pack-${{ hashFiles('pack/lock.json') }}
           restore-keys: awaken-pack-
 
-      # The runner boots a 1024x768 1x display: 1920x1080 lets a tour's "window 1440 900" open whole, the Mac's framing
-      # at half its pixels (the virtual display has no Retina modes)
+      # The runner boots a 1x 1024x768 display (at most 1920x1080, no Retina modes). tools/ci-retina.m adds a display
+      # like the owner's MacBook (1512x982 points at 2x) as the main one, so tours get the Mac's pixels and GUI scale;
+      # it lives in the background until the job ends. If macOS refuses it, the runner's own display goes to 1920x1080,
+      # where "window 1440 900" still opens whole (the Mac's framing at half its pixels).
       - name: Runner
         run: |
           mkdir -p tour-out
@@ -111,7 +113,12 @@ jobs:
             echo "label: $TOUR_RUNNER"; sw_vers; uname -m
             echo "cpus: $(sysctl -n hw.ncpu)  memory: $(( $(sysctl -n hw.memsize) / 1073741824 )) GB  cpu: $(sysctl -n machdep.cpu.brand_string)"
             echo "session: $(launchctl managername)  console user: $(stat -f %Su /dev/console)"
-            swift tools/ci-display.swift 1920x1080 2>&1 || true
+            clang -fobjc-arc -framework Foundation -framework CoreGraphics tools/ci-retina.m -o "$RUNNER_TEMP/ci-retina"
+            nohup "$RUNNER_TEMP/ci-retina" 1512 982 > "$RUNNER_TEMP/retina.txt" 2>&1 &
+            for i in $(seq 1 20); do grep -q '^main ' "$RUNNER_TEMP/retina.txt" && break; kill -0 $! 2>/dev/null || break; sleep 1; done
+            if grep -q '^main ' "$RUNNER_TEMP/retina.txt"; then echo "display: virtual Retina, $(cat "$RUNNER_TEMP/retina.txt")"
+            else echo "display: no virtual Retina ($(cat "$RUNNER_TEMP/retina.txt")); the runner's own at 1920x1080"
+              swift tools/ci-display.swift 1920x1080 2>&1 || true; fi
           } | tee tour-out/runner.txt
 
       - name: Build
@@ -128,6 +135,8 @@ jobs:
           # the runner has 7 GB: the client's heap leaves room for Gradle and the GPU's buffers
           export XMX="${XMX:-4G}"
           export FARSIGHT=off
+          # 3 cores load and build chunks slower than the Mac the scripts' waits were written on
+          export SETTLE=90
           start=$(date +%s)
           tools/autopilot.sh "$SCRIPT" "$TOUR_TIMEOUT" 2>&1 | tee tour-out/autopilot.txt
           echo "TOUR_SECONDS=$(( $(date +%s) - start ))" >> "$GITHUB_ENV"
