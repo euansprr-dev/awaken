@@ -267,7 +267,10 @@ public final class FarSightClient {
                     // the same blocks and light as the mesh already up: nothing to do
                     long hash = snap.hash();
                     if (layer.hashes[slot] == hash) return;
+                    long t = System.nanoTime();
                     VoxelMesh mesh = layer.mesher.get().mesh(snap, slot);
+                    layer.meshNanos.addAndGet(System.nanoTime() - t);
+                    layer.meshed.incrementAndGet();
                     layer.finished.add(mesh);
                     layer.hashes[slot] = hash;
                 } finally {
@@ -463,10 +466,11 @@ public final class FarSightClient {
         cpuFrames = 0;
         double[] gpu = renderer.gpuMillis();
         return String.format(Locale.ROOT,
-                "%s gpu_ms=%.3f bake_ms=%.3f cpu_ms=%.3f rest_us=%d missing=[%s] queued=%d workers=%d pieces=%d cells=%d trees=%d (%d draws) column=%.1fus probes=%.1f/column (%d columns) generated=%d/%d city=%d/%d chunks (%d meshing) drawn=%d chunks %d quads vram=%dMB",
+                "%s gpu_ms=%.3f bake_ms=%.3f cpu_ms=%.3f rest_us=%d missing=[%s] queued=%d workers=%d pieces=%d cells=%d trees=%d (%d draws) column=%.1fus probes=%.1f/column (%d columns) generated=%d/%d city=%d/%d chunks (%d meshing, %.1f ms each) drawn=%d chunks %d quads vram=%dMB",
                 drawing() ? "drawing" : enabled() ? "on" : "off", gpu[0], gpu[1], cpu, workers.restMicros, rings, workers.queued(), workers.active, renderer.pieces, renderer.cells, renderer.treesDrawn, renderer.treeDraws,
                 cols == 0 ? 0.0 : workers.columnNanos.get() / 1000.0 / cols, cols == 0 ? 0.0 : workers.probes.get() / (double) cols, cols,
-                field.genUploaded, field.genAsked, voxels.resident(), VoxelCapture.captured(), voxels.inFlight.get(), voxels.chunksDrawn, voxels.quadsDrawn,
+                field.genUploaded, field.genAsked, voxels.resident(), VoxelCapture.captured(), voxels.inFlight.get(),
+                voxels.meshed.get() == 0 ? 0.0 : voxels.meshNanos.get() / 1e6 / voxels.meshed.get(), voxels.chunksDrawn, voxels.quadsDrawn,
                 (field.memoryBytes() + renderer.memoryBytes() + voxels.memoryBytes()) >> 20);
     }
 }

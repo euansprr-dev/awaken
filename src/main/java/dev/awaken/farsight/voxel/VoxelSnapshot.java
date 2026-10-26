@@ -30,6 +30,14 @@ public record VoxelSnapshot(int chunkX, int chunkZ, int levelMinY, int fromSecti
             }
         }
         if (lo < 0) return null;
+        // from just under the chunk's lowest ground: what lies deeper (stone, dark caves) never shows from afar, and a
+        // natural chunk is then a few sections, not the world's whole height
+        int ground = Integer.MAX_VALUE;
+        for (int z = 0; z < 16; z++) {
+            for (int x = 0; x < 16; x++) ground = Math.min(ground, chunk.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR, x, z));
+        }
+        int groundSection = chunk.getSectionIndex(Math.max(chunk.getMinY(), ground - 8));
+        lo = Math.max(lo, groundSection);
         lo = Math.max(0, lo - 1);
         hi = Math.min(all.length - 1, hi + 1);
         int n = hi - lo + 1, minSection = chunk.getMinSectionY();

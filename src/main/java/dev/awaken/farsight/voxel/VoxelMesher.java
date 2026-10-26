@@ -132,7 +132,8 @@ public final class VoxelMesher {
     }
 
     private byte kindAt(int x, int y, int z) {
-        if (y < 0) return snap.fromSection() * 16 <= snap.levelMinY() ? VoxelKinds.FULL : VoxelKinds.AIR;
+        // under the snapshot: the ground it was cut from (or the world's floor)
+        if (y < 0) return VoxelKinds.FULL;
         if (y >= height || x < 0 || x > 15 || z < 0 || z > 15) return VoxelKinds.AIR;
         return kinds[index(x, y, z)];
     }
@@ -420,7 +421,7 @@ public final class VoxelMesher {
     }
 
     private int coarseAt(int cx, int cy, int cz, int n, int ny) {
-        if (cy < 0) return snap.fromSection() * 16 <= snap.levelMinY() ? 1 : 0;
+        if (cy < 0) return 1;
         if (cy >= ny || cx < 0 || cx >= n || cz < 0 || cz >= n) return 0;
         return coarse[cellIndex(cx, cy, cz, n)];
     }

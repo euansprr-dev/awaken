@@ -87,6 +87,8 @@ final class VoxelLayer implements AutoCloseable {
     final ThreadLocal<VoxelMesher> mesher = ThreadLocal.withInitial(() -> new VoxelMesher(looks));
     /** Each slot's last meshed snapshot's hash (workers write, so a chunk taken again unchanged isn't meshed again). */
     final long[] hashes = new long[MAX_SLOTS];
+    /** Time spent meshing and chunks meshed (status). */
+    final java.util.concurrent.atomic.AtomicLong meshNanos = new java.util.concurrent.atomic.AtomicLong(), meshed = new java.util.concurrent.atomic.AtomicLong();
     /** Meshing jobs on the workers. */
     final java.util.concurrent.atomic.AtomicInteger inFlight = new java.util.concurrent.atomic.AtomicInteger();
     final ConcurrentLinkedQueue<VoxelMesh> finished = new ConcurrentLinkedQueue<>();

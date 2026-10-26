@@ -1545,6 +1545,23 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   read within 2 km) and under it carry only the city's ground, a block under its streets (`FarCity.underCitySight`,
   `CityLayout.groundY`). The opening's card waits for the whole city to be meshed and up. Debug view 3 tints City
   Sight green; `farsight part city off` hides it. Test `farsight_voxels_mesh`.
+  Also (2026-10-26, Euan's tours): every overworld chunk the server loads is captured too, after the city's (kept
+  within 1.9 km, the city's at any distance, at most 16 M quads, farthest first; the coverage mask redrawn each second
+  for chunks within 2 km, so its 4 km torus never stands a far chunk in for a near one). A snapshot starts just under
+  the chunk's lowest ground (OCEAN_FLOOR - 8): deeper never shows. A chunk is taken again 2 s after its last block
+  change (the neighbour-update event), not on save (the city's hold saves every chunk as it lets go: the city
+  "loaded twice"), and a worker skips a snapshot that hashes as the mesh already up. Faces into dark rooms (no sky
+  light, block light ≤ 2) aren't drawn; panes, doors and bars between such a room and the light draw their outward
+  face as a window (dark glass). Light steps by three for merging. Each chunk's quads are grouped by face; faces turned
+  away across the whole chunk aren't drawn. Chunks clear of the render distance's edge and of a level's fade draw with
+  a pipeline that never discards (cut-out holes take the room's darkness, leaves' their colour), so Apple GPUs'
+  hidden-surface removal works. Measured at the Roost: about 1.1 M quads, 1.6 to 4.7 ms on a loaded M4.
+- **Hand-off with the real chunks**: while Far Sight draws, the game's chunk fade-in is held at none (new chunks
+  faded in from the fog colour, a white veil sweeping over the city; the far view already shows them), and the
+  player's own value comes back when Far Sight stops. A loaded chunk's 2 s settling clock starts only once it is
+  inside the camera's render distance (after the opening's flight the Roost's long-loaded, never-built chunks counted
+  as drawn at the landing: the city vanished and reloaded), and a chunk counts as drawn 250 ms after it first does
+  (Sodium draws a section a frame or two after it reports it compiled: a flash at the loading edge).
 - **Generated layer** (stage 1, schema 2): `FarChunk` keeps per 2×2-block cell the ground's top (MOTION_BLOCKING_NO_LEAVES;
   water counts), water depth, the ground's colour, the canopy's height above it and its colour (leaves at
   MOTION_BLOCKING). `FarStore.patch` averages the cells within half a cell of each corner (known once a quarter is
