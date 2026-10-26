@@ -25,6 +25,12 @@ public final class ProgressionClient {
         modBus.addListener(ProgressionClient::onPayloads);
         modBus.addListener(ProgressionClient::onLayers);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> onTick());
+        // the band opened: its tip has done its job (SPEC §27.7)
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ScreenEvent.Opening.class, e -> {
+            if (e.getNewScreen() instanceof StatusScreen || e.getNewScreen() instanceof dev.awaken.holo.client.HoloStatusScreen) {
+                dev.awaken.core.api.TipHooks.client().done(Awaken.id("first/band"));
+            }
+        });
         CoreSections.register();
     }
 
@@ -53,10 +59,7 @@ public final class ProgressionClient {
     private static void onTick() {
         Minecraft mc = Minecraft.getInstance();
         while (AwakenKeys.STATUS.consumeClick()) {
-            if (mc.player != null && mc.gui.screen() == null) {
-                mc.gui.setScreen(statusOpener.get());
-                dev.awaken.core.api.TipHooks.client().done(Awaken.id("first/band"));
-            }
+            if (mc.player != null && mc.gui.screen() == null) mc.gui.setScreen(statusOpener.get());
         }
     }
 
