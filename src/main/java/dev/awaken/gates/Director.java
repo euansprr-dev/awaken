@@ -259,7 +259,7 @@ public final class Director {
         if (id < 0 || prof.counter("awaken:floors_cleared") > 0 || p.level().dimension() != Level.OVERWORLD) return java.util.List.of();
         GateRecord g = GateRegistry.get(p.level().getServer()).gate((int) id);
         if (g == null || !g.state.standing()) return java.util.List.of();
-        return java.util.List.of(new dev.awaken.core.api.HorizonHooks.Site("gate:first", g.plan.rank().label + "-rank gate · its floors make you stronger",
+        return java.util.List.of(new dev.awaken.core.api.HorizonHooks.Site("gate:first", "First gate · " + g.plan.rank().label + "-rank",
                 g.pos, "", true));
     }
 

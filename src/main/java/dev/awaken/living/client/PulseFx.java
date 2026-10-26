@@ -39,6 +39,15 @@ final class PulseFx {
     static final Map<Integer, Shown> SHOWN = new HashMap<>();
     static final float LERP = 40;
 
+    /** The Wayfarer camp's fire (SPEC §27.6), and when the server last said it burns (it's drawn for 15 s after). */
+    private static net.minecraft.core.BlockPos camp;
+    private static float campSeen = -1000;
+
+    static void camp(net.minecraft.core.BlockPos at) {
+        camp = at;
+        campSeen = LivingClient.ticks;
+    }
+
     static void onTells(LivingNet.Happenings msg) {
         float now = LivingClient.ticks;
         java.util.Set<Integer> keep = new java.util.HashSet<>();
@@ -88,7 +97,8 @@ final class PulseFx {
     private static double k, ax, ay, az;
 
     static void submit(SubmitCustomGeometryEvent e) {
-        if (SHOWN.isEmpty() || !LivingClient.shown) return;
+        boolean fire = camp != null && LivingClient.ticks - campSeen < 300;
+        if ((SHOWN.isEmpty() || !LivingClient.shown) && !fire) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
         var state = e.getLevelRenderState();
@@ -116,6 +126,16 @@ final class PulseFx {
     }
 
     private static void pass(VertexConsumer vc, float clamp, boolean add) {
+        if (camp != null && LivingClient.ticks - campSeen < 300) {
+            double x = camp.getX() - 3 + 0.5, y = camp.getY(), z = camp.getZ() + 3 + 0.5;
+            double dist = Math.sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy) + (z - cz) * (z - cz));
+            k = dist > clamp ? clamp / dist : 1;
+            ax = x;
+            ay = y;
+            az = z;
+            campfire(vc, add);
+        }
+        if (!LivingClient.shown) return;
         for (Shown s : SHOWN.values()) {
             float lk = Mth.clamp((now - s.since) / LERP, 0, 1);
             double x = Mth.lerp(lk, s.px, s.x), y = Mth.lerp(lk, s.py, s.y), z = Mth.lerp(lk, s.pz, s.z);
@@ -253,6 +273,27 @@ final class PulseFx {
             }
         }
         soft(vc, 0, 1.2, 0, s.radius * 0.45F, argb(0.2F * a, 0x40464E));
+    }
+
+    /**
+     * The Wayfarers' fire (SPEC §27.6): a column of pale smoke you see from the High Gate, rising forty blocks, widening
+     * and leaning with the wind as it goes, over a warm glow at its foot. Its own look, drawn from afar: vanilla's campfire
+     * smoke only rises within a few dozen blocks of you.
+     */
+    private static void campfire(VertexConsumer vc, boolean add) {
+        if (!add) {
+            for (int i = 0; i < 16; i++) {
+                float rise = (now * 0.0035F + i / 16F) % 1F;
+                float lean = rise * rise;
+                double ox = Mth.sin(now * 0.004F + i * 0.7F) * 0.9 * rise + lean * 7, oz = Mth.cos(now * 0.005F + i) * 0.9 * rise + lean * 3;
+                float a = 0.34F * (1 - rise) * Mth.clamp(rise * 8, 0, 1);
+                soft(vc, ox, 1.5 + rise * 40, oz, 1.4F + rise * 6.5F, argb(a, 0xC9C4BA));
+            }
+            return;
+        }
+        float flick = 0.8F + 0.2F * Mth.sin(now * 0.6F) * Mth.sin(now * 0.23F + 1);
+        soft(vc, 0, 0.8, 0, 0.9F, argb(0.9F * flick, 0xFFD27A));
+        soft(vc, 0, 1.0, 0, 4.0F, argb(0.22F * flick, 0xFFA040));
     }
 
     /** A caravan: warm lanterns swinging on its wagons, a thin line of cook-smoke rising from it. */

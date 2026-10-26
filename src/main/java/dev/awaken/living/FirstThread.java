@@ -82,7 +82,11 @@ public final class FirstThread {
         return switch (o.type()) {
             case "reach" -> Scenes.marker(server, scene, o.target());
             case "talk" -> switch (o.target()) {
-                case "kestrel" -> OpeningHooks.place("roost");
+                // a named citizen where her body is now (the Roost's street door), else the Roost
+                case "kestrel" -> {
+                    var at = dev.awaken.core.api.CitizenHooks.where(server.overworld(), "kestrel");
+                    yield at != null ? BlockPos.containing(at) : OpeningHooks.place("roost");
+                }
                 case "hale" -> Scenes.marker(server, scene, "spot:quartermaster");
                 case "ilse", "hettie" -> Scenes.marker(server, scene, "camp");
                 default -> Scenes.marker(server, scene, "scene");

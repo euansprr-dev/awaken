@@ -179,11 +179,23 @@ public final class LivingNet {
         }
     }
 
+    /** Server → client: the Wayfarer camp's fire, so its smoke can be seen from afar (SPEC §27.6; every 5 s while near). */
+    public record CampSmoke(net.minecraft.core.BlockPos at) implements CustomPacketPayload {
+        public static final Type<CampSmoke> TYPE = new Type<>(Awaken.id("living_camp_smoke"));
+        public static final StreamCodec<ByteBuf, CampSmoke> STREAM_CODEC = net.minecraft.core.BlockPos.STREAM_CODEC.map(CampSmoke::new, CampSmoke::at);
+
+        @Override
+        public Type<CampSmoke> type() {
+            return TYPE;
+        }
+    }
+
     static void register(RegisterPayloadHandlersEvent e) {
         var r = e.registrar("1");
         r.playToClient(Happenings.TYPE, Happenings.STREAM_CODEC);
         r.playToClient(Journal.TYPE, Journal.STREAM_CODEC);
         r.playToClient(Tells.TYPE, Tells.STREAM_CODEC);
+        r.playToClient(CampSmoke.TYPE, CampSmoke.STREAM_CODEC);
         r.playToClient(RegionMsg.TYPE, RegionMsg.STREAM_CODEC);
         r.playToClient(HitFx.TYPE, HitFx.STREAM_CODEC);
         r.playToClient(XpFx.TYPE, XpFx.STREAM_CODEC);

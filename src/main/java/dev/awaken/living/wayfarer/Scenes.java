@@ -137,6 +137,10 @@ public final class Scenes extends SavedData {
             if (p.level() != level || p.isSpectator() || !Progression.profile(p).awakened()) continue;
             changed |= s.maybeScene(level, p, day);
             dev.awaken.core.AwakenNet.send(p, new dev.awaken.living.LivingNet.Tells(s.tells(p)));
+            // the camp's smoke, seen from afar (vanilla campfire smoke only rises within ~32 blocks of you)
+            if (s.camp != NONE && BlockPos.of(s.camp).distSqr(p.blockPosition().atY(BlockPos.of(s.camp).getY())) < 1000 * 1000) {
+                dev.awaken.core.AwakenNet.send(p, new dev.awaken.living.LivingNet.CampSmoke(BlockPos.of(s.camp)));
+            }
         }
         if (changed) s.setDirty();
     }
@@ -495,7 +499,7 @@ public final class Scenes extends SavedData {
             BlockPos camp = marker(p.level().getServer(), 0, "camp");
             if (camp != null) {
                 if (camp.distSqr(p.blockPosition().atY(camp.getY())) < 24 * 24) dev.awaken.progression.Progression.setCounter(p, CAMP_REACHED, 1);
-                else if (camp.distSqr(p.blockPosition().atY(camp.getY())) < 1200 * 1200) out.add(new HorizonHooks.Site("living:camp", "Wayfarer camp · a fire, people", camp, "", false));
+                else if (camp.distSqr(p.blockPosition().atY(camp.getY())) < 1200 * 1200) out.add(new HorizonHooks.Site("living:camp", "Wayfarers' fire", camp, "", false));
             }
         }
         QuestState qs = QuestEngine.state(p);

@@ -4,7 +4,7 @@
 # 3. Outside the High Gate, facing north: the camp's signal smoke over the trees ahead.
 # 4. Out on the road past the city's edge: the Commons' caption, then a rift tearing open off the road.
 # 5. The first gate, on purpose: announced, then its pillar from the camp's rise.
-# 6. The spawn vault at E-rank: it stirs; its door reads you; WHAT WAITS keeps it.
+# 6. After the world's first five minutes (tips are held while it settles): the waiting tips show.
 # Run: SLOT_WHO=progression /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/progression-way.txt 900
 world autopilot_progression survival 20261026
 waitworld
@@ -42,7 +42,7 @@ shotnow leave_3_gate_smoke
 cmd awaken living way road
 wait 80
 shotnow leave_4_road_caption
-cmd awaken anomaly now rift
+cmd awaken anomaly now rift_tear
 wait 120
 shotnow leave_4_road_rift
 cmd awaken anomaly clear
@@ -53,18 +53,9 @@ shotnow leave_5_gate_announced
 cmd awaken living way rise
 wait 240
 shotnow leave_5_camp_rise_pillar
-# 6. the spawn vault at E-rank (the gate's first floor waits; rank stays E here)
-cmd awaken ascent vow goto
-wait 34
-shotnow leave_6_vault_stir
-wait 60
-shotnow leave_6_vault_words
-cmd tp @s ^ ^ ^8
-wait 60
-shotnow leave_6_vault_door
-key status
-wait 30
-shotnow leave_6_band_waiting
-screen close
+# 6. past the settle (SPEC §26: tips wait 5 minutes of a new world), a tip shows
+cmd tick sprint 4800
+wait 200
+shotnow leave_6_tip_after_settle
 info
 quit

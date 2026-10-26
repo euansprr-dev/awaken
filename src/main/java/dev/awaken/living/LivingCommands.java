@@ -316,6 +316,7 @@ final class LivingCommands {
         net.minecraft.core.BlockPos camp = dev.awaken.living.wayfarer.Scenes.marker(server, 0, "camp");
         if (gate == null || camp == null) return false;
         net.minecraft.core.BlockPos at, look;
+        float pitch = 4F;
         switch (step) {
             case "gate" -> {
                 at = gate.offset((camp.getX() - gate.getX()) / 12, 0, (camp.getZ() - gate.getZ()) / 12);
@@ -329,6 +330,7 @@ final class LivingCommands {
             case "rise" -> {
                 at = camp.offset(0, 0, 6);
                 look = camp.offset(0, 0, -400);
+                pitch = -18F; // over the canopy, to the pillar
                 for (var g : dev.awaken.core.api.GateHooks.near(level, camp, 900)) {
                     if (java.util.Set.of("BUILDING", "READY", "ACTIVE", "OPEN").contains(g.state())) look = g.pos();
                 }
@@ -341,7 +343,7 @@ final class LivingCommands {
         int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, at.getX(), at.getZ());
         double dx = look.getX() - at.getX(), dz = look.getZ() - at.getZ();
         float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
-        p.teleportTo(level, at.getX() + 0.5, y, at.getZ() + 0.5, java.util.Set.of(), yaw, 4F, true);
+        p.teleportTo(level, at.getX() + 0.5, y, at.getZ() + 0.5, java.util.Set.of(), yaw, pitch, true);
         return true;
     }
 }
