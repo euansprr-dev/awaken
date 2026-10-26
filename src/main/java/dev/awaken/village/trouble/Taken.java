@@ -759,15 +759,15 @@ final class Taken implements Plot {
         VillageService.Live l = c.live();
         if (l == null) return;
         Runner.release(c, t, l);
-        // home: they stay in each other's arms until it lapses on its own (half a minute)
-        if (t.stage == HOME) return;
-        TroubleDirector.release(l, t.kin);
-        for (int m : TroubleDirector.household(l, t.kin)) if (m != t.person) TroubleDirector.release(l, m);
-        // ended any other way (a command, a failure): whoever was taken is simply back home
+        // ended any other way (a command, a failure, a reunion cut short): whoever was taken is simply back home
         if (t.person >= 0 && l.settlement().isAway(t.person) && !c.st().memory(t.village).left.contains(t.person)) {
             Rescuee r = rescuee(c, t);
             if (r != null) r.discard();
             l.settlement().away(t.person, false);
         }
+        // home: they stay in each other's arms until it lapses on its own (half a minute)
+        if (t.stage == HOME) return;
+        TroubleDirector.release(l, t.kin);
+        for (int m : TroubleDirector.household(l, t.kin)) if (m != t.person) TroubleDirector.release(l, m);
     }
 }

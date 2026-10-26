@@ -166,7 +166,7 @@ final class Festival implements Plot {
             TroubleNet.festoons(c.level(), l.key(), TroubleDirector.well(l), ends);
         }
         Vec3 fire = Vec3.atBottomCenterOf(BlockPos.of(t.get("fire", t.place)));
-        Set<Integer> used = new HashSet<>();
+        Set<Integer> used = new HashSet<>(c.st().memory(l.key()).homeless); // the burned-out keep to their camp by the well
         if (t.get("racer", -1) >= 0) used.add((int) t.get("racer", -1));
         // the musicians by the fire (the jig plays from them: music())
         List<Integer> band = TroubleDirector.crowd(l, 2, used, "tavernkeeper", "miller");

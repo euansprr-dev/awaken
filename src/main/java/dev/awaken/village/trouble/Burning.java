@@ -99,7 +99,8 @@ final class Burning implements Plot {
         double bd = 800;
         for (Camps.Camp camp : Camps.get(c.level().getServer()).all()) {
             if (!camp.resolved() || camp.cleared(c.day())) continue;
-            double d = TroubleDirector.horizontal(o, camp.pos());
+            // a riftborn camp raids before a den does (a den's Hollows keep to their hole)
+            double d = TroubleDirector.horizontal(o, camp.pos()) + (camp.kind.equals("riftborn") ? 0 : 400);
             if (d < bd) {
                 bd = d;
                 best = camp;
@@ -212,6 +213,7 @@ final class Burning implements Plot {
     }
 
     static void forceRaid(Ctx c, Trouble t, VillageService.Live l) {
+        t.put("there", 1);
         ((Burning) TroubleDirector.PLOTS.get(TroubleKind.BURNING)).raid(c, t, l);
     }
 
@@ -288,7 +290,7 @@ final class Burning implements Plot {
     /** The raid's night: held if someone's there, else it burns without you. */
     void raid(Ctx c, Trouble t, VillageService.Live l) {
         Vec3 w = TroubleDirector.well(l);
-        boolean there = false;
+        boolean there = t.get("there", 0) != 0; // (tours: someone is there, whatever their game mode)
         for (ServerPlayer p : c.level().players()) if (!p.isSpectator() && p.distanceToSqr(w) < THERE * THERE) there = true;
         dismissScouts(c, t);
         if (!there) {
