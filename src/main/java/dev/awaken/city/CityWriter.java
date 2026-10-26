@@ -163,6 +163,11 @@ final class CityWriter {
         long farX = Math.max(Math.abs(x0 - cx), Math.abs(x1 - cx)), farZ = Math.max(Math.abs(z0 - cz), Math.abs(z1 - cz));
         // all inside the cleared columns, or all out of the ring's reach: nothing of ours to find
         if (farX * farX + farZ * farZ <= lo * lo || nearX * nearX + nearZ * nearZ > hi * hi) return 0;
+        return collectOrphansAt(level, chunkX, chunkZ);
+    }
+
+    /** The orphan pass round one chunk, wherever a cut can have left trees hanging (the ring, or the trail's corridor). */
+    static int collectOrphansAt(WorldGenLevel level, int chunkX, int chunkZ) {
         Long2ByteOpenHashMap blocks = new Long2ByteOpenHashMap();
         LongOpenHashSet loaded = new LongOpenHashSet();
         for (int dx = -1; dx <= 1; dx++) {

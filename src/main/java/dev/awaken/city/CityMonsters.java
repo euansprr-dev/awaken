@@ -7,25 +7,42 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.event.entity.living.FinalizeSpawnEvent;
+import net.neoforged.neoforge.event.entity.living.MobSpawnEvent;
 
 /**
  * Monsters near the city (M4, the Commons step; SPEC §16.3). Euan leaves Carillon with no weapon, only his first power,
  * and the fields at night were crowded. Outside the wall a natural spawn of anything hostile (vanilla's monsters, the
  * Awakened hunters) goes ahead only by {@link #pass(double)}: one in eight over the fields and the roads, easing up the
- * road to two in five by the Wayfarers' fire and to every one 640 out. A few still come, so the first night keeps a
- * little threat; never a crowd. Inside the wall the citizens' lamps decide (CitizensModule); the camp keeps its own
+ * road to two in five by the Wayfarers' fire and to every one 640 out, and never where six already stand within 64 (to
+ * 470 out). A few still come, so the first night keeps a little threat; never a crowd. Inside the wall the citizens' lamps decide (CitizensModule); the camp keeps its own
  * ground (living.wayfarer.Camp, 32 round the fire).
  */
 final class CityMonsters {
     private CityMonsters() {}
 
-    static void onFinalizeSpawn(FinalizeSpawnEvent e) {
+    /**
+     * The natural spawner's position check (26.3 calls finalizeSpawn directly, without FinalizeSpawnEvent: the position
+     * check is the one hook a natural spawn passes through with its mob).
+     */
+    static void onPositionCheck(MobSpawnEvent.PositionCheck e) {
         if (e.getSpawnType() != EntitySpawnReason.NATURAL || !(e.getLevel().getLevel() instanceof ServerLevel level)
                 || level.dimension() != Level.OVERWORLD) return;
         CityLayout l = City.layout();
         Mob mob = e.getEntity();
-        if (l != null && thinned(l, mob, mob.getRandom().nextDouble())) e.setSpawnCancelled(true);
+        if (l == null) return;
+        if (thinned(l, mob, mob.getRandom().nextDouble()) || crowded(l, level, mob)) e.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
+    }
+
+    /** Near the city at most this many hostile creatures stand round a spawn (within 64, at about its height). */
+    static final int CROWD = 6, CROWD_TO = 470;
+
+    /** Whether a spawn near the city would join a crowd (only asked of spawns the roll let through: a few a second). */
+    static boolean crowded(CityLayout l, ServerLevel level, Mob mob) {
+        if (!hostile(mob)) return false;
+        int px = l.px(mob.getBlockX()), pz = l.pz(mob.getBlockZ());
+        if (l.plan.kind(px, pz) != CityPlan.VOID || (double) px * px + (double) pz * pz > (double) CROWD_TO * CROWD_TO) return false;
+        var box = mob.getBoundingBox().inflate(64, 16, 64);
+        return level.getEntitiesOfClass(Mob.class, box, CityMonsters::hostile).size() >= CROWD;
     }
 
     /** Whether this natural spawn is one the city's surroundings turn away, for a roll in 0..1. */

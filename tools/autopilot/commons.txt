@@ -53,8 +53,10 @@ cmd awaken city view commons_night
 cmd gamemode creative
 wait 1200
 cmd awaken city monsters 96
-shot commons_night
 cmd gamemode spectator
+cmd awaken city view commons_night
+wait 40
+shot commons_night
 cmd awaken city view commons_road_out
 wait 100
 shot commons_road_out_night

@@ -195,6 +195,21 @@ final class CityCommonsTests {
             h.assertFalse(CityMonsters.thinned(l, zombie, 0.99), "inside the wall the lamps decide, not the fields");
             h.assertTrue(Math.abs(CityMonsters.pass(450) - 0.40) < 0.06, "about two in five by the Wayfarers' fire");
             h.assertTrue(CityMonsters.pass(700) == 1.0, "every spawn far out");
+            // and through the hook the natural spawner really posts (26.3 skips FinalizeSpawnEvent for natural spawns)
+            BlockPos abs = h.absolutePos(new BlockPos(0, 1, 0));
+            CityLayout before = City.install(CityTests.layoutAt(abs.getX(), abs.getZ()));
+            try {
+                zombie.setPos(abs.getX() + 30.5, abs.getY(), abs.getZ() - 290.5);
+                int failed = 0;
+                for (int i = 0; i < 400; i++) {
+                    var ev = new net.neoforged.neoforge.event.entity.living.MobSpawnEvent.PositionCheck(zombie, h.getLevel(), EntitySpawnReason.NATURAL, null);
+                    net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(ev);
+                    if (ev.getResult() == net.neoforged.neoforge.event.entity.living.MobSpawnEvent.PositionCheck.Result.FAIL) failed++;
+                }
+                h.assertTrue(failed >= 320 && failed <= 380, "the natural spawner's position check turns most away over the fields (" + failed + " of 400)");
+            } finally {
+                City.install(before);
+            }
             zombie.discard();
             cow.discard();
             h.succeed();

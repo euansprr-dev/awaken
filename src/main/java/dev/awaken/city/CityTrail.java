@@ -4,7 +4,11 @@ import dev.awaken.city.CityPainter.Ctx;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 
 import static dev.awaken.city.CityBlocks.*;
 import static dev.awaken.city.CityCommons.*;
@@ -32,6 +36,50 @@ final class CityTrail {
         if (!l.carved) return false;
         int x0 = (chunkX << 4) - l.cx, z0 = (chunkZ << 4) - l.cz;
         return x0 <= HALF && x0 + 15 >= -HALF && z0 <= -l.reach + 4 && z0 + 15 >= PATH_END_Z - 2;
+    }
+
+    /** Whether a chunk lies next to the trail (its trees may have grown into the trail's columns). */
+    static boolean near(CityLayout l, int chunkX, int chunkZ) {
+        for (int dx = -1; dx <= 1; dx++)
+            for (int dz = -1; dz <= 1; dz++) if (touches(l, chunkX + dx, chunkZ + dz)) return true;
+        return false;
+    }
+
+    /** The columns the trail keeps clear above its ground: the road and its verges, the footpath, the fingerpost. */
+    static boolean owns(CityLayout l, int wx, int wz) {
+        int x = wx - l.cx, z = wz - l.cz;
+        if (!l.carved || Math.sqrt((double) x * x + (double) z * z) <= l.reach) return false;
+        if (z >= END_Z && z <= -l.reach + 8 && Math.abs(x + 0.5) <= VERGE + 1) return true;
+        return z < END_Z && z >= PATH_END_Z && Math.abs(x + 0.5 - pathX(z)) <= 2.1 || post(x, z);
+    }
+
+    /**
+     * After a chunk next to the trail has grown its trees (the city's feature is its last decoration): takes every tree's
+     * logs and leaves out of the trail's columns in it and its neighbours, then whatever of those trees now hangs in the
+     * air (the city's orphan pass). Returns blocks removed.
+     */
+    static int sweep(WorldGenLevel level, CityLayout l, int chunkX, int chunkZ) {
+        int removed = 0;
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                int nx = chunkX + dx, nz = chunkZ + dz;
+                if (!touches(l, nx, nz)) continue;
+                ChunkAccess n = dx == 0 && dz == 0 ? level.getChunk(nx, nz) : level.getChunk(nx, nz, ChunkStatus.TERRAIN, false);
+                if (n == null) continue;
+                for (int lx = 0; lx < 16; lx++)
+                    for (int lz = 0; lz < 16; lz++) {
+                        int wx = (nx << 4) + lx, wz = (nz << 4) + lz;
+                        if (!owns(l, wx, wz)) continue;
+                        for (int y = l.streetY - 16; y <= l.streetY + 64; y++) {
+                            if (!CityWriter.vegetation(n.getBlockState(m.set(wx, y, wz)))) continue;
+                            level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                            removed++;
+                        }
+                    }
+            }
+        }
+        return removed + (removed > 0 ? CityWriter.collectOrphansAt(level, chunkX, chunkZ) : 0);
     }
 
     /** Paints the trail's columns of one chunk into its buffer (the city's, already painted or reset), reading its ground. */

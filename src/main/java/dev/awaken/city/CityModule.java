@@ -58,7 +58,7 @@ public final class CityModule {
         CityProtection.registerConfig();
         City.init();
         NeoForge.EVENT_BUS.addListener(CitySpawn::onCreateSpawn);
-        NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, CityMonsters::onFinalizeSpawn); // few monsters near the city (the Commons step)
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, CityMonsters::onPositionCheck); // few monsters near the city (the Commons step)
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, CityProtection::onBreak);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, CityProtection::onPlace);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, CityProtection::onUse);

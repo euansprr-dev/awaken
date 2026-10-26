@@ -38,8 +38,7 @@ final class CityCommons {
     /** A field gate (over a culvert) every 48 along, three wide, by turns either side. */
     static final int GATE_STEP = 48, GATE_AT = 30;
 
-    static final BlockState MUD_BLOCK = of("minecraft:mud"), ROOTED_DIRT = of("minecraft:rooted_dirt"),
-            STONE_TOP_SLAB = of("minecraft:stone_brick_slab[type=top]"), LILY = of("minecraft:lily_pad"),
+    static final BlockState STONE_TOP_SLAB = of("minecraft:stone_brick_slab[type=top]"), LILY = of("minecraft:lily_pad"),
             TALL_LOWER = of("minecraft:tall_grass[half=lower]"), TALL_UPPER = of("minecraft:tall_grass[half=upper]"),
             FERN = of("minecraft:fern"), COBBLE_WALL = of("minecraft:cobblestone_wall[up=true]");
     static final BlockState[] WILDFLOWERS = {of("minecraft:dandelion"), of("minecraft:poppy"), of("minecraft:oxeye_daisy"),
@@ -154,21 +153,20 @@ final class CityCommons {
     }
 
     /**
-     * The carriageway at one cell, its top at row {@code y}: setts from the gate, then the laid road (kerbs of cobble,
-     * gravel shoulders worn through to dirt in patches, wheel ruts of coarse dirt with the odd puddle, a crown of trodden
-     * path with a tuft of grass further out). Coherent wear (noise), never a scatter of single blocks.
+     * The carriageway at one cell, its top at row {@code y}: setts from the gate, then the laid road, all one height but
+     * the ruts: cobble kerbs, gravel shoulders and crown (worn to coarse dirt in patches, a tuft of grass further out),
+     * and two wheel ruts of trodden path a pixel down. Coherent wear (noise), never a scatter of single blocks.
      */
     static void carriage(Ctx c, CityBuffer b, int x, int y, int z, double along, double off) {
         int k = (int) Math.abs(off);
         int h = c.pct(x, z, 610);
         double wear = CityWall.vnoise(611, x * 1.3, z * 1.3);
         BlockState s;
-        if (along < SETTS + wear * 6) s = k == 3 ? (h < 70 ? COBBLE : MOSSY_COBBLE) : h < 50 ? COBBLE : h < 78 ? STONE : h < 92 ? ANDESITE : MOSSY_COBBLE;
+        if (along < SETTS + wear * 6) s = k == 3 ? (h < 70 ? COBBLE : MOSSY_COBBLE) : h < 55 ? COBBLE : h < 82 ? STONE_BRICKS : h < 94 ? ANDESITE : MOSSY_COBBLE;
         else s = switch (k) {
-            case 3 -> h < 64 ? COBBLE : h < 86 ? MOSSY_COBBLE : STONE;
-            case 2 -> wear > 0.7 && h < 45 ? MUD_BLOCK : h < 72 ? COARSE_DIRT : h < 90 ? PATH : ROOTED_DIRT;
-            case 1 -> wear < 0.32 || h >= 80 ? PATH : GRAVEL;
-            default -> along > 60 && wear > 0.62 && h < 30 ? GRASS : PATH;
+            case 3 -> h < 72 ? COBBLE : MOSSY_COBBLE;
+            case 2 -> PATH;
+            default -> wear > 0.64 ? COARSE_DIRT : along > 60 && wear < 0.18 && h < 35 ? GRASS : GRAVEL;
         };
         b.set(x, y, z, s);
         b.column(x, y + 1, y + 14, z, AIR);

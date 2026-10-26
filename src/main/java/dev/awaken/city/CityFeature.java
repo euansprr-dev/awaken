@@ -29,8 +29,12 @@ public record CityFeature() implements Feature {
         CityLayout layout = City.layout();
         if (layout == null || level.getLevel().dimension() != Level.OVERWORLD) return false;
         int cx = origin.getX() >> 4, cz = origin.getZ() >> 4;
-        boolean city = layout.touches(cx, cz), trail = CityTrail.touches(layout, cx, cz);
-        if (!city && !trail) return false;
+        boolean city = layout.touches(cx, cz), trail = CityTrail.touches(layout, cx, cz), near = CityTrail.near(layout, cx, cz);
+        if (!city && !trail && !near) return false;
+        if (!city && !trail) {
+            CityTrail.sweep(level, layout, cx, cz); // a neighbour's trees out of the trail's columns
+            return true;
+        }
         ChunkAccess chunk = level.getChunk(cx, cz);
         CityBuffer buf = CityBuffer.chunk();
         long t0 = System.nanoTime();
@@ -40,7 +44,8 @@ public record CityFeature() implements Feature {
         if (trail) CityTrail.paint(layout, chunk, buf, level.getSeed());
         long t1 = System.nanoTime();
         int n = CityWriter.toProto(chunk, buf, layout.streetY);
-        int swept = CityWriter.sweepNeighbours(level, layout, cx, cz) + CityWriter.collectOrphans(level, layout, cx, cz);
+        int swept = CityWriter.sweepNeighbours(level, layout, cx, cz) + CityWriter.collectOrphans(level, layout, cx, cz)
+                + (near ? CityTrail.sweep(level, layout, cx, cz) : 0);
         long t2 = System.nanoTime();
         City.STATS.add(t1 - t0, t2 - t1, n + swept);
         return true;

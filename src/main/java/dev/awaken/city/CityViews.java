@@ -115,7 +115,7 @@ final class CityViews {
         add("commons_fields", -60, 30, -330, 30, 0, -262);
         add("commons_trail", 0.5, 1.6, -345.5, 0.5, 2.5, -440);
         add("commons_camp_end", -2.5, 1.8, -412.5, 4.5, 1.5, -446);
-        add("commons_night", 40.5, 1.6, -300.5, 60, 2, -290);
+        add("commons_night", 30.5, 5.0, -305.5, 0, 2, -290);
         add("walls_works_far", 165.0, 14, 300.0, 78.0, 22, 222.0); // the Works' slanted sides from the fields
         add("walls_inner", 225.8, 1.0, 43.9, 223.9, 14, 68.3);
         add("walls_inner_high", -50.1, 20, 210.1, -66.6, 20, 225.4);
