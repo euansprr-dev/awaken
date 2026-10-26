@@ -9,6 +9,7 @@
     "awaken:role_pad_mine",
     "awaken:role_pad_train",
     "awaken:start_gate",
-    "awaken:finish_gate"
+    "awaken:finish_gate",
+    "awaken:hearthfire"
   ]
 }

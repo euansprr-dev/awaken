@@ -16,7 +16,22 @@ import java.util.Optional;
  */
 public record GuideData(int tier, int radius, int rest, int sanctuaryRest, boolean respawnHere, BlockPos anchor,
                         List<RoomCard> rooms, List<RecipeView> recipes, List<Person> town, List<Person> coming,
-                        Upgrade upgrade, int cottage) {
+                        Upgrade upgrade, int cottage, Home home) {
+
+    /**
+     * The home as the Hearth reads it (W1): its name, Comfort (out of {@code Comfort.MAX}) and what would add a point,
+     * its Style in words, the land's features, the Rested minutes it gives, and every room it read.
+     */
+    public record Home(String name, int comfort, String style, String comfortNext, List<String> land, int restedMinutes, List<RoomView> rooms) {
+        public static final Home NONE = new Home("", 0, "", "", List.of(), 8, List.of());
+    }
+
+    /** One read room: its name, grade (Reading.Grade ordinal), the six readings, what it is for, what would lift it, where. */
+    public record RoomView(String name, int grade, List<Integer> readings, String purpose, String lift, BlockPos centre) {
+        public int reading(int i) {
+            return i < readings.size() ? readings.get(i) : 0;
+        }
+    }
 
     /** {@link #cottage}: Oren's offer is open, being built, built, waiting for open ground, or politely declined. */
     public static final int COTTAGE_NONE = 0, COTTAGE_OFFER = 1, COTTAGE_BUILDING = 2, COTTAGE_BUILT = 3, COTTAGE_NO_ROOM = 4,
@@ -75,13 +90,23 @@ public record GuideData(int tier, int radius, int rest, int sanctuaryRest, boole
         for (Part p : u.parts) b.writeIdentifier(p.item).writeVarInt(p.need).writeVarInt(p.have);
         b.writeVarInt(u.discount).writeBoolean(u.affordable);
         b.writeVarInt(d.cottage);
+        Home h = d.home;
+        b.writeUtf(h.name, 64).writeVarInt(h.comfort).writeUtf(h.style, 64).writeUtf(h.comfortNext, 96).writeVarInt(h.restedMinutes);
+        b.writeVarInt(h.land.size());
+        for (String l : h.land) b.writeUtf(l, 32);
+        b.writeVarInt(h.rooms.size());
+        for (RoomView r : h.rooms) {
+            b.writeUtf(r.name, 96).writeVarInt(r.grade);
+            for (int i = 0; i < 6; i++) b.writeVarInt(r.reading(i));
+            b.writeUtf(r.purpose, 48).writeUtf(r.lift, 96).writeBlockPos(r.centre);
+        }
     }
 
     private static GuideData read(FriendlyByteBuf b) {
         int tier = b.readVarInt(), radius = b.readVarInt(), rest = b.readVarInt(), sRest = b.readVarInt();
         boolean respawn = b.readBoolean();
         BlockPos anchor = b.readBlockPos();
-        int n = Math.min(16, b.readVarInt());
+        int n = Math.min(32, b.readVarInt());
         List<RoomCard> rooms = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
             int type = b.readVarInt(), have = b.readVarInt();
@@ -93,7 +118,7 @@ public record GuideData(int tier, int radius, int rest, int sanctuaryRest, boole
             Optional<BlockPos> mark = b.readOptional(buf -> buf.readBlockPos());
             rooms.add(new RoomCard(type, have, closed, built, why, mark, b.readBoolean()));
         }
-        int rn = Math.min(16, b.readVarInt());
+        int rn = Math.min(32, b.readVarInt());
         List<RecipeView> recipes = new ArrayList<>(rn);
         for (int i = 0; i < rn; i++) {
             int f = b.readVarInt(), w = b.readVarInt(), h = b.readVarInt();
@@ -118,7 +143,25 @@ public record GuideData(int tier, int radius, int rest, int sanctuaryRest, boole
         int discount = b.readVarInt();
         boolean affordable = b.readBoolean();
         Upgrade up = new Upgrade(maxed, next, uRadius, uRest, rank, rankMet, parts, discount, affordable);
-        return new GuideData(tier, radius, rest, sRest, respawn, anchor, rooms, recipes, town, coming, up, b.readVarInt());
+        int cottage = b.readVarInt();
+        String name = b.readUtf(64);
+        int comfort = b.readVarInt();
+        String style = b.readUtf(64), comfortNext = b.readUtf(96);
+        int restedMinutes = b.readVarInt();
+        int ln = Math.min(8, b.readVarInt());
+        List<String> land = new ArrayList<>(ln);
+        for (int i = 0; i < ln; i++) land.add(b.readUtf(32));
+        int vn = Math.min(64, b.readVarInt());
+        List<RoomView> views = new ArrayList<>(vn);
+        for (int i = 0; i < vn; i++) {
+            String roomName = b.readUtf(96);
+            int grade = b.readVarInt();
+            List<Integer> readings = new ArrayList<>(6);
+            for (int k = 0; k < 6; k++) readings.add(b.readVarInt());
+            views.add(new RoomView(roomName, grade, readings, b.readUtf(48), b.readUtf(96), b.readBlockPos()));
+        }
+        Home home = new Home(name, comfort, style, comfortNext, land, restedMinutes, views);
+        return new GuideData(tier, radius, rest, sRest, respawn, anchor, rooms, recipes, town, coming, up, cottage, home);
     }
 
     private static void writePeople(FriendlyByteBuf b, List<Person> people) {

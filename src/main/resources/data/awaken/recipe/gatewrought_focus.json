@@ -3,15 +3,16 @@
   "category": "equipment",
   "group": "awaken_hunter_focus",
   "key": {
-    "B": "#awaken:hunter_bind_c",
     "C": "#awaken:hunter_core_c",
+    "G": "minecraft:gold_ingot",
     "L": "awaken:lord_heart",
+    "M": "#awaken:tier_metal_c",
     "S": "awaken:essence_shard"
   },
   "pattern": [
     "SLS",
-    " C ",
-    " B "
+    "GCG",
+    " M "
   ],
   "result": {
     "id": "awaken:gatewrought_focus"

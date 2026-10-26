@@ -60,5 +60,6 @@ public final class AwakenClient {
         dev.awaken.atlas.client.AtlasClient.init(modBus);
         dev.awaken.arms.client.ArmsClient.init(modBus);
         dev.awaken.wildlife.client.WildlifeClient.init(modBus);
+        dev.awaken.delve.client.DelveClient.init(modBus);
     }
 }

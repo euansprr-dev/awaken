@@ -5,10 +5,11 @@
   "key": {
     "C": "#awaken:hunter_core_c",
     "H": "#awaken:hunter_hide_c",
+    "M": "#awaken:tier_metal_c",
     "S": "awaken:essence_shard"
   },
   "pattern": [
-    "S S",
+    "MSM",
     "HCH"
   ],
   "result": {

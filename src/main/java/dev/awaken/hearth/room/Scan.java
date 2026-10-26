@@ -1,15 +1,50 @@
 package dev.awaken.hearth.room;
 
+import dev.awaken.hearth.echo.EchoRole;
+import net.minecraft.core.BlockPos;
+
 import java.util.List;
 
 /**
- * One finished room scan: the closed rooms, the furniture that isn't in one (and why), and how many of each piece of
- * furniture the radius holds ({@code furniture[Furniture.ordinal()]}; trophies count only when mounted).
+ * One finished room scan: the closed rooms, the furniture that isn't in one (and why), how many of each piece of
+ * furniture the radius holds ({@code furniture[Furniture.ordinal()]}; trophies count only when mounted), what the land
+ * round the rooms has (for Comfort), the faces of each material family over every room (the home's Style), and every role pad in the radius (pads placed before the Hearth join it).
  */
-public record Scan(List<Room> rooms, List<Miss> misses, int[] furniture) {
-    public static final Scan EMPTY = new Scan(List.of(), List.of(), new int[Furniture.COUNT]);
+public record Scan(List<Room> rooms, List<Miss> misses, int[] furniture, Land land, List<Pad> pads, int[] families) {
+    public static final Scan EMPTY = new Scan(List.of(), List.of(), new int[Furniture.COUNT], Land.NONE, List.of(), new int[Materials.FAMILIES]);
 
     public int count(Furniture f) {
         return furniture.length > f.ordinal() ? furniture[f.ordinal()] : 0;
+    }
+
+    /** A role pad the sweep found. */
+    public record Pad(BlockPos pos, EchoRole role) {}
+
+    /**
+     * The land's features outside the rooms (PLAN 4.5): a field (farmland), a pen (farm animals by fences), a garden (a
+     * composter and flowers), a lit yard (lights outdoors at night) and a wall round the place.
+     */
+    public record Land(int farmland, int animals, int fences, int walls, int composters, int flowers, int outdoorLights) {
+        public static final Land NONE = new Land(0, 0, 0, 0, 0, 0, 0);
+
+        public boolean field() {
+            return farmland >= 16;
+        }
+
+        public boolean pen() {
+            return animals >= 2 && fences >= 8;
+        }
+
+        public boolean garden() {
+            return composters >= 1 && flowers >= 6;
+        }
+
+        public boolean litYard() {
+            return outdoorLights >= 6;
+        }
+
+        public boolean wall() {
+            return walls + fences >= 40;
+        }
     }
 }

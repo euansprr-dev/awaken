@@ -95,14 +95,18 @@ TAGS = {
     "hunter_bind_a": ["minecraft:diamond", "minecraft:wind_charge", OPT("awaken:precursor_circuit")],
     # S: a weave of netherite thread, the A-rank Lord's and the deepest strata's relics (the Hollow Court's when you get
     # there), bound with the Herald's echoes and dreams
-    "hunter_hide_s": ["minecraft:netherite_ingot", "minecraft:netherite_scrap"],
+    # S's hide is starmetal now (PLAN 7.2); its recipes take it through M, the tier's metal
+    "hunter_hide_s": [OPT("awaken:starmetal_ingot")],
     "hunter_core_s": [OPT("awaken:" + i) for i in ["herald_halo", "abyssal_glass", "architect_key", "regent_shadow",
                                                    "hunger_fang", "silence_ear", "sleep_feather", "machine_crown",
                                                    "mirror_heart", "storm_core", "root_heart", "ash_heart", "seed_shard"]],
     "hunter_bind_s": ["minecraft:echo_shard", OPT("awaken:dream_residue")],
 }
 
-# Recipes: H hide, C core, B bind, S essence shard, L Lord's Heart, / stick. Patterns differ within a tier.
+# Recipes: H hide, C core, B bind, S essence shard, L Lord's Heart, / stick; from D up M the tier's metal from the deep
+# (#awaken:tier_metal_<t>: D iron, C diamond, B Deepglass, A netherite scrap, S starmetal; no other item fills it), G a
+# gold ingot (every focus from D up: gold is the power's metal) and at B Y an amethyst shard (Veilwoven's resonance).
+# SPEC §28.3: about 13 of the metal for a tier's seven pieces. Patterns differ within a tier.
 RECIPES = {
     "E": {
         "helmet": ["HSH", "H H"],
@@ -114,59 +118,59 @@ RECIPES = {
         "mattock": ["CCC", "B/S", " / "],
     },
     "D": {
-        "helmet": ["HCH", "BSB"],
-        "chestplate": ["HSH", "BCB", "HSH"],
-        "leggings": ["BCB", "S S", "H H"],
-        "boots": ["BSB", "HCH"],
-        "blade": ["CS", "B ", "B "],
-        "focus": ["SBS", " C ", " B "],
-        "mattock": ["BCB", " /S", " / "],
+        "helmet": ["HCH", "MSM"],
+        "chestplate": ["HSH", "MCM", "HMH"],
+        "leggings": ["MCM", "S S", "H H"],
+        "boots": ["MSM", "HCH"],
+        "blade": ["CS", "M ", "B "],
+        "focus": ["SGS", " C ", " M "],
+        "mattock": ["MCM", " /S", " / "],
     },
     "C": {
-        "helmet": ["BCB", "HSH"],
-        "chestplate": ["HSH", "BLB", "SCS"],
-        "leggings": ["BCB", "S S", "H H"],
-        "boots": ["S S", "HCH"],
-        "blade": [" C", "SC", "B "],
-        "focus": ["SLS", " C ", " B "],
-        "mattock": ["CBC", " /S", " / "],
+        "helmet": ["MCM", "HSH"],
+        "chestplate": ["HMH", "MLM", "SCS"],
+        "leggings": ["MCM", "S S", "H H"],
+        "boots": ["MSM", "HCH"],
+        "blade": [" C", "SC", "M "],
+        "focus": ["SLS", "GCG", " M "],
+        "mattock": ["MCM", " /S", " / "],
     },
     "B": {
-        "helmet": ["BCB", "SHS"],
-        "chestplate": ["HSH", "BLB", "SCS"],
-        "leggings": ["SCS", "B B", "H H"],
-        "boots": ["BSB", "HCH"],
-        "blade": [" C", "SC", "BS"],
-        "focus": ["SLS", "BCB", " C "],
-        "mattock": ["CBC", "S/S", " / "],
+        "helmet": ["MCM", "SYS"],
+        "chestplate": ["MYM", "HLH", "SCM"],
+        "leggings": ["SCS", "MYM", "H H"],
+        "boots": ["MSM", "HCH", " Y "],
+        "blade": [" C", "YC", "MS"],
+        "focus": ["SLS", "GCG", "MYM"],
+        "mattock": ["MCM", "Y/S", " / "],
     },
     "A": {
-        "helmet": ["CHC", "BSB"],
-        "chestplate": ["HLH", "CSC", "HBH"],
-        "leggings": ["HCH", "B B", "S S"],
-        "boots": ["C C", "HSH"],
-        "blade": ["  C", "SC ", "LB "],
-        "focus": ["BLB", " C ", " S "],
-        "mattock": ["CCC", " BS", " B "],
+        "helmet": ["CHC", "MSM"],
+        "chestplate": ["HLH", "CSC", "MMM"],
+        "leggings": ["HCH", "M M", "S S"],
+        "boots": ["MCM", "HSH"],
+        "blade": ["  C", "SC ", "LM "],
+        "focus": ["GLG", " C ", "MSM"],
+        "mattock": ["CMC", " BS", " M "],
     },
     "S": {
-        "helmet": ["CLC", "HSH"],
-        "chestplate": ["CLC", "HSH", "BHB"],
-        "leggings": ["CSC", "H H", "B B"],
-        "boots": ["H H", "CSC"],
-        "blade": ["  C", "LC ", "BS "],
-        "focus": ["CLC", " B ", " S "],
-        "mattock": ["CCC", "SBL", " B "],
+        "helmet": ["CLC", "MSM"],
+        "chestplate": ["CLC", "MSM", "BMB"],
+        "leggings": ["CSC", "M M", "B B"],
+        "boots": ["M M", "CSC"],
+        "blade": ["  C", "LC ", "MS "],
+        "focus": ["CLC", "GMG", " S "],
+        "mattock": ["CCC", "SML", " M "],
     },
 }
 
 ROAD = {
     "E": (3, "Hunter gear · E", "Creature hide, bone and essence: your first set. Recipe book."),
-    "D": (13, "Beastbound gear · D", "Beast trophies and Lord parts make iron-grade gear."),
-    "C": (22, "Gatewrought gear · C", "D-rank Lord relics forge diamond-grade gear."),
-    "B": (42, "Veilwoven gear · B", "C-rank relics and Veil-touched bindings."),
-    "A": (67, "Lordscale gear · A", "Lords' scales forge gear past netherite."),
-    "S": (97, "Sovereign Weave · S", "The Herald's halo, woven into a crown."),
+    "D": (13, "Beastbound gear · D", "Beast trophies and Lord parts, bound in iron from the deep."),
+    "C": (22, "Gatewrought gear · C", "D-rank Lord relics set in diamond: it matches diamond armour."),
+    "B": (42, "Veilwoven gear · B", "C-rank relics, Deepglass and amethyst: the Veil's resonance."),
+    "A": (67, "Lordscale gear · A", "Lords' scales plated in netherite, past it."),
+    "S": (97, "Sovereign Weave · S", "The Herald's halo and starmetal from the fallen stars."),
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -2022,7 +2026,8 @@ def content():
             # recipe
             tl = t.lower()
             keymap = {"H": "#awaken:hunter_hide_" + tl, "C": "#awaken:hunter_core_" + tl, "B": "#awaken:hunter_bind_" + tl,
-                      "S": "awaken:essence_shard", "L": "awaken:lord_heart", "/": "minecraft:stick"}
+                      "S": "awaken:essence_shard", "L": "awaken:lord_heart", "/": "minecraft:stick",
+                      "M": "#awaken:tier_metal_" + tl, "G": "minecraft:gold_ingot", "Y": "minecraft:amethyst_shard"}
             pattern = RECIPES[t][piece]
             used = sorted({ch for row in pattern for ch in row if ch != " "})
             write(os.path.join(d, "recipe", iid + ".json"), {

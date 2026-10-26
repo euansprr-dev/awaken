@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": "awaken:bell_bronze_ingot",
+    "/": "minecraft:stick"
+  },
+  "pattern": [
+    " / ",
+    "BBB",
+    "B B"
+  ],
+  "result": {
+    "id": "minecraft:bell"
+  }
+}

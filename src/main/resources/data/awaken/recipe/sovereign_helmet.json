@@ -4,13 +4,13 @@
   "group": "awaken_hunter_helmet",
   "key": {
     "C": "#awaken:hunter_core_s",
-    "H": "#awaken:hunter_hide_s",
     "L": "awaken:lord_heart",
+    "M": "#awaken:tier_metal_s",
     "S": "awaken:essence_shard"
   },
   "pattern": [
     "CLC",
-    "HSH"
+    "MSM"
   ],
   "result": {
     "id": "awaken:sovereign_helmet"

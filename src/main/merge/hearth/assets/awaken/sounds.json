@@ -66,5 +66,29 @@
     "sounds": [
       { "name": "minecraft:block.respawn_anchor.charge", "type": "event", "pitch": 1.4, "volume": 0.8 }
     ]
+  },
+  "hearth.take": {
+    "subtitle": "subtitles.awaken.hearth.take",
+    "sounds": [
+      { "name": "awaken:sfx_hearth_take", "attenuation_distance": 32 }
+    ]
+  },
+  "hearth.fire": {
+    "subtitle": "subtitles.awaken.hearth.fire",
+    "sounds": [
+      { "name": "awaken:sfx_hearth_fire", "attenuation_distance": 12 }
+    ]
+  },
+  "hearth.lift": {
+    "subtitle": "subtitles.awaken.hearth.lift",
+    "sounds": [
+      { "name": "awaken:sfx_hearth_lift", "attenuation_distance": 16 }
+    ]
+  },
+  "hearth.room": {
+    "subtitle": "subtitles.awaken.hearth.room",
+    "sounds": [
+      { "name": "awaken:ui_hearth_room" }
+    ]
   }
 }

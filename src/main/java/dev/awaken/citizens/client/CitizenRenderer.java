@@ -163,7 +163,7 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         Minecraft mc = Minecraft.getInstance();
         life(body, s, mc, rec, partial);
         s.label = null;
-        if (mc.crosshairPickEntity == body && s.distanceToCameraSq < 9 * 9 && s.speech == null) {
+        if (mc.crosshairPickEntity == body && s.distanceToCameraSq < 9 * 9 && s.speech == null && !body.staged()) {
             s.label = CitizenFx.label(body);
             s.labelWidth = body.labelWidth;
         }

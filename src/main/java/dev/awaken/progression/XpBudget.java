@@ -18,6 +18,8 @@ public final class XpBudget {
     public static final String KILL = "kill";
     public static final String ORE = "ore";
     public static final String BUILD = "build";
+    /** Ores under y 0 and Deepglass (SPEC §28.3): their own budget, so the deep pays whatever the way down took. */
+    public static final String DEEP = "deep_mining";
 
     /** Decay time constant: "per 10 minutes". */
     static final double TAU_TICKS = 20 * 60 * 10;
@@ -32,6 +34,7 @@ public final class XpBudget {
             case KILL -> 0.15;
             case ORE -> 0.06;
             case BUILD -> 0.03;
+            case DEEP -> 0.08;
             default -> 0.25;
         };
     }
