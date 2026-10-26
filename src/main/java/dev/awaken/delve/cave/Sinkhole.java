@@ -149,6 +149,19 @@ final class Sinkhole {
             }
         }
 
+        // ---- a lava lake at the ground beside the hole is walled off (no fall of lava down the shaft) ---------------
+        for (int x = x0; x <= x1; x++) {
+            for (int z = z0; z <= z1; z++) {
+                double dx = x + 0.5 - cx, dz = z + 0.5 - cz, d = Math.sqrt(dx * dx + dz * dz);
+                if (d > reach) continue;
+                double a = angleOf(s, x + 0.5, z + 0.5);
+                for (int y = rim - 8; y <= rim + ABOVE; y++) {
+                    if (!k.inside(x, y, z) || d > wall(w, s, y, a) + 2.5) continue;
+                    if (k.get(x, y, z).getFluidState().is(net.minecraft.tags.FluidTags.LAVA)) Carve.put(k, x, y, z, Carve.rock(y));
+                }
+            }
+        }
+
         // ---- the step stones: where a row's drop lands, a stone to climb back up from -------------------------------
         for (int m = 0; m < nRows; m++) {
             int h = rowY(s, m); // m 0: the floor itself, under the lowest row's drop

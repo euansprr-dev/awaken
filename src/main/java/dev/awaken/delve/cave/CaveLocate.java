@@ -31,11 +31,15 @@ final class CaveLocate {
 
     /** The nearest place of {@code kind} whose start lies within {@code radius} of {@code at}, or null. */
     static @Nullable Spec nearest(ServerLevel level, BlockPos at, CaveKind kind, int radius) {
-        return nearest(level, at, kind, radius, s -> true);
+        return nearest(level, at, kind, radius, false, s -> true);
     }
 
-    /** As {@link #nearest(ServerLevel, BlockPos, CaveKind, int)}, the first candidate that {@code ok} accepts. */
-    static @Nullable Spec nearest(ServerLevel level, BlockPos at, CaveKind kind, int radius, java.util.function.Predicate<Spec> ok) {
+    /**
+     * As {@link #nearest(ServerLevel, BlockPos, CaveKind, int)}, the first candidate that {@code ok} accepts; with
+     * {@code world} each candidate's start chunk is generated to its structure starts and the start the world really
+     * holds is taken (and any disagreement with the search logged), so a tour never stands where nothing was built.
+     */
+    static @Nullable Spec nearest(ServerLevel level, BlockPos at, CaveKind kind, int radius, boolean world, java.util.function.Predicate<Spec> ok) {
         var sets = level.registryAccess().lookupOrThrow(Registries.STRUCTURE_SET);
         var state = level.getChunkSource().getGeneratorState();
         record Candidate(ChunkPos chunk, StructureSet set, boolean first, double d) {}
@@ -62,7 +66,29 @@ final class CaveLocate {
         all.sort(Comparator.comparingDouble(Candidate::d));
         for (Candidate c : all) {
             Spec s = site(level, c.set(), c.chunk(), kind, c.first());
+            if (world) {
+                Spec w = built(level, c.set(), c.chunk(), kind);
+                if (w == null ? s != null : s == null || w.id() != s.id()) {
+                    Awaken.LOG.warn("[delve] locate {} at chunk {}: the search says {}, the world holds {}", kind.id, c.chunk(), where(s), where(w));
+                }
+                s = w;
+            }
             if (s != null && ok.test(s)) return s;
+        }
+        return null;
+    }
+
+    private static String where(@Nullable Spec s) {
+        return s == null ? "nothing" : s.x() + " " + s.y() + " " + s.z();
+    }
+
+    /** The place the world really started in a candidate chunk (its chunk generated to its starts), or null. */
+    static @Nullable Spec built(ServerLevel level, StructureSet set, ChunkPos c, CaveKind kind) {
+        var chunk = level.getChunk(c.x(), c.z(), net.minecraft.world.level.chunk.status.ChunkStatus.STRUCTURE_STARTS, true);
+        if (chunk == null) return null;
+        for (var entry : set.structures()) {
+            if (!(entry.structure().value() instanceof CaveStructure cs) || cs.kind() != kind) continue;
+            return CavePlaces.spec(chunk.getStartForStructure(cs));
         }
         return null;
     }

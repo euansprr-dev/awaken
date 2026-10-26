@@ -108,7 +108,7 @@ final class CaveCommands {
         }
         ServerLevel level = p.level();
         long t0 = System.nanoTime();
-        Spec s = CaveLocate.nearest(level, p.blockPosition(), kind, 1600, sp -> real(level, sp));
+        Spec s = CaveLocate.nearest(level, p.blockPosition(), kind, 1600, true, sp -> real(level, sp));
         if (s == null) {
             c.getSource().sendSuccess(() -> Component.literal("No " + kind.id + " within 1600: laying one here").withColor(0xC8C2B0), false);
             return place(c);
@@ -146,10 +146,13 @@ final class CaveCommands {
         if (m == null) return true;
         BlockPos goal = new BlockPos(m[0], m[1], m[2]);
         level.getChunk(goal.getX() >> 4, goal.getZ() >> 4);
-        boolean there = CavePlaces.at(level, goal) != null, dry = level.getFluidState(goal).isEmpty() && level.getFluidState(goal.above()).isEmpty();
-        if (!there || !dry) dev.awaken.Awaken.LOG.warn("[delve] goto passes {} at {} {} {}: {}", s.kind().id, s.x(), s.y(), s.z(),
-                !there ? "the world has no such place there" : "its goal is under water");
-        return there && dry;
+        Spec here = CavePlaces.at(level, goal);
+        boolean there = here != null && here.id() == s.id();
+        boolean open = level.getBlockState(goal).getCollisionShape(level, goal).isEmpty();
+        boolean dry = level.getFluidState(goal).isEmpty() && level.getFluidState(goal.above()).isEmpty();
+        if (!there || !open || !dry) dev.awaken.Awaken.LOG.warn("[delve] goto passes {} at {} {} {}: {}", s.kind().id, s.x(), s.y(), s.z(),
+                !there ? "the world has no such place there" : !open ? "its goal is solid rock (not built)" : "its goal is under water");
+        return there && open && dry;
     }
 
     /** A spot to stand at or just above {@code at} (the world's own ground may differ a little from a mark's). */
