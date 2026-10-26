@@ -184,10 +184,14 @@ public final class OpeningPlaces {
                 atV(ATRIUM_X1 - 1.5, y, z), atV(REG_X0 + 2.0, y, z), bramLens()};
     }
 
-    /** Round the counter's south end to behind it (the counter runs z LENS_Z-2..DESK_Z+1). */
+    /**
+     * From beside the Lens round the counter's far (north) end to behind it: never across the desk's front, where you
+     * stand to sign (the south way passed two blocks from you and he shouldered you aside: Euan, 2026-10-26). The
+     * counter runs z LENS_Z-2..DESK_Z; the Lens's pedestal z LENS_Z-1..LENS_Z+1; the row north of both is clear.
+     */
     Vec3[] toDesk() {
-        double y = TERRACE + 1, z = DESK_Z + 2.65;
-        return new Vec3[]{atV(COUNTER_X - 1.0, y, z), atV(COUNTER_X + 1.5, y, z), bramDesk()};
+        double y = TERRACE + 1, z = LENS_Z - 2.5;
+        return new Vec3[]{atV(LENS_X - 2.0, y, z), atV(COUNTER_X + 1.5, y, z), bramDesk()};
     }
 
     /** Inside the Registry hall (the walk there is over). */

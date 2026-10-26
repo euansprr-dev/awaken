@@ -1301,6 +1301,7 @@ final class CityEvents {
             default -> {}
         }
         b.setAct(act);
+        b.setFlag(CitizenBody.F_STAGED, role == Roles.STAGED);
         b.hold(EquipmentSlot.MAINHAND, main);
         b.hold(EquipmentSlot.OFFHAND, off);
         b.setFlag(CitizenBody.F_CRATE, false);

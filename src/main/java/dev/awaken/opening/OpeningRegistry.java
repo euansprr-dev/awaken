@@ -284,10 +284,11 @@ final class OpeningRegistry {
         if (now % 10 != 1) return;
         Vec3[] way = at.toDesk();
         Vec3 bram = CitizenHooks.where(p.level().getServer().overworld(), "bram");
+        // no body yet, or far off (a relog, a skip of the walk): straight behind the desk, never put down beside you
+        if (bram == null || bram.distanceTo(at.bramLens()) > 6 && w.deskWp < 1) w.deskWp = way.length - 1;
         if (w.deskWp < 0) w.deskWp = 0;
         Vec3 t = way[Math.min(w.deskWp, way.length - 1)];
         if (bram != null && bram.distanceTo(t) < 1.0 && w.deskWp < way.length - 1) t = way[++w.deskWp];
-        if (bram == null) w.deskWp = way.length - 1;
         boolean behind = w.deskWp >= way.length - 1;
         // a friend still to be handed a band: he holds one out for them too
         if (prop.isEmpty() && anyAt(p, BAND)) {
