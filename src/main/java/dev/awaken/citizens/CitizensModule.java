@@ -111,6 +111,12 @@ public final class CitizensModule {
             e.setCanceled(true);
             return;
         }
+        // a Registry clerk answers "anything for me?" with the one next step that fits you (SPEC §27.8)
+        if (c.roster.isCitizen(b.rec) && c.data.role[b.rec] == 0 && "clerk".equals(Roster.JOBS[c.roster.job[b.rec]])) {
+            CitizensNet.say(p, b, dev.awaken.progression.Advice.next(p), 110, 0);
+            e.setCanceled(true);
+            return;
+        }
         if (c.roster.isCitizen(b.rec) && c.data.role[b.rec] == 0) c.recognition.greet(b, b.rec, p, c.level.getGameTime(), true);
         e.setCanceled(true);
     }

@@ -248,6 +248,7 @@ public final class Director {
         dev.awaken.signal.Signal.toast(p, net.minecraft.network.chat.Component.literal("A gate is drawing breath · " + dist + " m " + dir
                 + " · its floors make you stronger"), dev.awaken.core.api.Notices.Tier.IMPORTANT, "gate");
         DirectorLog.log(p, "gate", "the first gate, on purpose: #" + g.id + " " + dist + " m " + dir + " after " + waited + " passes");
+        dev.awaken.core.api.TipHooks.offer(p, dev.awaken.Awaken.id("first/gate"));
         return g;
     }
 

@@ -246,6 +246,7 @@ public final class Progression {
                         Component.literal(gained > 1 ? "Level " + (p.level - gained) + " → " + p.level : "Level " + p.level))
                 .body(Component.literal("+" + gained * Curve.POINTS_PER_LEVEL + " points to spend · K"))
                 .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 5).build());
+        if (p.unspent > 0) dev.awaken.core.api.TipHooks.offer(player, dev.awaken.Awaken.id("first/level")); // where points go, and how you grow (SPEC §27.7)
         // after the level toast, so each level's unlock (the level road) reads as its consequence
         int top = p.level;
         for (int lv = top - gained + 1; lv <= top; lv++) {
@@ -266,6 +267,7 @@ public final class Progression {
     public static boolean spendPoint(ServerPlayer player, Stat stat) {
         Profile p = profile(player);
         if (p.unspent <= 0) return false;
+        dev.awaken.core.api.TipHooks.done(player, dev.awaken.Awaken.id("first/level"));
         p.unspent--;
         p.stats[stat.ordinal()]++;
         applyAttributes(player);

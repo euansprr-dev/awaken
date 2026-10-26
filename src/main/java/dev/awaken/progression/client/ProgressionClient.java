@@ -53,7 +53,10 @@ public final class ProgressionClient {
     private static void onTick() {
         Minecraft mc = Minecraft.getInstance();
         while (AwakenKeys.STATUS.consumeClick()) {
-            if (mc.player != null && mc.gui.screen() == null) mc.gui.setScreen(statusOpener.get());
+            if (mc.player != null && mc.gui.screen() == null) {
+                mc.gui.setScreen(statusOpener.get());
+                dev.awaken.core.api.TipHooks.client().done(Awaken.id("first/band"));
+            }
         }
     }
 

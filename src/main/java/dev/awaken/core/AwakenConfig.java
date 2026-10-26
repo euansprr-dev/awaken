@@ -88,6 +88,10 @@ public final class AwakenConfig {
                         "small finds go quietly to the Journal (K). MINIMAL: only decisions, danger and firsts. GUIDED: small finds",
                         "show too, with shorter gaps.")
                 .defineEnum("notifications", Notifications.STANDARD);
+        public static final ModConfigSpec.BooleanValue TIPS = C
+                .comment("Just-in-time tips: a short line in your own keys the first time something comes up, gone when you do it,",
+                        "never more than a few times. Counts are kept in config/awaken-tips.json (delete it to see them again).")
+                .define("tips", true);
         public static final ModConfigSpec.DoubleValue SYSTEM_SCALE = C
                 .comment("Size of System cards, story lines and the Now tracker (toasts stay vanilla-sized).")
                 .defineInRange("systemScale", 1.0, 0.75, 1.5);

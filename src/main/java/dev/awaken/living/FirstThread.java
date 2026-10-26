@@ -46,6 +46,10 @@ public final class FirstThread {
             QuestEngine.track(p, id);
             DirectorLog.log(p, "living", "the first thread: " + id + " starts by itself at registration");
         }
+        // the first tips (SPEC §27.7): the band, then the two lines at the top
+        var server = p.level().getServer();
+        dev.awaken.core.Later.run(server, 120, () -> dev.awaken.core.api.TipHooks.offer(p, dev.awaken.Awaken.id("first/band")));
+        dev.awaken.core.Later.run(server, 520, () -> dev.awaken.core.api.TipHooks.offer(p, dev.awaken.Awaken.id("first/now")));
     }
 
     /** The errand's key as the quest book holds it (with or without the namespace). */

@@ -1361,8 +1361,52 @@ final class CityEvents {
                 return line.replace("{district}", n[1]).replace("{gate}", n[1]);
             }
         }
-        if (!about.isEmpty() && pick < 8) return lines.pick(seed, tod, "news.about");
+        if (!about.isEmpty() && pick < 7) return lines.pick(seed, tod, "news.about");
+        if (pick < 9) {
+            String wilds = wildsNews(lines, seed, tod);
+            if (wilds != null) return wilds;
+        }
         return lines.pick(seed, tod, "news.city");
+    }
+
+    /**
+     * The land past the walls, from the world (SPEC §27.8): the nearest standing gate within 900 of the city, else the
+     * spawn vault, else the Wayfarers' camp, with which way and through which of the city's gates. Before, every line in
+     * the city was flavour: no one ever named a place outside the walls.
+     */
+    private @org.jspecify.annotations.Nullable String wildsNews(Lines lines, long seed, int tod) {
+        var site = dev.awaken.terrain.api.CityBasin.site(c.server);
+        if (site.isEmpty()) return null;
+        net.minecraft.server.level.ServerLevel level = c.server.overworld();
+        net.minecraft.core.BlockPos centre = new net.minecraft.core.BlockPos(site.get().x(), level.getSeaLevel(), site.get().z());
+        net.minecraft.core.BlockPos best = null;
+        double bestD = Double.MAX_VALUE;
+        for (var g : dev.awaken.core.api.GateHooks.near(level, centre, 900)) {
+            if (!java.util.Set.of("BUILDING", "READY", "ACTIVE", "OPEN").contains(g.state())) continue;
+            double d = g.pos().distSqr(centre.atY(g.pos().getY()));
+            if (d < bestD) {
+                bestD = d;
+                best = g.pos();
+            }
+        }
+        if (best != null) return lines.pick(seed, tod, "news.wilds_gate").replace("{gate}", way(centre, best));
+        var vault = dev.awaken.above.ruin.RuinLocator.spawnVault(level);
+        if (vault != null && Math.floorMod(seed >>> 3, 2L) == 0) {
+            return lines.pick(seed, tod, "news.wilds_vault").replace("{gate}", way(centre, vault.getMiddleBlockPosition(centre.getY())));
+        }
+        return lines.pick(seed, tod, "news.wilds_camp");
+    }
+
+    /** "past the High Gate, to the north" (the city's gates: High north, Dawn east, Mill south). */
+    private static String way(net.minecraft.core.BlockPos from, net.minecraft.core.BlockPos to) {
+        double ang = (Math.toDegrees(Math.atan2(to.getX() - from.getX(), -(to.getZ() - from.getZ()))) + 360) % 360;
+        int q = (int) Math.round(ang / 90.0) % 4;
+        return switch (q) {
+            case 0 -> "past the High Gate, to the north";
+            case 1 -> "past the Dawn Gate, to the east";
+            case 2 -> "past the Mill Gate, to the south";
+            default -> "out past the west wall";
+        };
     }
 
     String aboutName() {

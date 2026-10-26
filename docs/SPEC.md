@@ -4533,3 +4533,44 @@ rings are a rope ladder), the Tether's "· needs the Tether".
 - **Out through the walls** is a moment: crossing the city reserve outward shows the region's caption ("THE COMMONS ·
   1-8") once a play-day (the Commons spans the city's edge, so leaving had none).
 - Test: `living_first_thread`.
+
+### 27.7 Tips, switched on, and the Signal's thread (phase 4)
+- **Tips** (docs/carillon/m4/onboarding.md §1, finally built; `TipHooks.install` had no caller, so every tip in the
+  game, the Ascent's, the Living Wilds' and the free-run's, showed nothing):
+  - Rules (`signal.ui.TipRules`, pure): one tip at a time, the highest priority whose context has held 6 ticks; 80 ticks
+    between any two; `cooldown` between showings of one; retired after `retire_after_done` dones or `retire_after_shown`
+    showings; the `short` text (just the keys) once it's been done.
+  - Client (`signal.client.Tips`, `TipHooks.Client`): data from `assets/awaken/tips/<group>/<name>.json` (reloaded with
+    resources), `{key.<mapping>}` in the player's own bindings (`KeyText`), other placeholders dropped; counts per person
+    in `config/awaken-tips.json`; shown only when the notification director allows (`Notices.claim(IMPORTANT, "tip")`)
+    and never over a screen, while held (`hold(owner)`: the Ascent's scenes) or while the director is quiet. Drawn
+    centred above the story line's slot, one line (two at most), in the System's glass; it fades when its context ends,
+    at once when done. Client option `tips` (on).
+  - Server (`TipHooks.Server` in the signal module): `offer` and `done` are one small payload (`signal_tip`); a server
+    offer holds for the tip's whole `show_for`.
+  - The first stretch (`assets/awaken/tips/first/`): `band` (registration + 6 s: "K opens your band: what you hold, what
+    waits for you, and the way up."; done when K opens), `now` (registration + 26 s: the two lines at the top), `atlas`
+    (the first way out through the walls; done when the Atlas opens), `power` (the first power chosen; done at the first
+    cast), `level` (a level-up with points; done when a point is spent: "You grow by finding new things, hunting, and
+    clearing gate floors."), `gate` (the first gate placed; done on entering a gate), `night` (the first dusk outside
+    the walls, once).
+- **The Signal's thread** (`NowClient.thread`): toward the Now line's place, a thread of the Signal's light runs low
+  along the ground, 26 blocks in a little over a second (`AscentFxBridge.threadMote`, two motes a tick), once when that
+  place is new and once more if the player stands still outdoors for 8 s with it; at most every 2 minutes, never in a
+  screen, never within 12 blocks of the place. No key, nothing that stays on screen (Ghost of Tsushima's guiding wind,
+  in our blue).
+
+### 27.8 People who point (phase 4)
+- **The crier names real places** (`CityEvents.wildsNews`, lines in `tools/city/lines.py` → `citizen_lines.json`
+  `news.wilds_*`): the nearest standing gate within 900 of the city ("Hear ye! A gate's light stands past the High Gate,
+  to the north!"), else the spawn vault ("…hums again! Its door reads a hunter's rank, they say!"), else the
+  Wayfarers' camp. Before, every line in the city was flavour.
+- **Kestrel speaks** before you click her (`named.kestrel`: "Runner! You owe me word from the square.").
+- **"Anything for me?"** (`progression.Advice.next`, after Terraria's Guide): a free Registry clerk you right-click says
+  the one next step that fits you: a Reassessment waiting, a lock that answers you now, points to spend, the Directive
+  you've taken, else the next rank and what it opens for you ("D-rank at level 10. It opens a sealed vault for you, and
+  more.").
+- **A level-1 found scene**: Marta's Wheel (`quest/martas_wheel.json`, band 0, a road scene): eight sticks for her
+  wagon, paid in road news (gates' light, vaults' doors, the camp). Found scenes all needed level 8, so a new player
+  never saw a flare; now the first one can rise in the first quarter hour.
+- **One Journal**: the Living Wilds' chains read "JOURNAL · CHAINS" beside the System's filed finds ("JOURNAL").

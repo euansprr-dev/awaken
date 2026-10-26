@@ -55,10 +55,14 @@ public final class RegionTracker {
         // out through the walls: the region's caption once a play-day (SPEC §27.6; the Commons spans the city's edge,
         // so leaving had no moment at all)
         boolean city = dev.awaken.terrain.api.CityBasin.reserved(p.getBlockX(), p.getBlockZ());
+        // the first dusk outside the walls (the client shows it once, ever)
+        long tod = Math.floorMod(level.getServer().overworld().getOverworldClockTime(), 24000L);
+        if (!city && tod >= 12300 && tod < 13500 && dev.awaken.core.Throttle.allow(p, "tip_night", 24000)) dev.awaken.core.api.TipHooks.offer(p, dev.awaken.Awaken.id("first/night"));
         Boolean wasCity = IN_CITY.put(p.getUUID(), city);
         if (Boolean.TRUE.equals(wasCity) && !city) {
             long day = PlayDays.current(level.getServer());
             Long last = WENT_OUT.put(p.getUUID(), day);
+            if (last == null) dev.awaken.core.api.TipHooks.offer(p, dev.awaken.Awaken.id("first/atlas")); // the first way out: the Atlas (SPEC §27.7)
             if (last == null || last != day) {
                 var out = new LivingNet.RegionMsg(r.name(), r.low(), r.high(), r.commons(), true, r.high() >= Progression.profile(p).level() + DANGER);
                 dev.awaken.core.AwakenNet.send(p, out);

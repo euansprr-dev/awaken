@@ -43,6 +43,29 @@ final class SignalTests {
         Signal.onAction("signaltest", (p, action, accepted) -> ANSWERS.incrementAndGet());
         NowHooks.register(p -> TEST_NOW.getOrDefault(p.getUUID(), List.of()));
 
+        // SPEC §27.7: tips, the pure rules: the context settles, the higher priority wins, a gap between tips, a cooldown
+        // for the same one, retired after its dones or showings, the short text once done, and only if the director allows
+        AwakenTests.register("signal_tip_rules", 20, h -> {
+            var a = new dev.awaken.signal.ui.TipRules.Def("Hold {key.jump}", "{key.jump}", 60, 140, 2, 3, 600, "after");
+            var b = new dev.awaken.signal.ui.TipRules.Def("Press K", "", 40, 140, 1, 2, 600, "any");
+            java.util.Map<String, dev.awaken.signal.ui.TipRules.Def> defs = java.util.Map.of("a", a, "b", b);
+            java.util.Map<String, dev.awaken.signal.ui.TipRules.Count> counts = new java.util.HashMap<>();
+            java.util.Map<String, Long> since = new java.util.HashMap<>(java.util.Map.of("a", 100L, "b", 100L)), last = new java.util.HashMap<>();
+            h.assertTrue(dev.awaken.signal.ui.TipRules.pick(103, since, defs, counts, last, -1000, true, x -> true) == null, "a context settles first");
+            h.assertTrue("a".equals(dev.awaken.signal.ui.TipRules.pick(106, since, defs, counts, last, -1000, true, x -> true)), "the higher priority wins");
+            h.assertTrue("b".equals(dev.awaken.signal.ui.TipRules.pick(106, since, defs, counts, last, -1000, false, x -> true)), "an 'after' tip waits for the awakening");
+            h.assertTrue(dev.awaken.signal.ui.TipRules.pick(106, since, defs, counts, last, 50, true, x -> true) == null, "a gap after the last tip");
+            h.assertTrue(dev.awaken.signal.ui.TipRules.pick(106, since, defs, counts, last, -1000, true, x -> false) == null, "never past the director");
+            last.put("a", 106L);
+            h.assertTrue("b".equals(dev.awaken.signal.ui.TipRules.pick(300, since, defs, counts, last, -1000, true, x -> true)), "a cooldown for the same tip");
+            counts.put("a", new dev.awaken.signal.ui.TipRules.Count(1, 1));
+            h.assertTrue(dev.awaken.signal.ui.TipRules.text(a, counts.get("a")).equals("{key.jump}"), "done once: the short text");
+            counts.put("a", new dev.awaken.signal.ui.TipRules.Count(1, 2));
+            h.assertTrue(dev.awaken.signal.ui.TipRules.retired(a, counts.get("a")), "done enough: retired");
+            h.assertTrue(dev.awaken.signal.ui.TipRules.retired(b, new dev.awaken.signal.ui.TipRules.Count(2, 0)), "shown enough: retired");
+            h.succeed();
+        });
+
         AwakenTests.register("signal_layout_every_gui_size", 20, h -> {
             List<String> bad = layoutViolations();
             h.assertTrue(bad.isEmpty(), "layout: " + String.join("; ", bad.subList(0, Math.min(6, bad.size()))));

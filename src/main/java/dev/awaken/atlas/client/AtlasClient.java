@@ -65,7 +65,10 @@ public final class AtlasClient {
         boolean open = mc.gui.screen() instanceof AtlasScreen;
         AtlasState.get().tick(mc, open);
         while (KEY.consumeClick()) {
-            if (mc.gui.screen() == null && mc.player != null) AtlasScreen.open(20f, 52f, 1f);
+            if (mc.gui.screen() == null && mc.player != null) {
+                AtlasScreen.open(20f, 52f, 1f);
+                dev.awaken.core.api.TipHooks.client().done(dev.awaken.Awaken.id("first/atlas"));
+            }
         }
     }
 

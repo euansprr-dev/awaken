@@ -94,6 +94,7 @@ public final class Runs {
 
     public static boolean enter(ServerPlayer p, GateRecord g) {
         MinecraftServer server = p.level().getServer();
+        dev.awaken.core.api.TipHooks.done(p, dev.awaken.Awaken.id("first/gate"));
         ServerLevel gl = GateService.gateLevel(server);
         if (gl == null || !AwakenConfig.GATES.get()) return false;
         RunState cur = run(p);
