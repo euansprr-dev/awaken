@@ -87,6 +87,10 @@ MINE_DIAMOND_P = 0.07           # ASSUMED: chance of a diamond per deep mining m
 MINE_DEEP_SHARE = 0.4           # ASSUMED: share of mining minutes spent below y 0 once you can
 MINE_DEEP_LEVEL = 8             # ASSUMED: from this level (and an iron pick) a player goes deep
 LODE_P, LODE_P_DEEP, FORK_X, FORK_HOUR = 0.012, 0.008, 3.0, 3.0
+# A delve trip: once a player is within DELVE_AHEAD levels of a tier whose metal they lack, each cycle out they go after
+# it for DELVE_MIN minutes (C: below y 0, the fork tuned to diamond, so the lodes they find are diamond lodes:
+# DELVE_LODE_P a minute with the fork, a third of it without). It costs the cycle that time and pays ore XP as mining does.
+DELVE_AHEAD, DELVE_MIN, DELVE_LODE_P = 3, (15, 30), 0.02
 LODE_LEFT = 0.55
 IRON_LODE = (40, 100)           # JAVA delve.Ore: IRON 40-100 blocks, heart 4-7 raw iron
 DIAMOND_LODE = (20, 40)         # JAVA delve.Ore: DIAMOND 20-40 blocks, heart 2-4 diamonds
@@ -320,13 +324,32 @@ def simulate(kind, rng):
             if tier not in old_kit_at and all(metal[k] + old[k] >= v for k, v in need.items()):
                 old_kit_at[tier] = st["t"] / 60
 
-    def mine_minute():
-        """One minute of mining: ore by depth, and maybe a lode (more often with the Tuning Fork)."""
+    def mine_minute(after=None):
+        """One minute of mining: ore by depth, and maybe a lode (more often with the Tuning Fork). {@code after}: a delve
+        trip's tier (it goes where that tier's metal is, and its lodes are that metal's)."""
         hours = st["t"] / 60
         fork = FORK_X if hours >= FORK_HOUR else 1.0
         if not pick[0] and metal["iron"] >= 3:
             pick[0] = True
             metal["iron"] -= 3                      # the iron pick
+        if after == "C" and pick[0]:
+            metal["iron"] += 1
+            if mrng.random() < MINE_DIAMOND_P:
+                metal["diamond"] += mrng.randint(1, 2)
+            if mrng.random() < DELVE_LODE_P * fork / FORK_X:
+                metal["diamond"] += round(mrng.randint(*DIAMOND_LODE) * LODE_LEFT) + mrng.randint(2, 4)
+            if mrng.random() < MINE_GOLD_P:
+                metal["gold"] += mrng.randint(1, 2)
+            kit_check()
+            return
+        if after == "D":
+            metal["iron"] += mrng.randint(*MINE_IRON)
+            if mrng.random() < DELVE_LODE_P * 1.5 * fork / FORK_X:
+                metal["iron"] += round(mrng.randint(*IRON_LODE) * LODE_LEFT) + mrng.randint(4, 7)
+            if mrng.random() < MINE_GOLD_P:
+                metal["gold"] += mrng.randint(1, 2)
+            kit_check()
+            return
         deep = pick[0] and st["level"] >= MINE_DEEP_LEVEL and mrng.random() < MINE_DEEP_SHARE
         if deep:
             metal["iron"] += 1
@@ -362,6 +385,14 @@ def simulate(kind, rng):
 
     def levels(frac):  # a fraction of the current level
         gain(frac * xp_to_next(st["level"]))
+
+    def delve(tier, minutes):
+        """A trip after a tier's metal: every minute mining (it pays ore XP as mining does)."""
+        for _ in range(int(round(minutes))):
+            st["t"] += 1
+            budget.decay(1)
+            gain(budget.pay("ore", ORE_FRAC * mrng.randint(1, 4)) * taper(st["level"]) * xp_to_next(st["level"]))
+            mine_minute(tier)
 
     def overworld(minutes, awake=True):
         """Minute by minute outside (the Living Wilds, SPEC 21.3): kills by creature level and role, crafts, ores, building,
@@ -440,6 +471,11 @@ def simulate(kind, rng):
             home = rng.uniform(14, 22)  # the first hour (the Commons): try the power, meet creatures, a rift tear, then go in
         before = st["t"]
         overworld(home)
+        # the deep: once a tier is near and its metal isn't in hand, go after it (W2: gates no longer pay it)
+        for tier, lv in KIT_LEVEL.items():
+            if tier not in kit_at and st["level"] >= lv - DELVE_AHEAD:
+                delve(tier, mrng.uniform(*DELVE_MIN))
+                break
         # Known quirk: in-game days advance only outdoors here; in the real game they also pass in gates (a flattering
         # simplification for a player who stays outside; docs/living-wilds/living_wilds_sim.py counts both).
         day_clock += st["t"] - before
