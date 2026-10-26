@@ -57,12 +57,35 @@ public final class SettleCommands {
         return Commands.literal("stage").executes(SettleCommands::buildStage)
                 .then(Commands.literal("view").then(Commands.argument("name", StringArgumentType.word())
                         .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("road", "ilse_door", "ilse_room", "forge", "field", "minehead",
-                                "anchor", "kit", "overview", "hall"), b))
+                                "anchor", "kit", "overview", "hall", "atlas", "walker"), b))
                         .executes(c -> view(c, StringArgumentType.getString(c, "name")))))
-                .then(Commands.literal("settle").executes(SettleCommands::settleStage));
+                .then(Commands.literal("settle").executes(SettleCommands::settleStage))
+                .then(Commands.literal("miner").executes(SettleCommands::minerSoon));
     }
 
-    /** Builds the homestead at your feet; its Hearth (Tier I, named Ashford) is yours, its rooms read now. */
+    /** The clock set to four seconds before the miner comes up the shaft and the evening's haul is in. */
+    static int minerSoon(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        Optional<HearthRecord> ho = home(c);
+        if (ho.isEmpty()) return 0;
+        HearthRecord h = ho.get();
+        ServerLevel level = c.getSource().getPlayerOrException().level().getServer().overworld();
+        for (Folk.Settler st : h.folk.settlers) {
+            if (!"miner".equals(st.who.role()) || !st.home()) continue;
+            int rec = HomePeople.recordOf(h, st.who.id());
+            if (rec < 0) continue;
+            int up = Math.min(Days.surfaces(rec), Work.HAUL_TOD); // he and the haul both within the four seconds
+            long now = level.getOverworldClockTime();
+            var clock = level.registryAccess().get(net.minecraft.world.clock.WorldClocks.OVERWORLD);
+            if (clock.isEmpty()) return 0;
+            level.getServer().clockManager().setTotalTicks(clock.get(), now / 24000 * 24000 + up - 80);
+            say(c, st.who.given() + " comes up at " + up);
+            return 1;
+        }
+        c.getSource().sendFailure(Component.literal("No miner lives here"));
+        return 0;
+    }
+
+    /** Builds the homestead on the nearest good ground; its Hearth (Tier I, named Ashford) is yours, its rooms read now. */
     static int buildStage(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
         ServerPlayer sp = c.getSource().getPlayerOrException();
         ServerLevel level = sp.level().getServer().overworld();
@@ -71,9 +94,11 @@ public final class SettleCommands {
             HomePeople.stop(old);
             data.remove(old.owner);
         });
-        BlockPos at = sp.blockPosition();
         long t0 = System.nanoTime();
+        // on dry, gently rolling land near you, clear of any settlement, and you're stood in its yard after
+        BlockPos at = HomeStage.site(level, sp.blockPosition());
         HomeStage.Stage st = HomeStage.build(level, at);
+        sp.teleportTo(level, at.getX() + 2.5, at.getY(), at.getZ() + 7.5, java.util.Set.of(), 180f, 10f, true);
         HearthRecord h = new HearthRecord(sp.getUUID(), sp.getGameProfile().name(), st.anchor(), HearthService.OVERWORLD);
         h.name = "Ashford";
         h.tier = 1;
@@ -99,6 +124,15 @@ public final class SettleCommands {
         ServerPlayer sp = c.getSource().getPlayerOrException();
         HomeStage.Stage st = HomeStage.last();
         HomeStage.View v = st == null ? null : st.views().get(name);
+        if (name.equals("walker")) {
+            // whoever is walking in, from just behind their shoulder: the bundle, and the way ahead
+            var npc = Arrival.walker(sp.level().getServer().overworld());
+            if (npc != null) {
+                double yaw = Math.toRadians(npc.yBodyRot);
+                Vec3 fwd = new Vec3(-Math.sin(yaw), 0, Math.cos(yaw)), right = new Vec3(-fwd.z, 0, fwd.x), at = npc.position();
+                v = new HomeStage.View(at.subtract(fwd.scale(4.2)).add(right.scale(1.6)).add(0, 2.2, 0), at.add(fwd.scale(3)).add(0, 1.1, 0));
+            }
+        }
         if (v == null) {
             c.getSource().sendFailure(Component.literal("No staged view " + name));
             return 0;
@@ -183,7 +217,7 @@ public final class SettleCommands {
             }
             HomeStage.Stage st = HomeStage.last();
             BlockPos from = st != null && h.contains(st.road()) ? st.road() : null;
-            String why = Settlers.settleNow(level, h, p.id(), from);
+            String why = Settlers.settleNow(level, h, p.id(), from, from == null ? null : st.spots().get("road_end"));
             say(c, why.isEmpty() ? p.given() + " is on the way" : why);
             return why.isEmpty() ? 1 : 0;
         }));

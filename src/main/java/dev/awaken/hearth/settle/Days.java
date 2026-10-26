@@ -21,6 +21,11 @@ final class Days {
         return Math.floorMod(start + (int) Math.floorMod(z, (long) (2 * k + 1)) - k, 24000);
     }
 
+    /** When the miner who is record {@code i} comes up the shaft with the evening's haul (time of day). */
+    static int surfaces(int i) {
+        return at(i, Work.HAUL_TOD, 60);
+    }
+
     static void of(RosterBuilder.Person p, int i, String role, int home, @Nullable Integer work, @Nullable Integer work2, int meal, int fire,
                    @Nullable Integer watch, int errands) {
         if (work != null) p.work(work);

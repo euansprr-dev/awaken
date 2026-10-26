@@ -5,8 +5,11 @@ import dev.awaken.city.kit.KitBlocks;
 import dev.awaken.hearth.HearthContent;
 import dev.awaken.hearth.guide.Cottage;
 import dev.awaken.hearth.guide.CottagePlan;
+import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -19,6 +22,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.LadderBlock;
+import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.StairBlock;
@@ -29,6 +33,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.Half;
 import net.minecraft.world.level.block.state.properties.SlabType;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
@@ -61,8 +66,57 @@ public final class HomeStage {
         return last;
     }
 
-    /** The flattened ground's reach round the Anchor and the height cleared above it. */
-    static final int REACH = 50, CLEAR = 26;
+    /**
+     * The flattened ground's reach round the Anchor (a disc), the rim over which it eases back into the land, and the
+     * height cleared above it.
+     */
+    static final int REACH = 50, RIM = 16, CLEAR = 26;
+
+    /**
+     * Ground fit for the stage near {@code near}: dry land, within a few blocks of level over the whole disc and its rim,
+     * clear of any settlement (Carillon, a village, a planned one), the nearest such. Read from the world generator's own
+     * heights, so nothing is generated to look; {@code near} itself when nothing within reach will do.
+     */
+    public static BlockPos site(ServerLevel lvl, BlockPos near) {
+        var src = lvl.getChunkSource();
+        var gen = src.getGenerator();
+        var rs = src.randomState();
+        int span = REACH + RIM, step = 40, sea = lvl.getSeaLevel();
+        for (int slack : new int[]{6, 10}) {
+            for (int ring = 0; ring <= 8; ring++) {
+                BlockPos best = null;
+                int bestRange = Integer.MAX_VALUE;
+                for (int i = -ring; i <= ring; i++) for (int j = -ring; j <= ring; j++) {
+                    if (Math.max(Math.abs(i), Math.abs(j)) != ring) continue;
+                    int cx = near.getX() + i * step, cz = near.getZ() + j * step;
+                    if (dev.awaken.village.api.Villages.reserved(lvl, new BlockPos(cx, near.getY(), cz), span)) continue;
+                    int lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE, sum = 0, n = 0;
+                    boolean ok = true;
+                    // the centre first, then outwards: most bad ground shows at once
+                    for (int r = 0; r <= 4 && ok; r++) for (int a = -r; a <= r && ok; a++) for (int b = -r; b <= r && ok; b++) {
+                        if (Math.max(Math.abs(a), Math.abs(b)) != r) continue;
+                        int dx = a * span / 4, dz = b * span / 4;
+                        if (dx * dx + dz * dz > span * span) continue;
+                        int x = cx + dx, z = cz + dz;
+                        int floor = gen.getBaseHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, lvl, rs);
+                        int surface = gen.getBaseHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, lvl, rs);
+                        if (surface > floor || floor <= sea + 1) ok = false; // water over it, or the shore
+                        else if (dev.awaken.citizens.api.Settlements.at(lvl, new BlockPos(x, floor, z)).isPresent()) ok = false;
+                        lo = Math.min(lo, floor);
+                        hi = Math.max(hi, floor);
+                        sum += floor;
+                        n++;
+                        if (hi - lo > slack) ok = false;
+                    }
+                    if (!ok || n == 0 || hi - lo >= bestRange) continue;
+                    bestRange = hi - lo;
+                    best = new BlockPos(cx, Math.round((float) sum / n), cz);
+                }
+                if (best != null) return best;
+            }
+        }
+        return near;
+    }
 
     private static ServerLevel level;
     private static int ox, gy, oz;
@@ -77,6 +131,10 @@ public final class HomeStage {
         oz = at.getZ();
         gy = at.getY() - 1; // the ground's top block: floors replace it, walls rise from gy + 1
         ground();
+        // the land's own beasts were standing on ground that's gone: only the pen's stay
+        int span = REACH + RIM;
+        for (var a : level.getEntitiesOfClass(net.minecraft.world.entity.animal.Animal.class,
+                new net.minecraft.world.phys.AABB(ox - span, gy - 16, oz - span, ox + span + 1, gy + 48, oz + span + 1))) a.discard();
         Map<String, BlockPos> beds = new LinkedHashMap<>(), spots = new LinkedHashMap<>();
         Map<String, View> views = new LinkedHashMap<>();
         yard();
@@ -98,6 +156,7 @@ public final class HomeStage {
         BlockPos anchor = w(0, 1, 0);
         level.setBlock(anchor, HearthContent.HEARTH_ANCHOR.get().defaultBlockState(), 3);
         BlockPos road = w(0, 1, 46);
+        spots.put("road_end", w(0, 1, 7));
         // the views the tour takes (eye, look), in the village's own frame
         views.put("road", view(1.5, 2.9, 40.5, 0.5, 2.0, 12.5));
         views.put("ilse_door", view(7.5, 2.6, 2.5, 14.5, 1.9, -3.5));
@@ -106,10 +165,13 @@ public final class HomeStage {
         views.put("forge", view(13.4, 2.66, -14.3, 15.5, 1.4, -17.5));
         views.put("field", view(-8.5, 2.8, 27.5, -17.5, 1.3, 33.5));
         views.put("minehead", view(6.4, 2.66, 17.4, 8.5, 1.0, 15.5));
-        views.put("anchor", view(3.4, 2.4, 3.6, 0.5, 1.7, 0.5));
+        views.put("anchor", view(5.6, 2.9, 6.2, 0.5, 1.5, 0.5));
         views.put("kit", view(-8.5, 4.4, -17.5, -16.0, 4.0, -10.5));
         views.put("overview", view(30.5, 28, 44.5, -2.5, 2, -4.5));
-        views.put("hall", view(0.5, 2.8, -15.5, 0.5, 1.6, -20.5));
+        // the hall from its south-west corner, high, down the long table to the fire
+        views.put("hall", view(-5.5, 4.3, -15.4, 3.5, 1.6, -20.5));
+        // north-west of the village (the Atlas centres on you: Ashford then sits clear of its legend)
+        views.put("atlas", view(-30.5, 3, -44.5, 0.5, 2, 0.5));
         last = new Stage(anchor, beds, spots, road, views);
         return last;
     }
@@ -132,14 +194,31 @@ public final class HomeStage {
         set(x, y, z, b.defaultBlockState());
     }
 
-    /** Levels the land: grass at the ground's height over dirt, air above (only where it isn't air already). */
+    /**
+     * Levels the land: a disc of grass at the ground's height over dirt with air above, eased back to the land's own
+     * height over the rim, and every tree the cut reached taken whole (no leaves left hanging where a trunk was).
+     */
     private static void ground() {
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         BlockState air = Blocks.AIR.defaultBlockState(), grass = Blocks.GRASS_BLOCK.defaultBlockState(), dirt = Blocks.DIRT.defaultBlockState();
-        for (int dz = -REACH; dz <= REACH; dz++) {
-            for (int dx = -REACH; dx <= REACH; dx++) {
-                for (int dy = -4; dy <= CLEAR; dy++) {
-                    m.set(ox + dx, gy + dy, oz + dz);
+        int span = REACH + RIM;
+        for (int dz = -span; dz <= span; dz++) {
+            for (int dx = -span; dx <= span; dx++) {
+                double d = Math.sqrt(dx * dx + dz * dz);
+                if (d > span) continue;
+                int x = ox + dx, z = oz + dz;
+                int top = gy, reach = CLEAR;
+                if (d > REACH) {
+                    // the rim: from the stage's height back to the land's, eased at both ends
+                    int land = landTop(x, z);
+                    double f = (d - REACH) / RIM;
+                    f = f * f * (3 - 2 * f);
+                    top = (int) Math.round(gy + (land - gy) * f);
+                    if (top == land) continue; // the land as it is
+                    reach = Math.max(land - top, 0) + 20;
+                }
+                for (int dy = -4; dy <= reach; dy++) {
+                    m.set(x, top + dy, z);
                     BlockState want = dy > 0 ? air : dy == 0 ? grass : dirt;
                     BlockState have = level.getBlockState(m);
                     if (have == want || dy > 0 && have.isAir()) continue;
@@ -147,6 +226,65 @@ public final class HomeStage {
                     level.setBlock(m, want, Block.UPDATE_CLIENTS);
                 }
             }
+        }
+        dropCutTrees();
+    }
+
+    /** The land's own top at a column: its highest solid block that isn't a tree or a plant. */
+    private static int landTop(int x, int z) {
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1, z);
+        while (m.getY() > level.getMinY()) {
+            BlockState s = level.getBlockState(m);
+            if (!s.isAir() && !s.is(BlockTags.LOGS) && !s.is(BlockTags.LEAVES) && s.isSolid() && s.getFluidState().isEmpty()) break;
+            m.move(Direction.DOWN);
+        }
+        return m.getY();
+    }
+
+    /**
+     * Leaves the cut left without a trunk (a tree whose trunk stood inside the disc or the rim, its crown reaching out):
+     * every leaf round the edge more than six steps through leaves from any log goes, as it would have decayed.
+     */
+    private static void dropCutTrees() {
+        int inner = REACH - 6, outer = REACH + RIM + 8, logsOut = outer + 7, y0 = gy - 12, y1 = gy + 44;
+        LongOpenHashSet leaves = new LongOpenHashSet();
+        LongArrayFIFOQueue queue = new LongArrayFIFOQueue();
+        it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap dist = new it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int dz = -logsOut; dz <= logsOut; dz++) for (int dx = -logsOut; dx <= logsOut; dx++) {
+            int r2 = dx * dx + dz * dz;
+            if (r2 < (inner - 7) * (inner - 7)) continue; // the cleared middle has neither
+            boolean band = r2 >= inner * inner && r2 <= outer * outer;
+            int x = ox + dx, z = oz + dz;
+            int topY = Math.min(y1, level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z));
+            for (int y = y0; y <= topY; y++) {
+                m.set(x, y, z);
+                BlockState s = level.getBlockState(m);
+                if (s.is(BlockTags.LOGS)) {
+                    long k = m.asLong();
+                    dist.put(k, 0);
+                    queue.enqueue(k);
+                } else if (band && s.getBlock() instanceof LeavesBlock && !s.getValue(LeavesBlock.PERSISTENT)) {
+                    leaves.add(m.asLong());
+                }
+            }
+        }
+        while (!queue.isEmpty()) {
+            long k = queue.dequeueLong();
+            int dd = dist.get(k);
+            if (dd >= 6) continue;
+            for (Direction dir : Direction.values()) {
+                long n = BlockPos.offset(k, dir);
+                if (!leaves.contains(n) || dist.containsKey(n)) continue;
+                dist.put(n, dd + 1);
+                queue.enqueue(n);
+            }
+        }
+        BlockState air = Blocks.AIR.defaultBlockState();
+        var it = leaves.iterator();
+        while (it.hasNext()) {
+            long k = it.nextLong();
+            if (!dist.containsKey(k)) level.setBlock(m.set(k), air, Block.UPDATE_CLIENTS);
         }
     }
 

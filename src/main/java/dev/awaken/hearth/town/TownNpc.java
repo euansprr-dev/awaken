@@ -51,6 +51,8 @@ public class TownNpc extends PathfinderMob implements Npc {
     private int gatherTicks;
     /** (W6) Walking up the road to move in: where to, and whose arrival this is (never saved: an arrival is one walk). */
     private @Nullable BlockPos walkTo;
+    /** A point on the way (the end of a road), reached first; null: straight in. */
+    private @Nullable BlockPos walkVia;
     private @Nullable String arrival;
     private int walkTicks, lastProgress;
     private double bestDist = Double.MAX_VALUE;
@@ -83,8 +85,14 @@ public class TownNpc extends PathfinderMob implements Npc {
 
     /** An arrival: walks to {@code to} wearing {@code skin} with a bundle on the back, then {@code Arrival.arrived}. */
     public void arrive(String id, String skin, boolean slim, BlockPos to) {
+        arrive(id, skin, slim, to, null);
+    }
+
+    /** As {@link #arrive(String, String, boolean, BlockPos)}, by way of {@code via} first (up a road to its end). */
+    public void arrive(String id, String skin, boolean slim, BlockPos to, @Nullable BlockPos via) {
         this.arrival = id;
         this.walkTo = to.immutable();
+        this.walkVia = via == null ? null : via.immutable();
         entityData.set(DATA_SKIN, skin);
         entityData.set(DATA_LOOKS, (byte) (L_BUNDLE | (slim ? L_SLIM : 0)));
         getNavigation().setRequiredPathLength(160);
@@ -224,6 +232,14 @@ public class TownNpc extends PathfinderMob implements Npc {
         public void tick() {
             BlockPos to = npc.walkTo;
             if (to == null) return;
+            if (npc.walkVia != null) {
+                if (npc.position().distanceToSqr(Vec3.atBottomCenterOf(npc.walkVia)) < 2.5 * 2.5) {
+                    npc.walkVia = null;
+                    repath = 0;
+                } else {
+                    to = npc.walkVia;
+                }
+            }
             if (--repath <= 0 || npc.getNavigation().isDone()) {
                 repath = 40;
                 npc.getNavigation().moveTo(to.getX() + 0.5, to.getY(), to.getZ() + 0.5, 0, 0.42);

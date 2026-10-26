@@ -49,8 +49,19 @@ public final class Arrival {
         WALKS.clear();
     }
 
+    /** Someone on their way in now, walking (tours frame them), or null. */
+    static @Nullable TownNpc walker(ServerLevel level) {
+        for (Walk w : WALKS.values()) if (level.getEntity(w.entity) instanceof TownNpc npc && npc.isAlive()) return npc;
+        return null;
+    }
+
     /** They set out for this Hearth's spare bedroom. {@code from}: where they walk up from (null: the road on their side). */
     static void start(ServerLevel level, HearthRecord h, Folk.Person who, Settlers.Bedroom room, @Nullable BlockPos from) {
+        start(level, h, who, room, from, null);
+    }
+
+    /** As above, by way of {@code via} (the end of the road they walk up) when there's one. */
+    static void start(ServerLevel level, HearthRecord h, Folk.Person who, Settlers.Bedroom room, @Nullable BlockPos from, @Nullable BlockPos via) {
         Folk.Settler s = new Folk.Settler(who, room.bed(), Folk.Settler.COMING, Settlers.today(level.getServer()));
         h.folk.settlers.add(s);
         HearthService.dirty(level.getServer());
@@ -81,7 +92,7 @@ public final class Arrival {
         npc.setHearthOwner(h.owner);
         npc.setCustomName(Component.literal(who.name()));
         npc.setCustomNameVisible(true);
-        npc.arrive(who.id(), Faces.texture(who), Faces.slim(who), bedside);
+        npc.arrive(who.id(), Faces.texture(who), Faces.slim(who), bedside, from != null ? via : null);
         level.addFreshEntity(npc);
         WALKS.put(who.id(), new Walk(npc.getUUID(), h.owner, level.getGameTime()));
     }

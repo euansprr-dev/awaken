@@ -188,6 +188,11 @@ public final class Settlers {
 
     /** Admin and tours: lets this one person in now if they can come (cap, their trade's room, a spare bedroom); why not otherwise. */
     public static String settleNow(ServerLevel level, HearthRecord h, String id, @Nullable BlockPos from) {
+        return settleNow(level, h, id, from, null);
+    }
+
+    /** As above, walking up by way of {@code via} (a staged road's end). */
+    public static String settleNow(ServerLevel level, HearthRecord h, String id, @Nullable BlockPos from, @Nullable BlockPos via) {
         Folk.Person p = h.folk.known.get(id);
         if (p == null) return "nobody known as " + id;
         if (h.folk.settler(id) != null) return p.given() + " already lives here";
@@ -197,7 +202,7 @@ public final class Settlers {
         if (!need.isEmpty()) return who.given() + " needs " + need;
         List<Bedroom> spare = spare(level, h);
         if (spare.isEmpty()) return "no spare Snug bedroom";
-        Arrival.start(level, h, who, nearestTo(spare, workAt(h, who)), from);
+        Arrival.start(level, h, who, nearestTo(spare, workAt(h, who)), from, via);
         return "";
     }
 

@@ -6649,8 +6649,10 @@ their beds, the rooms or the yard change. Its places are read from the rooms you
 is going to bed), Oren's (or a smith's) spot beside the Forge's anvil (`anvil`: he hammers), Ilse's beside the Greenhouse's
 soil (`wash`: her hands at work), Teodor's at the Study's lectern (he reads), Mira's at the Lookout's window, Sun's in the
 Sanctuary, the miner's beside the hatch (a door place: going in is going down), Hettie's at the field's edge (farmland outside
-rooms, from the scan's new `Scan.Yard`) and outside the pen's gate (away from the beasts), meals at the Hall's seats (`sit`;
-else beside the Kitchen's stove, else the fire), the fire's ring by the Anchor of an evening (`tavern_out`: they lean and
+rooms, from the scan's new `Scan.Yard`) and outside the pen's gate (away from the beasts), meals standing at the Hall's
+table (`stand`: a floor cell beside a fence or wall with something on it, a top slab or an upside-down stair, facing it, eight
+spread along it; with no table, beside its benches; the engine has no seated pose and someone stood on a bench reads wrong),
+else the Kitchen's, else beside its stove, else the fire, the fire's ring by the Anchor of an evening (`tavern_out`: they lean and
 talk), the yard's edge for Mira's watch at dusk (`post`, a lantern), errands round the doors. **The street graph** is walked
 over the real blocks (`HomeWalk`): breadth-first from the yard over cells someone can stand in (feet and head clear or a carpet,
 something 0.5-1.0 high under the feet that isn't farmland, a bed, fire, magma or leaves; wooden doors pass; steps of one up
@@ -6668,7 +6670,8 @@ village's, a generated Carillon face of their trade for the rest (by id). Named 
 `Settlements.Voice` wrapping the villages' (installed at server start) makes the household **kin** (the villages' warmest
 greetings, `{village}` the home's name) and anyone else known.
 
-**What they do** (`Work`, `HomeTalk`; talking goes through `Settlements.onTalk`; a chain waiting on them by name goes first).
+**What they do** (`Work`, `HomeTalk`; talking goes through `Settlements.onTalk`; a chain waiting on them by name goes first,
+except at Oren's forge with its business in your main hand: something to temper, or an ingredient of the piece he'd make).
 **Oren**: tempers what you hold (as before); **commissions**: with a Forge, the best piece you carry the makings of (a weapon or
 armour from any crafting recipe without a Blueprint, AWAKEN's first, then the bigger recipe) on a choice card; he takes exactly
 what the recipe picks and the piece is done the next play-day, tempered I, in the chest nearest his anvil (else he keeps it for
@@ -6709,11 +6712,19 @@ village"; "· your town" at V) and in the place caption ("ASHFORD · your villag
 `Hearth.villages(server)` (§12) is the hook W4's festival and W7's caravans use.
 
 **Fixes found on the way**: a stair counts as a seat from the cell over it whichever side the reading meets it first (a hall's
-benches could go uncounted).
+benches could go uncounted). After the first CI tour: the townsfolk's bundle stack is made on first use (a static stack built
+before item components are bound broke the client's first resource reload: tours hung at world creation); the walk graph's nodes
+are offsets from the Anchor like the rest of a roster (they were world coordinates, so every walk between places failed and the
+engine set people down at their places: `hearth_settler_moves_in` now reads the graph back); the arrival walks a given road to
+its end first (the stage's).
 
 **Commands** (admin): `/awaken admin hearth people | know <who> | arrive <who> | talk <who> | tier <n> | evening | wren | harvest
-| stage [settle | view <name>]` (the staged village for tours: `hearth/stage/HomeStage`, a home grown round its Anchor on
-levelled ground, built from the Hearth's own cottages and simple shells; every room reads as any build does).
+| stage [settle | miner | view <name>]` (the staged village for tours: `hearth/stage/HomeStage`, a home grown round its Anchor,
+built from the Hearth's own cottages and simple shells; every room reads as any build does. It finds its own ground first: the
+nearest dry land within about 320 blocks, no more than 6 blocks of rise over a 50-block disc and its 16-block rim, clear of any
+settlement or planned village, read from the generator's heights without generating; the disc is levelled, the rim eased back
+to the land's height, trees the cut reached taken whole, the land's own beasts cleared. `view walker` frames whoever is walking
+in from behind their shoulder; `miner` sets the clock to four seconds before the miner comes up with the haul).
 
 **Decisions taken here** (none of the plan's 13): townsfolk want only a bed (their room makes them work there); "Trusted in
 Carillon" is a townsperson a rank early; a village Friend or the city sends a new person, never one of its own records (no one
@@ -6721,7 +6732,7 @@ lives in two places); one settler a bedroom, one miner a shaft; the caps 0/1/2/4
 when someone's near; the settlement keyed `hearth:<owner>`; the walk's rules above; the day's hours; the household is kin; Oren's
 commission takes the best piece you can make, done next play-day at temper I; Hettie's six crops a half-minute and two of a kind a
 day; Ilse two herbs a tonic, home-cooked; the haul table and half a lode; Wren's lines at the eaves and her course gift; Pell's
-letter from the village's history; seats from above.
+letter from the village's history; seats from above; meals standing at the table; the forge's business before Oren's chain.
 
 **Left for W7** (and after): caravans on your road (Tier IV's other reward); the festival comes to `Hearth.villages` (W4);
 a rescued settler still walks in their village too (the village
