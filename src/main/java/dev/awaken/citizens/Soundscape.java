@@ -19,7 +19,7 @@ import org.jspecify.annotations.Nullable;
  * AmbientSounds (it plays birds and crickets for real wherever there's greenery) hears the same beds without our
  * synthetic birds and crickets: {@code awaken:city/as/<district>}, {@code awaken:city/as/night}.
  */
-final class Soundscape {
+public final class Soundscape {
     private Soundscape() {}
 
     /** The districts' keys by plan id (1 market .. 7 wallring); their outdoor count at the busiest hour (roster, B3a). */
@@ -46,6 +46,11 @@ final class Soundscape {
         MusicLayers.register(MusicLayers.Slot.AMBIENCE, 100, "carillon", Soundscape::context); // SPEC Plan v2 · audio: the city's reserved ids
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
                 (net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> NATURE.remove(e.getEntity().getUUID()));
+    }
+
+    /** Whether a player's client plays AmbientSounds' birds and crickets (W3's village beds leave ours out for them). */
+    public static boolean nature(ServerPlayer p) {
+        return NATURE.contains(p.getUUID());
     }
 
     static void hears(ServerPlayer p, boolean ambientSounds) {

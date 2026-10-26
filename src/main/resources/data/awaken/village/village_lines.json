@@ -1,0 +1,1046 @@
+{
+ "schemaVersion": 1,
+ "greet": {
+  "any": {
+   "stranger": [
+    "[m]Morning. Wipe your boots, the lane's wet.",
+    "[d]Afternoon. Passing through, or staying?",
+    "[e]Evening. Mind the cattle coming home.",
+    "[n]Late to be out. The Watch will have seen you.",
+    "Hunter, is it? No gate here, if that's your errand.",
+    "New face. We'll know your business by supper.",
+    "Keep to the path. Those fields are somebody's winter."
+   ],
+   "known": [
+    "[m]Morning to you, {name}.",
+    "[d]Afternoon, {name}. Kept dry?",
+    "[e]Evening, {name}. The lamps are nearly lit.",
+    "[n]Out late, {name}. The Watch knows your step by now.",
+    "{name}. Good. You can stop looking lost.",
+    "There's {name} again. Mind the mud, it holds a grudge."
+   ],
+   "friend": [
+    "{name}! Good to see you, and I mean it.",
+    "[m]Morning, {name}. You look almost rested.",
+    "[e]Evening, {name}. Come by the fire, the lane's no place to stand.",
+    "There you are. We'd started saving you a seat.",
+    "{name}, you're thinner. Eat something before you go.",
+    "[n]Still up, {name}? Come in out of the dark, then."
+   ],
+   "kin": [
+    "{name}. Home, then. Properly home.",
+    "[m]Morning, {name}. Did you eat? Don't lie.",
+    "[e]There's our {name}. Supper stretches for one more.",
+    "Welcome back to {village}, {name}. It's your place as much as ours.",
+    "{name}! Somebody tell the dog.",
+    "[n]Come in, {name}. No door in {village} is bolted against you."
+   ]
+  },
+  "farmer": {
+   "stranger": [
+    "Mind the furrows. That's next year's bread.",
+    "[m]Up with the light, me. You too, it seems.",
+    "Use the verge, not the field. I'll know if you don't.",
+    "You've the look of a hunter. Is it gate trouble?",
+    "[d]Rain by supper. My knee has never been wrong."
+   ],
+   "known": [
+    "[m]Morning, {name}. The barley's coming on.",
+    "{name}. Not on my seedlings, I hope.",
+    "[d]Afternoon, {name}. Hot work. There's water by the trough.",
+    "[e]Evening, {name}. One last row, then supper.",
+    "Good to see you, {name}. Harvest's close, so say it quick."
+   ],
+   "friend": [
+    "{name}! Come to lean on my gate and watch me work? Welcome.",
+    "[m]Morning, {name}. Best wheat in years. Don't tell it I said so.",
+    "Take a turnip, {name}. Take two. They won't eat themselves.",
+    "You've saved us more than one good field, {name}. The soil remembers.",
+    "[e]Put your feet up on the wall, {name}. I'll finish the row."
+   ],
+   "kin": [
+    "{name}. Soil under my nails, and glad to see you.",
+    "Whatever's in that basket is yours, {name}. It's your field too.",
+    "[m]Morning, {name}. I left your row. Don't look grateful, it's weeds.",
+    "Our own {name}. The crop knows you. I swear it leans.",
+    "[n]Stars out and you still up, {name}? Sit. I'll tell you the yield."
+   ]
+  },
+  "shepherd": {
+   "stranger": [
+    "Hold still. You'll spook the flock.",
+    "[m]Dew's still on the grass. Mind your hem.",
+    "The dog doesn't like strangers. The dog is usually right.",
+    "Hunters bring trouble. Are you bringing trouble?",
+    "Keep your hand out of the fleece."
+   ],
+   "known": [
+    "[m]Morning, {name}. The ewes are restless. Weather's turning.",
+    "{name}. The dog's decided you're all right. High praise.",
+    "[d]Afternoon, {name}. Quiet on the hill. I like it quiet.",
+    "[e]Evening, {name}. Counting heads. Stand still, you'll spoil it.",
+    "Good to see you, {name}. Count with me if you've nothing better."
+   ],
+   "friend": [
+    "{name}! The lambs know your voice, I swear.",
+    "[m]Morning, {name}. Fancy the hill? I'll talk, you nod.",
+    "Sit, {name}. There's a flask and a warm rock, both yours.",
+    "The dog's been at the gate for you, {name}. It won't admit it.",
+    "[e]{name}, you walk like a hunter and sit like a shepherd now. Progress."
+   ],
+   "kin": [
+    "{name}. You're one of the flock now. Don't wander off.",
+    "[m]Morning, {name}. The first lamb of spring was named for you. Sorry.",
+    "My dog, my hill and my flask, {name}. All yours.",
+    "You climbed the hill just to say hello, {name}? That's family.",
+    "[n]Out under the stars with me, {name}? Best shift there is."
+   ]
+  },
+  "woodcutter": {
+   "stranger": [
+    "Timber! ...Too late. You're fine.",
+    "Stand back from the fall line.",
+    "[m]Early for talk. Right time for firewood.",
+    "Hunter? Then you've a sharper axe than mine. Don't wave it.",
+    "Chips fly. Keep your eyes shut or your distance."
+   ],
+   "known": [
+    "[m]Morning, {name}. Good oak down by the ridge.",
+    "{name}. Mind that log, it rolls.",
+    "[d]Afternoon, {name}. Sweat's honest work.",
+    "[e]Evening, {name}. Last cut, then I'm done.",
+    "Good to see you, {name}. Take a stack home if you've a hearth."
+   ],
+   "friend": [
+    "{name}! Hold the axe a moment. See how it sits.",
+    "[m]Morning, {name}. I cut you a bundle of kindling. By the stump.",
+    "You stand like an oak these days, {name}. Steady. I mean it kindly.",
+    "The woods are quieter since you came, {name}. I won't ask why.",
+    "[e]{name}! Sit on the log. It's not wet. Mostly."
+   ],
+   "kin": [
+    "{name}. The woodpile is yours. All of it. Don't look so shocked.",
+    "[m]Morning, {name}. I split a log for your fire and left it at your door.",
+    "Our {name}. I knew you'd come by. Kettle's on the stump.",
+    "The forest's your home too, {name}. I only keep the paths.",
+    "[n]Out this late, {name}? Take my lamp, the roots are tricky."
+   ]
+  },
+  "miner": {
+   "stranger": [
+    "Coal on my hands. Don't shake, don't ask.",
+    "[m]Going down, coming up, tired either way.",
+    "Hunters dig too, I hear. Deeper than we do.",
+    "Lamp's lit, pick's sharp. Move along, friend.",
+    "Stay clear of the shaft mouth. It doesn't forgive."
+   ],
+   "known": [
+    "[m]Morning, {name}. Early shift. Early dust.",
+    "{name}. The vein's thin today, but the ale's thick tonight.",
+    "[d]Afternoon, {name}. Come to see the daylight I've missed?",
+    "[e]Evening, {name}. Out of one dark, into the other. The inn.",
+    "Good to see you, {name}. Mind your head. Always."
+   ],
+   "friend": [
+    "{name}! Show me your hands. Good. Working hands.",
+    "Down the shaft with me, {name}? A jest. Though you'd be handy.",
+    "[m]Morning, {name}. Found a seam of something shiny. Not telling where.",
+    "You've dirt on you, {name}. Suits you.",
+    "[e]Sit with the shift, {name}. We save the bench for friends."
+   ],
+   "kin": [
+    "{name}. Down in the dark, you're the one I'd want behind me.",
+    "Take the best of what I've dug, {name}. It's a family share.",
+    "[m]Morning, {name}. The lamp's lit for you. Always is.",
+    "Come home with us, {name}. The dust washes off. The company doesn't.",
+    "[n]Night shift's easier with you about, {name}. Don't ask why."
+   ]
+  },
+  "fisher": {
+   "stranger": [
+    "Quiet. You'll frighten the fish.",
+    "[m]Dawn's the best bite. Don't talk.",
+    "Hunter? The river's got nothing for you but trout.",
+    "Mind the nets. They're my wages.",
+    "Keep your shadow off the water, if you can."
+   ],
+   "known": [
+    "[m]Morning, {name}. Bite's good by the weir.",
+    "{name}. Caught a big one. It got away. That's the other kind of big.",
+    "[d]Afternoon, {name}. Slow day. Slow is fine.",
+    "[e]Evening, {name}. Last cast, then home.",
+    "Good to see you, {name}. You've a fisher's patience now."
+   ],
+   "friend": [
+    "{name}! Take a rod. Doesn't matter if you catch. Matters that you sit.",
+    "[m]Morning, {name}. Smoked you a trout. It's by the nets.",
+    "You're good company at the water, {name}. Quiet. Rare.",
+    "The river likes you, {name}. It hasn't tipped you in yet.",
+    "[e]Sit by the bank fire, {name}. I'll gut, you talk."
+   ],
+   "kin": [
+    "{name}. The best fish of the day was always yours. Don't ask where I hid it.",
+    "[m]Morning, {name}. The river's yours as much as mine. Stay and fish.",
+    "Our {name}. The boat's got your seat now. Not painted on. Yet.",
+    "{name}, you're home by the water. Sit. Talk. Or don't.",
+    "[n]Night lines are out, {name}. Help me pull, or keep me company."
+   ]
+  },
+  "hunter": {
+   "stranger": [
+    "Hunter to hunter: you're loud in the grass.",
+    "[d]I hunt deer. You hunt gates. Fair split.",
+    "Quiet. Something's moving in the brush.",
+    "[m]Frost holds a track best. You'd not know.",
+    "Keep your voice down. Game hears."
+   ],
+   "known": [
+    "[m]Morning, {name}. Tracks along the stream. Fresh.",
+    "{name}. Meat's good this week. Come by the rack.",
+    "[d]Afternoon, {name}. Wind's wrong for a stalk. I'll rest.",
+    "[e]Evening, {name}. Heading home with a haunch.",
+    "Good to see you, {name}. You step quieter than you used to."
+   ],
+   "friend": [
+    "{name}! Hunt the ridge with me at first light?",
+    "[m]Morning, {name}. I'll show you a track I've been saving.",
+    "You've the eye for it now, {name}. It's the gates that spoil you.",
+    "I'd walk the woods at night with you, {name}. Few I'd say that to.",
+    "[e]Sit, {name}. I'll tell you where the deer cross. Not a word to the others."
+   ],
+   "kin": [
+    "{name}. The ridge is yours. Walk it whenever you like.",
+    "[m]Morning, {name}. I hung a haunch at your door. Eat it.",
+    "Our {name}. Best tracker in two valleys, and I'll say so to anyone.",
+    "I taught you half of it, {name}. You taught yourself the rest. Come eat.",
+    "[n]Night hunt, {name}? Come on, then. Quiet feet."
+   ]
+  },
+  "carter": {
+   "stranger": [
+    "Make way! The wheel has no brake and I've no patience.",
+    "[m]Early start. It's a long road to Carillon.",
+    "Don't touch the load. It's counted.",
+    "Hunter? Ride the tail if you like. Pay in emeralds.",
+    "Road's rough. Cart's rougher."
+   ],
+   "known": [
+    "[m]Morning, {name}. Loaded, ready, behind schedule.",
+    "{name}. Want the road news? It costs nothing.",
+    "[d]Afternoon, {name}. The axle squeals. It's trying to say something.",
+    "[e]Evening, {name}. Back from the city, and aching.",
+    "Good to see you, {name}. You walk faster than my horse."
+   ],
+   "friend": [
+    "{name}! Hop on, I'll take you to the next village. No charge.",
+    "[m]Morning, {name}. Carillon says hello. Well, it shouts. It always shouts.",
+    "Brought you something from the city, {name}. Under the sacks.",
+    "Sit up front, {name}. The horse prefers you to me.",
+    "[e]The roads are better with you about, {name}. Odd, that."
+   ],
+   "kin": [
+    "{name}. Any road, any hour. If I'm on it, you ride.",
+    "[m]Morning, {name}. Letters from the city, and a pie from my sister. Take both.",
+    "Our {name}! The horse knows your whistle.",
+    "You're why I'll drive after dark, {name}. Don't tell my wife.",
+    "[n]Night road, {name}? I'll light the lantern. Hop up."
+   ]
+  },
+  "elder": {
+   "stranger": [
+    "I'm {elder}. This is {village}. State your business, kindly.",
+    "Hunter? We asked for none. We've never turned one away, though.",
+    "[m]Morning, traveller. The inn is warm and the bell is honest.",
+    "[e]Evening. Strangers are welcome until they aren't.",
+    "Welcome to {village}. We're small and busy. Keep both in mind."
+   ],
+   "known": [
+    "{name}. I hear good things. And one or two of the other kind.",
+    "[m]Morning, {name}. The village is awake. So am I, unfortunately.",
+    "[d]Afternoon, {name}. Walk with me a moment.",
+    "[e]Evening, {name}. The lamps are lit. Not a bad day.",
+    "{name}. {village} has taken note of you. Bear that in mind."
+   ],
+   "friend": [
+    "{name}. {village} has a word for people like you, and it isn't stranger.",
+    "[m]Morning, {name}. Sit. I'll tell you what the ledgers won't.",
+    "You've done us proud, {name}. Don't let it go to your head.",
+    "Welcome, {name}. The chair by the hearth is yours, any day.",
+    "[e]Evening, {name}. I've news to share and a stew to offer."
+   ],
+   "kin": [
+    "{name}. You're one of ours. The village has decided, and so have I.",
+    "My door's open, {name}. It always was. Now it's yours as well.",
+    "[m]Morning, {name}. {village} sleeps easier with you about.",
+    "Welcome home, {name}. I'll not make a speech. The bell will.",
+    "[e]Sit with me, {name}. The village can manage without us for an hour."
+   ]
+  },
+  "scribe": {
+   "stranger": [
+    "Quiet, please. The ink is wet.",
+    "Books are not toys. Look, do not touch.",
+    "[m]I copy the records. If you want a book, ask politely.",
+    "Hunters rarely read. Prove me wrong.",
+    "Keep clear of the candle. Paper burns, and so do tempers."
+   ],
+   "known": [
+    "{name}. Your name's in the ledger. Spelt correctly, I hope.",
+    "[m]Morning, {name}. Fresh ink, fresh pages.",
+    "[d]Afternoon, {name}. Looking for a book, or a quiet seat?",
+    "[e]Evening, {name}. I stay late. The light is kinder.",
+    "Good to see you, {name}. Mind the spine on that one."
+   ],
+   "friend": [
+    "{name}! I saved you a passage. A good one.",
+    "[m]Morning, {name}. I wrote a line about you. Don't read it yet.",
+    "Sit, {name}. You may touch the books. Gently.",
+    "A hunter who listens. Rare. Sit down, {name}.",
+    "[e]Come, {name}. The best page is the one nobody's turned."
+   ],
+   "kin": [
+    "{name}. You're in the margins of every page I love.",
+    "My desk, my lamp, my ink, {name}. All yours, as ever.",
+    "[m]Morning, {name}. I copied out your deeds in my best hand.",
+    "Our {name}. {village} writes you into its history. I hold the pen.",
+    "[n]Writing late, {name}? So am I. Stay awhile."
+   ]
+  },
+  "smith": {
+   "stranger": [
+    "Stand wide of the anvil. Scale flies.",
+    "[m]Fire's lit, anvil's warm. State your business or leave.",
+    "Sparks fly. Don't let them find you.",
+    "A hunter's blade? Mine's cheaper than the city's.",
+    "Mind the bellows."
+   ],
+   "known": [
+    "{name}. That edge has seen better days. I can hear it.",
+    "[m]Morning, {name}. Fire's up. Bring me iron.",
+    "[d]Afternoon, {name}. The hammer's tired. The metal isn't.",
+    "[e]Evening, {name}. Last piece of the day, cooling.",
+    "Good to see you, {name}. Your armour wants tightening."
+   ],
+   "friend": [
+    "{name}! Let me look at that blade. You treat it like a stick.",
+    "[m]Morning, {name}. I hung a fresh edge on the spare. Don't thank me.",
+    "Pull up the stool, {name}. Watch me work. Learn something.",
+    "For you, {name}, the good coals.",
+    "[e]The forge likes you, {name}. It hasn't burned you yet."
+   ],
+   "kin": [
+    "{name}. Whatever you break, I'll mend. It's the family discount.",
+    "[m]Morning, {name}. I made you something. Hush, it isn't finished.",
+    "Our {name}. The anvil rings truer when you're in the door.",
+    "Stand by the fire, {name}. Warm your hands, then tell me your troubles.",
+    "[n]The forge never sleeps for kin, {name}. What do you need?"
+   ]
+  },
+  "tavernkeeper": {
+   "stranger": [
+    "Feet off the benches.",
+    "[e]Fire's lit inside. Coin on the counter.",
+    "Room, meal or just a seat? Pick one.",
+    "[m]Too early for ale. Tea?",
+    "Hunters drink the same as anyone. Sit."
+   ],
+   "known": [
+    "{name}! Your seat's waiting.",
+    "[e]Evening, {name}. First pint's on me. Second's on you.",
+    "[m]Morning, {name}. Bread, eggs, the works. Sit.",
+    "[d]Afternoon, {name}. Quiet. Perfect for talking.",
+    "Back again, {name}. The regulars keep asking after you."
+   ],
+   "friend": [
+    "{name}! Your corner by the fire is warm. Go on.",
+    "[e]Evening, {name}. I saved the good barrel. Don't tell the miners.",
+    "[m]Morning, {name}. Porridge with honey. Don't argue.",
+    "You make the place feel busy, {name}. I like that.",
+    "Sit, {name}. Supper's on me, and the story's on you."
+   ],
+   "kin": [
+    "{name}. Your room's aired, your bed's turned, your mug's polished.",
+    "The inn is your house, {name}. I just hold the door.",
+    "[e]Evening, {name}. Stew's on, and there's always enough.",
+    "[m]Morning, {name}. I made too much breakfast on purpose.",
+    "[n]Late, {name}? Come in. I'll leave the fire up."
+   ]
+  },
+  "miller": {
+   "stranger": [
+    "Mind the sacks. Flour travels.",
+    "[m]Wheel's turning, grain's grinding. Move along.",
+    "Mind the stones. They bite.",
+    "Wheat or barley? Either way, it's heavy.",
+    "Hunters eat bread too, I hope."
+   ],
+   "known": [
+    "{name}! The wheel sings when you're near.",
+    "[m]Morning, {name}. First grind of the day.",
+    "[d]Afternoon, {name}. Water's high. Good for the wheel.",
+    "[e]Evening, {name}. The stones are quiet. So am I.",
+    "Good to see you, {name}. Flour on your boots. Mine, probably."
+   ],
+   "friend": [
+    "{name}! Fresh flour, fresh bread, fresh news.",
+    "[m]Morning, {name}. Take a handful. Feel how fine.",
+    "Stay for the next grind, {name}. It's soothing.",
+    "The wheel turns better with friends about, {name}. Superstition, but still.",
+    "[e]Sit on a sack, {name}. They're clean. Mostly."
+   ],
+   "kin": [
+    "{name}. Whatever flour you need, it's yours.",
+    "[m]Morning, {name}. The first loaf of the harvest is for you.",
+    "Our {name}. The mill runs on water and good company.",
+    "I'd grind the stones to dust for you, {name}. Please don't make me.",
+    "[n]Late, {name}? The wheel never rests. Come in."
+   ]
+  },
+  "washer": {
+   "stranger": [
+    "Mind the linen, it's wet.",
+    "Not a drop on my linen, mind.",
+    "[m]The lines are full. Duck, or go round.",
+    "Hunters' clothes are the worst. Gate muck sticks.",
+    "Round the back, there's wet linen about."
+   ],
+   "known": [
+    "[m]Morning, {name}. Good drying weather.",
+    "{name}. Your coat could do with a wash. Just saying.",
+    "[d]Afternoon, {name}. The water's cold. My hands are colder.",
+    "[e]Evening, {name}. Lines are down, folded and done.",
+    "Good to see you, {name}. Bring your laundry. Politely."
+   ],
+   "friend": [
+    "{name}! Hand over that shirt. I'll have it spotless.",
+    "[m]Morning, {name}. Sheets on the line. Borrow one if you like.",
+    "Sit on the stone, {name}. Warm from the sun.",
+    "You wash more than most hunters, {name}. Or I've started noticing.",
+    "[e]{name}, I mended that tear in your cloak. I didn't ask."
+   ],
+   "kin": [
+    "{name}. Whatever's dirty, bring it. Whatever's torn, I'll mend it.",
+    "[m]Morning, {name}. Clean linen on your bed. Go and lie in it.",
+    "Our {name}. The river carries your muck away. I carry the rest.",
+    "I'd wash the whole world for you, {name}. Start with your boots.",
+    "[n]Rinsing late, {name}. Help, or just keep me company."
+   ]
+  },
+  "lamplighter": {
+   "stranger": [
+    "[e]Lamps first. Talk once there's light to see by.",
+    "Step off the lane while I reach, if you would.",
+    "[m]Lamps are out, wicks cooling. Long night, that.",
+    "Don't dawdle in the dark between posts. Lamp to lamp.",
+    "[n]Trimmed and burning. You ought to be indoors."
+   ],
+   "known": [
+    "[e]Evening, {name}. Yours is the first lane I do.",
+    "[m]Morning, {name}. Every lamp held through. Bar the one.",
+    "{name}! Walk lamp to lamp tonight, and the dark can't have you.",
+    "[d]Afternoon, {name}. Oil's running low. The wicks are fine.",
+    "[n]Late, {name}. Carry a lantern. I always do."
+   ],
+   "friend": [
+    "{name}! I lit the lamp by your door first. Superstition.",
+    "[e]Walk the round with me, {name}. I'll show you how it's done.",
+    "[m]Morning, {name}. Dawn's your hour and mine.",
+    "Light suits you, {name}.",
+    "[n]Out late, {name}? Take a taper. Go slowly."
+   ],
+   "kin": [
+    "{name}. Every lamp in {village} burns a little brighter for you.",
+    "[e]Evening, {name}. I'll light your way home. I always will.",
+    "Our {name}. The Watch sleeps easier by my lamps, and so do I.",
+    "[m]Morning, {name}. The lamps are out. You're in. Good.",
+    "[n]Take my lantern, {name}. I'll light another."
+   ]
+  },
+  "bellringer": {
+   "stranger": [
+    "No touching the rope, please.",
+    "[m]Dawn bell's mine. Don't linger under it.",
+    "Learn the strokes and you'll always know the hour.",
+    "It's loud. It's meant to be.",
+    "[e]Dusk soon. Mind the lane."
+   ],
+   "known": [
+    "{name}! I tolled it a little warmer today. You'll not have noticed.",
+    "[m]Morning, {name}. Bell's warm. Rope's cold.",
+    "[d]Afternoon, {name}. Quiet hour. My ears are grateful.",
+    "[e]Evening, {name}. Rope's ready.",
+    "{name}. The bell has learnt your step. So have I."
+   ],
+   "friend": [
+    "{name}! Come, pull the rope. Gently. Don't break it.",
+    "[m]Morning, {name}. The bell sounds sweeter when you listen.",
+    "Stay for the next stroke, {name}. Feel the tower hum.",
+    "You know the bell's moods, {name}. Few do.",
+    "[e]I'll toll it soft tonight, {name}."
+   ],
+   "kin": [
+    "{name}. The bell rings for {village}. And for you.",
+    "[m]Morning, {name}. First stroke is yours. Pull.",
+    "Our {name}. When you're away, the bell sounds lonelier.",
+    "{name}, home at last. The tower will want to know.",
+    "[n]Night bell, {name}. Soft, so the sleepers don't stir."
+   ]
+  },
+  "watch": {
+   "stranger": [
+    "Hold there. Who are you, and why here?",
+    "[n]Nobody walks the lane at this hour without a reason. Yours?",
+    "Keep it sheathed in the village.",
+    "State your name. Or don't, and I'll remember you anyway.",
+    "[e]Dusk soon. Be indoors or be seen."
+   ],
+   "known": [
+    "{name}. Quiet night so far. Keep it that way.",
+    "[n]Nothing stirring, {name}. Not tonight.",
+    "[m]Morning, {name}. We made it through the night. Good.",
+    "[d]Afternoon, {name}. Off shift, and bored already.",
+    "Walk safe, {name}. Dark comes early."
+   ],
+   "friend": [
+    "{name}! The Watch remembers its debts. All of us do.",
+    "[n]Walk the round with me, {name}. Better company, same dark.",
+    "[m]Morning, {name}. We held the night. Only just.",
+    "You make the rest of us look good, {name}. We resent it.",
+    "[e]I'll stand your watch if you stand mine, {name}. Deal?"
+   ],
+   "kin": [
+    "{name}. You're Watch, badge or no badge.",
+    "[n]The night's yours too, {name}. We keep it together.",
+    "Our {name}. The whole Watch asks after you.",
+    "[m]Morning, {name}. We sleep easier with you out there.",
+    "If anything comes, you'll hear the bell first, {name}. Promise."
+   ]
+  },
+  "healer": {
+   "stranger": [
+    "If you're bleeding, mind the floor. I've just scrubbed it.",
+    "[m]Drink water. Eat something. Then talk.",
+    "Hunters come back in pieces. Mind yourself.",
+    "Nothing in the cupboard is for show. Don't touch.",
+    "[e]Evening. Sit. Let me see that arm."
+   ],
+   "known": [
+    "{name}. You're limping less. I'm pleased.",
+    "[m]Morning, {name}. Slept well? Liar.",
+    "[d]Afternoon, {name}. Cough drops are in the jar.",
+    "[e]Evening, {name}. Sit. Drink. Don't argue.",
+    "Good to see you, {name}. Mind your ribs."
+   ],
+   "friend": [
+    "{name}! Let me look at you. Eat, drink, then explain the bruise.",
+    "[m]Morning, {name}. Fresh poultices. Smells awful. Works wonders.",
+    "You never drink water, {name}. Start.",
+    "I've stitched worse on a goat, {name}. Sit.",
+    "[e]Tea, {name}. Honey. No hunter nonsense."
+   ],
+   "kin": [
+    "{name}. Whatever hurts, I'll mend it. Whatever hurts worse, I'll listen.",
+    "My cupboard is yours, {name}. Every herb. Every bandage.",
+    "[m]Morning, {name}. Did you sleep? Did you eat? Did you drink?",
+    "Our {name}. Don't make me sew you again. I'm out of thread.",
+    "[n]Night call, {name}? I'm awake. I always am."
+   ]
+  },
+  "child": {
+   "stranger": [
+    "Are you the one from the gates?",
+    "I'm not allowed to talk to hunters. I'm only talking a bit.",
+    "Is your sword real? Can I hold it? No? Fine.",
+    "[m]I'm not meant to be up yet.",
+    "[n]I'm not meant to be out. Don't tell."
+   ],
+   "known": [
+    "It's you! I knew your boots.",
+    "{name}! Can you jump the wall? I can't. Yet.",
+    "[m]Morning, {name}! I fed a chicken!",
+    "[e]{name}, watch me run! I'm faster than a sheep!",
+    "Hello {name}! I found a frog."
+   ],
+   "friend": [
+    "{name}! We're playing hunters and you're the best one!",
+    "{name}, watch me jump the stream! Watch, watch!",
+    "[m]{name}! I saved you a berry. It's squished.",
+    "[e]{name}, tell me about a gate! The scary bit!",
+    "I told everyone you're my friend, {name}. They didn't believe me."
+   ],
+   "kin": [
+    "{name}! You're home! You're home!",
+    "I'm going to be a hunter like you, {name}, but with a pony.",
+    "[m]{name}! Did you bring me anything? A tooth? A claw?",
+    "[e]{name}, sit with me! I'll show you the best puddle.",
+    "[n]I can't sleep, {name}. Will you sit till I do?"
+   ]
+  },
+  "resident": {
+   "stranger": [
+    "Bells were louder when I was young. So was everyone.",
+    "Hm. Another hunter. The last one left muddy boots and a gate.",
+    "[m]Up early. Old habit. Old knees, too.",
+    "[e]Evening. Strangers used to bring news. Now they bring swords.",
+    "You'll want the inn. It's that way. Don't ask me twice."
+   ],
+   "known": [
+    "Ah, {name}. The hunter.",
+    "[m]Morning, {name}. Sun's on my knees. Lovely.",
+    "[d]Afternoon, {name}. I was only resting my eyes.",
+    "[e]Evening, {name}. Slow down. You'll see more.",
+    "{name}. I remember when this lane was a mud track. It still is."
+   ],
+   "friend": [
+    "{name}! Come here and let me look at you.",
+    "[m]Morning, {name}. My grandson won't stop talking of you.",
+    "Sit, {name}. I've a story. It's long, and half of it's true.",
+    "You've a kind face, {name}. For a hunter.",
+    "[e]The bench is warm, {name}. Sit. Tell me about the gates."
+   ],
+   "kin": [
+    "{name}. You're family to me, and I'm too old to lie.",
+    "[m]Morning, {name}. Wrap up, it's cold.",
+    "Our {name}. Come, sit, eat. You're all bones.",
+    "I told the neighbours you're ours, {name}. They agreed.",
+    "[n]Can't sleep, {name}? Nor can I. Sit with me."
+   ]
+  }
+ },
+ "calls": {
+  "stallkeeper": {
+   "produce": [
+    "Apples off the bough this morning!",
+    "Beans, roots, new potatoes!",
+    "[m]Eggs still warm! Who's first?",
+    "Honey from the hives up the lane!",
+    "Turnips! Don't laugh, they're good turnips!",
+    "[d]Plums! Sweet as you like, while they last!",
+    "[e]Last of the day, nearly a gift!",
+    "Cabbages big as your head!"
+   ]
+  },
+  "farmer": [
+   "[m]Come on, you stubborn ox.",
+   "Rain by supper, mark me.",
+   "One more row, then breakfast.",
+   "[d]Hot enough to bake the barley standing.",
+   "Weeds don't pull themselves.",
+   "[e]That'll do. That'll do for today.",
+   "Good tilth, this.",
+   "[m]Seed in, prayers out."
+  ],
+  "shepherd": [
+   "Come by, Moss! Come by!",
+   "Away, away! Not that way, you daft thing.",
+   "[m]Dew's heavy. Wool's heavy. Back's heavy.",
+   "That's the lot. Count them again.",
+   "[e]Home, you lot. Home!",
+   "Lamb's lost. Lamb's always lost.",
+   "[n]Easy now, there's no wolf here. Probably."
+  ],
+  "woodcutter": [
+   "Timber!",
+   "[m]Heave, and again.",
+   "Clear the fall!",
+   "Oak's tougher than it looks.",
+   "[d]Sweat's honest. So is sawdust.",
+   "Another log for the winter.",
+   "[e]Last tree. Then supper."
+  ],
+  "fisher": [
+   "Net's heavy. Good sign.",
+   "[m]Bite's early. Hush.",
+   "Got one! ...Oh. Weed.",
+   "Pull, pull, easy now.",
+   "[e]Cast, wait, cast again.",
+   "Fish don't care about gates. Nice change.",
+   "Mind the line."
+  ],
+  "hunter": [
+   "[e]Stand clear, coming through with a buck!",
+   "[e]Heavy, this one. Make way!",
+   "Dusk's near, and so's the pot.",
+   "[e]Wind was right for once. Got a good one.",
+   "[e]Hup! Haunch for the inn tonight.",
+   "Mind the blood on the lane. Sorry.",
+   "[e]Feet hurt, shoulders hurt, supper's earned."
+  ],
+  "carter": [
+   "Way there, way!",
+   "[m]Gee up, gee up!",
+   "Heavy load, light purse.",
+   "[d]The road to Carillon's long. The cart's longer.",
+   "Mind the wheel!",
+   "[e]Almost home. Stable, hay, rest.",
+   "Hup, Daisy, hup!",
+   "Axle's squealing. Again."
+  ],
+  "elder": [
+   "[m]Another day, another ledger.",
+   "Mind the green, the geese have opinions.",
+   "[d]Who's been at the well-rope?",
+   "[e]Day's done. Almost.",
+   "A village is a great many small jobs, done.",
+   "Someone fetch the bell-ringer, I've a notice to give."
+  ],
+  "child": [
+   "Bet you can't catch me!",
+   "I'm the king of the hill!",
+   "[m]Mum! I fed the hens!",
+   "[d]Race you to the well!",
+   "I found a feather!",
+   "[e]Not tired! Not tired!",
+   "Gate monster! Roar! Boo!",
+   "Tag, you're it!"
+  ],
+  "smith": [
+   "Steady, steady.",
+   "Aye, that's sound iron.",
+   "[m]Fire's up. Let's make something.",
+   "Hammer, anvil, hammer.",
+   "[d]Hot as the hearth of the world in here.",
+   "Hiss! Into the water with you.",
+   "[e]Last blade of the day."
+  ],
+  "miller": [
+   "[m]Grind, you old stones, grind.",
+   "Wheel's turning. All's well.",
+   "More wheat, more flour, more dust.",
+   "Water's high. Good for business.",
+   "[e]Sacks tied, mill sleeping.",
+   "Don't breathe in the dust. I do. Look at me.",
+   "The stones sound a bit flat today."
+  ],
+  "watch_night": [
+   "[n]{hour} o'clock, and all's well in {village}!",
+   "[n]{hour} o'clock! Lamps lit, doors barred!",
+   "[n]Past {hour} o'clock. No rift tonight. Yet.",
+   "[n]{hour} o'clock, and the sky is quiet!",
+   "[n]{hour} of the night! Keep your fires banked!",
+   "[n]{hour} o'clock! The Watch is awake. You needn't be!",
+   "[n]Hark! {hour} o'clock, nothing stirring on the road!"
+  ],
+  "tavernkeeper": [
+   "Fresh pie! Fresh pie!",
+   "[e]Fire's lit, ale's cold!",
+   "[m]Porridge on! Eggs on!",
+   "Rooms aired, beds turned, come in!",
+   "[d]Soup of the day: whatever's left.",
+   "Mind the step, mind the dog!",
+   "[e]Last orders in the hour!"
+  ],
+  "lamplighter": [
+   "[e]Light, light, light.",
+   "[e]Dusk. Pole up, wick lit.",
+   "[e]One more lamp. And one more.",
+   "[m]Out you go, little flame.",
+   "[m]Snuff and trim, snuff and trim.",
+   "Oil's low. Again.",
+   "[n]Stay in the light, good folk."
+  ],
+  "bellringer": [
+   "[m]Dawn bell! Up, all of you!",
+   "[e]Dusk bell! Lamps and doors!",
+   "Heave. And heave again.",
+   "[d]Noon, and nothing stirring.",
+   "Mind your ears!",
+   "[n]Softly, softly. Sleepers about.",
+   "Rope's slick. Grip tight."
+  ]
+ },
+ "news": {
+  "village": [
+   "The mill wheel's squealed since Tuesday. The miller is sulking over it.",
+   "Somebody's goat got into the herb beds again. Nobody will own to it.",
+   "The inn's new barrel is the best in years. Or it's the new cellar.",
+   "Harvest looks fair. Not good, mind. Fair.",
+   "The well-rope frayed in the night. Replaced before breakfast.",
+   "{elder} says the green wants mowing. The sheep volunteered.",
+   "A new lamp stands by the lane. Cost three emeralds, they say.",
+   "The geese have taken against the carter. He is not pleased.",
+   "A child was caught on the mill roof again. No harm, much shouting.",
+   "The bell's gone flat since the frost. We pretend not to notice.",
+   "They're mending the dock before the rains. About time.",
+   "Fish were thin this week. The river is sulking.",
+   "Wool prices are up. Everyone's smug, the shepherds worst of all.",
+   "The smith's apprentice burned the supper and the bellows both.",
+   "[m]The cockerel's been wrong about dawn all week. We've stopped trusting it.",
+   "[d]Shearing starts Thursday. Keep a sleeve free of wool, if you can.",
+   "[e]The bell rang late tonight. The ringer swears the rope was wet.",
+   "[n]Someone left the pen gate open. We're counting sheep in the dark."
+  ],
+  "region": [
+   "Folk in {region} say the roads are drier east of the ford.",
+   "Carters tell of a bridge washed out somewhere in {region}.",
+   "Early frost on the high ground in {region}. A cold winter, they say.",
+   "A caravan from Carillon crossed {region} last week. Salt, nails, news.",
+   "The harvest in {region} is mixed. Wet in the west, dry in the east.",
+   "Wolves have come down in {region}. The hunters are earning their keep.",
+   "Hunters pass along the road through {region}. Fewer than last year.",
+   "There's talk of a tax on salt in {region}. There is always talk.",
+   "The old road across {region} wants mending. Nobody wants to pay.",
+   "They say the next village over has a new bell. Ours is jealous.",
+   "[m]A drover on the road says the ford is up after the night's rain.",
+   "[e]A Carillon caravan camps a day down the road, so the carter says."
+  ],
+  "gate": [
+   "A rift opened {gate} of here last night. The sky went strange.",
+   "The Watch says a gate stands {gate} of us. Nobody goes near.",
+   "Cattle won't graze {gate} of the village. Make of that what you will.",
+   "There's light {gate} of the hill again. Pale, like a bruise.",
+   "A hunter went {gate} three days ago. Haven't seen them back.",
+   "We heard it {gate} before dawn. Low, like a bell underwater.",
+   "Keep off the {gate} road. The Watch has put a rope across.",
+   "The sheep came down off the {gate} hill by themselves. Never a good sign.",
+   "[n]Look {gate} tonight. Faint, but the sky is the wrong colour.",
+   "[e]The Watch lit a second fire facing {gate}. Nobody asked why.",
+   "[m]A hunter's gone {gate} at first light. We'll hear by evening."
+  ],
+  "landmark": [
+   "Something hums at {landmark} before a storm. I feel it in my teeth.",
+   "Children dare each other to touch {landmark}. Nobody has. Yet.",
+   "A pedlar camped near {landmark} and swears he heard singing.",
+   "Mist sits on {landmark} even in high summer. Don't ask.",
+   "{landmark} is worth the walk, if you've a day and good boots.",
+   "They say old coin lies buried at {landmark}. Everyone says that.",
+   "The Watch sets a lamp at {landmark} each night. Costs oil, saves sleep.",
+   "Smoke over {landmark} yesterday. Charcoal burners, we hope.",
+   "[m]Dew lies strangely at {landmark}. Always has. Nobody minds.",
+   "[e]Folk go to {landmark} to think. Or to dodge their chores.",
+   "[n]Lights at {landmark} again. Fireflies, say the optimists."
+  ]
+ },
+ "trade": {
+  "open": {
+   "stranger": [
+    "Prices are on the board. I don't haggle with strangers.",
+    "[m]Early, but here's what I've got.",
+    "Emeralds up front, goods after. House rule.",
+    "Look, don't paw. Then pay.",
+    "Take your time. Don't take my stock."
+   ],
+   "known": [
+    "Good to see you, {name}. Here's what I've got.",
+    "[m]Morning, {name}. Fresh in. Fair prices.",
+    "For you, {name}, the fair price. Not the stranger's.",
+    "[e]Last stock of the day, {name}. Have a look."
+   ],
+   "friend": [
+    "{name}! Friend's price. Don't spread it about.",
+    "Take a look, {name}. I've knocked a few emeralds off.",
+    "[m]Morning, {name}. The best of the lot is behind the counter. Yours.",
+    "Anything you fancy, {name}. I put the good stuff in front."
+   ],
+   "kin": [
+    "{name}. Family rate. Take what you need.",
+    "For kin, the best price in {village}. And that's no boast.",
+    "Whatever you fancy, {name}. The lowest price I've got.",
+    "[m]Morning, {name}. I set aside what you like. At cost."
+   ]
+  },
+  "done": [
+   "Done. Pleasure doing business.",
+   "There you go. Use it well.",
+   "Emeralds counted, goods handed. Fair's fair.",
+   "Good. Look after it.",
+   "[m]First sale of the day. Lucky omen.",
+   "[e]Last of the day, sold. I'll sleep sound.",
+   "Thank you. Tell your friends, if you've any.",
+   "Done and dusted. Mind how you carry it.",
+   "Sold. Come back when you need more.",
+   "Fair price, fair goods, fair weather. Can't ask for more."
+  ],
+  "short": [
+   "Not enough emeralds, I'm afraid.",
+   "Short, by the look of it. Come back when you're not.",
+   "I can't give it away. The family would starve.",
+   "A few more emeralds and it's yours.",
+   "Count again. I'll wait.",
+   "Emeralds are the coin here, friend. Not promises.",
+   "[m]Too early for credit. Try later.",
+   "There's work on the board. It pays in emeralds.",
+   "[e]Short today. Tomorrow might be kinder.",
+   "I'd like to. The ledger wouldn't."
+  ]
+ },
+ "request": {
+  "board": [
+   "The board's got fresh notices. Read before you rush.",
+   "Anything needing doing goes on the board. Emeralds for the doing.",
+   "Folk pin up what they can't do themselves. Have a look.",
+   "[m]Board's been filling since dawn. Someone's busy.",
+   "[e]Last notices of the day. Take one for the morning.",
+   "Pinned up by the bell. Honest work, honest pay.",
+   "Everything this village needs is pinned there, in bad handwriting.",
+   "{elder} reads every notice. Nothing goes up unchecked."
+  ],
+  "done": [
+   "That's it done? Bless you. Here are your emeralds.",
+   "You've saved us a day's work. Emeralds, as promised.",
+   "Fair work, fairly paid. {village} won't forget it.",
+   "I'd say thank you twice, but the emeralds say it better.",
+   "[m]Done before noon, too. I should have offered more.",
+   "[e]Just in time for supper. Come, and take your coin.",
+   "Word will go round, {name}. Good word, for once.",
+   "You have my thanks and my emeralds, in that order.",
+   "A promise kept. Not many keep them. Take your pay.",
+   "People will remember this. I will."
+  ],
+  "none": [
+   "Nothing posted today. The village is, for once, coping.",
+   "Board's bare. Enjoy it, it never lasts.",
+   "No notices. Nothing broke, nobody lost anything. Marvellous.",
+   "[m]Nothing yet. Check back at noon, folk think better after breakfast.",
+   "[e]Nothing today. Come back tomorrow, there's always something.",
+   "Empty board. Even the geese are behaving."
+  ]
+ },
+ "inn": {
+  "offer": [
+   "[e]Rooms are free, if you're staying the night.",
+   "A bed, a meal, a fire. Fancy any of them?",
+   "[n]Still awake? There's a bed upstairs with your name on it.",
+   "Tired? Stay the night. The gates will keep till morning.",
+   "[e]Dark soon. The road is no place to sleep. Stay.",
+   "[m]Not heading off yet? Another night won't hurt.",
+   "You look like you've walked far. A bed would suit you.",
+   "[n]No sense wandering at this hour. Take a room.",
+   "[d]Bed's aired and the sheets are clean. Stay if you like."
+  ],
+  "room": [
+   "Top of the stairs, second door. If you fall out there, you wake in this bed.",
+   "Here's your key. Fall somewhere nasty and you'll wake here. House rule.",
+   "Room's yours. Come to grief out there and you'll find this pillow again.",
+   "Key's on the hook when you're out. Nobody takes it. Nobody dares.",
+   "Sleep sound. The Watch walks the lane.",
+   "Mind the third stair, it's loud. The bed is soft, though.",
+   "Room's warm, blankets mended. Don't snore.",
+   "[n]Quietly, now. The others are asleep.",
+   "If the worst happens, this is the bed you come back to."
+  ],
+  "rumour": [
+   "They say a gate stands {gate} of here. The cattle won't graze that way.",
+   "A drover swore he saw the sky split {gate} last night.",
+   "{landmark} was glowing at dusk. Or it was the sunset. Depends who's drinking.",
+   "Someone's leaving cakes at {landmark}. Nobody admits it.",
+   "Carters from {region} say the roads are wet. Wet and watched.",
+   "The Watch doubled the night rounds. They won't say why. Everyone knows.",
+   "{elder} was up before dawn, pacing the green. Something's on their mind.",
+   "A hunter came through last week and paid in teeth. Monster teeth. We kept them.",
+   "The miller's lad is courting the washer's girl. Everyone knows but the pair.",
+   "A pedlar from {region} swears the moon turned green over the {gate} hills.",
+   "Two hens are laying double yolks. Nobody trusts it.",
+   "They say the Association is hiring in Carillon. Good pay. Poor odds.",
+   "My cousin in the city says the walls hum at night. Gates are close, he says.",
+   "The smith swears his anvil rang by itself on Thursday. He'd been drinking.",
+   "{region} is quiet. Too quiet, say the old men. They always say that.",
+   "A rift hung over {landmark} for an hour last week. Gone by dawn.",
+   "[n]Keep your voice down. The walls listen after dark.",
+   "[e]Heard it from the miller, who heard it from the fisher, who was drunk."
+  ],
+  "morning": [
+   "[m]Morning. Sleep well? The beds are honest.",
+   "[m]Up already? Breakfast is porridge, eggs and bad jokes.",
+   "[m]Good morning. You're alive, so the bed worked.",
+   "[m]Morning. Tea's on, bread's warm. Take a seat.",
+   "[m]There you are. I'd started to think the bed had eaten you.",
+   "[m]Morning. Fire's lit, kettle's singing. Rise and shine, or just rise.",
+   "Up so soon? Sit, eat. The day can wait a bite.",
+   "[d]Slept in? Good. The roads will keep."
+  ],
+  "full": [
+   "Full, I'm afraid. Every bed, and two cots in the stable.",
+   "No rooms. The harvest hands have taken the lot.",
+   "Sorry, friend. Not a pillow free. Try the barn?",
+   "[e]Full up tonight. A trader's cart rolled in. Come back tomorrow."
+  ]
+ },
+ "scribe": {
+  "open": [
+   "Enchanted books, bound and sealed. Choose carefully.",
+   "Each book holds a spell. Each spell, a price. Take your time.",
+   "Ink and magic in equal measure. Browse, then pay.",
+   "These came from Carillon. Don't ask how I got them.",
+   "[m]Fresh bound, still smelling of glue and sorcery.",
+   "Read the cover, not the contents. The contents bite.",
+   "[e]Candle's lit. Come and look at the shelf.",
+   "Careful with the spines. They're older than me."
+  ]
+ },
+ "elder": {
+  "news": [
+   "{village} is in fair heart. The harvest will carry us if the weather holds.",
+   "The Watch asked for more oil for the night lamps. I've said yes.",
+   "{region} is restless. Carters bring news of gates, none of it good.",
+   "We've a bell, a mill and a good well. A village needs little more.",
+   "Carillon sends word by cart, now and then. The walls hold, they say.",
+   "The young ones talk of leaving for the city. I don't blame them. I'd miss them.",
+   "A gate stands {gate}. The Watch keeps eyes on it. We keep our heads down.",
+   "Whatever the gates do, {village} will plant in spring and reap in autumn.",
+   "We pay what we can in emeralds, and in bread when we can't.",
+   "{landmark} is ours to mind. Walk there, but leave nothing broken.",
+   "Hunters like you are a comfort. And a worry. Mostly the first.",
+   "Mind the Watch. They're tired, and tired folk jump at shadows.",
+   "[m]Another morning, another ledger. The village has, at least, woken.",
+   "[e]Dusk is the village's hour. Everyone home, everyone counted.",
+   "[n]A village at night is a held breath. We hold it together."
+  ]
+ },
+ "bell": {
+  "dawn": [
+   "[m]Dawn bell! Time to be up, whether you like it or not.",
+   "[m]There's the bell. The fields are waiting.",
+   "[m]First light. The Watch hands over to the day.",
+   "[m]Bell's rung. Night's behind us, thank goodness.",
+   "[m]Listen to that. Never gets old."
+  ],
+  "dusk": [
+   "[e]Dusk bell. Lamps lit, doors barred.",
+   "[e]There it goes. Everyone in before dark.",
+   "[e]Bell's rung. The Watch takes the lane.",
+   "[e]Day's done. Time for supper and shutters.",
+   "[e]Evening bell. Mind the dark.",
+   "Gate or no gate, we ring it all the same."
+  ]
+ },
+ "event": {
+  "hit": [
+   "Oi! What was that for?",
+   "Ow! I only said good morning!",
+   "Hey! I've done nothing to you!",
+   "Watch! Somebody fetch the Watch!",
+   "Hunters, honestly. What's wrong with you?",
+   "That hurt! Is this how you thank people?",
+   "[n]Dark's no excuse for hitting folk!",
+   "I'll tell {elder} about this, see if I don't.",
+   "Nobody hits anybody in {village}!"
+  ],
+  "broke": [
+   "You broke that! That's someone's wall!",
+   "Hey! That's not yours to knock down!",
+   "Stop that! People live there!",
+   "That's a house, hunter, not a gate! Leave it be!",
+   "Who's going to fix that? You?",
+   "[n]Breaking houses in the dark? Shame on you.",
+   "I saw that. {elder} will hear of it.",
+   "Mind what you smash, friend. It's our home."
+  ],
+  "stole": [
+   "Thief! I saw you at that chest!",
+   "Hey! Those are someone's things!",
+   "Put it back. Now. Before the Watch hears.",
+   "From a house in {village}? Shameful.",
+   "[n]Creeping about at night, taking what's not yours!",
+   "I saw what you took. Put it back, or I'll shout."
+  ],
+  "trampled": [
+   "Mind the crop! That's somebody's bread!",
+   "You're standing on the barley, hunter! Get off!",
+   "Careful! It took all spring to grow that.",
+   "Stick to the path! The field's not a road.",
+   "Someone's wheat, trampled flat. Bless me.",
+   "[n]Walking through fields in the dark. Look at the state of it."
+  ]
+ }
+}

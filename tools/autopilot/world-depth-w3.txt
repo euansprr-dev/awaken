@@ -1,0 +1,112 @@
+# Between the Gates W3, "Living villages" (SPEC §28.6): the first hamlet up the road from Carillon, seen from the hill
+# at dusk (smoke, lit windows, people walking home, the lamps); its green; inside two of its houses; a village by day
+# (its fields, the smithy's forge, the mill, people at work); a trade in emeralds; the notice board; the village at night
+# (the Watch, the inn's light). Shots only. World shots are a spectator's (the eye exactly where the framing puts it,
+# no hand, no HUD); the screens are a creative player's.
+# Run on GitHub: tools/tour-ci.sh tools/autopilot/world-depth-w3.txt
+world autopilot_world_depth_w3 creative 26102610
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+# the opening's sky flight holds the camera and ends on a question a closed screen never answers: skip it first
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+# the Ascent's gift card holds the director while it's up: put it away
+wait 40
+key dismiss
+wait 10
+screen close
+cmd tick sprint 6200
+wait 240
+cmd gamerule advance_time false
+cmd gamemode spectator
+hud off
+# ---- the first hamlet up the road, from the hill above it at dusk ----
+cmd time set 12300
+cmd awaken village view first hill
+wait 400
+cmd awaken village start
+cmd awaken village info
+wait 240
+shot w3_01_first_hamlet_from_the_hill_dusk
+cmd time set 12600
+cmd awaken village view first green
+wait 160
+shot w3_02_the_green_at_dusk
+cmd time set 12900
+cmd awaken village view first street
+wait 80
+shot w3_03_the_street_at_dusk
+# ---- walking into two houses (late morning: the light through the windows) ----
+cmd time set 4500
+cmd awaken village view first house1
+wait 80
+shot w3_04_inside_a_house
+cmd awaken village view first house2
+wait 60
+shot w3_05_inside_another_house
+# ---- a village by day: people at work ----
+cmd time set 3800
+cmd awaken village view nearest_village hill
+wait 500
+cmd awaken village start
+cmd awaken village info
+wait 240
+shot w3_06_a_village_by_day
+cmd awaken village view nearest_village field
+wait 120
+shot w3_07_the_fields_at_work
+cmd awaken village view nearest_village smithy
+wait 100
+shot w3_08_the_smithy_and_its_forge
+cmd awaken village view nearest_village mill
+wait 100
+shot w3_09_the_mill_on_the_water
+cmd awaken village view nearest_village green
+wait 80
+shot w3_10_the_green_by_day
+# ---- trade in emeralds, the notice board ----
+cmd gamemode creative
+cmd give @s minecraft:emerald 24
+cmd give @s minecraft:wheat 40
+hud on
+cmd awaken village trade farmer
+wait 30
+shot w3_11_a_trade_in_emeralds
+screen close
+wait 10
+cmd awaken village trade scribe
+wait 30
+shot w3_12_the_scribes_books
+screen close
+wait 10
+cmd awaken village board
+wait 30
+shot w3_13_the_notice_board
+screen close
+hud off
+cmd gamemode spectator
+# ---- night: the Watch, the inn ----
+cmd time set 15200
+cmd awaken village view nearest_village street
+wait 160
+shot w3_14_the_village_at_night
+cmd awaken village view nearest_village inn
+wait 80
+shot w3_15_the_inn_at_night
+cmd awaken village view nearest_village bell
+wait 40
+shot w3_16_the_bell_tower_at_night
+quit

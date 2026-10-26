@@ -305,6 +305,8 @@ public final class Director {
             if (c == null) continue;
             // never inside Carillon (its core plus the reserve margin; SPEC §16.2)
             if (dev.awaken.terrain.api.CityBasin.reserved(c.getX(), c.getZ())) continue;
+            // nor on a village's ground or within a break's reach of it (SPEC §28.6)
+            if (dev.awaken.village.api.Villages.reserved(over, c, 64)) continue;
             if (!reg.near(c, 96, false).isEmpty()) continue;
             // never within a break's reach of a Hearth the player doesn't share: a veteran's gates stay off a newcomer's home
             if (nearForeignHearth(over, c, p)) continue;
