@@ -179,7 +179,7 @@ final class FarSightTests {
                 // samplers compile with the basin set
                 RandomState rs = RandomState.create(access.lookupOrThrow(Registries.NOISE), 777L, settings.value());
                 var real = rs.getSampler(new CityBasinFunction(settings.value().noiseRouter().finalDensity(),
-                        CityBasinFunction.Mode.DENSITY));
+                        CityBasinFunction.Mode.DENSITY, java.util.Optional.of(settings.value().noiseRouter().depth())));
                 var ctx = SamplerContext.builder().enableCaches().build();
                 FarColumns columns = new FarColumns(gen, rs, access, heights, false, site);
                 var shape = new CityBasinFunction.Shape(site);

@@ -1,0 +1,71 @@
+# Temporal Lens 2's frame cost (docs/perf/IDEAS-26OCT.md B), on the Mac, alone (the 26 Oct perf tour is the before):
+#   JAVA_TOOL_OPTIONS=... XMX=8G ZGC=1 PACK=perf,feel,sound,world TECTONIC=awakened RD=24 SLOT_WHO=temporal-lens \
+#   /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/lens-temporal-perf.txt 1500
+# Render scale 0.95 on the MacBook = Euan's Dell at 0.75 (4.7 MP world). At the Roost at noon: Cinematic and Ultra with
+# temporal off and on, Lens Swift and off for the reference, each window with the GPU's world pass; then the free check
+# from the 26 Oct plan: vanilla's multi-draw-indirect off against on.
+world lensperf creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd gamemode spectator
+cmd time set 6000
+lookswitch cinematic
+pixels 0.95 sharp
+pixels steady on
+cmd awaken city view studio_roost
+# the new world settles and Far Sight's rings fill
+wait 1600
+pixels gpu on
+lens temporal off
+pixels gpu reset
+perf cine_temporal_off 12
+pixels gpu cine_temporal_off
+lens temporal on
+pixels gpu reset
+perf cine_temporal_on 12
+pixels gpu cine_temporal_on
+lens temporal off
+pixels gpu reset
+perf cine_temporal_off2 12
+pixels gpu cine_temporal_off2
+lens temporal on
+pixels gpu reset
+perf cine_temporal_on2 12
+pixels gpu cine_temporal_on2
+lookswitch ultra
+lens temporal off
+pixels gpu reset
+perf ultra_temporal_off 12
+pixels gpu ultra_temporal_off
+lens temporal on
+pixels gpu reset
+perf ultra_temporal_on 12
+pixels gpu ultra_temporal_on
+lookswitch cinematic
+lens swift
+pixels gpu reset
+perf lens_swift 12
+pixels gpu lens_swift
+lookswitch cinematic
+mdi off
+pixels gpu reset
+perf cine_mdi_off 12
+pixels gpu cine_mdi_off
+mdi on
+pixels gpu reset
+perf cine_mdi_on 12
+pixels gpu cine_mdi_on
+lens temporal setting
+pixels config
+quit

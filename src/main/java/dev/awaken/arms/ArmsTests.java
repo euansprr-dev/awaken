@@ -367,6 +367,11 @@ final class ArmsTests {
                     }
                 }
             }
+            if (a.id().equals("spear")) { // a haft is held down it in third person: the wrist turns it there (arms_holds.grip3)
+                org.joml.Vector3f g = FpSwings.grip3("gatewrought_spear");
+                h.assertTrue(g != null && Math.abs(g.x - g.y) < 1e-4F && g.x < 3F / 16F, "the spear is held down its haft in third person: " + g);
+                h.assertTrue(FpSwings.grip3("gatewrought_katana") == null, "a sword is held at its grip");
+            }
             if (a.id().equals("katana")) { // a single edge turned over to chop, as the forehand cuts with it (the lab's audit)
                 h.assertTrue(FpSwings.wristLength(st, Archetype.Move.STRIKE_3) > 0, "the katana's chop turns its edge into the blow in third person");
             }

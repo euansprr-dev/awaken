@@ -289,7 +289,6 @@ public final class RitualClient {
         }
         for (Cue c : CUES) if (c.live && c.ticks >= 0 && ticks - c.start > Math.max(c.ticks, 1) + 40) c.live = false;
         if (holdUntil >= 0 && ticks >= holdUntil) releaseInput();
-        if (holdUntil >= 0 && mc.player != heldPlayer) releaseInput();
         RitualCamera.tick();
         RitualFx.tick();
         RitualHud.tick();
@@ -308,31 +307,23 @@ public final class RitualClient {
 
     // ---- input ------------------------------------------------------------------------------------------------------
 
-    private static @Nullable ClientInput heldInput;
-    private static @Nullable LocalPlayer heldPlayer;
+    /** The lock's owner while the scene holds the player (the shared input lock: core.client.InputLock). */
+    private static final Object INPUT = "ritual";
     private static long holdUntil = -1;
 
     /** The scene takes the controls for a moment (the waking, the end): no walking, the camera is the scene's. */
     private static void holdInput(int forTicks) {
-        LocalPlayer p = Minecraft.getInstance().player;
-        if (p == null) return;
-        if (heldInput == null) {
-            heldInput = p.input;
-            heldPlayer = p;
-            p.input = new ClientInput();
-        }
         holdUntil = Math.max(holdUntil, ticks + forTicks);
+        dev.awaken.core.client.InputLock.hold(INPUT, (int) (holdUntil - ticks) + 40);
     }
 
     static void releaseInput() {
-        if (heldInput != null && heldPlayer != null && heldPlayer.input != heldInput) heldPlayer.input = heldInput;
-        heldInput = null;
-        heldPlayer = null;
+        dev.awaken.core.client.InputLock.release(INPUT);
         holdUntil = -1;
     }
 
     static boolean held() {
-        return heldInput != null;
+        return dev.awaken.core.client.InputLock.held(INPUT);
     }
 
     // ---- sound ------------------------------------------------------------------------------------------------------

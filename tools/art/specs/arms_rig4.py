@@ -43,9 +43,19 @@ DT = 0.25  # ticks between keys (the wrist's own step)
 # counts against keeping both hands on (a figure's arms meet at most ~4 px before its chest, so a long hilt held
 # two-handed and pointed ahead reaches into it: the Katana's turns aside, the longest Greatblades' can't without
 # letting go, and a two-handed great sword is worth more than its pommel by the belly)
+# Hafted weapons: the sword hand at the grip near the butt, the off hand up the haft toward the head (+), fought
+# side-on (stance: the chest turned so the off shoulder comes forward; a figure's arm can't reach up a haft held square
+# before it); a maul's two hands low on its haft; the Twinblades in one hand at the middle (the off hand free, balancing).
 STYLES = {
     "katana": dict(pivot=(-1.5, 3.0, -2.0), radius=6.5, second=-3.5, chest=0.7, torso=2.0),
     "greatblade": dict(pivot=(-1.5, 3.0, -3.5), radius=7.0, second=-4.0, chest=0.8, torso=1.0),
+    "maul": dict(pivot=(-1.5, 3.0, -2.5), radius=6.0, second=-3.5, chest=0.8, torso=1.5),
+    "spear": dict(pivot=(-0.5, 4.0, -3.0), radius=5.0, second=4.0, chest=0.5, torso=1.5, stance=30.0, slide=(3.5, 8.0)),
+    "glaive": dict(pivot=(-0.5, 4.0, -3.0), radius=5.0, second=4.5, chest=0.6, torso=1.5, stance=30.0, slide=(-7.0, 9.0)),
+    "scythe": dict(pivot=(-1.0, 3.5, -2.5), radius=5.0, second=5.0, chest=0.6, torso=1.5, stance=25.0, slide=(-7.0, 9.0),
+                   exact_hit=True),
+    "warstaff": dict(pivot=(-1.0, 3.0, -2.5), radius=5.0, second=4.5, chest=0.6, torso=1.5, stance=20.0, slide=(-8.0, 9.0)),
+    "twinblades": dict(pivot=(-3.0, 3.0, -2.0), radius=7.0, second=0.0, chest=0.7, torso=1.5, hands=1),
 }
 REACH = 8.4  # px: how far a fist reaches from its shoulder
 EYE = np.array([0.0, -1.92, 0.0])  # the camera in the unposed model: 1.62 blocks up, the neck at 1.5
@@ -54,6 +64,30 @@ SHOULDER = np.array([-5.0, 2.0, 0.0])  # the right arm's pivot, unposed
 HAND_LOCAL = {"right": np.array([-1.0, 8.5, 0.0]), "left": np.array([1.0, 8.5, 0.0])}  # a fist's middle, arm frame
 # grip shifts (px, the figure's own frame: right -x, up -y, ahead -z) the clearance may choose from
 # (both ways across: a two-handed hilt is brought in toward the middle, where both hands meet on it)
+GAP = 3.5  # px: the two fists never closer than this along a haft
+
+
+def off_spot(cfg, grip, axis, shoulder, side=0):
+    """Where along the weapon (px from the grip) the off hand closes: its own spot, or on a haft (slide: the range it
+    may take) the reachable one nearest its shoulder, on one side of the sword hand (side: +1 up the haft, -1 toward
+    the butt, 0 either), never on it."""
+    lo, hi = cfg.get("slide", (cfg["second"], cfg["second"]))
+    if lo == hi:
+        return lo
+    if side > 0:
+        lo = max(lo, GAP)
+    elif side < 0:
+        hi = min(hi, -GAP)
+    best, out = None, cfg["second"]
+    for s_ in np.arange(lo, hi + 1e-6, 0.5):
+        if abs(s_) < GAP:
+            continue
+        d = float(np.linalg.norm(grip + axis * s_ - shoulder)) + 0.05 * abs(s_ - cfg["second"])
+        if best is None or d < best:
+            best, out = d, float(s_)
+    return out
+
+
 SHIFTS = [np.array(v, dtype=float) for v in (
     (0, 0, 0), (-2, 0, 0), (-4, 0, 0), (-6, 0, 0), (2, 0, 0), (4, 0, 0), (6, 0, 0), (0, 0, -2), (0, 0, -4), (0, 0, -6),
     (0, -2, 0), (0, -4, 0), (0, 2, 0), (0, 4, 0), (-3, 0, -3), (3, 0, -3), (-4, -2, -2), (4, -2, -2), (-2, -2, -2),
@@ -199,7 +233,7 @@ def to_world(bones, q):
     return T + M @ (np.asarray(q) - np.array([0.0, PC.WAIST, 0.0]))
 
 
-def hold_of(display, arm):
+def hold_of(display, arm, grip=None):
     """(turn, grip): the item-to-arm-frame turn of a hold (ItemInHandLayer's X -90, Y 180, then the display, a left
     hand's mirrored) and where it puts the weapon's grip in the arm's frame (px)."""
     import anim_lab as L
@@ -210,7 +244,8 @@ def hold_of(display, arm):
     Rd = L.MR.euler(ax, ay, az)
     hold = L.rx(-90) @ L.ry(180)
     o = np.array([(-1.0 if arm == "left" else 1.0) / 16, 2 / 16, -10 / 16])
-    grip = 16 * hold @ (o + np.asarray(t) / 16 + sc * Rd @ (AH.GRIP_ITEM - 0.5))
+    g = AH.GRIP_ITEM if grip is None else np.asarray(grip)  # where the fist closes (a haft's down it: grip3)
+    grip = 16 * hold @ (o + np.asarray(t) / 16 + sc * Rd @ (g - 0.5))
     return hold @ Rd, grip
 
 
@@ -231,7 +266,7 @@ class FirstPerson:
         wid = "gatewrought_" + style
         (ax, ay, az), t, sc = L.MR.held(wid)
         self.Rh, self.th, self.sh = L.MR.euler(ax, ay, az), np.asarray(t) / 16.0, sc
-        self.G = AH.GRIP_ITEM
+        self.G = AH.grip3(style)  # the item point the fist closes on in third person (the wrist's pivot)
         self.H0 = np.array([L.HX, L.HY, L.HZ])
 
     def pose(self, move, t):
@@ -266,6 +301,8 @@ def body_depth(frames_list, pts_model, grip, parts=("head", "torso", "right_leg"
     import anim_lab as L
     P = pts_model[np.linalg.norm(pts_model - grip, axis=1) > L.BODY_OWN_HAND]
     worst = 0.0
+    if not len(P):
+        return worst  # nothing of it past the hand (a haft held at its butt has nothing behind)
     for fr in frames_list:
         for part in parts:
             Mp, Tp = (np.array(v) for v in fr[part])
@@ -297,6 +334,7 @@ def rig_move(style, mv, m, swings):
     import arms_holds as AH
     import arms_moves as A
     cfg = STYLES[style]
+    two = cfg.get("hands", 2) == 2
     wt = L.WEIGHTS[L.WEIGHT_OF.get(style, "blade")]
     own = f"arms_{style}_{mv}"
     base = own if own in A.BASE else f"arms_{mv}"
@@ -304,10 +342,11 @@ def rig_move(style, mv, m, swings):
     fp = FirstPerson(style, swings)
     wid = "gatewrought_" + style
     disp = L.display_3p(wid, "right")
-    turn_r, grip_local = hold_of(disp, "right")
+    g3 = AH.grip3(style)
+    turn_r, grip_local = hold_of(disp, "right", g3)
     sc3 = disp[2]
     cloud, length = weapon_cloud(style)
-    rel = (cloud - AH.GRIP_ITEM) * sc3 * 16  # the weapons about the grip, px (item frame)
+    rel = (cloud - g3) * sc3 * 16  # the weapons about where the fist closes, px (item frame)
     c, hit, ea, fe, total = L.phases(m, wt)
     ts = np.arange(0.0, total + 1e-6, DT)
 
@@ -346,7 +385,9 @@ def rig_move(style, mv, m, swings):
         bones0 = [clip.sample(float(t)) for t in ts]
         twists = []
         for i, b0 in enumerate(bones0):
-            tw_rig = float(np.clip(cfg["chest"] * yaw_led[i], -55.0, 55.0))
+            # a hafted weapon is fought side-on (the off shoulder forward, so the off hand reaches up the haft)
+            lim = cfg.get("turn", 55.0)
+            tw_rig = float(np.clip(cfg["chest"] * yaw_led[i] + cfg.get("stance", 0.0), -lim, lim))
             twists.append((1 - w[i]) * twist_of(b0) + w[i] * tw_rig)
         bones = [with_twist(b0, tw) for b0, tw in zip(bones0, twists)]
         # the rest's grip and turn (the base clip's own hand, no wrist), blended into the blade's path by the ramp
@@ -387,13 +428,17 @@ def rig_move(style, mv, m, swings):
                 depth = max(2.5 * body_depth(frs, pts, gk, ("head",)), cfg["torso"] * body_depth(frs, pts, gk, ("torso",)),
                             body_depth(frs, pts, gk, ("right_leg", "left_leg")))
                 # both hands must reach: the grip from the sword arm's shoulder, the handle from the other's
-                far = max(0.0, float(np.linalg.norm(gk - s_r)) - REACH) + w[i] * max(
-                    0.0, float(np.linalg.norm(gk + axis_w * cfg["second"] - s_l)) - REACH)
+                far = max(0.0, float(np.linalg.norm(gk - s_r)) - REACH)
+                if two:
+                    sp = off_spot(cfg, gk, axis_w, s_l)
+                    far += w[i] * max(0.0, float(np.linalg.norm(gk + axis_w * sp - s_l)) - REACH)
                 cost[i, k] = 30.0 * max(0.0, depth - 0.3) + 25.0 * far + 0.15 * float(np.linalg.norm(s_)) + 0.06 * l_
         trans = np.array([[0.4 * float(np.linalg.norm(a[0] - b[0])) + 0.08 * abs(a[1] - b[1]) for b in opts] for a in opts])
         acc, back = cost[0].copy(), np.zeros((len(ts), K), dtype=int)
         for i in range(1, len(ts)):
-            tot = acc[:, None] + trans
+            # a working part as subtle as the scythe's haul: about the hit the shift holds, so the blade meets the target
+            # moving exactly as first person's does (the rest keep their reach there)
+            tot = acc[:, None] + (trans * 60.0 if cfg.get("exact_hit") and abs(ts[i] - hit) <= 0.75 else trans)
             back[i] = np.argmin(tot, axis=0)
             acc = tot[back[i], np.arange(K)] + cost[i]
         pick = [int(np.argmin(acc))]
@@ -405,6 +450,8 @@ def rig_move(style, mv, m, swings):
         # a light smoothing: the shift and the lift glide between keys
         sm, lm = shifts.copy(), lifted.copy()
         for i in range(1, len(ts) - 1):
+            if cfg.get("exact_hit") and abs(ts[i] - hit) <= 0.75:
+                continue  # held about the hit
             sm[i] = 0.25 * shifts[i - 1] + 0.5 * shifts[i] + 0.25 * shifts[i + 1]
             lm[i] = 0.25 * lifted[i - 1] + 0.5 * lifted[i] + 0.25 * lifted[i + 1]
         for i, (g, Q, Mr) in enumerate(targets):
@@ -414,7 +461,7 @@ def rig_move(style, mv, m, swings):
         # the arms: the main hand on the grip, the off hand on the handle; the wrist turns the rest of the way. Two
         # passes: where the off hand can't hold the handle (a follow-through carried round to the far side, a low sweep
         # out of a slide) it lets go cleanly, back toward its own place, rather than float beside the hilt
-        def solve_arms(hold):
+        def solve_arms(hold, spots=None):
             res = []
             prev_r, prev_l = terms_of(bones0[0], "right", bent), terms_of(bones0[0], "left", bent)
             for i, (g, Q, Mr) in enumerate(targets):
@@ -438,7 +485,14 @@ def rig_move(style, mv, m, swings):
                 Ml, Tl, _ = limb_frame(bones0[i], "left", bent)
                 own_l = Tl + Ml @ HAND_LOCAL["left"]
                 M, T, _ = limb_frame(b2, "right", bent)
-                handle = T + M @ grip_local + axis_w * cfg["second"]  # on the weapon where the sword hand really put it
+                if not two:  # one hand: the other keeps its own pose, riding the chest's turn
+                    vl = terms_of(bones0[i], "left", bent)
+                    b2["left_arm"] = arm_bones(*vl, twists[i], "left", bent)
+                    res.append((vr, vl, miss, 0.0, (M @ turn_r).T @ Q, b2, 0.0))
+                    prev_r, prev_l = vr, vl
+                    continue
+                sp = cfg["second"] if spots is None else spots[i]
+                handle = T + M @ grip_local + axis_w * sp  # on the weapon where the sword hand really put it
                 target_l = own_l + (handle - own_l) * w[i] * hold[i]
 
                 def roll_l(M_):
@@ -450,18 +504,53 @@ def rig_move(style, mv, m, swings):
                 prev_r, prev_l = vr, vl
             return res
 
-        first = solve_arms(np.ones(len(ts)))
-        # the fist (4 px across) still closes on the hilt 2.4 px off its line; past 3.6 it lets go
-        grip = np.array([float(np.clip((3.6 - r[3]) / 1.2, 0.0, 1.0)) for r in first])
+        # the off hand's spot on a haft: per key the reachable one, glided between (a hand slides along a haft), on one
+        # side of the sword hand for the whole move (a hand doesn't pass through the other): the side whose solved arms
+        # keep both hands on longer
+        def spots_for(side):
+            raw = []
+            for i, (g, Q, Mr) in enumerate(targets):
+                axis_w = Q @ AH.AXIS_ITEM
+                axis_w /= np.linalg.norm(axis_w)
+                s_l = np.array(PC.part_frames(bones[i])["left_arm"][1])
+                raw.append(off_spot(cfg, g + Mr @ sm[i], axis_w, s_l, side))
+            raw = np.array(raw)
+            sp = np.array([raw[max(0, i - 3):i + 4].mean() for i in range(len(raw))])
+            return np.where(np.abs(sp) < GAP, np.sign(sp + 1e-9) * GAP, sp)
+
+        def holding(first):
+            # the fist (4 px across) still closes on the hilt 2.4 px off its line; past 3.6 it lets go
+            return np.array([float(np.clip((3.6 - r[3]) / 1.2, 0.0, 1.0)) for r in first])
+
+        spots = None
+        if two and cfg.get("slide"):
+            tries = []
+            for side in ((1, -1) if cfg["slide"][0] < 0 else (1,)):
+                sp = spots_for(side)
+                f_ = solve_arms(np.ones(len(ts)), sp)
+                g_ = holding(f_)
+                tries.append((float(np.mean([g_[i] for i in range(len(ts)) if w[i] > 0.5] or [1.0])), sp, f_))
+            _, spots, first = max(tries, key=lambda x: x[0])
+        else:
+            first = solve_arms(np.ones(len(ts)), spots)
+        grip = holding(first)
         n = len(grip)
         grip = np.array([grip[max(0, i - 1):i + 2].min() for i in range(n)])  # let go a little early, take hold late
         grip = np.array([grip[max(0, i - 2):i + 3].mean() for i in range(n)])  # and glide between
-        solved = solve_arms(grip) if grip.min() < 0.999 else first
+        solved = solve_arms(grip, spots) if grip.min() < 0.999 else first
+        # the arms solved again from where they let go may still fall short somewhere: let go there too, until settled
+        for _ in range(6):
+            short = np.array([r[3] > 3.6 and grip[i] > 0.0 for i, r in enumerate(solved)])
+            if not short.any():
+                break
+            cut = np.array([0.0 if short[max(0, i - 2):i + 3].any() else 1.0 for i in range(n)])
+            grip = np.minimum(grip, np.array([cut[max(0, i - 2):i + 3].mean() for i in range(n)]))
+            solved = solve_arms(grip, spots)
         rec = {"right": [], "left": [], "twist": [round(float(x), 2) for x in twists], "wrist": [], "miss": 0.0, "miss_off": 0.0,
                "depth": 0.0, "hilt": 0.0, "held": 0.0, "keys": []}
-        ahead = (cloud - AH.GRIP_ITEM) @ AH.AXIS_ITEM > 0
+        ahead = (cloud - g3) @ AH.AXIS_ITEM > 0
         both = [i for i in range(n) if w[i] > 0.999]
-        rec["held"] = round(float(np.mean([grip[i] for i in both])) if both else 1.0, 2)
+        rec["held"] = round(float(np.mean([grip[i] for i in both])) if both and two else 0.0 if not two else 1.0, 2)
         rec["reach_off"] = [round(float(r[3]), 2) for r in first]  # how far the off hand fell short when asked to hold
         rec["dist_off"] = [round(r[6], 2) for r in first]  # the handle from the off arm's shoulder
         for i, (vr, vl, miss, miss_l, W, b2, _) in enumerate(solved):
@@ -565,7 +654,13 @@ def charge_clips(style, base_straight, base_bent, data):
         name = f"arms_{style}_heavy_charge"
         out.append(BakedClip(name + suffix, [(0.0, b0), (2.0, shaken(1.5)), (4.0, b0)], 4.0, note=f"{style}: the heavy's draw held",
                              bent=bent, loop=True))
-        out.append(BakedClip(name + "_end" + suffix, [(0.0, b0)], 5.0, end=0.0, note="settles out of " + name, bent=bent))
+        # the settle: to the move's own rest first (the off hand leaves the haft the way it came, round the body),
+        # then the library's fade to standing
+        rest = base.sample(float(len(rec["right"]) - 1) * DT)
+        mid = dict(b0)  # the off arm out before the body on its way back, never across it
+        mid["left_arm"] = arm_bones(-65.0, 0.0, -8.0, 25.0 if bent else 0.0, rec["twist"][0], "left", bent)
+        out.append(BakedClip(name + "_end" + suffix, [(0.0, b0), (1.5, mid), (3.0, rest)], 6.0, end=3.0,
+                             note="settles out of " + name, bent=bent))
     return out
 
 

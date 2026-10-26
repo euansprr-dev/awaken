@@ -1,0 +1,59 @@
+# City Sight from the Commons (Euan, 2026-10-26, build 3e1f9d11: "BIG loading issue here for farsight": where Carillon
+# stands, tall dark slabs, a pale grid to the sky, a floating tree, no city). His own world (seed below): the city at
+# 219 1098, the Commons where he stood, 476 blocks north of it. Render distance 24 as he played, the city taken in, then
+# out over the Commons looking back, then his change to 15 (Sodium hands most of the city to City Sight), with the
+# debug views (3: far land blue, far trees red, City Sight green; 4: magenta where the far land steps aside for City
+# Sight; 2: red where a mask hides something) and City Sight and the steady pass switched off in turn.
+# Run: PACK=perf,world TECTONIC=awakened LENS=cinematic SLOT_WHO=far-sight \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/farsight3-commons.txt 900
+world fs3commons survival 1150487391879686904
+waitworld
+window 1440 900
+cmd awaken opening skip
+wait 60
+cmd awaken powers starter 1
+wait 20
+screen close
+gui 0
+hud off
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+opt renderDistance 24
+cmd gamemode spectator
+cmd tp @s 219 120 1098 0 30
+wait 800
+farsight status
+cmd tp @s 222 140 622 0 8
+wait 400
+shot fs3m_rd24
+farsight status
+opt renderDistance 15
+wait 600
+shot fs3m_rd15
+farsight status
+farsight debug 3
+wait 10
+shot fs3m_rd15_d3
+farsight debug 4
+wait 10
+shot fs3m_rd15_d4
+farsight debug 2
+wait 10
+shot fs3m_rd15_d2
+farsight debug 0
+farsight part city off
+wait 60
+shot fs3m_rd15_nocity
+farsight part city on
+pixels steady off
+wait 60
+shot fs3m_rd15_nosteady
+pixels steady on
+cmd tp @s 222 110 760 0 8
+wait 300
+shot fs3m_rd15_near
+farsight status
+info
+quit

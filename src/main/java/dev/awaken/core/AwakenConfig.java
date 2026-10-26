@@ -114,6 +114,11 @@ public final class AwakenConfig {
                         "CINEMATIC (adds sun shadows, ambient occlusion, warm and cool light and light shafts; 90+ fps) or ULTRA",
                         "(the same at higher quality; 60+ fps). It steps aside while an Iris shaderpack is on.")
                 .defineEnum("lens", LensLook.SWIFT);
+        public static final ModConfigSpec.BooleanValue LENS_TEMPORAL = C
+                .comment("Lens 2 (Cinematic and Ultra) spreads its clouds and light over frames: each pixel's clouds are worked out one",
+                        "frame in four and its light every other frame, the rest carried forward from the frames before (still and",
+                        "slow views look the same; a fast turn settles in a few frames). Off: every pixel every frame.")
+                .define("lensTemporal", true);
 
         /** Far Sight, AWAKEN's own far terrain (dev.awaken.farsight, SPEC §20): how far it draws. */
         public enum FarSight { OFF, NEAR, FULL }

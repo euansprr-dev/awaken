@@ -1086,6 +1086,19 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   `tools/autopilot/perf-pack.txt` at a 1440×900-point window; results and comparisons in `docs/perf/`
   (`tools/perf-report.py`). Every perf line carries the machine's load; runs that disagree by more than 5% on p50 are
   re-run.
+- The Look page (O; also Mods → AWAKEN → Config → Look), since 2026-10-26 (Euan: "options that I can easily switch
+  between ... where I can see them all at once"; `compat.client.LookPresets`):
+  - The three Look cards stay.
+  - Under them, four presets, each one click for the Look, Far Sight's reach, the render distance, the render scale on
+    a 4K screen (`renderScale4k`) and steady:
+    - PERFORMANCE: Swift, Near (4 km), 12 chunks, 0.75, steady off;
+    - CLOSE-UP: Ultra, no far terrain, 12 chunks, native, steady on;
+    - BALANCED: Cinematic, Full (16 km), 16 chunks, 0.75, steady on;
+    - VISTA: Cinematic, Full, 24 chunks, 0.75, steady on.
+  - Then every setting as a row: Look, far terrain, render distance (8-32), 4K render scale (native, 0.85, 0.75,
+    0.67), steady, Lens over frames (`lensTemporal`). A click changes a row (right click: back), saved at once.
+  - The heading names the preset the settings match, or "a custom mix".
+  - Autopilot: `lookpreset <name>`. Tour: `tools/autopilot/look-presets.txt`.
 - Looks: Swift (default; the SPEC budget above), Cinematic (p50 ≥ 60 fps, p99 ≤ 25 ms at 4K, to confirm after the
   baseline), Ultra (Iris, experimental: OpenGL only and unsupported on Apple Silicon by Iris). Chosen with the Look
   switch (below).
@@ -1515,7 +1528,17 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   river carved to y 57 and 18 wide (water to sea level 63: the surface estimate reads 8 below the floor there, the aquifer's test for open
   sea-level water),
   continuing straight past the core and fading out 160 blocks beyond it; everything eases back to the natural terrain
-  by 700. No site (old worlds, Classic start, no Lithostitched) means the function is its input. Lairs and Precursor
+  by 700. The rim (2026-10-26, Euan: "that's a bit weird terrain generation"): across the blend the basin aims not at
+  the street but at a rise from it to the land's own height (`aim = street + (land − street) × (1 − w)`, the land being
+  where the router's `depth` crosses zero, linear in y in both routers: the ground without its peaks and noise; the
+  lands pack passes `"depth": "minecraft:overworld/depth"`). Aiming at the street everywhere, the land held until the
+  blend outweighed it and gave way at once: a sheer cliff about 560 blocks out, often undercut into a cave tens of blocks
+  tall. Now near the edge the aim and the land agree on where the ground is and it eases in as a slope. New worlds only:
+  `<world>/awaken/terrain_rim` records "soft" for a world with no overworld chunks at its first start, "steep" otherwise,
+  so an old world never grows a slope beside its cliff (`CityBasin.softRim`). Far Sight samples the same wrapped final
+  density, so far and near agree. Test `terrain_city_basin_rim` (vanilla, seed 777, a hilly site, 36 rays from 330 to 600
+  every 8 blocks: no more than 2% of steps rise over 8 blocks, no more than 2% of columns have an air gap of 3 or more
+  under their top; the street aim logged beside it). No site (old worlds, Classic start, no Lithostitched) means the function is its input. Lairs and Precursor
   ruins skip `reserved(x, z)`; the city wires its runtime systems (gates, anomalies, landmarks, spawn vault, the Well).
   Terrain never sets spawn (the city does, through `LevelEvent.CreateSpawnPosition`). Dev switch for tours before the
   city exists: `CITY=on` (writes `config/awaken-terrain-dev.properties`); `/awaken terrain city` goes to the site.
@@ -1585,7 +1608,10 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   straight line (the real terrain interpolates its density over 8-block cells in y, so this is closer than halving:
   median 0.3 blocks from the generator's exact ground, p90 1.2, test `farsight_columns_predict`), plus half a block (the
   top face). 2.5 probes a column; 59 µs a column on the Awakened Tectonic terrain on the M4 (stage 0: 650-870 µs and
-  8-block steps). Inside the city basin's blend (2026-10-26, Euan: a far wall east of Carillon "that isn't really
+  8-block steps). Under the world's ceiling Tectonic's final density slides to air (`tectonic:__constants/slope_upper`,
+  1 thirty blocks under the ceiling to 0 ten under it, lerped toward −0.1), so its peaks are cut flat about y 308; the
+  height model applies the same slide (2026-10-26, Euan: a massif standing flat at the ceiling itself, y 320, with a
+  sheer wall down). Inside the city basin's blend (2026-10-26, Euan: a far wall east of Carillon "that isn't really
   there", flat when he got close) the ground comes from the router's own final density, which the basin wraps
   (`CityBasinFunction` round `final_density`; the lands pack's Lithostitched wrap swaps it into the generator's settings,
   a router without it gets the same wrap): down from above the natural ground (or the street + 11) in 8-block steps to
@@ -1627,13 +1653,21 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   game's lightmap at the face's own light (dark under roofs, lit windows by night), `farLight` and the same air.
   A level gives way to the next once its cells span 1.5 pixels or fewer, cross-fading over 15% of its reach
   (dithered). Hidden where Sodium draws the section (`farRealSection` and the chunk mask); chunks Sodium draws whole are
-  not planned. The far terrain and far trees step aside where City Sight stands (a 256×256-chunk toroidal coverage mask,
-  read within 2 km) and under it carry only the city's ground, a block under its streets (`FarCity.underCitySight`,
-  `CityLayout.groundY`). The opening's card waits for the whole city to be meshed and up. Debug view 3 tints City
+  not planned. The far terrain and far trees step aside where City Sight draws this frame (a 256×256-chunk toroidal
+  coverage mask, read within 2 km, rebuilt from the frame's plan after it and uploaded when it changes) and under it
+  carry only the city's ground, a block under its streets (`FarCity.underCitySight`, `CityLayout.groundY`). Never where
+  it only holds a chunk: a chunk held but not drawn left the far land stepping aside for nothing (2026-10-26, Euan from
+  the Commons, build 3e1f9d11: where Carillon stood, a pale grid to the sky and tall dark slabs, the solid dark-oak cores
+  of the houses cut open at the edges of the chunks that were drawn). A frame's draws are capped at 32768 (was 8192,
+  silently: past it chunks went undrawn, likeliest after a render distance drop hands Sodium's chunks to City Sight); a
+  chunk is planned whole or not at all, and one past the cap falls back to the far land, logged once. Coarse levels
+  light a face by the brightest air a block out across the whole face (one block at its middle was often a wall of the
+  cell beside, which holds no light: whole faces black). Status line: `drawn=… draws`. Tour `farsight3-commons.txt`
+  (Euan's world, his seed). The opening's card waits for the whole city to be meshed and up. Debug view 3 tints City
   Sight green; `farsight part city off` hides it. Test `farsight_voxels_mesh`.
   Also (2026-10-26, Euan's tours): every overworld chunk the server loads is captured too, after the city's (kept
-  within 1.9 km, the city's at any distance, at most 16 M quads, farthest first; the coverage mask redrawn each second
-  for chunks within 2 km, so its 4 km torus never stands a far chunk in for a near one). A snapshot starts just under
+  within 1.9 km, the city's at any distance, at most 16 M quads, farthest first; the coverage mask holds chunks within
+  2 km only, so its 4 km torus never stands a far chunk in for a near one). A snapshot starts just under
   the chunk's lowest ground (MOTION_BLOCKING_NO_LEAVES - 8; OCEAN_FLOOR counts leaves, and under a closed canopy the
   cut fell at the leaves: trees floating over a hole): deeper never shows. A chunk is taken again 2 s after its last block
   change (the neighbour-update event), not on save (the city's hold saves every chunk as it lets go: the city
@@ -1683,6 +1717,13 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   speed (at most 300 blocks ahead), so in fast flight the land ahead comes first.
 - **The opening's card** waits, while City Sight draws, for the far rings and the whole city meshed and up, not for
   the real chunks round the player (the flight's camera is far from them and Sodium doesn't build them for it).
+- **Known gap: Sodium's cave culling** (2026-10-26, Euan's world over the Commons, `tools/autopilot/farsight3-euan-hole.txt`):
+  sections inside the render distance that Sodium has built but culls this frame (its occlusion traversal can miss a
+  view through a narrow opening, e.g. under the basin rim's old undercut) show the sky colour, with Far Sight off as
+  well; the far land is hidden there because the mask counts built sections, not drawn ones. Closing it needs Sodium's
+  per-frame visibility (`SodiumWorldRenderer.isBoxVisible`, its classes in a nested jar) for each built section, on
+  the path the 26 Oct perf pass trimmed; City Sight drawing past 12 chunks (perf idea C) makes it moot out there, and
+  the soft rim (§15) leaves no such cave in new worlds. Open, for a decision.
 - **Seam audit** (`tools/farsight/seam_audit.py`): pairs of tour frames, normal and debug view 2 (far terrain and City
   Sight hidden for the real chunks paint red); red only in the debug frame, eroded by 5 pixels (outline slivers where
   City Sight's cubes are hidden for thinner real blocks are expected), is a hole. Tour `farsight3-city.txt` takes the
@@ -1732,7 +1773,9 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   world cell of the wider picks one, anchored to the land: 2026-10-26, pixel-wide columns dithered on the screen made far
   slopes glitter in motion, Euan's play; part "steady" off restores them for measuring), tops rounded to
   whole blocks, and shows the face it meets: the top, or a side facing x or z, shaded as the game shades faces (1, 0.8,
-  0.6) under a light matched to Lens 2's on the chunks (`farLight`: a warm key where the sun reaches, Lens's cool shade
+  0.6; a side by the way the slope faces, between 0.6 and 0.8, not by the axis its column shows: a steep slope's
+  staircase shows x and z sides by turns, and read per triangle that flip drew dark spikes down far mountains and
+  grooves down their walls, 2026-10-26) under a light matched to Lens 2's on the chunks (`farLight`: a warm key where the sun reaches, Lens's cool shade
   behind ridges, faces turned from the sun shaded only as it lowers). Grass tops stand over dirt risers (the dirt
   texture's average, a grass fringe along the top), cliffs show stone or an Awakened biome's own block (hoarfrost, riven
   shale, fused glass, mirepeat: palette rock kinds in colour flags bits 4-6), badlands their strata, every block its own
@@ -1743,7 +1786,10 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   tour `farsight3-rim.txt`). Snow lies by the alpine snow line and by a smooth coldness (each corner's blocks above the game's own cold
   line, info alpha, found by bisecting `coldEnoughToSnow`), both broken into patches over a ~20-block band
   (`AlpineSurface.patches`, the same noise the chunks' snow uses), on tops and as a fringe on risers. Scree and bare
-  rock by slope; water over its own sea floor (2026-10-26, Euan's idea: the real water shows its floor, the far water
+  rock by slope; water where it's cold enough to snow (colour flag COLD) is ice, opaque, as the chunks freeze it
+  (2026-10-26: frozen rivers' indigo water drew far valleys purple and see-through), and the generated layer reads ice's
+  lavender map colour as ice's textures' pale blue (`FarPalette.ICE`; the generated layer's store went to schema 3 so
+  the lavender kept on disk is re-learned as chunks load); water over its own sea floor (2026-10-26, Euan's idea: the real water shows its floor, the far water
   showed none, so the floor ended at the chunks): the floor lies the water's depth down along the view ray, blocks of
   sand, gravel in the deep and seagrass patches, anchored to the world, showing by the water's absorption over the path
   (shallows and steep views, not deep water or grazing ones) and fading out over 700 blocks past the render distance's
@@ -1755,7 +1801,7 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   of four directions, one and two corners out): a cliff's foot or a face under a summit isn't a hollow. Changed rings at once, one more every other frame
   (the chunk mask refreshes on the frames between).
 - **Far forests** (`FarTrees`): rings 1-4 (half a kilometre to four) plant jittered candidate spots per cell (1, 2, 3,
-  1 by ring; ring 4's trees are dots, the canopy shading carries the forest there) taking a tree as often as the forest is dense (densest: about two in three), never on water, on slopes over
+  1 by ring; ring 4's trees are dots, the canopy shading carries the forest there) taking a tree as often as the forest is dense (densest: about two in three), its crown and height from the cell's densest corner (a forest's edge on open ground took that ground's blank crown: flat black trees, 2026-10-26), never on water, on slopes over
   1.1, or above the treeline (14 under the alpine snow line); each a little taller or wider than the mean. Up to 512 a
   patch, 16 bytes each, in a persistent texel buffer (two runs per slot: predicted, real), stood as opaque voxel trees
   (crown top, two camera-facing crown sides narrowing by shape, two trunk sides): broadleaf, conifer, jungle, acacia.
@@ -4384,6 +4430,36 @@ texture carries them (texel 20 x the count, texels 24-41, three a plate; it grew
 0.15 block of a plate's plane and inside its rectangle (`onPlate` in lens_frame.glsl) gets no shadow, AO, key or shade
 and no haze. With the K panel open they dim with the rest of the world (the focus dim stays).
 
+**Temporal clouds and light** (Euan, 2026-10-26: "Start all three ideas now", docs/perf/IDEAS-26OCT.md B; setting
+`lensTemporal`, default on; autopilot `lens temporal on|off|setting`):
+- Why: at the Roost, Lens Cinematic cost ~5.4 ms of a ~21 ms frame (docs/perf/PERF-26OCT.md). Its marches (the clouds
+  at 560×315 / 800×450, the light buffer at 960×540 / 1440×810) already blend into a reprojected history, but every
+  pixel marched every frame.
+- The clouds: a pixel marches one frame in four, a 2×2 pattern of 8×8-pixel tiles turning with the frame counter
+  (frame texel 12 w). Whole tiles, so the GPU's SIMD groups skip together: the first, per-pixel pattern left a marching
+  pixel in every group and saved nothing (Cinematic 13.22 ms off, 13.25 on).
+  - On the other three frames it keeps last frame's clouds, reprojected to where its ray enters the layer (or the
+    nearer storm cell; 150 blocks when the camera is inside the layer).
+  - A march blends in at 1 - (1 - f)^4 of the old weight f, so the clouds answer over time as before.
+  - It marches anyway with no history (a cut, a teleport, a long gap), off screen, or while lightning flashes.
+- The light buffer (sun visibility, contact shadows, AO, volumetric light): a checkerboard of 8×8 tiles marches each
+  frame, alternating.
+  - On its off frame a pixel keeps its reprojected history where at least 0.4 of the 2×2 taps saw the same distance.
+  - A new surface (disocclusion) marches.
+  - A march blends in at 1 - (1 - f)^2.
+- Frame texel 17 y carries the switch; with it off, both passes are exactly as before.
+- Measured (perf tour `tools/autopilot/lens-temporal-perf.txt`, 26 Oct; MacBook at Euan's 4.7 MP world, the Roost,
+  noon, a quiet machine; GPU world pass p50):
+
+  | | off | on |
+  |---|---|---|
+  | Ultra | 17.02 ms | **15.12 ms** (frame p50 19.4 → 17.3, 51 → 58 fps) |
+  | Cinematic (paired windows) | 13.95, 13.53 ms | 13.70, 13.13 ms (−0.25 to −0.4) |
+
+  - Lens Swift is 9.29 ms, so the whole of Lens Cinematic is ~4.2 ms over Swift and the marches are a small part of
+    it. The rest is the full-size passes; time them per pass next.
+  - Look tour `tools/autopilot/lens-temporal-look.txt` (CI): no smear and no tile blocks, at rest or in a 180° turn.
+
 ## 23. Creature life (Fresh Animations in the pack, and a life layer on every body of ours; Euan 2026-10-25)
 
 Euan: every mob, ours included, "still feels a bit rigid and static". Approved: "Both: Fresh Animations + our life layer".
@@ -4865,33 +4941,46 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   poses for the longest and widest weapons (the Greatblade's, the Twinblades' far blade, some Longswords): those need
   their own third-person poses and two-handed grips, not a wrist. The scythe leads point first in third person; its haul back through
   the target is first person's.
-- **Third person from first person's blade** (Katana and Greatblade so far; Euan 2026-10-26: "how are we gonna get
-  that exactly the same as first person... so that it genuinely looks really, really good"; tools/art/specs/
-  arms_rig4.py). First person is designed from the blade (its path, the edge leading, through the target on the hit);
-  third person was designed from the arm (a few poses per kind, the weapon wherever the hand put it), so long blades
-  swept through the body and a two-handed weapon was held in one hand. Now third person takes each move's weapon from
-  first person's own baked keys (the grip's place and the blade's turn every quarter tick) and the body follows it:
-  first person's arc about its pivot is carried onto a point before the chest's middle (both hands meet on the hilt
-  there), turned as a whole so its line into the target runs from there to a point before the face, its lever scaled
-  to the figure's reach, level with the view (a slide's or a fall's lean doesn't tilt it). Through the drive, the hit
-  and the cut the blade is exactly first person's; in the wind-up and the follow-through only, the move may be turned
-  as a whole about the pivot (+36 to -30 degrees: first person cocks an overhead chop back past the top of the view
-  and carries a long blade down out of the frame, which in a figure are through the head and the legs). The grip
-  shifts a little where it must (out, ahead, up, in toward the middle), chosen over the whole move at once (Viterbi):
-  a blade by the face counts most, then any weapon in the body, then both hands reaching. The chest turns with the
-  lever, half a tick ahead of it (70% of its turn for the Katana, 80% for the Greatblade, at most 55 degrees); the
-  sword hand closes on the grip and the off hand on the handle toward the pommel by IK, elbows bent (Bendable Cuboids)
-  or, for the straight clips, solved straight with their own wrist keys (`wrist3s`; `ArmsWrist` plays them when
-  Bendable Cuboids isn't loaded); an arm may graze the body, never go into it. Where the off hand can't reach the
-  handle (a follow-through carried round to the far side, the low sweep out of a slide) it lets go cleanly rather
-  than float beside the hilt. These styles play their own Slipcut, Undercut and Plunge (`ArmsClips.OWN_SHARED`) and
-  hold their own heavy's first pose while charging (`arms_<style>_heavy_charge`, `ArmsClips.charge`), so the
-  release never snaps. Measured (`arms_rig4.py bake`, the lab's audits, every tier of the style, looking level and
-  down): every move leads with its edge or point at the hit; both hands on the hilt through 81-100% of every Katana
-  move and 73-100% of every Greatblade move but the Undercut (one-handed out of a slide); the blade more than 1.5 px
-  into the head, body or legs in 5 of their 22 moves (8 before; the Greatblade's from up to 3.7 px to about 1.3). What
-  still touches: a two-handed hilt's pommel by the belly (a figure's arms meet at most ~4 px before its chest, a hilt
-  reaches 5-9 px behind the hands: in 16 moves, mostly the Greatblade's longest tiers, past the blow), and the
+- **Third person from first person's blade** (the Katana, Greatblade, Maul, Spear, Glaive, Scythe, War-staff and
+  Twinblades; Euan 2026-10-26: "how are we gonna get that exactly the same as first person... so that it genuinely
+  looks really, really good", then "roll the blade-first third-person rig out to the maul, spear, glaive, scythe,
+  war-staff and twinblades"; tools/art/specs/arms_rig4.py). First person is designed from the blade (its path, the edge
+  leading, through the target on the hit); third person was designed from the arm (a few poses per kind, the weapon
+  wherever the hand put it), so long blades swept through the body and two-handed weapons were held in one hand. Now
+  third person takes each move's weapon from first person's own baked keys (the grip's place and the blade's turn
+  every quarter tick) and the body follows it: first person's arc about its pivot is carried onto a point before the
+  chest (its middle for a two-handed grip; a spear's or glaive's lower, at the hip), turned as a whole so its line into
+  the target runs from there to a point before the face, its lever scaled to the figure's reach, level with the view
+  (a slide's or a fall's lean doesn't tilt it). Through the drive, the hit and the cut the weapon is exactly first
+  person's; in the wind-up and the follow-through only, the move may be turned as a whole about the pivot (+36 to -30
+  degrees: first person cocks an overhead chop back past the top of the view and carries a long blade down out of the
+  frame, which in a figure are through the head and the legs). The grip shifts a little where it must (out, ahead, up,
+  in toward the middle), chosen over the whole move at once (Viterbi): a blade by the face counts most, then any
+  weapon in the body, then both hands reaching; the Scythe's held still about the hit, so its haul back through the
+  target is first person's to the pixel. The chest turns with the lever, half a tick ahead of it (a style's share,
+  at most 55 degrees). Two hands: the sword hand on the grip, the off hand on the hilt toward the pommel (swords, the
+  Maul) or up the haft (polearms), by IK, elbows bent (Bendable Cuboids) or, for the straight clips, solved straight
+  with their own wrist keys (`wrist3s`; `ArmsWrist` plays them when Bendable Cuboids isn't loaded); an arm may graze the
+  body, never go into it. Polearms (Spear, Glaive, Scythe, War-staff) are fought side-on (the chest turned 20-30 degrees
+  so the off shoulder comes forward: a figure's arm can't reach up a haft held square before it), the off hand sliding
+  along the haft to where it reaches, on one side of the sword hand for the whole move (the side whose solved arms keep
+  both hands on longer). Where the off hand still can't reach (a follow-through carried round to the far side, the low
+  sweep out of a slide) it lets go cleanly, never floats beside the hilt. The Twinblades are swung in one hand at their
+  middle, the other free. **A haft is held down it** (`arms_holds.HAFT3`: Maul 3.5 px, Spear 10, Glaive 5, Scythe 6,
+  War-staff 5, at the third-person scale): their third-person hold moves the item along its length so the fist closes
+  that far toward the butt, and the wrist turns the weapon there (`arms_holds.grip3`; `FpSwings.grip3`, WeaponRenderer),
+  so the haft behind the hands doesn't run back through the chest (held at the item's grip, a Spear's 12 px of butt
+  went through it on every move). These styles play their own Slipcut, Undercut and Plunge (`ArmsClips.OWN_SHARED`) and
+  hold their own heavy's first pose while charging (`arms_<style>_heavy_charge`, `ArmsClips.charge`; its settle goes to
+  the move's rest, the off arm out before the body), so the release never snaps. Measured (`arms_rig4.py bake`, the
+  lab's audits, every tier of each style, looking level and down): every move but one leads with its edge, bit, face
+  or point at the hit (the Veilwoven Spear's second thrust leads at 0.74 of the 0.8 bar); both hands on through 81-100%
+  of each Katana move, 73-100% Greatblade, 90-100% Maul, 83-100% Spear, 80-94% Scythe, and most Glaive and War-staff
+  moves (their thrust, plunge and slide moves mostly one-handed); the blade more than 1.5 px into the head, body or legs
+  in 17 of the 89 moves (23 before: the Greatblade's from up to 3.7 px to about 1.3, the Maul's and Scythe's to none).
+  What still touches: a two-handed sword's pommel by the belly (a figure's arms meet at most ~4 px before its chest, a
+  hilt reaches 5-9 px behind the hands), the War-staff's rear end (1.3-1.9 px), the Twinblades' far blade in the
+  spins; with them, 39 moves have some part of the weapon past 1.5 px (24 before, held one-handed at the side); and the
   Executions' first quarter tick out of rest, where the blade passes the head looking down. Review set:
   docs/combat/anim-lab/third-<style>-blade-first.png (shipped against new, every move from behind-right) and
   fp-third-<style>-<move>.png (first person over third person from behind-right and the side, at the same moments).
@@ -5468,6 +5557,19 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   and captions on the way (e.g. Ilse: "Here, take an ember from our fire. Carry it with you, and when you find a spot
   you'd like to live, place it there. That'll be your home."). Lines that grew got time to be read (Bram's briefing:
   28 s, a line every 7; Ilse's beats 90 apart).
+- **Control comes back** (Euan, 2026-10-26: "right after the cutscene, you can't move"; he had to /kill). Every scene
+  that holds the player still goes through one lock, `core.client.InputLock` (bookkeeping `core.InputHolds`): the camera
+  shots, the Registry's waits, Ilse's ember, the ritual. The real input is saved once, by the first holder, and put back
+  only when the last lets go; a holder never saves another's stand-in. (Ilse's hand-over saved the camera's empty
+  stand-in, the camera then gave the real keys back, and the scene's end put the stand-in back for good.) Every hold has
+  a deadline (a shot's own length + 2 s, re-asserted while it plays; Ilse's ember 45 s; a shot of unknown length 2 min):
+  past it the lock lets go and logs `[input]`. A respawn's new player object is held in turn and given its own keys; a
+  logout lets everything go. Ilse's scene also ends server side on walking off (18 blocks), death, logout or her being
+  gone, and her hand empties. Tests: `core_input_holds`, `progression_first_scene_exits`; tour `camp-exit.txt` walks
+  away after the scene.
+- **The far smoke is far only**: the column (`PulseFx.campfire`) fades out within 48 blocks of the fire (gone at 48,
+  whole from 96), where vanilla's campfire smoke is the real thing. Drawn up close its puffs, up to 15 blocks across and
+  110 up, read as a dark dome over the camp and a pale facet in the sky (Euan, 2026-10-26).
 - **Quest fields** (`QuestDef.Step`, schema 1, both optional): `tally` shows a step's count even when it's one ("· 0/1");
   `night` says why a step needs the dark. Objective type `hearth`: done when the player has a Hearth.
 - Dev and tours: `/awaken living first gate|letters|ilse|took|camp`; tour `tools/autopilot/first-scenes.txt` (CI).
@@ -5539,12 +5641,15 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
 ---------------------------------------------------------------------------------------------------------------------
 
 ### 27.10 The current task, top right (Euan's playtest, 2026-10-26)
-"Every time you have a goal and things to do, you actually have a small checklist top right." One small card, top right
-under the first two toast slots (`signal.client.TaskHud`; never over the crosshair, hidden with the HUD), in the band's
-glass, a touch smaller than the Now card: the task's title and done/total, then its steps (a long one wraps to a second
-line), each ticked when done (a soft green flash as it ticks), the
-current one bright with ▸, keys drawn as key caps from "{key}" in the words, a count where a step has one ("0/10"),
-and a compass to a place nearby to do it ("↗ 9 m"). The Now line, top left, keeps the where; the card keeps the what.
+"Every time you have a goal and things to do, you actually have a small checklist top right." One small card tucked
+into the top-right corner (`signal.client.TaskHud`; the Now card's margin, 4 GUI px), in the Now card's glass, at about
+half its size (Euan, 2026-10-26, after the first version: "WAY too big, 2x smaller and closer to the corner"): 0.45 of
+the System scale, never under two screen pixels a font pixel, widest line 185 px before a step is shortened. Its title
+and done/total, then only what matters now, one line each: the current step bright with ▸, the next two dim, and a step
+that just ticked (a soft green flash, then it fades out over 2.5 s); a long step is shortened with "…" (the Journal has
+the whole of it). Keys are drawn as key caps from "{key}" in the words, a count where a step has one ("0/10"), and a
+compass to a place nearby ("↗ 9 m"). While the System's toasts are up it eases down under them. Hidden with the HUD.
+The Now line, top left, keeps the where; the card keeps the what.
 The server decides (`progression.Checklist`, sent only when it changes, payload `signal_task`; nothing while the
 opening runs):
 - **Your body remembers** first, from the awakening: "Hold [Shift] as you land to roll", "Double-tap [Ctrl] to sprint

@@ -144,6 +144,12 @@ final class OpeningHud {
         return OpeningClient.ticks() < busyUntil || !QUEUE.isEmpty();
     }
 
+    /** Any line still up goes within {@code ticks} (a scene ended: its words don't outstay it). */
+    static void shortenLines(int ticks) {
+        long now = OpeningClient.ticks();
+        for (Line l : LINES) l.ticks = (int) Math.min(l.ticks, now - l.from + ticks);
+    }
+
     /** A prompt the scene waits on (the Registry: sign, take the band, your inventory, K): the key as a cap, then what
      *  it does. A null key clears it (it fades). */
     private static @Nullable String promptKey;

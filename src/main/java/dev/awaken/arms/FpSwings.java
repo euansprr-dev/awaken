@@ -61,6 +61,8 @@ public final class FpSwings {
     private static final float[] NONE = new float[0];
     /** Weapons turned over in their third-person hold (their single edge on the other side from their style's). */
     private static final java.util.Set<String> FLIPPED = new java.util.HashSet<>();
+    /** Where the fist closes on a weapon held down its haft in third person (item space; the rest at the item's grip). */
+    private static final Map<String, Vector3f> GRIP3 = new HashMap<>();
 
     /**
      * Loads the swings now (the client calls this on a worker at start): reading the 1.1 MB file on first use cost a
@@ -77,6 +79,9 @@ public final class FpSwings {
                 dt = root.get("dt").getAsFloat();
                 if (root.has("wristDt")) wristDt = root.get("wristDt").getAsFloat();
                 if (root.has("flipped3")) root.getAsJsonArray("flipped3").forEach(id -> FLIPPED.add(id.getAsString()));
+                if (root.has("grip3")) {
+                    for (var g : root.getAsJsonObject("grip3").entrySet()) GRIP3.put(g.getKey(), vec(g.getValue().getAsJsonArray()));
+                }
                 for (var e : root.getAsJsonObject("styles").entrySet()) {
                     JsonObject st = e.getValue().getAsJsonObject();
                     Map<Archetype.Move, Clip> moves = new EnumMap<>(Archetype.Move.class);
@@ -189,6 +194,11 @@ public final class FpSwings {
     /** Whether a weapon is turned over in its third-person hold (its wrist then turns turned over too). */
     public static boolean flipped3(String weapon) {
         return FLIPPED.contains(weapon);
+    }
+
+    /** Where the fist closes on a weapon in third person, the wrist's pivot (item space): down a haft, or null at its grip. */
+    public static @Nullable Vector3f grip3(String weapon) {
+        return GRIP3.get(weapon);
     }
 
     private static final Quaternionf Q0 = new Quaternionf(), Q1 = new Quaternionf();

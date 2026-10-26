@@ -8,6 +8,10 @@
 // blended into last frame's result reprojected by where the ray first met cloud.
 // Storm cells (the Living Wilds' Rolling Storm, lens_storm.glsl) are marched in the same pass, band by band along the
 // ray (rain, body, anvil), with lightning lighting them from inside; the layer's clouds thin out around them.
+// Temporal (frame texel 17 y, the lensTemporal setting): each pixel marches one frame in four, a 2x2 pattern of 8x8-pixel
+// tiles turning with the frame counter (whole tiles, so the GPU's SIMD groups skip together: a per-pixel pattern left a
+// marching pixel in every group and saved nothing, perf tour 26 Oct); the other three keep last frame's clouds reprojected to where the ray enters the layer, and a
+// march blends in more strongly so the clouds answer as fast as before. No history, off screen or lightning: it marches.
 // Out: rgb the light the clouds send this way (premultiplied), a how much of what's behind still shows.
 uniform sampler2D DepthSampler;     // the world's depth, full size (first input: InSize is the full frame)
 uniform sampler2D CloudNoiseSampler;
@@ -218,6 +222,8 @@ void main() {
 
     // the layer: where the ray is inside it
     float t0 = 0.0, t1 = 0.0;
+    vec4 f13 = F(13);
+    bool interleave = F(17).y > 0.5 && f13.w > 0.5;
     if (cp.x > 0.0) {
         float base = cp.x - 6.0, top = base + CLOUD_THICK;
         if (abs(v.y) > 1.0e-4) {
@@ -228,6 +234,26 @@ void main() {
             t1 = maxD;
         }
         t1 = min(min(t1, scene), min(maxD, t0 + (ultra ? 1100.0 : 800.0)));
+    }
+    if (interleave) {
+        ivec2 tile = ivec2(gl_FragCoord.xy) >> 3;
+        int phase = int(mod(f12.w, 4.0)), mine = (tile.x & 1) + 2 * (tile.y & 1);
+        bool flash = false;
+        for (int s = 0; s < 2; s++) if (s < nStorm && stormC(s).w > 0.0) flash = true;
+        if (mine != phase && !flash) {
+            // this pixel's off frame: last frame's clouds along this ray, found where it enters the layer (or a storm)
+            float at = t0 > 0.0 ? t0 : 150.0;
+            for (int s = 0; s < 2; s++) {
+                if (s >= nStorm) break;
+                float e = stormEntry(v, s, camY);
+                if (e < at && e < 1.0e8) at = max(e, 1.0);
+            }
+            vec3 q = project(frameMat(8), v * at + f13.xyz, z01);
+            if (q.x > 0.0 && q.y > 0.0 && q.x < 1.0 && q.y < 1.0) {
+                fragColor = clamp(texture(HistorySampler, q.xy) + (jitter - 0.5) / 255.0, 0.0, 1.0);
+                return;
+            }
+        }
     }
     int steps = ultra ? 32 : 20;
     float len = max(t1 - t0, 1.0);
@@ -256,10 +282,12 @@ void main() {
     vec4 res = vec4(L, T);
     // last frame's clouds along this ray, found where it first met cloud; lightning shows at once (and fades over a few
     // frames, an afterglow)
-    vec4 f13 = F(13);
     if (f13.w > 0.5) {
         vec3 s = project(frameMat(8), v * max(at, 1.0) + f13.xyz, z01);
-        float fresh = mix(ultra ? 0.12 : 0.15, 0.85, clamp(flashSeen * 4.0, 0.0, 1.0));
+        float fresh = ultra ? 0.12 : 0.15;
+        // marching one frame in four: the same response over time as a march every frame (1 - (1 - f)^4)
+        if (interleave) fresh = 1.0 - pow(1.0 - fresh, 4.0);
+        fresh = mix(fresh, 0.85, clamp(flashSeen * 4.0, 0.0, 1.0));
         if (s.x > 0.0 && s.y > 0.0 && s.x < 1.0 && s.y < 1.0) res = mix(texture(HistorySampler, s.xy), res, fresh);
     }
     fragColor = clamp(res + (jitter - 0.5) / 255.0, 0.0, 1.0);
