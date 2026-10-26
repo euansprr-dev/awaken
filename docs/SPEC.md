@@ -6361,8 +6361,9 @@ s guts the house. It ends when the raiders are dead and the fires out (paid by h
 standing, a bucket token) or at dawn (the rest withdraw and what burns burns). Missed (nobody there, or the village not
 awake: then it burns when it next wakes): the 2-3 houses nearest the camp (3-5 at tier 5) are charred (`Char`: roofs fall
 in, timber blackens to stripped dark oak, basalt, coal and blackstone, glass, doors and cloth gone, floors to ash; stone
-stands but soot blackens it, a sixth of it at the footings rising to most under the eaves, into its deepslate or tuff kin,
-shape kept; chests untouched; every block into the damage record with what stood there), a fire smoulders in each gutted
+stands but soot blackens its walls and roof (not the paving), a sixth at the footings rising to most under the eaves,
+into its deepslate or tuff kin, shape kept; burned footings up, so a charred remnant only stands on what's under it, never
+floating; chests untouched; every block into the damage record with what stood there), a fire smoulders in each gutted
 house (a signal campfire on its ash floor: Minecraft's own tall smoke, seen from far off; cold once the smoke's days are
 done, cleared by the Rebuild), smoke columns rise over them for three play-days, the survivors camp by the well (a
 campfire and bedrolls, sitting at night) until the Rebuild, mood -25, prosperity -12.

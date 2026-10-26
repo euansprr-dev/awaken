@@ -87,8 +87,9 @@ Lines: `data/awaken/village/village_lines.json` under `trouble` (`village.troubl
   a camp put there if the world has none); `info`; `help` (say Help); `end`; `miss` (its clock runs out now).
 - `night` (Taken: in the nest now; Burning: the scouts), `raid`, `fire`, `cut [fraction]`, `carry`, `home`, `deliver`,
   `build <fraction>`, `bell`, `hang`, `ruin` (a Burning missed), `quiet on|off` (hold the director's own starts).
-- `view <well|edge|scouts|trail|lair|nest|fight|roofs|line|ruin|scaffold|belfry|bell|green|dance>` — the tour's
-  framings; each eye is moved as little as it takes to one with sky over it, room to stand and a clear sight of its mark.
+- `view <well|edge|scouts|trail|lair|nest|fight|roofs|line|ruin|smoke|scaffold|belfry|bell|green|dance>` — the tour's
+  framings; each eye is moved as little as it takes to one with sky over it, room to stand, a clear sight of its mark
+  and nothing close filling a side of the frame (never onto a roof).
 - `site` — stands you past the village's edge on even, open ground facing out: a lair built in front of you
   (`/awaken fauna lair place <beast>`) is then in a Taken's reach (the W4 tour does this).
 - `/awaken village grow [now]` — a plot fenced now; again: the masons on; `now`: the stage done at once.

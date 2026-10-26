@@ -52,7 +52,7 @@ final class Lasting {
             if (!left) mem.data.remove("char_queue");
         }
         // smoke over what burned; when its days are done the fires in the ruins go cold
-        if (c.day() <= mem.get("smoke_until", -1) && c.now() % 40 == 13) smoke(c, l, mem);
+        if (c.day() <= mem.get("smoke_until", -1) && c.now() % 20 == 13) smoke(c, l, mem);
         if (mem.get("sm_n", 0) > 0 && mem.get("sm_cold", 0) == 0 && c.day() > mem.get("smoke_until", -1)) douse(c.level(), mem);
         // the survivors by the well
         if (!mem.homeless.isEmpty()) camp(c, l, mem);
@@ -69,8 +69,12 @@ final class Lasting {
             CityPlan.Plot q = p.plots.get(plot);
             double x = p.ox + (q.x0() + q.x1()) / 2.0 + 0.5, z = p.oz + (q.z0() + q.z1()) / 2.0 + 0.5;
             double y = p.baseY + q.lift() + 3;
-            // a tall column (seen from far off: overrideLimiter sends it to 512) and a few embers low in the ruin
-            c.level().sendParticles(ParticleTypes.CAMPFIRE_SIGNAL_SMOKE, true, true, x, y, z, 2, 1.2, 0.4, 1.2, 0.02);
+            // a tall column rising (seen from far off: overrideLimiter sends it to 512; one at a time, so each keeps its lift)
+            // and a few embers low in the ruin
+            var rnd = c.level().getRandom();
+            for (int k = 0; k < 3; k++)
+                c.level().sendParticles(ParticleTypes.CAMPFIRE_SIGNAL_SMOKE, true, true, x + rnd.nextGaussian() * 1.1, y + rnd.nextDouble(), z + rnd.nextGaussian() * 1.1,
+                        0, 0, 0.07, 0, 1);
             c.level().sendParticles(ParticleTypes.SMOKE, x, y - 1.5, z, 4, 2, 0.5, 2, 0.01);
         }
     }
@@ -84,11 +88,16 @@ final class Lasting {
         if (mem.get("smp" + plot, 0) != 0) return;
         VillagePlan p = l.plan();
         CityPlan.Plot q = p.plots.get(plot);
-        int y0 = p.baseY + q.lift(), cx = p.ox + (q.x0() + q.x1()) / 2, cz = p.oz + (q.z0() + q.z1()) / 2;
-        for (int k = 0; k < 25; k++) {
-            int x = cx + (k % 5) - 2, z = cz + (k / 5) - 2;
-            for (int y = y0 + 1; y <= y0 + 3; y++) {
-                BlockPos at = new BlockPos(x, y, z);
+        int y0 = p.baseY + q.lift();
+        double cx = p.ox + (q.x0() + q.x1()) / 2.0, cz = p.oz + (q.z0() + q.z1()) / 2.0;
+        // inside the walls, the cell nearest the middle with ash under it and room over it
+        List<BlockPos> cells = new java.util.ArrayList<>();
+        for (int x = p.ox + q.x0() + 1; x < p.ox + q.x1(); x++)
+            for (int z = p.oz + q.z0() + 1; z < p.oz + q.z1(); z++)
+                for (int y = y0 + 1; y <= y0 + 3; y++) cells.add(new BlockPos(x, y, z));
+        cells.sort(java.util.Comparator.comparingDouble(b -> Math.hypot(b.getX() + 0.5 - cx, b.getZ() + 0.5 - cz) + (b.getY() - y0) * 0.6));
+        for (BlockPos at : cells) {
+            {
                 if (!level.isLoaded(at)) return;
                 if (!level.getBlockState(at).isAir() || !level.getBlockState(at.above()).isAir()
                         || !level.getBlockState(at.below()).isFaceSturdy(level, at.below(), Direction.UP)) continue;

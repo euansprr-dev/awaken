@@ -51,7 +51,7 @@ final class Views {
                 // behind the green's edge (the Watch, the lanterns), out toward the dark the trouble went into
                 Vec3 eye = TroubleDirector.green(l, toward, p.greenR - 3.5);
                 Vec3 far = new Vec3(w.x + Math.cos(toward) * 40, eye.y + 1, w.z + Math.sin(toward) * 40);
-                return new Vec3[]{eye.add(0, 2.2, 0), far};
+                return new Vec3[]{eye.add(0, 2.2, 0), far, TroubleDirector.green(l, toward, p.greenR + 1.5).add(0, 1.2, 0)};
             }
             case "scouts" -> {
                 // the camp's scouts at the treeline, seen from the village's edge
@@ -68,7 +68,7 @@ final class Views {
                     at = Vec3.atBottomCenterOf(edge);
                 }
                 double a = Math.atan2(w.z - at.z, w.x - at.x);
-                double ex = at.x + Math.cos(a + 0.25) * 13, ez = at.z + Math.sin(a + 0.25) * 13;
+                double ex = at.x + Math.cos(a + 0.25) * 9, ez = at.z + Math.sin(a + 0.25) * 9;
                 return new Vec3[]{new Vec3(ex, ground(c, ex, ez) + 2.2, ez), at.add(0, 1.3, 0)};
             }
             case "trail" -> {
@@ -103,9 +103,11 @@ final class Views {
                 Vec3 b = beast != null ? beast.position() : Vec3.atBottomCenterOf(place);
                 Vec3 n = r != null ? r.position() : Vec3.atBottomCenterOf(BlockPos.of(t.get("nest", t.place)));
                 Vec3 mid = b.add(n).scale(0.5);
-                double a = Math.atan2(w.z - mid.z, w.x - mid.x);
+                // across the line between them (the side nearer the village), so neither hides the other
+                double along = Math.atan2(n.z - b.z, n.x - b.x), a = along + Math.PI * 0.5;
+                if (Math.cos(a) * (w.x - mid.x) + Math.sin(a) * (w.z - mid.z) < 0) a += Math.PI;
                 double d = Math.max(6, b.distanceTo(n) + 4);
-                double ex = mid.x + Math.cos(a + 0.3) * d, ez = mid.z + Math.sin(a + 0.3) * d;
+                double ex = mid.x + Math.cos(a) * d, ez = mid.z + Math.sin(a) * d;
                 return new Vec3[]{new Vec3(ex, Math.max(ground(c, ex, ez), mid.y) + 1.8, ez), mid.add(0, 1.0, 0)};
             }
             case "roofs" -> {
@@ -137,22 +139,26 @@ final class Views {
                 CityPlan.Plot q = p.plots.get(plot);
                 Vec3 to = new Vec3(p.ox + (q.x0() + q.x1()) / 2.0 + 0.5, w.y, p.oz + (q.z0() + q.z1()) / 2.0 + 0.5);
                 for (VillagePlan.Building b : p.buildings) if (b.plot() == plot) to = new Vec3(p.ox + b.outX() + 0.5, w.y, p.oz + b.outZ() + 0.5);
+                // from behind the well, down the line of people to the burning door, the roof alight over it
                 double a = Math.atan2(to.z - w.z, to.x - w.x), len = Math.hypot(to.x - w.x, to.z - w.z);
-                Vec3 mid = new Vec3(w.x + Math.cos(a) * len * 0.45, w.y, w.z + Math.sin(a) * len * 0.45);
-                double side = a + Math.PI * 0.5;
-                double ex = mid.x + Math.cos(side) * 7 - Math.cos(a) * 3, ez = mid.z + Math.sin(side) * 7 - Math.sin(a) * 3;
-                Vec3 look = new Vec3(w.x + Math.cos(a) * len * 0.7, p.baseY + q.lift() + Math.max(3, q.eave()) - 0.5, w.z + Math.sin(a) * len * 0.7);
-                return new Vec3[]{new Vec3(ex, ground(c, ex, ez) + 2.6, ez), look};
+                double ex = w.x - Math.cos(a + 0.25) * 5, ez = w.z - Math.sin(a + 0.25) * 5;
+                Vec3 look = new Vec3(w.x + Math.cos(a) * len * 0.8, p.baseY + q.lift() + Math.max(3, q.eave()) - 1.5, w.z + Math.sin(a) * len * 0.8);
+                Vec3 mark = new Vec3(w.x + Math.cos(a) * len * 0.5, w.y + 1.2, w.z + Math.sin(a) * len * 0.5);
+                return new Vec3[]{new Vec3(ex, ground(c, ex, ez) + 3.2, ez), look, mark};
             }
-            case "ruin", "scaffold" -> {
+            case "ruin", "scaffold", "smoke" -> {
                 int plot = worst(c, l, t, name.equals("scaffold"));
                 if (plot < 0) return null;
                 CityPlan.Plot q = p.plots.get(plot);
-                Vec3 mid = new Vec3(p.ox + (q.x0() + q.x1()) / 2.0 + 0.5, p.baseY + q.lift() + 2.5, p.oz + (q.z0() + q.z1()) / 2.0 + 0.5);
+                Vec3 mid = new Vec3(p.ox + (q.x0() + q.x1()) / 2.0 + 0.5, p.baseY + q.lift() + 3.0, p.oz + (q.z0() + q.z1()) / 2.0 + 0.5);
+                // from the street before its door (else from the well's side), a little off square
                 double a = Math.atan2(w.z - mid.z, w.x - mid.x);
-                double r = Math.max(q.x1() - q.x0(), q.z1() - q.z0()) * 0.5 + 9;
+                for (VillagePlan.Building b : p.buildings)
+                    if (b.plot() == plot && (b.outX() != b.doorX() || b.outZ() != b.doorZ())) a = Math.atan2(b.outZ() - b.doorZ(), b.outX() - b.doorX());
+                double r = Math.max(q.x1() - q.x0(), q.z1() - q.z0()) * 0.5 + (name.equals("smoke") ? 26 : 9);
                 double ex = mid.x + Math.cos(a + 0.35) * r, ez = mid.z + Math.sin(a + 0.35) * r;
-                return new Vec3[]{new Vec3(ex, ground(c, ex, ez) + 4.2, ez), mid};
+                Vec3 look = name.equals("smoke") ? mid.add(0, 9, 0) : mid;
+                return new Vec3[]{new Vec3(ex, ground(c, ex, ez) + (name.equals("smoke") ? 4.5 : 2.6), ez), look, mid};
             }
             case "belfry" -> {
                 // from outside the tower, level with the bell and past it: the bell, the roofs below, the land the ring runs over
@@ -232,18 +238,24 @@ final class Views {
                 for (double lift : new double[]{0, 1.5, 3, 5, 8})
                     tries.add(new Try(turn, scale, lift, Math.abs(turn) * 4 + Math.abs(scale - 1) * 3 + lift * 0.35));
         tries.sort((a, b) -> Double.compare(a.cost, b.cost));
-        Vec3 seeing = null;
+        // the ground the eye was meant to stand over: a column much higher is a roof or a wall top, not a place to stand
+        double meant = level.isLoaded(BlockPos.containing(eye)) ? ground(c, eye.x, eye.z) : mark.y;
+        Vec3 narrow = null, seeing = null;
         for (Try k : tries) {
             double a = base + k.turn, r = dist * k.scale;
             double x = mark.x + Math.cos(a) * r, z = mark.z + Math.sin(a) * r;
             if (!level.isLoaded(BlockPos.containing(x, mark.y, z))) continue;
-            double y = Math.max(mark.y + up, ground(c, x, z) + 1.7) + k.lift;
+            double g = ground(c, x, z);
+            if (g > meant + 2.5) continue;
+            double y = Math.max(mark.y + up, g + 1.7) + k.lift;
             Vec3 e = new Vec3(x, y, z);
             if (!room(level, e) || !sees(level, e, mark, r)) continue;
-            if (open(level, e)) return new Vec3[]{e, at};
-            if (seeing == null) seeing = e;
+            if (open(level, e)) {
+                if (wide(level, e, mark)) return new Vec3[]{e, at};
+                if (narrow == null) narrow = e;
+            } else if (seeing == null) seeing = e;
         }
-        return new Vec3[]{seeing != null ? seeing : eye, at};
+        return new Vec3[]{narrow != null ? narrow : seeing != null ? seeing : eye, at};
     }
 
     /** Nothing to bump into or see through at the eye and down the body under it. */
@@ -252,6 +264,18 @@ final class Views {
             BlockPos q = BlockPos.containing(e.x, e.y + dy, e.z);
             BlockState s = level.getBlockState(q);
             if (s.is(BlockTags.LEAVES) || !s.getFluidState().isEmpty() || !s.getCollisionShape(level, q).isEmpty()) return false;
+        }
+        return true;
+    }
+
+    /** Nothing close by filling a side of the frame: the sight lines a third of the way to either side of the mark run clear half way. */
+    private static boolean wide(ServerLevel level, Vec3 e, Vec3 mark) {
+        double dx = mark.x - e.x, dz = mark.z - e.z, len = Math.max(1, Math.hypot(dx, dz));
+        double sx = -dz / len * len * 0.33, sz = dx / len * len * 0.33;
+        for (int side = -1; side <= 1; side += 2) {
+            Vec3 to = new Vec3(mark.x + sx * side, mark.y, mark.z + sz * side);
+            HitResult hit = level.clip(new ClipContext(e, to, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, CollisionContext.empty()));
+            if (hit.getType() != HitResult.Type.MISS && hit.getLocation().distanceTo(e) < e.distanceTo(to) * 0.5) return false;
         }
         return true;
     }

@@ -34,19 +34,28 @@ final class Char {
         if (!level.isLoaded(new BlockPos(x0, y0, z0)) || !level.isLoaded(new BlockPos(x1, y0, z1))) return 0;
         int n = 0;
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
-        for (int y = y1; y >= y0; y--) {
+        // footings up, so what's left of a course knows whether the one under it still stands
+        for (int y = y0; y <= y1; y++) {
             boolean roof = y >= eave;
             // a scorch takes only the roof's top few rows
-            if (how == SCORCH && y < y1 - 3) break;
+            if (how == SCORCH && y < y1 - 3) continue;
             for (int x = x0; x <= x1; x++) {
                 for (int z = z0; z <= z1; z++) {
                     m.set(x, y, z);
                     BlockState s = level.getBlockState(m);
                     if (s.isAir() || s.hasBlockEntity() || !s.getFluidState().isEmpty()) continue;
-                    // soot climbs the stone: little at the footings, most under the eaves (a gutted house only)
-                    double soot = how == GUTTED ? 0.16 + 0.46 * Math.clamp((y - y0) / (double) Math.max(1, eave - y0), 0, 1) : 0;
+                    // soot climbs the stone of its walls and roof (not the paving): little at the footings, most under the eaves
+                    double soot = 0;
+                    if (how == GUTTED && y > y0) {
+                        Block under = level.getBlockState(m.below()).getBlock();
+                        if (roof || !level.getBlockState(m.above()).isAir() || SOOT.containsKey(under) || SOOT.containsValue(under))
+                            soot = 0.16 + 0.46 * Math.clamp((y - y0) / (double) Math.max(1, eave - y0), 0, 1);
+                    }
                     BlockState to = burnt(s, roof, y == y0, Taken.mix(seed, m.asLong(), 3), soot);
                     if (to == null || to == s) continue;
+                    // a charred remnant hangs on what's under it (or beside it in a wall); nothing floats
+                    if (!to.isAir() && isCharred(to) && !SOOT.containsValue(to.getBlock()) && y > y0 && !supported(level, m, roof))
+                        to = Blocks.AIR.defaultBlockState();
                     VillageService.damaged(l, m.immutable(), s, day);
                     level.setBlock(m, to, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
                     n++;
@@ -55,6 +64,17 @@ final class Char {
         }
         VillageState.get(level.getServer()).setDirty();
         return n;
+    }
+
+    /** Something under this cell (or under a neighbour, for a stepped roof; or beside it, in a wall) still stands. */
+    private static boolean supported(ServerLevel level, BlockPos.MutableBlockPos m, boolean roof) {
+        BlockPos at = m.immutable();
+        if (!level.getBlockState(at.below()).isAir()) return true;
+        for (net.minecraft.core.Direction d : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+            if (!level.getBlockState(at.below().relative(d)).isAir()) return true;
+            if (!roof && !level.getBlockState(at.relative(d)).isAir()) return true;
+        }
+        return false;
     }
 
     /** Whether a block is what fire left (the Rebuild puts the house back over it). */

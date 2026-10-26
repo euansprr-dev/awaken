@@ -40,7 +40,7 @@ import java.util.Set;
  * deliver           Rebuild: the notices filled; build &lt;fraction&gt;: the masons that far along
  * bell              the village's bell in your hand; hang: hung in its tower as if you did
  * ruin              Burning missed: the houses on the raid side charred, the survivors by the well
- * view &lt;name&gt;       stand at a framing: well, edge, scouts, trail, lair, nest, fight, roofs, line, ruin, scaffold, belfry, bell, green, dance
+ * view &lt;name&gt;       stand at a framing: well, edge, scouts, trail, lair, nest, fight, roofs, line, ruin, smoke, scaffold, belfry, bell, green, dance
  * site              out past the village's edge on even, open ground, facing away (a lair built in front of you is in a Taken's reach)
  * quiet on|off      hold the director's own starts (tours)
  * </pre>
@@ -49,8 +49,8 @@ public final class TroubleCommands {
     private TroubleCommands() {}
 
     static final List<String> KINDS = Arrays.stream(TroubleKind.values()).map(k -> k.id).toList();
-    static final List<String> VIEWS = List.of("well", "edge", "scouts", "trail", "lair", "nest", "fight", "roofs", "line", "ruin", "scaffold", "belfry",
-            "bell", "green", "dance");
+    static final List<String> VIEWS = List.of("well", "edge", "scouts", "trail", "lair", "nest", "fight", "roofs", "line", "ruin", "smoke", "scaffold",
+            "belfry", "bell", "green", "dance");
 
     public static LiteralArgumentBuilder<CommandSourceStack> node() {
         return Commands.literal("trouble")

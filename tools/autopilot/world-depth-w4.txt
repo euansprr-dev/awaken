@@ -109,9 +109,9 @@ shot w4_08_carrying_them_out
 camera front
 wait 20
 shot w4_09_carrying_them_out_front
+# (first person shows only their hands at your chest, and the clean shots hide the hand: no shot of it here)
 camera first
 wait 20
-shot w4_10_carried_first_person
 # ---- home in the square ----
 cmd awaken village trouble home
 cmd gamemode spectator
@@ -152,7 +152,7 @@ shot w4_15_charred_next_morning
 cmd awaken village trouble view well
 wait 40
 shot w4_16_survivors_by_the_well
-cmd awaken village view nearest_village hill
+cmd awaken village trouble view smoke
 wait 80
 shot w4_17_smoke_over_the_roofs
 # ---- the Rebuild: scaffolding, masons at work ----
@@ -178,9 +178,9 @@ cmd time set 12500
 cmd awaken village trouble view belfry
 wait 40
 cmd awaken village trouble hang
-wait 25
+wait 22
 shot w4_20_the_bell_rehung
-wait 35
+wait 18
 shot w4_21_the_ring_of_light
 # ---- a festival at night ----
 cmd time set 12000
