@@ -3728,17 +3728,32 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   starts half the active before it (`ArmsHands.blowStart`: never before half a tick) and the recovery takes up the
   difference; the move ends when its row says. In first person, in third person (`arms_moves.py` keys the cocked pose
   there too) and in the trails. Before, the hit, its freeze and its red flash came while the blade was still cocked.
-- **First person** (`ArmsHands`, a source on Hands' view layer, `FirstPerson.view`, every styled item): the row's
-  swing from the click frame. A pose is the hand's place on screen (blocks from vanilla's resting hand), the blade's
-  roll in the screen's plane and an optional tilt of the tip forward (a chop, a thrust). The blade stays flat to the
-  eye: a flat item sprite turned about the vertical goes edge-on and vanishes mid-cut (seen in the first tour), so the
-  hand travels across the view instead, on an arc about the shoulder during the blow (eased out hard, with its lunge)
-  and on straight eased lines into the wind-up and home (an arc there lifts the blade back over the top of the view).
-  The Longsword: strike 1 a forehand diagonal (upper right to lower left), strike 2 a backhand sweep, strike 3 an
-  overhead chop, strike 4 and the riposte thrusts, the heavy a rising cut, the Slipcut a low wide sweep, the Execution
-  a raised chop. A held heavy draws back to its start pose and trembles finely as it charges; the guard is vanilla's
-  blocking pose eased in over 2 ticks. Reviewed frame by frame with `tools/autopilot/arms-poses.txt` (the autopilot's
-  `arms pose <move> <0..1>` holds the hands still).
+- **First person** (`ArmsHands`, a source on Hands' view layer, `FirstPerson.view`, every styled item; Euan
+  2026-10-26: "like you're waving the sword instead of slicing... a bit too high"): every move plays a swing baked by
+  the animation lab (tools/art/anim_lab.py `bake` -> `data/awaken/arms/fp_swings.json`, read by `FpSwings`): keys every
+  0.25 ticks of the hand's move from vanilla's rest and its turn about its own place. A cut is a lever, the arm and
+  blade turning as one about a pivot low and right of the view (0.80, -0.64, -0.48 from the eye), in the plane that
+  holds the blade and the cut's direction on the screen (the row's swing.from -> swing.to: a slash flattened 0.6, a
+  chop down, a rising cut up), the blade's flat across that plane so its edge leads (its cutting side toward the motion
+  for an axe, a scythe or a glaive; a symmetric blade takes the side that turns least). On the hit tick (the server's
+  first active tick; mid-blow for a released heavy) the blade crosses the target, a point just under the crosshair
+  (0, -0.10, -1.20), at 78% along its length: seen along its length rising from the frame's lower right, not down it
+  from the hilt. Drawn back to 50-74 degrees before it (heavier rows further), accelerating into the hit, the edge
+  biting and slowing 14-22 degrees past it, a follow-through, then home. Thrusts drive straight along the aim, the flat
+  level. The keys are for the style's forged weapon; a vanilla item in the style takes the same targets from its own
+  hold (`vanilla` turn and grips in the file). A held heavy waits at its drawn-back start and trembles; an armed
+  Plunge at the Plunge's; mirrored for a left main arm. Without keys a move falls back to the row's own slide (the old
+  model). Lab numbers (the review set, 2026-10-26): every slash and chop crosses within 0.11 of the half-frame of the
+  crosshair (most within 0.05; the Chain-blade's and War-staff's long blades +0.11..0.13), edge lead 0.87-1.00 through
+  the blow (before: Longsword strikes 1 and 2 at 0.41 and 0.17, crossing 0.45 above). Test `arms_fp_swings`.
+- **The animation lab** (tools/art/anim_lab.py; SPEC §25, Euan's ask for a way to see the motion): `sheet` / `all`
+  draw each strike's first-person frames as the game composes them (the swing, Hands' view layer, vanilla's rest, the
+  weapon's hold and mesh, 70 degrees) as an onion-skin with the blade tip's path (wind-up blue, blow gold, recovery
+  grey), the hit ringed and the crosshair; under it the tip's height on screen and the edge lead over the move; beside
+  it top and side views of the grip and tip paths against the view cone (`--model old` shows the row's slide).
+  `third` draws the body's clip (arms_moves.py) with the blade in its hand as vanilla's ItemInHandLayer holds it, two
+  views and the third-person edge lead (a thrust: the point lead). `film` overlays the game's own frames (the clip
+  recorder's, in a tour) the same way. Sheets for the review set in docs/combat/anim-lab/.
 - **Third person** (Player Animation Library, optional, through `core.api.PlayerClips`; `ArmsClips`, `ArmsBodies`):
   a full-body clip per move from tools/art/specs/arms_moves.py, its keys on the timing table's rows (cocked at the
   wind-up's end, through at the active ticks' end, home by the endTick), each with a bent twin; the guard held while

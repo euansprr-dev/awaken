@@ -57,6 +57,7 @@ final class ArmsTests {
         AwakenTests.register("arms_weave", 40, ArmsTests::weave);
         AwakenTests.register("arms_lord_forged", 40, ArmsTests::lordForged);
         AwakenTests.register("arms_mastery", 20, ArmsTests::mastery);
+        AwakenTests.register("arms_fp_swings", 20, ArmsTests::fpSwings);
         AwakenTests.register("arms_marks", 40, ArmsTests::marks);
         AwakenTests.register("arms_forge", 20, ArmsTests::forge);
     }
@@ -323,6 +324,52 @@ final class ArmsTests {
             h.assertTrue(p.getData(ArmsContent.MEMORY).lordsWithout() == 0, "and the pity starts again");
             h.succeed();
         });
+    }
+
+    /**
+     * The lab's first-person swings (FpSwings, tools/art/anim_lab.py): keys for every style's every move, each ending
+     * at rest; on the hit tick a slash's hand is turned well off its rest, not slid (the old wave); and the view move of
+     * any turn is exactly the hand turned about its own place (as HandPose's roll-and-tilt one).
+     */
+    static void fpSwings(GameTestHelper h) {
+        org.joml.Vector3f d = new org.joml.Vector3f();
+        org.joml.Quaternionf q = new org.joml.Quaternionf();
+        for (Archetypes.Loaded a : Archetypes.all()) {
+            FpSwings.Style st = FpSwings.style(a.id());
+            h.assertTrue(st != null, a.id() + " has its swings");
+            for (var e : a.moves().entrySet()) {
+                Archetype.MoveDef def = e.getValue();
+                if (def.swing() == null) continue;
+                h.assertTrue(FpSwings.sample(st, e.getKey(), 0, true, d, q), a.id() + " " + e.getKey() + " has keys");
+                FpSwings.sample(st, e.getKey(), def.total() + 1, true, d, q);
+                h.assertTrue(d.length() < 1e-3F && Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + " ends at rest");
+            }
+            Archetype.MoveDef s1 = a.move(Archetype.Move.STRIKE_1);
+            if (s1 != null && s1.windup() > 0 && s1.swing().from().size() < 4) {
+                FpSwings.sample(st, Archetype.Move.STRIKE_1, s1.windup(), true, d, q);
+                float turned = (float) Math.toDegrees(2 * Math.acos(Math.min(1, Math.abs(q.w))));
+                h.assertTrue(turned > 25F, a.id() + "'s first strike turns the blade into the cut on its hit (" + turned + " degrees)");
+            }
+        }
+        float[] m = new float[6];
+        float[] old = new float[6];
+        float worst = 0;
+        for (float roll = -150; roll <= 150; roll += 50) {
+            for (float tilt = -40; tilt <= 60; tilt += 50) {
+                q.identity().rotateZ((float) Math.toRadians(roll)).rotateX((float) Math.toRadians(-tilt));
+                HandPose.viewMove(0.56F, -0.52F, -0.72F, 0.2F, 0.1F, -0.1F, q, m);
+                HandPose.viewMove(0.56F, -0.52F, -0.72F, 0.2F, 0.1F, -0.1F, roll, tilt, old);
+                org.joml.Matrix4f a = viewMatrix(m), b = viewMatrix(old);
+                for (int c = 0; c < 4; c++) for (int r = 0; r < 4; r++) worst = Math.max(worst, Math.abs(a.get(c, r) - b.get(c, r)));
+            }
+        }
+        h.assertTrue(worst < 1e-3F, "a turn's view move matches the roll-and-tilt one (off by " + worst + ")");
+        h.succeed();
+    }
+
+    private static org.joml.Matrix4f viewMatrix(float[] m) {
+        return new org.joml.Matrix4f().translate(m[0], m[1], m[2]).rotateX((float) Math.toRadians(m[3]))
+                .rotateY((float) Math.toRadians(m[4])).rotateZ((float) Math.toRadians(m[5]));
     }
 
     /** Mastery: kills raise a style's step; step I carries the chain's finisher into its mastery strike. */
