@@ -320,6 +320,9 @@ final class OpeningTests {
                 OpeningWorld w = r.world();
                 MinecraftServer server = r.server();
                 ServerPlayer a = r.players().get(0), b = r.players().get(1), c = r.players().get(2), d = r.players().get(3);
+                // the clock is game time: early in a run (or a short one) "five minutes before now" fell below zero, which
+                // reads as no group at all, and the straggler was never pulled
+                OpeningDirector.clockOffset += OpeningDirector.STRAGGLERS;
 
                 // both run; the first arrives and waits
                 run(r, a);
@@ -347,10 +350,7 @@ final class OpeningTests {
                 serverTick(r);
                 h.assertTrue(w.firstArrival < 0 && w.cinematicAt < 0 && w.rushAt < 0, "a finished group's clock is cleared: " + w.firstArrival + " " + w.cinematicAt + " " + w.rushAt);
 
-                // stragglers: one arrives, the other keeps running. The clock moves five minutes on first, so "five
-                // minutes after the first arrival" is never before zero on a young test server (a negative first arrival
-                // reads as "nobody has arrived yet", and nothing is pulled)
-                OpeningDirector.clockOffset += OpeningDirector.STRAGGLERS;
+                // stragglers: one arrives, the other keeps running
                 run(r, c);
                 run(r, d);
                 toSquare(r, c);

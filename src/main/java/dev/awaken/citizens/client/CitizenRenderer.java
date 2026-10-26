@@ -87,7 +87,9 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         skins();
         int rec = body.record();
         s.rec = rec;
-        if (rec >= 0 && rec < skins.length) s.wear(skins[rec], slim[rec]);
+        // (SPEC §28.4) outside Carillon a body wears the Carillon skin the server picked for it from the pool
+        int skin = body.look();
+        if (skin >= 0 && skin < skins.length) s.wear(skins[skin], slim[skin]);
         else s.wear(FALLBACK, false);
         float age = body.tickCount + partial;
         float a = Math.min(1f, age / FADE_IN);
@@ -163,7 +165,7 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         Minecraft mc = Minecraft.getInstance();
         life(body, s, mc, rec, partial);
         s.label = null;
-        if (mc.crosshairPickEntity == body && s.distanceToCameraSq < 9 * 9 && s.speech == null) {
+        if (mc.crosshairPickEntity == body && s.distanceToCameraSq < 9 * 9 && s.speech == null && !body.staged()) {
             s.label = CitizenFx.label(body);
             s.labelWidth = body.labelWidth;
         }

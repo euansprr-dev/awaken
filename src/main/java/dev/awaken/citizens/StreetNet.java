@@ -19,7 +19,10 @@ final class StreetNet {
     static final byte MOVE_HIDDEN = 9;
     /** What climbing a tower's stair costs on top of its length (blocks; tools/city/citizens.py TOWER_CLIMB). */
     static final float TOWER_CLIMB = 45f;
-    /** At most this many columns are baked per server tick; a record whose column isn't ready waits a second. */
+    /**
+     * At most this many columns are baked per server tick, across every settlement's net (SPEC §28.4: one budget for
+     * all of them); a record whose column isn't ready waits a second.
+     */
     static final int BAKES_PER_TICK = 3;
 
     final int n, m;
@@ -43,7 +46,8 @@ final class StreetNet {
      */
     final boolean[] wall;
     private final Int2ObjectOpenHashMap<Column> columns = new Int2ObjectOpenHashMap<>();
-    private int bakesThisTick;
+    /** Shared by every net: the settlements' registry resets it once a server tick (tests through any net's newTick). */
+    private static int bakesThisTick;
     long bakes, bakeNanos;
 
     /** Next hop toward one destination for every node, and the walking distance in decimetres (-1 unreachable). */
@@ -154,6 +158,22 @@ final class StreetNet {
     }
 
     /**
+     * A settlement's own graph built in code (RosterSource.Graph: offsets from its origin), placed at the origin; edges
+     * carry their keep-right lanes.
+     */
+    static StreetNet of(dev.awaken.citizens.api.RosterSource.Graph g, int ox, int oy, int oz) {
+        int n = g.nodes(), m = g.edges();
+        double[] x = new double[n], z = new double[n];
+        int[] y = new int[n];
+        for (int i = 0; i < n; i++) {
+            x[i] = Math.round((g.x()[i] + ox) * 10) / 10.0;
+            z[i] = Math.round((g.z()[i] + oz) * 10) / 10.0;
+            y[i] = oy + g.ry()[i];
+        }
+        return new StreetNet(x, z, y, g.kind().clone(), g.ref().clone(), g.a().clone(), g.b().clone(), new byte[m], g.lane());
+    }
+
+    /**
      * This graph with the roster's wall walk appended (its nodes and edges follow the plan's, as the generator numbered
      * them): the plan placed at (cx, cz) with the street at streetY.
      */
@@ -189,7 +209,12 @@ final class StreetNet {
         return e >= 0 && emove[e] == MOVE_HIDDEN;
     }
 
+    /** A new server tick: the bake budget (shared by every settlement's net) starts again. */
     void newTick() {
+        newServerTick();
+    }
+
+    static void newServerTick() {
         bakesThisTick = 0;
     }
 

@@ -60,7 +60,16 @@ final class Ledger {
     long arrivals, late, noRoute, jumps, waits, overflow, early;
     final double[] tmp = new double[3];
 
+    /** The crowd's scratch: whether this record gets a body in the pass running now (Crowd.rebalance). */
+    final boolean[] want;
+
+    /** Carillon's district count (the plan's eight): its tests' ledgers. */
     Ledger(Roster r, StreetNet g, CitizensData d, int cx, int cz, int streetY, long gameTime, long clock) {
+        this(r, g, d, cx, cz, streetY, gameTime, clock, dev.awaken.city.CityPlan.DISTRICTS.length);
+    }
+
+    /** {@code (cx, streetY, cz)} is the settlement's origin (its roster's offsets); {@code districts} its site's count. */
+    Ledger(Roster r, StreetNet g, CitizensData d, int cx, int cz, int streetY, long gameTime, long clock, int districts) {
         this.r = r;
         this.g = g;
         this.d = d;
@@ -76,6 +85,7 @@ final class Ledger {
         Arrays.fill(rx, Double.NaN);
         lastGame = new long[n];
         lastClock = new long[n];
+        want = new boolean[n];
         slice = Math.max(1, (n + 19) / 20);
         int inf = -1;
         for (int p = 0; p < r.places; p++) {
@@ -85,11 +95,12 @@ final class Ledger {
         Arrays.fill(lastGame, gameTime);
         Arrays.fill(lastClock, clock);
         boolean fresh = !r.sha256.equals(d.roster) || d.records() != n || d.lamps.length != r.lampPlace.length
-                || d.stallOpen.length != r.stalls.size() || d.cloths.length != r.lines.size() || d.bellPos.length != r.bells.size();
+                || d.stallOpen.length != r.stalls.size() || d.cloths.length != r.lines.size() || d.bellPos.length != r.bells.size()
+                || d.safety.length != Math.max(1, districts);
         this.fresh = fresh;
         d.beforeSave = data -> store();
         if (fresh) {
-            d.size(n, r.lampPlace.length, r.stalls.size(), r.lines.size(), r.bells.size());
+            d.size(n, r.lampPlace.length, r.stalls.size(), r.lines.size(), r.bells.size(), districts);
             d.roster = r.sha256;
             int tod = tod(clock);
             for (int i = 0; i < n; i++) {
@@ -276,9 +287,11 @@ final class Ledger {
         }
         if (d.hurtUntil[i] > 0) {
             if (now < d.hurtUntil[i]) {
-                if (infirmary >= 0 && d.place[i] != infirmary) {
+                // to the infirmary (Carillon's Association), or home where a settlement has none
+                int rest = infirmary >= 0 ? infirmary : r.home[i];
+                if (rest >= 0 && d.place[i] != rest) {
                     d.seg[i] = -1;
-                    goTo(i, infirmary);
+                    goTo(i, rest);
                 }
                 if (body[i] == null) advance(i, now, dGame);
                 return;
@@ -307,6 +320,23 @@ final class Ledger {
         }
         if (d.state[i] == STAND && d.dwellUntil[i] > 0 && now >= d.dwellUntil[i]) afterDwell(i, now);
         advance(i, now, dGame);
+    }
+
+    /**
+     * A settlement waking after it slept (no player near it, SPEC §28.4): everyone where this hour wants them, as after a
+     * clock jump. Records an event holds are left to the event, which ends itself.
+     */
+    void reseat(long now, long clock) {
+        int tod = tod(clock);
+        for (int i = 0; i < n; i++) {
+            lastGame[i] = now;
+            lastClock[i] = clock;
+            if (d.role[i] != 0 || d.state[i] == ABSENT || !r.isCitizen(i)) continue;
+            int sched = segmentAt(i, tod);
+            if (d.seg[i] != sched) startSegment(i, sched, now);
+            settle(i, now);
+        }
+        jumps++;
     }
 
     /** Start the next segment early by the walking time to its first place. */

@@ -153,7 +153,6 @@ final class RegistryScene {
             case WEAR -> {
                 String inv = mc.options.keyInventory.getTranslatedKeyMessage().getString();
                 if (!worn) {
-                    if (TipHooks.client().wants(TIP_WEAR)) TipHooks.client().offer(TIP_WEAR);
                     OpeningHud.prompt(sc == null ? inv : null, sc == null ? "Open your inventory and put the band on your wrist" : "");
                 } else stepAside(sc, worn);
                 bootTitle(mc, worn);
@@ -167,8 +166,7 @@ final class RegistryScene {
             case OPEN -> {
                 boolean status = isStatus(sc);
                 if (!status) {
-                    // only now: the tip that shows your K
-                    if (TipHooks.client().wants(TIP_OPEN)) TipHooks.client().offer(TIP_OPEN);
+                    // only now: the prompt that shows your K (the scene's own: the tip system is held through it)
                     String k = dev.awaken.core.client.AwakenKeys.STATUS.getTranslatedKeyMessage().getString();
                     OpeningHud.prompt(sc == null ? k : null, sc == null ? "Open your band" : "");
                 } else {

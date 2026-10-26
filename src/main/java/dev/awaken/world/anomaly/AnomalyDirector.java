@@ -7,6 +7,7 @@ import dev.awaken.core.Playtest;
 import dev.awaken.core.api.Notices;
 import dev.awaken.progression.Profile;
 import dev.awaken.progression.Progression;
+import dev.awaken.signal.Finds;
 import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
 import net.minecraft.core.BlockPos;
@@ -277,6 +278,7 @@ public final class AnomalyDirector {
 
     /** The first meeting with a kind pays a discovery (a tenth of a level, once). */
     static void discovered(ServerPlayer p, AnomalyKind kind) {
+        if (!Finds.counts(p)) return;
         if (Progression.discover(p, kind.discoveryKey(), 0.1)) {
             Progression.markNewThing(p, kind.display);
             Progression.count(p, "awaken:anomalies_seen");

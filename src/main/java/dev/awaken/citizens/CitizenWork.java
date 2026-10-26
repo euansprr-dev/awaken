@@ -42,7 +42,7 @@ import static dev.awaken.citizens.Roster.*;
  * other), and nothing touches a chunk that isn't loaded. Also decides what each body visibly does and holds.
  */
 final class CitizenWork implements Ledger.Work {
-    final Citizens c;
+    final Settlement c;
     final Ledger l;
     final Roster r;
     final CitizensData d;
@@ -69,7 +69,7 @@ final class CitizenWork implements Ledger.Work {
 
     static final int NIGHT_FROM = 13000, NIGHT_TO = 23200, STALLS_OPEN = 700, STALLS_CLOSE = 11800;
 
-    CitizenWork(Citizens c) {
+    CitizenWork(Settlement c) {
         this.c = c;
         this.l = c.ledger;
         this.r = c.roster;
@@ -79,11 +79,10 @@ final class CitizenWork implements Ledger.Work {
         this.cz = l.cz;
         this.sy = l.streetY;
         lampHead = new BlockPos[r.lampPlace.length];
-        dev.awaken.city.CityPlan plan = dev.awaken.city.CityPlan.get();
         for (int k = 0; k < lampHead.length; k++) {
             // the head stands four over the post's own ground (the painter's), not the lamplighter's spot beside it
             int lx = (int) Math.floor(r.lampX[k]), lz = (int) Math.floor(r.lampZ[k]);
-            lampHead[k] = new BlockPos(cx + lx, sy + plan.lift(lx, lz) + 4, cz + lz);
+            lampHead[k] = new BlockPos(cx + lx, c.site.ground(cx + lx, cz + lz) + 4, cz + lz);
         }
         lineAxis = new Direction.Axis[r.lines.size()];
         for (int k = 0; k < r.lines.size(); k++) {
@@ -712,8 +711,12 @@ final class CitizenWork implements Ledger.Work {
     private int[] firstPlots;
     private int housesCursor, firstCursor;
 
-    /** Bakeries, taverns and smithies first; then houses near a player, one plot a tick, each once per world. */
+    /**
+     * Bakeries, taverns and smithies first; then houses near a player, one plot a tick, each once per world. Carillon's
+     * (its plan's plots; a settlement built in code has no chimney finder yet: W3).
+     */
     private void chimneys() {
+        if (!c.site.carillon()) return;
         dev.awaken.city.CityPlan plan = dev.awaken.city.CityPlan.get();
         if (firstPlots == null) {
             for (int k = 0; k + 1 < d.chimneys.length; k += 2) chimneyOf.put((int) d.chimneys[k], d.chimneys[k + 1]);
@@ -795,8 +798,27 @@ final class CitizenWork implements Ledger.Work {
         return false;
     }
 
-    /** Every chimney found so far, for a player who just arrived. */
+    /**
+     * A settlement that isn't Carillon: its street lamps' heads (the client draws their pool of light while they're lit),
+     * added to whatever the player's client has (Carillon's list replaces; this never does).
+     */
+    void sendLamps(ServerPlayer p) {
+        if (c.site.carillon() || lampHead.length == 0) return;
+        long[] pa = new long[lampHead.length];
+        byte[] ka = new byte[lampHead.length];
+        for (int k = 0; k < pa.length; k++) {
+            pa[k] = lampHead[k].asLong();
+            ka[k] = 5;
+        }
+        CitizensNet.emitters(java.util.List.of(p), false, pa, ka);
+    }
+
+    /** Every chimney found so far, for a player who just arrived (Carillon: its site, chimneys, fountains and lamps). */
     void sendChimneys(ServerPlayer p) {
+        if (!c.site.carillon()) {
+            sendLamps(p);
+            return;
+        }
         if (firstPlots == null) chimneys();
         java.util.List<Long> ps = new java.util.ArrayList<>();
         java.util.List<Byte> ks = new java.util.ArrayList<>();
@@ -822,7 +844,7 @@ final class CitizenWork implements Ledger.Work {
             pa[k] = ps.get(k);
             ka[k] = ks.get(k);
         }
-        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(p, new CitizensNet.Site(cx, sy, cz));
+        dev.awaken.core.AwakenNet.send(p, new CitizensNet.Site(cx, sy, cz));
         CitizensNet.emitters(java.util.List.of(p), true, pa, ka);
     }
 

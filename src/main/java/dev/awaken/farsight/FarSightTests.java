@@ -222,27 +222,36 @@ final class FarSightTests {
             h.assertTrue(high >= city.streetY + city.plan.wallHeight && built,
                     "the wall stands at its height, built: top " + high + ", street " + city.streetY + " + wall " + city.plan.wallHeight);
             h.assertTrue(FarCity.planned(city, (city.cx >> 4) + 200, city.cz >> 4, level.getSeed(), plains) == null, "nothing beyond the city");
+            // the far prediction reads the same plan column by column: across the wall, its top stands at the wall's height
+            int[] yAt = new int[1];
+            int wallTop = Integer.MIN_VALUE;
+            for (int dx = -6; dx <= 6; dx++) {
+                if (FarCity.plannedAt(city, level.getSeed(), wallX + dx, city.cz, yAt) != null) wallTop = Math.max(wallTop, yAt[0]);
+            }
+            h.assertTrue(wallTop + 1 >= city.streetY + city.plan.wallHeight, "the prediction's wall: top " + (wallTop + 1));
+            h.assertTrue(FarCity.plannedAt(city, level.getSeed(), city.cx + 4000, city.cz, yAt) == null, "the prediction leaves the land beyond the city");
 
             // a chunk loaded before anything collected (as the city's pregeneration holds them, never saving) reaches the
             // store as soon as collecting starts
             int x0 = (o.getX() & ~15) + 4, z0 = (o.getZ() & ~15) + 4, y0 = o.getY() + 2;
-            for (int x = x0 - 2; x < x0 + 4; x++) {
-                for (int z = z0 - 2; z < z0 + 4; z++) {
-                    for (int y = y0; y <= level.getMaxY(); y++) level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
-                }
-            }
+            // the chunk is the test's own: nothing over it, and plains under it (snow on the pillar read one block high,
+            // "top 31", where another test had filled in a snowy biome and left the rain on)
+            AwakenTests.clearToSky(level, new BlockPos(x0 - 4, y0, z0 - 4), new BlockPos(x0 + 11, y0, z0 + 11));
+            var cmd = level.getServer().createCommandSourceStack().withLevel(level).withSuppressedOutput();
+            level.getServer().getCommands().performPrefixedCommand(cmd, "fillbiome " + (x0 - 4) + " " + (y0 - 4) + " " + (z0 - 4) + " "
+                    + (x0 + 11) + " " + (y0 + 40) + " " + (z0 + 11) + " minecraft:plains");
             for (int y = y0; y < y0 + 23; y++) {
                 for (int k = 0; k < 4; k++) level.setBlock(new BlockPos(x0 + (k & 1), y, z0 + (k >> 1)), Blocks.STONE_BRICKS.defaultBlockState(), Block.UPDATE_CLIENTS);
             }
             boolean was = FarStore.collecting;
             FarStore.collecting = false;
+            AwakenTests.onEnd(h, () -> FarStore.collecting = was); // left on, it sums every chunk loaded for the rest of the run
             int cell = 2 * FarChunk.SIDE + 2, cx = x0 >> 4, cz = z0 >> 4;
             h.runAfterDelay(3, () -> FarStore.collecting = true);
             h.succeedWhen(() -> {
                 FarChunk seen = FarStore.of(level).get(cx, cz);
                 h.assertTrue(seen != null && FarChunk.top(seen.cell()[cell]) == y0 + 23,
                         "the loaded chunk reached the store: " + (seen == null ? "not yet" : "top " + FarChunk.top(seen.cell()[cell])));
-                FarStore.collecting = was;
             });
         });
 
