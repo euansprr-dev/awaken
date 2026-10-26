@@ -30,6 +30,13 @@ for tier in ("cinematic", "ultra"):
         d = copy.deepcopy(base)
         d["passes"] = [null_pass(p) if p["fragment_shader"] in shaders else p for p in d["passes"]]
         (FX / f"lens_probe_{tier}_{group}.json").write_text(json.dumps(d, indent=2) + "\n")
+    # the lit composite without one of its parts (lens_composite_probe_<part>.fsh: the same shader with one #define)
+    for part in ("light", "clouds", "scatter", "grade"):
+        d = copy.deepcopy(base)
+        for p in d["passes"]:
+            if p["fragment_shader"] == "awaken:post/lens_composite_lit":
+                p["fragment_shader"] = f"awaken:post/lens_composite_probe_{part}"
+        (FX / f"lens_probe_{tier}_comp_{part}.json").write_text(json.dumps(d, indent=2) + "\n")
     # the final copy back to the main target, as a constant (its load and store stay)
     d = copy.deepcopy(base)
     last = d["passes"][-1]

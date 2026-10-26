@@ -353,6 +353,7 @@ void main() {
     vec3 dpx = dFdx(pRel), dpy = dFdy(pRel);
     float pd = max(length(pRel), 0.05);
     vec3 quick = vec3(0.0);
+#ifndef PROBE_NO_LIGHT
     if (max(abs(dFdx(pd)), abs(dFdy(pd))) < pd * 0.015 && !open) {
         quick = normalize(cross(dpx, dpy));
         if (dot(quick, pRel) > 0.0) quick = -quick;
@@ -361,12 +362,17 @@ void main() {
         if (qm > 0.9) quick = step(vec3(qm), qa) * sign(quick);
     }
     if (!open && !classic && !plate) c = lensLight(c, pRel, quick, depth, rdEnd, clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0), p1, lightDbg);
+#endif
     // Lens 2's clouds (L4), over the sky and over anything farther than where this ray enters their layer
     // and the storm cells marched with them (lens_storm.glsl): over anything farther than where the ray enters a cell's
     // bounds, never nearer than 16 blocks (its rain fades in from there; nearer, the game's own rain falls)
     vec4 cp = F(18);
     int storms = stormCount();
+#ifdef PROBE_NO_CLOUDS
+    if (false) {
+#else
     if ((cp.x > 0.0 || storms > 0) && !classic) {
+#endif
         vec4 cl = texture(CloudsSampler, texCoord);
         bool behind = sky;
         if (!sky) {
@@ -411,7 +417,11 @@ void main() {
     c = mix(c, mix(c, vec3(l0), h.a), haze);
     c = mix(c, hazeColor, haze * 0.55);
 #ifdef LENS_LIGHT
+#ifdef PROBE_NO_SCATTER
+    if (false) {
+#else
     if (!classic) {
+#endif
         vec4 v19 = P(19), f14 = F(14);
         // lights glowing in fog: the wide glow spread wider still (the shafts pass's g/b/a), tinted toward the haze, as
         // strong as the place's fogGlow
@@ -444,7 +454,11 @@ void main() {
 #ifdef LENS_LIGHT
         // volumetric light through the terrain's shadows, with the screen-space shafts kept at half for what the sun map
         // can't hold (clouds crossing the sun)
+#ifdef PROBE_NO_SCATTER
+        if (false) {
+#else
         if (!classic) {
+#endif
             float vol = !open && lrHave ? lrKept.b : upsample(LightSampler, open ? 0.0 : packDistance8(length(pRel))).b;
             c = screen(c, lightColour(p1, sunset) * (vol * 1.6) + texture(ShaftsSampler, texCoord).r * sunColor * 0.35);
         } else
@@ -460,7 +474,11 @@ void main() {
     c += (shadowT.rgb - vec3(luma(shadowT.rgb))) * (1.0 - l) * (1.0 - l) * shadowT.a;
     c += (highT.rgb - vec3(luma(highT.rgb))) * l * l * shadowT.a;
 #ifdef LENS_LIGHT
+#ifdef PROBE_NO_GRADE
+    c = clamp((c - 0.5) * (g.g * 2.0) + 0.5, 0.0, 1.0);
+#else
     c = mix(clamp((c - 0.5) * (g.g * 2.0) + 0.5, 0.0, 1.0), filmic(c, g.g * 2.0), classic || sky ? 0.0 : P(17).a);
+#endif
 #else
     c = clamp((c - 0.5) * (g.g * 2.0) + 0.5, 0.0, 1.0);
 #endif
