@@ -179,6 +179,8 @@ final class WildTests {
             var seq = h.startSequence();
             for (Family f : FAMILIES) {
                 seq.thenExecute(() -> {
+                    // surface creatures want the sky: nothing another test left over the patch may roof it
+                    AwakenTests.clearToSky(level, start.offset(-6, 0, -6), start.offset(6, 1, 6));
                     for (int dx = -6; dx <= 6; dx++) for (int dz = -6; dz <= 6; dz++) {
                         BlockPos at = start.offset(dx, 0, dz);
                         level.setBlock(at.below(), f.ground().defaultBlockState(), 3);
@@ -212,10 +214,16 @@ final class WildTests {
             long clock = Math.floorMod(level.getOverworldClockTime(), 24000L);
             List<BlockPos> patches = new ArrayList<>();
             int[][] offsets = {{-24, -24}, {0, -26}, {24, -24}, {-24, 24}, {0, 26}, {24, 24}};
+            // the caps count round the nearest player: this test's must be the only one near the patches
+            Vec3 centre = Vec3.atCenterOf(h.absolutePos(new BlockPos(0, UP, 0)));
+            for (ServerPlayer other : List.copyOf(level.players())) {
+                if (other != p && other.distanceToSqr(centre) < 200 * 200) other.setPos(other.getX() + 2000, other.getY(), other.getZ());
+            }
             for (int i = 0; i < FAMILIES.size(); i++) {
                 Family f = FAMILIES.get(i);
                 BlockPos c = h.absolutePos(new BlockPos(offsets[i][0], UP, offsets[i][1]));
                 patches.add(c);
+                AwakenTests.clearToSky(level, c.offset(-5, 0, -5), c.offset(5, 1, 5));
                 for (int dx = -5; dx <= 5; dx++) for (int dz = -5; dz <= 5; dz++) {
                     level.setBlock(c.offset(dx, -1, dz), f.ground().defaultBlockState(), 3);
                     level.setBlock(c.offset(dx, 0, dz), Blocks.AIR.defaultBlockState(), 3);

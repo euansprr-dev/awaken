@@ -188,6 +188,8 @@ public final class Director {
 
     static void tick(MinecraftServer server) {
         if (!AwakenConfig.GATES.get()) return;
+        // GameTests call upkeep and firstGate themselves: a test's player never gets a gate formed on another test's plot
+        if (server instanceof net.minecraft.gametest.framework.GameTestServer) return;
         int t = server.getTickCount();
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             if (Math.floorMod(t + p.getUUID().hashCode(), PERIOD) == 0) upkeep(server, p, false);

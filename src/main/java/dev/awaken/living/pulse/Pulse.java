@@ -110,6 +110,8 @@ public final class Pulse extends SavedData {
         Pulse p = get(server);
         if (t % 20 == 0) p.run(level);
         if (t % 40 == 0) p.sendTells(level);
+        // GameTests start happenings themselves: none comes to a test's player on its own, across other tests' plots
+        if (server instanceof net.minecraft.gametest.framework.GameTestServer) return;
         for (ServerPlayer pl : server.getPlayerList().getPlayers()) {
             if ((t + (pl.getUUID().hashCode() & 0xFF)) % 200 == 0) p.consider(level, pl);
         }
