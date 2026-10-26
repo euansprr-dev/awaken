@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "awaken:delve/mine",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 52,
+    "separation": 22,
+    "salt": 481120967
+  }
+}

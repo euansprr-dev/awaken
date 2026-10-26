@@ -1,0 +1,225 @@
+package dev.awaken.delve.cave;
+
+import dev.awaken.core.test.AwakenTests;
+import dev.awaken.living.api.Regions;
+import dev.awaken.mobs.SeepHearts;
+import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.Structure;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+/**
+ * The cave places' GameTests (SPEC §28.5), one per mechanism: every place has a route that needs no rope, both ways
+ * (in to its end and back out), within the Ascent's numbers, over several seeds and turns, and what it costs a chunk to
+ * build and a candidate to find; a seep's rule: five levels over the region, its heart rooted when a player comes, and
+ * quiet once the heart falls.
+ */
+final class CaveTests {
+    private CaveTests() {}
+
+    static void register() {
+        AwakenTests.register("delve_cave_routes", 200, CaveTests::routes);
+        AwakenTests.registerIsolated("delve_seep", 600, CaveTests::seep);
+    }
+
+    /** Where each kind is laid for the test (a sinkhole's rim, every other's floor). */
+    private static int testY(CaveKind k) {
+        return switch (k) {
+            case SINKHOLE -> 72;
+            case MINE -> 64;
+            case SEEP -> -30;
+            case CHUTE -> 24;
+            case GROTTO -> 12;
+        };
+    }
+
+    static Grid grid(Spec s) {
+        BoundingBox b = s.box();
+        Grid g = new Grid(b.minX() - 2, Math.max(-64, b.minY() - 2), b.minZ() - 2, b.maxX() + 2, b.maxY() + 2, b.maxZ() + 2);
+        if (s.kind() == CaveKind.SINKHOLE) {
+            // open ground at the rim: the sky over it
+            for (int x = g.minX(); x <= g.maxX(); x++) for (int z = g.minZ(); z <= g.maxZ(); z++) for (int y = s.p(Sinkhole.RIM); y <= g.maxY(); y++)
+                g.set(x, y, z, Blocks.AIR.defaultBlockState());
+        }
+        CaveStaging.cave(s, g);
+        return g;
+    }
+
+    private static void routes(GameTestHelper h) {
+        List<String> fails = new ArrayList<>();
+        StringBuilder costs = new StringBuilder();
+        for (CaveKind k : CaveKind.values()) {
+            double worst = 0, sum = 0;
+            int chunks = 0;
+            for (int seed = 1; seed <= 4; seed++) {
+                Spec s = CaveStaging.spec(k, 0, testY(k), 0, seed & 3, 0x5EEDL * seed + k.ordinal());
+                Grid g = grid(s);
+                // the whole place, one chunk at a time as worldgen builds it: what a chunk costs
+                BoundingBox b = s.box();
+                for (int cx = b.minX() >> 4; cx <= b.maxX() >> 4; cx++) {
+                    for (int cz = b.minZ() >> 4; cz <= b.maxZ() >> 4; cz++) {
+                        Clip clip = new Clip(g, cx << 4, cz << 4);
+                        long t0 = System.nanoTime();
+                        s.build(clip);
+                        double ms = (System.nanoTime() - t0) / 1e6;
+                        worst = Math.max(worst, ms);
+                        sum += ms;
+                        chunks++;
+                    }
+                }
+                int[] start = g.mark("start"), goal = g.mark("goal");
+                Routes.Result in = Routes.find(g, start, goal);
+                Routes.Result out = Routes.find(g, goal, start);
+                if (!in.found()) fails.add(k.id + " seed " + seed + " in: " + Routes.describe(in));
+                if (!out.found()) fails.add(k.id + " seed " + seed + " back out: " + Routes.describe(out));
+                if (k == CaveKind.SINKHOLE && !diveLands(g, s)) fails.add("sinkhole seed " + seed + ": the dive from the lip misses the pool");
+                if (k == CaveKind.MINE) {
+                    for (String m : new String[]{"office", "stope", "incline", "crawl", "bridge"}) {
+                        Routes.Result r = Routes.find(g, start, g.mark(m));
+                        if (!r.found()) fails.add("mine seed " + seed + " to its " + m + ": " + Routes.describe(r));
+                    }
+                }
+            }
+            costs.append(String.format(Locale.ROOT, "%s %.2f ms a chunk (worst %.2f); ", k.id, sum / Math.max(1, chunks), worst));
+        }
+        dev.awaken.Awaken.LOG.info("[delve] cave places' build cost: {}", costs);
+        h.assertTrue(fails.isEmpty(), "every place has a route with no rope, both ways: " + String.join("; ", fails));
+        // a candidate's search: the generator's base columns, the lodes beside it
+        ServerLevel level = h.getLevel();
+        StringBuilder sites = new StringBuilder();
+        for (CaveKind k : CaveKind.values()) {
+            long t0 = System.nanoTime();
+            int found = 0, cols = 0;
+            for (int i = 0; i < 6; i++) {
+                ChunkPos c = new ChunkPos(i * 37 + 400, -i * 29 + 300);
+                if (CaveSites.find(context(level, c), k, false) != null) found++;
+                cols += CaveSites.lastSampled;
+            }
+            sites.append(String.format(Locale.ROOT, "%s %.2f ms a candidate (%d columns, %d of 6 found); ", k.id, (System.nanoTime() - t0) / 6e6, cols / 6, found));
+        }
+        dev.awaken.Awaken.LOG.info("[delve] cave places' site search: {}", sites);
+        h.succeed();
+    }
+
+    /** The column under the lip (and a step in from it) falls into the pool's water. */
+    private static boolean diveLands(Grid g, Spec s) {
+        int[] d = g.mark("dive");
+        if (d == null) return false;
+        double a = Math.atan2(s.z() + 0.5 - d[2] - 0.5, s.x() + 0.5 - d[0] - 0.5);
+        int sx = (int) Math.floor(d[0] + 0.5 + Math.cos(a) * 1.2), sz = (int) Math.floor(d[2] + 0.5 + Math.sin(a) * 1.2);
+        for (int y = d[1]; y > g.minY(); y--) {
+            var b = g.get(sx, y, sz);
+            if (b.isAir()) continue;
+            return Routes.water(b);
+        }
+        return false;
+    }
+
+    static Structure.GenerationContext context(ServerLevel level, ChunkPos c) {
+        var gen = level.getChunkSource().getGenerator();
+        var rs = level.getChunkSource().randomState();
+        return new Structure.GenerationContext(level.registryAccess(), gen, gen.getBiomeSource(), rs.createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.builder().enableCaches().build()), rs,
+                level.getServer().getStructureTemplateManager(), level.getSeed(), c, level, b -> true);
+    }
+
+    /** A view of a grid that writes one chunk's columns only, as worldgen's postProcess does. */
+    private record Clip(Grid g, int x0, int z0) implements Sink {
+        @Override
+        public int minX() {
+            return x0;
+        }
+
+        @Override
+        public int maxX() {
+            return x0 + 15;
+        }
+
+        @Override
+        public int minZ() {
+            return z0;
+        }
+
+        @Override
+        public int maxZ() {
+            return z0 + 15;
+        }
+
+        @Override
+        public int minY() {
+            return g.minY();
+        }
+
+        @Override
+        public int maxY() {
+            return g.maxY();
+        }
+
+        @Override
+        public net.minecraft.world.level.block.state.BlockState get(int x, int y, int z) {
+            return g.get(x, y, z);
+        }
+
+        @Override
+        public void set(int x, int y, int z, net.minecraft.world.level.block.state.BlockState state) {
+            g.set(x, y, z, state);
+        }
+
+        @Override
+        public void mark(String what, int x, int y, int z) {
+            g.mark(what, x, y, z);
+        }
+    }
+
+    // ---- a seep ------------------------------------------------------------------------------------------------------
+
+    private static void seep(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = h.absolutePos(new BlockPos(0, 1, 0));
+        Spec s = CaveStaging.spec(CaveKind.SEEP, o.getX(), o.getY(), o.getZ(), 0, 0xC0FFEEL);
+        BoundingBox box = s.box();
+        // rock round it first (the test plot is open ground), then the seep
+        CavePiece.LevelSink sink = new CavePiece.LevelSink(level, box, level.getRandom());
+        Carve.fill(sink, box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ(), Blocks.DEEPSLATE.defaultBlockState());
+        CaveStaging.cave(s, sink);
+        var marks = CavePiece.build(level, s, box);
+        CavePlaces.stage(s);
+        CaveData data = CaveData.get(level);
+        data.wake(s.id());
+        BlockPos inside = marks.get("goal");
+        h.assertTrue(inside != null && CavePlaces.at(level, inside) != null, "the seep is known where it stands");
+        int live = Regions.creatureLevel(level, inside, Regions.Role.HUNTER);
+        h.assertTrue(CavePlaces.levelExtra(level, inside) == CavePlaces.SEEP_LEVELS, "a live seep is five levels over its region");
+        BlockPos far = inside.offset(80, 0, 0);
+        h.assertTrue(CavePlaces.levelExtra(level, far) == 0, "outside the seep, no extra");
+        BlockPos socket = marks.get("socket");
+        var live1 = AwakenTests.survivalPlayer(h, "Delver", new BlockPos(0, 2, 0));
+        var p = live1.player();
+        p.teleportTo(level, inside.getX() + 0.5, inside.getY(), inside.getZ() + 0.5, java.util.Set.of(), 0, 0, true);
+        h.startSequence()
+                .thenWaitUntil(() -> {
+                    CavePlaces.live(level, p, s, false);
+                    h.assertTrue(SeepHearts.at(level, socket) != null, "the heart is rooted at its socket once someone comes");
+                })
+                .thenExecute(() -> {
+                    LivingEntity heart = SeepHearts.at(level, socket);
+                    h.assertTrue(heart != null, "the heart lives");
+                    heart.kill(level);
+                    h.assertTrue(data.quiet(s.id()), "its death quiets the seep");
+                    h.assertTrue(CavePlaces.levelExtra(level, inside) == 0, "a quiet seep is no harder than its region");
+                    int quiet = Regions.creatureLevel(level, inside, Regions.Role.HUNTER);
+                    h.assertTrue(live - quiet == CavePlaces.SEEP_LEVELS, "the creature level falls by five (" + live + " to " + quiet + ")");
+                    CavePlaces.live(level, p, s, true);
+                    live1.leave();
+                    CavePlaces.STAGED.remove(s);
+                })
+                .thenSucceed();
+    }
+}
