@@ -126,9 +126,10 @@ public final class Waving {
     }
 
     /**
-     * {@code /awaken terrain waving on|off|status|debug <0..3>|plants <air> <water> <sheen> <push>} (client side): switch
-     * and reload (leaves and plants together), say why it is off, or tune the plants live (blocks of sway per unit of
-     * weight; a tuning aid, not saved).
+     * {@code /awaken terrain waving on|off|status|debug <0..3>|plants <air> <water> <sheen> <push>|probe frames <n>|probe
+     * seconds <s>|probe turn|probe stop} (client side): switch and reload (leaves and plants together), say why it is
+     * off, tune the plants live (blocks of sway per unit of weight; a tuning aid, not saved), or log the shader's offsets
+     * frame by frame ({@link SwayProbe}, a measuring aid).
      */
     private static void commands(RegisterClientCommandsEvent e) {
         e.getDispatcher().register(Commands.literal(Awaken.MODID).then(Commands.literal("terrain").then(Commands.literal("waving")
@@ -139,12 +140,26 @@ public final class Waving {
                 // 3 plants still (leaves wave on)
                 .then(Commands.literal("debug").then(Commands.argument("mode", IntegerArgumentType.integer(0, 3))
                         .executes(c -> debug(IntegerArgumentType.getInteger(c, "mode")))))
+                // measuring aid: log the shader's offsets frame by frame (SwayProbe)
+                .then(Commands.literal("probe")
+                        .then(Commands.literal("frames").then(Commands.argument("n", IntegerArgumentType.integer(1, 600))
+                                .executes(c -> probe(() -> SwayProbe.frames(IntegerArgumentType.getInteger(c, "n"))))))
+                        .then(Commands.literal("seconds").then(Commands.argument("s", IntegerArgumentType.integer(1, 600))
+                                .executes(c -> probe(() -> SwayProbe.seconds(IntegerArgumentType.getInteger(c, "s"))))))
+                        .then(Commands.literal("turn").executes(c -> probe(SwayProbe::turn)))
+                        .then(Commands.literal("stop").executes(c -> probe(SwayProbe::stop))))
                 .then(Commands.literal("plants").then(Commands.argument("air", FloatArgumentType.floatArg(0F, 0.5F))
                         .then(Commands.argument("water", FloatArgumentType.floatArg(0F, 0.5F))
                                 .then(Commands.argument("sheen", FloatArgumentType.floatArg(0F, 0.5F))
                                         .then(Commands.argument("push", FloatArgumentType.floatArg(0F, 1F)).executes(c -> plants(
                                                 FloatArgumentType.getFloat(c, "air"), FloatArgumentType.getFloat(c, "water"),
                                                 FloatArgumentType.getFloat(c, "sheen"), FloatArgumentType.getFloat(c, "push")))))))))));
+    }
+
+    private static int probe(Runnable action) {
+        action.run();
+        Awaken.LOG.info("Sway probe: {}", SwayProbe.status());
+        return Command.SINGLE_SUCCESS;
     }
 
     private static int plants(float air, float water, float sheen, float push) {

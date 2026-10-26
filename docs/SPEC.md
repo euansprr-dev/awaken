@@ -1388,9 +1388,9 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   sources of a known SHA-256, Iris is absent and client setting `waving_leaves` (`awaken-terrain-client.toml`, default
   on) is on; otherwise nothing is installed (vanilla renderer: no waving). Marker: every `LeavesBlock` model is wrapped
   after baking with vertex colour alpha 254 (textures untouched). Wind: texels at the block atlas's bottom-right
-  corner written each frame (signature, time mod 2048 s, camera, wind, the gust profile along the wind from
+  corner written each frame (signature, the sway clock mod 2048 s, camera, wind, the gust profile along the wind from
   `terrain.Wind`; since swaying plants also their amplitudes, the player's feet and whether the world has weather
-  wind): 27 texels.
+  wind): 45 texels, laid out by `terrain.SwayMath` (see "Smooth" below).
   Amplitude 0.11 blocks at full wind and gust. `/awaken terrain waving on|off|status` (client).
 - Swaying plants (2026-10-26, Euan: "all things sway with the same wind the trees get"): the same pack, gate, texels
   and setting as the leaves (`waving_leaves` now covers both and keeps its key, so older settings still apply; nothing
@@ -1436,7 +1436,31 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
     within noise against the shader finding no wind (+0.05, −0.03 ms) and the whole override +0.13 and +0.19 ms against
     Sodium's own shader; in a flower forest +0.30 and +0.16 ms against no wind, leaves' sway included (it has no
     distance fade). `/awaken terrain waving debug 3` stills and skips the plants alone, to split the two.
-  - Commands: `/awaken terrain waving on|off|status|debug <0..3>|plants ...` covers leaves and plants;
+  - Smooth (2026-10-26, Euan: "a bit jittery... as if they restarted the animation"). Three causes, all fixed for leaves
+    and plants alike:
+    - The clock: the client adds a tick per client tick and the server overwrites it every 20 server ticks, so a
+      lagging integrated server pulled the client's game time back every second or two, and the sway rewound. Now
+      `ClientWind` runs the wind (gust fronts, heading, steady strength; also the falling leaves and the rustle) on a
+      `terrain.SwayClock`: real frame time eased toward the game's clock, its pace changing by at most 35% for a small
+      error (up to 90% for one of seconds, so it follows a slow server), never backwards, snapping only on a jump of
+      over 4 s, still while paused. The to-and-fro itself runs on a separate clock of unpaused real time alone (whole
+      turns in 2048 s, so its wrap is seamless).
+    - The wrap: world positions are rebuilt modulo 4096 and the camera is written modulo 4096, so it wraps at x = 0 and
+      z = 0, right by spawn, and every spatial phase used to jump there. Spatial phases are now whole turns in 4096
+      blocks (coefficients rounded to multiples of 2π/4096, under 0.1% from before), and the leaf flutter's hash takes x
+      and z modulo 65536 sixteenths.
+    - Precision: every sine takes a phase in turns reduced with `fract` first (a GPU's sine is imprecise far from
+      zero); direction, steady strength and the 64 gust samples are 16-bit (they were 8-bit: tall grass ticked in
+      small steps as a gust or a turn moved them); the gust profile sits on a grid fixed in the world (multiples of 4
+      blocks along the wind; texel 7 holds its offset), so walking no longer slides it.
+    - `terrain.SwayMath` is a line-by-line Java mirror of the shader's sway and texel decoding. The GameTest
+      `terrain_sway_continuous` holds the clock against a server stuck at 15 ticks a second (it never rewinds or
+      lurches, stays within a second), the sway equal at t = 0 and t = 2048 and across 4096-block shifts, the gust at a
+      place still while the camera walks, and 16-bit round trips. `/awaken terrain waving probe frames <n> | seconds
+      <s> | turn | stop` logs, frame by frame, the offsets the shader gives a few fixed vertices (and the same vertices on
+      the raw game clock) to `sway-probe-<mode>.csv` (`frames` also grabs each frame at 60 fps);
+      `docs/spikes/plant-sway/plot_probe.py` charts them; `tools/autopilot/plant-sway-smooth.txt` films the proof.
+  - Commands: `/awaken terrain waving on|off|status|debug <0..3>|plants ...|probe ...` covers leaves and plants;
     `/awaken terrain wind front across|ahead` (showcase) launches one front across the view or from behind the camera,
     holding the heading the way it rolls, until `wind real`. Tests: `terrain_sway_markers` (every plant kind marked,
     leaves keep theirs, nothing else is), `terrain_sway_joined` (shared vertices agree for every run length; roots and
