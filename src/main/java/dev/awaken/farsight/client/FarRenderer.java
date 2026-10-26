@@ -394,7 +394,7 @@ final class FarRenderer implements AutoCloseable {
             for (int r = 0; r < Rings.RINGS; r++) {
                 u.putIVec4((field.winX[r] * Rings.PATCH) & Rings.MASK, (field.winZ[r] * Rings.PATCH) & Rings.MASK, r * Rings.SIZE, 0);
             }
-            u.putVec4(sunColour.x, sunColour.y, sunColour.z, golden).putVec4(haze, AIR_SCALE_HEIGHT, AIR_SUN, rain).putIVec4(cellX, cellZ, realWithin, 0)
+            u.putVec4(sunColour.x, sunColour.y, sunColour.z, golden).putVec4(haze, AIR_SCALE_HEIGHT, AIR_SUN, rain).putIVec4(cellX, realWithin, cellZ, 0)
                     .putVec4(mistFloor, mistDepth, mistDensity, mistCover);
         }
         GpuBuffer draws = drawUbo.currentBuffer();
