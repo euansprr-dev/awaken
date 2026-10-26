@@ -13,30 +13,36 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * The current task, top right (SPEC §27.10): a small card in the band's glass under the toasts' first two slots, its
- * title and a done/total count, then its steps: ticked when done, the current one bright, keys drawn as key caps
- * ("Double-tap [Left Control] to sprint harder"), a count where a step has one, and a compass to a place nearby to do
- * it. A step that ticks flashes once. The server ({@code progression.Checklist}) sends it when it changes; an empty
- * title clears it. Never over the crosshair, never when the HUD is hidden.
+ * The current task, top right (SPEC §27.10): a small card tucked into the corner, in the Now card's glass and margin, at
+ * about half the Now card's size (Euan, 2026-10-26: "WAY too big, 2x smaller and closer to the corner"). Its title and
+ * a done/total count, then only what matters now: the current step bright, the next one or two dim, each on one line
+ * (a long one shortened; the Journal has the whole of it), and a step that just ticked, which flashes green and fades
+ * away. Keys are drawn as key caps ("Double-tap [Left Control] to sprint harder"), a count where a step has one, a
+ * compass to a place nearby. While the System's toasts are up it steps down under them. The server
+ * ({@code progression.Checklist}) sends it when it changes; an empty title clears it. Never when the HUD is hidden.
  */
 final class TaskHud {
     private TaskHud() {}
 
-    /** The card sits just under the first toast slot; its words wrap at MAX_W (unscaled), two lines a step at most. */
-    static final int TOP = SignalLayout.TOAST_H + 4, MAX_W = 190, FLASH = 24;
-    /** A touch smaller than the Now card: it's a companion, not the headline. */
-    static final float SIZE = 0.85F;
+    /** The widest line (unscaled px) before a step is shortened; how long a ticked step lingers; the flash. */
+    static final int MAX_W = 150, LINGER = 50, FLASH = 24;
+    /** Half the Now card's size, but never so small a font pixel is under two screen pixels. */
+    static final float SIZE = 0.45F, MIN_PIXEL = 2.0F;
+    /** Rows after the current one. */
+    static final int AHEAD = 2;
 
     private static SignalPayloads.Task task = new SignalPayloads.Task("", "", List.of());
     private static long since, ticks;
     private static final long[] TICKED = new long[16];
+    /** Where the card sits (GUI px from the top), easing down under toasts and back. */
+    private static float top = SignalLayout.MARGIN, topO = SignalLayout.MARGIN;
 
     static void onTask(SignalPayloads.Task t) {
         boolean same = t.id().equals(task.id());
         for (int i = 0; i < t.rows().size() && i < TICKED.length; i++) {
             boolean was = same && i < task.rows().size() && task.rows().get(i).done();
             if (t.rows().get(i).done() && !was && same) TICKED[i] = ticks;
-            else if (!same) TICKED[i] = -1000;
+            else if (!same || !t.rows().get(i).done()) TICKED[i] = -1000;
         }
         if (!same) since = ticks;
         task = t;
@@ -44,10 +50,28 @@ final class TaskHud {
 
     static void tick() {
         ticks++;
+        topO = top;
+        float want = SignalLayout.MARGIN + SystemHud.liveToasts() * SignalLayout.TOAST_H;
+        top += (want - top) * 0.25F;
     }
 
     static void clear() {
         task = new SignalPayloads.Task("", "", List.of());
+    }
+
+    /** The rows shown now: a step that just ticked (while it lingers), the current one, and the next {@link #AHEAD}. */
+    private static List<Integer> shown(SignalPayloads.Task t) {
+        List<Integer> out = new java.util.ArrayList<>(4);
+        int open = 0;
+        for (int i = 0; i < t.rows().size(); i++) {
+            SignalPayloads.TaskRow r = t.rows().get(i);
+            if (r.done()) {
+                if (i < TICKED.length && ticks - TICKED[i] < LINGER) out.add(i);
+            } else if (open++ <= AHEAD) out.add(i);
+        }
+        // all done: the last step stays, ticked, until the card goes
+        if (out.isEmpty() && !t.rows().isEmpty()) out.add(t.rows().size() - 1);
+        return out;
     }
 
     static void render(GuiGraphicsExtractor g, DeltaTracker dt) {
@@ -57,19 +81,22 @@ final class TaskHud {
         Font font = mc.font;
         float pt = dt.getGameTimeDeltaPartialTick(false);
         float fade = Mth.clamp((ticks - since + pt) / 10F, 0, 1);
-        double s = SystemHud.scale() * SIZE;
+        // half the Now card, following the System's own scale (and so the GUI scale), but always legible
+        double gui = Math.max(1, mc.getWindow().getGuiScale());
+        double s = Math.max(SystemHud.scale() * SIZE, MIN_PIXEL / gui);
         int done = 0;
         for (SignalPayloads.TaskRow r : t.rows()) if (r.done()) done++;
         String title = t.title().toUpperCase(Locale.ROOT), count = done + "/" + t.rows().size();
-        // the widest line decides the card (unscaled); a step longer than the card wraps once
+        List<Integer> rows = shown(t);
+        // the widest line decides the card (unscaled), up to MAX_W; longer steps are shortened to fit
         int w = font.width(title) + 10 + font.width(count);
-        for (SignalPayloads.TaskRow r : t.rows()) w = Math.max(w, 13 + rowWidth(font, r, mc));
+        for (int i : rows) w = Math.max(w, 11 + rowWidth(font, t.rows().get(i), mc));
         w = Math.min(MAX_W, w) + 8;
-        int room = w - 17;
-        int h = 6 + 11 + 2;
-        for (SignalPayloads.TaskRow r : t.rows()) h += 10 * lines(font, r, mc, room).size();
+        int room = w - 15;
+        int h = 4 + 10 + rows.size() * 10 + 2;
         int sw = g.guiWidth();
-        int x = (int) Math.round(sw - w * s - SignalLayout.MARGIN), y = TOP;
+        float y = Mth.lerp(pt, topO, top);
+        int x = (int) Math.round(sw - w * s - SignalLayout.MARGIN);
 
         g.pose().pushMatrix();
         g.pose().translate(x, y);
@@ -79,60 +106,27 @@ final class TaskHud {
             g.fill(0, 0, w, h, Glass.a(Glass.GLASS, 0.55f * fade));
             g.fill(w - 1, 0, w, h, Glass.a(Glass.EDGE, 0.8f * fade));
         }
-        HudLook.text(g, font, title, 4, 4, Glass.a(Glass.EDGE, fade), true);
-        HudLook.text(g, font, count, w - 4 - font.width(count), 4, Glass.a(done == t.rows().size() ? Glass.GOOD : Glass.LABEL, fade), true);
-        int ry = 17;
+        String shortTitle = SignalTextFit.fit(font, title, w - 12 - font.width(count));
+        HudLook.text(g, font, shortTitle, 4, 3, Glass.a(Glass.EDGE, fade), true);
+        HudLook.text(g, font, count, w - 4 - font.width(count), 3, Glass.a(done == t.rows().size() ? Glass.GOOD : Glass.LABEL, fade), true);
+        int ry = 14;
         boolean current = false;
-        for (int i = 0; i < t.rows().size(); i++) {
+        for (int i : rows) {
             SignalPayloads.TaskRow r = t.rows().get(i);
             boolean now = !r.done() && !current;
             if (now) current = true;
-            // a step that just ticked: one soft flash of green behind it
-            long since = i < TICKED.length ? ticks - TICKED[i] : 1000;
-            if (since < FLASH) g.fill(2, ry - 1, w - 2, ry + 9, Glass.a(Glass.GOOD, 0.35f * (1 - (since + pt) / FLASH) * fade));
-            String mark = r.done() ? "✔" : now ? "▸" : "·";
+            // a step that just ticked: one soft flash of green, then it fades out of the list
+            long ago = i < TICKED.length ? ticks - TICKED[i] : 1000;
+            float rowFade = fade * (r.done() && ago < LINGER ? Mth.clamp((LINGER - ago - pt) / 16F, 0, 1) : 1f);
+            if (ago < FLASH) g.fill(2, ry - 1, w - 2, ry + 9, Glass.a(Glass.GOOD, 0.35f * (1 - (ago + pt) / FLASH) * fade));
+            String mark = r.done() ? "\u2714" : now ? "\u25B8" : "\u00B7";
             int markColour = r.done() ? Glass.GOOD : now ? Glass.AMBER : Glass.LABEL;
-            HudLook.text(g, font, mark, 4, ry, Glass.a(markColour, fade), true);
+            HudLook.text(g, font, mark, 3, ry, Glass.a(markColour, rowFade), true);
             int textColour = r.done() || !now ? Glass.LABEL : Glass.TEXT;
-            int argb = Glass.a(textColour, fade * (r.done() || now ? 1f : 0.8f));
-            if (r.text().contains("{key}")) {
-                boolean wrap = lines(font, r, mc, room).size() > 1;
-                drawRow(g, font, r, 13, ry, argb, fade, mc, wrap);
-                ry += wrap ? 20 : 10;
-            } else {
-                // a plain step wraps (two lines at most), its count and compass in the band's blue at the end
-                List<String> ls = lines(font, r, mc, room);
-                for (int k = 0; k < ls.size(); k++) {
-                    String l = ls.get(k);
-                    int tail = k == ls.size() - 1 ? l.indexOf("  ") : -1;
-                    if (tail >= 0) {
-                        String words = l.substring(0, tail);
-                        HudLook.text(g, font, words, 13, ry, argb, true);
-                        HudLook.text(g, font, l.substring(tail + 2), 13 + font.width(words + "  "), ry, Glass.a(Glass.EDGE, fade), true);
-                    } else HudLook.text(g, font, l, 13, ry, argb, true);
-                    ry += 10;
-                }
-            }
+            drawRow(g, font, r, 11, ry, Glass.a(textColour, rowFade * (r.done() || now ? 1f : 0.8f)), rowFade, mc, room);
+            ry += 10;
         }
         g.pose().popMatrix();
-    }
-
-    /**
-     * A plain step's lines in {@code room}: its words wrapped at a word break (two lines at most, the second shortened
-     * if it must), its count and compass after a no-break marker so they draw in blue.
-     */
-    private static List<String> lines(Font font, SignalPayloads.TaskRow r, Minecraft mc, int room) {
-        // a row with a key: one line if it fits, else the words after the key on a second line
-        if (r.text().contains("{key}")) return rowWidth(font, r, mc) <= room ? List.of(r.text()) : List.of(r.text(), "");
-        String extra = (r.need() > 0 ? r.have() + "/" + r.need() : "") + (r.marked() ? (r.need() > 0 ? "  " : "") + compass(mc, r) : "");
-        String full = r.text() + (extra.isEmpty() ? "" : "  " + extra);
-        if (font.width(full) <= room) return List.of(full);
-        int cut = full.lastIndexOf(' ', full.length() - 1);
-        while (cut > 0 && font.width(full.substring(0, cut)) > room) cut = full.lastIndexOf(' ', cut - 1);
-        if (cut <= 0) cut = Math.max(1, full.length() / 2);
-        String first = full.substring(0, cut).trim(), second = full.substring(cut).trim();
-        while (font.width(second) > room && second.length() > 2) second = second.substring(0, second.length() - 2) + "…";
-        return List.of(first, second);
     }
 
     /** The row's width: its words, a key cap for "{key}", its count and its compass. */
@@ -145,29 +139,25 @@ final class TaskHud {
         return w;
     }
 
-    private static void drawRow(GuiGraphicsExtractor g, Font font, SignalPayloads.TaskRow r, int x, int y, int argb, float fade, Minecraft mc, boolean wrap) {
+    /** One line: the words (shortened to fit), a key cap for "{key}", then the count and compass in the band's blue. */
+    private static void drawRow(GuiGraphicsExtractor g, Font font, SignalPayloads.TaskRow r, int x, int y, int argb, float fade, Minecraft mc, int room) {
+        String tail = (r.need() > 0 ? " " + r.have() + "/" + r.need() : "") + (r.marked() ? "  " + compass(mc, r) : "");
+        int left = room - font.width(tail);
         String[] parts = r.text().split("\\{key}", 2);
-        String before = parts[0];
         int cx = x;
+        String before = SignalTextFit.fit(font, parts[0], left);
         HudLook.text(g, font, before, cx, y, argb, true);
         cx += font.width(before);
-        if (parts.length > 1) {
-            cx += keyCap(g, font, r.key(), cx, y, fade);
-            // too wide for the card: what follows the key goes on the next line
-            String after = wrap ? parts[1].trim() : parts[1];
-            if (wrap) {
-                cx = x;
-                y += 10;
-            }
+        left -= font.width(before);
+        if (parts.length > 1 && left > keyWidth(font, r.key())) {
+            int kw = keyCap(g, font, r.key(), cx, y, fade);
+            cx += kw;
+            left -= kw;
+            String after = SignalTextFit.fit(font, parts[1], left);
             HudLook.text(g, font, after, cx, y, argb, true);
             cx += font.width(after);
         }
-        if (r.need() > 0) {
-            String c = " " + r.have() + "/" + r.need();
-            HudLook.text(g, font, c, cx, y, Glass.a(Glass.EDGE, fade), true);
-            cx += font.width(c);
-        }
-        if (r.marked()) HudLook.text(g, font, "  " + compass(mc, r), cx, y, Glass.a(Glass.EDGE, fade), true);
+        if (!tail.isEmpty()) HudLook.text(g, font, tail, cx, y, Glass.a(Glass.EDGE, fade), true);
     }
 
     private static String keyName(String mapping) {

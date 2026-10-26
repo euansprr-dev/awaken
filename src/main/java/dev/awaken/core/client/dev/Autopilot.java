@@ -550,12 +550,16 @@ public final class Autopilot {
                 dev.awaken.compat.client.CompatClient.shareFarDepthEverywhere("share".equals(arg.trim()));
                 waitTicks = 10;
             }
-            case "opt" -> { // opt renderDistance|simulationDistance <n>
+            case "opt" -> { // opt renderDistance|simulationDistance|guiScale <n> (guiScale 0: auto)
                 String[] o = arg.trim().split("\\s+");
                 int v = Integer.parseInt(o[1]);
                 switch (o[0]) {
                     case "renderDistance" -> mc.options.renderDistance().set(v);
                     case "simulationDistance" -> mc.options.simulationDistance().set(v);
+                    case "guiScale" -> {
+                        mc.options.guiScale().set(v);
+                        mc.resizeGui();
+                    }
                     default -> Awaken.LOG.warn("[autopilot] unknown option {}", o[0]);
                 }
                 waitTicks = 20;
