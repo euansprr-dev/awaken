@@ -5597,7 +5597,10 @@ mine also refuse oceans, rivers and beaches at the surface). Names by seed (`Cav
   minecart at the top and stairs beside the rails, and the second gallery folding back under the hill (a fall of roof to
   slide under, 5 long, one high; a camp with the second log; a chasm 26 deep with water at its bottom and a rope bridge,
   planks that sag a block, fence rails, chains to the roof), ending in the breakthrough: stained rock, Deepglass coming
-  through, a half-built seal and the last log. Not every place ends in a fight: this one ends in a log.
+  through, a half-built seal and the last log. Not every place ends in a fight: this one ends in a log. A site is taken
+  only when its galleries read dry in the generator's base columns: the head, the first gallery, five points along the
+  second and the chasm's ends and middle down to its floor (the tour's first real mine had its second gallery under an
+  aquifer near sea level, flooded to the roof).
 - **Seep** (`Seep`): round a region's Deepglass lode (the Tuning Fork tuned to Deepglass finds it): a hall 26 x 14 x 17
   laid toward the lode, the rock that touches its air stained (blackstone, obsidian, crying obsidian, tuff), nine
   Deepglass veins along its walls toward the heart, four Deepglass spires 5-9 high you climb by a ring of steps, a magma
@@ -5637,8 +5640,9 @@ nest keeps up to three Hushlings or Drip Lurkers about it, one more every 30 s, 
 death quiets the seep for everyone (`CaveData`, schemaVersion 1): no +5, no nest, no hum or violet; "<name> falls
 quiet" (IMPORTANT); counter `awaken:seeps_quieted`. **A sinkhole's bats**: at dusk (12,400-13,200) 7-12 come up from
 mid-shaft, once a play-day. Places within 160 are sent for their look from outside (`CaveNet.Near`): a sinkhole's mist
-rising by day (a few soft wisps a second at dawn, thinning through the day, gone at night, fading out within 2.5-8.5
-of the camera so it never walls the view; our sprites `delve_mist`), a chute's draught at its mouth (`delve_draught`).
+rising by day (a few soft wisps a second at dawn, thinning through the day, gone at night, most born in the shaft's top
+so they clear the rim, peak alpha 0.17-0.25, fading out within 2.5-8.5 of the camera so it never walls the view; our
+sprites `delve_mist`), a chute's draught at its mouth (`delve_draught`).
 Carving turns sand or gravel left hanging over the new air into sandstone or stone (a roof never pours in).
 `/awaken delve goto <kind>` (`CaveLocate`) stands you at the nearest place of a kind the world really made.
 
@@ -5728,7 +5732,10 @@ sinkhole may end in its grotto when no cave is near; a plain cave's own undergro
 
 **Not done in W5**: the Hollows den in a dripstone hall and the beast's cave under a hill (PLAN 8.2's other lairs); the
 Taken trouble's destination (W4); an ice chute (the stair slide runs on steps only); the cave sound judged by ear (a Mac
-listening check: `delve.cave.*`, `delve.deep.*`, `ascent.rappel_*`, the seep heart's voice).
+listening check: `delve.cave.*`, `delve.deep.*`, `ascent.rappel_*`, the seep heart's voice). Not yet seen in a shot
+(changed after the one tour): the place caption, the mist's later numbers, the draught, three cave biomes' looks (`senses
+goto` now tries a biome's neighbouring patches when the first is solid rock); the way home's Now line ranks under a
+tracked quest's line, so the tour saw its thread only.
 
 ---------------------------------------------------------------------------------------------------------------------
 

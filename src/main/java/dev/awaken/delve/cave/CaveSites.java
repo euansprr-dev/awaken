@@ -236,12 +236,11 @@ final class CaveSites {
                 if (into == Integer.MIN_VALUE || head == Integer.MIN_VALUE || front == Integer.MIN_VALUE) continue;
                 if (into < yp + 9 || head < yp + 12 || front > yp + 2) continue;
                 if (yp + Mine.G2 - 28 < cols.ctx.heightAccessor().getMinY() + 6) continue;
-                // the workings stay dry: the head, the galleries' far ends
-                int g1x = f.x(3, L + 40), g1z = f.z(3, L + 40), g2x = f.x(21, L + 80), g2z = f.z(21, L + 80);
-                if (cols.wet(f.x(0, L + 6), f.z(0, L + 6), yp + Mine.G1 - 2, yp + 6) || cols.wet(g1x, g1z, yp + Mine.G1 - 6, yp + Mine.G1 + 6)
-                        || cols.wet(g2x, g2z, yp + Mine.G2 - 4, yp + Mine.G2 + 6)) continue;
+                // the workings stay dry: the head, the first gallery, and the second (it runs back under the hill)
+                int g1x = f.x(3, L + 40), g1z = f.z(3, L + 40);
+                if (cols.wet(f.x(0, L + 6), f.z(0, L + 6), yp + Mine.G1 - 2, yp + 6) || cols.wet(g1x, g1z, yp + Mine.G1 - 6, yp + Mine.G1 + 6)) continue;
                 Spec bare = new Spec(CaveKind.MINE, px, yp, pz, rot, seed, false, 0, 0, 0, new int[]{L});
-                if (!fits(bare, c)) continue;
+                if (!fits(bare, c) || mineWet(cols, bare)) continue;
                 int[] e = Mine.end(bare);
                 int[] j = air(cols, e[0], e[1], e[2], 27, 12, 16, rnd);
                 Spec spec = new Spec(CaveKind.MINE, px, yp, pz, rot, seed, j != null, j == null ? 0 : j[0], j == null ? 0 : j[1], j == null ? 0 : j[2],
@@ -250,6 +249,21 @@ final class CaveSites {
             }
         }
         return null;
+    }
+
+    /**
+     * Whether the mine's second gallery would cut into water (an aquifer near sea level floods it and its chasm to the
+     * roof): the gallery's length, the chasm's two ends and middle down to its floor, and the breakthrough.
+     */
+    private static boolean mineWet(Columns cols, Spec s) {
+        Frame g = Mine.back(new Frame(s.x(), s.y(), s.z(), s.rot()), Mine.adit(s));
+        int zr = Mine.adit(s) + 9 + Mine.G1_LEN - 2, gx = 6 + Mine.INCLINE, z1 = zr + Mine.G2_LEN, h0 = zr + 30, y = s.y();
+        int[][] gallery = {{gx + 1, zr + 4}, {gx + 1, zr + 13}, {gx + 4, zr + 23}, {gx + 1, z1}, {gx + 1, z1 + 7}};
+        for (int[] q : gallery) if (cols.wet(g.x(q[0], q[1]), g.z(q[0], q[1]), y + Mine.G2 - 3, y + Mine.G2 + 7)) return true;
+        for (int lx : new int[]{gx - 8, gx + 1, gx + 10}) {
+            if (cols.wet(g.x(lx, h0 + 2), g.z(lx, h0 + 2), y + Mine.G2 - 28, y + Mine.G2 + 7)) return true;
+        }
+        return false;
     }
 
     private static @Nullable Spec seep(Columns cols, ChunkPos c, WorldgenRandom rnd, long seed) {

@@ -37,10 +37,13 @@ wait 60
 shot w5_00_horizon_at_spawn
 
 # ---- a sinkhole: from the rim (its mist, its caption), its shelves, the lip, a shelf, the cleft, its grotto ----
+# goto keeps your pitch: look down into the hole from the rim (from eye height a level gaze sees only its far lip),
+# and shoot the caption while it shows (it holds about five seconds)
+look 0 32
 cmd awaken delve goto sinkhole
-wait 200
+wait 70
 shotnow w5_01_sinkhole_caption
-wait 40
+wait 80
 hud off
 shot w5_02_sinkhole_rim_mist
 cmd awaken delve place go view shelf
@@ -84,6 +87,8 @@ shot w5_13_mine_breakthrough
 cmd awaken delve goto chute
 wait 160
 cmd awaken delve place go mouth lip
+# back out of the portal to see the draught breathe out of it
+cmd tp @s ^ ^ ^-5
 wait 30
 shot w5_14_chute_mouth_draught
 cmd awaken delve place go goal lip

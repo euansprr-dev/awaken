@@ -72,14 +72,21 @@ final class SenseCommands {
         }
         BlockPos at = found.getFirst();
         BlockPos stand = stand(level, at, key);
+        // a biome's patch can be solid rock (the caves run elsewhere): try its next patches round about
+        for (int i = 0; stand == null && i < 8; i++) {
+            int far = 160 * (1 + i / 4), dx = (i & 3) == 0 ? far : (i & 3) == 2 ? -far : 0, dz = (i & 3) == 1 ? far : (i & 3) == 3 ? -far : 0;
+            Pair<BlockPos, Holder<Biome>> next = level.findClosestBiome3d(b -> b.is(key), at.offset(dx, 0, dz), 96, 16, 8);
+            if (next != null) stand = stand(level, next.getFirst(), key);
+        }
         if (stand == null) {
-            c.getSource().sendFailure(Component.literal(name + " at " + at.toShortString() + ", but no air to stand in near it."));
+            c.getSource().sendFailure(Component.literal(name + " at " + at.toShortString() + ", but no air to stand in near it or its neighbours."));
             return 0;
         }
-        float yaw = openest(level, stand);
-        p.teleportTo(level, stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5, Set.of(), yaw, 0F, true);
-        int sky = level.getBrightness(LightLayer.SKY, stand.above());
-        c.getSource().sendSuccess(() -> Component.literal("In " + name + " at " + stand.toShortString() + " (sky light " + sky + ")"), false);
+        final BlockPos spot = stand;
+        float yaw = openest(level, spot);
+        p.teleportTo(level, spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, Set.of(), yaw, 0F, true);
+        int sky = level.getBrightness(LightLayer.SKY, spot.above());
+        c.getSource().sendSuccess(() -> Component.literal("In " + name + " at " + spot.toShortString() + " (sky light " + sky + ")"), false);
         return 1;
     }
 

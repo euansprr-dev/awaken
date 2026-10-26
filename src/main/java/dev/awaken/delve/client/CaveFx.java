@@ -56,7 +56,9 @@ final class CaveFx {
                 int n = (int) rate + (R.nextFloat() < rate - (int) rate ? 1 : 0);
                 for (int i = 0; i < n; i++) {
                     double a = R.nextDouble() * Math.PI * 2, r = Math.sqrt(R.nextDouble()) * s.radius() * 0.85;
-                    double y = s.at().getY() - 2 - R.nextDouble() * Math.min(24, s.depth() * 0.4);
+                    // most rise from the top of the shaft so they clear the rim in their life: seen from the rim and afar
+                    double u = R.nextDouble();
+                    double y = s.at().getY() - 1 - u * u * Math.min(24, s.depth() * 0.4);
                     level.addParticle(CaveContent.MIST.get(), s.at().getX() + 0.5 + Math.cos(a) * r, y, s.at().getZ() + 0.5 + Math.sin(a) * r,
                             (R.nextDouble() - 0.5) * 0.01, 0.025 + R.nextDouble() * 0.02, (R.nextDouble() - 0.5) * 0.01);
                 }
@@ -91,7 +93,7 @@ final class CaveFx {
             this.lifetime = mist ? 120 + random.nextInt(80) : 30 + random.nextInt(20);
             this.quadSize = mist ? 0.9F + random.nextFloat() * 0.8F : 0.35F + random.nextFloat() * 0.25F;
             this.base = quadSize;
-            this.peak = mist ? 0.14F + random.nextFloat() * 0.08F : 0.32F;
+            this.peak = mist ? 0.17F + random.nextFloat() * 0.08F : 0.32F;
             this.roll = random.nextFloat() * Mth.TWO_PI;
             this.oRoll = roll;
             float c = mist ? 0.92F + random.nextFloat() * 0.06F : 0.86F;
