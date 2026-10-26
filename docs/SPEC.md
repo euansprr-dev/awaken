@@ -1430,7 +1430,9 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   chunk counts once its surface section and the three below are built) and within the render distance in 3D from the
   camera, as Sodium culls them (a sphere of the render distance). Seen from high up the real sea ends well inside the
   horizontal render distance, and its floor sooner, so far water tests its own floor's distance and stays under a real
-  water surface whose floor is too far to draw. The planner and the windows count as covered only the ground the
+  water surface whose floor is too far to draw. Far water is never hidden under the real chunks unless the camera is
+  under the sea (2026-10-26, Euan's play: sky-coloured slabs on the sea where Sodium skipped a section), and grazing far
+  water takes the horizon's colour only from 1 km out, so near the edge it matches the real water. The planner and the windows count as covered only the ground the
   sphere reaches at a sea floor (40 under sea level) below the camera, in 16-block steps. (2026-10-26: the pale squares
   over the sea after a jump and the pale frame along a flight were these holes, found with `farsight debug 2`, which
   paints masked far terrain red. They were first taken for water walls and for vanilla's chunk fade-in; a Turbo
@@ -1474,7 +1476,8 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   Every tree stands on the far mesh exactly as drawn under it (the tree shader rebuilds the cell's vertices as the
   terrain's do: real corners where known, eased into the coarser ring, split on the index buffer's diagonals), never at
   its planting height, and none is planted inside `CityBasin.reserved` (2026-10-26, Euan's play: trees hung over the
-  basin's edge). Test `farsight_trees_basin`.
+  basin's edge). Test `farsight_trees_basin`. A tree patch's view-culling box reaches the tallest far tree (72 over its highest ground;
+  at 40, a patch whose ground sat just below the frame dropped its treetops: far trees flickered with the camera's pitch).
 - **Air** (`farsight_air.glsl`): aerial perspective from an exponential atmosphere at real scale (1e-4 per block at sea
   level, ×4 in rain; scale height 1500), toward the sun tinted by the sunlight; valley cloud, a patchy slab 40-86 above
   sea level lying among the mountains (a sea of it at dawn, dusk and in rain), sunlit on top, over far ground only; the

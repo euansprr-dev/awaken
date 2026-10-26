@@ -243,7 +243,9 @@ final class FarRenderer implements AutoCloseable {
                     if (ax >= ix0 && az >= iz0 && bx <= ix1 && bz <= iz1) continue;
                     float fx = Math.max(Math.abs(ax), Math.abs(bx)), fz = Math.max(Math.abs(az), Math.abs(bz));
                     if (fx * fx + fz * fz < covered * covered) continue;
-                    int lo = (field.lo[r][slot] & 0xFFFF) - FarColumns.HEIGHT_BASE - 2, hi = field.top(r, slot) - FarColumns.HEIGHT_BASE + 40;
+                    // up to the tallest far tree (canopy 255 quarter-blocks): a lower box culls a patch whose treetops are in view
+                    // while its ground is just below the frame, and its trees flicker with the camera's pitch
+                    int lo = (field.lo[r][slot] & 0xFFFF) - FarColumns.HEIGHT_BASE - 2, hi = field.top(r, slot) - FarColumns.HEIGHT_BASE + 72;
                     double down = camY - lo;
                     if (fx * fx + fz * fz + down * down < hiddenWithin * (double) hiddenWithin) continue;
                     if (!frustum.testAab(ax, (float) (lo - camY), az, bx, (float) (hi - camY), bz)) continue;
