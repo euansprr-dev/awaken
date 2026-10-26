@@ -20,7 +20,14 @@ final class ArmsContent {
     static final Supplier<AttachmentType<ArmsWeaves.ArmsMemory>> MEMORY = ATTACHMENTS.register("arms_memory",
             () -> AttachmentType.builder(ArmsWeaves.ArmsMemory::fresh).serialize(ArmsWeaves.ArmsMemory.CODEC).copyOnDeath().build());
 
+    static final net.neoforged.neoforge.registries.DeferredRegister.DataComponents COMPONENTS =
+            net.neoforged.neoforge.registries.DeferredRegister.createDataComponents(net.minecraft.core.registries.Registries.DATA_COMPONENT_TYPE, Awaken.MODID);
+    /** A weapon's own state: its Marks and its attunement (Marks.Instance; moves with the item). */
+    static final net.neoforged.neoforge.registries.DeferredHolder<net.minecraft.core.component.DataComponentType<?>, net.minecraft.core.component.DataComponentType<Marks.Instance>> INSTANCE =
+            COMPONENTS.registerComponentType("arms", b -> b.persistent(Marks.Instance.CODEC).networkSynchronized(Marks.Instance.STREAM_CODEC));
+
     static void register(IEventBus modBus) {
         ATTACHMENTS.register(modBus);
+        COMPONENTS.register(modBus);
     }
 }
