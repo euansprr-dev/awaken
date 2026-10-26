@@ -1,9 +1,11 @@
 # "Metal from the deep" (Between the Gates W2, SPEC §28.3): one short tour, shots only (slot.sh light).
 # Under the ground at y -30: a staged chamber with an iron lode on its north wall (lanterns: the lode glints), the
 # strike's sparks and its last blow, the Tuning Fork's arc, a heart breaking ("the vein gives", the System naming it, the
-# vein's light and cracks through the rock), the heavy strike's charge and its bore, a cave-in's warning dust and the
-# fall, Deepglass in the east wall, the miner's lamp in a dark tunnel, and a rope hanging from a piton in a shaft.
-# Run: SLOT_WHO=world-depth-w2 /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh tools/autopilot/world-depth-w2.txt 600
+# light running out through the rock along the vein, its cracks glowing), the heavy strike's charge and its bore, a
+# cave-in (cracks spreading over the roof and dust pouring from them, the stones letting go, the dust rolling out),
+# Deepglass in the east wall, the miner's lamp in a dark tunnel, and a rope hanging from a piton in a shaft.
+# Run on GitHub: tools/tour-ci.sh tools/autopilot/world-depth-w2.txt
+# or here: SLOT_WHO=world-depth-w2 /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh tools/autopilot/world-depth-w2.txt 600
 world autopilot_w2 creative 70712
 waitworld
 gui 0
@@ -51,17 +53,18 @@ shot w2_04_fork_arc
 look 175 10
 wait 10
 shot w2_05_fork_faced
-# the heart: the vein gives
+# the heart: the vein gives, the light running out along it, then the whole seam lit in the rock (from a step back)
 cmd item replace entity @s weapon.mainhand with minecraft:iron_pickaxe
 cmd tp @s ~ ~ ~-1 180 0
 wait 6
 cmd awaken delve heart calm
-wait 3
+wait 6
 shotnow w2_06_vein_gives
-wait 18
-shot w2_07_vein_cracks
+cmd tp @s ~ ~ ~3 180 4
+wait 14
+shotnow w2_07_vein_light
 # the heavy strike: the charge to its glint, then the bore
-cmd tp @s ~2 ~ ~-3.5 180 8
+cmd tp @s ~2 ~ ~-6.5 180 8
 wait 6
 cmd awaken delve demo charge
 wait 19
@@ -71,18 +74,18 @@ wait 2
 shotnow w2_09_heavy_bore
 wait 20
 shot w2_10_heavy_after
-# a cave-in: the warning dust, then the roof, from the chamber's south side
-cmd tp @s ~-2 ~ ~9.5 180 -18
+# a cave-in from the chamber's south side: cracks and pouring dust, the stones letting go, the dust rolling out
+cmd tp @s ~-2 ~ ~6.5 180 -22
 wait 6
 cmd awaken delve cavein
-wait 30
-shot w2_11_cavein_dust
-wait 38
+wait 42
+shotnow w2_11_cavein_dust
+wait 28
 shotnow w2_12_cavein_falls
-wait 30
-shot w2_13_cavein_after
+wait 20
+shotnow w2_13_cavein_lands
 # Deepglass in the east wall, below y 0
-cmd tp @s ~3 ~ ~-6 -90 4
+cmd tp @s ~3 ~ ~-3 -90 4
 wait 10
 shot w2_14_deepglass
 # the miner's lamp: a dark tunnel to the west, the lamp's light on its walls

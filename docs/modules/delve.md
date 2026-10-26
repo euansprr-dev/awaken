@@ -26,10 +26,11 @@ Code: `src/main/java/dev/awaken/delve/**` (server and common) and `delve/client/
 | `DelveContent`, `DelveNet`, `DelveCommands`, `DelveTests` | Registrations, messages, `/awaken delve`, the GameTests |
 | `client.StrikeFeel` | Every bite: the ore's sound, sparks or grit, the last blow's crack, hold and kick |
 | `client.HeavyCharge` | Sneak + hold attack with a pick: the charge, the glint, the release; the bore's burst for everyone near |
-| `client.VeinFx` | Glints on lit lode blocks; the vein's light and cracks; the client's two-blow speed |
-| `client.CaveInFx` | The warning's dust and tremble |
+| `client.VeinFx` | Glints on lit lode blocks; the vein giving: light running out along it inside the rock (the blocks' own faces lit, glowing cracks), no outline; the client's two-blow speed |
+| `client.CaveInFx` | The cave-in: cracks spreading over the roof, dust pouring from the seams, each stone's tear and landing (dust, thud), the shake |
 | `client.ForkSong` | The fork's ring (pitch by how squarely you face the lode) and its arc on the band |
 | `client.LampGlow` | The miner's lamp: the rock ahead lit by redrawing its lit faces' own quads additively, a haze, a flame on the brow |
+| `client.DelveRender` | The two additive passes the lamp and the vein share: a block face's own quads lit, sprites on faces; soft glow |
 | `client.DelveParticles` | Spark, grit, dust, glint, mote |
 
 Seams the phase touched in other modules (SPEC §28.1): `gear` (recipes via `tools/art/specs/gear.py`, `HunterTier`
@@ -42,7 +43,8 @@ lapis Blueprints) with `ArmsTests.forge`, `gates/run/Loot` and `Rooms` (no ore h
 
 All in SPEC §28.3. The ones to know: about 13 of a tier's metal for its seven pieces; ore XP 0.01 of a level x coal 0.5
 … diamond 6, deep ores through their own budget; lodes 20-120 blocks, a few a region at their ore's depth; the vein's
-window 30 s at two blows a block; cave-ins 60% of the time in a chamber of 160+ air blocks 7+ across; the heavy strike
+window 30 s at two blows a block; cave-ins 60% of the time in a chamber of 160+ air blocks 7+ across, the roof letting go
+over 1.5 s nearest first; the heavy strike
 on the Maul's charge (6 / 20 / 30 ticks), three blocks, x3 wear (x2 on the glint); the fork reaches 48; a rope 32.
 
 ## How to try it

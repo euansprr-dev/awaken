@@ -109,7 +109,13 @@ public final class DelveParticles {
 
         @Override
         protected int getLightCoords(float a) {
-            return kind == GRIT || kind == DUST ? super.getLightCoords(a) : LightCoordsUtil.FULL_BRIGHT;
+            if (kind == GRIT) return super.getLightCoords(a);
+            if (kind == DUST) {
+                // dust catches what light there is: never quite black, or a cave-in's cloud would vanish in the dark
+                int c = super.getLightCoords(a);
+                return LightCoordsUtil.pack(Math.max(LightCoordsUtil.block(c), 6), LightCoordsUtil.sky(c));
+            }
+            return LightCoordsUtil.FULL_BRIGHT;
         }
 
         @Override
@@ -133,7 +139,11 @@ public final class DelveParticles {
                     alpha = Math.min(1F, Math.min(t * 4F, (1F - t) * 2F)) * 0.85F;
                     quadSize = base * (0.8F + 0.25F * (float) Math.sin(t * Math.PI * 4));
                 }
-                case DUST -> alpha = 0.75F * Math.min(1F, (1F - t) * 3F);
+                case DUST -> {
+                    // billows as it falls and spreads, then thins away
+                    alpha = 0.75F * Math.min(1F, Math.min(t * 8F, (1F - t) * 3F));
+                    quadSize = base * (1F + 1.3F * t);
+                }
                 default -> alpha = 0.9F * (1F - t * t);
             }
         }

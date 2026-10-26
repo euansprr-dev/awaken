@@ -5339,8 +5339,12 @@ light so it glows in the dark, glinting), loot a lump (iron 4-7 raw, diamond
 **The vein gives** (`Veins.give`, client `VeinFx`): breaking a planned heart (after every protection, LOW) opens its
 lode once for the world (`DelveData`, schemaVersion 1): `LODE · <ore> · <blocks left>` through `Finds` (the first a
 moment), a lump of 0.08 of a level × the ore weight's square root × the taper, counters `awaken:lodes_opened`, the
-client's reveal (glass outline in the ore's colour lighting outward with white cracks from the heart at 32 blocks a
-second, a travelling crackle, a kick and hold), and for 30 s the breaker's blows take the lode's blocks in two (speed =
+client's reveal (no outline, no boxes: light runs out from the heart along the vein at 32 blocks a second with a
+travelling crackle; each vein block it reaches flashes from inside its own texture, its faces redrawn additively in the
+ore's colour, whiter in the 7-tick flash, with glowing cracks (`vein_cracks_0..3`) across them and a soft pool on the
+face; rock in front of a buried vein block shows the light bleeding through, its own face lit 42/20/9% through 1/2/3
+blocks, cracked too through one; 3 s full, settling over 2.5 s to a 30% pulse that lasts the window, fading over its
+last 1.2 s; grit and a glint off each open block as the front passes; a kick and hold), and for 30 s the breaker's blows take the lode's blocks in two (speed =
 hardness × 30 / 8, mirrored on the client). The lodes within 64 are sent to each client when the set changes, for the
 glints: a lode block open to the air glints in its ore's colour where block light ≥ 8 or the miner's lamp's beam falls.
 
@@ -5350,8 +5354,14 @@ roof = the natural rock over the top air of each such column within 6 of the hea
 gravel, calcite, dripstone), 10 to 40 of them, nearest first. Never inside a Hearth, a ward, or the city's footprint
 within 48 under its square (its foundations); never if any
 roof block's section holds a solid block a player placed underground (`DelveData` keeps sections below y 64). Warning:
-3 s of dust threads and grit from those stones, a creak, a tremble within 18, "The roof is giving way"; then each stone
-still unchanged falls as a falling block (1.5 damage a block fallen, at most 8) with a rumble.
+3 s: cracks spread over those stones (the game's breaking stages, the first to fall cracking first, all broken through
+by the fall), dust pours from up to 14 seams between them in streams that open and thicken as it nears, grit, a creak
+and a second higher one at 55%, a tremble within 20, "The roof is giving way". Then they let go one after another over
+1.5 s (`SPREAD` 30 ticks, stone i of n at i × 30 / n, nearest the heart first), each still unchanged as a falling block
+(1.5 damage a block fallen, at most 8): a rumble at the first and the last, and on the client a crack and a burst of
+dust where each tore free, a thud and a cloud rolling out along the floor where it lands (its landing time from the
+fall's height), and the view shaking within 20 (hardest as stones hit; the player's camera-kick comfort setting
+scales it). Dust takes at least block light 6 so the cloud reads in an unlit cave.
 
 **The strike's feel** (client `StrikeFeel`): a bite every 4 ticks held (vanilla's rhythm, from NeoForge's client mine
 hold): each ore its own sound (`delve.strike.<ore>`), sparks off hard rock with a pick or mattock (white-hot cooling to
