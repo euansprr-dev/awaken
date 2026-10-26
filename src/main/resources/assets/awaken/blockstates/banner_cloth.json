@@ -30,6 +30,21 @@
       "model": "awaken:block/banner_cloth_bellwatch_top_pole",
       "y": 270
     },
+    "design=bellwatch,facing=north,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_bellwatch_top_line"
+    },
+    "design=bellwatch,facing=east,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_bellwatch_top_line",
+      "y": 90
+    },
+    "design=bellwatch,facing=south,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_bellwatch_top_line",
+      "y": 180
+    },
+    "design=bellwatch,facing=west,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_bellwatch_top_line",
+      "y": 270
+    },
     "design=bellwatch,facing=north,mount=wall,part=middle": {
       "model": "awaken:block/banner_cloth_bellwatch_middle_wall"
     },
@@ -58,6 +73,21 @@
     },
     "design=bellwatch,facing=west,mount=pole,part=middle": {
       "model": "awaken:block/banner_cloth_bellwatch_middle_pole",
+      "y": 270
+    },
+    "design=bellwatch,facing=north,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_bellwatch_middle_line"
+    },
+    "design=bellwatch,facing=east,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_bellwatch_middle_line",
+      "y": 90
+    },
+    "design=bellwatch,facing=south,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_bellwatch_middle_line",
+      "y": 180
+    },
+    "design=bellwatch,facing=west,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_bellwatch_middle_line",
       "y": 270
     },
     "design=bellwatch,facing=north,mount=wall,part=bottom": {
@@ -90,6 +120,21 @@
       "model": "awaken:block/banner_cloth_bellwatch_bottom_pole",
       "y": 270
     },
+    "design=bellwatch,facing=north,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_bellwatch_bottom_line"
+    },
+    "design=bellwatch,facing=east,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_bellwatch_bottom_line",
+      "y": 90
+    },
+    "design=bellwatch,facing=south,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_bellwatch_bottom_line",
+      "y": 180
+    },
+    "design=bellwatch,facing=west,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_bellwatch_bottom_line",
+      "y": 270
+    },
     "design=quay,facing=north,mount=wall,part=top": {
       "model": "awaken:block/banner_cloth_quay_top_wall"
     },
@@ -118,6 +163,21 @@
     },
     "design=quay,facing=west,mount=pole,part=top": {
       "model": "awaken:block/banner_cloth_quay_top_pole",
+      "y": 270
+    },
+    "design=quay,facing=north,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_quay_top_line"
+    },
+    "design=quay,facing=east,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_quay_top_line",
+      "y": 90
+    },
+    "design=quay,facing=south,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_quay_top_line",
+      "y": 180
+    },
+    "design=quay,facing=west,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_quay_top_line",
       "y": 270
     },
     "design=quay,facing=north,mount=wall,part=middle": {
@@ -150,6 +210,21 @@
       "model": "awaken:block/banner_cloth_quay_middle_pole",
       "y": 270
     },
+    "design=quay,facing=north,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_quay_middle_line"
+    },
+    "design=quay,facing=east,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_quay_middle_line",
+      "y": 90
+    },
+    "design=quay,facing=south,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_quay_middle_line",
+      "y": 180
+    },
+    "design=quay,facing=west,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_quay_middle_line",
+      "y": 270
+    },
     "design=quay,facing=north,mount=wall,part=bottom": {
       "model": "awaken:block/banner_cloth_quay_bottom_wall"
     },
@@ -178,6 +253,21 @@
     },
     "design=quay,facing=west,mount=pole,part=bottom": {
       "model": "awaken:block/banner_cloth_quay_bottom_pole",
+      "y": 270
+    },
+    "design=quay,facing=north,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_quay_bottom_line"
+    },
+    "design=quay,facing=east,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_quay_bottom_line",
+      "y": 90
+    },
+    "design=quay,facing=south,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_quay_bottom_line",
+      "y": 180
+    },
+    "design=quay,facing=west,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_quay_bottom_line",
       "y": 270
     },
     "design=market,facing=north,mount=wall,part=top": {
@@ -210,6 +300,21 @@
       "model": "awaken:block/banner_cloth_market_top_pole",
       "y": 270
     },
+    "design=market,facing=north,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_market_top_line"
+    },
+    "design=market,facing=east,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_market_top_line",
+      "y": 90
+    },
+    "design=market,facing=south,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_market_top_line",
+      "y": 180
+    },
+    "design=market,facing=west,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_market_top_line",
+      "y": 270
+    },
     "design=market,facing=north,mount=wall,part=middle": {
       "model": "awaken:block/banner_cloth_market_middle_wall"
     },
@@ -238,6 +343,21 @@
     },
     "design=market,facing=west,mount=pole,part=middle": {
       "model": "awaken:block/banner_cloth_market_middle_pole",
+      "y": 270
+    },
+    "design=market,facing=north,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_market_middle_line"
+    },
+    "design=market,facing=east,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_market_middle_line",
+      "y": 90
+    },
+    "design=market,facing=south,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_market_middle_line",
+      "y": 180
+    },
+    "design=market,facing=west,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_market_middle_line",
       "y": 270
     },
     "design=market,facing=north,mount=wall,part=bottom": {
@@ -270,6 +390,21 @@
       "model": "awaken:block/banner_cloth_market_bottom_pole",
       "y": 270
     },
+    "design=market,facing=north,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_market_bottom_line"
+    },
+    "design=market,facing=east,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_market_bottom_line",
+      "y": 90
+    },
+    "design=market,facing=south,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_market_bottom_line",
+      "y": 180
+    },
+    "design=market,facing=west,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_market_bottom_line",
+      "y": 270
+    },
     "design=terrace,facing=north,mount=wall,part=top": {
       "model": "awaken:block/banner_cloth_terrace_top_wall"
     },
@@ -298,6 +433,21 @@
     },
     "design=terrace,facing=west,mount=pole,part=top": {
       "model": "awaken:block/banner_cloth_terrace_top_pole",
+      "y": 270
+    },
+    "design=terrace,facing=north,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_terrace_top_line"
+    },
+    "design=terrace,facing=east,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_terrace_top_line",
+      "y": 90
+    },
+    "design=terrace,facing=south,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_terrace_top_line",
+      "y": 180
+    },
+    "design=terrace,facing=west,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_terrace_top_line",
       "y": 270
     },
     "design=terrace,facing=north,mount=wall,part=middle": {
@@ -330,6 +480,21 @@
       "model": "awaken:block/banner_cloth_terrace_middle_pole",
       "y": 270
     },
+    "design=terrace,facing=north,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_terrace_middle_line"
+    },
+    "design=terrace,facing=east,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_terrace_middle_line",
+      "y": 90
+    },
+    "design=terrace,facing=south,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_terrace_middle_line",
+      "y": 180
+    },
+    "design=terrace,facing=west,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_terrace_middle_line",
+      "y": 270
+    },
     "design=terrace,facing=north,mount=wall,part=bottom": {
       "model": "awaken:block/banner_cloth_terrace_bottom_wall"
     },
@@ -358,6 +523,21 @@
     },
     "design=terrace,facing=west,mount=pole,part=bottom": {
       "model": "awaken:block/banner_cloth_terrace_bottom_pole",
+      "y": 270
+    },
+    "design=terrace,facing=north,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_terrace_bottom_line"
+    },
+    "design=terrace,facing=east,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_terrace_bottom_line",
+      "y": 90
+    },
+    "design=terrace,facing=south,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_terrace_bottom_line",
+      "y": 180
+    },
+    "design=terrace,facing=west,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_terrace_bottom_line",
       "y": 270
     },
     "design=works,facing=north,mount=wall,part=top": {
@@ -390,6 +570,21 @@
       "model": "awaken:block/banner_cloth_works_top_pole",
       "y": 270
     },
+    "design=works,facing=north,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_works_top_line"
+    },
+    "design=works,facing=east,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_works_top_line",
+      "y": 90
+    },
+    "design=works,facing=south,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_works_top_line",
+      "y": 180
+    },
+    "design=works,facing=west,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_works_top_line",
+      "y": 270
+    },
     "design=works,facing=north,mount=wall,part=middle": {
       "model": "awaken:block/banner_cloth_works_middle_wall"
     },
@@ -418,6 +613,21 @@
     },
     "design=works,facing=west,mount=pole,part=middle": {
       "model": "awaken:block/banner_cloth_works_middle_pole",
+      "y": 270
+    },
+    "design=works,facing=north,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_works_middle_line"
+    },
+    "design=works,facing=east,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_works_middle_line",
+      "y": 90
+    },
+    "design=works,facing=south,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_works_middle_line",
+      "y": 180
+    },
+    "design=works,facing=west,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_works_middle_line",
       "y": 270
     },
     "design=works,facing=north,mount=wall,part=bottom": {
@@ -450,6 +660,21 @@
       "model": "awaken:block/banner_cloth_works_bottom_pole",
       "y": 270
     },
+    "design=works,facing=north,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_works_bottom_line"
+    },
+    "design=works,facing=east,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_works_bottom_line",
+      "y": 90
+    },
+    "design=works,facing=south,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_works_bottom_line",
+      "y": 180
+    },
+    "design=works,facing=west,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_works_bottom_line",
+      "y": 270
+    },
     "design=garden,facing=north,mount=wall,part=top": {
       "model": "awaken:block/banner_cloth_garden_top_wall"
     },
@@ -478,6 +703,21 @@
     },
     "design=garden,facing=west,mount=pole,part=top": {
       "model": "awaken:block/banner_cloth_garden_top_pole",
+      "y": 270
+    },
+    "design=garden,facing=north,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_garden_top_line"
+    },
+    "design=garden,facing=east,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_garden_top_line",
+      "y": 90
+    },
+    "design=garden,facing=south,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_garden_top_line",
+      "y": 180
+    },
+    "design=garden,facing=west,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_garden_top_line",
       "y": 270
     },
     "design=garden,facing=north,mount=wall,part=middle": {
@@ -510,6 +750,21 @@
       "model": "awaken:block/banner_cloth_garden_middle_pole",
       "y": 270
     },
+    "design=garden,facing=north,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_garden_middle_line"
+    },
+    "design=garden,facing=east,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_garden_middle_line",
+      "y": 90
+    },
+    "design=garden,facing=south,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_garden_middle_line",
+      "y": 180
+    },
+    "design=garden,facing=west,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_garden_middle_line",
+      "y": 270
+    },
     "design=garden,facing=north,mount=wall,part=bottom": {
       "model": "awaken:block/banner_cloth_garden_bottom_wall"
     },
@@ -538,6 +793,21 @@
     },
     "design=garden,facing=west,mount=pole,part=bottom": {
       "model": "awaken:block/banner_cloth_garden_bottom_pole",
+      "y": 270
+    },
+    "design=garden,facing=north,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_garden_bottom_line"
+    },
+    "design=garden,facing=east,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_garden_bottom_line",
+      "y": 90
+    },
+    "design=garden,facing=south,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_garden_bottom_line",
+      "y": 180
+    },
+    "design=garden,facing=west,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_garden_bottom_line",
       "y": 270
     },
     "design=wallring,facing=north,mount=wall,part=top": {
@@ -570,6 +840,21 @@
       "model": "awaken:block/banner_cloth_wallring_top_pole",
       "y": 270
     },
+    "design=wallring,facing=north,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_wallring_top_line"
+    },
+    "design=wallring,facing=east,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_wallring_top_line",
+      "y": 90
+    },
+    "design=wallring,facing=south,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_wallring_top_line",
+      "y": 180
+    },
+    "design=wallring,facing=west,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_wallring_top_line",
+      "y": 270
+    },
     "design=wallring,facing=north,mount=wall,part=middle": {
       "model": "awaken:block/banner_cloth_wallring_middle_wall"
     },
@@ -598,6 +883,21 @@
     },
     "design=wallring,facing=west,mount=pole,part=middle": {
       "model": "awaken:block/banner_cloth_wallring_middle_pole",
+      "y": 270
+    },
+    "design=wallring,facing=north,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_wallring_middle_line"
+    },
+    "design=wallring,facing=east,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_wallring_middle_line",
+      "y": 90
+    },
+    "design=wallring,facing=south,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_wallring_middle_line",
+      "y": 180
+    },
+    "design=wallring,facing=west,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_wallring_middle_line",
       "y": 270
     },
     "design=wallring,facing=north,mount=wall,part=bottom": {
@@ -630,6 +930,21 @@
       "model": "awaken:block/banner_cloth_wallring_bottom_pole",
       "y": 270
     },
+    "design=wallring,facing=north,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_wallring_bottom_line"
+    },
+    "design=wallring,facing=east,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_wallring_bottom_line",
+      "y": 90
+    },
+    "design=wallring,facing=south,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_wallring_bottom_line",
+      "y": 180
+    },
+    "design=wallring,facing=west,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_wallring_bottom_line",
+      "y": 270
+    },
     "design=association,facing=north,mount=wall,part=top": {
       "model": "awaken:block/banner_cloth_association_top_wall"
     },
@@ -658,6 +973,21 @@
     },
     "design=association,facing=west,mount=pole,part=top": {
       "model": "awaken:block/banner_cloth_association_top_pole",
+      "y": 270
+    },
+    "design=association,facing=north,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_association_top_line"
+    },
+    "design=association,facing=east,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_association_top_line",
+      "y": 90
+    },
+    "design=association,facing=south,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_association_top_line",
+      "y": 180
+    },
+    "design=association,facing=west,mount=line,part=top": {
+      "model": "awaken:block/banner_cloth_association_top_line",
       "y": 270
     },
     "design=association,facing=north,mount=wall,part=middle": {
@@ -690,6 +1020,21 @@
       "model": "awaken:block/banner_cloth_association_middle_pole",
       "y": 270
     },
+    "design=association,facing=north,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_association_middle_line"
+    },
+    "design=association,facing=east,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_association_middle_line",
+      "y": 90
+    },
+    "design=association,facing=south,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_association_middle_line",
+      "y": 180
+    },
+    "design=association,facing=west,mount=line,part=middle": {
+      "model": "awaken:block/banner_cloth_association_middle_line",
+      "y": 270
+    },
     "design=association,facing=north,mount=wall,part=bottom": {
       "model": "awaken:block/banner_cloth_association_bottom_wall"
     },
@@ -718,6 +1063,21 @@
     },
     "design=association,facing=west,mount=pole,part=bottom": {
       "model": "awaken:block/banner_cloth_association_bottom_pole",
+      "y": 270
+    },
+    "design=association,facing=north,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_association_bottom_line"
+    },
+    "design=association,facing=east,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_association_bottom_line",
+      "y": 90
+    },
+    "design=association,facing=south,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_association_bottom_line",
+      "y": 180
+    },
+    "design=association,facing=west,mount=line,part=bottom": {
+      "model": "awaken:block/banner_cloth_association_bottom_line",
       "y": 270
     }
   }
