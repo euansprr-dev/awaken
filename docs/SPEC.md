@@ -201,6 +201,8 @@ Overworld: `awaken:gate` block structure (frame + core) at a surface position; c
 rank (E #F4F6FB, D #5FD08F, C #6FB3FF, B #B48CFF, A #F2A541, S #FF5A6A, Sovereign black-gold), visible up to 1500 blocks
 (drawn at clamped distance beyond render distance).
 Gate card shows rank, breaks-in, omen; PER ≥20 adds layout, ≥40 modifiers, ≥60 floor count; Veil scouting shows all.
+A gate of another rank than the hunter's says so in a "For you" row: "above your rank", or "below your rank · pays less"
+(floors below your rank pay ×0.3, `Curve.BELOW_RANK_FACTOR`; §17.25).
 
 Dimension `awaken:gates`: cells of 512×512 aligned to region files, cell origin = ((i mod 64)·1024, (i div 64)·1024).
 Floors stacked vertically: floor f at y = 200 − 32·(f−1) (f = 1..6), each floor a grid of room slots (16-block pitch).
@@ -2273,6 +2275,8 @@ Precursor wards (`wilds.ward`, config `features.wards`):
   box grown by 12 blocks on every side. `#awaken:warded_sky` (sky platforms) reaches 48 further down, so a tower stalls
   well under the deck. New structure sites (Tether Spires) join a tag; sites placed by code (hero-tree caches) register
   a `core.api.WardHooks.Source`. Existing ruins have wards at once: the box comes from the saved structure start.
+- At a **climb** (a Tether Spire, a sky platform, a hero tree's crown) a block is refused outright instead, and no
+  Hearth suspends the ward or its walls (§17.25).
 - Inside a ward, outside every Hearth's radius, a block a survival or adventure player places crumbles 3 s (60 ticks)
   later: still the same block, it is removed (water stays where it was waterlogged) and the item that placed it goes back
   to them (inventory, else at their feet; if they left, where it stood). Containers drop what was put in them, as
@@ -2291,12 +2295,15 @@ Precursor wards (`wilds.ward`, config `features.wards`):
 
 How you arrived (`wilds.arrival`, behind `core.api.ArrivalHooks`; config `features.wilds`):
 - Every tick the server reads each player's way of moving; a quarter second keeps its most telling way (in `Way` order:
-  STILL < WALK < SPRINT < SWIM < CLIMB < RIDE < AIRBORNE < POWER < ASCENT < BUILT) and 80 of them (20 s) are kept.
+  STILL < WALK < SPRINT < SWIM < CLIMB < RIDE < AIRBORNE < POWER < ASCENT < LINE < BUILT) and 80 of them (20 s) are kept.
   BUILT: standing on (any corner of the feet) or climbing a block the player placed in the last 10 minutes (last 512
   placements). POWER: 2 s after a cast of a movement-slot power, a dash or Hover, and every tick Flight or Hover runs.
-  ASCENT is for the movement tiers to report. Nothing is saved.
+  ASCENT: a Runner move (wall-run, ledge hang); LINE: the Ascent's own ladder (a rope out, a zip, the carry, wings;
+  §17.25). The history is never saved.
 - A visit: stepping into a ward opens it with the window's verdict (no BUILT in the 20 s that led there); a BUILT sample
   while inside spoils it; it ends after 5 s outside. Outside any ward the window is the verdict. No record: movement.
+  A visit also knows if the line carried the player (`ArrivalHooks.byLine`); a visit open at logout is saved and comes
+  back if they log in inside the same ward within 10 minutes (§17.25).
 - `awaken:arrived_by_movement` (loot condition, the chest's opener) gates a site's best roll. Route records and Flow XP
   pay through `ArrivalHooks.byMovement` too when they land.
 
@@ -3095,6 +3102,68 @@ worked down one by one. The server takes the drop as a ledge jump (`JUMP_DOWN`):
 the claimed hold, its top within the drop's band of the held one. Test: `runner_ledge_drop` (a wall's top over a sill
 one out: the drop catches the sill from its own face and the server takes it; no sill, nothing to catch and the server
 refuses).
+
+### 17.25 Locks that hold and speak (the progression plan §5.5, Phase 3; Euan approved it 2026-10-26)
+Euan: "If I was someone who didn't know about the grapple, I'd just look at that and use blocks to build up. So we
+should probably block that." · "I don't want a guidebook... you still get guided somehow." Name the need, never the
+manual; stop the build at the first block; the payoff answers only the line; danger stays the gate for terrain (never a
+"you need a higher level" text, which a stack of dirt disproves).
+- **Climbs refuse, they don't crumble** (`wilds.ward.ClimbWard`; ward kinds `precursor_tether_spire`,
+  `precursor_sky_platform`, `hero_crown`, `Wards.climb`). A survival player's block placement (at HIGH priority, so the
+  arrival tracker never logs it) and a fluid bucket are cancelled at the first block; the ghost of the block falls away
+  (`ward_fx` SHED: its twelve edges in grains of its own colour, a breath of the Signal's light; the crumble's sound
+  pitched down ×0.72). The 3 s crumble stays at walk-in sites (vaults, monoliths, labs). No Hearth suspends a climb's
+  ward or its walls (`Wards.enforced`, `Wards.sealed`).
+- **The place answers**, worded by what the player holds (`HorizonHooks.can(p, "tether")`), lang `awaken.wilds.climb.*`:
+  without the rope, "The spire sheds what you build. Its platforms answer to a line." / "The platform sheds what you
+  build. Its rings climb to it by rope." / "The great tree sheds what you build. Its crown answers to a line."; with it,
+  "Climb it by rope: hold <the player's own rope key> at a ring." (a platform: "at the lowest ring"). Each line also
+  comes in two halves (`.sheds`, `.way`; the tip `.short`), because a card's question and a toast's detail hold about 28
+  letters a line (`SignalLayout.CARD_W` 170, `TOAST_W` 160).
+  - The first refusal at each kind of climb, without the rope (flag `awaken:climb_shown/<spire|sky|tree>`): a choice
+    card, the question "The spire sheds what you build.", the body "Its platforms answer to a line.", one choice
+    **Show me** (Y) / Not now (action `ward:show_me:<kind>`, 30 s), with "A vault keeps a line for a hunter it opens to."
+    on the action bar under it. Y sends `awaken:ward_show_me`; the client opens the band (K › Status) scrolled to "THE
+    ASCENT" (§27.2: the next rung as a silhouette, where it comes from), else "THE BODY"
+    (`StatusScreen(Tab, String... titles)`).
+  - After that: once a visit (a ward, until 5 minutes without a refusal there) a toast, the place's name and its way up
+    (or the short tip), sent untagged so the director shows it at once as the answer to the click (§26.2), and the
+    whole line on the action bar; further refusals in the visit: the shed and the action-bar line, at most every 3 s.
+  - Without the rope each refusal records a promise (§27.1): key `landmark:<ward id>` (`landmark:ruin:x,z`,
+    `landmark:hero/<crown>`), need `tier:tether`, "A Tether Spire" / "A sky platform" / "A great tree's crown". Kept
+    when the climb is made: a spire's crown (§27.1), a great tree's crown, or a climb cache's inner seal opening.
+- **The payoff answers only the line** (`ArrivalHooks.byLine`: by movement, and a LINE sample in the visit or the 20 s
+  before it, nothing built): a spire's or great tree's crown, a sky platform's Wings core, a climb cache's best roll.
+  A clever climb (pearls, elytra, a power's flight, a Runner hang) still earns the view and the ordinary roll; the
+  crown says "The crown stays dark. It answers only to a line."; the core "The core stays dark. It answers only to a
+  line up its rings." (at once, then at most every 10 s). The Tether Vow is kept only at the mast by the line.
+- **A climb cache's inner seal** (`wilds.ward.Caches`, attachment `awaken:inner_seal` on the chest: schema 1, the best
+  table, who it opened to). A spire's, sky platform's or hero crown's chest keeps its ordinary roll in its own table
+  (`chests/precursor_spire`, `chests/precursor_sky`) and its best roll in `…_best` (spire: 1 Power Core Shard + a
+  1000-essence cell or a shard or nothing; sky: 2 shards + a cell, Jet Boots or nothing). Built arrival: the cache
+  stays shut ("The cache's inner seal holds. It opens to a climb.", the hold light). Any other arrival: the ordinary
+  roll unpacks (shared, once) and the seal is stamped; the best roll is filled into the chest for each climber the line
+  carried, once each ("The inner seal opens to your climb.", a ring of light off the lid, the mark's glass low).
+  Without the line the seal's line is said instead. Nobody's open spends anyone's best roll; the ward keeps the cache
+  from breaks and blasts. Vault, monolith and lab chests keep `awaken:arrived_by_movement`.
+- **Relog keeps the verdict**: the open visit (`wilds.arrival.Visit`, attachment `awaken:ward_visit`, schema 1) is saved at
+  logout and resumed at login if under 10 minutes old (game time) and the player is still in that ward.
+- **The hero trees**: the crown's ward covers the canopy (radius 32 round a Colossus's crown, 16 round a Lumen Spire's,
+  from 10 over the foot to 6 over the crown; radii from the progression builder's draft), and each crowned tree
+  within 640 blocks is on the Horizon line, "Elder Colossus · a light in its crown" / "Lumen Spire · …", need the
+  Tether, id `landmark:hero/<crown>`, until the player has reached its crown.
+- **Walls speak per site** (`awaken.wilds.ward.hold.*`): only a vault's say "These walls answer only to their door."; a
+  spire "The spire keeps its stones.", a platform "…its plates.", a tree "The crown keeps its own.", a monolith or lab
+  "The ruin keeps its walls."
+- **Sealed doors show their rank from afar**: a door's panels carry its rank (`precursor_door` `rank` 0-6, 7 = not
+  painted yet; the core paints its panels once each load, so older doors light up), and the panels' seams and the
+  core's rune and ring are an emissive layer (`light_emission` 15, `precursor_door_glow`, `precursor_door_core_glow`)
+  tinted with the rank's colour (`above.client.DoorTint`): E white, D green, C blue, B violet, A amber, S red. Within 24
+  blocks the core also breathes four of the Ascent's motes in that colour every 2 s (`AscentFxBridge.doorBreath`,
+  from the progression builder's draft).
+- **Gate cards compare ranks** (§7).
+- Tests: `wilds_ward_refuses_climb`, `wilds_arrival_survives_relog`, `wilds_cache_inner_seal` (and `wilds_ward_rules`,
+  `wilds_arrival_history`, `progression_promises`).
 
 ---------------------------------------------------------------------------------------------------------------------
 

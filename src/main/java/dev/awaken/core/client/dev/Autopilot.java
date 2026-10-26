@@ -328,6 +328,10 @@ public final class Autopilot {
                 Awaken.LOG.info("[autopilot] compat {}: {}", arg.trim(), dev.awaken.compat.client.CompatClient.autopilot(arg));
                 waitTicks = 10;
             }
+            case "use" -> { // the use key once (right click): places the held block where the crosshair rests
+                KeyMapping.click(mc.options.keyUse.getKey());
+                waitTicks = 2;
+            }
             case "key" -> {
                 KeyMapping k = KEYS.get(arg.trim());
                 if (k == null) Awaken.LOG.warn("[autopilot] unknown key {}", arg);
