@@ -19,6 +19,7 @@ Run:  python3 tools/sim/combat_sim.py                        (as built, 400 seed
       python3 tools/sim/combat_sim.py --preset recommended-hp    (every recommended change)
       python3 tools/sim/combat_sim.py --override lord.extra_health=1.85 --override fix.stagger=1
       python3 tools/sim/combat_sim.py --override longsword.strike_1.motion=1.0 --json /tmp/out.json
+      python3 tools/sim/combat_sim.py --untold                   (a parrier's guard against blows with no tell)
 Overrides: any CONFIG path (see default_config); `longsword.<move>.<field>` reaches the archetype's move rows,
 `lords.<id>.<field>` a Lord's base numbers (hp, dmg, uptime), `ability.<lord>.<phase>.<index>.<field>` one ability
 (e.g. ability.hive_regent.0.0.heavy=false). Deterministic for a seed; --jobs only changes speed.
@@ -1772,6 +1773,7 @@ def main(argv=None):
     ap.add_argument("--jobs", type=int, default=min(4, os.cpu_count() or 1), help="worker processes (results don't depend on it)")
     ap.add_argument("--no-diamond", action="store_true")
     ap.add_argument("--quiet", action="store_true")
+    ap.add_argument("--untold", action="store_true", help="the untold-mob guard table instead of the Lords (tools/sim/untold.py)")
     args = ap.parse_args(argv)
 
     t0 = time.time()
@@ -1784,6 +1786,14 @@ def main(argv=None):
             raise SystemExit(f"combat_sim: --override wants PATH=VALUE, got {o!r}")
         k, v = o.split("=", 1)
         apply_override(cfg, k.strip(), v.strip())
+    if args.untold:
+        import untold
+        t = untold.table(W, cfg)
+        untold.print_table(t)
+        if args.json:
+            with open(args.json, "w", encoding="utf-8") as f:
+                json.dump(t, f, indent=1)
+        return
 
     if args.profiles:
         bad = [p for p in args.profiles.split(",") if p.strip() not in PROFILE_ORDER]

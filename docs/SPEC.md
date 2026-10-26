@@ -448,7 +448,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   `broken(Entity)`, `focused(Entity)` (the local fighter's focus). Installed by Arms' client; zero until then.
 - `dev.awaken.arms.Arms` (§24) — `styleOf(ItemStack|Item)` (the fighting style, or null for tools and bare hands),
   `guards(ItemStack)`, `fights(LivingEntity)`, `posture(LivingEntity)` (0..1, server), `broken(LivingEntity)` (server),
-  `tellSound(Strikes.Kind)` (the class's one voice; the mobs module plays it with each tell).
+  `tellSound(Strikes.Kind)` (the class's one voice; the mobs module plays it with each tell), `untold(DamageSource)`
+  (a creature's own melee with no wind-up to read: not ours, not `#awaken:told_melee`; its guard window is wider, §25).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -4444,7 +4445,17 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   for 12 ticks); after that LIGHT is blocked (70% less), HEAVY breaks the guard (50% less, the guard drops, 15 ticks
   before it can rise); PERILOUS and GRAB pass through. A raise within 8 ticks of lowering one that deflected nothing can
   only block (spamming is not deflecting). **Latency grace**: a guardable blow on an unguarded fighter waits up to
-  latency/2 ticks (0 under 50 ms, at most 3) for a raise already on its way.
+  latency/2 ticks (0 under 50 ms, at most 3) for a raise already on its way. **Untold blows** (Euan 2026-10-26, of
+  zombies: "you don't know when it's going to hit you... so it's very hard to time a parry"): a creature's own melee
+  (it strikes with its body, the direct attacker) with no wind-up to read is untold: anything not ours (every Awaken
+  creature tells its blows) and not in `#awaken:told_melee` (the iron golem, the ravager, the warden): a zombie, husk,
+  drowned, spider, cave spider, silverfish, endermite, piglin. Its deflect window is `ArmsRules.UNTOLD_DEFLECT` (4)
+  ticks longer (the Longsword's 4 → 8; only on the early side: a raise after the blow still lets it land), and its
+  deflect pays `UNTOLD_REWARD` (0.6) of a told one's Resonance and stance. Told blows keep the tight window, so reading
+  a tell stays the skill; shots and players are never untold; nothing on screen foretells a blow. The combat sim's
+  untold table (`combat_sim.py --untold`, docs/combat/untold-parry-2026-10-26.md): a Parrier against zombies, deflects
+  40% → 70% and damage taken 117 → 58 per 100 blows once they raise into the wider window (Resonance per blow 8.0 →
+  8.4); no Gate Lord or summon is untold, so the Lord table is unchanged. Test `arms_untold_parry`.
 - **Dodge** (sprint pressed with back, left, right or no direction, on the ground; sprint + forward still runs): 6
   ticks, 2.6 blocks, client-predicted, server-validated (position within 1.5 blocks, charges, not in a wind-up or blow:
   a recovery can be dodged out of, which drops the rhythm). Ticks 0–4 evade any class (**the SPEC amendment: the only

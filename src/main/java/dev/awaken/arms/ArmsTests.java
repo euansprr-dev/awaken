@@ -63,6 +63,7 @@ final class ArmsTests {
         AwakenTests.register("arms_forge", 20, ArmsTests::forge);
         AwakenTests.register("arms_tap_or_hold", 40, ArmsTests::tapOrHold);
         AwakenTests.register("arms_strikes_things", 40, ArmsTests::strikesThings);
+        AwakenTests.register("arms_untold_parry", 40, ArmsTests::untoldParry);
     }
 
     /** At most this many triangle corners in one weapon (6,000 triangles: a few weapons in view cost what a mob does). */
@@ -787,6 +788,50 @@ final class ArmsTests {
         e.snapTo(v.x, v.y, v.z, 0F, 0F);
         h.getLevel().addFreshEntity(e);
         return e;
+    }
+
+    /**
+     * A blow with no wind-up to read (a zombie's, a spider's) deflects over a wider window and pays less for it; a told
+     * one (an iron golem's, any of ours) keeps the tight window. Shots and players are never untold.
+     */
+    static void untoldParry(GameTestHelper h) {
+        Archetype.Guard g = longsword().def().guard();
+        int w = g.deflect(), u = w + ArmsRules.UNTOLD_DEFLECT;
+        h.assertTrue(ArmsRules.guard(g, Strikes.Kind.LIGHT, w, 0, 0, false, true, false) == ArmsRules.Answer.BLOCK, "told: past its window, a block");
+        h.assertTrue(ArmsRules.guard(g, Strikes.Kind.LIGHT, u - 1, 0, 0, false, true, true) == ArmsRules.Answer.DEFLECT, "untold: still a deflect " + (u - 1) + " ticks after the raise");
+        h.assertTrue(ArmsRules.guard(g, Strikes.Kind.LIGHT, u, 0, 0, false, true, true) == ArmsRules.Answer.BLOCK, "untold: its window ends too");
+        h.assertTrue(ArmsRules.guard(g, Strikes.Kind.LIGHT, 0, 3, 2, false, true, true) == ArmsRules.Answer.BLOCK, "the grace is the same: a raise late past it blocks");
+        h.assertTrue(ArmsRules.guard(g, Strikes.Kind.LIGHT, 0, 0, 0, true, true, true) == ArmsRules.Answer.BLOCK, "a spammed raise stays locked out");
+        h.assertTrue(ArmsRules.guard(g, Strikes.Kind.PERILOUS, 0, 0, 0, false, true, true) == ArmsRules.Answer.PASS, "a perilous blow passes either way");
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        ServerPlayer q = fighter(h, 4.5, 0.5, 0F);
+        Mob z = put(h, EntityTypes.ZOMBIE, 1.5, 1.9, 60);
+        Mob golem = put(h, EntityTypes.IRON_GOLEM, 4.5, 2.2, 100);
+        Mob skeleton = put(h, EntityTypes.SKELETON, -1.5, 4.5, 60);
+        var src = h.getLevel().damageSources();
+        var arrow = EntityTypes.ARROW.create(h.getLevel(), EntitySpawnReason.COMMAND);
+        h.assertTrue(Arms.untold(src.mobAttack(z)), "a zombie's blow is untold");
+        h.assertTrue(!Arms.untold(src.mobAttack(golem)), "an iron golem's is told (#awaken:told_melee)");
+        h.assertTrue(!Arms.untold(src.arrow(arrow, skeleton)), "a shot is never untold");
+        h.assertTrue(!Arms.untold(src.playerAttack(q)), "nor a player's blow");
+        // the reward: an untold deflect pays UNTOLD_REWARD of a told one
+        z.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(6);
+        float untoldGain = deflectGain(h, p, z), toldGain = deflectGain(h, q, golem);
+        h.assertTrue(toldGain > 0 && Math.abs(untoldGain - toldGain * ArmsRules.UNTOLD_REWARD) < 1e-3,
+                "an untold deflect pays " + ArmsRules.UNTOLD_REWARD + " of a told one: " + untoldGain + " vs " + toldGain);
+        done(h, p, q);
+    }
+
+    /** Raises p's guard, lets {@code by} strike it on the raise's first tick, and returns the Resonance the deflect paid. */
+    private static float deflectGain(GameTestHelper h, ServerPlayer p, Mob by) {
+        p.startUsingItem(InteractionHand.MAIN_HAND);
+        ArmsServer.onUseStart(new net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent.Start(p, p.getMainHandItem(), InteractionHand.MAIN_HAND, 72000));
+        ArmsState s = ArmsServer.state(p);
+        float was = s.resonance;
+        float hp = p.getHealth();
+        Strikes.deliver(by, Strikes.Kind.LIGHT, () -> by.doHurtTarget(h.getLevel(), p));
+        h.assertTrue(s.raiseDeflected && p.getHealth() == hp, by.getType().getDescription().getString() + "'s blow on the raise is deflected");
+        return s.resonance - was;
     }
 
     /** Every listener after the Arms stage still applies: the momentum hit's +30% from a slide-speed run. */

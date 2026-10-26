@@ -560,7 +560,8 @@ final class ArmsServer {
         int grace = grace(p);
         boolean inArc = e.getOriginalBlockedDamage() > 0;
         Archetype.Guard g = style.def().guard();
-        ArmsRules.Answer a = ArmsRules.guard(g, kind, p.getTicksUsingItem(), heldTicks, grace, s.lockedOut, inArc);
+        boolean untold = Arms.untold(e.getDamageSource());
+        ArmsRules.Answer a = ArmsRules.guard(g, kind, p.getTicksUsingItem(), heldTicks, grace, s.lockedOut, inArc, untold);
         float incoming = e.getDamageContainer().getNewDamage();
         Entity by = e.getDamageSource().getEntity();
         long now = now(p);
@@ -571,7 +572,8 @@ final class ArmsServer {
                 s.raiseDeflected = true;
                 s.deflectAt = now;
                 s.deflected = by == null ? -1 : by.getId();
-                float charged = ArmsMastery.deflect(ArmsMastery.step(p, style)); // mastery III: a charged deflect
+                // mastery III: a charged deflect; an untold blow's wider window pays a little less
+                float charged = ArmsMastery.deflect(ArmsMastery.step(p, style)) * (untold ? ArmsRules.UNTOLD_REWARD : 1F);
                 resonance(p, s, ArmsRules.RESONANCE_DEFLECT * charged);
                 if (by instanceof LivingEntity attacker && e.getDamageSource().getDirectEntity() == by) {
                     addPosture(attacker, (int) ((kind == Strikes.Kind.HEAVY ? ArmsRules.DEFLECT_POSTURE_HEAVY : ArmsRules.DEFLECT_POSTURE_LIGHT) * charged), p);
