@@ -58,6 +58,7 @@ public final class CityModule {
         CityProtection.registerConfig();
         City.init();
         NeoForge.EVENT_BUS.addListener(CitySpawn::onCreateSpawn);
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, CityMonsters::onFinalizeSpawn); // few monsters near the city (the Commons step)
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, CityProtection::onBreak);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, CityProtection::onPlace);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, CityProtection::onUse);
@@ -66,6 +67,7 @@ public final class CityModule {
         CityCommands.register();
         CityTests.register();
         CityWallTests.register();
+        CityCommonsTests.register();
         // (M4 B3a) lit windows follow the time of day
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) -> {
             CityLights.tick(e.getServer());

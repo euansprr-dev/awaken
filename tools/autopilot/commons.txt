@@ -1,0 +1,61 @@
+# Carillon M4, the Commons step (docs/carillon/milestones/M4-commons.md, SPEC §16.3): the walk out of the High Gate to
+# the Wayfarers' fire. At noon: the road at eye height past the barbican, a pennant line across it, the Gatefield farm,
+# the fields from above, the road past the basin towards the camp's smoke, the road's end at the fingerpost; at dusk the
+# road out and the road past the basin again; then a night in the fields (creative, so spawning runs round you) and a
+# count of the monsters within 96 ("[city] monsters:" in the log).
+# Run on CI: tools/tour-ci.sh tools/autopilot/commons.txt 1500 PACK=perf,world TECTONIC=awakened
+world carillonCommons creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+hud off
+cmd gamemode spectator
+# noon: the walk out
+cmd awaken city view commons_road_out
+wait 400
+shot commons_road_out
+cmd awaken city view commons_poles
+wait 160
+shot commons_poles
+cmd awaken city view commons_farm
+wait 200
+shot commons_farm
+cmd awaken city view commons_fields
+wait 300
+shot commons_fields
+cmd awaken city view commons_trail
+wait 400
+shot commons_trail
+cmd awaken city view commons_camp_end
+wait 300
+shot commons_camp_end
+# dusk
+cmd time set 12600
+cmd awaken city view commons_road_out
+wait 200
+shot commons_road_out_dusk
+cmd awaken city view commons_trail
+wait 200
+shot commons_trail_dusk
+# night in the fields: a minute of spawning round a player in creative, then the count
+cmd time set 18000
+cmd awaken city view commons_night
+cmd gamemode creative
+wait 1200
+cmd awaken city monsters 96
+shot commons_night
+cmd gamemode spectator
+cmd awaken city view commons_road_out
+wait 100
+shot commons_road_out_night
+quit

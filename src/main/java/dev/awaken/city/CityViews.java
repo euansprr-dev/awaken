@@ -33,6 +33,10 @@ final class CityViews {
     static final java.util.Set<String> ALONG = java.util.Set.of("market", "bellwatch", "works", "wallring", "garden", "market_street");
 
     /** Views taken exactly where they say (indoors, underground): never moved onto open ground. */
+    /** Views whose heights are over the ground at the eye (past the basin, where the land lies as it lies). */
+    static final java.util.Set<String> GROUND = java.util.Set.of("commons_road_out", "commons_poles", "commons_farm", "commons_trail",
+            "commons_camp_end", "commons_night");
+
     static final java.util.Set<String> EXACT = java.util.Set.of("cellar", "quay_ladder", "walls_out_w", "walls_out_nw", "walls_out_e",
             "walls_out_s", "walls_inner", "walls_inner_high", "walls_walk", "walls_walk_roofed", "walls_climb", "walls_tower",
             "walls_passage", "walls_watergate", "walls_scaffold", "walls_approach", "walls_works_far");
@@ -102,6 +106,16 @@ final class CityViews {
         add("walls_out_nw", -293.3, 10, -64.1, -232.1, 30, -72.5);
         add("walls_out_e", 236.4, 8, 166.5, 213.4, 26, 116.3);
         add("walls_out_s", 97.6, 6, 263.7, 57.1, 30, 236.2);
+        // the Commons step: the walk out of the High Gate (the road at eye height, a pennant line, the Gatefield farm),
+        // the fields from above, the road past the basin towards the Wayfarers' smoke, the road's end at the fingerpost,
+        // and a spot in the fields for the night's count of monsters
+        add("commons_road_out", 0.5, 1.6, -261.5, 0.5, 3.0, -330);
+        add("commons_poles", -2.5, 1.6, -268.5, 0.5, 6.0, -277.5);
+        add("commons_farm", -3.5, 5.0, -296.5, 22, 2.0, -272);
+        add("commons_fields", -60, 30, -330, 30, 0, -262);
+        add("commons_trail", 0.5, 1.6, -345.5, 0.5, 2.5, -440);
+        add("commons_camp_end", -2.5, 1.8, -412.5, 4.5, 1.5, -446);
+        add("commons_night", 40.5, 1.6, -300.5, 60, 2, -290);
         add("walls_works_far", 165.0, 14, 300.0, 78.0, 22, 222.0); // the Works' slanted sides from the fields
         add("walls_inner", 225.8, 1.0, 43.9, 223.9, 14, 68.3);
         add("walls_inner_high", -50.1, 20, 210.1, -66.6, 20, 225.4);
