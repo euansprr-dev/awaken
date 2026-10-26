@@ -1456,13 +1456,21 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   median 0.3 blocks from the generator's exact ground, p90 1.2, test `farsight_columns_predict`), plus half a block (the
   top face). 2.5 probes a column; 59 µs a column on the Awakened Tectonic terrain on the M4 (stage 0: 650-870 µs and
   8-block steps). The city basin's `Shape.ground` applies on top. Water fills to sea level. Biome from the biome
-  source; colour, forest (density, canopy height, shape, crown colour) and flags from `FarPalette.look`; `ALPINE` where
-  the world has Awakened Alpine and the biome is `#awaken:alpine`. Generator without a terrain density: its base height.
-  Workers: a quarter of the cores, at most three (two on an M4: macOS ignores thread priorities), coarsest ring first.
+  source, sampled per patch every second corner and at least every 8 blocks, each corner taking the nearest sample
+  (2026-10-26, a JFR profile of the pack's world: one lookup a corner, through Lithostitched's injector over Tectonic's
+  climate, was 86% of the workers' time, 178 µs a column); colour, forest (density, canopy height, shape, crown
+  colour) and flags from `FarPalette.look`; `ALPINE` where the world has Awakened Alpine and the biome is
+  `#awaken:alpine`. Generator without a terrain density: its base height.
+  Workers: a quarter of the cores, at most three (two on an M4: macOS ignores thread priorities), paced by frame time;
+  while more than 64 patches are missing (a new world, a jump, the opening's card, fast flight) half the cores, at most
+  six, unpaced. The horizon ring first, then by distance; a ring asks only for patches it draws (not those the next
+  finer ring covers clear of its 16-cell easing band: asked for, they came first and the visible bands waited, so a
+  minute after a jump rings 4 and 5 still lacked 66 and 209 of 256 patches and the coast read as see-through sea).
 - **Generated layer** (stage 1, schema 2): `FarChunk` keeps per 2×2-block cell the ground's top (MOTION_BLOCKING_NO_LEAVES;
   water counts), water depth, the ground's colour, the canopy's height above it and its colour (leaves at
   MOTION_BLOCKING). `FarStore.patch` averages the cells within half a cell of each corner (known once a quarter is
-  seen) into the same four texels, flagged generated; its trees get their biome's shape. It wins over the prediction.
+  seen) into the same four texels, flagged generated; its trees get their biome's shape (looked up only where trees
+  stand). It wins over the prediction.
 - **Drawing** (`AfterSky`, before any chunk, its own D32 reversed-Z depth, planes 1 and 32768): each ring's window
   minus the next finer window is cut into pieces of up to 64×64 cells, culled on the CPU, each one draw of a continuous
   mesh: vertex `v` is the piece's corner `(v % 65, v / 65)`, one index buffer per piece width (8..64). A corner takes

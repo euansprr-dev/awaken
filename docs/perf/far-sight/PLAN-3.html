@@ -61,7 +61,7 @@ code { font: 13px var(--mono); background: var(--accent-soft); padding: 1px 4px;
 <header>
   <span class="eyebrow">Awaken · Far Sight · plan for approval · 26 Oct 2026</span>
   <h1>Far Sight 3: within a pixel</h1>
-  <p class="lede">Every far shape should stay within about a pixel of the real thing, so loading it in changes nothing you can see. Carillon gets this first: the whole city drawn from its real blocks, at any render distance, from the first frame of the flight.</p>
+  <p class="lede">Every far shape should stay within about a pixel of the real thing, so loading it in changes nothing you can see, and detail should fade with distance the way air fades real mountains, so no step is ever sharp. Carillon gets this first: the whole city drawn from its real blocks, at any render distance, from the first frame of the flight.</p>
   <p class="quote">"The biggest issue is the city itself … half the city is using Far Sight, so half the city just looks blocky … if you're moving super fast with flight and things are just rendering different than they looked, it takes a lot of the consistency away." Euan, 26 Oct</p>
 </header>
 
@@ -79,7 +79,7 @@ code { font: 13px var(--mono); background: var(--accent-soft); padding: 1px 4px;
       <tr><td></td><td>Two worker threads, paced for frame time even while the view was empty</td><td><span class="tag done">fixed</span> up to five workers, unpaced, while much of the view is missing</td></tr>
     </tbody>
   </table></div>
-  <p class="foot" id="fill-result">Fill time after a jump across the city, before these fixes: rings 4 and 5 still had 66 and 209 of 256 patches missing after 60 s.</p>
+  <p class="foot" id="fill-result">Fill time after a jump across the city: before, rings 4 and 5 still had 66 and 209 of 256 patches missing after 60 s. After, in the opening tour of 26 Oct (fd37a395), every ring was ready 2.4 to 5.4 s after each of five jumps. The tall brown column and the pale slab beside the left tower are the gate's light pillar, which its own builder is fixing.</p>
 </section>
 
 <section>
@@ -136,10 +136,11 @@ code { font: 13px var(--mono); background: var(--accent-soft); padding: 1px 4px;
     <figcaption>Distances along the ground from the player on the Roost. The bands nest: each draws only where the one inside it doesn't.</figcaption>
   </figure>
   <ol class="parts">
+    <li><div><h3>Detail follows the air (Euan's idea)</h3><p>Real mountains far away are soft and low in contrast; the closer something is, the more you see. Far Sight will spend detail the same way: one curve of distance sets the haze, the contrast, and how much detail each place gets. Textures fade to colour, colour to shaded relief, fine levels to coarse ones, each gradually and inside a band where the air has already softened it, so nothing steps from sharp to blocky. The rule for choosing a level becomes "under a pixel of error after the haze", so farther land needs less detail. The real chunks get the same curve, with no clear-near, hazy-far line at the render distance. The haze still leaves the far peaks visible (clear days reach 16 km, rain closes in); its strength gets tuned by eye in the tours.</p></div></li>
     <li><div><h3>City Sight: Carillon, whole, from its real blocks</h3><p>When the world is made, the server turns the generated city into compact block data (about 1,300 chunks, only faces that can be seen), saves it with the world and sends it to the client once. Far Sight draws it with the real block textures: at 500 m a block is still 2 to 3 pixels, so textured faces look like Sodium's own distant chunks. Past that, 2-block levels. A block someone changes updates its section.</p></div></li>
     <li><div><h3>Spans for the rest of the world</h3><p>Each column holds a few vertical runs (bottom, top, block, colour), not one height, so arches, overhangs, bridges and walls keep their outline. Built from every chunk the server has ever generated and kept on disk, so coming back shows the truth at once.</p></div></li>
     <li><div><h3>A shadow generator for land nobody has visited</h3><p>Predict what the game will place, cheaply: the height (already within 0.6 blocks), the surface blocks (the game's own surface rules) and trees at the exact spots the game's placement picks (it is seeded per chunk, so it can be replayed without growing the trees). What you see from afar is then what loads.</p></div></li>
-    <li><div><h3>Size-true levels, chosen by pixels</h3><p>A coarser level keeps a block only where at least half of its finer cells hold one, so thin things thin out instead of swelling. Each tile uses the coarsest level whose error stays under about a pixel at its distance, and levels cross-fade. Swapping to the real chunk then moves nothing you can see.</p></div></li>
+    <li><div><h3>Size-true levels, chosen by pixels</h3><p>A coarser level keeps a block only where at least half of its finer cells hold one, so thin things thin out instead of swelling. Each tile uses the coarsest level whose error, softened by the air in front of it, stays under about a pixel, and levels cross-fade. Swapping to the real chunk then moves nothing you can see.</p></div></li>
     <li><div><h3>Work goes where you're heading</h3><p>The queue ranks land by where the camera will be, so in fast flight the land ahead fills first, and the workers burst while the view is cold (built today).</p></div></li>
     <li><div><h3>One renderer per section, known exactly</h3><p>A Turbo hook (under the contract, locked to Sodium 0.9.3) reads Sodium's own list of sections with a mesh, in place of today's rule. Every section is drawn once: never twice, never by nobody.</p></div></li>
     <li><div><h3>The opening waits for the city</h3><p>With City Sight the whole city is there before the card lifts; the card also waits for the flight path's chunks.</p></div></li>
@@ -157,6 +158,7 @@ code { font: 13px var(--mono); background: var(--accent-soft); padding: 1px 4px;
       <tr><td>The city, Far Sight against real chunks, at the render distance's edge</td><td class="num">≤ 1 pixel shift</td></tr>
       <tr><td>Thin landmarks (spires, masts) when they load</td><td>same width within one level</td></tr>
       <tr><td>Fill time after a jump (all rings)</td><td class="num">≤ 10 s</td></tr>
+      <tr><td>No step in brightness or contrast where the real chunks end (a line scan across the render distance)</td><td>none visible</td></tr>
     </tbody>
   </table></div>
   <p>GameTests: the city's block data reproduces its chunks; a coarser level never grows a silhouette; the shadow generator's trees match the real ones.</p>
