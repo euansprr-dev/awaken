@@ -50,6 +50,8 @@ public final class FarSightClient {
 
     /** Where far terrain starts: this far inside the render distance it dithers in, over the same distance. */
     static final int CLIP_BAND = 32;
+    /** The share of near chunks meshed for the view to count as warm. */
+    static final float WARM_SHOWN = 0.97f;
     /** How far under sea level the lowest ground in view is taken to lie (a sea floor), for what the chunks cover. */
     static final int SEA_FLOOR = 40;
     /** Valley cloud: its floor above sea level, its depth (blocks) and density per block (SPEC §20). */
@@ -86,6 +88,17 @@ public final class FarSightClient {
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ViewportEvent.RenderFog.class, FarSightClient::fog);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingIn.class, e -> joinNanos = System.nanoTime());
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> unbind());
+    }
+
+    /**
+     * Whether the view is warm (the opening's flight waits behind its card for it, SPEC §16.4): every far ring's patches
+     * in, and nearly all the real chunks well inside the render distance loaded and meshed, so nothing shows a hole, a
+     * seam or the land under a city that isn't there yet. True at once when Far Sight doesn't draw.
+     */
+    public static boolean warm() {
+        if (!drawing() || field == null || renderer == null) return true;
+        for (int r = 0; r < rings(); r++) if (field.missing[r] > 0) return false;
+        return renderer.shownShare >= WARM_SHOWN;
     }
 
     /** Whether Far Sight drew in the last quarter second. */

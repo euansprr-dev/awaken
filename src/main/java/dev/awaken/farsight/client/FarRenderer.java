@@ -92,6 +92,9 @@ final class FarRenderer implements AutoCloseable {
     private final int[] pRing = new int[MAX_DRAWS], pX = new int[MAX_DRAWS], pZ = new int[MAX_DRAWS], pW = new int[MAX_DRAWS], pH = new int[MAX_DRAWS];
     int pieces, cells;
     private int seaLevel = 63;
+    private double planX, planZ;
+    /** The share of the chunks well inside the render distance that are loaded and meshed (the opening waits on it). */
+    float shownShare;
     private final FrustumIntersection frustum = new FrustumIntersection();
     private final Matrix4f cull = new Matrix4f();
     private final float[] originX = new float[Rings.RINGS], originZ = new float[Rings.RINGS];
@@ -151,10 +154,11 @@ final class FarRenderer implements AutoCloseable {
                 int cx, int cz, int radius) {
         radius = Math.min(radius, 31);
         var source = level.getChunkSource();
-        int minY = level.getMinY();
+        int minY = level.getMinY(), inner = Math.max(1, radius - 3), total = 0, shownN = 0;
         for (int dz = -radius; dz <= radius; dz++) {
             for (int dx = -radius; dx <= radius; dx++) {
                 int x = cx + dx, z = cz + dz;
+                boolean counts = dx * dx + dz * dz <= inner * inner;
                 var chunk = source.getChunk(x, z, ChunkStatus.FULL, false);
                 boolean shown = chunk != null;
                 if (shown) {
@@ -165,8 +169,13 @@ final class FarRenderer implements AutoCloseable {
                     }
                 }
                 chunkBytes.put(((z & 63) << 6) | (x & 63), shown ? (byte) 255 : 0);
+                if (counts) {
+                    total++;
+                    if (shown) shownN++;
+                }
             }
         }
+        shownShare = total == 0 ? 1f : shownN / (float) total;
         chunkBytes.clear();
         RenderSystem.getDevice().createCommandEncoder().writeToTexture(chunks, chunkBytes, 0, 0, 0, 0, 64, 64);
     }
@@ -190,6 +199,8 @@ final class FarRenderer implements AutoCloseable {
     void plan(FarField field, double camX, double camY, double camZ, Matrix4fc viewRotation, float fovDegrees, float aspect,
             float covered, float hiddenWithin, int minY, int maxY, int seaLevel) {
         this.seaLevel = seaLevel;
+        planX = camX;
+        planZ = camZ;
         pieces = 0;
         cells = 0;
         cull.setPerspective(fovDegrees * (float) (Math.PI / 180.0), aspect, 0.5f, FAR).mul(viewRotation);
@@ -279,14 +290,17 @@ final class FarRenderer implements AutoCloseable {
                 float fx = Math.max(Math.abs(ax), Math.abs(bx)), fz = Math.max(Math.abs(az), Math.abs(bz));
                 long range = range(field, r, x, z, w, h);
                 boolean sea = r == 0 && range != Long.MIN_VALUE && (int) (range >> 32) + 32 <= seaLevel + 1;
-                if (!sea && fx * fx + fz * fz < covered * covered) continue;
+                // (and only where every chunk under it is shown: a chunk still meshing leaves the far land to cover it)
+                boolean shown = range != Long.MIN_VALUE && (r > 0 || allShown(ax, az, bx, bz));
+                if (!sea && shown && fx * fx + fz * fz < covered * covered) continue;
                 int lo = minY, hi = maxY;
                 if (range != Long.MIN_VALUE) {
                     lo = (int) (range >> 32);
                     hi = (int) range;
                     double down = camY - lo;
-                    if (!sea && fx * fx + fz * fz + down * down < hiddenWithin * (double) hiddenWithin) continue;
-                } else if (fx * fx + fz * fz < covered * covered) {
+                    if (!sea && shown && fx * fx + fz * fz + down * down < hiddenWithin * (double) hiddenWithin) continue;
+                } else if (r > 0 && fx * fx + fz * fz < covered * covered) {
+                    // (ring 0's pieces still loading are drawn all the same, from the coarser surface: never a hole)
                     continue;
                 }
                 if (!frustum.testAab(ax, (float) (lo - camY), az, bx, (float) (hi - camY), bz)) continue;
@@ -299,6 +313,17 @@ final class FarRenderer implements AutoCloseable {
                 cells += w * h;
             }
         }
+    }
+
+    /** Whether every chunk under this camera-relative rectangle is shown in the chunk mask (loaded and meshed). */
+    private boolean allShown(float ax, float az, float bx, float bz) {
+        int x0 = Math.floorDiv((int) Math.floor(planX + ax), 16), x1 = Math.floorDiv((int) Math.floor(planX + bx) - 1, 16);
+        int z0 = Math.floorDiv((int) Math.floor(planZ + az), 16), z1 = Math.floorDiv((int) Math.floor(planZ + bz) - 1, 16);
+        if (x1 - x0 >= 64 || z1 - z0 >= 64) return false;
+        for (int z = z0; z <= z1; z++) {
+            for (int x = x0; x <= x1; x++) if (chunkBytes.get(((z & 63) << 6) | (x & 63)) == 0) return false;
+        }
+        return true;
     }
 
     /** Lowest and highest top over the piece's patches ({@code lo << 32 | hi}), or MIN_VALUE if any is missing. */

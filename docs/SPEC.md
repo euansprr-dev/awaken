@@ -1542,6 +1542,14 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   Cells the city builds on (real ones above the street + 3, planned ones) carry `FarCity.BUILT` in their colour's top
   byte, and a far corner over them takes the highest built cell and its colour, not the average, so walls, towers and
   spires keep their silhouette at any distance. Test `farsight_city`; tour `farsight2-city.txt`.
+- **The city before its chunks** (2026-10-26, Euan's play: a far hill stood over Carillon in the opening's flight, the
+  spire through it): the far prediction lays every column inside the city's reach from the plan (`FarCity.plannedAt`,
+  `City.skyline` painted once per chunk and kept), its top block's height and colour, flagged as known, so the city is
+  right from the first frame whether terrain carved its basin or the city levelled its own ground. Built cells keep
+  their highest only where a far corner spans 8 blocks or less (rings 0-2); coarser corners average, or one spire's top
+  would be taken by every corner round it and slope into a cone. Ring 0's pieces still loading are drawn from the
+  coarser surface, and its land pieces are skipped under the chunks only where every chunk under them is shown in the
+  chunk mask: a chunk still meshing leaves the far land to cover it, never a hole to the sky.
 - **Landmarks** (`FarLandmarks`): unchanged from stage 1 (gate pillars from `Gates.near` from 1500 blocks, the city's
   towers), drawn after the terrain and trees.
 - **Budgets** (measured): Lens Ultra at sunset on the jagged peaks, 2880×1800 (11% more pixels than 4K at 0.75): Far
@@ -1961,7 +1969,10 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   with the start age (a relog resumes mid-flight); the player is never dragged along. The camera stays within ~215
   blocks of the player, below y 320 and at most ~200 above the ground; the shot flies over the north-west half looking
   south-east across the spire, and Distant Horizons (or fog, Lens haze and clouds) carries the far half. The first
-  flight is pre-warmed behind the opening card. Life seen from the sky is blocks and particles (lit windows, smoke,
+  flight is pre-warmed behind the opening card, and the card holds (up to 20 s more, `SkyShot.WARM_MAX`) until the view
+  is warm (`FarSightClient.warm()`: every far ring's patches in and 97% of the chunks well inside the render distance
+  loaded and meshed; at once when Far Sight is off), so the first frame of sky has no hole, seam or hill where the city
+  stands (2026-10-26, Euan's play). The server allows the sky ninety seconds. Life seen from the sky is blocks and particles (lit windows, smoke,
   lamps, boats): citizens draw only within 128 blocks.
 
 - **The Registry ceremony** (2026-10-26; Euan, playing: "they actually physically hand you the Holo band and the paper

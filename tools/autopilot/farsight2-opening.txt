@@ -1,0 +1,80 @@
+# Far Sight over the opening's flight (SPEC §16.4, §20; Euan's play: a far hill stood over Carillon, the sky showed
+# through the ground): a new Carillon world, the opening from its first frame, a frame every second through the card,
+# its wait for the view to warm, and the whole flight to the landing. Far Sight on (its default), Lens as the opening
+# sets it. Run: PACK=perf,world TECTONIC=awakened RD=16 LENS=cinematic SLOT_WHO=far-sight \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/farsight2-opening.txt 900
+world fs2open survival 20261024
+waitworld
+window 1440 900
+info
+shotnow fs2o_00
+wait 20
+shotnow fs2o_01
+wait 20
+shotnow fs2o_02
+wait 20
+shotnow fs2o_03
+wait 20
+shotnow fs2o_04
+wait 20
+shotnow fs2o_05
+wait 20
+shotnow fs2o_06
+wait 20
+shotnow fs2o_07
+wait 20
+shotnow fs2o_08
+wait 20
+shotnow fs2o_09
+wait 20
+shotnow fs2o_10
+wait 20
+shotnow fs2o_11
+wait 20
+shotnow fs2o_12
+wait 20
+shotnow fs2o_13
+wait 20
+shotnow fs2o_14
+wait 20
+shotnow fs2o_15
+wait 20
+shotnow fs2o_16
+wait 20
+shotnow fs2o_17
+wait 20
+shotnow fs2o_18
+wait 20
+shotnow fs2o_19
+wait 20
+shotnow fs2o_20
+wait 20
+shotnow fs2o_21
+wait 20
+shotnow fs2o_22
+wait 20
+shotnow fs2o_23
+wait 20
+shotnow fs2o_24
+wait 20
+shotnow fs2o_25
+wait 20
+shotnow fs2o_26
+wait 20
+shotnow fs2o_27
+wait 20
+shotnow fs2o_28
+wait 20
+shotnow fs2o_29
+wait 20
+shotnow fs2o_30
+wait 20
+shotnow fs2o_31
+wait 20
+shotnow fs2o_32
+wait 20
+shotnow fs2o_33
+wait 20
+farsight status
+info
+quit

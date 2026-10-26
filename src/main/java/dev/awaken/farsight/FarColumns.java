@@ -1,6 +1,8 @@
 package dev.awaken.farsight;
 
 import dev.awaken.Awaken;
+import dev.awaken.city.City;
+import dev.awaken.city.CityLayout;
 import dev.awaken.terrain.alpine.AlpineSurface;
 import dev.awaken.terrain.api.CityBasin;
 import dev.awaken.terrain.api.CitySite;
@@ -15,10 +17,12 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeResolver;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
@@ -69,6 +73,9 @@ public final class FarColumns {
     private final int seaLevel, minY, maxY;
     private final boolean alpine;
     private final CityBasinFunction.@Nullable Shape city;
+    /** The world's seed (the city plan paints with it); 0 for the tests' generators. */
+    private final long seed;
+    private final int[] cityY = new int[1];
     private final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
     /** Density probes this instance has made (the cost per column, for the status line). */
     public long probes;
@@ -76,12 +83,18 @@ public final class FarColumns {
     private FarColumns(ServerLevel level) {
         this(level.getChunkSource().getGenerator(), level.getChunkSource().randomState(), level.registryAccess(), level,
                 FeatureFlags.REGISTRY.fromNames(Set.of(Awaken.id("awakened_alpine")), id -> {}).isSubsetOf(level.enabledFeatures()),
-                level.dimension() == Level.OVERWORLD ? CityBasin.current() : null);
+                level.dimension() == Level.OVERWORLD ? CityBasin.current() : null, level.getSeed());
     }
 
     /** For any generator (tests use vanilla's own overworld at a fixed seed): its random state, registries and height. */
     FarColumns(ChunkGenerator generator, RandomState random, RegistryAccess registries, LevelHeightAccessor heights, boolean alpine,
             @Nullable CitySite site) {
+        this(generator, random, registries, heights, alpine, site, 0L);
+    }
+
+    private FarColumns(ChunkGenerator generator, RandomState random, RegistryAccess registries, LevelHeightAccessor heights, boolean alpine,
+            @Nullable CitySite site, long seed) {
+        this.seed = seed;
         this.generator = generator;
         this.random = random;
         this.heights = heights;
@@ -253,6 +266,21 @@ public final class FarColumns {
                 colour[k] = abgr(rgb, flags);
                 info[k] = abgr(depth, Math.min(255, look.canopy() * 4), density, cold);
                 crown[k] = abgr(look.crown(), look.shape());
+                // the city, as its plan lays it out (whether or not terrain carved its basin, the city levels its own
+                // ground): its walls, roofs and squares at their true height and colour, never the land it was built over
+                CityLayout l = this.seed != 0 ? City.layout() : null;
+                BlockState built = l == null ? null : FarCity.plannedAt(l, seed, x, z, cityY);
+                if (built != null) {
+                    int brgb = FarPalette.block(built, EmptyBlockGetter.INSTANCE, pos.set(x, cityY[0], z), biome);
+                    if (brgb >= 0) {
+                        boolean wet = !built.getFluidState().isEmpty();
+                        top = cityY[0] + 1;
+                        height[k] = packHeight(top);
+                        colour[k] = abgr(brgb, GENERATED);
+                        info[k] = abgr(wet ? 4 : 0, 0, 0, cold);
+                        crown[k] = 0;
+                    }
+                }
                 int whole = (int) Math.floor(top) + HEIGHT_BASE;
                 min = Math.min(min, whole);
                 max = Math.max(max, whole + 1);

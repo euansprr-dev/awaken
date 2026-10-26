@@ -25,6 +25,37 @@ public final class FarCity {
     /** Cells this far above the street count as built (the paving and the gardens don't). */
     static final int ABOVE_STREET = 3;
 
+    /** One city chunk as the plan lays it out: each column's highest block and its world y (null where the land shows). */
+    record Sky(int[] topY, BlockState[] top) {}
+
+    private static final Sky OPEN = new Sky(new int[0], new BlockState[0]);
+    private static final java.util.concurrent.ConcurrentHashMap<Long, Sky> SKIES = new java.util.concurrent.ConcurrentHashMap<>();
+    private static volatile @Nullable CityLayout skiesFor;
+
+    /**
+     * The city's own column at block (x, z) as the plan lays it out, for the far prediction (any thread): its top block,
+     * with its y in {@code yOut[0]}, or null where the city leaves the land (or there is no city). Each city chunk is
+     * painted once and kept (about 1,700 of them, a few MB), so the far view shows the city from the first frame, before
+     * a single real chunk has been taken in.
+     */
+    static @Nullable BlockState plannedAt(CityLayout l, long seed, int x, int z, int[] yOut) {
+        int cx = x >> 4, cz = z >> 4;
+        if (!l.touches(cx, cz)) return null;
+        if (skiesFor != l) {
+            SKIES.clear();
+            skiesFor = l;
+        }
+        Sky sky = SKIES.computeIfAbsent(net.minecraft.world.level.ChunkPos.pack(cx, cz), k -> {
+            int[] topY = new int[256];
+            BlockState[] top = new BlockState[256];
+            return City.skyline(l, cx, cz, seed, topY, top) ? new Sky(topY, top) : OPEN;
+        });
+        if (sky == OPEN) return null;
+        int i = (z & 15) * 16 + (x & 15);
+        yOut[0] = sky.topY()[i];
+        return sky.top()[i];
+    }
+
     public static boolean built(int colour) {
         return (colour & BUILT) != 0;
     }
