@@ -49,6 +49,62 @@ public final class StatusSections {
 
         /** Handle a left click inside the section. Return true if consumed. */
         default boolean click(double mouseX, double mouseY, int x, int y, int width) { return false; }
+
+        /** A few words at the right of the section's title row ("ALL 23 ›"); empty for none. */
+        default String note() { return ""; }
+
+        default int noteColour() { return 0xFF7FC3FF; }
+
+        /** The page a click on the note opens ("ALL 23 ›": the Journal), or null. */
+        default @Nullable Tab notePage() { return null; }
+
+        /** A key while this section's page is open (place a point, confirm, undo). Return true if consumed. */
+        default boolean key(net.minecraft.client.input.KeyEvent event) { return false; }
+    }
+
+    // ---- what the open band tells its sections ------------------------------------------------------------------
+
+    /** Framebuffer pixels per panel unit of the open holo band, or 0 on the flat screen (the type sizes follow it). */
+    private static int ppu;
+    private static @Nullable Tab request;
+
+    /** Set by the screen each frame before its sections draw. */
+    public static void drawingAt(int pixelsPerUnit) {
+        ppu = pixelsPerUnit;
+    }
+
+    /** Small text: one framebuffer pixel fewer per font pixel than the body (4 at 5 px a unit); 1 on the flat screen. */
+    public static float small() {
+        return ppu <= 2 ? 1f : (ppu - 1) / (float) ppu;
+    }
+
+    /** Labels in spaced capitals: two pixels fewer (3 at 5 px a unit, never under 2); 1 on the flat screen. */
+    public static float micro() {
+        return ppu <= 2 ? 1f : Math.max(2, ppu - 2) / (float) ppu;
+    }
+
+    /** A section asks the open band to show another page ("Journal ›"); the screen takes it on its next frame. */
+    public static void go(Tab page) {
+        request = page;
+    }
+
+    public static @Nullable Tab takeRequest() {
+        Tab t = request;
+        request = null;
+        return t;
+    }
+
+    /** What the band plays as you use it (the holo module voices these; the flat band is silent). */
+    public enum Cue { SPEND, CONFIRM, UNDO, PAGE }
+
+    private static java.util.function.Consumer<Cue> cues = c -> {};
+
+    public static void installCues(java.util.function.Consumer<Cue> listener) {
+        cues = listener;
+    }
+
+    public static void cue(Cue c) {
+        cues.accept(c);
     }
 
     /** What a page opens instead of its sections, and the key that opens it from anywhere (the Map: the Atlas, M). */

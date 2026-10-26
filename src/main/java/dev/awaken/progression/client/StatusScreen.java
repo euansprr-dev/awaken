@@ -118,6 +118,9 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
         }
 
         // content
+        StatusSections.Tab asked = StatusSections.takeRequest();
+        if (asked != null) select(asked);
+        StatusSections.drawingAt(0);
         boolean inside = overContent(mouseX, mouseY);
         int mx = inside ? mouseX : -10000, my = inside ? mouseY : -10000;
         g.enableScissor(cx, cy, cx + cw + SCROLLBAR, cy + ch);
@@ -129,9 +132,7 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
             if (!s.visible()) continue;
             any = true;
             if (focusAt != null) for (int i = 0; i < focus.length; i++) if (focusAt[i] < 0 && focus[i].equals(s.title())) focusAt[i] = y + SCROLL[tab.ordinal()] - cy;
-            Ui title = Ui.draw(g, font, cx, y, cw, mx, my);
-            title.text(s.title(), Glass.a(Glass.EDGE, 0.85f));
-            y += title.height() + 2;
+            y += BandHeader.draw(g, font, s, cx, y, cw);
             int h = s.height(cw);
             if (y + h >= cy && y <= cy + ch) s.render(g, cx, y, cw, mx, my, a);
             y += h + SECTION_GAP;
@@ -184,9 +185,11 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
             List<StatusSections.Section> sections = StatusSections.of(tab);
             for (StatusSections.Section s : sections) {
                 if (!s.visible()) continue;
-                Ui title = Ui.measure(font, cw);
-                title.text(s.title(), 0);
-                y += title.height() + 2;
+                if (s.notePage() != null && BandHeader.onNote(font, s, cx, y, cw, mx, my)) {
+                    select(s.notePage());
+                    return true;
+                }
+                y += BandHeader.height(s);
                 int h = s.height(cw);
                 if (my >= y && my < y + h && s.click(mx, my, cx, y, cw)) return true;
                 y += h + SECTION_GAP;
@@ -220,6 +223,7 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
             onClose();
             return true;
         }
+        for (StatusSections.Section s : StatusSections.of(tab)) if (s.visible() && s.key(event)) return true;
         StatusSections.Tab keyed = StatusSections.pageForKey(event);
         if (keyed != null) {
             select(keyed);

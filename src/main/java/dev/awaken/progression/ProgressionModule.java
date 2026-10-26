@@ -154,6 +154,7 @@ public final class ProgressionModule {
                 case "spend" -> {
                     try { Progression.spendPoint(sp, Stat.valueOf(msg.arg())); } catch (IllegalArgumentException ignored) {}
                 }
+                case "spend_many" -> Progression.spendPoints(sp, msg.arg()); // the band's Confirm (SPEC §30.3)
                 case "declare" -> Progression.declareTruth(sp, msg.arg());
                 case "undeclare" -> Progression.undeclareTruth(sp, msg.arg());
                 case "title" -> Progression.equipTitle(sp, msg.arg());

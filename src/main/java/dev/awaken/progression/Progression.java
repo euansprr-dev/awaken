@@ -283,6 +283,28 @@ public final class Progression {
         return true;
     }
 
+    /**
+     * Spends points placed on the band and confirmed in one go ("STR:1,AGI:2", SPEC §30.3): each as {@link #spendPoint},
+     * so never more than you have; unknown stats and nonsense are skipped. Returns how many were spent.
+     */
+    public static int spendPoints(ServerPlayer player, String spec) {
+        int spent = 0;
+        for (String part : spec.split(",", 12)) {
+            String[] kv = part.split(":", 2);
+            if (kv.length != 2) continue;
+            Stat stat;
+            int n;
+            try {
+                stat = Stat.valueOf(kv[0].trim());
+                n = Math.min(500, Integer.parseInt(kv[1].trim()));
+            } catch (IllegalArgumentException e) {
+                continue;
+            }
+            for (int i = 0; i < n && spendPoint(player, stat); i++) spent++;
+        }
+        return spent;
+    }
+
     public static void addStat(ServerPlayer player, Stat stat, int amount) {
         Profile p = profile(player);
         p.stats[stat.ordinal()] += amount;

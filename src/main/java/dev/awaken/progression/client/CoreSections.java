@@ -1,11 +1,8 @@
 package dev.awaken.progression.client;
 
-import dev.awaken.progression.Curve;
 import dev.awaken.progression.Directives;
 import dev.awaken.progression.Profile;
 import dev.awaken.progression.Progression;
-import dev.awaken.progression.Rank;
-import dev.awaken.progression.Stat;
 import dev.awaken.progression.content.Content;
 import dev.awaken.progression.content.Defs;
 import dev.awaken.progression.net.ProgressionPayloads;
@@ -45,8 +42,9 @@ final class CoreSections {
     }
 
     static void register() {
-        StatusSections.add(StatusSections.Tab.STATUS, new Spine());
-        StatusSections.add(StatusSections.Tab.STATUS, new Stats());
+        // the Status page is a sheet about you: the hero, then the six stats (SPEC §30.3)
+        StatusSections.add(StatusSections.Tab.STATUS, new StatusSheet.Hero());
+        StatusSections.add(StatusSections.Tab.STATUS, new StatusSheet.StatLine());
         StatusSections.add(StatusSections.Tab.JOURNAL, new WaitingSection());
         dev.awaken.core.api.MapMarks.register(WaitingSection::marks);
         StatusSections.add(StatusSections.Tab.TRUTHS, new RoadSection());
@@ -68,97 +66,6 @@ final class CoreSections {
     }
 
     // ---- Status tab -------------------------------------------------------------------------------------------------
-
-    /** Who you are and what's next: level progress, points to spend, the way to the next rank, today's tally. */
-    static final class Spine extends UiSection {
-        public String title() { return "STATUS"; }
-        public int order() { return 0; }
-
-        @Override
-        protected void build(Ui ui) {
-            Profile p = profile();
-            var mc = Minecraft.getInstance();
-            Ui.Flow head = ui.flow();
-            head.text(mc.player == null ? "" : mc.player.getName().getString(), Glass.TITLE);
-            head.chip(p.rank().label + "-rank", p.rank().colour);
-            var path = p.path().map(Content.PATHS::get).orElse(null);
-            if (path != null) head.chip(path.name(), path.colour());
-            var title = p.title().map(Content.TITLES::get).orElse(null);
-            if (title != null) head.chip("“" + title.name() + "”", Glass.AMBER);
-            head.end();
-
-            if (!p.awakened()) {
-                ui.text("You have not awakened. Something in the world is waiting for you to notice it.", Glass.LABEL);
-                return;
-            }
-            double need = Curve.xpToNext(p.level());
-            ui.pair("Level " + p.level(), String.format("%,.0f / %,.0f XP", p.xp(), need), Glass.TEXT, Glass.LABEL);
-            ui.bar(p.xp() / need, Glass.EDGE);
-            long toGo = (long) Math.ceil(Math.max(0, need - p.xp()));
-            ui.text("◇ " + String.format("%,d", toGo) + " XP to level " + (p.level() + 1) + ".", Glass.TEXT);
-            if (p.unspent() > 0) {
-                ui.text("◇ " + plural(p.unspent(), "stat point") + " to spend: press + next to a stat below.", Glass.LANTERN);
-            }
-            Rank next = p.rank().next();
-            if (next == null) ui.text("◇ There is no rank above yours.", Glass.TEXT);
-            else if (p.reassessmentReady()) {
-                ui.text("◇ Reassessment ready: take the " + next.label + "-rank trial at the Spire in your town or at a Reassessment Monolith.", Glass.LANTERN);
-            } else {
-                int left = Math.max(0, next.levelRequired - p.level());
-                ui.text("◇ Next rank: " + next.label + " at level " + next.levelRequired + " (" + plural(left, "level") + " to go), then pass its Reassessment.", Glass.TEXT);
-            }
-            // the Far goal: what this player has met that the next rank opens (never a list of what they haven't)
-            if (next != null && mc.player != null) {
-                List<String> opens = WaitingSection.nextRankOpens(mc.player, next);
-                if (!opens.isEmpty()) {
-                    String list = String.join(" · ", opens.subList(0, Math.min(3, opens.size()))) + (opens.size() > 3 ? " · and more" : "");
-                    ui.text("◇ " + next.label + "-rank opens what waits for you: " + list + ".", Glass.HORIZON);
-                }
-            }
-            var level = mc.level;
-            if (level != null && p.fractureUntil() > level.getGameTime()) {
-                long min = Math.max(1, (p.fractureUntil() - level.getGameTime() + 1199) / 1200);
-                ui.text("◇ Fractured for " + min + " min: about 15% weaker. Rest at your Hearth or meditate to heal faster.", Glass.WARN);
-            }
-            Profile.DayLog d = p.day();
-            if (d.day() >= 0 && (d.kills() > 0 || d.gates() > 0 || p.level() > d.levelStart())) {
-                String today = "Today: level " + d.levelStart() + (p.level() > d.levelStart() ? " → " + p.level() : "")
-                        + " · " + plural(d.kills(), "kill") + " · " + plural(d.gates(), "gate")
-                        + (d.best().isBlank() ? "" : " · best: " + d.best());
-                ui.text(today, Glass.LABEL);
-            }
-        }
-    }
-
-    static final class Stats extends UiSection {
-        public String title() { return "STATS"; }
-        public int order() { return 10; }
-
-        private static final String[] HINT = {"melee, Kinetic", "speed, Flow", "health, resistance", "energy, Energy/Tech",
-                "crits, secrets, omens", "Veil, dreams, Echoes"};
-        private static final int ROW = 16;
-
-        @Override
-        protected void build(Ui ui) {
-            Profile p = profile();
-            boolean spend = p.unspent() > 0;
-            int cols = ui.width >= 300 ? 2 : 1;
-            int colW = ui.width / cols;
-            int rows = (Stat.values().length + cols - 1) / cols;
-            int y0 = ui.y();
-            for (Stat s : Stat.values()) {
-                int i = s.ordinal();
-                int sx = ui.x + (i % cols) * colW, sy = y0 + (i / cols) * ROW;
-                ui.textAt(s.name(), sx, sy + 3, 26, Glass.LABEL, false);
-                ui.textAt(String.valueOf(p.stat(s)), sx + 26, sy + 3, 24, Glass.TITLE, true);
-                int hintW = colW - 52 - (spend ? 24 : 4);
-                if (hintW > 20) ui.textAt(HINT[i], sx + 52, sy + 3, hintW, Glass.a(Glass.LABEL, 0.65f), false);
-                if (spend && ui.buttonAt("+", sx + colW - 20, sy, 14, 13, Glass.EDGE, true)) send("spend", s.name());
-            }
-            ui.gap(rows * ROW);
-            ui.text(spend ? plural(p.unspent(), "point") + " to spend" : "No points to spend", spend ? Glass.LANTERN : Glass.LABEL);
-        }
-    }
 
     static final class DirectivesSection extends UiSection {
         public String title() { return "DIRECTIVES"; }

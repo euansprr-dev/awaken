@@ -58,18 +58,33 @@ public final class Journal {
 
     static void register() {
         // right under your stats on the Status page (Euan, 2026-10-26), and again on the Journal page under your tasks
-        StatusSections.add(StatusSections.Tab.STATUS, new Section(20));
-        StatusSections.add(StatusSections.Tab.JOURNAL, new Section(700));
+        StatusSections.add(StatusSections.Tab.STATUS, new Section(20, 4));
+        StatusSections.add(StatusSections.Tab.JOURNAL, new Section(700, SHORT));
     }
 
-    /** The band's Journal: newest first; opening it reads them. */
+    private static final int SHORT = 8;
+
+    /**
+     * The band's Journal: newest first; opening it reads them. On the Status page only the newest few, with "ALL n ›"
+     * to the Journal page; there, the first eight and a button for the rest.
+     */
     static final class Section extends UiSection {
         private static boolean all;
-        private static final int SHORT = 8;
-        private final int order;
+        private final int order, limit;
 
-        Section(int order) {
+        Section(int order, int limit) {
             this.order = order;
+            this.limit = limit;
+        }
+
+        @Override
+        public String note() {
+            return limit < SHORT && ENTRIES.size() > limit ? "ALL " + ENTRIES.size() + " ›" : "";
+        }
+
+        @Override
+        public StatusSections.@org.jspecify.annotations.Nullable Tab notePage() {
+            return limit < SHORT ? StatusSections.Tab.JOURNAL : null;
         }
 
         public String title() {
@@ -85,7 +100,8 @@ public final class Journal {
         protected void build(Ui ui) {
             List<Entry> list = entries();
             if (!list.isEmpty()) seen = Math.max(seen, list.get(0).at());
-            int n = all ? list.size() : Math.min(SHORT, list.size());
+            boolean short_ = limit < SHORT;
+            int n = all && !short_ ? list.size() : Math.min(limit, list.size());
             long now = System.currentTimeMillis();
             for (int i = 0; i < n; i++) {
                 Entry e = list.get(i);
@@ -93,7 +109,7 @@ public final class Journal {
                 if (!e.line().isBlank()) ui.text(e.line(), Glass.TEXT, 6, false);
                 ui.gap(2);
             }
-            if (list.size() > SHORT) {
+            if (!short_ && list.size() > SHORT) {
                 Ui.Flow row = ui.flow();
                 if (row.button(all ? "Show fewer" : "Show all " + list.size(), Glass.EDGE, true)) all = !all;
                 row.end();

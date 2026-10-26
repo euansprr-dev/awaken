@@ -104,6 +104,9 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
     }
 
     private void draw(HoloGraphics gg, int mouseX, int mouseY, float a) {
+        Tab asked = StatusSections.takeRequest();
+        if (asked != null) selectTab(asked);
+        StatusSections.drawingAt(panel.ppu);
         rail(gg, mouseX, mouseY);
         Rect c = content;
         int cx = c.x(), cy = c.y(), cw = c.w(), ch = c.h();
@@ -119,9 +122,7 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
             if (!s.visible()) continue;
             any = true;
             if (focusAt != null) for (int k = 0; k < focus.length; k++) if (focusAt[k] < 0 && focus[k].equals(s.title())) focusAt[k] = y + SCROLL[i] - cy;
-            Ui title = Ui.draw((GuiGraphicsExtractor) gg, font, cx, y, cw, mx, my);
-            title.text(s.title(), Glass.a(Glass.EDGE, 0.85f));
-            y += title.height() + 2;
+            y += dev.awaken.progression.client.BandHeader.draw(gg, font, s, cx, y, cw);
             int h = s.height(cw);
             if (y + h >= cy && y <= cy + ch) s.render(gg, cx, y, cw, mx, my, a);
             y += h + SECTION_GAP;
@@ -245,9 +246,11 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
             int y = c.y() - SCROLL[tab.ordinal()];
             for (StatusSections.Section s : StatusSections.of(tab)) {
                 if (!s.visible()) continue;
-                Ui title = Ui.measure(font, c.w());
-                title.text(s.title(), 0);
-                y += title.height() + 2;
+                if (s.notePage() != null && dev.awaken.progression.client.BandHeader.onNote(font, s, c.x(), y, c.w(), mx, my)) {
+                    selectTab(s.notePage());
+                    return true;
+                }
+                y += dev.awaken.progression.client.BandHeader.height(s);
                 int h = s.height(c.w());
                 if (my >= y && my < y + h && s.click(mx, my, c.x(), y, c.w())) return true;
                 y += h + SECTION_GAP;
@@ -284,6 +287,7 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
             action.open().run();
             return;
         }
+        if (t != tab) StatusSections.cue(StatusSections.Cue.PAGE);
         tab = t;
     }
 
@@ -294,6 +298,7 @@ public final class HoloStatusScreen extends Screen implements QuietScreen {
             else onClose();
             return true;
         }
+        for (StatusSections.Section s : StatusSections.of(tab)) if (s.visible() && s.key(event)) return true;
         Tab keyed = StatusSections.pageForKey(event);
         if (keyed != null) {
             selectTab(keyed);

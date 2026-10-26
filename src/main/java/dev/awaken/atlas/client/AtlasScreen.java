@@ -31,7 +31,7 @@ import java.util.Locale;
  * and every place other modules mark ({@code MapMarks}) in a cell you've explored. The first open after the opening
  * plays the Registry reveal: the run you made draws itself across the city.
  */
-public final class AtlasScreen extends Screen {
+public final class AtlasScreen extends Screen implements dev.awaken.signal.client.QuietScreen {
     private static final int MARGIN = 12;
     private static final int INK = 0xFFE9F1FF, BRONZE = 0xFFE0A86A;
     /** Blocks across the table when it opens. */
