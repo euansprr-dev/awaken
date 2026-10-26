@@ -63,7 +63,7 @@ final class LensFrame {
      * {@code light} 0..1 how much it lights the world (0: no sun model here), {@code moon} whether it's the moon.
      */
     void write(CameraRenderState cam, PlayerRenderState player, boolean zeroToOne, float lightX, float lightY, float lightZ,
-            float light, boolean moon, float rain, LensHeightfield height) {
+            float light, boolean moon, float rain, LensHeightfield height, boolean temporal) {
         Minecraft mc = Minecraft.getInstance();
         // the projection GameRenderer.renderLevel draws the world with: its bob and hurt tilt, then the nausea warp
         bob.identity();
@@ -98,8 +98,9 @@ final class LensFrame {
         put(14, lightX, lightY, lightZ, light);
         put(15, height != null ? ring : 0f, height != null ? height.maxTop() : -64f, LensHeightfield.TRUSTED, 0f);
         put(16, zeroToOne ? 1f : 0f, moon ? 1f : 0f, rain, 0.05f);
-        // 17: x seconds (wrapping every hour) for what moves on its own: ripples, heat shimmer, frost
-        put(17, (float) ((now - start) / 1.0e9 % 3600.0), 0f, 0f, 0f);
+        // 17: x seconds (wrapping every hour) for what moves on its own: ripples, heat shimmer, frost; y 1 when the clouds
+        // and light are spread over frames (lensTemporal)
+        put(17, (float) ((now - start) / 1.0e9 % 3600.0), temporal ? 1f : 0f, 0f, 0f);
         // 18-19: the clouds: base height (0 none), cover, the camera's x and z plus the wind's drift (modulo the noise's
         // 30720-block repeat); their colour (the game's, by time and weather) and alpha
         double period = 30720.0;

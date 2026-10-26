@@ -9,6 +9,9 @@
 // by the frame's own matrices, so the look is many frames' work at one frame's cost. The same pass gathers volumetric
 // light along each view ray (beams through gaps in a canopy, down canyons, past ridges, in any direction) from the sun
 // map, so the whole of Lens 2's light is one pass and one history.
+// Temporal (frame texel 17 y, the lensTemporal setting): a checkerboard of pixels marches each frame, alternating; on its
+// off frame a pixel keeps last frame's answer for its surface where the history saw the same distance, and a march
+// blends in more strongly so the light answers as fast as before. No history, off screen or a new surface: it marches.
 // Out: r sun visibility, g ambient occlusion, b volumetric light, a the surface's distance (one byte, 0 for sky).
 uniform sampler2D DepthSampler;     // the world's depth, full size (first input: InSize is the full frame)
 uniform sampler2D HeightSampler;
@@ -144,6 +147,30 @@ float volume(vec3 v, float d, vec3 l, float strength, float jitter, bool ultra) 
     return 1.0 - exp(-acc * dt * 0.0016 * strength * phase);
 }
 
+// last frame's answer for this surface (or sky direction): xyz the light, w how much of the 2x2 history saw the same
+// distance (0: none of it)
+vec4 history(vec3 p, bool sky, bool z01) {
+    vec3 pp = (sky ? normalize(p) * 4096.0 : p) + F(13).xyz;
+    vec3 s = project(frameMat(8), pp, z01);
+    if (s.x <= 0.0 || s.y <= 0.0 || s.x >= 1.0 || s.y >= 1.0) return vec4(0.0);
+    float want = sky ? 0.0 : packDistance8(length(pp));
+    vec2 hp = s.xy * OutSize - 0.5;
+    ivec2 b = ivec2(floor(hp));
+    vec2 fr = hp - vec2(b);
+    ivec2 hl = ivec2(OutSize) - 1;
+    vec3 acc = vec3(0.0);
+    float wsum = 0.0;
+    for (int k = 0; k < 4; k++) {
+        ivec2 o = ivec2(k & 1, k >> 1);
+        vec4 h = texelFetch(HistorySampler, clamp(b + o, ivec2(0), hl), 0);
+        float w = (o.x == 1 ? fr.x : 1.0 - fr.x) * (o.y == 1 ? fr.y : 1.0 - fr.y)
+                * (1.0 - smoothstep(1.5 / 255.0, 2.5 / 255.0, abs(h.a - want)));
+        acc += h.rgb * w;
+        wsum += w;
+    }
+    return wsum > 0.0 ? vec4(acc / wsum, wsum) : vec4(0.0);
+}
+
 void main() {
     bool z01 = F(16).x > 0.5, ultra = Quality > 1.5;
     ivec2 last = ivec2(InSize) - 1;
@@ -162,6 +189,15 @@ void main() {
     vec4 p1 = P(1), f14 = F(14), f12 = F(12);
     float zFar = max(p1.r * 255.0 * 256.0 + p1.g * 255.0, 16.0);
     float noise = ign(gl_FragCoord.xy, f12.w), noise2 = ign(gl_FragCoord.yx + 17.0, f12.w + 31.0);
+    float code = packDistance8(dist);
+    vec4 f13 = F(13);
+    bool interleave = F(17).y > 0.5 && f13.w > 0.5;
+    vec4 hist = f13.w > 0.5 ? history(p, sky, z01) : vec4(0.0);
+    if (interleave && ((int(gl_FragCoord.x) + int(gl_FragCoord.y) + int(f12.w)) & 1) == 1 && hist.w > 0.4) {
+        // this pixel's off frame, and last frame saw the same surface here: keep its answer
+        fragColor = vec4(clamp(hist.rgb + (noise - 0.5) / 255.0, 0.0, 1.0), code);
+        return;
+    }
     float vis = 1.0, ao = 1.0, vol = 0.0;
     // the hand and the holo glass (within arm's reach, or a world plate over a creature) are never shadowed
     if (!sky && dist >= 1.25 && !onPlate(p)) {
@@ -181,34 +217,14 @@ void main() {
     if (strength > 0.0 && F(15).x > 0.0) vol = volume(normalize(p), sky ? (ultra ? 320.0 : 192.0) : min(dist, ultra ? 320.0 : 192.0), f14.xyz, strength, noise2, ultra);
 
     vec3 res = vec3(vis, ao, vol);
-    float code = packDistance8(dist);
     // last frame's answer for this surface (or this sky direction): reprojected, its 2x2 texels kept only where they saw
     // the same distance
-    vec4 f13 = F(13);
-    if (f13.w > 0.5) {
-        vec3 pp = (sky ? normalize(p) * 4096.0 : p) + f13.xyz;
-        vec3 s = project(frameMat(8), pp, z01);
-        if (s.x > 0.0 && s.y > 0.0 && s.x < 1.0 && s.y < 1.0) {
-            float want = sky ? 0.0 : packDistance8(length(pp));
-            vec2 hp = s.xy * OutSize - 0.5;
-            ivec2 b = ivec2(floor(hp));
-            vec2 fr = hp - vec2(b);
-            ivec2 hl = ivec2(OutSize) - 1;
-            vec3 acc = vec3(0.0);
-            float wsum = 0.0;
-            for (int k = 0; k < 4; k++) {
-                ivec2 o = ivec2(k & 1, k >> 1);
-                vec4 h = texelFetch(HistorySampler, clamp(b + o, ivec2(0), hl), 0);
-                float w = (o.x == 1 ? fr.x : 1.0 - fr.x) * (o.y == 1 ? fr.y : 1.0 - fr.y)
-                        * (1.0 - smoothstep(1.5 / 255.0, 2.5 / 255.0, abs(h.a - want)));
-                acc += h.rgb * w;
-                wsum += w;
-            }
-            if (wsum > 0.02) {
-                float k = smoothstep(0.02, 0.4, wsum);
-                res = mix(acc / wsum, res, mix(vec3(1.0), ultra ? vec3(0.1, 0.1, 0.15) : vec3(0.14, 0.14, 0.2), k));
-            }
-        }
+    if (hist.w > 0.02) {
+        vec3 fresh = ultra ? vec3(0.1, 0.1, 0.15) : vec3(0.14, 0.14, 0.2);
+        // marching every other frame: the same response over time as a march every frame (1 - (1 - f)^2)
+        if (interleave) fresh = 1.0 - (1.0 - fresh) * (1.0 - fresh);
+        float k = smoothstep(0.02, 0.4, hist.w);
+        res = mix(hist.rgb, res, mix(vec3(1.0), fresh, k));
     }
     // dithered into 8 bits, so slow changes still move
     res += (noise - 0.5) / 255.0;

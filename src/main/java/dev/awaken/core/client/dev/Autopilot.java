@@ -59,6 +59,7 @@ import java.util.Map;
  * window &lt;width&gt; &lt;height&gt;                       windowed at that size in points (Retina doubles the pixels)
  * opt renderDistance|simulationDistance &lt;n&gt;     changes a video option for the following scenes
  * lens off|swift|cinematic|ultra                switches Awaken's light layer, for same-moment A/B shots
+ * lens temporal on|off|setting                  Lens 2's clouds and light spread over frames, or every pixel every frame
  * lookswitch swift|cinematic|ultra              picks a Look tier as a click on its card would (the open Look screen's,
  *                                                else straight through the switch)
  * pixels &lt;scale&gt; [fsr|sharp|bilinear]|config|state  Pixels' render scale and upscaler for the following scenes (not saved)
@@ -524,6 +525,11 @@ public final class Autopilot {
                 waitTicks = 20;
             }
             case "lens" -> {
+                if (arg.trim().startsWith("temporal")) {
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.temporal(arg.trim().substring(8)));
+                    waitTicks = 20;
+                    return true;
+                }
                 dev.awaken.core.AwakenConfig.Client.LENS.set(dev.awaken.core.AwakenConfig.Client.LensLook.valueOf(arg.trim().toUpperCase(java.util.Locale.ROOT)));
                 waitTicks = 40; // Lens re-asserts itself on the next tick, then eases in
             }
