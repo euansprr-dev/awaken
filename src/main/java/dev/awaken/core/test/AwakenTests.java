@@ -17,6 +17,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -27,6 +28,8 @@ import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.living.MobDespawnEvent;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -329,6 +332,21 @@ public final class AwakenTests {
         WorldgenTests.register();
         FUNCTIONS.register(modBus);
         modBus.addListener(AwakenTests::onRegisterTests);
+        NeoForge.EVENT_BUS.addListener(AwakenTests::onDespawnCheck);
+    }
+
+    /**
+     * On the GameTest server a creature never despawns because its nearest player is another test's, far off. Vanilla
+     * discards a mob at once when the nearest player is over 128 blocks away: with tests 54 apart, and a mock player
+     * standing at 0, 0, 0 until its test moves it, that could be any test's monster on any tick (mobs_echo_rises_once
+     * lost its ghoul so).
+     */
+    private static void onDespawnCheck(MobDespawnEvent e) {
+        Mob mob = e.getEntity();
+        if (!(mob.level().getServer() instanceof GameTestServer) || mob.isPersistenceRequired()) return;
+        Player p = mob.level().getNearestPlayer(mob, -1.0);
+        int far = mob.getType().getCategory().getDespawnDistance();
+        if (p != null && p.distanceToSqr(mob) > (double) far * far) e.setResult(MobDespawnEvent.Result.DENY);
     }
 
     private static void onRegisterTests(RegisterGameTestsEvent event) {
