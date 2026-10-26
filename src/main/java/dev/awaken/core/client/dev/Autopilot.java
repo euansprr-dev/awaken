@@ -40,6 +40,8 @@ import java.util.Map;
  * cmd &lt;command without slash&gt;
  * look &lt;yaw&gt; &lt;pitch&gt;
  * turn &lt;degrees per tick&gt; &lt;ticks&gt;             a steady turn that keeps going while later lines run (a sharp turn)
+ * glide &lt;dx&gt; &lt;dy&gt; &lt;dz&gt; &lt;ticks&gt;               a steady flight (blocks a tick, spectator) that keeps going while later
+ *                                                lines run: smooth, unlike a teleport a line (a flight's frames)
  * key &lt;awaken key name&gt;                        press one of the mod's keys (status, accept, dismiss, ...)
  * screen status|map|codex|holo|uiprobe|look|settings|close|experimental  holo: the holo K menu (status/map/codex stay flat);
  *                                                look: the Look switch (AWAKEN · LOOK); settings: Awaken's client
@@ -90,6 +92,8 @@ public final class Autopilot {
     private static String shotPending;
     private static float turnStep;
     private static int turnTicks;
+    private static double glideX, glideY, glideZ;
+    private static int glideTicks;
     // perf: frame-to-frame times of the scene being measured, preallocated so measuring costs no allocation per frame
     private static final long[] FRAMES = new long[1 << 15];
     private static int frameCount;
@@ -270,6 +274,10 @@ public final class Autopilot {
             mc.player.setYRot(mc.player.getYRot() + turnStep);
             mc.player.setYHeadRot(mc.player.getYRot());
         }
+        if (glideTicks > 0 && mc.player != null) {
+            glideTicks--;
+            mc.player.setDeltaMovement(glideTicks == 0 ? 0 : glideX, glideTicks == 0 ? 0 : glideY, glideTicks == 0 ? 0 : glideZ);
+        }
         if (waitTicks > 0) {
             waitTicks--;
             return;
@@ -354,6 +362,13 @@ public final class Autopilot {
                 mc.player.setYRot(Float.parseFloat(r[0]));
                 mc.player.setYHeadRot(Float.parseFloat(r[0]));
                 mc.player.setXRot(Float.parseFloat(r[1]));
+            }
+            case "glide" -> { // glide <dx> <dy> <dz> <ticks>
+                String[] r = arg.trim().split("\\s+");
+                glideX = Double.parseDouble(r[0]);
+                glideY = Double.parseDouble(r[1]);
+                glideZ = Double.parseDouble(r[2]);
+                glideTicks = Integer.parseInt(r[3]);
             }
             case "turn" -> { // turn <degrees per tick> <ticks>
                 String[] r = arg.trim().split("\\s+");

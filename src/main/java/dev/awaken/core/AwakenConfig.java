@@ -127,6 +127,10 @@ public final class AwakenConfig {
                 .comment("While Far Sight draws, leave out the water walls at the edge of the loaded chunks (thin pale lines over the",
                         "far sea after a teleport or in fast flight). Needs Sodium; off: water meshes exactly as Sodium's.")
                 .define("farSightWaterEdges", true);
+        public static final ModConfigSpec.BooleanValue FAR_SIGHT_HORIZON = C
+                .comment("While you stand still, Far Sight draws the land past about 500 m once into a panorama and reuses it each",
+                        "frame (the same picture, a few ms of GPU back). Moving, it draws everything as before. Off: always as before.")
+                .define("farSightHorizon", true);
         public static final ModConfigSpec SPEC = C.build();
 
         private Client() {}

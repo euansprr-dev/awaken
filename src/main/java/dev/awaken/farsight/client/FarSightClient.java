@@ -71,6 +71,11 @@ public final class FarSightClient {
     private static FarGpu gpu;
     /** City Sight (Far Sight 3): the real chunks' blocks where Sodium doesn't draw them. */
     private static VoxelLayer voxels;
+    /** The cached horizon: what Far Sight draws past the live rings, held while the eye stays put (SPEC §20). */
+    private static FarHorizon horizon;
+    /** This frame's light and air, which a horizon slice is checked against; the fog's final colour and weather fog. */
+    private static final float[] look = new float[FarHorizon.LOOK];
+    private static float fogRed, fogGreen, fogBlue, envStart, envEnd, skyLight;
     /** Snapshots taken from the server per frame, and the bytes of finished meshes uploaded per frame. */
     private static final int SNAPSHOTS_PER_FRAME = 48, VOXEL_UPLOAD_BYTES = 6 << 20;
     private static final FarWorkers workers = new FarWorkers(FarWorkers.defaultThreads(), FarWorkers.burstThreads());
@@ -98,6 +103,12 @@ public final class FarSightClient {
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.AfterSky.class, FarSightClient::afterSky);
         // before Lens (LOWEST), which reads vanilla's render-distance end through FarTerrain
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ViewportEvent.RenderFog.class, FarSightClient::fog);
+        // the fog's colour as it ends up (after Lens and the rest): the far land's air is made of it
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ViewportEvent.ComputeFogColor.class, e -> {
+            fogRed = e.getRed();
+            fogGreen = e.getGreen();
+            fogBlue = e.getBlue();
+        });
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingIn.class, e -> joinNanos = System.nanoTime());
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             unbind();
@@ -200,6 +211,7 @@ public final class FarSightClient {
             field = new FarField();
             renderer = new FarRenderer();
             voxels = new VoxelLayer(level.getMinY());
+            horizon = new FarHorizon();
             gpu = new FragmentFarGpu();
             Awaken.LOG.info("[farsight] ready: {} rings of {}x{} cells, GPU work by {}", Rings.RINGS, Rings.SIZE, Rings.SIZE, gpu.name());
         }
@@ -280,7 +292,10 @@ public final class FarSightClient {
         for (int i = 0; i < UPLOADS_PER_FRAME; i++) {
             FarWorkers.Patch p = workers.poll();
             if (p == null) break;
-            if (field.accept(p) && field.again) field.regenerate(p.ring, p.px, p.pz, cam.x, cam.z, level, workers);
+            boolean took = field.accept(p);
+            // the cached horizon draws the slices this patch shows in again (or starts over if it rises past its band)
+            if (took) horizon.patch(field, p.ring, p.px, p.pz, cam.x, cam.z);
+            if (took && field.again) field.regenerate(p.ring, p.px, p.pz, cam.x, cam.z, level, workers);
             workers.recycle(p);
         }
         // City Sight: the server's snapshots to the workers (the city before the nearer far land), their meshes up
@@ -312,6 +327,12 @@ public final class FarSightClient {
         }
         voxels.upload(VOXEL_UPLOAD_BYTES);
         if (++tendTurn % 60 == 0) voxels.tend(cam.x, cam.z, VoxelCapture::forget);
+        for (int i = 0; i < voxels.changed.size(); i++) {
+            long k = voxels.changed.getLong(i);
+            float ax = (float) (net.minecraft.world.level.ChunkPos.getX(k) * 16 - cam.x), az = (float) (net.minecraft.world.level.ChunkPos.getZ(k) * 16 - cam.z);
+            horizon.cityChanged(ax, az, ax + 16, az + 16);
+        }
+        voxels.changed.clear();
         logProgress();
         renderer.timeStart();
         float partialTick = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
@@ -332,17 +353,6 @@ public final class FarSightClient {
                 cam.x, cam.z, rd * 16);
         RenderTarget main = mc.gameRenderer.mainRenderTarget();
         var camera = mc.gameRenderer.mainCamera();
-        float fov = Math.max(camera.getFov(), mc.options.fov().get()) + 10f;
-        renderer.plan(field, cam.x, cam.y, cam.z, e.getModelViewMatrix(), fov, (float) main.width / Math.max(1, main.height), covered, hidden,
-                mc.level.getMinY(), mc.level.getMaxY(), level.getSeaLevel());
-        renderer.planTrees(field, cam.y, covered, hidden);
-        // a block one block away spans this many pixels: City Sight picks each chunk's level by it
-        float pixelsAt1 = (float) (main.height / (2.0 * Math.tan(Math.toRadians(Math.max(10f, camera.getFov())) / 2.0)));
-        float voxelHaze = 1.5e-4f * (1f + 3f * mc.level.getRainLevel(mc.getDeltaTracker().getGameTimeDeltaPartialTick(false)));
-        voxels.plan(renderer, cam.x, cam.y, cam.z, pixelsAt1, rd * 16, (partsOff & 256) == 0, voxelHaze);
-        // the far land steps aside exactly where City Sight draws this frame
-        voxels.cover();
-        if ((partsOff & 2) != 0) renderer.treeDraws = 0;
         // the key light: the sun's strength by its height (a faint moon by night), weaker in rain; warm as it lowers
         float rain = mc.level.getRainLevel(partialTick), thunder = mc.level.getThunderLevel(partialTick);
         float elevation = Math.max(0f, sun.y);
@@ -357,14 +367,37 @@ public final class FarSightClient {
         float mistCover = Math.min(1f, 0.34f + 0.26f * golden + 0.35f * rain);
         fogEnd = horizon();
         fogStart = fogEnd * 0.5f;
+        float fov = Math.max(camera.getFov(), mc.options.fov().get()) + 10f, aspect = (float) main.width / Math.max(1, main.height);
+        renderer.plan(field, cam.x, cam.y, cam.z, e.getModelViewMatrix(), fov, aspect, covered, hidden,
+                mc.level.getMinY(), mc.level.getMaxY(), level.getSeaLevel(), rd * 16);
+        renderer.planTrees(field);
+        // a block one block away spans this many pixels: City Sight picks each chunk's level by it
+        float camFov = Math.max(10f, camera.getFov());
+        float pixelsAt1 = (float) (main.height / (2.0 * Math.tan(Math.toRadians(camFov) / 2.0)));
+        // the cached horizon: what it serves this frame and which slices it draws (before City Sight's plan leaves those out)
+        skyLight = cameraNow.attributeProbe().getValue(EnvironmentAttributes.SKY_LIGHT_FACTOR, partialTick);
+        lookNow(mc, strength, golden, haze, rain, mistCover);
+        boolean zeroToOne = RenderSystem.getDevice().getDeviceInfo().isZZeroToOne();
+        horizon.prepare(renderer, field, cam.x, cam.y, cam.z, e.getModelViewMatrix(), pixelsAt1, camFov, aspect, rd * 16, main.width, main.height, look);
+        renderer.leaveServed(horizon);
+        float voxelHaze = 1.5e-4f * (1f + 3f * mc.level.getRainLevel(mc.getDeltaTracker().getGameTimeDeltaPartialTick(false)));
+        voxels.plan(renderer, cam.x, cam.y, cam.z, pixelsAt1, rd * 16, (partsOff & 256) == 0, voxelHaze, horizon);
+        // the far land steps aside exactly where City Sight draws this frame
+        voxels.cover();
+        horizon.planSlices(renderer, field, voxels, cam.x, cam.y, cam.z, rd * 16, zeroToOne);
+        if ((partsOff & 2) != 0) {
+            renderer.screen.treeDraws = 0;
+            for (FarRenderer.View v : horizon.views) v.treeDraws = 0;
+        }
         if (RenderSystem.getProjectionMatrixBuffer() == null || RenderSystem.getShaderFog() == null) {
+            horizon.cancel();
             renderer.timeEnd();
             return;
         }
         renderer.draw(field, main, e.getModelViewMatrix(), cam.x, cam.y, cam.z, sun, strength, sunColour, golden, haze, rain,
                 level.getSeaLevel() + MIST_ABOVE_SEA, MIST_DEPTH, MIST_DENSITY, mistCover, fogStart, fogEnd,
                 hidden, CLIP_BAND, rd * 16, level.getSeaLevel(), RenderSystem.getDevice().getDeviceInfo().isZZeroToOne(), mc.gameRenderer.levelLightmap(),
-                FarLandmarks.current(level.dimension()), voxels);
+                FarLandmarks.current(level.dimension()), voxels, horizon, pixelsAt1);
         renderer.timeEnd();
         FarTerrain.report(renderer.depthTexture(), FarRenderer.NEAR, FarRenderer.FAR, true, RenderSystem.getDevice().getDeviceInfo().isZZeroToOne());
         // Far Sight hazes its own kilometres (aerial perspective at real scale): Lens keeps only its near haze over it
@@ -424,6 +457,45 @@ public final class FarSightClient {
         if (ringsDone == all) Awaken.LOG.info("[farsight] all rings ready {} ms after the first frame; {}", (now - bindNanos) / 1_000_000, status());
     }
 
+    /**
+     * This frame's light and air (FarHorizon#LOOK): the sun, its colour and strength, the haze, rain and valley cloud,
+     * Far Sight's horizon fog, the fog's colour, the sky's light and the weather fog, the views and parts being measured,
+     * the gamma; a sight effect (night vision, darkness, blindness) changes the light every frame.
+     */
+    private static void lookNow(Minecraft mc, float strength, float golden, float haze, float rain, float mistCover) {
+        float[] l = look;
+        l[0] = sun.x;
+        l[1] = sun.y;
+        l[2] = sun.z;
+        l[3] = strength;
+        l[4] = sunColour.x;
+        l[5] = sunColour.y;
+        l[6] = sunColour.z;
+        l[7] = golden;
+        l[8] = haze;
+        l[9] = rain;
+        l[10] = MIST_ABOVE_SEA;
+        l[11] = MIST_DEPTH;
+        l[12] = MIST_DENSITY;
+        l[13] = mistCover;
+        l[14] = fogStart;
+        l[15] = fogEnd;
+        l[16] = fogRed;
+        l[17] = fogGreen;
+        l[18] = fogBlue;
+        // the sky's light on the lightmap (lightning flashes it to full)
+        l[19] = skyLight;
+        l[20] = envStart;
+        l[21] = envEnd;
+        l[22] = debug;
+        l[23] = partsOff;
+        l[24] = mc.options.gamma().get().floatValue();
+        var player = mc.player;
+        boolean sight = player != null && (player.hasEffect(net.minecraft.world.effect.MobEffects.NIGHT_VISION)
+                || player.hasEffect(net.minecraft.world.effect.MobEffects.DARKNESS) || player.hasEffect(net.minecraft.world.effect.MobEffects.BLINDNESS));
+        l[25] = sight ? l[25] + 1f : 0f;
+    }
+
     private static void fog(ViewportEvent.RenderFog e) {
         if (!drawing()) return;
         FogData fog = e.getFogData();
@@ -439,6 +511,8 @@ public final class FarSightClient {
             fog.environmentalStart *= k;
             fog.environmentalEnd *= k;
         }
+        envStart = fog.environmentalStart;
+        envEnd = fog.environmentalEnd;
     }
 
     /** Development view: 0 normal, 1 generated-layer cells tinted magenta, 2 far terrain under the chunk mask red, 3 every far tree red and far terrain blue (autopilot {@code farsight debug <n>}). */
@@ -460,6 +534,12 @@ public final class FarSightClient {
             return "debug view " + debug;
         }
         if (a.startsWith("wateredge")) return "water edges " + dev.awaken.turbo.wateredge.WaterEdge.autopilot(a.substring(9));
+        if (a.startsWith("horizon")) {
+            String w = a.substring(7).trim();
+            if (w.startsWith("split")) FarHorizon.split = Integer.parseInt(w.substring(5).trim());
+            else FarHorizon.forced = w.equals("on") ? Boolean.TRUE : w.equals("off") ? Boolean.FALSE : null;
+            return "horizon " + (FarHorizon.enabled() ? "on" : "off") + " from ring " + FarHorizon.split;
+        }
         if (a.startsWith("time parts")) {
             FarRenderer.partsTiming = a.endsWith("on");
             return "parts timed " + FarRenderer.partsTiming;
@@ -507,16 +587,16 @@ public final class FarSightClient {
         double[] parts = renderer.partMillis();
         StringBuilder split = new StringBuilder();
         if (parts != null) {
-            split.append(" split_ms=[rings");
-            for (int r = 0; r < Rings.RINGS; r++) split.append(String.format(Locale.ROOT, " %.3f", parts[r]));
-            split.append(String.format(Locale.ROOT, " city %.3f trees %.3f]", parts[Rings.RINGS], parts[Rings.RINGS + 1]));
+            split.append(String.format(Locale.ROOT, " split_ms=[slices %.3f composite %.3f rings", parts[0], parts[1]));
+            for (int r = 0; r < Rings.RINGS; r++) split.append(String.format(Locale.ROOT, " %.3f", parts[2 + r]));
+            split.append(String.format(Locale.ROOT, " city %.3f trees %.3f]", parts[2 + Rings.RINGS], parts[3 + Rings.RINGS]));
         }
         return String.format(Locale.ROOT,
                 "%s gpu_ms=%.3f bake_ms=%.3f cpu_ms=%.3f rest_us=%d missing=[%s] queued=%d workers=%d pieces=%d cells=%d trees=%d (%d draws) column=%.1fus probes=%.1f/column (%d columns) generated=%d/%d city=%d/%d chunks (%d from disk, %d asked ahead, %d meshing, %.1f ms each, %d empty) drawn=%d chunks %d quads %d draws vram=%dMB",
-                drawing() ? "drawing" : enabled() ? "on" : "off", gpu[0], gpu[1], cpu, workers.restMicros, rings, workers.queued(), workers.active, renderer.pieces, renderer.cells, renderer.treesDrawn, renderer.treeDraws,
+                drawing() ? "drawing" : enabled() ? "on" : "off", gpu[0], gpu[1], cpu, workers.restMicros, rings, workers.queued(), workers.active, renderer.screen.pieces, renderer.screen.cells, renderer.screen.treesDrawn, renderer.screen.treeDraws,
                 cols == 0 ? 0.0 : workers.columnNanos.get() / 1000.0 / cols, cols == 0 ? 0.0 : workers.probes.get() / (double) cols, cols,
                 field.genUploaded, field.genAsked, voxels.resident(), VoxelCapture.captured(), VoxelCapture.fromDisk.get(), dev.awaken.farsight.voxel.VoxelAhead.asked(), voxels.inFlight.get(),
                 voxels.meshed.get() == 0 ? 0.0 : voxels.meshNanos.get() / 1e6 / voxels.meshed.get(), voxels.empty.get(), voxels.chunksDrawn, voxels.quadsDrawn, voxels.commands(),
-                (field.memoryBytes() + renderer.memoryBytes() + voxels.memoryBytes()) >> 20) + split;
+                (field.memoryBytes() + renderer.memoryBytes() + voxels.memoryBytes() + horizon.memoryBytes()) >> 20) + horizon.status() + split;
     }
 }

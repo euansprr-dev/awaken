@@ -69,7 +69,8 @@ void main() {
     vec4 vRect = texelFetch(Looks, vLookId * 2), vLook = texelFetch(Looks, vLookId * 2 + 1);
     vec2 size = vRect.zw - vRect.xy;
     vec2 uv = vRect.xy + fract(vUv) * size;
-    vec4 tex = textureGrad(AtlasSampler, uv, dFdx(vUv) * size, dFdy(vUv) * size);
+    // (the mip the screen would pick: a horizon slice's pixels are finer, FarView)
+    vec4 tex = textureGrad(AtlasSampler, uv, dFdx(vUv) * size * FarView.x, dFdy(vUv) * size * FarView.x);
     int flags = int(vLook.x + 0.5);
     vec3 albedo = tex.rgb;
     // a window closing a dark room: its glass shows the dark room, never a hole
