@@ -84,7 +84,10 @@ public final class VillageService {
         ServerLevel level = server.overworld();
         long seed = level.getSeed();
         int[] centre = SettlementGrid.centre();
-        for (ServerPlayer p : level.players()) {
+        // GameTests register their settlements themselves: none is planned round a test's player by itself (one planned
+        // so claimed the ground of the tests near it, and an Ember or a sister Anchor was refused "inside a village")
+        boolean quiet = server instanceof net.minecraft.gametest.framework.GameTestServer;
+        for (ServerPlayer p : quiet ? List.<ServerPlayer>of() : level.players()) {
             for (SettlementGrid.Anchor a : SettlementGrid.near(seed, p.getBlockX(), p.getBlockZ(), 420, centre)) {
                 if (LIVE.containsKey(a.key()) || ABSENT.contains(a.key())) continue;
                 if (!Plans.known(a.key())) {

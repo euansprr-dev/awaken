@@ -1025,10 +1025,11 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   and every non-player entity left in the overworld and puts back the first test's game rules, time of day and clear sky
   (the runner keeps neither; before 2026-10-26 some 240 finished tests' players stood about the grid and the world's
   directors acted round them). On the GameTest server the world's own directors stay quiet and the tests drive them: no
-  anomaly, gate, happening, ledger body, camp or scene comes to a test's players by itself. A test that builds above its
-  padded box, or reads a column's top, clears its own site to the sky first (`AwakenTests.site`, `clearToSky`); state a
-  test switches on goes back in `AwakenTests.onEnd`, which runs whether it passes or fails. A creature never despawns
-  there because its nearest player is another test's, over 128 blocks off (vanilla discards it at once).
+  anomaly, gate, happening, ledger body, camp, scene or settlement comes to a test's players by itself. A test that
+  builds above its padded box, or reads a column's top, clears its own site to the sky first (`AwakenTests.site`,
+  `clearToSky`); state a test switches on goes back in `AwakenTests.onEnd`, which runs whether it passes or fails. A
+  creature never despawns there because its nearest player is another test's, over 128 blocks off (vanilla discards it
+  at once).
 - `-Ptests=<name prefixes>` (comma-separated) registers only those GameTests; a filter that matches none fails.
 
 Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools/autopilot.sh`):
