@@ -61,6 +61,7 @@ final class ArmsTests {
         AwakenTests.register("arms_grip", 20, ArmsTests::grip);
         AwakenTests.register("arms_marks", 40, ArmsTests::marks);
         AwakenTests.register("arms_forge", 20, ArmsTests::forge);
+        AwakenTests.register("arms_tap_or_hold", 40, ArmsTests::tapOrHold);
     }
 
     /** At most this many triangle corners in one weapon (6,000 triangles: a few weapons in view cost what a mob does). */
@@ -693,6 +694,59 @@ final class ArmsTests {
         float was = aimed.getHealth();
         runActive(p);
         h.assertTrue(aimed.getHealth() == was, "one hit per creature per move");
+        done(h, p);
+    }
+
+    /**
+     * A press held into a charge never strikes on the way: its strike starts on the press but waits at its hit, and the
+     * charge takes its place; a charge held long past full goes only when let go. A tap lands its strike on time, and
+     * with no word from the client at all the strike lands at the charge's mark plus {@link ArmsServer#HOLD_WAIT}.
+     */
+    static void tapOrHold(GameTestHelper h) {
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        LivingEntity pig = put(h, EntityTypes.PIG, 1.5, 2.3, 200);
+        ArmsState s = ArmsServer.state(p);
+        Archetype.MoveDef s1 = longsword().move(Archetype.Move.STRIKE_1);
+        Archetype.Charge c = longsword().move(Archetype.Move.HEAVY).charge().orElseThrow();
+        // held: strike 1 starts at once, then waits at its hit until the hold turns into the charge
+        long t0 = ArmsServer.now(p);
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_STRIKE, 0F, 0F, pig.getId()));
+        h.assertTrue(s.move == Archetype.Move.STRIKE_1 && s.waitHit, "the press starts strike 1 at once, its hit waiting on the press");
+        for (int t = 0; t < c.min(); t++) ArmsServer.moveTick(p, s, t0 + t);
+        h.assertTrue(pig.getHealth() == 200, "held to the charge's mark: no strike landed first (took " + (200 - pig.getHealth()) + ")");
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_CHARGE, 0F, 0F, -1));
+        h.assertTrue(s.move == null && s.chargeSeq == 1, "the hold becomes the charge, the waiting strike dropped (" + s.move + ")");
+        // held ten seconds past full: still charging (nothing goes at the max); it goes on the release
+        s.chargeStart = ArmsServer.now(p) - 200;
+        h.assertTrue(s.move == null && s.chargeStart != ArmsState.NO_CHARGE, "still held at full charge");
+        ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_RELEASE, 0F, 0F, pig.getId()));
+        h.assertTrue(s.move == Archetype.Move.HEAVY, "let go: the heavy (" + s.move + ")");
+        runActive(p);
+        h.assertTrue(pig.getHealth() < 200, "the released heavy strikes");
+        // a tap: the strike lands at its hit, on the tick an unheld strike would
+        s.clearMove();
+        pig.setHealth(200);
+        long t1 = ArmsServer.now(p);
+        ArmsServer.onPress(p, new ArmsPayloads.Press(2, ArmsPayloads.PRESS_STRIKE, 0F, 0F, pig.getId()));
+        ArmsServer.onPress(p, new ArmsPayloads.Press(2, ArmsPayloads.PRESS_TAP, 0F, 0F, -1));
+        int landed = -1;
+        for (int t = 0; t < s1.activeEnd() && landed < 0; t++) {
+            ArmsServer.moveTick(p, s, t1 + t);
+            if (pig.getHealth() < 200) landed = t;
+        }
+        h.assertTrue(landed == s1.windup(), "a tap's strike lands at its wind-up's end, " + s1.windup() + " ticks in (landed at " + landed + ")");
+        // no word from the client: the strike never waits past the charge's mark and a little
+        s.clearMove();
+        pig.setHealth(200);
+        long t2 = ArmsServer.now(p);
+        ArmsServer.onPress(p, new ArmsPayloads.Press(3, ArmsPayloads.PRESS_STRIKE, 0F, 0F, pig.getId()));
+        int limit = c.min() + ArmsServer.HOLD_WAIT;
+        landed = -1;
+        for (int t = 0; t <= limit + s1.active() && landed < 0; t++) {
+            ArmsServer.moveTick(p, s, t2 + t);
+            if (pig.getHealth() < 200) landed = t;
+        }
+        h.assertTrue(landed == limit, "unanswered, the waiting strike lands " + limit + " ticks in (landed at " + landed + ")");
         done(h, p);
     }
 

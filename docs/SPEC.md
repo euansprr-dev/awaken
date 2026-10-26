@@ -4417,8 +4417,17 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   as a new press, restarting the swing every tick; now only a press the key was not already down for counts, and the
   repeats are swallowed. Every new press strikes wherever it points; outside a fight (100 ticks) a block the weapon
   cuts faster than a bare hand (a web, bamboo, leaves; never in creative) is still cut. The old rule (any block under the
-  crosshair outside a fight is mined) meant a click at the ground mined with no swing at all. Held = a heavy (charges from 6 ticks, the glint at 16, auto-release at
-  24; a release within 2 ticks of the glint is perfect: motion 2.4, posture 20, 110 ms hit-stop). A block under the
+  crosshair outside a fight is mined) meant a click at the ground mined with no swing at all. Held = a heavy (charges from 6 ticks, the glint at 16, full at
+  24; a release within 2 ticks of the glint is perfect: motion 2.4, posture 20, 110 ms hit-stop). **Tap or hold**
+  (Euan 2026-10-26: "when you long click to power up your attack... on the first click, before letting go, it already
+  attacks"): the press starts the chain's strike at once, so a tap is never late, but for a style whose heavy charges
+  the strike's hit waits at its wind-up's end while the key stays down (the hands hold there, `ArmsPredict.waitHit`).
+  Let go before the charge's 6 ticks and it is a tap (`PRESS_TAP`): the strike lands then. Still down at 6 ticks and
+  the strike is dropped unlanded and the charge begins (`PRESS_CHARGE`; a strike the same press queued mid-combo is
+  dropped too). The charge holds at full for as long as the key is down, trembling, and goes only on the release (no
+  auto-release; held past full it counts as full). The server never holds a blow on the client's word alone: with no
+  tap or charge heard it lands `ArmsServer.HOLD_WAIT` (4) ticks after the charge's mark. A riposte, Slipcut, Undercut
+  or Plunge starts as it always did. Test `arms_tap_or_hold`. A block under the
   crosshair outside a fight (100 ticks since the last) is still mined. A move strikes each creature in its arc and reach
   once, through vanilla's own attack at full strength (crits, enchantments, momentum and every damage listener still
   apply), scaled first by the move; vanilla's immunity is cleared between one fighter's blows; it never sweeps. A sweep

@@ -52,6 +52,13 @@ public final class ArmsPredict {
     // the strike key held into a heavy
     static boolean pressHeld, charging;
     static int heldTicks, chargeStart;
+    /**
+     * The press is still down and may become a charge (holdOpen), and the strike it began waits at its hit until the
+     * press ends as a tap or becomes the charge (waitHit; the hands hold there: waitNanos of their clock): a held press
+     * never strikes once before it charges (Euan 2026-10-26), and a tap's swing still starts on the press.
+     */
+    static boolean holdOpen, waitHit;
+    static long waitNanos;
     // what the server told us
     static int deflectAt = -1000, dodgeAt = -1000, resonance;
     /** Each style's mastery step, by its index (ArmsMastery; the server sends them). */
@@ -125,6 +132,8 @@ public final class ArmsPredict {
         pressHeld = true;
         heldTicks = 0;
         charging = false;
+        Archetype.MoveDef heavyDef = st.move(Archetype.Move.HEAVY);
+        holdOpen = heavyDef != null && heavyDef.charge().isPresent();
         fightAt = ticks;
         ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(s, ArmsPayloads.PRESS_STRIKE, p.getYRot(), p.getXRot(), target));
         Archetype.MoveDef riposte = st.move(Archetype.Move.RIPOSTE);
@@ -183,6 +192,8 @@ public final class ArmsPredict {
         Archetype.MoveDef def = st.move(m);
         if (def == null) return;
         perfectHeavy = perfect;
+        waitHit = m.strike() && holdOpen && s == seq;
+        waitNanos = 0;
         style = st;
         move = m;
         step = st2;
@@ -201,8 +212,10 @@ public final class ArmsPredict {
 
     /** Ticks into the running move on the hands' clock (hit-stop holds pause it), with the frame's fraction. */
     static float moveTime() {
-        long nanos = System.nanoTime() - moveNanos - (ArmsFeel.paused() - movePaused);
-        return nanos / 50_000_000F;
+        long nanos = System.nanoTime() - moveNanos - (ArmsFeel.paused() - movePaused) - waitNanos;
+        float t = nanos / 50_000_000F;
+        Archetype.MoveDef def = waitHit && move != null && style != null ? style.move(move) : null;
+        return def != null ? Math.min(t, def.windup() - 0.05F) : t; // a strike waiting on its press holds at its hit
     }
 
     static void tick() {
@@ -237,6 +250,11 @@ public final class ArmsPredict {
                 step = -1;
             }
         }
+        if (waitHit && move != null && style != null) {
+            Archetype.MoveDef def = style.move(move);
+            long nanos = System.nanoTime() - moveNanos - (ArmsFeel.paused() - movePaused) - waitNanos;
+            if (def != null && nanos / 50_000_000F > def.windup() - 0.05F) waitNanos += 50_000_000L; // held at the hit
+        }
         if (pressHeld) heldOrReleased(p, mc);
         if (dodgeCharges >= 0 && style != null && ticks >= dodgeRechargeAt && dodgeCharges < style.def().dodge().charges()) {
             dodgeCharges++;
@@ -257,6 +275,10 @@ public final class ArmsPredict {
         if (mc.options.keyAttack.isDown()) {
             heldTicks++;
             if (!charging && heldTicks >= c.min()) {
+                // held: the strike that began on the press never lands (it waited at its hit); the charge takes its place
+                holdOpen = false;
+                waitHit = false;
+                if (buffered != null && bufferedSeq == seq) buffered = null; // nor will one queued mid-combo
                 charging = true;
                 chargeStart = ticks;
                 move = Archetype.Move.HEAVY;
@@ -269,10 +291,17 @@ public final class ArmsPredict {
                 ArmsBodies.charge(p);
             }
             if (charging && c.min() + (ticks - chargeStart) == c.glint()) ArmsAudio.glint(p);
-            if (!charging || c.min() + (ticks - chargeStart) < c.max()) return;
+            return; // held at full charge for as long as the key is down: it goes only when let go (Euan 2026-10-26)
         }
         pressHeld = false;
-        if (!charging) return;
+        if (!charging) {
+            if (holdOpen) { // a tap: the strike waiting at its hit lands now
+                holdOpen = false;
+                waitHit = false;
+                ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_TAP, p.getYRot(), p.getXRot(), -1));
+            }
+            return;
+        }
         charging = false;
         int target = mc.hitResult instanceof EntityHitResult ehr ? ehr.getEntity().getId() : -1;
         ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_RELEASE, p.getYRot(), p.getXRot(), target));

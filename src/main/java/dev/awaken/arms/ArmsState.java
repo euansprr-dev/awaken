@@ -50,6 +50,11 @@ final class ArmsState {
     static final long NO_CHARGE = Long.MIN_VALUE;
     long chargeStart = NO_CHARGE;
     int chargeSeq = -1;
+    // a press still down (it may become a charge): its seq, when, whether it is still down; and whether the strike it
+    // began is waiting at its hit for the press's end (a tap lands it, a charge takes its place)
+    int holdSeq = -1;
+    long holdFrom;
+    boolean holdOpen, waitHit;
     // a Plunge armed in a fall: its press, when, the furthest it has fallen; and the landing's power once it strikes
     int plungeSeq = -1;
     long plungeAt;
@@ -90,5 +95,6 @@ final class ArmsState {
         hitCount = 0;
         perfectHeavy = false;
         unleashed = false;
+        waitHit = false;
     }
 }
