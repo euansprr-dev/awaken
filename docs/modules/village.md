@@ -11,7 +11,7 @@ by the city's grammar with furnished interiors, and lived in by the people engin
 | Part | Classes | Notes |
 |---|---|---|
 | Where settlements are | `world.SettlementGrid`, `world.SettlementPlacement`, `world.FirstHamlet` | 640-block cells, one anchor each; the first hamlet found up the road at server start |
-| Worldgen | `world.VillageStructure`, `world.VillagePiece`, `world.VillageMarker`, `world.VillageWorldgen`, `world.Plans`, `world.GenTerrain` | one painter piece, beard markers; plans cached per server, made again from the anchor after a restart |
+| Worldgen | `world.VillageStructure`, `world.VillagePiece`, `world.VillageMarker`, `world.VillageWorldgen`, `world.Plans`, `world.GenTerrain` | one painter piece, beard markers (houses and two past, fields, pens, the green, every street segment); the land's trees felled within 6 of the ground (`SettlementPaint.fell`); plans cached per server, made again from the anchor after a restart |
 | The planner | `plan.VillagePlanner`, `plan.VillagePlan`, `plan.Names`, `plan.Terrain` | pure; reads the generator's estimate only |
 | Its own painting | `plan.VillagePainter`, `plan.VillageBlocks` | streets, green, yards, fields, gardens, pens, pier, lamps, bell, forge, wheel, trees |
 | Houses and rooms | `dev.awaken.city.SettlementPaint`, `PlanView`, `VillageStyles`, `CityInteriors` (city module) | the city's grammar in land and wealth styles; Carillon unchanged |

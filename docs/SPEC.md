@@ -5770,7 +5770,11 @@ within 8 (`hearth/Embers`, `HearthService`).
 after the trees, which it clears; snow falls on its roofs after). The start is the anchor's chunk; the whole plan stays
 inside its eight-chunk reach (villages radius ≤ 88, hamlets ≤ 58). Pieces: one painter piece (the plan's box: each
 chunk it touches paints its share straight into the sections through the city's writer) and a thin-beard marker per
-building, field, pen and the green (the land eases up to their floors). The piece keeps only its anchor and the planner's
+building (reaching two past its walls: no bank of earth at a back window), field, pen, every four-block segment of every
+street, and the green (the land eases up or down to their floors and the paving instead of meeting them in a step).
+**The clearing:** before a chunk paints, the land's trees go from every free column within six of the settlement's
+ground (logs, leaves and what hangs on them; never grass, flowers, snow or a block entity; a felled trunk's dirt grows
+grass), so houses stand in a clearing, never in a wood; the planned trees are bark and persistent leaves and stay. The piece keeps only its anchor and the planner's
 version: after a restart the first chunk to paint makes the same plan again (`Plans`, cached per server). Pens get two to
 five beasts of the land (sheep, pigs, cows, chickens, goats), kept. A tree cut at the edge leaves nothing hanging
 (`SettlementPaint.sweep`, the city's sweep and orphan rule).
@@ -5809,7 +5813,8 @@ at most two lights a house. Generic over plots, for Carillon's B4 to adopt.
 joined at their branch), a door for every building, places for the work (each field's edge, the pen's gate, the forge,
 the well's trough, the bell, the benches, the green's play, the woodlot, the pier's end, the mill, the inn's taproom
 inside its door with the guests' floor found by painting the inn alone, the lamps, the Watch's posts and the roads
-out). Households of 1-3 adults and 0-3 children per home, 8-16 people in a hamlet, 20-50 in a village. Village jobs
+out). Errands spread over the whole place, never round the well: the board, the benches, the stall (buying), every other
+home's door (a visit) and a corner every sixteen blocks of street. Households of 1-3 adults and 0-3 children per home, 8-16 people in a hamlet, 20-50 in a village. Village jobs
 appended to `Roster.JOBS` (21 farmer, 22 shepherd, 23 woodcutter, 24 miner, 25 fisher, 26 hunter, 27 carter, 28 elder,
 29 scribe) beside the city's smith, tavernkeeper, miller, washer, lamplighter, bellringer, Watch, healer, stallkeeper
 and children. **The day** (0 = 06:00): the bell at dawn and dusk (the ringer at the bell 05:18-06:42 and 17:30-18:36;
@@ -5877,7 +5882,8 @@ chunk (about 1,600 cells; the grammar, the rooms and the ground), at most 4 ligh
 awake: 0.005 ms a tick.
 
 **Decisions taken here** (none of the plan's 13): the own pack and flag (above); the 640 grid and its odds; the first
-hamlet's search order; the structure's step and the plan rebuilt from its anchor; styles keyed 16 + land x 4 + wealth;
+hamlet's search order; the structure's step and the plan rebuilt from its anchor; the clearing of six; beards on the
+streets and two past each house; styles keyed 16 + land x 4 + wealth;
 two lights a house; the standing thresholds and the price rule; the board's needs; the inn's one fall; the claims kept
 in the villages' file; village jobs appended to the city's list; the day's hours; the kit's civic blocks (they drop
 nothing) used in village walls and furniture; gates 64 and Hearths 8 off a settlement's ground.
