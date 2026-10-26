@@ -24,6 +24,9 @@ done
 (( T <= 3600 )) || { echo "timeout at most 3600 s"; exit 2; }
 # the runner's GPU scrambles Far Sight's far mesh, so CI tours run without it and Far Sight's own tours stay on the Mac
 grep -q '^farsight on' $SCRIPT && { echo "$SCRIPT turns Far Sight on: run it on the Mac (slot.sh tour tools/autopilot.sh ...)"; exit 2; }
+# awakened without a starter pick: on the slower runner the first-power screen can open after the last "screen close"
+grep -qE '^cmd awaken (opening skip|admin awaken)' $SCRIPT && ! grep -q '^cmd awaken powers starter' $SCRIPT \
+  && echo "warning: $SCRIPT awakens without 'cmd awaken powers starter 1': the first-power screen may cover the shots"
 
 # the runner checks out the branch on GitHub: it must hold exactly what this worktree would tour
 BRANCH=$(git branch --show-current)
