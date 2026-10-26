@@ -159,13 +159,13 @@ final class CitizensTests {
         ServerLevel level = h.getLevel();
         var origin = h.absolutePos(net.minecraft.core.BlockPos.ZERO);
         StreetNet g = StreetNet.of(CityPlan.get(), origin.getX(), origin.getZ(), origin.getY(), r.edgeLane).withWall(r, origin.getX(), origin.getZ(), origin.getY());
-        Citizens before = Citizens.active;
-        Citizens c = new Citizens(level, r, g, new CitizensData(), origin.getX(), origin.getZ(), origin.getY());
-        c.crowd.on = false;
+        Settlement before = Citizens.carillon();
+        Settlement c = Settlement.carillon(level, r, g, new CitizensData(), origin.getX(), origin.getZ(), origin.getY());
+        c.embody = false;
         c.work.edits = false; // the shared test world is not Carillon: change no blocks there
         c.setClock(16000); // night: a burglary's hour
         c.events.noPlan();
-        Citizens.active = c;
+        Citizens.swapCarillon(c);
         long now = level.getGameTime();
         List<String> started = new ArrayList<>();
         for (String kind : List.of("burglary", "pickpocket", "fire", "cart")) {
@@ -178,8 +178,8 @@ final class CitizensTests {
         h.succeedWhen(() -> {
             long elapsed = level.getGameTime() - now;
             if (!c.data.events.isEmpty()) {
-                if (elapsed > 14500 && Citizens.active == c) {
-                    Citizens.active = before;
+                if (elapsed > 14500 && Citizens.carillon() == c) {
+                    Citizens.swapCarillon(before);
                     level.getServer().tickRateManager().stopSprinting();
                 }
                 throw new net.minecraft.gametest.framework.GameTestAssertException(net.minecraft.network.chat.Component.literal(
@@ -191,7 +191,7 @@ final class CitizensTests {
             for (int i = 0; i < r.citizens; i++) h.assertTrue(c.data.role[i] == 0, "citizen " + i + " is back to their day");
             Awaken.LOG.info("[citizens] events test: {} started, {} resolved in {} ticks, noRoute {}", c.events.started, c.events.resolved,
                     elapsed, c.ledger.noRoute);
-            Citizens.active = before;
+            Citizens.swapCarillon(before);
             level.getServer().tickRateManager().stopSprinting();
         });
     }
