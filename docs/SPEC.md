@@ -1574,7 +1574,8 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   Also (2026-10-26, Euan's tours): every overworld chunk the server loads is captured too, after the city's (kept
   within 1.9 km, the city's at any distance, at most 16 M quads, farthest first; the coverage mask redrawn each second
   for chunks within 2 km, so its 4 km torus never stands a far chunk in for a near one). A snapshot starts just under
-  the chunk's lowest ground (OCEAN_FLOOR - 8): deeper never shows. A chunk is taken again 2 s after its last block
+  the chunk's lowest ground (MOTION_BLOCKING_NO_LEAVES - 8; OCEAN_FLOOR counts leaves, and under a closed canopy the
+  cut fell at the leaves: trees floating over a hole): deeper never shows. A chunk is taken again 2 s after its last block
   change (the neighbour-update event), not on save (the city's hold saves every chunk as it lets go: the city
   "loaded twice"), and a worker skips a snapshot that hashes as the mesh already up. Faces into dark rooms (no sky
   light, block light ≤ 2) aren't drawn; panes, doors and bars between such a room and the light draw their outward

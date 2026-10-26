@@ -92,7 +92,19 @@ shotnow fs3l_030
 farsight debug 3
 wait 2
 shotnow fs3l_030_debug
+farsight debug 4
+wait 2
+shotnow fs3l_030_cover
+farsight debug 2
+wait 2
+shotnow fs3l_030_mask
 farsight debug 0
+farsight status
+farsight off
+wait 10
+shotnow fs3l_030_off
+info
+farsight on
 farsight status
 cmd tp @s ~16 ~ ~ -90 12
 wait 10

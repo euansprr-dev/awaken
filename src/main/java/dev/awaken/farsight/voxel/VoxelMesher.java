@@ -102,7 +102,7 @@ public final class VoxelMesher {
         snap = null;
         int levelMin = s.levelMinY();
         return new VoxelMesh(s.chunkX(), s.chunkZ(), slot, lo == Integer.MAX_VALUE ? 0 : levelMin + Math.floorDiv(lo, 16),
-                hi == Integer.MIN_VALUE ? 0 : levelMin + Math.floorDiv(hi + 15, 16), quads, starts);
+                hi == Integer.MIN_VALUE ? 0 : levelMin + Math.floorDiv(hi + 15, 16), s.ground(), quads, starts);
     }
 
     /** The level's quads grouped by face (down, up, north, south, west, east); starts[d] the first of face d, in quads. */

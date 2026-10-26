@@ -64,7 +64,7 @@ final class VoxelLayer implements AutoCloseable {
     }
 
     private static final class Chunk {
-        int cx, cz, minY, maxY;
+        int cx, cz, minY, maxY, groundY;
         /** When it first came up (ms), and how far its dissolve in has gone (0..255). */
         long appeared;
         int fade;
@@ -98,7 +98,8 @@ final class VoxelLayer implements AutoCloseable {
     /** Each slot's last meshed snapshot's hash (workers write, so a chunk taken again unchanged isn't meshed again). */
     final long[] hashes = new long[MAX_SLOTS];
     /** Time spent meshing and chunks meshed (status). */
-    final java.util.concurrent.atomic.AtomicLong meshNanos = new java.util.concurrent.atomic.AtomicLong(), meshed = new java.util.concurrent.atomic.AtomicLong();
+    final java.util.concurrent.atomic.AtomicLong meshNanos = new java.util.concurrent.atomic.AtomicLong(), meshed = new java.util.concurrent.atomic.AtomicLong(),
+            empty = new java.util.concurrent.atomic.AtomicLong();
     /** Meshing jobs on the workers. */
     final java.util.concurrent.atomic.AtomicInteger inFlight = new java.util.concurrent.atomic.AtomicInteger();
     final ConcurrentLinkedQueue<VoxelMesh> finished = new ConcurrentLinkedQueue<>();
@@ -219,6 +220,7 @@ final class VoxelLayer implements AutoCloseable {
         c.cz = m.chunkZ();
         c.minY = m.minY();
         c.maxY = m.maxY();
+        c.groundY = m.groundY();
         int bytes = 0;
         for (int l = 0; l < VoxelMesher.LEVELS; l++) {
             int[] q = m.quads()[l];
@@ -374,10 +376,12 @@ final class VoxelLayer implements AutoCloseable {
             float near = (float) Math.sqrt(nx * nx + nz * nz);
             float fx = Math.max(Math.abs(ax), Math.abs(bx)), fz = Math.max(Math.abs(az), Math.abs(bz));
             float far = (float) Math.sqrt(fx * fx + fz * fz);
-            // Sodium draws all of it: inside its distance (with a block's margin, as it culls) and shown (loaded, settled
-            // or built: sections it hasn't built there are hidden behind others, and drawing them cost 2 ms at the Roost);
-            // the chunks drawn hide per section (the section mask)
-            if (far < realWithin - 2 && renderer.shown(c.cx, c.cz) && Math.max(Math.abs(ay), Math.abs(by)) < realWithin - 2) continue;
+            // Sodium draws all of it: inside its distance (with a block's margin, as it culls) and every section it can be
+            // seen in built, from the chunk's lowest ground up (not the sealed ones under it, which Sodium never builds:
+            // counting those drew most chunks for 2 ms more at the Roost; nor a timer: on a busy machine Sodium builds
+            // late, and land it hadn't built stood as a hole). The chunks drawn hide per section (the section mask)
+            if (far < realWithin - 2 && Math.max(Math.abs(ay), Math.abs(by)) < realWithin - 2
+                    && renderer.sectionsBuilt(c.cx, c.cz, c.groundY, c.maxY, levelMinY)) continue;
             if (!renderer.inView(ax, ay, az, bx, by, bz)) continue;
             // faces turned away from the camera across the whole chunk aren't drawn: down, up, north, south, west, east
             int faces = (camY < c.maxY ? 1 : 0) | (camY > c.minY ? 2 : 0) | (camZ < c.cz * 16 + 16 ? 4 : 0) | (camZ > c.cz * 16 ? 8 : 0)
