@@ -197,6 +197,7 @@ final class OpeningFx {
             end = base + (long) MAX_QUADS * 64;
             try {
                 if (columnOn) column(t, day, far, true);
+                if (lens != null) lensFacets(t);
                 hazeQuads = (int) ((at - base) / 64);
                 if (columnOn) column(t, day, far, false);
                 draw(t);
@@ -398,6 +399,37 @@ final class OpeningFx {
         ps.popPose();
     }
 
+    /**
+     * The shard's facets, alpha-blended (the haze's pass), each shaded as if lit from above so it reads as cut crystal: as
+     * light added, front and back faces summed to a flat white diamond at noon.
+     */
+    private static void lensFacets(float t) {
+        Vec3 c = lens;
+        if (c == null) return;
+        double bob = Math.sin(t * 0.07) * 0.08;
+        float glow = 0.55F + lensGlow * 0.45F;
+        double s = 0.42, ang = t * 0.04;
+        Vec3 top = c.add(0, s * 1.6 + bob, 0), bot = c.add(0, -s * 1.6 + bob, 0);
+        Vec3[] ring = new Vec3[4];
+        for (int i = 0; i < 4; i++) {
+            double a = ang + i * Math.PI / 2;
+            ring[i] = c.add(Math.cos(a) * s, bob, Math.sin(a) * s);
+        }
+        for (int i = 0; i < 4; i++) {
+            Vec3 r1 = ring[i], r2 = ring[(i + 1) % 4];
+            // the face's turn toward a light up and to the north-west: the upper faces bright, the lower in shade
+            double mx = (r1.x + r2.x) * 0.5 - c.x, mz = (r1.z + r2.z) * 0.5 - c.z;
+            float lit = (float) (0.5 + 0.5 * (-mx - mz) / (Math.sqrt(mx * mx + mz * mz) * Math.sqrt(2) + 1e-6));
+            tri(top, r1, r2, argb(0.62F * glow, mix(0x9CC4EE, 0xF2F8FF, 0.35F + 0.65F * lit)));
+            tri(bot, r2, r1, argb(0.62F * glow, mix(0x46689C, 0xA8CCF0, lit)));
+        }
+    }
+
+    private static int mix(int a, int b, float k) {
+        int r = (int) Mth.lerp(k, a >> 16 & 255, b >> 16 & 255), g = (int) Mth.lerp(k, a >> 8 & 255, b >> 8 & 255), bl = (int) Mth.lerp(k, a & 255, b & 255);
+        return r << 16 | g << 8 | bl;
+    }
+
     /** The shard of the Choir over its pedestal: a turning octahedron of light; the scan sweeps head to foot. */
     private static void lensShard(float t) {
         Vec3 c = lens;
@@ -412,16 +444,14 @@ final class OpeningFx {
             double a = ang + i * Math.PI / 2;
             ring[i] = c.add(Math.cos(a) * s, bob, Math.sin(a) * s);
         }
-        int face = argb(0.55F * glow, 0xB8D8FF), edge = argb(0.9F * glow, 0xEAF4FF);
+        int edge = argb(0.9F * glow, 0xEAF4FF);
         for (int i = 0; i < 4; i++) {
             Vec3 r1 = ring[i], r2 = ring[(i + 1) % 4];
-            tri(top, r1, r2, face);
-            tri(bot, r2, r1, face);
             beam(top, r1, 0.03F, edge);
             beam(bot, r1, 0.03F, edge);
             beam(r1, r2, 0.03F, edge);
         }
-        flare(c.x, c.y + bob, c.z, 1.4F + lensGlow * 2.5F, argb(0.45F * glow, 0x9ED2FF));
+        flare(c.x, c.y + bob, c.z, 1.4F + lensGlow * 2.5F, argb(0.3F * glow, 0x9ED2FF));
         // the scan: a ring of light sweeping down over whoever stands to be read, twice
         float age = t - scanFrom;
         if (age >= 0 && age < 90) {
