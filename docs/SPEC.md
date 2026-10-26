@@ -5416,7 +5416,10 @@ behaves as before (its `citizens_` and `city_` tests unchanged in what they asse
 - **One body pool.** `Crowd` is one per world: every 10 ticks it gathers every settlement's candidates, sorts them
   nearest first whichever settlement they belong to, and applies the caps once (40 a player, 96 a world, 8 spawns a
   pass); path slots (4, 6 above 60 bodies) and the next-hop bake budget (3 a tick, `StreetNet.newServerTick`) are shared
-  the same way. `CitizenBody` carries its settlement (`home`, synced `DATA_SETTLEMENT`; 0 Carillon).
+  the same way. `CitizenBody` carries its settlement (`home`, synced `DATA_SETTLEMENT`; 0 Carillon). Each settlement's
+  people are compared only with the players within its reach (its furthest node + 40 + 64), any number of them: the
+  old pass looked at the first 16 players in the list wherever they were (a 17th player in the city got no one near
+  them; the multiplayer server can't have that). With 16 or fewer players nothing changes.
 - **Saved data v2.** `awaken:citizens` (`CitizensSave`, schemaVersion 2) is a list of `{key, id, schemaVersion 1,
   records, districts, data}`; `data` is the per-settlement `CitizensData` exactly as schema 1 wrote it (safety and
   gratitude sized by the settlement's own district count). A schemaVersion 1 file (Carillon's alone) is read as entry
@@ -5452,14 +5455,14 @@ behaves as before (its `citizens_` and `city_` tests unchanged in what they asse
 - **Also.** Citizens' payloads go through `AwakenNet.send` (a test or fake player is skipped, not thrown at); the hurt
   go home where a settlement has no infirmary; `/awaken citizens settlements` lists them and the pool.
 - **API** (§12): `dev.awaken.citizens.api.Settlements`, `Settlement`, `SettlementSpec`, `RosterSource`, `RosterBuilder`.
-- **Measured** (GameTest: Carillon's plan with 40 bodies round one player at its square at noon, 600-tick windows, the
-  machine at load 17-19 from other builds): before W0 ledger p50 0.014 / avg 0.066 ms, bodies p50 1.78 / avg 2.70 ms;
-  after, Carillon alone, ledger 0.016 / 0.047, bodies 1.35 / 2.04; with the hamlet beside it, ledger 0.012 / 0.025
-  (the hamlet's own 0.0009 ms a tick), bodies 1.78 / 2.04. Per-body work is the same code; at this load a single window
-  spreads 2-3x run to run (another after-run read bodies p50 2.5). The quiet in-game measure stays with Carillon's next
-  perf tour.
+- **Measured** (GameTest: Carillon's plan with 40 bodies round one player at its square at noon, 600-tick windows,
+  machine load 9-10 from other builds both times): before W0 ledger p50 0.011 / avg 0.030 ms, bodies p50 0.96 / avg
+  1.57 ms; after, Carillon alone, ledger 0.010 / 0.033, bodies 0.88 / 1.38; with the hamlet beside it (40 bodies
+  between them), ledger 0.007 / 0.019 (the hamlet's own 0.0003 ms a tick), bodies 0.51 / 0.69. At load 17-21 single
+  windows spread 2-3x run to run, both codes alike. The quiet in-game measure stays with Carillon's next perf tour.
 - **Tests:** `citizens_many_settlements` (the hamlet beside Carillon's engine: shared caps nearest first, come and go,
-  sleep and wake, events by tag, both saved and read back; logs the costs), `citizens_save_v1_loads`.
+  sleep and wake, events by tag, both saved and read back; logs the costs; it sets `Citizens.onlyPlayers` to its own
+  players, as the shared test world holds every earlier test's), `citizens_save_v1_loads`.
 - **Left for W3:** the village builder on `RosterBuilder` (households from plots, jobs from stations, day templates,
   village jobs appended to `Roster.JOBS`), village speech pools and soundscape beds (Soundscape is Carillon's),
   chimneys and client life for built settlements (`CitizenWork.chimneys` reads Carillon's plan), village skins if the

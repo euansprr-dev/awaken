@@ -29,6 +29,8 @@ final class Settlement implements dev.awaken.citizens.api.Settlement {
     final int radius;
     /** The city's daily events are planned here (Carillon; others when their spec asks). */
     final boolean plannedEvents;
+    /** No record of it stands further than this from its origin (the crowd compares its people with players this near). */
+    final double reach;
 
     final MinecraftServer server;
     final ServerLevel level;
@@ -80,6 +82,10 @@ final class Settlement implements dev.awaken.citizens.api.Settlement {
         recognition = new Recognition(this);
         lanterns = new Lanterns(this);
         ledger.work = work;
+        // how far from its origin its people can be: its furthest node, and a spot or an event's place beside it
+        double far = 0;
+        for (int i = 0; i < net.n; i++) far = Math.max(far, Math.hypot(net.x[i] - site.cx(), net.z[i] - site.cz()));
+        reach = far + 40;
         if (site.carillon()) {
             Awaken.LOG.info(String.format(Locale.ROOT, "[citizens] Carillon's %d citizens up in %.1f ms (%d inside, %d bakes)", roster.citizens,
                     (System.nanoTime() - t0) / 1e6, ledger.count(CitizensData.INSIDE), net.bakes));

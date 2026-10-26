@@ -68,6 +68,18 @@ final class Citizens {
         return best;
     }
 
+    /**
+     * Tests in the shared GameTest world: only these players wake settlements and get bodies (the world also holds every
+     * earlier test's players, which would otherwise decide for them). Null: every player in the level.
+     */
+    static @Nullable List<ServerPlayer> onlyPlayers;
+
+    /** The players who wake settlements and get bodies round them. */
+    static List<ServerPlayer> players(ServerLevel level) {
+        List<ServerPlayer> only = onlyPlayers;
+        return only != null ? only : level.players();
+    }
+
     /** The world's one pool of bodies (made with the first settlement). */
     static Crowd crowd(ServerLevel level) {
         if (crowd == null || crowd.level != level) crowd = new Crowd(level);
@@ -206,6 +218,7 @@ final class Citizens {
         LIVE.clear();
         carillon = null;
         crowd = null;
+        onlyPlayers = null;
         tried = false;
         startGame = -1;
     }
@@ -255,7 +268,7 @@ final class Citizens {
             if (s.site.carillon()) continue;
             double reach = s.radius + Settlement.WAKE + (s.awake ? 64 : 0);
             boolean near = false;
-            for (ServerPlayer p : s.level.players()) {
+            for (ServerPlayer p : players(s.level)) {
                 double dx = p.getX() - s.site.cx(), dz = p.getZ() - s.site.cz();
                 if (dx * dx + dz * dz < reach * reach) {
                     near = true;

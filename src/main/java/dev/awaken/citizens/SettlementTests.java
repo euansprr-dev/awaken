@@ -112,6 +112,8 @@ final class SettlementTests {
         Crowd pool = city.crowd;
         int capPlayer = pool.capPlayer, capWorld = pool.capWorld;
         AwakenTests.Live[] player = {AwakenTests.survivalPlayer(h, "w0-a", BlockPos.ZERO.above(2))};
+        // the shared test world keeps every earlier test's players: only this test's own decide here
+        Citizens.onlyPlayers = List.of(player[0].player());
         Settlement[] hamlet = new Settlement[1];
         List<String> problems = new ArrayList<>();
         String[] cost = new String[2];
@@ -130,6 +132,7 @@ final class SettlementTests {
                 if (el < 1900) throw running(el);
                 // back as it was, pass or fail
                 done[0] = true;
+                Citizens.onlyPlayers = null;
                 pool.capPlayer = capPlayer;
                 pool.capWorld = capWorld;
                 if (player[0] != null) player[0].leave();
@@ -214,12 +217,14 @@ final class SettlementTests {
             pool.capWorld = 96;
             player[0].leave();
             player[0] = null;
+            Citizens.onlyPlayers = List.of();
         }
         if (el == 1800) {
             if (!pool.bodies.isEmpty()) problems.add(pool.bodies.size() + " bodies with nobody about");
             if (hm.awake) problems.add("the hamlet is still awake with nobody near");
             hamletLedger[2] = hm.ledger.jumps;
             player[0] = AwakenTests.survivalPlayer(h, "w0-b", BlockPos.ZERO.above(2));
+            Citizens.onlyPlayers = List.of(player[0].player());
         }
         if (el == 1840) {
             if (!hm.awake) problems.add("the hamlet didn't wake for a player");

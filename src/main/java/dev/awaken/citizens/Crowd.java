@@ -24,7 +24,7 @@ import java.util.List;
 final class Crowd {
     /** Accumulated by every body's tick between the server tick's Pre and Post. */
     static long bodyNanos;
-    static final int SPAWNS_PER_PASS = 8, MAX_PLAYERS = 16;
+    static final int SPAWNS_PER_PASS = 8;
     static final double EMBODY = 56, KEEP = 64;
 
     final ServerLevel level;
@@ -36,7 +36,8 @@ final class Crowd {
     /** Candidates this pass: settlement (index into the live list), record, nearest player, squared distance. */
     private int[] candSet = new int[0], candIdx = new int[0], candPlayer = new int[0];
     private double[] candDist = new double[0];
-    private final int[] perPlayer = new int[MAX_PLAYERS];
+    /** Bodies given to each player this pass, and the players near the settlement being gathered (indices). */
+    private int[] perPlayer = new int[16], near = new int[16];
     private final double[] tmp = new double[3];
     private int pathsActive;
     /** Doors opened for someone, shut again at the given game time. */
@@ -81,20 +82,36 @@ final class Crowd {
     void rebalance() {
         List<Settlement> live = Citizens.live();
         capacity(live);
-        List<ServerPlayer> players = level.players();
-        int np = Math.min(players.size(), MAX_PLAYERS);
+        List<ServerPlayer> players = Citizens.players(level);
+        int np = players.size();
+        if (perPlayer.length < np) {
+            perPlayer = new int[np + 16];
+            near = new int[np + 16];
+        }
         int cc = 0;
         for (int si = 0; si < live.size(); si++) {
             Settlement c = live.get(si);
             Ledger l = c.ledger;
             boolean embodies = on && c.embody && c.awake && c.level == level;
+            // (SPEC §28.4) only the players near this settlement are compared with its people: any number of players
+            // online, each settlement's records against the few within its reach (a player further off can't be 56 from one)
+            int nn = 0;
+            if (embodies) {
+                double reach = c.reach + KEEP;
+                for (int p = 0; p < np; p++) {
+                    ServerPlayer sp = players.get(p);
+                    if (sp.isSpectator() && !c.spectatorsEmbody) continue;
+                    double dx = sp.getX() - c.site.cx(), dz = sp.getZ() - c.site.cz();
+                    if (dx * dx + dz * dz <= reach * reach) near[nn++] = p;
+                }
+            }
             for (int i = 0; i < l.n; i++) {
                 CitizenBody b = l.body[i];
                 if (b != null && (b.isRemoved() || b.fading())) {
                     l.body[i] = null;
                     b = null;
                 }
-                if (!embodies || np == 0) continue;
+                if (!embodies || nn == 0) continue;
                 double x, y, z;
                 if (b != null) {
                     x = b.getX();
@@ -108,9 +125,9 @@ final class Crowd {
                 }
                 int bp = -1;
                 double bd = Double.MAX_VALUE;
-                for (int p = 0; p < np; p++) {
+                for (int q = 0; q < nn; q++) {
+                    int p = near[q];
                     ServerPlayer sp = players.get(p);
-                    if (sp.isSpectator() && !c.spectatorsEmbody) continue;
                     double dx = sp.getX() - x, dy = (sp.getY() - y) * 0.5, dz = sp.getZ() - z, dd = dx * dx + dy * dy + dz * dz;
                     if (dd < bd) {
                         bd = dd;
