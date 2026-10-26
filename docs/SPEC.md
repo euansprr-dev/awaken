@@ -1506,27 +1506,41 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   median 0.3 blocks from the generator's exact ground, p90 1.2, test `farsight_columns_predict`), plus half a block (the
   top face). 2.5 probes a column; 59 µs a column on the Awakened Tectonic terrain on the M4 (stage 0: 650-870 µs and
   8-block steps). The city basin's `Shape.ground` applies on top. Water fills to sea level. Biome from the biome
-  source; colour, forest (density, canopy height, shape, crown colour) and flags from `FarPalette.look`; `ALPINE` where
-  the world has Awakened Alpine and the biome is `#awaken:alpine`. Generator without a terrain density: its base height.
-  Workers: a quarter of the cores, at most three (two on an M4: macOS ignores thread priorities), coarsest ring first.
+  source, sampled per patch every second corner and at least every 8 blocks, each corner taking the nearest sample
+  (2026-10-26, a JFR profile of the pack's world: one lookup a corner, through Lithostitched's injector over Tectonic's
+  climate, was 86% of the workers' time, 178 µs a column); colour, forest (density, canopy height, shape, crown
+  colour) and flags from `FarPalette.look`; `ALPINE` where the world has Awakened Alpine and the biome is
+  `#awaken:alpine`. Generator without a terrain density: its base height.
+  Workers: a quarter of the cores, at most three (two on an M4: macOS ignores thread priorities), paced by frame time;
+  while more than 64 patches are missing (a new world, a jump, the opening's card, fast flight) half the cores, at most
+  six, unpaced. The horizon ring first, then by distance; a ring asks only for patches it draws (not those the next
+  finer ring covers clear of its 16-cell easing band: asked for, they came first and the visible bands waited, so a
+  minute after a jump rings 4 and 5 still lacked 66 and 209 of 256 patches and the coast read as see-through sea).
 - **Generated layer** (stage 1, schema 2): `FarChunk` keeps per 2×2-block cell the ground's top (MOTION_BLOCKING_NO_LEAVES;
   water counts), water depth, the ground's colour, the canopy's height above it and its colour (leaves at
   MOTION_BLOCKING). `FarStore.patch` averages the cells within half a cell of each corner (known once a quarter is
-  seen) into the same four texels, flagged generated; its trees get their biome's shape. It wins over the prediction.
+  seen) into the same four texels, flagged generated; its trees get their biome's shape (looked up only where trees
+  stand). It wins over the prediction.
 - **Drawing** (`AfterSky`, before any chunk, its own D32 reversed-Z depth, planes 1 and 32768): each ring's window
   minus the next finer window is cut into pieces of up to 64×64 cells, culled on the CPU, each one draw of a continuous
   mesh: vertex `v` is the piece's corner `(v % 65, v / 65)`, one index buffer per piece width (8..64). A corner takes
   the generated layer, else the prediction, and over the window's outer 16 cells eases into the next coarser ring's
   surface (bilinear between its corners), exactly at the edge: no crack, no pop. A corner with no data takes the coarser
-  rings' surface, else open sea at sea level (never a collapsed vertex). Far terrain is hidden where the real chunks are drawn,
-  dithering in over 32 blocks at the render distance's edge: where they are loaded and meshed (a 64×64 chunk mask: a
-  chunk counts once its surface section and the three below are built) and within the render distance in 3D from the
-  camera, as Sodium culls them (a sphere of the render distance). Seen from high up the real sea ends well inside the
+  rings' surface, else open sea at sea level (never a collapsed vertex). Far terrain is hidden exactly where the real
+  chunks are drawn: where they are loaded and meshed (a 64×64 chunk mask: a chunk counts once its surface section and
+  the three below are built, or 2 s after it loads, since Sodium never builds sections it can't see) and in a section
+  Sodium draws, by its own rule (`farRealSection`, from Sodium 0.9.3's `OcclusionCuller`: the section's box grown by a
+  block within the render distance horizontally, as a circle, and vertically). (2026-10-26, Euan: a smooth dark wedge
+  on a loaded spire and a grey box behind a quay's tower: the mask was a sphere 48 blocks short of the render distance,
+  so in that band far cells, wider than a spire, stood with the real chunks.) Seen from high up the real sea ends well inside the
   horizontal render distance, and its floor sooner, so far water tests its own floor's distance and stays under a real
-  water surface whose floor is too far to draw. Far water is never hidden under the real chunks unless the camera is
+  water surface whose floor is too far to draw. Far water is not hidden under the real chunks in the render distance's outer band (the last 80 blocks), where the
+  mesh lies flat and the camera is above the sea (2026-10-26: a steep far triangle from a canal to a roof stood as a blue
+  wall in the loaded city, and nearer far water showed as boxes on its canals; the real floor is always drawn nearer),
+  unless the camera is
   under the sea (2026-10-26, Euan's play: sky-coloured slabs on the sea where Sodium skipped a section), and grazing far
-  water reflects the sky by the horizon at every distance, as Lens's real water beside it does. The planner and the windows count as covered only the ground the
-  sphere reaches at a sea floor (40 under sea level) below the camera, in 16-block steps. (2026-10-26: the pale squares
+  water reflects the sky by the horizon at every distance, as Lens's real water beside it does. The planner and the windows count as covered only the ground a
+  sphere 48 blocks inside the render distance reaches at a sea floor (40 under sea level) below the camera, in 16-block steps. (2026-10-26: the pale squares
   over the sea after a jump and the pale frame along a flight were these holes, found with `farsight debug 2`, which
   paints masked far terrain red. They were first taken for water walls and for vanilla's chunk fade-in; a Turbo
   fluid-renderer mixin and a fade override were built for those, removed nothing, and were dropped.)
@@ -1592,6 +1606,14 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   Cells the city builds on (real ones above the street + 3, planned ones) carry `FarCity.BUILT` in their colour's top
   byte, and a far corner over them takes the highest built cell and its colour, not the average, so walls, towers and
   spires keep their silhouette at any distance. Test `farsight_city`; tour `farsight2-city.txt`.
+- **The city before its chunks** (2026-10-26, Euan's play: a far hill stood over Carillon in the opening's flight, the
+  spire through it): the far prediction lays every column inside the city's reach from the plan (`FarCity.plannedAt`,
+  `City.skyline` painted once per chunk and kept), its top block's height and colour, flagged as known, so the city is
+  right from the first frame whether terrain carved its basin or the city levelled its own ground. Built cells keep
+  their highest only where a far corner spans 8 blocks or less (rings 0-2); coarser corners average, or one spire's top
+  would be taken by every corner round it and slope into a cone. Ring 0's pieces still loading are drawn from the
+  coarser surface, and its land pieces are skipped under the chunks only where every chunk under them is shown in the
+  chunk mask: a chunk still meshing leaves the far land to cover it, never a hole to the sky.
 - **Landmarks** (`FarLandmarks`): unchanged from stage 1 (gate pillars from `Gates.near` from 1500 blocks, the city's
   towers), drawn after the terrain and trees.
 - **Budgets** (measured): Lens Ultra at sunset on the jagged peaks, 2880×1800 (11% more pixels than 4K at 0.75): Far
@@ -2011,7 +2033,10 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   with the start age (a relog resumes mid-flight); the player is never dragged along. The camera stays within ~215
   blocks of the player, below y 320 and at most ~200 above the ground; the shot flies over the north-west half looking
   south-east across the spire, and Distant Horizons (or fog, Lens haze and clouds) carries the far half. The first
-  flight is pre-warmed behind the opening card. Life seen from the sky is blocks and particles (lit windows, smoke,
+  flight is pre-warmed behind the opening card, and the card holds (up to 20 s more, `SkyShot.WARM_MAX`) until the view
+  is warm (`FarSightClient.warm()`: every far ring's patches in and 97% of the chunks well inside the render distance
+  loaded and meshed; at once when Far Sight is off), so the first frame of sky has no hole, seam or hill where the city
+  stands (2026-10-26, Euan's play). The server allows the sky ninety seconds. Life seen from the sky is blocks and particles (lit windows, smoke,
   lamps, boats): citizens draw only within 128 blocks.
 
 - **The Registry ceremony** (2026-10-26; Euan, playing: "they actually physically hand you the Holo band and the paper

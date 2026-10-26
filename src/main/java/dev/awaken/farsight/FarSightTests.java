@@ -222,6 +222,14 @@ final class FarSightTests {
             h.assertTrue(high >= city.streetY + city.plan.wallHeight && built,
                     "the wall stands at its height, built: top " + high + ", street " + city.streetY + " + wall " + city.plan.wallHeight);
             h.assertTrue(FarCity.planned(city, (city.cx >> 4) + 200, city.cz >> 4, level.getSeed(), plains) == null, "nothing beyond the city");
+            // the far prediction reads the same plan column by column: across the wall, its top stands at the wall's height
+            int[] yAt = new int[1];
+            int wallTop = Integer.MIN_VALUE;
+            for (int dx = -6; dx <= 6; dx++) {
+                if (FarCity.plannedAt(city, level.getSeed(), wallX + dx, city.cz, yAt) != null) wallTop = Math.max(wallTop, yAt[0]);
+            }
+            h.assertTrue(wallTop + 1 >= city.streetY + city.plan.wallHeight, "the prediction's wall: top " + (wallTop + 1));
+            h.assertTrue(FarCity.plannedAt(city, level.getSeed(), city.cx + 4000, city.cz, yAt) == null, "the prediction leaves the land beyond the city");
 
             // a chunk loaded before anything collected (as the city's pregeneration holds them, never saving) reaches the
             // store as soon as collecting starts

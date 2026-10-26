@@ -21,6 +21,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.Heightmap;
 import org.joml.FrustumIntersection;
@@ -86,12 +87,18 @@ final class FarRenderer implements AutoCloseable {
     private final GpuTexture chunks;
     private final GpuTextureView chunksView;
     private final ByteBuffer chunkBytes = MemoryUtil.memCalloc(64 * 64);
+    /** Which chunk each mask slot last saw loaded, and since when (ms): a chunk settled this long counts as drawn. */
+    private final long[] slotChunk = new long[64 * 64], slotSince = new long[64 * 64];
+    static final long SETTLE_MS = 2000L;
     private final BlockPos.MutableBlockPos probe = new BlockPos.MutableBlockPos();
 
     // the frame's pieces: ring, first cell (window-local), width and height in cells
     private final int[] pRing = new int[MAX_DRAWS], pX = new int[MAX_DRAWS], pZ = new int[MAX_DRAWS], pW = new int[MAX_DRAWS], pH = new int[MAX_DRAWS];
     int pieces, cells;
     private int seaLevel = 63;
+    private double planX, planZ;
+    /** The share of the chunks well inside the render distance that are loaded and meshed (the opening waits on it). */
+    float shownShare;
     private final FrustumIntersection frustum = new FrustumIntersection();
     private final Matrix4f cull = new Matrix4f();
     private final float[] originX = new float[Rings.RINGS], originZ = new float[Rings.RINGS];
@@ -137,6 +144,7 @@ final class FarRenderer implements AutoCloseable {
         ti.flip();
         treeIndices = RenderSystem.getDevice().createBuffer(() -> "awaken far sight tree triangles", GpuBuffer.USAGE_INDEX, ti);
         MemoryUtil.memFree(ti);
+        java.util.Arrays.fill(slotChunk, Long.MIN_VALUE);
         chunks = RenderSystem.getDevice().createTexture(() -> "awaken far sight chunks", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING,
                 GpuFormat.R8_UNORM, 64, 64, 1, 1);
         chunksView = RenderSystem.getDevice().createTextureView(chunks);
@@ -151,13 +159,27 @@ final class FarRenderer implements AutoCloseable {
                 int cx, int cz, int radius) {
         radius = Math.min(radius, 31);
         var source = level.getChunkSource();
-        int minY = level.getMinY();
+        int minY = level.getMinY(), inner = Math.max(1, radius - 3), total = 0, shownN = 0;
+        long now = net.minecraft.util.Util.getMillis();
         for (int dz = -radius; dz <= radius; dz++) {
             for (int dx = -radius; dx <= radius; dx++) {
                 int x = cx + dx, z = cz + dz;
+                boolean counts = dx * dx + dz * dz <= inner * inner;
                 var chunk = source.getChunk(x, z, ChunkStatus.FULL, false);
                 boolean shown = chunk != null;
-                if (shown) {
+                int slot = ((z & 63) << 6) | (x & 63);
+                long key = ChunkPos.pack(x, z);
+                if (chunk == null) {
+                    slotChunk[slot] = Long.MIN_VALUE;
+                } else if (slotChunk[slot] != key) {
+                    slotChunk[slot] = key;
+                    slotSince[slot] = now;
+                }
+                // a chunk loaded a while counts as drawn whether or not its sections report built: Sodium builds only the
+                // sections it can see, so one hidden behind a street's houses stays unbuilt, and far terrain must not
+                // stand there (the far city at roof height showed over the streets as a ceiling). The meshing check is
+                // for the first moments after a chunk arrives (a teleport), when far terrain covers it instead of a hole
+                if (shown && now - slotSince[slot] < SETTLE_MS) {
                     int top = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, 8, 8);
                     for (int y = top; shown && y >= Math.max(minY, top - 48); y -= 16) {
                         probe.set(x * 16 + 8, y, z * 16 + 8);
@@ -165,8 +187,13 @@ final class FarRenderer implements AutoCloseable {
                     }
                 }
                 chunkBytes.put(((z & 63) << 6) | (x & 63), shown ? (byte) 255 : 0);
+                if (counts) {
+                    total++;
+                    if (shown) shownN++;
+                }
             }
         }
+        shownShare = total == 0 ? 1f : shownN / (float) total;
         chunkBytes.clear();
         RenderSystem.getDevice().createCommandEncoder().writeToTexture(chunks, chunkBytes, 0, 0, 0, 0, 64, 64);
     }
@@ -190,6 +217,8 @@ final class FarRenderer implements AutoCloseable {
     void plan(FarField field, double camX, double camY, double camZ, Matrix4fc viewRotation, float fovDegrees, float aspect,
             float covered, float hiddenWithin, int minY, int maxY, int seaLevel) {
         this.seaLevel = seaLevel;
+        planX = camX;
+        planZ = camZ;
         pieces = 0;
         cells = 0;
         cull.setPerspective(fovDegrees * (float) (Math.PI / 180.0), aspect, 0.5f, FAR).mul(viewRotation);
@@ -278,15 +307,18 @@ final class FarRenderer implements AutoCloseable {
                 // shows the sea, never the sky
                 float fx = Math.max(Math.abs(ax), Math.abs(bx)), fz = Math.max(Math.abs(az), Math.abs(bz));
                 long range = range(field, r, x, z, w, h);
-                boolean sea = r == 0 && range != Long.MIN_VALUE && (int) (range >> 32) + 32 <= seaLevel + 1;
-                if (!sea && fx * fx + fz * fz < covered * covered) continue;
+                boolean sea = r == 0 && (FarSightClient.partsOff & 64) == 0 && range != Long.MIN_VALUE && (int) (range >> 32) + 32 <= seaLevel + 1;
+                // (and only where every chunk under it is shown: a chunk still meshing leaves the far land to cover it)
+                boolean shown = range != Long.MIN_VALUE && (r > 0 || allShown(ax, az, bx, bz));
+                if (!sea && shown && fx * fx + fz * fz < covered * covered) continue;
                 int lo = minY, hi = maxY;
                 if (range != Long.MIN_VALUE) {
                     lo = (int) (range >> 32);
                     hi = (int) range;
                     double down = camY - lo;
-                    if (!sea && fx * fx + fz * fz + down * down < hiddenWithin * (double) hiddenWithin) continue;
-                } else if (fx * fx + fz * fz < covered * covered) {
+                    if (!sea && shown && fx * fx + fz * fz + down * down < hiddenWithin * (double) hiddenWithin) continue;
+                } else if (r > 0 && fx * fx + fz * fz < covered * covered) {
+                    // (ring 0's pieces still loading are drawn all the same, from the coarser surface: never a hole)
                     continue;
                 }
                 if (!frustum.testAab(ax, (float) (lo - camY), az, bx, (float) (hi - camY), bz)) continue;
@@ -299,6 +331,17 @@ final class FarRenderer implements AutoCloseable {
                 cells += w * h;
             }
         }
+    }
+
+    /** Whether every chunk under this camera-relative rectangle is shown in the chunk mask (loaded and meshed). */
+    private boolean allShown(float ax, float az, float bx, float bz) {
+        int x0 = Math.floorDiv((int) Math.floor(planX + ax), 16), x1 = Math.floorDiv((int) Math.floor(planX + bx) - 1, 16);
+        int z0 = Math.floorDiv((int) Math.floor(planZ + az), 16), z1 = Math.floorDiv((int) Math.floor(planZ + bz) - 1, 16);
+        if (x1 - x0 >= 64 || z1 - z0 >= 64) return false;
+        for (int z = z0; z <= z1; z++) {
+            for (int x = x0; x <= x1; x++) if (chunkBytes.get(((z & 63) << 6) | (x & 63)) == 0) return false;
+        }
+        return true;
     }
 
     /** Lowest and highest top over the piece's patches ({@code lo << 32 | hi}), or MIN_VALUE if any is missing. */
@@ -320,12 +363,13 @@ final class FarRenderer implements AutoCloseable {
     /**
      * Draws the planned pieces into the main colour target and Far Sight's depth. {@code sun} is the light's direction
      * (world space); {@code fogStart}/{@code fogEnd} Far Sight's own fog at the horizon; {@code clipStart}/{@code clipBand}
-     * where it dithers in under the real chunks.
+     * where the outer band of the real chunks begins; {@code realWithin} Sodium's render distance in blocks (the shaders
+     * hide far terrain in every loaded section it draws).
      */
     void draw(FarField field, RenderTarget main, Matrix4fc viewRotation, double camX, double camY, double camZ, Vector3f sun,
             float sunStrength, Vector3f sunColour, float golden, float haze, float rain, float mistFloor, float mistDepth, float mistDensity,
             float mistCover, float fogStart, float fogEnd, float clipStart,
-            float clipBand, int seaLevel, boolean zeroToOne, GpuTextureView lightmap, List<FarLandmarks.Landmark> landmarks) {
+            float clipBand, int realWithin, int seaLevel, boolean zeroToOne, GpuTextureView lightmap, List<FarLandmarks.Landmark> landmarks) {
         depth(main);
         // clip.z = A + B * clip.w: Far Sight's own planes on the game's x, y and w (so view bobbing and FOV still apply)
         float a, b;
@@ -350,7 +394,7 @@ final class FarRenderer implements AutoCloseable {
             for (int r = 0; r < Rings.RINGS; r++) {
                 u.putIVec4((field.winX[r] * Rings.PATCH) & Rings.MASK, (field.winZ[r] * Rings.PATCH) & Rings.MASK, r * Rings.SIZE, 0);
             }
-            u.putVec4(sunColour.x, sunColour.y, sunColour.z, golden).putVec4(haze, AIR_SCALE_HEIGHT, AIR_SUN, rain).putIVec4(cellX, cellZ, 0, 0)
+            u.putVec4(sunColour.x, sunColour.y, sunColour.z, golden).putVec4(haze, AIR_SCALE_HEIGHT, AIR_SUN, rain).putIVec4(cellX, realWithin, cellZ, 0)
                     .putVec4(mistFloor, mistDepth, mistDensity, mistCover);
         }
         GpuBuffer draws = drawUbo.currentBuffer();

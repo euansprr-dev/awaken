@@ -181,7 +181,7 @@ final class FarField implements AutoCloseable {
             for (int i = 0; i < Rings.PATCHES; i++) {
                 int px = nx + i, pz = nz + j, slot = Rings.slot(px, pz);
                 long key = Rings.key(px, pz);
-                boolean isHidden = isHidden(px, pz, pb, cx, cz, hidden);
+                boolean isHidden = isHidden(px, pz, pb, cx, cz, hidden) || covered(ring, px, pz, pb);
                 if (expect[ring].get(slot) != key) {
                     // a slot that held another patch is zeroed now; a fresh one already is (reset clears the atlases)
                     if (expect[ring].getAndSet(slot, key) != NONE) {
@@ -217,10 +217,31 @@ final class FarField implements AutoCloseable {
 
     private int frame;
 
+    /**
+     * Whether the next finer ring draws all of this patch: inside its window, clear of the outer 16 cells where it eases
+     * into this ring's surface. Such a patch would only be a fallback, and the horizon ring (never skipped) already is
+     * one; asked for, these came first (they lie nearest) and the rings' visible bands waited behind them (Euan's tour,
+     * 2026-10-26: rings 1-5 still empty a minute after a jump, see-through ground outside Carillon).
+     */
+    private boolean covered(int ring, int px, int pz, int pb) {
+        int f = ring - 1;
+        if (ring == 0 || ring == Rings.RINGS - 1 || !valid[f]) return false;
+        long fb = Rings.patchBlocks(f), band = 16L * Rings.cellSize(f);
+        long x0 = winX[f] * fb + band, x1 = (winX[f] + Rings.PATCHES) * fb - band;
+        long z0 = winZ[f] * fb + band, z1 = (winZ[f] + Rings.PATCHES) * fb - band;
+        return (long) px * pb >= x0 && (long) (px + 1) * pb <= x1 && (long) pz * pb >= z0 && (long) (pz + 1) * pb <= z1;
+    }
+
+    /**
+     * The horizon ring first (the whole horizon in a second), then every other ring's patches by how far they are from the
+     * camera, nearest first: the near far land is the most seen, and with the coarser rings first it waited behind every
+     * patch they queued as the camera moved (in the opening's flight ring 0 never arrived).
+     */
     private static float priority(int ring, int px, int pz, double camX, double camZ) {
         int pb = Rings.patchBlocks(ring);
         double dx = (px + 0.5) * pb - camX, dz = (pz + 0.5) * pb - camZ;
-        return (Rings.RINGS - 1 - ring) * 1.0e6f + (float) Math.sqrt(dx * dx + dz * dz) / Rings.cellSize(ring);
+        float blocks = (float) Math.sqrt(dx * dx + dz * dz);
+        return (ring == Rings.RINGS - 1 ? 0f : 1.0e6f) + blocks;
     }
 
     /**
