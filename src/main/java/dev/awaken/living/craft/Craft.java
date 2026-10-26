@@ -24,10 +24,10 @@ public enum Craft {
             new Perk(50, "wildheart", "Wildheart", "You heal slowly while you're in a forest."))),
     MINING("mining", "Mining", "mine", 0x9FC3E6, List.of(
             new Perk(5, "clean_strike", "Clean Strike", "Ores sometimes give one more."),
-            new Perk(10, "ore_sense", "Ore Sense", "With a pick in hand, the band shows ore within 6 blocks through the stone."),
-            new Perk(20, "vein_sight", "Vein Sight", "Ore Sense reaches 10 blocks."),
-            new Perk(30, "deep_ear", "Deep Ear", "You mine stone and deepslate a tenth faster."),
-            new Perk(40, "deep_vein", "Deep Vein", "Deepslate ores give one more a quarter of the time."),
+            new Perk(10, "ore_sense", "Ore Sense", "With a pick or mattock in hand, the band shows ore within 6 blocks through the stone."),
+            new Perk(20, "vein_sight", "Vein Sight", "Ore Sense outlines the whole vein of every ore it finds."),
+            new Perk(30, "deep_ear", "Deep Ear", "Underground, you hear an open cave or Deepglass behind the rock, soft, from its way."),
+            new Perk(40, "deepglass_cutter", "Deepglass Cutter", "Deepglass breaks twice as fast for you and gives one more shard."),
             new Perk(50, "heart_of_stone", "Heart of Stone", "Below the surface (under y 0) you take less damage."))),
     FISHING("fishing", "Fishing", "fish", 0x6FC8E6, List.of(
             new Perk(5, "calm_water", "Calm Water", "One more fish a fifth of the time."),

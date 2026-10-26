@@ -3,16 +3,17 @@
   "category": "equipment",
   "group": "awaken_hunter_chestplate",
   "key": {
-    "B": "#awaken:hunter_bind_b",
     "C": "#awaken:hunter_core_b",
     "H": "#awaken:hunter_hide_b",
     "L": "awaken:lord_heart",
-    "S": "awaken:essence_shard"
+    "M": "#awaken:tier_metal_b",
+    "S": "awaken:essence_shard",
+    "Y": "minecraft:amethyst_shard"
   },
   "pattern": [
-    "HSH",
-    "BLB",
-    "SCS"
+    "MYM",
+    "HLH",
+    "SCM"
   ],
   "result": {
     "id": "awaken:veilwoven_chestplate"

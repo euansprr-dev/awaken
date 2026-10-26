@@ -3,15 +3,16 @@
   "category": "equipment",
   "group": "awaken_hunter_focus",
   "key": {
-    "B": "#awaken:hunter_bind_a",
     "C": "#awaken:hunter_core_a",
+    "G": "minecraft:gold_ingot",
     "L": "awaken:lord_heart",
+    "M": "#awaken:tier_metal_a",
     "S": "awaken:essence_shard"
   },
   "pattern": [
-    "BLB",
+    "GLG",
     " C ",
-    " S "
+    "MSM"
   ],
   "result": {
     "id": "awaken:lordscale_focus"

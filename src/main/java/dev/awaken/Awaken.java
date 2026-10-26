@@ -61,6 +61,7 @@ public final class Awaken {
         dev.awaken.atlas.AtlasModule.init(modBus);
         dev.awaken.arms.ArmsModule.init(modBus);
         dev.awaken.wildlife.WildlifeModule.init(modBus);
+        dev.awaken.delve.DelveModule.init(modBus);
     }
 
     public static Identifier id(String path) {

@@ -35,9 +35,9 @@ import java.util.function.Consumer;
 
 /**
  * Arms at the Forge (SPEC §25 "The Forge"): sneak and use Hearth's Forge. Holding one of our weapons: attune it to a
- * Force, named by the catalyst in the off hand (Blaze Powder Heat, a Copper Ingot Charge, an Ender Pearl Gravity, a
- * Ghast Tear Spirit, Packed Ice Frost), for essence and a Core Shard. With an empty hand: draw a style's Blueprint, one
- * style each use in turn. An attuned weapon's riders take its Force, and it primes both ways: a landed hit makes the
+ * Force, named by the catalyst in the off hand: the Lands' crystals and the deep's (SPEC §28.3: Sunshard Heat, Frostspar
+ * Frost, a Fault Seam Gravity, a Copper Ingot Charge, a Deepglass Shard Spirit), for essence and a Core Shard. With an
+ * empty hand: draw a style's Blueprint in lapis ink, one style each use in turn. An attuned weapon's riders take its Force, and it primes both ways: a landed hit makes the
  * next power cost less, and a power of its Force makes the next blow land harder with that Force's touch.
  */
 public final class ArmsForge {
@@ -46,12 +46,22 @@ public final class ArmsForge {
     static final Identifier FORGE = Awaken.id("forge");
     static final String PREFIX = "arms";
 
-    /** The catalysts, by Force. */
-    static final Map<Forces.Force, Item> CATALYST = new EnumMap<>(Map.<Forces.Force, Item>of(
-            Forces.Force.HEAT, Items.BLAZE_POWDER, Forces.Force.CHARGE, Items.COPPER_INGOT, Forces.Force.GRAVITY, Items.ENDER_PEARL,
-            Forces.Force.SPIRIT, Items.GHAST_TEAR, Forces.Force.FROST, Items.PACKED_ICE));
+    /**
+     * The catalysts, by Force (every region has a stone worth going for: PLAN 7.2): the Glass Steppe's Sunshard, the Frost
+     * Spires' Frostspar, the Shattered Highlands' Fault Seam, copper, and the deep's Deepglass. By id: the crystals belong
+     * to the terrain module and Deepglass to the deep's, and arms names neither.
+     */
+    static final Map<Forces.Force, Identifier> CATALYST_ID = new EnumMap<>(Map.of(
+            Forces.Force.HEAT, Awaken.id("sunshard"), Forces.Force.CHARGE, Identifier.withDefaultNamespace("copper_ingot"),
+            Forces.Force.GRAVITY, Awaken.id("fault_seam"), Forces.Force.SPIRIT, Awaken.id("deepglass_shard"), Forces.Force.FROST, Awaken.id("frostspar")));
     public static final int ATTUNE_ESSENCE = 6, ATTUNE_CORE_SHARDS = 1;
-    public static final int BLUEPRINT_PAPER = 4, BLUEPRINT_IRON = 2, BLUEPRINT_ESSENCE = 1;
+    /** A Blueprint is drawn in lapis ink (PLAN 7.2): paper, a lapis and an essence shard, no iron. */
+    public static final int BLUEPRINT_PAPER = 4, BLUEPRINT_LAPIS = 1, BLUEPRINT_ESSENCE = 1;
+
+    /** The catalyst item of a Force (air if its module isn't loaded). */
+    public static Item catalystItem(Forces.Force f) {
+        return BuiltInRegistries.ITEM.getValue(CATALYST_ID.get(f));
+    }
     /** Both ways: an attuned hit primes the next power for so long, at this share of its energy. */
     public static final int PRIME_TICKS = 60;
     public static final float POWER_PRIME = 0.85F;
@@ -162,9 +172,10 @@ public final class ArmsForge {
         w.row(Component.literal("Weapon"), weapon.getHoverName());
         w.row(Component.literal("Attuned"), Component.literal(inst.attunement().map(ArmsForge::forceName).orElse("no")));
         if (f == null) {
-            w.body(Component.literal("Hold a catalyst in your off hand: Blaze Powder (Heat), a Copper Ingot (Charge), an Ender Pearl "
-                    + "(Gravity), a Ghast Tear (Spirit) or Packed Ice (Frost). An attuned weapon's Marks take its Force, its hits make "
-                    + "your next power cheaper, and a power of its Force makes your next blow land harder."));
+            w.body(Component.literal("Hold a catalyst in your off hand: Sunshard from the Glass Steppe (Heat), Frostspar from the Frost "
+                    + "Spires (Frost), a Fault Seam from the Shattered Highlands (Gravity), a Copper Ingot (Charge) or a Deepglass Shard "
+                    + "from the deep (Spirit). An attuned weapon's Marks take its Force, its hits make your next power cheaper, and a "
+                    + "power of its Force makes your next blow land harder."));
             Signal.send(p, w.ttl(20 * 12).build());
             return;
         }
@@ -238,7 +249,8 @@ public final class ArmsForge {
     }
 
     static Forces.@Nullable Force catalyst(ItemStack stack) {
-        for (var e : CATALYST.entrySet()) if (stack.is(e.getValue())) return e.getKey();
+        if (stack.isEmpty()) return null;
+        for (Forces.Force f : CATALYST_ID.keySet()) if (stack.is(catalystItem(f))) return f;
         return null;
     }
 
@@ -255,12 +267,12 @@ public final class ArmsForge {
         out.add(cost(dev.awaken.core.api.CoreApi.ESSENCE_SHARD.get(), ATTUNE_ESSENCE));
         Item shard = BuiltInRegistries.ITEM.getValue(Awaken.id("core_shard"));
         if (shard != Items.AIR) out.add(cost(shard, ATTUNE_CORE_SHARDS));
-        out.add(cost(CATALYST.get(f), 1));
+        out.add(cost(catalystItem(f), 1));
         return out;
     }
 
     static List<Cost> blueprintPrice() {
-        return List.of(cost(Items.PAPER, BLUEPRINT_PAPER), cost(Items.IRON_INGOT, BLUEPRINT_IRON),
+        return List.of(cost(Items.PAPER, BLUEPRINT_PAPER), cost(Items.LAPIS_LAZULI, BLUEPRINT_LAPIS),
                 cost(dev.awaken.core.api.CoreApi.ESSENCE_SHARD.get(), BLUEPRINT_ESSENCE));
     }
 

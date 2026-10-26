@@ -5,12 +5,13 @@
   "key": {
     "B": "#awaken:hunter_bind_a",
     "C": "#awaken:hunter_core_a",
+    "M": "#awaken:tier_metal_a",
     "S": "awaken:essence_shard"
   },
   "pattern": [
-    "CCC",
+    "CMC",
     " BS",
-    " B "
+    " M "
   ],
   "result": {
     "id": "awaken:lordscale_mattock"

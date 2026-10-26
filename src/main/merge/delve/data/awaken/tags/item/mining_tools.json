@@ -1,0 +1,29 @@
+{
+  "values": [
+    "#minecraft:pickaxes",
+    {
+      "id": "awaken:wildhide_mattock",
+      "required": false
+    },
+    {
+      "id": "awaken:beastbound_mattock",
+      "required": false
+    },
+    {
+      "id": "awaken:gatewrought_mattock",
+      "required": false
+    },
+    {
+      "id": "awaken:veilwoven_mattock",
+      "required": false
+    },
+    {
+      "id": "awaken:lordscale_mattock",
+      "required": false
+    },
+    {
+      "id": "awaken:sovereign_mattock",
+      "required": false
+    }
+  ]
+}

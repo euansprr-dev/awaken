@@ -1,0 +1,109 @@
+# "Metal from the deep" (Between the Gates W2, SPEC §28.3): one short tour, shots only (slot.sh light).
+# Under the ground at y -30: a staged chamber with an iron lode on its north wall (lanterns: the lode glints), the
+# strike's sparks and its last blow, the Tuning Fork's arc, a heart breaking ("the vein gives", the System naming it, the
+# vein's light and cracks through the rock), the heavy strike's charge and its bore, a cave-in's warning dust and the
+# fall, Deepglass in the east wall, the miner's lamp in a dark tunnel, and a rope hanging from a piton in a shaft.
+# Run: SLOT_WHO=world-depth-w2 /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh tools/autopilot/world-depth-w2.txt 600
+world autopilot_w2 creative 70712
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd time set 6000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 600 4 true
+# away from Carillon (its ground is protected all the way down), then below y 0 into the rock: the chamber is carved
+# round you, facing its north wall
+cmd tp @s ~700 ~ ~
+wait 160
+cmd tp @s ~ -30 ~
+wait 100
+cmd awaken delve stage cave iron
+wait 60
+screen close
+camera first
+look 180 6
+wait 30
+shot w2_01_lode_on_the_wall
+# the strike: walk to the wall with a pick, five blows and the last
+cmd item replace entity @s weapon.mainhand with minecraft:iron_pickaxe
+cmd tp @s ~3 ~ ~-7.2 180 8
+wait 12
+cmd awaken delve demo strike
+wait 7
+shotnow w2_02_strike_sparks
+wait 13
+shotnow w2_03_last_blow
+# the Tuning Fork, tuned to iron, struck on the floor while facing away: the arc shows which way to turn
+cmd tp @s ~-3 ~ ~5 130 10
+wait 8
+cmd awaken delve fork iron
+cmd awaken delve ring
+wait 6
+shot w2_04_fork_arc
+look 175 10
+wait 10
+shot w2_05_fork_faced
+# the heart: the vein gives
+cmd item replace entity @s weapon.mainhand with minecraft:iron_pickaxe
+cmd tp @s ~ ~ ~-1 180 0
+wait 6
+cmd awaken delve heart calm
+wait 3
+shotnow w2_06_vein_gives
+wait 18
+shot w2_07_vein_cracks
+# the heavy strike: the charge to its glint, then the bore
+cmd tp @s ~2 ~ ~-3.5 180 8
+wait 6
+cmd awaken delve demo charge
+wait 19
+shotnow w2_08_heavy_glint
+cmd awaken delve heavy
+wait 2
+shotnow w2_09_heavy_bore
+wait 20
+shot w2_10_heavy_after
+# a cave-in: the warning dust, then the roof, from the chamber's south side
+cmd tp @s ~-2 ~ ~9.5 180 -18
+wait 6
+cmd awaken delve cavein
+wait 30
+shot w2_11_cavein_dust
+wait 38
+shotnow w2_12_cavein_falls
+wait 30
+shot w2_13_cavein_after
+# Deepglass in the east wall, below y 0
+cmd tp @s ~3 ~ ~-6 -90 4
+wait 10
+shot w2_14_deepglass
+# the miner's lamp: a dark tunnel to the west, the lamp's light on its walls
+cmd fill ~-30 ~ ~-1 ~-14 ~2 ~1 minecraft:air
+cmd fill ~-31 ~-1 ~-2 ~-13 ~-1 ~2 minecraft:deepslate
+cmd tp @s ~-14 ~ ~ 90 4
+wait 10
+cmd item replace entity @s armor.head with awaken:miners_lamp
+wait 10
+shot w2_15_lamp_first_person
+camera back
+wait 10
+shot w2_16_lamp_third_person
+camera first
+# a rope hanging from a piton in a shaft
+cmd awaken delve stage rope
+wait 10
+look 90 62
+wait 10
+shot w2_17_rope_from_piton
+cmd tp @s ~-2 ~-10 ~1 90 -20
+wait 10
+shot w2_18_rope_from_below
+quit
