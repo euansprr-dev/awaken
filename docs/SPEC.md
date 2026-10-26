@@ -3629,7 +3629,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - **Scenes** (`living.wayfarer.Scenes`, saved data `awaken:living_scenes`, schema 1). Residents are placed once when a
   player first comes within 96 blocks: Ilse and Hettie at the Wayfarer camp (Carillon worlds: 450 north of the city's
   centre, up the High Gate road; classic worlds 300 north of spawn; on the nearest dry, level ground, found once and
-  kept), Hale on Carillon's `CityHooks.spot("quartermaster")` by the High Gate yard (classic: at the camp). A found scene: per player every 25 minutes outdoors (the first after 12), never inside a Hearth's radius or the
+  kept; the camp round Ilse's fire, its safe ground and Ilse's scene: §27.6), Hale on Carillon's `CityHooks.spot("quartermaster")` by the High Gate yard (classic: at the camp). A found scene: per player every 25 minutes outdoors (the first after 12), never inside a Hearth's radius or the
   city reserve, for the lowest-band chain they can take that isn't a resident's; a spot 64-160 blocks off in loaded
   chunks only (cliff: a top with a 6+ drop beside it, its foot marked; crag: y 100+; road/camp: flat ground), plus a
   `site` 40-80 from it (plain ground 56 off if the land offers none). An untaken scene fades after two play-days; a
@@ -4997,9 +4997,12 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
 - **Registered** (`core.api.OpeningHooks.onRegistered`, fired from `OpeningModule.afterOpening` when the opening ends or
   is skipped): Kestrel's errand, **The Last Delivery**, starts by itself and is tracked (`living.FirstThread`; once;
   never for a player who has it or did it): tell Kestrel what you saw at the Roost, out through the High Gate, run the
-  letters to the Wayfarer camp up the north road, give Ilse the letters. It ends at the camp, a place with several pulls
-  (Hettie's and Ilse's level-1 asks, a gate's pillar, a vault), so after it the player chooses: it is one errand, not a
-  chain that keeps leading (BotW's "lines" railroaded 80% of testers).
+  letters to the Wayfarer camp up the north road, deliver them to Ilse by her fire ("Deliver the letters · 0/1"), and
+  take the coal she gives you (the Ember, §28.2). The thread lets go there: its Now line ends once Ilse's step is done,
+  the Hearth's own line ("Set your Ember where you'd live", `hearth:ember`) takes over, and the chain's last two steps
+  (a `hearth` objective: done when you have a Hearth; then back to Kestrel) wait in the Journal. After it the player
+  chooses: it is one errand, not a chain that keeps leading (BotW's "lines" railroaded 80% of testers). Euan, after
+  playing it (2026-10-26): guide them exactly to the Ember, then let them go and explore.
 - **Chains on the Now line**: the tracked chain's current step (else the first chain's), priority 68 (over points to
   spend 55 and the next level's unlock 15; under a waiting Reassessment 72, rifts and danger), with a compass to its
   place: a "reach" step's marker; a "talk" step's person (Kestrel: the Roost, `OpeningHooks.place("roost")`; Hale: his
@@ -5022,7 +5025,47 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   was rolled the moment they awakened, in the infirmary, at random 300-1500 out, unannounced.
 - **Out through the walls** is a moment: crossing the city reserve outward shows the region's caption ("THE COMMONS ·
   1-8") once a play-day (the Commons spans the city's edge, so leaving had none).
-- Tests: `progression_first_thread`, `progression_now_priorities`, `gates_first_gate_on_purpose`.
+- **The High Gate's shot** (`living.FirstScenes.gateShot`, filmed by `living.client.FirstFilm.GateShot` with the
+  opening's camera and letterbox through `opening.client.Cinema`): the first time a player goes out through the High
+  Gate on the errand (the step "Out through the High Gate" completes), ten seconds, letterboxed, hold jump to skip: a
+  breath in your own eyes turning to the smoke, then the view lifts over the gate (the first clear spot of a fan, up to
+  15 up and 8 on) and narrows (FOV x0.6) onto the Wayfarers' smoke, which reads stronger while it's filmed; the lower
+  bar names it ("THE WAYFARERS' FIRE · THE CAMP UP THE NORTH ROAD · 330 M") while Hale says his line; then back down into
+  your eyes, left facing the camp. Once a player (counter `awaken:first/gate_shot`). Before the camp is founded the
+  smoke rises from its nominal spot at the generator's height. The step's done line is said in the shot, not as a
+  story line (`QuestEngine.Stager`: a scene that stages a step's ending takes its lines).
+- **Ilse's scene by the fire** (`FirstScenes`, `FirstFilm.IlseShot`): coming within 7 of Ilse with the letters (or
+  talking to her) starts it instead of a bare click. Letterboxed, over your shoulder on the side away from the fire, a
+  slow push while she talks; her lines one at a time in the Registry's speech (name above, the line under it): she asks
+  for the letters (the lower bar: "DELIVER THE LETTERS 1/1"), sits you down, says what a fire of your own is for ("First
+  night out, and it's coming on dark"; by day "It gets dark quicker out here than you'd think"), then holds a coal from
+  hers out in her hand. The view comes back to your own eyes facing her hand, "Take the coal" with the use key, and your
+  hand takes it from hers (the Registry's hand-over, `HandOver`, now for any item): the step ends as your hand closes on
+  it, and its reward is the Ember (W1's rules kept: one a player, kept through death, Ilse or Hettie give a lost one
+  back). Her last line ("Somewhere you'd want to wake up. That's all a fire asks."), the bars lift, the lower bar says
+  "SET YOUR EMBER WHERE YOU'D LIVE". About 20 s to the coal; hold jump to skip to it; after 30 s with her hand out she
+  presses it into yours. Someone with a Hearth or a coal already is told "Keep it fed" and the step ends there. Walking
+  off (18 blocks) ends it; it starts again when you come back. Nothing hunts or hurts a player while either moment plays
+  (target changes cancelled, damage cancelled but for what bypasses invulnerability; the gate's for 14 s).
+- **The camp** (`living.wayfarer.Camp`): laid once round its fire when a player is within 96 (`Scenes.campBuilt`, saved,
+  optional field): the grass and flowers within 5 cleared, the ground within 3.5 trodden to coarse dirt and path; two
+  **Wayfarer's Bedrolls** (`awaken:wayfarer_bedroll`, our own block on `AbstractBedBlock`, texture from
+  `tools/art/specs/camp.py`) feet to the fire, west and south; stripped spruce logs to sit on (north, east); a barrel of
+  packs with a lantern, a log of firewood; and the **Camp Pot** (`awaken:camp_pot`) hung by a chain from a bar on two
+  A-frames over the fire. Only on open ground: a trunk or a rock where something goes, and it's left out. Neither block
+  drops or has an item. **Its ground is safe**: no monster spawns (natural, chunk generation, patrols, reinforcements)
+  within 32 of the fire; a monster within 30 stops hunting and is sent back out past the edge (every half second); no
+  monster takes a player within 32 as its target. A **bedroll** sleeps the night through like a bed when it's dark (the
+  rule `WHEN_DARK`), never sets your spawn (that's the Hearth's), and when a step you're on needs the dark (a quest step's
+  `night`, e.g. Moth Lights' "The Lumen Moths only gather in the dark.") it says "Not tonight: ..." instead. At night
+  Hettie lies down on the far bedroll and gets up at dawn; Ilse keeps the fire.
+- **Quest fields** (`QuestDef.Step`, schema 1, both optional): `tally` shows a step's count even when it's one ("· 0/1");
+  `night` says why a step needs the dark. Objective type `hearth`: done when the player has a Hearth.
+- Dev and tours: `/awaken living first gate|letters|ilse|took|camp`; tour `tools/autopilot/first-scenes.txt` (CI).
+- Tests: `progression_first_thread`, `progression_now_priorities`, `gates_first_gate_on_purpose`,
+  `progression_first_scenes` (the gate's shot once; the letters counted; Ilse's scene to the coal; the Ember; the thread
+  letting go), `living_camp_keeps` (laid round its fire; nothing hunts there; a monster sent out; the bedroll's rule; a
+  step that needs the night).
 
 ### 27.7 Tips, switched on, and the Signal's thread (phase 4)
 - **Tips** (docs/carillon/m4/onboarding.md §1, finally built; `TipHooks.install` had no caller, so every tip in the

@@ -40,12 +40,20 @@ final class PulseFx {
     static final Map<Integer, Shown> SHOWN = new HashMap<>();
     static final float LERP = 40;
 
-    /** The Wayfarer camp's fire (SPEC §27.6), and when the server last said it burns (it's drawn for 15 s after). */
+    /** The Wayfarer camp's fire block (SPEC §27.6), and when the server last said it burns (it's drawn for 15 s after). */
     private static net.minecraft.core.BlockPos camp;
     private static float campSeen = -1000;
 
     static void camp(net.minecraft.core.BlockPos at) {
         camp = at;
+        campSeen = LivingClient.ticks;
+    }
+
+    /** The High Gate's shot is on the smoke (SPEC §27.6): it reads stronger until then (client ticks). */
+    private static float featuredUntil = -1000;
+
+    static void feature(int ticks) {
+        featuredUntil = LivingClient.ticks + ticks;
         campSeen = LivingClient.ticks;
     }
 
@@ -98,7 +106,7 @@ final class PulseFx {
     private static double k, ax, ay, az;
 
     static void submit(SubmitCustomGeometryEvent e) {
-        boolean fire = camp != null && LivingClient.ticks - campSeen < 300;
+        boolean fire = camp != null && (LivingClient.ticks - campSeen < 300 || LivingClient.ticks < featuredUntil);
         if ((SHOWN.isEmpty() || !LivingClient.shown) && !fire) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
@@ -128,8 +136,8 @@ final class PulseFx {
     }
 
     private static void pass(VertexConsumer vc, float clamp, boolean add) {
-        if (camp != null && LivingClient.ticks - campSeen < 300) {
-            double x = camp.getX() - 3 + 0.5, y = camp.getY(), z = camp.getZ() + 3 + 0.5;
+        if (camp != null && (LivingClient.ticks - campSeen < 300 || LivingClient.ticks < featuredUntil)) {
+            double x = camp.getX() + 0.5, y = camp.getY(), z = camp.getZ() + 0.5;
             double dist = Math.sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy) + (z - cz) * (z - cz));
             k = dist > clamp ? clamp / dist : 1;
             ax = x;
@@ -268,7 +276,8 @@ final class PulseFx {
                 float rise = (now * 0.0025F + i / 28F) % 1F;
                 float lean = rise * rise;
                 double ox = Mth.sin(now * 0.004F + i * 0.7F) * 1.4 * rise + lean * 18, oz = Mth.cos(now * 0.005F + i) * 1.4 * rise + lean * 7;
-                float a = 0.42F * (float) Math.pow(1 - rise, 0.8) * Mth.clamp(rise * 10, 0, 1);
+                float a = 0.42F * (float) Math.pow(1 - rise, 0.8) * Mth.clamp(rise * 10, 0, 1)
+                        * (LivingClient.ticks < featuredUntil ? 1.45F : 1F);
                 int grey = (int) Mth.lerp(rise, 0x9E, 0xD2);
                 soft(vc, ox, 1.5 + rise * 110, oz, 1.6F + rise * 11F, argb(a, grey << 16 | (grey - 4) << 8 | (grey - 10)));
             }

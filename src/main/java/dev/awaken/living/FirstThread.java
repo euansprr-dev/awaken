@@ -19,9 +19,11 @@ import java.util.List;
 /**
  * The first thread out of Carillon, and chains on the Now line (SPEC §27.6). When the Association registers a player
  * (the opening ends or is skipped) Kestrel's errand, The Last Delivery, starts by itself and is tracked: tell Kestrel
- * what you saw, out the High Gate, run the letters to the Wayfarer camp. It ends at the camp, a place with several pulls
- * (two people with small asks, a gate's pillar, a vault), so after it the player chooses. The tracked chain's current
- * step is on the Now line with a compass to its place, over bookkeeping (points to spend, the next level's unlock).
+ * what you saw, out the High Gate (a shot of the camp's smoke), run the letters to the Wayfarer camp, deliver them to
+ * Ilse by her fire (a scene that ends with her coal, the Ember, in your hand). The thread lets go there: the Hearth's own
+ * line ("Set your Ember where you'd live") takes over and the rest of the chain waits in the Journal, so after it the
+ * player chooses. The tracked chain's current step is on the Now line with a compass to its place, over bookkeeping
+ * (points to spend, the next level's unlock).
  */
 public final class FirstThread {
     private FirstThread() {}
@@ -66,6 +68,8 @@ public final class FirstThread {
         if (s.active().isEmpty()) return List.of();
         QuestState.Active a = s.active().getFirst();
         for (QuestState.Active x : s.active()) if (x.chain().equals(s.tracked())) a = x;
+        // the thread lets go at the Ember: the Hearth's line takes it from there, Kestrel waits in the Journal
+        if (a.chain().equals(chainId()) && Progression.profile(p).counter("awaken:claim/quest/" + a.chain() + "/ilse") > 0) return List.of();
         String line = QuestEngine.line(a);
         QuestDef d = QuestBook.get(a.chain());
         if (line == null || d == null) return List.of();
@@ -88,7 +92,10 @@ public final class FirstThread {
                     yield at != null ? BlockPos.containing(at) : OpeningHooks.place("roost");
                 }
                 case "hale" -> Scenes.marker(server, scene, "spot:quartermaster");
-                case "ilse", "hettie" -> Scenes.marker(server, scene, "camp");
+                case "ilse", "hettie" -> {
+                    BlockPos at = Scenes.residentAt(server, o.target());
+                    yield at != null ? at : Scenes.marker(server, scene, "camp");
+                }
                 default -> Scenes.marker(server, scene, "scene");
             };
             default -> null;

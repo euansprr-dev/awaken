@@ -89,6 +89,47 @@ final class LivingTests {
             }
             h.succeed();
         });
+        AwakenTests.register("progression_first_scenes", 100, h -> {
+            var server = h.getLevel().getServer();
+            net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+            dev.awaken.living.wayfarer.Wayfarer ilse = LivingContent.WAYFARER.get().create(h.getLevel(), net.minecraft.world.entity.EntitySpawnReason.EVENT);
+            dev.awaken.progression.Progression.awaken(p);
+            dev.awaken.progression.Progression.count(p, "awaken:carillon_registered");
+            String chain = FirstThread.chainId();
+            h.assertTrue(chain != null && ilse != null, "The Last Delivery is in the quest book");
+            var d = dev.awaken.living.quest.QuestBook.get(chain);
+            var gate = d.steps().stream().filter(s -> s.id().equals("gate")).findFirst().orElseThrow();
+            // out through the High Gate: the shot of the camp's smoke says Hale's line, once
+            h.assertTrue(FirstScenes.stage(p, chain, gate) && FirstScenes.shielded(p), "the High Gate's shot goes, and nothing hurts you under it");
+            h.assertFalse(FirstScenes.stage(p, chain, gate), "only the first time out");
+            // the letters, counted on the Now line, the compass on Ilse
+            h.assertTrue(dev.awaken.living.quest.QuestEngine.devStep(p, chain, "ilse"), "the errand at Ilse's step");
+            var now = FirstThread.now(p);
+            h.assertTrue(now.size() == 1 && now.getFirst().text().getString().equals("Deliver the letters · 0/1"), "the step counted: " + now);
+            ilse.snapTo(p.getX() + 2, p.getY(), p.getZ(), 90, 0);
+            ilse.become("ilse", ilse.blockPosition(), 2, 0);
+            h.getLevel().addFreshEntity(ilse);
+            FirstScenes.begin(p, ilse);
+            h.assertTrue(FirstScenes.shielded(p), "her scene holds you: nothing hunts you by the fire");
+            FirstScenes.ready(p, LivingNet.FirstSceneReady.SKIP);
+            h.runAfterDelay(4, () -> {
+                var ember = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(FirstScenes.EMBER);
+                try {
+                    h.assertTrue(ilse.getMainHandItem().is(ember), "a held skip: she holds the coal out, in her hand");
+                    FirstScenes.ready(p, LivingNet.FirstSceneReady.TOOK);
+                    var qs = dev.awaken.living.quest.QuestEngine.state(p);
+                    var a = qs.active().stream().filter(x -> x.chain().equals(chain)).findFirst().orElseThrow();
+                    h.assertTrue(d.steps().get(a.step()).id().equals("ember"), "your hand closed on it: the next step is your own fire's");
+                    h.assertTrue(p.getInventory().contains(new net.minecraft.world.item.ItemStack(ember)), "the coal is yours (the Ember)");
+                    h.assertTrue(ilse.getMainHandItem().isEmpty(), "her hand is empty again");
+                    h.assertTrue(FirstThread.now(p).isEmpty(), "the thread lets go at the Ember: the Hearth's line takes it from there");
+                } finally {
+                    ilse.discard();
+                    server.getPlayerList().remove(p);
+                }
+                h.succeed();
+            });
+        });
         AwakenTests.register("living_region_map", 200, h -> {
             RegionMap.Probe plain = (x, z) -> RegionMap.Land.PLAIN;
             RegionMap map = new RegionMap(1234L, 0, 0, plain);
