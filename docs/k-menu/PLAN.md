@@ -11,7 +11,8 @@ puts the renderer beside the real game with the same content: the layout matches
 can be trusted as the real size and density. The renderer lives in `docs/k-menu/mock/` (it reads Minecraft's font from
 the local `.ref` folder, which is never committed).
 
-Shots are in `docs/k-menu/shots/`; the approval page is `docs/k-menu/page.html` (published as an artifact).
+Shots are in `docs/k-menu/shots/`; the approval page is `docs/k-menu/page.html`, published at
+https://claude.ai/artifact/49cQxv5y3CzXcJ3SG4jDN9 .
 
 ---
 
