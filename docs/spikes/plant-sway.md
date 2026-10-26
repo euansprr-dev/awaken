@@ -51,3 +51,20 @@ Five runs of about 5-6 min each, more than the one-tour budget:
    all run. Every frame and perf window shows the city. Only the hanging garden, built near that balcony, filmed
    properly. Discarded (the tour-gotchas memory already says every tour needs that line).
 5. The final run above: a studio, so no biome heart can drop the camera into Carillon's basin or a tree.
+
+## Smooth (2026-10-26, after Euan's "a bit jittery... as if they restarted the animation")
+
+Tour `tools/autopilot/plant-sway-smooth.txt` (Vulkan, the studio meadow, `PACK=perf`). The sway probe
+(`/awaken terrain waving probe`) logs each frame the offsets the shader gives six fixed vertices, from the texels
+written that frame, beside the same vertices on the old clock (raw game time). Charts: `plot_probe.py`.
+
+- `smooth_frames.png`, `smooth_frames_sheet.jpg`: 20 consecutive frames (capped at 60 fps; grabbing every frame slowed
+  it to about 21 fps, with one 319 ms stall). Every curve runs on through the stall without a step.
+- `smooth_lag.png`: 30 s with the server made to lag (256 new chunks force-loaded, fills overhead; the server logged
+  "Running 5787ms or 115 ticks behind"). The raw game clock rewound 11 times, once by 3.8 s, and swung 4.3 s behind
+  and 1.3 s ahead of the smooth clock. On the new clocks no frame stepped back. The fastest any vertex moved was
+  0.7 blocks/s for grass tips, 1.9 for the tall grass top, 1.0 for the strand's end and 0.27 for the leaf, about three
+  times their median, the natural top of a sway. On the old clock the same vertices jumped at 11-29 blocks/s (leaf
+  2.9) at every rewind: the "restart" Euan saw. The pale curves step and stall where the new ones flow.
+- `smooth_turn.png`: 60 s across a natural heading turn (-66 to -47 degrees over 20 s, at most 0.08 degrees a frame).
+  The new clocks never stepped back; the fastest vertex moved at about three times its median.
