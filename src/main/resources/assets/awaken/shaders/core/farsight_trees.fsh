@@ -20,17 +20,10 @@ layout(location = 4) flat in float vValley;
 
 layout(location = 0) out vec4 fragColor;
 
-float bayer4(vec2 p) {
-    ivec2 q = ivec2(p) & 3;
-    int i = q.x + q.y * 4;
-    const float m[16] = float[](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
-    return (m[i] + 0.5) / 16.0;
-}
-
 void main() {
     vec2 rel = vRel.xz + FarCam.xz;
-    // hidden where the real chunks are drawn: loaded, and within the render distance in 3D, as the terrain
-    if (length(vRel) < FarDepth.z + FarDepth.w * bayer4(gl_FragCoord.xy)) {
+    // hidden where the real chunks are drawn: loaded, in a section Sodium draws, as the terrain
+    if (farRealSection(vRel)) {
         ivec2 chunk = (FarCamInt.xz >> 4) + ivec2(floor(rel / 16.0));
         if (texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5) discard;
     }
@@ -43,4 +36,5 @@ void main() {
     vec3 n = vFace.xyz;
     c *= farLight(n, vFace.w) * texture(LightSampler, vec2(0.5 / 16.0, 15.5 / 16.0)).rgb;
     fragColor = vec4(farAir(farMist(c, vRel, vValley), vRel), 1.0);
+    if (FarCam.w > 2.5) fragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }

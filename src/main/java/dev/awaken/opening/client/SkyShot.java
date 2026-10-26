@@ -29,6 +29,8 @@ import org.jspecify.annotations.Nullable;
 final class SkyShot implements OpeningCamera.Shot {
     /** The card, the flight and the push into the eyes, in ticks (the server's OpeningDirector.CARD is the same). */
     static final int CARD = 90, FLIGHT = (int) Math.round(SkyPath.SECONDS * 20), PUSH = 16;
+    /** How much longer the card may hold while the world under the flight comes in (ticks). */
+    static final int WARM_MAX = 400;
     /** Holding jump this long skips (after the first viewing). */
     static final int SKIP_HOLD = 20;
 
@@ -38,7 +40,7 @@ final class SkyShot implements OpeningCamera.Shot {
     final Vec3 eye;
     final boolean canSkip, shots, ask;
     private final double[] s = new double[6], s2 = new double[6];
-    private int jumpHeld, pushFrom = -1, endAt = -1;
+    private int jumpHeld, pushFrom = -1, endAt = -1, warming;
     private boolean landFirst;
     private boolean landed, skipped, reported, asked;
     private OpeningSounds.@Nullable Bed wind;
@@ -91,6 +93,15 @@ final class SkyShot implements OpeningCamera.Shot {
         barsO = bars;
         blackO = black;
         if (skipFlash > 0) skipFlash--;
+        // the flight waits behind the card until the world under it is in: the chunks round the Roost meshed and Far
+        // Sight's far land placed, so the first frame of sky shows no hole, seam or hill where the city stands (at most
+        // WARM_MAX ticks more; the server allows the sky ninety seconds)
+        if (age == CARD - 16 && warming < WARM_MAX && !dev.awaken.farsight.client.FarSightClient.warm()) {
+            if (warming++ == 0) Awaken.LOG.info("[opening] the card holds while the view warms");
+            OpeningCamera.seek(age - 1);
+            return;
+        }
+        if (age == CARD - 16 && warming > 0) Awaken.LOG.info("[opening] the view is warm after {} ticks", warming);
         // the card: one bell in the dark
         if (age == 6) {
             OpeningSounds.ui(CitizensContent.BELL_HOUR.get(), 0.71F, 1.0F);

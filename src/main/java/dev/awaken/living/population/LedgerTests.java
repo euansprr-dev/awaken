@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.block.Blocks;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,6 +18,9 @@ public final class LedgerTests {
         AwakenTests.registerIsolated("living_ledger", 300, h -> {
             ServerLevel level = h.getLevel();
             Ledger l = new Ledger();
+            // bodies stand on each column's top: a floor of the test's own, open to the sky (another test's water on top
+            // of a column refused them all: "ten bodies: 0")
+            AwakenTests.site(h, new BlockPos(-10, 0, -10), new BlockPos(10, 8, 10), Blocks.GRASS_BLOCK.defaultBlockState());
             BlockPos c = h.absolutePos(new BlockPos(0, 1, 0));
             int x = c.getX(), z = c.getZ();
             Ledger.Pop herd = new Ledger.Pop(l.nextId++, "herd", "mossback", x, z, List.of(x - 6, z - 6, x + 6, z, x, z + 6), 6, 12, 10, 42L, -1);

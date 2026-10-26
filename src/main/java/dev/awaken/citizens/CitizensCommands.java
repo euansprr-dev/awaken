@@ -28,6 +28,7 @@ import java.util.Set;
  * <pre>
  * info                  the ledger, bodies, lamps, stalls, events and the timing line (Carillon's)
  * settlements           every settlement on the people engine and the shared pool of bodies
+ * hamlet [off]          the test hamlet on the engine at your feet (W0's proof; W3 builds real villages)
  * who                   the citizen nearest you: name, job, what they're doing
  * show &lt;what&gt;           stand where you can watch it: a job (lamplighter, smith, ...), a citizen's name, stall, event
  * event &lt;kind&gt;          start an event now (burglary, pickpocket, fire, cart, tremor)
@@ -52,6 +53,8 @@ final class CitizensCommands {
         AwakenCommands.add((root, ctx) -> root.then(Commands.literal("citizens").requires(AwakenCommands.admin())
                 .then(Commands.literal("info").executes(c -> info(c.getSource())))
                 .then(Commands.literal("settlements").executes(c -> settlements(c.getSource())))
+                .then(Commands.literal("hamlet").executes(c -> hamlet(c.getSource(), true))
+                        .then(Commands.literal("off").executes(c -> hamlet(c.getSource(), false))))
                 .then(Commands.literal("who").executes(c -> who(c.getSource())))
                 .then(Commands.literal("show").then(Commands.argument("what", StringArgumentType.word())
                         .suggests((c, b) -> SharedSuggestionProvider.suggest(SHOW, b))
@@ -129,6 +132,26 @@ final class CitizensCommands {
         sb.append(String.format(Locale.ROOT, "pool: %d bodies of %d (world), %d a player", any.crowd.bodies.size(), any.crowd.capWorld, any.crowd.capPlayer));
         Awaken.LOG.info("[citizens] settlements:\n{}", sb);
         return say(src, sb.toString().strip());
+    }
+
+    /**
+     * (W0's proof, a stand-in for W3's villages) the test hamlet (SettlementTests.hamlet: a lane, three doors, a well, a
+     * smith, six people) running on the engine with its street at your feet, beside Carillon; {@code off} stops it.
+     * There are no houses: it is people, their places and the engine's own furniture (the anvil, the tub).
+     */
+    private static int hamlet(CommandSourceStack src, boolean on) throws CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        for (Settlement s : List.copyOf(Citizens.live())) if (s.key.equals("dev:hamlet")) Citizens.unregister(s.id);
+        if (!on) return say(src, "the hamlet is stopped");
+        BlockPos at = p.blockPosition().below(); // the street's paving: people stand on it
+        var made = dev.awaken.citizens.api.Settlements.register(p.level(),
+                new dev.awaken.citizens.api.SettlementSpec("dev:hamlet", "Little Wick", at, 48, SettlementTests.hamlet()));
+        if (made.isEmpty()) {
+            src.sendFailure(Component.literal("the hamlet didn't start (see the log)"));
+            return 0;
+        }
+        Awaken.LOG.info("[citizens] hamlet: settlement {} at {}", made.get().id(), at.toShortString());
+        return say(src, "Little Wick (settlement " + made.get().id() + ") at " + at.toShortString());
     }
 
     private static int say(CommandSourceStack src, String s) {

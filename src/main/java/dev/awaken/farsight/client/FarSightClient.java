@@ -50,8 +50,12 @@ public final class FarSightClient {
 
     /** Where far terrain starts: this far inside the render distance it dithers in, over the same distance. */
     static final int CLIP_BAND = 32;
+    /** The share of near chunks meshed for the view to count as warm. */
+    static final float WARM_SHOWN = 0.97f;
     /** How far under sea level the lowest ground in view is taken to lie (a sea floor), for what the chunks cover. */
     static final int SEA_FLOOR = 40;
+    /** The render distance's outer band where far water may lie under the real water (farsight_terrain.fsh's 80). */
+    static final float SEA_BAND = 80f;
     /** Valley cloud: its floor above sea level, its depth (blocks) and density per block (SPEC §20). */
     static final float MIST_ABOVE_SEA = 40f, MIST_DEPTH = 46f, MIST_DENSITY = 0.014f;
     private static final int UPLOADS_PER_FRAME = 48, CHANGES_PER_FRAME = 1024;
@@ -61,7 +65,7 @@ public final class FarSightClient {
     private static FarField field;
     private static FarRenderer renderer;
     private static FarGpu gpu;
-    private static final FarWorkers workers = new FarWorkers(FarWorkers.defaultThreads());
+    private static final FarWorkers workers = new FarWorkers(FarWorkers.defaultThreads(), FarWorkers.burstThreads());
     private static ServerLevel bound;
     private static int boundRd, boundRings = Rings.RINGS;
     private static long joinNanos, bindNanos, lastDrawNanos;
@@ -86,6 +90,17 @@ public final class FarSightClient {
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ViewportEvent.RenderFog.class, FarSightClient::fog);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingIn.class, e -> joinNanos = System.nanoTime());
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> unbind());
+    }
+
+    /**
+     * Whether the view is warm (the opening's flight waits behind its card for it, SPEC §16.4): every far ring's patches
+     * in, and nearly all the real chunks well inside the render distance loaded and meshed, so nothing shows a hole, a
+     * seam or the land under a city that isn't there yet. True at once when Far Sight doesn't draw.
+     */
+    public static boolean warm() {
+        if (!drawing() || field == null || renderer == null) return true;
+        for (int r = 0; r < rings(); r++) if (field.missing[r] > 0) return false;
+        return renderer.shownShare >= WARM_SHOWN;
     }
 
     /** Whether Far Sight drew in the last quarter second. */
@@ -163,8 +178,17 @@ public final class FarSightClient {
         // coarsest first: a window's first patches queue ahead of the finer rings'
         int far = shown - 1;
         long farWindow = field.valid[far] ? Rings.key(field.winX[far], field.winZ[far]) : Long.MIN_VALUE;
-        // ring 0 (the render distance's own) loads all its patches: its sea is drawn under the real water (FarRenderer.rect)
-        for (int r = far; r >= 0; r--) field.place(r, cam.x, cam.z, r == 0 ? 0f : covered, level, store, workers);
+        // ring 0 loads down to the render distance's outer band, where its sea can lie under real water (FarRenderer.rect);
+        // the workers take the horizon first, then the nearest patches (FarField.priority)
+        float sea = (partsOff & 64) == 0 ? Math.max(0f, covered - SEA_BAND - 32f) : covered;
+        field.place(far, cam.x, cam.z, covered, level, store, workers);
+        for (int r = 0; r < far; r++) field.place(r, cam.x, cam.z, r == 0 ? sea : covered, level, store, workers);
+        // much of the view missing (a new world, a jump, the opening's card, fast flight): every burst worker, unpaced,
+        // so the middle rings never stand empty for long (Euan, 2026-10-26: see-through ground outside Carillon)
+        int gaps = 0;
+        for (int r = 0; r < Rings.RINGS; r++) gaps += field.missing[r];
+        cold = gaps > COLD_GAPS;
+        workers.active = cold ? workers.burst() : workers.threads();
         for (int i = 0; i < CHANGES_PER_FRAME; i++) {
             long chunk = store.pollChanged();
             if (chunk == Long.MIN_VALUE) break;
@@ -227,7 +251,7 @@ public final class FarSightClient {
         }
         renderer.draw(field, main, e.getModelViewMatrix(), cam.x, cam.y, cam.z, sun, strength, sunColour, golden, haze, rain,
                 level.getSeaLevel() + MIST_ABOVE_SEA, MIST_DEPTH, MIST_DENSITY, mistCover, fogStart, fogEnd,
-                hidden, CLIP_BAND, level.getSeaLevel(), RenderSystem.getDevice().getDeviceInfo().isZZeroToOne(), mc.gameRenderer.levelLightmap(),
+                hidden, CLIP_BAND, rd * 16, level.getSeaLevel(), RenderSystem.getDevice().getDeviceInfo().isZZeroToOne(), mc.gameRenderer.levelLightmap(),
                 FarLandmarks.current(level.dimension()));
         renderer.timeEnd();
         FarTerrain.report(renderer.depthTexture(), FarRenderer.NEAR, FarRenderer.FAR, true, RenderSystem.getDevice().getDeviceInfo().isZZeroToOne());
@@ -239,6 +263,9 @@ public final class FarSightClient {
     }
 
     private static long lastFrameNanos;
+    /** Missing patches past which the view counts as cold (about a quarter of one ring). */
+    static final int COLD_GAPS = 64;
+    private static boolean cold;
     private static float frameMs = 8f;
 
     /**
@@ -251,7 +278,7 @@ public final class FarSightClient {
             frameMs += (ms - frameMs) * 0.05f;
         }
         lastFrameNanos = now;
-        workers.restMicros = (partsOff & 16) != 0 ? 0 : Math.round(Math.clamp((frameMs - 13f) / 5f, 0f, 1f) * 12_000f);
+        workers.restMicros = (partsOff & 16) != 0 || cold ? 0 : Math.round(Math.clamp((frameMs - 13f) / 5f, 0f, 1f) * 12_000f);
     }
 
     private static float smooth(float a, float b, float x) {
@@ -302,14 +329,15 @@ public final class FarSightClient {
         }
     }
 
-    /** Development view: 0 normal, 1 generated-layer cells tinted magenta, 2 far terrain under the chunk mask red (autopilot {@code farsight debug <n>}). */
+    /** Development view: 0 normal, 1 generated-layer cells tinted magenta, 2 far terrain under the chunk mask red, 3 every far tree red and far terrain blue (autopilot {@code farsight debug <n>}). */
     static int debug;
     /**
      * Parts switched off for measuring (autopilot {@code farsight part <name> on|off}): 1 the per-pixel erosion detail,
      * 2 the trees, 4 the valley cloud, 8 the bake, 16 the workers' pacing.
      */
     static int partsOff;
-    private static final String[] PARTS = {"detail", "trees", "mist", "bake", "pace", "steady"};
+    // seaunder: ring 0's sea drawn under the real chunks (4aa1b25f); seafloor: the far water's own floor (0cbdd9e8)
+    private static final String[] PARTS = {"detail", "trees", "mist", "bake", "pace", "steady", "seaunder", "seafloor"};
 
     /** Autopilot: {@code farsight on|off|status|debug <n>}. */
     public static String autopilot(String arg) {
@@ -327,7 +355,7 @@ public final class FarSightClient {
                 else partsOff &= ~(1 << i);
                 return "parts off " + partsOff;
             }
-            return "unknown part " + w[0] + " (detail|trees|mist|bake|pace|steady)";
+            return "unknown part " + w[0] + " (detail|trees|mist|bake|pace|steady|seaunder|seafloor)";
         }
         switch (a) {
             case "on" -> {
@@ -360,8 +388,8 @@ public final class FarSightClient {
         cpuFrames = 0;
         double[] gpu = renderer.gpuMillis();
         return String.format(Locale.ROOT,
-                "%s gpu_ms=%.3f bake_ms=%.3f cpu_ms=%.3f rest_us=%d missing=[%s] queued=%d pieces=%d cells=%d trees=%d (%d draws) column=%.1fus probes=%.1f/column (%d columns) generated=%d/%d vram=%dMB",
-                drawing() ? "drawing" : enabled() ? "on" : "off", gpu[0], gpu[1], cpu, workers.restMicros, rings, workers.queued(), renderer.pieces, renderer.cells, renderer.treesDrawn, renderer.treeDraws,
+                "%s gpu_ms=%.3f bake_ms=%.3f cpu_ms=%.3f rest_us=%d missing=[%s] queued=%d workers=%d pieces=%d cells=%d trees=%d (%d draws) column=%.1fus probes=%.1f/column (%d columns) generated=%d/%d vram=%dMB",
+                drawing() ? "drawing" : enabled() ? "on" : "off", gpu[0], gpu[1], cpu, workers.restMicros, rings, workers.queued(), workers.active, renderer.pieces, renderer.cells, renderer.treesDrawn, renderer.treeDraws,
                 cols == 0 ? 0.0 : workers.columnNanos.get() / 1000.0 / cols, cols == 0 ? 0.0 : workers.probes.get() / (double) cols, cols,
                 field.genUploaded, field.genAsked, (field.memoryBytes() + renderer.memoryBytes()) >> 20);
     }

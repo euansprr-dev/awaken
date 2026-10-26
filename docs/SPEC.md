@@ -202,7 +202,14 @@ The Tech movement power `awaken:grapple` is shown as **Snap Cable** (2026-10-26,
 
 Overworld: `awaken:gate` block structure (frame + core) at a surface position; client renders a light pillar coloured by
 rank (E #F4F6FB, D #5FD08F, C #6FB3FF, B #B48CFF, A #F2A541, S #FF5A6A, Sovereign black-gold), visible up to 1500 blocks
-(drawn at clamped distance beyond render distance).
+(drawn at clamped distance beyond render distance). Our own soft light, never vanilla's beacon beam: camera-facing
+ribbons with a bell-shaped falloff across their width ((1 - x²)³, nothing and flat at the edge), a near-white core and
+the rank's glow added as light, a wide haze in the rank's colour alpha-blended (it carries the pillar by day), all
+thinning to nothing with height; no world fog (it counts height as distance and cut the column off flat), the top kept
+inside the far plane. Drawn after the level in a pass of its own (depth-tested, no depth written), never through the
+level's translucent passes (with improved transparency their composite writes a translucent's depth wherever it shows,
+so Lens took each ribbon's whole quad for solid and left its clouds out there: a hard-edged slab). Admin `/awaken gate frame <dist> <lift>` puts the camera on the line from the nearest gate toward
+Carillon's centre, facing the pillar (tours).
 Gate card shows rank, breaks-in, omen; PER ≥20 adds layout, ≥40 modifiers, ≥60 floor count; Veil scouting shows all.
 A gate of another rank than the hunter's says so in a "For you" row: "above your rank", or "below your rank · pays less"
 (floors below your rank pay ×0.3, `Curve.BELOW_RANK_FACTOR`; §17.25).
@@ -1001,7 +1008,17 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   done on other threads. Every test starts once its force-loaded 5x5 chunks entity-tick, and light levels are read
   after `AwakenTests.awaitLight` (the light engine has taken every block change so far); both wait in real time, at
   most 30 s, by running the chunk system's main-thread queue. Timing budgets assert on the fastest of a few runs.
-  A test that needs untouched ground owns fresh ground away from the test grid (plots sit 6 blocks apart).
+  The test world is superflat (grass at y -61) and tests stand at y 5, so any rock, water or roof a test meets there was
+  left by another test. Every test is padded by 24 (`AwakenTests.PADDING`): plots sit 54 blocks apart instead of 6, and
+  vanilla clears the padded box (blocks and creatures) as it places the test. A test that starts while no other AWAKEN
+  test runs (every batch's first, at least: a batch's tests start one by one as their chunks come in) removes every player
+  and every non-player entity left in the overworld and puts back the first test's game rules, time of day and clear sky
+  (the runner keeps neither; before 2026-10-26 some 240 finished tests' players stood about the grid and the world's
+  directors acted round them). On the GameTest server the world's own directors stay quiet and the tests drive them: no
+  anomaly, gate, happening, ledger body, camp or scene comes to a test's players by itself. A test that builds above its
+  padded box, or reads a column's top, clears its own site to the sky first (`AwakenTests.site`, `clearToSky`); state a
+  test switches on goes back in `AwakenTests.onEnd`, which runs whether it passes or fails. A creature never despawns
+  there because its nearest player is another test's, over 128 blocks off (vanilla discards it at once).
 - `-Ptests=<name prefixes>` (comma-separated) registers only those GameTests; a filter that matches none fails.
 
 Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools/autopilot.sh`):
@@ -1531,27 +1548,41 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   median 0.3 blocks from the generator's exact ground, p90 1.2, test `farsight_columns_predict`), plus half a block (the
   top face). 2.5 probes a column; 59 µs a column on the Awakened Tectonic terrain on the M4 (stage 0: 650-870 µs and
   8-block steps). The city basin's `Shape.ground` applies on top. Water fills to sea level. Biome from the biome
-  source; colour, forest (density, canopy height, shape, crown colour) and flags from `FarPalette.look`; `ALPINE` where
-  the world has Awakened Alpine and the biome is `#awaken:alpine`. Generator without a terrain density: its base height.
-  Workers: a quarter of the cores, at most three (two on an M4: macOS ignores thread priorities), coarsest ring first.
+  source, sampled per patch every second corner and at least every 8 blocks, each corner taking the nearest sample
+  (2026-10-26, a JFR profile of the pack's world: one lookup a corner, through Lithostitched's injector over Tectonic's
+  climate, was 86% of the workers' time, 178 µs a column); colour, forest (density, canopy height, shape, crown
+  colour) and flags from `FarPalette.look`; `ALPINE` where the world has Awakened Alpine and the biome is
+  `#awaken:alpine`. Generator without a terrain density: its base height.
+  Workers: a quarter of the cores, at most three (two on an M4: macOS ignores thread priorities), paced by frame time;
+  while more than 64 patches are missing (a new world, a jump, the opening's card, fast flight) half the cores, at most
+  six, unpaced. The horizon ring first, then by distance; a ring asks only for patches it draws (not those the next
+  finer ring covers clear of its 16-cell easing band: asked for, they came first and the visible bands waited, so a
+  minute after a jump rings 4 and 5 still lacked 66 and 209 of 256 patches and the coast read as see-through sea).
 - **Generated layer** (stage 1, schema 2): `FarChunk` keeps per 2×2-block cell the ground's top (MOTION_BLOCKING_NO_LEAVES;
   water counts), water depth, the ground's colour, the canopy's height above it and its colour (leaves at
   MOTION_BLOCKING). `FarStore.patch` averages the cells within half a cell of each corner (known once a quarter is
-  seen) into the same four texels, flagged generated; its trees get their biome's shape. It wins over the prediction.
+  seen) into the same four texels, flagged generated; its trees get their biome's shape (looked up only where trees
+  stand). It wins over the prediction.
 - **Drawing** (`AfterSky`, before any chunk, its own D32 reversed-Z depth, planes 1 and 32768): each ring's window
   minus the next finer window is cut into pieces of up to 64×64 cells, culled on the CPU, each one draw of a continuous
   mesh: vertex `v` is the piece's corner `(v % 65, v / 65)`, one index buffer per piece width (8..64). A corner takes
   the generated layer, else the prediction, and over the window's outer 16 cells eases into the next coarser ring's
   surface (bilinear between its corners), exactly at the edge: no crack, no pop. A corner with no data takes the coarser
-  rings' surface, else open sea at sea level (never a collapsed vertex). Far terrain is hidden where the real chunks are drawn,
-  dithering in over 32 blocks at the render distance's edge: where they are loaded and meshed (a 64×64 chunk mask: a
-  chunk counts once its surface section and the three below are built) and within the render distance in 3D from the
-  camera, as Sodium culls them (a sphere of the render distance). Seen from high up the real sea ends well inside the
+  rings' surface, else open sea at sea level (never a collapsed vertex). Far terrain is hidden exactly where the real
+  chunks are drawn: where they are loaded and meshed (a 64×64 chunk mask: a chunk counts once its surface section and
+  the three below are built, or 2 s after it loads, since Sodium never builds sections it can't see) and in a section
+  Sodium draws, by its own rule (`farRealSection`, from Sodium 0.9.3's `OcclusionCuller`: the section's box grown by a
+  block within the render distance horizontally, as a circle, and vertically). (2026-10-26, Euan: a smooth dark wedge
+  on a loaded spire and a grey box behind a quay's tower: the mask was a sphere 48 blocks short of the render distance,
+  so in that band far cells, wider than a spire, stood with the real chunks.) Seen from high up the real sea ends well inside the
   horizontal render distance, and its floor sooner, so far water tests its own floor's distance and stays under a real
-  water surface whose floor is too far to draw. Far water is never hidden under the real chunks unless the camera is
+  water surface whose floor is too far to draw. Far water is not hidden under the real chunks in the render distance's outer band (the last 80 blocks), where the
+  mesh lies flat and the camera is above the sea (2026-10-26: a steep far triangle from a canal to a roof stood as a blue
+  wall in the loaded city, and nearer far water showed as boxes on its canals; the real floor is always drawn nearer),
+  unless the camera is
   under the sea (2026-10-26, Euan's play: sky-coloured slabs on the sea where Sodium skipped a section), and grazing far
-  water reflects the sky by the horizon at every distance, as Lens's real water beside it does. The planner and the windows count as covered only the ground the
-  sphere reaches at a sea floor (40 under sea level) below the camera, in 16-block steps. (2026-10-26: the pale squares
+  water reflects the sky by the horizon at every distance, as Lens's real water beside it does. The planner and the windows count as covered only the ground a
+  sphere 48 blocks inside the render distance reaches at a sea floor (40 under sea level) below the camera, in 16-block steps. (2026-10-26: the pale squares
   over the sea after a jump and the pale frame along a flight were these holes, found with `farsight debug 2`, which
   paints masked far terrain red. They were first taken for water walls and for vanilla's chunk fade-in; a Turbo
   fluid-renderer mixin and a fade override were built for those, removed nothing, and were dropped.)
@@ -1617,6 +1648,14 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   Cells the city builds on (real ones above the street + 3, planned ones) carry `FarCity.BUILT` in their colour's top
   byte, and a far corner over them takes the highest built cell and its colour, not the average, so walls, towers and
   spires keep their silhouette at any distance. Test `farsight_city`; tour `farsight2-city.txt`.
+- **The city before its chunks** (2026-10-26, Euan's play: a far hill stood over Carillon in the opening's flight, the
+  spire through it): the far prediction lays every column inside the city's reach from the plan (`FarCity.plannedAt`,
+  `City.skyline` painted once per chunk and kept), its top block's height and colour, flagged as known, so the city is
+  right from the first frame whether terrain carved its basin or the city levelled its own ground. Built cells keep
+  their highest only where a far corner spans 8 blocks or less (rings 0-2); coarser corners average, or one spire's top
+  would be taken by every corner round it and slope into a cone. Ring 0's pieces still loading are drawn from the
+  coarser surface, and its land pieces are skipped under the chunks only where every chunk under them is shown in the
+  chunk mask: a chunk still meshing leaves the far land to cover it, never a hole to the sky.
 - **Landmarks** (`FarLandmarks`): unchanged from stage 1 (gate pillars from `Gates.near` from 1500 blocks, the city's
   towers), drawn after the terrain and trees.
 - **Budgets** (measured): Lens Ultra at sunset on the jagged peaks, 2880×1800 (11% more pixels than 4K at 0.75): Far
@@ -2036,7 +2075,10 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   with the start age (a relog resumes mid-flight); the player is never dragged along. The camera stays within ~215
   blocks of the player, below y 320 and at most ~200 above the ground; the shot flies over the north-west half looking
   south-east across the spire, and Distant Horizons (or fog, Lens haze and clouds) carries the far half. The first
-  flight is pre-warmed behind the opening card. Life seen from the sky is blocks and particles (lit windows, smoke,
+  flight is pre-warmed behind the opening card, and the card holds (up to 20 s more, `SkyShot.WARM_MAX`) until the view
+  is warm (`FarSightClient.warm()`: every far ring's patches in and 97% of the chunks well inside the render distance
+  loaded and meshed; at once when Far Sight is off), so the first frame of sky has no hole, seam or hill where the city
+  stands (2026-10-26, Euan's play). The server allows the sky ninety seconds. Life seen from the sky is blocks and particles (lit windows, smoke,
   lamps, boats): citizens draw only within 128 blocks.
 
 - **The Registry ceremony** (2026-10-26; Euan, playing: "they actually physically hand you the Holo band and the paper
@@ -4561,26 +4603,41 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   The bash shoves the shield straight at the foe, its face square to the shove. Every move has a form in its row
   (tools/arms/forms.py writes the shared moves' too, read from their path as the lab always read them), so first and
   third person do the same thing (a spear's Art is a thrust in both).
-- **Third person, the wrist** (Euan 2026-10-26: "hold third person to the same working parts"): vanilla's
-  third-person hold sets a weapon across the fist, square to the forearm, and a vanilla arm has no wrist, so the
-  forearm's roll swings the blade round rather than turning its edge; before, a chop led with the other side of the
-  blade from a forehand (a katana's chop with its spine), the axe's swings with the back of the head and the
-  undercut with the flat. Now through each move's clip the weapon turns about its own length in the fist, through its
-  grip (`ArmsWrist`; FpSwings' `wrist3` keys, per arm, every 0.5 ticks, baked by the lab from the clip and the style's
-  forged weapon): from the hand's rest to the turn that lays its working side square into the blow by the wind-up's
-  end, held through the blow, home by the clip's end (median 34 degrees; a single edge turned right over, 180, where a
-  shared clip leads with its other side). The fighter's hand items are resolved again marked with their arm while a
-  move turns them (the player's render-state modifier, last), so only a hand's weapon in third person turns, never
-  one in first person, the hotbar or a frame; a left main arm keeps its hold (the keys are right-handed). A
-  single-edged tier on the other side from its style's lead (the Beastbound Longsword and Greatblade, the Wildhide and
-  Veilwoven Daggers) is turned over in its third-person hold (`thirdperson_right/lefthand`). The thrust keeps its arm
-  and chest on the line from cocked to through and leans in less than it lunges (a turn or a lean had swept a long
-  point's tip 45 degrees off its line); the shield bash raises the shield square in front of the chest, the body
-  driving in behind it; the Gauntlets punch their own dodge, slide and fall moves (a hook, an uppercut, a straight:
-  a vanilla arm can't turn a fist knuckles-down as it comes over). The lab's `audit` holds every clip to the working
-  part on every weapon in the arm that strikes (0 of 176 fail; 78 did); `wrist` draws a move's blow in third person
-  with and without the turn (docs/combat/anim-lab/wrist-3p.png). The scythe leads point first in third person; its
-  haul back through the target is first person's.
+- **Third person, the wrist** (Euan 2026-10-26: "hold third person to the same working parts"; then "it's
+  literally going through his body"): vanilla's third-person hold sets a weapon across the fist, square to the
+  forearm, and a vanilla arm has no wrist, so the forearm's roll swings the blade round rather than turning its edge,
+  and the shared poses swept long blades through the head, the body and the legs (a chop led with the other side of
+  the blade from a forehand, a katana's wind-up crossed the torso). Now through each move's clip the weapon turns in
+  the fist, about its grip (`ArmsWrist`; FpSwings' `wrist3` keys: a quaternion per arm every 0.25 ticks, in the forged
+  weapon's item frame; a weapon turned over in its hold, `flipped3`, takes them turned over too): about its own length,
+  so its edge, bit or face lies square into the blow, and bent in its own plane and out of it (15-degree steps, 90 and
+  60 at most), so it stays out of the head, the body, the legs and the other arm. The lab solves it per move and arm
+  (`wrists`, `bake`): a path through the bends at every quarter tick (Viterbi; at most 45 degrees a quarter tick, held
+  still through the hit, from the hand's rest and home to it; a heavy loosed from its held draw starts turned), the
+  working part's lead at the hit before everything, then no weapon of the style (every tier's outline at once) more
+  than 0.3 px into the figure in the straight clip and its bent twin (Bendable Cuboids, in the pack: the item rides
+  the bent forearm), looking ahead or down, then the least bend. The fighter's hand items are resolved again marked
+  with their arm while a move turns them (the player's render-state modifier, last), so only a hand's weapon in third
+  person turns, never one in first person, the hotbar or a frame; a left main arm keeps its hold (the keys are
+  right-handed). A single-edged tier on the other side from its style's lead (the Beastbound Longsword and Greatblade,
+  the Wildhide and Veilwoven Daggers) is turned over in its third-person hold. The Gauntlets are worn in third person
+  too (`arms_holds.worn_third_person`: the knuckles down the forearm, the back of the hand out, the cuff round the
+  forearm, 0.7 scale), never held out in front of the fist, and punch their own clips, each found in the lab (knuckles
+  first at the hit, the bent twin 0.8 or more, nothing into the head or body): a jab with the arm level and the body
+  lunging along it, an overhand angled down with the body dropping in behind it, an uppercut from a low bent fist
+  rising, a hook with the elbow bent at shoulder height, the chest turning it round. The thrust keeps its arm and
+  chest on the line from cocked to through, leans in less than it lunges and bends its elbow only a little (a turn, a
+  lean or a straightening forearm swept a long point's tip off its line); the shield bash raises the shield square in
+  front of the chest. The lab's `audit` holds every clip to the working part on every weapon in the arm that strikes
+  (the bent clip at the bar; without Bendable Cuboids the straight one at least leading with it) and measures how
+  deep any weapon goes into the figure (`body` compares it with no wrist); `wrist` draws a move's blow in third person
+  with and without the turn. Measured over every weapon, both clips, looking level: moves putting a weapon more than
+  1.5 px into the figure went from 99 of 179 without the wrist to 53 (the Katana, Glaive, Scythe, Spear, War-staff
+  and Gauntlets none). What still goes in: a few designs' own bulk at rest (the Hive Regent's glass-wing knuckle guard
+  along the forearm, the Gearwright Colossus's fist against the hip) and the wind-ups of the shared one-handed sword
+  poses for the longest and widest weapons (the Greatblade's, the Twinblades' far blade, some Longswords): those need
+  their own third-person poses and two-handed grips, not a wrist. The scythe leads point first in third person; its haul back through
+  the target is first person's.
 - **The animation lab** (tools/art/anim_lab.py; SPEC §25, Euan's ask for a way to see the motion): `sheet` / `all`
   draw each strike's first-person frames as the game composes them (the swing, Hands' view layer, vanilla's rest, the
   weapon's hold and mesh, 70 degrees) as an onion-skin with the blade tip's path (wind-up blue, blow gold, recovery
@@ -4933,6 +4990,24 @@ The rules below replace that.
   session, "JOURNAL · N NEW" until the K screen has shown them. The Codex keeps the finds themselves.
 - A lair rumour ("Heard of · …") is AMBIENT, topic `lair` (the Now tracker points at it).
 
+### 26.3b The city is not a discovery (Euan, 2026-10-26)
+Carillon is where you start, not something you find: inside its walls (`CityHooks.inCity`, the wall included) nothing
+counts as a discovery. One rule, `Finds.counts(player)`, checked by every source before it records anything, so the
+first find outside is still a first:
+- **Biomes** (`BiomeDiscovery`): no first steps inside; the remembered biome is dropped there, so the first step past
+  the wall into the same biome is the discovery (the Commons' caption is the moment).
+- **Creatures** (`Sightings`): the city's animals and citizens are never studied, by look or by touch.
+- **Landmarks and gates** (`LandmarkWatch`): the city's own gate and places are not landmarks found.
+- **Happenings** (`Pulse`): one seen from inside the walls isn't witnessed; stepping out while it runs still is.
+- **Anomalies** (`AnomalyDirector.discovered`).
+What the city keeps, because the city needs it: the Registry's band and licence, the first power, the city's own places
+on the Atlas (its discovery and bells), the opening's story lines and revelations, Carillon's quests and requests, region
+captions (a place name is not an achievement). Ores and lodes are found by mining, not by standing there, and stay.
+The K menu in a fresh world, by this rule (checked 2026-10-26): Journal and Codex creatures empty until the first step
+outside; Almanac empty; Truths none (they wait for level 5, `LevelRoad` flag `awaken:truths`); "Your body remembers"
+never plays in a fresh world (old worlds only, from rank B); Records (time awake) and Recent messages (the opening's
+own words) stay. Test `notice_city_discovers_nothing`.
+
 ### 26.4 "Nearby" alerts and the rift
 - Anomaly words are IMPORTANT, topic `nearby` (merged, paced, never several at once), sent 50 ticks after the anomaly's
   own cue, and dropped if it ended meanwhile. The first rift a player meets is a moment ("Something tore open", label
@@ -4955,7 +5030,7 @@ The rules below replace that.
 ### 26.5 Tests
 `notice_pace_gap_and_burst`, `notice_critical_bypasses_queue`, `notice_ambient_files_to_journal` (signal),
 `notice_discovery_needs_intent` (fauna: beside the crosshair is never a find, a glance isn't, a rest is; the first find
-teaches). `fauna_sighting_discovery` studies for `Sightings.DWELL` looks.
+teaches), `notice_city_discovers_nothing` (wilds: walking the city finds no biome; one step past the wall, it does). `fauna_sighting_discovery` studies for `Sightings.DWELL` looks.
 
 ### 26.6 The audit (2026-10-26) and what is still outside the director
 Routed: every Signal toast/panel/window (server tier tags: anomalies, creatures, biomes, happenings, lairs, landmarks,

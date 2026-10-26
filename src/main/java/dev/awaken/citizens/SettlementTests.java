@@ -62,7 +62,7 @@ final class SettlementTests {
         int homeB = b.place("door", dB, 1.5, 0, -2.5).ref(lotB).cap(4).id();
         int homeC = b.place("door", dC, 13.5, 0, -2.5).ref(lotC).cap(4).id();
         int forge = b.place("door", dS, 13.5, 0, 4.5).ref(lotS).cap(2).id();
-        int anvil = b.place("anvil", s2, 11.5, 0, 2.5).yaw(180).spot(11.5, 2.5).id();
+        int anvil = b.place("anvil", s2, 11.5, 0, 2.5).yaw(0).spot(11.5, 2.5).id(); // facing the anvil, south of him
         // the well: water in its shaft, the washer's trough beside it
         b.water(0, 5);
         int wash = b.place("wash", s1, 1.5, 0, 4.5).yaw(0).district(green).spot(1.5, 4.5).id();
