@@ -75,6 +75,8 @@ public final class FarSightClient {
     private static final int SNAPSHOTS_PER_FRAME = 48, VOXEL_UPLOAD_BYTES = 6 << 20;
     private static final FarWorkers workers = new FarWorkers(FarWorkers.defaultThreads(), FarWorkers.burstThreads());
     private static ServerLevel bound;
+    /** The level City Sight's meshes belong to (kept across an off and on in it). */
+    private static ServerLevel voxelLevel;
     private static int boundRd, boundRings = Rings.RINGS;
     private static long joinNanos, bindNanos, lastDrawNanos;
     private static int ringsDone;
@@ -97,7 +99,11 @@ public final class FarSightClient {
         // before Lens (LOWEST), which reads vanilla's render-distance end through FarTerrain
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ViewportEvent.RenderFog.class, FarSightClient::fog);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingIn.class, e -> joinNanos = System.nanoTime());
-        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> unbind());
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
+            unbind();
+            if (voxels != null) voxels.clear();
+            voxelLevel = null;
+        });
     }
 
     /**
@@ -166,7 +172,8 @@ public final class FarSightClient {
         // (the server may not tick between this and a rebind: start its capture over from here)
         VoxelCapture.reset();
         FarCity.underCitySight = false;
-        if (voxels != null) voxels.clear();
+        // City Sight's meshes stay while the world does: switched back on, the capture starts over and every chunk
+        // whose blocks are unchanged hashes the same and is skipped (Euan saw the city rebuild after an on/off)
         workers.clear();
         if (field != null) field.reset();
         bound = null;
@@ -199,6 +206,10 @@ public final class FarSightClient {
         int rd = mc.options.getEffectiveRenderDistance(), shown = rings();
         if (level != bound || rd != boundRd || shown != boundRings) {
             unbind();
+            if (level != voxelLevel) {
+                voxels.clear();
+                voxelLevel = level;
+            }
             bound = level;
             boundRd = rd;
             boundRings = shown;
