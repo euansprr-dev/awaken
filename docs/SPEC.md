@@ -1576,7 +1576,17 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   straight line (the real terrain interpolates its density over 8-block cells in y, so this is closer than halving:
   median 0.3 blocks from the generator's exact ground, p90 1.2, test `farsight_columns_predict`), plus half a block (the
   top face). 2.5 probes a column; 59 µs a column on the Awakened Tectonic terrain on the M4 (stage 0: 650-870 µs and
-  8-block steps). The city basin's `Shape.ground` applies on top. Water fills to sea level. Biome from the biome
+  8-block steps). Inside the city basin's blend (2026-10-26, Euan: a far wall east of Carillon "that isn't really
+  there", flat when he got close) the ground comes from the router's own final density, which the basin wraps
+  (`CityBasinFunction` round `final_density`; the lands pack's Lithostitched wrap swaps it into the generator's settings,
+  a router without it gets the same wrap): down from above the natural ground (or the street + 11) in 8-block steps to
+  the first solid, then the bracket's line. The basin blends densities, and inside hills the final density is held
+  small by the cave noise, so the real street runs flat out to about 560 blocks from the site and ends in a cliff
+  (sometimes undercut); blending heights (the old `Shape.ground`, still used for a generator without a terrain density)
+  drew a 230-block rise there. Test `farsight_columns_basin` (vanilla's overworld, seed 777, a hilly site, 910 columns
+  through the blend against the wrapped final density block by block): median 0.21 blocks, p90 0.46, none over 3 too
+  high (blending heights: median 2.1, p90 22.6); 86 µs and 7 probes a column, only in the ring 330–700 blocks from the
+  site. Water fills to sea level. Biome from the biome
   source, sampled per patch every second corner and at least every 8 blocks, each corner taking the nearest sample
   (2026-10-26, a JFR profile of the pack's world: one lookup a corner, through Lithostitched's injector over Tectonic's
   climate, was 86% of the workers' time, 178 µs a column); colour, forest (density, canopy height, shape, crown
@@ -1615,11 +1625,14 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   Also (2026-10-26, Euan's tours): every overworld chunk the server loads is captured too, after the city's (kept
   within 1.9 km, the city's at any distance, at most 16 M quads, farthest first; the coverage mask redrawn each second
   for chunks within 2 km, so its 4 km torus never stands a far chunk in for a near one). A snapshot starts just under
-  the chunk's lowest ground (OCEAN_FLOOR - 8): deeper never shows. A chunk is taken again 2 s after its last block
+  the chunk's lowest ground (MOTION_BLOCKING_NO_LEAVES - 8; OCEAN_FLOOR counts leaves, and under a closed canopy the
+  cut fell at the leaves: trees floating over a hole): deeper never shows. A chunk is taken again 2 s after its last block
   change (the neighbour-update event), not on save (the city's hold saves every chunk as it lets go: the city
   "loaded twice"), and a worker skips a snapshot that hashes as the mesh already up. Faces into dark rooms (no sky
   light, block light ≤ 2) aren't drawn; panes, doors and bars between such a room and the light draw their outward
-  face as a window (dark glass). Light steps by three for merging. Each chunk's quads are grouped by face; faces turned
+  face as a window (dark glass), and where a dark room opens to the light (an undercut, a cave's mouth) its air gets an
+  unlit stone curtain facing the light (past the chunk's side counts as light, so no slit at chunk borders): a hole
+  through to the sky otherwise (2026-10-26, under the ledge at the basin's rim). Light steps by three for merging. Each chunk's quads are grouped by face; faces turned
   away across the whole chunk aren't drawn. Chunks clear of the render distance's edge and of a level's fade draw with
   a pipeline that never discards (cut-out holes take the room's darkness, leaves' their colour), so Apple GPUs'
   hidden-surface removal works. Measured at the Roost: about 1.1 M quads, 1.6 to 4.7 ms on a loaded M4.
@@ -1632,8 +1645,11 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   City Sight hides per section: a 64×64-chunk × 32-section mask from the game's own `isSectionCompiledAndVisible`,
   which Sodium answers with its exact built state (so the approved Turbo hook into Sodium isn't needed); all-air
   sections count as built unasked, half the chunks are refreshed a call, a section counts 250 ms after it first is. A
-  section Sodium hasn't built keeps City Sight's copy of the same blocks. The plan still skips chunks the chunk mask
-  calls shown (drawing every chunk with an unbuilt section, mostly hidden behind others, cost 2 ms at the Roost).
+  section Sodium hasn't built keeps City Sight's copy of the same blocks. The plan skips a chunk only when Sodium has
+  built every section from the chunk's lowest ground (without leaves) to its top: not the sealed sections under the
+  ground, which Sodium never builds (counting those drew most chunks, 2 ms more at the Roost), and not by the settling
+  timer (on a busy machine Sodium builds late, and land it hadn't built yet stood empty). Same cost at the Roost as the
+  timer (876 chunks, 0.75 M quads).
   City Sight's meshes stay across Far Sight off and on in the same world (the capture starts over; unchanged chunks
   hash the same and are skipped).
 - **City Sight on disk** (`VoxelDisk`, schema 1): every snapshot taken is kept, deflated (sections in the game's own
@@ -1641,6 +1657,17 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   on its own thread at each level save and, waited for (at most 10 s), when the server stops. A start, and every 10 s
   after, reads back what lies within 1.7 km of the player and isn't tracked (the world's own copy wins), handed over
   as the client takes them.
+- **Real land ahead** (`VoxelAhead`, Far Sight 3's shadow generator as built): where trees will stand can't be
+  replayed without growing them (the game's placement and a tree's growth draw from one random stream in turn), so
+  the exact way is the real chunks. While City Sight draws and the server's smoothed tick stays under 30 ms, every 10
+  ticks it asks for the two best chunks (nearest, ahead before behind) in a band 3 chunks past the view distance and a
+  35° cone 12 further along the player's heading, at most 6 waiting, held by Awaken's own ticket (`farsight_ahead`:
+  loading only, never ticking, timing out 40 ticks after the chunk is ready to save). City Sight captures them on load,
+  once the light engine has finished the chunk (`isLightCorrect`; else 2 s later): without its sky light every face
+  reads as a dark room's and the chunk would stand as a hole.
+- **Dissolves**: a chunk new to City Sight dissolves in over 1 s (its share in the chunk table) while the far terrain
+  and far trees under it dissolve out in the complementary 4×4 dither (the coverage mask carries the same share), so
+  wherever the far view's guess differed from the real land it changes gently, never pops.
 - **Levels follow the air**: a City Sight level gives way once its cells span `PIXELS` / transmittance pixels (the air's
   haze at that distance, 4× in rain): hazier distance needs less detail.
 - **Work ahead of the camera**: the far patches' queue ranks from where the camera will be in 1.5 s at its smoothed
@@ -1700,7 +1727,11 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   behind ridges, faces turned from the sun shaded only as it lowers). Grass tops stand over dirt risers (the dirt
   texture's average, a grass fringe along the top), cliffs show stone or an Awakened biome's own block (hoarfrost, riven
   shale, fused glass, mirepeat: palette rock kinds in colour flags bits 4-6), badlands their strata, every block its own
-  grain. Snow lies by the alpine snow line and by a smooth coldness (each corner's blocks above the game's own cold
+  grain. The biome's materials (its rock, badlands, stony, alpine) are weights blended between corners (`vRocks`,
+  `vBiome`), and where biomes meet each block takes one rock with the blend as its odds (world-anchored): with the flags
+  flat per triangle, a border across a steep face drew whole triangles in one rock or the other (2026-10-26, Euan: grey
+  spikes on the basin's rim cliff and the mountains behind it, riven shale against stone; `docs/perf/far-sight/fs3-rim.jpg`,
+  tour `farsight3-rim.txt`). Snow lies by the alpine snow line and by a smooth coldness (each corner's blocks above the game's own cold
   line, info alpha, found by bisecting `coldEnoughToSnow`), both broken into patches over a ~20-block band
   (`AlpineSurface.patches`, the same noise the chunks' snow uses), on tops and as a fringe on risers. Scree and bare
   rock by slope; water over its own sea floor (2026-10-26, Euan's idea: the real water shows its floor, the far water
@@ -1710,7 +1741,9 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   edge, so the open sea further out is only water; forest floor tinted by its crowns, and from about 600 blocks out (full by 2.4 km)
   a forest is its canopy: crown colour over every face, speckled crown by crown.
 - **Bake** (fragment pass, `FarGpu`): per corner the normal, valley shade, and sunlight: a march toward the sun across
-  the ring (40 steps, growing), soft by how far under the ridge line. Changed rings at once, one more every other frame
+  the ring (40 steps, growing), soft by how far under the ridge line, never sharper than a cell and a half (a shadow's
+  edge stepping corner to corner drew a saw). Valley shade only where the ground rises on both sides (the lower side
+  of four directions, one and two corners out): a cliff's foot or a face under a summit isn't a hollow. Changed rings at once, one more every other frame
   (the chunk mask refreshes on the frames between).
 - **Far forests** (`FarTrees`): rings 1-4 (half a kilometre to four) plant jittered candidate spots per cell (1, 2, 3,
   1 by ring; ring 4's trees are dots, the canopy shading carries the forest there) taking a tree as often as the forest is dense (densest: about two in three), never on water, on slopes over
@@ -3679,6 +3712,29 @@ Plan: the Far Sight page, path 4 (https://claude.ai/artifact/LvAoTbYB82o6ggcHS73
   3456×2234 is 7.7), `upscaler` SHARP. 1.0 on the MacBook's own screen (about 1 ms, and nothing once a scene sits at
   120 Hz or on the CPU, doesn't pay for the softer textures); at 4K Lens 2 and the world's pixel-bound part cost the
   most (estimated 3–6 ms saved on Cinematic/Ultra, docs/perf/CITY-FPS.md). The autopilot's `pixels <scale>` sets both.
+- **Steady** (`PixelsSteady`, `core/pixels_steady.fsh`; 2026-10-26, Euan: distant edges, far trees and mountains
+  crawl as the camera breathes, red dots flicker): a temporal stabiliser before the upscale, at the world's resolution.
+  Each frame last frame's steady image is carried to where it now lies (this frame's NDC through the inverse
+  view-projection, the camera's step since, last frame's view-projection: one matrix; the projection as Lens reads it,
+  bob and hurt tilt included), sampled Catmull-Rom (five bilinear taps), clamped to this frame's pixel and its four
+  neighbours (a moving mob or a newly seen place never smears), and this frame mixed in at 0.1. No jitter: it steadies,
+  it adds no resolution. The hand (its own depth target) keeps no history; a teleport (24 blocks), a gap over 250 ms,
+  a resize or a frame without the pass starts it afresh. History: two RGB10A2 targets (a tenth's steps round away in
+  8 bits). Then the upscaler as before (SHARP's RCAS now sharpens a steady image); at native the world draws into a
+  same-size target and is copied out unsharpened. Needs a post effect (Lens): without one the game's hand pass clears
+  the main depth before Pixels' end hook, so the pass steps aside (`getRequestedPostEffects()` empty). Setting
+  `steady` (default on); autopilot `pixels steady on|off`.
+  Attribution first (tour `farsight3-shimmer.txt`, `tools/farsight/shimmer.py`: night over Carillon's east wall,
+  12-frame bursts under a scripted sway, fine flicker / hard-flicker share in the far, mid and near bands): SHARP
+  roughly quadrupled hard flicker against bilinear (far 0.42% vs 0.10%); Far Sight's far land and trees were most of
+  the far band (Far Sight off: 0.04%), City Sight added some in the middle band, the near fields' crop rows (Sodium)
+  flickered too, and native was worse than 0.75. The red dots (not in the tour's view): most likely the pale biome's
+  one-block crystal spires, real blocks about two pixels wide, tinted by the moonlight; the pass steadies them too. Proof (tour `farsight3-steady.txt`, M4 at 2880×1800, Vulkan, RD 16, Lens
+  Cinematic; `docs/perf/far-sight/fs3-steady.jpg`): under a slow continuous turn (as Camera Overhaul's breathing
+  moves the camera every frame) hard-flicker pixels 0.064% → 0.010% at 0.75 SHARP and 0.170% → 0.012% at native;
+  under the old tour's one-tick tp steps (a jump, then still frames) 0.106% → 0.086% and 0.351% → 0.235%. GPU: the
+  upscale 0.27 → 0.64 ms at 0.75 (world 2160×1350), steady plus the copy 0.84 ms at native. A first cut at the
+  screen's resolution with RCAS after cost 1.5 ms and sharpened native: dropped.
 - Holo: panels draw inside the world (the level's always-on-top phase), so at render scale their text would be
   upscaled with it (measured: softer, with RCAS fringes at 0.67). While a panel holds the player's attention
   (`UiHooks.focus() > 0`: the K menu, a reading screen) the world renders native, so panel text, Lens's bloom on the
@@ -3686,9 +3742,9 @@ Plan: the Far Sight page, path 4 (https://claude.ai/artifact/LvAoTbYB82o6ggcHS73
   cards and the HUD are GUI and always native.
 - Safety: both hooks must be seen in one frame before the first swap; a frame that ends with the target still lent
   (`RenderFrameEvent.Post`) gets it back and turns Pixels off for the session, as does any exception in a pass.
-- Client config `awaken-pixels-client.toml`: `renderScale` 0.5..1.0 (1.0 = native, off) and `upscaler` SHARP |
-  FSR | BILINEAR. Autopilot `pixels <scale> [sharp|fsr|bilinear] | config | state` overrides them for a tour (not
-  saved). Tours:
+- Client config `awaken-pixels-client.toml`: `renderScale` 0.5..1.0 (1.0 = native, off), `upscaler` SHARP |
+  FSR | BILINEAR and `steady` (on). Autopilot `pixels <scale> [sharp|fsr|bilinear] | steady on|off | config | state`
+  overrides them for a tour (not saved). Tours:
   `tools/autopilot/pixels.txt` (the measurement), `pixels-smoke.txt`, `pixels-dh.txt`; crops: `tools/pixels-crops.py`.
   `pixels gpu on|reset|<label>` (measurement only) writes GPU timestamps before the world, after the post effects and
   after the upscale, and logs the world pass's and the upscale's GPU time per label (`PixelsTiming`): on a busy Mac

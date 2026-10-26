@@ -49,6 +49,9 @@ final class PixelsFrame {
     // what the last frame drew, logged when it changes
     private static int loggedW, loggedH;
     private static PixelsConfig.@Nullable Upscaler loggedUpscaler;
+    private static boolean loggedSteady;
+    // whether this frame takes the steady pass (decided before the world draws)
+    private static boolean steady;
 
     /** Before {@code renderLevel()}. */
     static void begin(RenderTarget main, RenderTarget hand) {
@@ -59,14 +62,22 @@ final class PixelsFrame {
         int w = main.width, h = main.height;
         float scale = Pixels.scale(w, h);
         int sw = Math.max(1, Math.round(w * scale)), sh = Math.max(1, Math.round(h * scale));
-        if (scale >= 1f || sw >= w && sh >= h || !Pixels.usable()) {
+        // the steady pass takes the world at native resolution too (into a same-size target); it needs the world's depth
+        // at the end, which the game keeps only when a post effect runs (Lens): otherwise the hand clears it first
+        steady = Pixels.usable() && Pixels.steady() && !net.minecraft.client.Minecraft.getInstance().gameRenderer.getRequestedPostEffects().isEmpty();
+        if (!steady && (scale >= 1f || sw >= w && sh >= h) || !Pixels.usable()) {
             release();
             logIfChanged(w, h, null);
             return;
         }
+        if (sw > w || sh > h) {
+            sw = w;
+            sh = h;
+        }
         // a panel holds the player's attention (the K menu, a reading screen): Holo draws inside the world, so its text
         // would be upscaled with it; the world renders native until the panel closes (targets kept for after)
         if (UiHooks.focus() > 0f) {
+            PixelsSteady.skip();
             logIfChanged(w, h, null);
             return;
         }
@@ -89,6 +100,7 @@ final class PixelsFrame {
         beganThisFrame = false;
         PixelsTiming.stamp(PixelsTiming.AFTER_WORLD);
         if (lentMain == null) {
+            PixelsSteady.skip();
             PixelsTiming.stamp(PixelsTiming.AFTER_UPSCALE);
             return;
         }
@@ -96,8 +108,18 @@ final class PixelsFrame {
         PixelsConfig.Upscaler upscaler = Pixels.upscaler();
         try {
             CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
-            GpuTextureView world = low.getColorTextureView();
-            if (upscaler == PixelsConfig.Upscaler.FSR) {
+            // steadied first, at the world's resolution; then upscaled as ever (native: copied out, nothing sharpened that
+            // wasn't before)
+            GpuTextureView world;
+            if (steady) {
+                world = PixelsSteady.resolve(encoder, low, lowHand);
+            } else {
+                world = low.getColorTextureView();
+                PixelsSteady.skip();
+            }
+            if (low.width >= main.width && low.height >= main.height) {
+                pass(encoder, BILINEAR_LABEL, main.getColorTextureView(), PixelsPipelines.BILINEAR, world, FilterMode.NEAREST);
+            } else if (upscaler == PixelsConfig.Upscaler.FSR) {
                 easu = sized(easu, "Pixels EASU", main.width, main.height, main.getColorTexture().getFormat(), null);
                 pass(encoder, EASU_LABEL, easu.getColorTextureView(), PixelsPipelines.EASU, world, FilterMode.NEAREST);
                 pass(encoder, RCAS_LABEL, main.getColorTextureView(), PixelsPipelines.RCAS, easu.getColorTextureView(), FilterMode.NEAREST);
@@ -113,7 +135,7 @@ final class PixelsFrame {
                 }
             }
             PixelsTiming.stamp(PixelsTiming.AFTER_UPSCALE);
-            logIfChanged(low.width, low.height, upscaler);
+            logIfChanged(low.width, low.height, upscaler, steady);
         } catch (RuntimeException e) {
             Pixels.fail("the upscale pass failed", e);
         }
@@ -188,14 +210,20 @@ final class PixelsFrame {
         if (lowHand != null) lowHand.destroyBuffers();
         if (easu != null) easu.destroyBuffers();
         low = lowHand = easu = null;
+        PixelsSteady.release();
     }
 
     private static void logIfChanged(int w, int h, PixelsConfig.@Nullable Upscaler upscaler) {
-        if (w == loggedW && h == loggedH && upscaler == loggedUpscaler) return;
+        logIfChanged(w, h, upscaler, false);
+    }
+
+    private static void logIfChanged(int w, int h, PixelsConfig.@Nullable Upscaler upscaler, boolean steady) {
+        if (w == loggedW && h == loggedH && upscaler == loggedUpscaler && steady == loggedSteady) return;
         loggedW = w;
         loggedH = h;
         loggedUpscaler = upscaler;
+        loggedSteady = steady;
         if (upscaler == null) Awaken.LOG.info("[pixels] native {}x{}", w, h);
-        else Awaken.LOG.info("[pixels] world {}x{}, {} to the screen", w, h, upscaler);
+        else Awaken.LOG.info("[pixels] world {}x{}, {}{} to the screen", w, h, steady ? "steady, " : "", upscaler);
     }
 }

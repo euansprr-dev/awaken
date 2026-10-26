@@ -16,6 +16,7 @@ public final class PixelsClient {
         modBus.addListener(RegisterRenderPipelinesEvent.class, PixelsPipelines::onRegister);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> Pixels.refresh());
         NeoForge.EVENT_BUS.addListener(RenderFrameEvent.Post.class, e -> PixelsFrame.frameEnd());
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RenderLevelStageEvent.AfterLevel.class, PixelsSteady::capture);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingIn.class, e -> PixelsPipelines.recheck());
     }
 }

@@ -12,11 +12,12 @@ import net.minecraft.world.level.chunk.LevelChunkSection;
 import org.jspecify.annotations.Nullable;
 
 /**
- * A chunk's blocks and light as the server had them (SPEC §20, City Sight): copies of its sections from the lowest to
- * the highest that holds anything, one more each side for the light their faces get, taken on the server thread in a
- * few microseconds a section and read on Far Sight's workers. Sections are indexed from {@link #fromSection}.
+ * A chunk's blocks and light as the server had them (SPEC §20, City Sight): copies of its sections from just under its
+ * lowest ground to the highest that holds anything, one more each side for the light their faces get, taken on the
+ * server thread in a few microseconds a section and read on Far Sight's workers. Sections are indexed from
+ * {@link #fromSection}; {@code ground} is the chunk's lowest ground (leaves aside), where what can be seen begins.
  */
-public record VoxelSnapshot(int chunkX, int chunkZ, int levelMinY, int fromSection, @Nullable LevelChunkSection[] sections,
+public record VoxelSnapshot(int chunkX, int chunkZ, int levelMinY, int fromSection, int ground, @Nullable LevelChunkSection[] sections,
                             @Nullable DataLayer[] sky, @Nullable DataLayer[] block) {
 
     /** Takes the snapshot (server thread), or null if the chunk holds nothing but air. */
@@ -31,10 +32,14 @@ public record VoxelSnapshot(int chunkX, int chunkZ, int levelMinY, int fromSecti
         }
         if (lo < 0) return null;
         // from just under the chunk's lowest ground: what lies deeper (stone, dark caves) never shows from afar, and a
-        // natural chunk is then a few sections, not the world's whole height
+        // natural chunk is then a few sections, not the world's whole height. Ground without leaves (OCEAN_FLOOR counts
+        // them solid: under a closed canopy the cut fell at the leaves, the ground went missing and the trees floated
+        // over a hole); water's surface is where it ends there, which is all that shows of it from afar
         int ground = Integer.MAX_VALUE;
         for (int z = 0; z < 16; z++) {
-            for (int x = 0; x < 16; x++) ground = Math.min(ground, chunk.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.OCEAN_FLOOR, x, z));
+            for (int x = 0; x < 16; x++) {
+                ground = Math.min(ground, chunk.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z));
+            }
         }
         int groundSection = chunk.getSectionIndex(Math.max(chunk.getMinY(), ground - 8));
         lo = Math.max(lo, groundSection);
@@ -54,7 +59,7 @@ public record VoxelSnapshot(int chunkX, int chunkZ, int levelMinY, int fromSecti
             sky[i] = sl == null ? null : sl.copy();
             block[i] = bl == null ? null : bl.copy();
         }
-        return new VoxelSnapshot(cx, cz, level.getMinY(), minSection + lo, sections, sky, block);
+        return new VoxelSnapshot(cx, cz, level.getMinY(), minSection + lo, ground, sections, sky, block);
     }
 
     /** A hash of its blocks and light: the same chunk taken again unchanged hashes the same (workers; ~1 ms). */

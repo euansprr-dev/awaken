@@ -47,8 +47,12 @@ public final class VoxelMesher {
 
     private final Looks looks;
     private final int waterId = Block.BLOCK_STATE_REGISTRY.getId(Blocks.WATER.defaultBlockState());
+    /** What a dark room's mouth shows (its curtain): stone, unlit. */
+    private final int curtainId = Block.BLOCK_STATE_REGISTRY.getId(Blocks.STONE.defaultBlockState());
     private int[] ids = new int[0];
     private byte[] kinds = new byte[0];
+    /** Per block: the air of a dark room (open, no sky light, at most a glimmer of lamp light). */
+    private boolean[] darkAir = new boolean[0];
     private long[] mask = new long[0];
     private final int[][] out = new int[LEVELS][];
     private final int[] size = new int[LEVELS];
@@ -73,13 +77,16 @@ public final class VoxelMesher {
         if (ids.length < n) {
             ids = new int[n];
             kinds = new byte[n];
+            darkAir = new boolean[n];
         }
         for (int y = 0; y < height; y++) {
             for (int z = 0; z < 16; z++) {
                 for (int x = 0; x < 16; x++) {
                     int i = index(x, y, z), id = s.state(x, y, z);
+                    byte k = id == 0 ? VoxelKinds.AIR : VoxelKinds.kind(id);
                     ids[i] = id;
-                    kinds[i] = id == 0 ? VoxelKinds.AIR : VoxelKinds.kind(id);
+                    kinds[i] = k;
+                    darkAir[i] = (k == VoxelKinds.AIR || k == VoxelKinds.SKIP) && s.skyLight(x, y, z) == 0 && s.blockLight(x, y, z) <= 2;
                 }
             }
         }
@@ -102,7 +109,7 @@ public final class VoxelMesher {
         snap = null;
         int levelMin = s.levelMinY();
         return new VoxelMesh(s.chunkX(), s.chunkZ(), slot, lo == Integer.MAX_VALUE ? 0 : levelMin + Math.floorDiv(lo, 16),
-                hi == Integer.MIN_VALUE ? 0 : levelMin + Math.floorDiv(hi + 15, 16), quads, starts);
+                hi == Integer.MIN_VALUE ? 0 : levelMin + Math.floorDiv(hi + 15, 16), s.ground(), quads, starts);
     }
 
     /** The level's quads grouped by face (down, up, north, south, west, east); starts[d] the first of face d, in quads. */
@@ -163,12 +170,13 @@ public final class VoxelMesher {
         byte nk = kindAt(nx, ny, nz);
         int look, offset;
         int id = ids[i];
+        boolean curtain = false;
         if (k == VoxelKinds.FULL || k == VoxelKinds.SOFT) {
             if (nk == VoxelKinds.FULL) return 0;
             if (k == VoxelKinds.SOFT && nk == VoxelKinds.SOFT && ids[index(nx, ny, nz)] == id) return 0;
             // a face into a dark room (no sky, hardly a lamp) shows from afar only through its windows and doors, which
             // close it (thinWalls): never drawn
-            if (dark(nx, ny, nz, nk)) return 0;
+            if (dark(nx, ny, nz)) return 0;
             look = looks.face(id, dir);
             offset = (dir & 1) == 1 ? 16 : 0;
         } else if (k == VoxelKinds.WATER) {
@@ -177,20 +185,28 @@ public final class VoxelMesher {
             id = waterId;
             look = looks.face(waterId, 1);
             offset = 14;
+        } else if (darkAir[i] && ny >= 0 && ny < height && (nk == VoxelKinds.AIR || nk == VoxelKinds.SKIP) && !dark(nx, ny, nz)) {
+            // a dark room open to the light (an undercut, a cave's mouth): its faces aren't drawn, so where the light
+            // ends it gets an unlit curtain, as the dark there looks from afar, never a hole through to the sky
+            // (Euan, 2026-10-26: the sky showed under the ledge at the basin's rim). Past the chunk's side counts as
+            // light (as the snapshot reads it): a curtain the next chunk's dark hides costs a quad, a missing one a slit
+            id = curtainId;
+            look = looks.face(curtainId, dir);
+            offset = (dir & 1) == 1 ? 16 : 0;
+            curtain = true;
         } else {
             return 0;
         }
         if (look < 0) return 0;
         int tint = 0xFFFFFF;
-        if ((look >>> 16) != 0) tint = looks.tint(id, (look >>> 16) - 1, snap.biome(x, y, z)) & 0xFFFFFF;
-        int sky = step(snap.skyLight(nx, ny, nz)), block = step(snap.blockLight(nx, ny, nz));
+        if (!curtain && (look >>> 16) != 0) tint = looks.tint(id, (look >>> 16) - 1, snap.biome(x, y, z)) & 0xFFFFFF;
+        int sky = curtain ? 0 : step(snap.skyLight(nx, ny, nz)), block = curtain ? 0 : step(snap.blockLight(nx, ny, nz));
         return PRESENT | (long) offset << 52 | (long) block << 48 | (long) sky << 44 | (long) tint << 16 | (look & 0xFFFF);
     }
 
     /** Whether (x, y, z) is the air of a dark room: open, no sky light, at most a glimmer of lamp light. */
-    private boolean dark(int x, int y, int z, byte k) {
-        return (k == VoxelKinds.AIR || k == VoxelKinds.SKIP) && snap.skyLight(x, y, z) == 0 && snap.blockLight(x, y, z) <= 2
-                && x >= 0 && x <= 15 && z >= 0 && z <= 15 && y >= 0 && y < height;
+    private boolean dark(int x, int y, int z) {
+        return x >= 0 && x <= 15 && z >= 0 && z <= 15 && y >= 0 && y < height && darkAir[index(x, y, z)];
     }
 
     /**
@@ -198,13 +214,13 @@ public final class VoxelMesher {
      * so a room whose inner faces aren't drawn never shows through to the sky.
      */
     private void thinWalls(int x, int y, int z) {
-        if (dark(x, y, z, VoxelKinds.SKIP) || ids[index(x, y, z)] == 0) return;
+        if (dark(x, y, z) || ids[index(x, y, z)] == 0) return;
         int id = ids[index(x, y, z)];
         for (int dir = 2; dir < 6; dir++) {
             int ox = x - DX[dir], oz = z - DZ[dir], nx = x + DX[dir], nz = z + DZ[dir];
-            if (!dark(ox, y, oz, kindAt(ox, y, oz))) continue;
+            if (!dark(ox, y, oz)) continue;
             byte nk = kindAt(nx, y, nz);
-            if (nk == VoxelKinds.FULL || dark(nx, y, nz, nk)) continue;
+            if (nk == VoxelKinds.FULL || dark(nx, y, nz)) continue;
             int look = looks.window(id, dir);
             if (look < 0) continue;
             int sky = step(snap.skyLight(nx, y, nz)), block = step(snap.blockLight(nx, y, nz));
