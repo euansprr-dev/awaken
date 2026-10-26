@@ -656,7 +656,8 @@ Plan v2 · Hunter gear (details in docs/modules/gear.md):
   Numbers live in `gear/SetBonus`.
 - A focus adds +6/9/12/15% power damage in either hand (+2% per temper level), under the boss cap.
 - Crafting-table recipes with hook tags `#awaken:hunter_<hide|core|bind>_<e|d|c|b>`; new creature families add their
-  materials to these tags from their own merge folders. E-tier is craftable from first-hour creature drops.
+  materials to these tags from their own merge folders. E-tier is craftable from first-hour creature drops. From D up
+  every piece also needs its tier's metal from the deep (`#awaken:tier_metal_<t>`, §28.3).
 - Level road `hunter_gear_e/d/c/b` at 3, 13, 22, 42. Now line priority 25, only for an upgrade.
 
 Plan v2 · power targeting and visuals (details in docs/modules/powers.md, power-fx.md):
@@ -3779,9 +3780,13 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   - Foraging: Herb Glint (client: a sea-green shimmer on ripe plants within 16), Wild Larder (+1 berries, glow berries,
     mushrooms), Root Sense (6% ripe), Seed Keeper (grass 4%: pumpkin, melon, beetroot or torchflower seeds), Bloom (by
     day among 3+ flowers, a Bloom Sprite comes, 30% each 10 s, none within 16), Wildheart (Regeneration in forests).
-  - Mining: Clean Strike (ores +1 15%), Ore Sense (client: every 4 s with a pick in hand, ores within 6 pulse through
-    stone as glass outlines, 3 s), Vein Sight (Ore Sense 10), Deep Ear (stone and deepslate ×1.1 break speed), Deep Vein
-    (deepslate ores +1 25%), Heart of Stone (below y 0, damage ×0.85).
+  - Mining (fixed by W2, §28.3): Clean Strike (ores +1 15%), Ore Sense (client: every 4 s with a pick or Hunter mattock
+    in hand, ores within 6 pulse through stone as glass outlines, 3 s), Vein Sight (each ore Ore Sense finds, its whole
+    vein outlined: same ore through the 26 neighbours, 20 out, 192 blocks), Deep Ear (client: underground with a pick,
+    every 3 s, an open cave or Deepglass behind two or more blocks of rock within 12 plays a soft sound from where it
+    is), Deepglass Cutter (Deepglass breaks ×2 and gives a shard more; replaces Deep Vein and the planned "alloy from
+    deepslate"), Heart of Stone (below y 0, damage ×0.85). Mining keeps its own pace: only its Hunter-level share is
+    budgeted (`mine`), its craft XP is not cut; every craft's XP is × (1 + perk `awaken:craft_rate`).
   - Fishing: Calm Water (+1 fish 20%), Shimmer (a treasure 10%: name tag, saddle, nautilus shell, book, bottle o'
     enchanting), Deep Lungs (air lasts twice as long), Storm Caller (+1 in the rain), Pearl Diver (prismarine shard 8%,
     ender pearl 2%), Leviathan Line (catches pay the Hunter level twice).
@@ -4750,13 +4755,13 @@ it ("MARKED · Gatewrought Glaive · Rebuke"). Tooltips list each Mark and what 
 Test `arms_marks`.
 
 **The Forge** (S7, `ArmsForge`): sneak and use Hearth's Forge (any placed `awaken:forge`; a plain use stays Hearth's
-tempering and upgrades). Holding one of our weapons: attune it to a Force named by the catalyst in the off hand (Blaze
-Powder Heat, a Copper Ingot Charge, an Ender Pearl Gravity, a Ghast Tear Spirit, Packed Ice Frost) for 6 essence, a
-Core Shard and the catalyst; re-attuning replaces it. An attuned weapon's Mark riders take its Force, and it primes both
+tempering and upgrades). Holding one of our weapons: attune it to a Force named by the catalyst in the off hand (since
+W2, §28.3: Sunshard Heat, Frostspar Frost, a Fault Seam Gravity, a Copper Ingot Charge, a Deepglass Shard Spirit) for 6
+essence, a Core Shard and the catalyst; re-attuning replaces it. An attuned weapon's Mark riders take its Force, and it primes both
 ways: a landed hit makes the next power within 3 s cost 15% less (with a Weave's 30%: ×0.7×0.85), and a landed power of
 its Force makes the next blow within 3 s land ×1.25 with the Force's touch (Heat burns 3 s, Frost slows, Charge 6
 posture, Gravity lifts, Spirit heals 1.5). With an empty hand: the Blueprints, one design each use in turn, each for 4
-paper, 2 iron and an essence shard. Every style but the Longsword needs its Blueprint at the crafting table: the
+paper, a lapis (ink, since W2) and an essence shard. Every style but the Longsword needs its Blueprint at the crafting table: the
 Blueprint sits in a free cell of the style's own shape (tools/art/specs/arms_weapons.py `blueprint_pattern`; `python3
 tools/art/specs/arms_weapons.py recipes` rewrites only the recipes) and comes back out of the grid. Blueprint art: the
 style's Wildhide silhouette in white line on blueprint paper (tools/arms/blueprints.py). Dev: `/awaken arms attune
@@ -5098,6 +5103,192 @@ other's files): the Study halves the Blueprints' paper (`arms/ArmsForge`), the G
 ### 28.3 W2 as built
 (The W2 builder writes this subsection.)
 
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 28. Between the Gates (home, people, below; plan docs/world-depth/PLAN.md, page https://claude.ai/artifact/ATZfZSczLg95kNSgnLF42M; Euan approved all of it 2026-10-26)
+
+Euan, 2026-10-26: "Go ahead with all recommendations." PLAN.md is the long form and its audits (`docs/world-depth/
+audit-*.md`) are the facts it was designed against; this section is what builders hold to. (§27 is The Way Forward, on
+pack/progression.)
+
+### 28.0 Decisions (approved)
+1. The Hearth starts on the first evening: Ilse gives the **Hearth Ember** at the Wayfarer camp (the end of The Way
+   Forward's first thread); setting it down founds a **Tier 0 Hearthfire** (radius 24). The Lord's Heart still makes the
+   Anchor (Tier I) on that fire.
+2. The Hearth reads what you build: every closed room read on six readings (closed, light, warmth, room to live, made
+   with care, detail and comfort; best of each kind counts), graded Bare / Snug / Fine / Grand (the average, never more
+   than one step above the weakest), named (grade, main material, purpose, or a sign inside), its name shown once as an
+   AMBIENT caption; the glance reads the room you stand in; Comfort sets Rested; rooms do things (PLAN 4.6); people move
+   in when you know them, a spare Snug bedroom stands and their trade has its room.
+3. AWAKEN's own settlements replace vanilla villages in new worlds (hamlet, village, town, special kinds), built on
+   Carillon's people engine made multi-settlement (with the Carillon session) and the city's grammar, with interiors
+   (shared with Carillon B4); the first hamlet placed on purpose 700-1,100 from Carillon up the camp road.
+4. Village people are citizens, not vanilla villagers; vanilla villagers leave new worlds (iron farms and trading halls
+   with them); a town scribe sells enchanted books.
+5. The emerald is the coin of the world; Carillon's planned bell marks are dropped; `EconomyHooks` is installed with it.
+6. Troubles: caused by world state, found never listed, ≤ 1 per village and ≤ 2 within 1,500 of a player, none in a
+   world's first two hours or inside a Hearth; missable with a lasting cost, never a dead end or a named death; always
+   paid; world option "calm villages". Launch set of eight (PLAN 6.3).
+7. Hide from the hunt, metal from the deep, light from the gates: from D up every forged weapon, Hunter armour piece and
+   mattock needs its tier's mineral with no alternative: D iron, C diamond, B amethyst + Deepglass, A netherite,
+   S starmetal; E stays hide and bone. Gatewrought rises to 20 armour and 2.0 toughness.
+8. Gates pay no raw ore beyond their theme's flavour; the gate market stops selling diamonds; the Mine Echo works a real
+   mine head (W6) instead of rolling dice.
+9. New finds: Deepglass (seeps below y 0 and the Descent's walls; diamond edge to cut), starmetal (fallen stars), bell
+   bronze (copper + amethyst), lodes with a heart (vanilla ores in 20-120-block veins). The Lands' crystals become
+   attunement catalysts (Heat Sunshard, Frost Frostspar, Gravity Fault Seam; Charge copper; Spirit Deepglass); lapis is
+   ink (Blueprints: 4 paper, 1 lapis, 1 essence).
+10. Mining's feel: every ore its own strike sound, sparks, a hit on the last blow; the vein gives when a heart breaks;
+    the charged heavy strike (bore three along the aim); rare, warned cave-ins (never in a Hearth or on placed blocks);
+    the Tuning Fork, pitons and Runner's rope, the miner's lamp, rope fittings (W5).
+11. Caves: vanilla's generator stays; cave places (sinkholes, the Delvers' mines, seeps, chutes, grottos, joined lairs,
+    vents), the rappel (with the Ascent), cave sound and Lens looks, names, a way home; every place has a route that
+    needs no rope and passes M44's five tests (a rule, a resource, a sensory set, a story entrance, a route).
+12. This plan takes Living Wilds G (settlers, your named village, roads) and F's underground secrets and treasure maps;
+    Living Wilds F keeps wonders and legendary beasts.
+13. Order: W1 and W2 now as two builders; then W0 and W3 with Carillon, W5 alongside; W4, W6; W7 last.
+
+### 28.1 Phases and who touches what (keep two builders off the same files)
+| Phase | Owns (writes) | Reads / asks |
+|---|---|---|
+| **W1 The carried flame** | `hearth/**` (the Ember, Tier 0, the reading, room kinds of PLAN 4.6 except the Mine head, the room glance's data, Comfort, Rested, chests-at-home crafting, the 4.9 fixes, a coal per temper in `hearth/Upgrades`), `src/main/merge/hearth/`, the Ember's line and reward in `data/awaken/awaken/quest/the_last_delivery.json` (agreed with the progression session, which builds the first thread), the room glance's client panel | `core.api.Notices` (captions), `Progression.addPerkSource` (Rested: `awaken:energy_regen`, `awaken:craft_rate`), The Way Forward's glance when it exists |
+| **W2 Metal from the deep** | new module `delve` (`dev.awaken.delve`, `src/main/merge/delve/`): lodes and hearts, Deepglass, starmetal, bell bronze, the strike's feel (client), Tuning Fork, pitons and Runner's rope, miner's lamp; tier metals in `gear/**` and Arms' rows and recipes (agreed with the Arms session); `arms/ArmsForge` catalysts and Blueprints; `gates/run/Loot.java`, `gates/run/Rooms.java` (handouts); ore XP in `progression/ProgressionModule.java`; `living/craft/**` and `living/client/CraftFx.java` (Mining craft fixes, reading `awaken:craft_rate`); fallen-star loot; Deepglass in `descent/world/Palette.java` | nothing of W1's |
+| W0, W3 | `citizens`, `city` (with Carillon); new module `village` | |
+| W4 | `village`; `living/pulse`, `living/camp` targets (with Living Wilds) | |
+| W5 | `delve` cave places; `body/ascent` rappel and rope fittings (with the Ascent); Lens looks; core audio's cave soundscape | |
+| W6 | `hearth` settlers, tiers by reading, the Mine head and the Mine Echo's rework, the named village, the kit craftable | |
+| W7 | `village` roads, inns, towns | |
+
+Shared ids (fixed now so parallel builders agree): items `awaken:hearth_ember`, `awaken:deepglass` (the block's item),
+`awaken:deepglass_shard`, `awaken:raw_starmetal`, `awaken:starmetal_ingot`, `awaken:bell_bronze_ingot`,
+`awaken:tuning_fork`, `awaken:piton`, `awaken:runner_rope`, `awaken:miners_lamp`; tags `#awaken:tier_metal_<d|c|b|a|s>`
+(the signature minerals, used by gear and Arms recipes); perks `awaken:craft_rate` (a craft-XP multiplier, read by
+`living.craft`) and the existing `awaken:energy_regen`; test prefixes `hearth_` (W1) and `delve_` (W2).
+
+Wired after both W1 and W2 merge (one small follow-up, never inside either phase, so neither builder edits the
+other's files): the Study halves the Blueprints' paper (`arms/ArmsForge`), the Greenhouse triples herb ripeness
+(`living/craft/Herbs`). W2 reads the perk `awaken:craft_rate` by its id, so Rested's craft bonus needs no wiring.
+
+### 28.2 W1 as built
+(The W1 builder writes this subsection.)
+
+### 28.3 W2 as built
+Module `delve` (`dev.awaken.delve`, `delve.client`, `delve.api.Lodes`; doc `docs/modules/delve.md`), and the seams it was
+given. Branch `pack/world-depth-w2`. Tests `delve_lode_heart`, `delve_tier_metals`, `delve_tuning_fork`,
+`progression_ore_xp`; tour `tools/autopilot/world-depth-w2.txt`.
+
+**Hide, metal, light.** Item tags `#awaken:tier_metal_<d|c|b|a|s>` (in `src/main/merge/delve`): D `iron_ingot`, C
+`diamond`, B `awaken:deepglass_shard`, A `netherite_scrap`, S `awaken:starmetal_ingot`, one item each. Every gear piece
+from D up has a slot `M` that takes only its metal (tools/art/specs/gear.py RECIPES: 2 helmet, 3 chest, 2 legs, 2 boots,
+1 blade, 1 focus, 2 mattock, about 13 a tier); every focus from D up a gold ingot (`G`, two from C); every Veilwoven piece
+an amethyst shard (`Y`). Forged Arms weapons from D up take the metal in their bind cell (tools/art/specs/arms_weapons.py
+`write_recipe`). E is unchanged. `hunter_hide_s` is starmetal (S's recipes take it through `M`). Gatewrought: 3/6/8/3 =
+20 armour, toughness 2.0, durability multiplier 33 (diamond's); to keep every stat climbing, Veilwoven 3/7/8/3 = 21 and
+Lordscale 3/7/9/3 = 22. `HunterTier.metalTag()`.
+
+**Every ore's job.** Blueprints: 4 paper, 1 lapis, 1 essence (`ArmsForge.BLUEPRINT_LAPIS`). Attunement catalysts by id
+(`ArmsForge.CATALYST_ID`, `catalystItem`): Heat `awaken:sunshard`, Frost `awaken:frostspar`, Gravity `awaken:fault_seam`,
+Charge `copper_ingot`, Spirit `awaken:deepglass_shard` (each Lands crystal is its own block item, dropped by its block).
+Bell bronze: 3 copper + 1 amethyst = 3 ingots (shapeless); a vanilla bell from 5 bell bronze and a stick.
+
+**The handouts stop.** `gates/run/Loot.java`: the table pays no iron, gold, emerald, lapis, diamond or netherite; their
+weight went to essence shards (weight 14, 1-2+rank), torches, and a Core Shard from C (weight 4); the theme item stays
+(the Night Market's emerald, the Foundry's copper...). The Treasure Gate pays emeralds (the coin) and more essence, no
+gold. `gates/run/Rooms.java` market: the diamond (5 essence) became a coil of Runner's rope (2 essence), the netherite
+scrap (6) four pitons (2); selling gold and emeralds for essence stays. The Mine Echo is W6's.
+
+**Ore XP** (`ProgressionModule.OreXp`, `XpBudget.DEEP`): 0.01 of a level × coal 0.5, copper 0.7, iron 1, gold/redstone/
+lapis 1.5, emerald 4, diamond/Deepglass/ancient debris 6 (quartz 1; amethyst 0, a discovery only). Under y 0 (and
+Deepglass always) through the budget `deep_mining` (0.08 a 10 min) instead of `ore` (0.06), so the deep isn't worn by the
+coal on the way down; the taper starts at content level 15 under y 0 and 25 for diamond and Deepglass. The first of each
+ore is a discovery (`awaken:discovered/ore/<id>`, 0.1 of a level; a `Finds` toast, kind "ore", no lesson). A lode's heart
+pays its own lump (below).
+
+**The Mining craft** (`living/craft`, `living/client/CraftFx`): see §21.9 (Ore Sense with mattocks via
+`#awaken:mining_tools`, Vein Sight's whole vein, Deep Ear's sound, Deepglass Cutter). Craft XP per ore: 10 (15 in
+deepslate or Deepglass) × the ore's weight's square root clamped 0.7-2.5 (coal 7, diamond 25), a heart 60.
+
+**Lodes** (`LodePlans`, `LodeFeature`, `Veins`, `api.Lodes`): 256 x 256 regions; per region coal 2 (y 6..40, 50-110
+blocks), copper 2 (0..40, 50-110), iron 3 (-20..36, 40-100), gold 1 (-54..16, 30-70), redstone 1 (-58..-4, 40-90),
+lapis 1 (-48..8, 30-60), emerald 35% (-8..30, 20-32), diamond 80% (-58..-18, 20-40), Deepglass 1 (-58..-12, 25-50)
+(`delve.Ore`). A lode is a seam walked out from its heart in two arms along a gently wandering, mostly level heading, a
+cell and a cell beside it each step (1-2 thick), within 48 of the heart; pure SplitMix64 from the seed, cached per
+region. `awaken:lodes` (feature, `worldgen/feature/delve/lodes`, biome modifier `delve` on `#minecraft:is_overworld` at
+`underground_ores`) writes each chunk's cells into stone (the ore), deepslate (its deep twin) or another ore, never air,
+water or a build; the heart at the centre. New chunks only. `Lodes.nearest(level, pos, ore[, radius])` answers from the
+plan; a planned lode whose loaded blocks are plainly not its ore (old terrain, mined out) is passed over. One block per
+ore's heart (`<ore>_lode_heart`, its ore's tool tier, light 4, a slow pulse, its core and lit facets an overlay at full
+light so it glows in the dark, glinting), loot a lump (iron 4-7 raw, diamond
+2-4, Deepglass 4-7 shards..., Fortune applies), in `#c:ores`, `#c:ores/<ore>` and `#minecraft:<ore>_ores`.
+
+**The vein gives** (`Veins.give`, client `VeinFx`): breaking a planned heart (after every protection, LOW) opens its
+lode once for the world (`DelveData`, schemaVersion 1): `LODE · <ore> · <blocks left>` through `Finds` (the first a
+moment), a lump of 0.08 of a level × the ore weight's square root × the taper, counters `awaken:lodes_opened`, the
+client's reveal (glass outline in the ore's colour lighting outward with white cracks from the heart at 32 blocks a
+second, a travelling crackle, a kick and hold), and for 30 s the breaker's blows take the lode's blocks in two (speed =
+hardness × 30 / 8, mirrored on the client). The lodes within 64 are sent to each client when the set changes, for the
+glints: a lode block open to the air glints in its ore's colour where block light ≥ 8 or the miner's lamp's beam falls.
+
+**Cave-ins** (`CaveIns`, client `CaveInFx`): after a heart breaks, 60% of the time if the chamber qualifies: air reached
+from beside the heart (box ±12 x, -5..+12 y) at least 160 blocks, at least 7 across both ways, 30% of its columns 3+ high;
+roof = the natural rock over the top air of each such column within 6 of the heart (stone, deepslate and kin, ores, dirt,
+gravel, calcite, dripstone), 10 to 40 of them, nearest first. Never inside a Hearth, a ward, or the city's footprint
+within 48 under its square (its foundations); never if any
+roof block's section holds a solid block a player placed underground (`DelveData` keeps sections below y 64). Warning:
+3 s of dust threads and grit from those stones, a creak, a tremble within 18, "The roof is giving way"; then each stone
+still unchanged falls as a falling block (1.5 damage a block fallen, at most 8) with a rumble.
+
+**The strike's feel** (client `StrikeFeel`): a bite every 4 ticks held (vanilla's rhythm, from NeoForge's client mine
+hold): each ore its own sound (`delve.strike.<ore>`), sparks off hard rock with a pick or mattock (white-hot cooling to
+the ore's colour), grit off soft ground (tinted by the block), the last blow a crack (`delve.strike_last`), a 50-70 ms
+hold and a small kick on ores (`CombatFeedback`). **The heavy strike** (`HeavyStrikes`, client `HeavyCharge`): sneak and
+hold the attack with a pick or mattock (holding attack alone is vanilla mining, so the heavy takes sneak); the Maul's
+charge (starts at 6 ticks, glints at 20, 30 at most): a strain, grit off the head, a ring on the glint; let go to bore
+3 blocks along the aim. Server: a mining tool, charge ≥ 6, 14 ticks since the last, food ≥ 6, not in a gate; each block
+breakable by that tool (and dropping), outside the city's build (its civic blocks, the city's own protection rule; the
+rock under its streets is free), a ward and anyone else's Hearth, broken through the game's own
+`destroyBlock` (so every protection still applies); 2 more durability a block (1 on the glint), 1.0 exhaustion a block.
+
+**New finds.** `awaken:deepglass` (strength 5.5, diamond tool, light 3, its facets' violet edges an overlay at full
+light, hums now and then, motes off open faces; drops 1-2
+shards, Fortune, silk touch the block; in `#c:ores`, so the Veil sees it violet) as veins below y 0
+(`worldgen/feature/delve/deepglass`: ore, size 5, 3 a chunk from 4 above the bottom to y 0, open to caves) and in the
+Descent's strata walls from the Choir (form 3) down, one of each wall's ores (`descent/world/Palette`). Starmetal: the
+fallen star's loot table adds 1-3 `awaken:raw_starmetal`; smelts (400 ticks) or blasts (200) to `starmetal_ingot`.
+Bell bronze as above.
+
+**Tools.** The Tuning Fork (2 amethyst shards and 3 copper ingots; 256 uses): touched to an ore or
+heart it takes that ore's note (`awaken:tuned`); struck on stone (1.5 s cooldown) it rings toward the nearest lode of
+that ore within 48 (`TuningForkItem.target`): the client's ring climbs from the ore's note ×0.72 to ×1.34 as you face
+it (cubed alignment), lasting 4.5 s; a soft arc on the band with a bead of the ore's colour at its bearing (pinned at
+the end when behind you), a mark over or under when it's up or down; nothing within 48, a short flat note. Pitons (4 from
+2 iron and a nugget) go on a wall; a coil of Runner's rope (8 string and a nugget) used on one hangs a rope straight
+down to 32 blocks or the ground (`awaken:runner_line`, a free rope in `#awaken:runner_climbs`: the pipe grip climbs it);
+breaking any of it or the piton gives the coil back. **No two-piton zip line**: the Ascent's line traversal (the pipe
+grip) rides vertical climb lines only, and its zip is the Tether pulling to a point, so there is nothing to ride a run of
+blocks with yet. The miner's lamp (leather, copper, glowstone) is worn on the head (its equipment layer: a band and a
+brass lamp); its light is drawn, never placed (no light blocks): 17 rays in a 24° cone from the brow find the faces
+ahead (each ray's face and its eight neighbours on that plane, at most 260); each lit face is drawn again over itself
+with its own block quads (the model variant the world chose there, so it lines up), additively in a warm colour, ×0.95
+at the beam's 9° core falling to its edge and to nothing at 22 blocks, so the rock's own texture comes up out of the
+dark; a faint additive haze on the faces the inner rays hit (`CityGlow`'s pass) and, seen from outside, a small flame
+on the brow; for every wearer within 40 (`LampGlow`; the lit pass is skipped if its pipeline doesn't compile).
+
+**Sounds and art.** 25 events `delve.*` synthesised by `tools/art/specs/audio_delve.py`; textures, models, loot,
+recipes, tags, worldgen and the star's loot by `tools/art/specs/delve.py` (`build_all.py delve`, `delve.py content`,
+`delve.py preview DIR`). Own particles `delve_spark`, `delve_grit`, `delve_dust`, `delve_glint`, `delve_mote`.
+
+**Pacing** (`tools/sim/pacing_sim.py`, the deep's metal; balanced player, medians of 300 runs): the D kit's iron (14 and
+a gold) is in hand at 1.1 h, long before level 13 (6.3 h); the C kit's diamonds (14 and 2 gold) at 12.9 h against level
+22 at 13.8 h, wait after the level 0 h median, 2.1 h at p90 (careful 0 / 2.0, greedy 0 / 1.6, builder 0 / 2.1). That
+assumes the player goes after the metal once within 3 levels of the tier (15-30 min a cycle, the Tuning Fork tuned to
+diamond: a diamond lode found every ~50 deep minutes with the fork, every ~150 without). Every level target still passes
+(level 25 at 16.8 h, 50 at 51.5 h, 135 at 102 h).
+
+**Not done in W2** (left for later phases or a follow-up): the deep's soundscape below y 0 ("the deep presses") is W5's
+cave audio; the rope fittings and rappel are W5's; the Mine head and the Mine Echo's rework are W6's; the Tuning Fork
+from the hamlet's smith waits for villages (W3), it's craftable now; no zip line (above).
 
 ---------------------------------------------------------------------------------------------------------------------
 

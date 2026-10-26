@@ -3,15 +3,15 @@
   "category": "equipment",
   "group": "awaken_hunter_chestplate",
   "key": {
-    "B": "#awaken:hunter_bind_d",
     "C": "#awaken:hunter_core_d",
     "H": "#awaken:hunter_hide_d",
+    "M": "#awaken:tier_metal_d",
     "S": "awaken:essence_shard"
   },
   "pattern": [
     "HSH",
-    "BCB",
-    "HSH"
+    "MCM",
+    "HMH"
   ],
   "result": {
     "id": "awaken:beastbound_chestplate"

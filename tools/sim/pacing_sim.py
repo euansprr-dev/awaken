@@ -72,6 +72,34 @@ CRAFT_ACTION = 0.008  # JAVA: share of a level per craft action that pays (a her
 QUEST_STEP = 0.12     # JAVA: mean reward of a Wayfarer step or bounty, in levels (a chain's finale pays ~0.8)
 CAMP_K = 0.4          # JAVA: a cleared camp or nest pays CAMP_K x floor 1 of the zone's rank (through the camp budget)
 ORE_FRAC = 0.01       # JAVA: per ore
+
+# ---- the deep's metal (SPEC §28.3, "Between the Gates" W2): gates no longer pay raw ore, so D and C gear wait on mining.
+# A separate random stream (MINE_SEED), so the XP pacing above is untouched. Minutes of mining are the minutes the sim
+# already spends on ore (the "ores" roll) or on the Mining craft in a gathering minute. ASSUMED rates, tuned to vanilla:
+# a shallow mining minute (caves and hillsides) brings 1-3 raw iron and sometimes gold; a deep minute (below y 0, once you
+# have an iron pick and are level 8+) a diamond 7% of the time. Lodes (PLAN 7.3): a mining minute finds one 1.2% of the
+# time (0.8% deep), three times that once the Tuning Fork is in hand (the plan's 2-5 h: from hour 3); a lode's blocks left
+# after caves cut it are 55% of its size, plus its heart's lump.
+MINE_SEED = [0]
+MINE_IRON = (1, 3)              # ASSUMED: raw iron per shallow mining minute
+MINE_GOLD_P = 0.3               # ASSUMED: chance of 1-2 raw gold per mining minute
+MINE_DIAMOND_P = 0.07           # ASSUMED: chance of a diamond per deep mining minute (1-2)
+MINE_DEEP_SHARE = 0.4           # ASSUMED: share of mining minutes spent below y 0 once you can
+MINE_DEEP_LEVEL = 8             # ASSUMED: from this level (and an iron pick) a player goes deep
+LODE_P, LODE_P_DEEP, FORK_X, FORK_HOUR = 0.012, 0.008, 3.0, 3.0
+# A delve trip: once a player is within DELVE_AHEAD levels of a tier whose metal they lack, each cycle out they go after
+# it for DELVE_MIN minutes (C: below y 0, the fork tuned to diamond, so the lodes they find are diamond lodes:
+# DELVE_LODE_P a minute with the fork, a third of it without). It costs the cycle that time and pays ore XP as mining does.
+DELVE_AHEAD, DELVE_MIN, DELVE_LODE_P = 3, (15, 30), 0.02
+LODE_LEFT = 0.55
+IRON_LODE = (40, 100)           # JAVA delve.Ore: IRON 40-100 blocks, heart 4-7 raw iron
+DIAMOND_LODE = (20, 40)         # JAVA delve.Ore: DIAMOND 20-40 blocks, heart 2-4 diamonds
+# what a tier's kit needs (JAVA tools/art/specs/gear.py RECIPES: 13 of the metal over seven pieces, a forged weapon one
+# more; the focus's gold): D 14 iron + 1 gold, C 14 diamonds + 2 gold
+KIT_NEEDS = {"D": {"iron": 14, "gold": 1}, "C": {"diamond": 14, "gold": 2}}
+KIT_LEVEL = {"D": 13, "C": 22}  # JAVA level road: hunter_gear_d 13, hunter_gear_c 22
+# before W2, for comparison: what a gate paid in raw metal (gates/run/Loot.java's old table and the market's diamonds)
+OLD_GATE_IRON, OLD_GATE_GOLD, OLD_GATE_DIAMOND_C = 3.0, 2.0, 0.6
 BLOCK_FRAC = 0.0005   # JAVA: per block placed
 OUTLEVEL = 10.0       # JAVA: ore and building taper 1/(1 + levels above content level 0 / 10)
 
@@ -282,6 +310,60 @@ def simulate(kind, rng):
     deaths = gates = 0
     by_rank = {}  # gate rank -> [gates, deaths, floors cleared, Lords killed]
     mastery = {"on": False, "mp": 0.0, "level": 1, "at": {1: (1, 0.0)}, "combat_min": 0.0}
+    MINE_SEED[0] += 1
+    mrng = random.Random(9000 + MINE_SEED[0])
+    metal = {"iron": 0.0, "gold": 0.0, "diamond": 0.0}
+    old = {"iron": 0.0, "gold": 0.0, "diamond": 0.0}
+    kit_at, old_kit_at = {}, {}
+    pick = [False]
+
+    def kit_check():
+        for tier, need in KIT_NEEDS.items():
+            if tier not in kit_at and all(metal[k] >= v for k, v in need.items()):
+                kit_at[tier] = st["t"] / 60
+            if tier not in old_kit_at and all(metal[k] + old[k] >= v for k, v in need.items()):
+                old_kit_at[tier] = st["t"] / 60
+
+    def mine_minute(after=None):
+        """One minute of mining: ore by depth, and maybe a lode (more often with the Tuning Fork). {@code after}: a delve
+        trip's tier (it goes where that tier's metal is, and its lodes are that metal's)."""
+        hours = st["t"] / 60
+        fork = FORK_X if hours >= FORK_HOUR else 1.0
+        if not pick[0] and metal["iron"] >= 3:
+            pick[0] = True
+            metal["iron"] -= 3                      # the iron pick
+        if after == "C" and pick[0]:
+            metal["iron"] += 1
+            if mrng.random() < MINE_DIAMOND_P:
+                metal["diamond"] += mrng.randint(1, 2)
+            if mrng.random() < DELVE_LODE_P * fork / FORK_X:
+                metal["diamond"] += round(mrng.randint(*DIAMOND_LODE) * LODE_LEFT) + mrng.randint(2, 4)
+            if mrng.random() < MINE_GOLD_P:
+                metal["gold"] += mrng.randint(1, 2)
+            kit_check()
+            return
+        if after == "D":
+            metal["iron"] += mrng.randint(*MINE_IRON)
+            if mrng.random() < DELVE_LODE_P * 1.5 * fork / FORK_X:
+                metal["iron"] += round(mrng.randint(*IRON_LODE) * LODE_LEFT) + mrng.randint(4, 7)
+            if mrng.random() < MINE_GOLD_P:
+                metal["gold"] += mrng.randint(1, 2)
+            kit_check()
+            return
+        deep = pick[0] and st["level"] >= MINE_DEEP_LEVEL and mrng.random() < MINE_DEEP_SHARE
+        if deep:
+            metal["iron"] += 1
+            if mrng.random() < MINE_DIAMOND_P:
+                metal["diamond"] += mrng.randint(1, 2)
+            if mrng.random() < LODE_P_DEEP * fork and mrng.random() < 0.35:
+                metal["diamond"] += round(mrng.randint(*DIAMOND_LODE) * LODE_LEFT) + mrng.randint(2, 4)
+        else:
+            metal["iron"] += mrng.randint(*MINE_IRON)
+            if mrng.random() < LODE_P * fork and mrng.random() < 0.45:
+                metal["iron"] += round(mrng.randint(*IRON_LODE) * LODE_LEFT) + mrng.randint(4, 7)
+        if mrng.random() < MINE_GOLD_P:
+            metal["gold"] += mrng.randint(1, 2)
+        kit_check()
 
     def fight(minutes, extra_mp=0.0):
         """Minutes of fighting with the main power. Deterministic, so the XP pacing's random stream is untouched."""
@@ -304,6 +386,14 @@ def simulate(kind, rng):
     def levels(frac):  # a fraction of the current level
         gain(frac * xp_to_next(st["level"]))
 
+    def delve(tier, minutes):
+        """A trip after a tier's metal: every minute mining (it pays ore XP as mining does)."""
+        for _ in range(int(round(minutes))):
+            st["t"] += 1
+            budget.decay(1)
+            gain(budget.pay("ore", ORE_FRAC * mrng.randint(1, 4)) * taper(st["level"]) * xp_to_next(st["level"]))
+            mine_minute(tier)
+
     def overworld(minutes, awake=True):
         """Minute by minute outside (the Living Wilds, SPEC 21.3): kills by creature level and role, crafts, ores, building,
         Wayfarer quest steps, camps, first sightings, anomalies."""
@@ -314,6 +404,7 @@ def simulate(kind, rng):
             xpn = xp_to_next(lv)
             night = (st["t"] % 20) >= 13           # 7 of every 20 minutes are night
             r = rng.random()
+            mined = False
             if r < p["hunt"] + (0.15 if night else 0.0):
                 for _k in range(rng.choice((1, 1, 2, 2, 3))):  # a fight of one to three creatures
                     # in your zone the creatures are within 2 levels of you; out of it, far below (taper)
@@ -331,8 +422,12 @@ def simulate(kind, rng):
             elif r < p["hunt"] + p["gather"]:
                 for craft in rng.sample(("forage", "mine", "fish", "cook", "smith"), 2):  # two crafts a gathering minute
                     gain(budget.pay(craft, CRAFT_ACTION * rng.randint(1, 3)) * WILDS_RANK[RANKS[rank_i]] * xpn)
+                    mined = mined or craft == "mine"
             if rng.random() < 0.25 * p["ores"]:
                 gain(budget.pay("ore", ORE_FRAC * rng.randint(1, 4)) * taper(lv) * xpn)
+                mined = True
+            if mined:
+                mine_minute()
             gain(budget.pay("build", BLOCK_FRAC * 12 * (1 + 2 * p["build_time"])) * taper(lv) * xpn)
             if rng.random() < p["quest"]:
                 st["t"] += rng.uniform(2, 6)       # a Wayfarer step: talk, walk, do the thing
@@ -376,6 +471,11 @@ def simulate(kind, rng):
             home = rng.uniform(14, 22)  # the first hour (the Commons): try the power, meet creatures, a rift tear, then go in
         before = st["t"]
         overworld(home)
+        # the deep: once a tier is near and its metal isn't in hand, go after it (W2: gates no longer pay it)
+        for tier, lv in KIT_LEVEL.items():
+            if tier not in kit_at and st["level"] >= lv - DELVE_AHEAD:
+                delve(tier, mrng.uniform(*DELVE_MIN))
+                break
         # Known quirk: in-game days advance only outdoors here; in the real game they also pass in gates (a flattering
         # simplification for a player who stays outside; docs/living-wilds/living_wilds_sim.py counts both).
         day_clock += st["t"] - before
@@ -450,6 +550,13 @@ def simulate(kind, rng):
                     and (real or kind != "greedy"):
                 break
         gain(unbanked)
+        if cleared:
+            # before W2 a gate also paid raw metal (kept apart: the comparison only)
+            old["iron"] += OLD_GATE_IRON
+            old["gold"] += OLD_GATE_GOLD
+            if RANKS.index(g_rank) >= 2:
+                old["diamond"] += OLD_GATE_DIAMOND_C
+            kit_check()
         by_rank[g_rank][2] += cleared
         if bell_crypt_done and cleared == (nfloors if real else floors):
             by_rank[g_rank][3] += 1
@@ -469,7 +576,8 @@ def simulate(kind, rng):
     return {"rank_hours": rank_times, "deaths": deaths, "gates": gates, "level_times": level_times, "by_rank": by_rank,
             "level_at": {m: level_at(m) for m in (10, 30, 60, 120)}, "first_power_min": first_power_min,
             "final_level": st["level"], "discoveries": found[0],
-            "mastery_at": mastery["at"], "combat_minutes": mastery["combat_min"], "minutes": st["t"]}
+            "mastery_at": mastery["at"], "combat_minutes": mastery["combat_min"], "minutes": st["t"],
+            "kit_at": kit_at, "old_kit_at": old_kit_at}
 
 
 # Power mastery targets (P3 brief): your main power reaches level 3 around player level 20 and level 5 around 45.
@@ -610,6 +718,19 @@ def main():
                     "hours_median": round(statistics.median(h[1] for h in hit), 1), "reached": round(len(hit) / len(rs), 2)}
         # share of play time spent fighting (the sim's estimate; mastery comes only from these minutes)
         row["combat_share_median"] = round(statistics.median(x["combat_minutes"] / max(1.0, x["minutes"]) for x in rs), 3)
+        # the deep's metal: when a tier's kit has its metal in hand, against the level its recipes open at
+        row["metal"] = {}
+        for tier, lv in KIT_LEVEL.items():
+            road = [x["level_times"][lv] / 60 for x in rs if lv in x["level_times"]]
+            got = [x["kit_at"][tier] for x in rs if tier in x["kit_at"]]
+            was = [x["old_kit_at"][tier] for x in rs if tier in x["old_kit_at"]]
+            ready = [max(x["level_times"][lv] / 60, x["kit_at"].get(tier, 1e9)) - x["level_times"][lv] / 60 for x in rs if lv in x["level_times"]]
+            row["metal"][tier] = {"level_hours": round(statistics.median(road), 2) if road else None,
+                                  "metal_hours": round(statistics.median(got), 2) if got else None,
+                                  "metal_reached": round(len(got) / len(rs), 2),
+                                  "wait_after_level_median": round(statistics.median(ready), 2) if ready else None,
+                                  "wait_p90": round(statistics.quantiles(ready, n=10)[-1], 2) if len(ready) > 1 else None,
+                                  "before_w2_metal_hours": round(statistics.median(was), 2) if was else None}
         summary[kind] = row
     checks = []
     bal = summary["balanced"]
@@ -657,6 +778,9 @@ def main():
         print("   level at minute:", {m: v["median"] for m, v in row["level_at_minutes"].items()})
         print("   hours to level: ", {lv: v["median"] for lv, v in row["level_hours"].items()})
         print("   hours to rank:  ", {r: v["median"] for r, v in row["rank_hours"].items()})
+        print("   the deep's metal (kit's metal in hand vs its level; wait after the level, median / p90; before W2):",
+              {t: (v["level_hours"], v["metal_hours"], v["wait_after_level_median"], v["wait_p90"], v["before_w2_metal_hours"])
+               for t, v in row["metal"].items()})
         print("   main power level -> player level:", {ml: (v["median"], v["hours_median"]) for ml, v in row["mastery_player_level"].items()},
               " combat share", row["combat_share_median"])
     print("\nTarget checks (balanced player):")

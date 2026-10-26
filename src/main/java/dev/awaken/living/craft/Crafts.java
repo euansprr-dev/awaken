@@ -14,13 +14,17 @@ import net.minecraft.world.entity.player.Player;
  * Crafts that level as you do them (SPEC §21.9). An action pays craft XP and, through its craft's budget (the sim's
  * forage/mine/fish/cook/smith), a share of the Hunter level ({@link #ACTION} of a level, by rank like all wild XP);
  * the craft XP shrinks by the same share the budget kept back, so an AFK farm levels off on both. Hunting rides the
- * kill's own "hunt" budget. A craft level is a toast; a perk opening is a toast that names it.
+ * kill's own "hunt" budget. Mining keeps its own pace (SPEC §28.3): ore can't be farmed, so only its Hunter-level share
+ * is budgeted and the craft levels from every ore. All craft XP is multiplied by the perk {@link #RATE} (the Hearth's
+ * Rested sets it). A craft level is a toast; a perk opening is a toast that names it.
  */
 public final class Crafts {
     private Crafts() {}
 
     /** A paying craft action's share of a Hunter level (pacing_sim CRAFT_ACTION). */
     public static final double ACTION = 0.008;
+    /** The craft-XP multiplier perk (0.2 = +20%), read by its id from whoever grants it (SPEC §28.1). */
+    public static final String RATE = "awaken:craft_rate";
 
     public static CraftState state(Player p) {
         return p.getData(LivingContent.CRAFTS.get());
@@ -48,9 +52,10 @@ public final class Crafts {
             double rank = LivingModule.wildsRank(Progression.profile(p).rank());
             double raw = ACTION * actions * (c == Craft.FISHING && has(p, c, "leviathan_line") ? 2 : 1);
             double paid = Progression.worldXp(p, c.budget, raw, rank);
-            share = rank <= 0 ? 0 : Math.min(1, paid / (raw * rank));
+            // mining's craft XP keeps its own pace: only the Hunter-level share above was budgeted
+            share = c == Craft.MINING ? 1 : rank <= 0 ? 0 : Math.min(1, paid / (raw * rank));
         }
-        double got = xp * share;
+        double got = xp * share * Math.max(0, 1 + Progression.perk(p, RATE));
         if (got <= 0) return 0;
         CraftState s = state(p);
         int before = s.level(c);

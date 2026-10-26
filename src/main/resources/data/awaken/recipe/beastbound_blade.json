@@ -5,11 +5,12 @@
   "key": {
     "B": "#awaken:hunter_bind_d",
     "C": "#awaken:hunter_core_d",
+    "M": "#awaken:tier_metal_d",
     "S": "awaken:essence_shard"
   },
   "pattern": [
     "CS",
-    "B ",
+    "M ",
     "B "
   ],
   "result": {

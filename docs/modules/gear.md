@@ -2,7 +2,8 @@
 
 Plan v2 §4.5: the start is no longer "go find iron". Hunter gear is crafted from what the awakened world drops
 (creature materials, essence, beast trophies, Gate Lord parts), in tiers by rank, and sits beside vanilla gear rather
-than replacing it. Iron still helps (it is one of the D fittings, and the Forge tempers with it); it just isn't a wall.
+than replacing it. E stays hide and bone. Since "Between the Gates" W2 (SPEC §28.3), every piece from D up also needs its
+tier's metal from the deep: hide from the hunt, metal from the deep, light from the gates.
 
 Code: `src/main/java/dev/awaken/gear/**` (`HunterTier`, `Piece`, `GearItems`, `HunterGearItem`, `SetBonus`,
 `GearCombat`, `GearNow`, `GearCommands`, `GearState`, `Silhouette`, `GearTests`) and `gear/client/**` (`GearClient`,
@@ -20,16 +21,18 @@ tier adds a twist through its set bonus, and the late two change your silhouette
 |---|---|---|---|---|---|---|
 | E | **Wildhide** (Hood, Vest, Leggings, Boots, Fang, Charm, Mattock) | stone sword, copper armour | 2/4/3/1 = 10, 0 | 5 dmg, 1.8/s | +6% power dmg | stone pick, speed 4.5 |
 | D | **Beastbound** (Helm, Hauberk, Greaves, Boots, Cleaver, Totem, Mattock) | iron | 2/6/5/2 = 15, 0.5 | 6 dmg, 1.7/s | +9% | iron pick, 6.0 |
-| C | **Gatewrought** (Helm, Cuirass, Greaves, Sabatons, Sabre, Lens, Mattock) | diamond | 3/7/6/3 = 19, 1.5 | 7 dmg, 1.7/s | +12% | diamond pick, 7.5 |
-| B | **Veilwoven** (Cowl, Mantle, Leggings, Treads, Edge, Censer, Mattock) | netherite | 3/8/6/3 = 20, 2.5, kb 0.05 | 8 dmg, 1.7/s | +15% | netherite pick, 8.5 |
-| A | **Lordscale** (Greathelm, Warplate, Tassets, Talons, Warblade, Orb, Mattock) | past netherite | 3/8/7/3 = 21, 3.0, kb 0.1 | 9 dmg, 1.7/s | +18% | netherite pick, 9.5 |
+| C | **Gatewrought** (Helm, Cuirass, Greaves, Sabatons, Sabre, Lens, Mattock) | diamond | 3/8/6/3 = 20, 2.0 | 7 dmg, 1.7/s | +12% | diamond pick, 7.5 |
+| B | **Veilwoven** (Cowl, Mantle, Leggings, Treads, Edge, Censer, Mattock) | netherite | 3/8/7/3 = 21, 2.5, kb 0.05 | 8 dmg, 1.7/s | +15% | netherite pick, 8.5 |
+| A | **Lordscale** (Greathelm, Warplate, Tassets, Talons, Warblade, Orb, Mattock) | past netherite | 3/9/7/3 = 22, 3.0, kb 0.1 | 9 dmg, 1.7/s | +18% | netherite pick, 9.5 |
 | S | **Sovereign Weave** (Crown, Regalia, Legwraps, Striders, Oathblade, Sceptre, Mattock) | past netherite | 4/9/7/4 = 24, 3.5, kb 0.15 | 10 dmg, 1.8/s | +22% | netherite pick, 11 |
 
 Blades hit exactly like the vanilla sword of their twin but swing a little faster (they're hunters' knives); armour
-durability multipliers 13/18/28/35/40/48; blades 220/500/1400/1900/2300/2800; foci 180/400/1100/1600/2000/2500;
+durability multipliers 13/18/33/35/40/48 (Gatewrought's raised to diamond's with its armour, W2, so a diamond spent on
+it beats a diamond chestplate; Veilwoven and Lordscale a point of armour up to keep the ladder climbing); blades 220/500/1400/1900/2300/2800; foci 180/400/1100/1600/2000/2500;
 mattocks 240/520/1450/1950/2350/2850; melee of foci 3/4/5/6/7/8 and mattocks 3/4/5/6/7/8 (with the base 1). A and S
 equip with netherite's sound; S stays under the armour attribute's cap of 30.
-The mattock is the "not a wall" piece: a D mattock (beast trophies and copper, no iron needed) mines diamonds.
+The mattock (from D up it needs its tier's metal, like every piece) mines like its vanilla twin: a D mattock mines
+diamonds. Ore Sense, the strike's feel and the heavy strike treat it as a pick (`#awaken:mining_tools`).
 The focus is a club in melee (3/4/5/6 damage, slow) and raises power damage while held in **either** hand (the best
 focus counts, they don't stack); on a boss the raised hit still respects powers' 20%-of-health cap.
 
@@ -81,13 +84,21 @@ Ingredients use hook tags, so new creature families join by adding a tag file to
 
 | Tag | A (Lordscale) | S (Sovereign Weave) |
 |---|---|---|
-| `hunter_hide_<t>` | Precursor alloy, netherite scrap, shulker shell | netherite ingot or scrap |
+| `hunter_hide_<t>` | Precursor alloy, netherite scrap, shulker shell | starmetal ingot (W2; unused by S's recipes, which take it as `M`) |
 | `hunter_core_<t>` | the B and A Lords' parts (Leviathan Fin, Sky Pearl, Herald's Halo, Abyssal Glass) and the deep guardians' (Furnace Engine Core, Drowned Moon Scale, Architect's Key) | the Herald's parts, the Architect's Key, and the Hollow Court's when you get there (Regent's Shadow, the eight Sovereigns' hearts and crowns, the Seed Shard) |
 | `hunter_bind_<t>` | diamond, wind charge, Precursor circuit | echo shard, dream residue |
+| `tier_metal_<t>` (W2, the `M` slot) | netherite scrap | starmetal ingot |
 
 A's chest, blade and focus take a Lord's Heart; S's helmet, chest, blade, focus and mattock do. Every A and S piece is
 craftable at its road level from the rank below's content (A at B-rank from the Sky Leviathan, the Foundry and the
 Inverted Sea; S at A-rank from the Herald and the Dreaming), never from something you can't reach yet.
+
+**The deep's metal (W2, SPEC §28.3).** From D up every recipe has an `M` slot that takes only its tier's metal,
+`#awaken:tier_metal_<t>` (D iron ingot, C diamond, B Deepglass shard, A netherite scrap, S starmetal ingot): 2 for a
+helmet, 3 a chest, 2 legs, 2 boots, 1 blade, 1 focus, 2 mattock, about 13 a tier. Every focus from D up takes gold (`G`:
+1 at D, 2 from C; gold is the power's metal), every Veilwoven piece an amethyst shard (`Y`). The hook tags keep their
+other options for the other slots; `hunter_hide_s` is starmetal now. E is unchanged. Forged Arms weapons from D up take
+the metal in their bind cell.
 
 Every recipe also takes essence shards (E 1 each; D 1-2; C/B 1-3) and C/B chests and foci a Lord's Heart. The whole
 E kit is 15 hide, 7 essence, a few bones or flint, sinew and two sticks: each biome family can make it from its own
@@ -100,8 +111,8 @@ modules' items in the tags are optional entries: a rename never breaks loading, 
 | Lv | Title | Why then |
 |---|---|---|
 | 3 | Hunter gear · E | ~30 min in: you've met a night of hunters and hold hide and essence; Dash lands the same level |
-| 13 | Beastbound gear · D | early D rank, in the quiet stretch between 12 and 15; named beasts roam from level 3 and the Bell Crypt's Lord drops parts, so the recipes are often in the book already (they unlock on pickup) |
-| 22 | Gatewrought gear · C | three levels before the C trial, when D gates' Lords are your daily fare |
+| 13 | Beastbound gear · D | early D rank, in the quiet stretch between 12 and 15; named beasts roam from level 3 and the Bell Crypt's Lord drops parts, so the recipes are often in the book already (they unlock on pickup). The iron (14 for the kit) is in hand by about 1 h (pacing sim) |
+| 22 | Gatewrought gear · C | three levels before the C trial, when D gates' Lords are your daily fare. Its 14 diamonds come from the deep (a diamond lode or two hours below y 0): in hand at a median 12.9 h against level 22 at 13.8 h (pacing sim, SPEC §28.3) |
 | 42 | Veilwoven gear · B | three levels before the B trial |
 | 67 | Lordscale gear · A | three levels before the A trial: B-rank Lords and the B strata are your daily fare |
 | 97 | Sovereign Weave · S | three levels before the S trial: the Herald and the Dreaming Stratum |
@@ -183,6 +194,7 @@ layer, so nothing ever renders with mismatched UVs.
   (powers don't expose which), and doesn't reach energy regen.
 - Hunter's Sense can't be shown by the autopilot (it can't hold sneak).
 - Tempering cost is the Forge's (iron, gold, diamonds); a tempered piece crafted into a new tier starts fresh.
+- Repair tags are unchanged by W2 (the binds, not the metals).
 
 ## SPEC-worthy decisions (for the integrator)
 

@@ -3,15 +3,17 @@
   "category": "equipment",
   "group": "awaken_hunter_focus",
   "key": {
-    "B": "#awaken:hunter_bind_b",
     "C": "#awaken:hunter_core_b",
+    "G": "minecraft:gold_ingot",
     "L": "awaken:lord_heart",
-    "S": "awaken:essence_shard"
+    "M": "#awaken:tier_metal_b",
+    "S": "awaken:essence_shard",
+    "Y": "minecraft:amethyst_shard"
   },
   "pattern": [
     "SLS",
-    "BCB",
-    " C "
+    "GCG",
+    "MYM"
   ],
   "result": {
     "id": "awaken:veilwoven_focus"
