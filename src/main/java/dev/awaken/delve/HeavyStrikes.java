@@ -30,8 +30,8 @@ import java.util.UUID;
  * The heavy strike (PLAN 7.4, SPEC §28.3): sneak and hold the attack with a pick or mattock to charge it on Arms' heavy
  * timing (the Maul's: it starts at {@link #MIN} ticks, glints at {@link #GLINT}), let go to bore three blocks along your
  * aim. The server checks it all: a mining tool in hand, a charge it could have held, a breath since the last one,
- * enough food, and each block breakable by that tool and outside a ward, the city's build, a gate and anyone else's
- * Hearth; the
+ * enough food, and each block breakable by that tool and outside a ward, the city (as its own protection rules), a gate
+ * and anyone else's Hearth; the
  * break itself goes through the game's own path, so every other protection still has its say. It costs three times the
  * durability (twice on the glint) and real hunger.
  */
@@ -112,8 +112,8 @@ public final class HeavyStrikes {
         if (hardness < 0 || s.hasBlockEntity()) return false;
         if (s.requiresCorrectToolForDrops() && !tool.isCorrectToolForDrops(s)) return false;
         if (tool.getDestroySpeed(s) <= 1F && hardness > 0) return false;   // a pick doesn't bore through wood it can't bite
-        // the city's own rule (its civic build, as CityProtection guards it), not its whole footprint: under the streets is rock
-        if (CityHooks.isCivic(level, pos) || WardHooks.at(level, pos).isPresent()) return false;
+        // the city's own rule (CityProtection: its civic ground, creative and operators excepted)
+        if (!p.isCreative() && CityHooks.isCivic(level, pos) || WardHooks.at(level, pos).isPresent()) return false;
         if (HearthHooks.inside(level, pos)) {
             var anchor = HearthHooks.nearest(level, pos, 96);
             if (anchor.isEmpty() || !HearthHooks.belongs(p, anchor.get())) return false;   // someone else's Hearth

@@ -101,7 +101,7 @@ final class HeavyCharge {
         if (t == HeavyStrikes.GLINT) {
             level.playLocalSound(p.getX(), p.getEyeY(), p.getZ(), DelveContent.HEAVY_GLINT.get(), SoundSource.PLAYERS, 0.8F, 1.0F, false);
             for (int i = 0; i < 6; i++) {
-                DelveParticles.spawn(level, DelveContent.GLINT.get(), 0xFFE3A0, 1.3F, head.x + (r.nextDouble() - 0.5) * 0.12,
+                DelveParticles.spawn(level, DelveContent.GLINT.get(), 0xFFE3A0, 0.35F, head.x + (r.nextDouble() - 0.5) * 0.12,
                         head.y + (r.nextDouble() - 0.5) * 0.12, head.z + (r.nextDouble() - 0.5) * 0.12, 0, 0, 0);
             }
         }
@@ -111,7 +111,7 @@ final class HeavyCharge {
     private static Vec3 head(LocalPlayer p) {
         Vec3 look = p.getViewVector(1F);
         Vec3 right = new Vec3(-look.z, 0, look.x).normalize();
-        return p.getEyePosition().add(look.scale(0.45)).add(right.scale(0.42)).add(0, 0.12, 0);
+        return p.getEyePosition().add(look.scale(0.95)).add(right.scale(0.5)).add(0, 0.1, 0);
     }
 
     private static void stopStrain(Minecraft mc) {

@@ -19,7 +19,10 @@ cmd awaken powers starter 1
 wait 20
 screen close
 cmd effect give @s minecraft:resistance 600 4 true
-# below y 0, into the rock: the chamber is carved round you, facing its north wall
+# away from Carillon (its ground is protected all the way down), then below y 0 into the rock: the chamber is carved
+# round you, facing its north wall
+cmd tp @s ~700 ~ ~
+wait 160
 cmd tp @s ~ -30 ~
 wait 100
 cmd awaken delve stage cave iron
@@ -68,8 +71,8 @@ wait 2
 shotnow w2_09_heavy_bore
 wait 20
 shot w2_10_heavy_after
-# a cave-in: the warning dust, then the roof
-cmd tp @s ~-2 ~ ~3.5 180 -35
+# a cave-in: the warning dust, then the roof, from the chamber's south side
+cmd tp @s ~-2 ~ ~9.5 180 -18
 wait 6
 cmd awaken delve cavein
 wait 30
@@ -79,7 +82,7 @@ shotnow w2_12_cavein_falls
 wait 30
 shot w2_13_cavein_after
 # Deepglass in the east wall, below y 0
-cmd tp @s ~3 ~ ~ -90 4
+cmd tp @s ~3 ~ ~-6 -90 4
 wait 10
 shot w2_14_deepglass
 # the miner's lamp: a dark tunnel to the west, the lamp's light on its walls

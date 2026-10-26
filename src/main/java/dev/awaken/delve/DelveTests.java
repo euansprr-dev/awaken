@@ -73,7 +73,7 @@ final class DelveTests {
     private static void lodeHeart(GameTestHelper h) {
         ServerLevel level = h.getLevel();
         BlockPos o = h.absolutePos(new BlockPos(0, 24, 0));
-        for (int dx = -9; dx <= 9; dx++) for (int dz = -9; dz <= 9; dz++) for (int dy = -1; dy <= 7; dy++) {
+        for (int dx = -9; dx <= 9; dx++) for (int dz = -11; dz <= 9; dz++) for (int dy = -1; dy <= 7; dy++) {
             boolean inside = Math.abs(dx) <= 7 && Math.abs(dz) <= 7 && dy >= 0 && dy <= 5;
             level.setBlock(o.offset(dx, dy, dz), inside ? Blocks.AIR.defaultBlockState() : Blocks.STONE.defaultBlockState(), 2);
         }
@@ -107,6 +107,18 @@ final class DelveTests {
             level.setBlock(heart, Ore.IRON.heart().defaultBlockState(), 2);
             p.gameMode.destroyBlock(heart);
             h.assertTrue(Progression.profile(p).counter("awaken:lodes_opened") == 1, "a heart gives once");
+
+            // the heavy strike: from two blocks off the wall, on the glint, three blocks bored along the aim, the wear on top
+            p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_PICKAXE));
+            p.getFoodData().setFoodLevel(20);
+            p.teleportTo(level, o.getX() - 3.5, o.getY() + 0.2, o.getZ() - 5.0, Set.of(), 180F, 12F, true);
+            int wear = p.getMainHandItem().getDamageValue();
+            var bored = HeavyStrikes.release(p, HeavyStrikes.GLINT, true);
+            h.assertTrue(bored.size() == HeavyStrikes.DEPTH, "the heavy strike bores three: " + bored);
+            for (BlockPos b : bored) h.assertTrue(level.getBlockState(b).isAir(), "bored " + b.toShortString());
+            h.assertTrue(bored.get(1).getZ() == bored.get(0).getZ() - 1 && bored.get(2).getZ() == bored.get(0).getZ() - 2, "along the aim, into the wall");
+            h.assertTrue(p.getMainHandItem().getDamageValue() - wear >= HeavyStrikes.DEPTH * (1 + HeavyStrikes.EXTRA_WEAR_GLINT), "it wears the pick harder");
+            h.assertTrue(HeavyStrikes.release(p, HeavyStrikes.GLINT, true).isEmpty(), "and needs a breath before the next");
 
             // a cave-in: never over building, never in a Hearth; otherwise the roof comes down after its warning
             CaveIns.clear();
