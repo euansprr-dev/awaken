@@ -3413,8 +3413,9 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   - Murmuration (dusk, over water): client-drawn only; witnessing it gives `awaken:lucidity_start` +10 for that
     play-day (a perk source). Carrion Circle: kites over a barrel of remains (bones, leather, arrows, 40% a creature
     part, 25% a worn iron sword) and scattered bone blocks; the remains stay.
-  - The Rolling Storm (day/dusk): a cell crossing 180 blocks in 4 min; visual lightning near its centre about every
-    3 s; 3 damage within 4 blocks of a strike; struck sand turns to glass.
+  - The Rolling Storm (day/dusk): a cell crossing 180 blocks in 4 min; visual lightning out of its rain core (within 20
+    blocks of a point 12 downwind of its centre) about every 3 s; 3 damage within 4 blocks of a strike; struck sand
+    turns to glass. Its look, local weather and thunder: "The Rolling Storm, as a real storm" below.
   - The Wild Hunt (full moon only, night, bands 1+): five wisp hounds and the Huntmaster (an elite four levels up,
     titled "Huntmaster of the Pale Moon") run 220 blocks; they go for anyone within 18; each hound drops 2 essence, the
     Huntmaster 6. Beast Duel (bands 1+): two named beasts fight; the winner is left at 45% health.
@@ -3426,14 +3427,57 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - **Tells** (payload `living_happenings`: id, tell, centre, radius, progress, line direction; to players within 512
   every 2 s, an empty list once when the last goes). `living.client.PulseFx` draws them in an alpha pass (unfogged,
   reads by day) and an additive pass, the centre eased over the 2 s; past 70% of the render distance a tell is pulled
-  in along its sight line and shrunk to match (as the gate pillars).
+  in along its sight line and shrunk to match (as the gate pillars). The storm tell is a cell of its own (below), never
+  pulled in.
 - **The Almanac**: within a kind's `witness_radius` a player witnesses it once: counter `awaken:happenings_witnessed`;
   the first time a discovery `happening/<id>` (0.1 of a level), a new thing for the Director, and "Witnessed · <title>".
   The Codex tab lists them ("HAPPENINGS WITNESSED · n / ??").
 - **Rumours** (`Rumours`, attachment `awaken:rumours`, schema 1, synced to the owner, kept through death): half the
   time a Wayfarer with nothing for you tells of a happening on now 160-2500 blocks away that you haven't witnessed, with
   a compass direction; it leaves a "? <title>" mark on the Gate Map (MapMarks) for two play-days (at most 8).
-- Dev (admin): `/awaken living happen <kind>`, `happenings`, `calm`. Test `living_pulse`.
+- Dev (admin): `/awaken living happen <kind>`, `happenings`, `calm`, `strike <distance>` (a storm strike that far
+  ahead of you, for tours). Tests `living_pulse`, `living_storm`.
+- **The Rolling Storm, as a real storm** (Euan's playtest, 2026-10-26: the cell read as round soft discs full of
+  artifacts, its rain as moving white pillars of light, and it wasn't a real storm; he liked the bolts and their sound).
+  One model both sides share, `living.pulse.StormCell` (sizes match `lens_storm.glsl`):
+  - **The cell, a cumulonimbus**: its base 92 blocks over the ground its centre first stood on (140-215), 300 blocks
+    from base to the anvil's top. A broad tower (95 radius at the base, narrowing a third toward the top, leaning
+    35 downwind) of cauliflower turrets (cellular "puffs" at 50 and 20 blocks, rising 0.35 blocks a second through it,
+    so it boils), its axis wandering and its girth swelling and pinching with height, big lobes on some sides; an
+    overshooting dome over the updraft; a flanking line of three smaller towers stepping down upwind (170, 118, 78
+    high); a thin flat-topped anvil reaching 260 downwind, 60 upwind and 150 across, its underside rising to a thin rim,
+    its edges fibrous streaks along the wind (ice, not puffs). Its rain: a core of soft shafts 58 in radius, 12 downwind
+    of the centre, slanting downwind as it falls (0.3 blocks a block), to the ground. Downwind is the way it travels.
+    It builds over its first 12 s and rains itself out over its last 15 (the client times the end by the storm's 240 s).
+  - **Drawn by Lens 2 on Cinematic and Ultra** (§22 "Storm cells"): marched in Lens's cloud volume. Elsewhere (Lens off,
+    Swift, a shaderpack) by `living.client.StormFallback`: the same shape, built off-thread once per storm into 12-block
+    cloud cells, 8 blocks (78 × 45 × 78, density over 0.45), opaque and face-shaded as the game's clouds are (top 1,
+    sides 0.8-0.9, base 0.62), each lit by how much cloud lies eight cells toward the sun (exp(-0.45 per cell)), the sky's
+    light mostly the game's cloud brightness (30% of its hue: its sunset tint on every face read as terracotta), dim and
+    cold at the base, the sun's warm colour on faces turned to it, lit from inside by its lightning, hazed toward the sky colour
+    with distance (1400 blocks); only outer faces turned to the camera are sent (about 3,000-4,000 quads). It grows from the
+    base up as it builds and rains out from the top down (each cell's threshold by its height and a hash; faces rebuilt
+    off-thread per 32nd of strength). Its rain: nine curved sheets fixed in the world round the core (arcs at set radii
+    and angles), slanting downwind, the texture `living/storm_rain` (soft streaks, `tools/art/specs/storm_rain.py`)
+    sliding down at about 19 blocks a second (Euan saw it flow up at first), faded at their ends, top and foot, dark grey, in the game's own fog (the weather pipeline). No
+    camera-facing discs or billboards (the old `PulseFx.storm` is gone); nothing popped in from beyond the render
+    distance either: the cell stands where it is, as the game's clouds do.
+  - **Its local weather** (`living.client.StormSky`): this client's rain and thunder levels rise to
+    `weatherAt(d)` (full within 45 blocks of the rain core's centre, none past 110, smooth between) × its strength,
+    never below the server's own weather (followed if the server changes it while overriding) and handed back as you
+    leave. So under and near it the game's own rain falls on you and sounds, the sky, fog, clouds and light darken as in
+    a vanilla thunderstorm, terrain's wind steadies higher (rain and thunder lift it), the world sound hears rain, and
+    Lens dims its sun. Lens's cloud layer doesn't thicken for this rain (`StormSky.localRain`): the cell is the cloud
+    over you. Storms show only in the overworld while the Living Wilds are shown.
+  - **Its thunder**: the server's visual bolts stay (and the game's sky flash). On the client a bolt within 90 blocks
+    of a cell is its strike: it lights the cell from inside (a burst and up to two restrikes over half a second, 25
+    blocks over the base), and its own thunder and impact (played at once, everywhere, at full volume) are silenced and
+    played again late by the distance at 130 blocks a second (the world's scale: a strike on the horizon rolls in a few
+    seconds later). Within 70 blocks: the crack (the impact, pitch 0.55-0.7) and the thunder; farther: the thunder lower
+    and softer (volume 1.15 - d/520, pitch 0.95 - d/1400) and a long low roll after it (`living.storm.roll`, three
+    synthesised takes). Every 2.5-7 s lightning flickers inside the cloud (50-210 over the base, a quarter to two fifths
+    of a strike's brightness) and rumbles far off. Each flash is a burst and its restrikes, each fading over 0.11 s.
+    The storm's rain roars from its core for 340 blocks (`living.tell.storm`, a loop; PulseSound).
 
 ### 21.7 Creatures live somewhere: the ledger (Phase D, as built 2026-10-25)
 - `living.population.Ledger` (saved data `awaken:living_world`, schema 1, only cells players reached): per 512×512 cell,
@@ -3741,6 +3785,39 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
 - Tour: `tools/autopilot/lens2-l4.txt` (Swift's clouds against Lens's: noon, golden hour into the sun, cloud shadows
   over Carillon, above the deck, rain, night; the bench). Final (f53b8bf4, p50 ms): off 6.80, Swift 6.79, Cinematic
   9.96 (100 fps), Ultra 13.46 (74 fps).
+
+**Storm cells** (the Living Wilds' Rolling Storm, 2026-10-26; §21.6): Lens 2 marches each cell in its cloud pass.
+- `living.client.StormSky.lensCells` hands Lens up to two cells a frame (as `HoloWorld.lensPlates` does the plates):
+  frame texel 20 y their count; texels 42-47, three a cell (`lens_storm_frame.glsl`): centre x, z camera-relative,
+  base y, strength; downwind x, z, the ground under it, noise time; the latest flash camera-relative and its strength.
+  `LensClient.drawsStormCells()` says whether Lens draws them this frame (Cinematic or Ultra under an overworld sky);
+  otherwise the fallback does. Storms draw whether or not the game's clouds are on.
+- Shape (`lens_storm.glsl`, §21.6's numbers): cheap cellular puffs (the nearest of 8 jittered points; one octave on
+  Cinematic, two on Ultra), the body's wobble, girth and lobes from the cloud noise texture, the anvil's fibres from its
+  wisps channel. Light steps (and the land's shadow) keep the big forms only.
+- March (`lens_clouds.fsh`): a ray meets a cell in bands, marched in the ray's order, each its own steps by its length:
+  rain (ground to base; 18 / 16 blocks a step, at most 10 / 12), body (12 / 10.5, at most 22 / 26), anvil (8 / 7, at
+  most 10 / 12), Cinematic / Ultra, so the thin anvil is never stepped over. A turret's surface turns solid within 4
+  blocks (9 read as a soft ball at 200 blocks); σ 0.085 a block (a solid mass); 3 light steps (6 blocks, ×2.3); Beer's
+  law with a weak multiple-scatter floor (0.22) so the base and the shadowed side go dark; the layer's phase; the sky's
+  light as a cool grey-blue of the layer's ambient brightness (its sunset hue turned the shadowed side brown), by height
+  from 0.16 at the base (cold and bruised, bluer) to 1 on the tops; rain σ 0.016, its colour that sky light × 0.4 (a
+  grey veil, darker than the sky), fading in from 16 to 40 blocks from the camera (nearer, the game's rain falls).
+  Lightning: 3.5 × exp(-d/45) + 0.35 × exp(-d/200) of a cool white from the flash, in the cloud and (half) in its rain; while a flash shows, the pixel takes up to 85% of this
+  frame instead of 12-15%, so it lights at once and fades as an afterglow. The layer's clouds thin to nothing within
+  300-420 blocks of a cell (it clears the sky round it), so the layer's march can skip the cell's bounds without a cut.
+  History reprojects where the ray first met cloud (was: where it entered the layer).
+- The composite lays the cloud buffer over anything farther than where the ray enters a cell's bounds (300 radius
+  round 40 downwind of its centre, ground to 48 over the top), never nearer than 16 blocks; the light pass darkens the
+  sun on the land under a cell, sampled where the light ray crosses three heights of its body (long shadows at dusk).
+  Its bright, flashing edges bloom and cut the screen-space shafts like the layer's clouds.
+- It builds from its base up (the density cut at a height rising with its strength, softened over 40 blocks) and rains
+  out from the top down, as the fallback's cells do; its rain starts once the base has formed (strength 0.1-0.4).
+- Lens dims its sun by the world's own weather, not the storm's local rain (`StormSky.serverRain/serverThunder`): the
+  sun still lights its towers and the land beside it, and the cell's own shadow darkens the land under it.
+- **Wet surfaces** (Cinematic, Ultra; any rain, the storm's local rain included): in the composite, a surface open to the
+  sky in its column (the heightfield's top with leaves; under leaves 40%) gets wet by the rain level: 16% darker, 10%
+  richer, and what faces up a dull sheen of the haze colour at glancing angles (Schlick-like, power 4, × 0.22).
 
 **Holo world plates** (the Living Wilds' creature plates, 2026-10-25): plates write their depth at a creature's
 distance (4-40 blocks), beyond the 1.25-block rule that keeps the panels and the hand out. `HoloWorld.lensPlates`

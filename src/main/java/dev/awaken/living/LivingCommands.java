@@ -131,6 +131,18 @@ final class LivingCommands {
                         return 1;
                     })));
             l.then(Commands.literal("face").requires(AwakenCommands.admin()).executes(c -> faceHappening(c.getSource().getPlayerOrException(), 0)));
+            // tours: a Rolling Storm strike this far ahead of you (seen, lighting the cloud, heard late)
+            l.then(Commands.literal("strike").requires(AwakenCommands.admin())
+                    .then(Commands.argument("distance", IntegerArgumentType.integer(0, 400)).executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        ServerLevel level = p.level().getServer().overworld();
+                        var ahead = p.getLookAngle().multiply(1, 0, 1).normalize().scale(IntegerArgumentType.getInteger(c, "distance"));
+                        int x = (int) Math.floor(p.getX() + ahead.x), z = (int) Math.floor(p.getZ() + ahead.z);
+                        level.getChunk(x >> 4, z >> 4);
+                        int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+                        dev.awaken.living.pulse.StormCell.strike(level, new net.minecraft.core.BlockPos(x, y, z));
+                        return 1;
+                    })));
             l.then(Commands.literal("near").requires(AwakenCommands.admin())
                     .then(Commands.argument("distance", IntegerArgumentType.integer(4, 200))
                             .executes(c -> faceHappening(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "distance")))));

@@ -91,6 +91,9 @@ public final class LivingContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> TELL_HORN = sound("living.tell.horn");
     public static final DeferredHolder<SoundEvent, SoundEvent> TELL_TIDE = sound("living.tell.tide");
     public static final DeferredHolder<SoundEvent, SoundEvent> TELL_BELLS = sound("living.tell.bells");
+    // the Rolling Storm: its rain roaring from afar, and its thunder's long roll (living.client.StormSky)
+    public static final DeferredHolder<SoundEvent, SoundEvent> TELL_STORM = sound("living.tell.storm");
+    public static final DeferredHolder<SoundEvent, SoundEvent> STORM_ROLL = sound("living.storm.roll");
 
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String path) {
         return SOUNDS.register(path, () -> SoundEvent.createVariableRangeEvent(Awaken.id(path)));
