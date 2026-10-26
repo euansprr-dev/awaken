@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "home_kit_flower_box",
+  "key": {
+    "F": [
+      "minecraft:pink_tulip",
+      "minecraft:peony",
+      "minecraft:allium",
+      "minecraft:lilac"
+    ],
+    "D": "minecraft:dirt",
+    "P": "#minecraft:planks"
+  },
+  "pattern": [
+    " F ",
+    "DDD",
+    "PPP"
+  ],
+  "result": {
+    "id": "awaken:flower_box",
+    "count": 2,
+    "components": {
+      "minecraft:block_state": {
+        "bloom": "pink"
+      }
+    }
+  }
+}

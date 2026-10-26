@@ -52,9 +52,21 @@ public record GuideData(int tier, int radius, int rest, int sanctuaryRest, boole
 
     /** The next Anchor tier: its numbers, the rank it needs, the price with what you carry, and whether Y can build it. */
     public record Upgrade(boolean maxed, int next, int radius, int rest, String rank, boolean rankMet, List<Part> parts,
-                          int discount, boolean affordable) {
-        public static final Upgrade NONE = new Upgrade(true, 0, 0, 0, "", true, List.of(), 0, false);
+                          int discount, boolean affordable, List<Need> needs) {
+        public static final Upgrade NONE = new Upgrade(true, 0, 0, 0, "", true, List.of(), 0, false, List.of());
+
+        public Upgrade(boolean maxed, int next, int radius, int rest, String rank, boolean rankMet, List<Part> parts, int discount, boolean affordable) {
+            this(maxed, next, radius, rest, rank, rankMet, parts, discount, affordable, List.of());
+        }
+
+        public boolean homeReady() {
+            for (Need n : needs) if (!n.met()) return false;
+            return true;
+        }
     }
+
+    /** (W6) What the next tier asks of the home (four rooms, a bell tower, four people...) and whether it stands. */
+    public record Need(String text, boolean met) {}
 
     public record Part(Identifier item, int need, int have) {}
 
@@ -89,6 +101,8 @@ public record GuideData(int tier, int radius, int rest, int sanctuaryRest, boole
         b.writeVarInt(u.parts.size());
         for (Part p : u.parts) b.writeIdentifier(p.item).writeVarInt(p.need).writeVarInt(p.have);
         b.writeVarInt(u.discount).writeBoolean(u.affordable);
+        b.writeVarInt(u.needs.size());
+        for (Need n : u.needs) b.writeUtf(n.text, 96).writeBoolean(n.met);
         b.writeVarInt(d.cottage);
         Home h = d.home;
         b.writeUtf(h.name, 64).writeVarInt(h.comfort).writeUtf(h.style, 64).writeUtf(h.comfortNext, 96).writeVarInt(h.restedMinutes);
@@ -142,7 +156,10 @@ public record GuideData(int tier, int radius, int rest, int sanctuaryRest, boole
         for (int i = 0; i < pn; i++) parts.add(new Part(b.readIdentifier(), b.readVarInt(), b.readVarInt()));
         int discount = b.readVarInt();
         boolean affordable = b.readBoolean();
-        Upgrade up = new Upgrade(maxed, next, uRadius, uRest, rank, rankMet, parts, discount, affordable);
+        int nn = Math.min(8, b.readVarInt());
+        List<Need> needs = new ArrayList<>(nn);
+        for (int i = 0; i < nn; i++) needs.add(new Need(b.readUtf(96), b.readBoolean()));
+        Upgrade up = new Upgrade(maxed, next, uRadius, uRest, rank, rankMet, parts, discount, affordable, needs);
         int cottage = b.readVarInt();
         String name = b.readUtf(64);
         int comfort = b.readVarInt();

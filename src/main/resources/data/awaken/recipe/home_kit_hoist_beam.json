@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "L": "#minecraft:logs",
+    "N": "minecraft:iron_nugget"
+  },
+  "pattern": [
+    "LL",
+    " N"
+  ],
+  "result": {
+    "id": "awaken:hoist_beam",
+    "count": 4
+  }
+}

@@ -336,6 +336,9 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   tier, radius, members, foundedFrom)` with `has(UUID)`, `hearthsOf(MinecraftServer, UUID)` / `hearthsOf(ServerPlayer)`,
   `home(ServerPlayer)`, `isMember(ServerPlayer, BlockPos anchor)`, `isMember(MinecraftServer, UUID player, UUID owner)`,
   `hearthAt(ServerLevel, BlockPos)`; plus `anchor`, `atHome`, `hasRoom`, `isSanctuary`, `inRoom`, `ownedEchoes`.
+  (W6, §28.8) `record Village(owner, name, anchor, radius, tier, people, gather, bell)` and `villages(MinecraftServer)`: homes
+  grown to Tier IV+ (the festival's and caravans' hook); a home's people run on the people engine as settlement
+  `hearth:<owner>`. `core.api.HearthHooks` gained `greenhouse(Level, BlockPos)` (both sides) and `study(ServerPlayer)`.
 - `dev.awaken.citizens.api.Settlements` — the people engine's settlements (§28.4; overworld, server thread):
   `register(ServerLevel, SettlementSpec)` (or the running one with that key), `unregister(id)` (never Carillon),
   `at(Level, BlockPos)` (the smallest that contains it), `byId(id)`, `all()`, `bodies(id)`; `CARILLON` 0 / `"carillon"`.
@@ -350,6 +353,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   `fill(Settlement, ServerPlayer, line)`); `Settlement.records()`, `job(rec)`, `personName(rec)`, `age(rec)`, `body(rec)`,
   `say(ServerPlayer, rec, line, ticks)`, `acquaint(ServerPlayer, amount, ceiling)`; `RosterBuilder.emitter(x, ry, z, kind)`
   (0 bakery, 1 house, 2 tavern, 3 forge, 6 mill, 7 well) and `RosterSource.Built.emitters`.
+  (W6, §28.8) `RosterBuilder.Person.face(String)`: a face of their own outside Carillon, `skin:<texture>[:slim][;<title>]` or
+  `as:<settlement key>#<record>` (the roster's `named` field; synced as the body's skin and the word under its name).
 - `dev.awaken.village.api.Villages` (§28.6) — AWAKEN's settlements: `record View(key, name, kind, family, origin, radius,
   settlement, people)`, `settlementAt(Level, BlockPos)`, `nearest(Level, BlockPos, within)`, `all(Level)`,
   `standing(ServerPlayer, key)` (STRANGER 0, KNOWN 1, FRIEND 2, KIN 3), `addStanding(ServerPlayer, key, points, why)`,
@@ -5815,6 +5820,32 @@ Shared ids (fixed now so parallel builders agree): items `awaken:hearth_ember`, 
 Wired after both W1 and W2 merge (one small follow-up, never inside either phase, so neither builder edits the
 other's files): the Study halves the Blueprints' paper (`arms/ArmsForge`), the Greenhouse triples herb ripeness
 (`living/craft/Herbs`). W2 reads the perk `awaken:craft_rate` by its id, so Rested's craft bonus needs no wiring.
+**Wired (the W6 kit helper):** at a Hearth with a Study a Blueprint takes 2 paper instead of 4 (`ArmsForge.blueprintPrice(player)`,
+`HearthHooks.study`; the Forge window shows a "Your Study: halves the paper" row); in a Greenhouse the herb threshold is three
+times as high (`Herbs.ripe(pos, day, rootSense, greenhouse)`, 9% a day, 18% with Root Sense; the harvest and the client's glint
+both pass `HearthHooks.greenhouse(level, pos)`).
+
+**The craftable kit** (W6, `hearth/kit/HomeKit`; test `hearth_home_kit`). Carillon's climbable pieces, which have no items and
+no loot, become items of the same ids so a home can be a movement course: `awaken:drainpipe`, `trellis`, `flower_box` (shown
+as the Window Box), `wall_ivy`, `hoist_beam` (`awaken:hanging_ladder` already drops a ladder and is untouched). Nothing in
+`city/` changed: the blocks are named by id and their states by property name. FACING on every one is a ladder's: it points
+away from the wall the piece hangs on (the models are drawn for facing=north with the wall at z 16), so the placed facing is
+the face you click on a wall; a click on a floor or ceiling takes the way you look, as a ladder does; a click on the top or
+bottom of the same piece continues it the same way. It needs a wall solid on that side (a pipe may also hang off the next
+pipe, a beam off the last beam); nothing floats on placing. Drainpipe columns keep a shoe at the foot, a head at the top and
+plain pipe between (re-set on placing and, a tick later, on breaking; a lone pipe is plain). A trellis is placed with ivy,
+wall ivy at density 1 in green, a hoist beam with its pulley at the tip (a beam grown from a beam moves it out, and back when the tip is broken), a window box
+wooden with the bloom on the item (`minecraft:block_state` `{"bloom": ...}`, set by the recipe; a box with none gets one of
+red, yellow, blue, pink or white seeded by its position). Recipes (`data/awaken/recipe/home_kit_*`): drainpipe 3 from
+3 iron nuggets in a column, or 4 from 2 copper ingots; trellis 2 from 4 sticks and a vine (a lattice, the vine at its heart);
+window box 2 from three planks, three dirt and a flower on top (one recipe per bloom: red poppy/red tulip/rose bush, yellow
+dandelion/golden dandelion/sunflower/orange tulip, blue cornflower/blue orchid, pink pink tulip/peony/allium/lilac, white
+oxeye/lily of the valley/white tulip/azure bluet, herbs fern/the land's herbs; no flower, a bare box); wall ivy 3 from 2 vines;
+hoist beam 4 from two logs and an iron nugget. A piece a player breaks drops itself (`BlockDropsEvent`; a box keeps its
+bloom) unless it is Carillon's: inside the walls (`CityHooks.inCity`) or the city reserve (`CityBasin.reserved`), where
+nothing ever drops. Items sit in the shared AWAKEN creative tab (every bloom of the box). Client: `items/<id>.json` with
+item models `home_kit_*` that wrap the block models with a block's display transforms (the box picks its model from its
+bloom). Not done: pieces do not pop when their wall goes (the blocks have no survival rule, and `city/` is Carillon's).
 
 ### 28.2 W1 as built
 Branch `pack/world-depth-w1`. Module doc: `docs/modules/hearth.md` ("The carried flame"). Tests: `hearth_ember_founds`,
@@ -6666,6 +6697,144 @@ growth by copying the village's own smallest house, its thresholds, and the rost
 village through growth (W7's towns). The Hollowed's grey look on their bodies (they're abed instead). Settlers choosing to
 go home with you at a festival, and your Hall's festival (W6 reads `Troubles`; a festival hook for the Hearth is W6's). A
 GameTest for growth (its mechanism is exercised by `/awaken village grow`).
+
+### 28.8 W6 as built (your village, 2026-10-26)
+Branch `pack/world-depth-w6`. Package `dev.awaken.hearth.settle` (and `hearth/stage`, `hearth/kit`, `TierRules`); module doc
+`docs/modules/hearth.md` ("Your village"). Tests `hearth_settler_moves_in`, `hearth_tier_reading`, `hearth_mine_head` (and the
+kit's `hearth_home_kit`). Tour `tools/autopilot/world-depth-w6.txt` (CI).
+
+**Who comes** (`Settlers`, PLAN 4.7, decision 2). Three things true: **you know them**, **a spare bedroom of Snug or better
+stands**, and **their trade has its room**. Known (sticky, saved in the Hearth's `folk`, learned every 10 s from the household
+online): the townsfolk by the household's rank as before (Oren E, Mira D, Teodor C, Sun B, Vael A until S), each a rank early
+once Carillon's renown knows you (`RenownHooks` Known: "Trusted", §16 decision 8); a Wayfarer whose own chain you finished
+(Ilse `moth_lights`, Hettie `ten_sheep_short`, Wren `wrens_rope`, Pell `pells_message`); one person from each village where
+you're a Friend, and one from the city once its renown knows you (named from a seeded list, their work decided when they
+come: your shaft if no one works it, your fields if no one tends them, else a hand); the rescued (W4's `Troubles.rescued`, read by
+`settle/Rescued`: the grown-ups only, a child goes back to their family; a miner, farmer or shepherd, or smith keeps the
+trade, anyone else finds work at move-in; the face they wore in their village, read from `Settlement.look` while it runs;
+on moving in `Troubles.settle` once, through the household member who brought them home, so the village's history says
+so). Rooms:
+the townsfolk, Wren and Pell want only a bed; Ilse a Greenhouse; Hettie (and a farmer) a field or a pen; a miner a Mine head
+no one else works; a village smith a Forge. A spare bedroom is a read Bedroom of Snug or better that isn't a settler's, isn't
+the bed a member of the household last woke in at home (`folk.ownBeds`, from `PlayerWakeUpEvent`), and isn't the best one
+kept for a member who hasn't slept here yet. One at a time, the first known who can, into the best spare (nearest their
+work). **Caps** by tier: 0 / 1 / 2 / 4 / 8 / 12 (Hearthfire to Town). Waiting is said plainly: the guide's TOWN lists who
+lives here (name, trade, "Ilse's room") and who waits and why ("waits for a bed", "needs a Greenhouse", "Tier II"); the Now
+line (52) "Oren will come when there's a bed for him". A settler whose bed goes stays, between rooms, and takes the next spare
+first. Vael leaves at S with a note.
+
+**The walk up the road** (`Arrival`). The household is told ("Ilse is coming to live with you · On the road from the Wayfarer
+camp with her things. She'll take the fine timber kitchen."). With one of them within 128, the newcomer appears on the
+ground at the edge of the land toward Carillon (or the player's side) and walks in at an easy pace (a townsperson's body,
+`TownNpc`, in their own face; the bundle on their back: the city porters' back layer with the vanilla bundle) through the
+door to the bedside; vanilla pathing, 160 blocks, repathed every 2 s; stuck 12 s or on the road 2 min, they're in anyway.
+There the room takes their name ("Ilse's room", in the caption, the room panel and the guide), the household hears "Ilse
+moved in", a wool thud and embers at the bed. Nobody near: they simply move in. Arrival bodies are never saved.
+
+**On the people engine** (`HomePeople`, PLAN 4.7: "your Hearth registers as a settlement through W0's API"). A Hearth with
+people runs as settlement `hearth:<owner>` (origin the Anchor, radius the Hearth's, no planned events), rebuilt when the people,
+their beds, the rooms or the yard change. Its places are read from the rooms you built: each bedside (a door place: going home
+is going to bed), Oren's (or a smith's) spot beside the Forge's anvil (`anvil`: he hammers), Ilse's beside the Greenhouse's
+soil (`wash`: her hands at work), Teodor's at the Study's lectern (he reads), Mira's at the Lookout's window, Sun's in the
+Sanctuary, the miner's beside the hatch (a door place: going in is going down), Hettie's at the field's edge (farmland outside
+rooms, from the scan's new `Scan.Yard`) and outside the pen's gate (away from the beasts), meals standing at the Hall's
+table (`stand`: a floor cell beside a fence or wall with something on it, a top slab or an upside-down stair, facing it, eight
+spread along it; with no table, beside its benches; the engine has no seated pose and someone stood on a bench reads wrong),
+else the Kitchen's, else beside its stove, else the fire, the fire's ring by the Anchor of an evening (`tavern_out`: they lean and
+talk), the yard's edge for Mira's watch at dusk (`post`, a lantern), errands round the doors. **The street graph** is walked
+over the real blocks (`HomeWalk`): breadth-first from the yard over cells someone can stand in (feet and head clear or a carpet,
+something 0.5-1.0 high under the feet that isn't farmland, a bed, fire, magma or leaves; wooden doors pass; steps of one up
+with head room, two down; diagonals only past clear corners; at most 30,000 cells, 8,000 reads a tick), then each path pulled
+straight where a line keeps to walkable ground at one height (sampled a body's width either side, a corner at least every 12
+blocks), with corners on both sides of every step and doorway. **The day** (`Days`, 0 = 06:00): home; breakfast 06:20; work
+from 07:00 (Hettie's pen from 09:50); the midday meal 11:24; work 12:30; supper 17:18; Mira's watch 18:12; the fire 18:18;
+bed from 20:12 (each start nudged ±150 per person). The miner goes down the shaft at 06:54 and comes up at 17:18 with the
+haul; Wren, Pell and the hands go about the place. Wooden doors on their way open as a body reaches them and close once the
+doorway's clear; the hatch opens as the miner goes down and comes up. **Faces of their own** (a seam in citizens, additive:
+`RosterBuilder.Person.face(String)` writes the roster's `named` field as `skin:<texture>[:slim][;<title>]`;
+`CitizenBody` syncs `DATA_SKIN` and the word under the name; `CitizenRenderer` draws it):
+Carillon's own named faces for the townsfolk (`townsfolk/oren`), the Wayfarers' (`wayfarer/ilse`), the rescued their
+village's, a generated Carillon face of their trade for the rest (by id). Named bodies stay out of the city's events, as Carillon's named do. **Their voice**: a
+`Settlements.Voice` wrapping the villages' (installed at server start) makes the household **kin** (the villages' warmest
+greetings, `{village}` the home's name) and anyone else known.
+
+**What they do** (`Work`, `HomeTalk`; talking goes through `Settlements.onTalk`; a chain waiting on them by name goes first,
+except at Oren's forge with its business in your main hand: something to temper, or an ingredient of the piece he'd make).
+**Oren**: tempers what you hold (as before); **commissions**: with a Forge, the best piece you carry the makings of (a weapon or
+armour from any crafting recipe without a Blueprint, AWAKEN's first, then the bigger recipe) on a choice card; he takes exactly
+what the recipe picks and the piece is done the next play-day, tempered I, in the chest nearest his anvil (else he keeps it for
+you); without a Forge he asks for one. **Hettie** (and a farmer): every 30 s of work hours six ripe crops of the home's fields cut
+and replanted (a seed kept back), the harvest in the chest nearest (else kept for you); once a play-day after 09:50 two of each
+kind of beast in the pen breed while there are fewer than ten. **Ilse**: the herbs you hold (up to 16) become tonics by the next
+play-day, two herbs a tonic (sunleaf and emberroot broth, frostcap tea, moonmoss soup, spiritgrass and duskbloom spirit tea),
+home-cooked, in the greenhouse's chest. **The miner** (or a Mine Echo): below. **Mira, Teodor, Sun, Vael**: as before (rumours,
+reading and identifying, mending), at home. **Wren**: once a play-day a rope line between two of your buildings at their eaves
+(`Ropes`: the city's `awaken:hang_line`, a runner goes across hand over hand; rope and bunting by turns, sagging toward its
+middle; across 3-14 blocks of air three above the ground, wall to wall, never within two of another; nearest the Anchor first;
+six at most), and the first time you talk to her a Start Gate, four Checkpoint Rings and a Finish Gate ("Lay a line over the
+roofs. I'll race your ghost."): the Training Grounds' ghost on your own route. **Pell**: once a play-day a letter (from the
+village that knows you best, its own history's latest line; else the Association) and a rumour. What's kept for you comes
+with the next talk. Trophies are commented on by the nearest who lives here; a rank-up's window has their lines.
+
+**The Mine head** (`RoomType.MINE_HEAD`, `MineHead`, PLAN 7.7, decision 8). A closed room with a **hatch** (any trapdoor in its
+floor) over a shaft at least 16 deep of air and what you climb (ladders, scaffolding, vines, chains, the runner and city
+ropes: at least half of it), measured to 96 under up to four hatches (`Tally.F_SHAFT`, `F_SHAFT_X/Y/Z`, facts 12-15). The
+shaft cuts a lode when a lode block (`Lodes.nearest`, radius 3) lies by it anywhere down it (the richer when two). Each evening
+at 17:18 (once a play-day, `folk.haulDay`) each shaft worked (a miner who lives here or a Mine Echo on duty, one a shaft,
+deepest first) brings up the ore of its foot's depth: ≥ y 40 coal and copper; 16-40 coal, copper, some iron; 0-16 iron,
+copper, coal, now and then lapis; -24-0 iron, gold, redstone, now and then lapis; deeper redstone, gold, iron, lapis, 15% a
+diamond; and the cut lode's ore (3-5, gold and Deepglass 2-3, diamond and emerald 1-2) until the mine has taken half the lode's
+blocks. Into the chest nearest the hatch within 10 (else kept), dust and a thud at the hatch, a quiet toast to the household at
+home. **The Mine Echo's dice are gone**: a Mine pad's Echo works the Mine head (no Mine head: nothing, and its pad says so); the
+JEI page shows the haul by depth.
+
+**Tiers grow from the home** (`TierRules`, PLAN 4.8). Beside the rank and the materials each tier already asked (iron at II,
+gold and amethyst at III, diamonds at IV, diamonds, obsidian and a Lord's Heart at V): II Steading four rooms, one of them Fine,
+and a field or a pen; III Hall a Grand room; IV Village a bell tower and four people living here; V Town eight. Shown ticked on
+the upgrade card and the guide ("The home grows first"), checked again on building. Radii 24 / 48 / 56 / 64 / 80 / 96. The
+Anchor's flame shows the tier (`HearthAnchorBlock.TIER` 1-5, kept in step by upkeep: five models from `tools/art/specs/hearth.py`,
+a fire-bowl in the Anchor's top with the Lord's Heart in it: I a low ember flame, II steadier and taller, III gold with a gold
+rim, IV bell-gold with the side runes lit, V a block of white-gold flame and a crown of light; particles and the fire's
+crackle by tier; light 15 from IV). **At Tier IV your village is named**: on the Atlas (a `MapMarks` mark, "Ashford · your
+village"; "· your town" at V) and in the place caption ("ASHFORD · your village"). The rise is told to the household.
+`Hearth.villages(server)` (§12) is the hook W4's festival and W7's caravans use.
+
+**Fixes found on the way**: a stair counts as a seat from the cell over it whichever side the reading meets it first (a hall's
+benches could go uncounted). After the first CI tour: the townsfolk's bundle stack is made on first use (a static stack built
+before item components are bound broke the client's first resource reload: tours hung at world creation); the walk graph's nodes
+are offsets from the Anchor like the rest of a roster (they were world coordinates, so every walk between places failed and the
+engine set people down at their places: `hearth_settler_moves_in` now reads the graph back); the arrival walks a given road to
+its end first (the stage's).
+
+**Commands** (admin): `/awaken admin hearth people | know <who> | arrive <who> | talk <who> | tier <n> | evening | wren | harvest
+| stage [settle | miner | clock <who> breakfast|work | time <tod> | follow <who> | view <name>]` (the staged village for tours: `hearth/stage/HomeStage`, a home grown round its Anchor,
+built from the Hearth's own cottages and simple shells; every room reads as any build does. It finds its own ground first, read from the
+generator's heights without generating (`HomeStage.search`): candidates every 48 blocks out to 16 rings (768); each sampled on a
+coarse grid over the 50-block disc and its 16-block rim (no water, nothing below the sea, no settlement or planned village),
+then every 6 blocks for water; the least rise wins (14 at most; a ring of distance costs a block), and one rising 6 or less
+ends the search; nothing fits, it builds where you stand. The first tour started on a coast (ocean east and north, ridges
+west, Carillon south-west) and found nothing within 320 with the shore excluded, hence the reach. The disc is levelled, the
+rim eased back to the land's height, trees the cut reached taken whole, the land's own beasts cleared. `view walker` frames
+whoever is walking in from behind their shoulder, `follow <who>` a settler out of doors the same way; the clock only moves on
+(a day's work and the haul follow it): `miner` to four seconds before the miner comes up with the haul, `clock <who>
+breakfast|work` to three before a settler sets out, `time <tod>` to the next such time). Oren's commission card names the
+piece in its title (a choice card shows only its title and choices).
+
+**Decisions taken here** (none of the plan's 13): townsfolk want only a bed (their room makes them work there); "Trusted in
+Carillon" is a townsperson a rank early; a village Friend or the city sends a new person, never one of its own records (no one
+lives in two places); one settler a bedroom, one miner a shaft; the caps 0/1/2/4/8/12; the own bed by waking; arrivals walk only
+when someone's near; the settlement keyed `hearth:<owner>`; the walk's rules above; the day's hours; the household is kin; Oren's
+commission takes the best piece you can make, done next play-day at temper I; Hettie's six crops a half-minute and two of a kind a
+day; Ilse two herbs a tonic, home-cooked; the haul table and half a lode; Wren's lines at the eaves and her course gift; Pell's
+letter from the village's history; seats from above; meals standing at the table; the forge's business before Oren's chain.
+
+**Left for W7** (and after): caravans on your road (Tier IV's other reward); the festival comes to `Hearth.villages` (W4);
+a rescued settler still walks in their village too (the village
+keeps its roster; W4's history says where they went), and a party member who also brought them home could take them in as
+well; settlers sleeping in their beds visibly (today going to bed
+is going in at the bedside, as in the villages); Pell's deliveries to villages you've helped; the Lookout's settler at the
+Atlas; Carillon's own Oren, Mira, Teodor and Sun stay in the city as well (one person in two places, as the townsfolk always
+were); the stage is a tour's, not a building tool.
 
 ---------------------------------------------------------------------------------------------------------------------
 

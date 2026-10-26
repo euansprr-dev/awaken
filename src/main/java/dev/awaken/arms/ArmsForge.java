@@ -2,6 +2,7 @@ package dev.awaken.arms;
 
 import dev.awaken.Awaken;
 import dev.awaken.core.Forces;
+import dev.awaken.core.api.HearthHooks;
 import dev.awaken.powers.Fx;
 import dev.awaken.powers.fx.FxKind;
 import dev.awaken.signal.Signal;
@@ -57,6 +58,8 @@ public final class ArmsForge {
     public static final int ATTUNE_ESSENCE = 6, ATTUNE_CORE_SHARDS = 1;
     /** A Blueprint is drawn in lapis ink (PLAN 7.2): paper, a lapis and an essence shard, no iron. */
     public static final int BLUEPRINT_PAPER = 4, BLUEPRINT_LAPIS = 1, BLUEPRINT_ESSENCE = 1;
+    /** At a Hearth with a Study the paper is halved (SPEC §28.1). */
+    public static final int BLUEPRINT_PAPER_STUDY = 2;
 
     /** The catalyst item of a Force (air if its module isn't loaded). */
     public static Item catalystItem(Forces.Force f) {
@@ -217,8 +220,9 @@ public final class ArmsForge {
         var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Forge · Blueprints"));
         w.row(Component.literal("Design"), Component.literal(st.def().name() + " (" + (i + 1) + " of " + styles.size() + ")"));
         if (owns(p, style)) w.row(Component.literal("You have it"), Component.literal("yes"));
-        List<Cost> price = blueprintPrice();
+        List<Cost> price = blueprintPrice(p);
         for (Cost c : price) w.row(c.label(), Component.literal(count(p, c.item()) + " / " + c.n()));
+        if (HearthHooks.study(p)) w.row(Component.literal("Your Study"), Component.literal("halves the paper"));
         w.body(Component.literal("A Blueprint goes in the crafting grid with a forged weapon's parts and comes back out. Sneak and use "
                 + "the Forge again for the next design."));
         if (affords(p, price)) w.choice(offer(p, pl -> drawBlueprint(pl, style)), "Draw the " + st.def().name() + " Blueprint", "Not now");
@@ -227,7 +231,7 @@ public final class ArmsForge {
 
     static boolean drawBlueprint(ServerPlayer p, String style) {
         var item = ArmsItems.BLUEPRINTS.get(style);
-        List<Cost> price = blueprintPrice();
+        List<Cost> price = blueprintPrice(p);
         if (item == null || !affords(p, price)) return false;
         pay(p, price);
         ItemStack bp = new ItemStack(item.get());
@@ -272,7 +276,16 @@ public final class ArmsForge {
     }
 
     static List<Cost> blueprintPrice() {
-        return List.of(cost(Items.PAPER, BLUEPRINT_PAPER), cost(Items.LAPIS_LAZULI, BLUEPRINT_LAPIS),
+        return blueprintPrice(false);
+    }
+
+    /** What this player pays at the Forge: the Study at their Hearth halves the paper. */
+    static List<Cost> blueprintPrice(ServerPlayer p) {
+        return blueprintPrice(HearthHooks.study(p));
+    }
+
+    private static List<Cost> blueprintPrice(boolean study) {
+        return List.of(cost(Items.PAPER, study ? BLUEPRINT_PAPER_STUDY : BLUEPRINT_PAPER), cost(Items.LAPIS_LAZULI, BLUEPRINT_LAPIS),
                 cost(dev.awaken.core.api.CoreApi.ESSENCE_SHARD.get(), BLUEPRINT_ESSENCE));
     }
 

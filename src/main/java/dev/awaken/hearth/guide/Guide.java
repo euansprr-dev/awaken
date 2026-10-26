@@ -197,7 +197,7 @@ public final class Guide {
         for (Room r : sorted) {
             if (views.size() >= 24) break;
             var g = r.reading();
-            views.add(new GuideData.RoomView(g.name(), g.grade().ordinal(), List.of(g.closed(), g.light(), g.warmth(), g.space(), g.care(), g.detail()),
+            views.add(new GuideData.RoomView(dev.awaken.hearth.settle.Settlers.roomName(h, r), g.grade().ordinal(), List.of(g.closed(), g.light(), g.warmth(), g.space(), g.care(), g.detail()),
                     g.purpose().label, g.lift(), r.centre()));
         }
         return new GuideData.Home(h.displayName(), h.comfort, h.style, dev.awaken.hearth.Comfort.next(h.rooms, h.land),
@@ -262,25 +262,24 @@ public final class Guide {
         return out;
     }
 
+    /** (W6) Who lives here: name, trade, and their room (or that they wait for one again). */
     private static List<GuideData.Person> town(HearthRecord h) {
         List<GuideData.Person> out = new ArrayList<>();
-        for (String id : h.arrived) {
-            Townsfolk.get(id).ifPresent(d -> out.add(new GuideData.Person(d.name(), d.role(), "")));
+        for (dev.awaken.hearth.settle.Folk.Settler s : h.folk.settlers) {
+            String where = s.state == dev.awaken.hearth.settle.Folk.Settler.COMING ? "on the road in"
+                    : s.bed == null ? "needs a room again" : s.who.given() + "'s room";
+            out.add(new GuideData.Person(s.who.given(), dev.awaken.hearth.settle.Settlers.title(s.who), where));
         }
         return out;
     }
 
-    /** Who comes next: the first townsfolk still to arrive, and anyone arriving at the same rank. */
+    /** (W6) Who the household knows who isn't here yet, and why: "waits for a bed", "needs a Greenhouse", "Tier II". */
     private static List<GuideData.Person> coming(ServerPlayer sp, HearthRecord h) {
-        Rank rank = Progression.rank(sp);
         List<GuideData.Person> out = new ArrayList<>();
-        Rank at = null;
-        for (Map.Entry<String, Townsfolk.Def> e : Townsfolk.inArrivalOrder()) {
-            Townsfolk.Def d = e.getValue();
-            if (h.arrived.contains(e.getKey()) || d.arrivesAt().ordinal() <= rank.ordinal()) continue;
-            if (at != null && d.arrivesAt() != at) break;
-            at = d.arrivesAt();
-            out.add(new GuideData.Person(d.name(), d.role(), d.arrivesAt().label + "-rank"));
+        if (h.hearthfire()) return out;
+        for (var w : dev.awaken.hearth.settle.Settlers.waiting(HearthService.levelOf(sp.level().getServer(), h), h)) {
+            if (out.size() >= 6) break;
+            out.add(new GuideData.Person(w.who().given(), dev.awaken.hearth.settle.Settlers.title(w.who()), w.why()));
         }
         return out;
     }
@@ -304,8 +303,11 @@ public final class Guide {
             int have = sp.hasInfiniteMaterials() ? p.count() : Costs.countOf(sp, p.item());
             parts.add(new GuideData.Part(BuiltInRegistries.ITEM.getKey(p.item()), p.count(), have));
         }
+        List<GuideData.Need> needs = new ArrayList<>();
+        for (dev.awaken.hearth.TierRules.Need n : dev.awaken.hearth.TierRules.needs(h, next)) needs.add(new GuideData.Need(n.text(), n.met()));
+        boolean home = dev.awaken.hearth.TierRules.met(h, next);
         return new GuideData.Upgrade(false, next, HearthRecord.radiusForTier(next), HearthService.restSeconds(next),
                 def.tier().label + "-rank", rankMet, parts, rankMet ? Costs.discountPercent(rank, def.tier()) : 0,
-                rankMet && Costs.canAfford(sp, price));
+                rankMet && home && Costs.canAfford(sp, price), needs);
     }
 }

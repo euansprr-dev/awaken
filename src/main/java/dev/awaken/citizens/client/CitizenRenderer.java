@@ -81,6 +81,17 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         }
     }
 
+    private static final java.util.Map<String, Identifier> OWN = new java.util.HashMap<>();
+
+    /** "wayfarer/ilse:slim" → textures/entity/wayfarer/ilse.png, resolved once. */
+    private static Identifier own(String face) {
+        return OWN.computeIfAbsent(face, f -> {
+            String path = f.endsWith(":slim") ? f.substring(0, f.length() - 5) : f;
+            Identifier id = Awaken.id("textures/entity/" + path + ".png");
+            return Minecraft.getInstance().getResourceManager().getResource(id).isPresent() ? id : FALLBACK;
+        });
+    }
+
     @Override
     public void extractRenderState(CitizenBody body, CitizenRenderState s, float partial) {
         super.extractRenderState(body, s, partial);
@@ -89,7 +100,9 @@ public final class CitizenRenderer extends SkinnedMobRenderer<CitizenBody, Citiz
         s.rec = rec;
         // (SPEC §28.4) outside Carillon a body wears the Carillon skin the server picked for it from the pool
         int skin = body.look();
-        if (skin >= 0 && skin < skins.length) s.wear(skins[skin], slim[skin]);
+        String own = body.skin();
+        if (!own.isEmpty()) s.wear(own(own), own.endsWith(":slim")); // (SPEC §28.8) a face of their own: a settler at a Hearth
+        else if (skin >= 0 && skin < skins.length) s.wear(skins[skin], slim[skin]);
         else s.wear(FALLBACK, false);
         float age = body.tickCount + partial;
         float a = Math.min(1f, age / FADE_IN);

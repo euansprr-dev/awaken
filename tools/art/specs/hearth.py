@@ -3,7 +3,11 @@ the trophy, townsfolk skins, the training ghost and hearth particles.
 
 The Hearth is home: warm amber lantern light on dark slate, with signal blue for anything precursor."""
 import hashlib
+import json
 import math
+import os
+
+from PIL import Image
 
 from pixelart import *  # noqa: F401,F403
 from pixelart import _outline
@@ -67,72 +71,328 @@ def ring_blend(c: Canvas, r0, r1, colour, a, cx=7.5, cy=7.5):
 
 
 # ---------------------------------------------------------------------------------------------------------------------
-# Hearth anchor
+# Hearth anchor (W6: its flame shows the tier, PLAN 4.8)
+#
+# A block of obsidian with a fire-bowl cut into its top (10x10, 3 deep). The Lord's Heart lies in the bowl and the fire
+# that founded the home burns up out of it, growing with the Hearth: I a low ember flame; II steadier and taller, an
+# iron lip; III gold, a gold rim round the bowl; IV bright bell-gold, taller, the side runes lit; V a full block of
+# white-gold flame wearing a crown of light. Models: models/block/hearth_anchor_t1..t5.json. One texel is 1/16 block on
+# every face, flame planes included; animated frames are 16x16 or 16x32 (frame sizes that keep the atlas's mip levels).
+
+HOLE = (3, 13)  # the bowl's mouth on the top face, in texels
+
+# The side's carved runes (3x5), two by two round a narrow window onto the fire inside: a fork over a chevron that
+# points at the window, mirrored across it. Position, rows.
+RUNES = (
+    ((2, 3), ("X.X", "X.X", ".X.", ".X.", ".X.")),
+    ((11, 3), ("X.X", "X.X", ".X.", ".X.", ".X.")),
+    ((2, 9), ("X..", ".X.", "..X", ".X.", "X..")),
+    ((11, 9), ("..X", ".X.", "X..", ".X.", "..X")),
+)
+WINDOW = [(x, y) for y in range(3, 13) for x in (7, 8)]
+
+# Flame ramps per tier, tip (the faintest texels) to heart: I ember, II warmer, III gold, IV bright bell-gold, V
+# white-gold. Low tiers' tips go dark and smoky; from IV they are a pale haze of light.
+FLAME_RAMPS = {
+    1: ["#5a1606", "#9a2c0c", "#d4561a", "#f08a2c", "#ffbe55", "#ffe08a"],
+    2: ["#6e2008", "#b0420f", "#e6761f", "#faa53a", "#ffd06a", "#ffeeb4"],
+    3: ["#9a4a12", "#cc6e1a", "#f09a2c", "#ffc24c", "#ffe08a", "#fff4d2"],
+    4: ["#f0aa44", "#eea03a", "#ffb238", "#ffd466", "#fff0b0", "#fffbea"],
+    5: ["#ffe08a", "#ffd066", "#ffcc52", "#ffe692", "#fff8dc", "#ffffff"],
+}
+FLAME_ALPHA = (90, 150, 215, 255, 255, 255)
+
+# Per tier: the flame's height in texels from its root (the plane's foot, 1 below the Heart's top), the frame height,
+# how far it sways and how much its tongues jump, its tongues (x, phase, height share, half-width), the licks that
+# break off its top, and its inner core (height, half-width).
+FLAMES = {
+    1: dict(h=9.5, canvas=16, sway=1.0, flick=0.16, licks=0, core=(4.5, 1.5),
+            tongues=((5.5, 0.0, 0.72, 2.4), (8.4, 2.1, 1.0, 3.0), (11.2, 4.2, 0.64, 2.3))),
+    2: dict(h=12.5, canvas=16, sway=0.6, flick=0.08, licks=1, core=(6.5, 1.7),
+            tongues=((5.3, 0.0, 0.66, 2.4), (8.3, 2.1, 1.0, 3.2), (11.2, 4.2, 0.74, 2.4))),
+    3: dict(h=14.5, canvas=16, sway=0.7, flick=0.08, licks=1, core=(8.0, 1.9),
+            tongues=((4.9, 0.0, 0.58, 2.0), (7.0, 1.6, 0.86, 2.7), (9.3, 3.3, 1.0, 2.8), (11.4, 4.9, 0.66, 2.1))),
+    4: dict(h=16.5, canvas=32, sway=0.8, flick=0.09, licks=2, core=(10.0, 2.1),
+            tongues=((4.6, 0.0, 0.56, 2.1), (6.8, 1.5, 0.84, 2.8), (9.0, 3.1, 1.0, 3.0), (11.5, 4.6, 0.7, 2.3))),
+    5: dict(h=18.0, canvas=32, sway=0.8, flick=0.07, licks=2, core=(12.5, 2.4),
+            tongues=((4.6, 0.0, 0.5, 1.8), (6.3, 1.3, 0.78, 2.6), (8.2, 2.6, 1.0, 3.1), (10.2, 3.9, 0.86, 2.6),
+                     (11.9, 5.2, 0.56, 1.8))),
+}
+FLAME_FRAMES = 12
+
+
+def flame_ramp(tier, i):
+    rp = FLAME_RAMPS[tier]
+    return hex_rgba(rp[max(0, min(len(rp) - 1, i))])
 
 
 def anchor_side() -> Canvas:
-    ob, am, br = ramp("obsidian"), ramp("amber"), ramp("brass")
-    c = stone("obsidian", seed="hearth_anchor_side", bevel=True)
-    # inner panel line one pixel in from the bevel
-    for i in range(2, 14):
-        c.set(i, 1, ob[0]); c.set(i, 14, ob[3])
-        c.set(1, i, ob[0]); c.set(14, i, ob[3])
-    win = set()
-    for y in range(2, 14):
-        for x in range(6, 10):
-            if (y in (2, 13)) and x in (6, 9):
-                continue
-            win.add((x, y))
-    # warm spill on the frame, then a deep rim around the window
-    for y in range(16):
-        for x in range(16):
+    """The Anchor's side: bevelled obsidian, a narrow window in brass fittings onto the fire inside (lit by the glow
+    overlay), four runes carved beside it (dark until Tier IV lights them)."""
+    ob, br = ramp("obsidian"), ramp("brass")
+    c = stone("obsidian", seed="hearth_anchor_side", scale=3, contrast=0.8, lo=1, hi=3, bevel=True)
+    win = set(WINDOW)
+    # a deep frame round the window and a little of the fire's warmth on the stone beside it
+    for y in range(1, 15):
+        for x in range(1, 15):
             if (x, y) in win:
                 continue
-            dmin = min(math.hypot(x - wx, y - wy) for wx, wy in win)
-            if dmin < 1.5:
+            d = min(max(abs(x - wx), abs(y - wy)) for wx, wy in win)
+            if d == 1:
                 c.set(x, y, ob[0])
-            elif dmin < 2.6 and 1 < x < 14 and 1 < y < 14:
-                c.blend(x, y, am[2], 0.24 * (1 - abs(y - 7.5) / 8))
-    for (x, y) in win:
-        hx = abs(x - 7.5)
-        vy = abs(y - 7.5) / 6.0
-        v = 1.0 - (hx - 0.5) * 0.28 - vy * vy * 0.6
-        c.set(x, y, am[2 + quantize(max(0.0, min(0.999, v)), 4)])
-    # brass fittings holding the core top and bottom
+            elif d == 2 and 3 <= y <= 12:
+                c.blend(x, y, bell(2), 0.10)
+    for x, y in win:
+        c.set(x, y, bell(1) if y < 8 else bell(2))
     for x in (7, 8):
-        c.set(x, 1, br[4]); c.set(x, 14, br[2])
+        c.set(x, 2, br[4] if x == 7 else br[3]); c.set(x, 13, br[2])
+    # the runes: a dark groove with its lower lip catching the light
+    for (gx, gy), rows in RUNES:
+        cells = {(gx + i, gy + j) for j, row in enumerate(rows) for i, ch in enumerate(row) if ch == "X"}
+        for x, y in cells:
+            c.set(x, y, ob[0])
+        for x, y in cells:
+            if (x, y + 1) not in cells:
+                c.set(x, y + 1, ob[4])
     return c
 
 
-def anchor_top() -> Canvas:
-    ob, am, br = ramp("obsidian"), ramp("amber"), ramp("brass")
-    c = stone("obsidian", seed="hearth_anchor_top", bevel=True)
-    for i in range(1, 15):
-        c.set(i, 1, ob[3]); c.set(i, 14, ob[0])
-        c.set(1, i, ob[3]); c.set(14, i, ob[0])
+def anchor_glow(tier, frame, frames=8) -> Canvas:
+    """The Anchor's side, lit (cutout, drawn full-bright over the side): the window onto the fire, ember-dim at Tier I
+    and white-gold at V, flickering low down where the Heart is; from Tier IV the four runes too, breathing slowly."""
+    c = Canvas(16, 16)
+    t = frame / frames * math.tau
+    lo, hi = {1: (0.6, 2.8), 2: (1.6, 3.8), 3: (2.8, 4.4), 4: (4, 5), 5: (4, 6)}[tier]
+    white = hex_rgba("#ffffff")
+
+    def warm(v):  # 0..1 along the span lo..hi of the bell ramp (index 6 is white)
+        f = lo + (hi - lo) * max(0.0, min(1.0, v))
+        i = int(f)
+        a, b = (bell(i) if i < 6 else white), (bell(i + 1) if i + 1 < 6 else white)
+        k = f - i
+        return tuple(round(a[n] + (b[n] - a[n]) * k) for n in range(3)) + (255,)
+
+    for x, y in WINDOW:
+        heat = (y - 3) / 9  # 0 at the top of the window, 1 at its foot
+        flick = 0.12 * math.sin(t * 2 + y * 0.9 + x * 1.7) + 0.08 * math.sin(t + y * 0.4)
+        c.set(x, y, warm(0.25 + 0.75 * heat + flick * (1.2 - heat * 0.4)))
+    if tier >= 4:
+        # the runes burn a deeper gold than the window (white-gold at V), breathing slowly, brightest at their heads
+        lo, hi = (3, 4.6) if tier == 4 else (4, 5.6)
+        breath = 0.5 + 0.5 * math.sin(t)
+        for (gx, gy), rows in RUNES:
+            for j, row in enumerate(rows):
+                for i, ch in enumerate(row):
+                    if ch == "X":
+                        c.set(gx + i, gy + j, warm(0.45 + 0.3 * breath + 0.25 * (1 - j / 4)))
+    return c
+
+
+def anchor_top(lip="obsidian") -> Canvas:
+    """The Anchor's top: an obsidian band round the fire-bowl and, in the middle (seen down in the bowl, 3 below), its
+    floor of hot ash round the Heart. The bowl's lip is obsidian (Tier I), iron with rivets (II) or gold (III-V)."""
+    ob, br = ramp("obsidian"), ramp("brass")
+    c = stone("obsidian", seed="hearth_anchor_top", scale=3, contrast=0.8, lo=1, hi=3, bevel=True)
+    rng = rng_for("hearth_anchor_floor")
+    a, b = HOLE
     for y in range(16):
         for x in range(16):
-            d = math.hypot(x - 7.5, y - 7.5)
-            ang = math.atan2(y - 7.5, x - 7.5)
-            if d <= 1.2:
-                c.set(x, y, am[5])
-            elif d <= 2.3:
-                c.set(x, y, am[5] if (x + y) < 15 else am[4])
-            elif d <= 3.3:
-                c.set(x, y, am[4] if (x + y) < 15 else am[3])
-            elif d <= 4.1:
-                c.set(x, y, ob[0])
-            elif d <= 5.3:
-                k = (ang / (math.tau / 8)) % 1.0
-                if k < 0.22 or k > 0.92:
-                    c.set(x, y, am[3])
+            ring = min(x, y, 15 - x, 15 - y)
+            if a <= x < b and a <= y < b:
+                # the bowl's floor, visible round the Heart (which covers 5..10): ash, hotter toward the Heart
+                near = min(x - 4, 11 - x, y - 4, 11 - y) >= 0
+                if near:
+                    c.set(x, y, bell(3) if rng.random() < 0.35 else bell(2))
                 else:
-                    c.blend(x, y, am[1], 0.45)
-            elif d <= 6.2:
-                c.blend(x, y, am[2], 0.18)
-    # tiny brass studs at the four corners of the rim
-    for x, y in ((2, 2), (13, 2), (2, 13), (13, 13)):
-        c.set(x, y, br[4] if x + y < 15 else br[2])
+                    c.set(x, y, bell(1) if rng.random() < 0.3 else iron(1 + (rng.random() < 0.4)))
+            elif ring == 1:
+                c.set(x, y, ob[1] if (x + y) % 5 else ob[0])
+            elif ring == 2:
+                lit = (x == 2 or y == 2) and not (x == 13 or y == 13)  # the lip's far edges catch the light
+                if lip == "obsidian":
+                    c.set(x, y, ob[4] if lit else ob[3])
+                elif lip == "iron":
+                    c.set(x, y, iron(5) if lit else iron(4))
+                else:
+                    c.set(x, y, br[5] if lit else br[4])
+    if lip == "iron":
+        for x, y in ((2, 2), (13, 2), (2, 13), (13, 13), (7, 2), (2, 8), (13, 7), (8, 13)):
+            c.set(x, y, iron(2))
+    elif lip == "gilt":
+        for x, y in ((1, 1), (14, 1), (1, 14), (14, 14)):
+            c.set(x, y, br[5] if x + y < 15 else br[3])
+        for x, y in ((2, 2), (13, 2), (2, 13), (13, 13)):
+            c.set(x, y, br[3])
+    return c
+
+
+def anchor_wall(lip="obsidian") -> Canvas:
+    """The bowl's inner walls (rows 0-2 used: 3 deep): the lip, soot-black stone, then the ember glow off the floor."""
+    ob, br = ramp("obsidian"), ramp("brass")
+    rng = rng_for("hearth_anchor_wall", lip)
+    c = Canvas(16, 16)
+    for y in range(16):
+        for x in range(16):
+            row = y % 3
+            if row == 0:
+                col = {"obsidian": ob[3], "iron": iron(4), "gilt": br[4] if x % 4 else br[5]}[lip]
+            elif row == 1:
+                col = ob[0] if rng.random() < 0.6 else ob[1]
+            else:
+                col = bell(1) if rng.random() < 0.55 else bell(2) if rng.random() < 0.7 else ob[1]
+            c.set(x, y, col)
+    return c
+
+
+def anchor_heart(tier, frame, frames=6) -> Canvas:
+    """The Lord's Heart in the bowl: a crimson shell split into plates with the fire's light in the cracks. Each tier
+    the light eats further into it: crimson and gold at I, gold at III, white-gold at V. The light in the cracks
+    breathes."""
+    cr = ramp("crimson")
+    white = hex_rgba("#ffffff")
+    rng = rng_for("hearth_anchor_heart")
+    seeds = [(rng.uniform(0, 16), rng.uniform(0, 16)) for _ in range(12)]
+    noise = [[rng.random() for _ in range(16)] for _ in range(16)]
+    t = frame / frames * math.tau
+    crack_w = (0.0, 0.55, 0.75, 0.95, 1.15, 1.4)[tier]
+    c = Canvas(16, 16)
+    for y in range(16):
+        for x in range(16):
+            px, py = x + 0.5, y + 0.5
+            ds = sorted(math.hypot(px - sx, py - sy) for sx, sy in seeds)
+            edge = ds[1] - ds[0]
+            pulse = 0.5 + 0.5 * math.sin(t + (px + py) * 0.45)
+            if edge < crack_w * (0.75 + 0.35 * pulse):
+                hot = edge < crack_w * 0.45
+                if tier >= 5:
+                    col = white if hot else bell(5)
+                elif tier >= 3:
+                    col = bell(5) if hot else bell(4)
+                else:
+                    col = bell(4) if hot else bell(3)
+            else:
+                n = noise[y][x]
+                if tier <= 2:
+                    col = cr[3 + (n < 0.3) - (n > 0.8)] if tier == 1 else cr[2 + (n < 0.35)]
+                elif tier == 3:
+                    col = bell(2) if n < 0.6 else cr[3]
+                elif tier == 4:
+                    col = bell(3) if n < 0.6 else bell(2)
+                else:
+                    col = bell(4) if n < 0.6 else bell(3)
+            c.set(x, y, col)
+    return c
+
+
+def _tongue(x, h, tx, ph, share, hw, top, t, sway, flick):
+    """One tongue's value at a texel (0 outside it): bright and wide at the root, thin and dim at its tip."""
+    height = top * share * (1 + flick * math.sin(t * 2 + ph))
+    if h > height:
+        return 0.0
+    k = h / max(1.0, height)
+    cx = tx + sway * math.sin(t + ph + h * 0.32) * k ** 1.2
+    width = hw * (1 - k ** 1.6) ** 0.7 + 0.35
+    d = abs(x + 0.5 - cx) / width
+    return 0.0 if d >= 1 else (1 - d) * (1 - 0.55 * k)
+
+
+def anchor_flame(tier, frame, frames=FLAME_FRAMES) -> Canvas:
+    """One frame of the Anchor's flame for its crossed planes (16 wide, root on the bottom row): a body of tongues that
+    sway and jump, with a lick now and then breaking off the top and rising away. Each tier taller and brighter."""
+    p = FLAMES[tier]
+    H = p["canvas"]
+    c = Canvas(16, H)
+    t = frame / frames * math.tau
+    top = p["h"]
+    for y in range(H):
+        h = (H - 1 - y) + 0.5
+        for x in range(16):
+            v = max(_tongue(x, h, tx, ph, share, hw, top, t, p["sway"], p["flick"]) for tx, ph, share, hw in p["tongues"])
+            # the licks: a blob off the tallest tongue's tip that rises, shrinks and fades over the loop
+            for j in range(p["licks"]):
+                s = (frame / frames + j / max(1, p["licks"]) + 0.3 * tier) % 1.0
+                if s > 0.7:
+                    continue
+                lx = 8.4 + (1.3 if j % 2 else -1.1) * s + 0.6 * math.sin(t + j)
+                ly = top * 0.86 + s * (top * 0.32)
+                r = 1.9 * (1 - s) + 0.4
+                d = math.hypot((x + 0.5 - lx) * 1.15, h - ly) / r
+                if d < 1:
+                    v = max(v, (1 - d) * 0.62 * (1 - s))
+            band = 5 if v > 0.80 else 4 if v > 0.62 else 3 if v > 0.45 else 2 if v > 0.30 else 1 if v > 0.17 else 0 if v > 0.07 else -1
+            if band < 0:
+                continue
+            r_, g_, b_, _ = flame_ramp(tier, band)
+            c.set(x, y, (r_, g_, b_, FLAME_ALPHA[band]))
+    return c
+
+
+def anchor_core(tier, frame, frames=FLAME_FRAMES) -> Canvas:
+    """The flame's heart for the inner planes (drawn in the middle 8 columns): a narrow, near-white tongue that beats
+    against the outer flame's sway."""
+    p = FLAMES[tier]
+    H = p["canvas"]
+    ch, hw = p["core"]
+    c = Canvas(16, H)
+    t = frame / frames * math.tau + 2.4
+    for y in range(H):
+        h = (H - 1 - y) + 0.5
+        for x in range(4, 12):
+            v = max(_tongue(x, h, 8.0, 0.7, 1.0, hw, ch, t, 0.5, 0.12),
+                    _tongue(x, h, 7.0, 3.0, 0.62, hw * 0.8, ch, t, 0.6, 0.15) * 0.9)
+            band = 5 if v > 0.55 else 4 if v > 0.36 else 3 if v > 0.2 else -1
+            if band < 0:
+                continue
+            r_, g_, b_, _ = flame_ramp(tier, band)
+            c.set(x, y, (r_, g_, b_, 255 if band >= 4 else 200))
+    return c
+
+
+def anchor_gilt() -> Canvas:
+    """Polished gold for Tier IV's corner caps: a lit face, a shadowed edge."""
+    br = ramp("brass")
+    c = Canvas(16, 16)
+    for y in range(16):
+        for x in range(16):
+            v = 0.75 - y / 24 + (0.15 if (x + y) % 7 == 0 else 0) - (0.2 if x % 4 == 3 else 0)
+            c.set(x, y, br[2 + quantize(max(0.0, min(0.999, v)), 4)])
+    return c
+
+
+CROWN = ("X.....XX.....X",
+         "XX....XX....XX",
+         "XX..X.XX.X..XX",
+         "XXX.XXXXXX.XXX",
+         "XXXXXXXXXXXXXX",
+         "XXXXXXXXXXXXXX")
+CROWN_LIGHTS = (3, 6, 7, 10)  # the set lights in the band (row 4)
+
+
+def anchor_crown(frame, frames=8) -> Canvas:
+    """Tier V's crown, standing on the rim round the flame (one side of it, u1-15 v10-16; drawn full-bright): a gold
+    band with a tall point at each corner and in the middle and a small one between, white-gold at the tips, four set
+    lights in the band, and a glint that runs along it."""
+    br = ramp("brass")
+    white = hex_rgba("#ffffff")
+    c = Canvas(16, 16)
+    t = frame / frames * math.tau
+    glint = frame / frames * 18 - 2
+    for j, row in enumerate(CROWN):
+        for i, ch in enumerate(row):
+            if ch != "X":
+                continue
+            tip = j == 0 or (row[i] == "X" and CROWN[j - 1][i] == ".")
+            if tip:  # the points' lit tips
+                col = white if math.sin(t + i * 1.3) > -0.2 else bell(5)
+            elif j == 4 and i in CROWN_LIGHTS:
+                col = white if i in (6, 7) else bell(5)
+            else:  # deep gold so it stands out against the flame: each point's leading edge lit, the band's foot dark
+                col = (br[4], br[3], br[3], br[3], br[4], br[1])[j]
+                if j in (1, 2, 3) and (i == 0 or row[i - 1] == "."):
+                    col = br[4]
+                if j >= 3 and abs(i - glint + j * 0.5) < 0.8:
+                    col = bell(5)
+            c.set(1 + i, 10 + j, col)
     return c
 
 
@@ -143,6 +403,152 @@ def anchor_bottom() -> Canvas:
         c.set(i, 2, ob[0]); c.set(i, 13, ob[3])
         c.set(2, i, ob[0]); c.set(13, i, ob[3])
     return c
+
+
+def save_anim(out, name, frames, frametime, interpolate=True):
+    """An animated block texture with its own frame size and timing (Out.block assumes square frames, frametime 2)."""
+    path = os.path.join(out.root, "assets/awaken/textures/block", name + ".png")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    w, h = frames[0].w, frames[0].h
+    img = Image.new("RGBA", (w, h * len(frames)))
+    for i, f in enumerate(frames):
+        img.paste(f.image(), (0, i * h))
+    img.save(path)
+    anim = {"frametime": frametime, "interpolate": interpolate}
+    if w != h:
+        anim.update(width=w, height=h)
+    with open(path + ".mcmeta", "w") as m:
+        json.dump({"animation": anim}, m)
+    out.written.append("block/" + name)
+
+
+# The Anchor's block models and blockstate, written with its textures: their UVs and the flame planes' height follow the
+# drawings above (the bowl, the crown's rows, each tier's flame canvas), so the two are made in one place.
+
+_NO_AO = {"ambient_occlusion": False}
+
+
+def _face(tex, uv, cull=None, no_ao=False):
+    f = {"uv": uv, "texture": tex}
+    if cull:
+        f["cullface"] = cull
+    if no_ao:  # inside the bowl: no neighbour's shadow belongs there
+        f["neoforge_data"] = dict(_NO_AO)
+    return f
+
+
+def _el(frm, to, faces, lit=False, rot=None):
+    """An element; lit: drawn full-bright (light_emission 15, unshaded, no ambient occlusion)."""
+    e = {"from": frm, "to": to}
+    if rot is not None:
+        e["rotation"] = {"origin": [8, 8, 8], "axis": "y", "angle": rot}
+    if lit:
+        e["shade_direction_override"] = "up"
+        e["light_emission"] = 15
+        e["neoforge_data"] = dict(_NO_AO)
+    e["faces"] = faces
+    return e
+
+
+def _anchor_body():
+    """The obsidian block with its fire-bowl: a lower body (y0-13) and four strips round the 10x10 mouth (y13-16). The
+    side texture runs on unbroken over the strips' outer faces (v0-3) and the body's (v3-16); the top texture's middle
+    is the bowl's floor."""
+    s, t, w, b = "#side", "#top", "#wall", "#bottom"
+    return [
+        _el([0, 0, 0], [16, 13, 16], {
+            "down": _face(b, [0, 0, 16, 16], "down"), "up": _face(t, [0, 0, 16, 16], no_ao=True),
+            "north": _face(s, [0, 3, 16, 16], "north"), "south": _face(s, [0, 3, 16, 16], "south"),
+            "west": _face(s, [0, 3, 16, 16], "west"), "east": _face(s, [0, 3, 16, 16], "east")}),
+        _el([0, 13, 0], [16, 16, 3], {
+            "up": _face(t, [0, 0, 16, 3], "up"), "north": _face(s, [0, 0, 16, 3], "north"),
+            "west": _face(s, [0, 0, 3, 3], "west"), "east": _face(s, [13, 0, 16, 3], "east"),
+            "south": _face(w, [0, 0, 16, 3], no_ao=True)}),
+        _el([0, 13, 13], [16, 16, 16], {
+            "up": _face(t, [0, 13, 16, 16], "up"), "south": _face(s, [0, 0, 16, 3], "south"),
+            "west": _face(s, [13, 0, 16, 3], "west"), "east": _face(s, [0, 0, 3, 3], "east"),
+            "north": _face(w, [0, 0, 16, 3], no_ao=True)}),
+        _el([0, 13, 3], [3, 16, 13], {
+            "up": _face(t, [0, 3, 3, 13], "up"), "west": _face(s, [3, 0, 13, 3], "west"),
+            "east": _face(w, [3, 0, 13, 3], no_ao=True)}),
+        _el([13, 13, 3], [16, 16, 13], {
+            "up": _face(t, [13, 3, 16, 13], "up"), "east": _face(s, [3, 0, 13, 3], "east"),
+            "west": _face(w, [3, 0, 13, 3], no_ao=True)}),
+    ]
+
+
+def _anchor_model(tier):
+    lip = {1: "", 2: "_iron"}.get(tier, "_gilt")
+    tex = {"particle": "awaken:block/hearth_anchor_side", "side": "awaken:block/hearth_anchor_side",
+           "bottom": "awaken:block/hearth_anchor_bottom", "top": f"awaken:block/hearth_anchor_top{lip}",
+           "wall": f"awaken:block/hearth_anchor_wall{lip}", "glow": f"awaken:block/hearth_anchor_glow_t{tier}",
+           "heart": f"awaken:block/hearth_anchor_heart_t{tier}", "flame": f"awaken:block/hearth_anchor_flame_t{tier}",
+           "core": f"awaken:block/hearth_anchor_core_t{tier}"}
+    g, h, f, k = "#glow", "#heart", "#flame", "#core"
+    els = _anchor_body()
+    # the lit window (and from IV the runes) over each side, cutout
+    els.append(_el([0, 0, 0], [16, 16, 16], {d: _face(g, [0, 0, 16, 16], d) for d in ("north", "south", "west", "east")},
+                   lit=True))
+    # the Lord's Heart on the bowl's floor
+    els.append(_el([5, 13, 5], [11, 15, 11], {"up": _face(h, [5, 5, 11, 11]), **{
+        d: _face(h, [5, 7, 11, 9]) for d in ("north", "south", "west", "east")}}, lit=True))
+    # the flame on two crossed diagonal planes and its core on two upright ones, rooted at y14 inside the Heart; a 16x32
+    # canvas (IV-V) shows its lower 18 rows, up to the model's ceiling at y32
+    top, v0 = (30, 0) if FLAMES[tier]["canvas"] == 16 else (32, 7)
+    els += [
+        _el([8, 14, 0], [8, top, 16], {"west": _face(f, [0, v0, 16, 16]), "east": _face(f, [16, v0, 0, 16])}, lit=True, rot=45),
+        _el([0, 14, 8], [16, top, 8], {"north": _face(f, [16, v0, 0, 16]), "south": _face(f, [0, v0, 16, 16])}, lit=True, rot=45),
+        _el([8, 14, 4], [8, top, 12], {"west": _face(k, [4, v0, 12, 16]), "east": _face(k, [12, v0, 4, 16])}, lit=True),
+        _el([4, 14, 8], [12, top, 8], {"north": _face(k, [12, v0, 4, 16]), "south": _face(k, [4, v0, 12, 16])}, lit=True),
+    ]
+    if tier == 4:  # gold caps on the rim's corners
+        tex["gilt"] = "awaken:block/hearth_anchor_gilt"
+        for x, z in ((0.5, 0.5), (13.5, 0.5), (0.5, 13.5), (13.5, 13.5)):
+            els.append(_el([x, 16, z], [x + 2, 17, z + 2], {"up": _face("#gilt", [4, 4, 6, 6]), **{
+                d: _face("#gilt", [4, 6, 6, 7]) for d in ("north", "south", "west", "east")}}))
+    if tier == 5:  # the crown on the rim round the flame: four upright planes seen from without and within, full-bright
+        tex["crown"] = "awaken:block/hearth_anchor_crown"
+        n = len(CROWN)
+        for frm, to, (outer, inner) in (
+                ([1, 16, 1], [15, 16 + n, 1], ("north", "south")), ([1, 16, 15], [15, 16 + n, 15], ("south", "north")),
+                ([1, 16, 1], [1, 16 + n, 15], ("west", "east")), ([15, 16, 1], [15, 16 + n, 15], ("east", "west"))):
+            els.append(_el(frm, to, {outer: _face("#crown", [1, 16 - n, 15, 16]), inner: _face("#crown", [15, 16 - n, 1, 16])},
+                           lit=True))
+    return {"parent": "minecraft:block/block", "textures": tex, "elements": els}
+
+
+def _write_json(out, rel, obj):
+    path = os.path.join(out.root, "assets/awaken", rel)
+    with open(path, "w") as fh:
+        json.dump(obj, fh, indent=2)
+        fh.write("\n")
+
+
+def anchor_models(out):
+    for tier in range(1, 6):
+        _write_json(out, f"models/block/hearth_anchor_t{tier}.json", _anchor_model(tier))
+    # the item: Tier I, a little smaller in a slot so the flame's tip isn't clipped
+    _write_json(out, "models/block/hearth_anchor.json", {"parent": "awaken:block/hearth_anchor_t1", "display": {
+        "gui": {"rotation": [30, 225, 0], "translation": [0, -0.25, 0], "scale": [0.58, 0.58, 0.58]}}})
+    _write_json(out, "blockstates/hearth_anchor.json",
+                {"variants": {f"tier={t}": {"model": f"awaken:block/hearth_anchor_t{t}"} for t in range(1, 6)}})
+
+
+def build_anchor(out):
+    out.block("hearth_anchor_side", anchor_side())
+    out.block("hearth_anchor_bottom", anchor_bottom())
+    for lip, suffix in (("obsidian", ""), ("iron", "_iron"), ("gilt", "_gilt")):
+        out.block("hearth_anchor_top" + suffix, anchor_top(lip))
+        out.block("hearth_anchor_wall" + suffix, anchor_wall(lip))
+    out.block("hearth_anchor_gilt", anchor_gilt())
+    save_anim(out, "hearth_anchor_crown", [anchor_crown(i) for i in range(8)], 4)
+    for tier in range(1, 6):
+        save_anim(out, f"hearth_anchor_glow_t{tier}", [anchor_glow(tier, i) for i in range(8)], 3 if tier < 4 else 4)
+        save_anim(out, f"hearth_anchor_heart_t{tier}", [anchor_heart(tier, i) for i in range(6)], 5)
+        ft = 3 if tier == 2 else 2  # Tier II burns steadier
+        save_anim(out, f"hearth_anchor_flame_t{tier}", [anchor_flame(tier, i) for i in range(FLAME_FRAMES)], ft)
+        save_anim(out, f"hearth_anchor_core_t{tier}", [anchor_core(tier, i) for i in range(FLAME_FRAMES)], ft)
+    anchor_models(out)
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -1595,9 +2001,7 @@ def training_ghost() -> Canvas:
 
 
 def build(out):
-    out.block("hearth_anchor_side", anchor_side())
-    out.block("hearth_anchor_top", anchor_top())
-    out.block("hearth_anchor_bottom", anchor_bottom())
+    build_anchor(out)  # the Anchor and its flame by tier (W6)
     out.block("meditation_mat", meditation_mat())
     out.block("forge_front", forge_front())
     out.block("forge_side", forge_side())

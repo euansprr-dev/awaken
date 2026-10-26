@@ -40,6 +40,13 @@ public final class HearthHooks {
         default boolean tideCalm(ServerLevel level, BlockPos pos) { return false; }
         /** Essence a machine at {@code pos} pays for {@code amount} (a Workshop at home pays a quarter less). */
         default int machineCost(ServerLevel level, BlockPos pos, int amount) { return amount; }
+        /**
+         * Whether {@code pos} lies in a Greenhouse room at a Hearth (herbs there ripen three times as often, SPEC §28.8).
+         * Both sides: a server reads every Hearth's rooms; a client its own home's, as synced (so its glint agrees).
+         */
+        default boolean greenhouse(net.minecraft.world.level.Level level, BlockPos pos) { return false; }
+        /** Whether the player stands at a Hearth they belong to that has a Study: Blueprints take half the paper (SPEC §28.8). */
+        default boolean study(ServerPlayer player) { return false; }
     }
 
     private static Lookup lookup = new Lookup() {
@@ -98,6 +105,16 @@ public final class HearthHooks {
     /** Essence a machine at {@code pos} pays for {@code amount}: a quarter less in a Workshop at home. */
     public static int machineCost(ServerLevel level, BlockPos pos, int amount) {
         return lookup.machineCost(level, pos, amount);
+    }
+
+    /** Whether {@code pos} lies in a Greenhouse at a Hearth (either side): herbs ripen three times as often there. */
+    public static boolean greenhouse(net.minecraft.world.level.Level level, BlockPos pos) {
+        return lookup.greenhouse(level, pos);
+    }
+
+    /** Whether the player stands at home with a Study: the Blueprints' paper is halved. */
+    public static boolean study(ServerPlayer player) {
+        return lookup.study(player);
     }
 
     /** Every Hearth Anchor within {@code radius} blocks of {@code pos}, whoever owns it. */

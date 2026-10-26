@@ -42,6 +42,8 @@ public class CitizenBody extends PathfinderMob implements Npc {
     static final EntityDataAccessor<Integer> DATA_SETTLEMENT = SynchedEntityData.defineId(CitizenBody.class, EntityDataSerializers.INT);
     static final EntityDataAccessor<Integer> DATA_LOOK = SynchedEntityData.defineId(CitizenBody.class, EntityDataSerializers.INT);
     static final EntityDataAccessor<String> DATA_LABEL = SynchedEntityData.defineId(CitizenBody.class, EntityDataSerializers.STRING);
+    /** (SPEC §28.8) A face of its own outside Carillon: a skin texture under textures/entity/ ("wayfarer/ilse:slim"), "" none. */
+    static final EntityDataAccessor<String> DATA_SKIN = SynchedEntityData.defineId(CitizenBody.class, EntityDataSerializers.STRING);
     /** Flags: fading out (leaving view or going in), carrying a crate on the back, hurt. */
     public static final int F_FADING = 1, F_CRATE = 2, F_HURT = 4, F_BAG = 8,
             // staged for a scene (CitizenHooks.stage): never shoves the player it's playing to
@@ -109,6 +111,12 @@ public class CitizenBody extends PathfinderMob implements Npc {
         b.define(DATA_SETTLEMENT, 0);
         b.define(DATA_LOOK, -1);
         b.define(DATA_LABEL, "");
+        b.define(DATA_SKIN, "");
+    }
+
+    /** Its own face outside Carillon ("wayfarer/ilse:slim"), "" when it wears a Carillon skin. */
+    public String skin() {
+        return entityData.get(DATA_SKIN);
     }
 
     public int record() {
@@ -176,8 +184,22 @@ public class CitizenBody extends PathfinderMob implements Npc {
         if (home.id != 0) {
             Roster r = home.roster;
             entityData.set(DATA_SETTLEMENT, home.id);
-            entityData.set(DATA_LOOK, Looks.pick(home.key, rec, r.job[rec], r.build[rec], r.age[rec]));
-            entityData.set(DATA_LABEL, r.isCitizen(rec) ? r.name(rec) + "|" + Roster.JOBS[r.job[rec]] : "");
+            String named = rec < r.named.length ? r.named[rec] : "";
+            String title = Roster.JOBS[r.job[rec]];
+            if (named.startsWith("skin:")) {
+                // (SPEC §28.8) a face of their own, and the word under their name
+                String face = named.substring(5);
+                int semi = face.indexOf(';');
+                if (semi >= 0) {
+                    title = face.substring(semi + 1);
+                    face = face.substring(0, semi);
+                }
+                entityData.set(DATA_SKIN, face);
+                entityData.set(DATA_LOOK, -1);
+            } else {
+                entityData.set(DATA_LOOK, Looks.pick(home.key, rec, r.job[rec], r.build[rec], r.age[rec]));
+            }
+            entityData.set(DATA_LABEL, r.isCitizen(rec) ? r.name(rec) + "|" + title : "");
         }
         AttributeInstance s = getAttribute(Attributes.SCALE);
         if (s != null) s.setBaseValue(scale);

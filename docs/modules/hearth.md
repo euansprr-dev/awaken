@@ -95,6 +95,39 @@ coal per temper at the Forge (Oren brings his own fire).
 `/awaken admin ember give|set|raise`, `/awaken admin hearth read` (rescan, then the room you stand in), `/awaken admin hearth
 rested`.
 
+## Your village (W6, SPEC §28.8)
+
+People who live with you, the work they do with what you bring home, your own mine, tiers that grow from the home.
+Package `dev.awaken.hearth.settle` (and `TierRules`, `stage/HomeStage`, `kit/HomeKit`).
+
+- **Who comes** (`Settlers`): someone you know (the townsfolk by rank, a rank early once Carillon knows you; Ilse, Hettie,
+  Wren and Pell when you've finished their chain; someone from a village where you're a Friend, and from the city; the
+  grown-ups you brought home from a village's trouble, through W4's `Troubles.rescued`, in the face they wore there), when a spare bedroom of Snug or better stands (not yours: the
+  bed you last woke in at home is yours) and their trade has its room (Ilse a Greenhouse, Hettie a field or a pen, a miner
+  a Mine head; the townsfolk only a bed). One at a time, up to the tier's cap (1 / 2 / 4 / 8 / 12). Saved in the Hearth's
+  `folk` (`Folk`, schema 1): who's known, who lives here, their beds, commissions, brews, what's kept to hand over.
+- **The walk in** (`Arrival`): told to the household; with someone near, they walk up the road with a bundle on their back
+  (a `TownNpc`, in their own face, `TownNpcRenderer`'s bundle layer) through the door to their bed; the room becomes
+  "Ilse's room" (`Settlers.roomName`: the caption, the room panel, the guide).
+- **Their day** (`HomePeople`, `HomeWalk`, `Days`): the Hearth runs on the people engine as settlement `hearth:<owner>`; its
+  places come from your rooms (bedsides, the anvil, the greenhouse's soil, the lectern, the lookout's window, the hatch,
+  the field's edge, the pen's gate, the hall's seats, the fire's ring), its street graph is walked over your blocks
+  (budgeted), and their day runs from breakfast to bed. Doors open for them; the hatch for the miner. Faces of their own
+  through `RosterBuilder.Person.face`; the household is kin to them (`HomeTalk.HomeVoice`).
+- **What they do** (`Work`, `HomeTalk`, `Ropes`, `Letters`): Oren's commissions (the best piece you carry the makings of, by
+  morning, tempered I, in the forge's chest), Hettie's harvest and breeding, Ilse's tonics (home-cooked), the miner's
+  evening haul, Mira's rumours, Teodor's reading, Sun's mending, Wren's rope lines between your roofs (and a training
+  course to lay), Pell's letter and rumour.
+- **The Mine head** (`RoomType.MINE_HEAD`, `MineHead`): a hatch over 16+ blocks of climbable shaft; each evening the ore of
+  its foot's depth comes up, and the lode's it cut. The Mine Echo works it too (no dice).
+- **Tiers** (`TierRules`): II four rooms with a Fine one and a field or a pen; III a Grand room; IV a bell tower and four
+  people; V eight (with the old ranks and materials). Radii 48 / 56 / 64 / 80 / 96. The Anchor's flame shows the tier
+  (`HearthAnchorBlock.TIER`). At IV the village is named on the Atlas and in the place caption ("your village").
+- **The kit** (`kit/HomeKit`): drainpipe, trellis, window box, wall ivy, hoist beam craftable and dropping when broken
+  outside Carillon. **Wiring**: a Study halves the Blueprints' paper; a Greenhouse triples herb ripeness.
+- Admin: `/awaken admin hearth people | know | arrive | talk | tier | evening | wren | harvest | stage [settle | view]`.
+- Tests: `hearth_settler_moves_in`, `hearth_tier_reading`, `hearth_mine_head`, `hearth_home_kit`.
+
 ## How to try it
 
 1. `/awaken admin awaken`, then get a Lord's Heart (`/give @s awaken:lord_heart`) and craft a **Hearth Anchor**
@@ -220,7 +253,7 @@ declined; the screen keeps the offer, moved to its bottom: "Changed your mind?")
   `python3 tools/art/specs/structures.py preview DIR cottage` draws them (two angles, day and night).
 
 **Costs that fall** (`Costs`, `Upgrades`). Price ×0.85 per rank you hold above the upgrade's tier (compounding, rounded up,
-never below 1). Anchor tiers II-V (D, C, B, A): radius 48/56/64/72/80, faster rest healing; mostly overworld materials plus a
+never below 1). Anchor tiers II-V (D, C, B, A): radius 56/64/80/96 (I is 48), faster rest healing, and (W6) a home that has grown (TierRules); mostly overworld materials plus a
 little essence (tier V also a Lord's Heart). Forge tiers II (D) and III (B). Tempering: weapons +1 damage per level, armour
 +0.5 armour +0.25 toughness per level, stored in `awaken:temper`; limit 1 anywhere, 2 per Forge tier in an Armory (max VI).
 Oren tempers too and brings his own essence.

@@ -107,6 +107,8 @@ public final class RoomScanner {
     private final int[] diagnosed = new int[Furniture.COUNT];
     private int fills;
     private int farmland, fences, walls, composters, flowers;
+    /** (W6) Where the land's work is: farmland and fence gates (filtered to those outside rooms when the scan ends). */
+    private final LongArrayList fieldCells = new LongArrayList(), gateCells = new LongArrayList();
     /** The seed being worked on (null between seeds). */
     private Job job;
 
@@ -209,7 +211,11 @@ public final class RoomScanner {
         else if (s.getBlock() instanceof ComposterBlock) composters++;
         else if (s.is(BlockTags.FLOWERS) && !(s.getBlock() instanceof FlowerPotBlock)) flowers++;
         if (!seed) return;
-        if (f == Furniture.GROWING && !(s.getBlock() instanceof FlowerPotBlock)) farmland++;
+        if (f == Furniture.GROWING && !(s.getBlock() instanceof FlowerPotBlock)) {
+            farmland++;
+            if (fieldCells.size() < 1024 && s.getBlock() instanceof net.minecraft.world.level.block.FarmlandBlock) fieldCells.add(p.asLong());
+        }
+        if (s.getBlock() instanceof net.minecraft.world.level.block.FenceGateBlock && gateCells.size() < 32) gateCells.add(p.asLong());
         if (f == Furniture.PAD && s.getBlock() instanceof RolePadBlock pad) pads.add(new Scan.Pad(p, pad.role));
         boolean light = givesLight(s);
         if (light) lights.add(p.asLong());
@@ -552,7 +558,16 @@ public final class RoomScanner {
             for (Direction d : DIRS) {
                 m.set(x + d.getStepX(), y + d.getStepY(), z + d.getStepZ());
                 long nl = m.asLong();
-                if (j.visited.contains(nl) || !j.wallSeen.add(nl)) continue;
+                if (j.visited.contains(nl)) continue;
+                boolean first = j.wallSeen.add(nl);
+                if (d == Direction.DOWN) {
+                    // (W6) a seat is a stair someone can sit on from above: counted from the cell over it, whichever side
+                    // the reading met the stair first (a bench's stair is also beside the floor's other cells)
+                    cost++;
+                    BlockState under = level.getBlockState(m);
+                    if (under.is(BlockTags.STAIRS) && under.hasProperty(StairBlock.HALF) && under.getValue(StairBlock.HALF) == Half.BOTTOM) t.seats++;
+                }
+                if (!first) continue;
                 cost += 2;
                 wall(t, j, level.getBlockState(m), m, d);
             }
@@ -613,11 +628,11 @@ public final class RoomScanner {
         } else if (from == Direction.UP) {
             t.ceiling++;
             if (glass) t.glassCeiling++;
+        } else if (b instanceof net.minecraft.world.level.block.TrapDoorBlock) {
+            t.hatch(at.asLong()); // a trapdoor in the floor: a shaft's hatch, maybe (the Mine head, W6)
         }
         if (w.is(BlockTags.STAIRS)) {
-            t.detail(Tally.STAIRS);
-            // a seat: a stair on the floor with room to sit on it
-            if (from == Direction.DOWN && w.hasProperty(StairBlock.HALF) && w.getValue(StairBlock.HALF) == Half.BOTTOM) t.seats++;
+            t.detail(Tally.STAIRS); // (a seat is counted in read(), from the cell over it)
         } else if (w.is(BlockTags.SLABS)) {
             t.detail(Tally.SLAB);
         } else if (w.is(BlockTags.TRAPDOORS)) {
@@ -640,6 +655,44 @@ public final class RoomScanner {
         } else if (t.sign.isEmpty() && w.is(BlockTags.ALL_SIGNS)) {
             t.sign = signText(at);
         }
+    }
+
+    /**
+     * (W6, PLAN 7.7) Under each hatch in the room's floor: how far a shaft goes down (air and what you climb), and whether
+     * you can climb it (a ladder, scaffolding, vines, a chain or a rope for at least half its depth). The deepest that can be
+     * climbed is the room's shaft. At most four hatches and 96 blocks each.
+     */
+    private int shafts(Tally t) {
+        int cost = 0;
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int k = 0; k < t.hatchCount; k++) {
+            m.set(t.hatches[k]);
+            int x = m.getX(), top = m.getY(), z = m.getZ();
+            int depth = 0, climbs = 0;
+            for (int y = top - 1; y >= Math.max(level.getMinY(), top - 96); y--) {
+                m.set(x, y, z);
+                cost++;
+                BlockState s = level.getBlockState(m);
+                boolean climb = climbable(s);
+                if (!climb && !s.getCollisionShape(level, m).isEmpty()) break;
+                if (s.getFluidState().is(FluidTags.LAVA)) break;
+                depth++;
+                if (climb) climbs++;
+            }
+            if (depth > t.shaft && climbs * 2 >= depth) {
+                t.shaft = depth;
+                t.shaftAt = t.hatches[k];
+            }
+        }
+        return cost;
+    }
+
+    /** What a shaft is climbed by: ladders, scaffolding, vines, chains and the ropes that hang down a wall. */
+    public static boolean climbable(BlockState s) {
+        Block b = s.getBlock();
+        return b instanceof net.minecraft.world.level.block.LadderBlock || b instanceof net.minecraft.world.level.block.ScaffoldingBlock
+                || b instanceof net.minecraft.world.level.block.VineBlock || b instanceof ChainBlock
+                || s.is(dev.awaken.body.GripRules.CLIMBS) || s.is(BlockTags.CLIMBABLE);
     }
 
     private int finishRoom(Job j) {
@@ -665,6 +718,7 @@ public final class RoomScanner {
         }
         t.ground = ground == Integer.MAX_VALUE ? Integer.MIN_VALUE : ground;
         t.trophies.addAll(j.trophies);
+        cost += shafts(t);
         int[] counts = t.furniture.clone();
         counts[Furniture.SEAT.ordinal()] = t.seats;
         counts[Furniture.TABLE.ordinal()] = t.tables;
@@ -695,14 +749,31 @@ public final class RoomScanner {
         int stands = 0, animals = 0;
         AABB box = hearth.box();
         for (ArmorStand a : level.getEntitiesOfClass(ArmorStand.class, box)) if (hearth.contains(a.blockPosition())) stands++;
+        List<BlockPos> beasts = new ArrayList<>();
         for (Animal a : level.getEntitiesOfClass(Animal.class, box)) {
-            if (!(a instanceof TamableAnimal) && hearth.contains(a.blockPosition()) && ++animals >= 8) break;
+            if (a instanceof TamableAnimal || !hearth.contains(a.blockPosition())) continue;
+            animals++;
+            if (beasts.size() < 32) beasts.add(a.blockPosition());
+        }
+        animals = Math.min(animals, 8);
+        // (W6) the land's work for the people who live here: fields and gates outside the rooms, where the beasts are
+        List<BlockPos> fields = new ArrayList<>(), gates = new ArrayList<>();
+        for (int i = 0; i < fieldCells.size() && fields.size() < 512; i++) {
+            long c = fieldCells.getLong(i);
+            if (!indoors.contains(BlockPos.offset(c, Direction.UP))) fields.add(BlockPos.of(c));
+        }
+        for (int i = 0; i < gateCells.size() && gates.size() < 16; i++) {
+            long c = gateCells.getLong(i);
+            boolean in = false;
+            for (Direction d : Direction.Plane.HORIZONTAL) in |= indoors.contains(BlockPos.offset(c, d));
+            if (!in) gates.add(BlockPos.of(c));
         }
         furniture[Furniture.STAND.ordinal()] = stands;
         int outdoorLights = 0;
         for (int i = 0; i < lights.size(); i++) if (!indoors.contains(lights.getLong(i))) outdoorLights++;
         Scan.Land land = new Scan.Land(farmland, animals, fences, walls, composters, flowers, outdoorLights);
-        onDone.accept(new Scan(List.copyOf(found), List.copyOf(misses), furniture.clone(), land, List.copyOf(pads), families.clone()));
+        onDone.accept(new Scan(List.copyOf(found), List.copyOf(misses), furniture.clone(), land, List.copyOf(pads), families.clone(),
+                new Scan.Yard(List.copyOf(fields), List.copyOf(gates), List.copyOf(beasts))));
     }
 
     private String mountedTrophy(BlockPos p) {

@@ -164,6 +164,10 @@ final class HearthCommands {
                     .then(Commands.literal("view").then(Commands.argument("where", StringArgumentType.word())
                             .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("outside", "inside", "side"), b))
                             .executes(HearthCommands::cottageView)))));
+            // (W6) the people who live with you, the staged village, the tiers (brigadier merges the two "hearth" nodes)
+            var people = Commands.literal("hearth");
+            for (var t : dev.awaken.hearth.settle.SettleCommands.trees()) people.then(t);
+            admin.then(people);
             root.then(admin);
         });
     }
