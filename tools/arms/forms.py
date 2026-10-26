@@ -52,6 +52,12 @@ FORMS = {
     "precursor": {"strike_1": ("slash", DIAG), "strike_2": ("slash", DIAG_UP), "strike_3": ("slash", R2L),
                   "strike_4": ("stab", "line"), "heavy": ("slash", R2L)},
 }
+# the moves every style shares (a riposte, a dodge's cut, a plunge from the air...), where the shared swing would strike
+# with the wrong part: only the form is set, the server's blow kept as it is (a fist's sweeps are punches)
+SPECIALS = {
+    "gauntlets": {"riposte": ("upper", None), "art": ("jab", None), "slipcut": ("hook", None), "undercut": ("upper", None),
+                  "plunge": ("over", None), "execution": ("over", None)},
+}
 POINT = ("stab", "jab", "bash")
 
 
@@ -83,6 +89,15 @@ def main():
                 if m["arc"] < 70:
                     changed.append(f"{a['id']} {mv}: arc {m['arc']} -> 90 ({form})")
                     m["arc"] = 90
+        for mv, (form, extra) in SPECIALS.get(a["id"], {}).items():
+            sw = a["moves"][mv]["swing"]
+            sw["form"] = form
+            sw.pop("dir", None)
+            sw.pop("variant", None)
+            if isinstance(extra, list):
+                sw["dir"] = extra
+            elif isinstance(extra, str):
+                sw["variant"] = extra
     TABLE.write_text(json.dumps(d, indent=2) + "\n")
     print("\n".join(changed) or "no arcs changed")
 

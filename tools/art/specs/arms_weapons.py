@@ -3379,12 +3379,14 @@ def row_hold(row, pos):
     """A weapon's first-person hold: its style's real hold (arms_holds.HOLDS, written as the weapon is really held) solved
     for its own mesh so it sits in the hand like every other of its style; the gauntlets keep their worn hold."""
     import arms_holds as AH
-    d = AH.hold_for(row[8], pos)
+    edge = AH.edge_of(row[8], None if row[0] in LORD_COLOUR else row[2])
+    d = AH.hold_for(row[8], pos, edge)
     if d is None:  # the style's own (the gauntlets' worn hold)
         fp = hold_of(hold_key(row))["firstperson_righthand"]
         d = (tuple(fp["rotation"]), tuple(fp["translation"]), fp["scale"][0])
     rot, tr, sc = d
-    lrot, ltr, _ = AH.mirror_display(d)  # the left hand holds its true mirror (a pair's twin, or a weapon in the off hand)
+    # the left hand holds its true mirror (a pair's twin, or a weapon in the off hand), a single-edged one edge and all
+    lrot, ltr, _ = AH.mirror_display(d, keep_edge=edge != 0)
     return {"firstperson_righthand": {"rotation": list(rot), "translation": list(tr), "scale": [sc, sc, sc]},
             "firstperson_lefthand": {"rotation": lrot, "translation": ltr, "scale": [sc, sc, sc]}}
 

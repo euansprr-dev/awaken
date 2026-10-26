@@ -10,6 +10,7 @@ the swing's path; 0: the flat face leads, a wave).
     python3 tools/art/anim_lab.py all OUT_DIR [--model old|new]       the review set: longsword, daggers, greatblade, maul
     python3 tools/art/anim_lab.py third OUT.png STYLE                 third person: the body's clips with the blade in hand
     python3 tools/art/anim_lab.py bake                                writes data/awaken/arms/fp_swings.json (the new model)
+    python3 tools/art/anim_lab.py audit                               every move's working part at the hit, every weapon, both hands
     python3 tools/art/anim_lab.py strip OUT.png STYLE MOVE             one move frame by frame (a turn in the hand shows)
     python3 tools/art/anim_lab.py film FRAMES_DIR OUT.png             onion-skin of real frames (the clip recorder's PNGs)
 
@@ -272,17 +273,16 @@ def kind(m):
     return "slash"
 
 
+TIERS = {"wildhide": "E", "beastbound": "D", "gatewrought": "C", "veilwoven": "B", "lordscale": "A", "sovereign": "S"}
+
+
 def held_frame(held):
     """The held weapon's blade frame (columns: axis, edge, face) and which side of it cuts (+1 edge, -1 the other, 0
-    either: a symmetric blade picks the side that turns least)."""
+    either: a symmetric blade picks the side that turns least): its design's own (arms_holds.cut_side), never a guess
+    from its outline (a katana's tip curves back toward its spine, a glaive's fluke weighs down its back)."""
+    import arms_holds as AH
     F = np.stack([held.axis, np.cross(held.axis, held.face), held.face], axis=1)
-    top = held.P[(held.P - held.grip) @ held.axis > 0.6 * ((held.tip - held.grip) @ held.axis)]
-    side = 0
-    if len(top):
-        e = (top - top.mean(axis=0)) @ F[:, 1]
-        bias = float(((top - held.grip) @ F[:, 1]).mean())
-        side = 0 if abs(bias) < 0.03 else (1 if bias > 0 else -1)
-    return F, side
+    return F, AH.cut_side(held.wid.rsplit("_", 1)[-1], TIERS.get(held.wid.split("_")[0]))
 
 
 def frame_to(r, t, side, F):
@@ -347,13 +347,14 @@ POINTED = ("stab", "jab", "bash")  # their measure is the point's lead, not the 
 
 
 ARM_MIN = 0.36  # pivot to grip: every weapon keeps a real arm's length, a long one striking further out on the aim
+REACH, PULL = 0.12, 0.22  # a scythe's blade swept this far past its target, then hauled back this far short of it
 
 
-def target_for(held, lift=0.0):
+def target_for(held, lift=0.0, mid=MID, extra=0.0):
     """Where the blow lands: on the aim just under the crosshair, at TARGET's distance, or further out for a long weapon
-    so its grip stays an arm's length from the pivot (and its hilt out of the eye)."""
+    so its grip stays an arm's length (and {@code extra}) from the pivot, the target {@code mid} along it."""
     aim = TARGET / np.linalg.norm(TARGET)
-    need = ARM_MIN + MID * held.length
+    need = ARM_MIN + extra + mid * held.length
     b = PIVOT @ aim
     dist = b + math.sqrt(max(0.0, b * b - (PIVOT @ PIVOT - need * need)))
     t = aim * max(float(np.linalg.norm(TARGET)), dist)
@@ -421,6 +422,26 @@ def home_curve(x, wt):
     return ease_in_out_sine(x)
 
 
+def turn_to(a, b):
+    """The least turn that lays direction a along b."""
+    a, b = a / np.linalg.norm(a), b / np.linalg.norm(b)
+    c = np.cross(a, b)
+    s_, k = float(np.linalg.norm(c)), float(a @ b)
+    if s_ < 1e-9:
+        return np.eye(3) if k > 0 else axis_rot(np.cross(a, [1.0, 0, 0]) if abs(a[0]) < 0.9 else np.cross(a, [0, 1.0, 0]), 180)
+    return axis_rot(c, math.degrees(math.atan2(s_, k)))
+
+
+def orient(held, a, b):
+    """The turn that points the held weapon's length along a, its face toward b (a fist: knuckles, back of the hand)."""
+    a = a / np.linalg.norm(a)
+    b = b - a * (b @ a)
+    b /= np.linalg.norm(b)
+    T = np.stack([a, np.cross(a, b), b], axis=1)
+    Fh = np.stack([held.axis, np.cross(held.axis, held.face), held.face], axis=1)
+    return T @ Fh.T
+
+
 def axis_rot(axis, deg):
     axis = axis / np.linalg.norm(axis)
     a = math.radians(deg)
@@ -451,19 +472,24 @@ def rig_pose(style_row, m, held, t):
     def back_home(from_pose, x):
         return lerp_pose(from_pose, rest, home_curve(x, wt))
 
-    if form in ("stab", "jab", "bash", "hook", "upper"):
+    if form in ("stab", "jab", "bash", "hook", "upper", "over"):
         return thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, back_home, (c, hit, ea, fe, total))
     if form == "spin":
         return spin_pose(m, held, F, side, wt, t, g, rest, windup_pose, back_home, u, (c, hit, ea, fe, total))
 
-    # a cut: the lever about the pivot, in the plane of the blade at the hit and the cut's direction on the screen
-    target = target_for(held, -0.08 if form == "slam" else 0.0)
+    # a cut: the lever about the pivot, in the plane of the blade at the hit and the cut's direction on the screen. A
+    # scythe cuts on the inside of its blade, which a sweep only drags along its length: it is swept round with the
+    # blade's point leading until the blade is past the target (REACH further out), then hauled back through it (PULL),
+    # the inside edge drawn through what it hooked; its blade, at the snath's top, is what crosses the target
+    inner = WORK.get(sid) == "inner"
+    mid = 1.0 if inner else MID
+    target = target_for(held, -0.08 if form == "slam" else 0.0, mid, PULL if inner else 0.0)
     r_c = target - PIVOT
     reach = float(np.linalg.norm(r_c))
     r_c /= reach
     tan_c = u - r_c * (u @ r_c)
     tan_c /= np.linalg.norm(tan_c)
-    arm = max(0.15, reach - MID * held.length)
+    arm = max(0.15, reach - mid * held.length)
     pre, post, stop = sweep(form, m, wt, u)
     # the wrist: cocked back so the head trails the hands into the blow, then whipped through (a hammer's or an axe's
     # head carries the most)
@@ -476,7 +502,7 @@ def rig_pose(style_row, m, held, t):
              "lash": 50.0}.get(form, 30.0)
     step_dir = r_c * wt["step"] * (1.4 if form in ("slam", "whirl", "swing") else 1.0)
 
-    def at(theta, lag=0.0, step=0.0, roll=0.0):
+    def at(theta, lag=0.0, step=0.0, roll=0.0, out=0.0):
         th, tb = math.radians(theta), math.radians(theta - lag)
         r = math.cos(th) * r_c + math.sin(th) * tan_c
         rb = math.cos(tb) * r_c + math.sin(tb) * tan_c
@@ -484,7 +510,7 @@ def rig_pose(style_row, m, held, t):
         R = frame_to(rb, tan, side, F)
         if roll:
             R = axis_rot(rb, roll) @ R
-        return g(PIVOT + step_dir * step + r * arm, R)
+        return g(PIVOT + step_dir * step + r * (arm + out), R)
 
     cocked = at(-pre, lag_max * 0.6, 0.0, roll0 * 0.85)
     creep = at(-pre - (8 if wt["draw"] < 1 else 0), lag_max, 0.0, roll0)
@@ -492,6 +518,21 @@ def rig_pose(style_row, m, held, t):
         return windup_pose(cocked, creep)
     th0 = -pre - (8 if wt["draw"] < 1 else 0)
     r_start = roll0 if wt["draw"] < 1 else roll0 * 0.85
+    if inner:
+        # round past the target by the hook, then the haul: the blade crosses the target about the hit
+        hook = max(c + (hit - c) * 0.35, (hit - 0.4 * ea) / 0.6)
+        held_at = post * 0.4
+        if t < hook:
+            x, p = drive(t, c, hook, wt)
+            return at(th0 * (1 - p), lag_max * (1 - x) ** 1.5, x, r_start * (1 - x) ** 1.6, REACH * p)
+        if t < ea:
+            k = ease_in_out_sine((t - hook) / max(1e-6, ea - hook))
+            return at(held_at * k, 0.0, 1.0, 0.0, REACH - (REACH + PULL) * k)
+        settle = held_at + (stop - held_at) * 0.3
+        if t < fe:
+            x = (t - ea) / max(1e-6, fe - ea)
+            return at(held_at + (settle - held_at) * ease_out_cubic(x), 0.0, 1.0 - 0.3 * x, 0.0, -PULL)
+        return back_home(at(settle, 0.0, 0.7, 0.0, -PULL), (t - fe) / max(1e-6, total - fe))
     if t < hit:  # accelerating into the hit: the arm leads, the forearm turning the blade square, the wrist whipping it
         x, p = drive(t, c, hit, wt)
         return at(th0 * (1 - p), lag_max * (1 - x) ** 1.5, x, r_start * (1 - x) ** 1.6)
@@ -515,17 +556,17 @@ THRUST_FROM = {
 
 def thrust_pose(form, variant, m, held, F, side, wt, t, g, rest, windup_pose, back_home, ph):
     c, hit, ea, fe, total = ph
-    if form in ("jab", "hook", "upper"):
+    if form in ("jab", "hook", "upper", "over"):
         return punch_pose(form, m, held, wt, t, g, rest, windup_pose, back_home, ph)
     start = THRUST_FROM.get(variant, THRUST_FROM["line"])
     target = target_for(held, 0.02 if variant not in ("over", "reverse") else -0.06)
     r = target - start
     r /= np.linalg.norm(r)
     level = np.cross(r, np.array([0.0, 1.0, 0.0]))
-    if form == "bash":  # the shield shoved forward, its face to the foe, a little tilted
-        R = axis_rot(np.array([1.0, 0, 0]), -12) @ axis_rot(np.array([0, 1.0, 0]), 10)
-        out_p = held.grip + np.array([-0.30, 0.08, -0.32]) + H0_
+    if form == "bash":  # the shield shoved straight at the foe, its face square to the shove (turned the least way)
+        out_p = held.grip + np.array([-0.24, 0.04, -0.40]) + H0_
         back_p = held.grip + np.array([0.06, -0.06, 0.10]) + H0_
+        R = turn_to(-held.face, out_p - back_p)
         if t < c:
             return windup_pose(g(back_p, R))
         if t < hit:
@@ -567,22 +608,25 @@ def punch_pose(form, m, held, wt, t, g, rest, windup_pose, back_home, ph):
     c, hit, ea, fe, total = ph
     base = held.grip + H0_
     paths = {
-        # (start offset, end offset from the resting grip; turn at the end: yaw, pitch, roll degrees)
-        "jab": (np.array([0.04, -0.03, 0.10]), np.array([-0.40, 0.20, -0.30]), (14, 4, -22)),
-        "hook": (np.array([0.16, 0.02, 0.06]), np.array([-0.42, 0.22, -0.20]), (48, 0, -40)),
-        "upper": (np.array([0.02, -0.18, 0.06]), np.array([-0.36, 0.30, -0.26]), (10, -28, -10)),
+        # (start offset, end offset from the resting grip; where the back of the hand faces as the punch lands, the
+        # knuckles square to the fist's travel: a jab and a hook palm down, an uppercut palm to the face, an overhand
+        # driven down knuckles first)
+        "jab": (np.array([0.04, -0.03, 0.10]), np.array([-0.40, 0.20, -0.30]), (0.0, 1.0, 0.2)),
+        "hook": (np.array([0.16, 0.02, 0.06]), np.array([-0.42, 0.22, -0.20]), (0.0, 1.0, 0.0)),
+        "upper": (np.array([0.02, -0.18, 0.06]), np.array([-0.36, 0.30, -0.26]), (0.0, 0.0, -1.0)),
+        "over": (np.array([0.10, 0.22, 0.10]), np.array([-0.34, -0.02, -0.34]), (0.0, 0.4, -1.0)),
     }
-    s0, s1, (yw, pt, rl) = paths[form]
+    s0, s1, back = paths[form]
     big = 1.0 + 0.25 * min(1.0, m["swing"].get("lunge", 0.5))
     s1 = s1 * big
-    R1 = axis_rot(np.array([0, 1.0, 0]), yw) @ axis_rot(np.array([1.0, 0, 0]), pt) @ axis_rot(np.array([0, 0, 1.0]), rl)
-    R0 = axis_rot(np.array([0, 1.0, 0]), -yw * 0.3)
+    mid = (s0 + s1) / 2 + np.array([0.14, 0.0, -0.10])  # a hook comes in on an arc
+    R1 = orient(held, 2 * (s1 - mid) if form == "hook" else s1 - s0, np.array(back))
+    R0 = lerp_pose((np.zeros(3), np.eye(3)), (np.zeros(3), R1), 0.15)[1]
     if t < c:
         return windup_pose(g(base + s0, R0))
     if t < hit:
         x, p = drive(t, c, hit, wt)
         if form == "hook":  # round, not straight: the fist comes in on an arc
-            mid = (s0 + s1) / 2 + np.array([0.14, 0.0, -0.10])
             q = (1 - p) ** 2 * s0 + 2 * (1 - p) * p * mid + p * p * s1
         else:
             q = s0 + (s1 - s0) * p
@@ -702,6 +746,120 @@ def bake(out=SWINGS):
     json.dump({"schemaVersion": 2, "generatedBy": "tools/art/anim_lab.py bake", "dt": KEY_DT, "styles": styles},
               open(out, "w"), separators=(",", ":"))
     return out
+
+
+# ---- the working-part audit (Euan 2026-10-26: "when it's a blade, it's the sharp end that's cutting. When it's a
+# dagger, it's the sharp end that's stabbing. When it's the hammer, it's that end") ----------------------------------
+# What each style strikes with: a blade's edge (a single-edged one's own side, arms_holds.EDGES), an axe's bit, a
+# hammer's faces (never the flat its emblem is on), a staff's ends, a scythe's inner edge (drawn back through, a pull),
+# and for a thrust the point, a fist's knuckles, a shield's face. Each is held to every move at its hit: the share of
+# the working part's motion that drives that part into the target (1: square on; under the bar: something else lands).
+WORK = {"axe": "bit", "maul": "face", "warstaff": "end", "scythe": "inner", "gauntlets": "knuckles"}
+LEAD_MIN = {"edge": 0.7, "bit": 0.7, "face": 0.7, "end": 0.6, "inner": 0.3, "point": 0.8, "knuckles": 0.8, "shield": 0.7}
+
+
+def working(style, form):
+    if form == "bash":
+        return "shield"
+    if form in POINTED:
+        return "knuckles" if style == "gauntlets" else "point"
+    return WORK.get(style, "edge")
+
+
+def lead_at(held, side, part, d0, R0, d1, R1):
+    """How squarely the working part drives into the target between two poses (signed: below 0 the wrong side leads)."""
+    L = held.length
+    if part == "inner":  # the scythe's blade: out from the snath's top on the -edge side, its edge on its inside
+        top = held.P[(held.P - held.grip) @ held.axis > 0.8 * L]
+        p = top[np.argmax(-(top - held.grip) @ (R0.T @ R0 @ held.edge) * side)] if len(top) else held.tip
+    elif part in ("point", "knuckles"):
+        p = held.tip
+    else:
+        p = held.grip + held.axis * L * (0.72 if part == "edge" else 0.92)
+    v = (R1 @ p + d1) - (R0 @ p + d0)
+    n = float(np.linalg.norm(v))
+    if n < 1e-5:
+        return float("nan")
+    a, e, f = R1 @ held.axis, R1 @ held.edge, R1 @ held.face
+    if part in ("point", "knuckles"):
+        return float(v @ a) / n
+    if part == "shield":
+        return abs(float(v @ f)) / n
+    if part == "inner":  # drawn back toward the hands: the inside of the blade through the target
+        return float(-(v @ a)) / n
+    vp = v - a * (v @ a)
+    m = float(np.linalg.norm(vp))
+    if m < 1e-5:
+        return float("nan")
+    lead = float(vp @ e) / m
+    return lead * side if side and part != "face" and part != "end" else abs(lead)
+
+
+def audit():
+    """Every style's moves (its forged weapon, as baked) held to its working part at the hit; prints a table and returns
+    the moves under the bar."""
+    bad = []
+    for sid, st in table().items():
+        held = Held("gatewrought_" + sid)
+        _, side = held_frame(held)
+        cells = []
+        for mv, m in st["moves"].items():
+            if "swing" not in m:
+                continue
+            form = form_of(m)[0]
+            part = working(sid, form)
+            hit = hit_tick(m)
+            d0, R0 = rig_pose(st, m, held, max(0.0, hit - 0.25))
+            d1, R1 = rig_pose(st, m, held, hit + 0.25)
+            lead = lead_at(held, side, part, d0, R0, d1, R1)
+            ok = not math.isnan(lead) and lead >= LEAD_MIN[part]
+            cells.append(f"{mv}:{form}/{part} {lead:+.2f}{'' if ok else ' !'}")
+            if not ok:
+                bad.append((sid, mv, form, part, lead))
+        print(f"{sid:11s} side {side:+d}  " + "  ".join(cells))
+    return bad
+
+
+def audit_tiers():
+    """As the game draws it: each style's baked swing (its forged weapon's) on every weapon of the style in its own hold,
+    a single-edged one held to its own edge, in the hand each move strikes with (the off hand's twin in its left-hand
+    hold, the move mirrored); prints the weapons whose working part fails on some move."""
+    import arms_holds as AH
+    import arms_weapons as AW
+    M = np.diag([-1.0, 1.0, 1.0])
+    bad = []
+    for sid, st in table().items():
+        ref = Held("gatewrought_" + sid)
+        for row in [r for r in AW.CATALOG if r[8] == sid]:
+            wid, lord = row[0], row[0] in AW.LORD_COLOUR
+            e = AH.edge_of(sid, None if lord else row[2])
+            right = Held(wid)
+            fp = json.load(open(os.path.join(MR.RES, "assets/awaken/models/item", wid + "_in_hand.json")))["display"]["firstperson_lefthand"]
+            (rx, ry, rz), (tx, ty, tz) = fp["rotation"], fp["translation"]
+            left = HeldAs(wid, ((rx, -ry, -rz), (-tx, ty, tz), fp["scale"][0]))  # as the engine applies a left hand's
+            fails = []
+            for mv, m in st["moves"].items():
+                if "swing" not in m:
+                    continue
+                form = form_of(m)[0]
+                part = working(sid, form)
+                hand = m["swing"].get("hand", "main")
+                hit = hit_tick(m)
+                d0, R0 = rig_pose(st, m, ref, max(0.0, hit - 0.25))
+                d1, R1 = rig_pose(st, m, ref, hit + 0.25)
+                hands = {"main": ["main"], "off": ["off"], "both": ["main", "off"]}[hand]
+                for h in hands:
+                    if h == "main":
+                        lead = lead_at(right, e, part, d0, R0, d1, R1)
+                    else:
+                        lead = lead_at(left, e, part, M @ d0, M @ R0 @ M, M @ d1, M @ R1 @ M)
+                    if math.isnan(lead) or lead < LEAD_MIN[part]:
+                        fails.append(f"{mv}/{h} {part} {lead:+.2f}")
+            if fails:
+                bad.append(wid)
+                print(f"{wid:32s} edge {e:+d}  " + "  ".join(fails))
+    print(f"{len(bad)} weapons strike with something other than their working part")
+    return bad
 
 
 def _vanilla_hold(px):
@@ -1190,6 +1348,10 @@ def main(argv):
     if argv[0] == "bake":
         print(bake())
         return 0
+    if argv[0] == "audit":
+        bad = audit()
+        print(f"{len(bad)} moves strike with something other than their working part")
+        return 1 if bad or audit_tiers() else 0
     if argv[0] == "strip":
         print(strip(argv[1], argv[2], argv[3]))
         return 0

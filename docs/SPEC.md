@@ -3785,7 +3785,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   the Daggers 0.575 so their blade reads): a spear is as much longer in hand than a longsword as in F5 and a dagger as
   much shorter, and a long point may leave the view. Longsword up and forward to the left, its flat to the eye
   (18 left, 52 up); Rapier en garde, the point forward at the target's height (20, 18); Katana two-handed at the
-  middle, the edge up (10, 36); Spear the shaft across the lower view, gripped part way, the head forward and up
+  middle, the edge down toward the target (10, 36); Spear the shaft across the lower view, gripped part way, the head forward and up
   (24, 22); Glaive the same with the blade higher, its edge in (18, 34); Scythe the snath up, the blade reaching in
   across the top (8, 64); War-staff at its middle across the body (58, 28); Greatblade two-handed, raised, near the
   middle (20, 60); Maul two hands low on the haft, the head up (6, 58); Axe the head up, its bit in (10, 58); Daggers
@@ -3813,13 +3813,37 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   weapon's frame is its design's (along the item's diagonal, its flat across z), never a guess from its outline: a
   maul's head is longest along its striking faces, so the outline's thinnest direction was the way it strikes and its
   emblem side led; now the gold face leads in every direction it swings.
+- **Working parts** (Euan 2026-10-26: "when it's a blade, it's the sharp end that's cutting. When it's a dagger, it's the
+  sharp end that's stabbing. When it's the hammer, it's that end... think logically"): every move strikes with the part
+  of its weapon that does the work, and the lab's `audit` holds it to that at the hit, on every weapon of the style in
+  its own hold and in the hand that strikes (the off hand's twin in its left-hand hold, the move mirrored): a blade's
+  edge, an axe's bit, a hammer's faces (never its emblem flat), a staff's ends, a point for a thrust, the knuckles for a
+  punch, the shield's face for a bash, and a scythe's inner edge drawn back through. Which side cuts is read from each
+  design (arms_holds.EDGES), never guessed from the outline: the katana's edge is on the outside of its curve, the tip
+  curving back toward the spine, and the glaive's fluke weighs down its back, so the old guess (the heavier side) had
+  every katana and glaive cut leading with the spine. Single-edged: Katana and Glaive (+x), Axe (the bit, -x), Scythe
+  (the blade, -x), Twinblades (each blade's leading side, so the pair spins tips trailing), the Beastbound Longsword and
+  Greatblade (tusk cleavers), the Wildhide skinning knife, the Beastbound tusk (honed on its inside) and the Veilwoven
+  talon. A style whose forged (C) weapon is double-edged but has single-edged tiers (Longsword, Greatblade, Daggers)
+  cuts with the side its hold's cut turns in toward the middle, and each single-edged tier is turned so its edge is
+  there: one baked swing cuts with every tier's edge (the wrist turns a backhand over, as a single edge needs). A turn
+  can mirror only two of a weapon's three ways, so a single-edged weapon's left-hand hold keeps its length and its
+  edge mirrored and shows its other flat (before, the Wildhide twin's off-hand cut led with its back). The scythe is
+  swept round, its blade's point leading, until the blade is past the target (0.12 blocks out), then hauled back 0.34
+  blocks through it on the hit, its inside edge drawn through what it hooked; its blade, at the snath's top, is what
+  crosses the target. Every punch lands knuckles first, square to the fist's travel (a jab and a hook palm down, an
+  uppercut palm to the face, an overhand driven down); the Gauntlets' shared moves are punches too (riposte and undercut
+  uppercuts, the dodge's cut a hook, the Art a straight, the plunge and execution overhands; their server blows kept).
+  The bash shoves the shield straight at the foe, its face square to the shove. Third person is not yet held to this
+  (every weapon there takes vanilla's handheld hold and the shared poses' rolls: several swings lead with the flat).
 - **The animation lab** (tools/art/anim_lab.py; SPEC §25, Euan's ask for a way to see the motion): `sheet` / `all`
   draw each strike's first-person frames as the game composes them (the swing, Hands' view layer, vanilla's rest, the
   weapon's hold and mesh, 70 degrees) as an onion-skin with the blade tip's path (wind-up blue, blow gold, recovery
   grey), the hit ringed and the crosshair; under it the tip's height on screen and the edge lead over the move; beside
   it top and side views of the grip and tip paths against the view cone (`--model old` shows the row's slide).
   `third` draws the body's clip (arms_moves.py) with the blade in its hand as vanilla's ItemInHandLayer holds it, two
-  views and the third-person edge lead (a thrust: the point lead). `film` overlays the game's own frames (the clip
+  views and the third-person edge lead (a thrust: the point lead). `audit` checks every move's working part ("Working
+  parts" above; exit 1 when one fails). `film` overlays the game's own frames (the clip
   recorder's, in a tour) the same way. Sheets for the review set in docs/combat/anim-lab/.
 - **Third person** (Player Animation Library, optional, through `core.api.PlayerClips`; `ArmsClips`, `ArmsBodies`):
   a full-body clip per move from tools/art/specs/arms_moves.py, its keys on the timing table's rows (cocked at the

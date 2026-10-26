@@ -244,8 +244,8 @@ def styled(style, lean=0.0, sink=0.0):
             # the move's form (tools/arms/forms.py): the body that does it
             if form in ("stab", "jab", "bash"):
                 kind = "thrust"
-            elif form in ("slam", "chop"):
-                kind = "exec" if form == "slam" and m.get("arc", 0) >= 300 else "over"
+            elif form in ("slam", "chop", "over"):  # over: a fist's overhand, driven down knuckles first
+                kind = "exec" if (form == "slam" and m.get("arc", 0) >= 300) or move == "execution" else "over"
             elif form in ("whirl", "spin"):
                 kind = "round"
             elif form in ("rise", "upper"):

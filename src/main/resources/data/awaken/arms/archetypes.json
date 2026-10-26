@@ -4186,7 +4186,8 @@
               -10,
               -20
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "upper"
           },
           "swish": "heavy"
         },
@@ -4217,7 +4218,8 @@
               0,
               80
             ],
-            "lunge": 1.2
+            "lunge": 1.2,
+            "form": "jab"
           },
           "swish": "art"
         },
@@ -4242,7 +4244,8 @@
               0.15,
               85
             ],
-            "lunge": 0.25
+            "lunge": 0.25,
+            "form": "hook"
           }
         },
         "undercut": {
@@ -4265,7 +4268,8 @@
               -0.05,
               95
             ],
-            "lunge": 0.2
+            "lunge": 0.2,
+            "form": "upper"
           }
         },
         "plunge": {
@@ -4290,7 +4294,8 @@
               -18,
               120
             ],
-            "lunge": 0.0
+            "lunge": 0.0,
+            "form": "over"
           },
           "swish": "heavy"
         },
@@ -4317,7 +4322,8 @@
               -18,
               105
             ],
-            "lunge": 0.5
+            "lunge": 0.5,
+            "form": "over"
           },
           "swish": "heavy"
         }

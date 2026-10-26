@@ -8,8 +8,9 @@ weapon of a style, a Lord-forged one too, sits the same way in the hand whatever
   grip         where the hand closes, from vanilla's resting hand (view space, blocks): every weapon is seated in it
   scale        one size for every style (SCALE), so a spear is as much longer than a longsword in hand as in F5, a
                dagger as much shorter; a style may carry a little more or less (two-handed weapons nearer the eye)
-  cut          for a weapon with a working side (an axe's bit, a scythe's blade, a glaive's edge): the side it faces at
-               rest, as a view direction; the solver puts the mesh's heavier side there
+  cut          for a style with a working side (an axe's bit, a scythe's blade, a glaive's edge, a cleaver's edge): the
+               side it faces at rest, as a view direction; the solver turns each weapon so its own working side (EDGES,
+               read from its design) faces there, so every weapon of the style cuts with its edge on the same swing
 
 Every design puts its grip at arms_weapons.HAND along the item's diagonal, tip to the upper right, its flat across z.
     python3 tools/art/specs/arms_holds.py report        each style's current hold, in these terms
@@ -67,9 +68,46 @@ def euler_xyz(R):
     return math.degrees(x), math.degrees(y), math.degrees(z)
 
 
+# Which side of its length each weapon works with, in its design's terms (+1: arms_weapons' +x, the item's lower right;
+# -1: its upper left; 0: both, or a point, a face): read from each design, never guessed from the outline (a katana's
+# tip curves back toward its spine and a glaive's fluke weighs down its back, so their mass leans away from the edge).
+# Euan 2026-10-26: "when it's a blade, it's the sharp end that's cutting". A style's own entry covers its every weapon;
+# a (style, tier) entry one forged tier (a Lord-forged weapon takes its style's).
+EDGES = {
+    "katana": 1,      # the edge on the outside of the curve, the tip curving back toward the spine
+    "glaive": 1,      # the hardened edge on the outside of the curve, the fluke on the back
+    "axe": -1,        # the bit
+    "scythe": -1,     # the blade, off the top at right angles; it cuts along its inside, drawn back (the reap's pull)
+    "twinblades": 1,  # each blade's leading side: a tusk or fin curving back from it, so the pair spins tips trailing
+    ("longsword", "D"): 1,   # the tusk cleaver, its bronze-capped back to -x
+    ("greatblade", "D"): 1,  # the tusk blade, its back and hook to -x
+    ("daggers", "E"): 1,     # the skinning knife, its straight back to -x
+    ("daggers", "D"): -1,    # the boar's tusk, honed along its inside (it curves to -x)
+    ("daggers", "B"): 1,     # the talon, curving forward to +x, cutting on its inside
+}
+
+
+def edge_of(style, tier=None):
+    """A weapon's working side (EDGES): its forged tier's own, else its style's; None for the tier: a Lord-forged one."""
+    e = EDGES.get((style, tier)) if tier else None
+    return EDGES.get(style, 0) if e is None else e
+
+
+def cut_side(style, tier=None):
+    """The side every cut of a style leads with, for its weapon of {@code tier}, in that weapon's design terms: its own
+    working side; a double-edged one of a style with single-edged tiers (a hold with a cut) leads with the side those
+    tiers' edges are turned to, so one baked swing cuts with every tier's edge."""
+    e = edge_of(style, tier)
+    h = HOLDS.get(style, {})
+    if e or "cut" not in h:
+        return e
+    T = frame(h["yaw"], h["pitch"], h.get("roll", 0.0))
+    return 1 if T[:, 1] @ np.asarray(h["cut"], dtype=float) > 0 else -1
+
+
 def side_of(pos):
     """Which side of the item's axis the mesh's head reaches (+1 toward the edge direction axis x face, -1 away,
-    0 even): an axe's bit, a scythe's blade."""
+    0 even): a fallback for a weapon with no entry in EDGES."""
     edge = np.cross(AXIS_ITEM, FACE_ITEM)
     rel = pos - GRIP_ITEM
     along = rel @ AXIS_ITEM
@@ -80,10 +118,11 @@ def side_of(pos):
     return 0 if abs(bias) < 0.04 else (1 if bias > 0 else -1)
 
 
-def solve(pos, hold):
-    """(rotation, translation, scale) of the display transform for a mesh (item space, 0..1) held as {@code hold}."""
+def solve(pos, hold, edge=None):
+    """(rotation, translation, scale) of the display transform for a mesh (item space, 0..1) held as {@code hold}, its
+    working side {@code edge} (EDGES; None: guessed from the mesh)."""
     T = frame(hold["yaw"], hold["pitch"], hold.get("roll", 0.0))
-    side = side_of(pos)
+    side = side_of(pos) if edge is None else edge
     if hold.get("cut") is not None and side != 0:
         want = np.asarray(hold["cut"], dtype=float)
         if (T[:, 1] @ want) * side < 0:  # turn the weapon about its length so its working side faces the cut
@@ -100,17 +139,23 @@ def solve(pos, hold):
 M_X = np.diag([-1.0, 1.0, 1.0])
 
 
-def mirror_display(display):
+def mirror_display(display, keep_edge=False):
     """The left hand's display transform for a right hand's, so the weapon in the left hand is that hand's true mirror:
     its length, its flat and where the hand closes mirrored across the view (only a detail on one side of the blade
-    stays on its side). 26.3 mirrors every left-hand transform itself as it applies it (ItemTransform.apply: x
+    stays on its side). A turn can mirror only two of a weapon's three ways: a single-edged one ({@code keep_edge})
+    keeps its length and its edge mirrored and shows its other flat, so the off hand's mirrored cuts lead with the edge
+    too, never the back. 26.3 mirrors every left-hand transform itself as it applies it (ItemTransform.apply: x
     translation, y and z rotation negated), so what is written here is the transform before that."""
     (rx, ry, rz), t, sc = display
     R = MR.euler(rx, ry, rz)
     a = R @ AXIS_ITEM
     f = R @ FACE_ITEM
     a2, f2 = M_X @ a, M_X @ f
-    T = np.stack([a2, np.cross(a2, f2), f2], axis=1)
+    if keep_edge:
+        e2 = M_X @ (R @ np.cross(AXIS_ITEM, FACE_ITEM))
+        T = np.stack([a2, e2, np.cross(e2, a2)], axis=1)
+    else:
+        T = np.stack([a2, np.cross(a2, f2), f2], axis=1)
     F = np.stack([AXIS_ITEM, np.cross(AXIS_ITEM, FACE_ITEM), FACE_ITEM], axis=1)
     R_left = T @ F.T
     grip_r = sc * (R @ (GRIP_ITEM - 0.5)) + np.asarray(t) / 16.0
@@ -136,11 +181,12 @@ def describe(display):
 LEFT = (-1.0, 0.0, -0.3)  # a working side toward the middle of the view
 
 HOLDS = {
-    # one hand, the blade up and forward to the left, its flat to the eye
-    "longsword": dict(yaw=18, pitch=52, grip=(0.02, 0.0, 0.02)),
+    # one hand, the blade up and forward to the left, its flat to the eye; a cleaver's edge in toward the middle, the
+    # side the style's cuts lead with
+    "longsword": dict(yaw=18, pitch=52, grip=(0.02, 0.0, 0.02), cut=LEFT),
     # en garde: the point forward at the target's height, the hand a little in
     "rapier": dict(yaw=20, pitch=18, grip=(-0.04, 0.03, -0.02)),
-    # two hands at the middle, the edge up, the point toward the target (chudan)
+    # two hands at the middle, the edge down toward the target, the point at it (chudan)
     "katana": dict(yaw=10, pitch=36, roll=90, grip=(-0.14, 0.0, 0.04)),
     # the shaft across the lower view, gripped part way, the head forward and up, the butt back past the hand; held
     # larger (nearer its size in F5) and turned so its head sits left of and under the aim point, not on it (the game
@@ -152,15 +198,15 @@ HOLDS = {
     "scythe": dict(yaw=8, pitch=64, grip=(0.02, -0.04, 0.03), cut=LEFT),
     # held at its middle across the body, one end low right, the other up to the left
     "warstaff": dict(yaw=58, pitch=28, grip=(-0.08, -0.06, 0.0)),
-    # two hands, raised, big and near the middle
-    "greatblade": dict(yaw=20, pitch=60, grip=(-0.10, -0.08, 0.04)),
+    # two hands, raised, big and near the middle; a single edge in toward the middle
+    "greatblade": dict(yaw=20, pitch=60, grip=(-0.10, -0.08, 0.04), cut=LEFT),
     # two hands low on the haft, the head up at the right
     "maul": dict(yaw=6, pitch=58, roll=90, grip=(-0.04, -0.10, 0.04)),
     # one hand, the head up, its bit in toward the middle
     "axe": dict(yaw=10, pitch=58, grip=(0.02, -0.04, 0.02), cut=LEFT),
     # short, the point forward, a little larger than true so its blade reads; one in each hand (the off hand's twin,
     # ArmsOffHand), held up enough that both blades show whole
-    "daggers": dict(yaw=14, pitch=42, grip=(-0.02, 0.07, -0.02), size=1.15),
+    "daggers": dict(yaw=14, pitch=42, grip=(-0.02, 0.07, -0.02), size=1.15, cut=LEFT),
     # held at the middle, the blades either way across the view
     "twinblades": dict(yaw=62, pitch=34, grip=(-0.04, 0.02, 0.0)),
     # the head forward on its coiled chain
@@ -173,11 +219,11 @@ HOLDS = {
 }
 
 
-def hold_for(style, pos):
-    """The display transform for a weapon of {@code style} with mesh corners {@code pos} (item space), or None to keep
-    the style's own (the gauntlets)."""
+def hold_for(style, pos, edge=None):
+    """The display transform for a weapon of {@code style} with mesh corners {@code pos} (item space) and working side
+    {@code edge} (EDGES), or None to keep the style's own (the gauntlets)."""
     h = HOLDS.get(style)
-    return None if h is None else solve(pos, h)
+    return None if h is None else solve(pos, h, edge)
 
 
 def report():
