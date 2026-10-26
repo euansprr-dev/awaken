@@ -1,5 +1,5 @@
 {
-  "text": "Points to spend: {key.awaken.status}, then + beside a stat. You grow by finding new things, hunting, and clearing gate floors.",
+  "text": "You have points to spend. Press {key.awaken.status} and click + next to a stat. You earn more by exploring, hunting and clearing gate floors.",
   "short": "{key.awaken.status}: points to spend",
   "priority": 50,
   "show_for": 220,

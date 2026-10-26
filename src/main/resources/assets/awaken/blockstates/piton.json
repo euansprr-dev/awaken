@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "facing=north,roped=false": {
+      "model": "awaken:block/piton"
+    },
+    "facing=north,roped=true": {
+      "model": "awaken:block/piton_roped"
+    },
+    "facing=east,roped=false": {
+      "model": "awaken:block/piton",
+      "y": 90
+    },
+    "facing=east,roped=true": {
+      "model": "awaken:block/piton_roped",
+      "y": 90
+    },
+    "facing=south,roped=false": {
+      "model": "awaken:block/piton",
+      "y": 180
+    },
+    "facing=south,roped=true": {
+      "model": "awaken:block/piton_roped",
+      "y": 180
+    },
+    "facing=west,roped=false": {
+      "model": "awaken:block/piton",
+      "y": 270
+    },
+    "facing=west,roped=true": {
+      "model": "awaken:block/piton_roped",
+      "y": 270
+    }
+  }
+}

@@ -138,13 +138,16 @@ public final class FarStore {
                 int x = (px * Rings.PATCH + i) * s, z = (pz * Rings.PATCH + j) * s;
                 height[k] = colour[k] = info[k] = crown[k] = 0;
                 if (!sum.reset().over(this, x - s / 2, z - s / 2, s)) continue;
-                // built cells (the city) keep their highest: a wall or a spire stands out of its corner, never averaged away
-                float top = sum.built > 0 ? Math.max((float) sum.top / sum.n, sum.builtTop) : (float) sum.top / sum.n;
+                // built cells (the city) keep their highest where a corner spans a few blocks (rings 0-2): a wall or a spire
+                // stands out of its corner, never averaged away. Coarser corners average: there one spire's top would be
+                // taken by every corner round it and the mesh would slope between them into a cone over the city
+                boolean keep = sum.built > 0 && s <= 8;
+                float top = keep ? Math.max((float) sum.top / sum.n, sum.builtTop) : (float) sum.top / sum.n;
                 int depth = sum.wet * 2 >= sum.n ? Math.clamp(sum.depth / Math.max(1, sum.wet), 1, FarColumns.MAX_DEPTH) : 0;
                 int canopy = sum.trees == 0 ? 0 : sum.canopy / sum.trees;
                 int density = sum.trees * 255 / sum.n;
                 height[k] = FarColumns.packHeight(top);
-                int rgb = sum.built > 0 && sum.builtTop > (float) sum.top / sum.n ? sum.builtRgb
+                int rgb = keep && sum.builtTop > (float) sum.top / sum.n ? sum.builtRgb
                         : (int) (sum.r / sum.n) << 16 | (int) (sum.g / sum.n) << 8 | (int) (sum.b / sum.n);
                 colour[k] = FarColumns.abgr(rgb, FarColumns.GENERATED);
                 // coldness stays the prediction's (the shaders read it from there): the real colours already hold the snow
@@ -204,8 +207,20 @@ public final class FarStore {
         void add(FarChunk c, int i) {
             int cell = c.cell()[i];
             if (cell == 0) return;
-            top += FarChunk.top(cell);
             int rgb = c.colour()[i];
+            if (FarCity.underCitySight && FarCity.built(rgb)) {
+                // City Sight draws the buildings: here only the ground, a block under the street
+                var l = dev.awaken.city.City.layout();
+                if (l != null) {
+                    top += l.groundY(c.x() * 16 + (i % FarChunk.SIDE) * 2, c.z() * 16 + (i / FarChunk.SIDE) * 2);
+                    r += rgb >> 16 & 255;
+                    g += rgb >> 8 & 255;
+                    b += rgb & 255;
+                    n++;
+                    return;
+                }
+            }
+            top += FarChunk.top(cell);
             if (FarCity.built(rgb) && (built++ == 0 || FarChunk.top(cell) > builtTop)) {
                 builtTop = FarChunk.top(cell);
                 builtRgb = rgb & 0xFFFFFF;

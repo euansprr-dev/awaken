@@ -4,11 +4,11 @@
   "group": "awaken_hunter_boots",
   "key": {
     "C": "#awaken:hunter_core_s",
-    "H": "#awaken:hunter_hide_s",
+    "M": "#awaken:tier_metal_s",
     "S": "awaken:essence_shard"
   },
   "pattern": [
-    "H H",
+    "M M",
     "CSC"
   ],
   "result": {

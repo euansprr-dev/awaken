@@ -211,10 +211,10 @@ final class Ritual {
         }
         MinecraftServer server = p.level().getServer();
         if (!Gates.isRitual(server, id) || p.isSpectator()) return Optional.empty();
-        if (Progression.profile(p).awakened()) return Optional.of("The hall beyond is quiet. Whatever waited there is done with you.");
+        if (Progression.profile(p).awakened()) return Optional.of("The hall is empty now. Whatever was in here has already finished.");
         RitualData.State st = RitualData.get(server).rituals.get(id);
-        if (st != null && st.beat.sealed() && !st.party.contains(p.getUUID())) return Optional.of("The doors are sealed. The bell rings without you.");
-        if (storyGate(p) != id) return Optional.of("This bell isn't ringing for you.");
+        if (st != null && st.beat.sealed() && !st.party.contains(p.getUUID())) return Optional.of("The doors are sealed. The ritual has started without you.");
+        if (storyGate(p) != id) return Optional.of("This gate isn't for you.");
         return Optional.empty();
     }
 
@@ -362,7 +362,7 @@ final class Ritual {
             RitualData.State st = data.rituals.get(gate);
             if (s.prologue == StoryProgress.Prologue.GATE_OPEN) {
                 if (st != null && st.beat.sealed()) {
-                    reassign(p, s, "The bell tolled without you. Another door will open.");
+                    reassign(p, s, "The ritual went ahead without you. Another gate will open for you soon.");
                     continue;
                 }
                 if (st == null && ritualGateHere(p) == gate) {
@@ -425,7 +425,7 @@ final class Ritual {
             StoryProgress s = Prologue.progress(p);
             boolean inGate = ritualGateHere(p) == st.gate;
             if (!inGate) {
-                reassign(p, s, "The bell tolled without you. Another door will open.");
+                reassign(p, s, "The ritual went ahead without you. Another gate will open for you soon.");
                 continue;
             }
             if (!l.hall.inHall(p)) {
@@ -1203,7 +1203,7 @@ final class Ritual {
                 var view = GateHooks.get(server.overworld(), Integer.toString(gate));
                 if (view.isPresent()) {
                     int d = (int) Math.sqrt(view.get().mouth().distSqr(p.blockPosition()));
-                    return List.of(NowHooks.Suggestion.at("story:ritual", 70, "A bell is calling · " + d + " m", view.get().mouth()));
+                    return List.of(NowHooks.Suggestion.at("story:ritual", 70, "Go to the gate · " + d + " m", view.get().mouth()));
                 }
             }
         }

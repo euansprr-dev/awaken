@@ -3142,13 +3142,15 @@ def blueprint_pattern(pattern):
 def write_recipe(wid, style, tier):
     """A forged weapon's recipe at the crafting table: the tier's Hunter blade, core and bind in the style's shape, and
     every style but the Longsword needs its Blueprint, drawn at the Forge and kept (it comes back out of the grid). The
-    Lord-forged only drop."""
+    Lord-forged only drop. From D up the bind is the tier's metal from the deep (#awaken:tier_metal_<t>, SPEC §28.3:
+    D iron, C diamond, B Deepglass, A netherite scrap, S starmetal), with no other item to stand in for it."""
     recipe = os.path.join(RES, "data/awaken/recipe", wid + ".json")
     if wid in LORD_COLOUR:
         if os.path.exists(recipe):
             os.remove(recipe)
         return
-    key = {"C": "#awaken:hunter_core_" + tier.lower(), "X": "awaken:" + G.SET[tier] + "_blade", "B": "#awaken:hunter_bind_" + tier.lower()}
+    bind = "#awaken:hunter_bind_e" if tier == "E" else "#awaken:tier_metal_" + tier.lower()
+    key = {"C": "#awaken:hunter_core_" + tier.lower(), "X": "awaken:" + G.SET[tier] + "_blade", "B": bind}
     pattern = STYLES[style][4]
     if style != "longsword":
         key["P"] = "awaken:" + style + "_blueprint"
@@ -3390,6 +3392,8 @@ def row_hold(row, pos):
     out = {"firstperson_righthand": {"rotation": list(rot), "translation": list(tr), "scale": [sc, sc, sc]},
            "firstperson_lefthand": {"rotation": lrot, "translation": ltr, "scale": [sc, sc, sc]}}
     third = AH.third_person(row[8], edge)  # a single edge on the other side from its style's: turned over in F5 too
+    if row[8] == "gauntlets":
+        third = AH.worn_third_person()  # worn on the fist in F5 too, never held out in front of it
     if third is not None:
         out["thirdperson_righthand"], out["thirdperson_lefthand"] = third
     return out

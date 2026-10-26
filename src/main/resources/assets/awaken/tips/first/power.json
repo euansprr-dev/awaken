@@ -1,5 +1,5 @@
 {
-  "text": "Your power is on {key.awaken.power_1}. Try it out past the walls.",
+  "text": "Your power is on {key.awaken.power_1}. Try it out once you're outside the city.",
   "short": "{key.awaken.power_1}: your power",
   "priority": 60,
   "show_for": 180,

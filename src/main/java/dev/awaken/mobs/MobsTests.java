@@ -27,6 +27,7 @@ import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.zombie.Zombie;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.storage.loot.LootTable;
 
 import java.util.ArrayList;
@@ -198,6 +199,9 @@ final class MobsTests {
 
         AwakenTests.register("mobs_echo_rises_once", 140, h -> {
             ServerLevel level = h.getLevel();
+            // a floor of its own to fall onto (it stood on whatever other tests had left under the plot, else fell 66
+            // blocks to the superflat ground and wasn't up again in time)
+            AwakenTests.site(h, new BlockPos(-3, 0, -3), new BlockPos(3, 4, 3), Blocks.STONE.defaultBlockState());
             AwakenMob m = Mobs.spawn(level, Bestiary.get("toll_ghoul"), h.absoluteVec(new net.minecraft.world.phys.Vec3(0.5, 1, 0.5)), 5,
                     new MobRole(MobRole.Role.NORMAL, 5, Theme.BELL.id, Optional.empty(), ""), EnumSet.of(Forces.Tag.ECHO));
             m.hurtServer(level, level.damageSources().generic(), 10000F);

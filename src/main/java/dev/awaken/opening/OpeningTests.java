@@ -291,14 +291,16 @@ final class OpeningTests {
 
                 // the steps run out on the clock, one tick at a time (the licence is handed over on one exact tick of its step)
                 List<Integer> steps = new ArrayList<>();
-                for (int i = 0; i < 2000 && Story.prologue(p) == Prologue.REGISTRY; i++) {
+                for (int i = 0; i < 3000 && Story.prologue(p) == Prologue.REGISTRY; i++) {
                     if (steps.isEmpty() || steps.getLast() != st.step) steps.add(st.step);
                     OpeningDirector.clockOffset += 1;
                     tick(p);
                 }
                 h.assertTrue(steps.equals(List.of(OpeningRegistry.WALK, OpeningRegistry.READ, OpeningRegistry.SIGN, OpeningRegistry.BAND,
                         OpeningRegistry.WEAR, OpeningRegistry.BOOT, OpeningRegistry.BRIEF, OpeningRegistry.OPEN, OpeningRegistry.ATLAS,
-                        OpeningRegistry.POWER, OpeningRegistry.DIRECTIVE, OpeningRegistry.YOURS)), "every step in order: " + steps);
+                        OpeningRegistry.POWER, OpeningRegistry.DIRECTIVE, OpeningRegistry.LETTERS, OpeningRegistry.YOURS)), "every step in order: " + steps);
+                h.assertTrue(p.getInventory().contains(new net.minecraft.world.item.ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(dev.awaken.Awaken.id("ilse_letters")))),
+                        "Bram's letters for Ilse in the pack");
                 h.assertTrue(dev.awaken.core.api.HoloBand.worn(p), "the band on the wrist when it's over");
                 h.assertTrue(Story.prologue(p) == Prologue.DONE, "the city is yours: " + Story.prologue(p));
                 assertSkipped(h, p, "after the Registry");
@@ -318,6 +320,9 @@ final class OpeningTests {
                 OpeningWorld w = r.world();
                 MinecraftServer server = r.server();
                 ServerPlayer a = r.players().get(0), b = r.players().get(1), c = r.players().get(2), d = r.players().get(3);
+                // the clock is game time: early in a run (or a short one) "five minutes before now" fell below zero, which
+                // reads as no group at all, and the straggler was never pulled
+                OpeningDirector.clockOffset += OpeningDirector.STRAGGLERS;
 
                 // both run; the first arrives and waits
                 run(r, a);

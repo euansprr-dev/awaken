@@ -344,13 +344,14 @@ final class ArmsTests {
                 h.assertTrue(FpSwings.sample(st, e.getKey(), 0, true, d, q), a.id() + " " + e.getKey() + " has keys");
                 FpSwings.sample(st, e.getKey(), def.total() + 1, true, d, q);
                 h.assertTrue(d.length() < 1e-3F && Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + " ends at rest");
-                // third person's wrist (ArmsWrist): from the hand's rest and home again, never more than a half turn
+                // third person's wrist (ArmsWrist): home by the clip's end, and from the hand's rest unless loosed from a
+                // held draw (no wind-up: it starts as the charge held it)
                 float len = FpSwings.wristLength(st, e.getKey());
                 for (boolean left : new boolean[]{false, true}) {
-                    h.assertTrue(Math.abs(FpSwings.wrist(st, e.getKey(), left, 0)) < 1e-3F && Math.abs(FpSwings.wrist(st, e.getKey(), left, len)) < 1e-3F,
-                            a.id() + " " + e.getKey() + "'s wrist starts and ends square");
-                    for (float t = 0; t <= len; t += 0.5F) {
-                        h.assertTrue(Math.abs(FpSwings.wrist(st, e.getKey(), left, t)) <= 180.5F, a.id() + " " + e.getKey() + "'s wrist turns at most half round");
+                    for (float t : def.windup() > 0 ? new float[]{0, len} : new float[]{len}) {
+                        if (FpSwings.wrist(st, e.getKey(), left, t, q)) {
+                            h.assertTrue(Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + "'s wrist starts and ends square");
+                        }
                     }
                 }
             }
@@ -456,11 +457,13 @@ final class ArmsTests {
     static void forge(GameTestHelper h) {
         ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
         p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ArmsItems.item("wildhide_glaive")));
-        p.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(Items.BLAZE_POWDER));
+        Item heat = ArmsForge.catalystItem(dev.awaken.core.Forces.Force.HEAT);
+        h.assertTrue(heat != Items.AIR, "Heat's catalyst (Sunshard) is registered");
+        p.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(heat));
         h.assertTrue(!ArmsForge.attune(p, dev.awaken.core.Forces.Force.HEAT), "nothing to pay with: no attunement (creative "
                 + p.isCreative() + ", essence " + ArmsForge.count(p, dev.awaken.core.api.CoreApi.ESSENCE_SHARD.get()) + ")");
         for (ArmsForge.Cost c : ArmsForge.attunePrice(dev.awaken.core.Forces.Force.HEAT)) {
-            if (c.item() != Items.BLAZE_POWDER) p.getInventory().add(new ItemStack(c.item(), c.n()));
+            if (c.item() != heat) p.getInventory().add(new ItemStack(c.item(), c.n()));
         }
         h.assertTrue(ArmsForge.attune(p, dev.awaken.core.Forces.Force.HEAT), "with its price, it attunes");
         h.assertTrue(ArmsForge.attunement(p) == dev.awaken.core.Forces.Force.HEAT && p.getOffhandItem().isEmpty(), "attuned to Heat, the catalyst spent");

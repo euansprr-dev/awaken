@@ -68,6 +68,10 @@ public final class Wind {
         public float steady;
         /** Raises every gust toward 1 (0 = the real wind); a debug aid for showing gusts on demand. */
         public float gustFloor;
+        /** A showcase front (debug aid, {@code /awaken terrain wind front}): launched at {@code frontAt} seconds from
+         * (frontX, frontZ), rolling along (frontDirX, frontDirZ) at {@link #FRONT_SPEED}; NaN for none. */
+        public double frontAt = Double.NaN, frontX, frontZ;
+        public float frontDirX, frontDirZ;
         private double ax, az, bx, bz; // this segment's heading and the next one's (fronts travel along these)
         private float blend;           // 0 = this segment's heading, 1 = the next one's
 
@@ -100,6 +104,7 @@ public final class Wind {
         public float gust(double x, double z) {
             double g = envelope(salt, seconds - (x * ax + z * az) / FRONT_SPEED);
             if (blend > 0F) g += (envelope(salt, seconds - (x * bx + z * bz) / FRONT_SPEED) - g) * blend;
+            if (!Double.isNaN(frontAt)) g = Math.max(g, showcase(seconds - frontAt - ((x - frontX) * frontDirX + (z - frontZ) * frontDirZ) / FRONT_SPEED));
             return gustFloor > 0F ? (float) (1 - (1 - g) * (1 - gustFloor)) : (float) g;
         }
 
@@ -107,6 +112,13 @@ public final class Wind {
         public float strength(double x, double z) {
             return Wind.strength(steady, gust(x, z));
         }
+    }
+
+    /** The showcase front over time since it passed: a 0.8 s rise, 1.2 s at full, a 2.5 s fall. */
+    static double showcase(double tau) {
+        if (tau <= 0 || tau >= 4.5) return 0;
+        double u = tau < 0.8 ? tau / 0.8 : tau < 2.0 ? 1 : 1 - (tau - 2.0) / 2.5;
+        return u * u * (3 - 2 * u);
     }
 
     /** The one formula for strength from steady wind and gust, shared with the terrain shader's sway. */

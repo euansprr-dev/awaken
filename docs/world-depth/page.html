@@ -1,0 +1,586 @@
+<title>Between the Gates</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=Silkscreen&display=swap">
+<style>
+/* Layout: AWAKEN's plan-page house look (night glass, the System's blue). One reading column; concept frames run the
+   full column like screenshots; tables scroll inside their own frames. */
+:root {
+  --bg: #0a1019;          /* the night behind the Holo */
+  --glass: #0f1724;       /* the System's glass (SPEC §5) */
+  --glass-2: #142033;
+  --line: #22344d;
+  --fg: #e4f1ff;
+  --muted: #8ea5bf;
+  --accent: #7fc3ff;      /* System blue */
+  --horizon: #9fe6d6;     /* the Horizon line's sea-green */
+  --amber: #ffcf7a;       /* what waits, warnings, the Ember */
+  --ember: #ff8a7a;       /* broken, missing */
+  --rank-e: #f4f6fb; --rank-d: #5fd08f; --rank-c: #6fb3ff; --rank-b: #b48cff; --rank-a: #f2a541; --rank-s: #ff5a6a; --rank-x: #d4af37;
+  --chip-ink: #0a1019;
+  --display: "Chakra Petch", "Avenir Next Condensed", "Arial Narrow", sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --pixel: "Silkscreen", "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #eef3f8; --glass: #ffffff; --glass-2: #f4f8fc; --line: #cfdbe8;
+    --fg: #0e1a2b; --muted: #4b5f76; --accent: #1f6fb5; --horizon: #157a68; --amber: #9a6100; --ember: #b8402f;
+    --rank-e: #6b7787; --rank-d: #23884f; --rank-c: #2468b3; --rank-b: #6f46c4; --rank-a: #a8610a; --rank-s: #c42a3d; --rank-x: #8a6d12;
+    --chip-ink: #ffffff;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #eef3f8; --glass: #ffffff; --glass-2: #f4f8fc; --line: #cfdbe8;
+  --fg: #0e1a2b; --muted: #4b5f76; --accent: #1f6fb5; --horizon: #157a68; --amber: #9a6100; --ember: #b8402f;
+  --rank-e: #6b7787; --rank-d: #23884f; --rank-c: #2468b3; --rank-b: #6f46c4; --rank-a: #a8610a; --rank-s: #c42a3d; --rank-x: #8a6d12;
+  --chip-ink: #ffffff;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #0a1019; --glass: #0f1724; --glass-2: #142033; --line: #22344d;
+  --fg: #e4f1ff; --muted: #8ea5bf; --accent: #7fc3ff; --horizon: #9fe6d6; --amber: #ffcf7a; --ember: #ff8a7a;
+  --rank-e: #f4f6fb; --rank-d: #5fd08f; --rank-c: #6fb3ff; --rank-b: #b48cff; --rank-a: #f2a541; --rank-s: #ff5a6a; --rank-x: #d4af37;
+  --chip-ink: #0a1019;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font: 400 16px/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 64px;
+}
+.wrap { max-width: 1040px; margin: 0 auto; }
+.prose { max-width: 70ch; display: grid; gap: 12px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; letter-spacing: 0.01em; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2.6rem, 7vw, 4.4rem); font-weight: 700; }
+h2 { font-size: clamp(1.6rem, 3.6vw, 2.2rem); font-weight: 600; }
+h3 { font-size: 1.2rem; font-weight: 600; color: var(--accent); }
+p { margin: 0; }
+a { color: var(--accent); }
+strong, b { font-weight: 600; }
+.eyebrow { font-family: var(--pixel); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.muted { color: var(--muted); }
+code { font-family: var(--mono); font-size: 0.86em; color: var(--horizon); overflow-wrap: anywhere; }
+
+header { padding-block: 56px 28px; display: grid; gap: 18px; }
+header .lede { font-size: 1.15rem; max-width: 64ch; }
+header .meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 0.85rem; color: var(--muted); }
+blockquote.euan { margin: 0; padding: 14px 18px; border-left: 3px solid var(--accent); background: var(--glass-2); font-style: italic; max-width: 72ch; }
+blockquote.euan cite { display: block; margin-top: 6px; font-style: normal; font-size: 0.82rem; color: var(--muted); }
+
+/* a projected frame: hairline rim with corner brackets, the Holo's language */
+.frame { position: relative; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); background: var(--glass); }
+.frame::before, .frame::after { content: ""; position: absolute; width: 14px; height: 14px; border: 2px solid var(--accent); pointer-events: none; z-index: 1; }
+.frame::before { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
+.frame::after { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
+
+/* concept frames */
+figure.shot { margin: 0; display: grid; gap: 0; }
+figure.shot img { display: block; width: 100%; max-width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; background: var(--glass-2); }
+figure.shot figcaption { padding: 10px 14px 12px; font-size: 0.9rem; color: var(--muted); border-top: 1px solid var(--line); }
+figure.shot figcaption b { color: var(--fg); font-weight: 600; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 18px; }
+.pair > * { min-width: 0; }
+
+section { padding-block: 44px 8px; display: grid; gap: 18px; border-top: 1px solid var(--line); margin-top: 36px; }
+section > .head { display: grid; gap: 6px; }
+
+/* decisions */
+.decisions { padding: 26px clamp(16px, 3vw, 30px); display: grid; gap: 16px; }
+.decisions .go { font-size: 1.05rem; }
+.decisions .go b { color: var(--horizon); }
+ol.dec { list-style: none; counter-reset: d; margin: 0; padding: 0; display: grid; }
+ol.dec li { counter-increment: d; display: grid; grid-template-columns: 2.4rem 1fr; gap: 4px 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+ol.dec li::before { content: counter(d, decimal-leading-zero); font-family: var(--mono); color: var(--accent); font-size: 0.95rem; padding-top: 2px; grid-row: span 2; }
+ol.dec .q { font-weight: 600; }
+ol.dec .rec { color: var(--muted); font-size: 0.93rem; }
+ol.dec .rec b { color: var(--horizon); }
+
+/* finding cards */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+.cards > div { padding: 14px 16px; background: var(--glass-2); border: 1px solid var(--line); display: grid; gap: 6px; align-content: start; min-width: 0; }
+.cards b.t { font-family: var(--display); font-size: 1.05rem; }
+.cards span { font-size: 0.92rem; color: var(--muted); }
+.cards em { font-style: normal; font-family: var(--mono); font-size: 0.78rem; color: var(--horizon); }
+.cards .sev { font-family: var(--pixel); font-size: 0.66rem; letter-spacing: 0.1em; }
+.sev.hi { color: var(--ember); } .sev.mid { color: var(--amber); } .sev.lo { color: var(--horizon); }
+
+/* the three places */
+.three { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px; }
+.three > div { padding: 16px 18px; border: 1px solid var(--line); background: var(--glass); display: grid; gap: 8px; align-content: start; min-width: 0; }
+.three .k { font-family: var(--pixel); font-size: 0.7rem; letter-spacing: 0.12em; color: var(--amber); }
+.three h3 { color: var(--fg); font-size: 1.35rem; }
+.three p { font-size: 0.94rem; color: var(--muted); }
+.rule { padding: 18px clamp(16px, 3vw, 26px); display: grid; gap: 6px; }
+.rule .line { font-family: var(--display); font-weight: 600; font-size: clamp(1.25rem, 3.2vw, 1.75rem); line-height: 1.25; }
+.rule .line span { white-space: nowrap; }
+.rule .hide { color: var(--rank-d); } .rule .metal { color: var(--amber); } .rule .light { color: var(--accent); }
+
+ul.points { margin: 0; padding-left: 1.1rem; display: grid; gap: 8px; }
+ul.points li::marker { color: var(--accent); content: "◇  "; }
+
+/* tables */
+.tbl { overflow-x: auto; border: 1px solid var(--line); background: var(--glass); }
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+th { font-family: var(--display); font-weight: 600; font-size: 0.82rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); background: var(--glass-2); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td b { color: var(--fg); }
+td.num { white-space: nowrap; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.chip { display: inline-block; font-family: var(--pixel); font-size: 0.7rem; letter-spacing: 0.06em; padding: 1px 7px 0; color: var(--chip-ink); white-space: nowrap; }
+.r-e { background: var(--rank-e); } .r-d { background: var(--rank-d); } .r-c { background: var(--rank-c); }
+.r-b { background: var(--rank-b); } .r-a { background: var(--rank-a); } .r-s { background: var(--rank-s); } .r-x { background: var(--rank-x); }
+.v-in { background: var(--horizon); } .v-later { background: var(--amber); } .v-cut { background: var(--ember); }
+.callout { padding: 14px 18px; border-left: 3px solid var(--amber); background: var(--glass-2); font-size: 0.93rem; }
+.callout b { color: var(--amber); }
+
+/* first evening */
+ol.tl { list-style: none; margin: 0; padding: 0; display: grid; }
+ol.tl li { display: grid; grid-template-columns: 4.6rem 1fr; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 0.94rem; }
+ol.tl .t { font-family: var(--mono); font-size: 0.8rem; color: var(--amber); padding-top: 2px; font-variant-numeric: tabular-nums; }
+ol.tl .say { color: var(--horizon); font-style: italic; }
+
+/* the room glance mock */
+.glance { font-family: var(--mono); font-size: 0.82rem; display: grid; gap: 8px; padding: 16px 18px; background: color-mix(in srgb, var(--bg) 70%, transparent); }
+.glance .name { font-family: var(--display); font-size: 1.15rem; font-weight: 600; letter-spacing: 0.04em; color: var(--accent); }
+.glance .name span { color: var(--muted); font-weight: 500; }
+.glance .row { display: grid; grid-template-columns: 8.5rem auto; gap: 10px; align-items: center; }
+.glance .k { font-family: var(--pixel); font-size: 0.62rem; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; }
+.pips { display: inline-flex; gap: 4px; }
+.pips i { width: 18px; height: 6px; background: var(--line); display: block; }
+.pips i.on { background: var(--horizon); }
+.pips.low i.on { background: var(--amber); }
+.glance .lift { color: var(--amber); border-top: 1px solid var(--line); padding-top: 8px; }
+
+.split { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 20px; align-items: start; }
+.split > * { min-width: 0; }
+footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 0.85rem; color: var(--muted); display: grid; gap: 6px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 560px) {
+  ol.dec li { grid-template-columns: 2rem 1fr; }
+  ol.tl li { grid-template-columns: 3.8rem 1fr; }
+  th, td { padding: 8px 9px; }
+  .glance .row { grid-template-columns: 6.5rem auto; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">Awaken · the world between the gates · plan for approval · 26 Oct 2026</span>
+  <h1>Between the Gates</h1>
+  <p class="lede">The gates give you power. The time between them should give you a life: a home that reads what you
+  build, villages that live on Carillon's own logic and need you, and a deep underground that holds the metal
+  everything is made from. Every ordinary Minecraft verb feeds one of those three, the movement system is how you get
+  through all of them, and each one you touch changes something you can see.</p>
+  <div class="meta"><span>From code audits of the build you play and 118 sourced references (games, mods, packs, Mojang)</span><span>Eight phases, two builders, about 37-56 builder hours</span><span>Plan: docs/world-depth/PLAN.md</span><span>Nothing built yet</span></div>
+  <blockquote class="euan">"I still want it to feel like Minecraft, and for the things that you do in Minecraft to have
+  sense and an objective and reasoning for doing them… Why would I go mining?… When you build your base, it kind of
+  plays into the system of the hearth… I don't want fluff."
+  <cite>Euan, 26 Oct 2026</cite></blockquote>
+</header>
+
+<figure class="shot frame">
+  <img src="concept/01-living-village-dusk.jpg" alt="From a hilltop at dusk, a river-valley village of timber and stone houses, each different: an inn with a sign, a smithy with a glowing forge, a watermill, a square with a well and a bronze bell where a lamplighter climbs a ladder. Farmers walk home from strip fields with hoes, a shepherd pens sheep, a horse cart crosses the square, chimney smoke rises, and a faint blue gate pillar stands far off on the horizon." width="1536" height="1024">
+  <figcaption><b>A hamlet at dusk, seen from the hill you came over.</b> Carillon's people engine, running a second place:
+  farmers walking home, the smith at the forge, the lamplighter on his round, the bell about to ring. Concept frame.</figcaption>
+</figure>
+
+<div class="decisions frame" id="decisions" style="margin-top:28px">
+  <span class="eyebrow">What your yes covers</span>
+  <p class="go">Thirteen decisions, each with my recommendation. <b>"Go with your recommendations"</b> says yes to all of them.</p>
+  <ol class="dec">
+    <li><span class="q">The Hearth starts on your first evening. At the Wayfarer camp Ilse gives you a coal from their fire; you carry it till you find your ground, and setting it down founds your Hearth.</span><span class="rec"><b>Yes.</b> Today the Hearth needs a Lord's Heart, comes 1-2 hours in, and nobody mentions it. The Heart still makes the full Anchor (Tier I).</span></li>
+    <li><span class="q">The Hearth reads what you build: every room named and graded on light, warmth, space, care and detail; your glance reads the room you stand in; Comfort sets how rested you wake; rooms do things; people move in when there's a bed.</span><span class="rec"><b>Yes.</b> Today a bed and a mat in a three-block nook counts the same as a hall, and nothing reads quality at all.</span></li>
+    <li><span class="q">AWAKEN's own settlements replace vanilla villages in new worlds: hamlets to walled towns, plus mining towns, fishing villages, stilt houses, frost longhouses. Built on Carillon's people engine and the city's grammar, with real interiors.</span><span class="rec"><b>Yes,</b> with the Carillon session, which owns that engine. The first hamlet is placed on purpose up the camp road.</span></li>
+    <li><span class="q">Village people are people (Carillon's citizens), not vanilla villagers. Vanilla villagers leave new worlds, which ends iron farms and trading halls there.</span><span class="rec"><b>Yes.</b> Iron comes from the deep now, and a town scribe keeps enchanted books.</span></li>
+    <li><span class="q">The emerald is the coin of the world. Carillon's planned bell marks are dropped.</span><span class="rec"><b>Yes.</b> There's no coin in the game today; the emerald is already Minecraft's.</span></li>
+    <li><span class="q">Troubles: caused by the world, found never listed, missable with a lasting cost but never a dead end or a named death, always paid, and a "calm villages" world option. Eight at launch.</span><span class="rec"><b>Yes.</b> No mod, pack or Mojang feature does this yet.</span></li>
+    <li><span class="q">Hide from the hunt, metal from the deep, light from the gates: from D up, every tier needs its mineral (iron, diamond, amethyst and Deepglass, netherite, starmetal). E stays free.</span><span class="rec"><b>Yes.</b> Gatewrought rises to beat diamond armour, so a diamond is worth more in it than in a chestplate.</span></li>
+    <li><span class="q">Give mining its job back: gates stop paying raw ore, the gate market stops selling diamonds, the Mine Echo works a real mine you dug instead of rolling dice.</span><span class="rec"><b>Yes.</b> Today you can get every ore without a pickaxe.</span></li>
+    <li><span class="q">New finds only where they earn a place: Deepglass (where the Deep leaks into caves) and starmetal (fallen stars), bell bronze, and lodes with a heart. The Lands' crystals become attunement catalysts; lapis becomes ink.</span><span class="rec"><b>Yes.</b> Two ores, one alloy, and the crystals already in your world finally do something.</span></li>
+    <li><span class="q">Mining as a cinematic act: every ore its own sound, the vein that gives way, a charged heavy strike, rare fair cave-ins, the Tuning Fork, pitons and rope, rope fittings forged from metal.</span><span class="rec"><b>Yes.</b> Today mining has no sound, hit or reveal of its own.</span></li>
+    <li><span class="q">Caves: keep vanilla's generator and put places in it (sinkholes, the Delvers' old mines, seeps, chutes, grottos, lairs joined to the caves, vents), add the rappel, cave sound and light, and a way home. Every place has a route that needs no rope.</span><span class="rec"><b>Yes.</b></span></li>
+    <li><span class="q">This plan takes Living Wilds Phase G (settlers, your named village, roads) and F's underground secrets and maps. F keeps its wonders and legendary beasts.</span><span class="rec"><b>Yes,</b> agreed with the Living Wilds owner before building.</span></li>
+    <li><span class="q">Order: the Hearth (W1) and mining (W2) now, as two builders at once; then the people engine and villages with Carillon, caves alongside; troubles and your village after; roads and towns last.</span><span class="rec"><b>Yes.</b> W1 and W2 change your first evening and every cave trip within a day.</span></li>
+  </ol>
+</div>
+
+<section id="today">
+  <div class="head"><span class="eyebrow">The audit · from the code, with file and line in the audit files</span><h2>What's between the gates today</h2></div>
+  <div class="cards">
+    <div><span class="sev hi">The Hearth</span><b class="t">Late, unmentioned, and blind to what you build</b><span>It needs a Lord's Heart, so it comes 1-2 hours in. Founding stamps a prefab Spire into your ground. A room is a furniture checklist; nothing reads light, size, materials, windows or comfort. Townsfolk wander with no homes or work. The Mine Echo rolls dice.</span><em>audit-hearth.md</em></div>
+    <div><span class="sev hi">Villages</span><b class="t">Vanilla, untouched</b><span>No trade, raid or villager code. Frost Spires wiped out most snowy villages. There's no coin anywhere. Carillon's people engine is good and cheap (468 people for 0.06 ms a tick) but it runs one city only, and no building has an interior.</span><em>audit-villages.md</em></div>
+    <div><span class="sev hi">Mining</span><b class="t">A diamond is worth a lump of coal</b><span>Gates, chests, a market and the Mine Echo hand out every ore. Ore XP is flat. The Mining craft can't really be levelled by mining, and Ore Sense ignores AWAKEN's own mattock. Diamond armour quietly beats C-rank gear. No ore of our own, and no feel on the strike.</span><em>audit-mining.md</em></div>
+    <div><span class="sev mid">Caves</span><b class="t">Vanilla's caves, and nothing of ours in them</b><span>One AWAKEN cave place, sealed shut. Everything alive happens on the surface. Wall-runs need flat square walls that caves never have; there's no rappel; no cave sound or light. The Descent is a separate world with empty tunnels.</span><em>audit-caves.md</em></div>
+    <div><span class="sev lo">Living Wilds F and G</span><b class="t">Designed, not built</b><span>Wonders, secrets, legends and maps; settlers, your village and roads. They overlap this plan heavily, so it takes G and the underground half of F.</span><em>living/ has no wonder or village package</em></div>
+  </div>
+</section>
+
+<section id="idea">
+  <div class="head"><span class="eyebrow">The idea</span><h2>Three places, one rule</h2></div>
+  <div class="three">
+    <div><span class="k">Home</span><h3>A Hearth that reads you</h3><p>It starts on your first evening with a coal from the camp's fire, and from then on every room you build is read, named and graded, and someone you saved can move into the spare one.</p></div>
+    <div><span class="k">People</span><h3>Villages that live</h3><p>Hamlets to walled towns on the city's own engine: real jobs, real routes, every house different and walk-in. They get into trouble, and what you do about it changes them for good.</p></div>
+    <div><span class="k">Below</span><h3>The deep, worth going into</h3><p>Every tier's metal is down there, in lodes that break open like an event, in caves built for how you move: sinkholes, old mines you wall-run through, seeps where the Deep leaks in.</p></div>
+  </div>
+  <div class="rule frame">
+    <span class="eyebrow">The one rule your gear follows from D up</span>
+    <p class="line"><span class="hide">Hide from the hunt.</span> <span class="metal">Metal from the deep.</span> <span class="light">Light from the gates.</span></p>
+    <p class="muted">Gates alone can't make your gear, and neither can mining. E stays hide and bone, so the first hour is still never "go find iron".</p>
+  </div>
+</section>
+
+<section id="home">
+  <div class="head"><span class="eyebrow">Home · Phase W1</span><h2>The carried flame</h2></div>
+  <div class="pair">
+    <figure class="shot frame">
+      <img src="concept/04-carried-flame.jpg" alt="First-person at twilight: the left hand holds an iron lantern with a glowing gold coal, lighting the grass. Ahead an empty valley with a stream, a lone oak on a rise and a waterfall; a camp's smoke on a far ridge, a walled city of bell towers on the horizon. Faint glass text reads: Set it down where you mean to stay." width="1536" height="1024" loading="lazy">
+      <figcaption><b>Minute twelve, dusk on day one.</b> The Ember lights your way; the land ahead is nobody's yet. Concept frame.</figcaption>
+    </figure>
+    <div class="prose">
+      <p><b>Why you leave the city.</b> One line from Bram, already true in code: "The bells hold the city. Hunters hold the wilds." A hunter's Hearth really does calm the land round it. Leaving isn't an errand; it's the job.</p>
+      <ol class="tl">
+        <li><span class="t">0:12</span><span>The Way Forward's first thread ends at the camp: Ilse takes Kestrel's letters. <span class="say">"First night out? Take a coal from our fire. Carry it till you find your ground, then set it down. It'll know."</span></span></li>
+        <li><span class="t">0:15</span><span>You walk out with the Ember lit in your hand. The Now line: "Set your Ember where you'd live." The first gate waits as Next. No timer.</span></li>
+        <li><span class="t">0:20</span><span>A rise by a stream. You set it down: the coal sinks into a ring of stones, warmth runs out 24 blocks, fireflies come up. <b>YOUR GROUND</b>, and a card to name it.</span></li>
+        <li><span class="t">0:25</span><span>Walls and a roof before the Gloomstalkers come, as Minecraft always taught you. <span class="say">First shelter · rest heals here.</span></span></li>
+        <li><span class="t">~2 h</span><span>The first Lord's Heart goes on the fire and it becomes the Anchor: Tier I. Oren will come when there's a bed for him.</span></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="reading">
+  <div class="head"><span class="eyebrow">Home · Phase W1</span><h2>A Hearth that reads what you build</h2></div>
+  <figure class="shot frame">
+    <img src="concept/05-hearth-reads.jpg" alt="First-person inside a hand-built timber and stone room with a cobblestone fireplace, lanterns, bookshelves, a red bed, carpets and windows on a blue evening. Thin cyan lines trace the room's edges and a glass caption reads THE LONG HALL · Fine, warm · well lit · stone and timber." width="1536" height="1024" loading="lazy">
+    <figcaption><b>Walk into a room you just finished.</b> The Hearth names it once, quietly, and never toasts per block. Concept frame.</figcaption>
+  </figure>
+  <div class="split">
+    <div class="prose">
+      <p>Every closed room inside your Hearth is read on six things, in the scan the Hearth already runs. Nothing asks for a block by name; only furniture names what a room is for.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Reading</th><th>What counts</th></tr></thead>
+        <tbody>
+          <tr><td><b>Closed</b></td><td>walls and a roof; doors, panes, fences, stairs and slabs close gaps</td></tr>
+          <tr><td><b>Light</b></td><td>how much of the floor is lit at night; windows by day</td></tr>
+          <tr><td><b>Warmth</b></td><td>a lit fire in or beside it: hearth, campfire, furnace, candles</td></tr>
+          <tr><td><b>Room to live</b></td><td>floor and height for what it's for; tall halls allowed</td></tr>
+          <tr><td><b>Made with care</b></td><td>worked blocks (planks, bricks, stripped logs, cut stone, tiles, glass), three kinds or more</td></tr>
+          <tr><td><b>Detail and comfort</b></td><td>trim in walls and ceiling, soft things; the best of each kind counts, ten rugs add nothing</td></tr>
+        </tbody>
+      </table></div>
+      <p>The grade (<b>Bare</b>, <b>Snug</b>, <b>Fine</b>, <b>Grand</b>) is held down by the weakest reading: a grand hall with one dark corner is Fine until you light it. Your home's Comfort sets how long you wake <b>Rested</b>: powers recharge a quarter faster, crafts learn a quarter faster.</p>
+    </div>
+    <div class="glance frame" aria-label="The band's glance inside a room">
+      <span class="eyebrow">Hold the band key in a room</span>
+      <div class="name">THE LONG HALL <span>· Fine</span></div>
+      <div class="row"><span class="k">Closed</span><span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+      <div class="row"><span class="k">Light</span><span class="pips low"><i class="on"></i><i></i><i></i></span></div>
+      <div class="row"><span class="k">Warmth</span><span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+      <div class="row"><span class="k">Room to live</span><span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+      <div class="row"><span class="k">Made with care</span><span class="pips"><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+      <div class="row"><span class="k">Detail</span><span class="pips"><i class="on"></i><i class="on"></i><i></i></span></div>
+      <div class="lift">Lifts it most: light the north end (the floor there is dark at night)</div>
+      <div class="muted" style="font-family:var(--body); font-size:0.85rem">stone and timber · Comfort 9 · Rested 17 min</div>
+    </div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Room</th><th>Furniture in it</th><th>What it gives</th></tr></thead>
+    <tbody>
+      <tr><td><b>Bedroom</b></td><td>a bed</td><td>yours: Rested on waking. A spare one: someone can move in</td></tr>
+      <tr><td><b>Kitchen</b></td><td>furnace or smoker, crafting table, barrel</td><td>meals made here last half again as long</td></tr>
+      <tr><td><b>Forge</b> (today's Armory)</td><td>anvil, Forge, armour stand</td><td>the temper cap; Oren works here</td></tr>
+      <tr><td><b>Study</b></td><td>lectern, six bookshelves</td><td>Blueprints for half the paper; Teodor moves in</td></tr>
+      <tr><td><b>Greenhouse</b></td><td>farmland or pots under a glass roof</td><td>herbs ripen three times as often</td></tr>
+      <tr><td><b>Stable</b></td><td>hay, a fence gate</td><td>your mount comes home here; the whistle reaches twice as far</td></tr>
+      <tr><td><b>Hall</b></td><td>a big floor, six seats, a table</td><td>a meal here feeds everyone in it; your festival comes here</td></tr>
+      <tr><td><b>Bell tower</b></td><td>a bell, under a roof, high up</td><td>your own bell at dawn and dusk; breaks near home warned two days early</td></tr>
+      <tr><td><b>Lookout</b></td><td>high, windows on three sides</td><td>the Atlas fills in round your home; one more rumour a day</td></tr>
+      <tr><td><b>Mine head</b></td><td>a shaft 16+ deep under it</td><td>a miner works the shaft you dug and brings up its ore</td></tr>
+      <tr><td class="muted">and today's</td><td class="muted">Sanctuary, Trophy Hall, Barracks, Workshop</td><td class="muted">as today; the Workshop finally gives something</td></tr>
+    </tbody>
+  </table></div>
+  <div class="split">
+    <div class="prose">
+      <h3>People who live with you</h3>
+      <p>Someone moves in when <b>you know them</b> (you finished their chain, rescued them, or you're a Friend in their village), <b>a spare Snug bedroom stands</b>, and <b>their trade has its room</b>. They walk up the road with a bundle on their back and live a real day on the city's engine. Hand Oren the metal and the hide and he forges the piece overnight; Hettie tends your fields and pens; a miner you saved works your shaft; Wren strings rope lines between your roofs, so your home becomes a course.</p>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th>Tier</th><th>Asks for</th><th>Opens</th></tr></thead>
+      <tbody>
+        <tr><td><b>0 Hearthfire</b></td><td>the Ember</td><td>respawn, rest, calm land</td></tr>
+        <tr><td><b>I Homestead</b></td><td>a Lord's Heart, a Snug bedroom</td><td>Oren, the guide</td></tr>
+        <tr><td><b>II Steading</b> <span class="chip r-d">D</span></td><td>four rooms, one Fine; a field or pen; iron</td><td>two settlers</td></tr>
+        <tr><td><b>III Hall</b> <span class="chip r-c">C</span></td><td>a Grand room; gold, amethyst</td><td>four settlers</td></tr>
+        <tr><td><b>IV Village</b> <span class="chip r-b">B</span></td><td>a bell tower, four settlers; diamonds</td><td>named on the Atlas, caravans, your festival</td></tr>
+        <tr><td><b>V Town</b> <span class="chip r-a">A</span></td><td>eight settlers; obsidian, a Lord's Heart</td><td>the trials at home</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="villages">
+  <div class="head"><span class="eyebrow">People · Phases W0 and W3</span><h2>Living villages on the city's logic</h2></div>
+  <div class="prose">
+    <p>Carillon's people engine becomes one engine with many places: each settlement its own ledger, street graph and saved state, all sharing one pool of bodies so a village never starves the city. Carillon becomes the first and largest settlement on it and nothing it does changes. A planner lays out each village on the land (streets that follow the contours, a green with the well and the bell, plots, fields, a mill on the water); the city's grammar paints it in the region's own materials; and, for the first time in AWAKEN, every house gets an interior, furnished from who lives there.</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Kind</th><th>Homes · people</th><th>How often</th><th>What makes it</th></tr></thead>
+    <tbody>
+      <tr><td><b>Hamlet</b></td><td class="num">3-6 · 8-16</td><td>one or two most regions</td><td>a green, a well, a bell post, fields</td></tr>
+      <tr><td><b>Village</b></td><td class="num">8-20 · 20-50</td><td>one region in two</td><td>a smithy, an inn, a mill, a bell tower</td></tr>
+      <tr><td><b>Town</b></td><td class="num">25-45 · 60-120</td><td>one region in five</td><td>walls and a gate, a market, the Watch, a scribe</td></tr>
+      <tr><td><b>Special</b></td><td class="num">by land</td><td>rare</td><td>a mining town over its own mine; a fishing village on piers; Mire stilt houses; frost longhouses; a desert caravanserai; a woodcutters' camp</td></tr>
+    </tbody>
+  </table></div>
+  <div class="pair">
+    <div class="prose">
+      <h3>A village's day</h3>
+      <p>The bell rings at dawn. Farmers walk to the strips, the woodcutter to the woodlot, the miner down the shaft, the hunter out with a spear, coming home at dusk with a carcass on a pole. Midday, everyone comes home to eat. The lamplighter does his round, the inn fills, the Watch walks the edge after dark, and chimneys smoke only when someone's in.</p>
+      <h3>What you do there</h3>
+      <ul class="points">
+        <li><b>Trade in emeralds.</b> Each region makes its own thing: furs and frostcap in the frost villages, glass at the caravanserai, ingots and lode maps in the mining town.</li>
+        <li><b>Answer real needs</b> on the notice board: iron for the bell frame, timber after the storm.</li>
+        <li><b>Earn standing</b> per village: Stranger, Known, Friend, Kin. Better prices, bigger asks, people who'll move to your Hearth.</li>
+        <li><b>Sleep at the inn</b>, hear the night's rumours, buy enchanted books from a town's scribe.</li>
+      </ul>
+    </div>
+    <figure class="shot frame">
+      <img src="concept/08-bell-festival.jpg" alt="A village square at night during a festival: paper lanterns strung between timber houses, a bonfire, people dancing in a ring, a band on a cart, food stalls with striped awnings, fireworks over a garlanded bell tower, and runners racing across the roof ridges trailing ribbons while the crowd cheers." width="1536" height="1024" loading="lazy">
+      <figcaption><b>The bell's day.</b> Every village has a festival about every ten play-days: the market shuts, the lanterns go up, and there's a rooftop race on an Ascent route. Concept frame.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="troubles">
+  <div class="head"><span class="eyebrow">People · Phase W4</span><h2>When a village needs you</h2></div>
+  <div class="pair">
+    <figure class="shot frame">
+      <img src="concept/02-burned-village.jpg" alt="Overcast morning in a village after a raid: half the houses are blackened frames with collapsed roofs and thin smoke rising; survivors in blankets huddle at the well and the bell; a guard with a bandaged arm leans on a spear; a woman runs toward the viewer pointing back at a cave mouth on a wooded hill. A glass panel reads HOLLOWMERE · in trouble." width="1536" height="1024" loading="lazy">
+      <figcaption><b>You weren't here last night.</b> Half of Hollowmere is ash, and someone was taken toward the hill. Concept frame.</figcaption>
+    </figure>
+    <figure class="shot frame">
+      <img src="concept/03-lair-rescue.jpg" alt="Inside a cave lair lit by violet crystals: a huge many-legged creature coils round the pillars; a villager is trapped in a cocoon on the wall, one arm reaching out; a rope hangs from a hole in the roof where daylight falls in; a hunter with a lantern and a voxel longsword faces the beast." width="1536" height="1024" loading="lazy">
+      <figcaption><b>Taken.</b> Follow the trail under the hill, cut them free, and bring them out on your back or up the rope you hang for them. Concept frame.</figcaption>
+    </figure>
+  </div>
+  <div class="prose">
+    <p>Every trouble has the same shape: <b>a call</b> you see or hear from afar, <b>an ask</b> from a person, <b>a place</b>, <b>a deed</b>, <b>the return</b> to the square, and <b>a lasting change</b> in the village's blocks and people. Each one comes from something real nearby (a camp that grew, a gate about to break, a beast's lair, the town's mine), never from a dice roll. At most one per village and two near you. Miss one and the world moves on without you, worse, but never to a dead end.</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Trouble</th><th>The call</th><th>The deed</th><th>What stays changed</th></tr></thead>
+    <tbody>
+      <tr><td><b>Taken</b></td><td>the alarm bell at night</td><td>track them into the lair, fight, carry them out</td><td>the lair gone for good; they greet you by name and can move to your Hearth</td></tr>
+      <tr><td><b>The Burning</b></td><td>a rumour, scouts at the treeline, a day's warning</td><td>hold the square; join the bucket line when roofs catch</td><td>if missed, houses stay charred until rebuilt</td></tr>
+      <tr><td><b>The Rebuild</b></td><td>the elder at the well</td><td>bring timber, stone and iron; masons work three days</td><td>new houses with a beam of your colour; a family comes back</td></tr>
+      <tr><td><b>The Bell</b></td><td>the bell silent at dusk</td><td>take it back from the Unbound, or cast a new one and haul it up the tower</td><td>a ring of light over the land; breaks warned early; blight kept off</td></tr>
+      <tr><td><b>Gone Missing</b></td><td>lanterns searching at dusk</td><td>a night search: a ledge, a shaft, a cave</td><td>a keepsake; Friend standing</td></tr>
+      <tr><td><b>The Grey Fields</b></td><td>"It breaks in two days"</td><td>close that gate in time</td><td>nothing happens (the best ending), or grey fields and Hollowed people you cure</td></tr>
+      <tr><td><b>The Deep Mine</b></td><td>the mine bell</td><td>go down the town's mine and bring the miners up</td><td>the mine reopens and sells you lode maps, or is sealed for good</td></tr>
+      <tr><td><b>The Festival</b></td><td>lanterns and music at dusk</td><td>the rooftop race, the fishing and cooking contests</td><td>prizes; settlers decide to come home with you</td></tr>
+    </tbody>
+  </table></div>
+  <div class="split">
+    <figure class="shot frame">
+      <img src="concept/09-bell-rehung.jpg" alt="At dusk on a timber bell tower, a hunter hauls a rope to raise a new bronze bell into the frame while villagers cheer below; as the bell swings a ring of golden light ripples out over roofs, fields and hills, and a dark haze on the horizon pulls back." width="1536" height="1024" loading="lazy">
+      <figcaption><b>The Bell.</b> Copper and amethyst from your own digging, cast by the smith, raised by you. Concept frame.</figcaption>
+    </figure>
+    <div class="prose">
+      <p><b>Villages grow.</b> Troubles solved, trade and what you deliver raise a village's prosperity, and when it's high enough it builds: scaffolding goes up on a fenced plot, masons work it for two or three days, a cart brings a new family. A hamlet you looked after can be a village by the time you're C-rank.</p>
+      <p class="callout"><b>Nobody does this yet.</b> The mod research looked across about sixty village, structure and pack projects: none has a village burn and be rebuilt over days, or someone taken to a lair and brought back, with the place remembering.</p>
+    </div>
+  </div>
+</section>
+
+<section id="deep">
+  <div class="head"><span class="eyebrow">Below · Phase W2</span><h2>Mining with meaning</h2></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Tier</th><th>Its metal</th><th>Where</th><th>The feeling</th></tr></thead>
+    <tbody>
+      <tr><td><span class="chip r-e">E</span> Wildhide</td><td>none: hide and bone</td><td>—</td><td>the start stays free</td></tr>
+      <tr><td><span class="chip r-d">D</span> Beastbound</td><td><b>iron</b></td><td>any cave, any hillside</td><td>your first real dig</td></tr>
+      <tr><td><span class="chip r-c">C</span> Gatewrought</td><td><b>diamond</b></td><td>below y 0, best in lodes</td><td>diamond finally means C-rank gear</td></tr>
+      <tr><td><span class="chip r-b">B</span> Veilwoven</td><td><b>amethyst and Deepglass</b></td><td>geodes; seeps</td><td>resonance and the Veil</td></tr>
+      <tr><td><span class="chip r-a">A</span> Lordscale</td><td><b>netherite</b></td><td>the Nether</td><td>the Nether finally has a reason</td></tr>
+      <tr><td><span class="chip r-s">S</span> Sovereign</td><td><b>starmetal</b></td><td>the cores of fallen stars</td><td>you chase stars across the night</td></tr>
+    </tbody>
+  </table></div>
+  <div class="split">
+    <div class="tbl"><table>
+      <thead><tr><th>Ore</th><th>Its job (new in bold)</th></tr></thead>
+      <tbody>
+        <tr><td>Coal</td><td>fuel; <b>a coal per temper at the Forge</b></td></tr>
+        <tr><td>Copper</td><td>the Anchor, circuits; <b>bell bronze, the Tuning Fork, the miner's lamp</b></td></tr>
+        <tr><td>Iron</td><td><b>D-tier's metal, pitons, the rope's first fitting</b>; the Forge, tempering</td></tr>
+        <tr><td>Gold</td><td><b>the power's metal: every power focus from D up</b>; tempering</td></tr>
+        <tr><td>Lapis</td><td><b>ink: Blueprints, lode maps, treasure maps</b></td></tr>
+        <tr><td>Emerald</td><td><b>money</b></td></tr>
+        <tr><td>Diamond</td><td><b>C-tier's edge</b>; tempering, Anchor IV-V</td></tr>
+        <tr><td>Amethyst</td><td><b>B-tier, bell bronze, the Tuning Fork</b></td></tr>
+        <tr><td>Sunshard, Frostspar, Fault Seam</td><td><b>attunement catalysts</b> (Heat, Frost, Gravity): every region has a stone worth going for</td></tr>
+      </tbody>
+    </table></div>
+    <div class="prose">
+      <p><b>Lodes.</b> Big natural veins, 20-120 blocks of one ore along a cave wall or through rock, with a <b>heart</b> at the centre. They glint in lantern light. One lode beats an hour of branch mining, so the reason to explore caves instead of strip-mining is built into the rock. Vanilla's scattered ores stay as they are.</p>
+      <p><b>Two new ores.</b> <b>Deepglass</b> grows where the Deep presses into the caves below y 0: it hums, the Veil sees it from far off, and it needs a diamond edge. <b>Starmetal</b> is the core of a fallen star, cut out while it cools before its guardian rises.</p>
+      <p><b>The handouts stop.</b> Gates pay essence, cores, parts and gear, not raw ore. The market stops selling diamonds. A chore only earns its place if it pays something you can't get another way.</p>
+    </div>
+  </div>
+  <figure class="shot frame">
+    <img src="concept/07-lode-strike.jpg" alt="First-person in a dark deepslate cave: a pickaxe strikes the heart of a diagonal diamond seam; the whole vein is outlined in glowing cyan glass with white cracks of light running along it, sparks and chips flying. The other hand holds a glowing amethyst-and-copper tuning fork. Glass text reads LODE · the vein gives." width="1536" height="1024" loading="lazy">
+    <figcaption><b>The vein gives.</b> Break a lode's heart: its outline lights through the rock, cracks run along it, the camera kicks, and for thirty seconds the whole seam falls in two blows each. Concept frame.</figcaption>
+  </figure>
+  <div class="split">
+    <ul class="points">
+      <li><b>Every ore sounds like itself</b>: iron rings, copper clanks, diamond cracks like glass, Deepglass hums. Sparks off hard stone, a short hit on the last blow.</li>
+      <li><b>The heavy strike</b>: hold to charge a pick, release to bore three blocks along your aim. Mining's own heavy, on the same timing as a weapon's.</li>
+      <li><b>Cave-ins</b>, rare and fair: break a heart in a big unsupported chamber and dust trickles for three seconds before the roof comes down. Run, slide or wall-run out.</li>
+      <li><b>The deep presses</b>: below y 0 the air's sound thins and lowers; near a seep the world muffles and a low hum rises.</li>
+    </ul>
+    <div class="tbl"><table>
+      <thead><tr><th>Tool</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><b>Tuning Fork</b></td><td>strike it on stone and the chime climbs in pitch as you turn toward the lode you tuned it to. Prospecting by ear</td></tr>
+        <tr><td><b>Pitons and rope</b></td><td>a rope hangs 32 blocks from any lip, climbable before you have the Tether, and by people you're bringing out</td></tr>
+        <tr><td><b>Miner's lamp</b></td><td>light drawn on the rock ahead, so a lode's glint shows</td></tr>
+        <tr><td><b>Rope fittings</b></td><td>iron reaches further, gold reels faster, Deepglass pays out smoothly for the rappel</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="below">
+  <div class="head"><span class="eyebrow">Below · Phase W5</span><h2>Caves worth entering</h2></div>
+  <figure class="shot frame">
+    <img src="concept/06-great-shaft.jpg" alt="Inside a huge round sinkhole a hundred blocks deep: a hunter wall-runs along the curved wall leaving a faint blue trail; a rope runs from an old iron ring to a ledge; roots and vines hang down; streaks of copper, iron and a glinting diamond seam show in the rock; daylight and a waterfall pour in from the rim far above into a glowing turquoise pool and grotto at the bottom." width="1536" height="1024" loading="lazy">
+    <figcaption><b>A sinkhole near the Commons' edge.</b> Climb down the ledge rings at E-rank, dive into the pool from the rim, or, once you hold the Tether, rope and run your way down to the lode at the bottom. Concept frame.</figcaption>
+  </figure>
+  <div class="prose">
+    <p>Minecraft's caves are good and every player knows how to read them, so AWAKEN keeps the generator and puts <b>places</b> in it, carries <b>the city's climbing language</b> underground (the movement system works on natural rock, but wall-runs need flat walls caves never have), and adds the <b>senses</b> it lacks. Every place has a route that never needs the rope; the rope buys the shortcuts and the treasure.</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Place</th><th>What it is</th><th>How you move</th><th>What it holds</th></tr></thead>
+    <tbody>
+      <tr><td><b>Sinkhole</b></td><td>a shaft 40-110 deep from the surface into the caves, a waterfall into a pool, a grotto at the bottom</td><td>ledge rings and vines (E); the dive; rope off any wall (D)</td><td>a lode</td></tr>
+      <tr><td><b>The Delvers' mine</b></td><td>the old workings of the people who dug Carillon's bell metal: galleries, timber shafts, rail inclines, rope bridges</td><td><b>real wall-runs underground</b> on the cut walls; a minecart ride down; slides under collapses</td><td>lode maps, a Delver's log, an old pick; the logs say they dug too deep</td></tr>
+      <tr><td><b>Seep</b></td><td>below y 0, where the Deep presses in: violet-black rock, Deepglass spires, muffled sound, a hum</td><td>ruined galleries, crystal spires, a vent</td><td>Deepglass, a Hollows nest, the seep's heart</td></tr>
+      <tr><td><b>Chute</b></td><td>an old ore chute of stair-cut steps, or ice</td><td>the stair slide you already have: 60 blocks down, out over a lake</td><td>the fun way down</td></tr>
+      <tr><td><b>Grotto</b></td><td>behind a waterfall, a glowing pool, a geode you climb inside</td><td>climbs and dives</td><td>region secrets, a legendary fish</td></tr>
+      <tr><td><b>Lairs</b></td><td>the Crystal Nest finally joined to the caves; a Hollows den; a beast's cave under a hill</td><td>the arena's own ledges</td><td>where the Taken are</td></tr>
+      <tr><td><b>Vents</b></td><td>hot air over magma in lava tunnels and sulfur caves</td><td>glide up, refill Aether</td><td>the C-rank way up a great cavern</td></tr>
+    </tbody>
+  </table></div>
+  <div class="split">
+    <ul class="points">
+      <li><b>The rappel</b> (with the Ascent): on a Tether line, sneak and jump pays rope out. Lower yourself down a shaft, kick off the wall, swing into a side passage.</li>
+      <li><b>A way home</b>: underground, your glance adds "Surface ↑ 34 · NE 60" and the Signal's thread runs along the floor toward it.</li>
+      <li><b>Sound and light</b>: a Hollows soundscape and the deep's hum; a Lens look for every cave biome, including 26.3's sulfur caves, which have nothing of ours today.</li>
+    </ul>
+    <ul class="points">
+      <li><b>Names</b>: big places get a quiet caption ("THE DELVERS' DEEP · old mine"), and the lair line finally says how far down.</li>
+      <li><b>The Descent stays the story deep</b>, reached only by the Well. Seeps speak its language (Deepglass, the hum, the Hollows) and its empty tunnels get Deepglass lodes, so the strata gain a mining job.</li>
+      <li><b>Not every place ends in a fight</b>: a vista, a rope puzzle, a lake, a log, a lode.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="before-after">
+  <div class="head"><span class="eyebrow">Before and after</span><h2>The first evening and the first week</h2></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Moment</th><th>Today</th><th>After</th></tr></thead>
+    <tbody>
+      <tr><td><b>Leaving Carillon</b></td><td>an errand to a camp, then a forest</td><td>the errand ends at dusk with a coal from the camp's fire</td></tr>
+      <tr><td><b>Night one</b></td><td>dig a hole, wait</td><td>find your ground, set the Ember, build a shelter; the Hearth names it</td></tr>
+      <tr><td><b>Your base</b></td><td>invisible to AWAKEN until a Lord's Heart, then a checklist</td><td>every room read, named and graded; people move in when there's a bed</td></tr>
+      <tr><td><b>A village</b></td><td>nodding traders, nothing happens</td><td>a hamlet at work; it can burn, lose someone, ring again</td></tr>
+      <tr><td><b>Finding diamonds</b></td><td>worth a lump of coal; gates hand them out</td><td>C-rank gear is made from them; a diamond lode breaking open is an event</td></tr>
+      <tr><td><b>A cave</b></td><td>vanilla noise; little for the movement system to grip</td><td>a sinkhole with a route down, a mine you wall-run through, a seep that hums, a way home</td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose">
+    <h3>One or two new things at a time</h3>
+    <p class="muted">Crimson Desert's own critics fault it for opening too many systems at once. This plan opens its verbs one or two at a time, spread through the D and C bands where the pacing sims found the long empty stretches.</p>
+  </div>
+  <ol class="tl">
+    <li><span class="t">0:12</span><span>the camp at dusk: the Ember. <b>Carry the flame.</b></span></li>
+    <li><span class="t">0:15-0:40</span><span>your ground, the first shelter, then the first gate. <b>A room is read.</b></span></li>
+    <li><span class="t">1-2 h</span><span>the first hamlet up the road; the first sinkhole. <b>Trade, the climb down.</b></span></li>
+    <li><span class="t">~2 h</span><span>a Lord's Heart on the fire: Tier I; Oren comes when there's a bed. <b>Rooms that do things.</b></span></li>
+    <li><span class="t">2-5 h</span><span>"LODE · iron"; the hamlet's first trouble; the Tuning Fork from its smith. <b>Prospect.</b></span></li>
+    <li><span class="t">5-6 h</span><span>D-rank and the Tether: Beastbound needs iron, sinkholes become playgrounds. <b>Rope in rock.</b></span></li>
+    <li><span class="t">6-12 h</span><span>a village further out: a festival, the Taken; someone you saved moves in. <b>Settlers.</b></span></li>
+    <li><span class="t">12-20 h</span><span>below y 0: diamond lodes, the first seep, Gatewrought; the Bell; a town over the pass. <b>The deep.</b></span></li>
+    <li><span class="t">20-50 h</span><span>towns' troubles, the Deep Mine, Deepglass; Tier IV: your village named on the Atlas, caravans on your road. <b>Your place in the world.</b></span></li>
+  </ol>
+</section>
+
+<section id="beyond">
+  <div class="head"><span class="eyebrow">Beyond your list</span><h2>What else passed the test, and what didn't</h2></div>
+  <p class="prose muted">Every idea had to answer: why would a player do this, what does it give them, how does it feel the first time, and does it still feel like Minecraft?</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Idea</th><th>Verdict</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><b>Roads and inns</b> between the city, the camp and the settlements, with caravans walking them</td><td><span class="chip v-in">IN · W7</span></td><td>the world joins up; following a road to a village you didn't know is a classic Minecraft moment</td></tr>
+      <tr><td><b>The emerald economy</b></td><td><span class="chip v-in">IN · W3</span></td><td>every surplus gets a use and every region a reason</td></tr>
+      <tr><td><b>Your home as a course</b>: Carillon's climbable kit craftable, Wren's rope lines, the Training Grounds' ghost on your own route</td><td><span class="chip v-in">IN · W6</span></td><td>the thing you loved most about the movement, at home</td></tr>
+      <tr><td><b>Fishing spots</b>: a legendary fish in named waters and grottos; the festival contest</td><td><span class="chip v-in">IN · W4, W5</span></td><td>small, data, uses the Fishing craft</td></tr>
+      <tr><td><b>Crafting draws from nearby chests at home</b></td><td><span class="chip v-in">IN · W1</span></td><td>the cheapest quality-of-life win in every base game</td></tr>
+      <tr><td><b>A hound</b> from a village kennel that follows tracks</td><td><span class="chip v-later">LATER</span></td><td>lovely, but one more verb in the first week</td></tr>
+      <tr><td><b>The Atlas below</b>: the caves you've walked, drawn under your feet</td><td><span class="chip v-later">LATER</span></td><td>big client work; the depth on the lair line and the way home come first</td></tr>
+      <tr><td>Seasons, temperature, thirst</td><td><span class="chip v-cut">CUT</span></td><td>friction that pays nothing you can't get</td></tr>
+      <tr><td>Relationships, marriage, families</td><td><span class="chip v-cut">CUT</span></td><td>a game of its own; people get routines and a few arcs</td></tr>
+      <tr><td>Colony management (worker trees, research, logistics)</td><td><span class="chip v-cut">CUT</span></td><td>MineColonies' 45 worker types is a second game; settlers do one job each</td></tr>
+      <tr><td>Vein-mining a whole vein in one swing</td><td><span class="chip v-cut">CUT</span></td><td>it kills the strike; the lode's heart is the better version</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="fit">
+  <div class="head"><span class="eyebrow">How it fits</span><h2>Its own plan, joined at three seams</h2></div>
+  <div class="split">
+    <ul class="points">
+      <li><b>The Way Forward</b>: its first thread ends at the camp, which is where your Hearth starts. Locks you meet underground and in villages become its promises. This plan is most of what fills its "long middle" (Phase 5).</li>
+      <li><b>Living Wilds</b>: G (settlers, your village, roads) moves here, with F's underground secrets and maps. F keeps wonders and legendary beasts. Village events join the World Pulse; camps raid villages as well as Hearths.</li>
+      <li><b>Carillon</b>: its people engine goes multi-place and interiors are built once for both (its B4). Carillon behaves exactly as now. It keeps Kestrel and Bram; this plan asks Bram for one line.</li>
+    </ul>
+    <ul class="points">
+      <li><b>Arms and gear</b>: the tier metals, Gatewrought's armour numbers, lapis Blueprints and the new catalysts are data changes, briefed to the Arms session after its current batch.</li>
+      <li><b>The Ascent</b>: the rappel and the rope fittings are its own; caves are built to its numbers (wall faces 2+ tall and flat, ledges 1.2-2.4 over the feet).</li>
+      <li><b>Old worlds</b>: villages, caves and new ores need new chunks, so your current world keeps its vanilla villages. The Hearth's reading, mining's jobs and the recipes apply everywhere; nothing you've made is taken.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="phases">
+  <div class="head"><span class="eyebrow">Phases · effort at the pace this project really moves</span><h2>Eight phases, two builders</h2></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Phase</th><th>Scope</th><th>Effort</th><th>It proves</th></tr></thead>
+    <tbody>
+      <tr><td><b>W1</b> The carried flame</td><td>the Ember, Tier 0, the reading and grades, the room glance, Comfort and Rested, room kinds, the fixes</td><td class="num">3-4 h</td><td>a hand-built shelter is read, named and graded</td></tr>
+      <tr><td><b>W2</b> Metal from the deep</td><td>tier metals, handouts trimmed, ore XP, lodes and hearts, the strike, the Fork, pitons, Deepglass, starmetal, bell bronze</td><td class="num">4-6 h</td><td>a lode breaking open is an event; every ore has a job</td></tr>
+      <tr><td><b>W0</b> Many settlements</td><td>the people engine per place, one body pool (with Carillon)</td><td class="num">2-3 h</td><td>Carillon unchanged, a second place ticking beside it</td></tr>
+      <tr><td><b>W3</b> Living villages</td><td>the planner, styles by biome, interiors, village jobs, emerald trade, standing, the first hamlet</td><td class="num">8-12 h</td><td>a hamlet at dusk; every house walk-in</td></tr>
+      <tr><td><b>W5</b> Caves worth entering</td><td>sinkholes, mines, seeps, chutes, grottos, lairs, vents; the rappel; sound, light, the way home</td><td class="num">6-9 h</td><td>each place climbed with every move; a route without rope</td></tr>
+      <tr><td><b>W4</b> Troubles</td><td>the eight troubles, growth, the calm-villages option</td><td class="num">5-7 h</td><td>a village burned, rebuilt and remembering you</td></tr>
+      <tr><td><b>W6</b> Your village</td><td>settlers and their work, tiers that grow from the home, the named village, the climbable kit</td><td class="num">3-5 h</td><td>someone you saved moves into the room you built</td></tr>
+      <tr><td><b>W7</b> Roads and towns</td><td>roads and inns, caravans on them, walled towns, mining towns over their mines</td><td class="num">6-10 h</td><td>the world joined up</td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose">W1 and W2 run first as two builders at once (different code). Then W0 and W3 with Carillon, with W5 alongside; W4 and W6 after; W7 last. <b>About 37-56 builder hours</b>, two to three days of wall-clock. Every phase: one GameTest per mechanism, CI for the rest, one screenshot tour judged against the look bar (our own particles, sound and light, never vanilla's reused). Opus at extra-high effort for anything that decides the look or feel.</p>
+</section>
+
+<footer>
+  <span>Plan and its reasoning: <code>docs/world-depth/PLAN.md</code> · audits: <code>audit-hearth.md</code>, <code>audit-villages.md</code>, <code>audit-mining.md</code>, <code>audit-caves.md</code> · research: <code>research.md</code>, <code>research-games.md</code> (G1-G55), <code>research-mods.md</code> (M1-M63) · branch <code>pack/world-depth</code></span>
+  <span>Concept frames are generated illustrations of the intended look, not screenshots. Built from <code>build/awaken-v1</code> c7846bc2, 26 Oct 2026.</span>
+</footer>
+
+</div>

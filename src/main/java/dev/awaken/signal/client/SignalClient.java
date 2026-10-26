@@ -70,6 +70,7 @@ public final class SignalClient {
         event.register(SignalPayloads.Pending.TYPE, (msg, ctx) -> SystemHud.pending(msg.entries()));
         event.register(SignalPayloads.Now.TYPE, (msg, ctx) -> NowClient.accept(msg));
         event.register(SignalPayloads.Horizon.TYPE, (msg, ctx) -> HorizonClient.accept(msg));
+        event.register(SignalPayloads.Task.TYPE, (msg, ctx) -> TaskHud.onTask(msg));
         event.register(SignalPayloads.Tip.TYPE, (msg, ctx) -> {
             if (msg.offer()) Tips.serverOffer(msg.id());
             else Tips.done(msg.id());
@@ -84,11 +85,13 @@ public final class SignalClient {
         if (classic()) ClassicHud.render(g, dt);
         else SystemHud.render(g, dt);
         TrackerHud.render(g, dt);
+        TaskHud.render(g, dt);
         Tips.render(g, dt);
     }
 
     private static void tick() {
         NowClient.tick();
+        TaskHud.tick();
         Tips.tick();
         HorizonClient.tick();
         boolean c = classic();
@@ -106,6 +109,7 @@ public final class SignalClient {
         SystemHud.clear();
         RecentLog.clear();
         NowClient.clear();
+        TaskHud.clear();
         HorizonClient.clear();
     }
 }

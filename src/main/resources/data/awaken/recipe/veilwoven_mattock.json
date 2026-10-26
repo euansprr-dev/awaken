@@ -4,13 +4,14 @@
   "group": "awaken_hunter_mattock",
   "key": {
     "/": "minecraft:stick",
-    "B": "#awaken:hunter_bind_b",
     "C": "#awaken:hunter_core_b",
-    "S": "awaken:essence_shard"
+    "M": "#awaken:tier_metal_b",
+    "S": "awaken:essence_shard",
+    "Y": "minecraft:amethyst_shard"
   },
   "pattern": [
-    "CBC",
-    "S/S",
+    "MCM",
+    "Y/S",
     " / "
   ],
   "result": {

@@ -75,10 +75,10 @@ final class HearthScreen extends Screen implements QuietScreen {
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float a) {
         super.extractRenderState(g, mouseX, mouseY, a);
         Glass.panel(g, px, py, pw, ph, Glass.LANTERN, 1f);
-        String title = "YOUR HEARTH";
+        String title = data.home().name().isEmpty() ? "YOUR HEARTH" : data.home().name().toUpperCase(java.util.Locale.ROOT);
         g.text(font, title, px + 12, py + 9, Glass.a(Glass.LANTERN, 1f), false);
         int chipX = px + 12 + font.width(title) + 6;
-        int chipW = Glass.chip(g, font, "TIER " + GuideSections.roman(data.tier()), chipX, py + 7, Glass.AMBER);
+        int chipW = Glass.chip(g, font, data.tier() <= 0 ? "HEARTHFIRE" : "TIER " + GuideSections.roman(data.tier()), chipX, py + 7, Glass.AMBER);
         String close = "Esc to close";
         int closeX = px + pw - 12 - font.width(close);
         g.text(font, close, closeX, py + 9, Glass.a(Glass.LABEL, 0.7f), false);

@@ -26,14 +26,15 @@ import org.jspecify.annotations.Nullable;
  * still); at the desk you sign the register ({@link SigningScene}); you take the Holo band from his hand
  * ({@link HandOver}); it sits in your inventory until you put it on the wrist slot, and the inventory closes on its own
  * a moment later so the boot plays on your wrist (the holo module's); then "Go on, open it": the K tip shows only now;
- * the K menu; the Atlas opens with the run you made (a proposal); the first power; "The city is yours." The server moves
+ * the K menu; the Atlas opens with the run you made (a proposal); the first power; a Directive; then Bram says what a
+ * hunter is for and hands you letters for Ilse at the camp, the same way as the band (SPEC §27.6). The server moves
  * the steps; this side reports what only it can see end. Step numbers mirror OpeningRegistry's.
  */
 final class RegistryScene {
     private RegistryScene() {}
 
     static final int WALK = 0, READ = 1, SIGN = 2, BAND = 3, WEAR = 4, BOOT = 5, BRIEF = 6, OPEN = 7, STATUS = 8, ATLAS = 9,
-            POWER = 10, DIRECTIVE = 11, YOURS = 12;
+            POWER = 10, DIRECTIVE = 11, YOURS = 12, LETTERS = 13;
     private static final Identifier TIP_WEAR = Awaken.id("holo/wear"), TIP_OPEN = Awaken.id("holo/open");
 
     private static int step = -1;
@@ -89,10 +90,10 @@ final class RegistryScene {
                 OpeningFx.lensGlow = 1;
                 OpeningSounds.ui(dev.awaken.holo.HoloSounds.CARD.get(), 0.7F, 0.9F);
                 OpeningSounds.ui(SoundEvents.BEACON_ACTIVATE, 1.4F, 0.5F);
-                OpeningHud.title("ASSESSING", "the Lens reads what came back", 60);
+                OpeningHud.title("ASSESSING", "the Lens is reading you", 60);
                 OpeningClient.later(70, () -> {
                     if (step == READ) {
-                        OpeningHud.title("AWAKENED", "rank E · the Signal's newest", 50);
+                        OpeningHud.title("AWAKENED", "rank E · a new hunter", 50);
                         OpeningSounds.ui(SoundEvents.AMETHYST_BLOCK_RESONATE, 0.8F, 1F);
                     }
                 });
@@ -114,7 +115,7 @@ final class RegistryScene {
                 else ready(ATLAS);
             });
             case YOURS -> {
-                OpeningHud.title("THE CITY IS YOURS.", "", 110);
+                OpeningHud.title("WELCOME TO CARILLON", "you're a hunter now · go wherever you like", 110);
                 OpeningSounds.ui(CitizensContent.BELL_HOUR.get(), 1.0F, 0.8F);
                 OpeningClient.later(14, () -> OpeningSounds.ui(CitizensContent.BELL_DISTRICT.get(), 1.12F, 0.5F));
                 OpeningClient.later(26, () -> OpeningSounds.ui(CitizensContent.BELL_DISTRICT.get(), 1.26F, 0.5F));
@@ -144,10 +145,15 @@ final class RegistryScene {
                 boolean can = b != null && b.distanceTo(p) < 3.6 && !HandOver.active();
                 OpeningHud.prompt(can ? use : null, can ? "Take the band" : "");
             }
+            case LETTERS -> {
+                LivingEntity b = HandOver.holder(6, RegistryScene::isLetters);
+                boolean can = b != null && b.distanceTo(p) < 3.6 && !HandOver.active();
+                OpeningHud.prompt(can ? use : null, can ? "Take the letters" : "");
+            }
             case WEAR -> {
                 String inv = mc.options.keyInventory.getTranslatedKeyMessage().getString();
                 if (!worn) {
-                    OpeningHud.prompt(sc == null ? inv : null, sc == null ? "Open your inventory · put the band on your wrist" : "");
+                    OpeningHud.prompt(sc == null ? inv : null, sc == null ? "Open your inventory and put the band on your wrist" : "");
                 } else stepAside(sc, worn);
                 bootTitle(mc, worn);
             }
@@ -207,7 +213,7 @@ final class RegistryScene {
     private static void bootTitle(Minecraft mc, boolean worn) {
         if (bootTitled || !worn || mc.gui.screen() != null) return;
         bootTitled = true;
-        OpeningClient.later(14, () -> OpeningHud.title("THE HOLO", "fitted to your wrist · booting", 70));
+        OpeningClient.later(14, () -> OpeningHud.title("THE HOLO BAND", "on your wrist · starting up", 70));
     }
 
     private static boolean isStatus(@Nullable Screen sc) {
@@ -240,6 +246,13 @@ final class RegistryScene {
             e.setSwingHand(false);
             OpeningHud.prompt(null, "");
             HandOver.begin(b);
+        } else if (step == LETTERS && !HandOver.active()) {
+            LivingEntity b = HandOver.holder(6, RegistryScene::isLetters);
+            if (b == null || b.distanceTo(p) > 3.6) return;
+            e.setCanceled(true);
+            e.setSwingHand(false);
+            OpeningHud.prompt(null, "");
+            HandOver.begin(b, b.getMainHandItem().copy(), () -> sendReady(LETTERS));
         }
     }
 
@@ -292,6 +305,10 @@ final class RegistryScene {
         if (heldInput != null && heldPlayer != null && heldPlayer.input != heldInput) heldPlayer.input = heldInput;
         heldInput = null;
         heldPlayer = null;
+    }
+
+    private static boolean isLetters(net.minecraft.world.item.ItemStack s) {
+        return !s.isEmpty() && net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(s.getItem()).equals(Awaken.id("ilse_letters"));
     }
 
     static @Nullable Vec3 lens() {

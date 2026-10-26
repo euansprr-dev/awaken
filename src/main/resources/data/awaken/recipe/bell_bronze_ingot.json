@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:copper_ingot",
+    "minecraft:copper_ingot",
+    "minecraft:copper_ingot",
+    "minecraft:amethyst_shard"
+  ],
+  "result": {
+    "id": "awaken:bell_bronze_ingot",
+    "count": 3
+  }
+}

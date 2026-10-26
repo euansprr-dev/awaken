@@ -1,0 +1,105 @@
+# The first thread's staged moments (SPEC §27.6): the High Gate's shot of the camp's smoke, Ilse's scene by her fire
+# (the letters counted on the Now line, her lines, the coal taken from her hand), and the camp kept safe by night.
+# 0. The checklist, top right: Your body remembers ticking move by move, then the errand; the Journal kept clean.
+# 1. Out through the High Gate: the view lifts over the gate, names the land (THE COMMONS), then the camp's smoke and
+#    its caption, while Hale says his line.
+# 2. The camp by day: bedrolls feet to the fire, logs to sit on, the packs and lantern, the pot on its poles.
+# 3. Ten blocks off Ilse: "Deliver the letters · 0/1" on the Now line, its compass on her.
+# 4. Her scene: over your shoulder, Ilse and her fire; the letters delivered (1/1); her lines one at a time.
+# 5. She holds the coal out and brings it to you: your eyes again, "Take the coal"; your hand takes it from hers; the
+#    Ember's line takes over.
+# 6. The camp at night, monsters about: Hettie asleep on the far bedroll, nothing hostile on the camp's ground.
+# Run: tools/tour-ci.sh tools/autopilot/first-scenes.txt 1500 PACK=perf,world TECTONIC=awakened
+world autopilot_firstscenes survival 20261026
+waitworld
+window 1440 900
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd time set 4000
+cmd gamerule advance_time false
+hud on
+camera first
+wait 60
+# 0. the current task, top right: Your body remembers, ticking move by move (the body module counts each move), then
+#    the errand; and the Journal with nothing confusing in it (no "Danger · The Commons", no "[ERROR]")
+shotnow first_0_checklist
+cmd awaken admin counter "awaken:body_roll" 1
+wait 24
+shotnow first_0_checklist_roll
+cmd awaken admin counter "awaken:body_sprint" 1
+cmd awaken admin counter "awaken:body_slide" 1
+cmd awaken admin counter "awaken:body_mantle" 1
+wait 20
+shotnow first_0_checklist_done
+wait 100
+shotnow first_0_checklist_errand
+key status
+wait 60
+shot first_0_journal
+scroll -3
+wait 10
+shot first_0_journal_more
+scroll -1
+wait 10
+shot first_0_journal_end
+screen close
+wait 10
+# 1. the High Gate's shot (the land named as the view lifts: THE COMMONS)
+cmd awaken living first gate
+wait 22
+shotnow first_1_gate_turn
+wait 48
+shotnow first_1_gate_rise
+wait 50
+shotnow first_1_gate_named
+wait 40
+shotnow first_1_gate_hold
+wait 75
+shotnow first_1_gate_back
+# 2. the camp by day (the residents come and the camp is laid once you're near)
+cmd awaken living camp
+wait 240
+cmd awaken living first camp
+wait 40
+shotnow first_2_camp_day
+# 3. the letters on the Now line
+cmd awaken living first letters
+wait 60
+shotnow first_3_letters_now
+# 4. Ilse's scene
+cmd awaken living first ilse
+wait 40
+shotnow first_4_ilse_frame
+wait 60
+shotnow first_4_ilse_delivered
+wait 150
+shotnow first_4_ilse_night
+# 5. the coal: she holds it out and brings it over, your hand takes it
+wait 175
+shotnow first_5_offer
+wait 70
+shotnow first_5_take_prompt
+use
+wait 12
+shotnow first_5_hand
+wait 50
+shotnow first_5_after
+wait 100
+shotnow first_5_ember_now
+# 6. the camp at night, monsters about
+cmd gamerule spawn_mobs true
+cmd time set 18000
+cmd awaken living first camp
+wait 260
+shotnow first_6_camp_night
+info
+quit

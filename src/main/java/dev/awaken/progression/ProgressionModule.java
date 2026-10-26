@@ -120,6 +120,7 @@ public final class ProgressionModule {
         });
         ProgressionNow.register();
         PromiseKeeper.init(); // the locks you met, and the call back when you hold their key (SPEC §27)
+        Checklist.init(); // the current task, top right (SPEC §27.10)
         // "Show me" on a card (a climb site's first refusal): the band opens (SPEC §27)
         Signal.onAction(Progression.BAND_ACTION, (p, action, yes) -> {
             if (yes) Progression.openBand(p);
@@ -257,8 +258,79 @@ public final class ProgressionModule {
         if (paid > 0) Progression.grantLevels(player, paid, Progression.XpSource.HOME);
     }
 
-    /** Full-value world XP per kill of a 20-HP mob (× min(2, max health / 20)), mined ore and placed block. */
+    /** Full-value world XP per kill of a 20-HP mob (× min(2, max health / 20)), mined ore (× its {@link OreXp} weight) and placed block. */
     static final double KILL_XP = 0.04, ORE_XP = 0.01, BLOCK_XP = 0.0005;
+    /** The first of each ore is a discovery (SPEC §28.3): this share of a level, once. */
+    static final double ORE_DISCOVERY = 0.1;
+
+    /**
+     * Ore XP by rarity and depth (PLAN 7.6, SPEC §28.3): each ore's weight on {@link #ORE_XP}, the content level its
+     * taper starts from (an ore under y 0 is level 15's, diamond and Deepglass 25's), and the line its first find says.
+     * Ores under y 0 (and Deepglass, always) pay through their own budget, {@link XpBudget#DEEP}, so a deep trip isn't
+     * worn out by the coal on the way down. A lode's heart pays its own lump (the deep module).
+     */
+    public enum OreXp {
+        COAL("Coal", 0.5, 0, 0xB8C2CE, "Fuel for the Forge's every temper"),
+        COPPER("Copper", 0.7, 0, 0xFFB07A, "Bell bronze, the Tuning Fork and the miner's lamp"),
+        IRON("Iron", 1.0, 0, 0xEAD2BC, "D-rank gear is bound in iron"),
+        GOLD("Gold", 1.5, 0, 0xFFE27A, "The power's metal: every focus from D up needs it"),
+        REDSTONE("Redstone", 1.5, 0, 0xFF7A7A, "The Precursors' circuits run on it"),
+        LAPIS("Lapis", 1.5, 0, 0x7FA0FF, "Ink: Blueprints are drawn in it"),
+        EMERALD("Emerald", 4.0, 0, 0x7FFFA8, "The coin of every village and road"),
+        DIAMOND("Diamond", 6.0, 25, 0x8FF6FF, "C-rank gear is cut from diamond"),
+        DEEPGLASS("Deepglass", 6.0, 25, 0xB48CFF, "Black glass from the Deep: B-rank's resonance, the Spirit catalyst"),
+        QUARTZ("Quartz", 1.0, 0, 0xF2EEE6, "Nether stone"),
+        DEBRIS("Ancient debris", 6.0, 25, 0xC9A38A, "Netherite: A-rank's metal"),
+        AMETHYST("Amethyst", 0.0, 0, 0xC79BFF, "With Deepglass, B-rank's resonance");
+
+        public final String title, hint;
+        public final double weight;
+        public final int contentLevel, colour;
+
+        OreXp(String title, double weight, int contentLevel, int colour, String hint) {
+            this.title = title;
+            this.weight = weight;
+            this.contentLevel = contentLevel;
+            this.colour = colour;
+            this.hint = hint;
+        }
+
+        public String id() {
+            return name().toLowerCase(java.util.Locale.ROOT);
+        }
+
+        /** The content level an ore at this height counts as (deep ones taper later). */
+        public int contentLevel(int y) {
+            return Math.max(contentLevel, y < 0 ? 15 : 0);
+        }
+
+        /** Which ore a block is (vanilla's and the common tags, Deepglass by id), or null; a lode's heart is not an ore here. */
+        public static OreXp of(net.minecraft.world.level.block.state.BlockState s) {
+            var id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(s.getBlock());
+            if (id.getNamespace().equals(Awaken.MODID)) {
+                if (id.getPath().equals("deepglass")) return DEEPGLASS;
+                if (id.getPath().endsWith("_lode_heart")) return null;
+            }
+            if (s.is(net.minecraft.world.level.block.Blocks.AMETHYST_CLUSTER)) return AMETHYST;
+            if (s.is(net.minecraft.world.level.block.Blocks.ANCIENT_DEBRIS)) return DEBRIS;
+            if (!s.is(BlockTags.ORES) && !s.is(net.neoforged.neoforge.common.Tags.BlockItems.ORES.block())) return null;
+            if (s.is(net.neoforged.neoforge.common.Tags.BlockItems.ORES_DIAMOND.block())) return DIAMOND;
+            if (s.is(net.neoforged.neoforge.common.Tags.BlockItems.ORES_EMERALD.block())) return EMERALD;
+            if (s.is(net.neoforged.neoforge.common.Tags.BlockItems.ORES_GOLD.block())) return GOLD;
+            if (s.is(net.neoforged.neoforge.common.Tags.BlockItems.ORES_IRON.block())) return IRON;
+            if (s.is(net.neoforged.neoforge.common.Tags.BlockItems.ORES_COPPER.block())) return COPPER;
+            if (s.is(net.neoforged.neoforge.common.Tags.BlockItems.ORES_COAL.block())) return COAL;
+            if (s.is(net.neoforged.neoforge.common.Tags.BlockItems.ORES_REDSTONE.block())) return REDSTONE;
+            if (s.is(net.neoforged.neoforge.common.Tags.BlockItems.ORES_LAPIS.block())) return LAPIS;
+            if (s.is(net.neoforged.neoforge.common.Tags.BlockItems.ORES_QUARTZ.block())) return QUARTZ;
+            return null;
+        }
+
+        /** Mined under y 0 (or Deepglass, which is always deep): pays through the deep budget. */
+        public boolean deep(int y) {
+            return this == DEEPGLASS || y < 0;
+        }
+    }
 
     private static boolean isHome(Level level) {
         return level.dimension() == Level.OVERWORLD;
@@ -299,10 +371,19 @@ public final class ProgressionModule {
 
     private static void onBreak(BreakBlockEvent event) {
         if (!(event.getPlayer() instanceof ServerPlayer sp)) return;
-        boolean ore = event.getState().is(BlockTags.ORES);
-        if (ore && isHome(sp.level())) homeXp(sp, XpBudget.ORE, ORE_XP, 0); // banked before awakening
+        OreXp ore = OreXp.of(event.getState());
+        int y = event.getPos().getY();
+        // banked before awakening
+        if (ore != null && ore.weight > 0 && isHome(sp.level())) homeXp(sp, ore.deep(y) ? XpBudget.DEEP : XpBudget.ORE, ORE_XP * ore.weight, ore.contentLevel(y));
+        if (ore != null && Progression.discover(sp, "ore/" + ore.id(), ORE_DISCOVERY) && Progression.profile(sp).awakened()) {
+            // a paced toast that says what the ore is for (ores aren't Journal entries, so not Finds' "kept in your Journal")
+            Signal.send(sp, dev.awaken.signal.SignalWindow.builder(dev.awaken.signal.SignalWindow.Kind.NOTICE,
+                            Component.literal("New ore · " + ore.title).withColor(ore.colour))
+                    .body(Component.literal(ore.hint)).presentation(dev.awaken.signal.SignalWindow.Presentation.TOAST)
+                    .tier(dev.awaken.core.api.Notices.Tier.IMPORTANT).topic("ore").ttl(20 * 6).build());
+        }
         if (!Progression.profile(sp).awakened()) return;
-        if (ore) Progression.count(sp, Counters.ORES_MINED);
+        if (ore != null && ore != OreXp.AMETHYST) Progression.count(sp, Counters.ORES_MINED);
         Progression.count(sp, "awaken:blocks_broken");
     }
 

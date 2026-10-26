@@ -19,6 +19,7 @@
 
 uniform sampler2D LightSampler;
 uniform sampler2D ChunkSampler;     // which real chunks the client has (64x64, chunk coordinate masked to 63)
+uniform sampler2D VoxelSampler;     // where City Sight draws the real blocks (256x256 world chunks, toroidal)
 
 layout(location = 0) in vec3 vRel;
 layout(location = 1) in vec3 vNormal;
@@ -168,20 +169,35 @@ void main() {
     int flags = vFlags.x;
     bool generated = (flags & 128) != 0, alpine = (flags & 1) != 0;
     float depth = vInfo.r * 255.0;
-    bool water = depth > 0.5;
+    // water is a flat surface: a steep far triangle whose corners hold water (a canal's corner joined to a roof's, a
+    // river below a bank) is the bank or the quay wall, not a blue wall of water (Euan, Carillon's river district)
+    vec3 facet = cross(dFdx(vRel), dFdy(vRel));
+    bool flatWater = abs(facet.y) > 0.9 * length(facet);
+    bool water = depth > 0.5 && flatWater;
+    bool bank = depth > 0.5 && !flatWater;
     // under the real chunks it stays hidden, but only where they are drawn: where they are loaded (a fresh teleport, a
-    // fast flight) and within the render distance as Sodium culls it, in 3D from the camera (seen from high up, the sea
-    // ends well inside the horizontal render distance, and its floor sooner); far water keeps to its own floor's reach,
+    // fast flight) and in a section Sodium draws (farRealSection: seen from high up, the sea floor falls out of its reach
+    // well inside the horizontal render distance); far water keeps to its own floor's reach,
     // so a real water surface drawn over a floor too far to draw keeps the far sea under it
+    // City Sight draws the real blocks there: the far land steps aside (its coverage holds for 2 km)
+    if ((int(FarCam.y + 0.5) & 256) == 0 && length(vRel.xz) < 2000.0) {
+        ivec2 world = (FarCamInt.xz >> 4) + ivec2(floor((vRel.xz + FarCam.xz) / 16.0));
+        if (texelFetch(VoxelSampler, world & 255, 0).r > 0.5) discard;
+    }
     vec3 reach = vec3(vRel.x, vRel.y - (water ? depth : 0.0), vRel.z);
     // far water stays under the real water too (unless the camera is under the sea): wherever a real section isn't drawn
     // this frame (Sodium's culling, a chunk still meshing) the sea shows, never the clear colour through a hole
-    bool underReal = !(water && FarFog.z >= FarFog.w);
-    if (length(reach) < FarDepth.z + FarDepth.w * bayer4(gl_FragCoord.xy)) {
+    // ...but only where the far mesh lies flat as a water surface does (a steep far triangle joining a canal's corner to a
+    // roof's counts as water by its corners, and would stand in the loaded city as a wall), and only in the render
+    // distance's outer band, where a real floor can be missing: nearer, the real floor is always drawn, and far water
+    // there would show as boxes on the city's canals
+    bool surface = abs(facet.y) > 0.97 * length(facet) && horizontal > FarDepth.z - 80.0;
+    bool underReal = !(water && surface && FarFog.z >= FarFog.w);
+    if (farRealSection(reach)) {
         ivec2 chunk = (FarCamInt.xz >> 4) + ivec2(floor(rel / 16.0));
         if (underReal && texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5) {
             // debug view 2: where the mask hides far terrain, red instead (red that shows is a hole the chunks leave)
-            if (FarCam.w > 1.5) { fragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
+            if (FarCam.w > 1.5 && FarCam.w < 2.5) { fragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
             discard;
         }
     }
@@ -216,9 +232,13 @@ void main() {
     // the top's material, as the chunks choose it (the real chunks' colour where seen)
     vec3 top = vColor;
     float density = vInfo.b;
+    if (bank) {
+        top = mix(top, vec3(0.47, 0.46, 0.44), 0.75);
+        density = 0.0;
+    }
     float rock = 0.0, snow = 0.0, canopy = 0.0;
     if (water) {
-        top = seaFloor(top, world, normalize(vRel), depth, horizontal);
+        if ((int(FarCam.y) & 128) == 0) top = seaFloor(top, world, normalize(vRel), depth, horizontal);
     } else {
         float jag = 0.25 * (grain - 0.5);
         vec3 STONE = ROCKS[min((flags >> 4) & 7, 4)];
@@ -266,7 +286,9 @@ void main() {
         // than the real water at the edge)
         c = mix(c, FogColor.rgb, pow(1.0 - facing, 5.0) * 0.55);
     }
-    if (FarCam.w > 0.5 && generated) c = vec3(1.0, 0.0, 1.0);
+    if (FarCam.w > 0.5 && FarCam.w < 1.5 && generated) c = vec3(1.0, 0.0, 1.0);
+    // debug view 3: all far terrain blue (with its far trees red), so any far piece over the loaded world is plain
+    if (FarCam.w > 2.5) { fragColor = vec4(0.0, 0.3, 1.0, 1.0); return; }
     c *= light * texture(LightSampler, vec2(0.5 / 16.0, 15.5 / 16.0)).rgb;
     // valley cloud fills hollows: the bake's valley shade (1 open, 0.65 a deep hollow) says how deep this one is
     fragColor = vec4(farAir(farMist(c, pos, smoothstep(0.96, 0.78, vInfo.a)), pos), 1.0);

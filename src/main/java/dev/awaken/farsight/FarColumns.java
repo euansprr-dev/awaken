@@ -1,6 +1,8 @@
 package dev.awaken.farsight;
 
 import dev.awaken.Awaken;
+import dev.awaken.city.City;
+import dev.awaken.city.CityLayout;
 import dev.awaken.terrain.alpine.AlpineSurface;
 import dev.awaken.terrain.api.CityBasin;
 import dev.awaken.terrain.api.CitySite;
@@ -15,10 +17,12 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeResolver;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
@@ -69,6 +73,9 @@ public final class FarColumns {
     private final int seaLevel, minY, maxY;
     private final boolean alpine;
     private final CityBasinFunction.@Nullable Shape city;
+    /** The world's seed (the city plan paints with it); 0 for the tests' generators. */
+    private final long seed;
+    private final int[] cityY = new int[1];
     private final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
     /** Density probes this instance has made (the cost per column, for the status line). */
     public long probes;
@@ -76,12 +83,18 @@ public final class FarColumns {
     private FarColumns(ServerLevel level) {
         this(level.getChunkSource().getGenerator(), level.getChunkSource().randomState(), level.registryAccess(), level,
                 FeatureFlags.REGISTRY.fromNames(Set.of(Awaken.id("awakened_alpine")), id -> {}).isSubsetOf(level.enabledFeatures()),
-                level.dimension() == Level.OVERWORLD ? CityBasin.current() : null);
+                level.dimension() == Level.OVERWORLD ? CityBasin.current() : null, level.getSeed());
     }
 
     /** For any generator (tests use vanilla's own overworld at a fixed seed): its random state, registries and height. */
     FarColumns(ChunkGenerator generator, RandomState random, RegistryAccess registries, LevelHeightAccessor heights, boolean alpine,
             @Nullable CitySite site) {
+        this(generator, random, registries, heights, alpine, site, 0L);
+    }
+
+    private FarColumns(ChunkGenerator generator, RandomState random, RegistryAccess registries, LevelHeightAccessor heights, boolean alpine,
+            @Nullable CitySite site, long seed) {
+        this.seed = seed;
         this.generator = generator;
         this.random = random;
         this.heights = heights;
@@ -212,6 +225,35 @@ public final class FarColumns {
         return biomes.getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(y), QuartPos.fromBlock(z));
     }
 
+    // Biomes change over tens of blocks, so a patch samples them on a sparser grid (at least 8 blocks and two corners
+    // apart) and each corner takes the nearest sample: a biome edge moves by under two pixels at any ring's distance.
+    // (2026-10-26 profile in the pack's world: the biome source, Tectonic's climate behind Lithostitched's injector, was
+    // 86% of the workers' time at one lookup a corner, 178 us a column, and rings 1-5 took minutes to fill.)
+    private static final int BIOME_SIDE = Rings.PATCH / 2 + 1;
+    @SuppressWarnings("unchecked")
+    private final Holder<Biome>[] patchBiomes = new Holder[BIOME_SIDE * BIOME_SIDE];
+    private int biomeX, biomeZ, biomeStep, biomeCell;
+
+    /** Starts a patch's biome samples afresh: patch (px, pz) of ring {@code ring}. */
+    public void biomesFor(int ring, int px, int pz) {
+        java.util.Arrays.fill(patchBiomes, null);
+        biomeCell = Rings.cellSize(ring);
+        biomeStep = Math.max(2, 8 / biomeCell);
+        biomeX = px * Rings.PATCH;
+        biomeZ = pz * Rings.PATCH;
+    }
+
+    /** The biome at corner (i, j) of the patch {@link #biomesFor} named: its nearest sample's, sampled at height y. */
+    public Holder<Biome> patchBiome(int i, int j, int y) {
+        int bi = Math.round((float) i / biomeStep), bj = Math.round((float) j / biomeStep), b = bj * BIOME_SIDE + bi;
+        Holder<Biome> biome = patchBiomes[b];
+        if (biome == null) {
+            biome = biome((biomeX + bi * biomeStep) * biomeCell, y, (biomeZ + bj * biomeStep) * biomeCell);
+            patchBiomes[b] = biome;
+        }
+        return biome;
+    }
+
     /**
      * Fills one patch of ring {@code ring}: its 16×16 grid corners, row by row, as the texels the client uploads:
      * <ul>
@@ -227,18 +269,26 @@ public final class FarColumns {
         int s = Rings.cellSize(ring);
         int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
         float rowStart = Float.NaN;
+        biomesFor(ring, px, pz);
         guess = Float.NaN;
         for (int j = 0; j < Rings.PATCH; j++) {
             // each row starts from the corner above its first, the nearest solved neighbour
             guess = rowStart;
             for (int i = 0; i < Rings.PATCH; i++) {
                 int x = (px * Rings.PATCH + i) * s, z = (pz * Rings.PATCH + j) * s;
-                float ground = ground(x, z);
+                // the city, as its plan lays it out (whether or not terrain carved its basin, the city levels its own
+                // ground): its walls, roofs and squares at their true height and colour, never the land it was built
+                // over; its columns skip the terrain solve
+                CityLayout l = this.seed != 0 ? City.layout() : null;
+                BlockState built = l == null ? null : FarCity.plannedAt(l, seed, x, z, cityY);
+                // under City Sight the city's real blocks are drawn: here only its ground, a block under the street
+                if (built != null && FarCity.underCitySight) cityY[0] = l.groundY(x, z) - 1;
+                float ground = built != null ? cityY[0] + 1 : ground(x, z);
                 if (i == 0) rowStart = guess;
                 // the sea fills to just under sea level: its surface is the top face of the block below it
                 boolean water = ground < seaLevel;
                 float top = water ? seaLevel : ground;
-                Holder<Biome> biome = biome(x, (int) top, z);
+                Holder<Biome> biome = patchBiome(i, j, (int) top);
                 FarPalette.Look look = FarPalette.look(biome);
                 int k = j * Rings.PATCH + i;
                 int flags = look.flags();
@@ -253,12 +303,41 @@ public final class FarColumns {
                 colour[k] = abgr(rgb, flags);
                 info[k] = abgr(depth, Math.min(255, look.canopy() * 4), density, cold);
                 crown[k] = abgr(look.crown(), look.shape());
+                if (built != null) {
+                    int brgb = FarPalette.block(built, EmptyBlockGetter.INSTANCE, pos.set(x, cityY[0], z), biome);
+                    if (brgb >= 0) {
+                        boolean wet = !built.getFluidState().isEmpty();
+                        top = cityY[0] + 1;
+                        // a corner spanning 8 blocks or more stands at the city's mean height round it, as the real
+                        // chunks' corners do (FarStore.patch): one spire's tip at a corner would be a pyramid that wide
+                        if (s >= 8 && !FarCity.underCitySight) top = cityMean(l, x, z, s, top);
+                        height[k] = packHeight(top);
+                        colour[k] = abgr(brgb, GENERATED);
+                        info[k] = abgr(wet ? 4 : 0, 0, 0, cold);
+                        crown[k] = 0;
+                    }
+                }
                 int whole = (int) Math.floor(top) + HEIGHT_BASE;
                 min = Math.min(min, whole);
                 max = Math.max(max, whole + 1);
             }
         }
         return Math.clamp(min, 0, 65535) << 16 | Math.clamp(max, 0, 65535);
+    }
+
+    /** The plan's mean top (top faces) over a 3 by 3 spread of an s-block cell round (x, z); {@code at} where none is city. */
+    private float cityMean(CityLayout l, int x, int z, int s, float at) {
+        float sum = 0f;
+        int n = 0, d = Math.max(1, s / 3);
+        for (int dz = -1; dz <= 1; dz++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (FarCity.plannedAt(l, seed, x + dx * d, z + dz * d, cityY) != null) {
+                    sum += cityY[0] + 1;
+                    n++;
+                }
+            }
+        }
+        return n == 0 ? at : sum / n;
     }
 
     /**

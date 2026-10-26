@@ -48,9 +48,14 @@ final class RunnerTests {
 
     private static final BlockPos.MutableBlockPos M = new BlockPos.MutableBlockPos();
 
-    /** The course's origin (feet level) for a test: up in the air, clear of the terrain other tests stand on. */
+    /**
+     * The course's origin (feet level) for a test: up in the air, and the box every course here fits in (the S3 course,
+     * the row of seven pipe tops) cleared to the sky first, whatever another test's course left up there.
+     */
     private static BlockPos origin(GameTestHelper h) {
-        return h.absolutePos(new BlockPos(20, 1, 6)).above(80);
+        BlockPos o = h.absolutePos(new BlockPos(20, 1, 6)).above(80);
+        AwakenTests.clearToSky(h.getLevel(), o.offset(-16, -2, -6), o.offset(72, 24, 46));
+        return o;
     }
 
     private static void finish(GameTestHelper h, BlockPos o, ServerPlayer... ps) {
@@ -711,6 +716,9 @@ final class RunnerTests {
         ServerLevel level = h.getLevel();
         BlockPos o = origin(h);
         BlockState stone = Blocks.STONE.defaultBlockState();
+        // its own air first, wherever the test lands (inside a mountain too)
+        for (int x = -2; x <= 8; x++) for (int y = -1; y <= 9; y++) for (int z = -4; z <= 6; z++)
+            level.setBlockAndUpdate(o.offset(x, y, z), Blocks.AIR.defaultBlockState());
         // a 3-high wall at z 1 under a roof (top y 3) running back to z 4; a fence on its top row at x -1..2, a wall at 4..7
         for (int x = -1; x <= 7; x++) {
             for (int z = -3; z <= 4; z++) level.setBlockAndUpdate(o.offset(x, -1, z), stone);
@@ -759,7 +767,7 @@ final class RunnerTests {
             h.assertTrue(RunnerServer.ledgeJump(a, m, run(Move.LEDGE_JUMP, BodyPayloads.JUMP_OVER, 0F, s, over.endX(), over.floor(), over.endZ(), 2, 1), now + 10)
                     && !m.hanging && m.vaultUntil != 0 && a.getForcedPose() == net.minecraft.world.entity.Pose.SWIMMING,
                     "and takes the climb over the rail, with the crawl box");
-            for (int x = -1; x <= 7; x++) for (int y = -1; y <= 3; y++) for (int z = -3; z <= 4; z++)
+            for (int x = -2; x <= 8; x++) for (int y = -1; y <= 9; y++) for (int z = -4; z <= 6; z++)
                 level.setBlockAndUpdate(o.offset(x, y, z), Blocks.AIR.defaultBlockState());
             BodyTests.done(h, a);
         });

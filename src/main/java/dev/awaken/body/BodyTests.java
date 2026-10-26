@@ -275,7 +275,9 @@ final class BodyTests {
      * eye low over the rail. The server takes the client's crossing with the crawl box, and refuses a landing that isn't.
      */
     static void vaultRails(GameTestHelper h) {
-        floor(h, -1, 17, -1, 7, 4);
+        // its own floor and 7 of air over it wherever the test lands (underground too: a garden wall's climb over comes
+        // down beyond it standing, its head 5.4 over the floor)
+        floor(h, -1, 17, -1, 7, 7);
         // lanes along +z, each obstacle on the row z = 2
         rail(h, -1, 1, 1, 2, Blocks.OAK_FENCE.defaultBlockState());                                       // lane 0: a fence
         h.setBlock(new BlockPos(3, 1, 2), Blocks.OAK_FENCE_GATE.defaultBlockState()

@@ -45,28 +45,35 @@ public final class GuideTests {
                 GuideData.RoomCard card = Guide.card(t, rec);
                 h.assertTrue(card.have() == mask, t + ": the checklist is RoomType's furniture, was " + card.have() + " vs " + mask);
                 h.assertTrue(card.type() == t.ordinal() && card.built().isEmpty(), t + ": not built without a room");
-                // classify reads the same list: all of it makes the room, any one missing doesn't
-                h.assertTrue(Room.classify(c(t, null, Furniture.BED), c(t, null, Furniture.MAT), c(t, null, Furniture.ANVIL), c(t, null, Furniture.FORGE),
-                        c(t, null, Furniture.STAND), c(t, null, Furniture.TROPHY), c(t, null, Furniture.MACHINE), c(t, null, Furniture.PAD)).contains(t),
-                        t + ": its furniture classifies as it");
+                // classify reads the same list: all of it (and the kind's condition) makes the room, any one short doesn't
+                int[] counts = new int[Furniture.COUNT];
+                for (Furniture f : t.furniture) counts[f.ordinal()] = f.needed();
+                int[] facts = conditionMet(t);
+                h.assertTrue(Room.classify(counts, facts).contains(t), t + ": its furniture and condition classify as it");
                 for (Furniture without : t.furniture) {
-                    h.assertFalse(Room.classify(c(t, without, Furniture.BED), c(t, without, Furniture.MAT), c(t, without, Furniture.ANVIL),
-                                    c(t, without, Furniture.FORGE), c(t, without, Furniture.STAND), c(t, without, Furniture.TROPHY),
-                                    c(t, without, Furniture.MACHINE), c(t, without, Furniture.PAD)).contains(t),
-                            t + " without " + without + " is not one");
+                    int[] less = counts.clone();
+                    less[without.ordinal()] = without.needed() - 1;
+                    h.assertFalse(Room.classify(less, facts).contains(t), t + " without " + without + " is not one");
                 }
-                h.assertTrue(t.needs.contains(t.furniture.get(0).label), t + ": the 'needs' words come from the furniture");
+                if (t.condition != null) h.assertFalse(Room.classify(counts, new int[dev.awaken.hearth.room.Tally.F_COUNT]).contains(t),
+                        t + ": not one without " + t.condition);
+                if (!t.furniture.isEmpty()) h.assertTrue(t.needs.contains(t.furniture.get(0).label), t + ": the 'needs' words come from the furniture");
                 // what the player reads fits: toast title and first sentence in 144 px, Now lines in the tracker
                 h.assertTrue(Fit.px(t.label + " recognised") <= Fit.TOAST, t + ": toast title fits");
                 h.assertTrue(Fit.px(Fit.firstSentence(t.toast + " " + t.does)) <= Fit.TOAST, t + ": toast line fits, " + Fit.px(t.toast));
                 rec.furniture = new int[Furniture.COUNT];
                 h.assertTrue(Fit.px(dev.awaken.hearth.HearthNow.progress(t, rec)) <= Fit.TRACKER, t + ": progress line fits");
-                rec.furniture[t.furniture.get(0).ordinal()] = 1;
+                if (!t.furniture.isEmpty()) rec.furniture[t.furniture.get(0).ordinal()] = 1;
                 h.assertTrue(Fit.px(dev.awaken.hearth.HearthNow.progress(t, rec)) <= Fit.TRACKER, t + ": progress line fits, half done");
+                if (t.condition != null) h.assertTrue(Fit.px(WhyNot.condition(t, BlockPos.ZERO).tracker()) <= Fit.TRACKER, t + ": condition line fits");
                 for (Furniture f : t.furniture) {
                     var leak = WhyNot.leak(t, new dev.awaken.hearth.room.Miss(f, BlockPos.ZERO, dev.awaken.hearth.room.Miss.Leak.OPENING, new BlockPos(-123, 64, 456)));
                     h.assertTrue(Fit.px(leak.tracker()) <= Fit.TRACKER_WITH_COMPASS, t + ": why line fits beside a compass: " + leak.tracker());
                     h.assertTrue(Fit.px(WhyNot.missing(t, t.furniture, BlockPos.ZERO).tracker()) <= Fit.TRACKER, t + ": missing line fits");
+                    for (var big : new dev.awaken.hearth.room.Miss.Leak[]{dev.awaken.hearth.room.Miss.Leak.TOO_BIG, dev.awaken.hearth.room.Miss.Leak.TOO_WIDE}) {
+                        var r = WhyNot.leak(t, new dev.awaken.hearth.room.Miss(f, BlockPos.ZERO, big, BlockPos.ZERO));
+                        h.assertTrue(Fit.px(r.tracker()) <= Fit.TRACKER_WITH_COMPASS && !r.card().contains("32"), t + ": " + big + " says the real cap");
+                    }
                 }
             }
             h.assertTrue(Fit.px("Use the Anchor for a guide") <= Fit.TRACKER, "the guide nudge fits");
@@ -78,7 +85,8 @@ public final class GuideTests {
                             List.of(net.minecraft.resources.Identifier.withDefaultNamespace("amethyst_shard"))), dev.awaken.Awaken.id("meditation_mat"), 1)),
                     List.of(new GuideData.Person("Oren", "Blacksmith", "")), List.of(new GuideData.Person("Mira", "Scout", "D-rank")),
                     new GuideData.Upgrade(false, 3, 64, 22, "C-rank", true, List.of(new GuideData.Part(net.minecraft.resources.Identifier.withDefaultNamespace("diamond"), 6, 2)), 15, false),
-                    GuideData.COTTAGE_OFFER);
+                    GuideData.COTTAGE_OFFER, new GuideData.Home("Ashford", 5, "timber and fieldstone", "a table and seats", List.of("a field"), 13,
+                            List.of(new GuideData.RoomView("the snug timber bedroom", 1, List.of(3, 2, 1, 2, 2, 1), "Bedroom", "a lit fire", new BlockPos(1, 2, 3)))));
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             GuideData.STREAM_CODEC.encode(buf, d);
             h.assertTrue(GuideData.STREAM_CODEC.decode(buf).equals(d), "guide data round-trips");
@@ -321,5 +329,16 @@ public final class GuideTests {
             else if (wall) level.setBlock(p, Blocks.STONE.defaultBlockState(), 3);
             else if (!here.is(net.minecraft.tags.BlockTags.BEDS) && !here.is(HearthContent.MEDITATION_MAT.get())) level.setBlock(p, Blocks.AIR.defaultBlockState(), 3);
         }
+    }
+
+    /** Facts that meet a kind's condition (a glass roof, a big floor, height over the ground, windows round). */
+    private static int[] conditionMet(RoomType t) {
+        int[] f = new int[dev.awaken.hearth.room.Tally.F_COUNT];
+        f[dev.awaken.hearth.room.Tally.F_FLOOR] = 64;
+        f[dev.awaken.hearth.room.Tally.F_CEILING] = 10;
+        f[dev.awaken.hearth.room.Tally.F_GLASS_CEILING] = 10;
+        f[dev.awaken.hearth.room.Tally.F_ELEVATION] = 14;
+        f[dev.awaken.hearth.room.Tally.F_WINDOW_DIRS] = 0b1111;
+        return f;
     }
 }

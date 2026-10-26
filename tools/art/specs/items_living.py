@@ -12,6 +12,7 @@
     pells_letter       the folded letter, blue wax at the flap's point, a road-worn corner and a rust-brown thumbprint
     couriers_knot      a Runner's courier knot: red and cream cord braided into a tight round knot, a brass ring, two brass-tipped tails
     orens_mark         Oren's smith's mark: a dark iron token on a leather thong, an O punched in it and still glowing from the strike
+    ilse_letters       Bram's letters for Ilse: three envelopes stacked askew, tied crosswise with red cord, a knot on top
 
 Every icon is drawn by hand from the shared palette (pixelart.RAMPS) plus small local ramps, one pixel outline, light from
 the top left. Nothing is random: the same ids always give the same pixels.
@@ -523,9 +524,45 @@ def orens_mark() -> Canvas:
     return _outline(c)
 
 
+def ilse_letters() -> Canvas:
+    """Bram's letters for Ilse: three envelopes stacked a little askew, tied crosswise with red cord, a knot on top."""
+    c = Canvas()
+    p = [col("paper", i) for i in range(6)]
+    red = [col("wax", i) for i in range(6)]
+    # back to front: each envelope 11 wide and 7 tall, the stack stepping down and right
+    for k, (x0, y0) in enumerate(((2, 3), (3, 5), (1, 7))):
+        shade = 2 + k
+        for y in range(y0, y0 + 7):
+            for x in range(x0, x0 + 12):
+                if 0 <= x < 16 and 0 <= y < 16:
+                    i = shade - (1 if y == y0 + 6 else 0) + (1 if y == y0 else 0)
+                    c.set(x, y, p[max(0, min(5, i))])
+        # the front one shows its flap: a shallow V from its top corners
+        if k == 2:
+            for dx in range(0, 6):
+                c.set(x0 + dx, y0 + min(dx, 3) // 1 if dx < 4 else y0 + 3, p[2])
+                c.set(x0 + 11 - dx, y0 + min(dx, 3) if dx < 4 else y0 + 3, p[2])
+    # the cord: across the middle and down the middle, darker where it turns under
+    cy, cx = 10, 7
+    for x in range(1, 14):
+        c.set(x, cy, red[3] if x % 3 else red[2])
+    for y in range(3, 14):
+        c.set(cx, y, red[3] if y % 3 else red[2])
+    # the knot and its two tails
+    for (x, y, i) in ((6, 9, 4), (7, 9, 5), (8, 9, 4), (6, 10, 3), (7, 10, 4), (8, 10, 3), (7, 11, 2),
+                      (5, 8, 3), (4, 7, 2), (9, 8, 3), (10, 7, 2)):
+        c.set(x, y, red[i])
+    # a line of handwriting on the front envelope
+    ink = col("ink", 1)
+    for x in (2, 3, 4, 9, 10, 11):
+        c.set(x, 12, ink if x % 2 else col("ink", 2))
+    return _outline(c)
+
+
 ITEMS = {"shepherds_lantern": shepherds_lantern, "lumen_tonic": lumen_tonic, "wrens_hook": wrens_hook,
          "caravan_writ": caravan_writ, "herdcaller_horn": herdcaller_horn, "pells_spurs": pells_spurs,
-         "pells_letter": pells_letter, "couriers_knot": couriers_knot, "orens_mark": orens_mark}
+         "pells_letter": pells_letter, "couriers_knot": couriers_knot, "orens_mark": orens_mark,
+         "ilse_letters": ilse_letters}
 
 
 def build(out):

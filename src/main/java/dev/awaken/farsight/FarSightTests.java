@@ -4,6 +4,9 @@ import dev.awaken.Awaken;
 import dev.awaken.city.CityLayout;
 import dev.awaken.city.CityPlan;
 import dev.awaken.core.test.AwakenTests;
+import dev.awaken.farsight.voxel.VoxelMesh;
+import dev.awaken.farsight.voxel.VoxelMesher;
+import dev.awaken.farsight.voxel.VoxelSnapshot;
 import dev.awaken.terrain.api.CityBasin;
 import dev.awaken.terrain.api.CitySite;
 import net.minecraft.core.BlockPos;
@@ -138,6 +141,74 @@ final class FarSightTests {
             h.succeed();
         });
 
+        // City Sight's mesher (SPEC §20) on a real chunk: a 4-block stone cube shows each face once (merged, whatever
+        // the light), a slab its top half a block up, a one-block pillar its top; at level 1 (2-block cells) the cube
+        // keeps its silhouette and the pillar, a quarter of its cells, thins out instead of swelling.
+        AwakenTests.registerIsolated("farsight_voxels_mesh", 100, h -> {
+            ServerLevel level = h.getLevel();
+            BlockPos o = h.absolutePos(BlockPos.ZERO);
+            int x0 = (o.getX() & ~15) + 4, z0 = (o.getZ() & ~15) + 4, y0 = (o.getY() + 2) & ~1;
+            for (int x = x0 - 2; x < x0 + 11; x++) {
+                for (int z = z0 - 2; z < z0 + 9; z++) {
+                    for (int y = y0; y <= level.getMaxY(); y++) level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                }
+            }
+            for (int y = y0; y < y0 + 4; y++) {
+                for (int z = z0; z < z0 + 4; z++) for (int x = x0; x < x0 + 4; x++) level.setBlockAndUpdate(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState());
+            }
+            for (int y = y0; y < y0 + 6; y++) level.setBlockAndUpdate(new BlockPos(x0 + 8, y, z0 + 1), Blocks.OAK_PLANKS.defaultBlockState());
+            level.setBlockAndUpdate(new BlockPos(x0 + 6, y0, z0 + 6), Blocks.STONE_SLAB.defaultBlockState());
+            // faces carry the light in front of them (a dark room's aren't drawn): the light first
+            AwakenTests.awaitLight(h, new BlockPos(x0 - 2, y0, z0 - 2), new BlockPos(x0 + 10, y0 + 8, z0 + 8));
+            LevelChunk chunk = level.getChunkAt(new BlockPos(x0, y0, z0));
+            VoxelSnapshot snap = VoxelSnapshot.take(level, chunk);
+            h.assertTrue(snap != null, "the chunk has blocks");
+            VoxelMesher mesher = new VoxelMesher(new VoxelMesher.Looks() {
+                @Override
+                public int face(int id, int dir) {
+                    return id & 0xFFFF;
+                }
+
+                @Override
+                public int tint(int id, int tintIndex, Holder<Biome> biome) {
+                    return 0xFFFFFF;
+                }
+
+                @Override
+                public int window(int id, int dir) {
+                    return id & 0xFFFF;
+                }
+            });
+            long t0 = System.nanoTime();
+            VoxelMesh mesh = mesher.mesh(snap, 7);
+            double ms = (System.nanoTime() - t0) / 1e6;
+            int lx = x0 & 15, lz = z0 & 15, base = (y0 - level.getMinY()) * 16;
+            // areas in square sixteenths of the faces in a box (dir; plane; u and v ranges in sixteenths)
+            h.assertTrue(area(mesh, 0, 1, base + 64, lx * 16, lx * 16 + 64, lz * 16, lz * 16 + 64) == 64 * 64,
+                    "the cube's top, once: " + area(mesh, 0, 1, base + 64, lx * 16, lx * 16 + 64, lz * 16, lz * 16 + 64));
+            h.assertTrue(area(mesh, 0, 5, (lx + 4) * 16, lz * 16, lz * 16 + 64, base, base + 64) == 64 * 64, "the cube's east side, once");
+            h.assertTrue(area(mesh, 0, 1, base + 8, (lx + 6) * 16, (lx + 7) * 16, (lz + 6) * 16, (lz + 7) * 16) == 256, "the slab's top, half a block up");
+            h.assertTrue(area(mesh, 0, 1, base + 96, (lx + 8) * 16, (lx + 9) * 16, (lz + 1) * 16, (lz + 2) * 16) == 256, "the pillar's top");
+            int top1 = area(mesh, 1, 1, base + 64, lx * 16, lx * 16 + 64, lz * 16, lz * 16 + 64);
+            h.assertTrue(top1 == 64 * 64, "level 1 keeps the cube's silhouette: " + top1);
+            h.assertTrue(!any(mesh, 1, (lx + 8) * 16, (lz + 1) * 16, base + 16), "level 1 thins the pillar out");
+            for (int l = 0; l < VoxelMesher.LEVELS; l++) {
+                for (int q = 0; q < mesh.quadCount(l); q++) h.assertTrue((mesh.quads()[l][q * 4 + 2] >>> 16) == 7, "every quad carries its slot");
+            }
+            // kept on disk and read back, the same blocks and light
+            try {
+                byte[] blob = dev.awaken.farsight.voxel.VoxelDisk.encode(snap);
+                VoxelSnapshot back = dev.awaken.farsight.voxel.VoxelDisk.of(level).decode(snap.chunkX(), snap.chunkZ(), blob);
+                h.assertTrue(back.hash() == snap.hash() && back.fromSection() == snap.fromSection(), "a kept snapshot reads back the same");
+                Awaken.LOG.info("[farsight] voxel snapshot kept in {} bytes", blob.length);
+            } catch (java.io.IOException e) {
+                h.fail("a kept snapshot can't be read back: " + e);
+            }
+            Awaken.LOG.info("[farsight] voxel mesh: {} ms, quads by level {} {} {} {}", String.format(java.util.Locale.ROOT, "%.2f", ms),
+                    mesh.quadCount(0), mesh.quadCount(1), mesh.quadCount(2), mesh.quadCount(3));
+            h.succeed();
+        });
+
         // The generated layer: a real chunk summed into 2-block cells (a stone pillar's top, a pool's surface and depth),
         // kept through the disk cache, and read back as a ring 0 patch.
         AwakenTests.registerIsolated("farsight_generated_layer", 100, h -> {
@@ -222,27 +293,36 @@ final class FarSightTests {
             h.assertTrue(high >= city.streetY + city.plan.wallHeight && built,
                     "the wall stands at its height, built: top " + high + ", street " + city.streetY + " + wall " + city.plan.wallHeight);
             h.assertTrue(FarCity.planned(city, (city.cx >> 4) + 200, city.cz >> 4, level.getSeed(), plains) == null, "nothing beyond the city");
+            // the far prediction reads the same plan column by column: across the wall, its top stands at the wall's height
+            int[] yAt = new int[1];
+            int wallTop = Integer.MIN_VALUE;
+            for (int dx = -6; dx <= 6; dx++) {
+                if (FarCity.plannedAt(city, level.getSeed(), wallX + dx, city.cz, yAt) != null) wallTop = Math.max(wallTop, yAt[0]);
+            }
+            h.assertTrue(wallTop + 1 >= city.streetY + city.plan.wallHeight, "the prediction's wall: top " + (wallTop + 1));
+            h.assertTrue(FarCity.plannedAt(city, level.getSeed(), city.cx + 4000, city.cz, yAt) == null, "the prediction leaves the land beyond the city");
 
             // a chunk loaded before anything collected (as the city's pregeneration holds them, never saving) reaches the
             // store as soon as collecting starts
             int x0 = (o.getX() & ~15) + 4, z0 = (o.getZ() & ~15) + 4, y0 = o.getY() + 2;
-            for (int x = x0 - 2; x < x0 + 4; x++) {
-                for (int z = z0 - 2; z < z0 + 4; z++) {
-                    for (int y = y0; y <= level.getMaxY(); y++) level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
-                }
-            }
+            // the chunk is the test's own: nothing over it, and plains under it (snow on the pillar read one block high,
+            // "top 31", where another test had filled in a snowy biome and left the rain on)
+            AwakenTests.clearToSky(level, new BlockPos(x0 - 4, y0, z0 - 4), new BlockPos(x0 + 11, y0, z0 + 11));
+            var cmd = level.getServer().createCommandSourceStack().withLevel(level).withSuppressedOutput();
+            level.getServer().getCommands().performPrefixedCommand(cmd, "fillbiome " + (x0 - 4) + " " + (y0 - 4) + " " + (z0 - 4) + " "
+                    + (x0 + 11) + " " + (y0 + 40) + " " + (z0 + 11) + " minecraft:plains");
             for (int y = y0; y < y0 + 23; y++) {
                 for (int k = 0; k < 4; k++) level.setBlock(new BlockPos(x0 + (k & 1), y, z0 + (k >> 1)), Blocks.STONE_BRICKS.defaultBlockState(), Block.UPDATE_CLIENTS);
             }
             boolean was = FarStore.collecting;
             FarStore.collecting = false;
+            AwakenTests.onEnd(h, () -> FarStore.collecting = was); // left on, it sums every chunk loaded for the rest of the run
             int cell = 2 * FarChunk.SIDE + 2, cx = x0 >> 4, cz = z0 >> 4;
             h.runAfterDelay(3, () -> FarStore.collecting = true);
             h.succeedWhen(() -> {
                 FarChunk seen = FarStore.of(level).get(cx, cz);
                 h.assertTrue(seen != null && FarChunk.top(seen.cell()[cell]) == y0 + 23,
                         "the loaded chunk reached the store: " + (seen == null ? "not yet" : "top " + FarChunk.top(seen.cell()[cell])));
-                FarStore.collecting = was;
             });
         });
 
@@ -280,5 +360,36 @@ final class FarSightTests {
             }
             h.succeed();
         });
+    }
+
+    /** The area (square sixteenths) of level l's faces toward dir lying on plane, within the face's u and v ranges. */
+    private static int area(VoxelMesh mesh, int l, int dir, int plane, int u0, int u1, int v0, int v1) {
+        int[] q = mesh.quads()[l];
+        int total = 0;
+        for (int i = 0; i < q.length; i += 4) {
+            int x = q[i] & 511, z = q[i] >> 9 & 511, d = q[i] >> 18 & 7, eu = q[i] >> 21 & 511;
+            int y = q[i + 1] & 16383, ev = q[i + 1] >> 14 & 16383;
+            if (d != dir) continue;
+            int p, u, v;
+            if (dir < 2) { p = y; u = x; v = z; }
+            else if (dir < 4) { p = z; u = x; v = y; }
+            else { p = x; u = z; v = y; }
+            if (p != plane) continue;
+            int a = Math.max(0, Math.min(u + eu, u1) - Math.max(u, u0)), b = Math.max(0, Math.min(v + ev, v1) - Math.max(v, v0));
+            total += a * b;
+        }
+        return total;
+    }
+
+    /** Whether any of level l's quads covers column (x16, z16) at or above y16. */
+    private static boolean any(VoxelMesh mesh, int l, int x16, int z16, int y16) {
+        int[] q = mesh.quads()[l];
+        for (int i = 0; i < q.length; i += 4) {
+            int x = q[i] & 511, z = q[i] >> 9 & 511, d = q[i] >> 18 & 7, eu = q[i] >> 21 & 511;
+            int y = q[i + 1] & 16383, ev = q[i + 1] >> 14 & 16383;
+            int xs = d < 4 ? eu : 0, zs = d < 2 ? ev : d >= 4 ? eu : 0, ys = d < 2 ? 0 : ev;
+            if (x16 + 8 >= x && x16 + 8 <= x + xs && z16 + 8 >= z && z16 + 8 <= z + zs && y + ys > y16) return true;
+        }
+        return false;
     }
 }

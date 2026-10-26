@@ -1,0 +1,69 @@
+{
+  "variants": {
+    "facing=north": [
+      {
+        "model": "awaken:block/stook_a",
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/stook_b",
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/stook_c",
+        "weight": 1
+      }
+    ],
+    "facing=east": [
+      {
+        "model": "awaken:block/stook_a",
+        "y": 90,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/stook_b",
+        "y": 90,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/stook_c",
+        "y": 90,
+        "weight": 1
+      }
+    ],
+    "facing=south": [
+      {
+        "model": "awaken:block/stook_a",
+        "y": 180,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/stook_b",
+        "y": 180,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/stook_c",
+        "y": 180,
+        "weight": 1
+      }
+    ],
+    "facing=west": [
+      {
+        "model": "awaken:block/stook_a",
+        "y": 270,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/stook_b",
+        "y": 270,
+        "weight": 1
+      },
+      {
+        "model": "awaken:block/stook_c",
+        "y": 270,
+        "weight": 1
+      }
+    ]
+  }
+}

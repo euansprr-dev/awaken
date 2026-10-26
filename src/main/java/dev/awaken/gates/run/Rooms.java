@@ -551,14 +551,17 @@ public final class Rooms {
                 offers.add(new MerchantOffer(new ItemCost(Items.EMERALD, 2), new ItemStack(shard, 1), 16, 1, 0.05F));
             }
             case 1 -> {
-                offers.add(new MerchantOffer(new ItemCost(shard, 5), new ItemStack(Items.DIAMOND, 1), 4, 6, 0.05F));
+                // no diamonds (SPEC §28.0 decision 8: metal comes from the deep); a coil of Runner's rope instead
+                var rope = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(dev.awaken.Awaken.id("runner_rope"));
+                if (rope != Items.AIR) offers.add(new MerchantOffer(new ItemCost(shard, 2), new ItemStack(rope, 1), 6, 3, 0.05F));
                 offers.add(new MerchantOffer(new ItemCost(shard, 2), new ItemStack(Items.ENDER_PEARL, 2), 8, 3, 0.05F));
                 offers.add(new MerchantOffer(new ItemCost(shard, 3), new ItemStack(Items.EXPERIENCE_BOTTLE, 6), 8, 3, 0.05F));
                 offers.add(new MerchantOffer(new ItemCost(Items.GOLD_INGOT, 4), new ItemStack(shard, 1), 16, 1, 0.05F));
             }
             default -> {
                 offers.add(new MerchantOffer(new ItemCost(shard, 12), new ItemStack(CoreApi.LORD_HEART.get(), 1), 1, 20, 0.0F));
-                offers.add(new MerchantOffer(new ItemCost(shard, 6), new ItemStack(Items.NETHERITE_SCRAP, 1), 2, 10, 0.05F));
+                var pitons = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(dev.awaken.Awaken.id("piton"));
+                if (pitons != Items.AIR) offers.add(new MerchantOffer(new ItemCost(shard, 2), new ItemStack(pitons, 4), 4, 3, 0.05F));
                 offers.add(new MerchantOffer(new ItemCost(shard, 4), new ItemStack(Items.GOLDEN_APPLE, 2), 4, 6, 0.05F));
             }
         }

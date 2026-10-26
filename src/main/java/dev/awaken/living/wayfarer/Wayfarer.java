@@ -78,10 +78,17 @@ public class Wayfarer extends PathfinderMob implements Npc {
         setCustomNameVisible(false);
     }
 
+    /** Asleep on a bedroll (Hettie, at night by the camp's fire): lies still until morning or until spoken to. */
+    @Override
+    protected boolean isImmobile() {
+        return super.isImmobile() || isSleeping();
+    }
+
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
         if (player instanceof ServerPlayer sp) {
+            if (isSleeping()) stopSleeping();
             getLookControl().setLookAt(sp);
             getNavigation().stop();
             Wayfarers.talk(sp, this);
