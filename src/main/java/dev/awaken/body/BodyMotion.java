@@ -48,7 +48,7 @@ final class BodyMotion {
     int histAt, histCount;
     // the bench's view of the trial in progress
     boolean tStarted, tAccepted, tRefused, tEnded, tCorrected;
-    int tRuns, tGrabs;
+    int tRuns, tGrabs, tVaults;
 
     boolean runner() {
         return runUntil != 0 || hanging || gripping;

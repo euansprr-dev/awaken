@@ -296,6 +296,7 @@ final class BodyServer {
 
     /** A crossing accepted (from the ground, or over a rail from a hang): the crawl box here too, counted, shown. */
     static void vaultFrom(ServerPlayer p, BodyMotion m, VaultRules.Vault v, float yaw, long now) {
+        if (RunnerServer.bench != null) m.tVaults++; // an accident lane's count
         m.vaultUntil = now + v.ticks() + VaultRules.GRACE;
         p.setForcedPose(Pose.SWIMMING);
         p.setPose(Pose.SWIMMING);

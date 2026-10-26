@@ -536,7 +536,8 @@ final class RunnerServer {
      * Builds the S3 course with its floor top at {@code o} (feet level), facing +z. Lane A: two parallel walls 4 apart
      * with a 2-high launch platform (wall-run, wall jumps). Shaft S: two walls with trims 3 apart (back jumps). The
      * warehouse W: a face with a low trim (gap, corner wrap), an upper trim, a crane arm and a crate; its roof for the
-     * sneak-lower. Accident lanes: a 2-wide alley, an alley with crates, a wall with a low fence, a 2-high garden wall.
+     * sneak-lower. Accident lanes: a 2-wide alley, an alley with crates, a wall with a low fence (never run on, grabbed or
+     * crossed: it's beside you, SPEC §17.27), a 2-high garden wall.
      */
     static void build(ServerLevel level, BlockPos o) {
         course = o.immutable();
@@ -634,7 +635,7 @@ final class RunnerServer {
         int si, trial;
         int target = -1, flag = -1;
         // per script
-        int noStart, accepted, refused, ended, corrected, unwantedRuns, unwantedGrabs, fallbacks;
+        int noStart, accepted, refused, ended, corrected, unwantedRuns, unwantedGrabs, unwantedVaults, fallbacks;
 
         Bench(ServerPlayer p, String[] scripts, int count) {
             this.p = p;
@@ -683,7 +684,7 @@ final class RunnerServer {
             report(b);
             b.si++;
             b.trial = 0;
-            b.noStart = b.accepted = b.refused = b.ended = b.corrected = b.unwantedRuns = b.unwantedGrabs = b.fallbacks = 0;
+            b.noStart = b.accepted = b.refused = b.ended = b.corrected = b.unwantedRuns = b.unwantedGrabs = b.unwantedVaults = b.fallbacks = 0;
             if (b.si >= b.scripts.length) {
                 bench = null;
                 Runnable next = QUEUE.poll();
@@ -714,7 +715,7 @@ final class RunnerServer {
             if (bench != b) return;
             m.tStarted = m.tAccepted = m.tRefused = m.tEnded = m.tCorrected = false;
             m.hangFallbacks = 0;
-            m.tRuns = m.tGrabs = 0;
+            m.tRuns = m.tGrabs = m.tVaults = 0;
             AwakenNet.send(p, new BodyPayloads.Try(what, 0));
         });
         Later.run(p.level().getServer(), 8 + s.ticks + 6, () -> {
@@ -722,6 +723,7 @@ final class RunnerServer {
             if (s.target < 0) {
                 if (m.tRuns > 0) b.unwantedRuns++;
                 if (m.tGrabs > 0) b.unwantedGrabs++;
+                if (m.tVaults > 0) b.unwantedVaults++; // a fence beside you is never crossed (SPEC §17.27)
             } else if (!m.tStarted) b.noStart++;
             else if (m.tRefused) b.refused++;
             else b.accepted++;
@@ -744,8 +746,8 @@ final class RunnerServer {
     private static void report(Bench b) {
         String s = b.scripts[b.si];
         String line = spec(s).target < 0
-                ? String.format("%s latency %d ms, trigger %s: %d passes, unwanted wall-runs %d, unwanted grabs %d", s, latencyTicks * 50,
-                airPress ? "press" : "held", b.count, b.unwantedRuns, b.unwantedGrabs)
+                ? String.format("%s latency %d ms, trigger %s: %d passes, unwanted wall-runs %d, unwanted grabs %d, unwanted vaults %d", s,
+                latencyTicks * 50, airPress ? "press" : "held", b.count, b.unwantedRuns, b.unwantedGrabs, b.unwantedVaults)
                 : String.format("%s latency %d ms (%s, trigger %s): %d trials, accepted %d, refused %d, no start %d, ended by server %d, corrected %d, hang fallbacks %d",
                 s, latencyTicks * 50, fromHistory ? "history" : "now", airPress ? "press" : "held", b.count, b.accepted, b.refused, b.noStart, b.ended,
                 b.corrected, b.fallbacks);
