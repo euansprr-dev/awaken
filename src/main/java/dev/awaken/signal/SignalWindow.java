@@ -8,6 +8,8 @@ import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 
+import dev.awaken.core.api.Notices;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +25,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public record SignalWindow(int id, Kind kind, Component title, Optional<Component> body, List<Row> rows,
                            Optional<Component> footer, Optional<String> action, int ttlTicks, int priority,
-                           Presentation presentation, Optional<Component> yesLabel, Optional<Component> noLabel) {
+                           Presentation presentation, Optional<Component> yesLabel, Optional<Component> noLabel,
+                           Notices.Tier tier, String topic, boolean moment) {
 
     /** How a message is shown (System v2). */
     public enum Presentation {
@@ -54,6 +57,27 @@ public record SignalWindow(int id, Kind kind, Component title, Optional<Componen
         ).apply(i, Row::new));
     }
 
+    /** This message at another tier (the Signal raises an untagged one inside a gate run). */
+    public SignalWindow withTier(Notices.Tier t) {
+        return new SignalWindow(id, kind, title, body, rows, footer, action, ttlTicks, priority, presentation, yesLabel, noLabel, t, topic, moment);
+    }
+
+    /** Untagged: the default tier, no topic, not a moment (the director may treat it as a response to the player). */
+    public boolean untagged() {
+        return tier == Notices.Tier.IMPORTANT && topic.isEmpty() && !moment;
+    }
+
+    private static final Codec<Notices.Tier> TIER_CODEC = Codec.STRING.xmap(Notices.Tier::valueOf, Notices.Tier::name);
+
+    /**
+     * The tier a message gets unless its sender says (SPEC §26): a decision, a warning or a gate panel is CRITICAL;
+     * everything else IMPORTANT. Discoveries and other ambient finds say AMBIENT themselves.
+     */
+    static Notices.Tier defaultTier(Kind kind, boolean decision, Presentation p) {
+        if (decision || kind == Kind.WARNING || kind == Kind.GATE || p == Presentation.CHOICE) return Notices.Tier.CRITICAL;
+        return Notices.Tier.IMPORTANT;
+    }
+
     public static final Codec<SignalWindow> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.INT.fieldOf("id").forGetter(SignalWindow::id),
             Kind.CODEC.fieldOf("kind").forGetter(SignalWindow::kind),
@@ -66,7 +90,10 @@ public record SignalWindow(int id, Kind kind, Component title, Optional<Componen
             Codec.INT.fieldOf("priority").forGetter(SignalWindow::priority),
             Presentation.CODEC.optionalFieldOf("presentation", Presentation.AUTO).forGetter(SignalWindow::presentation),
             ComponentSerialization.CODEC.optionalFieldOf("yes").forGetter(SignalWindow::yesLabel),
-            ComponentSerialization.CODEC.optionalFieldOf("no").forGetter(SignalWindow::noLabel)
+            ComponentSerialization.CODEC.optionalFieldOf("no").forGetter(SignalWindow::noLabel),
+            TIER_CODEC.optionalFieldOf("tier", Notices.Tier.IMPORTANT).forGetter(SignalWindow::tier),
+            Codec.STRING.optionalFieldOf("topic", "").forGetter(SignalWindow::topic),
+            Codec.BOOL.optionalFieldOf("moment", false).forGetter(SignalWindow::moment)
     ).apply(i, SignalWindow::new));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SignalWindow> STREAM_CODEC = ByteBufCodecs.fromCodecWithRegistriesTrusted(CODEC);
@@ -88,6 +115,9 @@ public record SignalWindow(int id, Kind kind, Component title, Optional<Componen
         private int priority = 0;
         private Presentation presentation = Presentation.AUTO;
         private Component yes, no;
+        private Notices.Tier tier;
+        private String topic = "";
+        private boolean moment;
 
         private Builder(Kind kind, Component title) {
             this.kind = kind;
@@ -114,11 +144,18 @@ public record SignalWindow(int id, Kind kind, Component title, Optional<Componen
         /** Info: how long a card is shown. A decision: how long it stays answerable (keep it within the handler's own offer). */
         public Builder ttl(int ticks) { this.ttl = ticks; return this; }
         public Builder priority(int p) { this.priority = p; return this; }
+        /** How much it may interrupt (SPEC §26); unset, {@link #defaultTier} decides. */
+        public Builder tier(Notices.Tier t) { this.tier = t; return this; }
+        /** Waiting messages with the same topic arrive as one ("3 new creatures"). */
+        public Builder topic(String t) { this.topic = t; return this; }
+        /** A first of its kind or a wonder: shown as a moment (the centre banner), and waits longer for its quiet. */
+        public Builder moment() { this.moment = true; return this; }
 
         public SignalWindow build() {
             return new SignalWindow(NEXT_ID.getAndIncrement(), kind, title, Optional.ofNullable(body), List.copyOf(rows),
                     Optional.ofNullable(footer), Optional.ofNullable(action), ttl, priority, presentation,
-                    Optional.ofNullable(yes), Optional.ofNullable(no));
+                    Optional.ofNullable(yes), Optional.ofNullable(no),
+                    tier != null ? tier : defaultTier(kind, action != null, presentation), topic, moment);
         }
     }
 }

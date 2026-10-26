@@ -5,16 +5,14 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.awaken.Awaken;
 import dev.awaken.core.AwakenNet;
 import dev.awaken.core.DirectorLog;
-import dev.awaken.core.PlayDays;
 import dev.awaken.core.api.GateHooks;
 import dev.awaken.core.api.HearthHooks;
 import dev.awaken.living.LivingNet;
 import dev.awaken.living.api.Regions;
 import dev.awaken.progression.Progression;
-import dev.awaken.signal.Signal;
+import dev.awaken.signal.Finds;
 import dev.awaken.terrain.api.CityBasin;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -161,7 +159,8 @@ public final class Pulse extends SavedData {
         Progression.count(p, "awaken:happenings_witnessed");
         if (Progression.discover(p, "happening/" + path, 0.1)) {
             Progression.markNewThing(p, "happening/" + path);
-            Signal.toast(p, Component.literal("Witnessed · " + def.title()));
+            // a happening is big and in plain view: witnessing it is enough (SPEC §26.3)
+            Finds.tell(p, Finds.Find.of("happening", "Witnessed · " + def.title(), def.title(), "", 0xFFCF7A, false));
         }
         Behaviour b = Behaviours.get(def.behaviour());
         if (b != null) b.witnessed(p, h, def);

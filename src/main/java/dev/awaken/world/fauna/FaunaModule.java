@@ -89,6 +89,13 @@ public final class FaunaModule {
             Lairs.tick(e.getServer());
         });
         bus.addListener(Lairs::onChunkLoad);
+        // hitting or touching a creature studies it (SPEC §26.3)
+        bus.addListener((net.neoforged.neoforge.event.entity.player.AttackEntityEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer sp && e.getTarget() instanceof FaunaMob m) Sightings.touched(sp, m);
+        });
+        bus.addListener((net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract e) -> {
+            if (e.getEntity() instanceof ServerPlayer sp && e.getTarget() instanceof FaunaMob m) Sightings.touched(sp, m);
+        });
         bus.addListener(FaunaModule::onLogin);
         bus.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> Sightings.forget(e.getEntity().getUUID()));
         bus.addListener(FaunaModule::onDimension);

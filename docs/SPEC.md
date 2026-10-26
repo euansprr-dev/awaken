@@ -277,7 +277,11 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
 
 ## 12. Cross-module public API (stable)
 
-- `dev.awaken.signal.Signal` — `send(ServerPlayer, SignalWindow)`, `toast(ServerPlayer, Component)`.
+- `dev.awaken.signal.Signal` — `send(ServerPlayer, SignalWindow)`, `toast(ServerPlayer, Component)`,
+  `toast(ServerPlayer, Component, Notices.Tier, String topic)`; `SignalWindow.Builder.tier/topic/moment` (§26).
+  `dev.awaken.signal.Finds` — `tell(ServerPlayer, Find)`: how a new find is told (lesson, moment, first of kind, filed).
+- `dev.awaken.core.api.Notices` (§26) — `enum Tier {CRITICAL, IMPORTANT, AMBIENT}`; client: `claim(tier, topic)` before
+  a module's own HUD line takes the screen, `file(tier, title, line)` into the Journal, `quiet()`, `hold(owner, bool)`.
 - `dev.awaken.progression.Progression` — `profile(Player)`, `grantXp(ServerPlayer, double, XpSource)`, `count(ServerPlayer,
   Identifier, long)`, `markNewThing(ServerPlayer, String what)`, `rank(Player)`, `stat(Player, Stat)`, `contentLevel(rank)`.
 - `dev.awaken.powers.Powers` — `learn(ServerPlayer, Identifier power, int variant)`, `energy(Player)`, `forcesOf(DamageSource)`.
@@ -4228,3 +4232,106 @@ in 1–2 hits from D up) and let a Tank win at C and A. No extra level is carrie
 kill switch, sounds, stance rules, clips, the Art, the Plunge, assets; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
 `audio_events_resolve` covers the kit's files and subtitles. S2/S3: `arms_hand_pose` (the swing on Hands' view layer),
 `arms_assets` (the streams), `mobs_bolt_class`, `mobs_answered_no_burn`, `mobs_broken_idle`.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 26. How AWAKEN tells you things (the notification director, discovery, the rift; Euan's playtest 2026-10-26)
+
+Euan, at level 3 in a forest: a lair rumour, "Something tore open nearby" and a "New creature" toast whose hint named a
+plant arrived seconds apart; he hadn't looked at anything, barely heard the rift and could hardly see it. The audit
+(26.6) found ~400 Signal call sites, a dozen client HUD channels that ignore each other, and no global pace at all.
+The rules below replace that.
+
+### 26.1 Principles
+- **World first, HUD second.** A happening announces itself in the world first: sound with distance and direction,
+  light, motion. Text is the last resort. A rift's word follows its tear by 2.5 s (`AnomalyDirector.WORD_AFTER = 50`).
+- **One director.** Every System message that isn't a decision, and every module's own HUD line that wants the
+  player's eye, goes through the Signal client's `Herald` (pure pacing logic in `signal.ui.Pace`, GameTested).
+- **Discovery is earned and understood.** Intent, never proximity alone; the first find teaches; the rest are quiet.
+- **Nothing is lost.** What isn't shown is filed in the Journal (K), and finds stay in the Codex for good.
+
+### 26.2 Tiers, pace and context (`core.api.Notices`, `SignalWindow.tier/topic/moment`)
+- **CRITICAL** bypasses everything: a decision (any window with an action), a WARNING kind, a GATE panel, a dangerous
+  region's caption, a level-up pane, an Ascent gift scene (those two claim the moment so what follows waits its gap).
+- **IMPORTANT** (the default for everything else) is paced. **AMBIENT** never interrupts at Standard: filed with a cue.
+- A **moment** (`Builder.moment()`): a first of its kind, a wonder, the first rift. Shown as the centre banner
+  (`signal.client.Moment`: spaced label = the window's footer, a line of light, the name ×1.8, ≤2 lines; ~5 s +6 ticks a
+  word, at most +6 s; sound `awaken:ui.moment`), at 20% of the screen height; shows at every density.
+- **Pace** (ticks; density `notifications` in `awaken-client.toml`, `AwakenConfig.Client.NOTIFICATIONS`):
+
+  | density | gap | calm gap | burst / window | ordinary waits | moment waits | IMPORTANT | AMBIENT |
+  |---|---|---|---|---|---|---|---|
+  | MINIMAL | 600 | 900 | 1 / 2400 | 600 | 3600 | filed | filed |
+  | STANDARD (default) | 160 | 280 | 3 / 1800 | 900 | 3600 | shown | filed |
+  | GUIDED | 80 | 120 | 5 / 1200 | 1200 | 3600 | shown | shown |
+
+  Calm = no fight for 60 s. Waiting messages of the same `topic` merge into one toast ("Mossback · +2"). A message that
+  waited past its wait is filed, not shown late. Moments go first, then the higher tier, then the oldest.
+- **Held** (nothing paced shows): any screen open, a fight (hurt in 5 s or a hostile within 8), `UiHooks.focus > 0.2`,
+  a choice card or info panel up, a moment up, a scene holding (`Notices.client().hold`, the Ascent gift scene), not yet
+  awakened, or the world's first 5 minutes (`Herald.SETTLE`; onboarding speaks through story lines and its own HUD).
+- **Responses and runs stay live.** An *untagged* message (IMPORTANT, no topic, not a moment: most of the ~400 call
+  sites) that arrives within 60 ticks of the player's own click (attack/use/pick, or a click in a screen) answers it and
+  shows at once; inside a gate run the server raises untagged messages to CRITICAL (`Signal.send/toast`). The pace is
+  for what arrives unasked.
+- **Look and place per tier:** CRITICAL = the choice/warning card or panel (right slot) and the warning sound;
+  IMPORTANT = the System toast, top right, chime; moment = the centre banner; AMBIENT = the find cue (below).
+- **Client lines through the director:** `Notices.client().claim(tier, topic)` before showing (true counts as shown);
+  `file(...)` what can't wait. The region caption claims IMPORTANT (CRITICAL when dangerous), waits up to 200 ticks,
+  then files "Entered · <name>"; the dangerous region's toast is IMPORTANT, topic `danger`.
+
+### 26.3 Discovery (`signal.Finds`)
+- **Intent.** A creature is studied when the crosshair rests on it (its angular size + 3°) for 3 looks in a row, 5
+  ticks apart (~0.5 s), within 24 blocks (48 for a named beast), in line of sight; or when it is hit or touched
+  (`AttackEntityEvent`, `EntityInteract`). Proximity alone never counts, except something big in plain view: a named
+  beast or a creature ≥2.5 blocks tall, within 16 blocks and within 60° of the view (`Sightings`). Biomes and
+  happenings are big and in plain view: standing in one, witnessing one counts (but they never carry the lesson).
+  Lairs (reach the den), landmarks and gates (reach them) are found by going there.
+- **Telling** (`Finds.tell(player, Find)` after `Progression.discover` returned true):
+  1. the first find ever made on purpose (`intent`) is the **lesson**: a moment with the name, its hint, and "A
+     discovery. You studied something new: it pays a little XP, and what you learned is kept in your Journal and Codex
+     (K). Look closely at what you meet." (counter `awaken:finds_taught`);
+  2. a **big** one (a named beast; later wonders) is a moment with its own label;
+  3. the **first of each kind** (`awaken:finds/<kind>`: creature, biome, happening, lair, landmark, gate) is an
+     IMPORTANT toast ending "kept in your Journal (K)";
+  4. **every later one** is AMBIENT: filed with the cue.
+- **The find cue** (`signal.client.FindCue`): a small diamond blooms 13 px right of the crosshair with the name in a
+  whisper beside it (5 + 34 + 16 ticks), and `awaken:ui.find` at 0.32 (at most every 60 ticks); several at once read
+  "N finds · Journal".
+- **The Journal** (`signal.client.Journal`, Status tab, order −10): filed lines newest first ("◆" unread), 60 kept per
+  session, "JOURNAL · N NEW" until the K screen has shown them. The Codex keeps the finds themselves.
+- A lair rumour ("Heard of · …") is AMBIENT, topic `lair` (the Now tracker points at it).
+
+### 26.4 "Nearby" alerts and the rift
+- Anomaly words are IMPORTANT, topic `nearby` (merged, paced, never several at once), sent 50 ticks after the anomaly's
+  own cue, and dropped if it ended meanwhile. The first rift a player meets is a moment ("Something tore open", label
+  "Rift", what it is and how to close it).
+- **The tear's sound:** `anomaly.rift_open` is our own `sfx_rift_tear` (tools/art/specs/audio_discovery.py: air pulled
+  in, a falling rip with crackle, a sub boom 62→27 Hz, glass splinters, a crackling tail; mono), a fixed-range event
+  heard to 128 blocks with linear falloff (`attenuation_distance` 128). Before: vanilla respawn-anchor sounds that a
+  variable-range event at volume 3 sent only within 48 blocks of a tear that opens 32–96 away.
+- **While open:** the near crackle bed (40 blocks, as before), a new far bed `amb.rift_rumble` (`amb_rift_rumble`,
+  started within 72 blocks, attenuation 72), the hum, and a hush of birds and insects within 40 blocks to 20%
+  (`Soundscape.hush`, renewed every 40 ticks).
+- **The look** (`world.anomaly.client.RiftGlow`; the CityGlow way: one additive lightning-blend pass, depth-tested, no
+  depth written, Lens-friendly; replaces the 0.8 × 3.6 textured quad and the vanilla portal particles): a jagged crack
+  7 blocks tall (16 nodes whose edges crawl) in three ribbons (violet glow ×2.8, magenta body, white core ×0.3), four
+  flickering side cracks, a halo of radius 6.5, a violet pool of radius 11 on the ground, a faint column 56 blocks into
+  the sky (so it reads against the sky from 60 blocks by day), 28 motes spiralling in, the core at its foot. It opens
+  over 30 ticks with a flash and a ring running out along the ground, flares when struck, folds as it closes. Drawn to
+  160 blocks.
+
+### 26.5 Tests
+`notice_pace_gap_and_burst`, `notice_critical_bypasses_queue`, `notice_ambient_files_to_journal` (signal),
+`notice_discovery_needs_intent` (fauna: beside the crosshair is never a find, a glance isn't, a rest is; the first find
+teaches). `fauna_sighting_discovery` studies for `Sightings.DWELL` looks.
+
+### 26.6 The audit (2026-10-26) and what is still outside the director
+Routed: every Signal toast/panel/window (server tier tags: anomalies, creatures, biomes, happenings, lairs, landmarks,
+gates, crafts, the danger toast; the rest default IMPORTANT/CRITICAL by kind), the region caption, the level pane, the
+Ascent gift scene. What Euan saw: reaching level 3 (and a first sighting) queues lair rumours for every family met
+(`Lairs.onLevel`) → a toast "Heard of · <lair>"; a rift opened (toast at once, sound to 48 blocks only); a creature
+in the 60° cone at 24 blocks counted as a sighting and its toast's hint named plants ("Plants mushrooms", "Crops it
+hovers over grow"). Not yet routed (follow-ups): the vanilla action bar (102 server call sites, three throttled), boss
+chat lines, the XP pop, Ascent notes and the Vow scene, citizens' speech; TipHooks has no implementation (the onboarding
+spec's `TipHud`/`TipRules` were never built), so Carillon's and the Ascent's tips show nothing today.

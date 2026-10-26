@@ -1,6 +1,5 @@
 package dev.awaken.world.anomaly;
 
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -97,36 +96,17 @@ public class RiftEntity extends Entity {
             discard();
             return;
         }
-        // a low hum that carries ~40 blocks, and a few forced particles so the tear reads from further off
+        // a low hum that carries ~40 blocks (the drawn light makes it read from further off)
         if (tickCount % 80 == 1) {
             level.playSound(null, getX(), getY() + 1.4, getZ(), AnomalyContent.RIFT_HUM.get(), SoundSource.HOSTILE, 2.5F,
                     0.75F + random.nextFloat() * 0.15F);
         }
-        if (tickCount % 10 == 0) {
-            level.sendParticles(ParticleTypes.REVERSE_PORTAL, true, true, getX(), getY() + 1.6, getZ(), 5, 0.2, 1.1, 0.2, 0.02);
-        }
     }
 
     private void clientTick() {
+        // the tear's light, motes and flashes are drawn (client.RiftGlow), not vanilla particles
         if (flash > 0) flash--;
         if (closingAge >= 0) closingAge++;
-        Level l = level();
-        // matter pulled into the crack...
-        for (int i = 0; i < 2; i++) {
-            double ox = (random.nextDouble() - 0.5) * 3.0, oy = random.nextDouble() * 3.4 - 0.4, oz = (random.nextDouble() - 0.5) * 3.0;
-            l.addParticle(ParticleTypes.PORTAL, getX(), getY() + 1.4, getZ(), ox, oy - 1.0, oz);
-        }
-        // ...and sparks along its edge
-        if (random.nextInt(4) == 0) {
-            l.addParticle(ParticleTypes.ELECTRIC_SPARK, getX() + (random.nextDouble() - 0.5) * 0.5, getY() + random.nextDouble() * 3.2,
-                    getZ() + (random.nextDouble() - 0.5) * 0.5, 0, 0.02, 0);
-        }
-        if (closingAge >= 0 && closingAge < 4) {
-            for (int i = 0; i < 12; i++) {
-                l.addParticle(ParticleTypes.END_ROD, getX(), getY() + 0.3 + random.nextDouble() * 2.8, getZ(),
-                        (random.nextDouble() - 0.5) * 0.4, (random.nextDouble() - 0.5) * 0.2, (random.nextDouble() - 0.5) * 0.4);
-            }
-        }
     }
 
     @Override

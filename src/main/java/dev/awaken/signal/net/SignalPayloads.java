@@ -29,11 +29,14 @@ public final class SignalPayloads {
         @Override public Type<Show> type() { return TYPE; }
     }
 
-    /** Server → client: a small toast line (combat-safe). */
-    public record Toast(Component text) implements CustomPacketPayload {
+    /** Server → client: a small toast line (combat-safe), with its tier (SPEC §26) and merge topic. */
+    public record Toast(Component text, int tier, String topic) implements CustomPacketPayload {
         public static final Type<Toast> TYPE = new Type<>(Awaken.id("signal_toast"));
-        public static final StreamCodec<RegistryFriendlyByteBuf, Toast> STREAM_CODEC =
-                ComponentSerialization.TRUSTED_STREAM_CODEC.map(Toast::new, Toast::text);
+        public static final StreamCodec<RegistryFriendlyByteBuf, Toast> STREAM_CODEC = StreamCodec.composite(
+                ComponentSerialization.TRUSTED_STREAM_CODEC, Toast::text,
+                ByteBufCodecs.VAR_INT, Toast::tier,
+                ByteBufCodecs.STRING_UTF8, Toast::topic,
+                Toast::new);
         @Override public Type<Toast> type() { return TYPE; }
     }
 
