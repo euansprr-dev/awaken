@@ -1,0 +1,116 @@
+# Carillon M4: the Registry ceremony, desk to K (tour 3): the signing, the hand-over, the wear, the boot, the K tip.
+# wake's last lines, Bram's walk (shots behind him at three points of the way), the Lens, the desk (signing: the hand to
+# the pot, the name being written, the blot, Bram's seal, the fold), the band held out and taken (the reach, the look at
+# it), the wear prompt, the plain inventory with the breathing wrist slot, the band on the cursor and on the wrist, the
+# boot on the wrist (raise, the light running round, the marks, the ignition ring), the K prompt, the K menu, the Atlas
+# reveal, the first power, the city is yours; then the holo inventory with the band worn, and a third-person look.
+# Run: PACK=perf,world TECTONIC=awakened RD=16 SLOT_WHO=registry \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh light tools/autopilot.sh tools/autopilot/carillon-m4-registry-boot.txt 900
+world carillonRegB survival 20261024
+waitworld
+gui 0
+window 1440 900
+info
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+cmd awaken opening tour true
+wait 200
+wait 200
+# ---- the desk: Bram goes round behind the counter; use signs
+cmd awaken opening beat desk
+wait 90
+shot reg_desk
+cmd awaken ascent pilot use
+wait 24
+shotnow reg_sign_pot
+wait 22
+shotnow reg_sign_writing
+wait 14
+shotnow reg_sign_written
+wait 20
+shotnow reg_sign_blot
+wait 34
+shotnow reg_sign_seal
+wait 30
+shotnow reg_sign_fold
+wait 30
+shot reg_licence_title
+# ---- the band: Bram holds it out; use takes it
+wait 40
+shot reg_band_offer
+camera back
+wait 6
+shot reg_band_offer_3p
+camera first
+wait 6
+cmd awaken ascent pilot use
+wait 8
+shotnow reg_take_reach
+wait 12
+shotnow reg_take_bring
+wait 10
+shotnow reg_take_look
+wait 30
+shot reg_band_in_hand
+# ---- wearing it: the prompt, the plain inventory (the slot breathes), the band onto the wrist
+shot reg_wear_prompt
+key status
+wait 10
+shot reg_k_dark
+holo inv open
+wait 20
+shot reg_inventory_slot
+holo wrist pick
+wait 8
+shot reg_inventory_carried
+holo wrist
+wait 6
+shotnow reg_inventory_worn
+# the inventory closes itself 14 ticks after; then the boot (raise 10, seated 8, the light round 20, marks 18, ignite)
+wait 18
+shotnow reg_boot_raise
+wait 14
+shotnow reg_boot_run
+wait 16
+shotnow reg_boot_marks
+wait 14
+shotnow reg_boot_ignite
+wait 8
+shotnow reg_boot_ring
+wait 20
+shot reg_boot_title
+# ---- Bram's three lines, then "Go on, open it" and the K prompt
+wait 280
+shot reg_k_prompt
+key status
+wait 24
+shot reg_kmenu
+screen close
+# ---- the Atlas opens by itself with the run (proposal)
+wait 60
+shot reg_atlas_reveal
+wait 60
+shot reg_atlas_thread
+screen close
+# ---- the first power, the Directive, the city is yours
+wait 60
+shot reg_power
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 200
+shot reg_yours
+cmd awaken opening status
+# ---- after: the holo inventory with the band in its slot, and the band on the wrist in third person
+wait 100
+holo inv open
+wait 30
+shot reg_inventory_holo
+holo inv close
+camera back
+wait 10
+shot reg_third_person
+camera first
+cmd awaken band status
+quit

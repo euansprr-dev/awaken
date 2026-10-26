@@ -149,21 +149,12 @@ final class RegistryScene {
                 if (!worn) {
                     if (TipHooks.client().wants(TIP_WEAR)) TipHooks.client().offer(TIP_WEAR);
                     OpeningHud.prompt(sc == null ? inv : null, sc == null ? "Open your inventory · put the band on your wrist" : "");
-                } else {
-                    OpeningHud.prompt(null, "");
-                    if (wornSeenAt < 0) {
-                        wornSeenAt = OpeningClient.ticks();
-                        TipHooks.client().done(TIP_WEAR);
-                    }
-                    // a moment to see it in the slot, then the inventory steps aside for the boot
-                    if (!closedInventory && sc instanceof InventoryScreen && OpeningClient.ticks() - wornSeenAt > 14) {
-                        closedInventory = true;
-                        sc.onClose();
-                    }
-                }
+                } else stepAside(sc, worn);
                 bootTitle(mc, worn);
             }
             case BOOT -> {
+                // the server is here the moment the band goes on, usually with the inventory still open
+                stepAside(sc, worn);
                 bootTitle(mc, worn);
                 if (bootedAt >= stepAt - 40 && bootedAt >= 0) ready(BOOT);
             }
@@ -198,6 +189,20 @@ final class RegistryScene {
             default -> {}
         }
         if (OpeningFx.lens != null) OpeningFx.lensGlow = Math.max(0.15F, OpeningFx.lensGlow * 0.985F);
+    }
+
+    /** The band is on: a moment to see it in the slot, then the inventory steps aside so the boot plays on the wrist. */
+    private static void stepAside(@Nullable Screen sc, boolean worn) {
+        if (!worn) return;
+        OpeningHud.prompt(null, "");
+        if (wornSeenAt < 0) {
+            wornSeenAt = OpeningClient.ticks();
+            TipHooks.client().done(TIP_WEAR);
+        }
+        if (!closedInventory && sc instanceof InventoryScreen && OpeningClient.ticks() - wornSeenAt > 14) {
+            closedInventory = true;
+            sc.onClose();
+        }
     }
 
     /** The band's title as its boot begins on the wrist (once the inventory is shut). */

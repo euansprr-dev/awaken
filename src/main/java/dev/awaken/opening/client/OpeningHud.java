@@ -296,7 +296,7 @@ final class OpeningHud {
         String key = promptKey != null ? promptKey : lastKey;
         if (promptKey != null) lastKey = promptKey;
         int kw = Math.max(13, font.width(key) + 8), tw = font.width(promptText), gap = 6;
-        int x = w / 2 - (kw + gap + tw) / 2, y = h / 2 + 14; // just under the crosshair, clear of the speech
+        int x = w / 2 - (kw + gap + tw) / 2, y = h - 60; // under the speech (it stacks up from h - 68), over the health bar
         int ia = (int) (a * 255);
         float pulse = 0.75F + 0.25F * Mth.sin((OpeningClient.ticks() + pt) * 0.18F);
         g.fill(x, y - 2, x + kw, y + 11, ((int) (a * 170) << 24) | 0x0C0F14);
