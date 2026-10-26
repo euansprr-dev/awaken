@@ -230,14 +230,19 @@ final class FarRenderer implements AutoCloseable {
             for (int dx = -radius; dx <= radius; dx++) {
                 int x = cx + dx, z = cz + dz;
                 if (((x + z) & 1) != turn) continue;
-                boolean loaded = source.getChunk(x, z, ChunkStatus.FULL, false) != null;
+                var chunk = source.getChunk(x, z, ChunkStatus.FULL, false);
                 int base = (((z & 63) * SECTIONS) << 6) | (x & 63);
                 for (int sy = 0; sy < count; sy++) {
                     int at = base + (sy << 6);
                     boolean built = false;
-                    if (loaded) {
-                        probe.set(x * 16 + 8, (minSection + sy) * 16 + 8, z * 16 + 8);
-                        built = sections.isSectionCompiledAndVisible(probe, 0L);
+                    if (chunk != null) {
+                        // an all-air section has nothing of City Sight's to hide: counted built without asking
+                        var section = chunk.getSection(sy);
+                        if (section.hasOnlyAir()) built = true;
+                        else {
+                            probe.set(x * 16 + 8, (minSection + sy) * 16 + 8, z * 16 + 8);
+                            built = sections.isSectionCompiledAndVisible(probe, 0L);
+                        }
                     }
                     if (!built) sectionSince[at] = 0;
                     else if (sectionSince[at] == 0) sectionSince[at] = now;

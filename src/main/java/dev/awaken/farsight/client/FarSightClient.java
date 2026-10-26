@@ -108,8 +108,10 @@ public final class FarSightClient {
     public static boolean warm() {
         if (!drawing() || field == null || renderer == null) return true;
         for (int r = 0; r < rings(); r++) if (field.missing[r] > 0) return false;
-        // City Sight: the whole city meshed and up (the flight shows all of it)
-        if (VoxelCapture.wanted && (!VoxelCapture.idle() || voxels.inFlight.get() > 0 || !voxels.finished.isEmpty())) return false;
+        // City Sight: the whole city meshed and up (the flight shows all of it). Then the real chunks don't matter: the
+        // flight's camera is far from the player, Sodium doesn't build them for it, and City Sight draws them anyway
+        // (waiting on them held the card its full 20 s every time)
+        if (VoxelCapture.wanted) return VoxelCapture.idle() && voxels.inFlight.get() == 0 && voxels.finished.isEmpty();
         return renderer.shownShare >= WARM_SHOWN;
     }
 
@@ -140,6 +142,8 @@ public final class FarSightClient {
      * value comes back when it stops.
      */
     private static double heldFade = -1;
+    private static long lastCamNanos;
+    private static double lastCamX, lastCamZ, velX, velZ;
     private static int tendTurn;
 
     private static void holdFade(boolean hold) {
@@ -221,6 +225,21 @@ public final class FarSightClient {
         double drop = Math.max(0.0, cam.y - (level.getSeaLevel() - SEA_FLOOR));
         float covered = (float) (Math.floor(Math.sqrt(Math.max(0.0, hidden * (double) hidden - drop * drop)) / 16.0) * 16.0);
         // coarsest first: a window's first patches queue ahead of the finer rings'
+        // where the camera is heading: 1.5 s ahead at its smoothed speed, at most 300 blocks (the queue's lead)
+        long nowNanos = System.nanoTime();
+        if (lastCamNanos != 0) {
+            double dt = Math.max(1e-3, (nowNanos - lastCamNanos) / 1e9);
+            double vx = (cam.x - lastCamX) / dt, vz = (cam.z - lastCamZ) / dt;
+            if (Math.abs(vx) > 2000 || Math.abs(vz) > 2000) vx = vz = 0; // a jump, not a flight
+            velX += (vx - velX) * 0.1;
+            velZ += (vz - velZ) * 0.1;
+        }
+        lastCamNanos = nowNanos;
+        lastCamX = cam.x;
+        lastCamZ = cam.z;
+        double lead = Math.min(1.0, 300.0 / Math.max(1e-3, Math.hypot(velX, velZ) * 1.5));
+        field.leadX = velX * 1.5 * lead;
+        field.leadZ = velZ * 1.5 * lead;
         int far = shown - 1;
         long farWindow = field.valid[far] ? Rings.key(field.winX[far], field.winZ[far]) : Long.MIN_VALUE;
         // ring 0 loads down to the render distance's outer band, where its sea can lie under real water (FarRenderer.rect);

@@ -331,9 +331,10 @@ final class VoxelLayer implements AutoCloseable {
             float near = (float) Math.sqrt(nx * nx + nz * nz);
             float fx = Math.max(Math.abs(ax), Math.abs(bx)), fz = Math.max(Math.abs(az), Math.abs(bz));
             float far = (float) Math.sqrt(fx * fx + fz * fz);
-            // Sodium draws all of it: inside its distance (with a block's margin, as it culls) and every section built
-            if (far < realWithin - 2 && Math.max(Math.abs(ay), Math.abs(by)) < realWithin - 2
-                    && renderer.sectionsBuilt(c.cx, c.cz, c.minY, c.maxY, levelMinY)) continue;
+            // Sodium draws all of it: inside its distance (with a block's margin, as it culls) and shown (loaded, settled
+            // or built: sections it hasn't built there are hidden behind others, and drawing them cost 2 ms at the Roost);
+            // the chunks drawn hide per section (the section mask)
+            if (far < realWithin - 2 && renderer.shown(c.cx, c.cz) && Math.max(Math.abs(ay), Math.abs(by)) < realWithin - 2) continue;
             if (!renderer.inView(ax, ay, az, bx, by, bz)) continue;
             // faces turned away from the camera across the whole chunk aren't drawn: down, up, north, south, west, east
             int faces = (camY < c.maxY ? 1 : 0) | (camY > c.minY ? 2 : 0) | (camZ < c.cz * 16 + 16 ? 4 : 0) | (camZ > c.cz * 16 ? 8 : 0)
