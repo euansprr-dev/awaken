@@ -59,15 +59,22 @@ public final class RegionTracker {
         long tod = Math.floorMod(level.getServer().overworld().getOverworldClockTime(), 24000L);
         if (!city && tod >= 12300 && tod < 13500 && dev.awaken.core.Throttle.allow(p, "tip_night", 24000)) dev.awaken.core.api.TipHooks.offer(p, dev.awaken.Awaken.id("first/night"));
         Boolean wasCity = IN_CITY.put(p.getUUID(), city);
-        if (Boolean.TRUE.equals(wasCity) && !city) {
+        // inside the walls the city is the place: no region caption, no warning, nothing filed (Euan, 2026-10-26: the
+        // Commons' "danger" and "waits for level 4" in the Journal of someone who hadn't left the city yet)
+        if (city) return null;
+        if (Boolean.TRUE.equals(wasCity)) {
             long day = PlayDays.current(level.getServer());
             Long last = WENT_OUT.put(p.getUUID(), day);
             if (last == null) dev.awaken.core.api.TipHooks.offer(p, dev.awaken.Awaken.id("first/atlas")); // the first way out: the Atlas (SPEC §27.7)
-            if (last == null || last != day) {
-                var out = new LivingNet.RegionMsg(r.name(), r.low(), r.high(), r.commons(), true, r.high() >= Progression.profile(p).level() + DANGER);
+            CAPTIONED.computeIfAbsent(p.getUUID(), k -> new HashMap<>()).put(r.id(), day);
+            // the first time out through the High Gate its shot names the land (FirstScenes): no second caption on top
+            boolean named = last == null && Progression.profile(p).counter("awaken:first/gate_shot") > 0;
+            if (!named && (last == null || last != day)) {
+                var out = new LivingNet.RegionMsg(r.name(), r.low(), r.high(), r.commons(), true, danger(p, r));
                 dev.awaken.core.AwakenNet.send(p, out);
                 return out;
             }
+            return null;
         }
         if (was != null && was == r.id()) return null;
         long day = PlayDays.current(level.getServer());
@@ -75,8 +82,7 @@ public final class RegionTracker {
         Long last = captioned.get(r.id());
         boolean caption = last == null || last != day;
         if (caption) captioned.put(r.id(), day);
-        int mine = Progression.profile(p).level();
-        boolean danger = r.high() >= mine + DANGER;
+        boolean danger = danger(p, r);
         var msg = new LivingNet.RegionMsg(r.name(), r.low(), r.high(), r.commons(), caption, danger);
         dev.awaken.core.AwakenNet.send(p, msg);
         if (danger) {
@@ -86,13 +92,18 @@ public final class RegionTracker {
         return msg;
     }
 
+    /** A region far above the player is a danger; the Commons, the land round the city where everyone starts, never is. */
+    static boolean danger(ServerPlayer p, Regions.Region r) {
+        return !r.commons() && r.high() >= Progression.profile(p).level() + DANGER;
+    }
+
     private static void warn(ServerPlayer p, Regions.Region r) {
         long now = p.level().getGameTime();
         Long at = WARNED.get(p.getUUID());
         if (at != null && now - at < WARN_COOLDOWN) return;
         WARNED.put(p.getUUID(), now);
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("Danger · " + r.name()))
-                .body(Component.literal("Creatures here are level " + r.low() + " to " + r.high() + "."))
+                .body(Component.literal("The creatures here are level " + r.low() + " to " + r.high() + ". That's well above you, so be careful."))
                 .presentation(SignalWindow.Presentation.TOAST).tier(Notices.Tier.IMPORTANT).topic("danger").ttl(20 * 6).build());
     }
 

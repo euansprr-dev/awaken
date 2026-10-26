@@ -19,6 +19,7 @@
 
 uniform sampler2D LightSampler;
 uniform sampler2D ChunkSampler;     // which real chunks the client has (64x64, chunk coordinate masked to 63)
+uniform sampler2D VoxelSampler;     // where City Sight draws the real blocks (256x256 world chunks, toroidal)
 
 layout(location = 0) in vec3 vRel;
 layout(location = 1) in vec3 vNormal;
@@ -178,6 +179,11 @@ void main() {
     // fast flight) and in a section Sodium draws (farRealSection: seen from high up, the sea floor falls out of its reach
     // well inside the horizontal render distance); far water keeps to its own floor's reach,
     // so a real water surface drawn over a floor too far to draw keeps the far sea under it
+    // City Sight draws the real blocks there: the far land steps aside (its coverage holds for 2 km)
+    if ((int(FarCam.y + 0.5) & 256) == 0 && length(vRel.xz) < 2000.0) {
+        ivec2 world = (FarCamInt.xz >> 4) + ivec2(floor((vRel.xz + FarCam.xz) / 16.0));
+        if (texelFetch(VoxelSampler, world & 255, 0).r > 0.5) discard;
+    }
     vec3 reach = vec3(vRel.x, vRel.y - (water ? depth : 0.0), vRel.z);
     // far water stays under the real water too (unless the camera is under the sea): wherever a real section isn't drawn
     // this frame (Sodium's culling, a chunk still meshing) the sea shows, never the clear colour through a hole

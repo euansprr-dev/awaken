@@ -44,6 +44,7 @@ final class FarPipelines {
             .withUniform("ShadeSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .withUniform("LightSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .withUniform("ChunkSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("VoxelSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .build();
 
     static final BindGroupLayout BAKE_INPUTS = BindGroupLayout.builder()
@@ -74,6 +75,7 @@ final class FarPipelines {
             .withUniform("HeightSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .withUniform("LightSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .withUniform("ChunkSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("VoxelSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .build();
 
     /** Far forests: opaque voxel trees from the tree buffer, after the terrain, into the same targets. */
@@ -84,6 +86,46 @@ final class FarPipelines {
             .withLocation(Awaken.id("pipeline/farsight_trees"))
             .withVertexShader(Awaken.id("core/farsight_trees"))
             .withFragmentShader(Awaken.id("core/farsight_trees"))
+            .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
+            .withColorTargetState(ColorTargetState.DEFAULT)
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
+            .withCull(false)
+            .build();
+
+    static final BindGroupLayout VOXEL_INPUTS = BindGroupLayout.builder()
+            .withUniform("FarFrame", UniformType.UNIFORM_BUFFER)
+            .withUniform("FarVoxel", UniformType.UNIFORM_BUFFER)
+            .withUniform("Quads", UniformType.TEXEL_BUFFER, GpuFormat.RGBA32_UINT)
+            .withUniform("Chunks", UniformType.TEXEL_BUFFER, GpuFormat.RGBA32_SINT)
+            .withUniform("Looks", UniformType.TEXEL_BUFFER, GpuFormat.RGBA32_FLOAT)
+            .withUniform("AtlasSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("LightSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("SectionSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .build();
+
+    /** City Sight (Far Sight 3): real chunks' blocks from their pulled quads, after the terrain, into the same targets. */
+    static final RenderPipeline VOXELS = RenderPipeline.builder()
+            .withBindGroupLayout(BindGroupLayouts.PROJECTION)
+            .withBindGroupLayout(BindGroupLayouts.FOG)
+            .withBindGroupLayout(VOXEL_INPUTS)
+            .withLocation(Awaken.id("pipeline/farsight_voxels"))
+            .withVertexShader(Awaken.id("core/farsight_voxels"))
+            .withFragmentShader(Awaken.id("core/farsight_voxels"))
+            .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
+            .withColorTargetState(ColorTargetState.DEFAULT)
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
+            .withCull(false)
+            .build();
+
+    /** City Sight without discard, for chunks clear of the render distance's edge and of a level's fade (see VoxelLayer#EDGED). */
+    static final RenderPipeline VOXELS_PLAIN = RenderPipeline.builder()
+            .withBindGroupLayout(BindGroupLayouts.PROJECTION)
+            .withBindGroupLayout(BindGroupLayouts.FOG)
+            .withBindGroupLayout(VOXEL_INPUTS)
+            .withLocation(Awaken.id("pipeline/farsight_voxels_plain"))
+            .withVertexShader(Awaken.id("core/farsight_voxels"))
+            .withFragmentShader(Awaken.id("core/farsight_voxels"))
+            .withShaderDefine("NO_DISCARD")
             .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
             .withColorTargetState(ColorTargetState.DEFAULT)
             .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
@@ -127,6 +169,8 @@ final class FarPipelines {
         e.registerOptionalPipeline(BAKE);
         e.registerOptionalPipeline(MARKS);
         e.registerOptionalPipeline(TREES);
+        e.registerOptionalPipeline(VOXELS);
+        e.registerOptionalPipeline(VOXELS_PLAIN);
     }
 
     /** Whether both pipelines compiled; checked once per resource load (a failed one would recompile every lookup). */
@@ -134,7 +178,8 @@ final class FarPipelines {
         if (ok < 0) {
             try {
                 ok = RenderSystem.getCompiledPipelineNullable(TERRAIN) != null && RenderSystem.getCompiledPipelineNullable(BAKE) != null
-                        && RenderSystem.getCompiledPipelineNullable(MARKS) != null && RenderSystem.getCompiledPipelineNullable(TREES) != null ? 1 : 0;
+                        && RenderSystem.getCompiledPipelineNullable(MARKS) != null && RenderSystem.getCompiledPipelineNullable(TREES) != null
+                        && RenderSystem.getCompiledPipelineNullable(VOXELS) != null && RenderSystem.getCompiledPipelineNullable(VOXELS_PLAIN) != null ? 1 : 0;
             } catch (RuntimeException e) {
                 ok = 0;
             }

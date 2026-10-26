@@ -526,6 +526,11 @@ final class BodyServer {
         }
         if (fresh.isEmpty()) return false;
         p.setData(BodyContent.MEMORY, mem);
+        // the awakening's first moves are taught by the checklist, top right (SPEC §27.10), ticked as you do them
+        if (fresh.contains(Move.ROLL)) {
+            dev.awaken.core.DirectorLog.log(p, "body", "the checklist teaches " + fresh);
+            return false;
+        }
         String title = fresh.size() == 1 ? fresh.get(0).title : fresh.contains(Move.ROLL) ? "Your body remembers" : "Your body learns";
         StringBuilder body = new StringBuilder();
         for (Move mv : fresh) body.append(body.isEmpty() ? "" : " · ").append(fresh.size() == 1 ? mv.how : mv.hint);
