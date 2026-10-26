@@ -3383,10 +3383,11 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
     It builds over its first 12 s and rains itself out over its last 15 (the client times the end by the storm's 240 s).
   - **Drawn by Lens 2 on Cinematic and Ultra** (§22 "Storm cells"): marched in Lens's cloud volume. Elsewhere (Lens off,
     Swift, a shaderpack) by `living.client.StormFallback`: the same shape, built off-thread once per storm into 12-block
-    cloud cells (52 × 30 × 52, density over 0.45), opaque and face-shaded as the game's clouds are (top 1, sides
-    0.8-0.9, base 0.62), each lit by how much cloud lies six cells toward the sun (exp(-0.55 per cell)), dim and cold at
-    the base, the sun's warm colour on faces turned to it, lit from inside by its lightning, hazed toward the sky colour
-    with distance (1400 blocks); only outer faces turned to the camera are sent (about 1,500 quads). It grows from the
+    cloud cells, 8 blocks (78 × 45 × 78, density over 0.45), opaque and face-shaded as the game's clouds are (top 1,
+    sides 0.8-0.9, base 0.62), each lit by how much cloud lies eight cells toward the sun (exp(-0.45 per cell)), the sky's
+    light mostly the game's cloud brightness (30% of its hue: its sunset tint on every face read as terracotta), dim and
+    cold at the base, the sun's warm colour on faces turned to it, lit from inside by its lightning, hazed toward the sky colour
+    with distance (1400 blocks); only outer faces turned to the camera are sent (about 3,000-4,000 quads). It grows from the
     base up as it builds and rains out from the top down (each cell's threshold by its height and a hash; faces rebuilt
     off-thread per 32nd of strength). Its rain: nine curved sheets fixed in the world round the core (arcs at set radii
     and angles), slanting downwind, the texture `living/storm_rain` (soft streaks, `tools/art/specs/storm_rain.py`)

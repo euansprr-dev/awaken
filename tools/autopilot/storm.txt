@@ -27,7 +27,7 @@ wait 200
 cmd tp @s ~300 ~ ~300
 wait 300
 cmd gamemode spectator
-cmd time set 12700
+cmd time set 12300
 # ---- dusk, about 200 blocks off, looking up at it out of the forest (Euan's view)
 cmd awaken living happen rolling_storm
 wait 320
@@ -132,15 +132,13 @@ lens cinematic
 cmd tp @s ~ ~ ~ ~ -18
 wait 40
 cmd awaken living strike 34
-wait 3
 shotnow storm_08_strike_close_a
-wait 3
+wait 2
 shotnow storm_08_strike_close_b
 wait 40
 lens swift
 wait 40
 cmd awaken living strike 34
-wait 3
 shotnow storm_08_strike_close_swift
 wait 40
 lens cinematic
@@ -149,26 +147,23 @@ cmd awaken living near 190
 wait 120
 cmd tp @s ~ ~ ~ ~ -22
 wait 60
-cmd awaken living strike 205
-wait 3
+cmd awaken living strike 150
 shotnow storm_09_strike_far_a
-wait 4
+wait 2
 shotnow storm_09_strike_far_b
 wait 60
 # ---- night: the cell shows by its lightning
 cmd time set 18000
 wait 80
 shot storm_10_night_dark
-cmd awaken living strike 205
-wait 3
+cmd awaken living strike 150
 shotnow storm_10_night_strike_a
-wait 3
+wait 2
 shotnow storm_10_night_strike_b
 wait 40
 lens swift
 wait 40
-cmd awaken living strike 205
-wait 3
+cmd awaken living strike 150
 shotnow storm_10_night_strike_swift
 lens cinematic
 wait 20

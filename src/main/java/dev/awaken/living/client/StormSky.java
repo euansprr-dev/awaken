@@ -1,6 +1,5 @@
 package dev.awaken.living.client;
 
-import dev.awaken.Awaken;
 import dev.awaken.living.pulse.StormCell;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -229,7 +228,7 @@ public final class StormSky {
     // ---- strikes and their thunder ------------------------------------------------------------------------------------
 
     private static final Identifier THUNDER = SoundEvents.LIGHTNING_BOLT_THUNDER.location(), CRACK = SoundEvents.LIGHTNING_BOLT_IMPACT.location(),
-            ROLL = Awaken.id("living.storm.roll");
+            ROLL = dev.awaken.living.LivingContent.STORM_ROLL.getId();
     /** The storm's strikes of the last half second (x, y, z, client tick): their own thunder is silenced, ours comes late. */
     private static final List<double[]> RECENT = new ArrayList<>();
     /** Thunder on its way: (client tick it arrives, x, y, z, distance, 1 a strike / 0 lightning inside the cloud). */

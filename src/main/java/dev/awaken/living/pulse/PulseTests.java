@@ -90,12 +90,15 @@ public final class PulseTests {
             h.assertTrue(out[0] == 10F && out[1] == -10F && out[2] == 162F && out[3] == 0.5F, "the cell, camera-relative, on its base");
             h.assertTrue(Math.abs(out[4] - 0.6F) < 1e-6F && Math.abs(out[5] - 0.8F) < 1e-6F && out[6] == 70F && out[7] == 12F, "its wind and the ground under it");
             h.assertTrue(out[8] == 20F && out[9] == 116F && out[10] == -20F && out[11] == 0.8F, "its flash, camera-relative");
-            // a strike on sand turns it to glass
+            // a strike on sand turns it to glass, where strikes may change the land (this plot lands somewhere real: near a
+            // gate or on a Hearth's land, its sand must stay sand)
             BlockPos at = h.absolutePos(new BlockPos(0, 2, 0));
             AwakenTests.clearAbove(level, at, 2, 0, 8);
             level.setBlock(at.below(), Blocks.SAND.defaultBlockState(), 3);
+            boolean allowed = Behaviours.allowed(level, at);
             StormCell.strike(level, at);
-            h.assertTrue(level.getBlockState(at.below()).is(Blocks.GLASS), "struck sand turns to glass");
+            h.assertTrue(level.getBlockState(at.below()).is(allowed ? Blocks.GLASS : Blocks.SAND),
+                    allowed ? "struck sand turns to glass" : "protected land keeps its sand");
             h.succeed();
         });
     }

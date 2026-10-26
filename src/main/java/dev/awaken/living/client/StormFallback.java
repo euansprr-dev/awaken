@@ -32,7 +32,7 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * The Rolling Storm's cell where Lens 2 doesn't draw it (Lens off or Swift, or a shaderpack; SPEC §21.6): the same
- * cumulonimbus as Lens's, built of solid 12-block cloud cells in the game's own cloud style (opaque and face-shaded like
+ * cumulonimbus as Lens's, built of solid 8-block cloud cells in the game's own cloud style (opaque and face-shaded like
  * vanilla's clouds, so nothing translucent overlaps or sorts), each cell lit by how much of the cloud lies between it
  * and the sun, cold and dark at its base and warm on its sunward turrets at dusk, lit from inside by its lightning. Its
  * rain hangs as fixed curtains (world-anchored sheets, never turned to the camera) in the game's own fog, darker than the
@@ -84,7 +84,7 @@ final class StormFallback {
 
     // ---- the shape (lens_storm.glsl's, on the CPU) -------------------------------------------------------------------
 
-    static final int CELL = 12, NX = 52, NY = 30, NZ = 52;
+    static final int CELL = 8, NX = 78, NY = 45, NZ = 78;
     static final double X0 = -NX * CELL / 2.0, Y0 = -CELL, Z0 = -NZ * CELL / 2.0;
     private static final double R = 95, H = StormCell.HEIGHT, DOWN = 260, UP = 60, SIDE = 150;
     private static final double[][] FLANK = {{-118, 26, 48, 170}, {-168, 48, 40, 118}, {-210, 66, 32, 78}};
@@ -231,7 +231,7 @@ final class StormFallback {
         }
     }
 
-    /** Light per solid cell: how much cloud lies toward the sun (six cells' worth), off the render thread. */
+    /** Light per solid cell: how much cloud lies toward the sun (eight cells' worth), softened; off the render thread. */
     private static void light(Cloud c, float lx, float ly, float lz) {
         for (int y = 0; y < NY; y++) {
             for (int z = 0; z < NZ; z++) {
@@ -239,21 +239,42 @@ final class StormFallback {
                     int i = index(x, y, z);
                     if (c.solid[i] == 0) continue;
                     float od = 0;
-                    for (int s = 1; s <= 6; s++) {
+                    for (int s = 1; s <= 8; s++) {
                         int sx = Math.round(x + lx * s), sy = Math.round(y + ly * s), sz = Math.round(z + lz * s);
                         if (sx < 0 || sy < 0 || sz < 0 || sx >= NX || sy >= NY || sz >= NZ) break;
                         od += c.solid[index(sx, sy, sz)];
                     }
-                    c.light[i] = (float) Math.exp(-od * 0.55);
+                    c.light[i] = (float) Math.exp(-od * 0.45);
                 }
             }
         }
+        // softened over each cell's neighbours, so light rolls over the turrets instead of flipping cell by cell
+        float[] soft = new float[c.light.length];
+        for (int y = 1; y < NY - 1; y++) {
+            for (int z = 1; z < NZ - 1; z++) {
+                for (int x = 1; x < NX - 1; x++) {
+                    int i = index(x, y, z);
+                    if (c.solid[i] == 0) continue;
+                    float sum = 0;
+                    int n = 0;
+                    for (int[] d : DIRS) {
+                        int j = index(x + d[0], y + d[1], z + d[2]);
+                        if (c.solid[j] != 0) {
+                            sum += c.light[j];
+                            n++;
+                        }
+                    }
+                    soft[i] = (c.light[i] * 2 + sum) / (2 + n);
+                }
+            }
+        }
+        System.arraycopy(soft, 0, c.light, 0, soft.length);
     }
 
     /** The outer faces of the cells shown at {@code level} (32nds of full strength), off the render thread. */
     private static int[] faces(Cloud c, int level) {
         int limit = level * 255 / 32, n = 0;
-        int[] out = new int[4096];
+        int[] out = new int[8192];
         for (int y = 0; y < NY; y++) {
             for (int z = 0; z < NZ; z++) {
                 for (int x = 0; x < NX; x++) {
@@ -297,8 +318,11 @@ final class StormFallback {
         float warm = moon ? 0F : glow.w();
         float sr = Mth.lerp(warm, 1F, glow.x() * 1.15F) * day, sg = Mth.lerp(warm, 0.97F, glow.y() * 1.05F) * day,
                 sb = Mth.lerp(warm, 0.92F, glow.z()) * day;
+        // the sky's light on it: the game's cloud colour, mostly its brightness (its sunset hue is the sun's to give, on the
+        // faces turned to it; on every face it read as a terracotta rock)
         int cc = state.cloudColor;
-        float ar = ((cc >> 16) & 255) / 255F, ag = ((cc >> 8) & 255) / 255F, ab = (cc & 255) / 255F;
+        float cr = ((cc >> 16) & 255) / 255F, cg = ((cc >> 8) & 255) / 255F, cb = (cc & 255) / 255F, lum = 0.3F * cr + 0.59F * cg + 0.11F * cb;
+        float ar = Mth.lerp(0.3F, lum, cr) * 0.97F, ag = Mth.lerp(0.3F, lum, cg) * 0.99F, ab = Mth.lerp(0.3F, lum, cb) * 1.04F;
         var sky = state.skyRenderState.skyColor;
         float hr = sky.x(), hg = sky.y(), hb = sky.z();
         loadNoise();
@@ -374,7 +398,7 @@ final class StormFallback {
                 case 0, 1 -> 0.8F;
                 default -> 0.9F;
             };
-            float ao = (0.28F + 0.6F * (float) Math.pow(hn, 0.8)) * shade;
+            float ao = (0.3F + 0.62F * (float) Math.pow(hn, 0.8)) * shade;
             float bruise = 1F - hn;
             float r = ar * ao * (1F - 0.2F * bruise), g = ag * ao * (1F - 0.18F * bruise), b = ab * ao;
             // the sun's, on faces turned to it, as much as gets through the cloud
@@ -385,7 +409,7 @@ final class StormFallback {
             b += sb * sun;
             if (flash > 0F) {
                 double ddx = x + 0.5 - fx, ddy = y + 0.5 - fy, ddz = z + 0.5 - fz;
-                float lit = flash * 2.2F * (float) Math.exp(-Math.sqrt(ddx * ddx + ddy * ddy + ddz * ddz) / 4.5);
+                float lit = flash * 2.2F * (float) Math.exp(-Math.sqrt(ddx * ddx + ddy * ddy + ddz * ddz) * CELL / 54.0);
                 r += 0.86F * lit;
                 g += 0.9F * lit;
                 b += lit;

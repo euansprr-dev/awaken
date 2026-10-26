@@ -33,7 +33,6 @@ final class PulseSound {
     private static final Identifier BAY = Awaken.id("fauna.wisp_hound.ambient"), KITE = Awaken.id("fauna.peak_kite.ambient"),
             LOW = Identifier.withDefaultNamespace("entity.cow.ambient"), ROAR = Identifier.withDefaultNamespace("entity.ravager.ambient");
     private static final RandomSource RANDOM = RandomSource.create();
-    private static final SoundEvent STORM = SoundEvent.createVariableRangeEvent(Awaken.id("living.tell.storm"));
     private static final Map<Integer, Loop> LOOPS = new HashMap<>();
     private static final Map<Integer, Integer> NEXT = new HashMap<>();
     private static float emphasis;
@@ -89,7 +88,7 @@ final class PulseSound {
                     // its rain roaring under the cell, heard from the core (a little ahead of the centre)
                     double rx = x + s.dx * dev.awaken.living.pulse.StormCell.RAIN_AHEAD, rz = z + s.dz * dev.awaken.living.pulse.StormCell.RAIN_AHEAD;
                     float dr = (float) me.distanceTo(new Vec3(rx, y + 20, rz));
-                    loudest = Math.max(loudest, loop(mc, id, STORM, rx, y + 20, rz, dr, 340F, 0.75F));
+                    loudest = Math.max(loudest, loop(mc, id, LivingContent.TELL_STORM.get(), rx, y + 20, rz, dr, 340F, 0.75F));
                 }
                 default -> {}
             }
