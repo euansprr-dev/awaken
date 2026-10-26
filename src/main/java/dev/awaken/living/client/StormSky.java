@@ -93,7 +93,7 @@ public final class StormSky {
     }
 
     private static float pulse(float s, float at) {
-        return at < 0F || s < at ? 0F : (float) Math.exp(-(s - at) / 0.07F);
+        return at < 0F || s < at ? 0F : (float) Math.exp(-(s - at) / 0.11F);
     }
 
     /**
@@ -158,7 +158,7 @@ public final class StormSky {
             if (here && now >= c.nextFlicker && c.strength > 0.4F && now - c.flashAt > 25F) {
                 double a = RANDOM.nextDouble() * Math.PI * 2, r = RANDOM.nextDouble() * 55;
                 flashAt(c, now, c.x + Math.cos(a) * r + c.windX * 20, c.baseY + 50 + RANDOM.nextDouble() * 160,
-                        c.z + Math.sin(a) * r + c.windZ * 20, 0.45F + 0.25F * RANDOM.nextFloat());
+                        c.z + Math.sin(a) * r + c.windZ * 20, 0.25F + 0.15F * RANDOM.nextFloat());
                 hear(now, c.fx, c.fy, c.fz, cam, false);
                 c.nextFlicker = now + 50 + RANDOM.nextInt(90);
             }

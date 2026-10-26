@@ -83,6 +83,8 @@ cmd tp @s ^ ^ ^-310
 wait 200
 cmd awaken living face
 wait 160
+cmd tp @s ~ ~ ~ ~ -17
+wait 60
 shot storm_03_dusk500_cinematic
 lens swift
 wait 80

@@ -465,7 +465,9 @@ final class StormFallback {
         int col = channel(Mth.clamp(ar * 0.42F * lift, 0F, 1F)) << 16 | channel(Mth.clamp(ag * 0.45F * lift, 0F, 1F)) << 8
                 | channel(Mth.clamp(ab * 0.5F * lift, 0F, 1F));
         float alpha = 0.55F * s.strength;
-        float scroll = (now * 0.09F) % 1F;
+        // the texture slides down the sheets as the rain falls (v grows downward, so the offset shrinks over time), at
+        // about 19 blocks a second: from a few hundred blocks off, faster reads as streaming water
+        float scroll = 1F - (now * 0.02F) % 1F;
         for (int k = 0; k < SHEETS; k++) {
             float u0 = k * 0.37F;
             double radius = StormCell.RAIN_RADIUS * (0.25 + 0.7 * fract(k * 0.618F + 0.11F));

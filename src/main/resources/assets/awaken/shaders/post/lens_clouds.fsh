@@ -38,7 +38,7 @@ vec4 P(int i) { return texelFetch(ParamsSampler, ivec2(i, 0), 0); }
 float hg(float mu, float g) { return (1.0 - g * g) / (12.566 * pow(1.0 + g * g - 2.0 * g * mu, 1.5)); }
 
 // this frame's light, shared by every piece of the march
-vec3 v, l, sunCol, ambient;
+vec3 v, l, sunCol, ambient, stormSky;
 float camY, phase, jitter;
 bool ultra;
 int nStorm;
@@ -102,7 +102,7 @@ void stormPiece(vec2 span, int steps, int k) {
     vec4 a = stormA(k), b = stormB(k), c = stormC(k);
     vec3 centre = vec3(a.x, a.z - camY, a.y);
     float groundH = b.z - a.z, dt = (span.y - span.x) / float(steps);
-    int lightSteps = ultra ? 4 : 3, detail = ultra ? 2 : 1;
+    int lightSteps = 3, detail = ultra ? 2 : 1;
     vec3 flashCol = vec3(0.86, 0.9, 1.0) * c.w;
     for (int i = 0; i < 32; i++) {
         if (i >= steps) break;
@@ -114,7 +114,7 @@ void stormPiece(vec2 span, int steps, int k) {
         if (d + rn <= 0.002) continue;
         // lightning: a glow round the flash inside the cell, and a faint wash through all of it
         float fd = length(w - c.xyz);
-        vec3 E = c.w > 0.0 ? flashCol * (5.0 * exp(-fd / 50.0) + 0.45 * exp(-fd / 220.0)) : vec3(0.0);
+        vec3 E = c.w > 0.0 ? flashCol * (3.5 * exp(-fd / 45.0) + 0.35 * exp(-fd / 200.0)) : vec3(0.0);
         float ac = 1.0 - exp(-d * STORM_SIGMA * dt), ar = 1.0 - exp(-rn * STORM_RAIN_SIGMA * dt);
         float hn = clamp(q.y / STORM_H, 0.0, 1.0);
         vec3 col = vec3(0.0);
@@ -126,16 +126,17 @@ void stormPiece(vec2 span, int steps, int k) {
                 s *= 2.3;
             }
             // little light scattered deep inside: its base and its shadowed side go dark
-            float beer = max(exp(-od * STORM_SIGMA * 1.1), 0.18 * exp(-od * STORM_SIGMA * 0.22));
+            float beer = max(exp(-od * STORM_SIGMA * 1.1), 0.22 * exp(-od * STORM_SIGMA * 0.22));
             float powder = 1.0 - exp(-d * 4.0);
-            // the sky's light: dim and cold under the base (bruised), full on the tops
+            // the sky's light: dim and cold under the base (bruised), full on the tops; cool grey-blue, never the
+            // horizon's sunset hue (that turned its shadowed side brown)
             float ao = 0.16 + 0.84 * smoothstep(0.0, 1.0, pow(hn, 0.8));
-            vec3 sky = ambient * 0.8 * ao * mix(vec3(0.80, 0.82, 1.0), vec3(1.0), hn);
+            vec3 sky = stormSky * ao * mix(vec3(0.80, 0.84, 1.0), vec3(1.0), hn);
             col = (sunCol * beer * phase * mix(1.0, powder, 0.5) + sky + E) * ac;
             if (c.w > 0.0) flashSeen = max(flashSeen, T * ac * c.w * exp(-fd / 120.0));
         }
         // rain: a grey veil, darker than the sky behind it, lit by the flash too
-        col += (ambient * 0.32 + E * 0.5) * ar;
+        col += (stormSky * 0.4 + E * 0.5) * ar;
         float at = 1.0 - (1.0 - ac) * (1.0 - ar);
         L += T * col;
         if (tHit < 0.0 && at > 0.05) tHit = t;
@@ -155,10 +156,10 @@ vec2 storm(int k, float scene) {
     rain.y = min(rain.y, scene);
     body.y = min(body.y, scene);
     anvil.y = min(anvil.y, scene);
-    int rs = ultra ? 14 : 10, bs = ultra ? 32 : 22, ans = ultra ? 14 : 10;
-    int nr = clamp(int((rain.y - rain.x) / (ultra ? 14.0 : 18.0)) + 1, 3, rs);
-    int nb = clamp(int((body.y - body.x) / (ultra ? 9.0 : 12.0)) + 1, 4, bs);
-    int na = clamp(int((anvil.y - anvil.x) / (ultra ? 6.0 : 8.0)) + 1, 3, ans);
+    int rs = ultra ? 12 : 10, bs = ultra ? 26 : 22, ans = ultra ? 12 : 10;
+    int nr = clamp(int((rain.y - rain.x) / (ultra ? 16.0 : 18.0)) + 1, 3, rs);
+    int nb = clamp(int((body.y - body.x) / (ultra ? 10.5 : 12.0)) + 1, 4, bs);
+    int na = clamp(int((anvil.y - anvil.x) / (ultra ? 7.0 : 8.0)) + 1, 3, ans);
     if (v.y >= 0.0) {
         stormPiece(rain, nr, k);
         stormPiece(body, nb, k);
@@ -206,6 +207,8 @@ void main() {
     // (overcast keeps it: a grey sky is bright grey, not night); with no layer this frame, by the fog's colour
     vec3 skyTint = cp.x > 0.0 ? max(cc.rgb, vec3(0.5)) : max(P(10).rgb * 1.2, vec3(0.3));
     ambient = skyTint * mix(vec3(0.62, 0.72, 0.92), P(10).rgb, 0.35) * (0.95 + 0.9 * smoothstep(0.6, 0.95, cp.y));
+    // a storm cell's: the same brightness, but cool grey-blue
+    stormSky = vec3(dot(ambient, vec3(0.3, 0.59, 0.11))) * vec3(0.74, 0.8, 0.92);
 
     // the layer: where the ray is inside it
     float t0 = 0.0, t1 = 0.0;

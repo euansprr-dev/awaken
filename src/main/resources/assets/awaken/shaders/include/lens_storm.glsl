@@ -28,7 +28,8 @@ float stormPuffs(vec3 p) {
     return 1.0 - sqrt(best);
 }
 
-float stormBlob(float dist, float r, float puff) { return clamp((r * (0.66 + 0.5 * puff) - dist) / 9.0, 0.0, 1.0); }
+// a turret's surface: solid within 4 blocks of its edge (a defined cauliflower, not a soft ball)
+float stormBlob(float dist, float r, float puff) { return clamp((r * (0.66 + 0.5 * puff) - dist) / 4.0, 0.0, 1.0); }
 
 // the flanking line: (along the wind, across it, radius, height of its top)
 const vec4 STORM_FLANK0 = vec4(-118.0, 26.0, 48.0, 170.0);

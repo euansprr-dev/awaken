@@ -3391,7 +3391,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
     base up as it builds and rains out from the top down (each cell's threshold by its height and a hash; faces rebuilt
     off-thread per 32nd of strength). Its rain: nine curved sheets fixed in the world round the core (arcs at set radii
     and angles), slanting downwind, the texture `living/storm_rain` (soft streaks, `tools/art/specs/storm_rain.py`)
-    scrolling down, faded at their ends, top and foot, dark grey, in the game's own fog (the weather pipeline). No
+    sliding down at about 19 blocks a second (Euan saw it flow up at first), faded at their ends, top and foot, dark grey, in the game's own fog (the weather pipeline). No
     camera-facing discs or billboards (the old `PulseFx.storm` is gone); nothing popped in from beyond the render
     distance either: the cell stands where it is, as the game's clouds do.
   - **Its local weather** (`living.client.StormSky`): this client's rain and thunder levels rise to
@@ -3407,7 +3407,8 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
     played again late by the distance at 130 blocks a second (the world's scale: a strike on the horizon rolls in a few
     seconds later). Within 70 blocks: the crack (the impact, pitch 0.55-0.7) and the thunder; farther: the thunder lower
     and softer (volume 1.15 - d/520, pitch 0.95 - d/1400) and a long low roll after it (`living.storm.roll`, three
-    synthesised takes). Every 2.5-7 s lightning flickers inside the cloud (50-210 over the base) and rumbles far off.
+    synthesised takes). Every 2.5-7 s lightning flickers inside the cloud (50-210 over the base, a quarter to two fifths
+    of a strike's brightness) and rumbles far off. Each flash is a burst and its restrikes, each fading over 0.11 s.
     The storm's rain roars from its core for 340 blocks (`living.tell.storm`, a loop; PulseSound).
 
 ### 21.7 Creatures live somewhere: the ledger (Phase D, as built 2026-10-25)
@@ -3727,13 +3728,14 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
   Cinematic, two on Ultra), the body's wobble, girth and lobes from the cloud noise texture, the anvil's fibres from its
   wisps channel. Light steps (and the land's shadow) keep the big forms only.
 - March (`lens_clouds.fsh`): a ray meets a cell in bands, marched in the ray's order, each its own steps by its length:
-  rain (ground to base; 18 / 14 blocks a step, at most 10 / 14), body (12 / 9, at most 22 / 32), anvil (8 / 6, at most
-  10 / 14), Cinematic / Ultra, so the thin anvil is never stepped over. σ 0.085 a block (defined turrets, a solid mass);
-  3 / 4 light steps (6 blocks, ×2.3); Beer's law with a weak multiple-scatter floor (0.18) so the base and the shadowed
-  side go dark; the layer's phase; the sky's light × 0.8, by height from 0.16 at the base (cold and bruised, bluer) to 1
-  on the tops; rain σ 0.016, its colour the sky's light × 0.32 (a grey veil, darker than the sky), fading in from 16 to
-  40 blocks from the camera (nearer, the game's rain falls). Lightning: 5 × exp(-d/50) + 0.45 × exp(-d/220) of a cool
-  white from the flash, in the cloud and (half) in its rain; while a flash shows, the pixel takes up to 85% of this
+  rain (ground to base; 18 / 16 blocks a step, at most 10 / 12), body (12 / 10.5, at most 22 / 26), anvil (8 / 7, at
+  most 10 / 12), Cinematic / Ultra, so the thin anvil is never stepped over. A turret's surface turns solid within 4
+  blocks (9 read as a soft ball at 200 blocks); σ 0.085 a block (a solid mass); 3 light steps (6 blocks, ×2.3); Beer's
+  law with a weak multiple-scatter floor (0.22) so the base and the shadowed side go dark; the layer's phase; the sky's
+  light as a cool grey-blue of the layer's ambient brightness (its sunset hue turned the shadowed side brown), by height
+  from 0.16 at the base (cold and bruised, bluer) to 1 on the tops; rain σ 0.016, its colour that sky light × 0.4 (a
+  grey veil, darker than the sky), fading in from 16 to 40 blocks from the camera (nearer, the game's rain falls).
+  Lightning: 3.5 × exp(-d/45) + 0.35 × exp(-d/200) of a cool white from the flash, in the cloud and (half) in its rain; while a flash shows, the pixel takes up to 85% of this
   frame instead of 12-15%, so it lights at once and fades as an afterglow. The layer's clouds thin to nothing within
   300-420 blocks of a cell (it clears the sky round it), so the layer's march can skip the cell's bounds without a cut.
   History reprojects where the ray first met cloud (was: where it entered the layer).
