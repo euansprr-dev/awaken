@@ -293,6 +293,17 @@ final class Sinkhole {
             }
         }
 
+        // ---- marks for tours: across the shaft from the shelves, and halfway down them --------------------------------
+        {
+            double va = shelf + Math.toRadians(150);
+            k.mark("view", Mth.floor(cx + 0.5 + Math.cos(va) * (rad + 6)), rim, Mth.floor(cz + 0.5 + Math.sin(va) * (rad + 6)));
+            int m = Math.max(1, nRows / 2);
+            int h = rowY(s, m);
+            double ma = shelf + ((m & 1) == 0 ? -half - ext * 0.5 : half + ext * 0.5);
+            float r = wall(w, s, h, ma);
+            k.mark("shelf", Mth.floor(cx + 0.5 + Math.cos(ma) * (r - 1.2)), h, Mth.floor(cz + 0.5 + Math.sin(ma) * (r - 1.2)));
+        }
+
         // ---- the grotto at the bottom, toward the lode -----------------------------------------------------------------
         if (s.p(LODE) != 0) grotto(s, k, w);
         // ---- and the way on into the caves

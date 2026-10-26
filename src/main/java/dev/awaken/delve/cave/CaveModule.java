@@ -30,6 +30,7 @@ public final class CaveModule {
         });
         bus.addListener(CavePlaces::onDeath);
         bus.addListener((PlayerInteractEvent.RightClickBlock e) -> CavePlaces.onUse(e));
+        bus.addListener((net.neoforged.neoforge.event.entity.player.ItemFishedEvent e) -> CavePlaces.onFished(e));
         bus.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) AwakenNet.send(p, new CaveNet.Logs(CaveItems.read(p)));
         });

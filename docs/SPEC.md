@@ -5400,6 +5400,171 @@ diamond: a diamond lode found every ~50 deep minutes with the fork, every ~150 w
 cave audio; the rope fittings and rappel are W5's; the Mine head and the Mine Echo's rework are W6's; the Tuning Fork
 from the hamlet's smith waits for villages (W3), it's craftable now; no zip line (above).
 
+### 28.5 W5 as built
+Caves worth entering (PLAN section 8). Packages `delve.cave` (the places, their run-time rules, the Delvers' things),
+`delve.home` (a way home, the vents), `delve.sense` and `delve.client.Sense*`/`CaveSound`/`DeepHum`/`CaveLook` (sound and
+light below), the rappel and rope fittings in `body/ascent`, the seep heart in `mobs`. Branch `pack/world-depth-w5`. Tests
+`delve_cave_routes`, `delve_seep`, `ascent_rappel`, `delve_way_home`, `mobs_seep_heart`; tour `tools/autopilot/world-depth-w5.txt`.
+
+**The places** (`delve.cave`; structure type `awaken:cave_place`, one code-built `CavePiece` whose `Spec` builds the part in
+each chunk, drawn in the same order in every chunk; `Spec.STYLE` 1). Placed with the lair's cave placement and what the
+lairs never had: natural cave air nearby, read from the generator's own base columns (noise caves and aquifers, no chunk
+needed: `CaveSites.air`, rings at 8/14/20/27 out, 6 a ring, a floor under three of air), and a short tunnel carved to it
+(the joint). Every place keeps out of water and lava (its columns are read for fluid), out of the city's reserve, and
+inside 8 chunks of its start chunk (the generator links a structure only that far: `CaveSites.fits`). Structure sets
+(`data/awaken/worldgen/structure_set/delve/`, from `tools/art/specs/caves.py`): sinkholes spacing 44 / separation 18
+chunks, mines 52/22, seeps 26/10, chutes 34/13, grottos 28/11; biomes `#minecraft:is_overworld` (the sinkhole and the
+mine also refuse oceans, rivers and beaches at the surface). Names by seed (`CaveNames`).
+- **Sinkhole** (`Sinkhole`): a round shaft radius 7-15, its floor 40-110 under the rim, laid beside a planned lode (W2's
+  `LodePlans`, any ore but Deepglass) with its floor one under the heart: at the bottom a passage to a grotto lit by glow
+  lichen and glow berries where the heart glints in a niche of its far wall. The wall has noise (±1.2) and a funnel lip.
+  **The shelves** (the E route down): rows every 3 blocks stacked in one sector, a row one block thick where the next runs
+  under it (two high to walk), each row's end over the next one's start, alternating sides: walk a few blocks, drop 3.
+  **The cleft** (the way back up): a crack cut into the wall 100° round from the shelves, vines in one straight column from
+  the floor to the ground, step off the top onto it; vines and a mossy step stone at every drop too. **The dive**: opposite
+  the shelves the wall falls sheer (±0.45 rad) from a smooth jutting lip beside a spring in a notch under the rim, whose
+  water falls into a pool 5 deep. **The old rope**: a roped piton under the rim a quarter turn from the shelves, its line
+  32 down (`#awaken:runner_climbs`). Vines in the upper half, hanging roots under the shelves, moss on the shelves and
+  floor. Mist by day and bats at dusk (below). The first sinkhole (`awaken:delve/first_sinkhole`, placement
+  `awaken:near_city`): 600-900 from Carillon's centre (world origin without the city), never within 40° of north (the camp
+  road), radius 12-14, "The Opening"; its joint may be missing (it ends in its grotto).
+- **The Delvers' mine** (`Mine`): an adit (20-27 long, timber sets every 4, rails) into a hillside that rises 9+ in 18,
+  the mine head (the winch over a 3x3 shaft, a foreman's office with a chest: the first Delver's log, the lode map, the old
+  pick, lapis), a ladder 21 down to the first gallery (3 wide, 5 high, 40 long: dressed walls of polished andesite or
+  deepslate, flat and on the grid, timber flush in them, so the Runner runs them), a drowned stope across it (9 long,
+  water 2 deep, 4 down: run its wall, or drop in and take the ladder out), a rail incline 14 down along its end with a
+  minecart at the top and stairs beside the rails, and the second gallery folding back under the hill (a fall of roof to
+  slide under, 5 long, one high; a camp with the second log; a chasm 26 deep with water at its bottom and a rope bridge,
+  planks that sag a block, fence rails, chains to the roof), ending in the breakthrough: stained rock, Deepglass coming
+  through, a half-built seal and the last log. Not every place ends in a fight: this one ends in a log.
+- **Seep** (`Seep`): round a region's Deepglass lode (the Tuning Fork tuned to Deepglass finds it): a hall 26 x 14 x 17
+  laid toward the lode, the rock that touches its air stained (blackstone, obsidian, crying obsidian, tuff), nine
+  Deepglass veins along its walls toward the heart, four Deepglass spires 5-9 high you climb by a ring of steps, a magma
+  vent with the Ascent's updraft in its floor, a ruined timber set where the Delvers' drift came in, a Hollows nest in a
+  side alcove (bone, shed chitin, dripstone), and through a curving throat the heart chamber: a Deepglass dais with the
+  socket, veins out across the floor, the lode's heart glinting in the wall behind.
+- **Chute** (`Chute`): from a timbered mouth joined to the caves, 48 steps falling half a block each (slab, block, slab:
+  the stair slide's rhythm), 3 wide between dressed walls, to a lip over a lake 4 deep in a cavern 5.5 below: the slide's
+  run-out throws you out over the water. The way back: a landing at the water and a stair up the cavern's side.
+- **Grotto** (`Grotto`): a passage from the caves to a curtain of falling water across a doorway (a slot of sources in the
+  roof, a trench under it; walk through, wade out), a room 14 across lit by lichen and glow berries, a pool glowing from
+  sea pickles in its bed, a geode half out of the wall (basalt, calcite, amethyst, clusters) cracked open, a fallen stone
+  to climb into it, and a cache under suspicious gravel by the pool (loot `awaken:chests/delve/grotto_cache`; opening it
+  first counts `awaken:secrets_found` and is a find). A third of grottos (by seed) are a legendary fishing spot: a third
+  of catches there bring something more up (glow ink, amethyst, Deepglass, lapis, prismarine crystals, glow berries or a
+  nautilus shell) and the first catch is a secret.
+- **Routes** (`Routes`, G46): a search over a built place's feet cells with only the Runner's Kit and the Ascent's numbers
+  (walk/step 0.6, jump 1.25 with three clear over you, grab and climb a lip 2.4, drop 3, lower into a hang and let go 4.5,
+  a running jump over a gap of one or two, ladders, vines and the place's own ropes, swim, falling into water from any
+  height, the slide's crawl under a one-high gap); never the Tether. `delve_cave_routes` builds every kind for four seeds
+  and turns, one chunk at a time as worldgen does, and needs a route from its way in to its end and back out (the mine also
+  to its office, stope, incline, crawl and bridge; the sinkhole's dive must land in the pool).
+- **Cost** (the test, M4 under load): building a place averages 0.25-0.9 ms a chunk it touches (sinkhole 0.9, worst chunk
+  ~6-8 ms; mine 0.3; seep 0.5-0.8; chute 0.2-0.4; grotto 0.35); one place in 800-2,700 chunks, so under 0.005 ms a
+  chunk across the world. A candidate's site search: sinkhole ~4.5 ms (24 columns), mine ~2 ms (up to 77), seep, chute and
+  grotto under 0.5 ms, once per candidate chunk (one in 676-2,704 chunks).
+
+**At run time** (`CavePlaces`): places are known as their start chunks load, and a player's place is the structure piece
+round their feet (`StructureManager.getStructureWithPieceAt`; a place laid by a command or a test is `STAGED`). Twice a
+second each player's place is sent to their client (`CaveNet.Now`: kind, name, how strongly a live seep presses, 1 within
+15 of its hall or chamber fading over 9, quiet). The first time in a place is a discovery (`awaken:discovered/cave/...`,
+0.15 of a level for a big place, 0.08 small; counter `awaken:cave_places_found`); the first time each play-day, a caption.
+**A seep's rule**: inside a live seep creatures are 5 levels over the region (`living/api/Regions.addLevelExtra`, a hook
+added for this); within 40 of the socket the seep heart is rooted (`mobs.SeepHearts.spawn`, idempotent), and the Hollows'
+nest keeps up to three Hushlings or Drip Lurkers about it, one more every 30 s, while someone is within 28. The heart's
+death quiets the seep for everyone (`CaveData`, schemaVersion 1): no +5, no nest, no hum or violet; "<name> falls
+quiet" (IMPORTANT); counter `awaken:seeps_quieted`. **A sinkhole's bats**: at dusk (12,400-13,200) 7-12 come up from
+mid-shaft, once a play-day. Places within 160 are sent for their look from outside (`CaveNet.Near`): a sinkhole's mist
+rising by day (thick at dawn, gone at night; our sprites `delve_mist`), a chute's draught at its mouth (`delve_draught`).
+
+**Names and captions** (`delve.client.CaveHud`): "THE DELVERS' DEEP" in spaced capitals under one hairline, "old mine"
+under it, quieter than a region's (smaller, dimmer, rising as it fades), through the notification director (topic
+"region"; IMPORTANT for sinkholes, mines and seeps, AMBIENT for chutes and grottos, filed in the Journal when it can't
+show); its cue `delve.cave.name` is the region caption's chime lower and quieter.
+
+**The Delvers' things** (`CaveItems`): three Delver's logs (use: the pages in the book screen; read, it joins the Codex as
+"The Delvers", attachment `awaken:delver_logs`): the foreman's (the Carillon's bell metal, the copper running down, the
+seams written in lapis), a Delver's notes (the lamps burn blue past the chasm, black glass in the wall), the last entry
+(they broke into it and sealed the drift; the Well goes down to where this comes from). The lode map: read with a lapis
+(used up), the three nearest lodes within 224 come up on the Gate Map and in a toast. The Delver's old pick (a relic):
+carried, the Tuning Fork reaches 16 further (perk `awaken:fork_reach`, read by `TuningForkItem`).
+
+**Joined lairs**: the Crystal Nest finds cave air within 20 past either tunnel (`delve.cave.CaveJoints`) and bores on to
+it (`DeepLairs.joinTunnel`; `LairPiece` saves the joint; older pieces keep none); one laid by `/awaken fauna lair place`
+opens into a pocket. The lair line says how far down or up ("Lair of the Thousandfoot · 1.2 km NE · 40 below", nothing
+within 8: `FaunaNow.depth`). **The Horizon** (`CaveHorizon`): from awakening, within 900, never at home or in a gate, until
+you've stood at one: "Sinkhole · a way down" ("The Opening · a way down", raised, for the first), found by walking the
+sinkholes' placement grid and running each candidate's own site search (the same answer worldgen gets; two new
+candidates a call, cached).
+
+**Moving through rock** (`body/ascent`): **the rappel** is its own state (`AscentState.RAPPEL`, ordinal 6: watchers get the
+pose from `Seen` alone, the server can bound a rope that grows, TETHER untouched). On a line, sneak then jump starts it;
+sneak held holds you, jump held with it pays out; a fresh jump with your feet on the wall kicks off (cooldown 8 ticks:
+0.26 out, 0.08 up; a lean of 0.02 and damping 0.015 bring a bound 1.4-1.7 out back in 15-20 ticks at any length, about 3
+blocks down); let go of sneak and you swing again; let go of the line by a roofed floor within 2 and the zip's vault
+steps you in. Pay-out without Deepglass in bites (0.24, 0.21, 0.05: half a block every 3 ticks, 3.3 b/s, a catch on the
+third), a Deepglass line smooth at 0.21 (4.2 b/s); down to the floor plus 0.3, six ticks standing lets go. Falls stay
+free. The server: length ≤ reach + 1, the hand within len + 2 of the anchor, a pay bank refilled at the line's rate x1.15
+(capped at 30 ticks' worth + 1, counting the larger of game and wall time so a lagging server doesn't refuse), a per-tick
+astray check; refusals go through Stop and the refusal counter and never move the body; a kick is a chain link.
+**Rope fittings** (crafting-table recipes: the Forge has no data-driven ones): an iron line (4 iron, 4 nuggets, a coil
+of Runner's rope: the rope reaches 6 further), a gold reel (4 gold, 1 iron: winds 1.5x, reel-in 0.51, fit-reel 1.8), a
+Deepglass line (4 shards, 4 iron, Runner's rope: smooth pay-out, keeps the +6); fitted by using them, one line and one
+reel (the old one comes back), saved as `awaken:rope_kit` (schema 1, kept through death), synced (`Kit`, and `Seen.kit`
+for watchers); the line drawn steel-grey or with a violet glint, the reel at the hand. Sounds `ascent.rappel_*`.
+
+**The senses** (`delve.client`): **sound** (`CaveSound`, `DeepHum`, a Conductor `Source` in its voice budget, honouring
+its hushes, ducking and `natureLevel()`; played beside AmbientSounds, whose cave ambience it doesn't double; and
+`soundscape/family/hollows.json` for players without it). Underground ("under": no sky, real ground 3-12 over you; full
+at sky light ≤ 4, none at 10; eases over ~2.5 s): drips at real dripstone tips and wet roofs (4 + 2.5 a tip found, capped
+at 4; dripstone x1.3, lush x1.1, deep dark x0.35; 40% fall again from the same tip 1.2-3.5 s later), stone settling (0.45
+a minute, 6-26 off, lower with depth), far water toward real water 8-32 off (a loop), a breath of air from the brightest
+sky-lit air 3-32 off at least 4 brighter than you (a loop, lower with depth); sulfur caves add a vent's hiss and acid's
+bubbles and their drips sizzle; every event x(1 - 0.45 depth) (depth 0 at y 48, 1 at y -64), lulls every 2-4 min.
+At most 10 block reads a tick. **The deep's hum** below y 0: nothing at 0, in over 8, 0.28 at y -30, 0.52 at y -60, plus
+0.48 x a seep's weight (deep dark x0.6); the seep's second voice at 0.85 x seep^1.3, and the world muffles (the air's
+filter to 20000 x (600/20000)^seep Hz, nature to 1 - 0.7 x seep). Ten events `delve.cave.*`, `delve.deep.*`
+(`tools/art/specs/audio_caves.py`). **Light**: a Lens look per cave biome (`assets/awaken/lens/looks_delve.json`: lush
+caves' green glow, dripstone's amber, the deep dark's ink, sulfur caves' yellow haze) and a seep's violet-black shadows and
+lilac Deepglass bloom through a new place-look hook (`LensClient.placeLook(layer, id, weight)`: two layers, nothing while
+Lens is off, a story override always wins); a plain cave under any other biome takes an underground look by "under", so
+it no longer wears its surface biome's grade.
+
+**A way home** (`delve.home`): the server keeps your trail (a crumb every 4 blocks while out of the sky, at most 96, the
+older half thinned when full, loops cut; attachment `awaken:delve_home`, schemaVersion 1, not kept on death). After 15 s
+out of the sky with sky light ≤ 6, 6+ from where you last stood under open sky and 12+ below it or 32+ walked, a Now line
+"Surface ↑ 20 · NE 40" (priority 56; never outside the overworld, in a gate, the Descent, a Hearth or the opening) until
+you see the sky again. The Signal's thread runs back along the crumbs (never through rock), a block a tick for 40, when
+the line appears and when you stand still 5 s, at most every 30 s; NowClient's straight thread and arrow leave it alone
+(`NowClient.ownWay`). The Way Forward's glance plugs in with `delve.client.HomeClient.thread()`. **Vents** (`awaken:delve/vents`,
+biome modifier `delve_vents` at `underground_decoration`): a chunk in 8 tries 3 columns; over a floor in sulfur caves, or
+at y ≤ -28 with lava within 4, with 20+ of air above: the Ascent's updraft vent on a magma crust (a cinnabar ring in sulfur
+caves); 0.011 ms a chunk. **The Descent's tunnels**: five small grottos per tunnel stratum (a pool lit from below by the
+stratum's glow block, Deepglass in floor and roof, lichen, half with a cache from the stratum's loot table) and Deepglass
+seams along the tunnel walls in bands (the Rim and the Gardens get iron and gold seams and amethyst grottos); the tunnel
+forms lose W2's scattered Deepglass; no overworld cave reaches a stratum.
+
+**The seep heart** (`mobs`, `awaken:seep_heart`, `MobDef.placed()`: fauna kept out of the census, beast registry, codex and
+lairs): our own body (Deepglass and black-violet growth fused into the rock, a beating violet core, plates that open as it
+wakes, roots in the walls), rooted, hp 34, damage 4, armour 4, box 2.0 x 2.6, at a beast's level (the seep's +5 with it).
+Wakes for a survival player within 12 (7 up or down) or a blow (2 s); fights within 20, sleeps after 30 s alone and heals.
+Phase 1: Deep Shards, Rootfall (cracks, then roots), Root Lash; at 65%: Deep Pulse (radius 9, knockback, 4 s darkness),
+Call of the Deep (two Hushlings); at 30%: Shard Storm, Heartburst. Its own light (5 asleep, 10-12 awake, dark after death),
+its own sounds; drops Deepglass shards, a Chime Crystal, essence, a Heartglass part, 45% a Power Core.
+
+**Decisions made in W5** (not among the plan's 13; each the recommendation): the rappel as its own state; fittings as
+crafting-table recipes (the Forge has none data-driven); the Deepglass line keeps the iron line's +6; the way home's glance
+has no key (as The Way Forward's): its thread runs when the line appears and when you stand still; the thread follows the
+trail you came by; the seep heart's level is a beast's in the seep (region + 5 + 3); seeps form round a region's Deepglass
+lode, sinkholes beside a planned lode (so their grottos hold one); the climb back out of a sinkhole is a vine cleft (the
+shelves are the way down); the mine folds back into a U (a structure reaches only 8 chunks from its start); the first
+sinkhole may end in its grotto when no cave is near; a plain cave's own underground look; bats at dusk are vanilla bats
+(Minecraft's own life), the mist and the draught our own; the caption's cue reuses the region chime, lower.
+
+**Not done in W5**: the Hollows den in a dripstone hall and the beast's cave under a hill (PLAN 8.2's other lairs); the
+Taken trouble's destination (W4); an ice chute (the stair slide runs on steps only); the cave sound judged by ear (a Mac
+listening check: `delve.cave.*`, `delve.deep.*`, `ascent.rappel_*`, the seep heart's voice).
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 29. Wild life (the wild's small ambient life, client-only; Euan 2026-10-26, built without an approval page)

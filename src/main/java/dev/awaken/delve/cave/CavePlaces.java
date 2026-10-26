@@ -273,6 +273,32 @@ public final class CavePlaces {
         Finds.tell(p, Finds.Find.of("secret", "Secret · " + CaveNames.name(s), CaveNames.name(s), "A cache buried in a grotto", 0x9FE6D6, true));
     }
 
+    /**
+     * A grotto's pool that is a legendary fishing spot (some are: {@link Grotto#fishingSpot}): a third of its catches bring
+     * something more up out of the dark water, and the first catch there is a find.
+     */
+    static void onFished(net.neoforged.neoforge.event.entity.player.ItemFishedEvent e) {
+        if (!(e.getEntity() instanceof ServerPlayer p) || !(p.level() instanceof ServerLevel level)) return;
+        BlockPos at = e.getHookEntity().blockPosition();
+        Spec s = at(level, at);
+        if (s == null || s.kind() != CaveKind.GROTTO || !Grotto.fishingSpot(s)) return;
+        if (Progression.discover(p, "secret/fishing/" + s.id(), 0.1)) {
+            Progression.count(p, Counters.SECRETS_FOUND);
+            Finds.tell(p, Finds.Find.of("secret", "Fishing spot · " + CaveNames.name(s), CaveNames.name(s), "The glowing pool bites", 0x9FE6D6, true));
+        }
+        var r = p.getRandom();
+        if (r.nextFloat() > 0.35F) return;
+        net.minecraft.world.item.ItemStack extra = switch (r.nextInt(6)) {
+            case 0 -> new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.GLOW_INK_SAC, 1 + r.nextInt(2));
+            case 1 -> new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.AMETHYST_SHARD, 1 + r.nextInt(3));
+            case 2 -> new net.minecraft.world.item.ItemStack(dev.awaken.delve.DelveContent.DEEPGLASS_SHARD.get());
+            case 3 -> new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.LAPIS_LAZULI, 2 + r.nextInt(3));
+            case 4 -> new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.PRISMARINE_CRYSTALS, 1 + r.nextInt(2));
+            default -> new net.minecraft.world.item.ItemStack(r.nextInt(4) == 0 ? net.minecraft.world.item.Items.NAUTILUS_SHELL : net.minecraft.world.item.Items.GLOW_BERRIES);
+        };
+        p.getInventory().placeItemBackInInventory(extra, net.minecraft.util.Prediction.SERVER_ONLY);
+    }
+
     static void forget(UUID player) {
         TRACKED.remove(player);
     }

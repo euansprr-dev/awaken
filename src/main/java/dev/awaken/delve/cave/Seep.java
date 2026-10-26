@@ -66,6 +66,7 @@ final class Seep {
             }
         }
         k.mark("socket", c[0], c[1], c[2]);
+        k.mark("hall", Mth.floor(s.x() + 0.5 - ux * 6), floor, Mth.floor(s.z() + 0.5 - uz * 6));
         k.mark("goal", c[0] + Mth.floor(-ux * 3 + 0.5), c[1], c[2] + Mth.floor(-uz * 3 + 0.5));
         // ---- the nest: an alcove off the hall's side, bone and shed chitin round a hollow ------------------------------
         nest(s, k, ux, uz, floor);

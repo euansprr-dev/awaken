@@ -43,7 +43,10 @@ final class CaveCommands {
             var d = Commands.literal("delve");
             d.then(Commands.literal("place").requires(AwakenCommands.admin())
                     .then(Commands.literal("go").then(Commands.argument("mark", StringArgumentType.word())
-                            .suggests((c, b) -> SharedSuggestionProvider.suggest(lastMarks.keySet(), b)).executes(CaveCommands::go)))
+                            .suggests((c, b) -> SharedSuggestionProvider.suggest(lastMarks.keySet(), b)).executes(c -> go(c, null))
+                            .then(Commands.argument("toward", StringArgumentType.word())
+                                    .suggests((c, b) -> SharedSuggestionProvider.suggest(lastMarks.keySet(), b))
+                                    .executes(c -> go(c, StringArgumentType.getString(c, "toward"))))))
                     .then(Commands.argument("kind", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(kinds, b))
                             .executes(CaveCommands::place)));
             d.then(Commands.literal("places").executes(CaveCommands::places));
@@ -82,7 +85,7 @@ final class CaveCommands {
         double ms = (System.nanoTime() - t0) / 1e6;
         lastMarks = marks;
         lastYaw = p.getYRot();
-        BlockPos start = marks.get(kind == CaveKind.SINKHOLE ? "start" : kind == CaveKind.MINE ? "start" : "start");
+        BlockPos start = marks.get("start");
         if (start != null) teleport(p, start, kind == CaveKind.SINKHOLE ? yawToward(start, s.x(), s.z()) : p.getYRot());
         c.getSource().sendSuccess(() -> Component.literal(String.format(Locale.ROOT, "%s \"%s\" laid in %.0f ms; marks: %s",
                 kind.id, CaveNames.name(s), ms, String.join(", ", marks.keySet()))).withColor(0x9FE6D6), false);
@@ -103,19 +106,32 @@ final class CaveCommands {
         CaveStaging.stageLode(s);
     }
 
-    private static int go(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+    /** To a mark, facing another one when given (its eye on that mark's middle). */
+    private static int go(CommandContext<CommandSourceStack> c, String toward) throws CommandSyntaxException {
         ServerPlayer p = c.getSource().getPlayerOrException();
         BlockPos at = lastMarks.get(StringArgumentType.getString(c, "mark"));
-        if (at == null) {
+        BlockPos to = toward == null ? null : lastMarks.get(toward);
+        if (at == null || toward != null && to == null) {
             c.getSource().sendFailure(Component.literal("No such mark in the last place laid: " + String.join(", ", lastMarks.keySet())));
             return 0;
         }
-        teleport(p, at, p.getYRot());
+        if (to == null) {
+            teleport(p, at, p.getYRot(), p.getXRot());
+            return 1;
+        }
+        double dx = to.getX() - at.getX(), dy = to.getY() + 1.0 - (at.getY() + 1.62), dz = to.getZ() - at.getZ();
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+        float pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)));
+        teleport(p, at, yaw, pitch);
         return 1;
     }
 
     private static void teleport(ServerPlayer p, BlockPos at, float yaw) {
-        p.teleportTo(p.level(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, Set.of(), yaw, p.getXRot(), true);
+        teleport(p, at, yaw, p.getXRot());
+    }
+
+    private static void teleport(ServerPlayer p, BlockPos at, float yaw, float pitch) {
+        p.teleportTo(p.level(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, Set.of(), yaw, pitch, true);
     }
 
     private static float yawToward(BlockPos from, int x, int z) {

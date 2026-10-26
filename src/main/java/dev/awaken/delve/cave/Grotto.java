@@ -30,6 +30,11 @@ final class Grotto {
         return new BoundingBox(Math.min(ax, bx), s.y() - 6, Math.min(az, bz), Math.max(ax, bx), s.y() + 12, Math.max(az, bz));
     }
 
+    /** Some grottos' pools are a legendary fishing spot (a third of them, fixed by the seed). */
+    static boolean fishingSpot(Spec s) {
+        return Carve.rand(s.seed() + 77, 0, 0, 0) < 0.34;
+    }
+
     /** The buried cache's chest (world position), for the secret's count. */
     static int[] cache(Spec s) {
         Frame f = new Frame(s.x(), s.y(), s.z(), s.rot());
@@ -81,12 +86,13 @@ final class Grotto {
             int depth = d < 1.6 ? 3 : 2;
             for (int ly = -depth; ly <= -1; ly++) f.put(k, lx, ly, lz, Carve.WATER);
             f.put(k, lx, -depth - 1, lz, Blocks.CLAY.defaultBlockState());
-            if (d < 2.2 && Carve.rand(seed + 3, lx, 0, lz) < 0.35) {
+            if (d < 2.2 && Carve.rand(seed + 3, lx, 0, lz) < (fishingSpot(s) ? 0.7 : 0.35)) {
                 f.put(k, lx, -depth, lz, Blocks.SEA_PICKLE.defaultBlockState().setValue(SeaPickleBlock.PICKLES, 1 + (int) (Carve.rand(seed + 4, lx, 1, lz) * 4))
                         .setValue(SeaPickleBlock.WATERLOGGED, true));
             }
         }
         f.mark(k, "pool", px, 0, pz);
+        f.mark(k, "room", 3, 0, -4);
         // ---- the geode: an egg of basalt, calcite and amethyst half out of the west wall, cracked open ----------------
         geode(s, k, f);
         // ---- the cache: a chest under the floor by the pool, suspicious gravel over it ----------------------------------

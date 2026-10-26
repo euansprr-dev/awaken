@@ -82,3 +82,52 @@ kinds, a diamond against coal, the deep budget after the shallow one is worn, di
 - Judged on the preview sheet and the tour (shots: /Volumes/MEDIA/tour-shots/world-depth-w2-2026-10-26); the sounds were
   checked by their loudness, not yet by ear in game. The tour stages its chamber 700 blocks off Carillon: the city's
   footprint is protected all the way down for survival players, so neither the heavy strike nor a cave-in happens there.
+
+## W5: caves worth entering
+
+"Between the Gates" phase W5 (PLAN section 8, SPEC §28.5): places in the caves joined to the natural ones, every one with a
+route that needs no rope; the rappel and rope fittings (in `body/ascent`); sound and light below; names; a way home; vents;
+the Descent's tunnels dressed.
+
+| Class | What it does |
+|---|---|
+| `cave.CaveKind`, `cave.Spec` | The five kinds; one place as data (origin, turn, seed, joint, numbers), saved with its piece |
+| `cave.CaveSites` | Where a place goes: depth, rock overhead, dry, out of the city, natural cave air from the base columns, a lode beside a sinkhole, a Deepglass lode in a seep, a hillside for a mine; within 8 chunks of its start |
+| `cave.CaveStructure`, `cave.CavePiece`, `cave.NearCityPlacement` | The structure type, its one code-built piece, the first sinkhole's placement off the camp road |
+| `cave.Sinkhole`, `Mine`, `Seep`, `Chute`, `Grotto` | The builders (rooms strung like beads, G45), into a `Sink`: a chunk of the world, all of it, or a `Grid` |
+| `cave.Carve`, `cave.Frame` | Hashing and noise, carving that keeps the bedrock, blobs, walkable tunnels, the rock of a depth; a place's turned axes |
+| `cave.Routes`, `cave.Grid` | The no-rope route search over a built place with the Runner's moves and numbers; a place built in memory |
+| `cave.CavePlaces`, `cave.CaveData` | At run time: your place (sent to your client), discovery and caption, a seep's +5, heart and nest, quiet seeps, a sinkhole's bats, a grotto's cache and fishing spot, the places near you |
+| `cave.CaveHorizon` | "Sinkhole · a way down" on the Horizon, found by the sinkholes' own site search |
+| `cave.CaveItems` | The Delvers' logs (Codex), the lode map (lapis), the old pick (the fork's reach) |
+| `cave.CaveJoints` | Cave air near a point, for other structures (the Crystal Nest's tunnel) |
+| `cave.CaveCommands`, `cave.CaveStaging`, `cave.CaveTests` | `/awaken delve place`, staged places, `delve_cave_routes` and `delve_seep` |
+| `home.*` | The way home (trail, Now line, thread), the vents feature, `delve_way_home` |
+| `sense.*` | The cave soundscape's sound events, `/awaken delve senses goto` |
+| `client.CaveClient`, `CaveHud`, `CaveFx`, `CaveState` | The place you're in, its caption, mist and draught, logs and lode marks |
+| `client.SenseClient`, `SenseState`, `CaveSound`, `DeepHum`, `CaveLook`, `SenseLoop` | Sound and light below |
+| `client.HomeClient`, `VentFx` | The thread home, the vents' embers |
+
+Seams outside delve: `living/api/Regions.addLevelExtra` (the seep's +5), `world/fauna/lair` (`LairStructure`, `LairPiece`,
+`LairBuilder.Sink.joint`, `DeepLairs.joinTunnel`: the joined Crystal Nest), `world/fauna/FaunaNow.depth` (the lair line),
+`world/fauna/Lairs.placeAt` (a laid nest's pocket), `delve/TuningForkItem` (`awaken:fork_reach`), `delve/LodePlans.stage`,
+`lens/client/LensClient.placeLook`, `core/audio` (two Drives, `Listener.under/depth`), `signal/client/NowClient.ownWay`,
+`descent/world/Terrain` and `Palette` (seams and grottos), `body/ascent` (the rappel, fittings), `mobs` (the seep heart).
+
+### How to try it
+
+- Survival: find a sinkhole by the Horizon line (the first is 600-900 from Carillon, off the camp road), walk the shelves
+  down, climb the vine cleft back up, dive from the lip by the spring. A mine's adit is a timbered hole in a hillside.
+- Admin (tours, tests): `/awaken delve place <sinkhole|mine|seep|chute|grotto>` lays one round you (a sinkhole's rim
+  where you stand; the rest with their floor at your feet, facing your way) and puts you at its way in; `place go <mark>
+  [toward]` (marks: start, goal, view, shelf, dive, pool, cleft, heart; office, stope, incline, crawl, bridge; hall,
+  socket, nest, vent, spire0-3; mouth, lip; curtain, room, cache); `places`; `seep quiet|wake`; `home stage`, `home
+  thread`, `vent stage`, `descent grotto <n>`; `senses goto <cave biome>`, client `senses [status]`, `senses seep <w>|off`;
+  `/awaken ascent rappel stage [deepglass]`, `ascent rappel fit <iron|gold|deepglass>`, `ascent pilot run rappel`.
+- Tour: `tools/autopilot/world-depth-w5.txt` (on GitHub's Mac runners: `tools/tour-ci.sh`).
+
+### Known gaps
+
+- The cave sound is unheard on a Mac yet (listening check owed). Places come in new chunks only.
+- Places laid by `/awaken delve place` are known until the server stops (they have no structure start).
+- The Horizon finds sinkholes only; the other places are found by walking into them, the fork, Deep Ear and the Veil.
