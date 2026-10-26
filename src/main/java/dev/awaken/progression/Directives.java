@@ -29,6 +29,9 @@ public final class Directives {
         return 3 + (int) Progression.perk(player, Perks.EXTRA_DIRECTIVE_SLOT) + Progression.extraDirectiveSlots(player);
     }
 
+    /** The Registry's own Directive (SPEC §27.6): the first floor of a gate, already taken on. */
+    static final String OPENING = "awaken:first_floor";
+
     /** Each in-game morning, and after long gaps without anything new. */
     public static void tryOffer(ServerPlayer player, String reason) {
         Profile p = Progression.profile(player);
@@ -36,6 +39,7 @@ public final class Directives {
         long today = PlayDays.current(player.level().getServer());
         expire(player, p, today);
         if (p.directives.size() >= slots(player)) return;
+        if (reason.equals("opening") && opening(player, p, today)) return;
         boolean wantQuick = Progression.minutesSinceNewThing(player) > 20;
         long offers = p.counter("awaken:directive_offers");
         boolean mustBeFresh = offers % 4 == 3;
@@ -80,6 +84,26 @@ public final class Directives {
                 .choice(ACTION + ":" + key, "Take it on", "Let it pass").build(),
                 Component.literal("New directive · " + def.text() + " · K"));
         Progression.markDirty(player);
+    }
+
+    /**
+     * The Registry's Directive fits the moment instead of a random roll: clear a floor of a gate (your first gate is
+     * placed on purpose soon after: SPEC §27.6), accepted for you and on the Now line with its progress. False if it
+     * can't be (no such Directive, already held or done), and the ordinary roll takes over.
+     */
+    static boolean opening(ServerPlayer player, Profile p, long today) {
+        var def = Content.DIRECTIVES.get(OPENING);
+        if (def == null || p.counter("awaken:directive_done/" + OPENING) > 0) return false;
+        for (var d : p.directives) if (d.id().equals(OPENING)) return false;
+        Set<String> cs = new HashSet<>();
+        def.condition().counters(cs);
+        p.directives.add(new Profile.DirectiveState(OPENING, true, today, today + Math.max(4, def.expiresDays()), Progression.snapshot(p, cs)));
+        p.counters.put("awaken:directive_offered/" + OPENING, today + 1);
+        p.counters.merge("awaken:directive_offers", 1L, Long::sum);
+        Signal.toast(player, Component.literal("Directive · " + def.text() + " Your first gate will show itself out past the walls."));
+        DirectorLog.log(player, "directive", "the Registry's own: " + OPENING + ", accepted");
+        Progression.markDirty(player);
+        return true;
     }
 
     private static int weight(Defs.DirectiveDef d, boolean wantQuick) {

@@ -4504,3 +4504,32 @@ rings are a rope ladder), the Tether's "· needs the Tether".
 - **Gate cards compare ranks**: "Your rank · below it · its Lord will test you" or "above it · it pays you less" (0.3).
 - Tests: `wilds_ward_rules` (a spire refuses the first block inside a Hearth and keeps the promise; a vault doesn't;
   the cache's seal by arrival), `wilds_arrival_history` (a relog keeps the tower's visit).
+
+### 27.6 The first thread (phase 1)
+- **Registered** (`core.api.OpeningHooks.onRegistered`, fired from `OpeningModule.afterOpening` when the opening ends or
+  is skipped): Kestrel's errand, **The Last Delivery**, starts by itself and is tracked (`living.FirstThread`; once;
+  never for a player who has it or did it): tell Kestrel what you saw at the Roost, out through the High Gate, run the
+  letters to the Wayfarer camp up the north road, give Ilse the letters. It ends at the camp, a place with several pulls
+  (Hettie's and Ilse's level-1 asks, a gate's pillar, a vault), so after it the player chooses: it is one errand, not a
+  chain that keeps leading (BotW's "lines" railroaded 80% of testers).
+- **Chains on the Now line**: the tracked chain's current step (else the first chain's), priority 68 (over points to
+  spend 55 and the next level's unlock 15; under a waiting Reassessment 72, rifts and danger), with a compass to its
+  place: a "reach" step's marker; a "talk" step's person (Kestrel: the Roost, `OpeningHooks.place("roost")`; Hale: his
+  quartermaster spot; Ilse and Hettie: the camp; a Wayfarer: their scene). Before, tracked chains never reached the HUD.
+- **The camp is findable**: its marker falls back to its nominal spot until someone has come near (the compass knows the
+  way); a Horizon site "Wayfarer camp · a fire, people" until the player has stood within 24 of it (counter
+  `awaken:camp_reached`); and a signal fire on a bale by Ilse (`Scenes.campFire`), its smoke a column seen from the High
+  Gate, lit once a player is within 160 and lit again if it's gone.
+- **The Registry's Directive fits** (`Directives.opening`, reason "opening"): "Clear a floor of any gate.", accepted for
+  the player (4 play-days), "Your first gate will show itself out past the walls." Accepted Directives show on the Now
+  line with their progress ("· 50%", priority 58). Before, the Registry's was a random roll offered quietly, its waiting
+  line gone in 30 s, and accepted ones never showed outside K.
+- **The first gate, on purpose** (`Director.firstGate`, SPEC §21.0.14 finally built): a player's first gate waits until
+  level 3 or about half an hour after awakening (36 Director passes), and until they're out of the city (or an hour),
+  then forms 250-400 blocks further along the bearing from the city's centre to them (north from its middle), at their
+  own rank, with "A gate is drawing breath · 320 m N · its floors make you stronger" (IMPORTANT, topic `gate`); the
+  Horizon raises it ("E-rank gate · its floors make you stronger") until they've cleared a floor. Before, the first gate
+  was rolled the moment they awakened, in the infirmary, at random 300-1500 out, unannounced.
+- **Out through the walls** is a moment: crossing the city reserve outward shows the region's caption ("THE COMMONS ·
+  1-8") once a play-day (the Commons spans the city's edge, so leaving had none).
+- Test: `living_first_thread`.

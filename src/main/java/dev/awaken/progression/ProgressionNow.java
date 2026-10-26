@@ -19,6 +19,13 @@ final class ProgressionNow {
                 out.add(Suggestion.of("progression:reassessment", 72,
                         "Reassessment ready · " + p.rank().next().label + "-rank trial"));
             }
+            // accepted Directives, with how far along (SPEC §27.6): before, they never showed outside K
+            for (Profile.DirectiveState d : p.directives()) {
+                var def = d.accepted() ? dev.awaken.progression.content.Content.DIRECTIVES.get(d.id()) : null;
+                if (def == null) continue;
+                int pct = (int) Math.round(Directives.progress(p, d) * 100);
+                out.add(Suggestion.of("progression:directive/" + d.id(), 58, def.text() + (pct > 0 ? " · " + pct + "%" : "")));
+            }
             if (p.unspent() > 0) {
                 out.add(Suggestion.of("progression:points", 55,
                         "Spend " + p.unspent() + " point" + (p.unspent() == 1 ? "" : "s") + " · K"));

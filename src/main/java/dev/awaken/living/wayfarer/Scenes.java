@@ -112,8 +112,9 @@ public final class Scenes extends SavedData {
         // places that aren't a scene's own: the city's named spots and the Wayfarer camp
         if (name.startsWith("spot:")) return dev.awaken.core.api.CityHooks.spot(server.overworld(), name.substring(5));
         if (name.equals("camp")) {
+            // before anyone has come near, the camp's nominal spot (the compass still knows the way: SPEC §27.6)
             long c = get(server).camp;
-            return c == NONE ? null : BlockPos.of(c);
+            return c == NONE ? campColumn(server).atY(server.overworld().getSeaLevel()) : BlockPos.of(c);
         }
         Scene s = scene(server, id);
         if (s == null) return null;
@@ -426,6 +427,7 @@ public final class Scenes extends SavedData {
                 place(level, "hettie", c.offset(9, 0, -4), 12, false);
             }
         }
+        if (camp != NONE) campFire(level, BlockPos.of(camp));
         // Hale stands on Carillon's quartermaster spot (kept clear by the city); in a classic world, by the camp
         BlockPos post = dev.awaken.core.api.CityHooks.spot(level, "quartermaster");
         if (post != null) placeAt(level, "hale", post);
@@ -458,12 +460,43 @@ public final class Scenes extends SavedData {
         }
     }
 
+    /**
+     * The camp's fire (SPEC §27.6): a signal fire on a bale by Ilse, its smoke a column you see from the High Gate, lit
+     * once a player is near and lit again if it's gone. The camp had no structure, no smoke, nothing to walk toward.
+     */
+    private static void campFire(ServerLevel level, BlockPos camp) {
+        if (!near(level, camp, 160)) return;
+        BlockPos column = camp.offset(-3, 0, 3);
+        if (!level.hasChunkAt(column)) return;
+        for (BlockPos q : BlockPos.betweenClosed(camp.offset(-6, -3, -6), camp.offset(6, 3, 6))) {
+            if (level.getBlockState(q).is(net.minecraft.world.level.block.Blocks.CAMPFIRE)) return;
+        }
+        BlockPos fire = dryLand(level, column, 6);
+        if (fire == null) return;
+        level.setBlock(fire.below(), net.minecraft.world.level.block.Blocks.HAY_BLOCK.defaultBlockState(), net.minecraft.world.level.block.Block.UPDATE_ALL);
+        level.setBlock(fire, net.minecraft.world.level.block.Blocks.CAMPFIRE.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.CampfireBlock.SIGNAL_FIRE, true), net.minecraft.world.level.block.Block.UPDATE_ALL);
+        Awaken.LOG.info("[living] the camp's fire lit at {}", fire.toShortString());
+    }
+
+    /** Whether this player has stood at the camp (once: counter {@code awaken:camp_reached}). */
+    static final String CAMP_REACHED = "awaken:camp_reached";
+
     // ---- the Horizon line ---------------------------------------------------------------------------------------------
 
     /** The open scene meant for this player, while it waits (the Horizon line names it: "Wren, stranded"). */
     static List<HorizonHooks.Site> sites(ServerPlayer p) {
         if (!Regions.on(p.level())) return List.of();
         List<HorizonHooks.Site> out = new ArrayList<>();
+        // the Wayfarer camp, until you've been: the first place past the walls with people in it (SPEC §27.6)
+        var prof = dev.awaken.progression.Progression.profile(p);
+        if (prof.counter(CAMP_REACHED) == 0 && p.level().dimension() == net.minecraft.world.level.Level.OVERWORLD) {
+            BlockPos camp = marker(p.level().getServer(), 0, "camp");
+            if (camp != null) {
+                if (camp.distSqr(p.blockPosition().atY(camp.getY())) < 24 * 24) dev.awaken.progression.Progression.setCounter(p, CAMP_REACHED, 1);
+                else if (camp.distSqr(p.blockPosition().atY(camp.getY())) < 1200 * 1200) out.add(new HorizonHooks.Site("living:camp", "Wayfarer camp · a fire, people", camp, "", false));
+            }
+        }
         QuestState qs = QuestEngine.state(p);
         for (Scene sc : get(p.level().getServer()).scenes) {
             if (sc.owner.isEmpty() || !sc.owner.get().equals(p.getUUID()) || sc.kind.equals("resident")) continue;
