@@ -34,8 +34,10 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.BooleanSupplier;
@@ -97,7 +99,9 @@ public final class AwakenTests {
             for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) level.getChunk(cx + dx, cz + dz);
             // loaded is not entity-ticking: that also needs the ring two chunks round each one loaded, which the chunk
             // workers generate in the background, and the promotion then runs on the main-thread queue
-            freshBatch(level);
+            if (RUNNING.isEmpty()) freshWorld(level);
+            RUNNING.add(h.testInfo);
+            onEnd(h, () -> RUNNING.remove(h.testInfo));
             h.assertTrue(settle(level, () -> areaTicking(level, cx, cz), "the test area entity-ticks"), "the test area entity-ticks within 30 s");
             // Note: don't defer the body with runAfterDelay. Vanilla iterates its scheduled callbacks while running them,
             // so scheduling from inside one can run entries twice. Tests that need settled chunks delay their own actions.
@@ -113,26 +117,25 @@ public final class AwakenTests {
      */
     static final int PADDING = 24;
 
-    /** The server tick the current batch started on (its tests all take their first tick on it). */
-    private static int batchTick = Integer.MIN_VALUE;
-    /** The game rules and the time of day the first batch found (every batch starts from them). */
+    /** AWAKEN tests that have taken their first tick and not yet ended (identity: GameTestInfo keeps Object's equals). */
+    private static final Set<GameTestInfo> RUNNING = new HashSet<>();
+    /** The game rules and the time of day the first test found (the world goes back to them between tests). */
     private static GameRules startRules;
     private static long startClock;
 
     /**
-     * Every batch starts in a world nobody else is using (the GameTest server only). The runner never removes what a test
-     * leaves behind: by the end of a run some 240 players from finished tests still stood about the grid, the Living Wilds
-     * started stampedes, hunts and pack spawns round them, they were the "nearest player" of other tests' spawns and caps,
-     * and a gate whose reused cell one of them stood in could never be released. Rain a test set never stopped (the test
-     * server doesn't advance the weather) and the clock ran on, so a test met whatever sky and hour the tests before it
-     * left. A batch starts only after every earlier one has finished, and its tests all take their first tick on the same
-     * server tick, so the first of them removes every player and every creature, item and other entity left in the
-     * overworld, and puts back the first batch's game rules, time of day and clear sky, before any test body runs.
+     * A test that starts while no other AWAKEN test runs finds a world nobody else is using (the GameTest server only).
+     * The runner never removes what a test leaves behind: by the end of a run some 240 players from finished tests still
+     * stood about the grid, the Living Wilds started stampedes, hunts and pack spawns round them, they were the "nearest
+     * player" of other tests' spawns and caps, and a gate whose reused cell one of them stood in could never be released.
+     * Rain a test set never stopped (the test server doesn't advance the weather) and the clock ran on, so a test met
+     * whatever sky and hour the tests before it left. So every player and every creature, item and other entity left in
+     * the overworld goes, and the first test's game rules, time of day and clear sky come back. Only when nothing runs:
+     * a batch's tests start one by one as their chunks come in, not on one tick.
      */
-    private static void freshBatch(ServerLevel level) {
+    private static void freshWorld(ServerLevel level) {
         MinecraftServer server = level.getServer();
-        if (!(server instanceof GameTestServer) || server.getTickCount() == batchTick) return;
-        batchTick = server.getTickCount();
+        if (!(server instanceof GameTestServer)) return;
         for (ServerPlayer p : List.copyOf(server.getPlayerList().getPlayers())) server.getPlayerList().remove(p);
         ServerLevel over = server.overworld();
         List<Entity> left = new ArrayList<>();
