@@ -1,0 +1,61 @@
+# After Ilse's scene you can move again, and the camp has no dome (Euan, 2026-10-26: "right after the cutscene, you
+# can't move"; "a weird dark dome around the camp"). SPEC §27.6, "Control comes back".
+# 1. The camp by day, at the fire, looking up into the sky over it: no dome, no facets (the far smoke column fades out
+#    within 48 blocks of the fire; vanilla's smoke is the near one).
+# 2. Ilse's scene to its end: the ember held out, taken; the scene ends; then walking away (the log says how far).
+# 3. The camp at dusk, at the fire, looking up: no dark shell.
+# Run: tools/tour-ci.sh tools/autopilot/camp-exit.txt 1500 PACK=perf,world TECTONIC=awakened
+world autopilot_campexit survival 20261026
+waitworld
+window 1440 900
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd time set 5000
+cmd gamerule advance_time false
+hud on
+camera first
+# 1. the camp by day: at the fire, then looking up over it
+cmd awaken living camp
+wait 240
+cmd awaken living first camp
+wait 60
+shotnow exit_1_camp_day
+cmd tp @s ~ ~ ~ ~ -55
+wait 20
+shotnow exit_1_camp_day_sky
+# 2. Ilse's scene to its end, then walk away
+cmd awaken living first ilse
+wait 60
+shotnow exit_2_scene
+# she holds the ember out at about 450 ticks in, then walks it over to you
+wait 430
+shotnow exit_2_offer
+wait 80
+shotnow exit_2_take_prompt
+use
+# her last line, then the scene ends (about 180 ticks after your hand closes on it)
+wait 260
+shotnow exit_2_scene_over
+# your own keys again: walk forward for 3 s (the log says where you started and where you got to)
+walk 60
+wait 70
+shotnow exit_2_walked
+# 3. the camp at dusk, at the fire, looking up
+cmd time set 12800
+cmd awaken living first camp
+wait 60
+shotnow exit_3_camp_dusk
+cmd tp @s ~ ~ ~ ~ -55
+wait 20
+shotnow exit_3_camp_dusk_sky
+info
+quit

@@ -38,6 +38,11 @@ public final class Cinema {
         OpeningHud.line(who, text, ticks);
     }
 
+    /** Any line still on screen fades within {@code ticks} (a scene ended). */
+    public static void shortenLines(int ticks) {
+        OpeningHud.shortenLines(ticks);
+    }
+
     /** A title card: big spaced capitals, a line under them. */
     public static void title(String big, String small, int ticks) {
         OpeningHud.title(big, small, ticks);

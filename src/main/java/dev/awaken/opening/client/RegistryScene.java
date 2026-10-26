@@ -41,8 +41,8 @@ final class RegistryScene {
     private static long stepAt;
     private static boolean sawScreen, bootTitled, closedInventory, readySent;
     private static long wornSeenAt = -1, bootedAt = -1;
-    private static @Nullable ClientInput heldInput;
-    private static @Nullable LocalPlayer heldPlayer;
+    /** The lock's owner while a step holds the player still (the shared input lock: core.client.InputLock). */
+    private static final Object HOLD = "registry";
     private static long holdUntil;
 
     static void init() {
@@ -131,7 +131,7 @@ final class RegistryScene {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null) return;
-        if (heldInput != null && OpeningClient.ticks() >= holdUntil && !SigningScene.active()) release();
+        if (dev.awaken.core.client.InputLock.held(HOLD) && OpeningClient.ticks() >= holdUntil && !SigningScene.active()) release();
         Screen sc = mc.gui.screen();
         boolean worn = HoloBand.worn(p);
         String use = mc.options.keyUse.getTranslatedKeyMessage().getString();
@@ -291,20 +291,13 @@ final class RegistryScene {
     }
 
     private static void hold(int ticks) {
-        LocalPlayer p = Minecraft.getInstance().player;
-        if (p == null) return;
-        if (heldInput == null) {
-            heldInput = p.input;
-            heldPlayer = p;
-            p.input = new ClientInput();
-        }
         holdUntil = OpeningClient.ticks() + ticks;
+        // the signing can run long; the lock's own failsafe is a little past the longest a step waits
+        dev.awaken.core.client.InputLock.hold(HOLD, ticks + 20 * 40);
     }
 
     private static void release() {
-        if (heldInput != null && heldPlayer != null && heldPlayer.input != heldInput) heldPlayer.input = heldInput;
-        heldInput = null;
-        heldPlayer = null;
+        dev.awaken.core.client.InputLock.release(HOLD);
     }
 
     private static boolean isLetters(net.minecraft.world.item.ItemStack s) {

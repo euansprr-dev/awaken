@@ -33,6 +33,8 @@ wait 60
 #    the errand; and the Journal with nothing confusing in it (no "Danger · The Commons", no "[ERROR]")
 shotnow first_0_checklist
 cmd awaken admin counter "awaken:body_roll" 1
+wait 10
+shotnow first_0_checklist_tick
 wait 24
 shotnow first_0_checklist_roll
 cmd awaken admin counter "awaken:body_sprint" 1
@@ -42,6 +44,12 @@ wait 20
 shotnow first_0_checklist_done
 wait 100
 shotnow first_0_checklist_errand
+# the same card at a smaller GUI scale (auto here is 7, the 4K-equivalent: Euan's 3840x2160 runs at 9, 426x240 GUI px)
+opt guiScale 4
+wait 10
+shotnow first_0_checklist_gui4
+opt guiScale 0
+wait 10
 key status
 wait 60
 shot first_0_journal

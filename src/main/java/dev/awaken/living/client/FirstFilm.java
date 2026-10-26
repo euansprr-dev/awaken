@@ -50,8 +50,10 @@ final class FirstFilm {
     private static boolean offering, taken;
     /** When the server last moved her scene (client ticks): a scene gone quiet 45 s lets go of you. */
     private static long lastCue;
-    private static @Nullable ClientInput heldInput;
-    private static @Nullable LocalPlayer heldPlayer;
+    /** The lock's owner while the ember is held out (the shared input lock: core.client.InputLock). */
+    private static final Object HOLD = "ilse's ember";
+    /** Her hand stays out at most half a minute, then the server presses it into yours; past this, let go anyway. */
+    static final int HOLD_MAX = 20 * 45;
 
     static void init() {
         NeoForge.EVENT_BUS.addListener(InputEvent.InteractionKeyMappingTriggered.class, FirstFilm::onUse);
@@ -110,6 +112,8 @@ final class FirstFilm {
         Cinema.bars(false);
         Cinema.hud(true);
         Cinema.prompt(null, "");
+        // her last words fade with the scene (on a slow client a line could outstay it by ten seconds)
+        Cinema.shortenLines(80);
         release();
         ilseId = -1;
         offering = false;
@@ -119,14 +123,8 @@ final class FirstFilm {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null || mc.level == null) {
-            heldInput = null;
-            heldPlayer = null;
             ilseId = -1;
             return;
-        }
-        if (heldPlayer != null && heldPlayer != p) {
-            release();
-            if (ilseId >= 0) hold(p);
         }
         if (ilseId >= 0 && LivingClient.ticks - lastCue > 20 * 45) end();
         if (!offering || taken) return;
@@ -157,16 +155,11 @@ final class FirstFilm {
     }
 
     private static void hold(LocalPlayer p) {
-        if (heldInput != null) return;
-        heldInput = p.input;
-        heldPlayer = p;
-        p.input = new ClientInput();
+        dev.awaken.core.client.InputLock.hold(HOLD, HOLD_MAX);
     }
 
     private static void release() {
-        if (heldInput != null && heldPlayer != null && heldPlayer.input != heldInput) heldPlayer.input = heldInput;
-        heldInput = null;
-        heldPlayer = null;
+        dev.awaken.core.client.InputLock.release(HOLD);
     }
 
     /** Turns the player's own view toward a point (their eyes come back there). */

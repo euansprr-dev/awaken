@@ -5468,6 +5468,19 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   and captions on the way (e.g. Ilse: "Here, take an ember from our fire. Carry it with you, and when you find a spot
   you'd like to live, place it there. That'll be your home."). Lines that grew got time to be read (Bram's briefing:
   28 s, a line every 7; Ilse's beats 90 apart).
+- **Control comes back** (Euan, 2026-10-26: "right after the cutscene, you can't move"; he had to /kill). Every scene
+  that holds the player still goes through one lock, `core.client.InputLock` (bookkeeping `core.InputHolds`): the camera
+  shots, the Registry's waits, Ilse's ember, the ritual. The real input is saved once, by the first holder, and put back
+  only when the last lets go; a holder never saves another's stand-in. (Ilse's hand-over saved the camera's empty
+  stand-in, the camera then gave the real keys back, and the scene's end put the stand-in back for good.) Every hold has
+  a deadline (a shot's own length + 2 s, re-asserted while it plays; Ilse's ember 45 s; a shot of unknown length 2 min):
+  past it the lock lets go and logs `[input]`. A respawn's new player object is held in turn and given its own keys; a
+  logout lets everything go. Ilse's scene also ends server side on walking off (18 blocks), death, logout or her being
+  gone, and her hand empties. Tests: `core_input_holds`, `progression_first_scene_exits`; tour `camp-exit.txt` walks
+  away after the scene.
+- **The far smoke is far only**: the column (`PulseFx.campfire`) fades out within 48 blocks of the fire (gone at 48,
+  whole from 96), where vanilla's campfire smoke is the real thing. Drawn up close its puffs, up to 15 blocks across and
+  110 up, read as a dark dome over the camp and a pale facet in the sky (Euan, 2026-10-26).
 - **Quest fields** (`QuestDef.Step`, schema 1, both optional): `tally` shows a step's count even when it's one ("· 0/1");
   `night` says why a step needs the dark. Objective type `hearth`: done when the player has a Hearth.
 - Dev and tours: `/awaken living first gate|letters|ilse|took|camp`; tour `tools/autopilot/first-scenes.txt` (CI).
@@ -5539,12 +5552,15 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
 ---------------------------------------------------------------------------------------------------------------------
 
 ### 27.10 The current task, top right (Euan's playtest, 2026-10-26)
-"Every time you have a goal and things to do, you actually have a small checklist top right." One small card, top right
-under the first two toast slots (`signal.client.TaskHud`; never over the crosshair, hidden with the HUD), in the band's
-glass, a touch smaller than the Now card: the task's title and done/total, then its steps (a long one wraps to a second
-line), each ticked when done (a soft green flash as it ticks), the
-current one bright with ▸, keys drawn as key caps from "{key}" in the words, a count where a step has one ("0/10"),
-and a compass to a place nearby to do it ("↗ 9 m"). The Now line, top left, keeps the where; the card keeps the what.
+"Every time you have a goal and things to do, you actually have a small checklist top right." One small card tucked
+into the top-right corner (`signal.client.TaskHud`; the Now card's margin, 4 GUI px), in the Now card's glass, at about
+half its size (Euan, 2026-10-26, after the first version: "WAY too big, 2x smaller and closer to the corner"): 0.45 of
+the System scale, never under two screen pixels a font pixel, widest line 185 px before a step is shortened. Its title
+and done/total, then only what matters now, one line each: the current step bright with ▸, the next two dim, and a step
+that just ticked (a soft green flash, then it fades out over 2.5 s); a long step is shortened with "…" (the Journal has
+the whole of it). Keys are drawn as key caps from "{key}" in the words, a count where a step has one ("0/10"), and a
+compass to a place nearby ("↗ 9 m"). While the System's toasts are up it eases down under them. Hidden with the HUD.
+The Now line, top left, keeps the where; the card keeps the what.
 The server decides (`progression.Checklist`, sent only when it changes, payload `signal_task`; nothing while the
 opening runs):
 - **Your body remembers** first, from the awakening: "Hold [Shift] as you land to roll", "Double-tap [Ctrl] to sprint
