@@ -358,8 +358,20 @@ final class LivingCommands {
         // from the side away from the fire, so she and the fire are both before you
         Vec3 away = fire == null ? ilse.getLookAngle() : ilse.position().subtract(Vec3.atCenterOf(fire));
         away = away.multiply(1, 0, 1).lengthSqr() < 1e-3 ? new Vec3(1, 0, 0) : away.multiply(1, 0, 1).normalize();
-        Vec3 from = ilse.position().add(away.yRot((float) Math.toRadians(35)).scale(dist));
-        net.minecraft.core.BlockPos at = dev.awaken.living.wayfarer.Scenes.ground(p.level().getServer().overworld(), net.minecraft.core.BlockPos.containing(from));
+        // the first angle with nothing between you and her (the Lumen trunks are wide)
+        var level = p.level().getServer().overworld();
+        net.minecraft.core.BlockPos at = null;
+        for (int turn : new int[]{35, -35, 0, 70, -70, 110, -110, 180}) {
+            Vec3 from = ilse.position().add(away.yRot((float) Math.toRadians(turn)).scale(dist));
+            net.minecraft.core.BlockPos q = dev.awaken.living.wayfarer.Scenes.ground(level, net.minecraft.core.BlockPos.containing(from));
+            if (at == null) at = q;
+            var seen = level.clip(new net.minecraft.world.level.ClipContext(Vec3.atCenterOf(q).add(0, 1.1, 0), ilse.getEyePosition(),
+                    net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, p));
+            if (seen.getType() == net.minecraft.world.phys.HitResult.Type.MISS) {
+                at = q;
+                break;
+            }
+        }
         double dx = ilse.getX() - (at.getX() + 0.5), dz = ilse.getZ() - (at.getZ() + 0.5);
         p.teleportTo(p.level().getServer().overworld(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, java.util.Set.of(),
                 (float) Math.toDegrees(Math.atan2(-dx, dz)), 10F, true);
