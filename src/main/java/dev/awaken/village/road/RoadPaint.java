@@ -278,8 +278,9 @@ final class RoadPaint implements SettlementPaint.Layout {
     }
 
     /**
-     * The carriageway's surface by the land: across it, a worn crown, two ruts and gravel shoulders (a highroad), or a
-     * trodden way (a lane); near a town, cobbles and setts.
+     * The carriageway's surface by the land: a two-track country road (the crown between the wheels grown over, two worn
+     * tracks, rougher shoulders on a highroad), each band mostly one ground so it reads along the road; near a town,
+     * cobbles and setts.
      */
     static BlockState paving(int family, float d, boolean town, int wx, int wz) {
         int roll = pct(wx, wz, 50);
@@ -288,14 +289,20 @@ final class RoadPaint implements SettlementPaint.Layout {
         return switch (family) {
             case VillageStyles.DESERT -> crown ? (roll < 50 ? SMOOTH_SANDSTONE : roll < 80 ? SANDSTONE : SAND)
                     : rut ? (roll < 60 ? SAND : roll < 85 ? SANDSTONE : COARSE_DIRT) : (roll < 55 ? SAND : roll < 80 ? SMOOTH_SANDSTONE : SANDSTONE);
-            case VillageStyles.SAVANNA -> roll < 40 ? COARSE_DIRT : roll < 70 ? PATH : roll < 88 ? PACKED_MUD : GRAVEL;
-            case VillageStyles.MIRE, VillageStyles.JUNGLE -> roll < 50 ? PATH : roll < 72 ? PACKED_MUD : roll < 86 ? MUD : MOSSY_COBBLE;
-            case VillageStyles.FROST -> crown ? (roll < 60 ? GRAVEL : PATH) : roll < 50 ? GRAVEL : roll < 80 ? PATH : roll < 92 ? COBBLE : COARSE_DIRT;
-            case VillageStyles.HIGHLAND -> roll < 40 ? GRAVEL : roll < 65 ? COBBLE : roll < 82 ? ANDESITE : roll < 92 ? STONE : PATH;
-            case VillageStyles.ELDER -> roll < 55 ? PATH : roll < 75 ? COARSE_DIRT : roll < 90 ? PODZOL : MOSSY_COBBLE;
-            case VillageStyles.COAST -> roll < 45 ? GRAVEL : roll < 75 ? PATH : roll < 90 ? SAND : COBBLE;
-            default -> crown ? (roll < 45 ? PATH : roll < 72 ? COARSE_DIRT : roll < 90 ? GRASS : GRAVEL)
-                    : rut ? (roll < 70 ? PATH : roll < 90 ? COARSE_DIRT : GRAVEL) : (roll < 55 ? GRAVEL : roll < 85 ? PATH : COARSE_DIRT);
+            case VillageStyles.SAVANNA -> crown ? (roll < 50 ? COARSE_DIRT : roll < 80 ? GRASS : PATH)
+                    : rut ? (roll < 60 ? PATH : roll < 85 ? PACKED_MUD : COARSE_DIRT) : (roll < 55 ? COARSE_DIRT : roll < 80 ? PATH : GRAVEL);
+            case VillageStyles.MIRE, VillageStyles.JUNGLE -> crown ? (roll < 40 ? GRASS : roll < 70 ? MUD : PACKED_MUD)
+                    : rut ? (roll < 55 ? PATH : roll < 85 ? PACKED_MUD : MUD) : (roll < 40 ? PACKED_MUD : roll < 70 ? MUD : roll < 90 ? PATH : MOSSY_COBBLE);
+            case VillageStyles.FROST -> crown ? (roll < 45 ? COARSE_DIRT : roll < 80 ? GRAVEL : PODZOL)
+                    : rut ? (roll < 70 ? PATH : GRAVEL) : (roll < 50 ? GRAVEL : roll < 80 ? COARSE_DIRT : PATH);
+            case VillageStyles.HIGHLAND -> crown ? (roll < 40 ? GRASS : roll < 75 ? GRAVEL : COARSE_DIRT)
+                    : rut ? (roll < 55 ? GRAVEL : roll < 85 ? PATH : ANDESITE) : (roll < 35 ? COBBLE : roll < 70 ? GRAVEL : roll < 85 ? ANDESITE : STONE);
+            case VillageStyles.ELDER -> crown ? (roll < 45 ? PODZOL : roll < 80 ? GRASS : COARSE_DIRT)
+                    : rut ? (roll < 75 ? PATH : COARSE_DIRT) : (roll < 40 ? PODZOL : roll < 75 ? COARSE_DIRT : PATH);
+            case VillageStyles.COAST -> crown ? (roll < 45 ? GRASS : roll < 75 ? SAND : PATH)
+                    : rut ? (roll < 65 ? PATH : roll < 90 ? GRAVEL : SAND) : (roll < 45 ? GRAVEL : roll < 80 ? SAND : PATH);
+            default -> crown ? (roll < 65 ? GRASS : roll < 90 ? PATH : COARSE_DIRT)
+                    : rut ? (roll < 82 ? PATH : roll < 94 ? COARSE_DIRT : GRAVEL) : (roll < 40 ? COARSE_DIRT : roll < 70 ? PATH : roll < 85 ? GRAVEL : GRASS);
         };
     }
 
@@ -311,8 +318,15 @@ final class RoadPaint implements SettlementPaint.Layout {
         };
     }
 
+    /** The half step where the road climbs a block: the paving's own stone, or an earthen one on an earth road, one per land. */
     static BlockState slabOf(BlockState pave, int family) {
-        if (pave == COBBLE || pave == GRAVEL || pave == PATH || pave == COARSE_DIRT || pave == GRASS || pave == PODZOL) return COBBLE_SLAB;
+        if (pave == PATH || pave == COARSE_DIRT || pave == GRASS || pave == PODZOL || pave == GRAVEL)
+            return switch (family) {
+                case VillageStyles.DESERT -> SANDSTONE_SLAB;
+                case VillageStyles.FROST, VillageStyles.HIGHLAND -> COBBLE_SLAB;
+                default -> MUD_BRICK_SLAB;
+            };
+        if (pave == COBBLE) return COBBLE_SLAB;
         if (pave == MOSSY_COBBLE) return MOSSY_COBBLE_SLAB;
         if (pave == STONE_BRICKS || pave == CRACKED_STONE_BRICKS) return STONE_BRICK_SLAB;
         if (pave == ANDESITE) return ANDESITE_SLAB;

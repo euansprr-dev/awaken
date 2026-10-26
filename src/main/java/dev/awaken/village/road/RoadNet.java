@@ -342,6 +342,14 @@ public final class RoadNet {
      * settlements within a lane's reach.
      */
     public static List<Road> roadsNear(RoadWorld w, int x, int z, int reach) {
+        List<Road> out = highroadsNear(w, x, z, reach);
+        for (SettlementGrid.Anchor a : SettlementGrid.gridNear(w.seed, x, z, Highroads.LANE_REACH + reach, new int[]{w.cx, w.cz}))
+            out.addAll(branch(w, a));
+        return out;
+    }
+
+    /** The highroads and Carillon's roads out that may pass within {@code reach} of a point (no lanes: those cascade). */
+    public static List<Road> highroadsNear(RoadWorld w, int x, int z, int reach) {
         List<Road> out = new ArrayList<>();
         int pitch = RegionMap.PITCH;
         int gx = Math.floorDiv(x, pitch), gz = Math.floorDiv(z, pitch);
@@ -363,8 +371,6 @@ public final class RoadNet {
                 }
             }
         }
-        for (SettlementGrid.Anchor a : SettlementGrid.gridNear(w.seed, x, z, Highroads.LANE_REACH + reach, new int[]{w.cx, w.cz}))
-            out.addAll(branch(w, a));
         return out;
     }
 

@@ -54,11 +54,14 @@ wait 100
 shot w7_05_a_hamlet_you_didnt_know
 cmd gamemode spectator
 # ---- a wayhouse and its waymarker at dusk ----
+# (the server plans what a framing needs on its own thread while the client waits on: there first, then the roads round it)
 cmd time set 12650
+cmd awaken village view nearest_wayhouse stable
+wait 600
 cmd awaken village view nearest_wayhouse marker
-wait 420
+wait 900
 cmd awaken village start
-wait 80
+wait 100
 shot w7_06_the_wayhouse_and_its_waymarker_at_dusk
 cmd awaken village view nearest_wayhouse stable
 wait 80
@@ -74,8 +77,10 @@ wait 60
 shot w7_08_a_caravan_on_the_road
 # ---- the first town from the pass: its gate, its market, its scribe ----
 cmd time set 4200
+cmd awaken village view first_town market
+wait 700
 cmd awaken village view first_town pass
-wait 500
+wait 900
 shot w7_09_the_town_from_the_pass
 cmd awaken village view first_town gate
 wait 300
@@ -94,7 +99,7 @@ shot w7_13_on_the_wall
 # ---- a mining town at a mountain's foot over its mine ----
 cmd time set 5200
 cmd awaken village view nearest_mine hill
-wait 500
+wait 1200
 cmd awaken village start
 wait 100
 shot w7_14_the_mining_town_at_the_mountains_foot

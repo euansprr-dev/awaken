@@ -89,7 +89,7 @@ public final class RoadCommands {
             List<Road> rs = RoadNet.port(w, port);
             if (!rs.isEmpty()) return stand(src, p, rs.getFirst(), 6, 1);
         }
-        RoadNet.roadsNear(w, p.getBlockX(), p.getBlockZ(), 400);
+        RoadNet.highroadsNear(w, p.getBlockX(), p.getBlockZ(), 400);
         var n = RoadNet.nearest(p.getX(), p.getZ(), 1200);
         if (n.isEmpty()) {
             src.sendFailure(Component.literal("No road out of Carillon or near you in this world."));
@@ -152,10 +152,18 @@ public final class RoadCommands {
         return stand(src, p, r, i, points >= 0 ? 1 : -1);
     }
 
-    /** Stands a player on a road's point, eye at standing height, looking a dozen points along it in {@code dir}. */
+    /**
+     * Stands a player on a road's point looking a dozen points along it in {@code dir}: at standing height, or (one who
+     * may fly) held two blocks over it, so the verge's grass doesn't fill the view.
+     */
     static int stand(CommandSourceStack src, ServerPlayer p, Road r, int i, int dir) {
         int j = Math.clamp(i + dir * 12, 0, r.points() - 1);
-        double x = r.x()[i], z = r.z()[i], y = r.y()[i] + 1;
+        boolean fly = p.getAbilities().mayfly && !p.isSpectator();
+        if (fly) {
+            p.getAbilities().flying = true;
+            p.onUpdateAbilities();
+        }
+        double x = r.x()[i], z = r.z()[i], y = r.y()[i] + 1 + (fly ? 2 : 0);
         double dx = r.x()[j] - x, dz = r.z()[j] - z, dy = r.y()[j] - r.y()[i];
         float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)), pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.max(1, Math.hypot(dx, dz))));
         p.teleportTo((ServerLevel) p.level(), x, y, z, Set.of(), yaw, Math.clamp(pitch + 4, -30, 30), true);
@@ -274,19 +282,28 @@ public final class RoadCommands {
                 return null;
             }
             case "marker" -> {
-                // the waymarker on a road out of this place, read from the road
+                // the waymarker on a road out of this place (the one nearest it), read from the road
                 lay(p);
+                Road best = null;
+                Road.Marker bm = null;
+                double bd = Double.MAX_VALUE;
                 for (Road r : RoadNet.laid()) {
                     boolean ours = r.from().settlement().equals(p.key) || r.to().settlement().equals(p.key);
                     if (!ours) continue;
                     for (Road.Marker m : r.markers()) {
-                        int wi = Math.clamp(m.point(), 0, r.points() - 1);
-                        double rx = r.x()[wi] - m.x(), rz = r.z()[wi] - m.z(), l = Math.max(1e-3, Math.hypot(rx, rz));
-                        double ex = m.x() + 0.5 + rx / l * 4.5 + rz / l * 2, ez = m.z() + 0.5 + rz / l * 4.5 - rx / l * 2;
-                        return new double[]{ex - p.ox, m.y() + 2.4 - p.baseY, ez - p.oz, m.x() + 0.5 - p.ox, m.y() + 3 - p.baseY, m.z() + 0.5 - p.oz};
+                        double d = Math.hypot(m.x() - p.ox, m.z() - p.oz);
+                        if (d < bd) {
+                            bd = d;
+                            best = r;
+                            bm = m;
+                        }
                     }
                 }
-                return null;
+                if (bm == null) return null;
+                int wi = Math.clamp(bm.point(), 0, best.points() - 1);
+                double rx = best.x()[wi] - bm.x(), rz = best.z()[wi] - bm.z(), l = Math.max(1e-3, Math.hypot(rx, rz));
+                double ex = bm.x() + 0.5 + rx / l * 4.5 + rz / l * 2, ez = bm.z() + 0.5 + rz / l * 4.5 - rx / l * 2;
+                return new double[]{ex - p.ox, bm.y() + 2.4 - p.baseY, ez - p.oz, bm.x() + 0.5 - p.ox, bm.y() + 3 - p.baseY, bm.z() + 0.5 - p.oz};
             }
             default -> {
                 return null;
@@ -294,10 +311,13 @@ public final class RoadCommands {
         }
     }
 
-    /** The roads round a place laid now (a framing needs them before the land there has generated). */
+    /**
+     * The highroads through a place laid now (a framing needs them before the land there has generated); not the lanes
+     * round it, whose own roads would cascade over the regions about.
+     */
     static void lay(VillagePlan p) {
         RoadWorld w = RoadWorld.get();
-        if (w != null) RoadNet.roadsNear(w, p.ox, p.oz, p.r + 120);
+        if (w != null) RoadNet.highroadsNear(w, p.ox, p.oz, p.r + 40);
     }
 
     static double ring(VillagePlan p, double a) {
