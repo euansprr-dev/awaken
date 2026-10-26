@@ -1,0 +1,154 @@
+# The cached horizon (SPEC §20, perf build A): Far Sight's land past ring 1 held in a panorama while the eye stays put.
+# perf-26oct's set-up (seed 20261024, Cinematic, render scale 0.95 = Euan's Dell at 0.75, RD 24, noon), then with the
+# horizon off (as before) and on, at the same moment: the Roost (standing, the split by part, turning), the Roost with
+# the day running (slices redrawn as the sun moves), the countryside 900 blocks out, and a 30 s flight at 40 blocks a
+# second as a steady glide (a warm-up pass first, so both measured passes fly over loaded land). Each window: frame
+# p50/p99, the GPU's world pass, farsight status (its gpu_ms, frames served, slices drawn, the horizon's memory).
+# Run (alone on the Mac): XMX=8G ZGC=1 PACK=perf,world TECTONIC=awakened RD=24 LENS=cinematic SLOT_WHO=far-sight \
+#   /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/farsight-horizon.txt 900
+world perf26 creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd gamemode spectator
+cmd time set 6000
+lookswitch cinematic
+pixels 0.95 sharp
+pixels steady on
+cmd awaken city view studio_roost
+# Far Sight's rings take about a minute in a new world
+wait 1600
+farsight status
+pixels gpu on
+# ---- the Roost at noon, standing: off, then on (the slices fill in a second), then same-moment shots
+farsight horizon off
+wait 40
+pixels gpu reset
+perf roost_live 12
+pixels gpu roost_live
+farsight status
+farsight horizon on
+wait 80
+pixels gpu reset
+perf roost_cached 12
+pixels gpu roost_cached
+farsight status
+shot fh_roost_on
+farsight horizon off
+wait 3
+shot fh_roost_off
+farsight horizon on
+wait 60
+farsight debug 5
+wait 30
+shot fh_roost_d5
+farsight debug 0
+wait 30
+# ---- the split by part (each part its own pass), on then off
+farsight time parts on
+farsight horizon on
+wait 60
+farsight status
+perf roost_parts_cached 6
+farsight status
+farsight horizon off
+wait 20
+farsight status
+perf roost_parts_live 6
+farsight status
+farsight time parts off
+# ---- looking around at the Roost (a steady turn): the panorama holds every bearing
+farsight horizon on
+cmd awaken city view studio_roost
+wait 60
+farsight status
+turn 1.5 150
+pixels gpu reset
+perf roost_turn_cached 7
+pixels gpu roost_turn_cached
+farsight status
+farsight horizon off
+cmd awaken city view studio_roost
+wait 40
+turn 1.5 150
+pixels gpu reset
+perf roost_turn_live 7
+pixels gpu roost_turn_live
+farsight status
+# ---- the day running: slices redrawn as the sun moves (farsight status: slices)
+farsight horizon on
+cmd gamerule advance_time true
+wait 60
+farsight status
+perf roost_daylight 10
+farsight status
+cmd gamerule advance_time false
+cmd time set 6000
+# ---- the countryside, 900 blocks out
+cmd tp @s ~900 ~40 ~300
+wait 600
+farsight horizon off
+wait 20
+pixels gpu reset
+perf country_live 10
+pixels gpu country_live
+farsight status
+farsight horizon on
+wait 80
+pixels gpu reset
+perf country_cached 10
+pixels gpu country_cached
+farsight status
+shot fh_country_on
+farsight horizon off
+wait 3
+shot fh_country_off
+# ---- a flight east, 40 blocks a second for 30 s (a steady glide, interpolated like a real flight): a warm-up pass,
+# then on, then off, from the same spot, with a frame from the middle of each
+cmd tp @s ~ ~60 ~ -90 8
+wait 200
+glide 2 0 0 600
+wait 600
+cmd tp @s ~-1198 ~ ~ -90 8
+wait 100
+farsight horizon on
+wait 40
+farsight status
+pixels gpu reset
+perfstart flight_cached
+glide 2 0 0 600
+wait 300
+shotnow fh_flight_on
+wait 300
+perfend
+pixels gpu flight_cached
+farsight status
+cmd tp @s ~-1198 ~ ~ -90 8
+wait 100
+farsight horizon off
+wait 40
+farsight status
+pixels gpu reset
+perfstart flight_live
+glide 2 0 0 600
+wait 300
+shotnow fh_flight_off
+wait 300
+perfend
+pixels gpu flight_live
+farsight status
+cmd tp @s ~-1198 ~ ~ -90 8
+wait 100
+farsight horizon on
+pixels config
+quit

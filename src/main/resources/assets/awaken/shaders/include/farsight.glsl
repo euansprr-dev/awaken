@@ -24,6 +24,8 @@ layout(std140) uniform FarFrame {
                         // y Sodium's render distance in blocks
     vec4 FarMist;       // valley cloud: x its floor (y), y its depth (blocks), z density per block, w how much of the sky
                         // it covers (0 none .. 1 a cloud sea)
+    vec4 FarView;       // x the screen's footprint per pixel over this target's (1 on screen; more in a cached horizon
+                        // slice, which holds more pixels per degree), y 1 drawing a horizon slice
 };
 
 float farHeight(float texel) {

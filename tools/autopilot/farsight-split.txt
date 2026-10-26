@@ -1,0 +1,88 @@
+# Far Sight's GPU time by part, before the cached horizon (SPEC §20), and the cave-culling void, in a copy of Euan's
+# world (WORLD_FROM). "farsight time parts on" draws each part in its own pass with a timestamp after it: near rings
+# 0-2, far rings 3-6, City Sight, trees and landmarks (farsight status: split_ms). Settings as perf-26oct (Cinematic,
+# render scale 0.95 of the MacBook's screen = Euan's Dell at 0.75, RD 24, noon), so gpu_ms reads against PERF-26OCT.
+# Run: WORLD_FROM="/Volumes/MEDIA/Awaken-play/run-pack/saves/New World (2)" PACK=perf,world TECTONIC=awakened \
+#      LENS=cinematic SLOT_WHO=far-sight /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh \
+#      tools/autopilot/farsight-split.txt 900
+world copied
+waitworld
+window 1440 900
+wait 40
+screen close
+gui 0
+hud off
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+cmd gamemode spectator
+lookswitch cinematic
+pixels 0.95 sharp
+pixels steady on
+# ---- the void by the rim's cave (from over the Commons, east, RD 15): Sodium culls sections it built; the far land
+# now stands in where it doesn't draw them (debug 2: red where a mask still hides far land)
+opt renderDistance 15
+cmd tp @s 222 140 622 -90 8
+wait 700
+shot fs_void
+farsight debug 2
+wait 10
+shot fs_void_d2
+farsight debug 0
+farsight off
+wait 60
+shot fs_void_nofar
+farsight on
+# ---- the Roost at noon, RD 24
+opt renderDistance 24
+cmd awaken city view studio_roost
+wait 1200
+farsight status
+pixels gpu on
+farsight time parts on
+wait 40
+pixels gpu reset
+perf roost_parts 10
+pixels gpu roost_parts
+farsight status
+farsight time parts off
+wait 40
+pixels gpu reset
+perf roost_whole 10
+pixels gpu roost_whole
+farsight status
+farsight part mist off
+wait 40
+pixels gpu reset
+perf roost_no_mist 8
+pixels gpu roost_no_mist
+farsight status
+farsight part mist on
+farsight part detail off
+wait 40
+pixels gpu reset
+perf roost_no_detail 8
+pixels gpu roost_no_detail
+farsight status
+farsight part detail on
+farsight part trees off
+wait 40
+pixels gpu reset
+perf roost_no_trees 8
+pixels gpu roost_no_trees
+farsight status
+farsight part trees on
+shot fs_roost
+# ---- the countryside, 900 blocks out
+cmd tp @s ~900 ~40 ~300
+wait 600
+farsight time parts on
+wait 40
+pixels gpu reset
+perf country_parts 10
+pixels gpu country_parts
+farsight status
+farsight time parts off
+shot fs_country
+quit
