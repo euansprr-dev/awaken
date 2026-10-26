@@ -73,49 +73,94 @@ public final class HomeStage {
     static final int REACH = 50, RIM = 16, CLEAR = 26;
 
     /**
-     * Ground fit for the stage near {@code near}: dry land, within a few blocks of level over the whole disc and its rim,
-     * clear of any settlement (Carillon, a village, a planned one), the nearest such. Read from the world generator's own
-     * heights, so nothing is generated to look; {@code near} itself when nothing within reach will do.
+     * Ground fit for the stage near {@code near}: dry land, as level as can be found over the whole disc and its rim, clear
+     * of any settlement (Carillon, a village, a planned one), nearer counting for a little. Read from the world generator's
+     * own heights, so nothing is generated to look; {@code near} itself when nothing within reach will do.
      */
     public static BlockPos site(ServerLevel lvl, BlockPos near) {
         var src = lvl.getChunkSource();
         var gen = src.getGenerator();
         var rs = src.randomState();
-        int span = REACH + RIM, step = 40, sea = lvl.getSeaLevel();
-        for (int slack : new int[]{6, 10}) {
-            for (int ring = 0; ring <= 8; ring++) {
-                BlockPos best = null;
-                int bestRange = Integer.MAX_VALUE;
-                for (int i = -ring; i <= ring; i++) for (int j = -ring; j <= ring; j++) {
-                    if (Math.max(Math.abs(i), Math.abs(j)) != ring) continue;
-                    int cx = near.getX() + i * step, cz = near.getZ() + j * step;
-                    if (dev.awaken.village.api.Villages.reserved(lvl, new BlockPos(cx, near.getY(), cz), span)) continue;
-                    int lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE, sum = 0, n = 0;
-                    boolean ok = true;
-                    // the centre first, then outwards: most bad ground shows at once
-                    for (int r = 0; r <= 4 && ok; r++) for (int a = -r; a <= r && ok; a++) for (int b = -r; b <= r && ok; b++) {
-                        if (Math.max(Math.abs(a), Math.abs(b)) != r) continue;
-                        int dx = a * span / 4, dz = b * span / 4;
-                        if (dx * dx + dz * dz > span * span) continue;
-                        int x = cx + dx, z = cz + dz;
-                        int floor = gen.getBaseHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, lvl, rs);
-                        int surface = gen.getBaseHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, lvl, rs);
-                        if (surface > floor || floor <= sea + 1) ok = false; // water over it, or the shore
-                        else if (dev.awaken.citizens.api.Settlements.at(lvl, new BlockPos(x, floor, z)).isPresent()) ok = false;
-                        lo = Math.min(lo, floor);
-                        hi = Math.max(hi, floor);
-                        sum += floor;
-                        n++;
-                        if (hi - lo > slack) ok = false;
-                    }
-                    if (!ok || n == 0 || hi - lo >= bestRange) continue;
-                    bestRange = hi - lo;
-                    best = new BlockPos(cx, Math.round((float) sum / n), cz);
-                }
-                if (best != null) return best;
-            }
+        return site(near, lvl.getSeaLevel(),
+                (x, z) -> new int[]{gen.getBaseHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, lvl, rs), gen.getBaseHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, lvl, rs)},
+                p -> dev.awaken.village.api.Villages.reserved(lvl, p, REACH + RIM),
+                p -> dev.awaken.citizens.api.Settlements.at(lvl, p).isPresent());
+    }
+
+    /** The land's floor and surface (water over the floor when the surface is higher) at a column. */
+    public interface Heights {
+        int[] at(int x, int z);
+    }
+
+    /** What the search found: the centre (feet height), how much the land rises over it, how many places it looked at. */
+    public record Site(BlockPos at, int rise, int looked) {}
+
+    static final int SITE_STEP = 48, SITE_RINGS = 16, SITE_RISE = 14;
+
+    /** As below, logged; {@code near} when nothing fits. */
+    public static BlockPos site(BlockPos near, int sea, Heights heights, java.util.function.Predicate<BlockPos> reserved,
+                                java.util.function.Predicate<BlockPos> settled) {
+        Site s = search(near, sea, heights, reserved, settled);
+        dev.awaken.Awaken.LOG.info("[hearth] stage ground near {}: {}", near.toShortString(),
+                s == null ? "none fit, built where you stand" : s.at().toShortString() + " (rises " + s.rise() + ", " + s.looked() + " places looked at)");
+        return s == null ? near : s.at();
+    }
+
+    /**
+     * The search: candidates on square rings every {@link #SITE_STEP} blocks out to {@link #SITE_RINGS} rings; each sampled
+     * on a coarse grid over the disc and rim (no water, nothing below the sea, no settlement anywhere on it), then, if it
+     * passes, every six blocks for water (a pond between the coarse samples would stand as a wall at the rim); the least
+     * rise wins, a ring's worth of distance costing a block of rise, and a site rising six or less ends the search there.
+     */
+    /** Water anywhere over the disc and rim, looked at every six blocks. */
+    private static boolean wet(int cx, int cz, int span, Heights heights) {
+        for (int dz = -span; dz <= span; dz += 6) for (int dx = -span; dx <= span; dx += 6) {
+            if (dx * dx + dz * dz > span * span) continue;
+            int[] fs = heights.at(cx + dx, cz + dz);
+            if (fs[1] > fs[0]) return true;
         }
-        return near;
+        return false;
+    }
+
+    public static @Nullable Site search(BlockPos near, int sea, Heights heights, java.util.function.Predicate<BlockPos> reserved,
+                                        java.util.function.Predicate<BlockPos> settled) {
+        int span = REACH + RIM, looked = 0;
+        Site best = null;
+        int bestScore = Integer.MAX_VALUE;
+        for (int ring = 0; ring <= SITE_RINGS; ring++) {
+            for (int i = -ring; i <= ring; i++) for (int j = -ring; j <= ring; j++) {
+                if (Math.max(Math.abs(i), Math.abs(j)) != ring) continue;
+                int cx = near.getX() + i * SITE_STEP, cz = near.getZ() + j * SITE_STEP;
+                if (reserved.test(new BlockPos(cx, near.getY(), cz))) continue;
+                looked++;
+                int lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE, sum = 0, n = 0;
+                boolean ok = true;
+                // the centre first, then outwards: most bad ground shows at once
+                for (int r = 0; r <= 4 && ok; r++) for (int a = -r; a <= r && ok; a++) for (int b = -r; b <= r && ok; b++) {
+                    if (Math.max(Math.abs(a), Math.abs(b)) != r) continue;
+                    int dx = a * span / 4, dz = b * span / 4;
+                    if (dx * dx + dz * dz > span * span) continue;
+                    int x = cx + dx, z = cz + dz;
+                    int[] fs = heights.at(x, z);
+                    if (fs[1] > fs[0] || fs[0] <= sea) ok = false; // water over it, or below the sea
+                    else if (settled.test(new BlockPos(x, fs[0], z))) ok = false;
+                    lo = Math.min(lo, fs[0]);
+                    hi = Math.max(hi, fs[0]);
+                    sum += fs[0];
+                    n++;
+                    if (hi - lo > SITE_RISE) ok = false;
+                }
+                if (!ok || n == 0) continue;
+                int score = (hi - lo) + ring;
+                if (score >= bestScore || wet(cx, cz, span, heights)) continue;
+                if (score < bestScore) {
+                    bestScore = score;
+                    best = new Site(new BlockPos(cx, Math.round((float) sum / n), cz), hi - lo, looked);
+                }
+            }
+            if (best != null && best.rise() <= 6) break;
+        }
+        return best == null ? null : new Site(best.at(), best.rise(), looked);
     }
 
     private static ServerLevel level;
@@ -164,8 +209,10 @@ public final class HomeStage {
         views.put("ilse_room", view(15.6, 2.66, -6.6, 20.5, 1.4, -1.8));
         views.put("forge", view(13.4, 2.66, -14.3, 15.5, 1.4, -17.5));
         views.put("field", view(-8.5, 2.8, 27.5, -17.5, 1.3, 33.5));
-        views.put("minehead", view(6.4, 2.66, 17.4, 8.5, 1.0, 15.5));
-        views.put("anchor", view(5.6, 2.9, 6.2, 0.5, 1.5, 0.5));
+        // from the shed's south-east corner, high: the hatch mid-frame, the door beyond it he walks out by
+        views.put("minehead", view(9.6, 3.3, 17.6, 6.6, 0.8, 14.8));
+        // over the ring, looking down at the flame: heads below it, the bell tower beyond
+        views.put("anchor", view(3.6, 4.8, 4.4, 0.5, 1.4, 0.5));
         views.put("kit", view(-8.5, 4.4, -17.5, -16.0, 4.0, -10.5));
         views.put("overview", view(30.5, 28, 44.5, -2.5, 2, -4.5));
         // the hall from its south-west corner, high, down the long table to the fire

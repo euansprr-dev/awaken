@@ -62,6 +62,11 @@ public final class SettleCommands {
                         .executes(c -> view(c, StringArgumentType.getString(c, "name")))))
                 .then(Commands.literal("settle").executes(SettleCommands::settleStage))
                 .then(Commands.literal("miner").executes(SettleCommands::minerSoon))
+                .then(Commands.literal("time").then(Commands.argument("tod", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 23999))
+                        .executes(c -> {
+                            setClock(c.getSource().getLevel().getServer().overworld(), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "tod"));
+                            return 1;
+                        })))
                 .then(Commands.literal("follow").then(Commands.argument("who", StringArgumentType.word()).executes(c -> follow(c, StringArgumentType.getString(c, "who")))))
                 .then(Commands.literal("clock").then(Commands.argument("who", StringArgumentType.word())
                         .then(Commands.argument("when", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("breakfast", "work"), b))
@@ -94,10 +99,12 @@ public final class SettleCommands {
         return 1;
     }
 
+    /** The clock on to the next {@code timeOfDay} (always forward: the day's work and the haul follow the clock). */
     static void setClock(ServerLevel level, int timeOfDay) {
-        long now = level.getOverworldClockTime();
+        long now = level.getOverworldClockTime(), at = now / 24000 * 24000 + Math.floorMod(timeOfDay, 24000);
+        long to = at <= now ? at + 24000 : at;
         level.registryAccess().get(net.minecraft.world.clock.WorldClocks.OVERWORLD)
-                .ifPresent(clock -> level.getServer().clockManager().setTotalTicks(clock, now / 24000 * 24000 + timeOfDay));
+                .ifPresent(clock -> level.getServer().clockManager().setTotalTicks(clock, to));
     }
 
     /** The camera just behind a settler's shoulder, looking the way they face (walking: the way they're going). */

@@ -118,7 +118,6 @@ public final class HomeTalk {
             s.say(p, rec, "It's on the anvil. Morning. Go and sleep, you're in my light.", 90);
             return;
         }
-        var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(who.given() + " · the forge"));
         if (!h.hasRoom(RoomType.ARMORY)) {
             s.say(p, rec, "Build me a forge and I'll take commissions. Anvil, a Forge, a stand for the armour. One room.", 110);
             return;
@@ -129,6 +128,8 @@ public final class HomeTalk {
             return;
         }
         ItemStack piece = Work.result(r.value());
+        // the card names the piece (a choice card shows its title and its choices)
+        var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(who.given() + " · " + piece.getHoverName().getString()));
         w.row(Component.literal("The piece"), piece.getHoverName());
         w.row(Component.literal("Ready"), Component.literal("by morning, tempered I"));
         w.body(Component.literal("“You've the makings of a " + piece.getHoverName().getString() + " there. Leave them with me.”"));
@@ -139,7 +140,7 @@ public final class HomeTalk {
             Work.commission(pl, again, r.value());
             Signal.toast(pl, Component.literal("Oren takes the makings · " + piece.getHoverName().getString() + " by morning"));
             pl.level().playSound(null, at, net.minecraft.sounds.SoundEvents.ANVIL_PLACE, net.minecraft.sounds.SoundSource.NEUTRAL, 0.5f, 1.2f);
-        }), "Commission it (he takes the makings)", "Not now");
+        }), "Commission it", "Not now");
         Signal.send(p, w.ttl(20 * 15).build());
     }
 
