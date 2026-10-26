@@ -52,6 +52,20 @@ final class GateCommands {
                                     // tours: a gate that has a Gate Rig room
                                     .then(Commands.literal("rig").executes(c -> open(c, StringArgumentType.getString(c, "theme"), true))))));
             gate.then(Commands.literal("hop").requires(AwakenCommands.admin()).executes(GateCommands::hop));
+            // tours: the nearest standing gate's card, wherever it formed (a card shows by itself within 24 blocks)
+            gate.then(Commands.literal("card").requires(AwakenCommands.admin()).executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                GateRecord best = null;
+                for (GateRecord g : GateRegistry.get(c.getSource().getServer()).near(p.blockPosition(), 96, false)) {
+                    if (g.structurePlaced && (best == null || g.pos.distSqr(p.blockPosition()) < best.pos.distSqr(p.blockPosition()))) best = g;
+                }
+                if (best == null) {
+                    c.getSource().sendFailure(Component.literal("No standing gate within 96 blocks."));
+                    return 0;
+                }
+                GateCard.send(p, best);
+                return 1;
+            }));
             gate.then(Commands.literal("enter").requires(AwakenCommands.admin())
                     .then(Commands.argument("id", IntegerArgumentType.integer(1)).executes(c -> {
                         ServerPlayer p = c.getSource().getPlayerOrException();
