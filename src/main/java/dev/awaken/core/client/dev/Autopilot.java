@@ -99,7 +99,7 @@ public final class Autopilot {
     // settle before shots: a slower machine (GitHub's 3-core runners) is still loading and building chunks after the
     // waits a script was written with on the Mac
     private static final int SETTLE_TICKS = Integer.getInteger("awaken.autopilot.settle", 0) * 20;
-    private static int settleWaited, settleBuilt, settleSteady, settleChunks = -1;
+    private static int settleWaited, settleBuilt, settleQuiet, settleChunks;
 
     public static void init() {
         String path = System.getProperty("awaken.autopilot");
@@ -209,22 +209,35 @@ public final class Autopilot {
     }
 
     /**
-     * With settling on: true once every section the renderer knows is built (Sodium answers this too) for half a second
-     * and the client's loaded chunks have held steady for two, or after SETTLE_TICKS. Called once a tick until true.
+     * With settling on: true once every chunk within the render distance has arrived (or none has come for 10 s: a void
+     * cell, the world's edge) and every section the renderer knows has been built (Sodium answers this too) for a second,
+     * past the sections' fade-in; or after SETTLE_TICKS. Called once a tick until true.
      */
     private static boolean settled(Minecraft mc, String shot) {
-        if (SETTLE_TICKS <= 0 || mc.level == null) return true;
+        if (SETTLE_TICKS <= 0 || mc.level == null || mc.player == null) return true;
         int chunks = mc.level.getChunkSource().getLoadedChunksCount();
-        settleBuilt = mc.levelRenderer.hasRenderedAllSections() ? settleBuilt + 1 : 0;
-        settleSteady = chunks == settleChunks ? settleSteady + 1 : 0;
+        settleQuiet = chunks == settleChunks ? settleQuiet + 1 : 0;
         settleChunks = chunks;
-        boolean ready = settleBuilt >= 10 && settleSteady >= 40;
+        boolean arrived = settleQuiet >= 200 || chunksArrived(mc);
+        settleBuilt = arrived && mc.levelRenderer.hasRenderedAllSections() ? settleBuilt + 1 : 0;
+        boolean ready = settleBuilt >= 20;
         if (!ready && ++settleWaited < SETTLE_TICKS) return false;
-        if (settleWaited > 40) {
-            Awaken.LOG.info("[autopilot] settle {}: {} s for {} chunks{}", shot, settleWaited / 20, chunks, ready ? "" : " (gave up)");
+        if (settleWaited > 20) {
+            Awaken.LOG.info("[autopilot] settle {}: {} s{}", shot, settleWaited / 20, ready ? "" : " (gave up)");
         }
-        settleWaited = settleBuilt = settleSteady = 0;
-        settleChunks = -1;
+        settleWaited = settleBuilt = settleQuiet = 0;
+        return true;
+    }
+
+    /** Every chunk within the render distance (less one, the edge the server sends last) is on the client. */
+    private static boolean chunksArrived(Minecraft mc) {
+        int r = Math.max(1, mc.options.getEffectiveRenderDistance() - 1);
+        int cx = mc.player.chunkPosition().x(), cz = mc.player.chunkPosition().z();
+        for (int dx = -r; dx <= r; dx++) {
+            for (int dz = -r; dz <= r; dz++) {
+                if (dx * dx + dz * dz <= r * r && !mc.level.getChunkSource().hasChunk(cx + dx, cz + dz)) return false;
+            }
+        }
         return true;
     }
 

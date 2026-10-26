@@ -113,6 +113,8 @@ jobs:
             echo "label: $TOUR_RUNNER"; sw_vers; uname -m
             echo "cpus: $(sysctl -n hw.ncpu)  memory: $(( $(sysctl -n hw.memsize) / 1073741824 )) GB  cpu: $(sysctl -n machdep.cpu.brand_string)"
             echo "session: $(launchctl managername)  console user: $(stat -f %Su /dev/console)"
+            # the Dock hidden, as on the owner's Mac: a 900-point-tall window then fits under the menu bar
+            defaults write com.apple.dock autohide -bool true && killall Dock || true
             clang -fobjc-arc -framework Foundation -framework CoreGraphics tools/ci-retina.m -o "$RUNNER_TEMP/ci-retina"
             nohup "$RUNNER_TEMP/ci-retina" 1512 982 > "$RUNNER_TEMP/retina.txt" 2>&1 &
             for i in $(seq 1 20); do grep -q '^main ' "$RUNNER_TEMP/retina.txt" && break; kill -0 $! 2>/dev/null || break; sleep 1; done
