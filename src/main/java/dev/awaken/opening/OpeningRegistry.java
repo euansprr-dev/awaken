@@ -289,8 +289,20 @@ final class OpeningRegistry {
         if (bram != null && bram.distanceTo(t) < 1.0 && w.deskWp < way.length - 1) t = way[++w.deskWp];
         if (bram == null) w.deskWp = way.length - 1;
         boolean behind = w.deskWp >= way.length - 1;
+        // a friend still to be handed a band: he holds one out for them too
+        if (prop.isEmpty() && anyAt(p, BAND)) {
+            prop = "holo_band";
+            act = "serve";
+        }
         String a = behind ? (act.isEmpty() && now - w.lastLine < 60 ? "talk" : act) : "";
         stage(p, t, behind ? yawTo(t, p.position()) : yawTo(bram == null ? t : bram, t), a, behind ? prop : "");
+    }
+
+    private static boolean anyAt(ServerPlayer p, int step) {
+        for (ServerPlayer o : p.level().getServer().getPlayerList().getPlayers()) {
+            if (OpeningDirector.beat(o) == Prologue.REGISTRY && OpeningDirector.state(o).step == step) return true;
+        }
+        return false;
     }
 
     private static void stage(ServerPlayer p, @Nullable Vec3 at, float yaw, String act, String prop) {

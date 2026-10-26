@@ -1897,6 +1897,55 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   flight is pre-warmed behind the opening card. Life seen from the sky is blocks and particles (lit windows, smoke,
   lamps, boats): citizens draw only within 128 blocks.
 
+- **The Registry ceremony** (2026-10-26; Euan, playing: "they actually physically hand you the Holo band and the paper
+  to sign. You sign first, and then they give you the Holo band. And then you actually have to open your inventory and
+  put the Holo band on"). `OpeningRegistry` steps (schema 2 of `OpeningState`; an older save walks the Registry again):
+  WALK (Bram leads from the bed through the atrium to the Lens: `OpeningPlaces.walk()`, straight lines through the
+  doorways; he walks on when you're within 4.5 of him, waits and nudges past 9, says "Habit, I know" once if you run
+  ahead) → READ (as before) → SIGN (at the desk, the counter's free south end; use signs) → BAND (Bram holds it out over
+  the counter; use takes it) → WEAR (the band is in your hands, the Holo dark until you put it on the wrist slot) → BOOT
+  (the boot on the wrist; the inventory closes itself 0.7 s after it goes on) → BRIEF (his three lines) → OPEN ("Go on,
+  open it": the K prompt and `TipHooks` tip `awaken:holo/open` show only now) → STATUS → ATLAS → POWER → DIRECTIVE →
+  YOURS. Waiting steps nudge every 30 s (at most three); without a client every step moves on by itself.
+  - Bram is staged through `CitizenHooks.stage(level, "bram", at, yaw, act, prop)` (citizens role STAGED; lapses if not
+    renewed for 30 s; a party follows the first player in the Registry) and found with `CitizenHooks.where`. He is the
+    infirmary's officer too (a Watch citizen only if he's busy). Props by item id: `holo_band`, `licence`.
+  - Signing (`opening.client.SigningScene`, world source `opening_sign` 250): the view leans over the paper (×0.7 FOV);
+    the main hand takes the quill (a feather) from the ink pot, dips, writes the player's name across the signature
+    line letter by letter (4 ticks each, glossy while wet, a slanted hand, the cartographer's quill scratch), a flourish,
+    a blot, the quill back in the pot; the off hand holds the paper's corner. Bram stamps it (the blue seal "E" lands in
+    the ring with a thump, his name under it); the paper folds toward you. The licence is a real item,
+    `awaken:hunters_licence` ("Signed: <name>", witnessed by Bram); old paper licences still count.
+  - Taking the band (`opening.client.HandOver`, `opening_take` 250): the hand goes to his, closes on the band, brings it
+    up into view and turns it once, then settles; the server puts it in the selected slot (else anywhere) at the grasp.
+  - **The wrist slot** (`holo.band`): the band is an item, `awaken:holo_band` (a 3D model, tools/art/specs/registry.py);
+    the wrist is one slot beside your figure in the survival inventory, above the off hand (inventory image 77, 44), in
+    vanilla's look or the holo inventory's well. Why not a real slot: 26.3 and NeoForge have no API to add a slot to
+    `InventoryMenu` (it builds its slots in its constructor; `addSlot` is protected and the remote-slot lists are
+    private), so a real one needs a mixin; a slot in our own equipment screen would hide it from where players look.
+    So the wrist is kept on the player (`holo.band.BandState`, attachment `awaken:wrist`, schemaVersion 1, kept through
+    death, synced to whoever can see you), the client draws it and sends its clicks (`awaken:wrist_click`: a click with
+    what the cursor carries, shift off into the inventory, shift on from a menu slot), and the server checks and moves
+    the stack between the menu's carried stack, the inventory and the wrist. Creative's inventory has no wrist slot
+    (use `/awaken band wear`).
+  - Off the wrist the Holo is dark (`core.api.HoloBand.worn`): K opens nothing (an action-bar line says why), no
+    projected look (System cards fall back to flat glass), no level readout, E opens vanilla's inventory (the one you put
+    it on in). The empty wrist breathes blue while the band is in your inventory or on the cursor. Putting it on boots it
+    (`holo.client.HoloBoot`, drawn by `Wrist`): the forearm comes up with the band dark on it, it clicks home, a line of
+    light runs round it face by face, its marks light from the middle out, the diamond ignites with a ring of light
+    spreading off the wrist, a breath, the arm goes down (about four seconds the first time in a session, under two
+    after). Taking it off powers down (a falling chime); the K menu closes if it was open.
+  - Edge cases: skipping (any way) puts a band on the wrist (the one in your inventory if you have it) and gives the
+    licence; a Runner has no band (the opening's start takes it away); a player who never had the slot (an old save, a
+    classic world) finds a worn band in it at login; bands in the inventory at a death are kept and handed back at the
+    respawn (the worn one never leaves the wrist); a dropped band never despawns and doesn't burn. `/awaken band
+    status|wear|dark|give`. GameTests: `holo_band_dark_until_worn`, `holo_band_wearing_toggles`, `holo_band_slot_saves`,
+    and `opening_skip` / `opening_state_machine` check the band.
+  - **Proposed (Euan to confirm): the Atlas reveal right after the band's first K.** The Holo's boot is the natural
+    moment: when the K menu closes the Atlas opens by itself with the run you made this morning (the land prints in, the
+    bronze thread draws itself), and Bram says "Your band keeps a map. The city, the way you've run it." The run is sent
+    as soon as the Registry begins (`Discovery.trail`), so the reveal is ready; `AtlasClient.openReveal()`.
+
 ### 16.5 Citizens (W4)
 - Ledger: 240 records, sliced 12 per tick; ≤ 0.5 ms/tick (G0: p95 0.015–0.04 ms in game). Bodies within ~56 blocks: ≤ 40 per player, ≤ 96 per
   world; walk the street graph; brains tick every max(1, d²/256) ticks; ≤ 4 pathfinding at once; ≤ 1.5 ms/tick.
@@ -2043,7 +2092,11 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   `high_gate_yard`, `bounty_post`, `quartermaster` (the Living Wilds' Hale), `association_board`, `bellwatch_cellar` (the
   melting room under the Knoll's bell tower, for the Living Wilds' "Bell Metal"); null until placed).
   Graph types are added at G1.
-- `CitizenHooks`: `witnesses(ServerLevel, Vec3, double)` (citizen ids), `post(ServerLevel, Identifier event, BlockPos)`.
+- `CitizenHooks`: `witnesses(ServerLevel, Vec3, double)` (citizen ids), `post(ServerLevel, Identifier event, BlockPos)`,
+  `stage(ServerLevel, String named, Vec3 at, float yaw, String act, String prop)` (null `at` releases; 2026-10-26, the
+  Registry ceremony), `where(ServerLevel, String named)`.
+- `HoloBand` (2026-10-26): `worn(Player)`, `fitted(Player)`, `takeAway`, `wear`, `give`, `has` (server), `listen`
+  (server: on/off), `listenClient` (client: the boot finished, or it went dark).
 - `RenownHooks`: `witness(ServerPlayer, Identifier deed, BlockPos, int weight)`, `tier(Player)`, `standing(Player,
   Identifier faction)`.
 - `EconomyHooks`: `balance(Player)`, `pay(ServerPlayer, long, Identifier claimId)` (once per claim), `charge(ServerPlayer,

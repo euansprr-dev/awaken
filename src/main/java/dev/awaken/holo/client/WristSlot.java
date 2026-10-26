@@ -72,6 +72,9 @@ public final class WristSlot {
         int x = s.getLeftPos() + X, y = s.getTopPos() + Y;
         boolean hover = over(s, e.getMouseX(), e.getMouseY());
         float since = (System.nanoTime() - wornAtNanos) / 1e9f;
+        // the band in hand or on the cursor and the wrist bare: the slot breathes, so you know where it goes
+        float call = !on && (BandModule.isBand(s.getMenu().getCarried()) || mc.player.getInventory().hasAnyMatching(BandModule::isBand))
+                ? 0.5f + 0.5f * (float) Math.sin(System.nanoTime() / 1e9 * Math.PI * 1.6) : 0f;
         if (s instanceof HoloInventoryScreen h) {
             float k = h.faceAlpha();
             if (k < 0.5f) return; // the 3D panel is still landing
@@ -79,12 +82,13 @@ public final class WristSlot {
             c.fill(x, y, x + 16, y + 16, Glass.a(0x040A16, 0.58f * k));
             c.outline(x - 1, y - 1, 18, 18, Glass.a(Glass.EDGE, (on ? 0.6f : 0.32f) * k));
             c.hLine(x, x + 15, y, Glass.a(Glass.EDGE, 0.12f * k));
-            float glow = (hover ? 0.55f : 0f) + (on && since < 1.2f ? 0.9f * (1 - since / 1.2f) : 0f);
+            float glow = (hover ? 0.55f : 0f) + (on && since < 1.2f ? 0.9f * (1 - since / 1.2f) : 0f) + 0.6f * call;
             if (glow > 0) HoloGuiLook.INSTANCE.glow(g, x - 1, y - 1, 18, 18, Glass.EDGE, Math.min(1f, glow) * k);
         } else {
             g.blitSprite(RenderPipelines.GUI_TEXTURED, SLOT, x - 1, y - 1, 18, 18);
             if (hover) g.blitSprite(RenderPipelines.GUI_TEXTURED, HIGHLIGHT_BACK, x - 4, y - 4, 24, 24);
             if (on && since < 0.8f) g.fill(x, y, x + 16, y + 16, Glass.a(0x9ED2FF, 0.55f * (1 - since / 0.8f)));
+            if (call > 0f) g.fill(x, y, x + 16, y + 16, Glass.a(0x9ED2FF, 0.12f + 0.22f * call));
         }
         if (on) {
             g.item(worn, x, y);

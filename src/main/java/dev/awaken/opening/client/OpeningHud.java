@@ -89,6 +89,19 @@ final class OpeningHud {
         while (LINES.size() > 2) LINES.removeFirst();
     }
 
+    /** A prompt the scene waits on (the Registry: sign, take the band, your inventory, K): the key as a cap, then what
+     *  it does. A null key clears it (it fades). */
+    private static @Nullable String promptKey;
+    private static String promptText = "";
+    private static float promptA, promptAO;
+
+    static void prompt(@Nullable String key, String text) {
+        if (key != null) {
+            promptKey = key;
+            promptText = text;
+        } else promptKey = null;
+    }
+
     static void flash(int rgb, float strength) {
         flashColour = rgb & 0xFFFFFF;
         flash = Math.max(flash, strength);
@@ -106,6 +119,8 @@ final class OpeningHud {
         barsO = bars;
         bars += (barsTarget - bars) * (barsTarget > bars ? 0.14F : 0.08F);
         flash = Math.max(0, flash - 0.04F);
+        promptAO = promptA;
+        promptA = Mth.clamp(promptA + (promptKey != null ? 0.18F : -0.12F), 0, 1);
         long now = OpeningClient.ticks();
         LINES.removeIf(l -> now > l.from + l.ticks + 20);
         if (title != null && now > title.from + title.ticks + 20) title = null;
@@ -156,6 +171,7 @@ final class OpeningHud {
         if (sky != null) card(g, font, w, h, pt, sky);
         if (title != null) title(g, font, w, h, pt, now);
         lines(g, font, w, h, pt, now);
+        if (!OpeningCamera.active()) prompt(g, font, w, h, pt);
         if (waiting > 0 && !OpeningCamera.active()) waitBanner(g, font, w, h, pt, now);
         if (sky != null && sky.canSkip && OpeningCamera.active()) skipHint(g, font, w, h, pt);
     }
@@ -270,6 +286,27 @@ final class OpeningHud {
             }
         }
     }
+
+    /** The prompt: a key cap in the Runners' bronze and paper, the words beside it, just above the speech. */
+    private static void prompt(GuiGraphicsExtractor g, Font font, int w, int h, float pt) {
+        float a = Mth.lerp(pt, promptAO, promptA);
+        if (a <= 0.02F || promptText.isEmpty()) return;
+        String key = promptKey != null ? promptKey : lastKey;
+        if (promptKey != null) lastKey = promptKey;
+        int kw = Math.max(13, font.width(key) + 8), tw = font.width(promptText), gap = 6;
+        int x = w / 2 - (kw + gap + tw) / 2, y = h - 112;
+        int ia = (int) (a * 255);
+        float pulse = 0.75F + 0.25F * Mth.sin((OpeningClient.ticks() + pt) * 0.18F);
+        g.fill(x, y - 2, x + kw, y + 11, ((int) (a * 170) << 24) | 0x0C0F14);
+        g.fill(x, y - 2, x + kw, y - 1, ((int) (a * 230 * pulse) << 24) | BRONZE);
+        g.fill(x, y + 10, x + kw, y + 11, ((int) (a * 150) << 24) | BRONZE);
+        g.fill(x, y - 1, x + 1, y + 10, ((int) (a * 150) << 24) | BRONZE);
+        g.fill(x + kw - 1, y - 1, x + kw, y + 10, ((int) (a * 150) << 24) | BRONZE);
+        g.text(font, key, x + kw / 2 - font.width(key) / 2, y + 1, (ia << 24) | PAPER, false);
+        g.text(font, promptText, x + kw + gap, y + 1, (ia << 24) | PAPER, true);
+    }
+
+    private static String lastKey = "";
 
     private static void waitBanner(GuiGraphicsExtractor g, Font font, int w, int h, float pt, long now) {
         float a = Mth.clamp((now - waitingFrom + pt) / 20F, 0, 1);

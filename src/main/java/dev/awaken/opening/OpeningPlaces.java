@@ -155,6 +155,15 @@ public final class OpeningPlaces {
         return atV(COUNTER_X - 0.62, TERRACE + 1, DESK_Z + 0.5);
     }
 
+    /** The client's copies (it knows the Lens from the scene): the paper and where you stand, from the Lens. */
+    public static Vec3 deskPaperFrom(Vec3 lens) {
+        return lens.add(COUNTER_X - LENS_X, -1.4, DESK_Z - LENS_Z);
+    }
+
+    public static Vec3 deskStandFrom(Vec3 lens) {
+        return lens.add(COUNTER_X - 0.62 - LENS_X - 0.5, -2.4, DESK_Z - LENS_Z);
+    }
+
     /** Bram behind the counter, facing you (west). */
     Vec3 bramDesk() {
         return atV(COUNTER_X + 1.5, TERRACE + 1, DESK_Z + 0.5);
