@@ -1,0 +1,100 @@
+# Third person from first person's blade (SPEC §25): the Katana and the Greatblade in F5, from behind (Shoulder
+# Surfing's camera with PACK=feel, which brings the animation libraries and Bendable Cuboids) and from the front: each
+# chain of four, then a charge held past full and loosed. Clips: rig_katana_back, rig_greatblade_back,
+# rig_katana_front, rig_greatblade_front.
+world armsrig creative 780
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+cmd tp @s ~ 200 ~ 0 0
+wait 20
+cmd fill ~-12 ~-1 ~-12 ~12 ~-1 ~14 minecraft:smooth_stone
+cmd kill @e[type=minecraft:husk]
+cmd summon minecraft:husk ~0 ~ ~3.2 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:4000f,attributes:[{id:"minecraft:max_health",base:4000d}]}
+arms ribbonmode 0
+# from behind: the chain, then the held draw loosed
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_katana
+wait 40
+camera back
+look 0 4
+wait 20
+shot rig_katana_back_rest
+cmd awaken ascent pilot rec rig_katana_back 100
+wait 2
+arms strike
+wait 8
+arms strike
+wait 8
+arms strike
+wait 10
+arms strike
+wait 22
+arms heavy 30
+wait 46
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_greatblade
+wait 40
+camera back
+look 0 4
+wait 20
+shot rig_greatblade_back_rest
+cmd awaken ascent pilot rec rig_greatblade_back 120
+wait 2
+arms strike
+wait 10
+arms strike
+wait 11
+arms strike
+wait 14
+arms strike
+wait 26
+arms heavy 30
+wait 50
+# from the front (the husk gone: it stood between the camera and the figure)
+cmd kill @e[type=minecraft:husk]
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_katana
+wait 40
+camera front
+look 0 4
+wait 20
+shot rig_katana_front_rest
+cmd awaken ascent pilot rec rig_katana_front 70
+wait 2
+arms strike
+wait 8
+arms strike
+wait 8
+arms strike
+wait 10
+arms strike
+wait 30
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_greatblade
+wait 40
+camera front
+look 0 4
+wait 20
+shot rig_greatblade_front_rest
+cmd awaken ascent pilot rec rig_greatblade_front 85
+wait 2
+arms strike
+wait 10
+arms strike
+wait 11
+arms strike
+wait 14
+arms strike
+wait 36
+quit

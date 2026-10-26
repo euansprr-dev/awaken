@@ -4851,6 +4851,36 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   poses for the longest and widest weapons (the Greatblade's, the Twinblades' far blade, some Longswords): those need
   their own third-person poses and two-handed grips, not a wrist. The scythe leads point first in third person; its haul back through
   the target is first person's.
+- **Third person from first person's blade** (Katana and Greatblade so far; Euan 2026-10-26: "how are we gonna get
+  that exactly the same as first person... so that it genuinely looks really, really good"; tools/art/specs/
+  arms_rig4.py). First person is designed from the blade (its path, the edge leading, through the target on the hit);
+  third person was designed from the arm (a few poses per kind, the weapon wherever the hand put it), so long blades
+  swept through the body and a two-handed weapon was held in one hand. Now third person takes each move's weapon from
+  first person's own baked keys (the grip's place and the blade's turn every quarter tick) and the body follows it:
+  first person's arc about its pivot is carried onto a point before the chest's middle (both hands meet on the hilt
+  there), turned as a whole so its line into the target runs from there to a point before the face, its lever scaled
+  to the figure's reach, level with the view (a slide's or a fall's lean doesn't tilt it). Through the drive, the hit
+  and the cut the blade is exactly first person's; in the wind-up and the follow-through only, the move may be turned
+  as a whole about the pivot (+36 to -30 degrees: first person cocks an overhead chop back past the top of the view
+  and carries a long blade down out of the frame, which in a figure are through the head and the legs). The grip
+  shifts a little where it must (out, ahead, up, in toward the middle), chosen over the whole move at once (Viterbi):
+  a blade by the face counts most, then any weapon in the body, then both hands reaching. The chest turns with the
+  lever, half a tick ahead of it (70% of its turn for the Katana, 80% for the Greatblade, at most 55 degrees); the
+  sword hand closes on the grip and the off hand on the handle toward the pommel by IK, elbows bent (Bendable Cuboids)
+  or, for the straight clips, solved straight with their own wrist keys (`wrist3s`; `ArmsWrist` plays them when
+  Bendable Cuboids isn't loaded); an arm may graze the body, never go into it. Where the off hand can't reach the
+  handle (a follow-through carried round to the far side, the low sweep out of a slide) it lets go cleanly rather
+  than float beside the hilt. These styles play their own Slipcut, Undercut and Plunge (`ArmsClips.OWN_SHARED`) and
+  hold their own heavy's first pose while charging (`arms_<style>_heavy_charge`, `ArmsClips.charge`), so the
+  release never snaps. Measured (`arms_rig4.py bake`, the lab's audits, every tier of the style, looking level and
+  down): every move leads with its edge or point at the hit; both hands on the hilt through 81-100% of every Katana
+  move and 73-100% of every Greatblade move but the Undercut (one-handed out of a slide); the blade more than 1.5 px
+  into the head, body or legs in 5 of their 22 moves (8 before; the Greatblade's from up to 3.7 px to about 1.3). What
+  still touches: a two-handed hilt's pommel by the belly (a figure's arms meet at most ~4 px before its chest, a hilt
+  reaches 5-9 px behind the hands: in 16 moves, mostly the Greatblade's longest tiers, past the blow), and the
+  Executions' first quarter tick out of rest, where the blade passes the head looking down. Review set:
+  docs/combat/anim-lab/third-<style>-blade-first.png (shipped against new, every move from behind-right) and
+  fp-third-<style>-<move>.png (first person over third person from behind-right and the side, at the same moments).
 - **The animation lab** (tools/art/anim_lab.py; SPEC §25, Euan's ask for a way to see the motion): `sheet` / `all`
   draw each strike's first-person frames as the game composes them (the swing, Hands' view layer, vanilla's rest, the
   weapon's hold and mesh, 70 degrees) as an onion-skin with the blade tip's path (wind-up blue, blow gold, recovery
@@ -4863,7 +4893,8 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
 - **Third person** (Player Animation Library, optional, through `core.api.PlayerClips`; `ArmsClips`, `ArmsBodies`):
   a full-body clip per move from tools/art/specs/arms_moves.py, its keys on the timing table's rows (cocked at the
   wind-up's end, through at the active ticks' end, home by the endTick), each with a bent twin; the guard held while
-  it is up, the heavy's draw held while it charges, the dodge back or to a side by its way (mirrored for a left
+  it is up, the heavy's draw held while it charges (a blade-first style's own: its heavy's first pose), the dodge back
+  or to a side by its way (mirrored for a left
   hand). The fighter's own from their prediction, everyone else's from `Seen` MOVE, CHARGE and DODGE. Every clip is
   checked for an arm through the head or body (under 1.25 px). Without the library: vanilla's arm swing.
 - **The blade's own ribbon** (S2, `BladeTrail`; PLAN §4.8's SWEEP): while a blow is in the air the blade lays a
