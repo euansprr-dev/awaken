@@ -6677,13 +6677,16 @@ read this too, so their fields shift a little in new worlds).
 **Painting** (`RoadPiece`, `RoadPaint`, `RoadMarks`, `Waymarks`): each leg paints the chunks it touches through the
 settlement painter (fell the trees within reach, sweep what hangs over, fill to rock, `CityWriter`), pure per chunk;
 thin-beard markers under every dry point ease the land to the road's heights (the pieces themselves take no beard, so a
-bridge never dams a river). The carriageway in the land's family (dirt and gravel with two ruts and a worn crown in the
-heartland, cobbles and setts near a town, sand and sandstone in the desert, mud and packed earth in the mire, and so
-on), 5 wide for a highroad, 3 for a lane, a slab's half step wherever it climbs a block; lantern posts every fourth lit
-point for the last 18 points into a settlement. **Waymarkers**: a stripped-log post on a stone foot with a lantern, one
-hanging- sign arm per way out of its side, the place's name and distance on both faces (waxed; white ink on dark woods);
-one a little way out of every settlement (the next place and the one behind), one at every fork; at the crest where the
-first town comes into view, a cairn of field stones.
+bridge never dams a river). The carriageway is a two-track country road in the land's own ground: a crown grown over
+between two worn wheel tracks and, on a highroad, rougher shoulders, each band mostly one ground so it reads along the
+road (grass between dirt-path tracks in the heartland, podzol in the elder woods, gravel and coarse dirt in the frost,
+gravel and stone in the highlands, sand and sandstone in the desert, mud and packed mud in the mire; cobbles and setts
+near a town), 5 wide for a highroad, 3 for a lane, an earthen half step (mud brick; cobble in the frost and highlands,
+sandstone in the desert) wherever it climbs a block; lantern posts every fourth lit point for the last 18 points into a
+settlement. **Waymarkers**: a stripped-log post on a stone foot with a lantern, one hanging- sign arm per way out of its
+side, the place's name and distance on both faces (waxed; white ink on dark woods); one a little way out of every
+settlement (the next place and the one behind), one at every fork; at the crest where the first town comes into view, a
+cairn of field stones.
 
 **Towns** (`TownPlanner`, `TownPainter`; `Kind.TOWN`): a raster of 112 round a site near the region's heart (broad,
 gentle, dry, water near). A wall ring of mean radius 64 (planned again at 76 where the land fits fewer than 25 homes,
@@ -6750,7 +6753,11 @@ settlement they're in; 3,000 stretches and 400 places at most; the whole on logi
 **Cost** (Mac, seed 26102610, real noise): planning a road 285-355 ms on the planner thread (about 107k land reads; ~80
 roads within 2,400 of the centre), painting a road chunk 0.9-3.1 ms (cold); a town planned in 0.36-0.93 s on real land
 (the slower ones planned twice, the second with the wider wall; 48 ms on the test valley), painted at about 0.3 ms a
-chunk over ~75-110 chunks, at most 6 lights a chunk.
+chunk over ~75-110 chunks, at most 6 lights a chunk. On CI's macOS runner with Euan's terrain (Tectonic with the
+Awakened preset, the city basin): a road 1-6 s and a settlement 2-9 s to plan, Tectonic's land reads costing several
+times vanilla's. All of it runs on the planner thread or the worldgen threads, never the server's (but for commands):
+the planner keeps ahead of a walking player; past it (fast flight), a chunk on a lattice start waits for its roads.
+Framings lay only the highroads through a place: the lanes round it would plan the regions about (48 s on the runner).
 
 **Decisions taken here** (none of the plan's 13): the hub rule and its numbers above (towns one region in five, the
 first town placed on purpose, a wayhouse at a region's heart for "a day's walk"); roads on a lattice of leg starts

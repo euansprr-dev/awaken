@@ -14,9 +14,9 @@ import java.util.List;
  * One leg of a road as the settlement painter reads it (SPEC §28.9): a raster round the leg's line (the carriageway, its
  * verges, the band its trees are felled from) painted per chunk through the city's settlement writer, so a road clears
  * the trees it passes, its fill is carried down to the rock, and what hangs over it is swept like a village's. Its own
- * painting: the carriageway in the land's own stone and earth (dirt and gravel in the heartland with two wheel ruts and a
- * worn crown, cobbles and setts near a town, sand and sandstone in the desert, mud and packed earth in the mire), a slab's
- * half step wherever it climbs a block, a timber or stone bridge with rails and piers over water, boardwalks on posts
+ * painting: the carriageway in the land's own stone and earth (a two-track road: grass between dirt-path wheel tracks in
+ * the heartland, cobbles and setts near a town, sand and sandstone in the desert, mud and packed earth in the mire), an
+ * earthen half step wherever it climbs a block, a timber or stone bridge with rails and piers over water, boardwalks on posts
  * over the mire's shallows, a causeway over a brook; lantern posts by turns along the last stretch into a settlement;
  * the waymarkers. Pure: a chunk painted alone equals the same chunk painted with its neighbours.
  */
