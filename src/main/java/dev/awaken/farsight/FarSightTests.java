@@ -195,6 +195,15 @@ final class FarSightTests {
             for (int l = 0; l < VoxelMesher.LEVELS; l++) {
                 for (int q = 0; q < mesh.quadCount(l); q++) h.assertTrue((mesh.quads()[l][q * 4 + 2] >>> 16) == 7, "every quad carries its slot");
             }
+            // kept on disk and read back, the same blocks and light
+            try {
+                byte[] blob = dev.awaken.farsight.voxel.VoxelDisk.encode(snap);
+                VoxelSnapshot back = dev.awaken.farsight.voxel.VoxelDisk.of(level).decode(snap.chunkX(), snap.chunkZ(), blob);
+                h.assertTrue(back.hash() == snap.hash() && back.fromSection() == snap.fromSection(), "a kept snapshot reads back the same");
+                Awaken.LOG.info("[farsight] voxel snapshot kept in {} bytes", blob.length);
+            } catch (java.io.IOException e) {
+                h.fail("a kept snapshot can't be read back: " + e);
+            }
             Awaken.LOG.info("[farsight] voxel mesh: {} ms, quads by level {} {} {} {}", String.format(java.util.Locale.ROOT, "%.2f", ms),
                     mesh.quadCount(0), mesh.quadCount(1), mesh.quadCount(2), mesh.quadCount(3));
             h.succeed();

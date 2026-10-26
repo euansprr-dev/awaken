@@ -1588,6 +1588,28 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   inside the camera's render distance (after the opening's flight the Roost's long-loaded, never-built chunks counted
   as drawn at the landing: the city vanished and reloaded), and a chunk counts as drawn 250 ms after it first does
   (Sodium draws a section a frame or two after it reports it compiled: a flash at the loading edge).
+  City Sight hides per section: a 64×64-chunk × 32-section mask from the game's own `isSectionCompiledAndVisible`,
+  which Sodium answers with its exact built state (so the approved Turbo hook into Sodium isn't needed); all-air
+  sections count as built unasked, half the chunks are refreshed a call, a section counts 250 ms after it first is. A
+  section Sodium hasn't built keeps City Sight's copy of the same blocks. The plan still skips chunks the chunk mask
+  calls shown (drawing every chunk with an unbuilt section, mostly hidden behind others, cost 2 ms at the Roost).
+  City Sight's meshes stay across Far Sight off and on in the same world (the capture starts over; unchanged chunks
+  hash the same and are skipped).
+- **City Sight on disk** (`VoxelDisk`, schema 1): every snapshot taken is kept, deflated (sections in the game's own
+  network form, light), in regions of 32×32 chunks at `<world>/awaken/farsight/voxels/overworld/r.<x>.<z>.bin`, written
+  on its own thread at each level save and, waited for (at most 10 s), when the server stops. A start, and every 10 s
+  after, reads back what lies within 1.7 km of the player and isn't tracked (the world's own copy wins), handed over
+  as the client takes them.
+- **Levels follow the air**: a City Sight level gives way once its cells span `PIXELS` / transmittance pixels (the air's
+  haze at that distance, 4× in rain): hazier distance needs less detail.
+- **Work ahead of the camera**: the far patches' queue ranks from where the camera will be in 1.5 s at its smoothed
+  speed (at most 300 blocks ahead), so in fast flight the land ahead comes first.
+- **The opening's card** waits, while City Sight draws, for the far rings and the whole city meshed and up, not for
+  the real chunks round the player (the flight's camera is far from them and Sodium doesn't build them for it).
+- **Seam audit** (`tools/farsight/seam_audit.py`): pairs of tour frames, normal and debug view 2 (far terrain and City
+  Sight hidden for the real chunks paint red); red only in the debug frame, eroded by 5 pixels (outline slivers where
+  City Sight's cubes are hidden for thinner real blocks are expected), is a hole. Tour `farsight3-city.txt` takes the
+  pairs at the Roost, the quay and high over the walls; 0 hole pixels at all three (2026-10-26).
 - **Generated layer** (stage 1, schema 2): `FarChunk` keeps per 2×2-block cell the ground's top (MOTION_BLOCKING_NO_LEAVES;
   water counts), water depth, the ground's colour, the canopy's height above it and its colour (leaves at
   MOTION_BLOCKING). `FarStore.patch` averages the cells within half a cell of each corner (known once a quarter is

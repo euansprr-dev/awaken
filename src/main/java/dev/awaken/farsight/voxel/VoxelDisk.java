@@ -192,7 +192,8 @@ public final class VoxelDisk {
 
     // ---- one chunk --------------------------------------------------------------------------------------------------
 
-    private static byte[] encode(VoxelSnapshot s) {
+    /** A snapshot in its kept form (public for the test). */
+    public static byte[] encode(VoxelSnapshot s) {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer(16384));
         buf.writeInt(s.fromSection());
         buf.writeInt(s.sections().length);
@@ -216,7 +217,8 @@ public final class VoxelDisk {
         return bytes.toByteArray();
     }
 
-    private VoxelSnapshot decode(int cx, int cz, byte[] blob) throws IOException {
+    /** A kept snapshot read back (public for the test). */
+    public VoxelSnapshot decode(int cx, int cz, byte[] blob) throws IOException {
         byte[] raw;
         try (InflaterInputStream in = new InflaterInputStream(new java.io.ByteArrayInputStream(blob))) {
             raw = in.readAllBytes();
