@@ -59,7 +59,9 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
             // baked in the forged weapon's frame: one turned over in its hold takes it turned over too
             if (FpSwings.flipped3(weapon)) WRIST.premul(FLIP).mul(FLIP);
             poseStack.pushPose();
-            poseStack.rotateAround(WRIST, GRIP, GRIP, 0.5F);
+            Vector3f g = FpSwings.grip3(weapon); // a haft is held down it (the fist's spot, not the item's grip)
+            if (g == null) poseStack.rotateAround(WRIST, GRIP, GRIP, 0.5F);
+            else poseStack.rotateAround(WRIST, g.x, g.y, g.z);
         }
         boolean ours = WeaponPipelines.ok();
         int packed = ours ? (state == null ? 0 : state.energy()) | ((state == null ? 0 : state.flash()) | (foil ? 256 : 0)) << 16 : overlay;

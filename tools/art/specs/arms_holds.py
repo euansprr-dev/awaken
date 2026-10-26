@@ -168,20 +168,45 @@ def mirror_display(display, keep_edge=False):
 HANDHELD_3P = ((0.0, -90.0, 55.0), (0.0, 4.0, 0.5), 0.85)  # vanilla item/handheld's thirdperson_righthand
 
 
-def third_person(style, edge):
-    """The third-person holds (right, left, as written in the JSON) for a weapon whose single edge is on the other side
-    from the one its style's swings lead with (cut_side of its forged weapon): vanilla's handheld turned half round
-    about the weapon's length (the line through the item's centre), so the wrist's baked turn (anim_lab.py wrist_keys)
-    lays its edge into every blow; None keeps vanilla's."""
+# Third person holds a haft nearer its butt (the blade-first rig, tools/art/specs/arms_rig4.py: two hands on it): the
+# fist closes this many px (third-person scale) further down the haft than the item's grip, so the haft behind the
+# hands doesn't run back through the body; the wrist turns the weapon about that spot (grip3, FpSwings' grip3).
+HAFT3 = {"maul": 3.5, "spear": 10.0, "glaive": 5.0, "scythe": 6.0, "warstaff": 5.0}
+
+
+def grip3(style):
+    """Where the fist closes on a style's weapon in third person (item space): its grip, or down a haft (HAFT3)."""
+    return GRIP_ITEM - AXIS_ITEM * (HAFT3.get(style, 0.0) / (16 * HANDHELD_3P[2]))
+
+
+def flipped3(style, edge):
+    """Whether a weapon is turned over in its third-person hold: its single edge on the other side from the one its
+    style's swings lead with (cut_side of its forged weapon)."""
     lead = cut_side(style, "C")
-    if not edge or not lead or edge == lead:
+    return bool(edge and lead and edge != lead)
+
+
+def third_person(style, edge):
+    """The third-person holds (right, left, as written in the JSON), None keeping vanilla's handheld: turned half round
+    about the weapon's length (the line through the item's centre) for a weapon turned over (flipped3), so the wrist's
+    baked turn lays its edge into every blow; moved along its length so the fist closes down a haft (grip3)."""
+    flip = flipped3(style, edge)
+    k = HAFT3.get(style, 0.0)
+    if not flip and not k:
         return None
     (rx, ry, rz), t, sc = HANDHELD_3P
-    a = math.radians(180)
-    K = np.array([[0, -AXIS_ITEM[2], AXIS_ITEM[1]], [AXIS_ITEM[2], 0, -AXIS_ITEM[0]], [-AXIS_ITEM[1], AXIS_ITEM[0], 0]])
-    flip = np.eye(3) + math.sin(a) * K + (1 - math.cos(a)) * (K @ K)
-    ex, ey, ez = euler_xyz(MR.euler(rx, ry, rz) @ flip)
-    rot = [round(ex, 2), round(ey, 2), round(ez, 2)]
+    R = MR.euler(rx, ry, rz)
+    if flip:
+        a = math.radians(180)
+        K = np.array([[0, -AXIS_ITEM[2], AXIS_ITEM[1]], [AXIS_ITEM[2], 0, -AXIS_ITEM[0]], [-AXIS_ITEM[1], AXIS_ITEM[0], 0]])
+        R = R @ (np.eye(3) + math.sin(a) * K + (1 - math.cos(a)) * (K @ K))
+    if flip:
+        ex, ey, ez = euler_xyz(R)
+        rot = [round(ex, 2), round(ey, 2), round(ez, 2)]
+    else:
+        rot = [float(rx), float(ry), float(rz)]  # vanilla's own turn, as written
+    # the item moved so its point grip3 lands where its grip did: t' = t + 16 sc R (grip - grip3)
+    t = tuple(round(float(v), 3) for v in np.asarray(t, dtype=float) + 16 * sc * (MR.euler(*rot) @ (GRIP_ITEM - grip3(style))))
     # a left hand's is applied mirrored (y and z turns, x move negated): written so it applies as the right's does
     return ({"rotation": rot, "translation": list(t), "scale": [sc] * 3},
             {"rotation": [rot[0], -rot[1], -rot[2]], "translation": [-t[0], t[1], t[2]], "scale": [sc] * 3})
