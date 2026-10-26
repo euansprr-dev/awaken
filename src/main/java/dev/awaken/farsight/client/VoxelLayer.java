@@ -232,9 +232,10 @@ final class VoxelLayer implements AutoCloseable {
             int[] at = allocate(count);
             c.page[l] = at[0];
             c.first[l] = at[1];
+            // one bulk copy (an int at a time was ~1.5M calls a frame at the upload budget)
             staging.clear();
-            for (int v : q) staging.putInt(v);
-            staging.flip();
+            staging.asIntBuffer().put(q);
+            staging.limit(q.length * 4);
             enc.writeToBuffer(pages.get(at[0]).buffer.slice((long) at[1] * 16, (long) count * 16), staging);
             bytes += count * 16;
         }
@@ -499,14 +500,18 @@ final class VoxelLayer implements AutoCloseable {
         commands.rotate();
     }
 
+    // sortByPage's scratch, sized for the most draws a plan holds (add() stops at MAX_COMMANDS): nothing per frame
+    private final long[] sortKeys = new long[MAX_COMMANDS];
+    private final int[] sortPage = new int[MAX_COMMANDS], sortQuads = new int[MAX_COMMANDS], sortFirst = new int[MAX_COMMANDS];
+
     /** Groups the plan's draws by page, so each page's indirect commands are one run. */
     private void sortByPage() {
         int n = drawPage.size();
         if (n < 2) return;
-        long[] keys = new long[n];
+        long[] keys = sortKeys;
         for (int i = 0; i < n; i++) keys[i] = (long) drawPage.getInt(i) << 32 | i;
-        java.util.Arrays.sort(keys);
-        int[] p = new int[n], q = new int[n], f = new int[n];
+        java.util.Arrays.sort(keys, 0, n);
+        int[] p = sortPage, q = sortQuads, f = sortFirst;
         for (int i = 0; i < n; i++) {
             int k = (int) keys[i];
             p[i] = drawPage.getInt(k);
