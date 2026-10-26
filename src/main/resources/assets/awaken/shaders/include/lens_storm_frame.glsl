@@ -38,6 +38,6 @@ vec2 stormBand(vec3 v, vec2 c, float r, float y0, float y1, float camY) {
 // where a camera-relative ray v first enters storm k's whole volume (its bounding cylinder), or 1e9
 float stormEntry(vec3 v, int k, float camY) {
     vec4 a = stormA(k), b = stormB(k);
-    vec2 i = stormBand(v, a.xy + b.xy * 40.0, 300.0, b.z - 4.0, a.z + STORM_H + 48.0, camY);
+    vec2 i = stormBand(v, a.xy + b.xy * 60.0, 320.0, b.z - 4.0, a.z + STORM_H + 48.0, camY);
     return i.y > i.x ? i.x : 1.0e9;
 }

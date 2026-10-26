@@ -53,7 +53,7 @@ float clearing(vec3 w) {
     for (int s = 0; s < 2; s++) {
         if (s >= nStorm) break;
         vec4 a = stormA(s), b = stormB(s);
-        k *= mix(1.0, smoothstep(300.0, 420.0, length(w.xz - a.xy - b.xy * 40.0)), a.w);
+        k *= mix(1.0, smoothstep(330.0, 450.0, length(w.xz - a.xy - b.xy * 60.0)), a.w);
     }
     return k;
 }
@@ -112,9 +112,15 @@ void stormPiece(vec2 span, int steps, int k) {
         // the rain fades in from 16 blocks off: nearer, the game's own rain falls on you
         float rn = q.y < 0.0 ? stormRain(q, b.xy, groundH) * smoothstep(0.1, 0.4, a.w) * smoothstep(16.0, 40.0, t) : 0.0;
         if (d + rn <= 0.002) continue;
-        // lightning: a glow round the flash inside the cell, and a faint wash through all of it
+        // lightning lights the cell from within: its light reaches a point through the cloud between them (one sample
+        // at the midpoint stands for it), so the core round the bolt glows, the glow falls off through the volume, and
+        // the cell's outer shape stays dark and readable; a faint wash beyond
         float fd = length(w - c.xyz);
-        vec3 E = c.w > 0.0 ? flashCol * (3.5 * exp(-fd / 45.0) + 0.35 * exp(-fd / 200.0)) : vec3(0.0);
+        vec3 E = vec3(0.0);
+        if (c.w > 0.0 && fd < 260.0) {
+            float through = stormCell((w + c.xyz) * 0.5 - centre, b.xy, b.w, a.w, 0);
+            E = flashCol * (3.0 * exp(-fd / 55.0) * exp(-through * fd * STORM_SIGMA * 0.35) + 0.1 * exp(-fd / 180.0));
+        }
         float ac = 1.0 - exp(-d * STORM_SIGMA * dt), ar = 1.0 - exp(-rn * STORM_RAIN_SIGMA * dt);
         float hn = clamp(q.y / STORM_H, 0.0, 1.0);
         vec3 col = vec3(0.0);
@@ -152,7 +158,7 @@ vec2 storm(int k, float scene) {
     float base = a.z;
     vec2 rain = stormBand(v, axis + b.xy * 12.0, STORM_RAIN + 60.0, b.z - 4.0, base - 6.0, camY);
     vec2 body = stormBand(v, axis - b.xy * 30.0, 240.0, base - 6.0, base + STORM_H - STORM_ANVIL, camY);
-    vec2 anvil = stormBand(v, axis + b.xy * 100.0, 275.0, base + STORM_H - STORM_ANVIL, base + STORM_H + 46.0, camY);
+    vec2 anvil = stormBand(v, axis + b.xy * 150.0, 245.0, base + STORM_H - STORM_ANVIL, base + STORM_H + 46.0, camY);
     rain.y = min(rain.y, scene);
     body.y = min(body.y, scene);
     anvil.y = min(anvil.y, scene);
@@ -169,7 +175,7 @@ vec2 storm(int k, float scene) {
         stormPiece(body, nb, k);
         stormPiece(rain, nr, k);
     }
-    vec2 whole = stormBand(v, axis + b.xy * 40.0, 300.0, b.z - 4.0, base + STORM_H + 48.0, camY);
+    vec2 whole = stormBand(v, axis + b.xy * 60.0, 320.0, b.z - 4.0, base + STORM_H + 48.0, camY);
     return vec2(whole.x, min(whole.y, scene));
 }
 
