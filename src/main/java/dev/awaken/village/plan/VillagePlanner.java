@@ -1260,6 +1260,7 @@ public final class VillagePlanner {
             } else {
                 jobs.add(new String[]{"elder", "green", "0"});
                 jobs.add(new String[]{"lamplighter", "lamps", "0"});
+                jobs.add(new String[]{"bellringer", "bell", "0"});
             }
             int next = 0;
             // households: one per house and the inn; the smithy's smith lives in the house nearest it

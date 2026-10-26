@@ -353,8 +353,8 @@ public final class VillageRoster {
                 }
                 pr.work(work);
                 pr.segment(0, "home", -1).segment(at(i, 900, 250), "stand", work).segment(at(i, 5400, 150), "home", -1)
-                        .segment(at(i, 6900, 200), "stand", work).segment(at(i, 11300, 250), "home", -1);
-                if (evening) pr.segment(at(i, 13200, 300), "wander", eveningRoute, -1, 900, 0).segment(at(i, 16200, 300), "home", -1);
+                        .segment(at(i, 6900, 200), "stand", work).segment(at(i, 11700, 250), "home", -1);
+                if (evening) pr.segment(at(i, 12500, 250), "wander", eveningRoute, -1, 900, 0).segment(at(i, 16200, 300), "home", -1);
             }
             case "tavernkeeper" -> {
                 pr.work(innOut >= 0 ? innOut : home);
@@ -366,8 +366,8 @@ public final class VillageRoster {
                 pr.work(road);
                 // out by the road at dawn (inside: gone into the wilds), back at dusk with the day's take
                 pr.segment(0, "home", -1).segment(at(i, job.equals("hunter") ? 300 : 700, 200), "inside", road)
-                        .segment(at(i, 11600, 300), "home", -1);
-                if (evening) pr.segment(at(i, 13400, 300), "wander", eveningRoute, -1, 900, 0).segment(at(i, 16300, 300), "home", -1);
+                        .segment(at(i, 11900, 250), "home", -1);
+                if (evening) pr.segment(at(i, 12900, 250), "wander", eveningRoute, -1, 900, 0).segment(at(i, 16300, 300), "home", -1);
             }
             case "carter" -> {
                 pr.segment(0, "home", -1);
@@ -426,7 +426,7 @@ public final class VillageRoster {
     private void resident(RosterBuilder.Person pr, int i, int home, boolean evening) {
         pr.segment(0, "home", -1).segment(at(i, 2200, 400), "wander", errands, -1, 400, 0).segment(at(i, 5400, 150), "home", -1)
                 .segment(at(i, 7400, 400), "wander", errands, -1, 400, 0).segment(at(i, 10800, 300), "home", -1);
-        if (evening) pr.segment(at(i, 13100, 300), "wander", eveningRoute, -1, 900, 0).segment(at(i, 16000, 300), "home", -1);
+        if (evening) pr.segment(at(i, 12600, 300), "wander", eveningRoute, -1, 900, 0).segment(at(i, 16000, 300), "home", -1);
     }
 
     // ---- what the client draws: chimneys, the mill's wheel, the well ---------------------------------------------------

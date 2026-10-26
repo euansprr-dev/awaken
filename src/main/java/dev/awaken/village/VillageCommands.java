@@ -147,7 +147,7 @@ final class VillageCommands {
         for (SettlementGrid.Anchor a : near) {
             if (!key.equals("nearest") && !key.equals(a.key()) && !(key.equals("nearest_village") && a.kind() == VillagePlan.Kind.VILLAGE)) continue;
             VillagePlan plan = Plans.of(a, terrain(level));
-            if (plan != null) return plan;
+            if (plan != null && (!key.equals("nearest_village") || plan.kind == VillagePlan.Kind.VILLAGE)) return plan;
         }
         return null;
     }
