@@ -73,7 +73,12 @@ final class LivingCommands {
                     .then(Commands.literal("gate").executes(c -> {
                         ServerPlayer p = c.getSource().getPlayerOrException();
                         if (!way(p, "gate")) return 0;
-                        return FirstScenes.gateShot(p, "Hale: Licence? Fine. The Commons bite less than they look. Mostly.", true) ? 1 : 0;
+                        // Hale's line as the errand has it (the gate step's done line)
+                        String chain = FirstThread.chainId();
+                        var d = chain == null ? null : dev.awaken.living.quest.QuestBook.get(chain);
+                        String hale = d == null ? "" : d.steps().stream().filter(s -> s.id().equals("gate")).findFirst()
+                                .map(s -> s.done().isEmpty() ? "" : s.done().getFirst()).orElse("");
+                        return FirstScenes.gateShot(p, hale, true) ? 1 : 0;
                     }))
                     // ten blocks off Ilse with the letters still yours (the Now line counts them), then five off and her scene
                     .then(Commands.literal("letters").executes(c -> ilseStand(c.getSource(), 10) ? 1 : 0))
