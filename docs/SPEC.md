@@ -4417,6 +4417,36 @@ texture carries them (texel 20 x the count, texels 24-41, three a plate; it grew
 0.15 block of a plate's plane and inside its rectangle (`onPlate` in lens_frame.glsl) gets no shadow, AO, key or shade
 and no haze. With the K panel open they dim with the rest of the world (the focus dim stays).
 
+**Temporal clouds and light** (Euan, 2026-10-26: "Start all three ideas now", docs/perf/IDEAS-26OCT.md B; setting
+`lensTemporal`, default on; autopilot `lens temporal on|off|setting`):
+- Why: at the Roost, Lens Cinematic cost ~5.4 ms of a ~21 ms frame (docs/perf/PERF-26OCT.md). Its marches (the clouds
+  at 560×315 / 800×450, the light buffer at 960×540 / 1440×810) already blend into a reprojected history, but every
+  pixel marched every frame.
+- The clouds: a pixel marches one frame in four, a 2×2 pattern of 8×8-pixel tiles turning with the frame counter
+  (frame texel 12 w). Whole tiles, so the GPU's SIMD groups skip together: the first, per-pixel pattern left a marching
+  pixel in every group and saved nothing (Cinematic 13.22 ms off, 13.25 on).
+  - On the other three frames it keeps last frame's clouds, reprojected to where its ray enters the layer (or the
+    nearer storm cell; 150 blocks when the camera is inside the layer).
+  - A march blends in at 1 - (1 - f)^4 of the old weight f, so the clouds answer over time as before.
+  - It marches anyway with no history (a cut, a teleport, a long gap), off screen, or while lightning flashes.
+- The light buffer (sun visibility, contact shadows, AO, volumetric light): a checkerboard of 8×8 tiles marches each
+  frame, alternating.
+  - On its off frame a pixel keeps its reprojected history where at least 0.4 of the 2×2 taps saw the same distance.
+  - A new surface (disocclusion) marches.
+  - A march blends in at 1 - (1 - f)^2.
+- Frame texel 17 y carries the switch; with it off, both passes are exactly as before.
+- Measured (perf tour `tools/autopilot/lens-temporal-perf.txt`, 26 Oct; MacBook at Euan's 4.7 MP world, the Roost,
+  noon, a quiet machine; GPU world pass p50):
+
+  | | off | on |
+  |---|---|---|
+  | Ultra | 17.02 ms | **15.12 ms** (frame p50 19.4 → 17.3, 51 → 58 fps) |
+  | Cinematic (paired windows) | 13.95, 13.53 ms | 13.70, 13.13 ms (−0.25 to −0.4) |
+
+  - Lens Swift is 9.29 ms, so the whole of Lens Cinematic is ~4.2 ms over Swift and the marches are a small part of
+    it. The rest is the full-size passes; time them per pass next.
+  - Look tour `tools/autopilot/lens-temporal-look.txt` (CI): no smear and no tile blocks, at rest or in a 180° turn.
+
 ## 23. Creature life (Fresh Animations in the pack, and a life layer on every body of ours; Euan 2026-10-25)
 
 Euan: every mob, ours included, "still feels a bit rigid and static". Approved: "Both: Fresh Animations + our life layer".

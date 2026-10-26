@@ -99,6 +99,20 @@ public final class LensClient {
     private static final Vector4f clip = new Vector4f();
     private static final Matrix4f viewProj = new Matrix4f();
 
+    // Lens 2 spreads its clouds and light over frames (the lensTemporal setting, or the autopilot's override for A/Bs)
+    private static boolean temporal = true;
+    private static @org.jspecify.annotations.Nullable Boolean forcedTemporal;
+
+    /** Autopilot {@code lens temporal on|off|setting}: the A/B switch for the interleaved clouds and light. */
+    public static String temporal(String arg) {
+        forcedTemporal = switch (arg.trim()) {
+            case "on" -> Boolean.TRUE;
+            case "off" -> Boolean.FALSE;
+            default -> null;
+        };
+        return "temporal " + (forcedTemporal != null ? forcedTemporal : "from the setting");
+    }
+
     public static void debug(int mode) {
         debug = Math.clamp(mode, 0, 8);
         Awaken.LOG.info("[lens] debug view {}", debug);
@@ -139,6 +153,7 @@ public final class LensClient {
             return;
         }
         AwakenConfig.Client.LensLook setting = AwakenConfig.Client.LENS.get();
+        temporal = forcedTemporal != null ? forcedTemporal : AwakenConfig.Client.LENS_TEMPORAL.get();
         boolean off = setting == AwakenConfig.Client.LensLook.OFF;
         // a story scene's look plays like a cutscene even with Lens off (unless the player said no), then fades out
         boolean scene = overrideLook != null || tearStep > 0 || linger > 0;
@@ -361,7 +376,7 @@ public final class LensClient {
         long ticks = Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getGameTime() : 0L;
         lensFrame.clouds(cloudsHere ? cloudHeight : 0f, cover, (ticks % 768_000L) * 0.04, cloudColour);
         lensFrame.write(state.cameraRenderState, state.playerRenderState, zeroToOne, lx, ly, lz, lightStrength, moonLight, rain,
-                sunHere ? heightfield : null);
+                sunHere ? heightfield : null, temporal);
     }
 
     private static void ensureParams() {
