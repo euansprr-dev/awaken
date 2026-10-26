@@ -978,6 +978,37 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   A test that needs untouched ground owns fresh ground away from the test grid (plots sit 6 blocks apart).
 - `-Ptests=<name prefixes>` (comma-separated) registers only those GameTests; a filter that matches none fails.
 
+Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools/autopilot.sh`):
+- Look tours run on GitHub's macOS runners (`.github/workflows/tours.yml`, dispatched by `tools/tour-ci.sh`, decided
+  2026-10-26 when the Mac's one-at-a-time queue ran for hours). Perf and frame-time tours, Far Sight's tours and sound
+  listening stay on the Mac under `slot.sh tour`.
+- The runner is macos-15 on arm64 (3 cores of a virtual M1, 7 GB): Vulkan through MoltenVK 1.4.2 on Apple's
+  paravirtual GPU, client heap 4 GB. macOS 14's paravirtual GPU aborts MoltenVK (`newArgumentEncoderWithLayout:`) or
+  runs out of device memory; macOS 26 renders at half the frame rate and scrambles more. OpenGL there is Apple's
+  software renderer (0.1 fps), and Lens Cinematic fails on OpenGL anyway.
+- The autopilot run takes the graphics API as a launch argument (`--graphicsBackend`, tools/autopilot.sh `BACKEND`,
+  Vulkan unless `default`): a fresh game folder read its new options.txt's Vulkan as "default", which tries OpenGL first
+  (on the Mac, the first tour after a pack install).
+- On the paravirtual GPU, draws that each bind another slice of one uniform buffer come out wrong: Far Sight's far mesh
+  (slabs across the sky) and vanilla terrain without multi-draw-indirect (sections misplaced; it is on by default, and
+  autopilot `mdi on|off` switches it). Chunks (vanilla and Sodium), entities, the HUD and holo screens, and Lens Swift
+  and Cinematic render as on the Mac. So CI tours run with Far Sight off (`FARSIGHT=off`, the client config's
+  farSight) and refuse a script with `farsight on`.
+- Display: the runner boots a 1x 1024x768 screen. `tools/ci-retina.m` (CoreGraphics' private CGVirtualDisplay) adds a
+  display like the owner's MacBook, 1512x982 points at 2x, as the main one, with the Dock hidden: the same pixels and
+  GUI scale as the Mac, so a script's GUI clicks land as there. If macOS refuses it, the runner's display goes to
+  1920x1080 (1x: the Mac's framing at half its pixels) and the summary says so.
+- Shots settle (`SETTLE=<s>`, `-Dawaken.autopilot.settle`; CI 90 s): before each `shot` (not `shotnow`) the autopilot
+  waits until every chunk within the render distance less one is on the client (or none has come for 10 s), then a
+  second of built sections (`LevelRenderer.hasRenderedAllSections`, which Sodium answers too), past the fade-in. Waits
+  written on the Mac run out on 3 cores. Moments on the game's own clock still differ: the opening's sky shots, toasts,
+  a creature's tracks, anything after a fixed wait that isn't a shot.
+- Every tour picks a starter power (`cmd awaken powers starter 1`): on a slower machine the first-power screen can open
+  after the script's last `screen close` and cover every shot.
+- The run's artifact (7 days) holds the shots, the client's log, options.txt, awaken-client.toml, summary.txt and
+  tour.json (`tools/tour-report.py`: the verdict, renderer, display, settles, warnings, the first ERROR lines), and the
+  clip recorder's frames as a second artifact. Never Mojang's assets: they are downloaded on the runner and cached.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 14. The Awakened Pack (companion mods; plan in docs/plan-pack.html, approved 2026-10-24)

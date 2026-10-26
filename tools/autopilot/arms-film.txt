@@ -6,6 +6,7 @@ waitworld
 wait 60
 cmd awaken opening skip
 wait 40
+cmd awaken powers starter 1
 gui 0
 cmd gamerule send_command_feedback false
 cmd gamerule spawn_mobs false
