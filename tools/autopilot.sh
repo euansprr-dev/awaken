@@ -14,6 +14,7 @@
 #   FARSIGHT=off|near|full  Far Sight's reach (unset: whatever run-autopilot's client config says; CI tours: off)
 #   TECTONIC=<preset>       Tectonic settings from pack/tectonic/<preset>.json (unset: Tectonic's defaults)
 #   CITY=on                 ask for the city basin before Carillon exists (terrain's dev switch)
+#   WORLD_FROM=<world dir>  a copy of that world (never the original) as saves/copied, for the script's "world copied"
 cd "$(dirname "$0")/.."
 SCRIPT=${1:?script}
 T=${2:-900}
@@ -70,6 +71,11 @@ GRADLE_ARGS=()
 cp "$SCRIPT" run-autopilot/script.txt
 rm -f run-autopilot/screenshots/*.png(N)
 rm -rf run-autopilot/saves   # every tour starts from a fresh world
+# WORLD_FROM: a player's world to reproduce a bug in, copied in (the original is only read)
+if [ -n "$WORLD_FROM" ]; then
+  mkdir -p run-autopilot/saves && cp -R "$WORLD_FROM" run-autopilot/saves/copied || exit 1
+  rm -f run-autopilot/saves/copied/session.lock
+fi
 tools/gradle.sh "$T" runAutopilot "${GRADLE_ARGS[@]}" > /dev/null
 echo "screenshots:"
 ls -1 run-autopilot/screenshots/ 2>/dev/null
