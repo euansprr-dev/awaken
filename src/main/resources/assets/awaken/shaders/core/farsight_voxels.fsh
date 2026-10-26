@@ -11,6 +11,7 @@
 // (dark under roofs, lit windows at night), and hazed by the same air. Hidden where Sodium draws the real section;
 // levels cross-fade, dithered, over a band past each level's reach.
 
+uniform samplerBuffer Looks;     // per look: u0 v0 u1 v1, then flags and the sprite's average colour
 uniform sampler2D AtlasSampler;
 uniform sampler2D LightSampler;
 uniform sampler2D ChunkSampler;
@@ -22,12 +23,11 @@ layout(std140) uniform FarVoxel {
 
 layout(location = 0) in vec3 vRel;
 layout(location = 1) in vec2 vUv;
-layout(location = 2) flat in vec4 vRect;
-layout(location = 3) flat in vec4 vLook;
-layout(location = 4) flat in vec3 vTint;
-layout(location = 5) flat in vec3 vNormal;
-layout(location = 6) flat in vec2 vLight;
-layout(location = 7) flat in int vLod;
+layout(location = 2) flat in int vLookId;
+layout(location = 3) flat in vec3 vTint;
+layout(location = 4) flat in vec3 vNormal;
+layout(location = 5) flat in vec2 vLight;
+layout(location = 6) flat in int vLod;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -57,11 +57,14 @@ void main() {
         if (d > to + band || (d > to && dither <= (d - to) / band)) discard;
     }
 #endif
+    vec4 vRect = texelFetch(Looks, vLookId * 2), vLook = texelFetch(Looks, vLookId * 2 + 1);
     vec2 size = vRect.zw - vRect.xy;
     vec2 uv = vRect.xy + fract(vUv) * size;
     vec4 tex = textureGrad(AtlasSampler, uv, dFdx(vUv) * size, dFdy(vUv) * size);
     int flags = int(vLook.x + 0.5);
     vec3 albedo = tex.rgb;
+    // a window closing a dark room: its glass shows the dark room, never a hole
+    if ((flags & 16) != 0) albedo = mix(vLook.yzw * 0.3, tex.rgb, tex.a * tex.a);
 #ifndef NO_DISCARD
     if ((flags & 1) != 0 && tex.a < 0.5) discard;                    // cut-out: glass frames, bars
     if ((flags & 8) != 0) albedo = mix(vLook.yzw, tex.rgb, tex.a);  // leaves: their holes take the leaves' colour

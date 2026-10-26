@@ -158,6 +158,8 @@ final class FarSightTests {
             }
             for (int y = y0; y < y0 + 6; y++) level.setBlockAndUpdate(new BlockPos(x0 + 8, y, z0 + 1), Blocks.OAK_PLANKS.defaultBlockState());
             level.setBlockAndUpdate(new BlockPos(x0 + 6, y0, z0 + 6), Blocks.STONE_SLAB.defaultBlockState());
+            // faces carry the light in front of them (a dark room's aren't drawn): the light first
+            AwakenTests.awaitLight(h, new BlockPos(x0 - 2, y0, z0 - 2), new BlockPos(x0 + 10, y0 + 8, z0 + 8));
             LevelChunk chunk = level.getChunkAt(new BlockPos(x0, y0, z0));
             VoxelSnapshot snap = VoxelSnapshot.take(level, chunk);
             h.assertTrue(snap != null, "the chunk has blocks");
@@ -170,6 +172,11 @@ final class FarSightTests {
                 @Override
                 public int tint(int id, int tintIndex, Holder<Biome> biome) {
                     return 0xFFFFFF;
+                }
+
+                @Override
+                public int window(int id, int dir) {
+                    return id & 0xFFFF;
                 }
             });
             long t0 = System.nanoTime();

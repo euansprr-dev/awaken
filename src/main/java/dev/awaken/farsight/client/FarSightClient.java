@@ -140,6 +140,7 @@ public final class FarSightClient {
      * value comes back when it stops.
      */
     private static double heldFade = -1;
+    private static int tendTurn;
 
     private static void holdFade(boolean hold) {
         var option = Minecraft.getInstance().options.chunkSectionFadeInTime();
@@ -158,6 +159,8 @@ public final class FarSightClient {
         holdFade(false);
         FarStore.collecting = false;
         VoxelCapture.wanted = false;
+        // (the server may not tick between this and a rebind: start its capture over from here)
+        VoxelCapture.reset();
         FarCity.underCitySight = false;
         if (voxels != null) voxels.clear();
         workers.clear();
@@ -202,6 +205,7 @@ public final class FarSightClient {
             boolean city = level.dimension() == net.minecraft.world.level.Level.OVERWORLD && dev.awaken.city.City.layout() != null;
             VoxelCapture.wanted = city;
             FarCity.underCitySight = city;
+            if (city) voxels.pin(dev.awaken.city.City.layout().chunks);
         }
         holdFade(true);
         // the integrated server sums real chunks into the generated layer while Far Sight draws
@@ -272,6 +276,7 @@ public final class FarSightClient {
             });
         }
         voxels.upload(VOXEL_UPLOAD_BYTES);
+        if (++tendTurn % 60 == 0) voxels.tend(cam.x, cam.z, VoxelCapture::forget);
         logProgress();
         renderer.timeStart();
         float partialTick = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
@@ -288,7 +293,8 @@ public final class FarSightClient {
         if ((partsOff & 8) == 0) gpu.bake(field, bake, sun, sun.y > 0.01f);
         field.dirty = 0;
         renderer.timeBaked();
-        if ((bakeTurn & 1) == 0) renderer.chunks(mc.level, mc.levelRenderer, Util.toMillis(mc.options.chunkSectionFadeInTime().get()), Math.floorDiv((int) Math.floor(cam.x), 16), Math.floorDiv((int) Math.floor(cam.z), 16), rd + 1);
+        if ((bakeTurn & 1) == 0) renderer.chunks(mc.level, mc.levelRenderer, Util.toMillis(mc.options.chunkSectionFadeInTime().get()), Math.floorDiv((int) Math.floor(cam.x), 16), Math.floorDiv((int) Math.floor(cam.z), 16), rd + 1,
+                cam.x, cam.z, rd * 16);
         RenderTarget main = mc.gameRenderer.mainRenderTarget();
         var camera = mc.gameRenderer.mainCamera();
         float fov = Math.max(camera.getFov(), mc.options.fov().get()) + 10f;

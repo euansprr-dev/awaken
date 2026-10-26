@@ -30,7 +30,10 @@ public final class VoxelCapture {
     static final int MAX_WAITING = 96;
     private static final AtomicInteger waiting = new AtomicInteger();
     private static final LongLinkedOpenHashSet PENDING = new LongLinkedOpenHashSet();
+    /** Every chunk City Sight draws (the city's, and every overworld chunk loaded since it started). */
     private static final LongOpenHashSet CITY = new LongOpenHashSet();
+    /** The overworld's loaded chunks, tracked all along (server thread), so a start takes those already loaded too. */
+    private static final LongOpenHashSet LOADED = new LongOpenHashSet();
     /** City chunks whose blocks changed, by the tick of the last change (taken again once it has settled). */
     private static final it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap DIRTY = new it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap();
     static final int SETTLE_TICKS = 40;
@@ -51,6 +54,36 @@ public final class VoxelCapture {
 
     public static int captured() {
         return captured;
+    }
+
+    /** An overworld chunk loaded (server thread): tracked, and taken if City Sight is drawing. */
+    public static void loaded(ChunkPos pos) {
+        long key = pos.pack();
+        synchronized (PENDING) {
+            LOADED.add(key);
+            if (wanted && started && CITY.add(key)) PENDING.add(key);
+        }
+    }
+
+    public static void unloaded(ChunkPos pos) {
+        synchronized (PENDING) {
+            LOADED.remove(pos.pack());
+        }
+    }
+
+    /** The client let chunk {@code key} go (far away): taken again when it next loads. */
+    public static void forget(long key) {
+        synchronized (PENDING) {
+            CITY.remove(key);
+        }
+    }
+
+    /** The server stops: nothing kept. */
+    public static void stop() {
+        reset();
+        synchronized (PENDING) {
+            LOADED.clear();
+        }
     }
 
     /** A block changed at (x, z) in the overworld (server thread): if City Sight draws its chunk, take it again soon. */
@@ -104,6 +137,13 @@ public final class VoxelCapture {
                         PENDING.add(k);
                     }
                 }
+                // then every chunk already loaded (the player's surroundings), nearest first
+                var players = overworld.players();
+                int px = players.isEmpty() ? 0 : players.getFirst().blockPosition().getX() >> 4;
+                int pz = players.isEmpty() ? 0 : players.getFirst().blockPosition().getZ() >> 4;
+                long[] loaded = LOADED.toLongArray();
+                it.unimi.dsi.fastutil.longs.LongArrays.quickSort(loaded, (a, b) -> Long.compare(dist(a, px, pz), dist(b, px, pz)));
+                for (long k : loaded) if (CITY.add(k)) PENDING.add(k);
             }
         }
         synchronized (PENDING) {

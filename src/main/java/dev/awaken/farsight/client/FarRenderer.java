@@ -88,8 +88,13 @@ final class FarRenderer implements AutoCloseable {
     private final GpuTextureView chunksView;
     private final ByteBuffer chunkBytes = MemoryUtil.memCalloc(64 * 64);
     /** Which chunk each mask slot last saw loaded, and since when (ms): a chunk settled this long counts as drawn. */
-    private final long[] slotChunk = new long[64 * 64], slotSince = new long[64 * 64];
+    private final long[] slotChunk = new long[64 * 64], slotSince = new long[64 * 64], slotShown = new long[64 * 64];
     static final long SETTLE_MS = 2000L;
+    /**
+     * A chunk counts as drawn this long after it first does: Sodium draws a section a frame or two after it reports it
+     * compiled, and hiding the far view at once showed as a flash at the loading edge (Euan, 2026-10-26).
+     */
+    static final long SHOW_DELAY_MS = 250L;
     private final BlockPos.MutableBlockPos probe = new BlockPos.MutableBlockPos();
 
     // the frame's pieces: ring, first cell (window-local), width and height in cells
@@ -156,7 +161,7 @@ final class FarRenderer implements AutoCloseable {
      * shows the sky through it. A 64×64 sweep at most: cheap.
      */
     void chunks(ClientLevel level, LevelRenderer sections, long fade,
-                int cx, int cz, int radius) {
+                int cx, int cz, int radius, double camX, double camZ, int realWithin) {
         radius = Math.min(radius, 31);
         var source = level.getChunkSource();
         int minY = level.getMinY(), inner = Math.max(1, radius - 3), total = 0, shownN = 0;
@@ -169,9 +174,14 @@ final class FarRenderer implements AutoCloseable {
                 boolean shown = chunk != null;
                 int slot = ((z & 63) << 6) | (x & 63);
                 long key = ChunkPos.pack(x, z);
+                // outside the camera's render distance Sodium builds nothing: the settling clock starts only once the
+                // chunk is inside it (after the opening's flight the Roost's long-loaded chunks counted as drawn at the
+                // landing while Sodium was only starting to build them: the city vanished and reloaded)
+                double nx = Math.max(0, Math.max(x * 16 - camX, camX - (x * 16 + 16))), nz = Math.max(0, Math.max(z * 16 - camZ, camZ - (z * 16 + 16)));
+                boolean inside = nx * nx + nz * nz < (double) realWithin * realWithin;
                 if (chunk == null) {
                     slotChunk[slot] = Long.MIN_VALUE;
-                } else if (slotChunk[slot] != key) {
+                } else if (slotChunk[slot] != key || !inside) {
                     slotChunk[slot] = key;
                     slotSince[slot] = now;
                 }
@@ -186,6 +196,9 @@ final class FarRenderer implements AutoCloseable {
                         shown = sections.isSectionCompiledAndVisible(probe, fade);
                     }
                 }
+                if (!shown) slotShown[slot] = 0;
+                else if (slotShown[slot] == 0) slotShown[slot] = now;
+                shown = shown && now - slotShown[slot] >= SHOW_DELAY_MS;
                 chunkBytes.put(((z & 63) << 6) | (x & 63), shown ? (byte) 255 : 0);
                 if (counts) {
                     total++;

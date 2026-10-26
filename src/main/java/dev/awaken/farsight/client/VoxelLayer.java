@@ -38,6 +38,10 @@ final class VoxelLayer implements AutoCloseable {
     static final int PAGE_QUADS = 1 << 18, MAX_SLOTS = 1 << 16, DRAW_QUADS = 1 << 16, MAX_COMMANDS = 8192, COMMAND_BYTES = 20;
     /** A level's blocks give way to the next coarser level once they look this many pixels or fewer. */
     static final float PIXELS = 2.0f;
+    /** Chunks are kept this far (blocks) and drawn in the coverage mask this far; the city's are kept at any distance. */
+    static final float KEEP = 1900f, COVER = 2000f;
+    /** At most this many quads kept (256 MB of pages): past it, the farthest chunks go first. */
+    static final long MAX_QUADS = 16L << 20;
     /** The cross-fade between two levels, as a share of the nearer one's reach. */
     static final float BAND = 0.15f;
 
@@ -63,6 +67,9 @@ final class VoxelLayer implements AutoCloseable {
     private final Chunk[] chunks = new Chunk[MAX_SLOTS];
     private final IntArrayList live = new IntArrayList();
     private final Long2IntOpenHashMap slotOf = new Long2IntOpenHashMap();
+    private final it.unimi.dsi.fastutil.longs.LongOpenHashSet pinned = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+    private long quadsKept;
+    private double lastCamX, lastCamZ;
     private final IntArrayList freeSlots = new IntArrayList();
     private int nextSlot;
     private final GpuBuffer chunkTable, lookTable, indices;
@@ -167,8 +174,11 @@ final class VoxelLayer implements AutoCloseable {
             c = new Chunk();
             chunks[s] = c;
             live.add(s);
-            coverageBytes.put((m.chunkZ() & 255) << 8 | (m.chunkX() & 255), (byte) 255);
-            coverageDirty = true;
+            double dx = m.chunkX() * 16 + 8 - lastCamX, dz = m.chunkZ() * 16 + 8 - lastCamZ;
+            if (dx * dx + dz * dz < COVER * COVER) {
+                coverageBytes.put((m.chunkZ() & 255) << 8 | (m.chunkX() & 255), (byte) 255);
+                coverageDirty = true;
+            }
         }
         c.cx = m.chunkX();
         c.cz = m.chunkZ();
@@ -179,6 +189,7 @@ final class VoxelLayer implements AutoCloseable {
             int[] q = m.quads()[l];
             int count = q.length / VoxelMesher.INTS;
             c.count[l] = count;
+            quadsKept += count;
             System.arraycopy(m.starts()[l], 0, c.starts[l], 0, 7);
             if (count == 0) continue;
             int[] at = allocate(count);
@@ -225,8 +236,54 @@ final class VoxelLayer implements AutoCloseable {
     private void release(Chunk c) {
         for (int l = 0; l < VoxelMesher.LEVELS; l++) {
             if (c.count[l] > 0) pages.get(c.page[l]).free.add(new int[]{c.first[l], c.count[l]});
+            quadsKept -= c.count[l];
             c.count[l] = 0;
         }
+    }
+
+    /** The city's chunks: kept at any distance (the city is drawn from its real blocks however far away). */
+    void pin(long[] keys) {
+        pinned.clear();
+        for (long k : keys) pinned.add(k);
+    }
+
+    /**
+     * About once a second: drops chunks past {@link #KEEP} (never the city's), the farthest first while over
+     * {@link #MAX_QUADS}, and redraws the coverage mask for the chunks within {@link #COVER} (it is toroidal, 4 km
+     * across: a chunk farther off would stand in for one near).
+     */
+    void tend(double camX, double camZ, java.util.function.LongConsumer forgotten) {
+        lastCamX = camX;
+        lastCamZ = camZ;
+        int n = live.size();
+        long[] order = new long[n];
+        for (int i = 0; i < n; i++) {
+            Chunk c = chunks[live.getInt(i)];
+            double dx = c.cx * 16 + 8 - camX, dz = c.cz * 16 + 8 - camZ;
+            order[i] = (long) Math.min(Integer.MAX_VALUE, (long) Math.sqrt(dx * dx + dz * dz)) << 32 | live.getInt(i);
+        }
+        java.util.Arrays.sort(order);
+        for (int i = n - 1; i >= 0; i--) {
+            int s = (int) order[i];
+            Chunk c = chunks[s];
+            long key = ChunkPos.pack(c.cx, c.cz);
+            if (pinned.contains(key)) continue;
+            if ((order[i] >>> 32) <= KEEP && quadsKept <= MAX_QUADS) break;
+            release(c);
+            chunks[s] = null;
+            live.rem(s);
+            slotOf.remove(key);
+            freeSlots.add(s);
+            hashes[s] = 0;
+            forgotten.accept(key);
+        }
+        MemoryUtil.memSet(coverageBytes, 0);
+        for (int i = 0; i < live.size(); i++) {
+            Chunk c = chunks[live.getInt(i)];
+            double dx = c.cx * 16 + 8 - camX, dz = c.cz * 16 + 8 - camZ;
+            if (dx * dx + dz * dz < COVER * COVER) coverageBytes.put((c.cz & 255) << 8 | (c.cx & 255), (byte) 255);
+        }
+        coverageDirty = true;
     }
 
     /** Forgets every chunk (a new world, a resource reload). */
@@ -240,6 +297,7 @@ final class VoxelLayer implements AutoCloseable {
         slotOf.clear();
         freeSlots.clear();
         java.util.Arrays.fill(hashes, 0L);
+        quadsKept = 0;
         nextSlot = 0;
         for (Page p : pages) {
             p.used = 0;

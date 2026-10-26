@@ -11,16 +11,14 @@
 
 uniform usamplerBuffer Quads;
 uniform isamplerBuffer Chunks;   // per slot: block x, the level's floor y, block z
-uniform samplerBuffer Looks;     // per look: u0 v0 u1 v1, then flags and the sprite's average colour
 
 layout(location = 0) out vec3 vRel;
 layout(location = 1) out vec2 vUv;          // blocks along the face's u and v (the texture repeats per block)
-layout(location = 2) flat out vec4 vRect;   // the sprite in the atlas
-layout(location = 3) flat out vec4 vLook;   // flags, average colour
-layout(location = 4) flat out vec3 vTint;
-layout(location = 5) flat out vec3 vNormal;
-layout(location = 6) flat out vec2 vLight;  // block, sky (0..15)
-layout(location = 7) flat out int vLod;
+layout(location = 2) flat out int vLookId;  // its row in the look table (read per fragment: far fewer than vertices)
+layout(location = 3) flat out vec3 vTint;
+layout(location = 4) flat out vec3 vNormal;
+layout(location = 5) flat out vec2 vLight;  // block, sky (0..15)
+layout(location = 6) flat out int vLod;
 
 void main() {
     int quad = gl_VertexIndex >> 2, corner = gl_VertexIndex & 3;
@@ -40,8 +38,7 @@ void main() {
     vec2 uv = vec2(dot(local, U), dot(local, V));
     if (dir >= 2) uv.y = -uv.y;
     vUv = uv;
-    vRect = texelFetch(Looks, look * 2);
-    vLook = texelFetch(Looks, look * 2 + 1);
+    vLookId = look;
     uint t = q.w;
     vTint = vec3(float((t >> 16) & 255u), float((t >> 8) & 255u), float(t & 255u)) / 255.0;
     const vec3 NORMALS[6] = vec3[](vec3(0.0, -1.0, 0.0), vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, -1.0), vec3(0.0, 0.0, 1.0),

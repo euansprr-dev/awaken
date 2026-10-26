@@ -54,12 +54,14 @@ public final class FarCollector {
         NeoForge.EVENT_BUS.addListener(ChunkEvent.Load.class, e -> {
             if (!(e.getLevel() instanceof ServerLevel level) || !wanted(level)) return;
             LOADED.computeIfAbsent(level, k -> new LongOpenHashSet()).add(e.getChunk().getPos().pack());
+            if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD) dev.awaken.farsight.voxel.VoxelCapture.loaded(e.getChunk().getPos());
             if (FarStore.collecting) note(level, e.getChunk().getPos());
         });
         NeoForge.EVENT_BUS.addListener(ChunkEvent.Unload.class, e -> {
             if (e.getLevel() instanceof ServerLevel level) {
                 LongOpenHashSet loaded = LOADED.get(level);
                 if (loaded != null) loaded.remove(e.getChunk().getPos().pack());
+                if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD) dev.awaken.farsight.voxel.VoxelCapture.unloaded(e.getChunk().getPos());
             }
         });
         NeoForge.EVENT_BUS.addListener(ChunkDataEvent.Save.class, e -> {
@@ -84,7 +86,7 @@ public final class FarCollector {
             wasCollecting = false;
             FarLandmarks.clear();
             FarStore.closeAll();
-            dev.awaken.farsight.voxel.VoxelCapture.reset();
+            dev.awaken.farsight.voxel.VoxelCapture.stop();
         });
     }
 

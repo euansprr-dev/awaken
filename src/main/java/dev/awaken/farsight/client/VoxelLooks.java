@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * thread uploads the table when it grows. Rebuilt with the models (a resource reload).
  */
 final class VoxelLooks implements VoxelMesher.Looks {
-    static final int CUTOUT = 1, WATER = 2, GLOW = 4, FILL = 8;
+    static final int CUTOUT = 1, WATER = 2, GLOW = 4, FILL = 8, WINDOW = 16;
     static final int MAX = 16384;
 
     /** Per look: u0, v0, u1, v1, then flags, average r, g, b (0..1). */
@@ -62,6 +62,32 @@ final class VoxelLooks implements VoxelMesher.Looks {
             byState.put(id, faces);
         }
         return faces[dir];
+    }
+
+    private final ConcurrentHashMap<Long, Integer> windows = new ConcurrentHashMap<>();
+
+    @Override
+    public int window(int id, int dir) {
+        long key = (long) id << 3 | dir;
+        Integer w = windows.get(key);
+        if (w != null) return w;
+        int look = -1;
+        try {
+            BlockState state = Block.BLOCK_STATE_REGISTRY.byId(id);
+            if (state != null) {
+                BlockStateModel model = Minecraft.getInstance().getModelManager().getBlockStateModelSet().get(state);
+                List<BlockStateModelPart> parts = new ArrayList<>();
+                model.collectParts(RandomSource.create(42L), parts);
+                Direction d = Direction.from3DDataValue(dir);
+                BakedQuad q = quad(parts, d);
+                TextureAtlasSprite sprite = q != null ? q.materialInfo().sprite() : model.particleMaterial().sprite();
+                look = look(sprite, WINDOW, 0);
+            }
+        } catch (RuntimeException e) {
+            look = -1;
+        }
+        windows.put(key, look);
+        return look;
     }
 
     @Override

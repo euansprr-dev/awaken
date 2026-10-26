@@ -41,6 +41,13 @@ shotnow fs3o_15
 wait 40
 shotnow fs3o_16
 farsight status
+# City Sight's own cost here: Far Sight's GPU time over 5 s with it, then 5 s without
+wait 100
+farsight status
+farsight part city off
+wait 100
+farsight status
+farsight part city on
 farsight debug 3
 wait 4
 shotnow fs3o_roost_debug

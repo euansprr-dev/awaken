@@ -36,6 +36,9 @@ public final class VoxelMesher {
 
         /** The tint (0xRRGGBB) of a face of state {@code id} with tint index {@code tintIndex} in this biome. */
         int tint(int id, int tintIndex, @Nullable Holder<Biome> biome);
+
+        /** A thin block (a pane, a door) closing a dark room, seen from outside: its face toward dir, drawn as a window. */
+        int window(int id, int dir);
     }
 
     public static final int LEVELS = 4, INTS = 4;
@@ -145,6 +148,7 @@ public final class VoxelMesher {
                     byte k = kinds[index(x, y, z)];
                     if (k == VoxelKinds.BOX || k == VoxelKinds.FLAT) box(x, y, z, k);
                     else if (k == VoxelKinds.WATER) waterSides(x, y, z);
+                    else if (k == VoxelKinds.SKIP) thinWalls(x, y, z);
                 }
             }
         }
@@ -161,6 +165,9 @@ public final class VoxelMesher {
         if (k == VoxelKinds.FULL || k == VoxelKinds.SOFT) {
             if (nk == VoxelKinds.FULL) return 0;
             if (k == VoxelKinds.SOFT && nk == VoxelKinds.SOFT && ids[index(nx, ny, nz)] == id) return 0;
+            // a face into a dark room (no sky, hardly a lamp) shows from afar only through its windows and doors, which
+            // close it (thinWalls): never drawn
+            if (dark(nx, ny, nz, nk)) return 0;
             look = looks.face(id, dir);
             offset = (dir & 1) == 1 ? 16 : 0;
         } else if (k == VoxelKinds.WATER) {
@@ -177,6 +184,37 @@ public final class VoxelMesher {
         if ((look >>> 16) != 0) tint = looks.tint(id, (look >>> 16) - 1, snap.biome(x, y, z)) & 0xFFFFFF;
         int sky = step(snap.skyLight(nx, ny, nz)), block = step(snap.blockLight(nx, ny, nz));
         return PRESENT | (long) offset << 52 | (long) block << 48 | (long) sky << 44 | (long) tint << 16 | (look & 0xFFFF);
+    }
+
+    /** Whether (x, y, z) is the air of a dark room: open, no sky light, at most a glimmer of lamp light. */
+    private boolean dark(int x, int y, int z, byte k) {
+        return (k == VoxelKinds.AIR || k == VoxelKinds.SKIP) && snap.skyLight(x, y, z) == 0 && snap.blockLight(x, y, z) <= 2
+                && x >= 0 && x <= 15 && z >= 0 && z <= 15 && y >= 0 && y < height;
+    }
+
+    /**
+     * Panes, doors and bars between a dark room and the light: their outward face, as a window (dark glass, a door),
+     * so a room whose inner faces aren't drawn never shows through to the sky.
+     */
+    private void thinWalls(int x, int y, int z) {
+        if (dark(x, y, z, VoxelKinds.SKIP) || ids[index(x, y, z)] == 0) return;
+        int id = ids[index(x, y, z)];
+        for (int dir = 2; dir < 6; dir++) {
+            int ox = x - DX[dir], oz = z - DZ[dir], nx = x + DX[dir], nz = z + DZ[dir];
+            if (!dark(ox, y, oz, kindAt(ox, y, oz))) continue;
+            byte nk = kindAt(nx, y, nz);
+            if (nk == VoxelKinds.FULL || dark(nx, y, nz, nk)) continue;
+            int look = looks.window(id, dir);
+            if (look < 0) continue;
+            int sky = step(snap.skyLight(nx, y, nz)), block = step(snap.blockLight(nx, y, nz));
+            int bx = x * 16, by = y * 16, bz = z * 16;
+            switch (dir) {
+                case 2 -> quad(bx, by, bz, 2, 16, 16, look & 0xFFFF, 0xFFFFFF, sky, block);
+                case 3 -> quad(bx, by, bz + 16, 3, 16, 16, look & 0xFFFF, 0xFFFFFF, sky, block);
+                case 4 -> quad(bx, by, bz, 4, 16, 16, look & 0xFFFF, 0xFFFFFF, sky, block);
+                default -> quad(bx + 16, by, bz, 5, 16, 16, look & 0xFFFF, 0xFFFFFF, sky, block);
+            }
+        }
     }
 
     private void greedy(int dir) {
