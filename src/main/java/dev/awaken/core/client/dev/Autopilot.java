@@ -60,6 +60,7 @@ import java.util.Map;
  * opt renderDistance|simulationDistance &lt;n&gt;     changes a video option for the following scenes
  * lens off|swift|cinematic|ultra                switches Awaken's light layer, for same-moment A/B shots
  * lens temporal on|off|setting                  Lens 2's clouds and light spread over frames, or every pixel every frame
+ * lookpreset performance|close_up|balanced|vista  the Look page's presets (Look, Far Sight, render distance, 4K scale, steady)
  * lookswitch swift|cinematic|ultra              picks a Look tier as a click on its card would (the open Look screen's,
  *                                                else straight through the switch)
  * pixels &lt;scale&gt; [fsr|sharp|bilinear]|config|state  Pixels' render scale and upscaler for the following scenes (not saved)
@@ -532,6 +533,11 @@ public final class Autopilot {
                 }
                 dev.awaken.core.AwakenConfig.Client.LENS.set(dev.awaken.core.AwakenConfig.Client.LensLook.valueOf(arg.trim().toUpperCase(java.util.Locale.ROOT)));
                 waitTicks = 40; // Lens re-asserts itself on the next tick, then eases in
+            }
+            case "lookpreset" -> { // performance|close_up|balanced|vista: the Look page's preset, as a click would
+                var p = dev.awaken.compat.client.LookPresets.Preset.valueOf(arg.trim().toUpperCase(java.util.Locale.ROOT));
+                Awaken.LOG.info("[autopilot] look preset {}: {}", p, dev.awaken.compat.client.LookPresets.applyFromAutopilot(p) ? "applied" : "not available here");
+                waitTicks = 40;
             }
             case "lookswitch" -> {
                 var tier = dev.awaken.compat.Look.Tier.valueOf(arg.trim().toUpperCase(java.util.Locale.ROOT));

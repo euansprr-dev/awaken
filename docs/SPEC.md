@@ -1077,6 +1077,19 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   `tools/autopilot/perf-pack.txt` at a 1440×900-point window; results and comparisons in `docs/perf/`
   (`tools/perf-report.py`). Every perf line carries the machine's load; runs that disagree by more than 5% on p50 are
   re-run.
+- The Look page (O; also Mods → AWAKEN → Config → Look), since 2026-10-26 (Euan: "options that I can easily switch
+  between ... where I can see them all at once"; `compat.client.LookPresets`):
+  - The three Look cards stay.
+  - Under them, four presets, each one click for the Look, Far Sight's reach, the render distance, the render scale on
+    a 4K screen (`renderScale4k`) and steady:
+    - PERFORMANCE: Swift, Near (4 km), 12 chunks, 0.75, steady off;
+    - CLOSE-UP: Ultra, no far terrain, 12 chunks, native, steady on;
+    - BALANCED: Cinematic, Full (16 km), 16 chunks, 0.75, steady on;
+    - VISTA: Cinematic, Full, 24 chunks, 0.75, steady on.
+  - Then every setting as a row: Look, far terrain, render distance (8-32), 4K render scale (native, 0.85, 0.75,
+    0.67), steady, Lens over frames (`lensTemporal`). A click changes a row (right click: back), saved at once.
+  - The heading names the preset the settings match, or "a custom mix".
+  - Autopilot: `lookpreset <name>`. Tour: `tools/autopilot/look-presets.txt`.
 - Looks: Swift (default; the SPEC budget above), Cinematic (p50 ≥ 60 fps, p99 ≤ 25 ms at 4K, to confirm after the
   baseline), Ultra (Iris, experimental: OpenGL only and unsupported on Apple Silicon by Iris). Chosen with the Look
   switch (below).
