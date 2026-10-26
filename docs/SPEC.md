@@ -1448,7 +1448,9 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   version reached nothing under Sodium and was dropped.
 - **Look** (`farsight_terrain.fsh`; Euan's playtest, 2026-10-25: "it feels like an extension of the world"): far ground
   is drawn in blocks at every distance. Each pixel walks its view ray through columns standing on the mesh's local
-  plane, about a pixel wide (1 block by the real chunks, then 2, 4 .. 64, dithered between widths), tops rounded to
+  plane, at least a pixel and a half wide (1 block by the real chunks, then 2, 4 .. 64; between two widths each
+  world cell of the wider picks one, anchored to the land: 2026-10-26, pixel-wide columns dithered on the screen made far
+  slopes glitter in motion, Euan's play; part "steady" off restores them for measuring), tops rounded to
   whole blocks, and shows the face it meets: the top, or a side facing x or z, shaded as the game shades faces (1, 0.8,
   0.6) under a light matched to Lens 2's on the chunks (`farLight`: a warm key where the sun reaches, Lens's cool shade
   behind ridges, faces turned from the sun shaded only as it lowers). Grass tops stand over dirt risers (the dirt
@@ -1469,6 +1471,10 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   (crown top, two camera-facing crown sides narrowing by shape, two trunk sides): broadleaf, conifer, jungle, acacia.
   One `drawIndexedIndirect` of a command per visible run on Vulkan (multi-draw indirect, public API); a draw per run on
   OpenGL 4.1, which has no multi-draw indirect. A predicted tree steps aside where the real chunks' trees are known.
+  Every tree stands on the far mesh exactly as drawn under it (the tree shader rebuilds the cell's vertices as the
+  terrain's do: real corners where known, eased into the coarser ring, split on the index buffer's diagonals), never at
+  its planting height, and none is planted inside `CityBasin.reserved` (2026-10-26, Euan's play: trees hung over the
+  basin's edge). Test `farsight_trees_basin`.
 - **Air** (`farsight_air.glsl`): aerial perspective from an exponential atmosphere at real scale (1e-4 per block at sea
   level, ×4 in rain; scale height 1500), toward the sun tinted by the sunlight; valley cloud, a patchy slab 40-86 above
   sea level lying among the mountains (a sea of it at dawn, dusk and in rain), sunlit on top, over far ground only; the

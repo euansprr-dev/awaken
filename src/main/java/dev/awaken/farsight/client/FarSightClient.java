@@ -308,7 +308,7 @@ public final class FarSightClient {
      * 2 the trees, 4 the valley cloud, 8 the bake, 16 the workers' pacing.
      */
     static int partsOff;
-    private static final String[] PARTS = {"detail", "trees", "mist", "bake", "pace"};
+    private static final String[] PARTS = {"detail", "trees", "mist", "bake", "pace", "steady"};
 
     /** Autopilot: {@code farsight on|off|status|debug <n>}. */
     public static String autopilot(String arg) {
@@ -326,7 +326,7 @@ public final class FarSightClient {
                 else partsOff &= ~(1 << i);
                 return "parts off " + partsOff;
             }
-            return "unknown part " + w[0] + " (detail|trees|mist|bake|pace)";
+            return "unknown part " + w[0] + " (detail|trees|mist|bake|pace|steady)";
         }
         switch (a) {
             case "on" -> {

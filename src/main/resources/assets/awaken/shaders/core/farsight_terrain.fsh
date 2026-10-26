@@ -167,8 +167,18 @@ void main() {
     float slope = length(g);
     float footprint = max(fwidth(vRel.x), fwidth(vRel.z)); // blocks a pixel spans here
 
-    // the columns: about a pixel wide, a power of two, dithered between widths so no ring of change shows
-    float level = clamp(log2(max(footprint * 1.3, 1.0)) + bayer4(gl_FragCoord.xy) - 0.5, 0.0, 6.0);
+    // the columns: a power of two, at least a block and a half of pixels wide, so each pixel keeps meeting the same face
+    // as the camera moves (narrower, a pixel jumps between a column's lit top and its shaded side: far slopes glitter);
+    // between two widths each world cell of the wider one picks one, anchored to the land, never a screen pattern
+    // that crawls over it. Part "steady" off: the old pixel-wide columns, screen-dithered (to measure the difference).
+    float level;
+    if ((int(FarCam.y) & 32) != 0) {
+        level = clamp(log2(max(footprint * 1.3, 1.0)) + bayer4(gl_FragCoord.xy) - 0.5, 0.0, 6.0);
+    } else {
+        float lf = clamp(log2(max(footprint * 3.0, 1.0)), 0.0, 6.0), base = floor(lf);
+        float pick = farHash(ivec2(floor(rel / exp2(base + 1.0))) * 3 + ivec2(31, 77));
+        level = min(base + (pick < lf - base ? 1.0 : 0.0), 6.0);
+    }
     float w = exp2(floor(level));
     Hit hit;
     hit.ok = false;
