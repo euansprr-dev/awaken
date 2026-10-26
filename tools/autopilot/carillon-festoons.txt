@@ -1,0 +1,64 @@
+# Carillon's lines meet their anchors (Euan: "ropes still don't connect to poles, this also happens in the city"): a pole
+# top that ends a line has its rope tied through and out to the line, the banner under it hangs on cords, and a city line
+# whose plan end stopped short of the facade runs on to it. Close-ups (Carillon at 671 -1090, street 70, in this seed with
+# Tectonic's awakened terrain):
+#   - the High Gate road's first pennant line (plan z -277, poles at x -6 and 5, row 7) and its banner
+#   - the yard's line pole (plan -16 -255, row 9)
+#   - a city bunting line (plan x -37..-31 z -187, row 21): its pole at the east end and the wall at the west end
+#   - a laundry line run on to its facade (plan x -100 z -162..-159, row 9, the north end)
+#   - the road's pole and the city line at night
+# Run: tools/tour-ci.sh tools/autopilot/carillon-festoons.txt 1200 TECTONIC=awakened PACK=perf,world,horizon
+world carillonM4b3a creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+hud off
+cmd gamemode spectator
+cmd time set 4000
+# ---- the High Gate road's pole: the top close, then the line across with its banners
+cmd tp @s 668 78.2 -1363.5 facing 665.5 77.6 -1366.5
+wait 200
+shot festoon_road_pole_top
+cmd tp @s 660 76 -1360 facing 665.5 77 -1367
+wait 40
+shot festoon_road_pole_side
+cmd tp @s 671 74 -1358 facing 671 76.5 -1366.5
+wait 40
+shot festoon_road_line
+# ---- the yard's pole
+cmd tp @s 658 80.2 -1342 facing 655.5 79.6 -1344.5
+wait 120
+shot festoon_yard_pole
+# ---- a city line at both ends: its pole (east) and the wall (west)
+cmd tp @s 643 92.2 -1274 facing 640.5 91.6 -1276.5
+wait 160
+shot festoon_city_pole_end
+cmd tp @s 636.5 92.2 -1274 facing 633.5 91.6 -1276.5
+wait 40
+shot festoon_city_wall_end
+cmd tp @s 637 89 -1270 facing 637 91 -1276.5
+wait 40
+shot festoon_city_line
+# ---- a laundry line run on to its facade (north end)
+cmd tp @s 575 80.2 -1251.5 facing 571.5 79.5 -1254
+wait 160
+shot festoon_runon_end
+# ---- at night
+cmd time set 18000
+cmd tp @s 668 78.2 -1363.5 facing 665.5 77.6 -1366.5
+wait 120
+shot festoon_night_road_pole
+cmd tp @s 637 89 -1270 facing 637 91 -1276.5
+wait 120
+shot festoon_night_city_line
+quit

@@ -2089,7 +2089,12 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   ditch (water a block down) at 6.5 and a hedge or spruce fence at 7.5 from 26 out, a field gate over a culvert every 48
   (by turns either side). Lamps and pennant lines by turns every 14 from 24: a pennant line is two line poles at 5.5
   with a bunting line across the road at row 7 and a district banner hung from it by each pole (the yard's two lines
-  replace its masts; the floating flagpole arms are gone). Milestones every 64 from 40 on the right-hand verge. Fields
+  replace its masts; the floating flagpole arms are gone). Every line ends at its anchor (Euan: "ropes still don't
+  connect to poles"): a line pole's top that ends a line (`rope=` the way the line leaves) has the line's rope tied
+  through its far ring and out to the line at a sag-0 rope's height, its rings turned along the line; the cell beside
+  a pole hangs at sag 0; a banner under a line hangs on two cords from it (`mount=line`); and a city line whose plan
+  end stops short of the facade runs on as bare rope across up to 3 open cells to the building (GameTests
+  `city_commons_poles`, `city_lines_anchored`: every end meets a pole facing it or a wall). Milestones every 64 from 40 on the right-hand verge. Fields
   keep the lattice (bands 21 out from 252, cells about 26 round): boundaries are hedges, farm tracks or grass balks by
   pair; fields are arable strips 5 wide (four rows of one crop at its own growth, then an irrigation channel or a balk;
   wheat, carrots, potatoes, beetroot, pumpkins, ploughed or fallow; a scarecrow on the seed of half), reaped (stooks

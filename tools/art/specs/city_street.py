@@ -1617,6 +1617,13 @@ def banner_model(design, part, mount):
         els.append(E((2, 0 if part != "top" else 0, 15.5), (14, y1, 15.5), {"N": ("#cloth", [2, v0, 14, 16])}))
     else:
         els.append(E((8, 0, 2), (8, y1, 14), {"E": ("#cloth", [2, v0, 14, 16]), "W": ("#cloth", [2, v0, 14, 16])}))
+    if mount == "line":
+        # hung from a pennant line: the pole's rod, and a cord from each end of it up to the rope (a sag-0 rope's
+        # underside, y 9 of the cell above); the banner no longer hangs under the line on its own
+        t["rope"] = b("hang_rope")
+        if part == "top":
+            for z0 in (1.75, 13.75):
+                els.append(E((7.75, 16.5, z0), (8.25, 25.5, z0 + 0.5), {f_: ("#rope", [0, 0, 1, 2]) for f_ in "NSEW"}))
     if part == "top":
         if mount == "wall":
             els.append(E((1, 14, 14), (15, 16, 16), {"N": ("#rod", [0, 0, 14, 2]), "U": ("#rod", [0, 2, 14, 4]), "D": ("#rod", [0, 2, 14, 4]),
@@ -1642,7 +1649,7 @@ def g_banners(w):
         for pi, part in enumerate(("top", "middle", "bottom")):
             w.animated(f"banner_{design}_{part}", [fr[pi] for fr in frames], 4)
         for part in ("top", "middle", "bottom"):
-            for mount in ("wall", "pole"):
+            for mount in ("wall", "pole", "line"):
                 name = f"banner_cloth_{design}_{part}_{mount}"
                 w.model(name, finish(w, banner_model(design, part, mount)))
                 for facing in FACINGS:
@@ -1701,7 +1708,10 @@ def g_poles(w):
     m.box((6.5, 10.5, -12), (9.5, 13.5, -9), {"*": M_brass}, faces="NESWUD")
     w.model("flagpole", finish(w, m.build(ao=False)))
     w.state("flagpole", {f"facing={f}": rot_variant("flagpole", f) for f in FACINGS})
-    # line pole: a round-ish 4x4 timber post, with an iron cap and two hook rings when it ends the run
+    # line pole: a round-ish 4x4 timber post, with an iron cap and two hook rings when it ends the run. A top that ends a
+    # line (rope=<the way the line leaves>) has the line's rope tied through its far ring and out to the cell's edge at
+    # the height and thickness of a sag-0 rope, so the line meets the pole (Euan: "ropes still don't connect to poles":
+    # the rope stopped at its cell's edge, short of the post, the rings turned across a line along z)
     for top in (False, True):
         at = w.atlas("line_pole")
         m = MB(at, "line_pole_%s" % top, ao=False)
@@ -1717,8 +1727,21 @@ def g_poles(w):
             m.box((6.5, 13.5, 6.5), (9.5, 14.5, 9.5), iron, faces="NESWU")
             for (x0, x1) in ((10.5, 13), (3, 5.5)):
                 m.box((x0, 9.5, 7.5), (x1, 12.5, 8.5), {"N": M_ring, "S": M_ring, "*": M_iron(FORGE, 3)}, faces="NSUD")
-        w.model("line_pole_top" if top else "line_pole", finish(w, m.build(ao=False)))
-    w.state("line_pole", {"top=false": {"model": b("line_pole")}, "top=true": {"model": b("line_pole_top")}})
+        built = m.build(ao=False)
+        w.model("line_pole_top" if top else "line_pole", finish(w, built))
+        if top:  # east: from the west ring, through the post, to the east edge (hang_models' sag-0 rope: y 9-10, z 7.5-8.5)
+            tied = json.loads(json.dumps(built))
+            tied["textures"]["rope"] = b("hang_rope")
+            tied["elements"].append(E((3, 9, 7.5), (16, 10, 8.5), {"U": ("#rope", [0, 0, 13, 1]), "N": ("#rope", [0, 1, 13, 2]),
+                                                                    "S": ("#rope", [0, 1, 13, 2]), "D": ("#rope", [0, 2, 13, 3]),
+                                                                    "W": ("#rope", [1, 3, 2, 4])}))
+            w.model("line_pole_top_rope", finish(w, tied))
+    states = {}
+    for r in ROPES:
+        states[f"rope={r},top=false"] = {"model": b("line_pole")}
+        states[f"rope={r},top=true"] = {"model": b("line_pole_top")} if r == "none" else \
+            {"model": b("line_pole_top_rope"), **({"y": ROPE_Y[r]} if ROPE_Y[r] else {})}
+    w.state("line_pole", states)
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -3305,6 +3328,9 @@ DESIGNS = ["bellwatch", "quay", "market", "terrace", "works", "garden", "wallrin
 GOODS = ["bread", "fish", "produce", "cloth", "pottery", "candles", "flowers", "spice", "tools", "cheese"]
 SHELF_GOODS = ["jars", "cloth", "bread", "pots", "books", "tools"]
 BLOOMS = ["red", "yellow", "blue", "pink", "white", "herbs", "shrub"]
+# a line pole's rope: the way the line leaves its top (none: a plain cap); the model's rope runs east, turned by y
+ROPES = ["none", "north", "east", "south", "west"]
+ROPE_Y = {"none": 0, "east": 0, "south": 90, "west": 180, "north": 270}
 # the Java properties the builder writes (the brief's table); the blockstates must cover exactly their product
 PROPS = {
     "awning": {"facing": FACINGS, "colour": AWN_COLOURS, "shape": AWN_SHAPES},
@@ -3312,9 +3338,9 @@ PROPS = {
     "signboard": {"facing": FACINGS, "trade": TRADES, "mount": ["hanging", "flat"]},
     "hang_line": {"axis": ["x", "z"], "hang": ["rope", "laundry", "bunting", "lanterns"], "set": ["0", "1", "2", "3"],
                   "sag": ["0", "1", "2"]},
-    "banner_cloth": {"facing": FACINGS, "design": DESIGNS, "part": ["top", "middle", "bottom"], "mount": ["wall", "pole"]},
+    "banner_cloth": {"facing": FACINGS, "design": DESIGNS, "part": ["top", "middle", "bottom"], "mount": ["wall", "pole", "line"]},
     "flagpole": {"facing": FACINGS},
-    "line_pole": {"top": ["false", "true"]},
+    "line_pole": {"top": ["false", "true"], "rope": ROPES},
     "crate": {"content": ["lid", "apples", "cabbages", "fish", "straw", "bottles"]},
     "sack": {"count": ["1", "2", "3"], "fill": ["grain", "flour", "wool"]},
     "wares": {"good": GOODS},

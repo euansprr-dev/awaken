@@ -1,10 +1,37 @@
 {
   "variants": {
-    "top=false": {
+    "rope=none,top=false": {
       "model": "awaken:block/line_pole"
     },
-    "top=true": {
+    "rope=none,top=true": {
       "model": "awaken:block/line_pole_top"
+    },
+    "rope=north,top=false": {
+      "model": "awaken:block/line_pole"
+    },
+    "rope=north,top=true": {
+      "model": "awaken:block/line_pole_top_rope",
+      "y": 270
+    },
+    "rope=east,top=false": {
+      "model": "awaken:block/line_pole"
+    },
+    "rope=east,top=true": {
+      "model": "awaken:block/line_pole_top_rope"
+    },
+    "rope=south,top=false": {
+      "model": "awaken:block/line_pole"
+    },
+    "rope=south,top=true": {
+      "model": "awaken:block/line_pole_top_rope",
+      "y": 90
+    },
+    "rope=west,top=false": {
+      "model": "awaken:block/line_pole"
+    },
+    "rope=west,top=true": {
+      "model": "awaken:block/line_pole_top_rope",
+      "y": 180
     }
   }
 }
