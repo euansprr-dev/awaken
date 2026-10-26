@@ -33,7 +33,7 @@ public final class FarWorkers {
         boolean wanted(int ring, int px, int pz, int epoch);
     }
 
-    private record Job(ServerLevel level, int ring, int px, int pz, int epoch, float priority, Wanted still, boolean generated) {}
+    private record Job(ServerLevel level, int ring, int px, int pz, int epoch, float priority, Wanted still, boolean generated, Runnable task) {}
 
     private final PriorityBlockingQueue<Job> queue = new PriorityBlockingQueue<>(512, Comparator.comparingDouble(Job::priority));
     private final ConcurrentLinkedQueue<Patch> done = new ConcurrentLinkedQueue<>(), free = new ConcurrentLinkedQueue<>();
@@ -84,13 +84,19 @@ public final class FarWorkers {
     /** Asks for patch (px, pz) of ring {@code ring}; lower {@code priority} first. */
     public void submit(ServerLevel level, int ring, int px, int pz, int epoch, float priority, Wanted still) {
         if (!started) start();
-        queue.add(new Job(level, ring, px, pz, epoch, priority, still, false));
+        queue.add(new Job(level, ring, px, pz, epoch, priority, still, false, null));
+    }
+
+    /** Runs a task on the workers by priority, among the patches (City Sight's meshing). */
+    public void submitTask(float priority, Runnable task) {
+        if (!started) start();
+        queue.add(new Job(null, 0, 0, 0, 0, priority, null, false, task));
     }
 
     /** Asks for the generated layer of patch (px, pz): what the real chunks seen there show (a {@link FarStore} read). */
     public void submitGenerated(ServerLevel level, int ring, int px, int pz, int epoch, float priority, Wanted still) {
         if (!started) start();
-        queue.add(new Job(level, ring, px, pz, epoch, priority, still, true));
+        queue.add(new Job(level, ring, px, pz, epoch, priority, still, true, null));
     }
 
     /** Drops every queued job (a new world, a new dimension, far view turned off). */
@@ -144,6 +150,14 @@ public final class FarWorkers {
                 // idle: let go of the level so a closed world can be collected
                 bound = null;
                 columns = null;
+                continue;
+            }
+            if (job.task() != null) {
+                try {
+                    job.task().run();
+                } catch (RuntimeException e) {
+                    Awaken.LOG.warn("[farsight] task failed: {}", e.toString());
+                }
                 continue;
             }
             if (!job.still().wanted(job.ring(), job.px(), job.pz(), job.epoch())) continue;

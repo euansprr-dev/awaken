@@ -50,6 +50,42 @@ public final class SignalPayloads {
         @Override public Type<Tip> type() { return TYPE; }
     }
 
+    /**
+     * Server → client: the current task, top right (SPEC §27.10): a title and its steps as a checklist. A row's text may
+     * hold "{key}", drawn as the key cap of {@code key} (a key mapping's name); {@code need} above 1 shows "have/need";
+     * {@code at} (with {@code marked}) is a place nearby to do it. An empty title clears the panel.
+     */
+    public record TaskRow(String text, String key, boolean done, int have, int need, boolean marked, net.minecraft.core.BlockPos at) {
+        public static final StreamCodec<ByteBuf, TaskRow> STREAM_CODEC = new StreamCodec<>() {
+            @Override
+            public TaskRow decode(ByteBuf b) {
+                return new TaskRow(ByteBufCodecs.STRING_UTF8.decode(b), ByteBufCodecs.STRING_UTF8.decode(b), b.readBoolean(),
+                        ByteBufCodecs.VAR_INT.decode(b), ByteBufCodecs.VAR_INT.decode(b), b.readBoolean(), net.minecraft.core.BlockPos.STREAM_CODEC.decode(b));
+            }
+
+            @Override
+            public void encode(ByteBuf b, TaskRow r) {
+                ByteBufCodecs.STRING_UTF8.encode(b, r.text());
+                ByteBufCodecs.STRING_UTF8.encode(b, r.key());
+                b.writeBoolean(r.done());
+                ByteBufCodecs.VAR_INT.encode(b, r.have());
+                ByteBufCodecs.VAR_INT.encode(b, r.need());
+                b.writeBoolean(r.marked());
+                net.minecraft.core.BlockPos.STREAM_CODEC.encode(b, r.at());
+            }
+        };
+    }
+
+    public record Task(String id, String title, java.util.List<TaskRow> rows) implements CustomPacketPayload {
+        public static final Type<Task> TYPE = new Type<>(Awaken.id("signal_task"));
+        public static final StreamCodec<ByteBuf, Task> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.STRING_UTF8, Task::id,
+                ByteBufCodecs.STRING_UTF8, Task::title,
+                TaskRow.STREAM_CODEC.apply(ByteBufCodecs.list(16)), Task::rows,
+                Task::new);
+        @Override public Type<Task> type() { return TYPE; }
+    }
+
     /** Client → server: the player answered a window's action (accepted = Y, false = N). */
     public record Answer(String action, boolean accepted) implements CustomPacketPayload {
         public static final Type<Answer> TYPE = new Type<>(Awaken.id("signal_answer"));

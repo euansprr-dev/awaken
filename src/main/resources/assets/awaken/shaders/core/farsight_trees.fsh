@@ -11,6 +11,7 @@
 
 uniform sampler2D LightSampler;
 uniform sampler2D ChunkSampler;
+uniform sampler2D VoxelSampler;     // where City Sight draws the real blocks (256x256 world chunks, toroidal)
 
 layout(location = 0) in vec3 vRel;
 layout(location = 1) in vec3 vColor;
@@ -22,6 +23,11 @@ layout(location = 0) out vec4 fragColor;
 
 void main() {
     vec2 rel = vRel.xz + FarCam.xz;
+    // City Sight draws the real blocks there: the far land steps aside (its coverage holds for 2 km)
+    if ((int(FarCam.y + 0.5) & 256) == 0 && length(vRel.xz) < 2000.0) {
+        ivec2 world = (FarCamInt.xz >> 4) + ivec2(floor((vRel.xz + FarCam.xz) / 16.0));
+        if (texelFetch(VoxelSampler, world & 255, 0).r > 0.5) discard;
+    }
     // hidden where the real chunks are drawn: loaded, in a section Sodium draws, as the terrain
     if (farRealSection(vRel)) {
         ivec2 chunk = (FarCamInt.xz >> 4) + ivec2(floor(rel / 16.0));

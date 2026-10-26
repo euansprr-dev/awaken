@@ -40,6 +40,8 @@ public final class FarCollector {
     private FarCollector() {}
 
     static final long BUDGET_NANOS = 1_500_000L;
+    /** City Sight's share of the tick: snapshots of its chunks (VoxelCapture). */
+    static final long VOXEL_BUDGET_NANOS = 1_500_000L;
 
     private static final Map<ServerLevel, LongLinkedOpenHashSet> PENDING = new HashMap<>();
     /** Every chunk loaded in each far-terrain level, whether or not anything collects yet. Server thread. */
@@ -52,12 +54,14 @@ public final class FarCollector {
         NeoForge.EVENT_BUS.addListener(ChunkEvent.Load.class, e -> {
             if (!(e.getLevel() instanceof ServerLevel level) || !wanted(level)) return;
             LOADED.computeIfAbsent(level, k -> new LongOpenHashSet()).add(e.getChunk().getPos().pack());
+            if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD) dev.awaken.farsight.voxel.VoxelCapture.loaded(e.getChunk().getPos());
             if (FarStore.collecting) note(level, e.getChunk().getPos());
         });
         NeoForge.EVENT_BUS.addListener(ChunkEvent.Unload.class, e -> {
             if (e.getLevel() instanceof ServerLevel level) {
                 LongOpenHashSet loaded = LOADED.get(level);
                 if (loaded != null) loaded.remove(e.getChunk().getPos().pack());
+                if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD) dev.awaken.farsight.voxel.VoxelCapture.unloaded(e.getChunk().getPos());
             }
         });
         NeoForge.EVENT_BUS.addListener(ChunkDataEvent.Save.class, e -> {
@@ -66,8 +70,17 @@ public final class FarCollector {
             }
         });
         NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, e -> tick(e.getServer()));
+        // City Sight takes a chunk again after its blocks change
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.level.BlockEvent.NeighborNotifyEvent.class, e -> {
+            if (e.getLevel() instanceof ServerLevel level && level.dimension() == net.minecraft.world.level.Level.OVERWORLD) {
+                dev.awaken.farsight.voxel.VoxelCapture.blockChanged(level, e.getPos().getX(), e.getPos().getZ());
+            }
+        });
         NeoForge.EVENT_BUS.addListener(LevelEvent.Save.class, e -> {
-            if (e.getLevel() instanceof ServerLevel level && level.dimension() == net.minecraft.world.level.Level.OVERWORLD) FarStore.flushAll(false);
+            if (e.getLevel() instanceof ServerLevel level && level.dimension() == net.minecraft.world.level.Level.OVERWORLD) {
+                FarStore.flushAll(false);
+                dev.awaken.farsight.voxel.VoxelDisk.flush();
+            }
         });
         NeoForge.EVENT_BUS.addListener(ServerStoppingEvent.class, e -> {
             PENDING.clear();
@@ -76,6 +89,8 @@ public final class FarCollector {
             wasCollecting = false;
             FarLandmarks.clear();
             FarStore.closeAll();
+            dev.awaken.farsight.voxel.VoxelCapture.stop();
+            dev.awaken.farsight.voxel.VoxelDisk.close();
         });
     }
 
@@ -89,6 +104,9 @@ public final class FarCollector {
     }
 
     private static void tick(MinecraftServer server) {
+        // City Sight's snapshots first, within their own budget: the opening shows the city
+        ServerLevel overworld = server.overworld();
+        if (wanted(overworld)) dev.awaken.farsight.voxel.VoxelCapture.tick(overworld, System.nanoTime() + VOXEL_BUDGET_NANOS);
         boolean on = FarStore.collecting;
         if (on && !wasCollecting) {
             // just switched on: every chunk already loaded counts too (players' views, the city's pregenerated hold),

@@ -207,8 +207,20 @@ public final class FarStore {
         void add(FarChunk c, int i) {
             int cell = c.cell()[i];
             if (cell == 0) return;
-            top += FarChunk.top(cell);
             int rgb = c.colour()[i];
+            if (FarCity.underCitySight && FarCity.built(rgb)) {
+                // City Sight draws the buildings: here only the ground, a block under the street
+                var l = dev.awaken.city.City.layout();
+                if (l != null) {
+                    top += l.groundY(c.x() * 16 + (i % FarChunk.SIDE) * 2, c.z() * 16 + (i / FarChunk.SIDE) * 2);
+                    r += rgb >> 16 & 255;
+                    g += rgb >> 8 & 255;
+                    b += rgb & 255;
+                    n++;
+                    return;
+                }
+            }
+            top += FarChunk.top(cell);
             if (FarCity.built(rgb) && (built++ == 0 || FarChunk.top(cell) > builtTop)) {
                 builtTop = FarChunk.top(cell);
                 builtRgb = rgb & 0xFFFFFF;

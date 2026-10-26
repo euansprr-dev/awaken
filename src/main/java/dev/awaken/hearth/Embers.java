@@ -57,9 +57,9 @@ public final class Embers {
 
     /** The errand that ends at the camp: its ilse step hands the first Ember over itself (chain ids are full ids). */
     static final String CHAIN = "awaken:the_last_delivery";
-    static final String ILSE_LINE = "Ilse: First night out? Take a coal from our fire. Carry it till you find your ground, then set it down. It'll know.";
-    static final String ILSE_AGAIN = "Ilse: Lost your coal? Take another. The fire doesn't mind.";
-    static final String HETTIE_LINE = "Hettie: Ilse's fire is good for more than stew. Here, take a coal before it gets dark.";
+    static final String ILSE_LINE = "Ilse: Here, take an ember from our fire. Carry it with you, and when you find a spot you'd like to live, place it there. That'll be your home.";
+    static final String ILSE_AGAIN = "Ilse: Lost your ember? That's fine, take another one.";
+    static final String HETTIE_LINE = "Hettie: Take an ember from the fire before it gets dark. Place it wherever you want your home to be.";
 
     /** True while a fire is being raised to the Anchor (its removal is not a Hearth ending). */
     private static boolean raising;
@@ -132,7 +132,7 @@ public final class Embers {
         Later.run(sp.level().getServer(), 60, () -> {
             if (sp.isRemoved() || !give(sp)) return;
             Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Hearth Ember"))
-                    .body(Component.literal("A coal to carry. Find your ground and set it down: it'll know.")).ttl(20 * 8).build());
+                    .body(Component.literal("Carry it with you, and place it wherever you want your home to be.")).ttl(20 * 8).build());
         });
     }
 
@@ -158,8 +158,8 @@ public final class Embers {
         }
         if (!extra) return;
         stack.shrink(1);
-        Signal.toast(sp, Component.literal(HearthService.hearthOf(sp).isPresent() ? "The spare coal goes out: your fire already burns at home."
-                : "Two coals burn as one. You only need the one."));
+        Signal.toast(sp, Component.literal(HearthService.hearthOf(sp).isPresent() ? "You already have a home fire, so the spare ember went out."
+                : "You only need one ember, so the spare one went out."));
     }
 
     // ---- kept through death -------------------------------------------------------------------------------------------
@@ -202,18 +202,18 @@ public final class Embers {
     /** Why the coal won't take here, in plain words, or empty when it will. Public for the tests. */
     public static Optional<String> refusal(ServerPlayer sp, ServerLevel level, BlockPos ground, BlockPos at) {
         if (!HearthService.enabled()) return Optional.of("The Hearth is turned off on this world.");
-        if (level.dimension() != Level.OVERWORLD) return Optional.of("The coal only takes in the waking world.");
+        if (level.dimension() != Level.OVERWORLD) return Optional.of("You can only place your ember in the Overworld.");
         HearthData d = HearthService.data(level.getServer());
-        if (d.of(sp.getUUID()).isPresent()) return Optional.of("Your fire already burns at home.");
+        if (d.of(sp.getUUID()).isPresent()) return Optional.of("You already have a home fire.");
         BlockState g = level.getBlockState(ground), here = level.getBlockState(at);
         if (!g.isFaceSturdy(level, ground, Direction.UP) || !here.canBeReplaced() || !level.getFluidState(at).isEmpty()) {
-            return Optional.of("Set it on firm, open ground.");
+            return Optional.of("Place it on solid, open ground.");
         }
-        if (CityBasin.reserved(at.getX(), at.getZ())) return Optional.of("The city keeps its own fires. Carry it out past the walls.");
-        if (dev.awaken.village.api.Villages.reserved(level, at, 8)) return Optional.of("People live here. Carry it out past the last fence.");
-        if (WardHooks.at(level, at).isPresent()) return Optional.of("Old Precursor stone wards this ground. The coal won't take here.");
+        if (CityBasin.reserved(at.getX(), at.getZ())) return Optional.of("You can't make your home inside the city. Take it outside the walls.");
+        if (dev.awaken.village.api.Villages.reserved(level, at, 8)) return Optional.of("You can't make your home inside a village. Take it past the last house.");
+        if (WardHooks.at(level, at).isPresent()) return Optional.of("Old Precursor stone protects this ground, so your ember won't work here.");
         for (GateHooks.GateView g2 : GateHooks.near(level, at, GATE_CLEARANCE)) {
-            if (!"RELEASED".equals(g2.state())) return Optional.of("A gate is too close. The ground is restless within " + GATE_CLEARANCE + " blocks of one.");
+            if (!"RELEASED".equals(g2.state())) return Optional.of("There's a gate too close. Your home has to be at least " + GATE_CLEARANCE + " blocks from a gate.");
         }
         Optional<HearthRecord> other = d.containing(at, HearthService.OVERWORLD);
         if (other.isPresent()) return Optional.of("This is " + other.get().ownerName + "'s ground. Find your own.");
@@ -252,7 +252,7 @@ public final class Embers {
                 AwakenNet.send(p, new HomeNet.NameCard(h.name));
             } else {
                 Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Your ground"))
-                        .body(Component.literal(h.name + " · your hearth. Rest heals here, you wake here, and the land is calm.")).ttl(20 * 8).build());
+                        .body(Component.literal(h.name + " is your home now. You heal faster resting here, you wake up here if you die, and the land around it stays calm.")).ttl(20 * 8).build());
             }
         });
         return r;
@@ -355,7 +355,7 @@ public final class Embers {
         level.removeBlock(at, false);
         sp.getInventory().placeItemBackInInventory(new ItemStack(HearthContent.EMBER_ITEM.get()), net.minecraft.util.Prediction.SERVER_ONLY);
         moment(level, at, h.radius(), true);
-        Signal.toast(sp, Component.literal("You lift the coal. It'll take wherever you set it down."));
+        Signal.toast(sp, Component.literal("You picked your ember back up. Place it wherever you want your home."));
         DirectorLog.log(sp, "hearth", "ember lifted at " + at.toShortString());
         HearthViews.refresh(sp);
     }
@@ -371,7 +371,7 @@ public final class Embers {
         Optional<ServerPlayer> owner = HearthService.owner(level.getServer(), h);
         if (owner.isPresent() && owner.get().level() == level && owner.get().blockPosition().closerThan(pos, 16)) {
             owner.get().getInventory().placeItemBackInInventory(coal, net.minecraft.util.Prediction.SERVER_ONLY);
-            Signal.toast(owner.get(), Component.literal("The coal comes back to you. Set it down wherever home should be."));
+            Signal.toast(owner.get(), Component.literal("Your ember came back to you. Place it wherever you want your home."));
         } else {
             level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 0.3, pos.getZ() + 0.5, coal));
         }
