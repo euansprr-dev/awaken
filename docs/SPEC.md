@@ -1970,7 +1970,8 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   doorways; he walks on when you're within 4.5 of him, waits and nudges past 9, says "Habit, I know" once if you run
   ahead) → READ (as before) → SIGN (at the desk, the counter's free south end; use signs) → BAND (Bram holds it out over
   the counter; use takes it) → WEAR (the band is in your hands, the Holo dark until you put it on the wrist slot) → BOOT
-  (the boot on the wrist; the inventory closes itself 0.7 s after it goes on) → BRIEF (his three lines) → OPEN ("Go on,
+  (the boot on the wrist; the inventory closes itself 0.7 s after it goes on) → BRIEF (his three lines, then the camp: "The bells hold the city. Hunters hold the wilds. Ilse at the camp
+  keeps a fire for new licences.", whose Ember founds a Hearth, §28) → OPEN ("Go on,
   open it": the K prompt and `TipHooks` tip `awaken:holo/open` show only now) → STATUS → ATLAS → POWER → DIRECTIVE →
   YOURS. Waiting steps nudge every 30 s (at most three); without a client every step moves on by itself.
   - Bram is staged through `CitizenHooks.stage(level, "bram", at, yaw, act, prop)` (citizens role STAGED; lapses if not
