@@ -137,6 +137,10 @@ const int AWK_MODE_WATER = 2;
 const int AWK_MODE_WALL_X = 3;
 const int AWK_MODE_WALL_Z = 4;
 const int AWK_FLOAT_CODE = 40;
+// Plants sway out to AWK_PLANT_FAR blocks from the camera, fading from AWK_PLANT_FADE (a few pixels of sway there, and
+// far vertices are most of a meadow's: cross models have no faces to cull, so every plant quad is drawn)
+const float AWK_PLANT_FADE = 72.0;
+const float AWK_PLANT_FAR = 112.0;
 
 // The gust passing a place: the profile along the wind through the camera, 4 blocks a sample (as for the leaves).
 float _awk_gust_at(ivec2 base, vec3 cam, vec2 dir, vec2 xz) {
@@ -145,23 +149,26 @@ float _awk_gust_at(ivec2 base, vec3 cam, vec2 dir, vec2 xz) {
     return mix(_awk_gust_sample(base, i0), _awk_gust_sample(base, min(i0 + 1, 63)), gi - float(i0));
 }
 
-// Offset for one plant vertex; tint comes back above 1 on grass tips while a gust front bends them (the sheen that
-// shows a front rolling across a meadow).
-vec3 _awk_plant_offset(vec3 regionPos, int code, out float tint) {
+// Offset for one plant vertex (rel: the vertex relative to the camera); tint comes back above 1 on grass tips while a
+// gust front bends them (the sheen that shows a front rolling across a meadow).
+vec3 _awk_plant_offset(vec3 regionPos, vec3 rel, int code, out float tint) {
     tint = 1.0;
+    float dist2 = dot(rel, rel);
+    if (dist2 > AWK_PLANT_FAR * AWK_PLANT_FAR) return vec3(0.0); // no texel read for far plants
+    float near = 1.0 - smoothstep(AWK_PLANT_FADE, AWK_PLANT_FAR, sqrt(dist2));
     ivec2 base = textureSize(u_BlockTex, 0) - ivec2(AWK_TEXELS, 1);
     if (_awk_u32(base) != AWK_SIGNATURE) return vec3(0.0);
     float t = _awk_f32(base + ivec2(1, 0));
     vec3 cam = vec3(_awk_f32(base + ivec2(2, 0)), _awk_f32(base + ivec2(3, 0)), _awk_f32(base + ivec2(4, 0)));
     vec4 wind = texelFetch(u_BlockTex, base + ivec2(5, 0), 0);   // direction x, z (0..1 for -1..1), steady, leaf amplitude
-    vec4 plant = texelFetch(u_BlockTex, base + ivec2(22, 0), 0); // air and water amplitude, sheen (x 0.5), push (x 1 block)
+    vec4 plant = texelFetch(u_BlockTex, base + ivec2(22, 0), 0); // air and water amplitude, sheen (x 0.5), weather wind here
     vec3 origin = round((u_RegionOffset + cam) / AWK_REGION) * AWK_REGION;
     vec3 wp = origin + regionPos; // x, z modulo 4096; y is the true height
 
     if (code == AWK_FLOAT_CODE) {
         // a pad rides the ripples: a small bob, out of step across the pad so it rocks a little, more in a wind
         float bob = sin(t * AWK_TAU_P * 717.0 + dot(wp.xz, vec2(1.3, 0.9))) + 0.4 * sin(t * AWK_TAU_P * 1311.0 + dot(wp.xz, vec2(-0.7, 1.1)));
-        return vec3(0.0, bob * (0.006 + 0.01 * wind.z), 0.0);
+        return vec3(0.0, bob * (0.006 + 0.01 * wind.z) * near, 0.0);
     }
 
     int mode = code >> 3;
@@ -178,13 +185,13 @@ vec3 _awk_plant_offset(vec3 regionPos, int code, out float tint) {
         float roll = sin(t * AWK_TAU_P * 717.0 + 1.6 * ph + 1.3);
         off.xz = (axis * (0.8 * surge + 0.2 * roll) + vec2(-axis.y, axis.x) * (0.3 * roll)) * (plant.y * 0.5 * weight);
         off.y = -0.5 * dot(off.xz, off.xz) / max(weight, 0.5);
-        return off;
+        return off * near;
     }
 
     vec2 dir = wind.xy * 2.0 - 1.0;
     dir *= inversesqrt(max(dot(dir, dir), 1e-4));
     // deep underground (and in a world without weather) the wind gives way to a faint draught
-    float expo = smoothstep(30.0, 50.0, wp.y) * texelFetch(u_BlockTex, base + ivec2(26, 0), 0).x;
+    float expo = smoothstep(30.0, 50.0, wp.y) * plant.w;
     float gust = _awk_gust_at(base, cam, dir, wp.xz) * expo;
     float s = mix(0.12, min(1.0, wind.z * (0.6 + 0.8 * gust) + 0.25 * gust), expo); // Wind.strength
 
@@ -201,26 +208,30 @@ vec3 _awk_plant_offset(vec3 regionPos, int code, out float tint) {
     off.xz = (dir * (lean + swing * sway) + side * (0.4 * swing * crossSway)) * (plant.x * 0.5 * weight);
 
     if (mode == AWK_MODE_ROOTED) {
-        // parted by the player's feet: tips within about a block lean away and down
-        vec3 feet = vec3(_awk_f32(base + ivec2(23, 0)), _awk_f32(base + ivec2(24, 0)), _awk_f32(base + ivec2(25, 0)));
-        vec3 d = wp - feet;
-        d.xz -= round(d.xz / 4096.0) * 4096.0;
-        float r = length(d.xz);
-        if (r < 1.3 && d.y > -0.5 && d.y < 2.6) {
-            float k = 1.0 - r / 1.3;
-            k *= k;
-            float w = min(weight, 1.0);
-            off.xz += d.xz / max(r, 0.05) * (k * plant.w * w);
-            off.y -= k * plant.w * 0.35 * w;
+        // parted by the player's feet: tips within about a block lean away and down (the feet are read only near the
+        // camera, which is never far from them)
+        if (dist2 < 100.0) {
+            vec3 feet = vec3(_awk_f32(base + ivec2(23, 0)), _awk_f32(base + ivec2(24, 0)), _awk_f32(base + ivec2(25, 0)));
+            vec3 d = wp - feet;
+            d.xz -= round(d.xz / 4096.0) * 4096.0;
+            float r = length(d.xz);
+            if (r < 1.3 && d.y > -0.5 && d.y < 2.6) {
+                float push = texelFetch(u_BlockTex, base + ivec2(26, 0), 0).x;
+                float k = 1.0 - r / 1.3;
+                k *= k;
+                float w = min(weight, 1.0);
+                off.xz += d.xz / max(r, 0.05) * (k * push * w);
+                off.y -= k * push * 0.35 * w;
+            }
         }
-        tint = 1.0 + plant.z * 0.5 * gust * min(weight, 1.0);
+        tint = 1.0 + plant.z * 0.5 * gust * min(weight, 1.0) * near;
     }
     // a bending stem's tip dips as it leans; a swinging strand's rises
     off.y += (hanging ? 0.5 : -0.5) * dot(off.xz, off.xz) / max(weight, 0.5);
     // a vine stays flat on its wall
     if (mode == AWK_MODE_WALL_X) off.x = 0.0;
     if (mode == AWK_MODE_WALL_Z) off.z = 0.0;
-    return off;
+    return off * near;
 }
 // ----------------------------------------------------------------------------------------------------------------
 
@@ -240,7 +251,7 @@ void main() {
             position += _awk_leaf_offset(regionPos);
         } else {
             float tint;
-            position += _awk_plant_offset(regionPos, 253 - int(awkA + 0.5), tint);
+            position += _awk_plant_offset(regionPos, position, 253 - int(awkA + 0.5), tint);
             vertColor.rgb = min(vertColor.rgb * tint, vec3(1.0));
         }
         vertColor.a = 1.0;

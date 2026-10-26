@@ -28,14 +28,15 @@ import java.nio.ByteOrder;
  * texel 5      wind direction x, z (-1..1 as 0..1), steady strength, amplitude (x 0.25 blocks)
  * texels 6..21 the gust along the wind through the camera: 64 samples 4 blocks apart, 4 to a texel, sample i at
  *              (i - 31.5) x 4 blocks downwind of the camera
- * texel 22     plants: amplitude in air and under water (x 0.5 blocks), sheen (x 0.5), push by the feet (x 1 block)
+ * texel 22     plants: amplitude in air and under water (x 0.5 blocks), sheen (x 0.5), weather wind here (1, or 0 in
+ *              a world without sky light: plants feel only a draught)
  * texels 23..25 the player's feet x, y, z (x and z modulo 4096; y far below the world when there is no one to push)
- * texel 26     weather wind here (1, or 0 in a world without sky light: plants feel only a draught), 3 spare bytes
+ * texel 26     how far the feet push tips aside (x 1 block), 3 spare bytes
  * </pre>
  * The shader rounds (region offset + camera) to whole render regions to find each region's world position modulo 4096,
  * and reads the gust passing each leaf and plant from the profile, so the canopy and the meadow sway with the same
- * fronts {@link Wind} gives the falling leaves and the rustle. Seven fetches per leaf vertex and about a dozen per plant
- * vertex, none for any other vertex.
+ * fronts {@link Wind} gives the falling leaves and the rustle. Seven fetches per leaf vertex and nine per plant vertex
+ * within 112 blocks (four more right by the camera), none for any other vertex.
  */
 final class WindTexels {
     private WindTexels() {}
@@ -99,7 +100,8 @@ final class WindTexels {
             b.put(unorm(wind.gust(cam.x + wind.dirX * along, cam.z + wind.dirZ * along)));
         }
         boolean still = debugMode == 2;
-        b.put(still ? 0 : unorm(plantAmplitude / 0.5F)).put(still ? 0 : unorm(waterAmplitude / 0.5F)).put(unorm(sheen / 0.5F)).put(still ? 0 : unorm(push));
+        boolean weather = mc.level != null && mc.level.dimensionType().hasSkyLight();
+        b.put(still ? 0 : unorm(plantAmplitude / 0.5F)).put(still ? 0 : unorm(waterAmplitude / 0.5F)).put(unorm(sheen / 0.5F)).put(weather ? (byte) 255 : 0);
         Player p = mc.player;
         if (p != null && !p.isSpectator() && p.level() == mc.level) {
             Vec3 feet = p.getPosition(partialTick);
@@ -107,7 +109,7 @@ final class WindTexels {
         } else {
             b.putFloat(0F).putFloat(-1.0E6F).putFloat(0F);
         }
-        b.put(mc.level != null && mc.level.dimensionType().hasSkyLight() ? (byte) 255 : 0).put((byte) 0).put((byte) 0).put((byte) 0);
+        b.put(still ? 0 : unorm(push)).put((byte) 0).put((byte) 0).put((byte) 0);
         b.flip();
         RenderSystem.getDevice().createCommandEncoder().writeToTexture(tex, b, 0, 0, tex.getWidth(0) - TEXELS, tex.getHeight(0) - 1, TEXELS, 1);
     }

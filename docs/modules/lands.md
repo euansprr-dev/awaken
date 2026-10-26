@@ -61,6 +61,14 @@ probe positions picks), and the server, which hashes its seed the same way, gets
 64-sample profile along the wind through the camera (4 blocks apart) in the block atlas's corner texels, so the canopy
 sways hardest where a front is passing.
 
+**Swaying plants** (same shader, gate and setting; SPEC 15): grass, flowers, crops, saplings, cane, bamboo, vines,
+hanging plants, kelp, seagrass and pads carry a per-vertex weight in their vertex alpha (`terrain.PlantSway`, baked by
+`terrain.client.WavingModel`), read the same gust profile and lean and swing with it: a front rolls across a meadow
+and on through the trees. Bases and anchors never move; stalks and strands count their run 2 blocks each way while
+meshing, so every shared vertex agrees. Hanging plants swing from their anchor, wall vines stay in their wall's
+plane, underwater plants sway in a slow current, pads bob, grass tips brighten as a gust bends them and part round
+the player's feet; deep underground and in the Nether and End only a faint draught moves them.
+
 **Falling leaves** (`terrain.client.FallingLeaves`, `FallingLeafParticle`): Awaken's own particle, never vanilla's.
 - *Spawning*: each tick 12 random spots (normal) 6-32 blocks from the camera, 70% within ±70° of where it looks; the
   column's top canopy is searched (≤16 blocks) for a leaf block with air below. Chance = 0.06 × biome rate × leaf rate
@@ -92,7 +100,8 @@ strength) × (1 − 0.6 canopy). Both ease in and out and stop when silent. Sett
 
 **Commands** (client): `/awaken terrain leaves status|amount <off|low|normal|high>|biome <id|clear>` (the biome line
 treats every spot as that biome: a showcase aid), `/awaken terrain wind status|force <steady> <gust>|real`,
-`/awaken terrain waving on|off|status|debug <0..2>`.
+`/awaken terrain waving on|off|status|debug <0..2>|plants <air> <water> <sheen> <push>` (leaves and plants
+together), `/awaken terrain wind front across|ahead` (one showcase front, until `wind real`).
 
 **Measured** (2026-10-24, M4, OpenGL, framebuffer 2880×1658, `PACK=perf,world TECTONIC=awakened`, the heart of the
 nearest dark forest by `/awaken terrain visit minecraft:dark_forest`, seed 777; the Mac carried other builders' work,

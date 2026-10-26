@@ -1363,6 +1363,10 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
     blocks) and press down. Water: a 0.2 Hz surge (and a 0.35 Hz roll) along an axis that turns slowly across the
     seabed, a wave climbing kelp, 0.16 blocks × weight; never the air wind. Pads bob 0.006–0.016 blocks, rocking a
     little. All amplitudes are a texel (`/awaken terrain waving plants <air> <water> <sheen> <push>` tunes them live).
+  - Cost: plants sway out to 112 blocks from the camera, fading from 72 (cross models have no faces to cull, so every
+    plant quad is drawn and far ones are most of a meadow's vertices; with no fade a sparse meadow cost +0.3 ms p50).
+    A plant vertex past 112 reads no texel; one inside reads nine (four more within 10 blocks of the camera, for the
+    feet). Texels 22 (air and water amplitude, sheen, weather wind here), 23–25 (the player's feet), 26 (the push).
   - Commands: `/awaken terrain waving on|off|status|debug <0..2>|plants ...` covers leaves and plants;
     `/awaken terrain wind front across|ahead` (showcase) launches one front across the view or from behind the camera,
     holding the heading the way it rolls, until `wind real`. Tests: `terrain_sway_markers` (every plant kind marked,

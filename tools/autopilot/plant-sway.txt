@@ -1,0 +1,166 @@
+# Swaying plants (SPEC 15). One run, from fixed cameras in a plains meadow: a strip of 8 frames a second apart with a
+# front rolling across the view, the grass parting round the player's feet (push on, then off), a grove planted 14-30
+# blocks off with a front rolling from the grass into the trees (the forest edge), and a hanging garden (vines on a log
+# wall, weeping and cave vines, pale hanging moss, lumen vines, weepwood tendrils, hanging roots, a spore blossom under
+# a ceiling) with a front across it. Frame times in the meadow and in a forest: waving on against the shader finding no
+# wind (debug 1: nothing moves, no reload), alternated, and in the forest once against Sodium's own shader.
+# Run: SLOT_WHO=grass-sway PACK=perf slot.sh tour tools/autopilot.sh tools/autopilot/plant-sway.txt 900
+world sway779 creative 779
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+wait 40
+screen close
+window 1440 900
+camera first
+hud off
+info
+cmd awaken terrain waving status
+cmd gamemode spectator
+cmd awaken terrain visit minecraft:plains
+wait 500
+# ---- 1. the meadow: a front across the view
+cmd tp @s ~ ~2 ~
+look 90 12
+wait 40
+cmd awaken terrain wind force 0.35 0
+cmd awaken terrain wind front across
+shot sway_meadow_1
+wait 17
+shot sway_meadow_2
+wait 17
+shot sway_meadow_3
+wait 17
+shot sway_meadow_4
+wait 17
+shot sway_meadow_5
+wait 17
+shot sway_meadow_6
+wait 17
+shot sway_meadow_7
+wait 17
+shot sway_meadow_8
+cmd awaken terrain wind real
+perf meadow_on_a 10
+cmd awaken terrain waving debug 1
+wait 40
+perf meadow_still_a 10
+cmd awaken terrain waving debug 0
+wait 40
+perf meadow_on_b 10
+cmd awaken terrain waving debug 1
+wait 40
+perf meadow_still_b 10
+cmd awaken terrain waving debug 0
+# ---- 2. the feet: standing in grass, seen from behind; then the same with the push off
+cmd gamemode survival
+wait 40
+cmd fill ~-2 ~ ~-2 ~2 ~ ~2 minecraft:short_grass replace air
+wait 10
+camera back
+look 90 40
+wait 30
+shot sway_push_on
+cmd awaken terrain waving plants 0.2 0.16 0.1 0
+wait 10
+shot sway_push_off
+cmd awaken terrain waving plants 0.2 0.16 0.1 0.32
+camera first
+cmd gamemode spectator
+# ---- 3. a grove to the south (the forest edge) and a hanging garden to the north
+cmd execute positioned ~-13 ~ ~15 positioned over motion_blocking_no_leaves run place feature minecraft:fancy_oak
+cmd execute positioned ~-7 ~ ~19 positioned over motion_blocking_no_leaves run place feature minecraft:birch
+cmd execute positioned ~-2 ~ ~15 positioned over motion_blocking_no_leaves run place feature minecraft:oak
+cmd execute positioned ~4 ~ ~18 positioned over motion_blocking_no_leaves run place feature minecraft:fancy_oak
+cmd execute positioned ~10 ~ ~15 positioned over motion_blocking_no_leaves run place feature minecraft:birch
+cmd execute positioned ~15 ~ ~20 positioned over motion_blocking_no_leaves run place feature minecraft:oak
+cmd execute positioned ~-10 ~ ~25 positioned over motion_blocking_no_leaves run place feature minecraft:oak
+cmd execute positioned ~1 ~ ~26 positioned over motion_blocking_no_leaves run place feature minecraft:birch
+cmd execute positioned ~9 ~ ~27 positioned over motion_blocking_no_leaves run place feature minecraft:fancy_oak
+cmd execute positioned ~-4 ~ ~31 positioned over motion_blocking_no_leaves run place feature minecraft:fancy_oak
+cmd fill ~-5 ~ ~-12 ~5 ~9 ~-3 minecraft:air
+cmd fill ~-4 ~-1 ~-10 ~4 ~7 ~-10 minecraft:jungle_log
+cmd fill ~-4 ~1 ~-9 ~4 ~6 ~-9 minecraft:vine[north=true]
+cmd fill ~-4 ~8 ~-9 ~4 ~8 ~-4 minecraft:mossy_cobblestone
+cmd fill ~-4 ~3 ~-6 ~-4 ~7 ~-6 minecraft:weeping_vines_plant
+cmd fill ~-2 ~2 ~-6 ~-2 ~7 ~-6 minecraft:cave_vines_plant[berries=true]
+cmd fill ~0 ~4 ~-6 ~0 ~7 ~-6 minecraft:pale_hanging_moss
+cmd fill ~2 ~3 ~-6 ~2 ~7 ~-6 awaken:lumen_vines
+cmd fill ~4 ~2 ~-6 ~4 ~7 ~-6 awaken:weepwood_tendrils
+cmd setblock ~-3 ~7 ~-5 minecraft:hanging_roots
+cmd setblock ~-1 ~7 ~-5 minecraft:spore_blossom
+cmd fill ~1 ~4 ~-5 ~1 ~7 ~-5 minecraft:weeping_vines_plant
+cmd fill ~3 ~3 ~-5 ~3 ~7 ~-5 minecraft:cave_vines_plant
+wait 40
+# the forest edge: a front from behind the camera, over the grass and on into the grove
+cmd tp @s ~ ~2 ~
+look 0 6
+wait 40
+cmd awaken terrain wind force 0.35 0
+cmd awaken terrain wind front ahead
+shot sway_edge_1
+wait 17
+shot sway_edge_2
+wait 17
+shot sway_edge_3
+wait 17
+shot sway_edge_4
+wait 17
+shot sway_edge_5
+wait 17
+shot sway_edge_6
+wait 17
+shot sway_edge_7
+wait 17
+shot sway_edge_8
+# the hanging garden: a front across it
+cmd tp @s ~ ~-1 ~2
+look 180 -20
+wait 40
+cmd awaken terrain wind front across
+shot sway_vines_1
+wait 17
+shot sway_vines_2
+wait 17
+shot sway_vines_3
+wait 17
+shot sway_vines_4
+wait 17
+shot sway_vines_5
+wait 17
+shot sway_vines_6
+wait 17
+shot sway_vines_7
+wait 17
+shot sway_vines_8
+cmd awaken terrain wind real
+# ---- 4. a forest at eye level: frame times
+cmd awaken terrain visit minecraft:forest
+wait 400
+look 30 0
+wait 40
+perf forest_on_a 10
+cmd awaken terrain waving debug 1
+wait 40
+perf forest_still_a 10
+cmd awaken terrain waving debug 0
+wait 40
+perf forest_on_b 10
+cmd awaken terrain waving debug 1
+wait 40
+perf forest_still_b 10
+cmd awaken terrain waving debug 0
+cmd awaken terrain waving off
+wait 300
+perf forest_off 10
+cmd awaken terrain waving on
+wait 300
+cmd awaken terrain waving status
+perf forest_on_c 10
+shot sway_forest_view
+quit
