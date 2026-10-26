@@ -117,7 +117,7 @@ final class SettlementTests {
         Settlement[] hamlet = new Settlement[1];
         List<String> problems = new ArrayList<>();
         String[] cost = new String[2];
-        long[] hamletLedger = new long[3]; // its ledger's nanoseconds and ticks measured; its jumps before it wakes
+        long[] hamletLedger = new long[4]; // its ledger's nanoseconds and ticks measured; its jumps before it wakes; the cap check's tick
         boolean[] done = new boolean[1];
         long start = level.getGameTime();
         h.succeedWhen(() -> {
@@ -197,7 +197,10 @@ final class SettlementTests {
             pool.capPlayer = 12;
             pool.capWorld = 12;
         }
-        if (el == 1760) {
+        // on a tick the crowd ran its pass (every 10, at the tick's start, before the level's clock moved on: tests run
+        // after it): what it saw is what's checked (someone may step out of a door between passes)
+        if (el >= 1760 && hamletLedger[3] == 0 && level.getGameTime() % 10 == 1) {
+            hamletLedger[3] = el;
             if (pool.bodies.size() > 12) problems.add(pool.bodies.size() + " bodies with the caps at 12");
             ServerPlayer p = player[0].player();
             double in = 0, out = Double.MAX_VALUE;
