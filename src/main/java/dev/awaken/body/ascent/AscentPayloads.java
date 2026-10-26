@@ -20,7 +20,9 @@ public final class AscentPayloads {
             EV_ROLL = 13,
             /** The Sovereign (SPEC §17.19): the Ascend key pressed (client to server); the form begun (speed: its ticks),
              * ended; a Judgement Fall's landing (speed: its force). */
-            EV_ASCEND = 14, EV_SOVEREIGN = 15, EV_SOVEREIGN_END = 16, EV_JUDGEMENT = 17;
+            EV_ASCEND = 14, EV_SOVEREIGN = 15, EV_SOVEREIGN_END = 16, EV_JUDGEMENT = 17,
+            /** The rappel (SPEC §28.5): a kick off the wall, the feet back on it (speed: how hard each was). */
+            EV_RAPPEL_KICK = 18, EV_RAPPEL_PLANT = 19;
 
     /**
      * Client → server: the local player's state changed (predicted). (x, y, z) = the rope's anchor while one is out;
@@ -46,8 +48,11 @@ public final class AscentPayloads {
         @Override public Type<Event> type() { return TYPE; }
     }
 
-    /** Server → watching clients: an entity's state (and its rope's anchor). */
-    public record Seen(int entityId, int state, double x, double y, double z) implements CustomPacketPayload {
+    /**
+     * Server → watching clients: an entity's state (and its rope's anchor), and the fittings on its rope ({@code kit}:
+     * RopeKit.bits, so watchers see an iron line's steel and a Deepglass line's violet).
+     */
+    public record Seen(int entityId, int state, double x, double y, double z, int kit) implements CustomPacketPayload {
         public static final Type<Seen> TYPE = new Type<>(Awaken.id("ascent_seen"));
         public static final StreamCodec<ByteBuf, Seen> STREAM_CODEC = StreamCodec.of((buf, m) -> {
             ByteBufCodecs.VAR_INT.encode(buf, m.entityId);
@@ -55,9 +60,27 @@ public final class AscentPayloads {
             buf.writeDouble(m.x);
             buf.writeDouble(m.y);
             buf.writeDouble(m.z);
+            ByteBufCodecs.VAR_INT.encode(buf, m.kit);
         }, buf -> new Seen(ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf), buf.readDouble(), buf.readDouble(),
-                buf.readDouble()));
+                buf.readDouble(), ByteBufCodecs.VAR_INT.decode(buf)));
+
+        /** A state with no fittings to show. */
+        public Seen(int entityId, int state, double x, double y, double z) {
+            this(entityId, state, x, y, z, 0);
+        }
+
         @Override public Type<Seen> type() { return TYPE; }
+    }
+
+    /**
+     * Server → client: the fittings on this player's own Tether (RopeKit.bits); {@code fitted} when one was just fitted
+     * (the client tells it and plays the fit), not on a plain sync.
+     */
+    public record Kit(int bits, boolean fitted) implements CustomPacketPayload {
+        public static final Type<Kit> TYPE = new Type<>(Awaken.id("ascent_kit"));
+        public static final StreamCodec<ByteBuf, Kit> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, Kit::bits,
+                ByteBufCodecs.BOOL, Kit::fitted, Kit::new);
+        @Override public Type<Kit> type() { return TYPE; }
     }
 
     /** Server → watching clients: someone else's one-off moment. */
