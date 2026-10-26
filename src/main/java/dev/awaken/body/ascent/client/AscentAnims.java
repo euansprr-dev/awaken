@@ -378,6 +378,14 @@ public final class AscentAnims {
         out[8] = rz;
     }
 
+    /** A body on a rope is drawn hanging, not crouched, whatever sneak is doing on the rope. */
+    static void modify(Entity entity, net.minecraft.client.renderer.entity.state.EntityRenderState state) {
+        if (entity instanceof net.minecraft.world.entity.player.Player && state instanceof net.minecraft.client.renderer.entity.state.HumanoidRenderState s
+                && s.isCrouching && AscentRemote.stateOf(entity).rope) {
+            s.isCrouching = false;
+        }
+    }
+
     // ---- the whole figure -----------------------------------------------------------------------------------------------
 
     static void onPre(RenderPlayerEvent.Pre<?> e) {

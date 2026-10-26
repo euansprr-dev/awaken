@@ -31,15 +31,9 @@ public final class AscentFp {
     static final int GOLD = 0xFFD98A;
     /**
      * The rappel's brake hand, under the guiding one on the rope (AscentRender runs the rope down to it and its tail out
-     * of it), main hand's side: x times {@link #side()}.
+     * of it), on the main hand's side (x times the side, as ROPE_X).
      */
     static final float BRAKE_X = 0.16F, BRAKE_Y = -0.46F, BRAKE_Z = -0.6F;
-
-    /** The main hand's side in view space (1 right, -1 left). */
-    static float side() {
-        LocalPlayer p = Minecraft.getInstance().player;
-        return p != null && p.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT ? -1 : 1;
-    }
 
     /** A kick off the wall (client clock): the arms take the push for a few ticks. */
     private static int kickAt = -100;
