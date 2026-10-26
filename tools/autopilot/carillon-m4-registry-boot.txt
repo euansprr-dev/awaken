@@ -19,7 +19,12 @@ wait 200
 wait 200
 # ---- the desk: Bram goes round behind the counter; use signs
 cmd awaken opening beat desk
-wait 90
+# jumping here awakens a fresh player, so the first-power cards come up at once (the opening holds them until its end)
+wait 40
+cmd awaken powers starter 1
+wait 10
+screen close
+wait 50
 shot reg_desk
 cmd awaken ascent pilot use
 wait 24
