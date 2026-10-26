@@ -15,6 +15,11 @@ public interface Terrain {
     /** The land's family at a column ({@code dev.awaken.city.VillageStyles} TEMPERATE .. CHERRY), and whether it is sea or a river. */
     int family(int x, int z);
 
+    /** Both at once, packed (top in the high half, water in the low): one read where the two share work. */
+    default long both(int x, int z) {
+        return ((long) top(x, z) << 32) | (water(x, z) & 0xffffffffL);
+    }
+
     /** The sea level (water below it on open ground is the sea). */
     default int seaLevel() {
         return 63;

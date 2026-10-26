@@ -28,6 +28,7 @@ final class VillagePainter {
             if (p.forge != null) forge(p, c, p.forge);
             if (p.wheel != null) wheel(p, c, p.wheel);
             for (VillagePlan.Pen pen : p.pens) penFence(p, c, pen);
+            for (int[] t : p.trees) tree(p, c, t);
             if (p.dock != null) dockRail(p, c, p.dock);
         }
     }
@@ -73,6 +74,7 @@ final class VillagePainter {
                 clear(c, x, g, z, CLEAR);
             }
             case VillagePlan.DOCK -> dock(p, c, x, z, g);
+            case VillagePlan.KITCHEN -> kitchen(p, c, x, z, g);
             default -> {
             }
         }
@@ -204,6 +206,96 @@ final class VillagePainter {
                 };
                 c.set(x, g + 1, z, crop);
             }
+        }
+    }
+
+    /** A kitchen garden: a fence round it with its gate toward the house, vegetables in rows, a water hole in the middle. */
+    static void kitchen(VillagePlan p, Canvas c, int x, int z, int g) {
+        VillagePlan.Garden gd = null;
+        for (VillagePlan.Garden k : p.gardens) if (x >= k.x0() && x <= k.x1() && z >= k.z0() && z <= k.z1()) gd = k;
+        bed(c, x, g, z, p.family);
+        clear(c, x, g, z, CLEAR);
+        if (gd == null) {
+            c.set(x, g, z, GRASS);
+            return;
+        }
+        boolean edge = x == gd.x0() || x == gd.x1() || z == gd.z0() || z == gd.z1();
+        VillageBlocks.Wood w = wood(p.family);
+        if (edge) {
+            c.set(x, g, z, c.pct(x, z, 740) < 30 ? COARSE_DIRT : GRASS);
+            if (x == gd.gateX() && z == gd.gateZ()) {
+                c.set(x, g + 1, z, w.gate()[gd.gateSide()]);
+                return;
+            }
+            int m = 0;
+            if (z > gd.z0() && (x == gd.x0() || x == gd.x1())) m |= 1;
+            if (x < gd.x1() && (z == gd.z0() || z == gd.z1())) m |= 2;
+            if (z < gd.z1() && (x == gd.x0() || x == gd.x1())) m |= 4;
+            if (x > gd.x0() && (z == gd.z0() || z == gd.z1())) m |= 8;
+            c.set(x, g + 1, z, w.fence()[m]);
+            return;
+        }
+        int mx = (gd.x0() + gd.x1()) / 2, mz = (gd.z0() + gd.z1()) / 2;
+        boolean bigEnough = gd.x1() - gd.x0() >= 4 && gd.z1() - gd.z0() >= 4;
+        if (bigEnough && x == mx && z == mz) {
+            c.set(x, g - 1, z, DIRT);
+            c.set(x, g, z, WATER);
+            return;
+        }
+        c.set(x, g, z, FARMLAND);
+        int v = c.pct(x, z, 741);
+        BlockState crop = switch (gd.crop()) {
+            case "carrots" -> CARROTS[v < 70 ? 0 : 1];
+            case "potatoes" -> POTATOES[v < 70 ? 0 : 1];
+            case "beetroots" -> BEETROOTS[v < 70 ? 0 : 1];
+            case "melons", "pumpkins" -> CARROTS[0];
+            default -> CROP[v < 50 ? 0 : 1];
+        };
+        c.set(x, g + 1, z, crop);
+    }
+
+    /** A tree of the land's wood: a bark trunk and a rounded crown of kept leaves (a spruce's a cone). */
+    static void tree(VillagePlan p, Canvas c, int[] t) {
+        int x = t[0], z = t[1], g = t[2], seed = t[3];
+        if (Math.abs(x - c.x0() - 8) > 12 || Math.abs(z - c.z0() - 8) > 12) return;
+        String wood = switch (p.family) {
+            case dev.awaken.city.VillageStyles.FROST, dev.awaken.city.VillageStyles.HIGHLAND -> "spruce";
+            case dev.awaken.city.VillageStyles.SAVANNA, dev.awaken.city.VillageStyles.DESERT -> "acacia";
+            case dev.awaken.city.VillageStyles.MIRE -> "mangrove";
+            case dev.awaken.city.VillageStyles.JUNGLE -> "jungle";
+            case dev.awaken.city.VillageStyles.CHERRY -> "cherry";
+            case dev.awaken.city.VillageStyles.ELDER -> "dark_oak";
+            case dev.awaken.city.VillageStyles.COAST -> seed % 2 == 0 ? "birch" : "oak";
+            default -> seed % 4 == 0 ? "birch" : "oak";
+        };
+        BlockState trunk = VillageBlocks.of("minecraft:" + wood + "_wood[axis=y]");
+        BlockState leaf = VillageBlocks.of("minecraft:" + (wood.equals("mangrove") ? "mangrove" : wood) + "_leaves[persistent=true]");
+        int h = 4 + seed % 3;
+        c.column(x, g + 1, g + h, z, trunk);
+        if (wood.equals("spruce")) {
+            for (int dy = 2; dy <= h + 2; dy++) {
+                int rad = Math.max(0, (h + 2 - dy) / 2 + (dy < h ? 1 : 0));
+                for (int dz = -rad; dz <= rad; dz++)
+                    for (int dx = -rad; dx <= rad; dx++) {
+                        if (dx == 0 && dz == 0 && dy <= h) continue;
+                        if (Math.abs(dx) + Math.abs(dz) > rad + (rad > 1 ? 1 : 0)) continue;
+                        c.air(x + dx, g + dy, z + dz, leaf);
+                    }
+            }
+            c.air(x, g + h + 3, z, leaf);
+            return;
+        }
+        int top = g + h;
+        for (int dy = -2; dy <= 2; dy++) {
+            int rad = dy <= -1 ? 3 : dy == 2 ? 1 : 2;
+            for (int dz = -rad; dz <= rad; dz++)
+                for (int dx = -rad; dx <= rad; dx++) {
+                    double d = Math.hypot(dx, dz);
+                    if (d > rad + 0.4) continue;
+                    if (d > rad - 0.6 && c.pct(x + dx, z + dz, 742 + dy) < 35) continue; // a ragged edge
+                    if (dx == 0 && dz == 0 && dy <= 0) continue;
+                    c.air(x + dx, top + dy, z + dz, leaf);
+                }
         }
     }
 

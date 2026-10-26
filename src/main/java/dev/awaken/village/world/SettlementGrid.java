@@ -45,6 +45,19 @@ public final class SettlementGrid {
 
     /** The first hamlet's anchor: up the road north of the centre. */
     public static Anchor first(long worldSeed, int[] centre) {
+        Anchor o = firstFound;
+        if (o != null) return o;
+        return nominalFirst(worldSeed, centre);
+    }
+
+    /**
+     * Where the first hamlet was found at this server's start (the first spot up the road that the land takes), or
+     * null: the nominal spot. Set before any chunk generates ({@link FirstHamlet}).
+     */
+    static volatile @Nullable Anchor firstFound;
+
+    /** The first hamlet's nominal anchor, before the land is read. */
+    public static Anchor nominalFirst(long worldSeed, int[] centre) {
         long h = mix(worldSeed ^ 0xF125_7A41E7L);
         int x = centre[0] + 6 + (int) Math.round((unit(h) - 0.5) * 40);
         int z = centre[1] - FIRST_MIN - (int) Math.round(unit(mix(h)) * FIRST_SPREAD);

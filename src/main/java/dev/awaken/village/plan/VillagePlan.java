@@ -25,7 +25,7 @@ public final class VillagePlan implements SettlementPaint.Layout {
     public enum Kind { HAMLET, VILLAGE }
 
     // ground kinds beyond the city's (CityPlan.VOID .. LOWQUAY)
-    public static final byte FIELD = 32, PEN = 33, DOCK = 34, WATER = CityPlan.RIVER;
+    public static final byte FIELD = 32, PEN = 33, DOCK = 34, KITCHEN = 35, WATER = CityPlan.RIVER;
 
     public final String key, name;
     public final Kind kind;
@@ -46,6 +46,10 @@ public final class VillagePlan implements SettlementPaint.Layout {
     public final List<Lamp> lamps = new ArrayList<>();
     public final List<Field> fields = new ArrayList<>();
     public final List<Pen> pens = new ArrayList<>();
+    public final List<Garden> gardens = new ArrayList<>();
+    /** Trees: x, z, lift, a seed. */
+    public final List<int[]> trees = new ArrayList<>();
+    final it.unimi.dsi.fastutil.longs.LongOpenHashSet treeCells = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
     public final List<Household> households = new ArrayList<>();
     public final List<Person> people = new ArrayList<>();
     public final List<int[]> posts = new ArrayList<>(); // the Watch's posts at the street ends: x, z, lift
@@ -103,6 +107,9 @@ public final class VillagePlan implements SettlementPaint.Layout {
     /** A pen: its box, height, beast, its gate (cell and the side it opens to). */
     public record Pen(int x0, int z0, int x1, int z1, int lift, String beast, int gateX, int gateZ, int gateSide) {}
 
+    /** A kitchen garden behind a house: its box, height, crop, its gate (cell and the side it opens to). */
+    public record Garden(int x0, int z0, int x1, int z1, int lift, String crop, int gateX, int gateZ, int gateSide) {}
+
     /** A pier: its deck's box over the water, the deck's lift, the end the fisher stands at. */
     public record Dock(int x0, int z0, int x1, int z1, int lift, int endX, int endZ, int side) {}
 
@@ -157,7 +164,7 @@ public final class VillagePlan implements SettlementPaint.Layout {
 
     @Override
     public boolean treeAt(int x, int z) {
-        return false;
+        return treeCells.contains(((long) x << 32) ^ (z & 0xffffffffL));
     }
 
     @Override

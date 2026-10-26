@@ -34,12 +34,30 @@ public final class VillagePlanner {
     public record Request(String key, long seed, int anchorX, int anchorZ, Kind kind, boolean first, int minX, int minZ, int maxX, int maxZ,
                           BiPredicate<Integer, Integer> reserved) {}
 
-    public static final int SEARCH = 32;
-    static final int STEP = 4;
+    public static final int SEARCH = 32, FIRST_SEARCH = 64;
+    static final int STEP = 6;
 
-    /** The plan, or null when no site near the anchor suits (sea, a cliff, a lake, the city's reserve). */
+    /** Whether a site near the anchor takes a settlement (the site test alone, no plan: cheap). */
+    public static boolean hasSite(Request q, Terrain t) {
+        return new Work(q, t).site();
+    }
+
+    /** Why the last plan on this thread found no site (studio and survey diagnostics). */
+    public static final ThreadLocal<String> WHY = ThreadLocal.withInitial(() -> "");
+
+    /**
+     * The plan, or null when no site near the anchor suits (sea, a cliff, a lake, the city's reserve). A village with no
+     * room for itself becomes a hamlet on the same anchor.
+     */
     public static @Nullable VillagePlan plan(Request q, Terrain t) {
-        return new Work(q, t).run();
+        VillagePlan p = new Work(q, t).run();
+        if (p == null && q.kind() == Kind.VILLAGE) {
+            String why = WHY.get();
+            p = new Work(new Request(q.key(), q.seed(), q.anchorX(), q.anchorZ(), Kind.HAMLET, q.first(), q.minX(), q.minZ(), q.maxX(), q.maxZ(),
+                    q.reserved()), t).run();
+            if (p == null) WHY.set("village: " + why + "; hamlet: " + WHY.get());
+        }
+        return p;
     }
 
     // ---- the work of one plan -------------------------------------------------------------------------------------
@@ -63,8 +81,32 @@ public final class VillagePlanner {
             this.village = q.kind() == Kind.VILLAGE;
         }
 
+        /** The land at a column, read once ({top, water}). */
+        private final it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap memo = new it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap();
+
+        private long land(int x, int z) {
+            long k = ((long) x << 32) ^ (z & 0xffffffffL);
+            long v = memo.getOrDefault(k, Long.MIN_VALUE);
+            if (v == Long.MIN_VALUE) {
+                v = t.both(x, z);
+                memo.put(k, v);
+            }
+            return v;
+        }
+
+        int topAt(int x, int z) {
+            return (int) (land(x, z) >> 32);
+        }
+
+        int waterAt(int x, int z) {
+            return (int) land(x, z);
+        }
+
         @Nullable VillagePlan run() {
-            if (!site()) return null;
+            if (!site()) {
+                if (WHY.get().isEmpty()) WHY.set("no site");
+                return null;
+            }
             sample();
             int fam = family();
             int wealth = q.first() ? VillageStyles.MODEST : village ? (rnd.nextInt(100) < 55 ? VillageStyles.MODEST : VillageStyles.PROSPEROUS)
@@ -77,11 +119,17 @@ public final class VillagePlanner {
             green();
             streets();
             buildings();
-            if (plan.plots.size() < (village ? 6 : 3)) return null;
+            if (plan.plots.size() < (village ? 6 : q.first() ? 2 : 3)) {
+                WHY.set("only " + plan.plots.size() + " buildings fit");
+                return null;
+            }
             mill();
             dock();
+            gardens();
             fields();
             pens();
+            trees();
+            lines();
             lamps();
             props();
             people();
@@ -92,11 +140,13 @@ public final class VillagePlanner {
         // ---- the site: gentle ground near water -------------------------------------------------------------------
 
         boolean site() {
+            WHY.set("");
             int core = village ? 36 : 26;
             double best = Double.NEGATIVE_INFINITY;
             int bx = 0, bz = 0;
-            for (int dz = -SEARCH; dz <= SEARCH; dz += 16) {
-                for (int dx = -SEARCH; dx <= SEARCH; dx += 16) {
+            int search = q.first() ? FIRST_SEARCH : SEARCH;
+            for (int dz = -search; dz <= search; dz += 16) {
+                for (int dx = -search; dx <= search; dx += 16) {
                     int x = q.anchorX() + dx, z = q.anchorZ() + dz;
                     double s = score(x, z, core) - 0.02 * (dx * dx + dz * dz) / 16.0;
                     if (s > best) {
@@ -106,12 +156,16 @@ public final class VillagePlanner {
                     }
                 }
             }
-            if (best == Double.NEGATIVE_INFINITY || best < (q.first() ? -60 : -24)) return false;
+            if (best == Double.NEGATIVE_INFINITY || best < (q.first() ? -80 : -34)) {
+                WHY.set(best == Double.NEGATIVE_INFINITY ? "no dry, gentle ground" : String.format(java.util.Locale.ROOT, "best ground too rough (%.0f)", best));
+                return false;
+            }
             cx = bx;
             cz = bz;
             int want = village ? 88 : 58;
             int room = Math.min(Math.min(cx - q.minX(), q.maxX() - cx), Math.min(cz - q.minZ(), q.maxZ() - cz)) - 2;
             r = Math.min(want, room);
+            if (r < (village ? 56 : 38)) WHY.set("no room in the structure's reach");
             return r >= (village ? 56 : 38);
         }
 
@@ -124,8 +178,8 @@ public final class VillagePlanner {
                 for (int dx = -core; dx <= core; dx += 8) {
                     if (dx * dx + dz * dz > core * core) continue;
                     if (q.reserved().test(x + dx, z + dz)) return Double.NEGATIVE_INFINITY;
-                    int h = t.top(x + dx, z + dz);
-                    if (t.water(x + dx, z + dz) > 0) {
+                    int h = topAt(x + dx, z + dz);
+                    if (waterAt(x + dx, z + dz) > 0) {
                         wetN++;
                         continue;
                     }
@@ -136,17 +190,18 @@ public final class VillagePlanner {
                     hi = Math.max(hi, h);
                 }
             }
-            if (n < 8 || wetN > (n + wetN) * 0.12) return Double.NEGATIVE_INFINITY;
+            if (n < 8 || wetN > (n + wetN) * (q.first() ? 0.3 : 0.15)) return Double.NEGATIVE_INFINITY;
             double mean = sum / n, sd = Math.sqrt(Math.max(0, sum2 / n - mean * mean));
             int range = hi - lo;
-            if (range > (village ? 16 : 12) || mean < t.seaLevel() + 1 || mean > 150) return Double.NEGATIVE_INFINITY;
+            if (range > (village ? 18 : q.first() ? 22 : 16) || mean < t.seaLevel() + 1 || mean > 150) return Double.NEGATIVE_INFINITY;
             // water near: a river, a lake or the sea within forty blocks of the core's edge
             int near = 0;
             for (int a = 0; a < 16; a++) {
                 double ang = a * Math.PI / 8;
                 for (int d = core + 8; d <= core + 40; d += 16) {
-                    int wx = x + (int) Math.round(Math.cos(ang) * d), wz = z + (int) Math.round(Math.sin(ang) * d);
-                    if (t.water(wx, wz) > 0) {
+                    // on the same eight-block lattice as the core's reads (each column is read once)
+                    int wx = x + 8 * (int) Math.round(Math.cos(ang) * d / 8), wz = z + 8 * (int) Math.round(Math.sin(ang) * d / 8);
+                    if (waterAt(wx, wz) > 0) {
                         near++;
                         break;
                     }
@@ -159,14 +214,14 @@ public final class VillagePlanner {
         void sample() {
             gx0 = cx - r - STEP;
             gz0 = cz - r - STEP;
-            gn = (2 * r + 2 * STEP) / STEP + 2;
+            gn = (2 * r + 2 * STEP) / STEP + 3;
             top = new float[gn * gn];
             wet = new byte[gn * gn];
             for (int j = 0; j < gn; j++) {
                 for (int i = 0; i < gn; i++) {
                     int x = gx0 + i * STEP, z = gz0 + j * STEP;
-                    top[j * gn + i] = t.top(x, z);
-                    wet[j * gn + i] = (byte) Math.min(100, t.water(x, z));
+                    top[j * gn + i] = topAt(x, z);
+                    wet[j * gn + i] = (byte) Math.min(100, waterAt(x, z));
                 }
             }
             // the street level: the dry core's median
@@ -255,7 +310,7 @@ public final class VillagePlanner {
             double heading;
             if (Math.hypot(gxh, gzh) < 1.5) heading = rnd.nextDouble() * Math.PI;
             else heading = Math.atan2(gzh, gxh) + Math.PI / 2;
-            int len = village ? 40 + rnd.nextInt(26) : 18 + rnd.nextInt(12);
+            int len = village ? 40 + rnd.nextInt(26) : 24 + rnd.nextInt(14);
             List<float[]> a = walk(0, 0, heading, len, 1.0), b = walk(0, 0, heading + Math.PI, len, 1.0);
             List<float[]> main = new ArrayList<>();
             for (int k = b.size() - 1; k >= 1; k--) main.add(b.get(k));
@@ -268,7 +323,7 @@ public final class VillagePlanner {
             int[] ml = plan.streets.getFirst().lift();
             plan.posts.add(new int[]{Math.round(e1[0]), Math.round(e1[1]), ml[ml.length - 1]});
             // lanes branch off it, alternating sides, never in the green
-            int lanes = village ? 2 + rnd.nextInt(3) : rnd.nextInt(100) < 40 ? 1 : 0;
+            int lanes = village ? 2 + rnd.nextInt(3) : q.first() || rnd.nextInt(100) < 50 ? 1 : 0;
             VillagePlan.Street st = plan.streets.getFirst();
             int made = 0;
             List<Integer> starts = new ArrayList<>();
@@ -527,7 +582,7 @@ public final class VillagePlanner {
                     sum += h;
                     cells++;
                 }
-            if (hi - lo > 6 || Math.abs(sum / cells - lift) > 3.5f) return false;
+            if (hi - lo > 7 || Math.abs(sum / cells - lift) > 4.5f) return false;
             int id = plan.plots.size();
             int wealth = Math.clamp(plan.wealth + (w.use().equals("inn") ? 1 : 0) + (rnd.nextInt(100) < 20 ? (rnd.nextBoolean() ? 1 : -1) : 0), 0, 2);
             boolean steep = plan.family == VillageStyles.FROST || plan.family == VillageStyles.HIGHLAND || plan.family == VillageStyles.ELDER
@@ -763,21 +818,134 @@ public final class VillagePlanner {
                 {"melons", "carrots", "wheat"},                            // jungle
                 {"wheat", "beetroots", "carrots"}};                        // cherry
 
+        /**
+         * Kitchen gardens behind or beside half the homes: a fenced patch of vegetables, its gate toward the house (the
+         * village feeds itself from its back doors as much as its fields).
+         */
+        void gardens() {
+            String[] crops = CROPS[Math.clamp(plan.family, 0, CROPS.length - 1)];
+            for (VillagePlan.Building b : new ArrayList<>(plan.buildings)) {
+                if (!b.use().equals("house") || rnd.nextInt(100) >= (plan.family == VillageStyles.DESERT ? 25 : 55)) continue;
+                Plot p = plan.plots.get(b.plot());
+                // the back first, then either side
+                int back = (p.front() + 2) & 3;
+                for (int sd : new int[]{back, (p.front() + 1) & 3, (p.front() + 3) & 3}) {
+                    int gw = 5 + rnd.nextInt(2), gd = 4 + rnd.nextInt(2);
+                    int x0, z0, x1 = 0, z1 = 0;
+                    boolean along = sd == N || sd == S;
+                    int w = along ? gw : gd, d = along ? gd : gw;
+                    int mx = (p.x0() + p.x1()) / 2, mz = (p.z0() + p.z1()) / 2;
+                    switch (sd) {
+                        case N -> { x0 = mx - w / 2; z1 = p.z0() - 2; z0 = z1 - d + 1; }
+                        case S -> { x0 = mx - w / 2; z0 = p.z1() + 2; z1 = z0 + d - 1; }
+                        case E -> { z0 = mz - d / 2; x0 = p.x1() + 2; x1 = x0 + w - 1; }
+                        default -> { z0 = mz - d / 2; x1 = p.x0() - 2; x0 = x1 - w + 1; }
+                    }
+                    if (along) x1 = x0 + w - 1;
+                    else z1 = z0 + d - 1;
+                    if (!gardenFits(x0, z0, x1, z1)) continue;
+                    int lift = p.lift();
+                    for (int z = z0; z <= z1; z++) for (int x = x0; x <= x1; x++) plan.set(x, z, VillagePlan.KITCHEN, lift);
+                    // the gate faces the house
+                    int gx = sd == E ? x0 : sd == W ? x1 : (x0 + x1) / 2, gz = sd == S ? z0 : sd == N ? z1 : (z0 + z1) / 2;
+                    plan.gardens.add(new VillagePlan.Garden(x0, z0, x1, z1, lift, crops[rnd.nextInt(crops.length)], gx, gz, (sd + 2) & 3));
+                    break;
+                }
+            }
+        }
+
+        /** Free yard or open ground, gentle enough to level, that touches no street, plot or field. */
+        boolean gardenFits(int x0, int z0, int x1, int z1) {
+            float lo = Float.MAX_VALUE, hi = -Float.MAX_VALUE;
+            for (int z = z0; z <= z1; z++) {
+                for (int x = x0; x <= x1; x++) {
+                    if (x * x + z * z > (r - 3) * (r - 3)) return false;
+                    byte k = plan.kind(x, z);
+                    if (k != FREE && k != YARD) return false;
+                    if (q.reserved().test(cx + x, cz + z)) return false;
+                    float h = height(x, z);
+                    lo = Math.min(lo, h);
+                    hi = Math.max(hi, h);
+                }
+            }
+            return hi - lo <= 3;
+        }
+
+        /** A few trees in the village: on the green's edge and in yards, of the land's own wood. */
+        void trees() {
+            int want = village ? 4 + rnd.nextInt(4) : 2 + rnd.nextInt(2);
+            if (plan.family == VillageStyles.DESERT) want = village ? 2 : 1;
+            int made = 0;
+            for (int tries = 0; tries < 300 && made < want; tries++) {
+                double ang = rnd.nextDouble() * Math.PI * 2;
+                int dist = made == 0 ? plan.greenR + 3 : plan.greenR + 6 + rnd.nextInt(Math.max(1, r / 2));
+                int x = (int) Math.round(Math.cos(ang) * dist), z = (int) Math.round(Math.sin(ang) * dist);
+                boolean ok = true;
+                for (int dz = -2; dz <= 2 && ok; dz++)
+                    for (int dx = -2; dx <= 2 && ok; dx++) {
+                        byte k = plan.kind(x + dx, z + dz);
+                        ok = (k == FREE || k == YARD) && (Math.abs(dx) == 2 || Math.abs(dz) == 2 || k != YARD || !nextToPlot(x + dx, z + dz));
+                    }
+                // the canopy keeps clear of every wall
+                for (int dz = -3; dz <= 3 && ok; dz++) for (int dx = -3; dx <= 3 && ok; dx++) ok = plan.kind(x + dx, z + dz) != PLOT;
+                if (!ok || plan.treeCells.contains(cellKey(x, z))) continue;
+                int lift = Math.round(height(x, z)) - baseY;
+                for (int dz = -1; dz <= 1; dz++) for (int dx = -1; dx <= 1; dx++) plan.set(x + dx, z + dz, YARD, lift);
+                plan.trees.add(new int[]{x, z, lift, rnd.nextInt(1000)});
+                plan.treeCells.add(cellKey(x, z));
+                made++;
+            }
+        }
+
+        boolean nextToPlot(int x, int z) {
+            return plan.kind(x + 1, z) == PLOT || plan.kind(x - 1, z) == PLOT || plan.kind(x, z + 1) == PLOT || plan.kind(x, z - 1) == PLOT;
+        }
+
+        static long cellKey(int x, int z) {
+            return ((long) x << 32) ^ (z & 0xffffffffL);
+        }
+
+        /** Washing lines along a third of the homes' side yards, two out from the wall, a pole at each end. */
+        void lines() {
+            for (VillagePlan.Building b : plan.buildings) {
+                if (!b.use().equals("house") || rnd.nextInt(100) >= 32) continue;
+                Plot p = plan.plots.get(b.plot());
+                int sd = rnd.nextBoolean() ? (p.front() + 1) & 3 : (p.front() + 3) & 3;
+                boolean alongX = sd == N || sd == S;
+                int len = (alongX ? p.x1() - p.x0() : p.z1() - p.z0()) - 1;
+                if (len < 4) continue;
+                int x0, z0;
+                if (alongX) {
+                    x0 = p.x0() + 1;
+                    z0 = sd == N ? p.z0() - 2 : p.z1() + 2;
+                } else {
+                    z0 = p.z0() + 1;
+                    x0 = sd == W ? p.x0() - 2 : p.x1() + 2;
+                }
+                int x1 = alongX ? x0 + len - 1 : x0, z1 = alongX ? z0 : z0 + len - 1;
+                boolean ok = true;
+                for (int z = z0; z <= z1 && ok; z++) for (int x = x0; x <= x1 && ok; x++) ok = plan.kind(x, z) == YARD || plan.kind(x, z) == FREE;
+                if (!ok || plan.treeCells.contains(cellKey(x0, z0))) continue;
+                for (int z = z0; z <= z1; z++) for (int x = x0; x <= x1; x++) plan.set(x, z, YARD, p.lift());
+                plan.props.add(new Prop("line", x0, z0, x1, z1, p.lift() + 3, "ab", (alongX ? 0 : 4) + rnd.nextInt(4), "laundry"));
+            }
+        }
+
         void fields() {
-            int want = village ? 3 + rnd.nextInt(4) : 1 + rnd.nextInt(2);
-            if (q.first()) want = 2;
+            int want = village ? 4 + rnd.nextInt(4) : 2 + rnd.nextInt(2);
+            if (q.first()) want = 3;
             String[] crops = CROPS[Math.clamp(plan.family, 0, CROPS.length - 1)];
             int made = 0;
-            for (int tries = 0; tries < 260 && made < want; tries++) {
+            for (int tries = 0; tries < 420 && made < want; tries++) {
                 double ang = rnd.nextDouble() * Math.PI * 2;
-                int dist = plan.greenR + 14 + rnd.nextInt(Math.max(1, r - plan.greenR - 30));
+                int dist = plan.greenR + 10 + rnd.nextInt(Math.max(1, Math.min(r - plan.greenR - 24, 48)));
                 int fcx = (int) Math.round(Math.cos(ang) * dist), fcz = (int) Math.round(Math.sin(ang) * dist);
                 boolean rowsX = rnd.nextBoolean();
                 int fw = 9 + rnd.nextInt(4) * 2, fd = 7 + rnd.nextInt(2) * 2;
                 int wx = rowsX ? fw : fd, wz = rowsX ? fd : fw;
                 int x0 = fcx - wx / 2, z0 = fcz - wz / 2, x1 = x0 + wx - 1, z1 = z0 + wz - 1;
                 if (!rect(x0, z0, x1, z1, 1, 4)) continue;
-                if (!nearVillage(x0, z0, x1, z1, 9)) continue;
+                if (!nearVillage(x0, z0, x1, z1, 8)) continue;
                 int lift = meanLift(x0, z0, x1, z1);
                 for (int z = z0; z <= z1; z++) for (int x = x0; x <= x1; x++) plan.set(x, z, VillagePlan.FIELD, lift);
                 int[] near = nearestPoint((x0 + x1) / 2, (z0 + z1) / 2);

@@ -94,6 +94,75 @@ final class VillageTests {
         h.succeed();
     }
 
+    /**
+     * Studio (when {@code village-survey.request} exists in the server's folder): the settlement grid planned over the
+     * real overworld's noise for a seed (no chunks generated: the generator's own estimate, as world generation reads
+     * it), with how many anchors found a site, what the planning costs, and dumps of the first few for
+     * {@code tools/city/render.py} with their land under them.
+     */
+    static void survey(GameTestHelper h, long seed, int radius) throws java.io.IOException {
+        var level = h.getLevel();
+        var reg = level.registryAccess();
+        var ns = reg.lookupOrThrow(net.minecraft.core.registries.Registries.NOISE_SETTINGS)
+                .getOrThrow(net.minecraft.world.level.levelgen.NoiseGeneratorSettings.OVERWORLD);
+        var preset = reg.lookupOrThrow(net.minecraft.core.registries.Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST)
+                .getOrThrow(net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists.OVERWORLD);
+        var biomes = net.minecraft.world.level.biome.MultiNoiseBiomeSource.createFromPreset(preset);
+        var gen = new net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator(biomes, ns);
+        var rs = net.minecraft.world.level.levelgen.RandomState.create(reg.lookupOrThrow(net.minecraft.core.registries.Registries.NOISE), seed, ns.value());
+        var t = dev.awaken.village.world.GenTerrain.of(gen, level, rs);
+        java.nio.file.Path dir = level.getServer().getServerDirectory();
+        int[] centre = {0, 0};
+        int planned = 0, none = 0, dumped = 0;
+        long ns0 = 0;
+        StringBuilder sb = new StringBuilder();
+        var found = dev.awaken.village.world.FirstHamlet.search(seed, centre, t);
+        sb.append("the first hamlet's spot up the road: ").append(found == null ? "none" : found.x() + "," + found.z()).append('\n');
+        if (found != null) {
+            VillagePlan fp = VillagePlanner.plan(dev.awaken.village.world.Plans.request(found), t);
+            sb.append("  ").append(fp == null ? "no plan: " + VillagePlanner.WHY.get() : fp.toString()).append('\n');
+            if (fp != null) SettlementPaint.dump(dir.resolve("survey-first.bin"), fp, seed, fp.chunks(), (x, z) -> {
+                int top = t.top(fp.ox + x, fp.oz + z) - fp.baseY;
+                return t.water(fp.ox + x, fp.oz + z) > 0 ? top - 2000 : top;
+            });
+        }
+        for (var a : dev.awaken.village.world.SettlementGrid.near(seed, 0, 0, radius, centre)) {
+            long t0 = System.nanoTime();
+            VillagePlan p = VillagePlanner.plan(dev.awaken.village.world.Plans.request(a), t);
+            long dt = System.nanoTime() - t0;
+            ns0 += dt;
+            if (p == null) {
+                none++;
+                sb.append(a.key()).append(' ').append(a.kind()).append(" at ").append(a.x()).append(',').append(a.z()).append(": no site (").append(VillagePlanner.WHY.get()).append(")\n");
+                continue;
+            }
+            planned++;
+            sb.append(String.format(Locale.ROOT, "%s in %.0f ms%n", p, dt / 1e6));
+            if (dumped < 8) {
+                final VillagePlan fp = p;
+                SettlementPaint.dump(dir.resolve("survey-" + dumped + ".bin"), p, seed, p.chunks(), (x, z) -> {
+                    int top = t.top(fp.ox + x, fp.oz + z) - fp.baseY;
+                    return t.water(fp.ox + x, fp.oz + z) > 0 ? top - 2000 : top;
+                });
+                dumped++;
+            }
+        }
+        // the land round the first hamlet's anchor (top, ~ marks water), sixteen blocks a cell
+        var first = dev.awaken.village.world.SettlementGrid.first(seed, centre);
+        sb.append("\nround the first hamlet's anchor ").append(first.x()).append(',').append(first.z()).append(":\n");
+        for (int dz = -112; dz <= 112; dz += 16) {
+            for (int dx = -112; dx <= 112; dx += 16) {
+                int top = t.top(first.x() + dx, first.z() + dz);
+                sb.append(String.format(Locale.ROOT, "%4d%s", top, t.water(first.x() + dx, first.z() + dz) > 0 ? "~" : " "));
+            }
+            sb.append('\n');
+        }
+        String head = String.format(Locale.ROOT, "survey seed %d within %d: %d planned, %d no site, %.0f ms a plan on average%n", seed, radius, planned, none,
+                (planned + none) == 0 ? 0 : ns0 / 1e6 / (planned + none));
+        java.nio.file.Files.writeString(dir.resolve("village-survey.txt"), head + sb);
+        Awaken.LOG.info("[village] {}", head.trim());
+    }
+
     /** Where to put a bed in a plan's inn for the test (its first room cell, a row over the floor). */
     record CityPlanCheck(int x, int y, int z) {
         static CityPlanCheck inn(VillagePlan p) {
@@ -130,6 +199,14 @@ final class VillageTests {
         h.assertTrue(hamlet != null, "a hamlet fits the test valley");
         // the studio: a dump for tools/city/render.py when asked
         java.nio.file.Path dir = h.getLevel().getServer().getServerDirectory();
+        if (java.nio.file.Files.exists(dir.resolve("village-survey.request"))) {
+            try {
+                survey(h, 26102610L, 2600);
+            } catch (java.io.IOException e) {
+                h.fail("survey: " + e);
+                return;
+            }
+        }
         if (java.nio.file.Files.exists(dir.resolve("village-dump.request"))) {
             try {
                 for (VillagePlan p : new VillagePlan[]{v, hamlet}) {
@@ -138,6 +215,7 @@ final class VillageTests {
                         return land.water(p.ox + x, p.oz + z) > 0 ? top - 2000 : top;
                     });
                 }
+                SettlementPaint.dump(dir.resolve("village-rooms.bin"), v, 42L, v.chunks(), (x, z) -> land.top(v.ox + x, v.oz + z) - v.baseY, 4);
                 java.nio.file.Files.writeString(dir.resolve("village-dump.txt"), text(v).replace("|", "\n") + "\n\n" + text(hamlet).replace("|", "\n"));
             } catch (java.io.IOException e) {
                 h.fail("dump: " + e);

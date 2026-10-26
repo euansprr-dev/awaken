@@ -44,7 +44,11 @@ public final class VillageModule {
         VillageContent.register(modBus);
         modBus.addListener(VillageModule::onAddPackFinders);
         modBus.addListener(VillageNet::register);
-        NeoForge.EVENT_BUS.addListener((ServerAboutToStartEvent e) -> Plans.clear());
+        // after terrain has chosen the city's site (default priority): plans cleared, the first hamlet's spot found
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOW, (ServerAboutToStartEvent e) -> {
+            Plans.clear();
+            if (VillageService.enabled(e.getServer())) dev.awaken.village.world.FirstHamlet.find(e.getServer());
+        });
         NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> {
             Plans.clear();
             VillageService.serverStopped();

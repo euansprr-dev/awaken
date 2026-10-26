@@ -270,6 +270,11 @@ public final class SettlementPaint {
      * place. Returns the chunks written.
      */
     public static int dump(java.nio.file.Path out, Layout l, long seed, long[] chunks, java.util.function.IntBinaryOperator land) throws java.io.IOException {
+        return dump(out, l, seed, chunks, land, 0);
+    }
+
+    /** As {@link #dump}, with every house cut off {@code cut} rows over its floor (0: whole), so its rooms show from above. */
+    public static int dump(java.nio.file.Path out, Layout l, long seed, long[] chunks, java.util.function.IntBinaryOperator land, int cut) throws java.io.IOException {
         it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap<BlockState> ids = new it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap<>();
         java.util.List<String> palette = new java.util.ArrayList<>();
         palette.add("none");
@@ -288,6 +293,11 @@ public final class SettlementPaint {
                 for (int lz = 0; lz < 16; lz++) {
                     for (int lx = 0; lx < 16; lx++) {
                         int px = buf.px0 + lx, pz = buf.pz0 + lz;
+                        int pid = l.plotAt(px, pz);
+                        if (cut > 0 && pid >= 0) {
+                            int from = l.plot(pid).lift() + cut;
+                            for (int ry = from + 1; ry <= CityBuffer.YMAX; ry++) buf.cells[buf.index(lx, ry, lz)] = null;
+                        }
                         int top = land.applyAsInt(px, pz);
                         boolean wet = top <= -1000;
                         if (wet) top += 2000;

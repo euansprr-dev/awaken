@@ -545,7 +545,8 @@ final class CitizenWork implements Ledger.Work {
     private void ringHour(long now, int tod) {
         int hour = (6 + tod / 1000) % 24;
         int strokes = hour % 12 == 0 ? 12 : hour % 12;
-        long wait = hour == 6 || hour == 12 || hour == 18 ? AFTER_TUNE : 0;
+        // (Carillon waits for the carillon's tune at dawn, noon and dusk; a village bell has none)
+        long wait = c.site.carillon() && (hour == 6 || hour == 12 || hour == 18) ? AFTER_TUNE : 0;
         for (int b = 0; b < r.bells.size(); b++) {
             if (!ringerAt(b)) continue;
             boolean choir = "choir".equals(r.bells.get(b).landmark());
@@ -594,8 +595,13 @@ final class CitizenWork implements Ledger.Work {
                     if (level.getBlockEntity(pos) instanceof BellBlockEntity be) be.onHit(Direction.from2DDataValue((int) (p[2] & 3)));
                     boolean choir = "choir".equals(r.bells.get(b).landmark());
                     float pitch = alarm ? 1.15f : choir ? 0.84f : 0.92f + 0.05f * (b % 4);
-                    level.playSound(null, pos, alarm ? CitizensContent.BELL_ALARM.get() : choir ? CitizensContent.BELL_HOUR.get()
-                            : CitizensContent.BELL_DISTRICT.get(), SoundSource.AMBIENT, choir ? 6f : 4f, pitch);
+                    if (!c.site.carillon() && !alarm) {
+                        // (SPEC §28.6) a village's bell is Minecraft's own, heard across the fields
+                        level.playSound(null, pos, net.minecraft.sounds.SoundEvents.BELL_BLOCK, SoundSource.AMBIENT, 3.5f, 0.94f + 0.03f * (b % 3));
+                    } else {
+                        level.playSound(null, pos, alarm ? CitizensContent.BELL_ALARM.get() : choir ? CitizensContent.BELL_HOUR.get()
+                                : CitizensContent.BELL_DISTRICT.get(), SoundSource.AMBIENT, choir ? 6f : 4f, pitch);
+                    }
                     strokes++;
                 }
             }

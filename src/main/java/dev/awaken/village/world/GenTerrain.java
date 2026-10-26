@@ -39,6 +39,13 @@ public record GenTerrain(ChunkGenerator generator, LevelHeightAccessor heights, 
     }
 
     @Override
+    public long both(int x, int z) {
+        int top = top(x, z);
+        int floor = generator.getFirstOccupiedHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, heights, random);
+        return ((long) top << 32) | (Math.max(0, top - floor) & 0xffffffffL);
+    }
+
+    @Override
     public int family(int x, int z) {
         int y = top(x, z);
         Holder<Biome> b = biomes.getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(y), QuartPos.fromBlock(z));

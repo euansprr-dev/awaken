@@ -43,9 +43,94 @@ final class VillageCommands {
                     c.getSource().sendSuccess(() -> Component.literal(Plans.stats()), false);
                     return 1;
                 }))
+                .then(Commands.literal("info").executes(c -> info(c.getSource())))
+                .then(Commands.literal("board").executes(c -> board(c.getSource())))
+                .then(Commands.literal("trade").then(Commands.argument("job", StringArgumentType.word())
+                        .suggests((c, b) -> SharedSuggestionProvider.suggest(VillageService.TRADERS, b))
+                        .executes(c -> trade(c.getSource(), StringArgumentType.getString(c, "job")))))
+                .then(Commands.literal("standing").then(Commands.argument("points", com.mojang.brigadier.arguments.IntegerArgumentType.integer(-50, 200))
+                        .executes(c -> standing(c.getSource(), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "points")))))
+                .then(Commands.literal("start").executes(c -> start(c.getSource())))
                 .then(Commands.literal("view").then(Commands.argument("key", StringArgumentType.word())
                         .then(Commands.argument("name", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(VIEWS, b))
                                 .executes(c -> view(c.getSource(), StringArgumentType.getString(c, "key"), StringArgumentType.getString(c, "name"))))))));
+    }
+
+    /** The running settlement the player stands in, or the nearest within 300. */
+    static VillageService.@Nullable Live here(ServerPlayer p) {
+        VillageService.Live best = VillageService.at(p.level(), p.blockPosition());
+        if (best != null) return best;
+        double bd = 300;
+        for (VillageService.Live l : VillageService.all()) {
+            double d = Math.hypot(l.plan().ox - p.getX(), l.plan().oz - p.getZ());
+            if (d < bd) {
+                bd = d;
+                best = l;
+            }
+        }
+        return best;
+    }
+
+    private static int info(CommandSourceStack src) throws CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        VillageService.Live l = here(p);
+        if (l == null) {
+            src.sendFailure(Component.literal("No village running near you."));
+            return 0;
+        }
+        VillageState.Village v = l.rec();
+        String msg = String.format(Locale.ROOT, "%s | people %d, bodies %d, awake %s | prosperity %d, mood %d | your standing: %s (%d) | damage %d, requests %d | %s",
+                l.plan(), l.settlement().people(), l.settlement().bodies(), l.settlement().awake(), v.prosperity, v.mood,
+                VillageService.standingName(p, l), v.points(p.getUUID()), v.damage.size(), v.requests.size(), Plans.stats());
+        src.sendSuccess(() -> Component.literal(msg), false);
+        dev.awaken.Awaken.LOG.info("[village] info {}", msg);
+        return 1;
+    }
+
+    private static int board(CommandSourceStack src) throws CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        VillageService.Live l = here(p);
+        if (l == null) {
+            src.sendFailure(Component.literal("No village running near you."));
+            return 0;
+        }
+        VillageNet.openBoard(p, l);
+        return 1;
+    }
+
+    /** Opens a trader's goods (the nearest of that trade in the village): for tours and testing. */
+    private static int trade(CommandSourceStack src, String job) throws CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        VillageService.Live l = here(p);
+        if (l == null) {
+            src.sendFailure(Component.literal("No village running near you."));
+            return 0;
+        }
+        for (int rec = 0; rec < l.settlement().people(); rec++) {
+            if (!l.settlement().job(rec).equals(job)) continue;
+            if (VillageService.talk(p, l.settlement(), rec)) return 1;
+        }
+        src.sendFailure(Component.literal(l.plan().name + " has no " + job + "."));
+        return 0;
+    }
+
+    private static int standing(CommandSourceStack src, int points) throws CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        VillageService.Live l = here(p);
+        if (l == null) return 0;
+        VillageService.standing(p, l, points - l.rec().points(p.getUUID()), "command");
+        return 1;
+    }
+
+    /** Starts the people of the settlement nearest you now (they start by themselves within reach; tours don't wait). */
+    private static int start(CommandSourceStack src) throws CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        ServerLevel level = src.getServer().overworld();
+        VillagePlan plan = find(level, p, "nearest");
+        if (plan == null) return 0;
+        VillageService.Live l = VillageService.start(level, plan);
+        src.sendSuccess(() -> Component.literal(l == null ? plan.name + ": not started (not painted here, or not loaded)" : plan.name + " started"), false);
+        return l == null ? 0 : 1;
     }
 
     static GenTerrain terrain(ServerLevel level) {
