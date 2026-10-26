@@ -4501,7 +4501,8 @@ immovable, owner-only to break; loot table empty: the code returns the coal). `H
 camps 120, happenings, wards, the Living Wilds' calm). No town (`Town.arrivals` returns), no Spire, no requests, no cottage,
 no furniture recipes. The moment (`HomeNet.Kindled` to clients within 96): sparks drawn down into the coal for 14 ticks
 and a burst; from tick 10 the warmth runs out over 44 ticks as rings of `hearth_warmth` motes on the ground's height
-(eased out, brightness 1 → 0.45); fireflies if it's night; `hearth.take` (`sfx_hearth_take`: a settling thud, stone
+(eased out, brightness 1 → 0.45) with a ring of 40 light pools (radius 2.8, 0.30, and a fainter ring behind at 0.62 of
+it) drawn on the ground at the front through `CityGlow`; fireflies if it's night; `hearth.take` (`sfx_hearth_take`: a settling thud, stone
 clicks, a low hearth tone on D with its fifth, a faint D-A-F# bell chord; mono, 32 blocks). The grass tint itself is not
 changed (that needs a mixin into the biome tint cache); the warm wash of motes over the ground stands in for it. 50 ticks
 later the **YOUR GROUND** card (`client/NameScreen`, low on the screen, no dimming) with a name offered by
@@ -4554,7 +4555,9 @@ dawn and dusk; `Breaks` warns once of a standing gate within 256 due to break wi
 inside a Hearth with one, via `HearthHooks.tideCalm` in `living.api.Regions` (one line)), Lookout (12+ up, glass in three
 directions: `AtlasHooks.reveal` 256 round home when first recognised and on login; Mira tells a second rumour a play-day),
 Trophy Hall, Workshop (machines in it or in its walls pay ⌈×0.75⌉ essence: `HearthHooks.machineCost` in
-`above.machine.MachineBlockEntity.draw`, one line), Barracks. Toasts per new kind, topic `hearth_room`.
+`above.machine.MachineBlockEntity.draw`, one line), Barracks. Toasts per new kind, topic `hearth_room`. The Now line suggests a kind with two or more kinds of furniture
+only once two of them are in the radius (never from one flower pot or one bell); a kind with all its furniture but not its
+condition says so briefly ("Greenhouse: a glass roof").
 
 **Comfort, Style, Rested** (`Comfort`, `Rested`). Comfort 0-12: best bedroom grade (0-3) + a room with warmth 2+ + a table
 with 2+ seats + a room with two soft kinds + growing things indoors + the land: field (16 farmland), pen (2 untamed animals
@@ -4566,7 +4569,7 @@ minutes, perks `awaken:energy_regen` +0.25 and `awaken:craft_rate` +0.25 (a perk
 
 **The room panel** (`client/RoomPanel`: `visible()`, `build(Ui)`; data: attachment `awaken:hearth_here`, `RoomHere`, synced
 to its player when it changes, checked once a second). Name, grade, six readings as three pips each, purpose, "Lift it:
-…". Shown as the K Status page's first section (`RoomSection`, order -20) while you stand in a read room at home (PLAN
+…". Shown as the K Status page's first section (`RoomSection`, order -28: right under NOW, above the Atlas) while you stand in a read room at home (PLAN
 said "hold the band key": K opens the band on press today, so the panel lives on that page until The Way Forward's glance
 takes it, through the two calls above); and as every room's card in Your Hearth, which also gained a HOME section (Comfort
 with its bar and the next point, Style, the land, Rested minutes), the kinds you have as chips, at most three suggestions
