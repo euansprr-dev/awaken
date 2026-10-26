@@ -1,0 +1,24 @@
+# City Sight from disk (SPEC §20): rejoin the world farsight3-city.txt made, look from the quay and from high over
+# the walls; the status says how many chunks came back from disk before the server loaded them.
+# Run after farsight3-city.txt (it makes the world): RD=16 LENS=cinematic SLOT_WHO=far-sight PACK=perf,world \
+#      TECTONIC=awakened /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/farsight3-rejoin.txt 400
+world fs3city survival 20261024
+waitworld
+window 1440 900
+cmd awaken opening skip
+wait 40
+screen close
+cmd gamemode spectator
+gui 0
+hud off
+cmd gamerule send_command_feedback false
+wait 100
+farsight status
+cmd awaken city view quay
+wait 100
+shot fs3r_quay
+cmd tp @s ~ ~120 ~
+wait 100
+shot fs3r_high
+farsight status
+quit

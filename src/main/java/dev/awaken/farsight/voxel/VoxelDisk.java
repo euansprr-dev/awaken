@@ -63,11 +63,16 @@ public final class VoxelDisk {
         return open;
     }
 
-    /** Writes what changed and forgets the store (the server stops). */
+    /** Writes what changed and forgets the store (the server stops): waits for the write, at most 10 s (its thread dies with the game). */
     public static synchronized void close() {
         VoxelDisk d = open;
         open = null;
-        if (d != null) IO.execute(d::flushNow);
+        if (d == null) return;
+        try {
+            IO.submit(d::flushNow).get(10, java.util.concurrent.TimeUnit.SECONDS);
+        } catch (Exception e) {
+            Awaken.LOG.warn("[farsight] city sight: the last write didn't finish: {}", e.toString());
+        }
     }
 
     /** Writes what changed, on the IO thread (a level save). */

@@ -41,6 +41,8 @@ public final class VoxelCapture {
     /** Kept chunks within this of the player are read back from disk (under the client's keep, 1.9 km). */
     static final double FROM_DISK = 1700;
     private static int lastDiskTick = Integer.MIN_VALUE;
+    /** Snapshots read back from disk this session (status). */
+    public static final AtomicInteger fromDisk = new AtomicInteger();
     private static int captured;
 
     /** The client took a snapshot from {@link #SNAPSHOTS}. */
@@ -180,6 +182,7 @@ public final class VoxelCapture {
                     if (!CITY.add(ChunkPos.pack(snap.chunkX(), snap.chunkZ()))) return;
                 }
                 waiting.incrementAndGet();
+                fromDisk.incrementAndGet();
                 SNAPSHOTS.add(snap);
             });
         }
