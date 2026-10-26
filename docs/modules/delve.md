@@ -74,6 +74,9 @@ kinds, a diamond against coal, the deep budget after the shallow one is worn, di
 - The lamp's light is drawn, not real light: mobs don't see it and it doesn't stop spawns; its rays allocate a little per
   frame while someone wears one.
 - No zip line between pitons (the Ascent has nothing that rides a run of blocks yet).
+- Not proven in a tour yet: the Deepglass block's own look (its shot shows the glow specks, not the crystal), a rope
+  hanging from a piton (the shots show the shaft and the grip, not the rope clearly), the lamp seen in third person
+  (its shot is black).
 - Judged on the preview sheet and the tour (shots: /Volumes/MEDIA/tour-shots/world-depth-w2-2026-10-26); the sounds were
   checked by their loudness, not yet by ear in game. The tour stages its chamber 700 blocks off Carillon: the city's
   footprint is protected all the way down for survival players, so neither the heavy strike nor a cave-in happens there.
