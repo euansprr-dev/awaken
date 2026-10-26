@@ -119,7 +119,7 @@ final class BellTrouble implements Plot {
             if (ringer >= 0) {
                 Vec3 at = TroubleDirector.stand(c.level(), l, p.ox + p.bell.ringerX() + 0.5, p.oz + p.bell.ringerZ() + 0.5);
                 TroubleDirector.stage(l, ringer, at, TroubleDirector.yaw(at, Vec3.atCenterOf(bell)), "bell_pull", "");
-                if (c.now() % 200 == 13) TroubleDirector.say(c.level(), l, ringer, TroubleText.line(c.level(), "village.trouble.bell.dusk", c.now() / 200), 90);
+                if (TroubleDirector.every(c, 200, 13)) TroubleDirector.say(c.level(), l, ringer, TroubleText.line(c.level(), "village.trouble.bell.dusk", c.now() / 200), 90);
             }
         }
         if (t.kin >= 0) {
@@ -223,7 +223,7 @@ final class BellTrouble implements Plot {
         Vec3 forge = p.forge != null ? new Vec3(p.ox + p.forge.smithX() + 0.5, p.baseY + p.forge.lift() + 1, p.oz + p.forge.smithZ() + 0.5) : TroubleDirector.well(l);
         Vec3 anvil = p.forge != null ? new Vec3(p.ox + p.forge.anvilX() + 0.5, forge.y, p.oz + p.forge.anvilZ() + 0.5) : forge;
         if (smith >= 0) TroubleDirector.stage(l, smith, forge, TroubleDirector.yaw(forge, anvil), "hammer", "hammer");
-        if (c.now() % 10 == 3) {
+        if (TroubleDirector.every(c, 10, 3)) {
             c.level().playSound(null, BlockPos.containing(anvil), SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 0.6f, 0.9f + c.level().getRandom().nextFloat() * 0.2f);
             c.level().sendParticles(net.minecraft.core.particles.ParticleTypes.LAVA, anvil.x, anvil.y + 0.6, anvil.z, 2, 0.2, 0.1, 0.2, 0.0);
         }

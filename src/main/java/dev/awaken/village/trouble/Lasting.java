@@ -52,7 +52,7 @@ final class Lasting {
             if (!left) mem.data.remove("char_queue");
         }
         // smoke over what burned; when its days are done the fires in the ruins go cold
-        if (c.day() <= mem.get("smoke_until", -1) && c.now() % 20 == 13) smoke(c, l, mem);
+        if (c.day() <= mem.get("smoke_until", -1) && TroubleDirector.every(c, 20, 13)) smoke(c, l, mem);
         if (mem.get("sm_n", 0) > 0 && mem.get("sm_cold", 0) == 0 && c.day() > mem.get("smoke_until", -1)) douse(c.level(), mem);
         // the survivors by the well
         if (!mem.homeless.isEmpty()) camp(c, l, mem);
@@ -68,7 +68,8 @@ final class Lasting {
         for (int plot : mem.charred) {
             CityPlan.Plot q = p.plots.get(plot);
             double x = p.ox + (q.x0() + q.x1()) / 2.0 + 0.5, z = p.oz + (q.z0() + q.z1()) / 2.0 + 0.5;
-            double y = p.baseY + q.lift() + 3;
+            // from the top of what stands there, so it rises clear (smoke bumps into a ceiling and stays under it)
+            double y = c.level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, (int) Math.floor(x), (int) Math.floor(z)) + 0.3;
             // a tall column rising (seen from far off: overrideLimiter sends it to 512; one at a time, so each keeps its lift)
             // and a few embers low in the ruin
             var rnd = c.level().getRandom();
@@ -95,7 +96,9 @@ final class Lasting {
         for (int x = p.ox + q.x0() + 1; x < p.ox + q.x1(); x++)
             for (int z = p.oz + q.z0() + 1; z < p.oz + q.z1(); z++)
                 for (int y = y0 + 1; y <= y0 + 3; y++) cells.add(new BlockPos(x, y, z));
-        cells.sort(java.util.Comparator.comparingDouble(b -> Math.hypot(b.getX() + 0.5 - cx, b.getZ() + 0.5 - cz) + (b.getY() - y0) * 0.6));
+        // under open sky if it can be (its smoke goes up past the roofline, not along a ceiling)
+        cells.sort(java.util.Comparator.comparingDouble(b -> Math.hypot(b.getX() + 0.5 - cx, b.getZ() + 0.5 - cz) + (b.getY() - y0) * 0.6
+                + (level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, b.getX(), b.getZ()) > b.getY() + 1 ? 40 : 0)));
         for (BlockPos at : cells) {
             {
                 if (!level.isLoaded(at)) return;
@@ -155,7 +158,7 @@ final class Lasting {
             String act = night ? "sit" : k % 3 == 0 ? "talk" : k % 3 == 1 ? "arms_crossed" : "sit";
             TroubleDirector.stage(l, rec, at, TroubleDirector.yaw(at, fire), act, "");
         }
-        if (c.now() % 300 == 13 && n > 0) {
+        if (TroubleDirector.every(c, 300, 13) && n > 0) {
             int rec = mem.homeless.get((int) Math.floorMod(c.now() / 300, (long) n));
             TroubleDirector.say(c.level(), l, rec, TroubleText.line(c.level(), "village.trouble.burning.survivor", c.now() / 300), 90);
         }

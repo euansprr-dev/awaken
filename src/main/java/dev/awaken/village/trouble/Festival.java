@@ -160,7 +160,7 @@ final class Festival implements Plot {
             finish(c, t, l);
             return;
         }
-        if (c.now() % 200 == 13) {
+        if (TroubleDirector.every(c, 200, 13)) {
             long[] ends = new long[(int) t.get("ropes", 0)];
             for (int i = 0; i < ends.length; i++) ends[i] = t.get("e" + i, 0);
             TroubleNet.festoons(c.level(), l.key(), TroubleDirector.well(l), ends);

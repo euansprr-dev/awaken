@@ -172,7 +172,7 @@ final class Missing implements Plot {
             Vec3 look = new Vec3(at.x + Math.cos(a) * 12, at.y, at.z + Math.sin(a) * 12);
             TroubleDirector.stage(l, party.get(i), at, TroubleDirector.yaw(at, look), i % 2 == 0 ? "point_shout" : "look_around", "lantern");
         }
-        if (dark && !party.isEmpty() && c.now() % 120 == 13) {
+        if (dark && !party.isEmpty() && TroubleDirector.every(c, 120, 13)) {
             String name = TroubleText.given(l.settlement().personName(t.person));
             TroubleDirector.say(c.level(), l, party.get((int) Math.floorMod(c.now() / 120, (long) party.size())),
                     TroubleText.fill(TroubleText.line(c.level(), "village.trouble.missing.search", c.now() / 120), "person", name, "upper", name.toUpperCase()), 70);

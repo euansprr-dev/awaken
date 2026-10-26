@@ -113,7 +113,7 @@ final class Rebuild implements Plot {
         boolean someone = false;
         for (ServerPlayer p : c.level().players()) someone |= p.distanceToSqr(at) < 12 * 12 && !t.helped(p.getUUID());
         TroubleDirector.stage(l, t.kin, at, someone ? Float.NaN : TroubleDirector.yaw(at, board), someone ? "talk" : "arms_crossed", "cane");
-        if (someone && c.now() % 180 == 13)
+        if (someone && TroubleDirector.every(c, 180, 13))
             TroubleDirector.say(c.level(), l, t.kin, TroubleDirector.fill(c, t, TroubleText.line(c.level(), "village.trouble.rebuild.call", c.now() / 180)), 100);
     }
 

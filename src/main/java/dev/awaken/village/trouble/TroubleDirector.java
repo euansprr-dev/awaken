@@ -135,6 +135,16 @@ public final class TroubleDirector {
 
     // ---- the tick ---------------------------------------------------------------------------------------------------
 
+    /**
+     * Whether this second is one of every {@code ticks} (at {@code phase} ticks into it). The troubles tick once a second
+     * on the server's own count, which a loaded world's clock is offset from by any amount: counted in seconds of the
+     * clock, so it holds whatever the offset.
+     */
+    static boolean every(Plot.Ctx c, int ticks, int phase) {
+        long period = Math.max(1, ticks / 20);
+        return Math.floorMod(c.now() / 20, period) == (phase / 20) % period;
+    }
+
     static void tick(MinecraftServer server) {
         if (server.getTickCount() % 20 != 13) return;
         ServerLevel level = server.overworld();

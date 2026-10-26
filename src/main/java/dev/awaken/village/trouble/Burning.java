@@ -162,7 +162,7 @@ final class Burning implements Plot {
         boolean someone = false;
         for (ServerPlayer p : c.level().players()) someone |= p.distanceToSqr(at) < 12 * 12 && !t.helped(p.getUUID());
         TroubleDirector.stage(l, e, at, someone ? Float.NaN : TroubleDirector.yaw(at, new Vec3(camp.getX(), at.y, camp.getZ())), someone ? "talk" : "arms_crossed", "cane");
-        if (someone && c.now() % 160 == 13)
+        if (someone && TroubleDirector.every(c, 160, 13))
             TroubleDirector.say(c.level(), l, e, TroubleDirector.fill(c, t, TroubleText.line(c.level(), "village.trouble.burning.call", c.now() / 160)), 100);
     }
 
@@ -360,7 +360,7 @@ final class Burning implements Plot {
         // the fires: the line works them down, alone they grow; at full they eat the house
         boolean burning = false;
         for (int plot : plots(t)) burning |= fire(c, t, l, plot);
-        if (c.now() % 200 == 13 && !raiders.isEmpty() && !watch.isEmpty())
+        if (TroubleDirector.every(c, 200, 13) && !raiders.isEmpty() && !watch.isEmpty())
             TroubleDirector.say(c.level(), l, watch.get(0), TroubleDirector.fill(c, t, TroubleText.line(c.level(), "village.trouble.burning.fight", c.now() / 200)), 70);
         boolean dawn = c.tod() >= 22600 || c.tod() < 12000;
         if (raiders.isEmpty() && !burning || dawn) held(c, t, l, raiders, dawn);

@@ -274,9 +274,9 @@ final class Taken implements Plot {
             case HOME -> reunion(c, t, l, this::done);
             default -> {}
         }
-        if (t.stage <= MORNING && c.now() % 100 == 13) Runner.tick(c, t, l);
+        if (t.stage <= MORNING && TroubleDirector.every(c, 100, 13)) Runner.tick(c, t, l);
         // the trail for its followers (the Tracks perk lights it on their clients)
-        if (c.now() % 100 == 33 && t.stage <= LAIR) {
+        if (TroubleDirector.every(c, 100, 33) && t.stage <= LAIR) {
             for (java.util.UUID h : t.helpers) {
                 ServerPlayer hp = c.level().getServer().getPlayerList().getPlayer(h);
                 if (hp != null && TroubleDirector.horizontal(hp.blockPosition(), BlockPos.of(t.place)) < REACH + 200) TroubleNet.trail(hp, t, true);
@@ -325,8 +325,8 @@ final class Taken implements Plot {
             TroubleDirector.stage(l, out.get(i), at, TroubleDirector.yaw(at, look), i == out.size() / 2 ? "point_shout" : watch ? "halberd_stand" : "look_around",
                     watch && i != out.size() / 2 ? "halberd" : "lantern");
         }
-        if (c.now() % 160 == 13) TroubleDirector.say(c.level(), l, t.kin, TroubleDirector.fill(c, t, TroubleText.line(c.level(), "village.trouble.taken.night", c.now() / 160)), 90);
-        if (c.now() % 220 == 113 && !out.isEmpty())
+        if (TroubleDirector.every(c, 160, 13)) TroubleDirector.say(c.level(), l, t.kin, TroubleDirector.fill(c, t, TroubleText.line(c.level(), "village.trouble.taken.night", c.now() / 160)), 90);
+        if (TroubleDirector.every(c, 220, 113) && !out.isEmpty())
             TroubleDirector.say(c.level(), l, out.get(out.size() / 2), TroubleDirector.fill(c, t, TroubleText.line(c.level(), "village.trouble.taken.watch", c.now() / 220)), 80);
     }
 
@@ -347,7 +347,7 @@ final class Taken implements Plot {
             TroubleDirector.stage(l, m, at, TroubleDirector.yaw(at, kinAt), "arms_crossed", "");
             k++;
         }
-        if (someone && c.now() % 140 == 13)
+        if (someone && TroubleDirector.every(c, 140, 13))
             TroubleDirector.say(c.level(), l, t.kin, TroubleDirector.fill(c, t, TroubleText.line(c.level(), "village.trouble.taken.call", c.now() / 140)), 100);
     }
 

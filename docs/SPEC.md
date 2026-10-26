@@ -6302,7 +6302,8 @@ one night in eight (the Bell); a surface lair within 400 whose beast is home, el
 400, on one night in four (Taken); a storm at dusk, one in three (Gone Missing); 24+ blocks of damage (the Rebuild). The
 Burning comes from the camps (below). Each trouble runs on its own play-day clock (`due`) and ends without you when it
 runs out, unless someone is mid-deed (carrying someone home, at the lair, the raid's night, the masons at work, a bell
-being cast); its plot ticks each second while its village is awake. **World option**: game rule `awaken:calm_villages`
+being cast); its plot ticks each second while its village is awake (its once-in-a-while beats, a line said, the runner,
+the smoke, counted in seconds of the world's clock, so a loaded world's clock offset never silences them). **World option**: game rule `awaken:calm_villages`
 (off by default; in the world screen's rules): no troubles; festivals and growth go on.
 
 **Found, never listed.** The call is in the world: the village bell rings the alarm fast and is heard to 256 (a new
