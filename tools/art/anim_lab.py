@@ -756,6 +756,92 @@ def third_sheet(out, style):
     return out, rep
 
 
+# ---- holds: first person at rest beside the same weapon in F5 --------------------------------------------------------
+
+STYLES = ["longsword", "axe", "maul", "spear", "greatblade", "rapier", "daggers", "katana", "twinblades", "glaive", "scythe",
+          "gauntlets", "chainblade", "shieldblade", "warstaff", "precursor"]
+
+
+class HeldAs(Held):
+    """Held with a given first-person display (rotation, translation, scale) instead of the one in its model JSON."""
+
+    def __init__(self, wid, display):
+        saved = MR.held
+        MR.held = lambda _w: display
+        try:
+            super().__init__(wid)
+        finally:
+            MR.held = saved
+
+
+def fp_rest(wid, display=None, size=(480, 270)):
+    held = HeldAs(wid, display) if display is not None else Held(wid)
+    img = frame(held, np.zeros(3), np.eye(3)).resize(size, Image.LANCZOS)
+    dr = ImageDraw.Draw(img)
+    w, h = size
+    dr.line([(w / 2 - 6, h / 2), (w / 2 + 6, h / 2)], fill=(255, 255, 255))
+    dr.line([(w / 2, h / 2 - 6), (w / 2, h / 2 + 6)], fill=(255, 255, 255))
+    return img
+
+
+def f5(wid, yaw=-62.0, pitch=10.0, px=7.0, size=(300, 270)):
+    """The weapon in the right hand of the standing figure (F5's own size: vanilla's third-person hold), from the front
+    right so its length shows."""
+    import power_casts as PC
+    m, tex = MR.load(wid)
+    c = PC.Clip("__idle", [(0, PC.NEUTRAL, "linear")], 1)
+    frames = PC.part_frames(c.sample(0.0, 8.0), 8.0)
+    pts = np.array(blade_3p(frames, list(m["pos"])))
+    cam = np.array(PC._cam(yaw, pitch))
+    q = pts @ cam.T
+    figb = PC.strip_bounds([c], yaw, pitch)
+    minx, maxx = min(figb[0], q[:, 0].min()), max(figb[1], q[:, 0].max())
+    miny, maxy = min(figb[2], q[:, 1].min()), max(figb[3], q[:, 1].max())
+    bounds = (minx - 2, maxx + 2, miny - 2, maxy + 2)
+    fig = PC.frame_image(c, 0, yaw, pitch, px, bounds).convert("RGB")
+    offx, offy = 8 - bounds[0] * px, 8 - bounds[2] * px
+    screen = {"sx": q[:, 0] * px + offx, "sy": q[:, 1] * px + offy, "sz": -q[:, 2],
+              "nv": (m["nrm"] @ np.array(PC._cam(yaw, pitch)).T)}
+    wimg = MR._raster(m, tex, screen, fig.size, np.array([1, 2, 3]), time=0.27)
+    a = np.asarray(wimg).astype(int)
+    mask = (np.abs(a - np.array([1, 2, 3])).sum(axis=2) > 0)[..., None]
+    out = np.where(mask, a, np.asarray(fig))
+    im = Image.fromarray(out.astype(np.uint8), "RGB")
+    im.thumbnail(size, Image.LANCZOS)
+    canvas = Image.new("RGB", size, (34, 37, 46))
+    canvas.paste(im, ((size[0] - im.width) // 2, (size[1] - im.height) // 2))
+    return canvas
+
+
+def holds_sheet(out, styles=None, new=None, tier="gatewrought"):
+    """Each style: first person at rest as it is (the model JSON), as {@code new} would hold it, and in F5."""
+    styles = styles or STYLES
+    rows = []
+    for st in styles:
+        wid = f"{tier}_{st}"
+        cells = [fp_rest(wid)]
+        if new is not None:
+            cells.append(fp_rest(wid, new(wid)))
+        cells.append(f5(wid))
+        rows.append((st, cells))
+    cw = sum(c.width for c in rows[0][1]) + 10 * len(rows[0][1])
+    ch = rows[0][1][0].height + 18
+    sheet = Image.new("RGB", (cw, ch * len(rows) + 20), (14, 15, 20))
+    dr = ImageDraw.Draw(sheet)
+    heads = ["first person at rest, now"] + (["first person, the new hold"] if new is not None else []) + ["F5 (true size)"]
+    for r, (st, cells) in enumerate(rows):
+        y = 20 + r * ch
+        x = 0
+        dr.text((6, y + 2), st, fill=(230, 232, 240))
+        for i, c in enumerate(cells):
+            sheet.paste(c, (x, y + 16))
+            if r == 0:
+                dr.text((x + 6, 4), heads[i], fill=(170, 175, 190))
+            x += c.width + 10
+    sheet.save(out)
+    return out
+
+
 def film(frames_dir, out):
     """Onion-skin of the game's own frames (sorted by name), the moving pixels overlaid, later ones stronger."""
     names = sorted(n for n in os.listdir(frames_dir) if n.lower().endswith(".png"))

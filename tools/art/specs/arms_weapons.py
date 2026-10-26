@@ -3101,7 +3101,7 @@ def write_all(only=None):
         # the hands' base: a particle, no geometry of its own (the mesh draws itself), vanilla's third-person hold and
         # our own first-person one (FIRST_PERSON below)
         _write(os.path.join(RES, "assets/awaken/models/item", wid + "_in_hand.json"), {
-            "parent": "minecraft:item/handheld", "textures": {"particle": tex + "_icon"}, "display": hold_of(hold_key(row))})
+            "parent": "minecraft:item/handheld", "textures": {"particle": tex + "_icon"}, "display": row_hold(row, built.pos / 16.0)})
         _write(os.path.join(RES, "assets/awaken/items", wid + ".json"), {"model": {
             "type": "minecraft:select", "property": "minecraft:display_context",
             "cases": [{"when": ["gui", "ground", "fixed", "on_shelf"], "model": {"type": "minecraft:model", "model": "awaken:item/" + wid}}],
@@ -3375,6 +3375,29 @@ def contact_sheet(out, style="longsword"):
     return out
 
 
+def row_hold(row, pos):
+    """A weapon's first-person hold: its style's real hold (arms_holds.HOLDS, written as the weapon is really held) solved
+    for its own mesh so it sits in the hand like every other of its style; the gauntlets keep their worn hold."""
+    import arms_holds as AH
+    d = AH.hold_for(row[8], pos)
+    if d is None:
+        return hold_of(hold_key(row))
+    rot, tr, sc = d
+    return {"firstperson_righthand": {"rotation": rot, "translation": tr, "scale": [sc, sc, sc]},
+            "firstperson_lefthand": {"rotation": [rot[0], -rot[1], -rot[2]], "translation": tr, "scale": [sc, sc, sc]}}
+
+
+def write_holds():
+    """Only the holds (models/item/<id>_in_hand.json), from the meshes already built: no mesh or texture is re-made."""
+    for row in CATALOG:
+        wid = row[0]
+        m = MS.read(os.path.join(RES, "assets/awaken/arms/weapons", wid + ".mesh"))
+        path = os.path.join(RES, "assets/awaken/models/item", wid + "_in_hand.json")
+        model = json.load(open(path))
+        model["display"] = row_hold(row, m["pos"])
+        _write(path, model)
+
+
 def held_as(style):
     """A style's first-person hold as mesh_render takes it: (rotation, translation, scale)."""
     fp = hold_of(style)["firstperson_righthand"]
@@ -3432,13 +3455,8 @@ def check():
             q = np.array(pts) / 16.0
             if (q < lo - 0.05).any() or (q > hi + 0.05).any() or rate <= 0 or radius <= 0:
                 bad.append(f"{row[0]}: a stream off the weapon, or with no rate or spread")
-        if True:
-            sx, sy, height = fp_screen(built, hold_key(row))
-            g1 = look.get("grip", (-1, 3))[1]
-            above = height > g1 + (height.max() - g1) / 2  # the outer half of its reach
-            if (sx[above] < 0.02).any() or (sx[above] > 0.98).any() or (sy[above] < FP_TOP).any() or (sy[above] > 0.98).any():
-                bad.append(f"{row[0]}: in first person the outer half of its reach leaves the view "
-                           f"(x {sx[above].min():.2f}..{sx[above].max():.2f}, y {sy[above].min():.2f}..{sy[above].max():.2f})")
+        # (the old rule, every point inside the view, shrank every style to the Longsword's outline; the holds are now
+        # each weapon's own, true to its size, and a spear's point may leave the view: arms_holds.py)
         if (row[2] in ("B", "A", "S")) != bool(built.streams):
             bad.append(f"{row[0]}: light lifts off the B, A and S blades and only those")
         alpha = np.asarray(icon(make(row, clean=True)[0], look))[..., 3]
@@ -3461,6 +3479,10 @@ def main(argv):
         if cmd == "build":
             write_all(argv[1:] or None)
             print("written")
+        return 0
+    if cmd == "holds":  # only the first-person holds (models/item/<id>_in_hand.json)
+        write_holds()
+        print("holds written")
         return 0
     if cmd == "recipes":  # only the recipes (no meshes or textures re-made)
         write_recipes()

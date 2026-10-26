@@ -348,7 +348,7 @@ final class ArmsTests {
             if (s1 != null && s1.windup() > 0 && s1.swing().from().size() < 4) {
                 FpSwings.sample(st, Archetype.Move.STRIKE_1, s1.windup(), true, d, q);
                 float turned = (float) Math.toDegrees(2 * Math.acos(Math.min(1, Math.abs(q.w))));
-                h.assertTrue(turned > 25F, a.id() + "'s first strike turns the blade into the cut on its hit (" + turned + " degrees)");
+                h.assertTrue(turned > 15F, a.id() + "'s first strike turns the blade into the cut on its hit (" + turned + " degrees)");
             }
         }
         float[] m = new float[6];

@@ -3746,6 +3746,24 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   model). Lab numbers (the review set, 2026-10-26): every slash and chop crosses within 0.11 of the half-frame of the
   crosshair (most within 0.05; the Chain-blade's and War-staff's long blades +0.11..0.13), edge lead 0.87-1.00 through
   the blow (before: Longsword strikes 1 and 2 at 0.41 and 0.17, crossing 0.45 above). Test `arms_fp_swings`.
+- **First person, the hold** (tools/art/specs/arms_holds.py; Euan 2026-10-26: "a spear should still feel like you're
+  holding a spear. Right now in first person, it just looks like a sword"): every style is held as that weapon really
+  is, written in view terms (where the business end points: degrees left of ahead and up; its roll about its length;
+  where the hand closes, from vanilla's resting hand; for an axe, a glaive or a scythe the side its working edge faces)
+  and solved for each weapon from its own mesh, so each is seated in the hand. One scale for all (0.5, the Longsword's;
+  the Daggers 0.575 so their blade reads): a spear is as much longer in hand than a longsword as in F5 and a dagger as
+  much shorter, and a long point may leave the view. Longsword up and forward to the left, its flat to the eye
+  (18 left, 52 up); Rapier en garde, the point forward at the target's height (20, 18); Katana two-handed at the
+  middle, the edge up (10, 36); Spear the shaft across the lower view, gripped part way, the head forward and up
+  (24, 22); Glaive the same with the blade higher, its edge in (18, 34); Scythe the snath up, the blade reaching in
+  across the top (8, 64); War-staff at its middle across the body (58, 28); Greatblade two-handed, raised, near the
+  middle (20, 60); Maul two hands low on the haft, the head up (6, 58); Axe the head up, its bit in (10, 58); Daggers
+  short, the point forward (18, 34); Twinblades at the middle, the blades either way across (62, 34); Chain-blade the
+  head forward on its chain (18, 38); Shieldblade the shield to the front, the blade above it (30, 62); Precursor Arm
+  forward like a drawn arm (14, 24); the Gauntlets keep their worn hold. `python3 tools/art/specs/arms_weapons.py
+  holds` rewrites only the holds; the old check that kept every point inside the view (it shrank every style to the
+  Longsword's outline) is gone. The swings are baked from these holds (they start and end at rest), and the lab's
+  holds sheets (docs/combat/anim-lab/holds-*.png) show each style before, after and in F5.
 - **The animation lab** (tools/art/anim_lab.py; SPEC §25, Euan's ask for a way to see the motion): `sheet` / `all`
   draw each strike's first-person frames as the game composes them (the swing, Hands' view layer, vanilla's rest, the
   weapon's hold and mesh, 70 degrees) as an onion-skin with the blade tip's path (wind-up blue, blow gold, recovery
