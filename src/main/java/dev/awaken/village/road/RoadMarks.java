@@ -98,14 +98,10 @@ final class RoadMarks {
         String far = a.distance() <= 0 ? "" : distance(a.distance());
         String[] lines = new String[4];
         java.util.Arrays.fill(lines, "");
-        if (name.length == 1) {
-            lines[1] = name[0];
-            lines[2] = far;
-        } else {
-            lines[0] = name[0];
-            lines[1] = name[1];
-            lines[2] = far;
-        }
+        // one line in the middle of the board, two from the top, three filling it; the distance under the name
+        int top = name.length == 1 ? 1 : 0;
+        for (int i = 0; i < name.length; i++) lines[top + i] = name[i];
+        lines[Math.min(3, top + name.length)] = far;
         SignText.Mutable t = SignText.EMPTY.asMutable().setColor(ink);
         for (int i = 0; i < 4; i++) t.setLine(i, Component.literal(lines[i]));
         return t.asImmutable();
@@ -132,18 +128,54 @@ final class RoadMarks {
         return w;
     }
 
-    /** A name too wide for the board, broken where its parts meet (a capital, a space, "-"), else near the middle. */
+    /**
+     * A name on the board's lines (at most three, each within its {@link #LINE} pixels: a wider line loses its end): word by
+     * word, and a word too wide on its own broken where its parts meet (a first part we know), else near its middle.
+     */
     static String[] split(String name) {
-        if (width(name) <= 58) return new String[]{name};
-        int sp = name.lastIndexOf(' ', name.length() / 2 + 4);
-        if (sp > 0) return new String[]{name.substring(0, sp), name.substring(sp + 1)};
-        // the grid's names join a first part and an ending: break after the first part when it's one we know
-        for (String first : FIRSTS) {
-            if (name.startsWith(first) && name.length() > first.length() + 1) return new String[]{first + "-", name.substring(first.length())};
+        if (width(name) <= LINE) return new String[]{name};
+        java.util.List<String> words = new java.util.ArrayList<>();
+        for (String w : name.split(" ")) {
+            if (width(w) <= LINE) {
+                words.add(w);
+                continue;
+            }
+            String first = null;
+            for (String f : FIRSTS) if (w.startsWith(f) && w.length() > f.length() + 1) first = f;
+            String rest = w;
+            if (first != null) {
+                words.add(first + "-");
+                rest = w.substring(first.length());
+            }
+            // what still won't fit, as much as fits each line
+            while (width(rest) > LINE) {
+                int cut = rest.length() - 1;
+                while (cut > 1 && width(rest.substring(0, cut) + "-") > LINE) cut--;
+                words.add(rest.substring(0, cut) + "-");
+                rest = rest.substring(cut);
+            }
+            words.add(rest);
         }
-        int mid = name.length() / 2;
-        return new String[]{name.substring(0, mid) + "-", name.substring(mid)};
+        java.util.List<String> out = new java.util.ArrayList<>();
+        StringBuilder line = new StringBuilder();
+        for (String w : words) {
+            // a broken word's parts join again where they share a line
+            String next = line.isEmpty() ? w : line.charAt(line.length() - 1) == '-' ? line.substring(0, line.length() - 1) + w : line + " " + w;
+            if (!line.isEmpty() && width(next) > LINE) {
+                out.add(line.toString());
+                line = new StringBuilder(w);
+            } else line = new StringBuilder(next);
+        }
+        if (!line.isEmpty()) out.add(line.toString());
+        while (out.size() > 3) {
+            out.set(1, out.get(1) + " " + out.get(2));
+            out.remove(2);
+        }
+        return out.toArray(String[]::new);
     }
+
+    /** How wide a line of the board may be. */
+    static final int LINE = 58;
 
     private static final String[] FIRSTS = {"Hollow", "Bright", "Kettle", "Thorn", "Elder", "Brook", "Hazel", "Stone", "Alder", "Green", "Cross",
             "Bram", "Wren", "Mill", "Rook", "Cold", "Fair", "Long", "Mere", "Lark", "Wick", "Bell", "Ash", "Fen", "Oak", "Low"};

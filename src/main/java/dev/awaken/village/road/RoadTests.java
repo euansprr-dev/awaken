@@ -109,6 +109,13 @@ public final class RoadTests {
                 named |= s.getText(net.minecraft.world.level.block.entity.SignTextSlot.FRONT).getMessages(false).stream().anyMatch(c -> c.getString().contains("Other") || c.getString().contains("wick"));
         }
         h.assertTrue(named, "an arm names the next place");
+        // a long name keeps every word, each line within the board (a wider line loses its end)
+        for (String nm : new String[]{"The Sleeping Rest", "The Laughing Goose", "Kettleminsterbury"}) {
+            String[] ls = RoadMarks.split(nm);
+            boolean fits = ls.length <= 3;
+            for (String l : ls) fits &= RoadMarks.width(l) <= RoadMarks.LINE;
+            h.assertTrue(fits && String.join(" ", ls).replace("- ", "").equals(nm), "the board holds " + nm + ": " + java.util.Arrays.toString(ls));
+        }
         // in worldgen a sign has no level yet: its words go in without one
         var loose = new net.minecraft.world.level.block.entity.HangingSignBlockEntity(BlockPos.ZERO,
                 net.minecraft.world.level.block.Blocks.OAK_WALL_HANGING_SIGN.defaultBlockState());
