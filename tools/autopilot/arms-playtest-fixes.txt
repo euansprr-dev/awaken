@@ -1,0 +1,142 @@
+# Arms after Euan's playtest of c5a63dda (SPEC §25): the Axe, Greatblade and Katana held edge first, at rest and at the
+# hit of their first strike (and two single-edged tiers at rest); the Katana's first cut with its wind-up; a press held
+# into the charge (no strike first), held well past full and loosed only on the release; a zombie's untold blows met
+# by a guard raised and lowered on a steady beat, the wider window catching them. Run with PACK=feel (the animation
+# libraries and Bendable Cuboids, as Euan plays). Clips: fix_katana_s1, fix_charge, fix_zombie_parry.
+world armsfix creative 779
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+camera first
+cmd tp @s ~ 200 ~ 0 0
+wait 20
+cmd fill ~-12 ~-1 ~-12 ~12 ~-1 ~14 minecraft:smooth_stone
+cmd kill @e[type=minecraft:husk]
+cmd summon minecraft:husk ~0 ~ ~2.6 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:4000f,attributes:[{id:"minecraft:max_health",base:4000d}]}
+arms ribbonmode 0
+camera first
+look 0 4
+# held edge first: at rest, then the hands held at the first strike's hit (pose: the share of the move's length)
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_axe
+wait 40
+camera first
+look 0 4
+wait 12
+shot fix_axe_rest
+arms pose strike_1 0.27
+wait 6
+shot fix_axe_hit
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_greatblade
+wait 30
+look 0 4
+wait 12
+shot fix_greatblade_rest
+arms pose strike_1 0.30
+wait 6
+shot fix_greatblade_hit
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_katana
+wait 30
+look 0 4
+wait 12
+shot fix_katana_rest
+arms pose strike_1 0.35
+wait 6
+shot fix_katana_hit
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_axe
+wait 30
+look 0 4
+wait 12
+shot fix_axe_beastbound_rest
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_greatblade
+wait 30
+look 0 4
+wait 12
+shot fix_greatblade_beastbound_rest
+# the Katana's first cut, rested 2 s first (the draw), filmed
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_katana
+wait 50
+look 0 4
+cmd awaken ascent pilot rec fix_katana_s1 18
+wait 2
+arms strike
+wait 20
+# the press held into the charge: no strike on the way, held 2.5 s (full at 22 ticks), loosed on the release
+wait 30
+arms trace 70
+cmd awaken ascent pilot rec fix_charge 74
+wait 2
+arms heavy 50
+wait 30
+arms state
+wait 40
+arms state
+# a zombie's untold blows: survival (resistant), the guard up 8 ticks and down 10 on a beat that drifts across its
+# 20-tick swings, so some blows meet a raise 4-7 ticks old (only the untold window deflects those)
+cmd kill @e[type=minecraft:husk]
+cmd gamemode survival
+cmd effect give @s minecraft:resistance 600 4 true
+cmd effect give @s minecraft:regeneration 600 4 true
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
+wait 30
+camera first
+look 0 4
+cmd summon minecraft:zombie ~0 ~ ~3.5 {PersistenceRequired:1b,Rotation:[180f,0f],CanPickUpLoot:0b,equipment:{head:{id:"minecraft:leather_helmet"}},Health:400f,attributes:[{id:"minecraft:max_health",base:400d}]}
+wait 20
+arms state
+cmd awaken ascent pilot rec fix_zombie_parry 170
+arms guard on
+wait 8
+arms guard off
+wait 10
+arms guard on
+wait 8
+arms guard off
+wait 10
+arms guard on
+wait 8
+arms guard off
+wait 10
+arms guard on
+wait 8
+arms guard off
+wait 10
+arms guard on
+wait 8
+arms guard off
+wait 10
+arms guard on
+wait 8
+arms guard off
+wait 10
+arms guard on
+wait 8
+arms guard off
+wait 10
+arms guard on
+wait 8
+arms guard off
+wait 10
+arms guard on
+wait 8
+arms guard off
+wait 10
+arms state
+wait 10
+quit
