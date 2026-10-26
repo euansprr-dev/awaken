@@ -41,7 +41,7 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
     private static String shortBlurb(Tier t) {
         return switch (t) {
             case SWIFT -> "Soft light · 120 fps";
-            case CINEMATIC -> "Sun shadows · 90+ fps";
+            case CINEMATIC -> "Shadows · 90+ fps";
             case ULTRA -> "Finest light · 60+ fps";
         };
     }
