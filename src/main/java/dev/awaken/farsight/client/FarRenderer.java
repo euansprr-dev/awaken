@@ -132,6 +132,13 @@ final class FarRenderer implements AutoCloseable {
     private boolean timing = true;
     private double gpuNanos, bakeNanos;
     private int gpuFrames;
+    /** Measuring (autopilot {@code farsight time parts on}): each part drawn in its own pass and timed. */
+    static boolean partsTiming;
+    // start, baked, after each ring, after City Sight, end (after the trees and landmarks)
+    private static final int STAMPS = Rings.RINGS + 4, PARTS = Rings.RINGS + 2;
+    private final boolean[] partsTimed = new boolean[3];
+    private final double[] partNanos = new double[PARTS];
+    private int partFrames;
 
     FarRenderer() {
         ByteBuffer data = MemoryUtil.memAlloc(PIECE * PIECE * INDICES_PER_CELL * 2).order(ByteOrder.nativeOrder());
@@ -530,89 +537,34 @@ final class FarRenderer implements AutoCloseable {
             }
         }
         GpuSampler nearest = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
-        try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder()
-                .createRenderPass(() -> "awaken far sight", main.getColorTextureView(), Optional.empty(), depthView, OptionalDouble.of(0.0))) {
-            if (pieces > 0) {
-                pass.setPipeline(RenderSystem.getCompiledPipeline(FarPipelines.TERRAIN));
-                pass.setUniform("Projection", RenderSystem.getProjectionMatrixBuffer());
-                pass.setUniform("Fog", RenderSystem.getShaderFog());
-                pass.setUniform("FarFrame", frame);
-                pass.setUniform("HeightSampler", field.heightView, nearest);
-                pass.setUniform("ColorSampler", field.colourView, nearest);
-                pass.setUniform("InfoSampler", field.infoView, nearest);
-                pass.setUniform("CrownSampler", field.crownView, nearest);
-                pass.setUniform("GenHeightSampler", field.genHeightView, nearest);
-                pass.setUniform("GenColorSampler", field.genColourView, nearest);
-                pass.setUniform("GenInfoSampler", field.genInfoView, nearest);
-                pass.setUniform("GenCrownSampler", field.genCrownView, nearest);
-                pass.setUniform("ShadeSampler", field.shadeView, nearest);
-                pass.setUniform("LightSampler", lightmap, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
-                pass.setUniform("ChunkSampler", chunksView, nearest);
-                pass.setUniform("VoxelSampler", voxels.coverageView, nearest);
-                int bound = -1;
-                for (int i = 0; i < pieces; i++) {
-                    int k = pW[i] / 8 - 1;
-                    if (k != bound) {
-                        pass.setIndexBuffer(widths[k], IndexType.SHORT);
-                        bound = k;
-                    }
-                    pass.setUniform("FarDraw", draws.slice((long) i * align, 16));
-                    pass.drawIndexed(pW[i] * pH[i] * INDICES_PER_CELL, 1, 0, 0, 0);
+        var encoder = RenderSystem.getDevice().createCommandEncoder();
+        if (timing && partsTiming) {
+            // measuring (farsight time parts): each ring in its own pass, then City Sight, then the trees and landmarks,
+            // a timestamp after each (timestamps land at pass boundaries on Apple's GPUs)
+            for (int r = 0; r < Rings.RINGS; r++) {
+                int ring = r;
+                try (RenderPass pass = encoder.createRenderPass(() -> "awaken far sight ring " + ring, main.getColorTextureView(), Optional.empty(), depthView,
+                        r == 0 ? OptionalDouble.of(0.0) : OptionalDouble.empty())) {
+                    terrain(pass, field, frame, draws, lightmap, voxels, nearest, r, r);
                 }
+                stamp(2 + r);
             }
-            // City Sight: the real chunks' blocks, after the terrain (which steps aside where they stand)
-            if (voxels.any()) voxels.draw(pass, frame, lightmap, sectionsView);
-            if (treeDraws > 0) {
-                GpuBuffer slots = treeSlots.currentBuffer();
-                try (var view = slots.map(false, true)) {
-                    ByteBuffer d = view.data();
-                    for (int r = FarTrees.FIRST_RING; r <= FarTrees.LAST_RING; r++) {
-                        int pb = Rings.patchBlocks(r);
-                        for (int j = 0; j < Rings.PATCHES; j++) {
-                            for (int i = 0; i < Rings.PATCHES; i++) {
-                                int px = field.winX[r] + i, pz = field.winZ[r] + j;
-                                int at = ((r - FarTrees.FIRST_RING) * Rings.PATCHES * Rings.PATCHES + Rings.slot(px, pz)) * 16;
-                                d.putInt(at, px * pb).putInt(at + 4, pz * pb).putInt(at + 8, r).putInt(at + 12, 0);
-                            }
-                        }
-                    }
-                }
-                pass.setPipeline(RenderSystem.getCompiledPipeline(FarPipelines.TREES));
-                pass.setUniform("Projection", RenderSystem.getProjectionMatrixBuffer());
-                pass.setUniform("Fog", RenderSystem.getShaderFog());
-                pass.setUniform("FarFrame", frame);
-                pass.setUniform("Trees", field.trees);
-                pass.setUniform("TreeSlots", slots);
-                pass.setUniform("ShadeSampler", field.shadeView, nearest);
-                pass.setUniform("GenHeightSampler", field.genHeightView, nearest);
-                pass.setUniform("HeightSampler", field.heightView, nearest);
-                pass.setUniform("LightSampler", lightmap, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
-                pass.setUniform("ChunkSampler", chunksView, nearest);
-                pass.setUniform("VoxelSampler", voxels.coverageView, nearest);
-                pass.setIndexBuffer(treeIndices, IndexType.SHORT);
-                if (indirect) {
-                    GpuBuffer commands = treeCommands.currentBuffer();
-                    try (var view = commands.map(false, true)) {
-                        ByteBuffer d = view.data();
-                        for (int i = 0; i < treeDraws; i++) {
-                            int at = i * COMMAND_BYTES;
-                            d.putInt(at, treeCount[i]).putInt(at + 4, 1).putInt(at + 8, 0).putInt(at + 12, treeVertex[i]).putInt(at + 16, 0);
-                        }
-                    }
-                    pass.drawIndexedIndirect(commands.slice(0, (long) treeDraws * COMMAND_BYTES), treeDraws);
-                } else {
-                    for (int i = 0; i < treeDraws; i++) pass.drawIndexed(treeCount[i], 1, 0, treeVertex[i], 0);
-                }
+            try (RenderPass pass = encoder.createRenderPass(() -> "awaken far sight city", main.getColorTextureView(), Optional.empty(), depthView, OptionalDouble.empty())) {
+                if (voxels.any()) voxels.draw(pass, frame, lightmap, sectionsView);
             }
-            if (marks > 0) {
-                // after the terrain, so ridges in front hide them; two quads each (core and halo)
-                pass.setPipeline(RenderSystem.getCompiledPipeline(FarPipelines.MARKS));
-                pass.setUniform("Projection", RenderSystem.getProjectionMatrixBuffer());
-                pass.setUniform("Fog", RenderSystem.getShaderFog());
-                pass.setUniform("FarFrame", frame);
-                pass.setUniform("FarMarks", markBuffer);
-                pass.setIndexBuffer(quads, IndexType.SHORT);
-                pass.drawIndexed(marks * 2 * 6, 1, 0, 0, 0);
+            stamp(2 + Rings.RINGS);
+            try (RenderPass pass = encoder.createRenderPass(() -> "awaken far sight trees", main.getColorTextureView(), Optional.empty(), depthView, OptionalDouble.empty())) {
+                trees(pass, field, frame, lightmap, voxels, nearest);
+                marks(pass, frame, markBuffer, marks);
+            }
+            partsTimed[timerFrame % timers.length] = true;
+        } else {
+            try (RenderPass pass = encoder.createRenderPass(() -> "awaken far sight", main.getColorTextureView(), Optional.empty(), depthView, OptionalDouble.of(0.0))) {
+                terrain(pass, field, frame, draws, lightmap, voxels, nearest, 0, Rings.RINGS - 1);
+                // City Sight: the real chunks' blocks, after the terrain (which steps aside where they stand)
+                if (voxels.any()) voxels.draw(pass, frame, lightmap, sectionsView);
+                trees(pass, field, frame, lightmap, voxels, nearest);
+                marks(pass, frame, markBuffer, marks);
             }
         }
         voxels.endFrame();
@@ -623,22 +575,124 @@ final class FarRenderer implements AutoCloseable {
         treeCommands.rotate();
     }
 
+
+    /** The planned terrain pieces of rings {@code from} to {@code to}. */
+    private void terrain(RenderPass pass, FarField field, GpuBuffer frame, GpuBuffer draws, GpuTextureView lightmap, VoxelLayer voxels,
+            GpuSampler nearest, int from, int to) {
+        if (pieces > 0) {
+            pass.setPipeline(RenderSystem.getCompiledPipeline(FarPipelines.TERRAIN));
+            pass.setUniform("Projection", RenderSystem.getProjectionMatrixBuffer());
+            pass.setUniform("Fog", RenderSystem.getShaderFog());
+            pass.setUniform("FarFrame", frame);
+            pass.setUniform("HeightSampler", field.heightView, nearest);
+            pass.setUniform("ColorSampler", field.colourView, nearest);
+            pass.setUniform("InfoSampler", field.infoView, nearest);
+            pass.setUniform("CrownSampler", field.crownView, nearest);
+            pass.setUniform("GenHeightSampler", field.genHeightView, nearest);
+            pass.setUniform("GenColorSampler", field.genColourView, nearest);
+            pass.setUniform("GenInfoSampler", field.genInfoView, nearest);
+            pass.setUniform("GenCrownSampler", field.genCrownView, nearest);
+            pass.setUniform("ShadeSampler", field.shadeView, nearest);
+            pass.setUniform("LightSampler", lightmap, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
+            pass.setUniform("ChunkSampler", chunksView, nearest);
+            pass.setUniform("VoxelSampler", voxels.coverageView, nearest);
+            int bound = -1;
+            for (int i = 0; i < pieces; i++) {
+                if (pRing[i] < from || pRing[i] > to) continue;
+                int k = pW[i] / 8 - 1;
+                if (k != bound) {
+                    pass.setIndexBuffer(widths[k], IndexType.SHORT);
+                    bound = k;
+                }
+                pass.setUniform("FarDraw", draws.slice((long) i * align, 16));
+                pass.drawIndexed(pW[i] * pH[i] * INDICES_PER_CELL, 1, 0, 0, 0);
+            }
+        }
+    }
+
+    /** The planned far forests. */
+    private void trees(RenderPass pass, FarField field, GpuBuffer frame, GpuTextureView lightmap, VoxelLayer voxels, GpuSampler nearest) {
+        if (treeDraws > 0) {
+            GpuBuffer slots = treeSlots.currentBuffer();
+            try (var view = slots.map(false, true)) {
+                ByteBuffer d = view.data();
+                for (int r = FarTrees.FIRST_RING; r <= FarTrees.LAST_RING; r++) {
+                    int pb = Rings.patchBlocks(r);
+                    for (int j = 0; j < Rings.PATCHES; j++) {
+                        for (int i = 0; i < Rings.PATCHES; i++) {
+                            int px = field.winX[r] + i, pz = field.winZ[r] + j;
+                            int at = ((r - FarTrees.FIRST_RING) * Rings.PATCHES * Rings.PATCHES + Rings.slot(px, pz)) * 16;
+                            d.putInt(at, px * pb).putInt(at + 4, pz * pb).putInt(at + 8, r).putInt(at + 12, 0);
+                        }
+                    }
+                }
+            }
+            pass.setPipeline(RenderSystem.getCompiledPipeline(FarPipelines.TREES));
+            pass.setUniform("Projection", RenderSystem.getProjectionMatrixBuffer());
+            pass.setUniform("Fog", RenderSystem.getShaderFog());
+            pass.setUniform("FarFrame", frame);
+            pass.setUniform("Trees", field.trees);
+            pass.setUniform("TreeSlots", slots);
+            pass.setUniform("ShadeSampler", field.shadeView, nearest);
+            pass.setUniform("GenHeightSampler", field.genHeightView, nearest);
+            pass.setUniform("HeightSampler", field.heightView, nearest);
+            pass.setUniform("LightSampler", lightmap, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
+            pass.setUniform("ChunkSampler", chunksView, nearest);
+            pass.setUniform("VoxelSampler", voxels.coverageView, nearest);
+            pass.setIndexBuffer(treeIndices, IndexType.SHORT);
+            if (indirect) {
+                GpuBuffer commands = treeCommands.currentBuffer();
+                try (var view = commands.map(false, true)) {
+                    ByteBuffer d = view.data();
+                    for (int i = 0; i < treeDraws; i++) {
+                        int at = i * COMMAND_BYTES;
+                        d.putInt(at, treeCount[i]).putInt(at + 4, 1).putInt(at + 8, 0).putInt(at + 12, treeVertex[i]).putInt(at + 16, 0);
+                    }
+                }
+                pass.drawIndexedIndirect(commands.slice(0, (long) treeDraws * COMMAND_BYTES), treeDraws);
+            } else {
+                for (int i = 0; i < treeDraws; i++) pass.drawIndexed(treeCount[i], 1, 0, treeVertex[i], 0);
+            }
+        }
+    }
+
+    /** The landmarks' beams, after the terrain, so ridges in front hide them. */
+    private void marks(RenderPass pass, GpuBuffer frame, GpuBuffer markBuffer, int marks) {
+        if (marks > 0) {
+            // after the terrain, so ridges in front hide them; two quads each (core and halo)
+            pass.setPipeline(RenderSystem.getCompiledPipeline(FarPipelines.MARKS));
+            pass.setUniform("Projection", RenderSystem.getProjectionMatrixBuffer());
+            pass.setUniform("Fog", RenderSystem.getShaderFog());
+            pass.setUniform("FarFrame", frame);
+            pass.setUniform("FarMarks", markBuffer);
+            pass.setIndexBuffer(quads, IndexType.SHORT);
+            pass.drawIndexed(marks * 2 * 6, 1, 0, 0, 0);
+        }
+    }
+
     /** Opens this frame's GPU timing (before the bake), after reading the result of three frames ago. */
     void timeStart() {
         if (!timing) return;
         try {
             int i = timerFrame % timers.length;
             if (timers[i] == null) {
-                timers[i] = RenderSystem.getDevice().createTimestampQueryPool(3);
+                timers[i] = RenderSystem.getDevice().createTimestampQueryPool(STAMPS);
             } else if (timerFrame >= timers.length) {
-                var v = timers[i].getValues(0, 3);
-                if (v[0].isPresent() && v[1].isPresent() && v[2].isPresent()) {
+                var v = timers[i].getValues(0, STAMPS);
+                if (v[0].isPresent() && v[1].isPresent() && v[STAMPS - 1].isPresent()) {
                     double period = RenderSystem.getDevice().getDeviceInfo().timestampPeriod();
                     bakeNanos += (v[1].getAsLong() - v[0].getAsLong()) * period;
-                    gpuNanos += (v[2].getAsLong() - v[0].getAsLong()) * period;
+                    gpuNanos += (v[STAMPS - 1].getAsLong() - v[0].getAsLong()) * period;
                     gpuFrames++;
+                    boolean all = partsTimed[i];
+                    for (int k = 2; all && k < STAMPS - 1; k++) all = v[k].isPresent();
+                    if (all) {
+                        for (int k = 0; k < PARTS; k++) partNanos[k] += (v[k + 2].getAsLong() - v[k + 1].getAsLong()) * period;
+                        partFrames++;
+                    }
                 }
             }
+            partsTimed[i] = false;
             RenderSystem.getDevice().createCommandEncoder().writeTimestamp(timers[i], 0);
         } catch (RuntimeException e) {
             timing = false;
@@ -647,22 +701,21 @@ final class FarRenderer implements AutoCloseable {
 
     /** Between the bake and the draw: the bake's share (timestamps land at pass boundaries on Apple GPUs, as here). */
     void timeBaked() {
-        if (!timing) return;
-        try {
-            RenderSystem.getDevice().createCommandEncoder().writeTimestamp(timers[timerFrame % timers.length], 1);
-        } catch (RuntimeException e) {
-            timing = false;
-        }
+        stamp(1);
     }
 
     void timeEnd() {
+        stamp(STAMPS - 1);
+        timerFrame++;
+    }
+
+    private void stamp(int k) {
         if (!timing) return;
         try {
-            RenderSystem.getDevice().createCommandEncoder().writeTimestamp(timers[timerFrame % timers.length], 2);
+            RenderSystem.getDevice().createCommandEncoder().writeTimestamp(timers[timerFrame % timers.length], k);
         } catch (RuntimeException e) {
             timing = false;
         }
-        timerFrame++;
     }
 
     /** Mean GPU milliseconds per frame (all, and the bake's part) since the last call, or -1 if nothing was timed. */
@@ -671,6 +724,18 @@ final class FarRenderer implements AutoCloseable {
         gpuNanos = 0;
         bakeNanos = 0;
         gpuFrames = 0;
+        return ms;
+    }
+
+    /** Mean GPU milliseconds of the measured parts (each ring, City Sight, the trees and landmarks) since the last call, or null. */
+    double[] partMillis() {
+        double[] ms = null;
+        if (partFrames > 0) {
+            ms = new double[PARTS];
+            for (int k = 0; k < PARTS; k++) ms[k] = partNanos[k] / partFrames / 1e6;
+        }
+        java.util.Arrays.fill(partNanos, 0);
+        partFrames = 0;
         return ms;
     }
 

@@ -460,6 +460,10 @@ public final class FarSightClient {
             return "debug view " + debug;
         }
         if (a.startsWith("wateredge")) return "water edges " + dev.awaken.turbo.wateredge.WaterEdge.autopilot(a.substring(9));
+        if (a.startsWith("time parts")) {
+            FarRenderer.partsTiming = a.endsWith("on");
+            return "parts timed " + FarRenderer.partsTiming;
+        }
         if (a.startsWith("part ")) {
             String[] w = a.substring(5).trim().split("\\s+");
             for (int i = 0; i < PARTS.length; i++) {
@@ -500,12 +504,19 @@ public final class FarSightClient {
         cpuNanos = 0;
         cpuFrames = 0;
         double[] gpu = renderer.gpuMillis();
+        double[] parts = renderer.partMillis();
+        StringBuilder split = new StringBuilder();
+        if (parts != null) {
+            split.append(" split_ms=[rings");
+            for (int r = 0; r < Rings.RINGS; r++) split.append(String.format(Locale.ROOT, " %.3f", parts[r]));
+            split.append(String.format(Locale.ROOT, " city %.3f trees %.3f]", parts[Rings.RINGS], parts[Rings.RINGS + 1]));
+        }
         return String.format(Locale.ROOT,
                 "%s gpu_ms=%.3f bake_ms=%.3f cpu_ms=%.3f rest_us=%d missing=[%s] queued=%d workers=%d pieces=%d cells=%d trees=%d (%d draws) column=%.1fus probes=%.1f/column (%d columns) generated=%d/%d city=%d/%d chunks (%d from disk, %d asked ahead, %d meshing, %.1f ms each, %d empty) drawn=%d chunks %d quads %d draws vram=%dMB",
                 drawing() ? "drawing" : enabled() ? "on" : "off", gpu[0], gpu[1], cpu, workers.restMicros, rings, workers.queued(), workers.active, renderer.pieces, renderer.cells, renderer.treesDrawn, renderer.treeDraws,
                 cols == 0 ? 0.0 : workers.columnNanos.get() / 1000.0 / cols, cols == 0 ? 0.0 : workers.probes.get() / (double) cols, cols,
                 field.genUploaded, field.genAsked, voxels.resident(), VoxelCapture.captured(), VoxelCapture.fromDisk.get(), dev.awaken.farsight.voxel.VoxelAhead.asked(), voxels.inFlight.get(),
                 voxels.meshed.get() == 0 ? 0.0 : voxels.meshNanos.get() / 1e6 / voxels.meshed.get(), voxels.empty.get(), voxels.chunksDrawn, voxels.quadsDrawn, voxels.commands(),
-                (field.memoryBytes() + renderer.memoryBytes() + voxels.memoryBytes()) >> 20);
+                (field.memoryBytes() + renderer.memoryBytes() + voxels.memoryBytes()) >> 20) + split;
     }
 }
