@@ -36,13 +36,18 @@ shotnow exit_1_camp_day_sky
 cmd awaken living first ilse
 wait 60
 shotnow exit_2_scene
-wait 420
+# she holds the ember out at about 450 ticks in, then walks it over to you
+wait 430
 shotnow exit_2_offer
+wait 80
+shotnow exit_2_take_prompt
 use
-wait 220
+# her last line, then the scene ends (about 180 ticks after your hand closes on it)
+wait 260
 shotnow exit_2_scene_over
-walk 50
-wait 10
+# your own keys again: walk forward for 3 s (the log says where you started and where you got to)
+walk 60
+wait 70
 shotnow exit_2_walked
 # 3. the camp at dusk, at the fire, looking up
 cmd time set 12800
