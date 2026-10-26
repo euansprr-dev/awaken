@@ -38,8 +38,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * where the branches begin, each ring a zip from the one below (an eighth of a turn round the trunk, 11-13 higher). On
  * the Lumen Spire the rings are its night route, a spiral of light up to the pads; on the Colossus they carry you into
  * the dome, whose limbs and masses are the swinging. The layout comes from the tree's own blueprint
- * ({@link HeroWorldgen#blueprint}), so it fits the tree exactly; nothing is placed but into air. A ward keeps placed
- * blocks out of the column over the trunk (no towering up to the crown).
+ * ({@link HeroWorldgen#blueprint}), so it fits the tree exactly; nothing is placed but into air. A ward covers the
+ * whole canopy from a little over the foot (a climb: a block is refused there, SPEC §17.25), and the Horizon line names
+ * each crowned tree near you as a rope's climb ("Elder Colossus · needs Tether") until you have reached its crown.
  */
 public final class HeroCrowns {
     private HeroCrowns() {}
@@ -56,8 +57,14 @@ public final class HeroCrowns {
      * a zip takes under 0.45, AscentRules.ZIP_UP_SLOPE). */
     static final double[] TURNS = {Math.PI / 4, Math.PI / 6, Math.PI / 9, Math.PI / 18, 0};
     static final double ZIP_SIDE = 0.4;
-    /** The ward over the trunk: this far round the crown, from this far over the foot to a little over the crown. */
-    static final int WARD_R = 9, WARD_FROM = 10;
+    /**
+     * The crown's ward: the whole canopy (this far round the crown), from this far over the tree's foot (a home under the
+     * tree still builds) to a little over the crown, so a tower beside the trunk meets it as it reaches the branches. It
+     * was a column of radius 9 under a canopy 24-30 wide (radii from the progression builder's draft, 2026-10-26).
+     */
+    static final int WARD_COLOSSUS = 32, WARD_LUMEN = 16, WARD_FROM = 10;
+    /** The Horizon line names a crowned tree within this many blocks. */
+    static final int HORIZON_REACH = 640;
     static final ResourceKey<LootTable> CACHE = ResourceKey.create(Registries.LOOT_TABLE, dev.awaken.Awaken.id("chests/precursor_spire"));
 
     static boolean crowned(HeroTree tree) {
@@ -181,6 +188,8 @@ public final class HeroCrowns {
 
     private static final ConcurrentLinkedQueue<Pending> PENDING = new ConcurrentLinkedQueue<>();
     private static final Map<Long, BoundingBox> WARDS = new ConcurrentHashMap<>();
+    /** Which tree each warded crown crowns ({@link SpireCrownBlockEntity#SITE_COLOSSUS} or {@code SITE_LUMEN}). */
+    private static final Map<Long, Integer> TREES = new ConcurrentHashMap<>();
 
     public static void register(IEventBus bus) {
         bus.addListener(HeroCrowns::onChunkLoad);
@@ -191,6 +200,26 @@ public final class HeroCrowns {
                 if (w.getValue().isInside(pos)) out.accept(new WardHooks.Ward("hero/" + w.getKey(), "hero_crown", w.getValue()));
             }
         });
+        dev.awaken.core.api.HorizonHooks.register(HeroCrowns::horizon);
+    }
+
+    /**
+     * The Horizon's crowned trees near a player (the ones loaded: their crowns ward and tick only then): each a rope's
+     * climb, until this player has reached its crown. The id is the crown's promise key ("landmark:hero/<pos>").
+     */
+    static List<dev.awaken.core.api.HorizonHooks.Site> horizon(net.minecraft.server.level.ServerPlayer p) {
+        if (WARDS.isEmpty() || p.level().dimension() != Level.OVERWORLD) return List.of();
+        List<dev.awaken.core.api.HorizonHooks.Site> out = new ArrayList<>(2);
+        for (var w : WARDS.entrySet()) {
+            BlockPos crown = BlockPos.of(w.getKey());
+            double dx = crown.getX() - p.getX(), dz = crown.getZ() - p.getZ();
+            if (dx * dx + dz * dz > (double) HORIZON_REACH * HORIZON_REACH) continue;
+            if (p.level().getBlockEntity(crown) instanceof SpireCrownBlockEntity be && be.hasClimbed(p.getUUID())) continue;
+            boolean colossus = TREES.getOrDefault(w.getKey(), SpireCrownBlockEntity.SITE_COLOSSUS) == SpireCrownBlockEntity.SITE_COLOSSUS;
+            out.add(new dev.awaken.core.api.HorizonHooks.Site("landmark:hero/" + w.getKey(), (colossus ? "Elder Colossus" : "Lumen Spire")
+                    + " · a light in its crown", crown, dev.awaken.core.api.HorizonHooks.TETHER, false));
+        }
+        return out;
     }
 
     /** ChunkEvent.Load: a crowned hero tree starting here is queued (rigged on a later tick, its crown's chunks loaded). */
@@ -264,12 +293,15 @@ public final class HeroCrowns {
     }
 
     /** The crown's ward (its block entity calls this as it loads, so wards come back after a restart). */
-    static void ward(BlockPos crown, int ground) {
-        WARDS.put(crown.asLong(), new BoundingBox(crown.getX() - WARD_R, ground + WARD_FROM, crown.getZ() - WARD_R,
-                crown.getX() + WARD_R, crown.getY() + 6, crown.getZ() + WARD_R));
+    static void ward(BlockPos crown, int ground, int site) {
+        int r = site == SpireCrownBlockEntity.SITE_LUMEN ? WARD_LUMEN : WARD_COLOSSUS;
+        WARDS.put(crown.asLong(), new BoundingBox(crown.getX() - r, ground + WARD_FROM, crown.getZ() - r,
+                crown.getX() + r, crown.getY() + 6, crown.getZ() + r));
+        TREES.put(crown.asLong(), site);
     }
 
     static void unward(BlockPos crown) {
         WARDS.remove(crown.asLong());
+        TREES.remove(crown.asLong());
     }
 }
