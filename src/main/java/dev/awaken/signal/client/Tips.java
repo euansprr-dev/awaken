@@ -69,11 +69,16 @@ public final class Tips {
         });
     }
 
-    /** The server offered a tip: a moment, not a lasting context, so it holds for its whole showing. */
+    /**
+     * The server offered a tip: a moment, not a lasting context. It waits up to {@link #SERVER_WAIT} for a quiet moment
+     * (the director holds tips in a fight, a scene, the world's first minutes), then shows for its own {@code show_for}.
+     */
     static void serverOffer(String id) {
         TipRules.Def d = defs.get(id);
-        if (on() && d != null && !TipRules.retired(d, count(id))) keep(id, d.showFor(), true);
+        if (on() && d != null && !TipRules.retired(d, count(id))) keep(id, Math.max(d.showFor(), SERVER_WAIT), true);
     }
+
+    static final int SERVER_WAIT = 20 * 60 * 5;
 
     private static void keep(String id, int forTicks, boolean now) {
         SINCE.putIfAbsent(id, now ? ticks - TipRules.SETTLE : ticks);

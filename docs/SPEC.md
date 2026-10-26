@@ -4547,7 +4547,8 @@ rings are a rope ladder), the Tether's "· needs the Tether".
     centred above the story line's slot, one line (two at most), in the System's glass; it fades when its context ends,
     at once when done. Client option `tips` (on).
   - Server (`TipHooks.Server` in the signal module): `offer` and `done` are one small payload (`signal_tip`); a server
-    offer holds for the tip's whole `show_for`.
+    offer waits up to 5 minutes for a quiet moment (the director holds tips in a fight, a scene or the world's first
+    minutes), then shows for its `show_for`.
   - The first stretch (`assets/awaken/tips/first/`): `band` (registration + 6 s: "K opens your band: what you hold, what
     waits for you, and the way up."; done when K opens), `now` (registration + 26 s: the two lines at the top), `atlas`
     (the first way out through the walls; done when the Atlas opens), `power` (the first power chosen; done at the first
