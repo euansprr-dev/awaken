@@ -193,6 +193,9 @@ Feel: hit-stop 40–80 ms on heavy hits (client time scale on the hit entity's r
 
 Launch power list (≥45): see `powers/PowerCatalog.java` header for the authoritative list with numbers.
 
+The Tech movement power `awaken:grapple` is shown as **Snap Cable** (2026-10-26, progression plan decision 11), so
+"the grapple" only ever means the Tether; its id, and saved worlds, are unchanged.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 7. Gates
@@ -2566,16 +2569,17 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   broke. Record from standing still; at most five minutes.
 
 ### 17.7 The Tether Vow (the rope, earned at the first vault)
-- Who: awake, in the overworld, without the rope, the `ascent` option on, **at the vault's line rank: C, or the vault's
-  own door rank if higher** (`TetherVow.RANK`; the door rank is the piece's saved `rank`), **with its sealed door
-  open** (no door panel or core left at local x 10-12, y 1-3, z 12). Euan, 2026-10-26: "I got the grapple thing when my
+- Who: awake, in the overworld, without the rope, the `ascent` option on, **at the vault's line rank: its own door
+  rank, D at the least** (`TetherVow.RANK` = D since Euan approved the progression plan, decision 1, 2026-10-26; it was
+  C for a few hours; the door rank is the piece's saved `rank`: D within 1200 of the origin and at the spawn vault),
+  **with its sealed door open** (no door panel or core left at local x 10-12, y 1-3, z 12). Euan, 2026-10-26: "I got the grapple thing when my
   rank is too low to actually open the vault. I just walked into the vault and got it... you actually need the C rank
   to get into the vault to unlock it." Where: a Precursor vault's forecourt (local x 4-18, z 0-3, feet 1-5 over the
   floor: between the pylons; every vault qualifies until one is kept). So the order is: open the door, go in, and the
   vault calls as you come back out under its pylons. Checked once a second per player.
 - Short of that, the vault stirs (stage `STIR`, at most once in 5 minutes per vault and state): short of the rank, a
   low, quiet version of the call's note, the vault's light rising off the paving in the rank's colour, stalling and
-  settling back, "The vault stirs, and stills." then "Its line waits for a C-rank hunter."; ranked but with the door
+  settling back, "The vault stirs, and stills." then "Its line waits for a D-rank hunter."; ranked but with the door
   still sealed, the light drifts low toward the door: "The vault stirs. Its door will know you." No Lens look, no hush:
   it only half wakes. The rank is named; what the line is stays unsaid until it is given.
 - The sealed door answers (`DoorCoreBlock`, all ruins with a rank door): someone short of its rank who comes within 5
@@ -2584,9 +2588,9 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   used to do nothing (the door can't be broken), which read as a dead block. The hum for those who can open it is as
   before.
 - Worlds where the rope was already given under the old rule keep it (nothing is taken back).
-- Pacing note: C is level 25 plus the Reassessment (about 17 h at the default story length, Rank.java). Leaper and
-  Wings both follow the rope, so this moves the whole ladder after C; the progression plan
-  (docs/progression/PLAN.md) proposes the rank Euan decides on.
+- Pacing (docs/progression/PLAN.md §4): D arrives about 5 h in (pacing_sim, balanced), so the rope is the first
+  rank-up's reward, at the vault the player met in the first hour. The Leaper follows hours later (§17.10), Wings at C
+  (§17.9).
 - The vault's turn is read from its pylons' own blocks at the front corners (the amber lights at local y 20, the trim at
   19, the polished cornice at 11: at least 4 of the 6); terrain can't fake them, and a vault dug into a hill keeps them
   (open air at the back corners, the first try, failed on the first real spawn vault). The vault's box is its piece's
@@ -2606,8 +2610,8 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   `VOW_KEPT` in the record. Lapsed: "The mast will wait." (the rope stays; nothing is lost).
 - `ascent_tether_vow` builds a vault from its blueprint in each turn and checks the turn, the forecourt, the pylon
   anchor (real to the server, the line clear) and the mast; then the lock: at E the vault only stirs and its door reads
-  the player once and stays shut; at D the door opens but the line waits; a B door's line waits for B; at C with the door
-  open the director runs: call, line, kept.
+  the player once and stays shut; at D a C door's line still waits, and the D door's vault waits until its door is
+  open; then the director runs: call, line, kept.
 
 ### 17.8 Phase 4a: Aether (Skyborn's flight meter)
 - Flight (SOAR) runs on Aether, 0..1: cruising drains a full meter in 60 s, boosting in ~19 s, hovering in ~38 s, each
@@ -2648,11 +2652,15 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   under the ring below, a zip to the perch's underside near its edge vaults the body onto it; from it, a zip to the side
   of the pier's end (7 up) pulls the body onto the pier.
 - **The core** (`awaken:wing_core`, unbreakable, in the cabin's middle on the deck): twice a second, a player within 3
-  without Wings who came up by moving (`ArrivalHooks.byMovement` and `Ascent.arrivedByMovement(p, 20)`: a third of the
+  without Wings, **at C-rank or above** (`WingCoreBlockEntity.RANK`, progression plan decision 2, 2026-10-26), who came
+  up by moving (`ArrivalHooks.byMovement` and `Ascent.arrivedByMovement(p, 20)`: a third of the
   last 20 s in a ladder state or a Runner move and no block placed) is given Wings (`Ascent.grant`, "sky platform core")
   with the gift's scene (`Remember` mode `GIFT_WINGS`: "Wings of light.", the wings unfold round the body, then the
-  hint to open them), `ascent.vow_call`, counter `awaken:ascent_wings_core`. Anyone else is told, at most once a minute,
-  that the core answers only to the long way (`awaken.ascent.core.dark`). It breathes a ring of light every 3 s. The
+  hint to open them), `ascent.vow_call`, counter `awaken:ascent_wings_core`. Anyone else is told why on arrival, then at
+  most every 10 s (`Throttle`): "The core stays dark. It answers only to a climb up its rings." or "The core stirs, and
+  stays dark. It waits for a C-rank hunter." (before: once a minute, on the minute, so a refused player could wait 60 s
+  in silence). The Horizon's "wings" need is reached by Wings or the rope alone (the rings are a rope ladder) and reads
+  "· needs a rope or wings". It breathes a ring of light every 3 s. The
   platform's `#awaken:warded_sky` ward, its loot table and the Horizon's "wings" reach are unchanged.
 - **The rope's moves for a ladder** (§17.6 rope, both sides):
   - *Vertical zip*: a throw at something more than 6 above and nearly overhead (sideways under 0.45 of the rise) zips
@@ -2675,8 +2683,9 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   ground up): a throw from the ground sees the ring (a tour stood under birches throwing into leaves).
 
 ### 17.10 Ascension trials: the Leaper's Gauntlet
-- **Opened for you** (`AscentTrials`): once you hold the rope (not the leap) and have swung enough to know it (Tether
-  mastery level 2: 100 points), awake, in the overworld on the ground, checked every 5 s: a scripted gate opens in front
+- **Opened for you** (`AscentTrials`): once you hold the rope (not the leap) at **D-rank** and have swung enough to
+  know it (Tether mastery **level 4: 400 points**, about 80-130 swings and launches; it was level 2 until the
+  progression plan's decision 2, 2026-10-26, which made the leap its own rung hours after the rope), awake, in the overworld on the ground, checked every 5 s: a scripted gate opens in front
   of you (`Gates.openScripted`, `Gates.leaperTrialPlan`), once (`AscentMemory` flag `LEAPER_TRIAL` = 4), with "A gate
   is beating like a running heart: the Leaper's Gauntlet." It never breaks. Its card: "The Leaper's Gauntlet. A course
   of the Foundry, and at its end a chasm no running jump will cross." · Trial: run it to the far side.
@@ -2923,8 +2932,8 @@ Skyborn's earn path (the plan: "the Sky Archipelago Lord, rebuilt as a flight fi
 ### 17.19 The Sovereign: the god form
 The ladder's top (the plan: "the angel overlord"). Euan chose its trigger on 25 Oct: its own Ascend key, default U,
 needing full Aether, with a 10-minute cooldown.
-- **Earned** at the story's end: the world's ending seen (`StoryHooks.gatesCalm(server, player)`: the Signal broken
-  and their gates calm; or `colourRestored`: the world awake), checked every 5 s; the tier with the gift's scene
+- **Earned** at the story's end: any ending this player's story has reached (`StoryHooks.endingSeen`: the Break, the
+  Wake or the Become; before the progression plan's decision 2 the Become never gave it), checked every 5 s; the tier with the gift's scene
   ("Sovereign. · Aether full, press U: thirty seconds as the sky's own. Press it again high up: Judgement."), its tip,
   every tier under it. Dev: `/awaken ascent grant sovereign`.
 - **The form** (`body.ascent.Sovereign`, server-kept; `client.SovereignClient` draws it): the Ascend key with the tier,

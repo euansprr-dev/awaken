@@ -163,8 +163,14 @@ final class TrackerHud {
     private static int horizonKey;
 
     /** "wings" → "Wings". */
+    /** What a tease needs, in words: the sky's need is a way up (the rig's rings take a rope), never "Wings" alone. */
     private static String needLabel(String need) {
-        return need.isEmpty() ? "" : Character.toUpperCase(need.charAt(0)) + need.substring(1);
+        return switch (need) {
+            case "" -> "";
+            case HorizonHooks.WINGS -> "a rope or wings";
+            case HorizonHooks.TETHER -> "the Tether";
+            default -> Character.toUpperCase(need.charAt(0)) + need.substring(1);
+        };
     }
 
     /**

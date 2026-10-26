@@ -116,6 +116,7 @@ public final class StoryModule {
             @Override public java.util.Optional<String> refusesScriptedGate(ServerPlayer p, String gateId) {
                 return Prologue.storyOn() ? Ritual.refuses(p, gateId) : java.util.Optional.empty();
             }
+            @Override public boolean endingSeen(ServerPlayer p) { return Prologue.progress(p).seen.contains("ending:chosen"); }
             @Override public java.util.Optional<String> seedSealed(ServerPlayer p) {
                 if (!Prologue.storyOn()) return java.util.Optional.empty();
                 int left = 8 - Prologue.progress(p).sovereignsDefeated().size();

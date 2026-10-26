@@ -52,9 +52,10 @@ public final class AscentModule {
         // windways between sky platforms: lanes found round each player, synced to them (SPEC §17.12)
         dev.awaken.core.api.AirHooks.register(Windways::airAt);
         bus.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent e) -> WindwaysServer.clear());
-        // the Horizon's sky sites ("needs Wings"): Wings, or a rope and the Leaper's air moves, get you up there
+        // the Horizon's sky sites: Wings, or the rope alone (the rig's rings are climbed by rope: SPEC §17.9; the core
+        // itself waits for C-rank, so a D-rank climber finds the loot and the core's promise)
         dev.awaken.core.api.HorizonHooks.addReach((p, need) -> need.equals(dev.awaken.core.api.HorizonHooks.WINGS)
-                && (Ascent.has(p, Ascent.Tier.WINGS) || Ascent.has(p, Ascent.Tier.TETHER) && Ascent.has(p, Ascent.Tier.LEAPER)));
+                && (Ascent.has(p, Ascent.Tier.WINGS) || Ascent.has(p, Ascent.Tier.TETHER)));
         // a Tether Spire's climb needs the rope
         dev.awaken.core.api.HorizonHooks.addReach((p, need) -> need.equals(dev.awaken.core.api.HorizonHooks.TETHER) && Ascent.has(p, Ascent.Tier.TETHER));
     }
