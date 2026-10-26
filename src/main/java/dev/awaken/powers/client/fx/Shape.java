@@ -20,6 +20,7 @@ final class Shape {
     static final int DISC = 11;      // camera-facing sprite at the anchor: size a->b
     static final int SHELL = 12;     // sprites on a sphere around the anchor facing outward (hex skin): radius a
     static final int EMITTER = 13;   // draws nothing; only runs its emitter (auras, trails of sparks, fire paths)
+    static final int SLASH = 14;     // a blade's arc about anchor + e: axes n (0) and u (90 deg), from angle c through range, radius a, band b, d ticks
 
     /** Draw flags. */
     static final int HEMI = 1;       // sphere: upper half only
@@ -30,6 +31,8 @@ final class Shape {
     static final int AIM = 32;       // beam end follows the local player's live aim (own channelled beams)
     static final int HOLD = 64;      // sphere/ring: grow over the first 8 ticks, then hold the size
     static final int RIM = 128;      // sphere: also draw its silhouette as a bold band facing the camera
+    static final int THRUST = 256;   // slash: a straight streak from anchor + e along n, a - b to a + b long, c wide
+    static final int OWN = 512;      // slash: the local player's own, drawn softer in first person
 
     int type;
     boolean live;
@@ -45,6 +48,8 @@ final class Shape {
     double vx, vy, vz;
     /** Normal / direction for rings and arcs. */
     float nx, ny = 1, nz;
+    /** A second direction (a slash's travel across its plane). */
+    float ux, uy, uz;
     float a, b, c, d;
     int c0, c1, c2;
     int sprite = -1, frame;
@@ -84,6 +89,7 @@ final class Shape {
         nx = 0;
         ny = 1;
         nz = 0;
+        ux = uy = uz = 0;
         a = b = c = d = 0;
         c0 = c1 = c2 = 0;
         sprite = -1;

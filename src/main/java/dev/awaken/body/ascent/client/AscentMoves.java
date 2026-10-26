@@ -82,6 +82,8 @@ public final class AscentMoves {
     static int airMovesUsed;
     /** A dive slam is falling: its landing shakes the ground. */
     static boolean slamming;
+    /** This tick's keys, for the first-person stances (AscentFp). */
+    static boolean keyFwd, keySprint, keyJump, keySneak;
     private static int lastJumpPress = -100;
     // last tick's request to vanilla, to see what a collision took
     private static double lastX, lastY, lastZ, wantDx, wantDy, wantDz;
@@ -189,6 +191,11 @@ public final class AscentMoves {
         sneakWas = sneak;
         sprintWas = sprint;
         double fwd = (k.forward() ? 1 : 0) - (k.backward() ? 1 : 0);
+        // what the hands in first person follow (AscentFp)
+        keyFwd = fwd > 0;
+        keySprint = sprint;
+        keyJump = jump;
+        keySneak = sneak;
         double right = (k.right() ? 1 : 0) - (k.left() ? 1 : 0);
         if (off(p)) {
             if (state != AscentState.NONE) end(p, "off", false);
@@ -453,6 +460,7 @@ public final class AscentMoves {
                         + dev.awaken.progression.Progression.perk(p, AscentRules.ROPE_REACH_PERK),
                 ticks - leftAt <= 20 ? leftAnchor : null);
         fireAt = ticks;
+        AscentFp.fired();
         AscentSounds.local(p, AscentContent.ROPE_FIRE.get(), 0.8F, 0.95F + p.getRandom().nextFloat() * 0.1F);
         event(AscentPayloads.EV_FIRE, 0);
         if (a == null) {
@@ -816,6 +824,7 @@ public final class AscentMoves {
         AscentFlow.gain(0.04F + 0.12F * q);
         AscentSounds.local(p, AscentContent.ROPE_RELEASE.get(), 0.6F, 1.0F + q * 0.15F);
         FeelDirector.release(q);
+        AscentFp.released();
         trace(String.format("release (window %.2f)", q));
         toCarry(p, "released");
         carry(p.getYRot(), 0, 0);
@@ -834,6 +843,7 @@ public final class AscentMoves {
         AscentSounds.local(p, AscentContent.ROPE_RELEASE.get(), 0.5F, 1.2F);
         event(AscentPayloads.EV_LAUNCH, (float) K.speed());
         FeelDirector.launch(q);
+        AscentFp.launched();
         trace("launch");
         toCarry(p, "launched");
         carry(p.getYRot(), 0, 0);
@@ -861,6 +871,7 @@ public final class AscentMoves {
             AscentFx.ring(p.getX(), p.getY() + 0.1, p.getZ(), new Vec3(0, 1, 0), 0.35F);
             event(AscentPayloads.EV_DOUBLE, 0);
             FeelDirector.flap();
+            AscentFp.doubleJump();
             trace("double jump");
         } else if (dash) {
             airMovesUsed |= 2;
@@ -874,6 +885,7 @@ public final class AscentMoves {
             AscentFx.ring(p.getX(), p.getY() + 0.9, p.getZ(), new Vec3(fx, 0, fz), 0.3F);
             event(AscentPayloads.EV_DASH, (float) speed);
             FeelDirector.dash();
+            AscentFp.dash();
             trace(String.format("air dash %.2f", speed));
         } else {
             slamming = true;
@@ -883,6 +895,7 @@ public final class AscentMoves {
             AscentSounds.local(p, AscentContent.WINGS_FOLD.get(), 0.8F, 0.7F);
             event(AscentPayloads.EV_DIVE, 0);
             FeelDirector.dive();
+            AscentFp.dive();
             trace("dive slam");
         }
         AscentFlow.gain(0.08F);
@@ -904,6 +917,7 @@ public final class AscentMoves {
         setState(p, AscentState.CARRY);
         event(AscentPayloads.EV_DIVE, 0);
         FeelDirector.dive();
+        AscentFp.dive();
         trace("a Judgement Fall");
         return true;
     }
@@ -933,6 +947,7 @@ public final class AscentMoves {
         AscentSounds.local(p, AscentContent.WINGS_OPEN.get(), 1F, 1F);
         event(AscentPayloads.EV_DEPLOY, (float) K.speed());
         FeelDirector.deploy();
+        AscentFp.wingsOpen();
         trace("wings open");
         AscentRules.glideStep(K, p.getYRot(), p.getXRot(), glideDrag());
     }
@@ -972,6 +987,7 @@ public final class AscentMoves {
         AscentSounds.local(p, AscentContent.LAUNCH.get(), 0.7F, 1.45F);
         AscentSounds.local(p, AscentContent.FLAP.get(), 0.6F, 1.25F);
         FeelDirector.barrelRoll(dir);
+        AscentFp.roll();
         AscentAnims.roll(p.getId(), dir);
         AscentFlow.gain(0.06F);
         event(AscentPayloads.EV_ROLL, dir);
@@ -1012,6 +1028,7 @@ public final class AscentMoves {
         AscentSounds.local(p, AscentContent.FLAP.get(), 0.9F, 0.9F + p.getRandom().nextFloat() * 0.15F);
         event(AscentPayloads.EV_FLAP, 0);
         FeelDirector.flap();
+        AscentFp.beat();
     }
 
     private static void boomCheck(LocalPlayer p) {
@@ -1022,6 +1039,7 @@ public final class AscentMoves {
             AscentFlow.gain(0.25F);
             trace("sonic boom");
             FeelDirector.boom();
+            AscentFp.boom();
             AscentFx.boom(p, K);
             event(AscentPayloads.EV_BOOM, (float) s);
         } else if (!boomArmed && s < AscentRules.BOOM_REARM) {
@@ -1046,6 +1064,7 @@ public final class AscentMoves {
             AscentSounds.local(p, AscentContent.BOOM.get(), 0.7F, 1.35F);
             AscentFx.ring(p.getX(), p.getY() + 0.15, p.getZ(), new Vec3(0, 1, 0), 0.5F);
             FeelDirector.slam(landSpeed);
+            AscentFp.slamLand();
             AscentFlow.gain(0.1F);
             event(AscentPayloads.EV_SLAM_LAND, landSpeed);
         } else {

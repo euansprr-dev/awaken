@@ -1,0 +1,17 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "equipment",
+ "group": "awaken_arms_greatblade",
+ "key": {
+  "C": "#awaken:hunter_core_b",
+  "X": "awaken:veilwoven_blade",
+  "B": "#awaken:hunter_bind_b"
+ },
+ "pattern": [
+  "XX",
+  "CB"
+ ],
+ "result": {
+  "id": "awaken:veilwoven_greatblade"
+ }
+}

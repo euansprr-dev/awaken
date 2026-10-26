@@ -80,6 +80,7 @@ public final class ActionCamera {
         }
         if (RunnerMoves.state != RunnerMoves.State.NONE) return ActionRig.Pose.HANG;
         if (ClientMoves.sliding) return ActionRig.Pose.SLIDE;
+        if (dev.awaken.core.api.CombatFeedback.engaged.getAsBoolean()) return ActionRig.Pose.COMBAT; // a guard is no aim
         if (p.isUsingItem()) return ActionRig.Pose.AIM;
         return ActionRig.Pose.GROUND;
     }

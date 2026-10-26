@@ -55,6 +55,9 @@ public final class ClientMoves {
     private static double stairV, stairFallX, stairFallZ;
     private static final BodyRules.StairProfile STAIRS = new BodyRules.StairProfile();
     private static final double[] FALL = new double[2], WAY = new double[2], STEP = new double[3], ACC = new double[2];
+    // the landing slide (SPEC §17.24): crouch pressed in the air, still held at touchdown
+    private static boolean wasGround = true, airShift, airSprint;
+    private static double airSpeed, airX, airZ;
     // mantle
     static boolean mantling;
     static int mantleStart = -100, mantleEnd = -100, mantleAge;
@@ -90,6 +93,22 @@ public final class ClientMoves {
         sprintWas = sprintKey;
         if (p.mayFly()) lastFly = ticks;
         if (p.isFallFlying()) lastGlide = ticks;
+        // the air before a landing: how fast and which way it went, whether it ran, whether crouch was pressed
+        boolean ground = p.onGround(), landed = ground && !wasGround;
+        wasGround = ground;
+        if (!ground) {
+            Vec3 av = p.getDeltaMovement();
+            airSpeed = av.horizontalDistance();
+            if (airSpeed > 1e-3) {
+                airX = av.x / airSpeed;
+                airZ = av.z / airSpeed;
+            }
+            airSprint |= p.isSprinting();
+            if (shiftPressed) airShift = true;
+        }
+        if (!shift) airShift = false;
+        boolean landSlide = landed && landSlideWanted(p, shift);
+        if (ground && !landed) airShift = airSprint = false; // the landing tick still needs them (the slide starts then)
         // the Runner's Kit (SPEC §16.3): every move from the first second; without it, nothing until the awakening
         boolean kit = dev.awaken.body.BodyConfig.runnersKit();
         boolean awakened = kit || Progression.profile(p).awakened();
@@ -132,6 +151,11 @@ public final class ClientMoves {
                         startMantle(p, in, l);
                         return;
                     }
+                }
+                if (landSlide) {
+                    startSlide(p, in, airSpeed, airX, airZ);
+                    trace("landing slide");
+                    return;
                 }
                 if (shiftPressed && canSlide(p)) {
                     startSlide(p, in);
@@ -248,18 +272,37 @@ public final class ClientMoves {
         return BodyRules.stairStart(p.level(), CollisionContext.of(p), STAIRS, p.getX(), p.getY(), p.getZ(), v.x / hs, v.z / hs, FALL);
     }
 
+    /**
+     * A landing slide wanted now: crouch pressed in the air and held at touchdown, a running jump's speed, ground to
+     * slide onto ahead (not an edge-sneak), and the slide otherwise free to start. Asked at touchdown, also by the
+     * fall path, whose roll then stays quiet: the slide is the landing (the server softens the fall as for a roll).
+     */
+    private static boolean landSlideWanted(LocalPlayer p, boolean shift) {
+        return airShift && shift && BodyRules.landSlideFast(airSpeed, airSprint) && Body.unlocked(p, Move.SLIDE) && !sliding && !mantling
+                && ticks >= slideReadyAt && !p.isInLiquid() && !p.isUsingItem() && !RunnerMoves.active() && !off(p)
+                && BodyRules.groundAhead(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ(), airX, airZ);
+    }
+
     private static void startSlide(LocalPlayer p, ClientInput in) {
+        startSlide(p, in, -1, 0, 0);
+    }
+
+    /** {@code landSpeed} &ge; 0: a landing slide along (lx, lz) from that air speed (SPEC §17.24). */
+    private static void startSlide(LocalPlayer p, ClientInput in, double landSpeed, double lx, double lz) {
         double hx = p.getX() - p.xo, hz = p.getZ() - p.zo;
         double hs = Math.sqrt(hx * hx + hz * hz);
         float yaw = p.getYRot();
         double dx = -Mth.sin(yaw * Mth.DEG_TO_RAD), dz = Mth.cos(yaw * Mth.DEG_TO_RAD);
-        if (hs > 0.08) {
+        if (landSpeed >= 0) {
+            dx = lx;
+            dz = lz;
+        } else if (hs > 0.08) {
             dx = hx / hs;
             dz = hz / hs;
         }
         boolean fromTac = tac;
         if (tac) endTac(p, false); // the slide's own start tells the server
-        slideV0 = BodyRules.slideEntry(hs, fromTac);
+        slideV0 = landSpeed >= 0 ? BodyRules.landSlideEntry(landSpeed, fromTac) : BodyRules.slideEntry(hs, fromTac);
         sliding = true;
         slideAge = 0;
         slideAir = 0;
@@ -273,7 +316,7 @@ public final class ClientMoves {
         p.setForcedPose(Pose.SWIMMING);
         p.setPose(Pose.SWIMMING);
         // no running while sliding (vanilla's sprint footprints would show under our own grit); the run comes back after
-        slideWasSprinting = p.isSprinting();
+        slideWasSprinting = p.isSprinting() || landSpeed >= 0 && airSprint;
         p.setSprinting(false);
         float slideYaw = yawOf(dx, dz);
         send(Move.SLIDE, slideYaw, 0, 0, 0, slideV0, fromTac);
@@ -332,6 +375,7 @@ public final class ClientMoves {
      */
     private static void applyStairs(LocalPlayer p, ClientInput in) {
         stairTicks++;
+        BodyFp.stairTick(p);
         WAY[0] = slideX;
         WAY[1] = slideZ;
         BodyRules.stairBend(WAY, stairFallX, stairFallZ);
@@ -357,6 +401,7 @@ public final class ClientMoves {
     /** The bottom of a run: the slide's last ticks, its own decay from the speed it has now, carry the body out. */
     private static void runOut() {
         if (!stairSliding) return;
+        BodyFp.stairEnd();
         stairSliding = false;
         slideAge = BodyRules.SLIDE_TICKS - BodyRules.STAIR_RUNOUT;
         slideV0 = stairV / (1 - BodyRules.SLIDE_FADE * slideAge / (double) BodyRules.SLIDE_TICKS);
@@ -387,6 +432,7 @@ public final class ClientMoves {
         if (riding) p.jumpFromGround();
         else if (!in.keyPresses.jump()) in.keyPresses = with(in.keyPresses, true, false);
         slideJumpAt = ticks;
+        BodyFp.slideJump();
         trace("slide-cancel jump");
         BodyFx.sound(p, BodyContent.SPRINT.get(), 0.6F, 1.25F);
         BodyFx.kick(p, slideX, slideZ);
@@ -397,6 +443,7 @@ public final class ClientMoves {
         trace("slide ends (" + why + ") after " + slideAge);
         sliding = false;
         stairSliding = false;
+        BodyFp.stairEnd();
         slideEnd = ticks;
         slideReadyAt = ticks + BodyRules.slideCooldown(Body.runnerRank(p));
         if (p.getForcedPose() == Pose.SWIMMING) p.setForcedPose(null); // vanilla keeps a crawl under a gap
@@ -475,6 +522,7 @@ public final class ClientMoves {
         if (ticks - lastGlide < 10 || ticks - lastFly < 140) return; // an elytra, or a power's own landing
         boolean held = p.isSprinting() || p.isShiftKeyDown() || mc.options.keyShift.isDown();
         if (!held) return;
+        if (landSlideWanted(p, mc.options.keyShift.isDown())) return; // the slide out of it is this landing's look
         AttributeInstance safe = p.getAttribute(Attributes.SAFE_FALL_DISTANCE);
         double otherSafe = safe == null ? 0 : safe.getValue() - safe.getBaseValue();
         if (BodyRules.roll(distance, otherSafe, 1.0) == null) return;

@@ -20,6 +20,7 @@ import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import dev.awaken.core.audio.client.Soundscape;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
@@ -95,7 +96,14 @@ public final class VeilClient {
             drift = new LoopSound(VeilContent.DRIFT.get(), VeilClientState::spirit, 0.35F, 1.0F);
             mc.getSoundManager().play(drift);
         }
+        if (VeilClientState.spirit()) {
+            // world sound: the world through glass (the air muffled, nature far back) and the Veil's choir over it
+            Soundscape.overlay(VeilClient.class, VEIL_SOUNDSCAPE, 1F, 10);
+            Soundscape.muffle(VeilClient.class, 1100F, 0.2F, 10);
+        }
     }
+
+    private static final net.minecraft.resources.Identifier VEIL_SOUNDSCAPE = dev.awaken.Awaken.id("state/veil");
 
     /** Status tab: what your stats give you in the Veil. */
     static final class VeilSection extends dev.awaken.signal.client.UiSection {

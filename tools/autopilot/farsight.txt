@@ -1,0 +1,59 @@
+# Far Sight, looked at (screenshots only: run it as a light tour). High above spawn, the four directions, then Lens's
+# far-depth views (3: far depth raw, blue 1 once Lens trusts it; 4: the haze each pixel gets) and the ground.
+# Run with PACK=perf LENS=swift.
+world farsight creative 777
+waitworld
+gui 0
+farsight on
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd gamerule advance_time false
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+cmd gamemode spectator
+cmd tp @s 0.5 220 0.5 90 10
+wait 400
+farsight status
+shot fs_1_west
+look 0 10
+wait 40
+shot fs_2_south
+look -90 10
+wait 40
+shot fs_3_east
+look 180 10
+wait 40
+shot fs_4_north
+lensdebug 3
+wait 20
+shot fs_5_fardepth
+lensdebug 4
+wait 20
+shot fs_6_haze
+lensdebug 0
+lens off
+wait 60
+shot fs_7_lens_off
+lens swift
+look 90 45
+wait 40
+shot fs_8_down
+cmd time set 13000
+look 90 6
+wait 60
+shot fs_9_dusk
+cmd time set 18000
+wait 60
+shot fs_10_night
+cmd time set 6000
+cmd tp @s 0.5 90 0.5 90 2
+wait 200
+shot fs_11_low
+farsight status
+quit

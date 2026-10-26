@@ -138,6 +138,109 @@ public final class FxClient {
         onEvent(FxEvent.of(FxKind.TRAIL, style, p.position()).caster(p).ticks(12).seed(p.getId()).build());
     }
 
+    // ---- for other modules' weapons (Arms, SPEC §24): the same engine, budget and settings --------------------------
+
+    /**
+     * A blade's arc that moves with {@code wielder}: a crescent about their eyes + {@code offset}, in the plane of
+     * {@code axis0} (angle 0) and {@code axis90} (90 degrees; world-space unit vectors), from {@code startDeg} through
+     * {@code sweepDeg}, at {@code radius} with a band of {@code band} (the blade's length), its head crossing in
+     * {@code sweepTicks}. The local player's own is drawn softer in first person.
+     */
+    public static void slash(Entity wielder, Vec3 offset, Vec3 axis0, Vec3 axis90, float startDeg, float sweepDeg, float radius, float band,
+                             int sweepTicks, int argb) {
+        Shape s = blade(wielder, offset, sweepTicks, argb);
+        if (s == null) return;
+        s.nx = (float) axis0.x;
+        s.ny = (float) axis0.y;
+        s.nz = (float) axis0.z;
+        s.ux = (float) axis90.x;
+        s.uy = (float) axis90.y;
+        s.uz = (float) axis90.z;
+        s.c = (float) Math.toRadians(startDeg);
+        s.range = (float) Math.toRadians(sweepDeg);
+        s.a = radius;
+        s.b = band;
+    }
+
+    /** A thrust's streak that moves with {@code wielder}: from their eyes + {@code offset} along {@code dir}, {@code from}..{@code to} blocks out. */
+    public static void thrust(Entity wielder, Vec3 offset, Vec3 dir, float from, float to, float width, int sweepTicks, int argb) {
+        Shape s = blade(wielder, offset, sweepTicks, argb);
+        if (s == null) return;
+        s.flags |= Shape.THRUST;
+        s.nx = (float) dir.x;
+        s.ny = (float) dir.y;
+        s.nz = (float) dir.z;
+        s.a = (from + to) * 0.5f;
+        s.b = (to - from) * 0.5f;
+        s.c = width;
+    }
+
+    private static @org.jspecify.annotations.Nullable Shape blade(Entity wielder, Vec3 offset, int sweepTicks, int argb) {
+        Vec3 at = wielder.getEyePosition();
+        if (!FxWorld.begin(at.x, at.y, at.z, wielder.getId())) return null;
+        int sweep = Math.max(1, sweepTicks);
+        Shape s = FxWorld.shape(Shape.SLASH, sweep * 2 + 6);
+        if (s == null) return null;
+        s.x = at.x;
+        s.y = at.y;
+        s.z = at.z;
+        s.ex = offset.x;
+        s.ey = offset.y;
+        s.ez = offset.z;
+        s.follow = wielder.getId();
+        s.anchor = Anchors.EYE;
+        s.d = sweep;
+        s.c0 = argb;
+        s.c1 = 0xFFFFFFFF;
+        s.fadeIn = 0;
+        s.fadeOut = 3;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && wielder.getId() == mc.player.getId()) s.flags |= Shape.OWN;
+        return s;
+    }
+
+    /** A wave rolling out along the ground from {@code from}'s feet along {@code dir} to {@code range}, ±{@code halfDeg} wide. */
+    public static void groundWave(Entity from, Vec3 dir, float range, float halfDeg, int ticks, FxStyle style) {
+        onEvent(FxEvent.of(FxKind.CONE, style, from.position()).caster(from).dir(dir).scale(range).aux(halfDeg).ticks(ticks)
+                .seed(from.getId() * 31 + FxWorld.ticks).flag(FxEvent.QUIET, true).build());
+    }
+
+    /** A blade landing at {@code at}, travelling along {@code dir}: sparks, chips or wisps by what it meets. */
+    public static void bladeHit(Vec3 at, Vec3 dir, float size, dev.awaken.core.api.BodyMaterial material) {
+        if (!FxWorld.begin(at.x, at.y, at.z, (int) (at.x * 31 + at.z * 17 + FxWorld.ticks))) return;
+        FxRecipes.bladeHit(at.x, at.y, at.z, dir.x, dir.y, dir.z, size, material);
+    }
+
+    /** A weapon's own light (Arms' streams): an ember that rises and cools to red. */
+    public static final int MOTE_EMBER = 1;
+    /** A wisp that drifts, swells and curls away to nothing. */
+    public static final int MOTE_WISP = 2;
+    /** A mote that hangs in the air near where it was let go and twinkles out. */
+    public static final int MOTE_MOTE = 3;
+
+    /**
+     * Light lifting off a weapon at (x, y, z) with its own drift, in the weapon's colour (rgb), {@code size} blocks
+     * across: one particle of the shared pool, under its budget and the particle setting (Arms, SPEC §25 "Weapons").
+     * {@code near}: the fighter's own blade in first person, drawn even this close to the eye.
+     */
+    public static void weaponMote(int kind, double x, double y, double z, double vx, double vy, double vz, int rgb, float size, boolean near) {
+        if (!FxWorld.begin(x, y, z, (int) (x * 131 + y * 37 + z * 71) + FxWorld.ticks * 7919 + kind)) return;
+        if (FxWorld.R.f() > FxWorld.k) return; // the density setting thins them like any effect
+        FxRecipes.weaponMote(kind, x, y, z, vx, vy, vz, 0xFF000000 | rgb, size, near ? dev.awaken.powers.fx.FxPool.NEAR : 0);
+    }
+
+    /** A tell's marks (Arms, SPEC §25 "Tells"): a glint, a flare with its ring, a sign over the head, a held glow. */
+    public static final int TELL_GLINT = 1, TELL_FLARE = 2, TELL_SIGN = 3, TELL_GLOW = 4;
+
+    /**
+     * One mark of an enemy's tell at (x, y, z) in its class's colour (rgb), {@code size} blocks, living {@code life}
+     * ticks; drawn even close to the eye (a blow is told at sword's length). The effects engine's budget and setting.
+     */
+    public static void tellMark(int mark, double x, double y, double z, int rgb, float size, int life) {
+        if (!FxWorld.begin(x, y, z, (int) (x * 53 + z * 29) + FxWorld.ticks * 131 + mark)) return;
+        FxRecipes.tellMark(mark, x, y, z, 0xFF000000 | rgb, size, life);
+    }
+
     /** Cast animations are switched on in the power FX settings. */
     public static boolean animations() {
         return PowerFxConfig.animations();

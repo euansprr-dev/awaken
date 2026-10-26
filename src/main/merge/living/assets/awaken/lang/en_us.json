@@ -48,5 +48,10 @@
   "item.awaken.foragers_salad": "Forager's Salad",
   "item.awaken.miners_pasty": "Miner's Pasty",
   "item.awaken.anglers_chowder": "Angler's Chowder",
-  "item.awaken.spirit_tea": "Spirit Tea"
+  "item.awaken.spirit_tea": "Spirit Tea",
+  "subtitles.awaken.living.tell.horn": "A hunting horn, far off",
+  "subtitles.awaken.living.tell.stampede": "A stampede rumbles",
+  "subtitles.awaken.living.tell.wings": "A great flock turns",
+  "subtitles.awaken.living.tell.tide": "The Deep Tide rolls in",
+  "subtitles.awaken.living.tell.bells": "Caravan bells"
 }

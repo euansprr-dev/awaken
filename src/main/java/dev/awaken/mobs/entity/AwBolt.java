@@ -31,6 +31,8 @@ public class AwBolt extends AbstractHurtingProjectile implements ItemSupplier {
     private static final ItemStack[] STACKS = new ItemStack[BoltKind.values().length];
 
     private float damage = 4.0F;
+    /** The class of the ability that fired it (core.api.Strikes): it lands as that blow, whenever it lands. */
+    private dev.awaken.core.api.Strikes.Kind strike = dev.awaken.core.api.Strikes.Kind.LIGHT;
     private @Nullable MobEffectInstance effect;
     private int life;
 
@@ -46,9 +48,16 @@ public class AwBolt extends AbstractHurtingProjectile implements ItemSupplier {
         b.entityData.set(DATA_KIND, (byte) kind.ordinal());
         b.damage = damage;
         b.effect = effect;
+        var fired = dev.awaken.core.api.Strikes.delivering();
+        if (fired != null) b.strike = fired;
         b.setDeltaMovement(dir.normalize().scale(speed));
         level.addFreshEntity(b);
         return b;
+    }
+
+    /** The class this bolt lands as. */
+    public dev.awaken.core.api.Strikes.Kind strike() {
+        return strike;
     }
 
     public BoltKind kind() {

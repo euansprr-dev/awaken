@@ -11,7 +11,7 @@ public final class ActionRig {
     private ActionRig() {}
 
     /** What the body is doing, as the camera sees it. */
-    public enum Pose { GROUND, SLIDE, WALL_RUN, HANG, ROPE, ZIP, CARRY, GLIDE, FLIGHT, AIM, SOVEREIGN }
+    public enum Pose { GROUND, SLIDE, WALL_RUN, HANG, ROPE, ZIP, CARRY, GLIDE, FLIGHT, AIM, SOVEREIGN, COMBAT }
 
     /** The arm's channels: back (further behind), up, open (0..1: over to the side away from a wall), centre (0..1: in behind you). */
     public static final int BACK = 0, UP = 1, OPEN = 2, CENTRE = 3, N = 4;
@@ -75,6 +75,11 @@ public final class ActionRig {
             }
             case AIM -> {
                 // casting or drawing a bow: the shoulder's own aim view, nothing added
+            }
+            case COMBAT -> {
+                // in a fight (Arms, SPEC §25): a little closer and lower, the foe big in the frame over the shoulder
+                back = -0.45;
+                up = -0.18;
             }
         }
         out[BACK] = Math.min(MAX_BACK, back);

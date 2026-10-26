@@ -1,5 +1,6 @@
 package dev.awaken.mobs.entity;
 
+import dev.awaken.core.api.Strikes;
 import dev.awaken.mobs.MobSounds;
 import dev.awaken.mobs.Mobs;
 import dev.awaken.mobs.def.Ability;
@@ -83,7 +84,8 @@ public final class AbilityRunner {
             global--;
             return;
         }
-        if (list.isEmpty() || (mob.tickCount & 3) != 0 || mob.flag(AwakenMob.F_FALLEN) || mob.flag(AwakenMob.F_DORMANT)
+        // a broken stance (Arms) starts nothing until it stands again: the break is the opening it earned
+        if (list.isEmpty() || (mob.tickCount & 3) != 0 || mob.staggered() || mob.flag(AwakenMob.F_FALLEN) || mob.flag(AwakenMob.F_DORMANT)
                 || mob.flag(AwakenMob.F_DECOY) || mob.isWatchedNow() || mob.fleeTicks > 0 || chargeTicks > 0 || leapTicks > 0) return;
         LivingEntity t = mob.getTarget();
         if (t == null || !t.isAlive()) return;
@@ -133,14 +135,14 @@ public final class AbilityRunner {
             default -> { }
         }
         if (a.roots()) mob.getNavigation().stop();
-        mob.setTelegraph(left, a.heavy());
+        mob.setTell(left, a.strike(), a.heavy());
         mob.setAggressive(true);
         float pitch = switch (a.kind()) {
             case BOLT, ARROWS, NOVA -> 1.5F;
             case SUMMON, DECOY, HEAL -> 0.9F;
             default -> 1.0F;
         };
-        mob.playLevelSound(a.heavy() ? MobSounds.TELEGRAPH_HEAVY.get() : MobSounds.TELEGRAPH.get(), a.heavy() ? 1.4F : 0.9F, pitch);
+        mob.playTell(a.strike(), a.heavy(), pitch);
         if (a.heavy()) {
             for (ServerPlayer p : level.players()) {
                 if (p.distanceToSqr(mob) < 24 * 24) p.sendOverlayMessage(net.minecraft.network.chat.Component.literal(a.name()).withColor(mob.def().glow));
@@ -184,13 +186,16 @@ public final class AbilityRunner {
         if (t != null) mob.getLookControl().setLookAt(t, 30.0F, 30.0F);
         if (a.roots()) mob.getNavigation().stop();
         if (left % 3 == 0) show(level, a);
-        if ((left & 3) == 0) mob.setTelegraph(left, a.heavy());
+        if ((left & 3) == 0) mob.setTell(left, a.strike(), a.heavy());
         if (--left > 0) return;
         active = null;
         mob.setTelegraph(0, false);
         cooldowns[activeIndex] = a.cooldown() + mob.getRandom().nextInt(20);
         global = mob.def().tier.isBoss() ? 14 : 28;
-        execute(level, a, t);
+        Strikes.deliver(mob, a.strike(), () -> {
+            execute(level, a, t);
+            return true;
+        });
     }
 
     private void show(ServerLevel level, Ability a) {
@@ -292,8 +297,12 @@ public final class AbilityRunner {
         for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, mob.getBoundingBox().inflate(0.6), e -> Abilities.isEnemy(mob, e))) {
             if (chargeHits.contains(e.getId())) continue;
             chargeHits.add(e.getId());
-            Abilities.hurt(level, mob, e, chargeDamage, chargeAbility != null ? Abilities.bolt(mob, chargeAbility) : mob.def().theme.bolt,
-                    chargeAbility != null ? Abilities.effect(chargeAbility) : null);
+            Ability ca = chargeAbility;
+            Strikes.deliver(mob, ca != null ? ca.strike() : Strikes.Kind.HEAVY, () -> {
+                Abilities.hurt(level, mob, e, chargeDamage, ca != null ? Abilities.bolt(mob, ca) : mob.def().theme.bolt,
+                        ca != null ? Abilities.effect(ca) : null);
+                return true;
+            });
             Abilities.push(e, chargeDir, 1.1, 0.4);
         }
         if (mob.horizontalCollision && !mob.def().flies()) chargeTicks = 0;
@@ -310,7 +319,10 @@ public final class AbilityRunner {
         leapTicks = 0;
         Ability a = leapAbility;
         if (a == null) return;
-        Abilities.area(level, mob, a, mob.position(), a.radius(), 0, 0.7);
+        Strikes.deliver(mob, a.strike(), () -> {
+            Abilities.area(level, mob, a, mob.position(), a.radius(), 0, 0.7);
+            return true;
+        });
         Abilities.slamFx(level, mob, mob.position(), a.radius());
     }
 }

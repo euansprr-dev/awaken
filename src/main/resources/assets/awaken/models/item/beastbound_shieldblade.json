@@ -1,0 +1,6 @@
+{
+ "parent": "minecraft:item/handheld",
+ "textures": {
+  "layer0": "awaken:item/arms/beastbound_shieldblade_icon"
+ }
+}

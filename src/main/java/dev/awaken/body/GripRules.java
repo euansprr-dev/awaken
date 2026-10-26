@@ -10,6 +10,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
 
@@ -114,6 +115,37 @@ public final class GripRules {
     /** Whether a body with its feet at y still holds the line in this column (its feet or its chest are on it). */
     public static boolean holds(BlockGetter level, BlockPos.MutableBlockPos m, int bx, int bz, double y) {
         return lineAt(level, m, bx, bz, y + 0.1) || lineAt(level, m, bx, bz, y + 1.2);
+    }
+
+    /** A lip over a line's top: its top this far over the feet (an eave or cornice the line runs up under), out to here. */
+    public static final double LIP_LO = 1.6, LIP_HI = 3.2, LIP_OUT = 1.5;
+
+    /**
+     * Where the top of a line leads when something is over it (SPEC §17.23, "the top"): the lip of an eave or cornice
+     * the line runs up under, as a hang from its outer face (out from the line, then up), or null. Feet at (x, y, z) in
+     * front of the line, facing it (axis, sign toward the wall). The lip is over the head, its face out past the body,
+     * and the way out (level) and then up to the hold is free. {@code tol}: the server's extra reach.
+     */
+    public static RunnerRules.@Nullable Edge topLip(BlockGetter level, CollisionContext ctx, BlockPos.MutableBlockPos m,
+                                                    double x, double y, double z, int axis, int sign, double tol) {
+        double fx = axis == 0 ? sign : 0, fz = axis == 2 ? sign : 0, w = BodyRules.HALF_WIDTH, h = BodyRules.HEIGHT;
+        for (double d = 0.3; d <= LIP_OUT + 1e-6; d += 0.15) {
+            RunnerRules.Edge e = RunnerRules.findEdge(level, ctx, m, x - fx * d, y, z - fz * d, axis, sign, RunnerRules.HANG_REACH + tol,
+                    LIP_LO, LIP_HI, 0, 0.2);
+            if (e == null) continue;
+            double out = ((axis == 0 ? x : z) - (axis == 0 ? e.hx() : e.hz())) * sign;
+            if (e.top() < y + h - 0.2 || out < 0.2) continue; // an overhang over the head, its face out past the body
+            // out level from the line, then up (or down) to the hold
+            double c0 = Math.min(axis == 0 ? x : z, axis == 0 ? e.hx() : e.hz()) - w, c1 = Math.max(axis == 0 ? x : z, axis == 0 ? e.hx() : e.hz()) + w;
+            double t = axis == 0 ? z : x;
+            boolean out1 = axis == 0 ? BodyRules.blocked(level, ctx, m, c0 + 1e-3, y + 1e-3, t - w + 1e-3, c1 - 1e-3, y + h - 1e-3, t + w - 1e-3)
+                    : BodyRules.blocked(level, ctx, m, t - w + 1e-3, y + 1e-3, c0 + 1e-3, t + w - 1e-3, y + h - 1e-3, c1 - 1e-3);
+            if (out1) continue;
+            double y0 = Math.min(y, e.hy()), y1 = Math.max(y, e.hy()) + h;
+            if (BodyRules.blocked(level, ctx, m, e.hx() - w + 1e-3, y0 + 1e-3, e.hz() - w + 1e-3, e.hx() + w - 1e-3, y1 - 1e-3, e.hz() + w - 1e-3)) continue;
+            return e;
+        }
+        return null;
     }
 
     /** Whether the hands can reach on up the line from feet at y (climbing; else the top is here). */

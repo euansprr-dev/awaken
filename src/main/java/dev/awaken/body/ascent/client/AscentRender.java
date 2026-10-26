@@ -187,10 +187,14 @@ final class AscentRender {
     }
 
     /** Your raised hand in first person: low right of the view, a little ahead. */
+    /** Where the rope leaves your hand in first person: the main fist's place on a rope (AscentFp.ROPE_*, view space). */
     private static void cameraHand(double[] out, int at) {
-        out[at] = cx + rx * 0.36 + ux * -0.2 - bx * 0.62;
-        out[at + 1] = cy + ry * 0.36 + uy * -0.2 - by * 0.62;
-        out[at + 2] = cz + rz * 0.36 + uz * -0.2 - bz * 0.62;
+        float side = Minecraft.getInstance().player != null && Minecraft.getInstance().player.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT
+                ? -1 : 1;
+        double x = side * AscentFp.ROPE_X, y = AscentFp.ROPE_Y, z = AscentFp.ROPE_Z;
+        out[at] = cx + rx * x + ux * y + bx * z;
+        out[at + 1] = cy + ry * x + uy * y + by * z;
+        out[at + 2] = cz + rz * x + uz * y + bz * z;
     }
 
     /** A body's rope hand as the figure is drawn: the right arm raised along the body toward the anchor. */

@@ -1,0 +1,301 @@
+# Arms: a diamond sword as a player swings it (SPEC §25). Real clicks of the attack key (held 2 ticks, as a finger does)
+# and a real hold, looking at the ground and at the air, with the trace logging the move, its clock and the hand's
+# pose every tick, and a shot every tick through the swing. First person, then vanilla's third person. Run with the
+# pack as the owner plays it (PACK=feel,horizon,perf).
+world armsrepro creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+screen close
+window 1280 720
+hud on
+cmd gamemode creative
+wait 200
+screen close
+camera first
+cmd tp @s ~3000 300 ~ 0 0
+wait 100
+# the body fell while the chunks loaded (into the sea, once): back up into loaded air, then the platform under it
+cmd tp @s ~ 200 ~ 0 0
+cmd fill ~-10 ~-1 ~-10 ~10 ~-1 ~14 minecraft:smooth_stone
+cmd fill ~-10 ~ ~-10 ~10 ~10 ~14 minecraft:air
+cmd item replace entity @s weapon.mainhand with minecraft:diamond_sword
+cmd kill @e[type=minecraft:husk]
+cmd summon minecraft:husk ~ ~ ~2.6 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:400f,attributes:[{id:"minecraft:max_health",base:400d}]}
+wait 60
+camera first
+look 0 5
+wait 10
+info
+# 1. a tap on the husk (opens the fight)
+arms trace 40
+arms strike
+shotnow fp_a0
+wait 1
+shotnow fp_a1
+wait 1
+shotnow fp_a2
+wait 1
+shotnow fp_a3
+wait 1
+shotnow fp_a4
+wait 1
+shotnow fp_a5
+wait 1
+shotnow fp_a6
+wait 1
+shotnow fp_a8
+wait 20
+# 2. a tap looking at the ground, in the fight
+look 30 45
+wait 4
+arms trace 40
+arms strike
+shotnow fp_g0
+wait 1
+shotnow fp_g1
+wait 1
+shotnow fp_g2
+wait 1
+shotnow fp_g3
+wait 1
+shotnow fp_g4
+wait 1
+shotnow fp_g5
+wait 20
+# 3. a held heavy looking at the ground
+arms trace 50
+arms heavy 30
+wait 4
+shotnow fp_h4
+wait 6
+shotnow fp_h10
+wait 6
+shotnow fp_h16
+wait 6
+shotnow fp_h22
+wait 8
+shotnow fp_h30
+wait 2
+shotnow fp_h32
+wait 30
+# 4. a chain at the air
+look 0 -15
+wait 4
+arms trace 60
+arms strike
+wait 7
+arms strike
+wait 7
+arms strike
+shotnow fp_c3_0
+wait 2
+shotnow fp_c3_2
+wait 2
+shotnow fp_c3_4
+wait 30
+# 4b. ribbons held still: a strike, a backhand, an overhead and a heavy, each shot just after its blow
+arms trailfreeze on
+look 0 5
+wait 10
+arms strike
+wait 8
+shot rib_s1
+wait 6
+arms strike
+wait 8
+shot rib_s2
+wait 6
+arms strike
+wait 9
+shot rib_s3
+wait 30
+arms heavy 18
+wait 30
+shot rib_heavy
+arms trailfreeze off
+wait 10
+# 5. third person: a tap on the husk, then seen from the front, then a held heavy at the ground
+camera back
+look 0 5
+wait 10
+arms trace 40
+arms strike
+shotnow tp_a0
+wait 1
+shotnow tp_a1
+wait 1
+shotnow tp_a2
+wait 1
+shotnow tp_a3
+wait 1
+shotnow tp_a4
+wait 2
+shotnow tp_a6
+wait 20
+cmd tp @e[type=minecraft:husk] ~3 ~ ~2
+camera front
+wait 4
+arms strike
+wait 1
+shotnow tf_1
+wait 1
+shotnow tf_2
+wait 1
+shotnow tf_3
+wait 20
+camera back
+look 30 40
+arms trace 50
+arms heavy 30
+wait 8
+shotnow tp_h8
+wait 10
+shotnow tp_h18
+wait 13
+shotnow tp_h31
+wait 30
+# 5b. the six forged Longswords in first person by day, at rest
+camera first
+look 0 5
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
+wait 30
+shot day_wildhide
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_longsword
+wait 30
+shot day_beastbound
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
+wait 30
+shot day_gatewrought
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_longsword
+wait 30
+shot day_veilwoven
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_longsword
+wait 30
+shot day_lordscale
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_longsword
+wait 30
+shot day_sovereign
+camera back
+wait 20
+shot day_sovereign_3p
+camera first
+# 6. the high blades at dusk: Lordscale's embers, the Sovereign's motes, their ribbons, first person and third
+cmd time set 13000
+camera first
+look 0 5
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_longsword
+wait 40
+shot ws_lord_rest
+arms strike
+wait 1
+shotnow ws_lord_blow1
+wait 1
+shotnow ws_lord_blow2
+wait 30
+arms heavy 26
+wait 20
+shotnow ws_lord_charge
+wait 30
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_longsword
+wait 40
+shot ws_sov_rest
+arms strike
+wait 1
+shotnow ws_sov_blow1
+wait 1
+shotnow ws_sov_blow2
+wait 20
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_longsword
+wait 40
+shot ws_veil_rest
+camera back
+look 0 5
+wait 30
+shot ws_veil_3p
+arms strike
+wait 1
+shotnow ws_veil_3p_blow1
+wait 1
+shotnow ws_veil_3p_blow2
+wait 20
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_longsword
+wait 40
+shot ws_lord_3p
+arms trailfreeze on
+arms strike
+wait 8
+shot ws_lord_3p_ribbon
+arms trailfreeze off
+wait 10
+arms strike
+wait 1
+shotnow ws_lord_3p_blow1
+wait 1
+shotnow ws_lord_3p_blow2
+wait 20
+# 7. low health: the cold edge
+camera first
+cmd time set 6000
+cmd gamemode survival
+cmd attribute @s minecraft:max_health base set 20
+cmd damage @s 16 minecraft:out_of_world
+wait 12
+cmd damage @s 3 minecraft:out_of_world
+wait 40
+shot low_health
+cmd effect give @s minecraft:instant_health 1 3 true
+wait 10
+# 8. tells by class: a Toll Ghoul (light, every third a heavy) and a Crypt Keeper (its Bell Slam perilous) come at you
+cmd effect give @s minecraft:resistance 120 3 true
+cmd effect give @s minecraft:regeneration 120 3 true
+cmd kill @e[type=minecraft:husk]
+cmd item replace entity @s weapon.mainhand with minecraft:diamond_sword
+cmd tp @s ~ ~ ~ 0 10
+cmd summon awaken:toll_ghoul ~-1 ~ ~5
+cmd summon awaken:crypt_keeper ~2 ~ ~6
+wait 20
+shotnow tell_00
+wait 3
+shotnow tell_03
+wait 3
+shotnow tell_06
+wait 3
+shotnow tell_09
+wait 3
+shotnow tell_12
+wait 3
+shotnow tell_15
+wait 3
+shotnow tell_18
+wait 3
+shotnow tell_21
+wait 3
+shotnow tell_24
+wait 3
+shotnow tell_27
+wait 3
+shotnow tell_30
+wait 3
+shotnow tell_33
+wait 3
+shotnow tell_36
+wait 3
+shotnow tell_39
+cmd gamemode creative
+cmd kill @e[type=awaken:toll_ghoul]
+cmd kill @e[type=awaken:crypt_keeper]
+wait 10
+camera first
+quit

@@ -1,4 +1,4 @@
-# AWAKEN handoff (2026-10-25, ~16:30)
+# AWAKEN handoff (2026-10-26, ~05:45)
 
 Start here if you are a new Claude session with no context. Read this, then `CLAUDE.md`, then the memory index at
 `~/.claude/projects/-Volumes-MEDIA-Awaken/memory/MEMORY.md`. Its files hold Euan's decisions, preferences and the
@@ -36,76 +36,66 @@ history behind them. `docs/SPEC.md` is the source of truth for every system.
 - **Euan plays** with `tools/play.sh --pack`. It builds `build/awaken-v1` into `/Volumes/MEDIA/Awaken-play`, runs on
   Vulkan, and gives the client an 8 GB heap.
 
-## What is in build/awaken-v1 (4fa2e86c, ~16:30)
-Everything below is merged and green on CI, apart from the Living Wilds location test noted under "Small known issues".
+## What is in build/awaken-v1 (fe260b4b, 2026-10-26 ~05:45, CI green)
+Merged and green since 25 Oct 16:30, by the orchestrator, each one on green CI with its shots reviewed:
 
-**Carillon, the walled city at spawn (SPEC §16)**
-- The opening run, the Ritual, the infirmary wake, and citizens.
-- M4 look, steps B1 and B2: the climbing grid on all 779 buildings, real heights, chained roofs, walkways, and 3D or
-  hanging ladders.
-- The approved story and onboarding plan, with TipHooks v0.
+**Carillon (SPEC §16):**
+- **B3a, street life:** props, the street kit, lit windows, 460 citizens, Kestrel and Bram.
+- **B3b, the city's soundscape and creatures:**
+  - client-only animals and boats, and the district soundscape;
+  - drawn lanterns and festoons with no light blocks, and the Watch's 3D hand lantern;
+  - boatmen at their own berths, and held 3D props;
+  - the look-at limit.
+- **The walls, towers and gatehouses** (carillon/m4-walls):
+  - relief, the wall kit and climbable courses;
+  - the Watch's round on the walk;
+  - warm courses, the approach and the barbican.
+- **M5, the Atlas** (replaces Xaero's map): a voxel diorama on M, discovery, the wrist glance, region names, party pins,
+  readability, and under 2 ms.
 
-**The Ascent, movement (SPEC §17)**
-- Runner moves from the start, the one-button free-run, the shoulder action camera, and weight.
-- The tiers: rope, Leaper trial, Wings, flight via the Sky Leviathan trial, and Sovereign on the U key.
-- The tactical sprint bar, windways, Tether Spires, hero-tree crowns, and Living Wilds quest calls.
-- The stair-roof climb fix from Euan's playtest.
+**Movement and hands (SPEC §17, §24):**
+- **Movement fixes:** the stair slide (§17.22), mantling onto stair- and slab-topped walls (§17.23), and the landing
+  slide (§17.24).
+- **Hands, P1-P6** (approved in game by Euan):
+  - the pipe grip (Shift slides; Jump plus a direction kicks off);
+  - pipe tops lead to a cornice hang and the roof, and the ledge drop;
+  - first person for every move, touches that reach the world, station scenes, and the Ritual's hands.
 
-**The Living Wilds, MMO-lite (SPEC §21), phases B and C**
-- Regions with levels, kill XP, elites, gate XP ×0.80.
-- HoloWorld creature plates, damage numbers, XP stream, level-up moment, loot pillars.
-- Wayfarers, eight quest chains, relics, Hale's bounties, the Journal.
+**Arms, combat (SPEC §25):**
+- S0 (every blow told), S1 (strike, guard/deflect, dodge), and S2 (feel, ribbons, camera, tells).
+- All 16 styles, with 96 forged and 15 Lord-forged weapons in Euan's voxel reference style
+  (/Volumes/MEDIA/arms-ref).
+- Weaves (S8) and their Codex page, and the combat sim.
 
-**Lens 2, the shader (SPEC §22)**
-- Sun shadows, AO, beams, fog glow, sky, 15 gate-theme looks, water glint, volumetric clouds.
-- About 100 fps on Cinematic at 1440p on Euan's M4.
+**Far Sight 2 (SPEC §20):** the Awakened Alpine terrain for new worlds, real far relief, far forests, ridge shadows,
+haze and valley cloud. It's on by default and Distant Horizons is out of the pack. Ultra costs about +2.7-2.8 ms.
 
-**Creature life (SPEC §23)**
-- Fresh Animations (EMF and ETF) in the pack.
-- A procedural life layer for our creatures, plus hero clips.
+**World sound:** the Conductor, AWAKEN's own places and moments, AmbientSounds for nature, and Euan's listening
+remakes.
 
-**Power icons:** 63 new 32×32 icons in 9 family frames, and crystal Power Cores.
+**Earlier on the 25th:**
+- Living Wilds Phase E (crafts).
+- City fps: ZGC, render scale 0.75 on 4K, the city held through join, lighter Lens uploads.
 
-**The pack:** Shoulder Surfing, Fresh Animations, an 8 GB heap.
+**Measured quiet** (26 Oct, MacBook screen, render distance 32): the city holds the 60 Hz presentation cap on Swift,
+Cinematic and Ultra. The remaining hitch is generation while walking into new chunks (p99 53 ms). Euan's 40 fps reading
+was the builders' contention, not the game.
 
-## In flight (each one pushed to its branch, not yet merged)
-**MERGED (see the commit after f91675c9): pack/living-wilds-d at 8ffbffd3, Living Wilds Phase D**
-- The World Pulse with happenings, the ledger of herds, packs and roosts, camps and nests, and the game rule
-  `awaken:living_herds`.
-- CI run 40178150413 passed; merged into build.
+## Open, for Euan
+- **The Arms sim's whole-game pacing** (`docs/combat/sim-2026-10-26.md`): dodgers and parriers lose most on-level Lords
+  as built. Not applied, because it also changes how players who use powers fare.
+- **Feel sessions G1 and G2,** the combat listening sheet (`docs/combat/listening-2026-10-25.html`), and his verdict on
+  the voxel weapons.
+- **Atlas:** should it pop open by itself at the Registry? Gate pillars on the map, with the Gate Map tab renamed?
+- **Far Sight:** reference 2's massif scale is capped by the y 320 ceiling. Over the sea, Ultra's budget is lost to
+  the planner's sea-floor estimate (a next fix noted in STATUS).
+- **Carillon next:** M4 steps B4-B7 (interiors, landmarks, city light, Bram's Registry walk). Living Wilds next:
+  phases F and G.
 
-**pack/living-wilds at 14832a98: Phase E (crafts), WORK IN PROGRESS**
-- Herb and meal textures and the tour are missing.
-- Do not merge yet. Finish it, then merge.
-- Then Phases F (wonders, secrets, legendary beasts) and G (settlers and village) from docs/living-wilds/PLAN.md.
-
-**carillon/main: Carillon M4 B3a (street life), committed as WIP**
-- Euan's urgent stop at 98% usage; check what got pushed.
-- Next: B3b (animals, the soundscape, with Euan's listening page as the gate), then B4–B7, including the landmarks and
-  Bram's Registry walk.
-- Plan: `docs/carillon/m4/` and `docs/carillon/STATUS.md`.
-
-**pack/ascent**
-- Idle. Its branch is behind build, so merge `build/awaken-v1` into it before any new work.
-- Open: free-run tuning from Euan's feel notes, and the Sky Leviathan's aerial moveset (deferred).
-
-**Done and idle:** pack/lens2, pack/creature-life, pack/power-icons.
-
-**Paused on Euan's word:**
-- **Far Sight** (our own far-terrain renderer, pack/far-sight). It's the path to the alpine views he wants, together
-  with an Awakened Lands terrain upgrade (erosion, snow lines) and tall swaying grass.
-- **Pixels and MetalFX** (render scale is merged but off by default; MetalFX isn't done).
-
-## Euan's open notes from his playtest (25 Oct)
-1. **Blue glowing crystal-tree shapes all over Choir Square in a new world.** Probably an Awakened Lands feature the
-   city's sweep doesn't clear; this is for Carillon.
-2. **About 55 fps with big hitches in the city.**
-   - The setup: the 4K Dell (1920×1080 at 2x), 32 chunks, a 4 GB heap at 78%, allocation about 400 MB/s.
-   - Done: the heap is now 8 GB.
-   - To do: find the allocation hotspot in the city (citizens? the life layer? plates? Lens?). Consider renderScale 0.75
-     on 4K, and finishing MetalFX.
-3. **No clouds seen.** Check that he's on the Cinematic or Ultra look (the clouds draw only there).
-4. **Free-run feel notes:** not given yet. Ask him for them.
+## Working here
+- **The orchestrator session** briefs builders (Opus at xhigh effort), merges, and never stops builders unasked.
+- Tours have a standing OK. Cloud credit is used up, so work runs on local sessions.
+- New builders: read the memory index first.
 
 ## Small known issues
 - `living_scene_finder` still fails at some CI locations ("flat open ground for a road scene"). Make it independent of

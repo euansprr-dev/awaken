@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "title": "Everywhere: leaves in the wind, wind on the heights",
+  "textures": [
+    {"sound": "awaken:amb.lands_rustle", "anchor": "canopy", "gain": 1.0, "drive": "rustle"},
+    {"sound": "awaken:amb.lands_wind_high", "anchor": "sky", "gain": 1.0, "drive": "high_wind"}
+  ]
+}

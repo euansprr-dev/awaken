@@ -1,6 +1,5 @@
 package dev.awaken.body.client;
 
-import dev.awaken.core.api.FirstPerson;
 
 import dev.awaken.body.BodyRules;
 import net.minecraft.client.Minecraft;
@@ -16,7 +15,7 @@ import net.neoforged.neoforge.client.event.ViewportEvent;
 final class BodyCamera {
     private BodyCamera() {}
 
-    private static float tacWide, slideWide;
+    private static float tacWide, slideWide, stairTilt;
 
     private static float now(float pt) {
         return ClientMoves.ticks + pt;
@@ -42,8 +41,10 @@ final class BodyCamera {
             float attack = Mth.clamp(r / 2.2F, 0, 1);
             float release = Mth.clamp((r - 2.2F) / (BodyRules.ROLL_TICKS + 3.8F), 0, 1);
             float dip = attack * (1 - release * release * (3 - 2 * release));
-            pitch += 32F * dip;
-            roll += 7F * Mth.sin(r * 0.55F) * dip;
+            // reduced motion halves the dip and its twist like every other roll (SPEC §25 "Feel")
+            float comfort = dev.awaken.body.client.feel.FeelConfig.reduced() ? 0.5F : 1F;
+            pitch += 32F * dip * comfort;
+            roll += 7F * Mth.sin(r * 0.55F) * dip * comfort;
         }
         // mantle: eyes up to the lip, then over it
         float m = t - ClientMoves.mantleStart;
@@ -59,6 +60,9 @@ final class BodyCamera {
             pitch -= 3F * s;
             pitch += 0.35F * s * Mth.sin(t * 2.9F) * (float) (ClientMoves.slideSpeed / BodyRules.SLIDE_V0);
         }
+        // a stair slide (SPEC §17.22): the view tips down the run you're gliding (eased in and out)
+        stairTilt += ((ClientMoves.stairSliding ? 1F : 0F) - stairTilt) * 0.08F;
+        if (stairTilt > 0.01F) pitch += 9F * stairTilt;
         // the slide-cancel: a kick up as you come out
         float j = t - ClientMoves.slideJumpAt;
         if (j >= 0 && j < 7) pitch -= 5F * Mth.sin(j / 7F * Mth.PI);
@@ -93,26 +97,5 @@ final class BodyCamera {
         slideWide += ((ClientMoves.sliding ? 1F : 0F) - slideWide) * 0.3F;
         float extra = 0.035F * tacWide + 0.07F * slideWide;
         if (extra > 1e-4F) e.setNewFovModifier(e.getNewFovModifier() * (1 + extra * e.getFovScale()));
-    }
-
-    /**
-     * Hands (a first-person stance, core.api.FirstPerson): lowered in a tactical sprint, braced in a slide, up on the lip
-     * hanging, reaching up in a mantle. Both hands.
-     */
-    static void viewPose(float pt, FirstPerson.View v) {
-        float t = now(pt);
-        float a = hold(t, ClientMoves.tacStart, ClientMoves.tacEnd, ClientMoves.tac, 4F, 4F);
-        if (a > 0) FirstPerson.View.add(v.both, a, 0, -0.22F, 0.06F, 16F, 0, 0);
-        float s = hold(t, ClientMoves.slideStart, ClientMoves.slideEnd, ClientMoves.sliding, 2.5F, 4F);
-        if (s > 0) FirstPerson.View.add(v.both, s, 0.04F, -0.1F, 0.1F, 0, 0, -6F);
-        // spike S3: hanging, both hands are up on the lip
-        if (RunnerMoves.hanging()) FirstPerson.View.add(v.both, 1, 0, 0.42F, -0.18F, -32F, 0, 0);
-        float m = t - ClientMoves.mantleStart;
-        if (m >= 0 && m < BodyRules.MANTLE_TICKS + 4) {
-            float u = Mth.clamp(m / BodyRules.MANTLE_TICKS, 0, 1);
-            float reach = Mth.sin(Math.min(1, u / 0.45F) * Mth.HALF_PI) * (1 - Mth.clamp((m - BodyRules.MANTLE_TICKS) / 4F, 0, 1));
-            float push = u > 0.45F ? (u - 0.45F) / 0.55F : 0;
-            FirstPerson.View.add(v.both, reach, 0, 0.42F - 0.5F * push, -0.18F, -32F + 40F * push, 0, 0);
-        }
     }
 }

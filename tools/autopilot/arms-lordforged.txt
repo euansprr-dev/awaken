@@ -1,0 +1,99 @@
+# Arms Lord-forged (SPEC §25 "Lord-forged"): the reveal (pillar, ring, nova and the "LORD-FORGED ·" toast, the weapon in
+# the empty hand), each weapon held at rest, a few Lords' moves as their Art lets go, and the first-person ribbon
+# re-checked. Dev command: /awaken arms lord <lord> reveal|art.
+world armsrepro creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+cmd tp @s ~ 200 ~ 0 10
+cmd fill ~-12 ~-1 ~-12 ~12 ~-1 ~14 minecraft:smooth_stone
+cmd kill @e[type=minecraft:husk]
+cmd summon minecraft:husk ~2 ~ ~3 {NoAI:1b,PersistenceRequired:1b,Health:400f,attributes:[{id:"minecraft:max_health",base:400d}]}
+cmd summon minecraft:husk ~-2.5 ~ ~3.5 {NoAI:1b,PersistenceRequired:1b,Health:400f,attributes:[{id:"minecraft:max_health",base:400d}]}
+cmd summon minecraft:husk ~0 ~ ~5 {NoAI:1b,PersistenceRequired:1b,Health:400f,attributes:[{id:"minecraft:max_health",base:400d}]}
+camera back
+cmd item replace entity @s weapon.mainhand with minecraft:air
+wait 20
+cmd awaken arms lord bell_warden reveal
+wait 3
+shotnow lf_reveal_a
+wait 8
+shotnow lf_reveal_b
+wait 30
+shot lf_reveal_toast
+camera first
+wait 40
+shot lf_hold_bell_warden
+cmd awaken arms lord hollow_herald reveal
+wait 40
+shot lf_hold_hollow_herald
+cmd awaken arms lord unit_zero reveal
+wait 40
+cmd item replace entity @s weapon.mainhand with awaken:unit_zero_precursor
+wait 30
+shot lf_hold_unit_zero
+cmd item replace entity @s weapon.mainhand with awaken:sky_leviathan_twinblades
+wait 30
+shot lf_hold_sky_leviathan
+cmd item replace entity @s weapon.mainhand with awaken:mirror_knight_shieldblade
+wait 30
+shot lf_hold_mirror_knight
+camera back
+cmd item replace entity @s weapon.mainhand with awaken:bell_warden_maul
+wait 30
+cmd awaken arms lord bell_warden art
+wait 4
+shotnow lf_art_bell_warden
+wait 40
+cmd item replace entity @s weapon.mainhand with awaken:ember_tyrant_axe
+wait 30
+cmd awaken arms lord ember_tyrant art
+wait 3
+shotnow lf_art_ember_tyrant
+wait 40
+cmd item replace entity @s weapon.mainhand with awaken:drowned_archivist_spear
+wait 30
+cmd awaken arms lord drowned_archivist art
+wait 4
+shotnow lf_art_drowned_archivist
+wait 40
+cmd item replace entity @s weapon.mainhand with awaken:hollow_herald_greatblade
+wait 30
+cmd awaken arms lord hollow_herald art
+wait 6
+shotnow lf_art_hollow_herald
+wait 40
+camera first
+look 0 5
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_longsword
+wait 30
+arms ribbonmode 0
+arms strike
+wait 6
+shotnow lf_ribbon_lordscale
+wait 30
+cmd item replace entity @s weapon.mainhand with minecraft:diamond_sword
+wait 30
+arms strike
+wait 6
+shotnow lf_ribbon_diamond
+wait 30
+cmd item replace entity @s weapon.mainhand with awaken:abbot_of_frost_glaive
+wait 30
+arms strike
+wait 7
+shotnow lf_ribbon_abbot
+wait 20
+quit

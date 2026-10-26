@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "title": "Lumen Forest: a low soft hum, and at night the specks chiming and answering each other",
+  "air": [
+    {"file": "awaken:amb_world_lumen_hum", "gain": 0.5, "when": {"dawn": 0.5, "day": 0.4, "dusk": 0.8, "night": 1.0}}
+  ],
+  "events": [
+    {"sound": "awaken:world.lumen_chime", "anchor": "ground", "per_minute": 3,
+     "when": {"dawn": 0.2, "morning": 0.0, "day": 0.05, "dusk": 0.6, "night": 1.0}, "rain": 0.3, "hush": false,
+     "answer": 0.6, "answer_delay": [0.4, 1.5], "volume": [0.2, 0.4], "pitch": [1.0, 1.0], "distance": [6, 18]}
+  ]
+}

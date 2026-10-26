@@ -17,9 +17,11 @@ import java.util.Map;
  * the poses there, never the JSON). Each clip moves the main and the off hand on top of vanilla's own (view space:
  * x right, y up, z toward the viewer, blocks; then pitch, yaw, roll in degrees), keyed in ticks, each key eased in by
  * its curve ({@link Ease}); events fire at their ticks. Authored right-handed: the game mirrors x, yaw and roll for a
- * left main arm. Pure data: both sides read it (a GameTest holds the names to the file).
+ * left main arm. A clip with "fists" keys where each empty hand is instead (x, y, z in view space; vanilla's resting
+ * fist is FirstPerson.View.REST_FIST): its arm is drawn rising to it. Pure data: both sides read it (a GameTest holds the
+ * names to the file).
  * <pre>
- * {"schemaVersion": 1, "clips": {"fp_pipe_kick": {"length": 10, "loop": false, "both": true,
+ * {"schemaVersion": 1, "clips": {"fp_pipe_kick": {"length": 10, "loop": false, "both": true, "fists": false,
  *    "main": [[0, x, y, z, pitch, yaw, roll, "linear"], [3, ..., "easeoutcubic"]], "off": [...], "events": [[2, "push"]]}}}
  * </pre>
  */
@@ -37,19 +39,32 @@ public final class FpClipSet {
         public final String name;
         public final float length;
         public final boolean loop, both;
+        /** The tracks are fists (x, y, z in view space; the rest unused) rather than offsets (FirstPerson.View fists). */
+        public final boolean fists;
+        /** A clip played over a stance (a hang's ledge jumps): it ends where the stance holds the hands. */
+        public boolean toStance;
         final Key[] main, off;
         public final float[] eventAt;
         public final String[] events;
 
-        Clip(String name, float length, boolean loop, boolean both, Key[] main, Key[] off, float[] eventAt, String[] events) {
+        Clip(String name, float length, boolean loop, boolean both, boolean fists, Key[] main, Key[] off, float[] eventAt, String[] events) {
             this.name = name;
             this.length = length;
             this.loop = loop;
             this.both = both;
+            this.fists = fists;
             this.main = main;
             this.off = off;
             this.eventAt = eventAt;
             this.events = events;
+        }
+
+        public boolean hasMain() {
+            return main.length > 0;
+        }
+
+        public boolean hasOff() {
+            return off.length > 0;
         }
 
         /** Both hands' moves at tick t (wrapped for a loop, held at the ends otherwise) into two 6-wide arrays. */
@@ -113,7 +128,9 @@ public final class FpClipSet {
                 names[i] = a.get(1).getAsString();
             }
             out.put(e.getKey(), new Clip(e.getKey(), c.get("length").getAsFloat(), c.has("loop") && c.get("loop").getAsBoolean(),
-                    c.has("both") && c.get("both").getAsBoolean(), keys(c, "main"), keys(c, "off"), at, names));
+                    c.has("both") && c.get("both").getAsBoolean(), c.has("fists") && c.get("fists").getAsBoolean(), keys(c, "main"), keys(c, "off"), at,
+                    names));
+            out.get(e.getKey()).toStance = c.has("toStance") && c.get("toStance").getAsBoolean();
         }
         return out;
     }

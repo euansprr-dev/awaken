@@ -1,0 +1,6 @@
+{
+ "parent": "minecraft:item/handheld",
+ "textures": {
+  "layer0": "awaken:item/arms/root_saint_warstaff_icon"
+ }
+}

@@ -352,6 +352,37 @@ public final class RunnerRules {
         out[1] = tall ? 1 : 0;
     }
 
+    /** A drop from a hang to the ledge below (Shift; SPEC §17.24): its top this far under the held one, the most. */
+    public static final double DROP_MIN = 0.9, DROP_MAX = 3.2, DROP_OUT = 1.4;
+
+    /**
+     * The ledge under a hang that a drop catches (Shift; SPEC §17.24), the nearest one below: the same face direction,
+     * its top {@link #DROP_MIN}-{@link #DROP_MAX} under the held one, its face up to {@link #DROP_OUT} out from the
+     * hanging body (a sill or a balcony sticking out) or a little in; and the way to it free: out (or down) first, then
+     * down (or in). Null for none. The body hangs at (hx, hy, hz) from {@code held}.
+     */
+    public static @Nullable Edge edgeBelow(BlockGetter level, CollisionContext ctx, BlockPos.MutableBlockPos m,
+                                           double hx, double hy, double hz, Edge held, double tol) {
+        int axis = held.axis(), sign = held.sign();
+        double fx = held.fx(), fz = held.fz();
+        double lo = held.top() - DROP_MAX - hy, hi = held.top() - DROP_MIN - hy;
+        for (double d = 0; d <= DROP_OUT + 1e-6; d += 0.15) {
+            Edge e = findEdge(level, ctx, m, hx - fx * d, hy, hz - fz * d, axis, sign, HANG_REACH + tol, lo, hi, 0, 0.2);
+            if (e == null) continue;
+            // the way: level at whichever height is higher of the two holds' line, then straight along the other
+            boolean out = ((axis == 0 ? e.hx() : e.hz()) - (axis == 0 ? hx : hz)) * sign < 0;
+            double c0 = Math.min(axis == 0 ? hx : hz, axis == 0 ? e.hx() : e.hz()) - W, c1 = Math.max(axis == 0 ? hx : hz, axis == 0 ? e.hx() : e.hz()) + W;
+            double t = axis == 0 ? hz : hx, levelY = out ? hy : e.hy();
+            boolean across = axis == 0 ? BodyRules.blocked(level, ctx, m, c0 + 1e-3, levelY + 1e-3, t - W + 1e-3, c1 - 1e-3, levelY + H - 1e-3, t + W - 1e-3)
+                    : BodyRules.blocked(level, ctx, m, t - W + 1e-3, levelY + 1e-3, c0 + 1e-3, t + W - 1e-3, levelY + H - 1e-3, c1 - 1e-3);
+            if (across) continue;
+            double cx = out ? e.hx() : hx, cz = out ? e.hz() : hz;
+            if (BodyRules.blocked(level, ctx, m, cx - W + 1e-3, e.hy() + 1e-3, cz - W + 1e-3, cx + W - 1e-3, hy + H - 1e-3, cz + W - 1e-3)) continue;
+            return e;
+        }
+        return null;
+    }
+
     /** The edge found again near a hold: same face direction, top within ±tol of {@code topY}. */
     public static @Nullable Edge edgeNear(BlockGetter level, CollisionContext ctx, BlockPos.MutableBlockPos m,
                                           double px, double py, double pz, int axis, int sign, double topY, double tol, double reach) {
@@ -425,8 +456,16 @@ public final class RunnerRules {
         double hc = face + sign * (W + HANG_GAP);
         double hx = axis == 0 ? hc : px, hz = axis == 0 ? pz : hc;
         Edge e = edgeNear(level, ctx, m, hx, py - HANG_DROP, hz, axis, -sign, py, 0.3, 0.1);
-        if (e == null || groundWithin(level, ctx, m, e.hx(), e.top(), e.hz(), LOWER_DROP)) return null;
+        if (e == null || !lowerWorth(level, ctx, m, e)) return null;
         return e;
+    }
+
+    /**
+     * Whether lowering into a hang on this edge is worth it: a real drop under it, or a ledge below for a drop to catch
+     * (a facade's ledges are about three apart: SPEC §17.24). Ground near under an edge with no ledge is a step down.
+     */
+    public static boolean lowerWorth(BlockGetter level, CollisionContext ctx, BlockPos.MutableBlockPos m, Edge e) {
+        return !groundWithin(level, ctx, m, e.hx(), e.top(), e.hz(), LOWER_DROP) || edgeBelow(level, ctx, m, e.hx(), e.hy(), e.hz(), e, 0) != null;
     }
 
     /** Scratch for surface tops, per thread (the integrated server and the client probe at the same time). */

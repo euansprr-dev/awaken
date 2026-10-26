@@ -1,0 +1,65 @@
+# Arms trails (SPEC §24): each blow's arc caught mid-flight, first and third person: the chain in rhythm, a perfect
+# heavy, a thrust. Shots only; the arcs live a few ticks, so the shots are timed to the move's row.
+world armstrails creative 777
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+screen close
+hud on
+camera first
+cmd gamemode creative
+wait 300
+screen close
+cmd tp @s ~2000 300 ~ 0 8
+wait 80
+cmd fill ~-8 ~-1 ~-8 ~8 ~-1 ~12 minecraft:smooth_stone
+cmd fill ~-8 ~ ~-8 ~8 ~10 ~12 minecraft:air
+cmd fill ~-8 ~ ~9 ~8 ~7 ~9 minecraft:deepslate_tiles
+cmd item replace entity @s weapon.mainhand with minecraft:diamond_sword
+cmd kill @e[type=minecraft:husk]
+cmd summon minecraft:husk ~ ~ ~2.7 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+wait 60
+look 0 6
+arms strike
+wait 2
+shotnow trail_s1_a
+wait 1
+shotnow trail_s1_b
+wait 3
+arms strike
+wait 2
+shotnow trail_s2_a
+wait 1
+shotnow trail_s2_b
+wait 3
+arms strike
+wait 3
+shotnow trail_s3_a
+wait 1
+shotnow trail_s3_b
+wait 30
+arms heavy 16
+wait 17
+shotnow trail_heavy_a
+wait 1
+shotnow trail_heavy_b
+wait 30
+camera back
+arms strike
+wait 2
+shotnow trail_3p_a
+wait 1
+shotnow trail_3p_b
+wait 3
+arms strike
+wait 2
+shotnow trail_3p_c
+wait 30
+camera first
+quit

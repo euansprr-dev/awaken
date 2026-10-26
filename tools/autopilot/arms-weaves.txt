@@ -1,0 +1,77 @@
+# Arms Weaves (SPEC §25 "Weaves"): each shape in a few families, shot as it goes off: the deflect's ring, the dodge's
+# echo (6 ticks later), the rhythm's charged edge; the System's "WEAVE ·" toast. Dev command: /awaken arms weave.
+world armsrepro creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 12800
+screen close
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+camera back
+cmd tp @s ~ 200 ~ 0 10
+cmd fill ~-10 ~-1 ~-10 ~10 ~-1 ~14 minecraft:smooth_stone
+cmd kill @e[type=minecraft:husk]
+cmd summon minecraft:husk ~2 ~ ~2 {NoAI:1b,PersistenceRequired:1b,Health:400f,attributes:[{id:"minecraft:max_health",base:400d}]}
+cmd summon minecraft:husk ~-2 ~ ~2.5 {NoAI:1b,PersistenceRequired:1b,Health:400f,attributes:[{id:"minecraft:max_health",base:400d}]}
+cmd summon minecraft:husk ~0 ~ ~-2.5 {NoAI:1b,PersistenceRequired:1b,Health:400f,attributes:[{id:"minecraft:max_health",base:400d}]}
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_longsword
+wait 40
+cmd awaken arms weave 1 ENERGY
+wait 2
+shotnow wv_1_ENERGY_a
+wait 4
+shotnow wv_1_ENERGY_b
+wait 30
+cmd awaken arms weave 1 SHADOW
+wait 2
+shotnow wv_1_SHADOW_a
+wait 4
+shotnow wv_1_SHADOW_b
+wait 30
+cmd awaken arms weave 1 TECH
+wait 2
+shotnow wv_1_TECH_a
+wait 4
+shotnow wv_1_TECH_b
+wait 30
+cmd awaken arms weave 1 SPIRIT
+wait 2
+shotnow wv_1_SPIRIT_a
+wait 4
+shotnow wv_1_SPIRIT_b
+wait 30
+cmd awaken arms weave 2 SHADOW
+wait 7
+shotnow wv_2_SHADOW_a
+wait 3
+shotnow wv_2_SHADOW_b
+wait 30
+cmd awaken arms weave 2 ENERGY
+wait 7
+shotnow wv_2_ENERGY_a
+wait 3
+shotnow wv_2_ENERGY_b
+wait 30
+cmd awaken arms weave 4 ENERGY
+wait 2
+shotnow wv_4_ENERGY_a
+wait 4
+shotnow wv_4_ENERGY_b
+wait 30
+cmd awaken arms weave 4 SPIRIT
+wait 2
+shotnow wv_4_SPIRIT_a
+wait 4
+shotnow wv_4_SPIRIT_b
+wait 30
+camera first
+quit

@@ -1,0 +1,72 @@
+# World sound, Phase 1 (docs/sound/PLAN.md §11): the Conductor in a Greenwood forest through a day, in rain, under a
+# roof, underwater and in a gate. Mac only (it needs a client). Run with the pack's sound profile so Sound Physics
+# places the textures and events:
+#   PACK=sound tools/autopilot.sh tools/autopilot/world-sound.txt
+# Read the log: every "[audio] World sound: ..." line is /awaken audio world (soundscapes and weights, the listener,
+# the air stream's layers and filter, textures, voices against the budget of 16, the last event). Pass:
+#   - forest: awaken:world 1.00 and awaken:family/greenwood near 1.00; air: the three greenwood layers;
+#   - night: an owl answered at least once in two minutes ("(answer)" in a last-event line);
+#   - under the roof: filter ~1400 Hz; underwater: ~520 Hz; open sky again: back near 20000 Hz;
+#   - the gate: no greenwood (gate biomes are in no family), textures only where leaves are;
+#   - perf: world_sound_forest within 2% of world_sound_off (the same spot with the Conductor switched off).
+world world_sound creative 4243
+waitworld
+gui 0
+cmd gamerule awaken:fauna_spawning false
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken terrain visit minecraft:forest
+wait 200
+cmd weather clear 1000000
+# ---- a day in the forest --------------------------------------------------------------------------------------------
+cmd time set 23300
+wait 400
+cmd awaken audio world
+cmd time set 6000
+wait 400
+cmd awaken audio world
+cmd time set 12600
+wait 400
+cmd awaken audio world
+cmd time set 18000
+wait 2400
+cmd awaken audio world
+wait 1200
+cmd awaken audio world
+# ---- rain, then a roof over the head --------------------------------------------------------------------------------
+cmd time set 6000
+cmd weather rain 6000
+wait 400
+cmd awaken audio world
+cmd fill ~-4 ~3 ~-4 ~4 ~3 ~4 minecraft:oak_planks
+cmd fill ~-4 ~ ~-4 ~4 ~2 ~4 minecraft:oak_planks hollow
+cmd fill ~-3 ~ ~-3 ~3 ~2 ~3 minecraft:air
+wait 300
+cmd awaken audio world
+cmd fill ~-4 ~ ~-4 ~4 ~3 ~4 minecraft:air
+cmd weather clear 1000000
+wait 300
+cmd awaken audio world
+# ---- underwater -------------------------------------------------------------------------------------------------------
+cmd fill ~-2 ~-1 ~-2 ~2 ~3 ~2 minecraft:water
+wait 200
+cmd awaken audio world
+cmd fill ~-2 ~-1 ~-2 ~2 ~3 ~2 minecraft:air
+wait 300
+cmd awaken audio world
+# ---- frame time with and without the Conductor, same spot -------------------------------------------------------------
+perf world_sound_forest 20
+cmd awaken audio world off
+wait 100
+perf world_sound_off 20
+cmd awaken audio world on
+# ---- a gate -------------------------------------------------------------------------------------------------------------
+cmd awaken gate hop
+wait 60
+cmd awaken gate open E overgrown_temple
+wait 320
+cmd awaken gate interior enter
+wait 300
+cmd awaken audio world
+quit

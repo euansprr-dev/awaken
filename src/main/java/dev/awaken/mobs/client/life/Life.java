@@ -23,6 +23,8 @@ public final class Life {
     // ---- what the renderer tells it each frame ----------------------------------------------------------------------
     /** 0..1: 1 the moment it is struck, falling to 0. */
     public float hurt;
+    /** The entity this life animates (its renderer sets it), so a blow's way and weight reach its stagger. */
+    public int entity = Integer.MIN_VALUE;
     /** 0..1 how far a wind-up has come, or -1 when none plays. */
     public float windup = -1;
     /** A roar or a provocation is playing. */
@@ -338,10 +340,18 @@ public final class Life {
      * A blow knocks the body away from the camera (it reels from whoever struck it) and it sways back on its weight:
      * a damped spring per axis, kicked once. Heavy beasts reel less and slower; small creatures snap.
      */
+    private static final float[] BLOW = new float[2];
+
     private void stagger(LivingEntityRenderState s, boolean struck, boolean reduce) {
         if (struck) {
             Vec3 cam = Minecraft.getInstance().gameRenderer.mainCamera().position();
             float wx = (float) (s.x - cam.x), wz = (float) (s.z - cam.z);
+            // a blade's blow (Arms): the body folds along the swing and by its weight; anything else away from the eye
+            float weight = dev.awaken.core.api.CombatFeedback.blowOn(entity, BLOW);
+            if (weight > 0) {
+                wx = BLOW[0];
+                wz = BLOW[1];
+            }
             float l = Mth.sqrt(wx * wx + wz * wz);
             if (l > 0.01F) {
                 wx /= l;
@@ -351,7 +361,7 @@ public final class Life {
             }
             float th = (180.0F - s.bodyRot) * Mth.DEG_TO_RAD, c = Mth.cos(th), sn = Mth.sin(th);
             float px = -(wx * c - wz * sn), pz = wx * sn + wz * c; // the push in model space
-            float v = 2.6F * p.stagger() / Mth.sqrt(Math.max(0.3F, p.mass())) * (reduce ? 0.5F : 1.0F);
+            float v = 2.6F * p.stagger() / Mth.sqrt(Math.max(0.3F, p.mass())) * (reduce ? 0.5F : 1.0F) * (weight > 0 ? 0.6F + 0.4F * weight : 1F);
             stXv += -pz * v;
             stZv += px * v;
             headPitchV -= 2.2F * p.stagger();

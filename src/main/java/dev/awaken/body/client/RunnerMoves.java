@@ -66,7 +66,7 @@ public final class RunnerMoves {
     static int shimmyDir;
     private static int regrabAt, settleAt, shimmyAt = -100;
     // path
-    static final int GRAB = 0, LOWER = 1, CLIMB = 2, UP = 3, SIDE = 4, CORNER = 5;
+    static final int GRAB = 0, LOWER = 1, CLIMB = 2, UP = 3, SIDE = 4, CORNER = 5, EAVE = 6, DROP = 7;
     static int pathKind, pathAge, pathLen, pathStart = -100;
     private static boolean pathToHang;
     private static double ax, ay, az, bx, by, bz, cx, cz;
@@ -125,6 +125,7 @@ public final class RunnerMoves {
                 if (dev.awaken.body.ascent.client.AscentMoves.state() == dev.awaken.body.ascent.AscentState.NONE && fallVy < -ActionCamera.LAND_FROM) {
                     dev.awaken.body.client.feel.FeelDirector.land((float) (-fallVy * 0.6));
                     ActionCamera.land(-fallVy);
+                    BodyFp.landed(-fallVy);
                 }
             }
             groundAt = now;
@@ -156,10 +157,14 @@ public final class RunnerMoves {
                 return true;
             }
             case HANG -> {
+                // Shift belongs to the hang (a drop): no vanilla crouch, whose edge back-off would fight the hold
+                in.keyPresses = ClientMoves.with(k, k.jump(), false);
                 hangTick(p, in, k, jumpPressed, shiftPressed, level, ctx, now);
                 return true;
             }
             case PATH -> {
+                // nor on a path (a lower, a drop): held Shift would back the body off the edge it's moving past
+                in.keyPresses = ClientMoves.with(k, false, false);
                 pathTick(p, in, now);
                 return true;
             }
@@ -538,6 +543,15 @@ public final class RunnerMoves {
         return true;
     }
 
+    /**
+     * From a climb line's top up to the lip of an eave or cornice over it (GripRules.topLip; SPEC §17.23): out from the
+     * line under the overhang, then up into the hang on its outer face. From there the hang's own climb out (Jump, or
+     * forward) puts you on the roof.
+     */
+    static void eaveHang(LocalPlayer p, RunnerRules.Edge e, int now) {
+        startHang(p, e, BodyPayloads.HANG_EAVE, now);
+    }
+
     private static void startHang(LocalPlayer p, RunnerRules.Edge e, int kind, int now) {
         send(Move.LEDGE_HANG, kind, p, e.hx(), e.hy(), e.hz(), e.axis(), e.sign());
         links = 0;
@@ -545,7 +559,8 @@ public final class RunnerMoves {
         chainUntil = -100;
         hangStart = now;
         shimmying = false;
-        ClientMoves.trace(String.format("hang (%s) top %.2f above the feet %.2f", kind == BodyPayloads.HANG_LOWER ? "lower" : "grab", e.top(), e.top() - p.getY()));
+        ClientMoves.trace(String.format("hang (%s) top %.2f above the feet %.2f", kind == BodyPayloads.HANG_LOWER ? "lower"
+                : kind == BodyPayloads.HANG_EAVE ? "eave" : "grab", e.top(), e.top() - p.getY()));
         boolean lower = kind == BodyPayloads.HANG_LOWER;
         BodyAnims.runner(p.getId(), lower ? BodyClips.LOWER : BodyClips.GRAB);
         BodyFx.sound(p, lower ? BodyContent.SHIMMY.get() : BodyContent.GRAB.get(), lower ? 0.5F : 0.85F, 1F);
@@ -553,7 +568,8 @@ public final class RunnerMoves {
             BodyFx.lip(cl, e.hx() + e.fx() * 0.3, e.top(), e.hz() + e.fz() * 0.3, e.fx(), e.fz());
         }
         if (kind == BodyPayloads.HANG_LOWER) turnTo(yawOf(e.fx(), e.fz()), 8);
-        startPath(p, kind == BodyPayloads.HANG_LOWER ? LOWER : GRAB, e.hx(), e.hy(), e.hz(), kind == BodyPayloads.HANG_LOWER ? 8 : 3, e, now);
+        int path = kind == BodyPayloads.HANG_LOWER ? LOWER : kind == BodyPayloads.HANG_EAVE ? EAVE : GRAB;
+        startPath(p, path, e.hx(), e.hy(), e.hz(), path == LOWER ? 8 : path == EAVE ? 7 : 3, e, now);
     }
 
     private static void hangTick(LocalPlayer p, ClientInput in, Input k, boolean jumpPressed, boolean shiftPressed, BlockGetter level,
@@ -573,6 +589,8 @@ public final class RunnerMoves {
             return;
         }
         if (shiftPressed) {
+            // Shift drops to the ledge below when there is one (Euan, 2026-10-25); with back, or with none, lets go
+            if (!k.backward() && dropDown(p, level, ctx, e, now)) return;
             endHang(p, true, "drop");
             regrabAt = now + 8;
             return;
@@ -634,6 +652,21 @@ public final class RunnerMoves {
         ClientMoves.trace("shimmy round the corner");
         turnTo(yawOf(c.fx(), c.fz()), 8);
         startPath(p, CORNER, c.hx(), c.hy(), c.hz(), 8, c, now);
+        return true;
+    }
+
+    /** Shift in a hang: the hands let go and catch the ledge below (RunnerRules.edgeBelow). False when there's none. */
+    private static boolean dropDown(LocalPlayer p, BlockGetter level, CollisionContext ctx, RunnerRules.Edge e, int now) {
+        RunnerRules.Edge below = RunnerRules.edgeBelow(level, ctx, M, holdX, holdY, holdZ, e, 0);
+        if (below == null) return false;
+        send(Move.LEDGE_JUMP, BodyPayloads.JUMP_DOWN, p, below.hx(), below.hy(), below.hz(), below.axis(), below.sign());
+        ClientMoves.trace(String.format("ledge drop %.2f", e.top() - below.top()));
+        leaveHold(p);
+        double fall = e.top() - below.top();
+        startPath(p, DROP, below.hx(), below.hy(), below.hz(), Mth.clamp((int) Math.round(3 + fall * 1.5), 4, 8), below, now);
+        // the catch at the bottom: the hands slam onto the lower lip (the grab's clip, first person's too)
+        BodyAnims.runner(p.getId(), BodyClips.GRAB);
+        BodyFx.sound(p, BodyContent.SHIMMY.get(), 0.45F, 0.8F);
         return true;
     }
 
@@ -777,13 +810,13 @@ public final class RunnerMoves {
             holdX = bx;
             holdY = by;
             holdZ = bz;
-            if (pathKind != GRAB && pathKind != LOWER) {
+            if (pathKind != GRAB && pathKind != LOWER && pathKind != EAVE) {
                 hangStart = now;
                 // caught the next edge
                 BodyFx.sound(p, BodyContent.GRAB.get(), 0.75F, 1.05F);
             }
             // the catch settles into the hang once its clip has played (the grab and lower clips run 8 ticks)
-            settleAt = now + (pathKind == GRAB || pathKind == LOWER ? 5 : 1);
+            settleAt = now + (pathKind == GRAB || pathKind == LOWER || pathKind == EAVE ? 5 : 1);
         } else {
             state = State.NONE;
             ClientMoves.trace("climbed out");
@@ -800,9 +833,21 @@ public final class RunnerMoves {
         double u = k / (double) pathLen;
         double h, v;
         switch (pathKind) {
-            case LOWER -> { // out over the edge first, then down to the hold
+            case LOWER, EAVE -> { // out over the edge first, then down to the hold (from a line's top: out, then up)
                 h = smooth(u / 0.4);
                 v = smooth((u - 0.4) / 0.6);
+            }
+            case DROP -> { // to the ledge below: out first when it sticks out, else down first, then in
+                RunnerRules.Edge to = pathEdge;
+                boolean outward = to != null && ((bx - ax) * to.fx() + (bz - az) * to.fz()) < -1e-3;
+                if (outward) {
+                    h = smooth(u / 0.35);
+                    v = (u - 0.35) / 0.65;
+                    v = v <= 0 ? 0 : v >= 1 ? 1 : v * v; // falling: slow off the lip, fast into the catch
+                } else {
+                    v = u * u;
+                    h = smooth((u - 0.7) / 0.3);
+                }
             }
             case CLIMB -> { // up the face first, then over the lip
                 h = smooth((u - 0.5) / 0.5);

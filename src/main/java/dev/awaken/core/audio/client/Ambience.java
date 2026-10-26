@@ -165,6 +165,18 @@ final class Ambience {
         return 0.0;
     }
 
+    /** Beds playing now (the world sound Conductor counts them in its voice budget). */
+    static int voices() {
+        return PLAYING.size() + WHISTLES.size();
+    }
+
+    /** 0..1: the loudest bed playing (a falling star counts in full): the world sound Conductor lets nature step back. */
+    static float emphasis() {
+        float e = WHISTLES.isEmpty() ? 0F : 1F;
+        for (Bed b : PLAYING.values()) e = Math.max(e, b.level);
+        return e;
+    }
+
     private static void start(Bed b, Object key) {
         PLAYING.put(key, b);
         Minecraft.getInstance().getSoundManager().play(b);

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "title": "The Stillpoint: wind over the cloud sea, a temple's held tone, chimes, a far bell",
+  "air": [
+    {"file": "awaken:amb_world_stillpoint_sea", "gain": 0.8},
+    {"file": "awaken:amb_world_stillpoint_tone", "gain": 0.45}
+  ],
+  "events": [
+    {"sound": "awaken:world.chime", "anchor": "far", "per_minute": 4, "hush": false,
+     "answer": 0.3, "answer_delay": [0.6, 1.6], "volume": [0.35, 0.65], "pitch": [1.0, 1.0], "distance": [8, 20]},
+    {"sound": "awaken:world.bell_far", "anchor": "far", "per_minute": 1.5, "hush": false,
+     "volume": [0.6, 0.8], "pitch": [1.0, 1.0], "distance": [60, 90]}
+  ]
+}

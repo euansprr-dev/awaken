@@ -48,6 +48,7 @@ import java.util.Map;
  *                                                experimental: vanilla's experimental-settings prompt (it should answer itself)
  * click &lt;x&gt; &lt;y&gt;                                 a left click on the open screen at GUI coordinates
  * holo &lt;args&gt;                                    the holo module's test lines (HoloClient.autopilot): demo, at, run, hud, log
+ * arms &lt;args&gt;                                    Arms' lines (ArmsAutopilot): strike, heavy, guard, dodge, pose, state
  * compat &lt;args&gt;                                  the companion plugins' lines (CompatClient.autopilot): inventory, jei ..., press, discovered, map
  * gui &lt;scale&gt;                                    GUI scale (0 = auto)
  * camera first|back|front                        the F5 views
@@ -321,6 +322,8 @@ public final class Autopilot {
                 waitTicks = 2;
             }
             case "holo" -> Awaken.LOG.info("[autopilot] holo {}: {}", arg.trim(), dev.awaken.holo.client.HoloClient.autopilot(arg));
+            case "farsight" -> Awaken.LOG.info("[autopilot] farsight {}: {}", arg.trim(), dev.awaken.farsight.client.FarSightClient.autopilot(arg));
+            case "arms" -> Awaken.LOG.info("[autopilot] arms {}: {}", arg.trim(), dev.awaken.arms.client.ArmsAutopilot.run(arg));
             case "compat" -> {
                 Awaken.LOG.info("[autopilot] compat {}: {}", arg.trim(), dev.awaken.compat.client.CompatClient.autopilot(arg));
                 waitTicks = 10;

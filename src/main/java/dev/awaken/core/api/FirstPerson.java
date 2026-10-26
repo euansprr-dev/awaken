@@ -42,9 +42,21 @@ public final class FirstPerson {
         public final float[] weight = new float[N];
         /** Where the body faces (horizontal, unit). */
         public double fx, fz = 1;
+        /** What each hand holds, drawn in it (right, left; empty for nothing): a plucked flower, food being laid down. */
+        public final net.minecraft.world.item.ItemStack[] held = {net.minecraft.world.item.ItemStack.EMPTY, net.minecraft.world.item.ItemStack.EMPTY};
+        /**
+         * How far from the eye the arms are drawn (blocks; 0 for a hand's usual 0.85): nearer reads bigger. Each fist
+         * stays where the world has it on screen, wherever this puts it.
+         */
+        public double handDistance;
+        /** How lit the hands are from within (0..1). */
+        public float glow;
 
         public void clear() {
             java.util.Arrays.fill(weight, 0F);
+            held[0] = held[1] = net.minecraft.world.item.ItemStack.EMPTY;
+            handDistance = 0;
+            glow = 0;
         }
 
         public void limb(Limb l, double rx, double ry, double rz, double tx, double ty, double tz, double frx, double fry, double frz, float w) {
@@ -122,13 +134,40 @@ public final class FirstPerson {
     public static final class View {
         public static final int X = 0, Y = 1, Z = 2, PITCH = 3, YAW = 4, ROLL = 5;
         public final float[] both = new float[6], main = new float[6], off = new float[6];
+        /**
+         * Fists (an empty hand only): where on screen a hand is, in view space (x, y, z, then the summed weight). While a
+         * hand has one, its arm is drawn rising to it from under the frame's corner instead of vanilla's arm moved by
+         * offsets, so a hand can go anywhere without its forearm floating into view. Vanilla's own resting fist is at
+         * {@link #REST_FIST} (mirrored for the left hand).
+         */
+        public final float[] fistMain = new float[4], fistOff = new float[4];
         public boolean drawOff, hideMain, hideOff;
+        /** A colour the fists' arms are tinted (RGB; 0 for none): the Sovereign's gold. */
+        public int tint;
+        /** How lit the fists are from within (0..1, the most of the sources): a palm on a waystone, a charging cast. */
+        public float glow;
+
+        /** Vanilla's resting empty right fist, in view space. */
+        public static final float[] REST_FIST = {0.744F, -0.455F, -1.072F};
 
         public void clear() {
             java.util.Arrays.fill(both, 0F);
             java.util.Arrays.fill(main, 0F);
             java.util.Arrays.fill(off, 0F);
+            java.util.Arrays.fill(fistMain, 0F);
+            java.util.Arrays.fill(fistOff, 0F);
             drawOff = hideMain = hideOff = false;
+            tint = 0;
+            glow = 0;
+        }
+
+        /** Adds a fist (weighted: several sum to their weighted mean). */
+        public static void fist(float[] to, float k, float x, float y, float z) {
+            if (k <= 0) return;
+            to[X] += x * k;
+            to[Y] += y * k;
+            to[Z] += z * k;
+            to[3] += k;
         }
 
         /** Adds a move (scaled by k) to one of the three. */
@@ -143,7 +182,7 @@ public final class FirstPerson {
 
         public boolean moved() {
             for (int i = 0; i < 6; i++) if (both[i] != 0 || main[i] != 0 || off[i] != 0) return true;
-            return drawOff || hideMain || hideOff;
+            return drawOff || hideMain || hideOff || fistMain[3] > 0 || fistOff[3] > 0;
         }
     }
 
@@ -230,6 +269,15 @@ public final class FirstPerson {
         Player p = player;
         return p != null && p.armsInWorld();
     }
+
+    /** The station scenes' switch (the feel settings' stationScenes): the crafting table worked by hand. */
+    public static volatile java.util.function.BooleanSupplier stationsOn = () -> true;
+
+    /** The touches' switch (the feel settings' firstPersonTouches): hands on the things you use. */
+    public static volatile java.util.function.BooleanSupplier touchesOn = () -> true;
+
+    /** The comfort setting (the body's reduced motion): halves the procedural layer (look-lag) when true. */
+    public static volatile java.util.function.BooleanSupplier reducedMotion = () -> false;
 
     /** Names of every registered source (dev command). */
     public static List<String> describe() {

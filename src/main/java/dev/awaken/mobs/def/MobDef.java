@@ -1,5 +1,6 @@
 package dev.awaken.mobs.def;
 
+import dev.awaken.core.api.BodyMaterial;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
@@ -98,6 +99,19 @@ public final class MobDef {
 
     public boolean isFauna() {
         return fauna != null;
+    }
+
+    /** What a blade meets on this body (Arms' impacts): bone, golem iron and stone, creaking wood, a spirit's nothing. */
+    public BodyMaterial material() {
+        if (traits.contains(Trait.HAUNTED)) return BodyMaterial.SPIRIT;
+        return switch (model) {
+            case SKELETON, STRAY, WITHER_SKELETON, BOGGED, WITHER -> BodyMaterial.BONE;
+            case IRON_GOLEM, BELL, TORTOISE -> BodyMaterial.STONE;
+            case CREAKING -> BodyMaterial.WOOD;
+            case SLIME, MAGMA -> BodyMaterial.SLIME;
+            case VEX, BLAZE, BREEZE, ALLAY, SHADE -> BodyMaterial.SPIRIT;
+            default -> BodyMaterial.FLESH;
+        };
     }
 
     /** The voice this creature speaks with (its own override, else its model's). */

@@ -163,7 +163,7 @@ final class FxRender {
             float x = (float) (Mth.lerp(t, p.px[i], p.x[i]) - cx);
             float y = (float) (Mth.lerp(t, p.py[i], p.y[i]) - cy);
             float z = (float) (Mth.lerp(t, p.pz[i], p.z[i]) - cz);
-            if ((f & FxPool.FLAT) == 0) {
+            if ((f & (FxPool.FLAT | FxPool.NEAR)) == 0) {
                 float dist = Mth.sqrt(x * x + y * y + z * z);
                 float nf = near(dist);
                 if (nf <= 0.01f) continue;
@@ -485,6 +485,7 @@ final class FxRender {
                 case Shape.COLUMN -> column(vc, sh, fade);
                 case Shape.TETHER -> tether(vc, sh, fade);
                 case Shape.SEAMS -> FxSeams.draw(vc, sh, fade);
+                case Shape.SLASH -> slash(vc, sh, fade);
                 default -> {
                 }
             }
@@ -782,6 +783,67 @@ final class FxRender {
             float rb = Math.max(0, r - 0.9f);
             quadFacing(vc, ox + c0 * rb, oy + 0.05f, oz + s0 * rb, clear, x0, oy + 0.05f, z0, k0, x1, oy + 0.05f, z1, k1,
                     ox + c1 * rb, oy + 0.05f, oz + s1 * rb, clear);
+        }
+    }
+
+    /**
+     * A blade's arc: a crescent about the anchor + e in the plane of n (angle 0) and u (90 degrees), from angle c
+     * through range (radians), between radii a - b and a + b/4: the band the blade sweeps. Its head sweeps out over
+     * d ticks on the hands' curve (eased out hard), its tail chases it, brightest and whitest at the head. A thrust
+     * is a straight streak from the anchor + e along n, revealed outward. Close to the eye by nature, so it keeps its
+     * near alpha; the local player's own is drawn softer in first person so it never hides what it cuts.
+     */
+    private static void slash(VertexConsumer vc, Shape sh, float fade) {
+        float age = sh.age + pt, sweep = Math.max(1, sh.d);
+        float head = easeOut(Math.min(1, age / sweep), 3);
+        float tail = Math.min(head, easeOut(Math.min(1, Math.max(0, age - sweep * 0.3f) / (sweep * 1.4f)), 2));
+        if (head - tail < 1e-3f) return;
+        boolean own = (sh.flags & Shape.OWN) != 0 && net.minecraft.client.Minecraft.getInstance().options.getCameraType().isFirstPerson();
+        float alpha = fade * (((sh.c0 >>> 24) & 255) / 255f) * (own ? 0.8f : 1f);
+        float ox = (float) (sh.rx + sh.ex - cx), oy = (float) (sh.ry + sh.ey - cy), oz = (float) (sh.rz + sh.ez - cz);
+        // the hottest part is the weapon's own light lifted toward white, never plain white (it vanishes on a bright sky)
+        int core = FxWorld.mix(sh.c0 | 0xFF000000, sh.c1 == 0 ? 0xFFFFFFFF : sh.c1, 0.55f);
+        keepNear = true;
+        try {
+            if ((sh.flags & Shape.THRUST) != 0) {
+                float r0 = sh.a - sh.b, r1 = r0 + 2 * sh.b * head, rt = r0 + 2 * sh.b * tail;
+                for (int i = 0; i < 6; i++) {
+                    float f0 = i / 6f, f1 = (i + 1) / 6f;
+                    float ra = rt + (r1 - rt) * f0, rb = rt + (r1 - rt) * f1;
+                    int ca = FxWorld.alpha(FxWorld.mix(sh.c0, core, f0 * f0), alpha * f0), cb = FxWorld.alpha(FxWorld.mix(sh.c0, core, f1 * f1), alpha * f1);
+                    segment(vc, ox + sh.nx * ra, oy + sh.ny * ra, oz + sh.nz * ra, ox + sh.nx * rb, oy + sh.ny * rb, oz + sh.nz * rb,
+                            sh.c * (1 - f0 * 0.4f), sh.c * (1 - f1 * 0.4f), ca, cb);
+                }
+                return;
+            }
+            // the plane's normal, for which face the camera sees
+            float px = sh.ny * sh.uz - sh.nz * sh.uy, py = sh.nz * sh.ux - sh.nx * sh.uz, pz = sh.nx * sh.uy - sh.ny * sh.ux;
+            boolean front = -(ox * px + oy * py + oz * pz) >= 0;
+            float a0 = sh.c + sh.range * tail, a1 = sh.c + sh.range * head;
+            int segs = Math.max(4, (int) (Math.abs(a1 - a0) * 16));
+            // across the band: nothing at the hand, a tinted body, a crisp bright rim where the tip passed
+            float ri = Math.max(0.05f, sh.a - sh.b), rb = sh.a - sh.b * 0.35f, rr = sh.a, ro = sh.a + sh.b * 0.08f;
+            float step = (a1 - a0) / segs;
+            for (int i = 0; i < segs; i++) {
+                float th0 = a0 + i * step, th1 = th0 + step;
+                float f0 = i / (float) segs, f1 = (i + 1) / (float) segs;
+                float c0 = Mth.cos(th0), s0 = Mth.sin(th0), c1 = Mth.cos(th1), s1 = Mth.sin(th1);
+                float d0x = sh.nx * c0 + sh.ux * s0, d0y = sh.ny * c0 + sh.uy * s0, d0z = sh.nz * c0 + sh.uz * s0;
+                float d1x = sh.nx * c1 + sh.ux * s1, d1y = sh.ny * c1 + sh.uy * s1, d1z = sh.nz * c1 + sh.uz * s1;
+                // brightest at the head, gone at the tail; the rim whitens toward the head
+                float g0 = f0 * f0, g1 = f1 * f1;
+                int r0 = FxWorld.alpha(FxWorld.mix(sh.c0, core, g0 * f0), alpha * g0), r1 = FxWorld.alpha(FxWorld.mix(sh.c0, core, g1 * f1), alpha * g1);
+                int b0 = FxWorld.alpha(sh.c0, alpha * g0 * 0.5f), b1 = FxWorld.alpha(sh.c0, alpha * g1 * 0.5f);
+                int z0 = b0 & 0x00FFFFFF, z1 = b1 & 0x00FFFFFF;
+                quadC(vc, front, ox + d0x * ri, oy + d0y * ri, oz + d0z * ri, z0, ox + d0x * rb, oy + d0y * rb, oz + d0z * rb, b0,
+                        ox + d1x * rb, oy + d1y * rb, oz + d1z * rb, b1, ox + d1x * ri, oy + d1y * ri, oz + d1z * ri, z1);
+                quadC(vc, front, ox + d0x * rb, oy + d0y * rb, oz + d0z * rb, b0, ox + d0x * rr, oy + d0y * rr, oz + d0z * rr, r0,
+                        ox + d1x * rr, oy + d1y * rr, oz + d1z * rr, r1, ox + d1x * rb, oy + d1y * rb, oz + d1z * rb, b1);
+                quadC(vc, front, ox + d0x * rr, oy + d0y * rr, oz + d0z * rr, r0, ox + d0x * ro, oy + d0y * ro, oz + d0z * ro, r0 & 0x00FFFFFF,
+                        ox + d1x * ro, oy + d1y * ro, oz + d1z * ro, r1 & 0x00FFFFFF, ox + d1x * rr, oy + d1y * rr, oz + d1z * rr, r1);
+            }
+        } finally {
+            keepNear = false;
         }
     }
 

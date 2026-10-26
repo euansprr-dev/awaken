@@ -46,8 +46,20 @@ public final class BodyClips {
     public static final String FP_PIPE_KICK = "fp_pipe_kick", FP_PIPE_SIDE_L = "fp_pipe_side_l", FP_PIPE_SIDE_R = "fp_pipe_side_r",
             FP_PIPE_LAND = "fp_pipe_land";
 
+    /** The Runner's Kit in first person (Hands P2): the one-shots; the held moves are stances in body.client.BodyFp. */
+    public static final String FP_LAND_SOFT = "fp_land_soft", FP_LAND_HARD = "fp_land_hard", FP_ROLL = "fp_roll", FP_VAULT = "fp_vault",
+            FP_MANTLE = "fp_mantle", FP_LEAP = "fp_leap", FP_SLIDE_JUMP = "fp_slide_jump", FP_WALLJUMP_L = "fp_walljump_l",
+            FP_WALLJUMP_R = "fp_walljump_r", FP_GRAB = "fp_grab", FP_LOWER = "fp_lower", FP_LEDGE_UP = "fp_ledge_up",
+            FP_LEDGE_SIDE_L = "fp_ledge_side_l", FP_LEDGE_SIDE_R = "fp_ledge_side_r", FP_LEDGE_BACK = "fp_ledge_back",
+            FP_STAIR_BUMP = "fp_stair_bump";
+
     /** Every first-person clip the body plays (a GameTest holds them to the file). */
-    public static final List<String> FP = List.of(FP_PIPE_KICK, FP_PIPE_SIDE_L, FP_PIPE_SIDE_R, FP_PIPE_LAND);
+    public static final List<String> FP = List.of(FP_PIPE_KICK, FP_PIPE_SIDE_L, FP_PIPE_SIDE_R, FP_PIPE_LAND, FP_LAND_SOFT, FP_LAND_HARD,
+            FP_ROLL, FP_VAULT, FP_MANTLE, FP_LEAP, FP_SLIDE_JUMP, FP_WALLJUMP_L, FP_WALLJUMP_R, FP_GRAB, FP_LOWER, FP_LEDGE_UP,
+            FP_LEDGE_SIDE_L, FP_LEDGE_SIDE_R, FP_LEDGE_BACK, FP_STAIR_BUMP,
+            // the Ascent's (body.ascent.client.AscentFp)
+            "fp_rope_fire", "fp_rope_release", "fp_rope_launch", "fp_wings_open", "fp_wing_beat", "fp_barrel_roll", "fp_boom",
+            "fp_double_jump", "fp_air_dash", "fp_dive", "fp_slam_land", "fp_sovereign_ascend");
 
     /** The Runner's clips by network index (a Seen's code minus {@code SEEN_CLIP}); only append. */
     public static final List<String> RUNNER = List.of(WALLRUN_L, WALLRUN_R, WALLJUMP, GRAB, HANG, SHIMMY_L, SHIMMY_R, LEDGE_UP,

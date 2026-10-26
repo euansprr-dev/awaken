@@ -1,0 +1,28 @@
+{
+ "model": {
+  "type": "minecraft:select",
+  "property": "minecraft:display_context",
+  "cases": [
+   {
+    "when": [
+     "gui",
+     "ground",
+     "fixed",
+     "on_shelf"
+    ],
+    "model": {
+     "type": "minecraft:model",
+     "model": "awaken:item/gearwright_colossus_gauntlets"
+    }
+   }
+  ],
+  "fallback": {
+   "type": "minecraft:special",
+   "base": "awaken:item/gearwright_colossus_gauntlets_in_hand",
+   "model": {
+    "type": "awaken:weapon",
+    "weapon": "gearwright_colossus_gauntlets"
+   }
+  }
+ }
+}

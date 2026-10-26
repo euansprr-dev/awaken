@@ -36,7 +36,9 @@ public class CitizenBody extends PathfinderMob implements Npc {
     static final EntityDataAccessor<Integer> DATA_ACT = SynchedEntityData.defineId(CitizenBody.class, EntityDataSerializers.INT);
     static final EntityDataAccessor<Byte> DATA_FLAGS = SynchedEntityData.defineId(CitizenBody.class, EntityDataSerializers.BYTE);
     /** Flags: fading out (leaving view or going in), carrying a crate on the back, hurt. */
-    public static final int F_FADING = 1, F_CRATE = 2, F_HURT = 4, F_BAG = 8;
+    public static final int F_FADING = 1, F_CRATE = 2, F_HURT = 4, F_BAG = 8,
+            // staged for a scene (CitizenHooks.stage): never shoves the player it's playing to
+            F_STAGED = 16;
     static final double BASE_SPEED = 0.25;
     private static final double ARRIVE = 0.5 * 0.5, DOOR_ARRIVE = 1.05 * 1.05;
     static final int FADE_TICKS = 14;
@@ -574,7 +576,7 @@ public class CitizenBody extends PathfinderMob implements Npc {
 
     @Override
     public boolean isPushable() {
-        return !fading() && super.isPushable();
+        return !fading() && (entityData.get(DATA_FLAGS) & F_STAGED) == 0 && super.isPushable();
     }
 
     @Override

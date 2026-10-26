@@ -1,0 +1,18 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "equipment",
+ "group": "awaken_arms_scythe",
+ "key": {
+  "C": "#awaken:hunter_core_a",
+  "X": "awaken:lordscale_blade",
+  "B": "#awaken:hunter_bind_a"
+ },
+ "pattern": [
+  "XX",
+  " C",
+  " B"
+ ],
+ "result": {
+  "id": "awaken:lordscale_scythe"
+ }
+}
