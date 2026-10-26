@@ -55,6 +55,8 @@ public final class Embers {
     /** Ticks after the coal takes before the YOUR GROUND card opens (the warmth has run out by then). */
     static final int CARD_AFTER = 50;
 
+    /** The errand that ends at the camp: its ilse step hands the first Ember over itself (chain ids are full ids). */
+    static final String CHAIN = "awaken:the_last_delivery";
     static final String ILSE_LINE = "Ilse: First night out? Take a coal from our fire. Carry it till you find your ground, then set it down. It'll know.";
     static final String ILSE_AGAIN = "Ilse: Lost your coal? Take another. The fire doesn't mind.";
     static final String HETTIE_LINE = "Hettie: Ilse's fire is good for more than stew. Here, take a coal before it gets dark.";
@@ -105,8 +107,8 @@ public final class Embers {
         if (!Progression.profile(sp).awakened()) return;
         boolean classic = CityBasin.site(sp.level().getServer()).isEmpty();
         if (!classic && Progression.profile(sp).counter("awaken:carillon_registered") <= 0) return;
-        boolean chainAhead = dev.awaken.living.api.Quests.active(sp).contains("the_last_delivery")
-                && Progression.profile(sp).counter("awaken:claim/quest/the_last_delivery/ilse") <= 0;
+        boolean chainAhead = dev.awaken.living.api.Quests.active(sp).contains(CHAIN)
+                && Progression.profile(sp).counter("awaken:claim/quest/" + CHAIN + "/ilse") <= 0;
         if (chainAhead || !campGives(sp, w.who(), false)) return;
         e.setCanceled(true);
         e.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
