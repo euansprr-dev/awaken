@@ -3106,15 +3106,7 @@ def write_all(only=None):
             "type": "minecraft:select", "property": "minecraft:display_context",
             "cases": [{"when": ["gui", "ground", "fixed", "on_shelf"], "model": {"type": "minecraft:model", "model": "awaken:item/" + wid}}],
             "fallback": {"type": "minecraft:special", "base": "awaken:item/" + wid + "_in_hand", "model": {"type": "awaken:weapon", "weapon": wid}}}})
-        recipe = os.path.join(RES, "data/awaken/recipe", wid + ".json")
-        if wid in LORD_COLOUR:  # the Lord-forged only drop
-            if os.path.exists(recipe):
-                os.remove(recipe)
-        else:
-            _write(recipe, {
-                "type": "minecraft:crafting_shaped", "category": "equipment", "group": "awaken_arms_" + style,
-                "key": {"C": "#awaken:hunter_core_" + tier.lower(), "X": "awaken:" + G.SET[tier] + "_blade", "B": "#awaken:hunter_bind_" + tier.lower()},
-                "pattern": STYLES[style][4], "result": {"id": "awaken:" + wid}})
+        write_recipe(wid, style, tier)
         for stale in (wid + "_icon_glow.png",):
             if os.path.exists(os.path.join(tex_dir, stale)):
                 os.remove(os.path.join(tex_dir, stale))
@@ -3130,6 +3122,44 @@ def write_all(only=None):
         fh.write("\n")
     with open(JAVA, "w") as fh:
         fh.write(JAVA_HEAD + ",\n".join(java_rows) + "\n    );\n}\n")
+
+
+def blueprint_pattern(pattern):
+    """The style's own shape with its Blueprint (P) in the first free cell (a column or row added when there is none)."""
+    w = max(len(r) for r in pattern)
+    rows = [list(r.ljust(w)) for r in pattern]
+    for r in rows:
+        for i, c in enumerate(r):
+            if c == " ":
+                r[i] = "P"
+                return ["".join(x) for x in rows]
+    if w < 3:
+        return ["".join(r) + ("P" if i == 0 else " ") for i, r in enumerate(rows)]
+    assert len(rows) < 3, pattern
+    return ["".join(r) for r in rows] + ["P".ljust(w)]
+
+
+def write_recipe(wid, style, tier):
+    """A forged weapon's recipe at the crafting table: the tier's Hunter blade, core and bind in the style's shape, and
+    every style but the Longsword needs its Blueprint, drawn at the Forge and kept (it comes back out of the grid). The
+    Lord-forged only drop."""
+    recipe = os.path.join(RES, "data/awaken/recipe", wid + ".json")
+    if wid in LORD_COLOUR:
+        if os.path.exists(recipe):
+            os.remove(recipe)
+        return
+    key = {"C": "#awaken:hunter_core_" + tier.lower(), "X": "awaken:" + G.SET[tier] + "_blade", "B": "#awaken:hunter_bind_" + tier.lower()}
+    pattern = STYLES[style][4]
+    if style != "longsword":
+        key["P"] = "awaken:" + style + "_blueprint"
+        pattern = blueprint_pattern(pattern)
+    _write(recipe, {"type": "minecraft:crafting_shaped", "category": "equipment", "group": "awaken_arms_" + style,
+                    "key": key, "pattern": pattern, "result": {"id": "awaken:" + wid}})
+
+
+def write_recipes():
+    for row in CATALOG:
+        write_recipe(row[0], row[8], row[2])
 
 
 # First person, at rest: the weapon presented, not a slab of blade (vanilla's sword sits so close that a longsword shows
@@ -3431,6 +3461,10 @@ def main(argv):
         if cmd == "build":
             write_all(argv[1:] or None)
             print("written")
+        return 0
+    if cmd == "recipes":  # only the recipes (no meshes or textures re-made)
+        write_recipes()
+        print("recipes written")
         return 0
     if cmd == "preview":
         print("\n".join(preview(argv[1] if len(argv) > 1 else ".", argv[2:] or None)))

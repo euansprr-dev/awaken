@@ -5,11 +5,12 @@
  "key": {
   "C": "#awaken:hunter_core_d",
   "X": "awaken:beastbound_blade",
-  "B": "#awaken:hunter_bind_d"
+  "B": "#awaken:hunter_bind_d",
+  "P": "awaken:precursor_blueprint"
  },
  "pattern": [
-  "CX",
-  "XB"
+  "CXP",
+  "XB "
  ],
  "result": {
   "id": "awaken:beastbound_precursor"

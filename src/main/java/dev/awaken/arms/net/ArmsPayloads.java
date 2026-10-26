@@ -71,6 +71,14 @@ public final class ArmsPayloads {
         @Override public Type<Woven> type() { return TYPE; }
     }
 
+    /** Every style's mastery step, by the style's index (the client predicts the mastery strike, Slipcut and Art). */
+    public record Mastery(java.util.List<Integer> steps) implements CustomPacketPayload {
+        public static final Type<Mastery> TYPE = new Type<>(Awaken.id("arms_mastery"));
+        public static final StreamCodec<ByteBuf, Mastery> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT.apply(ByteBufCodecs.list(64)), Mastery::steps, Mastery::new);
+        @Override public Type<Mastery> type() { return TYPE; }
+    }
+
     public record Seen(int entity, int what, int other, int aux, int aux2) implements CustomPacketPayload {
         public static final Type<Seen> TYPE = new Type<>(Awaken.id("arms_seen"));
         public static final StreamCodec<ByteBuf, Seen> STREAM_CODEC = StreamCodec.composite(

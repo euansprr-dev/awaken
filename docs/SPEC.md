@@ -3963,6 +3963,45 @@ Glaive, Glacial Vow: a Frost nova, deep slow), Mirror Knight (C, Shieldblade, Re
 Unit Zero (C, Precursor Arm, Zero Point: a Gravity vortex pulling in), Sleeper (C, Katana, Waking: a Spirit ring that
 all but stops them), Sky Leviathan (B, Twinblades, Storm Eye: a Charge nova that lifts them), Hollow Herald (A,
 Greatblade, Event Horizon: a Gravity vortex, darkness, the strongest pull). Test `arms_lord_forged`.
+Each Lord-forged weapon also carries one Mark of its Lord (Bell Warden Rebuke, Mother of Spores Feast, Ember Tyrant
+Chain Reaction, Hive Regent Windrunner, Root Saint Steady Breath, Drowned Archivist Echo Return, Gearwright Colossus
+Earthsplitter, Glass Serpent Counterspark, Lantern Broker Harvest, Abbot of Frost Parry Ward, Mirror Knight Mercy, Unit
+Zero Overcharge, Sleeper Phantom Cut, Sky Leviathan Crescendo, Hollow Herald Sunder).
+
+**Mastery** (S7, `ArmsMastery`): five steps for each style, from the kills made with it (20, 60, 150, 350, 800; a kill
+of a foe with the style in the main hand; kept in `awaken:arms_memory` `kills`, schemaVersion 3). Each adds to the same
+presses: I the chain's mastery strike (the style's `masteryChain`, the 4th or the 5th: a press from 2 ticks after the
+finisher's blow until its recovery ends chains on, a chain in full rhythm staying in it, so that strike can be a
+full-rhythm finisher too), II a Slipcut window 3 ticks longer, III a charged deflect (posture to the attacker and the
+deflect's Resonance ×1.5), IV every Resonance gain ×1.2, V the Art at 80 Resonance instead of 100. A new step is named
+by the System ("MASTERY · Longsword II · a longer Slipcut"); the steps go to the client (`arms_mastery` payload, by
+style index) for the prediction of I, II and V, and show under a weapon's name. Dev: `/awaken arms mastery <style>
+<kills>`. Test `arms_mastery` (and `arms_timeline`'s mastered finisher).
+
+**Marks** (S7, `Marks`): 48, every trigger with every effect, in `data/awaken/arms/marks.json` (written by
+tools/arms/marks.py; read once on both sides, like the styles). Triggers: a landed hit, a finisher in full rhythm, a
+deflect, a perfect dodge, a Break, a kill, a blow guarded (blocked, not deflected), a perfect heavy. Effects: a rider (×
+the fighter's attack as a second blow of the weapon's attuned Force, else the Mark's own, else plain; on a Lord at most 2%
+of its health), posture (points; a Break's: the Break held longer), a heal (share of max health), power energy, Speed I
+or Resistance I (ticks). A kill's rider and posture go to the foes within 4 blocks. A weapon carries at most two, with
+its attunement, in the item component `awaken:arms` (`Marks.Instance`, schemaVersion 1, saved and synced, moves with the
+item). Until the named weapons (S9), an Elite a player kills drops a forged weapon of its rank (the content level's) in a
+style at random 4% of the time (a Warden 10%), glowing, with one Mark (a second 20% of the time), and the System names
+it ("MARKED · Gatewrought Glaive · Rebuke"). Tooltips list each Mark and what it does. Dev: `/awaken arms mark <id>`.
+Test `arms_marks`.
+
+**The Forge** (S7, `ArmsForge`): sneak and use Hearth's Forge (any placed `awaken:forge`; a plain use stays Hearth's
+tempering and upgrades). Holding one of our weapons: attune it to a Force named by the catalyst in the off hand (Blaze
+Powder Heat, a Copper Ingot Charge, an Ender Pearl Gravity, a Ghast Tear Spirit, Packed Ice Frost) for 6 essence, a
+Core Shard and the catalyst; re-attuning replaces it. An attuned weapon's Mark riders take its Force, and it primes both
+ways: a landed hit makes the next power within 3 s cost 15% less (with a Weave's 30%: ×0.7×0.85), and a landed power of
+its Force makes the next blow within 3 s land ×1.25 with the Force's touch (Heat burns 3 s, Frost slows, Charge 6
+posture, Gravity lifts, Spirit heals 1.5). With an empty hand: the Blueprints, one design each use in turn, each for 4
+paper, 2 iron and an essence shard. Every style but the Longsword needs its Blueprint at the crafting table: the
+Blueprint sits in a free cell of the style's own shape (tools/art/specs/arms_weapons.py `blueprint_pattern`; `python3
+tools/art/specs/arms_weapons.py recipes` rewrites only the recipes) and comes back out of the grid. Blueprint art: the
+style's Wildhide silhouette in white line on blueprint paper (tools/arms/blueprints.py). Dev: `/awaken arms attune
+<force>`. Test `arms_forge`.
 
 **Item level** (PLAN §7.7, decided by the sim): a weapon's level is its tier. The forged Longswords' damage climbs by
 tier (4.5 to 9.5) and melee already rises with the player's strength, so on-level melee keeps pace with a Lord's

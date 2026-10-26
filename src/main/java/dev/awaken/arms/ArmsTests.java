@@ -21,7 +21,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import dev.awaken.progression.Rank;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
@@ -54,6 +56,9 @@ final class ArmsTests {
         AwakenTests.register("arms_style_traits", 20, ArmsTests::styleTraits);
         AwakenTests.register("arms_weave", 40, ArmsTests::weave);
         AwakenTests.register("arms_lord_forged", 40, ArmsTests::lordForged);
+        AwakenTests.register("arms_mastery", 20, ArmsTests::mastery);
+        AwakenTests.register("arms_marks", 40, ArmsTests::marks);
+        AwakenTests.register("arms_forge", 20, ArmsTests::forge);
     }
 
     /** At most this many triangle corners in one weapon (6,000 triangles: a few weapons in view cost what a mob does). */
@@ -320,6 +325,82 @@ final class ArmsTests {
         });
     }
 
+    /** Mastery: kills raise a style's step; step I carries the chain's finisher into its mastery strike. */
+    static void mastery(GameTestHelper h) {
+        h.assertTrue(ArmsMastery.step(0) == 0 && ArmsMastery.step(ArmsMastery.KILLS[0]) == 1 && ArmsMastery.step(100_000) == 5, "five steps from kills");
+        Archetypes.Loaded a = longsword();
+        Archetype.MoveDef s3 = a.move(Archetype.Move.STRIKE_3);
+        long link = 100 + s3.windup() + s3.active() + ArmsRules.MASTERY_LINK;
+        ArmsRules.Decision plain = ArmsRules.tap(a, Archetype.Move.STRIKE_3, 100, 2, 2, link, 0);
+        h.assertTrue(plain == null || plain.move() == Archetype.Move.STRIKE_1, "unmastered, the finisher ends the chain");
+        ArmsRules.Decision on = ArmsRules.tap(a, Archetype.Move.STRIKE_3, 100, 2, 2, link, 1);
+        h.assertTrue(on != null && on.move() == Archetype.Move.STRIKE_4 && on.step() == 3 && on.cadence() == 3,
+                "mastered, a press after the finisher's blow is the mastery strike, still in full rhythm (" + on + ")");
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        h.assertTrue(ArmsMastery.step(p, a) == 0, "a fresh fighter has no mastery");
+        h.assertTrue(ArmsMastery.count(p, a, ArmsMastery.KILLS[1]) == 2 && ArmsMastery.step(p, a) == 2, "kills count and are remembered");
+        h.assertTrue(ArmsMastery.slipcutBonus(2) > 0 && ArmsMastery.deflect(2) == 1F && ArmsMastery.artAt(5) < ArmsRules.RESONANCE_MAX,
+                "II a longer Slipcut, III the charged deflect, V the Art at 80%");
+        h.succeed();
+    }
+
+    /** Marks: 48 rows, every trigger with every effect; a weapon's Marks act on their trigger; found weapons carry them. */
+    static void marks(GameTestHelper h) {
+        h.assertTrue(Marks.all().size() == 48, "48 Marks (" + Marks.all().size() + ")");
+        java.util.Set<String> pairs = new java.util.HashSet<>();
+        for (Marks.Mark m : Marks.all()) pairs.add(m.trigger() + "/" + m.effect());
+        h.assertTrue(pairs.size() == 48, "each trigger with each effect once");
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        ItemStack sword = p.getMainHandItem();
+        sword.set(ArmsContent.INSTANCE.get(), Marks.Instance.EMPTY.withMark("weight").withMark("leech").withMark("bite"));
+        h.assertTrue(Marks.of(sword).marks().size() == Marks.MAX_MARKS, "at most two Marks");
+        var zombie = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(1, 1, 3));
+        p.hurtServer(h.getLevel(), p.damageSources().generic(), 6F);
+        float hp = p.getHealth();
+        Marks.fire(p, Marks.Trigger.HIT, zombie);
+        Posture post = zombie.getExistingDataOrNull(ArmsContent.POSTURE);
+        h.assertTrue(post != null && post.value > 0, "Weight: a hit's posture");
+        h.assertTrue(p.getHealth() > hp, "Leech: a hit heals");
+        Marks.fire(p, Marks.Trigger.DEFLECT, zombie);
+        var bytes = Marks.Instance.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, Marks.of(sword)).getOrThrow();
+        h.assertTrue(Marks.Instance.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, bytes).getOrThrow().equals(Marks.of(sword)), "the component round-trips");
+        ItemStack found = MarkedDrops.roll(Rank.C.contentLevel, h.getLevel().getRandom());
+        ArmsData.Weapon row = ArmsItems.of(found.getItem());
+        h.assertTrue(row != null && row.tier().equals("C") && !Marks.of(found).marks().isEmpty(), "an Elite's weapon: its rank's tier, with a Mark");
+        LordForged.Forged bell = LordForged.byWeapon("bell_warden_maul");
+        h.assertTrue(Marks.of(LordForged.stack(bell, ArmsItems.item(bell.weapon()))).marks().contains("rebuke"), "a Lord-forged weapon carries its Lord's Mark");
+        h.succeed();
+    }
+
+    /** The Forge: attunement for its price, priming both ways; a Blueprint drawn, and the grid gives it back. */
+    static void forge(GameTestHelper h) {
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ArmsItems.item("wildhide_glaive")));
+        p.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(Items.BLAZE_POWDER));
+        h.assertTrue(!ArmsForge.attune(p, dev.awaken.core.Forces.Force.HEAT), "nothing to pay with: no attunement (creative "
+                + p.isCreative() + ", essence " + ArmsForge.count(p, dev.awaken.core.api.CoreApi.ESSENCE_SHARD.get()) + ")");
+        for (ArmsForge.Cost c : ArmsForge.attunePrice(dev.awaken.core.Forces.Force.HEAT)) {
+            if (c.item() != Items.BLAZE_POWDER) p.getInventory().add(new ItemStack(c.item(), c.n()));
+        }
+        h.assertTrue(ArmsForge.attune(p, dev.awaken.core.Forces.Force.HEAT), "with its price, it attunes");
+        h.assertTrue(ArmsForge.attunement(p) == dev.awaken.core.Forces.Force.HEAT && p.getOffhandItem().isEmpty(), "attuned to Heat, the catalyst spent");
+        ArmsState s = ArmsServer.state(p);
+        long now = ArmsServer.now(p);
+        var zombie = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(1, 1, 3));
+        ArmsForge.landed(p, s, zombie, now, false);
+        h.assertTrue(ArmsWeaves.INSTANCE.costScale(p) < 1F, "an attuned hit makes the next power cheaper");
+        ArmsWeaves.INSTANCE.cast(p, "ENERGY", "HEAT", 1);
+        h.assertTrue(ArmsWeaves.INSTANCE.costScale(p) == 1F, "the cast spends it");
+        h.assertTrue(ArmsForge.bladePrimed(p, s, now) && !ArmsForge.bladePrimed(p, s, now), "a Heat power primes the next blow, once");
+        p.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+        for (ArmsForge.Cost c : ArmsForge.blueprintPrice()) p.getInventory().add(new ItemStack(c.item(), c.n()));
+        h.assertTrue(ArmsForge.drawBlueprint(p, "glaive") && ArmsForge.owns(p, "glaive"), "a Glaive Blueprint drawn");
+        Item bp = ArmsItems.BLUEPRINTS.get("glaive").get();
+        h.assertTrue(bp.getCraftingRemainder(new ItemStack(bp)) != null, "the crafting grid gives a Blueprint back");
+        h.assertTrue(!ArmsItems.BLUEPRINTS.containsKey(Arms.LONGSWORD) && ArmsItems.BLUEPRINTS.size() == 15, "every style but the Longsword has one");
+        h.succeed();
+    }
+
     /** The Daggers' backstab and the Katana's draw cut: their rules and their rows. */
     static void styleTraits(GameTestHelper h) {
         h.assertTrue(ArmsRules.behind(0F, 180F) && ArmsRules.behind(90F, -60F), "a striker at its back, or well round it, is behind");
@@ -418,7 +499,7 @@ final class ArmsTests {
         ArmsRules.Decision after = ArmsRules.tap(a, Archetype.Move.STRIKE_3, 100, 2, 3, 100 + fin.total(), 0);
         h.assertTrue(after != null && after.move() == Archetype.Move.STRIKE_1, "after the finisher the chain starts again");
         ArmsRules.Decision mastered = ArmsRules.tap(a, Archetype.Move.STRIKE_3, 100, 2, 3, 100 + fin.total(), 1);
-        h.assertTrue(mastered != null && mastered.move() == Archetype.Move.STRIKE_1, "a finisher has no window: mastery adds a step only through it");
+        h.assertTrue(mastered != null && mastered.move() == Archetype.Move.STRIKE_4, "mastered, the finisher's recovery carries on into the mastery strike");
         h.assertTrue(Math.abs(ArmsRules.motion(s1, 3, false) - s1.motion() * 1.24F) < 1e-4, "three rhythm steps: +24%");
         Archetype.MoveDef heavy = a.move(Archetype.Move.HEAVY);
         h.assertTrue(heavy != null && heavy.charge().isPresent() && heavy.charge().get().perfect(heavy.charge().get().glint() + 2)
