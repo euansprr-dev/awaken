@@ -356,6 +356,11 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   `damage(server, key)` (`record Damage(pos, original, day)`), `repaired(server, key, pos)`, `history(server, key)` and
   `history(server, key, line)`, `prosperity`/`addProsperity`, `mood`/`addMood` (0-100), `reserved(Level, BlockPos,
   margin)` (a settlement's ground, planned ones included: gates and Hearths keep off).
+- `dev.awaken.village.api.Troubles` (§28.7, W4) — who a player brought home from a trouble: `rescued(ServerPlayer)` →
+  `List<Rescued>` oldest first, `record Rescued(village, villageName, rec, name, trade, age, day, trouble, settled)` (`rec`
+  is the person's record in that settlement's roster; `trade` a `Roster.JOBS` name; `trouble` "taken" or "missing";
+  remembered for the carrier and every party member within 48 of the reunion); `settle(ServerPlayer, Rescued, hearthName)`
+  (W6: they moved to a Hearth; the village's history says so and `settled` reads true after).
 - `dev.awaken.city.SettlementPaint` / `PlanView` / `VillageStyles` (§28.6) — the city's grammar for other settlements:
   a `Layout` (a `PlanView` of ground kinds, heights and plots, its origin and street level, its own ground and pieces on a
   `Canvas`, who lives in each plot as an `Interior`) painted per chunk by `paintChunk` into a proto chunk (`sweep` after);
