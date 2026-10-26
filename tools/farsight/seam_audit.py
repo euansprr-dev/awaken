@@ -3,15 +3,17 @@
 
 Every pair <name>.png / <name>_holes.png in a folder is the same view, normally and in debug view 2, where far terrain
 and City Sight that are hidden for the real chunks paint pure red instead. Red in the second frame that the first
-doesn't have is a hole: the far view stepped aside and no real chunk drew there. Prints the hole pixels per view and
-exits 1 if any view has more than --allow of them.
+doesn't have is where the far view stepped aside and no real chunk drew there. One- and two-pixel slivers along real
+blocks' outlines are expected (City Sight draws stairs and the like as whole cubes, hidden there for the thinner real
+block, which correctly shows what's behind): the mask is eroded by 5 pixels, so only patches a hole's size count.
+Prints the hole pixels per view and exits 1 if any view has more than --allow of them.
 
     python3 tools/farsight/seam_audit.py <screenshots dir> [--allow 0]
 """
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageChops
+from PIL import Image, ImageChops, ImageFilter
 
 
 def red(img):
@@ -44,8 +46,8 @@ def main():
         b = Image.open(holes).convert("RGB")
         if a.size != b.size:
             b = b.resize(a.size)
-        only = ImageChops.subtract(red(b), red(a))
-        n = sum(1 for v in only.getdata() if v > 0)
+        only = ImageChops.subtract(red(b), red(a)).filter(ImageFilter.MinFilter(5))
+        n = sum(1 for v in only.get_flattened_data() if v > 0)
         share = n / (a.size[0] * a.size[1])
         worst = max(worst, n)
         print(f"{base.stem:24s} holes {n:8d} px ({share * 100:.3f}%)")

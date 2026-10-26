@@ -38,6 +38,9 @@ public final class VoxelCapture {
     private static final it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap DIRTY = new it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap();
     static final int SETTLE_TICKS = 40;
     private static boolean started;
+    /** Kept chunks within this of the player are read back from disk (under the client's keep, 1.9 km). */
+    static final double FROM_DISK = 1700;
+    private static int lastDiskTick = Integer.MIN_VALUE;
     private static int captured;
 
     /** The client took a snapshot from {@link #SNAPSHOTS}. */
@@ -144,6 +147,7 @@ public final class VoxelCapture {
                 long[] loaded = LOADED.toLongArray();
                 it.unimi.dsi.fastutil.longs.LongArrays.quickSort(loaded, (a, b) -> Long.compare(dist(a, px, pz), dist(b, px, pz)));
                 for (long k : loaded) if (CITY.add(k)) PENDING.add(k);
+                lastDiskTick = Integer.MIN_VALUE;
             }
         }
         synchronized (PENDING) {
@@ -157,6 +161,27 @@ public final class VoxelCapture {
                     it.remove();
                 }
             }
+        }
+        // what was seen before and kept: read back around the player, now and every 10 s as it moves
+        int now = overworld.getServer().getTickCount();
+        if (now - lastDiskTick >= 200 && !overworld.players().isEmpty()) {
+            lastDiskTick = now;
+            var p = overworld.players().getFirst().position();
+            VoxelDisk.of(overworld).around(p.x, p.z, FROM_DISK, key -> {
+                synchronized (PENDING) {
+                    // taken from the server, or about to be: the world's own copy wins
+                    return CITY.contains(key) || LOADED.contains(key);
+                }
+            }, snap -> {
+                // (the IO thread: wait while the client is behind, a snapshot holds its sections' copies)
+                while (wanted && waiting.get() >= MAX_WAITING) java.util.concurrent.locks.LockSupport.parkNanos(5_000_000L);
+                if (!wanted) return;
+                synchronized (PENDING) {
+                    if (!CITY.add(ChunkPos.pack(snap.chunkX(), snap.chunkZ()))) return;
+                }
+                waiting.incrementAndGet();
+                SNAPSHOTS.add(snap);
+            });
         }
         boolean loadedOne = false;
         while (System.nanoTime() < deadline && waiting.get() < MAX_WAITING) {
@@ -181,6 +206,7 @@ public final class VoxelCapture {
             VoxelSnapshot s = VoxelSnapshot.take(overworld, chunk);
             captured++;
             if (s == null) continue;
+            VoxelDisk.of(overworld).put(s);
             waiting.incrementAndGet();
             SNAPSHOTS.add(s);
         }

@@ -77,7 +77,10 @@ public final class FarCollector {
             }
         });
         NeoForge.EVENT_BUS.addListener(LevelEvent.Save.class, e -> {
-            if (e.getLevel() instanceof ServerLevel level && level.dimension() == net.minecraft.world.level.Level.OVERWORLD) FarStore.flushAll(false);
+            if (e.getLevel() instanceof ServerLevel level && level.dimension() == net.minecraft.world.level.Level.OVERWORLD) {
+                FarStore.flushAll(false);
+                dev.awaken.farsight.voxel.VoxelDisk.flush();
+            }
         });
         NeoForge.EVENT_BUS.addListener(ServerStoppingEvent.class, e -> {
             PENDING.clear();
@@ -87,6 +90,7 @@ public final class FarCollector {
             FarLandmarks.clear();
             FarStore.closeAll();
             dev.awaken.farsight.voxel.VoxelCapture.stop();
+            dev.awaken.farsight.voxel.VoxelDisk.close();
         });
     }
 
