@@ -311,6 +311,9 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
 - `dev.awaken.terrain.alpine.Erosion` / `AlpineSurface` — Awakened Alpine's erosion and snow-and-rock rule as pure,
   allocation-free maths (§15): `Erosion.erode(x, z, gx, gz, strength, finestCell, out)`, `AlpineSurface.snowLine/snow/
   stone/erosionStrength`. Far Sight predicts and shades with the same numbers; its shaders mirror them.
+- `dev.awaken.city.City.skyline(layout, chunkX, chunkZ, worldSeed, topY[256], top[256])` — the city as planned over one
+  chunk, from the plan alone (any thread): each column's highest placed block and its world y, or none where the city
+  leaves the land; false outside the city. Far Sight's far skyline reads it (§20).
 - `dev.awaken.terrain.city.CityBasinFunction.Shape.ground(natural, x, z)` — the basin's ground height over a column
   whose natural ground stands at `natural` (what the density mode builds), for far terrain.
 - `dev.awaken.hearth.Hearth` — a Hearth's owner and members ("Together"): `record HearthInfo(owner, ownerName, anchor,
@@ -1475,6 +1478,14 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
 - **Lens**: Far Sight reports its depth through `compat.client.FarTerrain.report` and `FarTerrain.selfHazed`; Lens then
   hazes far terrain only as much as the end of the real chunks (flag 8 in params texel 0) and leaves the kilometres past
   them to Far Sight. Lens's light pass doesn't touch far pixels; its clouds composite over far terrain past their layer.
+- **The city** (`FarCity`, 2026-10-26, Euan's play: the ring wall vanished past the render distance): the far store
+  learns real chunks as they load or save while far terrain collects, and `FarCollector` keeps track of every loaded
+  chunk all along, so those loaded before (Carillon's pregeneration holds ~1,700 through the join, never saving them)
+  are taken in when collecting starts, nearest first. City chunks never seen are laid out from the plan
+  (`City.skyline`, top block per column, its map colour) after the real ones, and a real chunk replaces its planned one.
+  Cells the city builds on (real ones above the street + 3, planned ones) carry `FarCity.BUILT` in their colour's top
+  byte, and a far corner over them takes the highest built cell and its colour, not the average, so walls, towers and
+  spires keep their silhouette at any distance. Test `farsight_city`; tour `farsight2-city.txt`.
 - **Landmarks** (`FarLandmarks`): unchanged from stage 1 (gate pillars from `Gates.near` from 1500 blocks, the city's
   towers), drawn after the terrain and trees.
 - **Budgets** (measured): Lens Ultra at sunset on the jagged peaks, 2880×1800 (11% more pixels than 4K at 0.75): Far

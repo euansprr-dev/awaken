@@ -245,5 +245,40 @@ final class FarSightTests {
                 FarStore.collecting = was;
             });
         });
+
+        AwakenTests.registerIsolated("farsight_trees_basin", 20, h -> {
+            // a dense far forest over a ring 3 patch that holds a city basin: no tree in the reserve, every other one on
+            // its cell's ground (the shader then stands it on the mesh as drawn there)
+            int ring = 3, s = Rings.cellSize(ring), pb = Rings.patchBlocks(ring), n = Rings.PATCH * Rings.PATCH;
+            int px = 40, pz = -12, x0 = px * pb, z0 = pz * pb;
+            CitySite before = CityBasin.current();
+            CitySite site = new CitySite(x0 + pb / 2, z0 + pb / 2, 20, 120, CityBasin.STREET_Y, List.of(), 0, 0, true);
+            CityBasin.set(site);
+            try {
+                int[] height = new int[n], colour = new int[n], info = new int[n], crown = new int[n];
+                for (int k = 0; k < n; k++) {
+                    int i = k % Rings.PATCH, j = k / Rings.PATCH;
+                    height[k] = FarColumns.packHeight(90f + 0.2f * i * s);
+                    info[k] = FarColumns.abgr(0, 32, 255, 128);
+                    crown[k] = FarColumns.abgr(0x2E5A2E, FarPalette.CONIFER);
+                }
+                int[] out = new int[FarTrees.MAX * FarTrees.INTS];
+                int planted = FarTrees.plant(ring, px, pz, height, colour, info, crown, 63, out);
+                h.assertTrue(planted > 20, "a dense forest plants: " + planted);
+                int outside = 0;
+                for (int t = 0; t < planted; t++) {
+                    float lx = (out[t * FarTrees.INTS] & 0xFFFF) / 16f, lz = (out[t * FarTrees.INTS] >>> 16) / 16f;
+                    int wx = (int) Math.floor(x0 + lx), wz = (int) Math.floor(z0 + lz);
+                    h.assertFalse(CityBasin.reserved(wx, wz), "no far tree in the city's reserve: " + wx + ", " + wz);
+                    float ground = FarColumns.unpackHeight(out[t * FarTrees.INTS + 1] & 0xFFFF);
+                    h.assertTrue(Math.abs(ground - (90f + 0.2f * lx)) < 1f, "a tree on its cell's ground: " + ground + " at " + lx);
+                    outside++;
+                }
+                h.assertTrue(outside == planted, "every tree accounted for");
+            } finally {
+                CityBasin.set(before);
+            }
+            h.succeed();
+        });
     }
 }
