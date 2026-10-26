@@ -1,0 +1,7 @@
+[
+ {"name": "probe-m14", "script": "tools/autopilot/ci-probe.txt", "timeout": "1200", "os": "macos-14"},
+ {"name": "probe-m15", "script": "tools/autopilot/ci-probe.txt", "timeout": "1200", "os": "macos-15"},
+ {"name": "probe-m26", "script": "tools/autopilot/ci-probe.txt", "timeout": "1200", "os": "macos-26"},
+ {"name": "probe-m15-gl", "script": "tools/autopilot/ci-probe.txt", "timeout": "1200", "os": "macos-15", "knobs": "BACKEND=opengl"},
+ {"name": "arms-film-m15", "script": "tools/autopilot/arms-film.txt", "timeout": "1500", "os": "macos-15"}
+]

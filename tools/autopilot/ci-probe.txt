@@ -1,0 +1,33 @@
+# CI probe (tools/tour-ci.sh, .github/workflows/tours.yml): what a GitHub macOS runner renders, on Awaken alone, in a
+# few minutes. The renderer line, the Roost at noon in each Lens look, the HUD, and a 10 s frame-time line (the
+# runner's timing says nothing about a player's Mac: never judge performance from it).
+# Run: tools/tour-ci.sh tools/autopilot/ci-probe.txt 900
+world ciprobe creative 20261026
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken opening skip
+wait 100
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+hud off
+wait 200
+shot probe_swift
+lens cinematic
+wait 60
+shot probe_cinematic
+lens off
+shot probe_off
+lens swift
+hud on
+shot probe_hud
+perf probe 10
+quit
