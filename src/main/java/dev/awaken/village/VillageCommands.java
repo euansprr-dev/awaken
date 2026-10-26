@@ -51,6 +51,8 @@ final class VillageCommands {
                 .then(Commands.literal("standing").then(Commands.argument("points", com.mojang.brigadier.arguments.IntegerArgumentType.integer(-50, 200))
                         .executes(c -> standing(c.getSource(), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "points")))))
                 .then(Commands.literal("start").executes(c -> start(c.getSource())))
+                .then(dev.awaken.village.trouble.TroubleCommands.node())
+                .then(Commands.literal("grow").executes(c -> grow(c.getSource(), false)).then(Commands.literal("now").executes(c -> grow(c.getSource(), true))))
                 .then(Commands.literal("view").then(Commands.argument("key", StringArgumentType.word())
                         .then(Commands.argument("name", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(VIEWS, b))
                                 .executes(c -> view(c.getSource(), StringArgumentType.getString(c, "key"), StringArgumentType.getString(c, "name"))))))));
@@ -119,6 +121,29 @@ final class VillageCommands {
         VillageService.Live l = here(p);
         if (l == null) return 0;
         VillageService.standing(p, l, points - l.rec().points(p.getUUID()), "command");
+        return 1;
+    }
+
+    /**
+     * Growth (SPEC §28.7): a plot fenced past a lane's end now (its prosperity aside); {@code now}: the stage it's at
+     * done at once (the masons start, or finish).
+     */
+    private static int grow(CommandSourceStack src, boolean now) throws CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        VillageService.Live l = here(p);
+        if (l == null) return 0;
+        ServerLevel level = src.getServer().overworld();
+        var st = dev.awaken.village.trouble.TroubleState.get(src.getServer());
+        var g = st.memory(l.key()).growth();
+        long day = VillageService.today(src.getServer());
+        String what;
+        if (g.stage() == dev.awaken.village.growth.Growth.NONE) {
+            what = dev.awaken.village.growth.Growth.begin(level, l, g, day) ? "a plot fenced" : "no room past any lane's end";
+        } else {
+            what = dev.awaken.village.growth.Growth.hurry(level, l, g, day, now);
+        }
+        st.setDirty();
+        src.sendSuccess(() -> Component.literal(l.plan().name + ": " + what), false);
         return 1;
     }
 

@@ -58,6 +58,9 @@ public final class VillageModule {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, VillageModule::onBroken);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, VillageModule::onExploded);
         NeoForge.EVENT_BUS.addListener(VillageModule::onRightClickBlock);
+        // (SPEC §28.7) a village's trouble answers first: the parent in the square, the elder, the smith casting a bell
+        dev.awaken.village.trouble.TroubleDirector.init(modBus);
+        Settlements.onTalk(dev.awaken.village.trouble.TroubleDirector::talk);
         Settlements.onTalk(VillageService::talk);
         Settlements.installVoice(new VillageService.Voice());
         EconomyHooks.install(new Emeralds());

@@ -307,4 +307,47 @@ final class Settlement implements dev.awaken.citizens.api.Settlement {
         for (int i = 0; i < roster.citizens; i++) if (m.know[i] < ceiling) m.know[i] = Math.min(ceiling, m.know[i] + amount);
         data.setDirty();
     }
+
+    // ---- (SPEC §28.7) troubles and festivals ---------------------------------------------------------------------------
+
+    @Override
+    public void stage(int rec, net.minecraft.world.phys.@org.jspecify.annotations.Nullable Vec3 at, float yaw, String act, String prop) {
+        events.stage(rec, at, yaw, act, prop);
+    }
+
+    @Override
+    public void away(int rec, boolean away) {
+        events.away(rec, away);
+    }
+
+    @Override
+    public boolean isAway(int rec) {
+        return rec >= 0 && rec < roster.records && data.role[rec] == Roles.AWAY;
+    }
+
+    @Override
+    public void alarm(BlockPos near, int strokes) {
+        work.alarm(near.getX() + 0.5, near.getZ() + 0.5, strokes);
+    }
+
+    @Override
+    public net.minecraft.world.phys.@org.jspecify.annotations.Nullable Vec3 where(int rec) {
+        if (rec < 0 || rec >= roster.records) return null;
+        CitizenBody b = ledger.body[rec];
+        if (b != null && !b.isRemoved()) return b.position();
+        double[] at = new double[3];
+        return ledger.position(rec, at) ? new net.minecraft.world.phys.Vec3(at[0], at[1], at[2]) : null;
+    }
+
+    @Override
+    public Look look(int rec) {
+        Roster carillon = Roster.get();
+        int k = id == Settlements.CARILLON ? rec : rec >= 0 && rec < roster.records && roster.isCitizen(rec)
+                ? Looks.pick(key, rec, roster.job[rec], roster.build[rec], roster.age[rec]) : -1;
+        if (carillon == null || k < 0 || k >= carillon.records) return new Look(Awaken.id("textures/entity/townsfolk/oren.png"), false);
+        if (!carillon.named[k].isEmpty()) return new Look(Awaken.id("textures/entity/townsfolk/" + carillon.named[k] + ".png"), false);
+        String path = k >= carillon.citizens ? String.format(Locale.ROOT, "textures/entity/citizen/t%d.png", k - carillon.citizens)
+                : String.format(Locale.ROOT, "textures/entity/citizen/c%03d.png", k);
+        return new Look(Awaken.id(path), carillon.build[k] == 1);
+    }
 }

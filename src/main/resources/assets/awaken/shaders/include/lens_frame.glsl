@@ -8,7 +8,7 @@
 //   14   toward the light (sun, or the moon by night); w how strongly it lights the world (0: no sun model here)
 //   15   heightfield: x its size (0: none), y the highest surface in it, z blocks from the camera it can be trusted
 //   16   x 1 for zero-to-one depth, y 1 when the light is the moon, z rain, w the near plane
-//   17   x seconds, wrapping every hour (ripples, shimmer)
+//   17   x seconds, wrapping every hour (ripples, shimmer); y 1 when clouds and light are spread over frames
 //   18-19 the clouds (lens_clouds.glsl)
 //   20   x the Holo world plates drawn this frame, y the storm cells; 24-41 each plate: camera-relative centre,
 //        half-width and half-height vectors (3 texels a plate); 42-47 the storm cells (lens_storm_frame.glsl)

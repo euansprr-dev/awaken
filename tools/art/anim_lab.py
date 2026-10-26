@@ -720,7 +720,7 @@ def bake(out=SWINGS):
     rig = R4.load()  # third person from first person's blade: its styles' wrists come with their arms
     wrists = solve_wrists([s for s in table() if s not in rig])  # third person: every other move's wrist, in parallel
     flipped3 = sorted(r[0] for r in AW.CATALOG
-                      if AH.third_person(r[8], AH.edge_of(r[8], None if r[0] in AW.LORD_COLOUR else r[2])) is not None)
+                      if AH.flipped3(r[8], AH.edge_of(r[8], None if r[0] in AW.LORD_COLOUR else r[2])))
     styles = {}
     for sid, st in table().items():
         held = Held("gatewrought_" + sid)
@@ -757,7 +757,7 @@ def bake(out=SWINGS):
                        "grip": [round(float(v), 4) for v in held.grip], "vanillaGrip": [round(float(v), 4) for v in grip_v],
                        "moves": moves}
     json.dump({"schemaVersion": 4, "generatedBy": "tools/art/anim_lab.py bake", "dt": KEY_DT, "wristDt": WRIST_DT,
-               "flipped3": flipped3, "styles": styles},
+               "flipped3": flipped3, "grip3": grips3(), "styles": styles},
               open(out, "w"), separators=(",", ":"))
     return out
 
@@ -773,6 +773,14 @@ def rig4_wrists(r):
     return out
 
 
+def grips3():
+    """{weapon: [x, y, z]}: where the fist closes on each weapon held down its haft in third person (arms_holds.grip3;
+    the rest close on the item's grip)."""
+    import arms_holds as AH
+    import arms_weapons as AW
+    return {r[0]: [round(float(v), 5) for v in AH.grip3(r[8])] for r in AW.CATALOG if r[8] in AH.HAFT3}
+
+
 def rig4_inject(out=SWINGS):
     """Writes the rig's wrists into the baked swings as they stand (the rest of the bake unchanged)."""
     import arms_rig4 as R4
@@ -785,6 +793,7 @@ def rig4_inject(out=SWINGS):
             mv_row.pop("wrist3", None)
             mv_row.pop("wrist3s", None)
             mv_row.update(rig4_wrists(r))
+    data["grip3"] = grips3()
     json.dump(data, open(out, "w"), separators=(",", ":"))
     return out
 
@@ -1140,7 +1149,7 @@ def display_3p(wid, arm):
     return tuple(v["rotation"]), tuple(v["translation"]), v["scale"][0]
 
 
-def hand_3p(frames, arm, display, roll=0.0, lower=False, flipped=False):
+def hand_3p(frames, arm, display, roll=0.0, lower=False, flipped=False, grip=None):
     """Item points (item space, n x 3) to the figure's model space (pixels, y down) for the item in {@code arm}'s hand,
     as ItemInHandLayer draws it (the arm's frame, its bent forearm's for a bent clip; X -90, Y 180, (+-1, 2, -10)/16;
     the hold, a left hand's mirrored as ItemTransform applies it), turned by the wrist about its grip: {@code roll}
@@ -1159,7 +1168,7 @@ def hand_3p(frames, arm, display, roll=0.0, lower=False, flipped=False):
     Rr = np.asarray(roll) if np.ndim(roll) == 2 else axis_rot(AH.AXIS_ITEM, roll) if roll else np.eye(3)
     if flipped:
         Rr = FLIP @ Rr @ FLIP
-    G = AH.GRIP_ITEM
+    G = AH.GRIP_ITEM if grip is None else np.asarray(grip)  # the wrist turns it where the fist closes (arms_holds.grip3)
 
     def f(p):
         q = (np.atleast_2d(p) - G) @ Rr.T + G
@@ -1252,13 +1261,13 @@ def weapon_points(wid):
     return np.unique(np.round(m["pos"], 4), axis=0)
 
 
-def through_body(frames, f, pts, arm):
+def through_body(frames, f, pts, arm, grip=None):
     """How deep (pixels) the weapon placed by f goes into the figure: the head, the torso, the legs, the other arm,
     and its own arm above the hand. Returns (depth, part)."""
     import power_casts as PC
     import arms_holds as AH
     P = f(pts)
-    grip = f(AH.GRIP_ITEM[None, :])[0]
+    grip = f((AH.GRIP_ITEM if grip is None else np.asarray(grip))[None, :])[0]
     P = P[np.linalg.norm(P - grip, axis=1) > BODY_OWN_HAND]
     worst, where = 0.0, ""
     other = "left_arm" if arm == "right" else "right_arm"
@@ -1297,11 +1306,11 @@ def body_clips(style, mv, m, pitches=(0.0, 30.0), wrist=True):
     weapons = []
     for r in rows:
         e = AH.edge_of(style, None if r[0] in AW.LORD_COLOUR else r[2])
-        weapons.append((r[0], weapon_points(r[0]), AH.third_person(style, e) is not None))
+        weapons.append((r[0], weapon_points(r[0]), AH.flipped3(style, e)))
     worst = (0.0, "", 0.0, "", "")
     through_body.worn = style == "gauntlets"  # worn on the arm: its cuff lies along it
     import arms_rig4 as R4
-    through_body.both = style in R4.STYLES  # both hands on it: the other arm holds its handle
+    through_body.both = R4.STYLES.get(style, {}).get("hands", 2 if style in R4.STYLES else 1) == 2  # both hands on it: the other arm holds its handle
     for clip, lower in ((A.CLIPS[name], False), (A.CLIPS[name + "_bent"], True)):
         for t in np.arange(0, clip.length + 1e-6, 0.25):
             for pitch in pitches:
@@ -1309,7 +1318,8 @@ def body_clips(style, mv, m, pitches=(0.0, 30.0), wrist=True):
                 for arm in arms:
                     W = wrist_now((wk if lower else wks).get(arm), float(t))
                     for wid, pts, fl in weapons:
-                        d, part = through_body(fr, hand_3p(fr, arm, display_3p(wid, arm), W, lower=lower, flipped=fl), pts, arm)
+                        g3 = AH.grip3(style)
+                        d, part = through_body(fr, hand_3p(fr, arm, display_3p(wid, arm), W, lower=lower, flipped=fl, grip=g3), pts, arm, g3)
                         if d > worst[0]:
                             worst = (d, part + (" bent" if lower else ""), float(t), arm, wid)
     return worst
@@ -1382,9 +1392,11 @@ def clip_of(style, mv):
 
 
 def part_3p(style, form):
-    """The working part in third person: the scythe's blade leads point first (its haul back is first person's)."""
+    """The working part in third person: first person's where third person takes its blade from first person's
+    (arms_rig4: the scythe's inner edge hauled back through); else the scythe's blade leads point first."""
+    import arms_rig4 as R4
     part = working(style, form)
-    return "edge" if part == "inner" else part
+    return part if style in R4.STYLES else "edge" if part == "inner" else part
 
 
 # ---- third person: a whole wrist, solved (Euan 2026-10-26: "it's literally going through his body") ----------------
@@ -1416,7 +1428,7 @@ def style_weapons(style):
     groups = {}
     for r in rows:
         e = AH.edge_of(style, None if r[0] in AW.LORD_COLOUR else r[2])
-        groups.setdefault(AH.third_person(style, e) is not None, []).append(r[0])
+        groups.setdefault(AH.flipped3(style, e), []).append(r[0])
     out = []
     for flipped, ids in sorted(groups.items()):
         ids = sorted(ids, key=lambda w: w != "gatewrought_" + style)
@@ -1649,14 +1661,15 @@ def audit_3p(verbose=True):
                 for r in rows:
                     e = AH.edge_of(sid, None if r[0] in AW.LORD_COLOUR else r[2])
                     disp = display_3p(r[0], arm)
-                    fl = AH.third_person(sid, e) is not None
+                    fl = AH.flipped3(sid, e)
                     # the bent clip (Bendable Cuboids, in the pack) at the bar; the straight one (without it) at least
                     # leading with the working part: its lead counts as the bar's share it reaches of 0.45
                     leads = []
                     for lower, (f0, f1) in pair.items():
                         roll0, roll1 = rolls[lower]
-                        x = lead_3p(hand_3p(f0, arm, disp, roll0, lower=lower, flipped=fl),
-                                    hand_3p(f1, arm, disp, roll1, lower=lower, flipped=fl), part, e, lens[r[0]])
+                        g3 = AH.grip3(sid)
+                        x = lead_3p(hand_3p(f0, arm, disp, roll0, lower=lower, flipped=fl, grip=g3),
+                                    hand_3p(f1, arm, disp, roll1, lower=lower, flipped=fl, grip=g3), part, e, lens[r[0]])
                         leads.append(x if lower else LEAD_MIN[part] * min(1.0, x / 0.45) if not math.isnan(x) else x)
                     lead = min(leads)
                     if worst is None or (math.isnan(lead) or lead < worst[0]):
@@ -1835,7 +1848,7 @@ def flipped_3p(wid):
     import arms_holds as AH
     import arms_weapons as AW
     r = next(r for r in AW.CATALOG if r[0] == wid)
-    return AH.third_person(r[8], AH.edge_of(r[8], None if wid in AW.LORD_COLOUR else r[2])) is not None
+    return AH.flipped3(r[8], AH.edge_of(r[8], None if wid in AW.LORD_COLOUR else r[2]))
 
 
 def figure_3p(c_, t, weapons, yaw, pitch, px, bounds, lower=False):
@@ -1848,7 +1861,8 @@ def figure_3p(c_, t, weapons, yaw, pitch, px, bounds, lower=False):
     offx, offy = 8 - bounds[0] * px, 8 - bounds[2] * px
     for wid, arm, roll in weapons:
         m, tex = MR.load(wid)
-        f = hand_3p(fr, arm, display_3p(wid, arm), roll, lower=lower, flipped=flipped_3p(wid))
+        import arms_holds as AH
+        f = hand_3p(fr, arm, display_3p(wid, arm), roll, lower=lower, flipped=flipped_3p(wid), grip=AH.grip3(wid.rsplit("_", 1)[-1]))
         q = f(m["pos"]) @ cam.T
         o = f(np.zeros(3))[0]
         R = np.stack([f(np.eye(3)[i])[0] - o for i in range(3)], axis=1)

@@ -72,7 +72,7 @@ public final class VillageService {
         return BY_ID.get(s.id());
     }
 
-    static @Nullable Live at(Level level, BlockPos pos) {
+    public static @Nullable Live at(Level level, BlockPos pos) {
         for (Live l : LIVE.values()) if (l.settlement().inside(pos)) return l;
         return null;
     }
@@ -143,11 +143,13 @@ public final class VillageService {
     }
 
     /** Registers a settlement's people with the engine (tests and commands call it directly). */
-    static @Nullable Live register(ServerLevel level, VillagePlan plan) {
+    public static @Nullable Live register(ServerLevel level, VillagePlan plan) {
         Live had = LIVE.get(plan.key);
         if (had != null) return had;
         long t0 = System.nanoTime();
-        var source = VillageRoster.of(plan, level.getSeed());
+        // (SPEC §28.7) with the families of the houses it has grown
+        var mem = dev.awaken.village.trouble.TroubleState.get(level.getServer()).peek(plan.key);
+        var source = VillageRoster.of(plan, level.getSeed(), mem == null ? java.util.List.of() : mem.growth().houses());
         SettlementSpec spec = new SettlementSpec("village:" + plan.key, plan.name, new BlockPos(plan.ox, plan.baseY, plan.oz), plan.radius(), source, false);
         Settlement s = Settlements.register(level, spec).orElse(null);
         if (s == null) {
@@ -165,7 +167,7 @@ public final class VillageService {
         return l;
     }
 
-    static void stop(Live l) {
+    public static void stop(Live l) {
         LIVE.remove(l.key());
         BY_ID.remove(l.settlement().id());
         Settlements.unregister(l.settlement().id());
@@ -181,18 +183,18 @@ public final class VillageService {
     // ---- standing ---------------------------------------------------------------------------------------------------
 
     /** A player's standing at a settlement: 0 stranger, 1 known, 2 friend, 3 kin (its record; the people's own recognition lifts a stranger). */
-    static int tier(ServerPlayer p, Live l) {
+    public static int tier(ServerPlayer p, Live l) {
         int t = VillageState.tier(l.rec().points(p.getUUID()));
         if (t == 0 && l.settlement().standing(p) >= RenownHooks.KNOWN) t = 1;
         return t;
     }
 
-    static String standingName(ServerPlayer p, Live l) {
+    public static String standingName(ServerPlayer p, Live l) {
         return VillageState.STANDINGS[tier(p, l)];
     }
 
     /** Standing earned (or lost); the village's people know the player better as it rises. */
-    static void standing(ServerPlayer p, Live l, int points, String why) {
+    public static void standing(ServerPlayer p, Live l, int points, String why) {
         VillageState st = VillageState.get(p.level().getServer());
         int before = tier(p, l);
         int now = Math.clamp(l.rec().points(p.getUUID()) + points, -50, 200);
@@ -208,7 +210,7 @@ public final class VillageService {
         Awaken.LOG.info("[village] {} {} standing {} at {} ({}): {}", p.getName().getString(), points >= 0 ? "+" : "", points, l.plan().name, why, now);
     }
 
-    static void history(MinecraftServer server, Live l, String text) {
+    public static void history(MinecraftServer server, Live l, String text) {
         l.rec().history.add(new VillageState.History(today(server), text));
         while (l.rec().history.size() > 32) l.rec().history.removeFirst();
         VillageState.get(server).setDirty();
@@ -262,7 +264,7 @@ public final class VillageService {
         l.settlement().say(p, rec, fill(l, p, Lines.fill(line, p.getName().getString(), l.plan().name, "", hour(p))), ticks);
     }
 
-    static int hour(ServerPlayer p) {
+    public static int hour(ServerPlayer p) {
         int tod = (int) Math.floorMod(p.level().getOverworldClockTime(), 24000L);
         int h = (6 + tod / 1000) % 24;
         return h % 12 == 0 ? 12 : h % 12;
@@ -291,7 +293,7 @@ public final class VillageService {
 
     // ---- the voice: standing names and place names in lines ----------------------------------------------------------
 
-    static String fill(Live l, ServerPlayer p, String line) {
+    public static String fill(Live l, ServerPlayer p, String line) {
         if (line.indexOf('{') < 0) return line;
         MinecraftServer server = p.level().getServer();
         String region = "these parts";
@@ -339,8 +341,20 @@ public final class VillageService {
 
     // ---- what players do to a village ------------------------------------------------------------------------------------
 
+    /**
+     * (SPEC §28.7) A trouble's damage (a roof burned, a house charred): kept with the block that stood there for the
+     * Rebuild, wherever on the settlement's ground or its eaves it is. No one's blamed.
+     */
+    public static void damaged(Live l, BlockPos pos, net.minecraft.world.level.block.state.BlockState was, long day) {
+        VillageState.Village v = l.rec();
+        if (v.damage.size() >= 4096 || was.isAir()) return;
+        long key = pos.asLong();
+        for (VillageState.Damage d : v.damage) if (d.pos() == key) return; // the first block that stood there is the one to put back
+        v.damage.add(new VillageState.Damage(key, was, day, java.util.Optional.empty()));
+    }
+
     /** Part of a house broken (or blown up): the block that stood there is kept for the Rebuild (W4); seen, it costs standing. */
-    static void broke(ServerLevel level, BlockPos pos, net.minecraft.world.level.block.state.BlockState was, @Nullable ServerPlayer by) {
+    public static void broke(ServerLevel level, BlockPos pos, net.minecraft.world.level.block.state.BlockState was, @Nullable ServerPlayer by) {
         Live l = at(level, pos);
         if (l == null || !l.plan().owns(pos.getX(), pos.getZ()) || was.isAir()) return;
         VillageState.Village v = l.rec();
@@ -361,7 +375,12 @@ public final class VillageService {
 
     // ---- for the API ----------------------------------------------------------------------------------------------------
 
-    static List<Live> all() {
+    /** A running settlement by its key, or null (W4's troubles). */
+    public static @Nullable Live live(String key) {
+        return LIVE.get(key);
+    }
+
+    public static List<Live> all() {
         return new ArrayList<>(LIVE.values());
     }
 

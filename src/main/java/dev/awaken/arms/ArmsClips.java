@@ -29,10 +29,12 @@ public final class ArmsClips {
      * takes from first person's blade (tools/art/specs/arms_rig4.py: both hands on the hilt) swing them as they swing
      * the rest. Every other shares the Longsword's.
      */
-    public static final java.util.Set<String> OWN_SHARED = java.util.Set.of("gauntlets", "katana", "greatblade");
+    public static final java.util.Set<String> OWN_SHARED = java.util.Set.of("gauntlets", "katana", "greatblade", "maul", "spear",
+            "glaive", "scythe", "warstaff", "twinblades");
 
     /** Styles that hold their own heavy's draw while it charges (arms_<style>_heavy_charge: the very pose it is loosed from). */
-    public static final java.util.Set<String> OWN_CHARGE = java.util.Set.of("katana", "greatblade");
+    public static final java.util.Set<String> OWN_CHARGE = java.util.Set.of("katana", "greatblade", "maul", "spear", "glaive",
+            "scythe", "warstaff", "twinblades");
 
     /** The held draw a style charges in. */
     public static String charge(String style) {

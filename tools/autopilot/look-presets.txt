@@ -1,0 +1,34 @@
+# The Look page (O): presets and every setting on one page (SPEC §14 Looks, 26 Oct). A look tour (CI is fine).
+#   tools/tour-ci.sh tools/autopilot/look-presets.txt 900 PACK=perf LENS=cinematic
+world lookpresets creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+cmd time set 6000
+lookpreset balanced
+screen look
+wait 40
+shot lp_balanced
+screen close
+lookpreset performance
+screen look
+wait 40
+shot lp_performance
+screen close
+lookpreset close_up
+screen look
+wait 40
+shot lp_closeup
+screen close
+lookpreset vista
+screen look
+wait 40
+shot lp_vista
+screen close
+quit

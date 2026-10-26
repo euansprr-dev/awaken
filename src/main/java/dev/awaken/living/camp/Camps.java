@@ -67,7 +67,8 @@ public final class Camps extends SavedData {
                 Codec.STRING.optionalFieldOf("gate", "").forGetter(c -> c.gate),
                 Codec.LONG.optionalFieldOf("seed", 0L).forGetter(c -> c.seed),
                 Codec.LONG.listOf().optionalFieldOf("ground", List.of()).forGetter(c -> c.ground),
-                Codec.LONG.listOf().optionalFieldOf("stood", List.of()).forGetter(c -> c.stood)
+                Codec.LONG.listOf().optionalFieldOf("stood", List.of()).forGetter(c -> c.stood),
+                Codec.STRING.optionalFieldOf("raid_village", "").forGetter(c -> c.raidVillage)
         ).apply(i, Camp::new));
 
         public final int id;
@@ -78,9 +79,17 @@ public final class Camps extends SavedData {
         long clearedUntil, lastGrow, raidDay;
         final long seed;
         final List<Long> ground, stood;
+        /** (SPEC §28.7) A village it means to raid: the village's Burning runs the raid. */
+        String raidVillage;
 
         Camp(int id, String kind, String theme, BlockPos pos, boolean resolved, int tier, int built, long clearedUntil, long lastGrow,
              long raidDay, String gate, long seed, List<Long> ground, List<Long> stood) {
+            this(id, kind, theme, pos, resolved, tier, built, clearedUntil, lastGrow, raidDay, gate, seed, ground, stood, "");
+        }
+
+        Camp(int id, String kind, String theme, BlockPos pos, boolean resolved, int tier, int built, long clearedUntil, long lastGrow,
+             long raidDay, String gate, long seed, List<Long> ground, List<Long> stood, String raidVillage) {
+            this.raidVillage = raidVillage;
             this.id = id;
             this.kind = kind;
             this.theme = theme;
@@ -103,6 +112,20 @@ public final class Camps extends SavedData {
 
         public boolean cleared(long day) {
             return clearedUntil > day;
+        }
+
+        /** Whether it found its ground (a seeded camp's place is found the first time a player comes within 160). */
+        public boolean resolved() {
+            return resolved;
+        }
+
+        /** (SPEC §28.7) The village it means to raid ("" none): a Burning runs that raid, not this camp. */
+        public String raidVillage() {
+            return raidVillage;
+        }
+
+        public long raidDay() {
+            return raidDay;
         }
 
         public String name() {
@@ -343,9 +366,10 @@ public final class Camps extends SavedData {
     void clear(ServerLevel level, Camp c, long day) {
         sleep(level, c);
         CampPainter.ash(level, c.ground, c.stood);
-        c.clearedUntil = day + CLEAR_DAYS;
+        c.clearedUntil = Math.max(c.clearedUntil, day + CLEAR_DAYS);
         c.built = 0;
         c.raidDay = -1;
+        c.raidVillage = "";
         setDirty();
         for (ServerPlayer p : level.players()) {
             if (p.distanceToSqr(Vec3.atCenterOf(c.pos)) > 56 * 56) continue;
@@ -386,6 +410,15 @@ public final class Camps extends SavedData {
             }
             if (c.tier >= 4 && c.raidDay < day) {
                 BlockPos target = target(level, c.pos);
+                // (SPEC §28.7) a village nearer than any Hearth or the Wayfarer camp: its Burning runs the raid, with its
+                // own ladder of warnings (if it takes it: a calm world, or a village already in trouble, doesn't)
+                var village = dev.awaken.village.api.Villages.nearest(level, c.pos, 800);
+                if (village.isPresent() && (target == null || village.get().origin().distSqr(c.pos) < target.distSqr(c.pos))
+                        && dev.awaken.village.api.Troubles.raidComing(level, village.get().key(), c.id, c.name(), c.tier, day + 1)) {
+                    c.raidDay = day + 1;
+                    c.raidVillage = village.get().key();
+                    continue;
+                }
                 if (target != null) {
                     c.raidDay = day + 1;
                     for (ServerPlayer p : level.players()) {
@@ -411,6 +444,10 @@ public final class Camps extends SavedData {
     private void raid(ServerLevel level, Camp c, long day) {
         c.raidDay = -1;
         setDirty();
+        if (!c.raidVillage.isEmpty()) {
+            c.raidVillage = ""; // the village's Burning ran (or will resolve) this raid
+            return;
+        }
         BlockPos target = target(level, c.pos);
         if (target == null) return;
         Vec3 dir = Vec3.atCenterOf(c.pos).subtract(Vec3.atCenterOf(target)).multiply(1, 0, 1).normalize().scale(24);
@@ -431,6 +468,72 @@ public final class Camps extends SavedData {
     List<UUID> bodiesOf(int id) {
         return bodies.getOrDefault(id, List.of());
     }
+
+    // ---- (SPEC §28.7) villages: the Burning's raiders, the Taken's den ------------------------------------------------------
+
+    /** The camp by id, or null. */
+    public @Nullable Camp byId(int id) {
+        for (Camp c : camps) if (c.id == id) return c;
+        return null;
+    }
+
+    /** Whether a camp's heart still stands (asleep, it does: it wakes when someone comes). */
+    public static boolean heartStanding(ServerLevel level, Camp c) {
+        if (c.cleared(PlayDays.current(level.getServer()))) return false;
+        List<UUID> b = get(level.getServer()).bodies.get(c.id);
+        if (b == null) return true;
+        for (UUID id : b) {
+            Entity e = level.getEntity(id);
+            if (e != null && e.isAlive() && e.entityTags().contains(HEART)) return true;
+        }
+        return false;
+    }
+
+    /** Cleared for good: the den never comes back (a village's Taken ended there). */
+    public static void sealForGood(ServerLevel level, int id) {
+        Camps cs = get(level.getServer());
+        Camp c = cs.byId(id);
+        if (c == null) return;
+        if (!c.cleared(PlayDays.current(level.getServer()))) cs.clear(level, c, PlayDays.current(level.getServer()));
+        c.clearedUntil = Long.MAX_VALUE / 4;
+        cs.setDirty();
+    }
+
+    /**
+     * A village's Burning: {@code count} of the camp's creatures come out of the dark at {@code from}, toward {@code target}
+     * (at the camp's level for its tier, tagged as raiders). Returns them.
+     */
+    public static List<Entity> raidAt(ServerLevel level, int id, BlockPos from, BlockPos target, int count) {
+        Camps cs = get(level.getServer());
+        Camp c = cs.byId(id);
+        List<Entity> out = new ArrayList<>();
+        if (c == null || !level.hasChunkAt(from)) return out;
+        BlockPos saved = c.pos;
+        c.pos = CampPainter.surface(level, from.getX(), from.getZ());
+        for (int i = 0; i < count; i++) {
+            Entity e = cs.spawn(level, c, false);
+            if (e == null) continue;
+            e.addTag(RAIDER);
+            if (e instanceof Mob m) m.getNavigation().moveTo(target.getX() + 0.5, target.getY(), target.getZ() + 0.5, 1.0);
+            out.add(e);
+        }
+        c.pos = saved;
+        return out;
+    }
+
+    /** Dev, tours and tests (SPEC §28.7): a camp of this kind on the ground at a place (found within 48 of it), at a tier. */
+    public static @Nullable Camp placeAt(ServerLevel level, String kind, BlockPos around, int tier, long seed) {
+        Camps cs = get(level.getServer());
+        BlockPos at = site(level, around, RandomSource.create(seed));
+        if (at == null) return null;
+        Camp c = cs.add(kind, kind.equals("riftborn") ? "awaken:ember_mines" : "", at, true, "", seed);
+        c.tier = Math.max(1, Math.min(MAX_TIER, tier));
+        cs.setDirty();
+        return c;
+    }
+
+    /** Raiders out of a camp at a village (the Burning finds them by this tag). */
+    public static final String RAIDER = "awaken_village_raider";
 
     /** Dev: camps near a player. */
     public static List<String> describe(ServerPlayer p) {

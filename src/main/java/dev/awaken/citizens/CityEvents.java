@@ -322,8 +322,12 @@ final class CityEvents {
      * (or none yet) is put there; one in sight walks. A stage nobody renews lapses after {@link #STAGE_LAPSE}.
      */
     void stage(String who, net.minecraft.world.phys.@Nullable Vec3 at, float yaw, String act, String prop) {
-        int i = r.namedIndex(who);
-        if (i < 0) return;
+        stage(r.namedIndex(who), at, yaw, act, prop);
+    }
+
+    /** {@link #stage(String, net.minecraft.world.phys.Vec3, float, String, String)} by record (SPEC §28.7: a village's troubles). */
+    void stage(int i, net.minecraft.world.phys.@Nullable Vec3 at, float yaw, String act, String prop) {
+        if (i < 0 || i >= r.records || d.role[i] == Roles.AWAY) return;
         if (at == null) {
             staged.remove(i);
             if (d.role[i] == Roles.STAGED) release(i);
@@ -353,6 +357,40 @@ final class CityEvents {
         if (b != null) {
             b.faceYaw = yaw;
             if (b.distanceToSqr(at) > 20 * 20) b.teleportTo(at.x, at.y, at.z);
+        }
+        d.setDirty();
+    }
+
+    /**
+     * (SPEC §28.7) A citizen leaves the settlement's life (taken by a beast, gone to Carillon, out searching the land): no
+     * body, no day, whatever event held them let go; or comes back to it, where this hour wants them.
+     */
+    void away(int i, boolean away) {
+        if (i < 0 || i >= r.records || !r.isCitizen(i)) return;
+        if (away) {
+            if (d.role[i] == Roles.AWAY) return;
+            staged.remove(i);
+            l.release(i);
+            d.role[i] = Roles.AWAY;
+            d.event[i] = -1;
+            d.place[i] = -1;
+            d.spot[i] = -1;
+            d.next[i] = -1;
+            d.state[i] = ABSENT;
+            l.rx[i] = Double.NaN;
+            CitizenBody b = l.body[i];
+            if (b != null) c.crowd.entered(b);
+        } else {
+            if (d.role[i] != Roles.AWAY) return;
+            // back at their own door; the day takes them from there
+            d.role[i] = 0;
+            d.event[i] = -1;
+            if (r.home[i] >= 0) d.at[i] = r.pNode[r.home[i]];
+            d.next[i] = -1;
+            d.prog[i] = 0;
+            d.place[i] = r.home[i];
+            d.state[i] = INSIDE;
+            d.seg[i] = -1;
         }
         d.setDirty();
     }

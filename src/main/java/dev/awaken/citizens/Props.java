@@ -57,6 +57,21 @@ final class Props {
             case "letters" -> LETTERS;
             case "book" -> BOOK;
             case "scroll" -> SCROLL;
+            // (SPEC §28.7) what a village's people carry in a trouble or a festival
+            case "lantern" -> LANTERN;
+            case "bucket" -> BUCKET;
+            case "halberd" -> HALBERD;
+            case "hammer" -> HAMMER;
+            case "trowel" -> TROWEL;
+            case "bow" -> BOW;
+            case "pick" -> PICK;
+            case "hoe" -> HOE;
+            case "axe" -> AXE;
+            case "rod" -> ROD;
+            case "crook" -> CROOK;
+            case "bread" -> BREAD;
+            case "cane" -> CANE;
+            case "satchel" -> SATCHEL;
             default -> NONE;
         };
     }

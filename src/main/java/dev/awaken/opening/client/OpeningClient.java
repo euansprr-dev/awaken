@@ -80,6 +80,7 @@ public final class OpeningClient {
             e.register(OpeningPayloads.Drive.TYPE, (msg, ctx) -> RouteDriver.start(msg));
         });
         modBus.addListener(RegisterGuiLayersEvent.class, OpeningHud::register);
+        modBus.addListener(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent.class, OpeningFx::registerPipelines);
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
         bus.addListener(ClientTickEvent.Pre.class, e -> {
@@ -100,6 +101,7 @@ public final class OpeningClient {
         bus.addListener(CalculatePlayerTurnEvent.class, OpeningCamera::turn);
         bus.addListener(RenderNameTagEvent.CanRender.class, OpeningCamera::nameTag);
         bus.addListener(SubmitCustomGeometryEvent.class, OpeningFx::submit);
+        bus.addListener(net.neoforged.neoforge.client.event.RenderLevelStageEvent.AfterLevel.class, OpeningFx::afterLevel);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> reset());
         bus.addListener(net.neoforged.neoforge.client.event.ToastAddEvent.class, OpeningClient::onToast);
         bus.addListener(net.neoforged.neoforge.client.event.ScreenEvent.Render.Post.class, OpeningClient::overLoading);
