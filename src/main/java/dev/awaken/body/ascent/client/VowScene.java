@@ -64,6 +64,17 @@ final class VowScene {
                 line = null;
                 stage = -1;
             }
+            case 4 -> { // the vault stirs: short of its rank, or its door still sealed
+                mx = v.mx();
+                my = v.my();
+                mz = v.mz();
+                stirShort = v.ay() > 0.5;
+                stirTint = dev.awaken.progression.Rank.of((int) v.ax()).colour;
+                stirRank = dev.awaken.progression.Rank.of((int) v.ax()).label;
+                // the call's note, low and brief: no Lens, no hush; the vault only half wakes
+                AscentSounds.local(p, AscentContent.VOW_CALL.get(), stirShort ? 0.45F : 0.6F, stirShort ? 0.7F : 0.85F);
+                say(Component.translatable(stirShort ? "awaken.ascent.vow.stir" : "awaken.ascent.vow.stir_door"), stirShort ? 52 : 100, false);
+            }
             default -> { // lapsed
                 LensClient.clearOverride(40);
                 say(Component.translatable("awaken.ascent.vow.lapsed"), 90, false);
@@ -71,6 +82,11 @@ final class VowScene {
             }
         }
     }
+
+    /** The stir's state: short of the rank (the light falls back) or only the door sealed, the rank's colour and name. */
+    private static boolean stirShort;
+    private static int stirTint = 0x9FD4FF;
+    private static String stirRank = "C";
 
     private static void say(Component c, int life, boolean big) {
         if (big) {
@@ -98,6 +114,26 @@ final class VowScene {
                 MoteParticle.next(r.nextFloat() < 0.3F ? 0xEAF7FF : 0x9FD4FF, 0.8F + r.nextFloat() * 0.5F, 50 + r.nextInt(20), -0.02F, false);
                 p.level().addParticle(AscentContent.MOTE.get(), x, y, z, to.x, to.y, to.z);
             }
+        } else if (stage == 4) {
+            if (age <= 36 && age % 2 == 0) {
+                for (int i = 0; i < 2; i++) {
+                    double a = r.nextDouble() * Math.PI * 2, d = 0.8 + r.nextDouble() * 2.5;
+                    double x = p.getX() + Math.cos(a) * d, y = p.getY() + 0.1, z = p.getZ() + Math.sin(a) * d;
+                    Vec3 to = new Vec3(mx - x, my - y, mz - z).normalize();
+                    if (stirShort) {
+                        // it rises toward the mast in the rank's colour, stalls, and settles back on the paving
+                        MoteParticle.next(r.nextFloat() < 0.25F ? 0xEAF7FF : stirTint, 0.7F + r.nextFloat() * 0.4F, 45 + r.nextInt(15), 0.55F, true);
+                        p.level().addParticle(AscentContent.MOTE.get(), x, y, z, to.x * 0.06, 0.16 + r.nextDouble() * 0.06, to.z * 0.06);
+                    } else {
+                        // it drifts low along the floor toward the sealed door
+                        MoteParticle.next(r.nextFloat() < 0.3F ? 0xEAF7FF : 0x9FD4FF, 0.7F + r.nextFloat() * 0.4F, 60 + r.nextInt(20), -0.005F, false);
+                        Vec3 v = to.scale(0.1 + r.nextDouble() * 0.05);
+                        p.level().addParticle(AscentContent.MOTE.get(), x, y, z, v.x, 0.01, v.z);
+                    }
+                }
+            }
+            if (stirShort && age == 50) say(Component.translatable("awaken.ascent.vow.waits", stirRank), 110, false);
+            if (age >= 60) stage = -1;
         } else if (stage == 1) {
             if (age == 50) {
                 say(Component.translatable("awaken.ascent.vow.how", AwakenKeys.MOVEMENT.getTranslatedKeyMessage()), 160, false);

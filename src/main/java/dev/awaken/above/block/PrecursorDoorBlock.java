@@ -19,11 +19,19 @@ public class PrecursorDoorBlock extends Block {
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (player instanceof ServerPlayer sp) {
-            BlockPos core = DoorCoreBlock.findCore(level, pos);
-            if (core != null) DoorCoreBlock.tryOpen(sp, level, core);
-            else sp.sendOverlayMessage(Component.literal("Sealed. Nothing here answers."));
-        }
+        if (player instanceof ServerPlayer sp) ask(sp, level, pos);
         return InteractionResult.SUCCESS;
+    }
+
+    /** A strike is a touch: the panel can't be broken, so the door answers instead of doing nothing. */
+    @Override
+    protected void attack(BlockState state, Level level, BlockPos pos, Player player) {
+        if (player instanceof ServerPlayer sp) ask(sp, level, pos);
+    }
+
+    private static void ask(ServerPlayer sp, Level level, BlockPos pos) {
+        BlockPos core = DoorCoreBlock.findCore(level, pos);
+        if (core != null) DoorCoreBlock.tryOpen(sp, level, core);
+        else sp.sendOverlayMessage(Component.literal("Sealed. Nothing here answers."));
     }
 }
