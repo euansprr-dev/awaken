@@ -1,13 +1,19 @@
 package dev.awaken.farsight;
 
 import dev.awaken.Awaken;
+import dev.awaken.city.CityLayout;
+import dev.awaken.city.CityPlan;
 import dev.awaken.core.test.AwakenTests;
+import dev.awaken.terrain.api.CityBasin;
+import dev.awaken.terrain.api.CitySite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.LevelHeightAccessor;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists;
 import net.minecraft.world.level.block.Block;
@@ -18,8 +24,10 @@ import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.RandomState;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
@@ -186,6 +194,90 @@ final class FarSightTests {
             h.assertTrue(FarColumns.unpackHeight(height[i]) == y0 + 12, "the patch's pillar corner: " + FarColumns.unpackHeight(height[i]));
             h.assertTrue((colour[i] >>> 24 & FarColumns.GENERATED) != 0, "marked as the real chunks'");
             FarStore.closeAll();
+            h.succeed();
+        });
+
+        AwakenTests.registerIsolated("farsight_city", 600, h -> {
+            ServerLevel level = h.getLevel();
+            BlockPos o = h.absolutePos(BlockPos.ZERO);
+            // the plan alone: a chunk on a test city's ring wall stands at the wall's height, built
+            List<int[]> river = new ArrayList<>();
+            for (int[] p : CityBasin.RIVER) river.add(new int[]{o.getX() + p[0], o.getZ() + p[1]});
+            CityLayout city = new CityLayout(CityPlan.get(), new CitySite(o.getX(), o.getZ(), CityBasin.CORE_RADIUS,
+                    CityBasin.BLEND_RADIUS, o.getY(), river, CityBasin.RIVER_HALF_WIDTH, CityBasin.RIVER_FLOOR_Y, true));
+            int wallX = city.cx + city.plan.wallRadius;
+            Holder<Biome> plains = level.registryAccess().lookupOrThrow(Registries.BIOME).getOrThrow(Biomes.PLAINS);
+            FarChunk planned = FarCity.planned(city, wallX >> 4, city.cz >> 4, level.getSeed(), plains);
+            h.assertTrue(planned != null, "the plan lays out the wall's chunk");
+            int high = Integer.MIN_VALUE;
+            boolean built = false;
+            for (int i = 0; i < FarChunk.CELLS; i++) {
+                if (planned.cell()[i] == 0) continue;
+                int top = FarChunk.top(planned.cell()[i]);
+                if (top > high) {
+                    high = top;
+                    built = FarCity.built(planned.colour()[i]);
+                }
+            }
+            h.assertTrue(high >= city.streetY + city.plan.wallHeight && built,
+                    "the wall stands at its height, built: top " + high + ", street " + city.streetY + " + wall " + city.plan.wallHeight);
+            h.assertTrue(FarCity.planned(city, (city.cx >> 4) + 200, city.cz >> 4, level.getSeed(), plains) == null, "nothing beyond the city");
+
+            // a chunk loaded before anything collected (as the city's pregeneration holds them, never saving) reaches the
+            // store as soon as collecting starts
+            int x0 = (o.getX() & ~15) + 4, z0 = (o.getZ() & ~15) + 4, y0 = o.getY() + 2;
+            for (int x = x0 - 2; x < x0 + 4; x++) {
+                for (int z = z0 - 2; z < z0 + 4; z++) {
+                    for (int y = y0; y <= level.getMaxY(); y++) level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                }
+            }
+            for (int y = y0; y < y0 + 23; y++) {
+                for (int k = 0; k < 4; k++) level.setBlock(new BlockPos(x0 + (k & 1), y, z0 + (k >> 1)), Blocks.STONE_BRICKS.defaultBlockState(), Block.UPDATE_CLIENTS);
+            }
+            boolean was = FarStore.collecting;
+            FarStore.collecting = false;
+            int cell = 2 * FarChunk.SIDE + 2, cx = x0 >> 4, cz = z0 >> 4;
+            h.runAfterDelay(3, () -> FarStore.collecting = true);
+            h.succeedWhen(() -> {
+                FarChunk seen = FarStore.of(level).get(cx, cz);
+                h.assertTrue(seen != null && FarChunk.top(seen.cell()[cell]) == y0 + 23,
+                        "the loaded chunk reached the store: " + (seen == null ? "not yet" : "top " + FarChunk.top(seen.cell()[cell])));
+                FarStore.collecting = was;
+            });
+        });
+
+        AwakenTests.registerIsolated("farsight_trees_basin", 20, h -> {
+            // a dense far forest over a ring 3 patch that holds a city basin: no tree in the reserve, every other one on
+            // its cell's ground (the shader then stands it on the mesh as drawn there)
+            int ring = 3, s = Rings.cellSize(ring), pb = Rings.patchBlocks(ring), n = Rings.PATCH * Rings.PATCH;
+            int px = 40, pz = -12, x0 = px * pb, z0 = pz * pb;
+            CitySite before = CityBasin.current();
+            CitySite site = new CitySite(x0 + pb / 2, z0 + pb / 2, 20, 120, CityBasin.STREET_Y, List.of(), 0, 0, true);
+            CityBasin.set(site);
+            try {
+                int[] height = new int[n], colour = new int[n], info = new int[n], crown = new int[n];
+                for (int k = 0; k < n; k++) {
+                    int i = k % Rings.PATCH, j = k / Rings.PATCH;
+                    height[k] = FarColumns.packHeight(90f + 0.2f * i * s);
+                    info[k] = FarColumns.abgr(0, 32, 255, 128);
+                    crown[k] = FarColumns.abgr(0x2E5A2E, FarPalette.CONIFER);
+                }
+                int[] out = new int[FarTrees.MAX * FarTrees.INTS];
+                int planted = FarTrees.plant(ring, px, pz, height, colour, info, crown, 63, out);
+                h.assertTrue(planted > 20, "a dense forest plants: " + planted);
+                int outside = 0;
+                for (int t = 0; t < planted; t++) {
+                    float lx = (out[t * FarTrees.INTS] & 0xFFFF) / 16f, lz = (out[t * FarTrees.INTS] >>> 16) / 16f;
+                    int wx = (int) Math.floor(x0 + lx), wz = (int) Math.floor(z0 + lz);
+                    h.assertFalse(CityBasin.reserved(wx, wz), "no far tree in the city's reserve: " + wx + ", " + wz);
+                    float ground = FarColumns.unpackHeight(out[t * FarTrees.INTS + 1] & 0xFFFF);
+                    h.assertTrue(Math.abs(ground - (90f + 0.2f * lx)) < 1f, "a tree on its cell's ground: " + ground + " at " + lx);
+                    outside++;
+                }
+                h.assertTrue(outside == planted, "every tree accounted for");
+            } finally {
+                CityBasin.set(before);
+            }
             h.succeed();
         });
     }

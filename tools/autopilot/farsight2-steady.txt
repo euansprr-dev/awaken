@@ -1,0 +1,76 @@
+# Far Sight's steadiness (SPEC §20, Euan's play: far snow massifs glittered as he moved): the meadow view of the snow
+# massif in the refshots world (fs2ref), stepping 0.3 blocks and turning half a degree between frames 4 ticks apart, once
+# with part "steady" off (the old pixel-wide, screen-dithered columns) and once on; each pair is compared pixel by
+# pixel over the far massif only (sky left out).
+world fs2ref creative 20261025
+waitworld
+gui 0
+farsight on
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd gamerule advance_time false
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+hud off
+info
+cmd gamemode spectator
+lens cinematic
+cmd time set 6000
+cmd awaken terrain visit minecraft:meadow
+wait 300
+cmd tp @s ~ ~3 ~ -90 -2
+wait 600
+farsight status
+farsight part steady off
+wait 20
+shotnow fs2s_off_0a
+cmd tp @s ~0.3 ~ ~ ~0.5 ~
+wait 4
+shotnow fs2s_off_0b
+wait 10
+shotnow fs2s_off_1a
+cmd tp @s ~0.3 ~ ~ ~0.5 ~
+wait 4
+shotnow fs2s_off_1b
+wait 10
+shotnow fs2s_off_2a
+cmd tp @s ~0.3 ~ ~ ~0.5 ~
+wait 4
+shotnow fs2s_off_2b
+wait 10
+shotnow fs2s_off_3a
+cmd tp @s ~0.3 ~ ~ ~0.5 ~
+wait 4
+shotnow fs2s_off_3b
+wait 10
+farsight part steady on
+wait 20
+shotnow fs2s_on_0a
+cmd tp @s ~0.3 ~ ~ ~0.5 ~
+wait 4
+shotnow fs2s_on_0b
+wait 10
+shotnow fs2s_on_1a
+cmd tp @s ~0.3 ~ ~ ~0.5 ~
+wait 4
+shotnow fs2s_on_1b
+wait 10
+shotnow fs2s_on_2a
+cmd tp @s ~0.3 ~ ~ ~0.5 ~
+wait 4
+shotnow fs2s_on_2b
+wait 10
+shotnow fs2s_on_3a
+cmd tp @s ~0.3 ~ ~ ~0.5 ~
+wait 4
+shotnow fs2s_on_3b
+wait 10
+farsight part steady on
+farsight status
+quit

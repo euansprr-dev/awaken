@@ -311,6 +311,9 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
 - `dev.awaken.terrain.alpine.Erosion` / `AlpineSurface` — Awakened Alpine's erosion and snow-and-rock rule as pure,
   allocation-free maths (§15): `Erosion.erode(x, z, gx, gz, strength, finestCell, out)`, `AlpineSurface.snowLine/snow/
   stone/erosionStrength`. Far Sight predicts and shades with the same numbers; its shaders mirror them.
+- `dev.awaken.city.City.skyline(layout, chunkX, chunkZ, worldSeed, topY[256], top[256])` — the city as planned over one
+  chunk, from the plan alone (any thread): each column's highest placed block and its world y, or none where the city
+  leaves the land; false outside the city. Far Sight's far skyline reads it (§20).
 - `dev.awaken.terrain.city.CityBasinFunction.Shape.ground(natural, x, z)` — the basin's ground height over a column
   whose natural ground stands at `natural` (what the density mode builds), for far terrain.
 - `dev.awaken.hearth.Hearth` — a Hearth's owner and members ("Together"): `record HearthInfo(owner, ownerName, anchor,
@@ -1427,7 +1430,9 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   chunk counts once its surface section and the three below are built) and within the render distance in 3D from the
   camera, as Sodium culls them (a sphere of the render distance). Seen from high up the real sea ends well inside the
   horizontal render distance, and its floor sooner, so far water tests its own floor's distance and stays under a real
-  water surface whose floor is too far to draw. The planner and the windows count as covered only the ground the
+  water surface whose floor is too far to draw. Far water is never hidden under the real chunks unless the camera is
+  under the sea (2026-10-26, Euan's play: sky-coloured slabs on the sea where Sodium skipped a section), and grazing far
+  water takes the horizon's colour only from 1 km out, so near the edge it matches the real water. The planner and the windows count as covered only the ground the
   sphere reaches at a sea floor (40 under sea level) below the camera, in 16-block steps. (2026-10-26: the pale squares
   over the sea after a jump and the pale frame along a flight were these holes, found with `farsight debug 2`, which
   paints masked far terrain red. They were first taken for water walls and for vanilla's chunk fade-in; a Turbo
@@ -1445,7 +1450,9 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   version reached nothing under Sodium and was dropped.
 - **Look** (`farsight_terrain.fsh`; Euan's playtest, 2026-10-25: "it feels like an extension of the world"): far ground
   is drawn in blocks at every distance. Each pixel walks its view ray through columns standing on the mesh's local
-  plane, about a pixel wide (1 block by the real chunks, then 2, 4 .. 64, dithered between widths), tops rounded to
+  plane, at least a pixel and a half wide (1 block by the real chunks, then 2, 4 .. 64; between two widths each
+  world cell of the wider picks one, anchored to the land: 2026-10-26, pixel-wide columns dithered on the screen made far
+  slopes glitter in motion, Euan's play; part "steady" off restores them for measuring), tops rounded to
   whole blocks, and shows the face it meets: the top, or a side facing x or z, shaded as the game shades faces (1, 0.8,
   0.6) under a light matched to Lens 2's on the chunks (`farLight`: a warm key where the sun reaches, Lens's cool shade
   behind ridges, faces turned from the sun shaded only as it lowers). Grass tops stand over dirt risers (the dirt
@@ -1466,6 +1473,11 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   (crown top, two camera-facing crown sides narrowing by shape, two trunk sides): broadleaf, conifer, jungle, acacia.
   One `drawIndexedIndirect` of a command per visible run on Vulkan (multi-draw indirect, public API); a draw per run on
   OpenGL 4.1, which has no multi-draw indirect. A predicted tree steps aside where the real chunks' trees are known.
+  Every tree stands on the far mesh exactly as drawn under it (the tree shader rebuilds the cell's vertices as the
+  terrain's do: real corners where known, eased into the coarser ring, split on the index buffer's diagonals), never at
+  its planting height, and none is planted inside `CityBasin.reserved` (2026-10-26, Euan's play: trees hung over the
+  basin's edge). Test `farsight_trees_basin`. A tree patch's view-culling box reaches the tallest far tree (72 over its highest ground;
+  at 40, a patch whose ground sat just below the frame dropped its treetops: far trees flickered with the camera's pitch).
 - **Air** (`farsight_air.glsl`): aerial perspective from an exponential atmosphere at real scale (1e-4 per block at sea
   level, ×4 in rain; scale height 1500), toward the sun tinted by the sunlight; valley cloud, a patchy slab 40-86 above
   sea level lying among the mountains (a sea of it at dawn, dusk and in rain), sunlit on top, over far ground only; the
@@ -1475,6 +1487,14 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
 - **Lens**: Far Sight reports its depth through `compat.client.FarTerrain.report` and `FarTerrain.selfHazed`; Lens then
   hazes far terrain only as much as the end of the real chunks (flag 8 in params texel 0) and leaves the kilometres past
   them to Far Sight. Lens's light pass doesn't touch far pixels; its clouds composite over far terrain past their layer.
+- **The city** (`FarCity`, 2026-10-26, Euan's play: the ring wall vanished past the render distance): the far store
+  learns real chunks as they load or save while far terrain collects, and `FarCollector` keeps track of every loaded
+  chunk all along, so those loaded before (Carillon's pregeneration holds ~1,700 through the join, never saving them)
+  are taken in when collecting starts, nearest first. City chunks never seen are laid out from the plan
+  (`City.skyline`, top block per column, its map colour) after the real ones, and a real chunk replaces its planned one.
+  Cells the city builds on (real ones above the street + 3, planned ones) carry `FarCity.BUILT` in their colour's top
+  byte, and a far corner over them takes the highest built cell and its colour, not the average, so walls, towers and
+  spires keep their silhouette at any distance. Test `farsight_city`; tour `farsight2-city.txt`.
 - **Landmarks** (`FarLandmarks`): unchanged from stage 1 (gate pillars from `Gates.near` from 1500 blocks, the city's
   towers), drawn after the terrain and trees.
 - **Budgets** (measured): Lens Ultra at sunset on the jagged peaks, 2880×1800 (11% more pixels than 4K at 0.75): Far

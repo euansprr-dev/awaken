@@ -71,6 +71,7 @@ final class FarPipelines {
             .withUniform("TreeSlots", UniformType.TEXEL_BUFFER, GpuFormat.RGBA32_SINT)
             .withUniform("ShadeSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .withUniform("GenHeightSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("HeightSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .withUniform("LightSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .withUniform("ChunkSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .build();

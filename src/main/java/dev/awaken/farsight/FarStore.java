@@ -138,12 +138,15 @@ public final class FarStore {
                 int x = (px * Rings.PATCH + i) * s, z = (pz * Rings.PATCH + j) * s;
                 height[k] = colour[k] = info[k] = crown[k] = 0;
                 if (!sum.reset().over(this, x - s / 2, z - s / 2, s)) continue;
-                float top = (float) sum.top / sum.n;
+                // built cells (the city) keep their highest: a wall or a spire stands out of its corner, never averaged away
+                float top = sum.built > 0 ? Math.max((float) sum.top / sum.n, sum.builtTop) : (float) sum.top / sum.n;
                 int depth = sum.wet * 2 >= sum.n ? Math.clamp(sum.depth / Math.max(1, sum.wet), 1, FarColumns.MAX_DEPTH) : 0;
                 int canopy = sum.trees == 0 ? 0 : sum.canopy / sum.trees;
                 int density = sum.trees * 255 / sum.n;
                 height[k] = FarColumns.packHeight(top);
-                colour[k] = FarColumns.abgr((int) (sum.r / sum.n) << 16 | (int) (sum.g / sum.n) << 8 | (int) (sum.b / sum.n), FarColumns.GENERATED);
+                int rgb = sum.built > 0 && sum.builtTop > (float) sum.top / sum.n ? sum.builtRgb
+                        : (int) (sum.r / sum.n) << 16 | (int) (sum.g / sum.n) << 8 | (int) (sum.b / sum.n);
+                colour[k] = FarColumns.abgr(rgb, FarColumns.GENERATED);
                 // coldness stays the prediction's (the shaders read it from there): the real colours already hold the snow
                 info[k] = FarColumns.abgr(depth, Math.min(255, canopy * 4), density, 0);
                 if (sum.trees > 0) crown[k] = FarColumns.abgr((int) (sum.cr / sum.trees) << 16 | (int) (sum.cg / sum.trees) << 8 | (int) (sum.cb / sum.trees), 255);
@@ -155,14 +158,14 @@ public final class FarStore {
         return lo > hi ? -1 : lo << 16 | hi;
     }
 
-    /** Running sums of the 2-block cells over one corner's area: ground, water by majority, trees, colours. */
+    /** Running sums of the 2-block cells over one corner's area: ground, water by majority, trees, colours; the highest built cell. */
     private static final class Sum {
         long top, r, g, b, cr, cg, cb;
-        int n, wet, depth, trees, canopy;
+        int n, wet, depth, trees, canopy, built, builtTop, builtRgb;
 
         Sum reset() {
             top = r = g = b = cr = cg = cb = 0;
-            n = wet = depth = trees = canopy = 0;
+            n = wet = depth = trees = canopy = built = builtTop = builtRgb = 0;
             return this;
         }
 
@@ -203,6 +206,10 @@ public final class FarStore {
             if (cell == 0) return;
             top += FarChunk.top(cell);
             int rgb = c.colour()[i];
+            if (FarCity.built(rgb) && (built++ == 0 || FarChunk.top(cell) > builtTop)) {
+                builtTop = FarChunk.top(cell);
+                builtRgb = rgb & 0xFFFFFF;
+            }
             r += rgb >> 16 & 255;
             g += rgb >> 8 & 255;
             b += rgb & 255;

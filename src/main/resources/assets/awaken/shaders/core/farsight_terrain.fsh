@@ -154,7 +154,10 @@ void main() {
     // ends well inside the horizontal render distance, and its floor sooner); far water keeps to its own floor's reach,
     // so a real water surface drawn over a floor too far to draw keeps the far sea under it
     vec3 reach = vec3(vRel.x, vRel.y - (water ? depth : 0.0), vRel.z);
-    if (length(reach) < FarDepth.z + FarDepth.w * bayer4(gl_FragCoord.xy)) {
+    // far water stays under the real water too (unless the camera is under the sea): wherever a real section isn't drawn
+    // this frame (Sodium's culling, a chunk still meshing) the sea shows, never the clear colour through a hole
+    bool underReal = !(water && FarFog.z >= FarFog.w);
+    if (underReal && length(reach) < FarDepth.z + FarDepth.w * bayer4(gl_FragCoord.xy)) {
         ivec2 chunk = (FarCamInt.xz >> 4) + ivec2(floor(rel / 16.0));
         if (texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5) {
             // debug view 2: where the mask hides far terrain, red instead (red that shows is a hole the chunks leave)
@@ -167,8 +170,18 @@ void main() {
     float slope = length(g);
     float footprint = max(fwidth(vRel.x), fwidth(vRel.z)); // blocks a pixel spans here
 
-    // the columns: about a pixel wide, a power of two, dithered between widths so no ring of change shows
-    float level = clamp(log2(max(footprint * 1.3, 1.0)) + bayer4(gl_FragCoord.xy) - 0.5, 0.0, 6.0);
+    // the columns: a power of two, at least a block and a half of pixels wide, so each pixel keeps meeting the same face
+    // as the camera moves (narrower, a pixel jumps between a column's lit top and its shaded side: far slopes glitter);
+    // between two widths each world cell of the wider one picks one, anchored to the land, never a screen pattern
+    // that crawls over it. Part "steady" off: the old pixel-wide columns, screen-dithered (to measure the difference).
+    float level;
+    if ((int(FarCam.y) & 32) != 0) {
+        level = clamp(log2(max(footprint * 1.3, 1.0)) + bayer4(gl_FragCoord.xy) - 0.5, 0.0, 6.0);
+    } else {
+        float lf = clamp(log2(max(footprint * 3.0, 1.0)), 0.0, 6.0), base = floor(lf);
+        float pick = farHash(ivec2(floor(rel / exp2(base + 1.0))) * 3 + ivec2(31, 77));
+        level = min(base + (pick < lf - base ? 1.0 : 0.0), 6.0);
+    }
     float w = exp2(floor(level));
     Hit hit;
     hit.ok = false;
@@ -230,7 +243,9 @@ void main() {
     if (water) {
         float facing = abs(normalize(vRel).y);
         light = mix(light, vec3(1.0), 0.4);
-        c = mix(c, FogColor.rgb, pow(1.0 - facing, 5.0) * 0.55);
+        // grazing far water takes the horizon's colour, but only out where it meets the horizon haze: nearer, it must look
+        // like the real water beside it (at dusk the fog colour is the afterglow, red slabs on a blue sea)
+        c = mix(c, FogColor.rgb, pow(1.0 - facing, 5.0) * 0.55 * smoothstep(1000.0, 4000.0, horizontal));
     }
     if (FarCam.w > 0.5 && generated) c = vec3(1.0, 0.0, 1.0);
     c *= light * texture(LightSampler, vec2(0.5 / 16.0, 15.5 / 16.0)).rgb;

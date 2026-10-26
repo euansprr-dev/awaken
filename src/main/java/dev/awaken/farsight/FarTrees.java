@@ -1,6 +1,7 @@
 package dev.awaken.farsight;
 
 import dev.awaken.terrain.alpine.AlpineSurface;
+import dev.awaken.terrain.api.CityBasin;
 import dev.awaken.terrain.alpine.Erosion;
 
 /**
@@ -33,7 +34,8 @@ public final class FarTrees {
      * Plants the patch's trees into {@code out} ({@link #INTS} ints each) and returns how many:
      * <ol>
      *   <li>x and z in the patch, 1/16 block, 16 bits each;</li>
-     *   <li>the ground under it (a height texel), the canopy's height × 4 (8 bits), the shape (2 bits), a seed (6 bits);</li>
+     *   <li>the ground under it at planting (a height texel; the shader stands the tree on the mesh as drawn), the
+     *       canopy's height × 4 (8 bits), the shape (2 bits), a seed (6 bits);</li>
      *   <li>the crown's colour (RGB) and its width × 8 (8 bits);</li>
      *   <li>unused.</li>
      * </ol>
@@ -71,6 +73,8 @@ public final class FarTrees {
                     if (Erosion.unit(hash * 0x297A2D39) >= density * 0.72f) continue;
                     float ground = h00 * (1 - u) * (1 - v) + h10 * u * (1 - v) + h01 * (1 - u) * v + h11 * u * v;
                     float wx = wx0 + u * s, wz = wz0 + v * s;
+                    // the city's reserve is paved and swept of trees: none stands there far off either
+                    if (CityBasin.reserved((int) Math.floor(wx), (int) Math.floor(wz))) continue;
                     // the treeline, as the chunks' own trees keep it (Awakened Alpine's awaken:treeline)
                     if ((flags & FarColumns.ALPINE) != 0 && !AlpineSurface.treeAllowed(wx, ground, wz, gx, gz)) continue;
                     int at = n * INTS;
