@@ -68,36 +68,45 @@ int main(int argc, const char *argv[]) {
             return 1;
         }
         CGVirtualDisplaySettings *settings = [[NSClassFromString(@"CGVirtualDisplaySettings") alloc] init];
-        settings.hiDPI = 1; // each mode also offered at half its size in points, two pixels a point
-        settings.modes = @[[[NSClassFromString(@"CGVirtualDisplayMode") alloc] initWithWidth:2 * w height:2 * h refreshRate:60]];
+        settings.hiDPI = 1; // modes at two pixels a point, within maxPixels (the point size listed, and the pixel size)
+        Class modeClass = NSClassFromString(@"CGVirtualDisplayMode");
+        settings.modes = @[[[modeClass alloc] initWithWidth:w height:h refreshRate:60],
+                           [[modeClass alloc] initWithWidth:2 * w height:2 * h refreshRate:60]];
         if (![display applySettings:settings]) {
             fprintf(stderr, "the display's modes were refused\n");
             return 1;
         }
-        CGDirectDisplayID id = display.displayID, old = CGMainDisplayID();
+        CGDirectDisplayID vd = display.displayID, old = CGMainDisplayID();
         CGDisplayModeRef mode = NULL;
         for (int i = 0; i < 50 && mode == NULL; i++) { // the window server takes a moment to list the new display
             [NSThread sleepForTimeInterval:0.1];
-            mode = retinaMode(id, w, h);
+            mode = retinaMode(vd, w, h);
         }
         if (mode == NULL) {
-            fprintf(stderr, "display %u has no %ux%u mode at 2x\n", id, w, h);
+            fprintf(stderr, "display %u has no %ux%u mode at 2x; it has:", vd, w, h);
+            NSDictionary *options = @{(__bridge NSString *)kCGDisplayShowDuplicateLowResolutionModes: @YES};
+            for (id m in CFBridgingRelease(CGDisplayCopyAllDisplayModes(vd, (__bridge CFDictionaryRef)options))) {
+                CGDisplayModeRef dm = (__bridge CGDisplayModeRef)m;
+                fprintf(stderr, " %zux%zu/%zux%zu", CGDisplayModeGetWidth(dm), CGDisplayModeGetHeight(dm),
+                        CGDisplayModeGetPixelWidth(dm), CGDisplayModeGetPixelHeight(dm));
+            }
+            fprintf(stderr, "\n");
             return 1;
         }
         // the main display is the one at the origin: the virtual one there, the runner's own beside it
         CGDisplayConfigRef config;
         CGBeginDisplayConfiguration(&config);
-        CGConfigureDisplayWithDisplayMode(config, id, mode, NULL);
-        CGConfigureDisplayOrigin(config, id, 0, 0);
-        if (old != id) CGConfigureDisplayOrigin(config, old, (int32_t) w, 0);
+        CGConfigureDisplayWithDisplayMode(config, vd, mode, NULL);
+        CGConfigureDisplayOrigin(config, vd, 0, 0);
+        if (old != vd) CGConfigureDisplayOrigin(config, old, (int32_t) w, 0);
         CGError err = CGCompleteDisplayConfiguration(config, kCGConfigureForSession);
         CGDisplayModeRelease(mode);
-        if (err != kCGErrorSuccess || CGMainDisplayID() != id) {
-            fprintf(stderr, "could not make display %u the main one (error %d)\n", id, err);
+        if (err != kCGErrorSuccess || CGMainDisplayID() != vd) {
+            fprintf(stderr, "could not make display %u the main one (error %d)\n", vd, err);
             return 1;
         }
-        CGDisplayModeRef now = CGDisplayCopyDisplayMode(id);
-        printf("main %u %zux%zu pt = %zux%zu px\n", id, CGDisplayModeGetWidth(now), CGDisplayModeGetHeight(now),
+        CGDisplayModeRef now = CGDisplayCopyDisplayMode(vd);
+        printf("main %u %zux%zu pt = %zux%zu px\n", vd, CGDisplayModeGetWidth(now), CGDisplayModeGetHeight(now),
                CGDisplayModeGetPixelWidth(now), CGDisplayModeGetPixelHeight(now));
         fflush(stdout);
         CGDisplayModeRelease(now);
