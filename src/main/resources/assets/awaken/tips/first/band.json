@@ -1,5 +1,5 @@
 {
-  "text": "{key.awaken.status} opens your band: what you hold, what waits for you, and the way up.",
+  "text": "Press {key.awaken.status} to open your band. It shows your stats, what you're working toward, and how to rank up.",
   "short": "{key.awaken.status}: your band",
   "priority": 55,
   "show_for": 180,

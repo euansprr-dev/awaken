@@ -88,7 +88,7 @@ final class CoreSections {
             head.end();
 
             if (!p.awakened()) {
-                ui.text("You have not awakened. Something in the world is waiting for you to notice it.", Glass.LABEL);
+                ui.text("You haven't awakened yet. Keep exploring: something out there is waiting for you to find it.", Glass.LABEL);
                 return;
             }
             double need = Curve.xpToNext(p.level());

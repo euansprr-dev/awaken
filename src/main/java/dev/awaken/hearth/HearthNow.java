@@ -40,7 +40,7 @@ public final class HearthNow {
         if (home.isEmpty()) {
             // the carried flame: under a tracked chain's step (~68), over bookkeeping
             if (holds(p, HearthContent.EMBER_ITEM.get())) {
-                out.add(NowHooks.Suggestion.of("hearth:ember", 66, "Set your Ember where you'd live"));
+                out.add(NowHooks.Suggestion.of("hearth:ember", 66, "Place your Ember where you want your home"));
             } else if (holds(p, HearthContent.HEARTH_ANCHOR_ITEM.get())) {
                 out.add(NowHooks.Suggestion.of("hearth:place", 72, "Place your Hearth Anchor where you want your home"));
             } else if (holds(p, CoreApi.LORD_HEART.get())) {

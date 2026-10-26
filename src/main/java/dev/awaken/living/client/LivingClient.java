@@ -86,10 +86,13 @@ public final class LivingClient {
             e.register(LivingNet.Journal.TYPE, (m, ctx) -> JournalSection.entries = List.copyOf(m.entries()));
             e.register(LivingNet.Tells.TYPE, (m, ctx) -> TELLS = List.copyOf(m.at()));
             e.register(LivingNet.CampSmoke.TYPE, (m, ctx) -> PulseFx.camp(m.at()));
+            e.register(LivingNet.FirstScene.TYPE, (m, ctx) -> FirstFilm.onScene(m));
             e.register(LivingNet.Happenings.TYPE, (m, ctx) -> PulseFx.onTells(m));
         });
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
+        bus.addListener(ClientTickEvent.Post.class, e -> FirstFilm.tick());
+        FirstFilm.init();
         bus.addListener(SubmitCustomGeometryEvent.class, LivingFx::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, PulseFx::submit);
         bus.addListener(SubmitCustomGeometryEvent.class, CraftFx::submit);

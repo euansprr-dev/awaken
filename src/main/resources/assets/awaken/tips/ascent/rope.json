@@ -1,5 +1,5 @@
 {
-  "text": "Hold {key.awaken.movement} looking at a ring or a ledge above: the rope bites. {key.forward} pumps the swing; let go to fly free. Straight overhead it pulls you up and over the lip.",
+  "text": "Hold {key.awaken.movement} while looking at a ring or a ledge above you to throw your rope. Press {key.forward} to swing, and let go to fly off. If the ring is right above you, the rope pulls you up and over the edge.",
   "short": "{key.awaken.movement} at a ring above",
   "priority": 70,
   "show_for": 200,

@@ -34,7 +34,7 @@ final class LivingTests {
         dev.awaken.living.population.LedgerTests.register();
         dev.awaken.living.camp.CampTests.register();
         dev.awaken.living.craft.CraftTests.register();
-        // SPEC §27.6: registration starts Kestrel's errand, tracked and on the Now line over bookkeeping; the Registry's
+        // SPEC §27.6: registration starts Bram's errand (his letters for Ilse), tracked and on the Now line over bookkeeping; the Registry's
         // Directive is the first floor, already taken on, with its progress on the line; no gate forms before level 3
         // the Now line's order (SPEC §27.6): a tracked chain's step, then a taken Directive, then points, then the road
         AwakenTests.register("progression_now_priorities", 100, h -> {
@@ -70,11 +70,13 @@ final class LivingTests {
                 h.assertTrue(chain != null, "The Last Delivery is in the quest book");
                 dev.awaken.core.api.OpeningHooks.fireRegistered(p);
                 var qs = dev.awaken.living.quest.QuestEngine.state(p);
-                h.assertTrue(qs.has(chain) && qs.tracked().equals(chain), "registered: Kestrel's errand starts by itself, tracked");
+                h.assertTrue(qs.has(chain) && qs.tracked().equals(chain), "registered: Bram's errand starts by itself, tracked");
+                var letters = new net.minecraft.world.item.ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(FirstScenes.LETTERS));
+                h.assertTrue(p.getInventory().contains(letters), "his letters for Ilse in the pack (handed over at the Registry, or now if it was skipped)");
                 dev.awaken.core.api.OpeningHooks.fireRegistered(p);
                 h.assertTrue(qs.active().size() == 1, "and only once");
                 var now = FirstThread.now(p);
-                h.assertTrue(now.size() == 1 && now.getFirst().priority() > 55 && now.getFirst().text().getString().startsWith("Tell Kestrel"),
+                h.assertTrue(now.size() == 1 && now.getFirst().priority() > 55 && now.getFirst().text().getString().startsWith("Take the letters"),
                         "its step is on the Now line, over points to spend: " + now);
                 dev.awaken.progression.Directives.tryOffer(p, "opening");
                 var d = dev.awaken.progression.Progression.profile(p).directives();
@@ -88,6 +90,88 @@ final class LivingTests {
                 h.getLevel().getServer().getPlayerList().remove(p);
             }
             h.succeed();
+        });
+        AwakenTests.register("progression_first_scenes", 100, h -> {
+            var server = h.getLevel().getServer();
+            net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+            dev.awaken.living.wayfarer.Wayfarer ilse = LivingContent.WAYFARER.get().create(h.getLevel(), net.minecraft.world.entity.EntitySpawnReason.EVENT);
+            dev.awaken.progression.Progression.awaken(p);
+            dev.awaken.progression.Progression.count(p, "awaken:carillon_registered");
+            String chain = FirstThread.chainId();
+            h.assertTrue(chain != null && ilse != null, "The Last Delivery is in the quest book");
+            var d = dev.awaken.living.quest.QuestBook.get(chain);
+            var gate = d.steps().stream().filter(s -> s.id().equals("gate")).findFirst().orElseThrow();
+            // out through the High Gate: the shot of the camp's smoke says Hale's line, once
+            h.assertTrue(FirstScenes.stage(p, chain, gate) && FirstScenes.shielded(p), "the High Gate's shot goes, and nothing hurts you under it");
+            h.assertFalse(FirstScenes.stage(p, chain, gate), "only the first time out");
+            // the letters, counted on the Now line, the compass on Ilse
+            h.assertTrue(dev.awaken.living.quest.QuestEngine.devStep(p, chain, "ilse"), "the errand at Ilse's step");
+            var now = FirstThread.now(p);
+            h.assertTrue(now.size() == 1 && now.getFirst().text().getString().equals("Deliver the letters · 0/1"), "the step counted: " + now);
+            ilse.snapTo(p.getX() + 2, p.getY(), p.getZ(), 90, 0);
+            ilse.become("ilse", ilse.blockPosition(), 2, 0);
+            h.getLevel().addFreshEntity(ilse);
+            var letters = new net.minecraft.world.item.ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(FirstScenes.LETTERS));
+            p.getInventory().add(letters.copy());
+            FirstScenes.begin(p, ilse);
+            h.assertTrue(FirstScenes.shielded(p), "her scene holds you: nothing hunts you by the fire");
+            FirstScenes.ready(p, LivingNet.FirstSceneReady.SKIP);
+            h.runAfterDelay(4, () -> {
+                var ember = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(FirstScenes.EMBER);
+                try {
+                    h.assertTrue(ilse.getMainHandItem().is(ember), "a held skip: she holds the coal out, in her hand");
+                    h.assertFalse(p.getInventory().contains(letters), "the letters went from your pack into her hands");
+                    FirstScenes.ready(p, LivingNet.FirstSceneReady.TOOK);
+                    var qs = dev.awaken.living.quest.QuestEngine.state(p);
+                    var a = qs.active().stream().filter(x -> x.chain().equals(chain)).findFirst().orElseThrow();
+                    h.assertTrue(d.steps().get(a.step()).id().equals("ember"), "your hand closed on it: the next step is your own fire's");
+                    h.assertTrue(p.getInventory().contains(new net.minecraft.world.item.ItemStack(ember)), "the coal is yours (the Ember)");
+                    h.assertTrue(ilse.getMainHandItem().isEmpty(), "her hand is empty again");
+                    h.assertTrue(FirstThread.now(p).isEmpty(), "the thread lets go at the Ember: the Hearth's line takes it from there");
+                } finally {
+                    ilse.discard();
+                    server.getPlayerList().remove(p);
+                }
+                h.succeed();
+            });
+        });
+        // SPEC §27.10: the current task, top right: Your body remembers ticks move by move, then the tracked errand
+        AwakenTests.register("progression_checklist", 300, h -> {
+            net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+            boolean handedOn = false;
+            try {
+                dev.awaken.progression.Progression.awaken(p);
+                dev.awaken.progression.Progression.count(p, "awaken:carillon_registered");
+                var c = dev.awaken.progression.Checklist.now(p);
+                h.assertTrue(c != null && c.title().equals("Your body remembers") && c.rows().size() == 4
+                        && c.rows().stream().noneMatch(dev.awaken.progression.Checklist.Row::done), "first, the four moves, none done: " + c);
+                h.assertTrue(c.rows().get(1).key().equals("key.sprint") && c.rows().get(1).text().contains("{key}"), "each with its key, drawn as a key");
+                dev.awaken.progression.Progression.count(p, "awaken:body_roll");
+                c = dev.awaken.progression.Checklist.now(p);
+                h.assertTrue(c.rows().get(0).done() && !c.rows().get(1).done(), "a roll ticks the first");
+                for (String m : new String[]{"awaken:body_sprint", "awaken:body_slide", "awaken:body_mantle"}) dev.awaken.progression.Progression.count(p, m);
+                c = dev.awaken.progression.Checklist.now(p);
+                h.assertTrue(c != null && c.rows().stream().allMatch(dev.awaken.progression.Checklist.Row::done), "all four ticked, shown for a moment");
+                h.assertTrue(dev.awaken.progression.Progression.profile(p).counter(dev.awaken.progression.Checklist.MOVES_DONE) > 0, "and remembered as done");
+                dev.awaken.core.api.OpeningHooks.fireRegistered(p);
+                // its moment over (the real hold, not a faked clock: a young test server's "a minute ago" is before zero),
+                // the errand takes the panel: its title, its steps, the letters counted
+                h.runAfterDelay(dev.awaken.progression.Checklist.DONE_HOLD + 4, () -> {
+                    try {
+                        var t = dev.awaken.progression.Checklist.now(p);
+                        var d = dev.awaken.living.quest.QuestBook.get(FirstThread.chainId());
+                        h.assertTrue(t != null && t.title().equals(d.title()) && t.rows().getFirst().text().startsWith("Take the letters"),
+                                "then the errand you're on: " + t);
+                        h.assertTrue(t.rows().stream().anyMatch(r -> r.text().equals("Deliver the letters") && r.need() == 1), "a step with a count shows it");
+                    } finally {
+                        h.getLevel().getServer().getPlayerList().remove(p);
+                    }
+                    h.succeed();
+                });
+                handedOn = true;
+            } finally {
+                if (!handedOn) h.getLevel().getServer().getPlayerList().remove(p);
+            }
         });
         AwakenTests.register("living_region_map", 200, h -> {
             RegionMap.Probe plain = (x, z) -> RegionMap.Land.PLAIN;

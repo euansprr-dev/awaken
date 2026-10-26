@@ -11,12 +11,13 @@ import java.util.Optional;
 /**
  * A Wayfarer chain (SPEC §21, PLAN §2.2), from {@code data/<ns>/awaken/quest/<chain>.json}, schema 1. Lines are authored
  * (no language model), keyed so a step can say them when it starts and when it's done. A step whose {@code needs} the
- * player lacks (an Ascent tier, a flag) waits and says so.
+ * player lacks (an Ascent tier, a flag) waits and says so. {@code tally} shows a step's count even when it's one
+ * ("Deliver the letters · 0/1"); {@code night} says why a step needs the dark (a bedroll won't sleep it away).
  */
 public record QuestDef(int schemaVersion, String title, int band, List<String> requires, String scene, String giver,
                        List<Step> steps, Optional<String> relic, Reward finish, String summary, List<String> ask) {
 
-    /** What a step asks: talk to a Wayfarer, reach the scene, kill, collect, deliver, use an ability, discover. */
+    /** What a step asks: talk to a Wayfarer, reach the scene, kill, collect, deliver, use an ability, discover, a Hearth of your own. */
     public record Objective(String type, String target, int count, double radius) {
         public static final Codec<Objective> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.fieldOf("type").forGetter(Objective::type),
@@ -36,7 +37,8 @@ public record QuestDef(int schemaVersion, String title, int band, List<String> r
     }
 
     public record Step(String id, Objective objective, String text, List<String> start, List<String> done,
-                       Reward reward, Optional<String> needs, String needsText, Optional<Spawn> spawn, Optional<String> move) {
+                       Reward reward, Optional<String> needs, String needsText, Optional<Spawn> spawn, Optional<String> move,
+                       boolean tally, Optional<String> night) {
         public static final Codec<Step> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.fieldOf("id").forGetter(Step::id),
                 Objective.CODEC.fieldOf("objective").forGetter(Step::objective),
@@ -47,7 +49,9 @@ public record QuestDef(int schemaVersion, String title, int band, List<String> r
                 Codec.STRING.optionalFieldOf("needs").forGetter(Step::needs),
                 Codec.STRING.optionalFieldOf("needs_text", "").forGetter(Step::needsText),
                 Spawn.CODEC.optionalFieldOf("spawn").forGetter(Step::spawn),
-                Codec.STRING.optionalFieldOf("move").forGetter(Step::move)
+                Codec.STRING.optionalFieldOf("move").forGetter(Step::move),
+                Codec.BOOL.optionalFieldOf("tally", false).forGetter(Step::tally),
+                Codec.STRING.optionalFieldOf("night").forGetter(Step::night)
         ).apply(i, Step::new));
     }
 
@@ -66,7 +70,7 @@ public record QuestDef(int schemaVersion, String title, int band, List<String> r
     ).apply(i, QuestDef::new));
 
     /** Objective types the engine knows. */
-    public static final List<String> TYPES = List.of("talk", "reach", "kill", "collect", "deliver", "use", "discover");
+    public static final List<String> TYPES = List.of("talk", "reach", "kill", "collect", "deliver", "use", "discover", "hearth");
 
     public static Map<String, String> problems(String id, QuestDef d) {
         var out = new java.util.LinkedHashMap<String, String>();

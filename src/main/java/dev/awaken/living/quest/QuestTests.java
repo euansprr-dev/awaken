@@ -34,7 +34,7 @@ public final class QuestTests {
 
     private static QuestDef.Step step(String id, String type, String target, int count, double reward, Optional<String> needs) {
         return new QuestDef.Step(id, new QuestDef.Objective(type, target, count, 4.0), id, List.of(), List.of(), levels(reward),
-                needs, "", Optional.empty(), Optional.empty());
+                needs, "", Optional.empty(), Optional.empty(), false, Optional.empty());
     }
 
     public static void register() {

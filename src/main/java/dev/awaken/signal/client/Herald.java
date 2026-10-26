@@ -147,6 +147,10 @@ public final class Herald {
         for (Pace.Out<Item> o : out) {
             if (o.act() == Pace.Act.FILE) {
                 for (Item i : o.items()) {
+                    if (i.window() != null && i.window().fleeting()) {
+                        log("drop", o.tier(), "", i.title()); // its moment passed: not news, and not for the Journal
+                        continue;
+                    }
                     Journal.add(i.title(), i.detail(), i.colour(), o.tier());
                     filed.add(i);
                     log("file", o.tier(), "", i.title());

@@ -67,13 +67,15 @@ final class HomeTests {
                 h.assertTrue(Embers.give(sp) && Embers.carries(sp), "an Ember is given");
                 h.assertFalse(Embers.give(sp), "only one Ember a player");
                 // refused on thin air, with a plain reason
-                h.assertTrue(Embers.refusal(sp, level, ground.above(3), ground.above(4)).orElse("").contains("firm"), "not on air");
+                h.assertTrue(Embers.refusal(sp, level, ground.above(3), ground.above(4)).orElse("").contains("solid"), "not on air");
                 // set down: a Tier 0 Hearthfire, radius 24, named from the land's words
                 clearEmbers(sp);
                 sp.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(HearthContent.EMBER_ITEM.get()));
+                String refused = Embers.refusal(sp, level, ground, at).orElse("");
                 Embers.setDown(sp, level, ground, InteractionHand.MAIN_HAND);
                 HearthRecord fire = data.of(sp.getUUID()).orElse(null);
-                h.assertTrue(fire != null && fire.hearthfire() && fire.radius() == HearthRecord.HEARTHFIRE_RADIUS, "a Tier 0 Hearth, radius 24");
+                h.assertTrue(fire != null && fire.hearthfire() && fire.radius() == HearthRecord.HEARTHFIRE_RADIUS,
+                        "a Tier 0 Hearth, radius 24" + (refused.isEmpty() ? "" : " (refused: " + refused + ")"));
                 h.assertTrue(level.getBlockState(at).is(HearthContent.HEARTHFIRE.get()), "the ring of stones stands");
                 h.assertFalse(Embers.carries(sp), "the coal went into the ring");
                 h.assertFalse(fire.name.isBlank(), "a name is offered from the land's words");

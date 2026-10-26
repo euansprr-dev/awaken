@@ -25,7 +25,7 @@ import java.util.List;
 final class WaitingSection extends UiSection {
     static final int SHOWN = 8;
 
-    public String title() { return "WHAT WAITS"; }
+    public String title() { return "SAVED FOR LATER"; }
 
     public int order() { return 5; } // right under the spine and its next-rank line: the long goals
 
@@ -82,7 +82,7 @@ final class WaitingSection extends UiSection {
         List<MapMarks.Mark> out = new ArrayList<>();
         for (PromiseBook.Entry e : b.entries()) {
             if (e.where().isEmpty() || !e.dim().equals(dim)) continue;
-            String label = e.what() + (e.answered() ? " · ready" : " · " + e.need().words());
+            String label = e.what() + (e.answered() ? " · ready now" : " · needs " + e.need().words());
             out.add(new MapMarks.Mark(e.where().get(), e.answered() ? Glass.GOOD : colour(e.need()), label, false));
         }
         return out;
