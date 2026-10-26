@@ -41,7 +41,7 @@ final class OpeningRegistry {
     static final int WALK = 0, READ = 1, SIGN = 2, BAND = 3, WEAR = 4, BOOT = 5, BRIEF = 6, OPEN = 7, STATUS = 8, ATLAS = 9,
             POWER = 10, DIRECTIVE = 11, YOURS = 12;
     /** How long each clocked step plays, and the most a screen or a scene waits. */
-    static final int READ_TICKS = 110, BRIEF_TICKS = 20 * 14, SCREEN_MAX = 20 * 75, DIRECTIVE_TICKS = 150, YOURS_TICKS = 150,
+    static final int READ_TICKS = 110, BRIEF_TICKS = 20 * 19, SCREEN_MAX = 20 * 75, DIRECTIVE_TICKS = 150, YOURS_TICKS = 150,
             SCENE_MAX = 20 * 20, BOOT_MAX = 20 * 12;
     /** Close enough to the Lens to be read; to the desk to sign; to Bram to take the band. */
     static final double MARK = 2.2, DESK = 2.0, HAND = 3.4;
@@ -140,6 +140,8 @@ final class OpeningRegistry {
                 if (age == 10) say(p, at, w, "It keeps track of you. What you can do, what you've done, what you're owed.");
                 if (age == 100) say(p, at, w, "You get better at what you use. Run, and you run better. Fight, and you hit harder.");
                 if (age == 190) say(p, at, w, "Gates are how hunters grow. Go in, clear it, come out heavier. Clear enough and the Lens moves you up.");
+                // where new hunters go first: Ilse's camp, whose Ember founds a Hearth (SPEC §28, W1)
+                if (age == 285) say(p, at, w, "The bells hold the city. Hunters hold the wilds. Ilse at the camp keeps a fire for new licences.");
                 if (age >= BRIEF_TICKS) step(p, OPEN);
             }
             case OPEN -> {
