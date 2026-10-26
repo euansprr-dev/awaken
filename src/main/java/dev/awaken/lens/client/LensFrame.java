@@ -138,6 +138,11 @@ final class LensFrame {
         frame = (frame + 1) & 0xFFFF;
     }
 
+    /** This frame's texels into {@code dst} at byte {@code at} (LensBlock). */
+    void copyTo(ByteBuffer dst, int at) {
+        MemoryUtil.memCopy(MemoryUtil.memAddress(data), MemoryUtil.memAddress(dst) + at, (long) WIDTH * 16);
+    }
+
     private static double floorMod(double v, double m) {
         return v - Math.floor(v / m) * m;
     }

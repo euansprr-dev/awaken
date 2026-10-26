@@ -1,0 +1,12 @@
+{
+  "required": false,
+  "package": "dev.awaken.turbo.tiles.mixin",
+  "client": [
+    "PostChainMixin",
+    "PostPassMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  },
+  "minVersion": "0.8"
+}

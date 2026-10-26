@@ -19,7 +19,9 @@ layout(std140) uniform SamplerInfo {
 
 layout(location = 0) out vec4 fragColor;
 
-vec4 P(int i) { return texelFetch(ParamsSampler, ivec2(i, 0), 0); }
+#include <awaken:lens_block.glsl>
+
+vec4 P(int i) { return LensUse.x > 0.5 ? LensP[i] : texelFetch(ParamsSampler, ivec2(i, 0), 0); }
 
 float unpack16(vec2 v) { return (v.x * 255.0 * 256.0 + v.y * 255.0) / 65535.0; }
 

@@ -42,7 +42,7 @@ layout(std140) uniform LensConfig {
 
 layout(location = 0) out vec4 fragColor;
 
-vec4 P(int i) { return texelFetch(ParamsSampler, ivec2(i, 0), 0); }
+vec4 P(int i) { return LensUse.x > 0.5 ? LensP[i] : texelFetch(ParamsSampler, ivec2(i, 0), 0); }
 
 // the heightfield, from the surface toward the light: 0 under solid blocks, dimmed through leaves
 float sunVisibility(vec3 p, vec3 n, vec3 l, float noise, bool ultra) {
