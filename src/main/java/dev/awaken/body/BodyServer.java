@@ -76,7 +76,7 @@ final class BodyServer {
     /** No move starts (and a running one ends) while riding, sleeping, out of the body, meditating, flying or gliding. */
     static boolean off(ServerPlayer p) {
         return p.isPassenger() || p.isSleeping() || p.isSpectator() || !p.isAlive() || p.getAbilities().flying || p.isFallFlying()
-                || Veil.isSpirit(p) || Veil.isMeditating(p);
+                || Veil.isSpirit(p) || Veil.isMeditating(p) || p.isVehicle(); // (SPEC §28.7) someone on your back: no moves
     }
 
     // ---- payloads ---------------------------------------------------------------------------------------------------

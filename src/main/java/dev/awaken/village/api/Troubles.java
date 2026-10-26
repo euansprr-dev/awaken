@@ -1,5 +1,7 @@
 package dev.awaken.village.api;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import org.jspecify.annotations.Nullable;
 
@@ -28,6 +30,14 @@ public final class Troubles {
         List<Rescued> rescued(ServerPlayer player);
 
         void settle(ServerPlayer player, Rescued who, String hearthName);
+
+        default boolean raidComing(ServerLevel level, String village, int camp, String campName, int tier, long raidDay) {
+            return false;
+        }
+
+        default boolean lairSealed(ServerLevel level, BlockPos den) {
+            return false;
+        }
     }
 
     private static @Nullable Access access;
@@ -47,5 +57,19 @@ public final class Troubles {
      */
     public static void settle(ServerPlayer player, Rescued who, String hearthName) {
         if (access != null) access.settle(player, who, hearthName);
+    }
+
+    /**
+     * Living Wilds' camps (§21.8): a camp grown to raid has a village nearer than any Hearth. True when the village takes
+     * it as its Burning (its ladder of warnings, the raid on {@code raidDay}'s night run by the village); false (a calm
+     * world, a village already in trouble) and the camp raids as it always did.
+     */
+    public static boolean raidComing(ServerLevel level, String village, int camp, String campName, int tier, long raidDay) {
+        return access != null && access.raidComing(level, village, camp, campName, tier, raidDay);
+    }
+
+    /** Fauna's lairs: a lair a village's Taken ended in is cleared for good (its beast never comes back). */
+    public static boolean lairSealed(ServerLevel level, BlockPos den) {
+        return access != null && access.lairSealed(level, den);
     }
 }

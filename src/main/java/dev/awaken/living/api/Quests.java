@@ -50,4 +50,35 @@ public final class Quests {
     public static String tracked(Player player) {
         return player.getData(dev.awaken.living.LivingContent.QUESTS.get()).tracked();
     }
+
+    /**
+     * (SPEC §28.7) One more row of the Journal from another module: a village's trouble you said Help to, or what a
+     * village remembers of you. {@code tracked} rows lead, as a tracked chain does.
+     */
+    public record JournalRow(String title, String line, boolean tracked) {}
+
+    private static final List<java.util.function.Function<ServerPlayer, List<JournalRow>>> JOURNAL = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    /** Another module's rows in the one Journal (never a second Journal): asked each time the Journal is sent. */
+    public static void addJournal(java.util.function.Function<ServerPlayer, List<JournalRow>> source) {
+        JOURNAL.add(source);
+    }
+
+    /** Every other module's rows for a player (the Journal's sender reads them). */
+    public static List<JournalRow> journalRows(ServerPlayer player) {
+        List<JournalRow> out = new java.util.ArrayList<>();
+        for (var s : JOURNAL) {
+            try {
+                out.addAll(s.apply(player));
+            } catch (RuntimeException e) {
+                dev.awaken.Awaken.LOG.warn("[living] a Journal source failed: {}", e.toString());
+            }
+        }
+        return out;
+    }
+
+    /** Something another module keeps in the Journal changed: send the player's Journal again. */
+    public static void journalChanged(ServerPlayer player) {
+        QuestEngine.journal(player);
+    }
 }

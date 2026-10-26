@@ -149,6 +149,7 @@ public final class Lairs {
     static @Nullable String wake(ServerLevel level, LairRegistry reg, LairRegistry.Entry e, ServerPlayer p, boolean commit) {
         if (!FaunaModule.spawningOn(level)) return "game rule awaken:fauna_spawning is off";
         if (level.getDifficulty() == Difficulty.PEACEFUL) return "peaceful";
+        if (dev.awaken.village.api.Troubles.lairSealed(level, e.den())) return "a village's Taken cleared it for good"; // SPEC §28.7
         if (home(level, e)) return "its beast is home";
         if (e.felledAt() > 0 && level.getGameTime() - e.felledAt() < RESPAWN) return "its beast fell; the lair is quiet";
         if (!level.isPositionEntityTicking(e.den())) return "the den isn't loaded";

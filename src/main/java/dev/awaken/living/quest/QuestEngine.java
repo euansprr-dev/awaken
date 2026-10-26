@@ -56,6 +56,13 @@ public final class QuestEngine {
             String count = d.objective().type().equals("collect") ? "" : " (" + Math.min(t.progress(), d.objective().count()) + "/" + d.objective().count() + ")";
             out.add(new dev.awaken.living.LivingNet.JournalEntry(d.title(), dev.awaken.living.bounty.Bounties.task(d) + count, false, true));
         }
+        // (SPEC §28.7) other modules' rows: a village's trouble you took, what a village remembers of you
+        for (var row : dev.awaken.living.api.Quests.journalRows(p)) {
+            var e = new dev.awaken.living.LivingNet.JournalEntry(row.title(), row.line(), row.tracked(), false);
+            if (row.tracked()) out.addFirst(e);
+            else out.add(e);
+        }
+        while (out.size() > 16) out.removeLast(); // the payload's list holds sixteen
         dev.awaken.core.AwakenNet.send(p, new dev.awaken.living.LivingNet.Journal(out));
     }
 

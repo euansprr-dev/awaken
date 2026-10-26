@@ -51,6 +51,7 @@ final class VillageCommands {
                 .then(Commands.literal("standing").then(Commands.argument("points", com.mojang.brigadier.arguments.IntegerArgumentType.integer(-50, 200))
                         .executes(c -> standing(c.getSource(), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "points")))))
                 .then(Commands.literal("start").executes(c -> start(c.getSource())))
+                .then(dev.awaken.village.trouble.TroubleCommands.node())
                 .then(Commands.literal("view").then(Commands.argument("key", StringArgumentType.word())
                         .then(Commands.argument("name", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(VIEWS, b))
                                 .executes(c -> view(c.getSource(), StringArgumentType.getString(c, "key"), StringArgumentType.getString(c, "name"))))))));
