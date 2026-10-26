@@ -30,7 +30,7 @@ public final class MapScene {
     private static int side = 1;
     private static boolean high;
     private static float shotYaw;
-    // your eyes when the scene opened (x, y, z, yaw, pitch), where the camera goes back to
+    // your eyes when the scene opened (x, y, z, yaw, pitch): the camera holds there if the player goes mid-frame
     private static final double[] EYES = new double[5], SHOT = new double[5], TMP = new double[5];
     /** Ms since the scene opened, when input is live (SPEC §30.5). */
     static final float LIVE_MS = 250f;
@@ -223,9 +223,10 @@ public final class MapScene {
         double x = net.minecraft.util.Mth.lerp(pt, p.xo, p.getX()), y = net.minecraft.util.Mth.lerp(pt, p.yo, p.getY()),
                 z = net.minecraft.util.Mth.lerp(pt, p.zo, p.getZ());
         MapShot.pose(x, y, z, shotYaw, side, high, SHOT);
-        TMP[0] = x + (EYES[0] - p.getX());
+        // your eyes as they are now (you may have stepped while it folded away)
+        TMP[0] = x;
         TMP[1] = y + p.getEyeHeight();
-        TMP[2] = z + (EYES[2] - p.getZ());
+        TMP[2] = z;
         // your own view (the same as when it opened, unless you turned while it folded away)
         TMP[3] = net.minecraft.util.Mth.rotLerp(pt, p.yRotO, p.getYRot());
         TMP[4] = net.minecraft.util.Mth.lerp(pt, p.xRotO, p.getXRot());
