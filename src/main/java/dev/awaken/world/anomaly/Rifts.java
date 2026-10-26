@@ -94,8 +94,8 @@ final class Rifts {
         int group = first ? 2 : 2 + (night ? 1 : 0) + (rank.ordinal() >= Rank.C.ordinal() ? 1 : 0);
         spill(level, a, group, owner, MobRole.Role.NORMAL);
         BlockPos core = a.focus();
-        level.playSound(null, core.getX() + 0.5, core.getY() + 1.0, core.getZ() + 0.5, AnomalyContent.RIFT_OPEN.get(), SoundSource.HOSTILE, 3.0F, 0.8F);
-        level.sendParticles(ParticleTypes.REVERSE_PORTAL, true, true, core.getX() + 0.5, core.getY() + 1.5, core.getZ() + 0.5, 60, 0.4, 1.4, 0.4, 0.15);
+        // the tear (SPEC §26.4): our own sound, heard to 128 blocks (a fixed-range event: rifts open 32-96 blocks away)
+        level.playSound(null, core.getX() + 0.5, core.getY() + 1.0, core.getZ() + 0.5, AnomalyContent.RIFT_OPEN.get(), SoundSource.HOSTILE, 1.0F, 1.0F);
         return a;
     }
 
@@ -196,7 +196,6 @@ final class Rifts {
         if (e != null) e.beginClose();
         BlockPos core = a.focus();
         level.playSound(null, core.getX() + 0.5, core.getY() + 1.0, core.getZ() + 0.5, AnomalyContent.RIFT_CLOSE.get(), SoundSource.HOSTILE, 3.0F, 1.0F);
-        level.sendParticles(ParticleTypes.END_ROD, true, true, core.getX() + 0.5, core.getY() + 1.4, core.getZ() + 0.5, 40, 0.3, 1.2, 0.3, 0.12);
         reward(level, a, by);
         AnomalyDirector.end(level.getServer(), data, a, "closed by " + by.getGameProfile().name(), true);
         return true;

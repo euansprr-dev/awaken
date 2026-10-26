@@ -2,7 +2,9 @@ package dev.awaken.world.anomaly;
 
 import dev.awaken.Awaken;
 import dev.awaken.core.DirectorLog;
+import dev.awaken.core.Later;
 import dev.awaken.core.Playtest;
+import dev.awaken.core.api.Notices;
 import dev.awaken.progression.Profile;
 import dev.awaken.progression.Progression;
 import dev.awaken.signal.Signal;
@@ -219,8 +221,25 @@ public final class AnomalyDirector {
         };
     }
 
-    /** The Signal's word on it: a toast, never a choice card. */
+    /** The world speaks first (the tear's sound, the star's whistle): the Signal's word follows this many ticks later. */
+    static final int WORD_AFTER = 50;
+
+    /**
+     * The Signal's word on it (SPEC §26.4): after the world's own cue, a paced toast in the "nearby" topic (never a
+     * choice card, never several at once). The first rift a player ever meets is a moment instead.
+     */
     private static void announce(ServerPlayer p, Anomaly a, long now) {
+        boolean firstRift = a.kind == AnomalyKind.RIFT_TEAR && Progression.profile(p).counter("awaken:discovered/" + a.kind.discoveryKey()) == 0;
+        java.util.UUID id = p.getUUID();
+        Later.run(p.level().getServer(), WORD_AFTER, () -> {
+            ServerPlayer q = p.level().getServer().getPlayerList().getPlayer(id);
+            AnomalyData data = AnomalyData.get(p.level().getServer());
+            if (q == null || data.find(a.id) == null) return; // gone, or it ended in the meantime: nothing to tell
+            word(q, a, q.level().getGameTime(), firstRift);
+        });
+    }
+
+    static void word(ServerPlayer p, Anomaly a, long now, boolean firstRift) {
         String where = Spots.where(p.blockPosition(), a.focus());
         String title, body;
         switch (a.kind) {
@@ -245,8 +264,15 @@ public final class AnomalyDirector {
                 body = where + " · follow them";
             }
         }
+        if (firstRift) {
+            Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Something tore open").withColor(0xC9A0FF))
+                    .body(Component.literal(where + ". A rift: monsters spill from it until its core breaks. Strike the light at its foot."))
+                    .footer(Component.literal("Rift")).presentation(SignalWindow.Presentation.TOAST)
+                    .tier(Notices.Tier.IMPORTANT).moment().topic("nearby").ttl(20 * 8).build());
+            return;
+        }
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(title)).body(Component.literal(body))
-                .presentation(SignalWindow.Presentation.TOAST).ttl(20 * 6).build());
+                .presentation(SignalWindow.Presentation.TOAST).tier(Notices.Tier.IMPORTANT).topic("nearby").ttl(20 * 6).build());
     }
 
     /** The first meeting with a kind pays a discovery (a tenth of a level, once). */
