@@ -5785,7 +5785,8 @@ water within 40 of the core, a moderate height. A green (paved, radius 5 or 7) w
 hamlet, a stone tower with an open belfry and a lightning rod in a village), the notice board facing the street, benches
 round the well and, in a village, a market stall. A main street along the contour through the green (24-38 blocks each
 way in a hamlet, 40-65 in a village), lanes branching off it (0-1, 2-4); street heights never change more than one a
-four-block step. Plots on the frontages, each facing its street with a yard round it, level with the paving at its door,
+four-block step, and where the paving climbs one the lower cell takes a slab of its own stone (a half step, never a
+cube of cobble with earth at its sides). Plots on the frontages, each facing its street with a yard round it, level with the paving at its door,
 a path out to the street; never more than 4.5 of cut or fill. A village has the inn (11-13 x 9, two storeys), the smithy
 with its forge shed (anvil, a lit blast furnace), the elder's two-storey house, often a granary and a barn, 8-17 homes;
 a hamlet 3-6 homes (the first 4-5), sometimes a smithy and a barn. Longhouses in the frost. The mill (9 x 9, two storeys)
@@ -5814,7 +5815,9 @@ joined at their branch), a door for every building, places for the work (each fi
 the well's trough, the bell, the benches, the green's play, the woodlot, the pier's end, the mill, the inn's taproom
 inside its door with the guests' floor found by painting the inn alone, the lamps, the Watch's posts and the roads
 out). Errands spread over the whole place, never round the well: the board, the benches, the stall (buying), every other
-home's door (a visit) and a corner every sixteen blocks of street. Households of 1-3 adults and 0-3 children per home, 8-16 people in a hamlet, 20-50 in a village. Village jobs
+home's door (a visit), the green itself and a corner every sixteen blocks of street. A place holds as many people as it
+has spots (past them they'd stand in a heap), so the children's game spreads over twelve spots of the green, the green
+holds ten, the stall's front four, the board three. Households of 1-3 adults and 0-3 children per home, 8-16 people in a hamlet, 20-50 in a village. Village jobs
 appended to `Roster.JOBS` (21 farmer, 22 shepherd, 23 woodcutter, 24 miner, 25 fisher, 26 hunter, 27 carter, 28 elder,
 29 scribe) beside the city's smith, tavernkeeper, miller, washer, lamplighter, bellringer, Watch, healer, stallkeeper
 and children. **The day** (0 = 06:00): the bell at dawn and dusk (the ringer at the bell 05:18-06:42 and 17:30-18:36;
@@ -5879,11 +5882,12 @@ gained `Settlements.onTalk(Talk)` and `installVoice(Voice)`, `Settlement.records
 **Measured.** Planning on real overworld noise: 0.3-0.6 s a hamlet, 0.9-1.3 s a village, once per settlement on the
 worldgen thread that meets its start (the first hamlet's search at server start: a few tries). Painting: 0.35-1.5 ms a
 chunk (about 1,600 cells; the grammar, the rooms and the ground), at most 4 light sources a chunk. Ledger with a village
-awake: 0.005 ms a tick.
+awake: 0.0008-0.005 ms a tick. On GitHub's macOS runner (slower cores) the first hamlet planned in 5.2 s and a village
+in 2.2 s; look tour 40313778099.
 
 **Decisions taken here** (none of the plan's 13): the own pack and flag (above); the 640 grid and its odds; the first
 hamlet's search order; the structure's step and the plan rebuilt from its anchor; the clearing of six; beards on the
-streets and two past each house; styles keyed 16 + land x 4 + wealth;
+streets and two past each house; half steps in the paving; spots spread over the green; styles keyed 16 + land x 4 + wealth;
 two lights a house; the standing thresholds and the price rule; the board's needs; the inn's one fall; the claims kept
 in the villages' file; village jobs appended to the city's list; the day's hours; the kit's civic blocks (they drop
 nothing) used in village walls and furniture; gates 64 and Hearths 8 off a settlement's ground.

@@ -43,13 +43,17 @@ final class VillagePainter {
         switch (k) {
             case CityPlan.STREET, CityPlan.LANE -> {
                 bed(c, x, g, z, fam);
-                c.set(x, g, z, paving(p, c, x, z, k == CityPlan.STREET));
+                BlockState pave = paving(p, c, x, z, k == CityPlan.STREET);
+                c.set(x, g, z, pave);
                 clear(c, x, g, z, CLEAR);
+                halfStep(p, c, x, g, z, pave);
             }
             case CityPlan.SQUARE, CityPlan.LANDMARK -> {
                 bed(c, x, g, z, fam);
-                c.set(x, g, z, green(p, c, x, z));
+                BlockState pave = green(p, c, x, z);
+                c.set(x, g, z, pave);
                 clear(c, x, g, z, CLEAR);
+                halfStep(p, c, x, g, z, pave);
             }
             case CityPlan.YARD, CityPlan.GARDEN -> {
                 bed(c, x, g, z, fam);
@@ -78,6 +82,32 @@ final class VillagePainter {
             default -> {
             }
         }
+    }
+
+    /**
+     * Where the paving climbs a block to the next cell of street or green, the lower cell takes a slab of its own stone:
+     * a half step up, never a cube of cobble with earth showing at its sides.
+     */
+    static void halfStep(VillagePlan p, Canvas c, int x, int g, int z, BlockState pave) {
+        boolean up = false;
+        for (int s = 0; s < 4 && !up; s++) {
+            int nx = x + (s == 0 ? 1 : s == 1 ? -1 : 0), nz = z + (s == 2 ? 1 : s == 3 ? -1 : 0);
+            byte k = p.kind(nx, nz);
+            up = (k == CityPlan.STREET || k == CityPlan.LANE || k == CityPlan.SQUARE || k == CityPlan.LANDMARK) && p.lift(nx, nz) == g + 1;
+        }
+        if (up) c.set(x, g + 1, z, stepOf(pave, p.family));
+    }
+
+    static BlockState stepOf(BlockState pave, int fam) {
+        if (pave == MOSSY_COBBLE) return MOSSY_COBBLE_SLAB;
+        if (pave == ANDESITE) return ANDESITE_SLAB;
+        if (pave == POLISHED_ANDESITE) return POLISHED_ANDESITE_SLAB;
+        if (pave == STONE_BRICKS || pave == CRACKED_STONE_BRICKS) return STONE_SLAB;
+        if (pave == SMOOTH_SANDSTONE) return SMOOTH_SANDSTONE_SLAB;
+        if (pave == CUT_SANDSTONE) return CUT_SANDSTONE_SLAB;
+        if (pave == MUD_BRICKS || pave == PACKED_MUD || fam == VillageStyles.MIRE || fam == VillageStyles.JUNGLE) return MUD_BRICK_SLAB;
+        if (pave == SANDSTONE || pave == SAND || fam == VillageStyles.DESERT) return SANDSTONE_SLAB;
+        return COBBLE_SLAB;
     }
 
     /** What lies under a surface: earth (or sand) three deep, then the writer's fill down to the land. */

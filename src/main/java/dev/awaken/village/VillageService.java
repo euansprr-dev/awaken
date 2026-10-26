@@ -221,6 +221,11 @@ public final class VillageService {
 
     /** Someone a player spoke to: a trader opens their goods, the elder tells the news; anyone else greets them. */
     static boolean talk(ServerPlayer p, Settlement s, int rec) {
+        return talk(p, s, rec, false);
+    }
+
+    /** {@code remote}: opened by a command from wherever the player stands (the trader may be across the green). */
+    static boolean talk(ServerPlayer p, Settlement s, int rec, boolean remote) {
         Live l = live(s);
         if (l == null) return false;
         String job = s.job(rec);
@@ -242,8 +247,13 @@ public final class VillageService {
             default -> lines.pick(seed, tod, "village.trade.open." + st);
         };
         say(p, l, rec, opener, 90);
-        String title = s.personName(rec) + ", " + job.replace('_', ' ') + "  ·  " + Component.translatable("awaken.village.standing_short." + st).getString();
-        new Trade.Shop(p, l, rec, deals, tier).open(Component.literal(title));
+        String name = s.personName(rec), standing = Component.translatable("awaken.village.standing_short." + st).getString();
+        String title = name + ", " + job.replace('_', ' ') + "  ·  " + standing;
+        // the screen's title fits over its right half: a long name keeps only the given name
+        if (title.length() > 28) title = name.split(" ")[0] + ", " + job.replace('_', ' ') + " · " + standing;
+        Trade.Shop shop = new Trade.Shop(p, l, rec, deals, tier);
+        shop.remote = remote;
+        shop.open(Component.literal(title));
         return true;
     }
 

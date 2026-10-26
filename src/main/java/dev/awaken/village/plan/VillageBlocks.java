@@ -111,6 +111,13 @@ final class VillageBlocks {
     static final BlockState STONE_WALL_POST = of("minecraft:cobblestone_wall[up=true]");
     static final BlockState STONE_SLAB = of("minecraft:stone_brick_slab[type=bottom]");
     static final BlockState COBBLE_SLAB = of("minecraft:cobblestone_slab[type=bottom]");
+    static final BlockState MOSSY_COBBLE_SLAB = of("minecraft:mossy_cobblestone_slab[type=bottom]");
+    static final BlockState ANDESITE_SLAB = of("minecraft:andesite_slab[type=bottom]");
+    static final BlockState POLISHED_ANDESITE_SLAB = of("minecraft:polished_andesite_slab[type=bottom]");
+    static final BlockState SANDSTONE_SLAB = of("minecraft:sandstone_slab[type=bottom]");
+    static final BlockState SMOOTH_SANDSTONE_SLAB = of("minecraft:smooth_sandstone_slab[type=bottom]");
+    static final BlockState CUT_SANDSTONE_SLAB = of("minecraft:cut_sandstone_slab[type=bottom]");
+    static final BlockState MUD_BRICK_SLAB = of("minecraft:mud_brick_slab[type=bottom]");
     static final BlockState[] COBBLE_STAIR = dirs("minecraft:cobblestone_stairs[facing=%s,half=bottom,shape=straight]");
     static final BlockState[] STONE_BRICK_STAIR = dirs("minecraft:stone_brick_stairs[facing=%s,half=bottom,shape=straight]");
     static final BlockState[] LADDER = dirs("minecraft:ladder[facing=%s]");

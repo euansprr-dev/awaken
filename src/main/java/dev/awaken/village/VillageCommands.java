@@ -108,7 +108,7 @@ final class VillageCommands {
         }
         for (int rec = 0; rec < l.settlement().people(); rec++) {
             if (!l.settlement().job(rec).equals(job)) continue;
-            if (VillageService.talk(p, l.settlement(), rec)) return 1;
+            if (VillageService.talk(p, l.settlement(), rec, true)) return 1;
         }
         src.sendFailure(Component.literal(l.plan().name + " has no " + job + "."));
         return 0;
@@ -202,7 +202,13 @@ final class VillageCommands {
                 for (int i = 1; i < s.points(); i++)
                     if (Math.abs(Math.hypot(s.x()[i], s.z()[i]) - want) < Math.abs(Math.hypot(s.x()[k], s.z()[k]) - want)) k = i;
                 double x = s.x()[k], z = s.z()[k], len = Math.max(1, Math.hypot(x, z)), ux = x / len, uz = z / len;
-                return new double[]{x + ux * 8 - uz * 9 + 0.5, s.lift()[k] + 20, z + uz * 8 + ux * 9 + 0.5, 0, 2, 0};
+                double ex = x + ux * 8 - uz * 9, ez = z + uz * 8 + ux * 9;
+                // never over a roof: out along the street until no house stands within six
+                for (int step = 0; step < 12 && houseNear(p, ex, ez, 6); step++) {
+                    ex += ux * 3;
+                    ez += uz * 3;
+                }
+                return new double[]{ex + 0.5, s.lift()[k] + 20, ez + 0.5, 0, 2, 0};
             }
             case "green" -> {
                 // where the main street comes into the green, looking across it to the well
@@ -224,10 +230,16 @@ final class VillageCommands {
                 int sx = f == 1 ? 1 : f == 3 ? -1 : 0, sz = f == 2 ? 1 : f == 0 ? -1 : 0;
                 return new double[]{p.notice[0] + 0.5 + sx * 2.5, 2.6, p.notice[1] + 0.5 + sz * 2.5, p.notice[0] + 0.5, 2, p.notice[1] + 0.5};
             }
+            case "smithy" -> {
+                // the forge shed, where the work is (else the smithy itself, below)
+                VillagePlan.Forge f = p.forge;
+                if (f != null) return fromStreet(p, f.anvilX() + 0.5, f.anvilZ() + 0.5, f.lift() + 1.6, 8, 2.8);
+                return frameBuilding(p, name);
+            }
             case "bell" -> {
                 VillagePlan.Bell b = p.bell;
                 if (b == null) return null;
-                return fromStreet(p, b.bx() + 0.5, b.bz() + 0.5, b.bry() * 0.6, 9, 2.8);
+                return fromStreet(p, b.bx() + 0.5, b.bz() + 0.5, b.bry() * 0.75, b.tower() ? 15 : 9, 2.8);
             }
             case "field" -> {
                 if (p.fields.isEmpty()) return null;
@@ -247,32 +259,42 @@ final class VillageCommands {
                 return new double[]{d.x0() - 6, d.lift() + 5, d.z0() - 6, d.endX(), d.lift(), d.endZ()};
             }
             default -> {
-                // a building from the street in front of it, or (house1, house2) inside it
-                String use = switch (name) {
-                    case "house1", "house2" -> "house";
-                    default -> name;
-                };
-                int skip = name.equals("house2") ? 1 : 0;
-                for (VillagePlan.Building b : p.buildings) {
-                    if (!b.use().equals(use)) continue;
-                    if (name.equals("house2") && p.plots.get(b.plot()).storeys() < 2 && skip-- > 0) continue;
-                    if (skip-- > 0) continue;
-                    CityPlan.Plot q = p.plots.get(b.plot());
-                    int fx = b.outX() - b.doorX(), fz = b.outZ() - b.doorZ();
-                    double mx = (q.x0() + q.x1()) / 2.0 + 0.5, mz = (q.z0() + q.z1()) / 2.0 + 0.5;
-                    if (name.startsWith("house")) {
-                        // just inside the door, looking across the room
-                        return new double[]{b.doorX() - fx + 0.5, q.lift() + 2.6, b.doorZ() - fz + 0.5, mx - fx * 3, q.lift() + 2, mz - fz * 3};
-                    }
-                    return fromStreet(p, mx, mz, q.lift() + 3, 11, 2.8);
-                }
-                return null;
+                return frameBuilding(p, name);
             }
         }
     }
 
+    /** A building from the street in front of it, or (house1, house2) inside it. */
+    private static double @Nullable [] frameBuilding(VillagePlan p, String name) {
+        String use = switch (name) {
+            case "house1", "house2" -> "house";
+            default -> name;
+        };
+        int skip = name.equals("house2") ? 1 : 0;
+        for (VillagePlan.Building b : p.buildings) {
+            if (!b.use().equals(use)) continue;
+            if (name.equals("house2") && p.plots.get(b.plot()).storeys() < 2 && skip-- > 0) continue;
+            if (skip-- > 0) continue;
+            CityPlan.Plot q = p.plots.get(b.plot());
+            int fx = b.outX() - b.doorX(), fz = b.outZ() - b.doorZ();
+            double mx = (q.x0() + q.x1()) / 2.0 + 0.5, mz = (q.z0() + q.z1()) / 2.0 + 0.5;
+            if (name.startsWith("house")) {
+                // just inside the door, looking across the room
+                return new double[]{b.doorX() - fx + 0.5, q.lift() + 2.6, b.doorZ() - fz + 0.5, mx - fx * 3, q.lift() + 2, mz - fz * 3};
+            }
+            return fromStreet(p, mx, mz, q.lift() + 3, 11, 2.8);
+        }
+        return null;
+    }
+
+    private static boolean houseNear(VillagePlan p, double x, double z, int r) {
+        for (int dz = -r; dz <= r; dz++)
+            for (int dx = -r; dx <= r; dx++) if (p.plotAt((int) Math.floor(x) + dx, (int) Math.floor(z) + dz) >= 0) return true;
+        return false;
+    }
+
     /**
-     * A framing from the street: the street point nearest {@code dist} from a target (never one at its foot), the eye
+     * A framing from the street:the street point nearest {@code dist} from a target (never one at its foot), the eye
      * {@code eye} over the paving, looking at the target at {@code ty}.
      */
     private static double[] fromStreet(VillagePlan p, double tx, double tz, double ty, double dist, double eye) {

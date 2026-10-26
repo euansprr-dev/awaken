@@ -34,7 +34,7 @@ public final class VillageRoster {
     private final List<Integer> fieldPlaces = new ArrayList<>(), penPlaces = new ArrayList<>(), benchPlaces = new ArrayList<>(),
             postPlaces = new ArrayList<>(), roadPlaces = new ArrayList<>(), innPlaces = new ArrayList<>();
     private int[] doorPlace, doorNode, lotOf, lampPlace;
-    private int green, wash = -1, bell = -1, notice = -1, play = -1, anvil = -1, net = -1, mill = -1, woods = -1, inn = -1, innOut = -1, stallKeeper = -1, stallFront = -1;
+    private int green, wash = -1, bell = -1, notice = -1, play = -1, anvil = -1, net = -1, mill = -1, woods = -1, inn = -1, innOut = -1, stallKeeper = -1, stallFront = -1, greenEdge = -1;
     private int lampRoute = -1, watchRoute = -1, errands = -1, carterRoute = -1, eveningRoute = -1;
 
     public static RosterBuilder of(VillagePlan plan, long worldSeed) {
@@ -152,8 +152,10 @@ public final class VillageRoster {
         // the notice board: read from its face
         int f = p.notice[2];
         double nx = p.notice[0] + 0.5 + (f == 1 ? 1.2 : f == 3 ? -1.2 : 0), nz = p.notice[1] + 0.5 + (f == 2 ? 1.2 : f == 0 ? -1.2 : 0);
-        notice = b.place("stand", spot(nx, 0, nz), nx, 0, nz).yaw(yawTo(nx, nz, p.notice[0] + 0.5, p.notice[1] + 0.5)).district(green)
-                .cap(2).spot(nx, nz).id();
+        RosterBuilder.Place np = b.place("stand", spot(nx, 0, nz), nx, 0, nz).yaw(yawTo(nx, nz, p.notice[0] + 0.5, p.notice[1] + 0.5))
+                .district(green).cap(3).spot(nx, nz);
+        spread(np, nx - 0.5, nz - 0.5, 1, 2, false);
+        notice = np.id();
         // benches round the well, and the children's play on the green
         for (int i = 0; i + 2 < p.benches.length; i += 3) {
             int bx = p.benches[i], bz = p.benches[i + 1];
@@ -162,8 +164,14 @@ public final class VillageRoster {
             benchPlaces.add(pl);
         }
         int gx = wx - 3, gz = wz - 2;
-        play = b.place("play", spot(gx + 0.5, 0, gz + 0.5), gx + 0.5, 0, gz + 0.5).district(green).cap(4)
-                .spot(gx + 0.5, gz + 0.5).spot(gx + 1.5, gz + 0.5).spot(gx + 0.5, gz - 0.5).id();
+        // the children's game spreads over the green (a place holds as many as its spots: past them, people stand in a heap)
+        RosterBuilder.Place pp = b.place("play", spot(gx + 0.5, 0, gz + 0.5), gx + 0.5, 0, gz + 0.5).district(green).cap(12);
+        spread(pp, gx, gz, 4, 12, true);
+        play = pp.id();
+        // the green: somewhere to stand and talk, for errands and evenings (reached by the notice board's path)
+        RosterBuilder.Place ep = b.place("stand", spot(nx, 0, nz), nx, 0, nz).district(green).cap(10);
+        spread(ep, wx, wz, Math.max(3, p.greenR - 1), 10, true);
+        greenEdge = ep.id();
         // the bell: its ringer at the foot of the post or the tower
         VillagePlan.Bell bl = p.bell;
         if (bl != null) {
@@ -243,7 +251,9 @@ public final class VillageRoster {
             double kx = (pr.x0() + pr.x1()) / 2.0 + 0.5, kz = pr.z0() + 0.5, fx = kx, fz = pr.z1() + 1.5;
             int keeperNode = spot(kx, 0, kz);
             stallKeeper = b.place("stall_keeper", keeperNode, kx, 0, kz).yaw(0).spot(kx, kz).id();
-            stallFront = b.place("stall_front", spot(fx, 0, fz), fx, 0, fz).yaw(180).cap(2).spot(fx, fz).spot(fx - 1, fz).id();
+            RosterBuilder.Place sf = b.place("stall_front", spot(fx, 0, fz), fx, 0, fz).yaw(180).cap(4).spot(fx, fz).spot(fx - 1, fz);
+            for (int x = pr.x0() - 1; x <= pr.x1() + 1; x++) if (Math.abs(x + 0.5 - fx) >= 1.5 && open(x, pr.z1() + 1)) sf.spot(x + 0.5, fz);
+            stallFront = sf.id();
             b.stall(pr.x0(), pr.z0(), pr.x1(), pr.z1(), 'S', stallKeeper, stallFront, "produce", Math.floorMod(pr.v(), 6));
             break;
         }
@@ -269,9 +279,8 @@ public final class VillageRoster {
         if (postPlaces.size() >= 2) watchRoute = b.route("round", postPlaces.get(0), notice, postPlaces.get(1), notice);
         // errands spread over the whole place, not round the well: the board, the benches, the stall, a neighbour's door,
         // a word on a street corner (the washer keeps the well)
-        List<Integer> er = new ArrayList<>(List.of(notice));
-        er.addAll(benchPlaces);
-        if (play >= 0) er.add(play);
+        List<Integer> er = new ArrayList<>(List.of(notice, greenEdge));
+        if (!benchPlaces.isEmpty()) er.add(benchPlaces.getFirst());
         if (stallFront >= 0) er.add(stallFront);
         for (int k = 0; k < p.buildings.size(); k += 2) if (p.buildings.get(k).use().equals("house")) er.add(doorPlace[k]);
         int far = p.radius() - 12;
@@ -280,7 +289,9 @@ public final class VillageRoster {
             for (int k = 2; k < st.points() - 1; k += 4) {
                 double sx = st.x()[k], sz = st.z()[k];
                 if (Math.hypot(sx, sz) <= p.greenR + 4 || Math.hypot(sx, sz) > far) continue;
-                er.add(b.place("stand", streetNode[s][k], sx, st.lift()[k], sz).cap(2).spot(sx, sz).id());
+                RosterBuilder.Place cp = b.place("stand", streetNode[s][k], sx, st.lift()[k], sz).cap(2).spot(sx, sz);
+                spread(cp, Math.floor(sx), Math.floor(sz), 2, 1, false);
+                er.add(cp.id());
             }
         }
         errands = b.route("wander", er.stream().mapToInt(Integer::intValue).toArray());
@@ -293,7 +304,45 @@ public final class VillageRoster {
         if (cr.size() >= 2) carterRoute = b.route("round", cr.stream().mapToInt(Integer::intValue).toArray());
         List<Integer> ev = new ArrayList<>(innPlaces);
         ev.addAll(benchPlaces);
+        ev.add(greenEdge);
         eveningRoute = b.route("wander", ev.isEmpty() ? new int[]{notice} : ev.stream().mapToInt(Integer::intValue).toArray());
+    }
+
+    /** A cell people can stand on: paving or the green, with no prop, lamp, bell or well on it. */
+    private boolean open(int x, int z) {
+        if (!CityPlan.walkable(p.kind(x, z))) return false;
+        for (CityPlan.Prop pr : p.props) if (!pr.kind().equals("line") && pr.contains(x, z)) return false;
+        for (VillagePlan.Lamp l : p.lamps) if (l.x() == x && l.z() == z) return false;
+        VillagePlan.Bell bl = p.bell;
+        return bl == null || x < bl.x0() - 1 || x > bl.x1() + 1 || z < bl.z0() - 1 || z > bl.z1() + 1;
+    }
+
+    /**
+     * Adds up to {@code n} spots to a place on open cells within {@code r} of a cell, nearest first (every other cell when
+     * {@code apart}: nobody shoulder to shoulder), never the cell itself.
+     */
+    private void spread(RosterBuilder.Place pl, double cx, double cz, int r, int n, boolean apart) {
+        int x0 = (int) Math.floor(cx), z0 = (int) Math.floor(cz);
+        List<int[]> cells = new ArrayList<>();
+        for (int dz = -r; dz <= r; dz++)
+            for (int dx = -r; dx <= r; dx++) {
+                if (dx == 0 && dz == 0 || dx * dx + dz * dz > r * r + r) continue;
+                if (apart && ((x0 + dx + z0 + dz) & 1) != 0) continue;
+                if (open(x0 + dx, z0 + dz)) cells.add(new int[]{dx, dz, dx * dx + dz * dz});
+            }
+        // nearest first, but round the ring rather than in a line (by angle within each distance)
+        cells.sort((u, v) -> u[2] != v[2] ? Integer.compare(u[2], v[2]) : Double.compare(Math.atan2(u[1], u[0]), Math.atan2(v[1], v[0])));
+        int added = 0;
+        if (apart && cells.size() > n) {
+            // far apart: take every k-th cell of the sorted ring so the spots cover it
+            int step = cells.size() / n;
+            for (int i = 0; i < cells.size() && added < n; i += step, added++) pl.spot(x0 + cells.get(i)[0] + 0.5, z0 + cells.get(i)[1] + 0.5);
+            return;
+        }
+        for (int[] c : cells) {
+            if (added++ >= n) break;
+            pl.spot(x0 + c[0] + 0.5, z0 + c[1] + 0.5);
+        }
     }
 
     private int buildingOf(int plot) {

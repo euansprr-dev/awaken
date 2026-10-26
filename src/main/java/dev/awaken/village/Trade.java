@@ -256,6 +256,8 @@ final class Trade {
         final List<Deal> deals;
         final MerchantOffers offers = new MerchantOffers();
         private @Nullable Player trading;
+        /** Opened by a command (tests, tours): no walking away from the trader closes it. */
+        boolean remote;
 
         Shop(ServerPlayer player, VillageService.Live live, int rec, List<Deal> deals, int tier) {
             this.player = player;
@@ -348,7 +350,9 @@ final class Trade {
         @Override
         public boolean stillValid(Player p) {
             Entity body = s.body(rec);
-            return trading == p && (body == null ? p.distanceToSqr(live.plan().ox, p.getY(), live.plan().oz) < 160 * 160 : p.distanceToSqr(body) < 64);
+            if (trading != p) return false;
+            if (remote) return true;
+            return body == null ? p.distanceToSqr(live.plan().ox, p.getY(), live.plan().oz) < 160 * 160 : p.distanceToSqr(body) < 64;
         }
 
         void open(Component title) {
