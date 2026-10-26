@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "facing=north,half=lower,to=camp": {
+      "model": "awaken:block/fingerpost_lower"
+    },
+    "facing=north,half=upper,to=camp": {
+      "model": "awaken:block/fingerpost_upper_camp"
+    },
+    "facing=north,half=lower,to=mine": {
+      "model": "awaken:block/fingerpost_lower"
+    },
+    "facing=north,half=upper,to=mine": {
+      "model": "awaken:block/fingerpost_upper_mine"
+    },
+    "facing=east,half=lower,to=camp": {
+      "model": "awaken:block/fingerpost_lower",
+      "y": 90
+    },
+    "facing=east,half=upper,to=camp": {
+      "model": "awaken:block/fingerpost_upper_camp",
+      "y": 90
+    },
+    "facing=east,half=lower,to=mine": {
+      "model": "awaken:block/fingerpost_lower",
+      "y": 90
+    },
+    "facing=east,half=upper,to=mine": {
+      "model": "awaken:block/fingerpost_upper_mine",
+      "y": 90
+    },
+    "facing=south,half=lower,to=camp": {
+      "model": "awaken:block/fingerpost_lower",
+      "y": 180
+    },
+    "facing=south,half=upper,to=camp": {
+      "model": "awaken:block/fingerpost_upper_camp",
+      "y": 180
+    },
+    "facing=south,half=lower,to=mine": {
+      "model": "awaken:block/fingerpost_lower",
+      "y": 180
+    },
+    "facing=south,half=upper,to=mine": {
+      "model": "awaken:block/fingerpost_upper_mine",
+      "y": 180
+    },
+    "facing=west,half=lower,to=camp": {
+      "model": "awaken:block/fingerpost_lower",
+      "y": 270
+    },
+    "facing=west,half=upper,to=camp": {
+      "model": "awaken:block/fingerpost_upper_camp",
+      "y": 270
+    },
+    "facing=west,half=lower,to=mine": {
+      "model": "awaken:block/fingerpost_lower",
+      "y": 270
+    },
+    "facing=west,half=upper,to=mine": {
+      "model": "awaken:block/fingerpost_upper_mine",
+      "y": 270
+    }
+  }
+}

@@ -29,6 +29,8 @@ import org.jspecify.annotations.Nullable;
 public class AwBolt extends AbstractHurtingProjectile implements ItemSupplier {
     private static final EntityDataAccessor<Byte> DATA_KIND = SynchedEntityData.defineId(AwBolt.class, EntityDataSerializers.BYTE);
     private static final ItemStack[] STACKS = new ItemStack[BoltKind.values().length];
+    /** A seep heart's shard is a real Deepglass shard (the delve module's item), else an amethyst one. */
+    private static final net.minecraft.resources.Identifier DEEPGLASS_SHARD = dev.awaken.Awaken.id("deepglass_shard");
 
     private float damage = 4.0F;
     /** The class of the ability that fired it (core.api.Strikes): it lands as that blow, whenever it lands. */
@@ -74,7 +76,14 @@ public class AwBolt extends AbstractHurtingProjectile implements ItemSupplier {
     public ItemStack getItem() {
         BoltKind k = kind();
         ItemStack s = STACKS[k.ordinal()];
-        if (s == null) STACKS[k.ordinal()] = s = new ItemStack(k.item);
+        if (s == null) {
+            net.minecraft.world.item.Item item = k.item;
+            if (k == BoltKind.DEEP) {
+                net.minecraft.world.item.Item shard = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(DEEPGLASS_SHARD);
+                if (shard != net.minecraft.world.item.Items.AIR) item = shard;
+            }
+            STACKS[k.ordinal()] = s = new ItemStack(item);
+        }
         return s;
     }
 
@@ -86,7 +95,7 @@ public class AwBolt extends AbstractHurtingProjectile implements ItemSupplier {
 
     @Override
     protected @Nullable ParticleOptions getTrailParticle() {
-        return kind().trail;
+        return kind() == BoltKind.DEEP ? dev.awaken.mobs.MobParticles.SEEP_MOTE.get() : kind().trail;
     }
 
     @Override
@@ -122,7 +131,12 @@ public class AwBolt extends AbstractHurtingProjectile implements ItemSupplier {
     protected void onHit(HitResult result) {
         super.onHit(result);
         if (level() instanceof ServerLevel sl) {
-            sl.sendParticles(kind().trail, getX(), getY(), getZ(), 6, 0.15, 0.15, 0.15, 0.05);
+            if (kind() == BoltKind.DEEP) { // the shard shatters into slivers and light
+                sl.sendParticles(dev.awaken.mobs.MobParticles.SEEP_SHARD.get(), getX(), getY(), getZ(), 6, 0.1, 0.1, 0.1, 0.18);
+                sl.sendParticles(dev.awaken.mobs.MobParticles.SEEP_MOTE.get(), getX(), getY(), getZ(), 4, 0.1, 0.1, 0.1, 0.06);
+            } else {
+                sl.sendParticles(kind().trail, getX(), getY(), getZ(), 6, 0.15, 0.15, 0.15, 0.05);
+            }
             discard();
         }
     }

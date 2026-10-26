@@ -186,6 +186,9 @@ final class DeepLairs {
                 }
             }
         }
+        // W5: a tunnel on from the nearer of the two into the natural caves (PLAN 8.2, joined lairs)
+        int[] j = s.joint();
+        if (j != null) joinTunnel(s, j, seed);
         // stalactites from the roof and stalagmites from the floor (dripstone caves) or hanging vines and moss (lush)
         for (int k = 0; k < 14; k++) {
             double a = r.nextDouble() * Math.PI * 2, d = 2.5 + r.nextDouble() * (rad - 3.5);
@@ -246,6 +249,30 @@ final class DeepLairs {
                 int x = (int) Math.round(6 * Math.cos(a)), z = (int) Math.round(6 * Math.sin(a));
                 put(s, x, 1, z, Blocks.AZALEA.defaultBlockState());
                 put(s, x, 0, z, Blocks.MOSS_BLOCK.defaultBlockState());
+            }
+        }
+    }
+
+    /**
+     * From the end of the east or west tunnel (whichever is nearer the cave air) a three-wide bore to {@code j}, wandering
+     * a little, its floor never steeper than a block a block (the drop is spread along it).
+     */
+    private static void joinTunnel(LairBuilder.Sink s, int[] j, long seed) {
+        int side = j[0] >= 0 ? 1 : -1;
+        double ax = side * LairStyle.EXTENT, ay = 1, az = 0;
+        double dx = j[0] - ax, dy = j[1] - ay, dz = j[2] - az;
+        double h = Math.sqrt(dx * dx + dz * dz);
+        int steps = (int) Math.ceil(Math.max(h, Math.abs(dy)) * 2) + 1;
+        double nx = h < 1e-6 ? 0 : -dz / h, nz = h < 1e-6 ? 0 : dx / h;
+        for (int i = 0; i <= steps; i++) {
+            double t = i / (double) steps;
+            double wander = Math.sin(t * Math.PI) * 2.0 * Math.sin(t * 9 + (seed & 15));
+            double x = ax + dx * t + nx * wander, y = ay + dy * t, z = az + dz * t + nz * wander;
+            int ix = (int) Math.floor(x), iy = (int) Math.floor(y), iz = (int) Math.floor(z);
+            for (int ox = -1; ox <= 1; ox++) for (int oz = -1; oz <= 1; oz++) {
+                if (!s.here(ix + ox, iz + oz)) continue;
+                int top = Math.abs(ox) + Math.abs(oz) == 2 ? 1 : 2;
+                for (int oy = 0; oy <= top; oy++) s.set(ix + ox, iy + oy, iz + oz, AIR);
             }
         }
     }

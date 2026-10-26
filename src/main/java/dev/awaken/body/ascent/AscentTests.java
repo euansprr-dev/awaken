@@ -29,6 +29,8 @@ final class AscentTests {
         AwakenTests.register("ascent_hero_crowns", 100, AscentTests::heroCrowns);
         AwakenTests.register("ascent_aerial_kill", 40, AscentTests::aerialKill);
         AwakenTests.register("ascent_sovereign", 40, AscentTests::sovereign);
+        // the rappel and the rope's fittings (SPEC §28.5)
+        AwakenTests.registerIsolated("ascent_rappel", 60, AscentRappelTests::rappel);
     }
 
     /** A taut rope holds the hand on its sphere through a long swing, whatever the input. */
@@ -186,7 +188,7 @@ final class AscentTests {
     }
 
     /** A survival player on a plain connection, so the server's real movement checks run on it (tests). */
-    private record Flyer(net.minecraft.server.level.ServerPlayer p, net.minecraft.server.network.ServerGamePacketListenerImpl conn) {
+    record Flyer(net.minecraft.server.level.ServerPlayer p, net.minecraft.server.network.ServerGamePacketListenerImpl conn) {
         static Flyer at(GameTestHelper h, double x, double y, double z) {
             net.minecraft.server.level.ServerLevel level = h.getLevel();
             var cookie = net.minecraft.server.network.CommonListenerCookie.createInitial(

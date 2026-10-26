@@ -18,7 +18,13 @@ public enum AscentState {
     /** On wings of light. */
     GLIDE(false, true),
     /** Momentum flight. */
-    SOAR(false, true);
+    SOAR(false, true),
+    /**
+     * Lowering yourself on a rope (the rappel, SPEC §28.5): sneak held on a line, jump paying it out, the feet to the
+     * wall. Its own state (not a mode of TETHER) so watchers see the pose from Seen alone and the server can bound a
+     * rope that grows, which a swing's never does.
+     */
+    RAPPEL(true, false);
 
     private static final AscentState[] VALUES = values();
 

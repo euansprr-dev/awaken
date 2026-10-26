@@ -16,7 +16,7 @@ import net.minecraft.util.RandomSource;
 final class MoteParticle extends SingleQuadParticle {
     private static int nextTint = 0xFFFFFF, nextLife = 10;
     private static float nextSize = 1F, nextGravity = 0F;
-    private static boolean nextPhysics;
+    private static boolean nextPhysics, nextLit;
 
     static void next(int tint, float size, int life, float gravity, boolean physics) {
         nextTint = tint;
@@ -24,7 +24,16 @@ final class MoteParticle extends SingleQuadParticle {
         nextLife = life;
         nextGravity = gravity;
         nextPhysics = physics;
+        nextLit = false;
     }
+
+    /** As {@link #next}, lit by the world instead of glowing: grit knocked off rock (the rappel's kick). */
+    static void nextGrit(int tint, float size, int life, float gravity) {
+        next(tint, size, life, gravity, true);
+        nextLit = true;
+    }
+
+    private final boolean lit = nextLit;
 
     private final SpriteSet sprites;
     private final float size0;
@@ -54,7 +63,7 @@ final class MoteParticle extends SingleQuadParticle {
 
     @Override
     protected int getLightCoords(float a) {
-        return 0xF000F0;
+        return lit ? super.getLightCoords(a) : 0xF000F0;
     }
 
     @Override

@@ -80,10 +80,15 @@ public final class Wind {
         }
 
         public Field set(long salt, long gameTime, float partialTick, float rain, float thunder) {
+            return setTicks(salt, gameTime + (double) partialTick, rain, thunder);
+        }
+
+        /** The wind at a time in ticks with a fraction (the client passes its smoothed clock, {@link SwayClock}). */
+        public Field setTicks(long salt, double ticks, float rain, float thunder) {
             this.salt = salt;
-            this.seconds = (gameTime + (double) partialTick) / 20.0;
-            long seg = Math.floorDiv(gameTime, SEGMENT_TICKS);
-            double into = gameTime - seg * SEGMENT_TICKS + partialTick;
+            this.seconds = ticks / 20.0;
+            long seg = (long) Math.floor(ticks / SEGMENT_TICKS);
+            double into = ticks - seg * (double) SEGMENT_TICKS;
             double u = Math.clamp((into - (SEGMENT_TICKS - TURN_TICKS)) / TURN_TICKS, 0.0, 1.0);
             blend = (float) (u * u * (3 - 2 * u));
             double h0 = heading(salt, seg), h1 = heading(salt, seg + 1);

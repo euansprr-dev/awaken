@@ -202,7 +202,7 @@ final class CityProps {
             int x = axis == 0 ? p.x0() + k : p.x0(), z = axis == 0 ? p.z0() : p.z0() + k;
             boolean pole = k == 0 && p.facing().contains("a") || k == n - 1 && p.facing().contains("b");
             if (pole) {
-                int g = c.plan.lift(x, z);
+                int g = c.view.lift(x, z);
                 for (int ry = g + 1; ry < p.ry(); ry++) air(b, x, ry, z, POLE);
                 air(b, x, p.ry(), z, POLE_TOP);
                 continue;

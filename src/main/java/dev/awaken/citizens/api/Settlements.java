@@ -36,6 +36,45 @@ public final class Settlements {
 
     private static @Nullable Access access;
 
+    /**
+     * Someone a player spoke to in a settlement other than Carillon (SPEC §28.6): W3's villages answer here first (a trader
+     * opens their goods, the innkeeper offers a room). True when it handled the talk; otherwise the person greets them.
+     */
+    @FunctionalInterface
+    public interface Talk {
+        boolean talk(net.minecraft.server.level.ServerPlayer p, Settlement s, int rec);
+    }
+
+    /**
+     * How a settlement other than Carillon speaks of a player (SPEC §28.6): the standing its greetings use
+     * ("stranger", "known", "friend", "kin"; the line pools are {@code village.greet.<job>.<standing>}), and what fills a
+     * line's place names ({village}, {region}, {elder}, {gate}, {landmark}).
+     */
+    public interface Voice {
+        String standing(Settlement s, net.minecraft.server.level.ServerPlayer p);
+
+        String fill(Settlement s, net.minecraft.server.level.ServerPlayer p, String line);
+    }
+
+    private static final java.util.List<Talk> TALK = new java.util.concurrent.CopyOnWriteArrayList<>();
+    private static @Nullable Voice voice;
+
+    public static void onTalk(Talk t) {
+        TALK.add(t);
+    }
+
+    public static java.util.List<Talk> talkers() {
+        return TALK;
+    }
+
+    public static void installVoice(Voice v) {
+        voice = v;
+    }
+
+    public static @Nullable Voice voice() {
+        return voice;
+    }
+
     public static void install(Access a) {
         access = a;
     }

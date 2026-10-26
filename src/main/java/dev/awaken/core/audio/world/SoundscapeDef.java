@@ -46,7 +46,11 @@ public record SoundscapeDef(Identifier id, String title, List<Air> air, List<Tex
         /** Open sky over the listener (outdoor air that a roof takes away). */
         OPEN,
         /** The wind's strength where you stand, swelling in gusts (0.15 + 0.85 strength × (0.6 + 0.4 gust)). */
-        WIND
+        WIND,
+        /** Shallow under the ground: 1 down to y 48, falling to 0 at y -64 (the Hollows' upper air). */
+        SHALLOW,
+        /** Deep under the ground: 0 down to y 48, rising to 1 at y -64 (the Hollows' undertone: the deeper, the lower). */
+        DEEP
     }
 
     /** Where a positional sound comes from: real blocks found around the listener. */

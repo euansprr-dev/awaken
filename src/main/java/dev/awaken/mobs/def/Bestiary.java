@@ -30,7 +30,7 @@ public final class Bestiary {
         }
         BY_ID = Collections.unmodifiableMap(map);
         List<MobDef> fauna = new ArrayList<>();
-        for (MobDef d : all) if (d.isFauna()) fauna.add(d);
+        for (MobDef d : all) if (d.isFauna() && !d.placed) fauna.add(d);
         FAUNA = List.copyOf(fauna);
         for (MobDef d : all) {
             for (MobDef.Phase p : d.phases) {
@@ -58,7 +58,10 @@ public final class Bestiary {
         return BY_ID.get(path);
     }
 
-    /** The overworld creatures (the Awakened layer), in declaration order. */
+    /**
+     * The overworld creatures of the biome families (the Awakened layer), in declaration order. Placed creatures (the seep
+     * heart) are fauna too but are left out: no biome spawns them, no family, lair or codex counts them.
+     */
     public static List<MobDef> fauna() {
         return FAUNA;
     }

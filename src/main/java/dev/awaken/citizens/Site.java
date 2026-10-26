@@ -58,4 +58,9 @@ interface Site {
 
     /** Whether a world point carries a tag (CART: a lane a cart can spill across). */
     boolean tagged(String tag, double x, double z);
+
+    /** What the client draws for itself (a built settlement's chimneys and places that sound: x, ry, z offsets and kind). */
+    default List<int[]> emitters() {
+        return List.of();
+    }
 }

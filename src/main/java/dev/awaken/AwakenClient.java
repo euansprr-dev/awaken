@@ -54,6 +54,7 @@ public final class AwakenClient {
         dev.awaken.turbo.wateredge.WaterEdge.init();
         dev.awaken.wilds.client.WildsClient.init(modBus);
         dev.awaken.citizens.client.CitizensClient.init(modBus);
+        dev.awaken.village.client.VillageClient.init(modBus);
         dev.awaken.opening.client.OpeningClient.init(modBus);
         dev.awaken.living.client.LivingClient.init(modBus);
         dev.awaken.living.client.StormSky.init(modBus);

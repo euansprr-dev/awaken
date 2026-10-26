@@ -1,0 +1,64 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/fingerpost_under",
+    "t0": "awaken:block/fingerpost_under",
+    "t1": "awaken:block/fingerpost_camp_lower_n",
+    "t2": "awaken:block/fingerpost_camp_lower_e",
+    "t3": "awaken:block/fingerpost_camp_lower_s",
+    "t4": "awaken:block/fingerpost_camp_lower_w"
+  },
+  "elements": [
+    {
+      "from": [
+        6,
+        0,
+        6
+      ],
+      "to": [
+        10,
+        16,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6,
+            0,
+            10,
+            16
+          ],
+          "texture": "#t1"
+        },
+        "east": {
+          "uv": [
+            6,
+            0,
+            10,
+            16
+          ],
+          "texture": "#t2"
+        },
+        "south": {
+          "uv": [
+            6,
+            0,
+            10,
+            16
+          ],
+          "texture": "#t3"
+        },
+        "west": {
+          "uv": [
+            6,
+            0,
+            10,
+            16
+          ],
+          "texture": "#t4"
+        }
+      }
+    }
+  ],
+  "ambientocclusion": false
+}

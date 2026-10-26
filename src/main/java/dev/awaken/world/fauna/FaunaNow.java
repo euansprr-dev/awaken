@@ -82,9 +82,15 @@ final class FaunaNow {
         MobDef d = Bestiary.get(best.beast());
         String whose = d == null ? "a beast" : d.name.startsWith("The ") ? "the " + d.name.substring(4) : d.name;
         double dx = bestPos.getX() - at.getX(), dz = bestPos.getZ() - at.getZ();
-        String text = "Lair of " + whose + " · " + Lairs.distance(Math.sqrt(bestD)) + " " + compass(dx, dz);
+        String text = "Lair of " + whose + " · " + Lairs.distance(Math.sqrt(bestD)) + " " + compass(dx, dz) + depth(bestPos.getY() - at.getY());
         int priority = Progression.profile(sp).level() >= 3 ? 30 : 14;
         out.add(new NowHooks.Suggestion("fauna:lair:" + best.key(), priority, Component.literal(text), Optional.of(bestPos)));
+    }
+
+    /** How far down (or up) a lair is: " · 40 below" (W5, PLAN 8.2: cave lairs get a depth word); nothing within 8. */
+    static String depth(int dy) {
+        if (Math.abs(dy) < 8) return "";
+        return " · " + (Math.round(Math.abs(dy) / 5.0) * 5) + (dy < 0 ? " below" : " above");
     }
 
     /** Eight-point compass from a horizontal offset (Minecraft: -z is north). */

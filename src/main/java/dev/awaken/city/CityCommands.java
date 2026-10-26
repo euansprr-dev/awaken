@@ -23,6 +23,7 @@ import java.util.Set;
  * <pre>
  * info                 where the city stands, its plan hash, the graphs, the district under you, the pregen numbers
  * view &lt;name&gt;          stand at a named viewpoint (sky shots, street level per district, the studio framings)
+ * monsters [radius]    count the hostile creatures round you (the Commons step's night check)
  * repaint [radius]     paint the chunks round you again, live (dev; a repaired or edited plan)
  * dump                 paint the whole city into memory and write city-dump.bin for tools/city/render.py (dev)
  * scan [radius]        find tree wood hanging in the air within radius of the centre (default 400; reads the chunks from disk)
@@ -43,6 +44,9 @@ final class CityCommands {
                         .then(Commands.argument("radius", IntegerArgumentType.integer(0, 8))
                                 .executes(c -> repaint(c.getSource(), IntegerArgumentType.getInteger(c, "radius")))))
                 .then(Commands.literal("dump").executes(c -> dump(c.getSource())))
+                .then(Commands.literal("monsters").executes(c -> monsters(c.getSource(), 96))
+                        .then(Commands.argument("radius", IntegerArgumentType.integer(8, 256))
+                                .executes(c -> monsters(c.getSource(), IntegerArgumentType.getInteger(c, "radius")))))
                 .then(Commands.literal("scan").executes(c -> scan(c.getSource(), 400, false))
                         .then(Commands.argument("radius", IntegerArgumentType.integer(32, 700))
                                 .executes(c -> scan(c.getSource(), IntegerArgumentType.getInteger(c, "radius"), false))))
@@ -75,6 +79,34 @@ final class CityCommands {
         return 1;
     }
 
+    /** Tours: how many hostile creatures stand within a radius of you, by kind (the Commons step's night check). */
+    private static int monsters(CommandSourceStack src, int radius) {
+        CityLayout l = need(src);
+        if (l == null) return 0;
+        net.minecraft.world.phys.Vec3 at = src.getPosition();
+        var box = new net.minecraft.world.phys.AABB(at, at).inflate(radius, 64, radius);
+        java.util.Map<String, Integer> kinds = new java.util.TreeMap<>();
+        int n = 0, surface = 0, fields = 0;
+        for (var m : src.getLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, box, CityMonsters::hostile)) {
+            if (m.distanceToSqr(at) > (double) radius * radius) continue;
+            kinds.merge(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(m.getType()).getPath(), 1, Integer::sum);
+            n++;
+            // out on the ground (under open sky), not in the caves beneath; and of those, outside the wall
+            if (!src.getLevel().canSeeSky(m.blockPosition())) continue;
+            surface++;
+            if (l.plan.kind(l.px(m.getBlockX()), l.pz(m.getBlockZ())) == CityPlan.VOID) fields++;
+        }
+        int px = l.px((int) Math.floor(at.x)), pz = l.pz((int) Math.floor(at.z));
+        double r = Math.sqrt((double) px * px + (double) pz * pz);
+        String msg = String.format(Locale.ROOT, "%d hostile within %d of you, %d of them under open sky, %d out in the fields (%.0f from the "
+                        + "centre, spawns pass %.0f%%): %s; spawns checked %d, thinned %d, crowded %d", n, radius, surface, fields, r,
+                100 * CityMonsters.pass(r), kinds, CityMonsters.CHECKED.get(), CityMonsters.THINNED.get(), CityMonsters.CROWDED.get())
+                + "; " + CityTrail.leftover(src.getLevel(), l);
+        src.sendSuccess(() -> Component.literal(msg), false);
+        dev.awaken.Awaken.LOG.info("[city] monsters: {}", msg);
+        return n;
+    }
+
     private static int view(CommandSourceStack src, String name) throws CommandSyntaxException {
         CityLayout l = need(src);
         if (l == null) return 0;
@@ -88,7 +120,13 @@ final class CityCommands {
         // street views stand on open ground: the nearest street, square or quay cell to the named spot
         CityViews.View at = v;
         if (CityViews.ALONG.contains(name)) at = along(l.plan, v);
-        else if (CityViews.EXACT.contains(name)) at = v;
+        else if (CityViews.GROUND.contains(name)) {
+            // past the basin the ground lies as it lies: the eye and the target are heights over it (the Commons step)
+            int wx = l.cx + (int) Math.floor(v.x()), wz = l.cz + (int) Math.floor(v.z());
+            level.getChunk(wx >> 4, wz >> 4);
+            int g = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, wx, wz) - 1 - l.streetY;
+            at = new CityViews.View(v.x(), v.ry() + g, v.z(), v.tx(), v.tr() + g, v.tz());
+        } else if (CityViews.EXACT.contains(name)) at = v;
         else if (name.startsWith("studio_") && v.ry() < 25 && !CityPlan.walkable(l.plan.kind((int) Math.floor(v.x()), (int) Math.floor(v.z())))
                 && !CityPlan.water(l.plan.kind((int) Math.floor(v.x()), (int) Math.floor(v.z()))) && l.plan.inside((int) Math.floor(v.x()), (int) Math.floor(v.z()))) {
             // a framing from above the streets: over open ground, at its height above it

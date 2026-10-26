@@ -31,6 +31,7 @@ public final class RosterBuilder implements RosterSource {
     private final List<Lot> lots = new ArrayList<>();
     private final List<int[]> water = new ArrayList<>();
     private final List<String> districts = new ArrayList<>(List.of(""));
+    private final List<int[]> emitters = new ArrayList<>();
     // places, routes, stations
     private final List<Place> places = new ArrayList<>();
     private final List<int[]> routes = new ArrayList<>();
@@ -84,6 +85,15 @@ public final class RosterBuilder implements RosterSource {
         if (t.contains("house") && doorX != Integer.MIN_VALUE) t.add("fire");
         lots.add(new Lot(lots.size(), x0, z0, x1, z1, top, doorX, doorZ, Set.copyOf(t)));
         return lots.size() - 1;
+    }
+
+    /**
+     * Something the client draws for itself at a block (SPEC §28.6): a chimney's smoke (kind 0 a bakery's, 1 a house's, 2 a
+     * tavern's, 3 a forge's), a mill wheel's sound (6), a well's (7). Offsets from the origin; the smoke rises from it.
+     */
+    public RosterBuilder emitter(int x, int ry, int z, int kind) {
+        emitters.add(new int[]{x, ry, z, kind});
+        return this;
     }
 
     /** A cell a bucket line can draw water from (a well's shaft, a trough, a pier's edge). */
@@ -526,7 +536,8 @@ public final class RosterBuilder implements RosterSource {
             eb[e] = edges.get(e)[1];
             lane[e] = (byte) edges.get(e)[2];
         }
-        return new Built(roster, new Graph(gx, gry, gz, kind, ref, ea, eb, lane), List.copyOf(lots), List.copyOf(water), List.copyOf(districts));
+        return new Built(roster, new Graph(gx, gry, gz, kind, ref, ea, eb, lane), List.copyOf(lots), List.copyOf(water), List.copyOf(districts),
+                List.copyOf(emitters));
     }
 
     private static JsonArray ints(int... v) {

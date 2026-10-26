@@ -265,4 +265,46 @@ final class Settlement implements dev.awaken.citizens.api.Settlement {
     public String district(BlockPos pos) {
         return site.districtName(site.district(pos.getX(), pos.getZ()));
     }
+
+    @Override
+    public int records() {
+        return roster.records;
+    }
+
+    @Override
+    public String job(int rec) {
+        return rec >= 0 && roster.isCitizen(rec) ? Roster.JOBS[roster.job[rec]] : "";
+    }
+
+    @Override
+    public String personName(int rec) {
+        return rec >= 0 && roster.isCitizen(rec) ? roster.name(rec) : "";
+    }
+
+    @Override
+    public int age(int rec) {
+        return rec >= 0 && roster.isCitizen(rec) ? roster.age[rec] : 2;
+    }
+
+    @Override
+    public net.minecraft.world.entity.@org.jspecify.annotations.Nullable Entity body(int rec) {
+        CitizenBody b = rec >= 0 && rec < ledger.body.length ? ledger.body[rec] : null;
+        return b == null || b.isRemoved() ? null : b;
+    }
+
+    @Override
+    public void say(ServerPlayer to, int rec, String line, int ticks) {
+        CitizenBody b = rec >= 0 && rec < ledger.body.length ? ledger.body[rec] : null;
+        if (b != null && !b.isRemoved()) {
+            CitizensNet.say(to, b, line, ticks, 0);
+            b.lookAt(to, 60);
+        }
+    }
+
+    @Override
+    public void acquaint(ServerPlayer p, int amount, int ceiling) {
+        CitizensData.Memory m = data.memory(p.getUUID(), p.getName().getString(), true);
+        for (int i = 0; i < roster.citizens; i++) if (m.know[i] < ceiling) m.know[i] = Math.min(ceiling, m.know[i] + amount);
+        data.setDirty();
+    }
 }

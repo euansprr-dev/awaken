@@ -33,7 +33,8 @@ public final class CityPainter {
         for (int lz = 0; lz < buf.d; lz++) {
             for (int lx = 0; lx < buf.w; lx++) ground(c, buf, buf.px0 + lx, buf.pz0 + lz);
         }
-        CityWall.approaches(c, buf); // the High Gate's yard and barbican, the roads' lamps and masts (after the ground)
+        CityWall.approaches(c, buf); // the High Gate's yard, its pennant lines and the barbican (after the ground)
+        CityFarmsteads.paint(c, buf); // the farms among the fields (the Commons step)
         CityPlan plan = layout.plan;
         for (int id : pieces) {
             if (id < layout.nPlots) {
@@ -50,15 +51,31 @@ public final class CityPainter {
         }
     }
 
-    /** What every painter call shares: the layout and the seed's detail hashes. */
+    /**
+     * What every painter call shares: the layout and the seed's detail hashes. The grammar, the facades and the props
+     * read the ground through {@link #view} (Carillon's plan, or a settlement's raster: SPEC §28.6); only Carillon's own
+     * painters (its ground, wall, landmarks) read {@link #plan}, which a settlement's context doesn't have.
+     */
     static final class Ctx {
         final CityLayout layout;
         final CityPlan plan;
+        final PlanView view;
         final long seed;
+        /** Scratch for the commons' painters (a road's frame, a field's cell), one set per paint call. */
+        final double[] rd = new double[2], rd2 = new double[2], fc = new double[9], fc2 = new double[9];
 
         Ctx(CityLayout layout, long worldSeed) {
             this.layout = layout;
             this.plan = layout.plan;
+            this.view = plan;
+            this.seed = worldSeed ^ 0x5EEDC17EL;
+        }
+
+        /** A settlement's context (no city layout): the grammar reads its raster. */
+        Ctx(PlanView view, long worldSeed) {
+            this.layout = null;
+            this.plan = null;
+            this.view = view;
             this.seed = worldSeed ^ 0x5EEDC17EL;
         }
 
@@ -545,83 +562,8 @@ public final class CityPainter {
         b.plate(x, z);
         b.column(x, -4, -1, z, DIRT);
         // all the way up: a tree's crown above 40 would hang over the cleared trunk
-        int clear = CLEAR_TOP;
-        if (onRoad(p, x, z)) {
-            int h = c.pct(x, z, 31);
-            b.set(x, 0, z, h < 70 ? PATH : h < 85 ? GRAVEL : COARSE_DIRT);
-            b.column(x, 1, clear, z, AIR);
-            return;
-        }
-        if (apron || r > p.fieldsTo) {
-            b.set(x, 0, z, GRASS);
-            b.column(x, 1, clear, z, AIR);
-            if (c.pct(x, z, 32) < 10) b.set(x, 1, z, SHORT_GRASS);
-            if (apron) CityWall.outerBand(c, b, x, z); // the wall's outer foot and face (the Walls step)
-            return;
-        }
-        // the fields: irregular patches round the city (each column belongs to its nearest seed on a jittered polar
-        // lattice), each one crop or fallow, with grass paths and hedges along the boundaries
-        b.column(x, 1, clear, z, AIR);
-        long cell = fieldCell(p, x, z, r);
-        int band = (int) (cell >> 32), sector = (int) cell;
-        if (band < 0) {
-            b.set(x, 0, z, GRASS);
-            if (Ctx.shape(sector, -band, 33) < 35) b.set(x, 1, z, OAK_LEAVES);
-            else if (c.pct(x, z, 36) < 25) b.set(x, 1, z, SHORT_GRASS);
-            return;
-        }
-        int crop = Ctx.shape(sector, band, 34);
-        if (crop < 14) {
-            b.set(x, 0, z, GRASS);
-            if (c.pct(x, z, 35) < 18) b.set(x, 1, z, SHORT_GRASS);
-            return;
-        }
-        b.set(x, 0, z, FARMLAND);
-        BlockState s = crop < 42 ? CROPS[0] : crop < 56 ? CROPS[4] : crop < 72 ? CROPS[1] : crop < 87 ? CROPS[2] : CROPS[3];
-        b.set(x, 1, z, s);
-    }
-
-    static final double FIELD_BAND = 21.0, FIELD_W = 26.0;
-
-    /**
-     * The field a column belongs to: (band << 32 | sector) of its nearest seed, or a negative band (-1 - band) when
-     * the column lies on the boundary between two fields (a path or a hedge).
-     */
-    static long fieldCell(CityPlan p, int x, int z, double r) {
-        double a = Math.atan2(z, x);
-        int b0 = (int) Math.floor((r - p.fieldsFrom) / FIELD_BAND);
-        double best = Double.MAX_VALUE, second = Double.MAX_VALUE;
-        int bb = 0, bk = 0;
-        for (int band = b0 - 1; band <= b0 + 1; band++) {
-            if (band < 0) continue;
-            double rb = p.fieldsFrom + (band + 0.5) * FIELD_BAND;
-            int n = Math.max(16, (int) (2 * Math.PI * rb / FIELD_W));
-            double step = 2 * Math.PI / n;
-            int k0 = (int) Math.floor((a + Math.PI) / step);
-            for (int k = k0 - 1; k <= k0 + 1; k++) {
-                int kk = Math.floorMod(k, n);
-                double ja = (Ctx.shape(band, kk, 37) / 100.0 - 0.5) * 0.7, jr = (Ctx.shape(band, kk, 38) / 100.0 - 0.5) * 0.6;
-                double sa = -Math.PI + (k + 0.5 + ja) * step, sr = rb + jr * FIELD_BAND;
-                double dx = x - Math.cos(sa) * sr, dz = z - Math.sin(sa) * sr;
-                double d = Math.sqrt(dx * dx + dz * dz);
-                if (d < best) {
-                    second = best;
-                    best = d;
-                    bb = band;
-                    bk = kk;
-                } else if (d < second) second = d;
-            }
-        }
-        if (second - best < 1.2) return ((long) (-1 - bb) << 32) | (bk & 0xffffffffL);
-        return ((long) bb << 32) | (bk & 0xffffffffL);
-    }
-
-    static boolean onRoad(CityPlan p, int x, int z) {
-        double half = p.roadWidth / 2.0;
-        for (int[] r : p.roads) {
-            if (segDist(x + 0.5, z + 0.5, r[0], r[1], r[2], r[3]) <= half) return true;
-        }
-        return false;
+        b.column(x, 1, CLEAR_TOP, z, AIR);
+        CityCommons.ground(c, b, x, z, r, apron); // the roads, the fields, the farmsteads' ground (the Commons step)
     }
 
     static double riverDistance(CityPlan p, int x, int z) {

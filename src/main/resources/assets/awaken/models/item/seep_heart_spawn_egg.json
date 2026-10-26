@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "awaken:item/seep_heart_spawn_egg"
+  }
+}

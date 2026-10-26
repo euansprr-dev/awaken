@@ -18,6 +18,7 @@ final class BuiltSite implements Site {
     private final StreetNet net;
     private final List<String> districts;
     private final List<RosterSource.Lot> lots;
+    private final List<int[]> emitters;
     private final LongOpenHashSet water = new LongOpenHashSet();
     private final java.util.Map<String, List<Lot>> byTag = new java.util.HashMap<>();
     /** Each node's district: the nearest district-tagged place's, filled once from the roster. */
@@ -32,6 +33,7 @@ final class BuiltSite implements Site {
         this.net = net;
         this.districts = built.districts().isEmpty() ? List.of("") : built.districts();
         this.lots = built.lots();
+        this.emitters = built.emitters();
         for (int[] w : built.water()) water.add(key(cx + w[0], cz + w[1]));
         nodeDistrict = new int[net.n];
         for (int p = 0; p < r.places; p++) {
@@ -116,6 +118,11 @@ final class BuiltSite implements Site {
             for (RosterSource.Lot l : lots) if (l.tags().contains(t)) out.add(new Lot(l.id(), l.x0(), l.z0(), l.x1(), l.z1(), l.top(), l.doorX(), l.doorZ()));
             return List.copyOf(out);
         });
+    }
+
+    @Override
+    public List<int[]> emitters() {
+        return emitters;
     }
 
     @Override

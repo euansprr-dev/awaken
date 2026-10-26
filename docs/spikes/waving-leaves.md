@@ -1,7 +1,8 @@
 # Spike: waving leaves under Sodium 0.9.3-beta.1
 
 *Later (2026-10-26):* the same override now sways every plant too (SPEC 15, "Swaying plants"): plant vertices
-carry alpha 213..253 (`terrain.PlantSway`), leaves keep 254, and the corner holds 27 texels.
+carry alpha 213..253 (`terrain.PlantSway`), leaves keep 254, and the corner holds 45 texels laid out by `terrain.SwayMath`
+(16-bit wind, a smooth sway clock, phases that survive every wrap: SPEC 15, "Smooth").
 
 Spike for SPEC 15 ("Waving leaves only if the Sodium spike proves them safe"), branch `lands/wave-spike`, 2026-10-24.
 
