@@ -144,7 +144,7 @@ public final class Conductor {
     }
 
     /** What is left of a hushable sound at a point (1 = untouched): full depth within half the radius, easing out to its edge. */
-    static float hushAt(double x, double y, double z) {
+    public static float hushAt(double x, double y, double z) {
         float left = 1F;
         for (int i = 0; i < MAX_HUSHES; i++) {
             long rest = HUNTIL[i] - gameTime;

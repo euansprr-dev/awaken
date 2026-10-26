@@ -6,6 +6,7 @@ import dev.awaken.arms.Archetype;
 import dev.awaken.arms.Archetypes;
 import dev.awaken.arms.Arms;
 import dev.awaken.arms.ArmsItems;
+import dev.awaken.arms.FpSwings;
 import dev.awaken.arms.HandPose;
 import dev.awaken.core.api.FirstPerson;
 import net.minecraft.client.Minecraft;
@@ -41,6 +42,7 @@ final class ArmsHands {
         LocalPlayer p = mc.player;
         if (p == null || !ArmsPredict.fights(p)) return;
         trace(p);
+        if (lab(p, v)) return;
         pose(POSE);
         float x = POSE[0], y = POSE[1], roll = POSE[2], lunge = POSE[3], tilt = POSE[4];
         if (x == 0 && y == 0 && roll == 0 && lunge == 0 && tilt == 0) return;
@@ -99,6 +101,53 @@ final class ArmsHands {
     private static float guard(LocalPlayer p, float partial) {
         if (!p.isUsingItem() || p.getUseItem() != p.getMainHandItem()) return 0;
         return Math.min(1F, p.getTicksUsingItem(partial) / GUARD_RISE);
+    }
+
+    private static final org.joml.Vector3f D = new org.joml.Vector3f();
+    private static final org.joml.Quaternionf Q = new org.joml.Quaternionf();
+
+    /**
+     * The lab's swing (FpSwings), when it has one for the move: an arc about the sword arm's pivot, the edge leading,
+     * through the target under the crosshair on the hit tick. A held heavy waits at the heavy's drawn-back start (and
+     * trembles), an armed Plunge at the Plunge's. Mirrored for a left main arm. False: the row's own swing below.
+     */
+    private static boolean lab(LocalPlayer p, FirstPerson.View v) {
+        var style = ArmsPredict.style != null ? ArmsPredict.style : preview != null ? Archetypes.get(Arms.LONGSWORD) : null;
+        if (style == null) return false;
+        Archetype.Move m;
+        float t;
+        boolean tremble = false;
+        if (preview != null) {
+            m = preview;
+            Archetype.MoveDef def = style.move(m);
+            t = def == null ? 0 : previewAt * def.total();
+        } else if (ArmsPredict.plunging) {
+            m = Archetype.Move.PLUNGE;
+            t = 0;
+        } else if (ArmsPredict.charging) {
+            m = Archetype.Move.HEAVY;
+            t = 0;
+            tremble = true;
+        } else {
+            m = ArmsPredict.move;
+            t = ArmsPredict.moveTime();
+        }
+        if (m == null) return false;
+        boolean ours = ArmsItems.of(p.getMainHandItem().getItem()) != null;
+        if (!FpSwings.sample(FpSwings.style(style.id()), m, t, ours, D, Q)) return false;
+        int inv = p.getMainArm() == HumanoidArm.RIGHT ? 1 : -1;
+        if (tremble) {
+            float c = ArmsPredict.moveTime();
+            float k = Mth.sin(c * 2.7F) * Math.min(1F, c / 10F);
+            D.add(k * 0.008F, k * 0.012F, 0);
+        }
+        if (inv < 0) {
+            D.x = -D.x;
+            Q.set(Q.x, -Q.y, -Q.z, Q.w); // the turn mirrored across the view's vertical plane
+        }
+        HandPose.viewMove(inv * HX, HY, HZ, D.x, D.y, D.z, Q, MOVE);
+        FirstPerson.View.add(v.main, 1, MOVE[0], MOVE[1], MOVE[2], MOVE[3], MOVE[4], MOVE[5]);
+        return true;
     }
 
     /** Autopilot only: hold the hands at a fraction (0..1) through a move, for a still review frame. */

@@ -46,10 +46,12 @@ final class AscentScene {
         Minecraft mc = Minecraft.getInstance();
         // a gift's scene holds every tip back (its own tip comes after)
         dev.awaken.core.api.TipHooks.client().hold(AscentScene.class, age >= 0);
+        dev.awaken.core.api.Notices.client().hold(AscentScene.class, age >= 0); // and the System's messages (SPEC §26)
         if (pending != 0 && age < 0) {
-            boolean free = mc.gui.screen() == null && p.onGround() && !AscentMoves.active();
+            boolean free = mc.gui.screen() == null && p.onGround() && !AscentMoves.active() && !dev.awaken.core.api.Notices.client().quiet();
             // never lost: after 30 s it plays wherever you are; the chasm's moment plays at once
             if (free || edge(mode) || ++waited > 600) {
+                dev.awaken.core.api.Notices.client().claim(dev.awaken.core.api.Notices.Tier.CRITICAL, "ascent");
                 playing = pending;
                 playingMode = mode;
                 pending = 0;

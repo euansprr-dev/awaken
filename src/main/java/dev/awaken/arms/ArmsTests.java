@@ -21,7 +21,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import dev.awaken.progression.Rank;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
@@ -54,6 +56,10 @@ final class ArmsTests {
         AwakenTests.register("arms_style_traits", 20, ArmsTests::styleTraits);
         AwakenTests.register("arms_weave", 40, ArmsTests::weave);
         AwakenTests.register("arms_lord_forged", 40, ArmsTests::lordForged);
+        AwakenTests.register("arms_mastery", 20, ArmsTests::mastery);
+        AwakenTests.register("arms_fp_swings", 20, ArmsTests::fpSwings);
+        AwakenTests.register("arms_marks", 40, ArmsTests::marks);
+        AwakenTests.register("arms_forge", 20, ArmsTests::forge);
     }
 
     /** At most this many triangle corners in one weapon (6,000 triangles: a few weapons in view cost what a mob does). */
@@ -320,6 +326,128 @@ final class ArmsTests {
         });
     }
 
+    /**
+     * The lab's first-person swings (FpSwings, tools/art/anim_lab.py): keys for every style's every move, each ending
+     * at rest; on the hit tick a slash's hand is turned well off its rest, not slid (the old wave); and the view move of
+     * any turn is exactly the hand turned about its own place (as HandPose's roll-and-tilt one).
+     */
+    static void fpSwings(GameTestHelper h) {
+        org.joml.Vector3f d = new org.joml.Vector3f();
+        org.joml.Quaternionf q = new org.joml.Quaternionf();
+        for (Archetypes.Loaded a : Archetypes.all()) {
+            FpSwings.Style st = FpSwings.style(a.id());
+            h.assertTrue(st != null, a.id() + " has its swings");
+            for (var e : a.moves().entrySet()) {
+                Archetype.MoveDef def = e.getValue();
+                if (def.swing() == null) continue;
+                h.assertTrue(FpSwings.sample(st, e.getKey(), 0, true, d, q), a.id() + " " + e.getKey() + " has keys");
+                FpSwings.sample(st, e.getKey(), def.total() + 1, true, d, q);
+                h.assertTrue(d.length() < 1e-3F && Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + " ends at rest");
+            }
+            Archetype.MoveDef s1 = a.move(Archetype.Move.STRIKE_1);
+            if (s1 != null && s1.windup() > 0 && s1.swing().from().size() < 4) {
+                FpSwings.sample(st, Archetype.Move.STRIKE_1, s1.windup(), true, d, q);
+                float turned = (float) Math.toDegrees(2 * Math.acos(Math.min(1, Math.abs(q.w))));
+                h.assertTrue(turned > 15F, a.id() + "'s first strike turns the blade into the cut on its hit (" + turned + " degrees)");
+            }
+        }
+        float[] m = new float[6];
+        float[] old = new float[6];
+        float worst = 0;
+        for (float roll = -150; roll <= 150; roll += 50) {
+            for (float tilt = -40; tilt <= 60; tilt += 50) {
+                q.identity().rotateZ((float) Math.toRadians(roll)).rotateX((float) Math.toRadians(-tilt));
+                HandPose.viewMove(0.56F, -0.52F, -0.72F, 0.2F, 0.1F, -0.1F, q, m);
+                HandPose.viewMove(0.56F, -0.52F, -0.72F, 0.2F, 0.1F, -0.1F, roll, tilt, old);
+                org.joml.Matrix4f a = viewMatrix(m), b = viewMatrix(old);
+                for (int c = 0; c < 4; c++) for (int r = 0; r < 4; r++) worst = Math.max(worst, Math.abs(a.get(c, r) - b.get(c, r)));
+            }
+        }
+        h.assertTrue(worst < 1e-3F, "a turn's view move matches the roll-and-tilt one (off by " + worst + ")");
+        h.succeed();
+    }
+
+    private static org.joml.Matrix4f viewMatrix(float[] m) {
+        return new org.joml.Matrix4f().translate(m[0], m[1], m[2]).rotateX((float) Math.toRadians(m[3]))
+                .rotateY((float) Math.toRadians(m[4])).rotateZ((float) Math.toRadians(m[5]));
+    }
+
+    /** Mastery: kills raise a style's step; step I carries the chain's finisher into its mastery strike. */
+    static void mastery(GameTestHelper h) {
+        h.assertTrue(ArmsMastery.step(0) == 0 && ArmsMastery.step(ArmsMastery.KILLS[0]) == 1 && ArmsMastery.step(100_000) == 5, "five steps from kills");
+        Archetypes.Loaded a = longsword();
+        Archetype.MoveDef s3 = a.move(Archetype.Move.STRIKE_3);
+        long link = 100 + s3.windup() + s3.active() + ArmsRules.MASTERY_LINK;
+        ArmsRules.Decision plain = ArmsRules.tap(a, Archetype.Move.STRIKE_3, 100, 2, 2, link, 0);
+        h.assertTrue(plain == null || plain.move() == Archetype.Move.STRIKE_1, "unmastered, the finisher ends the chain");
+        ArmsRules.Decision on = ArmsRules.tap(a, Archetype.Move.STRIKE_3, 100, 2, 2, link, 1);
+        h.assertTrue(on != null && on.move() == Archetype.Move.STRIKE_4 && on.step() == 3 && on.cadence() == 3,
+                "mastered, a press after the finisher's blow is the mastery strike, still in full rhythm (" + on + ")");
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        h.assertTrue(ArmsMastery.step(p, a) == 0, "a fresh fighter has no mastery");
+        h.assertTrue(ArmsMastery.count(p, a, ArmsMastery.KILLS[1]) == 2 && ArmsMastery.step(p, a) == 2, "kills count and are remembered");
+        h.assertTrue(ArmsMastery.slipcutBonus(2) > 0 && ArmsMastery.deflect(2) == 1F && ArmsMastery.artAt(5) < ArmsRules.RESONANCE_MAX,
+                "II a longer Slipcut, III the charged deflect, V the Art at 80%");
+        h.succeed();
+    }
+
+    /** Marks: 48 rows, every trigger with every effect; a weapon's Marks act on their trigger; found weapons carry them. */
+    static void marks(GameTestHelper h) {
+        h.assertTrue(Marks.all().size() == 48, "48 Marks (" + Marks.all().size() + ")");
+        java.util.Set<String> pairs = new java.util.HashSet<>();
+        for (Marks.Mark m : Marks.all()) pairs.add(m.trigger() + "/" + m.effect());
+        h.assertTrue(pairs.size() == 48, "each trigger with each effect once");
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        ItemStack sword = p.getMainHandItem();
+        sword.set(ArmsContent.INSTANCE.get(), Marks.Instance.EMPTY.withMark("weight").withMark("leech").withMark("bite"));
+        h.assertTrue(Marks.of(sword).marks().size() == Marks.MAX_MARKS, "at most two Marks");
+        var zombie = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(1, 1, 3));
+        p.hurtServer(h.getLevel(), p.damageSources().generic(), 6F);
+        float hp = p.getHealth();
+        Marks.fire(p, Marks.Trigger.HIT, zombie);
+        Posture post = zombie.getExistingDataOrNull(ArmsContent.POSTURE);
+        h.assertTrue(post != null && post.value > 0, "Weight: a hit's posture");
+        h.assertTrue(p.getHealth() > hp, "Leech: a hit heals");
+        Marks.fire(p, Marks.Trigger.DEFLECT, zombie);
+        var bytes = Marks.Instance.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, Marks.of(sword)).getOrThrow();
+        h.assertTrue(Marks.Instance.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, bytes).getOrThrow().equals(Marks.of(sword)), "the component round-trips");
+        ItemStack found = MarkedDrops.roll(Rank.C.contentLevel, h.getLevel().getRandom());
+        ArmsData.Weapon row = ArmsItems.of(found.getItem());
+        h.assertTrue(row != null && row.tier().equals("C") && !Marks.of(found).marks().isEmpty(), "an Elite's weapon: its rank's tier, with a Mark");
+        LordForged.Forged bell = LordForged.byWeapon("bell_warden_maul");
+        h.assertTrue(Marks.of(LordForged.stack(bell, ArmsItems.item(bell.weapon()))).marks().contains("rebuke"), "a Lord-forged weapon carries its Lord's Mark");
+        h.succeed();
+    }
+
+    /** The Forge: attunement for its price, priming both ways; a Blueprint drawn, and the grid gives it back. */
+    static void forge(GameTestHelper h) {
+        ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
+        p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ArmsItems.item("wildhide_glaive")));
+        p.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(Items.BLAZE_POWDER));
+        h.assertTrue(!ArmsForge.attune(p, dev.awaken.core.Forces.Force.HEAT), "nothing to pay with: no attunement (creative "
+                + p.isCreative() + ", essence " + ArmsForge.count(p, dev.awaken.core.api.CoreApi.ESSENCE_SHARD.get()) + ")");
+        for (ArmsForge.Cost c : ArmsForge.attunePrice(dev.awaken.core.Forces.Force.HEAT)) {
+            if (c.item() != Items.BLAZE_POWDER) p.getInventory().add(new ItemStack(c.item(), c.n()));
+        }
+        h.assertTrue(ArmsForge.attune(p, dev.awaken.core.Forces.Force.HEAT), "with its price, it attunes");
+        h.assertTrue(ArmsForge.attunement(p) == dev.awaken.core.Forces.Force.HEAT && p.getOffhandItem().isEmpty(), "attuned to Heat, the catalyst spent");
+        ArmsState s = ArmsServer.state(p);
+        long now = ArmsServer.now(p);
+        var zombie = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(1, 1, 3));
+        ArmsForge.landed(p, s, zombie, now, false);
+        h.assertTrue(ArmsWeaves.INSTANCE.costScale(p) < 1F, "an attuned hit makes the next power cheaper");
+        ArmsWeaves.INSTANCE.cast(p, "ENERGY", "HEAT", 1);
+        h.assertTrue(ArmsWeaves.INSTANCE.costScale(p) == 1F, "the cast spends it");
+        h.assertTrue(ArmsForge.bladePrimed(p, s, now) && !ArmsForge.bladePrimed(p, s, now), "a Heat power primes the next blow, once");
+        p.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+        for (ArmsForge.Cost c : ArmsForge.blueprintPrice()) p.getInventory().add(new ItemStack(c.item(), c.n()));
+        h.assertTrue(ArmsForge.drawBlueprint(p, "glaive") && ArmsForge.owns(p, "glaive"), "a Glaive Blueprint drawn");
+        Item bp = ArmsItems.BLUEPRINTS.get("glaive").get();
+        h.assertTrue(bp.getCraftingRemainder(new ItemStack(bp)) != null, "the crafting grid gives a Blueprint back");
+        h.assertTrue(!ArmsItems.BLUEPRINTS.containsKey(Arms.LONGSWORD) && ArmsItems.BLUEPRINTS.size() == 15, "every style but the Longsword has one");
+        h.succeed();
+    }
+
     /** The Daggers' backstab and the Katana's draw cut: their rules and their rows. */
     static void styleTraits(GameTestHelper h) {
         h.assertTrue(ArmsRules.behind(0F, 180F) && ArmsRules.behind(90F, -60F), "a striker at its back, or well round it, is behind");
@@ -418,7 +546,7 @@ final class ArmsTests {
         ArmsRules.Decision after = ArmsRules.tap(a, Archetype.Move.STRIKE_3, 100, 2, 3, 100 + fin.total(), 0);
         h.assertTrue(after != null && after.move() == Archetype.Move.STRIKE_1, "after the finisher the chain starts again");
         ArmsRules.Decision mastered = ArmsRules.tap(a, Archetype.Move.STRIKE_3, 100, 2, 3, 100 + fin.total(), 1);
-        h.assertTrue(mastered != null && mastered.move() == Archetype.Move.STRIKE_1, "a finisher has no window: mastery adds a step only through it");
+        h.assertTrue(mastered != null && mastered.move() == Archetype.Move.STRIKE_4, "mastered, the finisher's recovery carries on into the mastery strike");
         h.assertTrue(Math.abs(ArmsRules.motion(s1, 3, false) - s1.motion() * 1.24F) < 1e-4, "three rhythm steps: +24%");
         Archetype.MoveDef heavy = a.move(Archetype.Move.HEAVY);
         h.assertTrue(heavy != null && heavy.charge().isPresent() && heavy.charge().get().perfect(heavy.charge().get().glint() + 2)

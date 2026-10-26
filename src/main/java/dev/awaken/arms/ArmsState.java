@@ -31,6 +31,10 @@ final class ArmsState {
     boolean perfectHeavy;
     /** A Lord-forged Art's move has let go this move (it fires once, at the end of the wind-up). */
     boolean unleashed;
+    /** This move is a finisher reached in full rhythm (Marks' FINISHER). */
+    boolean rhythm;
+    /** Attunement, both ways: an attuned hit primes the next power until then; a power of the weapon's Force the next blow. */
+    long powerPrimedUntil = Long.MIN_VALUE, bladePrimedUntil = Long.MIN_VALUE;
     /** A buffered tap waiting for its window. */
     ArmsRules.@Nullable Decision buffered;
     int bufferedSeq;
@@ -42,7 +46,9 @@ final class ArmsState {
     int aimed = -1, focus = -1;
     long focusSeenAt;
     // a held heavy
-    long chargeStart = -1;
+    /** When the heavy began charging (NO_CHARGE: none; a sentinel no clock can reach, so an early world's ticks never match it). */
+    static final long NO_CHARGE = Long.MIN_VALUE;
+    long chargeStart = NO_CHARGE;
     int chargeSeq = -1;
     // a Plunge armed in a fall: its press, when, the furthest it has fallen; and the landing's power once it strikes
     int plungeSeq = -1;

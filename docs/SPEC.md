@@ -277,7 +277,11 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
 
 ## 12. Cross-module public API (stable)
 
-- `dev.awaken.signal.Signal` — `send(ServerPlayer, SignalWindow)`, `toast(ServerPlayer, Component)`.
+- `dev.awaken.signal.Signal` — `send(ServerPlayer, SignalWindow)`, `toast(ServerPlayer, Component)`,
+  `toast(ServerPlayer, Component, Notices.Tier, String topic)`; `SignalWindow.Builder.tier/topic/moment` (§26).
+  `dev.awaken.signal.Finds` — `tell(ServerPlayer, Find)`: how a new find is told (lesson, moment, first of kind, filed).
+- `dev.awaken.core.api.Notices` (§26) — `enum Tier {CRITICAL, IMPORTANT, AMBIENT}`; client: `claim(tier, topic)` before
+  a module's own HUD line takes the screen, `file(tier, title, line)` into the Journal, `quiet()`, `hold(owner, bool)`.
 - `dev.awaken.progression.Progression` — `profile(Player)`, `grantXp(ServerPlayer, double, XpSource)`, `count(ServerPlayer,
   Identifier, long)`, `markNewThing(ServerPlayer, String what)`, `rank(Player)`, `stat(Player, Stat)`, `contentLevel(rank)`.
 - `dev.awaken.powers.Powers` — `learn(ServerPlayer, Identifier power, int variant)`, `energy(Player)`, `forcesOf(DamageSource)`.
@@ -325,7 +329,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   `Intensity.Signals`' `pressure`, `forced` (0..3) and `arrival`), `current(ServerPlayer, Slot)`, `level(ServerPlayer,
   Slot)` (-1 without a context). `dev.awaken.gates.Gates.pressure(ServerPlayer)` — the floor's pressure stage (0..3).
 - `dev.awaken.core.audio.client.Soundscape` (client, world sound): `hush(Object owner, Vec3 at, float radius, float
-  depth, int ticks)` (birds and insects quiet within the radius; depth = what is left), `register(Conductor.Source)`
+  depth, int ticks)` (birds and insects quiet within the radius; depth = what is left), `hushAt(x, y, z)` (what is left
+  at a point; the wild's visible animals read it), `register(Conductor.Source)`
   (another module's ambient voices, `voices()`, counted in the Conductor's budget of 16), `yieldWeight(Conductor.Yield)`
   (`at(x, y, z)` 0..1: how much of the world bed gives way there; the city), `natureLevel()` (0..1, how much nature
   ambience to let through now; AmbientSounds follows it), `overlay(owner, Identifier soundscape, weight, ticks)` (a
@@ -1432,7 +1437,7 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   horizontal render distance, and its floor sooner, so far water tests its own floor's distance and stays under a real
   water surface whose floor is too far to draw. Far water is never hidden under the real chunks unless the camera is
   under the sea (2026-10-26, Euan's play: sky-coloured slabs on the sea where Sodium skipped a section), and grazing far
-  water takes the horizon's colour only from 1 km out, so near the edge it matches the real water. The planner and the windows count as covered only the ground the
+  water reflects the sky by the horizon at every distance, as Lens's real water beside it does. The planner and the windows count as covered only the ground the
   sphere reaches at a sea floor (40 under sea level) below the camera, in 16-block steps. (2026-10-26: the pale squares
   over the sea after a jump and the pale frame along a flight were these holes, found with `farsight debug 2`, which
   paints masked far terrain red. They were first taken for water walls and for vanilla's chunk fade-in; a Turbo
@@ -1461,7 +1466,11 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   grain. Snow lies by the alpine snow line and by a smooth coldness (each corner's blocks above the game's own cold
   line, info alpha, found by bisecting `coldEnoughToSnow`), both broken into patches over a ~20-block band
   (`AlpineSurface.patches`, the same noise the chunks' snow uses), on tops and as a fringe on risers. Scree and bare
-  rock by slope; water with shallows; forest floor tinted by its crowns, and from about 600 blocks out (full by 2.4 km)
+  rock by slope; water over its own sea floor (2026-10-26, Euan's idea: the real water shows its floor, the far water
+  showed none, so the floor ended at the chunks): the floor lies the water's depth down along the view ray, blocks of
+  sand, gravel in the deep and seagrass patches, anchored to the world, showing by the water's absorption over the path
+  (shallows and steep views, not deep water or grazing ones) and fading out over 700 blocks past the render distance's
+  edge, so the open sea further out is only water; forest floor tinted by its crowns, and from about 600 blocks out (full by 2.4 km)
   a forest is its canopy: crown colour over every face, speckled crown by crown.
 - **Bake** (fragment pass, `FarGpu`): per corner the normal, valley shade, and sunlight: a march toward the sun across
   the ring (40 steps, growing), soft by how far under the ridge line. Changed rings at once, one more every other frame
@@ -1917,6 +1926,59 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   flight is pre-warmed behind the opening card. Life seen from the sky is blocks and particles (lit windows, smoke,
   lamps, boats): citizens draw only within 128 blocks.
 
+- **The Registry ceremony** (2026-10-26; Euan, playing: "they actually physically hand you the Holo band and the paper
+  to sign. You sign first, and then they give you the Holo band. And then you actually have to open your inventory and
+  put the Holo band on"). `OpeningRegistry` steps (schema 2 of `OpeningState`; an older save walks the Registry again):
+  WALK (Bram leads from the bed through the atrium to the Lens: `OpeningPlaces.walk()`, straight lines through the
+  doorways; he walks on when you're within 4.5 of him, waits and nudges past 9, says "Habit, I know" once if you run
+  ahead) → READ (as before) → SIGN (at the desk, the counter's free south end; use signs) → BAND (Bram holds it out over
+  the counter; use takes it) → WEAR (the band is in your hands, the Holo dark until you put it on the wrist slot) → BOOT
+  (the boot on the wrist; the inventory closes itself 0.7 s after it goes on) → BRIEF (his three lines) → OPEN ("Go on,
+  open it": the K prompt and `TipHooks` tip `awaken:holo/open` show only now) → STATUS → ATLAS → POWER → DIRECTIVE →
+  YOURS. Waiting steps nudge every 30 s (at most three); without a client every step moves on by itself.
+  - Bram is staged through `CitizenHooks.stage(level, "bram", at, yaw, act, prop)` (citizens role STAGED; lapses if not
+    renewed for 30 s; a party follows the first player in the Registry) and found with `CitizenHooks.where`. He is the
+    infirmary's officer too (a Watch citizen only if he's busy). Props by item id: `holo_band`, `licence`.
+  - Signing (`opening.client.SigningScene`, world source `opening_sign` 250): the view leans over the paper (×0.7 FOV);
+    the main hand takes the quill (a feather) from the ink pot, dips, writes the player's name across the signature
+    line letter by letter (4 ticks each, glossy while wet, a slanted hand, the cartographer's quill scratch), a flourish,
+    a blot, the quill back in the pot; the off hand holds the paper's corner. Bram stamps it (the blue seal "E" lands in
+    the ring with a thump, his name under it); the paper folds toward you. The licence is a real item,
+    `awaken:hunters_licence` ("Signed: <name>", witnessed by Bram); old paper licences still count.
+  - Taking the band (`opening.client.HandOver`, `opening_take` 250): the hand goes to his, closes on the band, brings it
+    up into view and turns it once, then settles; the server puts it in the selected slot (else anywhere) at the grasp.
+  - **The wrist slot** (`holo.band`): the band is an item, `awaken:holo_band` (a 3D model, tools/art/specs/registry.py);
+    the wrist is one slot beside your figure in the survival inventory, above the off hand (inventory image 77, 44), in
+    vanilla's look or the holo inventory's well. Why not a real slot: 26.3 and NeoForge have no API to add a slot to
+    `InventoryMenu` (it builds its slots in its constructor; `addSlot` is protected and the remote-slot lists are
+    private), so a real one needs a mixin; a slot in our own equipment screen would hide it from where players look.
+    So the wrist is kept on the player (`holo.band.BandState`, attachment `awaken:wrist`, schemaVersion 1, kept through
+    death, synced to whoever can see you), the client draws it and sends its clicks (`awaken:wrist_click`: a click with
+    what the cursor carries, shift off into the inventory, shift on from a menu slot), and the server checks and moves
+    the stack between the menu's carried stack, the inventory and the wrist. Creative's inventory has no wrist slot
+    (use `/awaken band wear`).
+  - Off the wrist the Holo is dark (`core.api.HoloBand.worn`): K opens nothing (an action-bar line says why), no
+    projected look (System cards fall back to flat glass), no level readout, E opens vanilla's inventory (the one you put
+    it on in). The empty wrist breathes blue while the band is in your inventory or on the cursor. Putting it on boots it
+    (`holo.client.HoloBoot`, drawn by `Wrist`): the forearm comes up with the band dark on it, it clicks home, a line of
+    light runs round it face by face, its marks light from the middle out, the diamond ignites with a ring of light
+    spreading off the wrist, a breath, the arm goes down (about four seconds the first time in a session, under two
+    after). Taking it off powers down (a falling chime); the K menu closes if it was open.
+  - Edge cases: skipping (any way) puts a band on the wrist (the one in your inventory if you have it) and gives the
+    licence; a Runner has no band (the opening's start takes it away); a player who never had the slot (an old save, a
+    classic world) finds a worn band in it at login; bands in the inventory at a death are kept and handed back at the
+    respawn (the worn one never leaves the wrist); a dropped band never despawns and doesn't burn. `/awaken band
+    status|wear|dark|give`. GameTests: `holo_band_dark_until_worn`, `holo_band_wearing_toggles`, `holo_band_slot_saves`,
+    and `opening_skip` / `opening_state_machine` check the band.
+  - From Euan's watch of the tours (2026-10-26): Bram reaches the desk round the counter's far (north) end, never across
+    its front where you stand, and is put straight behind it when he has no body near; a staged citizen can't be pushed
+    (so never shoves you); the opening's speech shows one line at a time (a new line replaces the old, no stacking); the
+    key prompt sits just above the speech; the licence goes into the pack so the band lands in your hand.
+  - **Proposed (Euan to confirm): the Atlas reveal right after the band's first K.** The Holo's boot is the natural
+    moment: when the K menu closes the Atlas opens by itself with the run you made this morning (the land prints in, the
+    bronze thread draws itself), and Bram says "Your band keeps a map. The city, the way you've run it." The run is sent
+    as soon as the Registry begins (`Discovery.trail`), so the reveal is ready; `AtlasClient.openReveal()`.
+
 ### 16.5 Citizens (W4)
 - Ledger: 240 records, sliced 12 per tick; ≤ 0.5 ms/tick (G0: p95 0.015–0.04 ms in game). Bodies within ~56 blocks: ≤ 40 per player, ≤ 96 per
   world; walk the street graph; brains tick every max(1, d²/256) ticks; ≤ 4 pathfinding at once; ≤ 1.5 ms/tick.
@@ -2051,6 +2113,13 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     glow); the hover waits until the table stops moving; while the view moves the picture is drawn at 60% resolution
     without cloud shadows, then once at full resolution 0.11 s after it stops. Result (load 5–7, closed 7.35–7.45 ms):
     open and still +0.9–1.0 ms, orbiting +1.5–1.8.
+  - Cloud motion (Euan, 2026-10-26: "jittery … like a 1 FPS animation"): each puff no longer wobbles on its own sine
+    (puffs swinging past each other flipped their draw order and popped); the whole blanket drifts on one slow wind
+    (1.8 blocks a second from the west-south-west at the finest level, scaled with the cloud cell when zoomed out) on a
+    lattice that slides with it, each puff taking its cover from the land under it, blended between cells, so it thins
+    smoothly as it drifts out over known land (zoomed out, gone before it reaches it) and new cloud fills in over the
+    unknown; each puff breathes 5% on its own long phase. Drifting clouds redraw 60 times a second (was 30). Measured
+    on a busy machine (load 12–29): open and still about +1.4–1.7 ms, orbiting about +1.8–2.1.
   - Clouds (same day): a puff's tone comes from its cell's hash (from its drifting position it changed every redraw and
     the blanket flickered); the view redraws every frame while it moves (the 60 Hz cap made the table lag the mouse);
     zooming across a level keeps drawing the built level until the new one is ready round the view (it blinked out).
@@ -2063,7 +2132,11 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   `high_gate_yard`, `bounty_post`, `quartermaster` (the Living Wilds' Hale), `association_board`, `bellwatch_cellar` (the
   melting room under the Knoll's bell tower, for the Living Wilds' "Bell Metal"); null until placed).
   Graph types are added at G1.
-- `CitizenHooks`: `witnesses(ServerLevel, Vec3, double)` (citizen ids), `post(ServerLevel, Identifier event, BlockPos)`.
+- `CitizenHooks`: `witnesses(ServerLevel, Vec3, double)` (citizen ids), `post(ServerLevel, Identifier event, BlockPos)`,
+  `stage(ServerLevel, String named, Vec3 at, float yaw, String act, String prop)` (null `at` releases; 2026-10-26, the
+  Registry ceremony), `where(ServerLevel, String named)`.
+- `HoloBand` (2026-10-26): `worn(Player)`, `fitted(Player)`, `takeAway`, `wear`, `give`, `has` (server), `listen`
+  (server: on/off), `listenClient` (client: the boot finished, or it went dark).
 - `RenownHooks`: `witness(ServerPlayer, Identifier deed, BlockPos, int weight)`, `tier(Player)`, `standing(Player,
   Identifier faction)`.
 - `EconomyHooks`: `balance(Player)`, `pay(ServerPlayer, long, Identifier claimId)` (once per claim), `charge(ServerPlayer,
@@ -4060,17 +4133,50 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   starts half the active before it (`ArmsHands.blowStart`: never before half a tick) and the recovery takes up the
   difference; the move ends when its row says. In first person, in third person (`arms_moves.py` keys the cocked pose
   there too) and in the trails. Before, the hit, its freeze and its red flash came while the blade was still cocked.
-- **First person** (`ArmsHands`, a source on Hands' view layer, `FirstPerson.view`, every styled item): the row's
-  swing from the click frame. A pose is the hand's place on screen (blocks from vanilla's resting hand), the blade's
-  roll in the screen's plane and an optional tilt of the tip forward (a chop, a thrust). The blade stays flat to the
-  eye: a flat item sprite turned about the vertical goes edge-on and vanishes mid-cut (seen in the first tour), so the
-  hand travels across the view instead, on an arc about the shoulder during the blow (eased out hard, with its lunge)
-  and on straight eased lines into the wind-up and home (an arc there lifts the blade back over the top of the view).
-  The Longsword: strike 1 a forehand diagonal (upper right to lower left), strike 2 a backhand sweep, strike 3 an
-  overhead chop, strike 4 and the riposte thrusts, the heavy a rising cut, the Slipcut a low wide sweep, the Execution
-  a raised chop. A held heavy draws back to its start pose and trembles finely as it charges; the guard is vanilla's
-  blocking pose eased in over 2 ticks. Reviewed frame by frame with `tools/autopilot/arms-poses.txt` (the autopilot's
-  `arms pose <move> <0..1>` holds the hands still).
+- **First person** (`ArmsHands`, a source on Hands' view layer, `FirstPerson.view`, every styled item; Euan
+  2026-10-26: "like you're waving the sword instead of slicing... a bit too high"): every move plays a swing baked by
+  the animation lab (tools/art/anim_lab.py `bake` -> `data/awaken/arms/fp_swings.json`, read by `FpSwings`): keys every
+  0.25 ticks of the hand's move from vanilla's rest and its turn about its own place. A cut is a lever, the arm and
+  blade turning as one about a pivot low and right of the view (0.80, -0.64, -0.48 from the eye), in the plane that
+  holds the blade and the cut's direction on the screen (the row's swing.from -> swing.to: a slash flattened 0.6, a
+  chop down, a rising cut up), the blade's flat across that plane so its edge leads (its cutting side toward the motion
+  for an axe, a scythe or a glaive; a symmetric blade takes the side that turns least). On the hit tick (the server's
+  first active tick; mid-blow for a released heavy) the blade crosses the target, a point just under the crosshair
+  (0, -0.10, -1.20), at 78% along its length: seen along its length rising from the frame's lower right, not down it
+  from the hilt. Drawn back to 50-74 degrees before it (heavier rows further), accelerating into the hit, the edge
+  biting and slowing 14-22 degrees past it, a follow-through, then home. Thrusts drive straight along the aim, the flat
+  level. The keys are for the style's forged weapon; a vanilla item in the style takes the same targets from its own
+  hold (`vanilla` turn and grips in the file). A held heavy waits at its drawn-back start and trembles; an armed
+  Plunge at the Plunge's; mirrored for a left main arm. Without keys a move falls back to the row's own slide (the old
+  model). Lab numbers (the review set, 2026-10-26): every slash and chop crosses within 0.11 of the half-frame of the
+  crosshair (most within 0.05; the Chain-blade's and War-staff's long blades +0.11..0.13), edge lead 0.87-1.00 through
+  the blow (before: Longsword strikes 1 and 2 at 0.41 and 0.17, crossing 0.45 above). Test `arms_fp_swings`.
+- **First person, the hold** (tools/art/specs/arms_holds.py; Euan 2026-10-26: "a spear should still feel like you're
+  holding a spear. Right now in first person, it just looks like a sword"): every style is held as that weapon really
+  is, written in view terms (where the business end points: degrees left of ahead and up; its roll about its length;
+  where the hand closes, from vanilla's resting hand; for an axe, a glaive or a scythe the side its working edge faces)
+  and solved for each weapon from its own mesh, so each is seated in the hand. One scale for all (0.5, the Longsword's;
+  the Daggers 0.575 so their blade reads): a spear is as much longer in hand than a longsword as in F5 and a dagger as
+  much shorter, and a long point may leave the view. Longsword up and forward to the left, its flat to the eye
+  (18 left, 52 up); Rapier en garde, the point forward at the target's height (20, 18); Katana two-handed at the
+  middle, the edge up (10, 36); Spear the shaft across the lower view, gripped part way, the head forward and up
+  (24, 22); Glaive the same with the blade higher, its edge in (18, 34); Scythe the snath up, the blade reaching in
+  across the top (8, 64); War-staff at its middle across the body (58, 28); Greatblade two-handed, raised, near the
+  middle (20, 60); Maul two hands low on the haft, the head up (6, 58); Axe the head up, its bit in (10, 58); Daggers
+  short, the point forward (18, 34); Twinblades at the middle, the blades either way across (62, 34); Chain-blade the
+  head forward on its chain (18, 38); Shieldblade the shield to the front, the blade above it (30, 62); Precursor Arm
+  forward like a drawn arm (14, 24); the Gauntlets keep their worn hold. `python3 tools/art/specs/arms_weapons.py
+  holds` rewrites only the holds; the old check that kept every point inside the view (it shrank every style to the
+  Longsword's outline) is gone. The swings are baked from these holds (they start and end at rest), and the lab's
+  holds sheets (docs/combat/anim-lab/holds-*.png) show each style before, after and in F5.
+- **The animation lab** (tools/art/anim_lab.py; SPEC §25, Euan's ask for a way to see the motion): `sheet` / `all`
+  draw each strike's first-person frames as the game composes them (the swing, Hands' view layer, vanilla's rest, the
+  weapon's hold and mesh, 70 degrees) as an onion-skin with the blade tip's path (wind-up blue, blow gold, recovery
+  grey), the hit ringed and the crosshair; under it the tip's height on screen and the edge lead over the move; beside
+  it top and side views of the grip and tip paths against the view cone (`--model old` shows the row's slide).
+  `third` draws the body's clip (arms_moves.py) with the blade in its hand as vanilla's ItemInHandLayer holds it, two
+  views and the third-person edge lead (a thrust: the point lead). `film` overlays the game's own frames (the clip
+  recorder's, in a tour) the same way. Sheets for the review set in docs/combat/anim-lab/.
 - **Third person** (Player Animation Library, optional, through `core.api.PlayerClips`; `ArmsClips`, `ArmsBodies`):
   a full-body clip per move from tools/art/specs/arms_moves.py, its keys on the timing table's rows (cocked at the
   wind-up's end, through at the active ticks' end, home by the endTick), each with a bent twin; the guard held while
@@ -4295,6 +4401,45 @@ Glaive, Glacial Vow: a Frost nova, deep slow), Mirror Knight (C, Shieldblade, Re
 Unit Zero (C, Precursor Arm, Zero Point: a Gravity vortex pulling in), Sleeper (C, Katana, Waking: a Spirit ring that
 all but stops them), Sky Leviathan (B, Twinblades, Storm Eye: a Charge nova that lifts them), Hollow Herald (A,
 Greatblade, Event Horizon: a Gravity vortex, darkness, the strongest pull). Test `arms_lord_forged`.
+Each Lord-forged weapon also carries one Mark of its Lord (Bell Warden Rebuke, Mother of Spores Feast, Ember Tyrant
+Chain Reaction, Hive Regent Windrunner, Root Saint Steady Breath, Drowned Archivist Echo Return, Gearwright Colossus
+Earthsplitter, Glass Serpent Counterspark, Lantern Broker Harvest, Abbot of Frost Parry Ward, Mirror Knight Mercy, Unit
+Zero Overcharge, Sleeper Phantom Cut, Sky Leviathan Crescendo, Hollow Herald Sunder).
+
+**Mastery** (S7, `ArmsMastery`): five steps for each style, from the kills made with it (20, 60, 150, 350, 800; a kill
+of a foe with the style in the main hand; kept in `awaken:arms_memory` `kills`, schemaVersion 3). Each adds to the same
+presses: I the chain's mastery strike (the style's `masteryChain`, the 4th or the 5th: a press from 2 ticks after the
+finisher's blow until its recovery ends chains on, a chain in full rhythm staying in it, so that strike can be a
+full-rhythm finisher too), II a Slipcut window 3 ticks longer, III a charged deflect (posture to the attacker and the
+deflect's Resonance ×1.5), IV every Resonance gain ×1.2, V the Art at 80 Resonance instead of 100. A new step is named
+by the System ("MASTERY · Longsword II · a longer Slipcut"); the steps go to the client (`arms_mastery` payload, by
+style index) for the prediction of I, II and V, and show under a weapon's name. Dev: `/awaken arms mastery <style>
+<kills>`. Test `arms_mastery` (and `arms_timeline`'s mastered finisher).
+
+**Marks** (S7, `Marks`): 48, every trigger with every effect, in `data/awaken/arms/marks.json` (written by
+tools/arms/marks.py; read once on both sides, like the styles). Triggers: a landed hit, a finisher in full rhythm, a
+deflect, a perfect dodge, a Break, a kill, a blow guarded (blocked, not deflected), a perfect heavy. Effects: a rider (×
+the fighter's attack as a second blow of the weapon's attuned Force, else the Mark's own, else plain; on a Lord at most 2%
+of its health), posture (points; a Break's: the Break held longer), a heal (share of max health), power energy, Speed I
+or Resistance I (ticks). A kill's rider and posture go to the foes within 4 blocks. A weapon carries at most two, with
+its attunement, in the item component `awaken:arms` (`Marks.Instance`, schemaVersion 1, saved and synced, moves with the
+item). Until the named weapons (S9), an Elite a player kills drops a forged weapon of its rank (the content level's) in a
+style at random 4% of the time (a Warden 10%), glowing, with one Mark (a second 20% of the time), and the System names
+it ("MARKED · Gatewrought Glaive · Rebuke"). Tooltips list each Mark and what it does. Dev: `/awaken arms mark <id>`.
+Test `arms_marks`.
+
+**The Forge** (S7, `ArmsForge`): sneak and use Hearth's Forge (any placed `awaken:forge`; a plain use stays Hearth's
+tempering and upgrades). Holding one of our weapons: attune it to a Force named by the catalyst in the off hand (Blaze
+Powder Heat, a Copper Ingot Charge, an Ender Pearl Gravity, a Ghast Tear Spirit, Packed Ice Frost) for 6 essence, a
+Core Shard and the catalyst; re-attuning replaces it. An attuned weapon's Mark riders take its Force, and it primes both
+ways: a landed hit makes the next power within 3 s cost 15% less (with a Weave's 30%: ×0.7×0.85), and a landed power of
+its Force makes the next blow within 3 s land ×1.25 with the Force's touch (Heat burns 3 s, Frost slows, Charge 6
+posture, Gravity lifts, Spirit heals 1.5). With an empty hand: the Blueprints, one design each use in turn, each for 4
+paper, 2 iron and an essence shard. Every style but the Longsword needs its Blueprint at the crafting table: the
+Blueprint sits in a free cell of the style's own shape (tools/art/specs/arms_weapons.py `blueprint_pattern`; `python3
+tools/art/specs/arms_weapons.py recipes` rewrites only the recipes) and comes back out of the grid. Blueprint art: the
+style's Wildhide silhouette in white line on blueprint paper (tools/arms/blueprints.py). Dev: `/awaken arms attune
+<force>`. Test `arms_forge`.
 
 **Item level** (PLAN §7.7, decided by the sim): a weapon's level is its tier. The forged Longswords' damage climbs by
 tier (4.5 to 9.5) and melee already rises with the player's strength, so on-level melee keeps pace with a Lord's
@@ -4305,3 +4450,213 @@ in 1–2 hits from D up) and let a Tank win at C and A. No extra level is carrie
 kill switch, sounds, stance rules, clips, the Art, the Plunge, assets; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
 `audio_events_resolve` covers the kit's files and subtitles. S2/S3: `arms_hand_pose` (the swing on Hands' view layer),
 `arms_assets` (the streams), `mobs_bolt_class`, `mobs_answered_no_burn`, `mobs_broken_idle`.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 26. How AWAKEN tells you things (the notification director, discovery, the rift; Euan's playtest 2026-10-26)
+
+Euan, at level 3 in a forest: a lair rumour, "Something tore open nearby" and a "New creature" toast whose hint named a
+plant arrived seconds apart; he hadn't looked at anything, barely heard the rift and could hardly see it. The audit
+(26.6) found ~400 Signal call sites, a dozen client HUD channels that ignore each other, and no global pace at all.
+The rules below replace that.
+
+### 26.1 Principles
+- **World first, HUD second.** A happening announces itself in the world first: sound with distance and direction,
+  light, motion. Text is the last resort. A rift's word follows its tear by 2.5 s (`AnomalyDirector.WORD_AFTER = 50`).
+- **One director.** Every System message that isn't a decision, and every module's own HUD line that wants the
+  player's eye, goes through the Signal client's `Herald` (pure pacing logic in `signal.ui.Pace`, GameTested).
+- **Discovery is earned and understood.** Intent, never proximity alone; the first find teaches; the rest are quiet.
+- **Nothing is lost.** What isn't shown is filed in the Journal (K), and finds stay in the Codex for good.
+
+### 26.2 Tiers, pace and context (`core.api.Notices`, `SignalWindow.tier/topic/moment`)
+- **CRITICAL** bypasses everything: a decision (any window with an action), a WARNING kind, a GATE panel, a dangerous
+  region's caption, a level-up pane, an Ascent gift scene (those two claim the moment so what follows waits its gap).
+- **IMPORTANT** (the default for everything else) is paced. **AMBIENT** never interrupts at Standard: filed with a cue.
+- A **moment** (`Builder.moment()`): a first of its kind, a wonder, the first rift. Shown as the centre banner
+  (`signal.client.Moment`: spaced label = the window's footer, a line of light, the name ×1.8, ≤2 lines; ~5 s +6 ticks a
+  word, at most +6 s; sound `awaken:ui.moment`), at 20% of the screen height; shows at every density.
+- **Pace** (ticks; density `notifications` in `awaken-client.toml`, `AwakenConfig.Client.NOTIFICATIONS`):
+
+  | density | gap | calm gap | burst / window | ordinary waits | moment waits | IMPORTANT | AMBIENT |
+  |---|---|---|---|---|---|---|---|
+  | MINIMAL | 600 | 900 | 1 / 2400 | 600 | 3600 | filed | filed |
+  | STANDARD (default) | 160 | 280 | 3 / 1800 | 900 | 3600 | shown | filed |
+  | GUIDED | 80 | 120 | 5 / 1200 | 1200 | 3600 | shown | shown |
+
+  Calm = no fight for 60 s. Waiting messages of the same `topic` merge into one toast ("Mossback · +2"). A message that
+  waited past its wait is filed, not shown late. Moments go first, then the higher tier, then the oldest.
+- **Held** (nothing paced shows): any screen open, a fight (hurt in 5 s or a hostile within 8), `UiHooks.focus > 0.2`,
+  a choice card or info panel up, a moment up, a scene holding (`Notices.client().hold`, the Ascent gift scene), not yet
+  awakened, or the world's first 5 minutes (`Herald.SETTLE`; onboarding speaks through story lines and its own HUD).
+- **Responses and runs stay live.** An *untagged* message (IMPORTANT, no topic, not a moment: most of the ~400 call
+  sites) that arrives within 60 ticks of the player's own click (attack/use/pick, or a click in a screen) answers it and
+  shows at once; inside a gate run the server raises untagged messages to CRITICAL (`Signal.send/toast`). The pace is
+  for what arrives unasked.
+- **Look and place per tier:** CRITICAL = the choice/warning card or panel (right slot) and the warning sound;
+  IMPORTANT = the System toast, top right, chime; moment = the centre banner; AMBIENT = the find cue (below).
+- **Client lines through the director:** `Notices.client().claim(tier, topic)` before showing (true counts as shown);
+  `file(...)` what can't wait. The region caption claims IMPORTANT (CRITICAL when dangerous), waits up to 200 ticks,
+  then files "Entered · <name>"; the dangerous region's toast is IMPORTANT, topic `danger`.
+
+### 26.3 Discovery (`signal.Finds`)
+- **Intent.** A creature is studied when the crosshair rests on it (its angular size + 3°) for 3 looks in a row, 5
+  ticks apart (~0.5 s), within 24 blocks (48 for a named beast), in line of sight; or when it is hit or touched
+  (`AttackEntityEvent`, `EntityInteract`). Proximity alone never counts, except something big in plain view: a named
+  beast or a creature ≥2.5 blocks tall, within 16 blocks and within 60° of the view (`Sightings`). Biomes and
+  happenings are big and in plain view: standing in one, witnessing one counts (but they never carry the lesson).
+  Lairs (reach the den), landmarks and gates (reach them) are found by going there.
+- **Telling** (`Finds.tell(player, Find)` after `Progression.discover` returned true):
+  1. the first find ever made on purpose (`intent`) is the **lesson**: a moment with the name, its hint, and "A
+     discovery. You studied something new: it pays a little XP, and what you learned is kept in your Journal and Codex
+     (K). Look closely at what you meet." (counter `awaken:finds_taught`);
+  2. a **big** one (a named beast; later wonders) is a moment with its own label;
+  3. the **first of each kind** (`awaken:finds/<kind>`: creature, biome, happening, lair, landmark, gate) is an
+     IMPORTANT toast ending "kept in your Journal (K)";
+  4. **every later one** is AMBIENT: filed with the cue.
+- **The find cue** (`signal.client.FindCue`): a small diamond blooms 13 px right of the crosshair with the name in a
+  whisper beside it (5 + 34 + 16 ticks), and `awaken:ui.find` at 0.32 (at most every 60 ticks); several at once read
+  "N finds · Journal".
+- **The Journal** (`signal.client.Journal`, Status tab, order −10): filed lines newest first ("◆" unread), 60 kept per
+  session, "JOURNAL · N NEW" until the K screen has shown them. The Codex keeps the finds themselves.
+- A lair rumour ("Heard of · …") is AMBIENT, topic `lair` (the Now tracker points at it).
+
+### 26.4 "Nearby" alerts and the rift
+- Anomaly words are IMPORTANT, topic `nearby` (merged, paced, never several at once), sent 50 ticks after the anomaly's
+  own cue, and dropped if it ended meanwhile. The first rift a player meets is a moment ("Something tore open", label
+  "Rift", what it is and how to close it).
+- **The tear's sound:** `anomaly.rift_open` is our own `sfx_rift_tear` (tools/art/specs/audio_discovery.py: air pulled
+  in, a falling rip with crackle, a sub boom 62→27 Hz, glass splinters, a crackling tail; mono), a fixed-range event
+  heard to 128 blocks with linear falloff (`attenuation_distance` 128). Before: vanilla respawn-anchor sounds that a
+  variable-range event at volume 3 sent only within 48 blocks of a tear that opens 32–96 away.
+- **While open:** the near crackle bed (40 blocks, as before), a new far bed `amb.rift_rumble` (`amb_rift_rumble`,
+  started within 72 blocks, attenuation 72), the hum, and a hush of birds and insects within 40 blocks to 20%
+  (`Soundscape.hush`, renewed every 40 ticks).
+- **The look** (`world.anomaly.client.RiftGlow`; the CityGlow way: one additive lightning-blend pass, depth-tested, no
+  depth written, Lens-friendly; replaces the 0.8 × 3.6 textured quad and the vanilla portal particles): a jagged crack
+  7 blocks tall (16 nodes whose edges crawl) in three ribbons (violet glow ×2.8, magenta body, white core ×0.3), four
+  flickering side cracks, a halo of radius 6.5, a violet pool of radius 11 on the ground, a faint column 56 blocks into
+  the sky (so it reads against the sky from 60 blocks by day), 28 motes spiralling in, the core at its foot. It opens
+  over 30 ticks with a flash and a ring running out along the ground, flares when struck, folds as it closes. Drawn to
+  160 blocks.
+
+### 26.5 Tests
+`notice_pace_gap_and_burst`, `notice_critical_bypasses_queue`, `notice_ambient_files_to_journal` (signal),
+`notice_discovery_needs_intent` (fauna: beside the crosshair is never a find, a glance isn't, a rest is; the first find
+teaches). `fauna_sighting_discovery` studies for `Sightings.DWELL` looks.
+
+### 26.6 The audit (2026-10-26) and what is still outside the director
+Routed: every Signal toast/panel/window (server tier tags: anomalies, creatures, biomes, happenings, lairs, landmarks,
+gates, crafts, the danger toast; the rest default IMPORTANT/CRITICAL by kind), the region caption, the level pane, the
+Ascent gift scene. What Euan saw: reaching level 3 (and a first sighting) queues lair rumours for every family met
+(`Lairs.onLevel`) → a toast "Heard of · <lair>"; a rift opened (toast at once, sound to 48 blocks only); a creature
+in the 60° cone at 24 blocks counted as a sighting and its toast's hint named plants ("Plants mushrooms", "Crops it
+hovers over grow"). Not yet routed (follow-ups): the vanilla action bar (102 server call sites, three throttled), boss
+chat lines, the XP pop, Ascent notes and the Vow scene, citizens' speech; TipHooks has no implementation (the onboarding
+spec's `TipHud`/`TipRules` were never built), so Carillon's and the Ascent's tips show nothing today.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 29. Wild life (the wild's small ambient life, client-only; Euan 2026-10-26, built without an approval page)
+
+Euan, after a forest walk: "I barely saw any insects or birds, so the sounds felt a bit off ... when you're exploring and
+walking in the forest, it should feel very real, very alive. Not too much either." Module `wildlife` (package
+`dev.awaken.wildlife`, client half `wildlife.client`). Everything that moves lives on the client: the server registers
+one entity type (`awaken:wild_critter`, never saved, never tracked, never summoned) and 18 sound events, and pays
+nothing. Nothing is huntable. Herds, packs, roosts and deer are the Living Wilds' (§21) server mobs; this layer never
+makes a deer.
+
+**Who.** Twelve bodies, hero rigs with the life layer (§23), from `tools/art/specs/wild_fauna.py` (textures
+`textures/entity/wild/`, data `wildlife.client.WildFaunaData`): songbirds (robin, blue tit, chaffinch, wren, blackbird;
+drawn at 0.42), woodpeckers (great spotted, green), crows, owls (tawny, barn; eyes catch the light at night), buzzards
+and kestrels, gulls (Carillon's gull design), ducks (mallard drake and hen), grey herons, squirrels (red, grey),
+rabbits, red foxes (eyeshine), frogs. Folded wings show their upper side; a spread wing hangs from the shoulder (the
+spec's `FOLD` and wing lift). Seven insects drawn as real little bodies from one sprite sheet (`insects.png`): butterflies
+(white, brimstone, peacock, common blue), bees, dragonflies (blue, green), fireflies (Lumen Forest's burn blue), moths,
+gnat swarms, water striders; plus ripples on water and far flocks (finches by day, a small murmuration of starlings at
+dusk) crossing the sky.
+
+**Where and how many** (`Density`, pure; numbers are first numbers, tuned on tours). Each chunk near the player is read
+once from the client's own heightmaps (`Sites`, one chunk a tick, re-read after 2 minutes): leaf tops (and the canopy's
+edge), fences and walls, bare rock, trunks (a log under the canopy with 2+ blocks of clear bark), open ground, flowers,
+still water, its shore (land beside water, facing it), lights. Expected animals per chunk = peak (per kind) × the
+family's affinity (the 16 sound families, `#awaken:soundscape/<family>`) × the hour × the weather × the cold × the
+habitat × an Awakened biome's flavour (Elderwood: woodpeckers ×2, owls ×1.5; Lumen Forest: fireflies ×1.6; Glass
+Steppe and Shattered Highlands: raptors ×1.6; Mirror Marsh: herons and dragonflies ×1.6). Peaks: songbird 0.55,
+woodpecker 0.06, crow 0.12, owl 0.05, raptor 0.006, gull 0.5, duck 0.6, heron 0.12, squirrel 0.22, rabbit 0.25, fox
+0.025, frog 0.8; butterfly 2.5, bee 1.5, dragonfly 1.5, firefly 7, moth 2.5 a light, gnats 1 swarm, strider 2. The
+hours (0 = 06:00): songbirds busiest at dawn (×1.5) and dusk, 0.75 at noon, none from 19:20 to 04:20; owls, moths and
+fireflies at night (fireflies from 18:12, full by 20:00); rabbits and foxes at dawn and dusk; raptors 07:30-17:00;
+butterflies 07:30-16:30; gnats at dusk. Rain: insects none (none in thunder), small birds ×0.4 and sheltering (fluffed
+up, no song), raptors none, frogs ×1.5. Cold land (biome temperature < 0.15): no insects or frogs, songbirds ×0.5.
+Targets the test holds: a temperate forest at noon 0.2-0.6 songbirds a chunk (one to three in view), a flowery meadow
+1-3 butterflies a chunk, nothing but owls and fireflies in a forest at night. The count is the expected number made
+whole by the chunk's fixed draw (`Density.count`), so a place keeps the same animals as the hours turn and looks alike
+when you return; each animal's spot and coat come from the chunk's draw too.
+
+**Reach and caps** (`WildKinds`, `Census`): made within (blocks) songbird 40, woodpecker 40, crow 64, owl 52, raptor 120,
+gull 80, duck 56, heron 64, squirrel 32, rabbit 40, fox 56, frog 22; butterfly 28, bee 16, dragonfly 28, firefly 40,
+moth 24, gnats 24, strider 16; dropped 16 past that (out of sight). At most 9 songbirds, 2 woodpeckers, 4 crows, 2 owls,
+2 raptors, 6 gulls, 6 ducks, 2 herons, 3 squirrels, 4 rabbits, 1 fox, 4 frogs, 14 butterflies, 10 bees, 8 dragonflies,
+64 fireflies, 12 moths, 5 swarms, 10 striders; 18 bodies and 140 insects in all. Chunks are walked nearest first, so the
+caps keep what is close. Never inside Carillon's walls (+24 blocks; `CityLife.inside`, the city's animals are B3b's),
+never outside the overworld.
+
+**Never popping.** A body appears only out of view or 26+ blocks off (48 for one in the sky); insects fade in and out.
+An animal no longer wanted leaves the way it would (a bird flies off, a rabbit bolts, a frog plops in, a squirrel climbs
+away) and is dropped once out of sight.
+
+**Seen, not just near** (the tours, 2026-10-26): in a forest the census logged nine songbirds near and none in view,
+all on the canopy's roof, above the leaf ceiling a walker stands under. So songbirds take the lowest of three perches
+(the outer rings of the trees' lower leaves, fences), and by day 75% of those in a closed forest (45% under an open
+canopy) start on the forest floor, forage there, flit low through the understory to another patch of floor (the flight
+hugs the ground ahead instead of climbing over the trees), and only now and then go up. Insects are drawn near twice
+life size (a butterfly 0.3 blocks a wing, a dragonfly 0.46 long), as the birds are: at life size a butterfly was a
+few pixels at ten blocks. Fireflies glow two fifths of their rhythm with a 0.75-block halo.
+
+**Behaviour** (`Birds`, `Critters`, `Insects`). Songbirds never still on a perch (glances, tail and wing flicks, a bow,
+hops along the branch), sing from it (the dawn chorus three times as often), preen, flit to the next tree in a bounding
+flight (three beats, wings shut, a dip), drop to forage on open ground and hop about pecking. Woodpeckers hitch up a
+trunk, peck, drum (more in the morning), slip round to the far side as you come within 9, fly off at 3. Crows stride,
+peck and caw on open ground, wary at 10. Owls perch at night, follow you with their heads, hoot, and fly off without a
+sound. Buzzards circle on a drifting thermal 24-40 above the ground, banked, beating now and then, mewing; kestrels drop
+to hover over the meadow (head still, quick shallow beats) and stoop. Gulls ride the air over the shore. Ducks paddle,
+dabble tail up, preen, quack, leave rings, paddle away from you and fly off at 3.5. Herons stand like statues at the
+shore, stalk, strike, turn alert at 20 and leave at 12 with a croak and slow heavy wings. Squirrels run up and down
+their trunk in bursts, scold, forage at its foot and race back up when you come. Rabbits graze, groom, sit up tall
+with ears high at 11 and bolt in a zigzag at 5. A fox trots its ground at dusk, sits and watches you, listens and
+pounces on something in the grass, curls up at night, slips away at 10. Frogs croak at dusk and in the rain and plop
+into the water at 3.5. Flushes are away from you, a burst of wings; sprinting doubles the distance, sneaking halves it.
+Birds bank into their turns and pitch with their climb. Butterflies flutter (seven beats a second) between flowers and
+settle with wings opening and closing slowly; bees zip flower to flower; dragonflies hover and dart low over still
+water; fireflies drift and blink each to its own rhythm (some answering with a second flash) in an additive glow pass;
+moths circle lamps; gnat swarms bob by the water at dusk; striders skate in strokes, a ring at each.
+
+**Sound** (`WildSound`; voices from `tools/art/specs/audio_wild.py`, synthesised, mono, placed; 18 events `wild.*`): a
+call comes from the animal you can see calling, its clip in step: songs (robin, tit, finch, wren; a blackbird sings the
+robin's phrases lower), contact chips, a flush's whirr, big wings, the woodpecker's drum and taps, caws, the buzzard's
+mew, hoots, quacks, the heron's croak, a squirrel's scolding, a frog's plop (its croak is vanilla's `entity.frog.ambient`,
+a bee's buzz vanilla's `entity.bee.loop`), rustles; the gulls use Carillon's `city.gull.call`. At most 6 at once and 3
+new a second, counted in the Conductor's voice budget, quieter where the world is hushed. AmbientSounds' bed plays as
+before; these sit on top. Crickets at night: three voices placed in the grass 7-16 blocks off, each silent while you walk
+within 6 of it and singing again 6-10 s after. Predators: every monster within 24 of the player hushes the birds and
+insects within 24 of it to a quarter (the Conductor's hush, renewed every second; docs/sound/PLAN.md's reaction), and
+every visible animal reads `Soundscape.hushAt`: no song below 0.67, leaving below 0.35, none made below 0.6 (so open
+gates and the Living Wilds' happenings quiet them too).
+
+**Budget.** Client only; the server pays nothing. Per tick: one chunk read (256 columns, three heightmaps), the brains
+of at most 18 bodies, the insects' arrays (no allocation per tick or frame; the director's half-second pass allocates
+nothing but a new animal), at most 6 sounds. Per frame: at most 18 small hero models, about 900 insect quads and a few
+hundred glow quads, culled by distance and view.
+
+**API additions** (§12): `core.audio.client.Soundscape.hushAt(x, y, z)` (what is left of birds and insects at a point);
+`citizens.client.CityLife.inside(x, z, margin)` (within Carillon's wall plus a margin). Client command
+`/awaken wildlife [on|off|count|dial <x>|lineup [clip|insects|off] [variant]]` (`count`: what's near, what the camera
+can see, and where the songbirds are; `lineup`: every body, or every insect, posed before the camera on a stage); tours
+log the census every 30 s as `[wildlife] in view N of M near: ...`. Tours: `tools/autopilot/wild-life.txt` (the stage by
+day and night, then forest, rain, flowers, river, Mirror Marsh, Lumen Forest), `wild-forest.txt` (the quick loop).
+
+**Tests** (`wildlife_`): `wildlife_density` (the tables reach every sound family, the hours run in order, the walk's
+targets hold, rain and cold clear the insects, a chunk's draw is fixed and the land averages the expected number),
+`wildlife_census` (the caps hold over 400 rich chunks at four hours; nothing is made inside the city and anything there
+leaves; nothing out of reach), `wildlife_rigs` (every rig parses and carries every clip its brain plays, every coat,
+blink and the insects' sheet exist); `audio_events_resolve` covers the 18 events.

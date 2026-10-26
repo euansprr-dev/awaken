@@ -29,7 +29,8 @@ import java.util.function.Supplier;
 /**
  * Ambience beds, looped at their source while you are near and eased in and out (the Ambient/Environment slider):
  * <ul>
- *   <li>a rift tear's crackle and the tearing drone under it (the anomaly's own hum still pulses on top);</li>
+ *   <li>a rift tear's crackle and the tearing drone under it (the anomaly's own hum still pulses on top), and further out
+ *   its low rumble, so an open rift is heard before it is seen (SPEC §26.4);</li>
  *   <li>a shimmer grove's glitter and breath;</li>
  *   <li>a falling star's whistle, following it down, and the hiss and ticking of the meteor while it cools (sealed),
  *   with a last settling sound when it opens;</li>
@@ -45,7 +46,7 @@ final class Ambience {
             FALLING_STAR = Awaken.id("anomaly_falling_star"), STAR_BLOCK = Awaken.id("anomaly_fallen_star");
 
     /** Start within this distance of the source, stop beyond STOP (blocks). */
-    static final double RIFT_START = 40, GROVE_START = 30, STAR_START = 26, WELL_START = 44, RUIN_START = 36, SLACK = 8;
+    static final double RIFT_START = 40, RUMBLE_START = 72, GROVE_START = 30, STAR_START = 26, WELL_START = 44, RUIN_START = 36, SLACK = 8;
 
     private static final List<Entity> ENTITIES = new ArrayList<>();
     private static List<AudioNet.Emitter> emitters = List.of();
@@ -88,6 +89,7 @@ final class Ambience {
         Vec3 me = mc.player.position();
         ENTITIES.removeIf(Entity::isRemoved);
         for (Entity ent : ENTITIES) {
+            if (BuiltInRegistries.ENTITY_TYPE.getKey(ent.getType()).equals(RIFT)) rumble(ent, me);
             if (PLAYING.containsKey(ent)) continue;
             boolean rift = BuiltInRegistries.ENTITY_TYPE.getKey(ent.getType()).equals(RIFT);
             double start = rift ? RIFT_START : GROVE_START;
@@ -122,6 +124,18 @@ final class Ambience {
             if (b.isStopped() || (gone && !mc.getSoundManager().isActive(b))) done.add(key);
         });
         for (Object k : done) PLAYING.remove(k);
+    }
+
+    /** The far layer of an open rift (its own key beside the near bed). */
+    private record Rumble(Entity rift) {}
+
+    private static void rumble(Entity ent, Vec3 me) {
+        Rumble key = new Rumble(ent);
+        if (PLAYING.containsKey(key) || ent.position().distanceTo(me) > RUMBLE_START) return;
+        Bed b = new Bed(AudioSounds.AMB_RIFT_RUMBLE.get(), true, () -> ent.position().add(0, 1.0, 0), () -> 1.0, 0.04F);
+        b.stopAt = RUMBLE_START + SLACK;
+        b.alive = () -> !ent.isRemoved();
+        start(b, key);
     }
 
     /** The meteor cools while sealed; when it opens, a last settling sound, once. */

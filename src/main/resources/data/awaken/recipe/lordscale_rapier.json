@@ -5,12 +5,13 @@
  "key": {
   "C": "#awaken:hunter_core_a",
   "X": "awaken:lordscale_blade",
-  "B": "#awaken:hunter_bind_a"
+  "B": "#awaken:hunter_bind_a",
+  "P": "awaken:rapier_blueprint"
  },
  "pattern": [
-  "X",
-  "B",
-  "C"
+  "XP",
+  "B ",
+  "C "
  ],
  "result": {
   "id": "awaken:lordscale_rapier"

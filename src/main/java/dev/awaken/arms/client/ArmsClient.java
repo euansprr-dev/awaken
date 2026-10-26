@@ -76,6 +76,7 @@ public final class ArmsClient {
         modBus.addListener(RegisterRenderPipelinesEvent.class, WeaponPipelines::onRegister);
         modBus.addListener(RegisterSpecialModelRendererEvent.class, e -> e.register(WeaponRenderer.TYPE, WeaponRenderer.Unbaked.MAP_CODEC));
         var bus = NeoForge.EVENT_BUS;
+        bus.addListener(ArmsTooltip::onTooltip);
         bus.addListener(EventPriority.HIGH, InputEvent.InteractionKeyMappingTriggered.class, ArmsPredict::onKey);
         bus.addListener(ClientTickEvent.Post.class, e -> {
             ArmsPredict.tick();
@@ -96,6 +97,7 @@ public final class ArmsClient {
         event.register(ArmsPayloads.Result.TYPE, (msg, ctx) -> ArmsPredict.onResult(msg));
         event.register(ArmsPayloads.Seen.TYPE, (msg, ctx) -> ArmsPredict.onSeen(msg));
         event.register(ArmsPayloads.Woven.TYPE, (msg, ctx) -> ArmsCodex.onWoven(msg));
+        event.register(ArmsPayloads.Mastery.TYPE, (msg, ctx) -> ArmsPredict.onMastery(msg));
     }
 
     private static void onExtensions(RegisterClientExtensionsEvent event) {

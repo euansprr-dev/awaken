@@ -5,11 +5,12 @@
  "key": {
   "C": "#awaken:hunter_core_e",
   "X": "awaken:wildhide_blade",
-  "B": "#awaken:hunter_bind_e"
+  "B": "#awaken:hunter_bind_e",
+  "P": "awaken:scythe_blueprint"
  },
  "pattern": [
   "XX",
-  " C",
+  "PC",
   " B"
  ],
  "result": {

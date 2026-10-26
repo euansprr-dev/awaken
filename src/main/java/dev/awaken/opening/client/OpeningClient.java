@@ -103,6 +103,7 @@ public final class OpeningClient {
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> reset());
         bus.addListener(net.neoforged.neoforge.client.event.ToastAddEvent.class, OpeningClient::onToast);
         bus.addListener(net.neoforged.neoforge.client.event.ScreenEvent.Render.Post.class, OpeningClient::overLoading);
+        RegistryScene.init();
     }
 
     static void reset() {

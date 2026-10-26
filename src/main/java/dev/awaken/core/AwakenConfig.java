@@ -80,6 +80,14 @@ public final class AwakenConfig {
                 .comment("Show the Horizon line under the Now tracker: the nearest place worth exploring, and now and then one you",
                         "can't reach yet.")
                 .define("horizonLine", true);
+        /** How much the System tells you unasked (SPEC §26). */
+        public enum Notifications { MINIMAL, STANDARD, GUIDED }
+
+        public static final ModConfigSpec.EnumValue<Notifications> NOTIFICATIONS = C
+                .comment("How much the System tells you unasked. STANDARD: decisions, danger and what you earned, spaced out;",
+                        "small finds go quietly to the Journal (K). MINIMAL: only decisions, danger and firsts. GUIDED: small finds",
+                        "show too, with shorter gaps.")
+                .defineEnum("notifications", Notifications.STANDARD);
         public static final ModConfigSpec.DoubleValue SYSTEM_SCALE = C
                 .comment("Size of System cards, story lines and the Now tracker (toasts stay vanilla-sized).")
                 .defineInRange("systemScale", 1.0, 0.75, 1.5);

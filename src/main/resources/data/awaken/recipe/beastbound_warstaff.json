@@ -5,10 +5,11 @@
  "key": {
   "C": "#awaken:hunter_core_d",
   "X": "awaken:beastbound_blade",
-  "B": "#awaken:hunter_bind_d"
+  "B": "#awaken:hunter_bind_d",
+  "P": "awaken:warstaff_blueprint"
  },
  "pattern": [
-  "  C",
+  "P C",
   " B ",
   "X  "
  ],

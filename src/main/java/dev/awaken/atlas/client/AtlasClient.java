@@ -152,6 +152,25 @@ public final class AtlasClient {
         return open(20f, 52f, 1f);
     }
 
+    /**
+     * The Registry reveal opened for you (SPEC §16.4, the Registry ceremony: right after the band's first K, as a
+     * proposal): the table opens and the run you made draws itself across the city. False (nothing opens) without a
+     * recorded run or with a screen up.
+     */
+    public static boolean openReveal() {
+        Minecraft mc = Minecraft.getInstance();
+        AtlasState a = AtlasState.get();
+        if (mc.player == null || mc.gui.screen() != null || a.trail.length < 6) return false;
+        a.revealPending = true;
+        AtlasScreen.open(20f, 52f, 1f);
+        return true;
+    }
+
+    /** Whether the Atlas table is the open screen. */
+    public static boolean isOpen() {
+        return Minecraft.getInstance().gui.screen() instanceof AtlasScreen;
+    }
+
     private static AtlasScreen screen() {
         return Minecraft.getInstance().gui.screen() instanceof AtlasScreen s ? s : null;
     }

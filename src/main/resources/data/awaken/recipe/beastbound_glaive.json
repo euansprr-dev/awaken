@@ -5,10 +5,11 @@
  "key": {
   "C": "#awaken:hunter_core_d",
   "X": "awaken:beastbound_blade",
-  "B": "#awaken:hunter_bind_d"
+  "B": "#awaken:hunter_bind_d",
+  "P": "awaken:glaive_blueprint"
  },
  "pattern": [
-  " X",
+  "PX",
   " C",
   "B "
  ],

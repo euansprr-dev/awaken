@@ -1,0 +1,175 @@
+# Wild life (SPEC "Wild life"). 1. The studio on a grass stage in the sky: every body idle and in flight, every insect,
+# by day and by night (eyeshine, the fireflies' glow). 2. The land: a forest at dawn, noon and night, the forest in rain, a
+# flower forest at noon, a river at dusk, Mirror Marsh at dusk, Lumen Forest at night. Each stop logs the census
+# ("[wildlife] in view N of M near: ...") and takes four views. The player stands still (animals flush from a moving
+# one); hostile spawns off, so the predators' hush doesn't empty the night.
+# Run: PACK=perf,world TECTONIC=awakened tools/autopilot.sh tools/autopilot/wild-life.txt 1500
+world wildlife778 creative 778
+waitworld
+gui 0
+cmd gamerule advance_time false
+cmd gamerule spawn_mobs false
+cmd gamerule send_command_feedback false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+camera first
+hud off
+info
+# ---- 1. the studio ----
+cmd tp @s 0.5 201 0.5 0 0
+wait 100
+cmd fill -20 199 -6 20 199 24 minecraft:grass_block
+cmd fill -20 200 -6 20 214 24 minecraft:air
+cmd awaken wildlife dial 0
+wait 20
+cmd tp @s 0.5 200 0.5 0 0
+look 0 22
+wait 20
+cmd awaken wildlife lineup idle
+wait 40
+shot wild_studio_idle
+cmd awaken wildlife lineup idle 1
+wait 40
+shot wild_studio_idle_b
+cmd awaken wildlife lineup fly
+wait 30
+shot wild_studio_fly
+cmd awaken wildlife lineup off
+cmd awaken wildlife lineup insects
+wait 30
+shot wild_studio_insects
+look 0 40
+wait 10
+shot wild_studio_insects_down
+cmd time set 18000
+look 0 22
+wait 40
+shot wild_studio_insects_night
+cmd awaken wildlife lineup off
+cmd awaken wildlife lineup idle
+wait 40
+shot wild_studio_night_eyes
+cmd awaken wildlife lineup off
+cmd awaken wildlife dial 1
+cmd time set 6000
+# ---- 2. a temperate forest ----
+cmd awaken terrain visit minecraft:forest
+wait 300
+cmd execute at @s positioned over motion_blocking_no_leaves run tp @s ~ ~ ~
+cmd time set 23500
+wait 400
+cmd awaken wildlife count
+look 0 -8
+shot wild_forest_dawn_n
+look 90 -8
+wait 60
+shot wild_forest_dawn_w
+look 180 -8
+wait 60
+shot wild_forest_dawn_s
+look 270 -8
+wait 60
+shot wild_forest_dawn_e
+cmd time set 6000
+wait 400
+cmd awaken wildlife count
+look 0 -6
+shot wild_forest_noon_n
+look 90 -6
+wait 60
+shot wild_forest_noon_w
+look 180 -6
+wait 60
+shot wild_forest_noon_s
+look 270 -6
+wait 60
+shot wild_forest_noon_e
+perf wild_forest_noon 8
+cmd awaken wildlife dial 0
+wait 200
+perf wild_forest_noon_none 8
+cmd awaken wildlife dial 1
+cmd time set 18000
+wait 400
+cmd awaken wildlife count
+look 0 4
+shot wild_forest_night_n
+look 120 4
+wait 60
+shot wild_forest_night_w
+look 240 4
+wait 60
+shot wild_forest_night_e
+perf wild_forest_night 8
+cmd time set 6000
+cmd weather rain 1000000
+wait 400
+cmd awaken wildlife count
+look 0 -6
+shot wild_forest_rain_n
+cmd weather clear 1000000
+# ---- a flower forest at noon ----
+cmd awaken terrain visit minecraft:flower_forest
+wait 300
+cmd execute at @s positioned over motion_blocking_no_leaves run tp @s ~ ~ ~
+wait 400
+cmd awaken wildlife count
+look 0 12
+shot wild_flowers_noon_n
+look 90 12
+wait 60
+shot wild_flowers_noon_w
+look 180 12
+wait 60
+shot wild_flowers_noon_s
+look 270 -10
+wait 60
+shot wild_flowers_noon_sky
+# ---- a river at dusk ----
+cmd awaken terrain visit minecraft:river
+wait 300
+cmd execute at @s positioned over motion_blocking_no_leaves run tp @s ~ ~ ~
+cmd time set 11800
+wait 400
+cmd awaken wildlife count
+look 0 14
+shot wild_river_dusk_n
+look 90 14
+wait 60
+shot wild_river_dusk_w
+look 180 14
+wait 60
+shot wild_river_dusk_s
+look 270 14
+wait 60
+shot wild_river_dusk_e
+# ---- Mirror Marsh at dusk, Lumen Forest at night ----
+cmd awaken terrain visit awaken:mirror_marsh
+wait 300
+cmd execute at @s positioned over motion_blocking_no_leaves run tp @s ~ ~ ~
+cmd time set 12400
+wait 400
+cmd awaken wildlife count
+look 0 10
+shot wild_marsh_dusk_n
+look 180 10
+wait 60
+shot wild_marsh_dusk_s
+cmd awaken terrain visit awaken:lumen_forest
+wait 300
+cmd execute at @s positioned over motion_blocking_no_leaves run tp @s ~ ~ ~
+cmd time set 18000
+wait 400
+cmd awaken wildlife count
+look 0 2
+shot wild_lumen_night_n
+look 180 2
+wait 60
+shot wild_lumen_night_s
+quit

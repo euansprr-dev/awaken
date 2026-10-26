@@ -123,12 +123,12 @@ final class ArmsServer {
                 seen(p, new ArmsPayloads.Seen(p.getId(), ArmsPayloads.CHARGE, -1, 0, 0));
             }
             case ArmsPayloads.PRESS_RELEASE -> {
-                if (msg.seq() != s.chargeSeq || s.chargeStart < 0) return;
+                if (msg.seq() != s.chargeSeq || s.chargeStart == ArmsState.NO_CHARGE) return;
                 Archetype.MoveDef heavy = style.move(Archetype.Move.HEAVY);
                 if (heavy == null || heavy.charge().isEmpty()) return;
                 int held = heavy.charge().get().min() + (int) (now - s.chargeStart);
-                s.chargeStart = -1;
-                if (style.move(Archetype.Move.ART) != null && ArmsRules.artReady(held, heavy.charge().get(), s.resonance)) {
+                s.chargeStart = ArmsState.NO_CHARGE;
+                if (style.move(Archetype.Move.ART) != null && ArmsRules.artReady(held, heavy.charge().get(), s.resonance, ArmsMastery.artAt(ArmsMastery.step(p, style)))) {
                     resonance(p, s, -ArmsRules.RESONANCE_MAX);
                     begin(p, s, style, Archetype.Move.ART, -1, 0, now, msg.seq());
                     return;
@@ -151,7 +151,8 @@ final class ArmsServer {
             return;
         }
         Archetype.MoveDef slip = style.move(Archetype.Move.SLIPCUT);
-        if (slip != null && now - s.dodgeAt <= style.def().dodge().ticks() + slip.window() && now - s.dodgeAt >= 1) {
+        int mastery = ArmsMastery.step(p, style);
+        if (slip != null && now - s.dodgeAt <= style.def().dodge().ticks() + slip.window() + ArmsMastery.slipcutBonus(mastery) && now - s.dodgeAt >= 1) {
             s.dodgeAt = Long.MIN_VALUE / 2;
             begin(p, s, style, Archetype.Move.SLIPCUT, -1, 0, now, seq);
             return;
@@ -166,7 +167,7 @@ final class ArmsServer {
             s.plungeFall = p.fallDistance;
             return; // it strikes where it lands
         }
-        ArmsRules.Decision d = ArmsRules.tap(style, s.style == style ? s.move : null, s.moveStart, s.step, s.cadence, now, 0);
+        ArmsRules.Decision d = ArmsRules.tap(style, s.style == style ? s.move : null, s.moveStart, s.step, s.cadence, now, ArmsMastery.strikes(mastery));
         if (d == null) return; // too early: a mash far ahead of the window counts for nothing
         if (d.startAt() > now) {
             s.buffered = d;
@@ -202,6 +203,7 @@ final class ArmsServer {
         s.hitCount = 0;
         s.perfectHeavy = false;
         s.unleashed = false;
+        s.rhythm = false;
         s.buffered = null;
         s.fightAt = now;
         // a finisher reached with every press in rhythm (the chain starts at 0, each press in the window adds one, so
@@ -210,6 +212,7 @@ final class ArmsServer {
         if (def.finisher() && step > 0 && cadence >= Math.min(ArmsRules.CADENCE_MAX, step)) {
             resonance(p, s, ArmsRules.RESONANCE_CADENCE3);
             ArmsWeaves.open(p, s, ArmsWeaves.RHYTHM, now, -1);
+            s.rhythm = true;
         }
         AwakenNet.send(p, new ArmsPayloads.Result(seq, ArmsPayloads.MOVE, -1, move.ordinal(), cadence));
         p.swing(InteractionHand.MAIN_HAND, net.minecraft.world.item.component.SwingAnimation.DEFAULT, true); // the vanilla arm for anyone without the clips
@@ -358,6 +361,8 @@ final class ArmsServer {
             if (ArmsRules.behind(t.yBodyRot, toStriker)) pendingMotion *= traits.backstab();
         }
         pendingCap = def.bossCap();
+        boolean primed = ArmsForge.bladePrimed(p, s, now);
+        if (primed) pendingMotion *= ArmsForge.BLADE_PRIME;
         pendingLanded = false;
         // a combo's blows come faster than vanilla's half second of immunity: each move strikes each creature once
         if (t.getLastHurtByMob() == p) t.damageCooldownTime = 0;
@@ -370,6 +375,10 @@ final class ArmsServer {
         }
         if (!pendingLanded) return;
         landedTraits(p, s, t, traits);
+        ArmsForge.landed(p, s, t, now, primed);
+        Marks.fire(p, Marks.Trigger.HIT, t);
+        if (def.finisher() && s.rhythm) Marks.fire(p, Marks.Trigger.FINISHER, t);
+        if (s.perfectHeavy) Marks.fire(p, Marks.Trigger.PERFECT_HEAVY, t);
         if (s.edgeHits > 0) ArmsWeaves.edge(p, s, t, now, (float) p.getAttributeValue(Attributes.ATTACK_DAMAGE) * pendingMotion);
         p.level().playSound(p, t.getX(), t.getY(0.6), t.getZ(), ArmsSounds.impact(t, s.move, def, s.style == null ? null : s.style.id()), SoundSource.PLAYERS, 1.0F, ArmsSounds.impactPitch(t, def));
         s.fightAt = now;
@@ -477,17 +486,20 @@ final class ArmsServer {
                 s.raiseDeflected = true;
                 s.deflectAt = now;
                 s.deflected = by == null ? -1 : by.getId();
-                resonance(p, s, ArmsRules.RESONANCE_DEFLECT);
+                float charged = ArmsMastery.deflect(ArmsMastery.step(p, style)); // mastery III: a charged deflect
+                resonance(p, s, ArmsRules.RESONANCE_DEFLECT * charged);
                 if (by instanceof LivingEntity attacker && e.getDamageSource().getDirectEntity() == by) {
-                    addPosture(attacker, kind == Strikes.Kind.HEAVY ? ArmsRules.DEFLECT_POSTURE_HEAVY : ArmsRules.DEFLECT_POSTURE_LIGHT, p);
+                    addPosture(attacker, (int) ((kind == Strikes.Kind.HEAVY ? ArmsRules.DEFLECT_POSTURE_HEAVY : ArmsRules.DEFLECT_POSTURE_LIGHT) * charged), p);
                 }
                 soundForOthers(p, ArmsSounds.DEFLECT.get(), 1.0F, 1.0F);
                 ArmsWeaves.open(p, s, ArmsWeaves.DEFLECT, now, by == null ? -1 : by.getId());
+                Marks.fire(p, Marks.Trigger.DEFLECT, by instanceof LivingEntity l ? l : null);
                 answer(p, s, ArmsPayloads.DEFLECT, by);
             }
             case BLOCK -> {
                 e.setBlockedDamage(incoming * g.reduction());
                 soundForOthers(p, ArmsSounds.BLOCK.get(), 1.0F, 1.0F);
+                Marks.fire(p, Marks.Trigger.GUARD, by instanceof LivingEntity l ? l : null);
                 answer(p, s, ArmsPayloads.BLOCK, by);
             }
             case GUARD_BREAK -> {
@@ -657,6 +669,7 @@ final class ArmsServer {
         SLOWED.put(attacker.getId(), now + d.slow());
         resonance(p, s, ArmsRules.RESONANCE_PERFECT_DODGE);
         ArmsWeaves.open(p, s, ArmsWeaves.DODGE, now, attacker.getId());
+        Marks.fire(p, Marks.Trigger.PERFECT_DODGE, attacker);
         AwakenNet.send(p, new ArmsPayloads.Result(s.seq, ArmsPayloads.PERFECT_DODGE, attacker.getId(), d.slow(), 0));
     }
 
@@ -706,6 +719,7 @@ final class ArmsServer {
             sound(target, ArmsSounds.BREAK.get(), 1.0F, 1.0F);
             resonance(by, state(by), ArmsRules.RESONANCE_BREAK);
             ArmsWeaves.open(by, state(by), ArmsWeaves.BREAK, now, target.getId());
+            Marks.fire(by, Marks.Trigger.BREAK, target);
             AwakenNet.send(by, new ArmsPayloads.Result(state(by).seq, ArmsPayloads.BREAK, target.getId(), ticks, 0));
             seen(by, new ArmsPayloads.Seen(target.getId(), ArmsPayloads.BREAK, by.getId(), ticks, 0));
         }
@@ -723,6 +737,10 @@ final class ArmsServer {
 
     static void resonance(ServerPlayer p, ArmsState s, float delta) {
         float was = s.resonance;
+        if (delta > 0) { // mastery IV: Resonance fills faster
+            Archetypes.Loaded style = Arms.styleOf(p.getMainHandItem());
+            if (style != null) delta *= ArmsMastery.resonanceGain(ArmsMastery.step(p, style));
+        }
         s.resonance = Mth.clamp(s.resonance + delta, 0, ArmsRules.RESONANCE_MAX);
         if ((int) was != (int) s.resonance) AwakenNet.send(p, new ArmsPayloads.Result(s.seq, ArmsPayloads.RESONANCE, -1, (int) s.resonance, 0));
     }

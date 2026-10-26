@@ -5,11 +5,12 @@
  "key": {
   "C": "#awaken:hunter_core_a",
   "X": "awaken:lordscale_blade",
-  "B": "#awaken:hunter_bind_a"
+  "B": "#awaken:hunter_bind_a",
+  "P": "awaken:daggers_blueprint"
  },
  "pattern": [
   "XB",
-  "C "
+  "CP"
  ],
  "result": {
   "id": "awaken:lordscale_daggers"
