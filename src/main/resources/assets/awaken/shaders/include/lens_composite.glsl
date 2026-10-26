@@ -166,6 +166,11 @@ vec3 lensWater(vec3 c, vec3 p, vec3 n, float vis, float strength) {
     return lit + sunColour * glint;
 }
 
+// the light buffer as lensLight upsampled it for this pixel (the volumetric term reads the same texels: kept, not
+// fetched twice)
+vec3 lrKept;
+bool lrHave = false;
+
 vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float fogFade, vec4 p1, out vec4 dbg) {
     dbg = vec4(0.0);
     vec4 f12 = F(12), f14 = F(14), f16 = F(16), l17 = P(17), l18 = P(18), m20 = P(20);
@@ -177,6 +182,8 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
     if (near <= 0.0) return c;
     // the light buffer, upsampled by distance: of its 2x2 texels, the ones that saw this surface
     vec3 lr = upsample(LightSampler, packDistance8(dist));
+    lrKept = lr;
+    lrHave = true;
     vec3 m = vec3(1.0);
     float rich = 0.0;
     float sun = f14.w * l17.r;
@@ -438,7 +445,7 @@ void main() {
         // volumetric light through the terrain's shadows, with the screen-space shafts kept at half for what the sun map
         // can't hold (clouds crossing the sun)
         if (!classic) {
-            float vol = upsample(LightSampler, open ? 0.0 : packDistance8(length(pRel))).b;
+            float vol = !open && lrHave ? lrKept.b : upsample(LightSampler, open ? 0.0 : packDistance8(length(pRel))).b;
             c = screen(c, lightColour(p1, sunset) * (vol * 1.6) + texture(ShaftsSampler, texCoord).r * sunColor * 0.35);
         } else
 #endif
