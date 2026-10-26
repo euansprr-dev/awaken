@@ -43,6 +43,11 @@ public final class Cinema {
         OpeningHud.title(big, small, ticks);
     }
 
+    /** The game's HUD in the frame or out of it, outside a camera shot (a hand-over in your own eyes). */
+    public static void hud(boolean shown) {
+        OpeningHud.film = !shown;
+    }
+
     /** A caption in the lower bar of the letterbox (a place's name, a step done), in spaced capitals. */
     public static void barNote(String big, String small, int ticks) {
         OpeningHud.barNote(big, small, ticks);

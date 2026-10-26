@@ -272,20 +272,29 @@ final class PulseFx {
      */
     private static void campfire(VertexConsumer vc, boolean add) {
         if (!add) {
-            for (int i = 0; i < 28; i++) {
-                float rise = (now * 0.0025F + i / 28F) % 1F;
+            // billows: each puff its own size, drift and shade, the plume bending downwind as it thins
+            float boost = LivingClient.ticks < featuredUntil ? 1.4F : 1F;
+            for (int i = 0; i < 40; i++) {
+                float h1 = hash(i * 7 + 1), h2 = hash(i * 13 + 5), h3 = hash(i * 29 + 11);
+                float rise = (now * 0.0025F + i / 40F) % 1F;
                 float lean = rise * rise;
-                double ox = Mth.sin(now * 0.004F + i * 0.7F) * 1.4 * rise + lean * 18, oz = Mth.cos(now * 0.005F + i) * 1.4 * rise + lean * 7;
-                float a = 0.42F * (float) Math.pow(1 - rise, 0.8) * Mth.clamp(rise * 10, 0, 1)
-                        * (LivingClient.ticks < featuredUntil ? 1.45F : 1F);
-                int grey = (int) Mth.lerp(rise, 0x9E, 0xD2);
-                soft(vc, ox, 1.5 + rise * 110, oz, 1.6F + rise * 11F, argb(a, grey << 16 | (grey - 4) << 8 | (grey - 10)));
+                float r = (1.6F + rise * 10F) * (0.7F + 0.6F * h1);
+                double ox = Mth.sin(now * 0.004F + i * 0.7F) * 1.6 * rise + lean * 24 + (h2 - 0.5) * r * 0.5;
+                double oz = Mth.cos(now * 0.005F + i) * 1.6 * rise + lean * 9 + (h3 - 0.5) * r * 0.5;
+                float a = 0.46F * (float) Math.pow(1 - rise, 0.7) * Mth.clamp(rise * 10, 0, 1) * (0.75F + 0.5F * h3) * boost;
+                int grey = (int) Mth.lerp(rise, 0x86, 0xC4) + (int) ((h2 - 0.5F) * 18);
+                soft(vc, ox, 1.5 + rise * 110 + (h1 - 0.5) * 3, oz, r, argb(Math.min(0.85F, a), grey << 16 | (grey - 3) << 8 | (grey - 8)));
             }
             return;
         }
         float flick = 0.8F + 0.2F * Mth.sin(now * 0.6F) * Mth.sin(now * 0.23F + 1);
         soft(vc, 0, 0.8, 0, 0.9F, argb(0.9F * flick, 0xFFD27A));
         soft(vc, 0, 1.0, 0, 4.0F, argb(0.22F * flick, 0xFFA040));
+    }
+
+    private static float hash(int n) {
+        n = (n << 13) ^ n;
+        return ((n * (n * n * 15731 + 789221) + 1376312589) & 0x7fffffff) / (float) 0x7fffffff;
     }
 
     /** A caravan: warm lanterns swinging on its wagons, a thin line of cook-smoke rising from it. */

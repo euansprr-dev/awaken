@@ -95,27 +95,26 @@ public final class Camp {
 
     /** Lays the camp round its fire, once (only on open ground: a trunk or a rock where something goes, and it's left out). */
     static void build(ServerLevel level, BlockPos fire) {
-        // the grass trodden flat round the fire, the flowers and ferns cleared
+        // the plants, the moss and the litter round the fire cleared, the ground trodden flat
         for (int dx = -5; dx <= 5; dx++) for (int dz = -5; dz <= 5; dz++) {
             double d = Math.sqrt(dx * dx + dz * dz);
             if (d > 5.2 || dx == 0 && dz == 0) continue;
-            for (int dy = -1; dy <= 2; dy++) {
+            for (int dy = -2; dy <= 2; dy++) {
                 BlockPos q = fire.offset(dx, dy, dz);
-                BlockState st = level.getBlockState(q);
-                if (!st.isAir() && st.canBeReplaced() && st.getFluidState().isEmpty() && !st.is(Blocks.CAMPFIRE)) level.setBlock(q, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                if (litter(level, q)) level.setBlock(q, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
             }
-            BlockPos ground = fire.offset(dx, -1, dz);
-            if (d < 3.6 && level.getBlockState(ground).is(BlockTags.DIRT) && level.getBlockState(ground.above()).isAir()) {
+            BlockPos at = ground(level, fire.offset(dx, 0, dz));
+            if (at != null && d < 3.6 && level.getBlockState(at.below()).is(BlockTags.DIRT)) {
                 long h = (dx * 73856093L) ^ (dz * 19349663L);
-                level.setBlock(ground, (h & 3) == 0 ? Blocks.DIRT_PATH.defaultBlockState() : Blocks.COARSE_DIRT.defaultBlockState(), Block.UPDATE_CLIENTS);
+                level.setBlock(at.below(), (h & 3) == 0 ? Blocks.DIRT_PATH.defaultBlockState() : Blocks.COARSE_DIRT.defaultBlockState(), Block.UPDATE_CLIENTS);
             }
         }
         // two bedrolls, feet to the fire
         for (int i = 0; i < BEDROLLS.length; i++) {
-            BlockPos foot = fire.offset(BEDROLLS[i][0], BEDROLLS[i][1], BEDROLLS[i][2]);
+            BlockPos foot = ground(level, fire.offset(BEDROLLS[i][0], BEDROLLS[i][1], BEDROLLS[i][2]));
             Direction facing = BEDROLL_FACING[i];
-            BlockPos head = foot.relative(facing);
-            if (!open(level, foot) || !open(level, head)) continue;
+            BlockPos head = foot == null ? null : foot.relative(facing);
+            if (foot == null || !open(level, foot) || !open(level, head)) continue;
             BlockState s = LivingContent.BEDROLL.get().defaultBlockState().setValue(AbstractBedBlock.FACING, facing);
             level.setBlock(foot, s.setValue(AbstractBedBlock.PART, BedPart.FOOT), Block.UPDATE_ALL);
             level.setBlock(head, s.setValue(AbstractBedBlock.PART, BedPart.HEAD), Block.UPDATE_ALL);
@@ -123,15 +122,21 @@ public final class Camp {
         // logs to sit on: a bench on the north side, a seat on the east
         BlockState benchX = Blocks.STRIPPED_SPRUCE_LOG.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.X);
         BlockState benchZ = Blocks.STRIPPED_SPRUCE_LOG.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.Z);
-        place(level, fire.offset(-1, 0, -2), benchX);
-        place(level, fire.offset(0, 0, -2), benchX);
-        place(level, fire.offset(2, 0, 0), benchZ);
-        place(level, fire.offset(2, 0, 1), benchZ);
-        // the packs, a lantern on them, and the night's wood
-        if (place(level, fire.offset(-3, 0, 2), Blocks.BARREL.defaultBlockState().setValue(BarrelBlock.FACING, Direction.UP))) {
-            place(level, fire.offset(-3, 1, 2), Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, false));
+        for (int[] o : new int[][]{{-1, -2}, {0, -2}}) {
+            BlockPos at = ground(level, fire.offset(o[0], 0, o[1]));
+            if (at != null) place(level, at, benchX);
         }
-        place(level, fire.offset(-4, 0, 1), Blocks.SPRUCE_LOG.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.Z));
+        for (int[] o : new int[][]{{2, 0}, {2, 1}}) {
+            BlockPos at = ground(level, fire.offset(o[0], 0, o[1]));
+            if (at != null) place(level, at, benchZ);
+        }
+        // the packs, a lantern on them, and the night's wood
+        BlockPos packs = ground(level, fire.offset(-3, 0, 2));
+        if (packs != null && place(level, packs, Blocks.BARREL.defaultBlockState().setValue(BarrelBlock.FACING, Direction.UP))) {
+            place(level, packs.above(), Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, false));
+        }
+        BlockPos wood = ground(level, fire.offset(-4, 0, 1));
+        if (wood != null) place(level, wood, Blocks.SPRUCE_LOG.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.Z));
         // the pot over the fire, on its tripod
         BlockPos pot = fire.above();
         if (level.getBlockState(pot).isAir()) level.setBlock(pot, LivingContent.CAMP_POT.get().defaultBlockState(), Block.UPDATE_ALL);
@@ -140,6 +145,24 @@ public final class Camp {
 
     private static boolean open(ServerLevel level, BlockPos at) {
         return level.getBlockState(at).isAir() && level.getBlockState(at.below()).isFaceSturdy(level, at.below(), Direction.UP);
+    }
+
+    /** The ground in this column near the fire's height: the first open spot over something solid, from one above it
+     *  down to two below (the fire stands on a bale; the ground round it may be a step lower under moss). */
+    static @Nullable BlockPos ground(ServerLevel level, BlockPos near) {
+        for (int dy = 1; dy >= -2; dy--) {
+            BlockPos at = near.above(dy);
+            if (litter(level, at)) level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+            if (open(level, at)) return at;
+        }
+        return null;
+    }
+
+    /** What lies on the ground and gives way underfoot: grass, flowers, mushrooms, ferns, moss and carpets, snow. */
+    private static boolean litter(ServerLevel level, BlockPos at) {
+        BlockState st = level.getBlockState(at);
+        if (st.isAir() || !st.getFluidState().isEmpty() || st.hasBlockEntity() || st.is(Blocks.CAMPFIRE) || st.is(BlockTags.LOGS)) return false;
+        return st.canBeReplaced() || st.getDestroySpeed(level, at) <= 0.2F && !st.isCollisionShapeFullBlock(level, at);
     }
 
     private static boolean place(ServerLevel level, BlockPos at, BlockState s) {
@@ -210,6 +233,7 @@ public final class Camp {
         Wayfarer hettie = Scenes.resident(server, "hettie");
         if (hettie == null) return;
         BlockPos head = f.offset(BEDROLLS[1][0], BEDROLLS[1][1], BEDROLLS[1][2]).relative(BEDROLL_FACING[1]);
+        for (int dy = 1; dy >= -2 && !level.getBlockState(head).is(LivingContent.BEDROLL.get()); dy--) head = f.offset(BEDROLLS[1][0], dy, BEDROLLS[1][2]).relative(BEDROLL_FACING[1]);
         BlockState bed = level.getBlockState(head);
         boolean dark = level.isDarkOutside();
         if (dark && !hettie.isSleeping() && bed.is(LivingContent.BEDROLL.get()) && bed.getValue(AbstractBedBlock.PART) == BedPart.HEAD

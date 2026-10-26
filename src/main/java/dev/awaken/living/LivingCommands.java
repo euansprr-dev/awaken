@@ -83,14 +83,14 @@ final class LivingCommands {
                         return 1;
                     }))
                     .then(Commands.literal("camp").executes(c -> {
-                        // seven blocks off the fire, on the side away from the bedrolls, looking across them
+                        // south-west of the fire, past the bedrolls, looking across them to the fire and Ilse beyond
                         ServerPlayer p = c.getSource().getPlayerOrException();
                         var fire = dev.awaken.living.wayfarer.Camp.fire(p.level().getServer());
                         if (fire == null) return 0;
-                        net.minecraft.core.BlockPos at = dev.awaken.living.wayfarer.Scenes.ground(p.level().getServer().overworld(), fire.offset(5, 0, -5));
+                        net.minecraft.core.BlockPos at = dev.awaken.living.wayfarer.Scenes.ground(p.level().getServer().overworld(), fire.offset(-6, 0, 6));
                         double dx = fire.getX() - 1 - at.getX(), dz = fire.getZ() + 1 - at.getZ();
-                        p.teleportTo(p.level().getServer().overworld(), at.getX() + 0.5, at.getY() + 1, at.getZ() + 0.5, java.util.Set.of(),
-                                (float) Math.toDegrees(Math.atan2(-dx, dz)), 28F, true);
+                        p.teleportTo(p.level().getServer().overworld(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, java.util.Set.of(),
+                                (float) Math.toDegrees(Math.atan2(-dx, dz)), 20F, true);
                         return 1;
                     })));
             l.then(Commands.literal("camp").requires(AwakenCommands.admin()).executes(c -> {

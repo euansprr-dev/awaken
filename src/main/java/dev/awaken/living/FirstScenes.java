@@ -241,7 +241,11 @@ public final class FirstScenes {
     private static boolean step(ServerPlayer p, Run r) {
         Wayfarer ilse = r.ilse;
         if (p.isRemoved() || !p.isAlive() || ilse.isRemoved() || p.level() != ilse.level() || p.distanceToSqr(ilse) > 18 * 18) return false;
-        ilse.getNavigation().stop();
+        // she stays where she stands while she talks; with the coal held out she brings it over to you
+        double d2 = p.distanceToSqr(ilse);
+        if (r.offered && r.tookAt < 0 && d2 > 2.2 * 2.2) {
+            if (r.age % 10 == 0) ilse.getNavigation().moveTo(p, 0.75);
+        } else ilse.getNavigation().stop();
         ilse.getLookControl().setLookAt(p, 30, 30);
         int a = ++r.age;
         if (a == L1) line(p, "Ilse", "Kestrel's runner. You've got the look about you. And our letters, I hope.", 70);

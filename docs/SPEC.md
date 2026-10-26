@@ -5039,8 +5039,9 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   slow push while she talks; her lines one at a time in the Registry's speech (name above, the line under it): she asks
   for the letters (the lower bar: "DELIVER THE LETTERS 1/1"), sits you down, says what a fire of your own is for ("First
   night out, and it's coming on dark"; by day "It gets dark quicker out here than you'd think"), then holds a coal from
-  hers out in her hand. The view comes back to your own eyes facing her hand, "Take the coal" with the use key, and your
-  hand takes it from hers (the Registry's hand-over, `HandOver`, now for any item): the step ends as your hand closes on
+  hers out in her hand and brings it over to you (to within about two blocks). The view comes back to your own eyes
+  facing her, the HUD stays out of the frame, "Take the coal" with the use key (within 3.6), and your hand takes it from
+  hers (the Registry's hand-over, `HandOver`, now for any item): the step ends as your hand closes on
   it, and its reward is the Ember (W1's rules kept: one a player, kept through death, Ilse or Hettie give a lost one
   back). Her last line ("Somewhere you'd want to wake up. That's all a fire asks."), the bars lift, the lower bar says
   "SET YOUR EMBER WHERE YOU'D LIVE". About 20 s to the coal; hold jump to skip to it; after 30 s with her hand out she
@@ -5048,7 +5049,9 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   off (18 blocks) ends it; it starts again when you come back. Nothing hunts or hurts a player while either moment plays
   (target changes cancelled, damage cancelled but for what bypasses invulnerability; the gate's for 14 s).
 - **The camp** (`living.wayfarer.Camp`): laid once round its fire when a player is within 96 (`Scenes.campBuilt`, saved,
-  optional field): the grass and flowers within 5 cleared, the ground within 3.5 trodden to coarse dirt and path; two
+  optional field): what lies on the ground within 5 cleared (grass, flowers, mushrooms, moss and carpets: anything
+  that gives way underfoot), each piece set on the real ground under it, the ground within 3.5 trodden to coarse dirt
+  and path; two
   **Wayfarer's Bedrolls** (`awaken:wayfarer_bedroll`, our own block on `AbstractBedBlock`, texture from
   `tools/art/specs/camp.py`) feet to the fire, west and south; stripped spruce logs to sit on (north, east); a barrel of
   packs with a lantern, a log of firewood; and the **Camp Pot** (`awaken:camp_pot`) hung by a chain from a bar on two

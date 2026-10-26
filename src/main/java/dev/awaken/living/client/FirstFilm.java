@@ -41,6 +41,8 @@ final class FirstFilm {
     private FirstFilm() {}
 
     private static final Identifier EMBER = Identifier.fromNamespaceAndPath("awaken", "hearth_ember");
+    /** Your hand reaches her hand this far (she brings the coal to within about two). */
+    static final double REACH = 3.6;
 
     /** Ilse's scene, while it runs: her entity id, her fire, whether the coal is held out. */
     private static int ilseId = -1;
@@ -91,6 +93,7 @@ final class FirstFilm {
                 // your own eyes come back facing her hand: the hand-over is yours to make
                 if (ilse != null) face(p, ilse.position().add(0, 1.1, 0));
                 hold(p);
+                Cinema.hud(false);
                 if (OpeningCamera.shot() instanceof IlseShot s) s.back();
             }
             case LivingNet.FirstScene.END -> end();
@@ -102,6 +105,7 @@ final class FirstFilm {
     private static void end() {
         if (OpeningCamera.shot() instanceof IlseShot s) s.back();
         Cinema.bars(false);
+        Cinema.hud(true);
         Cinema.prompt(null, "");
         release();
         ilseId = -1;
@@ -125,7 +129,8 @@ final class FirstFilm {
         if (ilseId >= 0 && LivingClient.ticks - lastCue > 20 * 45) end();
         if (!offering || taken) return;
         Entity ilse = mc.level.getEntity(ilseId);
-        boolean can = ilse != null && ilse.distanceTo(p) < 4.5 && !Cinema.handing() && !Cinema.filming();
+        if (ilse != null && !Cinema.filming() && !Cinema.handing() && ilse.distanceTo(p) > 2.4) face(p, ilse.position().add(0, 1.1, 0));
+        boolean can = ilse != null && ilse.distanceTo(p) < REACH && !Cinema.handing() && !Cinema.filming();
         String use = mc.options.keyUse.getTranslatedKeyMessage().getString();
         Cinema.prompt(can ? use : null, can ? "Take the coal" : "");
     }
@@ -139,7 +144,7 @@ final class FirstFilm {
         e.setCanceled(true);
         e.setSwingHand(false);
         if (!e.isUseItem() || !offering || taken || Cinema.handing()) return;
-        if (!(mc.level.getEntity(ilseId) instanceof LivingEntity ilse) || ilse.distanceTo(p) > 4.5) return;
+        if (!(mc.level.getEntity(ilseId) instanceof LivingEntity ilse) || ilse.distanceTo(p) > REACH) return;
         Cinema.prompt(null, "");
         ItemStack coal = new ItemStack(BuiltInRegistries.ITEM.getValue(EMBER));
         Cinema.handOver(ilse, coal, () -> {
@@ -281,6 +286,11 @@ final class FirstFilm {
         }
 
         @Override
+        public boolean hideBody(double camDistSq) {
+            return camDistSq < 1.0;
+        }
+
+        @Override
         public void finished(String reason) {
             Cinema.bars(false);
             LocalPlayer p = Minecraft.getInstance().player;
@@ -308,17 +318,17 @@ final class FirstFilm {
             look = target();
         }
 
-        /** Behind your shoulder on the side away from the fire, so she and the fire are both in the frame. */
+        /** Behind your shoulder on the fire's side, so your head is off to one side and she and the fire are both clear. */
         private Vec3 frame(LocalPlayer p) {
             Vec3 head = ilse.position().add(0, ilse.getEyeHeight(), 0);
             Vec3 flat = new Vec3(head.x - eye.x, 0, head.z - eye.z);
             Vec3 fwd = flat.lengthSqr() < 1e-4 ? new Vec3(0, 0, 1) : flat.normalize();
             Vec3 right = new Vec3(-fwd.z, 0, fwd.x);
-            double side = fireAt.subtract(eye).dot(right) >= 0 ? -1 : 1;
-            for (double back : new double[]{1.9, 1.4, 0.9}) {
-                Vec3 c = eye.add(fwd.scale(-back)).add(right.scale(side * 0.8)).add(0, 0.3, 0);
+            double side = fireAt.subtract(eye).dot(right) >= 0 ? 1 : -1;
+            for (double back : new double[]{1.8, 1.3, 0.9}) {
+                Vec3 c = eye.add(fwd.scale(-back)).add(right.scale(side * 1.05)).add(0, 0.2, 0);
                 if (clear(p, eye, c)) return c;
-                c = eye.add(fwd.scale(-back)).add(right.scale(-side * 0.8)).add(0, 0.3, 0);
+                c = eye.add(fwd.scale(-back)).add(right.scale(-side * 1.05)).add(0, 0.2, 0);
                 if (clear(p, eye, c)) return c;
             }
             return eye;
@@ -378,6 +388,11 @@ final class FirstFilm {
         private Vec3 pushed(float t) {
             double k = Mth.clamp((t - IN) / 400.0, 0, 1);
             return lerp(cam, look, 0.12 * k);
+        }
+
+        @Override
+        public boolean hideBody(double camDistSq) {
+            return camDistSq < 1.0;
         }
 
         @Override

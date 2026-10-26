@@ -64,6 +64,7 @@ final class OpeningHud {
     static void reset() {
         title = null;
         barNote = null;
+        film = false;
         LINES.clear();
         black = blackO = blackTarget = 0;
         lids = lidsO = 1;
@@ -76,6 +77,9 @@ final class OpeningHud {
     static void title(String big, String small, int ticks) {
         title = new Title(big, small, OpeningClient.ticks(), ticks);
     }
+
+    /** A scene outside a shot keeps the game's HUD out of the frame (a hand-over in your own eyes). */
+    static boolean film;
 
     /** A caption in the lower bar, the way the sky shot names Carillon (a place, a step done), for n ticks. */
     private static @Nullable Title barNote;
@@ -144,7 +148,7 @@ final class OpeningHud {
         if (id.equals(LAYER)) return;
         String path = id.getPath();
         if (path.equals("subtitle_overlay")) return;
-        boolean shot = OpeningCamera.active() || SkyShot.current != null;
+        boolean shot = OpeningCamera.active() || SkyShot.current != null || film;
         boolean hide = shot || black > 0.4F || lidsOn;
         // chat stays, except over a shot (it is a film then)
         if (path.equals("chat") && !shot) return;

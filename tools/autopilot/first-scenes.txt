@@ -4,7 +4,8 @@
 # 2. The camp by day: bedrolls feet to the fire, logs to sit on, the packs and lantern, the pot on its poles.
 # 3. Ten blocks off Ilse: "Deliver the letters · 0/1" on the Now line, its compass on her.
 # 4. Her scene: over your shoulder, Ilse and her fire; the letters delivered (1/1); her lines one at a time.
-# 5. She holds the coal out: your eyes again, "Take the coal"; your hand takes it from hers; the Ember's line takes over.
+# 5. She holds the coal out and brings it to you: your eyes again, "Take the coal"; your hand takes it from hers; the
+#    Ember's line takes over.
 # 6. The camp at night, monsters about: Hettie asleep on the far bedroll, nothing hostile on the camp's ground.
 # Run: tools/tour-ci.sh tools/autopilot/first-scenes.txt 1500 PACK=perf,world TECTONIC=awakened
 world autopilot_firstscenes survival 20261026
@@ -56,16 +57,17 @@ wait 60
 shotnow first_4_ilse_delivered
 wait 150
 shotnow first_4_ilse_night
-wait 160
+# 5. the coal: she holds it out and brings it over, your hand takes it
+wait 175
 shotnow first_5_offer
-wait 30
+wait 70
 shotnow first_5_take_prompt
 use
-wait 10
+wait 12
 shotnow first_5_hand
-wait 60
+wait 50
 shotnow first_5_after
-wait 80
+wait 100
 shotnow first_5_ember_now
 # 6. the camp at night, monsters about
 cmd gamerule spawn_mobs true
