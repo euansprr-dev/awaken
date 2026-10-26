@@ -4,7 +4,9 @@
 # A fresh world, the opening's run jumped to (the bell, the column falling into the square), Carillon at 671 -1090 in
 # this seed (street 70; the Roost terrace at plan -170 -130, row 40; the east avenue open to 95 out):
 #   noon from the Roost, from the east avenue (85 out) and inside the square (looking at it, and up); dusk from the
-#   Roost and the avenue; then the arrival's cinematic (the portal's bloom on the column, the rings).
+#   Roost and the avenue; then the arrival's cinematic (the portal's bloom on the column, the rings); then the Registry by
+#   day, the Assessment Lens's shard over its pedestal with the tall windows behind it (Euan: the windows behind the
+#   crystal read black, "like the shadow of the crystal's shape"), at the Lens and from a few steps back.
 # Run: tools/tour-ci.sh tools/autopilot/carillon-column.txt 1500 TECTONIC=awakened PACK=perf,world,horizon
 world carillonColumn survival 20261024
 waitworld
@@ -56,4 +58,17 @@ wait 50
 shot col_arrive_c
 wait 50
 shot col_arrive_d
+# ---- the Registry by day: the shard and the windows behind it
+cmd awaken gate leave
+wait 20
+cmd time set 6000
+cmd awaken opening beat lens
+wait 60
+shot col_registry_lens
+cmd tp @s ^ ^ ^-3
+wait 20
+shot col_registry_windows
+cmd tp @s ^ ^1 ^-2
+wait 20
+shot col_registry_hall
 quit
