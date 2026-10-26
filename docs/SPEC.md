@@ -356,6 +356,15 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   `damage(server, key)` (`record Damage(pos, original, day)`), `repaired(server, key, pos)`, `history(server, key)` and
   `history(server, key, line)`, `prosperity`/`addProsperity`, `mood`/`addMood` (0-100), `reserved(Level, BlockPos,
   margin)` (a settlement's ground, planned ones included: gates and Hearths keep off).
+- `dev.awaken.village.api.Troubles` (§28.7, W4) — who a player brought home from a trouble: `rescued(ServerPlayer)` →
+  `List<Rescued>` oldest first, `record Rescued(village, villageName, rec, name, trade, age, day, trouble, settled)` (`rec`
+  is the person's record in that settlement's roster; `trade` a `Roster.JOBS` name; `trouble` "taken" or "missing";
+  remembered for the carrier and every party member within 48 of the reunion); `settle(ServerPlayer, Rescued, hearthName)`
+  (W6: they moved to a Hearth; the village's history says so and `settled` reads true after). For other modules' worlds:
+  `raidComing(ServerLevel, village, camp, campName, tier, raidDay)` (Living Wilds' camps: true when the village takes the
+  raid as its Burning) and `lairSealed(ServerLevel, den)` (fauna: a lair a Taken ended in stays empty for good).
+  The citizens' `Settlement` gained `stage(rec, at, yaw, act, prop)`, `away(rec, bool)`/`isAway`, `alarm(near, strokes)`,
+  `where(rec)`, `look(rec)` (§28.7); `core.api.MovementHooks.addBurden`/`burdened(Player)` (both sides: no body moves).
 - `dev.awaken.city.SettlementPaint` / `PlanView` / `VillageStyles` (§28.6) — the city's grammar for other settlements:
   a `Layout` (a `PlanView` of ground kinds, heights and plots, its origin and street level, its own ground and pieces on a
   `Canvas`, who lives in each plot as an `Interior`) painted per chunk by `paintChunk` into a proto chunk (`sweep` after);
@@ -6278,6 +6287,192 @@ from the damage record, the history in the Journal, festivals. W6: settlers to t
 cured villager settling. W7: towns, mining towns, roads and caravans between settlements. Smaller: the Mire's houses
 want stilts and the caravanserai a courtyard (styles only today); village clothes are the city's; a house smokes by the
 hour, not by who is in; `/locate` can't find a settlement (`/awaken village list` does).
+
+### 28.7 W4 as built (troubles and growth, 2026-10-26)
+Branch `pack/world-depth-w4`. Packages `village.trouble`, `village.growth`, the troubles' client in `village.client`;
+module doc `docs/modules/village.md` ("Troubles"). Tests `village_trouble_taken`, `village_burning_rebuild`,
+`village_director_caps`. Tour `tools/autopilot/world-depth-w4.txt` (CI): `/awaken village trouble` moves each trouble
+along by hand, `view <name>` stands at a framing (the eye moved as little as it takes to one with sky over it, room to
+stand and nothing between it and its mark), and `site` stands you past the village's edge on even, open ground facing out,
+so a lair built in front of you (`/awaken fauna lair place`) is in a Taken's reach. The Deep Mine waits for W7's mining
+towns.
+
+**The director** (`TroubleDirector`, saved data `awaken:village_troubles` `TroubleState`, schemaVersion 1). Every 10 s,
+for each village that is awake (a player within its radius + 192): its festival's calendar first; then, unless the world
+option is on, the world is in its first two hours of play (`PlayDays.playTicks`), the village is already in trouble, its
+last ended under two play-days ago, it stands inside a Hearth, or some player within 1,500 of it already has two troubles
+within 1,500, the first cause the world holds, in order: a gate within 500 due to break in one or two play-days (the Grey
+Fields); its bell gone, a gate broken within 600 (cracks it, once per gate), or a riftborn camp of tier 2+ within 800 on
+one night in eight (the Bell); a surface lair within 400 whose beast is home, else a Hollows den or riftborn camp within
+400, on one night in four (Taken); a storm at dusk, one in three (Gone Missing); 24+ blocks of damage (the Rebuild). The
+Burning comes from the camps (below). Each trouble runs on its own play-day clock (`due`) and ends without you when it
+runs out, unless someone is mid-deed (carrying someone home, at the lair, the raid's night, the masons at work, a bell
+being cast); its plot ticks each second while its village is awake (its once-in-a-while beats, a line said, the runner,
+the smoke, counted in seconds of the world's clock, so a loaded world's clock offset never silences them). **World option**: game rule `awaken:calm_villages`
+(off by default; in the world screen's rules): no troubles; festivals and growth go on.
+
+**Found, never listed.** The call is in the world: the village bell rings the alarm fast and is heard to 256 (a new
+event `village.alarm` played at volume 16 from the bell the ringer pulls; players 256 out get a quiet AMBIENT line naming
+whose bell it is); scouts at the treeline; smoke columns over burned roofs sent to 512; the bell silent at dusk; lanterns
+and the jig. While nobody has said Help, a villager (a hunter, farmer or carter) runs to the village's edge toward a player
+the village knows (Known or better) coming within 180, waves, and tells them (`Runner`). The one who asks shows a choice
+card (Help / Not now). The Journal holds a trouble only once you said Help: a row on the band's Journal page through
+`living.api.Quests.addJournal` (the newest tracked), and the Now tracker points the way (for Taken the trail's next point,
+not the lair). Up to three villages where you're Known show their latest history line in the Journal.
+
+**Always paid** (`TroubleDirector.pay`): emeralds once per trouble and player (EconomyHooks claim), standing, XP through
+the new budget `village` (0.5 of a level per 10 minutes), a keepsake (`awaken:keepsake`: named and inscribed), counter
+`awaken:village_troubles_helped`, the village's prosperity +4 and mood +10. **Multiplayer**: saying Help counts the party
+within 48; a payout reaches every helper and any party member of one within its radius; a raider felled, a flame beaten or
+a person cut free counts you in whether you said Help or not.
+
+**Taken** (`Taken`). At night the beast takes a child (else a young one) whose household has a grown-up: their record goes
+away from the village's day (`Settlement.away`), the bell rings the alarm (36 strokes, again every 100 s up to three
+times), the parent weeps by the well with the household round them, the Watch and neighbours stand at the green's edge
+with lanterns and halberds looking the way it went. From dawn the parent stands in the square pointing that way and asks.
+The trail: points every 6-8 blocks from the village's edge to 7 short of the den, wandering ±4 (seeded), laid as their
+ground loads: two or three scuffs of drag marks along the way (`awaken:drag_marks`, flat, four looks, facing the trail) and
+every fifth a strip of their clothes (`awaken:torn_cloth`, four colours); use a clue to read it ("A strip of Bren's
+clothes, caught here. The way runs north-east."). With the Tracks perk (hunting 10) the trail glows for its helpers:
+paired smears in the perk's teal every 1.3 blocks, a pulse running along them toward the lair. Within 56 of the den the
+taken one is in the nest beside it, bound (arms tied behind, head down, tugging now and then, calling for help) in
+cobwebs. They can't be cut free while the beast (its lair's resident, alive within 64) or the den's heart stands ("Not
+while the Old Antler is here"). Holding use cuts the bonds (0.12 a use: about a second and a half; cobweb bits and shears),
+then they **hold on to your back**: drawn behind your shoulders, legs round your waist, arms round your neck, leaning in
+on your shoulder; you're 15% slower, can't sprint, and the body's moves stop (`core.api.MovementHooks.burdened`); your
+arms reach back under their knees (the carry arm pose, `AWAKEN_CARRY`); in first person only their hands show at your
+chest. Sneak a second to set them down: they walk behind you, climb a Runner's rope or ladder after you (they wait at
+the foot and say so when there's none), and wait where they are if you go too far; use them to take them on your back
+again. In the square they run to their parent's arms, the green cheers round them, a ring of light runs out; paid (14
+emeralds a hamlet, 20 a village, standing +25, half a level, a keepsake: the child's carved whistle or the family's
+knot), the village's history, the lair cleared for good (its beast never comes back: `Troubles.lairSealed`, read by
+fauna's `Lairs.wake`; a den sealed by `Camps.sealForGood`), a carved token (`awaken:carved_token`) by the family's door
+with your name on it, and from then on they greet you by name the first time you speak each play-day. Missed (three
+play-days): they get out alone days later and the family leaves for Carillon (its people away for good, the house
+empty), mood -12, prosperity -6, and whoever said Help and didn't come loses 4 standing.
+
+**The Burning** (`Burning`; Living Wilds' camps, §21.8). A camp at tier 4+ whose nearest target within 800 is a village
+asks the village (`Troubles.raidComing`): it takes it as its Burning unless calm, already troubled or crowded (otherwise
+the camp raids a Hearth or the Wayfarer camp as before). The camp records `raid_village` and leaves the raid to it. The
+ladder: the warning a play-day ahead (an IMPORTANT line to everyone within 800 and the history; the elder at the green
+looking the camp's way, asking), scouts at the treeline at dusk (three of the camp's creatures 30 past the edge, slowed,
+gone after 80 s), then the raid's night (13,600). If a player is within 90 of the green: the alarm, the camp's 4 + tier
+creatures from 34 past the edge toward the green, the Watch lining the green facing out with halberds and lanterns; every
+10-15 s while raiders live a fire arrow (a real flaming arrow) sets the nearest house's roof alight (up to four): up to
+seven flames (Carillon's `city_fire`) on its ridge that grow on their own (+9 a second to 1,000), a bucket line of six
+forming from the well to its door (Carillon's bucket pass, the bucket in hand) holding it back (-2 a second each: a full
+line only slowly wins, a short one loses; a player in the line with a bucket counts twice), and beaten out by players
+(-140 a flame: the player decides it); a fire at full for 20 s eats the roof, at 40
+s guts the house. It ends when the raiders are dead and the fires out (paid by how many houses stood: 18 or 10 emeralds,
+standing, a bucket token) or at dawn (the rest withdraw and what burns burns). Missed (nobody there, or the village not
+awake: then it burns when it next wakes): the 2-3 houses nearest the camp (3-5 at tier 5) are charred (`Char`: roofs fall
+in, timber blackens to stripped dark oak, basalt, coal and blackstone, glass, doors and cloth gone, floors to ash; stone
+stands but soot blackens its walls and roof (not the paving), a sixth at the footings rising to most under the eaves,
+into its deepslate or tuff kin, shape kept; burned footings up, so a charred remnant only stands on what's under it, never
+floating; chests untouched; every block into the damage record with what stood there), a fire smoulders in each gutted
+house (a signal campfire on its ash floor: Minecraft's own tall smoke, seen from far off; cold once the smoke's days are
+done, cleared by the Rebuild), smoke columns rise over them for three play-days, the survivors camp by the well (a
+campfire and bedrolls, sitting at night) until the Rebuild, mood -25, prosperity -12.
+
+**The Rebuild** (`Rebuild`): 24+ blocks of damage (after a Burning, or any). The elder at the board asks; three notices
+go up first on it (timber: the land's logs, a fifth of the wooden blocks lost, 12-64; cobblestone, a quarter of the rest,
+12-64; iron, 3 + 2 a house, 4-12), filled by anyone. Then the masons raise scaffolding round each damaged house (corners
+and every third block of the long sides, to the eaves) and put it back over three play-days, footings up, 40 blocks a
+second at most, caught up when the village wakes, exactly as it stood (blocks someone else put there since stay); three
+villagers at the house hammering and laying by day. Done: a beam of your colour over each charred house's door (the
+lintel in the terracotta of your dye, by UUID), the first family that had left for Carillon comes back, the survivors'
+camp is struck, mood +15, prosperity +6, a ring of light. Missed (five play-days without the materials): the village mends
+what it can and the worst house stays a shell (its damage kept: a later Rebuild can still come). W3's own mending notices
+now put back 24 blocks each (they had only forgotten the damage) and wait while a trouble runs.
+
+**The Bell** (`BellTrouble`): the bell (Minecraft's own, in the tower or on the post) is taken down. At dusk the ringer
+pulls at the empty rope and says so; the elder at the tower's foot asks. Stolen: once the camp's heart falls the bell lies
+in its ashes (`awaken:village_bell`, named for its village). Either way the smith casts a new one from five ingots of bell
+bronze (W2: copper and amethyst) handed to him: twelve seconds at the forge (sparks, the anvil) and it's in your hands.
+It's heavy (slowed while in a hand: haul it up the tower yourself). Used in the belfry it hangs, rings, and a ring of light
+runs out 160 blocks over the land at 20 blocks a second (three golden bands on the ground with a veil of light rising off
+them, thinning as they go, CityGlow's pools under them nearby). Paid (16 emeralds, standing +20, the bell-pin keepsake). From then on: gate breaks within 600 of the
+village are warned two play-days ahead (IMPORTANT, within 500), and the Grey Fields' blight keeps off its fields. A missing
+bell rings nothing (citizens' peal checks the block). Missed (six play-days): the smith casts a thin one himself
+(prosperity -8). Night hunters' boldness is left to Living Wilds (not built here).
+
+**Gone Missing** (`Missing`): a storm at dusk and someone out (a hunter, woodcutter, miner, shepherd, else a child) doesn't
+come home: away from the village, somewhere 50-180 out at the foot of the deepest drop (5+) the land shows, else in the
+woods. The search party (five, with lanterns) at the village's edge that way calling the name; the parent at the well.
+Clues: three strips of their clothes on the way; what they carried (a bow, an axe, a pick, shears, a lantern) dropped where
+they fell. Within 40 they're there, sitting hurt; on your back or (sneak) walking behind you up a rope. Home as Taken
+(Friend standing +30, 10 emeralds, a lucky stone; recorded for `Troubles.rescued` as "missing"). Missed: they limp home at
+dawn two days on.
+
+**The Grey Fields** (`GreyFields`): a gate within 500 due to break in one or two play-days. The elder at the green's edge
+facing it asks ("It breaks tomorrow."). Cleared or released: nothing happens, the best ending, and they say so (14
+emeralds, standing +15). Broken: the fields grey (farmland to coarse dirt, crops withered to dead bushes or gone) and two or
+three grown-ups are Hollowed (abed: away from the day), mood -20, prosperity -10. The cure: an herb remedy
+(`awaken:grey_remedy`, shapeless from sunleaf, moonmoss and a glass bottle) given to the healer or the elder brings one
+back (standing +6); the last one back and the fields are tilled and sown again. A village whose bell a player hung keeps
+the blight out.
+
+**The Festival** (`Festival`, `Race`): every ten or eleven play-days per village (the first two to six days after it's met),
+at dusk: the harvest, the first snow in the frost, the bell's day where a hunter hung its bell. Five or six poles round the
+green (a fence post four high, a lantern on top) with paper lanterns on strings between them and across the green (drawn
+on the client like Carillon's square, `village_festoons`; lit from dusk with CityGlow's halos and pools), a bonfire across
+the green from the board, a jig on note blocks (flute over guitar, a bass drum and a hat: 48 eighths in D, heard to about
+55) played from the musicians by the fire, ten of the village ring-dancing round it (the new `dance` clip), children
+running the green's edge, the old cheering from the benches; fireworks at 14,500 and 16,200. The elder judges the fishing
+and cooking (hand him your best fish or dish: fish by rarity and cooking, craft meals most; the best wins 8 emeralds,
+standing and the village's ribbon). The rooftop race: the village's best runner at the well offers it; five roofs round
+the green in order and back to the well (gold columns of light, the next one tall; the clock in the action bar), against
+their time (the route at 5.5 blocks a second plus three); beat it for 6 emeralds and standing. Over at 18,600. Calm
+villages keeps festivals.
+
+**Growth** (`village.growth.Growth`): prosperity 72+ (it costs 14), no trouble, six play-days since the last, at most two
+new houses a hamlet and three a village: past the end of a lane, on free level ground within the village's radius + 22,
+the smallest house of the village is copied (its blocks read from the world, chests empty) turned to face the lane. The
+plot is fenced with a gate and the land cleared, timber and stone stacked in it; the next morning scaffolding goes up at
+its corners and the masons build it over 2.5 play-days, course by course from the floor; a path is laid to the lane.
+Then a carter brings the family's cart to the door and the family (three) walk up the lane and in. From the village's
+next waking (it restarts once nobody is within its radius + 80) they live there on the people engine: a door, a household,
+two grown-ups and a child, records after the plan's own (the settlement's saved people reset with the new roster: its
+standing is the village's and is kept). Saved in the trouble state's memory (`growth`).
+
+**The person you bring home** (`Rescuee`, `awaken:village_rescuee`): wears their record's own skin (`Settlement.look`),
+a child at 0.68; never hurt; saved; modes BOUND, CARRIED, FOLLOW, WAIT, HOME, EMBRACE, LOST; says lines over their head.
+Players can't be ridden in 26.3 (the player's type is never saved, so `Entity.startRiding` refuses it as a vehicle on the
+server): on a back they're held in place each tick behind the carrier's shoulders, and each client draws them from the
+carrier's own position that frame. Their trouble gone (a body in an unloaded chunk), they go.
+
+**History**: every trouble and its ending go into the village's history (W3's 32 lines): taken, warned, burned, rebuilt,
+cast, festivals and their winners, families leaving and coming back.
+
+**API** (§12): `dev.awaken.village.api.Troubles` (`rescued`, `settle`; `raidComing` for Living Wilds' camps;
+`lairSealed` for fauna's lairs).
+
+**Other modules touched (small, additive)**: `citizens` (api `Settlement`: `stage`, `away`/`isAway`, `alarm`, `where`,
+`look`; `Roles.AWAY`; `CityEvents.stage` by record and `away`; the village alarm's far sound; a missing bell rings
+nothing; more props by name; staged villagers answer talk; acts `DANCE`, `EMBRACE`, `WEEP` with their clips in
+tools/art/specs/citizen_clips.py), `living` (`api.Quests` Journal rows, QuestEngine appends them (16 at most); `Camps`:
+village raid targets with `raid_village` saved, `resolved`, `raidDay`, `byId`, `heartStanding`, `sealForGood`,
+`placeAt`, `raidAt`), `world.fauna.Lairs.wake` (one line: a sealed lair), `body` (`BodyServer`, `ClientMoves`,
+`AscentMoves`: `off()` reads the burden, one line each), `core.api.MovementHooks` (`addBurden`, `burdened`),
+META-INF/enumextensions.json (`AWAKEN_CARRY`).
+
+**Decisions taken here** (none of the plan's 13): the director's cause order and odds (one night in four, one in eight,
+one dusk in three); two play-days' rest after a trouble; the young-world rule read from play time; the runner's 180 and
+Known; a party member within 48 counts; the `village` XP budget at 0.5 per 10 minutes and the payouts above; a cut needs
+the guard down; the held carry instead of riding (26.3 can't ride players) and its 15% slow; sneak to set down; the
+nest within 56 of the den, cobwebs for every lair; the lair cleared for good through `Troubles.lairSealed`; missed Taken
+sends the family to Carillon (the house empty) and costs the no-show 4 standing; a raid on a village is the village's
+Burning (the camp hands it over); raids needing someone within 90 to be held, else burned (when next awake if asleep);
+four fires at most, fire numbers above; char palette; the Rebuild's counts, three play-days and the beam in terracotta
+by UUID dye; mending notices put blocks back; the bell taken down (not a cracked block); five bell bronze, cast in 12 s;
+the bell's warning two days ahead within 600; Gone Missing from storms only; the Grey Fields' cure as an herb remedy (no
+Sun's Cure exists yet) and the Hollowed as away from the day; festival every 10-11 days, its contests and race as above;
+growth by copying the village's own smallest house, its thresholds, and the roster reset on growth.
+
+**Left.** The Deep Mine (W7's mining towns). Night hunters bolder round a silent bell (Living Wilds). A hamlet becoming a
+village through growth (W7's towns). The Hollowed's grey look on their bodies (they're abed instead). Settlers choosing to
+go home with you at a festival, and your Hall's festival (W6 reads `Troubles`; a festival hook for the Hearth is W6's). A
+GameTest for growth (its mechanism is exercised by `/awaken village grow`).
 
 ---------------------------------------------------------------------------------------------------------------------
 

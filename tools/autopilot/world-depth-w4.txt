@@ -1,0 +1,199 @@
+# Between the Gates W4, "Troubles: when a village needs you" (SPEC §28.7): Taken from the alarm bell at night to the
+# reunion in the square (the Watch at the edge with lanterns, the parent next morning, the trail lit by the Tracks perk,
+# the lair and its beast at home, the person bound in the nest, cutting them free, carrying them out on your back, home); the
+# Burning (scouts at the treeline at dusk, roofs alight and the bucket line on the raid's night, the charred village next
+# morning with smoke over it and the survivors by the well); the Rebuild's scaffolding and masons; the Bell (silent at
+# dusk, then rehung with its ring of light over the land); a festival at night. World shots are a spectator's (no hand,
+# no HUD); the lair and the carry a creative player's.
+# Run on GitHub: tools/tour-ci.sh tools/autopilot/world-depth-w4.txt
+world autopilot_world_depth_w4 creative 26102610
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+# the opening's sky flight holds the camera and ends on a question a closed screen never answers: skip it first
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+# level 3: a lair's beast wakes for you (the Taken's lair has its Weaver Queen at home)
+cmd awaken admin levels 3
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+# the Ascent's gift card holds the director while it's up: put it away
+wait 40
+key dismiss
+wait 10
+screen close
+cmd tick sprint 6200
+wait 240
+cmd gamerule advance_time false
+# the director's own troubles held: the tour starts each one itself
+cmd awaken village trouble quiet on
+# the Tracks perk (hunting 10): the trail glows for its followers
+cmd awaken living craft hunting 10
+cmd gamemode spectator
+hud off
+# ---- Taken: the alarm at night, the Watch at the edge ----
+cmd time set 13400
+cmd awaken village view nearest_village green
+wait 400
+cmd awaken village start
+wait 200
+# a beast's lair out past the edge (this seed's first village has none within a Taken's reach): the Silk Hollow
+cmd awaken village trouble site
+wait 100
+cmd awaken fauna lair place weaver_queen
+wait 20
+cmd awaken village trouble view well
+wait 60
+cmd awaken village trouble start taken
+wait 160
+cmd awaken village trouble info
+cmd awaken village trouble view well
+wait 100
+shot w4_01_taken_the_alarm_at_night
+cmd awaken village trouble view edge
+wait 60
+shot w4_02_the_watch_at_the_edge
+# ---- next morning: the parent in the square ----
+cmd time set 1800
+wait 60
+cmd awaken village trouble view well
+wait 100
+shot w4_03_the_parent_in_the_square
+cmd awaken village trouble help
+# ---- the trail at dusk, lit by Tracks ----
+cmd time set 12300
+cmd awaken village trouble view trail
+wait 220
+shot w4_04_the_trail_toward_the_lair
+# ---- the lair: its beast at home, the one they took bound in the nest ----
+cmd time set 11200
+cmd gamerule awaken:fauna_spawning true
+cmd gamemode creative
+cmd awaken village trouble view lair
+wait 220
+cmd awaken village trouble night
+wait 60
+shot w4_05_the_lair
+cmd gamerule awaken:fauna_spawning false
+cmd item replace entity @s weapon.mainhand with minecraft:iron_sword
+cmd awaken village trouble view fight
+wait 30
+arms strike
+wait 5
+shot w4_06_the_fight
+cmd kill @e[type=awaken:weaver_queen]
+wait 20
+cmd awaken village trouble cut 0.6
+cmd awaken village trouble view nest
+wait 20
+shot w4_07_cutting_them_free
+# ---- out on your back ----
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd awaken village trouble cut
+wait 30
+camera back
+wait 30
+shot w4_08_carrying_them_out
+camera front
+wait 20
+shot w4_09_carrying_them_out_front
+# (first person shows only their hands at your chest, and the clean shots hide the hand: no shot of it here)
+camera first
+wait 20
+# ---- home in the square ----
+cmd awaken village trouble home
+cmd gamemode spectator
+cmd awaken village trouble view well
+wait 70
+shot w4_11_home_in_the_square
+wait 120
+cmd awaken village trouble end
+# ---- the Burning: scouts at the treeline at dusk ----
+cmd time set 6000
+cmd awaken village trouble start burning
+wait 60
+cmd time set 12400
+cmd awaken village trouble night
+wait 20
+cmd awaken village trouble view scouts
+wait 80
+shot w4_12_scouts_at_the_treeline
+# ---- the raid's night: roofs alight, the bucket line ----
+cmd time set 14200
+cmd awaken village trouble raid
+wait 40
+cmd awaken village trouble fire
+wait 140
+cmd awaken village trouble view roofs
+wait 50
+shot w4_13_roofs_alight
+cmd awaken village trouble view line
+wait 40
+shot w4_14_the_bucket_line
+# ---- missed: the charred village next morning, smoke over it, the survivors by the well ----
+cmd awaken village trouble ruin
+cmd time set 1200
+wait 220
+cmd awaken village trouble view ruin
+wait 80
+shot w4_15_charred_next_morning
+cmd awaken village trouble view well
+wait 40
+shot w4_16_survivors_by_the_well
+cmd awaken village trouble view smoke
+wait 80
+shot w4_17_smoke_over_the_roofs
+# ---- the Rebuild: scaffolding, masons at work ----
+cmd time set 4000
+cmd awaken village trouble start rebuild
+wait 40
+cmd awaken village trouble deliver
+wait 60
+cmd awaken village trouble build 0.4
+wait 400
+cmd awaken village trouble view scaffold
+wait 60
+shot w4_18_the_rebuild
+cmd awaken village trouble end
+# ---- the Bell: silent at dusk, then rehung, its ring of light over the land ----
+cmd time set 12100
+cmd awaken village trouble start bell
+wait 100
+cmd awaken village trouble view bell
+wait 60
+shot w4_19_the_silent_bell
+cmd time set 12500
+cmd awaken village trouble view belfry
+wait 40
+cmd awaken village trouble hang
+wait 22
+shot w4_20_the_bell_rehung
+wait 18
+shot w4_21_the_ring_of_light
+# ---- a festival at night ----
+cmd time set 12000
+cmd awaken village trouble start festival
+wait 100
+cmd time set 14400
+wait 160
+cmd awaken village trouble view dance
+wait 40
+shot w4_22_the_festival_dance
+cmd time set 14600
+cmd awaken village trouble view green
+wait 45
+shot w4_23_lanterns_and_fireworks
+cmd awaken village trouble info
+quit

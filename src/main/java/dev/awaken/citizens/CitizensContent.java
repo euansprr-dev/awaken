@@ -81,6 +81,8 @@ public final class CitizensContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> BELL_HOUR = sound("city.bell.hour");
     public static final DeferredHolder<SoundEvent, SoundEvent> BELL_DISTRICT = sound("city.bell.district");
     public static final DeferredHolder<SoundEvent, SoundEvent> BELL_ALARM = sound("city.bell.alarm");
+    /** (SPEC §28.7) A village's alarm bell, heard to 256 blocks. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> VILLAGE_ALARM = sound("village.alarm");
     public static final DeferredHolder<SoundEvent, SoundEvent> HANDBELL = sound("city.handbell");
     // (M4 B3b) the animals and the places that sound; the client plays them (citizens.client.CitySound, CitySounds)
     public static final DeferredHolder<SoundEvent, SoundEvent> PIGEON_FLUTTER = sound("city.pigeon.flutter"), PIGEON_COO = sound("city.pigeon.coo"),

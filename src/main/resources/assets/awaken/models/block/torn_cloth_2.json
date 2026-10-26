@@ -1,0 +1,44 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": false,
+  "textures": {
+    "mark": "awaken:block/torn_cloth_2",
+    "particle": "awaken:block/torn_cloth_2"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0.02,
+        0
+      ],
+      "to": [
+        16,
+        0.5,
+        16
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#mark"
+        },
+        "down": {
+          "uv": [
+            0,
+            16,
+            16,
+            0
+          ],
+          "texture": "#mark",
+          "cullface": "down"
+        }
+      }
+    }
+  ]
+}

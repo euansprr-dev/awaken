@@ -114,4 +114,17 @@ public final class MovementHooks {
     public static boolean clientOwnsMovementKey(Player p) {
         return client.ownsMovementKey(p);
     }
+
+    private static final java.util.List<java.util.function.Predicate<Player>> BURDENS = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    /** A module's burden: something a player carries that stops the body's moves (SPEC §28.7: a person on their back). */
+    public static void addBurden(java.util.function.Predicate<Player> burden) {
+        BURDENS.add(burden);
+    }
+
+    /** Whether a player is burdened (both sides): no move starts, a running one ends, no sprinting. */
+    public static boolean burdened(Player p) {
+        for (int i = 0; i < BURDENS.size(); i++) if (BURDENS.get(i).test(p)) return true;
+        return false;
+    }
 }

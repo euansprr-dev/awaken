@@ -24,7 +24,7 @@ import java.util.Random;
  * its frame, nets want string. Up to three at a time, renewed every other play-day; counts shown and brought a
  * handful at a time; paid in emeralds (EconomyHooks, once per request) and standing when filled.
  */
-final class Requests {
+public final class Requests {
     private Requests() {}
 
     static final int MAX = 3, KEEP_DAYS = 6;
@@ -37,7 +37,7 @@ final class Requests {
         VillageState.Village v = l.rec();
         List<Need> out = new ArrayList<>();
         boolean smithy = p.forge != null, inn = p.buildings.stream().anyMatch(b -> b.use().equals("inn"));
-        if (!v.damage.isEmpty()) {
+        if (!v.damage.isEmpty() && !dev.awaken.village.trouble.TroubleDirector.busy(l.key())) {
             String log = BuiltInRegistries.ITEM.getKey(Trade.log(p.family)).toString();
             out.add(new Need("mend_timber", log, 32, 4, 8, "Timber to mend what was broken. The masons are waiting on it."));
             out.add(new Need("mend_stone", "minecraft:cobblestone", 64, 3, 6, "Stone for the walls that came down."));
@@ -108,7 +108,8 @@ final class Requests {
         VillageService.standing(p, l, q.standing, "request " + q.id);
         l.rec().prosperity = Math.min(100, l.rec().prosperity + 3);
         l.rec().mood = Math.min(100, l.rec().mood + (q.id.startsWith("edge") || q.id.startsWith("mend") ? 8 : 2));
-        if (q.id.startsWith("mend")) l.rec().damage.subList(0, Math.min(l.rec().damage.size(), 24)).clear();
+        // (SPEC §28.7) mending notices put blocks back (the masons' work, W4's Rebuild); a trouble's notices move it on
+        onFilled.filled(p, l, q.id);
         VillageService.history(server, l, p.getName().getString() + " brought " + q.need + " " + new ItemStack(item).getHoverName().getString().toLowerCase(java.util.Locale.ROOT)
                 + ": " + q.text);
         String thanks = Lines.get().pick(p.level().getGameTime(), (int) Math.floorMod(p.level().getOverworldClockTime(), 24000L), "village.request.done");
@@ -117,6 +118,44 @@ final class Requests {
         if (paid) p.sendOverlayMessage(Component.translatable("awaken.village.request.paid", q.pay));
         Awaken.LOG.info("[village] {} filled {} at {} (paid {} emeralds: {})", p.getName().getString(), q.id, l.plan().name, q.pay, paid);
         VillageNet.openBoard(p, l);
+    }
+
+    // ---- (SPEC §28.7) a trouble's notices: the Rebuild's timber, stone and iron -----------------------------------------------
+
+    /** Someone filled a notice (W4's troubles hear of it). */
+    public interface Filled {
+        void filled(ServerPlayer p, VillageService.Live l, String id);
+    }
+
+    private static Filled onFilled = (p, l, id) -> {};
+
+    public static void onFilled(Filled f) {
+        onFilled = f;
+    }
+
+    /**
+     * Pins a trouble's notice on a village's board (in front of the others; the board holds four while one is up): an item
+     * id, or "timber" for the land's own logs. Returns the notice's id.
+     */
+    public static String post(MinecraftServer server, VillageService.Live l, String id, String item, int count, int pay, int standing, String text) {
+        if (item.equals("timber")) item = BuiltInRegistries.ITEM.getKey(Trade.log(l.plan().family)).toString();
+        long today = VillageService.today(server);
+        String full = id + "@" + today;
+        l.rec().requests.removeIf(r -> r.id.startsWith(id + "@"));
+        l.rec().requests.addFirst(new VillageState.Request(full, item, count, 0, pay, standing, today, text));
+        VillageState.get(server).setDirty();
+        return full;
+    }
+
+    /** How much of a notice is in (have, need), or null if it's not on the board (filled, or taken down). */
+    public static int @org.jspecify.annotations.Nullable [] progress(VillageService.Live l, String id) {
+        for (VillageState.Request r : l.rec().requests) if (r.id.equals(id)) return new int[]{r.have, r.need};
+        return null;
+    }
+
+    /** Takes a trouble's notice down (it ended another way). */
+    public static void unpost(MinecraftServer server, VillageService.Live l, String id) {
+        if (l.rec().requests.removeIf(r -> r.id.equals(id))) VillageState.get(server).setDirty();
     }
 
     static ItemStack icon(VillageState.Request q) {

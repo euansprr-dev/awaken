@@ -141,7 +141,8 @@ public final class CitizensModule {
             return;
         }
         // (SPEC §28.6) in a village, its people answer first: a trader's goods, the inn's rooms, the notice's news
-        if (!c.site.carillon() && c.roster.isCitizen(b.rec) && c.data.role[b.rec] == 0) {
+        // (SPEC §28.7) someone a village's trouble stands in the square (staged) answers too: the parent, the elder
+        if (!c.site.carillon() && c.roster.isCitizen(b.rec) && (c.data.role[b.rec] == 0 || c.data.role[b.rec] == Roles.STAGED)) {
             for (Settlements.Talk t : Settlements.talkers()) {
                 if (t.talk(p, c, b.rec)) {
                     e.setCanceled(true);

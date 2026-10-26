@@ -12,7 +12,9 @@ final class Roles {
             // Carillon's opening (SPEC §16.4): running from the gate in the square; standing by a bed in the infirmary
             FLEE = 15, ATTEND = 16,
             // a named citizen staged by another module for a scene (the Registry ceremony: Bram), CitizenHooks.stage
-            STAGED = 17;
+            STAGED = 17,
+            // (SPEC §28.7) away from the settlement's life: taken by a beast, gone to Carillon, out on the land; no body, no day
+            AWAY = 18;
 
     /** Roles that move at a run. */
     static boolean runs(int role) {

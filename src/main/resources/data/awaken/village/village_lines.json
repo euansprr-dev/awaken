@@ -1042,5 +1042,291 @@
    "Someone's wheat, trampled flat. Bless me.",
    "[n]Walking through fields in the dark. Look at the state of it."
   ]
+ },
+ "trouble": {
+  "taken": {
+   "night": [
+    "They took {person}! Something came out of the dark and took {person}!",
+    "{person}! Somebody, please, it went {dir}, it went {dir}!",
+    "I heard {person} scream. I heard it and I couldn't move.",
+    "Ring it again! Ring it till the whole valley wakes!",
+    "Not {person}. Please, not {person}.",
+    "It dragged {person} off toward {place}. I saw the eyes."
+   ],
+   "watch": [
+    "Lanterns up! Nobody goes past the last fence alone.",
+    "It came from {dir}. Keep your eyes on the dark.",
+    "Steady. Whatever it is, it's gone for now.",
+    "Torches at the edge! Don't let it come back for another.",
+    "We can't follow it in the dark. Not without a hunter.",
+    "Hold the green. Mothers, get the little ones inside."
+   ],
+   "call": [
+    "Please! Hunter! They took my {person}!",
+    "You. You've a blade. Will you help us?",
+    "{person}'s gone. Taken in the night. Please, I'll give anything.",
+    "Hunter, please, a moment. My child.",
+    "Nobody here can go where it went. You can."
+   ],
+   "ask": [
+    "It took {person} in the night. Dragged off {dir}, toward {place}. You'll see the marks. Please.",
+    "My {person}. Something came out of the dark and took {person} toward {place}. The trail's plain enough. I'm begging you.",
+    "{beast} took {person}. The Watch won't go near {place}. Will you?",
+    "They say {beast} keeps what it takes, for a while. For a while. Please, go now."
+   ],
+   "again": [
+    "The marks run {dir} from the last fence. Please hurry.",
+    "Follow the trail to {place}. Bring {person} home.",
+    "I can't sit still. Every hour {person}'s out there.",
+    "You said you'd go. Please. {place}, {dir}."
+   ],
+   "thanks": [
+    "Thank you. Thank you. Bring {person} home to me.",
+    "Go. We'll keep a lamp lit at the door.",
+    "I'll be here. Right here by the well. Bring {person} back."
+   ],
+   "waiting_home": [
+    "You found {person}? Where is... oh. Oh, bring {person} here!",
+    "Is that... is that {person}?"
+   ],
+   "reunion": [
+    "{person}! Oh, {person}, come here, come here!",
+    "You're home. You're home. Let me look at you.",
+    "Thank you. I'll never... thank you, {name}.",
+    "Look, everyone! {name} brought {person} home!"
+   ]
+  },
+  "runner": [
+   "Hunter! Wait! It's {person}, from {village}. Something took {person} in the night!",
+   "{name}! Thank goodness. {person}'s been taken, the trail runs {dir}. Come to the well!",
+   "Hold up! You're needed in {village}. {person} was taken."
+  ],
+  "rescue": {
+   "bound": [
+    "Help! Somebody! Over here!",
+    "Is someone there? Please!",
+    "Get me out of this. Please get me out.",
+    "It comes back at dusk. Please hurry.",
+    "I can't feel my hands. Please."
+   ],
+   "behind_you": [
+    "Behind you! It's still here!",
+    "Watch out! It's coming!",
+    "Kill it first! Please!"
+   ],
+   "freed": [
+    "You came! You actually came. Take me home. Please.",
+    "Can't stand, my legs... hold on. I'll hold on.",
+    "I knew someone would come. I didn't. But I hoped."
+   ],
+   "carried": [
+    "I've got you. I mean, you've got me.",
+    "Don't drop me. Please.",
+    "Steady. I'm holding on."
+   ],
+   "walk": [
+    "I can walk. Go on, I'm right behind you.",
+    "My legs are back. Lead on, I'll keep up.",
+    "I'll follow. Don't go too fast."
+   ],
+   "wait": [
+    "I'll wait here. Come back for me?",
+    "Don't leave me out here long.",
+    "Is it far? Will you carry me?"
+   ],
+   "cant_climb": [
+    "I can't climb that! Hang a rope for me?",
+    "Too high for me. Is there another way? A rope?",
+    "I'll never get up there. Can you put a line down?"
+   ]
+  },
+  "burning": {
+   "call": [
+    "Hunter! A word, if you've one to spare.",
+    "You. You've seen the smoke over the ridge?",
+    "We've trouble coming. Will you hear it?"
+   ],
+   "ask": [
+    "Scouts saw the {beast} stirring. They come tomorrow night, and they bring fire. Will you stand with us?",
+    "The riftborn camp's grown fat on the ridge. Tomorrow night it comes for {village}. We'll fight, but we're farmers.",
+    "They'll come at dark tomorrow with fire arrows. If you're here, we might keep our roofs."
+   ],
+   "again": [
+    "Tomorrow night. Be on the green at dusk.",
+    "The Watch is sharpening everything we own. Come at dusk.",
+    "Buckets by every door. We'll need every hand."
+   ],
+   "thanks": [
+    "Then we'll hold. With you here, we'll hold.",
+    "Dusk tomorrow. We'll fill every bucket in {village}.",
+    "Good. I'll tell the Watch. They'll sleep easier. Well. Easier."
+   ],
+   "fight": [
+    "Hold the line! Hold it!",
+    "Roof's caught! Buckets, quick!",
+    "They're at the fence! Here they come!",
+    "Pass them down! Faster!",
+    "Don't let them reach the houses!"
+   ],
+   "survivor": [
+    "We lost everything but the clothes on us.",
+    "At least nobody's hurt. That's what matters. That's what I keep saying.",
+    "The masons say it can be built again. Can it?",
+    "Cold by the well at night. We'll manage.",
+    "Thirty years in that house. Thirty years."
+   ]
+  },
+  "missing": {
+   "search": [
+    "{person}! {upper}!",
+    "Can you hear me? {person}!",
+    "{upper}! Shout if you can hear us!",
+    "Keep the lanterns high. Look for anything.",
+    "Spread out! Not too far, mind the drop!"
+   ],
+   "ask": [
+    "{person} went out before the storm and never came back. The search party's out {dir}, but it's dark. Please.",
+    "{person} should've been home hours ago. The storm came in so fast. Will you look?",
+    "We've searched till the lanterns gave out. {person}'s out there somewhere {dir}. Please."
+   ],
+   "again": [
+    "Look {dir}. That's where {person} was working.",
+    "Anything at all. A scrap of cloth. Something dropped.",
+    "The ground's steep out that way. Mind the edges."
+   ],
+   "thanks": [
+    "Thank you. Bring {person} home.",
+    "Take a lantern. Please find {person}.",
+    "Go. We'll keep calling."
+   ],
+   "found_call": [
+    "Here! Down here!",
+    "Hello? Is someone up there?",
+    "I fell. I can't climb out. Please!"
+   ],
+   "found": [
+    "Oh thank the stars. My ankle's gone. Can you carry me?",
+    "You found me! I thought nobody would.",
+    "I slipped in the storm. Took me all night to stop shaking."
+   ],
+   "walk": [
+    "I'll limp along behind you. Go on.",
+    "Slowly. I can walk, slowly."
+   ],
+   "reunion": [
+    "{person}! Where have you been? Oh, come here!",
+    "We searched all night. You're home. You're home.",
+    "Thank you, {name}. Thank you."
+   ]
+  },
+  "rebuild": {
+   "call": [
+    "Hunter. A moment, if you've one.",
+    "We've houses to raise and no timber to raise them with.",
+    "Could you spare a little time for {village}?"
+   ],
+   "ask": [
+    "We'll rebuild. We always do. But we need timber, stone and iron, more than we have. The counts are on the board.",
+    "The masons are ready. What they lack is wood and stone, and iron for the nails. Will you help us gather it?",
+    "Bring what you can to the notice board. Every log is a beam over somebody's bed."
+   ],
+   "again": [
+    "The board says what's still wanted.",
+    "Every bit helps. The masons are itching to start.",
+    "Timber, stone and iron. The notice board has the counts."
+   ],
+   "thanks": [
+    "Bless you. The masons will be glad.",
+    "We'll have roofs over everyone before the frost.",
+    "Thank you. {village} won't forget it."
+   ],
+   "working": [
+    "Listen to them hammer. Best sound in the world.",
+    "Three days, the masons say. Three days and it'll be as it was.",
+    "Your beams are going up. Come and look."
+   ]
+  },
+  "bell": {
+   "dusk": [
+    "Nothing to ring.",
+    "Dusk, and no bell. It doesn't feel like evening.",
+    "I keep reaching for the rope.",
+    "Without the bell the night comes too quiet."
+   ],
+   "ask_stolen": [
+    "They took the bell. Raiders from the camp, in the night, rope and all. A bell's bronze, and bronze is worth something to them.",
+    "Our bell's gone. Taken. You can't think how quiet the dusk is now.",
+    "The riftborn took our bell. Take it back, or the smith says he can cast a new one, given the bronze."
+   ],
+   "ask_cracked": [
+    "When the gate broke, the bell cracked clean through. It came down in pieces.",
+    "Our bell split the night the gate broke. The smith could cast another, if he had the bell bronze.",
+    "The bell's cracked. A bell that won't ring is just a weight."
+   ],
+   "again": [
+    "Five ingots of bell bronze. Copper and amethyst, the smith says.",
+    "Bring the bell back and hang it. The ringer's waiting.",
+    "The tower's empty. It looks wrong from every field."
+   ],
+   "thanks": [
+    "Thank you. The night hunters have grown bold since it went quiet.",
+    "A village without a bell is a village asleep. Thank you.",
+    "Bless you. I'll tell the ringer."
+   ],
+   "casting": [
+    "Bell bronze. Good. Give me a little while at the forge.",
+    "Now that's a fine colour. Stand back, this gets hot.",
+    "I've not cast a bell since I was an apprentice. Let's see."
+   ],
+   "cast": [
+    "There she is. Heavy, mind. You'll feel her on the stairs.",
+    "Take her up the tower yourself. You've earned the first ring.",
+    "Careful with her. She'll ring true, I promise you."
+   ]
+  },
+  "grey": {
+   "ask": [
+    "There's a gate {dir} of the fields. It breaks {when}, and when it does it'll spill right onto our crops. Can you close it?",
+    "That gate. It's going to break {when}. Last time one broke near us, nothing grew for a season. Please, close it.",
+    "The gate {dir}. You hunters close them, don't you? It breaks {when}."
+   ],
+   "again": [
+    "Close it before it breaks. That's all I ask.",
+    "Every hour it stands, my stomach turns.",
+    "The fields are ready for harvest. Don't let it come to that."
+   ],
+   "thanks": [
+    "Thank you. I'll sleep tonight.",
+    "Then go with our thanks. The fields will thank you too.",
+    "Bless you, hunter."
+   ]
+  },
+  "festival": {
+   "band": [
+    "Take a turn round the fire! It's a festival!",
+    "We know three tunes. This is the best of them.",
+    "Clap along, it helps the fiddler.",
+    "Dance! Nobody's watching. Everybody's watching. Dance!"
+   ],
+   "judge_good": [
+    "Now that is something. That's a contender.",
+    "Oh my. I'll remember that one.",
+    "Best I've had all night. Don't tell the others."
+   ],
+   "judge_ok": [
+    "Hm. Respectable. Respectable.",
+    "That'll do. You might do better yet.",
+    "Not bad. The miller's wife brought a fine one, mind."
+   ]
+  },
+  "rescued": {
+   "greet": [
+    "{name}! You came back. Come in, sit, have something.",
+    "There's my hunter. I tell everyone about you, you know.",
+    "{name}! I still dream about that place. Then I dream about you coming through.",
+    "Look who it is. The one who carried me home.",
+    "{name}. Every time I see you I remember how cold it was. Thank you, again."
+   ]
+  }
  }
 }
