@@ -59,6 +59,14 @@ public final class ProgressionModule {
             .copyOnDeath()
             .build());
 
+    /** The locks this player has met and not opened (SPEC §27): saved, kept through death, synced to its owner. */
+    public static final Supplier<AttachmentType<PromiseBook>> PROMISES = ATTACHMENTS.register("promises", () -> AttachmentType
+            .builder(PromiseBook::new)
+            .serialize(PromiseBook.MAP_CODEC, b -> !b.isEmpty())
+            .copyOnDeath()
+            .sync((holder, to) -> holder == to, PromiseBook.STREAM_CODEC)
+            .build());
+
     /** Fraction of stats lost to the Strain of climbing (set by the Descent, decays over time). */
     public static final Supplier<AttachmentType<Double>> STRAIN = ATTACHMENTS.register("strain", () -> AttachmentType
             .builder(() -> 0.0)
@@ -111,6 +119,7 @@ public final class ProgressionModule {
             }
         });
         ProgressionNow.register();
+        PromiseKeeper.init(); // the locks you met, and the call back when you hold their key (SPEC §27)
         Lessons.init(); // teaching in play and the level road's goals (P3)
         Signal.onAction(Directives.ACTION, Directives::answer);
         PlayDays.onMorning((server, day) -> {

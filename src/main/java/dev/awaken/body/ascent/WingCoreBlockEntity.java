@@ -49,6 +49,8 @@ public class WingCoreBlockEntity extends BlockEntity {
             if (dev.awaken.core.Throttle.allow(p, "wing_core", TELL_EVERY)) {
                 p.sendSystemMessage(Component.translatable("awaken.ascent.core.rank", RANK.label), true);
             }
+            dev.awaken.core.api.Promises.seen(p, "wing_core:" + pos.getX() + "," + pos.getY() + "," + pos.getZ(), pos,
+                    dev.awaken.core.api.Promises.Need.rank(RANK.label), "A sky core's wings");
             return false;
         }
         int before = AscentServer.tiers(p);
@@ -58,6 +60,7 @@ public class WingCoreBlockEntity extends BlockEntity {
         AscentServer.show(p, new AscentPayloads.SeenEvent(p.getId(), AscentPayloads.EV_REMEMBER, 0));
         p.level().playSound(null, pos, AscentContent.VOW_CALL.get(), net.minecraft.sounds.SoundSource.BLOCKS, 1F, 1.2F);
         dev.awaken.progression.Progression.count(p, "awaken:ascent_wings_core");
+        dev.awaken.core.api.Promises.keptAll(p, "wing_core:");
         dev.awaken.core.DirectorLog.log(p, "ascent", "the sky platform's core gives wings at " + pos.toShortString());
         return true;
     }

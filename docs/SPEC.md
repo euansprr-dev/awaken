@@ -4237,3 +4237,58 @@ in 1–2 hits from D up) and let a Tank win at C and A. No extra level is carrie
 kill switch, sounds, stance rules, clips, the Art, the Plunge, assets; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
 `audio_events_resolve` covers the kit's files and subtitles. S2/S3: `arms_hand_pose` (the swing on Hands' view layer),
 `arms_assets` (the streams), `mobs_bolt_class`, `mobs_answered_no_burn`, `mobs_broken_idle`.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 27. The Way Forward (progression and guidance; plan docs/progression/PLAN.md, page https://claude.ai/artifact/RjzQ2SNdst8vbXPrZrvx1P; Euan approved all of it 2026-10-26)
+
+Euan, in survival: "I just got out of the city, I go into the forest, and I'm like, okay, so what's next?" The rules: every
+lock is seen before it opens and names what it waits for (a rank, a level, a rung by its in-world name), never how to
+play it; the world remembers the locks you met and calls you back once when you hold the key; three goals at all times
+(Now, Next, Far); the world pulls first and the HUD confirms. Builds on §26 (the notification director) where it lands.
+
+### 27.1 Promises (`core.api.Promises`, `progression.PromiseKeeper`, `PromiseBook`)
+- **The book** (attachment `awaken:promises`, schema 1, saved, kept through death, synced to its owner): at most 64
+  entries `{key, dim, where?, need kind, need value, what, answeredAt}`; the oldest go. A key is one per place
+  (`door:x,y,z`, `landmark:ruin:x,z`, `wing_core:x,y,z`, `stratum:n`, `region:id`, `halo`, `possession`).
+- **`seen(player, key, where, need, what)`**: recorded once, only for an awakened player who doesn't already meet the
+  need. Silent, except the first lock a player ever meets: one NOTICE toast "What waits · <what> waits for <need>. Your
+  band keeps it (K), and the world will call you back when you're ready." (flag `awaken:promise_taught`).
+- **Needs**: `rank:<label>` and `level:<n>` answered by progression; `tier:<tether|leaper|wings|skyborn>` answered by the
+  Ascent (`Promises.addAnswer`). Words: "D-rank", "level 20", "the Tether".
+- **The call back**: on a rank-up, a level reached or a rung granted, every waiting lock the player now meets is
+  answered. The nearest one with a place in this dimension leads one NOTICE toast "Ready now · <what> answers you now ·
+  640 m NE" (+ "and N more in your band (K)"), and for 10 minutes (`RAISED_FOR`) the Horizon line raises it over
+  everything near as "<what> · answers you" (a raised site). `markNewThing("promise_answered")`.
+- **`kept` / `keptAll(prefix)`**: a rank door opened (`door:`), a spire's crown climbed (`landmark:ruin:`), Wings from
+  a sky core (`wing_core:`).
+- **Sources today**: the Tether Vow's stir and every rank door's reading ("A sealed vault" / "A sealed door", the door's
+  rank), a Tether Spire or sky platform reached without the rope (`LandmarkWatch.reach`: "A Tether Spire's crown" / "A
+  sky platform", need the Tether), a sky core refusing a climber under C ("A sky core's wings"), a sealed Descent stratum
+  ("<name>, in the Descent", its rank), the Observatory's Halo line ("Something past the sky", B), Veil possession
+  refused ("Wearing a creature, in the Veil", C, no place), a dangerous region ("<region>", the level at which it stops
+  being dangerous).
+- **In the band** (K › Status, "WHAT WAITS", order 5, `progression.client.WaitingSection`): up to 8 rows, answered
+  first then nearest: a chip with the need in its colour (rank colour; the Horizon's green for a rung) or READY, what,
+  and "640 m NE". The same locks are pinned on the Atlas and the Gate Map (`MapMarks`), coloured by need.
+- **Far** (the next rank's promise): under "Next rank: D at level 10…" in the Spine section, "D-rank opens what waits
+  for you: A sealed vault · Gardens, in the Descent." Only locks the player has met; never a list of spoilers.
+- Test: `progression_promises`.
+
+### 27.2 The band's Ascent page (`body.client.AscentSection`, K › Status, order 28)
+"Runner · yours from the start"; each rung held with how to use it (keys in the player's own bindings,
+`signal.client.KeyText`); the next rung as "◇ The Tether · next" with where it comes from ("A Precursor vault keeps a
+line for a hunter it opens to: its door's rank, D at the least."); the rest "???". What a rung does is only told once
+it's yours.
+
+### 27.3 The ladder (decisions 1-2; details in §17.7, §17.9, §17.10, §17.19)
+Tether at the vault's door rank, D at the least (~5 h, balanced); Leaper at D with Tether mastery 4 (~8-12 h); Wings
+at C from a sky core (~20-25 h); Skyborn at A; the Sovereign form with any ending. Wren's Rope (`requires`
+`tier:tether`, a new requirement token answered by the Horizon's reach) is no longer offered before the rope, so it
+can't block every later found scene. Rungs, Lord-forged weapons and first Weaves now count as new things for the
+Director's rhythm.
+
+### 27.4 The Horizon line says why
+A landmark's site name carries a few words of why (`LandmarkKind.why`): "Sealed Vault · something waits inside", "The
+Well · the way down", "Tether Spire · a crown at the top". The sky's need reads "· needs a rope or wings" (the rig's
+rings are a rope ladder), the Tether's "· needs the Tether".

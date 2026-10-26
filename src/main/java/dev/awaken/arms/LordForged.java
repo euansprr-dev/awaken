@@ -172,6 +172,8 @@ public final class LordForged {
                 .append(stack.getHoverName().copy().withStyle(Style.EMPTY.withColor(forged.art().look().colour))));
         if (p.getMainHandItem().isEmpty()) p.setItemInHand(InteractionHand.MAIN_HAND, stack);
         else if (!p.getInventory().add(stack)) p.drop(stack, false, Prediction.SERVER_ONLY);
+        // a new weapon is a new capability: the Director's rhythm hears it (progression plan item 10)
+        dev.awaken.progression.Progression.markNewThing(p, "lord-forged weapon");
     }
 
     // ---- its Art ------------------------------------------------------------------------------------------------------

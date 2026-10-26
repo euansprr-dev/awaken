@@ -12,6 +12,43 @@ final class ProgressionTests {
     private ProgressionTests() {}
 
     static void register() {
+        // SPEC §27: a lock met is kept once (never for a need already met), answers at the rank-up, is raised on the
+        // Horizon line for a while, and goes when it's kept
+        AwakenTests.register("progression_promises", 40, h -> {
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            try {
+                Progression.awaken(p);
+                net.minecraft.core.BlockPos at = p.blockPosition().offset(300, 0, -400);
+                var d = dev.awaken.core.api.Promises.Need.rank("D");
+                dev.awaken.core.api.Promises.seen(p, "door:1,2,3", at, d, "A sealed vault");
+                dev.awaken.core.api.Promises.seen(p, "door:1,2,3", at, d, "A sealed vault");
+                dev.awaken.core.api.Promises.seen(p, "easy", at, dev.awaken.core.api.Promises.Need.rank("E"), "Something already open");
+                PromiseBook b = PromiseKeeper.book(p);
+                h.assertTrue(b.entries().size() == 1 && !b.entries().getFirst().answered(), "kept once, and never a lock already open: " + b.entries());
+                h.assertTrue(Progression.profile(p).counter(PromiseKeeper.TAUGHT) == 1, "the first lock says once where it's kept");
+                h.assertTrue(PromiseKeeper.horizon(p).isEmpty(), "nothing raised while it waits");
+                Progression.passReassessment(p);
+                b = PromiseKeeper.book(p);
+                h.assertTrue(b.entries().getFirst().answered(), "D-rank answers it");
+                var raised = PromiseKeeper.horizon(p);
+                h.assertTrue(raised.size() == 1 && raised.getFirst().raised() && raised.getFirst().where().equals(at)
+                        && raised.getFirst().name().equals("A sealed vault · answers you"), "and the Horizon raises it: " + raised);
+                dev.awaken.core.api.Promises.kept(p, "door:1,2,3");
+                h.assertTrue(PromiseKeeper.book(p).isEmpty() && PromiseKeeper.horizon(p).isEmpty(), "kept: gone");
+                dev.awaken.core.api.Promises.seen(p, "landmark:ruin:1,1", at, dev.awaken.core.api.Promises.Need.rank("C"), "A");
+                dev.awaken.core.api.Promises.seen(p, "landmark:ruin:2,2", at, dev.awaken.core.api.Promises.Need.rank("C"), "B");
+                dev.awaken.core.api.Promises.keptAll(p, "landmark:");
+                h.assertTrue(PromiseKeeper.book(p).isEmpty(), "kept by prefix");
+                // the codec keeps a lock with no place
+                dev.awaken.core.api.Promises.seen(p, "possession", null, dev.awaken.core.api.Promises.Need.rank("C"), "Wearing a creature");
+                var saved = PromiseBook.MAP_CODEC.codec().encodeStart(NbtOps.INSTANCE, PromiseKeeper.book(p)).getOrThrow();
+                var back = PromiseBook.MAP_CODEC.codec().parse(NbtOps.INSTANCE, saved).getOrThrow();
+                h.assertTrue(back.entries().size() == 1 && back.entries().getFirst().where().isEmpty(), "saved and read back: " + back.entries());
+            } finally {
+                h.getLevel().getServer().getPlayerList().remove(p);
+            }
+            h.succeed();
+        });
         // An instant-kill hit (a command, the void) must count what it could take, not 2 billion.
         AwakenTests.register("progression_damage_counter_capped", 40, h -> {
             ServerPlayer p = h.makeMockServerPlayerInLevel();

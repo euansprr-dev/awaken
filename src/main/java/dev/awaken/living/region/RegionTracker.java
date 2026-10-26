@@ -58,7 +58,10 @@ public final class RegionTracker {
         boolean danger = r.high() >= mine + DANGER;
         var msg = new LivingNet.RegionMsg(r.name(), r.low(), r.high(), r.commons(), caption, danger);
         dev.awaken.core.AwakenNet.send(p, msg);
-        if (danger) warn(p, r);
+        if (danger) {
+            warn(p, r);
+            dev.awaken.core.api.Promises.seen(p, "region:" + r.id(), p.blockPosition(), dev.awaken.core.api.Promises.Need.level(r.high() - DANGER + 1), r.name());
+        }
         return msg;
     }
 

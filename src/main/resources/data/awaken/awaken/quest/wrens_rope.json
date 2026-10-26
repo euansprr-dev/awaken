@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "title": "Wren's Rope",
   "band": 1,
-  "requires": ["level:8"],
+  "requires": ["level:8", "tier:tether"],
   "scene": "cliff",
   "giver": "wren",
   "summary": "Someone cut Wren's line and left her on a ledge. Get her down, then find out what happened to her crate.",

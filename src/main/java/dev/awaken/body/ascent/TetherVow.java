@@ -233,6 +233,7 @@ final class TetherVow {
         Stirred last = STIRRED.get(p.getUUID());
         if (last != null && last.vault().equals(vault) && last.short_() == short_ && now - last.at() < STIR_EVERY && now >= last.at()) return;
         STIRRED.put(p.getUUID(), new Stirred(vault, short_, now));
+        if (short_) dev.awaken.core.api.Promises.seen(p, dev.awaken.above.block.DoorCoreBlock.key(s.door()), s.door(), dev.awaken.core.api.Promises.Need.rank(s.needs().label), "A sealed vault");
         BlockPos to = short_ ? s.mast() : s.door();
         AwakenNet.send(p, new AscentPayloads.Vow(STIR, s.needs().ordinal(), short_ ? 1 : 0, 0, to.getX() + 0.5, to.getY() + 0.5, to.getZ() + 0.5));
         dev.awaken.core.DirectorLog.log(p, "ascent", "a vault stirs at " + vault.toShortString() + (short_
