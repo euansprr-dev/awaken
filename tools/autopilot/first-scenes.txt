@@ -43,12 +43,12 @@ shotnow first_0_checklist_done
 wait 100
 shotnow first_0_checklist_errand
 key status
-wait 30
+wait 60
 shot first_0_journal
-scroll -7
+scroll -3
 wait 10
 shot first_0_journal_more
-scroll -5
+scroll -1
 wait 10
 shot first_0_journal_end
 screen close

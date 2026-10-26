@@ -96,8 +96,9 @@ final class TaskHud {
             int textColour = r.done() || !now ? Glass.LABEL : Glass.TEXT;
             int argb = Glass.a(textColour, fade * (r.done() || now ? 1f : 0.8f));
             if (r.text().contains("{key}")) {
-                drawRow(g, font, r, 13, ry, argb, fade, mc);
-                ry += 10;
+                boolean wrap = lines(font, r, mc, room).size() > 1;
+                drawRow(g, font, r, 13, ry, argb, fade, mc, wrap);
+                ry += wrap ? 20 : 10;
             } else {
                 // a plain step wraps (two lines at most), its count and compass in the band's blue at the end
                 List<String> ls = lines(font, r, mc, room);
@@ -121,7 +122,8 @@ final class TaskHud {
      * if it must), its count and compass after a no-break marker so they draw in blue.
      */
     private static List<String> lines(Font font, SignalPayloads.TaskRow r, Minecraft mc, int room) {
-        if (r.text().contains("{key}")) return List.of(r.text());
+        // a row with a key: one line if it fits, else the words after the key on a second line
+        if (r.text().contains("{key}")) return rowWidth(font, r, mc) <= room ? List.of(r.text()) : List.of(r.text(), "");
         String extra = (r.need() > 0 ? r.have() + "/" + r.need() : "") + (r.marked() ? (r.need() > 0 ? "  " : "") + compass(mc, r) : "");
         String full = r.text() + (extra.isEmpty() ? "" : "  " + extra);
         if (font.width(full) <= room) return List.of(full);
@@ -143,7 +145,7 @@ final class TaskHud {
         return w;
     }
 
-    private static void drawRow(GuiGraphicsExtractor g, Font font, SignalPayloads.TaskRow r, int x, int y, int argb, float fade, Minecraft mc) {
+    private static void drawRow(GuiGraphicsExtractor g, Font font, SignalPayloads.TaskRow r, int x, int y, int argb, float fade, Minecraft mc, boolean wrap) {
         String[] parts = r.text().split("\\{key}", 2);
         String before = parts[0];
         int cx = x;
@@ -151,8 +153,14 @@ final class TaskHud {
         cx += font.width(before);
         if (parts.length > 1) {
             cx += keyCap(g, font, r.key(), cx, y, fade);
-            HudLook.text(g, font, parts[1], cx, y, argb, true);
-            cx += font.width(parts[1]);
+            // too wide for the card: what follows the key goes on the next line
+            String after = wrap ? parts[1].trim() : parts[1];
+            if (wrap) {
+                cx = x;
+                y += 10;
+            }
+            HudLook.text(g, font, after, cx, y, argb, true);
+            cx += font.width(after);
         }
         if (r.need() > 0) {
             String c = " " + r.have() + "/" + r.need();
