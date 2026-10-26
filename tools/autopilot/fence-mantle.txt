@@ -1,7 +1,8 @@
 # Fences, gates and walls (SPEC §17.27), one tour (run with PACK=feel, HUD on). A lane on a flat floor: an oak fence
 # vaulted running and hopped walking, a fence gate, a nether brick fence, a cobblestone wall vaulted, a fence on a block
 # (a garden wall) climbed over, a long mossy wall climbed onto and walked along its top, a spruce fence over a drop
-# climbed onto and held; one running vault again in third person. Then Carillon: the nearest real fence or wall to a
+# climbed onto and held, a fence at a roof's edge hung from and climbed over; one running vault and the garden wall
+# again in third person. Then Carillon: the nearest real fence or wall to a
 # street, run at. Every move is filmed by the pilot's clip recorder (the pilot's keys and the recorder start together:
 # a command reaches the client a few ticks late; the recorder goes first), full size; tools/ascent/clip.py makes each a
 # sheet. Clips: fm_*.
@@ -27,8 +28,7 @@ screen close
 cmd effect give @s minecraft:saturation 100000 10 true
 cmd tp @s 0.5 201 0.5 0 12
 wait 100
-cmd fill -4 199 -4 46 199 20 minecraft:smooth_stone
-cmd fill -4 200 -4 46 210 20 minecraft:air
+cmd fill -4 199 -4 50 199 20 minecraft:smooth_stone
 wait 10
 # the lane: every rail on the row z 8
 cmd fill -1 200 8 1 200 8 minecraft:oak_fence
@@ -42,6 +42,9 @@ cmd fill 19 200 8 21 200 8 minecraft:cobblestone_wall
 cmd fill 24 200 8 36 200 8 minecraft:mossy_stone_brick_wall
 cmd fill 38 199 -2 42 203 8 minecraft:stone
 cmd fill 39 204 8 41 204 8 minecraft:spruce_fence
+cmd fill 44 200 8 48 201 8 minecraft:stone_bricks
+cmd fill 44 201 9 48 201 14 minecraft:stone
+cmd fill 44 202 8 48 202 8 minecraft:oak_fence
 wait 20
 camera first
 wait 10
@@ -107,6 +110,14 @@ wait 15
 cmd awaken ascent pilot rec fm_perch 45 1
 cmd awaken ascent pilot hold forward,sprint 40
 wait 55
+
+# ---- a fence at a roof's edge, hung from the wall's face under it: the free-run's climb out goes over the rail ----
+# (forward held before the teleport: the hands find the rail the tick the body starts to fall)
+cmd awaken ascent pilot hold forward 24
+cmd tp @s 46.5 201.95 7.68 0 15
+cmd awaken ascent pilot rec fm_rail_over 40 1
+cmd awaken ascent pilot hold forward,sprint 30
+wait 45
 
 # ---- third person: the running vault over the oak fence again ----
 camera back

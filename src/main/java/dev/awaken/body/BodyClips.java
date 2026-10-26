@@ -62,16 +62,12 @@ public final class BodyClips {
             FP_WALLJUMP_R = "fp_walljump_r", FP_GRAB = "fp_grab", FP_LOWER = "fp_lower", FP_LEDGE_UP = "fp_ledge_up",
             FP_LEDGE_SIDE_L = "fp_ledge_side_l", FP_LEDGE_SIDE_R = "fp_ledge_side_r", FP_LEDGE_BACK = "fp_ledge_back",
             FP_STAIR_BUMP = "fp_stair_bump";
-    /**
-     * A crossing in first person (SPEC §17.27): the planted hands are drawn on the rail in the world (body.client.BodyFp);
-     * these are the free hand thrown out for balance over a running vault, and a held item carried clear of the rail.
-     */
-    public static final String FP_VAULT_RUN = "fp_vault_run", FP_VAULT_ITEM = "fp_vault_item";
+
 
     /** Every first-person clip the body plays (a GameTest holds them to the file). */
     public static final List<String> FP = List.of(FP_PIPE_KICK, FP_PIPE_SIDE_L, FP_PIPE_SIDE_R, FP_PIPE_LAND, FP_LAND_SOFT, FP_LAND_HARD,
             FP_ROLL, FP_VAULT, FP_MANTLE, FP_LEAP, FP_SLIDE_JUMP, FP_WALLJUMP_L, FP_WALLJUMP_R, FP_GRAB, FP_LOWER, FP_LEDGE_UP,
-            FP_LEDGE_SIDE_L, FP_LEDGE_SIDE_R, FP_LEDGE_BACK, FP_STAIR_BUMP, FP_VAULT_RUN, FP_VAULT_ITEM,
+            FP_LEDGE_SIDE_L, FP_LEDGE_SIDE_R, FP_LEDGE_BACK, FP_STAIR_BUMP,
             // the Ascent's (body.ascent.client.AscentFp)
             "fp_rope_fire", "fp_rope_release", "fp_rope_launch", "fp_wings_open", "fp_wing_beat", "fp_barrel_roll", "fp_boom",
             "fp_double_jump", "fp_air_dash", "fp_dive", "fp_slam_land", "fp_sovereign_ascend");

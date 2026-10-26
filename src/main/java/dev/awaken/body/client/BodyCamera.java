@@ -58,7 +58,7 @@ final class BodyCamera {
         dev.awaken.body.VaultRules.Vault v = ClientMoves.vault;
         float vt = t - ClientMoves.vaultStart;
         if (v != null && ClientMoves.vaultStart > -50 && vt >= 0 && vt < v.ticks() + 6) {
-            float plant = Math.max(1, v.rise() - 1), down = v.rise() + v.over(), end = v.ticks();
+            float plant = v.plantTick(), down = v.rise() + v.over(), end = v.ticks();
             float comfort = dev.awaken.body.client.feel.FeelConfig.reduced() ? 0.5F : 1F;
             if (v.kind() == dev.awaken.body.VaultRules.ONTO) {
                 float u = vt / end; // as the mantle's: eyes up to the lip, then over it
@@ -66,7 +66,14 @@ final class BodyCamera {
                 else pitch += (-7F * Mth.cos(Math.min(1, (u - 0.5F) / 0.35F) * Mth.HALF_PI) + 6F * Mth.sin(Math.min(1, (u - 0.5F) / 1.1F) * Mth.PI)) * comfort;
             } else {
                 boolean high = v.kind() == dev.awaken.body.VaultRules.HIGH || v.kind() == dev.awaken.body.VaultRules.OVER;
-                pitch += (high ? -6F : 6F) * pulse(vt, plant - 3, plant, down) * comfort;  // to the rail (up at a high one)
+                if (high) {
+                    // up to the rail as the hands catch it, then down onto them pressing as the body goes over
+                    pitch -= 12F * pulse(vt, plant - 3, plant, plant + 3) * comfort;
+                    pitch += 10F * pulse(vt, plant + 2, v.rise() + 1, down + 1) * comfort;
+                } else {
+                    // down to the rail (about 45° under the eye as the hand meets it), so the hand is seen landing on it
+                    pitch += 16F * pulse(vt, plant - 3, plant, down) * comfort;
+                }
                 pitch += 4F * pulse(vt, end - 1, end, end + 5) * comfort;                     // the landing
                 if (v.kind() == dev.awaken.body.VaultRules.VAULT) {
                     float sideR = mc.player.getMainArm() == net.minecraft.world.entity.HumanoidArm.RIGHT ? 1 : -1;

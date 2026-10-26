@@ -3142,8 +3142,10 @@ builds with vanilla's). Approved feel: the free-run is as before (§17.14), only
   fence's or gate's rail (`VaultRules.over`: up from the hold, over, down to the floor beyond, up to 3.5 under the top;
   18 ticks onto a roof 1.5 below), told to the server as a ledge jump (`JUMP_OVER`) and checked the same way.
 - **Server** (`BodyServer.startVault`): the Runner's Kit, not riding, sleeping, in water, using an item or blocking, no
-  other move running; the same probe from where it has the body, with 0.6 more reach, must end within 1.0 (0.3 high) of
-  the client's, else refused and put back. Then the crawl box and the fall forgotten each tick until the client's end or
+  other move running; the same probe from where it has the body (0.6 more reach), or from up to 3 blocks ahead of it
+  along the way (a server running behind its client hasn't seen the run-up's last steps: the tour's integrated server
+  ran a second behind once), must end within 1.0 (0.3 high) of the client's. A refused crossing is stopped, never put
+  back: its path passes through nothing and vanilla's own move checks hold it to that. Then the crawl box and the fall forgotten each tick until the client's end or
   the path's length plus 4; 0.05 exhaustion, counted (`awaken:body_vault`), a Runner link, Flow +0.05. Others are sent
   `Seen` 19 + the kind (`VaultRules.VAULT` .. `OVER`). `Body.isMantling` (`MovementHooks.mantling`) is true through it.
 - **The free-run** (§17.14) asks for a crossing before anything else on the ground; a fence or wall is no longer left
@@ -3156,10 +3158,13 @@ builds with vanilla's). Approved feel: the free-run is as before (§17.14), only
   planted hand. First person: the planting hands are drawn on the rail in the world (`BodyFp`, world source
   `body_moves`): up from under the frame onto the rail a hand's width to their side of your line, held there in the
   world as the body goes over it (the hand slides back under you), peeled off as you come down; the free hand over a
-  running vault thrown up and out for balance (`fp_vault_run`), a held item carried clear (`fp_vault_item`), both at the
-  crossing's own pace; up onto a top, the mantle's `fp_mantle`. The view dips to the rail as the hand meets it (looks up
-  at a high one), rolls 4° toward the legs over a running vault and takes the landing with a 4° dip (`BodyCamera`,
-  halved under reduced motion). Sound: `body.vault` (a palm on the rail, the legs' cloth whipping over it, two feet down
+  running vault, empty, thrown up and out wide for balance, drawn in the world too (while the world body has an arm the
+  view's own moves stand aside); a held item stays as it is. Up onto a top, the mantle's `fp_mantle`. The hands meet
+  the rail as the body comes level with it, a rail on a block's at the eyes (2 ticks in: the body rises past them), a
+  rail hung from at once. The view dips 16° toward a low rail as the hand meets it, so it's seen landing (the rail is
+  about 45° under the eye then), rolls 4° toward the legs over a running vault and takes the landing with a 4° dip; at a
+  rail on a block it looks up 12° to the catch, then down 10° onto the pressing hands (`BodyCamera`, all halved under
+  reduced motion). Sound: `body.vault` (a palm on the rail, the legs' cloth whipping over it, two feet down
   running; tools/art/specs/audio_body.py), and as the hand meets the rail its own hit sound (a wooden fence's knock, a
   stone wall's) with chips and dust off its top.
 - **City**: Carillon's fences and walls (the wall's parapets and crenel sills, the terraces' rails, the towers' rings,

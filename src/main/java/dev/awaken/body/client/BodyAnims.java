@@ -411,7 +411,7 @@ final class BodyAnims {
     }
 
     /** A crossing's nominal timing by kind (VaultRules.VAULT .. OVER, ticks): the hand meets the rail, over the top, the whole. */
-    static final float[] VAULT_PLANT = {3, 4, 6, 4, 5}, VAULT_OVER = {3, 5, 7, 4, 5}, VAULT_LEN = {12, 15, 21, 11, 18};
+    static final float[] VAULT_PLANT = {3, 4, 4, 4, 5}, VAULT_OVER = {3, 5, 7, 4, 5}, VAULT_LEN = {12, 15, 21, 11, 18};
 
     static void onPost(RenderPlayerEvent.Post<?> e) {
         if (pushed > 0) {

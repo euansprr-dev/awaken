@@ -105,11 +105,15 @@ final class BodyServer {
         else if (move.runner()) RunnerServer.onEnd(p, move);
     }
 
-    /** Undo what the client predicted: stop a slide where the server has it, put a refused mantle back where it began. */
+    /**
+     * Undo what the client predicted: stop a slide where the server has it, put a refused mantle back where it began. A
+     * refused crossing is only stopped: its path never passes through anything (vanilla's own move checks hold it to
+     * that), and a server running behind its client mustn't yank the body back a second later.
+     */
     static void refuse(ServerPlayer p, Move move) {
         AwakenNet.send(p, new BodyPayloads.Refuse(move.ordinal()));
         if (p.connection == null) return;
-        if (move == Move.MANTLE || move == Move.VAULT) {
+        if (move == Move.MANTLE) {
             p.connection.teleport(p.getX(), p.getY(), p.getZ(), p.getYRot(), p.getXRot());
         } else if (move == Move.SLIDE) {
             Vec3 v = new Vec3(0, p.getDeltaMovement().y, 0);
@@ -285,13 +289,19 @@ final class BodyServer {
         BodyMotion m = motion(p);
         long now = now(p);
         if (m.vaultUntil != 0 || m.mantleUntil != 0 || m.slideUntil != 0 || m.runner()) return false;
-        VaultRules.Vault v = VaultRules.find(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ(), yaw,
-                (run ? VaultRules.REACH_RUN : VaultRules.REACH_WALK) + VaultRules.REACH_SERVER, run, speed);
-        if (v == null) return false;
-        double ddx = v.endX() - x, ddz = v.endZ() - z;
-        if (Math.abs(v.floor() - y) > 0.3 || ddx * ddx + ddz * ddz > VaultRules.LAND_TOL * VaultRules.LAND_TOL) return false; // not the client's
-        vaultFrom(p, m, v, yaw, now);
-        return true;
+        // from where the server has the body, or a little ahead of it along the way (a server running a few ticks behind
+        // its client hasn't seen the run-up's last steps yet): a crossing that ends where the client's does
+        double reach = (run ? VaultRules.REACH_RUN : VaultRules.REACH_WALK) + VaultRules.REACH_SERVER;
+        double dx = -Mth.sin(yaw * Mth.DEG_TO_RAD), dz = Mth.cos(yaw * Mth.DEG_TO_RAD);
+        for (double d = 0; d <= VaultRules.LAG_MAX + 1e-6; d += 0.5) {
+            VaultRules.Vault v = VaultRules.find(p.level(), CollisionContext.of(p), p.getX() + dx * d, p.getY(), p.getZ() + dz * d, yaw, reach, run, speed);
+            if (v == null) continue;
+            double ddx = v.endX() - x, ddz = v.endZ() - z;
+            if (Math.abs(v.floor() - y) > 0.3 || ddx * ddx + ddz * ddz > VaultRules.LAND_TOL * VaultRules.LAND_TOL) continue; // not the client's
+            vaultFrom(p, m, v, yaw, now);
+            return true;
+        }
+        return false;
     }
 
     /** A crossing accepted (from the ground, or over a rail from a hang): the crawl box here too, counted, shown. */

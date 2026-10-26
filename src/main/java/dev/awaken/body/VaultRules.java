@@ -47,8 +47,11 @@ public final class VaultRules {
     public static final double DROP = 2.0, STEP = 0.6;
     /** The face this far in front of the body: walking, running (a running vault takes off early in its stride). */
     public static final double REACH_WALK = 0.6, REACH_RUN = 1.3;
-    /** The server's extra reach (its body may be a tick behind) and how near its landing must be to the claimed one. */
-    public static final double REACH_SERVER = 0.6, LAND_TOL = 1.0;
+    /**
+     * The server's extra reach (its body may be a tick behind), how far ahead of where it has the body it looks too (a
+     * server running a few ticks behind its client), and how near its landing must be to the claimed one.
+     */
+    public static final double REACH_SERVER = 0.6, LAG_MAX = 3.0, LAND_TOL = 1.0;
     /** Over the top at this speed: walking, running (at least; the run's own up to the most), a rail on a block. */
     public static final double V_WALK = 0.2, V_RUN = 0.28, V_MAX = 0.42, V_HIGH = 0.24, V_ONTO = 0.16;
     /** Rising, blocks a tick (a mantle rises ~0.45), walking a little slower. */
@@ -122,6 +125,19 @@ public final class VaultRules {
             out[0] = x + dx * s;
             out[1] = py;
             out[2] = z + dz * s;
+        }
+
+        /**
+         * When the hands meet the rail (ticks in): a low crossing's as the body comes level with the top; a climb over a
+         * rail on a block's early, while the rail is still at the eyes (the body then rises past the hands); from a hang
+         * at once (the hands are on it already).
+         */
+        public int plantTick() {
+            return switch (kind) {
+                case HIGH -> Math.min(2, rise);
+                case OVER -> 1;
+                default -> Math.max(1, rise - 1);
+            };
         }
 
         /** The kind's plant: a running vault's one hand, a hop's two, a climb's two (for the looks). */

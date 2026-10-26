@@ -281,8 +281,9 @@ clip("body_pipe_land", [(0, PS, "linear"), (2, PL_CROUCH, "easeoutcubic"), (5, P
 # Fences, gates and walls (SPEC §17.27). The body crosses a rail in a crawl-height box with its feet just over the top;
 # the figure is lowered (rise < 0) so its hips cross at the rail and the planted hand meets it, the legs swung out to the
 # side. Timings are the crossings' nominal plans (body.client.BodyAnims.VAULT_PLANT / VAULT_OVER / VAULT_LEN: the hand
-# meets the rail, the way over the top, the whole): a running vault 3 / 3-6 / 12, a hop 4 / 4-9 / 15, a rail on a block
-# 6 / 6-13 / 21, onto a top 4 / 4-8 / 11, over a rail from a hang 5 / 5-11 / 18. Authored right-handed: the off (left)
+# meets the rail, the way over the top, the whole): a running vault 3 / 4-7 / 12, a hop 4 / 5-10 / 15, a rail on a block
+# 2 / 7-14 / 21 (the hands catch the rail at the eyes and the body rises past them: its feet are near the top by tick 4),
+# onto a top 4 / 5-9 / 11, over a rail from a hang 1 / 6-11 / 18. Authored right-handed: the off (left)
 # hand plants, the legs go over to the main (right) side, the top of the figure leans onto the planted hand (tilt < 0).
 
 # A running vault (a speed vault): the stride takes off, the left hand reaches down onto the rail as the knees tuck up and
@@ -315,15 +316,15 @@ clip("body_vault_hop", [(0, VH_REACH, "linear"), (4, VH_PLANT, "easeoutcubic"), 
 
 # A rail on a block (a garden wall): a foot steps up the block's face, both hands reach high for the rail and catch it,
 # pull the body up past it, press with straight arms as the legs swing over to the right, and drop down beyond.
-VR_STEP = pose(lean=-4, rl=(-92, 0, 4), rk=96, ll=(10, 0, -3), lk=20, ra=(-150, -6, -8), re=20, la=(-156, 6, 8), le=16)
-VR_CATCH = pose(ground=False, lean=4, rl=(-70, 0, 4), rk=110, ll=(-20, 0, -3), lk=60, ra=(-168, -4, -12), re=10, la=(-168, 4, 12), le=10)
+VR_STEP = pose(lean=-2, rl=(-92, 0, 4), rk=96, ll=(10, 0, -3), lk=20, ra=(-128, -6, -8), re=20, la=(-132, 6, 8), le=16)
+VR_CATCH = pose(ground=False, lean=6, rl=(-70, 0, 4), rk=110, ll=(-20, 0, -3), lk=60, ra=(-104, -4, -10), re=12, la=(-104, 4, 10), le=12)
 VR_PULL = pose(ground=False, rise=-4, lean=26, rl=(-96, 0, 8), rk=122, ll=(-60, 0, -2), lk=110, ra=(-96, -18, 4), re=110, la=(-96, 18, -4), le=110)
 VR_PRESS = pose(ground=False, rise=-12, lean=38, tilt=-18, rl=(-90, 0, 36), rk=104, ll=(-80, 0, 26), lk=110, ra=(-14, -6, 10), re=4, la=(-14, 6, -10), le=4)
 VR_OVER = pose(ground=False, rise=-12, lean=24, tilt=-34, rl=(-56, 0, 52), rk=60, ll=(-48, 0, 40), lk=72, ra=(-4, -6, 14), re=0, la=(-4, 6, -14), le=0)
 VR_DROP = pose(ground=False, rise=-2, lean=10, tilt=-6, rl=(-30, 0, 10), rk=30, ll=(-14, 0, 2), lk=40, ra=(-90, 0, 40), re=20, la=(-90, 0, -40), le=20)
 VR_LAND = pose(lean=24, rl=(-34, 0, 4), rk=74, ll=(-24, 0, -4), lk=66, ra=(-40, 0, 16), re=44, la=(-40, 0, -16), le=44)
-clip("body_vault_high", [(0, VR_STEP, "linear"), (3, VR_CATCH, "easeoutcubic"), (6, VR_PULL, "easeinoutsine"), (9, VR_PRESS, "easeinoutsine"),
-                         (12, VR_OVER, "easeinoutsine"), (16, VR_DROP, "easeinquad"), (21, VR_LAND, "easeoutcubic")], 23,
+clip("body_vault_high", [(0, VR_STEP, "linear"), (1.5, VR_CATCH, "easeoutcubic"), (3, VR_PULL, "easeinoutsine"), (5, VR_PRESS, "easeinoutsine"),
+                         (10.5, VR_OVER, "easeinoutsine"), (15, VR_DROP, "easeinquad"), (21, VR_LAND, "easeoutcubic")], 23,
      note="a foot up the block, hands catch the rail, pull, press, legs over, drop beyond")
 
 # Up onto a top (a wall's coping to walk, a rail over a drop): reach, pull with a knee driving up onto it, set the feet on
@@ -393,7 +394,7 @@ def moves_sheet(out_dir, px=5.0):
              "body_sprint": [0, 2, 4, 6], "body_wallrun_l": [0, 4], "body_wallclimb": [0, 4], "body_walljump": [0, 2, 6], "body_hang": [0],
              "body_grab": [1.5, 5], "body_ledge_up": [2, 4], "body_ledge_back": [2, 4],
              "body_pipe_hold": [0], "body_pipe_climb": [0, 4], "body_pipe_slide": [0], "body_pipe_kick": [2, 4], "body_pipe_land": [2],
-             "body_vault": [3, 4.5, 6.5, 9], "body_vault_hop": [4, 7, 10], "body_vault_high": [3, 6, 9, 12], "body_vault_onto": [3, 6, 8],
+             "body_vault": [3, 4.5, 6.5, 9], "body_vault_hop": [4, 7, 10], "body_vault_high": [1.5, 3, 5, 10.5], "body_vault_onto": [3, 6, 8],
              "body_vault_over": [3, 5, 9]}
     views = (("front", -35.0, 10.0), ("side", -90.0, 6.0))
     rows = []

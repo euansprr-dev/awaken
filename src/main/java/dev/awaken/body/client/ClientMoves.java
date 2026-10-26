@@ -623,7 +623,7 @@ public final class ClientMoves {
             return;
         }
         // the hand meets the rail as the body comes level with it: a slap, the rail's own knock and a puff off it
-        if (!vaultPlanted && vaultAge >= Math.max(1, v.rise() - 1) && p.level() instanceof net.minecraft.client.multiplayer.ClientLevel cl) {
+        if (!vaultPlanted && vaultAge >= v.plantTick() && p.level() instanceof net.minecraft.client.multiplayer.ClientLevel cl) {
             vaultPlanted = true;
             BodyFx.plant(cl, p, v);
         }

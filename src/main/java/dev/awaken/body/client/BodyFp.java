@@ -99,21 +99,14 @@ final class BodyFp {
     }
 
     /**
-     * A crossing starts (SPEC §17.27): the hands that plant are drawn on the rail in the world ({@link #vaultPose});
-     * here the free hand over a running vault, thrown out for balance, and a held item carried clear of the rail, both
-     * in step with the crossing's own length. Up onto a top is the mantle's: palms slap the lip, press.
+     * A crossing starts (SPEC §17.27): the hands are drawn in the world ({@link #vaultPose}: while the world body has an
+     * arm the view's own moves stand aside, so the free hand's swing is drawn there too). Up onto a top is the
+     * mantle's view clip: palms slap the lip, press, at the crossing's own pace.
      */
     static void vault(int kind) {
-        LocalPlayer p = Minecraft.getInstance().player;
         dev.awaken.body.VaultRules.Vault v = ClientMoves.vault;
-        if (p == null || v == null || !dev.awaken.body.client.feel.FeelConfig.fpMoves()) return;
-        float speed = BodyAnims.VAULT_LEN[Mth.clamp(kind, 0, BodyAnims.VAULT_LEN.length - 1)] / Math.max(1F, v.ticks()); // the clips' nominal length
-        if (kind == dev.awaken.body.VaultRules.ONTO) {
-            FirstPerson.play(BodyClips.FP_MANTLE, 12F / Math.max(1F, v.ticks()));
-            return;
-        }
-        if (kind == dev.awaken.body.VaultRules.VAULT) FirstPerson.play(BodyClips.FP_VAULT_RUN, speed);
-        if (!p.getMainHandItem().isEmpty()) FirstPerson.play(BodyClips.FP_VAULT_ITEM, speed);
+        if (v == null || !dev.awaken.body.client.feel.FeelConfig.fpMoves()) return;
+        if (kind == dev.awaken.body.VaultRules.ONTO) FirstPerson.play(BodyClips.FP_MANTLE, 12F / Math.max(1F, v.ticks()));
     }
 
     static void leap() {
@@ -212,7 +205,7 @@ final class BodyFp {
         if (p == null) return false;
         float t = now(pt);
         var cam = mc.gameRenderer.mainCamera().position();
-        if (vaultPose(p, cam, pt, rig)) return true;
+        if (vaultPose(p, mc.gameRenderer.mainCamera(), pt, rig)) return true;
         float s = Ease.hold(t, ClientMoves.slideStart, ClientMoves.slideEnd, ClientMoves.sliding, 2.5F, 4F);
         if (s > 0) {
             double fx = ClientMoves.slideX, fz = ClientMoves.slideZ, l = Math.sqrt(fx * fx + fz * fz);
@@ -276,6 +269,14 @@ final class BodyFp {
     }
 
     private static final double[] RAIL = new double[3];
+    /**
+     * The free hand over a running vault, in view space (x right, y up, z toward you) at shares of its window: up and
+     * forward from under the frame as the other plants, out wide for balance over the top, down with the landing.
+     */
+    private static final float[][] FREE = {{0.6F, -0.8F, -0.6F}, {0.62F, -0.1F, -0.88F}, {0.88F, 0.04F, -0.74F}, {0.74F, -0.36F, -0.9F},
+            {0.62F, -0.9F, -0.6F}};
+    private static final float[] FREE_AT = {0F, 0.3F, 0.55F, 0.8F, 1F};
+    private static final org.joml.Vector3f FREE_V = new org.joml.Vector3f();
 
     /**
      * A crossing's hands in the world (SPEC §17.27): the off hand (and the main one too when both plant and it's empty)
@@ -283,11 +284,12 @@ final class BodyFp {
      * the body goes over it (so it slides back under you), and lets go as you come down. Up onto a top is the mantle's
      * view clip instead.
      */
-    private static boolean vaultPose(LocalPlayer p, net.minecraft.world.phys.Vec3 cam, float pt, FirstPerson.Rig rig) {
+    private static boolean vaultPose(LocalPlayer p, net.minecraft.client.Camera camera, float pt, FirstPerson.Rig rig) {
+        var cam = camera.position();
         dev.awaken.body.VaultRules.Vault v = ClientMoves.vault;
         if (v == null || v.kind() == dev.awaken.body.VaultRules.ONTO || ClientMoves.vaultStart < -50) return false;
         float k = ClientMoves.ticks - ClientMoves.vaultStart + pt;
-        float plant = Math.max(1, v.rise() - 1), release = v.rise() + v.over();
+        float plant = v.plantTick(), release = v.rise() + v.over();
         // a crossing cut short lets go where it was cut
         if (!ClientMoves.vaulting) release = Math.min(release, ClientMoves.vaultEnd - ClientMoves.vaultStart);
         if (k < plant - 3 || k > release + 4) return false;
@@ -313,13 +315,29 @@ final class BodyFp {
             }
             // from under the frame on its side, and back there
             double ux = cam.x + rx * side * 0.38 + fx * 0.2, uy = cam.y - 0.95, uz = cam.z + rz * side * 0.38 + fz * 0.2;
-            float a = k < plant ? Ease.at(Ease.OUT_CUBIC, Mth.clamp((k - (plant - 3)) / 3F, 0, 1))
+            // (from a hang the hands are on the rail already)
+            float a = k < plant && v.kind() != dev.awaken.body.VaultRules.OVER ? Ease.at(Ease.OUT_CUBIC, Mth.clamp((k - (plant - 3)) / 3F, 0, 1))
                     : k <= release ? 1 : 1 - Ease.at(Ease.IN_OUT_SINE, Mth.clamp((k - release) / 4F, 0, 1));
             double lift = k > release ? 0.12 * (1 - a) : 0; // peeled up off the rail as it lets go
             double x = Mth.lerp(a, ux, hx), y = Mth.lerp(a, uy, hy + 0.03 + lift), z = Mth.lerp(a, uz, hz);
             double sx = cam.x + rx * side * 0.33 - fx * 0.05, sz = cam.z + rz * side * 0.33 - fz * 0.05;
             rig.reach(side > 0 ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM, sx, cam.y - 0.3, sz, x, y, z, FirstPerson.Rig.ARM_REACH,
                     0, 1, 0, Math.min(1F, a * 2F));
+        }
+        if (v.kind() == dev.awaken.body.VaultRules.VAULT && p.getMainHandItem().isEmpty()) {
+            // the free (main) hand, empty: thrown up and out wide for balance as the legs go over
+            float from = plant - 3, to = release + 4, u = Mth.clamp((k - from) / (to - from), 0, 1);
+            int i = 0;
+            while (i < FREE_AT.length - 2 && u > FREE_AT[i + 1]) i++;
+            float f = Mth.clamp((u - FREE_AT[i]) / (FREE_AT[i + 1] - FREE_AT[i]), 0, 1);
+            f = f * f * (3 - 2 * f);
+            double side = leftMain ? -1 : 1;
+            FREE_V.set(Mth.lerp(f, FREE[i][0], FREE[i + 1][0]) * (float) side, Mth.lerp(f, FREE[i][1], FREE[i + 1][1]), Mth.lerp(f, FREE[i][2], FREE[i + 1][2]))
+                    .rotate(camera.rotation());
+            double sx = cam.x + rx * side * 0.33 - fx * 0.05, sz = cam.z + rz * side * 0.33 - fz * 0.05;
+            float w = Math.min(1F, Math.min(u, 1 - u) * 6F);
+            rig.reach(side > 0 ? FirstPerson.Limb.RIGHT_ARM : FirstPerson.Limb.LEFT_ARM, sx, cam.y - 0.3, sz, cam.x + FREE_V.x, cam.y + FREE_V.y,
+                    cam.z + FREE_V.z, FirstPerson.Rig.ARM_REACH, 0, 1, 0, w);
         }
         return true;
     }
