@@ -187,6 +187,31 @@ def third_person(style, edge):
             {"rotation": [rot[0], -rot[1], -rot[2]], "translation": [-t[0], t[1], t[2]], "scale": [sc] * 3})
 
 
+def worn_third_person(sc=0.7, fist=2.5):
+    """The Gauntlets' third-person holds (right, left, as written in the JSON): worn, not held (Euan 2026-10-26, "the
+    gauntlet should be on the hand"; in F5 vanilla's handheld hold set it out in front of the fist like a held block,
+    where it went into the legs, the body and the head). The knuckles point down the forearm and out past the fist, the
+    back of the hand outward, the cuff round the forearm, the fist ({@code fist} texels up from the wrist) on the hand.
+    ItemInHandLayer's frame: the arm's, X -90, Y 180, (+-1, 2, -10)/16; the arm hangs along +y, its hand near y 10."""
+    hold = MR.euler(-90, 0, 0) @ MR.euler(0, 180, 0)
+    F = np.stack([AXIS_ITEM, np.cross(AXIS_ITEM, FACE_ITEM), FACE_ITEM], axis=1)
+    c = GRIP_ITEM + AXIS_ITEM * fist / 16
+    out = []
+    for out_x, o in ((-1.0, np.array([1.0, 2.0, -10.0]) / 16), (1.0, np.array([-1.0, 2.0, -10.0]) / 16)):
+        a, z = np.array([0.0, 1.0, 0.0]), np.array([out_x, 0.0, 0.0])
+        T = np.stack([a, np.cross(a, z), z], axis=1)  # the arm frame's knuckles, edge, back of the hand
+        R = hold.T @ T @ F.T
+        centre = np.array([out_x, 9.0, 0.0]) / 16  # on the arm's middle, the fist round the hand
+        t = (hold.T @ centre - o - sc * R @ (c - 0.5)) * 16
+        ex, ey, ez = euler_xyz(R)
+        out.append((ex, ey, ez, t))
+    (rx, ry, rz, tr), (lx, ly, lz, tl) = out
+    # a left hand's is applied mirrored (y and z turns, x move negated): written so it applies as solved
+    return ({"rotation": [round(rx, 2), round(ry, 2), round(rz, 2)], "translation": [round(float(v), 3) for v in tr], "scale": [sc] * 3},
+            {"rotation": [round(lx, 2), round(-ly, 2), round(-lz, 2)], "translation": [round(float(-tl[0]), 3), round(float(tl[1]), 3),
+                                                                                      round(float(tl[2]), 3)], "scale": [sc] * 3})
+
+
 def describe(display):
     """A display transform back in these terms (for the report)."""
     (rx, ry, rz), t, sc = display

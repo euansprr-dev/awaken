@@ -3390,6 +3390,8 @@ def row_hold(row, pos):
     out = {"firstperson_righthand": {"rotation": list(rot), "translation": list(tr), "scale": [sc, sc, sc]},
            "firstperson_lefthand": {"rotation": lrot, "translation": ltr, "scale": [sc, sc, sc]}}
     third = AH.third_person(row[8], edge)  # a single edge on the other side from its style's: turned over in F5 too
+    if row[8] == "gauntlets":
+        third = AH.worn_third_person()  # worn on the fist in F5 too, never held out in front of it
     if third is not None:
         out["thirdperson_righthand"], out["thirdperson_lefthand"] = third
     return out

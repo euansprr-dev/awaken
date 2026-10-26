@@ -139,10 +139,36 @@ strike("arms_strike_3", "strike_3", S3_COCK, S3_THRU, "overhead: both hands up, 
 # lab's point lead, tools/art/anim_lab.py third)
 # (the arm and chest stay on the thrust's line from cocked to through, so the point drives straight along it, never
 # swinging across: a turn of the chest or the arm swept a long point's tip sideways, 45 degrees off its line; the body
-# leans in less than it lunges, its lean arcing a long point off the line too)
-T_COCK = pose(lean=-3, twist=0, shift=-3, rl=(-8, 0, 6), rk=12, ll=(12, 0, -4), lk=12, ra=(-12, 0, 4), re=50, la=(-38, 0, -20), le=40)
+# leans in less than it lunges, its lean arcing a long point off the line too; its elbow bends only a little, as a
+# straightening forearm tilts a blade held square across the fist off the line in the bent twin)
+T_COCK = pose(lean=-3, twist=0, shift=-3, rl=(-8, 0, 6), rk=12, ll=(12, 0, -4), lk=12, ra=(-12, 0, 4), re=12, la=(-38, 0, -20), le=40)
 T_THRU = pose(lean=6, twist=0, shift=5, rl=(-48, 0, 4), rk=44, ll=(26, 0, -4), lk=8, ra=(-15, 0, 4), re=0, la=(8, 0, -26), le=20)
 strike("arms_strike_4", "strike_4", T_COCK, T_THRU, "thrust: drawn back, then driven straight with a lunge")
+
+# The Gauntlets' punches: worn on the fist (arms_holds.worn_third_person), the knuckles point down the forearm, so a
+# punch lands knuckles first only when the fist travels along the forearm: the arm is set where the punch goes and the
+# body drives it there (a vanilla arm can't straighten; the bent twin's elbow adds its own drive). Never the blade's
+# high wind-up, which brought a fist through the head. A jab: the arm level, the chest turned in behind it, a lunge.
+# An overhand: the arm angled down at the foe, the body dropping in behind it. An uppercut: the arm angled up in front
+# of the chin, the knees driving the body up under it. A hook: the elbow bent level, the forearm across the front,
+# the chest turning it round (straight-armed it can only sweep: the bent twin is the hook).
+# (each pair found in the lab: knuckles first at the hit, the bent twin >= 0.8, nothing into the head or body)
+JB_COCK = pose(lean=-5, rise=0.7, twist=9, shift=-2.6, rl=(-8, 0, 6), rk=12, ll=(12, 0, -4), lk=12, ra=(-85, 14, 5), re=55,
+               la=(-70, -24, -24), le=100)
+JB_THRU = pose(lean=12, rise=0.3, twist=-23, shift=5.5, rl=(-40, 0, 4), rk=36, ll=(24, 0, -4), lk=8, ra=(-76, 3, 9), re=3,
+               la=(-70, -24, -24), le=100)
+OV_COCK = pose(lean=-2, twist=13, shift=-0.9, rl=(-10, 0, 6), rk=10, ll=(10, 0, -4), lk=10, ra=(-50, 7, 1), re=57,
+               la=(-70, -24, -24), le=100)
+OV_THRU = pose(lean=22, rise=-4.4, twist=10, shift=-0.4, rl=(-50, 0, 4), rk=70, ll=(26, 0, -4), lk=50, ra=(-53, 13, 13), re=0,
+               la=(-70, -24, -24), le=100)
+UP_COCK = pose(lean=-14, twist=16, shift=-2.1, rl=(-22, 0, 6), rk=34, ll=(14, 0, -4), lk=28, ra=(-36, 10, 40), re=59,
+               la=(-70, -24, -24), le=100)
+UP_THRU = pose(lean=4, twist=-12, shift=3.4, rl=(-8, 0, 4), rk=6, ll=(10, 0, -4), lk=6, ra=(-133, 18, -11), re=19,
+               la=(-70, -24, -24), le=100)
+HK_COCK = pose(lean=-6, rise=0.9, twist=18, shift=-2.5, rl=(-14, 0, 6), rk=16, ll=(12, 0, -4), lk=12, ra=(-38, -38, 91), re=134,
+               la=(-70, -24, -24), le=100)
+HK_THRU = pose(lean=15, rise=0.6, twist=-38, shift=4.6, rl=(-24, 0, 4), rk=22, ll=(16, 0, -6), lk=10, ra=(-92, 33, 88), re=124,
+               la=(-70, -24, -24), le=100)
 
 # A shield bash: the shield raised square in front of the chest (the arm up, so the weapon stands upright and its face,
 # turned by the wrist, looks ahead), the body drawn back and then driven in behind it with a lunge.
@@ -244,6 +270,8 @@ def styled(style, lean=0.0, sink=0.0):
         "side1": (S1_COCK, S1_THRU, S1_VIA, S1_ARC), "side2": (S2_COCK, S2_THRU, None, None), "over": (S3_COCK, S3_THRU, None, None),
         "thrust": (T_COCK, T_THRU, None, None), "round": (AR_DRAW, AR_THRU, None, None), "exec": (EX_COCK, EX_THRU, None, None),
         "rise": (HV_DRAW, HV_THRU, None, None), "bash": (BS_COCK, BS_THRU, None, None),
+        "hook": (HK_COCK, HK_THRU, None, None), "upper": (UP_COCK, UP_THRU, None, None),
+        "jab": (JB_COCK, JB_THRU, None, None), "overfist": (OV_COCK, OV_THRU, None, None),
     }
     for move, m in a["moves"].items():
         sw = m.get("swing", {})
@@ -255,15 +283,21 @@ def styled(style, lean=0.0, sink=0.0):
             # the move's form (tools/arms/forms.py): the body that does it
             if form == "bash":
                 kind = "bash"
-            elif form in ("stab", "jab", "over"):
-                # over: a fist's overhand; a vanilla arm can't turn a fist knuckles-down as it comes over, so the body
-                # drives a straight punch into it
+            elif form == "jab":
+                kind = "jab"
+            elif form == "over":
+                kind = "overfist"
+            elif form == "stab":
                 kind = "thrust"
             elif form in ("slam", "chop"):
                 kind = "exec" if (form == "slam" and m.get("arc", 0) >= 300) or move == "execution" else "over"
             elif form in ("whirl", "spin"):
                 kind = "round"
-            elif form in ("rise", "upper"):
+            elif form == "upper":
+                kind = "upper"
+            elif form == "hook":
+                kind = "hook"
+            elif form == "rise":
                 kind = "rise"
             else:
                 d = sw.get("dir") or [sw.get("to", [0])[0] - sw.get("from", [0])[0], 0]
