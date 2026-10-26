@@ -4,6 +4,7 @@ import dev.awaken.arms.Archetype;
 import dev.awaken.arms.Archetypes;
 import dev.awaken.arms.Arms;
 import dev.awaken.arms.ArmsConfig;
+import dev.awaken.arms.ArmsMastery;
 import dev.awaken.arms.ArmsRules;
 import dev.awaken.arms.net.ArmsPayloads;
 import dev.awaken.body.Body;
@@ -53,6 +54,8 @@ public final class ArmsPredict {
     static int heldTicks, chargeStart;
     // what the server told us
     static int deflectAt = -1000, dodgeAt = -1000, resonance;
+    /** Each style's mastery step, by its index (ArmsMastery; the server sends them). */
+    static int[] mastery = new int[0];
     static final Map<Integer, Integer> BROKEN = new HashMap<>();
     // dodge
     static boolean dodging;
@@ -131,7 +134,8 @@ public final class ArmsPredict {
             return;
         }
         Archetype.MoveDef slip = st.move(Archetype.Move.SLIPCUT);
-        if (slip != null && ticks - dodgeAt >= 1 && ticks - dodgeAt <= st.def().dodge().ticks() + slip.window()) {
+        int steps = mastery(st);
+        if (slip != null && ticks - dodgeAt >= 1 && ticks - dodgeAt <= st.def().dodge().ticks() + slip.window() + ArmsMastery.slipcutBonus(steps)) {
             dodgeAt = -1000;
             begin(p, st, Archetype.Move.SLIPCUT, -1, 0, s);
             return;
@@ -150,7 +154,7 @@ public final class ArmsPredict {
             p.setDeltaMovement(v.x * 0.6, Math.min(v.y, -1.1), v.z * 0.6);
             return;
         }
-        ArmsRules.Decision d = ArmsRules.tap(st, style == st ? move : null, moveStart, step, cadence, ticks, 0);
+        ArmsRules.Decision d = ArmsRules.tap(st, style == st ? move : null, moveStart, step, cadence, ticks, ArmsMastery.strikes(steps));
         if (d == null) return;
         if (d.startAt() > ticks) {
             buffered = d;
@@ -158,6 +162,16 @@ public final class ArmsPredict {
             return;
         }
         begin(p, st, d.move(), d.step(), d.cadence(), s);
+    }
+
+    static int mastery(Archetypes.Loaded st) {
+        return st.index() < mastery.length ? mastery[st.index()] : 0;
+    }
+
+    static void onMastery(ArmsPayloads.Mastery msg) {
+        int[] m = new int[msg.steps().size()];
+        for (int i = 0; i < m.length; i++) m[i] = msg.steps().get(i);
+        mastery = m;
     }
 
     static void begin(LocalPlayer p, Archetypes.Loaded st, Archetype.Move m, int st2, int cad, int s) {
@@ -263,7 +277,7 @@ public final class ArmsPredict {
         int target = mc.hitResult instanceof EntityHitResult ehr ? ehr.getEntity().getId() : -1;
         ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_RELEASE, p.getYRot(), p.getXRot(), target));
         int held = c.min() + (ticks - chargeStart);
-        if (st.move(Archetype.Move.ART) != null && ArmsRules.artReady(held, c, resonance)) {
+        if (st.move(Archetype.Move.ART) != null && ArmsRules.artReady(held, c, resonance, ArmsMastery.artAt(mastery(st)))) {
             begin(p, st, Archetype.Move.ART, -1, 0, seq); // held through with the meter full: the Art
             return;
         }

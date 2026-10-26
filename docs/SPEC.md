@@ -3987,17 +3987,50 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   starts half the active before it (`ArmsHands.blowStart`: never before half a tick) and the recovery takes up the
   difference; the move ends when its row says. In first person, in third person (`arms_moves.py` keys the cocked pose
   there too) and in the trails. Before, the hit, its freeze and its red flash came while the blade was still cocked.
-- **First person** (`ArmsHands`, a source on Hands' view layer, `FirstPerson.view`, every styled item): the row's
-  swing from the click frame. A pose is the hand's place on screen (blocks from vanilla's resting hand), the blade's
-  roll in the screen's plane and an optional tilt of the tip forward (a chop, a thrust). The blade stays flat to the
-  eye: a flat item sprite turned about the vertical goes edge-on and vanishes mid-cut (seen in the first tour), so the
-  hand travels across the view instead, on an arc about the shoulder during the blow (eased out hard, with its lunge)
-  and on straight eased lines into the wind-up and home (an arc there lifts the blade back over the top of the view).
-  The Longsword: strike 1 a forehand diagonal (upper right to lower left), strike 2 a backhand sweep, strike 3 an
-  overhead chop, strike 4 and the riposte thrusts, the heavy a rising cut, the Slipcut a low wide sweep, the Execution
-  a raised chop. A held heavy draws back to its start pose and trembles finely as it charges; the guard is vanilla's
-  blocking pose eased in over 2 ticks. Reviewed frame by frame with `tools/autopilot/arms-poses.txt` (the autopilot's
-  `arms pose <move> <0..1>` holds the hands still).
+- **First person** (`ArmsHands`, a source on Hands' view layer, `FirstPerson.view`, every styled item; Euan
+  2026-10-26: "like you're waving the sword instead of slicing... a bit too high"): every move plays a swing baked by
+  the animation lab (tools/art/anim_lab.py `bake` -> `data/awaken/arms/fp_swings.json`, read by `FpSwings`): keys every
+  0.25 ticks of the hand's move from vanilla's rest and its turn about its own place. A cut is a lever, the arm and
+  blade turning as one about a pivot low and right of the view (0.80, -0.64, -0.48 from the eye), in the plane that
+  holds the blade and the cut's direction on the screen (the row's swing.from -> swing.to: a slash flattened 0.6, a
+  chop down, a rising cut up), the blade's flat across that plane so its edge leads (its cutting side toward the motion
+  for an axe, a scythe or a glaive; a symmetric blade takes the side that turns least). On the hit tick (the server's
+  first active tick; mid-blow for a released heavy) the blade crosses the target, a point just under the crosshair
+  (0, -0.10, -1.20), at 78% along its length: seen along its length rising from the frame's lower right, not down it
+  from the hilt. Drawn back to 50-74 degrees before it (heavier rows further), accelerating into the hit, the edge
+  biting and slowing 14-22 degrees past it, a follow-through, then home. Thrusts drive straight along the aim, the flat
+  level. The keys are for the style's forged weapon; a vanilla item in the style takes the same targets from its own
+  hold (`vanilla` turn and grips in the file). A held heavy waits at its drawn-back start and trembles; an armed
+  Plunge at the Plunge's; mirrored for a left main arm. Without keys a move falls back to the row's own slide (the old
+  model). Lab numbers (the review set, 2026-10-26): every slash and chop crosses within 0.11 of the half-frame of the
+  crosshair (most within 0.05; the Chain-blade's and War-staff's long blades +0.11..0.13), edge lead 0.87-1.00 through
+  the blow (before: Longsword strikes 1 and 2 at 0.41 and 0.17, crossing 0.45 above). Test `arms_fp_swings`.
+- **First person, the hold** (tools/art/specs/arms_holds.py; Euan 2026-10-26: "a spear should still feel like you're
+  holding a spear. Right now in first person, it just looks like a sword"): every style is held as that weapon really
+  is, written in view terms (where the business end points: degrees left of ahead and up; its roll about its length;
+  where the hand closes, from vanilla's resting hand; for an axe, a glaive or a scythe the side its working edge faces)
+  and solved for each weapon from its own mesh, so each is seated in the hand. One scale for all (0.5, the Longsword's;
+  the Daggers 0.575 so their blade reads): a spear is as much longer in hand than a longsword as in F5 and a dagger as
+  much shorter, and a long point may leave the view. Longsword up and forward to the left, its flat to the eye
+  (18 left, 52 up); Rapier en garde, the point forward at the target's height (20, 18); Katana two-handed at the
+  middle, the edge up (10, 36); Spear the shaft across the lower view, gripped part way, the head forward and up
+  (24, 22); Glaive the same with the blade higher, its edge in (18, 34); Scythe the snath up, the blade reaching in
+  across the top (8, 64); War-staff at its middle across the body (58, 28); Greatblade two-handed, raised, near the
+  middle (20, 60); Maul two hands low on the haft, the head up (6, 58); Axe the head up, its bit in (10, 58); Daggers
+  short, the point forward (18, 34); Twinblades at the middle, the blades either way across (62, 34); Chain-blade the
+  head forward on its chain (18, 38); Shieldblade the shield to the front, the blade above it (30, 62); Precursor Arm
+  forward like a drawn arm (14, 24); the Gauntlets keep their worn hold. `python3 tools/art/specs/arms_weapons.py
+  holds` rewrites only the holds; the old check that kept every point inside the view (it shrank every style to the
+  Longsword's outline) is gone. The swings are baked from these holds (they start and end at rest), and the lab's
+  holds sheets (docs/combat/anim-lab/holds-*.png) show each style before, after and in F5.
+- **The animation lab** (tools/art/anim_lab.py; SPEC §25, Euan's ask for a way to see the motion): `sheet` / `all`
+  draw each strike's first-person frames as the game composes them (the swing, Hands' view layer, vanilla's rest, the
+  weapon's hold and mesh, 70 degrees) as an onion-skin with the blade tip's path (wind-up blue, blow gold, recovery
+  grey), the hit ringed and the crosshair; under it the tip's height on screen and the edge lead over the move; beside
+  it top and side views of the grip and tip paths against the view cone (`--model old` shows the row's slide).
+  `third` draws the body's clip (arms_moves.py) with the blade in its hand as vanilla's ItemInHandLayer holds it, two
+  views and the third-person edge lead (a thrust: the point lead). `film` overlays the game's own frames (the clip
+  recorder's, in a tour) the same way. Sheets for the review set in docs/combat/anim-lab/.
 - **Third person** (Player Animation Library, optional, through `core.api.PlayerClips`; `ArmsClips`, `ArmsBodies`):
   a full-body clip per move from tools/art/specs/arms_moves.py, its keys on the timing table's rows (cocked at the
   wind-up's end, through at the active ticks' end, home by the endTick), each with a bent twin; the guard held while
@@ -4222,6 +4255,45 @@ Glaive, Glacial Vow: a Frost nova, deep slow), Mirror Knight (C, Shieldblade, Re
 Unit Zero (C, Precursor Arm, Zero Point: a Gravity vortex pulling in), Sleeper (C, Katana, Waking: a Spirit ring that
 all but stops them), Sky Leviathan (B, Twinblades, Storm Eye: a Charge nova that lifts them), Hollow Herald (A,
 Greatblade, Event Horizon: a Gravity vortex, darkness, the strongest pull). Test `arms_lord_forged`.
+Each Lord-forged weapon also carries one Mark of its Lord (Bell Warden Rebuke, Mother of Spores Feast, Ember Tyrant
+Chain Reaction, Hive Regent Windrunner, Root Saint Steady Breath, Drowned Archivist Echo Return, Gearwright Colossus
+Earthsplitter, Glass Serpent Counterspark, Lantern Broker Harvest, Abbot of Frost Parry Ward, Mirror Knight Mercy, Unit
+Zero Overcharge, Sleeper Phantom Cut, Sky Leviathan Crescendo, Hollow Herald Sunder).
+
+**Mastery** (S7, `ArmsMastery`): five steps for each style, from the kills made with it (20, 60, 150, 350, 800; a kill
+of a foe with the style in the main hand; kept in `awaken:arms_memory` `kills`, schemaVersion 3). Each adds to the same
+presses: I the chain's mastery strike (the style's `masteryChain`, the 4th or the 5th: a press from 2 ticks after the
+finisher's blow until its recovery ends chains on, a chain in full rhythm staying in it, so that strike can be a
+full-rhythm finisher too), II a Slipcut window 3 ticks longer, III a charged deflect (posture to the attacker and the
+deflect's Resonance ×1.5), IV every Resonance gain ×1.2, V the Art at 80 Resonance instead of 100. A new step is named
+by the System ("MASTERY · Longsword II · a longer Slipcut"); the steps go to the client (`arms_mastery` payload, by
+style index) for the prediction of I, II and V, and show under a weapon's name. Dev: `/awaken arms mastery <style>
+<kills>`. Test `arms_mastery` (and `arms_timeline`'s mastered finisher).
+
+**Marks** (S7, `Marks`): 48, every trigger with every effect, in `data/awaken/arms/marks.json` (written by
+tools/arms/marks.py; read once on both sides, like the styles). Triggers: a landed hit, a finisher in full rhythm, a
+deflect, a perfect dodge, a Break, a kill, a blow guarded (blocked, not deflected), a perfect heavy. Effects: a rider (×
+the fighter's attack as a second blow of the weapon's attuned Force, else the Mark's own, else plain; on a Lord at most 2%
+of its health), posture (points; a Break's: the Break held longer), a heal (share of max health), power energy, Speed I
+or Resistance I (ticks). A kill's rider and posture go to the foes within 4 blocks. A weapon carries at most two, with
+its attunement, in the item component `awaken:arms` (`Marks.Instance`, schemaVersion 1, saved and synced, moves with the
+item). Until the named weapons (S9), an Elite a player kills drops a forged weapon of its rank (the content level's) in a
+style at random 4% of the time (a Warden 10%), glowing, with one Mark (a second 20% of the time), and the System names
+it ("MARKED · Gatewrought Glaive · Rebuke"). Tooltips list each Mark and what it does. Dev: `/awaken arms mark <id>`.
+Test `arms_marks`.
+
+**The Forge** (S7, `ArmsForge`): sneak and use Hearth's Forge (any placed `awaken:forge`; a plain use stays Hearth's
+tempering and upgrades). Holding one of our weapons: attune it to a Force named by the catalyst in the off hand (Blaze
+Powder Heat, a Copper Ingot Charge, an Ender Pearl Gravity, a Ghast Tear Spirit, Packed Ice Frost) for 6 essence, a
+Core Shard and the catalyst; re-attuning replaces it. An attuned weapon's Mark riders take its Force, and it primes both
+ways: a landed hit makes the next power within 3 s cost 15% less (with a Weave's 30%: ×0.7×0.85), and a landed power of
+its Force makes the next blow within 3 s land ×1.25 with the Force's touch (Heat burns 3 s, Frost slows, Charge 6
+posture, Gravity lifts, Spirit heals 1.5). With an empty hand: the Blueprints, one design each use in turn, each for 4
+paper, 2 iron and an essence shard. Every style but the Longsword needs its Blueprint at the crafting table: the
+Blueprint sits in a free cell of the style's own shape (tools/art/specs/arms_weapons.py `blueprint_pattern`; `python3
+tools/art/specs/arms_weapons.py recipes` rewrites only the recipes) and comes back out of the grid. Blueprint art: the
+style's Wildhide silhouette in white line on blueprint paper (tools/arms/blueprints.py). Dev: `/awaken arms attune
+<force>`. Test `arms_forge`.
 
 **Item level** (PLAN §7.7, decided by the sim): a weapon's level is its tier. The forged Longswords' damage climbs by
 tier (4.5 to 9.5) and melee already rises with the player's strength, so on-level melee keeps pace with a Lord's

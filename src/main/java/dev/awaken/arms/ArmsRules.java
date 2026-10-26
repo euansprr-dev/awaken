@@ -35,6 +35,8 @@ public final class ArmsRules {
     /** Soft focus: how far a strike may turn toward its target; looking further than this away for so long drops it. */
     public static final float FOCUS_TURN = 15F, FOCUS_DROP_ANGLE = 60F;
     public static final int FOCUS_DROP_TICKS = 20;
+    /** A mastered finisher's link: the mastery strike may start this many ticks after the finisher's blow ends. */
+    public static final int MASTERY_LINK = 2;
     /** Hit-stop in a sweep: at most one freeze per this many ticks. */
     public static final int HITSTOP_GAP = 4;
 
@@ -64,6 +66,14 @@ public final class ArmsRules {
             if (rel >= c0 && rel <= c1) return new Decision(chainMove(a, next), next, now, Math.min(CADENCE_MAX, cadence + 1));
             if (rel < c0) return c0 - rel <= a.def().buffer() ? new Decision(chainMove(a, next), next, start + c0, 0) : null;
             return new Decision(chainMove(a, next), next, now, 0);
+        }
+        if (chainStrike && next != 0) {
+            // a finisher that mastery carries on: a press from the end of its blow chains into the mastery strike (its
+            // recovery is the window); a chain in full rhythm stays in it
+            long link = start + cur.windup() + cur.active() + MASTERY_LINK;
+            int carried = cadence >= step ? Math.min(CADENCE_MAX, cadence + 1) : cadence;
+            if (now >= link) return new Decision(chainMove(a, next), next, now, carried);
+            return link - now <= a.def().buffer() ? new Decision(chainMove(a, next), next, link, carried) : null;
         }
         // a finisher, a heavy, a riposte: the next tap starts the chain again once it has recovered
         long end = start + cur.total();
@@ -177,7 +187,12 @@ public final class ArmsRules {
 
     /** The Art: a heavy held through to its full charge (2 ticks' grace for the trip) with the meter full. */
     public static boolean artReady(int held, Archetype.Charge c, float resonance) {
-        return held >= c.max() - 2 && resonance >= RESONANCE_MAX;
+        return artReady(held, c, resonance, RESONANCE_MAX);
+    }
+
+    /** The same, with the meter a mastered style asks for ({@link ArmsMastery#artAt}). */
+    public static boolean artReady(int held, Archetype.Charge c, float resonance, int needs) {
+        return held >= c.max() - 2 && resonance >= needs;
     }
 
     /** A stance left alone: what is left of {@code value} after {@code sinceHit} ticks untouched (both sides). */
