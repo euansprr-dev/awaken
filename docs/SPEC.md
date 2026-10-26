@@ -2084,6 +2084,13 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     glow); the hover waits until the table stops moving; while the view moves the picture is drawn at 60% resolution
     without cloud shadows, then once at full resolution 0.11 s after it stops. Result (load 5–7, closed 7.35–7.45 ms):
     open and still +0.9–1.0 ms, orbiting +1.5–1.8.
+  - Cloud motion (Euan, 2026-10-26: "jittery … like a 1 FPS animation"): each puff no longer wobbles on its own sine
+    (puffs swinging past each other flipped their draw order and popped); the whole blanket drifts on one slow wind
+    (1.8 blocks a second from the west-south-west at the finest level, scaled with the cloud cell when zoomed out) on a
+    lattice that slides with it, each puff taking its cover from the land under it, blended between cells, so it thins
+    smoothly as it drifts out over known land (zoomed out, gone before it reaches it) and new cloud fills in over the
+    unknown; each puff breathes 5% on its own long phase. Drifting clouds redraw 60 times a second (was 30). Measured
+    on a busy machine (load 12–29): open and still about +1.4–1.7 ms, orbiting about +1.8–2.1.
   - Clouds (same day): a puff's tone comes from its cell's hash (from its drifting position it changed every redraw and
     the blanket flickered); the view redraws every frame while it moves (the 60 Hz cap made the table lag the mouse);
     zooming across a level keeps drawing the built level until the new one is ready round the view (it blinked out).
