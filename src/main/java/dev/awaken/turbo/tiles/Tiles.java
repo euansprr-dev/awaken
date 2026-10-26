@@ -12,6 +12,8 @@ import org.joml.Vector4f;
 import org.joml.Vector4fc;
 import org.jspecify.annotations.Nullable;
 
+import com.mojang.renderpearl.api.buffers.GpuBuffer;
+
 import java.util.Optional;
 
 /**
@@ -32,7 +34,7 @@ public final class Tiles {
     static final String MINECRAFT = "26.3", NEOFORGE = "26.3.0.95";
     private static final Optional<Vector4fc> CLEAR = Optional.of(new Vector4f(0f, 0f, 0f, 0f));
     private static int versionOk = -1;
-    private static boolean failed, loggedChain, loggedPass;
+    private static boolean failed, loggedChain, loggedPass, loggedBlock;
     private static @Nullable Boolean forced;
 
     /** Whether Tiles reshapes this chain's or pass's work: a Lens one, the setting on, the versions right. */
@@ -88,6 +90,34 @@ public final class Tiles {
     /** A pass's depth: none (post pipelines neither test nor write it, so loading and storing it was all cost). */
     public static @Nullable GpuTextureView depth(String pass, @Nullable GpuTextureView depth) {
         return on(pass) ? null : depth;
+    }
+
+    private static @Nullable GpuBuffer lensBlock;
+    private static @Nullable Boolean forcedBlock;
+
+    /** Lens's live uniform block (lens.client.LensBlock), set each frame it's written. */
+    public static void lensBlock(GpuBuffer buffer) {
+        lensBlock = buffer;
+    }
+
+    /** A pass's uniform buffer: Lens's live block in place of the chain's zeros for "LensBlock" on a Lens pass. */
+    public static GpuBuffer uniform(String pass, String name, GpuBuffer buffer) {
+        if (lensBlock == null || !"LensBlock".equals(name) || forcedBlock == Boolean.FALSE || !on(pass)) return buffer;
+        if (!loggedBlock) {
+            loggedBlock = true;
+            Awaken.LOG.info("[tiles] {}: Lens's values from one uniform block", pass);
+        }
+        return lensBlock;
+    }
+
+    /** Autopilot {@code lens block on|off|setting}: the A/B switch for the uniform block alone (Tiles' other parts stay). */
+    public static String block(String arg) {
+        forcedBlock = switch (arg.trim()) {
+            case "on" -> Boolean.TRUE;
+            case "off" -> Boolean.FALSE;
+            default -> null;
+        };
+        return "lens block " + (forcedBlock != null ? forcedBlock : "with Tiles");
     }
 
     static void fail(Throwable e) {

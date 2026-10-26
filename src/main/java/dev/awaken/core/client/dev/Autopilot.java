@@ -553,6 +553,11 @@ public final class Autopilot {
                 waitTicks = 20;
             }
             case "lens" -> {
+                if (arg.trim().startsWith("block")) {
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.turbo.tiles.Tiles.block(arg.trim().substring(5)));
+                    waitTicks = 20;
+                    return true;
+                }
                 if (arg.trim().startsWith("tiles")) {
                     Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.turbo.tiles.Tiles.autopilot(arg.trim().substring(5)));
                     waitTicks = 20;

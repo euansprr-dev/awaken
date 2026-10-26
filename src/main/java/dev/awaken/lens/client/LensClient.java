@@ -379,7 +379,19 @@ public final class LensClient {
 
     /** Just before the post effects: Lens 2's frame values (the exact matrices this frame drew with, the light). */
     private static void afterLevel(RenderLevelStageEvent.AfterLevel e) {
-        if (!active || !lit || lensFrame == null) return;
+        if (!active) return;
+        if (lit && lensFrame != null) writeFrame(e);
+        // both textures are written for this frame: the same values as one uniform block (Tiles binds it on Apple's path)
+        if (params != null) {
+            if (block == null) block = new LensBlock();
+            block.write(lit ? lensFrame : null, params);
+            dev.awaken.turbo.tiles.Tiles.lensBlock(block.buffer);
+        }
+    }
+
+    private static @org.jspecify.annotations.Nullable LensBlock block;
+
+    private static void writeFrame(RenderLevelStageEvent.AfterLevel e) {
         var state = e.getLevelRenderState();
         float lx = moonLight ? -sunDir.x : sunDir.x, ly = moonLight ? -sunDir.y : sunDir.y, lz = moonLight ? -sunDir.z : sunDir.z;
         // the clouds' cover: the look's, thickening toward overcast in rain and storms (not for the rain a Rolling Storm

@@ -41,7 +41,9 @@ layout(location = 0) out vec4 fragColor;
 
 // The parameter texture (LensParams, 32x1): 0 flags and debug, 1-2 far plane and sun, 3-8 the look, 9 sunset, 10-11 fog,
 // 12 sun glow, 13 the story's moments, 14 holo focus, 15 far terrain's planes, 16 motion; 17-31 free.
-vec4 P(int i) { return texelFetch(ParamsSampler, ivec2(i, 0), 0); }
+#include <awaken:lens_block.glsl>
+
+vec4 P(int i) { return LensUse.x > 0.5 ? LensP[i] : texelFetch(ParamsSampler, ivec2(i, 0), 0); }
 
 float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
 

@@ -10,6 +10,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.ModifyArgs;
+import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 import java.util.Optional;
 
@@ -21,6 +23,13 @@ import java.util.Optional;
 @Mixin(PostPass.class)
 abstract class PostPassMixin {
     @Shadow @Final private String name;
+
+    // Lens's live uniform block (lens.client.LensBlock) in place of the chain's zeros
+    @ModifyArgs(method = "lambda$addToFrame$1", at = @At(value = "INVOKE", target = "Lcom/mojang/renderpearl/api/commands/RenderPass;setUniform(Ljava/lang/String;Lcom/mojang/renderpearl/api/buffers/GpuBuffer;)V"), require = 0)
+    private void awaken$tilesUniform(Args args) {
+        String uniform = args.get(0);
+        args.set(1, Tiles.uniform(this.name, uniform, args.<com.mojang.renderpearl.api.buffers.GpuBuffer>get(1)));
+    }
 
     @ModifyArg(method = "lambda$addToFrame$1", at = @At(value = "INVOKE", target = "Lcom/mojang/renderpearl/api/commands/CommandEncoder;createRenderPass(Ljava/util/function/Supplier;Lcom/mojang/renderpearl/api/textures/GpuTextureView;Ljava/util/Optional;Lcom/mojang/renderpearl/api/textures/GpuTextureView;Ljava/util/OptionalDouble;)Lcom/mojang/renderpearl/api/commands/RenderPass;"), index = 2, require = 0)
     private Optional<Vector4fc> awaken$tilesClear(Optional<Vector4fc> clear) {
