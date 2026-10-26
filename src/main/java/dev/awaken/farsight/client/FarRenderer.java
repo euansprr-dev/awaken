@@ -107,6 +107,13 @@ final class FarRenderer implements AutoCloseable {
     final GpuTextureView sectionsView;
     private final ByteBuffer sectionBytes = MemoryUtil.memCalloc(64 * 64 * SECTIONS);
     private final long[] sectionSince = new long[64 * 64 * SECTIONS];
+    /**
+     * Per chunk slot, the chunk its sections' answers belong to. A section Sodium has built stays built until its chunk
+     * goes (a rebuild keeps the old mesh until the new one is ready), so it isn't asked again: asking every non-air
+     * section of 63×63 chunks every other frame was 12.6% of the render thread at the Roost (perf tour, 26 Oct).
+     */
+    private final long[] sectionChunk = new long[64 * 64];
+    private boolean chunksChanged = true, sectionsChanged = true;
     private int sectionTurn;
 
     // the frame's pieces: ring, first cell (window-local), width and height in cells
@@ -162,6 +169,7 @@ final class FarRenderer implements AutoCloseable {
         treeIndices = RenderSystem.getDevice().createBuffer(() -> "awaken far sight tree triangles", GpuBuffer.USAGE_INDEX, ti);
         MemoryUtil.memFree(ti);
         java.util.Arrays.fill(slotChunk, Long.MIN_VALUE);
+        java.util.Arrays.fill(sectionChunk, Long.MIN_VALUE);
         chunks = RenderSystem.getDevice().createTexture(() -> "awaken far sight chunks", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING,
                 GpuFormat.R8_UNORM, 64, 64, 1, 1);
         chunksView = RenderSystem.getDevice().createTextureView(chunks);
@@ -214,7 +222,11 @@ final class FarRenderer implements AutoCloseable {
                 if (!shown) slotShown[slot] = 0;
                 else if (slotShown[slot] == 0) slotShown[slot] = now;
                 shown = shown && now - slotShown[slot] >= SHOW_DELAY_MS;
-                chunkBytes.put(((z & 63) << 6) | (x & 63), shown ? (byte) 255 : 0);
+                byte cb = shown ? (byte) 255 : 0;
+                if (chunkBytes.get(slot) != cb) {
+                    chunkBytes.put(slot, cb);
+                    chunksChanged = true;
+                }
                 if (counts) {
                     total++;
                     if (shown) shownN++;
@@ -222,8 +234,11 @@ final class FarRenderer implements AutoCloseable {
             }
         }
         shownShare = total == 0 ? 1f : shownN / (float) total;
-        chunkBytes.clear();
-        RenderSystem.getDevice().createCommandEncoder().writeToTexture(chunks, chunkBytes, 0, 0, 0, 0, 64, 64);
+        if (chunksChanged) {
+            chunksChanged = false;
+            chunkBytes.clear();
+            RenderSystem.getDevice().createCommandEncoder().writeToTexture(chunks, chunkBytes, 0, 0, 0, 0, 64, 64);
+        }
         // the sections, half the chunks a call (by parity), each counted built 250 ms after it first is
         int turn = sectionTurn++ & 1, minSection = level.getMinSectionY(), count = Math.min(SECTIONS, level.getSectionsCount());
         for (int dz = -radius; dz <= radius; dz++) {
@@ -232,6 +247,10 @@ final class FarRenderer implements AutoCloseable {
                 if (((x + z) & 1) != turn) continue;
                 var chunk = source.getChunk(x, z, ChunkStatus.FULL, false);
                 int base = (((z & 63) * SECTIONS) << 6) | (x & 63);
+                long key = chunk == null ? Long.MIN_VALUE : ChunkPos.pack(x, z);
+                int slot = ((z & 63) << 6) | (x & 63);
+                boolean same = sectionChunk[slot] == key;
+                sectionChunk[slot] = key;
                 for (int sy = 0; sy < count; sy++) {
                     int at = base + (sy << 6);
                     boolean built = false;
@@ -239,6 +258,7 @@ final class FarRenderer implements AutoCloseable {
                         // an all-air section has nothing of City Sight's to hide: counted built without asking
                         var section = chunk.getSection(sy);
                         if (section.hasOnlyAir()) built = true;
+                        else if (same && sectionSince[at] != 0) built = true;
                         else {
                             probe.set(x * 16 + 8, (minSection + sy) * 16 + 8, z * 16 + 8);
                             built = sections.isSectionCompiledAndVisible(probe, 0L);
@@ -246,12 +266,24 @@ final class FarRenderer implements AutoCloseable {
                     }
                     if (!built) sectionSince[at] = 0;
                     else if (sectionSince[at] == 0) sectionSince[at] = now;
-                    sectionBytes.put(at, built && now - sectionSince[at] >= SHOW_DELAY_MS ? (byte) 255 : 0);
+                    byte sb = built && now - sectionSince[at] >= SHOW_DELAY_MS ? (byte) 255 : 0;
+                    if (sectionBytes.get(at) != sb) {
+                        sectionBytes.put(at, sb);
+                        sectionsChanged = true;
+                    }
                 }
             }
         }
-        sectionBytes.clear();
-        RenderSystem.getDevice().createCommandEncoder().writeToTexture(sectionTex, sectionBytes, 0, 0, 0, 0, 64, 64 * SECTIONS);
+        if (sectionsChanged) {
+            sectionsChanged = false;
+            sectionBytes.clear();
+            RenderSystem.getDevice().createCommandEncoder().writeToTexture(sectionTex, sectionBytes, 0, 0, 0, 0, 64, 64 * SECTIONS);
+        }
+    }
+
+    /** A new level: no section answers carry over (the same chunk coordinates are another chunk there). */
+    void forgetSections() {
+        java.util.Arrays.fill(sectionChunk, Long.MIN_VALUE);
     }
 
     /** Far Sight's depth texture at the main target's size, recreated when the window is. */
