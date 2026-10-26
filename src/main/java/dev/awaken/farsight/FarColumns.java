@@ -121,7 +121,8 @@ public final class FarColumns {
             // the lands pack's Lithostitched wrap puts the basin round the settings' final density; a router without it
             // (the tests' vanilla one) gets the same wrap here
             DensityFunction fin = noise.generatorSettings().value().noiseRouter().finalDensity();
-            b = random.getSampler(fin instanceof CityBasinFunction ? fin : new CityBasinFunction(fin, CityBasinFunction.Mode.DENSITY));
+            b = random.getSampler(fin instanceof CityBasinFunction ? fin
+                    : new CityBasinFunction(fin, CityBasinFunction.Mode.DENSITY, java.util.Optional.of(noise.generatorSettings().value().noiseRouter().depth())));
         }
         finalDensity = b;
         streetY = site != null ? site.streetY() : 0;

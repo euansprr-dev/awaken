@@ -15,6 +15,7 @@ import net.minecraft.world.level.levelgen.densityfunction.DfRewriteRule;
 import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * {@code awaken:city_basin}: wraps the overworld's final density ({@code mode: density}) or its preliminary surface
@@ -24,8 +25,20 @@ import java.util.List;
  * treats the channel as sea-level water and fills it to the waterline. Deep below the street (more than {@link #CRUST} blocks)
  * the natural density stays, so caves and ores go on under the city. With no site in this world (old worlds, Classic
  * start, a test generator) it compiles to its input unchanged.
+ *
+ * <p>Given the router's {@code depth} (2026-10-26), the ground it aims for across the blend is not the street but a rise
+ * from the street to the land's own height (the zero of {@code depth}, which falls with height: the land without its
+ * peaks and noise), so near the blend's edge the aim and the land agree on where the ground is and the land eases in:
+ * a slope. Aiming at the street everywhere, the land held until the blend overpowered it and then gave way at once: a
+ * sheer cliff about 560 blocks out, often undercut into a great cave (Euan: "that's a bit weird terrain generation").
+ * New chunks only.
  */
-public record CityBasinFunction(DensityFunction input, Mode mode) implements DensityFunction {
+public record CityBasinFunction(DensityFunction input, Mode mode, Optional<DensityFunction> depth) implements DensityFunction {
+    /** Without the land's height: aims at the street across the whole blend (the original basin). */
+    public CityBasinFunction(DensityFunction input, Mode mode) {
+        this(input, mode, Optional.empty());
+    }
+
     public enum Mode {
         DENSITY, SURFACE;
         static final Codec<Mode> CODEC = Codec.STRING.xmap(s -> s.equals("surface") ? SURFACE : DENSITY, m -> m == SURFACE ? "surface" : "density");
@@ -33,7 +46,8 @@ public record CityBasinFunction(DensityFunction input, Mode mode) implements Den
 
     public static final MapCodec<CityBasinFunction> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             DensityFunction.CODEC.fieldOf("input").forGetter(CityBasinFunction::input),
-            Mode.CODEC.optionalFieldOf("mode", Mode.DENSITY).forGetter(CityBasinFunction::mode)
+            Mode.CODEC.optionalFieldOf("mode", Mode.DENSITY).forGetter(CityBasinFunction::mode),
+            DensityFunction.CODEC.optionalFieldOf("depth").forGetter(CityBasinFunction::depth)
     ).apply(i, CityBasinFunction::new));
 
     /** Solid ground kept under the street before the natural density (caves) takes over again. */
@@ -46,13 +60,16 @@ public record CityBasinFunction(DensityFunction input, Mode mode) implements Den
         DensitySampler in = input.compileSampler(context);
         CitySite site = CityBasin.current();
         if (site == null || !site.basinCarved()) return in;
-        return new Sampler(in, new Shape(site), mode);
+        boolean rise = mode == Mode.DENSITY && CityBasin.softRim();
+        return new Sampler(in, new Shape(site), mode, rise ? depth.map(d -> d.compileSampler(context)).orElse(null) : null,
+                ThreadLocal.withInitial(() -> new float[]{Float.NaN, Float.NaN, 0f}));
     }
 
     @Override
     public DensityFunction rewriteChildren(DfRewriteRule rule) {
         DensityFunction in = rule.rewrite(input);
-        return in == input ? this : new CityBasinFunction(in, mode);
+        Optional<DensityFunction> d = depth.map(rule::rewrite);
+        return in == input && d.equals(depth) ? this : new CityBasinFunction(in, mode, d);
     }
 
     @Override
@@ -165,6 +182,11 @@ public record CityBasinFunction(DensityFunction input, Mode mode) implements Den
             return channel >= street + 1 ? flat : Math.min(flat, flat + rw * (channel - flat));
         }
 
+        /** The ground the blend aims for over a column whose land stands at {@code land}: the street rising to it. */
+        public float aim(float land, float w) {
+            return street + (land - street) * (1.0F - w);
+        }
+
         /** The basin's own density at height y over a column whose ground stands at {@code surface}. */
         static float target(float surface, int y, float natural) {
             if (y < surface - CRUST) return natural;
@@ -172,7 +194,9 @@ public record CityBasinFunction(DensityFunction input, Mode mode) implements Den
         }
     }
 
-    private record Sampler(DensitySampler input, Shape shape, Mode mode) implements DensitySampler {
+    /** {@code last}: per thread, the last column asked and the ground aimed for there (a point query asks one column many times). */
+    private record Sampler(DensitySampler input, Shape shape, Mode mode, DensitySampler depth, ThreadLocal<float[]> last) implements DensitySampler {
+
         @Override
         public void sampleVolume(SamplerContext context, DensityBuffer out, DensityVolume volume) {
             input.sampleVolume(context, out, volume);
@@ -187,9 +211,9 @@ public record CityBasinFunction(DensityFunction input, Mode mode) implements Den
                         continue;
                     }
                     float rw = shape.riverWeight(bx, bz);
-                    float channel = channel(bx, bz, rw);
+                    float channel = channel(bx, bz, rw), aim = aim(context, bx, bz, w);
                     for (int y = 0; y < volume.sizeY(); y++, index++) {
-                        out.set(index, apply(out.get(index), w, rw, channel, volume.blockY(y)));
+                        out.set(index, apply(out.get(index), w, rw, channel, aim, volume.blockY(y)));
                     }
                 }
             }
@@ -201,7 +225,39 @@ public record CityBasinFunction(DensityFunction input, Mode mode) implements Den
             float w = shape.weight(x, z);
             if (w <= 0.0F) return natural;
             float rw = shape.riverWeight(x, z);
-            return apply(natural, w, rw, channel(x, z, rw), y);
+            float[] at = last.get();
+            if (at[0] != x || at[1] != z) {
+                at[0] = x;
+                at[1] = z;
+                at[2] = aim(context, x, z, w);
+            }
+            return apply(natural, w, rw, channel(x, z, rw), at[2], y);
+        }
+
+        /** The ground aimed for in column (x, z): the street, or (with the router's depth) the street rising to the land. */
+        private float aim(SamplerContext context, int x, int z, float w) {
+            if (depth == null || w >= 1.0F || mode != Mode.DENSITY) return shape.street;
+            return shape.aim(land(context, x, z), w);
+        }
+
+        /** Where the router's depth crosses zero in this column (it falls with height, linearly in both routers). */
+        private float land(SamplerContext context, int x, int z) {
+            int lo = -64, hi = 512;
+            float dlo = depth.sampleValue(context, x, lo, z), dhi = depth.sampleValue(context, x, hi, z);
+            if (dhi > 0.0F) return hi;
+            if (dlo <= 0.0F) return lo;
+            while (hi - lo > 4) {
+                int mid = (lo + hi) >> 1;
+                float dm = depth.sampleValue(context, x, mid, z);
+                if (dm > 0.0F) {
+                    lo = mid;
+                    dlo = dm;
+                } else {
+                    hi = mid;
+                    dhi = dm;
+                }
+            }
+            return lo + (hi - lo) * dlo / Math.max(1e-6F, dlo - dhi);
         }
 
         private float channel(int x, int z, float rw) {
@@ -210,12 +266,12 @@ public record CityBasinFunction(DensityFunction input, Mode mode) implements Den
             return mode == Mode.SURFACE ? shape.channelEstimate(d) : shape.channelSurface(d);
         }
 
-        private float apply(float natural, float w, float rw, float channel, int y) {
+        private float apply(float natural, float w, float rw, float channel, float aim, int y) {
             if (mode == Mode.SURFACE) {
                 float flat = natural + w * (shape.street - natural);
                 return channel >= shape.street ? flat : Math.min(flat, flat + rw * (channel - flat));
             }
-            float flat = natural + w * (Shape.target(shape.street, y, natural) - natural);
+            float flat = natural + w * (Shape.target(aim, y, natural) - natural);
             if (rw <= 0.0F || channel >= shape.street) return flat;
             // the channel only ever removes ground: never more solid than the flattened terrain
             float carved = flat + rw * (Shape.target(channel, y, natural) - flat);

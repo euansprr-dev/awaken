@@ -37,6 +37,7 @@ public final class CityBasin {
 
     private static volatile Predicate<MinecraftServer> enabled = s -> false;
     private static volatile CitySite current;
+    private static volatile boolean softRim = true;
 
     /** The city's rule for whether a world gets a city (e.g. its feature flag). Call once at mod init. */
     public static void request(Predicate<MinecraftServer> rule) {
@@ -69,6 +70,20 @@ public final class CityBasin {
     /** The current site for terrain's own code (the density function, structures); null when none. */
     public static CitySite current() {
         return current;
+    }
+
+    /**
+     * Whether the basin's edge rises as a slope to the land around (worlds made from 2026-10-26), or keeps the original
+     * aim at the street across the whole blend (a sheer, often undercut cliff about 560 blocks out), so a world made
+     * before never grows a slope beside its old cliff. Terrain only.
+     */
+    public static boolean softRim() {
+        return softRim;
+    }
+
+    /** Terrain only: set with the site, before the levels exist. */
+    public static void softRim(boolean soft) {
+        softRim = soft;
     }
 
     /** Terrain only: whether the city wants a site in this world. */
