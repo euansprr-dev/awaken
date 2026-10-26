@@ -263,7 +263,7 @@ public final class OpeningModule {
                         ServerPlayer p = c.getSource().getPlayerOrException();
                         String b = StringArgumentType.getString(c, "beat");
                         boolean ok = jump(p, b);
-                        c.getSource().sendSuccess(() -> Component.literal(ok ? "Opening beat " + b : "No such beat (sky, run, act2, act3, square, arrival, wake, registry)"), false);
+                        c.getSource().sendSuccess(() -> Component.literal(ok ? "Opening beat " + b : "No such beat (sky, run, act2, act3, square, arrival, wake, registry, lens, walk0..walk5, desk)"), false);
                         return ok ? 1 : 0;
                     })));
             opening.then(Commands.literal("reset").requires(AwakenCommands.admin()).executes(c -> {
@@ -347,6 +347,28 @@ public final class OpeningModule {
                 Progression.awaken(p);
                 Story.openingBeat(p, Prologue.WAKE, OpeningDirector.now(p));
                 OpeningDirector.state(p).bed = -1;
+            }
+            case "walk0", "walk1", "walk2", "walk3", "walk4", "walk5" -> {
+                // the Registry walk (tours): a step behind Bram's point k on the way, facing it
+                if (Story.prologue(p) != Prologue.REGISTRY) {
+                    Progression.awaken(p);
+                    OpeningDirector.toRegistry(p);
+                }
+                Vec3[] way = at.walk();
+                int k = Math.min(way.length - 1, beat.charAt(4) - '0');
+                Vec3 to = way[k], from = k > 0 ? way[k - 1] : at.bedside(Math.max(0, OpeningDirector.state(p).bed));
+                Vec3 back = to.subtract(from).normalize().scale(-2.5);
+                Vec3 stand = to.add(back.x, 0, back.z);
+                p.teleportTo(server.overworld(), stand.x, stand.y, stand.z, java.util.Set.of(), OpeningRegistry.yawTo(stand, to), 0F, true);
+            }
+            case "desk" -> {
+                // the Registry's desk (tours, tests): the Lens has read you; the register waits
+                Progression.awaken(p);
+                OpeningStage.ensure(server.overworld(), at);
+                if (Story.prologue(p) != Prologue.REGISTRY) OpeningDirector.toRegistry(p);
+                OpeningRegistry.step(p, OpeningRegistry.SIGN);
+                Vec3 to = at.deskStand();
+                p.teleportTo(server.overworld(), to.x, to.y, to.z, java.util.Set.of(), -90F, 30F, true);
             }
             case "registry", "lens" -> {
                 Progression.awaken(p);

@@ -355,6 +355,9 @@ public final class HoloClient {
                 else if (p == INVENTORY && mc.player != null) mc.player.closeContainer();
                 else p.timeline.close();
             }
+            case "wrist" -> { // wrist [shift]: a click on the wrist slot of the open inventory, as a player's
+                return WristSlot.devClickWrist(a.length > 1 && a[1].equals("shift"));
+            }
             case "inv" -> {
                 Minecraft mc = Minecraft.getInstance();
                 switch (a[1]) {
@@ -364,6 +367,9 @@ public final class HoloClient {
                         return "opened " + mc.gui.screen().getClass().getSimpleName();
                     }
                     case "click" -> { // click <menu slot> [shift]: through the screen's own input path
+                        if (mc.gui.screen() instanceof InventoryScreen plain && !(plain instanceof HoloInventoryScreen)) {
+                            return WristSlot.devClickSlot(plain, Integer.parseInt(a[2]), a.length > 3 && a[3].equals("shift"));
+                        }
                         if (!(mc.gui.screen() instanceof HoloInventoryScreen inv)) return "no holo inventory";
                         return inv.autopilotClick(Integer.parseInt(a[2]), a.length > 3 && a[3].equals("shift"));
                     }

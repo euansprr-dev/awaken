@@ -126,6 +126,32 @@ public final class WristSlot {
         }
     }
 
+    // ---- autopilot ------------------------------------------------------------------------------------------------------
+
+    /** A left click on menu slot {@code index} of a plain inventory, pressed and released at its centre through the
+     *  screen's own input path (the holo inventory has its own). */
+    static String devClickSlot(InventoryScreen s, int index, boolean shift) {
+        if (index < 0 || index >= s.getMenu().slots.size()) return "no slot " + index;
+        Slot slot = s.getMenu().slots.get(index);
+        var e = new net.minecraft.client.input.MouseButtonEvent(s.getLeftPos() + slot.x + 8, s.getTopPos() + slot.y + 8,
+                new net.minecraft.client.input.MouseButtonInfo(0, shift ? 1 : 0));
+        s.mouseClicked(e, false);
+        s.mouseReleased(e);
+        return "slot " + index + " holds " + slot.getItem() + ", carried " + s.getMenu().getCarried();
+    }
+
+    /** A click on the wrist slot of the open inventory (what the mouse there does). */
+    static String devClickWrist(boolean shift) {
+        Minecraft mc = Minecraft.getInstance();
+        if (!(mc.gui.screen() instanceof InventoryScreen s) || !shown(s)) return "no inventory with a wrist slot";
+        ItemStack carried = s.getMenu().getCarried();
+        boolean worn = !BandModule.state(mc.player).wrist().isEmpty();
+        if (shift && worn) send(BandNet.SHIFT_OFF, -1);
+        else if (BandModule.isBand(carried) || carried.isEmpty() && worn) send(BandNet.CLICK, -1);
+        else return "nothing to do: carried " + carried + ", worn " + worn;
+        return "clicked the wrist: carried " + carried + ", worn " + worn;
+    }
+
     private static void send(int action, int slot) {
         ClientPacketDistributor.sendToServer(new BandNet.WristClick(action, slot));
         HoloAudio.hover();
