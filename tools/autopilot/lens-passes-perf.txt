@@ -26,6 +26,8 @@ cmd awaken city view studio_roost
 lookswitch cinematic
 wait 1600
 pixels gpu on
+# the per-pass table is of the game as it is: Tiles off for the probes, its own A/B at the end
+lens tiles off
 lookswitch swift
 wait 40
 pixels gpu reset
@@ -171,5 +173,72 @@ pixels gpu reset
 perf ultra_real3 8
 pixels gpu ultra_real3
 lens chain off
+lookswitch swift
+wait 40
+lens tiles off
+wait 30
+pixels gpu reset
+perf swift_tiles_off0 8
+pixels gpu swift_tiles_off0
+lens tiles on
+wait 30
+pixels gpu reset
+perf swift_tiles_on0 8
+pixels gpu swift_tiles_on0
+lens tiles off
+wait 30
+pixels gpu reset
+perf swift_tiles_off1 8
+pixels gpu swift_tiles_off1
+lens tiles on
+wait 30
+pixels gpu reset
+perf swift_tiles_on1 8
+pixels gpu swift_tiles_on1
+lookswitch cinematic
+wait 40
+lens tiles off
+wait 30
+pixels gpu reset
+perf cinematic_tiles_off0 8
+pixels gpu cinematic_tiles_off0
+lens tiles on
+wait 30
+pixels gpu reset
+perf cinematic_tiles_on0 8
+pixels gpu cinematic_tiles_on0
+lens tiles off
+wait 30
+pixels gpu reset
+perf cinematic_tiles_off1 8
+pixels gpu cinematic_tiles_off1
+lens tiles on
+wait 30
+pixels gpu reset
+perf cinematic_tiles_on1 8
+pixels gpu cinematic_tiles_on1
+lookswitch ultra
+wait 40
+lens tiles off
+wait 30
+pixels gpu reset
+perf ultra_tiles_off0 8
+pixels gpu ultra_tiles_off0
+lens tiles on
+wait 30
+pixels gpu reset
+perf ultra_tiles_on0 8
+pixels gpu ultra_tiles_on0
+lens tiles off
+wait 30
+pixels gpu reset
+perf ultra_tiles_off1 8
+pixels gpu ultra_tiles_off1
+lens tiles on
+wait 30
+pixels gpu reset
+perf ultra_tiles_on1 8
+pixels gpu ultra_tiles_on1
+lens tiles setting
 pixels config
 quit
