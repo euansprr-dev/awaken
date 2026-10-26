@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "level": 135,
+  "title": "The Seed",
+  "text": "Level 135 and every Sovereign: the Seed opens. What you do there ends the story.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:essence_shard",
+      "count": 40
+    }
+  ],
+  "quiet": false
+}

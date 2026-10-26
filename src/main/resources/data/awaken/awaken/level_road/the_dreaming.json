@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "level": 80,
+  "title": "The Dreaming Stratum",
+  "text": "Stratum 8 opens to A-rank. A Power Core.",
+  "grants": [
+    {
+      "type": "power_core",
+      "count": 1
+    }
+  ],
+  "quiet": false
+}

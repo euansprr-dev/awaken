@@ -12,6 +12,26 @@ final class ProgressionTests {
     private ProgressionTests() {}
 
     static void register() {
+        // SPEC §27.9: only things you can do reset the capability clock; after 75 minutes the Now line offers the next
+        AwakenTests.register("progression_capability_clock", 40, h -> {
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            try {
+                Progression.awaken(p);
+                Progression.profile(p).counters.remove(Progression.CAPABILITY_AT);
+                Progression.markNewThing(p, "biome");
+                Progression.markNewThing(p, "power core from an elite");
+                h.assertTrue(Progression.profile(p).counter(Progression.CAPABILITY_AT) == 0, "a sight or a core is no new ability");
+                Progression.markNewThing(p, "power Haymaker");
+                h.assertTrue(Progression.profile(p).counter(Progression.CAPABILITY_AT) > 0, "a power learned is");
+                h.assertFalse(dev.awaken.core.api.NowHooks.collect(p, 10).stream().anyMatch(x -> x.id().equals("progression:capability")), "not yet");
+                Progression.profile(p).counters.put(Progression.CAPABILITY_AT, p.level().getGameTime() - ProgressionNow.CAPABILITY_GAP - 1);
+                h.assertTrue(dev.awaken.core.api.NowHooks.collect(p, 10).stream().anyMatch(x -> x.id().equals("progression:capability")),
+                        "75 minutes on: the next new thing in reach is on the Now line");
+            } finally {
+                h.getLevel().getServer().getPlayerList().remove(p);
+            }
+            h.succeed();
+        });
         // SPEC §27: a lock met is kept once (never for a need already met), answers at the rank-up, is raised on the
         // Horizon line for a while, and goes when it's kept
         AwakenTests.register("progression_promises", 40, h -> {

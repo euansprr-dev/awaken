@@ -4574,3 +4574,20 @@ rings are a rope ladder), the Tether's "· needs the Tether".
   wagon, paid in road news (gates' light, vaults' doors, the camp). Found scenes all needed level 8, so a new player
   never saw a flare; now the first one can rise in the first quarter hour.
 - **One Journal**: the Living Wilds' chains read "JOURNAL · CHAINS" beside the System's filed finds ("JOURNAL").
+
+### 27.9 The long middle (phase 5)
+- **The capability clock** (`Progression.CAPABILITY_AT`, set inside `markNewThing` for things you can *do*: a power
+  learned, a rank, a Path, a rung, a Lord-forged weapon, a first Weave, a machine or blueprint, an Echo, a Hearth or its
+  tier, a latent, a townsperson; never a sight or a core). After 75 minutes without one, outdoors and out of a gate, the
+  Now line offers the nearest one in reach: a lock that answers you now, with its place (57), else "D-rank at level 10 ·
+  gate floors pay best" (50).
+- **The Reassessment says where**: "Reassessment ready · D-rank trial at your Spire" with a compass to your Hearth, or
+  "· craft a Monolith" without one.
+- **The level road goes on to 135** (it had two steps in levels 51-135): The Precursor Foundry (52), The Halo (55, goal:
+  see it from an Observatory), Wings you know (58), The Inverted Sea (62, a core), A-rank trial (70), The open sky (73,
+  goal: the Sky Leviathan's trial), Any creature (77), The Dreaming Stratum (80, a core), The Sovereigns (90, goal: one
+  falls), S-rank trial (100), The Court opens (105, a core), Half the Court (112, goal: four), An empty court (122, goal:
+  eight, a core), The Seed (135).
+- **Weapon mastery** is wired by Arms S7 (`ArmsMastery.strikes`); Wilds content past level 20 belongs to Living Wilds
+  phase F.
+- Test: `progression_capability_clock`.

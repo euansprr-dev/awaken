@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "level": 62,
+  "title": "The Inverted Sea",
+  "text": "Stratum 7 opens to B-rank. A Power Core.",
+  "grants": [
+    {
+      "type": "power_core",
+      "count": 1
+    }
+  ],
+  "quiet": false
+}

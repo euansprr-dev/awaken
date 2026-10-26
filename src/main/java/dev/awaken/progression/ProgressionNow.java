@@ -10,14 +10,39 @@ import java.util.List;
 final class ProgressionNow {
     private ProgressionNow() {}
 
+    /** Game ticks without a new capability before the Now line offers the nearest one (75 minutes). */
+    static final long CAPABILITY_GAP = 20L * 60 * 75;
+
+    /** The nearest new thing to do: a lock that answers you now (with its place), else the next rank and how to get there. */
+    static Suggestion capability(net.minecraft.server.level.ServerPlayer player, Profile p) {
+        String dim = player.level().dimension().identifier().toString();
+        for (PromiseBook.Entry e : PromiseKeeper.book(player).entries()) {
+            if (e.answered() && e.where().isPresent() && e.dim().equals(dim)) {
+                return Suggestion.at("progression:capability", 57, e.what() + " · answers you", e.where().get());
+            }
+        }
+        Rank next = p.rank().next();
+        if (next == null || p.reassessmentReady()) return null;
+        return Suggestion.of("progression:capability", 50, next.label + "-rank at level " + next.levelRequired + " · gate floors pay best");
+    }
+
     static void register() {
         NowHooks.register(player -> {
             Profile p = Progression.profile(player);
             if (!p.awakened()) return List.of();
             List<Suggestion> out = new ArrayList<>(3);
             if (p.reassessmentReady() && p.rank().next() != null) {
-                out.add(Suggestion.of("progression:reassessment", 72,
-                        "Reassessment ready · " + p.rank().next().label + "-rank trial"));
+                // where to take it (SPEC §27.9): the Spire at your Hearth, else a Monolith you craft
+                var hearth = dev.awaken.core.api.HearthHooks.hearthOf(player);
+                String text = "Reassessment ready · " + p.rank().next().label + "-rank trial";
+                out.add(hearth.isPresent() ? Suggestion.at("progression:reassessment", 72, text + " at your Spire", hearth.get())
+                        : Suggestion.of("progression:reassessment", 72, text + " · craft a Monolith"));
+            }
+            // the capability clock (SPEC §27.9): 75 minutes with nothing new to do, outdoors: the nearest new thing in reach
+            long cap = p.counter(Progression.CAPABILITY_AT), now = player.level().getGameTime();
+            if (cap > 0 && now - cap > CAPABILITY_GAP && now >= cap && !dev.awaken.core.api.GateHooks.inGate(player)) {
+                Suggestion near = capability(player, p);
+                if (near != null) out.add(near);
             }
             // accepted Directives, with how far along (SPEC §27.6): before, they never showed outside K
             for (Profile.DirectiveState d : p.directives()) {
