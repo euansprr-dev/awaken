@@ -39,8 +39,13 @@ public final class FarWorkers {
     private final ConcurrentLinkedQueue<Patch> done = new ConcurrentLinkedQueue<>(), free = new ConcurrentLinkedQueue<>();
     /** Columns predicted, the time it took and the density probes it made, for the status line. */
     public final AtomicLong columnCount = new AtomicLong(), columnNanos = new AtomicLong(), probes = new AtomicLong();
-    private final int threads;
+    private final int threads, burst;
     private boolean started;
+    /**
+     * How many workers take jobs: {@code threads} while the view is filled in, up to {@code burst} while much of it is
+     * missing (a new world, a jump, the opening's card, fast flight), set by the render thread. The rest wait.
+     */
+    public volatile int active;
     /**
      * How long a worker rests after each patch nearer than the horizon rings, in microseconds: set by the render thread
      * from how its frames are going (0 while they keep up). macOS ignores thread priorities, so this is how the far
@@ -48,8 +53,18 @@ public final class FarWorkers {
      */
     public volatile int restMicros;
 
-    public FarWorkers(int threads) {
+    public FarWorkers(int threads, int burst) {
         this.threads = threads;
+        this.burst = Math.max(threads, burst);
+        this.active = threads;
+    }
+
+    public int threads() {
+        return threads;
+    }
+
+    public int burst() {
+        return burst;
     }
 
     /**
@@ -59,6 +74,11 @@ public final class FarWorkers {
      */
     public static int defaultThreads() {
         return Math.clamp(Runtime.getRuntime().availableProcessors() / 4, 1, 3);
+    }
+
+    /** Half the cores, at most six (five on an M4): while much of the view is missing, filling it matters more. */
+    public static int burstThreads() {
+        return Math.clamp(Runtime.getRuntime().availableProcessors() / 2, 1, 6);
     }
 
     /** Asks for patch (px, pz) of ring {@code ring}; lower {@code priority} first. */
@@ -96,19 +116,24 @@ public final class FarWorkers {
     private synchronized void start() {
         if (started) return;
         started = true;
-        for (int i = 0; i < threads; i++) {
-            Thread t = new Thread(this::run, "Awaken Far Sight #" + i);
+        for (int i = 0; i < burst; i++) {
+            int index = i;
+            Thread t = new Thread(() -> run(index), "Awaken Far Sight #" + i);
             t.setDaemon(true);
             t.setPriority(Thread.MIN_PRIORITY);
             t.start();
         }
-        Awaken.LOG.info("[farsight] {} worker threads", threads);
+        Awaken.LOG.info("[farsight] {} worker threads, {} while the view fills", threads, burst);
     }
 
-    private void run() {
+    private void run(int index) {
         ServerLevel bound = null;
         FarColumns columns = null;
         while (true) {
+            if (index >= active) {
+                java.util.concurrent.locks.LockSupport.parkNanos(50_000_000L);
+                continue;
+            }
             Job job;
             try {
                 job = queue.poll(5, TimeUnit.SECONDS);
@@ -139,12 +164,12 @@ public final class FarWorkers {
                     FarStore store = FarStore.peek(job.level());
                     p.range = store == null ? -1 : store.patch(job.ring(), job.px(), job.pz(), p.height, p.colour, p.info, p.crown);
                     if (p.range >= 0 && FarTrees.plants(job.ring())) {
-                        // the real chunks' trees, shaped as their biome grows them
-                        int s = Rings.cellSize(job.ring());
+                        // the real chunks' trees, shaped as their biome grows them (looked up only where trees stand, from
+                        // the patch's sparse biome samples)
+                        columns.biomesFor(job.ring(), job.px(), job.pz());
                         for (int k = 0; k < p.crown.length; k++) {
-                            if (p.height[k] == 0) continue;
-                            int x = (job.px() * Rings.PATCH + (k & 15)) * s, z = (job.pz() * Rings.PATCH + (k >> 4)) * s;
-                            int shape = FarPalette.look(columns.biome(x, (int) FarColumns.unpackHeight(p.height[k]), z)).shape();
+                            if (p.height[k] == 0 || p.crown[k] == 0) continue;
+                            int shape = FarPalette.look(columns.patchBiome(k & 15, k >> 4, (int) FarColumns.unpackHeight(p.height[k]))).shape();
                             p.crown[k] = p.crown[k] & 0xFFFFFF | shape << 24;
                         }
                         p.treeCount = FarTrees.plant(job.ring(), job.px(), job.pz(), p.height, p.colour, p.info, p.crown, columns.seaLevel(), p.trees);
