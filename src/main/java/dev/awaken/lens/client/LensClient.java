@@ -269,6 +269,14 @@ public final class LensClient {
         return active;
     }
 
+    /**
+     * Whether Lens 2 marches the Living Wilds' storm cells in its cloud volume this frame (Cinematic or Ultra, under an
+     * overworld sky); otherwise their own fallback draws them (SPEC §22 "Storm cells").
+     */
+    public static boolean drawsStormCells() {
+        return active && lit && sunHere && lensFrame != null;
+    }
+
     private static float rate(int fadeTicks) {
         // about 95% of the way after fadeTicks
         return fadeTicks <= 1 ? 1f : (float) (1.0 - Math.pow(0.05, 1.0 / fadeTicks));
@@ -304,8 +312,10 @@ public final class LensClient {
         if (!active || !lit || lensFrame == null) return;
         var state = e.getLevelRenderState();
         float lx = moonLight ? -sunDir.x : sunDir.x, ly = moonLight ? -sunDir.y : sunDir.y, lz = moonLight ? -sunDir.z : sunDir.z;
-        // the clouds' cover: the look's, thickening toward overcast in rain and storms
-        float cover = cloudsHere ? Math.min(0.95f, current[Look.CLOUDS] + rain * 0.4f) : 0f;
+        // the clouds' cover: the look's, thickening toward overcast in rain and storms (not for the rain a Rolling Storm
+        // brings: its own cell is the cloud over you)
+        float weather = Math.max(0f, rain - dev.awaken.living.client.StormSky.localRain());
+        float cover = cloudsHere ? Math.min(0.95f, current[Look.CLOUDS] + weather * 0.4f) : 0f;
         long ticks = Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getGameTime() : 0L;
         lensFrame.clouds(cloudsHere ? cloudHeight : 0f, cover, (ticks % 768_000L) * 0.04, cloudColour);
         lensFrame.write(state.cameraRenderState, state.playerRenderState, zeroToOne, lx, ly, lz, lightStrength, moonLight, rain,

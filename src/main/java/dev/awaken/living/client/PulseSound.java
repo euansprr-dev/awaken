@@ -23,8 +23,9 @@ import java.util.Map;
  * ({@link PulseFx#SHOWN}) sounds from where it is now, louder as you come near, so a rumour can be followed by ear. A
  * stampede rumbles, a murmuration's wings turn, the Deep Tide rolls in (and the world falls quiet under it), a caravan's
  * bells walk, the Wild Hunt's horn calls and its hounds bay (and everything else falls silent for 200 blocks), kites cry
- * over a carrion circle, a migrating herd lows, two beasts roar. The Rolling Storm needs nothing: its lightning thunders.
- * Registered with the world sound Conductor: its voices count in the budget, and a happening near lets nature step back.
+ * over a carrion circle, a migrating herd lows, two beasts roar, a storm's rain roars from under its cell (its thunder is
+ * {@link StormSky}'s, late by its distance). Registered with the world sound Conductor: its voices count in the budget,
+ * and a happening near lets nature step back.
  */
 final class PulseSound {
     private PulseSound() {}
@@ -32,6 +33,7 @@ final class PulseSound {
     private static final Identifier BAY = Awaken.id("fauna.wisp_hound.ambient"), KITE = Awaken.id("fauna.peak_kite.ambient"),
             LOW = Identifier.withDefaultNamespace("entity.cow.ambient"), ROAR = Identifier.withDefaultNamespace("entity.ravager.ambient");
     private static final RandomSource RANDOM = RandomSource.create();
+    private static final SoundEvent STORM = SoundEvent.createVariableRangeEvent(Awaken.id("living.tell.storm"));
     private static final Map<Integer, Loop> LOOPS = new HashMap<>();
     private static final Map<Integer, Integer> NEXT = new HashMap<>();
     private static float emphasis;
@@ -57,6 +59,7 @@ final class PulseSound {
             reset();
             return;
         }
+        StormSky.tick(mc);
         if (++clock % 5 != 0) return;
         Vec3 me = mc.player.position();
         float now = LivingClient.ticks, loudest = 0F;
@@ -82,8 +85,13 @@ final class PulseSound {
                 case "circle" -> loudest = Math.max(loudest, call(mc, id, KITE, x, y + 20, z, d, 180F, 0.6F, 0.9F, 100, 180));
                 case "haze" -> loudest = Math.max(loudest, call(mc, id, LOW, x, y, z, d, 220F, 0.5F, 0.6F, 120, 200));
                 case "roar" -> loudest = Math.max(loudest, call(mc, id, ROAR, x, y, z, d, 260F, 0.7F, 0.7F, 100, 160));
-                default -> { // storm: its own lightning is the sound
+                case "storm" -> {
+                    // its rain roaring under the cell, heard from the core (a little ahead of the centre)
+                    double rx = x + s.dx * dev.awaken.living.pulse.StormCell.RAIN_AHEAD, rz = z + s.dz * dev.awaken.living.pulse.StormCell.RAIN_AHEAD;
+                    float dr = (float) me.distanceTo(new Vec3(rx, y + 20, rz));
+                    loudest = Math.max(loudest, loop(mc, id, STORM, rx, y + 20, rz, dr, 340F, 0.75F));
                 }
+                default -> {}
             }
         }
         LOOPS.entrySet().removeIf(e -> {
@@ -135,6 +143,8 @@ final class PulseSound {
     }
 
     static void reset() {
+        StormSky.reset();
+        StormFallback.reset();
         for (Loop l : LOOPS.values()) l.goal = 0F;
         LOOPS.clear();
         NEXT.clear();

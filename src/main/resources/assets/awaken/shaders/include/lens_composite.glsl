@@ -36,6 +36,7 @@ layout(location = 0) out vec4 fragColor;
 #include <awaken:lens_frame.glsl>
 #include <awaken:lens_height.glsl>
 #include <awaken:lens_normal.glsl>
+#include <awaken:lens_storm_frame.glsl>
 #endif
 
 // The parameter texture (LensParams, 32x1): 0 flags and debug, 1-2 far plane and sun, 3-8 the look, 9 sunset, 10-11 fog,
@@ -342,16 +343,26 @@ void main() {
     }
     if (!open && !classic && !plate) c = lensLight(c, pRel, quick, depth, rdEnd, clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0), p1, lightDbg);
     // Lens 2's clouds (L4), over the sky and over anything farther than where this ray enters their layer
+    // and the storm cells marched with them (lens_storm.glsl): over anything farther than where the ray enters a cell's
+    // bounds, never nearer than 16 blocks (its rain fades in from there; nearer, the game's own rain falls)
     vec4 cp = F(18);
-    if (cp.x > 0.0 && !classic) {
+    int storms = stormCount();
+    if ((cp.x > 0.0 || storms > 0) && !classic) {
         vec4 cl = texture(CloudsSampler, texCoord);
         bool behind = sky;
         if (!sky) {
             vec3 cv = farTerrain ? normalize(unproject(frameMat(0), texCoord, 1.0e-5, F(16).x > 0.5)) : normalize(pRel);
-            float base = cp.x - 6.0, camY = F(12).y, enter = 1.0e9;
-            if (camY >= base && camY <= base + 84.0) enter = 0.0;
-            else if (abs(cv.y) > 1.0e-4) enter = (camY < base ? base - camY : base + 84.0 - camY) / cv.y;
-            behind = enter >= 0.0 && (farTerrain ? d : length(pRel)) > enter;
+            float camY = F(12).y, dist = farTerrain ? d : length(pRel);
+            if (cp.x > 0.0) {
+                float base = cp.x - 6.0, enter = 1.0e9;
+                if (camY >= base && camY <= base + 84.0) enter = 0.0;
+                else if (abs(cv.y) > 1.0e-4) enter = (camY < base ? base - camY : base + 84.0 - camY) / cv.y;
+                behind = enter >= 0.0 && dist > enter;
+            }
+            for (int k = 0; k < 2; k++) {
+                if (k >= storms) break;
+                behind = behind || dist > max(stormEntry(cv, k, camY), 16.0);
+            }
         }
         if (behind) c = c * cl.a + cl.rgb;
     }

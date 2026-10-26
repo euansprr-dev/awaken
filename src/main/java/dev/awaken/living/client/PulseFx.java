@@ -18,8 +18,9 @@ import java.util.Map;
 
 /**
  * Happenings told from afar (SPEC §21.6), drawn from their tells alone: a dust haze with birds wheeling over a
- * migration, a dust line behind a stampede, a murmuration's living cloud, kites circling carrion, a storm cell with its
- * rain, the Wild Hunt's ghost light, the Deep Tide's creeping fog, a caravan's lanterns and smoke, a duel's dust.
+ * migration, a dust line behind a stampede, a murmuration's living cloud, kites circling carrion, the Wild Hunt's ghost
+ * light, the Deep Tide's creeping fog, a caravan's lanterns and smoke, a duel's dust. A storm is a cell of its own
+ * ({@link StormSky}): Lens 2 marches it in its clouds, or {@link StormFallback} builds it of cloud cells.
  * Each in two passes: alpha-blended and unfogged (so it reads against a noon sky), then additive light. A tell past
  * the render distance is pulled in along its line of sight and shrunk to match, like the gate pillars, so it sits on
  * the horizon where it really is. Nothing allocates per frame but the per-tell state when a tell first arrives.
@@ -105,6 +106,7 @@ final class PulseFx {
         float clamp = Math.max(64, mc.options.getEffectiveRenderDistance() * 16 * 0.7F);
         e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), alpha, (pose, vc) -> guard(() -> pass(vc, clamp, false)));
         e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), light, (pose, vc) -> guard(() -> pass(vc, clamp, true)));
+        if (!dev.awaken.lens.client.LensClient.drawsStormCells()) StormFallback.submit(e);
     }
 
     private static void guard(Runnable r) {
@@ -131,7 +133,7 @@ final class PulseFx {
                 case "dustline" -> haze(vc, s, a, add, true);
                 case "flock" -> flock(vc, s, a, add);
                 case "circle" -> circle(vc, s, a, add);
-                case "storm" -> storm(vc, s, a, add);
+                case "storm" -> {} // its own cell: StormSky
                 case "ghost" -> ghost(vc, s, a, add);
                 case "fog" -> fog(vc, s, a, add);
                 case "lanterns" -> lanterns(vc, s, a, add);
@@ -201,26 +203,6 @@ final class PulseFx {
             double ox = Mth.cos(t) * rr, oz = Mth.sin(t) * rr, oy = 24 + (i % 2) * 5 + Mth.sin(t * 1.5F) * 1.5;
             bird(vc, ox, oy, oz, 0.9F, t, argb(0.9F * a, 0x231C18));
         }
-    }
-
-    /** A storm cell: a towering dark cloud body, rain hanging from it in sheets, a cold glow inside. */
-    private static void storm(VertexConsumer vc, Shown s, float a, boolean add) {
-        float r = s.radius;
-        if (!add) {
-            for (int i = 0; i < 16; i++) {
-                double ox = Mth.sin(i * 2.1F + now * 0.004F) * r * 0.8, oz = Mth.cos(i * 1.3F + now * 0.003F) * r * 0.8;
-                double oy = 44 + (i % 5) * 4 + Mth.sin(i + now * 0.01F) * 2;
-                soft(vc, ox, oy, oz, r * (0.55F + (i % 4) * 0.1F), argb(0.55F * a, i % 3 == 0 ? 0x2A2F38 : 0x3A404B));
-            }
-            // rain: grey sheets from the cloud's belly to the ground
-            for (int i = 0; i < 10; i++) {
-                double ox = Mth.sin(i * 3.3F) * r * 0.6, oz = Mth.cos(i * 2.7F) * r * 0.6;
-                streak(vc, ox, 0, oz, ox + 1.5, 42, oz, 2.2F + (i % 3), argb(0.16F * a, 0x8A97A8));
-            }
-            return;
-        }
-        float flick = Mth.sin(now * 0.9F) * Mth.sin(now * 0.37F);
-        if (flick > 0.85F) soft(vc, 0, 46, 0, r * 0.9F, argb(0.35F * a, 0xBFD8FF));
     }
 
     /** The Wild Hunt: a cold blue light running over the land, a ghost glow round it, a ring at its feet. */
