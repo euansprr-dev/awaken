@@ -24,11 +24,18 @@ public final class ArmsClips {
             "arms_riposte", "arms_slipcut", "arms_execution", "arms_art", "arms_undercut", "arms_plunge", GUARD, GUARD + "_end", CHARGE, CHARGE + "_end", DODGE_BACK, DODGE_LEFT, DODGE_RIGHT);
 
     /**
+     * Styles with their own slide, fall and dodge moves (arms_<style>_<move>): the Gauntlets punch them (before, every
+     * style played the Longsword's sword sweeps there, so the fists' own never showed). Every other shares the Longsword's.
+     */
+    public static final java.util.Set<String> OWN_SHARED = java.util.Set.of("gauntlets");
+
+    /**
      * The clip a move plays for a style: the style's own on its own row's ticks (arms_<style>_<move>, generated for
-     * every move but the slide's, the fall's and the dodge's, which every style shares), else the Longsword's.
+     * every move; the slide's, the fall's and the dodge's only for {@link #OWN_SHARED}), else the Longsword's.
      */
     public static @Nullable String of(String style, Archetype.Move move) {
-        if (style.equals(Arms.LONGSWORD) || move == Archetype.Move.UNDERCUT || move == Archetype.Move.PLUNGE || move == Archetype.Move.SLIPCUT) {
+        boolean shared = move == Archetype.Move.UNDERCUT || move == Archetype.Move.PLUNGE || move == Archetype.Move.SLIPCUT;
+        if (style.equals(Arms.LONGSWORD) || shared && !OWN_SHARED.contains(style)) {
             return of(move);
         }
         return "arms_" + style + "_" + move.key;
