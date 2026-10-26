@@ -332,6 +332,7 @@ Object.assign(SCENES, {
     place(stage, pw, 0, 0, H1); pw.canvas.style.opacity = '0.62';
     const p = statusPanel({ ...HUNTER, focus: null });
     place(stage, p);
+    micro;
   },
 });
 
@@ -348,4 +349,105 @@ async function glassOver(stage, src, tint) {
 Object.assign(SCENES, {
   g_cloud: (s) => glassOver(s, 'bg/t_cloud.png', 0.42), g_grass: (s) => glassOver(s, 'bg/t_grass.png', 0.42),
   g_night: (s) => glassOver(s, 'bg/t_night.png', 0.42), g_cloud_old: (s) => glassOver(s, 'bg/t_cloud.png', 0.38),
+});
+
+// ---- the map in the world: placement per base frame (frame px, 2880×1800) ----------------------------------------
+const MS = {
+  day: { region: [880, 318], bg: 'bg/ms_day.png', disc: { cx: 1450, cy: 505, rx: 600, ry: 265 }, wrist: [1528, 846], legend: { x: 2130, y: 250 }, dim: 0.30 },
+  night: { atlas: 'bg/atlas_night.jpg', src: [0, 84, 960, 432], bg: 'bg/ms_night.png', disc: { cx: 1450, cy: 545, rx: 600, ry: 265 }, wrist: [1530, 890], legend: { x: 2130, y: 290 }, dim: 0.18 },
+  mid: { bg: 'bg/ms_mid.png', disc: { cx: 1450, cy: 610, rx: 520, ry: 180 }, wrist: [1515, 870], dim: 0.14, reveal: 0.55 },
+  others: { bg: 'bg/ms_front.png', disc: { cx: 1440, cy: 1190, rx: 380, ry: 115 }, wrist: [1470, 930] },
+};
+// the Atlas picture used for the disc: the city in its clouds (the zoomed-out table)
+const ATLAS_SRC = [410, 630, 2000, 900];
+
+async function mapScene(stage, k, o = {}) {
+  const m = MS[k];
+  const bg = await bgStage(stage, m.bg);
+  const atlas = await loadImg(m.atlas || 'bg/atlas_drift.png');
+  const W = bg.naturalWidth, H = bg.naturalHeight;
+  const g = frameCanvas(stage, W, H);
+  sceneDim(g, W, H, m.dim);
+  const d = { ...m.disc, src: m.src || ATLAS_SRC, reveal: m.reveal || 1 };
+  bandBeams(g, m.wrist, d.cx, d.cy, d.rx, d.ry, m.reveal ? 0.55 : 0.42);
+  holoDisc(g, atlas, d);
+  if (o.pins !== false && !m.reveal) {
+    // pillars at places on the land: the D gate east of the city, the Bell Crypt north, a broken one south-west
+    const at = (u, v) => [d.cx + u * d.rx, d.cy + v * d.ry];
+    let [x, y] = at(0.55, -0.05);
+    mapPillar(stage, g, x, y, 190, C.RANK.D, { w: 96, h: 22, left: true, draw: (p) => { p.text('Mossdeep Hollow', 6, 3, { c: C.INK_HI }); small(p, 'D · 860 m E · 2 days', 6, 12, { c: C.AMBER }); } });
+    [x, y] = at(-0.05, -0.62);
+    mapPillar(stage, g, x, y, 150, C.RANK.E, { w: 90, h: 22, left: true, draw: (p) => { p.text('Bell Crypt', 6, 3, { c: C.INK_HI }); small(p, 'E · 320 m N · 4 days', 6, 12, { c: C.INK_DIM }); } });
+    [x, y] = at(-0.62, 0.42);
+    mapPillar(stage, g, x, y, 120, C.WARN, { w: 88, h: 22, left: true, draw: (p) => { p.text('Old Quarry', 6, 3, { c: C.INK_HI }); small(p, 'broken · 1.4 km SW', 6, 12, { c: C.WARN }); } });
+    // the region's name as a world plate (in the scene, the Atlas's zone chips become plates)
+    if (m.region) {
+      const rp = new Panel(106, 21, 4, 8);
+      rp.material({ tint: 0.55, halo: 0.3 });
+      rp.fill(0, 0, rp.w, rp.h, C.NAVY, 0.9);
+      rp.fill(0, 0, 2, 21, 0x5FD08F, 1);
+      rp.text('The Commons', 6, 2.5, { c: C.INK_HI });
+      small(rp, 'creatures level 1 to 8', 6, 11.5, { c: 0x8FF0C0 });
+      rp.frame({ bracket: 6 });
+      rp.canvas.style.cssText = `position:absolute;left:${(m.region[0] - 32) / 2}px;top:${(m.region[1] - 32) / 2}px;width:${rp.canvas.width / 2}px;height:${rp.canvas.height / 2}px`;
+      stage.appendChild(rp.canvas);
+    }
+    // a rumour in the cloud, and your own pin joined to you by a thread of light
+    [x, y] = at(0.48, 0.55);
+    const q = new Panel(70, 12, 4, 6);
+    q.text('?', 0, 1, { scale: 1.4, c: C.AMBER, glow: 0.9, glowBlur: 2 });
+    small(q, 'A Briar Sow wallow', 9, 2.5, { c: C.AMBER });
+    q.canvas.style.cssText = `position:absolute;left:${(x - 24) / 2}px;top:${(y - 24) / 2}px;width:${q.canvas.width / 2}px;height:${q.canvas.height / 2}px`;
+    stage.appendChild(q.canvas);
+    const you = at(0.0, 0.08);
+    g.save(); g.globalCompositeOperation = 'lighter';
+    g.setLineDash([6, 8]); g.strokeStyle = 'rgba(196,230,255,0.45)'; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(you[0], you[1]); g.quadraticCurveTo((you[0] + m.wrist[0]) / 2 - 60, (you[1] + m.wrist[1]) / 2, m.wrist[0], m.wrist[1]); g.stroke();
+    g.restore();
+  }
+  if (m.legend && o.legend !== false) {
+    const lp = legendPanel({ gates: MAP_DATA.gates, badges: { status: C.AMBER, journal: C.SIGNAL_HOT } });
+    // a panel turned a little toward you, beside the map
+    const L = m.legend, pw = lp.w, ph = lp.h;
+    const Hm = homography([[0, 0], [pw, 0], [0, ph], [pw, ph]], [[L.x, L.y], [L.x + 630, L.y + 36], [L.x, L.y + 540], [L.x + 630, L.y + 512]]);
+    place(stage, lp, 0, 0, Hm);
+  }
+  if (o.keys !== false && !m.reveal) {
+    const kp = sceneKeys([['DRAG', 'turn'], ['RIGHT-DRAG', 'move'], ['SCROLL', 'zoom'], ['TAB', 'next gate'], ['T', 'point me there'], ['SHIFT+M', 'flat map'], ['M', 'close']]);
+    kp.canvas.style.cssText = `position:absolute;left:${(W / 2 - (462 + 12) * 5 / 2) / 2}px;top:${(H - 150) / 2}px;width:${kp.canvas.width / 2}px;height:${kp.canvas.height / 2}px`;
+    stage.appendChild(kp.canvas);
+  }
+}
+
+// what another player sees: the wrist raised, a content-free projection
+async function othersScene(stage) {
+  const m = MS.others;
+  const bg = await bgStage(stage, m.bg);
+  const W = bg.naturalWidth, H = bg.naturalHeight;
+  const g = frameCanvas(stage, W, H);
+  const { cx, cy, rx, ry } = m.disc;
+  bandBeams(g, m.wrist, cx, cy, rx, ry, 0.35);
+  g.save(); g.translate(cx, cy); g.scale(1, ry / rx);
+  let gr = g.createRadialGradient(0, 0, 0, 0, 0, rx);
+  gr.addColorStop(0, 'rgba(14,26,46,0.55)'); gr.addColorStop(1, 'rgba(14,26,46,0.2)');
+  g.fillStyle = gr; g.beginPath(); g.arc(0, 0, rx, 0, Math.PI * 2); g.fill();
+  g.globalCompositeOperation = 'lighter';
+  // drifting wisps: soft blobs of light, no land
+  for (let i = 0; i < 14; i++) {
+    const a = i * 2.39, r = rx * (0.15 + 0.7 * ((i * 37) % 10) / 10), x = Math.cos(a) * r, y = Math.sin(a) * r;
+    const b = g.createRadialGradient(x, y, 0, x, y, rx * 0.22);
+    b.addColorStop(0, 'rgba(200,225,255,0.22)'); b.addColorStop(1, 'rgba(200,225,255,0)');
+    g.fillStyle = b; g.beginPath(); g.arc(x, y, rx * 0.22, 0, Math.PI * 2); g.fill();
+  }
+  for (let i = 0; i < 5; i++) { const a = i * 1.7 + 0.4, r = rx * 0.5; g.fillStyle = 'rgba(196,230,255,0.9)'; g.beginPath(); g.arc(Math.cos(a) * r, Math.sin(a) * r, 5, 0, Math.PI * 2); g.fill(); }
+  g.filter = 'blur(5px)'; g.strokeStyle = 'rgba(127,195,255,0.6)'; g.lineWidth = 9; g.beginPath(); g.arc(0, 0, rx, 0, Math.PI * 2); g.stroke();
+  g.filter = 'none'; g.strokeStyle = 'rgba(196,230,255,0.85)'; g.lineWidth = 2.5; g.beginPath(); g.arc(0, 0, rx, 0, Math.PI * 2); g.stroke();
+  g.restore();
+}
+
+Object.assign(SCENES, {
+  ms_day: (s) => mapScene(s, 'day'),
+  ms_night: (s) => mapScene(s, 'night'),
+  ms_mid: (s) => mapScene(s, 'mid'),
+  ms_others: (s) => othersScene(s),
 });

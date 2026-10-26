@@ -9,5 +9,7 @@ perspective, over real tour frames. `00_calibration.jpg` checks it against the g
     node --experimental-websocket docs/k-menu/mock/shoot.mjs /tmp/k-menu-out after powers journal map:1440:900
 
 Scenes are in `scenes.js` (`before`, `after`, `spend_pending`, `spend_done`, `dense`, `empty`, `powers`, `journal`,
-`map`, `switch_a`, `switch_b`, `dirA`, `dirC`, `t_cloud`, `t_grass`, `t_night`, `calib`). The page design is in
+`map`, `switch_a`, `switch_b`, `dirA`, `dirC`, `t_cloud`, `t_grass`, `t_night`, `calib`; the map in the world:
+`ms_day:1440:900`, `ms_night:1440:900`, `ms_mid:1440:900`, `ms_others:1440:900`, drawn by `mapscene.js` over the
+frames of the CI tour `tools/autopilot/k-menu-map.txt`). The page design is in
 `after.js` (rail, Status, Powers, Journal, Map) and today's panel in `before.js`.

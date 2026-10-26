@@ -56,6 +56,13 @@ shutil.copy(f'{HOLO}/holo_17_k_status.png', f'{bg}/real_status.png')
 shutil.copy(f'{ATLAS}/m5_drift_a.png', f'{bg}/atlas_drift.png')
 shutil.copy(f'{ATLAS}/m5_after_orbit.png', f'{bg}/atlas_city.png')
 Image.open(f'{bg}/atlas_drift.png').convert('RGB').crop((1050, 300, 2450, 1117)).resize((480, 280), Image.LANCZOS).save(f'{bg}/glance.png')
+# the map in the world: third-person frames from the CI tour tools/autopilot/k-menu-map.txt (run 40305279750)
+TOUR = os.path.join(REPO, 'run-autopilot/screenshots-ci/k-menu-map-40305279750')
+for src, dst in (('m03_back40_wilds', 'ms_day'), ('m06_back40_wilds_night', 'ms_night'), ('m04_back28_wilds', 'ms_mid'),
+                 ('m05_front_others', 'ms_front'), ('m00_first', 'ms_first')):
+    if os.path.exists(f'{TOUR}/{src}.png'):
+        shutil.copy(f'{TOUR}/{src}.png', f'{bg}/{dst}.png')
+shutil.copy('/Volumes/MEDIA/Awaken/docs/carillon/milestones/m5/m5_night_close.jpg', f'{bg}/atlas_night.jpg')
 W, H = 1740, 1440
 Image.open(f'{bg}/atlas_drift.png').convert('RGB').crop((1950, 950, 2870, 1710)).resize((W, H), Image.LANCZOS).save(f'{bg}/t_cloud.png')
 Image.open(f'{bg}/arm_grass.png').convert('RGB').crop((1150, 420, 1150 + W, 420 + H)).save(f'{bg}/t_grass.png')

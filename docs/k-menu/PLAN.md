@@ -161,6 +161,133 @@ turn away into the world; the map is a hologram diorama hovering over the forear
 **Recommendation: B.** It is the smallest change that removes the dashboard (structure, not paint), it puts stats,
 then the Journal, on the first screen, and it makes the two maps one.
 
+### The map in the world (Euan's idea, 26 Oct) — `15`–`19` — **recommended as how the Map opens**
+Euan: "instead of it opening the way it does now... it kind of zooms out and kind of gives you a top view of your
+character looking at the map... Imagine it's like a 3D map appears in front of the character, and then you're at like
+a slight angle, so you still see the shape of your character... As if the map was like a hologram, basically, in the
+world. But it still needs to look really sharp in the way it does now, like with the clouds and everything."
+
+This is not a fourth direction for the whole menu: it is how B's Map page (and M) opens. The rest of the band stays a
+panel on the wrist; reading a map is the one job where leaving first person earns its cost, because a map is something
+you look at and stand over, and your character in the frame gives it scale and place.
+
+References, and what each solves:
+- **The Division** (2016): the agent's watch projects the map as a hologram; the 2014 reveal showed a "Mega Map"
+  pulled up on the floor of a subway station (Game Informer, PC Gamer). The map is a projection from a wrist device,
+  in the world, with the agent beside it: exactly AWAKEN's band.
+- **Dead Space:** the whole interface lives on and in front of Isaac as holograms from his suit's wrist projectors, and
+  the game never pauses for it (Dino Ignacio's GDC 2013 talk; design write-ups cited below). Danger stays real while
+  you read.
+- **Mass Effect** (from play): the galaxy map frames Shepard standing at the holographic table; the person and the
+  map share the shot.
+
+**The scene.**
+- The camera rises out of your eyes, up and back, to a high three-quarter shot from behind, 35-45° down. You see your
+  character's back and shoulders and the raised wrist.
+- In front of the character, 1.6 m ahead at about waist height, the band projects the map: a disc about 1.7 m across
+  on a dark glass plate.
+- The disc shows the Atlas's own picture, so the voxel land, zones, clouds and pins look exactly as on the table today.
+  Its rim is a ring of the band's light with compass ticks. Beams run from the band's diamond to the disc's near rim.
+- Gates rise out of the disc as pillars of their rank colour; rumours hang in the clouds as "?"; your own pin is
+  joined to the real you by a faint thread of light.
+- Beside the map floats a panel of the band (the K panel's glass, a narrow rail of pages on its edge) with the legend:
+  Gates · Lands · Saved, the chosen gate open with "Point me there".
+- The world dims behind it (Lens through `UiHooks.focus`; a dim pass without Lens). Below the frame runs one line of
+  keys.
+- Shots: `15_map_scene_day.jpg`, `16_map_scene_night.jpg`, `17_map_scene_open_*.jpg` (the opening storyboard),
+  `18_map_scene_others.jpg` (what others see), `19_map_scene_detail.jpg` (real pixels: the sharpness). The base frames
+  are real: a CI tour (`tools/autopilot/k-menu-map.txt`, run 40305279750) outside the High Gate with the band raised in
+  third person and vanilla's third-person camera tilted 40° (28° for the halfway frame). The disc is cut from real Atlas
+  captures (M5); the plates, beams, legend and keys are drawn by the mockup renderer. The real scene would place its own
+  camera a little closer and off to one shoulder; vanilla's centred camera is what a tour can capture today.
+
+**How fast.** M must still feel instant, so the map is usable before the camera has finished moving.
+
+| ms | |
+|---|---|
+| 0–120 | the wrist rises and the band flares (the inventory's quick choreography) |
+| 60–380 | the camera eases (ease-in-out, no roll, FOV unchanged) from the eyes to the scene shot |
+| 120–420 | beams reach the rim; the plate fades in; the land prints from the centre out (the Atlas's reveal, shortened); clouds drift in |
+| 250 | input is live: zoom, turn and pins work while the last frames settle |
+| 420 | settled |
+
+- Opening again within 12 s takes 220 ms (the station scenes' rule).
+- Closing (M, Esc, K, Space) reverses in 250 ms, and the hands come back at once.
+- **Quick map:** Shift+M, or M tapped twice, opens today's flat table instantly. The table also opens on its own
+  whenever the scene can't: in a fight, without room for the camera, inside a gate (the Atlas's existing message), with
+  reduced motion, or with the setting "Map opens as: Table".
+
+**Input.** The cursor is a ray into the scene (as the K panel and the station scenes pick), so pins and plates are
+hovered where they stand.
+
+| | Mouse | Keys | Controller |
+|---|---|---|---|
+| Turn and tilt the map | drag | Q / E turn, R / F tilt | right stick |
+| Move across it | right-drag | W A S D (your body stays still) | left stick |
+| Zoom | scroll | + / − | triggers |
+| Back to you | — | C | click the left stick |
+| Pick a pin or a gate | hover, click | Tab steps through pins, nearest first | d-pad, A |
+| Point me there | the plate's button | T | X |
+| Legend tabs, band pages | click | 1–6 pages; Q / E with the legend focused | LB / RB |
+| Leave | — | M, Esc, K or Space | B |
+
+**Legible against the real world.**
+1. **The shot picks the backdrop.** 35-45° down puts the ground, not the sky, behind the map. The camera turns a
+   little toward lower, darker ground if it has the choice.
+2. **A plate under the land.** The disc sits on dark glass (about 78% navy) with a lit rim, inside a soft pool that
+   darkens the ground under the projection. The land never sits on raw grass or snow.
+3. **The world dims** to about two thirds and loses some colour while the map is open. The map is light: it is never
+   dimmed by night.
+4. **Text only on plates.** Gate names and the legend sit on the K panel's glass (tint 0.46 and adaptive), facing the
+   camera, drawn after the map.
+5. **The rim and the plate fade the cut edge** into light, so the picture reads as a projection, not a rectangle.
+
+**In a fight.**
+- M in a fight (`SystemHud.inCombat`: hurt in the last 5 s, or a hostile within 8) opens the quick table instead.
+- If you're hit, or a hostile comes within 8 blocks while the scene is open, it folds in 150 ms. The camera snaps back
+  to your eyes with the warning tick.
+- The world never pauses (unchanged, multiplayer-safe).
+
+**What others see.**
+- Your raised wrist (the existing third-person pose), and over the plate a content-free projection: the ring, the
+  plate, drifting wisps of cloud and a few points of light.
+- Never your land, pins or labels: your map stays yours, and only "Share with party" shares it.
+- `holo_state` gains a kind MAP (3), relayed and rate-limited like STATUS and INVENTORY. (A later choice: party members
+  standing within 8 blocks could see the real map.)
+
+**Cost.**
+- The Atlas picture costs what it costs today (+1.5 to 2.0 ms while open, measured in M5). The scene adds one
+  camera-facing quad for the picture, your player model in third person (an estimated +0.2 to 0.4 ms), beams and up to
+  8 plates (about +0.1 ms).
+- The camera move loads nothing new: it is the same place, seen from 4 blocks back.
+- The picture is drawn from the scene camera's own viewpoint, so a flat card in the world reads as true 3D. The camera
+  never moves while you read; turning the map redraws the picture.
+- A real 3D mesh in the world (which you could walk round) would put the Atlas mesh in the main pass, with Lens's
+  light and haze to keep off it. It is a later step, not v1.
+
+**Risks and fallbacks.**
+- The camera's view blocked (a forest, a room, a cliff): try the other shoulder, then higher, then open the table.
+- Shoulder Surfing and Camera Overhaul fighting the camera: hold them off while the scene runs, as the opening's camera
+  does.
+- Motion sickness: a short move with no roll, and the setting.
+
+**Who builds what** (the map is shared work):
+- **Atlas builder (local_91de2e6b):** `AtlasPainter` driven by an outside camera (yaw, tilt, zoom, centre) into a
+  texture sized for the card; the disc mask and rim; marks and labels handed to the scene as world plates instead of GUI
+  chips.
+- **Holo (the K builder):** the scene's timing, the beams for yourself in third person (others already see them), the
+  legend as a world-anchored `HoloPanel`, the relay kind MAP, focus.
+- **The camera:** the opening's shot system (`opening.client.Cinema` / `OpeningCamera`, a camera placed through
+  `ComputeCameraAngles`, no mixin), reused for a placed third-person shot.
+- **Lens:** keep its light, AO and haze off the card and plates (the `lensPlates` route the world plates use).
+- **Hands:** the off hand stays raised (`AWAKEN_HOLO_WRIST` exists).
+
+**Recommendation: yes.** Make the scene how the Map page and M open, and keep the flat table as the instant map and the
+fallback. It is the most magical moment the band can have. It loses none of the Atlas's look, because it is the
+Atlas's own picture. And a quick path, a fight rule and fallbacks cover every case where a camera move would cost
+something. It replaces phase 4's "the panel grows into the table" with phase 4 "the map scene" (about two builder
+hand-backs, Atlas and K builders together).
+
 ---
 
 ## 4. The visual system (B)
@@ -305,11 +432,12 @@ Map legend) · **arrows** move focus · **Enter / Space** activate · **Backspac
 6. **A Journal entry.** Click or Enter → it opens in place with its full text and what you can do with it ("Show on
    map" for a place → the Map flies there; "Open in the Codex" for a find) → Esc or click again folds it → entries count
    as read once K closes after showing them (unchanged).
-7. **Map.** Rail, 6 or M → the panel grows into the table (300 ms), the rail stays on its edge → drag to turn,
-   right-drag to move, scroll to zoom, C back to you (unchanged); the legend's **Gates** tab lists gates nearest first
-   with rank, distance and days to break; click one → the table flies to it and opens its row: "Point me there" (T)
-   sets your compass on it → 1, Tab or the Status node → the table folds back into the panel (250 ms). Inside a gate
-   the Map says "The Atlas can't see inside a gate" and shows the run.
+7. **Map.** Rail, 6 or M → the camera pulls back over your shoulder and the band projects the map in front of your
+   character (the map scene, section 3) → turn, move and zoom it; the legend's **Gates** tab lists gates nearest first
+   with rank, distance and days to break; click one → the map flies to it and opens its row: "Point me there" (T) sets
+   your compass on it → M, Esc, K or Space fold it back into the band (250 ms), or 1 / Tab go to another page. Shift+M
+   or a double tap opens the flat table instead (instant); in a fight, without room for the camera, or inside a gate the
+   table opens on its own ("The Atlas can't see inside a gate" there, as today).
 8. **Powers.** Click a power → it lights amber and the keys it fits light → press Z X C V (or R, Alt), or click a
    socket → it goes on that key → Esc clears the selection first, then closes.
 9. **Close.** K or Esc → the panel folds into the band (250 ms) → hands back at once (unchanged).
@@ -373,7 +501,9 @@ The keyboard focus model above is the contract it maps onto.
    its payload, the context row and its providers.
 3. **The look and motion:** tokens, type ramp, contrast (tint and adaptive), wrist light, the scan-line page change,
    motion that reports change, the four new sounds, reduced motion. One Mac perf tour.
-4. **The map:** legend tabs, gate pillars through the cloud, Point me there, the growth into the table, scanner marks.
+4. **The map scene** (with the Atlas builder): the placed camera, the projected disc from the Atlas's own picture, beams,
+   the legend panel, pillars and plates, Point me there, the fight rule and fallbacks, what others see (kind MAP), the
+   quick table on Shift+M, scanner marks.
 5. **Powers and Journal pages composed; Truths and Codex restyled;** narration; Band size.
 
 ### Performance risks
@@ -382,8 +512,8 @@ The keyboard focus model above is the contract it maps onto.
 - No allocation per frame (the existing rule): formatted strings ("3,420 / 5,100 XP") are cached on change.
 - Status draws 3 composed blocks instead of measuring and drawing up to 22 sections each frame: cheaper than today.
 - The glance paint (0.23 ms, up to once a second) and its texture go away.
-- The Map page costs what the Atlas costs (+1.5–2.0 ms while open, measured in M5); during the 300 ms growth both the
-  panel and the table draw (+~0.3 ms).
+- The Map costs what the Atlas costs (+1.5–2.0 ms while open, measured in M5); the scene adds your model in third
+  person (+0.2–0.4 ms, estimate), one card and up to 8 plates (+~0.1 ms).
 - Budget unchanged: the holo K menu within 0.25 ms of the flat one (SPEC); the Map within the Atlas budget (≤ 2 ms).
 
 ### Validation from four perspectives
@@ -420,6 +550,9 @@ CI GameTests green · one CI look tour reviewed (Status typical, dense and empty
 8. **Your face** on the Status page, from your skin?
 9. **"Clear Atlas cache"** moves to the settings screen?
 10. **Build order:** phase 1 first (your literal asks, one hand-back), then 2–5?
+11. **The map in the world:** the Map (and M) opens as the scene, with the camera over your shoulder and the map as a
+    hologram in front of your character (recommended), with Shift+M for the instant flat table? Or the flat table only?
+12. **Others see** a content-free projection while you read your map (recommended), or your real map?
 
 ---
 
@@ -436,4 +569,9 @@ CI GameTests green · one CI look tour reviewed (Status typical, dense and empty
   https://steamcommunity.com/app/1091500/discussions/0/3383914261430242165
 - Crimson Desert's UI after launch: https://gamingbolt.com/crimson-desert-is-better-than-before-yet-these-15-issues-still-hurt-it ,
   https://vulkk.com/2026/07/04/how-to-hide-the-minimap-and-hp-bar-in-crimson-desert/
-- Elden Ring's level up and Solo Leveling's status window: from play and reading, not a cited source.
+- The Division's projected map: https://gameinformer.com/b/news/archive/2014/06/09/the-division-emerges-from-the-shadows ,
+  https://www.pcgamer.com/the-division-e3-preview/ , https://thedivision.fandom.com/wiki/Smart_Watch
+- Dead Space's holographic interface: https://gamedeveloper.com/design/video-designing-i-dead-space-i-s-immersive-user-interface ,
+  https://www.wayline.io/blog/diegetic-interfaces-game-design , https://www.thegamer.com/dead-space-horror-ui/
+- Elden Ring's level up, Solo Leveling's status window and Mass Effect's galaxy map: from play and reading, not a cited
+  source.

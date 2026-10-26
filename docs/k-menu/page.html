@@ -194,6 +194,7 @@ footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line);
     <a href="#decide">Decide</a>
     <a href="#today">Today</a>
     <a href="#directions">Directions</a>
+    <a href="#mapscene">Map scene</a>
     <a href="#journey">Journey</a>
     <a href="#pages">Pages</a>
     <a href="#system">System</a>
@@ -228,8 +229,8 @@ footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line);
   <section id="decide" aria-labelledby="decide-h">
     <div class="head">
       <p class="label">What I need from you</p>
-      <h2 id="decide-h">Ten decisions</h2>
-      <p>Each has my recommendation. Saying yes to the first one (direction B) and the last one (start with phase 1) is enough to begin; the rest can be answered as the builder reaches them.</p>
+      <h2 id="decide-h">Twelve decisions</h2>
+      <p>Each has my recommendation. Saying yes to the first one (direction B) and the tenth (start with phase 1) is enough to begin; the rest can be answered as the builder reaches them. The last two are about your map idea.</p>
     </div>
     <ol class="decisions">
       <li><span class="q">Which direction: B (the band's pages), A (reorder only) or C (the orrery)?</span><span class="rec">I recommend <b>B</b>. It fixes why the menu feels like a dashboard, not only its order.</span></li>
@@ -242,6 +243,8 @@ footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line);
       <li><span class="q">Show your face, from your skin, on the Status page?</span><span class="rec">Recommended <b>yes</b>. It makes the sheet yours.</span></li>
       <li><span class="q">Move "Clear Atlas cache" off the map and into the settings screen?</span><span class="rec">Recommended <b>yes</b>. It's upkeep, not play.</span></li>
       <li><span class="q">Build phase 1 first (your literal asks, one builder hand-back), then phases 2 to 5?</span><span class="rec">Recommended <b>yes</b>. Phase 1 alone already moves the Journal under the stats and merges the maps.</span></li>
+      <li><span class="q">Does the map open in the world, with the camera over your character and the map as a hologram in front of you?</span><span class="rec">Recommended <b>yes</b>, with <b>Shift+M</b> (or a double tap) for the instant flat table, which also opens on its own in a fight or a tight space. <a href="#mapscene">See it</a>.</span></li>
+      <li><span class="q">While you read your map, do others see a content-free projection, or your real map?</span><span class="rec">Recommended <b>content-free</b>: your map stays yours unless you share it with your party.</span></li>
     </ol>
   </section>
 
@@ -326,6 +329,61 @@ footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line);
         </tbody>
       </table></div>
     </div>
+  </section>
+
+  <section id="mapscene" aria-labelledby="mapscene-h">
+    <div class="head">
+      <p class="label">2b · Euan's idea · <b>recommended as how the map opens</b></p>
+      <h2 id="mapscene-h">The map in the world</h2>
+      <p>"It kind of zooms out and gives you a top view of your character looking at the map… as if the map was like a hologram, basically, in the world. But it still needs to look really sharp in the way it does now." So the camera rises out of your eyes to a high three-quarter shot from behind, and the band projects the Atlas in front of your character. The land, the zones and the clouds are the Atlas's own picture, so they look exactly as sharp as they do on the table today.</p>
+    </div>
+    <figure class="real">
+      <img src="shots/15_map_scene_day.jpg" alt="Third person from above and behind: the character's band projects a round holographic Atlas in front of them, gates rising as pillars, a legend panel beside it" width="2880" height="1800" loading="lazy">
+      <figcaption><b>The scene at rest.</b> Your character, the raised band, beams to a disc about 1.7 m across on dark glass. Gates rise out of the map as pillars in their rank colour, and a rumour hangs in the cloud as "?". The legend floats beside it as a panel of the band, with its rail of pages and the chosen gate's "Point me there". The world dims behind the map, and one line of keys runs underneath. The base frame is a real CI tour frame (the band raised in third person, outside the High Gate, vanilla's third-person camera tilted 40°); the map is cut from real Atlas captures, and the plates, beams, legend and keys are composited. The real scene would place its own camera a little closer and off one shoulder.</figcaption>
+    </figure>
+    <div class="grid3">
+      <figure><img src="shots/17_map_scene_open_a.jpg" alt="Opening, 0 ms: first person" width="2880" height="1800" loading="lazy"><figcaption><b>0 ms.</b> You press M. The wrist rises and the band flares (the inventory's quick choreography).</figcaption></figure>
+      <figure><img src="shots/17_map_scene_open_b.jpg" alt="Opening, about 220 ms: the camera halfway, the map printing in" width="2880" height="1800" loading="lazy"><figcaption><b>About 220 ms.</b> The camera eases up and back with no roll. The beams reach the rim, and the land prints from the centre out. From 250 ms you can already zoom and turn it.</figcaption></figure>
+      <figure><img src="shots/15_map_scene_day.jpg" alt="Opening, 420 ms: settled" width="2880" height="1800" loading="lazy"><figcaption><b>420 ms.</b> Settled. Opening again within 12 s takes 220 ms. <span class="mono">Shift+M</span> or a double tap opens today's flat table instantly.</figcaption></figure>
+    </div>
+    <div class="grid2">
+      <figure><img src="shots/16_map_scene_night.jpg" alt="The map scene at night" width="2880" height="1800" loading="lazy"><figcaption><b>At night.</b> The map is light, so night never dims it. The plate and the darkened pool under it keep the land off the ground's own colours.</figcaption></figure>
+      <figure><img src="shots/18_map_scene_others.jpg" alt="What another player sees: the raised wrist and a content-free projection" width="2880" height="1800" loading="lazy"><figcaption><b>What others see.</b> Your raised wrist and a content-free projection: the ring, the plate and drifting wisps. Never your land, pins or labels; your map stays yours unless you share it with your party.</figcaption></figure>
+    </div>
+    <figure class="real">
+      <img src="shots/19_map_scene_detail.jpg" alt="A real-pixel crop of the projected map: voxel land, clouds, a gate pillar and its plate" width="1600" height="900" loading="lazy">
+      <figcaption><b>Real pixels.</b> The voxel city, the cloud blanket, a gate pillar and its plate, as they would sit in the frame.</figcaption>
+    </figure>
+    <div class="grid2">
+      <div class="stack text">
+        <h3>Reading it</h3>
+        <div class="tbl"><table>
+          <thead><tr><th></th><th>Mouse</th><th>Keys</th><th>Controller</th></tr></thead>
+          <tbody>
+            <tr><td><b>Turn, tilt</b></td><td>drag</td><td>Q / E, R / F</td><td>right stick</td></tr>
+            <tr><td><b>Move across</b></td><td>right-drag</td><td>W A S D (you stay still)</td><td>left stick</td></tr>
+            <tr><td><b>Zoom</b></td><td>scroll</td><td>+ / −</td><td>triggers</td></tr>
+            <tr><td><b>Back to you</b></td><td>—</td><td>C</td><td>left stick click</td></tr>
+            <tr><td><b>Pick a gate or pin</b></td><td>hover, click</td><td>Tab, nearest first</td><td>d-pad, A</td></tr>
+            <tr><td><b>Point me there</b></td><td>the plate's button</td><td>T</td><td>X</td></tr>
+            <tr><td><b>Leave</b></td><td>—</td><td>M, Esc, K or Space</td><td>B</td></tr>
+          </tbody>
+        </table></div>
+        <p style="font-size: var(--step--1); color: var(--ink-dim)">The cursor is a ray into the scene, as the K panel and the station scenes already pick, so pins and plates are hovered where they stand.</p>
+      </div>
+      <div class="stack text">
+        <h3>Legible, safe, cheap</h3>
+        <ul style="margin:0; padding-left:1.1em; display:grid; gap:6px; font-size: var(--step--1)">
+          <li><b>The shot picks the backdrop:</b> 35–45° down puts ground, not sky, behind the map.</li>
+          <li><b>A plate and a darkened pool</b> under the land, and the world dimmed to about two thirds; text only on the band's glass plates.</li>
+          <li><b>In a fight</b> M opens the quick table instead. If you're hit, or a hostile comes within 8 blocks, the scene folds in 150 ms. The world never pauses.</li>
+          <li><b>No room for the camera</b> (a forest, a room): the other shoulder, then higher, then the table.</li>
+          <li><b>Cost:</b> the Atlas picture as today (+1.5–2.0 ms while open), plus your model in third person (an estimated +0.2–0.4 ms) and up to 8 plates (+0.1 ms). The picture is drawn from the scene camera's own viewpoint, so one card in the world reads as true 3D.</li>
+          <li><b>Built with the Atlas builder:</b> the Atlas paints from an outside camera; the opening's shot system places the camera (no mixin); Lens keeps its light off the card; Shoulder Surfing and Camera Overhaul are held off while it runs.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="callout">Recommended: the Map page and M open this scene, and the flat table stays as the instant map and the fallback. It is the most magical moment the band can have, and because the map is the Atlas's own picture, nothing about how sharp it looks is lost.</p>
   </section>
 
   <section id="journey" aria-labelledby="journey-h">
@@ -662,7 +720,8 @@ footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line);
     { src: 'shots/05_switch_40ms.jpg', t: '40 ms', cap: 'The page change, frozen at 40 ms: the rail\'s light leaves Status and the old page dims.', hot: { l: 2.98, t: 8.96, w: 49.21, h: 60.62 }, label: 'Continue' },
     { src: 'shots/06_switch_110ms.jpg', t: '110 ms', cap: 'At 110 ms Powers prints in behind the band\'s scan line, the same gesture the panel makes when it opens.', hot: { l: 2.98, t: 8.96, w: 49.21, h: 60.62 }, label: 'Continue' },
     { src: 'shots/07_powers.jpg', t: 'Powers', cap: 'Powers: your six keys first, then everything you own. Haymaker is chosen, so the keys it fits glow. Click MAP on the rail.', hot: { l: 1.66, t: 58.13, w: 5.47, h: 8.94 }, label: 'Open the Map' },
-    { src: 'shots/09_map.jpg', t: 'Map', cap: 'The Map is the Atlas inside the band. Gates rise through the cloud as pillars; the nearest D-rank is open in the list with "Point me there". K closes the band from here.' },
+    { src: 'shots/15_map_scene_day.jpg', t: 'Map', cap: 'The camera rises over your shoulder and the band projects the map in front of you: the Atlas\'s own picture, gates rising as pillars, the legend beside it. Shift+M opens the flat table instead.', hot: { l: 0, t: 0, w: 100, h: 100 }, label: 'Show the quick table' },
+    { src: 'shots/09_map.jpg', t: 'Quick map', cap: 'The quick map (Shift+M, a double tap, or in a fight): the same Atlas as a flat table in the band, opened instantly. K closes the band from here.' },
   ];
   const img = document.getElementById('storyImg'), cap = document.getElementById('storyCap'), dots = document.getElementById('dots');
   const stage = img.parentElement;
