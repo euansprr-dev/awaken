@@ -196,7 +196,7 @@ public final class ClientMoves {
 
     static boolean off(LocalPlayer p) {
         return p.isPassenger() || p.isSleeping() || p.isSpectator() || !p.isAlive() || p.getAbilities().flying || p.isFallFlying()
-                || Veil.isSpirit(p) || dev.awaken.body.ascent.client.AscentMoves.active() || p.isVehicle(); // (SPEC §28.7) carrying someone
+                || Veil.isSpirit(p) || dev.awaken.body.ascent.client.AscentMoves.active() || dev.awaken.core.api.MovementHooks.burdened(p); // (SPEC §28.7) carrying someone
     }
 
     /** An Ascent state takes the body into the air (a rope, wings): whatever grounded move was running stops. */

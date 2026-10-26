@@ -58,6 +58,8 @@ public final class TroubleDirector {
     static final String ACTION = "village_trouble";
     /** No trouble in a world's first two hours of play (play ticks). */
     static final long FIRST_HOURS = 2L * 60 * 60 * 20;
+    /** The young-world rule's length (tests move it). */
+    static long firstHours = FIRST_HOURS;
     /** At most this many troubles within {@link #NEAR} of any player. */
     static final int NEAR = 1500, PER_PLAYER = 2;
     /** Two play-days' breather after a village's trouble ends before its next. */
@@ -107,10 +109,8 @@ public final class TroubleDirector {
             // a mending notice filled puts that much back; a trouble's own notices move it on in its tick
             if (id.startsWith("mend") && p.level() instanceof ServerLevel level) Rebuild.mend(level, l, 24);
         });
-        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
-            // whoever rode on a player's back gets down where they are
-            for (Entity rider : List.copyOf(e.getEntity().getPassengers())) if (rider instanceof Rescuee r) r.setDown(false);
-        });
+        // someone on your back stops the body's moves (both sides: the carry's speed modifier is synced)
+        dev.awaken.core.api.MovementHooks.addBurden(Rescuee::carrying);
         NeoForge.EVENT_BUS.addListener(TroubleEvents::onLeftClick);
         NeoForge.EVENT_BUS.addListener(TroubleEvents::onRightClickBlock);
         NeoForge.EVENT_BUS.addListener(TroubleEvents::onDeath);
@@ -119,6 +119,7 @@ public final class TroubleDirector {
         NowHooks.register(TroubleDirector::now);
         Quests.addJournal(TroubleDirector::journalRows);
         Troubles.install(new Access());
+        TroubleTests.register();
     }
 
     static Plot plot(Trouble t) {
@@ -165,7 +166,7 @@ public final class TroubleDirector {
     /** Each awake village: its festival's day, then (unless calm) whether something in the world troubles it now. */
     static void consider(ServerLevel level, TroubleState st, long day) {
         boolean calm = TroubleContent.calm(level);
-        boolean young = PlayDays.playTicks(level.getServer()) < FIRST_HOURS;
+        boolean young = PlayDays.playTicks(level.getServer()) < firstHours;
         for (VillageService.Live l : VillageService.all()) {
             if (!l.settlement().awake()) continue;
             Plot.Ctx c = ctx(level, l.key());
@@ -398,6 +399,22 @@ public final class TroubleDirector {
             VillageService.Live l = VillageService.live(t.village);
             if (l == null || l.settlement() != s) continue;
             if (plot(t).ask(ctx(level, t.village), t, p, rec)) return true;
+        }
+        // someone you brought home greets you by name (the first time you speak each play-day; after that, as anyone does)
+        var mine = st.rescued.get(p.getUUID());
+        if (mine != null) {
+            for (Troubles.Rescued r : mine) {
+                VillageService.Live l = VillageService.live(r.village());
+                if (l == null || l.settlement() != s || r.rec() != rec) continue;
+                TroubleState.Memory mem = st.memory(l.key());
+                String key = "greeted_" + rec + "_" + p.getUUID().hashCode();
+                long today = PlayDays.current(level.getServer());
+                if (mem.get(key, -1) == today) return false;
+                mem.data.put(key, today);
+                st.setDirty();
+                s.say(p, rec, VillageService.fill(l, p, TroubleText.line(level, "village.trouble.rescued.greet", today + rec)), 120);
+                return true;
+            }
         }
         return false;
     }

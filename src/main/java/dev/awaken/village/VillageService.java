@@ -143,7 +143,7 @@ public final class VillageService {
     }
 
     /** Registers a settlement's people with the engine (tests and commands call it directly). */
-    static @Nullable Live register(ServerLevel level, VillagePlan plan) {
+    public static @Nullable Live register(ServerLevel level, VillagePlan plan) {
         Live had = LIVE.get(plan.key);
         if (had != null) return had;
         long t0 = System.nanoTime();
@@ -165,7 +165,7 @@ public final class VillageService {
         return l;
     }
 
-    static void stop(Live l) {
+    public static void stop(Live l) {
         LIVE.remove(l.key());
         BY_ID.remove(l.settlement().id());
         Settlements.unregister(l.settlement().id());

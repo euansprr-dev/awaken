@@ -318,7 +318,7 @@ public final class AscentMoves {
 
     static boolean off(LocalPlayer p) {
         return p.isPassenger() || p.isSleeping() || p.isSpectator() || !p.isAlive() || p.getAbilities().flying || p.isFallFlying()
-                || p.isInWater() || p.isInLava() || Veil.isSpirit(p) || tiers == 0 || p.isVehicle(); // (SPEC §28.7) carrying someone
+                || p.isInWater() || p.isInLava() || Veil.isSpirit(p) || tiers == 0 || dev.awaken.core.api.MovementHooks.burdened(p); // (SPEC §28.7) carrying someone
     }
 
     /** High enough to open wings: falling, or rising slowly, with room under you. */

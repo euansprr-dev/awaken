@@ -85,6 +85,7 @@ public class Rescuee extends PathfinderMob implements Npc {
         b.define(DATA_SAY, "");
         b.define(DATA_CUT, 0f);
         b.define(DATA_CHILD, false);
+        b.define(DATA_CARRIER, -1);
     }
 
     @Override
@@ -160,26 +161,45 @@ public class Rescuee extends PathfinderMob implements Npc {
     }
 
     // ---- the carry --------------------------------------------------------------------------------------------------------
+    //
+    // A player can't be ridden in 26.3 (its entity type is never saved, so the server refuses it as a vehicle), so on a
+    // back they're held in place each tick behind the carrier's shoulders, and each client draws them from the carrier's
+    // own position that frame (no lag behind your own moves).
+
+    /** The carrier's entity id (synced), or -1. */
+    static final EntityDataAccessor<Integer> DATA_CARRIER = SynchedEntityData.defineId(Rescuee.class, EntityDataSerializers.INT);
+
+    public int carrier() {
+        return entityData.get(DATA_CARRIER);
+    }
+
+    public boolean carried() {
+        return mode() == CARRIED && carrier() >= 0;
+    }
 
     /** Onto a player's back (from bound, waiting or following). */
     boolean climbOn(ServerPlayer p) {
-        if (isPassenger() || p.isVehicle() || p.isPassenger() || p.isSpectator()) return false;
-        if (!startRiding(p, true, false)) return false;
-        mode(CARRIED);
+        if (carried() || p.isSpectator() || carrying(p)) return false;
         follow = p.getUUID();
+        entityData.set(DATA_CARRIER, p.getId());
+        mode(CARRIED);
+        noPhysics = true;
+        setNoGravity(true);
         slow(p, true);
+        hold(p);
         return true;
     }
 
-    /** Set down behind the carrier: they walk after them. */
+    /** Set down behind the carrier: they walk after them, or wait there. */
     void setDown(boolean followCarrier) {
-        Entity v = getVehicle();
-        stopRiding();
-        if (v instanceof ServerPlayer p) {
+        if (level() instanceof ServerLevel sl && follow != null && sl.getPlayerByUUID(follow) instanceof ServerPlayer p && carried()) {
             slow(p, false);
             float yaw = p.yBodyRot * Mth.DEG_TO_RAD;
             teleportTo(p.getX() + Mth.sin(yaw) * 0.9, p.getY(), p.getZ() - Mth.cos(yaw) * 0.9);
         }
+        entityData.set(DATA_CARRIER, -1);
+        noPhysics = false;
+        setNoGravity(false);
         mode(followCarrier ? FOLLOW : WAIT);
         stuck = 0;
     }
@@ -192,27 +212,42 @@ public class Rescuee extends PathfinderMob implements Npc {
         if (on) p.setSprinting(false);
     }
 
-    /** On a carrier's back: behind their shoulders, holding on (both sides place it the same each tick). */
-    @Override
-    public Vec3 getVehicleAttachmentPoint(Entity vehicle) {
-        if (!(vehicle instanceof Player pl)) return super.getVehicleAttachmentPoint(vehicle);
-        Vec3 top = vehicle.getPassengerRidingPosition(this).subtract(vehicle.position());
-        float yaw = pl.yBodyRot * Mth.DEG_TO_RAD;
-        double back = child() ? 0.30 : 0.34;
-        double up = child() ? 0.62 : 0.30;
-        // the forward of a body facing yaw is (-sin, cos); its back the other way
-        return top.subtract(Mth.sin(yaw) * back, up, -Mth.cos(yaw) * back);
+    /** Whether a player carries someone (both sides: the speed modifier is synced to its owner). */
+    public static boolean carrying(Player p) {
+        var speed = p.getAttribute(Attributes.MOVEMENT_SPEED);
+        return speed != null && speed.hasModifier(CARRY_SLOW);
+    }
+
+    /** Where someone on a carrier's back is: behind their shoulders, holding on. */
+    public static Vec3 onBack(double x, double y, double z, float bodyYaw, boolean child) {
+        float yaw = bodyYaw * Mth.DEG_TO_RAD;
+        double back = child ? 0.30 : 0.34, up = child ? 0.62 : 0.30;
+        // the forward of a body facing yaw is (-sin, cos): its back the other way
+        return new Vec3(x + Mth.sin(yaw) * back, y + up, z - Mth.cos(yaw) * back);
+    }
+
+    private void hold(Player p) {
+        Vec3 at = onBack(p.getX(), p.getY(), p.getZ(), p.yBodyRot, child());
+        setPos(at.x, at.y, at.z);
+        setDeltaMovement(Vec3.ZERO);
+        setYRot(p.yBodyRot);
+        yBodyRot = p.yBodyRot;
+        yHeadRot = p.yBodyRot + Mth.sin(tickCount * 0.03f) * 18f;
+        fallDistance = 0;
     }
 
     @Override
-    public void rideTick() {
-        super.rideTick();
-        if (getVehicle() instanceof LivingEntity v) {
-            // they face the way the carrier faces
-            setYRot(v.yBodyRot);
-            yBodyRot = v.yBodyRot;
-            yHeadRot = v.yBodyRot + Mth.sin(tickCount * 0.03f) * 18f;
+    public void tick() {
+        super.tick();
+        if (!level().isClientSide() && mode() == CARRIED && level() instanceof ServerLevel sl) {
+            Player p = follow == null ? null : sl.getPlayerByUUID(follow);
+            if (p != null && p.isAlive() && !p.isSpectator() && p.level() == level()) hold(p);
         }
+    }
+
+    @Override
+    public boolean canBeCollidedWith(@Nullable Entity other) {
+        return !carried() && super.canBeCollidedWith(other);
     }
 
     // ---- the tick ---------------------------------------------------------------------------------------------------------
@@ -220,7 +255,7 @@ public class Rescuee extends PathfinderMob implements Npc {
     @Override
     protected boolean isImmobile() {
         int m = mode();
-        return super.isImmobile() || m == BOUND || m == EMBRACE || m == LOST || m == WAIT && !isPassenger();
+        return super.isImmobile() || m == BOUND || m == EMBRACE || m == LOST || m == WAIT || m == CARRIED;
     }
 
     @Override
@@ -229,15 +264,14 @@ public class Rescuee extends PathfinderMob implements Npc {
         int m = mode();
         // their trouble ended while this body slept in an unloaded chunk: they've long since gone home
         if (tickCount % 200 == 17 && TroubleState.get(level.getServer()).byId(trouble) == null) {
-            if (isPassenger()) setDown(false);
+            if (carried()) setDown(false);
             discard();
             return;
         }
         if (m == CARRIED) {
-            if (!(getVehicle() instanceof ServerPlayer p) || !p.isAlive()) {
-                if (getVehicle() instanceof ServerPlayer gone) slow(gone, false);
-                stopRiding();
-                mode(WAIT);
+            Player held = follow == null ? null : level.getPlayerByUUID(follow);
+            if (!(held instanceof ServerPlayer p) || !p.isAlive() || p.isSpectator()) {
+                setDown(false);
                 return;
             }
             p.setSprinting(false);

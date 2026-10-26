@@ -291,7 +291,7 @@ public final class TroubleCommands {
         Plot.Ctx ctx = TroubleDirector.ctx(c.getSource().getServer().overworld(), t.village);
         Rescuee r = Taken.rescuee(ctx, t);
         if (r == null) return fail(c, "No one here.");
-        if (r.isPassenger()) r.setDown(false);
+        if (r.carried()) r.setDown(false);
         r.teleportTo(p.getX(), p.getY(), p.getZ());
         r.mode(Rescuee.WAIT);
         if (!t.helped(p.getUUID())) t.helpers.add(p.getUUID());
@@ -310,7 +310,7 @@ public final class TroubleCommands {
         VillageService.Live l = ctx.live();
         Rescuee r = Taken.rescuee(ctx, t);
         if (l == null || r == null) return fail(c, "Not here.");
-        if (r.isPassenger()) r.setDown(false);
+        if (r.carried()) r.setDown(false);
         Vec3 w = TroubleDirector.well(l);
         Vec3 at = TroubleDirector.green(l, 0.4, l.plan().greenR + 2);
         r.teleportTo(at.x, at.y, at.z);

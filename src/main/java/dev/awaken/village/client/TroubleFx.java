@@ -143,7 +143,7 @@ public final class TroubleFx {
         // a trail's prints: its ground read once each point's chunk is in
         for (var en : TRAIL_POINTS.entrySet()) if (!TRAILS.containsKey(en.getKey()) && ticks % 20 == 0) TRAILS.put(en.getKey(), prints(mc.level, en.getValue()));
         // carrying someone: no running (the server holds it too)
-        if (mc.player != null && mc.player.getFirstPassenger() instanceof dev.awaken.village.trouble.Rescuee) {
+        if (mc.player != null && dev.awaken.village.trouble.Rescuee.carrying(mc.player)) {
             mc.player.setSprinting(false);
             mc.options.keySprint.setDown(false);
         }

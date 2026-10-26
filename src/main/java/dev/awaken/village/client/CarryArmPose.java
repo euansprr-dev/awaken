@@ -36,7 +36,7 @@ public final class CarryArmPose {
     /** Render state modifier: a player with someone on their back holds them. */
     static void modify(Entity entity, EntityRenderState state) {
         if (!(entity instanceof Player p) || !(state instanceof HumanoidRenderState s)) return;
-        if (!(p.getFirstPassenger() instanceof Rescuee)) return;
+        if (!Rescuee.carrying(p)) return;
         HumanoidModel.ArmPose pose = CARRY_POSE.getValue();
         s.rightArmPose = pose;
         s.leftArmPose = pose;

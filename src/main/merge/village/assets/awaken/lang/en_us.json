@@ -20,5 +20,15 @@
   "awaken.village.request.progress": "Handed over %s %s (%s of %s).",
   "awaken.village.request.paid": "Paid %s emeralds.",
   "awaken.village.inn.rumour": "%s, over the fire: \"%s\"",
-  "awaken.village.inn.woke": "You wake in your bed at the inn. The room is spent."
+  "awaken.village.inn.woke": "You wake in your bed at the inn. The room is spent.",
+  "entity.awaken.village_rescuee": "Villager",
+  "block.awaken.drag_marks": "Drag Marks",
+  "block.awaken.torn_cloth": "Torn Cloth",
+  "block.awaken.carved_token": "Carved Token",
+  "item.awaken.keepsake": "Keepsake",
+  "item.awaken.village_bell": "Village Bell",
+  "item.awaken.village_bell.desc": "Heavy. Haul it up its village's tower and hang it.",
+  "item.awaken.grey_remedy": "Herb Remedy",
+  "gamerule.awaken.calm_villages": "Calm villages (no troubles; festivals and growth go on)",
+  "gamerule.awaken.calm_villages.description": "Villages are never troubled by raids, the taken, the missing or the grey. Festivals, trade and growth go on."
 }

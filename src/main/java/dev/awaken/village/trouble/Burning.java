@@ -233,7 +233,7 @@ final class Burning implements Plot {
     // ---- scouts at the treeline ----------------------------------------------------------------------------------------------
 
     void scouts(Ctx c, Trouble t, VillageService.Live l) {
-        BlockPos at = edge(c, t, l, 46);
+        BlockPos at = edge(c, t, l, 30);
         if (at == null) return;
         List<Entity> made = Camps.raidAt(c.level(), (int) t.get("camp", -1), at, at, 3);
         int k = 0;

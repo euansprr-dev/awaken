@@ -20,6 +20,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
@@ -55,10 +56,21 @@ final class RescueeRenderer extends SkinnedMobRenderer<Rescuee, RescueeRenderer.
         String skin = r.skin();
         s.wear(skin.isEmpty() ? dev.awaken.Awaken.id("textures/entity/townsfolk/oren.png") : Identifier.parse(skin), r.slim());
         s.mode = r.mode();
+        // on a back: drawn from the carrier's own position this frame, so it never trails your moves
+        if (s.mode == Rescuee.CARRIED && r.carrier() >= 0 && r.level().getEntity(r.carrier()) instanceof net.minecraft.world.entity.LivingEntity c) {
+            Vec3 at = c.getPosition(partial);
+            float yaw = Mth.rotLerp(partial, c.yBodyRotO, c.yBodyRot);
+            Vec3 on = Rescuee.onBack(at.x, at.y, at.z, yaw, r.child());
+            s.x = on.x;
+            s.y = on.y;
+            s.z = on.z;
+            s.bodyRot = yaw;
+        }
         s.cut = r.cut();
         s.age = r.tickCount + partial;
         Minecraft mc = Minecraft.getInstance();
-        s.firstPersonCarrier = s.mode == Rescuee.CARRIED && r.getVehicle() == mc.getCameraEntity() && mc.options.getCameraType().isFirstPerson();
+        s.firstPersonCarrier = s.mode == Rescuee.CARRIED && mc.getCameraEntity() != null && r.carrier() == mc.getCameraEntity().getId()
+                && mc.options.getCameraType().isFirstPerson();
         s.isPassenger = false; // never vanilla's riding pose: the model has its own
         // what they say, fading in and out over 5 s
         s.speech = null;

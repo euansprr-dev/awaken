@@ -594,8 +594,7 @@ final class Taken implements Plot {
 
     /** Into the square: off your back, running to their parent. */
     static void homecoming(Ctx c, Trouble t, VillageService.Live l, Rescuee r) {
-        Entity carrier = r.getVehicle();
-        if (r.isPassenger()) r.setDown(false);
+        if (r.carried()) r.setDown(false);
         Vec3 w = TroubleDirector.well(l);
         Vec3 from = r.position();
         double a = Math.atan2(from.z - w.z, from.x - w.x);
@@ -606,7 +605,6 @@ final class Taken implements Plot {
         t.stage = HOME;
         t.since = c.now();
         t.put("reunion", c.now());
-        if (carrier instanceof ServerPlayer cp) t.put("carrier", 1);
         c.st().setDirty();
         TroubleDirector.say(c.level(), l, t.kin, TroubleDirector.fill(c, t, TroubleText.line(c.level(), "village.trouble." + t.kind + ".reunion", c.now())), 120);
     }
