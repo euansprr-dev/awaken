@@ -54,6 +54,11 @@ public final class WardFx {
         e.registrar("1").playToClient(Event.TYPE, Event.STREAM_CODEC);
     }
 
+    /** A sealed thing holds (a rank door that won't open for someone): the ward's own look and sound on that block. */
+    public static void hold(ServerLevel level, BlockPos pos) {
+        play(level, Kind.HOLD, pos, level.getBlockState(pos));
+    }
+
     static void play(ServerLevel level, Kind kind, BlockPos pos, BlockState state) {
         Event ev = new Event(kind.ordinal(), pos, Block.getId(state));
         double r2 = RANGE * RANGE;

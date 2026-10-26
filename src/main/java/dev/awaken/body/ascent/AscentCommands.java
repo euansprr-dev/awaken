@@ -35,7 +35,9 @@ final class AscentCommands {
                 return 1;
             }));
             // the Tether Vow at the world's spawn vault: there, wait for its chunks, then stand in its forecourt (tours)
-            ascent.then(Commands.literal("vow").then(Commands.literal("goto").executes(c -> vowGoto(c.getSource()))));
+            ascent.then(Commands.literal("vow").then(Commands.literal("goto").executes(c -> vowGoto(c.getSource(), false))));
+            // the same, with the vault's sealed door opened first (the vow needs it open: tours at C-rank)
+            ascent.then(Commands.literal("vow").then(Commands.literal("open").executes(c -> vowGoto(c.getSource(), true))));
             // the Leaper's Gauntlet, opened in front of you now whatever you hold (tours)
             ascent.then(Commands.literal("trial").then(Commands.literal("leaper").executes(c -> {
                 int id = AscentTrials.openLeaper(c.getSource().getPlayerOrException());
@@ -253,7 +255,7 @@ final class AscentCommands {
         return 0;
     }
 
-    private static int vowGoto(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+    private static int vowGoto(CommandSourceStack src, boolean open) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer p = src.getPlayerOrException();
         net.minecraft.server.level.ServerLevel level = src.getServer().overworld();
         var chunk = dev.awaken.above.ruin.RuinLocator.spawnVault(level);
@@ -270,6 +272,7 @@ final class AscentCommands {
                 for (int dz = -24; dz <= 24; dz += 6) {
                     TetherVow.Site site = TetherVow.siteAt(level, new net.minecraft.core.BlockPos(cx + dx, ground + dy, cz + dz));
                     if (site == null) continue;
+                    if (open && !site.doorOpen(level)) dev.awaken.above.block.DoorCoreBlock.open(level, site.door());
                     net.minecraft.core.BlockPos f = site.world(11, 1, 2);
                     float yaw = switch (site.rot()) {
                         case 1 -> 90F;
