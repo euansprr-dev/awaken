@@ -13,8 +13,8 @@ cmd gamerule send_command_feedback false
 cmd gamerule spawn_mobs false
 cmd gamerule awaken:fauna_spawning false
 cmd weather clear 1000000
-cmd awaken admin awaken
-wait 200
+cmd awaken opening skip
+wait 100
 screen close
 cmd awaken powers starter 1
 wait 20
@@ -40,7 +40,7 @@ shot w5_00_horizon_at_spawn
 # ---- a sinkhole, laid 900 out: from the rim, across at its shelves, the dive, a shelf, the grotto ----
 cmd tp @s ~900 ~ ~
 wait 160
-cmd spreadplayers ~ ~ 0 1 false @s
+cmd spreadplayers ~ ~ 0 8 false @s
 wait 80
 cmd effect clear @s minecraft:night_vision
 cmd awaken delve place sinkhole
@@ -148,7 +148,7 @@ cmd effect give @s minecraft:night_vision 100000 0 true
 # ---- the Crystal Nest, joined to the caves ----
 cmd tp @s ~200 ~ ~ 90 0
 wait 160
-cmd spreadplayers ~ ~ 0 1 false @s
+cmd spreadplayers ~ ~ 0 8 false @s
 wait 60
 cmd awaken fauna lair place thousandfoot
 wait 80
@@ -174,7 +174,7 @@ camera first
 # ---- the way home underground: the Now line and the Signal's thread on the floor ----
 cmd tp @s ~0 ~ ~200 0 0
 wait 160
-cmd spreadplayers ~ ~ 0 1 false @s
+cmd spreadplayers ~ ~ 0 8 false @s
 wait 60
 cmd awaken delve home stage
 wait 60

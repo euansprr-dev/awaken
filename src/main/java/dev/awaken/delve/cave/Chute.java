@@ -96,10 +96,12 @@ final class Chute {
         Carve.blob(k, f.x(0.5, cz), f.y(LAKE + 3), f.z(0.5, cz), 9.5, 8.0, 11.0, seed + 2, 0.2, 4.0, f.y(LAKE - LAKE_DEPTH));
         // past the last step nothing but air down to the water: the slide's run-out throws you out over it
         f.carve(k, -2, LAKE - LAKE_DEPTH, 2 + LENGTH, 2, lip + 4, 2 + LENGTH + 3);
-        BoundingBox lake = new BoundingBox(f.x(-12, 2 + LENGTH), f.y(LAKE - LAKE_DEPTH), f.z(-12, 2 + LENGTH), f.x(12, 2 + LENGTH + 22), f.y(LAKE - 1), f.z(12, 2 + LENGTH + 22));
-        int lx0 = Math.max(Math.min(lake.minX(), lake.maxX()), k.minX()), lx1 = Math.min(Math.max(lake.minX(), lake.maxX()), k.maxX());
-        int lz0 = Math.max(Math.min(lake.minZ(), lake.maxZ()), k.minZ()), lz1 = Math.min(Math.max(lake.minZ(), lake.maxZ()), k.maxZ());
-        for (int x = lx0; x <= lx1; x++) for (int z = lz0; z <= lz1; z++) for (int y = lake.minY(); y <= lake.maxY(); y++) {
+        // the lake: every cell of the cavern's air below its surface (the turned frame's corners sorted)
+        int ax = f.x(-12, 2 + LENGTH), az = f.z(-12, 2 + LENGTH), bx = f.x(12, 2 + LENGTH + 22), bz = f.z(12, 2 + LENGTH + 22);
+        int lx0 = Math.max(Math.min(ax, bx), k.minX()), lx1 = Math.min(Math.max(ax, bx), k.maxX());
+        int lz0 = Math.max(Math.min(az, bz), k.minZ()), lz1 = Math.min(Math.max(az, bz), k.maxZ());
+        int ly0 = f.y(LAKE - LAKE_DEPTH), ly1 = f.y(LAKE - 1);
+        for (int x = lx0; x <= lx1; x++) for (int z = lz0; z <= lz1; z++) for (int y = ly0; y <= ly1; y++) {
             if (k.inside(x, y, z) && k.get(x, y, z).isAir()) k.set(x, y, z, Carve.WATER);
         }
         // the stair down the cavern's east side from beside the lip to a landing at the water
