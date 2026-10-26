@@ -1,0 +1,197 @@
+# Far Sight over the opening's flight (SPEC §16.4, §20; Euan's play: a far hill stood over Carillon, the sky showed
+# through the ground): a new Carillon world, the opening from its first frame, a frame every second through the card,
+# its wait for the view to warm, and the whole flight to the landing. Far Sight on (its default), Lens as the opening
+# sets it; at the landing the same view with every far piece tinted and with Far Sight off; at the end the fill time
+# after a jump. Then Carillon's streets and the river quay at noon and dusk, each frame with Far Sight on and then off (no
+# blue wall, grey box or sky hole, and what the far view adds is all it changes). Run: PACK=perf,world TECTONIC=awakened RD=16 LENS=cinematic SLOT_WHO=far-sight \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/farsight2-opening.txt 900
+world fs2open survival 20261024
+waitworld
+window 1440 900
+info
+shotnow fs2o_00
+wait 20
+shotnow fs2o_01
+wait 20
+shotnow fs2o_02
+wait 20
+shotnow fs2o_03
+wait 20
+shotnow fs2o_04
+wait 20
+shotnow fs2o_05
+wait 20
+shotnow fs2o_06
+wait 20
+shotnow fs2o_07
+wait 20
+shotnow fs2o_08
+wait 20
+shotnow fs2o_09
+wait 20
+shotnow fs2o_10
+wait 20
+shotnow fs2o_11
+wait 20
+shotnow fs2o_12
+wait 20
+shotnow fs2o_13
+wait 20
+shotnow fs2o_14
+wait 20
+shotnow fs2o_15
+wait 20
+shotnow fs2o_16
+wait 20
+shotnow fs2o_17
+wait 20
+shotnow fs2o_18
+wait 20
+shotnow fs2o_19
+wait 20
+shotnow fs2o_20
+wait 20
+shotnow fs2o_21
+wait 20
+shotnow fs2o_22
+wait 20
+shotnow fs2o_23
+wait 20
+shotnow fs2o_24
+wait 20
+shotnow fs2o_25
+wait 20
+shotnow fs2o_26
+wait 20
+shotnow fs2o_27
+wait 20
+shotnow fs2o_28
+wait 20
+shotnow fs2o_29
+wait 20
+shotnow fs2o_30
+wait 20
+shotnow fs2o_31
+wait 20
+shotnow fs2o_32
+wait 20
+shotnow fs2o_33
+wait 20
+farsight status
+# the landing's view of the two spires (Euan: a smooth dark wedge on the right one): far pieces tinted, then Far Sight off
+farsight debug 3
+wait 4
+shotnow fs2o_roost_debug
+farsight debug 0
+farsight off
+wait 40
+shotnow fs2o_roost_off
+farsight on
+cmd awaken opening skip
+wait 60
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd gamemode spectator
+gui 0
+hud off
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd time set 6000
+farsight on
+wait 300
+cmd awaken city view quay
+wait 100
+shot fs2t_noon_quay_on
+cmd awaken city view market_street
+wait 100
+shot fs2t_noon_market_street_on
+cmd awaken city view laundry_lane
+wait 100
+shot fs2t_noon_laundry_lane_on
+farsight off
+cmd awaken city view quay
+wait 40
+shot fs2t_noon_quay_off
+cmd awaken city view market_street
+wait 40
+shot fs2t_noon_market_street_off
+cmd awaken city view laundry_lane
+wait 40
+shot fs2t_noon_laundry_lane_off
+cmd time set 12400
+farsight on
+wait 300
+cmd awaken city view quay
+wait 100
+shot fs2t_dusk_quay_on
+cmd awaken city view market_street
+wait 100
+shot fs2t_dusk_market_street_on
+cmd awaken city view laundry_lane
+wait 100
+shot fs2t_dusk_laundry_lane_on
+farsight off
+cmd awaken city view quay
+wait 40
+shot fs2t_dusk_quay_off
+cmd awaken city view market_street
+wait 40
+shot fs2t_dusk_market_street_off
+cmd awaken city view laundry_lane
+wait 40
+shot fs2t_dusk_laundry_lane_off
+# the quay again with every far piece tinted (debug 3: far terrain blue, far trees red): none may stand in the loaded city
+cmd awaken city view quay
+farsight on
+wait 300
+shot fs2t_dusk_quay_debug_before
+farsight debug 3
+wait 4
+shot fs2t_dusk_quay_debug
+farsight debug 0
+# a Lumen Forest outside the city at dusk, looking up through the canopy (Euan: far shapes over the trees); then each of
+# today's far-water changes off in turn, the far trees off, and Far Sight off: what changes shows whose the shapes are
+cmd awaken terrain visit awaken:lumen_forest
+wait 300
+cmd tp @s ~ ~2 ~ 0 -35
+wait 200
+shot fs2f_all
+farsight debug 3
+wait 4
+shot fs2f_debug
+farsight debug 0
+farsight part seaunder off
+wait 120
+shot fs2f_no_seaunder
+farsight part seafloor off
+wait 20
+shot fs2f_no_seafloor
+farsight part trees off
+wait 20
+shot fs2f_no_trees
+farsight off
+wait 20
+shot fs2f_farsight_off
+farsight on
+farsight part seaunder on
+farsight part seafloor on
+farsight part trees on
+wait 200
+lens off
+wait 20
+shot fs2f_lens_off
+lens cinematic
+farsight status
+# fill time: one jump back across to the city, then Far Sight's status every 10 s (every ring's missing patches)
+cmd awaken city view laundry_lane
+wait 200
+farsight status
+wait 200
+farsight status
+wait 200
+farsight status
+wait 200
+farsight status
+info
+quit

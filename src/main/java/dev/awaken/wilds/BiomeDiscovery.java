@@ -51,6 +51,10 @@ public final class BiomeDiscovery {
     public static boolean check(ServerPlayer p) {
         if (p.isSpectator() || !Progression.profile(p).awakened()) return false;
         if (!p.level().dimension().identifier().getNamespace().equals(Identifier.DEFAULT_NAMESPACE)) return false;
+        if (!Finds.counts(p)) { // the city's ground is no discovery: forget the biome so the first step outside is checked
+            LAST.remove(p.getUUID());
+            return false;
+        }
         var key = p.level().getBiome(p.blockPosition()).unwrapKey();
         if (key.isEmpty() || key.get().equals(LAST.put(p.getUUID(), key.get()))) return false;
         Identifier id = key.get().identifier();

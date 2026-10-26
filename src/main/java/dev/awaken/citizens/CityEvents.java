@@ -54,7 +54,7 @@ final class CityEvents {
     /** The longest any event may run before it resolves itself (no event is ever left hanging). */
     static final int MAX_TICKS = 12000;
 
-    final Citizens c;
+    final Settlement c;
     final Ledger l;
     final Roster r;
     final CitizensData d;
@@ -67,7 +67,7 @@ final class CityEvents {
     private String about = "";
     long started, resolved, playerHelped;
 
-    CityEvents(Citizens c) {
+    CityEvents(Settlement c) {
         this.c = c;
         this.l = c.ledger;
         this.r = c.roster;
@@ -113,6 +113,8 @@ final class CityEvents {
     private void planDay(long day) {
         plannedDay = day;
         plan.clear();
+        // (SPEC §28.4) Carillon's daily troubles; a village's are W4's director's (its events still run when started)
+        if (!c.plannedEvents) return;
         long s = CitizenWork.mixHash(day * 0x9E3779B97F4A7C15L + 77);
         if (Math.floorMod(s, 100) < 85) plan.add(new int[]{BURGLARY, 15500 + (int) Math.floorMod(s >>> 8, 5000L), 0});
         int pp = (int) Math.floorMod(s >>> 20, 100L);
@@ -162,7 +164,7 @@ final class CityEvents {
         long seed = CitizenWork.mixHash(c.level.getGameTime() * 7 + 3);
         int k = 0;
         for (CitizenBody b : List.copyOf(c.crowd.bodies)) {
-            if (b.nearestSq > 72 * 72) continue;
+            if (b.home != c || b.nearestSq > 72 * 72) continue;
             b.gesture(Act.POINT_SHOUT, 50 + (int) Math.floorMod(seed >>> (k % 40), 30L));
             b.getLookControl().setLookAt(square.getX() + 0.5, square.getY() + 30, square.getZ() + 0.5, 40f, 40f);
             if (k % 3 == 0) {
@@ -264,6 +266,7 @@ final class CityEvents {
 
     /** The Bell Bridge is in the river: nobody's route crosses it any more (world state: it stays down). */
     void bellBridgeDown() {
+        if (!c.site.carillon()) return;
         String[] tags = CityPlan.get().streetGraph.etag();
         int closed = 0;
         for (int e = 0; e < Math.min(tags.length, c.net.ea.length); e++) {
@@ -546,11 +549,11 @@ final class CityEvents {
         int id = newId();
         boolean caught = Math.floorMod(seed >>> 9, 100L) < 50;
         int catchAt = 450 + (int) Math.floorMod(seed >>> 17, 300L);
-        int district = CityPlan.get().district((int) Math.floor(c.net.x[door] - l.cx), (int) Math.floor(c.net.z[door] - l.cz));
+        int district = c.site.district((int) Math.floor(c.net.x[door]), (int) Math.floor(c.net.z[door]));
         int[] data = {house, thief, escape, caught ? 1 : 0, catchAt, victim, district, 0, 0, 0, -1, -1};
         put(new CitizensData.Event(id, BURGLARY, P_GO, now, now + MAX_TICKS, data));
         enter(thief, start, door, Roles.THIEF_SNEAK, id);
-        return "burglary #" + id + " at " + r.pRef[house] + " (" + Recognition.districtName(district) + "), thief from node " + start + " escaping to " + escape
+        return "burglary #" + id + " at " + r.pRef[house] + " (" + c.site.districtName(district) + "), thief from node " + start + " escaping to " + escape
                 + (caught ? ", the Watch will catch him" : ", he'll get away unless someone stops him");
     }
 
@@ -637,7 +640,7 @@ final class CityEvents {
 
     private void escaped(CitizensData.Event e, long now) {
         int[] dd = e.data();
-        int district = dd[6];
+        int district = Math.clamp(dd[6], 0, d.safety.length - 1);
         d.safety[district] = (byte) Math.max(0, d.safety[district] - 12);
         finish(e, now);
     }
@@ -702,7 +705,8 @@ final class CityEvents {
                 if (d.at[thief] == dd[2] || now - e.since() > 1800) {
                     // away with it: the stall is short
                     d.stock[dd[0]] = (byte) Math.max(0, d.stock[dd[0]] - 25);
-                    news("pickpocket", CityPlan.MARKET);
+                    l.placeWorld(r.stalls.get(dd[0]).front(), l.tmp);
+                    news("pickpocket", c.site.districtFor(Site.STALL, (int) Math.floor(l.tmp[0]), (int) Math.floor(l.tmp[2])));
                     finish(e, now);
                 }
             }
@@ -718,12 +722,12 @@ final class CityEvents {
     /** data: 0 plot id, 1 door place (-1 none), 2 intensity (0..1000), 3 trapped, 4 rescued, 5 player help,
      *  6 line count, 7 door node, 8.. fire block positions as x, y, z triples (up to 8) */
     private @Nullable String fire(@Nullable ServerPlayer near, long now) {
-        CityPlan plan = CityPlan.get();
         long seed = CitizenWork.mixHash(now * 13 + 11);
-        CityPlan.Plot pick = null;
+        Site.Lot pick = null;
         double best = Double.MAX_VALUE;
-        for (CityPlan.Plot p : plan.plots) {
-            if (p.district() != CityPlan.WORKS || !p.use().equals("house") || !p.hasDoor() || p.enter()) continue;
+        // a house with a door that can burn (Carillon: the Works' houses, as always)
+        for (Site.Lot p : c.site.lots(Site.FIRE)) {
+            if (p.doorX() == Integer.MIN_VALUE) continue;
             double score = near != null ? Math.hypot(l.cx + p.doorX() - near.getX(), l.cz + p.doorZ() - near.getZ())
                     : Math.floorMod(CitizenWork.mixHash(seed + p.id()), 1000L);
             if (near != null && score < 14) score += 1000;
@@ -779,19 +783,25 @@ final class CityEvents {
             frontOf(doorNode, 0.0, m); // in the doorway itself, behind the smoke
         }
         bucketLine(id, data, doorNode);
-        news("fire", CityPlan.WORKS);
+        news("fire", fireDistrict(doorNode));
         return "fire #" + id + " at plot " + pick.id() + " (" + n + " flames" + (data[3] >= 0 ? ", " + r.name(data[3]) + " trapped" : "") + ")";
+    }
+
+    /** The district a fire at this door reports itself in (Carillon: the Works). */
+    private int fireDistrict(int doorNode) {
+        int dist = c.site.districtFor(Site.FIRE, (int) Math.floor(c.net.x[doorNode]), (int) Math.floor(c.net.z[doorNode]));
+        return Math.clamp(dist, 0, d.safety.length - 1);
     }
 
     /** The bucket line: from the nearest water to the door, a spot every 1.6 blocks, filled by whoever is near. */
     private void bucketLine(int id, int[] data, int doorNode) {
-        CityPlan plan = CityPlan.get();
+        Site site = c.site;
         double dx0 = c.net.x[doorNode], dz0 = c.net.z[doorNode];
         double wx = Double.NaN, wz = Double.NaN, wd = Double.MAX_VALUE;
         for (int ox = -40; ox <= 40; ox++) {
             for (int oz = -40; oz <= 40; oz++) {
                 int px = (int) Math.floor(dx0) + ox, pz = (int) Math.floor(dz0) + oz;
-                if (!CityPlan.water(plan.kind(px - l.cx, pz - l.cz))) continue;
+                if (!site.water(px, pz)) continue;
                 double dd = ox * ox + oz * oz;
                 if (dd < wd) {
                     wd = dd;
@@ -807,8 +817,7 @@ final class CityEvents {
         for (int s = 0; s < slots; s++) {
             double t = (s + 0.5) / slots;
             double x = dx0 + (wx - dx0) * t, z = dz0 + (wz - dz0) * t;
-            byte kd = plan.kind((int) Math.floor(x - l.cx), (int) Math.floor(z - l.cz));
-            if (!CityPlan.walkable(kd)) continue;
+            if (!site.walkable((int) Math.floor(x), (int) Math.floor(z))) continue;
             spots.add(new double[]{Math.floor(x) + 0.5, Math.floor(z) + 0.5});
         }
         // who comes: Works people and the Watch, nearest first, not inside asleep
@@ -828,7 +837,7 @@ final class CityEvents {
             send(i, node, Roles.BUCKET, id);
             l.rx[i] = sp[0];
             l.rz[i] = sp[1];
-            l.ry[i] = l.streetY + plan.lift((int) Math.floor(sp[0] - l.cx), (int) Math.floor(sp[1] - l.cz)) + 1;
+            l.ry[i] = site.ground((int) Math.floor(sp[0]), (int) Math.floor(sp[1])) + 1;
             n++;
         }
         data[6] = n;
@@ -894,7 +903,8 @@ final class CityEvents {
             int any = -1;
             for (int i = 0; i < r.citizens; i++) if (d.event[i] == e.id() && d.role[i] == Roles.BUCKET) any = i;
             if (any >= 0) shout(any, "fire_out", null, 70);
-            d.safety[CityPlan.WORKS] = (byte) Math.max(0, d.safety[CityPlan.WORKS] - 6);
+            int burnt = fireDistrict(dd[7]);
+            d.safety[burnt] = (byte) Math.max(0, d.safety[burnt] - 6);
             finish(e, now);
             return;
         }
@@ -982,7 +992,7 @@ final class CityEvents {
 
     /** data: 0 edge, 1 crates left, 2 player help, 3.. crate positions (x, y, z) up to 10 */
     private @Nullable String cart(@Nullable ServerPlayer near, long now) {
-        CityPlan plan = CityPlan.get();
+        Site site = c.site;
         long seed = CitizenWork.mixHash(now * 7 + 19);
         int best = -1;
         double bs = Double.MAX_VALUE;
@@ -990,7 +1000,8 @@ final class CityEvents {
             int a = c.net.ea[e], b = c.net.eb[e];
             if (c.net.kind[a] != StreetNet.JUNCTION || c.net.kind[b] != StreetNet.JUNCTION || c.net.elen[e] < 7) continue;
             double mx = (c.net.x[a] + c.net.x[b]) / 2, mz = (c.net.z[a] + c.net.z[b]) / 2;
-            if (plan.district((int) Math.floor(mx - l.cx), (int) Math.floor(mz - l.cz)) != CityPlan.QUAY_D) continue;
+            // a lane a cart can spill across (Carillon: the Quay's)
+            if (!site.tagged(Site.CART, mx, mz)) continue;
             double score = near != null ? Math.hypot(mx - near.getX(), mz - near.getZ()) : Math.floorMod(CitizenWork.mixHash(seed + e), 1000L);
             if (near != null && score < 10) score += 1000;
             if (score < bs) {
@@ -1009,7 +1020,7 @@ final class CityEvents {
             int z = (int) Math.floor(mz) + (int) Math.floorMod(CitizenWork.mixHash(seed + t * 3 + 1), 7L) - 3;
             BlockPos p = new BlockPos(x, y, z);
             if (!c.work.edits || !c.level.isLoaded(p) || !c.level.getBlockState(p).isAir() || !c.level.getBlockState(p.below()).isSolid()) continue;
-            if (!CityPlan.walkable(plan.kind(x - l.cx, z - l.cz))) continue;
+            if (!site.walkable(x, z)) continue;
             c.level.setBlock(p, CitizensContent.CARGO_CRATE.get().defaultBlockState(), Block.UPDATE_ALL);
             data[3 + n * 3] = x;
             data[4 + n * 3] = y;
@@ -1044,8 +1055,9 @@ final class CityEvents {
                 break;
             }
         }
-        news("cart", CityPlan.QUAY_D);
-        return "runaway cart #" + id + " on the Quay: " + n + " crates across edge " + best;
+        int lane = Math.clamp(site.districtFor(Site.CART, (int) Math.floor(mx), (int) Math.floor(mz)), 0, d.safety.length - 1);
+        news("cart", lane);
+        return "runaway cart #" + id + (site.carillon() ? " on the Quay" : " in " + site.districtName(lane)) + ": " + n + " crates across edge " + best;
     }
 
     private void stepCart(int k, CitizensData.Event e, long now) {
@@ -1117,6 +1129,7 @@ final class CityEvents {
     private final java.util.Map<Integer, String> gateIds = new java.util.HashMap<>();
 
     private @Nullable String tremor(@Nullable ServerPlayer near, long now) {
+        if (!c.site.carillon()) return null; // a wandering gate past the city's own gates, with its Watch
         ServerPlayer hunter = near;
         if (hunter == null) {
             for (ServerPlayer p : c.level.players()) if (Progression.rank(p).ordinal() >= Rank.D.ordinal() && inCity(p)) hunter = p;
@@ -1340,6 +1353,7 @@ final class CityEvents {
                 tag.putInt("event", e.id());
                 tag.putInt("kind", e.kind());
                 tag.putInt("owner", burglary ? dd[0] : r.stalls.get(dd[0]).keeper());
+                tag.putString("settlement", c.key); // a place index means nothing in another settlement
                 bag.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
                 b.spawnAtLocation(c.level, bag);
                 put(e);
@@ -1377,7 +1391,7 @@ final class CityEvents {
                 if (cd == null) continue;
                 CompoundTag tag = cd.copyTag();
                 int owner = tag.getIntOr("owner", -1), kind = tag.getIntOr("kind", 0);
-                if (owner < 0 || owner >= r.places) continue;
+                if (owner < 0 || owner >= r.places || !tag.getStringOr("settlement", dev.awaken.citizens.api.Settlements.CARILLON_KEY).equals(c.key)) continue;
                 l.placeWorld(owner, l.tmp);
                 if (Math.hypot(l.tmp[0] - p.getX(), l.tmp[2] - p.getZ()) > 4.5 || Math.abs(l.tmp[1] - p.getY()) > 4) continue;
                 st.shrink(1);
@@ -1415,7 +1429,7 @@ final class CityEvents {
     // ---- news ----------------------------------------------------------------------------------------------------------
 
     private void news(String key, int district) {
-        news(key, Recognition.districtName(district));
+        news(key, c.site.districtName(district));
     }
 
     private void news(String key, String where) {
@@ -1449,6 +1463,7 @@ final class CityEvents {
      * the city was flavour: no one ever named a place outside the walls.
      */
     private @org.jspecify.annotations.Nullable String wildsNews(Lines lines, long seed, int tod) {
+        if (!c.site.carillon()) return null; // told by the city's crier, by the city's gates
         var site = dev.awaken.terrain.api.CityBasin.site(c.server);
         if (site.isEmpty()) return null;
         net.minecraft.server.level.ServerLevel level = c.server.overworld();

@@ -68,8 +68,17 @@ public final class CitizenFx {
         if (b.label == null) {
             Roster r = Roster.get();
             int rec = b.record();
-            String name = r == null || rec < 0 || !r.isCitizen(rec) ? "" : r.name(rec);
-            String job = r == null || rec < 0 || !r.isCitizen(rec) ? "" : Roster.JOBS[r.job[rec]];
+            String name, job;
+            if (b.settlement() != 0) {
+                // (SPEC §28.4) another settlement's roster isn't on the client: the server sends "name|job"
+                String l = b.label();
+                int bar = l.indexOf('|');
+                name = bar < 0 ? l : l.substring(0, bar);
+                job = bar < 0 ? "" : l.substring(bar + 1);
+            } else {
+                name = r == null || rec < 0 || !r.isCitizen(rec) ? "" : r.name(rec);
+                job = r == null || rec < 0 || !r.isCitizen(rec) ? "" : Roster.JOBS[r.job[rec]];
+            }
             Component c = Component.literal(name).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xF4E6C8)))
                     .append(Component.literal(job.isEmpty() ? "" : "  " + job.toLowerCase(Locale.ROOT)).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xA8A090)).withItalic(true)));
             b.label = c.getVisualOrderText();

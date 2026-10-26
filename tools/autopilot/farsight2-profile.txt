@@ -1,0 +1,32 @@
+# Far Sight's fill time (SPEC §20, Euan's play: see-through ground outside Carillon while the middle rings were still
+# empty): the opening tour's world, one jump across the city, then Far Sight's status every 10 s for a minute, so the
+# rings' missing patches can be watched draining. Profile the workers by attaching JFR to the client meanwhile
+# (jcmd <pid> JFR.start). Run after farsight2-opening.txt (it makes the world): RD=16 LENS=cinematic SLOT_WHO=far-sight \
+#      PACK=perf,world TECTONIC=awakened /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/farsight2-profile.txt 600
+world fs2open survival 20261024
+waitworld
+window 1440 900
+cmd awaken opening skip
+wait 60
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd gamemode spectator
+cmd gamerule send_command_feedback false
+farsight on
+wait 200
+farsight status
+cmd awaken city view laundry_lane
+wait 200
+farsight status
+wait 200
+farsight status
+wait 200
+farsight status
+wait 200
+farsight status
+wait 200
+farsight status
+wait 200
+farsight status
+shot fs2p_laundry_lane

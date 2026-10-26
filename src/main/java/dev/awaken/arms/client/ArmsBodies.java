@@ -36,7 +36,7 @@ final class ArmsBodies {
     }
 
     static void charge(Entity e) {
-        ArmsWrist.stop(e);
+        ArmsWrist.charge(e);
         if (PlayerClips.play(e.getId(), ArmsClips.CHARGE, 2)) HELD.put(e.getId(), ArmsClips.CHARGE);
     }
 

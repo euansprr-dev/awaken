@@ -57,6 +57,7 @@ final class LandmarkWatch {
     static int check(ServerPlayer p, boolean gates) {
         ServerLevel level = p.level();
         if (level.dimension() != Level.OVERWORLD || p.isSpectator() || !Progression.profile(p).awakened()) return 0;
+        if (!Finds.counts(p)) return 0; // the city's own gate and places are no discovery
         BlockPos me = p.blockPosition();
         int found = 0;
         var well = Landmarks.wellPos(level.getServer());

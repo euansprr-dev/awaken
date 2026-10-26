@@ -8,6 +8,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.awaken.Awaken;
 import dev.awaken.arms.Archetype;
 import dev.awaken.arms.ArmsRules;
+import dev.awaken.arms.FpSwings;
 import dev.awaken.arms.WeaponMesh;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -52,12 +53,13 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
                        int outlineColor) {
         WeaponMesh mesh = WeaponMeshes.get(weapon);
         if (mesh == null) return;
-        // third person: the wrist turns the weapon about its own length through its grip (the item's diagonal), its
-        // working side into the blow
-        float turn = state == null || state.arm() == 0 ? 0F : ArmsWrist.angle(state.holder(), state.arm() == 2);
-        if (turn != 0F) {
+        // third person: the wrist turns the weapon about its grip, its working side into the blow and out of the body
+        boolean turn = state != null && state.arm() != 0 && ArmsWrist.turn(state.holder(), state.arm() == 2, WRIST);
+        if (turn) {
+            // baked in the forged weapon's frame: one turned over in its hold takes it turned over too
+            if (FpSwings.flipped3(weapon)) WRIST.premul(FLIP).mul(FLIP);
             poseStack.pushPose();
-            poseStack.rotateAround(WRIST.rotationAxis(turn * Mth.DEG_TO_RAD, Mth.SQRT_OF_TWO / 2, Mth.SQRT_OF_TWO / 2, 0F), GRIP, GRIP, 0.5F);
+            poseStack.rotateAround(WRIST, GRIP, GRIP, 0.5F);
         }
         boolean ours = WeaponPipelines.ok();
         int packed = ours ? (state == null ? 0 : state.energy()) | ((state == null ? 0 : state.flash()) | (foil ? 256 : 0)) << 16 : overlay;
@@ -77,12 +79,14 @@ final class WeaponRenderer implements SpecialModelRenderer<WeaponRenderer.State>
             float energy = state == null ? 0 : state.energy() / 255F, flash = state == null ? 0 : state.flash() / 255F;
             collector.submitCustomGeometry(poseStack, WeaponPipelines.glow(), (pose, buffer) -> halos(mesh, pose, buffer, energy, flash));
         }
-        if (turn != 0F) poseStack.popPose();
+        if (turn) poseStack.popPose();
     }
 
     /** Where the hand closes on every weapon (arms_weapons.HAND: along the item's diagonal, item space). */
     private static final float GRIP = 3F / 16F;
     private static final Quaternionf WRIST = new Quaternionf();
+    /** Half round about the item's diagonal (arms_holds.third_person's turn-over). */
+    private static final Quaternionf FLIP = new Quaternionf(Mth.SQRT_OF_TWO / 2, Mth.SQRT_OF_TWO / 2, 0F, 0F);
 
     private static final int HALO_SIDES = 10;
     private static final Vector3f AT = new Vector3f(), RIGHT = new Vector3f(), UP = new Vector3f(), SCALE = new Vector3f();

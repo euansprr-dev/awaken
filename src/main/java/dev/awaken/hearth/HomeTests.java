@@ -2,6 +2,7 @@ package dev.awaken.hearth;
 
 import com.mojang.serialization.JsonOps;
 import dev.awaken.core.api.CoreApi;
+import dev.awaken.core.api.GateHooks;
 import dev.awaken.core.api.HearthHooks;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.hearth.room.Reading;
@@ -22,6 +23,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -33,6 +35,23 @@ import java.util.UUID;
 final class HomeTests {
     private HomeTests() {}
 
+    /**
+     * Ground round {@code at} that is the test's own: no gate within an Ember's clearance and no Hearth whose land comes
+     * within 64 blocks, whatever other tests left there (a gate one of them left 50 blocks off refused the coal), and air
+     * over it.
+     */
+    static void ownGround(ServerLevel level, BlockPos at) {
+        for (GateHooks.GateView g : GateHooks.near(level, at, Embers.GATE_CLEARANCE)) GateHooks.release(level, g.id());
+        HearthData data = HearthData.get(level.getServer());
+        for (HearthRecord r : List.copyOf(data.all())) {
+            int reach = r.radius() + 64;
+            if (Math.abs(r.pos.getX() - at.getX()) > reach || Math.abs(r.pos.getZ() - at.getZ()) > reach) continue;
+            dev.awaken.hearth.town.Town.dissolve(level, r);
+            data.remove(r.owner);
+        }
+        AwakenTests.clearToSky(level, at.offset(-4, 0, -4), at.offset(4, 0, 4));
+    }
+
     static void register() {
         AwakenTests.registerIsolated("hearth_ember_founds", 400, h -> {
             ServerLevel level = h.getLevel();
@@ -40,6 +59,7 @@ final class HomeTests {
             HearthData data = HearthData.get(level.getServer());
             BlockPos origin = h.absolutePos(BlockPos.ZERO);
             BlockPos ground = new BlockPos((origin.getX() & ~15) + 8, origin.getY() + 100, (origin.getZ() & ~15) + 8);
+            ownGround(level, ground);
             level.setBlock(ground, Blocks.STONE.defaultBlockState(), 3);
             BlockPos at = ground.above();
             try {
