@@ -23,6 +23,10 @@ public final class DelveClient {
     private DelveClient() {}
 
     public static void init(IEventBus modBus) {
+        // W5 (SPEC §28.5): the place you are in and its caption, the way home, the senses below
+        CaveClient.init(modBus);
+        HomeClient.init(modBus);
+        SenseClient.init(modBus);
         modBus.addListener(RegisterParticleProvidersEvent.class, DelveParticles::register);
         modBus.addListener(RegisterRenderPipelinesEvent.class, LampGlow::onRegister);
         modBus.addListener(RegisterGuiLayersEvent.class, ForkSong::registerLayer);
