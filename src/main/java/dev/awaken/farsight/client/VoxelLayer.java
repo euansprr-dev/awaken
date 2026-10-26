@@ -331,8 +331,9 @@ final class VoxelLayer implements AutoCloseable {
             float near = (float) Math.sqrt(nx * nx + nz * nz);
             float fx = Math.max(Math.abs(ax), Math.abs(bx)), fz = Math.max(Math.abs(az), Math.abs(bz));
             float far = (float) Math.sqrt(fx * fx + fz * fz);
-            // Sodium draws all of it: inside its distance (with a block's margin, as it culls) and every section shown
-            if (far < realWithin - 2 && renderer.shown(c.cx, c.cz) && Math.max(Math.abs(ay), Math.abs(by)) < realWithin - 2) continue;
+            // Sodium draws all of it: inside its distance (with a block's margin, as it culls) and every section built
+            if (far < realWithin - 2 && Math.max(Math.abs(ay), Math.abs(by)) < realWithin - 2
+                    && renderer.sectionsBuilt(c.cx, c.cz, c.minY, c.maxY, levelMinY)) continue;
             if (!renderer.inView(ax, ay, az, bx, by, bz)) continue;
             // faces turned away from the camera across the whole chunk aren't drawn: down, up, north, south, west, east
             int faces = (camY < c.maxY ? 1 : 0) | (camY > c.minY ? 2 : 0) | (camZ < c.cz * 16 + 16 ? 4 : 0) | (camZ > c.cz * 16 ? 8 : 0)
@@ -387,7 +388,7 @@ final class VoxelLayer implements AutoCloseable {
         try (var view = p.map(false, true)) {
             ByteBuffer d = view.data();
             d.putFloat(0, reach[0]).putFloat(4, reach[1]).putFloat(8, reach[2]).putFloat(12, BAND);
-            d.putFloat(16, 0f).putFloat(20, 0f).putFloat(24, 0f).putFloat(28, 0f);
+            d.putFloat(16, levelMinY).putFloat(20, FarRenderer.SECTIONS).putFloat(24, 0f).putFloat(28, 0f);
         }
         AbstractTexture atlas = Minecraft.getInstance().getTextureManager().getTexture(TextureAtlas.LOCATION_BLOCKS);
         // the plain draws first (sorted ahead of the edged ones), then the pipeline that discards
@@ -438,7 +439,7 @@ final class VoxelLayer implements AutoCloseable {
         pass.setUniform("Looks", lookTable);
         pass.setUniform("AtlasSampler", atlas.getTextureView(), atlas.getSampler());
         pass.setUniform("LightSampler", lightmap, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
-        pass.setUniform("ChunkSampler", chunkMask, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+        pass.setUniform("SectionSampler", chunkMask, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
         pass.setIndexBuffer(indices, IndexType.INT);
     }
 

@@ -100,7 +100,7 @@ final class FarPipelines {
             .withUniform("Looks", UniformType.TEXEL_BUFFER, GpuFormat.RGBA32_FLOAT)
             .withUniform("AtlasSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .withUniform("LightSampler", UniformType.COMBINED_IMAGE_SAMPLER)
-            .withUniform("ChunkSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("SectionSampler", UniformType.COMBINED_IMAGE_SAMPLER)
             .build();
 
     /** City Sight (Far Sight 3): real chunks' blocks from their pulled quads, after the terrain, into the same targets. */

@@ -14,11 +14,11 @@
 uniform samplerBuffer Looks;     // per look: u0 v0 u1 v1, then flags and the sprite's average colour
 uniform sampler2D AtlasSampler;
 uniform sampler2D LightSampler;
-uniform sampler2D ChunkSampler;
+uniform sampler2D SectionSampler; // which sections Sodium has built (FarRenderer.sectionTex)
 
 layout(std140) uniform FarVoxel {
     vec4 VoxelReach;   // x, y, z: levels 0-2's reach (blocks); w the cross-fade band as a share of it
-    vec4 VoxelMore;
+    vec4 VoxelMore;    // x the level's floor (y), y sections in the section mask
 };
 
 layout(location = 0) in vec3 vRel;
@@ -40,11 +40,13 @@ float bayer4(vec2 p) {
 
 void main() {
 #ifndef NO_DISCARD
-    // hidden where the real chunks are drawn, as the far terrain is
+    // hidden only in a section Sodium draws: inside its distance and built (a section it hasn't built keeps this copy
+    // of the same blocks, never a hole)
     if (farRealSection(vRel)) {
         vec2 rel = vRel.xz + FarCam.xz;
         ivec2 chunk = (FarCamInt.xz >> 4) + ivec2(floor(rel / 16.0));
-        if (texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5) discard;
+        int sy = int(floor((vRel.y + FarFog.z - VoxelMore.x) / 16.0)), sections = int(VoxelMore.y + 0.5);
+        if (sy >= 0 && sy < sections && texelFetch(SectionSampler, ivec2(chunk.x & 63, (chunk.y & 63) * sections + sy), 0).r > 0.5) discard;
     }
     // a level fades in over the band past the finer level's reach and out over the band past its own
     float d = length(vRel.xz), dither = bayer4(gl_FragCoord.xy);

@@ -96,6 +96,18 @@ final class FarRenderer implements AutoCloseable {
      */
     static final long SHOW_DELAY_MS = 250L;
     private final BlockPos.MutableBlockPos probe = new BlockPos.MutableBlockPos();
+    /**
+     * Which sections Sodium has built (R8, 64 wide, 64 × {@link #SECTIONS} tall: chunk x & 63, then chunk z & 63 times
+     * SECTIONS plus the section above the level's floor), from the game's own query (Sodium answers it with its exact
+     * built state). City Sight hides only there, so a section Sodium hasn't built (just turned into view, still meshing,
+     * hidden behind a hill) keeps City Sight's copy of the same blocks, never a hole. Refreshed half the chunks a call.
+     */
+    static final int SECTIONS = 32;
+    private final GpuTexture sectionTex;
+    final GpuTextureView sectionsView;
+    private final ByteBuffer sectionBytes = MemoryUtil.memCalloc(64 * 64 * SECTIONS);
+    private final long[] sectionSince = new long[64 * 64 * SECTIONS];
+    private int sectionTurn;
 
     // the frame's pieces: ring, first cell (window-local), width and height in cells
     private final int[] pRing = new int[MAX_DRAWS], pX = new int[MAX_DRAWS], pZ = new int[MAX_DRAWS], pW = new int[MAX_DRAWS], pH = new int[MAX_DRAWS];
@@ -153,6 +165,9 @@ final class FarRenderer implements AutoCloseable {
         chunks = RenderSystem.getDevice().createTexture(() -> "awaken far sight chunks", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING,
                 GpuFormat.R8_UNORM, 64, 64, 1, 1);
         chunksView = RenderSystem.getDevice().createTextureView(chunks);
+        sectionTex = RenderSystem.getDevice().createTexture(() -> "awaken far sight sections", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING,
+                GpuFormat.R8_UNORM, 64, 64 * SECTIONS, 1, 1);
+        sectionsView = RenderSystem.getDevice().createTextureView(sectionTex);
     }
 
     /**
@@ -209,6 +224,29 @@ final class FarRenderer implements AutoCloseable {
         shownShare = total == 0 ? 1f : shownN / (float) total;
         chunkBytes.clear();
         RenderSystem.getDevice().createCommandEncoder().writeToTexture(chunks, chunkBytes, 0, 0, 0, 0, 64, 64);
+        // the sections, half the chunks a call (by parity), each counted built 250 ms after it first is
+        int turn = sectionTurn++ & 1, minSection = level.getMinSectionY(), count = Math.min(SECTIONS, level.getSectionsCount());
+        for (int dz = -radius; dz <= radius; dz++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                int x = cx + dx, z = cz + dz;
+                if (((x + z) & 1) != turn) continue;
+                boolean loaded = source.getChunk(x, z, ChunkStatus.FULL, false) != null;
+                int base = (((z & 63) * SECTIONS) << 6) | (x & 63);
+                for (int sy = 0; sy < count; sy++) {
+                    int at = base + (sy << 6);
+                    boolean built = false;
+                    if (loaded) {
+                        probe.set(x * 16 + 8, (minSection + sy) * 16 + 8, z * 16 + 8);
+                        built = sections.isSectionCompiledAndVisible(probe, 0L);
+                    }
+                    if (!built) sectionSince[at] = 0;
+                    else if (sectionSince[at] == 0) sectionSince[at] = now;
+                    sectionBytes.put(at, built && now - sectionSince[at] >= SHOW_DELAY_MS ? (byte) 255 : 0);
+                }
+            }
+        }
+        sectionBytes.clear();
+        RenderSystem.getDevice().createCommandEncoder().writeToTexture(sectionTex, sectionBytes, 0, 0, 0, 0, 64, 64 * SECTIONS);
     }
 
     /** Far Sight's depth texture at the main target's size, recreated when the window is. */
@@ -351,6 +389,15 @@ final class FarRenderer implements AutoCloseable {
         return chunkBytes.get(((cz & 63) << 6) | (cx & 63)) != 0;
     }
 
+    /** Whether every section of chunk (cx, cz) from y0 to y1 counts as built by Sodium (within 31 chunks of the camera). */
+    boolean sectionsBuilt(int cx, int cz, int y0, int y1, int levelMinY) {
+        int base = (((cz & 63) * SECTIONS) << 6) | (cx & 63);
+        for (int sy = Math.max(0, (y0 - levelMinY) >> 4); sy <= Math.min(SECTIONS - 1, (y1 - levelMinY) >> 4); sy++) {
+            if (sectionBytes.get(base + (sy << 6)) == 0) return false;
+        }
+        return true;
+    }
+
     /** Whether a camera-relative box is in this frame's view (after {@link #plan}). */
     boolean inView(float ax, float ay, float az, float bx, float by, float bz) {
         return frustum.testAab(ax, ay, az, bx, by, bz);
@@ -477,7 +524,7 @@ final class FarRenderer implements AutoCloseable {
                 }
             }
             // City Sight: the real chunks' blocks, after the terrain (which steps aside where they stand)
-            if (voxels.any()) voxels.draw(pass, frame, lightmap, chunksView);
+            if (voxels.any()) voxels.draw(pass, frame, lightmap, sectionsView);
             if (treeDraws > 0) {
                 GpuBuffer slots = treeSlots.currentBuffer();
                 try (var view = slots.map(false, true)) {
@@ -611,6 +658,9 @@ final class FarRenderer implements AutoCloseable {
         treeCommands.close();
         chunksView.close();
         chunks.close();
+        sectionsView.close();
+        sectionTex.close();
+        MemoryUtil.memFree(sectionBytes);
         MemoryUtil.memFree(chunkBytes);
         for (GpuQueryPool t : timers) if (t != null) t.close();
         if (depthView != null) depthView.close();
