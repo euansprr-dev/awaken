@@ -1,0 +1,499 @@
+{
+  "targets": {
+    "awaken:lens_far_probe": {
+      "width": 1,
+      "height": 1
+    },
+    "awaken:lens_far_trust": {
+      "width": 1,
+      "height": 1,
+      "persistent": true
+    },
+    "awaken:lens_half": {
+      "width": 960,
+      "height": 600
+    },
+    "awaken:lens_quarter": {
+      "width": 480,
+      "height": 300
+    },
+    "awaken:lens_bloom": {
+      "width": 480,
+      "height": 300
+    },
+    "awaken:lens_eighth": {
+      "width": 240,
+      "height": 150
+    },
+    "awaken:lens_wide": {
+      "width": 240,
+      "height": 150
+    },
+    "swap": {},
+    "awaken:lens_shafts": {
+      "width": 480,
+      "height": 300
+    },
+    "awaken:lens_light": {
+      "width": 1440,
+      "height": 810
+    },
+    "awaken:lens_hist": {
+      "width": 1440,
+      "height": 810,
+      "persistent": true
+    },
+    "awaken:lens_sunmap": {
+      "width": 1024,
+      "height": 1024
+    },
+    "awaken:lens_clouds": {
+      "width": 800,
+      "height": 450
+    },
+    "awaken:lens_clouds_hist": {
+      "width": 800,
+      "height": 450,
+      "persistent": true
+    }
+  },
+  "passes": [
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "awaken:post/lens_far_probe",
+      "inputs": [
+        {
+          "sampler_name": "FarDepth",
+          "location": "awaken:lens_far_depth",
+          "width": 1,
+          "height": 1
+        },
+        {
+          "sampler_name": "Trust",
+          "target": "awaken:lens_far_trust"
+        },
+        {
+          "sampler_name": "Params",
+          "location": "awaken:lens_params",
+          "width": 16,
+          "height": 1
+        }
+      ],
+      "output": "awaken:lens_far_probe"
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "minecraft:post/blit",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "awaken:lens_far_probe"
+        }
+      ],
+      "output": "awaken:lens_far_trust",
+      "uniforms": {
+        "BlitConfig": [
+          {
+            "name": "ColorModulate",
+            "type": "vec4",
+            "value": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "awaken:post/lens_sunmap",
+      "inputs": [
+        {
+          "sampler_name": "Height",
+          "location": "awaken:lens_height",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "sampler_name": "Frame",
+          "location": "awaken:lens_frame",
+          "width": 48,
+          "height": 1
+        }
+      ],
+      "output": "awaken:lens_sunmap"
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "awaken:post/lens_light",
+      "inputs": [
+        {
+          "sampler_name": "Depth",
+          "target": "minecraft:main",
+          "use_depth_buffer": true
+        },
+        {
+          "sampler_name": "Height",
+          "location": "awaken:lens_height",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "sampler_name": "Sunmap",
+          "target": "awaken:lens_sunmap"
+        },
+        {
+          "sampler_name": "CloudNoise",
+          "location": "awaken:lens_cloud_noise",
+          "width": 256,
+          "height": 256,
+          "bilinear": true
+        },
+        {
+          "sampler_name": "History",
+          "target": "awaken:lens_hist"
+        },
+        {
+          "sampler_name": "Frame",
+          "location": "awaken:lens_frame",
+          "width": 48,
+          "height": 1
+        },
+        {
+          "sampler_name": "Params",
+          "location": "awaken:lens_params",
+          "width": 16,
+          "height": 1
+        }
+      ],
+      "output": "awaken:lens_light",
+      "uniforms": {
+        "LensConfig": [
+          {
+            "name": "Quality",
+            "type": "float",
+            "value": 2.0
+          }
+        ]
+      }
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "minecraft:post/blit",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "awaken:lens_light"
+        }
+      ],
+      "output": "awaken:lens_hist",
+      "uniforms": {
+        "BlitConfig": [
+          {
+            "name": "ColorModulate",
+            "type": "vec4",
+            "value": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "awaken:post/lens_clouds",
+      "inputs": [
+        {
+          "sampler_name": "Depth",
+          "target": "minecraft:main",
+          "use_depth_buffer": true
+        },
+        {
+          "sampler_name": "CloudNoise",
+          "location": "awaken:lens_cloud_noise",
+          "width": 256,
+          "height": 256,
+          "bilinear": true
+        },
+        {
+          "sampler_name": "History",
+          "target": "awaken:lens_clouds_hist",
+          "bilinear": true
+        },
+        {
+          "sampler_name": "Frame",
+          "location": "awaken:lens_frame",
+          "width": 48,
+          "height": 1
+        },
+        {
+          "sampler_name": "Params",
+          "location": "awaken:lens_params",
+          "width": 16,
+          "height": 1
+        }
+      ],
+      "output": "awaken:lens_clouds",
+      "uniforms": {
+        "LensConfig": [
+          {
+            "name": "Quality",
+            "type": "float",
+            "value": 2.0
+          }
+        ]
+      }
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "minecraft:post/blit",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "awaken:lens_clouds"
+        }
+      ],
+      "output": "awaken:lens_clouds_hist",
+      "uniforms": {
+        "BlitConfig": [
+          {
+            "name": "ColorModulate",
+            "type": "vec4",
+            "value": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "awaken:post/lens_prefilter_lit",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "minecraft:main",
+          "bilinear": true
+        },
+        {
+          "sampler_name": "Depth",
+          "target": "minecraft:main",
+          "use_depth_buffer": true
+        },
+        {
+          "sampler_name": "FarDepth",
+          "location": "awaken:lens_far_depth",
+          "width": 1,
+          "height": 1
+        },
+        {
+          "sampler_name": "FarTrust",
+          "target": "awaken:lens_far_probe"
+        },
+        {
+          "sampler_name": "Params",
+          "location": "awaken:lens_params",
+          "width": 16,
+          "height": 1
+        },
+        {
+          "sampler_name": "Clouds",
+          "target": "awaken:lens_clouds",
+          "bilinear": true
+        }
+      ],
+      "output": "awaken:lens_half"
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "awaken:post/lens_down",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "awaken:lens_half",
+          "bilinear": true
+        }
+      ],
+      "output": "awaken:lens_quarter"
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "awaken:post/lens_blur",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "awaken:lens_quarter",
+          "bilinear": true
+        }
+      ],
+      "output": "awaken:lens_bloom"
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "awaken:post/lens_down",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "awaken:lens_quarter",
+          "bilinear": true
+        }
+      ],
+      "output": "awaken:lens_eighth"
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "awaken:post/lens_blur",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "awaken:lens_eighth",
+          "bilinear": true
+        }
+      ],
+      "output": "awaken:lens_wide"
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "awaken:post/lens_shafts",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "awaken:lens_quarter",
+          "bilinear": true
+        },
+        {
+          "sampler_name": "Wide",
+          "target": "awaken:lens_wide",
+          "bilinear": true
+        },
+        {
+          "sampler_name": "Params",
+          "location": "awaken:lens_params",
+          "width": 16,
+          "height": 1
+        }
+      ],
+      "output": "awaken:lens_shafts"
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "awaken:post/lens_composite_lit",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "minecraft:main"
+        },
+        {
+          "sampler_name": "Depth",
+          "target": "minecraft:main",
+          "use_depth_buffer": true
+        },
+        {
+          "sampler_name": "Bloom",
+          "target": "awaken:lens_bloom",
+          "bilinear": true
+        },
+        {
+          "sampler_name": "Wide",
+          "target": "awaken:lens_wide",
+          "bilinear": true
+        },
+        {
+          "sampler_name": "Sky",
+          "target": "awaken:lens_quarter",
+          "bilinear": true
+        },
+        {
+          "sampler_name": "Shafts",
+          "target": "awaken:lens_shafts",
+          "bilinear": true
+        },
+        {
+          "sampler_name": "FarDepth",
+          "location": "awaken:lens_far_depth",
+          "width": 1,
+          "height": 1
+        },
+        {
+          "sampler_name": "FarTrust",
+          "target": "awaken:lens_far_probe"
+        },
+        {
+          "sampler_name": "Params",
+          "location": "awaken:lens_params",
+          "width": 16,
+          "height": 1
+        },
+        {
+          "sampler_name": "Light",
+          "target": "awaken:lens_light"
+        },
+        {
+          "sampler_name": "Frame",
+          "location": "awaken:lens_frame",
+          "width": 48,
+          "height": 1
+        },
+        {
+          "sampler_name": "Height",
+          "location": "awaken:lens_height",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "sampler_name": "Clouds",
+          "target": "awaken:lens_clouds",
+          "bilinear": true
+        }
+      ],
+      "output": "swap",
+      "uniforms": {
+        "LensConfig": [
+          {
+            "name": "Cinematic",
+            "type": "float",
+            "value": 1.0
+          },
+          {
+            "name": "Quality",
+            "type": "float",
+            "value": 2.0
+          }
+        ]
+      }
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "awaken:post/lens_null",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "swap"
+        }
+      ],
+      "output": "minecraft:main",
+      "uniforms": {
+        "BlitConfig": [
+          {
+            "name": "ColorModulate",
+            "type": "vec4",
+            "value": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

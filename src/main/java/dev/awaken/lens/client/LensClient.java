@@ -113,6 +113,16 @@ public final class LensClient {
         return "temporal " + (forcedTemporal != null ? forcedTemporal : "from the setting");
     }
 
+    // measurement only (autopilot `lens chain <id>`): a probe chain in place of Cinematic's or Ultra's (tools/lens/probes.py)
+    private static @org.jspecify.annotations.Nullable Identifier forcedChain, lastForced;
+
+    /** Autopilot {@code lens chain <name>|off}: runs awaken:lens_probe_<name> instead of the Look's chain (Cinematic or Ultra on). */
+    public static String chain(String name) {
+        String n = name.trim();
+        forcedChain = n.isEmpty() || n.equals("off") ? null : Awaken.id("lens_probe_" + n);
+        return "chain " + (forcedChain == null ? "from the Look" : forcedChain);
+    }
+
     public static void debug(int mode) {
         debug = Math.clamp(mode, 0, 8);
         Awaken.LOG.info("[lens] debug view {}", debug);
@@ -164,13 +174,16 @@ public final class LensClient {
             case ULTRA -> ULTRA;
             default -> SWIFT;
         };
+        if (want != null && want != SWIFT && forcedChain != null) want = forcedChain;
         // the server replaces this list whenever it syncs post effects, so Lens re-asserts itself every tick, first
         List<Identifier> effects = player.getActivePostEffects();
+        if (lastForced != null && lastForced != want) effects.remove(lastForced);
+        lastForced = want == forcedChain ? forcedChain : null;
         if (want != SWIFT) effects.remove(SWIFT);
         if (want != CINEMATIC) effects.remove(CINEMATIC);
         if (want != ULTRA) effects.remove(ULTRA);
         boolean wasLit = lit;
-        lit = want == CINEMATIC || want == ULTRA;
+        lit = want == CINEMATIC || want == ULTRA || want != null && want == forcedChain;
         if (want != null) {
             ensureParams();
             if (lit) ensureLight();
