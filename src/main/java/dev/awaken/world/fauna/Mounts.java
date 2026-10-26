@@ -188,7 +188,8 @@ public final class Mounts {
         }
         if (p.getVehicle() == m) return new Result(Answer.RIDING, "You are riding it.");
         double d = m.distanceTo(p);
-        if (d > RANGE) return new Result(Answer.TOO_FAR, "Too far to hear you: your " + name + " is " + where(p, m.blockPosition()) + ".");
+        // a Stable at home (or Pell's Spurs) carries the whistle further: perk awaken:whistle_range, in blocks
+        if (d > RANGE + Progression.perk(p, "awaken:whistle_range")) return new Result(Answer.TOO_FAR, "Too far to hear you: your " + name + " is " + where(p, m.blockPosition()) + ".");
         if (home) return sendHome(p, m, name);
         ServerLevel level = (ServerLevel) m.level();
         if (d > RUN_TO) {

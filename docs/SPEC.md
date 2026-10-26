@@ -5030,6 +5030,198 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
 
 ---------------------------------------------------------------------------------------------------------------------
 
+## 28. Between the Gates (home, people, below; plan docs/world-depth/PLAN.md, page https://claude.ai/artifact/ATZfZSczLg95kNSgnLF42M; Euan approved all of it 2026-10-26)
+
+Euan, 2026-10-26: "Go ahead with all recommendations." PLAN.md is the long form and its audits (`docs/world-depth/
+audit-*.md`) are the facts it was designed against; this section is what builders hold to. (§27 is The Way Forward, on
+pack/progression.)
+
+### 28.0 Decisions (approved)
+1. The Hearth starts on the first evening: Ilse gives the **Hearth Ember** at the Wayfarer camp (the end of The Way
+   Forward's first thread); setting it down founds a **Tier 0 Hearthfire** (radius 24). The Lord's Heart still makes the
+   Anchor (Tier I) on that fire.
+2. The Hearth reads what you build: every closed room read on six readings (closed, light, warmth, room to live, made
+   with care, detail and comfort; best of each kind counts), graded Bare / Snug / Fine / Grand (the average, never more
+   than one step above the weakest), named (grade, main material, purpose, or a sign inside), its name shown once as an
+   AMBIENT caption; the glance reads the room you stand in; Comfort sets Rested; rooms do things (PLAN 4.6); people move
+   in when you know them, a spare Snug bedroom stands and their trade has its room.
+3. AWAKEN's own settlements replace vanilla villages in new worlds (hamlet, village, town, special kinds), built on
+   Carillon's people engine made multi-settlement (with the Carillon session) and the city's grammar, with interiors
+   (shared with Carillon B4); the first hamlet placed on purpose 700-1,100 from Carillon up the camp road.
+4. Village people are citizens, not vanilla villagers; vanilla villagers leave new worlds (iron farms and trading halls
+   with them); a town scribe sells enchanted books.
+5. The emerald is the coin of the world; Carillon's planned bell marks are dropped; `EconomyHooks` is installed with it.
+6. Troubles: caused by world state, found never listed, ≤ 1 per village and ≤ 2 within 1,500 of a player, none in a
+   world's first two hours or inside a Hearth; missable with a lasting cost, never a dead end or a named death; always
+   paid; world option "calm villages". Launch set of eight (PLAN 6.3).
+7. Hide from the hunt, metal from the deep, light from the gates: from D up every forged weapon, Hunter armour piece and
+   mattock needs its tier's mineral with no alternative: D iron, C diamond, B amethyst + Deepglass, A netherite,
+   S starmetal; E stays hide and bone. Gatewrought rises to 20 armour and 2.0 toughness.
+8. Gates pay no raw ore beyond their theme's flavour; the gate market stops selling diamonds; the Mine Echo works a real
+   mine head (W6) instead of rolling dice.
+9. New finds: Deepglass (seeps below y 0 and the Descent's walls; diamond edge to cut), starmetal (fallen stars), bell
+   bronze (copper + amethyst), lodes with a heart (vanilla ores in 20-120-block veins). The Lands' crystals become
+   attunement catalysts (Heat Sunshard, Frost Frostspar, Gravity Fault Seam; Charge copper; Spirit Deepglass); lapis is
+   ink (Blueprints: 4 paper, 1 lapis, 1 essence).
+10. Mining's feel: every ore its own strike sound, sparks, a hit on the last blow; the vein gives when a heart breaks;
+    the charged heavy strike (bore three along the aim); rare, warned cave-ins (never in a Hearth or on placed blocks);
+    the Tuning Fork, pitons and Runner's rope, the miner's lamp, rope fittings (W5).
+11. Caves: vanilla's generator stays; cave places (sinkholes, the Delvers' mines, seeps, chutes, grottos, joined lairs,
+    vents), the rappel (with the Ascent), cave sound and Lens looks, names, a way home; every place has a route that
+    needs no rope and passes M44's five tests (a rule, a resource, a sensory set, a story entrance, a route).
+12. This plan takes Living Wilds G (settlers, your named village, roads) and F's underground secrets and treasure maps;
+    Living Wilds F keeps wonders and legendary beasts.
+13. Order: W1 and W2 now as two builders; then W0 and W3 with Carillon, W5 alongside; W4, W6; W7 last.
+
+### 28.1 Phases and who touches what (keep two builders off the same files)
+| Phase | Owns (writes) | Reads / asks |
+|---|---|---|
+| **W1 The carried flame** | `hearth/**` (the Ember, Tier 0, the reading, room kinds of PLAN 4.6 except the Mine head, the room glance's data, Comfort, Rested, chests-at-home crafting, the 4.9 fixes, a coal per temper in `hearth/Upgrades`), `src/main/merge/hearth/`, the Ember's line and reward in `data/awaken/awaken/quest/the_last_delivery.json` (agreed with the progression session, which builds the first thread), the room glance's client panel | `core.api.Notices` (captions), `Progression.addPerkSource` (Rested: `awaken:energy_regen`, `awaken:craft_rate`), The Way Forward's glance when it exists |
+| **W2 Metal from the deep** | new module `delve` (`dev.awaken.delve`, `src/main/merge/delve/`): lodes and hearts, Deepglass, starmetal, bell bronze, the strike's feel (client), Tuning Fork, pitons and Runner's rope, miner's lamp; tier metals in `gear/**` and Arms' rows and recipes (agreed with the Arms session); `arms/ArmsForge` catalysts and Blueprints; `gates/run/Loot.java`, `gates/run/Rooms.java` (handouts); ore XP in `progression/ProgressionModule.java`; `living/craft/**` and `living/client/CraftFx.java` (Mining craft fixes, reading `awaken:craft_rate`); fallen-star loot; Deepglass in `descent/world/Palette.java` | nothing of W1's |
+| W0, W3 | `citizens`, `city` (with Carillon); new module `village` | |
+| W4 | `village`; `living/pulse`, `living/camp` targets (with Living Wilds) | |
+| W5 | `delve` cave places; `body/ascent` rappel and rope fittings (with the Ascent); Lens looks; core audio's cave soundscape | |
+| W6 | `hearth` settlers, tiers by reading, the Mine head and the Mine Echo's rework, the named village, the kit craftable | |
+| W7 | `village` roads, inns, towns | |
+
+Shared ids (fixed now so parallel builders agree): items `awaken:hearth_ember`, `awaken:deepglass` (the block's item),
+`awaken:deepglass_shard`, `awaken:raw_starmetal`, `awaken:starmetal_ingot`, `awaken:bell_bronze_ingot`,
+`awaken:tuning_fork`, `awaken:piton`, `awaken:runner_rope`, `awaken:miners_lamp`; tags `#awaken:tier_metal_<d|c|b|a|s>`
+(the signature minerals, used by gear and Arms recipes); perks `awaken:craft_rate` (a craft-XP multiplier, read by
+`living.craft`) and the existing `awaken:energy_regen`; test prefixes `hearth_` (W1) and `delve_` (W2).
+
+Wired after both W1 and W2 merge (one small follow-up, never inside either phase, so neither builder edits the
+other's files): the Study halves the Blueprints' paper (`arms/ArmsForge`), the Greenhouse triples herb ripeness
+(`living/craft/Herbs`). W2 reads the perk `awaken:craft_rate` by its id, so Rested's craft bonus needs no wiring.
+
+### 28.2 W1 as built
+Branch `pack/world-depth-w1`. Module doc: `docs/modules/hearth.md` ("The carried flame"). Tests: `hearth_ember_founds`,
+`hearth_room_grades`, `hearth_rested` (and every older `hearth_` test, `hearth_guide_matches_roomtype` updated to the new
+kinds). Tour: `tools/autopilot/world-depth-w1.txt`.
+
+**The Hearth Ember** (`awaken:hearth_ember`, `hearth/ember/EmberItem`, `hearth/Embers`). A 3D item (vanilla lantern
+proportions, its cage emissive: `models/item/hearth_ember.json`, texture from `tools/art/specs/hearth.py`). Carried in
+either hand: a pool of light on the ground (radius 5.2, 0.34) and a halo at the lantern, drawn as a source of
+`citizens.client.CityGlow` (`hearth/client/HomeClient.GLOW`; no light block). One per player: a spare goes out and none is
+kept once your fire burns (checked every 2 s while carried); kept through death (`LivingDropsEvent`, back on respawn).
+Given by: The Last Delivery's `ilse` step (reward `item: awaken:hearth_ember` and Ilse's line, the progression session told);
+talking to Ilse or Hettie with no Ember and no Hearth, registered (classic worlds: always), and past that step or never on
+the chain (`PlayerInteractEvent.EntityInteract` on a `living.wayfarer.Wayfarer`, so living is unchanged; Ilse: "Lost your
+coal? Take another. The fire doesn't mind."); 60 ticks after awakening in a classic world (no `CityBasin` site). Now line
+`hearth:ember`, priority 66 (under a tracked chain step ~68): "Set your Ember where you'd live". **Bram's line is not
+added** (Carillon's code): for the orchestrator, Bram at the Registry: "The bells hold the city. Hunters hold the wilds.
+Ilse at the camp keeps a fire for new licences."
+
+**Setting it down** (use on the top of a block). Refused, each with its reason: soft ground or no room, the city reserve
+(`CityBasin.reserved`), a Precursor ward (`WardHooks.at`), any gate not released within 64 (`GateHooks.near`), another
+Hearth's radius, a household rule (`Household.refusesOwnAnchor`). Founds a **Tier 0 Hearthfire** (`awaken:hearthfire`,
+`HearthfireBlock` + an empty block entity that lists loaded fires for the client's glow; light 14; strength 2 / 1200,
+immovable, owner-only to break; loot table empty: the code returns the coal). `HearthRecord.tier` 0, radius 24
+(`HEARTHFIRE_RADIUS`), respawn, rest heals (30 s), calm land and every rule that keys off any Hearth record (gates 64,
+camps 120, happenings, wards, the Living Wilds' calm). No town (`Town.arrivals` returns), no Spire, no requests, no cottage,
+no furniture recipes. The moment (`HomeNet.Kindled` to clients within 96): sparks drawn down into the coal for 14 ticks
+and a burst; from tick 10 the warmth runs out over 44 ticks as rings of `hearth_warmth` motes on the ground's height
+(eased out, brightness 1 → 0.45) with a ring of 40 light pools (radius 2.8, 0.30, and a fainter ring behind at 0.62 of
+it) drawn on the ground at the front through `CityGlow`; fireflies if it's night; `hearth.take` (`sfx_hearth_take`: a settling thud, stone
+clicks, a low hearth tone on D with its fifth, a faint D-A-F# bell chord; mono, 32 blocks). The grass tint itself is not
+changed (that needs a mixin into the biome tint cache); the warm wash of motes over the ground stands in for it. 50 ticks
+later the **YOUR GROUND** card (`client/NameScreen`, low on the screen, no dimming) with a name offered by
+`Embers.suggestName` (first words by biome: forest, plains, snow, dry, wet, high, water; joined endings ford, stead,
+holm, wick, cote, ley, by, worth, combe, field, hearth, burn, or apart: Rest, Hollow, End, Green, Hearth; deterministic per
+place and owner); the name is cleaned (letters, digits, spaces, ' and -, 24 at most). Walking onto your land: a place
+caption, the name spaced over "your hearth" (IMPORTANT, topic `hearth_place`, filed after 200 ticks). Fireflies over your
+land at night (one every 8 ticks round you). **Lifting**: empty hand on your fire while no room is read → the record ends
+(its household kept), the coal comes back, `hearth.lift`. Breaking it (owner) or losing it any other way returns the coal
+(to an owner within 16, else dropped there). **Tier I**: a Lord's Heart or the Anchor used on your fire, or the guide's
+button with a Heart in your pack, sets the Anchor block in place, tier 1, and runs what an Anchor placed runs
+(`HearthService.anchorTookRoot`: the toast, the furniture recipes, the town, the cottage offer).
+
+**The reading** (`room/Reading`, `room/Tally`, `room/Materials`, `RoomScanner.read`). As PLAN 4.5, numbers:
+closed 3 with no see-through faces, 2 up to 15% (fences, bars, leaves), else 1; light 3 = every floor cell at block light
+8+ (97%) and a window (glass or pane in a side wall), 2 = all lit, 1 = 60% lit or a window, 0; warmth = the best fire (lit
+campfire, fire, lava, magma, the Hearthfire or the Anchor 3; lit furnace/smoker/blast furnace or the Forge 2; cold stove
+or lit candles 1); room = floor / the purpose's target (Shelter 6, Bedroom and Sanctuary 12, Kitchen, Forge, Study,
+Workshop 16, Greenhouse, Stable, Barracks 20, Trophy Hall 24, Hall 64, Bell tower 4, Lookout 9): <0.5 → 0, <1 → 1,
+<1.75 → 2, else 3, capped at 1 when 2 high and 2 under the target height (3; halls and trophy halls 4); care = worked share
+of wall, floor and roof faces (tags and the block's name: planks, stripped logs, glass, wool, bricks, polished, cut, smooth,
+chiseled, tiles, terracotta, concrete, quartz, pillars, and every stair, slab, wall, fence, door and trapdoor) 25% → 1,
+60% with 2 kinds → 2, 85% with 3 kinds → 3; detail = trim kinds (stairs, slabs, trapdoors, fence and wall posts, chains,
+lanterns) ≥1 +1, ≥3 +1, soft kinds (carpets, banners, paintings or frames, flower pots, candles, bookshelves) ≥1 +1, ≥2 +1,
+at most 3. Grade: mean ≥2.5 Grand, ≥1.75 Fine, ≥1.25 Snug, else Bare, never above the weakest + 1. Name: "the <grade>
+<family word> <purpose noun>" (families: timber, log, stone, fieldstone, deepslate, brick, mud-brick, sandstone,
+blackstone, tuff, quartz, copper, sea-stone, clay, concrete, glass, earthen, end-stone, nether-brick, wool, leaf, snow), or a
+sign's words inside (front, else back; 40 characters). Lift: the weakest reading's fix, light first, then warmth, detail,
+care, room, closed. Seeds: furniture, doors, lights, chests, signs, carpets, banners, pots, the Hearthfire and Anchor, and
+the household's feet in the radius; a solid seed floods each open side on its own (a door no longer joins inside and
+out). Only the old eight pieces of furniture get "why not" fills. Caps 48 a side and 20,000 cells (`TOO_WIDE`,
+`TOO_BIG`, each worded); the explanation fill is capped at 6,144 cells. Every stage (fill, read, explain) stops at the
+tick's budget (12,000 reads) and goes on next tick. Saved: `HearthRecord` part `home`, schema 3 (name, rooms without cells,
+Comfort, Style, land); a loaded room answers by its box until the next scan, which comes 30 s to 4.5 min after the server
+starts (spread by owner). The first time a player stands in a room after it's recognised or regraded (key = its box,
+grade and name; 96 remembered per player in `HearthPlayer` schema 3), its name as a quiet caption (`HomeNet.RoomCaption`,
+AMBIENT, topic `hearth_room`, `ui.hearth_room`), waiting while they stay in the room up to 600 ticks, else filed.
+
+**Room kinds** (`RoomType`; effects in `RoomEffects`, `Breaks`, `Town`). Shelter (every closed room; the first: toast
+"First shelter · Rest heals here. From now on the Hearth reads everything you build."), Bedroom (a bed), Sanctuary,
+Kitchen (furnace or smoker, crafting table, barrel: food crafted or smelted while you stand in it gets component
+`awaken:home_cooked`; eating one stretches every effect it gave or lengthened ×1.5; tooltip "Home-cooked"), Forge
+(`ARMORY`, id kept, label "Forge"), Study (lectern, 6 bookshelves: recognised only; Blueprints after W2 merges),
+Greenhouse (farmland or a planted pot under a ceiling at least half glass: recognised only; herbs after W2 merges), Stable
+(hay bale, fence gate: perk `awaken:whistle_range` +160 within 512 of the home, read by `world.fauna.Mounts` (one line);
+Pell's Spurs' +80 now counts too), Hall (6 seats = bottom stairs on the floor with room above, a table = a fence or wall
+post with a carpet, pressure plate or bottom slab on it, floor 48+: a meal eaten in it feeds every other player in it
+nutrition and half its saturation), Bell tower (a bell, the floor 8+ over the lowest ground 4 blocks outside: rings at
+dawn and dusk; `Breaks` warns once of a standing gate within 256 due to break within 2 play-days; Deep Tide's +2 skipped
+inside a Hearth with one, via `HearthHooks.tideCalm` in `living.api.Regions` (one line)), Lookout (12+ up, glass in three
+directions: `AtlasHooks.reveal` 256 round home when first recognised and on login; Mira tells a second rumour a play-day),
+Trophy Hall, Workshop (machines in it or in its walls pay ⌈×0.75⌉ essence: `HearthHooks.machineCost` in
+`above.machine.MachineBlockEntity.draw`, one line), Barracks. Toasts per new kind, topic `hearth_room`. The Now line suggests a kind with two or more kinds of furniture
+only once two of them are in the radius (never from one flower pot or one bell); a kind with all its furniture but not its
+condition says so briefly ("Greenhouse: a glass roof").
+
+**Comfort, Style, Rested** (`Comfort`, `Rested`). Comfort 0-12: best bedroom grade (0-3) + a room with warmth 2+ + a table
+with 2+ seats + a room with two soft kinds + growing things indoors + the land: field (16 farmland), pen (2 untamed animals
+and 8 fences), garden (a composter and 6 flowers), lit yard (6 placed lights outside rooms), wall (40 wall or fence
+blocks), each 1. Style: the two families with the most faces, the second named when it is a fifth of the first ("timber and
+fieldstone"). Rested: waking (not shaken awake) in a bed inside a read Bedroom of a Hearth you belong to: 8 + Comfort
+minutes, perks `awaken:energy_regen` +0.25 and `awaken:craft_rate` +0.25 (a perk source on both sides reading the synced
+`HearthView.home.restedUntil`); toast topic `rested`; "◆ RESTED Nm" over the level line, pulsing in its last minute.
+
+**The room panel** (`client/RoomPanel`: `visible()`, `build(Ui)`; data: attachment `awaken:hearth_here`, `RoomHere`, synced
+to its player when it changes, checked once a second). Name, grade, six readings as three pips each, purpose, "Lift it:
+…". Shown as the K Status page's first section (`RoomSection`, order -28: right under NOW, above the Atlas) while you stand in a read room at home (PLAN
+said "hold the band key": K opens the band on press today, so the panel lives on that page until The Way Forward's glance
+takes it, through the two calls above); and as every room's card in Your Hearth, which also gained a HOME section (Comfort
+with its bar and the next point, Style, the land, Rested minutes), the kinds you have as chips, at most three suggestions
+as full cards (what you've started first, then Shelter, Bedroom, Kitchen, Sanctuary) and the rest one dim line each; a
+Hearthfire's header chip, town line and its Tier I step ("Feed the fire the Heart").
+
+**Chests at home** (`HomeCrafting`): done without a mixin. A crafting table inside a Hearth you belong to opens
+`HomeCrafting.HomeMenu` (a `CraftingMenu` on the vanilla menu type, so the client opens the vanilla screen); its
+`handlePlacement` first moves what you lack for one craft (shift: a stack's worth) from chests, barrels and shulker boxes
+you may open within 8 blocks of the table into your inventory, nearest first, then places as vanilla does. The client's
+book can show such a recipe red (it can't see the chests) but clicking it always asks the server, so it crafts. A one-time
+toast says so.
+
+**Fixes**: caps and their reasons as above; pads a scan finds join the Hearth (`HearthService.registerPads`); Anchors
+refused in the city reserve (and on your own Hearthfire's land: "Use the Anchor on your Hearthfire: it rises there.");
+the town Spire's Board and Monolith are given as items when the first townsperson arrives (retried by upkeep while the
+owner is away; the Board placed inside your Hearth becomes its board); a temper at the Forge costs a coal (`Items.COAL`;
+Oren's tempers don't).
+
+**Other modules touched (one line each)**: `core.api.HearthHooks` (+`tideCalm`, `machineCost`, defaults),
+`living.api.Regions` (Deep Tide skip), `above.machine.MachineBlockEntity` (Workshop cost), `world.fauna.Mounts` (whistle
+range perk). Read only: `citizens.client.CityGlow.source`, `living.wayfarer.Wayfarer.who()`, `living.api.Quests`.
+
+**Not done / left**: the grass tint (mixin territory, see above); the Study's and the Greenhouse's effects (after W2, per
+§28.1); Bram's line (Carillon); the room panel on a held band key (The Way Forward's glance); a stable's bonded mount
+"coming home here" (the whistle range is in); the Hall's festival (W4/W6).
+
+### 28.3 W2 as built
+(The W2 builder writes this subsection.)
+
+---------------------------------------------------------------------------------------------------------------------
+
 ## 29. Wild life (the wild's small ambient life, client-only; Euan 2026-10-26, built without an approval page)
 
 Euan, after a forest walk: "I barely saw any insects or birds, so the sounds felt a bit off ... when you're exploring and
