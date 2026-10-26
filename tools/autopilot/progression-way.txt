@@ -1,0 +1,52 @@
+# The Way Forward (SPEC §27): a new hunter's first steps out of Carillon. On the Roost after the opening: Kestrel's
+# errand on the Now line with its compass, the band's tip, the thread of light; the band (K): WHAT WAITS and THE
+# ASCENT (the Tether named as next); the Wayfarer camp's signal fire from its stand; the spawn vault at E-rank (it
+# stirs, its door breathes D's green and reads you), which then sits in WHAT WAITS.
+# Run: SLOT_WHO=progression /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/progression-way.txt 600
+world autopilot_progression survival 20261026
+waitworld
+window 1440 900
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd time set 6000
+cmd gamerule advance_time false
+hud on
+camera first
+# on the Roost: the Now line (Kestrel, with a compass), the band's tip, the thread of light toward her
+wait 160
+shotnow way_roost_now
+wait 120
+shotnow way_roost_tip
+# the band: the next rank's line, WHAT WAITS, THE ASCENT
+key status
+wait 30
+shotnow way_band
+screen close
+# the Wayfarer camp from its stand: Ilse, Hettie and the signal fire's smoke
+cmd awaken living camp
+wait 220
+shotnow way_camp
+# the spawn vault at E-rank: the vault stirs; then at its door, which reads you
+cmd awaken ascent vow goto
+wait 34
+shotnow way_vault_stir
+wait 60
+shotnow way_vault_words
+cmd tp @s ^ ^ ^8
+wait 60
+shotnow way_vault_door
+key status
+wait 30
+shotnow way_band_waiting
+screen close
+info
+quit
