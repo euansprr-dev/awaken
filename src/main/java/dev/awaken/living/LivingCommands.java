@@ -68,6 +68,36 @@ final class LivingCommands {
                         ServerPlayer p = c.getSource().getPlayerOrException();
                         return way(p, com.mojang.brigadier.arguments.StringArgumentType.getString(c, "step")) ? 1 : 0;
                     })));
+            // the first thread's staged moments (SPEC §27.6): the High Gate's shot again, Ilse's scene now, the camp by night
+            l.then(Commands.literal("first").requires(AwakenCommands.admin())
+                    .then(Commands.literal("gate").executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        if (!way(p, "gate")) return 0;
+                        // Hale's line as the errand has it (the gate step's done line)
+                        String chain = FirstThread.chainId();
+                        var d = chain == null ? null : dev.awaken.living.quest.QuestBook.get(chain);
+                        String hale = d == null ? "" : d.steps().stream().filter(s -> s.id().equals("gate")).findFirst()
+                                .map(s -> s.done().isEmpty() ? "" : s.done().getFirst()).orElse("");
+                        return FirstScenes.gateShot(p, hale, true) ? 1 : 0;
+                    }))
+                    // ten blocks off Ilse with the letters still yours (the Now line counts them), then five off and her scene
+                    .then(Commands.literal("letters").executes(c -> ilseStand(c.getSource(), 10) ? 1 : 0))
+                    .then(Commands.literal("ilse").executes(c -> ilseStand(c.getSource(), 5) && FirstScenes.devIlse(c.getSource().getPlayerOrException()) ? 1 : 0))
+                    .then(Commands.literal("took").executes(c -> {
+                        FirstScenes.ready(c.getSource().getPlayerOrException(), LivingNet.FirstSceneReady.TOOK);
+                        return 1;
+                    }))
+                    .then(Commands.literal("camp").executes(c -> {
+                        // south-west of the fire, past the bedrolls, looking across them to the fire and Ilse beyond
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        var fire = dev.awaken.living.wayfarer.Camp.fire(p.level().getServer());
+                        if (fire == null) return 0;
+                        net.minecraft.core.BlockPos at = dev.awaken.living.wayfarer.Scenes.ground(p.level().getServer().overworld(), fire.offset(-6, 0, 6));
+                        double dx = fire.getX() - 1 - at.getX(), dz = fire.getZ() + 1 - at.getZ();
+                        p.teleportTo(p.level().getServer().overworld(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, java.util.Set.of(),
+                                (float) Math.toDegrees(Math.atan2(-dx, dz)), 20F, true);
+                        return 1;
+                    })));
             l.then(Commands.literal("camp").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 var at = dev.awaken.living.wayfarer.Scenes.campStand(p.level().getServer());
@@ -318,6 +348,39 @@ final class LivingCommands {
         }
         dev.awaken.living.craft.Crafts.setLevel(c.getSource().getPlayerOrException(), craft, IntegerArgumentType.getInteger(c, "level"), announce);
         return 1;
+    }
+
+    /** Dev and tours: the errand at Ilse's step, and the player {@code dist} blocks off her, facing her, the fire beside. */
+    private static boolean ilseStand(CommandSourceStack src, int dist) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        String chain = FirstThread.chainId();
+        var ilse = dev.awaken.living.wayfarer.Scenes.resident(p.level().getServer(), "ilse");
+        if (chain == null || ilse == null || !dev.awaken.living.quest.QuestEngine.devStep(p, chain, "ilse")) {
+            src.sendFailure(Component.literal("No Ilse near the camp yet: /awaken living camp first, then wait a few seconds."));
+            return false;
+        }
+        var fire = dev.awaken.living.wayfarer.Camp.fire(p.level().getServer());
+        // from the side away from the fire, so she and the fire are both before you
+        Vec3 away = fire == null ? ilse.getLookAngle() : ilse.position().subtract(Vec3.atCenterOf(fire));
+        away = away.multiply(1, 0, 1).lengthSqr() < 1e-3 ? new Vec3(1, 0, 0) : away.multiply(1, 0, 1).normalize();
+        // the first angle with nothing between you and her (the Lumen trunks are wide)
+        var level = p.level().getServer().overworld();
+        net.minecraft.core.BlockPos at = null;
+        for (int turn : new int[]{35, -35, 0, 70, -70, 110, -110, 180}) {
+            Vec3 from = ilse.position().add(away.yRot((float) Math.toRadians(turn)).scale(dist));
+            net.minecraft.core.BlockPos q = dev.awaken.living.wayfarer.Scenes.ground(level, net.minecraft.core.BlockPos.containing(from));
+            if (at == null) at = q;
+            var seen = level.clip(new net.minecraft.world.level.ClipContext(Vec3.atCenterOf(q).add(0, 1.1, 0), ilse.getEyePosition(),
+                    net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, p));
+            if (seen.getType() == net.minecraft.world.phys.HitResult.Type.MISS) {
+                at = q;
+                break;
+            }
+        }
+        double dx = ilse.getX() - (at.getX() + 0.5), dz = ilse.getZ() - (at.getZ() + 0.5);
+        p.teleportTo(p.level().getServer().overworld(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, java.util.Set.of(),
+                (float) Math.toDegrees(Math.atan2(-dx, dz)), 10F, true);
+        return true;
     }
 
     /** Stands the player for a tour of the first thread; false if the world has no such place. */

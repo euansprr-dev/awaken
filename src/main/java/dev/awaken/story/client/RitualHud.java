@@ -158,8 +158,8 @@ final class RitualHud {
         // what the rule asks
         if (wordId >= 0 && now < wordUntil && !mc.gui.hud.isHidden()) {
             String line = switch (wordId) {
-                case 0 -> "Kneel. Hold " + mc.options.keyShift.getTranslatedKeyMessage().getString() + ".";
-                case 1 -> "Stand on the plate that lights.";
+                case 0 -> "Hold " + mc.options.keyShift.getTranslatedKeyMessage().getString() + " to kneel.";
+                case 1 -> "Stand on the plate that lights up.";
                 default -> "";
             };
             if (!line.isEmpty()) {
@@ -171,7 +171,7 @@ final class RitualHud {
         if (judgementTip >= 0 && now - judgementTip < 80 && !mc.gui.hud.isHidden()) {
             float a = Mth.clamp((now - judgementTip + pt) / 10F, 0, 1) * Mth.clamp((80 - (now - judgementTip) - pt) / 12F, 0, 1);
             int alpha = (int) (a * 230);
-            if (alpha > 4) g.centeredText(font, Component.literal("Read the red. Move."), w / 2, h / 2 + 22, (alpha << 24) | 0xFFB08A);
+            if (alpha > 4) g.centeredText(font, Component.literal("Get out of the red!"), w / 2, h / 2 + 22, (alpha << 24) | 0xFFB08A);
         }
         // hit: a red edge
         float hurt = 1 - (now - hurtFrom + pt) / 10F;

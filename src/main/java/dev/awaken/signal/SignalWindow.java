@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public record SignalWindow(int id, Kind kind, Component title, Optional<Component> body, List<Row> rows,
                            Optional<Component> footer, Optional<String> action, int ttlTicks, int priority,
                            Presentation presentation, Optional<Component> yesLabel, Optional<Component> noLabel,
-                           Notices.Tier tier, String topic, boolean moment) {
+                           Notices.Tier tier, String topic, boolean moment, boolean fleeting) {
 
     /** How a message is shown (System v2). */
     public enum Presentation {
@@ -59,7 +59,7 @@ public record SignalWindow(int id, Kind kind, Component title, Optional<Componen
 
     /** This message at another tier (the Signal raises an untagged one inside a gate run). */
     public SignalWindow withTier(Notices.Tier t) {
-        return new SignalWindow(id, kind, title, body, rows, footer, action, ttlTicks, priority, presentation, yesLabel, noLabel, t, topic, moment);
+        return new SignalWindow(id, kind, title, body, rows, footer, action, ttlTicks, priority, presentation, yesLabel, noLabel, t, topic, moment, fleeting);
     }
 
     /** Untagged: the default tier, no topic, not a moment (the director may treat it as a response to the player). */
@@ -93,7 +93,8 @@ public record SignalWindow(int id, Kind kind, Component title, Optional<Componen
             ComponentSerialization.CODEC.optionalFieldOf("no").forGetter(SignalWindow::noLabel),
             TIER_CODEC.optionalFieldOf("tier", Notices.Tier.IMPORTANT).forGetter(SignalWindow::tier),
             Codec.STRING.optionalFieldOf("topic", "").forGetter(SignalWindow::topic),
-            Codec.BOOL.optionalFieldOf("moment", false).forGetter(SignalWindow::moment)
+            Codec.BOOL.optionalFieldOf("moment", false).forGetter(SignalWindow::moment),
+            Codec.BOOL.optionalFieldOf("fleeting", false).forGetter(SignalWindow::fleeting)
     ).apply(i, SignalWindow::new));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SignalWindow> STREAM_CODEC = ByteBufCodecs.fromCodecWithRegistriesTrusted(CODEC);
@@ -117,7 +118,7 @@ public record SignalWindow(int id, Kind kind, Component title, Optional<Componen
         private Component yes, no;
         private Notices.Tier tier;
         private String topic = "";
-        private boolean moment;
+        private boolean moment, fleeting;
 
         private Builder(Kind kind, Component title) {
             this.kind = kind;
@@ -150,12 +151,15 @@ public record SignalWindow(int id, Kind kind, Component title, Optional<Componen
         public Builder topic(String t) { this.topic = t; return this; }
         /** A first of its kind or a wonder: shown as a moment (the centre banner), and waits longer for its quiet. */
         public Builder moment() { this.moment = true; return this; }
+        /** Shown now or never: if it can't find its moment it's dropped, not filed in the Journal (the System's voice in the
+         *  opening, a lesson the checklist teaches instead). */
+        public Builder fleeting() { this.fleeting = true; return this; }
 
         public SignalWindow build() {
             return new SignalWindow(NEXT_ID.getAndIncrement(), kind, title, Optional.ofNullable(body), List.copyOf(rows),
                     Optional.ofNullable(footer), Optional.ofNullable(action), ttl, priority, presentation,
                     Optional.ofNullable(yes), Optional.ofNullable(no),
-                    tier != null ? tier : defaultTier(kind, action != null, presentation), topic, moment);
+                    tier != null ? tier : defaultTier(kind, action != null, presentation), topic, moment, fleeting);
         }
     }
 }

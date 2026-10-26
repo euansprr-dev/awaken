@@ -1,5 +1,5 @@
 {
-  "text": "Every region has its own level. The higher above yours, the harder it bites.",
+  "text": "Every region has a level. The higher it is compared to yours, the more dangerous it is.",
   "priority": 35,
   "show_for": 140,
   "retire_after_done": 1,

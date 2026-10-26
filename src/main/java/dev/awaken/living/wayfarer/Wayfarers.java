@@ -74,7 +74,8 @@ public final class Wayfarers {
             QuestDef.Objective o = step.objective();
             if (o.type().equals("talk") && o.target().equals(who)) {
                 if (QuestEngine.blocked(p, step)) Signal.toast(p, Component.literal(step.needsText().isEmpty() ? step.text() : step.needsText()));
-                else QuestEngine.advance(p, "talk", who, 1);
+                // Ilse with the letters: her scene by the fire, not a bare line (SPEC §27.6)
+                else if (!dev.awaken.living.FirstScenes.talk(p, who)) QuestEngine.advance(p, "talk", who, 1);
                 return true;
             }
             if (o.type().equals("deliver") && o.target().startsWith(who + "|")) {

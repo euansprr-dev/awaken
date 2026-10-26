@@ -100,7 +100,7 @@ public final class Directives {
         p.directives.add(new Profile.DirectiveState(OPENING, true, today, today + Math.max(4, def.expiresDays()), Progression.snapshot(p, cs)));
         p.counters.put("awaken:directive_offered/" + OPENING, today + 1);
         p.counters.merge("awaken:directive_offers", 1L, Long::sum);
-        Signal.toast(player, Component.literal("Directive · " + def.text() + " Your first gate will show itself out past the walls."));
+        Signal.toast(player, Component.literal("Directive · " + def.text() + " Your first gate will open somewhere outside the city walls."));
         DirectorLog.log(player, "directive", "the Registry's own: " + OPENING + ", accepted");
         Progression.markDirty(player);
         return true;

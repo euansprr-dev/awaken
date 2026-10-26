@@ -1510,6 +1510,10 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
 
 ## 20. Far Sight (Awaken's own far terrain; Far Sight 2 plan docs/perf/far-sight/PLAN-2.md, page https://claude.ai/artifact/1USNxEEEGNHTL1NAzfnKWN, approved in full 2026-10-25)
 
+Far Sight 3 (plan docs/perf/far-sight/PLAN-3.md, page https://claude.ai/artifact/BYgaSCyxJsXY78CXNUzgaX, approved in full
+2026-10-26): every far shape within about a pixel of the real thing, detail fading with distance on the air's own
+curve, and Carillon drawn whole from its real blocks first (City Sight, below).
+
 Far Sight 2 (2026-10-25) replaced stage 0's stepped columns: real far relief to 16 km, far forests, alpine materials
 and air at real scale, at about 2 ms a frame (Lens Ultra, 2880×1800, `tools/autopilot/farsight2-perf.txt`). Its
 terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (/Volumes/MEDIA/farsight-ref).
@@ -1542,6 +1546,70 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   six, unpaced. The horizon ring first, then by distance; a ring asks only for patches it draws (not those the next
   finer ring covers clear of its 16-cell easing band: asked for, they came first and the visible bands waited, so a
   minute after a jump rings 4 and 5 still lacked 66 and 209 of 256 patches and the coast read as see-through sea).
+- **City Sight** (Far Sight 3, `farsight.voxel`, `client.VoxelLayer`/`VoxelLooks`): the city's real chunks drawn by Far
+  Sight wherever Sodium doesn't draw them, at any distance. `VoxelCapture` snapshots each city chunk (`City.layout().chunks`,
+  nearest the player first) on the server tick within its own 1.5 ms (`VoxelSnapshot`: copies of its sections from one
+  below the lowest non-air to one above the highest, with their sky and block light; a chunk the city's hold has let go
+  is read back from disk, one a tick), at most 96 waiting, and again after a save that changed it. Far Sight's workers
+  mesh them (`VoxelMesher`, after the horizon ring's patches, before the nearer far land): `VoxelKinds` reduces every
+  block to a cube (opaque cubes hide their neighbours' faces; glass, stairs and the like don't; leaves do, as fast
+  leaves), its box when at least 0.4 of a block (slabs, beds), a flat top (carpets, snow layers), water's surface at
+  14/16 and its open sides, or nothing (fences, panes, bars, plants, torches, doors: under a pixel there). Exposed cube
+  faces merge into the largest rectangles of one look, tint and light (greedy meshing). Each face carries the sky and
+  block light of the air in front of it. Levels 1-3 use cells of 2, 4 and 8 blocks: a cell is solid where at least half
+  its blocks are (thin things fade, never swell), it wears its blocks' most common look, and on top the most common look
+  of its columns' highest blocks. A quad is 16 bytes (least corner in sixteenths, face, extents, level, look, chunk
+  slot, tint, light), pulled by index from 4 MB texel-buffer pages. Looks (`VoxelLooks`): each face's sprite from the
+  game's own baked model (the quad facing that way, else the particle sprite), its tint (`BlockColors` with the
+  chunk's biome; water by its biome's water colour), cut-out where the model isn't solid, glow where it emits light,
+  and its texture's average colour (leaves' holes take it). Drawn after the far terrain into Far Sight's targets
+  (`farsight_voxels`): the block atlas with its mipmaps (a texture fades to its colour as the real chunks' do), the
+  game's lightmap at the face's own light (dark under roofs, lit windows by night), `farLight` and the same air.
+  A level gives way to the next once its cells span 1.5 pixels or fewer, cross-fading over 15% of its reach
+  (dithered). Hidden where Sodium draws the section (`farRealSection` and the chunk mask); chunks Sodium draws whole are
+  not planned. The far terrain and far trees step aside where City Sight stands (a 256×256-chunk toroidal coverage mask,
+  read within 2 km) and under it carry only the city's ground, a block under its streets (`FarCity.underCitySight`,
+  `CityLayout.groundY`). The opening's card waits for the whole city to be meshed and up. Debug view 3 tints City
+  Sight green; `farsight part city off` hides it. Test `farsight_voxels_mesh`.
+  Also (2026-10-26, Euan's tours): every overworld chunk the server loads is captured too, after the city's (kept
+  within 1.9 km, the city's at any distance, at most 16 M quads, farthest first; the coverage mask redrawn each second
+  for chunks within 2 km, so its 4 km torus never stands a far chunk in for a near one). A snapshot starts just under
+  the chunk's lowest ground (OCEAN_FLOOR - 8): deeper never shows. A chunk is taken again 2 s after its last block
+  change (the neighbour-update event), not on save (the city's hold saves every chunk as it lets go: the city
+  "loaded twice"), and a worker skips a snapshot that hashes as the mesh already up. Faces into dark rooms (no sky
+  light, block light ≤ 2) aren't drawn; panes, doors and bars between such a room and the light draw their outward
+  face as a window (dark glass). Light steps by three for merging. Each chunk's quads are grouped by face; faces turned
+  away across the whole chunk aren't drawn. Chunks clear of the render distance's edge and of a level's fade draw with
+  a pipeline that never discards (cut-out holes take the room's darkness, leaves' their colour), so Apple GPUs'
+  hidden-surface removal works. Measured at the Roost: about 1.1 M quads, 1.6 to 4.7 ms on a loaded M4.
+- **Hand-off with the real chunks**: while Far Sight draws, the game's chunk fade-in is held at none (new chunks
+  faded in from the fog colour, a white veil sweeping over the city; the far view already shows them), and the
+  player's own value comes back when Far Sight stops. A loaded chunk's 2 s settling clock starts only once it is
+  inside the camera's render distance (after the opening's flight the Roost's long-loaded, never-built chunks counted
+  as drawn at the landing: the city vanished and reloaded), and a chunk counts as drawn 250 ms after it first does
+  (Sodium draws a section a frame or two after it reports it compiled: a flash at the loading edge).
+  City Sight hides per section: a 64×64-chunk × 32-section mask from the game's own `isSectionCompiledAndVisible`,
+  which Sodium answers with its exact built state (so the approved Turbo hook into Sodium isn't needed); all-air
+  sections count as built unasked, half the chunks are refreshed a call, a section counts 250 ms after it first is. A
+  section Sodium hasn't built keeps City Sight's copy of the same blocks. The plan still skips chunks the chunk mask
+  calls shown (drawing every chunk with an unbuilt section, mostly hidden behind others, cost 2 ms at the Roost).
+  City Sight's meshes stay across Far Sight off and on in the same world (the capture starts over; unchanged chunks
+  hash the same and are skipped).
+- **City Sight on disk** (`VoxelDisk`, schema 1): every snapshot taken is kept, deflated (sections in the game's own
+  network form, light), in regions of 32×32 chunks at `<world>/awaken/farsight/voxels/overworld/r.<x>.<z>.bin`, written
+  on its own thread at each level save and, waited for (at most 10 s), when the server stops. A start, and every 10 s
+  after, reads back what lies within 1.7 km of the player and isn't tracked (the world's own copy wins), handed over
+  as the client takes them.
+- **Levels follow the air**: a City Sight level gives way once its cells span `PIXELS` / transmittance pixels (the air's
+  haze at that distance, 4× in rain): hazier distance needs less detail.
+- **Work ahead of the camera**: the far patches' queue ranks from where the camera will be in 1.5 s at its smoothed
+  speed (at most 300 blocks ahead), so in fast flight the land ahead comes first.
+- **The opening's card** waits, while City Sight draws, for the far rings and the whole city meshed and up, not for
+  the real chunks round the player (the flight's camera is far from them and Sodium doesn't build them for it).
+- **Seam audit** (`tools/farsight/seam_audit.py`): pairs of tour frames, normal and debug view 2 (far terrain and City
+  Sight hidden for the real chunks paint red); red only in the debug frame, eroded by 5 pixels (outline slivers where
+  City Sight's cubes are hidden for thinner real blocks are expected), is a hole. Tour `farsight3-city.txt` takes the
+  pairs at the Roost, the quay and high over the walls; 0 hole pixels at all three (2026-10-26).
 - **Generated layer** (stage 1, schema 2): `FarChunk` keeps per 2×2-block cell the ground's top (MOTION_BLOCKING_NO_LEAVES;
   water counts), water depth, the ground's colour, the canopy's height above it and its colour (leaves at
   MOTION_BLOCKING). `FarStore.patch` averages the cells within half a cell of each corner (known once a quarter is
@@ -3691,7 +3759,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - **Scenes** (`living.wayfarer.Scenes`, saved data `awaken:living_scenes`, schema 1). Residents are placed once when a
   player first comes within 96 blocks: Ilse and Hettie at the Wayfarer camp (Carillon worlds: 450 north of the city's
   centre, up the High Gate road; classic worlds 300 north of spawn; on the nearest dry, level ground, found once and
-  kept), Hale on Carillon's `CityHooks.spot("quartermaster")` by the High Gate yard (classic: at the camp). A found scene: per player every 25 minutes outdoors (the first after 12), never inside a Hearth's radius or the
+  kept; the camp round Ilse's fire, its safe ground and Ilse's scene: §27.6), Hale on Carillon's `CityHooks.spot("quartermaster")` by the High Gate yard (classic: at the camp). A found scene: per player every 25 minutes outdoors (the first after 12), never inside a Hearth's radius or the
   city reserve, for the lowest-band chain they can take that isn't a resident's; a spot 64-160 blocks off in loaded
   chunks only (cliff: a top with a 6+ drop beside it, its foot marked; crag: y 100+; road/camp: flat ground), plus a
   `site` 40-80 from it (plain ground 56 off if the land offers none). An untaken scene fades after two play-days; a
@@ -4951,6 +5019,13 @@ The rules below replace that.
 - **Client lines through the director:** `Notices.client().claim(tier, topic)` before showing (true counts as shown);
   `file(...)` what can't wait. The region caption claims IMPORTANT (CRITICAL when dangerous), waits up to 200 ticks,
   then files "Entered · <name>"; the dangerous region's toast is IMPORTANT, topic `danger`.
+- **Fleeting** (`Builder.fleeting()`, 2026-10-26): shown now or never. A fleeting message that waits past its wait is
+  dropped, not filed: the System's first contact ("[ERROR] … candidate found.", the opening's and the prologue's), which
+  in the Journal read as a real bug. The awakening's first moves ("Your body remembers") are no longer a toast at all:
+  the checklist teaches them (§27.10). The Signal's quips (`signal_line/lines.json`, `story.Beats.lineOnce`: "That's your
+  first power. Try it out once you're outside the city.") are fleeting too: a reaction read later in a list, out of its
+  moment, meant nothing ("There it is."). Nothing is filed for the city's own region while you're inside its walls
+  (§27.6).
 
 ### 26.3 Discovery (`signal.Finds`)
 - **Intent.** A creature is studied when the crosshair rests on it (its angular size + 3°) for 3 looks in a row, 5
@@ -5040,8 +5115,11 @@ play it; the world remembers the locks you met and calls you back once when you 
   entries `{key, dim, where?, need kind, need value, what, answeredAt}`; the oldest go. A key is one per place
   (`door:x,y,z`, `landmark:ruin:x,z`, `wing_core:x,y,z`, `stratum:n`, `region:id`, `halo`, `possession`).
 - **`seen(player, key, where, need, what)`**: recorded once, only for an awakened player who doesn't already meet the
-  need. Silent, except the first lock a player ever meets: one NOTICE toast "What waits · <what> waits for <need>. Your
-  band keeps it (K), and the world will call you back when you're ready." (flag `awaken:promise_taught`).
+  need. Silent, except the first lock a player ever meets: one NOTICE toast "Saved for later · <what>: you'll need
+  <need> first. Your band (K) keeps a list of things like this, and you'll get a reminder when you're ready." (flag
+  `awaken:promise_taught`). The band's list is **SAVED FOR LATER**, each row "<what> · needs <need>" ("· ready now" once
+  answered); the call back says "<what> is open to you now". (Until 2026-10-26 it was "What waits · The Commons waits
+  for level 4", which Euan couldn't read; plain words now, §27.6.)
 - **Needs**: `rank:<label>` and `level:<n>` answered by progression; `tier:<tether|leaper|wings|skyborn>` answered by the
   Ascent (`Promises.addAnswer`). Words: "D-rank", "level 20", "the Tether".
 - **The call back**: on a rank-up, a level reached or a rung granted, every waiting lock the player now meets is
@@ -5090,34 +5168,102 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
 
 ### 27.6 The first thread (phase 1)
 - **Registered** (`core.api.OpeningHooks.onRegistered`, fired from `OpeningModule.afterOpening` when the opening ends or
-  is skipped): Kestrel's errand, **The Last Delivery**, starts by itself and is tracked (`living.FirstThread`; once;
-  never for a player who has it or did it): tell Kestrel what you saw at the Roost, out through the High Gate, run the
-  letters to the Wayfarer camp up the north road, give Ilse the letters. It ends at the camp, a place with several pulls
-  (Hettie's and Ilse's level-1 asks, a gate's pillar, a vault), so after it the player chooses: it is one errand, not a
-  chain that keeps leading (BotW's "lines" railroaded 80% of testers).
+  is skipped): Bram's errand, **The Last Delivery**, starts by itself and is tracked (`living.FirstThread`; once;
+  never for a player who has it or did it). At the end of the Registry (its step `LETTERS`, after the Directive) Bram
+  says what a hunter is for ("Oh, and one more thing. As a hunter, your job is to protect the city from whatever is out
+  in the wilds, beyond the walls.") and where to go first ("Ilse runs a camp for new hunters up the north road. Take
+  these letters to her, and she'll explain the rest."), and holds out **Letters for Ilse** (`awaken:ilse_letters`, an
+  errand item; Bram's prop "letters"), which you take from his hand the way you took the band ("Take the letters").
+  A player who skipped the Registry is given them at registration. The steps: take the letters from Bram (done the
+  moment they're in your pack; it keeps the old first step's place, so saves hold), out through the High Gate, to the
+  Wayfarer camp up the north road, deliver them to Ilse by her fire ("Deliver the letters · 0/1"; she takes them from
+  your pack), and take the ember she gives you (the Ember, §28.2). The thread lets go there: its Now line ends once
+  Ilse's step is done, and the Hearth's own line ("Place your Ember where you want your home", `hearth:ember`) takes
+  over; the chain's last step (a `hearth` objective: done when you have a Hearth) waits in the Journal. Kestrel's
+  word-from-the-square opening and return were cut (Euan, 2026-10-26: Bram hands you the letters). After it the player
+  chooses: it is one errand, not a chain that keeps leading (BotW's "lines" railroaded 80% of testers). Euan, after
+  playing it (2026-10-26): guide them exactly to the Ember, then let them go and explore.
 - **Chains on the Now line**: the tracked chain's current step (else the first chain's), priority 68 (over points to
   spend 55 and the next level's unlock 15; under a waiting Reassessment 72, rifts and danger), with a compass to its
   place: a "reach" step's marker; a "talk" step's person (Kestrel: the Roost, `OpeningHooks.place("roost")`; Hale: his
   quartermaster spot; Ilse and Hettie: the camp; a Wayfarer: their scene). Before, tracked chains never reached the HUD.
 - **The camp is findable**: its marker falls back to its nominal spot until someone has come near (the compass knows the
-  way); a Horizon site "Wayfarers' fire" until the player has stood within 24 of it (counter
+  way); a Horizon site "Wayfarer camp" until the player has stood within 24 of it (counter
   `awaken:camp_reached`); and a signal fire on a bale by Ilse (`Scenes.campFire`), its smoke a column seen from the High
   Gate (vanilla smoke rises only near you, so the client draws its own column to 1000 out, 110 blocks tall to clear the
   Lumen canopy: `LivingNet.CampSmoke`, `PulseFx.campfire`), lit once a player is within 256 and lit again if it's gone; the camp itself is now founded within 256 (it was 112,
   so from the gate there was nothing there yet).
 - **The Registry's Directive fits** (`Directives.opening`, reason "opening"): "Clear a floor of any gate.", accepted for
-  the player (4 play-days), "Your first gate will show itself out past the walls." Accepted Directives show on the Now
+  the player (4 play-days), "Your first gate will open somewhere outside the city walls." Accepted Directives show on the Now
   line with their progress ("· 50%", priority 58). Before, the Registry's was a random roll offered quietly, its waiting
   line gone in 30 s, and accepted ones never showed outside K.
 - **The first gate, on purpose** (`Director.firstGate`, SPEC §21.0.14 finally built): a player's first gate waits until
   level 3 or about half an hour after awakening (36 Director passes), and until they're out of the city (or an hour),
   then forms 250-400 blocks further along the bearing from the city's centre to them (north from its middle; any way
-  if that way is sea, a river or a beach), at their own rank, with "A gate is drawing breath · 320 m N · its floors make you stronger" (IMPORTANT, topic `gate`); the
+  if that way is sea, a river or a beach), at their own rank, with "A gate has opened 320 m N · clear its floors to get stronger" (IMPORTANT, topic `gate`); the
   Horizon raises it ("First gate · E-rank") until they've cleared a floor. Before, the first gate
   was rolled the moment they awakened, in the infirmary, at random 300-1500 out, unannounced.
 - **Out through the walls** is a moment: crossing the city reserve outward shows the region's caption ("THE COMMONS ·
-  1-8") once a play-day (the Commons spans the city's edge, so leaving had none).
-- Tests: `progression_first_thread`, `progression_now_priorities`, `gates_first_gate_on_purpose`.
+  1-8") once a play-day (the Commons spans the city's edge, so leaving had none). Inside the walls no region caption,
+  warning or promise is sent at all, and the Commons, the land everyone starts in, is never a "danger" region (it was:
+  a level-1 player read "Danger · The Commons" and "The Commons waits for level 4" in the Journal before leaving the
+  city). **The first time out through the High Gate, its shot names the land**: as the view lifts over the gate the
+  title "THE COMMONS · THE LAND AROUND THE CITY · CREATURES LEVEL 1 TO 8" (the region at the camp, from the server),
+  then the camp's caption ("THE WAYFARER CAMP · UP THE NORTH ROAD · 181 M AWAY · YOUR NEXT STOP"); the region caption
+  is skipped that time. A danger region's warning says it plainly: "The creatures here are level 20 to 28. That's well
+  above you, so be careful."
+- **The High Gate's shot** (`living.FirstScenes.gateShot`, filmed by `living.client.FirstFilm.GateShot` with the
+  opening's camera and letterbox through `opening.client.Cinema`): the first time a player goes out through the High
+  Gate on the errand (the step "Out through the High Gate" completes), ten seconds, letterboxed, hold jump to skip: a
+  breath in your own eyes turning to the smoke, then the view lifts over the gate (the first clear spot of a fan, up to
+  15 up and 8 on) and narrows (FOV x0.6) onto the Wayfarers' smoke, which reads stronger while it's filmed; the lower
+  bar names it ("THE WAYFARER CAMP · UP THE NORTH ROAD · 330 M AWAY") while Hale says his line; then back down into
+  your eyes, left facing the camp. Once a player (counter `awaken:first/gate_shot`). Before the camp is founded the
+  smoke rises from its nominal spot at the generator's height. The step's done line is said in the shot, not as a
+  story line (`QuestEngine.Stager`: a scene that stages a step's ending takes its lines).
+- **Ilse's scene by the fire** (`FirstScenes`, `FirstFilm.IlseShot`): coming within 7 of Ilse with the letters (or
+  talking to her) starts it instead of a bare click. Letterboxed, over your shoulder on the side away from the fire, a
+  slow push while she talks; her lines one at a time in the Registry's speech (name above, the line under it): she asks
+  for the letters (the lower bar: "LETTERS DELIVERED 1/1"), sits you down, says why you'll want a home of your own ("It's
+  getting dark, and nights out here are dangerous"), then holds an ember from
+  hers out in her hand and brings it over to you (to within about two blocks). The view comes back to your own eyes
+  facing her, the HUD stays out of the frame, "Take the ember" with the use key (within 3.6), and your hand takes it from
+  hers (the Registry's hand-over, `HandOver`, now for any item): the step ends as your hand closes on
+  it, and its reward is the Ember (W1's rules kept: one a player, kept through death, Ilse or Hettie give a lost one
+  back). Her last line says plainly what it does ("Once it's placed, you can rest there, and if anything happens to you out
+  here, that's where you'll wake up."), the bars lift, and the Now line says "Place your Ember where you want your home"
+  (the Hearth's). About 20 s to the coal; hold jump to skip to it; after 30 s with her hand out she
+  presses it into yours. Someone with a Hearth or a coal already is told "Looks like you already have a home fire" and the step ends there. Walking
+  off (18 blocks) ends it; it starts again when you come back. Nothing hunts or hurts a player while either moment plays
+  (target changes cancelled, damage cancelled but for what bypasses invulnerability; the gate's for 14 s).
+- **The camp** (`living.wayfarer.Camp`): laid once round its fire when a player is within 96 (`Scenes.campBuilt`, saved,
+  optional field): what lies on the ground within 5 cleared (grass, flowers, mushrooms, moss and carpets: anything
+  that gives way underfoot), each piece set on the real ground under it, the ground within 3.5 trodden to coarse dirt
+  and path; two
+  **Wayfarer's Bedrolls** (`awaken:wayfarer_bedroll`, our own block on `AbstractBedBlock`, texture from
+  `tools/art/specs/camp.py`) feet to the fire, west and south; stripped spruce logs to sit on (north, east); a barrel of
+  packs with a lantern, a log of firewood; and the **Camp Pot** (`awaken:camp_pot`) hung by a chain from a bar on two
+  A-frames over the fire. Only on open ground: a trunk or a rock where something goes, and it's left out. Neither block
+  drops or has an item. **Its ground is safe**: no monster spawns (natural, chunk generation, patrols, reinforcements)
+  within 32 of the fire; a monster within 30 stops hunting and is sent back out past the edge (every half second); no
+  monster takes a player within 32 as its target. A **bedroll** sleeps the night through like a bed when it's dark (the
+  rule `WHEN_DARK`), never sets your spawn (that's the Hearth's), and when a step you're on needs the dark (a quest step's
+  `night`, e.g. Moth Lights' "The Lumen Moths only come out at night.") it says "You can't sleep yet. ..." instead. At night
+  Hettie lies down on the far bedroll and gets up at dawn; Ilse keeps the fire.
+- **Plain words, start to finish** (Euan, 2026-10-26, after playing it: "make it more human-like... not some poetic
+  riddle"): every line in the first sequence says plainly what it means, the way a person would say it: the infirmary
+  (Sun, Bram), Bram at the Registry and its cards, the ritual's prompts, the System's acceptance, Kestrel, Hale, Ilse,
+  Hettie, the clerk, the crier's news of the wilds, the first tips, the Ember's messages and tooltip, and the toasts
+  and captions on the way (e.g. Ilse: "Here, take an ember from our fire. Carry it with you, and when you find a spot
+  you'd like to live, place it there. That'll be your home."). Lines that grew got time to be read (Bram's briefing:
+  28 s, a line every 7; Ilse's beats 90 apart).
+- **Quest fields** (`QuestDef.Step`, schema 1, both optional): `tally` shows a step's count even when it's one ("· 0/1");
+  `night` says why a step needs the dark. Objective type `hearth`: done when the player has a Hearth.
+- Dev and tours: `/awaken living first gate|letters|ilse|took|camp`; tour `tools/autopilot/first-scenes.txt` (CI).
+- Tests: `progression_first_thread`, `progression_now_priorities`, `gates_first_gate_on_purpose`,
+  `progression_first_scenes` (the gate's shot once; the letters counted; Ilse's scene to the coal; the Ember; the thread
+  letting go), `living_camp_keeps` (laid round its fire; nothing hunts there; a monster sent out; the bedroll's rule; a
+  step that needs the night).
 
 ### 27.7 Tips, switched on, and the Signal's thread (phase 4)
 - **Tips** (docs/carillon/m4/onboarding.md §1, finally built; `TipHooks.install` had no caller, so every tip in the
@@ -5152,7 +5298,7 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   `news.wilds_*`): the nearest standing gate within 900 of the city ("Hear ye! A gate's light stands past the High Gate,
   to the north!"), else the spawn vault ("…hums again! Its door reads a hunter's rank, they say!"), else the
   Wayfarers' camp. Before, every line in the city was flavour.
-- **Kestrel speaks** before you click her (`named.kestrel`: "Runner! You owe me word from the square.").
+- **Kestrel speaks** before you click her (`named.kestrel`: "Runner! You still haven't told me what happened in the square.").
 - **"Anything for me?"** (`progression.Advice.next`, after Terraria's Guide): a free Registry clerk you right-click says
   the one next step that fits you: a Reassessment waiting, a lock that answers you now, points to spend, the Directive
   you've taken, else the next rank and what it opens for you ("D-rank at level 10. It opens a sealed vault for you, and
@@ -5180,6 +5326,27 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
 - Test: `progression_capability_clock`.
 
 ---------------------------------------------------------------------------------------------------------------------
+
+### 27.10 The current task, top right (Euan's playtest, 2026-10-26)
+"Every time you have a goal and things to do, you actually have a small checklist top right." One small card, top right
+under the first two toast slots (`signal.client.TaskHud`; never over the crosshair, hidden with the HUD), in the band's
+glass, a touch smaller than the Now card: the task's title and done/total, then its steps (a long one wraps to a second
+line), each ticked when done (a soft green flash as it ticks), the
+current one bright with ▸, keys drawn as key caps from "{key}" in the words, a count where a step has one ("0/10"),
+and a compass to a place nearby to do it ("↗ 9 m"). The Now line, top left, keeps the where; the card keeps the what.
+The server decides (`progression.Checklist`, sent only when it changes, payload `signal_task`; nothing while the
+opening runs):
+- **Your body remembers** first, from the awakening: "Hold [Shift] as you land to roll", "Double-tap [Ctrl] to sprint
+  harder", "Hold [Shift] while sprinting to slide", "Press [Space] at a ledge to climb it",
+  each ticked the first time you do it (the body module's counters `awaken:body_roll`, `_sprint`, `_slide`, `_mantle`);
+  the ledge row points at the nearest chest-high ledge within 10 blocks while it's current (every 2 s: a two-block step
+  up from standing ground with room on top). All four done: the list stays ticked for 4 s (`awaken:first/moves_done`),
+  then goes for good. It replaces the "Your body remembers" toast, which the director filed unread.
+- **Then the tracked chain** (`Checklist.register`; the living module's `FirstThread.task`): its title, its steps ticked
+  as they're done (at most six: the last done, the current, what follows), a count on a step that has one or a `tally`.
+  The first thread reads: Take the letters from Bram, Leave the city through the High Gate, Take the letters to the
+  Wayfarer camp up the north road, Deliver the letters 0/1, Place your Ember where you want your home.
+- Test: `progression_checklist` (the moves tick one by one, then the errand takes the card).
 
 ## 28. Between the Gates (home, people, below; plan docs/world-depth/PLAN.md, page https://claude.ai/artifact/ATZfZSczLg95kNSgnLF42M; Euan approved all of it 2026-10-26)
 
@@ -5259,7 +5426,7 @@ Given by: The Last Delivery's `ilse` step (reward `item: awaken:hearth_ember` an
 talking to Ilse or Hettie with no Ember and no Hearth, registered (classic worlds: always), and past that step or never on
 the chain (`PlayerInteractEvent.EntityInteract` on a `living.wayfarer.Wayfarer`, so living is unchanged; Ilse: "Lost your
 coal? Take another. The fire doesn't mind."); 60 ticks after awakening in a classic world (no `CityBasin` site). Now line
-`hearth:ember`, priority 66 (under a tracked chain step ~68): "Set your Ember where you'd live". **Bram's line is not
+`hearth:ember`, priority 66 (under a tracked chain step ~68): "Place your Ember where you want your home". **Bram's line is not
 added** (Carillon's code): for the orchestrator, Bram at the Registry: "The bells hold the city. Hunters hold the wilds.
 Ilse at the camp keeps a fire for new licences."
 
