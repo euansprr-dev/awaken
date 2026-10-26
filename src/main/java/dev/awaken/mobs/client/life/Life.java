@@ -718,8 +718,8 @@ public final class Life {
 
     // ---- smoothing the animation graph ----------------------------------------------------------------------------------
 
-    private final float[] eased = new float[12];
-    private final int[] easedFrame = new int[12];
+    private final float[] eased = new float[16];
+    private final int[] easedFrame = new int[16];
 
     /**
      * A graph weight eased toward its target over {@code tau} seconds, stepped once a frame however often the model

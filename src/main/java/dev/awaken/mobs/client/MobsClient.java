@@ -10,5 +10,6 @@ public final class MobsClient {
         modBus.addListener(AwRenderers::layers);
         modBus.addListener(AwRenderers::renderers);
         modBus.addListener(RitualRenderers::renderers);
+        modBus.addListener(SeepParticles::register);
     }
 }

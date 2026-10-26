@@ -39,7 +39,7 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
     private static final float HOLD = 1.0F, FADE = 0.3F;
     /** Held poses a clip owns (no idle fidgets on top). */
     private static final int HELD = WildPose.S_HANG | WildPose.S_CHIRP | WildPose.S_RIPEN | WildPose.S_LISTEN | WildPose.S_DEFLATE
-            | WildPose.S_CARRY | WildPose.S_REST | WildPose.S_BEACHED | WildPose.S_RIDDEN;
+            | WildPose.S_CARRY | WildPose.S_REST | WildPose.S_BEACHED | WildPose.S_RIDDEN | WildPose.S_SLEEP;
 
     private final Identifier texture;
     /** The closed-eyes skin (tools/art: {@code <id>_blink.png}) a blink draws, or null if the creature has none. */
@@ -110,6 +110,7 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         AwLook l = mob.look(partialTicks);
         s.setRenderData(AwModels.LOOK, l);
         s.wild = mob instanceof WildPose w ? w.wildState() : 0;
+        s.beat = mob instanceof WildPose w ? w.beatTime(partialTicks) : -1;
         s.pitch = (s.wild & WildPose.S_SWIM) != 0 ? Mth.clamp(mob.getXRot(partialTicks), -60.0F, 60.0F) : 0.0F;
         if (!(mob instanceof FaunaMob f)) return;
         s.gait = f.gait(partialTicks);
@@ -273,8 +274,8 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
             AwLook l = look(s);
             // P3 glows are their light in dark water and caves: never below 0.8 of the texture's own alpha (the
             // creature's pulse rides on top); only a pre-awakening shimmer stays faint
-            float a = Mth.clamp(l.translucent ? l.glow * 0.8F : 0.7F + 0.3F * l.glow, 0.0F, 1.0F);
-            if (s.dying >= 0) a *= Math.max(0.0F, 1.0F - s.dying / (NamedBeast.DEATH_TICKS / 20.0F));
+            float a = Mth.clamp(l.ownGlow ? l.glow : l.translucent ? l.glow * 0.8F : 0.7F + 0.3F * l.glow, 0.0F, 1.0F);
+            if (s.dying >= 0 && !l.ownGlow) a *= Math.max(0.0F, 1.0F - s.dying / (NamedBeast.DEATH_TICKS / 20.0F));
             if (a <= 0.01F) return;
             collector.order(2).submitModel(getParentModel(), s, pose, shut != null && shut(s) ? shut : type, LightCoordsUtil.FULL_BRIGHT,
                     LivingEntityRenderer.getOverlayCoords(s, 0.0F), ARGB.white(a), null, s.outlineColor);

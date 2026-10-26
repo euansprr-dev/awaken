@@ -9,6 +9,8 @@ public final class AwLook {
     public int tint = -1;
     /** Emissive layer alpha 0..1. */
     public float glow = 0.6F;
+    /** The creature sets its emissive strength itself, the fall included (no floor, no fade as it dies): the seep heart's beat. */
+    public boolean ownGlow;
     public boolean translucent;
     public boolean flash;
     public float telegraph;

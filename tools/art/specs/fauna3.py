@@ -1771,6 +1771,530 @@ def paint_thousandfoot(r, P):
 
 
 # =====================================================================================================================
+# The seep heart (W5, Between the Gates): the Deep grown up through the rock at a seep's innermost chamber. A mound of
+# deepslate fused with black-violet growth, roots running out over the floor towards the walls, Deepglass spires, two
+# hooked lashing arms, and on a twisted trunk the core: a faceted crystal that beats with violet light inside five
+# Deepglass plates. Asleep the plates are shut round the core like a bud (the "sleep" hold); awake they stand open.
+# It never walks: the crown turns to face you (the look bone), the body rises a little, the arms and roots lash.
+# =====================================================================================================================
+
+SEEP_PLATES, SEEP_ROOTS = 5, 6
+DEEPGLASS = ("#07050c", "#120a20", "#24133f", "#3e2470", "#6a45b0", "#b48cff", "#eadcff")  # delve.py's Deepglass ramp
+# spires of Deepglass out of the mound: (angle round from the front, radius, lean outward, height, width)
+SEEP_SPIRES = [(24, 9, 22, 16, 3), (100, 10, 32, 12, 3), (158, 9, 30, 15, 4), (204, 11, 40, 9, 2), (232, 10, 28, 14, 3), (300, 9, 26, 10, 2)]
+# rock lumps on the mound: (x, z, yaw, w, h, d)
+SEEP_LUMPS = [(-8, 9, 25, 7, 3, 5), (10, -6, -40, 6, 4, 6), (-11, -4, 70, 5, 3, 7), (6, 11, 10, 6, 2, 4)]
+SEEP_ROOT_ANGLES = [4, 58, 124, 177, 243, 296]
+SEEP_ROOT_BEND = (-14, 9, -6, 15, -11, 8)
+SEEP_MOVES = {"Deep Shards": "shards", "Rootfall": "roots", "Root Lash": "lash", "Deep Pulse": "pulse", "Call of the Deep": "call",
+              "Shard Storm": "storm", "Heartburst": "burst"}
+
+
+def _out(a, r):
+    """Model-space x, z of a point `r` px out from the middle at `a` degrees round from the front (-z)."""
+    rad = math.radians(a)
+    return r * math.sin(rad), -r * math.cos(rad)
+
+
+def seep_heart():
+    r = Rig("seep_heart", (256, 128))
+    r.walk_stride, r.run_stride, r.run_speed, r.shadow = 2.0, 4.0, (0.4, 0.8), 1.3
+    base = r.bone("base", (0, 24, 0))
+    base.cube("mound", -13, -4, -13, 26, 4, 26)
+    base.bone("mound_top", (0, -4, 0), (0, 45, 0)).cube("mound_top", -9, -3, -9, 18, 3, 18)
+    for k, (x, z, yaw, w, h, d) in enumerate(SEEP_LUMPS):
+        base.bone(f"lump{k}", (x, -4, z), (0, yaw, 0)).cube(f"lump{k}", -w / 2, -h, -d / 2, w, h, d)
+    # the roots, along the floor and out towards the walls (pivots on the floor line, so a lift raises the far end)
+    for i, a in enumerate(SEEP_ROOT_ANGLES):
+        x, z = _out(a, 10)
+        bend = SEEP_ROOT_BEND[i]
+        ra = base.bone(f"rt{i}a", (x, 0, z), (0, -a, 0))
+        ra.cube(f"rt{i}a", -3, -3, -11, 6, 3, 11, share=None if i == 0 else "rt0a")
+        rb = ra.bone(f"rt{i}b", (0, 0, -11), (0, bend, 0))
+        rb.cube(f"rt{i}b", -2.5, -2, -10, 5, 2, 10, share=None if i == 0 else "rt0b")
+        rc = rb.bone(f"rt{i}c", (0, 0, -10), (0, -bend * 0.9, 0))
+        rc.cube(f"rt{i}c", -1.5, -2, -10, 3, 2, 10, share=None if i == 0 else "rt0c")
+        # a rootlet forking off the middle link, out to the side it bends away from
+        side = 1 if bend < 0 else -1
+        rb.bone(f"rtf{i}", (side * 2, 0, -5), (0, side * -38, 0)).cube(f"rtf{i}", -1, -2, -8, 2, 2, 8, share=None if i == 0 else "rtf0")
+    # Deepglass spires, leaning out of the mound (each turned 45 degrees on its own axis: a diamond in section)
+    for k, (a, rad, lean, h, w) in enumerate(SEEP_SPIRES):
+        x, z = _out(a, rad)
+        sx = base.bone(f"spire{k}", (x, -3, z), (lean, -a, 0)).bone(f"spirex{k}", (0, 0, 0), (0, 45, 0))
+        sx.cube(f"spire{k}", -w / 2, -h, -w / 2, w, h, w)
+        tw, th = max(1, w - 2), max(2, h // 3)
+        sx.bone(f"stip{k}", (0, -h, 0)).cube(f"stip{k}", -tw / 2, -th, -tw / 2, tw, th, tw)
+    # two hooked arms of growth either side of the front: they lash, plunge into the floor, rise to the walls
+    for side, nm in ((1, "l"), (-1, "r")):
+        x, z = _out(side * 34, 8)
+        l1 = base.bone("lash_" + nm, (x, -4, z), (16, side * -34, side * 16))
+        l1.cube("lash_" + nm, -2, -10, -2, 4, 10, 4, mirror=side < 0, share=None if side > 0 else "lash_l")
+        l2 = l1.bone("lash2_" + nm, (0, -10, 0), (30, 0, 0))
+        l2.cube("lash2_" + nm, -1.5, -9, -1.5, 3, 9, 3, mirror=side < 0, share=None if side > 0 else "lash2_l")
+        l3 = l2.bone("lash3_" + nm, (0, -9, 0), (38, 0, 0))
+        l3.cube("lash3_" + nm, -1, -8, -1, 2, 8, 2, mirror=side < 0, share=None if side > 0 else "lash3_l")
+        l3.bone("barb_" + nm, (0, -8, 0), (55, 0, 0)).cube("barb_" + nm, -0.5, -4, -0.5, 1, 4, 1, mirror=side < 0, share=None if side > 0 else "barb_l")
+    # the trunk: a core of growth sunk deep in the mound (so the body can rise) wound with four strands of glass
+    body = base.bone("body", (0, -6, 0))
+    body.cube("trunk", -4, -14, -4, 8, 18, 8)
+    for k in range(4):
+        a = 45 + 90 * k
+        x, z = _out(a, 3.6)
+        st = body.bone(f"strand{k}", (x, 2, z), (-7, -a + (14 if k % 2 else -14), 0))
+        st.cube(f"strand{k}", -2, -16, -2, 4, 16, 4, share=None if k == 0 else "strand0")
+    # the crown turns to face you; the plates grow from its collar round the core
+    crown = body.bone("crown", (0, -12, 0))
+    crown.cube("collar", -6, -3, -6, 12, 4, 12)
+    core = crown.bone("core", (0, -8, 0), (0, 45, 0))
+    core.cube("core", -4, -5, -4, 8, 10, 8)
+    core.bone("facet", (0, 0, 0), (45, 0, 45)).cube("facet", -3.5, -3.5, -3.5, 7, 7, 7)
+    for i in range(SEEP_PLATES):
+        a = i * 360 / SEEP_PLATES
+        x, z = _out(a, 5.5)
+        p = crown.bone(f"plate{i}", (x, -2, z), (38, -a, 0))
+        p.cube(f"plate{i}", -4, -14, -1, 8, 14, 2, share=None if i == 0 else "plate0")
+        tip = p.bone(f"ptip{i}", (0, -14, 0), (6, 0, 0))
+        tip.cube(f"ptip{i}", -2, -5, -1, 4, 5, 2, share=None if i == 0 else "ptip0")
+        tip.bone(f"ppt{i}", (0, -5, 0), (8, 0, 0)).cube(f"ppt{i}", -1, -3, -0.5, 2, 3, 1, share=None if i == 0 else "ppt0")
+    r.look = [("crown", 1.0, 0.35)]
+    r.moves = dict(SEEP_MOVES)
+    r.pack()
+    seep_clips(r)
+    return r
+
+
+def seep_clips(r):
+    P = [f"plate{i}" for i in range(SEEP_PLATES)]
+    T = [f"ptip{i}" for i in range(SEEP_PLATES)]
+    RB = [f"rt{i}b" for i in range(SEEP_ROOTS)]
+    RC = [f"rt{i}c" for i in range(SEEP_ROOTS)]
+    L = (("l", 1), ("r", -1))
+
+    def plates(clip, keys, tips=None, stagger=0.0):
+        """keys [(t, degrees outward)] for every plate (tips: the same for the tips); each plate `stagger` s behind."""
+        for i in range(SEEP_PLATES):
+            def sh(ks):
+                return [(t + (i * stagger if 0 < t < clip.length - 1e-6 else 0), x, 0, 0) for t, x in ks]
+            clip.rot(P[i], sh(keys))
+            if tips:
+                clip.rot(T[i], sh(tips))
+
+    def arms(clip, k1, k2=None, k3=None):
+        """[(t, x, y, z)] for the left arm's three links; the right arm mirrors y and z."""
+        for nm, sg in L:
+            for bone, ks in (("lash_", k1), ("lash2_", k2), ("lash3_", k3)):
+                if ks:
+                    clip.rot(bone + nm, [(t, x, sg * y, sg * z) for t, x, y, z in ks])
+
+    def core(clip, keys):
+        clip.scale("core", [(t, v, v, v) for t, v in keys])
+
+    def roots(clip, kb, kc=None, stagger=0.0):
+        for i in range(SEEP_ROOTS):
+            clip.rot(RB[i], [(t + (i * stagger if 0 < t < clip.length - 1e-6 else 0), x, 0, 0) for t, x in kb])
+            if kc:
+                clip.rot(RC[i], [(t + (i * stagger if 0 < t < clip.length - 1e-6 else 0), x, 0, 0) for t, x in kc])
+
+    # idle: the plates breathe open and shut a few degrees, a slow ripple round the bud; the core turns; the roots
+    # swell one after another along the floor; the arms sway
+    idle = r.clip("idle", 4.0, loop=True)
+    for i in range(SEEP_PLATES):
+        cycle(idle, P[i], "rot", lambda q, i=i: (4 * s(q, -i / SEEP_PLATES), 0, 0), 8)
+        cycle(idle, T[i], "rot", lambda q, i=i: (3 * s(q, -i / SEEP_PLATES - 0.08), 0, 0), 8)
+    idle.rot("core", [(0, 0, 0, 0, "lin"), (4.0, 0, 360, 0, "lin")])
+    cycle(idle, "crown", "rot", lambda q: (1.5 * s(q), 0, 1.2 * c(q)), 8)
+    cycle(idle, "crown", "pos", lambda q: (0, 0.5 * s(q, 0.25), 0), 8)
+    for i in range(SEEP_ROOTS):
+        cycle(idle, RB[i], "rot", lambda q, i=i: (-1.2 * max(0.0, s(q, -i / SEEP_ROOTS)), 0, 0), 8)
+    for nm, sg in L:
+        ph = 0.0 if sg > 0 else 0.5
+        cycle(idle, "lash_" + nm, "rot", lambda q, sg=sg, ph=ph: (3 * s(q, ph), 0, sg * 2 * c(q, ph)), 8)
+        cycle(idle, "lash2_" + nm, "rot", lambda q, ph=ph: (4 * s(q, ph + 0.12), 0, 0), 8)
+        cycle(idle, "lash3_" + nm, "rot", lambda q, ph=ph: (6 * s(q, ph + 0.24), 0, 0), 8)
+    # it never walks (rooted at its socket): the walk is only the roots stirring
+    walk = r.clip("walk", 1.0, loop=True)
+    for i in range(SEEP_ROOTS):
+        cycle(walk, RB[i], "rot", lambda q, i=i: (-3 * max(0.0, s(q, -i / SEEP_ROOTS)), 0, 0), 8)
+    # asleep (held): the plates shut round the core like a bud, the crown sunk, the arms curled in
+    sl = r.clip("sleep", 4.0, loop=True)
+    plates(sl, [(0, -50), (4.0, -50)], [(0, -26), (4.0, -26)])
+    sl.pos("crown", [(0, 0, -2.5, 0), (4.0, 0, -2.5, 0)])
+    sl.pos("body", [(0, 0, -1, 0), (4.0, 0, -1, 0)])
+    core(sl, [(0, 0.85), (4.0, 0.85)])
+    arms(sl, [(0, -14, 0, -8), (4.0, -14, 0, -8)], [(0, 10, 0, 0), (4.0, 10, 0, 0)], [(0, 20, 0, 0), (4.0, 20, 0, 0)])
+    # one beat of the heart (the renderer plays it on every beat): lub, dub
+    be = r.clip("beat", 0.5)
+    core(be, [(0, 1.0), (0.05, 1.16), (0.14, 1.0), (0.22, 1.09), (0.5, 1.0)])
+    plates(be, [(0, 0), (0.06, 2.5), (0.16, 0), (0.24, 1.5), (0.5, 0)])
+    be.pos("crown", [(0, 0, 0, 0), (0.06, 0, 0.3, 0), (0.5, 0, 0, 0)])
+    # the wake (and every new phase): it rises, the plates burst open past their rest, the arms are flung up, the roots
+    # heave out of the floor and slap down
+    ro = r.clip("roar", 2.2)
+    ro.pos("crown", [(0, 0, 0, 0), (0.35, 0, 3.5, 0), (0.9, 0, 2.2, 0), (2.2, 0, 0, 0)])
+    ro.pos("body", [(0, 0, 0, 0), (0.4, 0, 1.5, 0), (2.2, 0, 0, 0)])
+    core(ro, [(0, 1.0), (0.25, 1.35), (0.6, 1.08), (1.0, 1.2), (2.2, 1.0)])
+    plates(ro, [(0, 0), (0.25, 24), (0.8, 10), (2.2, 0)], [(0, 0), (0.3, 20), (0.9, 6), (2.2, 0)], stagger=0.03)
+    arms(ro, [(0, 0, 0, 0), (0.35, -38, 0, 24), (1.2, -20, 0, 12), (2.2, 0, 0, 0)], [(0, 0, 0, 0), (0.4, -30, 0, 0), (2.2, 0, 0, 0)],
+         [(0, 0, 0, 0), (0.45, -40, 0, 0), (2.2, 0, 0, 0)])
+    roots(ro, [(0, 0), (0.25, -12), (0.6, 2), (1.0, 0), (2.2, 0)], [(0, 0), (0.3, -16), (0.7, 3), (1.1, 0), (2.2, 0)], stagger=0.02)
+    wa = r.clip("warn", 1.2)
+    plates(wa, [(0, 0), (0.3, 12), (0.5, 4), (0.7, 12), (1.2, 0)])
+    core(wa, [(0, 1), (0.3, 1.15), (0.5, 1.0), (0.7, 1.15), (1.2, 1)])
+    arms(wa, [(0, 0, 0, 0), (0.35, -18, 0, 10), (1.2, 0, 0, 0)])
+    # a melee lash of the arms
+    bi = r.clip("bite", 0.6)
+    arms(bi, [(0, 0, 0, 0), (0.12, -30, 0, 10), (0.24, 40, 0, -10), (0.6, 0, 0, 0)], [(0, 0, 0, 0), (0.12, -20, 0, 0), (0.24, 30, 0, 0), (0.6, 0, 0, 0)],
+         [(0, 0, 0, 0), (0.14, -25, 0, 0), (0.26, 35, 0, 0), (0.6, 0, 0, 0)])
+    bi.rot("crown", [(0, 0, 0, 0), (0.12, -6, 0, 0), (0.24, 8, 0, 0), (0.6, 0, 0, 0)])
+    w = r.clip("windup", 0.8)
+    w.rot("crown", [(0, 0, 0, 0), (0.8, -8, 0, 0)])
+    plates(w, [(0, 0), (0.8, 10)])
+    st = r.clip("strike", 0.5)
+    st.rot("crown", [(0, -8, 0, 0), (0.08, 10, 0, 0), (0.5, 0, 0, 0)])
+    plates(st, [(0, 10), (0.08, -6), (0.5, 0)])
+    # Deep Shards: the plates flare wide and the crown draws back... then they snap forward and fling the shards
+    sw = r.clip("shards_windup", 1.0)
+    plates(sw, [(0, 0), (1.0, 26)], [(0, 0), (1.0, 22)])
+    sw.rot("crown", [(0, 0, 0, 0), (1.0, -12, 0, 0)])
+    core(sw, [(0, 1), (1.0, 1.18)])
+    arms(sw, [(0, 0, 0, 0), (1.0, -16, 0, 14)])
+    ss = r.clip("shards_strike", 0.55)
+    plates(ss, [(0, 26), (0.07, -12), (0.25, 4), (0.55, 0)], [(0, 22), (0.07, -10), (0.55, 0)])
+    ss.rot("crown", [(0, -12, 0, 0), (0.07, 14, 0, 0), (0.55, 0, 0, 0)])
+    core(ss, [(0, 1.18), (0.06, 0.92), (0.55, 1.0)])
+    arms(ss, [(0, -16, 0, 14), (0.1, 10, 0, 0), (0.55, 0, 0, 0)])
+    # Rootfall: it hunches, drives its arms into the floor and the roots tremble as they push through the rock...
+    # then it heaves up and they burst out where you stood
+    rw = r.clip("roots_windup", 1.6)
+    rw.pos("crown", [(0, 0, 0, 0), (1.6, 0, -2.5, 0)])
+    rw.rot("crown", [(0, 0, 0, 0), (1.6, 7, 0, 0)])
+    arms(rw, [(0, 0, 0, 0), (1.0, 28, 0, -6), (1.6, 34, 0, -8)], [(0, 0, 0, 0), (1.6, 26, 0, 0)], [(0, 0, 0, 0), (1.6, 20, 0, 0)])
+    for i in range(SEEP_ROOTS):
+        rw.rot(f"rt{i}a", [(k * 0.1, 0, (1.5 if (k + i) % 2 else -1.5) * (k / 16), 0) for k in range(17)])
+    roots(rw, [(0, 0), (1.6, 3)])
+    plates(rw, [(0, 0), (1.6, -10)])
+    rs = r.clip("roots_strike", 0.6)
+    rs.pos("crown", [(0, 0, -2.5, 0), (0.08, 0, 2, 0), (0.6, 0, 0, 0)])
+    rs.rot("crown", [(0, 7, 0, 0), (0.08, -10, 0, 0), (0.6, 0, 0, 0)])
+    arms(rs, [(0, 34, 0, -8), (0.1, -30, 0, 16), (0.6, 0, 0, 0)], [(0, 26, 0, 0), (0.1, -20, 0, 0), (0.6, 0, 0, 0)], [(0, 20, 0, 0), (0.12, -30, 0, 0), (0.6, 0, 0, 0)])
+    plates(rs, [(0, -10), (0.08, 18), (0.6, 0)])
+    # Root Lash: the arms coil back, the crown twists away, the roots lift... then everything sweeps round
+    lw = r.clip("lash_windup", 1.0)
+    lw.rot("crown", [(0, 0, 0, 0), (1.0, -4, -22, 0)])
+    arms(lw, [(0, 0, 0, 0), (1.0, -42, 0, 20)], [(0, 0, 0, 0), (1.0, -26, 0, 0)], [(0, 0, 0, 0), (1.0, -20, 0, 0)])
+    roots(lw, [(0, 0), (1.0, -7)], [(0, 0), (1.0, -9)])
+    ls = r.clip("lash_strike", 0.65)
+    ls.rot("crown", [(0, -4, -22, 0), (0.14, 6, 38, 0), (0.65, 0, 0, 0)])
+    arms(ls, [(0, -42, 0, 20), (0.12, 46, 30, -20), (0.65, 0, 0, 0)], [(0, -26, 0, 0), (0.12, 36, 0, 0), (0.65, 0, 0, 0)],
+         [(0, -20, 0, 0), (0.14, 40, 0, 0), (0.65, 0, 0, 0)])
+    roots(ls, [(0, -7), (0.06, 6), (0.3, -2), (0.65, 0)], [(0, -9), (0.07, 8), (0.3, -2), (0.65, 0)])
+    # Deep Pulse (its signature): the plates close tight and the crown sinks while the hidden core swells... then the
+    # plates blast open with the pulse
+    pw = r.clip("pulse_windup", 1.8)
+    plates(pw, [(0, 0), (1.4, -52), (1.8, -56)], [(0, 0), (1.4, -24), (1.8, -26)])
+    pw.pos("crown", [(0, 0, 0, 0), (1.8, 0, -3, 0)])
+    core(pw, [(0, 1), (1.8, 1.3)])
+    arms(pw, [(0, 0, 0, 0), (1.8, -18, 0, -10)], [(0, 0, 0, 0), (1.8, 16, 0, 0)], [(0, 0, 0, 0), (1.8, 26, 0, 0)])
+    ps = r.clip("pulse_strike", 0.9)
+    plates(ps, [(0, -56), (0.07, 30), (0.3, 12), (0.9, 0)], [(0, -26), (0.08, 24), (0.9, 0)])
+    ps.pos("crown", [(0, 0, -3, 0), (0.08, 0, 3.5, 0), (0.9, 0, 0, 0)])
+    core(ps, [(0, 1.3), (0.05, 1.55), (0.3, 1.1), (0.9, 1.0)])
+    arms(ps, [(0, -18, 0, -10), (0.1, -40, 0, 30), (0.9, 0, 0, 0)], [(0, 16, 0, 0), (0.1, -24, 0, 0), (0.9, 0, 0, 0)], [(0, 26, 0, 0), (0.1, -30, 0, 0), (0.9, 0, 0, 0)])
+    roots(ps, [(0, 0), (0.06, -10), (0.4, 0), (0.9, 0)])
+    # Call of the Deep: it rises tall, opens wide and lifts its arms to the walls, shaking... then thrusts them out
+    cw = r.clip("call_windup", 1.8)
+    cw.pos("crown", [(0, 0, 0, 0), (1.0, 0, 4, 0), (1.8, 0, 4.5, 0)])
+    cw.pos("body", [(0, 0, 0, 0), (1.0, 0, 2, 0), (1.8, 0, 2, 0)])
+    plates(cw, [(0, 0), (1.0, 28), (1.8, 30)], [(0, 0), (1.0, 20), (1.8, 22)])
+    arms(cw, [(0, 0, 0, 0), (0.8, -36, 0, 46)] + [(0.9 + k * 0.1, -36 + (3 if k % 2 else -3), 0, 46) for k in range(9)],
+         [(0, 0, 0, 0), (0.8, -30, 0, 0), (1.8, -30, 0, 0)], [(0, 0, 0, 0), (0.8, -26, 0, 0), (1.8, -26, 0, 0)])
+    core(cw, [(0, 1), (1.8, 1.2)])
+    cs = r.clip("call_strike", 0.9)
+    cs.pos("crown", [(0, 0, 4.5, 0), (0.1, 0, 5, 0), (0.9, 0, 0, 0)])
+    cs.pos("body", [(0, 0, 2, 0), (0.9, 0, 0, 0)])
+    plates(cs, [(0, 30), (0.1, 34), (0.9, 0)], [(0, 22), (0.9, 0)])
+    arms(cs, [(0, -36, 0, 46), (0.1, -10, 0, 70), (0.9, 0, 0, 0)], [(0, -30, 0, 0), (0.1, -10, 0, 0), (0.9, 0, 0, 0)], [(0, -26, 0, 0), (0.9, 0, 0, 0)])
+    core(cs, [(0, 1.2), (0.08, 1.45), (0.9, 1.0)])
+    # Shard Storm: it winds the crown back and opens every plate... then whips round and the ring of shards flies
+    tw = r.clip("storm_windup", 1.2)
+    tw.rot("crown", [(0, 0, 0, 0), (1.2, -6, -30, 0)])
+    plates(tw, [(0, 0), (1.2, 30)], [(0, 0), (1.2, 24)])
+    core(tw, [(0, 1), (1.2, 1.25)])
+    arms(tw, [(0, 0, 0, 0), (1.2, -24, 0, 30)])
+    ts = r.clip("storm_strike", 0.7)
+    ts.rot("crown", [(0, -6, -30, 0), (0.15, 4, 50, 0), (0.7, 0, 0, 0)])
+    plates(ts, [(0, 30), (0.06, -8), (0.2, 14), (0.7, 0)], [(0, 24), (0.06, -10), (0.7, 0)], stagger=0.015)
+    core(ts, [(0, 1.25), (0.05, 0.9), (0.7, 1.0)])
+    arms(ts, [(0, -24, 0, 30), (0.15, 6, 0, 10), (0.7, 0, 0, 0)])
+    # Heartburst: the plates close slowly over a core that swells and shakes the crown... then burst open (step in!)
+    bw = r.clip("burst_windup", 2.4)
+    plates(bw, [(0, 0), (2.0, -50), (2.4, -54)], [(0, 0), (2.0, -22), (2.4, -24)])
+    bw.rot("crown", [(k * 0.1, (1.2 if k % 2 else -1.2) * (k / 24), 0, (1.0 if k % 3 else -1.0) * (k / 24)) for k in range(25)])
+    core(bw, [(0, 1), (2.4, 1.5)])
+    arms(bw, [(0, 0, 0, 0), (2.4, -10, 0, -14)], [(0, 0, 0, 0), (2.4, 18, 0, 0)], [(0, 0, 0, 0), (2.4, 30, 0, 0)])
+    bs = r.clip("burst_strike", 1.0)
+    plates(bs, [(0, -54), (0.06, 36), (0.35, 14), (1.0, 0)], [(0, -24), (0.07, 30), (1.0, 0)])
+    bs.pos("crown", [(0, 0, 0, 0), (0.07, 0, 4, 0), (1.0, 0, 0, 0)])
+    core(bs, [(0, 1.5), (0.05, 1.7), (0.4, 1.1), (1.0, 1.0)])
+    arms(bs, [(0, -10, 0, -14), (0.1, -46, 0, 40), (1.0, 0, 0, 0)], [(0, 18, 0, 0), (0.1, -30, 0, 0), (1.0, 0, 0, 0)], [(0, 30, 0, 0), (0.12, -36, 0, 0), (1.0, 0, 0, 0)])
+    roots(bs, [(0, 0), (0.06, -12), (0.5, 0), (1.0, 0)], [(0, 0), (0.08, -16), (0.6, 0), (1.0, 0)])
+    hu = r.clip("hurt", 0.45)
+    hu.rot("crown", [(0, 0, 0, 0), (0.05, -6, 0, 4), (0.2, 2, 0, -1), (0.45, 0, 0, 0)])
+    plates(hu, [(0, 0), (0.05, 8), (0.18, -3), (0.45, 0)])
+    core(hu, [(0, 1), (0.05, 0.9), (0.45, 1)])
+    # death: the violet drains into the core (it swells, the plates flare), then the plates shut over it and the crown
+    # sinks and droops; the arms collapse to the floor
+    de = r.clip("death", 3.2)
+    plates(de, [(0, 0), (0.9, 10), (1.3, 6), (2.4, -54), (3.2, -58)], [(0, 0), (0.9, 8), (2.4, -26), (3.2, -28)], stagger=0.05)
+    de.pos("crown", [(0, 0, 0, 0), (0.9, 0, 1.5, 0), (2.0, 0, 0, 0), (3.2, 0, -4.5, 0)])
+    de.rot("crown", [(0, 0, 0, 0), (1.2, -3, 0, 0), (3.2, 12, 0, 6)])
+    de.pos("body", [(0, 0, 0, 0), (3.2, 0, -2, 0)])
+    core(de, [(0, 1.0), (1.1, 1.3), (2.0, 1.05), (3.2, 0.7)])
+    arms(de, [(0, 0, 0, 0), (0.9, -16, 0, 14), (2.0, 40, 0, 20), (3.2, 62, 0, 26)], [(0, 0, 0, 0), (2.0, 20, 0, 0), (3.2, 30, 0, 0)],
+         [(0, 0, 0, 0), (2.2, 10, 0, 0), (3.2, 22, 0, 0)])
+    roots(de, [(0, 0), (0.6, -6), (1.4, 0), (3.2, 1)], stagger=0.05)
+
+
+def _cracks(P, cube, fname, n, seed, r0=0.2, r1=1.0, a0=230, a1=70, branch=0.25):
+    """Glowing cracks running out from the middle of a face (Deepglass light in the rock)."""
+    import random
+    rnd = random.Random(_h("seep_cracks", cube, fname, seed))
+    glass = Ramp(*DEEPGLASS)
+    f, g = P.face(cube, fname), P.face(cube, fname, glow=True)
+    cx, cy = (f.w - 1) / 2, (f.h - 1) / 2
+    big = min(f.w, f.h) / 2
+
+    def run(ang, ra, rb, aa, ab, depth=0):
+        steps = int(big * (rb - ra) * 1.6) + 2
+        wob = 0.0
+        for k in range(steps):
+            t = k / (steps - 1)
+            rr = big * (ra + (rb - ra) * t)
+            wob += rnd.uniform(-0.2, 0.2)
+            a = ang + wob * 0.3
+            x, y = int(round(cx + math.cos(a) * rr)), int(round(cy + math.sin(a) * rr))
+            if 0 <= x < f.w and 0 <= y < f.h:
+                f.set(x, y, glass.at(5 if t < 0.4 else 4))
+                g.set(x, y, hexc("#b48cff")[:3] + (int(aa + (ab - aa) * t),))
+            if depth == 0 and rnd.random() < branch * 0.08 and rb - ra > 0.2:
+                here = ra + (rb - ra) * t
+                run(a + rnd.choice((-0.7, 0.7)), here, min(rb, here + 0.3), int(aa * 0.8), ab, 1)
+
+    for k in range(n):
+        run((k + rnd.uniform(-0.3, 0.3)) / n * math.tau, r0, r1, a0, a1)
+
+
+def paint_seep_heart(r, P):
+    stone = Ramp("#0c0b10", "#16141c", "#211e28", "#2d2936", "#3b3646", "#4d4759")
+    growth = Ramp("#050309", "#0c0716", "#160d26", "#211338", "#30194f", "#45246e")
+    glass = Ramp(*DEEPGLASS)
+    light = Ramp("#5a38a0", "#8a62dc", "#b48cff", "#d4baff", "#ecdfff", "#fbf7ff")
+    VIOLET, PALE, WHITE = hexc("#b48cff"), hexc("#dcc8ff"), hexc("#f6efff")
+    # the mound: deepslate, stained black-violet towards the middle where the growth comes up, cracked with light
+    P.paint("mound", stone, 2.2, combine(p_stone(P.rng, 0.8, cell=5), p_blotch("seep_mound", 6, 0.25)), rim=0.4, ao=0.5)
+    f = P.face("mound", "top")
+    cx, cy = (f.w - 1) / 2, (f.h - 1) / 2
+    for i, j in f.each():
+        d = math.hypot(i - cx, j - cy) / (f.w / 2)
+        if d < 0.66:
+            f.set(i, j, growth.at(1.4 + 2.4 * d + (0.7 if (i * 7 + j * 3) % 11 == 0 else 0)))
+    for fname in SIDES:
+        f, g = P.face("mound", fname), P.face("mound", fname, glow=True)
+        for i in range(f.w):
+            k = (i * 5 + 3) % 7
+            if k < 2:  # the growth reaching over the rock's edge, a faint vein in it now and then
+                f.set(i, 0, growth.at(2.2))
+                f.set(i, 1, growth.at(1.6))
+                if k == 0:
+                    g.set(i, 0, VIOLET[:3] + (110,))
+    _cracks(P, "mound", "top", 8, "m", r0=0.55, r1=1.0, a0=170, a1=60)
+    P.paint("mound_top", growth, 2.2, combine(p_stone(P.rng, 0.5, cell=5), p_blotch("seep_mtop", 5, 0.3)), rim=0.5)
+    _cracks(P, "mound_top", "top", 6, "mt", r0=0.15, r1=1.0, a0=225, a1=120)
+    for k in range(len(SEEP_LUMPS)):
+        P.paint(f"lump{k}", stone, 2.4, p_stone(P.rng, 0.7, cell=3), rim=0.5)
+    # the roots: black-violet growth with a vein of light down their backs, brightest near the heart
+    for nm, a0 in (("rt0a", 215), ("rt0b", 180), ("rt0c", 140), ("rtf0", 120)):
+        P.paint(nm, growth, 2.0, combine(p_bands(3, 0.5), p_blotch("seep_" + nm, 3, 0.3)), rim=0.5, ao=0.6)
+        f, g = P.face(nm, "top"), P.face(nm, "top", glow=True)
+        mid = (f.w - 1) // 2
+        for j in range(f.h):
+            x = mid + ((j // 3) % 2 if f.w > 3 else 0)
+            f.set(x, j, glass.at(4.6))
+            g.set(x, j, VIOLET[:3] + (int(a0 - 30 * j / max(1, f.h - 1)),))
+        fn, gn = P.face(nm, "north"), P.face(nm, "north", glow=True)
+        fn.set((fn.w - 1) // 2, 0, glass.at(5))
+        gn.set((fn.w - 1) // 2, 0, PALE[:3] + (int(a0 * 0.8),))
+    # the arms: banded growth, a seam of light up their fronts, a glass barb
+    for nm in ("lash_l", "lash2_l", "lash3_l"):
+        P.paint(nm, growth, 2.3, combine(p_bands(3, 0.7), p_blotch("seep_" + nm, 3, 0.25)), rim=0.5)
+        for fname in ("north", "top"):
+            f, g = P.face(nm, fname), P.face(nm, fname, glow=True)
+            mid = (g.w - 1) // 2
+            for j in range(g.h):
+                f.set(mid, j, glass.at(4.2))
+                g.set(mid, j, VIOLET[:3] + (150,))
+    P.paint("barb_l", glass, 4.8, None, rim=0.4)
+    for fname in ("top", "north", "south", "west", "east"):
+        g = P.face("barb_l", fname, glow=True)
+        for i, j in g.each():
+            g.set(i, j, PALE[:3] + (220,))
+    # the trunk: growth twisted round itself, two seams of light climbing each side, brighter towards the core
+    P.paint("trunk", growth, 2.4, combine(p_strokes(cell=2, length=5, dark=0.8, light=0.5, density=0.8, seed=3), p_blotch("seep_trunk", 4, 0.3)), rim=0.3)
+    for fname in SIDES:
+        f, g = P.face("trunk", fname), P.face("trunk", fname, glow=True)
+        for x0 in (1, 5):
+            for j in range(f.h):
+                x = x0 + (1 if (j // 4 + x0) % 2 else 0)
+                if 0 <= x < f.w:
+                    f.set(x, j, glass.at(4))
+                    g.set(x, j, VIOLET[:3] + (int(60 + 130 * (1 - j / f.h) ** 1.5),))
+    P.paint("strand0", glass, 1.6, lambda f, i, j: (2.4 if i == 0 else 1.2 if i == f.w - 1 else 0) if f.name in SIDES else 0.8, rim=0.5)
+    for fname in SIDES:
+        g = P.face("strand0", fname, glow=True)
+        for j in range(g.h):
+            g.set(0, j, PALE[:3] + (int(50 + 140 * (1 - j / g.h) ** 1.4),))
+    # the collar: a ring of growth, its rim lit, glowing white-violet inside under the core
+    P.paint("collar", growth, 2.6, p_bands(2, 0.5, vertical=True), rim=0.6)
+    f, g = P.face("collar", "top"), P.face("collar", "top", glow=True)
+    for i, j in f.each():
+        edge = min(i, j, f.w - 1 - i, f.h - 1 - j)
+        if edge <= 1:
+            f.set(i, j, glass.at(4 + (1 - edge) * 0.6))
+            g.set(i, j, VIOLET[:3] + (200 - edge * 60,))
+        else:
+            f.set(i, j, light.at(1.5))
+            g.set(i, j, PALE[:3] + (170,))
+    # the core: a faceted crystal of light, white at its heart
+    for cname, base in (("core", 2.6), ("facet", 3.6)):
+        P.paint(cname, light, base, lambda f, i, j: 0.9 * (1 - abs(i - (f.w - 1) / 2) / max(1, f.w / 2)) - 0.6 * abs(j - (f.h - 1) / 2) / max(1, f.h / 2),
+                rim=0.4, ao=0.3, light=0.6)
+        for fname in ("top", "bottom") + SIDES:
+            gf = P.face(cname, fname, glow=True)
+            for i, j in gf.each():
+                d = max(abs(i - (gf.w - 1) / 2) / max(1, gf.w / 2), abs(j - (gf.h - 1) / 2) / max(1, gf.h / 2))
+                col = lerpc(WHITE, VIOLET if cname == "core" else PALE, d)
+                gf.set(i, j, col[:3] + (int(255 - 45 * d),))
+    # the plates: black Deepglass, dark inside the glass and lit violet only at the edges; their inner faces catch the
+    # core's light; the tips shine
+    for cname, tip in (("plate0", False), ("ptip0", True)):
+        def pat(f, i, j, tip=tip):
+            edge = i in (0, f.w - 1)
+            if f.name == "north":
+                if edge:
+                    return 2.5
+                return -0.5 + (0.9 if i == f.w // 2 and not tip else 0) + 0.3 * j / f.h
+            if f.name == "south":
+                return 1.2 + (1.3 * j / max(1, f.h - 1) if not tip else 0.6) + (0.7 if edge else 0)
+            return 2.3
+        P.paint(cname, glass, 1.6, pat, rim=0.3, ao=0.2, grad=0.3)
+        for fname in ("south", "west", "east", "top"):
+            g = P.face(cname, fname, glow=True)
+            for i, j in g.each():
+                if fname == "south":
+                    a = 60 + 100 * j / max(1, g.h - 1) if not tip else 100 + 60 * (1 - j / max(1, g.h - 1))
+                    g.set(i, j, VIOLET[:3] + (int(a),))
+                else:
+                    g.set(i, j, PALE[:3] + (215 if tip else 165,))
+        g = P.face(cname, "north", glow=True)
+        for i in (0, g.w - 1):
+            for j in range(g.h):
+                g.set(i, j, VIOLET[:3] + (int(120 if not tip else 170),))
+        if tip:
+            for i in range(g.w):
+                g.set(i, 0, PALE[:3] + (225,))
+    P.paint("ppt0", glass, 5.0, None, rim=0.4, ao=0.0)
+    for fname in ("top", "north", "south", "west", "east"):
+        g = P.face("ppt0", fname, glow=True)
+        for i, j in g.each():
+            g.set(i, j, lerpc(WHITE, PALE, j / max(1, g.h - 1))[:3] + (240,))
+    # the spires: Deepglass, lit along one edge, the light gathering to a shining tip
+    for k in range(len(SEEP_SPIRES)):
+        sp, tp = f"spire{k}", f"stip{k}"
+        P.paint(sp, glass, 1.4, lambda f, i, j: (2.6 if i == 0 else 1.5 if i == f.w - 1 else 0.3 * (1 - j / max(1, f.h))) if f.name in SIDES else 1.4,
+                rim=0.4, ao=0.4)
+        P.paint(tp, glass, 4.6, None, rim=0.5, ao=0.0, grad=0.3)
+        for fname in SIDES:
+            g = P.face(sp, fname, glow=True)
+            for j in range(g.h):
+                t = 1 - j / max(1, g.h - 1)
+                g.set(0, j, PALE[:3] + (int(40 + 160 * t * t),))
+            gt = P.face(tp, fname, glow=True)
+            for i, j in gt.each():
+                u = j / max(1, gt.h - 1)
+                gt.set(i, j, lerpc(WHITE, PALE, u)[:3] + (int(245 - 35 * u),))
+        gt = P.face(tp, "top", glow=True)
+        for i, j in gt.each():
+            gt.set(i, j, WHITE[:3] + (255,))
+    return P.skin, P.glow
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# A burst of roots (the seep heart's Rootfall and Root Lash): thorned roots of growth punch up through the floor with
+# the rock they broke, hold, and sink back. Drawn by mobs.client.SeepRootRenderer on awaken:seep_root (no creature).
+
+SEEP_ROOT_SPIKES = [(0, 0, 6, 0, 22), (-3, 2, -34, 40, 15), (3, -2, -30, 210, 13), (2, 3, -38, 300, 10), (-2, -3, -28, 130, 9)]
+
+
+def seep_root():
+    r = Rig("seep_root", (64, 64))
+    r.shadow = 0.0
+    base = r.bone("rbase", (0, 24, 0))
+    for k, (x, z, yaw, w, h, d) in enumerate([(-4, 2, 20, 4, 2, 3), (4, 1, -30, 3, 2, 4), (0, -4, 60, 4, 1, 3), (2, 5, 10, 3, 1, 3)]):
+        base.bone(f"rubble{k}", (x, 0, z), (0, yaw, 0)).cube(f"rubble{k}", -w / 2, -h, -d / 2, w, h, d)
+    for k, (x, z, lean, yaw, h) in enumerate(SEEP_ROOT_SPIKES):
+        w = 4 if k == 0 else 3
+        h1 = int(h * 0.55)
+        h2 = h - h1 - 3
+        sp = base.bone(f"spike{k}", (x, 0, z), (lean, yaw, 0))
+        sp.cube(f"spike{k}", -w / 2, -h1, -w / 2, w, h1, w)
+        sb = sp.bone(f"spikeb{k}", (0, -h1, 0), (14, 0, 0))
+        sb.cube(f"spikeb{k}", -(w - 1) / 2, -h2, -(w - 1) / 2, w - 1, h2, w - 1)
+        sb.bone(f"spikec{k}", (0, -h2, 0), (10, 0, 0)).cube(f"spikec{k}", -0.5, -3, -0.5, 1, 3, 1)
+    r.pack()
+    for nm in ("idle", "walk"):  # what every rig must have (it is no creature: these hold still)
+        r.clip(nm, 1.0, loop=True).rot("rbase", [(0, 0, 0, 0), (1.0, 0, 0, 0)])
+    for nm in ("hurt", "death"):
+        r.clip(nm, 0.2).rot("rbase", [(0, 0, 0, 0), (0.2, 0, 0, 0)])
+    er = r.clip("erupt", 1.4)
+    for k, (_, _, _, _, h) in enumerate(SEEP_ROOT_SPIKES):
+        delay = k * 0.035
+        keys = [(0, 0, -(h + 2), 0, "lin")]
+        if delay > 0:
+            keys.append((delay, 0, -(h + 2), 0, "lin"))
+        keys += [(delay + 0.08, 0, 1.5, 0), (delay + 0.2, 0, 0, 0), (0.75, 0, 0, 0), (1.35, 0, -(h + 2), 0), (1.4, 0, -(h + 2), 0)]
+        er.pos(f"spike{k}", keys)
+        er.rot(f"spikeb{k}", [(0, 0, 0, 0), (delay + 0.1, -12, 0, 0), (delay + 0.3, 4, 0, 0), (0.6, 0, 0, 0), (1.4, 0, 0, 0)])
+    for k in range(4):
+        er.pos(f"rubble{k}", [(0, 0, 0, 0), (0.08, 0, 2.0, 0), (0.25, 0, 0.5, 0), (1.0, 0, 0.5, 0), (1.4, 0, 0, 0)])
+    return r
+
+
+def paint_seep_root(r, P):
+    stone = Ramp("#0c0b10", "#16141c", "#211e28", "#2d2936", "#3b3646", "#4d4759")
+    growth = Ramp("#050309", "#0c0716", "#160d26", "#211338", "#30194f", "#45246e")
+    glass = Ramp(*DEEPGLASS)
+    VIOLET, PALE = hexc("#b48cff"), hexc("#dcc8ff")
+    for k in range(4):
+        P.paint(f"rubble{k}", stone, 2.2, p_stone(P.rng, 0.6, cell=2), rim=0.5)
+    for k in range(len(SEEP_ROOT_SPIKES)):
+        P.paint(f"spike{k}", growth, 2.2, combine(p_bands(3, 0.6), p_blotch(f"seep_spike{k}", 3, 0.3)), rim=0.5)
+        P.paint(f"spikeb{k}", growth, 2.6, p_bands(3, 0.6), rim=0.5)
+        P.paint(f"spikec{k}", glass, 4.8, None, rim=0.4)
+        for nm, a in ((f"spike{k}", 150), (f"spikeb{k}", 190)):
+            for fname in ("north", "south"):
+                f, g = P.face(nm, fname), P.face(nm, fname, glow=True)
+                mid = (f.w - 1) // 2
+                for j in range(f.h):
+                    f.set(mid, j, glass.at(4.4))
+                    g.set(mid, j, VIOLET[:3] + (a,))
+        for fname in ("top", "north", "south", "west", "east"):
+            g = P.face(f"spikec{k}", fname, glow=True)
+            for i, j in g.each():
+                g.set(i, j, PALE[:3] + (230,))
+    return P.skin, P.glow
+
+
+# =====================================================================================================================
 # Registry, Java data, previews (kept at the end: the designs above fill RIGS)
 # =====================================================================================================================
 
@@ -1779,7 +2303,8 @@ RIGS = {}
 
 def _register():
     RIGS.clear()
-    for name in ("glimmerfin", "breathbell", "brook_otter", "tidesteed", "lantern_maw", "chime_cricket", "wickling", "drip_lurker", "hushling", "thousandfoot"):
+    for name in ("glimmerfin", "breathbell", "brook_otter", "tidesteed", "lantern_maw", "chime_cricket", "wickling", "drip_lurker", "hushling", "thousandfoot",
+                 "seep_heart", "seep_root"):
         design = globals().get(name)
         painter = globals().get("paint_" + name)
         if design and painter:
@@ -1789,7 +2314,8 @@ def _register():
 # What each body is scaled to in game (the bestiary's .scale) and its box (Model width, height) for the size check.
 SCALE = {"lantern_maw": 1.3, "thousandfoot": 1.3}
 BOX = {"glimmerfin": (0.5, 0.35), "breathbell": (0.7, 0.8), "brook_otter": (0.6, 0.55), "tidesteed": (1.2, 1.3), "lantern_maw": (2.0, 1.6),
-       "chime_cricket": (0.5, 0.4), "wickling": (0.5, 0.35), "drip_lurker": (0.8, 1.1), "hushling": (0.6, 0.75), "thousandfoot": (2.0, 1.1)}
+       "chime_cricket": (0.5, 0.4), "wickling": (0.5, 0.35), "drip_lurker": (0.8, 1.1), "hushling": (0.6, 0.75), "thousandfoot": (2.0, 1.1),
+       "seep_heart": (2.0, 2.6), "seep_root": (0.6, 1.3)}
 
 
 def rigs(only=None):
@@ -1878,7 +2404,7 @@ EGG = {
     "glimmerfin": ("#2a5474", "#9ae4f2"), "breathbell": ("#8cb8d8", "#e6b8ff"), "brook_otter": ("#52341e", "#dcc6a0"),
     "tidesteed": ("#1a4e58", "#9ff6ff"), "lantern_maw": ("#0c1018", "#7fffe0"), "chime_cricket": ("#2e263e", "#c8a4ff"),
     "wickling": ("#1e1410", "#ff8a2a"), "drip_lurker": ("#725634", "#ff7a3a"), "hushling": ("#c8c2b8", "#1ad0c0"),
-    "thousandfoot": ("#221a2c", "#e08e3a"),
+    "thousandfoot": ("#221a2c", "#e08e3a"), "seep_heart": ("#120a20", "#b48cff"),
 }
 
 MATERIALS = ["tide_scale", "tide_pelt", "tide_gel", "hollow_crystal", "hollow_chitin", "hollow_wick"]
@@ -1954,6 +2480,25 @@ def part_icon(pid):
             c.set(8, y, R.hexc("#2a3442"))
         c.set(6, 7, (255, 255, 255, 255))
         return _outline(c)
+    if pid == "seep_heartglass":
+        # a heart of Deepglass: two lobes over a point, black glass lit violet at its facets, a white spark inside
+        g = [R.hexc(h) for h in DEEPGLASS] + [R.hexc("#fbf7ff")]
+        c = Canvas()
+        for y in range(16):
+            for x in range(16):
+                dx, dy = x - 7.5, y - 7.5
+                lobe = min(math.hypot(dx + 2.6, dy + 2.2), math.hypot(dx - 2.6, dy + 2.2)) <= 3.4
+                point = dy >= -2.2 and abs(dx) <= 6.0 - (dy + 2.2) * 0.72
+                if not (lobe or point):
+                    continue
+                d = math.hypot(dx, dy - 0.3) / 7.0
+                facet = (x + 2 * y) % 7 == 0 or (2 * x - y) % 9 == 0
+                v = 5.6 - 4.6 * d + (0.9 if facet else 0) - (0.9 if dx > 1.5 and dy > 0 else 0)
+                c.set(x, y, g[max(0, min(7, int(round(v))))])
+        c.set(7, 6, g[7])
+        c.set(8, 7, g[6])
+        c.set(6, 7, g[6])
+        return _outline(c)
     if pid == "thousandfoot_mandible":
         return F2._icon([(3, 14), (2, 9), (4, 4), (8, 1), (13, 2), (14, 5), (10, 4), (7, 6), (6, 10), (6, 14)],
                         F2.P("#e08e3a", "#bc6c26", "#6e3810", "#4a2408"))
@@ -1988,6 +2533,95 @@ def tool_icon(tid):
             c.set(12 + (k % 2), 10 + k // 2, R.hexc("#3e2414"))
         return _outline(c)
     return c
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# The seep heart's particle sprites (white with alpha: the game colours them violet; mobs.client.SeepParticles)
+
+def _soft(size, r, hard=0.0, a_max=255):
+    from pixelart import Canvas
+    c = Canvas(size, size)
+    m = (size - 1) / 2
+    for y in range(size):
+        for x in range(size):
+            d = math.hypot(x - m, y - m) / r
+            if d < 1:
+                c.set(x, y, (255, 255, 255, int(a_max * (1 - d) ** (1.4 - hard))))
+    return c
+
+
+def seep_particles():
+    import random
+    from pixelart import Canvas
+    out = {}
+    out["seep_mote"] = [_soft(8, r, hard=0.35) for r in (2.0, 2.8, 3.4, 2.4)]
+    shards = []
+    for k, ang in enumerate((0.35, 1.1, 1.9, 2.6)):
+        c = Canvas(8, 8)
+        dx, dy = math.cos(ang), math.sin(ang)
+        for s in range(-6, 7):
+            t = s / 2.0
+            x, y = 3.5 + dx * t, 3.5 + dy * t
+            a = int(255 * (1 - abs(t) / 3.2))
+            if a > 0:
+                c.set(int(round(x)), int(round(y)), (255, 255, 255, max(a, c.get(int(round(x)), int(round(y)))[3])))
+        shards.append(c)
+    out["seep_shard"] = shards
+    cracks = []
+    for k in range(4):
+        rnd = random.Random(_h("seep_crack_sprite", k))
+        c = Canvas(32, 32)
+        reach = 0.42 + 0.19 * k
+        for y in range(32):
+            for x in range(32):
+                d = math.hypot(x - 15.5, y - 15.5) / 16
+                if d < 0.32:
+                    c.set(x, y, (255, 255, 255, int(70 * (1 - d / 0.32))))
+        arms = 6 + k
+        for a_ in range(arms):
+            ang = (a_ + rnd.uniform(-0.3, 0.3)) / arms * math.tau
+            wob = 0.0
+            for s in range(60):
+                t = s / 59
+                if t > reach:
+                    break
+                wob += rnd.uniform(-0.25, 0.25)
+                aa = ang + wob * 0.25
+                x, y = int(round(15.5 + math.cos(aa) * t * 15.5)), int(round(15.5 + math.sin(aa) * t * 15.5))
+                if 0 <= x < 32 and 0 <= y < 32:
+                    c.set(x, y, (255, 255, 255, int(255 - 120 * t / max(0.01, reach))))
+                if s % 12 == 6 and rnd.random() < 0.5:  # a short branch
+                    ba = aa + rnd.choice((-0.6, 0.6))
+                    for b in range(1, 4):
+                        bx, by = int(round(x + math.cos(ba) * b)), int(round(y + math.sin(ba) * b))
+                        if 0 <= bx < 32 and 0 <= by < 32:
+                            c.set(bx, by, (255, 255, 255, 150))
+        cracks.append(c)
+    out["seep_crack"] = cracks
+    waves = []
+    for runed in (False, True):
+        c = Canvas(32, 32)
+        for y in range(32):
+            for x in range(32):
+                d = math.hypot(x - 15.5, y - 15.5)
+                a = math.exp(-((d - 14.8) / (0.75 if runed else 1.0)) ** 2)
+                if not runed and d < 14.8:
+                    a = max(a, 0.12 * (d / 14.8) ** 3)
+                if runed:
+                    ang = (math.atan2(y - 15.5, x - 15.5) / math.tau) % 1.0
+                    if abs(d - 12.8) < 0.6 and int(ang * 24) % 2 == 0:
+                        a = max(a, 0.55)  # a dashed inner ring
+                    if 12.5 < d < 15.5 and min(ang * 12 % 1.0, 1 - ang * 12 % 1.0) < 0.035:
+                        a = max(a, 0.8)  # ticks every 30 degrees
+                if a > 0.02:
+                    c.set(x, y, (255, 255, 255, int(255 * min(1.0, a))))
+        waves.append(c)
+    out["seep_wave"] = waves
+    return out
+
+
+SEEP_PARTICLE_JSON = {"seep_mote": "seep_mote", "seep_drain": "seep_mote", "seep_shard": "seep_shard", "seep_crack": "seep_crack",
+                      "seep_wave": "seep_wave"}
 
 
 def bridle_overlay(model):
@@ -2052,6 +2686,9 @@ def build(out):
         out.item(mid, material_icon(mid))
     for tid in TOOLS:
         out.item(tid, tool_icon(tid))
+    for name, frames in seep_particles().items():
+        for k, c in enumerate(frames):
+            out.particle(f"{name}_{k}", c)
     out.entity("mobs/frost_stag_bridle", bridle_overlay("STAG"))
     out.entity("mobs/dune_ray_bridle", bridle_overlay("RAY"))
     path = java(all_rigs)
@@ -2083,6 +2720,7 @@ DROPS = {
     "drip_lurker": [("awaken:hollow_chitin", 1, 1, 0.45, True), ("minecraft:pointed_dripstone", 0, 1, 1.0, False)],
     "hushling": [("minecraft:echo_shard", 0, 1, 0.05, False), ("minecraft:bone", 0, 2, 1.0, True), ("minecraft:sculk", 0, 1, 1.0, False)],
     "thousandfoot": [("awaken:hollow_chitin", 3, 5, 1.0, True), ("awaken:hollow_crystal", 2, 3, 1.0, True), ("minecraft:amethyst_shard", 2, 4, 1.0, False)],
+    "seep_heart": [("awaken:deepglass_shard", 3, 6, 1.0, True), ("awaken:hollow_crystal", 1, 3, 1.0, True), ("minecraft:amethyst_shard", 2, 5, 1.0, False)],
 }
 
 # Lairs: beast -> (style, spacing, separation, salt, step, terrain adaptation); biomes: the biome table's tag
@@ -2109,7 +2747,7 @@ GEAR_TAGS = {
     "hunter_hide_e": ["awaken:tide_scale", "awaken:tide_pelt", "awaken:hollow_chitin"],
     "hunter_hide_d": ["awaken:tide_scale", "awaken:tide_pelt", "awaken:hollow_chitin"],
     "hunter_core_e": ["awaken:hollow_crystal"],
-    "hunter_core_d": ["awaken:maw_lantern", "awaken:thousandfoot_mandible"],
+    "hunter_core_d": ["awaken:maw_lantern", "awaken:thousandfoot_mandible", "awaken:seep_heartglass"],
     "hunter_bind_e": ["awaken:tide_gel", "awaken:hollow_wick"],
 }
 
@@ -2176,6 +2814,10 @@ def content():
     for tid, name in TOOLS.items():
         F.item_model(tid)
         lang["item.awaken." + tid] = name
+    lang["entity.awaken.seep_root"] = "Seep Roots"
+    for name, sprite in SEEP_PARTICLE_JSON.items():
+        F.write_json(os.path.join(RES, "assets/awaken/particles", name + ".json"),
+                     {"textures": [f"awaken:{sprite}_{k}" for k in range(len(seep_particles()[sprite]))]})
     lang["awaken.fauna.whistle.sound"] = "Hunter's whistle"
     lang["subtitles.awaken.fauna.mount_whistle"] = "Hunter's whistle blows"
     merge_lang(lang)
@@ -2303,6 +2945,173 @@ def creak_(FS, r, dur):
     return FS.creak(r, dur, 8, 22)
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# The seep heart's voice (audiokit: 44.1 kHz, modal glass, drones, convolution rooms): a heart of Deepglass. Its beat
+# is a deep thump with glass ringing in it; it hums; it cracks when struck; its wake is an in-breath, the plates
+# cracking open and a hum swelling up; its death the room's light rushing into it, one last bright chord, a long
+# exhale and two faint beats. Its blows: the rock groaning, roots bursting, a volley of shards, a pulse, a call.
+
+SEEP_SUBTITLES = {"ambient": "The Seep Heart hums", "hurt": "The Seep Heart cracks", "death": "The Seep Heart falls silent",
+                  "roar": "The Seep Heart wakes", "beat": "The Seep Heart beats", "rumble": "Roots push through the rock",
+                  "roots": "Roots burst from the floor", "shards": "Deepglass shards fly", "pulse": "The Seep Heart pulses",
+                  "call": "The Seep Heart calls to the walls"}
+# volume and how far it carries (blocks)
+SEEP_MIX = {"ambient": (0.7, 24), "hurt": (1.0, 16), "death": (1.0, 40), "step": (0.5, 12), "roar": (1.0, 48), "beat": (0.8, 16),
+            "rumble": (1.0, 24), "roots": (1.0, 24), "shards": (1.0, 32), "pulse": (1.0, 40), "call": (1.0, 48)}
+
+
+def seep_voices():
+    import numpy as np
+    import audiokit as A
+
+    def n(sec):
+        return A.ns(sec)
+
+    def place(total, *parts):
+        """parts: (signal, start seconds, gain) summed into total seconds."""
+        out = np.zeros(n(total))
+        for x, t, g in parts:
+            i = n(t)
+            k = max(0, min(len(x), len(out) - i))
+            out[i:i + k] += x[:k] * g
+        return out
+
+    def trim(y, rel=1e-3):
+        idx = np.nonzero(np.abs(y) > rel * (np.max(np.abs(y)) + 1e-12))[0]
+        y = y[: (idx[-1] + 1 if len(idx) else len(y))]
+        return A.declick(y, 0.002, 0.03)
+
+    def room(x, t60=1.4, mix=0.3, seed=1, bright=0.35):
+        ir = A.reverb_ir(t60=t60, predelay=0.015, bright=bright, size=0.9, seed=seed)
+        wet = A.mono(A.convolve(x, ir))
+        y = wet * mix
+        y[:len(x)] += x * (1 - mix)
+        return trim(y)
+
+    def thump(f0, f1, dur, seed, knock=0.2):
+        b = A.sub_boom(n(dur), f0, f1, t60=dur * 0.8)
+        k = A.lowpass(A.noise(n(0.05), "white", seed), 700) * A.perc(n(0.05), 0.001, 0.035) * knock
+        b[:len(k)] += k
+        return b
+
+    def glass(f, dur, seed, bright=0.6, hit=0.5, t60=None):
+        return A.glass(f, n(dur), bright=bright, t60=t60 or dur * 0.8, seed=seed, hit=hit)
+
+    def hum(f0, dur, seed, peak=0.5):
+        x = A.drone(f0, n(dur), partials=(1, 2, 3, 5, 7), amps=(1, 0.55, 0.3, 0.12, 0.05), beat=0.25, seed=seed)
+        return x * A.swell(n(dur), peak, 1.5)
+
+    def heartbeat(seed, scale=1.0, pitch=1.0):
+        return place(0.6, (thump(62 * pitch, 40 * pitch, 0.34, seed), 0, 1.0), (glass(587 * pitch, 0.5, seed + 1, 0.5, 0.0, 0.45), 0.004, 0.13),
+                     (thump(72 * pitch, 46 * pitch, 0.28, seed + 2), 0.2, 0.7), (glass(880 * pitch, 0.4, seed + 3, 0.5, 0.0, 0.35), 0.204, 0.08)) * scale
+
+    def suck(dur, seed, freqs=(659, 988, 1319)):
+        """A chord of ringing glass played backwards: the light rushing in."""
+        ch = sum(glass(f, dur, seed + k, 0.7, 0.8, dur * 0.7) for k, f in enumerate(freqs))
+        air = A.highpass(A.noise(n(dur), "pink", seed + 9), 900) * A.line(n(dur), [(0, 0), (0.8, 0.5), (1, 1)]) ** 2 * 0.25
+        return np.flip(ch) * 0.5 + A.lowpass(air, 3200)
+
+    def exhale(dur, seed, f_hi=1400.0, f_lo=170.0):
+        x = A.noise(n(dur), "pink", seed)
+        fall = lambda t, f: 1.0 / np.sqrt(1.0 + (f / (f_hi * (f_lo / f_hi) ** min(1.0, max(0.0, t / dur)))) ** 4)
+        y = A.stft_filter(x, fall)
+        env = A.line(n(dur), [(0, 0), (0.06, 1), (1, 0)]) ** 1.6
+        return y * env
+
+    def crackle(dur, seed, rate=300, bright=0.85):
+        return A.crackle(n(dur), rate=rate, seed=seed, bright=bright)
+
+    def groan(f0, f1, dur, seed):
+        f = A.glide(n(dur), f0, f1)
+        tone = A.sine(f, n(dur)) + 0.35 * A.sine(f * 2.01, n(dur)) + 0.15 * A.sine(f * 3.02, n(dur))
+        return A.lowpass(tone, 600) * A.perc(n(dur), 0.02, dur * 0.8)
+
+    def grind(dur, seed, fc=380):
+        x = A.lowpass(A.noise(n(dur), "brown", seed), fc)
+        return x * (0.6 + 0.4 * A.smooth_noise(n(dur), 6, seed + 1))
+
+    def S(fn):
+        return fn
+
+    return {
+        "beat": [S(lambda r: room(heartbeat(r), 0.9, 0.22, 3))],
+        "ambient": [
+            S(lambda r: room(place(3.6, (hum(55, 3.6, r), 0, 0.55), (glass(880, 1.6, r + 1, 0.4, 0.0, 1.6), 0.6, 0.12),
+                                   (glass(1175, 1.6, r + 2, 0.4, 0.0, 1.5), 1.4, 0.1), (glass(1319, 1.5, r + 3, 0.4, 0.0, 1.4), 2.3, 0.09),
+                                   (heartbeat(r + 4), 1.0, 0.35)), 1.8, 0.4, 5)),
+            S(lambda r: room(place(3.3, (hum(49, 3.3, r, 0.4), 0, 0.55),
+                                   (A.bandpass(A.noise(n(3.0), "pink", r + 1), 420, 1.6) * A.swell(n(3.0), 0.45, 1.6), 0.1, 0.07),
+                                   (crackle(3.0, r + 2, 7, 0.3), 0.2, 0.07), (glass(1047, 1.4, r + 3, 0.4, 0.0, 1.3), 1.8, 0.1)), 1.8, 0.4, 6))],
+        "hurt": [
+            S(lambda r: room(place(0.8, (crackle(0.25, r, 420, 0.95), 0, 0.55), (glass(1480, 0.5, r + 1, 0.9, 1.6), 0, 0.45),
+                                   (glass(2230, 0.35, r + 2, 0.9, 1.0), 0.01, 0.28), (groan(96, 70, 0.6, r + 3), 0.02, 0.7)), 0.9, 0.24, 7)),
+            S(lambda r: room(place(0.8, (crackle(0.22, r, 380, 0.95), 0, 0.55), (glass(1320, 0.5, r + 1, 0.9, 1.6), 0, 0.45),
+                                   (glass(1980, 0.35, r + 2, 0.9, 1.0), 0.012, 0.28), (groan(106, 78, 0.55, r + 3), 0.02, 0.7)), 0.9, 0.24, 8))],
+        "death": [S(lambda r: room(place(4.2, (suck(1.5, r), 0, 0.8),
+                                         (glass(659, 2.2, r + 10, 0.8, 1.3), 1.45, 0.45), (glass(988, 2.0, r + 11, 0.8, 1.1), 1.46, 0.35),
+                                         (glass(1319, 1.8, r + 12, 0.8, 1.0), 1.47, 0.3), (thump(55, 34, 0.8, r + 13, 0.3), 1.45, 1.0),
+                                         (exhale(2.6, r + 14), 1.55, 0.75), (groan(70, 42, 2.4, r + 15), 1.6, 0.55),
+                                         (heartbeat(r + 16, 1.0, 0.9), 2.55, 0.32), (heartbeat(r + 17, 1.0, 0.8), 3.2, 0.16)), 2.4, 0.38, 9))],
+        "step": [S(lambda r: place(0.4, (A.bandpass(A.noise(n(0.3), "pink", r), 260, 3.0) * A.perc(n(0.3), 0.01, 0.22), 0, 0.6),
+                                   (crackle(0.3, r + 1, 30, 0.4), 0.02, 0.2)))],
+        "roar": [S(lambda r: room(place(3.0, (suck(0.62, r, (740, 1109, 1480)), 0, 0.7),
+                                        (A.bandpass(A.noise(n(0.62), "pink", r + 1), 1200, 0.6) * A.line(n(0.62), [(0, 0), (1, 1)]) ** 2, 0, 0.25),
+                                        (crackle(0.4, r + 2, 520, 0.95), 0.6, 0.7),
+                                        *[(glass(f, 0.9, r + 3 + k, 0.9, 1.4), 0.6 + k * 0.025, 0.24) for k, f in enumerate((1109, 1480, 1865, 2217, 2637))],
+                                        (A.sub_boom(n(1.8), 52, 30, 1.6), 0.6, 1.0), (thump(60, 40, 0.4, r + 9), 0.6, 0.6),
+                                        (hum(55, 2.3, r + 10, 0.35), 0.65, 0.5), (hum(82.5, 2.3, r + 11, 0.4), 0.7, 0.25),
+                                        (A.choir(110, n(2.2), "o", voices=5, seed=r + 12, bright=0.3) * A.swell(n(2.2), 0.45, 1.5), 0.75, 0.22),
+                                        (glass(880, 1.4, r + 13, 0.4, 0.0, 1.2), 0.95, 0.1), (glass(1319, 1.3, r + 14, 0.4, 0.0, 1.1), 1.35, 0.09),
+                                        (glass(1760, 1.2, r + 15, 0.4, 0.0, 1.0), 1.8, 0.07)), 2.2, 0.35, 10))],
+        "rumble": [S(lambda r: room(place(1.8, (grind(1.8, r, 160) * A.line(n(1.8), [(0, 0.15), (1, 1)]), 0, 0.9),
+                                          (crackle(1.7, r + 1, 45, 0.4) * A.line(n(1.7), [(0, 0.1), (1, 1)]), 0.05, 0.35),
+                                          (A.bandpass(A.noise(n(1.6), "pink", r + 2), 180, 4.0) * (0.5 + 0.5 * A.smooth_noise(n(1.6), 9, r + 3)), 0.15, 0.35)), 1.2, 0.3, 11))],
+        "roots": [S(lambda r: room(place(1.2, (crackle(0.16, r, 650, 0.85), 0, 0.8), (thump(82, 45, 0.45, r + 1, 0.4), 0, 1.0),
+                                         (A.bandpass(A.noise(n(0.35), "white", r + 2), 1600, 0.7) * A.perc(n(0.35), 0.002, 0.28), 0.01, 0.45),
+                                         (A.bandpass(A.noise(n(0.4), "pink", r + 3), 520, 2.0) * A.perc(n(0.4), 0.004, 0.32), 0.02, 0.4),
+                                         (glass(1760, 0.6, r + 4, 0.8, 1.0, 0.5), 0.015, 0.22)), 1.0, 0.25, 12))],
+        "shards": [S(lambda r: room(place(1.1, *[(glass(1900 + 1700 * ((k * 0.618) % 1.0), 0.45, r + k, 0.95, 1.3, 0.25), 0.034 * k + 0.012 * (k % 2), 0.26)
+                                                  for k in range(7)],
+                                          (A.bandpass(A.noise(n(0.4), "white", r + 20), 4200, 1.2) * A.swell(n(0.4), 0.25, 1.4), 0, 0.1)), 0.9, 0.22, 13))],
+        "pulse": [S(lambda r: room(place(2.2, (np.flip(A.lowpass(A.noise(n(0.14), "pink", r), 900) * A.perc(n(0.14), 0.002, 0.12)), 0, 0.35),
+                                         (A.sub_boom(n(1.6), 58, 28, 1.3), 0.13, 1.0),
+                                         (A.lowpass(A.noise(n(0.8), "brown", r + 1), 260) * A.perc(n(0.8), 0.003, 0.6), 0.13, 0.8),
+                                         (glass(440, 1.6, r + 2, 0.6, 0.6, 1.4), 0.14, 0.3), (glass(660, 1.5, r + 3, 0.6, 0.6, 1.3), 0.142, 0.24),
+                                         (glass(880, 1.4, r + 4, 0.6, 0.6, 1.2), 0.144, 0.18),
+                                         (A.bandpass(A.noise(n(0.6), "white", r + 5), 2000, 0.5) * A.perc(n(0.6), 0.004, 0.45), 0.15, 0.28)), 1.6, 0.3, 14))],
+        "call": [S(lambda r: room(place(2.6, (A.choir(110, n(1.4), "u", voices=6, seed=r, bright=0.35) * A.swell(n(1.4), 0.6, 1.4), 0, 0.5),
+                                        (A.choir(147, n(1.6), "o", voices=6, seed=r + 1, bright=0.4) * A.swell(n(1.6), 0.4, 1.4), 1.0, 0.5),
+                                        (glass(880, 1.8, r + 2, 0.4, 0.0, 1.6), 0.4, 0.12), (glass(1319, 1.6, r + 3, 0.4, 0.0, 1.4), 1.2, 0.12),
+                                        (grind(2.4, r + 4, 420), 0.1, 0.35), (crackle(2.2, r + 5, 18, 0.5), 0.2, 0.15)), 2.0, 0.4, 15))],
+    }
+
+
+def seep_sounds(sounds_json, lang):
+    """Writes the seep heart's voice (fauna/seep_heart/<kind><n>.ogg, bit-exact) and its sounds.json events."""
+    import numpy as np
+    import audiokit as A
+    import fauna_sounds as FS
+    table = seep_voices()
+    count = 0
+    for kind, fns in table.items():
+        entries = []
+        for k, fn in enumerate(fns):
+            x = np.asarray(fn(abs(FS.hash_str(f"seep_heart/{kind}/{k}")) % 100000), dtype=np.float64)
+            x = x - np.mean(x)
+            x = x / (np.max(np.abs(x)) + 1e-9) * 0.89
+            A.write_ogg(os.path.join(FS.SND, "seep_heart", f"{kind}{k + 1}.ogg"), A.declick(x, 0.002, 0.02))
+            count += 1
+            vol, dist = SEEP_MIX[kind]
+            entries.append({"name": f"awaken:fauna/seep_heart/{kind}{k + 1}", "volume": vol, "attenuation_distance": dist})
+        key = "fauna.seep_heart." + kind
+        if kind == "step":
+            sounds_json[key] = {"sounds": entries, "subtitle": "subtitles.awaken.fauna.step"}
+        else:
+            sounds_json[key] = {"sounds": entries, "subtitle": "subtitles.awaken." + key}
+            lang["subtitles.awaken." + key] = SEEP_SUBTITLES[kind]
+    return count
+
+
 VERBS = {"glimmerfin": ("shimmers", "flaps", "dies"), "breathbell": ("chimes", "squelches", "fades"), "brook_otter": ("chirps", "squeals", "dies"),
          "tidesteed": ("whinnies", "neighs", "dies"), "lantern_maw": ("rumbles", "growls", "dies"), "chime_cricket": ("chimes", "clicks", "shatters"),
          "wickling": ("crackles", "squeaks", "gutters out"), "drip_lurker": ("drips", "clicks", "crumbles"), "hushling": ("clicks", "shrieks", "dies"),
@@ -2311,10 +3120,11 @@ ROARS = {"lantern_maw": "roars from the deep", "thousandfoot": "hisses and rattl
 SMALL = {"glimmerfin", "breathbell", "chime_cricket", "wickling"}
 
 
-def sounds():
+def sounds(only=None):
+    """Every P3 voice and the seep heart's, or only the creatures named (the others' files and events are left alone)."""
     import fauna_sounds as FS
     import numpy as np
-    table = voices()
+    table = {cid: kinds for cid, kinds in voices().items() if not only or cid in only}
     names = {m["id"]: m["name"] for m in creatures()}
     path = os.path.join(MERGE, "assets/awaken/sounds.json")
     sounds_json = json.load(open(path)) if os.path.exists(path) else {}
@@ -2351,13 +3161,16 @@ def sounds():
                 else:
                     lang["subtitles.awaken." + key] = f"{names[cid]} {VERBS[cid][('ambient', 'hurt', 'death').index(kind)]}"
             sounds_json[key] = ev
-    # the Hunter's whistle: two rising notes, the second held
-    rng = np.random.default_rng(7)
-    w = FS.mixdown(FS.whistle(rng, 1800, 2600, 0.18), FS.at(FS.whistle(rng, 2200, 3100, 0.45), 0.2))
-    FS.encode(w, os.path.join(FS.SND, "mount", "whistle1.ogg"))
-    sounds_json["fauna.mount_whistle"] = {"sounds": [{"name": "awaken:fauna/mount/whistle1", "volume": 0.9, "attenuation_distance": 48}],
-                                          "subtitle": "subtitles.awaken.fauna.mount_whistle"}
-    lang["subtitles.awaken.fauna.mount_whistle"] = "Hunter's whistle blows"
+    if not only:
+        # the Hunter's whistle: two rising notes, the second held
+        rng = np.random.default_rng(7)
+        w = FS.mixdown(FS.whistle(rng, 1800, 2600, 0.18), FS.at(FS.whistle(rng, 2200, 3100, 0.45), 0.2))
+        FS.encode(w, os.path.join(FS.SND, "mount", "whistle1.ogg"))
+        sounds_json["fauna.mount_whistle"] = {"sounds": [{"name": "awaken:fauna/mount/whistle1", "volume": 0.9, "attenuation_distance": 48}],
+                                              "subtitle": "subtitles.awaken.fauna.mount_whistle"}
+        lang["subtitles.awaken.fauna.mount_whistle"] = "Hunter's whistle blows"
+    if not only or "seep_heart" in only:
+        count += seep_sounds(sounds_json, lang)
     with open(path, "w") as f:
         json.dump(dict(sorted(sounds_json.items())), f, indent=2)
         f.write("\n")
@@ -2382,9 +3195,11 @@ def pose_list(rig):
         out.append(("run", [("run", rig.clips["run"].length * 0.3, 1.0)]))
     if "fly" in rig.clips:
         out.append(("swim", [("idle", 0.8, 1.0), ("fly", rig.clips["fly"].length * 0.3, 1.0)]))
-    for hold in ("hang", "chirp", "ripen", "listen", "deflate", "carry", "rest", "beached", "ridden"):
+    for hold in ("hang", "chirp", "ripen", "listen", "deflate", "carry", "rest", "beached", "ridden", "sleep"):
         if hold in rig.clips:
             out.append((hold, [("idle", 0.8, 1.0), (hold, 0.3, 1.0)]))
+    if "erupt" in rig.clips:  # the seep heart's root burst
+        out += [(f"erupt {t:.2f}s", [("erupt", t, 1.0)]) for t in (0.04, 0.12, 0.4, 1.1)]
     sig = None
     for _, mv in rig.moves.items():
         if mv + "_windup" in rig.clips:
@@ -2495,7 +3310,7 @@ def main(args):
     elif args and args[0] == "content":
         content()
     elif args and args[0] == "sounds":
-        sounds()
+        sounds(args[1:] or None)
     elif args and args[0] == "java":
         java(rigs())
     else:

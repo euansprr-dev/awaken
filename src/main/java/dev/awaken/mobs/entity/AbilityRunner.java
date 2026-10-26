@@ -127,12 +127,14 @@ public final class AbilityRunner {
         aimTarget = t;
         aim = t.position();
         marks.clear();
-        switch (a.kind()) {
-            case RAIN -> rainMarks(level, a);
-            case SUMMON -> marks.addAll(Abilities.summonSpots(level, mob, a.count()));
-            case BLINK -> marks.add(Abilities.blinkSpot(mob, t));
-            case BEAM, BOLT, CHARGE -> aim = Abilities.chest(t);
-            default -> { }
+        if (a.kind() == Ability.Kind.BEAM || a.kind() == Ability.Kind.BOLT || a.kind() == Ability.Kind.CHARGE) aim = Abilities.chest(t);
+        if (!mob.abilityMarks(level, a, t, marks)) {
+            switch (a.kind()) {
+                case RAIN -> rainMarks(level, a);
+                case SUMMON -> marks.addAll(Abilities.summonSpots(level, mob, a.count()));
+                case BLINK -> marks.add(Abilities.blinkSpot(mob, t));
+                default -> { }
+            }
         }
         if (a.roots()) mob.getNavigation().stop();
         mob.setTell(left, a.strike(), a.heavy());
@@ -185,7 +187,7 @@ public final class AbilityRunner {
         }
         if (t != null) mob.getLookControl().setLookAt(t, 30.0F, 30.0F);
         if (a.roots()) mob.getNavigation().stop();
-        if (left % 3 == 0) show(level, a);
+        if (!mob.abilityTell(level, a, left, total, aim, marks) && left % 3 == 0) show(level, a);
         if ((left & 3) == 0) mob.setTell(left, a.strike(), a.heavy());
         if (--left > 0) return;
         active = null;
@@ -193,9 +195,25 @@ public final class AbilityRunner {
         cooldowns[activeIndex] = a.cooldown() + mob.getRandom().nextInt(20);
         global = mob.def().tier.isBoss() ? 14 : 28;
         Strikes.deliver(mob, a.strike(), () -> {
-            execute(level, a, t);
+            if (!mob.abilityStrike(level, a, t, aim, marks)) execute(level, a, t);
             return true;
         });
+    }
+
+    /**
+     * Begins the named ability of this phase now (a scripted moment: the seep heart's call as a phase opens), if nothing
+     * is winding up and there is a living target. False otherwise.
+     */
+    public boolean start(ServerLevel level, String name) {
+        LivingEntity t = mob.getTarget();
+        if (active != null || t == null || !t.isAlive()) return false;
+        for (int i = 0; i < list.size(); i++) {
+            Ability a = list.get(i);
+            if (!a.name().equals(name)) continue;
+            begin(level, i, a, t);
+            return true;
+        }
+        return false;
     }
 
     private void show(ServerLevel level, Ability a) {
