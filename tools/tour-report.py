@@ -132,7 +132,8 @@ def main(out):
     head = (f"{verdict.upper()}: {name} on {report['runner']}, {len(shots)} shots; tour {mins(report['tourSeconds'])},"
             f" build {mins(report['buildSeconds'])}")
     rows = [("script", script), ("knobs", report["knobs"] or "none (Awaken alone, defaults)"),
-            ("backend", report["backend"] or "?"), ("device", report["device"] or "?"), ("sound", sound)]
+            ("backend", report["backend"] or "?"), ("device", report["device"] or "?"), ("sound", sound),
+            ("far sight", "off (on CI always; its tours run on the Mac)")]
     txt = [head] + [f"  {k}: {v}" for k, v in rows]
     txt += [f"  info: {i}" for i in info]
     txt += [f"  perf (the runner's VM, not a Mac): {p}" for p in perf]

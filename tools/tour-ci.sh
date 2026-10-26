@@ -4,7 +4,7 @@
 #   tools/tour-ci.sh tools/autopilot/farsight2-city.txt 1500 PACK=perf,world TECTONIC=awakened LENS=cinematic
 # The knobs are tools/autopilot.sh's: PACK BACKEND LENS RD XMX ZGC CITY TECTONIC DH. The runner starts from a fresh game
 # folder, so an unset knob means the default (Lens Swift, Vulkan, render distance 16), not what this worktree's
-# run-autopilot last had. It tours the branch as pushed: commit and push first.
+# run-autopilot last had; Far Sight is always off there. It tours the branch as pushed: commit and push first.
 # Shots, logs and summary.txt land in run-autopilot/screenshots-ci/<script>-<run id>/; exits non-zero if the tour
 # failed. Several can run at once, from any worktrees (no shared state). Look tours only: perf and frame-time tours
 # stay on the Mac (slot.sh tour tools/autopilot.sh ...).
@@ -22,6 +22,8 @@ for kv in "$@"; do
 done
 [[ $SCRIPT =~ '^tools/autopilot/[A-Za-z0-9._-]+\.txt$' && -f $SCRIPT ]] || { echo "no tour $SCRIPT"; echo "$USAGE"; exit 2; }
 (( T <= 3600 )) || { echo "timeout at most 3600 s"; exit 2; }
+# the runner's GPU scrambles Far Sight's far mesh, so CI tours run without it and Far Sight's own tours stay on the Mac
+grep -q '^farsight on' $SCRIPT && { echo "$SCRIPT turns Far Sight on: run it on the Mac (slot.sh tour tools/autopilot.sh ...)"; exit 2; }
 
 # the runner checks out the branch on GitHub: it must hold exactly what this worktree would tour
 BRANCH=$(git branch --show-current)
@@ -58,7 +60,8 @@ CONCLUSION=${S#completed }
 DIR=run-autopilot/screenshots-ci/$NAME-$RUN
 mkdir -p $DIR
 gh run download $RUN -R $REPO -n tour-$NAME -D $DIR > /dev/null 2>&1 \
-  || { rmdir $DIR 2>/dev/null; echo "no artifact (the run stopped before the tour: see $URL)"; }
+  || { rmdir $DIR 2>/dev/null; echo "no artifact: the run stopped before the tour"
+         gh run view $RUN -R $REPO --log-failed 2>/dev/null | grep -m5 '##\[error\]' | sed 's/.*##\[error\]/  /'; }
 [ -f $DIR/summary.txt ] && cat $DIR/summary.txt
 SHOTS=($DIR/*.png(N))
 (( ${#SHOTS} )) && print -l -- $SHOTS

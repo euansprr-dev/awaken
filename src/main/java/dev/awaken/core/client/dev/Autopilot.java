@@ -66,8 +66,8 @@ import java.util.Map;
  * lensdebug 0..8                                 Lens debug views: normal, pass-through, depth masks, far depth, haze;
  *                                                Cinematic and Ultra: 5 light buffer, 6 normals, 7 the light alone,
  *                                                8 the classic Cinematic (before Lens 2) on the same frame
- * mdi on|off                                     vanilla terrain's multi-draw-indirect (the F3 debug toggle): GitHub's
- *                                                macOS runners (a paravirtual GPU) scramble far chunks with it on
+ * mdi on|off                                     vanilla terrain's multi-draw-indirect (the F3 debug toggle; on by
+ *                                                default): off, GitHub's macOS runners (a paravirtual GPU) misplace sections
  * fardepth share|auto                           Distant Horizons shares its depth with Lens on every graphics API (to
  *                                                check it on Vulkan), or again only on the one it was checked on
  * shot &lt;name&gt;                                     screenshots/&lt;name&gt;.png in the game folder

@@ -10,6 +10,7 @@
 #   LENS=off|swift|cinematic  Awaken's light layer (unset: whatever run-autopilot's client config says)
 #   DH=swift|cinematic|default  Distant Horizons settings (pack/dh/); unset leaves them
 #   RD=<chunks>             vanilla render distance for this run
+#   FARSIGHT=off|near|full  Far Sight's reach (unset: whatever run-autopilot's client config says; CI tours: off)
 #   TECTONIC=<preset>       Tectonic settings from pack/tectonic/<preset>.json (unset: Tectonic's defaults)
 #   CITY=on                 ask for the city basin before Carillon exists (terrain's dev switch)
 cd "$(dirname "$0")/.."
@@ -40,6 +41,13 @@ if [ -n "$LENS" ]; then
   touch $CFG
   sed -i '' '/^lens = /d' $CFG
   echo "lens = \"${(U)LENS}\"" >> $CFG
+fi
+# FARSIGHT=off|near|full sets Far Sight's reach for this run (a script's "farsight on" still forces it on)
+if [ -n "$FARSIGHT" ]; then
+  CFG=run-autopilot/config/awaken-client.toml
+  touch $CFG
+  sed -i '' '/^farSight = /d' $CFG
+  echo "farSight = \"${(U)FARSIGHT}\"" >> $CFG
 fi
 # TECTONIC=<preset> picks the terrain preset; unset restores Tectonic's defaults so a preset never leaks into a later run
 if [ -n "$TECTONIC" ]; then
