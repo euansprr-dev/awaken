@@ -89,7 +89,7 @@ public final class RoadTests {
             for (int cz = (p.oz + p.rz0) >> 4; cz <= (p.oz + p.rz0 + p.rd) >> 4; cz++) {
                 level.getChunk(cx, cz);
                 SettlementPaint.repaint(p, level, cx, cz);
-                for (Road.Marker m : r.markers()) if (m.point() <= legs.getFirst().i1()) RoadMarks.words(level.getChunk(cx, cz), p, m);
+                for (Road.Marker m : r.markers()) if (m.point() <= legs.getFirst().i1()) RoadMarks.words(level.getChunk(cx, cz), level.registryAccess(), p, m);
                 chunks++;
             }
         long paintNs = (System.nanoTime() - p0) / Math.max(1, chunks);
@@ -109,6 +109,13 @@ public final class RoadTests {
                 named |= s.getText(net.minecraft.world.level.block.entity.SignTextSlot.FRONT).getMessages(false).stream().anyMatch(c -> c.getString().contains("Other") || c.getString().contains("wick"));
         }
         h.assertTrue(named, "an arm names the next place");
+        // in worldgen a sign has no level yet: its words go in without one
+        var loose = new net.minecraft.world.level.block.entity.HangingSignBlockEntity(BlockPos.ZERO,
+                net.minecraft.world.level.block.Blocks.OAK_WALL_HANGING_SIGN.defaultBlockState());
+        RoadMarks.write(loose, level.registryAccess(), RoadMarks.text(leaving.arms().getFirst(), net.minecraft.world.item.DyeColor.BLACK));
+        h.assertTrue(loose.isWaxed() && loose.getText(net.minecraft.world.level.block.entity.SignTextSlot.FRONT).hasMessage(false)
+                        && loose.getText(net.minecraft.world.level.block.entity.SignTextSlot.BACK).hasMessage(false),
+                "a sign with no level takes its words, both faces, waxed");
         Awaken.LOG.info(String.format(Locale.ROOT, "[road] test road: %d points, %d bridged, worst step %d, worst cut %d, laid in %.1f ms (twice), %d legs, "
                 + "painted %.2f ms a chunk", a.points(), bridged, worstStep, worstCut, ns / 1e6, legs.size(), paintNs / 1e6));
         h.succeed();

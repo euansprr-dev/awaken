@@ -194,7 +194,7 @@ public class RoadPiece extends StructurePiece implements net.neoforged.neoforge.
         var chunk = level.getChunk(chunkPos.x(), chunkPos.z());
         int n = SettlementPaint.paintChunk(p, chunkPos.x(), chunkPos.z(), level.getSeed(), chunk);
         n += SettlementPaint.sweep(level, p, chunkPos.x(), chunkPos.z());
-        for (Road.Marker m : markers) RoadMarks.words(chunk, p, m);
+        for (Road.Marker m : markers) RoadMarks.words(chunk, level.registryAccess(), p, m);
         paintNanos += System.nanoTime() - t0;
         chunks++;
         blocks += n;

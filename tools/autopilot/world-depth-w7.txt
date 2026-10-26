@@ -4,7 +4,7 @@
 # Mine (the mine bell and the families at the shaft head, going down, the nest, the roof coming down behind, bringing
 # them up); the Atlas with the roads walked. The road shots a creative player's standing on the road with the HUD off (the
 # Atlas records roads walked by players, not spectators); the rest a spectator's.
-# Run on GitHub: tools/tour-ci.sh tools/autopilot/world-depth-w7.txt
+# Run on GitHub (the terrain Euan plays): tools/tour-ci.sh tools/autopilot/world-depth-w7.txt 1800 PACK=perf,world TECTONIC=awakened
 world autopilot_world_depth_w7 creative 26102610
 waitworld
 camera first

@@ -3,13 +3,16 @@ package dev.awaken.village.road;
 import dev.awaken.city.SettlementPaint;
 import dev.awaken.village.plan.VillageBlocks;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.entity.SignText;
-import net.minecraft.world.level.block.entity.SignTextSlot;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
 
 /**
  * A waymarker as built (SPEC §28.9): a post of the land's stripped timber on a stone foot, a lantern on its top, and an
@@ -64,8 +67,11 @@ final class RoadMarks {
         return l.fam[Math.clamp(m.point() - l.w0, 0, l.fam.length - 1)];
     }
 
-    /** After the chunk is written: each arm's words, the same on both faces. */
-    static void words(ChunkAccess chunk, RoadPaint l, Road.Marker m) {
+    /**
+     * After the chunk is written: each arm's words, the same on both faces, loaded into the sign the way a structure
+     * template loads its blocks' data (in worldgen the sign has no level yet, and {@code setText} would tell it).
+     */
+    static void words(ChunkAccess chunk, HolderLookup.Provider registries, RoadPaint l, Road.Marker m) {
         int cx = chunk.getPos().x(), cz = chunk.getPos().z();
         String w = RoadPaint.wood(woodFamily(l, m));
         DyeColor ink = w.equals("dark_oak") || w.equals("mangrove") || w.equals("spruce") || w.equals("jungle") ? DyeColor.WHITE : DyeColor.BLACK;
@@ -73,11 +79,17 @@ final class RoadMarks {
             BlockPos pos = new BlockPos(m.x() + SX[a.side()], m.y() + 3, m.z() + SZ[a.side()]);
             if (pos.getX() >> 4 != cx || pos.getZ() >> 4 != cz) continue;
             if (!(chunk.getBlockEntity(pos) instanceof SignBlockEntity sign)) continue;
-            SignText text = text(a, ink);
-            sign.setText(text, SignTextSlot.FRONT);
-            sign.setText(text, SignTextSlot.BACK);
-            sign.setWaxed(true);
+            write(sign, registries, text(a, ink));
         }
+    }
+
+    /** The same words on both faces, waxed; never touches the sign's level (it has none in worldgen). */
+    static void write(SignBlockEntity sign, HolderLookup.Provider registries, SignText text) {
+        TagValueOutput out = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, registries);
+        out.store("front_text", SignText.CODEC, text);
+        out.store("back_text", SignText.CODEC, text);
+        out.putBoolean("is_waxed", true);
+        sign.loadCustomOnly(TagValueInput.create(ProblemReporter.DISCARDING, registries, out.buildResult()));
     }
 
     /** An arm's four lines: the name (split where it's too long for the board), how far, centred on the board. */
