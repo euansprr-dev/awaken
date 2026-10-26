@@ -1,0 +1,713 @@
+<title>The Band's Pages</title>
+<meta charset="utf-8">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&family=Pixelify+Sans:wght@500;600&display=swap">
+<style>
+/* Layout: a design review in the band's own world: deep glass ground, System-blue structure, amber only for
+   what waits on Euan. Shots sit at real scale (1512 css px = the MacBook's pixels on a retina screen). */
+:root {
+  --ground: #070b12;
+  --glass: #0d1522;
+  --glass-2: #121c2c;
+  --line: rgba(127, 195, 255, 0.18);
+  --line-strong: rgba(127, 195, 255, 0.42);
+  --ink: #d9e4f2;
+  --ink-hi: #ffffff;
+  --ink-dim: #a3b6cf;
+  --signal: #7fc3ff;
+  --signal-hot: #c4e6ff;
+  --amber: #ffcf7a;
+  --good: #8ff0c0;
+  --warn: #ff8a7a;
+  --violet: #b48cff;
+  --display: "Pixelify Sans", "Silkscreen", ui-monospace, monospace;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.1875rem;
+  --step-2: 1.5rem;
+  --step-3: 2.25rem;
+  --step-4: 3.25rem;
+  --measure: 68ch;
+  --wide: 1512px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font: 400 var(--step-0)/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 64px;
+}
+a { color: var(--signal-hot); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, input:focus-visible, .hot:focus-visible, figure img:focus-visible {
+  outline: 2px solid var(--signal-hot); outline-offset: 3px;
+}
+.wrap { max-width: var(--wide); margin: 0 auto; }
+.text { max-width: var(--measure); }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; color: var(--ink-hi); text-wrap: balance; letter-spacing: 0.01em; line-height: 1.15; margin: 0; }
+h1 { font-size: var(--step-4); }
+h2 { font-size: var(--step-3); }
+h3 { font-size: var(--step-2); font-weight: 500; }
+p { margin: 0; }
+.label {
+  font: 500 var(--step--1)/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-dim);
+}
+.label b { color: var(--signal); font-weight: 500; }
+.amber { color: var(--amber); }
+.good { color: var(--good); }
+.warn { color: var(--warn); }
+.mono { font-family: var(--mono); font-size: 0.92em; }
+section { display: grid; gap: 28px; padding-block: 64px 8px; border-top: 1px solid var(--line); margin-top: 56px; }
+section > .head { display: grid; gap: 12px; max-width: var(--measure); }
+.stack { display: grid; gap: 16px; }
+
+/* top bar */
+nav.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  background: color-mix(in srgb, var(--ground) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  padding-inline: max(16px, env(safe-area-inset-left, 0px));
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--ground); }
+nav.bar .wrap { display: flex; gap: 6px 18px; flex-wrap: wrap; align-items: center; padding-block: 10px; }
+nav.bar a { font: 500 var(--step--1)/1 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-dim); text-decoration: none; padding: 4px 0; }
+nav.bar a:hover { color: var(--signal-hot); }
+nav.bar .mark { color: var(--signal); font-family: var(--display); font-size: var(--step-0); letter-spacing: 0.04em; text-transform: none; margin-right: 6px; }
+
+/* opener */
+header.open { display: grid; gap: 18px; padding-block: 48px 8px; }
+header.open .lede { font-size: var(--step-1); color: var(--ink); max-width: 62ch; }
+
+/* figures */
+figure { margin: 0; display: grid; gap: 10px; }
+figure img { display: block; width: 100%; height: auto; border-radius: 3px; border: 1px solid var(--line); background: #000; cursor: zoom-in; }
+figcaption { color: var(--ink-dim); font-size: var(--step--1); max-width: var(--measure); }
+figcaption b { color: var(--ink); font-weight: 700; }
+.real { max-width: var(--wide); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr)); gap: 28px 24px; }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 28px 20px; }
+
+/* before / after wipe */
+.wipe { position: relative; max-width: var(--wide); border: 1px solid var(--line); border-radius: 3px; overflow: hidden; background: #000; }
+.wipe img { display: block; width: 100%; height: auto; }
+.wipe .after { position: absolute; inset: 0; clip-path: inset(0 0 0 var(--cut, 50%)); }
+.wipe .seam { position: absolute; top: 0; bottom: 0; left: var(--cut, 50%); width: 2px; background: var(--signal-hot); box-shadow: 0 0 12px var(--signal); pointer-events: none; }
+.wipe .tag { position: absolute; top: 12px; font: 500 var(--step--1)/1 var(--mono); text-transform: uppercase; letter-spacing: 0.12em; padding: 6px 8px; background: rgba(7, 11, 18, 0.82); border: 1px solid var(--line-strong); color: var(--ink-hi); }
+.wipe .tag.l { left: 12px; } .wipe .tag.r { right: 12px; }
+.wipe-ctl { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; max-width: var(--wide); }
+.wipe-ctl input { flex: 1 1 240px; accent-color: var(--signal); }
+.btn {
+  font: 500 var(--step--1)/1 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-hi);
+  background: var(--glass-2); border: 1px solid var(--line-strong); padding: 9px 12px; border-radius: 2px; cursor: pointer;
+}
+.btn:hover { border-color: var(--signal); }
+.btn[aria-pressed="true"] { background: rgba(127, 195, 255, 0.16); border-color: var(--signal-hot); }
+
+/* decisions */
+ol.decisions { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; counter-reset: d; max-width: 980px; }
+ol.decisions li { counter-increment: d; display: grid; grid-template-columns: 2.4em minmax(0, 1fr); gap: 4px 12px; padding: 12px 14px; background: var(--glass); border: 1px solid var(--line); border-radius: 3px; }
+ol.decisions li::before { content: counter(d); font: 600 var(--step-1)/1.2 var(--display); color: var(--amber); grid-row: span 2; }
+ol.decisions .q { color: var(--ink-hi); font-weight: 700; }
+ol.decisions .rec { color: var(--ink-dim); font-size: var(--step--1); }
+ol.decisions .rec b { color: var(--amber); font-weight: 700; }
+
+/* scroll diagram */
+.scrollmap { overflow-x: auto; }
+.scrollmap svg { display: block; min-width: 760px; max-width: 1180px; height: auto; }
+
+/* tables */
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 3px; }
+table { border-collapse: collapse; width: 100%; font-size: var(--step--1); min-width: 640px; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+th { font: 500 0.75rem/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-dim); background: var(--glass); }
+tr:last-child td { border-bottom: 0; }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td b { color: var(--ink-hi); }
+
+/* direction cards */
+.dir { display: grid; gap: 12px; align-content: start; }
+.dir .who { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.dir .badge { font: 500 0.75rem/1 var(--mono); text-transform: uppercase; letter-spacing: 0.12em; padding: 5px 7px; border: 1px solid var(--amber); color: var(--amber); }
+.dir ul { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; font-size: var(--step--1); }
+.dir li::marker { color: var(--signal); }
+.dir .for, .dir .against { font: 500 0.75rem/1 var(--mono); text-transform: uppercase; letter-spacing: 0.12em; }
+.dir .for { color: var(--good); } .dir .against { color: var(--warn); }
+
+/* storyboard */
+.story { display: grid; gap: 14px; max-width: var(--wide); }
+.story .stage { position: relative; border: 1px solid var(--line); border-radius: 3px; overflow: hidden; background: #000; }
+.story .stage img { display: block; width: 100%; height: auto; cursor: default; border: 0; }
+.story .hot {
+  position: absolute; border: 2px solid var(--amber); border-radius: 3px; background: rgba(255, 207, 122, 0.12);
+  cursor: pointer; padding: 0; animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 207, 122, 0.55); } 50% { box-shadow: 0 0 0 8px rgba(255, 207, 122, 0); } }
+.story .bar2 { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.story .dots { display: flex; gap: 6px; flex-wrap: wrap; }
+.story .dots button { width: 30px; height: 30px; padding: 0; font: 500 0.75rem/1 var(--mono); color: var(--ink-dim); background: var(--glass); border: 1px solid var(--line); border-radius: 2px; cursor: pointer; }
+.story .dots button[aria-current="step"] { color: var(--ground); background: var(--signal-hot); border-color: var(--signal-hot); }
+.story .cap { min-height: 3.2em; max-width: 86ch; }
+.story .cap .t { font: 500 var(--step--1)/1.2 var(--mono); color: var(--signal); text-transform: uppercase; letter-spacing: 0.1em; margin-right: 8px; }
+
+/* swatches and type ramp */
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.sw { border: 1px solid var(--line); border-radius: 3px; overflow: hidden; background: var(--glass); }
+.sw i { display: block; height: 44px; }
+.sw div { padding: 8px 10px; display: grid; gap: 2px; }
+.sw b { color: var(--ink-hi); font-size: var(--step--1); }
+.sw span { font: 400 0.75rem/1.3 var(--mono); color: var(--ink-dim); }
+.callout { border-left: 2px solid var(--amber); padding: 6px 0 6px 14px; max-width: var(--measure); color: var(--ink); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 12px; max-width: 1100px; }
+.fact { background: var(--glass); border: 1px solid var(--line); border-radius: 3px; padding: 14px; display: grid; gap: 4px; }
+.fact b { font: 600 var(--step-3)/1 var(--display); color: var(--ink-hi); font-variant-numeric: tabular-nums; }
+.fact span { font-size: var(--step--1); color: var(--ink-dim); }
+
+/* lightbox */
+.lb { position: fixed; inset: 0; z-index: 50; background: rgba(3, 5, 9, 0.94); overflow: auto; padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); }
+.lb img { display: block; width: 1512px; max-width: none; height: auto; margin: 0 auto; cursor: zoom-out; }
+.lb .close { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); right: calc(12px + env(safe-area-inset-right, 0px)); }
+.lb p { text-align: center; color: var(--ink-dim); font-size: var(--step--1); margin-bottom: 10px; }
+
+footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--ink-dim); font-size: var(--step--1); display: grid; gap: 8px; }
+@media (max-width: 640px) {
+  h1 { font-size: var(--step-3); }
+  h2 { font-size: var(--step-2); }
+  section { padding-block: 40px 8px; margin-top: 40px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .story .hot { animation: none; }
+  html { scroll-behavior: auto; }
+}
+</style>
+
+<nav class="bar" aria-label="Sections">
+  <div class="wrap">
+    <a class="mark" href="#top">The band's pages</a>
+    <a href="#decide">Decide</a>
+    <a href="#today">Today</a>
+    <a href="#directions">Directions</a>
+    <a href="#journey">Journey</a>
+    <a href="#pages">Pages</a>
+    <a href="#system">System</a>
+    <a href="#interact">Interactions</a>
+    <a href="#build">Build</a>
+  </div>
+</nav>
+
+<main class="wrap" id="top">
+  <header class="open">
+    <p class="label">AWAKEN · the K menu · <b>design for approval</b> · 26 October 2026</p>
+    <h1>The band's pages</h1>
+    <p class="lede">The K menu becomes a short sheet about you, with the rest of the band one key away. Status fits on one screen: who you are, your six stats, then the Journal. The Gate Map and the Atlas become one map. Below is the same hunter, at the same moment, in today's menu and in the proposal. Drag the line to compare.</p>
+  </header>
+
+  <div class="stack">
+    <div class="wipe" id="wipe" style="--cut: 32%">
+      <img src="shots/01_before_status.jpg" alt="Today's K menu: tabs on top, NOW, then the Atlas picture fills the first screen" width="3024" height="1898">
+      <img class="after" src="shots/02_after_status.jpg" alt="The proposed Status page: face, level 14, D-rank sigil, six stats in one line, then the Journal" width="3024" height="1898">
+      <div class="seam" aria-hidden="true"></div>
+      <span class="tag l">Today</span><span class="tag r">Proposed</span>
+    </div>
+    <div class="wipe-ctl">
+      <label class="label" for="cut">Compare</label>
+      <input id="cut" type="range" min="0" max="100" value="32" aria-label="Move the line between today and the proposal">
+      <button class="btn" type="button" id="showBefore">Today</button>
+      <button class="btn" type="button" id="showAfter">Proposed</button>
+    </div>
+    <p class="text" style="color: var(--ink-dim); font-size: var(--step--1)">Both frames are 3024×1898, drawn at 5 framebuffer pixels a panel unit with the game's own font, over the same tour frame (the band raised, before its panel appears). On a retina screen at full width they are the MacBook's real pixels; click any shot to see it at that size. The renderer was checked against the real game first (<a href="#made">how the mockups were made</a>).</p>
+  </div>
+
+  <section id="decide" aria-labelledby="decide-h">
+    <div class="head">
+      <p class="label">What I need from you</p>
+      <h2 id="decide-h">Ten decisions</h2>
+      <p>Each has my recommendation. Saying yes to the first one (direction B) and the last one (start with phase 1) is enough to begin; the rest can be answered as the builder reaches them.</p>
+    </div>
+    <ol class="decisions">
+      <li><span class="q">Which direction: B (the band's pages), A (reorder only) or C (the orrery)?</span><span class="rec">I recommend <b>B</b>. It fixes why the menu feels like a dashboard, not only its order.</span></li>
+      <li><span class="q">Six pages: Status · Powers · Journal · Truths · Codex · Map. Are the names right?</span><span class="rec">Recommended <b>as listed</b>. Today there are four tabs.</span></li>
+      <li><span class="q">Does K always open on Status, or on the last page you used?</span><span class="rec">Recommended <b>always Status</b>, so a glance is one key. M and "Show me" links open their own page.</span></li>
+      <li><span class="q">Stat points: place them, then confirm? Or spend on each click as today?</span><span class="rec">Recommended <b>place, then confirm</b> (Enter), with Undo (Backspace).</span></li>
+      <li><span class="q">May the panel grow 6% wider (272 to 288 units)?</span><span class="rec">Recommended <b>yes</b>. Its right edge passes the screen's centre by about 70 px while open; the crosshair is already hidden then.</span></li>
+      <li><span class="q">Does M open the band's Map page, so there is one map with two keys?</span><span class="rec">Recommended <b>yes</b>. The rail stays on the map's edge, so Status is one key away.</span></li>
+      <li><span class="q">A denser tint by day, so labels stay readable over bright sky?</span><span class="rec">Recommended <b>yes</b>: 0.46 instead of 0.38, rising to 0.60 only over a bright backdrop. The glass looks a little less sheer at noon.</span></li>
+      <li><span class="q">Show your face, from your skin, on the Status page?</span><span class="rec">Recommended <b>yes</b>. It makes the sheet yours.</span></li>
+      <li><span class="q">Move "Clear Atlas cache" off the map and into the settings screen?</span><span class="rec">Recommended <b>yes</b>. It's upkeep, not play.</span></li>
+      <li><span class="q">Build phase 1 first (your literal asks, one builder hand-back), then phases 2 to 5?</span><span class="rec">Recommended <b>yes</b>. Phase 1 alone already moves the Journal under the stats and merges the maps.</span></li>
+    </ol>
+  </section>
+
+  <section id="today" aria-labelledby="today-h">
+    <div class="head">
+      <p class="label">1 · Diagnosis</p>
+      <h2 id="today-h">Why it feels like a dashboard</h2>
+      <p>The Status tab is one column of 22 sections from 11 modules, each with the same loud blue title and the same size of text, in a window of 246×192 units (about 17 lines). Nothing leads. The first screen is the Atlas picture, and your stats begin about three screens down.</p>
+    </div>
+    <div class="facts">
+      <div class="fact"><b>22</b><span>sections on the Status tab today, one column</span></div>
+      <div class="fact"><b>2.8</b><span>screens of scrolling before the stats begin (543 units for this hunter; 1.9 to 3.4 depending on the Journal)</span></div>
+      <div class="fact"><b>30</b><span>mouse-wheel notches to reach the stats (18 units a notch)</span></div>
+      <div class="fact"><b>6.5</b><span>screens to reach Powers, the most hands-on part of K</span></div>
+      <div class="fact"><b>2.6:1</b><span>contrast of today's labels over overcast sky, in the game's own shot (4.5:1 is the bar)</span></div>
+    </div>
+    <div class="scrollmap" role="img" aria-label="To scale: today's Status tab is a 1,976-unit stack, about ten screens, with the stats starting at 543 units and Powers at 1,242. The proposed Status page is one 208-unit screen, and the rest moves to five other pages.">
+      <svg viewBox="0 0 1180 690" xmlns="http://www.w3.org/2000/svg" id="smap"></svg>
+    </div>
+    <div class="grid2">
+      <div class="stack text">
+        <h3>What a player meets today</h3>
+        <p>Seeing your stats means scrolling past NOW, the map picture, the Journal, your status line and what's saved for later. Spending a point is permanent on the first click. Powers is near the bottom. Gates live on a radar of dots in one tab, while the good map (the Atlas on M) has no gates on it at all.</p>
+        <p>None of this is a styling problem. Every block has equal weight and they are stacked in one feed, so the eye has nowhere to land. That is what makes it read as a dashboard.</p>
+      </div>
+      <div class="stack text">
+        <h3>The thesis</h3>
+        <p>The band is the System's page about you: who you are now, and what's next for you. It should read like a character sheet, not a feed.</p>
+        <p><b class="amber">Commands attention:</b> your rank, your level and how far to the next, your six stats, and anything that waits on you. <b style="color: var(--signal-hot)">Sits close by:</b> what just happened, and the one thing you're doing. <b style="color: var(--ink-dim)">Waits until asked:</b> everything else, each on its own page. Hierarchy comes from scale, light and position, not from boxes and titles.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="directions" aria-labelledby="dir-h">
+    <div class="head">
+      <p class="label">2 · Three directions</p>
+      <h2 id="dir-h">How the work could happen</h2>
+      <p>They differ in structure, not paint. All three keep the band's choreography, its glass and its sounds.</p>
+    </div>
+    <div class="grid3">
+      <div class="dir">
+        <figure><img src="shots/12_direction_a.jpg" alt="Direction A: the same panel and top tabs, Status reordered to status, stats, journal" width="3024" height="1898" loading="lazy"></figure>
+        <div class="who"><h3>A · Reorder and refine</h3></div>
+        <p>Same panel and tabs (the Gate Map tab becomes Map, which opens the Atlas). Status stacks status, stats, Journal, then the rest. Quiet labels replace the loud titles.</p>
+        <span class="for">For</span>
+        <ul><li>The smallest change: about one builder hand-back.</li><li>Nothing new to learn.</li></ul>
+        <span class="against">Against</span>
+        <ul><li>Still one feed of 21 sections; the Journal is below the first screen.</li><li>Powers is still 4 to 6 screens down. A tidier dashboard.</li></ul>
+      </div>
+      <div class="dir">
+        <figure><img src="shots/02_after_status.jpg" alt="Direction B: the band's pages, the Status page" width="3024" height="1898" loading="lazy"></figure>
+        <div class="who"><h3>B · The band's pages</h3><span class="badge">Recommended</span></div>
+        <p>A rail of six pages down the wrist edge, like the band's own nodes. Each page is composed for its job: Status is one screen, Powers leads with your keys, Map is the Atlas with the gates on it.</p>
+        <span class="for">For</span>
+        <ul><li>Every ask met; the main tasks take no scrolling.</li><li>Removes the cause of the dashboard feel.</li><li>Builds on StatusSections, HoloPanel and the Atlas.</li></ul>
+        <span class="against">Against</span>
+        <ul><li>Six pages to learn (labelled rail, keys 1 to 6).</li><li>Each module moves its section (one line each). About four hand-backs.</li></ul>
+      </div>
+      <div class="dir">
+        <figure><img src="shots/13_direction_c.jpg" alt="Direction C: Status in front, Powers and Journal panes turned away into the world" width="3024" height="1898" loading="lazy"></figure>
+        <div class="who"><h3>C · The orrery</h3></div>
+        <p>The same pages as panes in an arc round the wrist. The one you look at comes forward; the others turn away into the world. The map hovers over the forearm as a diorama.</p>
+        <span class="for">For</span>
+        <ul><li>The most striking moment of the three.</li></ul>
+        <span class="against">Against</span>
+        <ul><li>Several panels at once: more frame time, more text over the world.</li><li>Side panes show content you can't use.</li><li>Two to three times B's build. B's pages are what C would present later.</li></ul>
+      </div>
+    </div>
+    <p class="callout">B is the smallest change that removes the dashboard, because it changes the structure. It puts stats and then the Journal on the first screen, and it makes the two maps one.</p>
+    <div class="stack text">
+      <h3>What the reference games solve</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Reference</th><th>What it solves</th><th>What we take</th></tr></thead>
+        <tbody>
+          <tr><td><b>Solo Leveling's status window</b></td><td>The System's own status window is short: name, level, job, title, stats and points left.</td><td>The page about you is small. Everything else is elsewhere.</td></tr>
+          <tr><td><b>Destiny 2</b></td><td>Your Guardian and loadout are the screen; details appear for what the cursor rests on; small glints mark what's new.</td><td>One hero composition, the focus line, motion that reports change.</td></tr>
+          <tr><td><b>Death Stranding</b></td><td>A soft blue scheme, little animation, long thin lines of information; a map that turns topographic to plan a route.</td><td>Thin light instead of boxes. The map is a projected model.</td></tr>
+          <tr><td><b>Breath of the Wild</b></td><td>A device with pages you flip between; the HUD shows only what's needed.</td><td>Pages on the band. The map is its own mode.</td></tr>
+          <tr><td><b>Elden Ring</b> (from play)</td><td>Points are placed, previewed, then confirmed at a Site of Grace.</td><td>Place, then confirm, with undo.</td></tr>
+          <tr><td><b>Persona 5</b></td><td>Every menu gets its own look; its own director called the type hard to read at first.</td><td>Each page composed for its job. Never style over legibility.</td></tr>
+          <tr><td><b>Cyberpunk 2077, Crimson Desert</b></td><td>Both drew complaints about clutter, small text and contrast; Crimson Desert patched clutter out after launch.</td><td>Readable size and contrast come first, and are measured.</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <section id="journey" aria-labelledby="journey-h">
+    <div class="head">
+      <p class="label">3 · The central journey · clickable</p>
+      <h2 id="journey-h">Open, spend, switch, find a gate</h2>
+      <p>Click the amber outline on each frame, or use the buttons. Every frame is a mockup at real scale.</p>
+    </div>
+    <div class="story" id="story">
+      <div class="stage"><img id="storyImg" src="shots/02_after_status.jpg" alt="" width="3024" height="1898"></div>
+      <p class="cap" id="storyCap" aria-live="polite"></p>
+      <div class="bar2">
+        <button class="btn" type="button" id="prev">Back</button>
+        <button class="btn" type="button" id="next">Next</button>
+        <div class="dots" id="dots" role="group" aria-label="Frames"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="pages" aria-labelledby="pages-h">
+    <div class="head">
+      <p class="label">4 · Every page, and the states that test it</p>
+      <h2 id="pages-h">Status, Powers, Journal, Map</h2>
+      <p>Truths and Codex keep their content and take the same system; they are not drawn here.</p>
+    </div>
+    <figure class="real">
+      <img src="shots/02_after_status.jpg" alt="Status page, typical" width="3024" height="1898" loading="lazy">
+      <figcaption><b>Status, typical (level 14, D-rank, 3 points, 2 new).</b> The hero: your face framed in rank colour, LEVEL 14 at twice the body size, a segmented XP bar, "Level 15 opens The Veil", and the rank as a pixel sigil with "C at level 25". Then the six stats in one line, each with a diamond + while points wait; the cursor on AGI lights its column and the focus line says what it does. Then the Journal: the task you track with its compass, and the newest entries (◆ new, ◇ read).</figcaption>
+    </figure>
+    <div class="grid2">
+      <figure>
+        <img src="shots/10_dense_night.jpg" alt="Status page, dense, at night" width="3024" height="1898" loading="lazy">
+        <figcaption><b>Dense, at night.</b> Level 47, B-rank, the Hollow path, a long title, 5 points, Fractured (shown on the stats it weakens), inside a gate run (the context row holds the floor, the Satchel and its key), 9 new entries with long titles cut with "…".</figcaption>
+      </figure>
+      <figure>
+        <img src="shots/11_empty_fresh.jpg" alt="Status page, a fresh world" width="3024" height="1898" loading="lazy">
+        <figcaption><b>Empty: a fresh world, just out of the Registry.</b> Level 1, six 5s, no points ("Your band is new. Points to spend come with each level."), the first task tracked, and a plain line for the empty Journal.</figcaption>
+      </figure>
+      <figure>
+        <img src="shots/07_powers.jpg" alt="Powers page" width="3024" height="1898" loading="lazy">
+        <figcaption><b>Powers.</b> Your six keys are the hero (Z X C V, the ultimate on R, movement on Alt). Below, every power you own with its level pips and mastery; the chosen one in full. Choosing Haymaker lights the keys it fits. Movement (the Ascent and the Body), Crafts and the Veil follow below.</figcaption>
+      </figure>
+      <figure>
+        <img src="shots/08_journal.jpg" alt="Journal page" width="3024" height="1898" loading="lazy">
+        <figcaption><b>Journal.</b> Filters (Q and E), the tracked task with every step (the same task as the progression builder's top-right card), what else you've taken on, what's saved for later with what it needs, and the log. Records end the page.</figcaption>
+      </figure>
+    </div>
+    <figure class="real">
+      <img src="shots/09_map.jpg" alt="Map page: the Atlas inside the band, with gates" width="2880" height="1800" loading="lazy">
+      <figcaption><b>Map: one map.</b> The Atlas table, opened as the band's last page (and by M), with the rail on its edge. Gates rise through the cloud as pillars in their rank colour, the way they stand in the world; a broken gate is red with "!". The legend's Gates tab lists them nearest first with days to break; the chosen gate opens in the list with "Point me there" (T), which sets your compass. A rumour hangs in the cloud as "?". (The diorama behind is a real M5 capture; the header, legend, pins and footer are the proposal.)</figcaption>
+    </figure>
+  </section>
+
+  <section id="system" aria-labelledby="sys-h">
+    <div class="head">
+      <p class="label">5 · The visual system</p>
+      <h2 id="sys-h">Light on glass, sized in whole pixels</h2>
+      <p>The glass, its scan lines, halo and brackets stay: they are AWAKEN's look. What changes is how the content uses them.</p>
+    </div>
+    <div class="grid2">
+      <div class="stack text">
+        <h3>Type</h3>
+        <p>Minecraft's own font, always on whole framebuffer pixels. Sizes are steps of font pixels tied to the panel's pixels per unit (ppu), so nothing is ever blurred or uneven:</p>
+        <div class="tbl"><table>
+          <thead><tr><th>Role</th><th>Scale</th><th>MacBook (5)</th><th>4K (6)</th><th>Used for</th></tr></thead>
+          <tbody>
+            <tr><td><b>Display</b></td><td class="num">2</td><td class="num">10 px</td><td class="num">12 px</td><td>level, stat values, rank letter</td></tr>
+            <tr><td><b>Body</b></td><td class="num">1</td><td class="num">5 px</td><td class="num">6 px</td><td>names, entry titles, buttons</td></tr>
+            <tr><td><b>Small</b></td><td class="num">(ppu−1)/ppu</td><td class="num">4 px</td><td class="num">5 px</td><td>second lines, hints, distances</td></tr>
+            <tr><td><b>Micro</b></td><td class="num">(ppu−2)/ppu</td><td class="num">3 px</td><td class="num">4 px</td><td>spaced capitals: labels, rail, chips</td></tr>
+          </tbody>
+        </table></div>
+        <p style="font-size: var(--step--1); color: var(--ink-dim)">Pixels are per font pixel. Never under 2 (1080p clamps micro). Words are plain: "Level 15 opens The Veil", "Press + on a stat to raise it, then confirm."</p>
+      </div>
+      <div class="stack text">
+        <h3>Colour has a job</h3>
+        <p>Blue is the System's structure. White is you. <span class="amber">Amber means it waits on you.</span> <span class="good">Green is done.</span> <span class="warn">Red is danger.</span> Rank colours appear only on rank things. Every colour also has a shape or a word (◆ new, ◇ read, ✓ done, ▸ current, ! danger, the rank letter), so colour is never alone.</p>
+        <div class="swatches">
+          <div class="sw"><i style="background:#7FC3FF"></i><div><b>signal</b><span>#7FC3FF · structure</span></div></div>
+          <div class="sw"><i style="background:#C4E6FF"></i><div><b>signal.hot</b><span>#C4E6FF · active, focus</span></div></div>
+          <div class="sw"><i style="background:#FFFFFF"></i><div><b>ink.hi</b><span>#FFFFFF · you, values</span></div></div>
+          <div class="sw"><i style="background:#BCCDE3"></i><div><b>ink.dim</b><span>#BCCDE3 · labels (was #8FA7C4)</span></div></div>
+          <div class="sw"><i style="background:#FFCF7A"></i><div><b>amber</b><span>#FFCF7A · waits on you</span></div></div>
+          <div class="sw"><i style="background:#8FF0C0"></i><div><b>good</b><span>#8FF0C0 · done, true</span></div></div>
+          <div class="sw"><i style="background:#FF8A7A"></i><div><b>warn</b><span>#FF8A7A · danger</span></div></div>
+          <div class="sw"><i style="background:linear-gradient(90deg,#F4F6FB 0 16.6%,#5FD08F 0 33.3%,#6FB3FF 0 50%,#B48CFF 0 66.6%,#F2A541 0 83.3%,#FF5A6A 0)"></i><div><b>rank E D C B A S</b><span>only on rank things</span></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="stack text">
+        <h3>Light, material, depth</h3>
+        <ul style="margin:0; padding-left:1.1em; display:grid; gap:6px">
+          <li><b>Light comes from the wrist.</b> A soft glow from the lower-left corner, where the beams meet the glass, so the panel reads as projected.</li>
+          <li><b>The active page leaks light</b> from its rail node into the page.</li>
+          <li><b>The tint behind text is 0.46</b> (was 0.38) and rises to 0.60 when the scene behind is bright, like a lens that darkens in sun.</li>
+          <li><b>Depth only where it means something:</b> the rank sigil sits in a faint field of its own light; the focused stat has a column of light.</li>
+        </ul>
+      </div>
+      <div class="stack text">
+        <h3>Motion reports change</h3>
+        <p>Nothing animates on every open. Only what changed since you last looked moves: XP gained fills its segments, new entries print in. A page change prints the new page behind the band's scan line, the gesture the panel already makes when it opens.</p>
+        <div class="grid2" style="gap: 12px">
+          <figure><img src="shots/05_switch_40ms.jpg" alt="Page change at 40 ms" width="3024" height="1898" loading="lazy"><figcaption><b>40 ms.</b> The rail's light leaves Status; the page dims.</figcaption></figure>
+          <figure><img src="shots/06_switch_110ms.jpg" alt="Page change at 110 ms" width="3024" height="1898" loading="lazy"><figcaption><b>110 ms.</b> Powers prints in behind the line.</figcaption></figure>
+        </div>
+      </div>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th>Moment</th><th>Timing</th><th>Sound</th><th>Reduced motion</th></tr></thead>
+      <tbody>
+        <tr><td><b>Open, close</b></td><td>Unchanged band choreography (450 / 250 ms); hero 300–360, stat columns 340–420 (12 ms apart), Journal 400–450</td><td>holo.open, holo.close</td><td>Fade in place</td></tr>
+        <tr><td><b>Change page</b></td><td>Rail light 0–120 ms; old page dims 0–60; new page prints behind a scan line 40–180</td><td>holo.page (new): soft glass sweep A5→D6</td><td>120 ms crossfade</td></tr>
+        <tr><td><b>Focus</b></td><td>Rim and column light 90 ms</td><td>holo.hover (≤ every 55 ms)</td><td>Instant</td></tr>
+        <tr><td><b>Place a point</b></td><td>Value turns amber, "+N" appears, 80 ms</td><td>holo.spend (new): one rising note per point, D5 E5 F♯5 A5 B5 D6</td><td>Instant</td></tr>
+        <tr><td><b>Confirm</b></td><td>Values flash 200 ms; chip dissolves 150; "You grew" prints into the Journal</td><td>holo.confirm (new): D5 A5 D6</td><td>Instant</td></tr>
+        <tr><td><b>Undo</b></td><td>Last placed point leaves, 80 ms</td><td>holo.undo (new): B5→F♯5</td><td>Instant</td></tr>
+        <tr><td><b>Map</b></td><td>The panel grows into the table 300 ms; back 250</td><td>holo.open_quick, pitched down</td><td>Crossfade</td></tr>
+      </tbody>
+    </table></div>
+    <div class="stack" id="readability">
+      <h3>Readability, measured</h3>
+      <figure class="real">
+        <img src="shots/14_readability.jpg" alt="The Status hero and stats over a white cloud, grass and night" width="3040" height="640" loading="lazy">
+        <figcaption><b>The same hero and stats over a white cloud (the worst case), grass and night,</b> at real pixels.</figcaption>
+      </figure>
+      <div class="tbl"><table>
+        <thead><tr><th>Backdrop (contrast ratio, 4.5 is the bar for small text)</th><th>White</th><th>Ink</th><th>Labels, new</th><th>Labels, today</th></tr></thead>
+        <tbody>
+          <tr><td><b>Real game, today's tint, overcast sky</b></td><td class="num">6.4</td><td class="num">5.0</td><td class="num">3.5</td><td class="num warn">2.6</td></tr>
+          <tr><td>Mockup, tint 0.46, white cloud</td><td class="num">9.0</td><td class="num">7.0</td><td class="num">4.9</td><td class="num">3.6</td></tr>
+          <tr><td>Mockup, grass</td><td class="num">13.5</td><td class="num">10.5</td><td class="num">7.3</td><td class="num">5.5</td></tr>
+          <tr><td>Mockup, night</td><td class="num">15.9</td><td class="num">12.3</td><td class="num">8.6</td><td class="num">6.4</td></tr>
+        </tbody>
+      </table></div>
+      <p class="text" style="font-size: var(--step--1); color: var(--ink-dim)">The mockup's glass renders a little darker than the real shader over sky, so its sky row flatters the proposal. That's why the plan adds both the adaptive tint and the brighter label colour; together they bring labels to about 4.7:1 even over the real overcast backdrop (an estimate the builder confirms on a CI tour over bright sky).</p>
+    </div>
+    <details class="stack">
+      <summary class="label" style="cursor:pointer">All tokens</summary>
+      <div class="tbl" style="margin-top:12px"><table>
+        <thead><tr><th>Token</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td><b>panel</b></td><td class="num">288 × 228 units · rail 30 · content x 40–278 · padding 10 · label to content 9 · block gap 6</td></tr>
+          <tr><td><b>pixels per unit</b></td><td class="num">5 on 2880×1800 and 3024×1964 (1440×1140 px) · 6 on 3840×2160 (1728×1368 px)</td></tr>
+          <tr><td><b>type</b></td><td class="num">display 2 · body 1 · small (ppu−1)/ppu · micro max(2, ppu−2)/ppu, +1 font px tracking</td></tr>
+          <tr><td><b>line height</b></td><td class="num">18 / 11 / 9 / 7 units</td></tr>
+          <tr><td><b>ink</b></td><td class="num">hi #FFFFFF · ink #D9E4F2 · dim #BCCDE3 · faint #6F86A6 (decoration only)</td></tr>
+          <tr><td><b>signal</b></td><td class="num">#7FC3FF · hot #C4E6FF</td></tr>
+          <tr><td><b>states</b></td><td class="num">amber #FFCF7A · lantern #F2A541 · good #8FF0C0 · warn #FF8A7A · violet #B48CFF · horizon #9FE6D6</td></tr>
+          <tr><td><b>glass</b></td><td class="num">#16233A → #0F1724, α 0.38 → 0.50 (unchanged)</td></tr>
+          <tr><td><b>content tint</b></td><td class="num">#05080F α 0.46, adaptive to 0.60 when the backdrop's mean luminance passes 0.35; feathered 14 units</td></tr>
+          <tr><td><b>wrist light</b></td><td class="num">additive #7FC3FF 13%, radius 190 units from the lower-left corner</td></tr>
+          <tr><td><b>scan lines</b></td><td class="num">every 3 units, #7FC3FF 3.5%</td></tr>
+          <tr><td><b>components</b></td><td class="num">segment 3 + gap 1, 3 tall · + node: diamond r 4 · keycap 9 tall · focus ticks 4 · context row 21 · journal row 20</td></tr>
+          <tr><td><b>motion</b></td><td class="num">page 180 ms · focus 90 · place 80 · confirm 200 · map 300 in / 250 out</td></tr>
+        </tbody>
+      </table></div>
+    </details>
+  </section>
+
+  <section id="interact" aria-labelledby="int-h">
+    <div class="head">
+      <p class="label">6 · Interactions, states, access</p>
+      <h2 id="int-h">Every action has a key and a way back</h2>
+      <p><span class="mono">1–6</span> pages · <span class="mono">Tab</span> next page · <span class="mono">Q / E</span> tabs inside a page · arrows move focus · <span class="mono">Enter</span> act · <span class="mono">Backspace</span> undo a placed point · <span class="mono">M</span> map · <span class="mono">K / Esc</span> close (Esc first clears a choice in progress).</p>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th>Interaction</th><th>Trigger → response</th><th>State</th><th>Recovery</th><th>Return</th></tr></thead>
+      <tbody>
+        <tr><td><b>Open</b></td><td>K (band worn) → the wrist rises, the panel unfolds; only what changed animates</td><td>Status, always (a link or M opens its page)</td><td>K while opening skips to open</td><td>K or Esc folds it back</td></tr>
+        <tr><td><b>Change page</b></td><td>Rail node, 1–6, Tab → rail light travels; the page prints in</td><td>The new page, where you left it this session</td><td>A second key finishes the first change at once</td><td>Tab back, or 1</td></tr>
+        <tr><td><b>Read a stat</b></td><td>Hover or arrow onto a column → it lights; the focus line explains it</td><td>Focused stat</td><td>Move away</td><td>The idle line returns</td></tr>
+        <tr><td><b>Spend points</b></td><td>+ or Enter → amber value with "+N" and a rising note; "2 of 3 placed", Confirm and Undo</td><td>Placed, not spent</td><td>Backspace undoes the last; closing K keeps the points and restores the placing next time</td><td>Confirm: one request, checked by the server; values flash; "You grew" is filed</td></tr>
+        <tr><td><b>Context row</b></td><td>The first that applies: a decision (Y/N), a gate run (V Satchel), the Deep Pack, the room you stand in, the task you track</td><td>One row above the Journal</td><td>The Journal page holds the rest</td><td>Its key acts</td></tr>
+        <tr><td><b>Journal entry</b></td><td>Click or Enter → opens in place: full text, "Show on map", "Open in the Codex"</td><td>Open entry</td><td>Esc or click folds it</td><td>Read once K closes (unchanged)</td></tr>
+        <tr><td><b>Map</b></td><td>Rail, 6 or M → the panel grows into the table; Gates list, click → fly there; T sets your compass</td><td>The Atlas, with the rail</td><td>C back to you</td><td>1 or Tab folds the table back into the panel</td></tr>
+        <tr><td><b>Powers</b></td><td>Click a power → it and the keys it fits light; press a key or click a socket → assigned</td><td>Selected power</td><td>Esc clears the selection first</td><td>The loadout updates at once</td></tr>
+      </tbody>
+    </table></div>
+    <div class="tbl"><table>
+      <thead><tr><th>Page</th><th>Empty</th><th>Sparse</th><th>Dense</th><th>Long content</th><th>Loading</th><th>Failed</th></tr></thead>
+      <tbody>
+        <tr><td><b>Status</b></td><td>Band off: K opens nothing (unchanged). Fresh world: the empty Journal line</td><td>Today's tally on the focus line</td><td>Shot 10</td><td>16-character names, long titles; entries end in "…" and open in full; labels shorten in translations</td><td>First second after joining: placeholder segments until the profile arrives</td><td>No holo shaders: the flat screen with the same pages. No skin: your initial in rank colour</td></tr>
+        <tr><td><b>Powers</b></td><td>Before a first power, K opens the first-power choice (unchanged)</td><td>1–3 powers</td><td>40+: the grid scrolls under the fixed keys</td><td>Descriptions wrap</td><td>—</td><td>Missing icon: the family glyph</td></tr>
+        <tr><td><b>Journal</b></td><td>"Nothing kept yet…"</td><td>—</td><td>60 kept (unchanged), filters</td><td>Wraps</td><td>—</td><td>—</td></tr>
+        <tr><td><b>Map</b></td><td>"You haven't seen a gate yet. Their light shows from far off: look for a pillar in the sky."</td><td>—</td><td>Nearest first, then "+ 4 further out"</td><td>Names shorten</td><td>Land prints in under cloud (unchanged)</td><td>Inside a gate: "The Atlas can't see inside a gate", with the run</td></tr>
+      </tbody>
+    </table></div>
+    <div class="grid2">
+      <div class="stack text">
+        <h3>Access</h3>
+        <ul style="margin:0; padding-left:1.1em; display:grid; gap:6px">
+          <li><b>Keyboard only</b> reaches everything; focus is always visible (corner ticks and a lit rim).</li>
+          <li><b>Band size</b> setting: Small, Normal, Large. It steps pixels per unit, so every size moves by whole pixels.</li>
+          <li><b>Contrast</b> as measured above; the faint ink never carries meaning.</li>
+          <li><b>Reduced motion</b> uses the existing setting (see the motion table).</li>
+          <li><b>Narration:</b> each focused thing gives the narrator one sentence ("Agility 22. Moves faster, and builds Flow sooner. 3 points to spend.").</li>
+        </ul>
+      </div>
+      <div class="stack text">
+        <h3>Controller</h3>
+        <p>No controller mod is in the pack today. The keyboard focus model is the contract one would map onto: LB and RB change page, the d-pad or left stick moves focus, A acts or places a point, B undoes then goes back then closes, X is the context row's action, Y confirms, the right stick scrolls or turns the map.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="build" aria-labelledby="build-h">
+    <div class="head">
+      <p class="label">7 · Build and check</p>
+      <h2 id="build-h">Five phases, the first one shippable alone</h2>
+      <p>One builder on <span class="mono">pack/k-menu</span>, at extra high effort, one CI look tour per hand-back. The full plan, with every section's destination, is <span class="mono">docs/k-menu/PLAN.md</span>.</p>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th>Phase</th><th>What lands</th></tr></thead>
+      <tbody>
+        <tr><td><b>1 · Structure</b></td><td>Your literal asks: pages and rail; Status ordered status, stats, Journal; the Atlas picture gone from Status; the Map page opens the Atlas; gates on the Atlas; the flat fallback; autopilot lines.</td></tr>
+        <tr><td><b>2 · The Status sheet</b></td><td>The hero (face, sigil, level, XP), the six columns and focus line, place and confirm with its server check, the context row.</td></tr>
+        <tr><td><b>3 · Look and motion</b></td><td>Type ramp, tokens, the denser and adaptive tint, wrist light, the scan-line page change, motion that reports change, four sounds, reduced motion. One Mac perf tour.</td></tr>
+        <tr><td><b>4 · The map</b></td><td>Legend tabs, gate pillars through the cloud, Point me there, the growth into the table, scanner readings.</td></tr>
+        <tr><td><b>5 · The other pages</b></td><td>Powers and Journal composed; Truths and Codex restyled; narration; Band size.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="grid2">
+      <div class="stack text">
+        <h3>Where it touches the game</h3>
+        <ul style="margin:0; padding-left:1.1em; display:grid; gap:6px; font-size: var(--step--1)">
+          <li><b>holo:</b> the page screen, the rail, page changes (one layer transform and a scissor line, so text isn't rebuilt each frame), the 288-unit panel, the map growth, the adaptive tint, Band size, sounds.</li>
+          <li><b>progression:</b> <span class="mono">StatusSections</span> gains pages and a context-row provider (the old tabs stay as an alias for one release); the Status sheet; the spend request and its server check.</li>
+          <li><b>One-line moves</b> in powers, body, veil, living, signal, hearth and descent.</li>
+          <li><b>atlas, gates, above:</b> the rail on the table, legend tabs, gates and scanner readings as Atlas marks; the Gate Map and the glance removed.</li>
+          <li><b>opening, tips:</b> Bram's line "Status, Truths, the Codex, the gate map" and the band tip get plain words for the new pages.</li>
+          <li><b>Not touched:</b> the progression builder's top-right task card (the Journal page reads the same task) and the discovery builder's Journal filing.</li>
+        </ul>
+      </div>
+      <div class="stack text">
+        <h3>Cost and the checks before release</h3>
+        <ul style="margin:0; padding-left:1.1em; display:grid; gap:6px; font-size: var(--step--1)">
+          <li><b>Cheaper Status:</b> three composed blocks instead of measuring up to 22 sections every frame; the glance's paint (0.23 ms) and texture go.</li>
+          <li><b>Map:</b> what the Atlas costs (+1.5 to 2.0 ms while open); about +0.3 ms during the 300 ms growth.</li>
+          <li><b>Budget kept:</b> the holo K menu within 0.25 ms of the flat one; no allocation per frame.</li>
+          <li><b>Tests:</b> layouts fit at 3 to 7 pixels a unit; Status never scrolls; every section sits on exactly one page; the spend request can't spend what you don't have.</li>
+          <li><b>Four checks:</b> a new player finds "what next" with no scrolling; an expert spends 5 points in 6 inputs; contrast measured on a CI tour over sky, grass and night; keyboard-only and reduced-motion passes.</li>
+          <li><b>Release gates:</b> CI green, the CI tour reviewed, the Mac perf tour within budget, your yes in game.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="made" aria-labelledby="made-h">
+    <div class="head">
+      <p class="label">How the mockups were made</p>
+      <h2 id="made-h">Checked against the real game</h2>
+      <p>A small renderer redraws the holo panel from the code's own numbers: panel units, 5 framebuffer pixels a unit, Minecraft's font with its real glyph widths, the glass, tint, halo, brackets and text drawn as light, fitted to the panel's real perspective. Before drawing anything new, it drew today's panel with the exact content of a real tour shot. Left is the game; right is the renderer.</p>
+    </div>
+    <figure class="real">
+      <img src="shots/00_calibration.jpg" alt="The real K menu on the left, the mockup renderer's version of the same content on the right" width="3140" height="1270" loading="lazy">
+      <figcaption><b>Same content, same scale.</b> The layout matches line for line. The real glass is a little bluer over bright sky, which is why the contrast numbers above are taken from the game's own shot where it matters. The renderer is in <span class="mono">docs/k-menu/mock/</span> and reads the font from the local reference folder; the font is never committed.</figcaption>
+    </figure>
+  </section>
+
+  <footer>
+    <p>Sources: Persona's menus (dtnext.in; Push Square; Inverse) · Destiny 2's menus and cursor (GamesRadar; Hud &amp; Guis) · Death Stranding's interface and map (Fonts In Use; PlayStation Blog) · Breath of the Wild's Slate (The Famicast; UX Collective) · Cyberpunk 2077 (Kotaku; Steam community) · Crimson Desert after launch (GamingBolt; vulkk.com). Elden Ring and Solo Leveling are from play and reading. Links are in PLAN.md.</p>
+    <p>Design phase only. Nothing in the game has changed yet.</p>
+  </footer>
+</main>
+
+<div class="lb" id="lb" hidden>
+  <button class="btn close" type="button" id="lbClose">Close</button>
+  <p>Real scale: 1512 css px is the MacBook's 3024 pixels on a retina screen. Scroll to pan.</p>
+  <img id="lbImg" alt="">
+</div>
+
+<script>
+(() => {
+  // before / after wipe
+  const wipe = document.getElementById('wipe'), cut = document.getElementById('cut');
+  const setCut = v => { wipe.style.setProperty('--cut', v + '%'); cut.value = v; };
+  cut.addEventListener('input', () => setCut(cut.value));
+  document.getElementById('showBefore').addEventListener('click', () => setCut(100));
+  document.getElementById('showAfter').addEventListener('click', () => setCut(0));
+  let dragging = false;
+  const fromEvent = e => { const r = wipe.getBoundingClientRect(); setCut(Math.round(Math.max(0, Math.min(100, (e.clientX - r.left) / r.width * 100)))); };
+  wipe.addEventListener('pointerdown', e => { dragging = true; wipe.setPointerCapture(e.pointerId); fromEvent(e); });
+  wipe.addEventListener('pointermove', e => { if (dragging) fromEvent(e); });
+  wipe.addEventListener('pointerup', () => { dragging = false; });
+
+  // to-scale scroll map: today's Status tab beside the proposed Status page
+  const today = [['NOW', 64], ['ATLAS (the picture)', 187], ['JOURNAL', 112], ['STATUS', 114], ['SAVED FOR LATER', 66], ['STATS', 130],
+    ['THE ROAD', 84], ['DIRECTIVES', 95], ['DAILY REGIMEN', 64], ['THE ASCENT', 94], ['HEARTH + REQUESTS', 74], ['JOURNAL · CHAINS', 84],
+    ['CRAFTS', 74], ['POWERS', 188], ['THE VEIL', 74], ['THE BODY', 84], ['RECORDS', 156], ['RECENT MESSAGES', 232]];
+  const svg = document.getElementById('smap'), k = 0.31, top = 46, NS = 'http://www.w3.org/2000/svg';
+  const css = getComputedStyle(document.documentElement);
+  const col = n => css.getPropertyValue(n).trim();
+  const el = (t, a, txt) => { const e = document.createElementNS(NS, t); for (const [x, y] of Object.entries(a)) e.setAttribute(x, y); if (txt) e.textContent = txt; svg.appendChild(e); return e; };
+  el('text', { x: 40, y: 22, fill: col('--ink-hi'), 'font-family': 'IBM Plex Mono, monospace', 'font-size': 13 }, 'TODAY · THE STATUS TAB (1,976 UNITS)');
+  el('text', { x: 660, y: 22, fill: col('--ink-hi'), 'font-family': 'IBM Plex Mono, monospace', 'font-size': 13 }, 'PROPOSED · THE STATUS PAGE (ONE SCREEN)');
+  let y = top;
+  for (const [name, h] of today) {
+    const key = name === 'STATS' || name === 'POWERS';
+    el('rect', { x: 40, y, width: 300, height: h * k - 2, fill: key ? 'rgba(255,207,122,0.22)' : 'rgba(127,195,255,0.10)', stroke: key ? col('--amber') : 'rgba(127,195,255,0.35)', 'stroke-width': 1 });
+    if (h * k > 11) el('text', { x: 48, y: y + Math.min(h * k - 4, 14), fill: key ? col('--amber') : col('--ink-dim'), 'font-family': 'IBM Plex Mono, monospace', 'font-size': 10.5 }, name + ' · ' + h);
+    y += h * k;
+  }
+  // the 192-unit window: what one screen shows
+  el('rect', { x: 34, y: top - 3, width: 312, height: 192 * k + 4, fill: 'none', stroke: col('--signal-hot'), 'stroke-width': 2 });
+  el('text', { x: 352, y: top + 12, fill: col('--signal-hot'), 'font-family': 'IBM Plex Mono, monospace', 'font-size': 11 }, '← one screen (192)');
+  el('text', { x: 352, y: top + 543 * k + 10, fill: col('--amber'), 'font-family': 'IBM Plex Mono, monospace', 'font-size': 11 }, '← stats start: 543 units, 30 notches');
+  el('text', { x: 352, y: top + 1242 * k + 10, fill: col('--amber'), 'font-family': 'IBM Plex Mono, monospace', 'font-size': 11 }, '← powers: 1,242 units');
+  // proposed: one screen of three blocks, then the other pages beside it
+  const now = [['YOU · level, rank, XP', 52], ['STATS · six, with +', 58], ['JOURNAL · tracked + newest', 98]];
+  y = top;
+  for (const [name, h] of now) {
+    el('rect', { x: 660, y, width: 300, height: h * k - 2, fill: 'rgba(127,195,255,0.16)', stroke: col('--signal'), 'stroke-width': 1 });
+    el('text', { x: 668, y: y + 14, fill: col('--ink-hi'), 'font-family': 'IBM Plex Mono, monospace', 'font-size': 10.5 }, name);
+    y += h * k;
+  }
+  el('rect', { x: 654, y: top - 3, width: 312, height: 208 * k + 4, fill: 'none', stroke: col('--signal-hot'), 'stroke-width': 2 });
+  const pages = [['POWERS', 'keys, owned, movement, crafts, veil'], ['JOURNAL', 'tracking, tasks, saved, log, records'], ['TRUTHS', 'truths, the road, titles, latents'], ['CODEX', 'the board, happenings'], ['MAP', 'the Atlas with gates']];
+  y = top + 208 * k + 26;
+  el('text', { x: 660, y: y - 8, fill: col('--ink-dim'), 'font-family': 'IBM Plex Mono, monospace', 'font-size': 11 }, 'EVERYTHING ELSE: ONE KEY AWAY');
+  pages.forEach(([p, what], i) => {
+    const yy = y + i * 34;
+    el('rect', { x: 660, y: yy, width: 420, height: 28, fill: 'rgba(127,195,255,0.06)', stroke: 'rgba(127,195,255,0.35)', 'stroke-width': 1 });
+    el('text', { x: 668, y: yy + 18, fill: col('--signal-hot'), 'font-family': 'IBM Plex Mono, monospace', 'font-size': 11 }, (i + 2) + '  ' + p);
+    el('text', { x: 760, y: yy + 18, fill: col('--ink-dim'), 'font-family': 'IBM Plex Mono, monospace', 'font-size': 10.5 }, what);
+  });
+  el('text', { x: 660, y: y + 5 * 34 + 26, fill: col('--ink-dim'), 'font-family': 'IBM Plex Mono, monospace', 'font-size': 11 }, 'heights to scale: 0.31 px a unit');
+
+  // the clickable storyboard
+  const frames = [
+    { src: 'shots/02_after_status.jpg', t: 'K', cap: 'You press K. The band opens on Status: you, your six stats, then the Journal. Click the + under AGI.', hot: { l: 19.3, t: 35.24, w: 2.98, h: 4.06 }, label: 'Place a point on AGI' },
+    { src: 'shots/03_spend_placed.jpg', t: 'Place', cap: 'Three points placed, shown in amber with +1 and +2. Nothing is spent yet: Undo takes one back. Click Confirm (or press Enter).', hot: { l: 26.0, t: 38.87, w: 13.68, h: 4.18 }, label: 'Confirm' },
+    { src: 'shots/04_spend_confirmed.jpg', t: 'Confirm', cap: 'Confirmed. The new values flash and the Journal files "You grew". Click POWERS on the rail.', hot: { l: 2.82, t: 20.46, w: 5.31, h: 8.95 }, label: 'Open Powers' },
+    { src: 'shots/05_switch_40ms.jpg', t: '40 ms', cap: 'The page change, frozen at 40 ms: the rail\'s light leaves Status and the old page dims.', hot: { l: 2.98, t: 8.96, w: 49.21, h: 60.62 }, label: 'Continue' },
+    { src: 'shots/06_switch_110ms.jpg', t: '110 ms', cap: 'At 110 ms Powers prints in behind the band\'s scan line, the same gesture the panel makes when it opens.', hot: { l: 2.98, t: 8.96, w: 49.21, h: 60.62 }, label: 'Continue' },
+    { src: 'shots/07_powers.jpg', t: 'Powers', cap: 'Powers: your six keys first, then everything you own. Haymaker is chosen, so the keys it fits glow. Click MAP on the rail.', hot: { l: 1.66, t: 58.13, w: 5.47, h: 8.94 }, label: 'Open the Map' },
+    { src: 'shots/09_map.jpg', t: 'Map', cap: 'The Map is the Atlas inside the band. Gates rise through the cloud as pillars; the nearest D-rank is open in the list with "Point me there". K closes the band from here.' },
+  ];
+  const img = document.getElementById('storyImg'), cap = document.getElementById('storyCap'), dots = document.getElementById('dots');
+  const stage = img.parentElement;
+  let i = 0;
+  frames.forEach((f, n) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = n + 1; b.setAttribute('aria-label', 'Frame ' + (n + 1) + ': ' + f.t);
+    b.addEventListener('click', () => show(n));
+    dots.appendChild(b);
+    const pre = new Image(); pre.src = f.src;
+  });
+  function show(n) {
+    i = Math.max(0, Math.min(frames.length - 1, n));
+    const f = frames[i];
+    img.src = f.src; img.alt = f.cap;
+    cap.innerHTML = '';
+    const t = document.createElement('span'); t.className = 't'; t.textContent = (i + 1) + ' / ' + frames.length + ' · ' + f.t;
+    cap.append(t, document.createTextNode(f.cap));
+    stage.querySelectorAll('.hot').forEach(h => h.remove());
+    if (f.hot) {
+      const h = document.createElement('button');
+      h.type = 'button'; h.className = 'hot'; h.setAttribute('aria-label', f.label);
+      Object.assign(h.style, { left: f.hot.l + '%', top: f.hot.t + '%', width: f.hot.w + '%', height: f.hot.h + '%' });
+      h.addEventListener('click', () => show(i + 1));
+      stage.appendChild(h);
+    }
+    [...dots.children].forEach((d, k2) => { if (k2 === i) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current'); });
+    document.getElementById('prev').disabled = i === 0;
+    document.getElementById('next').textContent = i === frames.length - 1 ? 'Start again' : 'Next';
+  }
+  document.getElementById('prev').addEventListener('click', () => show(i - 1));
+  document.getElementById('next').addEventListener('click', () => show(i === frames.length - 1 ? 0 : i + 1));
+  show(0);
+
+  // real-scale lightbox for every figure
+  const lb = document.getElementById('lb'), lbImg = document.getElementById('lbImg');
+  const close = () => { lb.hidden = true; };
+  document.querySelectorAll('figure img').forEach(im => {
+    im.tabIndex = 0;
+    const open = () => { lbImg.src = im.currentSrc || im.src; lbImg.alt = im.alt; lbImg.style.width = (im.naturalWidth / 2 || 1512) + 'px'; lb.hidden = false; document.getElementById('lbClose').focus(); };
+    im.addEventListener('click', open);
+    im.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+  });
+  lbImg.addEventListener('click', close);
+  document.getElementById('lbClose').addEventListener('click', close);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !lb.hidden) close(); });
+})();
+</script>
