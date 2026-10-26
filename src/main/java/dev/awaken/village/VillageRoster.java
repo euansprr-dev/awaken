@@ -34,7 +34,7 @@ public final class VillageRoster {
     private final List<Integer> fieldPlaces = new ArrayList<>(), penPlaces = new ArrayList<>(), benchPlaces = new ArrayList<>(),
             postPlaces = new ArrayList<>(), roadPlaces = new ArrayList<>(), innPlaces = new ArrayList<>();
     private int[] doorPlace, doorNode, lotOf, lampPlace;
-    private int green, wash = -1, bell = -1, notice = -1, play = -1, anvil = -1, net = -1, mill = -1, woods = -1, inn = -1, innOut = -1, stallKeeper = -1;
+    private int green, wash = -1, bell = -1, notice = -1, play = -1, anvil = -1, net = -1, mill = -1, woods = -1, inn = -1, innOut = -1, stallKeeper = -1, stallFront = -1;
     private int lampRoute = -1, watchRoute = -1, errands = -1, carterRoute = -1, eveningRoute = -1;
 
     public static RosterBuilder of(VillagePlan plan, long worldSeed) {
@@ -243,8 +243,8 @@ public final class VillageRoster {
             double kx = (pr.x0() + pr.x1()) / 2.0 + 0.5, kz = pr.z0() + 0.5, fx = kx, fz = pr.z1() + 1.5;
             int keeperNode = spot(kx, 0, kz);
             stallKeeper = b.place("stall_keeper", keeperNode, kx, 0, kz).yaw(0).spot(kx, kz).id();
-            int front = b.place("stall_front", spot(fx, 0, fz), fx, 0, fz).yaw(180).cap(2).spot(fx, fz).spot(fx - 1, fz).id();
-            b.stall(pr.x0(), pr.z0(), pr.x1(), pr.z1(), 'S', stallKeeper, front, "produce", Math.floorMod(pr.v(), 6));
+            stallFront = b.place("stall_front", spot(fx, 0, fz), fx, 0, fz).yaw(180).cap(2).spot(fx, fz).spot(fx - 1, fz).id();
+            b.stall(pr.x0(), pr.z0(), pr.x1(), pr.z1(), 'S', stallKeeper, stallFront, "produce", Math.floorMod(pr.v(), 6));
             break;
         }
         // the lamps: a place on the street beside each post, the lamplighter's round of them all (round the green by angle)
@@ -267,9 +267,22 @@ public final class VillageRoster {
             for (int k = 0; k < p.lamps.size(); k++) b.lamp(lampPlace[k], lampRoute, p.lamps.get(k).x() + 0.5, p.lamps.get(k).z() + 0.5);
         }
         if (postPlaces.size() >= 2) watchRoute = b.route("round", postPlaces.get(0), notice, postPlaces.get(1), notice);
-        List<Integer> er = new ArrayList<>(List.of(wash, notice));
+        // errands spread over the whole place, not round the well: the board, the benches, the stall, a neighbour's door,
+        // a word on a street corner (the washer keeps the well)
+        List<Integer> er = new ArrayList<>(List.of(notice));
         er.addAll(benchPlaces);
         if (play >= 0) er.add(play);
+        if (stallFront >= 0) er.add(stallFront);
+        for (int k = 0; k < p.buildings.size(); k += 2) if (p.buildings.get(k).use().equals("house")) er.add(doorPlace[k]);
+        int far = p.radius() - 12;
+        for (int s = 0; s < p.streets.size(); s++) {
+            VillagePlan.Street st = p.streets.get(s);
+            for (int k = 2; k < st.points() - 1; k += 4) {
+                double sx = st.x()[k], sz = st.z()[k];
+                if (Math.hypot(sx, sz) <= p.greenR + 4 || Math.hypot(sx, sz) > far) continue;
+                er.add(b.place("stand", streetNode[s][k], sx, st.lift()[k], sz).cap(2).spot(sx, sz).id());
+            }
+        }
         errands = b.route("wander", er.stream().mapToInt(Integer::intValue).toArray());
         List<Integer> cr = new ArrayList<>();
         for (int k = 0; k < p.buildings.size(); k++) {

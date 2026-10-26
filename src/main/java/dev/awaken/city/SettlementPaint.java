@@ -37,6 +37,14 @@ public final class SettlementPaint {
 
         /** Who lives in a plot (its rooms are furnished for them), or null for an empty or working building's own fit. */
         @Nullable Interior interior(int plotId);
+
+        /**
+         * Whether a column of the land round what the settlement uses is its clearing: the land's own trees there are
+         * felled before the settlement paints (it keeps its ground, grass and flowers), so houses never stand in a wood.
+         */
+        default boolean clears(int x, int z) {
+            return false;
+        }
     }
 
     /**
@@ -130,8 +138,67 @@ public final class SettlementPaint {
 
     /** World generation: paints the settlement's share of a proto chunk and writes it. Returns blocks written. */
     public static int paintChunk(Layout l, int chunkX, int chunkZ, long worldSeed, ChunkAccess chunk) {
+        int felled = fell(l, chunk);
         CityBuffer buf = paint(l, chunkX, chunkZ, worldSeed, LOCAL.get());
-        return CityWriter.toProto(chunk, buf, l.baseY());
+        return felled + CityWriter.toProto(chunk, buf, l.baseY());
+    }
+
+    /** How far under and over a clearing column's ground (the plan's reading of the land) its trees are felled. */
+    static final int FELL_BELOW = 8, FELL_ABOVE = 40;
+
+    /**
+     * Fells the land's trees in the chunk's clearing columns ({@link Layout#clears}): logs, leaves and what hangs on them,
+     * never a block with a block entity or a snow layer; a felled trunk's dirt grows grass again. What the felling leaves
+     * hanging past the clearing goes in {@link #sweep}. Returns blocks removed.
+     */
+    static int fell(Layout l, ChunkAccess chunk) {
+        int bx = chunk.getPos().getMinBlockX(), bz = chunk.getPos().getMinBlockZ();
+        int minY = chunk.getMinY(), maxY = chunk.getMaxY();
+        BlockState air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+        BlockState grass = net.minecraft.world.level.block.Blocks.GRASS_BLOCK.defaultBlockState();
+        int n = 0;
+        net.minecraft.world.level.chunk.LevelChunkSection[] held = new net.minecraft.world.level.chunk.LevelChunkSection[chunk.getSectionsCount()];
+        try {
+            for (int lz = 0; lz < 16; lz++) {
+                for (int lx = 0; lx < 16; lx++) {
+                    int px = bx + lx - l.originX(), pz = bz + lz - l.originZ();
+                    if (!l.clears(px, pz)) continue;
+                    int g = l.baseY() + l.lift(px, pz);
+                    for (int y = Math.max(minY, g - FELL_BELOW); y <= Math.min(maxY, g + FELL_ABOVE); y++) {
+                        int si = chunk.getSectionIndex(y);
+                        net.minecraft.world.level.chunk.LevelChunkSection sec = chunk.getSection(si);
+                        if (sec.hasOnlyAir()) {
+                            y |= 15; // the rest of this section
+                            continue;
+                        }
+                        int sy = net.minecraft.core.SectionPos.sectionRelative(y);
+                        BlockState s = sec.getBlockState(lx, sy, lz);
+                        if (s.isAir() || s.hasBlockEntity() || s.is(net.minecraft.world.level.block.Blocks.SNOW) || !CityWriter.vegetation(s)) continue;
+                        if (held[si] == null) {
+                            sec.acquire();
+                            held[si] = sec;
+                        }
+                        sec.setBlockState(lx, sy, lz, air, false);
+                        n++;
+                        if (s.is(net.minecraft.tags.BlockTags.LOGS) && y - 1 >= minY) {
+                            int bi = chunk.getSectionIndex(y - 1);
+                            net.minecraft.world.level.chunk.LevelChunkSection bs = chunk.getSection(bi);
+                            int by = net.minecraft.core.SectionPos.sectionRelative(y - 1);
+                            if (bs.getBlockState(lx, by, lz).is(net.minecraft.world.level.block.Blocks.DIRT)) {
+                                if (held[bi] == null) {
+                                    bs.acquire();
+                                    held[bi] = bs;
+                                }
+                                bs.setBlockState(lx, by, lz, grass, false);
+                            }
+                        }
+                    }
+                }
+            }
+        } finally {
+            for (net.minecraft.world.level.chunk.LevelChunkSection sec : held) if (sec != null) sec.release();
+        }
+        return n;
     }
 
     /** Counts the cells a chunk's paint would set (tests): {@code [cells, light sources]}. */

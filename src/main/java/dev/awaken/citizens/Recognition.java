@@ -347,7 +347,8 @@ final class Recognition {
                 String good = "produce";
                 int place = d.place[rec];
                 for (Roster.Stall st : r.stalls) if (st.keeper() == place) good = st.good();
-                yield lines.pick(seed, tod, "calls.stallkeeper." + good);
+                yield c.site.carillon() ? lines.pick(seed, tod, "calls.stallkeeper." + good)
+                        : lines.pick(seed, tod, "village.calls.stallkeeper." + good, "calls.stallkeeper." + good);
             }
             case Roster.WATCH -> lines.pick(seed, tod, "calls.watch_night");
             case Roster.CRIER -> c.events.news(seed, tod);

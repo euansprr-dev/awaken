@@ -1,11 +1,12 @@
 # Between the Gates W3, "Living villages" (SPEC §28.6): the first hamlet up the road from Carillon, seen from the hill
 # at dusk (smoke, lit windows, people walking home, the lamps); its green; inside two of its houses; a village by day
 # (its fields, the smithy's forge, the mill, people at work); a trade in emeralds; the notice board; the village at night
-# (the Watch, the inn's light). Shots only.
+# (the Watch, the inn's light). Shots only. World shots are a spectator's (the eye exactly where the framing puts it,
+# no hand, no HUD); the screens are a creative player's.
 # Run on GitHub: tools/tour-ci.sh tools/autopilot/world-depth-w3.txt
 world autopilot_world_depth_w3 creative 26102610
 waitworld
-gui 0
+camera first
 cmd gamerule send_command_feedback false
 cmd weather clear 100000
 cmd gamerule awaken:fauna_spawning false
@@ -25,18 +26,21 @@ screen close
 cmd tick sprint 6200
 wait 240
 cmd gamerule advance_time false
+cmd gamemode spectator
+hud off
 # ---- the first hamlet up the road, from the hill above it at dusk ----
-cmd time set 12650
+cmd time set 12300
 cmd awaken village view first hill
 wait 400
 cmd awaken village start
 cmd awaken village info
 wait 240
 shot w3_01_first_hamlet_from_the_hill_dusk
-cmd time set 13250
+cmd time set 12600
 cmd awaken village view first green
 wait 160
 shot w3_02_the_green_at_dusk
+cmd time set 12900
 cmd awaken village view first street
 wait 80
 shot w3_03_the_street_at_dusk
@@ -69,9 +73,10 @@ cmd awaken village view nearest_village green
 wait 80
 shot w3_10_the_green_by_day
 # ---- trade in emeralds, the notice board ----
+cmd gamemode creative
 cmd give @s minecraft:emerald 24
 cmd give @s minecraft:wheat 40
-gui 1
+hud on
 cmd awaken village trade farmer
 wait 30
 shot w3_11_a_trade_in_emeralds
@@ -86,7 +91,8 @@ cmd awaken village board
 wait 30
 shot w3_13_the_notice_board
 screen close
-gui 0
+hud off
+cmd gamemode spectator
 # ---- night: the Watch, the inn ----
 cmd time set 15200
 cmd awaken village view nearest_village street

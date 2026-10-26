@@ -33,7 +33,17 @@ public class VillageStructure extends Structure {
         if (p == null) return Optional.empty();
         return Optional.of(new Structure.GenerationStub(new BlockPos(p.ox, p.baseY, p.oz), b -> {
             b.addPiece(new VillagePiece(a, p));
-            for (CityPlan.Plot q : p.plots) b.addPiece(VillageMarker.of(p, q.x0(), q.z0(), q.x1(), q.z1(), q.lift()));
+            // a house's marker reaches two past its walls (no bank of earth at a back window), a street's every segment
+            // has one (the land eases up or down to the paving instead of meeting it in a step)
+            for (CityPlan.Plot q : p.plots) b.addPiece(VillageMarker.of(p, q.x0() - 2, q.z0() - 2, q.x1() + 2, q.z1() + 2, q.lift()));
+            for (VillagePlan.Street st : p.streets) {
+                int hw = (int) Math.ceil(st.width() / 2f);
+                for (int k = 0; k + 1 < st.points(); k++) {
+                    float ax = st.x()[k], az = st.z()[k], bx = st.x()[k + 1], bz = st.z()[k + 1];
+                    b.addPiece(VillageMarker.of(p, (int) Math.floor(Math.min(ax, bx)) - hw, (int) Math.floor(Math.min(az, bz)) - hw,
+                            (int) Math.ceil(Math.max(ax, bx)) + hw, (int) Math.ceil(Math.max(az, bz)) + hw, Math.min(st.lift()[k], st.lift()[k + 1])));
+                }
+            }
             for (VillagePlan.Field f : p.fields) b.addPiece(VillageMarker.of(p, f.x0(), f.z0(), f.x1(), f.z1(), f.lift()));
             for (VillagePlan.Pen f : p.pens) b.addPiece(VillageMarker.of(p, f.x0(), f.z0(), f.x1(), f.z1(), f.lift()));
             b.addPiece(VillageMarker.of(p, -p.greenR, -p.greenR, p.greenR, p.greenR, 0));

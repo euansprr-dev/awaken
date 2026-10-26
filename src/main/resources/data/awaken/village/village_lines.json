@@ -608,6 +608,18 @@
   }
  },
  "calls": {
+  "stallkeeper": {
+   "produce": [
+    "Apples off the bough this morning!",
+    "Beans, roots, new potatoes!",
+    "[m]Eggs still warm! Who's first?",
+    "Honey from the hives up the lane!",
+    "Turnips! Don't laugh, they're good turnips!",
+    "[d]Plums! Sweet as you like, while they last!",
+    "[e]Last of the day, nearly a gift!",
+    "Cabbages big as your head!"
+   ]
+  },
   "farmer": [
    "[m]Come on, you stubborn ox.",
    "Rain by supper, mark me.",

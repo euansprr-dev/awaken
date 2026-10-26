@@ -140,8 +140,9 @@ final class VillagesAccess implements Villages.Access {
     }
 
     /**
-     * Planned or met settlements' ground (radius plus margin); where the anchor is known but not yet planned, a safe
-     * circle round it (the site moves up to 32 from the anchor; a village reaches 90 from its middle).
+     * Planned or met settlements' ground (radius plus margin). A settlement not yet planned (none near any player: the
+     * service plans every anchor within 420 of one) isn't reserved; a gate that opens by one never carves into its
+     * built ground anyway (gates' own rule).
      */
     @Override
     public boolean reserved(Level level, BlockPos pos, int margin) {
@@ -151,8 +152,6 @@ final class VillagesAccess implements Villages.Access {
             VillagePlan p = Plans.cached(a.key());
             if (p != null) {
                 if (Math.hypot(p.ox - pos.getX(), p.oz - pos.getZ()) <= p.radius() + margin) return true;
-            } else if (!Plans.known(a.key()) && Math.hypot(a.x() - pos.getX(), a.z() - pos.getZ()) <= VillagePlannerReach.FAR + margin) {
-                return true;
             }
         }
         return false;

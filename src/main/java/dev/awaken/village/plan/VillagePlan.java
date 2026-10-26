@@ -37,6 +37,11 @@ public final class VillagePlan implements SettlementPaint.Layout {
     final int n;
     final byte[] kinds, lifts;
     final short[] plotIds;
+    /** Each cell's distance to the ground the settlement uses, in half blocks (capped): its clearing (see {@link #clears}). */
+    private byte[] near;
+
+    /** How far round its ground a settlement fells the land's trees (blocks). */
+    public static final int CLEARING = 6;
 
     public final List<CityPlan.Plot> plots = new ArrayList<>();
     /** One per plot, same index. */
@@ -173,6 +178,44 @@ public final class VillagePlan implements SettlementPaint.Layout {
         return false;
     }
 
+    @Override
+    public boolean clears(int x, int z) {
+        if (!inRaster(x, z) || near == null) return false;
+        int i = idx(x, z);
+        return kinds[i] == CityPlan.FREE && near[i] <= 2 * CLEARING;
+    }
+
+    /** The clearing's distances: two passes of a chamfer (2 straight, 3 diagonal) from every used cell. */
+    private void clearing() {
+        near = new byte[n * n];
+        for (int i = 0; i < near.length; i++) {
+            byte k = kinds[i];
+            near[i] = (byte) (k != CityPlan.VOID && k != CityPlan.FREE && k != WATER || plotIds[i] >= 0 ? 0 : 100);
+        }
+        for (int z = 0; z < n; z++)
+            for (int x = 0; x < n; x++) {
+                int d = near[z * n + x];
+                if (x > 0) d = Math.min(d, near[z * n + x - 1] + 2);
+                if (z > 0) {
+                    d = Math.min(d, near[(z - 1) * n + x] + 2);
+                    if (x > 0) d = Math.min(d, near[(z - 1) * n + x - 1] + 3);
+                    if (x + 1 < n) d = Math.min(d, near[(z - 1) * n + x + 1] + 3);
+                }
+                near[z * n + x] = (byte) Math.min(100, d);
+            }
+        for (int z = n - 1; z >= 0; z--)
+            for (int x = n - 1; x >= 0; x--) {
+                int d = near[z * n + x];
+                if (x + 1 < n) d = Math.min(d, near[z * n + x + 1] + 2);
+                if (z + 1 < n) {
+                    d = Math.min(d, near[(z + 1) * n + x] + 2);
+                    if (x + 1 < n) d = Math.min(d, near[(z + 1) * n + x + 1] + 3);
+                    if (x > 0) d = Math.min(d, near[(z + 1) * n + x - 1] + 3);
+                }
+                near[z * n + x] = (byte) Math.min(100, d);
+            }
+    }
+
     void set(int x, int z, byte k, int lift) {
         if (!inRaster(x, z)) return;
         int i = idx(x, z);
@@ -269,6 +312,7 @@ public final class VillagePlan implements SettlementPaint.Layout {
 
     /** After planning: which plots and props each chunk paints (plots reach three out from their walls). */
     void index() {
+        clearing();
         Long2ObjectOpenHashMap<List<Integer>> lists = new Long2ObjectOpenHashMap<>();
         for (CityPlan.Plot p : plots) {
             for (int cx = (ox + p.x0() - 3) >> 4; cx <= (ox + p.x1() + 3) >> 4; cx++)

@@ -174,57 +174,60 @@ final class VillageCommands {
             return 0;
         }
         double[] v = frame(plan, name);
+        // a village without a mill shows its water's other work, or its beasts
+        if (v == null && name.equals("mill")) v = frame(plan, "dock");
+        if (v == null && name.equals("mill")) v = frame(plan, "pen");
         if (v == null) {
             src.sendFailure(Component.literal(plan.name + " has no " + name + "."));
             return 0;
         }
         double dx = v[3] - v[0], dy = v[4] - v[1], dz = v[5] - v[2];
         float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)), pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.hypot(dx, dz)));
-        p.teleportTo(level, plan.ox + v[0], plan.baseY + v[1], plan.oz + v[2], Set.of(), yaw, pitch, true);
+        // framings give the eye; the player stands 1.62 under it (a spectator stays exactly there)
+        p.teleportTo(level, plan.ox + v[0], plan.baseY + v[1] - 1.62, plan.oz + v[2], Set.of(), yaw, pitch, true);
         dev.awaken.Awaken.LOG.info("[village] view {} {} of {} at {} {} {}", key, name, plan, plan.ox + v[0], plan.baseY + v[1], plan.oz + v[2]);
         src.sendSuccess(() -> Component.literal(plan.name + ": " + name), false);
         return 1;
     }
 
-    /** A framing: eye position and look-at point (plan coordinates, y over the street level), or null. */
+    /** A framing: the eye and the point it looks at (plan coordinates, y over the street level; a ground block's eye is 2.62 over it), or null. */
     static double @Nullable [] frame(VillagePlan p, String name) {
         switch (name) {
             case "hill" -> {
-                // from the highest ground just outside, looking down over the roofs to the green
-                double best = Double.NEGATIVE_INFINITY;
-                double[] at = null;
-                for (int a = 0; a < 24; a++) {
-                    double ang = a * Math.PI / 12;
-                    int d = Math.min(p.r - 2, (int) (p.radius() * 0.9));
-                    int x = (int) Math.round(Math.cos(ang) * d), z = (int) Math.round(Math.sin(ang) * d);
-                    double h = p.lift(x, z);
-                    if (p.kind(x, z) == VillagePlan.WATER) continue;
-                    if (h > best) {
-                        best = h;
-                        at = new double[]{x + 0.5, h + 14, z + 0.5, 0, 3, 0};
-                    }
-                }
-                return at;
+                // high over the main street's outer half and a little off it: the roofs, the smoke and the street running
+                // in to the green
+                VillagePlan.Street s = p.streets.getFirst();
+                double want = Math.max(p.greenR + 14, p.radius() * 0.6);
+                int k = 0;
+                for (int i = 1; i < s.points(); i++)
+                    if (Math.abs(Math.hypot(s.x()[i], s.z()[i]) - want) < Math.abs(Math.hypot(s.x()[k], s.z()[k]) - want)) k = i;
+                double x = s.x()[k], z = s.z()[k], len = Math.max(1, Math.hypot(x, z)), ux = x / len, uz = z / len;
+                return new double[]{x + ux * 8 - uz * 9 + 0.5, s.lift()[k] + 20, z + uz * 8 + ux * 9 + 0.5, 0, 2, 0};
             }
             case "green" -> {
-                int g = p.greenR + 3;
-                return new double[]{p.well[0] + g * 0.7, 2.6, p.well[1] + g * 0.7, p.well[0], 1, p.well[1]};
+                // where the main street comes into the green, looking across it to the well
+                VillagePlan.Street s = p.streets.getFirst();
+                int k = 0;
+                double want = p.greenR + 5;
+                for (int i = 1; i < s.points(); i++)
+                    if (Math.abs(Math.hypot(s.x()[i], s.z()[i]) - want) < Math.abs(Math.hypot(s.x()[k], s.z()[k]) - want)) k = i;
+                return new double[]{s.x()[k] + 0.5, s.lift()[k] + 3.2, s.z()[k] + 0.5, p.well[0] + 0.5, 1.6, p.well[1] + 0.5};
             }
             case "street", "night" -> {
                 VillagePlan.Street s = p.streets.getFirst();
                 int k = Math.min(s.points() - 1, s.points() * 3 / 4);
                 int toward = Math.max(0, k - 5);
-                return new double[]{s.x()[k] + 0.5, s.lift()[k] + 1.7, s.z()[k] + 0.5, s.x()[toward], s.lift()[toward] + 2.5, s.z()[toward]};
+                return new double[]{s.x()[k] + 0.5, s.lift()[k] + 2.6, s.z()[k] + 0.5, s.x()[toward], s.lift()[toward] + 3, s.z()[toward]};
             }
             case "notice" -> {
                 int f = p.notice[2];
                 int sx = f == 1 ? 1 : f == 3 ? -1 : 0, sz = f == 2 ? 1 : f == 0 ? -1 : 0;
-                return new double[]{p.notice[0] + 0.5 + sx * 2.5, 1.7, p.notice[1] + 0.5 + sz * 2.5, p.notice[0] + 0.5, 1.4, p.notice[1] + 0.5};
+                return new double[]{p.notice[0] + 0.5 + sx * 2.5, 2.6, p.notice[1] + 0.5 + sz * 2.5, p.notice[0] + 0.5, 2, p.notice[1] + 0.5};
             }
             case "bell" -> {
                 VillagePlan.Bell b = p.bell;
                 if (b == null) return null;
-                return new double[]{b.bx() + 6.5, 3, b.bz() + 6.5, b.bx() + 0.5, b.tower() ? 7 : 3, b.bz() + 0.5};
+                return fromStreet(p, b.bx() + 0.5, b.bz() + 0.5, b.bry() * 0.6, 9, 2.8);
             }
             case "field" -> {
                 if (p.fields.isEmpty()) return null;
@@ -259,12 +262,33 @@ final class VillageCommands {
                     double mx = (q.x0() + q.x1()) / 2.0 + 0.5, mz = (q.z0() + q.z1()) / 2.0 + 0.5;
                     if (name.startsWith("house")) {
                         // just inside the door, looking across the room
-                        return new double[]{b.doorX() - fx + 0.5, q.lift() + 1.6, b.doorZ() - fz + 0.5, mx - fx * 3, q.lift() + 1.2, mz - fz * 3};
+                        return new double[]{b.doorX() - fx + 0.5, q.lift() + 2.6, b.doorZ() - fz + 0.5, mx - fx * 3, q.lift() + 2, mz - fz * 3};
                     }
-                    return new double[]{b.outX() + fx * 9 + 0.5 + fz * 3, q.lift() + 3, b.outZ() + fz * 9 + 0.5 + fx * 3, mx, q.lift() + 3, mz};
+                    return fromStreet(p, mx, mz, q.lift() + 3, 11, 2.8);
                 }
                 return null;
             }
         }
+    }
+
+    /**
+     * A framing from the street: the street point nearest {@code dist} from a target (never one at its foot), the eye
+     * {@code eye} over the paving, looking at the target at {@code ty}.
+     */
+    private static double[] fromStreet(VillagePlan p, double tx, double tz, double ty, double dist, double eye) {
+        double bd = Double.MAX_VALUE;
+        double[] at = null;
+        for (VillagePlan.Street s : p.streets) {
+            for (int k = 0; k < s.points(); k++) {
+                double d = Math.hypot(s.x()[k] - tx, s.z()[k] - tz);
+                if (d < 5) continue;
+                double score = Math.abs(d - dist);
+                if (score < bd) {
+                    bd = score;
+                    at = new double[]{s.x()[k] + 0.5, s.lift()[k] + eye, s.z()[k] + 0.5, tx, ty, tz};
+                }
+            }
+        }
+        return at != null ? at : new double[]{tx + dist, ty + eye, tz, tx, ty, tz};
     }
 }
