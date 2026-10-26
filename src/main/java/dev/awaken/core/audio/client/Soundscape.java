@@ -20,6 +20,14 @@ public final class Soundscape {
         Conductor.hush(owner, at, radius, depth, ticks);
     }
 
+    /**
+     * What is left of birds and insects at a point (1 untouched, 0 silent) under the hushes now in force: the wild's
+     * visible animals go quiet and leave where their sound would (SPEC "Wild life").
+     */
+    public static float hushAt(double x, double y, double z) {
+        return Conductor.hushAt(x, y, z);
+    }
+
     /** Another module's ambient voices, counted in the Conductor's voice budget (16 ambient voices in all). */
     public static void register(Conductor.Source source) {
         Conductor.register(source);

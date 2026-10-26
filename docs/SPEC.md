@@ -329,7 +329,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   `Intensity.Signals`' `pressure`, `forced` (0..3) and `arrival`), `current(ServerPlayer, Slot)`, `level(ServerPlayer,
   Slot)` (-1 without a context). `dev.awaken.gates.Gates.pressure(ServerPlayer)` — the floor's pressure stage (0..3).
 - `dev.awaken.core.audio.client.Soundscape` (client, world sound): `hush(Object owner, Vec3 at, float radius, float
-  depth, int ticks)` (birds and insects quiet within the radius; depth = what is left), `register(Conductor.Source)`
+  depth, int ticks)` (birds and insects quiet within the radius; depth = what is left), `hushAt(x, y, z)` (what is left
+  at a point; the wild's visible animals read it), `register(Conductor.Source)`
   (another module's ambient voices, `voices()`, counted in the Conductor's budget of 16), `yieldWeight(Conductor.Yield)`
   (`at(x, y, z)` 0..1: how much of the world bed gives way there; the city), `natureLevel()` (0..1, how much nature
   ambience to let through now; AmbientSounds follows it), `overlay(owner, Identifier soundscape, weight, ticks)` (a
@@ -4552,3 +4553,110 @@ in the 60° cone at 24 blocks counted as a sighting and its toast's hint named p
 hovers over grow"). Not yet routed (follow-ups): the vanilla action bar (102 server call sites, three throttled), boss
 chat lines, the XP pop, Ascent notes and the Vow scene, citizens' speech; TipHooks has no implementation (the onboarding
 spec's `TipHud`/`TipRules` were never built), so Carillon's and the Ascent's tips show nothing today.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 29. Wild life (the wild's small ambient life, client-only; Euan 2026-10-26, built without an approval page)
+
+Euan, after a forest walk: "I barely saw any insects or birds, so the sounds felt a bit off ... when you're exploring and
+walking in the forest, it should feel very real, very alive. Not too much either." Module `wildlife` (package
+`dev.awaken.wildlife`, client half `wildlife.client`). Everything that moves lives on the client: the server registers
+one entity type (`awaken:wild_critter`, never saved, never tracked, never summoned) and 18 sound events, and pays
+nothing. Nothing is huntable. Herds, packs, roosts and deer are the Living Wilds' (§21) server mobs; this layer never
+makes a deer.
+
+**Who.** Twelve bodies, hero rigs with the life layer (§23), from `tools/art/specs/wild_fauna.py` (textures
+`textures/entity/wild/`, data `wildlife.client.WildFaunaData`): songbirds (robin, blue tit, chaffinch, wren, blackbird;
+drawn at 0.42), woodpeckers (great spotted, green), crows, owls (tawny, barn; eyes catch the light at night), buzzards
+and kestrels, gulls (Carillon's gull design), ducks (mallard drake and hen), grey herons, squirrels (red, grey),
+rabbits, red foxes (eyeshine), frogs. Folded wings show their upper side; a spread wing hangs from the shoulder (the
+spec's `FOLD` and wing lift). Seven insects drawn as real little bodies from one sprite sheet (`insects.png`): butterflies
+(white, brimstone, peacock, common blue), bees, dragonflies (blue, green), fireflies (Lumen Forest's burn blue), moths,
+gnat swarms, water striders; plus ripples on water and far flocks (finches by day, a small murmuration of starlings at
+dusk) crossing the sky.
+
+**Where and how many** (`Density`, pure; numbers are first numbers, tuned on tours). Each chunk near the player is read
+once from the client's own heightmaps (`Sites`, one chunk a tick, re-read after 2 minutes): leaf tops (and the canopy's
+edge), fences and walls, bare rock, trunks (a log under the canopy with 2+ blocks of clear bark), open ground, flowers,
+still water, its shore (land beside water, facing it), lights. Expected animals per chunk = peak (per kind) × the
+family's affinity (the 16 sound families, `#awaken:soundscape/<family>`) × the hour × the weather × the cold × the
+habitat × an Awakened biome's flavour (Elderwood: woodpeckers ×2, owls ×1.5; Lumen Forest: fireflies ×1.6; Glass
+Steppe and Shattered Highlands: raptors ×1.6; Mirror Marsh: herons and dragonflies ×1.6). Peaks: songbird 0.55,
+woodpecker 0.06, crow 0.12, owl 0.05, raptor 0.006, gull 0.5, duck 0.6, heron 0.12, squirrel 0.22, rabbit 0.25, fox
+0.025, frog 0.8; butterfly 2.5, bee 1.5, dragonfly 1.5, firefly 7, moth 2.5 a light, gnats 1 swarm, strider 2. The
+hours (0 = 06:00): songbirds busiest at dawn (×1.5) and dusk, 0.75 at noon, none from 19:20 to 04:20; owls, moths and
+fireflies at night (fireflies from 18:12, full by 20:00); rabbits and foxes at dawn and dusk; raptors 07:30-17:00;
+butterflies 07:30-16:30; gnats at dusk. Rain: insects none (none in thunder), small birds ×0.4 and sheltering (fluffed
+up, no song), raptors none, frogs ×1.5. Cold land (biome temperature < 0.15): no insects or frogs, songbirds ×0.5.
+Targets the test holds: a temperate forest at noon 0.2-0.6 songbirds a chunk (one to three in view), a flowery meadow
+1-3 butterflies a chunk, nothing but owls and fireflies in a forest at night. The count is the expected number made
+whole by the chunk's fixed draw (`Density.count`), so a place keeps the same animals as the hours turn and looks alike
+when you return; each animal's spot and coat come from the chunk's draw too.
+
+**Reach and caps** (`WildKinds`, `Census`): made within (blocks) songbird 40, woodpecker 40, crow 64, owl 52, raptor 120,
+gull 80, duck 56, heron 64, squirrel 32, rabbit 40, fox 56, frog 22; butterfly 28, bee 16, dragonfly 28, firefly 40,
+moth 24, gnats 24, strider 16; dropped 16 past that (out of sight). At most 9 songbirds, 2 woodpeckers, 4 crows, 2 owls,
+2 raptors, 6 gulls, 6 ducks, 2 herons, 3 squirrels, 4 rabbits, 1 fox, 4 frogs, 14 butterflies, 10 bees, 8 dragonflies,
+64 fireflies, 12 moths, 5 swarms, 10 striders; 18 bodies and 140 insects in all. Chunks are walked nearest first, so the
+caps keep what is close. Never inside Carillon's walls (+24 blocks; `CityLife.inside`, the city's animals are B3b's),
+never outside the overworld.
+
+**Never popping.** A body appears only out of view or 26+ blocks off (48 for one in the sky); insects fade in and out.
+An animal no longer wanted leaves the way it would (a bird flies off, a rabbit bolts, a frog plops in, a squirrel climbs
+away) and is dropped once out of sight.
+
+**Seen, not just near** (the tours, 2026-10-26): in a forest the census logged nine songbirds near and none in view,
+all on the canopy's roof, above the leaf ceiling a walker stands under. So songbirds take the lowest of three perches
+(the outer rings of the trees' lower leaves, fences), and by day 75% of those in a closed forest (45% under an open
+canopy) start on the forest floor, forage there, flit low through the understory to another patch of floor (the flight
+hugs the ground ahead instead of climbing over the trees), and only now and then go up. Insects are drawn near twice
+life size (a butterfly 0.3 blocks a wing, a dragonfly 0.46 long), as the birds are: at life size a butterfly was a
+few pixels at ten blocks. Fireflies glow two fifths of their rhythm with a 0.75-block halo.
+
+**Behaviour** (`Birds`, `Critters`, `Insects`). Songbirds never still on a perch (glances, tail and wing flicks, a bow,
+hops along the branch), sing from it (the dawn chorus three times as often), preen, flit to the next tree in a bounding
+flight (three beats, wings shut, a dip), drop to forage on open ground and hop about pecking. Woodpeckers hitch up a
+trunk, peck, drum (more in the morning), slip round to the far side as you come within 9, fly off at 3. Crows stride,
+peck and caw on open ground, wary at 10. Owls perch at night, follow you with their heads, hoot, and fly off without a
+sound. Buzzards circle on a drifting thermal 24-40 above the ground, banked, beating now and then, mewing; kestrels drop
+to hover over the meadow (head still, quick shallow beats) and stoop. Gulls ride the air over the shore. Ducks paddle,
+dabble tail up, preen, quack, leave rings, paddle away from you and fly off at 3.5. Herons stand like statues at the
+shore, stalk, strike, turn alert at 20 and leave at 12 with a croak and slow heavy wings. Squirrels run up and down
+their trunk in bursts, scold, forage at its foot and race back up when you come. Rabbits graze, groom, sit up tall
+with ears high at 11 and bolt in a zigzag at 5. A fox trots its ground at dusk, sits and watches you, listens and
+pounces on something in the grass, curls up at night, slips away at 10. Frogs croak at dusk and in the rain and plop
+into the water at 3.5. Flushes are away from you, a burst of wings; sprinting doubles the distance, sneaking halves it.
+Birds bank into their turns and pitch with their climb. Butterflies flutter (seven beats a second) between flowers and
+settle with wings opening and closing slowly; bees zip flower to flower; dragonflies hover and dart low over still
+water; fireflies drift and blink each to its own rhythm (some answering with a second flash) in an additive glow pass;
+moths circle lamps; gnat swarms bob by the water at dusk; striders skate in strokes, a ring at each.
+
+**Sound** (`WildSound`; voices from `tools/art/specs/audio_wild.py`, synthesised, mono, placed; 18 events `wild.*`): a
+call comes from the animal you can see calling, its clip in step: songs (robin, tit, finch, wren; a blackbird sings the
+robin's phrases lower), contact chips, a flush's whirr, big wings, the woodpecker's drum and taps, caws, the buzzard's
+mew, hoots, quacks, the heron's croak, a squirrel's scolding, a frog's plop (its croak is vanilla's `entity.frog.ambient`,
+a bee's buzz vanilla's `entity.bee.loop`), rustles; the gulls use Carillon's `city.gull.call`. At most 6 at once and 3
+new a second, counted in the Conductor's voice budget, quieter where the world is hushed. AmbientSounds' bed plays as
+before; these sit on top. Crickets at night: three voices placed in the grass 7-16 blocks off, each silent while you walk
+within 6 of it and singing again 6-10 s after. Predators: every monster within 24 of the player hushes the birds and
+insects within 24 of it to a quarter (the Conductor's hush, renewed every second; docs/sound/PLAN.md's reaction), and
+every visible animal reads `Soundscape.hushAt`: no song below 0.67, leaving below 0.35, none made below 0.6 (so open
+gates and the Living Wilds' happenings quiet them too).
+
+**Budget.** Client only; the server pays nothing. Per tick: one chunk read (256 columns, three heightmaps), the brains
+of at most 18 bodies, the insects' arrays (no allocation per tick or frame; the director's half-second pass allocates
+nothing but a new animal), at most 6 sounds. Per frame: at most 18 small hero models, about 900 insect quads and a few
+hundred glow quads, culled by distance and view.
+
+**API additions** (§12): `core.audio.client.Soundscape.hushAt(x, y, z)` (what is left of birds and insects at a point);
+`citizens.client.CityLife.inside(x, z, margin)` (within Carillon's wall plus a margin). Client command
+`/awaken wildlife [on|off|count|dial <x>|lineup [clip|insects|off] [variant]]` (`count`: what's near, what the camera
+can see, and where the songbirds are; `lineup`: every body, or every insect, posed before the camera on a stage); tours
+log the census every 30 s as `[wildlife] in view N of M near: ...`. Tours: `tools/autopilot/wild-life.txt` (the stage by
+day and night, then forest, rain, flowers, river, Mirror Marsh, Lumen Forest), `wild-forest.txt` (the quick loop).
+
+**Tests** (`wildlife_`): `wildlife_density` (the tables reach every sound family, the hours run in order, the walk's
+targets hold, rain and cold clear the insects, a chunk's draw is fixed and the land averages the expected number),
+`wildlife_census` (the caps hold over 400 rich chunks at four hours; nothing is made inside the city and anything there
+leaves; nothing out of reach), `wildlife_rigs` (every rig parses and carries every clip its brain plays, every coat,
+blink and the insects' sheet exist); `audio_events_resolve` covers the 18 events.
