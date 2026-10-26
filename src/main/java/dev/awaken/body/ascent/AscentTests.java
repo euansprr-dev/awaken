@@ -450,7 +450,7 @@ final class AscentTests {
             h.assertTrue(Ascent.has(p, Ascent.Tier.TETHER) && !Ascent.has(p, Ascent.Tier.LEAPER), "the line gives the rope (only)");
             BlockPos m = site.mast();
             p.snapTo(m.getX() + 0.5, box.minY() + 16, m.getZ() + 0.5, 0, 0);
-            // the mast keeps the vow only by the line (SPEC §17.27): a tower up to it waits
+            // the mast keeps the vow only by the line (SPEC §17.29): a tower up to it waits
             dev.awaken.core.api.ArrivalHooks.Tracker arrival = dev.awaken.core.api.ArrivalHooks.installed();
             boolean[] line = {false};
             dev.awaken.core.api.ArrivalHooks.install(new dev.awaken.core.api.ArrivalHooks.Tracker() {

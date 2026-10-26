@@ -41,7 +41,9 @@ public final class BodyContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> SHIMMY = sound("body.shimmy");
     public static final DeferredHolder<SoundEvent, SoundEvent> CLIMB = sound("body.climb");
     public static final DeferredHolder<SoundEvent, SoundEvent> DROP = sound("body.drop");
-    // the grip on a climb line (SPEC §17.23)
+    /** A crossing (SPEC §17.27): a palm on the rail, the legs swinging over, the feet coming down running. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> VAULT = sound("body.vault");
+    // the grip on a climb line (SPEC §17.28)
     public static final DeferredHolder<SoundEvent, SoundEvent> PIPE_SLIDE = sound("body.pipe_slide");
     public static final DeferredHolder<SoundEvent, SoundEvent> PIPE_BRAKE = sound("body.pipe_brake");
 

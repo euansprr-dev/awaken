@@ -121,7 +121,7 @@ public class SpireCrownBlockEntity extends BlockEntity {
     void reached(ServerPlayer p, long now) {
         Long last = arrived.put(p.getUUID(), now);
         if (last != null && now - last < 100) return;
-        // the crown answers only the line (SPEC §17.27): a pearl, elytra or a Runner hang still earns the view, not this
+        // the crown answers only the line (SPEC §17.29): a pearl, elytra or a Runner hang still earns the view, not this
         if (!ArrivalHooks.byLine(p)) {
             p.sendSystemMessage(Component.translatable("awaken.ascent.spire.built"), true);
             return;

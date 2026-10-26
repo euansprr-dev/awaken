@@ -39,7 +39,7 @@ public class WingCoreBlockEntity extends BlockEntity {
 
     /** A player at the core without wings: given them by the long way at its rank, or told why the core stays dark. */
     static boolean reached(ServerPlayer p, BlockPos pos) {
-        // the core answers only the line (SPEC §17.27): its rings by rope; a pearl, a power's flight or a hang never
+        // the core answers only the line (SPEC §17.29): its rings by rope; a pearl, a power's flight or a hang never
         if (!ArrivalHooks.byLine(p)) {
             if (dev.awaken.core.Throttle.allow(p, "wing_core_line", 200)) p.sendSystemMessage(Component.translatable("awaken.ascent.core.line"), true);
             return false;

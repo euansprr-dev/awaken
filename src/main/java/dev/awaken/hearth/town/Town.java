@@ -10,7 +10,6 @@ import dev.awaken.hearth.HearthViews;
 import dev.awaken.hearth.Later;
 import dev.awaken.hearth.Offers;
 import dev.awaken.hearth.Upgrades;
-import dev.awaken.hearth.block.SpireBoardBlock;
 import dev.awaken.hearth.block.SpireBoardBlockEntity;
 import dev.awaken.hearth.player.HearthPlayer;
 import dev.awaken.hearth.trophy.TrophyData;
@@ -23,7 +22,6 @@ import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -44,8 +42,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.FireworkExplosion;
 import net.minecraft.world.item.component.Fireworks;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.phys.AABB;
@@ -106,6 +102,7 @@ public final class Town {
      * online member of the household hears who came.
      */
     public static void arrivals(ServerLevel level, HearthRecord h, boolean newHome) {
+        if (h.hearthfire()) return; // a Hearthfire's first nights are yours alone: the town comes with the Anchor
         MinecraftServer server = level.getServer();
         Rank rank = householdRank(server, h);
         if (rank == null) return;
@@ -225,6 +222,7 @@ public final class Town {
         }
         if (now % 200 < 20) {
             arrivals(level, h, false);
+            if (owner != null && h.spire == null && !h.arrived.isEmpty()) raiseSpire(level, h);
             if (owner != null) refreshBoards(owner, level, h);
         }
         if (owner != null && h.pendingCelebration >= 0 && owner.level() == level && h.contains(owner.blockPosition())) celebrateWaiting(owner, level, h);
@@ -347,10 +345,21 @@ public final class Town {
         HearthPlayer hp = HearthService.player(sp);
         long today = PlayDays.current(level.getServer());
         var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal(d.name() + " the " + d.role())).body(Component.literal("“" + line + "”"));
-        if (hp.rumourDay == today) {
+        // a Lookout at home: Mira hears one more a play-day from up there
+        boolean second = hp.rumourDay == today && hp.rumourDay2 != today
+                && HearthService.homeOf(sp).map(h -> h.hasRoom(dev.awaken.hearth.room.RoomType.LOOKOUT)).orElse(false);
+        if (hp.rumourDay == today && !second) {
             w.footer(Component.literal("Nothing new today. Mira hears things overnight."));
         } else {
-            w.choice(Offers.offer(sp, "rumour", 20 * 30, p -> Rumours.give(p, (ServerLevel) p.level())), "Hear her rumour", "Not now");
+            w.choice(Offers.offer(sp, "rumour", 20 * 30, p -> {
+                HearthPlayer q = HearthService.player(p);
+                if (q.rumourDay == today) {
+                    HearthRecord home = HearthService.homeOf(p).orElse(null);
+                    if (home == null || !dev.awaken.hearth.RoomEffects.secondRumour(p, home)) return;
+                    q.rumourDay = -1;
+                }
+                Rumours.give(p, (ServerLevel) p.level());
+            }), second ? "Hear what she saw from the lookout" : "Hear her rumour", "Not now");
         }
         Signal.send(sp, w.ttl(20 * 10).build());
     }
@@ -464,64 +473,30 @@ public final class Town {
 
     // ---- the Spire --------------------------------------------------------------------------------------------------
 
-    /** Raises a small Spire (pedestal, Spire Board, Reassessment Monolith, lanterns) on open ground near the Anchor. */
+    /**
+     * The town Spire's pieces for the owner to place where they like (SPEC §28.2): its Spire Board and Reassessment
+     * Monolith come as items, never stamped into your ground (it used to replace nine blocks of your courtyard). The
+     * Board placed inside the Hearth becomes its Spire Board. Retried by upkeep while the owner is away.
+     */
     public static void raiseSpire(ServerLevel level, HearthRecord h) {
-        if (h.spire != null || !level.isLoaded(h.pos)) return;
-        BlockPos spot = findSpireSpot(level, h.pos);
-        if (spot == null) {
-            HearthService.owner(level.getServer(), h).ifPresent(sp -> {
-                sp.getInventory().placeItemBackInInventory(new ItemStack(HearthContent.SPIRE_BOARD_ITEM.get()), net.minecraft.util.Prediction.SERVER_ONLY);
-                sp.getInventory().placeItemBackInInventory(new ItemStack(HearthContent.MONOLITH_ITEM.get()), net.minecraft.util.Prediction.SERVER_ONLY);
-                Signal.toast(sp, Component.literal("No open ground for the town Spire. Place the Spire Board and Monolith yourself."));
-            });
+        if (h.spire != null) return;
+        HearthService.owner(level.getServer(), h).ifPresent(sp -> {
+            sp.getInventory().placeItemBackInInventory(new ItemStack(HearthContent.SPIRE_BOARD_ITEM.get()), net.minecraft.util.Prediction.SERVER_ONLY);
+            sp.getInventory().placeItemBackInInventory(new ItemStack(HearthContent.MONOLITH_ITEM.get()), net.minecraft.util.Prediction.SERVER_ONLY);
+            Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("The town Spire"))
+                    .body(Component.literal("Oren brought its Board and Monolith. Set them up where you like: the Board shows your record, the Monolith tests your rank."))
+                    .ttl(20 * 8).build());
             h.spire = h.pos;
-            return;
-        }
-        Direction toAnchor = Direction.getApproximateNearest(h.pos.getX() - spot.getX(), 0, h.pos.getZ() - spot.getZ());
-        if (!toAnchor.getAxis().isHorizontal()) toAnchor = Direction.NORTH;
-        for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) level.setBlock(spot.offset(dx, 0, dz), Blocks.POLISHED_ANDESITE.defaultBlockState(), 3);
-        level.setBlock(spot.above(), HearthContent.REASSESSMENT_MONOLITH.get().defaultBlockState(), 3);
-        level.setBlock(spot.above(2), Blocks.LANTERN.defaultBlockState(), 3);
-        BlockPos board = spot.above().relative(toAnchor);
-        level.setBlock(board, HearthContent.SPIRE_BOARD.get().defaultBlockState().setValue(SpireBoardBlock.FACING, toAnchor), 3);
-        if (level.getBlockEntity(board) instanceof SpireBoardBlockEntity be) be.setOwner(h.owner);
-        Direction side = toAnchor.getClockWise();
-        level.setBlock(spot.above().relative(side), Blocks.LANTERN.defaultBlockState(), 3);
-        level.setBlock(spot.above().relative(side.getOpposite()), Blocks.LANTERN.defaultBlockState(), 3);
-        h.spire = board;
-        HearthService.dirty(level.getServer());
-        HearthService.owner(level.getServer(), h).ifPresent(sp -> refreshBoards(sp, level, h));
+            HearthService.dirty(level.getServer());
+        });
     }
 
-    static BlockPos findSpireSpot(ServerLevel level, BlockPos anchor) {
-        for (int r = 6; r <= 14; r += 2) {
-            for (int i = -r; i <= r; i += 2) {
-                int[][] candidates = {{i, -r}, {i, r}, {-r, i}, {r, i}};
-                for (int[] c : candidates) {
-                    for (int dy = 2; dy >= -3; dy--) {
-                        BlockPos ground = anchor.offset(c[0], dy, c[1]);
-                        if (fits(level, ground)) return ground;
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    private static boolean fits(ServerLevel level, BlockPos ground) {
-        if (!level.isLoaded(ground)) return false;
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
-                BlockPos g = ground.offset(dx, 0, dz);
-                BlockState gs = level.getBlockState(g);
-                if (!gs.isFaceSturdy(level, g, Direction.UP) || gs.hasBlockEntity()) return false;
-                for (int dy = 1; dy <= 3; dy++) {
-                    BlockState above = level.getBlockState(g.above(dy));
-                    if (!above.isAir() && !above.canBeReplaced()) return false;
-                }
-            }
-        }
-        return true;
+    /** A Spire Board placed inside its owner's Hearth becomes that Hearth's board. */
+    public static void boardPlaced(ServerPlayer sp, ServerLevel level, BlockPos pos) {
+        HearthService.hearthOf(sp).filter(h -> h.contains(pos)).ifPresent(h -> {
+            h.spire = pos.immutable();
+            HearthService.dirty(level.getServer());
+        });
     }
 
     // ---- the Spire Board --------------------------------------------------------------------------------------------

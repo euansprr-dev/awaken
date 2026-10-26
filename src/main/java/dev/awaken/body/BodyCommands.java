@@ -51,6 +51,13 @@ final class BodyCommands {
                                             .executes(c -> bench(c, true, false))
                                             .then(Commands.literal("now").executes(c -> bench(c, false, false)))
                                             .then(Commands.literal("press").executes(c -> bench(c, true, true)))))));
+            // tours (SPEC §17.27): stand in front of the nearest real fence, gate or wall with a run-up, facing it
+            body.then(Commands.literal("rail").requires(AwakenCommands.admin())
+                    .then(Commands.argument("radius", com.mojang.brigadier.arguments.IntegerArgumentType.integer(4, 64))
+                            .then(Commands.argument("kind", StringArgumentType.word())
+                                    .suggests((c, b) -> SharedSuggestionProvider.suggest(new String[]{"any", "vault", "onto", "high"}, b))
+                                    .executes(c -> rail(c.getSource(), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "radius"),
+                                            StringArgumentType.getString(c, "kind"))))));
             body.then(Commands.literal("forget").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
                 p.setData(BodyContent.MEMORY, BodyMemory.EMPTY);
@@ -82,6 +89,70 @@ final class BodyCommands {
         }
         if (n == 0) src.sendSuccess(() -> Component.literal("You move like anyone else. For now.").withStyle(ChatFormatting.GRAY), false);
         return n;
+    }
+
+    /**
+     * The nearest fence, gate or wall (by tag, or any collision taller than its block) within the radius that a running
+     * body crosses as asked ({@code vault}: over it, {@code onto}: up onto it, {@code high}: a rail on a block, {@code
+     * any}), from 4 blocks of level run-up square on to it: the player is put at the run-up's start, facing it.
+     */
+    private static int rail(CommandSourceStack src, int r, String want) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        var level = p.level();
+        var ctx = net.minecraft.world.phys.shapes.CollisionContext.empty();
+        net.minecraft.core.BlockPos at = p.blockPosition(), best = null;
+        net.minecraft.core.Direction bestDir = null;
+        int bestKind = -1;
+        double bestD = Double.MAX_VALUE;
+        var m = new net.minecraft.core.BlockPos.MutableBlockPos();
+        for (int dx = -r; dx <= r; dx++) for (int dz = -r; dz <= r; dz++) for (int dy = -8; dy <= 8; dy++) {
+            m.set(at.getX() + dx, at.getY() + dy, at.getZ() + dz);
+            var s = level.getBlockState(m);
+            if (s.isAir()) continue;
+            boolean rail = s.is(net.minecraft.tags.BlockTags.FENCES) || s.is(net.minecraft.tags.BlockTags.WALLS) || s.is(net.minecraft.tags.BlockTags.FENCE_GATES);
+            if (!rail) continue;
+            double d = dx * dx + dz * dz + dy * dy * 4;
+            if (d >= bestD) continue;
+            for (int c = 0; c < 8 && d < bestD; c++) {
+                var dir = net.minecraft.core.Direction.from2DDataValue(c & 3);
+                // 4 blocks of level ground out from it on that side, the feet at the rail's own base (or a block under
+                // it: a rail on a block)
+                var base = m.below(c >> 2);
+                boolean ok = true;
+                for (int k = 1; k <= 4 && ok; k++) {
+                    var q = base.relative(dir, k);
+                    ok = !level.getBlockState(q.below()).getCollisionShape(level, q.below()).isEmpty()
+                            && level.getBlockState(q).getCollisionShape(level, q).isEmpty() && level.getBlockState(q.above()).getCollisionShape(level, q.above()).isEmpty();
+                }
+                if (!ok) continue;
+                var near = base.relative(dir, 1);
+                float yaw = dir.getOpposite().toYRot();
+                VaultRules.Vault v = VaultRules.find(level, ctx, near.getX() + 0.5 + dir.getStepX() * 0.3, base.getY(), near.getZ() + 0.5 + dir.getStepZ() * 0.3,
+                        yaw, VaultRules.REACH_RUN, true, 0.3);
+                if (v == null) continue;
+                boolean match = switch (want) {
+                    case "vault" -> v.kind() == VaultRules.VAULT;
+                    case "onto" -> v.kind() == VaultRules.ONTO;
+                    case "high" -> v.kind() == VaultRules.HIGH;
+                    default -> true;
+                };
+                if (!match) continue;
+                best = base.immutable();
+                bestDir = dir;
+                bestKind = v.kind();
+                bestD = d;
+            }
+        }
+        if (best == null) {
+            src.sendFailure(Component.literal("No fence or wall to cross within " + r));
+            return 0;
+        }
+        var start = best.relative(bestDir, 4);
+        p.connection.teleport(start.getX() + 0.5, best.getY(), start.getZ() + 0.5, bestDir.getOpposite().toYRot(), 10F);
+        String what = level.getBlockState(best).getBlock().getDescriptionId() + " at " + best.toShortString() + ", kind " + bestKind;
+        dev.awaken.Awaken.LOG.info("[body] rail: {}", what);
+        src.sendSuccess(() -> Component.literal("Run at " + what), false);
+        return 1;
     }
 
     private static int tryMove(CommandSourceStack src, String name, int delay) throws com.mojang.brigadier.exceptions.CommandSyntaxException {

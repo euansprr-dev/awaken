@@ -18,7 +18,7 @@ public final class AboveClient {
 
     public static void init(IEventBus modBus) {
         modBus.addListener(AboveClient::onPayloads);
-        // a sealed door's seams and rune glow in its rank's colour, so the rank reads from afar (SPEC §17.27)
+        // a sealed door's seams and rune glow in its rank's colour, so the rank reads from afar (SPEC §17.29)
         modBus.addListener(RegisterColorHandlersEvent.BlockTintSources.class, e -> {
             e.register(java.util.List.of(DoorTint.CORE), dev.awaken.above.AboveBlocks.DOOR_CORE.get());
             e.register(java.util.List.of(DoorTint.PANEL), dev.awaken.above.AboveBlocks.DOOR.get());

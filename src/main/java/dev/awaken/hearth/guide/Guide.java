@@ -123,7 +123,8 @@ public final class Guide {
         switch (action) {
             case Act.OPEN -> open(sp, HearthService.levelOf(sp.level().getServer(), h), h);
             case Act.UPGRADE -> {
-                Upgrades.upgradeAnchor(sp, h.owner);
+                if (h.hearthfire()) dev.awaken.hearth.Embers.raiseFromGuide(sp, h);
+                else Upgrades.upgradeAnchor(sp, h.owner);
                 refresh(sp);
             }
             case Act.COTTAGE -> {
@@ -185,7 +186,22 @@ public final class Guide {
         List<GuideData.RecipeView> recipes = new ArrayList<>();
         for (Furniture f : Furniture.values()) recipe(sp, f).ifPresent(recipes::add);
         return new GuideData(h.tier, h.radius(), rest, Math.max(1, rest / 2), hp.respawnAtHearth, h.pos, cards, recipes,
-                town(h), coming(sp, h), upgrade(sp, h), Cottage.state(sp, h));
+                town(h), coming(sp, h), upgrade(sp, h), Cottage.state(sp, h), home(h));
+    }
+
+    /** The home as read: its name, Comfort and what adds a point, Style, the land, and each room's reading (best first). */
+    static GuideData.Home home(HearthRecord h) {
+        List<Room> sorted = new ArrayList<>(h.rooms);
+        sorted.sort(java.util.Comparator.comparingInt((Room r) -> -r.reading().grade().ordinal()).thenComparingDouble(r -> r.centre().distSqr(h.pos)));
+        List<GuideData.RoomView> views = new ArrayList<>();
+        for (Room r : sorted) {
+            if (views.size() >= 24) break;
+            var g = r.reading();
+            views.add(new GuideData.RoomView(g.name(), g.grade().ordinal(), List.of(g.closed(), g.light(), g.warmth(), g.space(), g.care(), g.detail()),
+                    g.purpose().label, g.lift(), r.centre()));
+        }
+        return new GuideData.Home(h.displayName(), h.comfort, h.style, dev.awaken.hearth.Comfort.next(h.rooms, h.land),
+                dev.awaken.hearth.Comfort.landWords(h.land), dev.awaken.hearth.Comfort.restedMinutes(h.comfort), views);
     }
 
     /** One room card from the last scan. Public for the tests. */
@@ -270,6 +286,13 @@ public final class Guide {
     }
 
     private static GuideData.Upgrade upgrade(ServerPlayer sp, HearthRecord h) {
+        if (h.hearthfire()) {
+            // the Hearthfire's next step is a Lord's Heart on the fire, no rank needed
+            Item heart = dev.awaken.core.api.CoreApi.LORD_HEART.get();
+            int have = sp.hasInfiniteMaterials() ? 1 : Costs.countOf(sp, heart);
+            return new GuideData.Upgrade(false, 1, HearthRecord.radiusForTier(1), HearthService.restSeconds(1), "", true,
+                    List.of(new GuideData.Part(BuiltInRegistries.ITEM.getKey(heart), 1, have)), 0, have >= 1 && h.owner.equals(sp.getUUID()));
+        }
         if (h.tier >= HearthRecord.MAX_TIER) return GuideData.Upgrade.NONE;
         int next = h.tier + 1;
         Upgrades.Def def = Upgrades.anchorTier(next);

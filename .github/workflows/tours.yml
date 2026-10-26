@@ -1,0 +1,189 @@
+# Runs autopilot screenshot tours on GitHub's macOS runners (Apple Silicon VMs, Vulkan on a paravirtual Metal GPU),
+# several at once, so look tours no longer queue for hours on the owner's 16 GB Mac. Look tours only: a shared 3-core
+# VM's frame times say nothing about a player's Mac, so perf tours (perf-*, the Lens bench, anything measuring ms) stay
+# on the Mac under slot.sh tour, and so do Far Sight's (the runner's GPU scrambles its far mesh: Far Sight is off here).
+# Builders dispatch it with tools/tour-ci.sh <script> [timeout] [KEY=VAL ...]: each dispatch is its own run on its own
+# runner, and its shots, logs and summary are the run's artifact for 7 days.
+# Forks can't trigger it (workflow_dispatch needs write access). Inputs reach the shell only through env, and are
+# checked before anything runs.
+name: Tours
+run-name: Tour ${{ inputs.script }} ${{ inputs.knobs }} ${{ inputs.id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      script:
+        description: Tour script, tools/autopilot/<name>.txt
+        required: true
+        type: string
+      timeout:
+        description: Seconds the client may run (tools/autopilot.sh's timeout; at most 3600)
+        default: '1500'
+        type: string
+      knobs:
+        description: tools/autopilot.sh knobs, KEY=VAL separated by spaces (PACK BACKEND LENS RD XMX ZGC CITY TECTONIC DH)
+        default: ''
+        type: string
+      id:
+        description: The caller's tag, shown in the run name (tools/tour-ci.sh finds its run by it)
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+# one tour per branch, script and knobs at a time; a second waits instead of cancelling (other branches never wait)
+concurrency:
+  group: tours-${{ github.ref }}-${{ inputs.script }}-${{ inputs.knobs }}
+  cancel-in-progress: false
+
+jobs:
+  tour:
+    name: ${{ inputs.script }}
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      SCRIPT: ${{ inputs.script }}
+      TOUR_TIMEOUT: ${{ inputs.timeout }}
+      KNOBS: ${{ inputs.knobs }}
+      TOUR_RUNNER: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      # a script under tools/autopilot, a timeout in seconds, only the knobs autopilot.sh reads, plain values; no Far Sight
+      - name: Check the request
+        id: req
+        run: |
+          set -f
+          fail() { echo "::error::$1"; exit 1; }
+          [[ "$SCRIPT" =~ ^tools/autopilot/[A-Za-z0-9._-]+\.txt$ ]] || fail "script must be tools/autopilot/<name>.txt"
+          [ -f "$SCRIPT" ] || fail "no $SCRIPT on this branch (push it first)"
+          [[ "$TOUR_TIMEOUT" =~ ^[0-9]{2,4}$ ]] && [ "$TOUR_TIMEOUT" -le 3600 ] || fail "timeout must be seconds, at most 3600"
+          for kv in $KNOBS; do
+            [[ "$kv" =~ ^(PACK|BACKEND|LENS|RD|XMX|ZGC|CITY|TECTONIC|DH)=[A-Za-z0-9,._-]+$ ]] \
+              || fail "not a knob: only PACK BACKEND LENS RD XMX ZGC CITY TECTONIC DH=<plain value>"
+          done
+          ! grep -q '^farsight on' "$SCRIPT" || fail "Far Sight tours stay on the Mac: the runner's GPU scrambles Far Sight's far mesh"
+          name=$(basename "$SCRIPT" .txt)
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "TOUR_NAME=$name" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      # The Gradle home (Minecraft, NeoForge, the decompiled game) is written only by runs on the default branch, which
+      # every branch then reads; Minecraft's assets have their own entry below.
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-home-cache-excludes: caches/neoformruntime/assets
+
+      - name: Versions
+        id: v
+        run: |
+          echo "mc=$(sed -n 's/^minecraft_version=//p' gradle.properties)" >> "$GITHUB_OUTPUT"
+          echo "AWAKEN_PACK_CACHE=$HOME/.awaken-pack-cache" >> "$GITHUB_ENV"
+
+      # Mojang's assets, downloaded by the build on the runner and cached for the next ones (saved by default-branch runs,
+      # which every branch reads); never in the repo or an artifact (the repo is public).
+      - name: Restore Minecraft assets
+        id: assets
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.gradle/caches/neoformruntime/assets
+          key: mc-assets-${{ runner.os }}-${{ runner.arch }}-${{ steps.v.outputs.mc }}
+
+      - name: Restore pack mods
+        id: pack
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.awaken-pack-cache
+          key: awaken-pack-${{ hashFiles('pack/lock.json') }}
+          restore-keys: awaken-pack-
+
+      # The runner boots a 1x 1024x768 display (at most 1920x1080, no Retina modes). tools/ci-retina.m adds a display
+      # like the owner's MacBook (1512x982 points at 2x) as the main one, so tours get the Mac's pixels and GUI scale;
+      # it lives in the background until the job ends. If macOS refuses it, the runner's own display goes to 1920x1080,
+      # where "window 1440 900" still opens whole (the Mac's framing at half its pixels).
+      - name: Runner
+        run: |
+          mkdir -p tour-out
+          {
+            echo "label: $TOUR_RUNNER"; sw_vers; uname -m
+            echo "cpus: $(sysctl -n hw.ncpu)  memory: $(( $(sysctl -n hw.memsize) / 1073741824 )) GB  cpu: $(sysctl -n machdep.cpu.brand_string)"
+            echo "session: $(launchctl managername)  console user: $(stat -f %Su /dev/console)"
+            # the Dock hidden, as on the owner's Mac: a 900-point-tall window then fits under the menu bar
+            defaults write com.apple.dock autohide -bool true && killall Dock || true
+            clang -fobjc-arc -framework Foundation -framework CoreGraphics tools/ci-retina.m -o "$RUNNER_TEMP/ci-retina"
+            nohup "$RUNNER_TEMP/ci-retina" 1512 982 > "$RUNNER_TEMP/retina.txt" 2>&1 &
+            for i in $(seq 1 20); do grep -q '^main ' "$RUNNER_TEMP/retina.txt" && break; kill -0 $! 2>/dev/null || break; sleep 1; done
+            if grep -q '^main ' "$RUNNER_TEMP/retina.txt"; then echo "display: virtual Retina, $(cat "$RUNNER_TEMP/retina.txt")"
+            else echo "display: no virtual Retina ($(cat "$RUNNER_TEMP/retina.txt")); the runner's own at 1920x1080"
+              swift tools/ci-display.swift 1920x1080 2>&1 || true; fi
+          } | tee tour-out/runner.txt
+
+      - name: Build
+        run: |
+          start=$(date +%s)
+          ./gradlew --console=plain classes downloadAssets prepareAutopilotRun
+          echo "BUILD_SECONDS=$(( $(date +%s) - start ))" >> "$GITHUB_ENV"
+
+      - name: Tour
+        run: |
+          set -f
+          for kv in $KNOBS; do export "$kv"; done
+          set +f
+          # the runner has 7 GB: the client's heap leaves room for Gradle and the GPU's buffers
+          export XMX="${XMX:-4G}"
+          export FARSIGHT=off
+          # 3 cores load and build chunks slower than the Mac the scripts' waits were written on
+          export SETTLE=90
+          start=$(date +%s)
+          tools/autopilot.sh "$SCRIPT" "$TOUR_TIMEOUT" 2>&1 | tee tour-out/autopilot.txt
+          echo "TOUR_SECONDS=$(( $(date +%s) - start ))" >> "$GITHUB_ENV"
+
+      - name: Report
+        id: report
+        if: always() && steps.req.outcome == 'success'
+        run: python3 -I tools/tour-report.py tour-out
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.req.outcome == 'success'
+        with:
+          name: tour-${{ steps.req.outputs.name }}
+          path: tour-out/
+          retention-days: 7
+          compression-level: 1
+
+      # the clip recorder's frames (tools/art/anim_lab.py film), when the script records any
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.req.outcome == 'success'
+        with:
+          name: tour-${{ steps.req.outputs.name }}-clips
+          path: run-autopilot/clips/
+          retention-days: 7
+          compression-level: 0
+          if-no-files-found: ignore
+
+      - name: Save Minecraft assets
+        if: always() && github.ref == 'refs/heads/build/awaken-v1' && steps.assets.outputs.cache-hit != 'true' && steps.report.outputs.verdict == 'pass'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.gradle/caches/neoformruntime/assets
+          key: mc-assets-${{ runner.os }}-${{ runner.arch }}-${{ steps.v.outputs.mc }}
+
+      - name: Save pack mods
+        if: always() && github.ref == 'refs/heads/build/awaken-v1' && steps.pack.outputs.cache-hit != 'true' && hashFiles('run-autopilot/mods/.awaken-pack.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.awaken-pack-cache
+          key: awaken-pack-${{ hashFiles('pack/lock.json') }}
+
+      - name: Verdict
+        if: always() && steps.req.outcome == 'success'
+        env:
+          VERDICT: ${{ steps.report.outputs.verdict }}
+        run: |
+          echo "verdict: ${VERDICT:-no report}"
+          [ "$VERDICT" = pass ]

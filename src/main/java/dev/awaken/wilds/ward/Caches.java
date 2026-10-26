@@ -25,7 +25,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import org.jspecify.annotations.Nullable;
 
 /**
- * A climb cache's inner seal (SPEC §17.27; the progression plan §5.5). A chest at a climb site (a Tether Spire's crown
+ * A climb cache's inner seal (SPEC §17.29; the progression plan §5.5). A chest at a climb site (a Tether Spire's crown
  * deck, a sky platform's deck, a hero tree's crown) opens its ordinary roll to anyone who got there without building;
  * its best roll waits behind an inner seal that opens only to a climber the line carried (rope or wings: the Ascent's
  * own ladder, {@link ArrivalHooks#byLine}), once per climber, so nobody's open ever spends it for anyone else. Someone

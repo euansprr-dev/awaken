@@ -157,7 +157,7 @@ public final class Requests {
         if (!HearthService.enabled() || !Progression.profile(sp).awakened()) return;
         Optional<HearthRecord> home = HearthService.homeOf(sp);
         boolean dirty = forgeCredit(sp, st, home);
-        if (home.isEmpty()) {
+        if (home.isEmpty() || home.get().hearthfire()) { // requests come with the Anchor, not the Hearthfire
             if (dirty) sync(sp);
             return;
         }

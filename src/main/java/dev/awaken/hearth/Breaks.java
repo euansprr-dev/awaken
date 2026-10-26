@@ -34,6 +34,7 @@ public final class Breaks {
     /** Server stop: the next world starts with no breaks remembered (singleplayer reuses the JVM). */
     static void clear() {
         ACTIVE.clear();
+        RUNG.clear();
     }
 
     /** Whether a break is happening near this Hearth right now (from the last check). */
@@ -53,6 +54,7 @@ public final class Breaks {
         for (ServerPlayer p : home) if (p.getUUID().equals(h.owner)) owner = p;
         ServerPlayer logTo = owner != null ? owner : home.get(0);
         List<GateHooks.GateView> near = GateHooks.near(level, h.pos, RADIUS);
+        if (h.hasRoom(dev.awaken.hearth.room.RoomType.BELL_TOWER)) bellWarns(home, level, h, near);
         for (GateHooks.GateView g : near) {
             if (!"BROKEN".equals(g.state())) continue;
             if (defend == null) defend = g.pos();
@@ -97,6 +99,33 @@ public final class Breaks {
         else ACTIVE.remove(h.owner);
         Duty.defend(level, h, defend);
         if (changed) HearthService.dirty(level.getServer());
+    }
+
+    /** Gates already warned of by a Hearth's bell (runtime: after a restart the bell may warn once more). */
+    private static final Set<String> RUNG = new HashSet<>();
+    /** How many play-days ahead the bell warns of a break. */
+    public static final int BELL_DAYS = 2;
+
+    /** Your bell tower keeps watch: a gate within 256 that will break in two play-days or less is warned of, once. */
+    static void bellWarns(List<ServerPlayer> home, ServerLevel level, HearthRecord h, List<GateHooks.GateView> near) {
+        long today = dev.awaken.core.PlayDays.current(level.getServer());
+        for (GateHooks.GateView g : near) {
+            if (!bellWarns(g.state(), g.breaksOnPlayDay(), today) || !RUNG.add(h.owner + "|" + g.id())) continue;
+            long days = Math.max(0, g.breaksOnPlayDay() - today);
+            for (ServerPlayer p : home) {
+                Signal.send(p, SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("Your bell rings a warning"))
+                        .body(Component.literal("A gate " + (int) Math.sqrt(g.pos().distSqr(h.pos)) + " blocks from home will break "
+                                + (days <= 0 ? "today" : days == 1 ? "tomorrow" : "in " + days + " play-days") + ". Clear it before it does."))
+                        .row(Component.literal("Gate"), Component.literal(rankLabel(g.rank()) + "-rank · " + g.themeName())).priority(5).build());
+            }
+            level.playSound(null, h.pos, net.minecraft.sounds.SoundEvents.BELL_BLOCK, net.minecraft.sounds.SoundSource.BLOCKS, 1.5f, 0.8f);
+        }
+    }
+
+    /** Pure rule for the bell: a standing gate (ready, open or being run) whose break is due within {@link #BELL_DAYS} play-days. */
+    public static boolean bellWarns(String state, long breaksOnPlayDay, long today) {
+        boolean standing = "READY".equals(state) || "OPEN".equals(state) || "ACTIVE".equals(state);
+        return standing && breaksOnPlayDay > 0 && breaksOnPlayDay != Long.MAX_VALUE && breaksOnPlayDay - today <= BELL_DAYS;
     }
 
     /** Pure rule used by {@link #check} and the tests: count only a BROKEN→CLEARED transition nobody else counted. */

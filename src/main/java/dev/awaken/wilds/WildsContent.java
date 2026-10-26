@@ -42,10 +42,10 @@ public final class WildsContent {
     public static final DeferredHolder<MapCodec<? extends LootItemCondition>, MapCodec<ArrivedByMovement>> ARRIVED_BY_MOVEMENT =
             CONDITIONS.register("arrived_by_movement", () -> ArrivedByMovement.MAP_CODEC);
 
-    /** The ward visit a player logged out in (SPEC §17.27): saved, taken off at the next login. */
+    /** The ward visit a player logged out in (SPEC §17.29): saved, taken off at the next login. */
     public static final java.util.function.Supplier<AttachmentType<Visit>> VISIT = ATTACHMENTS.register("ward_visit",
             () -> AttachmentType.builder(() -> new Visit(1, "", false, false, 0)).serialize(Visit.MAP_CODEC).build());
-    /** A climb cache's inner seal: who it has opened to (SPEC §17.27), on the chest's block entity. */
+    /** A climb cache's inner seal: who it has opened to (SPEC §17.29), on the chest's block entity. */
     public static final java.util.function.Supplier<AttachmentType<dev.awaken.wilds.ward.InnerSeal>> INNER_SEAL = ATTACHMENTS.register("inner_seal",
             () -> AttachmentType.builder(() -> dev.awaken.wilds.ward.InnerSeal.NONE).serialize(dev.awaken.wilds.ward.InnerSeal.MAP_CODEC).build());
 

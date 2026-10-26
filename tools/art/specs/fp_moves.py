@@ -80,7 +80,7 @@ HANG_FIST = fist(0.26, -0.02, -0.82)
 
 
 # ---------------------------------------------------------------------------------------------------------------------
-# Leaving a climb line (SPEC §17.23). On the line itself the hands are drawn on it in the world (body.client.GripView),
+# Leaving a climb line (SPEC §17.28). On the line itself the hands are drawn on it in the world (body.client.GripView),
 # and for the first ticks after letting go they drop away there; these clips take the hands over from below.
 
 # Kicked off the wall: the hands come up from below thrown out for balance as you fly back, then settle.

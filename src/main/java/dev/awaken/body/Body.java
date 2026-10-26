@@ -75,7 +75,7 @@ public final class Body {
     public static boolean isMantling(Player p) {
         if (p.level().isClientSide()) return client != null && client.mantling();
         BodyMotion m = motion(p);
-        return m != null && m.mantleUntil != 0;
+        return m != null && (m.mantleUntil != 0 || m.vaultUntil != 0); // a crossing is a mantle to everyone else
     }
 
     /** Sliding down a run of stairs or slabs (SPEC §17.22). */

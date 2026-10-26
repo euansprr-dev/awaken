@@ -1,8 +1,31 @@
-# AWAKEN handoff (2026-10-26, ~05:45)
+# AWAKEN handoff (2026-10-26, ~05:45; addendum ~13:00)
 
 Start here if you are a new Claude session with no context. Read this, then `CLAUDE.md`, then the memory index at
 `~/.claude/projects/-Volumes-MEDIA-Awaken/memory/MEMORY.md`. Its files hold Euan's decisions, preferences and the
 history behind them. `docs/SPEC.md` is the source of truth for every system.
+
+## Addendum, 26 Oct ~13:00 (build a3869560, CI green)
+Merged since the morning, each on green CI with its shots reviewed:
+- **Fixes from Euan's playtest:**
+  - the vault rank lock (the Tether needs C or the door's rank and an open door);
+  - gate pillars as soft light (no boxed beacon beam);
+  - the Rolling Storm as a real cumulonimbus in Lens's clouds, with local rain and thunder late by distance;
+  - the Far Sight sea (no sky under the water, a far sea floor);
+  - leaps from a hang with momentum (§17.26).
+- **New systems:**
+  - the notification director, discovery and the rift (§26);
+  - the Registry ceremony (sign, take the band, wear it in the wrist slot, the boot, the K tip);
+  - the Atlas clouds' drift;
+  - wild life (§29: birds, insects, small animals);
+  - Arms S7, the animation lab, slicing swings, real holds per style, and the arm holding the weapon in first person.
+- **The Way Forward (§27, `docs/progression/`):** Euan approved all 11 decisions. Phases 1, 2, 4 and 5 (`pack/progression`) and Phase 3, locks (`pack/locks`, §17.27), are merged. The Tether is at D.
+- **Building in their own sessions:**
+  - fence and wall mantling (`pack/fence-mantle`, being reconciled with §17.26);
+  - grass and plant sway (`pack/grass-sway`);
+  - storm, nothing open;
+  - CI tours on GitHub macOS runners (`pack/ci-tours`, `tools/tour-ci.sh`);
+  - Between the Gates (§28, `docs/world-depth/`, all 13 decisions approved): W1 the early Hearth that reads your build, W2 mining.
+- **Tour budget** (memory `tour-budget.md`): one tour per hand-back, no "before" tours, under about 8 minutes.
 
 ## Who and how
 - **Euan** owns the project. He wants AWAKEN to feel "genuinely magical", at a AAA bar. He decides the look and the
@@ -30,7 +53,15 @@ history behind them. `docs/SPEC.md` is the source of truth for every system.
   3. Merge with `--no-ff`.
   4. Run `slot.sh build tools/gradle.sh 900 build -x test`.
   5. Push, then watch the build's CI.
-- **The machine lock:** wrap every Gradle run and tour in `/Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh
+- **Tours on CI:** `.github/workflows/tours.yml` runs one autopilot tour per dispatch on a macos-15 runner (Vulkan on
+  its paravirtual GPU, a virtual display like the MacBook's), free and in parallel (about 5 at once), 5-8 minutes from
+  dispatch to shots. Builders run `tools/tour-ci.sh <script> [timeout] [KEY=VAL ...]` after pushing; it waits and
+  downloads the shots, logs and summary into `run-autopilot/screenshots-ci/<script>-<run id>/`, and exits non-zero if
+  the tour failed. The run's artifact keeps them 7 days. Caches (Gradle, Mojang's assets, pack mods) are written only by
+  runs on build/awaken-v1: after a merge that changes Minecraft, NeoForge or pack/lock.json, run one tour there
+  (`tools/tour-ci.sh tools/autopilot/ci-probe.txt`) to warm them. Mac-only (under `slot.sh tour`): perf and frame-time
+  tours, Far Sight's tours (the runner's GPU scrambles its far mesh, so CI tours run without Far Sight), sound listening.
+- **The machine lock:** wrap every Gradle run and Mac tour in `/Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh
   build|tour|light <cmd>`. Set `SLOT_WHO=<you>`. A tour runs alone.
 - **Local tests:** `tools/gradle.sh 900 runGameTestServer -Ptests=<prefix>` runs only the tests you name.
 - **Euan plays** with `tools/play.sh --pack`. It builds `build/awaken-v1` into `/Volumes/MEDIA/Awaken-play`, runs on
