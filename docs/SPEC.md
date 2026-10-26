@@ -4388,6 +4388,17 @@ and no haze. With the K panel open they dim with the rest of the world (the focu
   - A new surface (disocclusion) marches.
   - A march blends in at 1 - (1 - f)^2.
 - Frame texel 17 y carries the switch; with it off, both passes are exactly as before.
+- Measured (perf tour `tools/autopilot/lens-temporal-perf.txt`, 26 Oct; MacBook at Euan's 4.7 MP world, the Roost,
+  noon, a quiet machine; GPU world pass p50):
+
+  | | off | on |
+  |---|---|---|
+  | Ultra | 17.02 ms | **15.12 ms** (frame p50 19.4 → 17.3, 51 → 58 fps) |
+  | Cinematic (paired windows) | 13.95, 13.53 ms | 13.70, 13.13 ms (−0.25 to −0.4) |
+
+  - Lens Swift is 9.29 ms, so the whole of Lens Cinematic is ~4.2 ms over Swift and the marches are a small part of
+    it. The rest is the full-size passes; time them per pass next.
+  - Look tour `tools/autopilot/lens-temporal-look.txt` (CI): no smear and no tile blocks, at rest or in a 180° turn.
 
 ## 23. Creature life (Fresh Animations in the pack, and a life layer on every body of ours; Euan 2026-10-25)
 
