@@ -16,7 +16,6 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -63,7 +62,7 @@ public final class TuningForkItem extends Item {
         p.getCooldowns().addCooldown(fork, COOLDOWN);
         level.playSound(null, pos, DelveContent.FORK_STRIKE.get(), SoundSource.PLAYERS, 1.0F, pitch(tuned));
         Optional<BlockPos> target = target(level, pos, tuned);
-        PacketDistributor.sendToPlayer(p, new DelveNet.ForkRing(tuned.ordinal(), target.isPresent(), target.map(BlockPos::asLong).orElse(0L)));
+        DelveNet.send(p, new DelveNet.ForkRing(tuned.ordinal(), target.isPresent(), target.map(BlockPos::asLong).orElse(0L)));
         dev.awaken.progression.Progression.count(p, "awaken:fork_strikes");
         return target;
     }

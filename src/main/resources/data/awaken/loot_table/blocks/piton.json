@@ -22,9 +22,9 @@
         }
       ],
       "condition": {
-        "type": "minecraft:block_state_property",
-        "block": "awaken:piton",
-        "properties": {
+        "type": "minecraft:match_block",
+        "blocks": "awaken:piton",
+        "state": {
           "roped": "true"
         }
       }

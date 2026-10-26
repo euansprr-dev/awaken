@@ -17,7 +17,6 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +56,7 @@ public final class CaveIns {
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         for (int i = 0; i < roof.length; i++) states[i] = level.getBlockState(m.set(roof[i]));
         PENDING.add(new Pending(level, level.getGameTime() + WARN, roof, states));
-        PacketDistributor.sendToPlayersNear(level, null, heart.getX() + 0.5, heart.getY() + 0.5, heart.getZ() + 0.5, 48,
+        DelveNet.near(level, null, heart.getX() + 0.5, heart.getY() + 0.5, heart.getZ() + 0.5, 48,
                 new DelveNet.CaveWarn(heart.asLong(), roof, WARN));
         level.playSound(null, heart, DelveContent.CAVE_CREAK.get(), SoundSource.BLOCKS, 1.4F, 0.9F + 0.2F * level.getRandom().nextFloat());
         p.sendOverlayMessage(Component.literal("The roof is giving way").withColor(0xE8C9A0));

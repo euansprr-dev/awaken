@@ -130,6 +130,18 @@ public final class DelveNet {
         }
     }
 
+    /** To one player, if their connection speaks our channel (fake players in tests don't). */
+    static void send(ServerPlayer p, CustomPacketPayload m) {
+        dev.awaken.core.AwakenNet.send(p, m);
+    }
+
+    /** To every player within {@code radius} of (x, y, z) in this level but {@code except}. */
+    static void near(net.minecraft.server.level.ServerLevel level, ServerPlayer except, double x, double y, double z, double radius, CustomPacketPayload m) {
+        for (ServerPlayer p : level.players()) {
+            if (p != except && p.distanceToSqr(x, y, z) <= radius * radius) send(p, m);
+        }
+    }
+
     static void register(RegisterPayloadHandlersEvent e) {
         var r = e.registrar("1");
         r.playToClient(VeinOpen.TYPE, VeinOpen.STREAM_CODEC);

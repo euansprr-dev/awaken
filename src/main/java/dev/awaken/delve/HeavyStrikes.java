@@ -19,7 +19,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -92,7 +91,7 @@ public final class HeavyStrikes {
         for (BlockPos b : bored) longs.add(b.asLong());
         BlockPos c = bored.getFirst();
         level.playSound(null, c, DelveContent.HEAVY_STRIKE.get(), SoundSource.PLAYERS, 1.3F, glint ? 1.12F : 0.95F);
-        PacketDistributor.sendToPlayersNear(level, null, c.getX() + 0.5, c.getY() + 0.5, c.getZ() + 0.5, 48,
+        DelveNet.near(level, null, c.getX() + 0.5, c.getY() + 0.5, c.getZ() + 0.5, 48,
                 new DelveNet.HeavyFx(p.getId(), longs.toLongArray(), states, glint));
         dev.awaken.progression.Progression.count(p, "awaken:heavy_strikes");
         return bored;

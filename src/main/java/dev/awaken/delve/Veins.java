@@ -15,7 +15,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -136,9 +135,9 @@ public final class Veins {
         Finds.tell(p, first ? f.big("Lode") : f);
         level.playSound(null, l.heartPos(), DelveContent.VEIN_GIVES.get(), SoundSource.BLOCKS, 1.6F, 1.0F);
         long[] cells = left.toLongArray();
-        PacketDistributor.sendToPlayer(p, new DelveNet.VeinOpen(l.id(), l.ore().ordinal(), l.heart(), cells, WINDOW, true));
+        DelveNet.send(p, new DelveNet.VeinOpen(l.id(), l.ore().ordinal(), l.heart(), cells, WINDOW, true));
         BlockPos h = l.heartPos();
-        PacketDistributor.sendToPlayersNear(level, p, h.getX() + 0.5, h.getY() + 0.5, h.getZ() + 0.5, 40,
+        DelveNet.near(level, p, h.getX() + 0.5, h.getY() + 0.5, h.getZ() + 0.5, 40,
                 new DelveNet.VeinOpen(l.id(), l.ore().ordinal(), l.heart(), cells, WINDOW, false));
         CaveIns.consider(level, l, p);
     }
@@ -219,7 +218,7 @@ public final class Veins {
         if ((p.tickCount + p.getId()) % 40 != 0) return;
         ServerLevel level = p.level();
         if (level.dimension() != Level.OVERWORLD) {
-            if (SENT.remove(p.getUUID()) != null) PacketDistributor.sendToPlayer(p, new DelveNet.LodesNear(List.of()));
+            if (SENT.remove(p.getUUID()) != null) DelveNet.send(p, new DelveNet.LodesNear(List.of()));
             return;
         }
         BlockPos at = p.blockPosition();
@@ -234,6 +233,6 @@ public final class Veins {
         LongOpenHashSet last = SENT.get(p.getUUID());
         if (last != null && last.equals(ids)) return;
         SENT.put(p.getUUID(), ids);
-        PacketDistributor.sendToPlayer(p, new DelveNet.LodesNear(out));
+        DelveNet.send(p, new DelveNet.LodesNear(out));
     }
 }

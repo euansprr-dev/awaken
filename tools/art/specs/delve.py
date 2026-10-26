@@ -639,7 +639,7 @@ def content():
     item_generated("piton")
     loot("piton", [{"rolls": 1, "entries": [{"type": "minecraft:item", "name": "awaken:piton"}], "condition": {"type": "minecraft:survives_explosion"}},
                    {"rolls": 1, "entries": [{"type": "minecraft:item", "name": "awaken:runner_rope"}],
-                    "condition": {"type": "minecraft:block_state_property", "block": "awaken:piton", "properties": {"roped": "true"}}}])
+                    "condition": {"type": "minecraft:match_block", "blocks": "awaken:piton", "state": {"roped": "true"}}}])
     lang["block.awaken.piton"] = "Runner's Piton"
     lang["block.awaken.runner_line"] = "Runner's Rope"
     # items

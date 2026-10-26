@@ -19,7 +19,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LanternBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -216,7 +215,7 @@ final class DelveCommands {
             c.getSource().sendFailure(Component.literal("Look at a block"));
             return 0;
         }
-        PacketDistributor.sendToPlayer(p, new DelveNet.Demo(kind, hit.getBlockPos().asLong(), hit.getDirection().get3DDataValue()));
+        DelveNet.send(p, new DelveNet.Demo(kind, hit.getBlockPos().asLong(), hit.getDirection().get3DDataValue()));
         return 1;
     }
 }
