@@ -87,7 +87,7 @@ public final class MapScene {
         if (!dev.awaken.core.api.HoloBand.worn(mc.player)) return "no band";
         if (dev.awaken.opening.client.OpeningCamera.active()) return "camera busy";
         if (mc.player.isSleeping() || mc.player.isSpectator()) return "pose";
-        if (mc.gui.screen() != null) return "screen";
+        if (mc.gui.screen() != null) return "screen " + mc.gui.screen().getClass().getSimpleName(); // a death screen too
         if (!room(mc)) return "no room";
         return null;
     }

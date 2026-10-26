@@ -319,16 +319,22 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         g.fillGradient(0, 0, width, height, Glass.a(0x050C18, 0.42f * a), Glass.a(0x050C18, 0.18f * a));
     }
 
-    /** The card's cut edge fades into its glass, so the land reads as a projection, not a rectangle. */
+    /** The card's cut edge fades into its glass, so the land reads as a projection, not a rectangle (smooth: steps showed over cloud). */
     private void edges(GuiGraphicsExtractor g, int x0, int y0, int x1, int y1, float reveal) {
-        for (int i = 0; i < 8; i++) {
-            int c = Glass.a(0x0B1626, 0.62f * (1f - i / 8f) * reveal);
-            int o = i * 2;
-            g.fill(x0 + o, y0 + o, x1 - o, y0 + o + 2, c);
-            g.fill(x0 + o, y1 - o - 2, x1 - o, y1 - o, c);
-            g.fill(x0 + o, y0 + o + 2, x0 + o + 2, y1 - o - 2, c);
-            g.fill(x1 - o - 2, y0 + o + 2, x1 - o, y1 - o - 2, c);
-        }
+        int band = 14, c = Glass.a(0x0B1626, 0.62f * reveal), clear = Glass.a(0x0B1626, 0f);
+        g.fillGradient(x0, y0, x1, y0 + band, c, clear);
+        g.fillGradient(x0, y1 - band, x1, y1, clear, c);
+        // the sides: the same gradient turned a quarter (local x runs along the edge, local y inward)
+        g.pose().pushMatrix();
+        g.pose().translate(x0, y1);
+        g.pose().rotate((float) (-Math.PI / 2));
+        g.fillGradient(0, 0, y1 - y0, band, c, clear);
+        g.pose().popMatrix();
+        g.pose().pushMatrix();
+        g.pose().translate(x1, y0);
+        g.pose().rotate((float) (Math.PI / 2));
+        g.fillGradient(0, 0, y1 - y0, band, c, clear);
+        g.pose().popMatrix();
     }
 
     /** Where the band's beams land: two points along the card's near bottom edge, so the light fans up into the map. */
