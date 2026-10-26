@@ -5090,8 +5090,6 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   phase F.
 - Test: `progression_capability_clock`.
 
-
-
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 28. Between the Gates (home, people, below; plan docs/world-depth/PLAN.md, page https://claude.ai/artifact/ATZfZSczLg95kNSgnLF42M; Euan approved all of it 2026-10-26)
