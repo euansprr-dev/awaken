@@ -42,9 +42,14 @@ public final class CaveIns {
 
     private static final List<Pending> PENDING = new ArrayList<>();
 
+    /** Set by the tour's {@code /awaken delve heart calm}: the next heart's roof stays up. */
+    static boolean calmNext;
+
     /** A lode's heart just broke: maybe its roof comes down ({@link #CHANCE}). */
     static boolean consider(ServerLevel level, Lode l, ServerPlayer p) {
-        return consider(level, l.heartPos(), p, level.getRandom().nextDouble() < CHANCE);
+        boolean calm = calmNext;
+        calmNext = false;
+        return consider(level, l.heartPos(), p, !calm && level.getRandom().nextDouble() < CHANCE);
     }
 
     /** {@code roll}: whether this one comes down if the chamber allows (tests pass true). */

@@ -27,7 +27,8 @@ import java.util.Optional;
  * {@code /awaken delve}: the lodes within 96 of you (ore, how far, which way). Admin, for tours and tests:
  * {@code stage cave [ore]} (a chamber round you with a lode on its north wall and a lantern), {@code stage rope} (a
  * shaft ahead with a piton and its rope), {@code fork <ore>} (a tuned fork), {@code ring} (strike the fork in hand on
- * the stone underfoot), {@code heart} (break the nearest heart within 16 as you), {@code cavein} (bring the nearest
+ * the stone underfoot), {@code heart [calm]} (break the nearest heart within 16 as you; calm: its roof stays up),
+ * {@code cavein} (bring the nearest
  * heart's roof down), {@code heavy} (a heavy strike released on the glint), {@code demo strike|charge} (the strike's
  * feel on the block in view).
  */
@@ -47,7 +48,8 @@ final class DelveCommands {
                     .then(Commands.argument("ore", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(ores, b))
                             .executes(DelveCommands::fork)));
             d.then(Commands.literal("ring").requires(AwakenCommands.admin()).executes(DelveCommands::ring));
-            d.then(Commands.literal("heart").requires(AwakenCommands.admin()).executes(DelveCommands::heart));
+            d.then(Commands.literal("heart").requires(AwakenCommands.admin()).executes(c -> heart(c, false))
+                    .then(Commands.literal("calm").executes(c -> heart(c, true))));
             d.then(Commands.literal("cavein").requires(AwakenCommands.admin()).executes(DelveCommands::caveIn));
             d.then(Commands.literal("heavy").requires(AwakenCommands.admin()).executes(DelveCommands::heavy));
             d.then(Commands.literal("demo").requires(AwakenCommands.admin())
@@ -181,8 +183,10 @@ final class DelveCommands {
         return best;
     }
 
-    private static int heart(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+    /** {@code calm}: this heart's roof stays up whatever the roll (a tour shows the cave-in on its own cue). */
+    private static int heart(CommandContext<CommandSourceStack> c, boolean calm) throws CommandSyntaxException {
         ServerPlayer p = c.getSource().getPlayerOrException();
+        CaveIns.calmNext = calm;
         Lode l = nearestHeart(p);
         if (l == null || !(p.level().getBlockState(l.heartPos()).getBlock() instanceof LodeHeartBlock)) {
             c.getSource().sendFailure(Component.literal("No lode heart within 16"));
