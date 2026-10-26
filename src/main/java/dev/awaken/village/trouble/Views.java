@@ -2,32 +2,74 @@ package dev.awaken.village.trouble;
 
 import dev.awaken.city.CityPlan;
 import dev.awaken.village.VillageService;
+import dev.awaken.village.api.Villages;
 import dev.awaken.village.plan.VillagePlan;
+import dev.awaken.world.fauna.LairRegistry;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jspecify.annotations.Nullable;
 
-/** The tours' framings of a trouble (SPEC §28.7): an eye and the point it looks at, from the trouble's own places. */
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * The tours' framings of a trouble (SPEC §28.7): an eye and the point it looks at, from the trouble's own places. Every
+ * eye is then moved, as little as it takes, to one that sees its mark: not inside a block or a tree, not under an eave,
+ * nothing solid between ({@link #clear}).
+ */
 final class Views {
     private Views() {}
 
     static Vec3 @Nullable [] frame(Plot.Ctx c, VillageService.Live l, @Nullable Trouble t, String name) {
+        Vec3[] v = raw(c, l, t, name);
+        return v == null ? null : clear(c, v[0], v[1], v.length > 2 ? v[2] : v[1]);
+    }
+
+    private static Vec3 @Nullable [] raw(Plot.Ctx c, VillageService.Live l, @Nullable Trouble t, String name) {
         VillagePlan p = l.plan();
         Vec3 w = TroubleDirector.well(l);
         BlockPos place = t == null || t.place == 0 ? BlockPos.containing(w).offset(80, 0, 0) : BlockPos.of(t.place);
         double toward = Math.atan2(place.getZ() - w.z, place.getX() - w.x);
         switch (name) {
             case "well" -> {
-                // across the green toward the well, the way the trouble went behind it
+                // across the green toward the well, the way the trouble went behind it, a little above the crowd
                 Vec3 eye = TroubleDirector.green(l, toward + Math.PI * 0.82, p.greenR + 4);
-                return new Vec3[]{eye.add(0, 2.4, 0), w.add(Math.cos(toward) * 2, 1.1, Math.sin(toward) * 2)};
+                return new Vec3[]{eye.add(0, 3.0, 0), w.add(Math.cos(toward) * 2, 1.1, Math.sin(toward) * 2)};
             }
             case "edge" -> {
                 // behind the green's edge (the Watch, the lanterns), out toward the dark the trouble went into
                 Vec3 eye = TroubleDirector.green(l, toward, p.greenR - 3.5);
                 Vec3 far = new Vec3(w.x + Math.cos(toward) * 40, eye.y + 1, w.z + Math.sin(toward) * 40);
                 return new Vec3[]{eye.add(0, 2.2, 0), far};
+            }
+            case "scouts" -> {
+                // the camp's scouts at the treeline, seen from the village's edge
+                if (t == null) return null;
+                Vec3 at = null;
+                int n = (int) t.get("scout_n", 0);
+                for (int k = 0; k + 1 < n && at == null; k += 2) {
+                    Entity e = c.level().getEntity(new UUID(t.get("s" + k, 0), t.get("s" + (k + 1), 0)));
+                    if (e != null && e.isAlive()) at = e.position();
+                }
+                if (at == null) {
+                    BlockPos edge = Burning.edge(c, t, l, 30);
+                    if (edge == null) return null;
+                    at = Vec3.atBottomCenterOf(edge);
+                }
+                double a = Math.atan2(w.z - at.z, w.x - at.x);
+                double ex = at.x + Math.cos(a + 0.25) * 13, ez = at.z + Math.sin(a + 0.25) * 13;
+                return new Vec3[]{new Vec3(ex, ground(c, ex, ez) + 2.2, ez), at.add(0, 1.3, 0)};
             }
             case "trail" -> {
                 if (t == null) return null;
@@ -53,39 +95,73 @@ final class Views {
                 double ex = at.x + dx / len * 3.6 + dz / len * 1.2, ez = at.z + dz / len * 3.6 - dx / len * 1.2;
                 return new Vec3[]{new Vec3(ex, at.y + 1.7, ez), at.add(0, 1.0, 0)};
             }
-            case "roofs", "line" -> {
+            case "fight" -> {
+                // the lair's beast and the one bound in the nest in one frame, from the village's side
+                if (t == null) return null;
+                Entity beast = beast(c, t);
+                Rescuee r = Taken.rescuee(c, t);
+                Vec3 b = beast != null ? beast.position() : Vec3.atBottomCenterOf(place);
+                Vec3 n = r != null ? r.position() : Vec3.atBottomCenterOf(BlockPos.of(t.get("nest", t.place)));
+                Vec3 mid = b.add(n).scale(0.5);
+                double a = Math.atan2(w.z - mid.z, w.x - mid.x);
+                double d = Math.max(6, b.distanceTo(n) + 4);
+                double ex = mid.x + Math.cos(a + 0.3) * d, ez = mid.z + Math.sin(a + 0.3) * d;
+                return new Vec3[]{new Vec3(ex, Math.max(ground(c, ex, ez), mid.y) + 1.8, ez), mid.add(0, 1.0, 0)};
+            }
+            case "roofs" -> {
+                // the roofs alight, from across the village and a little above them
+                if (t == null) return null;
+                List<Integer> plots = Burning.plots(t);
+                if (plots.isEmpty()) return null;
+                Vec3 sum = Vec3.ZERO;
+                List<Vec3> tops = new ArrayList<>();
+                for (int plot : plots) {
+                    CityPlan.Plot q = p.plots.get(plot);
+                    Vec3 top = new Vec3(p.ox + (q.x0() + q.x1()) / 2.0 + 0.5, p.baseY + q.lift() + q.top(), p.oz + (q.z0() + q.z1()) / 2.0 + 0.5);
+                    tops.add(top);
+                    sum = sum.add(top);
+                }
+                Vec3 mid = sum.scale(1.0 / tops.size());
+                double spread = 0;
+                for (Vec3 top : tops) spread = Math.max(spread, Math.hypot(top.x - mid.x, top.z - mid.z));
+                double a = Math.hypot(w.x - mid.x, w.z - mid.z) < 3 ? toward + Math.PI : Math.atan2(w.z - mid.z, w.x - mid.x);
+                double d = spread + 16;
+                double ex = mid.x + Math.cos(a + 0.3) * d, ez = mid.z + Math.sin(a + 0.3) * d;
+                return new Vec3[]{new Vec3(ex, Math.max(ground(c, ex, ez) + 2.5, mid.y + 1.5), ez), mid.add(0, 0.5, 0)};
+            }
+            case "line" -> {
+                // the bucket line from the well to the burning house's door, from beside it, the roof alight above them
                 if (t == null) return null;
                 int plot = Burning.plots(t).isEmpty() ? -1 : Burning.plots(t).getFirst();
                 if (plot < 0) return null;
                 CityPlan.Plot q = p.plots.get(plot);
-                Vec3 mid = new Vec3(p.ox + (q.x0() + q.x1()) / 2.0 + 0.5, p.baseY + q.lift() + (name.equals("roofs") ? q.top() : 1.5), p.oz + (q.z0() + q.z1()) / 2.0 + 0.5);
-                double a = Math.atan2(mid.z - w.z, mid.x - w.x);
-                Vec3 eye = name.equals("roofs") ? TroubleDirector.green(l, a + 0.5, Math.max(2, p.greenR - 2)).add(0, 3.2, 0)
-                        : new Vec3(w.x + Math.cos(a + 1.1) * 4, w.y + 2.4, w.z + Math.sin(a + 1.1) * 4);
-                return new Vec3[]{eye, name.equals("roofs") ? mid : mid.add(w).scale(0.5)};
+                Vec3 to = new Vec3(p.ox + (q.x0() + q.x1()) / 2.0 + 0.5, w.y, p.oz + (q.z0() + q.z1()) / 2.0 + 0.5);
+                for (VillagePlan.Building b : p.buildings) if (b.plot() == plot) to = new Vec3(p.ox + b.outX() + 0.5, w.y, p.oz + b.outZ() + 0.5);
+                double a = Math.atan2(to.z - w.z, to.x - w.x), len = Math.hypot(to.x - w.x, to.z - w.z);
+                Vec3 mid = new Vec3(w.x + Math.cos(a) * len * 0.45, w.y, w.z + Math.sin(a) * len * 0.45);
+                double side = a + Math.PI * 0.5;
+                double ex = mid.x + Math.cos(side) * 7 - Math.cos(a) * 3, ez = mid.z + Math.sin(side) * 7 - Math.sin(a) * 3;
+                Vec3 look = new Vec3(w.x + Math.cos(a) * len * 0.7, p.baseY + q.lift() + Math.max(3, q.eave()) - 0.5, w.z + Math.sin(a) * len * 0.7);
+                return new Vec3[]{new Vec3(ex, ground(c, ex, ez) + 2.6, ez), look};
             }
             case "ruin", "scaffold" -> {
-                TroubleState.Memory mem = c.st().peek(l.key());
-                int plot = mem == null || mem.charred.isEmpty() ? -1 : mem.charred.getFirst();
-                if (plot < 0 && t != null && t.kind.equals(TroubleKind.REBUILD.id)) {
-                    var dmg = dev.awaken.village.api.Villages.damage(c.level().getServer(), l.key());
-                    if (!dmg.isEmpty()) plot = p.plotAt(dmg.getFirst().pos().getX() - p.ox, dmg.getFirst().pos().getZ() - p.oz);
-                }
+                int plot = worst(c, l, t, name.equals("scaffold"));
                 if (plot < 0) return null;
                 CityPlan.Plot q = p.plots.get(plot);
                 Vec3 mid = new Vec3(p.ox + (q.x0() + q.x1()) / 2.0 + 0.5, p.baseY + q.lift() + 2.5, p.oz + (q.z0() + q.z1()) / 2.0 + 0.5);
                 double a = Math.atan2(w.z - mid.z, w.x - mid.x);
-                double r = Math.max(q.x1() - q.x0(), q.z1() - q.z0()) * 0.5 + 8;
+                double r = Math.max(q.x1() - q.x0(), q.z1() - q.z0()) * 0.5 + 9;
                 double ex = mid.x + Math.cos(a + 0.35) * r, ez = mid.z + Math.sin(a + 0.35) * r;
-                return new Vec3[]{new Vec3(ex, ground(c, ex, ez) + 3.4, ez), mid};
+                return new Vec3[]{new Vec3(ex, ground(c, ex, ez) + 4.2, ez), mid};
             }
             case "belfry" -> {
+                // from outside the tower, level with the bell and past it: the bell, the roofs below, the land the ring runs over
                 BlockPos bell = BellTrouble.bellPos(l);
                 if (bell == null) return null;
-                // from just under the bell, out over the roofs and the land past them
-                double a = Math.atan2(w.z - bell.getZ(), w.x - bell.getX()) + 0.6;
-                Vec3 eye = new Vec3(bell.getX() + 0.5 - Math.cos(a) * 1.4, bell.getY() + 0.9, bell.getZ() + 0.5 - Math.sin(a) * 1.4);
-                return new Vec3[]{eye, new Vec3(eye.x + Math.cos(a) * 40, eye.y - 12, eye.z + Math.sin(a) * 40)};
+                double a = Math.atan2(w.z - bell.getZ(), w.x - bell.getX()) + 0.45;
+                Vec3 b = Vec3.atCenterOf(bell);
+                Vec3 eye = new Vec3(b.x - Math.cos(a) * 7, b.y + 2.2, b.z - Math.sin(a) * 7);
+                return new Vec3[]{eye, new Vec3(b.x + Math.cos(a) * 22, b.y - 6, b.z + Math.sin(a) * 22), b};
             }
             case "bell" -> {
                 BlockPos bell = BellTrouble.bellPos(l);
@@ -105,6 +181,90 @@ final class Views {
                 return null;
             }
         }
+    }
+
+    /** The lair's beast, if it's there. */
+    static @Nullable Entity beast(Plot.Ctx c, Trouble t) {
+        if (!t.cause.startsWith("lair:")) return null;
+        LairRegistry.Entry e = LairRegistry.get(c.level().getServer()).get(Long.parseLong(t.cause.substring(5)));
+        if (e == null || e.resident().isEmpty()) return null;
+        Entity beast = c.level().getEntity(e.resident().get());
+        return beast != null && beast.isAlive() ? beast : null;
+    }
+
+    /** The house fire hurt most (the most blocks in the damage record), charred or being rebuilt. */
+    private static int worst(Plot.Ctx c, VillageService.Live l, @Nullable Trouble t, boolean rebuilding) {
+        VillagePlan p = l.plan();
+        TroubleState.Memory mem = c.st().peek(l.key());
+        Map<Integer, Integer> count = new HashMap<>();
+        for (Villages.Damage d : Villages.damage(c.level().getServer(), l.key())) {
+            int plot = p.plotAt(d.pos().getX() - p.ox, d.pos().getZ() - p.oz);
+            if (plot >= 0) count.merge(plot, 1, Integer::sum);
+        }
+        int best = -1, bn = 0;
+        for (var e : count.entrySet()) {
+            boolean charred = mem != null && mem.charred.contains(e.getKey());
+            if (!rebuilding && mem != null && !mem.charred.isEmpty() && !charred) continue;
+            if (e.getValue() > bn) {
+                bn = e.getValue();
+                best = e.getKey();
+            }
+        }
+        if (best < 0 && mem != null && !mem.charred.isEmpty()) best = mem.charred.getFirst();
+        return best;
+    }
+
+    // ---- an eye that sees ---------------------------------------------------------------------------------------------------
+
+    /**
+     * The nearest eye to {@code eye} (turned round the mark, pulled in or out, raised) that sees {@code mark} and looks at
+     * {@code at}: room to stand (no block or leaves at it or under it), open sky over it (not under an eave or a tree) and
+     * nothing solid between. Failing open sky, the first that sees it; failing that, as given.
+     */
+    static Vec3[] clear(Plot.Ctx c, Vec3 eye, Vec3 at, Vec3 mark) {
+        ServerLevel level = c.level();
+        double dx = eye.x - mark.x, dz = eye.z - mark.z;
+        double dist = Math.max(2.5, Math.hypot(dx, dz)), base = Math.atan2(dz, dx), up = eye.y - mark.y;
+        record Try(double turn, double scale, double lift, double cost) {}
+        List<Try> tries = new ArrayList<>();
+        for (double turn : new double[]{0, 0.2, -0.2, 0.4, -0.4, 0.65, -0.65, 0.95, -0.95, 1.3, -1.3})
+            for (double scale : new double[]{1, 0.8, 1.25, 0.6, 1.5})
+                for (double lift : new double[]{0, 1.5, 3, 5, 8})
+                    tries.add(new Try(turn, scale, lift, Math.abs(turn) * 4 + Math.abs(scale - 1) * 3 + lift * 0.35));
+        tries.sort((a, b) -> Double.compare(a.cost, b.cost));
+        Vec3 seeing = null;
+        for (Try k : tries) {
+            double a = base + k.turn, r = dist * k.scale;
+            double x = mark.x + Math.cos(a) * r, z = mark.z + Math.sin(a) * r;
+            if (!level.isLoaded(BlockPos.containing(x, mark.y, z))) continue;
+            double y = Math.max(mark.y + up, ground(c, x, z) + 1.7) + k.lift;
+            Vec3 e = new Vec3(x, y, z);
+            if (!room(level, e) || !sees(level, e, mark, r)) continue;
+            if (open(level, e)) return new Vec3[]{e, at};
+            if (seeing == null) seeing = e;
+        }
+        return new Vec3[]{seeing != null ? seeing : eye, at};
+    }
+
+    /** Nothing to bump into or see through at the eye and down the body under it. */
+    private static boolean room(ServerLevel level, Vec3 e) {
+        for (double dy : new double[]{0.25, -0.6, -1.5}) {
+            BlockPos q = BlockPos.containing(e.x, e.y + dy, e.z);
+            BlockState s = level.getBlockState(q);
+            if (s.is(BlockTags.LEAVES) || !s.getFluidState().isEmpty() || !s.getCollisionShape(level, q).isEmpty()) return false;
+        }
+        return true;
+    }
+
+    /** Sky over the eye (no roof, eave or crown above it). */
+    private static boolean open(ServerLevel level, Vec3 e) {
+        return level.getHeight(Heightmap.Types.MOTION_BLOCKING, (int) Math.floor(e.x), (int) Math.floor(e.z)) <= e.y + 0.5;
+    }
+
+    /** Nothing between the eye and the mark (what it hits, if anything, is at the mark). */
+    private static boolean sees(ServerLevel level, Vec3 e, Vec3 at, double dist) {
+        HitResult hit = level.clip(new ClipContext(e, at, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, CollisionContext.empty()));
+        return hit.getType() == HitResult.Type.MISS || hit.getLocation().distanceTo(at) <= Math.max(2.5, dist * 0.15);
     }
 
     static double ground(Plot.Ctx c, double x, double z) {

@@ -183,7 +183,7 @@ public final class TroubleFx {
     }
 
     /** How fast a ring runs out (blocks a tick). */
-    static final double SPEED = 1.5;
+    static final double SPEED = 1.0;
 
     // ---- drawing --------------------------------------------------------------------------------------------------------
 
@@ -235,8 +235,9 @@ public final class TroubleFx {
             for (int k = 0; k < 3; k++) {
                 double rad = (now - r.start - k * 14) * SPEED;
                 if (rad < 1 || rad > r.radius) continue;
+                // bright while it's near, thinning as it runs out (linear: still seen at the edge of the land)
                 float fade = (float) (1 - rad / r.radius);
-                float a = fade * fade * (k == 0 ? 0.95f : 0.6f);
+                float a = fade * (k == 0 ? 1.0f : 0.6f);
                 if (a < 0.02f) continue;
                 int segs = Mth.clamp((int) (rad * Math.PI * 2 / 2.2), 24, 420);
                 double prevX = 0, prevZ = 0;

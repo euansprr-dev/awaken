@@ -18,6 +18,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
@@ -39,7 +40,8 @@ import java.util.Set;
  * deliver           Rebuild: the notices filled; build &lt;fraction&gt;: the masons that far along
  * bell              the village's bell in your hand; hang: hung in its tower as if you did
  * ruin              Burning missed: the houses on the raid side charred, the survivors by the well
- * view &lt;name&gt;       stand at a framing: well, trail, lair, nest, roofs, line, ruin, scaffold, belfry, bell, green, edge
+ * view &lt;name&gt;       stand at a framing: well, edge, scouts, trail, lair, nest, fight, roofs, line, ruin, scaffold, belfry, bell, green, dance
+ * site              out past the village's edge on even, open ground, facing away (a lair built in front of you is in a Taken's reach)
  * quiet on|off      hold the director's own starts (tours)
  * </pre>
  */
@@ -47,8 +49,8 @@ public final class TroubleCommands {
     private TroubleCommands() {}
 
     static final List<String> KINDS = Arrays.stream(TroubleKind.values()).map(k -> k.id).toList();
-    static final List<String> VIEWS = List.of("well", "trail", "lair", "nest", "roofs", "line", "ruin", "scaffold", "belfry", "bell", "green", "edge",
-            "dance");
+    static final List<String> VIEWS = List.of("well", "edge", "scouts", "trail", "lair", "nest", "fight", "roofs", "line", "ruin", "scaffold", "belfry",
+            "bell", "green", "dance");
 
     public static LiteralArgumentBuilder<CommandSourceStack> node() {
         return Commands.literal("trouble")
@@ -71,6 +73,7 @@ public final class TroubleCommands {
                 .then(Commands.literal("bell").executes(TroubleCommands::bell))
                 .then(Commands.literal("hang").executes(TroubleCommands::hang))
                 .then(Commands.literal("ruin").executes(TroubleCommands::ruin))
+                .then(Commands.literal("site").executes(TroubleCommands::site))
                 .then(Commands.literal("quiet").then(Commands.argument("on", StringArgumentType.word()).executes(c -> {
                     TroubleDirector.quiet = StringArgumentType.getString(c, "on").equals("on");
                     return 1;
@@ -379,6 +382,50 @@ public final class TroubleCommands {
         // the fire's work now, not a house a second
         for (int i = 0; i < 6; i++) Lasting.tick(ctx, l);
         ok(c, "ruin: " + ctx.st().memory(l.key()).charred);
+        return 1;
+    }
+
+    /**
+     * Tours: stands you out past the village's edge where the land is even, dry and open (the side with the fewest trees),
+     * facing away from it, so a lair built in front of you ({@code /awaken fauna lair place <beast>}, 16 ahead) is within
+     * a Taken's reach and on loaded ground.
+     */
+    private static int site(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer p = c.getSource().getPlayerOrException();
+        ServerLevel level = c.getSource().getServer().overworld();
+        VillageService.Live l = here(p);
+        if (l == null) return fail(c, "No village near.");
+        Vec3 w = TroubleDirector.well(l);
+        double r = l.plan().radius() + 50;
+        double best = Double.MAX_VALUE, ba = Double.NaN;
+        for (int k = 0; k < 24; k++) {
+            double a = k * Math.PI * 2 / 24;
+            int lx = (int) Math.floor(w.x + Math.cos(a) * (r + 16)), lz = (int) Math.floor(w.z + Math.sin(a) * (r + 16));
+            int sx = (int) Math.floor(w.x + Math.cos(a) * r), sz = (int) Math.floor(w.z + Math.sin(a) * r);
+            if (!level.isLoaded(new BlockPos(lx + 10, 0, lz + 10)) || !level.isLoaded(new BlockPos(lx - 10, 0, lz - 10)) || !level.isLoaded(new BlockPos(sx, 0, sz)))
+                continue;
+            int cy = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, lx, lz);
+            double score = 0;
+            for (int dx = -8; dx <= 8; dx += 4) {
+                for (int dz = -8; dz <= 8; dz += 4) {
+                    int x = lx + dx, z = lz + dz, y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+                    score += Math.abs(y - cy);
+                    if (!level.getFluidState(new BlockPos(x, y - 1, z)).isEmpty()) score += 30;
+                    if (level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z) > y + 1) score += 4;
+                    if (l.plan().owns(x, z)) score += 50;
+                }
+            }
+            if (score < best) {
+                best = score;
+                ba = a;
+            }
+        }
+        if (Double.isNaN(ba)) return fail(c, "No loaded ground past the edge of " + l.plan().name + ".");
+        double x = w.x + Math.cos(ba) * r, z = w.z + Math.sin(ba) * r;
+        int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int) Math.floor(x), (int) Math.floor(z));
+        float yaw = (float) Math.toDegrees(Math.atan2(-Math.cos(ba), Math.sin(ba)));
+        p.teleportTo(level, x, y + 0.1, z, Set.of(), yaw, 10f, true);
+        ok(c, String.format(Locale.ROOT, "site at %d %d %d facing %.0f (roughness %.0f)", (int) x, y, (int) z, yaw, best));
         return 1;
     }
 

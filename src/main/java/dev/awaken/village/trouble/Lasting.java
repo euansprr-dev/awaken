@@ -44,14 +44,16 @@ final class Lasting {
                 left = true;
                 if (Char.house(c.level(), l, plot, Char.GUTTED, Taken.mix(l.plan().seed, plot, 17), c.day()) > 0 || charredAlready(c, l, plot)) {
                     mem.data.put("charred_" + plot, 1L);
+                    smoulder(c.level(), l, mem, plot);
                     c.st().setDirty();
                 }
                 break;
             }
             if (!left) mem.data.remove("char_queue");
         }
-        // smoke over what burned
+        // smoke over what burned; when its days are done the fires in the ruins go cold
         if (c.day() <= mem.get("smoke_until", -1) && c.now() % 40 == 13) smoke(c, l, mem);
+        if (mem.get("sm_n", 0) > 0 && mem.get("sm_cold", 0) == 0 && c.day() > mem.get("smoke_until", -1)) douse(c.level(), mem);
         // the survivors by the well
         if (!mem.homeless.isEmpty()) camp(c, l, mem);
     }
@@ -71,6 +73,46 @@ final class Lasting {
             c.level().sendParticles(ParticleTypes.CAMPFIRE_SIGNAL_SMOKE, true, true, x, y, z, 2, 1.2, 0.4, 1.2, 0.02);
             c.level().sendParticles(ParticleTypes.SMOKE, x, y - 1.5, z, 4, 2, 0.5, 2, 0.01);
         }
+    }
+
+    /**
+     * A fire still smouldering in a gutted house: a campfire on its ash floor near the middle, its smoke a column seen from
+     * far off (Minecraft's own signal smoke, drawn by the client) until the smoke's days are done; then it lies cold until
+     * the Rebuild clears it. One a house.
+     */
+    static void smoulder(ServerLevel level, VillageService.Live l, TroubleState.Memory mem, int plot) {
+        if (mem.get("smp" + plot, 0) != 0) return;
+        VillagePlan p = l.plan();
+        CityPlan.Plot q = p.plots.get(plot);
+        int y0 = p.baseY + q.lift(), cx = p.ox + (q.x0() + q.x1()) / 2, cz = p.oz + (q.z0() + q.z1()) / 2;
+        for (int k = 0; k < 25; k++) {
+            int x = cx + (k % 5) - 2, z = cz + (k / 5) - 2;
+            for (int y = y0 + 1; y <= y0 + 3; y++) {
+                BlockPos at = new BlockPos(x, y, z);
+                if (!level.isLoaded(at)) return;
+                if (!level.getBlockState(at).isAir() || !level.getBlockState(at.above()).isAir()
+                        || !level.getBlockState(at.below()).isFaceSturdy(level, at.below(), Direction.UP)) continue;
+                level.setBlock(at, Blocks.CAMPFIRE.defaultBlockState().setValue(CampfireBlock.LIT, true).setValue(CampfireBlock.SIGNAL_FIRE, true),
+                        Block.UPDATE_CLIENTS);
+                long n = mem.get("sm_n", 0);
+                mem.data.put("sm" + n, at.asLong());
+                mem.data.put("sm_n", n + 1);
+                mem.data.put("smp" + plot, 1L);
+                mem.data.remove("sm_cold");
+                return;
+            }
+        }
+    }
+
+    /** The ruins' fires out: cold campfires (charred logs) where they smouldered. */
+    private static void douse(ServerLevel level, TroubleState.Memory mem) {
+        for (int i = 0; i < mem.get("sm_n", 0); i++) {
+            BlockPos at = BlockPos.of(mem.get("sm" + i, 0));
+            if (!level.isLoaded(at)) return;
+            BlockState s = level.getBlockState(at);
+            if (s.is(Blocks.CAMPFIRE)) level.setBlock(at, s.setValue(CampfireBlock.LIT, false), Block.UPDATE_CLIENTS);
+        }
+        mem.data.put("sm_cold", 1L);
     }
 
     /** The households of charred houses camp by the well. */
@@ -141,10 +183,14 @@ final class Lasting {
             if (s.is(Blocks.CAMPFIRE) || s.getBlock() instanceof dev.awaken.living.wayfarer.Bedroll) level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
             mem.camp.remove(p);
         }
+        for (int i = 0; i < mem.get("sm_n", 0); i++) {
+            BlockPos at = BlockPos.of(mem.get("sm" + i, 0));
+            if (level.isLoaded(at) && level.getBlockState(at).is(Blocks.CAMPFIRE)) level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+        }
         for (int rec : mem.homeless) TroubleDirector.release(l, rec);
         mem.homeless.clear();
         mem.charred.clear();
-        mem.data.keySet().removeIf(k -> k.startsWith("charred_"));
+        mem.data.keySet().removeIf(k -> k.startsWith("charred_") || k.startsWith("sm"));
         mem.data.remove("smoke_until");
     }
 }

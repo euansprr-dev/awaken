@@ -6255,7 +6255,11 @@ hour, not by who is in; `/locate` can't find a settlement (`/awaken village list
 ### 28.7 W4 as built (troubles and growth, 2026-10-26)
 Branch `pack/world-depth-w4`. Packages `village.trouble`, `village.growth`, the troubles' client in `village.client`;
 module doc `docs/modules/village.md` ("Troubles"). Tests `village_trouble_taken`, `village_burning_rebuild`,
-`village_director_caps`. Tour `tools/autopilot/world-depth-w4.txt` (CI). The Deep Mine waits for W7's mining towns.
+`village_director_caps`. Tour `tools/autopilot/world-depth-w4.txt` (CI): `/awaken village trouble` moves each trouble
+along by hand, `view <name>` stands at a framing (the eye moved as little as it takes to one with sky over it, room to
+stand and nothing between it and its mark), and `site` stands you past the village's edge on even, open ground facing out,
+so a lair built in front of you (`/awaken fauna lair place`) is in a Taken's reach. The Deep Mine waits for W7's mining
+towns.
 
 **The director** (`TroubleDirector`, saved data `awaken:village_troubles` `TroubleState`, schemaVersion 1). Every 10 s,
 for each village that is awake (a player within its radius + 192): its festival's calendar first; then, unless the world
@@ -6317,17 +6321,20 @@ ladder: the warning a play-day ahead (an IMPORTANT line to everyone within 800 a
 looking the camp's way, asking), scouts at the treeline at dusk (three of the camp's creatures 30 past the edge, slowed,
 gone after 80 s), then the raid's night (13,600). If a player is within 90 of the green: the alarm, the camp's 4 + tier
 creatures from 34 past the edge toward the green, the Watch lining the green facing out with halberds and lanterns; every
-10-15 s while raiders live a fire arrow (a real flaming arrow) sets the nearest house's roof alight (up to four): 3-5
-flames (Carillon's `city_fire`) on its ridge that grow on their own (+9 a second to 1,000), a bucket line of six forming
-from the well to its door (Carillon's bucket pass, the bucket in hand) taking it down (-7 a second each, a player in the
-line with a bucket counts twice), and beaten out by players (-140 a flame); a fire at full for 20 s eats the roof, at 40
+10-15 s while raiders live a fire arrow (a real flaming arrow) sets the nearest house's roof alight (up to four): up to
+seven flames (Carillon's `city_fire`) on its ridge that grow on their own (+9 a second to 1,000), a bucket line of six
+forming from the well to its door (Carillon's bucket pass, the bucket in hand) holding it back (-2 a second each: a full
+line only slowly wins, a short one loses; a player in the line with a bucket counts twice), and beaten out by players
+(-140 a flame: the player decides it); a fire at full for 20 s eats the roof, at 40
 s guts the house. It ends when the raiders are dead and the fires out (paid by how many houses stood: 18 or 10 emeralds,
 standing, a bucket token) or at dawn (the rest withdraw and what burns burns). Missed (nobody there, or the village not
 awake: then it burns when it next wakes): the 2-3 houses nearest the camp (3-5 at tier 5) are charred (`Char`: roofs fall
 in, timber blackens to stripped dark oak, basalt, coal and blackstone, glass, doors and cloth gone, floors to ash; stone
-stands; chests untouched; every block into the damage record with what stood there), smoke columns rise over them for
-three play-days, the survivors camp by the well (a campfire and bedrolls, sitting at night) until the Rebuild, mood -25,
-prosperity -12.
+stands but soot blackens it, a sixth of it at the footings rising to most under the eaves, into its deepslate or tuff kin,
+shape kept; chests untouched; every block into the damage record with what stood there), a fire smoulders in each gutted
+house (a signal campfire on its ash floor: Minecraft's own tall smoke, seen from far off; cold once the smoke's days are
+done, cleared by the Rebuild), smoke columns rise over them for three play-days, the survivors camp by the well (a
+campfire and bedrolls, sitting at night) until the Rebuild, mood -25, prosperity -12.
 
 **The Rebuild** (`Rebuild`): 24+ blocks of damage (after a Burning, or any). The elder at the board asks; three notices
 go up first on it (timber: the land's logs, a fifth of the wooden blocks lost, 12-64; cobblestone, a quarter of the rest,
@@ -6345,8 +6352,8 @@ pulls at the empty rope and says so; the elder at the tower's foot asks. Stolen:
 in its ashes (`awaken:village_bell`, named for its village). Either way the smith casts a new one from five ingots of bell
 bronze (W2: copper and amethyst) handed to him: twelve seconds at the forge (sparks, the anvil) and it's in your hands.
 It's heavy (slowed while in a hand: haul it up the tower yourself). Used in the belfry it hangs, rings, and a ring of light
-runs out 160 blocks over the land (three golden bands on the ground with a veil of light rising off them, CityGlow's pools
-under them nearby). Paid (16 emeralds, standing +20, the bell-pin keepsake). From then on: gate breaks within 600 of the
+runs out 160 blocks over the land at 20 blocks a second (three golden bands on the ground with a veil of light rising off
+them, thinning as they go, CityGlow's pools under them nearby). Paid (16 emeralds, standing +20, the bell-pin keepsake). From then on: gate breaks within 600 of the
 village are warned two play-days ahead (IMPORTANT, within 500), and the Grey Fields' blight keeps off its fields. A missing
 bell rings nothing (citizens' peal checks the block). Missed (six play-days): the smith casts a thin one himself
 (prosperity -8). Night hunters' boldness is left to Living Wilds (not built here).

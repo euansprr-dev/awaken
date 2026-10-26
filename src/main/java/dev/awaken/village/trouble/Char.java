@@ -43,7 +43,9 @@ final class Char {
                     m.set(x, y, z);
                     BlockState s = level.getBlockState(m);
                     if (s.isAir() || s.hasBlockEntity() || !s.getFluidState().isEmpty()) continue;
-                    BlockState to = burnt(s, roof, y == y0, Taken.mix(seed, m.asLong(), 3));
+                    // soot climbs the stone: little at the footings, most under the eaves (a gutted house only)
+                    double soot = how == GUTTED ? 0.16 + 0.46 * Math.clamp((y - y0) / (double) Math.max(1, eave - y0), 0, 1) : 0;
+                    BlockState to = burnt(s, roof, y == y0, Taken.mix(seed, m.asLong(), 3), soot);
                     if (to == null || to == s) continue;
                     VillageService.damaged(l, m.immutable(), s, day);
                     level.setBlock(m, to, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
@@ -58,12 +60,34 @@ final class Char {
     /** Whether a block is what fire left (the Rebuild puts the house back over it). */
     static boolean isCharred(BlockState s) {
         return s.is(Blocks.COAL_BLOCK) || s.is(Blocks.BLACKSTONE) || s.is(Blocks.BASALT) || s.is(Blocks.STRIPPED_DARK_OAK_LOG) || s.is(Blocks.COARSE_DIRT)
-                || s.is(Blocks.GRAVEL);
+                || s.is(Blocks.GRAVEL) || SOOT.containsValue(s.getBlock());
     }
 
-    /** What fire leaves of a block (null: it stands). */
-    static BlockState burnt(BlockState s, boolean roof, boolean floor, long h) {
+    /** Stone blackened by the fire, shape kept (stairs, slabs and walls into their dark kin). */
+    private static final java.util.Map<Block, Block> SOOT = java.util.Map.ofEntries(
+            java.util.Map.entry(Blocks.STONE_BRICKS, Blocks.CRACKED_DEEPSLATE_BRICKS), java.util.Map.entry(Blocks.MOSSY_STONE_BRICKS, Blocks.DEEPSLATE_BRICKS),
+            java.util.Map.entry(Blocks.CRACKED_STONE_BRICKS, Blocks.CRACKED_DEEPSLATE_BRICKS), java.util.Map.entry(Blocks.COBBLESTONE, Blocks.COBBLED_DEEPSLATE),
+            java.util.Map.entry(Blocks.MOSSY_COBBLESTONE, Blocks.COBBLED_DEEPSLATE), java.util.Map.entry(Blocks.STONE, Blocks.DEEPSLATE),
+            java.util.Map.entry(Blocks.ANDESITE, Blocks.TUFF), java.util.Map.entry(Blocks.POLISHED_ANDESITE, Blocks.POLISHED_TUFF),
+            java.util.Map.entry(Blocks.SMOOTH_STONE, Blocks.POLISHED_DEEPSLATE),
+            java.util.Map.entry(Blocks.STONE_BRICK_STAIRS, Blocks.DEEPSLATE_BRICK_STAIRS), java.util.Map.entry(Blocks.STONE_BRICK_SLAB, Blocks.DEEPSLATE_BRICK_SLAB),
+            java.util.Map.entry(Blocks.STONE_BRICK_WALL, Blocks.DEEPSLATE_BRICK_WALL), java.util.Map.entry(Blocks.COBBLESTONE_STAIRS, Blocks.COBBLED_DEEPSLATE_STAIRS),
+            java.util.Map.entry(Blocks.COBBLESTONE_SLAB, Blocks.COBBLED_DEEPSLATE_SLAB), java.util.Map.entry(Blocks.COBBLESTONE_WALL, Blocks.COBBLED_DEEPSLATE_WALL),
+            java.util.Map.entry(Blocks.STONE_STAIRS, Blocks.POLISHED_DEEPSLATE_STAIRS), java.util.Map.entry(Blocks.STONE_SLAB, Blocks.POLISHED_DEEPSLATE_SLAB));
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static BlockState sooted(BlockState s, Block to) {
+        BlockState out = to.defaultBlockState();
+        for (net.minecraft.world.level.block.state.properties.Property p : s.getProperties())
+            if (out.hasProperty(p)) out = out.setValue(p, s.getValue(p));
+        return out;
+    }
+
+    /** What fire leaves of a block (null: it stands); stone it doesn't take is blackened at this chance. */
+    static BlockState burnt(BlockState s, boolean roof, boolean floor, long h, double soot) {
         int r = (int) Math.floorMod(h, 100L);
+        Block dark = SOOT.get(s.getBlock());
+        if (dark != null) return r < soot * 100 ? sooted(s, dark) : null;
         boolean burns = s.ignitedByLava() || s.is(BlockTags.LOGS) || s.is(BlockTags.PLANKS) || s.is(BlockTags.WOODEN_STAIRS)
                 || s.is(BlockTags.WOODEN_SLABS) || s.is(BlockTags.WOODEN_FENCES) || s.is(BlockTags.WOODEN_DOORS) || s.is(BlockTags.WOODEN_TRAPDOORS)
                 || s.is(BlockTags.WOOL) || s.is(BlockTags.WOOL_CARPETS) || s.is(BlockTags.BEDS) || s.is(BlockTags.LEAVES);

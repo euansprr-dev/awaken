@@ -53,7 +53,7 @@ final class Burning implements Plot {
     /** A player this near the green when the raid comes is there to hold it. */
     static final int THERE = 90;
     /** Fires: how fast one grows, how much each bucket on the line takes, a beaten flame. */
-    static final int GROW = 9, LINE = 7, BEAT = 140, FULL = 1000;
+    static final int GROW = 9, LINE = 2, BEAT = 140, FULL = 1000;
 
     // ---- the warning: a camp's raid becomes the village's Burning ------------------------------------------------------------
 
@@ -217,7 +217,7 @@ final class Burning implements Plot {
         ((Burning) TroubleDirector.PLOTS.get(TroubleKind.BURNING)).raid(c, t, l);
     }
 
-    /** Roofs alight now near a place (up to three), each with its bucket line. Returns how many. */
+    /** Roofs alight now near a place (up to three), each with its bucket line, well caught (for the camera). Returns how many. */
     static int forceFire(Ctx c, Trouble t, VillageService.Live l, Vec3 near) {
         Burning b = (Burning) TroubleDirector.PLOTS.get(TroubleKind.BURNING);
         List<LivingEntity> raiders = b.raiders(c, t);
@@ -227,6 +227,10 @@ final class Burning implements Plot {
             if (plot < 0) break;
             LivingEntity archer = raiders.isEmpty() ? null : raiders.get(k % raiders.size());
             b.light(c, t, l, archer, plot);
+            if (t.get("fn" + plot, 0) > 0) {
+                t.put("fi" + plot, 860);
+                b.setFlames(c, t, plot);
+            }
             n++;
         }
         return n;
@@ -391,7 +395,7 @@ final class Burning implements Plot {
 
     /** A roof set alight (by a fire arrow from a raider, if there is one), and the bucket line forming for it. */
     void light(Ctx c, Trouble t, VillageService.Live l, @Nullable LivingEntity archer, int plot) {
-        List<BlockPos> roof = roofTops(c.level(), l, plot, 5, c.now());
+        List<BlockPos> roof = roofTops(c.level(), l, plot, 7, c.now());
         if (roof.isEmpty()) return;
         int i = (int) t.get("fires", 0);
         t.put("fp" + i, plot);
@@ -514,6 +518,7 @@ final class Burning implements Plot {
         if (done + 1 >= 2) {
             TroubleState.Memory mem = c.st().memory(l.key());
             if (!mem.charred.contains(plot)) mem.charred.add(plot);
+            Lasting.smoulder(c.level(), l, mem, plot);
         }
     }
 
@@ -584,6 +589,7 @@ final class Burning implements Plot {
                 Char.house(c.level(), l, plot, Char.GUTTED, c.now() ^ plot, c.day());
                 TroubleState.Memory mem = c.st().memory(l.key());
                 if (!mem.charred.contains(plot)) mem.charred.add(plot);
+                Lasting.smoulder(c.level(), l, mem, plot);
                 t.put("fi" + plot, 0);
                 setFlames(c, t, plot);
                 lost++;
