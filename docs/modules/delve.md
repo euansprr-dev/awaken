@@ -118,7 +118,9 @@ Seams outside delve: `living/api/Regions.addLevelExtra` (the seep's +5), `world/
 
 - Survival: find a sinkhole by the Horizon line (the first is 600-900 from Carillon, off the camp road), walk the shelves
   down, climb the vine cleft back up, dive from the lip by the spring. A mine's adit is a timbered hole in a hillside.
-- Admin (tours, tests): `/awaken delve place <sinkhole|mine|seep|chute|grotto>` lays one round you (a sinkhole's rim
+- Admin (tours, tests): `/awaken delve goto <kind>` stands you at the way in of the nearest place of that kind the world
+  really made (within 1,600, found by each candidate's own site search; its marks kept for `place go`; with none near it
+  lays one); `/awaken delve place <sinkhole|mine|seep|chute|grotto>` lays one round you (a sinkhole's rim
   where you stand; the rest with their floor at your feet, facing your way) and puts you at its way in; `place go <mark>
   [toward]` (marks: start, goal, view, shelf, dive, pool, cleft, heart; office, stope, incline, crawl, bridge; hall,
   socket, nest, vent, spire0-3; mouth, lip; curtain, room, cache); `places`; `seep quiet|wake`; `home stage`, `home

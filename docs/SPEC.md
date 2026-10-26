@@ -5637,7 +5637,10 @@ nest keeps up to three Hushlings or Drip Lurkers about it, one more every 30 s, 
 death quiets the seep for everyone (`CaveData`, schemaVersion 1): no +5, no nest, no hum or violet; "<name> falls
 quiet" (IMPORTANT); counter `awaken:seeps_quieted`. **A sinkhole's bats**: at dusk (12,400-13,200) 7-12 come up from
 mid-shaft, once a play-day. Places within 160 are sent for their look from outside (`CaveNet.Near`): a sinkhole's mist
-rising by day (thick at dawn, gone at night; our sprites `delve_mist`), a chute's draught at its mouth (`delve_draught`).
+rising by day (a few soft wisps a second at dawn, thinning through the day, gone at night, fading out within 2.5-8.5
+of the camera so it never walls the view; our sprites `delve_mist`), a chute's draught at its mouth (`delve_draught`).
+Carving turns sand or gravel left hanging over the new air into sandstone or stone (a roof never pours in).
+`/awaken delve goto <kind>` (`CaveLocate`) stands you at the nearest place of a kind the world really made.
 
 **Names and captions** (`delve.client.CaveHud`): "THE DELVERS' DEEP" in spaced capitals under one hairline, "old mine"
 under it, quieter than a region's (smaller, dimmer, rising as it fades), through the notification director (topic
