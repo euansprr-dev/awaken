@@ -12,6 +12,8 @@ public final class Palette {
     public final BlockState rock, rockAlt, floor, wallGlow, light, platform, platformGlow;
     public final BlockState[] ores;
     public final double oreChance;
+    /** Deepglass, or null when the deep module isn't there (the tunnels' seams and grottos fall back to their own). */
+    public final @org.jspecify.annotations.Nullable BlockState deepglass;
     public final ResourceKey<LootTable> cacheLoot;
 
     private Palette(BlockState rock, BlockState rockAlt, BlockState floor, BlockState wallGlow, BlockState light,
@@ -26,6 +28,8 @@ public final class Palette {
         this.ores = ores;
         this.oreChance = oreChance;
         this.cacheLoot = cacheLoot;
+        var dg = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getValue(dev.awaken.Awaken.id("deepglass"));
+        this.deepglass = dg == Blocks.AIR ? null : dg.defaultBlockState();
     }
 
     private static final Palette[] CACHE = new Palette[11];
@@ -42,11 +46,13 @@ public final class Palette {
 
     /**
      * Deepglass (SPEC §28.3): where the Deep presses up through the strata, from the Choir (form 3) down it is one of
-     * every wall's ores. By id (the deep module owns it); missing, the walls keep their vanilla three.
+     * every wall's ores. By id (the deep module owns it); missing, the walls keep their vanilla three. Where a form has
+     * tunnels (SPEC §28.5) it isn't scattered: it runs in seams along the tunnels' walls and grows in their grottos
+     * ({@link Terrain}), so it reads as a seam to follow rather than noise.
      */
     private static BlockState[] withDeepglass(int form, BlockState... ores) {
         var dg = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getValue(dev.awaken.Awaken.id("deepglass"));
-        if (form < 3 || dg == Blocks.AIR) return ores;
+        if (form < 3 || dg == Blocks.AIR || Terrain.hasTunnels(form)) return ores;
         BlockState[] out = java.util.Arrays.copyOf(ores, ores.length + 1);
         out[ores.length] = dg.defaultBlockState();
         return out;
