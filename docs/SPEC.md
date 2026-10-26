@@ -1515,7 +1515,17 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   river carved to y 57 and 18 wide (water to sea level 63: the surface estimate reads 8 below the floor there, the aquifer's test for open
   sea-level water),
   continuing straight past the core and fading out 160 blocks beyond it; everything eases back to the natural terrain
-  by 700. No site (old worlds, Classic start, no Lithostitched) means the function is its input. Lairs and Precursor
+  by 700. The rim (2026-10-26, Euan: "that's a bit weird terrain generation"): across the blend the basin aims not at
+  the street but at a rise from it to the land's own height (`aim = street + (land − street) × (1 − w)`, the land being
+  where the router's `depth` crosses zero, linear in y in both routers: the ground without its peaks and noise; the
+  lands pack passes `"depth": "minecraft:overworld/depth"`). Aiming at the street everywhere, the land held until the
+  blend outweighed it and gave way at once: a sheer cliff about 560 blocks out, often undercut into a cave tens of blocks
+  tall. Now near the edge the aim and the land agree on where the ground is and it eases in as a slope. New worlds only:
+  `<world>/awaken/terrain_rim` records "soft" for a world with no overworld chunks at its first start, "steep" otherwise,
+  so an old world never grows a slope beside its cliff (`CityBasin.softRim`). Far Sight samples the same wrapped final
+  density, so far and near agree. Test `terrain_city_basin_rim` (vanilla, seed 777, a hilly site, 36 rays from 330 to 600
+  every 8 blocks: no more than 2% of steps rise over 8 blocks, no more than 2% of columns have an air gap of 3 or more
+  under their top; the street aim logged beside it). No site (old worlds, Classic start, no Lithostitched) means the function is its input. Lairs and Precursor
   ruins skip `reserved(x, z)`; the city wires its runtime systems (gates, anomalies, landmarks, spawn vault, the Well).
   Terrain never sets spawn (the city does, through `LevelEvent.CreateSpawnPosition`). Dev switch for tours before the
   city exists: `CITY=on` (writes `config/awaken-terrain-dev.properties`); `/awaken terrain city` goes to the site.
@@ -1585,7 +1595,10 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   straight line (the real terrain interpolates its density over 8-block cells in y, so this is closer than halving:
   median 0.3 blocks from the generator's exact ground, p90 1.2, test `farsight_columns_predict`), plus half a block (the
   top face). 2.5 probes a column; 59 µs a column on the Awakened Tectonic terrain on the M4 (stage 0: 650-870 µs and
-  8-block steps). Inside the city basin's blend (2026-10-26, Euan: a far wall east of Carillon "that isn't really
+  8-block steps). Under the world's ceiling Tectonic's final density slides to air (`tectonic:__constants/slope_upper`,
+  1 thirty blocks under the ceiling to 0 ten under it, lerped toward −0.1), so its peaks are cut flat about y 308; the
+  height model applies the same slide (2026-10-26, Euan: a massif standing flat at the ceiling itself, y 320, with a
+  sheer wall down). Inside the city basin's blend (2026-10-26, Euan: a far wall east of Carillon "that isn't really
   there", flat when he got close) the ground comes from the router's own final density, which the basin wraps
   (`CityBasinFunction` round `final_density`; the lands pack's Lithostitched wrap swaps it into the generator's settings,
   a router without it gets the same wrap): down from above the natural ground (or the street + 11) in 8-block steps to
@@ -1627,13 +1640,21 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   game's lightmap at the face's own light (dark under roofs, lit windows by night), `farLight` and the same air.
   A level gives way to the next once its cells span 1.5 pixels or fewer, cross-fading over 15% of its reach
   (dithered). Hidden where Sodium draws the section (`farRealSection` and the chunk mask); chunks Sodium draws whole are
-  not planned. The far terrain and far trees step aside where City Sight stands (a 256×256-chunk toroidal coverage mask,
-  read within 2 km) and under it carry only the city's ground, a block under its streets (`FarCity.underCitySight`,
-  `CityLayout.groundY`). The opening's card waits for the whole city to be meshed and up. Debug view 3 tints City
+  not planned. The far terrain and far trees step aside where City Sight draws this frame (a 256×256-chunk toroidal
+  coverage mask, read within 2 km, rebuilt from the frame's plan after it and uploaded when it changes) and under it
+  carry only the city's ground, a block under its streets (`FarCity.underCitySight`, `CityLayout.groundY`). Never where
+  it only holds a chunk: a chunk held but not drawn left the far land stepping aside for nothing (2026-10-26, Euan from
+  the Commons, build 3e1f9d11: where Carillon stood, a pale grid to the sky and tall dark slabs, the solid dark-oak cores
+  of the houses cut open at the edges of the chunks that were drawn). A frame's draws are capped at 32768 (was 8192,
+  silently: past it chunks went undrawn, likeliest after a render distance drop hands Sodium's chunks to City Sight); a
+  chunk is planned whole or not at all, and one past the cap falls back to the far land, logged once. Coarse levels
+  light a face by the brightest air a block out across the whole face (one block at its middle was often a wall of the
+  cell beside, which holds no light: whole faces black). Status line: `drawn=… draws`. Tour `farsight3-commons.txt`
+  (Euan's world, his seed). The opening's card waits for the whole city to be meshed and up. Debug view 3 tints City
   Sight green; `farsight part city off` hides it. Test `farsight_voxels_mesh`.
   Also (2026-10-26, Euan's tours): every overworld chunk the server loads is captured too, after the city's (kept
-  within 1.9 km, the city's at any distance, at most 16 M quads, farthest first; the coverage mask redrawn each second
-  for chunks within 2 km, so its 4 km torus never stands a far chunk in for a near one). A snapshot starts just under
+  within 1.9 km, the city's at any distance, at most 16 M quads, farthest first; the coverage mask holds chunks within
+  2 km only, so its 4 km torus never stands a far chunk in for a near one). A snapshot starts just under
   the chunk's lowest ground (MOTION_BLOCKING_NO_LEAVES - 8; OCEAN_FLOOR counts leaves, and under a closed canopy the
   cut fell at the leaves: trees floating over a hole): deeper never shows. A chunk is taken again 2 s after its last block
   change (the neighbour-update event), not on save (the city's hold saves every chunk as it lets go: the city
@@ -1683,6 +1704,13 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   speed (at most 300 blocks ahead), so in fast flight the land ahead comes first.
 - **The opening's card** waits, while City Sight draws, for the far rings and the whole city meshed and up, not for
   the real chunks round the player (the flight's camera is far from them and Sodium doesn't build them for it).
+- **Known gap: Sodium's cave culling** (2026-10-26, Euan's world over the Commons, `tools/autopilot/farsight3-euan-hole.txt`):
+  sections inside the render distance that Sodium has built but culls this frame (its occlusion traversal can miss a
+  view through a narrow opening, e.g. under the basin rim's old undercut) show the sky colour, with Far Sight off as
+  well; the far land is hidden there because the mask counts built sections, not drawn ones. Closing it needs Sodium's
+  per-frame visibility (`SodiumWorldRenderer.isBoxVisible`, its classes in a nested jar) for each built section, on
+  the path the 26 Oct perf pass trimmed; City Sight drawing past 12 chunks (perf idea C) makes it moot out there, and
+  the soft rim (§15) leaves no such cave in new worlds. Open, for a decision.
 - **Seam audit** (`tools/farsight/seam_audit.py`): pairs of tour frames, normal and debug view 2 (far terrain and City
   Sight hidden for the real chunks paint red); red only in the debug frame, eroded by 5 pixels (outline slivers where
   City Sight's cubes are hidden for thinner real blocks are expected), is a hole. Tour `farsight3-city.txt` takes the
@@ -1732,7 +1760,9 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   world cell of the wider picks one, anchored to the land: 2026-10-26, pixel-wide columns dithered on the screen made far
   slopes glitter in motion, Euan's play; part "steady" off restores them for measuring), tops rounded to
   whole blocks, and shows the face it meets: the top, or a side facing x or z, shaded as the game shades faces (1, 0.8,
-  0.6) under a light matched to Lens 2's on the chunks (`farLight`: a warm key where the sun reaches, Lens's cool shade
+  0.6; a side by the way the slope faces, between 0.6 and 0.8, not by the axis its column shows: a steep slope's
+  staircase shows x and z sides by turns, and read per triangle that flip drew dark spikes down far mountains and
+  grooves down their walls, 2026-10-26) under a light matched to Lens 2's on the chunks (`farLight`: a warm key where the sun reaches, Lens's cool shade
   behind ridges, faces turned from the sun shaded only as it lowers). Grass tops stand over dirt risers (the dirt
   texture's average, a grass fringe along the top), cliffs show stone or an Awakened biome's own block (hoarfrost, riven
   shale, fused glass, mirepeat: palette rock kinds in colour flags bits 4-6), badlands their strata, every block its own
@@ -1743,7 +1773,10 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   tour `farsight3-rim.txt`). Snow lies by the alpine snow line and by a smooth coldness (each corner's blocks above the game's own cold
   line, info alpha, found by bisecting `coldEnoughToSnow`), both broken into patches over a ~20-block band
   (`AlpineSurface.patches`, the same noise the chunks' snow uses), on tops and as a fringe on risers. Scree and bare
-  rock by slope; water over its own sea floor (2026-10-26, Euan's idea: the real water shows its floor, the far water
+  rock by slope; water where it's cold enough to snow (colour flag COLD) is ice, opaque, as the chunks freeze it
+  (2026-10-26: frozen rivers' indigo water drew far valleys purple and see-through), and the generated layer reads ice's
+  lavender map colour as ice's textures' pale blue (`FarPalette.ICE`; the generated layer's store went to schema 3 so
+  the lavender kept on disk is re-learned as chunks load); water over its own sea floor (2026-10-26, Euan's idea: the real water shows its floor, the far water
   showed none, so the floor ended at the chunks): the floor lies the water's depth down along the view ray, blocks of
   sand, gravel in the deep and seagrass patches, anchored to the world, showing by the water's absorption over the path
   (shallows and steep views, not deep water or grazing ones) and fading out over 700 blocks past the render distance's
@@ -1755,7 +1788,7 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   of four directions, one and two corners out): a cliff's foot or a face under a summit isn't a hollow. Changed rings at once, one more every other frame
   (the chunk mask refreshes on the frames between).
 - **Far forests** (`FarTrees`): rings 1-4 (half a kilometre to four) plant jittered candidate spots per cell (1, 2, 3,
-  1 by ring; ring 4's trees are dots, the canopy shading carries the forest there) taking a tree as often as the forest is dense (densest: about two in three), never on water, on slopes over
+  1 by ring; ring 4's trees are dots, the canopy shading carries the forest there) taking a tree as often as the forest is dense (densest: about two in three), its crown and height from the cell's densest corner (a forest's edge on open ground took that ground's blank crown: flat black trees, 2026-10-26), never on water, on slopes over
   1.1, or above the treeline (14 under the alpine snow line); each a little taller or wider than the mean. Up to 512 a
   patch, 16 bytes each, in a persistent texel buffer (two runs per slot: predicted, real), stood as opaque voxel trees
   (crown top, two camera-facing crown sides narrowing by shape, two trunk sides): broadleaf, conifer, jungle, acacia.

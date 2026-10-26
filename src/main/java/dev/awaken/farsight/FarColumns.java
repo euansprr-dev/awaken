@@ -70,6 +70,13 @@ public final class FarColumns {
     private final RandomState random;
     private final LevelHeightAccessor heights;
     private final @Nullable DensitySampler terrain, estimate;
+    /**
+     * Tectonic's slide under the world's ceiling ({@code tectonic:__constants/slope_upper}: 1 well below it, 0 ten blocks
+     * under it), which its final density lerps toward air: peaks that would pass the ceiling are cut there, flat. The far
+     * height model solves the terrain density without it, so such a peak stood flat at the ceiling itself with a sheer
+     * wall down (Euan, 2026-10-26: "big issue on this mountain"). Null without Tectonic.
+     */
+    private final @Nullable DensitySampler slopeUpper;
     /** The final density as the chunks are built from it, the city's basin included (null without a carved basin). */
     private final @Nullable DensitySampler finalDensity;
     private final SamplerContext context = SamplerContext.builder().enableCaches().build();
@@ -116,12 +123,20 @@ public final class FarColumns {
             }
         }
         terrain = t;
+        DensitySampler slope = null;
+        if (t != null) {
+            var holder = registries.lookupOrThrow(Registries.DENSITY_FUNCTION)
+                    .get(ResourceKey.create(Registries.DENSITY_FUNCTION, Identifier.parse("tectonic:__constants/slope_upper")));
+            if (holder.isPresent()) slope = random.getSampler(holder.get().value());
+        }
+        slopeUpper = slope;
         DensitySampler b = null;
         if (t != null && site != null && site.basinCarved() && generator instanceof NoiseBasedChunkGenerator noise) {
             // the lands pack's Lithostitched wrap puts the basin round the settings' final density; a router without it
             // (the tests' vanilla one) gets the same wrap here
             DensityFunction fin = noise.generatorSettings().value().noiseRouter().finalDensity();
-            b = random.getSampler(fin instanceof CityBasinFunction ? fin : new CityBasinFunction(fin, CityBasinFunction.Mode.DENSITY));
+            b = random.getSampler(fin instanceof CityBasinFunction ? fin
+                    : new CityBasinFunction(fin, CityBasinFunction.Mode.DENSITY, java.util.Optional.of(noise.generatorSettings().value().noiseRouter().depth())));
         }
         finalDensity = b;
         streetY = site != null ? site.streetY() : 0;
@@ -179,7 +194,13 @@ public final class FarColumns {
     private float builtGround(int x, int z, float natural) {
         int air = Math.min(Math.floorDiv((int) Math.ceil(Math.max(natural, streetY + 11)), 8) * 8 + 8, maxY - 8);
         float da = finalAt(x, air, z);
-        if (da > 0f) return natural; // not above everything after all: the natural ground
+        // not above everything after all (an overhang the natural solve stepped under): climb to the air first. Never
+        // the natural ground as it is: inside the blend that stood a hill where the basin had flattened it
+        for (int up = 0; da > 0f && up < 24 && air + 8 <= maxY - 8; up++) {
+            air += 8;
+            da = finalAt(x, air, z);
+        }
+        if (da > 0f) return city.ground(natural, x, z);
         while (true) {
             int solid = air - 8;
             if (solid < minY) return minY;
@@ -264,7 +285,9 @@ public final class FarColumns {
 
     private float density(int x, int y, int z) {
         probes++;
-        return terrain.sampleValue(context, x, y, z);
+        float d = terrain.sampleValue(context, x, y, z);
+        // under the ceiling the terrain slides to air as Tectonic's final density makes it (lerp(slope, -0.1, d))
+        return slopeUpper == null ? d : -0.1f + slopeUpper.sampleValue(context, x, y, z) * (d + 0.1f);
     }
 
     public Holder<Biome> biome(int x, int y, int z) {

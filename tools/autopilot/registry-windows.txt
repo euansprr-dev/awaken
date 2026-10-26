@@ -1,0 +1,58 @@
+# The Registry's dark windows (Euan, 2026-10-26, build 3e1f9d11: "Window loading issues here too, probs a Lens shader
+# issue"). In fs3shim (seed 20261024) the opening's Registry is at plan x 7..20, z -150..-137: its Lens pedestal at
+# 685 83 -1236. From inside, looking north (the wall it shares with the next house, whose inside is the city's dark oak
+# core) and south (onto the street), by day and by night, with each suspect switched off in turn: City Sight, Far
+# Sight, Pixels' steady pass, Lens. Then the infirmary, the opening's other hall, looking north the same way.
+# Run: PACK=perf,world TECTONIC=awakened RD=16 LENS=cinematic SLOT_WHO=far-sight \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/registry-windows.txt 600
+world fs3shim survival 20261024
+waitworld
+window 1440 900
+cmd awaken opening skip
+wait 60
+cmd awaken powers starter 1
+wait 20
+screen close
+gui 0
+hud off
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+cmd gamemode spectator
+cmd tp @s 684.5 83 -1231.5 180 -6
+wait 300
+shot reg_north
+cmd tp @s 684.5 83 -1236.5 0 -6
+wait 40
+shot reg_south
+cmd tp @s 684.5 83 -1231.5 180 -6
+farsight part city off
+wait 60
+shot reg_north_nocity
+farsight part city on
+farsight off
+wait 60
+shot reg_north_nofar
+farsight on
+pixels steady off
+wait 60
+shot reg_north_nosteady
+pixels steady on
+lens off
+wait 60
+shot reg_north_nolens
+lens cinematic
+cmd time set 18000
+wait 60
+shot reg_north_night
+cmd tp @s 684.5 83 -1236.5 0 -6
+wait 40
+shot reg_south_night
+cmd time set 6000
+cmd tp @s 656.5 83 -1231.5 180 -6
+wait 60
+shot inf_north
+pixels config
+info
+quit

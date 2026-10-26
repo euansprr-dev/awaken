@@ -37,6 +37,8 @@ layout(location = 0) out vec4 fragColor;
 const vec3 SCREE = vec3(0.55, 0.53, 0.50), SNOW = vec3(0.93, 0.95, 0.98);
 // the dirt texture's own average: risers as bright as the real ones beside them
 const vec3 DIRT = vec3(0.53, 0.38, 0.27);
+// ice's textures' average (FarPalette.ICE)
+const vec3 ICE = vec3(0.557, 0.702, 0.925);
 // what steep faces show, by the biome (colour flags bits 4-6): stone, or an Awakened biome's own block
 const vec3 ROCKS[5] = vec3[](vec3(0.49, 0.48, 0.46), vec3(0.68, 0.80, 0.86), vec3(0.23, 0.23, 0.28), vec3(0.78, 0.74, 0.65), vec3(0.24, 0.22, 0.18));
 
@@ -179,6 +181,9 @@ void main() {
     bool flatWater = abs(facet.y) > 0.9 * length(facet);
     bool water = depth > 0.5 && flatWater;
     bool bank = depth > 0.5 && !flatWater;
+    // water where it's cold enough to snow is frozen over, as the chunks freeze it: ice, never open water with its floor
+    // showing (frozen rivers' indigo water drew far valleys purple and see-through, Euan 2026-10-26)
+    bool frozen = water && (flags & 2) != 0;
     // under the real chunks it stays hidden, but only where they are drawn: where they are loaded (a fresh teleport, a
     // fast flight) and in a section Sodium draws (farRealSection: seen from high up, the sea floor falls out of its reach
     // well inside the horizontal render distance); far water keeps to its own floor's reach,
@@ -233,6 +238,10 @@ void main() {
     if (!water) hit = columns(vRel, g, w);
     vec3 pos = hit.ok ? normalize(vRel) * hit.t : vRel;
     vec3 face = hit.ok ? hit.n : n;
+    // a column's side is lit by the way the slope faces, not by the axis its column happens to show: a steep slope's
+    // staircase shows x sides and z sides by turns as the slope turns, and with the slope read per triangle those turns
+    // drew dark spikes down far mountains and grooves down their walls (Euan, 2026-10-26)
+    if (hit.ok && hit.n.y < 0.5 && dot(n.xz, n.xz) > 1e-4) face = normalize(vec3(n.x, 0.0, n.z));
     float y = pos.y + FarFog.z;
     vec2 world = vec2(FarCamInt.xz) + pos.xz + FarCam.xz;
     ivec2 blk = hit.ok ? hit.cell : FarCamInt.xz + ivec2(floor(rel));
@@ -246,7 +255,9 @@ void main() {
         density = 0.0;
     }
     float rock = 0.0, snow = 0.0, canopy = 0.0;
-    if (water) {
+    if (frozen) {
+        top = ICE * (0.92 + 0.16 * grain);
+    } else if (water) {
         if ((int(FarCam.y) & 128) == 0) top = seaFloor(top, world, normalize(vRel), depth, horizontal);
     } else {
         float jag = 0.25 * (grain - 0.5);
@@ -293,7 +304,7 @@ void main() {
     // light: the game's face shading, a warm key where the sun reaches past the ridges, a cool shade where it doesn't
     vec3 light = farLight(face, vCrown.a);
     light *= mix(1.0, vInfo.a, 0.8);
-    if (water) {
+    if (water && !frozen) {
         float facing = abs(normalize(vRel).y);
         light = mix(light, vec3(1.0), 0.4);
         // grazing far water reflects the sky by the horizon, as Lens's real water beside it does at every distance (the

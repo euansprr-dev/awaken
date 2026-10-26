@@ -25,6 +25,8 @@ public final class FarPalette {
 
     static final int SAND = 0xD9CB94, RED_SAND = 0xB4673C, TERRACOTTA = 0xA4593A, SNOW = 0xEEF2F5, STONE = 0x8C8C8C,
             GRAVEL = 0x8A8682, MYCELIUM = 0x77686E, SEABED = 0x9C916E, PALE = 0x8D9389;
+    /** Ice, packed ice and blue ice as their textures average (their map colour is lavender). */
+    static final int ICE = 0x8EB3EC;
     /** Grass where the client's colour maps aren't loaded (a dedicated server's GameTests). */
     static final int TEMPERATE = 0x79C05A;
 
@@ -78,6 +80,9 @@ public final class FarPalette {
         MapColor mc = state.getMapColor(level, pos);
         if (mc == MapColor.NONE) return -1;
         if (mc == MapColor.WATER) return water(biome);
+        // ice's map colour is lavender (0xA0A0FF): frozen lakes and packed-ice slopes drew purple from afar (Euan,
+        // 2026-10-26); its textures average a pale blue
+        if (mc == MapColor.ICE) return ICE;
         if (mc == MapColor.GRASS || mc == MapColor.PLANT) {
             Long t = TINTS.get(biome);
             if (t == null) {

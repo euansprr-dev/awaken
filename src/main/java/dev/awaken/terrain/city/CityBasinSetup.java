@@ -56,10 +56,37 @@ public final class CityBasinSetup {
         long t0 = System.currentTimeMillis();
         RandomState rs = RandomState.create(server.registryAccess().lookupOrThrow(Registries.NOISE), seed, gen.generatorSettings().value());
         boolean carved = carvable(server);
+        CityBasin.softRim(softRim(server));
         CitySite site = SitePicker.pick(gen, rs, heights(stem), carved);
         CityBasin.set(site);
         Awaken.LOG.info("[terrain] city site at {} {} (street {}, basin {}) chosen in {} ms", site.x(), site.z(), site.streetY(),
                 carved ? "carved" : "not carved: no Lithostitched or no Awakened Lands", System.currentTimeMillis() - t0);
+    }
+
+    /**
+     * Whether this world's basin edge is the soft rise (SPEC §15): recorded once in {@code <world>/awaken/terrain_rim}.
+     * A world with no overworld chunks yet is new and gets it; one with chunks keeps the cliff it was made with, so a
+     * slope never meets an old cliff at a chunk's edge.
+     */
+    static boolean softRim(MinecraftServer server) {
+        Path root = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT);
+        Path marker = root.resolve("awaken").resolve("terrain_rim");
+        try {
+            if (Files.exists(marker)) return Files.readString(marker).trim().equals("soft");
+            Path region = root.resolve("dimensions").resolve("minecraft").resolve("overworld").resolve("region");
+            boolean fresh = !Files.isDirectory(region);
+            if (!fresh) {
+                try (var files = Files.list(region)) {
+                    fresh = files.findAny().isEmpty();
+                }
+            }
+            Files.createDirectories(marker.getParent());
+            Files.writeString(marker, fresh ? "soft\n" : "steep\n");
+            return fresh;
+        } catch (java.io.IOException ex) {
+            Awaken.LOG.warn("[terrain] city basin: can't read or write {}: {}", marker, ex.toString());
+            return false;
+        }
     }
 
     /** The basin is carved by the lands pack's Lithostitched router wrap: both must be present in this world. */
