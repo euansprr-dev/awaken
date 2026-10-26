@@ -52,6 +52,8 @@ public final class ArmsClient {
     };
 
     public static void init(IEventBus modBus) {
+        // the first-person swings (1.1 MB of JSON) load off the render thread, before anyone draws a blade
+        java.util.concurrent.CompletableFuture.runAsync(dev.awaken.arms.FpSwings::warm, net.minecraft.util.Util.backgroundExecutor());
         ArmsComfort.register();
         CombatFeedback.install(ArmsFeel.INSTANCE);
         dev.awaken.progression.client.CodexEntries.addSource(ArmsCodex::entries);

@@ -2210,6 +2210,11 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   (approved proposal; the gate opens in the square via `GateHooks.openScripted`) → the Void → the infirmary → the
   Registry (licence E-rank, the Holo wristband, the Atlas opens with the run revealed, first Directive) → free play.
 - No death in the opening (falls leave ≥ 1 heart). Relog at any beat resumes it. `/awaken opening skip`.
+- The light column and the opening's other light in the world (rings, the Runner's eye, the Lens shard) are drawn as
+  the gate pillars are (§7): after the level in a pass of their own (depth-tested, no depth written, no fog), the
+  column as camera-facing ribbons with a bell-shaped falloff (a near-white core and a blue glow added as light, a wide
+  haze alpha-blended in lit-air blue by day), thinning to nothing with height, faded as the camera comes inside each
+  ribbon's width (Euan, 2026-10-26, from the Roost at noon: the column read as a pale glass slab with a flat top).
 - Registration (2026-10-25): when the opening ends, or is skipped, the counter `awaken:carillon_registered` is counted
   once (`OpeningDirector.REGISTERED`). Chains and content that wait on "after the Registry" require it.
 - Decided in M2 (2026-10-25; details docs/carillon/milestones/M2-opening.md): the opening's beats SKY, RUN, ARRIVAL,

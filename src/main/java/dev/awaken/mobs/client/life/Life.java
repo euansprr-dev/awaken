@@ -20,6 +20,9 @@ import net.minecraft.world.phys.Vec3;
  * own seed, and each breathes at its own slightly different rate.
  */
 public final class Life {
+    // enum values() clones its array on every call: these are read per creature per frame
+    private static final Idle[] IDLES = Idle.values();
+    private static final Role[] ROLES = Role.values();
     // ---- what the renderer tells it each frame ----------------------------------------------------------------------
     /** 0..1: 1 the moment it is struck, falling to 0. */
     public float hurt;
@@ -420,7 +423,7 @@ public final class Life {
         if (idle < 0 && idleEnv < 0.01F) return;
         float u = t - idleAt, e = idleEnv;
         float side = idleSide;
-        switch (Idle.values()[Math.max(0, idle)]) {
+        switch (IDLES[Math.max(0, idle)]) {
             case LOOK -> {
                 // a glance one way, a look the other, back: the eyes go first (the head's spring lags them)
                 float k = u < 0.35F * idleLen ? Mth.smoothstep(u / (0.25F * idleLen))
@@ -508,7 +511,7 @@ public final class Life {
         idle = which;
         idleAt = t;
         idleSide = rand() < 0.5F ? -1 : 1;
-        idleLen = switch (Idle.values()[which]) {
+        idleLen = switch (IDLES[which]) {
             case LOOK -> 2.6F + rand();
             case SNIFF -> 1.6F + 0.6F * rand();
             case FLICK -> 0.6F;
@@ -525,7 +528,7 @@ public final class Life {
             int tries = 0, j;
             do {
                 j = (int) (rand() * rig.n);
-                Role r = Role.values()[rig.role[j]];
+                Role r = ROLES[rig.role[j]];
                 if (r == Role.EAR || r == Role.TAIL || r == Role.ANTENNA || r == Role.WING || r == Role.FIN) break;
             } while (++tries < 6);
             flick = j;
