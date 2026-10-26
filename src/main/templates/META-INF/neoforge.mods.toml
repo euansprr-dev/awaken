@@ -49,6 +49,11 @@ config="awaken.pixels.mixins.json"
 [[mixins]]
 config="awaken.wateredge.mixins.json"
 
+# Tiles (Lens on Apple, SPEC §22): Lens's post passes without depth, separate clears or loads, as a tile-based GPU wants
+# them. Client-only mixins under the Turbo contract (dev.awaken.turbo.tiles.mixin); not required.
+[[mixins]]
+config="awaken.tiles.mixins.json"
+
 # A text field displayed in the mod UI
 #credits="" #optional
 

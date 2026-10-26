@@ -1,0 +1,244 @@
+# Lens per-pass cost on the Mac (docs/perf/LENS-APPLE.md), alone under slot.sh tour (ask first: Euan may be playing):
+#   XMX=8G ZGC=1 PACK=perf,feel,sound,world TECTONIC=awakened RD=24 SLOT_WHO=lens-apple \
+#   /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/lens-passes-perf.txt 1500
+# The Roost at noon, render scale 0.95 (Euan's 4.7 MP world at 0.75 on the Dell). Each window: the GPU's world pass
+# (level + post effects). A probe chain (tools/lens/probes.py) swaps one pass group for a constant: what it saves against
+# the real chain measured beside it is that group's cost. The real chain is measured again between probes for drift.
+world lenspasses creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd gamemode spectator
+cmd time set 6000
+pixels 0.95 sharp
+pixels steady on
+cmd awaken city view studio_roost
+lookswitch cinematic
+wait 1600
+pixels gpu on
+# the per-pass table is of the game as it is: Tiles off for the probes, its own A/B at the end
+lens tiles off
+lookswitch swift
+wait 40
+pixels gpu reset
+perf swift 8
+pixels gpu swift
+lens off
+wait 40
+pixels gpu reset
+perf lens_off 8
+pixels gpu lens_off
+lookswitch cinematic
+wait 60
+lens chain off
+wait 30
+pixels gpu reset
+perf cinematic_real0 8
+pixels gpu cinematic_real0
+lens chain cinematic_sunmap
+wait 30
+pixels gpu reset
+perf cinematic_sunmap 8
+pixels gpu cinematic_sunmap
+lens chain cinematic_light
+wait 30
+pixels gpu reset
+perf cinematic_light 8
+pixels gpu cinematic_light
+lens chain cinematic_clouds
+wait 30
+pixels gpu reset
+perf cinematic_clouds 8
+pixels gpu cinematic_clouds
+lens chain off
+wait 30
+pixels gpu reset
+perf cinematic_real1 8
+pixels gpu cinematic_real1
+lens chain cinematic_prefilter
+wait 30
+pixels gpu reset
+perf cinematic_prefilter 8
+pixels gpu cinematic_prefilter
+lens chain cinematic_bloom
+wait 30
+pixels gpu reset
+perf cinematic_bloom 8
+pixels gpu cinematic_bloom
+lens chain cinematic_shafts
+wait 30
+pixels gpu reset
+perf cinematic_shafts 8
+pixels gpu cinematic_shafts
+lens chain off
+wait 30
+pixels gpu reset
+perf cinematic_real2 8
+pixels gpu cinematic_real2
+lens chain cinematic_composite
+wait 30
+pixels gpu reset
+perf cinematic_composite 8
+pixels gpu cinematic_composite
+lens chain cinematic_final
+wait 30
+pixels gpu reset
+perf cinematic_final 8
+pixels gpu cinematic_final
+lens chain cinematic_extra
+wait 30
+pixels gpu reset
+perf cinematic_extra 8
+pixels gpu cinematic_extra
+lens chain off
+wait 30
+pixels gpu reset
+perf cinematic_real3 8
+pixels gpu cinematic_real3
+lookswitch ultra
+wait 60
+lens chain off
+wait 30
+pixels gpu reset
+perf ultra_real0 8
+pixels gpu ultra_real0
+lens chain ultra_sunmap
+wait 30
+pixels gpu reset
+perf ultra_sunmap 8
+pixels gpu ultra_sunmap
+lens chain ultra_light
+wait 30
+pixels gpu reset
+perf ultra_light 8
+pixels gpu ultra_light
+lens chain ultra_clouds
+wait 30
+pixels gpu reset
+perf ultra_clouds 8
+pixels gpu ultra_clouds
+lens chain off
+wait 30
+pixels gpu reset
+perf ultra_real1 8
+pixels gpu ultra_real1
+lens chain ultra_prefilter
+wait 30
+pixels gpu reset
+perf ultra_prefilter 8
+pixels gpu ultra_prefilter
+lens chain ultra_bloom
+wait 30
+pixels gpu reset
+perf ultra_bloom 8
+pixels gpu ultra_bloom
+lens chain ultra_shafts
+wait 30
+pixels gpu reset
+perf ultra_shafts 8
+pixels gpu ultra_shafts
+lens chain off
+wait 30
+pixels gpu reset
+perf ultra_real2 8
+pixels gpu ultra_real2
+lens chain ultra_composite
+wait 30
+pixels gpu reset
+perf ultra_composite 8
+pixels gpu ultra_composite
+lens chain ultra_final
+wait 30
+pixels gpu reset
+perf ultra_final 8
+pixels gpu ultra_final
+lens chain ultra_extra
+wait 30
+pixels gpu reset
+perf ultra_extra 8
+pixels gpu ultra_extra
+lens chain off
+wait 30
+pixels gpu reset
+perf ultra_real3 8
+pixels gpu ultra_real3
+lens chain off
+lookswitch swift
+wait 40
+lens tiles off
+wait 30
+pixels gpu reset
+perf swift_tiles_off0 8
+pixels gpu swift_tiles_off0
+lens tiles on
+wait 30
+pixels gpu reset
+perf swift_tiles_on0 8
+pixels gpu swift_tiles_on0
+lens tiles off
+wait 30
+pixels gpu reset
+perf swift_tiles_off1 8
+pixels gpu swift_tiles_off1
+lens tiles on
+wait 30
+pixels gpu reset
+perf swift_tiles_on1 8
+pixels gpu swift_tiles_on1
+lookswitch cinematic
+wait 40
+lens tiles off
+wait 30
+pixels gpu reset
+perf cinematic_tiles_off0 8
+pixels gpu cinematic_tiles_off0
+lens tiles on
+wait 30
+pixels gpu reset
+perf cinematic_tiles_on0 8
+pixels gpu cinematic_tiles_on0
+lens tiles off
+wait 30
+pixels gpu reset
+perf cinematic_tiles_off1 8
+pixels gpu cinematic_tiles_off1
+lens tiles on
+wait 30
+pixels gpu reset
+perf cinematic_tiles_on1 8
+pixels gpu cinematic_tiles_on1
+lookswitch ultra
+wait 40
+lens tiles off
+wait 30
+pixels gpu reset
+perf ultra_tiles_off0 8
+pixels gpu ultra_tiles_off0
+lens tiles on
+wait 30
+pixels gpu reset
+perf ultra_tiles_on0 8
+pixels gpu ultra_tiles_on0
+lens tiles off
+wait 30
+pixels gpu reset
+perf ultra_tiles_off1 8
+pixels gpu ultra_tiles_off1
+lens tiles on
+wait 30
+pixels gpu reset
+perf ultra_tiles_on1 8
+pixels gpu ultra_tiles_on1
+lens tiles setting
+pixels config
+quit

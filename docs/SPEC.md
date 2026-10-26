@@ -1030,10 +1030,11 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   and every non-player entity left in the overworld and puts back the first test's game rules, time of day and clear sky
   (the runner keeps neither; before 2026-10-26 some 240 finished tests' players stood about the grid and the world's
   directors acted round them). On the GameTest server the world's own directors stay quiet and the tests drive them: no
-  anomaly, gate, happening, ledger body, camp or scene comes to a test's players by itself. A test that builds above its
-  padded box, or reads a column's top, clears its own site to the sky first (`AwakenTests.site`, `clearToSky`); state a
-  test switches on goes back in `AwakenTests.onEnd`, which runs whether it passes or fails. A creature never despawns
-  there because its nearest player is another test's, over 128 blocks off (vanilla discards it at once).
+  anomaly, gate, happening, ledger body, camp, scene or settlement comes to a test's players by itself. A test that
+  builds above its padded box, or reads a column's top, clears its own site to the sky first (`AwakenTests.site`,
+  `clearToSky`); state a test switches on goes back in `AwakenTests.onEnd`, which runs whether it passes or fails. A
+  creature never despawns there because its nearest player is another test's, over 128 blocks off (vanilla discards it
+  at once).
 - `-Ptests=<name prefixes>` (comma-separated) registers only those GameTests; a filter that matches none fails.
 
 Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools/autopilot.sh`):
@@ -4484,6 +4485,43 @@ hands Lens the plates drawn this frame (up to 6: centre, half-width and half-hei
 texture carries them (texel 20 x the count, texels 24-41, three a plate; it grew to 48×1), and a surface point within
 0.15 block of a plate's plane and inside its rectangle (`onPlate` in lens_frame.glsl) gets no shadow, AO, key or shade
 and no haze. With the K panel open they dim with the rest of the world (the focus dim stays).
+
+**Lens on Apple** (orchestrator brief 2026-10-26 from Euan's "maybe there's a way to massively improve them to really
+optimise for macOS"; docs/perf/LENS-APPLE.md):
+- **Measured** (Roost at noon; MacBook at Euan's 4.7 MP world; GPU world pass). Swift costs nothing over Lens off. The
+  lit composite was ~4 ms of Cinematic's ~3.6 over Swift, everything else under 0.6 ms a pass. Inside the composite:
+  - its light, 1.15 ms;
+  - the cloud blend, 0.45 ms;
+  - the scatter, 0.5 ms.
+  A pass of one texture sample costing 0.45 ms pointed at its ~70 per-pixel fetches of values every pixel shares.
+- **Tiles** (Turbo, `dev.awaken.turbo.tiles`, `awaken.tiles.mixins.json`, setting `lensTiles`, default on;
+  autopilot `lens tiles`). Vanilla gives every post chain target a full-size D32 depth buffer, clears colour and depth
+  each frame in a pass of their own, and opens every pass LOAD/STORE on both; on a tile-based GPU each is a trip
+  through memory for the whole target. For `awaken:lens_*` chains only:
+  - per-frame targets have no depth and no clear pass;
+  - histories have no depth (their clear when made stays);
+  - passes open CLEAR with no depth attached.
+  Every Lens pass is a full-screen triangle with no blend or discard, and no post pipeline tests depth, so the picture
+  is the same (look tour lens-apple-look). It is version-locked, logs a probe line, and is off on failure.
+- **The uniform block** (`LensBlock`: LensF[48], LensP[32], LensUse; include lens_block.glsl, tools/lens/block.py;
+  autopilot `lens block`):
+  - The Lens chains declare it with zeros on every pass whose shader reads F() or P().
+  - Lens writes the same values to a live buffer each frame (the parameters as byte/255, what the texture fetch
+    returns), and Tiles' PostPass hook binds it.
+  - With LensUse.x at 0 (not bound), F() and P() read the textures as before.
+- **Together, measured** (GPU world pass, old path → new; frame p50):
+
+  | Look | GPU world pass | frame p50 |
+  |---|---|---|
+  | Swift | 7.71 → 7.13-7.20 ms | 9.59 → 9.1 ms (105 → 111 fps) |
+  | Cinematic | 11.51 → 10.06 ms | 13.26 → 11.8 ms (75 → 85 fps) |
+  | Ultra | 13.33 → 11.8 ms | 15.04 → 13.65 ms (66 → 73 fps) |
+
+  The look is unchanged. The composite's volumetric term also reuses the light buffer's upsample (identical output).
+- **Measurement tools (dev only):**
+  - probe chains `awaken:lens_probe_<tier>_<group>` (tools/lens/probes.py: one pass group swapped for lens_null);
+  - composite sub-probes (lens_composite_probe_<part>.fsh, PROBE_NO_* defines);
+  - autopilot `lens chain <name>|off`.
 
 **Temporal clouds and light** (Euan, 2026-10-26: "Start all three ideas now", docs/perf/IDEAS-26OCT.md B; setting
 `lensTemporal`, default on; autopilot `lens temporal on|off|setting`):
