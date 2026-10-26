@@ -343,7 +343,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
   Animation Library is installed; a no-op otherwise), `FirstPerson` (Hands, §24: the world body, view stances, view
-  clips and their events; every module's first person goes through it). The Wilds (§17): `WardHooks` (`register(Source)`, `at(level, pos)`:
+  clips and their events; every module's first person goes through it; `View.gripMain`/`gripOff` [x, y, z, weight]:
+  the arm drawn to a held thing's grip, additive, Arms 2026-10-26). The Wilds (§17): `WardHooks` (`register(Source)`, `at(level, pos)`:
   wards for sites placed by code; structures just join `#awaken:warded`), `ArrivalHooks` (`report(player, Way, ticks)` for
   movement systems, `byMovement(player)` for rewards, `history(player)`), `HorizonHooks` (`register(Source)` of sites,
   `addReach(Reach)` for needs such as `WINGS`, `collect(player)`, the pure `pick`).
@@ -3963,6 +3964,12 @@ of the plan). No mixins.
   `FirstPerson.View.REST_FIST` (0.744, -0.455, -1.072); a clip's fists replace a stance's for that hand; a hand holding
   an item ignores fists (vanilla draws it). A fist clip gives the hands back at rest (or the off hand out under the
   frame), or, marked `toStance`, where its stance holds them (the hang's ledge jumps).
+- **Grips** (Arms 2026-10-26, Euan: "it feels like the weapon is just floating and attacking on its own"): a source may
+  key where a hand that HOLDS something closes on it (`View.gripMain`/`gripOff`, view space, weighted as fists): that
+  hand's arm is drawn rising to the grip from under the frame's corner exactly as a fist's (after the moves for both
+  hands, so it sways with what it holds), and the held thing still draws (a grip never hides the hand). Unset (weight 0)
+  nothing changes. Arms keys them every frame a styled weapon is held: at rest, through each swing's turn, the guard
+  and the equip rise, the off hand's on a pair's twin. Test `arms_grip`.
 - **Look-lag** (P2): the hands trail fast turns of the view on a damped spring (up to 0.06 sideways, 0.045 up, 4° of
   roll), halved with reduced motion (`FirstPerson.reducedMotion`, the body's setting).
 - **Near legs** (P2): a foot nearer the eye than 1.15 is drawn in the hand pass, pushed out along its line of sight to
@@ -4183,6 +4190,30 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   model). Lab numbers (the review set, 2026-10-26): every slash and chop crosses within 0.11 of the half-frame of the
   crosshair (most within 0.05; the Chain-blade's and War-staff's long blades +0.11..0.13), edge lead 0.87-1.00 through
   the blow (before: Longsword strikes 1 and 2 at 0.41 and 0.17, crossing 0.45 above). Test `arms_fp_swings`.
+- **Forms** (tools/arms/forms.py writes them into archetypes.json's swing rows; Euan 2026-10-26: "a dagger should feel
+  like you're actually stabbing forwards... a hammer... from up to down, or side to side... the big thing first...
+  everything is just being swiped... very floaty"): every strike is done as its weapon is really used. Cuts turn the
+  arm and weapon about the pivot: slash, chop (raised above the view, down), slam (the hammer raised overhead, crashed
+  down head first), swing (level, a hammer's or axe's head leading), rise, whirl (the 360-degree finishers), reap (the
+  scythe), lash (the chain-blade: the wrist whips twice as hard). Thrusts drive the point along the aim to the target
+  (stab: a straight line, from below, overhand, or reverse-grip edge-down); the gauntlets punch (jab, hook on an arc,
+  upper); the twinblades and war-staff spin about their middle; the shieldblade bashes with its shield. The combos:
+  Daggers stab, rising stab, a reverse-grip rip, an overhand plunge, a spinning backhand (heavy: a deep stab); Maul an
+  overhead slam, a head-first side swing, a ground-shaking slam, an uppercut; Axe a diagonal chop, a level backhand, an
+  overhead chop, a wide swing; Longsword forehand, rising backhand, overhead chop, thrust; Greatblade a diagonal cleave,
+  a level sweep, a whirl, an overhead chop; Spear and Rapier thrusts with a haft sweep or a flick cut third; Katana a
+  level draw cut, a rising cut, a chop, a thrust; Glaive wide swings and a whirl; Scythe reaps, an overhead reap and a
+  whirl; Gauntlets jab, cross, hook, uppercut, straight; Chain-blade lashes and a lasso whirl; Shieldblade cut, bash,
+  chop, stab; War-staff swings, a chop and spins; Precursor Arm cuts and a thrust. A stab, jab or bash strikes narrow on
+  the server (arc at most 30 degrees, the thrust's whoosh; the Daggers' stabs became single-target, their rip and
+  backhand 90 degrees). Weight by style (snap: Daggers, Rapier, Gauntlets; blade; heavy: Axe, Maul, Greatblade, Glaive,
+  Scythe, War-staff): how much of the wind-up reaches the cocked pose and how long it hangs there creeping back (heavy
+  70%), the drive's curve (progress to the power 1.25 snap, 2.2 blade, 3.4 heavy: a heavy blow starts slow and
+  arrives explosively on the hit), how far it carries past (0.45 / 1 / 1.5), the wrist's whip (6 / 18 / 7 degrees), the
+  step in (0.04 / 0.07 / 0.13 blocks), how it comes home (snapped back, eased, hauled back after a beat). The view leans
+  with every blow (FpSwings' camera keys, first person, scaled by the kick setting): a slam pitches it down on the
+  crash (4.5 degrees heavy), a cut turns and leans it the way the blade travels, a whirl turns it furthest; heavy blows
+  draw it the other way first. The third-person body of each move is picked by its form (arms_moves.py styled()).
 - **First person, the hold** (tools/art/specs/arms_holds.py; Euan 2026-10-26: "a spear should still feel like you're
   holding a spear. Right now in first person, it just looks like a sword"): every style is held as that weapon really
   is, written in view terms (where the business end points: degrees left of ahead and up; its roll about its length;
@@ -4191,7 +4222,7 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   the Daggers 0.575 so their blade reads): a spear is as much longer in hand than a longsword as in F5 and a dagger as
   much shorter, and a long point may leave the view. Longsword up and forward to the left, its flat to the eye
   (18 left, 52 up); Rapier en garde, the point forward at the target's height (20, 18); Katana two-handed at the
-  middle, the edge up (10, 36); Spear the shaft across the lower view, gripped part way, the head forward and up
+  middle, the edge down toward the target (10, 36); Spear the shaft across the lower view, gripped part way, the head forward and up
   (24, 22); Glaive the same with the blade higher, its edge in (18, 34); Scythe the snath up, the blade reaching in
   across the top (8, 64); War-staff at its middle across the body (58, 28); Greatblade two-handed, raised, near the
   middle (20, 60); Maul two hands low on the haft, the head up (6, 58); Axe the head up, its bit in (10, 58); Daggers
@@ -4201,13 +4232,76 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   holds` rewrites only the holds; the old check that kept every point inside the view (it shrank every style to the
   Longsword's outline) is gone. The swings are baked from these holds (they start and end at rest), and the lab's
   holds sheets (docs/combat/anim-lab/holds-*.png) show each style before, after and in F5.
+- **The wrist and the arm** (Euan 2026-10-26: "it should actually turn it like as if you had a wrist... or a forearm
+  that's turning... if you're gonna do an uppercut, you kind of turn it 180 degrees"): every cut turns the weapon about
+  its own handle as the swing gathers and back square just as it lands (a slash 35 degrees, a chop 40, a slam 75, a
+  hammer's swing 85, an uppercut 170: the head turned right over to drive it up), the wrist cocked so a heavy head
+  trails the hands (16 degrees at least) and whips through. The arm that holds the weapon is drawn to its grip
+  (§24 "Grips"): the hand closes where the style's hold puts it (arms_holds.py's grip, baked as fp_swings.json's
+  `handGrip`), a vanilla item's on its sprite's handle. The lab's `strip` shows one move frame by frame (a turn in the
+  hand reads there, not in an onion-skin).
+- **A pair, and the left hand** (Euan 2026-10-26: "the left hand... looks like it's just floating near the hand"; "the
+  gauntlet should be on the hand"): the Daggers and the Gauntlets are pairs (ArmsOffHand: the main hand's twin worn or
+  held in the empty off hand, first and third person); the Gauntlets' combo alternates fists (jab, cross, hook, the other
+  fist's uppercut, a straight; heavy both) and each fist closes inside its gauntlet (the mesh's centre), so the arm wears
+  it rather than holding it. Every weapon's left-hand hold is its right hand's true mirror (arms_holds.mirror_display):
+  26.3 mirrors any left-hand transform as it applies it (x translation, y and z rotation), so a left transform written
+  pre-mirrored, as old vanilla JSON was, came out unmirrored and the twin sat beside the hand the arm reached for. A
+  weapon's frame is its design's (along the item's diagonal, its flat across z), never a guess from its outline: a
+  maul's head is longest along its striking faces, so the outline's thinnest direction was the way it strikes and its
+  emblem side led; now the gold face leads in every direction it swings.
+- **Working parts** (Euan 2026-10-26: "when it's a blade, it's the sharp end that's cutting. When it's a dagger, it's the
+  sharp end that's stabbing. When it's the hammer, it's that end... think logically"): every move strikes with the part
+  of its weapon that does the work, and the lab's `audit` holds it to that at the hit, on every weapon of the style in
+  its own hold and in the hand that strikes (the off hand's twin in its left-hand hold, the move mirrored): a blade's
+  edge, an axe's bit, a hammer's faces (never its emblem flat), a staff's ends, a point for a thrust, the knuckles for a
+  punch, the shield's face for a bash, and a scythe's inner edge drawn back through. Which side cuts is read from each
+  design (arms_holds.EDGES), never guessed from the outline: the katana's edge is on the outside of its curve, the tip
+  curving back toward the spine, and the glaive's fluke weighs down its back, so the old guess (the heavier side) had
+  every katana and glaive cut leading with the spine. Single-edged: Katana and Glaive (+x), Axe (the bit, -x), Scythe
+  (the blade, -x), Twinblades (each blade's leading side, so the pair spins tips trailing), the Beastbound Longsword and
+  Greatblade (tusk cleavers), the Wildhide skinning knife, the Beastbound tusk (honed on its inside) and the Veilwoven
+  talon. A style whose forged (C) weapon is double-edged but has single-edged tiers (Longsword, Greatblade, Daggers)
+  cuts with the side its hold's cut turns in toward the middle, and each single-edged tier is turned so its edge is
+  there: one baked swing cuts with every tier's edge (the wrist turns a backhand over, as a single edge needs). A turn
+  can mirror only two of a weapon's three ways, so a single-edged weapon's left-hand hold keeps its length and its
+  edge mirrored and shows its other flat (before, the Wildhide twin's off-hand cut led with its back). The scythe is
+  swept round, its blade's point leading, until the blade is past the target (0.12 blocks out), then hauled back 0.34
+  blocks through it on the hit, its inside edge drawn through what it hooked; its blade, at the snath's top, is what
+  crosses the target. Every punch lands knuckles first, square to the fist's travel (a jab and a hook palm down, an
+  uppercut palm to the face, an overhand driven down); the Gauntlets' shared moves are punches too (riposte and undercut
+  uppercuts, the dodge's cut a hook, the Art a straight, the plunge and execution overhands; their server blows kept).
+  The bash shoves the shield straight at the foe, its face square to the shove. Every move has a form in its row
+  (tools/arms/forms.py writes the shared moves' too, read from their path as the lab always read them), so first and
+  third person do the same thing (a spear's Art is a thrust in both).
+- **Third person, the wrist** (Euan 2026-10-26: "hold third person to the same working parts"): vanilla's
+  third-person hold sets a weapon across the fist, square to the forearm, and a vanilla arm has no wrist, so the
+  forearm's roll swings the blade round rather than turning its edge; before, a chop led with the other side of the
+  blade from a forehand (a katana's chop with its spine), the axe's swings with the back of the head and the
+  undercut with the flat. Now through each move's clip the weapon turns about its own length in the fist, through its
+  grip (`ArmsWrist`; FpSwings' `wrist3` keys, per arm, every 0.5 ticks, baked by the lab from the clip and the style's
+  forged weapon): from the hand's rest to the turn that lays its working side square into the blow by the wind-up's
+  end, held through the blow, home by the clip's end (median 34 degrees; a single edge turned right over, 180, where a
+  shared clip leads with its other side). The fighter's hand items are resolved again marked with their arm while a
+  move turns them (the player's render-state modifier, last), so only a hand's weapon in third person turns, never
+  one in first person, the hotbar or a frame; a left main arm keeps its hold (the keys are right-handed). A
+  single-edged tier on the other side from its style's lead (the Beastbound Longsword and Greatblade, the Wildhide and
+  Veilwoven Daggers) is turned over in its third-person hold (`thirdperson_right/lefthand`). The thrust keeps its arm
+  and chest on the line from cocked to through and leans in less than it lunges (a turn or a lean had swept a long
+  point's tip 45 degrees off its line); the shield bash raises the shield square in front of the chest, the body
+  driving in behind it; the Gauntlets punch their own dodge, slide and fall moves (a hook, an uppercut, a straight:
+  a vanilla arm can't turn a fist knuckles-down as it comes over). The lab's `audit` holds every clip to the working
+  part on every weapon in the arm that strikes (0 of 176 fail; 78 did); `wrist` draws a move's blow in third person
+  with and without the turn (docs/combat/anim-lab/wrist-3p.png). The scythe leads point first in third person; its
+  haul back through the target is first person's.
 - **The animation lab** (tools/art/anim_lab.py; SPEC §25, Euan's ask for a way to see the motion): `sheet` / `all`
   draw each strike's first-person frames as the game composes them (the swing, Hands' view layer, vanilla's rest, the
   weapon's hold and mesh, 70 degrees) as an onion-skin with the blade tip's path (wind-up blue, blow gold, recovery
   grey), the hit ringed and the crosshair; under it the tip's height on screen and the edge lead over the move; beside
   it top and side views of the grip and tip paths against the view cone (`--model old` shows the row's slide).
   `third` draws the body's clip (arms_moves.py) with the blade in its hand as vanilla's ItemInHandLayer holds it, two
-  views and the third-person edge lead (a thrust: the point lead). `film` overlays the game's own frames (the clip
+  views and the third-person edge lead (a thrust: the point lead). `audit` checks every move's working part ("Working
+  parts" above; exit 1 when one fails). `film` overlays the game's own frames (the clip
   recorder's, in a tour) the same way. Sheets for the review set in docs/combat/anim-lab/.
 - **Third person** (Player Animation Library, optional, through `core.api.PlayerClips`; `ArmsClips`, `ArmsBodies`):
   a full-body clip per move from tools/art/specs/arms_moves.py, its keys on the timing table's rows (cocked at the
