@@ -174,6 +174,20 @@ public final class QuestEngine {
         step.spawn().ifPresent(sp -> Scenes.bring(p, scene, sp));
     }
 
+    /**
+     * A scene that stages a step's ending itself (the first thread's High Gate shot, Ilse by the fire): true when it took
+     * the step's done lines (it says them in its own way), so the engine doesn't say them again.
+     */
+    public interface Stager {
+        boolean stage(ServerPlayer p, String chain, QuestDef.Step step);
+    }
+
+    private static Stager stager = (p, chain, step) -> false;
+
+    public static void stager(Stager s) {
+        stager = s;
+    }
+
     private static void complete(ServerPlayer p, QuestState s, int i, QuestDef d, QuestDef.Step step) {
         QuestState.Active a = s.active.get(i);
         String claim = "awaken:claim/quest/" + a.chain() + "/" + step.id();
@@ -181,7 +195,7 @@ public final class QuestEngine {
             Progression.setCounter(p, claim, 1);
             RewardHooks.apply(p, step.reward(), Progression.XpSource.WORLD);
         }
-        sayLines(p, step.done());
+        if (!stager.stage(p, a.chain(), step)) sayLines(p, step.done());
         step.move().ifPresent(m -> a.scene().ifPresent(id -> Scenes.move(p.level().getServer(), id, m)));
         int next = a.step() + 1;
         if (next >= d.steps().size()) {
@@ -221,6 +235,25 @@ public final class QuestEngine {
         }
         ItemStack stack = new ItemStack(item);
         p.getInventory().placeItemBackInInventory(stack, net.minecraft.util.Prediction.SERVER_ONLY);
+    }
+
+    /** Dev and tours: puts a chain (taken first if need be) at one of its steps, its claims from there on cleared. */
+    public static boolean devStep(ServerPlayer p, String chain, String stepId) {
+        QuestDef d = QuestBook.get(chain);
+        if (d == null) return false;
+        int at = -1;
+        for (int i = 0; i < d.steps().size(); i++) if (d.steps().get(i).id().equals(stepId)) at = i;
+        if (at < 0) return false;
+        QuestState s = state(p);
+        if (!s.has(chain)) {
+            s.done.remove(chain);
+            if (!start(p, chain)) return false;
+        }
+        for (int i = 0; i < s.active.size(); i++) if (s.active.get(i).chain().equals(chain)) s.active.set(i, s.active.get(i).withStep(at));
+        for (int i = at; i < d.steps().size(); i++) Progression.setCounter(p, "awaken:claim/quest/" + chain + "/" + d.steps().get(i).id(), 0);
+        s.tracked = chain;
+        save(p, s);
+        return true;
     }
 
     /** Wayfarer lines: "Name: text" shows as a story line. */
@@ -293,6 +326,9 @@ public final class QuestEngine {
                 case "discover" -> {
                     if (Progression.profile(p).counter("awaken:discovered/" + o.target()) > 0) hold(p, "discover", o.target(), 1);
                 }
+                case "hearth" -> {
+                    if (dev.awaken.core.api.HearthHooks.hearthOf(p).isPresent()) hold(p, "hearth", o.target(), 1);
+                }
                 default -> {}
             }
         }
@@ -322,6 +358,7 @@ public final class QuestEngine {
         QuestDef d = QuestBook.get(a.chain());
         if (d == null || a.step() >= d.steps().size()) return null;
         QuestDef.Step st = d.steps().get(a.step());
+        if (st.tally()) return st.text() + " · " + a.progress() + "/" + st.objective().count();
         String count = st.objective().count() > 1 ? " (" + a.progress() + "/" + st.objective().count() + ")" : "";
         return st.text() + count;
     }

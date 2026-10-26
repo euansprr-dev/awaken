@@ -39,13 +39,19 @@
     {
       "id": "ilse",
       "objective": { "type": "talk", "target": "ilse" },
-      "text": "Give Ilse the letters",
+      "text": "Deliver the letters",
+      "tally": true,
       "done": [
         "Ilse: Letters! With Kestrel's knot on them. She still ties them like she's angry at the string.",
         "Ilse: Sit a minute. Nobody out here runs anywhere.",
         "Ilse: First night out? Take a coal from our fire. Carry it till you find your ground, then set it down. It'll know."
       ],
       "reward": { "item": "awaken:hearth_ember" }
+    },
+    {
+      "id": "ember",
+      "objective": { "type": "hearth" },
+      "text": "Set your Ember where you'd live"
     },
     {
       "id": "home",
