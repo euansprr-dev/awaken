@@ -30,5 +30,11 @@
   "subtitles.awaken.hearth.request_deliver": "Items stream into the Anchor",
   "subtitles.awaken.hearth.request_complete": "The Anchor chimes",
   "subtitles.awaken.hearth.core_fuse": "Shards fuse",
-  "screen.awaken.hearth": "Your Hearth"
+  "screen.awaken.hearth": "Your Hearth",
+  "item.awaken.hearth_ember": "Hearth Ember",
+  "block.awaken.hearthfire": "Hearthfire",
+  "subtitles.awaken.hearth.take": "A coal takes",
+  "subtitles.awaken.hearth.fire": "Hearthfire crackles",
+  "subtitles.awaken.hearth.lift": "A coal is lifted",
+  "subtitles.awaken.hearth.room": "The Hearth names a room"
 }
