@@ -69,6 +69,7 @@ public final class CitizensModule {
         CitizensTests.register();
         CityLifeTests.register();
         SettlementTests.register();
+        VillageDayTests.register();
     }
 
     /** A Carillon citizen's stable id for other modules (CitizenHooks.witnesses). */

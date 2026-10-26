@@ -22,7 +22,7 @@ import java.util.Map;
  * at dusk and again at dawn. Hunters and miners go out by the road at dawn and come back at dusk, the hunter with a kill
  * on his pole.
  */
-final class VillageRoster {
+public final class VillageRoster {
     private VillageRoster() {}
 
     private final RosterBuilder b = new RosterBuilder();
@@ -37,7 +37,7 @@ final class VillageRoster {
     private int green, wash = -1, bell = -1, notice = -1, play = -1, anvil = -1, net = -1, mill = -1, woods = -1, inn = -1, innOut = -1, stallKeeper = -1;
     private int lampRoute = -1, watchRoute = -1, errands = -1, carterRoute = -1, eveningRoute = -1;
 
-    static RosterBuilder of(VillagePlan plan, long worldSeed) {
+    public static RosterBuilder of(VillagePlan plan, long worldSeed) {
         VillageRoster r = new VillageRoster();
         r.p = plan;
         r.worldSeed = worldSeed;

@@ -22,6 +22,84 @@ final class VillageTests {
 
     static void register() {
         AwakenTests.register("village_plan_deterministic", 400, VillageTests::deterministic);
+        AwakenTests.registerIsolated("village_trade", 400, VillageTests::trade);
+    }
+
+    /**
+     * Trade in emeralds (decision 5): EconomyHooks counts, takes and pays emeralds once per claim; a trader's prices move
+     * with standing (a stranger over, kin under); trades earn standing a few a day; a notice is filled from what you
+     * carry and pays once; a room at the inn makes its bed where you wake, once.
+     */
+    private static void trade(GameTestHelper h) {
+        var level = h.getLevel();
+        net.minecraft.core.BlockPos o = h.absolutePos(net.minecraft.core.BlockPos.ZERO);
+        VillagePlan plan = TestLand.at(57L, o.getX(), o.getY(), o.getZ()).plan("test:village_trade", 777L, true);
+        h.assertTrue(plan != null, "a village fits the test valley");
+        AwakenTests.Live live = AwakenTests.survivalPlayer(h, "w3-trade", net.minecraft.core.BlockPos.ZERO.above(2));
+        var p = live.player();
+        VillageService.Live l = null;
+        try {
+            l = VillageService.register(level, plan);
+            h.assertTrue(l != null, "the village's people start");
+            var em = dev.awaken.core.api.EconomyHooks.installed();
+            p.getInventory().clearContent();
+            p.getInventory().add(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.EMERALD, 5));
+            h.assertTrue(em.balance(p) == 5, "five emeralds in hand: " + em.balance(p));
+            h.assertTrue(em.charge(p, 3) && em.balance(p) == 2, "three taken");
+            h.assertTrue(!em.charge(p, 5) && em.balance(p) == 2, "five can't be taken from two");
+            var claim = dev.awaken.Awaken.id("test/village_trade/" + level.getGameTime());
+            h.assertTrue(em.pay(p, 4, claim) && em.balance(p) == 6, "paid four");
+            h.assertTrue(!em.pay(p, 4, claim) && em.balance(p) == 6, "never paid twice for one claim");
+            // the smith's pickaxe: a stranger pays over, kin under
+            var deals = Trade.deals("smith", plan.family, plan.seed, 0, level);
+            h.assertTrue(deals != null, "the smith trades");
+            Trade.Deal pick = deals.stream().filter(d -> d.id().equals("pickaxe")).findFirst().orElseThrow();
+            int stranger = new Trade.Shop(p, l, 0, deals, 0).getOffers().get(deals.indexOf(pick)).getCostA().getCount();
+            int kin = new Trade.Shop(p, l, 0, deals, 3).getOffers().get(deals.indexOf(pick)).getCostA().getCount();
+            h.assertTrue(stranger > pick.costCount() && kin < pick.costCount(), "prices show standing: stranger " + stranger + ", kin " + kin
+                    + " (base " + pick.costCount() + ")");
+            // trades earn standing, four a day
+            for (int k = 0; k < 6; k++) VillageService.traded(p, l, 0, pick);
+            h.assertTrue(l.rec().points(p.getUUID()) == 4, "four trades a day count toward standing: " + l.rec().points(p.getUUID()));
+            // a notice filled from what you carry pays once and counts toward standing
+            var board = Requests.board(level.getServer(), l);
+            h.assertTrue(!board.isEmpty(), "the board has notices");
+            VillageState.Request q = board.getFirst();
+            var item = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.parse(q.item));
+            p.getInventory().add(new net.minecraft.world.item.ItemStack(item, q.need));
+            long before = em.balance(p);
+            int pts = l.rec().points(p.getUUID());
+            Requests.deliver(p, l, q.id);
+            h.assertTrue(em.balance(p) == before + q.pay, "filled, it pays " + q.pay + ": " + before + " -> " + em.balance(p));
+            h.assertTrue(l.rec().points(p.getUUID()) == pts + q.standing, "and counts toward standing");
+            h.assertTrue(!l.rec().requests.contains(q), "and comes off the board");
+            // a room at the inn: its bed is where you wake, once
+            CityPlanCheck inn = CityPlanCheck.inn(plan);
+            h.assertTrue(inn != null, "the village has an inn");
+            var bed = new net.minecraft.core.BlockPos(plan.ox + inn.x, plan.baseY + inn.y, plan.oz + inn.z);
+            var head = net.minecraft.world.level.block.Blocks.BED.pick(net.minecraft.world.item.DyeColor.RED).defaultBlockState().setValue(net.minecraft.world.level.block.AbstractBedBlock.PART,
+                    net.minecraft.world.level.block.state.properties.BedPart.HEAD);
+            level.setBlock(bed, head, 3);
+            Inn.grant(p, l, 0);
+            var cfg = p.getRespawnConfig();
+            h.assertTrue(cfg != null && cfg.respawnData().globalPos().pos().equals(bed), "the inn's bed is where you wake: " + cfg);
+            Inn.onRespawn(new net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerRespawnEvent(p, false));
+            var after = p.getRespawnConfig();
+            h.assertTrue(after == null || !after.respawnData().globalPos().pos().equals(bed), "once: after waking there it's your own again");
+            h.assertTrue(!Inn.has(p, level.getServer()), "the room is spent");
+        } finally {
+            if (l != null) VillageService.stop(l);
+            live.leave();
+        }
+        h.succeed();
+    }
+
+    /** Where to put a bed in a plan's inn for the test (its first room cell, a row over the floor). */
+    record CityPlanCheck(int x, int y, int z) {
+        static CityPlanCheck inn(VillagePlan p) {
+            for (CityPlan.Plot q : p.plots) if (q.use().equals("inn")) return new CityPlanCheck(q.x0() + 2, q.lift() + 1, q.z0() + 2);
+            return null;
+        }
     }
 
     static VillagePlanner.Request request(String key, long seed, VillagePlan.Kind kind, boolean first) {

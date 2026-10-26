@@ -104,7 +104,7 @@ final class Requests {
         }
         // filled: paid once, standing, the village better off, a line in its history
         l.rec().requests.remove(q);
-        boolean paid = EconomyHooks.pay(p, q.pay, Awaken.id("village/" + l.key() + "/" + q.id.replace('@', '_')));
+        boolean paid = EconomyHooks.pay(p, q.pay, Awaken.id(("village/" + l.key() + "/" + q.id).toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9/._-]", "_")));
         VillageService.standing(p, l, q.standing, "request " + q.id);
         l.rec().prosperity = Math.min(100, l.rec().prosperity + 3);
         l.rec().mood = Math.min(100, l.rec().mood + (q.id.startsWith("edge") || q.id.startsWith("mend") ? 8 : 2));
