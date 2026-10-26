@@ -1586,7 +1586,10 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   straight line (the real terrain interpolates its density over 8-block cells in y, so this is closer than halving:
   median 0.3 blocks from the generator's exact ground, p90 1.2, test `farsight_columns_predict`), plus half a block (the
   top face). 2.5 probes a column; 59 µs a column on the Awakened Tectonic terrain on the M4 (stage 0: 650-870 µs and
-  8-block steps). Inside the city basin's blend (2026-10-26, Euan: a far wall east of Carillon "that isn't really
+  8-block steps). Under the world's ceiling Tectonic's final density slides to air (`tectonic:__constants/slope_upper`,
+  1 thirty blocks under the ceiling to 0 ten under it, lerped toward −0.1), so its peaks are cut flat about y 308; the
+  height model applies the same slide (2026-10-26, Euan: a massif standing flat at the ceiling itself, y 320, with a
+  sheer wall down). Inside the city basin's blend (2026-10-26, Euan: a far wall east of Carillon "that isn't really
   there", flat when he got close) the ground comes from the router's own final density, which the basin wraps
   (`CityBasinFunction` round `final_density`; the lands pack's Lithostitched wrap swaps it into the generator's settings,
   a router without it gets the same wrap): down from above the natural ground (or the street + 11) in 8-block steps to
@@ -1692,6 +1695,13 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   speed (at most 300 blocks ahead), so in fast flight the land ahead comes first.
 - **The opening's card** waits, while City Sight draws, for the far rings and the whole city meshed and up, not for
   the real chunks round the player (the flight's camera is far from them and Sodium doesn't build them for it).
+- **Known gap: Sodium's cave culling** (2026-10-26, Euan's world over the Commons, `tools/autopilot/farsight3-euan-hole.txt`):
+  sections inside the render distance that Sodium has built but culls this frame (its occlusion traversal can miss a
+  view through a narrow opening, e.g. under the basin rim's old undercut) show the sky colour, with Far Sight off as
+  well; the far land is hidden there because the mask counts built sections, not drawn ones. Closing it needs Sodium's
+  per-frame visibility (`SodiumWorldRenderer.isBoxVisible`, its classes in a nested jar) for each built section, on
+  the path the 26 Oct perf pass trimmed; City Sight drawing past 12 chunks (perf idea C) makes it moot out there, and
+  the soft rim (§15) leaves no such cave in new worlds. Open, for a decision.
 - **Seam audit** (`tools/farsight/seam_audit.py`): pairs of tour frames, normal and debug view 2 (far terrain and City
   Sight hidden for the real chunks paint red); red only in the debug frame, eroded by 5 pixels (outline slivers where
   City Sight's cubes are hidden for thinner real blocks are expected), is a hole. Tour `farsight3-city.txt` takes the
@@ -1741,7 +1751,9 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   world cell of the wider picks one, anchored to the land: 2026-10-26, pixel-wide columns dithered on the screen made far
   slopes glitter in motion, Euan's play; part "steady" off restores them for measuring), tops rounded to
   whole blocks, and shows the face it meets: the top, or a side facing x or z, shaded as the game shades faces (1, 0.8,
-  0.6) under a light matched to Lens 2's on the chunks (`farLight`: a warm key where the sun reaches, Lens's cool shade
+  0.6; a side by the way the slope faces, between 0.6 and 0.8, not by the axis its column shows: a steep slope's
+  staircase shows x and z sides by turns, and read per triangle that flip drew dark spikes down far mountains and
+  grooves down their walls, 2026-10-26) under a light matched to Lens 2's on the chunks (`farLight`: a warm key where the sun reaches, Lens's cool shade
   behind ridges, faces turned from the sun shaded only as it lowers). Grass tops stand over dirt risers (the dirt
   texture's average, a grass fringe along the top), cliffs show stone or an Awakened biome's own block (hoarfrost, riven
   shale, fused glass, mirepeat: palette rock kinds in colour flags bits 4-6), badlands their strata, every block its own

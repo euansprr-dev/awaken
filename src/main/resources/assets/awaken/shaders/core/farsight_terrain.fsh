@@ -238,6 +238,10 @@ void main() {
     if (!water) hit = columns(vRel, g, w);
     vec3 pos = hit.ok ? normalize(vRel) * hit.t : vRel;
     vec3 face = hit.ok ? hit.n : n;
+    // a column's side is lit by the way the slope faces, not by the axis its column happens to show: a steep slope's
+    // staircase shows x sides and z sides by turns as the slope turns, and with the slope read per triangle those turns
+    // drew dark spikes down far mountains and grooves down their walls (Euan, 2026-10-26)
+    if (hit.ok && hit.n.y < 0.5 && dot(n.xz, n.xz) > 1e-4) face = normalize(vec3(n.x, 0.0, n.z));
     float y = pos.y + FarFog.z;
     vec2 world = vec2(FarCamInt.xz) + pos.xz + FarCam.xz;
     ivec2 blk = hit.ok ? hit.cell : FarCamInt.xz + ivec2(floor(rel));
