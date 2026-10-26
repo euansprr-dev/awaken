@@ -2,7 +2,6 @@ package dev.awaken.hearth;
 
 import dev.awaken.core.PlayDays;
 import dev.awaken.core.api.AtlasHooks;
-import dev.awaken.hearth.room.Furniture;
 import dev.awaken.hearth.room.Room;
 import dev.awaken.hearth.room.RoomType;
 import dev.awaken.progression.Progression;
@@ -187,10 +186,5 @@ public final class RoomEffects {
             for (var d : net.minecraft.core.Direction.values()) if (r.contains(pos.relative(d))) return (int) Math.ceil(amount * WORKSHOP_COST);
         }
         return amount;
-    }
-
-    /** True when a room holds a bell (the bell tower's furniture), for the tests. */
-    static boolean hasBell(Room r) {
-        return r.count(Furniture.BELL) > 0;
     }
 }

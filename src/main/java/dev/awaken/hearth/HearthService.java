@@ -109,7 +109,7 @@ public final class HearthService {
      */
     static void forgetPeople() {
         Breaks.clear();
-        Embers.forget(null);
+        Embers.forget();
         Duty.clear();
         Household.forgetAll();
         Offers.forgetAll();

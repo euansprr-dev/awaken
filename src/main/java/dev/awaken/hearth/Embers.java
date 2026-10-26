@@ -16,7 +16,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -437,7 +436,7 @@ public final class Embers {
     }
 
     /** Called from {@link HearthService#forgetPeople}: nothing held across worlds. */
-    static void forget(MinecraftServer server) {
+    static void forget() {
         HELD.clear();
     }
 }
