@@ -368,6 +368,66 @@ public final class RoadNet {
         return out;
     }
 
+    // ---- laying ahead of the players -------------------------------------------------------------------------------------
+
+    private static java.util.concurrent.@Nullable ExecutorService ahead;
+    private static final java.util.Set<Long> QUEUED = ConcurrentHashMap.newKeySet();
+    /** How far ahead of each player the roads are laid (past the generation front), and lattice chunks queued a pass. */
+    static final int AHEAD = 1100, PER_PASS = 8;
+
+    /**
+     * Every two seconds: the lattice chunks round each player whose legs aren't known yet go to a planner thread of their
+     * own, nearest first, so the roads, towns, wayhouses and settlements there are laid before the land generates and world
+     * generation seldom waits for them (it asks the same cache: a chunk that needs a road being laid waits for that one).
+     */
+    public static void prefetch(net.minecraft.server.MinecraftServer server) {
+        if (server.getTickCount() % 40 != 21) return;
+        RoadWorld w = RoadWorld.get();
+        if (w == null) return;
+        if (ahead == null) ahead = java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "Awaken road planner");
+            t.setDaemon(true);
+            t.setPriority(Thread.MIN_PRIORITY);
+            return t;
+        });
+        for (net.minecraft.server.level.ServerPlayer p : server.overworld().players()) {
+            int pcx = p.getBlockX() >> 4, pcz = p.getBlockZ() >> 4;
+            int reach = AHEAD / 16 / Road.LATTICE + 1;
+            List<long[]> want = new ArrayList<>();
+            int lx = Math.floorDiv(pcx, Road.LATTICE), lz = Math.floorDiv(pcz, Road.LATTICE);
+            for (int i = lx - reach; i <= lx + reach; i++)
+                for (int j = lz - reach; j <= lz + reach; j++) {
+                    int cx = i * Road.LATTICE, cz = j * Road.LATTICE;
+                    long key = ((long) cx << 32) ^ (cz & 0xffffffffL);
+                    if (known(cx, cz) || QUEUED.contains(key)) continue;
+                    long d = (long) (cx - pcx) * (cx - pcx) + (long) (cz - pcz) * (cz - pcz);
+                    if (d * 256 > (long) AHEAD * AHEAD) continue;
+                    want.add(new long[]{d, cx, cz, key});
+                }
+            want.sort((u, v) -> Long.compare(u[0], v[0]));
+            for (int k = 0; k < Math.min(PER_PASS, want.size()); k++) {
+                long[] u = want.get(k);
+                QUEUED.add(u[3]);
+                ahead.submit(() -> {
+                    try {
+                        startsIn((int) u[1], (int) u[2]);
+                    } catch (RuntimeException e) {
+                        Awaken.LOG.error("[road] laying ahead at chunk {} {} failed", u[1], u[2], e);
+                    } finally {
+                        QUEUED.remove(u[3]);
+                    }
+                });
+            }
+        }
+    }
+
+    /** The planner thread stops with the server (a pass under way finishes into the cleared caches harmlessly). */
+    public static void stopAhead() {
+        if (ahead != null) ahead.shutdownNow();
+        ahead = null;
+        QUEUED.clear();
+    }
+
     // ---- what the network looks like, for commands and the survey -------------------------------------------------------
 
     public static String stats() {

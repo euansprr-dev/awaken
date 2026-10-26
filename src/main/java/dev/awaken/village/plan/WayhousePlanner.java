@@ -143,11 +143,12 @@ public final class WayhousePlanner {
                 for (int turn : new int[]{1, 3, 2}) {
                     int sd = (p.front() + turn) & 3;
                     int x0, z0, x1, z1;
+                    // past the stable's yard (its ring of one), the paddock's own ring free
                     switch (sd) {
-                        case 0 -> { x0 = p.x0(); x1 = p.x0() + 6; z1 = p.z0() - 2; z0 = z1 - 5; }
-                        case 2 -> { x0 = p.x0(); x1 = p.x0() + 6; z0 = p.z1() + 2; z1 = z0 + 5; }
-                        case 1 -> { z0 = p.z0(); z1 = p.z0() + 6; x0 = p.x1() + 2; x1 = x0 + 5; }
-                        default -> { z0 = p.z0(); z1 = p.z0() + 6; x1 = p.x0() - 2; x0 = x1 - 5; }
+                        case 0 -> { x0 = p.x0(); x1 = p.x0() + 6; z1 = p.z0() - 3; z0 = z1 - 5; }
+                        case 2 -> { x0 = p.x0(); x1 = p.x0() + 6; z0 = p.z1() + 3; z1 = z0 + 5; }
+                        case 1 -> { z0 = p.z0(); z1 = p.z0() + 6; x0 = p.x1() + 3; x1 = x0 + 5; }
+                        default -> { z0 = p.z0(); z1 = p.z0() + 6; x1 = p.x0() - 3; x0 = x1 - 5; }
                     }
                     if (!rect(x0, z0, x1, z1, 1, 3)) continue;
                     int lift = p.lift();

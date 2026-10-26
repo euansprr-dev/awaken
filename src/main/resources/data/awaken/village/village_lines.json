@@ -605,6 +605,26 @@
     "I told the neighbours you're ours, {name}. They agreed.",
     "[n]Can't sleep, {name}? Nor can I. Sit with me."
    ]
+  },
+  "assayer": {
+   "stranger": [
+    "[m]Morning. If you've come for ore, you've come to the right door.",
+    "Looking to buy? Iron's fresh up from the second level.",
+    "Mind the carts on the way in. They don't stop for anyone."
+   ],
+   "known": [
+    "{name}. Back for more of the mine's iron?",
+    "[e]Evening, {name}. The night's haul is just in.",
+    "There's a lode map on the shelf if you're of a mind to go looking."
+   ],
+   "friend": [
+    "{name}! The miners asked after you this morning.",
+    "For you, friend, the good ore. Not the slag the strangers get."
+   ],
+   "kin": [
+    "{name}, you're family here. Take what you need.",
+    "Kin of the mine, are you? Then you'll know where the good seams run."
+   ]
   }
  },
  "calls": {
@@ -747,6 +767,11 @@
    "Mind your ears!",
    "[n]Softly, softly. Sleepers about.",
    "Rope's slick. Grip tight."
+  ],
+  "assayer": [
+   "Raw iron! Copper! Up from the deep this morning!",
+   "Lode maps! Find your own seam, read it with lapis!",
+   "Coal by the sack, ingots by the bar!"
   ]
  },
  "news": {

@@ -53,8 +53,9 @@ public final class MinePlanner {
                 VillagePlanner.WHY.set("no room for the shaft head at the mountain's foot");
                 return null;
             }
-            buildings();
+            // the store first, nearest the head; then the town round it
             assay();
+            buildings();
             if (plan.plots.size() < 5) {
                 VillagePlanner.WHY.set("only " + plan.plots.size() + " buildings fit");
                 return null;
@@ -149,7 +150,9 @@ public final class MinePlanner {
                 VillagePlan.Street a = plan.streets.get(u[0]), b = plan.streets.get(v[0]);
                 return Double.compare(Math.hypot(a.x()[u[1]] - headX, a.z()[u[1]] - headZ), Math.hypot(b.x()[v[1]] - headX, b.z()[v[1]] - headZ));
             });
+            int before = plan.plots.size();
             place(new Want("assay", 9, 7, 2, 1), slots);
+            if (plan.plots.size() == before) place(new Want("assay", 7, 7, 1, 1), slots);
         }
 
         @Override

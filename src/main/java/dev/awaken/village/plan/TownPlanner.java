@@ -448,7 +448,8 @@ public final class TownPlanner {
             double h = Math.atan2(a.z()[a.points() - 1] - a.z()[0], a.x()[a.points() - 1] - a.x()[0]);
             double d1 = h + Math.PI / 4, d2 = h + Math.PI * 5 / 4;
             int fx = (int) Math.round(Math.cos(d1) * 6.5), fz = (int) Math.round(Math.sin(d1) * 6.5);
-            plan.well = new int[]{fx, fz};
+            // the well the people and the troubles go to: a cell of the fountain's basin (its water)
+            plan.well = new int[]{fx + 1, fz};
             plan.props.add(new dev.awaken.city.CityPlan.Prop("fountain", fx - 2, fz - 2, fx + 2, fz + 2, 0, "", 0, ""));
             mark(fx - 2, fz - 2, fx + 2, fz + 2);
             int bx = (int) Math.round(Math.cos(d2) * 7), bz = (int) Math.round(Math.sin(d2) * 7);
@@ -478,16 +479,19 @@ public final class TownPlanner {
             plan.benches = bs.stream().mapToInt(Integer::intValue).toArray();
             // stalls round the edge, facing in: up to six, never on the streets' way across
             int made = 0;
-            for (int ring = g - 2; ring >= g - 4 && made < 6; ring--) {
-                for (int q = 0; q < 16 && made < 6; q++) {
-                    double ang = h + Math.PI / 8 + q * Math.PI / 8;
+            for (int ring = g - 1; ring >= g - 6 && made < 6; ring--) {
+                for (int q = 0; q < 32 && made < 6; q++) {
+                    double ang = h + Math.PI / 16 + q * Math.PI / 16;
                     int sx = (int) Math.round(Math.cos(ang) * ring), sz = (int) Math.round(Math.sin(ang) * ring);
                     boolean alongX = Math.abs(Math.sin(ang)) > Math.abs(Math.cos(ang));
                     int x0 = alongX ? sx - 1 : sx, z0 = alongX ? sz : sz - 1, x1 = alongX ? sx + 2 : sx + 1, z1 = alongX ? sz + 1 : sz + 2;
                     boolean ok = true;
                     for (int z = z0 - 1; z <= z1 + 1 && ok; z++)
-                        for (int x = x0 - 1; x <= x1 + 1 && ok; x++)
-                            ok = plan.kind(x, z) == dev.awaken.city.CityPlan.SQUARE && !taken(x, z) && !nearMain(x, z, 3.2);
+                        for (int x = x0 - 1; x <= x1 + 1 && ok; x++) {
+                            boolean in = x >= x0 && x <= x1 && z >= z0 && z <= z1;
+                            // the stall on the square clear of the main streets' way across it, a step round it free of things
+                            ok = !taken(x, z) && (!in || plan.kind(x, z) == dev.awaken.city.CityPlan.SQUARE && !nearMain(x, z, 2.4));
+                        }
                     if (!ok) continue;
                     // the counter toward the square's middle
                     String face = alongX ? (sz > 0 ? "N" : "S") : (sx > 0 ? "W" : "E");

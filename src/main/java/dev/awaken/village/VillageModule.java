@@ -57,6 +57,7 @@ public final class VillageModule {
             }
         });
         NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> {
+            dev.awaken.village.road.RoadNet.stopAhead();
             Plans.clear();
             dev.awaken.village.road.RoadNet.clear();
             dev.awaken.village.road.RoadWorld.close();
@@ -64,6 +65,7 @@ public final class VillageModule {
         });
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> VillageService.tick(e.getServer()));
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> dev.awaken.village.road.RoadAtlas.tick(e.getServer()));
+        NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> dev.awaken.village.road.RoadNet.prefetch(e.getServer()));
         NeoForge.EVENT_BUS.addListener(Inn::onRespawn);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, VillageModule::onBroken);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, VillageModule::onExploded);

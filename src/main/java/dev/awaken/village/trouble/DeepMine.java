@@ -125,7 +125,7 @@ public final class DeepMine implements Plot {
         t.place = head(l.plan()).asLong();
         t.placeName = "the mine";
         t.due = c.day() + 2;
-        c.st().memory(l.key()).data.put("mine_broke", c.day());
+        c.st().memory(l.key()).data.put("mine_broke", c.day() + 1);
         l.settlement().alarm(head(l.plan()), 36);
         t.put("rung", c.now());
         String who = TroubleText.given(l.settlement().personName(t.person));
@@ -157,11 +157,12 @@ public final class DeepMine implements Plot {
                     home++;
                     continue;
                 }
-                if (r.getY() >= p.baseY + p.mine.lift() - 1 && r.position().distanceToSqr(Vec3.atBottomCenterOf(head(p))) < 7 * 7) {
+                if (r.getY() >= p.baseY + p.mine.lift() - 1 && r.position().distanceToSqr(Vec3.atBottomCenterOf(head(p))) < 10 * 10) {
                     if (r.carried()) r.setDown(false);
                     r.home = mouth(p, -0.6 + k * 0.6, 2.4);
                     r.mode(Rescuee.HOME);
                     r.say(TroubleText.line(c.level(), "village.trouble.deep_mine.up", c.now() + k));
+                    home++;
                 }
             }
             if (home >= n && n > 0) {
@@ -178,7 +179,7 @@ public final class DeepMine implements Plot {
     }
 
     /** The wall between the face and the nest gives once its ground is loaded (where the miners broke through). */
-    private void breach(Ctx c, Trouble t, VillagePlan p) {
+    private static void breach(Ctx c, Trouble t, VillagePlan p) {
         if (t.get("wall", 0) != 0) return;
         BlockPos f = face(p);
         if (!c.level().isLoaded(f)) return;
@@ -254,7 +255,7 @@ public final class DeepMine implements Plot {
         }
     }
 
-    private void wake(Ctx c, Trouble t, VillageService.Live l, BlockPos cav) {
+    private static void wake(Ctx c, Trouble t, VillageService.Live l, BlockPos cav) {
         ServerLevel level = c.level();
         VillagePlan.Mine m = l.plan().mine;
         // the miners, hurt, at the cavern's far side
@@ -315,7 +316,7 @@ public final class DeepMine implements Plot {
         return at;
     }
 
-    @Nullable Rescuee miner(Ctx c, Trouble t, int k) {
+    static @Nullable Rescuee miner(Ctx c, Trouble t, int k) {
         long hi = t.get("m" + k + "_hi", 0), lo = t.get("m" + k + "_lo", 0);
         if (hi == 0 && lo == 0) return null;
         Entity e = c.level().getEntity(new UUID(hi, lo));
@@ -404,6 +405,66 @@ public final class DeepMine implements Plot {
         TroubleNet.ring(c.level(), Vec3.atCenterOf(head(l.plan())), 0xF6D58A, 14);
     }
 
+    /** The tour's hand on the deed: wake the nest, clear it, lead the miners, bring the roof down, or have them up at the mouth. */
+    static @Nullable String step(Ctx c, Trouble t, ServerPlayer p, String step) {
+        VillageService.Live l = c.live();
+        if (l == null) return null;
+        switch (step) {
+            case "wake" -> {
+                if (t.get("woke", 0) != 0) return "already awake";
+                breach(c, t, l.plan());
+                t.put("woke", 1);
+                wake(c, t, l, cavern(l.plan()));
+                return "the nest woke";
+            }
+            case "clear" -> {
+                int n = 0;
+                for (Entity e : c.level().getAllEntities())
+                    if (e.entityTags().contains(TAG + "_" + t.id) && e.isAlive()) {
+                        e.discard();
+                        n++;
+                    }
+                return n + " cleared";
+            }
+            case "lead" -> {
+                int n = 0;
+                for (int k = 0; k < t.get("miners", 0); k++) {
+                    Rescuee r = miner(c, t, k);
+                    if (r == null) continue;
+                    r.teleportTo(p.getX() + (k - 1) * 0.8, p.getY(), p.getZ() + 1.2);
+                    r.follow = p.getUUID();
+                    r.mode(Rescuee.FOLLOW);
+                    n++;
+                }
+                if (!t.helped(p.getUUID())) t.helpers.add(p.getUUID());
+                if (t.stage == BELL) {
+                    t.stage = FREED;
+                    t.since = c.now();
+                }
+                return n + " following";
+            }
+            case "fall" -> {
+                t.put("fall", l.plan().mine.reach2());
+                return "the roof comes down from the face";
+            }
+            case "up" -> {
+                VillagePlan pl = l.plan();
+                for (int k = 0; k < t.get("miners", 0); k++) {
+                    Rescuee r = miner(c, t, k);
+                    if (r == null) continue;
+                    if (r.carried()) r.setDown(false);
+                    Vec3 at = mouth(pl, -0.8 + k * 0.8, 4.2);
+                    r.teleportTo(at.x, at.y, at.z);
+                }
+                if (t.stage == BELL) t.stage = FREED;
+                return "up at the mouth";
+            }
+            default -> {
+                return null;
+            }
+        }
+    }
+
     @Override
     public boolean ask(Ctx c, Trouble t, ServerPlayer p, int rec) {
         VillageService.Live l = c.live();
@@ -487,7 +548,7 @@ public final class DeepMine implements Plot {
     public void miss(Ctx c, Trouble t) {
         VillageService.Live l = c.live();
         TroubleState.Memory mem = c.st().memory(t.village);
-        mem.data.put("mine_sealed", c.day());
+        mem.data.put("mine_sealed", c.day() + 1);
         c.st().setDirty();
         if (l != null && l.plan().mine != null) seal(c.level(), l.plan());
         Villages.history(c.level().getServer(), t.village, "Nobody came down. The miners got out through the old workings two days on, hurt, and the town sealed the mine for good.");
