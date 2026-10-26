@@ -35,6 +35,9 @@ final class ArmsWrist {
 
     private static final Map<Integer, Going> GOING = new HashMap<>();
 
+    /** The straight clips play (no Bendable Cuboids, so no elbows): their own wrist keys, where a rig solved them. */
+    private static final boolean STRAIGHT = !net.neoforged.fml.ModList.get().isLoaded("bendable_cuboids");
+
     /** The arm whose item is being resolved (0 none, 1 right, 2 left) and whose it is: read by WeaponRenderer. */
     static int marking, markedHolder = -1;
 
@@ -79,7 +82,7 @@ final class ArmsWrist {
         Minecraft mc = Minecraft.getInstance();
         if (g == null || mc.level == null) return false;
         float t = g.held() ? 0F : (mc.level.getGameTime() - g.start()) + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-        return t <= FpSwings.wristLength(g.style(), g.move()) && FpSwings.wrist(g.style(), g.move(), left, t, out);
+        return t <= FpSwings.wristLength(g.style(), g.move()) && FpSwings.wrist(g.style(), g.move(), left, STRAIGHT, t, out);
     }
 
     /** The player's render-state modifier: while a move turns the wrist, its hand items again, marked with their arm. */

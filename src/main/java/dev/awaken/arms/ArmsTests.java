@@ -221,6 +221,12 @@ final class ArmsTests {
                 String c = ArmsClips.of(st.def().id(), m);
                 h.assertTrue(c != null && anims.has(c) && anims.has(c + "_bent"), st.def().id() + " " + m + ": its clip " + c + " is in the file");
             }
+            // its held draw: its own (the pose its heavy is loosed from) or the shared one, looping, with its settle
+            String draw = ArmsClips.charge(st.def().id());
+            for (String name : new String[]{draw, draw + "_bent"}) {
+                var a = anims.getAsJsonObject(name);
+                h.assertTrue(a != null && a.has("loop") && ArmsClips.loops(draw) && anims.has(draw + "_end"), st.def().id() + "'s draw " + name + " loops, and settles");
+            }
         }
         for (String base : ArmsClips.ALL) {
             for (String name : new String[]{base, base + "_bent"}) {
@@ -351,9 +357,12 @@ final class ArmsTests {
                 // held draw (no wind-up: it starts as the charge held it)
                 float len = FpSwings.wristLength(st, e.getKey());
                 for (boolean left : new boolean[]{false, true}) {
-                    for (float t : def.windup() > 0 ? new float[]{0, len} : new float[]{len}) {
-                        if (FpSwings.wrist(st, e.getKey(), left, t, q)) {
-                            h.assertTrue(Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + "'s wrist starts and ends square");
+                    for (boolean straight : new boolean[]{false, true}) { // with Bendable Cuboids' elbows and without
+                        for (float t : def.windup() > 0 ? new float[]{0, len} : new float[]{len}) {
+                            if (FpSwings.wrist(st, e.getKey(), left, straight, t, q)) {
+                                h.assertTrue(Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + "'s wrist starts and ends square"
+                                        + (straight ? " (straight arms)" : ""));
+                            }
                         }
                     }
                 }
