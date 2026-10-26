@@ -1,0 +1,12 @@
+{
+  "features": {
+    "enabled": [
+      "awaken:awakened_villages"
+    ]
+  },
+  "pack": {
+    "description": "Awakened Villages: AWAKEN's own hamlets and villages replace vanilla's (new worlds only)",
+    "max_format": 121,
+    "min_format": 121
+  }
+}
