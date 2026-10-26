@@ -5743,19 +5743,22 @@ inside 8 chunks of its start chunk (the generator links a structure only that fa
 (`data/awaken/worldgen/structure_set/delve/`, from `tools/art/specs/caves.py`): sinkholes spacing 44 / separation 18
 chunks, mines 52/22, seeps 26/10, chutes 34/13, grottos 28/11; biomes `#minecraft:is_overworld` (the sinkhole and the
 mine also refuse oceans, rivers and beaches at the surface). Names by seed (`CaveNames`).
-- **Sinkhole** (`Sinkhole`): a round shaft radius 7-15, its floor 40-110 under the rim, laid beside a planned lode (W2's
+- **Sinkhole** (`Sinkhole`): a great round shaft radius 10-17, its floor 40-110 under the rim, laid beside a planned lode (W2's
   `LodePlans`, any ore but Deepglass) with its floor one under the heart: at the bottom a passage to a grotto lit by glow
-  lichen and glow berries where the heart glints in a niche of its far wall. The wall has noise (±1.2) and a funnel lip.
+  lichen and glow berries where the heart glints in a niche of its far wall. The wall has noise (±1.2); its top three blocks lean in (0.6 a block) so the lip is a
+  crisp edge with the dark opening under it, and the hole is cut 12 over the rim (a bump at its edge never caps it).
   **The shelves** (the E route down): rows every 3 blocks stacked in one sector, a row one block thick where the next runs
   under it (two high to walk), each row's end over the next one's start, alternating sides: walk a few blocks, drop 3.
   **The cleft** (the way back up): a crack cut into the wall 100° round from the shelves, vines in one straight column from
   the floor to the ground, step off the top onto it; vines and a mossy step stone at every drop too. **The dive**: opposite
   the shelves the wall falls sheer (±0.45 rad) from a smooth jutting lip beside a spring in a notch under the rim, whose
   water falls into a pool 5 deep. **The old rope**: a roped piton under the rim a quarter turn from the shelves, its line
-  32 down (`#awaken:runner_climbs`). Vines in the upper half, hanging roots under the shelves, moss on the shelves and
+  32 down (`#awaken:runner_climbs`). The way in is a stony path (cobble, mossy cobble, stone, gravel) cut down from the ground onto
+  the top row; `goto` stands you on it at the edge of the drop. Vines hang in curtains from the lip down its first 14
+  blocks, then in strands through the upper half; hanging roots under the shelves, moss on the shelves and
   floor. Mist by day and bats at dusk (below). The first sinkhole (`awaken:delve/first_sinkhole`, placement
   `awaken:near_city`): 600-900 from Carillon's centre (world origin without the city), never within 40° of north (the camp
-  road), radius 12-14, "The Opening"; its joint may be missing (it ends in its grotto).
+  road), radius 14-16, "The Opening"; its joint may be missing (it ends in its grotto).
 - **The Delvers' mine** (`Mine`): an adit (20-27 long, timber sets every 4, rails) into a hillside that rises 9+ in 18,
   the mine head (the winch over a 3x3 shaft, a foreman's office with a chest: the first Delver's log, the lode map, the old
   pick, lapis), a ladder 21 down to the first gallery (3 wide, 5 high, 40 long: dressed walls of polished andesite or
@@ -5807,9 +5810,9 @@ nest keeps up to three Hushlings or Drip Lurkers about it, one more every 30 s, 
 death quiets the seep for everyone (`CaveData`, schemaVersion 1): no +5, no nest, no hum or violet; "<name> falls
 quiet" (IMPORTANT); counter `awaken:seeps_quieted`. **A sinkhole's bats**: at dusk (12,400-13,200) 7-12 come up from
 mid-shaft, once a play-day. Places within 160 are sent for their look from outside (`CaveNet.Near`): a sinkhole's mist
-rising by day (a few soft wisps a second at dawn, thinning through the day, gone at night, most born in the shaft's top
-so they clear the rim, peak alpha 0.17-0.25, fading out within 2.5-8.5 of the camera so it never walls the view; our
-sprites `delve_mist`), a chute's draught at its mouth (`delve_draught`).
+rising by day (at dawn 0.3 + radius/28 wisps a tick, thinning through the day, gone at night; most born in the shaft's
+top so they clear the rim; 1.3-2.3 across, swelling 2.2x, peak alpha 0.28-0.38 on a soft sprite; fading out within
+2.5-8.5 of the camera so it never walls the view; our sprites `delve_mist`), a chute's draught at its mouth (`delve_draught`).
 Carving turns sand or gravel left hanging over the new air into sandstone or stone (a roof never pours in).
 `/awaken delve goto <kind>` (`CaveLocate`) stands you at the nearest place of a kind the world really made.
 
@@ -5900,9 +5903,11 @@ sinkhole may end in its grotto when no cave is near; a plain cave's own undergro
 **Not done in W5**: the Hollows den in a dripstone hall and the beast's cave under a hill (PLAN 8.2's other lairs); the
 Taken trouble's destination (W4); an ice chute (the stair slide runs on steps only); the cave sound judged by ear (a Mac
 listening check: `delve.cave.*`, `delve.deep.*`, `ascent.rappel_*`, the seep heart's voice). Not yet seen in a shot
-(changed after the one tour): the place caption, the mist's later numbers, the draught, three cave biomes' looks (`senses
-goto` now tries a biome's neighbouring patches when the first is solid rock); the way home's Now line ranks under a
-tracked quest's line, so the tour saw its thread only.
+(changed after the second tour, 40313392914): the great shaft's shape (radius 10-17, the leaning lip, the vine curtains,
+the stony way in), the mist's latest numbers, the place caption, the draught; the grotto lit (that tour's grotto shots
+came out black round a placed lantern, the chunks or their light not yet on the client); the dripstone and deep-dark
+looks read only dimly (lush reads). The way home's Now line ranks under a tracked quest's line, so the tours saw its
+thread only.
 
 ---------------------------------------------------------------------------------------------------------------------
 

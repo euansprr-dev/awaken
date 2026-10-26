@@ -183,7 +183,7 @@ final class CaveSites {
             if (tries >= (first ? 10 : 6)) break;
             if (l.ore() == Ore.DEEPGLASS) continue;
             var h = l.heartPos();
-            int rad = first ? 12 + rnd.nextInt(3) : 7 + rnd.nextInt(9);
+            int rad = first ? 14 + rnd.nextInt(3) : 10 + rnd.nextInt(8);
             double a = rnd.nextDouble() * Math.PI * 2;
             double off = rad + 13 + rnd.nextInt(5);
             int cx = Mth.floor(h.getX() + 0.5 - Math.cos(a) * off), cz = Mth.floor(h.getZ() + 0.5 - Math.sin(a) * off);

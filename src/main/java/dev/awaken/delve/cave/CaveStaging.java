@@ -18,7 +18,7 @@ final class CaveStaging {
         Frame f = new Frame(x, y, z, rot);
         return switch (kind) {
             case SINKHOLE -> {
-                int rad = 12, floor = y - 54;
+                int rad = 10 + (int) Math.floorMod(seed, 8L), floor = y - 54; // the world's range, 10-17
                 int hx = x + rad + 16, hy = floor + 1, hz = z + 3;
                 yield new Spec(kind, x, floor, z, 0, seed, true, x - rad - 13, floor, z + 6,
                         new int[]{rad, y, 1, hx, hy, hz, 200, 20, 0});

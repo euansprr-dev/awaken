@@ -39,14 +39,17 @@ final class Sinkhole {
 
     static BoundingBox box(Spec s) {
         int r = s.p(R) + 10;
-        BoundingBox b = new BoundingBox(s.x() - r, s.y() - POOL_DEPTH - 3, s.z() - r, s.x() + r, s.p(RIM) + 8, s.z() + r);
+        BoundingBox b = new BoundingBox(s.x() - r, s.y() - POOL_DEPTH - 3, s.z() - r, s.x() + r, s.p(RIM) + ABOVE + 1, s.z() + r);
         if (s.p(LODE) != 0) b.encapsulate(new BoundingBox(s.p(HX) - 6, s.p(HY) - 3, s.p(HZ) - 6, s.p(HX) + 6, s.p(HY) + 6, s.p(HZ) + 6));
         return b;
     }
 
-    /** The wall's radius at each height (rows) and angle (BINS columns), noise along the wall, a funnel at the top. */
+    /** How far over the rim the hole is cut (the ground round it may stand up to 9 higher). */
+    static final int ABOVE = 12;
+
+    /** The wall's radius at each height (rows) and angle (BINS columns), noise along the wall, the lip leaning in. */
     static float[][] walls(Spec s) {
-        int y0 = s.y(), top = s.p(RIM) + 4, rad = s.p(R);
+        int y0 = s.y(), top = s.p(RIM) + ABOVE, rad = s.p(R);
         float[][] w = new float[top - y0 + 1][BINS];
         double water = Math.toRadians(s.p(WATER));
         for (int y = y0; y <= top; y++) {
@@ -59,7 +62,8 @@ final class Sinkhole {
                 } else {
                     double n = Carve.noise(s.seed() + 1, s.x() + Math.cos(a) * rad * 1.3, y * 1.0, s.z() + Math.sin(a) * rad * 1.3, 8);
                     r = rad + (n - 0.5) * 2.4;
-                    if (y > s.p(RIM) - 4) r += (y - (s.p(RIM) - 4)) * 0.75; // the lip opens out like a funnel
+                    // the lip leans in over the shaft: a crisp edge with the dark opening under it, never a terraced dip
+                    if (y > s.p(RIM) - 3) r -= Math.min(y - (s.p(RIM) - 3), 3) * 0.6;
                 }
                 if (y < y0 + 5) r += (y0 + 5 - y) * 0.3; // the floor bellies out into the cave below
                 w[y - y0][b] = (float) r;
@@ -116,7 +120,7 @@ final class Sinkhole {
                 if (d > reach) continue;
                 double a = angleOf(s, x + 0.5, z + 0.5);
                 double fromShelf = delta(a, shelf);
-                for (int y = yf; y <= rim + 4; y++) {
+                for (int y = yf; y <= rim + ABOVE; y++) {
                     float r = wall(w, s, y, a);
                     if (d < r) Carve.air(k, x, y, z);
                 }
@@ -209,10 +213,11 @@ final class Sinkhole {
                 for (int side = -1; side <= 1; side++) {
                     double aa = a + side * 0.9 / Math.max(5, rr);
                     int px = Mth.floor(cx + Math.cos(aa) * rr), pz = Mth.floor(cz + Math.sin(aa) * rr);
-                    if (i > 0) Carve.put(k, px, fy - 1, pz, i < 2 ? shelfBlock(s, px, fy - 1, pz) : Blocks.COARSE_DIRT.defaultBlockState());
-                    for (int y = fy; y <= rim + 4; y++) Carve.air(k, px, y, pz);
+                    if (i > 0) Carve.put(k, px, fy - 1, pz, i < 2 || Carve.rand(s.seed() + 14, px, fy, pz) < 0.6
+                            ? shelfBlock(s, px, fy - 1, pz) : Blocks.GRAVEL.defaultBlockState());
+                    for (int y = fy; y <= rim + ABOVE; y++) Carve.air(k, px, y, pz);
                 }
-                if (i == 7) k.mark("start", Mth.floor(cx + Math.cos(a) * rr), fy, Mth.floor(cz + Math.sin(a) * rr));
+                if (i == 3) k.mark("start", Mth.floor(cx + Math.cos(a) * rr), fy, Mth.floor(cz + Math.sin(a) * rr));
             }
         }
 
@@ -275,7 +280,8 @@ final class Sinkhole {
                     if (!Carve.open(k, x, y, z) || !Carve.solidAt(k, x + toWall.getStepX(), y, z + toWall.getStepZ())) continue;
                     double depth = (rim - y) / (double) Math.max(1, rim - yf);
                     double vines = Carve.noise(s.seed() + 7, x, y * 0.25, z, 5);
-                    if (depth < 0.55 && vines > 0.62) Carve.vine(k, x, y, z, toWall);
+                    // curtains from the lip down its first fourteen blocks, then strands where the light still reaches
+                    if (rim - y < 14 ? vines > 0.42 : depth < 0.55 && vines > 0.62) Carve.vine(k, x, y, z, toWall);
                     else if (depth > 0.7 && Carve.rand(s.seed() + 8, x, y, z) < 0.05) Carve.lichen(k, x, y, z);
                     if (Carve.rand(s.seed() + 9, x, y, z) < 0.25) Carve.roots(k, x, y, z);
                 }
