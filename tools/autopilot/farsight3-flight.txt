@@ -1,5 +1,5 @@
-# Far Sight 3 in flight over new land (SPEC §20): from Carillon east at about 32 blocks a second, 60 blocks up, for
-# about 2 km, a frame every 5 s and the status (chunks asked for ahead, City Sight's dissolves in as real land
+# Far Sight 3 in flight over new land (SPEC §20): from Carillon east at about 32 blocks a second, 200 blocks up, for
+# about 2 km, a frame every 5 s (and debug view 3 every 10 s: far terrain blue, City Sight green) and the status (chunks asked for ahead, City Sight's dissolves in as real land
 # replaces the far view's guess). Run: PACK=perf,world TECTONIC=awakened RD=16 LENS=cinematic SLOT_WHO=far-sight \
 #      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/farsight3-flight.txt 600
 world fs3fly survival 20261024
@@ -16,7 +16,7 @@ hud off
 cmd gamerule send_command_feedback false
 cmd gamerule advance_time false
 cmd time set 5000
-cmd tp @s ~ ~60 ~ -90 12
+cmd tp @s ~ ~200 ~ -90 20
 wait 300
 farsight status
 shot fs3f_000
@@ -63,6 +63,10 @@ wait 10
 cmd tp @s ~16 ~ ~ -90 12
 wait 10
 shotnow fs3f_020
+farsight debug 3
+wait 2
+shotnow fs3f_020_debug
+farsight debug 0
 farsight status
 cmd tp @s ~16 ~ ~ -90 12
 wait 10
@@ -107,6 +111,10 @@ wait 10
 cmd tp @s ~16 ~ ~ -90 12
 wait 10
 shotnow fs3f_040
+farsight debug 3
+wait 2
+shotnow fs3f_040_debug
+farsight debug 0
 farsight status
 cmd tp @s ~16 ~ ~ -90 12
 wait 10
@@ -151,6 +159,10 @@ wait 10
 cmd tp @s ~16 ~ ~ -90 12
 wait 10
 shotnow fs3f_060
+farsight debug 3
+wait 2
+shotnow fs3f_060_debug
+farsight debug 0
 farsight status
 farsight debug 3
 wait 4

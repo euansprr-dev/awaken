@@ -210,6 +210,14 @@ public final class VoxelCapture {
                 loadedOne = true;
                 chunk = overworld.getChunk(cx, cz);
             }
+            // a chunk the light engine hasn't finished: taken once it has (without its sky light every face would read
+            // as a dark room's, and the chunk would stand as a hole)
+            if (!chunk.isLightCorrect()) {
+                synchronized (PENDING) {
+                    DIRTY.put(key, overworld.getServer().getTickCount());
+                }
+                continue;
+            }
             VoxelSnapshot s = VoxelSnapshot.take(overworld, chunk);
             captured++;
             if (s == null) continue;

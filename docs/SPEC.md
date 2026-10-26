@@ -1600,6 +1600,17 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   on its own thread at each level save and, waited for (at most 10 s), when the server stops. A start, and every 10 s
   after, reads back what lies within 1.7 km of the player and isn't tracked (the world's own copy wins), handed over
   as the client takes them.
+- **Real land ahead** (`VoxelAhead`, Far Sight 3's shadow generator as built): where trees will stand can't be
+  replayed without growing them (the game's placement and a tree's growth draw from one random stream in turn), so
+  the exact way is the real chunks. While City Sight draws and the server's smoothed tick stays under 30 ms, every 10
+  ticks it asks for the two best chunks (nearest, ahead before behind) in a band 3 chunks past the view distance and a
+  35° cone 12 further along the player's heading, at most 6 waiting, held by Awaken's own ticket (`farsight_ahead`:
+  loading only, never ticking, timing out 40 ticks after the chunk is ready to save). City Sight captures them on load,
+  once the light engine has finished the chunk (`isLightCorrect`; else 2 s later): without its sky light every face
+  reads as a dark room's and the chunk would stand as a hole.
+- **Dissolves**: a chunk new to City Sight dissolves in over 1 s (its share in the chunk table) while the far terrain
+  and far trees under it dissolve out in the complementary 4×4 dither (the coverage mask carries the same share), so
+  wherever the far view's guess differed from the real land it changes gently, never pops.
 - **Levels follow the air**: a City Sight level gives way once its cells span `PIXELS` / transmittance pixels (the air's
   haze at that distance, 4× in rain): hazier distance needs less detail.
 - **Work ahead of the camera**: the far patches' queue ranks from where the camera will be in 1.5 s at its smoothed
