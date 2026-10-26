@@ -143,8 +143,9 @@ public final class AwakenConfig {
         public static final ModConfigSpec.IntValue FAR_SIGHT_NEAR = C
                 .comment("With Far Sight on (single player, the overworld), the real chunks past this many are drawn by City Sight from",
                         "its own lighter meshes instead of Sodium; the world still loads and simulates to your render distance.",
-                        "0: Sodium draws to your render distance, as before.")
-                .defineInRange("farSightNear", 12, 0, 32);
+                        "0: Sodium draws to your render distance, as before. Experimental: City Sight's meshes leave out caves",
+                        "under overhangs, which then show as holes.")
+                .defineInRange("farSightNear", 0, 0, 32);
         public static final ModConfigSpec SPEC = C.build();
 
         private Client() {}

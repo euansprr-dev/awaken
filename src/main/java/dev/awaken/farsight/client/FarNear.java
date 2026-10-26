@@ -11,15 +11,16 @@ import net.neoforged.neoforge.client.event.RenderFrameEvent;
 
 /**
  * Far blocks handed to City Sight (SPEC §20, frame-budget build C, 2026-10-26): Sodium draws only the near chunks
- * ({@link #near}, 12 by default), City Sight the real chunks past them from its own greedy meshes, and the rings past
- * that, while the world still loads, simulates and sends everything to the player's render distance. Sodium and the
- * rest of the renderer read the client's effective render distance (the setting capped by the server's), so at the
- * start of each frame, before anything reads it, the server's value on the client is set to the near distance; the
- * integrated server keeps loading to the setting. Lens keeps its haze (it gets the real render distance's fog end,
- * FarTerrain). Entities draw to the game's own distance for the near one: the view scale it derives from the effective
- * distance (between the render distance over 8 and 2.5) has no hook short of a mixin, so a one-block mob draws to 96
- * blocks at 12 chunks against 160 at 24 (none of them past 12 chunks either way); the entity distance setting at 175%
- * gives the 160 back (setting it here would turn the player's graphics preset to custom).
+ * ({@link #near}; off by default, held back: City Sight's meshes leave out caves under overhangs, which show as holes,
+ * and over the city they cost more than Sodium's), City Sight the real chunks past them from its own greedy meshes,
+ * and the rings past that, while the world still loads, simulates and sends everything to the player's render
+ * distance. Sodium and the rest of the renderer read the client's effective render distance (the setting capped by
+ * the server's), so at the start of each frame, before anything reads it, the server's value on the client is set to
+ * the near distance; the integrated server keeps loading to the setting. Lens keeps its haze (it gets the real render
+ * distance's fog end, FarTerrain). Entities draw to the game's own distance for the near one: the view scale it derives
+ * from the effective distance (between the render distance over 8 and 2.5) has no hook short of a mixin, so a one-block
+ * mob draws to 96 blocks at 12 chunks against 160 at 24 (none of them past 12 chunks either way); the entity distance
+ * setting at 175% gives the 160 back (setting it here would turn the player's graphics preset to custom).
  *
  * <p>Single player, the overworld, with Carillon's City Sight on; anywhere else, or off, the effective distance is the
  * setting again (Sodium rebuilds once as it changes).
@@ -33,7 +34,7 @@ public final class FarNear {
     private static int applied;
     /**
      * Measuring (autopilot {@code farsight occlusion on|off|setting}): Sodium's occlusion culling, which it takes from the
-     * game's smart cull (Sodium misses an overhang's cave with it on). Null leaves the game's own.
+     * game's smart cull (off, 2026-10-27: 1.3 ms more at RD 24, and the rim cave's void stays). Null leaves the game's.
      */
     static Boolean occlusion;
     private static boolean occlusionSet;

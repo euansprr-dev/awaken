@@ -1,8 +1,9 @@
 # Far blocks handed to City Sight (SPEC §20, perf build C): Sodium draws the near 12 chunks, City Sight the real chunks
 # past them (the world still loads to the render distance), with the hand-off off (Sodium to 24, as before) and on at
-# the same moment: the Roost (and its split by part, and vanilla's multi-draw-indirect off for one window), the market
-# avenue looking down its length (the border at 192 m in shot), the countryside 900 blocks out, a 20 s glide over the city; then the rim cave's void
-# in a copy of Euan's world (debug 2: City Sight's fill of what Sodium culls, orange). perf-26oct's set-up.
+# the same moment: the Roost (and its split by part, and Sodium's occlusion culling off, which draws an overhang's cave it
+# misses), the market avenue looking down its length (the border at 192 m in shot), the countryside 900 blocks out, a 20 s
+# glide over the city; then the rim cave's void in a copy of Euan's world: Sodium to 24 and at 12, its occlusion culling on
+# and off, and at his own render distance, 15. perf-26oct's set-up.
 # Run (alone on the Mac): WORLD_FROM="/Volumes/MEDIA/Awaken-play/run-pack/saves/New World (2)" XMX=8G ZGC=1 \
 #   PACK=perf,world TECTONIC=awakened RD=24 LENS=cinematic SLOT_WHO=far-sight \
 #   /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/farsight-handoff.txt 900
@@ -55,20 +56,21 @@ farsight status
 perf roost_parts 6
 farsight status
 farsight time parts off
-mdi off
-wait 40
+# Sodium's occlusion culling off: what drawing the caves it misses costs, Sodium to 24, then with the hand-off
+farsight near off
+farsight occlusion off
+wait 200
 pixels gpu reset
-perf roost_mdi_off 8
-pixels gpu roost_mdi_off
+perf roost_sodium24_occ_off 8
+pixels gpu roost_sodium24_occ_off
 farsight status
-mdi on
-farsight part fill off
-wait 40
+farsight near 12
+wait 200
 pixels gpu reset
-perf roost_no_fill 8
-pixels gpu roost_no_fill
+perf roost_near12_occ_off 8
+pixels gpu roost_near12_occ_off
 farsight status
-farsight part fill on
+farsight occlusion setting
 # ---- the market avenue, looking down its length: the border in shot
 cmd awaken city view market
 wait 200
@@ -79,6 +81,13 @@ perf market_sodium24 8
 pixels gpu market_sodium24
 farsight status
 shot fn_market_off
+farsight occlusion off
+wait 200
+pixels gpu reset
+perf market_sodium24_occ_off 8
+pixels gpu market_sodium24_occ_off
+farsight status
+farsight occlusion setting
 farsight near 12
 wait 200
 pixels gpu reset
@@ -143,8 +152,8 @@ farsight status
 cmd tp @s ~-279 ~ ~-279
 wait 60
 farsight time parts off
-# ---- the rim cave's void in Euan's world (a copy): over the Commons looking east, the hand-off on, debug 2 (the fill
-# orange), then off
+# ---- the rim cave's void in Euan's world (a copy), over the Commons looking east: Sodium to 24, its occlusion culling on
+# (as today) and off; the hand-off, the same; then his own render distance, 15
 leave
 world copied
 waitworld
@@ -155,16 +164,41 @@ cmd gamerule advance_time false
 cmd time set 6000
 cmd gamemode spectator
 cmd tp @s 222 140 622 -90 8
-farsight near 12
-wait 500
-shot fn_void
-farsight debug 2
-wait 20
-shot fn_void_d2
-farsight debug 0
-farsight status
 farsight near off
-wait 200
+wait 500
+pixels gpu reset
+perf void_sodium24 6
+pixels gpu void_sodium24
 shot fn_void_off
+farsight occlusion off
+wait 200
+pixels gpu reset
+perf void_sodium24_occ_off 6
+pixels gpu void_sodium24_occ_off
+shot fn_void_off_occ_off
+farsight occlusion setting
+farsight near 12
+wait 200
+pixels gpu reset
+perf void_near12 6
+pixels gpu void_near12
+shot fn_void_on
+farsight occlusion off
+wait 200
+pixels gpu reset
+perf void_near12_occ_off 6
+pixels gpu void_near12_occ_off
+shot fn_void_on_occ_off
+farsight occlusion setting
+farsight status
+opt renderDistance 15
+farsight near off
+wait 300
+shot fn_void15
+farsight occlusion off
+wait 200
+shot fn_void15_occ_off
+farsight occlusion setting
+opt renderDistance 24
 farsight near setting
 quit
