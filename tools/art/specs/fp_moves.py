@@ -203,8 +203,13 @@ clip("fp_lower", 8, fists=True, to_stance=True,
      off=[(0, fist(-0.3, -0.6, -0.7), "linear"), (5, fist(-0.26, -0.04, -0.82), "easeinoutsine"), (8, mf(HANG_FIST), "easeoutsine")],
      note="down onto the hands at the edge")
 # The ledge jump up: a pull down, then both hands reach high for the next lip and catch it.
-LU = [(0, HANG_FIST, "linear"), (2, fist(0.26, -0.2, -0.8), "easeinquad"), (4, fist(0.24, 0.24, -0.85), "easeoutcubic"), (8, HANG_FIST, "easeinoutsine")]
-clip("fp_ledge_up", 8, fists=True, to_stance=True, main=LU, off=[(t, mf(h), e) for t, h, e in LU], events=[(4, "catch")], note="pull, reach high, catch")
+# Its beats match the body's leap (RunnerMoves: load 2, launch, a tick at the apex, the fall into the catch; played at
+# the speed that lands the catch with the body): the hands pull down on the load, fly up past the lip on the launch,
+# hang over it at the apex, slam down onto the new lip and take the weight.
+LU = [(0, HANG_FIST, "linear"), (2, fist(0.27, -0.24, -0.8), "easeinquad"), (5, fist(0.24, 0.3, -0.86), "easeoutcubic"),
+      (7, fist(0.25, 0.26, -0.85), "linear"), (8.5, fist(0.26, -0.09, -0.82), "easeinquad"), (10, HANG_FIST, "easeoutsine")]
+clip("fp_ledge_up", 10, fists=True, to_stance=True, main=LU, off=[(t, mf(h), e) for t, h, e in LU], events=[(2, "load"), (8.5, "catch")],
+     note="pull down on the load, fly up past the lip, hang, slam onto the new lip")
 
 
 def ledge_side(left):

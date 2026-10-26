@@ -3040,7 +3040,8 @@ A of the Hands plan): "Shift takes you down, Jump takes you off".
   that brakes into the hold.
 - **On it**: no keys holds still (vanilla drifts down); forward climbs at 0.2 b/t, 0.3 with the free-run held (the
   free-run's pace, unchanged); Shift held slides, +0.06 a tick to 0.65 b/t; letting go of Shift brakes to a hold over 4
-  ticks; Jump alone lunges 1.2 up the line (6 ticks, once per 10); Jump + back kicks off the wall (0.5 out, 0.42 up,
+  ticks; Jump alone lunges 1.2 up the line (8 ticks, once per 12: a load 0.08 down, a launch that slows like a throw to
+  0.12 over, a settle; §17.26); Jump + back kicks off the wall (0.5 out, 0.42 up,
   turning to face out over 5 ticks: the ledge back-jump's numbers); Jump + left/right swings out sideways (0.42 along,
   0.12 out, 0.36 up). The foot of the line lands you (no fall damage at any slide speed); with no keys at the foot you
   step off. **The top** always leads somewhere (Euan, 2026-10-25: "the last block doesn't let me through"): it is
@@ -3083,7 +3084,7 @@ A of the Hands plan): "Shift takes you down, Jump takes you off".
   face with its corbel table, band and parapet gap: the climb reaches the top, there's a lip, and the hang climbs out on
   top). Tour: `tools/autopilot/anims-pipe.txt` (PACK=feel).
 
-### 17.24 Dropping to the ledge below (Euan, 2026-10-25: "I'm on an edge already holding it, and there's one below")
+### 17.25 Dropping to the ledge below (Euan, 2026-10-25: "I'm on an edge already holding it, and there's one below")
 In a hang, **Shift** lets go and catches the next ledge below when there is one (`RunnerRules.edgeBelow`): the same
 face direction, its top 0.9-3.2 under the held one (the nearest), its face up to 1.4 out from the hanging body (a sill
 or a balcony sticking out) or a little in, and the way to it free. The body goes out first when the lower face sticks
@@ -3096,6 +3097,28 @@ the claimed hold, its top within the drop's band of the held one. Test: `runner_
 one out: the drop catches the sill from its own face and the server takes it; no sill, nothing to catch and the server
 refuses).
 
+
+### 17.26 Leaps with momentum (Euan, 2026-10-26: "it just feels like I'm basically floating up. So it doesn't feel like a jump")
+Every jump out of a hold has beats: a load, a launch that slows like a throw against gravity, a moment at the top, and a
+catch with weight. The body's own path (client, `RunnerMoves`; the server checks only where it lands, as before):
+- **Ledge jump up and sideways** (`startLeap`): the load, the body dipping 0.12 under the hold over 2 ticks (none when
+  something is under it); the launch, an ease-out (1 - (1 - s)², a constant deceleration) to the apex, 0.2 over the
+  target hold up (0.35 over the higher hold sideways; the target's own height when there's no room over it), over 3
+  ticks + one per block up (3 sideways), 85% of the way across by then; one tick of hang there; the fall into the hold
+  over 2 ticks (3 sideways), accelerating (s²). A jump up of 2 is 10 ticks (was 10 on one smoothstep curve).
+- **The catch**: the body jolts down on the hands and settles (0.08 × e^(-t/2.2) × cos(1.25 t) under the hold for 10
+  ticks; 1.4× after a drop), the grab's sound a little deeper.
+- **The climb out**: a 2-tick load (0.1 down) before the push up and over (10 ticks).
+- **The pipe hop**: a load 0.08 down, a launch that slows to 0.12 over the 1.2, a settle (8 ticks).
+- **The view** (`FeelDirector`, off with reduced motion): it sinks with the load (1.1°), lifts on the launch (2.4°, the
+  frame opening 2.5%), jolts down on the catch (2.6°, a touch of shake); the jump back off a ledge and the kick off a
+  pipe lift it (0.9, 0.8), the hop's launch too (0.7).
+- **Sound**: a push on the launch (the wall jump's, quiet), the catch's grab.
+- **Hands and figure**: first person's `fp_ledge_up` (10 ticks, played at the speed that lands its catch with the body)
+  pulls down on the load, flies up past the lip, hangs, slams onto the new lip; third person's `body_ledge_up` (10
+  ticks) pulls and tucks, kicks and stretches, holds at the apex, takes the catch. The kick, the swing out and the jump
+  back were already thrown by real velocity.
+- Tour: `tools/autopilot/anims-leaps.txt` (first person and the shoulder view).
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
