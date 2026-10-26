@@ -1,5 +1,5 @@
-# Far Sight's steadiness (SPEC §20, Euan's play: far snow massifs glittered as he moved): the meadow view of the snow
-# massif in the refshots world (fs2ref), stepping 0.3 blocks and turning half a degree between frames 4 ticks apart, once
+# Far Sight's steadiness (SPEC §20, Euan's play: far snow massifs glittered as he moved): high over the jagged peaks in
+# the refshots world (fs2ref), far massifs filling the view, stepping 0.3 blocks between frames 4 ticks apart, once
 # with part "steady" off (the old pixel-wide, screen-dithered columns) and once on; each pair is compared pixel by
 # pixel over the far massif only (sky left out).
 world fs2ref creative 20261025
@@ -22,52 +22,52 @@ info
 cmd gamemode spectator
 lens cinematic
 cmd time set 6000
-cmd awaken terrain visit minecraft:meadow
+cmd awaken terrain visit minecraft:jagged_peaks
 wait 300
-cmd tp @s ~ ~3 ~ -90 -2
+cmd tp @s ~ ~140 ~ 180 8
 wait 600
 farsight status
 farsight part steady off
 wait 20
 shotnow fs2s_off_0a
-cmd tp @s ~0.3 ~ ~ ~0.5 ~
+cmd tp @s ~0.3 ~ ~
 wait 4
 shotnow fs2s_off_0b
 wait 10
 shotnow fs2s_off_1a
-cmd tp @s ~0.3 ~ ~ ~0.5 ~
+cmd tp @s ~0.3 ~ ~
 wait 4
 shotnow fs2s_off_1b
 wait 10
 shotnow fs2s_off_2a
-cmd tp @s ~0.3 ~ ~ ~0.5 ~
+cmd tp @s ~0.3 ~ ~
 wait 4
 shotnow fs2s_off_2b
 wait 10
 shotnow fs2s_off_3a
-cmd tp @s ~0.3 ~ ~ ~0.5 ~
+cmd tp @s ~0.3 ~ ~
 wait 4
 shotnow fs2s_off_3b
 wait 10
 farsight part steady on
 wait 20
 shotnow fs2s_on_0a
-cmd tp @s ~0.3 ~ ~ ~0.5 ~
+cmd tp @s ~0.3 ~ ~
 wait 4
 shotnow fs2s_on_0b
 wait 10
 shotnow fs2s_on_1a
-cmd tp @s ~0.3 ~ ~ ~0.5 ~
+cmd tp @s ~0.3 ~ ~
 wait 4
 shotnow fs2s_on_1b
 wait 10
 shotnow fs2s_on_2a
-cmd tp @s ~0.3 ~ ~ ~0.5 ~
+cmd tp @s ~0.3 ~ ~
 wait 4
 shotnow fs2s_on_2b
 wait 10
 shotnow fs2s_on_3a
-cmd tp @s ~0.3 ~ ~ ~0.5 ~
+cmd tp @s ~0.3 ~ ~
 wait 4
 shotnow fs2s_on_3b
 wait 10

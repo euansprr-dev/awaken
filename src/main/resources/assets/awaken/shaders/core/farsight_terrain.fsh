@@ -156,10 +156,13 @@ void main() {
     vec3 reach = vec3(vRel.x, vRel.y - (water ? depth : 0.0), vRel.z);
     // far water stays under the real water too (unless the camera is under the sea): wherever a real section isn't drawn
     // this frame (Sodium's culling, a chunk still meshing) the sea shows, never the clear colour through a hole
-    bool underReal = !(water && FarFog.z >= FarFog.w);
-    if (underReal && length(reach) < FarDepth.z + FarDepth.w * bayer4(gl_FragCoord.xy)) {
+    bool underReal = !(water && FarFog.z >= FarFog.w), fillsUnder = false;
+    if (length(reach) < FarDepth.z + FarDepth.w * bayer4(gl_FragCoord.xy)) {
         ivec2 chunk = (FarCamInt.xz >> 4) + ivec2(floor(rel / 16.0));
-        if (texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5) {
+        // far water kept under the real water only fills where a real section isn't drawn: it shows as plain deep water,
+        // never a sunlit sandbar through the real surface
+        fillsUnder = !underReal && texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5;
+        if (underReal && texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5) {
             // debug view 2: where the mask hides far terrain, red instead (red that shows is a hole the chunks leave)
             if (FarCam.w > 1.5) { fragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
             discard;
@@ -200,7 +203,7 @@ void main() {
     if (water) {
         // shallows show their sandy floor through the water; deep water keeps its colour
         vec3 shallow = mix(vec3(0.80, 0.76, 0.58) * (top.r + top.g + top.b) / 1.2, top * 1.5, 0.5);
-        top = mix(shallow, top, smoothstep(1.0, 9.0, depth));
+        top = fillsUnder ? top : mix(shallow, top, smoothstep(1.0, 9.0, depth));
     } else {
         float jag = 0.25 * (grain - 0.5);
         vec3 STONE = ROCKS[min((flags >> 4) & 7, 4)];
