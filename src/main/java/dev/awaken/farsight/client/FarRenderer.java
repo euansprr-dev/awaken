@@ -333,6 +333,16 @@ final class FarRenderer implements AutoCloseable {
         }
     }
 
+    /** Whether chunk (cx, cz) is shown in the chunk mask (only meaningful within 31 chunks of the camera). */
+    boolean shown(int cx, int cz) {
+        return chunkBytes.get(((cz & 63) << 6) | (cx & 63)) != 0;
+    }
+
+    /** Whether a camera-relative box is in this frame's view (after {@link #plan}). */
+    boolean inView(float ax, float ay, float az, float bx, float by, float bz) {
+        return frustum.testAab(ax, ay, az, bx, by, bz);
+    }
+
     /** Whether every chunk under this camera-relative rectangle is shown in the chunk mask (loaded and meshed). */
     private boolean allShown(float ax, float az, float bx, float bz) {
         int x0 = Math.floorDiv((int) Math.floor(planX + ax), 16), x1 = Math.floorDiv((int) Math.floor(planX + bx) - 1, 16);
@@ -369,7 +379,8 @@ final class FarRenderer implements AutoCloseable {
     void draw(FarField field, RenderTarget main, Matrix4fc viewRotation, double camX, double camY, double camZ, Vector3f sun,
             float sunStrength, Vector3f sunColour, float golden, float haze, float rain, float mistFloor, float mistDepth, float mistDensity,
             float mistCover, float fogStart, float fogEnd, float clipStart,
-            float clipBand, int realWithin, int seaLevel, boolean zeroToOne, GpuTextureView lightmap, List<FarLandmarks.Landmark> landmarks) {
+            float clipBand, int realWithin, int seaLevel, boolean zeroToOne, GpuTextureView lightmap, List<FarLandmarks.Landmark> landmarks,
+            VoxelLayer voxels) {
         depth(main);
         // clip.z = A + B * clip.w: Far Sight's own planes on the game's x, y and w (so view bobbing and FOV still apply)
         float a, b;
@@ -440,6 +451,7 @@ final class FarRenderer implements AutoCloseable {
                 pass.setUniform("ShadeSampler", field.shadeView, nearest);
                 pass.setUniform("LightSampler", lightmap, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
                 pass.setUniform("ChunkSampler", chunksView, nearest);
+                pass.setUniform("VoxelSampler", voxels.coverageView, nearest);
                 int bound = -1;
                 for (int i = 0; i < pieces; i++) {
                     int k = pW[i] / 8 - 1;
@@ -451,6 +463,8 @@ final class FarRenderer implements AutoCloseable {
                     pass.drawIndexed(pW[i] * pH[i] * INDICES_PER_CELL, 1, 0, 0, 0);
                 }
             }
+            // City Sight: the real chunks' blocks, after the terrain (which steps aside where they stand)
+            if (voxels.any()) voxels.draw(pass, frame, lightmap, chunksView);
             if (treeDraws > 0) {
                 GpuBuffer slots = treeSlots.currentBuffer();
                 try (var view = slots.map(false, true)) {
@@ -477,6 +491,7 @@ final class FarRenderer implements AutoCloseable {
                 pass.setUniform("HeightSampler", field.heightView, nearest);
                 pass.setUniform("LightSampler", lightmap, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
                 pass.setUniform("ChunkSampler", chunksView, nearest);
+                pass.setUniform("VoxelSampler", voxels.coverageView, nearest);
                 pass.setIndexBuffer(treeIndices, IndexType.SHORT);
                 if (indirect) {
                     GpuBuffer commands = treeCommands.currentBuffer();

@@ -281,6 +281,8 @@ public final class FarColumns {
                 // over; its columns skip the terrain solve
                 CityLayout l = this.seed != 0 ? City.layout() : null;
                 BlockState built = l == null ? null : FarCity.plannedAt(l, seed, x, z, cityY);
+                // under City Sight the city's real blocks are drawn: here only its ground, a block under the street
+                if (built != null && FarCity.underCitySight) cityY[0] = l.groundY(x, z) - 1;
                 float ground = built != null ? cityY[0] + 1 : ground(x, z);
                 if (i == 0) rowStart = guess;
                 // the sea fills to just under sea level: its surface is the top face of the block below it
@@ -308,7 +310,7 @@ public final class FarColumns {
                         top = cityY[0] + 1;
                         // a corner spanning 8 blocks or more stands at the city's mean height round it, as the real
                         // chunks' corners do (FarStore.patch): one spire's tip at a corner would be a pyramid that wide
-                        if (s >= 8) top = cityMean(l, x, z, s, top);
+                        if (s >= 8 && !FarCity.underCitySight) top = cityMean(l, x, z, s, top);
                         height[k] = packHeight(top);
                         colour[k] = abgr(brgb, GENERATED);
                         info[k] = abgr(wet ? 4 : 0, 0, 0, cold);

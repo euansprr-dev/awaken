@@ -6,11 +6,15 @@ import dev.awaken.Awaken;
 import dev.awaken.core.AwakenConfig;
 import dev.awaken.compat.FarView;
 import dev.awaken.compat.client.FarTerrain;
+import dev.awaken.farsight.FarCity;
 import dev.awaken.farsight.FarLandmarks;
 import dev.awaken.farsight.FarPalette;
 import dev.awaken.farsight.FarStore;
 import dev.awaken.farsight.FarWorkers;
 import dev.awaken.farsight.Rings;
+import dev.awaken.farsight.voxel.VoxelCapture;
+import dev.awaken.farsight.voxel.VoxelMesh;
+import dev.awaken.farsight.voxel.VoxelSnapshot;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.fog.FogData;
 import net.minecraft.client.renderer.fog.environment.AtmosphericFogEnvironment;
@@ -65,6 +69,10 @@ public final class FarSightClient {
     private static FarField field;
     private static FarRenderer renderer;
     private static FarGpu gpu;
+    /** City Sight (Far Sight 3): the real chunks' blocks where Sodium doesn't draw them. */
+    private static VoxelLayer voxels;
+    /** Snapshots taken from the server per frame, and the bytes of finished meshes uploaded per frame. */
+    private static final int SNAPSHOTS_PER_FRAME = 48, VOXEL_UPLOAD_BYTES = 6 << 20;
     private static final FarWorkers workers = new FarWorkers(FarWorkers.defaultThreads(), FarWorkers.burstThreads());
     private static ServerLevel bound;
     private static int boundRd, boundRings = Rings.RINGS;
@@ -100,6 +108,8 @@ public final class FarSightClient {
     public static boolean warm() {
         if (!drawing() || field == null || renderer == null) return true;
         for (int r = 0; r < rings(); r++) if (field.missing[r] > 0) return false;
+        // City Sight: the whole city meshed and up (the flight shows all of it)
+        if (VoxelCapture.wanted && (!VoxelCapture.idle() || voxels.inFlight.get() > 0 || !voxels.finished.isEmpty())) return false;
         return renderer.shownShare >= WARM_SHOWN;
     }
 
@@ -125,6 +135,9 @@ public final class FarSightClient {
 
     private static void unbind() {
         FarStore.collecting = false;
+        VoxelCapture.wanted = false;
+        FarCity.underCitySight = false;
+        if (voxels != null) voxels.clear();
         workers.clear();
         if (field != null) field.reset();
         bound = null;
@@ -150,6 +163,7 @@ public final class FarSightClient {
         if (field == null) {
             field = new FarField();
             renderer = new FarRenderer();
+            voxels = new VoxelLayer(level.getMinY());
             gpu = new FragmentFarGpu();
             Awaken.LOG.info("[farsight] ready: {} rings of {}x{} cells, GPU work by {}", Rings.RINGS, Rings.SIZE, Rings.SIZE, gpu.name());
         }
@@ -162,6 +176,10 @@ public final class FarSightClient {
             bindNanos = System.nanoTime();
             ringsDone = 0;
             horizonLogged = false;
+            // City Sight draws the overworld's city from its real chunks; the far terrain then carries only its ground
+            boolean city = level.dimension() == net.minecraft.world.level.Level.OVERWORLD && dev.awaken.city.City.layout() != null;
+            VoxelCapture.wanted = city;
+            FarCity.underCitySight = city;
         }
         // the integrated server sums real chunks into the generated layer while Far Sight draws
         FarStore.collecting = true;
@@ -207,6 +225,26 @@ public final class FarSightClient {
             if (field.accept(p) && field.again) field.regenerate(p.ring, p.px, p.pz, cam.x, cam.z, level, workers);
             workers.recycle(p);
         }
+        // City Sight: the server's snapshots to the workers (the city before the nearer far land), their meshes up
+        for (int i = 0; i < SNAPSHOTS_PER_FRAME; i++) {
+            VoxelSnapshot snap = VoxelCapture.SNAPSHOTS.poll();
+            if (snap == null) break;
+            VoxelCapture.took();
+            int slot = voxels.slot(snap.chunkX(), snap.chunkZ());
+            if (slot < 0) continue;
+            double dx = snap.chunkX() * 16 + 8 - cam.x, dz = snap.chunkZ() * 16 + 8 - cam.z;
+            VoxelLayer layer = voxels;
+            layer.inFlight.incrementAndGet();
+            workers.submitTask(5.0e5f + (float) Math.sqrt(dx * dx + dz * dz), () -> {
+                try {
+                    VoxelMesh mesh = layer.mesher.get().mesh(snap, slot);
+                    layer.finished.add(mesh);
+                } finally {
+                    layer.inFlight.decrementAndGet();
+                }
+            });
+        }
+        voxels.upload(VOXEL_UPLOAD_BYTES);
         logProgress();
         renderer.timeStart();
         float partialTick = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
@@ -230,6 +268,9 @@ public final class FarSightClient {
         renderer.plan(field, cam.x, cam.y, cam.z, e.getModelViewMatrix(), fov, (float) main.width / Math.max(1, main.height), covered, hidden,
                 mc.level.getMinY(), mc.level.getMaxY(), level.getSeaLevel());
         renderer.planTrees(field, cam.y, covered, hidden);
+        // a block one block away spans this many pixels: City Sight picks each chunk's level by it
+        float pixelsAt1 = (float) (main.height / (2.0 * Math.tan(Math.toRadians(Math.max(10f, camera.getFov())) / 2.0)));
+        voxels.plan(renderer, cam.x, cam.y, cam.z, pixelsAt1, rd * 16, (partsOff & 256) == 0);
         if ((partsOff & 2) != 0) renderer.treeDraws = 0;
         // the key light: the sun's strength by its height (a faint moon by night), weaker in rain; warm as it lowers
         float rain = mc.level.getRainLevel(partialTick), thunder = mc.level.getThunderLevel(partialTick);
@@ -252,7 +293,7 @@ public final class FarSightClient {
         renderer.draw(field, main, e.getModelViewMatrix(), cam.x, cam.y, cam.z, sun, strength, sunColour, golden, haze, rain,
                 level.getSeaLevel() + MIST_ABOVE_SEA, MIST_DEPTH, MIST_DENSITY, mistCover, fogStart, fogEnd,
                 hidden, CLIP_BAND, rd * 16, level.getSeaLevel(), RenderSystem.getDevice().getDeviceInfo().isZZeroToOne(), mc.gameRenderer.levelLightmap(),
-                FarLandmarks.current(level.dimension()));
+                FarLandmarks.current(level.dimension()), voxels);
         renderer.timeEnd();
         FarTerrain.report(renderer.depthTexture(), FarRenderer.NEAR, FarRenderer.FAR, true, RenderSystem.getDevice().getDeviceInfo().isZZeroToOne());
         // Far Sight hazes its own kilometres (aerial perspective at real scale): Lens keeps only its near haze over it
@@ -337,7 +378,8 @@ public final class FarSightClient {
      */
     static int partsOff;
     // seaunder: ring 0's sea drawn under the real chunks (4aa1b25f); seafloor: the far water's own floor (0cbdd9e8)
-    private static final String[] PARTS = {"detail", "trees", "mist", "bake", "pace", "steady", "seaunder", "seafloor"};
+    // city: City Sight, the real chunks' blocks (Far Sight 3)
+    private static final String[] PARTS = {"detail", "trees", "mist", "bake", "pace", "steady", "seaunder", "seafloor", "city"};
 
     /** Autopilot: {@code farsight on|off|status|debug <n>}. */
     public static String autopilot(String arg) {
@@ -355,7 +397,7 @@ public final class FarSightClient {
                 else partsOff &= ~(1 << i);
                 return "parts off " + partsOff;
             }
-            return "unknown part " + w[0] + " (detail|trees|mist|bake|pace|steady|seaunder|seafloor)";
+            return "unknown part " + w[0] + " (detail|trees|mist|bake|pace|steady|seaunder|seafloor|city)";
         }
         switch (a) {
             case "on" -> {
@@ -388,9 +430,10 @@ public final class FarSightClient {
         cpuFrames = 0;
         double[] gpu = renderer.gpuMillis();
         return String.format(Locale.ROOT,
-                "%s gpu_ms=%.3f bake_ms=%.3f cpu_ms=%.3f rest_us=%d missing=[%s] queued=%d workers=%d pieces=%d cells=%d trees=%d (%d draws) column=%.1fus probes=%.1f/column (%d columns) generated=%d/%d vram=%dMB",
+                "%s gpu_ms=%.3f bake_ms=%.3f cpu_ms=%.3f rest_us=%d missing=[%s] queued=%d workers=%d pieces=%d cells=%d trees=%d (%d draws) column=%.1fus probes=%.1f/column (%d columns) generated=%d/%d city=%d/%d chunks (%d meshing) drawn=%d chunks %d quads vram=%dMB",
                 drawing() ? "drawing" : enabled() ? "on" : "off", gpu[0], gpu[1], cpu, workers.restMicros, rings, workers.queued(), workers.active, renderer.pieces, renderer.cells, renderer.treesDrawn, renderer.treeDraws,
                 cols == 0 ? 0.0 : workers.columnNanos.get() / 1000.0 / cols, cols == 0 ? 0.0 : workers.probes.get() / (double) cols, cols,
-                field.genUploaded, field.genAsked, (field.memoryBytes() + renderer.memoryBytes()) >> 20);
+                field.genUploaded, field.genAsked, voxels.resident(), VoxelCapture.captured(), voxels.inFlight.get(), voxels.chunksDrawn, voxels.quadsDrawn,
+                (field.memoryBytes() + renderer.memoryBytes() + voxels.memoryBytes()) >> 20);
     }
 }

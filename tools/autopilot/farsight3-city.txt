@@ -1,0 +1,84 @@
+# City Sight (Far Sight 3, SPEC §20): Carillon drawn from its real blocks past the render distance. A new Carillon
+# world, the opening's card and flight (a frame every 2 s), the landing's view on, in debug view 3 (City Sight green,
+# far terrain blue, far trees red) and with Far Sight off, then the quay and a high view over the walls, on and off.
+# Run: PACK=perf,world TECTONIC=awakened RD=16 LENS=cinematic SLOT_WHO=far-sight \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/farsight3-city.txt 700
+world fs3city survival 20261024
+waitworld
+window 1440 900
+info
+shotnow fs3o_00
+wait 40
+shotnow fs3o_01
+wait 40
+shotnow fs3o_02
+wait 40
+shotnow fs3o_03
+wait 40
+shotnow fs3o_04
+wait 40
+shotnow fs3o_05
+wait 40
+shotnow fs3o_06
+wait 40
+shotnow fs3o_07
+wait 40
+shotnow fs3o_08
+wait 40
+shotnow fs3o_09
+wait 40
+shotnow fs3o_10
+wait 40
+shotnow fs3o_11
+wait 40
+shotnow fs3o_12
+wait 40
+shotnow fs3o_13
+wait 40
+shotnow fs3o_14
+wait 40
+shotnow fs3o_15
+wait 40
+shotnow fs3o_16
+farsight status
+farsight debug 3
+wait 4
+shotnow fs3o_roost_debug
+farsight debug 0
+farsight off
+wait 40
+shotnow fs3o_roost_off
+farsight on
+cmd awaken opening skip
+wait 60
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd gamemode spectator
+gui 0
+hud off
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd time set 6000
+wait 200
+cmd awaken city view quay
+wait 100
+shot fs3t_quay_on
+farsight off
+wait 40
+shot fs3t_quay_off
+farsight on
+cmd tp @s ~ ~120 ~
+wait 200
+shot fs3t_high_on
+farsight debug 3
+wait 4
+shot fs3t_high_debug
+farsight debug 0
+farsight off
+wait 40
+shot fs3t_high_off
+farsight on
+farsight status
+info
+quit

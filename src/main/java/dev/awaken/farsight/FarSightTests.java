@@ -4,6 +4,9 @@ import dev.awaken.Awaken;
 import dev.awaken.city.CityLayout;
 import dev.awaken.city.CityPlan;
 import dev.awaken.core.test.AwakenTests;
+import dev.awaken.farsight.voxel.VoxelMesh;
+import dev.awaken.farsight.voxel.VoxelMesher;
+import dev.awaken.farsight.voxel.VoxelSnapshot;
 import dev.awaken.terrain.api.CityBasin;
 import dev.awaken.terrain.api.CitySite;
 import net.minecraft.core.BlockPos;
@@ -135,6 +138,58 @@ final class FarSightTests {
             float coarseMedian = coarseErrors.get(coarseErrors.size() / 2), coarseP90 = coarseErrors.get(coarseErrors.size() * 9 / 10);
             Awaken.LOG.info("[farsight] the bracket's line: median {}, p90 {}", coarseMedian, coarseP90);
             h.assertTrue(coarseMedian <= 1.0f && coarseP90 <= 3f, "the bracket's line: median " + coarseMedian + ", p90 " + coarseP90);
+            h.succeed();
+        });
+
+        // City Sight's mesher (SPEC §20) on a real chunk: a 4-block stone cube shows each face once (merged, whatever
+        // the light), a slab its top half a block up, a one-block pillar its top; at level 1 (2-block cells) the cube
+        // keeps its silhouette and the pillar, a quarter of its cells, thins out instead of swelling.
+        AwakenTests.registerIsolated("farsight_voxels_mesh", 100, h -> {
+            ServerLevel level = h.getLevel();
+            BlockPos o = h.absolutePos(BlockPos.ZERO);
+            int x0 = (o.getX() & ~15) + 4, z0 = (o.getZ() & ~15) + 4, y0 = (o.getY() + 2) & ~1;
+            for (int x = x0 - 2; x < x0 + 11; x++) {
+                for (int z = z0 - 2; z < z0 + 9; z++) {
+                    for (int y = y0; y <= level.getMaxY(); y++) level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                }
+            }
+            for (int y = y0; y < y0 + 4; y++) {
+                for (int z = z0; z < z0 + 4; z++) for (int x = x0; x < x0 + 4; x++) level.setBlockAndUpdate(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState());
+            }
+            for (int y = y0; y < y0 + 6; y++) level.setBlockAndUpdate(new BlockPos(x0 + 8, y, z0 + 1), Blocks.OAK_PLANKS.defaultBlockState());
+            level.setBlockAndUpdate(new BlockPos(x0 + 6, y0, z0 + 6), Blocks.STONE_SLAB.defaultBlockState());
+            LevelChunk chunk = level.getChunkAt(new BlockPos(x0, y0, z0));
+            VoxelSnapshot snap = VoxelSnapshot.take(level, chunk);
+            h.assertTrue(snap != null, "the chunk has blocks");
+            VoxelMesher mesher = new VoxelMesher(new VoxelMesher.Looks() {
+                @Override
+                public int face(int id, int dir) {
+                    return id & 0xFFFF;
+                }
+
+                @Override
+                public int tint(int id, int tintIndex, Holder<Biome> biome) {
+                    return 0xFFFFFF;
+                }
+            });
+            long t0 = System.nanoTime();
+            VoxelMesh mesh = mesher.mesh(snap, 7);
+            double ms = (System.nanoTime() - t0) / 1e6;
+            int lx = x0 & 15, lz = z0 & 15, base = (y0 - level.getMinY()) * 16;
+            // areas in square sixteenths of the faces in a box (dir; plane; u and v ranges in sixteenths)
+            h.assertTrue(area(mesh, 0, 1, base + 64, lx * 16, lx * 16 + 64, lz * 16, lz * 16 + 64) == 64 * 64,
+                    "the cube's top, once: " + area(mesh, 0, 1, base + 64, lx * 16, lx * 16 + 64, lz * 16, lz * 16 + 64));
+            h.assertTrue(area(mesh, 0, 5, (lx + 4) * 16, lz * 16, lz * 16 + 64, base, base + 64) == 64 * 64, "the cube's east side, once");
+            h.assertTrue(area(mesh, 0, 1, base + 8, (lx + 6) * 16, (lx + 7) * 16, (lz + 6) * 16, (lz + 7) * 16) == 256, "the slab's top, half a block up");
+            h.assertTrue(area(mesh, 0, 1, base + 96, (lx + 8) * 16, (lx + 9) * 16, (lz + 1) * 16, (lz + 2) * 16) == 256, "the pillar's top");
+            int top1 = area(mesh, 1, 1, base + 64, lx * 16, lx * 16 + 64, lz * 16, lz * 16 + 64);
+            h.assertTrue(top1 == 64 * 64, "level 1 keeps the cube's silhouette: " + top1);
+            h.assertTrue(!any(mesh, 1, (lx + 8) * 16, (lz + 1) * 16, base + 16), "level 1 thins the pillar out");
+            for (int l = 0; l < VoxelMesher.LEVELS; l++) {
+                for (int q = 0; q < mesh.quadCount(l); q++) h.assertTrue((mesh.quads()[l][q * 4 + 2] >>> 16) == 7, "every quad carries its slot");
+            }
+            Awaken.LOG.info("[farsight] voxel mesh: {} ms, quads by level {} {} {} {}", String.format(java.util.Locale.ROOT, "%.2f", ms),
+                    mesh.quadCount(0), mesh.quadCount(1), mesh.quadCount(2), mesh.quadCount(3));
             h.succeed();
         });
 
@@ -288,5 +343,36 @@ final class FarSightTests {
             }
             h.succeed();
         });
+    }
+
+    /** The area (square sixteenths) of level l's faces toward dir lying on plane, within the face's u and v ranges. */
+    private static int area(VoxelMesh mesh, int l, int dir, int plane, int u0, int u1, int v0, int v1) {
+        int[] q = mesh.quads()[l];
+        int total = 0;
+        for (int i = 0; i < q.length; i += 4) {
+            int x = q[i] & 511, z = q[i] >> 9 & 511, d = q[i] >> 18 & 7, eu = q[i] >> 21 & 511;
+            int y = q[i + 1] & 16383, ev = q[i + 1] >> 14 & 16383;
+            if (d != dir) continue;
+            int p, u, v;
+            if (dir < 2) { p = y; u = x; v = z; }
+            else if (dir < 4) { p = z; u = x; v = y; }
+            else { p = x; u = z; v = y; }
+            if (p != plane) continue;
+            int a = Math.max(0, Math.min(u + eu, u1) - Math.max(u, u0)), b = Math.max(0, Math.min(v + ev, v1) - Math.max(v, v0));
+            total += a * b;
+        }
+        return total;
+    }
+
+    /** Whether any of level l's quads covers column (x16, z16) at or above y16. */
+    private static boolean any(VoxelMesh mesh, int l, int x16, int z16, int y16) {
+        int[] q = mesh.quads()[l];
+        for (int i = 0; i < q.length; i += 4) {
+            int x = q[i] & 511, z = q[i] >> 9 & 511, d = q[i] >> 18 & 7, eu = q[i] >> 21 & 511;
+            int y = q[i + 1] & 16383, ev = q[i + 1] >> 14 & 16383;
+            int xs = d < 4 ? eu : 0, zs = d < 2 ? ev : d >= 4 ? eu : 0, ys = d < 2 ? 0 : ev;
+            if (x16 + 8 >= x && x16 + 8 <= x + xs && z16 + 8 >= z && z16 + 8 <= z + zs && y + ys > y16) return true;
+        }
+        return false;
     }
 }
