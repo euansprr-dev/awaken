@@ -1,6 +1,6 @@
 # Far Sight over Carillon (SPEC §20, the city on the far horizon): from the Runners' Roost at dusk, as Euan stood when
 # the ring wall beyond the render distance went missing (bugs/city-walls-missing-far.webp), all four directions, then
-# from above the city. The far half of the ring, its towers and the Choir's spire must stand all round, with no seam
+# from above the city, and west at noon past the spire (where far trees once floated). The far half of the ring, its towers and the Choir's spire must stand all round, with no seam
 # where the real chunks end.
 # Run: PACK=perf,world TECTONIC=awakened RD=16 LENS=cinematic SLOT_WHO=far-sight \
 #      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/farsight2-city.txt 1200
@@ -40,6 +40,15 @@ shot fs2c_roost_n
 look -90 4
 wait 40
 shot fs2c_roost_e
+# noon, west past the Choir's spire (Euan's flying trees: far trees hung over the basin's edge beyond the city)
+cmd time set 6000
+look 90 4
+wait 60
+shot fs2c_roost_w_noon
+look 75 2
+wait 20
+shot fs2c_roost_w_noon_b
+cmd time set 12300
 cmd awaken city view sky_top
 wait 200
 shot fs2c_sky_top
