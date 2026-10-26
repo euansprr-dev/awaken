@@ -4550,7 +4550,8 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
 - **The camp is findable**: its marker falls back to its nominal spot until someone has come near (the compass knows the
   way); a Horizon site "Wayfarer camp · a fire, people" until the player has stood within 24 of it (counter
   `awaken:camp_reached`); and a signal fire on a bale by Ilse (`Scenes.campFire`), its smoke a column seen from the High
-  Gate, lit once a player is within 160 and lit again if it's gone.
+  Gate, lit once a player is within 256 and lit again if it's gone; the camp itself is now founded within 256 (it was 112,
+  so from the gate there was nothing there yet).
 - **The Registry's Directive fits** (`Directives.opening`, reason "opening"): "Clear a floor of any gate.", accepted for
   the player (4 play-days), "Your first gate will show itself out past the walls." Accepted Directives show on the Now
   line with their progress ("· 50%", priority 58). Before, the Registry's was a random roll offered quietly, its waiting

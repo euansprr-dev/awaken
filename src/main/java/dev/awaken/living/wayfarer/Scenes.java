@@ -413,7 +413,8 @@ public final class Scenes extends SavedData {
         MinecraftServer server = level.getServer();
         if (!residents.contains("ilse") || !residents.contains("hettie")) {
             BlockPos nominal = campColumn(server);
-            if (camp == NONE && near(level, nominal, 112)) {
+            // founded while still a column of smoke in the distance (render distance 16), not when you're at its edge
+            if (camp == NONE && near(level, nominal, 256)) {
                 // the camp stands on dry land: the nearest to its nominal spot (a river or a bay may sit there)
                 BlockPos found = dryLand(level, nominal, 160);
                 if (found != null) {
@@ -462,10 +463,10 @@ public final class Scenes extends SavedData {
 
     /**
      * The camp's fire (SPEC §27.6): a signal fire on a bale by Ilse, its smoke a column you see from the High Gate, lit
-     * once a player is near and lit again if it's gone. The camp had no structure, no smoke, nothing to walk toward.
+     * once a player is within 256 (before they can make out the camp) and lit again if it's gone. The camp had no structure, no smoke, nothing to walk toward.
      */
     private static void campFire(ServerLevel level, BlockPos camp) {
-        if (!near(level, camp, 160)) return;
+        if (!near(level, camp, 256)) return;
         BlockPos column = camp.offset(-3, 0, 3);
         if (!level.hasChunkAt(column)) return;
         for (BlockPos q : BlockPos.betweenClosed(camp.offset(-6, -3, -6), camp.offset(6, 3, 6))) {

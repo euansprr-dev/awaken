@@ -1,8 +1,11 @@
-# The Way Forward (SPEC §27): a new hunter's first steps out of Carillon. On the Roost after the opening: Kestrel's
-# errand on the Now line with its compass, the band's tip, the thread of light; the band (K): WHAT WAITS and THE
-# ASCENT (the Tether named as next); the Wayfarer camp's signal fire from its stand; the spawn vault at E-rank (it
-# stirs, its door breathes D's green and reads you), which then sits in WHAT WAITS.
-# Run: SLOT_WHO=progression /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/progression-way.txt 600
+# Leave Carillon (SPEC §27.6, the first thread): a new hunter's first steps out of the city, the Now line at each step.
+# 1. The Roost after the opening: Kestrel's errand on the Now line with its compass; the band's tip; the thread of light.
+# 2. The band (K): the next rank's line, WHAT WAITS, THE ASCENT (the Tether named as next).
+# 3. Outside the High Gate, facing north: the camp's signal smoke over the trees ahead.
+# 4. Out on the road past the city's edge: the Commons' caption, then a rift tearing open off the road.
+# 5. The first gate, on purpose: announced, then its pillar from the camp's rise.
+# 6. The spawn vault at E-rank: it stirs; its door reads you; WHAT WAITS keeps it.
+# Run: SLOT_WHO=progression /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/progression-way.txt 900
 world autopilot_progression survival 20261026
 waitworld
 window 1440 900
@@ -21,32 +24,47 @@ cmd time set 6000
 cmd gamerule advance_time false
 hud on
 camera first
-# on the Roost: the Now line (Kestrel, with a compass), the band's tip, the thread of light toward her
+# 1. the Roost
 wait 160
-shotnow way_roost_now
-wait 120
-shotnow way_roost_tip
-# the band: the next rank's line, WHAT WAITS, THE ASCENT
+shotnow leave_1_roost_now
+wait 140
+shotnow leave_1_roost_tip
+# 2. the band
 key status
 wait 30
-shotnow way_band
+shotnow leave_2_band
 screen close
-# the Wayfarer camp from its stand: Ilse, Hettie and the signal fire's smoke
-cmd awaken living camp
-wait 220
-shotnow way_camp
-# the spawn vault at E-rank: the vault stirs; then at its door, which reads you
+# 3. outside the High Gate, facing the camp: its smoke (the camp is founded and lit within 256)
+cmd awaken living way gate
+wait 260
+shotnow leave_3_gate_smoke
+# 4. out on the road past the city's edge: the caption, then a rift off the road
+cmd awaken living way road
+wait 80
+shotnow leave_4_road_caption
+cmd awaken anomaly now rift
+wait 120
+shotnow leave_4_road_rift
+cmd awaken anomaly clear
+# 5. the first gate, on purpose, then its pillar from the camp's rise
+cmd awaken gate first
+wait 60
+shotnow leave_5_gate_announced
+cmd awaken living way rise
+wait 240
+shotnow leave_5_camp_rise_pillar
+# 6. the spawn vault at E-rank (the gate's first floor waits; rank stays E here)
 cmd awaken ascent vow goto
 wait 34
-shotnow way_vault_stir
+shotnow leave_6_vault_stir
 wait 60
-shotnow way_vault_words
+shotnow leave_6_vault_words
 cmd tp @s ^ ^ ^8
 wait 60
-shotnow way_vault_door
+shotnow leave_6_vault_door
 key status
 wait 30
-shotnow way_band_waiting
+shotnow leave_6_band_waiting
 screen close
 info
 quit
