@@ -136,8 +136,9 @@ final class LivingTests {
             });
         });
         // SPEC §27.10: the current task, top right: Your body remembers ticks move by move, then the tracked errand
-        AwakenTests.register("progression_checklist", 100, h -> {
+        AwakenTests.register("progression_checklist", 300, h -> {
             net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+            boolean handedOn = false;
             try {
                 dev.awaken.progression.Progression.awaken(p);
                 dev.awaken.progression.Progression.count(p, "awaken:carillon_registered");
@@ -152,18 +153,25 @@ final class LivingTests {
                 c = dev.awaken.progression.Checklist.now(p);
                 h.assertTrue(c != null && c.rows().stream().allMatch(dev.awaken.progression.Checklist.Row::done), "all four ticked, shown for a moment");
                 h.assertTrue(dev.awaken.progression.Progression.profile(p).counter(dev.awaken.progression.Checklist.MOVES_DONE) > 0, "and remembered as done");
-                // its moment over, the errand takes the panel: its title, its steps, the letters counted
                 dev.awaken.core.api.OpeningHooks.fireRegistered(p);
-                dev.awaken.progression.Progression.setCounter(p, dev.awaken.progression.Checklist.MOVES_DONE, Math.max(1, p.level().getGameTime() - 20 * 60));
-                c = dev.awaken.progression.Checklist.now(p);
-                var d = dev.awaken.living.quest.QuestBook.get(FirstThread.chainId());
-                h.assertTrue(c != null && c.title().equals(d.title()) && c.rows().getFirst().text().startsWith("Take the letters"),
-                        "then the errand you're on: " + c);
-                h.assertTrue(c.rows().stream().anyMatch(r -> r.text().equals("Deliver the letters") && r.need() == 1), "a step with a count shows it");
+                // its moment over (the real hold, not a faked clock: a young test server's "a minute ago" is before zero),
+                // the errand takes the panel: its title, its steps, the letters counted
+                h.runAfterDelay(dev.awaken.progression.Checklist.DONE_HOLD + 4, () -> {
+                    try {
+                        var t = dev.awaken.progression.Checklist.now(p);
+                        var d = dev.awaken.living.quest.QuestBook.get(FirstThread.chainId());
+                        h.assertTrue(t != null && t.title().equals(d.title()) && t.rows().getFirst().text().startsWith("Take the letters"),
+                                "then the errand you're on: " + t);
+                        h.assertTrue(t.rows().stream().anyMatch(r -> r.text().equals("Deliver the letters") && r.need() == 1), "a step with a count shows it");
+                    } finally {
+                        h.getLevel().getServer().getPlayerList().remove(p);
+                    }
+                    h.succeed();
+                });
+                handedOn = true;
             } finally {
-                h.getLevel().getServer().getPlayerList().remove(p);
+                if (!handedOn) h.getLevel().getServer().getPlayerList().remove(p);
             }
-            h.succeed();
         });
         AwakenTests.register("living_region_map", 200, h -> {
             RegionMap.Probe plain = (x, z) -> RegionMap.Land.PLAIN;

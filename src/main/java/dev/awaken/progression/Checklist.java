@@ -57,7 +57,7 @@ public final class Checklist {
 
     /** When the first four moves were all done (game time; 0: not yet). The finished list stays a moment, then goes. */
     public static final String MOVES_DONE = "awaken:first/moves_done";
-    static final int DONE_HOLD = 20 * 4;
+    public static final int DONE_HOLD = 20 * 4;
     /** The first moves: the counter the body module keeps, the words, the key. */
     static final String[][] MOVES = {
             {"awaken:body_roll", "Hold {key} as you land to roll", "key.sneak"},
