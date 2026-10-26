@@ -1,0 +1,361 @@
+# Shimmer, after (Euan, 2026-10-26: distant edges, far trees and mountains crawl as the camera breathes). The view of
+# farsight3-shimmer.txt (night, high on Carillon's east wall), the same scripted tp sway, then a slow continuous turn
+# (the camera eases between ticks, as Camera Overhaul's breathing moves it every frame). Pixels' steady pass on and
+# off at Euan's 4K setting (0.75, SHARP) and at native; its GPU cost; then the basin's rim by day, where the far land
+# drew a long rise over the flat street (City Sight off: the far land alone).
+# Run: PACK=perf,world TECTONIC=awakened RD=16 LENS=cinematic SLOT_WHO=far-sight \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/farsight3-steady.txt 600
+#      python3 tools/farsight/shimmer.py <shots> fs3t
+world fs3shim survival 20261024
+waitworld
+window 1440 900
+cmd awaken opening skip
+wait 60
+cmd awaken powers starter 1
+wait 20
+screen close
+gui 0
+hud off
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 18000
+cmd awaken city view walls_walk
+wait 20
+cmd gamemode spectator
+cmd tp @s ~ ~20 ~
+look -49.6 24
+pixels 0.75 sharp
+pixels steady on
+wait 400
+shot fs3t_ref
+farsight status
+pixels state
+wait 60
+pixels 0.75 sharp
+pixels steady on
+pixels state
+wait 60
+shotnow fs3t_steady075_00
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3t_steady075_01
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3t_steady075_02
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3t_steady075_03
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3t_steady075_04
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3t_steady075_05
+cmd tp @s ~ ~ ~ ~-0.03 ~0.0
+wait 2
+shotnow fs3t_steady075_06
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3t_steady075_07
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3t_steady075_08
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3t_steady075_09
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3t_steady075_10
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3t_steady075_11
+look -49.6 24
+wait 20
+pixels steady off
+pixels state
+wait 60
+shotnow fs3t_sharp075_00
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3t_sharp075_01
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3t_sharp075_02
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3t_sharp075_03
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3t_sharp075_04
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3t_sharp075_05
+cmd tp @s ~ ~ ~ ~-0.03 ~0.0
+wait 2
+shotnow fs3t_sharp075_06
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3t_sharp075_07
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3t_sharp075_08
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3t_sharp075_09
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3t_sharp075_10
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3t_sharp075_11
+look -49.6 24
+wait 20
+pixels 1.0 sharp
+pixels steady on
+pixels state
+wait 60
+shotnow fs3t_steadynative_00
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3t_steadynative_01
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3t_steadynative_02
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3t_steadynative_03
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3t_steadynative_04
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3t_steadynative_05
+cmd tp @s ~ ~ ~ ~-0.03 ~0.0
+wait 2
+shotnow fs3t_steadynative_06
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3t_steadynative_07
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3t_steadynative_08
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3t_steadynative_09
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3t_steadynative_10
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3t_steadynative_11
+look -49.6 24
+wait 20
+pixels steady off
+pixels state
+wait 60
+shotnow fs3t_native_00
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3t_native_01
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3t_native_02
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3t_native_03
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3t_native_04
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3t_native_05
+cmd tp @s ~ ~ ~ ~-0.03 ~0.0
+wait 2
+shotnow fs3t_native_06
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3t_native_07
+cmd tp @s ~ ~ ~ ~0.03 ~0.02
+wait 2
+shotnow fs3t_native_08
+cmd tp @s ~ ~ ~ ~0.03 ~0.0
+wait 2
+shotnow fs3t_native_09
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3t_native_10
+cmd tp @s ~ ~ ~ ~-0.03 ~-0.02
+wait 2
+shotnow fs3t_native_11
+look -49.6 24
+wait 20
+pixels 0.75 sharp
+pixels steady on
+pixels state
+look -49.6 24
+wait 60
+turn 0.03 26
+wait 2
+shotnow fs3t_turnsteady_00
+wait 2
+shotnow fs3t_turnsteady_01
+wait 2
+shotnow fs3t_turnsteady_02
+wait 2
+shotnow fs3t_turnsteady_03
+wait 2
+shotnow fs3t_turnsteady_04
+wait 2
+shotnow fs3t_turnsteady_05
+wait 2
+shotnow fs3t_turnsteady_06
+wait 2
+shotnow fs3t_turnsteady_07
+wait 2
+shotnow fs3t_turnsteady_08
+wait 2
+shotnow fs3t_turnsteady_09
+wait 2
+shotnow fs3t_turnsteady_10
+wait 2
+shotnow fs3t_turnsteady_11
+wait 10
+look -49.6 24
+wait 20
+pixels steady off
+pixels state
+look -49.6 24
+wait 60
+turn 0.03 26
+wait 2
+shotnow fs3t_turnsharp_00
+wait 2
+shotnow fs3t_turnsharp_01
+wait 2
+shotnow fs3t_turnsharp_02
+wait 2
+shotnow fs3t_turnsharp_03
+wait 2
+shotnow fs3t_turnsharp_04
+wait 2
+shotnow fs3t_turnsharp_05
+wait 2
+shotnow fs3t_turnsharp_06
+wait 2
+shotnow fs3t_turnsharp_07
+wait 2
+shotnow fs3t_turnsharp_08
+wait 2
+shotnow fs3t_turnsharp_09
+wait 2
+shotnow fs3t_turnsharp_10
+wait 2
+shotnow fs3t_turnsharp_11
+wait 10
+look -49.6 24
+wait 20
+pixels 1.0 sharp
+pixels steady on
+pixels state
+look -49.6 24
+wait 60
+turn 0.03 26
+wait 2
+shotnow fs3t_turnsteadynative_00
+wait 2
+shotnow fs3t_turnsteadynative_01
+wait 2
+shotnow fs3t_turnsteadynative_02
+wait 2
+shotnow fs3t_turnsteadynative_03
+wait 2
+shotnow fs3t_turnsteadynative_04
+wait 2
+shotnow fs3t_turnsteadynative_05
+wait 2
+shotnow fs3t_turnsteadynative_06
+wait 2
+shotnow fs3t_turnsteadynative_07
+wait 2
+shotnow fs3t_turnsteadynative_08
+wait 2
+shotnow fs3t_turnsteadynative_09
+wait 2
+shotnow fs3t_turnsteadynative_10
+wait 2
+shotnow fs3t_turnsteadynative_11
+wait 10
+look -49.6 24
+wait 20
+pixels steady off
+pixels state
+look -49.6 24
+wait 60
+turn 0.03 26
+wait 2
+shotnow fs3t_turnnative_00
+wait 2
+shotnow fs3t_turnnative_01
+wait 2
+shotnow fs3t_turnnative_02
+wait 2
+shotnow fs3t_turnnative_03
+wait 2
+shotnow fs3t_turnnative_04
+wait 2
+shotnow fs3t_turnnative_05
+wait 2
+shotnow fs3t_turnnative_06
+wait 2
+shotnow fs3t_turnnative_07
+wait 2
+shotnow fs3t_turnnative_08
+wait 2
+shotnow fs3t_turnnative_09
+wait 2
+shotnow fs3t_turnnative_10
+wait 2
+shotnow fs3t_turnnative_11
+wait 10
+look -49.6 24
+wait 20
+# the GPU's cost: the world and the upscale, steady on and off (PixelsTiming)
+pixels 0.75 sharp
+pixels steady on
+wait 40
+pixels gpu on
+pixels gpu reset
+wait 200
+pixels gpu steady075
+pixels steady off
+wait 40
+pixels gpu reset
+wait 200
+pixels gpu sharp075
+pixels 1.0 sharp
+pixels steady on
+wait 40
+pixels gpu reset
+wait 200
+pixels gpu steadynative
+pixels gpu off
+# the basin's rim by day, from the wall: the far land alone (City Sight off), then with City Sight
+pixels 0.75 sharp
+pixels steady on
+cmd time set 6000
+look -49.6 6
+farsight part city off
+wait 120
+shot fs3t_rim_far
+farsight part city on
+wait 120
+shot fs3t_rim_city
+look -90 6
+farsight part city off
+wait 120
+shot fs3t_rim_far_s
+farsight part city on
+pixels config
+info
+quit

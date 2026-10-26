@@ -3635,6 +3635,29 @@ Plan: the Far Sight page, path 4 (https://claude.ai/artifact/LvAoTbYB82o6ggcHS73
   3456×2234 is 7.7), `upscaler` SHARP. 1.0 on the MacBook's own screen (about 1 ms, and nothing once a scene sits at
   120 Hz or on the CPU, doesn't pay for the softer textures); at 4K Lens 2 and the world's pixel-bound part cost the
   most (estimated 3–6 ms saved on Cinematic/Ultra, docs/perf/CITY-FPS.md). The autopilot's `pixels <scale>` sets both.
+- **Steady** (`PixelsSteady`, `core/pixels_steady.fsh`; 2026-10-26, Euan: distant edges, far trees and mountains
+  crawl as the camera breathes, red dots flicker): a temporal stabiliser before the upscale, at the world's resolution.
+  Each frame last frame's steady image is carried to where it now lies (this frame's NDC through the inverse
+  view-projection, the camera's step since, last frame's view-projection: one matrix; the projection as Lens reads it,
+  bob and hurt tilt included), sampled Catmull-Rom (five bilinear taps), clamped to this frame's pixel and its four
+  neighbours (a moving mob or a newly seen place never smears), and this frame mixed in at 0.1. No jitter: it steadies,
+  it adds no resolution. The hand (its own depth target) keeps no history; a teleport (24 blocks), a gap over 250 ms,
+  a resize or a frame without the pass starts it afresh. History: two RGB10A2 targets (a tenth's steps round away in
+  8 bits). Then the upscaler as before (SHARP's RCAS now sharpens a steady image); at native the world draws into a
+  same-size target and is copied out unsharpened. Needs a post effect (Lens): without one the game's hand pass clears
+  the main depth before Pixels' end hook, so the pass steps aside (`getRequestedPostEffects()` empty). Setting
+  `steady` (default on); autopilot `pixels steady on|off`.
+  Attribution first (tour `farsight3-shimmer.txt`, `tools/farsight/shimmer.py`: night over Carillon's east wall,
+  12-frame bursts under a scripted sway, fine flicker / hard-flicker share in the far, mid and near bands): SHARP
+  roughly quadrupled hard flicker against bilinear (far 0.42% vs 0.10%); Far Sight's far land and trees were most of
+  the far band (Far Sight off: 0.04%), City Sight added some in the middle band, the near fields' crop rows (Sodium)
+  flickered too, and native was worse than 0.75. The red dots (not in the tour's view): most likely the pale biome's
+  one-block crystal spires, real blocks about two pixels wide, tinted by the moonlight; the pass steadies them too. Proof (tour `farsight3-steady.txt`, M4 at 2880×1800, Vulkan, RD 16, Lens
+  Cinematic; `docs/perf/far-sight/fs3-steady.jpg`): under a slow continuous turn (as Camera Overhaul's breathing
+  moves the camera every frame) hard-flicker pixels 0.064% → 0.010% at 0.75 SHARP and 0.170% → 0.012% at native;
+  under the old tour's one-tick tp steps (a jump, then still frames) 0.106% → 0.086% and 0.351% → 0.235%. GPU: the
+  upscale 0.27 → 0.64 ms at 0.75 (world 2160×1350), steady plus the copy 0.84 ms at native. A first cut at the
+  screen's resolution with RCAS after cost 1.5 ms and sharpened native: dropped.
 - Holo: panels draw inside the world (the level's always-on-top phase), so at render scale their text would be
   upscaled with it (measured: softer, with RCAS fringes at 0.67). While a panel holds the player's attention
   (`UiHooks.focus() > 0`: the K menu, a reading screen) the world renders native, so panel text, Lens's bloom on the
@@ -3642,9 +3665,9 @@ Plan: the Far Sight page, path 4 (https://claude.ai/artifact/LvAoTbYB82o6ggcHS73
   cards and the HUD are GUI and always native.
 - Safety: both hooks must be seen in one frame before the first swap; a frame that ends with the target still lent
   (`RenderFrameEvent.Post`) gets it back and turns Pixels off for the session, as does any exception in a pass.
-- Client config `awaken-pixels-client.toml`: `renderScale` 0.5..1.0 (1.0 = native, off) and `upscaler` SHARP |
-  FSR | BILINEAR. Autopilot `pixels <scale> [sharp|fsr|bilinear] | config | state` overrides them for a tour (not
-  saved). Tours:
+- Client config `awaken-pixels-client.toml`: `renderScale` 0.5..1.0 (1.0 = native, off), `upscaler` SHARP |
+  FSR | BILINEAR and `steady` (on). Autopilot `pixels <scale> [sharp|fsr|bilinear] | steady on|off | config | state`
+  overrides them for a tour (not saved). Tours:
   `tools/autopilot/pixels.txt` (the measurement), `pixels-smoke.txt`, `pixels-dh.txt`; crops: `tools/pixels-crops.py`.
   `pixels gpu on|reset|<label>` (measurement only) writes GPU timestamps before the world, after the post effects and
   after the upscale, and logs the world pass's and the upscale's GPU time per label (`PixelsTiming`): on a busy Mac
