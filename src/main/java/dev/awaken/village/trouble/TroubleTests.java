@@ -190,9 +190,10 @@ final class TroubleTests {
             Rescuee r = DeepMine.miner(c, t, 0);
             TroubleDirector.touched(level, p, r);
             boolean guarded = r.mode() == Rescuee.LOST;
-            DeepMine.step(c, t, p, "clear");
+            String cleared = DeepMine.step(c, t, p, "clear");
             TroubleDirector.touched(level, p, r);
-            h.assertTrue(r.mode() == Rescuee.FOLLOW, "with the nest cleared they follow you (" + (guarded ? "not while it was guarded" : "the nest was empty") + ")");
+            h.assertTrue(r.mode() == Rescuee.FOLLOW, "with the nest cleared they follow you (" + (guarded ? "not while it was guarded" : "the nest was empty")
+                    + "; " + cleared + ", mode " + r.mode() + ", trouble " + (st.byId(t.id) != null) + ")");
             DeepMine.step(c, t, p, "lead");
             DeepMine.step(c, t, p, "up");
             p.teleportTo(head.getX() + 0.5, head.getY(), head.getZ() + 4.5);
