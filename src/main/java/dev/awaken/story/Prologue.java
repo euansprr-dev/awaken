@@ -77,7 +77,7 @@ final class Prologue {
                 if (p.tickCount < 100) return;
                 Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE,
                                 Component.literal(StoryContent.line("first_contact", "[ERROR] … candidate found.")))
-                        .ttl(20 * 4).priority(9).build());
+                        .ttl(20 * 4).priority(9).fleeting().build());
                 s.prologue = StoryProgress.Prologue.GLITCHED;
                 s.prologueSince = now;
                 sync(p);
