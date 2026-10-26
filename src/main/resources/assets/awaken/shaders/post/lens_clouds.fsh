@@ -8,8 +8,9 @@
 // blended into last frame's result reprojected by where the ray first met cloud.
 // Storm cells (the Living Wilds' Rolling Storm, lens_storm.glsl) are marched in the same pass, band by band along the
 // ray (rain, body, anvil), with lightning lighting them from inside; the layer's clouds thin out around them.
-// Temporal (frame texel 17 y, the lensTemporal setting): each pixel marches one frame in four, a 2x2 pattern turning with
-// the frame counter; the other three keep last frame's clouds reprojected to where the ray enters the layer, and a
+// Temporal (frame texel 17 y, the lensTemporal setting): each pixel marches one frame in four, a 2x2 pattern of 8x8-pixel
+// tiles turning with the frame counter (whole tiles, so the GPU's SIMD groups skip together: a per-pixel pattern left a
+// marching pixel in every group and saved nothing, perf tour 26 Oct); the other three keep last frame's clouds reprojected to where the ray enters the layer, and a
 // march blends in more strongly so the clouds answer as fast as before. No history, off screen or lightning: it marches.
 // Out: rgb the light the clouds send this way (premultiplied), a how much of what's behind still shows.
 uniform sampler2D DepthSampler;     // the world's depth, full size (first input: InSize is the full frame)
@@ -235,8 +236,8 @@ void main() {
         t1 = min(min(t1, scene), min(maxD, t0 + (ultra ? 1100.0 : 800.0)));
     }
     if (interleave) {
-        ivec2 op = ivec2(gl_FragCoord.xy);
-        int phase = int(mod(f12.w, 4.0)), mine = (op.x & 1) + 2 * (op.y & 1);
+        ivec2 tile = ivec2(gl_FragCoord.xy) >> 3;
+        int phase = int(mod(f12.w, 4.0)), mine = (tile.x & 1) + 2 * (tile.y & 1);
         bool flash = false;
         for (int s = 0; s < 2; s++) if (s < nStorm && stormC(s).w > 0.0) flash = true;
         if (mine != phase && !flash) {

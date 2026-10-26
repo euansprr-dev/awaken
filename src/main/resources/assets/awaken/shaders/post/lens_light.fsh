@@ -9,7 +9,8 @@
 // by the frame's own matrices, so the look is many frames' work at one frame's cost. The same pass gathers volumetric
 // light along each view ray (beams through gaps in a canopy, down canyons, past ridges, in any direction) from the sun
 // map, so the whole of Lens 2's light is one pass and one history.
-// Temporal (frame texel 17 y, the lensTemporal setting): a checkerboard of pixels marches each frame, alternating; on its
+// Temporal (frame texel 17 y, the lensTemporal setting): a checkerboard of 8x8-pixel tiles marches each frame,
+// alternating (whole tiles, so SIMD groups skip together); on its
 // off frame a pixel keeps last frame's answer for its surface where the history saw the same distance, and a march
 // blends in more strongly so the light answers as fast as before. No history, off screen or a new surface: it marches.
 // Out: r sun visibility, g ambient occlusion, b volumetric light, a the surface's distance (one byte, 0 for sky).
@@ -193,7 +194,7 @@ void main() {
     vec4 f13 = F(13);
     bool interleave = F(17).y > 0.5 && f13.w > 0.5;
     vec4 hist = f13.w > 0.5 ? history(p, sky, z01) : vec4(0.0);
-    if (interleave && ((int(gl_FragCoord.x) + int(gl_FragCoord.y) + int(f12.w)) & 1) == 1 && hist.w > 0.4) {
+    if (interleave && (((int(gl_FragCoord.x) >> 3) + (int(gl_FragCoord.y) >> 3) + int(f12.w)) & 1) == 1 && hist.w > 0.4) {
         // this pixel's off frame, and last frame saw the same surface here: keep its answer
         fragColor = vec4(clamp(hist.rgb + (noise - 0.5) / 255.0, 0.0, 1.0), code);
         return;
