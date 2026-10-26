@@ -6,11 +6,30 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.FunctionGameTestInstance;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.gametest.framework.GameTestInfo;
+import net.minecraft.gametest.framework.GameTestListener;
+import net.minecraft.gametest.framework.GameTestRunner;
+import net.minecraft.gametest.framework.GameTestServer;
 import net.minecraft.gametest.framework.TestData;
 import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gamerules.GameRules;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.living.MobDespawnEvent;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -18,8 +37,10 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.BooleanSupplier;
@@ -81,6 +102,9 @@ public final class AwakenTests {
             for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) level.getChunk(cx + dx, cz + dz);
             // loaded is not entity-ticking: that also needs the ring two chunks round each one loaded, which the chunk
             // workers generate in the background, and the promotion then runs on the main-thread queue
+            if (RUNNING.isEmpty()) freshWorld(level);
+            RUNNING.add(h.testInfo);
+            onEnd(h, () -> RUNNING.remove(h.testInfo));
             h.assertTrue(settle(level, () -> areaTicking(level, cx, cz), "the test area entity-ticks"), "the test area entity-ticks within 30 s");
             // Note: don't defer the body with runAfterDelay. Vanilla iterates its scheduled callbacks while running them,
             // so scheduling from inside one can run entries twice. Tests that need settled chunks delay their own actions.
@@ -89,9 +113,115 @@ public final class AwakenTests {
     }
 
     /**
-     * Clears the air over a test spot: plots are reused, and an earlier test's floor left high above one roofs it (a
-     * surface creature sees no sky, a lair lays its ring on top of it). From {@code fromDy} to {@code toDy} above
-     * {@code centre}, {@code radius} blocks round it. Call before the test builds anything up there.
+     * Room round every test, in blocks (its TestData padding). The grid spawner spaces tests by their padded bounds, so
+     * neighbours stand 54 blocks apart instead of 6, and vanilla clears the padded box (blocks and creatures, from 19
+     * below the test's origin to 24 above it) as it places the test. The world is superflat with its grass at y -61 and
+     * tests stand at y 5: whatever rock, water or roof a test finds there was left by another test.
+     */
+    static final int PADDING = 24;
+
+    /** AWAKEN tests that have taken their first tick and not yet ended (identity: GameTestInfo keeps Object's equals). */
+    private static final Set<GameTestInfo> RUNNING = new HashSet<>();
+    /** The game rules and the time of day the first test found (the world goes back to them between tests). */
+    private static GameRules startRules;
+    private static long startClock;
+
+    /**
+     * A test that starts while no other AWAKEN test runs finds a world nobody else is using (the GameTest server only).
+     * The runner never removes what a test leaves behind: by the end of a run some 240 players from finished tests still
+     * stood about the grid, the Living Wilds started stampedes, hunts and pack spawns round them, they were the "nearest
+     * player" of other tests' spawns and caps, and a gate whose reused cell one of them stood in could never be released.
+     * Rain a test set never stopped (the test server doesn't advance the weather) and the clock ran on, so a test met
+     * whatever sky and hour the tests before it left. So every player and every creature, item and other entity left in
+     * the overworld goes, and the first test's game rules, time of day and clear sky come back. Only when nothing runs:
+     * a batch's tests start one by one as their chunks come in, not on one tick.
+     */
+    private static void freshWorld(ServerLevel level) {
+        MinecraftServer server = level.getServer();
+        if (!(server instanceof GameTestServer)) return;
+        for (ServerPlayer p : List.copyOf(server.getPlayerList().getPlayers())) server.getPlayerList().remove(p);
+        ServerLevel over = server.overworld();
+        List<Entity> left = new ArrayList<>();
+        for (Entity e : over.getAllEntities()) if (!(e instanceof Player)) left.add(e);
+        left.forEach(Entity::discard);
+        var cmd = server.createCommandSourceStack().withLevel(over).withSuppressedOutput();
+        if (startRules == null) {
+            startRules = over.getGameRules().copy(over.enabledFeatures());
+            startClock = Math.floorMod(over.getOverworldClockTime(), 24000L);
+        } else {
+            over.getGameRules().setAll(startRules, server);
+            server.getCommands().performPrefixedCommand(cmd, "time set " + startClock);
+        }
+        server.getCommands().performPrefixedCommand(cmd, "weather clear");
+    }
+
+    /**
+     * Air from the lower corner of a box (absolute corners, any order) up to the sky in every column of it: leftovers of
+     * any height, and the water in them, so heightmaps, sky checks and falling bodies see only what the test builds. It
+     * reads each column's top and changes only blocks that aren't air, without neighbour updates (nothing outside starts
+     * to flow or fall in).
+     */
+    public static void clearToSky(ServerLevel level, BlockPos a, BlockPos b) {
+        BlockState air = Blocks.AIR.defaultBlockState();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        int y0 = Math.min(a.getY(), b.getY()), y1 = Math.max(a.getY(), b.getY());
+        for (int x = Math.min(a.getX(), b.getX()); x <= Math.max(a.getX(), b.getX()); x++) {
+            for (int z = Math.min(a.getZ(), b.getZ()); z <= Math.max(a.getZ(), b.getZ()); z++) {
+                int top = Math.max(y1, level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1);
+                for (int y = y0; y <= top; y++) {
+                    if (!level.getBlockState(m.set(x, y, z)).isAir()) level.setBlock(m, air, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+                }
+            }
+        }
+    }
+
+    /** Removes every creature, item and other non-player entity in a box (absolute corners, any order). */
+    public static void clearEntities(ServerLevel level, BlockPos a, BlockPos b) {
+        for (Entity e : level.getEntitiesOfClass(Entity.class, AABB.encapsulatingFullBlocks(a, b), e -> !(e instanceof Player))) e.discard();
+    }
+
+    /**
+     * Runs {@code r} when the test ends, passed or failed (a failed assertion skips the rest of the test, so a switch it
+     * turned on stays on for every test after it unless it's put back here).
+     */
+    public static void onEnd(GameTestHelper h, Runnable r) {
+        h.testInfo.addListener(new GameTestListener() {
+            @Override
+            public void testStructureLoaded(GameTestInfo info) {}
+
+            @Override
+            public void testPassed(GameTestInfo info, GameTestRunner runner) {
+                r.run();
+            }
+
+            @Override
+            public void testFailed(GameTestInfo info, GameTestRunner runner) {
+                r.run();
+            }
+
+            @Override
+            public void testAddedForRerun(GameTestInfo original, GameTestInfo copy, GameTestRunner runner) {}
+        });
+    }
+
+    /**
+     * A site of the test's own wherever it lands: a floor of {@code floor} on the layer of {@code lo} (relative corners;
+     * {@code lo} is the low one), air from the layer above it up to the sky, and no creatures or items left over it.
+     * Returns the floor's absolute low corner.
+     */
+    public static BlockPos site(GameTestHelper h, BlockPos lo, BlockPos hi, BlockState floor) {
+        ServerLevel level = h.getLevel();
+        BlockPos a = h.absolutePos(lo), b = h.absolutePos(hi);
+        clearToSky(level, a.above(), b);
+        clearEntities(level, a, b.atY(Math.max(b.getY(), a.getY() + 1)));
+        for (BlockPos q : BlockPos.betweenClosed(a, b.atY(a.getY()))) level.setBlock(q, floor, Block.UPDATE_CLIENTS);
+        return a;
+    }
+
+    /**
+     * Clears the air over a test spot, so an earlier test's floor left high above it doesn't roof it (a surface creature
+     * sees no sky, a lair lays its ring on top of it). From {@code fromDy} to {@code toDy} above {@code centre},
+     * {@code radius} blocks round it. Call before the test builds anything up there.
      */
     public static void clearAbove(ServerLevel level, BlockPos centre, int radius, int fromDy, int toDy) {
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
@@ -202,6 +332,21 @@ public final class AwakenTests {
         WorldgenTests.register();
         FUNCTIONS.register(modBus);
         modBus.addListener(AwakenTests::onRegisterTests);
+        NeoForge.EVENT_BUS.addListener(AwakenTests::onDespawnCheck);
+    }
+
+    /**
+     * On the GameTest server a creature never despawns because its nearest player is another test's, far off. Vanilla
+     * discards a mob at once when the nearest player is over 128 blocks away: with tests 54 apart, and a mock player
+     * standing at 0, 0, 0 until its test moves it, that could be any test's monster on any tick (mobs_echo_rises_once
+     * lost its ghoul so).
+     */
+    private static void onDespawnCheck(MobDespawnEvent e) {
+        Mob mob = e.getEntity();
+        if (!(mob.level().getServer() instanceof GameTestServer) || mob.isPersistenceRequired()) return;
+        Player p = mob.level().getNearestPlayer(mob, -1.0);
+        int far = mob.getType().getCategory().getDespawnDistance();
+        if (p != null && p.distanceToSqr(mob) > (double) far * far) e.setResult(MobDespawnEvent.Result.DENY);
     }
 
     private static void onRegisterTests(RegisterGameTestsEvent event) {
@@ -211,8 +356,8 @@ public final class AwakenTests {
         for (Pending p : PENDING) {
             if (!selected(p.name())) continue;
             Holder<TestEnvironmentDefinition<?>> e = envs.computeIfAbsent(p.env(), n -> event.registerEnvironment(Awaken.id(n)));
-            event.registerTest(Awaken.id(p.name()), new FunctionGameTestInstance(p.fn().getKey(),
-                    new TestData<>(e, Identifier.withDefaultNamespace("empty"), p.maxTicks(), 0, true)));
+            event.registerTest(Awaken.id(p.name()), new FunctionGameTestInstance(p.fn().getKey(), new TestData<>(e, Level.OVERWORLD,
+                    Identifier.withDefaultNamespace("empty"), p.maxTicks(), 0, true, Rotation.NONE, false, 1, 1, false, PADDING)));
             registered++;
         }
         if (FILTER.isEmpty()) return;

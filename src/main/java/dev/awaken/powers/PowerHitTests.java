@@ -78,11 +78,16 @@ final class PowerHitTests {
             if (!(type.create(h.getLevel(), EntitySpawnReason.COMMAND) instanceof LivingEntity e)) continue;
             Vec3 pos = at.add(s.x(), 0, s.z());
             e.snapTo(pos.x, pos.y, pos.z, 180f, 0f);
-            // standing still, but with physics: a body with no AI ignores knockback entirely
+            // standing still, but with physics: a body with no AI ignores knockback entirely, so it keeps its AI and loses
+            // its goals (a ravager sets its own speed back every tick and walked back at the caster: it "moved" 0.2 to 2.5)
             if (e.getAttribute(Attributes.MOVEMENT_SPEED) != null) e.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0);
             e.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 20 * 60, 0, false, false));
             if (e instanceof Mob m) m.setPersistenceRequired();
             h.getLevel().addFreshEntity(e);
+            if (e instanceof Mob m) {
+                m.goalSelector.removeAllGoals(g -> true);
+                m.targetSelector.removeAllGoals(g -> true);
+            }
             if (s.fought()) e.setLastHurtByPlayer(p, 200);
             bodies.put(s, e);
         }

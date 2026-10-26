@@ -48,9 +48,14 @@ final class RunnerTests {
 
     private static final BlockPos.MutableBlockPos M = new BlockPos.MutableBlockPos();
 
-    /** The course's origin (feet level) for a test: up in the air, clear of the terrain other tests stand on. */
+    /**
+     * The course's origin (feet level) for a test: up in the air, and the box every course here fits in (the S3 course,
+     * the row of seven pipe tops) cleared to the sky first, whatever another test's course left up there.
+     */
     private static BlockPos origin(GameTestHelper h) {
-        return h.absolutePos(new BlockPos(20, 1, 6)).above(80);
+        BlockPos o = h.absolutePos(new BlockPos(20, 1, 6)).above(80);
+        AwakenTests.clearToSky(h.getLevel(), o.offset(-16, -2, -6), o.offset(72, 24, 46));
+        return o;
     }
 
     private static void finish(GameTestHelper h, BlockPos o, ServerPlayer... ps) {
