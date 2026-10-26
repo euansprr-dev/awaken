@@ -271,6 +271,10 @@ def woodpecker():
             if b not in skip:
                 hold(cl, b, rot=rot)
 
+    idle = clip_of(r, "idle", 3.0, loop=True)
+    # perched like any bird (a branch, the line-up): glances, a tail flick
+    idle.rot("head", [(0, 0, 0, 0), (0.4, 0, 30, 0), (1.1, 0, 30, 0), (1.3, 0, -28, 0), (2.1, 0, -28, 0), (2.3, 0, 0, 0), (3.0, 0, 0, 0)])
+    idle.rot("tail", [(0, 0, 0, 0), (2.5, 0, 0, 0), (2.6, -14, 0, 0), (2.8, 0, 0, 0), (3.0, 0, 0, 0)])
     cling = clip_of(r, "cling", 3.0, loop=True)
     clinging(cling, ("head",))
     cling.rot("head", [(0, 20, 0, 0), (0.4, 20, 35, 0), (1.0, 20, 35, 0), (1.2, 20, -30, 0), (1.9, 20, -30, 0), (2.1, 20, 0, 0),
@@ -447,7 +451,7 @@ def raptor():
     hold(soar, "neck", rot=(-20, 0, 0))
     hold(soar, "tail", scale=(1.5, 1, 1), rot=(-24, 0, 0))
     tuck_legs(soar, 60)
-    fl_ = clip_of(r, "flap", 0.62, loop=True)
+    fl_ = clip_of(r, "fly", 0.62, loop=True)
     flap(fl_, up=48, down=-38)
     hold(fl_, "body", rot=level)
     hold(fl_, "neck", rot=(-20, 0, 0))

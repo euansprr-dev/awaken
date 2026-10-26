@@ -1,0 +1,175 @@
+# Wild life (SPEC "Wild life"): the line-up of every body in the game's own light, then a forest at dawn, noon, dusk and
+# night, a flower meadow at noon, a river and a swamp at dusk, an Awakened forest at night, and the forest in rain. Each
+# stop: the census in the log ("[wildlife] in view N of M near: ...") and four views round the compass. Standing still
+# (the animals flush from a moving player). Hostile spawns off, so the predators' hush doesn't empty the night.
+# Run: PACK=perf,world TECTONIC=awakened tools/autopilot.sh tools/autopilot/wild-life.txt 1500
+world wildlife777 creative 777
+waitworld
+gui 0
+cmd gamerule advance_time false
+cmd gamerule spawn_mobs false
+cmd gamerule send_command_feedback false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+camera first
+hud off
+info
+# ---- the line-up: one of each body, idle, by day ----
+cmd awaken terrain visit minecraft:plains
+wait 400
+look 0 12
+cmd awaken wildlife off
+wait 10
+cmd awaken wildlife lineup idle
+wait 40
+shot wild_lineup_idle
+cmd awaken wildlife lineup idle 1
+wait 40
+shot wild_lineup_idle_b
+cmd awaken wildlife lineup fly
+wait 30
+shot wild_lineup_fly
+cmd awaken wildlife lineup off
+cmd awaken wildlife on
+# ---- a temperate forest through the day ----
+cmd awaken terrain visit minecraft:forest
+wait 500
+cmd time set 23500
+wait 400
+cmd awaken wildlife count
+look 0 4
+shot wild_forest_dawn_n
+look 90 4
+wait 60
+shot wild_forest_dawn_w
+look 180 4
+wait 60
+shot wild_forest_dawn_s
+look 270 10
+wait 60
+shot wild_forest_dawn_e
+cmd time set 6000
+wait 400
+cmd awaken wildlife count
+look 0 4
+shot wild_forest_noon_n
+look 90 8
+wait 60
+shot wild_forest_noon_w
+look 180 4
+wait 60
+shot wild_forest_noon_s
+look 270 20
+wait 60
+shot wild_forest_noon_e
+perf wild_forest_noon 8
+cmd awaken wildlife off
+wait 20
+perf wild_forest_noon_off 8
+cmd awaken wildlife on
+cmd time set 12300
+wait 400
+cmd awaken wildlife count
+look 0 4
+shot wild_forest_dusk_n
+look 180 4
+wait 60
+shot wild_forest_dusk_s
+cmd time set 18000
+wait 400
+cmd awaken wildlife count
+look 0 2
+shot wild_forest_night_n
+look 120 2
+wait 60
+shot wild_forest_night_w
+look 240 2
+wait 60
+shot wild_forest_night_e
+perf wild_forest_night 8
+# ---- rain in the forest ----
+cmd time set 6000
+cmd weather rain 1000000
+wait 400
+cmd awaken wildlife count
+look 0 6
+shot wild_forest_rain_n
+look 180 6
+wait 60
+shot wild_forest_rain_s
+cmd weather clear 1000000
+# ---- a flower meadow at noon ----
+cmd awaken terrain visit minecraft:flower_forest
+wait 500
+cmd time set 6000
+wait 400
+cmd awaken wildlife count
+look 0 20
+shot wild_meadow_noon_n
+look 90 20
+wait 60
+shot wild_meadow_noon_w
+look 180 30
+wait 60
+shot wild_meadow_noon_down
+cmd awaken terrain visit minecraft:plains
+wait 500
+cmd awaken wildlife count
+look 0 -20
+shot wild_plains_noon_sky
+look 90 4
+wait 60
+shot wild_plains_noon_w
+# ---- a river and a swamp at dusk ----
+cmd awaken terrain visit minecraft:river
+wait 500
+cmd time set 12000
+wait 400
+cmd awaken wildlife count
+look 0 14
+shot wild_river_dusk_n
+look 180 14
+wait 60
+shot wild_river_dusk_s
+cmd awaken terrain visit minecraft:swamp
+wait 500
+cmd time set 12600
+wait 400
+cmd awaken wildlife count
+look 0 10
+shot wild_swamp_dusk_n
+look 180 10
+wait 60
+shot wild_swamp_dusk_s
+cmd time set 18000
+wait 300
+cmd awaken wildlife count
+shot wild_swamp_night_s
+# ---- an Awakened forest at night ----
+cmd awaken terrain visit awaken:lumen_forest
+wait 500
+cmd time set 18000
+wait 400
+cmd awaken wildlife count
+look 0 4
+shot wild_lumen_night_n
+look 180 4
+wait 60
+shot wild_lumen_night_s
+cmd awaken terrain visit awaken:elderwood
+wait 500
+cmd time set 1000
+wait 400
+cmd awaken wildlife count
+look 0 10
+shot wild_elderwood_morning_n
+look 180 10
+wait 60
+shot wild_elderwood_morning_s
+quit
