@@ -20,9 +20,9 @@ final class ProgressionTests {
                 Progression.profile(p).counters.remove(Progression.CAPABILITY_AT);
                 Progression.markNewThing(p, "biome");
                 Progression.markNewThing(p, "power core from an elite");
-                h.assertTrue(Progression.profile(p).counter(Progression.CAPABILITY_AT) == 0, "a sight or a core is no new ability");
+                h.assertFalse(Progression.profile(p).counters.containsKey(Progression.CAPABILITY_AT), "a sight or a core is no new ability");
                 Progression.markNewThing(p, "power Haymaker");
-                h.assertTrue(Progression.profile(p).counter(Progression.CAPABILITY_AT) > 0, "a power learned is");
+                h.assertTrue(Progression.profile(p).counters.containsKey(Progression.CAPABILITY_AT), "a power learned is");
                 h.assertFalse(dev.awaken.core.api.NowHooks.collect(p, 10).stream().anyMatch(x -> x.id().equals("progression:capability")), "not yet");
                 Progression.profile(p).counters.put(Progression.CAPABILITY_AT, p.level().getGameTime() - ProgressionNow.CAPABILITY_GAP - 1);
                 h.assertTrue(dev.awaken.core.api.NowHooks.collect(p, 10).stream().anyMatch(x -> x.id().equals("progression:capability")),

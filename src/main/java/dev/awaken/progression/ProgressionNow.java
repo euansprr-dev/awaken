@@ -39,8 +39,10 @@ final class ProgressionNow {
                         : Suggestion.of("progression:reassessment", 72, text + " · craft a Monolith"));
             }
             // the capability clock (SPEC §27.9): 75 minutes with nothing new to do, outdoors: the nearest new thing in reach
-            long cap = p.counter(Progression.CAPABILITY_AT), now = player.level().getGameTime();
-            if (cap > 0 && now - cap > CAPABILITY_GAP && now >= cap && !dev.awaken.core.api.GateHooks.inGate(player)) {
+            // set or not (a young world's clock can make "75 minutes ago" negative, so never test it against 0)
+            Long cap = p.counters.get(Progression.CAPABILITY_AT);
+            long now = player.level().getGameTime();
+            if (cap != null && now - cap > CAPABILITY_GAP && !dev.awaken.core.api.GateHooks.inGate(player)) {
                 Suggestion near = capability(player, p);
                 if (near != null) out.add(near);
             }
