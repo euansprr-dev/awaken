@@ -103,7 +103,7 @@ final class FarHorizon implements AutoCloseable {
     // the panorama in hand: its eye, its band, its density, the ring it starts at and the windows it was drawn in
     private boolean held;
     private double eyeX, eyeY, eyeZ, lastX = Double.NaN, lastY, lastZ;
-    private float vLo, vHi, density, screenDensity, eps, ratio, bandLo, bandHi;
+    private float vLo, vHi, density, screenDensity, eps, ratio;
     /** City Sight's chunks are the panorama's from this far (blocks, horizontally): past the real chunks' reach. */
     private float cityFrom;
     /** The screen rows the band covers this frame (NDC y, low and high): the composite draws over those only. */
@@ -296,8 +296,6 @@ final class FarHorizon implements AutoCloseable {
         // up to the world's top and the tallest treetops over it, so land learnt later never rises past the band (it
         // started the panorama over a few times a second while the generated layer filled in)
         float lo = (int) (range >> 32), hi = Math.max((int) range, renderer.maxY() + 32) + 72f;
-        bandLo = lo;
-        bandHi = hi;
         float tLo = (float) ((lo - camY) / (lo < camY ? near : far)), tHi = (float) ((hi - camY) / (hi > camY ? near : far));
         vLo = (tLo < 0 ? tLo * EDGE : tLo) - 0.002f;
         vHi = (tHi > 0 ? tHi * EDGE : tHi) + 0.002f;
@@ -362,21 +360,24 @@ final class FarHorizon implements AutoCloseable {
     }
 
     /**
-     * A far patch arrived (ring, patch): the slices it shows in are drawn again, or, rising past (or sinking under) the
-     * band the panorama was sized for, the panorama starts over.
+     * A far patch arrived (ring, patch): the slices it shows in are drawn again, or, if its land seen from its own
+     * distance leaves the band the panorama was sized for (a deep sea floor near the held rings' edge), the panorama
+     * starts over. (Its lowest ground against the band's lowest ground started it over ten times a second in a new
+     * world's countryside, for far land that lay well inside.)
      */
     void patch(FarField field, int r, int px, int pz, double camX, double camZ) {
         if (!held || r < ring) return;
         int slot = Rings.slot(px, pz), pb = Rings.patchBlocks(r);
-        int lo = (field.lo[r][slot] & 0xFFFF) - dev.awaken.farsight.FarColumns.HEIGHT_BASE - 32;
-        int hi = field.top(r, slot) - dev.awaken.farsight.FarColumns.HEIGHT_BASE + 32 + 72;
-        if (lo < bandLo || hi > bandHi) {
+        float lo = (field.lo[r][slot] & 0xFFFF) - dev.awaken.farsight.FarColumns.HEIGHT_BASE - 32 - (float) eyeY;
+        float hi = field.top(r, slot) - dev.awaken.farsight.FarColumns.HEIGHT_BASE + 32 + 72 - (float) eyeY;
+        float ax = (float) ((double) px * pb - camX), az = (float) ((double) pz * pb - camZ), bx = ax + pb, bz = az + pb;
+        float nx = Math.max(0, Math.max(ax, -bx)), nz = Math.max(0, Math.max(az, -bz)), d = Math.max(1f, (float) Math.sqrt(nx * nx + nz * nz));
+        if (lo < 0 && lo / d * EDGE < vLo || hi > 0 && hi / d * EDGE > vHi) {
             dropBand++;
             drop();
             return;
         }
-        float ax = (float) ((double) px * pb - camX), az = (float) ((double) pz * pb - camZ);
-        changed(ax, az, ax + pb, az + pb);
+        changed(ax, az, bx, bz);
     }
 
     /** Far land changed there (blocks from the camera): the slices it shows in are drawn again. */

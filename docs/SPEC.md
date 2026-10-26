@@ -1748,7 +1748,8 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
     a quarter) change. A slice is served while the light and air it was drawn under still hold: sun (about 0.7°),
     strength, colour, haze, rain, valley cloud, Far Sight's fog, the fog's colour (it turns with the view at dawn and
     dusk), the sky's light (lightning), the weather fog, gamma, debug views and parts; a sight effect never matches. A
-    far patch or a City Sight chunk (a mesh up, a dissolve's step, one let go) stales the slices it spans, which stay
+    far patch or a City Sight chunk (a mesh up, a dissolve's step, one let go) stales the slices it spans (or starts
+    the panorama over, if that patch's land seen from its own distance leaves the band), which stay
     live until that land has been quiet 30 frames (a world still filling in is drawn live, never redrawn again and
     again). Stale slices in view are drawn first (two a frame), then one out of view a frame, and one older than 600
     frames every 8th frame.
@@ -1760,6 +1761,16 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
     holds enough pixels: the screen's radial pixels per radian are f / cos² off its axis, so its corners need more than
     the slices hold and stay live, as the composite leaves them). Lens reads the same depth. Moving, it's exactly the
     old path. Debug view 5 paints where it serves (land magenta, none cyan), 6 the panorama itself.
+  - **Result** (2026-10-26, `tools/autopilot/farsight-horizon.txt` on build with temporal Lens, a new world from seed
+    20261024, Cinematic, RD 24, render scale 0.95; sheet `docs/perf/far-sight/fs3-horizon.jpg`): at the Roost standing,
+    Far Sight 3.65 → 2.60 ms and the GPU's world pass 12.38 → 11.05 ms (frame p50 14.12 → 12.91 ms, 71 → 77 fps), the
+    same-moment frames on and off differing by 0.95 of 765 on average; turning at the Roost, Far Sight 4.42 → 3.21 ms,
+    world pass 14.03 → 12.41; the day running, about 12 slices a second redrawn as the sun moves; a 30 s glide at 40
+    blocks a second, live throughout (5 of 1683 frames served), 14.45 vs 14.93 ms. The countryside in the new world
+    (still generating) measured Far Sight 6.05 ms either way, with the panorama starting over ten times a second on
+    its band; the per-patch band check that ends that came after the tour. The 2 ms target at the Roost isn't reached:
+    the composite (0.34 ms), the live rings 0-1 (0.68) and the held rings' pieces that reach past the cone or into a
+    stale slice are what's left. 102 MB of video memory.
 - **Ring 0's sea under the city**: a sea piece wholly inside the band where far water stays under real water, over
   chunks all shown and within Sodium's reach up and down, has every fragment hidden by the mask; it is no longer drawn
   (ring 0 at the Roost 0.70 → 0.15 ms: discarded fragments under Carillon's canals).
