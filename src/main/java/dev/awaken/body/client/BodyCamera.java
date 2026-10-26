@@ -94,7 +94,7 @@ final class BodyCamera {
         // the slide-cancel: a kick up as you come out
         float j = t - ClientMoves.slideJumpAt;
         if (j >= 0 && j < 7) pitch -= 5F * Mth.sin(j / 7F * Mth.PI);
-        // the grip's slide (SPEC §17.25): a faint judder from the line running through the hands
+        // the grip's slide (SPEC §17.28): a faint judder from the line running through the hands
         if (GripMoves.active() && GripMoves.mode == GripMoves.SLIDE) {
             pitch += 0.4F * Mth.sin(t * 3.3F) * (float) (-GripMoves.v / dev.awaken.body.GripRules.SLIDE_MAX);
         }

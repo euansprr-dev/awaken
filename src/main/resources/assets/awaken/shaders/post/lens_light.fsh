@@ -22,6 +22,8 @@ uniform sampler2D ParamsSampler;
 #include <awaken:lens_height.glsl>
 #include <awaken:lens_normal.glsl>
 #include <awaken:lens_clouds.glsl>
+#include <awaken:lens_storm_frame.glsl>
+#include <awaken:lens_storm.glsl>
 
 layout(location = 0) in vec2 texCoord;
 
@@ -170,6 +172,8 @@ void main() {
             if (vis > 0.0 && dist < 96.0) vis *= contactShadow(p, n, f14.xyz, dist, noise2, vp, z01, zFar, ultra);
             // the clouds' moving shadows
             if (vis > 0.0) vis *= cloudShadow(p, f14.xyz, cloudParams(), f12.y);
+            // and a storm cell's, long across the land when the sun is low
+            if (vis > 0.0) vis *= stormShadow(p, f14.xyz, f12.y);
         }
         if (dist < 96.0) ao = ambient(p, n, noise, noise2, vp, z01, zFar, ultra);
     }

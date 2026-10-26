@@ -1,6 +1,6 @@
 # Hands: first-person animation for AWAKEN (approved 2026-10-25; building phase by phase)
 
-Status: approved by Euan 2026-10-25 with every recommendation in §7; P1-P6 built (SPEC §17.25, §24); the quality pass P1.1/P2.1/P4.1 (hands that meet the world) after the orchestrator's review. Branch `pack/fp-anims`. Approval page: https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy (`docs/plan-hands.html`).
+Status: approved by Euan 2026-10-25 with every recommendation in §7; P1-P6 built (SPEC §17.28, §24); the quality pass P1.1/P2.1/P4.1 (hands that meet the world) after the orchestrator's review. Branch `pack/fp-anims`. Approval page: https://claude.ai/artifact/5dQodY76zUGpn536Z34Lpy (`docs/plan-hands.html`).
 Euan's ask: a real pipe climb and slide; first-person animation for every move of The Ascent; "Cinematic
 Interactions"-level hand moments across the mod; all in the design language we already have.
 

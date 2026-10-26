@@ -163,7 +163,7 @@ final class RunnerServer {
             // a real drop under the hold (the column in front of the face)
             if (e != null && !RunnerRules.lowerWorth(p.level(), ctx, M, e)) return false;
         } else if (msg.flag() == BodyPayloads.HANG_EAVE) {
-            // from a climb line's top up to the lip over it (SPEC §17.25): only from a grip held or just let go
+            // from a climb line's top up to the lip over it (SPEC §17.28): only from a grip held or just let go
             if (!m.gripping && now - m.gripEndedAt > 6) return false;
             e = GripRules.topLip(p.level(), ctx, M, s[0], s[1], s[2], msg.axis(), msg.sign(), RunnerRules.SERVER_TOL);
         } else {
@@ -297,7 +297,7 @@ final class RunnerServer {
         });
     }
 
-    // ---- the grip on a climb line (SPEC §17.25) ------------------------------------------------------------------------
+    // ---- the grip on a climb line (SPEC §17.28) ------------------------------------------------------------------------
 
     /** The clip others see for a grip flag. */
     static String gripClip(int flag) {

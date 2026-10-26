@@ -68,7 +68,7 @@ public final class BodyPayloads {
             SHIMMY_START_RIGHT = 3;
 
     /**
-     * Grip flags (SPEC §17.25): the first Run of a grip starts it (holding or climbing), later ones change what the
+     * Grip flags (SPEC §17.28): the first Run of a grip starts it (holding or climbing), later ones change what the
      * hands do; the last four leave the line (a kick off the wall, a swing out left or right, a landing at its foot).
      */
     public static final int GRIP_HOLD = 0, GRIP_CLIMB = 1, GRIP_CLIMB_FAST = 2, GRIP_SLIDE = 3, GRIP_HOP = 4,

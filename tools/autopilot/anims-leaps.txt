@@ -1,0 +1,119 @@
+# Leaps with momentum (Euan, 2026-10-26: "it just feels like I'm basically floating up"): every jump out of a hang or
+# a grip, filmed in first person and in the shoulder view (run with PACK=feel, HUD on). S3's course for the ledge jump
+# up, sideways, the climb out and the jump back; a drainpipe for the hop, the kick and the top's eave hang.
+# Clips: run-autopilot/clips/m_* (rename to before_/after_ between runs).
+world anims_leaps survival 4264
+waitworld
+window 1440 900
+gui 0
+hud on
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule fall_damage false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd tp @s 0.5 201 0.5 0 12
+wait 100
+cmd fill -16 199 -4 42 199 44 minecraft:smooth_stone
+cmd fill -16 200 -4 42 214 44 minecraft:air
+cmd tp @s 0.5 200 0.5 0 12
+wait 40
+cmd awaken body course
+wait 100
+screen close
+cmd clear @s
+# the pipe at x 50, clear of the course: a wall at z 6 with a drainpipe up it to a cornice and a roof
+cmd fill 46 199 0 54 199 10 minecraft:smooth_stone
+cmd fill 46 200 0 54 212 10 minecraft:air
+cmd fill 46 200 6 54 205 6 minecraft:stone_bricks
+cmd fill 46 206 5 54 206 5 minecraft:stone_bricks
+cmd fill 46 206 6 54 206 9 minecraft:stone_bricks
+cmd fill 50 200 5 50 204 5 awaken:drainpipe[facing=north,part=pipe]
+cmd setblock 50 205 5 awaken:drainpipe[facing=north,part=head]
+camera first
+wait 20
+
+cmd awaken body try release
+wait 20
+cmd tp @s 3.5 200 18.2 0 12
+wait 20
+cmd awaken ascent pilot rec m_ledgeup 60 1
+cmd awaken body try ledgeup
+wait 70
+cmd awaken body try release
+wait 20
+cmd tp @s 7.3 200 18.2 0 12
+wait 20
+cmd awaken ascent pilot rec m_ledgeside 60 1
+cmd awaken body try ledgeside
+wait 70
+cmd awaken body try release
+wait 20
+cmd tp @s 13.5 200 18.2 0 12
+wait 20
+cmd awaken ascent pilot rec m_climb 55 1
+cmd awaken body try climb
+wait 65
+cmd awaken body try release
+wait 20
+cmd tp @s -3.0 200 2.0 90 12
+wait 20
+cmd awaken ascent pilot rec m_ledgeback 60 1
+cmd awaken body try ledgeback
+wait 70
+cmd awaken body try release
+wait 20
+cmd tp @s 50.5 200 3.6 0 -5
+wait 20
+cmd awaken ascent pilot hold forward 10
+wait 14
+cmd awaken ascent pilot rec m_hop 24 1
+cmd awaken ascent pilot hold jump 1
+wait 26
+cmd awaken ascent pilot rec m_kick 24 1
+cmd awaken ascent pilot hold jump,back 2
+wait 40
+cmd tp @s 50.5 200 3.6 0 -10
+wait 20
+cmd awaken ascent pilot hold forward 70
+wait 30
+cmd awaken ascent pilot rec m_top 50 1
+wait 40
+cmd awaken ascent pilot hold jump 2
+wait 30
+camera back
+wait 20
+
+cmd awaken body try release
+wait 20
+cmd tp @s 3.5 200 18.2 0 12
+wait 20
+cmd awaken ascent pilot rec m_ledgeup_f5 60 1
+cmd awaken body try ledgeup
+wait 70
+cmd awaken body try release
+wait 20
+cmd tp @s 7.3 200 18.2 0 12
+wait 20
+cmd awaken ascent pilot rec m_ledgeside_f5 60 1
+cmd awaken body try ledgeside
+wait 70
+cmd awaken body try release
+wait 20
+cmd tp @s 50.5 200 3.6 0 -5
+wait 20
+cmd awaken ascent pilot hold forward 10
+wait 14
+cmd awaken ascent pilot rec m_hop_f5 24 1
+cmd awaken ascent pilot hold jump 1
+wait 26
+info
+quit

@@ -39,7 +39,7 @@ final class BodyMotion {
     double hangX, hangY, hangZ;
     int hangFallbacks;
     boolean hangExplained;
-    // grip on a climb line (SPEC §17.25): the line's column, since when, misses of the re-check
+    // grip on a climb line (SPEC §17.28): the line's column, since when, misses of the re-check
     boolean gripping;
     int gripBx, gripBz, gripMiss;
     long gripSince, gripEndedAt = Long.MIN_VALUE / 2;

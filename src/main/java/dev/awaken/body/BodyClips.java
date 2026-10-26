@@ -31,7 +31,7 @@ public final class BodyClips {
             LEDGE_BACK = "body_ledge_back", LOWER = "body_lower", WALLCLIMB = "body_wallclimb";
 
     /**
-     * The grip on a climb line (SPEC §17.25): held still, climbing hand over hand (and its free-run pace), sliding down
+     * The grip on a climb line (SPEC §17.28): held still, climbing hand over hand (and its free-run pace), sliding down
      * (each a loop with an {@code _end}), and the one-shots out of it: the kick off the wall, the swing out to a side,
      * the hop up the line, the landing at its foot.
      */

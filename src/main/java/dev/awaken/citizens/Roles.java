@@ -10,7 +10,9 @@ final class Roles {
     static final int NONE = 0, THIEF_SNEAK = 1, THIEF_INSIDE = 2, THIEF_FLEE = 3, THIEF_CAUGHT = 4, WATCH_CHASE = 5,
             WATCH_ESCORT = 6, SHOUT = 7, BUCKET = 8, TRAPPED = 9, CLEAR = 10, GATE_GUARD = 11, PICKPOCKET = 12, GAWK = 13, REPAIR = 14,
             // Carillon's opening (SPEC §16.4): running from the gate in the square; standing by a bed in the infirmary
-            FLEE = 15, ATTEND = 16;
+            FLEE = 15, ATTEND = 16,
+            // a named citizen staged by another module for a scene (the Registry ceremony: Bram), CitizenHooks.stage
+            STAGED = 17;
 
     /** Roles that move at a run. */
     static boolean runs(int role) {

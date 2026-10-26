@@ -182,8 +182,10 @@ clip("body_shimmy_r_end", [(0, shimmy(False)[0][1], "linear")], 5, end=0, note="
 # Ledge jump up: pull, kick, reach high for the next lip, catch.
 LU_PULL = pose(ground=False, ra=(-150, 0, -24), re=90, la=(-150, 0, 24), le=90, rl=(-50, 0, 4), rk=80, ll=(-30, 0, -4), lk=60)
 LU_REACH = pose(ground=False, ra=(-166, 0, -26), re=5, la=(-166, 0, 26), le=5, rl=(10, 0, 3), rk=10, ll=(-6, 0, -3), lk=20)
-clip("body_ledge_up", [(0, HG, "linear"), (2, LU_PULL, "easeinquad"), (4, LU_REACH, "easeoutcubic"), (7, HG, "easeinoutsine")], 8,
-     note="pull, kick, reach high, catch")
+# On the leap's beats (RunnerMoves: load 2, launch, apex, the fall into the catch): pull and tuck on the load, kick and
+# stretch on the launch, held long at the apex, the catch's weight.
+clip("body_ledge_up", [(0, HG, "linear"), (2, LU_PULL, "easeinquad"), (5, LU_REACH, "easeoutcubic"), (7, LU_REACH, "linear"),
+                       (9, HG, "easeinquad")], 10, note="pull and tuck, kick and stretch, hang at the apex, catch")
 
 # Ledge jump sideways: push off the hands, swing across, reach out with the lead hand, catch.
 def ledge_side(left):
@@ -211,7 +213,7 @@ clip("body_lower", [(0, LO_CROUCH, "linear"), (3, pose(LO_CROUCH, ground=False, 
 
 
 # ---------------------------------------------------------------------------------------------------------------------
-# The grip on a climb line (SPEC §17.25): facing a drainpipe, rope or ladder close in front, both hands on it, the
+# The grip on a climb line (SPEC §17.28): facing a drainpipe, rope or ladder close in front, both hands on it, the
 # knees bent and the insteps clamping it. The game turns the body to the line and leans it in a touch; these clips pose
 # the limbs. A line is narrow, so both hands meet in front of the chest (arms turned in across, y < 0 for the right).
 

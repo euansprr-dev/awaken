@@ -80,6 +80,26 @@ float snowOn(vec2 world, float y, vec2 g, float slope, bool alpine) {
     return snow * (1.0 - smoothstep(SNOW_SLOPE - 0.1, SNOW_SLOPE + 0.25, slope));
 }
 
+// The sea floor under far water, seen through it (Euan: the real water shows its floor, the far water showed none, so
+// the floor ended where the chunks did). The floor lies `depth` blocks down along the view ray, so it shifts as the
+// camera moves as the real one does: blocks of sand, gravel in the deep, seagrass in patches, anchored to the world.
+// How much shows: the water's own absorption over the path through it (shallows and steep views see it, deep water and
+// grazing views don't), and less and less past the render distance's edge, until the open sea is only water.
+vec3 seaFloor(vec3 water, vec2 world, vec3 d, float depth, float horizontal) {
+    float facing = max(-d.y, 0.03);
+    vec2 floorXZ = world + d.xz / facing * depth;
+    ivec2 fb = ivec2(floor(floorXZ));
+    float patches = valueNoise(vec2(fb) + 0.5, 7.0, 41), pebble = farHash(fb * 5 + ivec2(13, 7));
+    vec3 sand = vec3(0.80, 0.75, 0.58), gravel = vec3(0.50, 0.49, 0.46), grass = vec3(0.20, 0.38, 0.17);
+    vec3 bed = mix(sand, gravel, smoothstep(9.0, 18.0, depth + 6.0 * (patches - 0.5)));
+    bed = mix(bed, grass, step(0.62, patches) * smoothstep(2.0, 5.0, depth) * (1.0 - smoothstep(14.0, 22.0, depth)));
+    bed *= 0.85 + 0.3 * pebble;
+    // seen through the water: tinted by it
+    vec3 seen = bed * (water * 1.6 + 0.2);
+    float clear = exp(-0.09 * depth / facing) * (1.0 - smoothstep(FarDepth.z + 32.0, FarDepth.z + 700.0, horizontal));
+    return mix(water, seen, clear);
+}
+
 struct Hit {
     bool ok;
     float t;        // along the ray from the camera
@@ -157,9 +177,9 @@ void main() {
     // far water stays under the real water too (unless the camera is under the sea): wherever a real section isn't drawn
     // this frame (Sodium's culling, a chunk still meshing) the sea shows, never the clear colour through a hole
     bool underReal = !(water && FarFog.z >= FarFog.w);
-    if (underReal && length(reach) < FarDepth.z + FarDepth.w * bayer4(gl_FragCoord.xy)) {
+    if (length(reach) < FarDepth.z + FarDepth.w * bayer4(gl_FragCoord.xy)) {
         ivec2 chunk = (FarCamInt.xz >> 4) + ivec2(floor(rel / 16.0));
-        if (texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5) {
+        if (underReal && texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5) {
             // debug view 2: where the mask hides far terrain, red instead (red that shows is a hole the chunks leave)
             if (FarCam.w > 1.5) { fragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
             discard;
@@ -198,9 +218,7 @@ void main() {
     float density = vInfo.b;
     float rock = 0.0, snow = 0.0, canopy = 0.0;
     if (water) {
-        // shallows show their sandy floor through the water; deep water keeps its colour
-        vec3 shallow = mix(vec3(0.80, 0.76, 0.58) * (top.r + top.g + top.b) / 1.2, top * 1.5, 0.5);
-        top = mix(shallow, top, smoothstep(1.0, 9.0, depth));
+        top = seaFloor(top, world, normalize(vRel), depth, horizontal);
     } else {
         float jag = 0.25 * (grain - 0.5);
         vec3 STONE = ROCKS[min((flags >> 4) & 7, 4)];
@@ -243,9 +261,10 @@ void main() {
     if (water) {
         float facing = abs(normalize(vRel).y);
         light = mix(light, vec3(1.0), 0.4);
-        // grazing far water takes the horizon's colour, but only out where it meets the horizon haze: nearer, it must look
-        // like the real water beside it (at dusk the fog colour is the afterglow, red slabs on a blue sea)
-        c = mix(c, FogColor.rgb, pow(1.0 - facing, 5.0) * 0.55 * smoothstep(1000.0, 4000.0, horizontal));
+        // grazing far water reflects the sky by the horizon, as Lens's real water beside it does at every distance (the
+        // dusk slabs were holes to the clear colour, not this; limiting it to the far distance left the far sea darker
+        // than the real water at the edge)
+        c = mix(c, FogColor.rgb, pow(1.0 - facing, 5.0) * 0.55);
     }
     if (FarCam.w > 0.5 && generated) c = vec3(1.0, 0.0, 1.0);
     c *= light * texture(LightSampler, vec2(0.5 / 16.0, 15.5 / 16.0)).rgb;

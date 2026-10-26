@@ -365,11 +365,11 @@ public final class RunnerRules {
         out[1] = tall ? 1 : 0;
     }
 
-    /** A drop from a hang to the ledge below (Shift; SPEC §17.26): its top this far under the held one, the most. */
+    /** A drop from a hang to the ledge below (Shift; SPEC §17.25): its top this far under the held one, the most. */
     public static final double DROP_MIN = 0.9, DROP_MAX = 3.2, DROP_OUT = 1.4;
 
     /**
-     * The ledge under a hang that a drop catches (Shift; SPEC §17.26), the nearest one below: the same face direction,
+     * The ledge under a hang that a drop catches (Shift; SPEC §17.25), the nearest one below: the same face direction,
      * its top {@link #DROP_MIN}-{@link #DROP_MAX} under the held one, its face up to {@link #DROP_OUT} out from the
      * hanging body (a sill or a balcony sticking out) or a little in; and the way to it free: out (or down) first, then
      * down (or in). Null for none. The body hangs at (hx, hy, hz) from {@code held}.
@@ -487,7 +487,7 @@ public final class RunnerRules {
 
     /**
      * Whether lowering into a hang on this edge is worth it: a real drop under it, or a ledge below for a drop to catch
-     * (a facade's ledges are about three apart: SPEC §17.26). Ground near under an edge with no ledge is a step down.
+     * (a facade's ledges are about three apart: SPEC §17.25). Ground near under an edge with no ledge is a step down.
      */
     public static boolean lowerWorth(BlockGetter level, CollisionContext ctx, BlockPos.MutableBlockPos m, Edge e) {
         return !groundWithin(level, ctx, m, e.hx(), e.top(), e.hz(), LOWER_DROP) || edgeBelow(level, ctx, m, e.hx(), e.hy(), e.hz(), e, 0) != null;

@@ -551,7 +551,7 @@ final class RunnerTests {
         return k;
     }
 
-    // ---- the grip on a climb line (SPEC §17.25) -----------------------------------------------------------------------
+    // ---- the grip on a climb line (SPEC §17.28) -----------------------------------------------------------------------
 
     /**
      * A drainpipe on a wall and a free hoist rope: where the body holds each and which way it faces; the server takes a
@@ -635,7 +635,7 @@ final class RunnerTests {
     }
 
     /**
-     * The top of a pipe always leads somewhere (Euan, 2026-10-25: "the last block doesn't let me through"; SPEC §17.25):
+     * The top of a pipe always leads somewhere (Euan, 2026-10-25: "the last block doesn't let me through"; SPEC §17.28):
      * a drainpipe up a wall under a one-block cornice, a roof behind it. At the pipe's top, the head under the cornice,
      * the lip over it is a hang from its outer face (out, then up), the server takes it only from a grip, and the hang
      * climbs out onto the roof. A ceiling with no lip in reach, or open air, is no hang.
@@ -766,7 +766,7 @@ final class RunnerTests {
     }
 
     /**
-     * Shift in a hang drops to the ledge below (Euan, 2026-10-25; SPEC §17.26): hanging from a wall's top with a sill
+     * Shift in a hang drops to the ledge below (Euan, 2026-10-25; SPEC §17.25): hanging from a wall's top with a sill
      * sticking out a block lower down, the drop catches the sill (out from the wall first, then down), and the server
      * takes it; with no sill, there's nothing to catch (Shift lets go).
      */

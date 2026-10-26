@@ -329,7 +329,8 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   `Intensity.Signals`' `pressure`, `forced` (0..3) and `arrival`), `current(ServerPlayer, Slot)`, `level(ServerPlayer,
   Slot)` (-1 without a context). `dev.awaken.gates.Gates.pressure(ServerPlayer)` — the floor's pressure stage (0..3).
 - `dev.awaken.core.audio.client.Soundscape` (client, world sound): `hush(Object owner, Vec3 at, float radius, float
-  depth, int ticks)` (birds and insects quiet within the radius; depth = what is left), `register(Conductor.Source)`
+  depth, int ticks)` (birds and insects quiet within the radius; depth = what is left), `hushAt(x, y, z)` (what is left
+  at a point; the wild's visible animals read it), `register(Conductor.Source)`
   (another module's ambient voices, `voices()`, counted in the Conductor's budget of 16), `yieldWeight(Conductor.Yield)`
   (`at(x, y, z)` 0..1: how much of the world bed gives way there; the city), `natureLevel()` (0..1, how much nature
   ambience to let through now; AmbientSounds follows it), `overlay(owner, Identifier soundscape, weight, ticks)` (a
@@ -1436,7 +1437,7 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   horizontal render distance, and its floor sooner, so far water tests its own floor's distance and stays under a real
   water surface whose floor is too far to draw. Far water is never hidden under the real chunks unless the camera is
   under the sea (2026-10-26, Euan's play: sky-coloured slabs on the sea where Sodium skipped a section), and grazing far
-  water takes the horizon's colour only from 1 km out, so near the edge it matches the real water. The planner and the windows count as covered only the ground the
+  water reflects the sky by the horizon at every distance, as Lens's real water beside it does. The planner and the windows count as covered only the ground the
   sphere reaches at a sea floor (40 under sea level) below the camera, in 16-block steps. (2026-10-26: the pale squares
   over the sea after a jump and the pale frame along a flight were these holes, found with `farsight debug 2`, which
   paints masked far terrain red. They were first taken for water walls and for vanilla's chunk fade-in; a Turbo
@@ -1465,7 +1466,11 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   grain. Snow lies by the alpine snow line and by a smooth coldness (each corner's blocks above the game's own cold
   line, info alpha, found by bisecting `coldEnoughToSnow`), both broken into patches over a ~20-block band
   (`AlpineSurface.patches`, the same noise the chunks' snow uses), on tops and as a fringe on risers. Scree and bare
-  rock by slope; water with shallows; forest floor tinted by its crowns, and from about 600 blocks out (full by 2.4 km)
+  rock by slope; water over its own sea floor (2026-10-26, Euan's idea: the real water shows its floor, the far water
+  showed none, so the floor ended at the chunks): the floor lies the water's depth down along the view ray, blocks of
+  sand, gravel in the deep and seagrass patches, anchored to the world, showing by the water's absorption over the path
+  (shallows and steep views, not deep water or grazing ones) and fading out over 700 blocks past the render distance's
+  edge, so the open sea further out is only water; forest floor tinted by its crowns, and from about 600 blocks out (full by 2.4 km)
   a forest is its canopy: crown colour over every face, speckled crown by crown.
 - **Bake** (fragment pass, `FarGpu`): per corner the normal, valley shade, and sunlight: a march toward the sun across
   the ring (40 steps, growing), soft by how far under the ridge line. Changed rings at once, one more every other frame
@@ -1921,6 +1926,59 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   flight is pre-warmed behind the opening card. Life seen from the sky is blocks and particles (lit windows, smoke,
   lamps, boats): citizens draw only within 128 blocks.
 
+- **The Registry ceremony** (2026-10-26; Euan, playing: "they actually physically hand you the Holo band and the paper
+  to sign. You sign first, and then they give you the Holo band. And then you actually have to open your inventory and
+  put the Holo band on"). `OpeningRegistry` steps (schema 2 of `OpeningState`; an older save walks the Registry again):
+  WALK (Bram leads from the bed through the atrium to the Lens: `OpeningPlaces.walk()`, straight lines through the
+  doorways; he walks on when you're within 4.5 of him, waits and nudges past 9, says "Habit, I know" once if you run
+  ahead) → READ (as before) → SIGN (at the desk, the counter's free south end; use signs) → BAND (Bram holds it out over
+  the counter; use takes it) → WEAR (the band is in your hands, the Holo dark until you put it on the wrist slot) → BOOT
+  (the boot on the wrist; the inventory closes itself 0.7 s after it goes on) → BRIEF (his three lines) → OPEN ("Go on,
+  open it": the K prompt and `TipHooks` tip `awaken:holo/open` show only now) → STATUS → ATLAS → POWER → DIRECTIVE →
+  YOURS. Waiting steps nudge every 30 s (at most three); without a client every step moves on by itself.
+  - Bram is staged through `CitizenHooks.stage(level, "bram", at, yaw, act, prop)` (citizens role STAGED; lapses if not
+    renewed for 30 s; a party follows the first player in the Registry) and found with `CitizenHooks.where`. He is the
+    infirmary's officer too (a Watch citizen only if he's busy). Props by item id: `holo_band`, `licence`.
+  - Signing (`opening.client.SigningScene`, world source `opening_sign` 250): the view leans over the paper (×0.7 FOV);
+    the main hand takes the quill (a feather) from the ink pot, dips, writes the player's name across the signature
+    line letter by letter (4 ticks each, glossy while wet, a slanted hand, the cartographer's quill scratch), a flourish,
+    a blot, the quill back in the pot; the off hand holds the paper's corner. Bram stamps it (the blue seal "E" lands in
+    the ring with a thump, his name under it); the paper folds toward you. The licence is a real item,
+    `awaken:hunters_licence` ("Signed: <name>", witnessed by Bram); old paper licences still count.
+  - Taking the band (`opening.client.HandOver`, `opening_take` 250): the hand goes to his, closes on the band, brings it
+    up into view and turns it once, then settles; the server puts it in the selected slot (else anywhere) at the grasp.
+  - **The wrist slot** (`holo.band`): the band is an item, `awaken:holo_band` (a 3D model, tools/art/specs/registry.py);
+    the wrist is one slot beside your figure in the survival inventory, above the off hand (inventory image 77, 44), in
+    vanilla's look or the holo inventory's well. Why not a real slot: 26.3 and NeoForge have no API to add a slot to
+    `InventoryMenu` (it builds its slots in its constructor; `addSlot` is protected and the remote-slot lists are
+    private), so a real one needs a mixin; a slot in our own equipment screen would hide it from where players look.
+    So the wrist is kept on the player (`holo.band.BandState`, attachment `awaken:wrist`, schemaVersion 1, kept through
+    death, synced to whoever can see you), the client draws it and sends its clicks (`awaken:wrist_click`: a click with
+    what the cursor carries, shift off into the inventory, shift on from a menu slot), and the server checks and moves
+    the stack between the menu's carried stack, the inventory and the wrist. Creative's inventory has no wrist slot
+    (use `/awaken band wear`).
+  - Off the wrist the Holo is dark (`core.api.HoloBand.worn`): K opens nothing (an action-bar line says why), no
+    projected look (System cards fall back to flat glass), no level readout, E opens vanilla's inventory (the one you put
+    it on in). The empty wrist breathes blue while the band is in your inventory or on the cursor. Putting it on boots it
+    (`holo.client.HoloBoot`, drawn by `Wrist`): the forearm comes up with the band dark on it, it clicks home, a line of
+    light runs round it face by face, its marks light from the middle out, the diamond ignites with a ring of light
+    spreading off the wrist, a breath, the arm goes down (about four seconds the first time in a session, under two
+    after). Taking it off powers down (a falling chime); the K menu closes if it was open.
+  - Edge cases: skipping (any way) puts a band on the wrist (the one in your inventory if you have it) and gives the
+    licence; a Runner has no band (the opening's start takes it away); a player who never had the slot (an old save, a
+    classic world) finds a worn band in it at login; bands in the inventory at a death are kept and handed back at the
+    respawn (the worn one never leaves the wrist); a dropped band never despawns and doesn't burn. `/awaken band
+    status|wear|dark|give`. GameTests: `holo_band_dark_until_worn`, `holo_band_wearing_toggles`, `holo_band_slot_saves`,
+    and `opening_skip` / `opening_state_machine` check the band.
+  - From Euan's watch of the tours (2026-10-26): Bram reaches the desk round the counter's far (north) end, never across
+    its front where you stand, and is put straight behind it when he has no body near; a staged citizen can't be pushed
+    (so never shoves you); the opening's speech shows one line at a time (a new line replaces the old, no stacking); the
+    key prompt sits just above the speech; the licence goes into the pack so the band lands in your hand.
+  - **Proposed (Euan to confirm): the Atlas reveal right after the band's first K.** The Holo's boot is the natural
+    moment: when the K menu closes the Atlas opens by itself with the run you made this morning (the land prints in, the
+    bronze thread draws itself), and Bram says "Your band keeps a map. The city, the way you've run it." The run is sent
+    as soon as the Registry begins (`Discovery.trail`), so the reveal is ready; `AtlasClient.openReveal()`.
+
 ### 16.5 Citizens (W4)
 - Ledger: 240 records, sliced 12 per tick; ≤ 0.5 ms/tick (G0: p95 0.015–0.04 ms in game). Bodies within ~56 blocks: ≤ 40 per player, ≤ 96 per
   world; walk the street graph; brains tick every max(1, d²/256) ticks; ≤ 4 pathfinding at once; ≤ 1.5 ms/tick.
@@ -2055,6 +2113,13 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     glow); the hover waits until the table stops moving; while the view moves the picture is drawn at 60% resolution
     without cloud shadows, then once at full resolution 0.11 s after it stops. Result (load 5–7, closed 7.35–7.45 ms):
     open and still +0.9–1.0 ms, orbiting +1.5–1.8.
+  - Cloud motion (Euan, 2026-10-26: "jittery … like a 1 FPS animation"): each puff no longer wobbles on its own sine
+    (puffs swinging past each other flipped their draw order and popped); the whole blanket drifts on one slow wind
+    (1.8 blocks a second from the west-south-west at the finest level, scaled with the cloud cell when zoomed out) on a
+    lattice that slides with it, each puff taking its cover from the land under it, blended between cells, so it thins
+    smoothly as it drifts out over known land (zoomed out, gone before it reaches it) and new cloud fills in over the
+    unknown; each puff breathes 5% on its own long phase. Drifting clouds redraw 60 times a second (was 30). Measured
+    on a busy machine (load 12–29): open and still about +1.4–1.7 ms, orbiting about +1.8–2.1.
   - Clouds (same day): a puff's tone comes from its cell's hash (from its drifting position it changed every redraw and
     the blanket flickered); the view redraws every frame while it moves (the 60 Hz cap made the table lag the mouse);
     zooming across a level keeps drawing the built level until the new one is ready round the view (it blinked out).
@@ -2067,7 +2132,11 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   `high_gate_yard`, `bounty_post`, `quartermaster` (the Living Wilds' Hale), `association_board`, `bellwatch_cellar` (the
   melting room under the Knoll's bell tower, for the Living Wilds' "Bell Metal"); null until placed).
   Graph types are added at G1.
-- `CitizenHooks`: `witnesses(ServerLevel, Vec3, double)` (citizen ids), `post(ServerLevel, Identifier event, BlockPos)`.
+- `CitizenHooks`: `witnesses(ServerLevel, Vec3, double)` (citizen ids), `post(ServerLevel, Identifier event, BlockPos)`,
+  `stage(ServerLevel, String named, Vec3 at, float yaw, String act, String prop)` (null `at` releases; 2026-10-26, the
+  Registry ceremony), `where(ServerLevel, String named)`.
+- `HoloBand` (2026-10-26): `worn(Player)`, `fitted(Player)`, `takeAway`, `wear`, `give`, `has` (server), `listen`
+  (server: on/off), `listenClient` (client: the boot finished, or it went dark).
 - `RenownHooks`: `witness(ServerPlayer, Identifier deed, BlockPos, int weight)`, `tier(Player)`, `standing(Player,
   Identifier faction)`.
 - `EconomyHooks`: `balance(Player)`, `pay(ServerPlayer, long, Identifier claimId)` (once per claim), `charge(ServerPlayer,
@@ -3031,60 +3100,7 @@ floor within 0.6 under a point 0.6 ahead (vanilla's edge-sneak stays), not in wa
 - Test: `body_land_slide` (a sprint jump's landing speed slides farther than a run's slide, a walk's doesn't, an edge
   with a drop is no slide, the server takes a sprinted landing and refuses a body that never ran).
 
-### 17.25 The grip on a climb line (Hands P1; Euan, 2026-10-25: "you just float up")
-A Runner move (`Move.GRIP`, appended; `GripRules`, client `body.client.GripMoves`) on every `#awaken:runner_climbs`
-block: Carillon's drainpipes, trellises, hoist ropes and hanging ladders, and every ladder. Approved controls (decision
-A of the Hands plan): "Shift takes you down, Jump takes you off".
-- **Taking a line**: walking into it facing it (within 70° of its wall; a free rope from any side), or in the air with
-  forward or the free-run held (a swing out to the side catches the next line without). The body stands centred in
-  front of the line, 0.02 off its face (a rope: from the side it's on). A fall caught keeps its speed as a short slide
-  that brakes into the hold.
-- **On it**: no keys holds still (vanilla drifts down); forward climbs at 0.2 b/t, 0.3 with the free-run held (the
-  free-run's pace, unchanged); Shift held slides, +0.06 a tick to 0.65 b/t; letting go of Shift brakes to a hold over 4
-  ticks; Jump alone lunges 1.2 up the line (6 ticks, once per 10); Jump + back kicks off the wall (0.5 out, 0.42 up,
-  turning to face out over 5 ticks: the ledge back-jump's numbers); Jump + left/right swings out sideways (0.42 along,
-  0.12 out, 0.36 up). The foot of the line lands you (no fall damage at any slide speed); with no keys at the foot you
-  step off. **The top** always leads somewhere (Euan, 2026-10-25: "the last block doesn't let me through"): it is
-  reached when there's no line where the hands would go (1.75 over the feet) or the head meets something over it (a
-  cornice, an eave, a coping row). The body stands off the column where it sticks out most (a drainpipe's head is 2 px
-  deeper than its pipe; off the pipe alone the climb ran into the head and stopped a block short: Euan, 2026-10-26).
-  With forward held (or Jump): (1) a lip over the head, its top 1.6-3.2 over the feet, from right in front out to 1.5
-  out, with the way out level and then up to the hold free, the nearest one the hang can climb out from
-  (`GripRules.topLip`): the line's own head or a wall's top in front (a flat roof's balustrade gap, a terrace's
-  parapet gap, the city wall's walk), or an eave or cornice it runs up under (block, stair or slab), is a hang (out,
-  then up, 7 ticks, `HANG_EAVE`), and the hang's own climb out (§17.21) puts you on top; (2) else, open air over the
-  head hands the body to vanilla's climb, whose eave is caught as a hang as before (§17.14); (3) else the hands hold
-  still at the top (no climb, no jitter) until forward is let go. A jump at the top always does something: the lip, or
-  a kick off the wall. The server takes the eave hang only from a grip held or ended within 6 ticks, with the same
-  `topLip` from where it has the body (plus its tolerance). A screen open holds the grip. The rope key still cuts in.
-- **Motion**: the grip moves the body itself (`move`), its velocity zeroed, so vanilla's ladder cap (0.15 down) doesn't
-  hold back the slide on any line, vanilla's ladder included; sideways it eases onto the line at most 0.15 a tick.
-- **Server** (`RunnerServer.grip`): the first Run takes a line in the claimed column where the server saw the body
-  lately (flags HOLD, CLIMB, CLIMB_FAST); later Runs change what others see (SLIDE, HOP) or leave the line (KICK,
-  SIDE_L, SIDE_R, LAND); while gripping its copy's motion is zeroed after its tick, fall distance reset, hunger at half a
-  hang's; every 4 ticks the column must still hold a line within the body's reach, 3 misses end it (`Refuse`).
-- **Look**: third person, `body_pipe_hold`, `body_pipe_climb` (a pair of pulls every 8 ticks: 1.6 blocks at 0.2),
-  `body_pipe_climb_fast` (6 ticks), `body_pipe_slide` (loops with `_end`), `body_pipe_kick`, `body_pipe_side_l/_r`,
-  `body_pipe_hop`, `body_pipe_land` (tools/art/specs/body_moves.py); the figure faces the line and leans into it (back
-  off it in a slide). First person: both hands closed round the line in the world (§24, `body.client.GripView`; P1.1):
-  each fist closed on its own side of the pipe, drawn at 0.85; the holds at the eyes +0.04 and -0.12 (the eyes are about
-  0.3 from the pipe: both fists in the frame looking ahead, their arms rising from below). Climbing, a hand stays where
-  it gripped while you rise past it (to -0.2), then lets go and reaches up past the other for a new hold (hand over
-  hand); held still, look round them; sliding, both run down the line with you, shaking with the friction (0.018 up and
-  down, 0.006 across at full speed); look down to see your feet clamped on it. The top-out: both hands go up onto the
-  top of the line, stay there 12 ticks while vanilla's climb carries you up past them, and fade.
-  Leaving: view clips `fp_pipe_kick`, `fp_pipe_side_l/_r`, `fp_pipe_land`. Sound: the grip's grab, `body.pipe_slide`
-  (palms hissing on the line, every 8 ticks of a slide), `body.pipe_brake`; the line's own grit off the hands while
-  sliding, sparks off a metal line at speed; a faint judder in the view.
-- Tests: `runner_pipe_grip`; `runner_pipe_cornice` (a drainpipe under a one-block cornice with a roof behind: the lip is
-  the way on, hung from its outer face, taken by the server only from the grip, climbed out onto the roof; a deep
-  ceiling and open air give no lip). `runner_pipe_tops` (every kind of top Carillon paints, each climbed on a real drainpipe
-  with its head from the street: a flat roof with its balustrade open at the pipe, a gable eave with the head in the
-  eave stairs' row, block, upside-down stair and slab cornices, a retaining wall's parapet gap, the city wall's inner
-  face with its corbel table, band and parapet gap: the climb reaches the top, there's a lip, and the hang climbs out on
-  top). Tour: `tools/autopilot/anims-pipe.txt` (PACK=feel).
-
-### 17.26 Dropping to the ledge below (Euan, 2026-10-25: "I'm on an edge already holding it, and there's one below")
+### 17.25 Dropping to the ledge below (Euan, 2026-10-25: "I'm on an edge already holding it, and there's one below")
 In a hang, **Shift** lets go and catches the next ledge below when there is one (`RunnerRules.edgeBelow`): the same
 face direction, its top 0.9-3.2 under the held one (the nearest), its face up to 1.4 out from the hanging body (a sill
 or a balcony sticking out) or a little in, and the way to it free. The body goes out first when the lower face sticks
@@ -3096,6 +3112,28 @@ worked down one by one. The server takes the drop as a ledge jump (`JUMP_DOWN`):
 the claimed hold, its top within the drop's band of the held one. Test: `runner_ledge_drop` (a wall's top over a sill
 one out: the drop catches the sill from its own face and the server takes it; no sill, nothing to catch and the server
 refuses).
+
+### 17.26 Leaps with momentum (Euan, 2026-10-26: "it just feels like I'm basically floating up. So it doesn't feel like a jump")
+Every jump out of a hold has beats: a load, a launch that slows like a throw against gravity, a moment at the top, and a
+catch with weight. The body's own path (client, `RunnerMoves`; the server checks only where it lands, as before):
+- **Ledge jump up and sideways** (`startLeap`): the load, the body dipping 0.12 under the hold over 2 ticks (none when
+  something is under it); the launch, an ease-out (1 - (1 - s)², a constant deceleration) to the apex, 0.2 over the
+  target hold up (0.35 over the higher hold sideways; the target's own height when there's no room over it), over 3
+  ticks + one per block up (3 sideways), 85% of the way across by then; one tick of hang there; the fall into the hold
+  over 2 ticks (3 sideways), accelerating (s²). A jump up of 2 is 10 ticks (was 10 on one smoothstep curve).
+- **The catch**: the body jolts down on the hands and settles (0.08 × e^(-t/2.2) × cos(1.25 t) under the hold for 10
+  ticks; 1.4× after a drop), the grab's sound a little deeper.
+- **The climb out**: a 2-tick load (0.1 down) before the push up and over (10 ticks).
+- **The pipe hop**: a load 0.08 down, a launch that slows to 0.12 over the 1.2, a settle (8 ticks).
+- **The view** (`FeelDirector`, off with reduced motion): it sinks with the load (1.1°), lifts on the launch (2.4°, the
+  frame opening 2.5%), jolts down on the catch (2.6°, a touch of shake); the jump back off a ledge and the kick off a
+  pipe lift it (0.9, 0.8), the hop's launch too (0.7).
+- **Sound**: a push on the launch (the wall jump's, quiet), the catch's grab.
+- **Hands and figure**: first person's `fp_ledge_up` (10 ticks, played at the speed that lands its catch with the body)
+  pulls down on the load, flies up past the lip, hangs, slams onto the new lip; third person's `body_ledge_up` (10
+  ticks) pulls and tucks, kicks and stretches, holds at the apex, takes the catch. The kick, the swing out and the jump
+  back were already thrown by real velocity.
+- Tour: `tools/autopilot/anims-leaps.txt` (first person and the shoulder view).
 
 ### 17.27 Fences, gates and walls (Euan, 2026-10-26: "Make every fence and wall of every type mantleable, everywhere, the city included")
 Every fence, fence gate and wall, of every wood, stone, brick and mud, vanilla's and any mod's (any collision taller than
@@ -3179,6 +3217,60 @@ builds with vanilla's). Approved feel: the free-run is as before (§17.14), only
   the server takes the climb over); `body_mantle_gate_walls` (every crossing from a gate room ends inside one);
   `body_mantle_ledges`, `body_free_run` and `runner_course_probes` keep their fence lanes (no ledge, nothing to jump at,
   no hang). Tour: `tools/autopilot/fence-mantle.txt`.
+
+### 17.28 The grip on a climb line (Hands P1; Euan, 2026-10-25: "you just float up")
+A Runner move (`Move.GRIP`, appended; `GripRules`, client `body.client.GripMoves`) on every `#awaken:runner_climbs`
+block: Carillon's drainpipes, trellises, hoist ropes and hanging ladders, and every ladder. Approved controls (decision
+A of the Hands plan): "Shift takes you down, Jump takes you off".
+- **Taking a line**: walking into it facing it (within 70° of its wall; a free rope from any side), or in the air with
+  forward or the free-run held (a swing out to the side catches the next line without). The body stands centred in
+  front of the line, 0.02 off its face (a rope: from the side it's on). A fall caught keeps its speed as a short slide
+  that brakes into the hold.
+- **On it**: no keys holds still (vanilla drifts down); forward climbs at 0.2 b/t, 0.3 with the free-run held (the
+  free-run's pace, unchanged); Shift held slides, +0.06 a tick to 0.65 b/t; letting go of Shift brakes to a hold over 4
+  ticks; Jump alone lunges 1.2 up the line (8 ticks, once per 12: a load 0.08 down, a launch that slows like a throw to
+  0.12 over, a settle; §17.26); Jump + back kicks off the wall (0.5 out, 0.42 up,
+  turning to face out over 5 ticks: the ledge back-jump's numbers); Jump + left/right swings out sideways (0.42 along,
+  0.12 out, 0.36 up). The foot of the line lands you (no fall damage at any slide speed); with no keys at the foot you
+  step off. **The top** always leads somewhere (Euan, 2026-10-25: "the last block doesn't let me through"): it is
+  reached when there's no line where the hands would go (1.75 over the feet) or the head meets something over it (a
+  cornice, an eave, a coping row). The body stands off the column where it sticks out most (a drainpipe's head is 2 px
+  deeper than its pipe; off the pipe alone the climb ran into the head and stopped a block short: Euan, 2026-10-26).
+  With forward held (or Jump): (1) a lip over the head, its top 1.6-3.2 over the feet, from right in front out to 1.5
+  out, with the way out level and then up to the hold free, the nearest one the hang can climb out from
+  (`GripRules.topLip`): the line's own head or a wall's top in front (a flat roof's balustrade gap, a terrace's
+  parapet gap, the city wall's walk), or an eave or cornice it runs up under (block, stair or slab), is a hang (out,
+  then up, 7 ticks, `HANG_EAVE`), and the hang's own climb out (§17.21) puts you on top; (2) else, open air over the
+  head hands the body to vanilla's climb, whose eave is caught as a hang as before (§17.14); (3) else the hands hold
+  still at the top (no climb, no jitter) until forward is let go. A jump at the top always does something: the lip, or
+  a kick off the wall. The server takes the eave hang only from a grip held or ended within 6 ticks, with the same
+  `topLip` from where it has the body (plus its tolerance). A screen open holds the grip. The rope key still cuts in.
+- **Motion**: the grip moves the body itself (`move`), its velocity zeroed, so vanilla's ladder cap (0.15 down) doesn't
+  hold back the slide on any line, vanilla's ladder included; sideways it eases onto the line at most 0.15 a tick.
+- **Server** (`RunnerServer.grip`): the first Run takes a line in the claimed column where the server saw the body
+  lately (flags HOLD, CLIMB, CLIMB_FAST); later Runs change what others see (SLIDE, HOP) or leave the line (KICK,
+  SIDE_L, SIDE_R, LAND); while gripping its copy's motion is zeroed after its tick, fall distance reset, hunger at half a
+  hang's; every 4 ticks the column must still hold a line within the body's reach, 3 misses end it (`Refuse`).
+- **Look**: third person, `body_pipe_hold`, `body_pipe_climb` (a pair of pulls every 8 ticks: 1.6 blocks at 0.2),
+  `body_pipe_climb_fast` (6 ticks), `body_pipe_slide` (loops with `_end`), `body_pipe_kick`, `body_pipe_side_l/_r`,
+  `body_pipe_hop`, `body_pipe_land` (tools/art/specs/body_moves.py); the figure faces the line and leans into it (back
+  off it in a slide). First person: both hands closed round the line in the world (§24, `body.client.GripView`; P1.1):
+  each fist closed on its own side of the pipe, drawn at 0.85; the holds at the eyes +0.04 and -0.12 (the eyes are about
+  0.3 from the pipe: both fists in the frame looking ahead, their arms rising from below). Climbing, a hand stays where
+  it gripped while you rise past it (to -0.2), then lets go and reaches up past the other for a new hold (hand over
+  hand); held still, look round them; sliding, both run down the line with you, shaking with the friction (0.018 up and
+  down, 0.006 across at full speed); look down to see your feet clamped on it. The top-out: both hands go up onto the
+  top of the line, stay there 12 ticks while vanilla's climb carries you up past them, and fade.
+  Leaving: view clips `fp_pipe_kick`, `fp_pipe_side_l/_r`, `fp_pipe_land`. Sound: the grip's grab, `body.pipe_slide`
+  (palms hissing on the line, every 8 ticks of a slide), `body.pipe_brake`; the line's own grit off the hands while
+  sliding, sparks off a metal line at speed; a faint judder in the view.
+- Tests: `runner_pipe_grip`; `runner_pipe_cornice` (a drainpipe under a one-block cornice with a roof behind: the lip is
+  the way on, hung from its outer face, taken by the server only from the grip, climbed out onto the roof; a deep
+  ceiling and open air give no lip). `runner_pipe_tops` (every kind of top Carillon paints, each climbed on a real drainpipe
+  with its head from the street: a flat roof with its balustrade open at the pipe, a gable eave with the head in the
+  eave stairs' row, block, upside-down stair and slab cornices, a retaining wall's parapet gap, the city wall's inner
+  face with its corbel table, band and parapet gap: the climb reaches the top, there's a lip, and the hang climbs out on
+  top). Tour: `tools/autopilot/anims-pipe.txt` (PACK=feel).
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -3433,8 +3525,9 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   - Murmuration (dusk, over water): client-drawn only; witnessing it gives `awaken:lucidity_start` +10 for that
     play-day (a perk source). Carrion Circle: kites over a barrel of remains (bones, leather, arrows, 40% a creature
     part, 25% a worn iron sword) and scattered bone blocks; the remains stay.
-  - The Rolling Storm (day/dusk): a cell crossing 180 blocks in 4 min; visual lightning near its centre about every
-    3 s; 3 damage within 4 blocks of a strike; struck sand turns to glass.
+  - The Rolling Storm (day/dusk): a cell crossing 180 blocks in 4 min; visual lightning out of its rain core (within 20
+    blocks of a point 12 downwind of its centre) about every 3 s; 3 damage within 4 blocks of a strike; struck sand
+    turns to glass. Its look, local weather and thunder: "The Rolling Storm, as a real storm" below.
   - The Wild Hunt (full moon only, night, bands 1+): five wisp hounds and the Huntmaster (an elite four levels up,
     titled "Huntmaster of the Pale Moon") run 220 blocks; they go for anyone within 18; each hound drops 2 essence, the
     Huntmaster 6. Beast Duel (bands 1+): two named beasts fight; the winner is left at 45% health.
@@ -3446,14 +3539,57 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - **Tells** (payload `living_happenings`: id, tell, centre, radius, progress, line direction; to players within 512
   every 2 s, an empty list once when the last goes). `living.client.PulseFx` draws them in an alpha pass (unfogged,
   reads by day) and an additive pass, the centre eased over the 2 s; past 70% of the render distance a tell is pulled
-  in along its sight line and shrunk to match (as the gate pillars).
+  in along its sight line and shrunk to match (as the gate pillars). The storm tell is a cell of its own (below), never
+  pulled in.
 - **The Almanac**: within a kind's `witness_radius` a player witnesses it once: counter `awaken:happenings_witnessed`;
   the first time a discovery `happening/<id>` (0.1 of a level), a new thing for the Director, and "Witnessed · <title>".
   The Codex tab lists them ("HAPPENINGS WITNESSED · n / ??").
 - **Rumours** (`Rumours`, attachment `awaken:rumours`, schema 1, synced to the owner, kept through death): half the
   time a Wayfarer with nothing for you tells of a happening on now 160-2500 blocks away that you haven't witnessed, with
   a compass direction; it leaves a "? <title>" mark on the Gate Map (MapMarks) for two play-days (at most 8).
-- Dev (admin): `/awaken living happen <kind>`, `happenings`, `calm`. Test `living_pulse`.
+- Dev (admin): `/awaken living happen <kind>`, `happenings`, `calm`, `strike <distance>` (a storm strike that far
+  ahead of you, for tours). Tests `living_pulse`, `living_storm`.
+- **The Rolling Storm, as a real storm** (Euan's playtest, 2026-10-26: the cell read as round soft discs full of
+  artifacts, its rain as moving white pillars of light, and it wasn't a real storm; he liked the bolts and their sound).
+  One model both sides share, `living.pulse.StormCell` (sizes match `lens_storm.glsl`):
+  - **The cell, a cumulonimbus**: its base 92 blocks over the ground its centre first stood on (140-215), 300 blocks
+    from base to the anvil's top. A broad tower (95 radius at the base, narrowing a third toward the top, leaning
+    35 downwind) of cauliflower turrets (cellular "puffs" at 50 and 20 blocks, rising 0.35 blocks a second through it,
+    so it boils), its axis wandering and its girth swelling and pinching with height, big lobes on some sides; an
+    overshooting dome over the updraft; a flanking line of three smaller towers stepping down upwind (170, 118, 78
+    high); a thin flat-topped anvil reaching 260 downwind, 60 upwind and 150 across, its underside rising to a thin rim,
+    its edges fibrous streaks along the wind (ice, not puffs). Its rain: a core of soft shafts 58 in radius, 12 downwind
+    of the centre, slanting downwind as it falls (0.3 blocks a block), to the ground. Downwind is the way it travels.
+    It builds over its first 12 s and rains itself out over its last 15 (the client times the end by the storm's 240 s).
+  - **Drawn by Lens 2 on Cinematic and Ultra** (§22 "Storm cells"): marched in Lens's cloud volume. Elsewhere (Lens off,
+    Swift, a shaderpack) by `living.client.StormFallback`: the same shape, built off-thread once per storm into 12-block
+    cloud cells, 8 blocks (78 × 45 × 78, density over 0.45), opaque and face-shaded as the game's clouds are (top 1,
+    sides 0.8-0.9, base 0.62), each lit by how much cloud lies eight cells toward the sun (exp(-0.45 per cell)), the sky's
+    light mostly the game's cloud brightness (30% of its hue: its sunset tint on every face read as terracotta), dim and
+    cold at the base, the sun's warm colour on faces turned to it, lit from inside by its lightning, hazed toward the sky colour
+    with distance (1400 blocks); only outer faces turned to the camera are sent (about 3,000-4,000 quads). It grows from the
+    base up as it builds and rains out from the top down (each cell's threshold by its height and a hash; faces rebuilt
+    off-thread per 32nd of strength). Its rain: nine curved sheets fixed in the world round the core (arcs at set radii
+    and angles), slanting downwind, the texture `living/storm_rain` (soft streaks, `tools/art/specs/storm_rain.py`)
+    sliding down at about 19 blocks a second (Euan saw it flow up at first), faded at their ends, top and foot, dark grey, in the game's own fog (the weather pipeline). No
+    camera-facing discs or billboards (the old `PulseFx.storm` is gone); nothing popped in from beyond the render
+    distance either: the cell stands where it is, as the game's clouds do.
+  - **Its local weather** (`living.client.StormSky`): this client's rain and thunder levels rise to
+    `weatherAt(d)` (full within 45 blocks of the rain core's centre, none past 110, smooth between) × its strength,
+    never below the server's own weather (followed if the server changes it while overriding) and handed back as you
+    leave. So under and near it the game's own rain falls on you and sounds, the sky, fog, clouds and light darken as in
+    a vanilla thunderstorm, terrain's wind steadies higher (rain and thunder lift it), the world sound hears rain, and
+    Lens dims its sun. Lens's cloud layer doesn't thicken for this rain (`StormSky.localRain`): the cell is the cloud
+    over you. Storms show only in the overworld while the Living Wilds are shown.
+  - **Its thunder**: the server's visual bolts stay (and the game's sky flash). On the client a bolt within 90 blocks
+    of a cell is its strike: it lights the cell from inside (a burst and up to two restrikes over half a second, 25
+    blocks over the base), and its own thunder and impact (played at once, everywhere, at full volume) are silenced and
+    played again late by the distance at 130 blocks a second (the world's scale: a strike on the horizon rolls in a few
+    seconds later). Within 70 blocks: the crack (the impact, pitch 0.55-0.7) and the thunder; farther: the thunder lower
+    and softer (volume 1.15 - d/520, pitch 0.95 - d/1400) and a long low roll after it (`living.storm.roll`, three
+    synthesised takes). Every 2.5-7 s lightning flickers inside the cloud (50-210 over the base, a quarter to two fifths
+    of a strike's brightness) and rumbles far off. Each flash is a burst and its restrikes, each fading over 0.11 s.
+    The storm's rain roars from its core for 340 blocks (`living.tell.storm`, a loop; PulseSound).
 
 ### 21.7 Creatures live somewhere: the ledger (Phase D, as built 2026-10-25)
 - `living.population.Ledger` (saved data `awaken:living_world`, schema 1, only cells players reached): per 512×512 cell,
@@ -3761,6 +3897,39 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
 - Tour: `tools/autopilot/lens2-l4.txt` (Swift's clouds against Lens's: noon, golden hour into the sun, cloud shadows
   over Carillon, above the deck, rain, night; the bench). Final (f53b8bf4, p50 ms): off 6.80, Swift 6.79, Cinematic
   9.96 (100 fps), Ultra 13.46 (74 fps).
+
+**Storm cells** (the Living Wilds' Rolling Storm, 2026-10-26; §21.6): Lens 2 marches each cell in its cloud pass.
+- `living.client.StormSky.lensCells` hands Lens up to two cells a frame (as `HoloWorld.lensPlates` does the plates):
+  frame texel 20 y their count; texels 42-47, three a cell (`lens_storm_frame.glsl`): centre x, z camera-relative,
+  base y, strength; downwind x, z, the ground under it, noise time; the latest flash camera-relative and its strength.
+  `LensClient.drawsStormCells()` says whether Lens draws them this frame (Cinematic or Ultra under an overworld sky);
+  otherwise the fallback does. Storms draw whether or not the game's clouds are on.
+- Shape (`lens_storm.glsl`, §21.6's numbers): cheap cellular puffs (the nearest of 8 jittered points; one octave on
+  Cinematic, two on Ultra), the body's wobble, girth and lobes from the cloud noise texture, the anvil's fibres from its
+  wisps channel. Light steps (and the land's shadow) keep the big forms only.
+- March (`lens_clouds.fsh`): a ray meets a cell in bands, marched in the ray's order, each its own steps by its length:
+  rain (ground to base; 18 / 16 blocks a step, at most 10 / 12), body (12 / 10.5, at most 22 / 26), anvil (8 / 7, at
+  most 10 / 12), Cinematic / Ultra, so the thin anvil is never stepped over. A turret's surface turns solid within 4
+  blocks (9 read as a soft ball at 200 blocks); σ 0.085 a block (a solid mass); 3 light steps (6 blocks, ×2.3); Beer's
+  law with a weak multiple-scatter floor (0.22) so the base and the shadowed side go dark; the layer's phase; the sky's
+  light as a cool grey-blue of the layer's ambient brightness (its sunset hue turned the shadowed side brown), by height
+  from 0.16 at the base (cold and bruised, bluer) to 1 on the tops; rain σ 0.016, its colour that sky light × 0.4 (a
+  grey veil, darker than the sky), fading in from 16 to 40 blocks from the camera (nearer, the game's rain falls).
+  Lightning: 3.5 × exp(-d/45) + 0.35 × exp(-d/200) of a cool white from the flash, in the cloud and (half) in its rain; while a flash shows, the pixel takes up to 85% of this
+  frame instead of 12-15%, so it lights at once and fades as an afterglow. The layer's clouds thin to nothing within
+  300-420 blocks of a cell (it clears the sky round it), so the layer's march can skip the cell's bounds without a cut.
+  History reprojects where the ray first met cloud (was: where it entered the layer).
+- The composite lays the cloud buffer over anything farther than where the ray enters a cell's bounds (300 radius
+  round 40 downwind of its centre, ground to 48 over the top), never nearer than 16 blocks; the light pass darkens the
+  sun on the land under a cell, sampled where the light ray crosses three heights of its body (long shadows at dusk).
+  Its bright, flashing edges bloom and cut the screen-space shafts like the layer's clouds.
+- It builds from its base up (the density cut at a height rising with its strength, softened over 40 blocks) and rains
+  out from the top down, as the fallback's cells do; its rain starts once the base has formed (strength 0.1-0.4).
+- Lens dims its sun by the world's own weather, not the storm's local rain (`StormSky.serverRain/serverThunder`): the
+  sun still lights its towers and the land beside it, and the cell's own shadow darkens the land under it.
+- **Wet surfaces** (Cinematic, Ultra; any rain, the storm's local rain included): in the composite, a surface open to the
+  sky in its column (the heightfield's top with leaves; under leaves 40%) gets wet by the rain level: 16% darker, 10%
+  richer, and what faces up a dull sheen of the haze colour at glancing angles (Schlick-like, power 4, × 0.22).
 
 **Holo world plates** (the Living Wilds' creature plates, 2026-10-25): plates write their depth at a creature's
 distance (4-40 blocks), beyond the 1.25-block rule that keeps the panels and the hand out. `HoloWorld.lensPlates`
@@ -4491,3 +4660,110 @@ in the 60° cone at 24 blocks counted as a sighting and its toast's hint named p
 hovers over grow"). Not yet routed (follow-ups): the vanilla action bar (102 server call sites, three throttled), boss
 chat lines, the XP pop, Ascent notes and the Vow scene, citizens' speech; TipHooks has no implementation (the onboarding
 spec's `TipHud`/`TipRules` were never built), so Carillon's and the Ascent's tips show nothing today.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 29. Wild life (the wild's small ambient life, client-only; Euan 2026-10-26, built without an approval page)
+
+Euan, after a forest walk: "I barely saw any insects or birds, so the sounds felt a bit off ... when you're exploring and
+walking in the forest, it should feel very real, very alive. Not too much either." Module `wildlife` (package
+`dev.awaken.wildlife`, client half `wildlife.client`). Everything that moves lives on the client: the server registers
+one entity type (`awaken:wild_critter`, never saved, never tracked, never summoned) and 18 sound events, and pays
+nothing. Nothing is huntable. Herds, packs, roosts and deer are the Living Wilds' (§21) server mobs; this layer never
+makes a deer.
+
+**Who.** Twelve bodies, hero rigs with the life layer (§23), from `tools/art/specs/wild_fauna.py` (textures
+`textures/entity/wild/`, data `wildlife.client.WildFaunaData`): songbirds (robin, blue tit, chaffinch, wren, blackbird;
+drawn at 0.42), woodpeckers (great spotted, green), crows, owls (tawny, barn; eyes catch the light at night), buzzards
+and kestrels, gulls (Carillon's gull design), ducks (mallard drake and hen), grey herons, squirrels (red, grey),
+rabbits, red foxes (eyeshine), frogs. Folded wings show their upper side; a spread wing hangs from the shoulder (the
+spec's `FOLD` and wing lift). Seven insects drawn as real little bodies from one sprite sheet (`insects.png`): butterflies
+(white, brimstone, peacock, common blue), bees, dragonflies (blue, green), fireflies (Lumen Forest's burn blue), moths,
+gnat swarms, water striders; plus ripples on water and far flocks (finches by day, a small murmuration of starlings at
+dusk) crossing the sky.
+
+**Where and how many** (`Density`, pure; numbers are first numbers, tuned on tours). Each chunk near the player is read
+once from the client's own heightmaps (`Sites`, one chunk a tick, re-read after 2 minutes): leaf tops (and the canopy's
+edge), fences and walls, bare rock, trunks (a log under the canopy with 2+ blocks of clear bark), open ground, flowers,
+still water, its shore (land beside water, facing it), lights. Expected animals per chunk = peak (per kind) × the
+family's affinity (the 16 sound families, `#awaken:soundscape/<family>`) × the hour × the weather × the cold × the
+habitat × an Awakened biome's flavour (Elderwood: woodpeckers ×2, owls ×1.5; Lumen Forest: fireflies ×1.6; Glass
+Steppe and Shattered Highlands: raptors ×1.6; Mirror Marsh: herons and dragonflies ×1.6). Peaks: songbird 0.55,
+woodpecker 0.06, crow 0.12, owl 0.05, raptor 0.006, gull 0.5, duck 0.6, heron 0.12, squirrel 0.22, rabbit 0.25, fox
+0.025, frog 0.8; butterfly 2.5, bee 1.5, dragonfly 1.5, firefly 7, moth 2.5 a light, gnats 1 swarm, strider 2. The
+hours (0 = 06:00): songbirds busiest at dawn (×1.5) and dusk, 0.75 at noon, none from 19:20 to 04:20; owls, moths and
+fireflies at night (fireflies from 18:12, full by 20:00); rabbits and foxes at dawn and dusk; raptors 07:30-17:00;
+butterflies 07:30-16:30; gnats at dusk. Rain: insects none (none in thunder), small birds ×0.4 and sheltering (fluffed
+up, no song), raptors none, frogs ×1.5. Cold land (biome temperature < 0.15): no insects or frogs, songbirds ×0.5.
+Targets the test holds: a temperate forest at noon 0.2-0.6 songbirds a chunk (one to three in view), a flowery meadow
+1-3 butterflies a chunk, nothing but owls and fireflies in a forest at night. The count is the expected number made
+whole by the chunk's fixed draw (`Density.count`), so a place keeps the same animals as the hours turn and looks alike
+when you return; each animal's spot and coat come from the chunk's draw too.
+
+**Reach and caps** (`WildKinds`, `Census`): made within (blocks) songbird 40, woodpecker 40, crow 64, owl 52, raptor 120,
+gull 80, duck 56, heron 64, squirrel 32, rabbit 40, fox 56, frog 22; butterfly 28, bee 16, dragonfly 28, firefly 40,
+moth 24, gnats 24, strider 16; dropped 16 past that (out of sight). At most 9 songbirds, 2 woodpeckers, 4 crows, 2 owls,
+2 raptors, 6 gulls, 6 ducks, 2 herons, 3 squirrels, 4 rabbits, 1 fox, 4 frogs, 14 butterflies, 10 bees, 8 dragonflies,
+64 fireflies, 12 moths, 5 swarms, 10 striders; 18 bodies and 140 insects in all. Chunks are walked nearest first, so the
+caps keep what is close. Never inside Carillon's walls (+24 blocks; `CityLife.inside`, the city's animals are B3b's),
+never outside the overworld.
+
+**Never popping.** A body appears only out of view or 26+ blocks off (48 for one in the sky); insects fade in and out.
+An animal no longer wanted leaves the way it would (a bird flies off, a rabbit bolts, a frog plops in, a squirrel climbs
+away) and is dropped once out of sight.
+
+**Seen, not just near** (the tours, 2026-10-26): in a forest the census logged nine songbirds near and none in view,
+all on the canopy's roof, above the leaf ceiling a walker stands under. So songbirds take the lowest of three perches
+(the outer rings of the trees' lower leaves, fences), and by day 75% of those in a closed forest (45% under an open
+canopy) start on the forest floor, forage there, flit low through the understory to another patch of floor (the flight
+hugs the ground ahead instead of climbing over the trees), and only now and then go up. Insects are drawn near twice
+life size (a butterfly 0.3 blocks a wing, a dragonfly 0.46 long), as the birds are: at life size a butterfly was a
+few pixels at ten blocks. Fireflies glow two fifths of their rhythm with a 0.75-block halo.
+
+**Behaviour** (`Birds`, `Critters`, `Insects`). Songbirds never still on a perch (glances, tail and wing flicks, a bow,
+hops along the branch), sing from it (the dawn chorus three times as often), preen, flit to the next tree in a bounding
+flight (three beats, wings shut, a dip), drop to forage on open ground and hop about pecking. Woodpeckers hitch up a
+trunk, peck, drum (more in the morning), slip round to the far side as you come within 9, fly off at 3. Crows stride,
+peck and caw on open ground, wary at 10. Owls perch at night, follow you with their heads, hoot, and fly off without a
+sound. Buzzards circle on a drifting thermal 24-40 above the ground, banked, beating now and then, mewing; kestrels drop
+to hover over the meadow (head still, quick shallow beats) and stoop. Gulls ride the air over the shore. Ducks paddle,
+dabble tail up, preen, quack, leave rings, paddle away from you and fly off at 3.5. Herons stand like statues at the
+shore, stalk, strike, turn alert at 20 and leave at 12 with a croak and slow heavy wings. Squirrels run up and down
+their trunk in bursts, scold, forage at its foot and race back up when you come. Rabbits graze, groom, sit up tall
+with ears high at 11 and bolt in a zigzag at 5. A fox trots its ground at dusk, sits and watches you, listens and
+pounces on something in the grass, curls up at night, slips away at 10. Frogs croak at dusk and in the rain and plop
+into the water at 3.5. Flushes are away from you, a burst of wings; sprinting doubles the distance, sneaking halves it.
+Birds bank into their turns and pitch with their climb. Butterflies flutter (seven beats a second) between flowers and
+settle with wings opening and closing slowly; bees zip flower to flower; dragonflies hover and dart low over still
+water; fireflies drift and blink each to its own rhythm (some answering with a second flash) in an additive glow pass;
+moths circle lamps; gnat swarms bob by the water at dusk; striders skate in strokes, a ring at each.
+
+**Sound** (`WildSound`; voices from `tools/art/specs/audio_wild.py`, synthesised, mono, placed; 18 events `wild.*`): a
+call comes from the animal you can see calling, its clip in step: songs (robin, tit, finch, wren; a blackbird sings the
+robin's phrases lower), contact chips, a flush's whirr, big wings, the woodpecker's drum and taps, caws, the buzzard's
+mew, hoots, quacks, the heron's croak, a squirrel's scolding, a frog's plop (its croak is vanilla's `entity.frog.ambient`,
+a bee's buzz vanilla's `entity.bee.loop`), rustles; the gulls use Carillon's `city.gull.call`. At most 6 at once and 3
+new a second, counted in the Conductor's voice budget, quieter where the world is hushed. AmbientSounds' bed plays as
+before; these sit on top. Crickets at night: three voices placed in the grass 7-16 blocks off, each silent while you walk
+within 6 of it and singing again 6-10 s after. Predators: every monster within 24 of the player hushes the birds and
+insects within 24 of it to a quarter (the Conductor's hush, renewed every second; docs/sound/PLAN.md's reaction), and
+every visible animal reads `Soundscape.hushAt`: no song below 0.67, leaving below 0.35, none made below 0.6 (so open
+gates and the Living Wilds' happenings quiet them too).
+
+**Budget.** Client only; the server pays nothing. Per tick: one chunk read (256 columns, three heightmaps), the brains
+of at most 18 bodies, the insects' arrays (no allocation per tick or frame; the director's half-second pass allocates
+nothing but a new animal), at most 6 sounds. Per frame: at most 18 small hero models, about 900 insect quads and a few
+hundred glow quads, culled by distance and view.
+
+**API additions** (§12): `core.audio.client.Soundscape.hushAt(x, y, z)` (what is left of birds and insects at a point);
+`citizens.client.CityLife.inside(x, z, margin)` (within Carillon's wall plus a margin). Client command
+`/awaken wildlife [on|off|count|dial <x>|lineup [clip|insects|off] [variant]]` (`count`: what's near, what the camera
+can see, and where the songbirds are; `lineup`: every body, or every insect, posed before the camera on a stage); tours
+log the census every 30 s as `[wildlife] in view N of M near: ...`. Tours: `tools/autopilot/wild-life.txt` (the stage by
+day and night, then forest, rain, flowers, river, Mirror Marsh, Lumen Forest), `wild-forest.txt` (the quick loop).
+
+**Tests** (`wildlife_`): `wildlife_density` (the tables reach every sound family, the hours run in order, the walk's
+targets hold, rain and cold clear the insects, a chunk's draw is fixed and the land averages the expected number),
+`wildlife_census` (the caps hold over 400 rich chunks at four hours; nothing is made inside the city and anything there
+leaves; nothing out of reach), `wildlife_rigs` (every rig parses and carries every clip its brain plays, every coat,
+blink and the insects' sheet exist); `audio_events_resolve` covers the 18 events.

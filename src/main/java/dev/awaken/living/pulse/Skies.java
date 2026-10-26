@@ -11,9 +11,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.EntityTypes;
-import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -112,8 +109,9 @@ final class Skies {
     }
 
     /**
-     * The Rolling Storm: a dark cell crossing the plains over a few minutes, lightning walking with it. A strike hurts
-     * whoever stands under it and turns struck sand to glass.
+     * The Rolling Storm: a cumulonimbus crossing the plains over a few minutes, lightning walking with it out of its rain
+     * core (a little ahead of its centre, under the base: StormCell). A strike hurts whoever stands under it and turns
+     * struck sand to glass. The cell, its rain, its local weather and its thunder are the client's (StormSky).
      */
     static final class RollingStorm implements Behaviour {
         @Override
@@ -130,24 +128,13 @@ final class Skies {
             h.centre = new Vec3(c.x, y, c.z);
             RandomSource r = level.getRandom();
             if (r.nextFloat() > 0.35F) return;
+            // out of the rain core, which hangs a little downwind of the centre
+            double dx = h.to.getX() - h.from.getX(), dz = h.to.getZ() - h.from.getZ(), len = Math.max(1e-3, Math.sqrt(dx * dx + dz * dz));
             double a = r.nextDouble() * Math.PI * 2, d = r.nextDouble() * 20;
-            int x = (int) (c.x + Math.cos(a) * d), z = (int) (c.z + Math.sin(a) * d);
+            int x = (int) Math.floor(c.x + dx / len * StormCell.RAIN_AHEAD + Math.cos(a) * d);
+            int z = (int) Math.floor(c.z + dz / len * StormCell.RAIN_AHEAD + Math.sin(a) * d);
             if (!level.hasChunkAt(new BlockPos(x, 0, z))) return;
-            BlockPos at = Behaviours.surface(level, x, z);
-            LightningBolt bolt = EntityTypes.LIGHTNING_BOLT.create(level, EntitySpawnReason.TRIGGERED);
-            if (bolt != null) {
-                bolt.setVisualOnly(true);
-                bolt.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
-                level.addFreshEntity(bolt);
-            }
-            for (ServerPlayer pl : level.players()) {
-                if (!pl.isSpectator() && !pl.isCreative() && pl.distanceToSqr(Vec3.atBottomCenterOf(at)) < 16) {
-                    pl.hurtServer(level, level.damageSources().lightningBolt(), 3.0F);
-                }
-            }
-            if (level.getBlockState(at.below()).is(BlockTags.SAND) && Behaviours.allowed(level, at)) {
-                level.setBlock(at.below(), Blocks.GLASS.defaultBlockState(), 3);
-            }
+            StormCell.strike(level, Behaviours.surface(level, x, z));
         }
     }
 }

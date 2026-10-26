@@ -23,6 +23,7 @@ public final class HoloModule {
     public static void init(IEventBus modBus) {
         modBus.addListener(HoloNet::register);
         HoloSounds.register(modBus);
+        dev.awaken.holo.band.BandModule.init(modBus);
         NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, e -> HoloRelay.flush(e.getServer(), HoloRelay.SEND));
         NeoForge.EVENT_BUS.addListener(PlayerEvent.StartTracking.class, e -> {
             if (e.getEntity() instanceof ServerPlayer tracker) HoloRelay.onStartTracking(tracker, e.getTarget());

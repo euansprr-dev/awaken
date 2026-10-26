@@ -1,4 +1,4 @@
-# The pipe's top and the ledge drop (SPEC §17.25 "the top", §17.26; run with PACK=feel, HUD on). A drainpipe up a wall
+# The pipe's top and the ledge drop (SPEC §17.28 "the top", §17.25; run with PACK=feel, HUD on). A drainpipe up a wall
 # under a one-block cornice, a roof behind it: climb it, the top hangs you on the cornice's lip (out, then up), Jump
 # climbs out onto the roof. Then a wall's top over a sill one out: lower into a hang (Shift + forward at the edge),
 # Shift drops you to the sill, Shift again lets go. Filmed with the clip recorder. Clips: run-autopilot/clips/l_*.
