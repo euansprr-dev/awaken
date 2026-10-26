@@ -155,6 +155,141 @@ public final class SettlementPaint {
         return h;
     }
 
+    /** How high over its ground a settlement clears trees off the ground it uses. */
+    public static final int CLEAR = 12;
+
+    /**
+     * After a settlement chunk is written: trees a neighbouring chunk grew may hang leaves and limbs into the ground the
+     * settlement uses (its streets, yards and fields), and the trees it cut may leave pieces hanging. Like the city's sweep
+     * (CityWriter): vegetation in the neighbours' used columns up to {@link #CLEAR} over their ground goes, then any
+     * group of logs and leaves round this chunk that stands on nothing. Returns blocks removed.
+     */
+    public static int sweep(net.minecraft.world.level.WorldGenLevel level, Layout l, int chunkX, int chunkZ) {
+        int removed = 0;
+        net.minecraft.core.BlockPos.MutableBlockPos pos = new net.minecraft.core.BlockPos.MutableBlockPos();
+        BlockState air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                if (dx == 0 && dz == 0) continue;
+                int nx = chunkX + dx, nz = chunkZ + dz;
+                ChunkAccess n = level.getChunk(nx, nz, net.minecraft.world.level.chunk.status.ChunkStatus.TERRAIN, false);
+                if (n == null) continue;
+                for (int lz = 0; lz < 16; lz++) {
+                    for (int lx = 0; lx < 16; lx++) {
+                        int wx = (nx << 4) + lx, wz = (nz << 4) + lz;
+                        int px = wx - l.originX(), pz = wz - l.originZ();
+                        byte k = l.kind(px, pz);
+                        if (k == CityPlan.VOID || k == CityPlan.FREE || k == CityPlan.RIVER) continue;
+                        int g = l.baseY() + l.lift(px, pz);
+                        for (int y = g + 1; y <= g + CLEAR; y++) {
+                            BlockState s = n.getBlockState(pos.set(wx, y, wz));
+                            if (!CityWriter.vegetation(s)) continue;
+                            level.setBlock(pos, air, net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+                            removed++;
+                        }
+                    }
+                }
+            }
+        }
+        // what the cut left hanging round this chunk
+        it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap blocks = new it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap();
+        it.unimi.dsi.fastutil.longs.LongOpenHashSet loaded = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                int nx = chunkX + dx, nz = chunkZ + dz;
+                ChunkAccess c = dx == 0 && dz == 0 ? level.getChunk(nx, nz) : level.getChunk(nx, nz, net.minecraft.world.level.chunk.status.ChunkStatus.TERRAIN, false);
+                if (c == null) continue;
+                loaded.add(net.minecraft.world.level.ChunkPos.pack(nx, nz));
+                CityTrees.read(c, CityWriter::vegetation, blocks, null);
+            }
+        }
+        if (blocks.isEmpty()) return removed;
+        it.unimi.dsi.fastutil.longs.LongArrayList doomed = new it.unimi.dsi.fastutil.longs.LongArrayList();
+        CityTrees.groups(blocks, loaded::contains, (cells, grounded, clipped) -> {
+            if (grounded || clipped) return;
+            boolean tree = false;
+            for (int i = 0; i < cells.size() && !tree; i++) tree = (blocks.get(cells.getLong(i)) & (CityTrees.WOOD | CityTrees.LEAF)) != 0;
+            if (tree) doomed.addAll(cells);
+        });
+        for (int i = 0; i < doomed.size(); i++) {
+            long p = doomed.getLong(i);
+            level.setBlock(pos.set(net.minecraft.core.BlockPos.getX(p), net.minecraft.core.BlockPos.getY(p), net.minecraft.core.BlockPos.getZ(p)), air,
+                    net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+        }
+        return removed + doomed.size();
+    }
+
+    /**
+     * Dev studio: paints a whole settlement into memory and writes it in the city dump's format for
+     * {@code tools/city/render.py}; where the settlement leaves a column to the land, the land is drawn from
+     * {@code land} (its top's lift over the street, grass on dirt; below the sea level, water), so the render reads as a
+     * place. Returns the chunks written.
+     */
+    public static int dump(java.nio.file.Path out, Layout l, long seed, long[] chunks, java.util.function.IntBinaryOperator land) throws java.io.IOException {
+        it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap<BlockState> ids = new it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap<>();
+        java.util.List<String> palette = new java.util.ArrayList<>();
+        palette.add("none");
+        CityBuffer buf = new CityBuffer(16, 16);
+        int ccx = l.originX() >> 4, ccz = l.originZ() >> 4;
+        java.nio.file.Files.createDirectories(out.toAbsolutePath().getParent());
+        java.nio.file.Path tmp = out.resolveSibling(out.getFileName() + ".chunks");
+        BlockState grass = net.minecraft.world.level.block.Blocks.GRASS_BLOCK.defaultBlockState(), dirt = net.minecraft.world.level.block.Blocks.DIRT.defaultBlockState(),
+                water = net.minecraft.world.level.block.Blocks.WATER.defaultBlockState();
+        int n = 0;
+        try (java.io.DataOutputStream d = new java.io.DataOutputStream(new java.io.BufferedOutputStream(new java.util.zip.GZIPOutputStream(java.nio.file.Files.newOutputStream(tmp)), 1 << 16))) {
+            short[] cells = new short[16 * 16 * CityBuffer.H];
+            for (long key : chunks) {
+                int x = net.minecraft.world.level.ChunkPos.getX(key), z = net.minecraft.world.level.ChunkPos.getZ(key);
+                paint(l, x, z, seed, buf);
+                for (int lz = 0; lz < 16; lz++) {
+                    for (int lx = 0; lx < 16; lx++) {
+                        int px = buf.px0 + lx, pz = buf.pz0 + lz;
+                        int top = land.applyAsInt(px, pz);
+                        boolean wet = top <= -1000;
+                        if (wet) top += 2000;
+                        // the land under and round what the settlement painted
+                        int low = CityBuffer.YMIN;
+                        while (low <= CityBuffer.YMAX && buf.cells[buf.index(lx, low, lz)] == null) low++;
+                        for (int ry = CityBuffer.YMIN; ry <= Math.min(top, CityBuffer.YMAX); ry++) {
+                            if (ry >= low) break;
+                            buf.cells[buf.index(lx, ry, lz)] = ry == top ? (wet ? water : grass) : dirt;
+                        }
+                    }
+                }
+                for (int i = 0; i < cells.length; i++) {
+                    BlockState s = buf.cells[i];
+                    if (s == null) {
+                        cells[i] = 0;
+                        continue;
+                    }
+                    int id = ids.getOrDefault(s, -1);
+                    if (id < 0) {
+                        id = palette.size();
+                        palette.add(s.toString());
+                        ids.put(s, id);
+                    }
+                    cells[i] = (short) id;
+                }
+                d.writeInt(x - ccx);
+                d.writeInt(z - ccz);
+                for (short v : cells) d.writeShort(v);
+                n++;
+            }
+        }
+        try (java.io.DataOutputStream d = new java.io.DataOutputStream(new java.io.BufferedOutputStream(new java.util.zip.GZIPOutputStream(java.nio.file.Files.newOutputStream(out)), 1 << 16))) {
+            d.writeBytes("CITYDUMP");
+            d.writeInt(2);
+            d.writeInt(CityBuffer.YMIN);
+            d.writeInt(CityBuffer.H);
+            d.writeInt(palette.size());
+            for (String s : palette) d.writeUTF(s);
+            d.writeInt(n);
+            d.writeInt(l.originX() - (ccx << 4));
+            d.writeInt(l.originZ() - (ccz << 4));
+        }
+        return n;
+    }
+
     /** Dev and studio: repaints a settlement's chunk in a live world (setBlock, no updates). Returns blocks changed. */
     public static int repaint(Layout l, net.minecraft.server.level.ServerLevel level, int chunkX, int chunkZ) {
         CityBuffer buf = paint(l, chunkX, chunkZ, level.getSeed(), new CityBuffer(16, 16));
