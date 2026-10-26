@@ -96,8 +96,6 @@ final class FarRenderer implements AutoCloseable {
     }
 
     final View screen = new View();
-    /** This frame's frame block (City Sight's fill, after the sky pass, binds it too). */
-    GpuBufferSlice lastFrame;
     // the screen plan's settings, which the horizon's slices plan with too
     private double planCamY;
     private float planCovered, planHidden;
@@ -133,19 +131,6 @@ final class FarRenderer implements AutoCloseable {
     final GpuTextureView sectionsView;
     private final ByteBuffer sectionBytes = MemoryUtil.memCalloc(64 * 64 * SECTIONS);
     private final long[] sectionSince = new long[64 * 64 * SECTIONS];
-    /**
-     * Per section: since when Sodium, having built it, hasn't drawn it while it's on screen (0: drawn, or off screen).
-     * Past FILL_DELAY_MS it's marked CULLED in the section mask, and City Sight fills it in after Sodium's terrain (only
-     * where nothing nearer stands: a view into an overhang's cave Sodium's traversal misses). The delay keeps a section
-     * turning into view, which Sodium draws a frame later, from being filled for nothing.
-     */
-    private final long[] culledSince = new long[64 * 64 * SECTIONS];
-    static final long FILL_DELAY_MS = 250L;
-    /**
-     * The section mask's marks: 255 built and drawn (or off screen), CULLED (0.5) built but not drawn on screen a while,
-     * UNBUILT (0.25) on screen, with blocks, never built a while (both City Sight's fill), 0 not built.
-     */
-    static final byte CULLED = (byte) 128, UNBUILT = (byte) 64;
     /**
      * Per chunk slot, the chunk its sections' answers belong to. A section Sodium has built stays built until its chunk
      * goes (a rebuild keeps the old mesh until the new one is ready), so it isn't asked again: asking every non-air
@@ -226,7 +211,7 @@ final class FarRenderer implements AutoCloseable {
      * shows the sky through it. A 64×64 sweep at most: cheap.
      */
     void chunks(ClientLevel level, LevelRenderer sections, long fade,
-                int cx, int cz, int radius, double camX, double camY, double camZ, int realWithin) {
+                int cx, int cz, int radius, double camX, double camZ, int realWithin) {
         radius = Math.min(radius, 31);
         var source = level.getChunkSource();
         int minY = level.getMinY(), inner = Math.max(1, radius - 3), total = 0, shownN = 0;
@@ -281,10 +266,8 @@ final class FarRenderer implements AutoCloseable {
             chunkBytes.clear();
             RenderSystem.getDevice().createCommandEncoder().writeToTexture(chunks, chunkBytes, 0, 0, 0, 0, 64, 64);
         }
-        // the sections, half the chunks a call (by parity), each counted built 250 ms after it first is; a built one on
-        // screen that Sodium hasn't drawn for FILL_DELAY_MS is City Sight's to fill in (CULLED)
+        // the sections, half the chunks a call (by parity), each counted built 250 ms after it first is
         int turn = sectionTurn++ & 1, minSection = level.getMinSectionY(), count = Math.min(SECTIONS, level.getSectionsCount());
-        boolean fill = (FarSightClient.partsOff & 512) == 0;
         for (int dz = -radius; dz <= radius; dz++) {
             for (int dx = -radius; dx <= radius; dx++) {
                 int x = cx + dx, z = cz + dz;
@@ -310,27 +293,7 @@ final class FarRenderer implements AutoCloseable {
                     }
                     if (!built) sectionSince[at] = 0;
                     else if (sectionSince[at] == 0) sectionSince[at] = now;
-                    boolean shownBuilt = built && now - sectionSince[at] >= SHOW_DELAY_MS;
-                    // City Sight's to fill in: on screen inside Sodium's distance, with blocks, and not drawn by Sodium a while,
-                    // culled (built but missed by its traversal) or never built (an overhang's cave Sodium never reaches)
-                    // (only one with sky-lit air: the sky can show only through air the sky lights, so sealed rock, which
-                    // Sodium never builds, is never filled: filling it cost 0.8 ms at the Roost for nothing)
-                    boolean culled = false;
-                    if (fill && chunk != null && !chunk.getSection(sy).hasOnlyAir() && skyLit(level, at, x, minSection + sy, z, same)) {
-                        double ax = x * 16 - camX, ay = (minSection + sy) * 16 - camY, az = z * 16 - camZ;
-                        double nx = Math.max(0, Math.max(ax, -ax - 16)), nz = Math.max(0, Math.max(az, -az - 16));
-                        if (nx * nx + nz * nz < (double) realWithin * realWithin
-                                && screen.frustum.testAab((float) ax, (float) ay, (float) az, (float) ax + 16, (float) ay + 16, (float) az + 16)
-                                && (!shownBuilt || !SodiumSight.drawn(x * 16 + 1, (minSection + sy) * 16 + 1, z * 16 + 1, x * 16 + 15, (minSection + sy) * 16 + 15, z * 16 + 15))) {
-                            if (culledSince[at] == 0) culledSince[at] = now;
-                            culled = now - culledSince[at] >= FILL_DELAY_MS;
-                        } else {
-                            culledSince[at] = 0;
-                        }
-                    } else {
-                        culledSince[at] = 0;
-                    }
-                    byte sb = !shownBuilt ? (culled ? UNBUILT : 0) : culled ? CULLED : (byte) 255;
+                    byte sb = built && now - sectionSince[at] >= SHOW_DELAY_MS ? (byte) 255 : 0;
                     if (sectionBytes.get(at) != sb) {
                         sectionBytes.put(at, sb);
                         sectionsChanged = true;
@@ -343,30 +306,6 @@ final class FarRenderer implements AutoCloseable {
             sectionBytes.clear();
             RenderSystem.getDevice().createCommandEncoder().writeToTexture(sectionTex, sectionBytes, 0, 0, 0, 0, 64, 64 * SECTIONS);
         }
-    }
-
-    /** Per section: whether its sky light is known lit (2), dark (1) or unknown (0), for the chunk its answers belong to. */
-    private final byte[] sectionSky = new byte[64 * 64 * SECTIONS];
-
-    /** Whether any of the section's air has sky light (cached until its chunk goes, as the built answers are). */
-    private boolean skyLit(ClientLevel level, int at, int x, int sy, int z, boolean same) {
-        if (same && sectionSky[at] != 0) return sectionSky[at] == 2;
-        var sky = level.getLightEngine().getLayerListener(net.minecraft.world.level.LightLayer.SKY)
-                .getDataLayerData(net.minecraft.core.SectionPos.of(x, sy, z));
-        boolean lit;
-        if (sky == null) lit = true;
-        else if (sky.isDefinitelyHomogenous()) lit = !sky.isEmpty();
-        else {
-            lit = false;
-            for (byte b : sky.getData()) {
-                if (b != 0) {
-                    lit = true;
-                    break;
-                }
-            }
-        }
-        sectionSky[at] = (byte) (lit ? 2 : 1);
-        return lit;
     }
 
     /** A new level: no section answers carry over (the same chunk coordinates are another chunk there). */
@@ -630,21 +569,11 @@ final class FarRenderer implements AutoCloseable {
         return chunkBytes.get(((cz & 63) << 6) | (cx & 63)) != 0;
     }
 
-    /** Whether any section of chunk (cx, cz) from y0 to y1 is City Sight's to fill in (CULLED or UNBUILT). */
-    boolean anyCulled(int cx, int cz, int y0, int y1, int levelMinY) {
-        int base = (((cz & 63) * SECTIONS) << 6) | (cx & 63);
-        for (int sy = Math.max(0, (y0 - levelMinY) >> 4); sy <= Math.min(SECTIONS - 1, (y1 - levelMinY) >> 4); sy++) {
-            byte b = sectionBytes.get(base + (sy << 6));
-            if (b == CULLED || b == UNBUILT) return true;
-        }
-        return false;
-    }
-
     /** Whether every section of chunk (cx, cz) from y0 to y1 counts as built by Sodium (within 31 chunks of the camera). */
     boolean sectionsBuilt(int cx, int cz, int y0, int y1, int levelMinY) {
         int base = (((cz & 63) * SECTIONS) << 6) | (cx & 63);
         for (int sy = Math.max(0, (y0 - levelMinY) >> 4); sy <= Math.min(SECTIONS - 1, (y1 - levelMinY) >> 4); sy++) {
-            if ((sectionBytes.get(base + (sy << 6)) & 0xFF) < 128) return false;
+            if (sectionBytes.get(base + (sy << 6)) == 0) return false;
         }
         return true;
     }
@@ -722,7 +651,6 @@ final class FarRenderer implements AutoCloseable {
         try (var view = frame.map(false, true)) {
             view.data().put(0, frameBytes, 0, FRAME_SIZE);
         }
-        lastFrame = frame.slice(0, FRAME_SIZE);
         int slices = horizon.renderCount();
         GpuBuffer draws = drawUbo.currentBuffer();
         try (var view = draws.map(false, true)) {

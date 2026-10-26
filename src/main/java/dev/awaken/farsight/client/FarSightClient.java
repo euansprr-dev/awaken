@@ -101,8 +101,6 @@ public final class FarSightClient {
                     FarPalette.clear();
                 }));
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.AfterSky.class, FarSightClient::afterSky);
-        // perf build C: City Sight fills in what Sodium culls on screen, after its terrain
-        NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.AfterOpaqueBlocks.class, FarSightClient::afterOpaque);
         // perf build C: Sodium draws the near chunks, City Sight the rest (FarNear), set before anything reads the distance
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre.class, FarNear::frame);
         // before Lens (LOWEST), which reads vanilla's render-distance end through FarTerrain
@@ -359,7 +357,7 @@ public final class FarSightClient {
         field.dirty = 0;
         renderer.timeBaked();
         if ((bakeTurn & 1) == 0) renderer.chunks(mc.level, mc.levelRenderer, Util.toMillis(mc.options.chunkSectionFadeInTime().get()), Math.floorDiv((int) Math.floor(cam.x), 16), Math.floorDiv((int) Math.floor(cam.z), 16), rd + 1,
-                cam.x, cam.y, cam.z, rd * 16);
+                cam.x, cam.z, rd * 16);
         RenderTarget main = mc.gameRenderer.mainRenderTarget();
         var camera = mc.gameRenderer.mainCamera();
         // the key light: the sun's strength by its height (a faint moon by night), weaker in rain; warm as it lowers
@@ -414,18 +412,6 @@ public final class FarSightClient {
         lastDrawNanos = System.nanoTime();
         cpuNanos += lastDrawNanos - t0;
         cpuFrames++;
-    }
-
-    /**
-     * After Sodium's opaque terrain: City Sight's fill, the near sections Sodium has built but culls on screen, into the
-     * main target with the game's depth, so only what nothing nearer covers shows (a view into an overhang's cave).
-     */
-    private static void afterOpaque(RenderLevelStageEvent.AfterOpaqueBlocks e) {
-        if (voxels == null || renderer == null || renderer.lastFrame == null || !drawing() || !FarPipelines.fillOk()) return;
-        var projection = RenderSystem.getProjectionMatrixBuffer();
-        if (projection == null || voxels.fillChunks() == 0) return;
-        // (the level's own pass, still open on the main target and its depth: the event hands it over)
-        voxels.drawFill(e.getRenderPass(), projection, renderer.lastFrame, Minecraft.getInstance().gameRenderer.levelLightmap(), renderer.sectionsView);
     }
 
     private static long lastFrameNanos;
@@ -546,8 +532,7 @@ public final class FarSightClient {
     static int partsOff;
     // seaunder: ring 0's sea drawn under the real chunks (4aa1b25f); seafloor: the far water's own floor (0cbdd9e8)
     // city: City Sight, the real chunks' blocks (Far Sight 3)
-    // fill: City Sight filling in sections Sodium culls on screen (perf build C)
-    private static final String[] PARTS = {"detail", "trees", "mist", "bake", "pace", "steady", "seaunder", "seafloor", "city", "fill"};
+    private static final String[] PARTS = {"detail", "trees", "mist", "bake", "pace", "steady", "seaunder", "seafloor", "city"};
 
     /** Autopilot: {@code farsight on|off|status|debug <n>}. */
     public static String autopilot(String arg) {
@@ -557,6 +542,11 @@ public final class FarSightClient {
             return "debug view " + debug;
         }
         if (a.startsWith("wateredge")) return "water edges " + dev.awaken.turbo.wateredge.WaterEdge.autopilot(a.substring(9));
+        if (a.startsWith("occlusion")) {
+            String w = a.substring(9).trim();
+            FarNear.occlusion = w.equals("on") ? Boolean.TRUE : w.equals("off") ? Boolean.FALSE : null;
+            return "Sodium's occlusion culling " + (FarNear.occlusion == null ? "the game's" : FarNear.occlusion ? "on" : "off");
+        }
         if (a.startsWith("near")) {
             String w = a.substring(4).trim();
             FarNear.forced = w.equals("off") ? Integer.valueOf(0) : w.equals("setting") || w.isEmpty() ? null : Integer.valueOf(Integer.parseInt(w));
@@ -580,7 +570,7 @@ public final class FarSightClient {
                 else partsOff &= ~(1 << i);
                 return "parts off " + partsOff;
             }
-            return "unknown part " + w[0] + " (detail|trees|mist|bake|pace|steady|seaunder|seafloor|city|fill)";
+            return "unknown part " + w[0] + " (detail|trees|mist|bake|pace|steady|seaunder|seafloor|city)";
         }
         switch (a) {
             case "on" -> {
@@ -625,6 +615,6 @@ public final class FarSightClient {
                 cols == 0 ? 0.0 : workers.columnNanos.get() / 1000.0 / cols, cols == 0 ? 0.0 : workers.probes.get() / (double) cols, cols,
                 field.genUploaded, field.genAsked, voxels.resident(), VoxelCapture.captured(), VoxelCapture.fromDisk.get(), dev.awaken.farsight.voxel.VoxelAhead.asked(), voxels.inFlight.get(),
                 voxels.meshed.get() == 0 ? 0.0 : voxels.meshNanos.get() / 1e6 / voxels.meshed.get(), voxels.empty.get(), voxels.chunksDrawn, voxels.quadsDrawn, voxels.commands(),
-                (field.memoryBytes() + renderer.memoryBytes() + voxels.memoryBytes() + horizon.memoryBytes()) >> 20) + FarNear.status() + " fill=" + voxels.fillChunks() + voxels.quadsStatus() + horizon.status() + split;
+                (field.memoryBytes() + renderer.memoryBytes() + voxels.memoryBytes() + horizon.memoryBytes()) >> 20) + FarNear.status() + voxels.quadsStatus() + horizon.status() + split;
     }
 }

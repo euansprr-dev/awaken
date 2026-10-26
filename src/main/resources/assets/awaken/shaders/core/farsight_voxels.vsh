@@ -53,8 +53,6 @@ void main() {
     vLod = int(q.x >> 30);
     vFade = float(origin.w) / 255.0;
     vec4 clip = ProjMat * (FarViewRot * vec4(vRel, 1.0));
-#ifndef FILL
     clip.z = FarDepth.x + FarDepth.y * clip.w;
-#endif
     gl_Position = clip;
 }

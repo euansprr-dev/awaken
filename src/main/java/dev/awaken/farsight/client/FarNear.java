@@ -31,6 +31,12 @@ public final class FarNear {
     static Integer forced;
     /** The near distance applied (chunks), or 0 when none is. */
     private static int applied;
+    /**
+     * Measuring (autopilot {@code farsight occlusion on|off|setting}): Sodium's occlusion culling, which it takes from the
+     * game's smart cull (Sodium misses an overhang's cave with it on). Null leaves the game's own.
+     */
+    static Boolean occlusion;
+    private static boolean occlusionSet;
     private static boolean logged;
 
     /** The near distance asked for (chunks), 0 for none. */
@@ -55,6 +61,13 @@ public final class FarNear {
     static void frame(RenderFrameEvent.Pre e) {
         Minecraft mc = Minecraft.getInstance();
         Options o = mc.options;
+        if (occlusion != null) {
+            mc.smartCull = occlusion;
+            occlusionSet = true;
+        } else if (occlusionSet) {
+            mc.smartCull = true;
+            occlusionSet = false;
+        }
         int setting = o.renderDistance().get(), want = near();
         if (want > 0 && want < setting && where(mc)) {
             // every frame: the server's chunk radius packet (a join, a respawn) writes the real value back

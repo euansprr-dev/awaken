@@ -132,24 +132,6 @@ final class FarPipelines {
             .withCull(false)
             .build();
 
-    /**
-     * City Sight's fill (perf build C): after Sodium's opaque terrain, into the main target with the game's own depth
-     * (tested and written), only in sections Sodium has built but culls on screen (FILL in the shaders).
-     */
-    static final RenderPipeline VOXELS_FILL = RenderPipeline.builder()
-            .withBindGroupLayout(BindGroupLayouts.PROJECTION)
-            .withBindGroupLayout(BindGroupLayouts.FOG)
-            .withBindGroupLayout(VOXEL_INPUTS)
-            .withLocation(Awaken.id("pipeline/farsight_voxels_fill"))
-            .withVertexShader(Awaken.id("core/farsight_voxels"))
-            .withFragmentShader(Awaken.id("core/farsight_voxels"))
-            .withShaderDefine("FILL")
-            .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
-            .withColorTargetState(ColorTargetState.DEFAULT)
-            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
-            .withCull(false)
-            .build();
-
     static final BindGroupLayout MARK_INPUTS = BindGroupLayout.builder()
             .withUniform("FarFrame", UniformType.UNIFORM_BUFFER)
             .withUniform("FarMarks", UniformType.UNIFORM_BUFFER)
@@ -203,7 +185,7 @@ final class FarPipelines {
             .withCull(false)
             .build();
 
-    private static int ok = -1, horizonOk = -1, fillOk = -1; // -1 unknown, 0 failed, 1 compiled
+    private static int ok = -1, horizonOk = -1; // -1 unknown, 0 failed, 1 compiled
 
     static void onRegister(RegisterRenderPipelinesEvent e) {
         e.registerOptionalPipeline(TERRAIN);
@@ -213,7 +195,6 @@ final class FarPipelines {
         e.registerOptionalPipeline(VOXELS);
         e.registerOptionalPipeline(VOXELS_PLAIN);
         e.registerOptionalPipeline(HORIZON);
-        e.registerOptionalPipeline(VOXELS_FILL);
     }
 
     /** Whether the cached horizon's composite compiled (without it, Far Sight draws everything live). */
@@ -244,21 +225,8 @@ final class FarPipelines {
         return ok == 1;
     }
 
-    /** Whether City Sight's fill compiled (without it, nothing fills in where Sodium culls). */
-    static boolean fillOk() {
-        if (fillOk < 0) {
-            try {
-                fillOk = RenderSystem.getCompiledPipelineNullable(VOXELS_FILL) != null ? 1 : 0;
-            } catch (RuntimeException e) {
-                fillOk = 0;
-            }
-        }
-        return fillOk == 1;
-    }
-
     static void recheck() {
         ok = -1;
         horizonOk = -1;
-        fillOk = -1;
     }
 }
