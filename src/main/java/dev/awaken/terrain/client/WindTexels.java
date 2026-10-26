@@ -54,7 +54,8 @@ final class WindTexels {
     private static final ByteBuffer BUF = MemoryUtil.memAlloc(TEXELS * 4).order(ByteOrder.LITTLE_ENDIAN);
     private static GpuTexture cornerOf; // the atlas texture whose corner was found free
     private static boolean cornerFree;
-    /** Measuring aid ({@code /awaken terrain waving debug}): 0 normal, 1 no signature (shader exits early), 2 amplitude 0. */
+    /** Measuring aid ({@code /awaken terrain waving debug}): 0 normal, 1 no signature (shader exits early), 2 amplitude 0,
+     * 3 plants still (their amplitudes 0, so the shader skips their sway; leaves wave on). */
     static int debugMode;
 
     /** At each block-atlas stitch: is the corner strip outside every sprite? */
@@ -99,7 +100,7 @@ final class WindTexels {
             float along = (i - (PROFILE - 1) * 0.5F) * PROFILE_STEP;
             b.put(unorm(wind.gust(cam.x + wind.dirX * along, cam.z + wind.dirZ * along)));
         }
-        boolean still = debugMode == 2;
+        boolean still = debugMode == 2 || debugMode == 3;
         boolean weather = mc.level != null && mc.level.dimensionType().hasSkyLight();
         b.put(still ? 0 : unorm(plantAmplitude / 0.5F)).put(still ? 0 : unorm(waterAmplitude / 0.5F)).put(unorm(sheen / 0.5F)).put(weather ? (byte) 255 : 0);
         Player p = mc.player;

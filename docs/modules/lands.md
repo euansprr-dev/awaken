@@ -100,7 +100,7 @@ strength) × (1 − 0.6 canopy). Both ease in and out and stop when silent. Sett
 
 **Commands** (client): `/awaken terrain leaves status|amount <off|low|normal|high>|biome <id|clear>` (the biome line
 treats every spot as that biome: a showcase aid), `/awaken terrain wind status|force <steady> <gust>|real`,
-`/awaken terrain waving on|off|status|debug <0..2>|plants <air> <water> <sheen> <push>` (leaves and plants
+`/awaken terrain waving on|off|status|debug <0..3>|plants <air> <water> <sheen> <push>` (leaves and plants
 together), `/awaken terrain wind front across|ahead` (one showcase front, until `wind real`).
 
 **Measured** (2026-10-24, M4, OpenGL, framebuffer 2880×1658, `PACK=perf,world TECTONIC=awakened`, the heart of the

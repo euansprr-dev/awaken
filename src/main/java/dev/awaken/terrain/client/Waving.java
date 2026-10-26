@@ -126,7 +126,7 @@ public final class Waving {
     }
 
     /**
-     * {@code /awaken terrain waving on|off|status|debug <0..2>|plants <air> <water> <sheen> <push>} (client side): switch
+     * {@code /awaken terrain waving on|off|status|debug <0..3>|plants <air> <water> <sheen> <push>} (client side): switch
      * and reload (leaves and plants together), say why it is off, or tune the plants live (blocks of sway per unit of
      * weight; a tuning aid, not saved).
      */
@@ -135,8 +135,9 @@ public final class Waving {
                 .then(Commands.literal("on").executes(c -> toggle(true)))
                 .then(Commands.literal("off").executes(c -> toggle(false)))
                 .then(Commands.literal("status").executes(c -> status()))
-                // measuring aid: 0 normal, 1 shader runs but finds no wind (exits early), 2 full shader, amplitude 0
-                .then(Commands.literal("debug").then(Commands.argument("mode", IntegerArgumentType.integer(0, 2))
+                // measuring aid: 0 normal, 1 shader runs but finds no wind (exits early), 2 full shader, amplitude 0,
+                // 3 plants still (leaves wave on)
+                .then(Commands.literal("debug").then(Commands.argument("mode", IntegerArgumentType.integer(0, 3))
                         .executes(c -> debug(IntegerArgumentType.getInteger(c, "mode")))))
                 .then(Commands.literal("plants").then(Commands.argument("air", FloatArgumentType.floatArg(0F, 0.5F))
                         .then(Commands.argument("water", FloatArgumentType.floatArg(0F, 0.5F))

@@ -162,6 +162,7 @@ vec3 _awk_plant_offset(vec3 regionPos, vec3 rel, int code, out float tint) {
     vec3 cam = vec3(_awk_f32(base + ivec2(2, 0)), _awk_f32(base + ivec2(3, 0)), _awk_f32(base + ivec2(4, 0)));
     vec4 wind = texelFetch(u_BlockTex, base + ivec2(5, 0), 0);   // direction x, z (0..1 for -1..1), steady, leaf amplitude
     vec4 plant = texelFetch(u_BlockTex, base + ivec2(22, 0), 0); // air and water amplitude, sheen (x 0.5), weather wind here
+    if (plant.x == 0.0 && plant.y == 0.0) return vec3(0.0); // plants switched still (debug 3): skip the rest
     vec3 origin = round((u_RegionOffset + cam) / AWK_REGION) * AWK_REGION;
     vec3 wp = origin + regionPos; // x, z modulo 4096; y is the true height
 

@@ -1366,8 +1366,13 @@ so results never depend on AI wandering, daylight or chunk-ticking timing.
   - Cost: plants sway out to 112 blocks from the camera, fading from 72 (cross models have no faces to cull, so every
     plant quad is drawn and far ones are most of a meadow's vertices; with no fade a sparse meadow cost +0.3 ms p50).
     A plant vertex past 112 reads no texel; one inside reads nine (four more within 10 blocks of the camera, for the
-    feet). Texels 22 (air and water amplitude, sheen, weather wind here), 23–25 (the player's feet), 26 (the push).
-  - Commands: `/awaken terrain waving on|off|status|debug <0..2>|plants ...` covers leaves and plants;
+    feet); with both plant amplitudes 0 it stops after five. Texels 22 (air and water amplitude, sheen, weather wind
+    here), 23–25 (the player's feet), 26 (the push). Measured 2026-10-26 (docs/spikes/plant-sway.md; Vulkan, 2880×1800,
+    render distance 16, machine at load 12–18): in a studio meadow with every plant inside the sway radius, the sway
+    within noise against the shader finding no wind (+0.05, −0.03 ms) and the whole override +0.13 and +0.19 ms against
+    Sodium's own shader; in a flower forest +0.30 and +0.16 ms against no wind, leaves' sway included (it has no
+    distance fade). `/awaken terrain waving debug 3` stills and skips the plants alone, to split the two.
+  - Commands: `/awaken terrain waving on|off|status|debug <0..3>|plants ...` covers leaves and plants;
     `/awaken terrain wind front across|ahead` (showcase) launches one front across the view or from behind the camera,
     holding the heading the way it rolls, until `wind real`. Tests: `terrain_sway_markers` (every plant kind marked,
     leaves keep theirs, nothing else is), `terrain_sway_joined` (shared vertices agree for every run length; roots and
