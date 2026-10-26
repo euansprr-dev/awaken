@@ -258,7 +258,9 @@ public final class ArmsPredict {
         if (waitHit && move != null && style != null) {
             Archetype.MoveDef def = style.move(move);
             long nanos = System.nanoTime() - moveNanos - (ArmsFeel.paused() - movePaused) - waitNanos;
-            if (def != null && nanos / 50_000_000F > def.windup() - 0.05F) waitNanos += 50_000_000L; // held at the hit
+            // held at the hit: the clock pinned there, never stepped back (a whole tick taken off made the hands twitch)
+            long over = def == null ? 0 : nanos - (long) ((def.windup() - 0.05F) * 50_000_000L);
+            if (over > 0) waitNanos += over;
         }
         if (pressHeld) heldOrReleased(p, mc);
         if (dodgeCharges >= 0 && style != null && ticks >= dodgeRechargeAt && dodgeCharges < style.def().dodge().charges()) {
