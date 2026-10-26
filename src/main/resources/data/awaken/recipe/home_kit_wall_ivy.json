@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    "minecraft:vine",
+    "minecraft:vine"
+  ],
+  "result": {
+    "id": "awaken:wall_ivy",
+    "count": 3
+  }
+}

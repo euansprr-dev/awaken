@@ -75,6 +75,15 @@ public final class LensClient {
     private static String biomeFor;
     private static int biomeClock;
     private static final float[] current = Look.neutral(), target = Look.neutral();
+    // the place's own look (the biome's, else the dimension's; or a story moment's), before any place look over it
+    private static final float[] base = Look.neutral();
+    // place looks over the biome's (SPEC §28.5: a plain cave's own, a seep's violet), each weighted 0..1 by its owner
+    // every tick, blended in layer order; resolved again when the id or the looks change
+    static final int PLACE_LAYERS = 2;
+    private static final String[] placeId = new String[PLACE_LAYERS];
+    private static final float[] placeWeight = new float[PLACE_LAYERS];
+    private static final float[][] placeLook = {Look.neutral(), Look.neutral()};
+    private static final boolean[] placeKnown = new boolean[PLACE_LAYERS], placeStale = new boolean[PLACE_LAYERS];
     // a story moment's look over the dimension's (the Ritual of the Bell: awaken:ritual, awaken:void), its easing rate
     private static @org.jspecify.annotations.Nullable String overrideLook;
     private static boolean overrideChanged;
@@ -101,6 +110,7 @@ public final class LensClient {
                     Looks.reload(manager);
                     lookFor = null; // re-resolve the current place's look
                     biomeFor = null;
+                    java.util.Arrays.fill(placeStale, true);
                 }));
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> tick());
         // after every other fog listener (Blight, the Veil): Lens hazes toward the fog the player actually sees
@@ -125,6 +135,7 @@ public final class LensClient {
             overrideLook = null;
             linger = 0;
             tear = tearStep = crush = crushTarget = bloomBoost = bloomTarget = 0f;
+            java.util.Arrays.fill(placeWeight, 0f);
             return;
         }
         AwakenConfig.Client.LensLook setting = AwakenConfig.Client.LENS.get();
@@ -171,13 +182,28 @@ public final class LensClient {
             if (placeChanged && !overrideChanged && overrideLook == null) ease = dim != lookFor ? 0.06f : 0.03f;
             if (dim != lookFor && lensFrame != null) lensFrame.reset();
             // with Lens off the look rests at neutral, so a scene eases in from (and back out to) the plain frame
-            if (overrideLook != null) Looks.resolve(overrideLook, null, target);
-            else if (off) System.arraycopy(NEUTRAL, 0, target, 0, Look.SIZE);
-            else Looks.resolve(dim.identifier().toString(), biome, target);
+            if (overrideLook != null) Looks.resolve(overrideLook, null, base);
+            else if (off) System.arraycopy(NEUTRAL, 0, base, 0, Look.SIZE);
+            else Looks.resolve(dim.identifier().toString(), biome, base);
             lookFor = dim;
             biomeFor = biome;
             overrideChanged = false;
             wasOff = off;
+        }
+        // the place looks over it: never while Lens is off, never over a story moment's look
+        System.arraycopy(base, 0, target, 0, Look.SIZE);
+        if (!off && overrideLook == null) {
+            for (int l = 0; l < PLACE_LAYERS; l++) {
+                if (placeStale[l]) {
+                    placeKnown[l] = placeId[l] != null && Looks.has(placeId[l]);
+                    if (placeKnown[l]) Looks.resolve(placeId[l], null, placeLook[l]);
+                    placeStale[l] = false;
+                }
+                float w = placeWeight[l];
+                if (!placeKnown[l] || w <= 0.001f) continue;
+                float[] p = placeLook[l];
+                for (int i = 0; i < Look.SIZE; i++) target[i] += (p[i] - target[i]) * w;
+            }
         }
         // Lens 2's sun shadows need the terrain's heights, only where there is a sun
         sunHere = mc.level.dimensionType().skybox() == DimensionType.Skybox.OVERWORLD;
@@ -211,6 +237,22 @@ public final class LensClient {
         overrideLook = lookId;
         overrideChanged = true;
         ease = rate(fadeTicks);
+    }
+
+    /**
+     * A place look over the biome's: {@code lookId} (an exact key in lens/*.json, such as {@code awaken:seep}) blended over
+     * the place's own look by {@code weight} (0..1), in layer order (0 first, then 1). The owner sets it every tick it
+     * holds (its weight already eased); Lens eases toward the blend as it does between biomes. It never plays while Lens
+     * is off (unlike a story moment) and a story moment's look ({@link #override}) wins over it. Delve's senses use layer 0
+     * for a plain cave's own look and layer 1 for a seep (SPEC §28.5).
+     */
+    public static void placeLook(int layer, @org.jspecify.annotations.Nullable String lookId, float weight) {
+        if (layer < 0 || layer >= PLACE_LAYERS) return;
+        if (!java.util.Objects.equals(lookId, placeId[layer])) {
+            placeId[layer] = lookId;
+            placeStale[layer] = true;
+        }
+        placeWeight[layer] = lookId == null ? 0f : Math.clamp(weight, 0f, 1f);
     }
 
     /** The moment's look playing now ({@link #override}), or null for the place's own. */

@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.state.BlockState;
 /**
  * Wild herbs (SPEC §21.9) are no new blocks: a natural plant (grass, ferns, flowers) is "ripe" by a pure function of its
  * column and the day, so the client can glint it (Herb Glint) and the server checks it on harvest, with nothing stored.
- * 3% of plants are ripe on a day (6% with Root Sense); which herb comes out is the land's.
+ * 3% of plants are ripe on a day (6% with Root Sense, three times that in a Greenhouse); which herb comes out is the land's.
  */
 public final class Herbs {
     private Herbs() {}
@@ -32,11 +32,20 @@ public final class Herbs {
 
     /** Whether the plant at this column is ripe today. */
     public static boolean ripe(BlockPos pos, long day, boolean rootSense) {
+        return ripe(pos, day, rootSense, false);
+    }
+
+    /**
+     * As above; in a Hearth's Greenhouse the threshold is three times as high (SPEC §28.1). The same hash decides, so a
+     * plant ripe outside would be ripe inside too.
+     */
+    public static boolean ripe(BlockPos pos, long day, boolean rootSense, boolean greenhouse) {
         long h = pos.getX() * 0x9E3779B97F4A7C15L ^ pos.getZ() * 0xC2B2AE3D27D4EB4FL ^ day * 0x165667B19E3779F9L;
         h ^= h >>> 29;
         h *= 0xBF58476D1CE4E5B9L;
         h ^= h >>> 32;
-        return Math.floorMod(h, 1000L) < (rootSense ? 60 : 30);
+        long threshold = rootSense ? 60 : 30;
+        return Math.floorMod(h, 1000L) < (greenhouse ? threshold * 3 : threshold);
     }
 
     private static final TagKey<Biome> FROST = TagKey.create(Registries.BIOME, Awaken.id("fauna/frostwild")),

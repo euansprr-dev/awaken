@@ -41,6 +41,7 @@ public final class HearthModule {
 
     public static void init(IEventBus modBus) {
         HearthContent.register(modBus);
+        dev.awaken.hearth.kit.HomeKit.init(modBus);
         modBus.addListener(HearthModule::attributes);
         modBus.addListener(HearthModule::creativeTab);
         modBus.addListener(HearthNet::register);

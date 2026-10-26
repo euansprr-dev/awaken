@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "home_kit_drainpipe",
+  "key": {
+    "C": "minecraft:copper_ingot"
+  },
+  "pattern": [
+    "C",
+    "C"
+  ],
+  "result": {
+    "id": "awaken:drainpipe",
+    "count": 4
+  }
+}

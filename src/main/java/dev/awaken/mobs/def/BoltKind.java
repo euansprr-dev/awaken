@@ -25,7 +25,9 @@ public enum BoltKind {
     DREAM(Forces.Force.SPIRIT, Items.PHANTOM_MEMBRANE, ParticleTypes.WITCH, MobEffects.NAUSEA, 60),
     GRAVITY(Forces.Force.GRAVITY, Items.ENDER_PEARL, ParticleTypes.REVERSE_PORTAL, MobEffects.LEVITATION, 20),
     VOID(Forces.Force.SPIRIT, Items.ENDER_EYE, ParticleTypes.PORTAL, MobEffects.DARKNESS, 50),
-    SIGNAL(Forces.Force.CHARGE, Items.NETHER_STAR, ParticleTypes.END_ROD, MobEffects.GLOWING, 60);
+    SIGNAL(Forces.Force.CHARGE, Items.NETHER_STAR, ParticleTypes.END_ROD, MobEffects.GLOWING, 60),
+    /** A Deepglass shard (the seep heart): drawn as awaken:deepglass_shard with a trail of the Deep's motes (AwBolt). */
+    DEEP(null, Items.AMETHYST_SHARD, ParticleTypes.END_ROD, null, 0);
 
     public final Forces.@Nullable Force force;
     public final Item item;

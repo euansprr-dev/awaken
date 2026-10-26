@@ -42,6 +42,21 @@ public final class AscentServer {
     static void syncTiers(ServerPlayer p) {
         AscentMemory mem = p.getData(AscentContent.MEMORY);
         AwakenNet.send(p, new AscentPayloads.Tiers(mem.tiers(), mem.packedLevels()));
+        syncKit(p, false);
+    }
+
+    /** The fittings on this player's Tether, to its client ({@code fitted}: one was just fitted, so it's told). */
+    static void syncKit(ServerPlayer p, boolean fitted) {
+        AwakenNet.send(p, new AscentPayloads.Kit(kit(p).bits(), fitted));
+    }
+
+    static RopeKit kit(Player p) {
+        return p.getData(AscentContent.ROPE_KIT);
+    }
+
+    /** The player's rope at its longest (mastery 10's reach for the anchor check: levels can land mid-swing). */
+    static double reach(ServerPlayer p, int tetherLevel) {
+        return AscentRules.reach(tetherLevel, dev.awaken.progression.Progression.perk(p, AscentRules.ROPE_REACH_PERK), kit(p).line());
     }
 
     /** The client heard its tiers (Ascent.has on the client reads them). */
@@ -168,7 +183,7 @@ public final class AscentServer {
         int t = tiers(p);
         return switch (s) {
             case NONE, CARRY -> true;
-            case TETHER, ZIP -> AscentPayloads.Tier.TETHER.in(t);
+            case TETHER, ZIP, RAPPEL -> AscentPayloads.Tier.TETHER.in(t);
             case GLIDE -> AscentPayloads.Tier.WINGS.in(t);
             case SOAR -> AscentPayloads.Tier.SKYBORN.in(t);
         };
@@ -208,7 +223,8 @@ public final class AscentServer {
         AscentMotion m = motion(p);
         boolean refuse = !allowed(p, s) || p.isPassenger() || p.isSpectator() || !dev.awaken.body.BodyConfig.ascent()
                 || s.rope && !anchorReal(p, msg.x(), msg.y(), msg.z())
-                || s == AscentState.SOAR && m.state != AscentState.SOAR && m.aether < AscentRules.AETHER_START - AETHER_TOLERANCE;
+                || s == AscentState.SOAR && m.state != AscentState.SOAR && m.aether < AscentRules.AETHER_START - AETHER_TOLERANCE
+                || s == AscentState.RAPPEL && !rappelOk(p, m, msg);
         if (refuse && s != AscentState.NONE) {
             refusals++;
             AwakenNet.send(p, new AscentPayloads.Stop(s.ordinal()));
@@ -218,29 +234,70 @@ public final class AscentServer {
         if (s == AscentState.NONE && m.state != AscentState.NONE) m.endedAt = now(p);
         // a rope that bit is a link (counted here, once the server has checked its anchor)
         boolean newRope = s.rope && !m.state.rope;
-        if (s != m.state) {
+        boolean update = s == m.state;
+        if (!update) {
             AscentTips.used(p, s);
             AscentQuests.state(p, m.state, s, m.ax, m.ay, m.az);
         }
         m.state = s;
         if (newRope) link(p, AscentMemory.Track.TETHER, 2);
+        boolean anchored = Math.abs(m.ax - msg.x()) + Math.abs(m.ay - msg.y()) + Math.abs(m.az - msg.z()) < 0.05;
         m.ax = msg.x();
         m.ay = msg.y();
         m.az = msg.z();
         m.len = msg.len();
-        m.since = now(p);
+        m.lenAt = now(p);
+        m.lenAtMs = net.minecraft.util.Util.getMillis();
+        if (!update) m.since = now(p);
         m.groundTicks = 0;
         if (s.airborne()) p.resetFallDistance();
-        show(p, new AscentPayloads.Seen(p.getId(), s.ordinal(), m.ax, m.ay, m.az));
+        // a rappel's length heard again (the rope paying out, same anchor) changes nothing anyone else draws
+        if (update && anchored && s == AscentState.RAPPEL) return;
+        show(p, new AscentPayloads.Seen(p.getId(), s.ordinal(), m.ax, m.ay, m.az, s.rope ? kit(p).bits() : 0));
     }
 
     /**
-     * A rope's anchor is real: within the rope's longest reach (mastery 10; plus the ground the body covered while the
-     * packet travelled) of
-     * where the server has the body, and the point sits on a block's collision (it is placed a hair off the face it bit).
+     * A rappel's checks (SPEC §28.5), on each length the client sends while it pays out: the rope no longer than the
+     * player's real reach (and a block), paid out no faster than the fitted line allows (a bank refilled at its rate,
+     * which lag bursts draw on), and the hand within the rope's length of the anchor. Draws on the bank when it holds.
+     */
+    static boolean rappelOk(ServerPlayer p, AscentMotion m, AscentPayloads.State msg) {
+        double len = msg.len();
+        int level = p.getData(AscentContent.MEMORY).level(AscentMemory.Track.TETHER);
+        if (!(len <= reach(p, level) + AscentRules.RAPPEL_LENGTH_TOLERANCE) || len < AscentRules.TETHER_MIN - 0.5) return false;
+        double hx = p.getX() - msg.x(), hy = p.getY() + AscentRules.HAND_HEIGHT - msg.y(), hz = p.getZ() - msg.z();
+        if (Math.sqrt(hx * hx + hy * hy + hz * hz) > len + AscentRules.RAPPEL_BODY_TOLERANCE) return false;
+        boolean smooth = kit(p).smooth();
+        boolean same = m.state.rope && Math.abs(m.ax - msg.x()) + Math.abs(m.ay - msg.y()) + Math.abs(m.az - msg.z()) < 0.05;
+        // a new rope (or a new anchor: a wrap) starts the bank afresh
+        double bank = m.state == AscentState.RAPPEL && same ? AscentRules.payBank(m.payBank, sinceLength(p, m), smooth) : AscentRules.RAPPEL_SLACK;
+        double grow = same ? len - m.len : 0;
+        if (grow > bank + 1e-6) return false;
+        m.payBank = bank - Math.max(0, grow);
+        return true;
+    }
+
+    /** A rappel's hand gone further from its anchor than its rope could have paid out since the server last heard it. */
+    static boolean rappelAstray(ServerPlayer p, AscentMotion m) {
+        double hx = p.getX() - m.ax, hy = p.getY() + AscentRules.HAND_HEIGHT - m.ay, hz = p.getZ() - m.az;
+        return Math.sqrt(hx * hx + hy * hy + hz * hz) > AscentRules.rappelBodyLimit(m.len, sinceLength(p, m), kit(p).smooth());
+    }
+
+    /**
+     * Ticks since the rope's length was last heard: the game's, or the clock's when the server runs slow (the client
+     * pays out at its own 20 a second, so a lagging server mustn't take that for paying too fast).
+     */
+    static long sinceLength(ServerPlayer p, AscentMotion m) {
+        return Math.max(now(p) - m.lenAt, (net.minecraft.util.Util.getMillis() - m.lenAtMs) / 50);
+    }
+
+    /**
+     * A rope's anchor is real: within the rope's longest reach (mastery 10, the line; plus the ground the body covered
+     * while the packet travelled) of where the server has the body, and the point sits on a block's collision (it is
+     * placed a hair off the face it bit).
      */
     static boolean anchorReal(ServerPlayer p, double ax, double ay, double az) {
-        double reach = AscentRules.TETHER_RANGE + AscentRules.MASTERY_REACH * 10 + 6 + dev.awaken.progression.Progression.perk(p, AscentRules.ROPE_REACH_PERK);
+        double reach = reach(p, 10) + 6;
         if (p.distanceToSqr(ax, ay, az) > reach * reach) return false;
         net.minecraft.world.phys.AABB probe = new net.minecraft.world.phys.AABB(ax - 0.12, ay - 0.12, az - 0.12, ax + 0.12, ay + 0.12, az + 0.12);
         for (var shape : p.level().getBlockCollisions(null, probe)) {
@@ -261,6 +318,10 @@ public final class AscentServer {
         switch (msg.what()) {
             case AscentPayloads.EV_LAUNCH -> {
                 if (st == AscentState.TETHER) link(p, AscentMemory.Track.TETHER, 3);
+            }
+            // a rappel's bound off the wall: a link, as any move on the rope
+            case AscentPayloads.EV_RAPPEL_KICK -> {
+                if (st == AscentState.RAPPEL) link(p, AscentMemory.Track.TETHER, 1);
             }
             case AscentPayloads.EV_DEPLOY -> {
                 if (Ascent.has(p, Ascent.Tier.WINGS)) link(p, AscentMemory.Track.WINGS, 2);
@@ -351,6 +412,20 @@ public final class AscentServer {
         if (p.isPassenger() || p.isSpectator() || !p.isAlive()) {
             end(p, m);
             return;
+        }
+        // a rappel is only free while the body is really on its rope (SPEC §28.5): a hand gone further than the rope could
+        // have paid out is refused (the client lets go into the carry; nothing is sent back)
+        if (m.state == AscentState.RAPPEL && rappelAstray(p, m)) {
+            refusals++;
+            AwakenNet.send(p, new AscentPayloads.Stop(AscentState.RAPPEL.ordinal()));
+            dev.awaken.Awaken.LOG.debug("[ascent] refused a rappel astray for {}", p.getPlainTextName());
+            end(p, m);
+            return;
+        }
+        // on a line over a long drop: the rappel's tip (once a second; the tip system keeps its own pace)
+        if (m.state == AscentState.TETHER && now(p) % 20 == 0
+                && p.getY() - AscentAnchors.floorUnder(p.level(), p, p.getX(), p.getY() + 0.5, p.getZ(), 24) >= 12) {
+            dev.awaken.core.api.TipHooks.offer(p, AscentTips.RAPPEL);
         }
         p.resetFallDistance();
         p.connection.resetFlyingTicks();

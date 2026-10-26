@@ -1,0 +1,71 @@
+# Between the Gates W5 (SPEC §28.5), the lead's third look: the reshaped sinkhole (radius 10-17, the lip leaning in,
+# vine curtains, the stony way in) from its edge, over its lip looking down the shaft, from a ring partway down and from
+# its floor; and one grotto in its own light only (no lamp, no night vision): its pool, its curtain from both sides,
+# its geode. goto now passes a place the world lacks or has flooded (logged "[delve] goto passes").
+# Run: tools/tour-ci.sh tools/autopilot/world-depth-w5-shaft2.txt 900 LENS=cinematic
+world autopilot_world_depth_w5s2 creative 52605260
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+# dawn: the mist is thickest
+cmd time set 600
+cmd effect give @s minecraft:resistance 100000 4 true
+lens cinematic
+camera first
+hud off
+
+# ---- the sinkhole: a spectator's camera (it hovers where a player would fall) ----
+cmd gamemode spectator
+cmd awaken delve goto sinkhole
+wait 200
+# at the edge of the drop, on the stony way in, looking in
+cmd tp @s ~ ~ ~ ~ 35
+wait 30
+shot w5t_01_sinkhole_from_the_edge
+# over the lip, looking across and down the shaft at the waterfall, the pool and the rings
+cmd execute rotated ~ 0 run tp @s ^ ^2 ^5
+cmd tp @s ~ ~ ~ ~ 55
+wait 30
+shot w5t_02_sinkhole_down_the_shaft
+# a ring partway down, looking across
+cmd awaken delve place go shelf pool
+cmd execute rotated ~ 0 run tp @s ^ ^ ^2
+cmd tp @s ~ ~ ~ ~ 18
+wait 30
+shot w5t_03_sinkhole_from_a_ring
+# the floor, looking up the cleft at the sky
+cmd awaken delve place go cleft view
+wait 30
+shot w5t_04_sinkhole_from_the_floor
+
+# ---- a grotto in its own light (lichen, glow berries, the pool's pickles, and its drawn light) ----
+cmd gamemode creative
+cmd awaken delve goto grotto
+wait 200
+cmd awaken delve place go room pool
+wait 60
+shot w5t_05_grotto_pool
+cmd awaken delve place go curtain room
+wait 40
+shot w5t_06_grotto_through_the_curtain
+cmd awaken delve place go room curtain
+wait 40
+shot w5t_07_grotto_curtain_from_inside
+cmd awaken delve place go goal pool
+wait 30
+shot w5t_08_grotto_geode
+quit

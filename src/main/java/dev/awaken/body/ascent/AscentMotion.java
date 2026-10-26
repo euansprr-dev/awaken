@@ -5,6 +5,9 @@ final class AscentMotion {
     AscentState state = AscentState.NONE;
     double ax, ay, az;
     float len;
+    /** The rappel (SPEC §28.5): when the rope's length was last heard, and the rope it may still pay out (blocks). */
+    long lenAt, lenAtMs;
+    double payBank;
     /** Overworld game time the state began, and when the last airborne state ended (a landing within it is soft). */
     long since, endedAt = Long.MIN_VALUE / 2;
     /** Ticks on the ground while the client still says airborne (a lost NONE): the server ends it itself. */

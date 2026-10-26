@@ -13,7 +13,14 @@ public interface WildPose {
     int S_REST = 1 << 6, S_BEACHED = 1 << 7, S_RIDDEN = 1 << 8, S_BRIDLED = 1 << 9;
     /** In water (swimmers pitch with their swim and play their swim loop). */
     int S_SWIM = 1 << 10;
+    /** Asleep: the seep heart's plates shut round its core (its "sleep" clip, eased slowly in and out). */
+    int S_SLEEP = 1 << 11;
 
     /** The pose bits this frame (client side). */
     int wildState();
+
+    /** Seconds since the body's last heartbeat (its "beat" clip plays once from it), or -1 for none. Client side. */
+    default float beatTime(float partialTicks) {
+        return -1.0F;
+    }
 }

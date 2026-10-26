@@ -15,7 +15,9 @@ public final class AscentTips {
     private AscentTips() {}
 
     public static final Identifier ROPE = Awaken.id("ascent/rope"), LEAPER = Awaken.id("ascent/leaper"), WINGS = Awaken.id("ascent/wings"),
-            FLIGHT = Awaken.id("ascent/flight"), FREERUN = Awaken.id("ascent/freerun"), SOVEREIGN = Awaken.id("ascent/sovereign");
+            FLIGHT = Awaken.id("ascent/flight"), FREERUN = Awaken.id("ascent/freerun"), SOVEREIGN = Awaken.id("ascent/sovereign"),
+            /** Paying the line out over a drop (SPEC §28.5): offered on a line with a long drop under it. */
+            RAPPEL = Awaken.id("ascent/rappel");
 
     static @Nullable Identifier of(Ascent.Tier tier) {
         return switch (tier) {
@@ -39,6 +41,7 @@ public final class AscentTips {
     static void used(ServerPlayer p, AscentState s) {
         Identifier tip = switch (s) {
             case TETHER, ZIP -> ROPE;
+            case RAPPEL -> RAPPEL;
             case GLIDE -> WINGS;
             case SOAR -> FLIGHT;
             default -> null;
