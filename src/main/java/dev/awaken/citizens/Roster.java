@@ -29,7 +29,7 @@ import java.util.List;
 public final class Roster {
     public static final int SCHEMA = 1;
     public static final String RESOURCE = "/data/awaken/city/citizens.json";
-    /** Event actors (thieves) follow the 240 citizens in every per-record array. */
+    /** Event actors (thieves) follow the 240 citizens in every per-record array (a built roster may say how many: "extraCount"). */
     public static final int EXTRAS = 8;
 
     // jobs (the generator's order)
@@ -136,7 +136,7 @@ public final class Roster {
     public final List<Group> groups;
 
     // citizens (then the extras)
-    public final int citizens, records;
+    public final int citizens, records, extras;
     public final String[] given, family, named;
     public final int[] job, household, home, work, group, tavern, build, age;
     public final float[] scale, speed;
@@ -168,6 +168,14 @@ public final class Roster {
             }
             return instance;
         }
+    }
+
+    /**
+     * A roster built in code (SPEC §28.4: a settlement's {@code RosterSource}, the same shape tools/city/citizens.py
+     * writes for Carillon); its sha256 ties its saved records to it as the jar file's does.
+     */
+    public static Roster parse(byte[] json) {
+        return new Roster(json);
     }
 
     private Roster(byte[] raw) {
@@ -385,7 +393,8 @@ public final class Roster {
         JsonArray crow = cz.getAsJsonArray("rows");
         JsonArray ex = o.has("extras") ? o.getAsJsonArray("extras") : new JsonArray();
         citizens = crow.size();
-        records = citizens + EXTRAS;
+        extras = o.has("extraCount") ? Math.max(0, o.get("extraCount").getAsInt()) : EXTRAS;
+        records = citizens + extras;
         given = new String[records];
         family = new String[records];
         named = new String[records];
@@ -423,7 +432,7 @@ public final class Roster {
             look[i] = ints(a.get(cLook).getAsJsonArray());
             named[i] = cNamed < 0 || a.get(cNamed).isJsonNull() ? "" : a.get(cNamed).getAsString();
         }
-        for (int k = 0; k < EXTRAS; k++) {
+        for (int k = 0; k < extras; k++) {
             int i = citizens + k;
             JsonObject e = k < ex.size() ? ex.get(k).getAsJsonObject() : null;
             given[i] = "";

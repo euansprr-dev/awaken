@@ -36,7 +36,7 @@ final class Recognition {
     static final int CITY_FAMILIAR = 30, CITY_KNOWN = 24;
     static final int GREET_EVERY = 9000, TALK_GAP = 140, HEAR_GAP = 100;
 
-    final Citizens c;
+    final Settlement c;
     final Roster r;
     final CitizensData d;
     private final Map<UUID, long[]> lastSeen = new HashMap<>(), lastGreet = new HashMap<>();
@@ -45,7 +45,7 @@ final class Recognition {
     private final int[][] tavernMates;
     long greetings, witnessed;
 
-    Recognition(Citizens c) {
+    Recognition(Settlement c) {
         this.c = c;
         this.r = c.roster;
         this.d = c.data;
@@ -53,6 +53,9 @@ final class Recognition {
         for (int i = 0; i < r.citizens; i++) by.computeIfAbsent(r.tavern[i], k -> new ArrayList<>()).add(i);
         tavernMates = new int[r.citizens][];
         for (int i = 0; i < r.citizens; i++) tavernMates[i] = by.get(r.tavern[i]).stream().mapToInt(Integer::intValue).toArray();
+        int quarter = Math.max(1, r.citizens / 4);
+        cityFamiliar = Math.min(CITY_FAMILIAR, quarter);
+        cityKnown = Math.min(CITY_KNOWN, quarter);
     }
 
     // ---- tiers --------------------------------------------------------------------------------------------------
@@ -69,8 +72,14 @@ final class Recognition {
             if (m.know[i] >= FAMILIAR) fam++;
             if (m.know[i] >= KNOWN) known++;
         }
-        return known >= CITY_KNOWN ? RenownHooks.KNOWN : fam >= CITY_FAMILIAR ? RenownHooks.FAMILIAR : RenownHooks.STRANGER;
+        return known >= cityKnown ? RenownHooks.KNOWN : fam >= cityFamiliar ? RenownHooks.FAMILIAR : RenownHooks.STRANGER;
     }
+
+    /**
+     * How many of its people must know a player for the settlement to (SPEC §28.4): Carillon's 30 and 24; a smaller
+     * place a quarter of its people (a hamlet of six, two), never more than Carillon asks.
+     */
+    private final int cityFamiliar, cityKnown;
 
     /** How one citizen sees a player: what they know themselves, or what the whole city does if that's more. */
     int tierFor(ServerPlayer p, int rec) {
@@ -146,10 +155,12 @@ final class Recognition {
         return hit.getType() == HitResult.Type.MISS;
     }
 
+    /** The part of its settlement a body stands in, as its people name it ({district} in what they say). */
     String district(CitizenBody b) {
-        int dd = CityPlan.get().district((int) Math.floor(b.getX() - c.ledger.cx), (int) Math.floor(b.getZ() - c.ledger.cz));
-        return districtName(dd);
+        return c.site.districtName(c.site.district((int) Math.floor(b.getX()), (int) Math.floor(b.getZ())));
     }
+
+    /** Carillon's district names (its plan's ids). */
 
     static String districtName(int id) {
         return switch (id) {
@@ -206,7 +217,7 @@ final class Recognition {
             m.know[i] = Math.min(100, m.know[i] + gain);
             m.regard[i] = Math.clamp(m.regard[i] + reg, -100, 100);
         }
-        int district = CityPlan.get().district(pos.getX() - c.ledger.cx, pos.getZ() - c.ledger.cz);
+        int district = c.site.district(pos.getX(), pos.getZ());
         m.deeds.add(new CitizensData.Deed(deed.toString(), PlayDays.current(c.server), weight, district));
         while (m.deeds.size() > 16) m.deeds.removeFirst();
         d.setDirty();
@@ -295,7 +306,7 @@ final class Recognition {
         Lines lines = Lines.get();
         CitizenBody pick = null;
         for (CitizenBody b : c.crowd.bodies) {
-            if (b.rec < 0 || b.nearestSq > 14 * 14 || !r.isCitizen(b.rec) || d.role[b.rec] != 0) continue;
+            if (b.rec < 0 || b.home != c || b.nearestSq > 14 * 14 || !r.isCitizen(b.rec) || d.role[b.rec] != 0) continue;
             int job = r.job[b.rec];
             Act a = b.act();
             boolean caller = job == Roster.STALLKEEPER && a == Act.SERVE || job == Roster.CRIER && a == Act.PROCLAIM

@@ -1,13 +1,13 @@
 package dev.awaken.citizens;
 
 import dev.awaken.Awaken;
+import dev.awaken.core.AwakenNet;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
 import java.util.Arrays;
@@ -99,19 +99,23 @@ public final class CitizensNet {
         });
     }
 
+    // sent through AwakenNet: a player whose connection doesn't speak our channels (a GameTest's player, another mod's
+    // fake player) is skipped instead of throwing in a body's tick
+
     static void say(ServerPlayer p, CitizenBody b, String text, int ticks, int kind) {
         if (text.isEmpty()) return;
-        PacketDistributor.sendToPlayer(p, new Speech(b.getId(), text, ticks, kind));
+        AwakenNet.send(p, new Speech(b.getId(), text, ticks, kind));
     }
 
     /** Aloud: every player within {@code radius} hears it. */
     static void aloud(ServerLevel level, CitizenBody b, String text, int ticks, int kind, double radius) {
         if (text.isEmpty()) return;
-        PacketDistributor.sendToPlayersNear(level, null, b.getX(), b.getY(), b.getZ(), radius, new Speech(b.getId(), text, ticks, kind));
+        Speech msg = new Speech(b.getId(), text, ticks, kind);
+        for (ServerPlayer p : level.players()) if (p.distanceToSqr(b.getX(), b.getY(), b.getZ()) < radius * radius) AwakenNet.send(p, msg);
     }
 
     static void emitters(List<ServerPlayer> to, boolean replace, long[] pos, byte[] kind) {
         Emitters msg = new Emitters(replace, pos, kind);
-        for (ServerPlayer p : to) PacketDistributor.sendToPlayer(p, msg);
+        for (ServerPlayer p : to) AwakenNet.send(p, msg);
     }
 }
