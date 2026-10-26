@@ -17,6 +17,9 @@ Every body is a hero rig (fauna_rig.py: bones, packed UVs, clean value masses, k
 the Java side parses Fauna3Data.java through HeroRig and draws it with mobs.client.anim.WildRenderer (swimmers pitch
 with their swim; held poses: hang, chirp, ripen, listen, deflate, carry, rest, beached, ridden; bones named bridle*
 show only on a bridled mount). The creature list is read from mobs/def/WaterBestiary.java and CaveBestiary.java.
+W5 adds the seep heart (a rooted beast placed at a seep's socket: its rig, a sleep hold and a beat clip, its voice
+synthesised with audiokit, its particle sprites) and "seep_root", the burst of roots its Rootfall throws up (a rig with
+no creature). `fauna3.py sounds seep_heart` rebuilds only its voice.
 
 Conventions (vanilla ModelPart): model pixels, y down, ground at y = 24, the creature faces -z, rotations in degrees.
 """

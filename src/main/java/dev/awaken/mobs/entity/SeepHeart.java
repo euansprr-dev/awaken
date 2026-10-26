@@ -138,6 +138,13 @@ public class SeepHeart extends NamedBeast implements WildPose {
         return out;
     }
 
+    /** What the band says under its name (a named beast's would be the terror of its region; this is the seep's). */
+    @Override
+    public void configure(int lv, dev.awaken.core.api.MobRole role, java.util.Set<dev.awaken.core.Forces.Tag> tags) {
+        super.configure(lv, role, tags);
+        setData(dev.awaken.core.api.CoreApi.CREATURE_TAG.get(), dev.awaken.core.api.CreatureTag.of(this).withTitle("Where the Deep grew through"));
+    }
+
     /** The body never turns: the crown does (its look bone). */
     @Override
     protected BodyRotationControl createBodyControl() {

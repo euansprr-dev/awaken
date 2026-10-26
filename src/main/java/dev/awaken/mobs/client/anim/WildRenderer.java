@@ -48,6 +48,8 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
     private final float[] windupSeconds;
     private final int roar, warn;
     private final float deathLength;
+    /** How far the body reaches past its box sideways (the seep heart's roots run out over the floor), for culling. */
+    private final float reach;
 
     public WildRenderer(EntityRendererProvider.Context ctx, MobDef def, HeroRig rig) {
         super(ctx, new WildModel(ctx.bakeLayer(HeroModel.layer(rig.id)), rig), rig.shadow);
@@ -58,6 +60,7 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
         windup = new int[names.size()];
         strike = new int[names.size()];
         windupSeconds = new float[names.size()];
+        reach = def.model == dev.awaken.mobs.def.Model.SEEP_HEART ? 1.8F : 0.0F;
         roar = m.clip("roar");
         warn = m.clip("warn");
         deathLength = m.length(m.clip("death"));
@@ -97,6 +100,12 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
     private static @Nullable Ability ability(MobDef d, String name) {
         for (MobDef.Phase p : d.phases) for (Ability a : p.abilities()) if (a.name().equals(name)) return a;
         return null;
+    }
+
+    @Override
+    protected net.minecraft.world.phys.AABB getBoundingBoxForCulling(AwakenMob mob, float partialTicks) {
+        net.minecraft.world.phys.AABB box = super.getBoundingBoxForCulling(mob, partialTicks);
+        return reach > 0 ? box.inflate(reach, 0.0, reach) : box;
     }
 
     @Override

@@ -10,7 +10,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LightBlock;
 
@@ -22,7 +21,6 @@ import net.minecraft.world.level.block.LightBlock;
 public final class SeepTests {
     private SeepTests() {}
 
-    @SuppressWarnings("removal")
     public static void register() {
         AwakenTests.registerIsolated("mobs_seep_heart", 600, h -> {
             ServerLevel level = h.getLevel();
@@ -42,6 +40,7 @@ public final class SeepTests {
             heart.setPos(heart.getX() + 1.5, heart.getY() + 0.5, heart.getZ());
             int[] step = {0}, mark = {0}, tick = {0};
             ServerPlayer[] p = {null};
+            AwakenTests.Live[] live = {null};
             h.succeedWhen(() -> {
                 tick[0]++;
                 switch (step[0]) {
@@ -49,10 +48,9 @@ public final class SeepTests {
                         h.assertTrue(heart.blockPosition().equals(at) && Math.abs(heart.getX() - (at.getX() + 0.5)) < 0.01, "a shove puts it back in its socket");
                         var light = level.getBlockState(at.above());
                         h.assertTrue(light.is(Blocks.LIGHT) && light.getValue(LightBlock.LEVEL) == 5, "a dim light at its core while it sleeps: " + light);
-                        ServerPlayer sp = h.makeMockServerPlayerInLevel();
-                        sp.setGameMode(GameType.SURVIVAL);
-                        sp.snapTo(at.getX() + 6.5, at.getY(), at.getZ() + 0.5);
-                        p[0] = sp;
+                        // a survival player the server sees online (a mock player is always creative: it never wakes it)
+                        live[0] = AwakenTests.survivalPlayer(h, "seep-test", new BlockPos(6, WildTalentTests.UP, 0));
+                        p[0] = live[0].player();
                         step[0] = 1;
                         h.assertTrue(false, "a player comes near");
                     }
@@ -79,6 +77,7 @@ public final class SeepTests {
                         h.assertTrue(tick[0] - mark[0] >= SeepHeart.DEATH_HOLD - 2, "its fall lasts its moment (" + (tick[0] - mark[0]) + " ticks)");
                         h.assertTrue(!level.getBlockState(at.above()).is(Blocks.LIGHT), "its light is gone");
                         h.assertTrue(Progression.profile(p[0]).counter("awaken:discovered/beast_felled/seep_heart") == 1, "the first kill is paid");
+                        live[0].leave();
                         WildTalentTests.wipe(level, at.offset(-9, -1, -9), at.offset(9, 4, 9));
                     }
                 }
