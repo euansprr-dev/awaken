@@ -92,6 +92,8 @@ final class Birds {
                 c.az = BlockPos.getZ(p) + 0.5;
                 c.ty = BlockPos.getY(p) + 0.88;
                 c.sink = 0.16F;
+                c.tx = c.ax;
+                c.tz = c.az;
                 c.setPos(c.ax, c.ty, c.az);
                 c.setYRot(r.nextFloat() * 360F);
                 settle(c, SWIM, r);
@@ -501,6 +503,7 @@ final class Birds {
                 c.sink = 0.16F;
                 c.ax = c.tx;
                 c.az = c.tz;
+                c.ty = c.getY();
                 settle(c, SWIM, r);
                 Insects.ripple(c.tx, c.ty - c.sink + 0.1, c.tz, 1.4F);
             } else if (c.next == STAND) {
