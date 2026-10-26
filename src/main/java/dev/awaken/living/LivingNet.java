@@ -207,7 +207,8 @@ public final class LivingNet {
 
     /**
      * Server → client: the first thread's staged moments (SPEC §27.6). {@code GATE}: the High Gate's shot of the camp's
-     * smoke ({@code at} the fire, {@code n} metres to it, {@code text} "who|line" said over it). {@code BEGIN}: Ilse's
+     * smoke ({@code at} the fire, {@code n} metres to it, {@code text} "who|line" said over it, then on a second line
+     * "land|low|high", the region it names). {@code BEGIN}: Ilse's
      * scene by her fire ({@code entity} her, {@code at} the fire). {@code LINE}: one of her lines ("who|line", {@code n}
      * ticks). {@code DELIVERED}: the letters changed hands. {@code OFFER}: she holds the coal out ({@code entity}).
      * {@code END}: the scene is over.

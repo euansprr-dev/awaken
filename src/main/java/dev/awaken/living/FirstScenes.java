@@ -125,7 +125,10 @@ public final class FirstScenes {
         Progression.setCounter(p, GATE_SEEN, 1);
         AwakenNet.send(p, new LivingNet.CampSmoke(fire));
         int dist = (int) Math.round(Math.sqrt(p.blockPosition().distSqr(fire.atY(p.getBlockY()))));
-        AwakenNet.send(p, new LivingNet.FirstScene(LivingNet.FirstScene.GATE, 0, fire, dist, said(line)));
+        // the land you're stepping into, named in the shot (the region caption is skipped for this first time out)
+        var region = dev.awaken.living.api.Regions.regionAt(server.overworld(), fire.getX(), fire.getZ());
+        String land = region.name() + "|" + region.low() + "|" + region.high();
+        AwakenNet.send(p, new LivingNet.FirstScene(LivingNet.FirstScene.GATE, 0, fire, dist, said(line) + "\n" + land));
         SHIELD.put(p.getUUID(), p.level().getGameTime() + GATE_SHIELD);
         DirectorLog.log(p, "living", "the first thread: the High Gate's shot of the camp's smoke, " + dist + " m");
         return true;

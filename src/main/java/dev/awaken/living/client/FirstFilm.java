@@ -64,10 +64,13 @@ final class FirstFilm {
         lastCue = LivingClient.ticks;
         switch (m.kind()) {
             case LivingNet.FirstScene.GATE -> {
-                String[] said = m.text().split("\\|", 2);
+                String[] parts = m.text().split("\n", 2);
+                String[] said = parts[0].split("\\|", 2);
+                String[] land = parts.length > 1 ? parts[1].split("\\|") : new String[0];
                 PulseFx.camp(m.at());
                 PulseFx.feature(GateShot.LENGTH + 40);
-                Cinema.take(new GateShot(p, m.at(), m.n(), said.length == 2 ? said[0] : "", said.length == 2 ? said[1] : ""));
+                Cinema.take(new GateShot(p, m.at(), m.n(), said.length == 2 ? said[0] : "", said.length == 2 ? said[1] : "",
+                        land.length == 3 ? land[0] : "", land.length == 3 ? land[1] + " to " + land[2] : ""));
                 Awaken.LOG.info("[living] the High Gate's shot of the camp's smoke, {} m", m.n());
             }
             case LivingNet.FirstScene.BEGIN -> {
@@ -212,12 +215,14 @@ final class FirstFilm {
 
         private final Vec3 eye, look0, smoke, base, crane, toward;
         private final int metres;
-        private final String who, line;
+        private final String who, line, land, levels;
 
-        GateShot(LocalPlayer p, BlockPos fire, int metres, String who, String line) {
+        GateShot(LocalPlayer p, BlockPos fire, int metres, String who, String line, String land, String levels) {
             this.metres = metres;
             this.who = who;
             this.line = line;
+            this.land = land;
+            this.levels = levels;
             eye = p.getEyePosition();
             look0 = eye.add(p.getViewVector(1F).scale(20));
             base = Vec3.atBottomCenterOf(fire);
@@ -251,9 +256,13 @@ final class FirstFilm {
         @Override
         public void tick(int age) {
             if (age == 2) Cinema.bars(true);
+            // the land you're stepping into, as the view lifts over the gate: the first time it's named
+            if (age == IN + 8 && !land.isEmpty()) {
+                Cinema.title(land.toUpperCase(java.util.Locale.ROOT), "THE LAND AROUND THE CITY · CREATURES LEVEL " + levels.toUpperCase(java.util.Locale.ROOT), 64);
+                Cinema.sound(LivingContent.REGION_ENTER.get(), 0.8F, 0.6F);
+            }
             if (age == RISE + 6) {
-                Cinema.barNote("THE WAYFARER CAMP", "UP THE NORTH ROAD  ·  " + metres + " M AWAY", HOLD - RISE + 10);
-                Cinema.sound(LivingContent.REGION_ENTER.get(), 0.9F, 0.7F);
+                Cinema.barNote("THE WAYFARER CAMP", "UP THE NORTH ROAD  ·  " + metres + " M AWAY  ·  YOUR NEXT STOP", HOLD - RISE + 10);
             }
             if (age == RISE + 16 && !line.isEmpty()) Cinema.line(who, line, 20 * 4 + line.length());
             if (age == LENGTH - 22) Cinema.bars(false);
