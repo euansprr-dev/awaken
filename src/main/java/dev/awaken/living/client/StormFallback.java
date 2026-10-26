@@ -84,9 +84,9 @@ final class StormFallback {
 
     // ---- the shape (lens_storm.glsl's, on the CPU) -------------------------------------------------------------------
 
-    static final int CELL = 8, NX = 78, NY = 45, NZ = 78;
+    static final int CELL = 8, NX = 96, NY = 45, NZ = 96;
     static final double X0 = -NX * CELL / 2.0, Y0 = -CELL, Z0 = -NZ * CELL / 2.0;
-    private static final double R = 95, H = StormCell.HEIGHT, DOWN = 260, UP = 60, SIDE = 150;
+    private static final double R = 95, H = StormCell.HEIGHT, DOWN = 340, UP = 70, SIDE = 185, SHELF = 125;
     private static final double[][] FLANK = {{-118, 26, 48, 170}, {-168, 48, 40, 118}, {-210, 66, 32, 78}};
     private static byte[] noise;   // lens_cloud_noise.png, 256x256 RGBA
 
@@ -131,7 +131,7 @@ final class StormFallback {
     }
 
     private static double blob(double dist, double r, double puff) {
-        return Mth.clamp((r * (0.66 + 0.5 * puff) - dist) / 9.0, 0, 1);
+        return Mth.clamp((r * (0.66 + 0.5 * puff) - dist) / 4.0, 0, 1);
     }
 
     private static double smooth(double a, double b, double x) {
@@ -146,27 +146,33 @@ final class StormFallback {
         double along = qx * wx + qz * wz, across = -qx * wz + qz * wx;
         double hn = Mth.clamp(h / H, 0, 1);
         double puff = puffs(qx / 50, qy / 50, qz / 50) * 0.85 + 0.09;
-        double base = smooth(-2, 3, h + 3 * (puff - 0.6));
+        double base = smooth(-1, 1.5, h + 1.5 * (puff - 0.6));
         double d = 0;
+        if (h < 40) {
+            // the shelf: a flat dark base wider than the tower, its rim ragged
+            double rim = SHELF * (0.82 + 0.36 * tex(qx / 300, qz / 300, 1)) + 14 * (puff - 0.6), sx = along - 8;
+            double rd = Math.sqrt(sx * sx + across * across) / Math.max(rim, 1), deep = 32 - 26 * smooth(0.55, 1, rd);
+            d = Mth.clamp((1 - rd) * rim / 5, 0, 1) * base * (1 - smooth(deep - 12, deep, h + 12 * (puff - 0.55)));
+        }
         if (h < H - 28) {
             double sr = tex(h / 900 + 0.13, 0.37, 0), sg = tex(h / 900 + 0.13, 0.37, 1), sb = tex(h / 900 + 0.13, 0.37, 2);
             double lean = hn * hn * 35;
             double bx = along - lean - 70 * (sr - 0.5), bz = across - 70 * (sg - 0.5);
             double lobes = 0.75 + 0.5 * tex(qx / 420 + h / 900, qz / 420, 0);
             double r = R * (1 - 0.32 * Math.pow(hn, 1.4)) * (0.8 + 0.4 * sb) * lobes;
-            d = blob(Math.sqrt(bx * bx + bz * bz), r, puff) * base * (1 - smooth(H - 30, H, h));
+            d = Math.max(d, blob(Math.sqrt(bx * bx + bz * bz), r, puff) * base * (1 - smooth(H - 30, H, h)));
             for (double[] f : FLANK) {
                 double dx = along - f[0], dz = across - f[1], dy = Math.max(h - (f[3] - f[2]), 0);
                 d = Math.max(d, blob(Math.sqrt(dx * dx + dy * dy + dz * dz), f[2], puff) * base);
             }
         }
-        if (h > H - 60) {
+        if (h > H - 72) {
             double ox = along + 10, oy = Math.max(h - H + 40, 0) * 1.3;
             d = Math.max(d, blob(Math.sqrt(ox * ox + across * across + oy * oy), 70, puff) * smooth(H - 60, H - 40, h));
             double ax = along / (along > 0 ? DOWN : UP), ay = across / SIDE;
             double ra = Math.sqrt(ax * ax + ay * ay) + 0.16 * (tex(along / 900, across / 140, 3) - 0.5);
-            double top = H + 6 - 4 * ra, lo = H - 52 + 46 * Math.pow(Mth.clamp(ra, 0, 1), 0.6);
-            double a = Mth.clamp((1 - ra) * 5, 0, 1) * Mth.clamp((h - lo) / 6, 0, 1) * Mth.clamp((top - h) / 3, 0, 1);
+            double top = H + 8 - 3 * ra, lo = H - 70 + 58 * Math.pow(Mth.clamp(ra, 0, 1), 0.55);
+            double a = Mth.clamp((1 - ra) * 8, 0, 1) * Mth.clamp((h - lo) / 4, 0, 1) * Mth.clamp((top - h) / 2, 0, 1);
             d = Math.max(d, a * smooth(0, 0.25, 1.2 - ra));
         }
         return d;
@@ -409,7 +415,7 @@ final class StormFallback {
             b += sb * sun;
             if (flash > 0F) {
                 double ddx = x + 0.5 - fx, ddy = y + 0.5 - fy, ddz = z + 0.5 - fz;
-                float lit = flash * 2.2F * (float) Math.exp(-Math.sqrt(ddx * ddx + ddy * ddy + ddz * ddz) * CELL / 54.0);
+                float lit = flash * 1.7F * (float) Math.exp(-Math.sqrt(ddx * ddx + ddy * ddy + ddz * ddz) * CELL / 42.0);
                 r += 0.86F * lit;
                 g += 0.9F * lit;
                 b += lit;

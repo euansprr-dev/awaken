@@ -63,6 +63,8 @@ public final class StormSky {
 
     /** From the client entry: its strikes, their thunder and the fallback's render pipeline. */
     public static void init(net.neoforged.bus.api.IEventBus modBus) {
+        modBus.addListener(net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent.class,
+                e -> e.register(dev.awaken.living.LivingNet.StormStrike.TYPE, (m, ctx) -> strike(m.x(), m.y(), m.z())));
         NeoForge.EVENT_BUS.addListener(EntityJoinLevelEvent.class, StormSky::onJoin);
         NeoForge.EVENT_BUS.addListener(PlaySoundEvent.class, StormSky::onPlaySound);
         StormFallback.init(modBus);
@@ -235,22 +237,31 @@ public final class StormSky {
     private static final List<double[]> PENDING = new ArrayList<>();
 
     private static void onJoin(EntityJoinLevelEvent e) {
-        if (!e.getLevel().isClientSide() || !(e.getEntity() instanceof LightningBolt bolt) || !here()) return;
+        if (e.getLevel().isClientSide() && e.getEntity() instanceof LightningBolt bolt) strike(bolt.getX(), bolt.getY(), bolt.getZ());
+    }
+
+    /**
+     * A strike near a cell, from its bolt (within 256 blocks) or the server's word of it (to 640): it lights the cloud
+     * from inside and its thunder comes late; the second of the two for the same strike changes nothing.
+     */
+    private static void strike(double x, double y, double z) {
+        if (!here()) return;
+        float now = LivingClient.ticks;
+        for (double[] b : RECENT) if (Math.abs(b[0] - x) < 2 && Math.abs(b[2] - z) < 2) return;
         Cell best = null;
         double bestD = 90 * 90;
         for (Cell c : CELLS) {
-            double d = (bolt.getX() - c.x) * (bolt.getX() - c.x) + (bolt.getZ() - c.z) * (bolt.getZ() - c.z);
+            double d = (x - c.x) * (x - c.x) + (z - c.z) * (z - c.z);
             if (d < bestD) {
                 bestD = d;
                 best = c;
             }
         }
         if (best == null) return;
-        float now = LivingClient.ticks;
-        RECENT.add(new double[]{bolt.getX(), bolt.getY(), bolt.getZ(), now});
+        RECENT.add(new double[]{x, y, z, now});
         // the strike lights the cloud from inside, just over where it came down
-        flashAt(best, now, bolt.getX(), best.baseY + 25, bolt.getZ(), 1F);
-        hear(now, bolt.getX(), bolt.getY(), bolt.getZ(), Minecraft.getInstance().gameRenderer.mainCamera().position(), true);
+        flashAt(best, now, x, best.baseY + 25, z, 1F);
+        hear(now, x, y, z, Minecraft.getInstance().gameRenderer.mainCamera().position(), true);
     }
 
     private static void hear(float now, double x, double y, double z, Vec3 cam, boolean strike) {

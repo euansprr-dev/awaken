@@ -106,6 +106,21 @@ public final class LivingNet {
         }
     }
 
+    /**
+     * A Rolling Storm strike (SPEC §21.6), to players within {@code StormCell.HEARD}: the game sends its bolt only to 256
+     * blocks, so farther off the client flashes the cloud and thunders from this alone.
+     */
+    public record StormStrike(float x, float y, float z) implements CustomPacketPayload {
+        public static final Type<StormStrike> TYPE = new Type<>(Awaken.id("living_storm_strike"));
+        public static final StreamCodec<ByteBuf, StormStrike> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.FLOAT, StormStrike::x,
+                ByteBufCodecs.FLOAT, StormStrike::y, ByteBufCodecs.FLOAT, StormStrike::z, StormStrike::new);
+
+        @Override
+        public Type<StormStrike> type() {
+            return TYPE;
+        }
+    }
+
     /** One Journal line: a chain's title and its current step (or a bounty's), and whether it's the tracked one. */
     public record JournalEntry(String title, String line, boolean tracked, boolean bounty) {
         public static final StreamCodec<ByteBuf, JournalEntry> STREAM_CODEC = StreamCodec.composite(
@@ -189,5 +204,6 @@ public final class LivingNet {
         r.playToClient(XpFx.TYPE, XpFx.STREAM_CODEC);
         r.playToClient(LevelUp.TYPE, LevelUp.STREAM_CODEC);
         r.playToClient(Shown.TYPE, Shown.STREAM_CODEC);
+        r.playToClient(StormStrike.TYPE, StormStrike.STREAM_CODEC);
     }
 }

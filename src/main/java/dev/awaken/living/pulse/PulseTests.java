@@ -82,6 +82,7 @@ public final class PulseTests {
             h.assertTrue(StormCell.weatherAt(10) == 1F && StormCell.weatherAt(200) == 0F && StormCell.weatherAt(80) > 0F && StormCell.weatherAt(80) < 1F,
                     "its rain falls on you near its core and fades away from it");
             h.assertTrue(StormCell.thunderDelay(StormCell.SOUND_SPEED * 2) == 2F && StormCell.thunderDelay(10) < 0.1F, "thunder comes later the farther the strike");
+            h.assertTrue(StormCell.heard(300, 300) && !StormCell.heard(600, 300), "a strike reaches players past the bolt's own 256 blocks, to 640");
             h.assertTrue(StormCell.strength(0F, 0F, 240F) == 0F && StormCell.strength(30F, 0.5F, 240F) == 1F && StormCell.strength(30F, 1F, 240F) == 0F,
                     "it builds, holds and rains itself out");
             // the hook carries the cell to Lens: camera-relative, downwind a unit, its flash where it struck

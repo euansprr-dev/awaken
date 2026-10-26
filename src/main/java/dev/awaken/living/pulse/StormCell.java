@@ -34,6 +34,8 @@ public final class StormCell {
     /** Thunder's speed over the land, in blocks a second: the world's scale, not the metre's (a strike on the horizon
      * rolls in a few seconds later, as one a few kilometres off would). */
     public static final double SOUND_SPEED = 130;
+    /** How far a strike is seen and heard (the game sends its bolt only to 256 blocks; a StormStrike carries it further). */
+    public static final double HEARD = 640;
     /** A strike this close is a crack; farther, a roll. */
     public static final double CRACK = 70;
     /** Floats per cell in {@link #pack}: three texels of the Lens frame. */
@@ -84,7 +86,8 @@ public final class StormCell {
 
     /**
      * A strike at {@code at} (the surface): the bolt (visual only: clients see it, flash the cloud and hear it late),
-     * 3 damage to anyone within 4 blocks, struck sand to glass.
+     * word of it to everyone within {@link #HEARD} (beyond the bolt's own reach), 3 damage to anyone within 4 blocks,
+     * struck sand to glass.
      */
     public static void strike(ServerLevel level, BlockPos at) {
         LightningBolt bolt = EntityTypes.LIGHTNING_BOLT.create(level, EntitySpawnReason.TRIGGERED);
@@ -92,6 +95,10 @@ public final class StormCell {
             bolt.setVisualOnly(true);
             bolt.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
             level.addFreshEntity(bolt);
+        }
+        var word = new dev.awaken.living.LivingNet.StormStrike(at.getX() + 0.5F, at.getY(), at.getZ() + 0.5F);
+        for (ServerPlayer pl : level.players()) {
+            if (heard(pl.getX() - at.getX(), pl.getZ() - at.getZ())) dev.awaken.core.AwakenNet.send(pl, word);
         }
         for (ServerPlayer pl : level.players()) {
             if (!pl.isSpectator() && !pl.isCreative() && pl.distanceToSqr(Vec3.atBottomCenterOf(at)) < 16) {
@@ -101,6 +108,11 @@ public final class StormCell {
         if (level.getBlockState(at.below()).is(BlockTags.SAND) && Behaviours.allowed(level, at)) {
             level.setBlock(at.below(), Blocks.GLASS.defaultBlockState(), 3);
         }
+    }
+
+    /** Whether a strike this far off (horizontally) reaches a player. */
+    public static boolean heard(double dx, double dz) {
+        return dx * dx + dz * dz <= HEARD * HEARD;
     }
 
     static float smooth(float x) {

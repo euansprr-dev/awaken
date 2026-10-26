@@ -3469,17 +3469,20 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   artifacts, its rain as moving white pillars of light, and it wasn't a real storm; he liked the bolts and their sound).
   One model both sides share, `living.pulse.StormCell` (sizes match `lens_storm.glsl`):
   - **The cell, a cumulonimbus**: its base 92 blocks over the ground its centre first stood on (140-215), 300 blocks
-    from base to the anvil's top. A broad tower (95 radius at the base, narrowing a third toward the top, leaning
-    35 downwind) of cauliflower turrets (cellular "puffs" at 50 and 20 blocks, rising 0.35 blocks a second through it,
+    from base to the anvil's top. A flat dark shelf at the base (the condensation level, flat to a block or two),
+    125 in radius with a ragged rim, wider than the tower that rises from it and 14-34 deep (the orchestrator's review:
+    the underside read as rounded and lumpy). A broad tower (95 radius at the base, narrowing a third toward the top,
+    leaning 35 downwind) of cauliflower turrets (cellular "puffs" at 50 and 20 blocks, rising 0.35 blocks a second through it,
     so it boils), its axis wandering and its girth swelling and pinching with height, big lobes on some sides; an
     overshooting dome over the updraft; a flanking line of three smaller towers stepping down upwind (170, 118, 78
-    high); a thin flat-topped anvil reaching 260 downwind, 60 upwind and 150 across, its underside rising to a thin rim,
-    its edges fibrous streaks along the wind (ice, not puffs). Its rain: a core of soft shafts 58 in radius, 12 downwind
+    high); a flat-topped anvil plate reaching 340 downwind, 70 upwind and 185 across, 78 deep where the tower spreads
+    into it and thin at its rim (underside at 230 + 58 × r^0.55, top at 308 − 3r), its edges fibrous streaks along the
+    wind (ice, not puffs); 260 by 150 read as a pale blob in profile. Its rain: a core of soft shafts 58 in radius, 12 downwind
     of the centre, slanting downwind as it falls (0.3 blocks a block), to the ground. Downwind is the way it travels.
     It builds over its first 12 s and rains itself out over its last 15 (the client times the end by the storm's 240 s).
   - **Drawn by Lens 2 on Cinematic and Ultra** (§22 "Storm cells"): marched in Lens's cloud volume. Elsewhere (Lens off,
     Swift, a shaderpack) by `living.client.StormFallback`: the same shape, built off-thread once per storm into 12-block
-    cloud cells, 8 blocks (78 × 45 × 78, density over 0.45), opaque and face-shaded as the game's clouds are (top 1,
+    cloud cells, 8 blocks (96 × 45 × 96, density over 0.45), opaque and face-shaded as the game's clouds are (top 1,
     sides 0.8-0.9, base 0.62), each lit by how much cloud lies eight cells toward the sun (exp(-0.45 per cell)), the sky's
     light mostly the game's cloud brightness (30% of its hue: its sunset tint on every face read as terracotta), dim and
     cold at the base, the sun's warm colour on faces turned to it, lit from inside by its lightning, hazed toward the sky colour
@@ -3497,8 +3500,10 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
     a vanilla thunderstorm, terrain's wind steadies higher (rain and thunder lift it), the world sound hears rain, and
     Lens dims its sun. Lens's cloud layer doesn't thicken for this rain (`StormSky.localRain`): the cell is the cloud
     over you. Storms show only in the overworld while the Living Wilds are shown.
-  - **Its thunder**: the server's visual bolts stay (and the game's sky flash). On the client a bolt within 90 blocks
-    of a cell is its strike: it lights the cell from inside (a burst and up to two restrikes over half a second, 25
+  - **Its thunder**: the server's visual bolts stay (and the game's sky flash). The game sends a bolt only to 256 blocks,
+    so each strike also sends `living_storm_strike` (its position) to players within 640 (`StormCell.HEARD`): a far
+    storm still flashes and thunders. On the client a bolt or that word within 90 blocks of a cell is its strike (the
+    second of the two for one strike changes nothing): it lights the cell from inside (a burst and up to two restrikes over half a second, 25
     blocks over the base), and its own thunder and impact (played at once, everywhere, at full volume) are silenced and
     played again late by the distance at 130 blocks a second (the world's scale: a strike on the horizon rolls in a few
     seconds later). Within 70 blocks: the crack (the impact, pitch 0.55-0.7) and the thunder; farther: the thunder lower
@@ -3831,12 +3836,16 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
   light as a cool grey-blue of the layer's ambient brightness (its sunset hue turned the shadowed side brown), by height
   from 0.16 at the base (cold and bruised, bluer) to 1 on the tops; rain σ 0.016, its colour that sky light × 0.4 (a
   grey veil, darker than the sky), fading in from 16 to 40 blocks from the camera (nearer, the game's rain falls).
-  Lightning: 3.5 × exp(-d/45) + 0.35 × exp(-d/200) of a cool white from the flash, in the cloud and (half) in its rain; while a flash shows, the pixel takes up to 85% of this
+  Lightning lights the cell from within: 3 × exp(-d/55) × exp(-τ) + 0.1 × exp(-d/180) of a cool white from the flash,
+  where τ is the cloud between the flash and the point (its density at their midpoint × d × σ × 0.35, one sample, only
+  while a flash shows), in the cloud and (half) in its rain; the core round the bolt glows and the cell's shape still
+  reads (an even glow over the whole cell blew a night strike out to a white disc); while a flash shows, the pixel takes up to 85% of this
   frame instead of 12-15%, so it lights at once and fades as an afterglow. The layer's clouds thin to nothing within
-  300-420 blocks of a cell (it clears the sky round it), so the layer's march can skip the cell's bounds without a cut.
+  330-450 blocks of a cell (it clears the sky round it), so the layer's march can skip the cell's bounds without a cut.
   History reprojects where the ray first met cloud (was: where it entered the layer).
-- The composite lays the cloud buffer over anything farther than where the ray enters a cell's bounds (300 radius
-  round 40 downwind of its centre, ground to 48 over the top), never nearer than 16 blocks; the light pass darkens the
+- The composite lays the cloud buffer over anything farther than where the ray enters a cell's bounds (320 radius
+  round 60 downwind of its centre, ground to 48 over the top; the anvil band 245 round 150 downwind, from 72 under
+  the top), never nearer than 16 blocks; the light pass darkens the
   sun on the land under a cell, sampled where the light ray crosses three heights of its body (long shadows at dusk).
   Its bright, flashing edges bloom and cut the screen-space shafts like the layer's clouds.
 - It builds from its base up (the density cut at a height rising with its strength, softened over 40 blocks) and rains

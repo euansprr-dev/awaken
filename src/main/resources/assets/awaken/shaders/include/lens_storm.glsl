@@ -6,10 +6,11 @@
 // lens_storm_frame.glsl before it.
 
 const float STORM_R = 95.0;       // the body's radius at its base
-const float STORM_DOWN = 260.0;   // the anvil's reach downwind, upwind and across
-const float STORM_UP = 60.0;
-const float STORM_SIDE = 150.0;
-const float STORM_ANVIL = 56.0;   // the anvil band: from this far under the top
+const float STORM_DOWN = 340.0;   // the anvil's reach downwind, upwind and across
+const float STORM_UP = 70.0;
+const float STORM_SIDE = 185.0;
+const float STORM_SHELF = 125.0;  // the flat base's radius, wider than the tower that rises from it
+const float STORM_ANVIL = 72.0;   // the anvil band: from this far under the top
 const float STORM_RAIN = 58.0;    // the rain core's radius, 12 blocks downwind of the centre
 const float STORM_SIGMA = 0.085;  // extinction per block of the body: defined turrets, a solid mass
 const float STORM_RAIN_SIGMA = 0.016;
@@ -53,8 +54,17 @@ float stormCell(vec3 q, vec2 w, float time, float grow, int detail) {
     // the turrets: two octaves of puffs carried with the cell, rising slowly through it (the cloud boils)
     vec3 pq = q - vec3(0.0, time * 0.35, 0.0);
     float puff = detail > 0 ? stormPuffs(pq / 50.0) * 0.7 + stormPuffs(pq / 20.0 + 3.1) * 0.3 : 0.62;
-    float base = smoothstep(-2.0, 3.0, h + 3.0 * (puff - 0.6));
+    // the condensation level: a flat underside, ragged by a block or two
+    float base = smoothstep(-1.0, 1.5, h + 1.5 * (puff - 0.6));
     float d = 0.0;
+    if (h < 40.0) {
+        // the shelf: a flat dark base wider than the tower, thinning toward its ragged rim (a rim the shelf's full depth,
+        // ragged only across, read as tall flutes when backlit); the turrets rise from it
+        float rim = STORM_SHELF * (0.82 + 0.36 * texture(CloudNoiseSampler, fract(q.xz / 300.0)).g) + 14.0 * (puff - 0.6);
+        float rd = length(vec2(aw.x - 8.0, aw.y)) / max(rim, 1.0);
+        float deep = mix(32.0, 6.0, smoothstep(0.55, 1.0, rd));
+        d = clamp((1.0 - rd) * rim / 5.0, 0.0, 1.0) * base * (1.0 - smoothstep(deep - 12.0, deep, h + 12.0 * (puff - 0.55)));
+    }
     if (h < STORM_H - 28.0) {
         // the body: broad and flat-based, narrowing a little as it towers, leaning downwind; its axis wanders and its
         // girth swells and pinches with height (stacked thermals), and big lobes push out on some sides
@@ -63,23 +73,23 @@ float stormCell(vec3 q, vec2 w, float time, float grow, int detail) {
         vec2 b = vec2(aw.x - lean - 70.0 * (s.r - 0.5), aw.y - 70.0 * (s.g - 0.5));
         float lobes = 0.75 + 0.5 * texture(CloudNoiseSampler, fract(q.xz / 420.0 + vec2(h / 900.0, 0.0))).r;
         float r = STORM_R * (1.0 - 0.32 * pow(hn, 1.4)) * (0.8 + 0.4 * s.b) * lobes;
-        d = stormBlob(length(b), r, puff) * base * (1.0 - smoothstep(STORM_H - 30.0, STORM_H, h));
+        d = max(d, stormBlob(length(b), r, puff) * base * (1.0 - smoothstep(STORM_H - 30.0, STORM_H, h)));
         if (h < STORM_FLANK0.w + 8.0) {
             d = max(d, stormFlank(aw, h, STORM_FLANK0, puff, base));
             d = max(d, stormFlank(aw, h, STORM_FLANK1, puff, base));
             d = max(d, stormFlank(aw, h, STORM_FLANK2, puff, base));
         }
     }
-    if (h > STORM_H - 60.0) {
+    if (h > STORM_H - 72.0) {
         // the overshooting top: a dome over the updraft
         vec3 o = vec3(aw.x + 10.0, aw.y, max(h - STORM_H + 40.0, 0.0) * 1.3);
         d = max(d, stormBlob(length(o), 70.0, puff) * smoothstep(STORM_H - 60.0, STORM_H - 40.0, h));
-        // the anvil: a thin flat sheet spreading downwind, flat on top, its underside rising to a thin rim; ice, so its
-        // edges are fibrous streaks along the wind, not puffs
+        // the anvil: a flat plate spreading far downwind, thick where the tower spreads into it and thin at its rim,
+        // its top crisp and flat; ice, so its edges are fibrous streaks along the wind, not puffs
         float ra = length(vec2(aw.x / (aw.x > 0.0 ? STORM_DOWN : STORM_UP), aw.y / STORM_SIDE));
         if (detail > 0) ra += 0.16 * (texture(CloudNoiseSampler, fract(vec2(aw.x / 900.0, aw.y / 140.0))).a - 0.5);
-        float top = STORM_H + 6.0 - 4.0 * ra, lo = STORM_H - 52.0 + 46.0 * pow(clamp(ra, 0.0, 1.0), 0.6);
-        float a = clamp((1.0 - ra) * 5.0, 0.0, 1.0) * clamp((h - lo) / 6.0, 0.0, 1.0) * clamp((top - h) / 3.0, 0.0, 1.0);
+        float top = STORM_H + 8.0 - 3.0 * ra, lo = STORM_H - 70.0 + 58.0 * pow(clamp(ra, 0.0, 1.0), 0.55);
+        float a = clamp((1.0 - ra) * 8.0, 0.0, 1.0) * clamp((h - lo) / 4.0, 0.0, 1.0) * clamp((top - h) / 2.0, 0.0, 1.0);
         d = max(d, a * smoothstep(0.0, 0.25, 1.2 - ra));
     }
     return d * (1.0 - smoothstep(cut - 40.0, cut, h)) * min(1.0, grow * 3.0);
