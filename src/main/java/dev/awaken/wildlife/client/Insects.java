@@ -105,7 +105,7 @@ final class Insects {
                 int have = 0, far = -1;
                 double farD = -1;
                 for (int i = 0; i < CAP; i++) {
-                    if (kind[i] != k || home[i] != s.key || leaving[i]) continue;
+                    if (kind[i] != k || home[i] != s.key || leaving[i] || slot[i] < 0) continue;
                     have++;
                     double dd = (x[i] - Wildlife.px) * (x[i] - Wildlife.px) + (z[i] - Wildlife.pz) * (z[i] - Wildlife.pz);
                     if (dd > farD) {
@@ -249,6 +249,51 @@ final class Insects {
         light[i] = LightCoordsUtil.FULL_BRIGHT;
         live++;
         return true;
+    }
+
+    /**
+     * The studio (tours): a few of every insect in a band 3-6 blocks before the camera, each anchored where it's put
+     * (water-bound ones on the ground there), living on the player's chunk. Cleared with the bodies' line-up.
+     */
+    static int demo(ClientLevel level, double px, double pz, float facing) {
+        long chunk = net.minecraft.world.level.ChunkPos.pack(Mth.floor(px) >> 4, Mth.floor(pz) >> 4);
+        double fx = -Mth.sin(facing), fz = Mth.cos(facing), rx = -fz, rz = fx;
+        int n = 0;
+        for (int k = WildKinds.BODIES; k < WildKinds.COUNT; k++) {
+            int many = k == WildKinds.FIREFLY ? 8 : k == WildKinds.GNATS ? 1 : 3;
+            for (int j = 0; j < many; j++) {
+                int i = -1;
+                for (int q = 0; q < CAP; q++) if (kind[q] < 0) {
+                    i = q;
+                    break;
+                }
+                if (i < 0) return n;
+                double off = (k - WildKinds.BODIES - 3) * 1.4 + (j - many / 2.0) * 0.45;
+                double d = 3.5 + (j % 3) * 1.1;
+                double x0 = px + fx * d + rx * off, z0 = pz + fz * d + rz * off, g = Wildlife.ground(level, x0, z0);
+                if (Double.isNaN(g)) continue;
+                double y0 = g + (k == WildKinds.STRIDER ? 0.02 : k == WildKinds.FIREFLY ? 0.6 + (j % 4) * 0.4 : 1.0);
+                kind[i] = k;
+                home[i] = chunk;
+                slot[i] = -1 - j; // the studio's: the director leaves them be
+                state[i] = FLY;
+                timer[i] = 20;
+                variant[i] = j % 4;
+                ax[i] = x[i] = xo[i] = tx[i] = x0;
+                ay[i] = y[i] = yo[i] = ty[i] = y0;
+                az[i] = z[i] = zo[i] = tz[i] = z0;
+                vx[i] = vy[i] = vz[i] = 0;
+                alpha[i] = alphaO[i] = 1F;
+                yaw[i] = yawO[i] = R.nextFloat() * 360F;
+                phase[i] = R.nextFloat() * Mth.TWO_PI;
+                rate[i] = 0.85F + R.nextFloat() * 0.3F;
+                leaving[i] = false;
+                light[i] = LightCoordsUtil.FULL_BRIGHT;
+                live++;
+                n++;
+            }
+        }
+        return n;
     }
 
     private static void free(int i) {

@@ -232,7 +232,14 @@ public final class Wildlife {
     static String lineup(ClientLevel level, String clip, int variant) {
         for (WildCritter c : LIVE) if (c.state == SHOW) c.discard();
         LIVE.removeIf(WildCritter::isRemoved);
-        if (clip.equals("off")) return "line-up cleared";
+        if (clip.equals("off")) {
+            Insects.clear();
+            return "line-up cleared";
+        }
+        if (clip.equals("insects")) {
+            float yaw = Minecraft.getInstance().player.getYRot() * Mth.DEG_TO_RAD;
+            return Insects.demo(level, px, pz, yaw) + " insects in the line-up";
+        }
         float yaw = Minecraft.getInstance().player.getYRot() * Mth.DEG_TO_RAD;
         double fx = -Mth.sin(yaw), fz = Mth.cos(yaw), rx = -fz, rz = fx;
         int n = 0;

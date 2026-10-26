@@ -44,6 +44,8 @@ final class Sites {
         final long[] perch = new long[PERCHES], trunk = new long[TRUNKS], ground = new long[GROUND], flower = new long[FLOWERS],
                 water = new long[WATER], shore = new long[SHORE], light = new long[LIGHTS];
         final byte[] perchKind = new byte[PERCHES], shoreDir = new byte[SHORE];
+        /** How high a perch stands above the ground under it (blocks; 99 when the column is a trunk's). */
+        final byte[] perchLift = new byte[PERCHES];
         /** A trunk's height of clear bark above its foot (blocks). */
         final int[] trunkHeight = new int[TRUNKS];
         int nPerch, nTrunk, nGround, nFlower, nWater, nShore, nLight;
@@ -166,7 +168,11 @@ final class Sites {
                                 || chunk.getHeight(Heightmap.Types.MOTION_BLOCKING, lx, lz + 1) < mb - 2
                                 || chunk.getHeight(Heightmap.Types.MOTION_BLOCKING, lx, lz - 1) < mb - 2);
                         int slot = keep(s.perch, perches + (edge ? 2 : 0), M.set(x, mb + 1, z).asLong(), seed + 2, null);
-                        if (slot >= 0) s.perchKind[slot] = edge ? EDGE : LEAF;
+                        if (slot >= 0) {
+                            s.perchKind[slot] = edge ? EDGE : LEAF;
+                            boolean trunk = nl < mb && chunk.getBlockState(M.set(x, nl, z)).is(BlockTags.LOGS);
+                            s.perchLift[slot] = (byte) (trunk ? 99 : Math.min(99, mb - nl));
+                        }
                     }
                     // a trunk: the highest non-leaf block under the canopy is a log
                     if (nl < mb && nl > level.getMinY()) {
@@ -186,7 +192,10 @@ final class Sites {
                 if (top.is(BlockTags.FENCES) || top.is(BlockTags.WALLS)) {
                     perches++;
                     int slot = keep(s.perch, perches, M.set(x, mb + 1, z).asLong(), seed + 2, null);
-                    if (slot >= 0) s.perchKind[slot] = FENCE;
+                    if (slot >= 0) {
+                        s.perchKind[slot] = FENCE;
+                        s.perchLift[slot] = 1;
+                    }
                     continue;
                 }
                 if (top.is(BlockTags.DIRT) || top.is(BlockTags.SAND) || top.is(BlockTags.SNOW)) {
@@ -195,7 +204,10 @@ final class Sites {
                 } else if (top.is(BlockTags.BASE_STONE_OVERWORLD)) {
                     perches++;
                     int slot = keep(s.perch, perches, M.set(x, mb + 1, z).asLong(), seed + 2, null);
-                    if (slot >= 0) s.perchKind[slot] = ROCK;
+                    if (slot >= 0) {
+                        s.perchKind[slot] = ROCK;
+                        s.perchLift[slot] = 0;
+                    }
                 }
                 if (ws > mb) {
                     BlockState plant = chunk.getBlockState(M.set(x, ws, z));

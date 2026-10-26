@@ -148,7 +148,7 @@ final class InsectRender {
                     }
                     case WildKinds.FIREFLY -> {
                         float b = blink(i);
-                        body(dx, dy, dz, yaw, 0.06F, 0.035F, 54, 21, 58, 28, alpha | 0xFFFFFF, b > 0.3F ? LightCoordsUtil.FULL_BRIGHT : light);
+                        body(dx, dy, dz, yaw, 0.08F, 0.045F, 54, 21, 58, 28, alpha | 0xFFFFFF, b > 0.2F ? LightCoordsUtil.FULL_BRIGHT : light);
                     }
                     case WildKinds.GNATS -> gnats(dx, dy, dz, i, alpha | 0x2A2A24, light);
                     case WildKinds.STRIDER -> flat(dx, dy, dz, yaw, 0.2F, 32, 32, 48, 48, alpha | 0xFFFFFF, light);
@@ -174,11 +174,12 @@ final class InsectRender {
                 double x = Mth.lerp(pt, Insects.xo[i], Insects.x[i]), y = Mth.lerp(pt, Insects.yo[i], Insects.y[i]),
                         z = Mth.lerp(pt, Insects.zo[i], Insects.z[i]);
                 float dx = (float) (x - cx), dy = (float) (y - cy), dz = (float) (z - cz);
-                if (dx * dx + dy * dy + dz * dz > 48 * 48) continue;
+                if (dx * dx + dy * dy + dz * dz > 56 * 56) continue;
                 boolean lumen = Insects.variant[i] == 4;
                 float r = lumen ? 0.45F : 0.78F, g = lumen ? 0.92F : 1.0F, bl = lumen ? 1.0F : 0.32F;
-                disc(dx, dy, dz, 0.42F, r, g, bl, 0.38F * b);
-                disc(dx, dy, dz, 0.09F, 1F, 1F, 0.85F, 0.95F * b);
+                disc(dx, dy, dz, 0.75F, r, g, bl, 0.35F * b);
+                disc(dx, dy, dz, 0.28F, r, g, bl, 0.6F * b);
+                disc(dx, dy, dz, 0.1F, 1F, 1F, 0.85F, b);
             }
         } catch (RuntimeException ex) {
             Awaken.LOG.error("[wildlife] firefly light failed", ex);
@@ -187,12 +188,14 @@ final class InsectRender {
 
     /** A firefly's light: a slow swell and fade every few seconds, its own rhythm, an ember between. */
     static float blink(int i) {
-        float period = 46F + 60F / Insects.rate[i];
+        float period = 40F + 40F / Insects.rate[i];
         float t = (age + Insects.phase[i] * 40F) % period;
-        float flash = t < 14F ? Mth.sin(t / 14F * Mth.PI) : 0F;
+        // a slow swell and fade over two fifths of its rhythm, then a low ember
+        float lit = period * 0.42F;
+        float flash = t < lit ? Mth.sin(t / lit * Mth.PI) : 0F;
         // some answer with a second, smaller flash
-        if (Insects.slot[i] % 3 == 0 && t > 20F && t < 30F) flash = Math.max(flash, 0.6F * Mth.sin((t - 20F) / 10F * Mth.PI));
-        return Math.max(0.06F, flash * flash);
+        if (Insects.slot[i] % 3 == 0 && t > lit + 4F && t < lit + 14F) flash = Math.max(flash, 0.6F * Mth.sin((t - lit - 4F) / 10F * Mth.PI));
+        return Math.max(0.1F, flash);
     }
 
     // ---- shapes -------------------------------------------------------------------------------------------------------

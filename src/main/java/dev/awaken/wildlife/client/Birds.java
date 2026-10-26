@@ -49,6 +49,24 @@ final class Birds {
             case WildKinds.SONGBIRD, WildKinds.OWL -> {
                 if (s.nPerch == 0) return false;
                 int i = (int) (draw * s.nPerch);
+                // the lowest of three of the chunk's perches: a bird on the canopy's roof is a bird nobody sees
+                for (int t = 2; t <= 3; t++) {
+                    int j = (int) (dev.awaken.wildlife.Density.draw(s.key, c.kind, slot * 7 + t + 40) * s.nPerch);
+                    if (s.perchLift[j] < s.perchLift[i] && (c.kind == WildKinds.SONGBIRD || s.perchKind[j] < Sites.FENCE)) i = j;
+                }
+                // by day many songbirds are down foraging on the forest floor, under the trees and at their edge
+                if (c.kind == WildKinds.SONGBIRD && s.h.canopy > 0.2F && Wildlife.tod < 11800 && r.nextFloat() < 0.45F) {
+                    long p = s.perch[i];
+                    double gx = BlockPos.getX(p) + 0.5 + (r.nextFloat() - 0.5) * 4, gz = BlockPos.getZ(p) + 0.5 + (r.nextFloat() - 0.5) * 4;
+                    double g = Wildlife.ground(level, gx, gz);
+                    if (!Double.isNaN(g) && level.getFluidState(BlockPos.containing(gx, g - 1, gz)).isEmpty()
+                            && level.getBlockState(BlockPos.containing(gx, g, gz)).getCollisionShape(level, BlockPos.containing(gx, g, gz)).isEmpty()) {
+                        c.setPos(gx, g, gz);
+                        c.setYRot(r.nextFloat() * 360F);
+                        settle(c, GROUND, r);
+                        return true;
+                    }
+                }
                 // owls keep to the trees; a songbird takes a fence or a rock as readily
                 if (c.kind == WildKinds.OWL && s.perchKind[i] >= Sites.FENCE) return false;
                 long p = s.perch[i];
@@ -199,9 +217,10 @@ final class Birds {
                 } else if (roll < 0.8F) {
                     Wildlife.replay(c, "peck");
                     c.timer = 22 + r.nextInt(30);
-                } else if (roll < 0.9F || now - c.since < 200) {
+                } else if (roll < 0.93F || now - c.since < 300) {
                     clip(c, "idle");
                     c.timer = 20 + r.nextInt(40);
+                    if (r.nextInt(5) == 0) WildSound.play(c, WildlifeModule.CHIP.get(), 0.4F, 0.9F + r.nextFloat() * 0.3F);
                 } else {
                     upToPerch(c, level, r, 8);
                 }
@@ -217,7 +236,7 @@ final class Birds {
                 c.timer = 40;
             } else if (roll < sing + 0.38F) {
                 shuffle(c, level, r);
-            } else if (roll < sing + 0.52F) {
+            } else if (roll < sing + 0.58F) {
                 if (!downToForage(c, level, r)) flit(c, level, r, 4, 9);
             } else if (roll < sing + 0.64F) {
                 flit(c, level, r, 4, 9);
@@ -353,6 +372,8 @@ final class Birds {
             boolean fence = s.is(BlockTags.FENCES) || s.is(BlockTags.WALLS);
             if (!s.is(BlockTags.LEAVES) && !fence) continue;
             if (Math.abs(y - c.getY()) > 9) continue;
+            // a songbird keeps low: the outer rings of the trees' lower leaves, fences, not the canopy's roof
+            if (c.kind == WildKinds.SONGBIRD && !fence && k < 5 && y - Wildlife.ground(level, x, z) > 7) continue;
             c.tx = x + (r.nextFloat() - 0.5) * 0.5;
             c.ty = y + (fence ? 0.5 : 0);
             c.tz = z + (r.nextFloat() - 0.5) * 0.5;
