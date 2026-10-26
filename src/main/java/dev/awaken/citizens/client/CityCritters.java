@@ -506,7 +506,7 @@ public final class CityCritters {
         }
         for (CitizenBody b : BODIES) {
             if (n >= CAP_DOG) break;
-            if (DOGS.containsKey(b) || b.isRemoved() || !keepsDog(b.record())) continue;
+            if (DOGS.containsKey(b) || b.isRemoved() || b.settlement() != 0 || !keepsDog(b.record())) continue;
             if (b.distanceToSqr(px, py, pz) > RANGE_DOG * RANGE_DOG) continue;
             CityCritter c = new CityCritter(CitizensContent.CRITTER.get(), level);
             c.setId(nextId--);
