@@ -57,7 +57,7 @@ jobs:
           if [ "$EVENT" = push ]; then list=$(cat .github/tours-dev.json)
           else list=$(jq -cn --arg s "$SCRIPT" --arg t "$TIMEOUT" --arg k "$KNOBS" '[{script: $s, timeout: $t, knobs: $k}]'); fi
           matrix=$(jq -c 'map({script, timeout: (.timeout // "1500"), knobs: ((.knobs // "") | gsub("^ +| +$"; "") | gsub("  +"; " ")),
-              os: (.os // "macos-15")} + {name: (.name // (.script | sub("^tools/autopilot/"; "") | sub("\\.txt$"; "")))})' <<< "$list")
+              os: (.os // "macos-15"), mvk: (.mvk // "")} + {name: (.name // (.script | sub("^tools/autopilot/"; "") | sub("\\.txt$"; "")))})' <<< "$list")
           # a script under tools/autopilot, a timeout in seconds, only the knobs autopilot.sh reads, plain values
           bad=$(jq -r '.[] | select(
               (.script | test("^tools/autopilot/[A-Za-z0-9._-]+\\.txt$") | not)
@@ -92,6 +92,7 @@ jobs:
       KNOBS: ${{ matrix.knobs }}
       TOUR_NAME: ${{ matrix.name }}
       TOUR_RUNNER: ${{ matrix.os }}
+      MVK_ARGBUF: ${{ matrix.mvk }}
     steps:
       - uses: actions/checkout@v4
 
@@ -151,6 +152,8 @@ jobs:
           set -f
           for kv in $KNOBS; do export "$kv"; done
           set +f
+          # development: MoltenVK's Metal argument buffers (the macOS 14 paravirtual GPU lacks newArgumentEncoderWithLayout)
+          [ -z "$MVK_ARGBUF" ] || export MVK_CONFIG_USE_METAL_ARGUMENT_BUFFERS="$MVK_ARGBUF"
           # the runner has 7 GB: the client's heap leaves room for Gradle and the GPU's buffers
           export XMX="${XMX:-4G}"
           start=$(date +%s)

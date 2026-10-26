@@ -56,8 +56,9 @@ else rm -f run-autopilot/config/awaken-terrain-dev.properties; fi
 GRADLE_ARGS=()
 [ -n "$XMX" ] && GRADLE_ARGS+=("-Pxmx=$XMX")
 [ -n "$ZGC" ] && GRADLE_ARGS+=("-Pzgc")
+[ "${BACKEND:-vulkan}" != default ] && GRADLE_ARGS+=("-Pbackend=${BACKEND:-vulkan}")
 cp "$SCRIPT" run-autopilot/script.txt
-rm -f run-autopilot/screenshots/*.png
+rm -f run-autopilot/screenshots/*.png(N)
 rm -rf run-autopilot/saves   # every tour starts from a fresh world
 tools/gradle.sh "$T" runAutopilot "${GRADLE_ARGS[@]}" > /dev/null
 echo "screenshots:"

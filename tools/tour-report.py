@@ -68,6 +68,14 @@ def main(out):
         problems.append(f"Gradle exited {exit_code} (a build failure or the client crashed)")
     if "[autopilot] world never became ready" in text:
         problems.append("the world never became ready")
+    # the process died under the game (the GPU driver, the JVM): the line that says why
+    for l in lines:
+        if re.search(r"\*\*\* Terminating app|A fatal error has been detected", l):
+            problems.append(l.strip()[:300])
+            break
+    for l in lines:
+        if "Failed to create backend" in l:
+            warnings.append(re.sub(r"^\[[0-9:]+\] ", "", l).strip()[:300])
 
     crashes = sorted((GAME / "crash-reports").glob("*.txt")) if (GAME / "crash-reports").is_dir() else []
     if crashes:
