@@ -1,0 +1,61 @@
+# Leave Carillon (SPEC §27.6, the first thread): a new hunter's first steps out of the city, the Now line at each step.
+# 1. The Roost after the opening: Kestrel's errand on the Now line with its compass; the band's tip; the thread of light.
+# 2. The band (K): the next rank's line, WHAT WAITS, THE ASCENT (the Tether named as next).
+# 3. Outside the High Gate, facing north: the camp's signal smoke over the trees ahead.
+# 4. Out on the road past the city's edge: the Commons' caption, then a rift tearing open off the road.
+# 5. The first gate, on purpose: announced, then its pillar from the camp's rise.
+# 6. After the world's first five minutes (tips are held while it settles): the waiting tips show.
+# Run: SLOT_WHO=progression /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/progression-way.txt 900
+world autopilot_progression survival 20261026
+waitworld
+window 1440 900
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd time set 6000
+cmd gamerule advance_time false
+hud on
+camera first
+# 1. the Roost
+wait 160
+shotnow leave_1_roost_now
+wait 140
+shotnow leave_1_roost_tip
+# 2. the band
+key status
+wait 30
+shotnow leave_2_band
+screen close
+# 3. outside the High Gate, facing the camp: its smoke (the camp is founded and lit within 256)
+cmd awaken living way gate
+wait 260
+shotnow leave_3_gate_smoke
+# 4. out on the road past the city's edge: the caption, then a rift off the road
+cmd awaken living way road
+wait 80
+shotnow leave_4_road_caption
+cmd awaken anomaly now rift_tear
+wait 120
+shotnow leave_4_road_rift
+cmd awaken anomaly clear
+# 5. the first gate, on purpose, then its pillar from the camp's rise
+cmd awaken gate first
+wait 60
+shotnow leave_5_gate_announced
+cmd awaken living way rise
+wait 240
+shotnow leave_5_camp_rise_pillar
+# 6. past the settle (SPEC §26: tips wait 5 minutes of a new world), a tip shows
+cmd tick sprint 4800
+wait 200
+shotnow leave_6_tip_after_settle
+info
+quit

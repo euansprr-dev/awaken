@@ -3379,12 +3379,20 @@ def row_hold(row, pos):
     """A weapon's first-person hold: its style's real hold (arms_holds.HOLDS, written as the weapon is really held) solved
     for its own mesh so it sits in the hand like every other of its style; the gauntlets keep their worn hold."""
     import arms_holds as AH
-    d = AH.hold_for(row[8], pos)
-    if d is None:
-        return hold_of(hold_key(row))
+    edge = AH.edge_of(row[8], None if row[0] in LORD_COLOUR else row[2])
+    d = AH.hold_for(row[8], pos, edge)
+    if d is None:  # the style's own (the gauntlets' worn hold)
+        fp = hold_of(hold_key(row))["firstperson_righthand"]
+        d = (tuple(fp["rotation"]), tuple(fp["translation"]), fp["scale"][0])
     rot, tr, sc = d
-    return {"firstperson_righthand": {"rotation": rot, "translation": tr, "scale": [sc, sc, sc]},
-            "firstperson_lefthand": {"rotation": [rot[0], -rot[1], -rot[2]], "translation": tr, "scale": [sc, sc, sc]}}
+    # the left hand holds its true mirror (a pair's twin, or a weapon in the off hand), a single-edged one edge and all
+    lrot, ltr, _ = AH.mirror_display(d, keep_edge=edge != 0)
+    out = {"firstperson_righthand": {"rotation": list(rot), "translation": list(tr), "scale": [sc, sc, sc]},
+           "firstperson_lefthand": {"rotation": lrot, "translation": ltr, "scale": [sc, sc, sc]}}
+    third = AH.third_person(row[8], edge)  # a single edge on the other side from its style's: turned over in F5 too
+    if third is not None:
+        out["thirdperson_righthand"], out["thirdperson_lefthand"] = third
+    return out
 
 
 def write_holds():

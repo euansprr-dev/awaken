@@ -95,6 +95,7 @@ public final class BodyClient {
             }
         });
         StatusSections.add(StatusSections.Tab.STATUS, new BodySection());
+        StatusSections.add(StatusSections.Tab.STATUS, new AscentSection());
         dev.awaken.body.ascent.client.AscentClient.init(modBus);
     }
 

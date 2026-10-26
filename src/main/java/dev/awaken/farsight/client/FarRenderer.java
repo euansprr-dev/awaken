@@ -91,6 +91,7 @@ final class FarRenderer implements AutoCloseable {
     // the frame's pieces: ring, first cell (window-local), width and height in cells
     private final int[] pRing = new int[MAX_DRAWS], pX = new int[MAX_DRAWS], pZ = new int[MAX_DRAWS], pW = new int[MAX_DRAWS], pH = new int[MAX_DRAWS];
     int pieces, cells;
+    private int seaLevel = 63;
     private final FrustumIntersection frustum = new FrustumIntersection();
     private final Matrix4f cull = new Matrix4f();
     private final float[] originX = new float[Rings.RINGS], originZ = new float[Rings.RINGS];
@@ -187,7 +188,8 @@ final class FarRenderer implements AutoCloseable {
      * nearer than {@code hiddenWithin} in 3D down to its own lowest ground (the shader's mask).
      */
     void plan(FarField field, double camX, double camY, double camZ, Matrix4fc viewRotation, float fovDegrees, float aspect,
-            float covered, float hiddenWithin, int minY, int maxY) {
+            float covered, float hiddenWithin, int minY, int maxY, int seaLevel) {
+        this.seaLevel = seaLevel;
         pieces = 0;
         cells = 0;
         cull.setPerspective(fovDegrees * (float) (Math.PI / 180.0), aspect, 0.5f, FAR).mul(viewRotation);
@@ -270,16 +272,22 @@ final class FarRenderer implements AutoCloseable {
                 if (w <= 0 || h <= 0 || pieces >= MAX_DRAWS) continue;
                 float ax = originX[r] + x * s, az = originZ[r] + z * s, bx = ax + w * s, bz = az + h * s;
                 // wholly under the real chunks: its farthest corner is nearer than where far terrain starts, in 3D down to
-                // its lowest ground (32 blocks under the patches' lowest top), or within what the windows leave unloaded
+                // its lowest ground (32 blocks under the patches' lowest top), or within what the windows leave unloaded.
+                // Ring 0's pieces that hold sea are drawn even there: the far water lies under every real water surface,
+                // so wherever a real section's floor isn't drawn (still meshing, culled, past its distance) the water
+                // shows the sea, never the sky
                 float fx = Math.max(Math.abs(ax), Math.abs(bx)), fz = Math.max(Math.abs(az), Math.abs(bz));
-                if (fx * fx + fz * fz < covered * covered) continue;
-                int lo = minY, hi = maxY;
                 long range = range(field, r, x, z, w, h);
+                boolean sea = r == 0 && range != Long.MIN_VALUE && (int) (range >> 32) + 32 <= seaLevel + 1;
+                if (!sea && fx * fx + fz * fz < covered * covered) continue;
+                int lo = minY, hi = maxY;
                 if (range != Long.MIN_VALUE) {
                     lo = (int) (range >> 32);
                     hi = (int) range;
                     double down = camY - lo;
-                    if (fx * fx + fz * fz + down * down < hiddenWithin * (double) hiddenWithin) continue;
+                    if (!sea && fx * fx + fz * fz + down * down < hiddenWithin * (double) hiddenWithin) continue;
+                } else if (fx * fx + fz * fz < covered * covered) {
+                    continue;
                 }
                 if (!frustum.testAab(ax, (float) (lo - camY), az, bx, (float) (hi - camY), bz)) continue;
                 pRing[pieces] = r;

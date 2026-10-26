@@ -20,8 +20,13 @@ public final class ArrivalHooks {
         STILL, WALK, SPRINT, SWIM, CLIMB, RIDE, AIRBORNE,
         /** A power's move: a dash, a blink, flight. */
         POWER,
-        /** A state of the Ascent's movement tiers: a swing, a leap, a glide, flight. */
+        /** A Runner move the Ascent reports: a wall-run, a ledge hang. */
         ASCENT,
+        /**
+         * The Ascent's own ladder: a rope out, a zip, the carry after a swing or a leap, wings. A climb site's payoff
+         * answers only this (SPEC §17.27): never a pearl, a tower or a hang.
+         */
+        LINE,
         /** Standing on or climbing blocks the player placed: a tower or a bridge. Always outranks the rest. */
         BUILT;
 
@@ -37,6 +42,12 @@ public final class ArrivalHooks {
 
         /** Whether the player reached where they stand by movement: nothing built on the way in (SPEC §17). */
         default boolean byMovement(ServerPlayer p) { return true; }
+
+        /**
+         * Whether the player reached where they stand by the line: by movement, and the Ascent's ladder carried them
+         * ({@link Way#LINE}) on the way in or since. What a climb site's crown, core and inner seal answer (SPEC §17.27).
+         */
+        default boolean byLine(ServerPlayer p) { return byMovement(p); }
 
         /** The last 20 seconds, oldest first, one entry per quarter second (empty without a tracker). */
         default List<Way> history(ServerPlayer p) { return List.of(); }
@@ -59,6 +70,10 @@ public final class ArrivalHooks {
 
     public static boolean byMovement(ServerPlayer p) {
         return tracker.byMovement(p);
+    }
+
+    public static boolean byLine(ServerPlayer p) {
+        return tracker.byLine(p);
     }
 
     public static List<Way> history(ServerPlayer p) {

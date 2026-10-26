@@ -181,6 +181,7 @@ final class HomeMachines {
             b.button("Something in orbit", "A ring of light, too regular to be a star.", Machines.AMBER, "halo", 0, "Look closer", true);
         } else {
             b.text("Something glints", "Past the sky, too far to make out. Your eyes aren't ready yet (" + HALO_RANK.label + "-rank).", Machines.LABEL);
+            dev.awaken.core.api.Promises.seen(player, "halo", be.getBlockPos(), dev.awaken.core.api.Promises.Need.rank(HALO_RANK.label), "Something past the sky");
         }
         return b.footer("Sky platforms glow from below at night.").build();
     }

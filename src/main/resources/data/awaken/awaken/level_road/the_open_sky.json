@@ -1,0 +1,26 @@
+{
+  "schema": 2,
+  "level": 73,
+  "title": "The open sky",
+  "text": "The sky asks for you. At A-rank, with wings you know well, the Sky Leviathan's gate opens. 24 essence.",
+  "grants": [
+    {
+      "type": "item",
+      "id": "awaken:essence_shard",
+      "count": 24
+    }
+  ],
+  "quiet": false,
+  "goal": {
+    "now": "The Sky Leviathan (it finds you)",
+    "done": {
+      "type": "counter",
+      "counter": "awaken:ascent_skyborn_trial",
+      "value": 1
+    },
+    "toast": "The sky is yours",
+    "requires": [
+      "rank:A"
+    ]
+  }
+}

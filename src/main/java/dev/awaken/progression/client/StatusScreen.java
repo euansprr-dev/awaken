@@ -42,6 +42,15 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
         lastTab = open;
     }
 
+    /** The first of these section titles that shows, scrolled to on the first frame (a link: the ward's "Show me"). */
+    private String @org.jspecify.annotations.Nullable [] focus;
+
+    /** Opens on a tab scrolled to the first of {@code titles} that shows there ("THE ASCENT", else "THE BODY"). */
+    public StatusScreen(StatusSections.Tab open, String... titles) {
+        this(open);
+        focus = titles;
+    }
+
     @Override
     protected void init() {
         List<String> labels = new java.util.ArrayList<>();
@@ -120,9 +129,12 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
         g.enableScissor(cx, cy, cx + cw + SCROLLBAR, cy + ch);
         int y = cy - SCROLL[tab.ordinal()];
         boolean any = false;
+        int[] focusAt = focus == null ? null : new int[focus.length];
+        if (focusAt != null) java.util.Arrays.fill(focusAt, -1);
         for (StatusSections.Section s : StatusSections.of(tab)) {
             if (!s.visible()) continue;
             any = true;
+            if (focusAt != null) for (int i = 0; i < focus.length; i++) if (focusAt[i] < 0 && focus[i].equals(s.title())) focusAt[i] = y + SCROLL[tab.ordinal()] - cy;
             Ui title = Ui.draw(g, font, cx, y, cw, mx, my);
             title.text(s.title(), Glass.a(Glass.EDGE, 0.85f));
             y += title.height() + 2;
@@ -141,6 +153,15 @@ public final class StatusScreen extends Screen implements dev.awaken.signal.clie
             y += ui.height();
         }
         contentHeight = y + SCROLL[tab.ordinal()] - cy;
+        if (focusAt != null) {
+            // the link lands on its section: the first named that shows, else where the tab was
+            for (int at : focusAt) {
+                if (at < 0) continue;
+                SCROLL[tab.ordinal()] = Math.max(0, at - 4);
+                break;
+            }
+            focus = null;
+        }
         g.disableScissor();
         // content can shrink (a decision answered, a screen resize): never stay scrolled past the end
         SCROLL[tab.ordinal()] = Math.min(SCROLL[tab.ordinal()], Math.max(0, contentHeight - ch));

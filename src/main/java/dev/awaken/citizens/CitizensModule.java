@@ -111,6 +111,12 @@ public final class CitizensModule {
             e.setCanceled(true);
             return;
         }
+        // a Registry clerk answers "anything for me?" with the one next step that fits you (SPEC §27.8)
+        if (c.roster.isCitizen(b.rec) && c.data.role[b.rec] == 0 && "clerk".equals(Roster.JOBS[c.roster.job[b.rec]])) {
+            CitizensNet.say(p, b, dev.awaken.progression.Advice.next(p), 110, 0);
+            e.setCanceled(true);
+            return;
+        }
         if (c.roster.isCitizen(b.rec) && c.data.role[b.rec] == 0) c.recognition.greet(b, b.rec, p, c.level.getGameTime(), true);
         e.setCanceled(true);
     }
@@ -150,6 +156,21 @@ public final class CitizensModule {
         public void post(ServerLevel level, Identifier event, BlockPos pos) {
             Citizens c = Citizens.active;
             if (c != null && level == c.level) c.events.post(event, pos);
+        }
+
+        @Override
+        public void stage(ServerLevel level, String who, @org.jspecify.annotations.Nullable Vec3 at, float yaw, String act, String prop) {
+            Citizens c = Citizens.active;
+            if (c != null && level == c.level) c.events.stage(who, at, yaw, act, prop);
+        }
+
+        @Override
+        public @org.jspecify.annotations.Nullable Vec3 where(ServerLevel level, String who) {
+            Citizens c = Citizens.active;
+            if (c == null || level != c.level) return null;
+            int i = c.roster.namedIndex(who);
+            CitizenBody b = i < 0 ? null : c.ledger.body[i];
+            return b == null || b.isRemoved() ? null : b.position();
         }
     }
 

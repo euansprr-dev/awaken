@@ -1,0 +1,368 @@
+{
+  "wild.song.robin": {
+    "subtitle": "subtitles.awaken.wild.song.robin",
+    "sounds": [
+      {
+        "name": "awaken:wild/robin1",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "awaken:wild/robin2",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "awaken:wild/robin3",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "awaken:wild/robin4",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "awaken:wild/robin5",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "wild.song.tit": {
+    "subtitle": "subtitles.awaken.wild.song.tit",
+    "sounds": [
+      {
+        "name": "awaken:wild/tit1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:wild/tit2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:wild/tit3",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:wild/tit4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "wild.song.finch": {
+    "subtitle": "subtitles.awaken.wild.song.finch",
+    "sounds": [
+      {
+        "name": "awaken:wild/finch1",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "awaken:wild/finch2",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "awaken:wild/finch3",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "awaken:wild/finch4",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "wild.song.wren": {
+    "subtitle": "subtitles.awaken.wild.song.wren",
+    "sounds": [
+      {
+        "name": "awaken:wild/wren1",
+        "attenuation_distance": 36
+      },
+      {
+        "name": "awaken:wild/wren2",
+        "attenuation_distance": 36
+      },
+      {
+        "name": "awaken:wild/wren3",
+        "attenuation_distance": 36
+      },
+      {
+        "name": "awaken:wild/wren4",
+        "attenuation_distance": 36
+      }
+    ]
+  },
+  "wild.chip": {
+    "subtitle": "subtitles.awaken.wild.chip",
+    "sounds": [
+      {
+        "name": "awaken:wild/chip1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:wild/chip2",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:wild/chip3",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:wild/chip4",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:wild/chip5",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:wild/chip6",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "wild.flush": {
+    "subtitle": "subtitles.awaken.wild.flush",
+    "sounds": [
+      {
+        "name": "awaken:wild/flush1",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:wild/flush2",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:wild/flush3",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:wild/flush4",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "wild.wings.big": {
+    "subtitle": "subtitles.awaken.wild.wings.big",
+    "sounds": [
+      {
+        "name": "awaken:wild/wings_big1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:wild/wings_big2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:wild/wings_big3",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "wild.woodpecker.drum": {
+    "subtitle": "subtitles.awaken.wild.woodpecker.drum",
+    "sounds": [
+      {
+        "name": "awaken:wild/woodpecker_drum1",
+        "attenuation_distance": 56
+      },
+      {
+        "name": "awaken:wild/woodpecker_drum2",
+        "attenuation_distance": 56
+      },
+      {
+        "name": "awaken:wild/woodpecker_drum3",
+        "attenuation_distance": 56
+      },
+      {
+        "name": "awaken:wild/woodpecker_drum4",
+        "attenuation_distance": 56
+      }
+    ]
+  },
+  "wild.woodpecker.tap": {
+    "subtitle": "subtitles.awaken.wild.woodpecker.tap",
+    "sounds": [
+      {
+        "name": "awaken:wild/woodpecker_tap1",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:wild/woodpecker_tap2",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:wild/woodpecker_tap3",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "wild.crow.caw": {
+    "subtitle": "subtitles.awaken.wild.crow.caw",
+    "sounds": [
+      {
+        "name": "awaken:wild/crow1",
+        "attenuation_distance": 56
+      },
+      {
+        "name": "awaken:wild/crow2",
+        "attenuation_distance": 56
+      },
+      {
+        "name": "awaken:wild/crow3",
+        "attenuation_distance": 56
+      },
+      {
+        "name": "awaken:wild/crow4",
+        "attenuation_distance": 56
+      },
+      {
+        "name": "awaken:wild/crow5",
+        "attenuation_distance": 56
+      }
+    ]
+  },
+  "wild.raptor.call": {
+    "subtitle": "subtitles.awaken.wild.raptor.call",
+    "sounds": [
+      {
+        "name": "awaken:wild/buzzard1",
+        "attenuation_distance": 110
+      },
+      {
+        "name": "awaken:wild/buzzard2",
+        "attenuation_distance": 110
+      },
+      {
+        "name": "awaken:wild/buzzard3",
+        "attenuation_distance": 110
+      }
+    ]
+  },
+  "wild.owl.hoot": {
+    "subtitle": "subtitles.awaken.wild.owl.hoot",
+    "sounds": [
+      {
+        "name": "awaken:wild/owl1",
+        "attenuation_distance": 72
+      },
+      {
+        "name": "awaken:wild/owl2",
+        "attenuation_distance": 72
+      },
+      {
+        "name": "awaken:wild/owl3",
+        "attenuation_distance": 72
+      },
+      {
+        "name": "awaken:wild/owl4",
+        "attenuation_distance": 72
+      }
+    ]
+  },
+  "wild.duck.quack": {
+    "subtitle": "subtitles.awaken.wild.duck.quack",
+    "sounds": [
+      {
+        "name": "awaken:wild/duck1",
+        "attenuation_distance": 36
+      },
+      {
+        "name": "awaken:wild/duck2",
+        "attenuation_distance": 36
+      },
+      {
+        "name": "awaken:wild/duck3",
+        "attenuation_distance": 36
+      },
+      {
+        "name": "awaken:wild/duck4",
+        "attenuation_distance": 36
+      },
+      {
+        "name": "awaken:wild/duck5",
+        "attenuation_distance": 36
+      }
+    ]
+  },
+  "wild.heron.croak": {
+    "subtitle": "subtitles.awaken.wild.heron.croak",
+    "sounds": [
+      {
+        "name": "awaken:wild/heron1",
+        "attenuation_distance": 48
+      },
+      {
+        "name": "awaken:wild/heron2",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "wild.squirrel.chatter": {
+    "subtitle": "subtitles.awaken.wild.squirrel.chatter",
+    "sounds": [
+      {
+        "name": "awaken:wild/squirrel1",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:wild/squirrel2",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:wild/squirrel3",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "wild.frog.plop": {
+    "subtitle": "subtitles.awaken.wild.frog.plop",
+    "sounds": [
+      {
+        "name": "awaken:wild/frog_plop1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:wild/frog_plop2",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:wild/frog_plop3",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "wild.cricket": {
+    "subtitle": "subtitles.awaken.wild.cricket",
+    "sounds": [
+      {
+        "name": "awaken:wild/cricket1",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:wild/cricket2",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:wild/cricket3",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:wild/cricket4",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "wild.rustle": {
+    "subtitle": "subtitles.awaken.wild.rustle",
+    "sounds": [
+      {
+        "name": "awaken:wild/rustle1",
+        "attenuation_distance": 14
+      },
+      {
+        "name": "awaken:wild/rustle2",
+        "attenuation_distance": 14
+      },
+      {
+        "name": "awaken:wild/rustle3",
+        "attenuation_distance": 14
+      }
+    ]
+  }
+}

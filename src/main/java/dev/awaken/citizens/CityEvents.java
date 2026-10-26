@@ -74,9 +74,22 @@ final class CityEvents {
         this.d = c.data;
     }
 
+    /** Named citizens staged by another module (CitizenHooks.stage): record → {act, prop, last staged (game time)}. */
+    private final java.util.Map<Integer, long[]> staged = new java.util.HashMap<>();
+    /** A stage nobody renews this long is over (the player who needed it left). */
+    static final int STAGE_LAPSE = 20 * 30;
+
     // ---- planning ---------------------------------------------------------------------------------------------------
 
     void tick(long now, int tod) {
+        if (!staged.isEmpty() && now % 20 == 7) {
+            for (var it = staged.entrySet().iterator(); it.hasNext(); ) {
+                var e = it.next();
+                if (now - e.getValue()[2] < STAGE_LAPSE) continue;
+                it.remove();
+                if (d.role[e.getKey()] == Roles.STAGED) release(e.getKey());
+            }
+        }
         long day = PlayDays.current(c.server);
         if (day != plannedDay) planDay(day);
         int step = lastTod < 0 ? 0 : Math.floorMod(tod - lastTod, Ledger.DAY);
@@ -269,8 +282,13 @@ final class CityEvents {
     private void infirmary(BlockPos side, long now) {
         int id = newId();
         int sun = r.namedIndex("sun");
-        List<Integer> watch = nearestWatch(side.getX(), side.getZ(), 1, 600);
-        int officer = watch.isEmpty() ? -1 : watch.get(0);
+        // the officer is Bram (story.md: he walks you to the Registry); a Watch citizen in the Association's colours if
+        // he's busy with someone else's ceremony
+        int officer = r.namedIndex("bram");
+        if (officer < 0 || d.role[officer] != 0) {
+            List<Integer> watch = nearestWatch(side.getX(), side.getZ(), 1, 600);
+            officer = watch.isEmpty() ? -1 : watch.get(0);
+        }
         int[] who = {sun, officer};
         double[][] at = {{side.getX() + 0.5, side.getY(), side.getZ() - 0.4}, {side.getX() - 1.2, side.getY(), side.getZ() + 1.6}};
         for (int k = 0; k < 2; k++) {
@@ -292,6 +310,48 @@ final class CityEvents {
         }
         put(new CitizensData.Event(id, INFIRMARY, P_GO, now, now + 20L * 60 * 4, who));
         Awaken.LOG.info("[citizens] infirmary: Sun {} and an officer {} at the bed", sun, officer);
+    }
+
+    /**
+     * CitizenHooks.stage: a named citizen walks to {@code at} and stands there facing {@code yaw} (NaN: the way
+     * they stand anyway), doing {@code act} once standing, {@code prop} in hand; {@code at} null hands them back to their
+     * day. Called again to move them on (the Registry walk: Bram a few steps ahead of you). A body far from the spot
+     * (or none yet) is put there; one in sight walks. A stage nobody renews lapses after {@link #STAGE_LAPSE}.
+     */
+    void stage(String who, net.minecraft.world.phys.@Nullable Vec3 at, float yaw, String act, String prop) {
+        int i = r.namedIndex(who);
+        if (i < 0) return;
+        if (at == null) {
+            staged.remove(i);
+            if (d.role[i] == Roles.STAGED) release(i);
+            return;
+        }
+        if (d.role[i] != Roles.STAGED) {
+            // from whatever they were doing (the infirmary's bedside too)
+            l.release(i);
+            d.role[i] = Roles.STAGED;
+            d.event[i] = -1;
+            d.place[i] = -1;
+            d.spot[i] = -1;
+            d.at[i] = c.net.nearest(at.x, at.z, false);
+        }
+        d.state[i] = STAND;
+        l.rx[i] = at.x;
+        l.ry[i] = at.y;
+        l.rz[i] = at.z;
+        Act a = Act.NONE;
+        try {
+            if (!act.isEmpty()) a = Act.valueOf(act.toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException ignored) {
+            // an act this version doesn't know: stand
+        }
+        staged.put(i, new long[]{a.ordinal(), Props.named(prop), c.level.getGameTime()});
+        CitizenBody b = body(i);
+        if (b != null) {
+            b.faceYaw = yaw;
+            if (b.distanceToSqr(at) > 20 * 20) b.teleportTo(at.x, at.y, at.z);
+        }
+        d.setDirty();
     }
 
     /** Starts an event now; near the player when one is given (commands), else where the city's plan puts it. */
@@ -1196,7 +1256,7 @@ final class CityEvents {
         int role = d.role[i];
         if (role == Roles.THIEF_FLEE || role == Roles.WATCH_CHASE) return; // the steps decide
         if (role == Roles.WATCH_ESCORT || role == Roles.CLEAR || role == Roles.GATE_GUARD || role == Roles.BUCKET || role == Roles.FLEE
-                || role == Roles.ATTEND) d.state[i] = STAND;
+                || role == Roles.ATTEND || role == Roles.STAGED) d.state[i] = STAND;
     }
 
     // ---- what event bodies show ----------------------------------------------------------------------------------------
@@ -1230,13 +1290,27 @@ final class CityEvents {
             case Roles.TRAPPED -> act = Act.TRAPPED;
             case Roles.FLEE -> act = walking ? Act.RUN : Act.LOOK_AROUND;
             case Roles.ATTEND -> act = r.namedIndex("sun") == i ? Act.TALK : Act.HANDS_BEHIND;
+            case Roles.STAGED -> {
+                long[] st = staged.get(i);
+                if (st != null) {
+                    act = walking || farFromStage(b, i) ? Act.NONE : Act.values()[(int) st[0]];
+                    main = (int) st[1];
+                }
+            }
             case Roles.CLEAR -> act = walking ? Act.NONE : Act.SET_DOWN;
             default -> {}
         }
         b.setAct(act);
+        b.setFlag(CitizenBody.F_STAGED, role == Roles.STAGED);
         b.hold(EquipmentSlot.MAINHAND, main);
         b.hold(EquipmentSlot.OFFHAND, off);
         b.setFlag(CitizenBody.F_CRATE, false);
+    }
+
+    /** Still walking to the staged spot (STAND, but not there yet): no act until arrived. */
+    private boolean farFromStage(CitizenBody b, int i) {
+        double dx = b.getX() - l.rx[i], dz = b.getZ() - l.rz[i];
+        return dx * dx + dz * dz > 0.6 * 0.6;
     }
 
     private boolean bagDropped(int thief) {
@@ -1361,8 +1435,52 @@ final class CityEvents {
                 return line.replace("{district}", n[1]).replace("{gate}", n[1]);
             }
         }
-        if (!about.isEmpty() && pick < 8) return lines.pick(seed, tod, "news.about");
+        if (!about.isEmpty() && pick < 7) return lines.pick(seed, tod, "news.about");
+        if (pick < 9) {
+            String wilds = wildsNews(lines, seed, tod);
+            if (wilds != null) return wilds;
+        }
         return lines.pick(seed, tod, "news.city");
+    }
+
+    /**
+     * The land past the walls, from the world (SPEC §27.8): the nearest standing gate within 900 of the city, else the
+     * spawn vault, else the Wayfarers' camp, with which way and through which of the city's gates. Before, every line in
+     * the city was flavour: no one ever named a place outside the walls.
+     */
+    private @org.jspecify.annotations.Nullable String wildsNews(Lines lines, long seed, int tod) {
+        var site = dev.awaken.terrain.api.CityBasin.site(c.server);
+        if (site.isEmpty()) return null;
+        net.minecraft.server.level.ServerLevel level = c.server.overworld();
+        net.minecraft.core.BlockPos centre = new net.minecraft.core.BlockPos(site.get().x(), level.getSeaLevel(), site.get().z());
+        net.minecraft.core.BlockPos best = null;
+        double bestD = Double.MAX_VALUE;
+        for (var g : dev.awaken.core.api.GateHooks.near(level, centre, 900)) {
+            if (!java.util.Set.of("BUILDING", "READY", "ACTIVE", "OPEN").contains(g.state())) continue;
+            double d = g.pos().distSqr(centre.atY(g.pos().getY()));
+            if (d < bestD) {
+                bestD = d;
+                best = g.pos();
+            }
+        }
+        if (best != null) return lines.pick(seed, tod, "news.wilds_gate").replace("{gate}", way(centre, best));
+        var vault = dev.awaken.above.ruin.RuinLocator.spawnVault(level);
+        if (vault != null && Math.floorMod(seed >>> 3, 2L) == 0) {
+            return lines.pick(seed, tod, "news.wilds_vault").replace("{gate}", way(centre, vault.getMiddleBlockPosition(centre.getY())));
+        }
+        return lines.pick(seed, tod, "news.wilds_camp");
+    }
+
+    /** "past the High Gate, to the north" (the city's gates: High north, Dawn east, Mill south). */
+    private static String way(net.minecraft.core.BlockPos from, net.minecraft.core.BlockPos to) {
+        double ang = (Math.toDegrees(Math.atan2(to.getX() - from.getX(), -(to.getZ() - from.getZ()))) + 360) % 360;
+        int q = (int) Math.round(ang / 90.0) % 4;
+        return switch (q) {
+            case 0 -> "past the High Gate, to the north";
+            case 1 -> "past the Dawn Gate, to the east";
+            case 2 -> "past the Mill Gate, to the south";
+            default -> "out past the west wall";
+        };
     }
 
     String aboutName() {

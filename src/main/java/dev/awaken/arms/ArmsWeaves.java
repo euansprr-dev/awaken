@@ -214,8 +214,10 @@ public final class ArmsWeaves implements WeaveHooks.Weaver {
         }
         Component text = Component.literal("WEAVE · ").withStyle(Style.EMPTY.withColor(0xE2B450))
                 .append(Component.literal(name(opening, fam)).withStyle(Style.EMPTY.withColor(fam.colour)));
-        if (first) Signal.toast(p, text);
-        else p.sendOverlayMessage(text);
+        if (first) {
+            Signal.toast(p, text);
+            dev.awaken.progression.Progression.markNewThing(p, "weave");
+        } else p.sendOverlayMessage(text);
     }
 
     /**

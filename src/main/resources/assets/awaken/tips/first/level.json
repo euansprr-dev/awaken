@@ -1,0 +1,10 @@
+{
+  "text": "Points to spend: {key.awaken.status}, then + beside a stat. You grow by finding new things, hunting, and clearing gate floors.",
+  "short": "{key.awaken.status}: points to spend",
+  "priority": 50,
+  "show_for": 220,
+  "retire_after_done": 1,
+  "retire_after_shown": 2,
+  "cooldown": 2400,
+  "awake": "after"
+}

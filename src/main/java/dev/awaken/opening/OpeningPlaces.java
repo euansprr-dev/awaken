@@ -140,6 +140,60 @@ public final class OpeningPlaces {
         return atV(LENS_X + 0.5, TERRACE + 1, LENS_Z + 3.5);
     }
 
+    // ---- the Registry ceremony (SPEC §16.4): the desk, and where Bram walks you ------------------------------------
+
+    /** The clerk's counter runs north-south at this plan x (OpeningStage.registry); the desk is its free south end. */
+    static final int COUNTER_X = REG_X1 - 3, DESK_Z = LENS_Z + 3;
+
+    /** The middle of the paper laid on the desk (the counter's top). */
+    Vec3 deskPaper() {
+        return atV(COUNTER_X + 0.5, TERRACE + 2.0, DESK_Z + 0.5);
+    }
+
+    /** Where you stand to sign: before the desk, facing east across it. */
+    Vec3 deskStand() {
+        return atV(COUNTER_X - 0.62, TERRACE + 1, DESK_Z + 0.5);
+    }
+
+    /** The client's copies (it knows the Lens from the scene): the paper and where you stand, from the Lens. */
+    public static Vec3 deskPaperFrom(Vec3 lens) {
+        return lens.add(COUNTER_X - LENS_X, -1.4, DESK_Z - LENS_Z);
+    }
+
+    public static Vec3 deskStandFrom(Vec3 lens) {
+        return lens.add(COUNTER_X - 0.62 - LENS_X - 0.5, -2.4, DESK_Z - LENS_Z);
+    }
+
+    /** Bram behind the counter, facing you (west). */
+    Vec3 bramDesk() {
+        return atV(COUNTER_X + 1.5, TERRACE + 1, DESK_Z + 0.5);
+    }
+
+    /** Bram beside the Lens while it reads you (west of the mark, clear of its light). */
+    Vec3 bramLens() {
+        return atV(LENS_X - 2.0, TERRACE + 1, LENS_Z + 2.6);
+    }
+
+    /**
+     * Bram's way from the infirmary to the Lens, through the doorways (straight lines between these: the halls have no
+     * street graph): the infirmary by its door, the atrium either side of its middle, the Registry inside its door.
+     */
+    Vec3[] walk() {
+        double z = DOOR_Z0 + 0.95, y = TERRACE + 1;
+        return new Vec3[]{atV(INF_X1 - 2.5, y, z), atV(ATRIUM_X0 + 2.0, y, z), atV((ATRIUM_X0 + ATRIUM_X1) / 2.0 + 0.5, y, z + 0.6),
+                atV(ATRIUM_X1 - 1.5, y, z), atV(REG_X0 + 2.0, y, z), bramLens()};
+    }
+
+    /**
+     * From beside the Lens round the counter's far (north) end to behind it: never across the desk's front, where you
+     * stand to sign (the south way passed two blocks from you and he shouldered you aside: Euan, 2026-10-26). The
+     * counter runs z LENS_Z-2..DESK_Z; the Lens's pedestal z LENS_Z-1..LENS_Z+1; the row north of both is clear.
+     */
+    Vec3[] toDesk() {
+        double y = TERRACE + 1, z = LENS_Z - 2.5;
+        return new Vec3[]{atV(LENS_X - 2.0, y, z), atV(COUNTER_X + 1.5, y, z), bramDesk()};
+    }
+
     /** Inside the Registry hall (the walk there is over). */
     boolean inRegistry(Vec3 p) {
         double px = p.x - cx, pz = p.z - cz, ry = p.y - streetY;

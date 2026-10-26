@@ -169,6 +169,25 @@ public final class FeelDirector {
         if (!FeelConfig.reduced()) flash = Math.max(flash, 0.12F);
     }
 
+    /** A leap's load off a hold: the view sinks with the body (off with reduced motion). */
+    public static void leapLoad() {
+        if (!FeelConfig.reduced()) kick(1.1F);
+    }
+
+    /** A leap's launch: the view lifts, the frame opens a touch. */
+    public static void leapLaunch(float strength) {
+        if (FeelConfig.reduced()) return;
+        kick(-2.4F * strength);
+        fovPunch += 0.025F * strength;
+    }
+
+    /** A leap's catch on the new edge: the weight lands on the hands, the view jolts down. */
+    public static void leapCatch(float strength) {
+        if (FeelConfig.reduced()) return;
+        kick(2.6F * strength);
+        shake = Math.max(shake, 0.12F * strength);
+    }
+
     public static void land(float speed) {
         kick(Math.min(7F, 2.5F + speed * 3.5F));
         if (speed > 0.8F) shake = Math.max(shake, Math.min(0.9F, speed * 0.4F));

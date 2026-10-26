@@ -1,0 +1,9 @@
+{
+  "text": "A gate's light means a gate. Walk into it to read its card; clear its floors to grow.",
+  "priority": 58,
+  "show_for": 200,
+  "retire_after_done": 1,
+  "retire_after_shown": 2,
+  "cooldown": 2400,
+  "awake": "after"
+}

@@ -163,7 +163,8 @@ public final class FarSightClient {
         // coarsest first: a window's first patches queue ahead of the finer rings'
         int far = shown - 1;
         long farWindow = field.valid[far] ? Rings.key(field.winX[far], field.winZ[far]) : Long.MIN_VALUE;
-        for (int r = far; r >= 0; r--) field.place(r, cam.x, cam.z, covered, level, store, workers);
+        // ring 0 (the render distance's own) loads all its patches: its sea is drawn under the real water (FarRenderer.rect)
+        for (int r = far; r >= 0; r--) field.place(r, cam.x, cam.z, r == 0 ? 0f : covered, level, store, workers);
         for (int i = 0; i < CHANGES_PER_FRAME; i++) {
             long chunk = store.pollChanged();
             if (chunk == Long.MIN_VALUE) break;
@@ -203,7 +204,7 @@ public final class FarSightClient {
         var camera = mc.gameRenderer.mainCamera();
         float fov = Math.max(camera.getFov(), mc.options.fov().get()) + 10f;
         renderer.plan(field, cam.x, cam.y, cam.z, e.getModelViewMatrix(), fov, (float) main.width / Math.max(1, main.height), covered, hidden,
-                mc.level.getMinY(), mc.level.getMaxY());
+                mc.level.getMinY(), mc.level.getMaxY(), level.getSeaLevel());
         renderer.planTrees(field, cam.y, covered, hidden);
         if ((partsOff & 2) != 0) renderer.treeDraws = 0;
         // the key light: the sun's strength by its height (a faint moon by night), weaker in rain; warm as it lowers
