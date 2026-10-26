@@ -3834,8 +3834,29 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   crosses the target. Every punch lands knuckles first, square to the fist's travel (a jab and a hook palm down, an
   uppercut palm to the face, an overhand driven down); the Gauntlets' shared moves are punches too (riposte and undercut
   uppercuts, the dodge's cut a hook, the Art a straight, the plunge and execution overhands; their server blows kept).
-  The bash shoves the shield straight at the foe, its face square to the shove. Third person is not yet held to this
-  (every weapon there takes vanilla's handheld hold and the shared poses' rolls: several swings lead with the flat).
+  The bash shoves the shield straight at the foe, its face square to the shove. Every move has a form in its row
+  (tools/arms/forms.py writes the shared moves' too, read from their path as the lab always read them), so first and
+  third person do the same thing (a spear's Art is a thrust in both).
+- **Third person, the wrist** (Euan 2026-10-26: "hold third person to the same working parts"): vanilla's
+  third-person hold sets a weapon across the fist, square to the forearm, and a vanilla arm has no wrist, so the
+  forearm's roll swings the blade round rather than turning its edge; before, a chop led with the other side of the
+  blade from a forehand (a katana's chop with its spine), the axe's swings with the back of the head and the
+  undercut with the flat. Now through each move's clip the weapon turns about its own length in the fist, through its
+  grip (`ArmsWrist`; FpSwings' `wrist3` keys, per arm, every 0.5 ticks, baked by the lab from the clip and the style's
+  forged weapon): from the hand's rest to the turn that lays its working side square into the blow by the wind-up's
+  end, held through the blow, home by the clip's end (median 34 degrees; a single edge turned right over, 180, where a
+  shared clip leads with its other side). The fighter's hand items are resolved again marked with their arm while a
+  move turns them (the player's render-state modifier, last), so only a hand's weapon in third person turns, never
+  one in first person, the hotbar or a frame; a left main arm keeps its hold (the keys are right-handed). A
+  single-edged tier on the other side from its style's lead (the Beastbound Longsword and Greatblade, the Wildhide and
+  Veilwoven Daggers) is turned over in its third-person hold (`thirdperson_right/lefthand`). The thrust keeps its arm
+  and chest on the line from cocked to through and leans in less than it lunges (a turn or a lean had swept a long
+  point's tip 45 degrees off its line); the shield bash raises the shield square in front of the chest, the body
+  driving in behind it; the Gauntlets punch their own dodge, slide and fall moves (a hook, an uppercut, a straight:
+  a vanilla arm can't turn a fist knuckles-down as it comes over). The lab's `audit` holds every clip to the working
+  part on every weapon in the arm that strikes (0 of 176 fail; 78 did); `wrist` draws a move's blow in third person
+  with and without the turn (docs/combat/anim-lab/wrist-3p.png). The scythe leads point first in third person; its
+  haul back through the target is first person's.
 - **The animation lab** (tools/art/anim_lab.py; SPEC §25, Euan's ask for a way to see the motion): `sheet` / `all`
   draw each strike's first-person frames as the game composes them (the swing, Hands' view layer, vanilla's rest, the
   weapon's hold and mesh, 70 degrees) as an onion-skin with the blade tip's path (wind-up blue, blow gold, recovery

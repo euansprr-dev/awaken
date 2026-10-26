@@ -344,6 +344,18 @@ final class ArmsTests {
                 h.assertTrue(FpSwings.sample(st, e.getKey(), 0, true, d, q), a.id() + " " + e.getKey() + " has keys");
                 FpSwings.sample(st, e.getKey(), def.total() + 1, true, d, q);
                 h.assertTrue(d.length() < 1e-3F && Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + " ends at rest");
+                // third person's wrist (ArmsWrist): from the hand's rest and home again, never more than a half turn
+                float len = FpSwings.wristLength(st, e.getKey());
+                for (boolean left : new boolean[]{false, true}) {
+                    h.assertTrue(Math.abs(FpSwings.wrist(st, e.getKey(), left, 0)) < 1e-3F && Math.abs(FpSwings.wrist(st, e.getKey(), left, len)) < 1e-3F,
+                            a.id() + " " + e.getKey() + "'s wrist starts and ends square");
+                    for (float t = 0; t <= len; t += 0.5F) {
+                        h.assertTrue(Math.abs(FpSwings.wrist(st, e.getKey(), left, t)) <= 180.5F, a.id() + " " + e.getKey() + "'s wrist turns at most half round");
+                    }
+                }
+            }
+            if (a.id().equals("katana")) { // a single edge turned over to chop, as the forehand cuts with it (the lab's audit)
+                h.assertTrue(FpSwings.wristLength(st, Archetype.Move.STRIKE_3) > 0, "the katana's chop turns its edge into the blow in third person");
             }
             Archetype.MoveDef s1 = a.move(Archetype.Move.STRIKE_1);
             if (s1 != null && s1.windup() > 0 && s1.swing().from().size() < 4) {

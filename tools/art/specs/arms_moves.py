@@ -137,9 +137,17 @@ strike("arms_strike_3", "strike_3", S3_COCK, S3_THRU, "overhead: both hands up, 
 # (a vanilla arm can't bend its wrist: a straight arm raised forward points the blade at the sky, so the arm keeps the
 # angle that lays the blade level, ahead, and the body drives it, the stance drawn back and the lunge going in; the
 # lab's point lead, tools/art/anim_lab.py third)
-T_COCK = pose(lean=-6, twist=8, shift=-3, rl=(-8, 0, 6), rk=12, ll=(12, 0, -4), lk=12, ra=(-3, 14, 12), re=50, la=(-38, 0, -20), le=40)
-T_THRU = pose(lean=10, twist=0, shift=5, rl=(-48, 0, 4), rk=44, ll=(26, 0, -4), lk=8, ra=(-15, 0, 4), re=0, la=(8, 0, -26), le=20)
+# (the arm and chest stay on the thrust's line from cocked to through, so the point drives straight along it, never
+# swinging across: a turn of the chest or the arm swept a long point's tip sideways, 45 degrees off its line; the body
+# leans in less than it lunges, its lean arcing a long point off the line too)
+T_COCK = pose(lean=-3, twist=0, shift=-3, rl=(-8, 0, 6), rk=12, ll=(12, 0, -4), lk=12, ra=(-12, 0, 4), re=50, la=(-38, 0, -20), le=40)
+T_THRU = pose(lean=6, twist=0, shift=5, rl=(-48, 0, 4), rk=44, ll=(26, 0, -4), lk=8, ra=(-15, 0, 4), re=0, la=(8, 0, -26), le=20)
 strike("arms_strike_4", "strike_4", T_COCK, T_THRU, "thrust: drawn back, then driven straight with a lunge")
+
+# A shield bash: the shield raised square in front of the chest (the arm up, so the weapon stands upright and its face,
+# turned by the wrist, looks ahead), the body drawn back and then driven in behind it with a lunge.
+BS_COCK = pose(lean=-6, twist=-6, shift=-3, rl=(-8, 0, 6), rk=12, ll=(12, 0, -4), lk=12, ra=(-84, 8, 8), re=40, la=(-38, 0, -20), le=40)
+BS_THRU = pose(lean=10, twist=0, shift=5, rl=(-48, 0, 4), rk=44, ll=(26, 0, -4), lk=8, ra=(-88, 0, 4), re=0, la=(8, 0, -26), le=20)
 strike("arms_riposte", "riposte", T_COCK, nudge(T_THRU, shift=1, lean=4, rl=(-8, 0, 0)), "riposte: the thrust, deeper")
 
 # The Slipcut, out of a dodge: low and wide, the chest whipping round, the blade flat across the front.
@@ -225,6 +233,9 @@ def paired(p):
     return q
 
 
+PUNCHES = ("jab", "hook", "upper", "over")
+
+
 def styled(style, lean=0.0, sink=0.0):
     k = lambda p: nudge(p, lean=lean, rise=-sink) if (lean or sink) else p
     table = json.load(open(TABLE))
@@ -232,19 +243,23 @@ def styled(style, lean=0.0, sink=0.0):
     kinds = {
         "side1": (S1_COCK, S1_THRU, S1_VIA, S1_ARC), "side2": (S2_COCK, S2_THRU, None, None), "over": (S3_COCK, S3_THRU, None, None),
         "thrust": (T_COCK, T_THRU, None, None), "round": (AR_DRAW, AR_THRU, None, None), "exec": (EX_COCK, EX_THRU, None, None),
-        "rise": (HV_DRAW, HV_THRU, None, None),
+        "rise": (HV_DRAW, HV_THRU, None, None), "bash": (BS_COCK, BS_THRU, None, None),
     }
     for move, m in a["moves"].items():
-        if move in ("undercut", "plunge", "slipcut"):
-            continue  # the Longsword's own (out of a slide, a fall, a dodge) fit every style
         sw = m.get("swing", {})
+        if move in ("undercut", "plunge", "slipcut") and sw.get("form") not in PUNCHES:
+            continue  # the Longsword's own (out of a slide, a fall, a dodge) fit every blade; a fist punches its own
         tilt_from = sw.get("from", [0, 0, 0])[3] if len(sw.get("from", [])) > 3 else 0
         form = sw.get("form")
         if form is not None:
             # the move's form (tools/arms/forms.py): the body that does it
-            if form in ("stab", "jab", "bash"):
+            if form == "bash":
+                kind = "bash"
+            elif form in ("stab", "jab", "over"):
+                # over: a fist's overhand; a vanilla arm can't turn a fist knuckles-down as it comes over, so the body
+                # drives a straight punch into it
                 kind = "thrust"
-            elif form in ("slam", "chop", "over"):  # over: a fist's overhand, driven down knuckles first
+            elif form in ("slam", "chop"):
                 kind = "exec" if (form == "slam" and m.get("arc", 0) >= 300) or move == "execution" else "over"
             elif form in ("whirl", "spin"):
                 kind = "round"

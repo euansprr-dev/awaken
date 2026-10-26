@@ -1,0 +1,111 @@
+# Arms working parts filmed (SPEC §25 "Working parts", "Third person, the wrist"): the katana's cuts edge first in first
+# person and from behind (its chop turned over by the wrist), the scythe hooked and hauled back, the shield bash face
+# on, the gauntlets' punches knuckles first. Third person needs the Player Animation Library in run-autopilot/mods.
+world armsrepro creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+cmd tp @s ~ 200 ~ 0 0
+cmd fill ~-12 ~-1 ~-12 ~12 ~-1 ~14 minecraft:smooth_stone
+cmd kill @e[type=minecraft:husk]
+cmd summon minecraft:husk ~0 ~ ~2.6 {NoAI:1b,PersistenceRequired:1b,Health:4000f,attributes:[{id:"minecraft:max_health",base:4000d}]}
+camera first
+look 0 4
+arms ribbonmode 0
+camera back
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_katana
+wait 40
+camera back
+look 0 4
+wait 12
+cmd awaken ascent pilot rec work_katana_3p 41 2
+wait 3
+arms strike
+wait 7
+arms strike
+wait 7
+arms strike
+wait 35
+camera first
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_katana
+wait 40
+camera first
+look 0 4
+wait 12
+cmd awaken ascent pilot rec work_katana_fp 41 2
+wait 3
+arms strike
+wait 7
+arms strike
+wait 7
+arms strike
+wait 35
+camera first
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_scythe
+wait 40
+camera first
+look 0 4
+wait 12
+cmd awaken ascent pilot rec work_scythe_fp 54 2
+wait 3
+arms strike
+wait 9
+arms strike
+wait 10
+arms strike
+wait 48
+camera back
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_scythe
+wait 40
+camera back
+look 0 4
+wait 12
+cmd awaken ascent pilot rec work_scythe_3p 54 2
+wait 3
+arms strike
+wait 9
+arms strike
+wait 10
+arms strike
+wait 48
+camera back
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_shieldblade
+wait 40
+camera back
+look 0 4
+wait 12
+cmd awaken ascent pilot rec work_shield_3p 30 2
+wait 3
+arms strike
+wait 7
+arms strike
+wait 26
+camera first
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_gauntlets
+wait 40
+camera first
+look 0 4
+wait 12
+cmd awaken ascent pilot rec work_gauntlets_fp 34 2
+wait 3
+arms strike
+wait 4
+arms strike
+wait 4
+arms strike
+wait 5
+arms strike
+wait 26
+quit

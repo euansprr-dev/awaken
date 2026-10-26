@@ -61,6 +61,22 @@ SPECIALS = {
 POINT = ("stab", "jab", "bash")
 
 
+def derived(m):
+    """The form of a move nothing above names (a style's shared moves), read from its row's own path as the animation
+    lab always read it: straight ahead, a stab, a chop or a rising cut; otherwise a slash. Written into the row so first
+    person (the lab) and third person (arms_moves.py) do the same thing."""
+    sw = m["swing"]
+    f, t = sw["from"], sw["to"]
+    dx, dy = t[0] - f[0], t[1] - f[1]
+    if len(f) >= 4 and abs(f[2]) < 40 and abs(dx) < 0.35:
+        if dy < -0.4 or t[3] - f[3] > 90:
+            return "chop"
+        if dy > 0.4 and t[3] < f[3]:
+            return "rise"
+        return "stab"
+    return "slash"
+
+
 def main():
     d = json.loads(TABLE.read_text())
     changed = []
@@ -89,6 +105,9 @@ def main():
                 if m["arc"] < 70:
                     changed.append(f"{a['id']} {mv}: arc {m['arc']} -> 90 ({form})")
                     m["arc"] = 90
+        for mv, m in a["moves"].items():
+            if "swing" in m and mv not in FORMS.get(a["id"], {}) and mv not in SPECIALS.get(a["id"], {}):
+                m["swing"]["form"] = derived(m)
         for mv, (form, extra) in SPECIALS.get(a["id"], {}).items():
             sw = a["moves"][mv]["swing"]
             sw["form"] = form

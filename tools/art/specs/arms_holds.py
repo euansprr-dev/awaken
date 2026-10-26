@@ -165,6 +165,28 @@ def mirror_display(display, keep_edge=False):
                                                          round(float(t_left[2] * 16), 3)], sc)
 
 
+HANDHELD_3P = ((0.0, -90.0, 55.0), (0.0, 4.0, 0.5), 0.85)  # vanilla item/handheld's thirdperson_righthand
+
+
+def third_person(style, edge):
+    """The third-person holds (right, left, as written in the JSON) for a weapon whose single edge is on the other side
+    from the one its style's swings lead with (cut_side of its forged weapon): vanilla's handheld turned half round
+    about the weapon's length (the line through the item's centre), so the wrist's baked turn (anim_lab.py wrist_keys)
+    lays its edge into every blow; None keeps vanilla's."""
+    lead = cut_side(style, "C")
+    if not edge or not lead or edge == lead:
+        return None
+    (rx, ry, rz), t, sc = HANDHELD_3P
+    a = math.radians(180)
+    K = np.array([[0, -AXIS_ITEM[2], AXIS_ITEM[1]], [AXIS_ITEM[2], 0, -AXIS_ITEM[0]], [-AXIS_ITEM[1], AXIS_ITEM[0], 0]])
+    flip = np.eye(3) + math.sin(a) * K + (1 - math.cos(a)) * (K @ K)
+    ex, ey, ez = euler_xyz(MR.euler(rx, ry, rz) @ flip)
+    rot = [round(ex, 2), round(ey, 2), round(ez, 2)]
+    # a left hand's is applied mirrored (y and z turns, x move negated): written so it applies as the right's does
+    return ({"rotation": rot, "translation": list(t), "scale": [sc] * 3},
+            {"rotation": [rot[0], -rot[1], -rot[2]], "translation": [-t[0], t[1], t[2]], "scale": [sc] * 3})
+
+
 def describe(display):
     """A display transform back in these terms (for the report)."""
     (rx, ry, rz), t, sc = display

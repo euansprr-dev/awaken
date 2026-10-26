@@ -10,9 +10,11 @@ the swing's path; 0: the flat face leads, a wave).
     python3 tools/art/anim_lab.py all OUT_DIR [--model old|new]       the review set: longsword, daggers, greatblade, maul
     python3 tools/art/anim_lab.py third OUT.png STYLE                 third person: the body's clips with the blade in hand
     python3 tools/art/anim_lab.py bake                                writes data/awaken/arms/fp_swings.json (the new model)
-    python3 tools/art/anim_lab.py audit                               every move's working part at the hit, every weapon, both hands
+    python3 tools/art/anim_lab.py audit                               every move's working part at the hit, every weapon, both hands,
+                                                                      first person and third
     python3 tools/art/anim_lab.py strip OUT.png STYLE MOVE             one move frame by frame (a turn in the hand shows)
     python3 tools/art/anim_lab.py film FRAMES_DIR OUT.png             onion-skin of real frames (the clip recorder's PNGs)
+    python3 tools/art/anim_lab.py wrist OUT.png [style:move:weapon ...]  third person: the wrist's turn through each blow
 
 The game's own frames (Hands' clip recorder, in a tour) go through `film`: the same overlay from real frames, so a
 lab judgement can be checked against the game. Reading a sheet: a slice shows a long, fast streak on a clear diagonal or
@@ -731,6 +733,9 @@ def bake(out=SWINGS):
                             + [round(float(v), 3) for v in cam])
             moves[mv] = {"form": form_of(m)[0], "weight": WEIGHT_OF.get(sid, "blade"), "hand": m["swing"].get("hand", "main"),
                          "keys": keys}
+            wrist = wrist_keys(sid, mv, m)  # third person: the wrist's turn, per arm (ArmsWrist)
+            if wrist:
+                moves[mv]["wrist3"] = wrist
         # a vanilla item held in this style: the same targets, from vanilla's own hold (R_vanilla = R . C)
         C = Fs @ Fv.T
         import arms_holds as AH
@@ -743,7 +748,7 @@ def bake(out=SWINGS):
                        "vanilla": [round(float(v), 5) for v in mat_quat(C)],
                        "grip": [round(float(v), 4) for v in held.grip], "vanillaGrip": [round(float(v), 4) for v in grip_v],
                        "moves": moves}
-    json.dump({"schemaVersion": 2, "generatedBy": "tools/art/anim_lab.py bake", "dt": KEY_DT, "styles": styles},
+    json.dump({"schemaVersion": 3, "generatedBy": "tools/art/anim_lab.py bake", "dt": KEY_DT, "wristDt": WRIST_DT, "styles": styles},
               open(out, "w"), separators=(",", ":"))
     return out
 
@@ -1080,6 +1085,221 @@ def blade_3p(frames, held_pts):
     return out
 
 
+# ---- third person: the wrist (Euan 2026-10-26, "hold third person to the same working parts") ----------------------
+# Vanilla's third-person hold sets every weapon across the fist, square to the forearm, so the forearm's roll swings
+# the blade round rather than turning its edge: a vanilla arm has no wrist. The game gives it one (ArmsWrist): through
+# each move the weapon turns about its own length in the fist, through its grip, so its working side leads the blow,
+# baked here per style and move for the arm that holds it. A single-edged tier on the other side from its style's is
+# turned over in its third-person hold (arms_weapons.py holds), as in first person.
+HANDHELD_3P_LEFT = ((0, 90, -55), (0, 4.0, 0.5), 0.85)  # vanilla item/handheld's thirdperson_lefthand, as written
+WRIST_DT = 0.5  # ticks between the wrist's keys
+
+
+def display_3p(wid, arm):
+    """A weapon's third-person hold for an arm (its model's, else vanilla handheld's), as written in the JSON."""
+    d = json.load(open(os.path.join(MR.RES, "assets/awaken/models/item", wid + "_in_hand.json")))["display"]
+    v = d.get(f"thirdperson_{arm}hand")
+    if v is None:
+        return HANDHELD_3P if arm == "right" else HANDHELD_3P_LEFT
+    return tuple(v["rotation"]), tuple(v["translation"]), v["scale"][0]
+
+
+def hand_3p(frames, arm, display, roll=0.0):
+    """Item points (item space, n x 3) to the figure's model space (pixels, y down) for the item in {@code arm}'s hand,
+    as ItemInHandLayer draws it (the arm's frame, X -90, Y 180, (+-1, 2, -10)/16; the hold, a left hand's mirrored as
+    ItemTransform applies it), turned {@code roll} degrees about its own length through its grip (the wrist)."""
+    import arms_holds as AH
+    M, T = (np.array(v) for v in frames[arm + "_arm"])
+    (ax, ay, az), t, sc = display
+    left = arm == "left"
+    if left:
+        ay, az, t = -ay, -az, (-t[0], t[1], t[2])
+    Rd = MR.euler(ax, ay, az)
+    hold = rx(-90) @ ry(180)
+    o = np.array([(-1.0 if left else 1.0) / 16, 2 / 16, -10 / 16])
+    Rr = axis_rot(AH.AXIS_ITEM, roll) if roll else np.eye(3)
+    G = AH.GRIP_ITEM
+
+    def f(p):
+        q = (np.atleast_2d(p) - G) @ Rr.T + G
+        q = (o + np.asarray(t) / 16 + ((q - 0.5) * sc) @ Rd.T) @ hold.T
+        return T + (q * 16) @ M.T
+    return f
+
+
+def clip_beats(m):
+    """A strike clip's blow (arms_moves.strike): its start, the hit (the first active tick), its end, the hold, the end."""
+    w, a, r = m["windup"], m["active"], m["recovery"]
+    c = max(0.5, w - a * 0.5) if w > 0 else 0.0
+    return c, c + a * 0.5, c + a, c + a + max(1, r // 3), w + a + r
+
+
+def arms_3p(style, mv, m):
+    """The arms that hold a weapon that strikes in a move: the right (the blade arm), the left for a pair's off-hand or
+    both-hands strike (arms_moves.styled: the off hand's moves are mirrored onto the left arm)."""
+    import arms_holds as AH  # noqa: F401
+    hand = m["swing"].get("hand", "main")
+    return {"main": ["right"], "off": ["left"], "both": ["right", "left"]}[hand]
+
+
+def lead_3p(f0, f1, part, side, L):
+    """How squarely the working part drives into the target between two placements (item -> model space): as
+    lead_at, for the item's own frame (its length the diagonal, its edge axis x face)."""
+    import arms_holds as AH
+    A, Z = AH.AXIS_ITEM, AH.FACE_ITEM
+    E = np.cross(A, Z)
+    G = AH.GRIP_ITEM
+    p = G + A * L * (0.72 if part == "edge" else 0.92 if part not in ("point", "knuckles") else 1.0)
+    v = f1(p)[0] - f0(p)[0]
+    n = float(np.linalg.norm(v))
+    if n < 1e-6:
+        return float("nan")
+    a = f1(G + A)[0] - f1(G)[0]
+    a /= np.linalg.norm(a)
+    e = f1(G + E)[0] - f1(G)[0]
+    z = f1(G + Z)[0] - f1(G)[0]
+    e, z = e / np.linalg.norm(e), z / np.linalg.norm(z)
+    if part in ("point", "knuckles"):
+        return float(v @ a) / n
+    if part == "shield":
+        return abs(float(v @ z)) / n
+    vp = v - a * (v @ a)
+    k = float(np.linalg.norm(vp))
+    if k < 1e-6:
+        return float("nan")
+    lead = float(vp @ e) / k
+    return lead * side if side and part not in ("face", "end") else abs(lead)
+
+
+def wrist_at(f0, f1, part, side, L):
+    """The wrist's turn (degrees about the weapon's length) that lays its working side square into the blow: the turn
+    whose edge lies along the motion (less its slide), the shorter of the two for a weapon that works with both sides;
+    0 for a thrust (its point is on its length) and a punch."""
+    import arms_holds as AH
+    if part in ("point", "knuckles"):
+        return 0.0
+    A, Z = AH.AXIS_ITEM, AH.FACE_ITEM
+    E = np.cross(A, Z)
+    G = AH.GRIP_ITEM
+    p = G + A * L * (0.72 if part == "edge" else 0.92)
+    v = f1(p)[0] - f0(p)[0]
+    # the motion in the item's own frame at f1 (the placement is a turn and a scale: undo it on directions)
+    basis = np.stack([f1(G + A)[0] - f1(G)[0], f1(G + E)[0] - f1(G)[0], f1(G + Z)[0] - f1(G)[0]], axis=1)
+    loc = np.linalg.solve(basis, v)  # v in (A, E, Z) terms
+    want = Z if part == "shield" else E
+    # turning by psi about A carries E to E cos psi + (A x E) sin psi; A x E = -Z (E = A x Z): the edge then points
+    # along (cos psi, -sin psi) in (E, Z) terms
+    ang = math.degrees(math.atan2(-loc[2], loc[1])) if part != "shield" else math.degrees(math.atan2(loc[1], loc[2]))
+    if part == "shield" or not side or part in ("face", "end"):
+        return (ang + 90) % 180 - 90  # either side works: the shorter turn
+    if side < 0:
+        ang += 180
+    return (ang + 180) % 360 - 180
+
+
+def clip_of(style, mv):
+    import arms_moves as A
+    return A.CLIPS.get(_clip_name(style, mv)) or A.CLIPS.get("arms_" + mv)
+
+
+def part_3p(style, form):
+    """The working part in third person: the scythe's blade leads point first (its haul back is first person's)."""
+    part = working(style, form)
+    return "edge" if part == "inner" else part
+
+
+def wrist_keys(style, mv, m, wid=None):
+    """{arm: [degrees every WRIST_DT ticks]} for a move's clip: from the hand's rest to the turn that lays the working
+    side into the blow by the wind-up's end (a heavy loosed from its draw: early in the blow), held through the blow,
+    home by the clip's end."""
+    import arms_holds as AH
+    import power_casts as PC
+    c_ = clip_of(style, mv)
+    if c_ is None:
+        return {}
+    wid = wid or "gatewrought_" + style
+    side = AH.cut_side(style, "C")
+    part = part_3p(style, form_of(m)[0])
+    L = held_length_item(wid)
+    c, hit, ea, hold, end = clip_beats(m)
+    out = {}
+    for arm in arms_3p(style, mv, m):
+        disp = display_3p(wid, arm)
+        fr = lambda t: PC.part_frames(c_.sample(float(t), 8.0), 8.0)
+        psi = wrist_at(hand_3p(fr(max(0.0, hit - 0.25)), arm, disp), hand_3p(fr(hit + 0.25), arm, disp), part, side, L)
+        if abs(psi) < 1.0:
+            continue
+        keys = []
+        ready = c if c > 0 else hit * 0.6  # a heavy loosed from its held draw turns as it goes, square by the hit
+        for t in np.arange(0, end + 1e-6, WRIST_DT):
+            if t < ready:
+                k = ease_in_out_sine(t / max(1e-6, ready))
+            elif t <= hold:
+                k = 1.0
+            else:
+                k = 1.0 - ease_in_out_sine((t - hold) / max(1e-6, end - hold))
+            keys.append(round(psi * k, 1))
+        out[arm] = keys
+    return out
+
+
+def held_length_item(wid):
+    """The weapon's length from its grip along the item's diagonal (item units)."""
+    import arms_holds as AH
+    m, _ = MR.load(wid)
+    return float(((m["pos"] - AH.GRIP_ITEM) @ AH.AXIS_ITEM).max())
+
+
+def wrist_now(keys, t):
+    if not keys:
+        return 0.0
+    x = max(0.0, t / WRIST_DT)
+    i = min(len(keys) - 1, int(x))
+    j = min(len(keys) - 1, i + 1)
+    return keys[i] + (keys[j] - keys[i]) * min(1.0, x - i)
+
+
+def audit_3p(verbose=True):
+    """Third person, as the game draws it: each style's clips with the wrist's baked turn, on every weapon of the
+    style in its own third-person hold, in the arm that strikes; prints the moves whose working part fails."""
+    import arms_holds as AH
+    import arms_weapons as AW
+    import power_casts as PC
+    swings = load_swings()
+    bad = []
+    for sid, st in table().items():
+        rows = [r for r in AW.CATALOG if r[8] == sid]
+        lens = {r[0]: held_length_item(r[0]) for r in rows}
+        cells = []
+        for mv in chain_moves(st) + [k for k in ("riposte", "art", "slipcut", "undercut", "plunge", "execution") if k in st["moves"]]:
+            m = st["moves"][mv]
+            c_ = clip_of(sid, mv)
+            if c_ is None or "swing" not in m:
+                continue
+            form = form_of(m)[0]
+            part = part_3p(sid, form)
+            c, hit, ea, hold, end = clip_beats(m)
+            f0, f1 = (PC.part_frames(c_.sample(float(t), 8.0), 8.0) for t in (max(0.0, hit - 0.25), hit + 0.25))
+            wk = swings.get(sid, {}).get("moves", {}).get(mv, {}).get("wrist3", {})
+            worst = None
+            for arm in arms_3p(sid, mv, m):
+                roll0, roll1 = wrist_now(wk.get(arm), max(0.0, hit - 0.25)), wrist_now(wk.get(arm), hit + 0.25)
+                for r in rows:
+                    e = AH.edge_of(sid, None if r[0] in AW.LORD_COLOUR else r[2])
+                    disp = display_3p(r[0], arm)
+                    lead = lead_3p(hand_3p(f0, arm, disp, roll0), hand_3p(f1, arm, disp, roll1), part, e, lens[r[0]])
+                    if worst is None or (math.isnan(lead) or lead < worst[0]):
+                        worst = (lead, r[0], arm)
+            ok = worst is not None and not math.isnan(worst[0]) and worst[0] >= LEAD_MIN[part]
+            cells.append(f"{mv}:{form}/{part} {worst[0]:+.2f}" + ("" if ok else f" ! ({worst[1]}, {worst[2]})"))
+            if not ok:
+                bad.append((sid, mv, worst))
+        if verbose:
+            print(f"{sid:11s} " + "  ".join(cells))
+    print(f"{len(bad)} third-person moves strike with something other than their working part")
+    return bad
+
+
 def third_panel(style, move, m):
     import arms_moves as A
     import power_casts as PC
@@ -1239,6 +1459,78 @@ def f5(wid, yaw=-62.0, pitch=10.0, px=7.0, size=(300, 270)):
     return canvas
 
 
+def figure_3p(c_, t, weapons, yaw, pitch, px, bounds):
+    """The figure at t of a clip with weapons in its hands: [(wid, arm, roll)], each placed as ItemInHandLayer does."""
+    import power_casts as PC
+    fr = PC.part_frames(c_.sample(float(t), 8.0), 8.0)
+    out = np.asarray(PC.frame_image(c_, float(t), yaw, pitch, px, bounds).convert("RGB")).astype(int)
+    cam = np.array(PC._cam(yaw, pitch))
+    offx, offy = 8 - bounds[0] * px, 8 - bounds[2] * px
+    for wid, arm, roll in weapons:
+        m, tex = MR.load(wid)
+        f = hand_3p(fr, arm, display_3p(wid, arm), roll)
+        q = f(m["pos"]) @ cam.T
+        o = f(np.zeros(3))[0]
+        R = np.stack([f(np.eye(3)[i])[0] - o for i in range(3)], axis=1)
+        R /= np.linalg.norm(R[:, 0])
+        screen = {"sx": q[:, 0] * px + offx, "sy": q[:, 1] * px + offy, "sz": -q[:, 2], "nv": m["nrm"] @ (cam @ R).T}
+        a = np.asarray(MR._raster(m, tex, screen, (out.shape[1], out.shape[0]), np.array([1, 2, 3]), time=0.27)).astype(int)
+        mask = (np.abs(a - np.array([1, 2, 3])).sum(axis=2) > 0)[..., None]
+        out = np.where(mask, a, out)
+    return Image.fromarray(out.astype(np.uint8), "RGB")
+
+
+def wrist_sheet(out, picks, yaw=-35.0, pitch=10.0, px=6.0):
+    """Third person: each pick (style, move, weapon id) at its hit without the wrist's turn, then through its blow with
+    it (a quarter in, the hit, three quarters, the blow's end), with the working part's lead at the hit."""
+    import arms_holds as AH
+    import power_casts as PC
+    swings = load_swings()
+    rows = []
+    for sid, mv, wid in picks:
+        st = table()[sid]
+        m = st["moves"][mv]
+        c_ = clip_of(sid, mv)
+        c, hit, ea, hold, end = clip_beats(m)
+        wk = swings[sid]["moves"][mv].get("wrist3", {})
+        arms = arms_3p(sid, mv, m)
+        both = "left" in arms or sid in ("daggers", "gauntlets")
+        bounds = PC.strip_bounds([c_], yaw, pitch)
+        bounds = (bounds[0] - 14, bounds[1] + 14, bounds[2] - 14, bounds[3] + 8)
+        e = AH.edge_of(sid, None if not wid.split("_")[0] in TIERS else TIERS[wid.split("_")[0]])
+        part = part_3p(sid, form_of(m)[0])
+        Ln = held_length_item(wid)
+
+        def lead(arm, rolled):
+            fr = lambda t: PC.part_frames(c_.sample(float(t), 8.0), 8.0)
+            r0 = wrist_now(wk.get(arm), max(0.0, hit - 0.25)) if rolled else 0.0
+            r1 = wrist_now(wk.get(arm), hit + 0.25) if rolled else 0.0
+            disp = display_3p(wid, arm)
+            return lead_3p(hand_3p(fr(max(0.0, hit - 0.25)), arm, disp, r0), hand_3p(fr(hit + 0.25), arm, disp, r1), part, e, Ln)
+
+        def weapons(t, rolled):
+            hands = ["right", "left"] if both else ["right"]
+            return [(wid, a, wrist_now(wk.get(a), t) if rolled else 0.0) for a in hands]
+
+        cells = [(f"no wrist, hit  lead {lead(arms[0], False):+.2f}", figure_3p(c_, hit, weapons(hit, False), yaw, pitch, px, bounds))]
+        for t in (c + (ea - c) * 0.25, hit, c + (ea - c) * 0.75, ea):
+            cap = f"t {t:.1f}" + (f"  lead {lead(arms[0], True):+.2f}" if abs(t - hit) < 1e-6 else "")
+            cells.append((cap, figure_3p(c_, t, weapons(t, True), yaw, pitch, px, bounds)))
+        rows.append((f"{wid} {mv} ({form_of(m)[0]}, {part}, {'/'.join(arms)})", cells))
+    w = max(im.width for _, r in rows for _, im in r)
+    h = max(im.height for _, r in rows for _, im in r)
+    sheet = Image.new("RGB", (5 * w, len(rows) * (h + 30)), (18, 20, 26))
+    dr = ImageDraw.Draw(sheet)
+    for j, (label, cells) in enumerate(rows):
+        y = j * (h + 30)
+        dr.text((6, y + 2), label, fill=(235, 236, 242))
+        for i, (cap, im) in enumerate(cells):
+            sheet.paste(im, (i * w, y + 28))
+            dr.text((i * w + 6, y + 16), cap, fill=(255, 210, 80) if i == 0 else (150, 220, 160))
+    sheet.save(out)
+    return out
+
+
 def holds_sheet(out, styles=None, new=None, tier="gatewrought"):
     """Each style: first person at rest as it is (the model JSON), as {@code new} would hold it, and in F5."""
     styles = styles or STYLES
@@ -1351,9 +1643,18 @@ def main(argv):
     if argv[0] == "audit":
         bad = audit()
         print(f"{len(bad)} moves strike with something other than their working part")
-        return 1 if bad or audit_tiers() else 0
+        tiers = audit_tiers()
+        return 1 if bad or tiers or audit_3p() else 0
     if argv[0] == "strip":
         print(strip(argv[1], argv[2], argv[3]))
+        return 0
+    if argv[0] == "wrist":
+        picks = [tuple(a.split(":")) for a in argv[2:]] or [
+            ("maul", "strike_2", "gatewrought_maul"), ("katana", "strike_3", "gatewrought_katana"),
+            ("axe", "strike_2", "gatewrought_axe"), ("scythe", "strike_1", "gatewrought_scythe"),
+            ("daggers", "strike_5", "wildhide_daggers"), ("shieldblade", "strike_2", "gatewrought_shieldblade"),
+            ("longsword", "strike_3", "beastbound_longsword")]
+        print(wrist_sheet(argv[1], picks))
         return 0
     if argv[0] == "film":
         print(film(argv[1], argv[2]))

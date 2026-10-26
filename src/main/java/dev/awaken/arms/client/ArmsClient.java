@@ -64,6 +64,7 @@ public final class ArmsClient {
                 e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, (entity, state) -> {
                     ArmsFeel.modify(entity, state);
                     ArmsOffHand.modify(entity, state);
+                    ArmsWrist.modify(entity, state); // last: its hands' items as the others left them, marked with their arm
                 }));
         modBus.addListener(ArmsClient::onExtensions);
         // vanilla blades seen from outside lay their ribbon from the posed hand

@@ -3387,8 +3387,12 @@ def row_hold(row, pos):
     rot, tr, sc = d
     # the left hand holds its true mirror (a pair's twin, or a weapon in the off hand), a single-edged one edge and all
     lrot, ltr, _ = AH.mirror_display(d, keep_edge=edge != 0)
-    return {"firstperson_righthand": {"rotation": list(rot), "translation": list(tr), "scale": [sc, sc, sc]},
-            "firstperson_lefthand": {"rotation": lrot, "translation": ltr, "scale": [sc, sc, sc]}}
+    out = {"firstperson_righthand": {"rotation": list(rot), "translation": list(tr), "scale": [sc, sc, sc]},
+           "firstperson_lefthand": {"rotation": lrot, "translation": ltr, "scale": [sc, sc, sc]}}
+    third = AH.third_person(row[8], edge)  # a single edge on the other side from its style's: turned over in F5 too
+    if third is not None:
+        out["thirdperson_righthand"], out["thirdperson_lefthand"] = third
+    return out
 
 
 def write_holds():

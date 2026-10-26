@@ -35,8 +35,12 @@ public final class FpSwings {
     /** Which hand a move strikes with (a weapon in each hand, the Daggers): the main, the off (the main's mirrored), both. */
     public enum Hand { MAIN, OFF, BOTH }
 
-    /** One move's keys: [dx, dy, dz, qx, qy, qz, qw, yaw, pitch, roll] per step of {@code dt} ticks, and its hand. */
-    public record Clip(float[] keys, Hand hand) {
+    /**
+     * One move's keys: [dx, dy, dz, qx, qy, qz, qw, yaw, pitch, roll] per step of {@code dt} ticks, and its hand; and in
+     * third person the wrist's turn of the weapon in each arm (degrees about its length, per {@code wristDt} ticks;
+     * empty when it doesn't turn).
+     */
+    public record Clip(float[] keys, Hand hand, float[] wristRight, float[] wristLeft) {
         public int size() {
             return keys.length / STRIDE;
         }
@@ -52,13 +56,15 @@ public final class FpSwings {
                         Vector3f hand) {}
 
     private static final Map<String, Style> STYLES = new HashMap<>();
-    private static float dt = 0.25F;
+    private static float dt = 0.25F, wristDt = 0.5F;
+    private static final float[] NONE = new float[0];
 
     static {
         try (InputStream in = FpSwings.class.getResourceAsStream(PATH)) {
             if (in != null) {
                 JsonObject root = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
                 dt = root.get("dt").getAsFloat();
+                if (root.has("wristDt")) wristDt = root.get("wristDt").getAsFloat();
                 for (var e : root.getAsJsonObject("styles").entrySet()) {
                     JsonObject st = e.getValue().getAsJsonObject();
                     Map<Archetype.Move, Clip> moves = new EnumMap<>(Archetype.Move.class);
@@ -73,7 +79,8 @@ public final class FpSwings {
                         }
                         JsonElement hand = mv.getValue().getAsJsonObject().get("hand");
                         Hand h = hand == null ? Hand.MAIN : Hand.valueOf(hand.getAsString().toUpperCase(java.util.Locale.ROOT));
-                        moves.put(m, new Clip(k, h));
+                        JsonObject wrist = mv.getValue().getAsJsonObject().getAsJsonObject("wrist3");
+                        moves.put(m, new Clip(k, h, floats(wrist, "right"), floats(wrist, "left")));
                     }
                     Vector3f grip = vec(st.getAsJsonArray("grip"));
                     STYLES.put(e.getKey(), new Style(moves, quat(st.getAsJsonArray("vanilla")), grip, vec(st.getAsJsonArray("vanillaGrip")),
@@ -84,6 +91,14 @@ public final class FpSwings {
         } catch (java.io.IOException | RuntimeException e) {
             Awaken.LOG.error("[arms] {} unreadable: the swings fall back to the rows' own", PATH, e);
         }
+    }
+
+    private static float[] floats(@Nullable JsonObject o, String key) {
+        if (o == null || !o.has(key)) return NONE;
+        JsonArray a = o.getAsJsonArray(key);
+        float[] out = new float[a.size()];
+        for (int i = 0; i < out.length; i++) out[i] = a.get(i).getAsFloat();
+        return out;
     }
 
     private static Quaternionf quat(JsonArray a) {
@@ -121,6 +136,26 @@ public final class FpSwings {
         float u = Math.min(1F, x - i);
         for (int n = 0; n < 3; n++) out[n] = k[i * STRIDE + 7 + n] + (k[j * STRIDE + 7 + n] - k[i * STRIDE + 7 + n]) * u;
         return true;
+    }
+
+    /**
+     * Third person: the wrist's turn (degrees about the weapon's own length, through its grip) at {@code t} ticks of a
+     * move's clip for the weapon in the right or the left arm, so its working side leads the blow (ArmsWrist); 0 when
+     * it doesn't turn.
+     */
+    public static float wrist(@Nullable Style st, Archetype.Move m, boolean left, float t) {
+        Clip c = st == null ? null : st.moves().get(m);
+        float[] k = c == null ? NONE : left ? c.wristLeft() : c.wristRight();
+        if (k.length == 0) return 0F;
+        float x = Math.max(0, t / wristDt);
+        int i = Math.min(k.length - 1, (int) x), j = Math.min(k.length - 1, i + 1);
+        return k[i] + (k[j] - k[i]) * Math.min(1F, x - i);
+    }
+
+    /** How long a move's wrist keys run (ticks; 0 without them). */
+    public static float wristLength(@Nullable Style st, Archetype.Move m) {
+        Clip c = st == null ? null : st.moves().get(m);
+        return c == null ? 0F : Math.max(c.wristRight().length, c.wristLeft().length) * wristDt;
     }
 
     private static final Quaternionf Q0 = new Quaternionf(), Q1 = new Quaternionf();
