@@ -41,7 +41,8 @@ public final class ProgressionClient {
         });
         event.register(ProgressionPayloads.OpenBand.TYPE, (msg, ctx) -> {
             Minecraft mc = Minecraft.getInstance();
-            if (mc.player != null) mc.gui.setScreen(statusOpener.get());
+            // the Status is the band's: off the wrist, a card's "Show me" has nothing to open (SPEC §16.4)
+            if (mc.player != null && dev.awaken.core.api.HoloBand.worn(mc.player)) mc.gui.setScreen(statusOpener.get());
         });
     }
 
