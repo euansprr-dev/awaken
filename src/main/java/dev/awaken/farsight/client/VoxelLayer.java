@@ -314,15 +314,24 @@ final class VoxelLayer implements AutoCloseable {
      * This frame's draws: every chunk at the level its blocks' size picks (and the next one too inside a cross-fade),
      * in view, and not drawn whole by Sodium.
      */
-    void plan(FarRenderer renderer, double camX, double camY, double camZ, float pixelsPerBlockAt1, int realWithin, boolean on) {
+    void plan(FarRenderer renderer, double camX, double camY, double camZ, float pixelsPerBlockAt1, int realWithin, boolean on, float haze) {
         drawPage.clear();
         drawQuads.clear();
         drawFirst.clear();
         quadsDrawn = 0;
         chunksDrawn = 0;
         if (!on) return;
-        // a level-l cell (2^l blocks) looks PIXELS pixels at this distance
-        for (int l = 0; l < VoxelMesher.LEVELS; l++) reach[l] = l == VoxelMesher.LEVELS - 1 ? Float.MAX_VALUE : (1 << l) * pixelsPerBlockAt1 / PIXELS;
+        // a level-l cell (2^l blocks) looks PIXELS pixels at this distance, more where the air has dimmed it (detail
+        // follows the air: a cell's error counts for what shows through the haze, so hazier distance needs less of it)
+        for (int l = 0; l < VoxelMesher.LEVELS; l++) {
+            if (l == VoxelMesher.LEVELS - 1) {
+                reach[l] = Float.MAX_VALUE;
+                continue;
+            }
+            float d = (1 << l) * pixelsPerBlockAt1 / PIXELS;
+            for (int k = 0; k < 3; k++) d = (1 << l) * pixelsPerBlockAt1 / PIXELS * (float) Math.exp(-haze * d);
+            reach[l] = d;
+        }
         for (int i = 0; i < live.size(); i++) {
             Chunk c = chunks[live.getInt(i)];
             float ax = (float) (c.cx * 16 - camX), az = (float) (c.cz * 16 - camZ), bx = ax + 16, bz = az + 16;

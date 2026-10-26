@@ -325,7 +325,8 @@ public final class FarSightClient {
         renderer.planTrees(field, cam.y, covered, hidden);
         // a block one block away spans this many pixels: City Sight picks each chunk's level by it
         float pixelsAt1 = (float) (main.height / (2.0 * Math.tan(Math.toRadians(Math.max(10f, camera.getFov())) / 2.0)));
-        voxels.plan(renderer, cam.x, cam.y, cam.z, pixelsAt1, rd * 16, (partsOff & 256) == 0);
+        float voxelHaze = 1.5e-4f * (1f + 3f * mc.level.getRainLevel(mc.getDeltaTracker().getGameTimeDeltaPartialTick(false)));
+        voxels.plan(renderer, cam.x, cam.y, cam.z, pixelsAt1, rd * 16, (partsOff & 256) == 0, voxelHaze);
         if ((partsOff & 2) != 0) renderer.treeDraws = 0;
         // the key light: the sun's strength by its height (a faint moon by night), weaker in rain; warm as it lowers
         float rain = mc.level.getRainLevel(partialTick), thunder = mc.level.getThunderLevel(partialTick);
