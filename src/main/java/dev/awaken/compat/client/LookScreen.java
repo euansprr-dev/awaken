@@ -35,7 +35,16 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
     private static final LookPresets.Preset[] PRESETS = LookPresets.Preset.values();
     // the clickable setting rows, in order
     private static final int S_LOOK = 0, S_FAR = 1, S_DISTANCE = 2, S_SCALE = 3, S_STEADY = 4, S_TEMPORAL = 5, SETTINGS = 6;
-    private static final int CARD_GAP = 6, PAD = 8, LINE = 10, TOP = 24, FOOT = 18;
+    // compact: the whole page fits a 240-pixel-high GUI (auto scale on a 4K or Retina screen)
+    private static final int CARD_GAP = 6, PAD = 8, LINE = 10, TOP = 20, FOOT = 15;
+    /** One line under each tier's name on this page (the tiers' longer blurbs are for the settings screen). */
+    private static String shortBlurb(Tier t) {
+        return switch (t) {
+            case SWIFT -> "Soft light · 120 fps";
+            case CINEMATIC -> "Sun shadows · 90+ fps";
+            case ULTRA -> "Finest light · 60+ fps";
+        };
+    }
     private static final int TITLE = 0xFFF4F6FB, LABEL = 0xFF8FA7C4, BLURB = 0xFFA9BBD4, DIM = 0xFF6F8299;
 
     private final @Nullable Screen parent;
@@ -74,11 +83,11 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
         blurbs.clear();
         int lines = 1;
         for (Tier t : TIERS) {
-            List<FormattedCharSequence> l = font.split(Component.literal(t.blurb), cw - 12);
+            List<FormattedCharSequence> l = font.split(Component.literal(shortBlurb(t)), cw - 12);
             blurbs.add(l);
             lines = Math.max(lines, l.size());
         }
-        ch = 6 + LINE + 3 + lines * LINE + 4 + LINE + 4;
+        ch = 5 + LINE + 2 + lines * LINE + 3;
         pcw = (pw - 2 * PAD - (PRESETS.length - 1) * CARD_GAP) / PRESETS.length;
         presetBlurbs.clear();
         int plines = 1;
@@ -87,7 +96,7 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
             presetBlurbs.add(l);
             plines = Math.max(plines, l.size());
         }
-        pch = 5 + LINE + 2 + plines * LINE + 3;
+        pch = 5 + LINE + 1 + plines * LINE + 3;
         ultra = LookSwitch.ultra();
         refreshFrames();
     }
@@ -165,12 +174,12 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
         List<FormattedCharSequence> noteLines = shown.isEmpty() ? List.of() : font.split(Component.literal(shown), innerW);
         int noteRoom = room.isEmpty() ? 0 : 3 + Math.min(3, font.split(Component.literal(room), innerW).size()) * LINE;
         // the presets with their heading, a rule, the settings, a rule, a line per row, the note
-        int presetsH = LINE + 2 + pch + 4;
+        int presetsH = LINE + 1 + pch + 3;
         int bodyH = 5 + SETTINGS * LINE + 5 + 5 + rows.size() * LINE + noteRoom;
-        int ph = TOP + ch + 6 + presetsH + bodyH + FOOT;
+        int ph = TOP + ch + 5 + presetsH + bodyH + FOOT;
         int py = Math.max(6, (height - ph) / 2);
         cardsY = py + TOP;
-        presetsY = cardsY + ch + 6 + LINE + 2;
+        presetsY = cardsY + ch + 5 + LINE + 1;
 
         float ms = (System.nanoTime() - openedAt) / 1e6f;
         if (holo) {
@@ -189,9 +198,9 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
         }
 
         LookPresets.Preset preset = LookPresets.current();
-        row(g, innerX, innerW, cardsY + ch + 6, "PRESETS", preset == null ? "a custom mix" : preset.label, preset == null ? Glass.LABEL : Glass.GOOD);
+        row(g, innerX, innerW, cardsY + ch + 5, "PRESETS", preset == null ? "a custom mix" : preset.label, preset == null ? Glass.LABEL : Glass.GOOD);
         for (int i = 0; i < PRESETS.length; i++) presetChip(g, i, PRESETS[i], PRESETS[i] == preset, holo);
-        int y = presetsY + pch + 4;
+        int y = presetsY + pch + 3;
         y = rule(g, innerX, innerW, y);
         for (int i = 0; i < SETTINGS; i++) {
             settingY[i] = y;
@@ -210,8 +219,7 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
             int colour = Glass.a(why ? Glass.AMBER : noteColour, 1f);
             for (int l = 0; l < Math.min(3, noteLines.size()); l++) HudLook.text(g, font, noteLines.get(l), innerX, y + l * LINE, colour, false);
         }
-        HudLook.centered(g, font, "Click a tier (1 · 2 · 3) or a preset · click a setting to change it, right click back · Esc",
-                px + pw / 2, py + ph - 13, DIM, false);
+        HudLook.centered(g, font, "Click to choose or change · right click: back · Esc", px + pw / 2, py + ph - 12, DIM, false);
         if (holo) g.disableScissor();
     }
 
@@ -228,7 +236,7 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
         }
         HudLook.text(g, font, p.label, x + 5, y + 5, Glass.a(on ? Glass.GOOD : TITLE, 1f), false);
         List<FormattedCharSequence> lines = presetBlurbs.get(i);
-        for (int l = 0; l < lines.size(); l++) HudLook.text(g, font, lines.get(l), x + 5, y + 5 + LINE + 2 + l * LINE, Glass.a(BLURB, 1f), false);
+        for (int l = 0; l < lines.size(); l++) HudLook.text(g, font, lines.get(l), x + 5, y + 5 + LINE + 1 + l * LINE, Glass.a(BLURB, 1f), false);
     }
 
     /** One setting: its name on the left, "‹ value ›" on the right, brighter under the mouse. */
@@ -293,14 +301,11 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
             if (on) g.outline(x + 1, y + 1, cw - 2, ch - 2, Glass.a(Glass.GOOD, 0.55f));
         }
         float dim = can ? 1f : 0.55f;
-        HudLook.text(g, font, t.label, x + 6, y + 6, Glass.a(TITLE, dim), false);
+        HudLook.text(g, font, (on ? "● " : "") + t.label, x + 6, y + 5, Glass.a(on ? Glass.GOOD : TITLE, dim), false);
         String key = String.valueOf(i + 1);
-        HudLook.text(g, font, key, x + cw - 6 - font.width(key), y + 6, Glass.a(Glass.LANTERN, 0.75f * dim), false);
+        HudLook.text(g, font, key, x + cw - 6 - font.width(key), y + 5, Glass.a(Glass.LANTERN, 0.75f * dim), false);
         List<FormattedCharSequence> lines = blurbs.get(i);
-        for (int l = 0; l < lines.size(); l++) HudLook.text(g, font, lines.get(l), x + 6, y + 19 + l * LINE, Glass.a(BLURB, dim), false);
-        String status = on ? "● ON" : !can ? "NOT AVAILABLE" : hover ? "CHOOSE" : "";
-        int colour = on ? Glass.GOOD : !can ? Glass.AMBER : Glass.EDGE;
-        if (!status.isEmpty()) HudLook.text(g, font, status, x + 6, y + ch - 14, Glass.a(colour, 1f), false);
+        for (int l = 0; l < lines.size(); l++) HudLook.text(g, font, lines.get(l), x + 6, y + 5 + LINE + 2 + l * LINE, Glass.a(BLURB, dim), false);
     }
 
     /** The rows under the tiers: the frame-time line and the horizon, then what each mod has. */

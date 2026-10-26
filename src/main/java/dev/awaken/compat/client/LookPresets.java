@@ -18,10 +18,10 @@ public final class LookPresets {
     private LookPresets() {}
 
     public enum Preset {
-        PERFORMANCE("PERFORMANCE", "Most fps: soft light, 4 km horizon, 12 chunks.", Tier.SWIFT, FarSight.NEAR, 12, 0.75, false),
-        CLOSE_UP("CLOSE-UP", "Finest light and full 4K up close; no far terrain.", Tier.ULTRA, FarSight.OFF, 12, 1.0, true),
-        BALANCED("BALANCED", "Cinematic light, the 16 km horizon, 16 chunks.", Tier.CINEMATIC, FarSight.FULL, 16, 0.75, true),
-        VISTA("VISTA", "The longest view: 24 chunks of real blocks, 16 km beyond.", Tier.CINEMATIC, FarSight.FULL, 24, 0.75, true);
+        PERFORMANCE("PERFORMANCE", "Most fps", Tier.SWIFT, FarSight.NEAR, 12, 0.75, false),
+        CLOSE_UP("CLOSE-UP", "Sharpest up close", Tier.ULTRA, FarSight.OFF, 12, 1.0, true),
+        BALANCED("BALANCED", "Cinematic, 16 km", Tier.CINEMATIC, FarSight.FULL, 16, 0.75, true),
+        VISTA("VISTA", "Longest view", Tier.CINEMATIC, FarSight.FULL, 24, 0.75, true);
 
         public final String label, blurb;
         public final Tier tier;
