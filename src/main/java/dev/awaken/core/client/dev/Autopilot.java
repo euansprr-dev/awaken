@@ -99,7 +99,7 @@ public final class Autopilot {
     // settle before shots: a slower machine (GitHub's 3-core runners) is still loading and building chunks after the
     // waits a script was written with on the Mac
     private static final int SETTLE_TICKS = Integer.getInteger("awaken.autopilot.settle", 0) * 20;
-    private static int settleWaited, settleBuilt, settleQuiet, settleChunks;
+    private static int settleWaited, settleBuilt, settleQuiet, settleChunks, settleSpent;
 
     public static void init() {
         String path = System.getProperty("awaken.autopilot");
@@ -209,17 +209,23 @@ public final class Autopilot {
     }
 
     /**
-     * With settling on: true once every chunk within the render distance has arrived (or none has come for 10 s: a void
-     * cell, the world's edge) and every section the renderer knows has been built (Sodium answers this too) for a second,
-     * past the sections' fade-in; or after SETTLE_TICKS. Called once a tick until true.
+     * With settling on: true at once if every chunk within the render distance has arrived (or none has come for 10 s: a
+     * void cell, the world's edge) and every section the renderer knows is built (Sodium answers this too); else once
+     * that has held for a second, past the sections' fade-in; or after SETTLE_TICKS. At most ten minutes a tour, so a world
+     * that never settles costs a long tour no more than that. Called once a tick until true.
      */
     private static boolean settled(Minecraft mc, String shot) {
-        if (SETTLE_TICKS <= 0 || mc.level == null || mc.player == null) return true;
+        if (SETTLE_TICKS <= 0 || mc.level == null || mc.player == null || settleSpent >= 20 * 600) return true;
+        settleSpent++;
         int chunks = mc.level.getChunkSource().getLoadedChunksCount();
         settleQuiet = chunks == settleChunks ? settleQuiet + 1 : 0;
         settleChunks = chunks;
-        boolean arrived = settleQuiet >= 200 || chunksArrived(mc);
-        settleBuilt = arrived && mc.levelRenderer.hasRenderedAllSections() ? settleBuilt + 1 : 0;
+        boolean now = (settleQuiet >= 200 || chunksArrived(mc)) && mc.levelRenderer.hasRenderedAllSections();
+        if (now && settleWaited == 0) { // nothing loading: the shot keeps the script's own timing
+            settleQuiet = 0;
+            return true;
+        }
+        settleBuilt = now ? settleBuilt + 1 : 0;
         boolean ready = settleBuilt >= 20;
         if (!ready && ++settleWaited < SETTLE_TICKS) return false;
         if (settleWaited > 20) {

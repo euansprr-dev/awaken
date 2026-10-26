@@ -30,7 +30,15 @@ history behind them. `docs/SPEC.md` is the source of truth for every system.
   3. Merge with `--no-ff`.
   4. Run `slot.sh build tools/gradle.sh 900 build -x test`.
   5. Push, then watch the build's CI.
-- **The machine lock:** wrap every Gradle run and tour in `/Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh
+- **Tours on CI:** `.github/workflows/tours.yml` runs one autopilot tour per dispatch on a macos-15 runner (Vulkan on
+  its paravirtual GPU, a virtual display like the MacBook's), free and in parallel (about 5 at once), 5-8 minutes from
+  dispatch to shots. Builders run `tools/tour-ci.sh <script> [timeout] [KEY=VAL ...]` after pushing; it waits and
+  downloads the shots, logs and summary into `run-autopilot/screenshots-ci/<script>-<run id>/`, and exits non-zero if
+  the tour failed. The run's artifact keeps them 7 days. Caches (Gradle, Mojang's assets, pack mods) are written only by
+  runs on build/awaken-v1: after a merge that changes Minecraft, NeoForge or pack/lock.json, run one tour there
+  (`tools/tour-ci.sh tools/autopilot/ci-probe.txt`) to warm them. Mac-only (under `slot.sh tour`): perf and frame-time
+  tours, Far Sight's tours (the runner's GPU scrambles its far mesh, so CI tours run without Far Sight), sound listening.
+- **The machine lock:** wrap every Gradle run and Mac tour in `/Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh
   build|tour|light <cmd>`. Set `SLOT_WHO=<you>`. A tour runs alone.
 - **Local tests:** `tools/gradle.sh 900 runGameTestServer -Ptests=<prefix>` runs only the tests you name.
 - **Euan plays** with `tools/play.sh --pack`. It builds `build/awaken-v1` into `/Volumes/MEDIA/Awaken-play`, runs on
