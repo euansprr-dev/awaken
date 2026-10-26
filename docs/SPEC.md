@@ -2278,6 +2278,9 @@ Precursor wards (`wilds.ward`, config `features.wards`):
 - Inside a ward a block in `#awaken:ward_sealed` (every Precursor building block plus the deepslate and blackstone
   dressing ruins build with) can't be broken by a player, an explosion or a piston (pistons inside a ward never move).
   The vault's sealed chamber is enclosed in those blocks, so a rank door can't be dug around. Natural ground still digs.
+  A Hearth's radius gives a site's walls to its owner, **except a vault's** (vault and spawn vault): those hold even
+  inside a Hearth, or a Hearth Anchor beside a vault would let an under-ranked hunter dig round its rank door (2026-10-26,
+  with the Tether Vow's rank lock, §17.7). Placed blocks still stay inside a Hearth.
 - Its own look and sound, never vanilla: `awaken:ward_spark` (a thread of the Signal's #7FC3FF light) and `awaken:ward_grain`
   (a chip tinted by the block's map colour), built on the client from one `ward_fx` event (mark, crumble, hold); sounds
   `wilds.ward_mark`, `wilds.ward_crumble`, `wilds.ward_hold` (tools/art/specs/audio_wilds.py; sprites tools/art/specs/wilds.py).

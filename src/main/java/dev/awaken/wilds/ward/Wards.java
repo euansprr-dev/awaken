@@ -1,6 +1,7 @@
 package dev.awaken.wilds.ward;
 
 import dev.awaken.Awaken;
+import dev.awaken.above.ruin.RuinKind;
 import dev.awaken.core.AwakenConfig;
 import dev.awaken.core.api.HearthHooks;
 import dev.awaken.core.api.WardHooks;
@@ -66,9 +67,21 @@ public final class Wards {
         return w;
     }
 
-    /** Whether this block is part of a site's walls and stands inside an enforced ward. */
+    /**
+     * Whether this block is part of a site's walls and stands inside a ward that holds them. A Hearth's radius gives
+     * the walls to its owner, except a vault's: they keep its rank door honest, so they hold even there (Euan,
+     * 2026-10-26: an under-ranked hunter must not get into a vault; a Hearth Anchor beside one let them dig round it).
+     */
     public static boolean sealed(ServerLevel level, BlockPos pos, BlockState state) {
-        return state.is(SEALED) && enforced(level, pos).isPresent();
+        if (!state.is(SEALED) || !on()) return false;
+        Optional<WardHooks.Ward> w = WardHooks.at(level, pos);
+        return w.isPresent() && (!HearthHooks.inside(level, pos) || rankDoored(w.get()));
+    }
+
+    /** A site whose sealed chamber waits behind a rank door: the vaults. */
+    static boolean rankDoored(WardHooks.Ward w) {
+        return w.kind().equals(RuinKind.VAULT.structure.identifier().getPath())
+                || w.kind().equals(RuinKind.SPAWN_VAULT.structure.identifier().getPath());
     }
 
     // ---- the structure source -------------------------------------------------------------------------------------
