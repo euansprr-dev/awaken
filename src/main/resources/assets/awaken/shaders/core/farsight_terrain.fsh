@@ -175,8 +175,8 @@ void main() {
     bool water = depth > 0.5 && flatWater;
     bool bank = depth > 0.5 && !flatWater;
     // under the real chunks it stays hidden, but only where they are drawn: where they are loaded (a fresh teleport, a
-    // fast flight) and within the render distance as Sodium culls it, in 3D from the camera (seen from high up, the sea
-    // ends well inside the horizontal render distance, and its floor sooner); far water keeps to its own floor's reach,
+    // fast flight) and in a section Sodium draws (farRealSection: seen from high up, the sea floor falls out of its reach
+    // well inside the horizontal render distance); far water keeps to its own floor's reach,
     // so a real water surface drawn over a floor too far to draw keeps the far sea under it
     vec3 reach = vec3(vRel.x, vRel.y - (water ? depth : 0.0), vRel.z);
     // far water stays under the real water too (unless the camera is under the sea): wherever a real section isn't drawn
@@ -187,7 +187,7 @@ void main() {
     // there would show as boxes on the city's canals
     bool surface = abs(facet.y) > 0.97 * length(facet) && horizontal > FarDepth.z - 80.0;
     bool underReal = !(water && surface && FarFog.z >= FarFog.w);
-    if (length(reach) < FarDepth.z + FarDepth.w * bayer4(gl_FragCoord.xy)) {
+    if (farRealSection(reach)) {
         ivec2 chunk = (FarCamInt.xz >> 4) + ivec2(floor(rel / 16.0));
         if (underReal && texelFetch(ChunkSampler, chunk & 63, 0).r > 0.5) {
             // debug view 2: where the mask hides far terrain, red instead (red that shows is a hole the chunks leave)

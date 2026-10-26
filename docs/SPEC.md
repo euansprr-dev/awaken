@@ -1468,18 +1468,21 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   mesh: vertex `v` is the piece's corner `(v % 65, v / 65)`, one index buffer per piece width (8..64). A corner takes
   the generated layer, else the prediction, and over the window's outer 16 cells eases into the next coarser ring's
   surface (bilinear between its corners), exactly at the edge: no crack, no pop. A corner with no data takes the coarser
-  rings' surface, else open sea at sea level (never a collapsed vertex). Far terrain is hidden where the real chunks are drawn,
-  dithering in over 32 blocks at the render distance's edge: where they are loaded and meshed (a 64×64 chunk mask: a
-  chunk counts once its surface section and the three below are built) and within the render distance in 3D from the
-  camera, as Sodium culls them (a sphere of the render distance). Seen from high up the real sea ends well inside the
+  rings' surface, else open sea at sea level (never a collapsed vertex). Far terrain is hidden exactly where the real
+  chunks are drawn: where they are loaded and meshed (a 64×64 chunk mask: a chunk counts once its surface section and
+  the three below are built, or 2 s after it loads, since Sodium never builds sections it can't see) and in a section
+  Sodium draws, by its own rule (`farRealSection`, from Sodium 0.9.3's `OcclusionCuller`: the section's box grown by a
+  block within the render distance horizontally, as a circle, and vertically). (2026-10-26, Euan: a smooth dark wedge
+  on a loaded spire and a grey box behind a quay's tower: the mask was a sphere 48 blocks short of the render distance,
+  so in that band far cells, wider than a spire, stood with the real chunks.) Seen from high up the real sea ends well inside the
   horizontal render distance, and its floor sooner, so far water tests its own floor's distance and stays under a real
   water surface whose floor is too far to draw. Far water is not hidden under the real chunks in the render distance's outer band (the last 80 blocks), where the
   mesh lies flat and the camera is above the sea (2026-10-26: a steep far triangle from a canal to a roof stood as a blue
   wall in the loaded city, and nearer far water showed as boxes on its canals; the real floor is always drawn nearer),
   unless the camera is
   under the sea (2026-10-26, Euan's play: sky-coloured slabs on the sea where Sodium skipped a section), and grazing far
-  water reflects the sky by the horizon at every distance, as Lens's real water beside it does. The planner and the windows count as covered only the ground the
-  sphere reaches at a sea floor (40 under sea level) below the camera, in 16-block steps. (2026-10-26: the pale squares
+  water reflects the sky by the horizon at every distance, as Lens's real water beside it does. The planner and the windows count as covered only the ground a
+  sphere 48 blocks inside the render distance reaches at a sea floor (40 under sea level) below the camera, in 16-block steps. (2026-10-26: the pale squares
   over the sea after a jump and the pale frame along a flight were these holes, found with `farsight debug 2`, which
   paints masked far terrain red. They were first taken for water walls and for vanilla's chunk fade-in; a Turbo
   fluid-renderer mixin and a fade override were built for those, removed nothing, and were dropped.)

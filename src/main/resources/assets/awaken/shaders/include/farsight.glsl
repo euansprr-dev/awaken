@@ -20,13 +20,27 @@ layout(std140) uniform FarFrame {
     ivec4 FarTexel[7];  // per ring: the window's first corner as a texel (x, z), the ring's first atlas row
     vec4 FarSunColor;   // rgb the sunlight's colour, a golden hour (0..1)
     vec4 FarAir;        // x haze per block at sea level, y its scale height (blocks), z sun in-scatter, w rain (0..1)
-    ivec4 FarCamInt;    // the camera's x and z rounded down to a multiple of 256 (exact world cells for the shaders)
+    ivec4 FarCamInt;    // x, y the camera's x and z rounded down to a multiple of 256 (exact world cells for the shaders);
+                        // z Sodium's render distance in blocks
     vec4 FarMist;       // valley cloud: x its floor (y), y its depth (blocks), z density per block, w how much of the sky
                         // it covers (0 none .. 1 a cloud sea)
 };
 
 float farHeight(float texel) {
     return texel * (65535.0 / 16.0) - 1024.0;
+}
+
+// Whether Sodium draws the section holding p (blocks from the camera) when its chunk is loaded: it draws a section whose
+// box, grown by a block, comes within the render distance horizontally (a circle) and vertically (OcclusionCuller,
+// Sodium 0.9.3). Far terrain hides exactly there: no band where both draw (a far cell's top round a thin spire, a far
+// roof standing over the real one) and none where neither does.
+bool farRealSection(vec3 p) {
+    vec2 o = floor((p.xz + FarCam.xz) / 16.0) * 16.0 - FarCam.xz;
+    vec2 d = clamp(vec2(0.0), o - 1.0, o + 17.0);
+    float oy = floor((p.y + FarFog.z) / 16.0) * 16.0 - FarFog.z;
+    float dy = clamp(0.0, oy - 1.0, oy + 17.0);
+    float r = float(FarCamInt.z);
+    return dot(d, d) < r * r && abs(dy) < r;
 }
 
 // a cheap, well-spread hash of two integers to [0, 1)

@@ -363,12 +363,13 @@ final class FarRenderer implements AutoCloseable {
     /**
      * Draws the planned pieces into the main colour target and Far Sight's depth. {@code sun} is the light's direction
      * (world space); {@code fogStart}/{@code fogEnd} Far Sight's own fog at the horizon; {@code clipStart}/{@code clipBand}
-     * where it dithers in under the real chunks.
+     * where the outer band of the real chunks begins; {@code realWithin} Sodium's render distance in blocks (the shaders
+     * hide far terrain in every loaded section it draws).
      */
     void draw(FarField field, RenderTarget main, Matrix4fc viewRotation, double camX, double camY, double camZ, Vector3f sun,
             float sunStrength, Vector3f sunColour, float golden, float haze, float rain, float mistFloor, float mistDepth, float mistDensity,
             float mistCover, float fogStart, float fogEnd, float clipStart,
-            float clipBand, int seaLevel, boolean zeroToOne, GpuTextureView lightmap, List<FarLandmarks.Landmark> landmarks) {
+            float clipBand, int realWithin, int seaLevel, boolean zeroToOne, GpuTextureView lightmap, List<FarLandmarks.Landmark> landmarks) {
         depth(main);
         // clip.z = A + B * clip.w: Far Sight's own planes on the game's x, y and w (so view bobbing and FOV still apply)
         float a, b;
@@ -393,7 +394,7 @@ final class FarRenderer implements AutoCloseable {
             for (int r = 0; r < Rings.RINGS; r++) {
                 u.putIVec4((field.winX[r] * Rings.PATCH) & Rings.MASK, (field.winZ[r] * Rings.PATCH) & Rings.MASK, r * Rings.SIZE, 0);
             }
-            u.putVec4(sunColour.x, sunColour.y, sunColour.z, golden).putVec4(haze, AIR_SCALE_HEIGHT, AIR_SUN, rain).putIVec4(cellX, cellZ, 0, 0)
+            u.putVec4(sunColour.x, sunColour.y, sunColour.z, golden).putVec4(haze, AIR_SCALE_HEIGHT, AIR_SUN, rain).putIVec4(cellX, cellZ, realWithin, 0)
                     .putVec4(mistFloor, mistDepth, mistDensity, mistCover);
         }
         GpuBuffer draws = drawUbo.currentBuffer();
