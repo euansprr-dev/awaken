@@ -3,14 +3,15 @@
   "category": "equipment",
   "group": "awaken_hunter_focus",
   "key": {
-    "B": "#awaken:hunter_bind_d",
     "C": "#awaken:hunter_core_d",
+    "G": "minecraft:gold_ingot",
+    "M": "#awaken:tier_metal_d",
     "S": "awaken:essence_shard"
   },
   "pattern": [
-    "SBS",
+    "SGS",
     " C ",
-    " B "
+    " M "
   ],
   "result": {
     "id": "awaken:beastbound_focus"

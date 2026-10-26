@@ -1,0 +1,60 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "rope": "awaken:block/runner_line",
+    "particle": "awaken:block/runner_line"
+  },
+  "elements": [
+    {
+      "from": [
+        7.25,
+        0,
+        7.25
+      ],
+      "to": [
+        8.75,
+        16,
+        8.75
+      ],
+      "faces": {
+        "north": {
+          "texture": "#rope",
+          "uv": [
+            6,
+            0,
+            9,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#rope",
+          "uv": [
+            6,
+            0,
+            9,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#rope",
+          "uv": [
+            6,
+            0,
+            9,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#rope",
+          "uv": [
+            6,
+            0,
+            9,
+            16
+          ]
+        }
+      }
+    }
+  ]
+}

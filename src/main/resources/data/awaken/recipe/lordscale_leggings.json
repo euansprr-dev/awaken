@@ -3,14 +3,14 @@
   "category": "equipment",
   "group": "awaken_hunter_leggings",
   "key": {
-    "B": "#awaken:hunter_bind_a",
     "C": "#awaken:hunter_core_a",
     "H": "#awaken:hunter_hide_a",
+    "M": "#awaken:tier_metal_a",
     "S": "awaken:essence_shard"
   },
   "pattern": [
     "HCH",
-    "B B",
+    "M M",
     "S S"
   ],
   "result": {

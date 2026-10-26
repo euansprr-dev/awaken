@@ -423,11 +423,13 @@ final class ArmsTests {
     static void forge(GameTestHelper h) {
         ServerPlayer p = fighter(h, 1.5, 0.5, 0F);
         p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ArmsItems.item("wildhide_glaive")));
-        p.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(Items.BLAZE_POWDER));
+        Item heat = ArmsForge.catalystItem(dev.awaken.core.Forces.Force.HEAT);
+        h.assertTrue(heat != Items.AIR, "Heat's catalyst (Sunshard) is registered");
+        p.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(heat));
         h.assertTrue(!ArmsForge.attune(p, dev.awaken.core.Forces.Force.HEAT), "nothing to pay with: no attunement (creative "
                 + p.isCreative() + ", essence " + ArmsForge.count(p, dev.awaken.core.api.CoreApi.ESSENCE_SHARD.get()) + ")");
         for (ArmsForge.Cost c : ArmsForge.attunePrice(dev.awaken.core.Forces.Force.HEAT)) {
-            if (c.item() != Items.BLAZE_POWDER) p.getInventory().add(new ItemStack(c.item(), c.n()));
+            if (c.item() != heat) p.getInventory().add(new ItemStack(c.item(), c.n()));
         }
         h.assertTrue(ArmsForge.attune(p, dev.awaken.core.Forces.Force.HEAT), "with its price, it attunes");
         h.assertTrue(ArmsForge.attunement(p) == dev.awaken.core.Forces.Force.HEAT && p.getOffhandItem().isEmpty(), "attuned to Heat, the catalyst spent");

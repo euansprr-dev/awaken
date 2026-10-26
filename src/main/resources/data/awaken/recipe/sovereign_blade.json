@@ -3,15 +3,15 @@
   "category": "equipment",
   "group": "awaken_hunter_blade",
   "key": {
-    "B": "#awaken:hunter_bind_s",
     "C": "#awaken:hunter_core_s",
     "L": "awaken:lord_heart",
+    "M": "#awaken:tier_metal_s",
     "S": "awaken:essence_shard"
   },
   "pattern": [
     "  C",
     "LC ",
-    "BS "
+    "MS "
   ],
   "result": {
     "id": "awaken:sovereign_blade"
