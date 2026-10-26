@@ -205,8 +205,49 @@ public final class LivingNet {
         }
     }
 
+    /**
+     * Server → client: the first thread's staged moments (SPEC §27.6). {@code GATE}: the High Gate's shot of the camp's
+     * smoke ({@code at} the fire, {@code n} metres to it, {@code text} "who|line" said over it, then on a second line
+     * "land|low|high", the region it names). {@code BEGIN}: Ilse's
+     * scene by her fire ({@code entity} her, {@code at} the fire). {@code LINE}: one of her lines ("who|line", {@code n}
+     * ticks). {@code DELIVERED}: the letters changed hands. {@code OFFER}: she holds the coal out ({@code entity}).
+     * {@code END}: the scene is over.
+     */
+    public record FirstScene(int kind, int entity, net.minecraft.core.BlockPos at, int n, String text) implements CustomPacketPayload {
+        public static final int GATE = 0, BEGIN = 1, LINE = 2, DELIVERED = 3, OFFER = 4, END = 5;
+        public static final Type<FirstScene> TYPE = new Type<>(Awaken.id("living_first_scene"));
+        public static final StreamCodec<ByteBuf, FirstScene> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, FirstScene::kind,
+                ByteBufCodecs.VAR_INT, FirstScene::entity,
+                net.minecraft.core.BlockPos.STREAM_CODEC, FirstScene::at,
+                ByteBufCodecs.VAR_INT, FirstScene::n,
+                ByteBufCodecs.stringUtf8(512), FirstScene::text,
+                FirstScene::new);
+
+        @Override
+        public Type<FirstScene> type() {
+            return TYPE;
+        }
+    }
+
+    /** Client → server: the coal taken from Ilse's hand ({@code TOOK}), or a held skip ({@code SKIP}). */
+    public record FirstSceneReady(int what) implements CustomPacketPayload {
+        public static final int TOOK = 0, SKIP = 1;
+        public static final Type<FirstSceneReady> TYPE = new Type<>(Awaken.id("living_first_scene_ready"));
+        public static final StreamCodec<ByteBuf, FirstSceneReady> STREAM_CODEC = ByteBufCodecs.VAR_INT.map(FirstSceneReady::new, FirstSceneReady::what);
+
+        @Override
+        public Type<FirstSceneReady> type() {
+            return TYPE;
+        }
+    }
+
     static void register(RegisterPayloadHandlersEvent e) {
         var r = e.registrar("1");
+        r.playToClient(FirstScene.TYPE, FirstScene.STREAM_CODEC);
+        r.playToServer(FirstSceneReady.TYPE, FirstSceneReady.STREAM_CODEC, (m, ctx) -> {
+            if (ctx.player() instanceof net.minecraft.server.level.ServerPlayer sp) FirstScenes.ready(sp, m.what());
+        });
         r.playToClient(Happenings.TYPE, Happenings.STREAM_CODEC);
         r.playToClient(Journal.TYPE, Journal.STREAM_CODEC);
         r.playToClient(Tells.TYPE, Tells.STREAM_CODEC);

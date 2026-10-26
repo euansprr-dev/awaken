@@ -48,6 +48,7 @@ public final class LivingModule {
         dev.awaken.living.quest.Relics.register(modBus);
         dev.awaken.living.wayfarer.Scenes.init();
         FirstThread.init(); // the first thread out of Carillon, and chains on the Now line (SPEC §27.6)
+        FirstScenes.init(); // its High Gate shot and Ilse's scene by the fire
         modBus.addListener(LivingNet::register);
         XpBudget.register(HUNT, 0.10);
         XpBudget.register("pulse", 0.15);
@@ -88,6 +89,9 @@ public final class LivingModule {
         bus.addListener(LivingDamageEvent.Post.class, Hits::onDamage);
         bus.addListener(LivingDropsEvent.class, LootPillars::onDrops);
         bus.addListener(LivingDeathEvent.class, dev.awaken.living.quest.QuestEngine::onDeath);
+        // the Wayfarers' camp keeps its ground: no monster spawns, none hunts there (SPEC §27.6)
+        bus.addListener(net.neoforged.neoforge.event.entity.living.MobSpawnEvent.SpawnPlacementCheck.class, dev.awaken.living.wayfarer.Camp::onSpawnCheck);
+        bus.addListener(net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent.class, dev.awaken.living.wayfarer.Camp::onTarget);
         bus.addListener(dev.awaken.living.quest.QuestBook::addReload);
         bus.addListener(dev.awaken.living.bounty.Bounties::addReload);
         bus.addListener(dev.awaken.living.pulse.HappeningBook::addReload);
@@ -133,6 +137,7 @@ public final class LivingModule {
                 dev.awaken.living.pulse.Pulse.tick(e.getServer());
                 if (!quiet) dev.awaken.living.population.Ledger.tick(e.getServer());
                 if (!quiet) dev.awaken.living.camp.Camps.tick(e.getServer());
+                dev.awaken.living.wayfarer.Camp.ward(e.getServer());
             }
             dev.awaken.living.quest.Relics.wardTick(e.getServer());
             if (shown(e.getServer())) dev.awaken.living.craft.CraftEvents.tick(e.getServer());

@@ -277,8 +277,9 @@ final class OpeningDirector {
         CitizenHooks.post(server.overworld(), Awaken.id("bell_wrong"), at.square());
         dev.awaken.core.Later.run(server, LINE_AFTER, () -> {
             if (p.isRemoved() || beat(p) != Prologue.RUN) return;
+            // the System's first contact: its moment in the run, never filed (in the Journal it read as a real bug)
             Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("[ERROR] … candidate found."))
-                    .ttl(20 * 5).priority(9).build());
+                    .ttl(20 * 5).priority(9).fleeting().build());
         });
         DirectorLog.log(p, "opening", "the bell rings wrong; the run begins");
     }

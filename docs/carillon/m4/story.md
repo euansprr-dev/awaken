@@ -4,6 +4,10 @@ For Euan's approval with the look bible. One page of story, then the exact lines
 Choir, the Signal, the Precursors, Vael, the tone rules) and the approved Ritual (docs/proposals/the-ritual.md). All lines
 are authored: no language model at runtime. No em dashes in anything the player reads.
 
+> **2026-10-26: plain words.** After playing it, Euan asked for every line in the first sequence to sound like a
+> person talking, not a riddle ("place this wherever you want your home to be"). The lines in the code are now the plain
+> versions (SPEC §27.6, "Plain words, start to finish"); where the tables below differ, the code wins.
+
 ## The premise
 
 Carillon is a walled city of bells, built on top of the Choir, a machine the Precursors left under it. Gates tear open

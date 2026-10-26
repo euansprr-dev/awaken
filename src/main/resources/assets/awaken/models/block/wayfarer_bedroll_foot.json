@@ -1,0 +1,79 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "bedroll": "awaken:block/wayfarer_bedroll",
+    "particle": "awaken:block/wayfarer_bedroll"
+  },
+  "elements": [
+    {
+      "name": "mat",
+      "from": [
+        1,
+        0,
+        0
+      ],
+      "to": [
+        15,
+        1.5,
+        16
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            0,
+            7,
+            8
+          ],
+          "texture": "#bedroll"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            7,
+            8
+          ],
+          "texture": "#bedroll",
+          "cullface": "down"
+        },
+        "north": {
+          "uv": [
+            0,
+            9,
+            7,
+            10
+          ],
+          "texture": "#bedroll"
+        },
+        "south": {
+          "uv": [
+            0,
+            9,
+            7,
+            10
+          ],
+          "texture": "#bedroll"
+        },
+        "east": {
+          "uv": [
+            0,
+            8,
+            8,
+            9
+          ],
+          "texture": "#bedroll"
+        },
+        "west": {
+          "uv": [
+            0,
+            8,
+            8,
+            9
+          ],
+          "texture": "#bedroll"
+        }
+      }
+    }
+  ]
+}

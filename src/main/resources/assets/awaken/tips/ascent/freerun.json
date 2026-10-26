@@ -1,5 +1,5 @@
 {
-  "text": "Hold {key.sprint} with {key.forward}: the body vaults, climbs, runs along walls and leaps from edges for you.",
+  "text": "Hold {key.sprint} and {key.forward} and you'll vault, climb, run along walls and leap from edges on your own.",
   "short": "hold {key.sprint}",
   "priority": 55,
   "show_for": 140,
