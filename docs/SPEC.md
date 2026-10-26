@@ -6666,11 +6666,13 @@ plans the roads within 1,100 of each player ahead of them, eight a pass.
 nodes at most), costing grade squared, refusing cliffs (over 0.6), open water (only narrow crossings with land on both
 sides) and deep sea, with a small price on height so it takes low passes; corners cut (Chaikin twice); laid every 4
 blocks; its profile the land's own height smoothed over three points each side, never more than a block a point (two
-where the land is that steep), held at the ends and level over water. Bridges at surface + 2 (timber, or stone near a
-town and on a highroad's spans of 6+), boardwalks over the mire's shallows, causeways over brooks. It keeps off a
-settlement's **built ground** (houses, streets, square, walls, landmarks, three round them) but may cross its fields;
-each settlement keeps a way **14 wide clear past every street end** a road leaves by (`VillagePlanner.keepExits`: no
-field, pen, garden, tree or house there; W3's villages read this too, so their fields shift a little in new worlds).
+where the land is that steep), held at the ends and level over water. The road north out of the camp (the one every
+player follows), where no narrow way is found, tries again allowing wide water (land within 48 on both sides; the deep
+sea still refused). Bridges at surface + 2 (timber, or stone near a town and on a highroad's spans of 6+), boardwalks
+over the mire's shallows, causeways over brooks. It keeps off a settlement's **built ground** (houses, streets, square,
+walls, landmarks, three round them) but may cross its fields; each settlement keeps a way **14 wide clear past every
+street end** a road leaves by (`VillagePlanner.keepExits`: no field, pen, garden, tree or house there; W3's villages
+read this too, so their fields shift a little in new worlds).
 
 **Painting** (`RoadPiece`, `RoadPaint`, `RoadMarks`, `Waymarks`): each leg paints the chunks it touches through the
 settlement painter (fell the trees within reach, sweep what hangs over, fill to rock, `CityWriter`), pure per chunk;
@@ -6752,12 +6754,12 @@ chunk over ~75-110 chunks, at most 6 lights a chunk.
 
 **Decisions taken here** (none of the plan's 13): the hub rule and its numbers above (towns one region in five, the
 first town placed on purpose, a wayhouse at a region's heart for "a day's walk"); roads on a lattice of leg starts
-(every eighth chunk, 72-point legs) and planned ahead of players; the keep rules and the 14-wide exits (they shift W3's
-fields); the mining roll (one in three villages, one in ten hamlets); the town's numbers (wall 64, or 76 when that fits
-under 25 homes, square 11, lanes 24 apart, squared to the compass, 3-block frontage slots) and its people bounds; the
-mine's depths (24, then 16); the Deep Mine's cause, timings and pay; the assayer's goods and the lode map's price; the
-caravan's stretch (50-160, 160 long) and its prosperity; the Atlas's record limits; the Awakened Villages pack holds the
-roads.
+(every eighth chunk, 72-point legs) and planned ahead of players; the north road's wide-water retry; the keep rules and
+the 14-wide exits (they shift W3's fields); the mining roll (one in three villages, one in ten hamlets); the town's
+numbers (wall 64, or 76 when that fits under 25 homes, square 11, lanes 24 apart, squared to the compass, 3-block
+frontage slots) and its people bounds; the mine's depths (24, then 16); the Deep Mine's cause, timings and pay; the
+assayer's goods and the lode map's price; the caravan's stretch (50-160, 160 long) and its prosperity; the Atlas's
+record limits; the Awakened Villages pack holds the roads.
 
 **Left.** W6's Tier IV caravans (the hook is in place; W6 installs it). Travellers on foot on the roads (caravans only).
 Horses to hire at the wayhouse's stable (the carter sells leads and saddles; the paddock's horses are the stable's). A

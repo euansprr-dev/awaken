@@ -34,9 +34,17 @@ public final class RoadPlanner {
     /**
      * What to lay: the two ends (world x, z; the height a settlement's street meets the road at, or
      * {@link Integer#MIN_VALUE} for the land's own), the direction each end leaves in (unit x, z, or 0, 0: any), what it
-     * keeps out of, whether the mire's shallows take boardwalks (the land's family at a column, see {@link Terrain#family}).
+     * keeps out of, whether the mire's shallows take boardwalks (the land's family at a column, see {@link Terrain#family}),
+     * and whether it may bridge {@link #WIDE} water (the road north out of the camp, where no narrower way is found).
      */
-    public record Request(int ax, int az, int ay, float adx, float adz, int bx, int bz, int by, float bdx, float bdz, Keep keep) {}
+    public record Request(int ax, int az, int ay, float adx, float adz, int bx, int bz, int by, float bdx, float bdz, Keep keep, boolean wide) {
+        public Request(int ax, int az, int ay, float adx, float adz, int bx, int bz, int by, float bdx, float bdz, Keep keep) {
+            this(ax, az, ay, adx, adz, bx, bz, by, bdx, bdz, keep, false);
+        }
+    }
+
+    /** A wide crossing has land this near on both sides (a lake's narrows, a broad river): bridges to about twice it. */
+    static final int WIDE = 48;
 
     /** The laid line: points every {@link #STEP} blocks with the road's surface height and flags; what it cost. */
     public record Path(float[] x, float[] z, int[] y, byte[] flags, int reads, long nanos) {
@@ -226,7 +234,16 @@ public final class RoadPlanner {
             int[][] pairs = {{1, 0}, {0, 1}, {1, 1}, {1, -1}};
             for (int[] d : pairs) {
                 if (water(x + d[0] * c, z + d[1] * c) == 0 && water(x - d[0] * c, z - d[1] * c) == 0) return true;
+                // (a wide crossing) land further out on both sides, a step at a time
+                for (int m = 2; q.wide() && m * c <= WIDE; m++)
+                    if (shore(x, z, d[0] * c, d[1] * c, m) && shore(x, z, -d[0] * c, -d[1] * c, m)) return true;
             }
+            return false;
+        }
+
+        /** Land within m steps of (x, z) one way. */
+        boolean shore(int x, int z, int sx, int sz, int m) {
+            for (int k = 1; k <= m; k++) if (water(x + sx * k, z + sz * k) == 0) return true;
             return false;
         }
 

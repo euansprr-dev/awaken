@@ -176,6 +176,12 @@ final class Highroads {
     static @Nullable Road lay(RoadWorld w, String key, int cls, RoadNet.Entry from, RoadNet.Entry to, RoadPlanner.Keep keep, Terrain t) {
         RoadPlanner.Path p = RoadPlanner.plan(new RoadPlanner.Request(from.x(), from.z(), from.kind() == Road.CROSSROADS ? Integer.MIN_VALUE : from.y(),
                 from.dx(), from.dz(), to.x(), to.z(), to.kind() == Road.CROSSROADS ? Integer.MIN_VALUE : to.y(), to.dx(), to.dz(), keep), t);
+        if (p == null && key.startsWith("P0")) {
+            // the road north out of the camp is the one every player follows: where no narrower way is found, a long bridge
+            RoadNet.log("no narrow way for {} from {} to {} ({}): trying wide water", key, from.name(), to.name(), RoadPlanner.WHY.get());
+            p = RoadPlanner.plan(new RoadPlanner.Request(from.x(), from.z(), from.kind() == Road.CROSSROADS ? Integer.MIN_VALUE : from.y(),
+                    from.dx(), from.dz(), to.x(), to.z(), to.kind() == Road.CROSSROADS ? Integer.MIN_VALUE : to.y(), to.dx(), to.dz(), keep, true), t);
+        }
         if (p == null) {
             RoadNet.log("no way for {} from {} to {} ({})", key, from.name(), to.name(), RoadPlanner.WHY.get());
             return null;
