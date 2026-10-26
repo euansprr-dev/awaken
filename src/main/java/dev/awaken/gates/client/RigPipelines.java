@@ -42,22 +42,23 @@ public final class RigPipelines {
     public static final OitPipelineSet LIGHT_OIT = OitPipelineSet.builder(Awaken.id("rig_light"),
             RenderPipeline.builder(SNIPPET).withShaderDefine("OIT_ADDITIVE")).build();
 
-    /** (Gate pillars) the same, alpha-blended: a colour that shows against a bright daytime sky, where light added can't. */
-    public static final RenderPipeline HAZE = RenderPipeline.builder(SNIPPET)
-            .withLocation(Awaken.id("pipeline/rig_haze"))
-            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+    /**
+     * (Gate pillars) additive light without the world's fog: vanilla's render-distance fog counts height as distance
+     * (max of the horizontal distance and |dy|), so a column hundreds of blocks tall came out cut off flat at the fog
+     * line. The pillar fades itself out instead.
+     */
+    public static final RenderPipeline GLOW = RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
+            .withLocation(Awaken.id("pipeline/rig_glow"))
+            .withColorTargetState(new ColorTargetState(BlendFunction.LIGHTNING))
             .build();
 
-    public static final OitPipelineSet HAZE_OIT = OitPipelineSet.builder(Awaken.id("rig_haze"), RenderPipeline.builder(SNIPPET)).build();
-
-    private static RenderType type, hazeType;
-    private static int ok = -1, hazeOk = -1;
+    private static RenderType type;
+    private static int ok = -1;
 
     static void onRegister(RegisterRenderPipelinesEvent e) {
         e.registerOptionalPipeline(LIGHT);
         e.registerOitPipelineSet(LIGHT_OIT);
-        e.registerOptionalPipeline(HAZE);
-        e.registerOitPipelineSet(HAZE_OIT);
+        e.registerOptionalPipeline(GLOW);
     }
 
     /** The rig's light, or vanilla lightning if the pipeline didn't build (never no light at all). */
@@ -72,19 +73,5 @@ public final class RigPipelines {
         if (ok == 0) return RenderTypes.lightning();
         if (type == null) type = RenderType.create("awaken_rig_light", RenderSetup.builder(LIGHT).setOitPipelines(LIGHT_OIT).createRenderSetup());
         return type;
-    }
-
-    /** The haze (alpha-blended), or vanilla's debug quads if the pipeline didn't build. */
-    public static RenderType haze() {
-        if (hazeOk < 0) {
-            try {
-                hazeOk = RenderSystem.getCompiledPipelineNullable(HAZE) != null ? 1 : 0;
-            } catch (RuntimeException ex) {
-                hazeOk = 0;
-            }
-        }
-        if (hazeOk == 0) return RenderTypes.debugQuads();
-        if (hazeType == null) hazeType = RenderType.create("awaken_rig_haze", RenderSetup.builder(HAZE).setOitPipelines(HAZE_OIT).sortOnUpload().createRenderSetup());
-        return hazeType;
     }
 }
