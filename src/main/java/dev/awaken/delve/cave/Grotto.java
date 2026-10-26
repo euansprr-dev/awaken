@@ -31,6 +31,21 @@ final class Grotto {
     }
 
     /** Some grottos' pools are a legendary fishing spot (a third of them, fixed by the seed). */
+    /** The curtain's middle (world x, y, z): where its own light is drawn (delve.client.CaveFx). */
+    static int[] curtain(Spec s) {
+        Frame f = new Frame(s.x(), s.y(), s.z(), s.rot());
+        return new int[]{f.x(0, -ROOM), f.y(1), f.z(0, -ROOM)};
+    }
+
+    /** The glowing pool's middle (world x, y, z) on its surface. */
+    static int[] pool(Spec s) {
+        Frame f = new Frame(s.x(), s.y(), s.z(), s.rot());
+        return new int[]{f.x(3, 2), f.y(0), f.z(3, 2)};
+    }
+
+    /** Points (local x, z) the grotto's rock spans: the room's rim, the geode, the passage, read dry before it is laid. */
+    static final int[][] SPAN = {{0, 0}, {6, 0}, {-6, 0}, {0, 6}, {0, -6}, {4, 4}, {-4, -4}, {-9, 1}, {0, -12}};
+
     static boolean fishingSpot(Spec s) {
         return Carve.rand(s.seed() + 77, 0, 0, 0) < 0.34;
     }
@@ -86,8 +101,8 @@ final class Grotto {
             int depth = d < 1.6 ? 3 : 2;
             for (int ly = -depth; ly <= -1; ly++) f.put(k, lx, ly, lz, Carve.WATER);
             f.put(k, lx, -depth - 1, lz, Blocks.CLAY.defaultBlockState());
-            if (d < 2.2 && Carve.rand(seed + 3, lx, 0, lz) < (fishingSpot(s) ? 0.7 : 0.35)) {
-                f.put(k, lx, -depth, lz, Blocks.SEA_PICKLE.defaultBlockState().setValue(SeaPickleBlock.PICKLES, 1 + (int) (Carve.rand(seed + 4, lx, 1, lz) * 4))
+            if (d < 2.6 && Carve.rand(seed + 3, lx, 0, lz) < (fishingSpot(s) ? 0.85 : 0.6)) {
+                f.put(k, lx, -depth, lz, Blocks.SEA_PICKLE.defaultBlockState().setValue(SeaPickleBlock.PICKLES, 2 + (int) (Carve.rand(seed + 4, lx, 1, lz) * 3))
                         .setValue(SeaPickleBlock.WATERLOGGED, true));
             }
         }
@@ -109,8 +124,8 @@ final class Grotto {
             for (int y = f.y(0); y <= f.y(9); y++) {
                 if (!Carve.open(k, x, y, z)) continue;
                 double r = Carve.rand(seed + 6, x, y, z);
-                if (r < 0.1) Carve.lichen(k, x, y, z);
-                else if (r < 0.125 && Carve.solidAt(k, x, y + 1, z)) Sinkhole.vines(s, k, x, y, z);
+                if (r < 0.16) Carve.lichen(k, x, y, z);
+                else if (r < 0.2 && Carve.solidAt(k, x, y + 1, z)) Sinkhole.vines(s, k, x, y, z);
             }
             int fy = f.y(0);
             if (Carve.open(k, x, fy, z) && Carve.solidAt(k, x, fy - 1, z) && !k.get(x, fy - 1, z).is(Blocks.SUSPICIOUS_GRAVEL)

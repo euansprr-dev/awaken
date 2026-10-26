@@ -65,6 +65,9 @@ public final class CaveContent {
     /** Mist rising from a sinkhole by day; a breath of cold air at a chute's mouth. */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> MIST = PARTICLES.register("delve_mist", () -> new SimpleParticleType(true));
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> DRAUGHT = PARTICLES.register("delve_draught", () -> new SimpleParticleType(false));
+    /** A grotto's own light, drawn: a soft halo over its pool and in its curtain, and the glints in the falling water. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> GLOW = PARTICLES.register("delve_grotto_glow", () -> new SimpleParticleType(true));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> GLINT = PARTICLES.register("delve_grotto_glint", () -> new SimpleParticleType(true));
 
     /** A place's name arriving: a low, open note. */
     public static final DeferredHolder<SoundEvent, SoundEvent> NAME = SOUNDS.register("delve.cave.name",

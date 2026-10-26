@@ -288,6 +288,9 @@ def content():
     write(os.path.join(ASSETS, "items/delvers_pick.json"), {"model": {"type": "minecraft:model", "model": "awaken:item/delvers_pick"}})
     write(os.path.join(ASSETS, "particles/delve_mist.json"), {"textures": [f"awaken:delve_mist_{i}" for i in range(4)]})
     write(os.path.join(ASSETS, "particles/delve_draught.json"), {"textures": [f"awaken:delve_draught_{i}" for i in range(4)]})
+    # a grotto's drawn light (its pool's halo, the glints in its curtain): the mist's soft lobes, full bright
+    write(os.path.join(ASSETS, "particles/delve_grotto_glow.json"), {"textures": [f"awaken:delve_mist_{i}" for i in range(4)]})
+    write(os.path.join(ASSETS, "particles/delve_grotto_glint.json"), {"textures": [f"awaken:delve_mist_{i}" for i in range(4)]})
     worldgen()
     loot()
     write(os.path.join(MERGE, "assets/awaken/lang/en_us.json"), dict(sorted(lang().items())))

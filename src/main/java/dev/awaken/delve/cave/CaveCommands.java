@@ -108,7 +108,7 @@ final class CaveCommands {
         }
         ServerLevel level = p.level();
         long t0 = System.nanoTime();
-        Spec s = CaveLocate.nearest(level, p.blockPosition(), kind, 1600);
+        Spec s = CaveLocate.nearest(level, p.blockPosition(), kind, 1600, sp -> real(level, sp));
         if (s == null) {
             c.getSource().sendSuccess(() -> Component.literal("No " + kind.id + " within 1600: laying one here").withColor(0xC8C2B0), false);
             return place(c);
@@ -132,6 +132,24 @@ final class CaveCommands {
         c.getSource().sendSuccess(() -> Component.literal(String.format(Locale.ROOT, "%s \"%s\" at %d %d %d (found in %.0f ms); marks: %s",
                 kind.id, CaveNames.name(s), s.x(), s.y(), s.z(), ms, String.join(", ", marks.keySet()))).withColor(0x9FE6D6), false);
         return 1;
+    }
+
+    /**
+     * Whether the world really holds this place, dry: its goal's chunk generated, the place's piece there and no water
+     * in the goal (a tour must never stand in a flooded or phantom place; each miss is logged, it says the site search
+     * and the world disagree).
+     */
+    private static boolean real(ServerLevel level, Spec s) {
+        Grid g = CaveTests.grid(s);
+        s.build(g);
+        int[] m = g.mark("goal");
+        if (m == null) return true;
+        BlockPos goal = new BlockPos(m[0], m[1], m[2]);
+        level.getChunk(goal.getX() >> 4, goal.getZ() >> 4);
+        boolean there = CavePlaces.at(level, goal) != null, dry = level.getFluidState(goal).isEmpty() && level.getFluidState(goal.above()).isEmpty();
+        if (!there || !dry) dev.awaken.Awaken.LOG.warn("[delve] goto passes {} at {} {} {}: {}", s.kind().id, s.x(), s.y(), s.z(),
+                !there ? "the world has no such place there" : "its goal is under water");
+        return there && dry;
     }
 
     /** A spot to stand at or just above {@code at} (the world's own ground may differ a little from a mark's). */

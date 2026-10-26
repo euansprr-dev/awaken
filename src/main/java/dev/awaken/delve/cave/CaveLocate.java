@@ -31,6 +31,11 @@ final class CaveLocate {
 
     /** The nearest place of {@code kind} whose start lies within {@code radius} of {@code at}, or null. */
     static @Nullable Spec nearest(ServerLevel level, BlockPos at, CaveKind kind, int radius) {
+        return nearest(level, at, kind, radius, s -> true);
+    }
+
+    /** As {@link #nearest(ServerLevel, BlockPos, CaveKind, int)}, the first candidate that {@code ok} accepts. */
+    static @Nullable Spec nearest(ServerLevel level, BlockPos at, CaveKind kind, int radius, java.util.function.Predicate<Spec> ok) {
         var sets = level.registryAccess().lookupOrThrow(Registries.STRUCTURE_SET);
         var state = level.getChunkSource().getGeneratorState();
         record Candidate(ChunkPos chunk, StructureSet set, boolean first, double d) {}
@@ -57,7 +62,7 @@ final class CaveLocate {
         all.sort(Comparator.comparingDouble(Candidate::d));
         for (Candidate c : all) {
             Spec s = site(level, c.set(), c.chunk(), kind, c.first());
-            if (s != null) return s;
+            if (s != null && ok.test(s)) return s;
         }
         return null;
     }

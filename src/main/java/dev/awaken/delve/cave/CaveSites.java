@@ -328,9 +328,12 @@ final class CaveSites {
             if (cityNear(px, pz, 60)) continue;
             int top = cols.surface(px, pz);
             if (top != Integer.MIN_VALUE && top < y + 16) continue;
-            if (cols.wet(px, pz, y - 5, y + 10)) continue;
             if (!cols.ctx.validBiome().test(cols.biome(px, y + 2, pz))) continue;
             Frame f = new Frame(px, y, pz, rot);
+            // dry across its span, not only at its middle (an aquifer beside the room floods it to the roof)
+            boolean wet = false;
+            for (int[] q : Grotto.SPAN) if (!wet) wet = cols.wet(f.x(q[0], q[1]), f.z(q[0], q[1]), y - 5, y + 10);
+            if (wet) continue;
             int[] j = air(cols, f.x(0, -14), y, f.z(0, -14), 22, 10, 10, rnd);
             if (j == null) continue;
             Spec spec = new Spec(CaveKind.GROTTO, px, y, pz, rot, seed, true, j[0], j[1], j[2], new int[0]);

@@ -5786,7 +5786,13 @@ mine also refuse oceans, rivers and beaches at the surface). Names by seed (`Cav
   to climb into it, and a cache under suspicious gravel by the pool (loot `awaken:chests/delve/grotto_cache`; opening it
   first counts `awaken:secrets_found` and is a find). A third of grottos (by seed) are a legendary fishing spot: a third
   of catches there bring something more up (glow ink, amethyst, Deepglass, lapis, prismarine crystals, glow berries or a
-  nautilus shell) and the first catch is a secret.
+  nautilus shell) and the first catch is a secret. **Its own light**, so it reads without a lamp: glow lichen on 16% of
+  the open cells against rock, glow berries hanging from 4% of the roof cells, sea pickles in 60% of the pool bed (85% at
+  a fishing spot) two to four to a cluster; and our drawn light (`delve.client.CaveFx`, sprites `delve_grotto_glow`
+  and `delve_grotto_glint` (the mist's soft lobes), full bright, never a light block): glints sliding down the curtain with a pale aqua glow behind it, a
+  sea-green halo over the pool with motes rising off it, for players within 40 (sites sent within 64). A grotto is taken
+  only when nine columns across its span (the room's rim, the geode, the passage) read dry, not only its middle (the
+  second tour's grotto was black: flooded to the roof by an aquifer beside it).
 - **Routes** (`Routes`, G46): a search over a built place's feet cells with only the Runner's Kit and the Ascent's numbers
   (walk/step 0.6, jump 1.25 with three clear over you, grab and climb a lip 2.4, drop 3, lower into a hang and let go 4.5,
   a running jump over a gap of one or two, ladders, vines and the place's own ropes, swim, falling into water from any
@@ -5814,7 +5820,8 @@ rising by day (at dawn 0.3 + radius/28 wisps a tick, thinning through the day, g
 top so they clear the rim; 1.3-2.3 across, swelling 2.2x, peak alpha 0.28-0.38 on a soft sprite; fading out within
 2.5-8.5 of the camera so it never walls the view; our sprites `delve_mist`), a chute's draught at its mouth (`delve_draught`).
 Carving turns sand or gravel left hanging over the new air into sandstone or stone (a roof never pours in).
-`/awaken delve goto <kind>` (`CaveLocate`) stands you at the nearest place of a kind the world really made.
+`/awaken delve goto <kind>` (`CaveLocate`) stands you at the nearest place of a kind the world really made; it passes
+(and logs `[delve] goto passes`) a candidate whose goal the world lacks or has under water.
 
 **Names and captions** (`delve.client.CaveHud`): "THE DELVERS' DEEP" in spaced capitals under one hairline, "old mine"
 under it, quieter than a region's (smaller, dimmer, rising as it fades), through the notification director (topic
@@ -5867,7 +5874,9 @@ filter to 20000 x (600/20000)^seep Hz, nature to 1 - 0.7 x seep). Ten events `de
 caves' green glow, dripstone's amber, the deep dark's ink, sulfur caves' yellow haze) and a seep's violet-black shadows and
 lilac Deepglass bloom through a new place-look hook (`LensClient.placeLook(layer, id, weight)`: two layers, nothing while
 Lens is off, a story override always wins); a plain cave under any other biome takes an underground look by "under", so
-it no longer wears its surface biome's grade.
+it no longer wears its surface biome's grade. Dripstone's amber is opened up (it read only dark in the second tour):
+exposure 1.05 (the cap), contrast 1.03, vignette 0.16, bloom 1.1 from 0.46, an amber haze mixed 0.75 that lights glow
+into (fogGlow 1.1); shadows are still never lifted.
 
 **A way home** (`delve.home`): the server keeps your trail (a crumb every 4 blocks while out of the sky, at most 96, the
 older half thinned when full, loops cut; attachment `awaken:delve_home`, schemaVersion 1, not kept on death). After 15 s

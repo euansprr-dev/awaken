@@ -48,7 +48,7 @@ public final class CavePlaces {
     /** How strongly a live seep presses at its heart and fades toward its edge (blocks). */
     static final double SEEP_FULL = 15, SEEP_FADE = 9;
     public static final int SEEP_LEVELS = 5;
-    static final int NEST_MOBS = 3, NEST_EVERY = 600, HEART_REACH = 40, NEAR = 160;
+    static final int NEST_MOBS = 3, NEST_EVERY = 600, HEART_REACH = 40, NEAR = 160, GROTTO_NEAR = 64;
 
     /** Places whose start has loaded, per id (every dimension's are overworld's: places only generate there). */
     static final Map<Long, Spec> KNOWN = new ConcurrentHashMap<>();
@@ -231,12 +231,18 @@ public final class CavePlaces {
         List<Long> ids = new ArrayList<>();
         List<CaveNet.Site> sites = new ArrayList<>();
         for (Spec s : KNOWN.values()) {
-            if (s.kind() != CaveKind.SINKHOLE && s.kind() != CaveKind.CHUTE) continue;
+            if (s.kind() != CaveKind.SINKHOLE && s.kind() != CaveKind.CHUTE && s.kind() != CaveKind.GROTTO) continue;
             double dx = s.x() - p.getX(), dz = s.z() - p.getZ();
-            if (dx * dx + dz * dz > NEAR * NEAR) continue;
+            if (dx * dx + dz * dz > (s.kind() == CaveKind.GROTTO ? GROTTO_NEAR * GROTTO_NEAR : NEAR * NEAR)) continue;
             ids.add(s.id());
             if (s.kind() == CaveKind.SINKHOLE) sites.add(new CaveNet.Site(s.kind().ordinal(), new BlockPos(s.x(), s.p(Sinkhole.RIM), s.z()), s.p(Sinkhole.R), s.p(Sinkhole.RIM) - s.y()));
-            else sites.add(new CaveNet.Site(s.kind().ordinal(), new BlockPos(s.x(), s.y(), s.z()), 2, s.rot()));
+            else if (s.kind() == CaveKind.CHUTE) sites.add(new CaveNet.Site(s.kind().ordinal(), new BlockPos(s.x(), s.y(), s.z()), 2, s.rot()));
+            else {
+                // a grotto's own light: its curtain (depth 0) and its pool (depth 1); radius carries its turn
+                int[] c = Grotto.curtain(s), q = Grotto.pool(s);
+                sites.add(new CaveNet.Site(s.kind().ordinal(), new BlockPos(c[0], c[1], c[2]), s.rot(), 0));
+                sites.add(new CaveNet.Site(s.kind().ordinal(), new BlockPos(q[0], q[1], q[2]), s.rot(), 1));
+            }
             if (sites.size() >= 16) break;
         }
         if (ids.equals(t.near)) return;

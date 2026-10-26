@@ -16,8 +16,8 @@ import java.util.List;
 
 /**
  * The cave places seen from outside (PLAN 8.2): mist rising out of a sinkhole by day (thickest in the morning, gone
- * by night; soft lobes that swell and thin as they climb past the rim, lit by the sky) and a breath of cold air at a
- * chute's mouth (pale streaks drifting out of it). Our own sprites (tools/art/specs/caves.py); a few a tick at most,
+ * by night; soft lobes that swell and thin as they climb past the rim, lit by the sky), a breath of cold air at a
+ * chute's mouth (pale streaks drifting out of it), and a grotto's own light (its curtain and its pool). Our own sprites (tools/art/specs/caves.py); a few a tick at most,
  * only near the player.
  */
 final class CaveFx {
@@ -35,8 +35,10 @@ final class CaveFx {
     }
 
     static void register(RegisterParticleProvidersEvent e) {
-        e.registerSpriteSet(CaveContent.MIST.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Wisp(l, x, y, z, xa, ya, za, s, true));
-        e.registerSpriteSet(CaveContent.DRAUGHT.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Wisp(l, x, y, z, xa, ya, za, s, false));
+        e.registerSpriteSet(CaveContent.MIST.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Wisp(l, x, y, z, xa, ya, za, s, Kind.MIST));
+        e.registerSpriteSet(CaveContent.DRAUGHT.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Wisp(l, x, y, z, xa, ya, za, s, Kind.DRAUGHT));
+        e.registerSpriteSet(CaveContent.GLOW.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Wisp(l, x, y, z, xa, ya, za, s, Kind.GLOW));
+        e.registerSpriteSet(CaveContent.GLINT.get(), s -> (o, l, x, y, z, xa, ya, za, r) -> new Wisp(l, x, y, z, xa, ya, za, s, Kind.GLINT));
     }
 
     static void tick() {
@@ -70,34 +72,100 @@ final class CaveFx {
                 double ox = s.at().getX() + 0.5 + (R.nextDouble() - 0.5) * 2.4 + fx * 1.5, oz = s.at().getZ() + 0.5 + (R.nextDouble() - 0.5) * 2.4 + fz * 1.5;
                 level.addParticle(CaveContent.DRAUGHT.get(), ox, s.at().getY() + 0.3 + R.nextDouble() * 2.2, oz,
                         -fx * (0.05 + R.nextDouble() * 0.03), 0.004, -fz * (0.05 + R.nextDouble() * 0.03));
+            } else if (s.kind() == CaveKind.GROTTO.ordinal()) {
+                double dy = s.at().getY() - mc.player.getY();
+                if (d2 + dy * dy > 40 * 40) continue;
+                grotto(mc, s);
             }
         }
     }
 
-    /** One wisp: mist (big, slow, rising, swelling) or a draught's streak (small, quick, along the air). */
+    /**
+     * A grotto's own light, drawn (no light blocks, no torches): light caught in its curtain (bright glints sliding down
+     * the falling water, a pale aqua glow behind it) and its pool's sea-green halo with motes rising off the water.
+     * A site's depth says which (0 the curtain, 1 the pool); its radius carries the grotto's turn.
+     */
+    private static void grotto(Minecraft mc, CaveNet.Site s) {
+        boolean alongX = (s.radius() & 1) == 0; // the curtain runs along world x when the grotto faces north or south
+        double cx = s.at().getX() + 0.5, cy = s.at().getY(), cz = s.at().getZ() + 0.5;
+        if (s.depth() == 0) {
+            if (R.nextFloat() < 0.9F) {
+                double o = (R.nextDouble() - 0.5) * 3.0, w = (R.nextDouble() - 0.5) * 0.5;
+                spawn(mc, CaveContent.GLINT.get(), cx + (alongX ? o : w), cy + 1.7 + R.nextDouble() * 0.4, cz + (alongX ? w : o),
+                        0, -0.17 - R.nextDouble() * 0.08, 0, 0.78F, 0.96F, 1F);
+            }
+            if (R.nextFloat() < 0.07F) {
+                double o = (R.nextDouble() - 0.5) * 2.4;
+                spawn(mc, CaveContent.GLOW.get(), cx + (alongX ? o : 0), cy - 0.2 + R.nextDouble() * 2.0, cz + (alongX ? 0 : o),
+                        0, 0.002, 0, 0.5F, 0.86F, 0.98F);
+            }
+        } else {
+            if (R.nextFloat() < 0.09F) {
+                spawn(mc, CaveContent.GLOW.get(), cx + (R.nextDouble() - 0.5) * 2.4, cy + 0.25 + R.nextDouble() * 0.4, cz + (R.nextDouble() - 0.5) * 2.4,
+                        0, 0.003, 0, 0.45F, 1F, 0.72F);
+            }
+            if (R.nextFloat() < 0.3F) {
+                spawn(mc, CaveContent.GLINT.get(), cx + (R.nextDouble() - 0.5) * 4.5, cy + 0.05, cz + (R.nextDouble() - 0.5) * 4.5,
+                        (R.nextDouble() - 0.5) * 0.01, 0.012 + R.nextDouble() * 0.014, (R.nextDouble() - 0.5) * 0.01, 0.7F, 1F, 0.82F);
+            }
+        }
+    }
+
+    private static void spawn(Minecraft mc, net.minecraft.core.particles.ParticleOptions type, double x, double y, double z,
+                              double xa, double ya, double za, float r, float g, float b) {
+        var p = mc.particleEngine.createParticle(type, x, y, z, xa, ya, za);
+        if (p instanceof Wisp w) w.setColor(r, g, b);
+    }
+
+    /** What a wisp is. */
+    enum Kind { MIST, DRAUGHT, GLOW, GLINT }
+
+    /**
+     * One wisp: mist (big, slow, rising, swelling), a draught's streak (small, quick, along the air), or a grotto's drawn
+     * light: a glow (a soft halo, full bright, barely moving) or a glint (a small bright mote sliding down the curtain or
+     * rising off the pool).
+     */
     static final class Wisp extends SingleQuadParticle {
-        private final SpriteSet sprites;
-        private final boolean mist;
+        private final Kind kind;
         private final float base, peak;
 
-        Wisp(ClientLevel level, double x, double y, double z, double xa, double ya, double za, SpriteSet sprites, boolean mist) {
+        Wisp(ClientLevel level, double x, double y, double z, double xa, double ya, double za, SpriteSet sprites, Kind kind) {
             super(level, x, y, z, xa, ya, za, sprites.get(level.getRandom()));
-            this.sprites = sprites;
-            this.mist = mist;
+            this.kind = kind;
             this.xd = xa;
             this.yd = ya;
             this.zd = za;
             this.gravity = 0F;
-            this.friction = mist ? 0.995F : 0.97F;
+            this.friction = switch (kind) {
+                case MIST -> 0.995F;
+                case DRAUGHT -> 0.97F;
+                case GLOW -> 0.98F;
+                case GLINT -> 0.99F;
+            };
             this.hasPhysics = false;
-            this.lifetime = mist ? 120 + random.nextInt(80) : 30 + random.nextInt(20);
-            this.quadSize = mist ? 1.3F + random.nextFloat() * 1.0F : 0.35F + random.nextFloat() * 0.25F;
+            this.lifetime = switch (kind) {
+                case MIST -> 120 + random.nextInt(80);
+                case DRAUGHT -> 30 + random.nextInt(20);
+                case GLOW -> 50 + random.nextInt(40);
+                case GLINT -> 16 + random.nextInt(10);
+            };
+            this.quadSize = switch (kind) {
+                case MIST -> 1.3F + random.nextFloat() * 1.0F;
+                case DRAUGHT -> 0.35F + random.nextFloat() * 0.25F;
+                case GLOW -> 1.4F + random.nextFloat() * 0.9F;
+                case GLINT -> 0.07F + random.nextFloat() * 0.07F;
+            };
             this.base = quadSize;
-            this.peak = mist ? 0.28F + random.nextFloat() * 0.1F : 0.32F;
+            this.peak = switch (kind) {
+                case MIST -> 0.28F + random.nextFloat() * 0.1F;
+                case DRAUGHT -> 0.32F;
+                case GLOW -> 0.2F + random.nextFloat() * 0.1F;
+                case GLINT -> 0.85F;
+            };
             this.roll = random.nextFloat() * Mth.TWO_PI;
             this.oRoll = roll;
-            float c = mist ? 0.92F + random.nextFloat() * 0.06F : 0.86F;
-            setColor(c, c + 0.02F, mist ? c + 0.03F : 1F);
+            float c = kind == Kind.MIST ? 0.92F + random.nextFloat() * 0.06F : 0.86F;
+            setColor(c, c + 0.02F, kind == Kind.MIST ? c + 0.03F : 1F);
             this.alpha = 0F;
         }
 
@@ -108,26 +176,37 @@ final class CaveFx {
 
         @Override
         protected int getLightCoords(float a) {
-            // mist is lit by the sky that reaches it; the draught keeps a little light of its own so it shows in the dark
+            // mist is lit by the sky that reaches it; the draught keeps a little light of its own so it shows in the dark;
+            // a grotto's glow and glints are its light
             int c = super.getLightCoords(a);
-            return mist ? c : LightCoordsUtil.pack(Math.max(LightCoordsUtil.block(c), 5), LightCoordsUtil.sky(c));
+            return switch (kind) {
+                case MIST -> c;
+                case DRAUGHT -> LightCoordsUtil.pack(Math.max(LightCoordsUtil.block(c), 5), LightCoordsUtil.sky(c));
+                case GLOW, GLINT -> LightCoordsUtil.FULL_BRIGHT;
+            };
         }
 
         @Override
         public void tick() {
             super.tick();
             float t = (float) age / lifetime;
-            alpha = peak * Math.min(1F, Math.min(t * (mist ? 4F : 6F), (1F - t) * (mist ? 1.6F : 2.5F)));
-            quadSize = base * (mist ? 1F + 1.2F * t : 1F + 0.5F * t);
-            if (mist) {
-                // thins to nothing round the camera: you walk out of mist, never into a white wall
+            float in = kind == Kind.MIST ? 4F : kind == Kind.GLOW ? 3F : 6F, out = kind == Kind.MIST ? 1.6F : kind == Kind.GLOW ? 2F : 2.5F;
+            alpha = peak * Math.min(1F, Math.min(t * in, (1F - t) * out));
+            quadSize = base * switch (kind) {
+                case MIST -> 1F + 1.2F * t;
+                case GLOW -> 1F + 0.3F * t;
+                case GLINT -> 1F - 0.4F * t;
+                default -> 1F + 0.5F * t;
+            };
+            if (kind == Kind.MIST || kind == Kind.GLOW) {
+                // thins to nothing round the camera: you walk out of mist (or a glow), never into a white wall
                 var cam = net.minecraft.client.Minecraft.getInstance().gameRenderer.mainCamera().position();
                 double dx = x - cam.x, dy = y - cam.y, dz = z - cam.z;
                 double d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                alpha *= (float) Math.max(0, Math.min(1, (d - 2.5) / 6.0));
+                alpha *= (float) Math.max(0, Math.min(1, (d - (kind == Kind.MIST ? 2.5 : 1.0)) / 6.0));
             }
             oRoll = roll;
-            roll += mist ? 0.004F : 0.01F;
+            roll += kind == Kind.MIST ? 0.004F : 0.01F;
         }
     }
 }
