@@ -175,7 +175,9 @@ final class VillageCommands {
         // (SPEC §28.9) the first town a player meets: its region's town
         if (key.equals("first_town")) {
             var town = dev.awaken.village.road.RoadNet.firstTown();
-            return town == null ? null : Plans.of(town, terrain(level));
+            VillagePlan plan = town == null ? null : Plans.of(town, terrain(level));
+            if (plan != null) return plan;
+            key = "nearest_town";
         }
         VillagePlan.Kind want = switch (key) {
             case "nearest_village" -> VillagePlan.Kind.VILLAGE;

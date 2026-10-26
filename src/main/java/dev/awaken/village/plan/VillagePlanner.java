@@ -437,7 +437,7 @@ public final class VillagePlanner {
                     byte k = plan.kind(ix, iz);
                     if ((k == STREET || k == LANE) && s > 1 && !joins()) continue; // never back across a street (a town's lane joins it)
                     float dh = Math.abs(height(ix, iz) - height(Math.round(x), Math.round(z)));
-                    double cost = dh * 3 + Math.abs(turn) * 0.7 + Math.abs(height(ix, iz) - baseY) * 0.05;
+                    double cost = dh * 3 + Math.abs(turn) * turnCost() + Math.abs(height(ix, iz) - baseY) * 0.05;
                     if (dh > 3 * climb) continue;
                     if (cost < bestCost) {
                         bestCost = cost;
@@ -461,6 +461,11 @@ public final class VillagePlanner {
                 pts.add(new float[]{x, z});
             }
             return pts;
+        }
+
+        /** What a street's walk pays to turn a step (a town's lanes keep straighter than a village's). */
+        double turnCost() {
+            return 0.7;
         }
 
         /** Whether lanes end where they meet another street (a town's grid; a village's lanes keep W3's ways). */
@@ -592,18 +597,27 @@ public final class VillagePlanner {
         }
 
         void place(Want w, List<int[]> slots) {
-            for (int[] sl : slots) if (place(w, sl[0], sl[1], sl[2])) return;
+            for (int[] sl : slots) if (place(w, sl[0], sl[1], sl[2], sl.length > 3 ? sl[3] : 0)) return;
         }
 
         double slotDist(int[] sl) {
             VillagePlan.Street st = plan.streets.get(sl[0]);
-            double d = Math.hypot(st.x()[sl[1]], st.z()[sl[1]]);
+            int k = sl[1], k1 = Math.min(st.points() - 1, k + 1);
+            float f = sl.length > 3 ? sl[3] / (float) STEP : 0;
+            double d = Math.hypot(st.x()[k] + (st.x()[k1] - st.x()[k]) * f, st.z()[k] + (st.z()[k1] - st.z()[k]) * f);
             // each side of a street fills house by house; lanes a little after the main street
             return d + st.rank() * 6 + (sl[2] > 0 ? 0.5 : 0);
         }
 
-        /** Tries a building beside street s at point k on one side: front to the street, a yard round it, level with the paving. */
         boolean place(Want w, int s, int k, int side) {
+            return place(w, s, k, side, 0);
+        }
+
+        /**
+         * Tries a building beside street s at point k on one side (moved {@code shift} blocks along the street): front to
+         * the street, a yard round it, level with the paving.
+         */
+        boolean place(Want w, int s, int k, int side, int shift) {
             VillagePlan.Street st = plan.streets.get(s);
             int n = st.points();
             float tx = st.x()[Math.min(n - 1, k + 1)] - st.x()[Math.max(0, k - 1)], tz = st.z()[Math.min(n - 1, k + 1)] - st.z()[Math.max(0, k - 1)];
@@ -624,7 +638,7 @@ public final class VillagePlanner {
             }
             int wx = alongX ? w.w() : w.d(), wz = alongX ? w.d() : w.w();
             float off = st.width() / 2f + w.setback() + 0.5f + (alongX ? wz : wx) / 2f;
-            float hx = st.x()[k] + nx * off, hz = st.z()[k] + nz * off;
+            float hx = st.x()[k] + nx * off + tx * shift, hz = st.z()[k] + nz * off + tz * shift;
             int x0 = Math.round(hx - (wx - 1) / 2f), z0 = Math.round(hz - (wz - 1) / 2f), x1 = x0 + wx - 1, z1 = z0 + wz - 1;
             // all of it inside, on free dry ground, a free ring round it
             for (int z = z0 - 1; z <= z1 + 1; z++) {

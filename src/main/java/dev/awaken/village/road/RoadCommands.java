@@ -39,7 +39,8 @@ public final class RoadCommands {
                 .then(Commands.literal("camp").executes(c -> camp(c.getSource())))
                 .then(Commands.literal("walk").then(Commands.argument("points", IntegerArgumentType.integer(-2000, 2000))
                         .executes(c -> walk(c.getSource(), IntegerArgumentType.getInteger(c, "points")))))
-                .then(Commands.literal("marker").executes(c -> marker(c.getSource())));
+                .then(Commands.literal("marker").executes(c -> marker(c.getSource())))
+                .then(Commands.literal("watch").executes(c -> watch(c.getSource())));
     }
 
     private static int info(CommandSourceStack src) throws CommandSyntaxException {
@@ -76,17 +77,67 @@ public final class RoadCommands {
         return 1;
     }
 
-    /** On the road north out of the camp (Carillon's north port), at its sixth point, looking up it. */
+    /**
+     * On the road north out of the camp (Carillon's north port), at its sixth point, looking up it; where the land north
+     * gave it no way, Carillon's road east or south, else the road nearest the player.
+     */
     private static int camp(CommandSourceStack src) throws CommandSyntaxException {
         ServerPlayer p = src.getPlayerOrException();
         RoadWorld w = RoadWorld.get();
         if (w == null) return 0;
-        List<Road> rs = RoadNet.port(w, 0);
-        if (rs.isEmpty()) {
-            src.sendFailure(Component.literal("No road north out of the camp in this world."));
+        for (int port = 0; port < 3; port++) {
+            List<Road> rs = RoadNet.port(w, port);
+            if (!rs.isEmpty()) return stand(src, p, rs.getFirst(), 6, 1);
+        }
+        RoadNet.roadsNear(w, p.getBlockX(), p.getBlockZ(), 400);
+        var n = RoadNet.nearest(p.getX(), p.getZ(), 1200);
+        if (n.isEmpty()) {
+            src.sendFailure(Component.literal("No road out of Carillon or near you in this world."));
             return 0;
         }
-        return stand(src, p, rs.getFirst(), 6, 1);
+        return stand(src, p, n.get().road(), Math.min(6, n.get().road().points() - 1), 1);
+    }
+
+    /** Stands you a dozen blocks ahead of the nearest caravan on its road, looking back at it coming. */
+    private static int watch(CommandSourceStack src) throws CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        net.minecraft.world.entity.Entity best = null;
+        double bd = 400 * 400;
+        for (net.minecraft.world.entity.Entity e : ((ServerLevel) p.level()).getAllEntities()) {
+            if (!(e instanceof net.minecraft.world.entity.npc.wanderingtrader.WanderingTrader) || e.getCustomName() == null
+                    || !e.getCustomName().getString().equals("Caravan Master")) continue;
+            double d = e.distanceToSqr(p);
+            if (d < bd) {
+                bd = d;
+                best = e;
+            }
+        }
+        if (best == null) {
+            src.sendFailure(Component.literal("No caravan within 400 of you."));
+            return 0;
+        }
+        var n = RoadNet.nearest(best.getX(), best.getZ(), 24);
+        double ex, ez, ey;
+        if (n.isPresent()) {
+            Road r = n.get().road();
+            // ahead of it: the way it's walking is the way its nav is pointed; else the road's own way
+            var vel = best.getDeltaMovement();
+            int dir = r.points() > 1 && vel.horizontalDistanceSqr() > 1e-6 ? (int) Math.signum((r.x()[Math.min(r.points() - 1, n.get().point() + 1)] - r.x()[n.get().point()]) * vel.x
+                    + (r.z()[Math.min(r.points() - 1, n.get().point() + 1)] - r.z()[n.get().point()]) * vel.z) : 1;
+            int i = Math.clamp(n.get().point() + (dir == 0 ? 1 : dir) * 4, 0, r.points() - 1);
+            ex = r.x()[i] + 2.5;
+            ez = r.z()[i] + 0.5;
+            ey = r.y()[i] + 2.6;
+        } else {
+            ex = best.getX() + 10;
+            ez = best.getZ();
+            ey = best.getY() + 2.6;
+        }
+        double dx = best.getX() - ex, dz = best.getZ() - ez, dy = best.getY() + 1 - ey;
+        float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)), pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.hypot(dx, dz)));
+        p.teleportTo((ServerLevel) p.level(), ex, ey - 1.62, ez, Set.of(), yaw, pitch, true);
+        src.sendSuccess(() -> Component.literal("Watching the caravan"), false);
+        return 1;
     }
 
     private static int walk(CommandSourceStack src, int points) throws CommandSyntaxException {
@@ -171,6 +222,7 @@ public final class RoadCommands {
                 return new double[]{Math.cos(a) * r + 0.5, t[2] + 9 + 1.62, Math.sin(a) * r + 0.5, t[0] + 0.5, t[2] + 10, t[1] + 0.5};
             }
             case "pass" -> {
+                lay(p);
                 return pass(p);
             }
             case "head" -> {
@@ -223,6 +275,7 @@ public final class RoadCommands {
             }
             case "marker" -> {
                 // the waymarker on a road out of this place, read from the road
+                lay(p);
                 for (Road r : RoadNet.laid()) {
                     boolean ours = r.from().settlement().equals(p.key) || r.to().settlement().equals(p.key);
                     if (!ours) continue;
@@ -239,6 +292,12 @@ public final class RoadCommands {
                 return null;
             }
         }
+    }
+
+    /** The roads round a place laid now (a framing needs them before the land there has generated). */
+    static void lay(VillagePlan p) {
+        RoadWorld w = RoadWorld.get();
+        if (w != null) RoadNet.roadsNear(w, p.ox, p.oz, p.r + 120);
     }
 
     static double ring(VillagePlan p, double a) {

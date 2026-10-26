@@ -91,7 +91,7 @@ public final class TownPlanner {
     /** A town's raster reaches this far (its structure's reach less the beard). */
     static final int TOWN_R = 112;
     /** The wall's mean radius: about what thirty to forty homes, their lanes, the square and the civic buildings fill. */
-    static final int WALL = 60;
+    static final int WALL = 64;
 
     /**
      * The town's plan: inside a wall that follows the land round it, a market square where two main streets cross (each
@@ -182,6 +182,11 @@ public final class TownPlanner {
         }
 
         @Override
+        double turnCost() {
+            return mainWalk ? 0.7 : 40;
+        }
+
+        @Override
         boolean walkable(int x, int z) {
             double d = Math.hypot(x, z);
             return d <= wallAt(x, z) + (mainWalk ? 6 : -8);
@@ -223,6 +228,8 @@ public final class TownPlanner {
         void streets() {
             float gxh = height(14, 0) - height(-14, 0), gzh = height(0, 14) - height(0, -14);
             double heading = Math.hypot(gxh, gzh) < 1.5 ? rnd.nextDouble() * Math.PI : Math.atan2(gzh, gxh) + Math.PI / 2;
+            // square to the compass, near enough: houses stand square to the world, and a lane off the square stays a frontage
+            heading = Math.round(heading / (Math.PI / 2)) * (Math.PI / 2) + (rnd.nextDouble() - 0.5) * 0.14;
             mainWalk = true;
             for (int m = 0; m < 2; m++) {
                 double h = heading + m * Math.PI / 2;
@@ -259,8 +266,9 @@ public final class TownPlanner {
             mainWalk = false;
             plan.gatePosts = plan.posts.size();
             if (plan.streets.isEmpty()) return;
-            // lanes off the main streets every two dozen blocks, either side, packing the quarters
             int mains = plan.streets.size();
+            wallLanes();
+            // lanes off the main streets every two dozen blocks, either side, packing the quarters
             for (int s = 0; s < mains; s++) {
                 VillagePlan.Street st = plan.streets.get(s);
                 for (int k = 2; k < st.points() - 2; k++) {
@@ -273,6 +281,43 @@ public final class TownPlanner {
                         if (lane.size() >= 4) addStreet(1, 3.4f, lane, 0, st.lift()[k]);
                     }
                 }
+            }
+        }
+
+        /**
+         * The lane round the inside of the wall, nine in from it: an arc between each two main streets where they cross it,
+         * so the houses along it back onto the wall and the lanes off the main streets meet it.
+         */
+        void wallLanes() {
+            int mains = plan.streets.size();
+            java.util.List<Double> cuts = new java.util.ArrayList<>();
+            for (int s = 0; s < mains; s++) {
+                VillagePlan.Street st = plan.streets.get(s);
+                for (int end = 0; end < 2; end++) {
+                    float x = st.x()[end == 0 ? 0 : st.points() - 1], z = st.z()[end == 0 ? 0 : st.points() - 1];
+                    if (Math.hypot(x, z) > plan.greenR + 20) cuts.add(Math.atan2(z, x));
+                }
+            }
+            if (cuts.size() < 2) return;
+            cuts.sort(null);
+            for (int c = 0; c < cuts.size(); c++) {
+                double a0 = cuts.get(c), a1 = c + 1 < cuts.size() ? cuts.get(c + 1) : cuts.getFirst() + Math.PI * 2;
+                java.util.List<float[]> arc = new java.util.ArrayList<>();
+                double span = a1 - a0;
+                double r0 = Math.min(WALL, r - 30) - 9;
+                int n = Math.max(3, (int) Math.ceil(span * r0 / 6));
+                for (int i = 0; i <= n; i++) {
+                    double a = a0 + span * i / n;
+                    double rr = wallAt(Math.cos(a), Math.sin(a)) - 9;
+                    int ix = (int) Math.round(Math.cos(a) * rr), iz = (int) Math.round(Math.sin(a) * rr);
+                    if (!dry(ix, iz) || water(ix, iz) > 0.2f) {
+                        if (arc.size() >= 4) addStreet(1, 3.4f, arc, 0, Math.round(height(Math.round(arc.getFirst()[0]), Math.round(arc.getFirst()[1]))) - baseY);
+                        arc = new java.util.ArrayList<>();
+                        continue;
+                    }
+                    arc.add(new float[]{(float) (Math.cos(a) * rr), (float) (Math.sin(a) * rr)});
+                }
+                if (arc.size() >= 4) addStreet(1, 3.4f, arc, 0, Math.round(height(Math.round(arc.getFirst()[0]), Math.round(arc.getFirst()[1]))) - baseY);
             }
         }
 
@@ -388,10 +433,15 @@ public final class TownPlanner {
             outer.add(new Want("granary", 7, 7, 1, 2));
             outer.add(new Want("barn", 11, 9, 1, 2));
             if (rnd.nextBoolean()) outer.add(new Want("barn", 9, 7, 1, 2));
+            // a slot every three blocks of frontage (a street's points are six apart), so the houses stand shoulder to shoulder
             java.util.List<int[]> slots = new java.util.ArrayList<>();
             for (int s = 0; s < plan.streets.size(); s++) {
                 VillagePlan.Street st = plan.streets.get(s);
-                for (int k = 0; k < st.points(); k++) for (int side = -1; side <= 1; side += 2) slots.add(new int[]{s, k, side});
+                for (int k = 0; k < st.points(); k++)
+                    for (int side = -1; side <= 1; side += 2) {
+                        slots.add(new int[]{s, k, side, 0});
+                        if (k + 1 < st.points()) slots.add(new int[]{s, k, side, 3});
+                    }
             }
             slots.sort((u, v) -> Double.compare(slotDist(u), slotDist(v)));
             for (Want w : civic) place(w, slots);
