@@ -6637,29 +6637,30 @@ go home with you at a festival, and your Hall's festival (W6 reads `Troubles`; a
 GameTest for growth (its mechanism is exercised by `/awaken village grow`).
 
 ### 28.9 W7 as built (roads and towns, 2026-10-26)
-Branch `pack/world-depth-w7`. Packages `village.road` (the network, the planner, painting, the Atlas record), planners in
-`village.plan` (`TownPlanner`, `WayhousePlanner`, `MinePlanner`, `TownPainter`, `MinePainter`), `village.world.MinePiece`,
-the Deep Mine in `village.trouble.DeepMine`; module doc `docs/modules/village.md` ("Roads and towns"). Tests
-`village_roads`, `village_town_plan`, `village_deep_mine`. Tour `tools/autopilot/world-depth-w7.txt` (CI). Built by one
-builder with no sub-agents (Euan's instruction). New worlds only, like W3: the **Awakened Villages** pack carries the
-road structure (`awaken:road`, set `awaken:road`, placement `awaken:road_lattice`); old chunks never repaint.
+Branch `pack/world-depth-w7`. Packages `village.road` (the network, the planner, painting, the Atlas record), planners
+in `village.plan` (`TownPlanner`, `WayhousePlanner`, `MinePlanner`, `TownPainter`, `MinePainter`),
+`village.world.MinePiece`, the Deep Mine in `village.trouble.DeepMine`; module doc `docs/modules/village.md` ("Roads and
+towns"). Tests `village_roads`, `village_town_plan`, `village_deep_mine`. Tour `tools/autopilot/world-depth-w7.txt`
+(CI). Built by one builder with no sub-agents (Euan's instruction). New worlds only, like W3: the **Awakened Villages**
+pack carries the road structure (`awaken:road`, set `awaken:road`, placement `awaken:road_lattice`); old chunks never
+repaint.
 
 **The network** (`RoadNet`, `Highroads`): planned per pair of neighbouring regions from Living Wilds' region map
-(`RegionMap.cellRegion/heart/swallowed/roll`, made public for it), pure from the seed and the generator's estimate of the
-land (`RoadWorld`: seed, centre, one `GenTerrain` per thread, its own `RegionMap`; made at `ServerAboutToStart` right
-after the first hamlet is found, gone at stop). Each region outside the Commons has a **hub**: its **town** (about one
-region in five, `TOWN_ODDS` 0.22, on the best site within 192 of its heart; never within 520 of the first hamlet), else
-the grid settlement anchored nearest its heart within 300, else a **wayhouse** (an inn on a crossroads at the heart, so
-inns stand a region apart: about 900 blocks, a day's walk), else a bare crossroads on dry ground within 128 of the heart.
-Grid settlements within 360 of a town's region heart stand down. A **highroad** joins the hubs of every two
+(`RegionMap.cellRegion/heart/swallowed/roll`, made public for it), pure from the seed and the generator's estimate of
+the land (`RoadWorld`: seed, centre, one `GenTerrain` per thread, its own `RegionMap`; made at `ServerAboutToStart`
+right after the first hamlet is found, gone at stop). Each region outside the Commons has a **hub**: its **town** (about
+one region in five, `TOWN_ODDS` 0.22, on the best site within 192 of its heart; never within 520 of the first hamlet),
+else the grid settlement anchored nearest its heart within 300, else a **wayhouse** (an inn on a crossroads at the
+heart, so inns stand a region apart: about 900 blocks, a day's walk), else a bare crossroads on dry ground within 128 of
+the heart. Grid settlements within 360 of a town's region heart stand down. A **highroad** joins the hubs of every two
 4-neighbouring regions, through the settlements near the straight way (between an eighth and seven eighths of it, within
 a fifth of its length or 200 to one side; in at one end of a main street, out at the other); Carillon's three **ports**
 (north from the Wayfarer camp, past its fire and the first hamlet; east and south from the painter's reach, 336 out) run
-to the nearest hub within sixty degrees of their way out (up to three tried);
-every other settlement has a **lane** to the nearest road point within 650 (with a waymarker at the fork). Each road is
-made once by whichever thread asks first (`once` futures) and cut into **legs** of at most 72 points whose structure
-starts sit on a lattice of chunks (every eighth chunk each way), so a chunk off the lattice answers at once; a
-minimum-priority thread ("Awaken road planner") plans the roads within 1,100 of each player ahead of them, eight a pass.
+to the nearest hub within sixty degrees of their way out (up to three tried); every other settlement has a **lane** to
+the nearest road point within 650 (with a waymarker at the fork). Each road is made once by whichever thread asks first
+(`once` futures) and cut into **legs** of at most 72 points whose structure starts sit on a lattice of chunks (every
+eighth chunk each way), so a chunk off the lattice answers at once; a minimum-priority thread ("Awaken road planner")
+plans the roads within 1,100 of each player ahead of them, eight a pass.
 
 **The line** (`RoadPlanner`): an A* over a 12-32-block lattice inside an ellipse round the ends (stretch 1.45, 40,000
 nodes at most), costing grade squared, refusing cliffs (over 0.6), open water (only narrow crossings with land on both
@@ -6675,27 +6676,28 @@ field, pen, garden, tree or house there; W3's villages read this too, so their f
 settlement painter (fell the trees within reach, sweep what hangs over, fill to rock, `CityWriter`), pure per chunk;
 thin-beard markers under every dry point ease the land to the road's heights (the pieces themselves take no beard, so a
 bridge never dams a river). The carriageway in the land's family (dirt and gravel with two ruts and a worn crown in the
-heartland, cobbles and setts near a town, sand and sandstone in the desert, mud and packed earth in the mire, and so on),
-5 wide for a highroad, 3 for a lane, a slab's half step wherever it climbs a block; lantern posts every fourth lit point
-for the last 18 points into a settlement. **Waymarkers**: a stripped-log post on a stone foot with a lantern, one hanging-
-sign arm per way out of its side, the place's name and distance on both faces (waxed; white ink on dark woods); one a
-little way out of every settlement (the next place and the one behind), one at every fork; at the crest where the first
-town comes into view, a cairn of field stones.
+heartland, cobbles and setts near a town, sand and sandstone in the desert, mud and packed earth in the mire, and so
+on), 5 wide for a highroad, 3 for a lane, a slab's half step wherever it climbs a block; lantern posts every fourth lit
+point for the last 18 points into a settlement. **Waymarkers**: a stripped-log post on a stone foot with a lantern, one
+hanging- sign arm per way out of its side, the place's name and distance on both faces (waxed; white ink on dark woods);
+one a little way out of every settlement (the next place and the one behind), one at every fork; at the crest where the
+first town comes into view, a cairn of field stones.
 
 **Towns** (`TownPlanner`, `TownPainter`; `Kind.TOWN`): a raster of 112 round a site near the region's heart (broad,
-gentle, dry, water near). A wall ring of mean radius 64 that follows a wavy line (8 high, merlons, a walk, towers about
-every 30 blocks and two flanking each gate, 12 high with loopholes and pyramid roofs or crenels); a market square
-(super-ellipse, half-size 11) where two main streets cross, squared to the compass (within four degrees), each out
-through a gate (arched passage, portcullis bars, lanterns, banners) with a Watch post; straight lanes off the main
-streets every 24 blocks (they end at the next street, T-junctions only) and a lane round the inside of the wall; a slot
-every 3 blocks of frontage so houses stand shoulder to shoulder; 30-43 homes asked (the test valley fits 33, 113
-people; a site under 18 is refused), the inn, the hall, the scribe's shop and the smithy nearest the square, the
-granary and barns at the edge; districts by quarter (stone and slate round the market, timber further out, the poorest
-by a gate); the square's fountain, a 5x5 bell tower, the notice board, benches and up to six market stalls (a stall
-keeper each, goods by the land); fields, pens and the mill outside the walls. People 60-120 (two Watch per extra gate, a
-carter, a healer, farmers outside). The first town is placed on purpose (`FirstTown`): of the regions north of the
-first hamlet (420-1,700 on), the first whose land takes a town, preferring one with a rise between: its road crests it
-there (the pass's cairn), and the town lies below.
+gentle, dry, water near). A wall ring of mean radius 64 (planned again at 76 where the land fits fewer than 25 homes,
+the one with more homes kept) that follows a wavy line (8 high, merlons, a walk, towers about every 30 blocks and two
+flanking each gate, 12 high with loopholes and pyramid roofs or crenels); a market square (super-ellipse, half-size 11)
+where two main streets cross, squared to the compass (within four degrees), each out through a gate (arched passage,
+portcullis bars, lanterns, banners) with a Watch post; straight lanes off the main streets every 24 blocks (they end at
+the next street, T-junctions only) and a lane round the inside of the wall; a slot every 3 blocks of frontage so houses
+stand shoulder to shoulder; 30-43 homes asked (the test valley fits 33, 113 people; a site under 18 is refused; the
+survey's 15 sites all plan, 25-50 buildings and 69-120 people), the inn, the hall, the scribe's shop and the smithy
+nearest the square, the granary and barns at the edge; districts by quarter (stone and slate round the market, timber
+further out, the poorest by a gate); the square's fountain, a 5x5 bell tower, the notice board, benches and up to six
+market stalls (a stall keeper each, goods by the land); fields, pens and the mill outside the walls. People 60-120 (two
+Watch per extra gate, a carter, a healer, farmers outside). The first town is placed on purpose (`FirstTown`): of the
+regions north of the first hamlet (420-1,700 on), the first whose land takes a town, preferring one with a rise between:
+its road crests it there (the pass's cairn), and the town lies below.
 
 **Wayhouses** (`WayhousePlanner`; `Kind.WAYHOUSE`): a crossroads square with four streets out (each an exit), the inn
 (13x9 or 11x9: W3's tavern keeper, a room and respawn once, a meal, the night's rumours), a stable (a barn) and a horse
@@ -6704,26 +6706,26 @@ paddock, a carter (horses, leads, saddles, hay), a well and notice board; 4-9 pe
 **Mining towns** (`MinePlanner`, `MinePainter`, `world.MinePiece`; `Kind.MINING`): a grid settlement rolls mining (a
 village one in three, a hamlet one in ten) and plans as one where a mountain rises at least 26 from its edge (16
 directions); else it plans as a village. At the mountain's foot the **shaft head** (7x7: timber headframe, sheave wheel,
-chain, winch drum with its grindstone and lantern), the **assayer's store** (job `assayer`, id 30 in `Roster.JOBS`:
-raw iron and copper, coal, ingots, gold nuggets, lapis, lantern; buys torches; a **lode map** for 8 emeralds, read with
+chain, winch drum with its grindstone and lantern), the **assayer's store** (job `assayer`, id 30 in `Roster.JOBS`: raw
+iron and copper, coal, ingots, gold nuggets, lapis, lantern; buys torches; a **lode map** for 8 emeralds, read with
 lapis, W5's `CaveItems.map()`), four to six miners down the shaft each day. The workings: the shaft (lined, a ladder on
 the town side, a roped piton line on the cross side) down 24 to the first level, a timbered gallery 3 wide and 4 high
 with sets every 4 and rails, to the landing and a winze (ladder) 16 down to the second level, driven to a lode (W2's own
-within reach, else a seam of the land's ore) and behind its face the cavern the Deep Mine breaks into; fluids walled off,
-lode cells never cut.
+within reach, else a seam of the land's ore) and behind its face the cavern the Deep Mine breaks into; fluids walled
+off, lode cells never cut.
 
-**The Deep Mine** (`TroubleKind.DEEP_MINE`, on W4's framework): caused once per mining town, after it's been worked three
-play-days, on a morning (1,500-5,000) one in four; never again once sealed. The mine bell (the alarm at the shaft head,
-36) and up to three miners' kin at the mouth with lanterns. Go down (ladder, rope, gallery, winze); near the cavern (28)
-the nest wakes: 4-5 Hollows (Bestiary, normal tier) round the miners in its far corner; clear them (none within 24),
-the miners follow you back along the second level while the roof comes down behind (W2's cave-in: cracks, dust, falling
-stone, `CAVE_FALL`), then climb after you; home at the head. Paid (`TroubleDirector.pay`): 16 emeralds, standing 20, XP
-0.5, the keepsake "The Miners' Lamp"; the town's mood +14, history "... The mine's working again.", the miners recorded
-for `Troubles.rescued` ("miner"). Missed (two play-days): the town seals the shaft with planks for good (`mine_sealed`),
-the miners get out through old workings hurt, the assayer stops selling the mine's ore and maps.
+**The Deep Mine** (`TroubleKind.DEEP_MINE`, on W4's framework): caused once per mining town, after it's been worked
+three play-days, on a morning (1,500-5,000) one in four; never again once sealed. The mine bell (the alarm at the shaft
+head, 36) and up to three miners' kin at the mouth with lanterns. Go down (ladder, rope, gallery, winze); near the
+cavern (28) the nest wakes: 4-5 Hollows (Bestiary, normal tier) round the miners in its far corner; clear them (none
+within 24), the miners follow you back along the second level while the roof comes down behind (W2's cave-in: cracks,
+dust, falling stone, `CAVE_FALL`), then climb after you; home at the head. Paid (`TroubleDirector.pay`): 16 emeralds,
+standing 20, XP 0.5, the keepsake "The Miners' Lamp"; the town's mood +14, history "... The mine's working again.", the
+miners recorded for `Troubles.rescued` ("miner"). Missed (two play-days): the town seals the shaft with planks for good
+(`mine_sealed`), the miners get out through old workings hurt, the assayer stops selling the mine's ore and maps.
 
-**Caravans** (`RoadHooks`, `RoadAccess`; Living Wilds' `People.Caravan`): the World Pulse's caravan asks for a stretch of
-a laid road 50-160 from the player, about 160 long, bound for a settlement (arriving at its edge when it's in reach),
+**Caravans** (`RoadHooks`, `RoadAccess`; Living Wilds' `People.Caravan`): the World Pulse's caravan asks for a stretch
+of a laid road 50-160 from the player, about 160 long, bound for a settlement (arriving at its edge when it's in reach),
 and walks it; when it comes in, the village gains prosperity (+2, +4 if someone stood with it through an ambush), its
 history says so, its stalls take the caravan's goods from where it set out, and players within 200 get an AMBIENT line.
 Without the roads (old worlds) it walks open ground as before. **Tier IV**: W6 is not in this build, so the call site is
@@ -6744,16 +6746,18 @@ settlement they're in; 3,000 stretches and 400 places at most; the whole on logi
 `atlas.client.AtlasScreen` (draws the lines first), `citizens.Roster` (`ASSAYER` 30).
 
 **Cost** (Mac, seed 26102610, real noise): planning a road 285-355 ms on the planner thread (about 107k land reads; ~80
-roads within 2,400 of the centre), painting a road chunk 0.9-3.1 ms (cold); a town planned in 0.4-0.6 s on real land (48
-ms on the test valley), painted at about 0.3 ms a chunk over ~75-110 chunks, at most 6 lights a chunk.
+roads within 2,400 of the centre), painting a road chunk 0.9-3.1 ms (cold); a town planned in 0.36-0.93 s on real land
+(the slower ones planned twice, the second with the wider wall; 48 ms on the test valley), painted at about 0.3 ms a
+chunk over ~75-110 chunks, at most 6 lights a chunk.
 
 **Decisions taken here** (none of the plan's 13): the hub rule and its numbers above (towns one region in five, the
 first town placed on purpose, a wayhouse at a region's heart for "a day's walk"); roads on a lattice of leg starts
 (every eighth chunk, 72-point legs) and planned ahead of players; the keep rules and the 14-wide exits (they shift W3's
-fields); the mining roll (one in three villages, one in ten hamlets); the town's numbers (wall 64, square 11, lanes 24
-apart, squared to the compass, 3-block frontage slots) and its people bounds; the mine's depths (24, then 16); the Deep
-Mine's cause, timings and pay; the assayer's goods and the lode map's price; the caravan's stretch (50-160, 160 long)
-and its prosperity; the Atlas's record limits; the Awakened Villages pack holds the roads.
+fields); the mining roll (one in three villages, one in ten hamlets); the town's numbers (wall 64, or 76 when that fits
+under 25 homes, square 11, lanes 24 apart, squared to the compass, 3-block frontage slots) and its people bounds; the
+mine's depths (24, then 16); the Deep Mine's cause, timings and pay; the assayer's goods and the lode map's price; the
+caravan's stretch (50-160, 160 long) and its prosperity; the Atlas's record limits; the Awakened Villages pack holds the
+roads.
 
 **Left.** W6's Tier IV caravans (the hook is in place; W6 installs it). Travellers on foot on the roads (caravans only).
 Horses to hire at the wayhouse's stable (the carter sells leads and saddles; the paddock's horses are the stable's). A

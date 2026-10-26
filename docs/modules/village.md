@@ -120,7 +120,7 @@ you've found. New worlds with the Awakened Villages pack only.
 | The line | `road.RoadPlanner` | pure from the ends and the generator's estimate of the land; A* on a coarse lattice, cut corners, a profile that never climbs more than a block a point; bridges, boardwalks, causeways |
 | Worldgen | `road.RoadStructure`, `road.RoadPlacement`, `road.RoadPiece` (`world.VillageWorldgen` registers them) | legs of ≤ 72 points starting on a lattice of every eighth chunk; thin-beard markers under the dry points; the piece takes no beard |
 | Painting | `road.RoadPaint`, `road.RoadMarks`, `road.Waymarks` | through the settlement painter (fell, sweep, fill); the land's paving, half-step slabs, bridges, lantern posts; waymarkers with a hanging-sign arm per way, the cairn at the pass |
-| Towns | `plan.TownPlanner`, `plan.TownPainter` | wall ring 64 out with towers and gates, the market square where two main streets cross, a lane grid, about 30-40 homes, the inn, hall, scribe, smithy, a bell tower, stalls |
+| Towns | `plan.TownPlanner`, `plan.TownPainter` | wall ring 64 out (76 where that fits under 25 homes) with towers and gates, the market square where two main streets cross, a lane grid, about 30-40 homes, the inn, hall, scribe, smithy, a bell tower, stalls |
 | Wayhouses | `plan.WayhousePlanner` | an inn and stable on a crossroads at a region's heart, a horse paddock, a carter |
 | Mining towns | `plan.MinePlanner`, `plan.MinePainter`, `world.MinePiece` | the shaft head with its winch, the assayer's store, two levels down to a lode, the cavern behind the face |
 | The Deep Mine | `trouble.DeepMine` | the bell at the shaft head, the families at the mouth, the nest, the roof coming down behind, the miners brought up; or the shaft sealed |

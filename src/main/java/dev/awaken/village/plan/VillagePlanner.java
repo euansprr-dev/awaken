@@ -58,7 +58,7 @@ public final class VillagePlanner {
         // (SPEC §28.9) a region's town, a crossroads' wayhouse, a mining town (where no mountain is near, a village)
         switch (q.kind()) {
             case TOWN -> {
-                return new TownPlanner.TownWork(q, t).run();
+                return TownPlanner.plan(q, t);
             }
             case WAYHOUSE -> {
                 return new WayhousePlanner.WayWork(q, t).run();
