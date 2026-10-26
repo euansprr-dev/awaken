@@ -78,6 +78,22 @@ public final class Wards {
         return w.isPresent() && (!HearthHooks.inside(level, pos) || rankDoored(w.get()));
     }
 
+    /**
+     * A climb: a site whose way up is the rope (a Tether Spire, a sky platform's rig, a hero tree's crown). A block placed
+     * there is refused at once rather than crumbled (the crumble's three seconds are a nerd-pole), even inside a Hearth.
+     */
+    public static boolean climb(WardHooks.Ward w) {
+        return w.kind().equals(RuinKind.SPIRE.structure.identifier().getPath())
+                || w.kind().equals(RuinKind.SKY.structure.identifier().getPath()) || w.kind().equals("hero_crown");
+    }
+
+    /** The climb ward at {@code pos} whose rules bind this player (wards on, survival or adventure), if any. */
+    public static Optional<WardHooks.Ward> climbAt(ServerLevel level, BlockPos pos, Player p) {
+        if (!on() || !binds(p)) return Optional.empty();
+        Optional<WardHooks.Ward> w = WardHooks.at(level, pos);
+        return w.isPresent() && climb(w.get()) ? w : Optional.empty();
+    }
+
     /** A site whose sealed chamber waits behind a rank door: the vaults. */
     static boolean rankDoored(WardHooks.Ward w) {
         return w.kind().equals(RuinKind.VAULT.structure.identifier().getPath())

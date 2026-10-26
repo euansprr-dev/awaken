@@ -87,6 +87,36 @@ public final class WardTests {
                 level.setBlock(spot, stone, 3);
                 h.assertFalse(WardEvents.placed(p, level, spot, stone), "a block placed inside a Hearth stays");
                 h.assertTrue(WardEvents.refuses(p, level, wall, plating), "but a vault's walls hold even there: its rank door can't be dug round");
+
+                // a climb (a Tether Spire's ward, high over the test) refuses the first block outright, Hearth or not,
+                // and keeps the lock in the band; its unopened cache stays sealed for someone who built their way in
+                BlockPos high = at.above(120);
+                WardHooks.Source spire = (l, pos, out) -> {
+                    if (pos.getY() > at.getY() + 100) out.accept(new WardHooks.Ward("ruin:9,9", RuinKind.SPIRE.structure.identifier().getPath(),
+                            new net.minecraft.world.level.levelgen.structure.BoundingBox(high).inflatedBy(8)));
+                };
+                WardHooks.register(spire);
+                var real = dev.awaken.core.api.ArrivalHooks.installed();
+                try {
+                    dev.awaken.progression.Progression.awaken(p);
+                    h.assertTrue(WardEvents.refusesClimb(p, level, high), "a spire refuses the first block, even inside a Hearth");
+                    h.assertTrue(p.getData(dev.awaken.progression.ProgressionModule.PROMISES.get()).get("landmark:ruin:9,9") != null,
+                            "and the band keeps its crown, waiting for the Tether");
+                    h.assertFalse(WardEvents.refusesClimb(p, level, at.east()), "a vault isn't a climb: it crumbles instead");
+                    level.setBlock(high, Blocks.CHEST.defaultBlockState(), 3);
+                    net.minecraft.world.RandomizableContainer.setBlockEntityLootTable(level, level.getRandom(), high, dev.awaken.above.ruin.RuinBuilder.loot("precursor_spire"));
+                    boolean[] moved = {false};
+                    dev.awaken.core.api.ArrivalHooks.install(new dev.awaken.core.api.ArrivalHooks.Tracker() {
+                        @Override public boolean byMovement(ServerPlayer q) { return moved[0]; }
+                    });
+                    h.assertTrue(WardEvents.sealsCache(p, level, high), "built your way up: the cache's inner seal holds");
+                    moved[0] = true;
+                    h.assertFalse(WardEvents.sealsCache(p, level, high), "came by rope: it opens");
+                } finally {
+                    dev.awaken.core.api.ArrivalHooks.install(real);
+                    WardHooks.unregister(spire);
+                    level.setBlock(high, Blocks.AIR.defaultBlockState(), 3);
+                }
             } finally {
                 HearthHooks.install(hearths);
                 chunk.setAllStarts(starts);

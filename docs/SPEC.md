@@ -4292,3 +4292,36 @@ Director's rhythm.
 A landmark's site name carries a few words of why (`LandmarkKind.why`): "Sealed Vault · something waits inside", "The
 Well · the way down", "Tether Spire · a crown at the top". The sky's need reads "· needs a rope or wings" (the rig's
 rings are a rope ladder), the Tether's "· needs the Tether".
+
+### 27.5 Locks that hold and speak (phase 3)
+- **Climbs refuse the first block** (`Wards.climb`: a Tether Spire's, a sky platform's or a hero tree's crown's ward;
+  `WardEvents.refusesClimb`, at `EventPriority.HIGH` so nothing else logs a block never placed; buckets too). A survival
+  player's block there is refused at once instead of crumbling three seconds later (the crumble was a nerd-pole: you
+  always stood on a block younger than three seconds), even inside a Hearth. The ward's HOLD light where it would have
+  gone, and, worded by what the player holds (every 3 s at most): without the rope "The spire sheds what you build. Its
+  platforms answer to a line." (sky: "Nothing you build reaches it. Its rings answer to a line."; tree: "The great tree
+  sheds what you build. Its rings answer to a line.") and the lock is kept as a promise (§27.1); with the rope "Climb it
+  by rope: hold [movement key] at a ring." The first climb that ever refuses a player shows a card ("A Tether Spire" ·
+  "It sheds what you build. Its way up answers to a line, and a Precursor vault keeps a line for a hunter it opens
+  to." · Y "Show me" opens the band, `ProgressionPayloads.OpenBand`, action `band:ascent`; flag `awaken:climb_refused`).
+  Vaults, monoliths and labs keep the crumble.
+- **The cache's inner seal** (`WardEvents.sealsCache`): an unopened site cache (a container with its loot table still
+  unrolled) inside a ward stays shut for a player whose visit is built (`ArrivalHooks.byMovement` false), with the HOLD
+  light and "The cache's inner seal holds: you built your way up. Come back by rope." (elsewhere: "…you built your way
+  here. Come back without building."). Before, the first open by a builder silently spent the best roll for everyone.
+- **A relog keeps a built visit** (`Arrival.leave`): a visit spoiled by building is remembered for 10 minutes past a
+  logout and re-opened spoiled on return. Before, "no record" read as moving: a tower plus a relog paid the best roll,
+  and with a ledge hang a sky core's Wings.
+- **Hero trees' wards cover the canopy** (`HeroCrowns.WARD_COLOSSUS` 32, `WARD_LUMEN` 16, from 10 over the foot): it was
+  a column of radius 9 under a canopy 24-30 wide, so a tower beside the trunk never met it.
+- **The Vow's mast** pays only by movement (`ArrivalHooks.byMovement` at the mast).
+- **Refusals answer on arrival**: the sky core (§17.9) and a quest step's needs (Wren's ledge; `QuestEngine.waiting`,
+  every 20 s at most) instead of once a minute on the minute.
+- **The wall's line** names a door only where there is one: "The ward holds. These walls answer only to their door." at
+  vaults, "The ward holds. These walls were sealed to stay." elsewhere.
+- **Rank doors breathe their rank's colour** (`DoorCoreBlockEntity.clientTick`, within 24 blocks every 2 s,
+  `AscentFxBridge.doorBreath`: a few motes in the rank colour lift off the core), so a door says which rank it waits for
+  before anyone touches it.
+- **Gate cards compare ranks**: "Your rank · below it · its Lord will test you" or "above it · it pays you less" (0.3).
+- Tests: `wilds_ward_rules` (a spire refuses the first block inside a Hearth and keeps the promise; a vault doesn't;
+  the cache's seal by arrival), `wilds_arrival_history` (a relog keeps the tower's visit).

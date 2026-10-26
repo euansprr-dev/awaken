@@ -78,13 +78,13 @@ public class SpireCrownBlockEntity extends BlockEntity {
         this.site = site;
         this.ground = ground;
         setChanged();
-        if (site != SITE_SPIRE && level != null && !level.isClientSide()) HeroCrowns.ward(worldPosition, ground);
+        if (site != SITE_SPIRE && level != null && !level.isClientSide()) HeroCrowns.ward(worldPosition, ground, site == SITE_COLOSSUS);
     }
 
     @Override
     public void onLoad() {
         super.onLoad();
-        if (site != SITE_SPIRE && level != null && !level.isClientSide()) HeroCrowns.ward(worldPosition, ground);
+        if (site != SITE_SPIRE && level != null && !level.isClientSide()) HeroCrowns.ward(worldPosition, ground, site == SITE_COLOSSUS);
     }
 
     @Override

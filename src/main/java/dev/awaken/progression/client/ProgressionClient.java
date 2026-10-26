@@ -33,6 +33,10 @@ public final class ProgressionClient {
         event.register(ProgressionPayloads.ContentSync.TYPE, (msg, ctx) -> {
             if (!Minecraft.getInstance().hasSingleplayerServer()) msg.apply();
         });
+        event.register(ProgressionPayloads.OpenBand.TYPE, (msg, ctx) -> {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null) mc.gui.setScreen(statusOpener.get());
+        });
     }
 
     private static void onLayers(RegisterGuiLayersEvent event) {

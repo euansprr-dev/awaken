@@ -120,6 +120,10 @@ public final class ProgressionModule {
         });
         ProgressionNow.register();
         PromiseKeeper.init(); // the locks you met, and the call back when you hold their key (SPEC §27)
+        // "Show me" on a card (a climb site's first refusal): the band opens (SPEC §27)
+        Signal.onAction(Progression.BAND_ACTION, (p, action, yes) -> {
+            if (yes) Progression.openBand(p);
+        });
         Lessons.init(); // teaching in play and the level road's goals (P3)
         Signal.onAction(Directives.ACTION, Directives::answer);
         PlayDays.onMorning((server, day) -> {
@@ -139,6 +143,7 @@ public final class ProgressionModule {
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
         var r = event.registrar("1");
         r.playToClient(ProgressionPayloads.ContentSync.TYPE, ProgressionPayloads.ContentSync.STREAM_CODEC);
+        r.playToClient(ProgressionPayloads.OpenBand.TYPE, ProgressionPayloads.OpenBand.STREAM_CODEC);
         r.playToServer(ProgressionPayloads.StatusAction.TYPE, ProgressionPayloads.StatusAction.STREAM_CODEC, (msg, ctx) -> {
             if (!(ctx.player() instanceof ServerPlayer sp)) return;
             long now = sp.level().getGameTime();

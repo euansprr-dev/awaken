@@ -55,6 +55,13 @@ public final class ProgressionPayloads {
         @Override public Type<StatusAction> type() { return TYPE; }
     }
 
+    /** Server → client: open the band (the Status screen), e.g. from a "Show me" card (SPEC §27). */
+    public record OpenBand(int tab) implements CustomPacketPayload {
+        public static final Type<OpenBand> TYPE = new Type<>(Awaken.id("open_band"));
+        public static final StreamCodec<ByteBuf, OpenBand> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, OpenBand::tab, OpenBand::new);
+        @Override public Type<OpenBand> type() { return TYPE; }
+    }
+
     static {
         // keep Defs referenced so content codecs initialise before first use
         Defs.TruthDef.class.getName();

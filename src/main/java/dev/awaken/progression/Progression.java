@@ -57,6 +57,14 @@ public final class Progression {
         return rank.contentLevel;
     }
 
+    /** The action prefix of a card whose yes opens the band ("band:ascent"). */
+    public static final String BAND_ACTION = "band";
+
+    /** Opens the band (the Status screen) on this player's client. */
+    public static void openBand(ServerPlayer player) {
+        dev.awaken.core.AwakenNet.send(player, new dev.awaken.progression.net.ProgressionPayloads.OpenBand(0));
+    }
+
     /** Queue a sync of the profile to its owner (batched once per second). */
     public static void markDirty(ServerPlayer player) {
         DIRTY.add(player);

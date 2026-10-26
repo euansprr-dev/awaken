@@ -25,6 +25,14 @@ public class DoorCoreBlockEntity extends BlockEntity {
         super(AboveBlocks.DOOR_CORE_BE.get(), pos, state);
     }
 
+    /** Client: every 2 s, within 24 blocks, the door breathes its rank's colour (it waits for that rank, whoever looks). */
+    public static void clientTick(Level level, BlockPos pos, BlockState state, DoorCoreBlockEntity be) {
+        if (Math.floorMod(level.getGameTime() + pos.hashCode(), 40L) != 0) return;
+        Player near = level.getNearestPlayer(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 24, false);
+        if (near == null) return;
+        dev.awaken.body.ascent.client.AscentFxBridge.doorBreath(pos, DoorCoreBlock.required(state).colour);
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, DoorCoreBlockEntity be) {
         if (Math.floorMod(level.getGameTime() + pos.hashCode(), 40L) != 0 || !(level instanceof ServerLevel sl)) return;
         for (ServerPlayer sp : sl.players()) {

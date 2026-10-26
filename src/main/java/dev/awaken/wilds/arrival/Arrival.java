@@ -59,6 +59,15 @@ public final class Arrival implements ArrivalHooks.Tracker {
     }
 
     private static final Map<UUID, State> STATES = new HashMap<>();
+    /**
+     * A visit someone built their way into, kept past a logout for {@link #SPOILED_FOR} (SPEC §27.5): before, a relog
+     * wiped the record, and "no record" reads as moving, so a tower plus a relog opened a site's best roll (and with a
+     * ledge hang, a sky core's Wings).
+     */
+    private record Spoiled(String ward, long until) {}
+
+    private static final Map<UUID, Spoiled> SPOILED = new HashMap<>();
+    static final long SPOILED_FOR = 20 * 60 * 10;
     static final Arrival INSTANCE = new Arrival();
 
     private Arrival() {}
@@ -72,8 +81,11 @@ public final class Arrival implements ArrivalHooks.Tracker {
             State s = e.getPlayer() == null ? null : STATES.get(e.getPlayer().getUUID());
             if (s != null && !e.isCanceled()) s.placed.remove(e.getPos().asLong());
         });
-        bus.addListener(PlayerEvent.PlayerLoggedOutEvent.class, e -> STATES.remove(e.getEntity().getUUID()));
-        bus.addListener(ServerStoppingEvent.class, e -> STATES.clear());
+        bus.addListener(PlayerEvent.PlayerLoggedOutEvent.class, e -> leave(e.getEntity().getUUID(), e.getEntity().level().getGameTime()));
+        bus.addListener(ServerStoppingEvent.class, e -> {
+            STATES.clear();
+            SPOILED.clear();
+        });
     }
 
     static State state(ServerPlayer p) {
@@ -82,6 +94,13 @@ public final class Arrival implements ArrivalHooks.Tracker {
 
     static void forget(UUID id) {
         STATES.remove(id);
+        SPOILED.remove(id);
+    }
+
+    /** A logout: a built visit is remembered for a while, the rest is dropped. */
+    static void leave(UUID id, long now) {
+        State s = STATES.remove(id);
+        if (s != null && s.visit != null && !s.visitByMovement) SPOILED.put(id, new Spoiled(s.visit, now + SPOILED_FOR));
     }
 
     private static void tick(MinecraftServer server) {
@@ -147,6 +166,8 @@ public final class Arrival implements ArrivalHooks.Tracker {
             if (!id.equals(s.visit) || now - s.visitSeen > VISIT_GRACE) {
                 s.visit = id;
                 s.visitByMovement = !s.log.contains(Way.BUILT) && s.slot != Way.BUILT.ordinal();
+                Spoiled was = SPOILED.remove(p.getUUID());
+                if (was != null && was.ward().equals(id) && now < was.until() && now >= was.until() - SPOILED_FOR) s.visitByMovement = false;
             } else if (s.builtSince || s.slot == Way.BUILT.ordinal()) {
                 s.visitByMovement = false;
             }
@@ -185,7 +206,10 @@ public final class Arrival implements ArrivalHooks.Tracker {
     /** The open visit's verdict, else the window's: nothing built in the last 20 s. No record at all: nothing built. */
     static boolean verdict(ServerPlayer p, long now) {
         State s = STATES.get(p.getUUID());
-        if (s == null) return true;
+        if (s == null) {
+            if (!SPOILED.containsKey(p.getUUID())) return true;
+            s = state(p); // back from a logout inside a visit they built into: open it again, spoiled
+        }
         visit(p, s, now);
         if (s.visit != null) return s.visitByMovement;
         return !s.log.contains(Way.BUILT) && s.slot != Way.BUILT.ordinal();

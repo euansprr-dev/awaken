@@ -113,6 +113,10 @@ public final class GateCard {
             Signal.send(p, w.ttl(20 * 9).priority(3).build());
             return;
         }
+        // the gate against your rank, said plainly (SPEC §27.5): a gate below your rank pays 0.3 (Curve.BELOW_RANK_FACTOR)
+        int vs = plan.rank().ordinal() - Progression.rank(p).ordinal();
+        if (vs > 0) w.row("Your rank", "below it · its Lord will test you");
+        else if (vs < 0) w.row("Your rank", "above it · it pays you less");
         w.row("Omen", plan.theme().omen);
         if (scouted) w.row("Theme", plan.theme().displayName);
         if (per >= 20 || scouted) w.row("Layout", plan.layout().displayName);
