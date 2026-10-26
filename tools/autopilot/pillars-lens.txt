@@ -1,7 +1,7 @@
 # Gate pillars under Lens 2's clouds (pillars.txt's gate and framing, Awaken alone, Lens Cinematic: its volumetric
 # clouds pass behind and in front of the pillar). The slab Euan and the Far Sight tour saw was a hole in those clouds
 # the width of the widest haze ribbon. Short: noon and dusk, close and far.
-# Run: tools/tour-ci.sh tools/autopilot/pillars-lens.txt 1500 TECTONIC=awakened
+# Run: tools/tour-ci.sh tools/autopilot/pillars-lens.txt 1500
 #
 # Gate pillars, our own soft light (Euan: vanilla's beacon beam read as "a weird boxed outline" over Carillon; then
 # "the outline of the main light is still there and blocky": a pale slab with hard sides and a flat top at noon from a
@@ -31,13 +31,18 @@ hud off
 lens cinematic
 cmd gamemode spectator
 cmd time set 6000
-cmd tp @s 1110 140 -1090
+# Awaken alone has vanilla terrain (no Tectonic): open the gate by spawn, with fallbacks (a gate refuses to form
+# within 96 blocks of another, so only the first that finds dry ground stands near; frame picks the nearest)
+cmd awaken gate open C
+wait 20
+cmd awaken gate open C
+wait 20
+cmd tp @s ~200 140 ~
 wait 100
-# the first that finds ground stands; the others fall within 96 blocks of it and are refused
 cmd awaken gate open C
 wait 20
-cmd awaken gate open C
-wait 20
+cmd tp @s ~-200 140 ~200
+wait 100
 cmd awaken gate open C
 wait 200
 cmd awaken gate list
