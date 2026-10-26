@@ -19,7 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class Plans {
     private Plans() {}
 
-    private static final ConcurrentHashMap<String, Optional<VillagePlan>> CACHE = new ConcurrentHashMap<>();
+    /** Each key's plan as a future: the thread that asks first makes it (outside the map's lock), the others wait for it. */
+    private static final ConcurrentHashMap<String, java.util.concurrent.CompletableFuture<Optional<VillagePlan>>> CACHE = new ConcurrentHashMap<>();
     static long planNanos, plans;
 
     /** The structure's reach round its start chunk (references are made eight chunks out), less a margin for what hangs off walls. */
@@ -31,25 +32,39 @@ public final class Plans {
 
     /** The plan for an anchor (made now if no one has yet), or null where no site suits. */
     public static @Nullable VillagePlan of(SettlementGrid.Anchor a, Terrain t) {
-        return CACHE.computeIfAbsent(a.key(), k -> {
+        var mine = new java.util.concurrent.CompletableFuture<Optional<VillagePlan>>();
+        var had = CACHE.putIfAbsent(a.key(), mine);
+        if (had != null) return had.join().orElse(null);
+        VillagePlan p = null;
+        try {
             long t0 = System.nanoTime();
-            VillagePlan p = VillagePlanner.plan(request(a), t);
+            p = VillagePlanner.plan(request(a), t);
             long ns = System.nanoTime() - t0;
             planNanos += ns;
             plans++;
             if (p != null) Awaken.LOG.info("[village] planned {} in {} ms", p, String.format(java.util.Locale.ROOT, "%.1f", ns / 1e6));
-            else Awaken.LOG.info("[village] no site near {} {} for {} ({} ms)", a.x(), a.z(), a.key(), String.format(java.util.Locale.ROOT, "%.1f", ns / 1e6));
-            return Optional.ofNullable(p);
-        }).orElse(null);
+            else Awaken.LOG.info("[village] no site near {} {} for {} ({}; {} ms)", a.x(), a.z(), a.key(), VillagePlanner.WHY.get(),
+                    String.format(java.util.Locale.ROOT, "%.1f", ns / 1e6));
+        } finally {
+            mine.complete(Optional.ofNullable(p));
+        }
+        return p;
     }
 
     /** A plan already made (or null), without making one. */
     public static @Nullable VillagePlan cached(String key) {
-        Optional<VillagePlan> p = CACHE.get(key);
-        return p == null ? null : p.orElse(null);
+        var f = CACHE.get(key);
+        return f == null || !f.isDone() ? null : f.join().orElse(null);
     }
 
+    /** Planned (with a site or without), not merely being planned. */
     public static boolean known(String key) {
+        var f = CACHE.get(key);
+        return f != null && f.isDone();
+    }
+
+    /** Being planned or planned. */
+    public static boolean asked(String key) {
         return CACHE.containsKey(key);
     }
 
@@ -61,7 +76,7 @@ public final class Plans {
 
     /** Tests and commands: a plan made elsewhere under its key. */
     public static void put(VillagePlan p) {
-        CACHE.put(p.key, Optional.of(p));
+        CACHE.put(p.key, java.util.concurrent.CompletableFuture.completedFuture(Optional.of(p)));
     }
 
     public static String stats() {

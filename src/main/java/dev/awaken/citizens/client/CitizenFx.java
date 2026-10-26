@@ -39,11 +39,19 @@ public final class CitizenFx {
             pos = msg.pos().clone();
             kind = msg.kind().clone();
         } else {
-            int n = pos.length;
-            pos = Arrays.copyOf(pos, n + msg.pos().length);
-            kind = Arrays.copyOf(kind, n + msg.kind().length);
-            System.arraycopy(msg.pos(), 0, pos, n, msg.pos().length);
-            System.arraycopy(msg.kind(), 0, kind, n, msg.kind().length);
+            // a settlement sent again (it slept and woke, it stopped and started: SPEC §28.6) adds only what's new
+            it.unimi.dsi.fastutil.longs.LongOpenHashSet have = new it.unimi.dsi.fastutil.longs.LongOpenHashSet(pos);
+            int n = pos.length, add = 0;
+            long[] np = Arrays.copyOf(pos, n + msg.pos().length);
+            byte[] nk = Arrays.copyOf(kind, n + msg.kind().length);
+            for (int i = 0; i < msg.pos().length && i < msg.kind().length; i++) {
+                if (!have.add(msg.pos()[i])) continue;
+                np[n + add] = msg.pos()[i];
+                nk[n + add] = msg.kind()[i];
+                add++;
+            }
+            pos = Arrays.copyOf(np, n + add);
+            kind = Arrays.copyOf(nk, n + add);
         }
     }
 
