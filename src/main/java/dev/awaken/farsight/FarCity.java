@@ -22,6 +22,11 @@ public final class FarCity {
 
     /** The colour's top byte: this cell is built (its corner keeps the highest built cell). */
     public static final int BUILT = 1 << 24;
+    /**
+     * City Sight draws the city's real blocks (Far Sight 3, set by the client while it does): far terrain then carries
+     * only the city's ground there, a block under its streets so the real paving wins, and never its roofs.
+     */
+    public static volatile boolean underCitySight;
     /** Cells this far above the street count as built (the paving and the gardens don't). */
     static final int ABOVE_STREET = 3;
 
