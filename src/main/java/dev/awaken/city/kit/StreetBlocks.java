@@ -169,17 +169,21 @@ public final class StreetBlocks {
 
     /** A timber pole a line ties to at the far kerb (bible: "plant a pole there"): climbable, nothing to bump into. */
     public static final class LinePole extends Block {
+        /** The way a line leaves a top that ends it (its rope tied through the far ring out to that edge); none: a cap. */
+        public enum Rope implements KitBlocks.Named { NONE, NORTH, EAST, SOUTH, WEST }
+
         public static final BooleanProperty TOP = BooleanProperty.create("top");
+        public static final EnumProperty<Rope> ROPE = EnumProperty.create("rope", Rope.class);
         private static final VoxelShape FULL = Block.column(4, 0, 16), CAP = Block.column(6, 0, 13);
 
         public LinePole(BlockBehaviour.Properties p) {
             super(p);
-            registerDefaultState(stateDefinition.any().setValue(TOP, false));
+            registerDefaultState(stateDefinition.any().setValue(TOP, false).setValue(ROPE, Rope.NONE));
         }
 
         @Override
         protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
-            b.add(TOP);
+            b.add(TOP, ROPE);
         }
 
         @Override
@@ -206,7 +210,7 @@ public final class StreetBlocks {
 
         public enum Part implements KitBlocks.Named { TOP, MIDDLE, BOTTOM }
 
-        public enum Mount implements KitBlocks.Named { WALL, POLE }
+        public enum Mount implements KitBlocks.Named { WALL, POLE, LINE }
 
         public static final EnumProperty<Design> DESIGN = EnumProperty.create("design", Design.class);
         public static final EnumProperty<Part> PART = EnumProperty.create("part", Part.class);
@@ -227,7 +231,7 @@ public final class StreetBlocks {
 
         @Override
         protected VoxelShape getShape(BlockState s, BlockGetter level, BlockPos pos, CollisionContext ctx) {
-            return (s.getValue(MOUNT) == Mount.POLE ? POLE : WALL).get(s.getValue(FACING));
+            return (s.getValue(MOUNT) == Mount.WALL ? WALL : POLE).get(s.getValue(FACING));
         }
 
         @Override

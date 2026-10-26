@@ -1,0 +1,64 @@
+# The band's pages, phase 1 (SPEC §30): outside the High Gate with a few levels (points to spend) and two gates near,
+# the holo band on each page (Status: status, stats, then the Journal; Powers; Journal; Truths; Codex), a page picked by
+# a real click on the rail, the Map page (the Atlas table, the gates standing on it), and the flat fallback.
+# Run on CI: tools/tour-ci.sh tools/autopilot/k-menu-pages.txt 1200 PACK=perf,world TECTONIC=awakened
+world kmenuPages survival 20261024
+waitworld
+gui 0
+window 1440 900
+info
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 5000
+cmd awaken opening skip
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd awaken city view studio_high_gate
+wait 240
+cmd awaken admin xp 4000
+wait 20
+cmd awaken gate open D
+wait 60
+cmd awaken gate open E
+wait 60
+cmd awaken atlas ring city
+cmd awaken atlas reveal 260
+wait 120
+screen holo status
+wait 40
+shot p01_status
+scroll -6
+wait 10
+shot p02_status_lower
+screen holo powers
+wait 40
+shot p03_powers
+screen holo journal
+wait 40
+shot p04_journal
+screen holo truths
+wait 40
+shot p05_truths
+screen holo codex
+wait 40
+shot p06_codex
+screen holo status
+wait 40
+holo clicktab 2
+wait 20
+shot p07_clicked_journal
+screen close
+wait 20
+screen holo map
+wait 100
+shot p08_map_gates
+screen close
+wait 20
+screen status
+wait 30
+shot p09_flat_status
+screen close
+quit

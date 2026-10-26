@@ -37,7 +37,9 @@ final class ArmsBodies {
 
     static void charge(Entity e) {
         ArmsWrist.charge(e);
-        if (PlayerClips.play(e.getId(), ArmsClips.CHARGE, 2)) HELD.put(e.getId(), ArmsClips.CHARGE);
+        Archetypes.Loaded style = e instanceof LivingEntity l ? Arms.styleOf(l.getMainHandItem()) : null;
+        String clip = style == null ? ArmsClips.CHARGE : ArmsClips.charge(style.id());
+        if (PlayerClips.play(e.getId(), clip, 2)) HELD.put(e.getId(), clip);
     }
 
     /** The dodge's clip for a way (dx, dz in the world): back, or a step to one side, mirrored for a left hand. */

@@ -13,6 +13,7 @@ public final class FarSightModule {
 
     public static void init(IEventBus modBus) {
         FarCollector.init();
+        dev.awaken.farsight.voxel.VoxelAhead.init(modBus);
         FarLandmarks.register(FarLandmarks::gates);
         FarSightTests.register();
     }

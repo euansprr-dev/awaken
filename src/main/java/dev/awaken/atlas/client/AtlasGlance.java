@@ -7,20 +7,16 @@ import com.mojang.renderpearl.api.textures.FilterMode;
 import com.mojang.renderpearl.api.textures.GpuTexture;
 import com.mojang.renderpearl.api.textures.GpuTextureView;
 import dev.awaken.Awaken;
-import dev.awaken.atlas.Discovery;
-import dev.awaken.progression.client.StatusSections;
-import dev.awaken.signal.client.Glass;
-import dev.awaken.signal.client.Ui;
-import dev.awaken.signal.client.UiSection;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.resources.Identifier;
 
 /**
- * The wrist glance (SPEC §16.8): the land round you as a small live diorama in the K menu, turned so where you look is
- * up, your thread and the clouds included. It is painted into one registered texture at most once a second, and only
- * while the menu shows it (or sooner when you've moved or turned), so the Holo draws it as one textured quad: the
- * glance costs one quad a frame plus a paint a second.
+ * The wrist glance (SPEC §16.8): the land round you as a small live diorama, turned so where you look is up, your thread
+ * and the clouds included. It is painted into one registered texture at most once a second, and only while something
+ * asks for it ({@link #want}; or sooner when you've moved or turned), so it costs one quad a frame plus a paint a
+ * second. It left the K menu with the band's pages (SPEC §30: the Map page is the Atlas itself), and the map scene draws
+ * the table's own picture (SPEC §30.5), so nothing asks for it now; it is kept for a wrist glance later.
  */
 final class AtlasGlance {
     private AtlasGlance() {}
@@ -107,49 +103,5 @@ final class AtlasGlance {
             target = null;
             painter = null;
         }
-    }
-
-    /** The glance on the K menu's Status page, with a button to the table. */
-    static final class Section extends UiSection {
-        public String title() {
-            return "ATLAS";
-        }
-
-        public int order() {
-            return -25; // right under NOW: where you are comes before what you carry
-        }
-
-        public boolean visible() {
-            return Discovery.mapped(AtlasState.get().dimension()) && Discovery.CLIENT.count() > 0;
-        }
-
-        @Override
-        protected void build(Ui ui) {
-            int w = ui.width, h = Math.round(w * (float) H / W);
-            int x = ui.x, y = ui.y();
-            if (ui.drawing()) {
-                want();
-                if (target != null) ui.canvas().texture(ID, x, y, w, h, 0f, 1f, 1f, 0f, 0xFFFFFFFF);
-                ui.canvas().outline(x - 1, y - 1, w + 2, h + 2, Glass.a(Glass.EDGE, 0.35f));
-                // you, at the middle of the glance (the table's centre sits a little below half)
-                int cx = x + w / 2, cy = y + Math.round(h * 0.55f);
-                ui.canvas().fill(cx - 1, cy - 1, cx + 2, cy + 2, 0xFFE9F1FF);
-                ui.canvas().fill(cx, cy - 6, cx + 1, cy - 2, 0xCCE9F1FF);
-            }
-            ui.gap(h + 4);
-            Ui.Flow row = ui.flow();
-            if (row.button("Open the table  ·  " + AtlasClient.KEY.getTranslatedKeyMessage().getString(), Glass.EDGE, true)) {
-                Minecraft.getInstance().schedule(() -> {
-                    Minecraft.getInstance().gui.setScreen(null);
-                    AtlasScreen.open(20f, 52f, 1f);
-                });
-            }
-            row.text(String.format(java.util.Locale.ROOT, "%,d places known", Discovery.CLIENT.count()), Glass.LABEL);
-            row.end();
-        }
-    }
-
-    static void register() {
-        StatusSections.add(StatusSections.Tab.STATUS, new Section());
     }
 }

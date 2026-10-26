@@ -716,7 +716,9 @@ def bake(out=SWINGS):
     plus each style's turn for a vanilla item."""
     import arms_holds as AH
     import arms_weapons as AW
-    wrists = solve_wrists()  # third person: every move's wrist, in parallel
+    import arms_rig4 as R4
+    rig = R4.load()  # third person from first person's blade: its styles' wrists come with their arms
+    wrists = solve_wrists([s for s in table() if s not in rig])  # third person: every other move's wrist, in parallel
     flipped3 = sorted(r[0] for r in AW.CATALOG
                       if AH.third_person(r[8], AH.edge_of(r[8], None if r[0] in AW.LORD_COLOUR else r[2])) is not None)
     styles = {}
@@ -739,7 +741,9 @@ def bake(out=SWINGS):
             moves[mv] = {"form": form_of(m)[0], "weight": WEIGHT_OF.get(sid, "blade"), "hand": m["swing"].get("hand", "main"),
                          "keys": keys}
             wrist = wrists.get(sid, {}).get(mv, ({}, 0.0))[0]  # third person: the wrist, per arm (ArmsWrist)
-            if wrist:
+            if mv in rig.get(sid, {}):
+                moves[mv].update(rig4_wrists(rig[sid][mv]))
+            elif wrist:
                 moves[mv]["wrist3"] = wrist
         # a vanilla item held in this style: the same targets, from vanilla's own hold (R_vanilla = R . C)
         C = Fs @ Fv.T
@@ -755,6 +759,33 @@ def bake(out=SWINGS):
     json.dump({"schemaVersion": 4, "generatedBy": "tools/art/anim_lab.py bake", "dt": KEY_DT, "wristDt": WRIST_DT,
                "flipped3": flipped3, "styles": styles},
               open(out, "w"), separators=(",", ":"))
+    return out
+
+
+def rig4_wrists(r):
+    """A move's wrist keys from third person's blade-first rig (arms_rig4): the bent clip's (wrist3) and the straight
+    one's (wrist3s, without Bendable Cuboids: its arms solved straight, so its own turn)."""
+    out = {}
+    for key, variant in (("wrist3", "bent"), ("wrist3s", "straight")):
+        keys = r[variant]["wrist"]
+        if any(abs(k[3]) < 0.99995 for k in keys):
+            out[key] = {"right": keys}
+    return out
+
+
+def rig4_inject(out=SWINGS):
+    """Writes the rig's wrists into the baked swings as they stand (the rest of the bake unchanged)."""
+    import arms_rig4 as R4
+    data = json.load(open(out))
+    for sid, moves in R4.load().items():
+        for mv, r in moves.items():
+            mv_row = data["styles"].get(sid, {}).get("moves", {}).get(mv)
+            if mv_row is None:
+                continue
+            mv_row.pop("wrist3", None)
+            mv_row.pop("wrist3s", None)
+            mv_row.update(rig4_wrists(r))
+    json.dump(data, open(out, "w"), separators=(",", ":"))
     return out
 
 
@@ -1232,7 +1263,8 @@ def through_body(frames, f, pts, arm):
     worst, where = 0.0, ""
     other = "left_arm" if arm == "right" else "right_arm"
     worn = pts.shape[0] and getattr(through_body, "worn", False)
-    for part in ("head", "torso", "right_leg", "left_leg", other) + (() if worn else (arm + "_arm",)):
+    both = getattr(through_body, "both", False)
+    for part in ("head", "torso", "right_leg", "left_leg") + (() if both else (other,)) + (() if worn else (arm + "_arm",)):
         M, T = (np.array(v) for v in frames[part])
         _, (ox, oy, oz, ow, oh, od), _ = PC.PARTS[part]
         L = (P - T) @ M  # M orthonormal: its transpose undoes it
@@ -1257,7 +1289,9 @@ def body_clips(style, mv, m, pitches=(0.0, 30.0), wrist=True):
     name = _clip_name(style, mv) if _clip_name(style, mv) in A.CLIPS else "arms_" + mv
     if name not in A.CLIPS:
         return 0.0, "", 0.0, "", ""
-    wk = load_swings().get(style, {}).get("moves", {}).get(mv, {}).get("wrist3", {}) if wrist else {}
+    row = load_swings().get(style, {}).get("moves", {}).get(mv, {})
+    wk = row.get("wrist3", {}) if wrist else {}
+    wks = row.get("wrist3s", wk) if wrist else {}  # the straight clip's own, where its arms were solved straight
     arms = ["right", "left"] if style in ("daggers", "gauntlets") else ["right"]
     rows = [r for r in AW.CATALOG if r[8] == style]
     weapons = []
@@ -1266,12 +1300,14 @@ def body_clips(style, mv, m, pitches=(0.0, 30.0), wrist=True):
         weapons.append((r[0], weapon_points(r[0]), AH.third_person(style, e) is not None))
     worst = (0.0, "", 0.0, "", "")
     through_body.worn = style == "gauntlets"  # worn on the arm: its cuff lies along it
+    import arms_rig4 as R4
+    through_body.both = style in R4.STYLES  # both hands on it: the other arm holds its handle
     for clip, lower in ((A.CLIPS[name], False), (A.CLIPS[name + "_bent"], True)):
         for t in np.arange(0, clip.length + 1e-6, 0.25):
             for pitch in pitches:
                 fr = PC.part_frames(clip.sample(float(t), pitch), pitch)
                 for arm in arms:
-                    W = wrist_now(wk.get(arm), float(t))
+                    W = wrist_now((wk if lower else wks).get(arm), float(t))
                     for wid, pts, fl in weapons:
                         d, part = through_body(fr, hand_3p(fr, arm, display_3p(wid, arm), W, lower=lower, flipped=fl), pts, arm)
                         if d > worst[0]:
@@ -1604,10 +1640,12 @@ def audit_3p(verbose=True):
             bent = A.CLIPS[c_.name + "_bent"]
             pair = {False: tuple(PC.part_frames(c_.sample(float(t), 8.0), 8.0) for t in (max(0.0, hit - 0.25), hit + 0.25)),
                     True: tuple(PC.part_frames(bent.sample(float(t), 8.0), 8.0) for t in (max(0.0, hit - 0.25), hit + 0.25))}
-            wk = swings.get(sid, {}).get("moves", {}).get(mv, {}).get("wrist3", {})
+            row = swings.get(sid, {}).get("moves", {}).get(mv, {})
+            wk = row.get("wrist3", {})
+            wks = row.get("wrist3s", wk)  # the straight clip's own (a rig that solved its arms straight)
             worst = None
             for arm in arms_3p(sid, mv, m):
-                roll0, roll1 = wrist_now(wk.get(arm), max(0.0, hit - 0.25)), wrist_now(wk.get(arm), hit + 0.25)
+                rolls = {lw: (wrist_now(k.get(arm), max(0.0, hit - 0.25)), wrist_now(k.get(arm), hit + 0.25)) for lw, k in ((True, wk), (False, wks))}
                 for r in rows:
                     e = AH.edge_of(sid, None if r[0] in AW.LORD_COLOUR else r[2])
                     disp = display_3p(r[0], arm)
@@ -1616,6 +1654,7 @@ def audit_3p(verbose=True):
                     # leading with the working part: its lead counts as the bar's share it reaches of 0.45
                     leads = []
                     for lower, (f0, f1) in pair.items():
+                        roll0, roll1 = rolls[lower]
                         x = lead_3p(hand_3p(f0, arm, disp, roll0, lower=lower, flipped=fl),
                                     hand_3p(f1, arm, disp, roll1, lower=lower, flipped=fl), part, e, lens[r[0]])
                         leads.append(x if lower else LEAD_MIN[part] * min(1.0, x / 0.45) if not math.isnan(x) else x)
@@ -1957,6 +1996,9 @@ def film(frames_dir, out):
 
 
 def main(argv):
+    if argv[:1] == ["rig4"]:  # third person from first person's blade: its wrists into the baked swings
+        print(rig4_inject())
+        return 0
     model = "old"
     if "--model" in argv:
         i = argv.index("--model")

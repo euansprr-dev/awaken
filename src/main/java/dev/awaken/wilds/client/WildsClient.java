@@ -21,10 +21,9 @@ public final class WildsClient {
             // the band's Ascent page (the progression plan's ladder) if it is there, else the moves the body has; never
             // before the Registry has put the band on the wrist (SPEC §16, the ceremony)
             e.register(ClimbWard.ShowMe.TYPE, (msg, ctx) -> {
-                var mc = net.minecraft.client.Minecraft.getInstance();
-                if (mc.player == null || !dev.awaken.core.api.HoloBand.worn(mc.player)) return;
-                mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(
-                        dev.awaken.progression.client.StatusSections.Tab.STATUS, "THE ASCENT", "THE BODY"));
+                // the band's Powers page, at the Ascent (SPEC §30); the band in whichever style the player uses
+                dev.awaken.progression.client.ProgressionClient.openBand(
+                        dev.awaken.progression.client.StatusSections.Tab.POWERS, "THE ASCENT", "THE BODY");
             });
         });
     }

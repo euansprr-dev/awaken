@@ -1,0 +1,120 @@
+# Frame budget at Euan's settings (perf, 26 Oct; docs/perf/PERF-26OCT.md): which system costs what at the Roost on
+# Cinematic, then a street, the countryside and the first hamlet. One tour, alone on the machine:
+#   JAVA_TOOL_OPTIONS="-XX:StartFlightRecording=settings=profile,maxsize=500m,filename=<dir>/p-%p.jfr" XMX=8G ZGC=1 \
+#   PACK=perf,feel,sound,world TECTONIC=awakened RD=24 SLOT_WHO=perf-26oct \
+#   /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/perf-26oct.txt 1500
+# Render scale 0.95 on the MacBook (2736x1710, 4.7 MP) is the world Euan's Dell draws at 0.75 (2880x1620, 4.7 MP), so
+# Lens, Far Sight, steady and Sodium do the same GPU work per frame. HUD on (he plays with it). Each window is a perf
+# line plus the GPU's world pass (pixels gpu) and Far Sight's own status.
+world perf26 creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd gamemode spectator
+cmd time set 6000
+lookswitch cinematic
+pixels 0.95 sharp
+pixels steady on
+cmd awaken city view studio_roost
+# Far Sight's rings take about a minute in a new world
+wait 1600
+farsight status
+pixels gpu on
+# ---- the Roost over Carillon at noon, everything on
+pixels gpu reset
+perf roost_all 15
+pixels gpu roost_all
+farsight status
+# ---- one system off at a time, then back on
+pixels steady off
+wait 20
+pixels gpu reset
+perf roost_no_steady 12
+pixels gpu roost_no_steady
+pixels steady on
+cmd awaken terrain waving debug 1
+wait 20
+pixels gpu reset
+perf roost_no_sway 12
+pixels gpu roost_no_sway
+cmd awaken terrain waving debug 0
+cmd awaken wildlife off
+wait 20
+pixels gpu reset
+perf roost_no_wildlife 12
+pixels gpu roost_no_wildlife
+cmd awaken wildlife on
+cmd awaken citizens bodies off
+wait 40
+pixels gpu reset
+perf roost_no_people 12
+pixels gpu roost_no_people
+cmd awaken citizens bodies on
+hud off
+wait 20
+pixels gpu reset
+perf roost_no_hud 12
+pixels gpu roost_no_hud
+hud on
+farsight part city off
+wait 20
+pixels gpu reset
+perf roost_no_citysight 12
+pixels gpu roost_no_citysight
+farsight part city on
+lens swift
+pixels gpu reset
+perf roost_lens_swift 12
+pixels gpu roost_lens_swift
+lens off
+pixels gpu reset
+perf roost_lens_off 12
+pixels gpu roost_lens_off
+lens ultra
+pixels gpu reset
+perf roost_ultra 12
+pixels gpu roost_ultra
+lookswitch cinematic
+farsight off
+wait 40
+pixels gpu reset
+perf roost_no_farsight 12
+pixels gpu roost_no_farsight
+lens off
+pixels gpu reset
+perf roost_bare 12
+pixels gpu roost_bare
+lookswitch cinematic
+farsight on
+shot p26_roost
+# ---- a street (Choir market), the countryside 900 blocks out, the first hamlet
+cmd awaken city view market
+wait 300
+pixels gpu reset
+perf street 15
+pixels gpu street
+cmd tp @s ~900 ~40 ~300
+wait 600
+pixels gpu reset
+perf country 15
+pixels gpu country
+farsight status
+cmd awaken village view first green
+wait 600
+pixels gpu reset
+perf hamlet 15
+pixels gpu hamlet
+shot p26_hamlet
+farsight status
+pixels config
+quit

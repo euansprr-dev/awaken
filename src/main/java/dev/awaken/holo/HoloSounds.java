@@ -27,6 +27,11 @@ public final class HoloSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> HOVER = reg("holo.hover");
     /** A System card is projected in (the projected look's voice for {@code signal.open}). */
     public static final DeferredHolder<SoundEvent, SoundEvent> CARD = reg("holo.card");
+    /** The band's pages (SPEC §30.4): a page turns, a stat point placed (pitched up per point), confirmed, taken back. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> PAGE = reg("holo.page");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SPEND = reg("holo.spend");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CONFIRM = reg("holo.confirm");
+    public static final DeferredHolder<SoundEvent, SoundEvent> UNDO = reg("holo.undo");
 
     private static DeferredHolder<SoundEvent, SoundEvent> reg(String path) {
         return SOUNDS.register(path, () -> SoundEvent.createVariableRangeEvent(Awaken.id(path)));
