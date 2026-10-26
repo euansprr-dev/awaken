@@ -1589,7 +1589,9 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   change (the neighbour-update event), not on save (the city's hold saves every chunk as it lets go: the city
   "loaded twice"), and a worker skips a snapshot that hashes as the mesh already up. Faces into dark rooms (no sky
   light, block light ≤ 2) aren't drawn; panes, doors and bars between such a room and the light draw their outward
-  face as a window (dark glass). Light steps by three for merging. Each chunk's quads are grouped by face; faces turned
+  face as a window (dark glass), and where a dark room opens to the light (an undercut, a cave's mouth) its air gets an
+  unlit stone curtain facing the light (past the chunk's side counts as light, so no slit at chunk borders): a hole
+  through to the sky otherwise (2026-10-26, under the ledge at the basin's rim). Light steps by three for merging. Each chunk's quads are grouped by face; faces turned
   away across the whole chunk aren't drawn. Chunks clear of the render distance's edge and of a level's fade draw with
   a pipeline that never discards (cut-out holes take the room's darkness, leaves' their colour), so Apple GPUs'
   hidden-surface removal works. Measured at the Roost: about 1.1 M quads, 1.6 to 4.7 ms on a loaded M4.
@@ -1684,7 +1686,11 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   behind ridges, faces turned from the sun shaded only as it lowers). Grass tops stand over dirt risers (the dirt
   texture's average, a grass fringe along the top), cliffs show stone or an Awakened biome's own block (hoarfrost, riven
   shale, fused glass, mirepeat: palette rock kinds in colour flags bits 4-6), badlands their strata, every block its own
-  grain. Snow lies by the alpine snow line and by a smooth coldness (each corner's blocks above the game's own cold
+  grain. The biome's materials (its rock, badlands, stony, alpine) are weights blended between corners (`vRocks`,
+  `vBiome`), and where biomes meet each block takes one rock with the blend as its odds (world-anchored): with the flags
+  flat per triangle, a border across a steep face drew whole triangles in one rock or the other (2026-10-26, Euan: grey
+  spikes on the basin's rim cliff and the mountains behind it, riven shale against stone; `docs/perf/far-sight/fs3-rim.jpg`,
+  tour `farsight3-rim.txt`). Snow lies by the alpine snow line and by a smooth coldness (each corner's blocks above the game's own cold
   line, info alpha, found by bisecting `coldEnoughToSnow`), both broken into patches over a ~20-block band
   (`AlpineSurface.patches`, the same noise the chunks' snow uses), on tops and as a fringe on risers. Scree and bare
   rock by slope; water over its own sea floor (2026-10-26, Euan's idea: the real water shows its floor, the far water
@@ -1694,7 +1700,9 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   edge, so the open sea further out is only water; forest floor tinted by its crowns, and from about 600 blocks out (full by 2.4 km)
   a forest is its canopy: crown colour over every face, speckled crown by crown.
 - **Bake** (fragment pass, `FarGpu`): per corner the normal, valley shade, and sunlight: a march toward the sun across
-  the ring (40 steps, growing), soft by how far under the ridge line. Changed rings at once, one more every other frame
+  the ring (40 steps, growing), soft by how far under the ridge line, never sharper than a cell and a half (a shadow's
+  edge stepping corner to corner drew a saw). Valley shade only where the ground rises on both sides (the lower side
+  of four directions, one and two corners out): a cliff's foot or a face under a summit isn't a hollow. Changed rings at once, one more every other frame
   (the chunk mask refreshes on the frames between).
 - **Far forests** (`FarTrees`): rings 1-4 (half a kilometre to four) plant jittered candidate spots per cell (1, 2, 3,
   1 by ring; ring 4's trees are dots, the canopy shading carries the forest there) taking a tree as often as the forest is dense (densest: about two in three), never on water, on slopes over

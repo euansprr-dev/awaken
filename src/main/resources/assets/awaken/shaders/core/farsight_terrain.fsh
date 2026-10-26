@@ -29,6 +29,8 @@ layout(location = 4) in vec4 vCrown;
 layout(location = 5) flat in ivec2 vFlags;
 layout(location = 6) in float vCell;
 layout(location = 7) in float vCold;
+layout(location = 8) in vec4 vRocks;
+layout(location = 9) in vec4 vBiome;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -72,10 +74,10 @@ float snowLine(vec2 world, vec2 g) {
 
 // how much snow lies on a top at height y: the alpine line and the game's cold line, each broken into patches over a
 // band (drifts reaching down, bare ground reaching up), never one hard line
-float snowOn(vec2 world, float y, vec2 g, float slope, bool alpine) {
+float snowOn(vec2 world, float y, vec2 g, float slope, float alpine) {
     float patch = (valueNoise(world, 24.0, 5) - 0.5) * 14.0 + (valueNoise(world, 7.0, 9) - 0.5) * 6.0;
     float snow = 0.0;
-    if (alpine) snow = smoothstep(-1.5, 1.5, y + patch - snowLine(world, g));
+    if (alpine > 0.0) snow = alpine * smoothstep(-1.5, 1.5, y + patch - snowLine(world, g));
     snow = max(snow, smoothstep(-1.5, 1.5, vCold + patch * 0.7));
     // snow slides off steep faces
     return snow * (1.0 - smoothstep(SNOW_SLOPE - 0.1, SNOW_SLOPE + 0.25, slope));
@@ -167,7 +169,9 @@ void main() {
     float horizontal = length(vRel.xz);
     vec2 rel = vRel.xz + FarCam.xz;                       // blocks from FarCamInt: exact cells, any distance out
     int flags = vFlags.x;
-    bool generated = (flags & 128) != 0, alpine = (flags & 1) != 0;
+    bool generated = (flags & 128) != 0;
+    // the biome's materials as weights, blended between the corners (vBiome)
+    float alpine = vBiome.x, badlands = vBiome.y, stony = vBiome.z * (1.0 - vBiome.y);
     float depth = vInfo.r * 255.0;
     // water is a flat surface: a steep far triangle whose corners hold water (a canal's corner joined to a roof's, a
     // river below a bank) is the bank or the quay wall, not a blue wall of water (Euan, Carillon's river district)
@@ -246,13 +250,19 @@ void main() {
         if ((int(FarCam.y) & 128) == 0) top = seaFloor(top, world, normalize(vRel), depth, horizontal);
     } else {
         float jag = 0.25 * (grain - 0.5);
-        vec3 STONE = ROCKS[min((flags >> 4) & 7, 4)];
+        // the rock of the biome this block stands in: where biomes meet, block by block, each biome's share its odds
+        // (never one rock per triangle: a border across a steep face drew grey spikes, Euan 2026-10-26)
+        float pick = farHash(blk * 13 + ivec2(int(floor(y)), 41));
+        float r0 = vRocks.x, r1 = r0 + vRocks.y, r2 = r1 + vRocks.z, r3 = r2 + vRocks.w;
+        int ri = pick < r0 ? 0 : pick < r1 ? 1 : pick < r2 ? 2 : pick < r3 ? 3 : 4;
+        vec3 STONE = ROCKS[ri];
         if (!generated) {
             rock = smoothstep(ROCK_SLOPE - 0.2, ROCK_SLOPE + 0.1, slope + jag);
-            float scree = smoothstep(SCREE_SLOPE - 0.15, SCREE_SLOPE + 0.1, slope + jag) * (1.0 - rock) * float(((flags >> 4) & 7) == 0);
-            if ((flags & 4) != 0) top = mix(top, band(y), smoothstep(0.5, 1.2, slope) * 0.85);
-            else if ((flags & 8) != 0) top = mix(top, STONE, 0.6 + 0.4 * rock);
-            else top = mix(mix(top, SCREE, scree * 0.85), STONE, rock * 0.9);
+            float scree = smoothstep(SCREE_SLOPE - 0.15, SCREE_SLOPE + 0.1, slope + jag) * (1.0 - rock) * float(ri == 0);
+            vec3 plain = mix(mix(top, SCREE, scree * 0.85), STONE, rock * 0.9);
+            vec3 own = mix(top, STONE, 0.6 + 0.4 * rock);
+            vec3 banded = badlands > 0.0 ? mix(top, band(y), smoothstep(0.5, 1.2, slope) * 0.85) : top;
+            top = mix(mix(plain, own, stony), banded, badlands);
         }
         // forests: the floor under them takes the crowns' tint (the trees themselves stand on it)
         if (density > 0.0) top = mix(top, vCrown.rgb * (0.8 + 0.3 * grain), density * 0.6 * (1.0 - rock));
@@ -267,8 +277,8 @@ void main() {
         // a column's side: stone, sand, snow blocks and the like are the same all through; under grass, dirt with the
         // grass's fringe along its top edge; snow on the top shows as a white fringe
         vec3 side = grassy ? mix(DIRT, top * 0.9, step(hit.below, 0.19)) : top;
-        side = mix(side, SNOW, snow * step(hit.below, 0.22 + 0.6 * float(alpine && !grassy)));
-        if ((flags & 4) != 0 && !generated) side = band(y);
+        side = mix(side, SNOW, snow * step(hit.below, 0.22 + 0.6 * alpine * float(!grassy)));
+        if (badlands > 0.0 && !generated) side = mix(side, band(y), badlands);
         c = side;
     } else {
         c = mix(top, SNOW, snow);

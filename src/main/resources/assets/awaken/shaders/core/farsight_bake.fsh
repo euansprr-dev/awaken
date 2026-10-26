@@ -4,7 +4,7 @@
 // AWAKEN Far Sight 2 bake (the fragment-pass FarGpu): per ring corner, from the heights around it in its own ring
 // (generated where seen, else predicted; a corner not known yet counts as level with this one):
 //   rg the normal's x and z, from the corners either side;
-//   b  valley shade: how far the ground around rises above this corner (hollows darken a little);
+//   b  valley shade: how far the ground rises on both sides of this corner (hollows darken a little);
 //   a  sunlight: 1 where the sun reaches, falling to 0 where a ridge toward it stands higher than the sun, marched
 //      across the window in growing steps (a soft edge from how far under the ridge line it sits).
 // Neighbours past the window's edge aren't this place (the atlas wraps): the march stops there, and the outer band is
@@ -47,12 +47,19 @@ void main() {
     float east = heightAt(t, ring, l + ivec2(1, 0), h), west = heightAt(t, ring, l - ivec2(1, 0), h);
     float south = heightAt(t, ring, l + ivec2(0, 1), h), north = heightAt(t, ring, l - ivec2(0, 1), h);
     vec3 n = normalize(vec3((west - east) / (2.0 * s), 1.0, (north - south) / (2.0 * s)));
-    float sum = 0.0;
-    for (int dz = -2; dz <= 2; dz++) {
-        for (int dx = -2; dx <= 2; dx++) sum += heightAt(t, ring, l + ivec2(dx, dz), h);
+    // a hollow rises on both sides: along each of four directions, the lower of the two sides (one and two corners
+    // out) over this corner. The foot of a cliff or a face under a summit rises on one side only and isn't one (an
+    // average of the 5x5 round it shaded every cliff foot, and per corner across the long triangles of a cliff those
+    // made grey wedges: Euan, 2026-10-26)
+    const ivec2 DIRS[4] = ivec2[](ivec2(1, 0), ivec2(0, 1), ivec2(1, 1), ivec2(1, -1));
+    float hollow = 0.0;
+    for (int k = 0; k < 4; k++) {
+        ivec2 d = DIRS[k];
+        float a = 0.5 * (heightAt(t, ring, l + d, h) + heightAt(t, ring, l + 2 * d, h));
+        float b = 0.5 * (heightAt(t, ring, l - d, h) + heightAt(t, ring, l - 2 * d, h));
+        hollow = max(hollow, min(a, b) - h);
     }
-    float above = (sum / 25.0 - h) / s;
-    float valley = 1.0 - 0.35 * smoothstep(0.0, 2.5, above);
+    float valley = 1.0 - 0.35 * smoothstep(0.0, 2.5, hollow / s);
     // ridges toward the sun
     float sun = 1.0;
     vec3 L = BakeSun.xyz;
@@ -69,8 +76,10 @@ void main() {
             float hh = heightAt(t, ring, at, -10000.0);
             if (hh < -9000.0) continue;
             float ray = h + 1.5 + rise * dist * s;
-            // how many blocks under the ridge line the ray passes, softened by distance (a penumbra)
-            worst = min(worst, clamp((ray - hh) / (3.0 + 0.02 * dist * s) + 1.0, 0.0, 1.0));
+            // how many blocks under the ridge line the ray passes, softened by distance (a penumbra) and never sharper
+            // than a cell and a half (sharper, a shadow's edge steps from corner to corner and the triangles draw it as
+            // a saw)
+            worst = min(worst, clamp((ray - hh) / max(3.0 + 0.02 * dist * s, 1.5 * s) + 1.0, 0.0, 1.0));
             if (worst <= 0.0) break;
         }
         sun = worst;
