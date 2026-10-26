@@ -10,8 +10,20 @@ import java.util.List;
  * furniture the radius holds ({@code furniture[Furniture.ordinal()]}; trophies count only when mounted), what the land
  * round the rooms has (for Comfort), the faces of each material family over every room (the home's Style), and every role pad in the radius (pads placed before the Hearth join it).
  */
-public record Scan(List<Room> rooms, List<Miss> misses, int[] furniture, Land land, List<Pad> pads, int[] families) {
-    public static final Scan EMPTY = new Scan(List.of(), List.of(), new int[Furniture.COUNT], Land.NONE, List.of(), new int[Materials.FAMILIES]);
+public record Scan(List<Room> rooms, List<Miss> misses, int[] furniture, Land land, List<Pad> pads, int[] families, Yard yard) {
+    public static final Scan EMPTY = new Scan(List.of(), List.of(), new int[Furniture.COUNT], Land.NONE, List.of(), new int[Materials.FAMILIES], Yard.NONE);
+
+    public Scan(List<Room> rooms, List<Miss> misses, int[] furniture, Land land, List<Pad> pads, int[] families) {
+        this(rooms, misses, furniture, land, pads, families, Yard.NONE);
+    }
+
+    /**
+     * (W6) Where the land's work is, for the people who live here: the farmland outside rooms (Hettie's fields, at most
+     * 512), the fence gates outside rooms (a pen's gate, at most 16) and the farm animals (at most 32).
+     */
+    public record Yard(List<BlockPos> fields, List<BlockPos> gates, List<BlockPos> beasts) {
+        public static final Yard NONE = new Yard(List.of(), List.of(), List.of());
+    }
 
     public int count(Furniture f) {
         return furniture.length > f.ordinal() ? furniture[f.ordinal()] : 0;

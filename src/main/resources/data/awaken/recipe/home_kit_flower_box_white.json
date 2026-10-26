@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "home_kit_flower_box",
+  "key": {
+    "F": [
+      "minecraft:oxeye_daisy",
+      "minecraft:lily_of_the_valley",
+      "minecraft:white_tulip",
+      "minecraft:azure_bluet"
+    ],
+    "D": "minecraft:dirt",
+    "P": "#minecraft:planks"
+  },
+  "pattern": [
+    " F ",
+    "DDD",
+    "PPP"
+  ],
+  "result": {
+    "id": "awaken:flower_box",
+    "count": 2,
+    "components": {
+      "minecraft:block_state": {
+        "bloom": "white"
+      }
+    }
+  }
+}

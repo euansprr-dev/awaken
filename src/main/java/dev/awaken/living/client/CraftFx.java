@@ -2,6 +2,7 @@ package dev.awaken.living.client;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.awaken.Awaken;
+import dev.awaken.core.api.HearthHooks;
 import dev.awaken.living.craft.Craft;
 import dev.awaken.living.craft.Crafts;
 import dev.awaken.living.craft.Herbs;
@@ -91,7 +92,7 @@ final class CraftFx {
                 if (dx * dx + dz * dz > HERB_RADIUS * HERB_RADIUS) continue;
                 for (int dy = -5; dy <= 5; dy++) {
                     m.set(c.getX() + dx, c.getY() + dy, c.getZ() + dz);
-                    if (Herbs.plant(level.getBlockState(m)) && Herbs.ripe(m, day, root)) {
+                    if (Herbs.plant(level.getBlockState(m)) && Herbs.ripe(m, day, root, HearthHooks.greenhouse(level, m))) {
                         HERBS.add(m.immutable());
                         break;
                     }

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "S": "minecraft:stick",
+    "V": "minecraft:vine"
+  },
+  "pattern": [
+    "S S",
+    " V ",
+    "S S"
+  ],
+  "result": {
+    "id": "awaken:trellis",
+    "count": 2
+  }
+}

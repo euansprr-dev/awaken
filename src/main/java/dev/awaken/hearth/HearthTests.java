@@ -59,7 +59,7 @@ final class HearthTests {
             h.assertTrue(d.containing(new BlockPos(60, 64, 0), HearthService.OVERWORLD).isEmpty(), "outside tier I radius");
             ra.tier = 3;
             h.assertTrue(ra.radius() == 64 && d.containing(new BlockPos(60, 64, 0), HearthService.OVERWORLD).isPresent(), "tier III reaches 64");
-            h.assertTrue(HearthRecord.radiusForTier(1) == 48 && HearthRecord.radiusForTier(5) == 80, "radius by tier");
+            h.assertTrue(HearthRecord.radiusForTier(1) == 48 && HearthRecord.radiusForTier(5) == 96, "radius by tier (W6: 80 at IV, 96 at V)");
             d.remove(a);
             h.assertTrue(d.of(a).isEmpty() && d.all().size() == 1, "removed");
             h.succeed();

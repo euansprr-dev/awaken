@@ -80,7 +80,7 @@ public final class HearthContent {
     // ---- blocks -----------------------------------------------------------------------------------------------------
 
     public static final DeferredBlock<HearthAnchorBlock> HEARTH_ANCHOR = BLOCKS.registerBlock("hearth_anchor", HearthAnchorBlock::new,
-            p -> p.mapColor(MapColor.COLOR_ORANGE).strength(25f, 1200f).sound(SoundType.LODESTONE).lightLevel(s -> 14)
+            p -> p.mapColor(MapColor.COLOR_ORANGE).strength(25f, 1200f).sound(SoundType.LODESTONE).lightLevel(s -> s.getValue(HearthAnchorBlock.TIER) >= 4 ? 15 : 14)
                     .pushReaction(PushReaction.IMMOVEABLE).instrument(NoteBlockInstrument.BASEDRUM));
     /** The Ember's fire: a Tier 0 Hearth (SPEC §28.2). No item: the Hearth Ember sets it down. */
     public static final DeferredBlock<HearthfireBlock> HEARTHFIRE = BLOCKS.registerBlock("hearthfire", HearthfireBlock::new,

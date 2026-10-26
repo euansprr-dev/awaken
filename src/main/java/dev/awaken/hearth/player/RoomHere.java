@@ -17,8 +17,13 @@ public record RoomHere(boolean in, String name, int grade, List<Integer> reading
     public static final RoomHere NONE = new RoomHere(false, "", 0, List.of(), "", "");
 
     public static RoomHere of(Room r) {
+        return of(r, "");
+    }
+
+    /** With the name the home gives it ("Ilse's room" once she lives there; "" = the reading's). */
+    public static RoomHere of(Room r, String name) {
         Reading g = r.reading();
-        return new RoomHere(true, g.name(), g.grade().ordinal(), List.of(g.closed(), g.light(), g.warmth(), g.space(), g.care(), g.detail()),
+        return new RoomHere(true, name.isEmpty() ? g.name() : name, g.grade().ordinal(), List.of(g.closed(), g.light(), g.warmth(), g.space(), g.care(), g.detail()),
                 g.purpose().label, g.lift());
     }
 

@@ -124,7 +124,19 @@ public final class Tally {
     // ---- what is kept after the scan ----------------------------------------------------------------------------------
 
     public static final int F_FLOOR = 0, F_HEIGHT = 1, F_SEATS = 2, F_TABLES = 3, F_CEILING = 4, F_GLASS_CEILING = 5,
-            F_ELEVATION = 6, F_WINDOW_DIRS = 7, F_SOFT = 8, F_TRIM = 9, F_WARMTH = 10, F_MAIN = 11, F_COUNT = 12;
+            F_ELEVATION = 6, F_WINDOW_DIRS = 7, F_SOFT = 8, F_TRIM = 9, F_WARMTH = 10, F_MAIN = 11,
+            // (W6) the Mine head: the deepest climbable shaft under a hatch in the floor, and where its hatch is
+            F_SHAFT = 12, F_SHAFT_X = 13, F_SHAFT_Y = 14, F_SHAFT_Z = 15, F_COUNT = 16;
+
+    /** Trapdoors in the floor (a shaft's hatch, at most four looked at), and the deepest shaft found under one. */
+    final long[] hatches = new long[4];
+    int hatchCount;
+    public int shaft;
+    public long shaftAt;
+
+    void hatch(long pos) {
+        if (hatchCount < hatches.length) hatches[hatchCount++] = pos;
+    }
 
     /** The numbers other code reads after the scan (the room kinds' conditions, Comfort), saved with the room. */
     public int[] facts() {
@@ -141,6 +153,12 @@ public final class Tally {
         f[F_TRIM] = trimKinds();
         f[F_WARMTH] = warmth;
         f[F_MAIN] = mainFamily().ordinal();
+        if (shaft > 0) {
+            f[F_SHAFT] = shaft;
+            f[F_SHAFT_X] = net.minecraft.core.BlockPos.getX(shaftAt);
+            f[F_SHAFT_Y] = net.minecraft.core.BlockPos.getY(shaftAt);
+            f[F_SHAFT_Z] = net.minecraft.core.BlockPos.getZ(shaftAt);
+        }
         return f;
     }
 }

@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "home_kit_flower_box",
+  "key": {
+    "D": "minecraft:dirt",
+    "P": "#minecraft:planks"
+  },
+  "pattern": [
+    "DDD",
+    "PPP"
+  ],
+  "result": {
+    "id": "awaken:flower_box",
+    "count": 2,
+    "components": {
+      "minecraft:block_state": {
+        "bloom": "none"
+      }
+    }
+  }
+}

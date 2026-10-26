@@ -113,7 +113,8 @@ public final class CraftEvents {
         BlockState s = e.getState();
         BlockPos pos = e.getPos();
         if (Herbs.plant(s)) {
-            boolean ripe = Herbs.ripe(pos, Herbs.day(level), Crafts.has(p, Craft.FORAGING, "root_sense"));
+            boolean ripe = Herbs.ripe(pos, Herbs.day(level), Crafts.has(p, Craft.FORAGING, "root_sense"),
+                    dev.awaken.core.api.HearthHooks.greenhouse(level, pos));
             if (ripe) {
                 ItemStack herb = new ItemStack(Herbs.herbAt(level, pos, p.getRandom()));
                 net.minecraft.world.level.block.Block.popResource(level, pos, herb);

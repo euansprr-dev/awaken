@@ -290,19 +290,22 @@ final class GuideSections {
                         + "goes on the fire.", Glass.a(Glass.TEXT, 1f));
                 return;
             }
+            // (W6) people move in when you know them, a spare Snug bedroom stands and their trade has its room
             if (d.town().isEmpty()) {
-                ui.text("Nobody has moved in yet.", Glass.a(Glass.TEXT, 1f));
+                ui.text("Nobody lives here yet. People you know come when there's a spare bedroom, Snug or better, and a room for their work.",
+                        Glass.a(Glass.TEXT, 1f));
             } else {
-                List<String> names = new ArrayList<>();
-                for (GuideData.Person p : d.town()) names.add(p.name() + " the " + p.role());
-                ui.text("Living here: " + String.join(", ", names) + ".", Glass.a(Glass.TEXT, 1f));
+                for (GuideData.Person p : d.town()) {
+                    ui.text(p.name() + " · " + p.role() + "   " + p.when(), Glass.a(p.when().startsWith("needs") ? Glass.AMBER : Glass.TEXT, 1f));
+                }
             }
             if (!d.coming().isEmpty()) {
-                List<String> names = new ArrayList<>();
-                for (GuideData.Person p : d.coming()) names.add(p.name() + " the " + p.role());
-                ui.text("Next: " + String.join(" and ", names) + ", when you reach " + d.coming().get(0).when() + ".", Glass.a(Glass.LABEL, 1f));
+                ui.gap(1);
+                for (GuideData.Person p : d.coming()) {
+                    ui.text(p.name() + " · " + p.role() + "   " + p.when(), Glass.a(Glass.LABEL, 1f));
+                }
             }
-            ui.text("Talk to them: they temper gear, tell rumours, read your Codex and heal.", Glass.a(Glass.LABEL, 0.8f));
+            ui.text("Talk to them: commissions at the forge, tonics, the mine's haul, rumours, your Codex, mending.", Glass.a(Glass.LABEL, 0.8f));
         }
     }
 
@@ -329,6 +332,8 @@ final class GuideSections {
                 ui.text("Tier " + roman(u.next()) + ": radius " + u.radius() + ", rest heals in " + u.rest() + " s.", Glass.a(Glass.TEXT, 1f));
             }
             if (!u.rankMet()) ui.text("Opens at " + u.rank() + " (pass the Reassessment). You will need:", Glass.a(Glass.LABEL, 1f));
+            // (W6) the tier grows from the home: what it must have first
+            for (GuideData.Need n : u.needs()) ui.text((n.met() ? "✓ " : "✗ ") + n.text(), Glass.a(n.met() ? Glass.GOOD : Glass.AMBER, 1f));
             ui.gap(1);
             var flow = ui.flow();
             for (GuideData.Part p : u.parts()) {
@@ -341,7 +346,8 @@ final class GuideSections {
             if (u.rankMet()) {
                 String key = AwakenKeys.ACCEPT.getTranslatedKeyMessage().getString();
                 String act = data.get().tier() <= 0 ? "Feed the fire the Heart" : "Build Tier " + roman(u.next());
-                button(ui, u.affordable() ? "[" + key + "] " + act : data.get().tier() <= 0 ? "Bring a Lord's Heart" : "Gather the materials first",
+                button(ui, u.affordable() ? "[" + key + "] " + act : data.get().tier() <= 0 ? "Bring a Lord's Heart"
+                                : !u.homeReady() ? "The home grows first" : "Gather the materials first",
                         Glass.LANTERN, u.affordable(), Guide.Act.UPGRADE);
             }
         }

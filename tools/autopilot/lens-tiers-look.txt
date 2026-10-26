@@ -1,0 +1,99 @@
+# The Look tiers side by side (docs/perf/LENS-APPLE.md): the same moments with Lens off, Swift, Cinematic and Ultra, so
+# each tier's look can be judged against its cost. A look tour (CI is fine; Far Sight is off there):
+#   tools/tour-ci.sh tools/autopilot/lens-tiers-look.txt 1800 PACK=perf,world TECTONIC=awakened LENS=cinematic
+world lenstiers creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+hud off
+cmd gamemode spectator
+# ---- roost_noon
+cmd time set 6000
+cmd awaken city view studio_roost
+wait 300
+lens off
+wait 60
+shot lt_roost_noon_0off
+lookswitch swift
+wait 80
+shot lt_roost_noon_1swift
+lookswitch cinematic
+wait 80
+shot lt_roost_noon_2cine
+lookswitch ultra
+wait 80
+shot lt_roost_noon_3ultra
+# ---- roost_dusk
+cmd time set 12300
+wait 40
+lens off
+wait 60
+shot lt_roost_dusk_0off
+lookswitch swift
+wait 80
+shot lt_roost_dusk_1swift
+lookswitch cinematic
+wait 80
+shot lt_roost_dusk_2cine
+lookswitch ultra
+wait 80
+shot lt_roost_dusk_3ultra
+# ---- market
+cmd time set 6000
+cmd awaken city view market
+wait 200
+lens off
+wait 60
+shot lt_market_0off
+lookswitch swift
+wait 80
+shot lt_market_1swift
+lookswitch cinematic
+wait 80
+shot lt_market_2cine
+lookswitch ultra
+wait 80
+shot lt_market_3ultra
+# ---- night
+cmd time set 18000
+cmd awaken city view sky_nw_low
+wait 200
+lens off
+wait 60
+shot lt_night_0off
+lookswitch swift
+wait 80
+shot lt_night_1swift
+lookswitch cinematic
+wait 80
+shot lt_night_2cine
+lookswitch ultra
+wait 80
+shot lt_night_3ultra
+# ---- forest
+cmd time set 5000
+cmd awaken terrain visit awaken:elderwood
+wait 500
+lens off
+wait 60
+shot lt_forest_0off
+lookswitch swift
+wait 80
+shot lt_forest_1swift
+lookswitch cinematic
+wait 80
+shot lt_forest_2cine
+lookswitch ultra
+wait 80
+shot lt_forest_3ultra
+quit

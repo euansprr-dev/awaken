@@ -13,7 +13,9 @@
 //   20   x the Holo world plates drawn this frame, y the storm cells; 24-41 each plate: camera-relative centre,
 //        half-width and half-height vectors (3 texels a plate); 42-47 the storm cells (lens_storm_frame.glsl)
 
-vec4 F(int i) { return texelFetch(FrameSampler, ivec2(i, 0), 0); }
+#include <awaken:lens_block.glsl>
+
+vec4 F(int i) { return LensUse.x > 0.5 ? LensF[i] : texelFetch(FrameSampler, ivec2(i, 0), 0); }
 
 mat4 frameMat(int i) { return mat4(F(i), F(i + 1), F(i + 2), F(i + 3)); }
 

@@ -51,8 +51,17 @@ public final class HearthViews {
         List<String> rooms = new ArrayList<>();
         counts.forEach((t, n) -> rooms.add(n > 1 ? t.label + " ×" + n : t.label));
         List<String> town = new ArrayList<>();
-        for (String id : h.arrived) town.add(Townsfolk.displayName(id));
-        HearthView.Home home = new HearthView.Home(h.displayName(), hp.restedUntil, Comfort.restedMinutes(hp.restedComfort), h.comfort, h.style);
+        for (dev.awaken.hearth.settle.Folk.Settler s : h.folk.settlers) {
+            if (s.home()) town.add(s.who.given() + " the " + dev.awaken.hearth.settle.Settlers.title(s.who));
+        }
+        List<BlockPos> greenhouses = new ArrayList<>();
+        for (Room r : h.rooms) {
+            if (!r.types().contains(RoomType.GREENHOUSE) || greenhouses.size() >= 16) continue;
+            greenhouses.add(r.min());
+            greenhouses.add(r.max());
+        }
+        HearthView.Home home = new HearthView.Home(h.displayName(), hp.restedUntil, Comfort.restedMinutes(hp.restedComfort), h.comfort, h.style,
+                List.copyOf(greenhouses));
         return new HearthView(true, h.pos, h.tier, h.radius(), h.forgeTier, rooms, town, h.hallTrophies.size(), Echoes.fieldCap(sp),
                 h.pads.size(), hp.fieldOut, echoes, List.copyOf(hp.rumours), records, home);
     }

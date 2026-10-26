@@ -60,11 +60,18 @@ public enum RoomType {
     WORKSHOP("Workshop", "workshop", List.of(MACHINE), null, 16, 3, "machines spend a quarter less",
             "Precursor machines in this room spend a quarter less essence.", "Machines spend less here."),
     BARRACKS("Barracks", "barracks", List.of(PAD), null, 20, 3, "Echoes on duty rest and train better",
-            "Echoes on role pads here heal four times faster, and Train pads train twice as fast.", "Echoes here heal and train.");
+            "Echoes on role pads here heal four times faster, and Train pads train twice as fast.", "Echoes here heal and train."),
+    /** (W6, PLAN 7.7) a hatch (a trapdoor in the floor) over a shaft you dug, with something to climb down it. */
+    MINE_HEAD("Mine head", "mine head", List.of(), "a hatch over a shaft 16 or more deep, with a ladder", 9, 3, "a miner works your shaft",
+            "A miner, or your Mine Echo, works the shaft: each evening the ore of its depth comes up, and a lode's if the shaft cut one.",
+            "Your own mine.");
+
+    /** How deep a Mine head's shaft must go from its floor (PLAN 4.6). */
+    public static final int SHAFT_DEPTH = 16;
 
     /** The order a room takes its purpose (and its name) in: the most particular first, a plain shelter last. */
     public static final List<RoomType> PURPOSE = List.of(SANCTUARY, HALL, KITCHEN, ARMORY, STUDY, GREENHOUSE, STABLE, BELL_TOWER,
-            LOOKOUT, TROPHY_HALL, WORKSHOP, BARRACKS, BEDROOM, SHELTER);
+            LOOKOUT, MINE_HEAD, TROPHY_HALL, WORKSHOP, BARRACKS, BEDROOM, SHELTER);
 
     public final String label;
     /** "bedroom": the last word of a room's name. */
@@ -108,6 +115,7 @@ public enum RoomType {
             case HALL -> facts[Tally.F_FLOOR] >= 48;
             case BELL_TOWER -> facts[Tally.F_ELEVATION] >= 8;
             case LOOKOUT -> facts[Tally.F_ELEVATION] >= 12 && Integer.bitCount(facts[Tally.F_WINDOW_DIRS]) >= 3;
+            case MINE_HEAD -> facts.length > Tally.F_SHAFT && facts[Tally.F_SHAFT] >= SHAFT_DEPTH;
             default -> true;
         };
     }
