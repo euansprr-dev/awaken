@@ -1754,7 +1754,8 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   (`AlpineSurface.patches`, the same noise the chunks' snow uses), on tops and as a fringe on risers. Scree and bare
   rock by slope; water where it's cold enough to snow (colour flag COLD) is ice, opaque, as the chunks freeze it
   (2026-10-26: frozen rivers' indigo water drew far valleys purple and see-through), and the generated layer reads ice's
-  lavender map colour as ice's textures' pale blue (`FarPalette.ICE`); water over its own sea floor (2026-10-26, Euan's idea: the real water shows its floor, the far water
+  lavender map colour as ice's textures' pale blue (`FarPalette.ICE`; the generated layer's store went to schema 3 so
+  the lavender kept on disk is re-learned as chunks load); water over its own sea floor (2026-10-26, Euan's idea: the real water shows its floor, the far water
   showed none, so the floor ended at the chunks): the floor lies the water's depth down along the view ray, blocks of
   sand, gravel in the deep and seagrass patches, anchored to the world, showing by the water's absorption over the path
   (shallows and steep views, not deep water or grazing ones) and fading out over 700 blocks past the render distance's
