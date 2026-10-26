@@ -254,7 +254,7 @@ public final class HoloClient {
                 && (m0.gui.screen() instanceof HoloStatusScreen || m0.gui.screen() instanceof StatusScreen)) m0.gui.setScreen(null);
         Wrist.tickEnd(wristClosing());
         // tell the server which panel the wrist shows (it relays to whoever can see us, at most 4 a second)
-        HoloKind want = opening(STATUS) ? HoloKind.STATUS : opening(INVENTORY) ? HoloKind.INVENTORY
+        HoloKind want = HoloScene.mapOpen() ? HoloKind.MAP : opening(STATUS) ? HoloKind.STATUS : opening(INVENTORY) ? HoloKind.INVENTORY
                 : DEMO.anchor == HoloPanel.Anchor.WRIST && opening(DEMO) ? HoloKind.STATUS : HoloKind.NONE;
         Minecraft mc = Minecraft.getInstance();
         if (want != sent && mc.getConnection() != null && mc.getConnection().hasChannel(HoloNet.State.TYPE)) {
@@ -455,6 +455,7 @@ public final class HoloClient {
     private static void reset() {
         UiHooks.setFocus(FOCUS_OWNER, 0f);
         HoloOthers.clear();
+        HoloScene.reset();
         demoMode = 0;
         DEMO.timeline.hold(false);
         DEMO.timeline.close();

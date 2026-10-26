@@ -30,6 +30,11 @@ import java.util.Locale;
  * C to come back to yourself, M or Esc to close. Markers are only what you know: you, Carillon's districts once seen,
  * and every place other modules mark ({@code MapMarks}) in a cell you've explored. The first open after the opening
  * plays the Registry reveal: the run you made draws itself across the city.
+ * <p>
+ * In the map scene ({@link MapScene}, SPEC §30.5) the same table is the band's projection: a card in front of you while
+ * the camera stands over your shoulder, the legend on its own glass beside it, the world dimmed behind. Keys move the
+ * map while your body stays still (WASD, Q/E turn, R/F tilt, +/- zoom); Tab steps through the gates you know and T
+ * points the Now line at the one picked.
  */
 public final class AtlasScreen extends Screen implements dev.awaken.signal.client.QuietScreen {
     private static final int MARGIN = 12;
@@ -84,10 +89,26 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         return true;
     }
     private int wantX = Integer.MIN_VALUE, wantZ;
-    private int shareX0, shareX1, clearX0, clearX1, buttonsY;
+    private int shareX0 = -1, shareX1 = -1, buttonsY;
+    /** The band's projection in the map scene (SPEC §30.5), not the full-screen table. */
+    final boolean scene;
+    // the gates in the legend (nearest first), the one picked (Tab, a click), and its "Point me there" row
+    private final java.util.List<MapMarks.Gate> gateRows = new java.util.ArrayList<>();
+    private int gateRowY0, pointY = -1000;
+    private @org.jspecify.annotations.Nullable BlockPos chosen;
+    static final int GATE_ROWS = 4;
+    // keys held down (the map moves while they are)
+    private int held;
+    private static final int K_FWD = 1, K_BACK = 2, K_LEFT = 4, K_RIGHT = 8, K_TURN_L = 16, K_TURN_R = 32, K_TILT_UP = 64,
+            K_TILT_DOWN = 128, K_ZOOM_IN = 256, K_ZOOM_OUT = 512;
 
     AtlasScreen(float yaw, float tilt, float zoomScale) {
+        this(yaw, tilt, zoomScale, false);
+    }
+
+    AtlasScreen(float yaw, float tilt, float zoomScale, boolean scene) {
         super(Component.translatable("screen.awaken.atlas"));
+        this.scene = scene;
         Minecraft mc = Minecraft.getInstance();
         this.yaw = yaw;
         this.tilt = tilt;
@@ -116,6 +137,15 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         mc.getSoundManager().play(SimpleSoundInstance.forUI(HoloSounds.OPEN.get(), 1.0f, 0.8f));
     }
 
+    /** The map scene's card (its camera and sound are {@link MapScene}'s): up the map is the way the camera looks. */
+    static void openScene(float yaw) {
+        Minecraft mc = Minecraft.getInstance();
+        AtlasState.stats.reset();
+        AtlasState.stats.openStart = System.nanoTime();
+        AtlasState.get().revealPending = false;
+        mc.gui.setScreen(new AtlasScreen(yaw, 54f, 1.3f, true)); // the card is narrower than the table: a little closer
+    }
+
     /** The Registry reveal: high over the city, the run's thread drawing itself from start to finish. */
     private void startReveal(AtlasState a) {
         int[] t = a.trail;
@@ -137,10 +167,14 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         reveal = true;
     }
 
-    private int px0() { return MARGIN; }
-    private int py0() { return MARGIN + 14; }
-    private int px1() { return width - MARGIN; }
-    private int py1() { return height - MARGIN - 14; }
+    // the table fills the screen; the scene's card stands beside you, on the far side of the frame from your shoulder
+    private int px0() { return scene ? (MapScene.side() > 0 ? Math.round(width * 0.31f) : Math.round(width * 0.025f)) : MARGIN; }
+    private int py0() { return scene ? Math.round(height * 0.075f) : MARGIN + 14; }
+    private int px1() { return scene ? (MapScene.side() > 0 ? Math.round(width * 0.975f) : Math.round(width * 0.69f)) : width - MARGIN; }
+    private int py1() { return scene ? Math.round(height * 0.74f) : height - MARGIN - 14; }
+    /** The scene's legend glass: over your head, on the near side. */
+    private int sideX0() { return MapScene.side() > 0 ? Math.round(width * 0.025f) : Math.round(width * 0.71f); }
+    private int sideX1() { return MapScene.side() > 0 ? Math.round(width * 0.29f) : Math.round(width * 0.975f); }
 
     @Override
     protected void init() {
@@ -174,6 +208,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         float age = age();
         if ((prof & PROF_NO_FOCUS) == 0) UiHooks.setFocus(this, Math.min(1f, age / 0.25f));
         else UiHooks.clearFocus(this);
+        if (held != 0) keysHeld(dt);
         // zooming across a level: keep drawing the level we have until the new one is built round the view (it builds
         // on the worker meanwhile), or the land blinks out for a moment
         int want = AtlasMesh.lodFor(zoom);
@@ -195,19 +230,28 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         }
         float night = mc.level == null ? 0f : AtlasState.night(mc.level);
         int x0 = px0(), y0 = py0(), x1 = px1(), y1 = py1();
-        float reveal = Math.min(1f, age / 0.35f);
+        // the scene: the band's beams reach the card at 120 ms and it scans in by 420 (SPEC §30.5)
+        float reveal = scene ? Math.clamp((age - 0.12f) / 0.30f, 0f, 1f) : Math.min(1f, age / 0.35f);
+        if (scene) veil(g, age);
         // the K panel's projected glass: frame, corner brackets, a slow interference band; scans in as it opens
-        if ((prof & PROF_NO_CARD) == 0) HudLook.card(g, x0, y0, x1 - x0, y1 - y0, Glass.EDGE, 0.92f, reveal, 0f, HudLook.FRAME | HudLook.DRIFT);
+        if ((prof & PROF_NO_CARD) == 0) HudLook.card(g, x0, y0, x1 - x0, y1 - y0, Glass.EDGE, scene ? 0.80f : 0.92f, reveal, 0f, HudLook.FRAME | HudLook.DRIFT);
         else g.fill(x0, y0, x1, y1, 0xE00B1626);
         float time = frozen ? 0f : (now - opened) / 1e9f;
         boolean moving = !frozen || spin != 0f || age < 1.5f || atlas.trailProgress() < 1f || atlas.trailGlow() < 1f && atlas.trailGlow() > 0.35f;
-        if ((prof & PROF_NO_PIP) == 0)
+        // the scene's land prints in quicker, once the card is there
+        float printAge = scene ? Math.max(0f, (age - 0.12f) * 1.6f) : age;
+        if ((prof & PROF_NO_PIP) == 0 && (!scene || age > 0.12f))
             g.submitPictureInPictureRenderState(new AtlasRenderState(x0, y0, x1, y1, yaw, tilt, zoom, cx, cy, cz, time, night,
-                    moving, lod, age, 0, g.peekScissorStack()));
+                    moving, lod, printAge, 0, g.peekScissorStack()));
+        if (scene) {
+            edges(g, x0, y0, x1, y1, reveal);
+            beams(x0, y0, x1, y1);
+        }
         if ((prof & PROF_NO_OVERLAY) == 0) {
             legendLayout(mc, atlas, x0, y0, lod);
-            if (age > 0.45f) markers(g, mc, atlas, x0, y0, x1, y1, lod);
-            if (age > 0.45f) {
+            float marks = scene ? 0.30f : 0.45f;
+            if (age > marks) markers(g, mc, atlas, x0, y0, x1, y1, lod);
+            if (age > marks) {
                 legend(g, mc, atlas, mouseX, mouseY);
                 hover(g, mc, atlas, mouseX, mouseY, x0, y0, x1, y1);
             }
@@ -223,33 +267,74 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         int room = x1 - x0 - font.width(count) - 20;
         String title = "ATLAS" + (where == null ? "" : "  ·  " + where.toUpperCase(Locale.ROOT));
         if (font.width(title) > room) title = font.plainSubstrByWidth(title, room - font.width("…")) + "…";
-        text(g, title, x0 + 2, MARGIN, INK, false);
-        text(g, count, x1 - font.width(count) - 2, MARGIN, Glass.LABEL | 0xFF000000, false);
+        int ty = scene ? y0 - 11 : MARGIN;
+        text(g, title, x0 + 2, ty, INK, false);
+        text(g, count, x1 - font.width(count) - 2, ty, Glass.LABEL | 0xFF000000, false);
         // compass: north turns with the table
         int ccx = x1 - 18, ccy = y0 + 18;
         double r = Math.toRadians(yaw);
         int nx = ccx + (int) Math.round(-Math.sin(r) * 9), ny = ccy - (int) Math.round(Math.cos(r) * 9 * Math.sin(Math.toRadians(tilt)));
         g.fill(ccx - 1, ccy - 1, ccx + 1, ccy + 1, 0x667FC3FF);
         text(g, "N", nx - 2, ny - 4, 0xFF7FC3FF, false);
-        // hints and the two buttons
+        // one line of keys along the bottom, and "Share with party" when there's anyone to share with (the Atlas
+        // cache's clearing lives in the settings now: SPEC §30)
         buttonsY = height - MARGIN - 8;
-        String share = "Share with party", clear = "Clear Atlas cache";
-        clearX1 = x1 - 2;
-        clearX0 = clearX1 - font.width(clear);
-        shareX1 = clearX0 - 14;
-        shareX0 = shareX1 - font.width(share);
-        for (String hint : new String[]{"drag orbit  ·  right-drag pan  ·  scroll zoom  ·  double-click pin  ·  C you  ·  L legend",
-                "drag orbit  ·  right-drag pan  ·  scroll zoom  ·  double-click pin  ·  C you",
-                "drag orbit  ·  right-drag pan  ·  scroll zoom  ·  C you", "drag · right-drag · scroll · C"}) {
-            if (x0 + 2 + font.width(hint) < shareX0 - 12) {
-                text(g, hint, x0 + 2, buttonsY, Glass.LABEL | 0xFF000000, false);
+        String share = "Share with party";
+        boolean others = mc.getConnection() != null && mc.getConnection().getOnlinePlayers().size() > 1;
+        shareX0 = shareX1 = -1;
+        int right = x1 - 2;
+        if (others) {
+            shareX1 = right;
+            shareX0 = shareX1 - font.width(share);
+            right = shareX0 - 14;
+        }
+        String[] hints = scene
+                ? new String[]{"drag turn  ·  right-drag or WASD move  ·  scroll zoom  ·  Tab gates  ·  T point me there  ·  C you  ·  Shift+M table  ·  M close",
+                        "drag turn  ·  WASD move  ·  scroll zoom  ·  Tab gates  ·  T point me there  ·  C you  ·  M close",
+                        "drag · WASD · scroll · Tab · T · C · M close"}
+                : new String[]{"drag orbit  ·  right-drag pan  ·  scroll zoom  ·  double-click pin  ·  Tab gates  ·  C you  ·  L legend",
+                        "drag orbit  ·  right-drag pan  ·  scroll zoom  ·  double-click pin  ·  C you",
+                        "drag orbit  ·  right-drag pan  ·  scroll zoom  ·  C you", "drag · right-drag · scroll · C"};
+        int left = scene ? Math.round(width * 0.025f) : x0 + 2;
+        for (String hint : hints) {
+            if (left + font.width(hint) < right - 12) {
+                // the scene centres its line under the whole frame
+                int hx = scene && !others ? (width - font.width(hint)) / 2 : left;
+                text(g, hint, hx, buttonsY, Glass.LABEL | 0xFF000000, false);
                 break;
             }
         }
-        boolean overShare = mouseY >= buttonsY - 2 && mouseY < buttonsY + 10 && mouseX >= shareX0 && mouseX < shareX1;
-        boolean overClear = mouseY >= buttonsY - 2 && mouseY < buttonsY + 10 && mouseX >= clearX0 && mouseX < clearX1;
-        text(g, share, shareX0, buttonsY, overShare ? 0xFFFFFFFF : 0xFF7FC3FF, false);
-        text(g, clear, clearX0, buttonsY, overClear ? 0xFFFFFFFF : 0xFF93A7C2, false);
+        if (others) {
+            boolean overShare = mouseY >= buttonsY - 2 && mouseY < buttonsY + 10 && mouseX >= shareX0 && mouseX < shareX1;
+            text(g, share, shareX0, buttonsY, overShare ? 0xFFFFFFFF : 0xFF7FC3FF, false);
+        }
+    }
+
+    // ---- the scene's dressing (SPEC §30.5) -----------------------------------------------------------------------------
+
+    /** The world dims behind the projection (Lens also dims it through the focus): darker at the top, where sky may be. */
+    private void veil(GuiGraphicsExtractor g, float age) {
+        float a = Math.min(1f, age / 0.30f);
+        g.fillGradient(0, 0, width, height, Glass.a(0x050C18, 0.42f * a), Glass.a(0x050C18, 0.18f * a));
+    }
+
+    /** The card's cut edge fades into its glass, so the land reads as a projection, not a rectangle. */
+    private void edges(GuiGraphicsExtractor g, int x0, int y0, int x1, int y1, float reveal) {
+        for (int i = 0; i < 8; i++) {
+            int c = Glass.a(0x0B1626, 0.62f * (1f - i / 8f) * reveal);
+            int o = i * 2;
+            g.fill(x0 + o, y0 + o, x1 - o, y0 + o + 2, c);
+            g.fill(x0 + o, y1 - o - 2, x1 - o, y1 - o, c);
+            g.fill(x0 + o, y0 + o + 2, x0 + o + 2, y1 - o - 2, c);
+            g.fill(x1 - o - 2, y0 + o + 2, x1 - o, y1 - o - 2, c);
+        }
+    }
+
+    /** Where the band's beams land: two points down the card's near edge, so the light fans up into the map. */
+    private void beams(int x0, int y0, int x1, int y1) {
+        float ex = MapScene.side() > 0 ? x0 + 2 : x1 - 2, nx = ex / width * 2f - 1f;
+        float ay = y0 + (y1 - y0) * 0.42f, by = y1 - 6;
+        dev.awaken.holo.client.HoloScene.beams(nx, 1f - ay / height * 2f, nx, 1f - by / height * 2f, 4.5f);
     }
 
     /** The district or "Carillon" under the table's centre, if known. */
@@ -414,50 +499,108 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         plain(g, sub, x + 8, y + 12, Glass.a(colour & 0xFFFFFF, 0.95f * alpha));
     }
 
-    /** The zone you're in, then the nearest others: the legend's rows. */
+    /** The gates you know (nearest first), the zone you're in, then the nearest others: the legend's rows. */
     private void legendLayout(Minecraft mc, AtlasState atlas, int x0, int y0, int lod) {
         legendRows.clear();
+        gateRows.clear();
         legendX0 = legendY0 = legendX1 = legendY1 = -1000;
-        if (!showLegend || mc.player == null || px1() - px0() < 300) return;
-        java.util.List<AtlasState.ZoneLabel> all = atlas.zoneLabels();
-        if (all.isEmpty()) return;
-        int here = atlas.zoneView().zone(mc.player.getBlockX(), mc.player.getBlockZ());
+        pointY = -1000;
+        if (!showLegend || mc.player == null || !scene && px1() - px0() < 300) return;
         double px = mc.player.getX(), pz = mc.player.getZ();
+        java.util.List<MapMarks.Gate> gates = new java.util.ArrayList<>(MapMarks.gates(mc.player));
+        gates.sort(java.util.Comparator.comparingDouble((MapMarks.Gate gt) -> gt.pos().distToCenterSqr(px, gt.pos().getY(), pz)));
+        for (int i = 0; i < Math.min(GATE_ROWS, gates.size()); i++) gateRows.add(gates.get(i));
+        if (chosen != null && gateRows.stream().noneMatch(gt -> gt.pos().equals(chosen))) chosen = null;
+        java.util.List<AtlasState.ZoneLabel> all = atlas.zoneLabels();
+        int here = atlas.zoneView().zone(mc.player.getBlockX(), mc.player.getBlockZ());
         java.util.List<AtlasState.ZoneLabel> sorted = new java.util.ArrayList<>(all);
         sorted.sort(java.util.Comparator.comparingDouble((AtlasState.ZoneLabel z) -> z.zone() == here ? -1 : (z.x() - px) * (z.x() - px) + (z.z() - pz) * (z.z() - pz)));
+        // in the scene the legend stays over your head; on the table, inside the table's corner
+        int maxY = scene ? Math.round(height * 0.56f) : py1() - 6;
+        int fixed = 4 + (gateRows.isEmpty() ? 0 : 12 + gateRows.size() * ROW + (chosen != null ? ROW + 2 : 0) + 6) + 12 + 22;
+        int lands = Math.max(0, (maxY - (scene ? py0() : y0 + 6) - fixed) / ROW);
         // close in, the city's districts and the land round you; zoomed out, the regions (their danger matters there)
         for (AtlasState.ZoneLabel z : sorted)
-            if (legendRows.size() < LEGEND_ROWS && (lod == 0 || z.zone() < ZoneMap.DISTRICT)) legendRows.add(z);
-        if (legendRows.isEmpty()) return;
-        legendX0 = x0 + 6;
-        legendY0 = y0 + 6;
-        legendX1 = legendX0 + LEGEND_W;
-        legendRowY0 = legendY0 + 16;
-        legendY1 = legendRowY0 + legendRows.size() * ROW + 26;
+            if (legendRows.size() < Math.min(LEGEND_ROWS, lands) && (lod == 0 || z.zone() < ZoneMap.DISTRICT)) legendRows.add(z);
+        if (legendRows.isEmpty() && gateRows.isEmpty()) return;
+        legendX0 = scene ? sideX0() : x0 + 6;
+        legendY0 = scene ? py0() : y0 + 6;
+        legendX1 = scene ? sideX1() : legendX0 + LEGEND_W;
+        int y = legendY0 + 4;
+        if (!gateRows.isEmpty()) {
+            gateRowY0 = y + 12;
+            y = gateRowY0 + gateRows.size() * ROW;
+            if (chosen != null) {
+                pointY = y + 1;
+                y += ROW + 2;
+            }
+            y += 6;
+        }
+        legendRowY0 = legendRows.isEmpty() ? -1000 : y + 12;
+        if (!legendRows.isEmpty()) y = legendRowY0 + legendRows.size() * ROW;
+        dangerY = y + 6;
+        legendY1 = dangerY + 14;
     }
 
-    /** The legend: what the colours are, the zone you're in, and each row a place to fly to (click). */
+    private int dangerY;
+
+    /** The legend: the gates you know (pick one, then "Point me there"), the lands and what their colours mean. */
     private void legend(GuiGraphicsExtractor g, Minecraft mc, AtlasState atlas, int mouseX, int mouseY) {
-        if (legendRows.isEmpty()) return;
-        int x = legendX0, y = legendY0, w = LEGEND_W;
-        g.fill(x, y, x + w, legendY1, 0xC80B1626);
-        g.fill(x, y, x + w, y + 1, 0x667FC3FF);
-        plain(g, "KNOWN LANDS", x + 6, y + 4, Glass.LABEL | 0xFF000000);
-        int here = mc.player == null ? 0 : atlas.zoneView().zone(mc.player.getBlockX(), mc.player.getBlockZ());
-        for (int i = 0; i < legendRows.size(); i++) {
-            AtlasState.ZoneLabel z = legendRows.get(i);
-            int ry = legendRowY0 + i * ROW;
-            boolean over = mouseX >= x && mouseX < x + w && mouseY >= ry - 1 && mouseY < ry + ROW - 1;
-            if (over) g.fill(x + 1, ry - 1, x + w - 1, ry + ROW - 1, 0x307FC3FF);
-            g.fill(x + 6, ry + 1, x + 13, ry + 8, z.colour());
-            String sub = z.zone() == here ? "here" : z.sub();
-            int subW = font.width(sub);
-            String name = font.plainSubstrByWidth(z.name(), w - 30 - subW);
-            plain(g, name, x + 17, ry, over ? 0xFFFFFFFF : INK);
-            plain(g, sub, x + w - 6 - subW, ry, z.zone() == here ? 0xFFE9F1FF : Glass.a(z.colour() & 0xFFFFFF, 0.9f));
+        if (legendRows.isEmpty() && gateRows.isEmpty()) return;
+        int x = legendX0, y = legendY0, w = legendX1 - legendX0;
+        if (scene) HudLook.card(g, x, y, w, legendY1 - y, Glass.EDGE, 0.86f, Math.clamp((age() - 0.18f) / 0.25f, 0f, 1f), 0f, HudLook.FRAME);
+        else {
+            g.fill(x, y, x + w, legendY1, 0xC80B1626);
+            g.fill(x, y, x + w, y + 1, 0x667FC3FF);
+        }
+        if (!gateRows.isEmpty()) {
+            plain(g, "GATES", x + 6, gateRowY0 - 12, Glass.LABEL | 0xFF000000);
+            String tab = "Tab";
+            plain(g, tab, x + w - 6 - font.width(tab), gateRowY0 - 12, Glass.a(Glass.LABEL, 0.7f));
+            for (int i = 0; i < gateRows.size(); i++) {
+                MapMarks.Gate gt = gateRows.get(i);
+                int ry = gateRowY0 + i * ROW;
+                boolean picked = gt.pos().equals(chosen);
+                boolean over = mouseX >= x && mouseX < x + w && mouseY >= ry - 1 && mouseY < ry + ROW - 1;
+                if (picked) g.fill(x + 1, ry - 1, x + w - 1, ry + ROW - 1, Glass.a(gt.colour(), 0.22f));
+                else if (over) g.fill(x + 1, ry - 1, x + w - 1, ry + ROW - 1, 0x307FC3FF);
+                g.fill(x + 8, ry, x + 10, ry + 9, Glass.a(gt.colour(), gt.read() ? 0.6f : 1f));
+                String dist = gateDistance(mc, gt);
+                int dw = font.width(dist);
+                String name = font.plainSubstrByWidth((gt.broken() ? "! " : "") + gt.name(), w - 30 - dw);
+                plain(g, name, x + 17, ry, over || picked ? 0xFFFFFFFF : INK);
+                plain(g, dist, x + w - 6 - dw, ry, Glass.a(gt.broken() ? Glass.WARN : Glass.LABEL, 0.95f));
+            }
+            if (pointY > -1000) {
+                boolean pointing = pinned().map(at -> at.equals(chosen)).orElse(false);
+                String label = pointing ? "Pointing you there" : "Point me there";
+                String key = pointing ? "" : "T";
+                boolean over = mouseX >= x && mouseX < x + w && mouseY >= pointY - 1 && mouseY < pointY + ROW - 1;
+                int bx0 = x + 15, bx1 = x + w - 6;
+                g.fill(bx0, pointY - 1, bx1, pointY + ROW - 1, Glass.a(0x7FC3FF, pointing ? 0.12f : over ? 0.34f : 0.22f));
+                g.fill(bx0, pointY - 1, bx0 + 1, pointY + ROW - 1, 0xFF7FC3FF);
+                plain(g, (pointing ? "✓ " : "› ") + label, bx0 + 5, pointY + 1, pointing ? Glass.a(Glass.LABEL, 1f) : 0xFFFFFFFF);
+                if (!key.isEmpty()) plain(g, key, bx1 - 4 - font.width(key), pointY + 1, Glass.a(Glass.LABEL, 0.8f));
+            }
+        }
+        if (!legendRows.isEmpty()) {
+            plain(g, "KNOWN LANDS", x + 6, legendRowY0 - 12, Glass.LABEL | 0xFF000000);
+            int here = mc.player == null ? 0 : atlas.zoneView().zone(mc.player.getBlockX(), mc.player.getBlockZ());
+            for (int i = 0; i < legendRows.size(); i++) {
+                AtlasState.ZoneLabel z = legendRows.get(i);
+                int ry = legendRowY0 + i * ROW;
+                boolean over = mouseX >= x && mouseX < x + w && mouseY >= ry - 1 && mouseY < ry + ROW - 1;
+                if (over) g.fill(x + 1, ry - 1, x + w - 1, ry + ROW - 1, 0x307FC3FF);
+                g.fill(x + 6, ry + 1, x + 13, ry + 8, z.colour());
+                String sub = z.zone() == here ? "here" : z.sub();
+                int subW = font.width(sub);
+                String name = font.plainSubstrByWidth(z.name(), w - 30 - subW);
+                plain(g, name, x + 17, ry, over ? 0xFFFFFFFF : INK);
+                plain(g, sub, x + w - 6 - subW, ry, z.zone() == here ? 0xFFE9F1FF : Glass.a(z.colour() & 0xFFFFFF, 0.9f));
+            }
         }
         // the danger key: what a region's colour means
-        int ky = legendRowY0 + legendRows.size() * ROW + 6;
+        int ky = dangerY;
         plain(g, "DANGER", x + 6, ky + 1, Glass.LABEL | 0xFF000000);
         int kx = x + 6 + font.width("DANGER") + 6;
         String[] lv = {"1", "8", "20", "45", "80"};
@@ -465,6 +608,39 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             g.fill(kx, ky + 2, kx + 6, ky + 8, ZoneMap.BAND_COLOUR[b]);
             plain(g, lv[b], kx + 8, ky + 1, Glass.LABEL | 0xFF000000);
             kx += 8 + font.width(lv[b]) + 6;
+        }
+    }
+
+    private static java.util.Optional<BlockPos> pinned() {
+        return dev.awaken.signal.client.NowClient.pinned();
+    }
+
+    /** "120 m" along the ground from you to a gate. */
+    private static String gateDistance(Minecraft mc, MapMarks.Gate gt) {
+        if (mc.player == null) return "";
+        double dx = gt.pos().getX() + 0.5 - mc.player.getX(), dz = gt.pos().getZ() + 0.5 - mc.player.getZ();
+        long m = Math.round(Math.sqrt(dx * dx + dz * dz));
+        return m >= 1000 ? String.format(Locale.ROOT, "%.1f km", m / 1000.0) : m + " m";
+    }
+
+    /** Picks a gate: the map glides to it and the legend offers "Point me there". */
+    private void choose(MapMarks.Gate gt) {
+        chosen = gt.pos();
+        flyX = gt.pos().getX() + 0.5;
+        flyZ = gt.pos().getZ() + 0.5;
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(HoloSounds.HOVER.get(), 1.1f, 0.7f));
+    }
+
+    /** "Point me there": the Now line, its compass and the Signal's thread lead to the gate picked, until you reach it. */
+    private void pointAtChosen() {
+        if (chosen == null) return;
+        for (MapMarks.Gate gt : gateRows) {
+            if (!gt.pos().equals(chosen)) continue;
+            dev.awaken.signal.client.NowClient.pin("Go to the " + (gt.broken() ? "broken " : "") + gt.name(), gt.pos());
+            Minecraft mc = Minecraft.getInstance();
+            mc.getSoundManager().play(SimpleSoundInstance.forUI(HoloSounds.CONFIRM.get(), 1.0f, 0.7f));
+            if (mc.player != null) mc.player.sendOverlayMessage(Component.translatable("atlas.awaken.point"));
+            return;
         }
     }
 
@@ -567,7 +743,19 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
 
     @Override
     public boolean mouseClicked(MouseButtonEvent e, boolean doubleClick) {
-        if (e.button() == InputConstants.MOUSE_BUTTON_LEFT && e.x() >= legendX0 && e.x() < legendX1 && e.y() >= legendRowY0) {
+        boolean inLegend = e.x() >= legendX0 && e.x() < legendX1 && e.y() >= legendY0 && e.y() < legendY1;
+        if (inLegend && e.button() == InputConstants.MOUSE_BUTTON_LEFT && !gateRows.isEmpty()) {
+            if (e.y() >= pointY - 1 && e.y() < pointY + ROW - 1) {
+                pointAtChosen();
+                return true;
+            }
+            int i = (int) Math.floor((e.y() - gateRowY0 + 1) / ROW);
+            if (e.y() >= gateRowY0 - 1 && i >= 0 && i < gateRows.size()) {
+                choose(gateRows.get(i));
+                return true;
+            }
+        }
+        if (e.button() == InputConstants.MOUSE_BUTTON_LEFT && inLegend && legendRowY0 > -1000 && e.y() >= legendRowY0 - 1) {
             int i = (int) ((e.y() - legendRowY0 + 1) / ROW);
             if (i >= 0 && i < legendRows.size()) { // fly there, close enough to read it
                 AtlasState.ZoneLabel z = legendRows.get(i);
@@ -596,16 +784,10 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(HoloSounds.HOVER.get(), remove ? 0.8f : 1.3f, 0.8f));
             return true;
         }
-        if (e.button() == InputConstants.MOUSE_BUTTON_LEFT && e.y() >= buttonsY - 2 && e.y() < buttonsY + 10) {
-            if (e.x() >= shareX0 && e.x() < shareX1) {
-                ClientPacketDistributor.sendToServer(new AtlasNet.Share());
-                return true;
-            }
-            if (e.x() >= clearX0 && e.x() < clearX1) {
-                AtlasState.get().clearCache();
-                Minecraft.getInstance().player.sendOverlayMessage(Component.translatable("atlas.awaken.cleared"));
-                return true;
-            }
+        if (e.button() == InputConstants.MOUSE_BUTTON_LEFT && e.y() >= buttonsY - 2 && e.y() < buttonsY + 10
+                && shareX0 >= 0 && e.x() >= shareX0 && e.x() < shareX1) {
+            ClientPacketDistributor.sendToServer(new AtlasNet.Share());
+            return true;
         }
         return super.mouseClicked(e, doubleClick);
     }
@@ -635,8 +817,37 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
 
     @Override
     public boolean keyPressed(KeyEvent e) {
+        Minecraft mc = Minecraft.getInstance();
         if (AtlasClient.KEY.matches(e)) {
+            // in the scene: Shift+M or a quick second M is the flat table (SPEC §30.5); else M closes
+            if (scene && (e.hasShiftDown() || age() < 0.30f)) MapScene.toTable();
+            else onClose();
+            return true;
+        }
+        if (scene && (dev.awaken.core.client.AwakenKeys.STATUS.matches(e) || e.key() == InputConstants.KEY_SPACE)) {
             onClose();
+            return true;
+        }
+        if (scene && e.key() >= InputConstants.KEY_1 && e.key() <= InputConstants.KEY_5) { // a band page
+            var page = dev.awaken.progression.client.StatusSections.Tab.values()[e.key() - InputConstants.KEY_1];
+            MapScene.cut(); // the band opens on your own eyes, at once
+            dev.awaken.progression.client.ProgressionClient.openBand(page);
+            return true;
+        }
+        if (e.key() == InputConstants.KEY_TAB && !gateRows.isEmpty()) { // the next gate, nearest first
+            int at = -1;
+            for (int i = 0; i < gateRows.size(); i++) if (gateRows.get(i).pos().equals(chosen)) at = i;
+            choose(gateRows.get((at + (e.hasShiftDown() ? gateRows.size() - 1 : 1)) % gateRows.size()));
+            return true;
+        }
+        if (e.key() == InputConstants.KEY_T && chosen != null) {
+            pointAtChosen();
+            return true;
+        }
+        int k = heldKey(mc, e);
+        if (k != 0) {
+            held |= k;
+            lastInput = System.nanoTime();
             return true;
         }
         if (e.key() == InputConstants.KEY_L) {
@@ -654,12 +865,70 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
     }
 
     @Override
+    public boolean keyReleased(KeyEvent e) {
+        int k = heldKey(Minecraft.getInstance(), e);
+        if (k != 0) {
+            held &= ~k;
+            return true;
+        }
+        return super.keyReleased(e);
+    }
+
+    /** The keys that move the map while held: your movement keys pan it, Q/E turn, R/F tilt, +/- zoom. */
+    private static int heldKey(Minecraft mc, KeyEvent e) {
+        if (mc.options.keyUp.matches(e)) return K_FWD;
+        if (mc.options.keyDown.matches(e)) return K_BACK;
+        if (mc.options.keyLeft.matches(e)) return K_LEFT;
+        if (mc.options.keyRight.matches(e)) return K_RIGHT;
+        return switch (e.key()) {
+            case InputConstants.KEY_Q -> K_TURN_L;
+            case InputConstants.KEY_E -> K_TURN_R;
+            case InputConstants.KEY_R -> K_TILT_UP;
+            case InputConstants.KEY_F -> K_TILT_DOWN;
+            case InputConstants.KEY_EQUALS, InputConstants.KEY_ADD -> K_ZOOM_IN;
+            case InputConstants.KEY_MINUS, 86 -> K_ZOOM_OUT; // 86: the keypad's minus (no constant for it)
+            default -> 0;
+        };
+    }
+
+    /** Moves the map by the keys held, this frame. */
+    private void keysHeld(float dt) {
+        lastInput = System.nanoTime();
+        float fwd = ((held & K_FWD) != 0 ? 1 : 0) - ((held & K_BACK) != 0 ? 1 : 0);
+        float right = ((held & K_RIGHT) != 0 ? 1 : 0) - ((held & K_LEFT) != 0 ? 1 : 0);
+        if (fwd != 0 || right != 0) {
+            // as a right-drag: a third of the card a second, along the view's own right and forward
+            double px = (px1() - px0()) * 0.35 * dt;
+            double r = Math.toRadians(yaw), k = 1.0 / zoom;
+            double dx = -right * px, dy = fwd * px / Math.max(0.3, Math.sin(Math.toRadians(tilt)));
+            cx -= (Math.cos(r) * dx - Math.sin(r) * dy) * k;
+            cz -= (Math.sin(r) * dx + Math.cos(r) * dy) * k;
+            cy = AtlasState.get().store.groundY(cx, cz, cy);
+            flyX = Double.NaN;
+        }
+        if ((held & K_TURN_L) != 0) yaw -= 90f * dt;
+        if ((held & K_TURN_R) != 0) yaw += 90f * dt;
+        if ((held & K_TILT_UP) != 0) tilt = Math.clamp(tilt + 40f * dt, 20f, 89f);
+        if ((held & K_TILT_DOWN) != 0) tilt = Math.clamp(tilt - 40f * dt, 20f, 89f);
+        if ((held & K_ZOOM_IN) != 0) zoom = Math.clamp(zoom * (float) Math.pow(2.2, dt), 0.04f, 16f);
+        if ((held & K_ZOOM_OUT) != 0) zoom = Math.clamp(zoom / (float) Math.pow(2.2, dt), 0.04f, 16f);
+    }
+
+    @Override
+    public void onClose() {
+        if (scene) MapScene.close(false);
+        super.onClose();
+    }
+
+    @Override
     public boolean isPauseScreen() {
         return false;
     }
 
     @Override
     public void removed() {
+        if (scene) MapScene.close(false); // replaced by another screen: the camera goes back too
+        dev.awaken.holo.client.HoloScene.noBeams();
         UiHooks.clearFocus(this);
         Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(HoloSounds.CLOSE.get(), 1.0f, 0.7f));
         dev.awaken.Awaken.LOG.info("[atlas] closed: {} | {} | {}", AtlasState.stats.summary(), AtlasState.get().memory(), AtlasState.get().costs());

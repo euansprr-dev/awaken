@@ -81,6 +81,8 @@ final class HoloTests {
             ServerPlayer p = h.makeMockServerPlayerInLevel();
             List<ServerPlayer> got = new ArrayList<>();
             h.assertTrue(HoloRelay.receive(p, 7, recorder(got)) == HoloRelay.Result.REJECTED, "kind 7 is refused");
+            h.assertTrue(HoloRelay.receive(p, HoloKind.MAP.id, recorder(got)) == HoloRelay.Result.RELAYED && HoloRelay.kind(p) == HoloKind.MAP, "MAP (3) is a known kind");
+            HoloRelay.forget(p);
             h.assertTrue(HoloRelay.receive(p, -1, recorder(got)) == HoloRelay.Result.REJECTED, "kind -1 is refused");
             h.assertTrue(HoloRelay.kind(p) == HoloKind.NONE, "a refused kind changes nothing");
             h.assertTrue(HoloRelay.receive(p, HoloKind.STATUS.id, recorder(got)) == HoloRelay.Result.RELAYED, "a known kind is taken");

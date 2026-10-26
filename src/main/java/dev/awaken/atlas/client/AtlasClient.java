@@ -56,22 +56,33 @@ public final class AtlasClient {
         });
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> tick());
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre.class, e -> AtlasGlance.frame());
-        // the band's Map page opens the table (SPEC §30); M opens it from anywhere, the band included
-        dev.awaken.progression.client.StatusSections.setPageAction(dev.awaken.progression.client.StatusSections.Tab.MAP, () -> {
-            AtlasScreen.open(20f, 52f, 1f);
-            dev.awaken.core.api.TipHooks.client().done(dev.awaken.Awaken.id("first/atlas"));
-        }, KEY);
-        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> AtlasState.get().leave());
+        // the band's Map page opens the map in the world (SPEC §30.5); M opens it from anywhere, the band included
+        dev.awaken.progression.client.StatusSections.setPageAction(dev.awaken.progression.client.StatusSections.Tab.MAP, MapScene::openFromKey, KEY);
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
+            MapScene.reset();
+            AtlasState.get().leave();
+        });
+        // the map scene's camera: last, so its angles win over shakes and rolls from elsewhere
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST, net.neoforged.neoforge.client.event.ViewportEvent.ComputeCameraAngles.class, MapCamera::angles);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RenderHandEvent.class, MapCamera::hand);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ExtractBlockOutlineRenderStateEvent.class, MapCamera::outline);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RenderNameTagEvent.CanRender.class, MapCamera::nameTag);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RenderGuiLayerEvent.Pre.class, MapCamera::hud);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre.class, e -> MapScene.frame());
+        AtlasConfig.register();
     }
 
     private static void tick() {
         Minecraft mc = Minecraft.getInstance();
+        AtlasConfig.refresh();
         boolean open = mc.gui.screen() instanceof AtlasScreen;
         AtlasState.get().tick(mc, open);
+        MapScene.tick();
         while (KEY.consumeClick()) {
             if (mc.gui.screen() == null && mc.player != null) {
-                AtlasScreen.open(20f, 52f, 1f);
-                dev.awaken.core.api.TipHooks.client().done(dev.awaken.Awaken.id("first/atlas"));
+                // Shift+M: the flat table at once; M: the map in the world, where it can open (SPEC §30.5)
+                if (mc.hasShiftDown()) MapScene.table();
+                else MapScene.openFromKey();
             }
         }
     }
@@ -171,6 +182,11 @@ public final class AtlasClient {
         a.revealPending = true;
         AtlasScreen.open(20f, 52f, 1f);
         return true;
+    }
+
+    /** The flat table at once, as Shift+M opens it (tours). */
+    public static void openTable() {
+        MapScene.table();
     }
 
     /** Whether the Atlas table is the open screen. */

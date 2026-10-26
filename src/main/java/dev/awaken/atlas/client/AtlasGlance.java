@@ -15,8 +15,8 @@ import net.minecraft.resources.Identifier;
  * The wrist glance (SPEC §16.8): the land round you as a small live diorama, turned so where you look is up, your thread
  * and the clouds included. It is painted into one registered texture at most once a second, and only while something
  * asks for it ({@link #want}; or sooner when you've moved or turned), so it costs one quad a frame plus a paint a
- * second. It left the K menu with the band's pages (SPEC §30: the Map page is the Atlas itself); it is kept as the
- * painter the map scene (phase 4) will drive from its own camera.
+ * second. It left the K menu with the band's pages (SPEC §30: the Map page is the Atlas itself), and the map scene draws
+ * the table's own picture (SPEC §30.5), so nothing asks for it now; it is kept for a wrist glance later.
  */
 final class AtlasGlance {
     private AtlasGlance() {}

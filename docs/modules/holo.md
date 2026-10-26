@@ -137,9 +137,12 @@ While the K menu is open the camera holds still. The cursor is a ray through the
 - The wrist is the off-hand arm (left for right-handed players).
 
 ## Network: `awaken:holo_state`
-- C2S `{kind}` (NONE 0, STATUS 1, INVENTORY 2) as a raw VarInt; unknown ids are refused. Sent when the K menu (or the
-  wrist demo) or the holo inventory opens or closes, only to a server that knows the channel. Others see the same
-  raised wrist and content-free card for either kind.
+- C2S `{kind}` (NONE 0, STATUS 1, INVENTORY 2, MAP 3) as a raw VarInt; unknown ids are refused. Sent when the K menu
+  (or the wrist demo), the holo inventory or the map scene (SPEC §30.5) opens or closes, only to a server that knows the
+  channel. Others see the same raised wrist and content-free card for STATUS and INVENTORY; for MAP a content-free disc
+  of light before you at the waist (a ring with compass ticks, a few drifting points, a cone from the wrist).
+- The map scene drives your own wrist through `holo.client.HoloScene` (public): `map(raise, open)` keeps the wrist up in
+  third person while its camera holds the view, and `beams(...)` fans the band's light to the map card's near edge.
 - Server: at most 4 changes per 20 ticks per player; a change over the limit waits and goes out when the window frees
   (the last state always arrives). Relayed as `awaken:holo_state_relay {entityId, kind}` to players tracking the sender
   (never the sender, never players without the channel), and to a player who starts tracking someone with a panel open.

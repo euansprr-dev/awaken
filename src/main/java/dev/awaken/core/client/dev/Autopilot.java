@@ -390,7 +390,11 @@ public final class Autopilot {
                 else if (arg.trim().equals("status")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.STATUS));
                 else if (arg.trim().equals("powers")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.POWERS));
                 else if (arg.trim().equals("journal")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.JOURNAL));
-                else if (arg.trim().equals("map")) openMapPage(mc); // the band's Map page is the Atlas table (SPEC §30)
+                else if (arg.trim().equals("map")) openMapPage(mc); // the band's Map page: the map in the world (SPEC §30.5)
+                else if (arg.trim().equals("table")) {
+                    mc.gui.setScreen(null);
+                    dev.awaken.atlas.client.AtlasClient.openTable();
+                }
                 else if (arg.trim().equals("codex")) mc.gui.setScreen(new dev.awaken.progression.client.StatusScreen(dev.awaken.progression.client.StatusSections.Tab.CODEX));
                 else if (arg.trim().equals("uiprobe")) mc.gui.setScreen(new UiProbeScreen());
                 else if (arg.trim().equals("look")) mc.gui.setScreen(new dev.awaken.compat.client.LookScreen(null));

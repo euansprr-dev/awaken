@@ -5694,8 +5694,8 @@ band's Map page; a denser tint by day (phase 3); your face on Status (phase 2); 
 - **The flat fallback** (`StatusScreen`) has the same pages on its tab row.
 - **Keys:** K always opens on Status unless a link names a page. 1–6 open a page; Tab and Shift+Tab step through the
   pages that show here; M opens the Map (the Atlas key, `StatusSections.pageForKey`).
-- **Map:** a page with an action (`StatusSections.setPageAction`; the atlas module registers "open the table", key M).
-  Picking it closes the band and opens the Atlas table. The map scene replaces this in phase 4.
+- **Map:** a page with an action (`StatusSections.setPageAction`; the atlas module registers `MapScene.openFromKey`,
+  key M). Picking it closes the band and opens the map in the world (§30.5), or the table where the scene can't open.
 - **Where each section lives** (order in brackets). Earlier sections of this SPEC that say "K › Status" mean these
   pages now.
 
@@ -5706,7 +5706,7 @@ band's Map page; a denser tint by day (phase 3); your face on Status (phase 2); 
   | Journal | NOW (−30), JOURNAL · CHAINS (−20), DIRECTIVES (−15), DAILY REGIMEN (−12), WHAT WAITS / SAVED FOR LATER (5), HEARTH (40), ANCHOR REQUESTS (41), JOURNAL (700, the filed lines again), RECENT MESSAGES (800), RECORDS (900) |
   | Truths | the Path choice (0), Truths (10–30), THE ROAD (35), TITLES (40), LATENTS (50) |
   | Codex | THE BOARD (0), HAPPENINGS WITNESSED (460) |
-  | Map | the Atlas table |
+  | Map | the map in the world (§30.5), or the Atlas table |
 
 - **Gates on the Atlas** (`MapMarks.Gate`, `MapMarks.registerGates`, `MapMarks.gates`):
   - Every gate whose pillar you can see (the gates module, from the synced beacons) and each gate your scanner read (the
@@ -5728,18 +5728,93 @@ band's Map page; a denser tint by day (phase 3); your face on Status (phase 2); 
 - **Words:** Bram's line at the Registry is now "That's your band. Your status and your stats are on the first page, and
   the map is the last one. Press the same key to close it."
 - **Autopilot:** `screen holo status|powers|journal|truths|codex|map`; flat `screen status|powers|journal|codex`;
-  `screen map` (and `screen holo map`) opens what the Map page opens, the Atlas table. `holo clicktab <i>` clicks rail
-  node i.
+  `screen map` (and `screen holo map`) opens what the Map page opens (the scene); `screen table` the flat table.
+  `holo clicktab <i>` clicks rail node i.
 - **Tests:** `holo_band_layout` (nodes inside the rail and apart, the K key clear, content clear of the rail, labels on
   whole pixels, 5 and 6 px a unit kept on the owner's screens); `signal_status_screen_frame` now lays out the six
   labels.
 
 ### 30.2 Still to build (PLAN §6)
-- **Phase 2, the Status sheet:** the hero (face, rank sigil, LEVEL, segmented XP, the next unlock), the six stats in one
-  line with a focus line, points placed then confirmed (one checked request), and the context row (decision > gate run
-  > Deep Pack > room > tracked task).
-- **Phase 3, the look:** the type ramp, tokens, tint 0.46 adaptive to 0.60, the wrist light, the scan-line page change,
-  motion that reports change, `holo.page`, `holo.spend`, `holo.confirm`, `holo.undo`, reduced motion.
-- **Phase 4, the map scene** (with the Atlas builder): the camera over your shoulder, the band projecting the Atlas's own
-  picture, the legend as a panel of the band, the quick table on Shift+M, the fight rule, `holo_state` kind MAP.
 - **Phase 5:** the Powers and Journal pages composed, Truths and Codex restyled, narration, Band size.
+
+### 30.3 The Status sheet (phase 2, built: `progression.client.StatusSheet`)
+- **The hero** (Status order 0, no title row): your face (the skin's face and hat layers, 8×8 scaled up, in corner
+  ticks), your name, your title in amber, then LEVEL in spaced capitals with the number at twice the body size, the XP
+  to the next level as segments (3 units each, 1 apart, the one filling half lit), and "Level N opens X" from the level
+  road (`Content.LEVEL_ROAD`). The XP gained since you last looked fills in when the band opens (not with reduced
+  motion). Your rank stands at the right as a pixel diamond with its letter; hovering it says what the next rank opens,
+  or "TRIAL READY" when the trial is.
+- **The six stats in one line** (order 10): STR AGI VIT INT PER SEN, each a column with its value; the header reads
+  STATS with the points to place (amber) and any fracture chip.
+  - While points wait, a + diamond sits under each stat. Click it (or arrows to focus, Space) to place a point there.
+    Placed points show at once as +N in amber and in a PLACED list; nothing is sent yet.
+  - **Confirm** (Enter) sends one request for all of them (`StatusAction("spend_many", "STR:1,AGI:2")`); the server
+    places each through `Progression.spendPoint` and skips what you don't have (at most 500). **Undo** (Backspace)
+    takes the last one back. Placed points are kept while the band is shut. On a confirm the stats that rose flash amber
+    for 600 ms.
+  - The focused stat's line under the row says what it does in plain words.
+- **The context row:** the top Now suggestion with its compass sits under the stats (`NowRow`, order 18: "NOW · n more
+  on the Journal page ›"), then the decision waiting (14), this gate (15), the Deep Pack (16), this room (17), and the
+  newest Journal lines (20, four of them, "ALL n ›").
+- **Labels** (`BandHeader`): small capitals in the labels' colour, a hairline to the edge and a note on the right
+  ("ALL 23 ›", a click opens its page), instead of loud titles.
+- **Sounds:** `holo.spend` (a rising step per point), `holo.confirm`, `holo.undo` (`StatusSections.Cue`).
+- **Test:** `progression_spend_many` (a mixed request places what it can, skips nonsense and what you can't afford).
+
+### 30.4 The look and the motion (phase 3, built)
+- **Tint by daylight:** the band's glass is denser by day: 0.46 at night or under a roof, up to 0.60 in full daylight
+  looking at the sky (`HoloRender.tint`, from sky darkening and the camera's pitch), so text holds against bright sky
+  and snow.
+- **Light from the wrist:** a soft blob of the band's light (150 units, 0.10 alpha) at the panel's wrist corner, as if
+  the band lit the glass from below.
+- **Pages print in:** changing page sweeps the scan line down the content (40 ms, then 140 ms; `HoloPanel.rescan`), and
+  the rail's lit bead slides to the new page in 120 ms. Off with reduced motion.
+- **Type:** body text at the panel's pixel size, `small()` one framebuffer pixel fewer, `micro()` (labels) two fewer,
+  never under 2 (`StatusSections`).
+- **Sounds:** `holo.page` (one soft glass tick, a pitch step per page), `holo.spend`, `holo.confirm`, `holo.undo`, from
+  `tools/art/specs/audio_holo.py`, on the Interface slider.
+
+### 30.5 The map in the world (phase 4, built: `atlas.client.MapScene`, `MapCamera`, `AtlasScreen` scene mode)
+Euan's idea: the camera pulls back and you see your character looking at the map, a hologram from the band, "still
+really sharp, with the clouds and everything".
+- **Opening:** M (or the band's Map page) raises your wrist (120 ms), then the camera rises out of your eyes to a shot
+  2.4 m behind your feet, 2.2 m over your right shoulder and 4.6 m up, looking the way you face and 38° down
+  (`atlas.MapShot`), easing in over 320 ms after a 60 ms wait (190 ms after 30 ms when it opened in the last 12 s). The
+  map is usable at once; it is settled by 420 ms (220 ms again).
+  - The camera is a client-only marker entity the game's camera follows (as the opening's, `OpeningCamera`), placed
+    every frame from `ComputeCameraAngles` at LOWEST. It follows you if you're pushed; it never turns with you. While it
+    holds the view the hands, the block outline, your name tag and the HUD stand aside (chat, subtitles and the action
+    bar stay). The world never pauses.
+  - **Room:** the line from your eyes to a little past the camera's place must be clear; else the left shoulder (the
+    layout mirrors), then a higher, steeper shot (1.4 m back, 6 m up, 50° down), then the table.
+- **The card:** the Atlas's own picture (the same renderer as the table: land, zones, clouds, pins, gates, rumours) on
+  the band's projected glass (78% navy), on the far side of the frame from your shoulder (31% to 97.5% of the width,
+  7.5% to 74% of the height). Up the map is the way the camera looks. The cut edge fades into the glass; the world
+  behind dims (Lens through the focus, plus a soft veil that is darker at the top). Beams of the band's light fan from
+  your wrist to the card's near edge (`holo.client.HoloScene`, drawn by the wrist layer). The card scans in from 120 ms
+  and the land prints in from the middle, faster than on the table.
+- **The legend** floats on its own glass over your head, on the near side: GATES (the four nearest you know, with
+  their distance; Tab steps through them, a click picks one and the map glides to it), the picked gate's **Point me
+  there** (T), KNOWN LANDS (click to fly there) and the DANGER key. It never reaches lower than 56% of the height.
+- **Point me there** (scene and table): the Now line leads with "Go to the D-rank gate" (`NowClient.pin`, id
+  `awaken:map_pin`, priority 86, client-side), with its compass and the Signal's thread, until you're within 12 blocks.
+- **Keys** (one line along the bottom): drag turns the map, right-drag or WASD moves across it (your body stays still),
+  scroll or +/- zooms, Q/E turn, R/F tilt, C comes back to you, Tab gates, T point me there, 1–5 open a band page, M,
+  Esc, K or Space close (250 ms back to your eyes). The table takes the same held keys and Tab/T.
+- **The table instead,** at once: Shift+M, or M again within 0.3 s of opening (from the scene); in a fight
+  (`SystemHud.inCombat`: hurt in the last 5 s or a hostile within 8); with reduced motion; with the setting "Map opens
+  as: Table" (`config/awaken-atlas-client.toml`, `mapOpens`); without the band; while another camera holds the view;
+  asleep or spectating; with no room. Inside a gate the Atlas's own message stands.
+- **The fight rule:** hit, or a hostile within 8 blocks, while the scene is open: it folds in 150 ms with a sharp glass
+  tick.
+- **What others see** (`holo_state` kind MAP = 3, relayed and rate-limited like STATUS and INVENTORY): your raised
+  wrist and, before you at the waist, a content-free disc of light (a ring with compass ticks, a few drifting points,
+  a cone from the wrist). Never your land, pins or labels.
+- **Settings moved:** "Clear Atlas cache" is a setting now (`clearAtlasCache`, turns itself off once done); "Share with
+  party" shows only while other players are online.
+- **Cost:** the Atlas picture costs what the table does; the scene adds your player model, the beams (two thin quads
+  and a fan) and the GUI glass. Nothing is loaded for the camera move: the same place, seen from 5 m back.
+- **Test:** `atlas_map_shot` (behind you, over a shoulder, 38° down, the left mirrors the right, the eases, the short
+  way round, the promised timings, the MAP kind).
+- **Later:** a real 3D mesh in the world you could walk round; party members within 8 blocks seeing the real map;
+  holding Shoulder Surfing and Camera Overhaul off while the scene runs (today they may fight the camera).
