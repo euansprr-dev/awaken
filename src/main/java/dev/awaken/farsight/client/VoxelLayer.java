@@ -121,7 +121,8 @@ final class VoxelLayer implements AutoCloseable {
      */
     private static final class Plan {
         final IntArrayList page = new IntArrayList(), quads = new IntArrayList(), first = new IntArrayList();
-        int quadsDrawn, chunksDrawn;
+        /** Quads drawn, those by the discarding pipeline (edges, fades, cut-outs), and the detail run's (status). */
+        int quadsDrawn, chunksDrawn, edgedQuads, detailQuads;
         final MappableRingBuffer commands;
         boolean used;
 
@@ -135,6 +136,8 @@ final class VoxelLayer implements AutoCloseable {
             first.clear();
             quadsDrawn = 0;
             chunksDrawn = 0;
+            edgedQuads = 0;
+            detailQuads = 0;
         }
     }
 
@@ -439,7 +442,8 @@ final class VoxelLayer implements AutoCloseable {
             float ay = (float) (c.minY - camY), by = (float) (c.maxY - camY);
             float fx = Math.max(Math.abs(ax), Math.abs(bx)), fz = Math.max(Math.abs(az), Math.abs(bz));
             if (fx * fx + fz * fz >= (realWithin - 2f) * (realWithin - 2f) || c.count[0] == 0) continue;
-            if (!renderer.anyCulled(c.cx, c.cz, c.groundY, c.maxY, levelMinY) || !renderer.inView(ax, ay, az, bx, by, bz)) continue;
+            // (from its lowest block: an overhang's cave lies under the chunk's ground)
+            if (!renderer.anyCulled(c.cx, c.cz, c.minY, c.maxY, levelMinY) || !renderer.inView(ax, ay, az, bx, by, bz)) continue;
             int faces = (camY < c.maxY ? 1 : 0) | (camY > c.minY ? 2 : 0) | (camZ < c.cz * 16 + 16 ? 4 : 0) | (camZ > c.cz * 16 ? 8 : 0)
                     | (camX < c.cx * 16 + 16 ? 16 : 0) | (camX > c.cx * 16 ? 32 : 0);
             int[] st = c.starts[0];
@@ -558,7 +562,10 @@ final class VoxelLayer implements AutoCloseable {
                     d = e;
                 }
                 // thin things and plants, while a block shows big enough for them (always the discarding pipeline: cut-outs)
-                if (l == 0 && st[7] > st[6] && near < detailReach * (1f + BAND)) fits &= add(p, c.page[l] | EDGED, c.first[l] + st[6], st[7] - st[6]);
+                if (l == 0 && st[7] > st[6] && near < detailReach * (1f + BAND)) {
+                    fits &= add(p, c.page[l] | EDGED, c.first[l] + st[6], st[7] - st[6]);
+                    p.detailQuads += st[7] - st[6];
+                }
                 drawn = true;
             }
             if (!fits) {
@@ -600,8 +607,14 @@ final class VoxelLayer implements AutoCloseable {
             p.quads.add(n);
             p.first.add(first + at);
             p.quadsDrawn += n;
+            if ((page & EDGED) != 0) p.edgedQuads += n;
         }
         return true;
+    }
+
+    /** The screen's quads by the discarding pipeline and the detail run's (status). */
+    String quadsStatus() {
+        return " edged=" + screen.edgedQuads + " detail=" + screen.detailQuads;
     }
 
     /** This frame's draw commands on the screen (status). */

@@ -625,6 +625,6 @@ public final class FarSightClient {
                 cols == 0 ? 0.0 : workers.columnNanos.get() / 1000.0 / cols, cols == 0 ? 0.0 : workers.probes.get() / (double) cols, cols,
                 field.genUploaded, field.genAsked, voxels.resident(), VoxelCapture.captured(), VoxelCapture.fromDisk.get(), dev.awaken.farsight.voxel.VoxelAhead.asked(), voxels.inFlight.get(),
                 voxels.meshed.get() == 0 ? 0.0 : voxels.meshNanos.get() / 1e6 / voxels.meshed.get(), voxels.empty.get(), voxels.chunksDrawn, voxels.quadsDrawn, voxels.commands(),
-                (field.memoryBytes() + renderer.memoryBytes() + voxels.memoryBytes() + horizon.memoryBytes()) >> 20) + FarNear.status() + " fill=" + voxels.fillChunks() + horizon.status() + split;
+                (field.memoryBytes() + renderer.memoryBytes() + voxels.memoryBytes() + horizon.memoryBytes()) >> 20) + FarNear.status() + " fill=" + voxels.fillChunks() + voxels.quadsStatus() + horizon.status() + split;
     }
 }

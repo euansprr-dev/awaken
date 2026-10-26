@@ -25,8 +25,6 @@ public final class VoxelKinds {
     private VoxelKinds() {}
 
     public static final byte UNKNOWN = 0, AIR = 1, FULL = 2, SOFT = 3, BOX = 4, FLAT = 5, WATER = 6, SKIP = 7, THIN = 8;
-    /** A thin thing's boxes at most (the largest of its shape's). */
-    static final int PARTS = 4;
     private static final int[] NONE = new int[0];
 
     private static volatile byte[] kinds = new byte[0];
@@ -130,13 +128,10 @@ public final class VoxelKinds {
         }
         if (all.getYsize() <= 0.2 && all.getXsize() * all.getZsize() >= 0.8) return FLAT;
         if (water) return WATER;
-        // a thin thing: its largest boxes (a fence's post and rails, a pane's arms, a door), each at least a sixteenth
-        java.util.List<AABB> list = new java.util.ArrayList<>(shape.toAabbs());
-        list.sort((a, b) -> Double.compare(b.getXsize() * b.getYsize() * b.getZsize(), a.getXsize() * a.getYsize() * a.getZsize()));
-        int n = Math.min(PARTS, list.size());
-        int[] p = new int[n];
-        for (int i = 0; i < n; i++) p[i] = pack(list.get(i));
-        thin[0] = p;
+        // a thin thing: its bounds, one box (a fence's post and rails as one board, a pane, a door): from where City Sight
+        // draws it a fence's gaps are under a pixel, and each part its own box made a city's panes and fences most of its
+        // quads (the first tour's flight over Carillon)
+        thin[0] = new int[]{pack(all)};
         return THIN;
     }
 

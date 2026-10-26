@@ -14,7 +14,7 @@
 uniform samplerBuffer Looks;     // per look: u0 v0 u1 v1, then flags and the sprite's average colour
 uniform sampler2D AtlasSampler;
 uniform sampler2D LightSampler;
-uniform sampler2D SectionSampler; // which sections Sodium has built (FarRenderer.sectionTex): 1, or 0.5 built but culled on screen
+uniform sampler2D SectionSampler; // which sections Sodium has built (FarRenderer.sectionTex): 1, 0.5 built but culled on screen, 0.25 on screen never built, 0
 
 layout(std140) uniform FarVoxel {
     vec4 VoxelReach;   // x, y, z: levels 0-2's reach (blocks); w the cross-fade band as a share of it
@@ -50,10 +50,12 @@ void main() {
         int sy = int(floor((vRel.y + FarFog.z - VoxelMore.x) / 16.0)), sections = int(VoxelMore.y + 0.5);
         float built = sy >= 0 && sy < sections ? texelFetch(SectionSampler, ivec2(chunk.x & 63, (chunk.y & 63) * sections + sy), 0).r : 0.0;
 #ifdef FILL
-        // the fill: only a section Sodium has built but culls on screen (the main depth keeps it where nothing's nearer)
-        if (abs(built - 0.5) > 0.1) discard;
+        // the fill: only a section Sodium doesn't draw on screen, culled or never built (the main depth keeps it only
+        // where nothing's nearer)
+        if (built < 0.15 || built > 0.6) discard;
 #else
-        if (built > 0.25) {
+        // (a section on screen Sodium never built keeps this copy too, as one it hasn't built yet)
+        if (built > 0.4) {
             // debug view 2: hidden here for the real chunks, red instead (red that shows is a hole they leave)
             if (FarCam.w > 1.5 && FarCam.w < 2.5) { fragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
             discard;

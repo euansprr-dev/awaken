@@ -62,6 +62,13 @@ perf roost_mdi_off 8
 pixels gpu roost_mdi_off
 farsight status
 mdi on
+farsight part fill off
+wait 40
+pixels gpu reset
+perf roost_no_fill 8
+pixels gpu roost_no_fill
+farsight status
+farsight part fill on
 # ---- the market avenue, looking down its length: the border in shot
 cmd awaken city view market
 wait 200
@@ -83,18 +90,9 @@ farsight debug 3
 wait 10
 shot fn_market_d3
 farsight debug 0
-# ---- the countryside, 900 blocks out (perf-26oct's spot): off, then on
+# ---- the countryside, 900 blocks out (perf-26oct's spot): on (arriving with it), then off
 cmd tp @s ~900 ~40 ~300
-wait 400
-farsight near off
-wait 200
-pixels gpu reset
-perf country_sodium24 8
-pixels gpu country_sodium24
-farsight status
-shot fn_country_off
-farsight near 12
-wait 200
+wait 600
 pixels gpu reset
 perf country_near12 8
 pixels gpu country_near12
@@ -104,11 +102,20 @@ farsight debug 3
 wait 10
 shot fn_country_d3
 farsight debug 0
+farsight near off
+wait 300
+pixels gpu reset
+perf country_sodium24 8
+pixels gpu country_sodium24
+farsight status
+shot fn_country_off
+farsight near 12
 # ---- a glide over the city, 20 blocks a second for 20 s, the hand-off on then off from the same spot
 cmd awaken city view sky_nw
 wait 100
 farsight near 12
 wait 200
+farsight time parts on
 farsight status
 pixels gpu reset
 perfstart flight_near12
@@ -135,6 +142,7 @@ pixels gpu flight_sodium24
 farsight status
 cmd tp @s ~-279 ~ ~-279
 wait 60
+farsight time parts off
 # ---- the rim cave's void in Euan's world (a copy): over the Commons looking east, the hand-off on, debug 2 (the fill
 # orange), then off
 leave
