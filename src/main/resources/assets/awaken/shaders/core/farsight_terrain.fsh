@@ -168,7 +168,12 @@ void main() {
     int flags = vFlags.x;
     bool generated = (flags & 128) != 0, alpine = (flags & 1) != 0;
     float depth = vInfo.r * 255.0;
-    bool water = depth > 0.5;
+    // water is a flat surface: a steep far triangle whose corners hold water (a canal's corner joined to a roof's, a
+    // river below a bank) is the bank or the quay wall, not a blue wall of water (Euan, Carillon's river district)
+    vec3 facet = cross(dFdx(vRel), dFdy(vRel));
+    bool flatWater = abs(facet.y) > 0.9 * length(facet);
+    bool water = depth > 0.5 && flatWater;
+    bool bank = depth > 0.5 && !flatWater;
     // under the real chunks it stays hidden, but only where they are drawn: where they are loaded (a fresh teleport, a
     // fast flight) and within the render distance as Sodium culls it, in 3D from the camera (seen from high up, the sea
     // ends well inside the horizontal render distance, and its floor sooner); far water keeps to its own floor's reach,
@@ -180,7 +185,6 @@ void main() {
     // roof's counts as water by its corners, and would stand in the loaded city as a wall), and only in the render
     // distance's outer band, where a real floor can be missing: nearer, the real floor is always drawn, and far water
     // there would show as boxes on the city's canals
-    vec3 facet = cross(dFdx(vRel), dFdy(vRel));
     bool surface = abs(facet.y) > 0.97 * length(facet) && horizontal > FarDepth.z - 80.0;
     bool underReal = !(water && surface && FarFog.z >= FarFog.w);
     if (length(reach) < FarDepth.z + FarDepth.w * bayer4(gl_FragCoord.xy)) {
@@ -222,6 +226,10 @@ void main() {
     // the top's material, as the chunks choose it (the real chunks' colour where seen)
     vec3 top = vColor;
     float density = vInfo.b;
+    if (bank) {
+        top = mix(top, vec3(0.47, 0.46, 0.44), 0.75);
+        density = 0.0;
+    }
     float rock = 0.0, snow = 0.0, canopy = 0.0;
     if (water) {
         if ((int(FarCam.y) & 128) == 0) top = seaFloor(top, world, normalize(vRel), depth, horizontal);

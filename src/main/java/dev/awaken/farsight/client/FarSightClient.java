@@ -178,8 +178,8 @@ public final class FarSightClient {
         // coarsest first: a window's first patches queue ahead of the finer rings'
         int far = shown - 1;
         long farWindow = field.valid[far] ? Rings.key(field.winX[far], field.winZ[far]) : Long.MIN_VALUE;
-        // the horizon first, then from the camera outward (the nearest far land is the most seen); ring 0 loads down to
-        // the render distance's outer band, where its sea can lie under real water (FarRenderer.rect)
+        // ring 0 loads down to the render distance's outer band, where its sea can lie under real water (FarRenderer.rect);
+        // the workers take the horizon first, then the nearest patches (FarField.priority)
         float sea = (partsOff & 64) == 0 ? Math.max(0f, covered - SEA_BAND - 32f) : covered;
         field.place(far, cam.x, cam.z, covered, level, store, workers);
         for (int r = 0; r < far; r++) field.place(r, cam.x, cam.z, r == 0 ? sea : covered, level, store, workers);

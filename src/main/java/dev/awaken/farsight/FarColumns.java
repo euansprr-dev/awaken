@@ -276,6 +276,9 @@ public final class FarColumns {
                     if (brgb >= 0) {
                         boolean wet = !built.getFluidState().isEmpty();
                         top = cityY[0] + 1;
+                        // a corner spanning 8 blocks or more stands at the city's mean height round it, as the real
+                        // chunks' corners do (FarStore.patch): one spire's tip at a corner would be a pyramid that wide
+                        if (s >= 8) top = cityMean(l, x, z, s, top);
                         height[k] = packHeight(top);
                         colour[k] = abgr(brgb, GENERATED);
                         info[k] = abgr(wet ? 4 : 0, 0, 0, cold);
@@ -288,6 +291,21 @@ public final class FarColumns {
             }
         }
         return Math.clamp(min, 0, 65535) << 16 | Math.clamp(max, 0, 65535);
+    }
+
+    /** The plan's mean top (top faces) over a 3 by 3 spread of an s-block cell round (x, z); {@code at} where none is city. */
+    private float cityMean(CityLayout l, int x, int z, int s, float at) {
+        float sum = 0f;
+        int n = 0, d = Math.max(1, s / 3);
+        for (int dz = -1; dz <= 1; dz++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (FarCity.plannedAt(l, seed, x + dx * d, z + dz * d, cityY) != null) {
+                    sum += cityY[0] + 1;
+                    n++;
+                }
+            }
+        }
+        return n == 0 ? at : sum / n;
     }
 
     /**

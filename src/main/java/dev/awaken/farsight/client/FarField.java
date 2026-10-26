@@ -217,10 +217,16 @@ final class FarField implements AutoCloseable {
 
     private int frame;
 
+    /**
+     * The horizon ring first (the whole horizon in a second), then every other ring's patches by how far they are from the
+     * camera, nearest first: the near far land is the most seen, and with the coarser rings first it waited behind every
+     * patch they queued as the camera moved (in the opening's flight ring 0 never arrived).
+     */
     private static float priority(int ring, int px, int pz, double camX, double camZ) {
         int pb = Rings.patchBlocks(ring);
         double dx = (px + 0.5) * pb - camX, dz = (pz + 0.5) * pb - camZ;
-        return (Rings.RINGS - 1 - ring) * 1.0e6f + (float) Math.sqrt(dx * dx + dz * dz) / Rings.cellSize(ring);
+        float blocks = (float) Math.sqrt(dx * dx + dz * dz);
+        return (ring == Rings.RINGS - 1 ? 0f : 1.0e6f) + blocks;
     }
 
     /**
