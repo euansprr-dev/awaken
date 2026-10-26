@@ -3477,8 +3477,10 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
     a vanilla thunderstorm, terrain's wind steadies higher (rain and thunder lift it), the world sound hears rain, and
     Lens dims its sun. Lens's cloud layer doesn't thicken for this rain (`StormSky.localRain`): the cell is the cloud
     over you. Storms show only in the overworld while the Living Wilds are shown.
-  - **Its thunder**: the server's visual bolts stay (and the game's sky flash). On the client a bolt within 90 blocks
-    of a cell is its strike: it lights the cell from inside (a burst and up to two restrikes over half a second, 25
+  - **Its thunder**: the server's visual bolts stay (and the game's sky flash). The game sends a bolt only to 256 blocks,
+    so each strike also sends `living_storm_strike` (its position) to players within 640 (`StormCell.HEARD`): a far
+    storm still flashes and thunders. On the client a bolt or that word within 90 blocks of a cell is its strike (the
+    second of the two for one strike changes nothing): it lights the cell from inside (a burst and up to two restrikes over half a second, 25
     blocks over the base), and its own thunder and impact (played at once, everywhere, at full volume) are silenced and
     played again late by the distance at 130 blocks a second (the world's scale: a strike on the horizon rolls in a few
     seconds later). Within 70 blocks: the crack (the impact, pitch 0.55-0.7) and the thunder; farther: the thunder lower
