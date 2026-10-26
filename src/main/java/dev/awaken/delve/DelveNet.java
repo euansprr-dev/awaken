@@ -68,11 +68,12 @@ public final class DelveNet {
         }
     }
 
-    /** A roof is about to come down: the blocks that will fall, and how long the dust trickles first. */
-    public record CaveWarn(long centre, long[] roof, int ticks) implements CustomPacketPayload {
+    /** A roof is about to come down: the blocks that will fall (nearest first), the warning's length, and how long they take to let go. */
+    public record CaveWarn(long centre, long[] roof, int ticks, int spread) implements CustomPacketPayload {
         public static final Type<CaveWarn> TYPE = new Type<>(Awaken.id("delve_cave_warn"));
         public static final StreamCodec<ByteBuf, CaveWarn> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.LONG, CaveWarn::centre, LONGS, CaveWarn::roof, ByteBufCodecs.VAR_INT, CaveWarn::ticks, CaveWarn::new);
+                ByteBufCodecs.LONG, CaveWarn::centre, LONGS, CaveWarn::roof, ByteBufCodecs.VAR_INT, CaveWarn::ticks,
+                ByteBufCodecs.VAR_INT, CaveWarn::spread, CaveWarn::new);
 
         @Override
         public Type<CaveWarn> type() {

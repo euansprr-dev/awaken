@@ -1,35 +1,16 @@
 package dev.awaken.delve.client;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.renderpearl.api.pipeline.BlendFunction;
-import com.mojang.renderpearl.api.pipeline.ColorTargetState;
-import com.mojang.renderpearl.api.pipeline.CompareOp;
-import com.mojang.renderpearl.api.pipeline.DepthStencilState;
-import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
-import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import dev.awaken.Awaken;
 import dev.awaken.delve.DelveContent;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.geom.builders.UVPair;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.BindGroupLayouts;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
-import net.minecraft.client.renderer.oit.OitPipelineSet;
-import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.client.renderer.texture.TextureAtlas;
-import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
@@ -37,14 +18,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
 import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * The miner's lamp (PLAN 7.5): its light is drawn on the rock ahead of whoever wears it, never placed (no light
@@ -57,68 +33,6 @@ import java.util.List;
  */
 public final class LampGlow {
     private LampGlow() {}
-
-    // ---- pipelines: the glow (untextured, like CityGlow) and the lit rock (the block atlas, additive) ----------------
-
-    private static final RenderPipeline.Snippet GLOW_SNIPPET = RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
-            .withVertexShader("core/rendertype_lightning")
-            .withFragmentShader("core/rendertype_lightning")
-            .withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR)
-            .withPrimitiveTopology(PrimitiveTopology.QUADS)
-            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
-            .withCull(false)
-            .buildSnippet();
-    static final RenderPipeline GLOW = RenderPipeline.builder(GLOW_SNIPPET)
-            .withLocation(Awaken.id("pipeline/delve_lamp"))
-            .withColorTargetState(new ColorTargetState(BlendFunction.LIGHTNING))
-            .build();
-    static final OitPipelineSet GLOW_OIT = OitPipelineSet.builder(Awaken.id("delve_lamp"),
-            RenderPipeline.builder(GLOW_SNIPPET).withShaderDefine("OIT_ADDITIVE")).build();
-    static final RenderPipeline LIT = RenderPipeline.builder(RenderPipelines.GLOBALS_SNIPPET)
-            .withBindGroupLayout(BindGroupLayouts.PROJECTION)
-            .withBindGroupLayout(BindGroupLayouts.DYNAMIC_TRANSFORMS)
-            .withVertexShader("core/position_tex_color")
-            .withFragmentShader("core/position_tex_color")
-            .withBindGroupLayout(BindGroupLayouts.SAMPLER0)
-            .withVertexBinding(0, DefaultVertexFormat.POSITION_TEX_COLOR)
-            .withPrimitiveTopology(PrimitiveTopology.QUADS)
-            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, false))
-            .withCull(false)
-            .withColorTargetState(new ColorTargetState(BlendFunction.LIGHTNING))
-            .withLocation(Awaken.id("pipeline/delve_lamp_lit"))
-            .build();
-    private static RenderType glowType, litType;
-    private static int glowOk = -1, litOk = -1;
-
-    static void onRegister(RegisterRenderPipelinesEvent e) {
-        e.registerOptionalPipeline(GLOW);
-        e.registerOitPipelineSet(GLOW_OIT);
-        e.registerOptionalPipeline(LIT);
-    }
-
-    private static boolean compiled(RenderPipeline p) {
-        try {
-            return RenderSystem.getCompiledPipelineNullable(p) != null;
-        } catch (RuntimeException ex) {
-            return false;
-        }
-    }
-
-    private static RenderType glow() {
-        if (glowOk < 0) glowOk = compiled(GLOW) ? 1 : 0;
-        if (glowOk == 0) return RenderTypes.lightning();
-        if (glowType == null) glowType = RenderType.create("awaken_delve_lamp", RenderSetup.builder(GLOW).setOitPipelines(GLOW_OIT).createRenderSetup());
-        return glowType;
-    }
-
-    /** The lit-rock pass, or null when its pipeline didn't compile (the glow alone then). */
-    private static RenderType lit() {
-        if (litOk < 0) litOk = compiled(LIT) ? 1 : 0;
-        if (litOk == 0) return null;
-        if (litType == null) litType = RenderType.create("awaken_delve_lamp_lit", RenderSetup.builder(LIT)
-                .withTexture("Sampler0", TextureAtlas.LOCATION_BLOCKS).createRenderSetup());
-        return litType;
-    }
 
     // ---- the numbers -----------------------------------------------------------------------------------------------
 
@@ -162,12 +76,11 @@ public final class LampGlow {
     private static double cx, cy, cz;
     private static float pt;
     private static ClientLevel level;
-    // reused every frame: the lit faces (pos * 8 + face), the model parts, the variant's random
+    // reused every frame: the lit faces (pos * 8 + face)
     private static final LongOpenHashSet FACES = new LongOpenHashSet();
-    private static final List<BlockStateModelPart> PARTS = new ArrayList<>();
-    private static final RandomSource RANDOM = RandomSource.createThreadLocalInstance(0L);
     private static final BlockPos.MutableBlockPos M = new BlockPos.MutableBlockPos(), N = new BlockPos.MutableBlockPos();
-    private static final float[] A = new float[4];
+    /** The beam's light on the rock, per vertex. */
+    private static final DelveRender.VertexLight BEAM = (x, y, z) -> col(light(x, y, z) * BRIGHT);
     // the beam being drawn: its origin and axis
     private static double ox, oy, oz, ax, ay, az;
 
@@ -192,9 +105,9 @@ public final class LampGlow {
         CAM.set(state.cameraRenderState.orientation);
         RIGHT.set(1, 0, 0).rotate(CAM);
         UP.set(0, 1, 0).rotate(CAM);
-        RenderType rock = lit();
+        RenderType rock = DelveRender.lit();
         if (rock != null) e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), rock, DRAW_ROCK);
-        e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), glow(), DRAW_GLOW);
+        e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), DelveRender.glow(), DRAW_GLOW);
     }
 
     private static final net.minecraft.client.renderer.SubmitNodeCollector.CustomGeometryRenderer DRAW_ROCK = (pose, vc) -> {
@@ -204,7 +117,7 @@ public final class LampGlow {
             for (Player p : level.players()) if (wears(p) && p.distanceToSqr(mc.player) <= OTHERS * OTHERS) rock(vc, p);
         } catch (RuntimeException ex) {
             Awaken.LOG.error("[delve] lamp light failed", ex);
-            litOk = 0;
+            DelveRender.litOk = 0;
         }
     };
 
@@ -241,7 +154,6 @@ public final class LampGlow {
         Vec3 side = new Vec3(-az, 0, ax);
         side = side.lengthSqr() < 1e-6 ? new Vec3(1, 0, 0) : side.normalize();
         Vec3 up = side.cross(f).normalize();
-        var models = Minecraft.getInstance().getModelManager().getBlockStateModelSet();
         int drawn = 0;
         for (float[] ray : RAYS) {
             double off = Math.toRadians(ray[1]);
@@ -261,39 +173,10 @@ public final class LampGlow {
                 if (s.isAir() || !s.getFluidState().isEmpty()) continue;
                 N.setWithOffset(M, face);
                 if (level.getBlockState(N).isSolidRender()) continue;   // that face is buried
-                drawn += face(vc, models.get(s), s, M, face);
+                drawn += DelveRender.face(vc, level, s, M, face, BEAM, cx, cy, cz);
                 if (drawn >= MAX_FACES) return;
             }
         }
-    }
-
-    /** One face of one block, its own quads, lit: returns the quads drawn. */
-    private static int face(VertexConsumer vc, BlockStateModel model, BlockState s, BlockPos pos, Direction face) {
-        PARTS.clear();
-        RANDOM.setSeed(s.getSeed(pos));
-        model.collectParts(level, pos, s, RANDOM, PARTS);
-        int n = 0;
-        float nx = face.getStepX() * 0.0015F, ny = face.getStepY() * 0.0015F, nz = face.getStepZ() * 0.0015F;
-        for (BlockStateModelPart part : PARTS) {
-            for (BakedQuad q : part.getQuads(face)) {
-                float[] a = A;
-                boolean any = false;
-                for (int v = 0; v < 4; v++) {
-                    Vector3fc pv = q.position(v);
-                    a[v] = light(pos.getX() + pv.x(), pos.getY() + pv.y(), pos.getZ() + pv.z());
-                    any |= a[v] > 0.004F;
-                }
-                if (!any) continue;
-                for (int v = 0; v < 4; v++) {
-                    Vector3fc pv = q.position(v);
-                    long uv = q.packedUV(v);
-                    vc.addVertex((float) (pos.getX() + pv.x() + nx - cx), (float) (pos.getY() + pv.y() + ny - cy), (float) (pos.getZ() + pv.z() + nz - cz))
-                            .setUv(UVPair.unpackU(uv), UVPair.unpackV(uv)).setColor(col(a[v] * BRIGHT));
-                }
-                n++;
-            }
-        }
-        return n;
     }
 
     /** The beam's light at a point: its cone (bright core, soft edge) times its fall-off with distance. */
@@ -331,37 +214,8 @@ public final class LampGlow {
 
     /** A soft disc of light lying on the face it hit: bright in the middle, nothing at its rim. */
     private static void pool(VertexConsumer vc, Vec3 at, Direction face, float r, float s) {
-        float ux, uy, uz, vx, vy, vz;
-        switch (face.getAxis()) {
-            case Y -> { ux = 1; uy = 0; uz = 0; vx = 0; vy = 0; vz = 1; }
-            case X -> { ux = 0; uy = 1; uz = 0; vx = 0; vy = 0; vz = 1; }
-            default -> { ux = 1; uy = 0; uz = 0; vx = 0; vy = 1; vz = 0; }
-        }
         float x = (float) (at.x + face.getStepX() * 0.02 - cx), y = (float) (at.y + face.getStepY() * 0.02 - cy), z = (float) (at.z + face.getStepZ() * 0.02 - cz);
-        ring(vc, x, y, z, ux, uy, uz, vx, vy, vz, 0F, r * 0.35F, s, s * 0.7F);
-        ring(vc, x, y, z, ux, uy, uz, vx, vy, vz, r * 0.35F, r, s * 0.7F, 0F);
-    }
-
-    private static final int SEG = 16;
-    private static final float[] COS = new float[SEG + 1], SIN = new float[SEG + 1];
-
-    static {
-        for (int i = 0; i <= SEG; i++) {
-            COS[i] = Mth.cos(i * Mth.TWO_PI / SEG);
-            SIN[i] = Mth.sin(i * Mth.TWO_PI / SEG);
-        }
-    }
-
-    private static void ring(VertexConsumer vc, float x, float y, float z, float ux, float uy, float uz, float vx, float vy, float vz,
-                             float r0, float r1, float a0, float a1) {
-        int c0 = col(a0), c1 = col(a1);
-        for (int i = 0; i < SEG; i++) {
-            float ca = COS[i], sa = SIN[i], cb = COS[i + 1], sb = SIN[i + 1];
-            vc.addVertex(x + (ux * ca + vx * sa) * r0, y + (uy * ca + vy * sa) * r0, z + (uz * ca + vz * sa) * r0).setColor(c0);
-            vc.addVertex(x + (ux * ca + vx * sa) * r1, y + (uy * ca + vy * sa) * r1, z + (uz * ca + vz * sa) * r1).setColor(c1);
-            vc.addVertex(x + (ux * cb + vx * sb) * r1, y + (uy * cb + vy * sb) * r1, z + (uz * cb + vz * sb) * r1).setColor(c1);
-            vc.addVertex(x + (ux * cb + vx * sb) * r0, y + (uy * cb + vy * sb) * r0, z + (uz * cb + vz * sb) * r0).setColor(c0);
-        }
+        DelveRender.pool(vc, x, y, z, face, r, col(s), col(s * 0.7F));
     }
 
     /** The lamp itself seen from outside: a hot little flame on the brow in a warm halo. */
@@ -369,20 +223,8 @@ public final class LampGlow {
         Vec3 eye = p.getEyePosition(pt), f = p.getViewVector(pt);
         Vec3 at = eye.add(0, 0.27, 0).add(f.scale(0.28));
         float x = (float) (at.x - cx), y = (float) (at.y - cy), z = (float) (at.z - cz);
-        sprite(vc, x, y, z, 0.5F, col(0.5F), col(0F));
-        sprite(vc, x, y, z, 0.09F, 0xF2FFF2DA, 0x00FFDCA0);
-    }
-
-    private static void sprite(VertexConsumer vc, float x, float y, float z, float r, int inner, int outer) {
-        for (int i = 0; i < 8; i++) {
-            int a = i * SEG / 8, b = (i + 1) * SEG / 8;
-            float ax0 = (RIGHT.x * COS[a] + UP.x * SIN[a]) * r, ay0 = (RIGHT.y * COS[a] + UP.y * SIN[a]) * r, az0 = (RIGHT.z * COS[a] + UP.z * SIN[a]) * r;
-            float bx = (RIGHT.x * COS[b] + UP.x * SIN[b]) * r, by = (RIGHT.y * COS[b] + UP.y * SIN[b]) * r, bz = (RIGHT.z * COS[b] + UP.z * SIN[b]) * r;
-            vc.addVertex(x, y, z).setColor(inner);
-            vc.addVertex(x + ax0, y + ay0, z + az0).setColor(outer);
-            vc.addVertex(x + bx, y + by, z + bz).setColor(outer);
-            vc.addVertex(x, y, z).setColor(inner);
-        }
+        DelveRender.disc(vc, x, y, z, 0.5F, col(0.5F), col(0F), RIGHT, UP);
+        DelveRender.disc(vc, x, y, z, 0.09F, 0xF2FFF2DA, 0x00FFDCA0, RIGHT, UP);
     }
 
     private static int col(float a) {
