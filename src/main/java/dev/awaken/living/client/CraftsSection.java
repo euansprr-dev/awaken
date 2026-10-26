@@ -16,7 +16,7 @@ final class CraftsSection implements StatusSections.Section {
     static final int ROW = 31;
 
     static void register() {
-        StatusSections.add(StatusSections.Tab.STATUS, new CraftsSection());
+        StatusSections.add(StatusSections.Tab.POWERS, new CraftsSection());
     }
 
     @Override

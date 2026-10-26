@@ -32,7 +32,7 @@ import java.util.zip.InflaterInputStream;
  * seen at once, before any chunk there loads. Written and read on its own thread; regions stay in memory once read.
  */
 public final class VoxelDisk {
-    static final int SCHEMA = 1, REGION = 32, MAGIC = 0x41575658; // "AWVX"
+    static final int SCHEMA = 2, REGION = 32, MAGIC = 0x41575658; // "AWVX"; 2: the chunk's lowest ground
 
     private static final class Region {
         final Long2ObjectOpenHashMap<byte[]> blobs = new Long2ObjectOpenHashMap<>();
@@ -196,6 +196,7 @@ public final class VoxelDisk {
     public static byte[] encode(VoxelSnapshot s) {
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer(16384));
         buf.writeInt(s.fromSection());
+        buf.writeInt(s.ground());
         buf.writeInt(s.sections().length);
         for (int i = 0; i < s.sections().length; i++) {
             LevelChunkSection sec = s.sections()[i];
@@ -224,7 +225,7 @@ public final class VoxelDisk {
             raw = in.readAllBytes();
         }
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.wrappedBuffer(raw));
-        int from = buf.readInt(), n = buf.readInt();
+        int from = buf.readInt(), ground = buf.readInt(), n = buf.readInt();
         LevelChunkSection[] sections = new LevelChunkSection[n];
         DataLayer[] sky = new DataLayer[n], block = new DataLayer[n];
         for (int i = 0; i < n; i++) {
@@ -245,6 +246,6 @@ public final class VoxelDisk {
                 block[i] = new DataLayer(d);
             }
         }
-        return new VoxelSnapshot(cx, cz, levelMinY, from, sections, sky, block);
+        return new VoxelSnapshot(cx, cz, levelMinY, from, ground, sections, sky, block);
     }
 }

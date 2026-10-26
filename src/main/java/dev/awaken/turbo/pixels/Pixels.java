@@ -29,6 +29,8 @@ public final class Pixels {
     private static PixelsConfig.Upscaler upscaler = PixelsConfig.Upscaler.SHARP;
     private static float forcedScale = -1f;
     private static PixelsConfig.@Nullable Upscaler forcedUpscaler;
+    private static boolean steady = true;
+    private static @Nullable Boolean forcedSteady;
     // -1 unknown, 0 off (logged why), 1 on
     private static int versionOk = -1, accessOk = -1;
     private static boolean failed;
@@ -40,12 +42,19 @@ public final class Pixels {
                 scale = PixelsConfig.RENDER_SCALE.get().floatValue();
                 scale4k = PixelsConfig.RENDER_SCALE_4K.get().floatValue();
                 upscaler = PixelsConfig.UPSCALER.get();
+                steady = PixelsConfig.STEADY.get();
             }
         } catch (RuntimeException e) {
             // keep the last good values
         }
         if (forcedScale > 0f) scale = scale4k = forcedScale;
         if (forcedUpscaler != null) upscaler = forcedUpscaler;
+        if (forcedSteady != null) steady = forcedSteady;
+    }
+
+    /** Whether the steady pass runs (PixelsSteady): set, and its pipelines compiled. */
+    static boolean steady() {
+        return steady && PixelsPipelines.steadyOk();
     }
 
     /** The world's share of the screen's resolution this frame (1 = native), for a game frame of w by h. */
@@ -101,7 +110,8 @@ public final class Pixels {
 
     /**
      * The autopilot's line: {@code pixels <scale> [fsr|sharp|bilinear]} overrides the settings for the following scenes
-     * (not saved), {@code pixels config} goes back to them, {@code pixels state} logs what's in force;
+     * (not saved), {@code pixels steady on|off} the steady pass, {@code pixels config} goes back to them, {@code pixels state}
+     * logs what's in force;
      * {@code pixels gpu on|off|reset|<label>} times the world pass and the upscale on the GPU (PixelsTiming).
      */
     public static String autopilot(String arg) {
@@ -121,7 +131,9 @@ public final class Pixels {
             case "config" -> {
                 forcedScale = -1f;
                 forcedUpscaler = null;
+                forcedSteady = null;
             }
+            case "steady" -> forcedSteady = a.length < 2 || !a[1].equals("off");
             case "state" -> {
                 // nothing to change
             }
@@ -131,7 +143,7 @@ public final class Pixels {
             }
         }
         refresh();
-        return String.format(Locale.ROOT, "scale %.2f (4K %.2f), %s, %s", scale(1, 1), scale(4096, 2160), upscaler(),
+        return String.format(Locale.ROOT, "scale %.2f (4K %.2f), %s%s, %s", scale(1, 1), scale(4096, 2160), upscaler(), steady() ? " steady" : "",
                 failed ? "off (failed)" : usable() ? "ready" : "unavailable");
     }
 }

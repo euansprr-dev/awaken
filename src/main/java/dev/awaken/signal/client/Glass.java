@@ -15,7 +15,8 @@ public final class Glass {
     public static final int EDGE = 0x7FC3FF;
     public static final int TITLE = 0xFFFFFF;
     public static final int TEXT = 0xD9E4F2;
-    public static final int LABEL = 0x8FA7C4;
+    /** Labels: lifted from 0x8FA7C4, which measured 2.6:1 over an overcast sky behind the band (SPEC §30.4). */
+    public static final int LABEL = 0xBCCDE3;
     public static final int AMBER = 0xFFCF7A;
     public static final int WARN = 0xFF8A7A;
     public static final int GOOD = 0x8FF0C0;

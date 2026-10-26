@@ -54,7 +54,7 @@ public final class VeilClient {
         });
         Veil.installClientQuery(p -> p == Minecraft.getInstance().player && VeilClientState.spirit());
         CodexEntries.addSource(VeilClientState::codexEntries);
-        StatusSections.add(StatusSections.Tab.STATUS, new VeilSection());
+        StatusSections.add(StatusSections.Tab.POWERS, new VeilSection());
     }
 
     private static void onPayloads(RegisterClientPayloadHandlersEvent event) {

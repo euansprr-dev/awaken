@@ -1,0 +1,49 @@
+# The basin's rim and the mountains beyond, by day (Euan, 2026-10-26: grey spikes on the cliff and on the mountains, a
+# shading that "looks really off"; the sky through the ledge's undercut). From Carillon's east wall, as farsight3-steady's
+# rim shots: noon and a low afternoon sun, the far land alone (City Sight off) and with City Sight.
+# Run: PACK=perf,world TECTONIC=awakened RD=16 LENS=cinematic SLOT_WHO=far-sight \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/farsight3-rim.txt 600
+world fs3shim survival 20261024
+waitworld
+window 1440 900
+cmd awaken opening skip
+wait 60
+cmd awaken powers starter 1
+wait 20
+screen close
+gui 0
+hud off
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken city view walls_walk
+wait 20
+cmd gamemode spectator
+cmd tp @s ~ ~20 ~
+look -49.6 6
+wait 400
+farsight status
+farsight part city off
+wait 120
+shot fs3r_noon_far
+farsight part city on
+wait 120
+shot fs3r_noon_city
+look -90 6
+wait 60
+shot fs3r_noon_city_e
+farsight part city off
+wait 120
+shot fs3r_noon_far_e
+farsight part city on
+cmd time set 10500
+look -49.6 6
+wait 120
+shot fs3r_late_city
+farsight part city off
+wait 120
+shot fs3r_late_far
+farsight part city on
+info
+quit

@@ -6,7 +6,9 @@ import org.jspecify.annotations.Nullable;
 public enum HoloKind {
     NONE(0),
     STATUS(1),
-    INVENTORY(2);
+    INVENTORY(2),
+    /** The map in the world (SPEC §30.5): others see a content-free disc of light in front of you. */
+    MAP(3);
 
     public final int id;
 
@@ -14,7 +16,7 @@ public enum HoloKind {
         this.id = id;
     }
 
-    private static final HoloKind[] BY_ID = {NONE, STATUS, INVENTORY};
+    private static final HoloKind[] BY_ID = {NONE, STATUS, INVENTORY, MAP};
 
     /** Null for an id no version of the mod sends. */
     public static @Nullable HoloKind byId(int id) {
