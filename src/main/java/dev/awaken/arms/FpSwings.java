@@ -38,9 +38,10 @@ public final class FpSwings {
     /**
      * One move's keys: [dx, dy, dz, qx, qy, qz, qw, yaw, pitch, roll] per step of {@code dt} ticks, and its hand; and in
      * third person the wrist's turn of the weapon in each arm (a quaternion [x, y, z, w] per {@code wristDt} ticks, in
-     * the forged weapon's item frame, about its grip; empty when it doesn't turn).
+     * the forged weapon's item frame, about its grip; empty when it doesn't turn): for the bent clip (Bendable Cuboids)
+     * and, where third person's rig solved its arms straight too (tools/art/specs/arms_rig4.py), for the straight one.
      */
-    public record Clip(float[] keys, Hand hand, float[] wristRight, float[] wristLeft) {
+    public record Clip(float[] keys, Hand hand, float[] wristRight, float[] wristLeft, float[] straightRight, float[] straightLeft) {
         public int size() {
             return keys.length / STRIDE;
         }
@@ -83,7 +84,9 @@ public final class FpSwings {
                         JsonElement hand = mv.getValue().getAsJsonObject().get("hand");
                         Hand h = hand == null ? Hand.MAIN : Hand.valueOf(hand.getAsString().toUpperCase(java.util.Locale.ROOT));
                         JsonObject wrist = mv.getValue().getAsJsonObject().getAsJsonObject("wrist3");
-                        moves.put(m, new Clip(k, h, floats(wrist, "right"), floats(wrist, "left")));
+                        JsonObject straight = mv.getValue().getAsJsonObject().getAsJsonObject("wrist3s");
+                        moves.put(m, new Clip(k, h, floats(wrist, "right"), floats(wrist, "left"), floats(straight, "right"),
+                                floats(straight, "left")));
                     }
                     Vector3f grip = vec(st.getAsJsonArray("grip"));
                     STYLES.put(e.getKey(), new Style(moves, quat(st.getAsJsonArray("vanilla")), grip, vec(st.getAsJsonArray("vanillaGrip")),
@@ -147,11 +150,16 @@ public final class FpSwings {
     /**
      * Third person: the wrist's turn of the weapon in the right or the left arm at {@code t} ticks of a move's clip, into
      * {@code out} (about the weapon's grip, in its item frame; ArmsWrist): its working side laid into the blow and the
-     * weapon kept out of the body. False (out left alone) when it doesn't turn.
+     * weapon kept out of the body. {@code straight}: the straight clip plays (no Bendable Cuboids), its own keys where it
+     * has them. False (out left alone) when it doesn't turn.
      */
-    public static boolean wrist(@Nullable Style st, Archetype.Move m, boolean left, float t, Quaternionf out) {
+    public static boolean wrist(@Nullable Style st, Archetype.Move m, boolean left, boolean straight, float t, Quaternionf out) {
         Clip c = st == null ? null : st.moves().get(m);
         float[] k = c == null ? NONE : left ? c.wristLeft() : c.wristRight();
+        if (straight && c != null) {
+            float[] s = left ? c.straightLeft() : c.straightRight();
+            if (s.length > 0) k = s;
+        }
         int n = k.length / 4;
         if (n == 0) return false;
         float x = Math.max(0, t / wristDt);
