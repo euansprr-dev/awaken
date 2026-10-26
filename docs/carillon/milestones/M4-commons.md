@@ -107,7 +107,19 @@ None has light, a block entity or loot.
 - dusk: the road out and past the basin again;
 - night: a minute in the fields in creative, then `/awaken city monsters 96`.
 
-Shots are in `docs/carillon/milestones/m4commons/`.
+Shots are in `docs/carillon/milestones/m4commons/`; Euan's screenshot is `before_euan_road_poles.jpg`.
+
+Five CI tours. Each found something the tests couldn't:
+1. **The monsters weren't thinned.** 30 hostiles within 96 at night: 26.3's natural spawner posts no
+   FinalizeSpawnEvent, so the thinning moved to the position check (and a test now posts that event).
+2. **The road and the trail.** Path blocks sit a pixel lower than full blocks, so gravel on path read as slabs dropped on
+   a dirt track (Euan's complaint): the road is now one height but the ruts. Mud puddles read as holes and are gone. A
+   neighbour chunk's tree stood on the footpath.
+3. **The count.** It split the hostiles into the caves and the surface: 8 out in the fields. The crowd ceiling went to
+   three within 48 at the spawn's height, and the pass to one in ten.
+4. **The last tour** (run 40310171142), a minute of night at 307 from the centre: 31 hostiles within 96. 21 of them were
+   in the caves beneath, and 8 were out in the fields: 4 lumen moths, a glimmerfin in the river and about 3 land
+   monsters. The spawn checks: 3,843 seen, 3,140 thinned, 545 crowded. 0 tree blocks were left in the trail's columns.
 
 ## Not done (follow-ups)
 - **Field workers by day.** The citizens' graph stops at the gates, so workers in the fields mean wall-walk-style graph
