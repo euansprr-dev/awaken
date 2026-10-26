@@ -68,7 +68,8 @@ another mod's, version-locked to the exact Minecraft, NeoForge (and target mod) 
 mixin applied, a client setting, off on the first failure, and with it off the game behaves exactly as without it.
 Kept only with a measured win; access transformer before mixin, never reflection. Only mixin classes in the mixin
 package (anything else there can't be referenced and crashes the client). Record each in SPEC. Today: Pixels (§18,
-`awaken.pixels.mixins.json`), Water edges (§20, `awaken.wateredge.mixins.json`, in Sodium's fluid renderer).
+`awaken.pixels.mixins.json`), Water edges (§20, `awaken.wateredge.mixins.json`, in Sodium's fluid renderer),
+Tiles (§22 "Lens on Apple", `awaken.tiles.mixins.json`, in PostChain and PostPass for Lens's chains only).
 
 ## Commits
 Small, focused commits on the current branch. End every commit message with:

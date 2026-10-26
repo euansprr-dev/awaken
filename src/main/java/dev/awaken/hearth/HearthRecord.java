@@ -69,8 +69,12 @@ public final class HearthRecord {
     public int comfort;
     public String style = "";
     public int land;
+    /** (W6) The people of this Hearth: who the household knows, who lives here, their beds and work (saved, schema 1). */
+    public dev.awaken.hearth.settle.Folk folk = new dev.awaken.hearth.settle.Folk();
 
     // ---- runtime only (rooms are saved, but not their cells) ---------------------------------------------------------
+    /** (W6) Where the land's work is (fields, gates, beasts), from the last scan. */
+    public dev.awaken.hearth.room.Scan.Yard yard = dev.awaken.hearth.room.Scan.Yard.NONE;
     public volatile List<Room> rooms = List.of();
     /** Furniture in the radius that isn't in a room, and why (from the last scan). */
     public List<Miss> misses = List.of();
@@ -182,7 +186,8 @@ public final class HearthRecord {
             Core.CODEC.fieldOf("core").forGetter(HearthRecord::core),
             Town.CODEC.fieldOf("town").forGetter(HearthRecord::town),
             Household.CODEC.optionalFieldOf("household", Household.NONE).forGetter(HearthRecord::household),
-            Home.CODEC.optionalFieldOf("home", Home.NONE).forGetter(HearthRecord::home)
+            Home.CODEC.optionalFieldOf("home", Home.NONE).forGetter(HearthRecord::home),
+            dev.awaken.hearth.settle.Folk.CODEC.optionalFieldOf("folk").forGetter(r -> java.util.Optional.of(r.folk))
     ).apply(i, HearthRecord::fromSaved));
 
     public HearthRecord(UUID owner, String ownerName, BlockPos pos, String dimension) {
@@ -217,8 +222,9 @@ public final class HearthRecord {
         return new Home(Home.SCHEMA, name, List.copyOf(rooms), comfort, style, land);
     }
 
-    private static HearthRecord fromSaved(Core c, Town t, Household h, Home home) {
+    private static HearthRecord fromSaved(Core c, Town t, Household h, Home home, java.util.Optional<dev.awaken.hearth.settle.Folk> folk) {
         HearthRecord r = fromParts(c, t);
+        folk.ifPresent(f -> r.folk = f);
         r.name = home.name;
         r.comfort = home.comfort;
         r.style = home.style;
@@ -281,9 +287,16 @@ public final class HearthRecord {
         return radiusForTier(tier);
     }
 
+    /** PLAN 4.8: Hearthfire 24, Homestead 48, Steading 56, Hall 64, Village 80, Town 96. */
     public static int radiusForTier(int tier) {
-        if (tier <= 0) return HEARTHFIRE_RADIUS;
-        return 48 + 8 * (Math.min(MAX_TIER, tier) - 1);
+        return switch (Math.min(MAX_TIER, tier)) {
+            case 0 -> HEARTHFIRE_RADIUS;
+            case 1 -> 48;
+            case 2 -> 56;
+            case 3 -> 64;
+            case 4 -> 80;
+            default -> tier < 0 ? HEARTHFIRE_RADIUS : 96;
+        };
     }
 
     /** Tier 0: an Ember's fire, before a Lord's Heart makes it an Anchor (no town, no Spire, no requests). */

@@ -1,0 +1,159 @@
+# Between the Gates W6, "Your village" (SPEC §28.8): a home grown into a village round its Anchor (the staged Ashford,
+# built on the nearest dry, gently rolling ground and eased back into the land: the hall, Oren's forge, the bell tower,
+# five cottages, Ilse's greenhouse, the mine head over its shaft, the field and the pen), and a day of it on the people
+# engine: Oren out of his door in the morning and off to the forge, his commission; the village by morning, Hettie at the
+# field, Wren's rope line between two roofs; Ilse walking up the road with a bundle and taking her room ("Ilse's room");
+# the miner coming up the shaft at evening with the haul, supper at the hall's long table; the Anchor's flame at Tier IV
+# and V; the village's name on the Atlas; a drainpipe, a hoist beam and window boxes on the house. World shots are a
+# spectator's; the cards and the Atlas show with the HUD. The clock only ever moves on (stage clock / miner / time), as a
+# day does. Ilse's walk (re-tour 40362429908): at her door about 300 ticks after she sets out, in her room about 350.
+# Run on GitHub: tools/tour-ci.sh tools/autopilot/world-depth-w6.txt
+world autopilot_world_depth_w6 creative 26102610
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+# the opening's sky flight holds the camera and ends on a question a closed screen never answers: skip it first
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+# the Ascent's gift card holds the director while it's up: put it away
+wait 40
+key dismiss
+wait 10
+screen close
+cmd tick sprint 6200
+wait 240
+cmd gamerule advance_time false
+cmd time set 3000
+# open country east of the camp road, Carillon's walls to the south-west; the stage finds its own ground from here
+cmd awaken living camp
+wait 160
+cmd tp @s ~150 ~ ~60
+wait 100
+cmd awaken admin hearth stage
+wait 160
+cmd awaken admin hearth tier 3
+cmd awaken admin hearth stage settle
+# the makings for Oren in hand now, so the toasts they raise are long gone by his shots
+cmd item replace entity @s weapon.mainhand with minecraft:iron_ingot 8
+wait 260
+cmd awaken admin hearth people
+cmd gamemode spectator
+hud off
+cmd gamerule advance_time true
+# ---- a settler's morning: Oren out of his door to breakfast, then off to the forge (bodies are out near you: the yard) ----
+cmd awaken admin hearth stage view anchor
+cmd awaken admin hearth stage clock oren breakfast
+wait 70
+cmd awaken admin hearth stage follow oren
+wait 4
+shot w6_01_oren_out_in_the_morning
+cmd awaken admin hearth stage view anchor
+cmd awaken admin hearth stage clock oren work
+wait 50
+cmd awaken admin hearth stage follow oren
+wait 4
+shot w6_02_oren_on_his_way_to_the_forge
+wait 160
+cmd awaken admin hearth stage view forge
+wait 50
+shot w6_03_oren_at_the_forge
+# ---- his commission ----
+hud on
+cmd awaken admin hearth talk oren
+wait 30
+shot w6_04_orens_commission
+key accept
+wait 40
+shotnow w6_05_oren_takes_the_makings
+hud off
+# ---- the village by morning, Hettie at the field, Wren's line between two roofs ----
+cmd awaken admin hearth stage view overview
+wait 160
+shot w6_06_ashford_by_day
+cmd awaken admin hearth stage view field
+wait 60
+cmd awaken admin hearth stage follow hettie
+wait 4
+shot w6_07_hettie_in_the_field
+cmd awaken admin hearth wren
+wait 120
+shot w6_08_a_rope_line_between_roofs
+# ---- Ilse walks up the road with her things and takes the spare bedroom ----
+cmd awaken admin hearth stage view road
+wait 20
+cmd awaken admin hearth arrive ilse
+wait 110
+cmd awaken admin hearth stage view walker
+wait 4
+shot w6_09_ilse_on_the_road_with_a_bundle
+wait 76
+cmd awaken admin hearth stage view walker
+wait 4
+shot w6_10_ilse_nearer_the_houses
+cmd awaken admin hearth stage view ilse_door
+wait 85
+shot w6_11_ilse_at_her_door
+hud on
+cmd awaken admin hearth stage view ilse_room
+wait 95
+shot w6_12_ilses_room
+wait 200
+shot w6_13_ilses_room_later
+hud off
+# ---- evening: the miner up the shaft with the haul, then supper at the hall's long table ----
+cmd awaken admin hearth stage view minehead
+cmd awaken admin hearth stage miner
+wait 25
+shotnow w6_14_the_miner_comes_up
+wait 30
+shotnow w6_15_the_miner_comes_up_b
+hud on
+wait 45
+shotnow w6_16_the_mines_haul
+hud off
+wait 160
+cmd awaken admin hearth stage time 11600
+cmd gamerule advance_time false
+cmd awaken admin hearth stage view hall
+wait 200
+shot w6_17_supper_in_the_hall
+# ---- the Anchor at Tier IV, the village named; the fire of an evening ----
+cmd awaken admin hearth tier 4
+cmd awaken admin hearth stage time 12800
+cmd awaken admin hearth stage view anchor
+wait 200
+shot w6_18_the_anchor_at_tier_iv
+cmd awaken admin hearth stage view overview
+wait 200
+shot w6_19_ashford_at_dusk
+hud on
+# the Atlas centres on you: from north-west of the village its name sits clear of the legend
+cmd awaken admin hearth stage view atlas
+wait 40
+cmd atlas open 20 58 2.5
+wait 80
+shot w6_20_ashford_on_the_atlas
+screen close
+cmd awaken admin hearth tier 5
+cmd awaken admin hearth stage view anchor
+wait 100
+shot w6_21_the_anchor_at_tier_v
+hud off
+# ---- the house as a course: the kit, crafted ----
+cmd awaken admin hearth stage time 4600
+cmd awaken admin hearth stage view kit
+wait 140
+shot w6_22_drainpipe_beam_and_window_boxes
+quit

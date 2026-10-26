@@ -119,6 +119,10 @@ public final class AwakenConfig {
                         "frame in four and its light every other frame, the rest carried forward from the frames before (still and",
                         "slow views look the same; a fast turn settles in a few frames). Off: every pixel every frame.")
                 .define("lensTemporal", true);
+        public static final ModConfigSpec.BooleanValue LENS_TILES = C
+                .comment("Lens's passes as Apple's (tile-based) GPUs want them: no depth buffers, separate clears or reloads of the frame",
+                        "between its passes. The picture is the same; it saves memory traffic. Off: exactly as the game does it.")
+                .define("lensTiles", true);
 
         /** Far Sight, AWAKEN's own far terrain (dev.awaken.farsight, SPEC §20): how far it draws. */
         public enum FarSight { OFF, NEAR, FULL }

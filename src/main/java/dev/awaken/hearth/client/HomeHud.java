@@ -92,7 +92,7 @@ final class HomeHud {
                 pendingPlace = null;
                 mc.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(HearthContent.SND_ROOM.get(), 0.8f, 0.55f));
             } else if (ticks - placeSince > WAIT) {
-                notices.file(Notices.Tier.AMBIENT, Component.literal("Home · " + pendingPlace), Component.literal("your hearth"));
+                notices.file(Notices.Tier.AMBIENT, Component.literal("Home · " + pendingPlace), Component.literal(sub()));
                 pendingPlace = null;
             }
         }
@@ -149,8 +149,15 @@ final class HomeHud {
         int lineW = (int) (Math.max(bw, 120) * Mth.clamp(age / (PLACE_IN * 1.5f), 0f, 1f));
         g.horizontalLine((w - lineW) / 2, (w + lineW) / 2, y - 6, Glass.a(Glass.LANTERN, 0.6f * a));
         g.horizontalLine((w - lineW) / 2, (w + lineW) / 2, y + (int) (font.lineHeight * s) + 3, Glass.a(Glass.LANTERN, 0.6f * a));
-        String sub = "your hearth";
+        String sub = sub();
         g.text(font, sub, (w - font.width(sub)) / 2, y + (int) (font.lineHeight * s) + 8, Glass.a(Glass.AMBER, 0.9f * a), true);
+    }
+
+    /** (W6) From Tier IV your hearth is a village: "ASHFORD · your village". */
+    private static String sub() {
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        int tier = mc.player == null ? 0 : mc.player.getData(HearthContent.VIEW.get()).tier();
+        return tier >= 5 ? "your town" : tier >= 4 ? "your village" : "your hearth";
     }
 
     /** A room's name in a quiet line below the middle of the screen, its grade spaced small above it. */

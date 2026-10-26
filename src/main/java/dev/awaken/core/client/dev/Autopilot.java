@@ -61,6 +61,7 @@ import java.util.Map;
  * window &lt;width&gt; &lt;height&gt;                       windowed at that size in points (Retina doubles the pixels)
  * opt renderDistance|simulationDistance &lt;n&gt;     changes a video option for the following scenes
  * lens off|swift|cinematic|ultra                switches Awaken's light layer, for same-moment A/B shots
+ * lens chain <probe>|off                       measurement: awaken:lens_probe_<probe> (tools/lens/probes.py) in place of the Look's chain
  * lens temporal on|off|setting                  Lens 2's clouds and light spread over frames, or every pixel every frame
  * lookpreset performance|close_up|balanced|vista  the Look page's presets (Look, Far Sight, render distance, 4K scale, steady)
  * lookswitch swift|cinematic|ultra              picks a Look tier as a click on its card would (the open Look screen's,
@@ -552,6 +553,21 @@ public final class Autopilot {
                 waitTicks = 20;
             }
             case "lens" -> {
+                if (arg.trim().startsWith("block")) {
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.turbo.tiles.Tiles.block(arg.trim().substring(5)));
+                    waitTicks = 20;
+                    return true;
+                }
+                if (arg.trim().startsWith("tiles")) {
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.turbo.tiles.Tiles.autopilot(arg.trim().substring(5)));
+                    waitTicks = 20;
+                    return true;
+                }
+                if (arg.trim().startsWith("chain")) {
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.chain(arg.trim().substring(5)));
+                    waitTicks = 20;
+                    return true;
+                }
                 if (arg.trim().startsWith("temporal")) {
                     Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.temporal(arg.trim().substring(8)));
                     waitTicks = 20;

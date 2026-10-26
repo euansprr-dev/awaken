@@ -110,6 +110,9 @@ public final class HearthService {
     static void forgetPeople() {
         Breaks.clear();
         Embers.forget();
+        dev.awaken.hearth.settle.Arrival.clear();
+        dev.awaken.hearth.settle.HomePeople.clear();
+        dev.awaken.hearth.settle.MineHead.clear();
         Duty.clear();
         Household.forgetAll();
         Offers.forgetAll();
@@ -275,6 +278,7 @@ public final class HearthService {
         List<ServerPlayer> household = Household.online(level.getServer(), h);
         Duty.releaseAll(level, h);
         Town.dissolve(level, h);
+        dev.awaken.hearth.settle.HomePeople.stop(h);
         d.keep(h); // the members share it again when the owner places the Anchor anew
         d.remove(h.owner);
         if (activeScan != null && activeScan.hearth() == h) activeScan = null;
@@ -331,8 +335,9 @@ public final class HearthService {
             String who = Duty.workerName(level, h.get(), pos);
             w.row(Component.literal("Working"), Component.literal(who == null ? "Nobody yet: bind another Echo" : who));
             if (role == EchoRole.MINE) {
-                int prog = h.get().mineProgress.getOrDefault(pos, 0);
-                w.row(Component.literal("Next haul"), Component.literal(Math.max(0, (Duty.MINE_TICKS - prog) / 20) + "s of work"));
+                // (W6) a Mine Echo works your Mine head's shaft: its haul comes up with the evening's
+                w.row(Component.literal("Works"), Component.literal(h.get().hasRoom(RoomType.MINE_HEAD)
+                        ? "your shaft · the haul comes up each evening" : "nothing yet · needs a Mine head (a hatch over a shaft 16 deep, with a ladder)"));
             }
         }
         Signal.send(sp, w.ttl(20 * 6).build());
@@ -486,12 +491,24 @@ public final class HearthService {
     private static void onWake(PlayerWakeUpEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer sp) || e.wakeImmediately() || !enabled()) return;
         if (!(sp.level() instanceof ServerLevel level)) return;
+        // (W6) the bed you wake in at home is yours (never a settler's spare)
+        sp.getSleepingPos().ifPresent(bed -> sharedAt(sp, bed).ifPresent(h -> dev.awaken.hearth.settle.Settlers.woke(sp, h, headOf(level, bed))));
         Rested.onWake(sp, level);
         if (!Hearth.isSanctuary(level, sp.blockPosition())) return;
         boolean fractured = Progression.profile(sp).fractureUntil() > level.getGameTime();
         if (fractured) Progression.clearFracture(sp);
         sp.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 20 * 30, 0, true, true));
         Signal.toast(sp, Component.literal(fractured ? "You slept in your Sanctuary. The Fracture is gone." : "Well rested in your Sanctuary."));
+    }
+
+    /** A bed's head (where a settler's bed is kept), from either half. */
+    static BlockPos headOf(ServerLevel level, BlockPos bed) {
+        BlockState s = level.getBlockState(bed);
+        if (s.getBlock() instanceof net.minecraft.world.level.block.BedBlock && s.getValue(net.minecraft.world.level.block.BedBlock.PART)
+                == net.minecraft.world.level.block.state.properties.BedPart.FOOT) {
+            return bed.relative(s.getValue(net.minecraft.world.level.block.BedBlock.FACING));
+        }
+        return bed.immutable();
     }
 
     // ---- Fracture heals with rest at home -----------------------------------------------------------------------------
@@ -571,6 +588,8 @@ public final class HearthService {
             activeScan.step(SCAN_BUDGET);
             if (activeScan.done()) activeScan = null;
         }
+        // (W6) a home whose people changed walks its ground (budgeted), and doors open for them
+        dev.awaken.hearth.settle.HomePeople.tick(overworld);
 
         // 2. Upkeep, once a second, spread across Hearths by owner hash so they don't all run on the same tick.
         int tick = server.getTickCount();
@@ -578,6 +597,18 @@ public final class HearthService {
         for (HearthRecord h : d.all()) if ((tick + (h.owner.hashCode() & 15)) % 20 == 0) DUE.add(h);
         for (int i = 0; i < DUE.size(); i++) upkeep(server, overworld, DUE.get(i), now);
         DUE.clear();
+    }
+
+    /**
+     * The Anchor's flame shows the tier (SPEC §28.8): its block state follows the record (an upgrade, an old world's Anchor
+     * loaded at tier I's state). One state read a second; a change only when they differ.
+     */
+    public static void showTier(ServerLevel level, HearthRecord h) {
+        if (h.hearthfire() || !level.isLoaded(h.pos)) return;
+        BlockState s = level.getBlockState(h.pos);
+        if (!(s.getBlock() instanceof dev.awaken.hearth.block.HearthAnchorBlock a)) return;
+        int want = Math.max(1, Math.min(5, h.tier));
+        if (s.getValue(dev.awaken.hearth.block.HearthAnchorBlock.TIER) != want) level.setBlock(h.pos, a.atTier(want), 3);
     }
 
     /** Reused every tick so upkeep never allocates (and Hearths removed during upkeep don't break the loop). */
@@ -593,7 +624,9 @@ public final class HearthService {
         }
         ServerPlayer owner = server.getPlayerList().getPlayer(h.owner);
         if (loaded) {
+            if (!h.hearthfire()) showTier(level, h);
             if (!h.hearthfire()) Town.upkeep(level, h, owner, now);
+            if (!h.hearthfire()) dev.awaken.hearth.settle.Work.tick(level, h, now);
             RoomEffects.bells(level, h);
             // role pads are worked by the owner's Echoes (members' Echoes march with them)
             if (owner != null) Duty.upkeep(owner, level, h, now);
@@ -617,6 +650,7 @@ public final class HearthService {
         h.furniture = scan.furniture();
         h.lastScan = server.overworld().getGameTime();
         h.land = Comfort.land(scan.land());
+        h.yard = scan.yard();
         h.comfort = Comfort.of(rooms, h.land);
         h.style = Comfort.style(scan.families());
         dirty(server);
@@ -710,19 +744,26 @@ public final class HearthService {
      */
     static void trackRoom(ServerPlayer sp) {
         Optional<Room> here = roomHere(sp);
-        dev.awaken.hearth.player.RoomHere view = here.map(dev.awaken.hearth.player.RoomHere::of).orElse(dev.awaken.hearth.player.RoomHere.NONE);
+        Optional<HearthRecord> h = here.isEmpty() ? Optional.empty() : sharedAt(sp, sp.blockPosition());
+        // (W6) a room someone lives in is theirs: "Ilse's room"
+        String name = here.isPresent() && h.isPresent() ? dev.awaken.hearth.settle.Settlers.roomName(h.get(), here.get()) : "";
+        dev.awaken.hearth.player.RoomHere view = here.map(r -> dev.awaken.hearth.player.RoomHere.of(r, name)).orElse(dev.awaken.hearth.player.RoomHere.NONE);
         if (!view.equals(sp.getData(HearthContent.HERE.get()))) sp.setData(HearthContent.HERE.get(), view);
         if (here.isEmpty()) return;
-        Room r = here.get();
+        tellRoom(sp, here.get(), name);
+    }
+
+    /** The room's name once as a quiet caption (again only when its grade or name changes), as the Hearth names any room. */
+    public static void tellRoom(ServerPlayer sp, Room r, String name) {
+        String n = name.isEmpty() ? r.reading().name() : name;
         HearthPlayer hp = player(sp);
-        int as = r.reading().grade().ordinal() | (r.reading().name().hashCode() << 2);
+        int as = r.reading().grade().ordinal() | (n.hashCode() << 2);
         Integer told = hp.roomsTold.get(r.key());
         if (told != null && told == as) return;
         hp.roomsTold.remove(r.key());
         hp.roomsTold.put(r.key(), as);
         while (hp.roomsTold.size() > HearthPlayer.TOLD_MAX) hp.roomsTold.remove(hp.roomsTold.keySet().iterator().next());
-        dev.awaken.core.AwakenNet.send(sp, new dev.awaken.hearth.net.HomeNet.RoomCaption(r.reading().name(), r.reading().grade().ordinal(),
-                r.reading().purpose().label));
+        dev.awaken.core.AwakenNet.send(sp, new dev.awaken.hearth.net.HomeNet.RoomCaption(n, r.reading().grade().ordinal(), r.reading().purpose().label));
     }
 
     static String capitalise(String s) {

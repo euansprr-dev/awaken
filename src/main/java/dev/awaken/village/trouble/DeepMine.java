@@ -418,13 +418,11 @@ public final class DeepMine implements Plot {
                 return "the nest woke";
             }
             case "clear" -> {
-                int n = 0;
-                for (Entity e : c.level().getAllEntities())
-                    if (e.entityTags().contains(TAG + "_" + t.id) && e.isAlive()) {
-                        e.discard();
-                        n++;
-                    }
-                return n + " cleared";
+                // gathered first: discarding while walking the level's own entity view skips some
+                List<Entity> nest = new ArrayList<>();
+                for (Entity e : c.level().getAllEntities()) if (e != null && e.entityTags().contains(TAG + "_" + t.id) && e.isAlive()) nest.add(e);
+                for (Entity e : nest) e.discard();
+                return nest.size() + " cleared";
             }
             case "lead" -> {
                 int n = 0;
@@ -585,7 +583,10 @@ public final class DeepMine implements Plot {
             int rec = (int) t.get("miner" + k, 0) - 1;
             if (l != null && rec >= 0) l.settlement().away(rec, false);
         }
-        for (Entity e : c.level().getAllEntities()) if (e.entityTags().contains(TAG + "_" + t.id) && c.level().getNearestPlayer(e, 24) == null) e.discard();
+        List<Entity> gone = new ArrayList<>();
+        for (Entity e : c.level().getAllEntities())
+            if (e != null && e.entityTags().contains(TAG + "_" + t.id) && c.level().getNearestPlayer(e, 24) == null) gone.add(e);
+        for (Entity e : gone) e.discard();
         if (l == null) return;
         Runner.release(c, t, l);
         TroubleDirector.release(l, t.kin);

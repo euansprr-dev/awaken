@@ -339,6 +339,7 @@ public final class GuideTests {
         f[dev.awaken.hearth.room.Tally.F_GLASS_CEILING] = 10;
         f[dev.awaken.hearth.room.Tally.F_ELEVATION] = 14;
         f[dev.awaken.hearth.room.Tally.F_WINDOW_DIRS] = 0b1111;
+        f[dev.awaken.hearth.room.Tally.F_SHAFT] = RoomType.SHAFT_DEPTH; // (W6) the Mine head's shaft
         return f;
     }
 }

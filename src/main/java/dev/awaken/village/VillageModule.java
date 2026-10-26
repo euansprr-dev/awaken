@@ -79,6 +79,7 @@ public final class VillageModule {
         Villages.install(new VillagesAccess());
         // (SPEC §28.9) the roads for the World Pulse's caravans
         dev.awaken.core.api.RoadHooks.install(new dev.awaken.village.road.RoadAccess());
+        dev.awaken.village.road.RoadAccess.installHearths();
         MusicLayers.register(MusicLayers.Slot.AMBIENCE, 90, "village", VillageModule::soundscape);
         VillageCommands.register();
         VillageTests.register();

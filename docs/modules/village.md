@@ -124,7 +124,7 @@ you've found. New worlds with the Awakened Villages pack only.
 | Wayhouses | `plan.WayhousePlanner` | an inn and stable on a crossroads at a region's heart, a horse paddock, a carter |
 | Mining towns | `plan.MinePlanner`, `plan.MinePainter`, `world.MinePiece` | the shaft head with its winch, the assayer's store, two levels down to a lode, the cavern behind the face |
 | The Deep Mine | `trouble.DeepMine` | the bell at the shaft head, the families at the mouth, the nest, the roof coming down behind, the miners brought up; or the shaft sealed |
-| Caravans | `road.RoadAccess` (`core.api.RoadHooks`) | a stretch of a laid road for the World Pulse's caravan; trade and news when it comes in; W6's Tier IV call site (`RoadHooks.HearthRoads`) |
+| Caravans | `road.RoadAccess`, `road.HearthRoutes` (`core.api.RoadHooks`) | a stretch of a laid road for the World Pulse's caravan; trade and news when it comes in; to a Tier IV home (W6's `Hearth.villages`) along the nearest road, then over the land |
 | The Atlas | `road.RoadAtlas` (`awaken:road_atlas`), `client.RoadAtlasClient` | stretches walked and places found per player; lines through `MapMarks.registerLines` |
 | The studio | `road.RoadStudio`, `tools/city/roadmap.py` | `run/road-survey.request` ("seed radius") surveys the real overworld's roads, hubs and settlements with their cost; dumps towns, wayhouses, mines, the first town and legs for `tools/city/render.py` |
 

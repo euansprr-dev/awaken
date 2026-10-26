@@ -81,6 +81,15 @@ final class LensParams {
         dirty = false;
     }
 
+    /** The parameters as a texture fetch returns them (each byte / 255, r g b a) into {@code dst} at byte {@code at}. */
+    void copyTo(java.nio.ByteBuffer dst, int at) {
+        for (int i = 0; i < WIDTH; i++) {
+            int p = packed[i], o = at + i * 16;
+            dst.putFloat(o, (p & 255) / 255f).putFloat(o + 4, (p >>> 8 & 255) / 255f).putFloat(o + 8, (p >>> 16 & 255) / 255f)
+                    .putFloat(o + 12, (p >>> 24) / 255f);
+        }
+    }
+
     private static int b(float v) {
         return Math.clamp(Math.round(v * 255f), 0, 255);
     }

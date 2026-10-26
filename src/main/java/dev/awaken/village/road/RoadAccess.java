@@ -20,6 +20,11 @@ import java.util.Random;
  * comes in: the village's prosperity, its stalls' goods from where the caravan set out, the news in its history.
  */
 public final class RoadAccess implements RoadHooks.Access {
+    /** (SPEC §28.9) Caravans to Tier IV homes too, by W6's {@code Hearth.villages}. */
+    public static void installHearths() {
+        RoadHooks.installHearths(new HearthRoutes());
+    }
+
     @Override
     public Optional<RoadHooks.Route> stretch(ServerLevel level, BlockPos pos, int min, int max, int length, long seed) {
         Random r = new Random(seed);
@@ -58,8 +63,9 @@ public final class RoadAccess implements RoadHooks.Access {
                 }
             }
         }
-        // W6's call site (SPEC §28.9): the roads to Tier IV Hearth villages, once W6 installs its hook
-        found.addAll(RoadHooks.hearthStretches(level, pos, min, max, length));
+        // (SPEC §28.9) a Tier IV home near is the caravan's first choice: the road's reward for growing it
+        List<RoadHooks.Route> homes = RoadHooks.hearthStretches(level, pos, min, max, length);
+        if (!homes.isEmpty()) return Optional.of(homes.get(r.nextInt(homes.size())));
         if (found.isEmpty()) return Optional.empty();
         // a stretch that arrives first, else any
         List<RoadHooks.Route> arriving = found.stream().filter(RoadHooks.Route::arrives).toList();

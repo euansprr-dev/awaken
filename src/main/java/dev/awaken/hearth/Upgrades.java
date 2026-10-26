@@ -115,11 +115,16 @@ public final class Upgrades {
             return;
         }
         List<Costs.Part> price = Costs.price(next.base(), rank, next.tier());
-        w.row(Component.literal("Next"), Component.literal("Tier " + roman(h.tier + 1) + " · radius " + HearthRecord.radiusForTier(h.tier + 1)));
+        w.row(Component.literal("Next"), Component.literal("Tier " + roman(h.tier + 1) + " " + TierRules.name(h.tier + 1) + " · radius "
+                + HearthRecord.radiusForTier(h.tier + 1)));
+        // (W6) the tier grows from the home: what it must have, ticked
+        for (TierRules.Need n : TierRules.needs(h, h.tier + 1)) w.row(Component.literal(n.met() ? "✓" : "✗"), Component.literal(n.text()));
         for (Costs.Part p : price) w.row(p.name(), Costs.have(sp, p));
         int off = Costs.discountPercent(rank, next.tier());
         if (off > 0) w.row(Component.literal("Rank discount"), Component.literal("−" + off + "%"));
-        if (Costs.canAfford(sp, price)) {
+        if (!TierRules.met(h, h.tier + 1)) {
+            w.footer(Component.literal("The home grows first: build what's missing"));
+        } else if (Costs.canAfford(sp, price)) {
             w.choice(Offers.offer(sp, "anchor", 20 * 30, p -> upgradeAnchor(p, h.owner)), "Build Tier " + roman(h.tier + 1), "Not now");
         } else {
             w.footer(Component.literal("Gather the materials and come back"));
@@ -135,6 +140,10 @@ public final class Upgrades {
         Def next = anchorTier(h.tier + 1);
         Rank rank = Progression.rank(sp);
         if (rank.ordinal() < next.tier().ordinal()) return;
+        if (!TierRules.met(h, h.tier + 1)) {
+            sp.sendOverlayMessage(Component.literal("The home must grow first."));
+            return;
+        }
         List<Costs.Part> price = Costs.price(next.base(), rank, next.tier());
         if (!Costs.canAfford(sp, price)) {
             sp.sendOverlayMessage(Component.literal("Not enough materials any more."));
@@ -145,14 +154,30 @@ public final class Upgrades {
         h.scanAt = sp.level().getGameTime() + 1;
         HearthService.dirty(sp.level().getServer());
         ServerLevel level = HearthService.levelOf(sp.level().getServer(), h);
+        HearthService.showTier(level, h);
         level.playSound(null, h.pos, HearthContent.SND_ANCHOR.get(), SoundSource.BLOCKS, 1f, 1.2f);
         level.sendParticles(HearthContent.HEARTH_EMBER.get(), h.pos.getX() + 0.5, h.pos.getY() + 1.5, h.pos.getZ() + 0.5, 60, 1.2, 1.2, 1.2, 0.03);
-        Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Hearth Tier " + roman(h.tier)))
-                .row(Component.literal("Radius"), Component.literal(h.radius() + " blocks"))
-                .row(Component.literal("Rest heals"), Component.literal("in " + HearthService.restSeconds(h.tier) + "s"))
-                .body(Component.literal("The Anchor burns brighter. Home got bigger.")).priority(4).build());
+        grown(level, h);
         Progression.markNewThing(sp, "hearth_tier");
         HearthViews.refresh(sp);
+    }
+
+    /**
+     * The tier rose (built, or set by an admin): the flame climbs, everyone at home is told, and at Tier IV the home
+     * becomes a village with its name on the Atlas (W6).
+     */
+    public static void grown(ServerLevel level, HearthRecord h) {
+        HearthService.showTier(level, h);
+        dev.awaken.hearth.settle.HomePeople.changed(h);
+        String body = h.tier == 4 ? h.displayName() + " is a village now. Its name is on the Atlas, and the road knows it."
+                : h.tier == 5 ? h.displayName() + " is a town. The Spire's trials come home." : "The Anchor burns brighter. Home got bigger, and there's room for more people.";
+        for (ServerPlayer p : Household.online(level.getServer(), h)) {
+            Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Hearth Tier " + roman(h.tier) + " · " + TierRules.name(h.tier)))
+                    .row(Component.literal("Radius"), Component.literal(h.radius() + " blocks"))
+                    .row(Component.literal("People"), Component.literal("up to " + dev.awaken.hearth.settle.Settlers.cap(h.tier)))
+                    .body(Component.literal(body)).priority(4).build());
+            HearthViews.refresh(p);
+        }
     }
 
     // ---- the Forge --------------------------------------------------------------------------------------------------

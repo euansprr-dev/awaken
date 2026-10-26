@@ -1,8 +1,22 @@
 {
-  "parent": "minecraft:block/cube_bottom_top",
-  "textures": {
-    "side": "awaken:block/hearth_anchor_side",
-    "top": "awaken:block/hearth_anchor_top",
-    "bottom": "awaken:block/hearth_anchor_bottom"
+  "parent": "awaken:block/hearth_anchor_t1",
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "translation": [
+        0,
+        -0.25,
+        0
+      ],
+      "scale": [
+        0.58,
+        0.58,
+        0.58
+      ]
+    }
   }
 }

@@ -41,6 +41,7 @@ public final class HearthModule {
 
     public static void init(IEventBus modBus) {
         HearthContent.register(modBus);
+        dev.awaken.hearth.kit.HomeKit.init(modBus);
         modBus.addListener(HearthModule::attributes);
         modBus.addListener(HearthModule::creativeTab);
         modBus.addListener(HearthNet::register);
@@ -53,6 +54,9 @@ public final class HearthModule {
         bus.addListener(HearthModule::onServerTick);
 
         HearthService.init();
+        // (W6) the people who live with you answer on the people engine; the household is kin to them
+        dev.awaken.hearth.settle.HomeTalk.init();
+        bus.addListener((net.neoforged.neoforge.event.server.ServerAboutToStartEvent e) -> dev.awaken.hearth.settle.HomeTalk.installVoice());
         Embers.init();
         Rested.init();
         RoomEffects.init();
@@ -124,6 +128,20 @@ public final class HearthModule {
                 }
                 return out;
             }
+
+            @Override
+            public boolean greenhouse(net.minecraft.world.level.Level level, BlockPos pos) {
+                // the client knows only its own home's greenhouses (synced boxes); the server reads every Hearth's rooms
+                if (level.isClientSide()) return dev.awaken.hearth.player.ClientHome.home().inGreenhouse(pos);
+                if (!(level instanceof ServerLevel sl) || sl.dimension() != net.minecraft.world.level.Level.OVERWORLD) return false;
+                return HearthData.get(sl.getServer()).containing(pos, HearthService.OVERWORLD)
+                        .flatMap(h -> h.roomAt(pos, dev.awaken.hearth.room.RoomType.GREENHOUSE)).isPresent();
+            }
+
+            @Override
+            public boolean study(net.minecraft.server.level.ServerPlayer player) {
+                return HearthService.sharedAt(player, player.blockPosition()).map(h -> h.hasRoom(dev.awaken.hearth.room.RoomType.STUDY)).orElse(false);
+            }
         });
         Regimen.penaltyHandler = Trials::penalty;
         RankHooks.onRankUp((sp, rank) -> {
@@ -139,6 +157,7 @@ public final class HearthModule {
         HearthCommands.register();
         HearthTests.register();
         HomeTests.register();
+        dev.awaken.hearth.settle.SettleTests.register();
         TogetherHearthTests.register();
         dev.awaken.hearth.guide.GuideTests.register();
     }
