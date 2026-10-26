@@ -95,7 +95,10 @@ final class HomeTests {
             h.assertTrue(tr.grottos().size() >= 3, "form " + form + ": " + tr.grottos().size() + " grottos");
             Terrain.Grotto g = tr.grottos().getFirst();
             BlockState[] col = tr.singleColumn(g.x(), g.z());
-            h.assertTrue(col[g.floorY() - 1].is(Blocks.WATER) && col[g.floorY()].isAir(), "form " + form + ": a grotto's pool under open air");
+            // open over the pool (the Gardens' cave vines may hang down to it)
+            boolean open = col[g.floorY()].getCollisionShape(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty();
+            h.assertTrue(col[g.floorY() - 1].is(Blocks.WATER) && open, "form " + form + ": a grotto's pool, open over it: "
+                    + col[g.floorY() - 1] + " under " + col[g.floorY()]);
         }
         Terrain choir = new Terrain(3, 4242L);
         int seams = 0;
@@ -117,6 +120,16 @@ final class HomeTests {
         level.setBlock(floor.offset(4, 0, 0), Blocks.LAVA.defaultBlockState(), 3);
         VentFeature.Site site = VentFeature.site(level, floor.getX(), floor.getZ(), vy - 4, vy + 2, Integer.MAX_VALUE);
         h.assertTrue(site != null && site.floor().equals(floor) && site.kind() == VentFeature.Kind.LAVA, "a vent's site: " + site);
+        // the feature's cost: a probe is one pass up a column (bottom to y 48 and its air); a chunk probes 3 one time in 8
+        double best = Double.MAX_VALUE;
+        for (int round = 0; round < 3; round++) {
+            long t0 = System.nanoTime();
+            for (int i = 0; i < 32; i++) VentFeature.site(level, base.getX() + (i & 7) - 4, base.getZ() + (i >> 3) - 2, level.getMinY() + 5, 48, VentFeature.LAVA_MAX_Y);
+            best = Math.min(best, (System.nanoTime() - t0) / 1e6 / 32);
+        }
+        double perChunk = best * VentFeature.PROBES / VentFeature.CHANCE;
+        Awaken.LOG.info("AWAKEN delve: a vent probe {} ms, {} ms a chunk on average", String.format("%.4f", best), String.format("%.4f", perChunk));
+        h.assertTrue(perChunk < AwakenTests.cpuBudget(0.5), "the vents cost " + perChunk + " ms a chunk (budget 0.5)");
         VentFeature.dress(level, floor, VentFeature.Kind.LAVA, RandomSource.create(5));
         h.assertTrue(level.getBlockState(floor).is(AscentContent.UPDRAFT_VENT.get()) && level.getBlockState(floor.below()).is(Blocks.MAGMA_BLOCK)
                 && level.getBlockState(floor.east()).is(Blocks.MAGMA_BLOCK), "the vent set in a crust of magma");
