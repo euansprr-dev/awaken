@@ -27,6 +27,12 @@ final class Ropes {
 
     /** Strings the next line; where it starts, or null when the home has no gap for one. */
     static @Nullable BlockPos hang(ServerLevel level, HearthRecord h) {
+        Line l = string(level, h);
+        return l == null ? null : l.start;
+    }
+
+    /** Strings the next line: where it runs, or null when the home has no gap for one. */
+    static @Nullable Line string(ServerLevel level, HearthRecord h) {
         Line best = null;
         for (Room r : h.rooms) {
             if (r.max().getX() - r.min().getX() < 2 || r.max().getZ() - r.min().getZ() < 2) continue;
@@ -47,10 +53,14 @@ final class Ropes {
             if (i % 3 == 0) level.playSound(null, p, SoundEvents.WOOL_PLACE, SoundSource.BLOCKS, 0.5f, 1.1f);
         }
         h.folk.ropes.add(best.start);
-        return best.start;
+        return best;
     }
 
-    private record Line(BlockPos start, Direction dir, int length, double score) {}
+    record Line(BlockPos start, Direction dir, int length, double score) {
+        BlockPos middle() {
+            return start.relative(dir, length / 2);
+        }
+    }
 
     /** The best line out of one side of a room at its eaves (the top row inside), or null. */
     private static @Nullable Line fromSide(ServerLevel level, HearthRecord h, Room r, Direction d) {

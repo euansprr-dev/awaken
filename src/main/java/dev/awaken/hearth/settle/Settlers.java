@@ -222,13 +222,14 @@ public final class Settlers {
     public record Bedroom(Room room, BlockPos bed) {}
 
     private static final Map<UUID, List<Bedroom>> BEDROOMS = new HashMap<>();
-    private static final Map<UUID, Long> BEDROOMS_AT = new HashMap<>();
+    /** The rooms list each cache entry was read from (a scan replaces the list: the cache goes with it). */
+    private static final Map<UUID, List<Room>> BEDROOMS_AT = new HashMap<>();
 
     /** Every read bedroom and its bed, best first (cached until the next scan). */
     public static List<Bedroom> bedrooms(ServerLevel level, HearthRecord h) {
-        Long at = BEDROOMS_AT.get(h.owner);
+        List<Room> at = BEDROOMS_AT.get(h.owner);
         List<Bedroom> cached = BEDROOMS.get(h.owner);
-        if (cached != null && at != null && at == h.lastScan && h.lastScan >= 0) return cached;
+        if (cached != null && at == h.rooms && h.lastScan >= 0) return cached;
         List<Bedroom> out = new ArrayList<>();
         for (Room r : h.rooms) {
             if (!r.types().contains(RoomType.BEDROOM)) continue;
@@ -238,7 +239,7 @@ public final class Settlers {
         out.sort(Comparator.comparingInt((Bedroom b) -> -b.room.reading().grade().ordinal()).thenComparingDouble(b -> b.bed.distSqr(h.pos)));
         if (h.lastScan >= 0) {
             BEDROOMS.put(h.owner, List.copyOf(out));
-            BEDROOMS_AT.put(h.owner, h.lastScan);
+            BEDROOMS_AT.put(h.owner, h.rooms);
         }
         return out;
     }

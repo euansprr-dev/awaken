@@ -558,7 +558,16 @@ public final class RoomScanner {
             for (Direction d : DIRS) {
                 m.set(x + d.getStepX(), y + d.getStepY(), z + d.getStepZ());
                 long nl = m.asLong();
-                if (j.visited.contains(nl) || !j.wallSeen.add(nl)) continue;
+                if (j.visited.contains(nl)) continue;
+                boolean first = j.wallSeen.add(nl);
+                if (d == Direction.DOWN) {
+                    // (W6) a seat is a stair someone can sit on from above: counted from the cell over it, whichever side
+                    // the reading met the stair first (a bench's stair is also beside the floor's other cells)
+                    cost++;
+                    BlockState under = level.getBlockState(m);
+                    if (under.is(BlockTags.STAIRS) && under.hasProperty(StairBlock.HALF) && under.getValue(StairBlock.HALF) == Half.BOTTOM) t.seats++;
+                }
+                if (!first) continue;
                 cost += 2;
                 wall(t, j, level.getBlockState(m), m, d);
             }
@@ -623,9 +632,7 @@ public final class RoomScanner {
             t.hatch(at.asLong()); // a trapdoor in the floor: a shaft's hatch, maybe (the Mine head, W6)
         }
         if (w.is(BlockTags.STAIRS)) {
-            t.detail(Tally.STAIRS);
-            // a seat: a stair on the floor with room to sit on it
-            if (from == Direction.DOWN && w.hasProperty(StairBlock.HALF) && w.getValue(StairBlock.HALF) == Half.BOTTOM) t.seats++;
+            t.detail(Tally.STAIRS); // (a seat is counted in read(), from the cell over it)
         } else if (w.is(BlockTags.SLABS)) {
             t.detail(Tally.SLAB);
         } else if (w.is(BlockTags.TRAPDOORS)) {

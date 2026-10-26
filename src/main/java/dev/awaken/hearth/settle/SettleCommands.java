@@ -17,6 +17,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -241,11 +242,26 @@ public final class SettleCommands {
         return Commands.literal("wren").executes(c -> {
             Optional<HearthRecord> ho = home(c);
             if (ho.isEmpty()) return 0;
-            ServerLevel level = c.getSource().getPlayerOrException().level().getServer().overworld();
-            BlockPos at = Ropes.hang(level, ho.get());
+            ServerPlayer sp = c.getSource().getPlayerOrException();
+            ServerLevel level = sp.level().getServer().overworld();
+            Ropes.Line line = Ropes.string(level, ho.get());
             HearthService.dirty(level.getServer());
-            say(c, at == null ? "No gap for a line" : "A line from " + at.toShortString());
-            return at == null ? 0 : 1;
+            if (line == null) {
+                say(c, "No gap for a line");
+                return 0;
+            }
+            say(c, "A line of " + line.length() + " from " + line.start().toShortString());
+            if (sp.isSpectator()) {
+                // stand off the line's middle, square to it and a little below, looking up at it
+                BlockPos mid = line.middle();
+                Direction side = line.dir().getClockWise();
+                Vec3 eye = Vec3.atCenterOf(mid).add(side.getStepX() * 7.5, -2.0, side.getStepZ() * 7.5);
+                Vec3 d = Vec3.atCenterOf(mid).subtract(eye);
+                float yaw = (float) Math.toDegrees(Math.atan2(-d.x, d.z));
+                float pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)));
+                sp.teleportTo(level, eye.x, eye.y - 1.62, eye.z, java.util.Set.of(), yaw, pitch, true);
+            }
+            return 1;
         });
     }
 

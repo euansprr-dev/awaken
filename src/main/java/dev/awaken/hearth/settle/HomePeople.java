@@ -17,6 +17,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.FarmlandBlock;
 import net.minecraft.world.level.block.FlowerPotBlock;
@@ -215,6 +216,8 @@ public final class HomePeople {
                 double yaw = Math.toRadians(b.getYRot());
                 BlockPos ahead = BlockPos.containing(b.getX() - Math.sin(yaw) * 0.9, b.getY() + 0.1, b.getZ() + Math.cos(yaw) * 0.9);
                 for (BlockPos p : new BlockPos[]{feet, ahead}) open(level, p, now);
+                // the miner beside the hatch: it's open while he goes down or comes up
+                if (i < home.people.length && home.people[i].contains("miner")) hatch(level, feet, now);
             }
         }
         if (OPENED.isEmpty()) return;
@@ -233,7 +236,26 @@ public final class HomePeople {
             }
             BlockState st = level.getBlockState(p);
             if (st.getBlock() instanceof DoorBlock door && st.getValue(DoorBlock.OPEN)) door.setOpen(null, level, st, p, false);
+            if (st.getBlock() instanceof TrapDoorBlock && st.getValue(TrapDoorBlock.OPEN)) {
+                level.setBlock(p, st.setValue(TrapDoorBlock.OPEN, false), Block.UPDATE_ALL);
+                level.playSound(null, p, net.minecraft.sounds.SoundEvents.WOODEN_TRAPDOOR_CLOSE, net.minecraft.sounds.SoundSource.BLOCKS, 0.8f, 0.9f);
+            }
             it.remove();
+        }
+    }
+
+    /** A hatch in the floor beside someone's feet opens (and is closed again once they're through). */
+    private static void hatch(ServerLevel level, BlockPos feet, long now) {
+        BlockPos floor = feet.below();
+        for (Direction d : Direction.Plane.HORIZONTAL) {
+            BlockPos p = floor.relative(d);
+            BlockState st = level.getBlockState(p);
+            if (!(st.getBlock() instanceof TrapDoorBlock)) continue;
+            if (!st.getValue(TrapDoorBlock.OPEN)) {
+                level.setBlock(p, st.setValue(TrapDoorBlock.OPEN, true), Block.UPDATE_ALL);
+                level.playSound(null, p, net.minecraft.sounds.SoundEvents.WOODEN_TRAPDOOR_OPEN, net.minecraft.sounds.SoundSource.BLOCKS, 0.8f, 0.9f);
+            }
+            OPENED.put(p.asLong(), now + 40);
         }
     }
 
@@ -608,7 +630,7 @@ public final class HomePeople {
                 for (Spot s : w.spots) {
                     List<BlockPos> path = walk.path(s.feet);
                     if (path.isEmpty()) {
-                        unreached[0]++;
+                        if (unreached[0]++ < 4) Awaken.LOG.info("[hearth] {}'s home: no way to {} ({})", h.ownerName, s.feet.toShortString(), w.kind);
                         continue;
                     }
                     List<BlockPos> corners = walk.corners(path);

@@ -101,10 +101,11 @@ public final class HomeStage {
         // the views the tour takes (eye, look), in the village's own frame
         views.put("road", view(1.5, 2.9, 40.5, 0.5, 2.0, 12.5));
         views.put("ilse_door", view(7.5, 2.6, 2.5, 14.5, 1.9, -3.5));
-        views.put("ilse_room", view(15.6, 2.5, -6.6, 20.5, 1.3, -1.8));
-        views.put("forge", view(13.4, 2.5, -14.3, 15.5, 1.3, -17.5));
+        // (inside a room the eye is a standing player's: feet on the floor, so the room knows who's in it)
+        views.put("ilse_room", view(15.6, 2.66, -6.6, 20.5, 1.4, -1.8));
+        views.put("forge", view(13.4, 2.66, -14.3, 15.5, 1.4, -17.5));
         views.put("field", view(-8.5, 2.8, 27.5, -17.5, 1.3, 33.5));
-        views.put("minehead", view(6.4, 2.5, 17.4, 8.5, 1.0, 15.5));
+        views.put("minehead", view(6.4, 2.66, 17.4, 8.5, 1.0, 15.5));
         views.put("anchor", view(3.4, 2.4, 3.6, 0.5, 1.7, 0.5));
         views.put("kit", view(-8.5, 4.4, -17.5, -16.0, 4.0, -10.5));
         views.put("overview", view(30.5, 28, 44.5, -2.5, 2, -4.5));
@@ -217,18 +218,19 @@ public final class HomeStage {
         // the ceiling closes the room whatever the roof does
         for (int z = z0; z <= z1; z++) for (int x = x0; x <= x1; x++) set(x, h + 1, z, (x == x0 || x == x1 || z == z0 || z == z1) ? m.post : m.ceiling);
         roof(x0, z0, x1, z1, h + 2, m);
-        if (windows) {
-            for (int x = x0 + 2; x < x1 - 1; x += 3) {
-                window(x, z0, Direction.NORTH, h, m);
-                window(x, z1, Direction.SOUTH, h, m);
-            }
-            for (int z = z0 + 2; z < z1 - 1; z += 3) {
-                window(x0, z, Direction.WEST, h, m);
-                window(x1, z, Direction.EAST, h, m);
-            }
-        }
         BlockPos d = doorAt(x0, z0, x1, z1, door);
         int dx = d.getX(), dz = d.getZ();
+        if (windows) {
+            // never a window (or its shutters) within two of the door
+            for (int x = x0 + 2; x < x1 - 1; x += 3) {
+                if (!(door == Direction.NORTH && Math.abs(x - dx) <= 2)) window(x, z0, Direction.NORTH, h, m);
+                if (!(door == Direction.SOUTH && Math.abs(x - dx) <= 2)) window(x, z1, Direction.SOUTH, h, m);
+            }
+            for (int z = z0 + 2; z < z1 - 1; z += 3) {
+                if (!(door == Direction.WEST && Math.abs(z - dz) <= 2)) window(x0, z, Direction.WEST, h, m);
+                if (!(door == Direction.EAST && Math.abs(z - dz) <= 2)) window(x1, z, Direction.EAST, h, m);
+            }
+        }
         BlockState ds = m.door.defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, door);
         set(dx, 1, dz, ds.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.LOWER));
         set(dx, 2, dz, ds.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.UPPER));
@@ -303,7 +305,8 @@ public final class HomeStage {
         int x0 = -7, x1 = 7, z0 = -24, z1 = -14, h = 4;
         shell(x0, z0, x1, z1, h, STONE, Direction.SOUTH, true);
         // stripped-log pillars along the walls, inside, and a beamed ceiling
-        for (int x = x0 + 3; x < x1; x += 4) {
+        // (never in front of the door at x = 0)
+        for (int x : new int[]{-5, -2, 2, 5}) {
             for (int y = 1; y <= h; y++) {
                 set(x, y, z0 + 1, Blocks.STRIPPED_SPRUCE_LOG);
                 set(x, y, z1 - 1, Blocks.STRIPPED_SPRUCE_LOG);
