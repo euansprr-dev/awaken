@@ -39,6 +39,7 @@ shot commons_trail
 cmd awaken city view commons_camp_end
 wait 300
 shot commons_camp_end
+cmd awaken city monsters 32
 # dusk
 cmd time set 12600
 cmd awaken city view commons_road_out

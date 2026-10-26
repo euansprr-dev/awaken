@@ -100,7 +100,8 @@ final class CityCommands {
         double r = Math.sqrt((double) px * px + (double) pz * pz);
         String msg = String.format(Locale.ROOT, "%d hostile within %d of you, %d of them under open sky, %d out in the fields (%.0f from the "
                         + "centre, spawns pass %.0f%%): %s; spawns checked %d, thinned %d, crowded %d", n, radius, surface, fields, r,
-                100 * CityMonsters.pass(r), kinds, CityMonsters.CHECKED.get(), CityMonsters.THINNED.get(), CityMonsters.CROWDED.get());
+                100 * CityMonsters.pass(r), kinds, CityMonsters.CHECKED.get(), CityMonsters.THINNED.get(), CityMonsters.CROWDED.get())
+                + "; " + CityTrail.leftover(src.getLevel(), l);
         src.sendSuccess(() -> Component.literal(msg), false);
         dev.awaken.Awaken.LOG.info("[city] monsters: {}", msg);
         return n;

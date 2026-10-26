@@ -29,13 +29,32 @@ final class CityTrail {
     static final int END_Z = -424, PATH_END_Z = -440;
     static final int HALF = 8;
 
+    /** Tours: tree blocks still standing in the trail's columns of the loaded chunks (none, once the sweeps have run). */
+    static String leftover(net.minecraft.server.level.ServerLevel level, CityLayout l) {
+        int n = 0;
+        StringBuilder first = new StringBuilder();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int x = -HALF - 2; x <= HALF + 2; x++)
+            for (int z = PATH_END_Z - 2; z <= -l.reach + 8; z++) {
+                int wx = l.cx + x, wz = l.cz + z;
+                if (!owns(l, wx, wz) || !level.hasChunkAt(m.set(wx, l.streetY, wz))) continue;
+                for (int y = l.streetY - 16; y <= l.streetY + 64; y++) {
+                    BlockState s = level.getBlockState(m.set(wx, y, wz));
+                    if (!tree(s)) continue;
+                    if (n++ < 6) first.append(' ').append(x).append(',').append(y - l.streetY).append(',').append(z).append('=')
+                            .append(net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(s.getBlock()).getPath());
+                }
+            }
+        return n + " tree blocks left in the trail's columns" + first;
+    }
+
     static final BlockState SPRUCE_SLAB_TOP = of("minecraft:spruce_slab[type=top]");
 
     /** Whether the trail writes into this chunk (the north road's corridor past the reach). */
     static boolean touches(CityLayout l, int chunkX, int chunkZ) {
         if (!l.carved) return false;
         int x0 = (chunkX << 4) - l.cx, z0 = (chunkZ << 4) - l.cz;
-        return x0 <= HALF && x0 + 15 >= -HALF && z0 <= -l.reach + 4 && z0 + 15 >= PATH_END_Z - 2;
+        return x0 <= HALF + 2 && x0 + 15 >= -HALF && z0 <= -l.reach + 8 && z0 + 15 >= PATH_END_Z - 2;
     }
 
     /** Whether a chunk lies next to the trail (its trees may have grown into the trail's columns). */
@@ -49,8 +68,8 @@ final class CityTrail {
     static boolean owns(CityLayout l, int wx, int wz) {
         int x = wx - l.cx, z = wz - l.cz;
         if (!l.carved || Math.sqrt((double) x * x + (double) z * z) <= l.reach) return false;
-        if (z >= END_Z && z <= -l.reach + 8 && Math.abs(x + 0.5) <= VERGE + 1) return true;
-        return z < END_Z && z >= PATH_END_Z && Math.abs(x + 0.5 - pathX(z)) <= 2.1 || post(x, z);
+        if (z >= END_Z && z <= -l.reach + 8 && Math.abs(x + 0.5) <= VERGE + 2) return true;
+        return z < END_Z && z >= PATH_END_Z && Math.abs(x + 0.5 - pathX(z)) <= 4.1 || post(x, z);
     }
 
     /**
