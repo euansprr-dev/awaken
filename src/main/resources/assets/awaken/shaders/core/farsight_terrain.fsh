@@ -218,7 +218,8 @@ void main() {
     vec3 n = normalize(vNormal);
     vec2 g = -n.xz / max(n.y, 0.12);
     float slope = length(g);
-    float footprint = max(fwidth(vRel.x), fwidth(vRel.z)); // blocks a pixel spans here
+    // blocks a pixel spans here (as on screen: a horizon slice's pixels are finer, FarView)
+    float footprint = max(fwidth(vRel.x), fwidth(vRel.z)) * FarView.x;
 
     // the columns: a power of two, at least a block and a half of pixels wide, so each pixel keeps meeting the same face
     // as the camera moves (narrower, a pixel jumps between a column's lit top and its shaded side: far slopes glitter);

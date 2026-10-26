@@ -1,0 +1,48 @@
+# The cached horizon, diagnosed (SPEC §20): at the Roost (perf-26oct set-up, shorter wait) the horizon off and on, then
+# debug 5 (the composite: served land magenta, served without land cyan; live far land blue), debug 6 (the panorama
+# itself over the top half) and debug 3. Run: XMX=8G ZGC=1 PACK=perf,world TECTONIC=awakened RD=24 LENS=cinematic \
+#   SLOT_WHO=far-sight .../slot.sh tour tools/autopilot.sh tools/autopilot/farsight-horizon-debug.txt 600
+world perf26 creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+cmd gamemode spectator
+cmd time set 6000
+lookswitch cinematic
+pixels 0.95 sharp
+pixels steady on
+cmd awaken city view studio_roost
+wait 1200
+farsight status
+pixels gpu on
+farsight horizon off
+wait 40
+farsight status
+shot fd_off
+farsight horizon on
+wait 100
+farsight status
+shot fd_on
+farsight debug 5
+wait 40
+shot fd_d5
+farsight debug 6
+wait 40
+shot fd_d6
+farsight debug 3
+wait 40
+shot fd_d3
+farsight debug 0
+wait 20
+farsight status
+quit

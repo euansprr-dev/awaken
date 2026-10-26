@@ -43,7 +43,7 @@ void main() {
     }
     vec3 c = vColor;
     if (vFaceUv.x >= 0.0) {
-        float footprint = max(fwidth(vFaceUv.x), fwidth(vFaceUv.y));
+        float footprint = max(fwidth(vFaceUv.x), fwidth(vFaceUv.y)) * FarView.x;
         float grain = 1.0 - smoothstep(0.6, 1.6, footprint);
         c *= 1.0 + (farHash(ivec2(floor(vFaceUv * 1.0)) + ivec2(floor(rel))) - 0.5) * 0.3 * grain;
     }

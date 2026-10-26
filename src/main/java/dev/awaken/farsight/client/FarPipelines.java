@@ -162,7 +162,30 @@ final class FarPipelines {
             .withCull(false)
             .build();
 
-    private static int ok = -1; // -1 unknown, 0 failed, 1 compiled
+    static final BindGroupLayout HORIZON_INPUTS = BindGroupLayout.builder()
+            .withUniform("FarFrame", UniformType.UNIFORM_BUFFER)
+            .withUniform("Horizon", UniformType.UNIFORM_BUFFER)
+            .withUniform("HorizonColorSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withUniform("HorizonDepthSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+            .build();
+
+    /**
+     * The cached horizon's composite (FarHorizon): one triangle over the screen, laying the served slices into the main
+     * colour target and writing Far Sight's depth itself.
+     */
+    static final RenderPipeline HORIZON = RenderPipeline.builder()
+            .withBindGroupLayout(BindGroupLayouts.PROJECTION)
+            .withBindGroupLayout(HORIZON_INPUTS)
+            .withLocation(Awaken.id("pipeline/farsight_horizon"))
+            .withVertexShader(Awaken.id("core/farsight_horizon"))
+            .withFragmentShader(Awaken.id("core/farsight_horizon"))
+            .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
+            .withColorTargetState(ColorTargetState.DEFAULT)
+            .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, true))
+            .withCull(false)
+            .build();
+
+    private static int ok = -1, horizonOk = -1; // -1 unknown, 0 failed, 1 compiled
 
     static void onRegister(RegisterRenderPipelinesEvent e) {
         e.registerOptionalPipeline(TERRAIN);
@@ -171,6 +194,20 @@ final class FarPipelines {
         e.registerOptionalPipeline(TREES);
         e.registerOptionalPipeline(VOXELS);
         e.registerOptionalPipeline(VOXELS_PLAIN);
+        e.registerOptionalPipeline(HORIZON);
+    }
+
+    /** Whether the cached horizon's composite compiled (without it, Far Sight draws everything live). */
+    static boolean horizonOk() {
+        if (horizonOk < 0) {
+            try {
+                horizonOk = RenderSystem.getCompiledPipelineNullable(HORIZON) != null ? 1 : 0;
+            } catch (RuntimeException e) {
+                horizonOk = 0;
+            }
+            if (horizonOk == 0) Awaken.LOG.warn("[farsight] the cached horizon's shader did not load; Far Sight draws everything live");
+        }
+        return horizonOk == 1;
     }
 
     /** Whether both pipelines compiled; checked once per resource load (a failed one would recompile every lookup). */
@@ -190,5 +227,6 @@ final class FarPipelines {
 
     static void recheck() {
         ok = -1;
+        horizonOk = -1;
     }
 }

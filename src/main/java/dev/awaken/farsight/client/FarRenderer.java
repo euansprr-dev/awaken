@@ -6,6 +6,7 @@ import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.renderpearl.api.GpuFormat;
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.renderpearl.api.commands.GpuQueryPool;
 import com.mojang.renderpearl.api.commands.RenderPass;
 import com.mojang.renderpearl.api.pipeline.IndexType;
@@ -56,11 +57,15 @@ final class FarRenderer implements AutoCloseable {
     static final int PIECE = 64, MAX_DRAWS = 256, STRIDE = PIECE + 1, WIDTHS = PIECE / 8;
     private static final int INDICES_PER_CELL = 6;
     static final int FRAME_SIZE = new Std140SizeCalculator().putMat4f().putVec4().putVec4().putVec4().putVec4().get()
-            + Rings.RINGS * 16 * 2 + 4 * 16;
+            + Rings.RINGS * 16 * 2 + 5 * 16;
+    /** Views a frame plans: the screen, and the cached horizon's slices drawn this frame. */
+    static final int VIEWS = 1 + FarHorizon.MAX_RENDERS;
 
     private final MappableRingBuffer frameUbo = new MappableRingBuffer(() -> "awaken far sight frame", 130, FRAME_SIZE);
     private final int align = Math.max(16, RenderSystem.getDevice().getDeviceInfo().limits().minUniformOffsetAlignment());
-    private final MappableRingBuffer drawUbo = new MappableRingBuffer(() -> "awaken far sight draws", 130, MAX_DRAWS * align);
+    private final MappableRingBuffer drawUbo = new MappableRingBuffer(() -> "awaken far sight draws", 130, VIEWS * MAX_DRAWS * align);
+    /** This frame's frame block, built once: the screen's buffer and each horizon slice's (with its own rotation) copy it. */
+    private final ByteBuffer frameBytes = MemoryUtil.memCalloc(FRAME_SIZE);
     static final int MAX_MARKS = 48;
     private final MappableRingBuffer markUbo = new MappableRingBuffer(() -> "awaken far sight landmarks", 130, MAX_MARKS * 3 * 16);
     /** Index buffers by piece width (8, 16, .. 64 cells), each 64 rows tall; also the landmarks' quads. */
@@ -72,10 +77,29 @@ final class FarRenderer implements AutoCloseable {
     private final MappableRingBuffer treeSlots = new MappableRingBuffer(() -> "awaken far sight tree slots",
             GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_UNIFORM_TEXEL_BUFFER, FarField.TREE_RINGS * Rings.PATCHES * Rings.PATCHES * 16);
     private final MappableRingBuffer treeCommands = new MappableRingBuffer(() -> "awaken far sight tree draws",
-            GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_INDIRECT_PARAMETERS, FarField.TREE_RINGS * Rings.PATCHES * Rings.PATCHES * 2 * COMMAND_BYTES);
-    /** This frame's tree draws: index count and first vertex per run in view. */
-    private final int[] treeCount = new int[FarField.TREE_RINGS * Rings.PATCHES * Rings.PATCHES * 2], treeVertex = new int[treeCount.length];
-    int treeDraws, treesDrawn;
+            GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_INDIRECT_PARAMETERS, VIEWS * TREE_RUNS * COMMAND_BYTES);
+    static final int TREE_RUNS = FarField.TREE_RINGS * Rings.PATCHES * Rings.PATCHES * 2;
+
+    /**
+     * One view's plan: the screen's, or a cached horizon slice's ({@link FarHorizon}). Its pieces (ring, first cell
+     * window-local, width and height in cells) and its tree runs (index count, first vertex, and the run's patch,
+     * blocks from the camera, and its box's bottom and top), each in its frustum.
+     */
+    static final class View {
+        final int[] ring = new int[MAX_DRAWS], x = new int[MAX_DRAWS], z = new int[MAX_DRAWS], w = new int[MAX_DRAWS], h = new int[MAX_DRAWS];
+        final float[] lo = new float[MAX_DRAWS], hi = new float[MAX_DRAWS];
+        int pieces, cells;
+        final int[] treeCount = new int[TREE_RUNS], treeVertex = new int[TREE_RUNS], treeRing = new int[TREE_RUNS];
+        final float[] treeX = new float[TREE_RUNS], treeZ = new float[TREE_RUNS], treeLo = new float[TREE_RUNS], treeHi = new float[TREE_RUNS];
+        int treeDraws, treesDrawn;
+        final FrustumIntersection frustum = new FrustumIntersection();
+    }
+
+    final View screen = new View();
+    // the screen plan's settings, which the horizon's slices plan with too
+    private double planCamY;
+    private float planCovered, planHidden;
+    private int planMinY, planMaxY, planReal;
     /** Multi-draw indirect where the backend has it (Vulkan); a draw per run elsewhere (OpenGL 4.1 has none). */
     private final boolean indirect = "Vulkan".equalsIgnoreCase(RenderSystem.getDevice().getDeviceInfo().backendName());
     private GpuTexture depth;
@@ -116,14 +140,10 @@ final class FarRenderer implements AutoCloseable {
     private boolean chunksChanged = true, sectionsChanged = true;
     private int sectionTurn;
 
-    // the frame's pieces: ring, first cell (window-local), width and height in cells
-    private final int[] pRing = new int[MAX_DRAWS], pX = new int[MAX_DRAWS], pZ = new int[MAX_DRAWS], pW = new int[MAX_DRAWS], pH = new int[MAX_DRAWS];
-    int pieces, cells;
     private int seaLevel = 63;
     private double planX, planZ;
     /** The share of the chunks well inside the render distance that are loaded and meshed (the opening waits on it). */
     float shownShare;
-    private final FrustumIntersection frustum = new FrustumIntersection();
     private final Matrix4f cull = new Matrix4f();
     private final float[] originX = new float[Rings.RINGS], originZ = new float[Rings.RINGS];
     // GPU time of Far Sight's passes: timestamps before and after, read back three frames later (diagnostics only)
@@ -132,6 +152,13 @@ final class FarRenderer implements AutoCloseable {
     private boolean timing = true;
     private double gpuNanos, bakeNanos;
     private int gpuFrames;
+    /** Measuring (autopilot {@code farsight time parts on}): each part drawn in its own pass and timed. */
+    static boolean partsTiming;
+    // start, baked, after the horizon's slices, after its composite, after each ring, after City Sight, end (the trees and landmarks)
+    private static final int STAMPS = Rings.RINGS + 6, PARTS = Rings.RINGS + 4;
+    private final boolean[] partsTimed = new boolean[3];
+    private final double[] partNanos = new double[PARTS];
+    private int partFrames;
 
     FarRenderer() {
         ByteBuffer data = MemoryUtil.memAlloc(PIECE * PIECE * INDICES_PER_CELL * 2).order(ByteOrder.nativeOrder());
@@ -303,19 +330,38 @@ final class FarRenderer implements AutoCloseable {
      * nearer than {@code hiddenWithin} in 3D down to its own lowest ground (the shader's mask).
      */
     void plan(FarField field, double camX, double camY, double camZ, Matrix4fc viewRotation, float fovDegrees, float aspect,
-            float covered, float hiddenWithin, int minY, int maxY, int seaLevel) {
+            float covered, float hiddenWithin, int minY, int maxY, int seaLevel, int realWithin) {
         this.seaLevel = seaLevel;
+        planReal = realWithin;
         planX = camX;
         planZ = camZ;
-        pieces = 0;
-        cells = 0;
-        cull.setPerspective(fovDegrees * (float) (Math.PI / 180.0), aspect, 0.5f, FAR).mul(viewRotation);
-        frustum.set(cull, false);
+        planCamY = camY;
+        planCovered = covered;
+        planHidden = hiddenWithin;
+        planMinY = minY;
+        planMaxY = maxY;
         for (int r = 0; r < Rings.RINGS; r++) {
             if (!field.valid[r]) continue;
-            int s = Rings.cellSize(r);
             originX[r] = (float) ((double) field.winX[r] * Rings.patchBlocks(r) - camX);
             originZ[r] = (float) ((double) field.winZ[r] * Rings.patchBlocks(r) - camZ);
+        }
+        cull.setPerspective(fovDegrees * (float) (Math.PI / 180.0), aspect, 0.5f, FAR).mul(viewRotation);
+        screen.frustum.set(cull, false);
+        planRings(screen, field, 0);
+    }
+
+    /** Plans a view (its frustum set) from ring {@code fromRing} out, with the screen plan's settings: pieces and tree runs. */
+    void planView(View v, FarField field, int fromRing) {
+        planRings(v, field, fromRing);
+        planTrees(v, field, fromRing);
+    }
+
+    private void planRings(View v, FarField field, int fromRing) {
+        v.pieces = 0;
+        v.cells = 0;
+        for (int r = fromRing; r < Rings.RINGS; r++) {
+            if (!field.valid[r]) continue;
+            int s = Rings.cellSize(r);
             // the hole: the window of the ring inside, in this ring's cells (its corners fall on whole cells)
             int hx0 = 0, hz0 = 0, hx1 = 0, hz1 = 0;
             if (r > 0 && field.valid[r - 1]) {
@@ -325,12 +371,12 @@ final class FarRenderer implements AutoCloseable {
                 hz1 = hz0 + Rings.SIZE / 2;
             }
             if (hx1 > hx0) {
-                rect(field, r, s, 0, 0, Rings.SIZE, hz0, camY, covered, hiddenWithin, minY, maxY);
-                rect(field, r, s, 0, hz1, Rings.SIZE, Rings.SIZE, camY, covered, hiddenWithin, minY, maxY);
-                rect(field, r, s, 0, hz0, hx0, hz1, camY, covered, hiddenWithin, minY, maxY);
-                rect(field, r, s, hx1, hz0, Rings.SIZE, hz1, camY, covered, hiddenWithin, minY, maxY);
+                rect(v, field, r, s, 0, 0, Rings.SIZE, hz0);
+                rect(v, field, r, s, 0, hz1, Rings.SIZE, Rings.SIZE);
+                rect(v, field, r, s, 0, hz0, hx0, hz1);
+                rect(v, field, r, s, hx1, hz0, Rings.SIZE, hz1);
             } else {
-                rect(field, r, s, 0, 0, Rings.SIZE, Rings.SIZE, camY, covered, hiddenWithin, minY, maxY);
+                rect(v, field, r, s, 0, 0, Rings.SIZE, Rings.SIZE);
             }
         }
     }
@@ -339,10 +385,16 @@ final class FarRenderer implements AutoCloseable {
      * Decides this frame's tree runs: for rings 1-4, every patch in view, not wholly under the real chunks and not wholly
      * inside the finer ring's window (its own trees stand there), draws its predicted run and its real chunks' run.
      */
-    void planTrees(FarField field, double camY, float covered, float hiddenWithin) {
-        treeDraws = 0;
-        treesDrawn = 0;
-        for (int r = FarTrees.FIRST_RING; r <= FarTrees.LAST_RING; r++) {
+    void planTrees(FarField field) {
+        planTrees(screen, field, 0);
+    }
+
+    private void planTrees(View v, FarField field, int fromRing) {
+        v.treeDraws = 0;
+        v.treesDrawn = 0;
+        double camY = planCamY;
+        float covered = planCovered, hiddenWithin = planHidden;
+        for (int r = Math.max(FarTrees.FIRST_RING, fromRing); r <= FarTrees.LAST_RING; r++) {
             if (!field.valid[r]) continue;
             int pb = Rings.patchBlocks(r);
             // the finer ring's window, blocks from the camera
@@ -367,26 +419,74 @@ final class FarRenderer implements AutoCloseable {
                     int lo = (field.lo[r][slot] & 0xFFFF) - FarColumns.HEIGHT_BASE - 2, hi = field.top(r, slot) - FarColumns.HEIGHT_BASE + 72;
                     double down = camY - lo;
                     if (fx * fx + fz * fz + down * down < hiddenWithin * (double) hiddenWithin) continue;
-                    if (!frustum.testAab(ax, (float) (lo - camY), az, bx, (float) (hi - camY), bz)) continue;
+                    if (!v.frustum.testAab(ax, (float) (lo - camY), az, bx, (float) (hi - camY), bz)) continue;
                     for (int layer = 0; layer < 2; layer++) {
                         int n = layer == 0 ? pred : gen;
                         if (n == 0) continue;
-                        treeCount[treeDraws] = n * TREE_INDICES;
-                        treeVertex[treeDraws] = FarField.treeRun(r, slot, layer == 1) * FarTrees.MAX * TREE_VERTS;
-                        treeDraws++;
-                        treesDrawn += n;
+                        int k = v.treeDraws++;
+                        v.treeCount[k] = n * TREE_INDICES;
+                        v.treeVertex[k] = FarField.treeRun(r, slot, layer == 1) * FarTrees.MAX * TREE_VERTS;
+                        v.treeRing[k] = r;
+                        v.treeX[k] = ax;
+                        v.treeZ[k] = az;
+                        v.treeLo[k] = (float) (lo - camY);
+                        v.treeHi[k] = (float) (hi - camY);
+                        v.treesDrawn += n;
                     }
                 }
             }
         }
     }
 
-    private void rect(FarField field, int r, int s, int x0, int z0, int x1, int z1, double camY, float covered, float hiddenWithin,
-            int minY, int maxY) {
+    /**
+     * Leaves out of the screen's plan what the cached horizon draws this frame: its rings' pieces and its trees where
+     * every slice they span is served (City Sight's chunks are left out in its own plan).
+     */
+    void leaveServed(FarHorizon horizon) {
+        View v = screen;
+        int n = 0;
+        v.cells = 0;
+        for (int i = 0; i < v.pieces; i++) {
+            int r = v.ring[i], s = Rings.cellSize(r);
+            float ax = originX[r] + v.x[i] * s, az = originZ[r] + v.z[i] * s;
+            if (horizon.holdsRing(r) && horizon.serves(ax, v.lo[i], az, ax + v.w[i] * s, v.hi[i], az + v.h[i] * s)) continue;
+            v.ring[n] = r;
+            v.x[n] = v.x[i];
+            v.z[n] = v.z[i];
+            v.w[n] = v.w[i];
+            v.h[n] = v.h[i];
+            v.lo[n] = v.lo[i];
+            v.hi[n] = v.hi[i];
+            v.cells += v.w[i] * v.h[i];
+            n++;
+        }
+        v.pieces = n;
+        n = 0;
+        for (int i = 0; i < v.treeDraws; i++) {
+            int r = v.treeRing[i], pb = Rings.patchBlocks(r);
+            if (horizon.holdsRing(r) && horizon.serves(v.treeX[i], v.treeLo[i], v.treeZ[i], v.treeX[i] + pb, v.treeHi[i], v.treeZ[i] + pb)) {
+                v.treesDrawn -= v.treeCount[i] / TREE_INDICES;
+                continue;
+            }
+            v.treeCount[n] = v.treeCount[i];
+            v.treeVertex[n] = v.treeVertex[i];
+            v.treeRing[n] = r;
+            v.treeX[n] = v.treeX[i];
+            v.treeZ[n] = v.treeZ[i];
+            v.treeLo[n] = v.treeLo[i];
+            v.treeHi[n] = v.treeHi[i];
+            n++;
+        }
+        v.treeDraws = n;
+    }
+
+    private void rect(View v, FarField field, int r, int s, int x0, int z0, int x1, int z1) {
+        double camY = planCamY;
+        float covered = planCovered, hiddenWithin = planHidden;
         for (int z = z0; z < z1; z += PIECE) {
             for (int x = x0; x < x1; x += PIECE) {
                 int w = Math.min(PIECE, x1 - x), h = Math.min(PIECE, z1 - z);
-                if (w <= 0 || h <= 0 || pieces >= MAX_DRAWS) continue;
+                if (w <= 0 || h <= 0 || v.pieces >= MAX_DRAWS) continue;
                 float ax = originX[r] + x * s, az = originZ[r] + z * s, bx = ax + w * s, bz = az + h * s;
                 // wholly under the real chunks: its farthest corner is nearer than where far terrain starts, in 3D down to
                 // its lowest ground (32 blocks under the patches' lowest top), or within what the windows leave unloaded.
@@ -399,26 +499,69 @@ final class FarRenderer implements AutoCloseable {
                 // (and only where every chunk under it is shown: a chunk still meshing leaves the far land to cover it)
                 boolean shown = range != Long.MIN_VALUE && (r > 0 || allShown(ax, az, bx, bz));
                 if (!sea && shown && fx * fx + fz * fz < covered * covered) continue;
-                int lo = minY, hi = maxY;
+                int lo = planMinY, hi = planMaxY;
                 if (range != Long.MIN_VALUE) {
                     lo = (int) (range >> 32);
                     hi = (int) range;
                     double down = camY - lo;
                     if (!sea && shown && fx * fx + fz * fz + down * down < hiddenWithin * (double) hiddenWithin) continue;
+                    // ...but a sea piece wholly inside the band where the far water stays under the real water, over chunks
+                    // all shown and within Sodium's reach up and down, has every fragment hidden by the mask: not drawn
+                    // (at the Roost these were 0.7 ms of fragments discarded under the city's canals)
+                    float inside = Math.min(hiddenWithin - 96f, planReal - 17f);
+                    if (sea && shown && inside > 0 && fx * fx + fz * fz < inside * (double) inside && down < planReal - 17 && hi - camY < planReal - 17) continue;
                 } else if (r > 0 && fx * fx + fz * fz < covered * covered) {
                     // (ring 0's pieces still loading are drawn all the same, from the coarser surface: never a hole)
                     continue;
                 }
-                if (!frustum.testAab(ax, (float) (lo - camY), az, bx, (float) (hi - camY), bz)) continue;
-                pRing[pieces] = r;
-                pX[pieces] = x;
-                pZ[pieces] = z;
-                pW[pieces] = w;
-                pH[pieces] = h;
-                pieces++;
-                cells += w * h;
+                if (!v.frustum.testAab(ax, (float) (lo - camY), az, bx, (float) (hi - camY), bz)) continue;
+                int k = v.pieces++;
+                v.ring[k] = r;
+                v.x[k] = x;
+                v.z[k] = z;
+                v.w[k] = w;
+                v.h[k] = h;
+                v.lo[k] = (float) (lo - camY);
+                v.hi[k] = (float) (hi - camY);
+                v.cells += w * h;
             }
         }
+    }
+
+    /** The level's top (after {@link #plan}). */
+    int maxY() {
+        return planMaxY;
+    }
+
+    /** Ring r's window's first corner, blocks from the camera (after {@link #plan}). */
+    float originX(int r) {
+        return originX[r];
+    }
+
+    float originZ(int r) {
+        return originZ[r];
+    }
+
+    /**
+     * The lowest and highest ground ({@code lo << 32 | hi}) over the windows of rings {@code fromRing} out, or MIN_VALUE
+     * if none is placed (the cached horizon's band).
+     */
+    long range(FarField field, int fromRing) {
+        int lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE;
+        for (int r = fromRing; r < Rings.RINGS; r++) {
+            if (!field.valid[r]) continue;
+            for (int j = 0; j < Rings.PATCHES; j++) {
+                for (int i = 0; i < Rings.PATCHES; i++) {
+                    int wx = field.winX[r] + i, wz = field.winZ[r] + j;
+                    if (!field.has(r, wx, wz)) continue;
+                    int slot = Rings.slot(wx, wz);
+                    lo = Math.min(lo, (field.lo[r][slot] & 0xFFFF) - FarColumns.HEIGHT_BASE);
+                    hi = Math.max(hi, field.top(r, slot) - FarColumns.HEIGHT_BASE);
+                }
+            }
+        }
+        if (lo > hi) return Long.MIN_VALUE;
+        return (long) (lo - 32) << 32 | (hi + 32) & 0xFFFFFFFFL;
     }
 
     /** Whether chunk (cx, cz) is shown in the chunk mask (only meaningful within 31 chunks of the camera). */
@@ -437,7 +580,7 @@ final class FarRenderer implements AutoCloseable {
 
     /** Whether a camera-relative box is in this frame's view (after {@link #plan}). */
     boolean inView(float ax, float ay, float az, float bx, float by, float bz) {
-        return frustum.testAab(ax, ay, az, bx, by, bz);
+        return screen.frustum.testAab(ax, ay, az, bx, by, bz);
     }
 
     /** Whether every chunk under this camera-relative rectangle is shown in the chunk mask (loaded and meshed). */
@@ -477,7 +620,7 @@ final class FarRenderer implements AutoCloseable {
             float sunStrength, Vector3f sunColour, float golden, float haze, float rain, float mistFloor, float mistDepth, float mistDensity,
             float mistCover, float fogStart, float fogEnd, float clipStart,
             float clipBand, int realWithin, int seaLevel, boolean zeroToOne, GpuTextureView lightmap, List<FarLandmarks.Landmark> landmarks,
-            VoxelLayer voxels) {
+            VoxelLayer voxels, FarHorizon horizon, float pixelsPerTan) {
         depth(main);
         // clip.z = A + B * clip.w: Far Sight's own planes on the game's x, y and w (so view bobbing and FOV still apply)
         float a, b;
@@ -488,29 +631,37 @@ final class FarRenderer implements AutoCloseable {
             a = 2f * NEAR * FAR / (FAR - NEAR);
             b = -(NEAR + FAR) / (FAR - NEAR);
         }
+        // the frame block, built once: the screen's buffer, and the horizon's slices with their own rotation (FarView)
+        frameBytes.clear();
+        Std140Builder u = Std140Builder.intoBuffer(frameBytes);
+        // the camera as an exact world cell (a multiple of 256) and the rest, so the shaders' world patterns hold anywhere
+        int cellX = (int) Math.floor(camX / 256.0) * 256, cellZ = (int) Math.floor(camZ / 256.0) * 256;
+        u.putMat4f(viewRotation).putVec4(a, b, clipStart, clipBand).putVec4(fogStart, fogEnd, (float) camY, seaLevel)
+                .putVec4(sun.x, sun.y, sun.z, sunStrength)
+                .putVec4((float) (camX - cellX), FarSightClient.partsOff, (float) (camZ - cellZ), FarSightClient.debug);
+        for (int r = 0; r < Rings.RINGS; r++) {
+            u.putVec4(originX[r], originZ[r], Rings.cellSize(r), field.valid[r] ? 1f : 0f);
+        }
+        for (int r = 0; r < Rings.RINGS; r++) {
+            u.putIVec4((field.winX[r] * Rings.PATCH) & Rings.MASK, (field.winZ[r] * Rings.PATCH) & Rings.MASK, r * Rings.SIZE, 0);
+        }
+        u.putVec4(sunColour.x, sunColour.y, sunColour.z, golden).putVec4(haze, AIR_SCALE_HEIGHT, AIR_SUN, rain).putIVec4(cellX, realWithin, cellZ, 0)
+                .putVec4(mistFloor, mistDepth, mistDensity, mistCover).putVec4(1f, 0f, 0f, 0f);
         GpuBuffer frame = frameUbo.currentBuffer();
         try (var view = frame.map(false, true)) {
-            Std140Builder u = Std140Builder.intoBuffer(view.data());
-            // the camera as an exact world cell (a multiple of 256) and the rest, so the shaders' world patterns hold anywhere
-            int cellX = (int) Math.floor(camX / 256.0) * 256, cellZ = (int) Math.floor(camZ / 256.0) * 256;
-            u.putMat4f(viewRotation).putVec4(a, b, clipStart, clipBand).putVec4(fogStart, fogEnd, (float) camY, seaLevel)
-                    .putVec4(sun.x, sun.y, sun.z, sunStrength)
-                    .putVec4((float) (camX - cellX), FarSightClient.partsOff, (float) (camZ - cellZ), FarSightClient.debug);
-            for (int r = 0; r < Rings.RINGS; r++) {
-                u.putVec4(originX[r], originZ[r], Rings.cellSize(r), field.valid[r] ? 1f : 0f);
-            }
-            for (int r = 0; r < Rings.RINGS; r++) {
-                u.putIVec4((field.winX[r] * Rings.PATCH) & Rings.MASK, (field.winZ[r] * Rings.PATCH) & Rings.MASK, r * Rings.SIZE, 0);
-            }
-            u.putVec4(sunColour.x, sunColour.y, sunColour.z, golden).putVec4(haze, AIR_SCALE_HEIGHT, AIR_SUN, rain).putIVec4(cellX, realWithin, cellZ, 0)
-                    .putVec4(mistFloor, mistDepth, mistDensity, mistCover);
+            view.data().put(0, frameBytes, 0, FRAME_SIZE);
         }
+        int slices = horizon.renderCount();
         GpuBuffer draws = drawUbo.currentBuffer();
         try (var view = draws.map(false, true)) {
             ByteBuffer d = view.data();
-            for (int i = 0; i < pieces; i++) {
-                int at = i * align;
-                d.putInt(at, pRing[i]).putInt(at + 4, pX[i]).putInt(at + 8, pZ[i]).putInt(at + 12, pW[i]);
+            for (int k = 0; k <= slices; k++) {
+                View v = k == 0 ? screen : horizon.views[k - 1];
+                int base = k * MAX_DRAWS * align;
+                for (int i = 0; i < v.pieces; i++) {
+                    int at = base + i * align;
+                    d.putInt(at, v.ring[i]).putInt(at + 4, v.x[i]).putInt(at + 8, v.z[i]).putInt(at + 12, v.w[i]);
+                }
             }
         }
         int marks = Math.min(MAX_MARKS, landmarks.size());
@@ -529,98 +680,158 @@ final class FarRenderer implements AutoCloseable {
                 }
             }
         }
-        GpuSampler nearest = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
-        try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder()
-                .createRenderPass(() -> "awaken far sight", main.getColorTextureView(), Optional.empty(), depthView, OptionalDouble.of(0.0))) {
-            if (pieces > 0) {
-                pass.setPipeline(RenderSystem.getCompiledPipeline(FarPipelines.TERRAIN));
-                pass.setUniform("Projection", RenderSystem.getProjectionMatrixBuffer());
-                pass.setUniform("Fog", RenderSystem.getShaderFog());
-                pass.setUniform("FarFrame", frame);
-                pass.setUniform("HeightSampler", field.heightView, nearest);
-                pass.setUniform("ColorSampler", field.colourView, nearest);
-                pass.setUniform("InfoSampler", field.infoView, nearest);
-                pass.setUniform("CrownSampler", field.crownView, nearest);
-                pass.setUniform("GenHeightSampler", field.genHeightView, nearest);
-                pass.setUniform("GenColorSampler", field.genColourView, nearest);
-                pass.setUniform("GenInfoSampler", field.genInfoView, nearest);
-                pass.setUniform("GenCrownSampler", field.genCrownView, nearest);
-                pass.setUniform("ShadeSampler", field.shadeView, nearest);
-                pass.setUniform("LightSampler", lightmap, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
-                pass.setUniform("ChunkSampler", chunksView, nearest);
-                pass.setUniform("VoxelSampler", voxels.coverageView, nearest);
-                int bound = -1;
-                for (int i = 0; i < pieces; i++) {
-                    int k = pW[i] / 8 - 1;
-                    if (k != bound) {
-                        pass.setIndexBuffer(widths[k], IndexType.SHORT);
-                        bound = k;
+        // the trees' patch origins (every view's runs read them) and each view's indirect draws
+        boolean anyTrees = screen.treeDraws > 0;
+        for (int k = 0; k < slices; k++) anyTrees |= horizon.views[k].treeDraws > 0;
+        GpuBuffer commands = treeCommands.currentBuffer();
+        if (anyTrees) {
+            try (var view = treeSlots.currentBuffer().map(false, true)) {
+                ByteBuffer d = view.data();
+                for (int r = FarTrees.FIRST_RING; r <= FarTrees.LAST_RING; r++) {
+                    int pb = Rings.patchBlocks(r);
+                    for (int j = 0; j < Rings.PATCHES; j++) {
+                        for (int i = 0; i < Rings.PATCHES; i++) {
+                            int px = field.winX[r] + i, pz = field.winZ[r] + j;
+                            int at = ((r - FarTrees.FIRST_RING) * Rings.PATCHES * Rings.PATCHES + Rings.slot(px, pz)) * 16;
+                            d.putInt(at, px * pb).putInt(at + 4, pz * pb).putInt(at + 8, r).putInt(at + 12, 0);
+                        }
                     }
-                    pass.setUniform("FarDraw", draws.slice((long) i * align, 16));
-                    pass.drawIndexed(pW[i] * pH[i] * INDICES_PER_CELL, 1, 0, 0, 0);
                 }
             }
-            // City Sight: the real chunks' blocks, after the terrain (which steps aside where they stand)
-            if (voxels.any()) voxels.draw(pass, frame, lightmap, sectionsView);
-            if (treeDraws > 0) {
-                GpuBuffer slots = treeSlots.currentBuffer();
-                try (var view = slots.map(false, true)) {
+            if (indirect) {
+                try (var view = commands.map(false, true)) {
                     ByteBuffer d = view.data();
-                    for (int r = FarTrees.FIRST_RING; r <= FarTrees.LAST_RING; r++) {
-                        int pb = Rings.patchBlocks(r);
-                        for (int j = 0; j < Rings.PATCHES; j++) {
-                            for (int i = 0; i < Rings.PATCHES; i++) {
-                                int px = field.winX[r] + i, pz = field.winZ[r] + j;
-                                int at = ((r - FarTrees.FIRST_RING) * Rings.PATCHES * Rings.PATCHES + Rings.slot(px, pz)) * 16;
-                                d.putInt(at, px * pb).putInt(at + 4, pz * pb).putInt(at + 8, r).putInt(at + 12, 0);
-                            }
+                    for (int k = 0; k <= slices; k++) {
+                        View v = k == 0 ? screen : horizon.views[k - 1];
+                        int base = k * TREE_RUNS * COMMAND_BYTES;
+                        for (int i = 0; i < v.treeDraws; i++) {
+                            int at = base + i * COMMAND_BYTES;
+                            d.putInt(at, v.treeCount[i]).putInt(at + 4, 1).putInt(at + 8, 0).putInt(at + 12, v.treeVertex[i]).putInt(at + 16, 0);
                         }
                     }
-                }
-                pass.setPipeline(RenderSystem.getCompiledPipeline(FarPipelines.TREES));
-                pass.setUniform("Projection", RenderSystem.getProjectionMatrixBuffer());
-                pass.setUniform("Fog", RenderSystem.getShaderFog());
-                pass.setUniform("FarFrame", frame);
-                pass.setUniform("Trees", field.trees);
-                pass.setUniform("TreeSlots", slots);
-                pass.setUniform("ShadeSampler", field.shadeView, nearest);
-                pass.setUniform("GenHeightSampler", field.genHeightView, nearest);
-                pass.setUniform("HeightSampler", field.heightView, nearest);
-                pass.setUniform("LightSampler", lightmap, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
-                pass.setUniform("ChunkSampler", chunksView, nearest);
-                pass.setUniform("VoxelSampler", voxels.coverageView, nearest);
-                pass.setIndexBuffer(treeIndices, IndexType.SHORT);
-                if (indirect) {
-                    GpuBuffer commands = treeCommands.currentBuffer();
-                    try (var view = commands.map(false, true)) {
-                        ByteBuffer d = view.data();
-                        for (int i = 0; i < treeDraws; i++) {
-                            int at = i * COMMAND_BYTES;
-                            d.putInt(at, treeCount[i]).putInt(at + 4, 1).putInt(at + 8, 0).putInt(at + 12, treeVertex[i]).putInt(at + 16, 0);
-                        }
-                    }
-                    pass.drawIndexedIndirect(commands.slice(0, (long) treeDraws * COMMAND_BYTES), treeDraws);
-                } else {
-                    for (int i = 0; i < treeDraws; i++) pass.drawIndexed(treeCount[i], 1, 0, treeVertex[i], 0);
                 }
             }
-            if (marks > 0) {
-                // after the terrain, so ridges in front hide them; two quads each (core and halo)
-                pass.setPipeline(RenderSystem.getCompiledPipeline(FarPipelines.MARKS));
-                pass.setUniform("Projection", RenderSystem.getProjectionMatrixBuffer());
-                pass.setUniform("Fog", RenderSystem.getShaderFog());
-                pass.setUniform("FarFrame", frame);
-                pass.setUniform("FarMarks", markBuffer);
-                pass.setIndexBuffer(quads, IndexType.SHORT);
-                pass.drawIndexed(marks * 2 * 6, 1, 0, 0, 0);
+        }
+        GpuBufferSlice projection = RenderSystem.getProjectionMatrixBuffer();
+        // the cached horizon's slices drawn this frame, into its panorama, before the screen's pass
+        horizon.render(this, field, voxels, frameBytes, draws, commands, lightmap, zeroToOne);
+        if (timing && partsTiming) stamp(2);
+        var encoder = RenderSystem.getDevice().createCommandEncoder();
+        if (timing && partsTiming) {
+            // measuring (farsight time parts): the horizon's composite, each ring, City Sight, the trees and landmarks in
+            // their own passes, a timestamp after each (timestamps land at pass boundaries on Apple's GPUs)
+            try (RenderPass pass = encoder.createRenderPass(() -> "awaken far sight horizon", main.getColorTextureView(), Optional.empty(), depthView, OptionalDouble.of(0.0))) {
+                horizon.composite(pass, frame, a, b, zeroToOne, pixelsPerTan, main.width, main.height);
+            }
+            stamp(3);
+            for (int r = 0; r < Rings.RINGS; r++) {
+                int ring = r;
+                try (RenderPass pass = encoder.createRenderPass(() -> "awaken far sight ring " + ring, main.getColorTextureView(), Optional.empty(), depthView, OptionalDouble.empty())) {
+                    terrain(pass, screen, 0, field, projection, frame.slice(0, FRAME_SIZE), draws, lightmap, voxels, r, r);
+                }
+                stamp(4 + r);
+            }
+            try (RenderPass pass = encoder.createRenderPass(() -> "awaken far sight city", main.getColorTextureView(), Optional.empty(), depthView, OptionalDouble.empty())) {
+                voxels.draw(pass, projection, frame.slice(0, FRAME_SIZE), lightmap, sectionsView);
+            }
+            stamp(4 + Rings.RINGS);
+            try (RenderPass pass = encoder.createRenderPass(() -> "awaken far sight trees", main.getColorTextureView(), Optional.empty(), depthView, OptionalDouble.empty())) {
+                trees(pass, screen, 0, field, projection, frame.slice(0, FRAME_SIZE), commands, lightmap, voxels);
+                marks(pass, frame, markBuffer, marks);
+            }
+            partsTimed[timerFrame % timers.length] = true;
+        } else {
+            try (RenderPass pass = encoder.createRenderPass(() -> "awaken far sight", main.getColorTextureView(), Optional.empty(), depthView, OptionalDouble.of(0.0))) {
+                // the cached horizon first, writing Far Sight's depth where it serves; the live parts sort against it
+                horizon.composite(pass, frame, a, b, zeroToOne, pixelsPerTan, main.width, main.height);
+                terrain(pass, screen, 0, field, projection, frame.slice(0, FRAME_SIZE), draws, lightmap, voxels, 0, Rings.RINGS - 1);
+                // City Sight: the real chunks' blocks, after the terrain (which steps aside where they stand)
+                voxels.draw(pass, projection, frame.slice(0, FRAME_SIZE), lightmap, sectionsView);
+                trees(pass, screen, 0, field, projection, frame.slice(0, FRAME_SIZE), commands, lightmap, voxels);
+                marks(pass, frame, markBuffer, marks);
             }
         }
         voxels.endFrame();
+        horizon.endFrame();
         frameUbo.rotate();
         drawUbo.rotate();
         markUbo.rotate();
         treeSlots.rotate();
         treeCommands.rotate();
+    }
+
+    /** The view's planned terrain pieces of rings {@code from} to {@code to} (view {@code index}'s draw blocks). */
+    void terrain(RenderPass pass, View v, int index, FarField field, GpuBufferSlice projection, GpuBufferSlice frame, GpuBuffer draws,
+            GpuTextureView lightmap, VoxelLayer voxels, int from, int to) {
+        if (v.pieces == 0) return;
+        GpuSampler nearest = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
+        pass.setPipeline(RenderSystem.getCompiledPipeline(FarPipelines.TERRAIN));
+        pass.setUniform("Projection", projection);
+        pass.setUniform("Fog", RenderSystem.getShaderFog());
+        pass.setUniform("FarFrame", frame);
+        pass.setUniform("HeightSampler", field.heightView, nearest);
+        pass.setUniform("ColorSampler", field.colourView, nearest);
+        pass.setUniform("InfoSampler", field.infoView, nearest);
+        pass.setUniform("CrownSampler", field.crownView, nearest);
+        pass.setUniform("GenHeightSampler", field.genHeightView, nearest);
+        pass.setUniform("GenColorSampler", field.genColourView, nearest);
+        pass.setUniform("GenInfoSampler", field.genInfoView, nearest);
+        pass.setUniform("GenCrownSampler", field.genCrownView, nearest);
+        pass.setUniform("ShadeSampler", field.shadeView, nearest);
+        pass.setUniform("LightSampler", lightmap, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
+        pass.setUniform("ChunkSampler", chunksView, nearest);
+        pass.setUniform("VoxelSampler", voxels.coverageView, nearest);
+        int bound = -1;
+        long base = (long) index * MAX_DRAWS * align;
+        for (int i = 0; i < v.pieces; i++) {
+            if (v.ring[i] < from || v.ring[i] > to) continue;
+            int k = v.w[i] / 8 - 1;
+            if (k != bound) {
+                pass.setIndexBuffer(widths[k], IndexType.SHORT);
+                bound = k;
+            }
+            pass.setUniform("FarDraw", draws.slice(base + (long) i * align, 16));
+            pass.drawIndexed(v.w[i] * v.h[i] * INDICES_PER_CELL, 1, 0, 0, 0);
+        }
+    }
+
+    /** The view's planned far forests (view {@code index}'s indirect draws). */
+    void trees(RenderPass pass, View v, int index, FarField field, GpuBufferSlice projection, GpuBufferSlice frame, GpuBuffer commands,
+            GpuTextureView lightmap, VoxelLayer voxels) {
+        if (v.treeDraws == 0) return;
+        GpuSampler nearest = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
+        pass.setPipeline(RenderSystem.getCompiledPipeline(FarPipelines.TREES));
+        pass.setUniform("Projection", projection);
+        pass.setUniform("Fog", RenderSystem.getShaderFog());
+        pass.setUniform("FarFrame", frame);
+        pass.setUniform("Trees", field.trees);
+        pass.setUniform("TreeSlots", treeSlots.currentBuffer());
+        pass.setUniform("ShadeSampler", field.shadeView, nearest);
+        pass.setUniform("GenHeightSampler", field.genHeightView, nearest);
+        pass.setUniform("HeightSampler", field.heightView, nearest);
+        pass.setUniform("LightSampler", lightmap, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
+        pass.setUniform("ChunkSampler", chunksView, nearest);
+        pass.setUniform("VoxelSampler", voxels.coverageView, nearest);
+        pass.setIndexBuffer(treeIndices, IndexType.SHORT);
+        if (indirect) {
+            pass.drawIndexedIndirect(commands.slice((long) index * TREE_RUNS * COMMAND_BYTES, (long) v.treeDraws * COMMAND_BYTES), v.treeDraws);
+        } else {
+            for (int i = 0; i < v.treeDraws; i++) pass.drawIndexed(v.treeCount[i], 1, 0, v.treeVertex[i], 0);
+        }
+    }
+
+    /** The landmarks' beams, after the terrain, so ridges in front hide them. */
+    private void marks(RenderPass pass, GpuBuffer frame, GpuBuffer markBuffer, int marks) {
+        if (marks > 0) {
+            // after the terrain, so ridges in front hide them; two quads each (core and halo)
+            pass.setPipeline(RenderSystem.getCompiledPipeline(FarPipelines.MARKS));
+            pass.setUniform("Projection", RenderSystem.getProjectionMatrixBuffer());
+            pass.setUniform("Fog", RenderSystem.getShaderFog());
+            pass.setUniform("FarFrame", frame);
+            pass.setUniform("FarMarks", markBuffer);
+            pass.setIndexBuffer(quads, IndexType.SHORT);
+            pass.drawIndexed(marks * 2 * 6, 1, 0, 0, 0);
+        }
     }
 
     /** Opens this frame's GPU timing (before the bake), after reading the result of three frames ago. */
@@ -629,16 +840,23 @@ final class FarRenderer implements AutoCloseable {
         try {
             int i = timerFrame % timers.length;
             if (timers[i] == null) {
-                timers[i] = RenderSystem.getDevice().createTimestampQueryPool(3);
+                timers[i] = RenderSystem.getDevice().createTimestampQueryPool(STAMPS);
             } else if (timerFrame >= timers.length) {
-                var v = timers[i].getValues(0, 3);
-                if (v[0].isPresent() && v[1].isPresent() && v[2].isPresent()) {
+                var v = timers[i].getValues(0, STAMPS);
+                if (v[0].isPresent() && v[1].isPresent() && v[STAMPS - 1].isPresent()) {
                     double period = RenderSystem.getDevice().getDeviceInfo().timestampPeriod();
                     bakeNanos += (v[1].getAsLong() - v[0].getAsLong()) * period;
-                    gpuNanos += (v[2].getAsLong() - v[0].getAsLong()) * period;
+                    gpuNanos += (v[STAMPS - 1].getAsLong() - v[0].getAsLong()) * period;
                     gpuFrames++;
+                    boolean all = partsTimed[i];
+                    for (int k = 2; all && k < STAMPS - 1; k++) all = v[k].isPresent();
+                    if (all) {
+                        for (int k = 0; k < PARTS; k++) partNanos[k] += (v[k + 2].getAsLong() - v[k + 1].getAsLong()) * period;
+                        partFrames++;
+                    }
                 }
             }
+            partsTimed[i] = false;
             RenderSystem.getDevice().createCommandEncoder().writeTimestamp(timers[i], 0);
         } catch (RuntimeException e) {
             timing = false;
@@ -647,22 +865,21 @@ final class FarRenderer implements AutoCloseable {
 
     /** Between the bake and the draw: the bake's share (timestamps land at pass boundaries on Apple GPUs, as here). */
     void timeBaked() {
-        if (!timing) return;
-        try {
-            RenderSystem.getDevice().createCommandEncoder().writeTimestamp(timers[timerFrame % timers.length], 1);
-        } catch (RuntimeException e) {
-            timing = false;
-        }
+        stamp(1);
     }
 
     void timeEnd() {
+        stamp(STAMPS - 1);
+        timerFrame++;
+    }
+
+    private void stamp(int k) {
         if (!timing) return;
         try {
-            RenderSystem.getDevice().createCommandEncoder().writeTimestamp(timers[timerFrame % timers.length], 2);
+            RenderSystem.getDevice().createCommandEncoder().writeTimestamp(timers[timerFrame % timers.length], k);
         } catch (RuntimeException e) {
             timing = false;
         }
-        timerFrame++;
     }
 
     /** Mean GPU milliseconds per frame (all, and the bake's part) since the last call, or -1 if nothing was timed. */
@@ -671,6 +888,18 @@ final class FarRenderer implements AutoCloseable {
         gpuNanos = 0;
         bakeNanos = 0;
         gpuFrames = 0;
+        return ms;
+    }
+
+    /** Mean GPU milliseconds of the measured parts (each ring, City Sight, the trees and landmarks) since the last call, or null. */
+    double[] partMillis() {
+        double[] ms = null;
+        if (partFrames > 0) {
+            ms = new double[PARTS];
+            for (int k = 0; k < PARTS; k++) ms[k] = partNanos[k] / partFrames / 1e6;
+        }
+        java.util.Arrays.fill(partNanos, 0);
+        partFrames = 0;
         return ms;
     }
 
@@ -699,6 +928,7 @@ final class FarRenderer implements AutoCloseable {
         sectionTex.close();
         MemoryUtil.memFree(sectionBytes);
         MemoryUtil.memFree(chunkBytes);
+        MemoryUtil.memFree(frameBytes);
         for (GpuQueryPool t : timers) if (t != null) t.close();
         if (depthView != null) depthView.close();
         if (depth != null) depth.close();
