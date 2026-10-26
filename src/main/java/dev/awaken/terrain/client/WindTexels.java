@@ -3,11 +3,11 @@ package dev.awaken.terrain.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.renderpearl.api.textures.GpuTexture;
 import dev.awaken.Awaken;
+import dev.awaken.terrain.SwayMath;
 import dev.awaken.terrain.Wind;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.system.MemoryUtil;
@@ -16,35 +16,23 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
- * The wind, handed to Awaken's terrain shader through 27 texels in the block atlas's bottom-right corner (Sodium binds
- * only its own uniforms, the atlas and the lightmap; the atlas is the one thing Awaken can write that the shader can
- * read). The stitcher fills the atlas from the top left, so that corner lies outside every sprite; it is checked at
- * each stitch and nothing is written if a sprite is there. Written once a frame, before terrain draws.
+ * The wind, handed to Awaken's terrain shader through {@link SwayMath#TEXELS} texels in the block atlas's bottom-right
+ * corner (Sodium binds only its own uniforms, the atlas and the lightmap; the atlas is the one thing Awaken can write
+ * that the shader can read). The stitcher fills the atlas from the top left, so that corner lies outside every sprite;
+ * it is checked at each stitch and nothing is written if a sprite is there. Written once a frame, before terrain draws.
+ * The layout and its decoding are {@link SwayMath}'s: the sway clock ({@link ClientWind#animSeconds}, real frame time,
+ * whole turns in 2048 s), the camera (x and z modulo 4096), wind direction, steady strength and a 64-sample gust
+ * profile along the wind on a grid fixed in the world (all 16-bit), the plants' amplitudes, the player's feet.
  *
- * <pre>
- * texel 0      "AWND" signature
- * texel 1      time in seconds modulo 2048 (float bits)
- * texels 2..4  camera x, y, z (x and z modulo 4096; float bits)
- * texel 5      wind direction x, z (-1..1 as 0..1), steady strength, amplitude (x 0.25 blocks)
- * texels 6..21 the gust along the wind through the camera: 64 samples 4 blocks apart, 4 to a texel, sample i at
- *              (i - 31.5) x 4 blocks downwind of the camera
- * texel 22     plants: amplitude in air and under water (x 0.5 blocks), sheen (x 0.5), weather wind here (1, or 0 in
- *              a world without sky light: plants feel only a draught)
- * texels 23..25 the player's feet x, y, z (x and z modulo 4096; y far below the world when there is no one to push)
- * texel 26     how far the feet push tips aside (x 1 block), 3 spare bytes
- * </pre>
- * The shader rounds (region offset + camera) to whole render regions to find each region's world position modulo 4096,
- * and reads the gust passing each leaf and plant from the profile, so the canopy and the meadow sway with the same
+ * <p>The shader rounds (region offset + camera) to whole render regions to find each region's world position modulo
+ * 4096, and reads the gust passing each leaf and plant from the profile, so the canopy and the meadow sway with the same
  * fronts {@link Wind} gives the falling leaves and the rustle. Seven fetches per leaf vertex and nine per plant vertex
  * within 112 blocks (four more right by the camera), none for any other vertex.
  */
 final class WindTexels {
     private WindTexels() {}
 
-    static final int TEXELS = 27;
-    static final int PROFILE = 64;
-    static final float PROFILE_STEP = 4F;
-    private static final int SIGNATURE = 0x444E5741; // "AWND" little-endian
+    static final int TEXELS = SwayMath.TEXELS;
     /** Full sway at strength 1, in blocks (a few hundredths in a breeze). */
     private static final float AMPLITUDE = 0.11F;
     /** Plants, per unit of weight (a short grass tip has 0.75, a tall grass tip 2): blocks of sway in air and in water,
@@ -52,6 +40,7 @@ final class WindTexels {
     static float plantAmplitude = 0.2F, waterAmplitude = 0.16F, sheen = 0.1F, push = 0.32F;
 
     private static final ByteBuffer BUF = MemoryUtil.memAlloc(TEXELS * 4).order(ByteOrder.LITTLE_ENDIAN);
+    private static final SwayMath.Frame FRAME = new SwayMath.Frame();
     private static GpuTexture cornerOf; // the atlas texture whose corner was found free
     private static boolean cornerFree;
     /** Measuring aid ({@code /awaken terrain waving debug}): 0 normal, 1 no signature (shader exits early), 2 amplitude 0,
@@ -90,40 +79,44 @@ final class WindTexels {
         if (tex != cornerOf) return; // replaced by a reload whose stitch we have not seen yet
         Vec3 cam = mc.gameRenderer.mainCamera().position();
 
-        ByteBuffer b = BUF;
-        b.clear();
-        b.putInt(debugMode == 1 ? 0 : SIGNATURE);
-        b.putFloat((float) (wind.seconds - Math.floor(wind.seconds / 2048.0) * 2048.0));
-        b.putFloat((float) wrap(cam.x)).putFloat((float) cam.y).putFloat((float) wrap(cam.z));
-        b.put(snorm(wind.dirX)).put(snorm(wind.dirZ)).put(unorm(wind.steady)).put(debugMode == 2 ? 0 : unorm(AMPLITUDE / 0.25F));
-        for (int i = 0; i < PROFILE; i++) {
-            float along = (i - (PROFILE - 1) * 0.5F) * PROFILE_STEP;
-            b.put(unorm(wind.gust(cam.x + wind.dirX * along, cam.z + wind.dirZ * along)));
+        SwayMath.Frame f = FRAME;
+        f.signature = debugMode != 1;
+        f.t = (float) ClientWind.animSeconds();
+        f.camX = (float) SwayMath.wrap4096(cam.x);
+        f.camY = (float) cam.y;
+        f.camZ = (float) SwayMath.wrap4096(cam.z);
+        f.dirX = wind.dirX;
+        f.dirZ = wind.dirZ;
+        f.steady = wind.steady;
+        f.leafAmp = debugMode == 2 ? 0F : AMPLITUDE;
+        f.profileOff = SwayMath.profileOffset(cam.x, cam.z, wind.dirX, wind.dirZ);
+        for (int i = 0; i < SwayMath.PROFILE; i++) {
+            float along = SwayMath.sampleAlong(i, f.profileOff);
+            f.gust[i] = wind.gust(cam.x + wind.dirX * along, cam.z + wind.dirZ * along);
         }
         boolean still = debugMode == 2 || debugMode == 3;
-        boolean weather = mc.level != null && mc.level.dimensionType().hasSkyLight();
-        b.put(still ? 0 : unorm(plantAmplitude / 0.5F)).put(still ? 0 : unorm(waterAmplitude / 0.5F)).put(unorm(sheen / 0.5F)).put(weather ? (byte) 255 : 0);
+        f.air = still ? 0F : plantAmplitude;
+        f.water = still ? 0F : waterAmplitude;
+        f.sheen = sheen;
+        f.weather = mc.level != null && mc.level.dimensionType().hasSkyLight() ? 1F : 0F;
         Player p = mc.player;
         if (p != null && !p.isSpectator() && p.level() == mc.level) {
             Vec3 feet = p.getPosition(partialTick);
-            b.putFloat((float) wrap(feet.x)).putFloat((float) feet.y).putFloat((float) wrap(feet.z));
+            f.feetX = (float) SwayMath.wrap4096(feet.x);
+            f.feetY = (float) feet.y;
+            f.feetZ = (float) SwayMath.wrap4096(feet.z);
         } else {
-            b.putFloat(0F).putFloat(-1.0E6F).putFloat(0F);
+            f.feetX = 0F;
+            f.feetY = -1.0E6F;
+            f.feetZ = 0F;
         }
-        b.put(still ? 0 : unorm(push)).put((byte) 0).put((byte) 0).put((byte) 0);
+        f.push = still ? 0F : push;
+
+        ByteBuffer b = BUF;
+        b.clear();
+        SwayMath.encode(f, b);
         b.flip();
         RenderSystem.getDevice().createCommandEncoder().writeToTexture(tex, b, 0, 0, tex.getWidth(0) - TEXELS, tex.getHeight(0) - 1, TEXELS, 1);
-    }
-
-    private static double wrap(double v) {
-        return v - Math.floor(v / 4096.0) * 4096.0;
-    }
-
-    private static byte unorm(float v) {
-        return (byte) Math.round(Mth.clamp(v, 0.0F, 1.0F) * 255.0F);
-    }
-
-    private static byte snorm(float v) {
-        return unorm(v * 0.5F + 0.5F);
+        SwayProbe.frame(b, cam);
     }
 }
