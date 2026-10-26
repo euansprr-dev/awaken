@@ -49,6 +49,9 @@ final class CaveCommands {
                                     .executes(c -> go(c, StringArgumentType.getString(c, "toward"))))))
                     .then(Commands.argument("kind", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(kinds, b))
                             .executes(CaveCommands::place)));
+            d.then(Commands.literal("goto").requires(AwakenCommands.admin())
+                    .then(Commands.argument("kind", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(kinds, b))
+                            .executes(CaveCommands::gotoPlace)));
             d.then(Commands.literal("places").executes(CaveCommands::places));
             d.then(Commands.literal("seep").requires(AwakenCommands.admin())
                     .then(Commands.literal("quiet").executes(c -> seep(c, true)))
@@ -92,6 +95,57 @@ final class CaveCommands {
         return 1;
     }
 
+    /**
+     * To the nearest place of a kind the world really made (within 1,600), at its way in, its marks kept for {@code place
+     * go}; with none near, one is laid round you as {@code place} would.
+     */
+    private static int gotoPlace(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {
+        ServerPlayer p = c.getSource().getPlayerOrException();
+        CaveKind kind = CaveKind.byId(StringArgumentType.getString(c, "kind"));
+        if (kind == null) {
+            c.getSource().sendFailure(Component.literal("No such place: sinkhole, mine, seep, chute or grotto"));
+            return 0;
+        }
+        ServerLevel level = p.level();
+        long t0 = System.nanoTime();
+        Spec s = CaveLocate.nearest(level, p.blockPosition(), kind, 1600);
+        if (s == null) {
+            c.getSource().sendSuccess(() -> Component.literal("No " + kind.id + " within 1600: laying one here").withColor(0xC8C2B0), false);
+            return place(c);
+        }
+        // its marks, from the place built in memory (the world builds the real one as its chunks generate)
+        Grid g = CaveTests.grid(s);
+        s.build(g);
+        Map<String, BlockPos> marks = new HashMap<>();
+        for (var e : g.marks.entrySet()) marks.put(e.getKey(), new BlockPos(e.getValue()[0], e.getValue()[1], e.getValue()[2]));
+        lastMarks = marks;
+        CavePlaces.KNOWN.put(s.id(), s);
+        BlockPos start = marks.getOrDefault("start", new BlockPos(s.x(), s.y(), s.z()));
+        level.getChunk(start.getX() >> 4, start.getZ() >> 4);
+        BlockPos at = safe(level, start);
+        BlockPos look = kind == CaveKind.SINKHOLE ? new BlockPos(s.x(), at.getY() - 6, s.z()) : marks.getOrDefault("goal", at);
+        double dx = look.getX() - at.getX(), dy = look.getY() + 1.0 - (at.getY() + 1.62), dz = look.getZ() - at.getZ();
+        teleport(p, at, (float) Math.toDegrees(Math.atan2(-dx, dz)), (float) -Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz))));
+        double ms = (System.nanoTime() - t0) / 1e6;
+        dev.awaken.Awaken.LOG.info("[delve] goto {} \"{}\" at {} {} {} ({} ms), you at {}", kind.id, CaveNames.name(s), s.x(), s.y(), s.z(),
+                Math.round(ms), at.toShortString());
+        c.getSource().sendSuccess(() -> Component.literal(String.format(Locale.ROOT, "%s \"%s\" at %d %d %d (found in %.0f ms); marks: %s",
+                kind.id, CaveNames.name(s), s.x(), s.y(), s.z(), ms, String.join(", ", marks.keySet()))).withColor(0x9FE6D6), false);
+        return 1;
+    }
+
+    /** A spot to stand at or just above {@code at} (the world's own ground may differ a little from a mark's). */
+    static BlockPos safe(ServerLevel level, BlockPos at) {
+        BlockPos.MutableBlockPos m = at.mutable();
+        for (int i = 0; i < 24; i++) {
+            boolean feet = level.getBlockState(m).getCollisionShape(level, m).isEmpty() && level.getFluidState(m).isEmpty();
+            boolean head = level.getBlockState(m.above()).getCollisionShape(level, m.above()).isEmpty();
+            if (feet && head) return m.immutable();
+            m.move(0, 1, 0);
+        }
+        return at;
+    }
+
     /** The staged sinkhole's lode: its blocks written into the rock (worldgen writes planned lodes itself) and laid for every query. */
     private static void layLode(ServerLevel level, Spec s) {
         Lode l = CaveStaging.lode(s);
@@ -115,6 +169,7 @@ final class CaveCommands {
             c.getSource().sendFailure(Component.literal("No such mark in the last place laid: " + String.join(", ", lastMarks.keySet())));
             return 0;
         }
+        at = safe(p.level(), at);
         if (to == null) {
             teleport(p, at, p.getYRot(), p.getXRot());
             return 1;

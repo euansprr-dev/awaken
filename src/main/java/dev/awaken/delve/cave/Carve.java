@@ -101,7 +101,19 @@ final class Carve {
 
     static void air(Sink s, int x, int y, int z) {
         if (!s.inside(x, y, z)) return;
-        if (carvable(s.get(x, y, z))) s.set(x, y, z, AIR);
+        if (carvable(s.get(x, y, z))) clearAt(s, x, y, z);
+    }
+
+    /** Air at a carved cell; sand or gravel left hanging over it is turned to stone (a roof never pours in). */
+    private static void clearAt(Sink s, int x, int y, int z) {
+        s.set(x, y, z, AIR);
+        if (!s.inside(x, y + 1, z)) return;
+        BlockState up = s.get(x, y + 1, z);
+        if (up.getBlock() instanceof net.minecraft.world.level.block.FallingBlock) {
+            BlockState hard = up.is(Blocks.SAND) || up.is(Blocks.SUSPICIOUS_SAND) ? Blocks.SANDSTONE.defaultBlockState()
+                    : up.is(Blocks.RED_SAND) ? Blocks.RED_SANDSTONE.defaultBlockState() : rock(y + 1);
+            s.set(x, y + 1, z, hard);
+        }
     }
 
     /** Solid rock back where carving would have opened it (a lode's heart stays in the wall). */
@@ -121,7 +133,7 @@ final class Carve {
         int az = Math.max(Math.min(z0, z1), s.minZ()), bz = Math.min(Math.max(z0, z1), s.maxZ());
         int ay = Math.max(Math.min(y0, y1), s.minY()), by = Math.min(Math.max(y0, y1), s.maxY());
         for (int x = ax; x <= bx; x++) for (int z = az; z <= bz; z++) for (int y = ay; y <= by; y++) {
-            if (carvable(s.get(x, y, z))) s.set(x, y, z, AIR);
+            if (carvable(s.get(x, y, z))) clearAt(s, x, y, z);
         }
     }
 
@@ -140,7 +152,7 @@ final class Carve {
                     double dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry, dz = (z + 0.5 - cz) / rz;
                     double d = dx * dx + dy * dy + dz * dz;
                     double k = 1 + rough * (2 * noise(seed, x, y, z, scale) - 1);
-                    if (d <= k * k && carvable(s.get(x, y, z))) s.set(x, y, z, AIR);
+                    if (d <= k * k && carvable(s.get(x, y, z))) clearAt(s, x, y, z);
                 }
             }
         }

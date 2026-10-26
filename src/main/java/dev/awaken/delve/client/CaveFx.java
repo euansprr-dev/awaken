@@ -51,7 +51,8 @@ final class CaveFx {
             double d2 = dx * dx + dz * dz;
             if (s.kind() == CaveKind.SINKHOLE.ordinal()) {
                 if (day <= 0 || d2 > 150 * 150) continue;
-                float rate = day * (0.6F + s.radius() / 12F) * (d2 < 60 * 60 ? 1F : 0.5F);
+                // a few wisps a second at dawn, thinning through the day: mist, never a fog bank
+                float rate = day * (0.12F + s.radius() / 70F) * (d2 < 60 * 60 ? 1F : 0.5F);
                 int n = (int) rate + (R.nextFloat() < rate - (int) rate ? 1 : 0);
                 for (int i = 0; i < n; i++) {
                     double a = R.nextDouble() * Math.PI * 2, r = Math.sqrt(R.nextDouble()) * s.radius() * 0.85;
@@ -88,9 +89,9 @@ final class CaveFx {
             this.friction = mist ? 0.995F : 0.97F;
             this.hasPhysics = false;
             this.lifetime = mist ? 120 + random.nextInt(80) : 30 + random.nextInt(20);
-            this.quadSize = mist ? 1.6F + random.nextFloat() * 1.4F : 0.35F + random.nextFloat() * 0.25F;
+            this.quadSize = mist ? 0.9F + random.nextFloat() * 0.8F : 0.35F + random.nextFloat() * 0.25F;
             this.base = quadSize;
-            this.peak = mist ? 0.30F + random.nextFloat() * 0.12F : 0.32F;
+            this.peak = mist ? 0.14F + random.nextFloat() * 0.08F : 0.32F;
             this.roll = random.nextFloat() * Mth.TWO_PI;
             this.oRoll = roll;
             float c = mist ? 0.92F + random.nextFloat() * 0.06F : 0.86F;
@@ -115,7 +116,14 @@ final class CaveFx {
             super.tick();
             float t = (float) age / lifetime;
             alpha = peak * Math.min(1F, Math.min(t * (mist ? 4F : 6F), (1F - t) * (mist ? 1.6F : 2.5F)));
-            quadSize = base * (mist ? 1F + 1.4F * t : 1F + 0.5F * t);
+            quadSize = base * (mist ? 1F + 1.0F * t : 1F + 0.5F * t);
+            if (mist) {
+                // thins to nothing round the camera: you walk out of mist, never into a white wall
+                var cam = net.minecraft.client.Minecraft.getInstance().gameRenderer.mainCamera().position();
+                double dx = x - cam.x, dy = y - cam.y, dz = z - cam.z;
+                double d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                alpha *= (float) Math.max(0, Math.min(1, (d - 2.5) / 6.0));
+            }
             oRoll = roll;
             roll += mist ? 0.004F : 0.01F;
         }

@@ -82,6 +82,9 @@ public final class AscentPilot {
                 if (a.length >= 5 && a[1].equals("hang")
                         && AscentMoves.hangFrom(p, Double.parseDouble(a[2]), Double.parseDouble(a[3]), Double.parseDouble(a[4]))) {
                     HOLD[TETHER] = 600;
+                    // the key down now, before this tick's input lets go of a line nobody holds
+                    apply();
+                    holding = true;
                 } else {
                     Awaken.LOG.warn("[ascent] pilot: couldn't hang ({})", line);
                 }
