@@ -1,0 +1,55 @@
+# The city is not a discovery (SPEC §26.3b, Euan 2026-10-26): a fresh world, the opening skipped (the Registry done, the
+# city is yours), a walk through four districts past the city's animals and citizens, then the K menu: the Journal and
+# the Codex's creatures must be empty. Then out through the High Gate into the Commons: the first biome lands there
+# (filed to the Journal; a new world's first 5 minutes are quiet, so it is filed, not toasted) and K shows it.
+# Run on CI: tools/tour-ci.sh tools/autopilot/discovery-city.txt 1200 PACK=perf,world TECTONIC=awakened
+world discoveryCity survival 20261024
+waitworld
+gui 0
+window 1440 900
+info
+cmd gamerule send_command_feedback false
+cmd weather clear 1000000
+cmd time set 4000
+cmd awaken opening skip
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+# ---- the city: four districts, a while in each (biomes are checked every 2 s, sightings 4 times a second)
+cmd awaken city view square
+wait 120
+cmd awaken city view market
+wait 120
+cmd awaken city view garden
+wait 120
+cmd awaken city view quay
+wait 120
+shot 01_city_street
+screen status
+wait 30
+# K in the city after the Registry: no Journal, no "New biome", no creatures
+shot 02_k_status_in_city
+scroll -6
+wait 10
+shot 03_k_status_in_city_lower
+screen codex
+wait 30
+shot 04_k_codex_in_city
+screen close
+wait 10
+# ---- out through the High Gate into the Commons
+cmd awaken city view studio_high_gate
+wait 200
+shot 05_outside_high_gate
+# filed after the director's wait (the world is still in its quiet first minutes)
+wait 1000
+screen status
+wait 30
+shot 06_k_status_outside
+screen codex
+wait 30
+shot 07_k_codex_outside
+screen close
+wait 10
+quit

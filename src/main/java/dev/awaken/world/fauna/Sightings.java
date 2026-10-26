@@ -68,6 +68,10 @@ public final class Sightings {
     /** One look around for one player. Returns the creature newly discovered, if any. */
     public static @Nullable MobDef check(ServerPlayer p) {
         if (p.isSpectator() || !Progression.profile(p).awakened()) return null;
+        if (!Finds.counts(p)) { // the city's animals and citizens are no discovery
+            DWELLING.remove(p.getUUID());
+            return null;
+        }
         List<FaunaMob> live = FaunaCensus.in(p.level());
         if (live.isEmpty()) return null;
         Set<String> known = known(p);
@@ -126,7 +130,7 @@ public final class Sightings {
 
     /** The player hit or touched a creature: that is studying it. */
     static void touched(ServerPlayer p, FaunaMob m) {
-        if (!Progression.profile(p).awakened() || known(p).contains(m.def().id)) return;
+        if (!Progression.profile(p).awakened() || !Finds.counts(p) || known(p).contains(m.def().id)) return;
         discover(p, m.def());
     }
 

@@ -26,7 +26,9 @@ import java.util.Set;
 /**
  * {@code /awaken citizens ...} (game masters):
  * <pre>
- * info                  the ledger, bodies, lamps, stalls, events and the timing line
+ * info                  the ledger, bodies, lamps, stalls, events and the timing line (Carillon's)
+ * settlements           every settlement on the people engine and the shared pool of bodies
+ * hamlet [off]          the test hamlet on the engine at your feet (W0's proof; W3 builds real villages)
  * who                   the citizen nearest you: name, job, what they're doing
  * show &lt;what&gt;           stand where you can watch it: a job (lamplighter, smith, ...), a citizen's name, stall, event
  * event &lt;kind&gt;          start an event now (burglary, pickpocket, fire, cart, tremor)
@@ -50,6 +52,9 @@ final class CitizensCommands {
     static void register() {
         AwakenCommands.add((root, ctx) -> root.then(Commands.literal("citizens").requires(AwakenCommands.admin())
                 .then(Commands.literal("info").executes(c -> info(c.getSource())))
+                .then(Commands.literal("settlements").executes(c -> settlements(c.getSource())))
+                .then(Commands.literal("hamlet").executes(c -> hamlet(c.getSource(), true))
+                        .then(Commands.literal("off").executes(c -> hamlet(c.getSource(), false))))
                 .then(Commands.literal("who").executes(c -> who(c.getSource())))
                 .then(Commands.literal("show").then(Commands.argument("what", StringArgumentType.word())
                         .suggests((c, b) -> SharedSuggestionProvider.suggest(SHOW, b))
@@ -62,14 +67,14 @@ final class CitizensCommands {
                         .executes(c -> renown(c.getSource(), StringArgumentType.getString(c, "tier")))))
                 .then(Commands.literal("greet").executes(c -> greet(c.getSource())))
                 .then(Commands.literal("bodies").then(Commands.argument("on", StringArgumentType.word()).executes(c -> {
-                    Citizens z = need(c.getSource());
+                    Settlement z = need(c.getSource());
                     if (z == null) return 0;
                     z.crowd.on = StringArgumentType.getString(c, "on").equals("on");
                     if (!z.crowd.on) z.crowd.despawnAll();
                     return say(c.getSource(), "bodies " + z.crowd.on);
                 })))
                 .then(Commands.literal("lanterns").executes(c -> {
-                    Citizens z = need(c.getSource());
+                    Settlement z = need(c.getSource());
                     if (z == null) return 0;
                     long w = Lanterns.writes;
                     Lanterns.writes = 0;
@@ -78,21 +83,21 @@ final class CitizensCommands {
                     return say(c.getSource(), "lanterns " + (Lanterns.legacy ? "blocks" : "glow") + ": " + w + " writes, " + z.lanterns.active() + " lit");
                 }).then(Commands.argument("mode", StringArgumentType.word())
                         .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("blocks", "glow"), b)).executes(c -> {
-                            Citizens z = need(c.getSource());
+                            Settlement z = need(c.getSource());
                             if (z == null) return 0;
                             Lanterns.legacy = StringArgumentType.getString(c, "mode").equals("blocks");
                             Lanterns.writes = 0;
                             return say(c.getSource(), "lanterns " + (Lanterns.legacy ? "blocks" : "glow"));
                         })))
                 .then(Commands.literal("cap").then(Commands.argument("n", IntegerArgumentType.integer(0, 200)).executes(c -> {
-                    Citizens z = need(c.getSource());
+                    Settlement z = need(c.getSource());
                     if (z == null) return 0;
                     z.crowd.capPlayer = IntegerArgumentType.getInteger(c, "n");
                     return say(c.getSource(), "cap " + z.crowd.capPlayer);
                 })))
                 .then(Commands.literal("window")
                         .then(Commands.literal("start").then(Commands.argument("label", StringArgumentType.word()).executes(c -> {
-                            Citizens z = need(c.getSource());
+                            Settlement z = need(c.getSource());
                             if (z == null) return 0;
                             z.crowd.stats.startWindow(StringArgumentType.getString(c, "label"));
                             z.ledger.resetCounters();
@@ -100,7 +105,7 @@ final class CitizensCommands {
                             return say(c.getSource(), "window " + z.crowd.stats.windowLabel);
                         })))
                         .then(Commands.literal("end").executes(c -> {
-                            Citizens z = need(c.getSource());
+                            Settlement z = need(c.getSource());
                             if (z == null || z.crowd.stats.windowLabel == null) return 0;
                             String label = z.crowd.stats.windowLabel;
                             Awaken.LOG.info("[citizens] {} | inview={} | {}", z.crowd.stats.endWindow(), z.crowd.inView(), z.line());
@@ -108,10 +113,45 @@ final class CitizensCommands {
                         })))));
     }
 
-    private static Citizens need(CommandSourceStack src) {
-        Citizens c = Citizens.active;
+    private static Settlement need(CommandSourceStack src) {
+        Settlement c = Citizens.carillon();
         if (c == null) src.sendFailure(Component.literal("Carillon has no citizens in this world"));
         return c;
+    }
+
+    /** Every settlement running on the people engine (SPEC §28.4): id, key, people, bodies, awake. */
+    private static int settlements(CommandSourceStack src) {
+        List<Settlement> live = Citizens.live();
+        if (live.isEmpty()) return say(src, "no settlements running");
+        StringBuilder sb = new StringBuilder();
+        for (Settlement s : live) {
+            sb.append(String.format(Locale.ROOT, "#%d %s (%s) at %d %d %d: %d people, %d bodies, %s%n", s.id, s.key, s.name, s.site.cx(),
+                    s.site.baseY(), s.site.cz(), s.roster.citizens, s.bodies(), s.awake ? "awake" : "asleep"));
+        }
+        Settlement any = live.getFirst();
+        sb.append(String.format(Locale.ROOT, "pool: %d bodies of %d (world), %d a player", any.crowd.bodies.size(), any.crowd.capWorld, any.crowd.capPlayer));
+        Awaken.LOG.info("[citizens] settlements:\n{}", sb);
+        return say(src, sb.toString().strip());
+    }
+
+    /**
+     * (W0's proof, a stand-in for W3's villages) the test hamlet (SettlementTests.hamlet: a lane, three doors, a well, a
+     * smith, six people) running on the engine with its street at your feet, beside Carillon; {@code off} stops it.
+     * There are no houses: it is people, their places and the engine's own furniture (the anvil, the tub).
+     */
+    private static int hamlet(CommandSourceStack src, boolean on) throws CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        for (Settlement s : List.copyOf(Citizens.live())) if (s.key.equals("dev:hamlet")) Citizens.unregister(s.id);
+        if (!on) return say(src, "the hamlet is stopped");
+        BlockPos at = p.blockPosition().below(); // the street's paving: people stand on it
+        var made = dev.awaken.citizens.api.Settlements.register(p.level(),
+                new dev.awaken.citizens.api.SettlementSpec("dev:hamlet", "Little Wick", at, 48, SettlementTests.hamlet()));
+        if (made.isEmpty()) {
+            src.sendFailure(Component.literal("the hamlet didn't start (see the log)"));
+            return 0;
+        }
+        Awaken.LOG.info("[citizens] hamlet: settlement {} at {}", made.get().id(), at.toShortString());
+        return say(src, "Little Wick (settlement " + made.get().id() + ") at " + at.toShortString());
     }
 
     private static int say(CommandSourceStack src, String s) {
@@ -120,7 +160,7 @@ final class CitizensCommands {
     }
 
     private static int info(CommandSourceStack src) {
-        Citizens c = need(src);
+        Settlement c = need(src);
         if (c == null) return 0;
         CitizensData d = c.data;
         int lit = 0, broken = 0, open = 0;
@@ -147,7 +187,7 @@ final class CitizensCommands {
     }
 
     private static int who(CommandSourceStack src) throws CommandSyntaxException {
-        Citizens c = need(src);
+        Settlement c = need(src);
         if (c == null) return 0;
         ServerPlayer p = src.getPlayerOrException();
         int best = -1;
@@ -167,7 +207,7 @@ final class CitizensCommands {
         return say(src, describe(c, best) + String.format(Locale.ROOT, " (%.0f blocks)", Math.sqrt(bd)));
     }
 
-    static String describe(Citizens c, int i) {
+    static String describe(Settlement c, int i) {
         Roster r = c.roster;
         CitizensData d = c.data;
         int seg = c.ledger.segIndex(i);
@@ -184,7 +224,7 @@ final class CitizensCommands {
 
     /** Stands the player where a scene can be watched: a few blocks off, on open ground, looking at it. */
     private static int show(CommandSourceStack src, String what) throws CommandSyntaxException {
-        Citizens c = need(src);
+        Settlement c = need(src);
         if (c == null) return 0;
         ServerPlayer p = src.getPlayerOrException();
         Ledger l = c.ledger;
@@ -346,7 +386,7 @@ final class CitizensCommands {
     }
 
     /** A night watchman on the wall walk now (the next of them on each call), or -1. */
-    static int pickWallWatch(Citizens c) {
+    static int pickWallWatch(Settlement c) {
         Roster r = c.roster;
         CitizensData d = c.data;
         int job = java.util.Arrays.asList(Roster.JOBS).indexOf("watch"), best = -1, bestScore = -1;
@@ -367,7 +407,7 @@ final class CitizensCommands {
     }
 
     /** A citizen of that job (or that name) at work now: at the job's own station beats any stand beats walking beats inside. */
-    static int pickCitizen(Citizens c, String what) {
+    static int pickCitizen(Settlement c, String what) {
         Roster r = c.roster;
         CitizensData d = c.data;
         int named = r.namedIndex(what);
@@ -425,7 +465,7 @@ final class CitizensCommands {
     }
 
     /** Where most people of a district are out right now: the citizen with the most others within 16 blocks. */
-    static int crowdIn(Citizens c, int district) {
+    static int crowdIn(Settlement c, int district) {
         Ledger l = c.ledger;
         double[] pos = new double[3];
         int n = c.roster.citizens;
@@ -453,7 +493,7 @@ final class CitizensCommands {
     }
 
     /** An open spot 4-11 blocks from a point with a clear line of open ground to it, nearest to {@code want}. */
-    static double[] vantage(Citizens c, double x, double y, double z, double want) {
+    static double[] vantage(Settlement c, double x, double y, double z, double want) {
         CityPlan plan = CityPlan.get();
         int cx = c.ledger.cx, cz = c.ledger.cz;
         double bestScore = Double.MAX_VALUE;
@@ -496,7 +536,7 @@ final class CitizensCommands {
     }
 
     /** A camera with its feet at (x, feetY, z) stands in free air and sees the target. */
-    private static boolean seen(Citizens c, double x, double feetY, double z, Vec3 target) {
+    private static boolean seen(Settlement c, double x, double feetY, double z, Vec3 target) {
         BlockPos feet = BlockPos.containing(x, feetY, z);
         for (int dy = 0; dy <= 1; dy++) {
             BlockPos q = feet.above(dy);
@@ -528,12 +568,12 @@ final class CitizensCommands {
         return eye[0];
     }
 
-    private static int liftAt(Citizens c, double x, double z) {
+    private static int liftAt(Settlement c, double x, double z) {
         return CityPlan.get().lift((int) Math.floor(x - c.ledger.cx), (int) Math.floor(z - c.ledger.cz));
     }
 
     private static int event(CommandSourceStack src, String kind) throws CommandSyntaxException {
-        Citizens c = need(src);
+        Settlement c = need(src);
         if (c == null) return 0;
         ServerPlayer p = src.getPlayer();
         String s = c.events.start(kind, p, c.level.getGameTime());
@@ -545,7 +585,7 @@ final class CitizensCommands {
     }
 
     private static int renown(CommandSourceStack src, String tier) throws CommandSyntaxException {
-        Citizens c = need(src);
+        Settlement c = need(src);
         if (c == null) return 0;
         ServerPlayer p = src.getPlayerOrException();
         int know = switch (tier) {
@@ -558,7 +598,7 @@ final class CitizensCommands {
     }
 
     private static int greet(CommandSourceStack src) throws CommandSyntaxException {
-        Citizens c = need(src);
+        Settlement c = need(src);
         if (c == null) return 0;
         ServerPlayer p = src.getPlayerOrException();
         // whoever is most squarely in view within 14 blocks (else the nearest)
@@ -566,7 +606,7 @@ final class CitizensCommands {
         CitizenBody b = null;
         double best = -1e9;
         for (CitizenBody o : c.crowd.bodies) {
-            if (o.rec < 0 || !c.roster.isCitizen(o.rec)) continue;
+            if (o.rec < 0 || o.home != c || !c.roster.isCitizen(o.rec)) continue;
             double dx = o.getX() - p.getX(), dy = o.getEyeY() - p.getEyeY(), dz = o.getZ() - p.getZ(), dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
             if (dist > 14) continue;
             double score = (dx * look.x + dy * look.y + dz * look.z) / Math.max(1e-3, dist) * 10 - dist * 0.2;

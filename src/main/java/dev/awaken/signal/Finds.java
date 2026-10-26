@@ -1,5 +1,6 @@
 package dev.awaken.signal;
 
+import dev.awaken.core.api.CityHooks;
 import dev.awaken.core.api.Notices;
 import dev.awaken.progression.Progression;
 import net.minecraft.network.chat.Component;
@@ -43,6 +44,15 @@ public final class Finds {
         public Find big(String label) {
             return new Find(kind, title, name, hint, colour, intent, true, label);
         }
+    }
+
+    /**
+     * Whether finds count where the player stands (SPEC §26.3, Euan 2026-10-26): never inside Carillon's walls. The
+     * city is where you start, not something you discover; nothing there is a biome, a creature, a landmark or a
+     * happening found. Sources check this before recording anything, so the first find outside is still a first.
+     */
+    public static boolean counts(ServerPlayer p) {
+        return !CityHooks.inCity(p.level(), p.blockPosition());
     }
 
     /** What happened, for tests and the log. */

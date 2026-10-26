@@ -370,6 +370,7 @@ final class AnomalyTests {
             List<UUID> mobs = new java.util.ArrayList<>();
             h.startSequence()
                     .thenExecute(() -> {
+                        discardItems(level, g); // another test's shards on this ground would read as a payout
                         rift[0] = Rifts.open(level, p, g, data, true);
                         core[0] = Rifts.entity(level, rift[0]);
                         before[0] = totalXp(prof);

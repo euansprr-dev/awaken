@@ -318,6 +318,9 @@ final class OpeningTests {
                 OpeningWorld w = r.world();
                 MinecraftServer server = r.server();
                 ServerPlayer a = r.players().get(0), b = r.players().get(1), c = r.players().get(2), d = r.players().get(3);
+                // the clock is game time: early in a run (or a short one) "five minutes before now" fell below zero, which
+                // reads as no group at all, and the straggler was never pulled
+                OpeningDirector.clockOffset += OpeningDirector.STRAGGLERS;
 
                 // both run; the first arrives and waits
                 run(r, a);

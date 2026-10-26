@@ -1,0 +1,144 @@
+# Between the Gates W0, "Many settlements" (SPEC §28.4): Carillon running as settlement 0 of the multi-settlement
+# people engine, framed as before so the shots pair with the city before W0: B3a's tour (carillon-m4b3a.txt: w0_noon_*
+# with b3a_noon_square / _market_street / _market / _quay, b3a_bellwatch; w0_dusk_bellwatch with b3a_dusk_bellwatch;
+# w0_night_market_street and w0_night_square with b3a_night_*) and M3's (docs/carillon/milestones/m3/: m3_noon_market,
+# m3_job_smith, m3_job_porter, m3_dusk_quay, m3_dusk_lamplighter, m3_night_watch); Kestrel at the Roost and Bram at the
+# Registry by day; the Watch's lantern round after dark. Then a second settlement on the same engine: the test hamlet
+# (/awaken citizens hamlet: a lane, three doors, a well, a smith, six people with a day) on a studio platform 700 blocks
+# out, its people at work at noon beside the city's (one pool of bodies), and gone indoors at dusk.
+# Run on GitHub's Macs: tools/tour-ci.sh tools/autopilot/world-depth-w0.txt 1500 PACK=perf,world TECTONIC=awakened
+world autopilot_world_depth_w0 creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+# a fresh client's first flight over the city ends on the view question, holding the camera on the Roost: skip the
+# opening (as world-depth-w1.txt does), then the starter pick and the Ascent's gift card
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+key dismiss
+wait 10
+screen close
+window 1440 900
+info
+cmd awaken city info
+cmd awaken citizens info
+cmd awaken citizens settlements
+hud off
+cmd gamemode spectator
+# ---- noon in Carillon, B3a's framings
+cmd awaken city view square
+wait 300
+shot w0_noon_square
+cmd awaken city view market_street
+wait 200
+shot w0_noon_market_street
+cmd awaken city view market
+wait 160
+shot w0_noon_market
+cmd awaken city view quay
+wait 200
+shot w0_noon_quay
+cmd awaken city view bellwatch
+wait 160
+shot w0_noon_bellwatch
+# ---- people at work (M3's framings), the named
+cmd awaken citizens show crowd_market
+wait 140
+shot w0_noon_crowd_market
+cmd awaken citizens show smith
+wait 120
+shot w0_noon_smith
+cmd awaken citizens show porter
+wait 120
+shot w0_noon_porter
+cmd awaken citizens show kestrel
+wait 160
+shot w0_noon_kestrel_roost
+cmd awaken citizens show bram
+wait 160
+shot w0_noon_bram_registry
+# ---- dusk: the lamps lit by the lamplighters, the quay
+cmd time set 13300
+cmd awaken city view bellwatch
+wait 300
+shot w0_dusk_bellwatch
+cmd awaken citizens show crowd_quay
+wait 160
+shot w0_dusk_quay
+cmd awaken citizens show lamplighter
+wait 120
+shot w0_dusk_lamplighter
+# ---- night: the lamp lines and the Watch's lanterns
+cmd time set 16000
+cmd awaken city view market_street
+wait 300
+shot w0_night_market_street
+cmd awaken city view square
+wait 160
+shot w0_night_square
+cmd time set 17000
+cmd awaken citizens show watch_side
+wait 260
+shot w0_night_watch_lantern
+cmd awaken citizens show wall_watch_front
+wait 200
+shot w0_night_watch_round
+# ---- the second settlement: the test hamlet at noon, 700 blocks east of the square on a studio platform
+cmd time set 6000
+cmd awaken city view square
+wait 40
+cmd tp @s ~700 201 ~
+wait 300
+cmd fill ~-26 ~-1 ~-14 ~26 ~-1 ~14 minecraft:grass_block
+cmd fill ~-14 ~ ~-9 ~-8 ~4 ~-3 minecraft:spruce_planks hollow
+cmd fill ~-2 ~ ~-9 ~4 ~4 ~-3 minecraft:spruce_planks hollow
+cmd fill ~10 ~ ~-9 ~16 ~4 ~-3 minecraft:spruce_planks hollow
+cmd fill ~10 ~ ~4 ~16 ~4 ~10 minecraft:stone_bricks hollow
+cmd setblock ~-11 ~ ~-3 minecraft:spruce_door[facing=south,half=lower]
+cmd setblock ~-11 ~1 ~-3 minecraft:spruce_door[facing=south,half=upper]
+cmd setblock ~1 ~ ~-3 minecraft:spruce_door[facing=south,half=lower]
+cmd setblock ~1 ~1 ~-3 minecraft:spruce_door[facing=south,half=upper]
+cmd setblock ~13 ~ ~-3 minecraft:spruce_door[facing=south,half=lower]
+cmd setblock ~13 ~1 ~-3 minecraft:spruce_door[facing=south,half=upper]
+cmd setblock ~13 ~ ~4 minecraft:spruce_door[facing=north,half=lower]
+cmd setblock ~13 ~1 ~4 minecraft:spruce_door[facing=north,half=upper]
+cmd fill ~-1 ~-1 ~4 ~1 ~-1 ~6 minecraft:cobblestone
+cmd setblock ~ ~-1 ~5 minecraft:water
+cmd fill ~-13 ~-1 ~-1 ~16 ~-1 ~2 minecraft:dirt_path
+wait 20
+# the engine furnishes the smith's anvil and the washer's tub itself; its people seated by the hour (noon)
+cmd awaken citizens hamlet
+wait 20
+cmd awaken citizens settlements
+wait 400
+cmd tp @s ~3 ~10 ~26 facing ~1 ~ ~
+wait 120
+shot w0_hamlet_noon
+cmd tp @s ~-3 ~-10 ~-26
+cmd tp @s ~7 ~1 ~8 facing ~11.5 ~0.5 ~3
+wait 120
+shot w0_hamlet_smith
+cmd tp @s ~-7 ~-1 ~-8
+cmd tp @s ~-5 ~2 ~11 facing ~0 ~ ~4
+wait 120
+shot w0_hamlet_green
+cmd tp @s ~5 ~-2 ~-11
+cmd awaken citizens settlements
+# ---- dusk: the hamlet's people home (the bodies go in at their doors), Carillon's lamps lit far off
+cmd time set 12800
+wait 300
+cmd tp @s ~3 ~10 ~26 facing ~1 ~ ~
+wait 120
+shot w0_hamlet_dusk
+cmd awaken citizens settlements
+quit

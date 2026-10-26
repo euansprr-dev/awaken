@@ -84,8 +84,8 @@ final class CityLifeTests {
         ServerLevel level = h.getLevel();
         BlockPos origin = h.absolutePos(BlockPos.ZERO);
         StreetNet g = StreetNet.of(CityPlan.get(), origin.getX(), origin.getZ(), origin.getY(), r.edgeLane).withWall(r, origin.getX(), origin.getZ(), origin.getY());
-        Citizens c = new Citizens(level, r, g, new CitizensData(), origin.getX(), origin.getZ(), origin.getY());
-        c.crowd.on = false;
+        Settlement c = Settlement.carillon(level, r, g, new CitizensData(), origin.getX(), origin.getZ(), origin.getY());
+        c.embody = false;
         c.work.edits = false;
         CitizenBody b = new CitizenBody(CitizensContent.CITIZEN.get(), level);
         BlockPos feet = h.absolutePos(new BlockPos(2, 1, 2));
