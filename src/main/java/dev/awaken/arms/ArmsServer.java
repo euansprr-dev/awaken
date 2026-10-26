@@ -125,6 +125,7 @@ final class ArmsServer {
                 if (msg.seq() != s.holdSeq) return;
                 s.holdOpen = false;
                 s.waitHit = false; // a tap: the strike lands as it comes
+                if (s.waitSeen) shown(p, s);
             }
             case ArmsPayloads.PRESS_CHARGE -> {
                 if (msg.seq() != s.seq) return;
@@ -244,9 +245,18 @@ final class ArmsServer {
             s.rhythm = true;
         }
         AwakenNet.send(p, new ArmsPayloads.Result(seq, ArmsPayloads.MOVE, -1, move.ordinal(), cadence));
-        p.swing(InteractionHand.MAIN_HAND, net.minecraft.world.item.component.SwingAnimation.DEFAULT, true); // the vanilla arm for anyone without the clips
-        soundForOthers(p, ArmsSounds.swish(def), 1.0F, ArmsSounds.swishPitch(cadence));
-        seen(p, new ArmsPayloads.Seen(p.getId(), ArmsPayloads.MOVE, -1, style.index(), move.ordinal()));
+        s.waitSeen = s.waitHit; // a strike waiting on its press shows itself only once the press is a tap
+        if (!s.waitHit) shown(p, s);
+    }
+
+    /** The running move as everyone near sees and hears it: the vanilla arm (without the clips), the swish, the clip. */
+    static void shown(ServerPlayer p, ArmsState s) {
+        s.waitSeen = false;
+        Archetype.MoveDef def = s.style == null || s.move == null ? null : s.style.move(s.move);
+        if (def == null) return;
+        p.swing(InteractionHand.MAIN_HAND, net.minecraft.world.item.component.SwingAnimation.DEFAULT, true);
+        soundForOthers(p, ArmsSounds.swish(def), 1.0F, ArmsSounds.swishPitch(s.cadence));
+        seen(p, new ArmsPayloads.Seen(p.getId(), ArmsPayloads.MOVE, -1, s.style.index(), s.move.ordinal()));
     }
 
     static void refuse(ServerPlayer p, int seq) {
@@ -299,6 +309,7 @@ final class ArmsServer {
                 return;
             }
             s.waitHit = false;
+            if (s.waitSeen) shown(p, s);
         }
         if (rel >= def.windup() && rel < def.activeEnd() && Arms.fights(p)) {
             if (s.move == Archetype.Move.ART && !s.unleashed) {

@@ -4495,8 +4495,11 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   the strike is dropped unlanded and the charge begins (`PRESS_CHARGE`; a strike the same press queued mid-combo is
   dropped too). The charge holds at full for as long as the key is down, trembling, and goes only on the release (no
   auto-release; held past full it counts as full). The server never holds a blow on the client's word alone: with no
-  tap or charge heard it lands `ArmsServer.HOLD_WAIT` (4) ticks after the charge's mark. A riposte, Slipcut, Undercut
-  or Plunge starts as it always did. Test `arms_tap_or_hold`. A block under the
+  tap or charge heard it lands `ArmsServer.HOLD_WAIT` (4) ticks after the charge's mark. Until the press is a tap the
+  waiting strike shows nothing but the first-person wind-up: no swish, no arc, no third-person clip, and nobody near
+  sees the arm swing or hears it (`ArmsServer.shown`, `ArmsPredict.show`); a hold never shows it, and a tapped one is
+  shown from the release, its arc on the blade's clock. A riposte, Slipcut, Undercut or Plunge starts as it always did.
+  Test `arms_tap_or_hold`. A block under the
   crosshair outside a fight (100 ticks since the last) is still mined. A move strikes each creature in its arc and reach
   once, through vanilla's own attack at full strength (crits, enchantments, momentum and every damage listener still
   apply), scaled first by the move; vanilla's immunity is cleared between one fighter's blows; it never sweeps. A sweep

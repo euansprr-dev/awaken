@@ -55,6 +55,8 @@ final class ArmsState {
     int holdSeq = -1;
     long holdFrom;
     boolean holdOpen, waitHit;
+    // the waiting strike not yet shown to anyone near (the arm, the swish, the body's clip): a hold never shows it
+    boolean waitSeen;
     // a Plunge armed in a fall: its press, when, the furthest it has fallen; and the landing's power once it strikes
     int plungeSeq = -1;
     long plungeAt;
@@ -96,5 +98,6 @@ final class ArmsState {
         perfectHeavy = false;
         unleashed = false;
         waitHit = false;
+        waitSeen = false;
     }
 }

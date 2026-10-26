@@ -714,10 +714,11 @@ final class ArmsTests {
         long t0 = ArmsServer.now(p);
         ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_STRIKE, 0F, 0F, pig.getId()));
         h.assertTrue(s.move == Archetype.Move.STRIKE_1 && s.waitHit, "the press starts strike 1 at once, its hit waiting on the press");
+        h.assertTrue(s.waitSeen, "and nobody near is shown it yet (no swing, swish or clip for a press that may be a hold)");
         for (int t = 0; t < c.min(); t++) ArmsServer.moveTick(p, s, t0 + t);
         h.assertTrue(pig.getHealth() == 200, "held to the charge's mark: no strike landed first (took " + (200 - pig.getHealth()) + ")");
         ArmsServer.onPress(p, new ArmsPayloads.Press(1, ArmsPayloads.PRESS_CHARGE, 0F, 0F, -1));
-        h.assertTrue(s.move == null && s.chargeSeq == 1, "the hold becomes the charge, the waiting strike dropped (" + s.move + ")");
+        h.assertTrue(s.move == null && s.chargeSeq == 1 && !s.waitSeen, "the hold becomes the charge, the waiting strike dropped unshown (" + s.move + ")");
         // held ten seconds past full: still charging (nothing goes at the max); it goes on the release
         s.chargeStart = ArmsServer.now(p) - 200;
         h.assertTrue(s.move == null && s.chargeStart != ArmsState.NO_CHARGE, "still held at full charge");
@@ -731,6 +732,7 @@ final class ArmsTests {
         long t1 = ArmsServer.now(p);
         ArmsServer.onPress(p, new ArmsPayloads.Press(2, ArmsPayloads.PRESS_STRIKE, 0F, 0F, pig.getId()));
         ArmsServer.onPress(p, new ArmsPayloads.Press(2, ArmsPayloads.PRESS_TAP, 0F, 0F, -1));
+        h.assertTrue(!s.waitHit && !s.waitSeen, "a tap: the strike goes on, shown to everyone near");
         int landed = -1;
         for (int t = 0; t < s1.activeEnd() && landed < 0; t++) {
             ArmsServer.moveTick(p, s, t1 + t);

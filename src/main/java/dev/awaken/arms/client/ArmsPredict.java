@@ -59,6 +59,8 @@ public final class ArmsPredict {
      */
     static boolean holdOpen, waitHit;
     static long waitNanos;
+    /** The waiting strike's swish, arc and body clip, held back until the press is a tap (a hold never shows them). */
+    static boolean waitShown;
     // what the server told us
     static int deflectAt = -1000, dodgeAt = -1000, resonance;
     /** Each style's mastery step, by its index (ArmsMastery; the server sends them). */
@@ -204,9 +206,12 @@ public final class ArmsPredict {
         recovery = ArmsRules.recovery(def, st, p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_SPEED));
         buffered = null;
         fadeFrom = -100;
-        ArmsAudio.swing(p, st, m, cad);
-        ArmsFx.move(p, st, m, cad, perfect);
-        ArmsBodies.move(p, st, m);
+        waitShown = waitHit;
+        if (!waitHit) {
+            ArmsAudio.swing(p, st, m, cad);
+            ArmsFx.move(p, st, m, cad, perfect);
+            ArmsBodies.move(p, st, m);
+        }
         if (m == Archetype.Move.ART) ArmsFeel.art();
     }
 
@@ -264,6 +269,16 @@ public final class ArmsPredict {
         if (!mc.options.keyAttack.isDown()) attackHeld = false;
     }
 
+    /** The waiting strike, a tap after all: its swish now, its arc on the blade's clock from {@code at}, its body clip. */
+    private static void show(LocalPlayer p, float at) {
+        waitShown = false;
+        Archetype.MoveDef def = style == null || move == null ? null : style.move(move);
+        if (def == null) return;
+        ArmsAudio.swing(p, style, move, cadence);
+        ArmsFx.move(p, style, move, cadence, perfectHeavy, ArmsHands.blowStart(def) - at);
+        ArmsBodies.move(p, style, move);
+    }
+
     private static void heldOrReleased(LocalPlayer p, Minecraft mc) {
         Archetypes.Loaded st = style;
         Archetype.MoveDef heavy = st == null ? null : st.move(Archetype.Move.HEAVY);
@@ -278,6 +293,7 @@ public final class ArmsPredict {
                 // held: the strike that began on the press never lands (it waited at its hit); the charge takes its place
                 holdOpen = false;
                 waitHit = false;
+                waitShown = false;
                 if (buffered != null && bufferedSeq == seq) buffered = null; // nor will one queued mid-combo
                 charging = true;
                 chargeStart = ticks;
@@ -297,8 +313,10 @@ public final class ArmsPredict {
         if (!charging) {
             if (holdOpen) { // a tap: the strike waiting at its hit lands now
                 holdOpen = false;
+                float at = moveTime();
                 waitHit = false;
                 ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_TAP, p.getYRot(), p.getXRot(), -1));
+                if (waitShown) show(p, at);
             }
             return;
         }

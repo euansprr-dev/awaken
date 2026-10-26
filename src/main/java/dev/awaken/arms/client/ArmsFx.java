@@ -37,9 +37,13 @@ final class ArmsFx {
     /** Queues the move's arc for the tick its blow starts. */
     static void move(Entity wielder, Archetypes.Loaded style, Archetype.Move move, int cadence, boolean perfect) {
         Archetype.MoveDef def = style.move(move);
-        if (def == null) return;
         // on the blade's own clock: its blow starts half the active before the first active tick (ArmsHands.blowStart)
-        Pending p = new Pending(wielder.getId(), ArmsPredict.ticks + Math.round(ArmsHands.blowStart(def)), style, move, cadence, perfect);
+        if (def != null) move(wielder, style, move, cadence, perfect, ArmsHands.blowStart(def));
+    }
+
+    /** As above, the blow {@code after} ticks from now (a strike that waited on its press resumes part way in). */
+    static void move(Entity wielder, Archetypes.Loaded style, Archetype.Move move, int cadence, boolean perfect, float after) {
+        Pending p = new Pending(wielder.getId(), ArmsPredict.ticks + Math.round(Math.max(0F, after)), style, move, cadence, perfect);
         for (int i = 0; i < PENDING.length; i++) {
             if (PENDING[i] == null || PENDING[i].entity == wielder.getId()) {
                 PENDING[i] = p;
