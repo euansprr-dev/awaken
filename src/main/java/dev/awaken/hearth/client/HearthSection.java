@@ -41,17 +41,29 @@ final class HearthSection extends dev.awaken.signal.client.UiSection {
         long duty = v.echoes().stream().filter(e -> !e.duty().isEmpty()).count();
         String echoes = "Echoes " + v.echoes().size() + " · " + field + "/" + v.fieldCap() + " marching · " + duty + " on duty";
         if (!v.has()) {
-            ui.text("No Hearth yet · craft an Anchor from a Lord's Heart, 4 stone bricks and 4 copper", Glass.a(Glass.LABEL, 1f));
+            ui.text("No Hearth yet · the Wayfarers keep a fire up the north road: carry a coal from it and set it down where you'd live",
+                    Glass.a(Glass.LABEL, 1f));
             if (!v.echoes().isEmpty()) ui.text(echoes, Glass.a(Glass.VIOLET, 1f));
             return;
         }
-        String head = "Tier " + ROMAN[Math.max(0, Math.min(5, v.tier()))] + " · radius " + v.radius() + " · Forge " + ROMAN[Math.max(0, Math.min(5, v.forgeTier()))];
-        ui.pair(head, v.pos().getX() + ", " + v.pos().getY() + ", " + v.pos().getZ(), Glass.a(Glass.LANTERN, 1f), Glass.a(Glass.LABEL, 0.8f));
+        String head = (v.tier() <= 0 ? "Hearthfire" : "Tier " + ROMAN[Math.max(0, Math.min(5, v.tier()))] + " · Forge " + ROMAN[Math.max(0, Math.min(5, v.forgeTier()))])
+                + " · radius " + v.radius();
+        ui.pair(v.home().name().isEmpty() ? head : v.home().name(), v.home().name().isEmpty() ? v.pos().getX() + ", " + v.pos().getY() + ", " + v.pos().getZ() : head,
+                Glass.a(Glass.LANTERN, 1f), Glass.a(Glass.LABEL, 0.8f));
+        String comfort = "Comfort " + v.home().comfort() + "/" + dev.awaken.hearth.Comfort.MAX
+                + (v.home().style().isEmpty() ? "" : " · " + v.home().style());
+        long left = dev.awaken.hearth.Rested.left(Minecraft.getInstance().player);
+        ui.pair(comfort, left > 0 ? "Rested · " + Math.max(1, (left + 1199) / 1200) + " min" : "",
+                Glass.a(Glass.TEXT, 1f), Glass.a(Glass.AMBER, 1f));
         var flow = ui.flow();
+        boolean any = false;
         for (dev.awaken.hearth.room.RoomType t : dev.awaken.hearth.room.RoomType.values()) {
             String shown = v.rooms().stream().filter(r -> r.startsWith(t.label)).findFirst().orElse(null);
-            flow.chip(shown != null ? shown : t.label, shown != null ? Glass.AMBER : 0x4A5A72);
+            if (shown == null) continue;
+            flow.chip(shown, Glass.AMBER);
+            any = true;
         }
+        if (!any) flow.chip("No rooms yet: walls and a roof", 0x4A5A72);
         flow.end();
         // the full guide (what each room needs, why one isn't recognised, the next upgrade)
         var open = ui.flow();

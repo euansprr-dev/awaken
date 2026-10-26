@@ -34,14 +34,23 @@ public final class HearthClient {
         modBus.addListener(HearthClient::particles);
         modBus.addListener(HearthClient::renderStates);
         modBus.addListener(GuideClient::payloads);
+        modBus.addListener(HomeClient::payloads);
+        modBus.addListener(HomeHud::register);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> {
             EchoKeys.tick();
             AuraFx.tick();
             GuideClient.tick();
+            HomeClient.tick();
         });
         NeoForge.EVENT_BUS.addListener(HearthClient::tooltip);
-        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut.class, e -> GuideClient.clear());
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut.class, e -> {
+            GuideClient.clear();
+            HomeClient.clear();
+            HomeHud.clear();
+        });
+        StatusSections.add(StatusSections.Tab.STATUS, new RoomSection());
         StatusSections.add(StatusSections.Tab.STATUS, new HearthSection());
+        dev.awaken.citizens.client.CityGlow.source(HomeClient.GLOW);
         CodexEntries.addSource(HearthClient::rumours);
     }
 
@@ -58,6 +67,9 @@ public final class HearthClient {
         e.registerSpriteSet(HearthContent.HEARTH_EMBER.get(), HearthParticles.Ember.Provider::new);
         e.registerSpriteSet(HearthContent.HEARTH_RING.get(), HearthParticles.Mark.RingProvider::new);
         e.registerSpriteSet(HearthContent.HEARTH_LEAK.get(), HearthParticles.Mark.LeakProvider::new);
+        e.registerSpriteSet(HearthContent.HEARTH_WARMTH.get(), HearthParticles.Warmth.Provider::new);
+        e.registerSpriteSet(HearthContent.HEARTH_FLAME.get(), HearthParticles.Flame.Provider::new);
+        e.registerSpriteSet(HearthContent.HEARTH_FIREFLY.get(), HearthParticles.Firefly.Provider::new);
     }
 
     private static void renderStates(RegisterRenderStateModifiersEvent e) {
@@ -71,6 +83,9 @@ public final class HearthClient {
     private static void tooltip(ItemTooltipEvent e) {
         int t = e.getItemStack().getOrDefault(HearthContent.TEMPER.get(), 0);
         if (t > 0) e.getToolTip().add(1, Component.literal("Tempered " + "✦".repeat(t)).withStyle(ChatFormatting.GOLD));
+        if (Boolean.TRUE.equals(e.getItemStack().get(HearthContent.HOME_COOKED.get()))) {
+            e.getToolTip().add(Math.min(1, e.getToolTip().size()), Component.literal("Home-cooked · lasts half again as long").withStyle(ChatFormatting.GOLD));
+        }
     }
 
     private static List<CodexEntries.Entry> rumours() {

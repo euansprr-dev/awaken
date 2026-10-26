@@ -41,8 +41,9 @@ public final class HearthViews {
         }
         int records = hp.bests.size();
         if (ho.isEmpty()) {
+            HearthView.Home rested = new HearthView.Home("", hp.restedUntil, Comfort.restedMinutes(hp.restedComfort), 0, "");
             return new HearthView(false, BlockPos.ZERO, 0, 0, 0, List.of(), List.of(), 0, Echoes.fieldCap(sp), 0, hp.fieldOut,
-                    echoes, List.copyOf(hp.rumours), records);
+                    echoes, List.copyOf(hp.rumours), records, rested);
         }
         HearthRecord h = ho.get();
         Map<RoomType, Integer> counts = new EnumMap<>(RoomType.class);
@@ -51,7 +52,8 @@ public final class HearthViews {
         counts.forEach((t, n) -> rooms.add(n > 1 ? t.label + " ×" + n : t.label));
         List<String> town = new ArrayList<>();
         for (String id : h.arrived) town.add(Townsfolk.displayName(id));
+        HearthView.Home home = new HearthView.Home(h.displayName(), hp.restedUntil, Comfort.restedMinutes(hp.restedComfort), h.comfort, h.style);
         return new HearthView(true, h.pos, h.tier, h.radius(), h.forgeTier, rooms, town, h.hallTrophies.size(), Echoes.fieldCap(sp),
-                h.pads.size(), hp.fieldOut, echoes, List.copyOf(hp.rumours), records);
+                h.pads.size(), hp.fieldOut, echoes, List.copyOf(hp.rumours), records, home);
     }
 }

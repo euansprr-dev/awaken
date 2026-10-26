@@ -8,6 +8,9 @@ import dev.awaken.hearth.block.CheckpointRingBlockEntity;
 import dev.awaken.hearth.block.CourseGateBlock;
 import dev.awaken.hearth.block.ForgeBlock;
 import dev.awaken.hearth.block.HearthAnchorBlock;
+import dev.awaken.hearth.block.HearthfireBlock;
+import dev.awaken.hearth.block.HearthfireBlockEntity;
+import dev.awaken.hearth.ember.EmberItem;
 import dev.awaken.hearth.block.MeditationMatBlock;
 import dev.awaken.hearth.block.MonolithBlock;
 import dev.awaken.hearth.block.RolePadBlock;
@@ -21,6 +24,7 @@ import dev.awaken.hearth.echo.EchoRole;
 import dev.awaken.hearth.player.Aura;
 import dev.awaken.hearth.player.HearthPlayer;
 import dev.awaken.hearth.player.HearthView;
+import dev.awaken.hearth.player.RoomHere;
 import dev.awaken.hearth.town.TownNpc;
 import dev.awaken.hearth.training.TrainingGhost;
 import dev.awaken.hearth.trial.TrialChunkGenerator;
@@ -78,6 +82,10 @@ public final class HearthContent {
     public static final DeferredBlock<HearthAnchorBlock> HEARTH_ANCHOR = BLOCKS.registerBlock("hearth_anchor", HearthAnchorBlock::new,
             p -> p.mapColor(MapColor.COLOR_ORANGE).strength(25f, 1200f).sound(SoundType.LODESTONE).lightLevel(s -> 14)
                     .pushReaction(PushReaction.IMMOVEABLE).instrument(NoteBlockInstrument.BASEDRUM));
+    /** The Ember's fire: a Tier 0 Hearth (SPEC §28.2). No item: the Hearth Ember sets it down. */
+    public static final DeferredBlock<HearthfireBlock> HEARTHFIRE = BLOCKS.registerBlock("hearthfire", HearthfireBlock::new,
+            p -> p.mapColor(MapColor.STONE).strength(2f, 1200f).sound(SoundType.STONE).lightLevel(s -> 14).noOcclusion()
+                    .pushReaction(PushReaction.IMMOVEABLE));
     public static final DeferredBlock<MeditationMatBlock> MEDITATION_MAT = BLOCKS.registerBlock("meditation_mat", MeditationMatBlock::new,
             p -> p.mapColor(MapColor.COLOR_PURPLE).strength(0.3f).sound(SoundType.WOOL).noOcclusion());
     public static final DeferredBlock<ForgeBlock> FORGE = BLOCKS.registerBlock("forge", ForgeBlock::new,
@@ -113,6 +121,9 @@ public final class HearthContent {
     // ---- items ------------------------------------------------------------------------------------------------------
 
     public static final DeferredItem<BlockItem> HEARTH_ANCHOR_ITEM = ITEMS.registerSimpleBlockItem(HEARTH_ANCHOR, p -> p.rarity(Rarity.RARE));
+    /** A coal from the Wayfarers' fire in an iron lantern: set down, it founds a Hearthfire. One per player. */
+    public static final DeferredItem<EmberItem> EMBER_ITEM = ITEMS.registerItem("hearth_ember", EmberItem::new,
+            p -> p.stacksTo(1).rarity(Rarity.UNCOMMON).fireResistant());
     public static final DeferredItem<BlockItem> MEDITATION_MAT_ITEM = ITEMS.registerSimpleBlockItem(MEDITATION_MAT);
     public static final DeferredItem<BlockItem> FORGE_ITEM = ITEMS.registerSimpleBlockItem(FORGE);
     public static final DeferredItem<BlockItem> TROPHY_MOUNT_ITEM = ITEMS.registerSimpleBlockItem(TROPHY_MOUNT);
@@ -138,6 +149,10 @@ public final class HearthContent {
     public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>, net.minecraft.core.component.DataComponentType<Integer>> TEMPER =
             COMPONENTS.registerComponentType("temper", b -> b.persistent(Codec.INT).networkSynchronized(ByteBufCodecs.VAR_INT));
 
+    /** A meal made in a Kitchen at home: what it gives you lasts half again as long. */
+    public static final DeferredHolder<net.minecraft.core.component.DataComponentType<?>, net.minecraft.core.component.DataComponentType<Boolean>> HOME_COOKED =
+            COMPONENTS.registerComponentType("home_cooked", b -> b.persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL));
+
     public static final DeferredItem<TrophyItem> TROPHY_ITEM = ITEMS.registerItem("trophy", TrophyItem::new,
             p -> p.stacksTo(1).rarity(Rarity.EPIC).fireResistant());
 
@@ -147,6 +162,8 @@ public final class HearthContent {
             () -> new BlockEntityType<>(TrophyMountBlockEntity::new, TROPHY_MOUNT.get()));
     public static final Supplier<BlockEntityType<SpireBoardBlockEntity>> SPIRE_BOARD_BE = BLOCK_ENTITIES.register("spire_board",
             () -> new BlockEntityType<>(SpireBoardBlockEntity::new, SPIRE_BOARD.get()));
+    public static final Supplier<BlockEntityType<HearthfireBlockEntity>> HEARTHFIRE_BE = BLOCK_ENTITIES.register("hearthfire",
+            () -> new BlockEntityType<>(HearthfireBlockEntity::new, HEARTHFIRE.get()));
     public static final Supplier<BlockEntityType<CheckpointRingBlockEntity>> CHECKPOINT_RING_BE = BLOCK_ENTITIES.register("checkpoint_ring",
             () -> new BlockEntityType<>(CheckpointRingBlockEntity::new, CHECKPOINT_RING.get()));
 
@@ -166,6 +183,9 @@ public final class HearthContent {
     /** What the owner's client needs to draw the HEARTH section, the Echo chooser and Mira's rumours. Not saved. */
     public static final Supplier<AttachmentType<HearthView>> VIEW = ATTACHMENTS.register("hearth_view", () -> AttachmentType
             .builder(() -> HearthView.EMPTY).sync((holder, to) -> holder == to, HearthView.STREAM_CODEC).build());
+    /** The room the player stands in at home, for their room panel. Not saved. */
+    public static final Supplier<AttachmentType<RoomHere>> HERE = ATTACHMENTS.register("hearth_here", () -> AttachmentType
+            .builder(() -> RoomHere.NONE).sync((holder, to) -> holder == to, RoomHere.STREAM_CODEC).build());
     /** Rank aura shown to everyone who can see the player. */
     public static final Supplier<AttachmentType<Aura>> AURA = ATTACHMENTS.register("aura", () -> AttachmentType
             .builder(() -> Aura.NONE).sync(Aura.STREAM_CODEC).build());
@@ -182,6 +202,17 @@ public final class HearthContent {
     /** A pulsing signal-blue mark where a room leaks (a gap, the open sky). */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> HEARTH_LEAK = PARTICLES.register("hearth_leak", () -> new SimpleParticleType(true));
 
+    /** The founding: the coal sinks into the ring and takes; warmth runs out over the land in a low hearth tone. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> HEARTH_WARMTH = PARTICLES.register("hearth_warmth", () -> new SimpleParticleType(true));
+    /** Fireflies over a Hearth's land at night. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> HEARTH_FIREFLY = PARTICLES.register("hearth_firefly", () -> new SimpleParticleType(false));
+    /** A tongue of the Hearthfire's flame. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> HEARTH_FLAME = PARTICLES.register("hearth_flame", () -> new SimpleParticleType(false));
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_TAKE = sound("hearth.take");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_FIRE = sound("hearth.fire");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_LIFT = sound("hearth.lift");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SND_ROOM = sound("hearth.room");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_BIND = sound("hearth.bind");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_BIND_FAIL = sound("hearth.bind_fail");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_SUMMON = sound("hearth.summon");
@@ -200,7 +231,7 @@ public final class HearthContent {
 
     /** Items shown in the shared creative tab, in order. */
     static List<DeferredItem<?>> tabItems() {
-        List<DeferredItem<?>> out = new java.util.ArrayList<>(List.of(HEARTH_ANCHOR_ITEM, MEDITATION_MAT_ITEM, FORGE_ITEM, TROPHY_MOUNT_ITEM));
+        List<DeferredItem<?>> out = new java.util.ArrayList<>(List.of(EMBER_ITEM, HEARTH_ANCHOR_ITEM, MEDITATION_MAT_ITEM, FORGE_ITEM, TROPHY_MOUNT_ITEM));
         for (EchoRole r : EchoRole.values()) out.add(ROLE_PAD_ITEMS.get(r));
         out.addAll(List.of(SPIRE_BOARD_ITEM, MONOLITH_ITEM, START_GATE_ITEM, CHECKPOINT_RING_ITEM, FINISH_GATE_ITEM, TARGET_DUMMY_ITEM));
         return out;

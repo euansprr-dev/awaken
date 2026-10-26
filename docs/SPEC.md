@@ -1971,7 +1971,8 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   doorways; he walks on when you're within 4.5 of him, waits and nudges past 9, says "Habit, I know" once if you run
   ahead) → READ (as before) → SIGN (at the desk, the counter's free south end; use signs) → BAND (Bram holds it out over
   the counter; use takes it) → WEAR (the band is in your hands, the Holo dark until you put it on the wrist slot) → BOOT
-  (the boot on the wrist; the inventory closes itself 0.7 s after it goes on) → BRIEF (his three lines) → OPEN ("Go on,
+  (the boot on the wrist; the inventory closes itself 0.7 s after it goes on) → BRIEF (his three lines, then the camp: "The bells hold the city. Hunters hold the wilds. Ilse at the camp
+  keeps a fire for new licences.", whose Ember founds a Hearth, §28) → OPEN ("Go on,
   open it": the K prompt and `TipHooks` tip `awaken:holo/open` show only now) → STATUS → ATLAS → POWER → DIRECTIVE →
   YOURS. Waiting steps nudge every 30 s (at most three); without a client every step moves on by itself.
   - Bram is staged through `CitizenHooks.stage(level, "bram", at, yaw, act, prop)` (citizens role STAGED; lapses if not
@@ -5100,7 +5101,127 @@ other's files): the Study halves the Blueprints' paper (`arms/ArmsForge`), the G
 (`living/craft/Herbs`). W2 reads the perk `awaken:craft_rate` by its id, so Rested's craft bonus needs no wiring.
 
 ### 28.2 W1 as built
-(The W1 builder writes this subsection.)
+Branch `pack/world-depth-w1`. Module doc: `docs/modules/hearth.md` ("The carried flame"). Tests: `hearth_ember_founds`,
+`hearth_room_grades`, `hearth_rested` (and every older `hearth_` test, `hearth_guide_matches_roomtype` updated to the new
+kinds). Tour: `tools/autopilot/world-depth-w1.txt`.
+
+**The Hearth Ember** (`awaken:hearth_ember`, `hearth/ember/EmberItem`, `hearth/Embers`). A 3D item (vanilla lantern
+proportions, its cage emissive: `models/item/hearth_ember.json`, texture from `tools/art/specs/hearth.py`). Carried in
+either hand: a pool of light on the ground (radius 5.2, 0.34) and a halo at the lantern, drawn as a source of
+`citizens.client.CityGlow` (`hearth/client/HomeClient.GLOW`; no light block). One per player: a spare goes out and none is
+kept once your fire burns (checked every 2 s while carried); kept through death (`LivingDropsEvent`, back on respawn).
+Given by: The Last Delivery's `ilse` step (reward `item: awaken:hearth_ember` and Ilse's line, the progression session told);
+talking to Ilse or Hettie with no Ember and no Hearth, registered (classic worlds: always), and past that step or never on
+the chain (`PlayerInteractEvent.EntityInteract` on a `living.wayfarer.Wayfarer`, so living is unchanged; Ilse: "Lost your
+coal? Take another. The fire doesn't mind."); 60 ticks after awakening in a classic world (no `CityBasin` site). Now line
+`hearth:ember`, priority 66 (under a tracked chain step ~68): "Set your Ember where you'd live". **Bram's line is not
+added** (Carillon's code): for the orchestrator, Bram at the Registry: "The bells hold the city. Hunters hold the wilds.
+Ilse at the camp keeps a fire for new licences."
+
+**Setting it down** (use on the top of a block). Refused, each with its reason: soft ground or no room, the city reserve
+(`CityBasin.reserved`), a Precursor ward (`WardHooks.at`), any gate not released within 64 (`GateHooks.near`), another
+Hearth's radius, a household rule (`Household.refusesOwnAnchor`). Founds a **Tier 0 Hearthfire** (`awaken:hearthfire`,
+`HearthfireBlock` + an empty block entity that lists loaded fires for the client's glow; light 14; strength 2 / 1200,
+immovable, owner-only to break; loot table empty: the code returns the coal). `HearthRecord.tier` 0, radius 24
+(`HEARTHFIRE_RADIUS`), respawn, rest heals (30 s), calm land and every rule that keys off any Hearth record (gates 64,
+camps 120, happenings, wards, the Living Wilds' calm). No town (`Town.arrivals` returns), no Spire, no requests, no cottage,
+no furniture recipes. The moment (`HomeNet.Kindled` to clients within 96): sparks drawn down into the coal for 14 ticks
+and a burst; from tick 10 the warmth runs out over 44 ticks as rings of `hearth_warmth` motes on the ground's height
+(eased out, brightness 1 → 0.45) with a ring of 40 light pools (radius 2.8, 0.30, and a fainter ring behind at 0.62 of
+it) drawn on the ground at the front through `CityGlow`; fireflies if it's night; `hearth.take` (`sfx_hearth_take`: a settling thud, stone
+clicks, a low hearth tone on D with its fifth, a faint D-A-F# bell chord; mono, 32 blocks). The grass tint itself is not
+changed (that needs a mixin into the biome tint cache); the warm wash of motes over the ground stands in for it. 50 ticks
+later the **YOUR GROUND** card (`client/NameScreen`, low on the screen, no dimming) with a name offered by
+`Embers.suggestName` (first words by biome: forest, plains, snow, dry, wet, high, water; joined endings ford, stead,
+holm, wick, cote, ley, by, worth, combe, field, hearth, burn, or apart: Rest, Hollow, End, Green, Hearth; deterministic per
+place and owner); the name is cleaned (letters, digits, spaces, ' and -, 24 at most). Walking onto your land: a place
+caption, the name spaced over "your hearth" (IMPORTANT, topic `hearth_place`, filed after 200 ticks). Fireflies over your
+land at night (one every 8 ticks round you). **Lifting**: empty hand on your fire while no room is read → the record ends
+(its household kept), the coal comes back, `hearth.lift`. Breaking it (owner) or losing it any other way returns the coal
+(to an owner within 16, else dropped there). **Tier I**: a Lord's Heart or the Anchor used on your fire, or the guide's
+button with a Heart in your pack, sets the Anchor block in place, tier 1, and runs what an Anchor placed runs
+(`HearthService.anchorTookRoot`: the toast, the furniture recipes, the town, the cottage offer).
+
+**The reading** (`room/Reading`, `room/Tally`, `room/Materials`, `RoomScanner.read`). As PLAN 4.5, numbers:
+closed 3 with no see-through faces, 2 up to 15% (fences, bars, leaves), else 1; light 3 = every floor cell at block light
+8+ (97%) and a window (glass or pane in a side wall), 2 = all lit, 1 = 60% lit or a window, 0; warmth = the best fire (lit
+campfire, fire, lava, magma, the Hearthfire or the Anchor 3; lit furnace/smoker/blast furnace or the Forge 2; cold stove
+or lit candles 1); room = floor / the purpose's target (Shelter 6, Bedroom and Sanctuary 12, Kitchen, Forge, Study,
+Workshop 16, Greenhouse, Stable, Barracks 20, Trophy Hall 24, Hall 64, Bell tower 4, Lookout 9): <0.5 → 0, <1 → 1,
+<1.75 → 2, else 3, capped at 1 when 2 high and 2 under the target height (3; halls and trophy halls 4); care = worked share
+of wall, floor and roof faces (tags and the block's name: planks, stripped logs, glass, wool, bricks, polished, cut, smooth,
+chiseled, tiles, terracotta, concrete, quartz, pillars, and every stair, slab, wall, fence, door and trapdoor) 25% → 1,
+60% with 2 kinds → 2, 85% with 3 kinds → 3; detail = trim kinds (stairs, slabs, trapdoors, fence and wall posts, chains,
+lanterns) ≥1 +1, ≥3 +1, soft kinds (carpets, banners, paintings or frames, flower pots, candles, bookshelves) ≥1 +1, ≥2 +1,
+at most 3. Grade: mean ≥2.5 Grand, ≥1.75 Fine, ≥1.25 Snug, else Bare, never above the weakest + 1. Name: "the <grade>
+<family word> <purpose noun>" (families: timber, log, stone, fieldstone, deepslate, brick, mud-brick, sandstone,
+blackstone, tuff, quartz, copper, sea-stone, clay, concrete, glass, earthen, end-stone, nether-brick, wool, leaf, snow), or a
+sign's words inside (front, else back; 40 characters). Lift: the weakest reading's fix, light first, then warmth, detail,
+care, room, closed. Seeds: furniture, doors, lights, chests, signs, carpets, banners, pots, the Hearthfire and Anchor, and
+the household's feet in the radius; a solid seed floods each open side on its own (a door no longer joins inside and
+out). Only the old eight pieces of furniture get "why not" fills. Caps 48 a side and 20,000 cells (`TOO_WIDE`,
+`TOO_BIG`, each worded); the explanation fill is capped at 6,144 cells. Every stage (fill, read, explain) stops at the
+tick's budget (12,000 reads) and goes on next tick. Saved: `HearthRecord` part `home`, schema 3 (name, rooms without cells,
+Comfort, Style, land); a loaded room answers by its box until the next scan, which comes 30 s to 4.5 min after the server
+starts (spread by owner). The first time a player stands in a room after it's recognised or regraded (key = its box,
+grade and name; 96 remembered per player in `HearthPlayer` schema 3), its name as a quiet caption (`HomeNet.RoomCaption`,
+AMBIENT, topic `hearth_room`, `ui.hearth_room`), waiting while they stay in the room up to 600 ticks, else filed.
+
+**Room kinds** (`RoomType`; effects in `RoomEffects`, `Breaks`, `Town`). Shelter (every closed room; the first: toast
+"First shelter · Rest heals here. From now on the Hearth reads everything you build."), Bedroom (a bed), Sanctuary,
+Kitchen (furnace or smoker, crafting table, barrel: food crafted or smelted while you stand in it gets component
+`awaken:home_cooked`; eating one stretches every effect it gave or lengthened ×1.5; tooltip "Home-cooked"), Forge
+(`ARMORY`, id kept, label "Forge"), Study (lectern, 6 bookshelves: recognised only; Blueprints after W2 merges),
+Greenhouse (farmland or a planted pot under a ceiling at least half glass: recognised only; herbs after W2 merges), Stable
+(hay bale, fence gate: perk `awaken:whistle_range` +160 within 512 of the home, read by `world.fauna.Mounts` (one line);
+Pell's Spurs' +80 now counts too), Hall (6 seats = bottom stairs on the floor with room above, a table = a fence or wall
+post with a carpet, pressure plate or bottom slab on it, floor 48+: a meal eaten in it feeds every other player in it
+nutrition and half its saturation), Bell tower (a bell, the floor 8+ over the lowest ground 4 blocks outside: rings at
+dawn and dusk; `Breaks` warns once of a standing gate within 256 due to break within 2 play-days; Deep Tide's +2 skipped
+inside a Hearth with one, via `HearthHooks.tideCalm` in `living.api.Regions` (one line)), Lookout (12+ up, glass in three
+directions: `AtlasHooks.reveal` 256 round home when first recognised and on login; Mira tells a second rumour a play-day),
+Trophy Hall, Workshop (machines in it or in its walls pay ⌈×0.75⌉ essence: `HearthHooks.machineCost` in
+`above.machine.MachineBlockEntity.draw`, one line), Barracks. Toasts per new kind, topic `hearth_room`. The Now line suggests a kind with two or more kinds of furniture
+only once two of them are in the radius (never from one flower pot or one bell); a kind with all its furniture but not its
+condition says so briefly ("Greenhouse: a glass roof").
+
+**Comfort, Style, Rested** (`Comfort`, `Rested`). Comfort 0-12: best bedroom grade (0-3) + a room with warmth 2+ + a table
+with 2+ seats + a room with two soft kinds + growing things indoors + the land: field (16 farmland), pen (2 untamed animals
+and 8 fences), garden (a composter and 6 flowers), lit yard (6 placed lights outside rooms), wall (40 wall or fence
+blocks), each 1. Style: the two families with the most faces, the second named when it is a fifth of the first ("timber and
+fieldstone"). Rested: waking (not shaken awake) in a bed inside a read Bedroom of a Hearth you belong to: 8 + Comfort
+minutes, perks `awaken:energy_regen` +0.25 and `awaken:craft_rate` +0.25 (a perk source on both sides reading the synced
+`HearthView.home.restedUntil`); toast topic `rested`; "◆ RESTED Nm" over the level line, pulsing in its last minute.
+
+**The room panel** (`client/RoomPanel`: `visible()`, `build(Ui)`; data: attachment `awaken:hearth_here`, `RoomHere`, synced
+to its player when it changes, checked once a second). Name, grade, six readings as three pips each, purpose, "Lift it:
+…". Shown as the K Status page's first section (`RoomSection`, order -28: right under NOW, above the Atlas) while you stand in a read room at home (PLAN
+said "hold the band key": K opens the band on press today, so the panel lives on that page until The Way Forward's glance
+takes it, through the two calls above); and as every room's card in Your Hearth, which also gained a HOME section (Comfort
+with its bar and the next point, Style, the land, Rested minutes), the kinds you have as chips, at most three suggestions
+as full cards (what you've started first, then Shelter, Bedroom, Kitchen, Sanctuary) and the rest one dim line each; a
+Hearthfire's header chip, town line and its Tier I step ("Feed the fire the Heart").
+
+**Chests at home** (`HomeCrafting`): done without a mixin. A crafting table inside a Hearth you belong to opens
+`HomeCrafting.HomeMenu` (a `CraftingMenu` on the vanilla menu type, so the client opens the vanilla screen); its
+`handlePlacement` first moves what you lack for one craft (shift: a stack's worth) from chests, barrels and shulker boxes
+you may open within 8 blocks of the table into your inventory, nearest first, then places as vanilla does. The client's
+book can show such a recipe red (it can't see the chests) but clicking it always asks the server, so it crafts. A one-time
+toast says so.
+
+**Fixes**: caps and their reasons as above; pads a scan finds join the Hearth (`HearthService.registerPads`); Anchors
+refused in the city reserve (and on your own Hearthfire's land: "Use the Anchor on your Hearthfire: it rises there.");
+the town Spire's Board and Monolith are given as items when the first townsperson arrives (retried by upkeep while the
+owner is away; the Board placed inside your Hearth becomes its board); a temper at the Forge costs a coal (`Items.COAL`;
+Oren's tempers don't).
+
+**Other modules touched (one line each)**: `core.api.HearthHooks` (+`tideCalm`, `machineCost`, defaults),
+`living.api.Regions` (Deep Tide skip), `above.machine.MachineBlockEntity` (Workshop cost), `world.fauna.Mounts` (whistle
+range perk). Read only: `citizens.client.CityGlow.source`, `living.wayfarer.Wayfarer.who()`, `living.api.Quests`.
+
+**Not done / left**: the grass tint (mixin territory, see above); the Study's and the Greenhouse's effects (after W2, per
+§28.1); Bram's line (Carillon); the room panel on a held band key (The Way Forward's glance); a stable's bonded mount
+"coming home here" (the whistle range is in); the Hall's festival (W4/W6).
 
 ### 28.3 W2 as built
 Module `delve` (`dev.awaken.delve`, `delve.client`, `delve.api.Lodes`; doc `docs/modules/delve.md`), and the seams it was
@@ -5154,8 +5275,12 @@ light so it glows in the dark, glinting), loot a lump (iron 4-7 raw, diamond
 **The vein gives** (`Veins.give`, client `VeinFx`): breaking a planned heart (after every protection, LOW) opens its
 lode once for the world (`DelveData`, schemaVersion 1): `LODE · <ore> · <blocks left>` through `Finds` (the first a
 moment), a lump of 0.08 of a level × the ore weight's square root × the taper, counters `awaken:lodes_opened`, the
-client's reveal (glass outline in the ore's colour lighting outward with white cracks from the heart at 32 blocks a
-second, a travelling crackle, a kick and hold), and for 30 s the breaker's blows take the lode's blocks in two (speed =
+client's reveal (no outline, no boxes: light runs out from the heart along the vein at 32 blocks a second with a
+travelling crackle; each vein block it reaches flashes from inside its own texture, its faces redrawn additively in the
+ore's colour, whiter in the 7-tick flash, with glowing cracks (`vein_cracks_0..3`) across them and a soft pool on the
+face; rock in front of a buried vein block shows the light bleeding through, its own face lit 42/20/9% through 1/2/3
+blocks, cracked too through one; 3 s full, settling over 2.5 s to a 30% pulse that lasts the window, fading over its
+last 1.2 s; grit and a glint off each open block as the front passes; a kick and hold), and for 30 s the breaker's blows take the lode's blocks in two (speed =
 hardness × 30 / 8, mirrored on the client). The lodes within 64 are sent to each client when the set changes, for the
 glints: a lode block open to the air glints in its ore's colour where block light ≥ 8 or the miner's lamp's beam falls.
 
@@ -5165,8 +5290,14 @@ roof = the natural rock over the top air of each such column within 6 of the hea
 gravel, calcite, dripstone), 10 to 40 of them, nearest first. Never inside a Hearth, a ward, or the city's footprint
 within 48 under its square (its foundations); never if any
 roof block's section holds a solid block a player placed underground (`DelveData` keeps sections below y 64). Warning:
-3 s of dust threads and grit from those stones, a creak, a tremble within 18, "The roof is giving way"; then each stone
-still unchanged falls as a falling block (1.5 damage a block fallen, at most 8) with a rumble.
+3 s: cracks spread over those stones (the game's breaking stages, the first to fall cracking first, all broken through
+by the fall), dust pours from up to 14 seams between them in streams that open and thicken as it nears, grit, a creak
+and a second higher one at 55%, a tremble within 20, "The roof is giving way". Then they let go one after another over
+1.5 s (`SPREAD` 30 ticks, stone i of n at i × 30 / n, nearest the heart first), each still unchanged as a falling block
+(1.5 damage a block fallen, at most 8): a rumble at the first and the last, and on the client a crack and a burst of
+dust where each tore free, a thud and a cloud rolling out along the floor where it lands (its landing time from the
+fall's height), and the view shaking within 20 (hardest as stones hit; the player's camera-kick comfort setting
+scales it). Dust takes at least block light 6 so the cloud reads in an unlit cave.
 
 **The strike's feel** (client `StrikeFeel`): a bite every 4 ticks held (vanilla's rhythm, from NeoForge's client mine
 hold): each ore its own sound (`delve.strike.<ore>`), sparks off hard rock with a pick or mattock (white-hot cooling to

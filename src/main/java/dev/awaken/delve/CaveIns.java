@@ -23,8 +23,9 @@ import java.util.List;
 
 /**
  * Cave-ins (PLAN 7.4; the pattern of the gates' {@code RigCaveIn}): a lode's heart broken in a big, unsupported
- * chamber shakes its roof loose. Dust trickles from the stones that will fall for three seconds (the client's warning,
- * with a creak), then they come down as falling blocks and land as rubble: run, slide or wall-run out. Rare, warned and
+ * chamber shakes its roof loose. Cracks spread over the stones that will fall and dust pours from them for three seconds
+ * (the client's warning, with a creak), then they let go one after another over {@link #SPREAD} ticks, nearest the
+ * heart first, as falling blocks that land as rubble: run, slide or wall-run out. Rare, warned and
  * fair: only a chamber at least {@link #MIN_SPAN} across both ways with real headroom, only natural rock, never inside a
  * Hearth, the city (or within {@link #CITY_DEPTH} under its square) or a ward, and never a roof anyone built or propped
  * (a section with player-placed solid blocks).
@@ -35,11 +36,30 @@ public final class CaveIns {
     public static final int WARN = 60, MIN_AIR = 160, MIN_SPAN = 7, MAX_FILL = 1200, ROOF_RADIUS = 6, MAX_ROOF = 40, MIN_ROOF = 10;
     /** A big chamber's roof comes down this often when its heart breaks. */
     public static final double CHANCE = 0.6;
+    /** The fall's length (ticks): stone i of n lets go at {@code i * SPREAD / n} after the warning, so it reads as a collapse. */
+    public static final int SPREAD = 30;
     /** What a falling stone does to whoever stands under it (per block fallen, at most). */
     static final float HURT_PER_BLOCK = 1.5F;
     static final int HURT_MAX = 8;
 
-    private record Pending(ServerLevel level, long at, long[] roof, BlockState[] states) {}
+    private static final class Pending {
+        final ServerLevel level;
+        final long at;
+        final long[] roof;
+        final BlockState[] states;
+        int next;
+
+        Pending(ServerLevel level, long at, long[] roof, BlockState[] states) {
+            this.level = level;
+            this.at = at;
+            this.roof = roof;
+            this.states = states;
+        }
+
+        long due(int i) {
+            return at + (long) i * SPREAD / roof.length;
+        }
+    }
 
     private static final List<Pending> PENDING = new ArrayList<>();
 
@@ -63,7 +83,7 @@ public final class CaveIns {
         for (int i = 0; i < roof.length; i++) states[i] = level.getBlockState(m.set(roof[i]));
         PENDING.add(new Pending(level, level.getGameTime() + WARN, roof, states));
         DelveNet.near(level, null, heart.getX() + 0.5, heart.getY() + 0.5, heart.getZ() + 0.5, 48,
-                new DelveNet.CaveWarn(heart.asLong(), roof, WARN));
+                new DelveNet.CaveWarn(heart.asLong(), roof, WARN, SPREAD));
         level.playSound(null, heart, DelveContent.CAVE_CREAK.get(), SoundSource.BLOCKS, 1.4F, 0.9F + 0.2F * level.getRandom().nextFloat());
         p.sendOverlayMessage(Component.literal("The roof is giving way").withColor(0xE8C9A0));
         return true;
@@ -153,28 +173,24 @@ public final class CaveIns {
 
     static void tick(MinecraftServer server) {
         if (PENDING.isEmpty()) return;
-        List<Pending> due = new ArrayList<>();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         PENDING.removeIf(pd -> {
             if (pd.level.getServer() != server) return true;
-            if (pd.at > pd.level.getGameTime()) return false;
-            due.add(pd);
-            return true;
-        });
-        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
-        for (Pending pd : due) {
-            int fell = 0;
-            for (int i = 0; i < pd.roof.length; i++) {
+            long now = pd.level.getGameTime();
+            while (pd.next < pd.roof.length && pd.due(pd.next) <= now) {
+                int i = pd.next++;
                 m.set(pd.roof[i]);
                 if (pd.level.getBlockState(m) != pd.states[i]) continue;   // mined or changed meanwhile: it stays
                 FallingBlockEntity f = FallingBlockEntity.fall(pd.level, m.immutable(), pd.states[i]);
                 f.setHurtsEntities(HURT_PER_BLOCK, HURT_MAX);
-                fell++;
+                // the roof's groan as it goes, and again as the last of it lets go
+                if (i == 0 || pd.next == pd.roof.length) {
+                    pd.level.playSound(null, m, DelveContent.CAVE_FALL.get(), SoundSource.BLOCKS, i == 0 ? 2.0F : 1.4F,
+                            (i == 0 ? 0.85F : 0.7F) + 0.2F * pd.level.getRandom().nextFloat());
+                }
             }
-            if (fell > 0) {
-                BlockPos c = BlockPos.of(pd.roof[0]);
-                pd.level.playSound(null, c, DelveContent.CAVE_FALL.get(), SoundSource.BLOCKS, 2.0F, 0.85F + 0.2F * pd.level.getRandom().nextFloat());
-            }
-        }
+            return pd.next >= pd.roof.length;
+        });
     }
 
     /** Roofs waiting to fall (tests). */

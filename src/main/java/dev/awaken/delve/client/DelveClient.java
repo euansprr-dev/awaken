@@ -16,8 +16,9 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 /**
  * The deep on the client (SPEC §28.3): the strike's feel ({@link StrikeFeel}), the heavy strike's charge
- * ({@link HeavyCharge}), a lode's glints and the vein giving ({@link VeinFx}), a roof's warning dust ({@link CaveInFx}),
- * the Tuning Fork's song and arc ({@link ForkSong}) and the miner's lamp ({@link LampGlow}).
+ * ({@link HeavyCharge}), a lode's glints and the vein giving ({@link VeinFx}), a cave-in's cracks, dust and fall
+ * ({@link CaveInFx}), the Tuning Fork's song and arc ({@link ForkSong}) and the miner's lamp ({@link LampGlow}); the lamp and
+ * the vein's light are drawn through {@link DelveRender}.
  */
 public final class DelveClient {
     private DelveClient() {}
@@ -28,7 +29,7 @@ public final class DelveClient {
         HomeClient.init(modBus);
         SenseClient.init(modBus);
         modBus.addListener(RegisterParticleProvidersEvent.class, DelveParticles::register);
-        modBus.addListener(RegisterRenderPipelinesEvent.class, LampGlow::onRegister);
+        modBus.addListener(RegisterRenderPipelinesEvent.class, DelveRender::onRegister);
         modBus.addListener(RegisterGuiLayersEvent.class, ForkSong::registerLayer);
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(DelveNet.VeinOpen.TYPE, (m, ctx) -> VeinFx.open(m));
@@ -50,6 +51,7 @@ public final class DelveClient {
             ForkSong.tick();
         });
         bus.addListener(SubmitCustomGeometryEvent.class, LampGlow::submit);
+        bus.addListener(SubmitCustomGeometryEvent.class, VeinFx::submit);
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             VeinFx.reset();
             CaveInFx.reset();

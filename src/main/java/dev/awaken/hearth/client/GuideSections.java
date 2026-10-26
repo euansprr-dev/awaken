@@ -33,15 +33,15 @@ final class GuideSections {
     private GuideSections() {}
 
     /** The scanner's rule in one line. */
-    static final String RULE = "A closed, roofed room: walls, a roof, a door; at most " + RoomScanner.MAX_EXTENT + " wide.";
+    static final String RULE = "A closed, roofed room: walls, a roof, a door; at most " + RoomScanner.MAX_EXTENT + " blocks a side.";
     private static final int DIM = 0x4A5A72;
     private static final Map<Furniture, ItemStack> ICONS = new EnumMap<>(Furniture.class);
     private static final Map<Identifier, ItemStack> STACKS = new HashMap<>();
     private static final ItemStack DOOR = new ItemStack(Items.OAK_DOOR);
 
-    /** In screen order: where you stand, Oren's offer, rooms, town, the next upgrade, a declined offer last. */
+    /** In screen order: where you stand, the home's Comfort, Oren's offer, rooms, town, the next upgrade, a declined offer last. */
     static List<UiSection> all(Supplier<GuideData> data) {
-        return List.of(new Facts(data), new CottageOffer(data, true), new Rooms(data), new Town(data), new Upgrade(data),
+        return List.of(new Facts(data), new Home(data), new CottageOffer(data, true), new Rooms(data), new Town(data), new Upgrade(data),
                 new CottageOffer(data, false));
     }
 
@@ -87,9 +87,34 @@ final class GuideSections {
         protected void build(Ui ui) {
             GuideData d = data.get();
             int label = Glass.a(Glass.LABEL, 1f), text = Glass.a(Glass.TEXT, 1f);
-            ui.pair("Radius", d.radius() + " blocks around the Anchor", label, text);
+            ui.pair("Radius", d.radius() + " blocks around " + (d.tier() <= 0 ? "your fire" : "the Anchor"), label, text);
             ui.pair("Rest heals a Fracture", "in " + d.rest() + " s standing still (" + d.sanctuaryRest() + " s in a Sanctuary)", label, text);
-            ui.pair("You respawn", d.respawnHere() ? "here, by the Anchor" : "at a bed elsewhere (using the Anchor brings it back)", label, text);
+            String home = d.tier() <= 0 ? "the fire" : "the Anchor";
+            ui.pair("You respawn", d.respawnHere() ? "here, by " + home : "at a bed elsewhere (using " + home + " brings it back)", label, text);
+        }
+    }
+
+    /** The home as the Hearth reads it: Comfort (and what adds a point), Style, the land, how long you sleep Rested. */
+    static final class Home extends Part {
+        Home(Supplier<GuideData> data) {
+            super(data);
+        }
+
+        @Override public String title() { return "HOME"; }
+
+        @Override
+        protected void build(Ui ui) {
+            GuideData.Home h = data.get().home();
+            int label = Glass.a(Glass.LABEL, 1f), text = Glass.a(Glass.TEXT, 1f);
+            ui.pair("Comfort", h.comfort() + " of " + dev.awaken.hearth.Comfort.MAX, label, Glass.a(Glass.AMBER, 1f));
+            ui.bar(h.comfort() / (double) dev.awaken.hearth.Comfort.MAX, Glass.a(Glass.LANTERN, 1f));
+            ui.gap(2);
+            if (!h.comfortNext().isEmpty()) ui.text("A point more: " + h.comfortNext() + ".", Glass.a(Glass.AMBER, 0.9f));
+            ui.text("Comfort is your best bedroom, a warm room, a table and seats, soft things, plants, and the land round them: "
+                    + "a field, a pen, a garden, a lit yard, a wall. The best of each counts.", Glass.a(Glass.LABEL, 0.85f));
+            if (!h.style().isEmpty()) ui.pair("Style", h.style(), label, text);
+            if (!h.land().isEmpty()) ui.pair("The land", String.join(", ", h.land()), label, text);
+            ui.pair("Rested", h.restedMinutes() + " min when you wake in your own bed here", label, text);
         }
     }
 
@@ -147,13 +172,56 @@ final class GuideSections {
 
         @Override
         protected void build(Ui ui) {
-            ui.text("Build a room, put its furniture inside, and the Hearth notices: no menus. Doors, glass panes, fences, walls, "
-                    + "slabs and stairs close gaps.", Glass.a(Glass.LABEL, 1f));
+            GuideData d = data.get();
+            ui.text("Build it and the Hearth reads it: no menus. Every closed, roofed room is read on six things (closed, light, "
+                    + "warmth, room, care, detail), graded Bare, Snug, Fine or Grand (never more than a step above its weakest), and "
+                    + "named. Furniture says what a room is for. Doors, glass panes, fences, walls, slabs and stairs close gaps.",
+                    Glass.a(Glass.LABEL, 1f));
             ui.gap(4);
+            for (GuideData.RoomView r : d.home().rooms()) {
+                RoomPanel.card(ui, r.name(), r.grade(), r::reading, r.purpose(), r.lift(), false);
+                ui.gap(4);
+            }
+            // the kinds you have, as chips
+            var have = ui.flow();
+            boolean any = false;
             for (RoomType t : RoomType.values()) {
+                GuideData.RoomCard c = d.card(t.ordinal());
+                if (c.built().isEmpty()) continue;
+                have.chip(c.built().size() > 1 ? t.label + " ×" + c.built().size() : t.label, Glass.GOOD);
+                any = true;
+            }
+            if (any) {
+                have.end();
+                ui.gap(4);
+            } else {
+                have.end();
+            }
+            // at most three to build next (what you've started first), the rest one dim line each
+            List<RoomType> next = suggestions(d);
+            for (RoomType t : next) {
                 room(ui, t);
                 ui.gap(5);
             }
+            for (RoomType t : RoomType.values()) {
+                if (next.contains(t) || !d.card(t.ordinal()).built().isEmpty()) continue;
+                ui.text(t.label + " · " + t.needs + " · " + t.gives, Glass.a(DIM, 1f));
+            }
+        }
+
+        /** What you've started (some of its furniture is here, or it has a reason it isn't one yet), then the first rooms. */
+        static List<RoomType> suggestions(GuideData d) {
+            List<RoomType> out = new ArrayList<>(3);
+            for (RoomType t : RoomType.values()) {
+                GuideData.RoomCard c = d.card(t.ordinal());
+                if (!c.built().isEmpty() || out.size() >= 3) continue;
+                if (c.have() != 0 || !c.why().isEmpty()) out.add(t);
+            }
+            for (RoomType t : List.of(RoomType.SHELTER, RoomType.BEDROOM, RoomType.KITCHEN, RoomType.SANCTUARY)) {
+                if (out.size() >= 3) break;
+                if (!out.contains(t) && d.card(t.ordinal()).built().isEmpty()) out.add(t);
+            }
+            return out;
         }
 
         private void room(Ui ui, RoomType t) {
@@ -173,6 +241,7 @@ final class GuideSections {
                 }
                 flow.item(DOOR, (built ? "✓ " : "✗ ") + "all of it in one room", Glass.a(built ? Glass.GOOD : Glass.AMBER, 1f));
                 flow.end();
+                if (t.condition != null) in.text("And " + t.condition + ".", Glass.a(built ? Glass.GOOD : Glass.AMBER, 0.9f));
                 if (!built) {
                     in.text(RULE, Glass.a(Glass.LABEL, 0.85f));
                     for (Furniture f : t.furniture) if ((c.have() & f.bit()) == 0) recipe(in, d, f);
@@ -216,6 +285,11 @@ final class GuideSections {
         @Override
         protected void build(Ui ui) {
             GuideData d = data.get();
+            if (d.tier() <= 0) {
+                ui.text("Nobody lives here yet: the first nights are yours alone. People come with the Anchor, when a Lord's Heart "
+                        + "goes on the fire.", Glass.a(Glass.TEXT, 1f));
+                return;
+            }
             if (d.town().isEmpty()) {
                 ui.text("Nobody has moved in yet.", Glass.a(Glass.TEXT, 1f));
             } else {
@@ -247,7 +321,13 @@ final class GuideSections {
                 ui.text("Your Hearth is complete.", Glass.a(Glass.GOOD, 1f));
                 return;
             }
-            ui.text("Tier " + roman(u.next()) + ": radius " + u.radius() + ", rest heals in " + u.rest() + " s.", Glass.a(Glass.TEXT, 1f));
+            if (data.get().tier() <= 0) {
+                ui.text("Tier I, the Anchor: a Lord's Heart on the fire. Radius " + u.radius() + ", the town comes, and requests.",
+                        Glass.a(Glass.TEXT, 1f));
+                ui.text("A Gate Lord's hoard holds one. Use it on the fire, or here.", Glass.a(Glass.LABEL, 1f));
+            } else {
+                ui.text("Tier " + roman(u.next()) + ": radius " + u.radius() + ", rest heals in " + u.rest() + " s.", Glass.a(Glass.TEXT, 1f));
+            }
             if (!u.rankMet()) ui.text("Opens at " + u.rank() + " (pass the Reassessment). You will need:", Glass.a(Glass.LABEL, 1f));
             ui.gap(1);
             var flow = ui.flow();
@@ -260,8 +340,9 @@ final class GuideSections {
             if (u.discount() > 0) ui.text("Your rank takes " + u.discount() + "% off.", Glass.a(Glass.LABEL, 1f));
             if (u.rankMet()) {
                 String key = AwakenKeys.ACCEPT.getTranslatedKeyMessage().getString();
-                button(ui, u.affordable() ? "[" + key + "] Build Tier " + roman(u.next()) : "Gather the materials first", Glass.LANTERN,
-                        u.affordable(), Guide.Act.UPGRADE);
+                String act = data.get().tier() <= 0 ? "Feed the fire the Heart" : "Build Tier " + roman(u.next());
+                button(ui, u.affordable() ? "[" + key + "] " + act : data.get().tier() <= 0 ? "Bring a Lord's Heart" : "Gather the materials first",
+                        Glass.LANTERN, u.affordable(), Guide.Act.UPGRADE);
             }
         }
     }

@@ -21,9 +21,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-/** One player's Hearth. Saved in {@link HearthData}; rooms and other caches are rebuilt at runtime. */
+/**
+ * One player's Hearth. Saved in {@link HearthData}. Tier 0 is the Hearthfire an Ember founds (radius 24, no town); Tier I
+ * is the Anchor. The rooms the last scan read are saved with it (schema 3, without their cells), so a restart doesn't
+ * re-read every home at once; their cells come back with the next scan.
+ */
 public final class HearthRecord {
     public static final int MAX_TIER = 5;
+    /** The Hearthfire's radius (Tier 0). */
+    public static final int HEARTHFIRE_RADIUS = 24;
     public static final int MAX_FORGE_TIER = 3;
 
     public final UUID owner;
@@ -32,6 +38,8 @@ public final class HearthRecord {
     public String dimension;
     public int tier = 1;
     public int forgeTier = 1;
+    /** What the owner named their ground on the YOUR GROUND card ("" = not named yet). */
+    public String name = "";
     /** Town NPC ids that have arrived, and the entity each one lives in. */
     public final Set<String> arrived = new LinkedHashSet<>();
     public final Map<String, UUID> npcs = new HashMap<>();
@@ -57,7 +65,12 @@ public final class HearthRecord {
     /** Members' rank-ups still waiting to be celebrated here: uuid → rank ordinal. */
     public final Map<UUID, Integer> memberCelebrations = new HashMap<>();
 
-    // ---- runtime only -----------------------------------------------------------------------------------------------
+    /** The home's Comfort (best of each kind: SPEC §28.2), its Style in words, and the land's features (bits), from the last scan. */
+    public int comfort;
+    public String style = "";
+    public int land;
+
+    // ---- runtime only (rooms are saved, but not their cells) ---------------------------------------------------------
     public volatile List<Room> rooms = List.of();
     /** Furniture in the radius that isn't in a room, and why (from the last scan). */
     public List<Miss> misses = List.of();
@@ -151,10 +164,25 @@ public final class HearthRecord {
         ).apply(i, Household::new));
     }
 
+    /** Schema 3 (W1): the Hearth's name and the last reading of its rooms, Comfort, Style and land. */
+    private record Home(int schema, String name, List<Room> rooms, int comfort, String style, int land) {
+        static final int SCHEMA = 3;
+        static final Home NONE = new Home(SCHEMA, "", List.of(), 0, "", 0);
+        static final Codec<Home> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.INT.optionalFieldOf("schema", SCHEMA).forGetter(Home::schema),
+                Codec.STRING.optionalFieldOf("name", "").forGetter(Home::name),
+                Room.CODEC.listOf().optionalFieldOf("rooms", List.of()).forGetter(Home::rooms),
+                Codec.INT.optionalFieldOf("comfort", 0).forGetter(Home::comfort),
+                Codec.STRING.optionalFieldOf("style", "").forGetter(Home::style),
+                Codec.INT.optionalFieldOf("land", 0).forGetter(Home::land)
+        ).apply(i, Home::new));
+    }
+
     public static final Codec<HearthRecord> CODEC = RecordCodecBuilder.<HearthRecord>create(i -> i.group(
             Core.CODEC.fieldOf("core").forGetter(HearthRecord::core),
             Town.CODEC.fieldOf("town").forGetter(HearthRecord::town),
-            Household.CODEC.optionalFieldOf("household", Household.NONE).forGetter(HearthRecord::household)
+            Household.CODEC.optionalFieldOf("household", Household.NONE).forGetter(HearthRecord::household),
+            Home.CODEC.optionalFieldOf("home", Home.NONE).forGetter(HearthRecord::home)
     ).apply(i, HearthRecord::fromSaved));
 
     public HearthRecord(UUID owner, String ownerName, BlockPos pos, String dimension) {
@@ -185,8 +213,23 @@ public final class HearthRecord {
         return new Household(Household.SCHEMA, m, Optional.ofNullable(foundedFrom), c);
     }
 
-    private static HearthRecord fromSaved(Core c, Town t, Household h) {
+    private Home home() {
+        return new Home(Home.SCHEMA, name, List.copyOf(rooms), comfort, style, land);
+    }
+
+    private static HearthRecord fromSaved(Core c, Town t, Household h, Home home) {
         HearthRecord r = fromParts(c, t);
+        r.name = home.name;
+        r.comfort = home.comfort;
+        r.style = home.style;
+        r.land = home.land;
+        if (!home.rooms.isEmpty()) {
+            // the saved reading stands until a staggered rescan reads the rooms again (HearthService: lastScan < 0)
+            r.rooms = List.copyOf(home.rooms);
+            r.scanAt = 0;
+            r.lastScan = -1;
+            r.scannedOnce = true;
+        }
         for (Member m : h.members) if (!m.id().equals(r.owner)) r.members.put(m.id(), m.name());
         r.foundedFrom = h.foundedFrom.orElse(null);
         for (Cheer ch : h.cheers) if (r.members.containsKey(ch.id())) r.memberCelebrations.put(ch.id(), ch.rank());
@@ -195,7 +238,7 @@ public final class HearthRecord {
 
     private static HearthRecord fromParts(Core c, Town t) {
         HearthRecord r = new HearthRecord(c.owner, c.ownerName, c.pos, c.dimension);
-        r.tier = Math.max(1, Math.min(MAX_TIER, c.tier));
+        r.tier = Math.max(0, Math.min(MAX_TIER, c.tier));
         r.forgeTier = Math.max(1, Math.min(MAX_FORGE_TIER, c.forgeTier));
         r.createdDay = c.createdDay;
         r.pendingCelebration = c.pendingCelebration;
@@ -239,7 +282,18 @@ public final class HearthRecord {
     }
 
     public static int radiusForTier(int tier) {
-        return 48 + 8 * (Math.max(1, Math.min(MAX_TIER, tier)) - 1);
+        if (tier <= 0) return HEARTHFIRE_RADIUS;
+        return 48 + 8 * (Math.min(MAX_TIER, tier) - 1);
+    }
+
+    /** Tier 0: an Ember's fire, before a Lord's Heart makes it an Anchor (no town, no Spire, no requests). */
+    public boolean hearthfire() {
+        return tier <= 0;
+    }
+
+    /** The name the owner gave their ground, else "<owner>'s hearth". */
+    public String displayName() {
+        return name.isBlank() ? ownerName + "'s hearth" : name;
     }
 
     public boolean contains(BlockPos p) {
