@@ -179,7 +179,13 @@ public final class FarColumns {
     private float builtGround(int x, int z, float natural) {
         int air = Math.min(Math.floorDiv((int) Math.ceil(Math.max(natural, streetY + 11)), 8) * 8 + 8, maxY - 8);
         float da = finalAt(x, air, z);
-        if (da > 0f) return natural; // not above everything after all: the natural ground
+        // not above everything after all (an overhang the natural solve stepped under): climb to the air first. Never
+        // the natural ground as it is: inside the blend that stood a hill where the basin had flattened it
+        for (int up = 0; da > 0f && up < 24 && air + 8 <= maxY - 8; up++) {
+            air += 8;
+            da = finalAt(x, air, z);
+        }
+        if (da > 0f) return city.ground(natural, x, z);
         while (true) {
             int solid = air - 8;
             if (solid < minY) return minY;

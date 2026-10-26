@@ -1577,13 +1577,21 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   game's lightmap at the face's own light (dark under roofs, lit windows by night), `farLight` and the same air.
   A level gives way to the next once its cells span 1.5 pixels or fewer, cross-fading over 15% of its reach
   (dithered). Hidden where Sodium draws the section (`farRealSection` and the chunk mask); chunks Sodium draws whole are
-  not planned. The far terrain and far trees step aside where City Sight stands (a 256×256-chunk toroidal coverage mask,
-  read within 2 km) and under it carry only the city's ground, a block under its streets (`FarCity.underCitySight`,
-  `CityLayout.groundY`). The opening's card waits for the whole city to be meshed and up. Debug view 3 tints City
+  not planned. The far terrain and far trees step aside where City Sight draws this frame (a 256×256-chunk toroidal
+  coverage mask, read within 2 km, rebuilt from the frame's plan after it and uploaded when it changes) and under it
+  carry only the city's ground, a block under its streets (`FarCity.underCitySight`, `CityLayout.groundY`). Never where
+  it only holds a chunk: a chunk held but not drawn left the far land stepping aside for nothing (2026-10-26, Euan from
+  the Commons, build 3e1f9d11: where Carillon stood, a pale grid to the sky and tall dark slabs, the solid dark-oak cores
+  of the houses cut open at the edges of the chunks that were drawn). A frame's draws are capped at 32768 (was 8192,
+  silently: past it chunks went undrawn, likeliest after a render distance drop hands Sodium's chunks to City Sight); a
+  chunk is planned whole or not at all, and one past the cap falls back to the far land, logged once. Coarse levels
+  light a face by the brightest air a block out across the whole face (one block at its middle was often a wall of the
+  cell beside, which holds no light: whole faces black). Status line: `drawn=… draws`. Tour `farsight3-commons.txt`
+  (Euan's world, his seed). The opening's card waits for the whole city to be meshed and up. Debug view 3 tints City
   Sight green; `farsight part city off` hides it. Test `farsight_voxels_mesh`.
   Also (2026-10-26, Euan's tours): every overworld chunk the server loads is captured too, after the city's (kept
-  within 1.9 km, the city's at any distance, at most 16 M quads, farthest first; the coverage mask redrawn each second
-  for chunks within 2 km, so its 4 km torus never stands a far chunk in for a near one). A snapshot starts just under
+  within 1.9 km, the city's at any distance, at most 16 M quads, farthest first; the coverage mask holds chunks within
+  2 km only, so its 4 km torus never stands a far chunk in for a near one). A snapshot starts just under
   the chunk's lowest ground (MOTION_BLOCKING_NO_LEAVES - 8; OCEAN_FLOOR counts leaves, and under a closed canopy the
   cut fell at the leaves: trees floating over a hole): deeper never shows. A chunk is taken again 2 s after its last block
   change (the neighbour-update event), not on save (the city's hold saves every chunk as it lets go: the city

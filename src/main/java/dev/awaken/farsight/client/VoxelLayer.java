@@ -32,10 +32,12 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * the vertex shader pulls them by index. A chunk table gives each slot's origin, a look table each look's atlas
  * rectangle. Each frame every chunk picks its level by how big its blocks look (a block under {@link #PIXELS} pixels
  * goes to the next level), the levels cross-fading over a band, and chunks Sodium draws whole are skipped. A coverage
- * mask (256×256 chunks, toroidal) tells the far terrain and far trees where City Sight stands, so they step aside.
+ * mask (256×256 chunks, toroidal) tells the far terrain and far trees where City Sight stands, so they step aside: the
+ * chunks it draws this frame, never just the ones it holds (a chunk held but not drawn left the far land stepping
+ * aside for nothing, a hole to the sky: Euan, 2026-10-26, the city seen from the Commons).
  */
 final class VoxelLayer implements AutoCloseable {
-    static final int PAGE_QUADS = 1 << 18, MAX_SLOTS = 1 << 16, DRAW_QUADS = 1 << 16, MAX_COMMANDS = 8192, COMMAND_BYTES = 20;
+    static final int PAGE_QUADS = 1 << 18, MAX_SLOTS = 1 << 16, DRAW_QUADS = 1 << 16, MAX_COMMANDS = 32768, COMMAND_BYTES = 20;
     /** A level's blocks give way to the next coarser level once they look this many pixels or fewer. */
     static final float PIXELS = 2.0f;
     /** Chunks are kept this far (blocks) and drawn in the coverage mask this far; the city's are kept at any distance. */
@@ -89,7 +91,9 @@ final class VoxelLayer implements AutoCloseable {
     private final GpuTexture coverage;
     final GpuTextureView coverageView;
     private final ByteBuffer coverageBytes = MemoryUtil.memCalloc(256 * 256);
-    private boolean coverageDirty = true;
+    /** This frame's coverage (the chunks drawn, at their dissolve's share) and the one on the GPU. */
+    private final byte[] cover = new byte[256 * 256], coverShown = new byte[256 * 256];
+    private boolean coverageDirty = true, cappedLogged;
     private final ByteBuffer staging = MemoryUtil.memAlloc(PAGE_QUADS * 16).order(ByteOrder.LITTLE_ENDIAN);
     private final ByteBuffer one = MemoryUtil.memAlloc(16).order(ByteOrder.LITTLE_ENDIAN);
     final VoxelLooks looks = new VoxelLooks();
@@ -188,19 +192,22 @@ final class VoxelLayer implements AutoCloseable {
                 one.clear();
                 one.putInt(c.cx * 16).putInt(levelMinY).putInt(c.cz * 16).putInt(f).flip();
                 enc.writeToBuffer(chunkTable.slice((long) s * 16, 16), one);
-                double dx = c.cx * 16 + 8 - lastCamX, dz = c.cz * 16 + 8 - lastCamZ;
-                if (dx * dx + dz * dz < COVER * COVER) {
-                    coverageBytes.put((c.cz & 255) << 8 | (c.cx & 255), (byte) f);
-                    coverageDirty = true;
-                }
                 if (f == 255) fading.removeInt(i);
             }
         }
-        if (coverageDirty) {
-            coverageDirty = false;
-            coverageBytes.clear();
-            enc.writeToTexture(coverage, coverageBytes, 0, 0, 0, 0, 256, 256);
-        }
+    }
+
+    /**
+     * After {@link #plan}: the coverage mask for this frame, the chunks the plan draws (each at its dissolve's share),
+     * uploaded when it changed. Before the far terrain draws.
+     */
+    void cover() {
+        if (!coverageDirty && java.util.Arrays.equals(cover, coverShown)) return;
+        coverageDirty = false;
+        System.arraycopy(cover, 0, coverShown, 0, cover.length);
+        coverageBytes.clear();
+        coverageBytes.put(cover).flip();
+        RenderSystem.getDevice().createCommandEncoder().writeToTexture(coverage, coverageBytes, 0, 0, 0, 0, 256, 256);
     }
 
     private int put(CommandEncoder enc, VoxelMesh m) {
@@ -314,13 +321,6 @@ final class VoxelLayer implements AutoCloseable {
             hashes[s] = 0;
             forgotten.accept(key);
         }
-        MemoryUtil.memSet(coverageBytes, 0);
-        for (int i = 0; i < live.size(); i++) {
-            Chunk c = chunks[live.getInt(i)];
-            double dx = c.cx * 16 + 8 - camX, dz = c.cz * 16 + 8 - camZ;
-            if (dx * dx + dz * dz < COVER * COVER) coverageBytes.put((c.cz & 255) << 8 | (c.cx & 255), (byte) c.fade);
-        }
-        coverageDirty = true;
     }
 
     /** Forgets every chunk (a new world, a resource reload). */
@@ -342,7 +342,7 @@ final class VoxelLayer implements AutoCloseable {
         }
         finished.clear();
         fading.clear();
-        MemoryUtil.memSet(coverageBytes, 0);
+        java.util.Arrays.fill(cover, (byte) 0);
         coverageDirty = true;
     }
 
@@ -356,7 +356,9 @@ final class VoxelLayer implements AutoCloseable {
         drawFirst.clear();
         quadsDrawn = 0;
         chunksDrawn = 0;
+        java.util.Arrays.fill(cover, (byte) 0);
         if (!on) return;
+        boolean capped = false;
         // a level-l cell (2^l blocks) looks PIXELS pixels at this distance, more where the air has dimmed it (detail
         // follows the air: a cell's error counts for what shows through the haze, so hazier distance needs less of it)
         for (int l = 0; l < VoxelMesher.LEVELS; l++) {
@@ -386,7 +388,8 @@ final class VoxelLayer implements AutoCloseable {
             // faces turned away from the camera across the whole chunk aren't drawn: down, up, north, south, west, east
             int faces = (camY < c.maxY ? 1 : 0) | (camY > c.minY ? 2 : 0) | (camZ < c.cz * 16 + 16 ? 4 : 0) | (camZ > c.cz * 16 ? 8 : 0)
                     | (camX < c.cx * 16 + 16 ? 16 : 0) | (camX > c.cx * 16 ? 32 : 0);
-            boolean drawn = false;
+            boolean drawn = false, fits = true;
+            int mark = drawPage.size(), quadsMark = quadsDrawn;
             boolean edge = near < realWithin + 2;
             for (int l = 0; l < VoxelMesher.LEVELS; l++) {
                 float from = l == 0 ? 0f : reach[l - 1], to = reach[l] * (1f + BAND);
@@ -404,29 +407,52 @@ final class VoxelLayer implements AutoCloseable {
                     // a run of visible faces in one range
                     int e = d;
                     while (e < 6 && (faces & 1 << e) != 0) e++;
-                    if (st[e] > st[d]) add(c.page[l] | pageFlag, c.first[l] + st[d], st[e] - st[d]);
+                    if (st[e] > st[d]) fits &= add(c.page[l] | pageFlag, c.first[l] + st[d], st[e] - st[d]);
                     d = e;
                 }
                 drawn = true;
             }
-            if (drawn) chunksDrawn++;
+            if (!fits) {
+                // out of room for this frame's draws: the chunk isn't drawn at all (never in part), so the far land
+                // stands in for it
+                drawPage.size(mark);
+                drawQuads.size(mark);
+                drawFirst.size(mark);
+                quadsDrawn = quadsMark;
+                drawn = false;
+                capped = true;
+            }
+            if (!drawn) continue;
+            chunksDrawn++;
+            if (near < COVER) cover[(c.cz & 255) << 8 | (c.cx & 255)] = (byte) c.fade;
+        }
+        if (capped && !cappedLogged) {
+            cappedLogged = true;
+            dev.awaken.Awaken.LOG.warn("[farsight] city sight: more than {} draws in a frame; the rest fall back to the far land", MAX_COMMANDS);
         }
         sortByPage();
     }
 
-    private void add(int page, int first, int count) {
+    /** Adds one range's draws; false (and nothing added past the room left) when this frame's draws are full. */
+    private boolean add(int page, int first, int count) {
         for (int at = 0; at < count; at += DRAW_QUADS) {
-            if (drawPage.size() >= MAX_COMMANDS) return;
+            if (drawPage.size() >= MAX_COMMANDS) return false;
             int n = Math.min(DRAW_QUADS, count - at);
             drawPage.add(page);
             drawQuads.add(n);
             drawFirst.add(first + at);
             quadsDrawn += n;
         }
+        return true;
     }
 
     boolean any() {
         return !drawPage.isEmpty();
+    }
+
+    /** This frame's draw commands (status). */
+    int commands() {
+        return drawPage.size();
     }
 
     /** Draws the planned chunks into the open pass (Far Sight's targets), page by page. */

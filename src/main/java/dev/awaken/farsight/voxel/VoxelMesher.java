@@ -460,14 +460,28 @@ public final class VoxelMesher {
             offset = c * 16 - 2;
         }
         if (look < 0) return 0;
-        // the light of the air at the middle of the face, a block out
+        // the light of the air in front of the face: the brightest of the blocks a block out across the whole face.
+        // One block at its middle was often a wall or a roof of the cell beside (a cell is empty with up to half its
+        // blocks solid), and a solid block holds no light: whole coarse faces came out black, dark slabs where the city
+        // stood (Euan, 2026-10-26, from the Commons)
         int mx = cx * c + c / 2, my = cy * c + c / 2, mz = cz * c + c / 2;
-        int lx = mx + DX[dir] * (c / 2 + 1), ly = dir == 1 ? cy * c + c : dir == 0 ? cy * c - 1 : my, lz = mz + DZ[dir] * (c / 2 + 1);
-        if (dir >= 2) {
-            lx = dir == 4 ? cx * c - 1 : dir == 5 ? cx * c + c : mx;
-            lz = dir == 2 ? cz * c - 1 : dir == 3 ? cz * c + c : mz;
+        int x0 = cx * c, y0 = cy * c, z0 = cz * c, skyMax = 0, blockMax = 0;
+        for (int a = 0; a < c; a++) {
+            for (int b = 0; b < c; b++) {
+                int lx, ly, lz;
+                switch (dir) {
+                    case 0 -> { lx = x0 + a; ly = y0 - 1; lz = z0 + b; }
+                    case 1 -> { lx = x0 + a; ly = y0 + c; lz = z0 + b; }
+                    case 2 -> { lx = x0 + a; ly = y0 + b; lz = z0 - 1; }
+                    case 3 -> { lx = x0 + a; ly = y0 + b; lz = z0 + c; }
+                    case 4 -> { lx = x0 - 1; ly = y0 + b; lz = z0 + a; }
+                    default -> { lx = x0 + c; ly = y0 + b; lz = z0 + a; }
+                }
+                skyMax = Math.max(skyMax, snap.skyLight(lx, ly, lz));
+                blockMax = Math.max(blockMax, snap.blockLight(lx, ly, lz));
+            }
         }
-        int sky = step(snap.skyLight(lx, ly, lz)), block = step(snap.blockLight(lx, ly, lz));
+        int sky = step(skyMax), block = step(blockMax);
         int tint = (look >>> 16) != 0 ? looks.tint(id, (look >>> 16) - 1, snap.biome(mx, my, mz)) & 0xFFFFFF : 0xFFFFFF;
         return PRESENT | (long) (offset & 255) << 52 | (long) block << 48 | (long) sky << 44 | (long) tint << 16 | (look & 0xFFFF);
     }
