@@ -4563,7 +4563,7 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   was rolled the moment they awakened, in the infirmary, at random 300-1500 out, unannounced.
 - **Out through the walls** is a moment: crossing the city reserve outward shows the region's caption ("THE COMMONS ·
   1-8") once a play-day (the Commons spans the city's edge, so leaving had none).
-- Test: `living_first_thread`.
+- Tests: `progression_first_thread`, `progression_now_priorities`, `gates_first_gate_on_purpose`.
 
 ### 27.7 Tips, switched on, and the Signal's thread (phase 4)
 - **Tips** (docs/carillon/m4/onboarding.md §1, finally built; `TipHooks.install` had no caller, so every tip in the

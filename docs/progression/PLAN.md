@@ -3,12 +3,14 @@
 Lead designer's plan, built from a code audit of the build Euan plays (`build/awaken-v1` 84bea58c), the pacing sims and
 AAA research. Approval page: https://claude.ai/artifact/RjzQ2SNdst8vbXPrZrvx1P (source `docs/progression/page.html`).
 
-**Status (2026-10-26): Euan approved all of it ("ahead of the entire plan"), all eleven recommendations, the Tether at
-D. Phases 0-5 are built on `pack/progression` (SPEC §27, with §17.7, §17.9, §17.10, §17.19).** Built as planned, with
-these changes: the glance is no key: the Signal's thread runs toward the Now line's place when it's new or when you
-stand idle (no new binding); weapon mastery came with Arms S7; Wilds content past level 20 stays with Living Wilds F;
-the daytime shaft over the Horizon's site, the E-rank pillar's look and the Atlas "?" seeds are left for their owners
-(the pillars were just rebuilt as soft light). Tour: `tools/autopilot/progression-way.txt` (waits for the machine).
+**Status (2026-10-26): approved in full.** Euan, through the orchestrator: "Approve The Way Forward as recommended: all
+eleven decisions as the plan recommends, start Phase 1 and Phase 3." and here: "ahead of the entire plan". Built on
+`pack/progression`: phases 0, 1, 2, 4 and 5 (SPEC §27, with §17.7, §17.9, §17.10, §17.19). Phase 3 (locks) is the
+locks builder's, on `pack/locks` (a first draft is on `pack/progression-p3-wip`). Changes from the plan: the glance has no
+key (the Signal's thread runs toward the Now line's place when it's new or when you stand idle); weapon mastery came with
+Arms S7; Wilds content past level 20 stays with Living Wilds F; the daytime shaft over the Horizon's site, the E-rank
+pillar's look and the Atlas "?" seeds are left to their owners. The Registry ceremony is merged in. Tour:
+`tools/autopilot/progression-way.txt`.
 
 Supporting files (all in this folder):
 - `audit-journey.md`: the first hour minute by minute, and every guidance channel.
@@ -360,7 +362,7 @@ Phases 1 and 3 touch different files and can run as two builders at once; 2 foll
 - **Multiplayer:** promises, the first thread and the first gate are per player; one player's tower must never spend a
   cache's prize for another (Phase 3's inner seal).
 
-## 9. Euan's decisions
+## 9. Euan's decisions (all approved as recommended, 2026-10-26)
 1. **The Tether's rank: the vault's own door rank (D near Carillon, ~5-6 h) rather than a flat C (~18 h).**
    *Recommend D.* You said C, and C is what's built now. But vaults near home have D doors, so "open the vault and it
    gives you its line" is your rule at D; C leaves an 18-hour movement desert and stacks the ladder on C.

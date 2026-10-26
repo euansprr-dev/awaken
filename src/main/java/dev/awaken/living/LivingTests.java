@@ -36,7 +36,32 @@ final class LivingTests {
         dev.awaken.living.craft.CraftTests.register();
         // SPEC §27.6: registration starts Kestrel's errand, tracked and on the Now line over bookkeeping; the Registry's
         // Directive is the first floor, already taken on, with its progress on the line; no gate forms before level 3
-        AwakenTests.register("living_first_thread", 100, h -> {
+        // the Now line's order (SPEC §27.6): a tracked chain's step, then a taken Directive, then points, then the road
+        AwakenTests.register("progression_now_priorities", 100, h -> {
+            net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+            try {
+                dev.awaken.progression.Progression.awaken(p);
+                dev.awaken.progression.Progression.count(p, "awaken:carillon_registered");
+                dev.awaken.core.api.OpeningHooks.fireRegistered(p);
+                dev.awaken.progression.Directives.tryOffer(p, "opening");
+                dev.awaken.progression.Progression.topUpToLevel(p, 3, dev.awaken.progression.Progression.XpSource.COMMAND);
+                List<String> ids = dev.awaken.core.api.NowHooks.collect(p, 20).stream().map(dev.awaken.core.api.NowHooks.Suggestion::id).toList();
+                int chain = -1, directive = -1, points = -1, road = -1;
+                for (int i = 0; i < ids.size(); i++) {
+                    String id = ids.get(i);
+                    if (id.startsWith("living:chain/") && chain < 0) chain = i;
+                    if (id.startsWith("progression:directive/") && directive < 0) directive = i;
+                    if (id.equals("progression:points")) points = i;
+                    if (id.startsWith("progression:road/") && road < 0) road = i;
+                }
+                h.assertTrue(chain >= 0 && directive > chain && points > directive && (road < 0 || road > points),
+                        "the chain's step, then the Directive, then points, then the road: " + ids);
+            } finally {
+                h.getLevel().getServer().getPlayerList().remove(p);
+            }
+            h.succeed();
+        });
+        AwakenTests.register("progression_first_thread", 100, h -> {
             net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
             try {
                 dev.awaken.progression.Progression.awaken(p);
