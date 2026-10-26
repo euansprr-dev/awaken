@@ -12,9 +12,9 @@ import net.neoforged.neoforge.event.entity.living.MobSpawnEvent;
 /**
  * Monsters near the city (M4, the Commons step; SPEC §16.3). Euan leaves Carillon with no weapon, only his first power,
  * and the fields at night were crowded. Outside the wall a natural spawn of anything hostile (vanilla's monsters, the
- * Awakened hunters) goes ahead only by {@link #pass(double)}: one in eight over the fields and the roads, easing up the
- * road to two in five by the Wayfarers' fire and to every one 640 out, and never where six already stand within 64 (to
- * 470 out). A few still come, so the first night keeps a little threat; never a crowd. Inside the wall the citizens' lamps decide (CitizensModule); the camp keeps its own
+ * Awakened hunters) goes ahead only by {@link #pass(double)}: one in ten over the fields and the roads, easing up the
+ * road to two in five by the Wayfarers' fire and to every one 640 out, and never where three already stand within 48 at
+ * about its height (to 470 out). A few still come, so the first night keeps a little threat; never a crowd. Inside the wall the citizens' lamps decide (CitizensModule); the camp keeps its own
  * ground (living.wayfarer.Camp, 32 round the fire).
  */
 final class CityMonsters {
@@ -45,15 +45,16 @@ final class CityMonsters {
     static final java.util.concurrent.atomic.AtomicInteger CHECKED = new java.util.concurrent.atomic.AtomicInteger(),
             THINNED = new java.util.concurrent.atomic.AtomicInteger(), CROWDED = new java.util.concurrent.atomic.AtomicInteger();
 
-    /** Near the city at most this many hostile creatures stand round a spawn (within 64, at about its height). */
-    static final int CROWD = 6, CROWD_TO = 470;
+    /** Near the city at most this many hostile creatures stand round a spawn (within 48, at about its height: the caves
+     * beneath don't count against the surface, nor the surface against the caves). */
+    static final int CROWD = 3, CROWD_TO = 470;
 
     /** Whether a spawn near the city would join a crowd (only asked of spawns the roll let through: a few a second). */
     static boolean crowded(CityLayout l, ServerLevel level, Mob mob) {
         if (!hostile(mob)) return false;
         int px = l.px(mob.getBlockX()), pz = l.pz(mob.getBlockZ());
         if (l.plan.kind(px, pz) != CityPlan.VOID || (double) px * px + (double) pz * pz > (double) CROWD_TO * CROWD_TO) return false;
-        var box = mob.getBoundingBox().inflate(64, 16, 64);
+        var box = mob.getBoundingBox().inflate(48, 8, 48);
         return level.getEntitiesOfClass(Mob.class, box, CityMonsters::hostile).size() >= CROWD;
     }
 
@@ -74,8 +75,8 @@ final class CityMonsters {
 
     /** The share of hostile natural spawns that go ahead this far from the city's centre. */
     static double pass(double r) {
-        if (r <= 330) return 0.12;
-        if (r <= 470) return 0.12 + (r - 330) / 140.0 * 0.33;
+        if (r <= 330) return 0.10;
+        if (r <= 470) return 0.10 + (r - 330) / 140.0 * 0.35;
         if (r <= 640) return 0.45 + (r - 470) / 170.0 * 0.55;
         return 1.0;
     }

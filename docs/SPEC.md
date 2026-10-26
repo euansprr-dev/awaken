@@ -1972,8 +1972,9 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   High Gate road is laid on the ground as it lies to 424 north (a plank bridge over water, lamps and milestones, no
   ditch or hedges), a fingerpost, then a footpath bending to 26 short of the Wayfarers' fire (450 north, 6 east; the camp
   and its 32 of safe ground are the Wayfarers'). Monsters: outside the wall a natural spawn of anything hostile (MONSTER,
-  `Enemy`, or an Awakened creature that isn't peaceful) goes ahead with chance 0.12 to 330 from the centre, rising to
-  0.45 at 470 and 1 at 640 (`CityMonsters`); inside the wall the lamps decide. Kit: milestone, fingerpost, scarecrow,
+  `Enemy`, or an Awakened creature that isn't peaceful) goes ahead with chance 0.10 to 330 from the centre, rising to
+  0.45 at 470 and 1 at 640, and never where three hostiles stand within 48 at about its height (to 470 out;
+  `CityMonsters`, at the natural spawner's position check); inside the wall the lamps decide. Kit: milestone, fingerpost, scarecrow,
   stook (no light, no block entity). Dev: `/awaken city monsters [radius]`.
 - Floating wood fix (2026-10-25): the city's vegetation sweep takes the lands' bark (elder wood) as well as leaves and
   logs, sweeps the whole neighbour chunk to full height, clears fields to the top, and removes tree groups left resting

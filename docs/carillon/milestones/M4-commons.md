@@ -61,12 +61,17 @@ The camp itself is the Wayfarers' (the progression builder's scene).
 
 **Monsters (`CityMonsters`).** Outside the wall, a natural spawn of anything hostile goes ahead by chance. That covers
 vanilla's monsters, anything that is an `Enemy`, and Awakened creatures that aren't peaceful (the hunters):
-- 0.12 to 330 from the centre (the fields and the roads near the wall);
-- rising to about 0.40 at the fire (450);
+- one in ten to 330 from the centre (the fields and the roads near the wall);
+- rising to about two in five at the fire (450);
 - 0.45 at 470;
 - every one at 640.
 
-A few still come, so the first night keeps a little threat. Inside the wall the lamps decide, as before.
+To 470 out, a spawn is also refused when three hostiles already stand within 48 of it at about its height, so the
+caves beneath and the surface don't count against each other. A few still come, so the first night keeps a little
+threat. Inside the wall the lamps decide, as before.
+
+This runs at the natural spawner's position check. 26.3's natural spawner calls `finalizeSpawn` directly and posts no
+`FinalizeSpawnEvent`; the first tour showed it, with 30 hostiles round the fields.
 
 How it fits the progression builder's camp (`living.wayfarer.Camp` on pack/progression): their camp cancels every
 monster spawn within 32 of the fire and turns wanderers back out. Mine thins the ground around it, so the walk there is

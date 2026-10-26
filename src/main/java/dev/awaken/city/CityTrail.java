@@ -72,7 +72,7 @@ final class CityTrail {
                         int wx = (nx << 4) + lx, wz = (nz << 4) + lz;
                         if (!owns(l, wx, wz)) continue;
                         for (int y = l.streetY - 16; y <= l.streetY + 64; y++) {
-                            if (!CityWriter.vegetation(n.getBlockState(m.set(wx, y, wz)))) continue;
+                            if (!tree(n.getBlockState(m.set(wx, y, wz)))) continue;
                             level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
                             removed++;
                         }
@@ -80,6 +80,11 @@ final class CityTrail {
             }
         }
         return removed + (removed > 0 ? CityWriter.collectOrphansAt(level, chunkX, chunkZ) : 0);
+    }
+
+    /** Any tree's wood or leaves (nothing of the trail's own is: in its columns all of it goes, vanilla bark too). */
+    static boolean tree(BlockState s) {
+        return s.is(BlockTags.LOGS) || s.is(BlockTags.LEAVES) || CityWriter.vegetation(s);
     }
 
     /** Paints the trail's columns of one chunk into its buffer (the city's, already painted or reset), reading its ground. */
@@ -103,7 +108,7 @@ final class CityTrail {
                 int y = (wet ? -gy : gy) - l.streetY;
                 if (y < CityBuffer.YMIN + 2 || y > CityBuffer.YMAX - 16) continue;
                 if (post(x, z)) {
-                    b.column(x, y + 1, y + 4, z, AIR);
+                    b.column(x, y + 1, y + 30, z, AIR);
                     b.set(x, y + 1, z, FINGERPOST[N][0]);
                     b.set(x, y + 2, z, FINGERPOST[N][1]);
                     continue;
@@ -111,18 +116,16 @@ final class CityTrail {
                 if (foot) {
                     int h = c.pct(x, z, 720);
                     b.set(x, y, z, wet ? SPRUCE_PLANKS : h < 55 ? PATH : h < 70 ? COARSE_DIRT : GRASS);
-                    b.column(x, y + 1, y + 4, z, AIR);
+                    b.column(x, y + 1, y + 30, z, AIR);
                     continue;
                 }
                 if (wet) {
                     bridge(b, x, y, z, off);
                     continue;
                 }
+                b.column(x, y + 1, y + 30, z, AIR); // a tree standing here goes, trunk and crown
                 if (Math.abs(off) <= CARRIAGE) carriage(c, b, x, y, z, along, off);
-                else {
-                    b.column(x, y + 1, y + 14, z, AIR);
-                    verge(c, b, x, y, z, along, off);
-                }
+                else verge(c, b, x, y, z, along, off);
                 furnish(c, b, 0, x, y, z, along, off, false);
             }
         }

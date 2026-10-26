@@ -177,7 +177,7 @@ final class CityCommonsTests {
             h.succeed();
         });
 
-        // monsters round the city: one in eight goes ahead over the fields, about one in two by the fire, all of them far
+        // monsters round the city: one in ten goes ahead over the fields, about one in two by the fire, all of them far
         // out; never inside the wall's own rule, never a peaceful creature
         AwakenTests.register("city_commons_monsters", 200, h -> {
             CityLayout l = CityTests.layoutAt(0, 0);
@@ -188,7 +188,7 @@ final class CityCommonsTests {
             zombie.setPos(l.cx + 30.5, 71, l.cz - 290.5);
             int kept = 0;
             for (int i = 0; i < 1000; i++) if (!CityMonsters.thinned(l, zombie, (i + 0.5) / 1000.0)) kept++;
-            h.assertTrue(kept >= 100 && kept <= 140, "about one in eight over the fields (" + kept + " of 1000)");
+            h.assertTrue(kept >= 85 && kept <= 115, "about one in ten over the fields (" + kept + " of 1000)");
             cow.setPos(l.cx + 30.5, 71, l.cz - 290.5);
             h.assertFalse(CityMonsters.thinned(l, cow, 0.99), "a cow is never turned away");
             zombie.setPos(l.cx + 0.5, 71, l.cz - 150.5);
@@ -206,7 +206,7 @@ final class CityCommonsTests {
                     net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(ev);
                     if (ev.getResult() == net.neoforged.neoforge.event.entity.living.MobSpawnEvent.PositionCheck.Result.FAIL) failed++;
                 }
-                h.assertTrue(failed >= 320 && failed <= 380, "the natural spawner's position check turns most away over the fields (" + failed + " of 400)");
+                h.assertTrue(failed >= 340 && failed <= 385, "the natural spawner's position check turns most away over the fields (" + failed + " of 400)");
             } finally {
                 City.install(before);
             }

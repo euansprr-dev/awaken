@@ -45,7 +45,7 @@ public record CityFeature() implements Feature {
         long t1 = System.nanoTime();
         int n = CityWriter.toProto(chunk, buf, layout.streetY);
         int swept = CityWriter.sweepNeighbours(level, layout, cx, cz) + CityWriter.collectOrphans(level, layout, cx, cz)
-                + (near ? CityTrail.sweep(level, layout, cx, cz) : 0);
+                + (near ? CityTrail.sweep(level, layout, cx, cz) : 0) + (city ? CityCommons.sweepRoads(level, layout, cx, cz) : 0);
         long t2 = System.nanoTime();
         City.STATS.add(t1 - t0, t2 - t1, n + swept);
         return true;

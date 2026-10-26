@@ -364,4 +364,36 @@ final class CityCommons {
             for (int i = 0; i < 3; i++) b.set(x, ry0 - 1 - i, z, CityFacadeLife.BANNER[x < 0 ? E : W][design][i][1]);
         }
     }
+
+    // ---- after the neighbours' decoration ----------------------------------------------------------------------------
+
+    /**
+     * Grass and flowers a neighbour's decoration set on the carriageway after the city painted it (the city's sweep takes
+     * trees, not plants): off the road's surface in this chunk and its neighbours. Returns blocks removed.
+     */
+    static int sweepRoads(net.minecraft.world.level.WorldGenLevel level, CityLayout l, int chunkX, int chunkZ) {
+        int removed = 0;
+        double[] o = new double[2];
+        net.minecraft.core.BlockPos.MutableBlockPos m = new net.minecraft.core.BlockPos.MutableBlockPos();
+        for (int dx = -1; dx <= 1; dx++)
+            for (int dz = -1; dz <= 1; dz++) {
+                int nx = chunkX + dx, nz = chunkZ + dz;
+                if (!l.touches(nx, nz)) continue;
+                var n = dx == 0 && dz == 0 ? level.getChunk(nx, nz)
+                        : level.getChunk(nx, nz, net.minecraft.world.level.chunk.status.ChunkStatus.TERRAIN, false);
+                if (n == null) continue;
+                for (int lx = 0; lx < 16; lx++)
+                    for (int lz = 0; lz < 16; lz++) {
+                        int px = (nx << 4) + lx - l.cx, pz = (nz << 4) + lz - l.cz;
+                        if (l.plan.kind(px, pz) != VOID || road(l.plan, px, pz, CARRIAGE, o) < 0) continue;
+                        for (int ry = 1; ry <= 2; ry++) {
+                            BlockState s = n.getBlockState(m.set(px + l.cx, l.streetY + ry, pz + l.cz));
+                            if (s.isAir() || !s.canBeReplaced()) continue;
+                            level.setBlock(m, AIR, net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+                            removed++;
+                        }
+                    }
+            }
+        return removed;
+    }
 }
