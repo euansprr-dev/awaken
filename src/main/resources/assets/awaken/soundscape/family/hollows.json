@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "title": "Hollows (dripstone, lush and sulfur caves, the deep dark, and any cave well under the rock)",
+  "_about": "The Conductor plays this only without AmbientSounds (which carries the cave beds in the pack), and the Listener gives the Hollows the family weight under the rock whatever the surface above. Air only, the deeper the lower: the shallow air fades and the undertone rises from y 48 to y -64 (drives shallow and deep). The cave's events (drips at real tips and wet roofs, far water, stone settling, the breath from a way out, sulfur's vents and acid, the deep's hum) are delve's own driver (delve.client.CaveSound, DeepHum), placed on real blocks underground and played with or without AmbientSounds, so they are not here (the Conductor's spots are surface columns).",
+  "air": [
+    {"file": "awaken:amb_world_hollows_a", "gain": 0.7, "drive": "shallow"},
+    {"file": "awaken:amb_world_hollows_b", "gain": 0.8},
+    {"file": "awaken:amb_world_hollows_c", "gain": 0.65, "drive": "deep"}
+  ]
+}
