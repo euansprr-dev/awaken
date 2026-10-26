@@ -30,8 +30,20 @@ final class CityMonsters {
         CityLayout l = City.layout();
         Mob mob = e.getEntity();
         if (l == null) return;
-        if (thinned(l, mob, mob.getRandom().nextDouble()) || crowded(l, level, mob)) e.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
+        if (!hostile(mob)) return;
+        CHECKED.incrementAndGet();
+        if (thinned(l, mob, mob.getRandom().nextDouble())) {
+            THINNED.incrementAndGet();
+            e.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
+        } else if (crowded(l, level, mob)) {
+            CROWDED.incrementAndGet();
+            e.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
+        }
     }
+
+    /** Tours: hostile natural spawns checked, turned away by the roll, turned away by a crowd (since the server started). */
+    static final java.util.concurrent.atomic.AtomicInteger CHECKED = new java.util.concurrent.atomic.AtomicInteger(),
+            THINNED = new java.util.concurrent.atomic.AtomicInteger(), CROWDED = new java.util.concurrent.atomic.AtomicInteger();
 
     /** Near the city at most this many hostile creatures stand round a spawn (within 64, at about its height). */
     static final int CROWD = 6, CROWD_TO = 470;

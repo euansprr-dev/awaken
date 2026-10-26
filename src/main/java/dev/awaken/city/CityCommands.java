@@ -86,18 +86,21 @@ final class CityCommands {
         net.minecraft.world.phys.Vec3 at = src.getPosition();
         var box = new net.minecraft.world.phys.AABB(at, at).inflate(radius, 64, radius);
         java.util.Map<String, Integer> kinds = new java.util.TreeMap<>();
-        int n = 0, surface = 0;
+        int n = 0, surface = 0, fields = 0;
         for (var m : src.getLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, box, CityMonsters::hostile)) {
             if (m.distanceToSqr(at) > (double) radius * radius) continue;
             kinds.merge(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(m.getType()).getPath(), 1, Integer::sum);
             n++;
-            // out on the ground (under open sky), not in the caves beneath
-            if (src.getLevel().canSeeSky(m.blockPosition())) surface++;
+            // out on the ground (under open sky), not in the caves beneath; and of those, outside the wall
+            if (!src.getLevel().canSeeSky(m.blockPosition())) continue;
+            surface++;
+            if (l.plan.kind(l.px(m.getBlockX()), l.pz(m.getBlockZ())) == CityPlan.VOID) fields++;
         }
         int px = l.px((int) Math.floor(at.x)), pz = l.pz((int) Math.floor(at.z));
         double r = Math.sqrt((double) px * px + (double) pz * pz);
-        String msg = String.format(Locale.ROOT, "%d hostile within %d of you, %d of them under open sky (%.0f from the centre, spawns pass %.0f%%): %s",
-                n, radius, surface, r, 100 * CityMonsters.pass(r), kinds);
+        String msg = String.format(Locale.ROOT, "%d hostile within %d of you, %d of them under open sky, %d out in the fields (%.0f from the "
+                        + "centre, spawns pass %.0f%%): %s; spawns checked %d, thinned %d, crowded %d", n, radius, surface, fields, r,
+                100 * CityMonsters.pass(r), kinds, CityMonsters.CHECKED.get(), CityMonsters.THINNED.get(), CityMonsters.CROWDED.get());
         src.sendSuccess(() -> Component.literal(msg), false);
         dev.awaken.Awaken.LOG.info("[city] monsters: {}", msg);
         return n;
