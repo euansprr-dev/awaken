@@ -4928,33 +4928,46 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   poses for the longest and widest weapons (the Greatblade's, the Twinblades' far blade, some Longswords): those need
   their own third-person poses and two-handed grips, not a wrist. The scythe leads point first in third person; its haul back through
   the target is first person's.
-- **Third person from first person's blade** (Katana and Greatblade so far; Euan 2026-10-26: "how are we gonna get
-  that exactly the same as first person... so that it genuinely looks really, really good"; tools/art/specs/
-  arms_rig4.py). First person is designed from the blade (its path, the edge leading, through the target on the hit);
-  third person was designed from the arm (a few poses per kind, the weapon wherever the hand put it), so long blades
-  swept through the body and a two-handed weapon was held in one hand. Now third person takes each move's weapon from
-  first person's own baked keys (the grip's place and the blade's turn every quarter tick) and the body follows it:
-  first person's arc about its pivot is carried onto a point before the chest's middle (both hands meet on the hilt
-  there), turned as a whole so its line into the target runs from there to a point before the face, its lever scaled
-  to the figure's reach, level with the view (a slide's or a fall's lean doesn't tilt it). Through the drive, the hit
-  and the cut the blade is exactly first person's; in the wind-up and the follow-through only, the move may be turned
-  as a whole about the pivot (+36 to -30 degrees: first person cocks an overhead chop back past the top of the view
-  and carries a long blade down out of the frame, which in a figure are through the head and the legs). The grip
-  shifts a little where it must (out, ahead, up, in toward the middle), chosen over the whole move at once (Viterbi):
-  a blade by the face counts most, then any weapon in the body, then both hands reaching. The chest turns with the
-  lever, half a tick ahead of it (70% of its turn for the Katana, 80% for the Greatblade, at most 55 degrees); the
-  sword hand closes on the grip and the off hand on the handle toward the pommel by IK, elbows bent (Bendable Cuboids)
-  or, for the straight clips, solved straight with their own wrist keys (`wrist3s`; `ArmsWrist` plays them when
-  Bendable Cuboids isn't loaded); an arm may graze the body, never go into it. Where the off hand can't reach the
-  handle (a follow-through carried round to the far side, the low sweep out of a slide) it lets go cleanly rather
-  than float beside the hilt. These styles play their own Slipcut, Undercut and Plunge (`ArmsClips.OWN_SHARED`) and
-  hold their own heavy's first pose while charging (`arms_<style>_heavy_charge`, `ArmsClips.charge`), so the
-  release never snaps. Measured (`arms_rig4.py bake`, the lab's audits, every tier of the style, looking level and
-  down): every move leads with its edge or point at the hit; both hands on the hilt through 81-100% of every Katana
-  move and 73-100% of every Greatblade move but the Undercut (one-handed out of a slide); the blade more than 1.5 px
-  into the head, body or legs in 5 of their 22 moves (8 before; the Greatblade's from up to 3.7 px to about 1.3). What
-  still touches: a two-handed hilt's pommel by the belly (a figure's arms meet at most ~4 px before its chest, a hilt
-  reaches 5-9 px behind the hands: in 16 moves, mostly the Greatblade's longest tiers, past the blow), and the
+- **Third person from first person's blade** (the Katana, Greatblade, Maul, Spear, Glaive, Scythe, War-staff and
+  Twinblades; Euan 2026-10-26: "how are we gonna get that exactly the same as first person... so that it genuinely
+  looks really, really good", then "roll the blade-first third-person rig out to the maul, spear, glaive, scythe,
+  war-staff and twinblades"; tools/art/specs/arms_rig4.py). First person is designed from the blade (its path, the edge
+  leading, through the target on the hit); third person was designed from the arm (a few poses per kind, the weapon
+  wherever the hand put it), so long blades swept through the body and two-handed weapons were held in one hand. Now
+  third person takes each move's weapon from first person's own baked keys (the grip's place and the blade's turn
+  every quarter tick) and the body follows it: first person's arc about its pivot is carried onto a point before the
+  chest (its middle for a two-handed grip; a spear's or glaive's lower, at the hip), turned as a whole so its line into
+  the target runs from there to a point before the face, its lever scaled to the figure's reach, level with the view
+  (a slide's or a fall's lean doesn't tilt it). Through the drive, the hit and the cut the weapon is exactly first
+  person's; in the wind-up and the follow-through only, the move may be turned as a whole about the pivot (+36 to -30
+  degrees: first person cocks an overhead chop back past the top of the view and carries a long blade down out of the
+  frame, which in a figure are through the head and the legs). The grip shifts a little where it must (out, ahead, up,
+  in toward the middle), chosen over the whole move at once (Viterbi): a blade by the face counts most, then any
+  weapon in the body, then both hands reaching; the Scythe's held still about the hit, so its haul back through the
+  target is first person's to the pixel. The chest turns with the lever, half a tick ahead of it (a style's share,
+  at most 55 degrees). Two hands: the sword hand on the grip, the off hand on the hilt toward the pommel (swords, the
+  Maul) or up the haft (polearms), by IK, elbows bent (Bendable Cuboids) or, for the straight clips, solved straight
+  with their own wrist keys (`wrist3s`; `ArmsWrist` plays them when Bendable Cuboids isn't loaded); an arm may graze the
+  body, never go into it. Polearms (Spear, Glaive, Scythe, War-staff) are fought side-on (the chest turned 20-30 degrees
+  so the off shoulder comes forward: a figure's arm can't reach up a haft held square before it), the off hand sliding
+  along the haft to where it reaches, on one side of the sword hand for the whole move (the side whose solved arms keep
+  both hands on longer). Where the off hand still can't reach (a follow-through carried round to the far side, the low
+  sweep out of a slide) it lets go cleanly, never floats beside the hilt. The Twinblades are swung in one hand at their
+  middle, the other free. **A haft is held down it** (`arms_holds.HAFT3`: Maul 3.5 px, Spear 10, Glaive 5, Scythe 6,
+  War-staff 5, at the third-person scale): their third-person hold moves the item along its length so the fist closes
+  that far toward the butt, and the wrist turns the weapon there (`arms_holds.grip3`; `FpSwings.grip3`, WeaponRenderer),
+  so the haft behind the hands doesn't run back through the chest (held at the item's grip, a Spear's 12 px of butt
+  went through it on every move). These styles play their own Slipcut, Undercut and Plunge (`ArmsClips.OWN_SHARED`) and
+  hold their own heavy's first pose while charging (`arms_<style>_heavy_charge`, `ArmsClips.charge`; its settle goes to
+  the move's rest, the off arm out before the body), so the release never snaps. Measured (`arms_rig4.py bake`, the
+  lab's audits, every tier of each style, looking level and down): every move but one leads with its edge, bit, face
+  or point at the hit (the Veilwoven Spear's second thrust leads at 0.74 of the 0.8 bar); both hands on through 81-100%
+  of each Katana move, 73-100% Greatblade, 90-100% Maul, 83-100% Spear, 80-94% Scythe, and most Glaive and War-staff
+  moves (their thrust, plunge and slide moves mostly one-handed); the blade more than 1.5 px into the head, body or legs
+  in 17 of the 89 moves (23 before: the Greatblade's from up to 3.7 px to about 1.3, the Maul's and Scythe's to none).
+  What still touches: a two-handed sword's pommel by the belly (a figure's arms meet at most ~4 px before its chest, a
+  hilt reaches 5-9 px behind the hands), the War-staff's rear end (1.3-1.9 px), the Twinblades' far blade in the
+  spins; with them, 39 moves have some part of the weapon past 1.5 px (24 before, held one-handed at the side); and the
   Executions' first quarter tick out of rest, where the blade passes the head looking down. Review set:
   docs/combat/anim-lab/third-<style>-blade-first.png (shipped against new, every move from behind-right) and
   fp-third-<style>-<move>.png (first person over third person from behind-right and the side, at the same moments).
