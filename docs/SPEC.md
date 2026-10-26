@@ -1436,7 +1436,7 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   horizontal render distance, and its floor sooner, so far water tests its own floor's distance and stays under a real
   water surface whose floor is too far to draw. Far water is never hidden under the real chunks unless the camera is
   under the sea (2026-10-26, Euan's play: sky-coloured slabs on the sea where Sodium skipped a section), and grazing far
-  water takes the horizon's colour only from 1 km out, so near the edge it matches the real water. The planner and the windows count as covered only the ground the
+  water reflects the sky by the horizon at every distance, as Lens's real water beside it does. The planner and the windows count as covered only the ground the
   sphere reaches at a sea floor (40 under sea level) below the camera, in 16-block steps. (2026-10-26: the pale squares
   over the sea after a jump and the pale frame along a flight were these holes, found with `farsight debug 2`, which
   paints masked far terrain red. They were first taken for water walls and for vanilla's chunk fade-in; a Turbo
@@ -1465,7 +1465,11 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   grain. Snow lies by the alpine snow line and by a smooth coldness (each corner's blocks above the game's own cold
   line, info alpha, found by bisecting `coldEnoughToSnow`), both broken into patches over a ~20-block band
   (`AlpineSurface.patches`, the same noise the chunks' snow uses), on tops and as a fringe on risers. Scree and bare
-  rock by slope; water with shallows; forest floor tinted by its crowns, and from about 600 blocks out (full by 2.4 km)
+  rock by slope; water over its own sea floor (2026-10-26, Euan's idea: the real water shows its floor, the far water
+  showed none, so the floor ended at the chunks): the floor lies the water's depth down along the view ray, blocks of
+  sand, gravel in the deep and seagrass patches, anchored to the world, showing by the water's absorption over the path
+  (shallows and steep views, not deep water or grazing ones) and fading out over 700 blocks past the render distance's
+  edge, so the open sea further out is only water; forest floor tinted by its crowns, and from about 600 blocks out (full by 2.4 km)
   a forest is its canopy: crown colour over every face, speckled crown by crown.
 - **Bake** (fragment pass, `FarGpu`): per corner the normal, valley shade, and sunlight: a march toward the sun across
   the ring (40 steps, growing), soft by how far under the ridge line. Changed rings at once, one more every other frame
