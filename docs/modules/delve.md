@@ -29,7 +29,7 @@ Code: `src/main/java/dev/awaken/delve/**` (server and common) and `delve/client/
 | `client.VeinFx` | Glints on lit lode blocks; the vein's light and cracks; the client's two-blow speed |
 | `client.CaveInFx` | The warning's dust and tremble |
 | `client.ForkSong` | The fork's ring (pitch by how squarely you face the lode) and its arc on the band |
-| `client.LampGlow` | The miner's lamp: drawn light on the rock ahead, an additive pass like the city's lanterns |
+| `client.LampGlow` | The miner's lamp: the rock ahead lit by redrawing its lit faces' own quads additively, a haze, a flame on the brow |
 | `client.DelveParticles` | Spark, grit, dust, glint, mote |
 
 Seams the phase touched in other modules (SPEC §28.1): `gear` (recipes via `tools/art/specs/gear.py`, `HunterTier`
@@ -70,7 +70,7 @@ kinds, a diamond against coal, the deep budget after the shallow one is worn, di
 
 - Lodes and Deepglass veins come only in new chunks; an old world's fork finds nothing in old terrain (it checks).
 - The heavy strike needs sneak: holding attack alone stays vanilla mining.
-- The lamp's light is additive (it brightens what moonlight or torches already show; on pitch-black rock it reads as a
-  warm pool); its rays allocate a little per frame while someone wears one.
+- The lamp's light is drawn, not real light: mobs don't see it and it doesn't stop spawns; its rays allocate a little per
+  frame while someone wears one.
 - No zip line between pitons (the Ascent has nothing that rides a run of blocks yet).
 - Judged on the preview sheet and one tour; the sounds were checked by their loudness, not yet by ear in game.

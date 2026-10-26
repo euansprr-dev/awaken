@@ -4527,7 +4527,8 @@ region. `awaken:lodes` (feature, `worldgen/feature/delve/lodes`, biome modifier 
 `underground_ores`) writes each chunk's cells into stone (the ore), deepslate (its deep twin) or another ore, never air,
 water or a build; the heart at the centre. New chunks only. `Lodes.nearest(level, pos, ore[, radius])` answers from the
 plan; a planned lode whose loaded blocks are plainly not its ore (old terrain, mined out) is passed over. One block per
-ore's heart (`<ore>_lode_heart`, its ore's tool tier, light 4, a slow pulse, glinting), loot a lump (iron 4-7 raw, diamond
+ore's heart (`<ore>_lode_heart`, its ore's tool tier, light 4, a slow pulse, its core and lit facets an overlay at full
+light so it glows in the dark, glinting), loot a lump (iron 4-7 raw, diamond
 2-4, Deepglass 4-7 shards..., Fortune applies), in `#c:ores`, `#c:ores/<ore>` and `#minecraft:<ore>_ores`.
 
 **The vein gives** (`Veins.give`, client `VeinFx`): breaking a planned heart (after every protection, LOW) opens its
@@ -4541,7 +4542,8 @@ glints: a lode block open to the air glints in its ore's colour where block ligh
 **Cave-ins** (`CaveIns`, client `CaveInFx`): after a heart breaks, 60% of the time if the chamber qualifies: air reached
 from beside the heart (box ±12 x, -5..+12 y) at least 160 blocks, at least 7 across both ways, 30% of its columns 3+ high;
 roof = the natural rock over the top air of each such column within 6 of the heart (stone, deepslate and kin, ores, dirt,
-gravel, calcite, dripstone), 10 to 40 of them, nearest first. Never inside a Hearth, the city or a ward; never if any
+gravel, calcite, dripstone), 10 to 40 of them, nearest first. Never inside a Hearth, a ward, or the city's footprint
+within 48 under its square (its foundations); never if any
 roof block's section holds a solid block a player placed underground (`DelveData` keeps sections below y 64). Warning:
 3 s of dust threads and grit from those stones, a creak, a tremble within 18, "The roof is giving way"; then each stone
 still unchanged falls as a falling block (1.5 damage a block fallen, at most 8) with a rumble.
@@ -4553,10 +4555,12 @@ hold and a small kick on ores (`CombatFeedback`). **The heavy strike** (`HeavySt
 hold the attack with a pick or mattock (holding attack alone is vanilla mining, so the heavy takes sneak); the Maul's
 charge (starts at 6 ticks, glints at 20, 30 at most): a strain, grit off the head, a ring on the glint; let go to bore
 3 blocks along the aim. Server: a mining tool, charge ≥ 6, 14 ticks since the last, food ≥ 6, not in a gate; each block
-breakable by that tool (and dropping), outside the city, a ward and anyone else's Hearth, broken through the game's own
+breakable by that tool (and dropping), outside the city's build (its civic blocks, the city's own protection rule; the
+rock under its streets is free), a ward and anyone else's Hearth, broken through the game's own
 `destroyBlock` (so every protection still applies); 2 more durability a block (1 on the glint), 1.0 exhaustion a block.
 
-**New finds.** `awaken:deepglass` (strength 5.5, diamond tool, light 3, hums now and then, motes off open faces; drops 1-2
+**New finds.** `awaken:deepglass` (strength 5.5, diamond tool, light 3, its facets' violet edges an overlay at full
+light, hums now and then, motes off open faces; drops 1-2
 shards, Fortune, silk touch the block; in `#c:ores`, so the Veil sees it violet) as veins below y 0
 (`worldgen/feature/delve/deepglass`: ore, size 5, 3 a chunk from 4 above the bottom to y 0, open to caves) and in the
 Descent's strata walls from the Choir (form 3) down, one of each wall's ores (`descent/world/Palette`). Starmetal: the
@@ -4573,8 +4577,12 @@ down to 32 blocks or the ground (`awaken:runner_line`, a free rope in `#awaken:r
 breaking any of it or the piton gives the coil back. **No two-piton zip line**: the Ascent's line traversal (the pipe
 grip) rides vertical climb lines only, and its zip is the Tether pulling to a point, so there is nothing to ride a run of
 blocks with yet. The miner's lamp (leather, copper, glowstone) is worn on the head (its equipment layer: a band and a
-brass lamp); its light is drawn (no light blocks): 15 rays in a 21° cone from the brow, a soft pool of warm light on
-each face hit, to 22 blocks, for every wearer within 40 (`LampGlow`, one additive pass like `CityGlow`).
+brass lamp); its light is drawn, never placed (no light blocks): 17 rays in a 24° cone from the brow find the faces
+ahead (each ray's face and its eight neighbours on that plane, at most 260); each lit face is drawn again over itself
+with its own block quads (the model variant the world chose there, so it lines up), additively in a warm colour, ×0.95
+at the beam's 9° core falling to its edge and to nothing at 22 blocks, so the rock's own texture comes up out of the
+dark; a faint additive haze on the faces the inner rays hit (`CityGlow`'s pass) and, seen from outside, a small flame
+on the brow; for every wearer within 40 (`LampGlow`; the lit pass is skipped if its pipeline doesn't compile).
 
 **Sounds and art.** 25 events `delve.*` synthesised by `tools/art/specs/audio_delve.py`; textures, models, loot,
 recipes, tags, worldgen and the star's loot by `tools/art/specs/delve.py` (`build_all.py delve`, `delve.py content`,
