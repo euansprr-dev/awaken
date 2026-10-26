@@ -149,7 +149,7 @@ vec2 storm(int k, float scene) {
     vec4 a = stormA(k), b = stormB(k);
     vec2 axis = a.xy;
     float base = a.z;
-    vec2 rain = stormBand(v, axis + b.xy * 12.0, STORM_RAIN + 60.0, b.z - 4.0, base, camY);
+    vec2 rain = stormBand(v, axis + b.xy * 12.0, STORM_RAIN + 60.0, b.z - 4.0, base - 6.0, camY);
     vec2 body = stormBand(v, axis - b.xy * 30.0, 240.0, base - 6.0, base + STORM_H - STORM_ANVIL, camY);
     vec2 anvil = stormBand(v, axis + b.xy * 100.0, 275.0, base + STORM_H - STORM_ANVIL, base + STORM_H + 46.0, camY);
     rain.y = min(rain.y, scene);

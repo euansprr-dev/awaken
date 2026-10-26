@@ -33,7 +33,7 @@ cmd awaken living happen rolling_storm
 wait 320
 cmd awaken living near 190
 wait 160
-cmd tp @s ~ ~-2 ~ ~ -26
+cmd tp @s ~ ~ ~ ~ -26
 wait 80
 shot storm_01_dusk200_cinematic
 lens swift
@@ -98,7 +98,7 @@ shot storm_04_day500_swift
 lens cinematic
 cmd awaken living near 190
 wait 140
-cmd tp @s ~ ~-2 ~ ~ -22
+cmd tp @s ~ ~ ~ ~ -22
 wait 80
 shot storm_05_day200_cinematic
 lens swift
@@ -147,7 +147,7 @@ lens cinematic
 # ---- a strike far off, from 200
 cmd awaken living near 190
 wait 120
-cmd tp @s ~ ~-2 ~ ~ -22
+cmd tp @s ~ ~ ~ ~ -22
 wait 60
 cmd awaken living strike 205
 wait 3
