@@ -6769,12 +6769,13 @@ engine set people down at their places: `hearth_settler_moves_in` now reads the 
 its end first (the stage's).
 
 **Commands** (admin): `/awaken admin hearth people | know <who> | arrive <who> | talk <who> | tier <n> | evening | wren | harvest
-| stage [settle | miner | view <name>]` (the staged village for tours: `hearth/stage/HomeStage`, a home grown round its Anchor,
+| stage [settle | miner | clock <who> breakfast|work | follow <who> | view <name>]` (the staged village for tours: `hearth/stage/HomeStage`, a home grown round its Anchor,
 built from the Hearth's own cottages and simple shells; every room reads as any build does. It finds its own ground first: the
 nearest dry land within about 320 blocks, no more than 6 blocks of rise over a 50-block disc and its 16-block rim, clear of any
 settlement or planned village, read from the generator's heights without generating; the disc is levelled, the rim eased back
 to the land's height, trees the cut reached taken whole, the land's own beasts cleared. `view walker` frames whoever is walking
-in from behind their shoulder; `miner` sets the clock to four seconds before the miner comes up with the haul).
+in from behind their shoulder, `follow <who>` a settler out of doors the same way; `miner` sets the clock to four seconds before
+the miner comes up with the haul, `clock <who> breakfast|work` to three before a settler sets out).
 
 **Decisions taken here** (none of the plan's 13): townsfolk want only a bed (their room makes them work there); "Trusted in
 Carillon" is a townsperson a rank early; a village Friend or the city sends a new person, never one of its own records (no one

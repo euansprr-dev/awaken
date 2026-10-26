@@ -21,6 +21,15 @@ final class Days {
         return Math.floorMod(start + (int) Math.floorMod(z, (long) (2 * k + 1)) - k, 24000);
     }
 
+    /** When record {@code i} sets out from home for breakfast, and for the morning's work (time of day). */
+    static int breakfast(int i) {
+        return at(i, 350, 150);
+    }
+
+    static int work(int i) {
+        return at(i, 1000, 150);
+    }
+
     /** When the miner who is record {@code i} comes up the shaft with the evening's haul (time of day). */
     static int surfaces(int i) {
         return at(i, Work.HAUL_TOD, 60);

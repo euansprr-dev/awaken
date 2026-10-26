@@ -22,6 +22,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -60,7 +61,71 @@ public final class SettleCommands {
                                 "anchor", "kit", "overview", "hall", "atlas", "walker"), b))
                         .executes(c -> view(c, StringArgumentType.getString(c, "name")))))
                 .then(Commands.literal("settle").executes(SettleCommands::settleStage))
-                .then(Commands.literal("miner").executes(SettleCommands::minerSoon));
+                .then(Commands.literal("miner").executes(SettleCommands::minerSoon))
+                .then(Commands.literal("follow").then(Commands.argument("who", StringArgumentType.word()).executes(c -> follow(c, StringArgumentType.getString(c, "who")))))
+                .then(Commands.literal("clock").then(Commands.argument("who", StringArgumentType.word())
+                        .then(Commands.argument("when", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("breakfast", "work"), b))
+                                .executes(c -> clock(c, StringArgumentType.getString(c, "who"), StringArgumentType.getString(c, "when"))))));
+    }
+
+    /** A settler by id, given name or role ("oren", "hettie", "miner"), or null. */
+    static Folk.@Nullable Settler settler(HearthRecord h, String who) {
+        for (Folk.Settler s : h.folk.settlers) {
+            if (s.who.id().equals(who) || s.who.given().equalsIgnoreCase(who) || s.who.role().equals(who)) return s;
+        }
+        return null;
+    }
+
+    /** The clock set to three seconds before a settler sets out from home for breakfast, or for the morning's work. */
+    static int clock(CommandContext<CommandSourceStack> c, String who, String when) throws CommandSyntaxException {
+        Optional<HearthRecord> ho = home(c);
+        if (ho.isEmpty()) return 0;
+        HearthRecord h = ho.get();
+        ServerLevel level = c.getSource().getPlayerOrException().level().getServer().overworld();
+        Folk.Settler st = settler(h, who);
+        int rec = st == null ? -1 : HomePeople.recordOf(h, st.who.id());
+        if (rec < 0) {
+            c.getSource().sendFailure(Component.literal("Nobody here called " + who));
+            return 0;
+        }
+        int t = when.equals("work") ? Days.work(rec) : Days.breakfast(rec);
+        setClock(level, t - 60);
+        say(c, st.who.given() + " sets out at " + t);
+        return 1;
+    }
+
+    static void setClock(ServerLevel level, int timeOfDay) {
+        long now = level.getOverworldClockTime();
+        level.registryAccess().get(net.minecraft.world.clock.WorldClocks.OVERWORLD)
+                .ifPresent(clock -> level.getServer().clockManager().setTotalTicks(clock, now / 24000 * 24000 + timeOfDay));
+    }
+
+    /** The camera just behind a settler's shoulder, looking the way they face (walking: the way they're going). */
+    static int follow(CommandContext<CommandSourceStack> c, String who) throws CommandSyntaxException {
+        ServerPlayer sp = c.getSource().getPlayerOrException();
+        Optional<HearthRecord> ho = home(c);
+        if (ho.isEmpty()) return 0;
+        Folk.Settler st = settler(ho.get(), who);
+        var body = st == null ? null : HomePeople.body(ho.get(), st.who.id());
+        if (!(body instanceof net.minecraft.world.entity.LivingEntity e)) {
+            c.getSource().sendFailure(Component.literal("Nobody out of doors called " + who));
+            return 0;
+        }
+        look(sp, behind(e));
+        return 1;
+    }
+
+    static HomeStage.View behind(net.minecraft.world.entity.LivingEntity e) {
+        double yaw = Math.toRadians(e.yBodyRot);
+        Vec3 fwd = new Vec3(-Math.sin(yaw), 0, Math.cos(yaw)), right = new Vec3(-fwd.z, 0, fwd.x), at = e.position();
+        return new HomeStage.View(at.subtract(fwd.scale(4.2)).add(right.scale(1.6)).add(0, 2.2, 0), at.add(fwd.scale(3)).add(0, 1.1, 0));
+    }
+
+    static void look(ServerPlayer sp, HomeStage.View v) {
+        Vec3 d = v.look().subtract(v.eye());
+        float yaw = (float) Math.toDegrees(Math.atan2(-d.x, d.z));
+        float pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)));
+        sp.teleportTo(sp.level().getServer().overworld(), v.eye().x, v.eye().y - 1.62, v.eye().z, java.util.Set.of(), yaw, pitch, true);
     }
 
     /** The clock set to four seconds before the miner comes up the shaft and the evening's haul is in. */
@@ -74,10 +139,7 @@ public final class SettleCommands {
             int rec = HomePeople.recordOf(h, st.who.id());
             if (rec < 0) continue;
             int up = Math.min(Days.surfaces(rec), Work.HAUL_TOD); // he and the haul both within the four seconds
-            long now = level.getOverworldClockTime();
-            var clock = level.registryAccess().get(net.minecraft.world.clock.WorldClocks.OVERWORLD);
-            if (clock.isEmpty()) return 0;
-            level.getServer().clockManager().setTotalTicks(clock.get(), now / 24000 * 24000 + up - 80);
+            setClock(level, up - 80);
             say(c, st.who.given() + " comes up at " + up);
             return 1;
         }
@@ -127,20 +189,13 @@ public final class SettleCommands {
         if (name.equals("walker")) {
             // whoever is walking in, from just behind their shoulder: the bundle, and the way ahead
             var npc = Arrival.walker(sp.level().getServer().overworld());
-            if (npc != null) {
-                double yaw = Math.toRadians(npc.yBodyRot);
-                Vec3 fwd = new Vec3(-Math.sin(yaw), 0, Math.cos(yaw)), right = new Vec3(-fwd.z, 0, fwd.x), at = npc.position();
-                v = new HomeStage.View(at.subtract(fwd.scale(4.2)).add(right.scale(1.6)).add(0, 2.2, 0), at.add(fwd.scale(3)).add(0, 1.1, 0));
-            }
+            if (npc != null) v = behind(npc);
         }
         if (v == null) {
             c.getSource().sendFailure(Component.literal("No staged view " + name));
             return 0;
         }
-        Vec3 d = v.look().subtract(v.eye());
-        float yaw = (float) Math.toDegrees(Math.atan2(-d.x, d.z));
-        float pitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.sqrt(d.x * d.x + d.z * d.z)));
-        sp.teleportTo(sp.level().getServer().overworld(), v.eye().x, v.eye().y - 1.62, v.eye().z, java.util.Set.of(), yaw, pitch, true);
+        look(sp, v);
         return 1;
     }
 
