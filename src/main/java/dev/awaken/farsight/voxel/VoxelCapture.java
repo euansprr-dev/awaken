@@ -14,7 +14,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * City Sight's capture (SPEC §20): the city's chunks, snapshotted on the server tick within the far collector's budget
  * (nearest the players first, a held chunk read as it is, one not loaded any more read back from disk once a tick),
- * and again whenever one is saved after a change; the snapshots wait in {@link #SNAPSHOTS} for the client's workers.
+ * and again two seconds after a block in it changes (the game's neighbour update, which every placed, broken or
+ * exploded block sends; saves are no sign: the city's hold saves every chunk as it lets it go, and taking them all
+ * again showed as the city loading twice); the snapshots wait in {@link #SNAPSHOTS} for the client's workers.
  * Runs only while the client draws City Sight ({@link #wanted}).
  */
 public final class VoxelCapture {
@@ -29,6 +31,9 @@ public final class VoxelCapture {
     private static final AtomicInteger waiting = new AtomicInteger();
     private static final LongLinkedOpenHashSet PENDING = new LongLinkedOpenHashSet();
     private static final LongOpenHashSet CITY = new LongOpenHashSet();
+    /** City chunks whose blocks changed, by the tick of the last change (taken again once it has settled). */
+    private static final it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap DIRTY = new it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap();
+    static final int SETTLE_TICKS = 40;
     private static boolean started;
     private static int captured;
 
@@ -48,12 +53,21 @@ public final class VoxelCapture {
         return captured;
     }
 
-    /** A chunk was saved after a change: if it is one City Sight draws, take it again. */
-    public static void changed(ChunkPos pos) {
+    /** A block changed at (x, z) in the overworld (server thread): if City Sight draws its chunk, take it again soon. */
+    public static void blockChanged(ServerLevel level, int x, int z) {
         if (!wanted) return;
-        long key = pos.pack();
+        int tick = level.getServer().getTickCount();
         synchronized (PENDING) {
-            if (CITY.contains(key)) PENDING.add(key);
+            if (CITY.isEmpty()) return;
+            // the chunk, and its neighbour where the block sits on the edge (its face there may now show or hide)
+            for (int dz = -1; dz <= 1; dz++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    int bx = x + dx, bz = z + dz;
+                    if ((dx != 0 || dz != 0) && (bx >> 4) == (x >> 4) && (bz >> 4) == (z >> 4)) continue;
+                    long key = ChunkPos.pack(bx >> 4, bz >> 4);
+                    if (CITY.contains(key)) DIRTY.put(key, tick);
+                }
+            }
         }
     }
 
@@ -61,6 +75,7 @@ public final class VoxelCapture {
         synchronized (PENDING) {
             PENDING.clear();
             CITY.clear();
+            DIRTY.clear();
             started = false;
             captured = 0;
         }
@@ -88,6 +103,18 @@ public final class VoxelCapture {
                         CITY.add(k);
                         PENDING.add(k);
                     }
+                }
+            }
+        }
+        synchronized (PENDING) {
+            if (!DIRTY.isEmpty()) {
+                int now = overworld.getServer().getTickCount();
+                var it = DIRTY.long2IntEntrySet().iterator();
+                while (it.hasNext()) {
+                    var e = it.next();
+                    if (now - e.getIntValue() < SETTLE_TICKS) continue;
+                    PENDING.addAndMoveToFirst(e.getLongKey());
+                    it.remove();
                 }
             }
         }

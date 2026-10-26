@@ -39,6 +39,7 @@ float bayer4(vec2 p) {
 }
 
 void main() {
+#ifndef NO_DISCARD
     // hidden where the real chunks are drawn, as the far terrain is
     if (farRealSection(vRel)) {
         vec2 rel = vRel.xz + FarCam.xz;
@@ -55,13 +56,21 @@ void main() {
         float to = VoxelReach[vLod], band = to * VoxelReach.w;
         if (d > to + band || (d > to && dither <= (d - to) / band)) discard;
     }
+#endif
     vec2 size = vRect.zw - vRect.xy;
     vec2 uv = vRect.xy + fract(vUv) * size;
     vec4 tex = textureGrad(AtlasSampler, uv, dFdx(vUv) * size, dFdy(vUv) * size);
     int flags = int(vLook.x + 0.5);
     vec3 albedo = tex.rgb;
+#ifndef NO_DISCARD
     if ((flags & 1) != 0 && tex.a < 0.5) discard;                    // cut-out: glass frames, bars
     if ((flags & 8) != 0) albedo = mix(vLook.yzw, tex.rgb, tex.a);  // leaves: their holes take the leaves' colour
+#else
+    // never discarding (the GPU's hidden-surface removal stays on): a cut-out's holes (glass) take the dim room behind
+    // them, leaves' holes the leaves' colour
+    if ((flags & 1) != 0) albedo = mix(vLook.yzw * 0.45, tex.rgb, tex.a);
+    else if ((flags & 8) != 0) albedo = mix(vLook.yzw, tex.rgb, tex.a);
+#endif
     float blockLight = (flags & 4) != 0 ? 15.0 : vLight.x;
     vec3 c = albedo * vTint * farLight(vNormal, smoothstep(9.0, 15.0, vLight.y));
     c *= texture(LightSampler, (vec2(blockLight, vLight.y) + 0.5) / 16.0).rgb;

@@ -1484,6 +1484,10 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
 
 ## 20. Far Sight (Awaken's own far terrain; Far Sight 2 plan docs/perf/far-sight/PLAN-2.md, page https://claude.ai/artifact/1USNxEEEGNHTL1NAzfnKWN, approved in full 2026-10-25)
 
+Far Sight 3 (plan docs/perf/far-sight/PLAN-3.md, page https://claude.ai/artifact/BYgaSCyxJsXY78CXNUzgaX, approved in full
+2026-10-26): every far shape within about a pixel of the real thing, detail fading with distance on the air's own
+curve, and Carillon drawn whole from its real blocks first (City Sight, below).
+
 Far Sight 2 (2026-10-25) replaced stage 0's stepped columns: real far relief to 16 km, far forests, alpine materials
 and air at real scale, at about 2 ms a frame (Lens Ultra, 2880×1800, `tools/autopilot/farsight2-perf.txt`). Its
 terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (/Volumes/MEDIA/farsight-ref).
@@ -1516,6 +1520,31 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   six, unpaced. The horizon ring first, then by distance; a ring asks only for patches it draws (not those the next
   finer ring covers clear of its 16-cell easing band: asked for, they came first and the visible bands waited, so a
   minute after a jump rings 4 and 5 still lacked 66 and 209 of 256 patches and the coast read as see-through sea).
+- **City Sight** (Far Sight 3, `farsight.voxel`, `client.VoxelLayer`/`VoxelLooks`): the city's real chunks drawn by Far
+  Sight wherever Sodium doesn't draw them, at any distance. `VoxelCapture` snapshots each city chunk (`City.layout().chunks`,
+  nearest the player first) on the server tick within its own 1.5 ms (`VoxelSnapshot`: copies of its sections from one
+  below the lowest non-air to one above the highest, with their sky and block light; a chunk the city's hold has let go
+  is read back from disk, one a tick), at most 96 waiting, and again after a save that changed it. Far Sight's workers
+  mesh them (`VoxelMesher`, after the horizon ring's patches, before the nearer far land): `VoxelKinds` reduces every
+  block to a cube (opaque cubes hide their neighbours' faces; glass, stairs and the like don't; leaves do, as fast
+  leaves), its box when at least 0.4 of a block (slabs, beds), a flat top (carpets, snow layers), water's surface at
+  14/16 and its open sides, or nothing (fences, panes, bars, plants, torches, doors: under a pixel there). Exposed cube
+  faces merge into the largest rectangles of one look, tint and light (greedy meshing). Each face carries the sky and
+  block light of the air in front of it. Levels 1-3 use cells of 2, 4 and 8 blocks: a cell is solid where at least half
+  its blocks are (thin things fade, never swell), it wears its blocks' most common look, and on top the most common look
+  of its columns' highest blocks. A quad is 16 bytes (least corner in sixteenths, face, extents, level, look, chunk
+  slot, tint, light), pulled by index from 4 MB texel-buffer pages. Looks (`VoxelLooks`): each face's sprite from the
+  game's own baked model (the quad facing that way, else the particle sprite), its tint (`BlockColors` with the
+  chunk's biome; water by its biome's water colour), cut-out where the model isn't solid, glow where it emits light,
+  and its texture's average colour (leaves' holes take it). Drawn after the far terrain into Far Sight's targets
+  (`farsight_voxels`): the block atlas with its mipmaps (a texture fades to its colour as the real chunks' do), the
+  game's lightmap at the face's own light (dark under roofs, lit windows by night), `farLight` and the same air.
+  A level gives way to the next once its cells span 1.5 pixels or fewer, cross-fading over 15% of its reach
+  (dithered). Hidden where Sodium draws the section (`farRealSection` and the chunk mask); chunks Sodium draws whole are
+  not planned. The far terrain and far trees step aside where City Sight stands (a 256×256-chunk toroidal coverage mask,
+  read within 2 km) and under it carry only the city's ground, a block under its streets (`FarCity.underCitySight`,
+  `CityLayout.groundY`). The opening's card waits for the whole city to be meshed and up. Debug view 3 tints City
+  Sight green; `farsight part city off` hides it. Test `farsight_voxels_mesh`.
 - **Generated layer** (stage 1, schema 2): `FarChunk` keeps per 2×2-block cell the ground's top (MOTION_BLOCKING_NO_LEAVES;
   water counts), water depth, the ground's colour, the canopy's height above it and its colour (leaves at
   MOTION_BLOCKING). `FarStore.patch` averages the cells within half a cell of each corner (known once a quarter is

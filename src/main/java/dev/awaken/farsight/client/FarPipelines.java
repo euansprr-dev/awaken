@@ -117,6 +117,21 @@ final class FarPipelines {
             .withCull(false)
             .build();
 
+    /** City Sight without discard, for chunks clear of the render distance's edge and of a level's fade (see VoxelLayer#EDGED). */
+    static final RenderPipeline VOXELS_PLAIN = RenderPipeline.builder()
+            .withBindGroupLayout(BindGroupLayouts.PROJECTION)
+            .withBindGroupLayout(BindGroupLayouts.FOG)
+            .withBindGroupLayout(VOXEL_INPUTS)
+            .withLocation(Awaken.id("pipeline/farsight_voxels_plain"))
+            .withVertexShader(Awaken.id("core/farsight_voxels"))
+            .withFragmentShader(Awaken.id("core/farsight_voxels"))
+            .withShaderDefine("NO_DISCARD")
+            .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
+            .withColorTargetState(ColorTargetState.DEFAULT)
+            .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true))
+            .withCull(false)
+            .build();
+
     static final BindGroupLayout MARK_INPUTS = BindGroupLayout.builder()
             .withUniform("FarFrame", UniformType.UNIFORM_BUFFER)
             .withUniform("FarMarks", UniformType.UNIFORM_BUFFER)
@@ -155,6 +170,7 @@ final class FarPipelines {
         e.registerOptionalPipeline(MARKS);
         e.registerOptionalPipeline(TREES);
         e.registerOptionalPipeline(VOXELS);
+        e.registerOptionalPipeline(VOXELS_PLAIN);
     }
 
     /** Whether both pipelines compiled; checked once per resource load (a failed one would recompile every lookup). */
@@ -163,7 +179,7 @@ final class FarPipelines {
             try {
                 ok = RenderSystem.getCompiledPipelineNullable(TERRAIN) != null && RenderSystem.getCompiledPipelineNullable(BAKE) != null
                         && RenderSystem.getCompiledPipelineNullable(MARKS) != null && RenderSystem.getCompiledPipelineNullable(TREES) != null
-                        && RenderSystem.getCompiledPipelineNullable(VOXELS) != null ? 1 : 0;
+                        && RenderSystem.getCompiledPipelineNullable(VOXELS) != null && RenderSystem.getCompiledPipelineNullable(VOXELS_PLAIN) != null ? 1 : 0;
             } catch (RuntimeException e) {
                 ok = 0;
             }

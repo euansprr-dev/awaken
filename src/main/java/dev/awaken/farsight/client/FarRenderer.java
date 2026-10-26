@@ -518,6 +518,7 @@ final class FarRenderer implements AutoCloseable {
                 pass.drawIndexed(marks * 2 * 6, 1, 0, 0, 0);
             }
         }
+        voxels.endFrame();
         frameUbo.rotate();
         drawUbo.rotate();
         markUbo.rotate();

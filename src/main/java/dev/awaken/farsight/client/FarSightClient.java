@@ -133,7 +133,29 @@ public final class FarSightClient {
         return enabled() && !ModList.get().isLoaded("distanthorizons");
     }
 
+    /**
+     * The player's chunk fade-in, while Far Sight holds it off (-1: not held). New chunks fade in from the fog colour,
+     * a white veil sweeping over the city as it loads (Euan, 2026-10-26); with Far Sight there is nothing to fade from,
+     * since the far view already shows those blocks, so the fade is off while Far Sight draws and the player's own
+     * value comes back when it stops.
+     */
+    private static double heldFade = -1;
+
+    private static void holdFade(boolean hold) {
+        var option = Minecraft.getInstance().options.chunkSectionFadeInTime();
+        if (hold) {
+            if (option.get() > 0.0) {
+                if (heldFade < 0) heldFade = option.get();
+                option.set(0.0);
+            }
+        } else if (heldFade >= 0) {
+            option.set(heldFade);
+            heldFade = -1;
+        }
+    }
+
     private static void unbind() {
+        holdFade(false);
         FarStore.collecting = false;
         VoxelCapture.wanted = false;
         FarCity.underCitySight = false;
@@ -181,6 +203,7 @@ public final class FarSightClient {
             VoxelCapture.wanted = city;
             FarCity.underCitySight = city;
         }
+        holdFade(true);
         // the integrated server sums real chunks into the generated layer while Far Sight draws
         FarStore.collecting = true;
         FarStore store = FarStore.of(level);
@@ -237,8 +260,12 @@ public final class FarSightClient {
             layer.inFlight.incrementAndGet();
             workers.submitTask(5.0e5f + (float) Math.sqrt(dx * dx + dz * dz), () -> {
                 try {
+                    // the same blocks and light as the mesh already up: nothing to do
+                    long hash = snap.hash();
+                    if (layer.hashes[slot] == hash) return;
                     VoxelMesh mesh = layer.mesher.get().mesh(snap, slot);
                     layer.finished.add(mesh);
+                    layer.hashes[slot] = hash;
                 } finally {
                     layer.inFlight.decrementAndGet();
                 }

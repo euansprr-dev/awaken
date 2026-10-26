@@ -49,6 +49,23 @@ public record VoxelSnapshot(int chunkX, int chunkZ, int levelMinY, int fromSecti
         return new VoxelSnapshot(cx, cz, level.getMinY(), minSection + lo, sections, sky, block);
     }
 
+    /** A hash of its blocks and light: the same chunk taken again unchanged hashes the same (workers; ~1 ms). */
+    public long hash() {
+        long h = 1125899906842597L ^ fromSection;
+        for (int i = 0; i < sections.length; i++) {
+            LevelChunkSection s = sections[i];
+            if (s != null) {
+                var states = s.getStates();
+                for (int k = 0; k < 4096; k++) h = h * 31 + Block.BLOCK_STATE_REGISTRY.getId(states.get(k & 15, k >> 8, (k >> 4) & 15));
+            } else {
+                h = h * 31 - 1;
+            }
+            h = h * 31 + (sky[i] == null ? 7 : java.util.Arrays.hashCode(sky[i].getData()));
+            h = h * 31 + (block[i] == null ? 11 : java.util.Arrays.hashCode(block[i].getData()));
+        }
+        return h;
+    }
+
     /** The lowest block y the snapshot covers. */
     public int minY() {
         return fromSection * 16;

@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 final class VoxelLayer implements AutoCloseable {
     static final int PAGE_QUADS = 1 << 18, MAX_SLOTS = 1 << 16, DRAW_QUADS = 1 << 16, MAX_COMMANDS = 8192, COMMAND_BYTES = 20;
     /** A level's blocks give way to the next coarser level once they look this many pixels or fewer. */
-    static final float PIXELS = 1.5f;
+    static final float PIXELS = 2.0f;
     /** The cross-fade between two levels, as a share of the nearer one's reach. */
     static final float BAND = 0.15f;
 
@@ -55,6 +55,8 @@ final class VoxelLayer implements AutoCloseable {
     private static final class Chunk {
         int cx, cz, minY, maxY;
         final int[] page = new int[VoxelMesher.LEVELS], first = new int[VoxelMesher.LEVELS], count = new int[VoxelMesher.LEVELS];
+        /** Per level, each face's first quad within the level's run (down, up, north, south, west, east, end). */
+        final int[][] starts = new int[VoxelMesher.LEVELS][7];
     }
 
     private final List<Page> pages = new ArrayList<>();
@@ -76,14 +78,22 @@ final class VoxelLayer implements AutoCloseable {
     final VoxelLooks looks = new VoxelLooks();
     /** Each worker's mesher (it reuses its arrays), reading this layer's looks. */
     final ThreadLocal<VoxelMesher> mesher = ThreadLocal.withInitial(() -> new VoxelMesher(looks));
+    /** Each slot's last meshed snapshot's hash (workers write, so a chunk taken again unchanged isn't meshed again). */
+    final long[] hashes = new long[MAX_SLOTS];
     /** Meshing jobs on the workers. */
     final java.util.concurrent.atomic.AtomicInteger inFlight = new java.util.concurrent.atomic.AtomicInteger();
     final ConcurrentLinkedQueue<VoxelMesh> finished = new ConcurrentLinkedQueue<>();
     private final boolean indirect = "Vulkan".equalsIgnoreCase(RenderSystem.getDevice().getDeviceInfo().backendName());
     private final int levelMinY;
 
-    // this frame's draws per page: page, quad count (indices / 6), first vertex
+    // this frame's draws per page: page (+ EDGED for those needing the discarding pipeline), quad count, first quad
     private final IntArrayList drawPage = new IntArrayList(), drawQuads = new IntArrayList(), drawFirst = new IntArrayList();
+    /**
+     * A draw near the render distance's edge or in a level's cross-fade, drawn by the pipeline that discards (Sodium's
+     * sections, the dither). The rest are drawn without discard, so the GPU's own hidden-surface removal works (Apple
+     * GPUs shade every fragment of a shader that may discard: the city's hidden walls cost as much as its visible ones).
+     */
+    static final int EDGED = 1 << 20;
     int quadsDrawn, chunksDrawn;
     private final float[] reach = new float[VoxelMesher.LEVELS];
 
@@ -169,6 +179,7 @@ final class VoxelLayer implements AutoCloseable {
             int[] q = m.quads()[l];
             int count = q.length / VoxelMesher.INTS;
             c.count[l] = count;
+            System.arraycopy(m.starts()[l], 0, c.starts[l], 0, 7);
             if (count == 0) continue;
             int[] at = allocate(count);
             c.page[l] = at[0];
@@ -228,6 +239,7 @@ final class VoxelLayer implements AutoCloseable {
         live.clear();
         slotOf.clear();
         freeSlots.clear();
+        java.util.Arrays.fill(hashes, 0L);
         nextSlot = 0;
         for (Page p : pages) {
             p.used = 0;
@@ -262,12 +274,30 @@ final class VoxelLayer implements AutoCloseable {
             // Sodium draws all of it: inside its distance (with a block's margin, as it culls) and every section shown
             if (far < realWithin - 2 && renderer.shown(c.cx, c.cz) && Math.max(Math.abs(ay), Math.abs(by)) < realWithin - 2) continue;
             if (!renderer.inView(ax, ay, az, bx, by, bz)) continue;
+            // faces turned away from the camera across the whole chunk aren't drawn: down, up, north, south, west, east
+            int faces = (camY < c.maxY ? 1 : 0) | (camY > c.minY ? 2 : 0) | (camZ < c.cz * 16 + 16 ? 4 : 0) | (camZ > c.cz * 16 ? 8 : 0)
+                    | (camX < c.cx * 16 + 16 ? 16 : 0) | (camX > c.cx * 16 ? 32 : 0);
             boolean drawn = false;
+            boolean edge = near < realWithin + 2;
             for (int l = 0; l < VoxelMesher.LEVELS; l++) {
                 float from = l == 0 ? 0f : reach[l - 1], to = reach[l] * (1f + BAND);
                 if (far < from || near > to) continue;
                 if (c.count[l] == 0) continue;
-                add(c.page[l], c.first[l], c.count[l]);
+                // in a fade: inside the band past the finer level's reach, or past its own
+                boolean fading = (l > 0 && near < from * (1f + BAND)) || (l < VoxelMesher.LEVELS - 1 && far > reach[l]);
+                int pageFlag = edge || fading ? EDGED : 0;
+                int[] st = c.starts[l];
+                for (int d = 0; d < 6; ) {
+                    if ((faces & 1 << d) == 0 || st[d + 1] == st[d]) {
+                        d++;
+                        continue;
+                    }
+                    // a run of visible faces in one range
+                    int e = d;
+                    while (e < 6 && (faces & 1 << e) != 0) e++;
+                    if (st[e] > st[d]) add(c.page[l] | pageFlag, c.first[l] + st[d], st[e] - st[d]);
+                    d = e;
+                }
                 drawn = true;
             }
             if (drawn) chunksDrawn++;
@@ -291,8 +321,7 @@ final class VoxelLayer implements AutoCloseable {
     }
 
     /** Draws the planned chunks into the open pass (Far Sight's targets), page by page. */
-    void draw(RenderPass pass, GpuBuffer frame, com.mojang.renderpearl.api.textures.GpuTextureView lightmap,
-              com.mojang.renderpearl.api.textures.GpuTextureView chunkMask) {
+    void draw(RenderPass pass, GpuBuffer frame, GpuTextureView lightmap, GpuTextureView chunkMask) {
         if (drawPage.isEmpty()) return;
         GpuBuffer p = params.currentBuffer();
         try (var view = p.map(false, true)) {
@@ -301,17 +330,10 @@ final class VoxelLayer implements AutoCloseable {
             d.putFloat(16, 0f).putFloat(20, 0f).putFloat(24, 0f).putFloat(28, 0f);
         }
         AbstractTexture atlas = Minecraft.getInstance().getTextureManager().getTexture(TextureAtlas.LOCATION_BLOCKS);
-        pass.setPipeline(RenderSystem.getCompiledPipeline(FarPipelines.VOXELS));
-        pass.setUniform("Projection", RenderSystem.getProjectionMatrixBuffer());
-        pass.setUniform("Fog", RenderSystem.getShaderFog());
-        pass.setUniform("FarFrame", frame);
-        pass.setUniform("FarVoxel", p);
-        pass.setUniform("Chunks", chunkTable);
-        pass.setUniform("Looks", lookTable);
-        pass.setUniform("AtlasSampler", atlas.getTextureView(), atlas.getSampler());
-        pass.setUniform("LightSampler", lightmap, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
-        pass.setUniform("ChunkSampler", chunkMask, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
-        pass.setIndexBuffer(indices, IndexType.INT);
+        // the plain draws first (sorted ahead of the edged ones), then the pipeline that discards
+        boolean edgedBound = (drawPage.getInt(0) & EDGED) != 0;
+        pass.setPipeline(RenderSystem.getCompiledPipeline(edgedBound ? FarPipelines.VOXELS : FarPipelines.VOXELS_PLAIN));
+        bindAll(pass, frame, p, atlas, lightmap, chunkMask);
         GpuBuffer cmd = commands.currentBuffer();
         int n = drawPage.size();
         if (indirect) {
@@ -323,10 +345,17 @@ final class VoxelLayer implements AutoCloseable {
                 }
             }
         }
-        // the plan is grouped by page (sortByPage): one run of draws per page
+        // the plan is grouped by page and kind (sortByPage): one run of draws each
         for (int i = 0; i < n; ) {
-            int pg = drawPage.getInt(i), j = i;
-            while (j < n && drawPage.getInt(j) == pg) j++;
+            int key = drawPage.getInt(i), j = i;
+            while (j < n && drawPage.getInt(j) == key) j++;
+            if ((key & EDGED) != 0 && !edgedBound) {
+                // the same bindings carry over to the second pipeline (same layout)
+                pass.setPipeline(RenderSystem.getCompiledPipeline(FarPipelines.VOXELS));
+                bindAll(pass, frame, p, atlas, lightmap, chunkMask);
+                edgedBound = true;
+            }
+            int pg = key & (EDGED - 1);
             pass.setUniform("Quads", pages.get(pg).buffer);
             if (indirect) {
                 pass.drawIndexedIndirect(cmd.slice((long) i * COMMAND_BYTES, (long) (j - i) * COMMAND_BYTES), j - i);
@@ -335,6 +364,28 @@ final class VoxelLayer implements AutoCloseable {
             }
             i = j;
         }
+        used = true;
+    }
+
+    private boolean used;
+
+    private void bindAll(RenderPass pass, GpuBuffer frame, GpuBuffer p, AbstractTexture atlas, GpuTextureView lightmap, GpuTextureView chunkMask) {
+        pass.setUniform("Projection", RenderSystem.getProjectionMatrixBuffer());
+        pass.setUniform("Fog", RenderSystem.getShaderFog());
+        pass.setUniform("FarFrame", frame);
+        pass.setUniform("FarVoxel", p);
+        pass.setUniform("Chunks", chunkTable);
+        pass.setUniform("Looks", lookTable);
+        pass.setUniform("AtlasSampler", atlas.getTextureView(), atlas.getSampler());
+        pass.setUniform("LightSampler", lightmap, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
+        pass.setUniform("ChunkSampler", chunkMask, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+        pass.setIndexBuffer(indices, IndexType.INT);
+    }
+
+    /** After the pass has closed: the ring buffers move on (a fence, which can't be made inside a pass). */
+    void endFrame() {
+        if (!used) return;
+        used = false;
         params.rotate();
         commands.rotate();
     }

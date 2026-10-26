@@ -82,6 +82,7 @@ public final class VoxelMesher {
         }
         int lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE;
         int[][] quads = new int[LEVELS][];
+        int[][] starts = new int[LEVELS][7];
         for (int l = 0; l < LEVELS; l++) {
             lod = l;
             size[l] = 0;
@@ -89,7 +90,7 @@ public final class VoxelMesher {
             maxY16 = Integer.MIN_VALUE;
             if (l == 0) level0();
             else coarse(1 << l);
-            quads[l] = Arrays.copyOf(out[l], size[l]);
+            quads[l] = byFace(out[l], size[l], starts[l]);
             if (size[l] > 0) {
                 lo = Math.min(lo, minY16);
                 hi = Math.max(hi, maxY16);
@@ -98,7 +99,29 @@ public final class VoxelMesher {
         snap = null;
         int levelMin = s.levelMinY();
         return new VoxelMesh(s.chunkX(), s.chunkZ(), slot, lo == Integer.MAX_VALUE ? 0 : levelMin + Math.floorDiv(lo, 16),
-                hi == Integer.MIN_VALUE ? 0 : levelMin + Math.floorDiv(hi + 15, 16), quads);
+                hi == Integer.MIN_VALUE ? 0 : levelMin + Math.floorDiv(hi + 15, 16), quads, starts);
+    }
+
+    /** The level's quads grouped by face (down, up, north, south, west, east); starts[d] the first of face d, in quads. */
+    private static int[] byFace(int[] q, int n, int[] starts) {
+        int[] count = new int[6];
+        for (int i = 0; i < n; i += INTS) count[q[i] >> 18 & 7]++;
+        starts[0] = 0;
+        for (int d = 0; d < 6; d++) starts[d + 1] = starts[d] + count[d];
+        int[] at = Arrays.copyOf(starts, 6), sorted = new int[n];
+        for (int i = 0; i < n; i += INTS) {
+            int d = q[i] >> 18 & 7, to = at[d]++ * INTS;
+            System.arraycopy(q, i, sorted, to, INTS);
+        }
+        return sorted;
+    }
+
+    /**
+     * Light in steps of three (0, 3, 6 .. 15): a level's difference doesn't show from where City Sight draws, and
+     * walls lit a level apart then merge into one quad.
+     */
+    private static int step(int light) {
+        return Math.min(15, (light + 1) / 3 * 3);
     }
 
     private static int index(int x, int y, int z) {
@@ -152,7 +175,7 @@ public final class VoxelMesher {
         if (look < 0) return 0;
         int tint = 0xFFFFFF;
         if ((look >>> 16) != 0) tint = looks.tint(id, (look >>> 16) - 1, snap.biome(x, y, z)) & 0xFFFFFF;
-        int sky = snap.skyLight(nx, ny, nz), block = snap.blockLight(nx, ny, nz);
+        int sky = step(snap.skyLight(nx, ny, nz)), block = step(snap.blockLight(nx, ny, nz));
         return PRESENT | (long) offset << 52 | (long) block << 48 | (long) sky << 44 | (long) tint << 16 | (look & 0xFFFF);
     }
 
@@ -223,7 +246,7 @@ public final class VoxelMesher {
             if (look < 0) continue;
             int tint = (look >>> 16) != 0 ? looks.tint(id, (look >>> 16) - 1, snap.biome(x, y, z)) & 0xFFFFFF : 0xFFFFFF;
             int lx = edge ? nx : x, ly = edge ? ny : y, lz = edge ? nz : z;
-            int sky = Math.max(snap.skyLight(lx, ly, lz), edge ? 0 : snap.skyLight(x, y + 1, z)), block = snap.blockLight(lx, ly, lz);
+            int sky = step(Math.max(snap.skyLight(lx, ly, lz), edge ? 0 : snap.skyLight(x, y + 1, z))), block = step(snap.blockLight(lx, ly, lz));
             switch (dir) {
                 case 0 -> quad(bx + x0, by + y0, bz + z0, 0, x1 - x0, z1 - z0, look, tint, sky, block);
                 case 1 -> quad(bx + x0, by + y1, bz + z0, 1, x1 - x0, z1 - z0, look, tint, sky, block);
@@ -248,7 +271,7 @@ public final class VoxelMesher {
             if (nk != VoxelKinds.AIR && nk != VoxelKinds.SKIP && nk != VoxelKinds.FLAT) continue;
             // the chunk's edge: its neighbour draws its own side if it has one
             if (nx < 0 || nx > 15 || nz < 0 || nz > 15) continue;
-            int sky = snap.skyLight(nx, y, nz), block = snap.blockLight(nx, y, nz);
+            int sky = step(snap.skyLight(nx, y, nz)), block = step(snap.blockLight(nx, y, nz));
             int bx = x * 16, by = y * 16, bz = z * 16;
             switch (dir) {
                 case 2 -> quad(bx, by, bz, 2, 16, top, look & 0xFFFF, tint, sky, block);
@@ -389,7 +412,7 @@ public final class VoxelMesher {
             lx = dir == 4 ? cx * c - 1 : dir == 5 ? cx * c + c : mx;
             lz = dir == 2 ? cz * c - 1 : dir == 3 ? cz * c + c : mz;
         }
-        int sky = snap.skyLight(lx, ly, lz), block = snap.blockLight(lx, ly, lz);
+        int sky = step(snap.skyLight(lx, ly, lz)), block = step(snap.blockLight(lx, ly, lz));
         int tint = (look >>> 16) != 0 ? looks.tint(id, (look >>> 16) - 1, snap.biome(mx, my, mz)) & 0xFFFFFF : 0xFFFFFF;
         return PRESENT | (long) (offset & 255) << 52 | (long) block << 48 | (long) sky << 44 | (long) tint << 16 | (look & 0xFFFF);
     }

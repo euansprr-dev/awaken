@@ -65,10 +65,15 @@ public final class FarCollector {
         NeoForge.EVENT_BUS.addListener(ChunkDataEvent.Save.class, e -> {
             if (FarStore.collecting && e.getLevel() instanceof ServerLevel level && e.getChunk() instanceof LevelChunk && wanted(level)) {
                 note(level, e.getChunk().getPos());
-                if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD) dev.awaken.farsight.voxel.VoxelCapture.changed(e.getChunk().getPos());
             }
         });
         NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, e -> tick(e.getServer()));
+        // City Sight takes a chunk again after its blocks change
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.level.BlockEvent.NeighborNotifyEvent.class, e -> {
+            if (e.getLevel() instanceof ServerLevel level && level.dimension() == net.minecraft.world.level.Level.OVERWORLD) {
+                dev.awaken.farsight.voxel.VoxelCapture.blockChanged(level, e.getPos().getX(), e.getPos().getZ());
+            }
+        });
         NeoForge.EVENT_BUS.addListener(LevelEvent.Save.class, e -> {
             if (e.getLevel() instanceof ServerLevel level && level.dimension() == net.minecraft.world.level.Level.OVERWORLD) FarStore.flushAll(false);
         });
