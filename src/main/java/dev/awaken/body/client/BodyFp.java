@@ -38,9 +38,14 @@ final class BodyFp {
 
     // ---- the one-shots ----------------------------------------------------------------------------------------------
 
+    /** The speed the next move's view clip plays at (a ledge jump's, to land its catch with the body's path), then 1. */
+    static float speed = 1F;
+
     /** A move's view clip, unless first person's moves are switched off (feel settings: firstPersonMoves). */
     static void play(String clip) {
-        if (dev.awaken.body.client.feel.FeelConfig.fpMoves()) FirstPerson.play(clip);
+        float sp = speed;
+        speed = 1F;
+        if (dev.awaken.body.client.feel.FeelConfig.fpMoves()) FirstPerson.play(clip, sp);
     }
 
     /** Our own body started a clip (third person): play its first-person counterpart. */

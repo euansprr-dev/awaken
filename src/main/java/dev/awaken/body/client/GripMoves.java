@@ -141,6 +141,7 @@ public final class GripMoves {
         boolean fwd = !screen && k.forward(), shift = !screen && k.shift();
         if (mode == HOP) {
             if (++hopAge > GripRules.HOP_TICKS) mode = fwd ? CLIMB : HOLD;
+            else if (hopAge == 3) dev.awaken.body.client.feel.FeelDirector.leapLaunch(0.7F); // off the hop's load
         } else if (shift) {
             mode = SLIDE;
         } else if (mode == SLIDE) {
@@ -287,7 +288,7 @@ public final class GripMoves {
             modeSince = now;
             changed(p, l);
             BodyFx.sound(p, BodyContent.GRAB.get(), 0.6F, 1.25F);
-            dev.awaken.body.client.feel.FeelDirector.bite(-0.9F);
+            dev.awaken.body.client.feel.FeelDirector.leapLoad(); // the hop loads first, then launches (tick 3)
         }
         return false;
     }
@@ -301,6 +302,7 @@ public final class GripMoves {
         ClientMoves.suppressJump();
         BodyFx.sound(p, BodyContent.WALLJUMP.get(), 0.75F, 1.05F);
         BodyFp.play(BodyClips.FP_PIPE_KICK);
+        dev.awaken.body.client.feel.FeelDirector.leapLaunch(0.8F);
         ClientMoves.trace("grip: kick off");
     }
 
