@@ -52,17 +52,13 @@ public final class RigPipelines {
             .withColorTargetState(new ColorTargetState(BlendFunction.LIGHTNING))
             .build();
 
-    public static final OitPipelineSet GLOW_OIT = OitPipelineSet.builder(Awaken.id("rig_glow"),
-            RenderPipeline.builder(RenderPipelines.OIT_DEBUG_FILLED_SNIPPET).withShaderDefine("OIT_ADDITIVE")).build();
-
-    private static RenderType type, glowType;
-    private static int ok = -1, glowOk = -1;
+    private static RenderType type;
+    private static int ok = -1;
 
     static void onRegister(RegisterRenderPipelinesEvent e) {
         e.registerOptionalPipeline(LIGHT);
         e.registerOitPipelineSet(LIGHT_OIT);
         e.registerOptionalPipeline(GLOW);
-        e.registerOitPipelineSet(GLOW_OIT);
     }
 
     /** The rig's light, or vanilla lightning if the pipeline didn't build (never no light at all). */
@@ -77,24 +73,5 @@ public final class RigPipelines {
         if (ok == 0) return RenderTypes.lightning();
         if (type == null) type = RenderType.create("awaken_rig_light", RenderSetup.builder(LIGHT).setOitPipelines(LIGHT_OIT).createRenderSetup());
         return type;
-    }
-
-    /** The pillars' light (additive, no fog), or the rig's light if it didn't build. */
-    public static RenderType glow() {
-        if (glowOk < 0) {
-            try {
-                glowOk = RenderSystem.getCompiledPipelineNullable(GLOW) != null ? 1 : 0;
-            } catch (RuntimeException ex) {
-                glowOk = 0;
-            }
-        }
-        if (glowOk == 0) return light();
-        if (glowType == null) glowType = RenderType.create("awaken_rig_glow", RenderSetup.builder(GLOW).setOitPipelines(GLOW_OIT).createRenderSetup());
-        return glowType;
-    }
-
-    /** The pillars' haze: alpha-blended, no fog, depth-tested, no depth written (vanilla's debug quads are exactly that). */
-    public static RenderType haze() {
-        return RenderTypes.debugQuads();
     }
 }

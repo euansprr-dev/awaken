@@ -206,7 +206,9 @@ rank (E #F4F6FB, D #5FD08F, C #6FB3FF, B #B48CFF, A #F2A541, S #FF5A6A, Sovereig
 ribbons with a bell-shaped falloff across their width ((1 - x²)³, nothing and flat at the edge), a near-white core and
 the rank's glow added as light, a wide haze in the rank's colour alpha-blended (it carries the pillar by day), all
 thinning to nothing with height; no world fog (it counts height as distance and cut the column off flat), the top kept
-inside the far plane. Admin `/awaken gate frame <dist> <lift>` puts the camera on the line from the nearest gate toward
+inside the far plane. Drawn after the level in a pass of its own (depth-tested, no depth written), never through the
+level's translucent passes (with improved transparency their composite writes a translucent's depth wherever it shows,
+so Lens took each ribbon's whole quad for solid and left its clouds out there: a hard-edged slab). Admin `/awaken gate frame <dist> <lift>` puts the camera on the line from the nearest gate toward
 Carillon's centre, facing the pillar (tours).
 Gate card shows rank, breaks-in, omen; PER ≥20 adds layout, ≥40 modifiers, ≥60 floor count; Veil scouting shows all.
 A gate of another rank than the hunter's says so in a "For you" row: "above your rank", or "below your rank · pays less"

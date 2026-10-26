@@ -6,7 +6,8 @@
 # about 7 and 12 blocks (looking up, inside the haze), 30, 100, 180 and 250 (over the city's roofs), at noon, dusk and
 # night, at street level and over roofs.
 # Run on GitHub's Mac runners:
-#   tools/tour-ci.sh tools/autopilot/pillars.txt 1200 TECTONIC=awakened PACK=perf,world,horizon
+#   tools/tour-ci.sh tools/autopilot/pillars.txt 1800 TECTONIC=awakened PACK=perf,world,horizon LENS=cinematic
+# (Cinematic: Lens 2's clouds behind the pillar, where the slab showed as a hole in them)
 world carillonM4b3a creative 20261024
 waitworld
 gui 0
