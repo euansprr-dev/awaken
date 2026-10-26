@@ -1,0 +1,188 @@
+# Third person from first person's blade, the rest of the two-handed styles (SPEC §25): the Maul, Spear, Glaive,
+# Scythe, War-staff and Twinblades in F5 from behind (Shoulder Surfing's camera with PACK=feel: the animation libraries
+# and Bendable Cuboids), each chain of four then a charge held past full and loosed; the Maul, Spear and War-staff from
+# the front too. Clips: rig2_<style>_back, rig2_<style>_front.
+world armsrig2 creative 781
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+cmd tp @s ~ 200 ~ 0 0
+wait 20
+cmd fill ~-12 ~-1 ~-12 ~12 ~-1 ~14 minecraft:smooth_stone
+cmd kill @e[type=minecraft:husk]
+cmd summon minecraft:husk ~0 ~ ~3.2 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:4000f,attributes:[{id:"minecraft:max_health",base:4000d}]}
+arms ribbonmode 0
+# from behind: the chain, then the held draw loosed
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_maul
+wait 40
+camera back
+look 0 4
+wait 20
+shot rig2_maul_back_rest
+cmd awaken ascent pilot rec rig2_maul_back 110
+wait 2
+arms strike
+wait 10
+arms strike
+wait 11
+arms strike
+wait 13
+arms strike
+wait 24
+arms heavy 30
+wait 54
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_spear
+wait 40
+camera back
+look 0 4
+wait 20
+shot rig2_spear_back_rest
+cmd awaken ascent pilot rec rig2_spear_back 110
+wait 2
+arms strike
+wait 10
+arms strike
+wait 11
+arms strike
+wait 13
+arms strike
+wait 24
+arms heavy 30
+wait 54
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_glaive
+wait 40
+camera back
+look 0 4
+wait 20
+shot rig2_glaive_back_rest
+cmd awaken ascent pilot rec rig2_glaive_back 110
+wait 2
+arms strike
+wait 10
+arms strike
+wait 11
+arms strike
+wait 13
+arms strike
+wait 24
+arms heavy 30
+wait 54
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_scythe
+wait 40
+camera back
+look 0 4
+wait 20
+shot rig2_scythe_back_rest
+cmd awaken ascent pilot rec rig2_scythe_back 110
+wait 2
+arms strike
+wait 10
+arms strike
+wait 11
+arms strike
+wait 13
+arms strike
+wait 24
+arms heavy 30
+wait 54
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_warstaff
+wait 40
+camera back
+look 0 4
+wait 20
+shot rig2_warstaff_back_rest
+cmd awaken ascent pilot rec rig2_warstaff_back 110
+wait 2
+arms strike
+wait 10
+arms strike
+wait 11
+arms strike
+wait 13
+arms strike
+wait 24
+arms heavy 30
+wait 54
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_twinblades
+wait 40
+camera back
+look 0 4
+wait 20
+shot rig2_twinblades_back_rest
+cmd awaken ascent pilot rec rig2_twinblades_back 110
+wait 2
+arms strike
+wait 10
+arms strike
+wait 11
+arms strike
+wait 13
+arms strike
+wait 24
+arms heavy 30
+wait 54
+# from the front (the husk gone: it stood between the camera and the figure)
+cmd kill @e[type=minecraft:husk]
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_maul
+wait 40
+camera front
+look 0 4
+wait 20
+shot rig2_maul_front_rest
+cmd awaken ascent pilot rec rig2_maul_front 70
+wait 2
+arms strike
+wait 10
+arms strike
+wait 11
+arms strike
+wait 13
+arms strike
+wait 38
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_spear
+wait 40
+camera front
+look 0 4
+wait 20
+shot rig2_spear_front_rest
+cmd awaken ascent pilot rec rig2_spear_front 70
+wait 2
+arms strike
+wait 10
+arms strike
+wait 11
+arms strike
+wait 13
+arms strike
+wait 38
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_warstaff
+wait 40
+camera front
+look 0 4
+wait 20
+shot rig2_warstaff_front_rest
+cmd awaken ascent pilot rec rig2_warstaff_front 70
+wait 2
+arms strike
+wait 10
+arms strike
+wait 11
+arms strike
+wait 13
+arms strike
+wait 38
+quit

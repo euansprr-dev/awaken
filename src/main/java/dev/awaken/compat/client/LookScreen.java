@@ -22,21 +22,39 @@ import java.util.Locale;
 
 /**
  * AWAKEN · LOOK (docs/plan-pack.html, "The one new screen"): three tiers, one click each. A choice sets Lens, Distant
- * Horizons and Iris together ({@link LookSwitch}); the lines under the tiers say what each mod got and why Sodium
- * keeps its own settings. The frame-time line is the last minute's p50 and p99, green while it fits the tier's
+ * Horizons and Iris together ({@link LookSwitch}). Under the tiers, four presets ({@link LookPresets}: Performance,
+ * Close-up, Balanced, Vista) set the Look, Far Sight's reach, the render distance, the 4K render scale and steady at
+ * once, and every one of those is a row of its own that a click changes (right click: back), so all of it shows on one
+ * page (Euan, 2026-10-26). The frame-time line is the last minute's p50 and p99, green while it fits the tier's
  * budget. Drawn like the System's own cards: projected glass that scans in while the holo look is on
  * ({@link HudLook}), flat {@link Glass} otherwise. The world keeps running behind it and is never dimmed (this isn't a
  * reading screen), so a choice shows at once. Keys: 1 · 2 · 3, Esc.
  */
 public final class LookScreen extends Screen implements dev.awaken.signal.client.QuietScreen {
     private static final Tier[] TIERS = Tier.values();
-    private static final int CARD_GAP = 6, PAD = 8, LINE = 10, TOP = 24, FOOT = 18;
+    private static final LookPresets.Preset[] PRESETS = LookPresets.Preset.values();
+    // the clickable setting rows, in order
+    private static final int S_LOOK = 0, S_FAR = 1, S_DISTANCE = 2, S_SCALE = 3, S_STEADY = 4, S_TEMPORAL = 5, SETTINGS = 6;
+    // compact: the whole page fits a 240-pixel-high GUI (auto scale on a 4K or Retina screen)
+    private static final int CARD_GAP = 6, PAD = 8, LINE = 10, TOP = 20, FOOT = 15;
+    /** One line under each tier's name on this page (the tiers' longer blurbs are for the settings screen). */
+    private static String shortBlurb(Tier t) {
+        return switch (t) {
+            case SWIFT -> "Soft light · 120 fps";
+            case CINEMATIC -> "Shadows · 90+ fps";
+            case ULTRA -> "Finest light · 60+ fps";
+        };
+    }
     private static final int TITLE = 0xFFF4F6FB, LABEL = 0xFF8FA7C4, BLURB = 0xFFA9BBD4, DIM = 0xFF6F8299;
 
     private final @Nullable Screen parent;
     private long openedAt;
     private int px, pw, cw, ch, cardsY;
-    private final List<List<FormattedCharSequence>> blurbs = new ArrayList<>();
+    private final List<List<FormattedCharSequence>> blurbs = new ArrayList<>(), presetBlurbs = new ArrayList<>();
+    private int pcw, pch, presetsY;
+    // where each setting row was drawn last frame (y), for clicks; -1 not drawn
+    private final int[] settingY = new int[SETTINGS];
+    private int hoveredPreset = -1, hoveredSetting = -1, innerX0, innerW0;
     private Look.Availability ultra = new Look.Availability(false, "");
     // the frame-time line, refreshed twice a second
     private final float[] stats = new float[4];
@@ -58,17 +76,27 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
     @Override
     protected void init() {
         if (openedAt == 0) openedAt = System.nanoTime();
+        java.util.Arrays.fill(settingY, -1);
         pw = Math.min(396, width - 12);
         px = (width - pw) / 2;
         cw = (pw - 2 * PAD - 2 * CARD_GAP) / TIERS.length;
         blurbs.clear();
         int lines = 1;
         for (Tier t : TIERS) {
-            List<FormattedCharSequence> l = font.split(Component.literal(t.blurb), cw - 12);
+            List<FormattedCharSequence> l = font.split(Component.literal(shortBlurb(t)), cw - 12);
             blurbs.add(l);
             lines = Math.max(lines, l.size());
         }
-        ch = 6 + LINE + 3 + lines * LINE + 4 + LINE + 4;
+        ch = 5 + LINE + 2 + lines * LINE + 3;
+        pcw = (pw - 2 * PAD - (PRESETS.length - 1) * CARD_GAP) / PRESETS.length;
+        presetBlurbs.clear();
+        int plines = 1;
+        for (LookPresets.Preset q : PRESETS) {
+            List<FormattedCharSequence> l = font.split(Component.literal(q.blurb), pcw - 10);
+            presetBlurbs.add(l);
+            plines = Math.max(plines, l.size());
+        }
+        pch = 5 + LINE + 1 + plines * LINE + 3;
         ultra = LookSwitch.ultra();
         refreshFrames();
     }
@@ -98,6 +126,23 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
         return px + PAD + i * (cw + CARD_GAP);
     }
 
+    private int presetX(int i) {
+        return px + PAD + i * (pcw + CARD_GAP);
+    }
+
+    private int presetAt(double mx, double my) {
+        for (int i = 0; i < PRESETS.length; i++) {
+            if (Glass.inside(mx, my, presetX(i), presetsY, pcw, pch)) return i;
+        }
+        return -1;
+    }
+
+    private int settingAt(double mx, double my) {
+        if (mx < innerX0 || mx > innerX0 + innerW0) return -1;
+        for (int i = 0; i < SETTINGS; i++) if (settingY[i] >= 0 && my >= settingY[i] - 1 && my < settingY[i] + LINE) return i;
+        return -1;
+    }
+
     private int cardAt(double mx, double my) {
         for (int i = 0; i < TIERS.length; i++) {
             if (Glass.inside(mx, my, cardX(i), cardsY, cw, ch)) return i;
@@ -118,17 +163,23 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
         int innerX = px + PAD + 2, innerW = pw - 2 * PAD - 4;
         // the cards where they were last frame (the panel only moves when its content grows)
         hovered = cardAt(mouseX, mouseY);
+        hoveredPreset = presetAt(mouseX, mouseY);
+        hoveredSetting = settingAt(mouseX, mouseY);
+        innerX0 = innerX;
+        innerW0 = innerW;
         buildRows();
         // every tier runs everywhere since Lens 2's Ultra (SPEC §22); the note is the last choice's
         boolean why = false;
         String shown = note, room = note;
         List<FormattedCharSequence> noteLines = shown.isEmpty() ? List.of() : font.split(Component.literal(shown), innerW);
         int noteRoom = room.isEmpty() ? 0 : 3 + Math.min(3, font.split(Component.literal(room), innerW).size()) * LINE;
-        // two rules, a line per row, the note
-        int bodyH = 5 + 5 + rows.size() * LINE + noteRoom;
-        int ph = TOP + ch + 6 + bodyH + FOOT;
+        // the presets with their heading, a rule, the settings, a rule, a line per row, the note
+        int presetsH = LINE + 1 + pch + 3;
+        int bodyH = 5 + SETTINGS * LINE + 5 + 5 + rows.size() * LINE + noteRoom;
+        int ph = TOP + ch + 5 + presetsH + bodyH + FOOT;
         int py = Math.max(6, (height - ph) / 2);
         cardsY = py + TOP;
+        presetsY = cardsY + ch + 5 + LINE + 1;
 
         float ms = (System.nanoTime() - openedAt) / 1e6f;
         if (holo) {
@@ -146,7 +197,16 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
             if (r > 0) card(g, i, TIERS[i], current, holo, r);
         }
 
-        int y = cardsY + ch + 6;
+        LookPresets.Preset preset = LookPresets.current();
+        row(g, innerX, innerW, cardsY + ch + 5, "PRESETS", preset == null ? "a custom mix" : preset.label, preset == null ? Glass.LABEL : Glass.GOOD);
+        for (int i = 0; i < PRESETS.length; i++) presetChip(g, i, PRESETS[i], PRESETS[i] == preset, holo);
+        int y = presetsY + pch + 3;
+        y = rule(g, innerX, innerW, y);
+        for (int i = 0; i < SETTINGS; i++) {
+            settingY[i] = y;
+            setting(g, innerX, innerW, y, i);
+            y += LINE;
+        }
         int frameRows = LookSwitch.DH ? 2 : 1;
         y = rule(g, innerX, innerW, y);
         for (int i = 0; i < rows.size(); i++) {
@@ -159,8 +219,73 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
             int colour = Glass.a(why ? Glass.AMBER : noteColour, 1f);
             for (int l = 0; l < Math.min(3, noteLines.size()); l++) HudLook.text(g, font, noteLines.get(l), innerX, y + l * LINE, colour, false);
         }
-        HudLook.centered(g, font, "Click a tier or press 1 · 2 · 3      Esc: back", px + pw / 2, py + ph - 13, DIM, false);
+        HudLook.centered(g, font, "Click to choose or change · right click: back · Esc", px + pw / 2, py + ph - 12, DIM, false);
         if (holo) g.disableScissor();
+    }
+
+    private void presetChip(GuiGraphicsExtractor g, int i, LookPresets.Preset p, boolean on, boolean holo) {
+        int x = presetX(i), y = presetsY;
+        boolean hover = i == hoveredPreset;
+        int edge = on ? Glass.a(Glass.GOOD, 1f) : hover ? Glass.a(Glass.EDGE, 1f) : 0xFF4A5D78;
+        if (holo) {
+            HudLook.card(g, x, y, pcw, pch, edge, 1f, 1f, 0f);
+            if (on || hover) HudLook.glow(g, x, y, pcw, pch, edge, on ? 1f : 0.6f);
+        } else {
+            g.fill(x, y, x + pcw, y + pch, on ? Glass.a(0x16233A, 0.96f) : Glass.a(0x1B2635, hover ? 0.95f : 0.85f));
+            g.outline(x, y, pcw, pch, Glass.a(edge, 0.9f));
+        }
+        HudLook.text(g, font, p.label, x + 5, y + 5, Glass.a(on ? Glass.GOOD : TITLE, 1f), false);
+        List<FormattedCharSequence> lines = presetBlurbs.get(i);
+        for (int l = 0; l < lines.size(); l++) HudLook.text(g, font, lines.get(l), x + 5, y + 5 + LINE + 1 + l * LINE, Glass.a(BLURB, 1f), false);
+    }
+
+    /** One setting: its name on the left, "‹ value ›" on the right, brighter under the mouse. */
+    private void setting(GuiGraphicsExtractor g, int x, int w, int y, int i) {
+        boolean hover = i == hoveredSetting;
+        if (hover) g.fill(x - 2, y - 1, x + w + 2, y + LINE - 1, Glass.a(Glass.EDGE, 0.10f));
+        String label = switch (i) {
+            case S_LOOK -> "LOOK";
+            case S_FAR -> "FAR TERRAIN";
+            case S_DISTANCE -> "RENDER DISTANCE";
+            case S_SCALE -> "RENDER SCALE ON 4K";
+            case S_STEADY -> "STEADY (NO SHIMMER)";
+            default -> "LENS OVER FRAMES";
+        };
+        Tier t = LookSwitch.current();
+        String value = switch (i) {
+            case S_LOOK -> t == null ? "off" : t.pretty();
+            case S_FAR -> switch (LookPresets.far()) {
+                case FULL -> "Full, 16 km";
+                case NEAR -> "Near, 4 km";
+                case OFF -> "Off";
+            };
+            case S_DISTANCE -> LookPresets.distance() + " chunks";
+            case S_SCALE -> LookPresets.scale4k() >= 0.995 ? "native" : String.format(Locale.ROOT, "%.2f", LookPresets.scale4k());
+            case S_STEADY -> LookPresets.steady() ? "on" : "off";
+            default -> LookPresets.temporal() ? "on" : "off";
+        };
+        HudLook.text(g, font, label, x, y, hover ? Glass.a(Glass.EDGE, 1f) : LABEL, false);
+        String shown = "‹ " + value + " ›";
+        HudLook.text(g, font, shown, x + w - font.width(shown), y, Glass.a(hover ? TITLE : Glass.TEXT, 1f), false);
+    }
+
+    /** A click on setting i: the next value (step 1) or the one before (step -1), set now and saved. */
+    private void change(int i, int step) {
+        switch (i) {
+            case S_LOOK -> {
+                Tier t = LookSwitch.current();
+                pick(TIERS[Math.floorMod((t == null ? -step : t.ordinal()) + step, TIERS.length)]);
+            }
+            case S_FAR -> {
+                AwakenConfig.Client.FarSight[] all = AwakenConfig.Client.FarSight.values();
+                LookPresets.setFar(all[Math.floorMod(LookPresets.far().ordinal() - step, all.length)]);
+            }
+            case S_DISTANCE -> LookPresets.setDistance(LookPresets.next(LookPresets.DISTANCES, LookPresets.distance(), step));
+            case S_SCALE -> LookPresets.setScale4k(LookPresets.next(LookPresets.SCALES, LookPresets.scale4k(), step));
+            case S_STEADY -> LookPresets.setSteady(!LookPresets.steady());
+            default -> LookPresets.setTemporal(!LookPresets.temporal());
+        }
+        note = "";
     }
 
     private void card(GuiGraphicsExtractor g, int i, Tier t, @Nullable Tier current, boolean holo, float reveal) {
@@ -176,14 +301,11 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
             if (on) g.outline(x + 1, y + 1, cw - 2, ch - 2, Glass.a(Glass.GOOD, 0.55f));
         }
         float dim = can ? 1f : 0.55f;
-        HudLook.text(g, font, t.label, x + 6, y + 6, Glass.a(TITLE, dim), false);
+        HudLook.text(g, font, (on ? "● " : "") + t.label, x + 6, y + 5, Glass.a(on ? Glass.GOOD : TITLE, dim), false);
         String key = String.valueOf(i + 1);
-        HudLook.text(g, font, key, x + cw - 6 - font.width(key), y + 6, Glass.a(Glass.LANTERN, 0.75f * dim), false);
+        HudLook.text(g, font, key, x + cw - 6 - font.width(key), y + 5, Glass.a(Glass.LANTERN, 0.75f * dim), false);
         List<FormattedCharSequence> lines = blurbs.get(i);
-        for (int l = 0; l < lines.size(); l++) HudLook.text(g, font, lines.get(l), x + 6, y + 19 + l * LINE, Glass.a(BLURB, dim), false);
-        String status = on ? "● ON" : !can ? "NOT AVAILABLE" : hover ? "CHOOSE" : "";
-        int colour = on ? Glass.GOOD : !can ? Glass.AMBER : Glass.EDGE;
-        if (!status.isEmpty()) HudLook.text(g, font, status, x + 6, y + ch - 14, Glass.a(colour, 1f), false);
+        for (int l = 0; l < lines.size(); l++) HudLook.text(g, font, lines.get(l), x + 6, y + 5 + LINE + 2 + l * LINE, Glass.a(BLURB, dim), false);
     }
 
     /** The rows under the tiers: the frame-time line and the horizon, then what each mod has. */
@@ -197,25 +319,16 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
             add("HORIZON", !here ? "OFF IN THIS PLACE" : r > 0 ? r + " CHUNKS" : "…", Glass.GOOD);
         }
         Tier current = LookSwitch.current();
-        String lens = switch (AwakenConfig.Client.LENS.get()) {
-            case OFF -> "off";
-            case SWIFT -> "Swift";
-            case CINEMATIC -> "Cinematic";
-            case ULTRA -> "Ultra";
-        };
-        if (Companions.shaderPackActive()) lens += ", stepping aside for the shaderpack";
-        add("LENS", lens, Glass.TEXT);
+        if (Companions.shaderPackActive()) add("LENS", "stepping aside for the shaderpack", Glass.AMBER);
         if (!LookSwitch.DH) {
-            add("DISTANT HORIZONS", "not installed", Glass.LABEL);
+            // Distant Horizons is out of the pack since 25 Oct: nothing to say
         } else if (LookSwitch.chosen != null) {
             add("DISTANT HORIZONS", LookSwitch.dhResult, LookSwitch.dhWarn ? Glass.AMBER : Glass.TEXT);
         } else {
             boolean same = current != null && Look.dhMatches(current, DistantHorizonsLook::current);
             add("DISTANT HORIZONS", same ? "set for " + current.pretty() : "its own settings (changed in its menu)", Glass.TEXT);
         }
-        add("SODIUM", LookSwitch.SODIUM ? "keeps its own settings: no supported way to set them" : "not installed", Glass.LABEL);
-        String iris = !Companions.irisLoaded() ? "not installed" : Companions.irisShadersEnabled() ? "shaders on (Lens steps aside)" : "shaders off";
-        add("IRIS", iris, Glass.LABEL);
+        if (Companions.irisLoaded()) add("IRIS", Companions.irisShadersEnabled() ? "shaders on (Lens steps aside)" : "shaders off", Glass.LABEL);
     }
 
     private void add(String label, String value, int colour) {
@@ -258,6 +371,23 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
             int i = cardAt(event.x(), event.y());
             if (i >= 0) {
                 pick(TIERS[i]);
+                return true;
+            }
+            int p = presetAt(event.x(), event.y());
+            if (p >= 0) {
+                if (!LookPresets.apply(PRESETS[p])) {
+                    note = ultra.reason();
+                    noteColour = Glass.AMBER;
+                }
+                refreshFrames();
+                return true;
+            }
+        }
+        boolean right = event.button() == InputConstants.MOUSE_BUTTON_RIGHT;
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT || right) {
+            int s = settingAt(event.x(), event.y());
+            if (s >= 0) {
+                change(s, right ? -1 : 1);
                 return true;
             }
         }

@@ -1,0 +1,130 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "face": "awaken:block/carved_token",
+    "particle": "awaken:block/carved_token",
+    "side": "minecraft:block/stripped_oak_log"
+  },
+  "elements": [
+    {
+      "from": [
+        4,
+        3,
+        14.5
+      ],
+      "to": [
+        12,
+        11,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ],
+          "texture": "#face"
+        },
+        "south": {
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ],
+          "texture": "#face",
+          "cullface": "south"
+        },
+        "east": {
+          "uv": [
+            0,
+            4,
+            1.5,
+            12
+          ],
+          "texture": "#side"
+        },
+        "west": {
+          "uv": [
+            0,
+            4,
+            1.5,
+            12
+          ],
+          "texture": "#side"
+        },
+        "up": {
+          "uv": [
+            4,
+            0,
+            12,
+            1.5
+          ],
+          "texture": "#side"
+        },
+        "down": {
+          "uv": [
+            4,
+            0,
+            12,
+            1.5
+          ],
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "from": [
+        7.5,
+        11,
+        15
+      ],
+      "to": [
+        8.5,
+        12.5,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            1,
+            1.5
+          ],
+          "texture": "#side"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            1,
+            1.5
+          ],
+          "texture": "#side"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            1,
+            1.5
+          ],
+          "texture": "#side"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "texture": "#side"
+        }
+      }
+    }
+  ]
+}

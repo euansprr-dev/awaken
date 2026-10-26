@@ -17,7 +17,9 @@ public enum Act {
     // reactions and events
     WAVE, NOD, POINT_SHOUT, BUCKET_PASS, HURT, CHEER, THIEF_RUN, SURRENDER, TRAPPED,
     // (M4 B3b) the boatmen's work at their berths and the nets
-    COIL, BAIL, MEND, POLE;
+    COIL, BAIL, MEND, POLE,
+    // (SPEC §28.7) a village's troubles and festivals: the ring dance, the reunion, a parent's grief
+    DANCE, EMBRACE, WEEP;
 
     private static final Act[] ALL = values();
 

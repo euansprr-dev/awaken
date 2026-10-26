@@ -69,4 +69,35 @@ public interface Settlement {
      * greetings follow (familiar at 20, known at 55).
      */
     void acquaint(net.minecraft.server.level.ServerPlayer p, int amount, int ceiling);
+
+    // ---- (SPEC §28.7, W4) a village's troubles and festivals stage its people -------------------------------------
+
+    /**
+     * A citizen staged for a trouble or a festival: walks to {@code at} (a body far from it, or none yet, is put there)
+     * and stands facing {@code yaw} (NaN: as they stand), doing {@code act} once there (a {@code citizens.Act} name in
+     * lower case: "point_shout", "bucket_pass", "cheer", "dance", "embrace", "halberd_stand", "hammer", "sit", ...) with
+     * {@code prop} in hand ("lantern", "bucket", "halberd", "hammer", "trowel", "bow", "pick", "hoe", ""). Call again to
+     * move them; {@code at} null hands them back to their day. Lapses if not renewed for 30 s (a stopped trouble never
+     * leaves anyone standing).
+     */
+    void stage(int rec, net.minecraft.world.phys.@org.jspecify.annotations.Nullable Vec3 at, float yaw, String act, String prop);
+
+    /**
+     * A citizen away from the settlement's life ({@code away} true: taken, gone to Carillon, out on the land; no body, no
+     * day) or back in it (false: where this hour wants them). Saved with the settlement.
+     */
+    void away(int rec, boolean away);
+
+    boolean isAway(int rec);
+
+    /** The alarm on the bell nearest a place: fast strokes heard to 256 blocks, its ringer at the rope. */
+    void alarm(BlockPos near, int strokes);
+
+    /** Where a citizen is now (their body, else where the ledger has them out of doors), or null (inside, away). */
+    net.minecraft.world.phys.@org.jspecify.annotations.Nullable Vec3 where(int rec);
+
+    /** The skin a citizen wears (a texture path under {@code awaken}, and whether it is the slim build). */
+    record Look(net.minecraft.resources.Identifier texture, boolean slim) {}
+
+    Look look(int rec);
 }

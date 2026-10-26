@@ -196,18 +196,6 @@ public class CitizenBody extends PathfinderMob implements Npc {
                 }
                 entityData.set(DATA_SKIN, face);
                 entityData.set(DATA_LOOK, -1);
-            } else if (named.startsWith("as:")) {
-                // the face a record of another settlement wears there (someone who came from it)
-                int hash = named.indexOf('#');
-                String key = hash < 0 ? named.substring(3) : named.substring(3, hash);
-                int other = hash < 0 ? -1 : parse(named.substring(hash + 1));
-                Settlement from = null;
-                for (Settlement s : Citizens.live()) if (s.key.equals(key)) from = s;
-                if (from != null && other >= 0 && other < from.roster.records) {
-                    entityData.set(DATA_LOOK, Looks.pick(key, other, from.roster.job[other], from.roster.build[other], from.roster.age[other]));
-                } else {
-                    entityData.set(DATA_LOOK, Looks.pick(home.key, rec, r.job[rec], r.build[rec], r.age[rec]));
-                }
             } else {
                 entityData.set(DATA_LOOK, Looks.pick(home.key, rec, r.job[rec], r.build[rec], r.age[rec]));
             }
@@ -219,14 +207,6 @@ public class CitizenBody extends PathfinderMob implements Npc {
         refTick = tickCount;
         refX = getX();
         refZ = getZ();
-    }
-
-    private static int parse(String s) {
-        try {
-            return Integer.parseInt(s.trim());
-        } catch (NumberFormatException e) {
-            return -1;
-        }
     }
 
     private int heldMain = -1, heldOff = -1;

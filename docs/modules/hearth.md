@@ -102,7 +102,7 @@ Package `dev.awaken.hearth.settle` (and `TierRules`, `stage/HomeStage`, `kit/Hom
 
 - **Who comes** (`Settlers`): someone you know (the townsfolk by rank, a rank early once Carillon knows you; Ilse, Hettie,
   Wren and Pell when you've finished their chain; someone from a village where you're a Friend, and from the city; the
-  rescued once W4 merges: `Rescued` is the marked call site), when a spare bedroom of Snug or better stands (not yours: the
+  grown-ups you brought home from a village's trouble, through W4's `Troubles.rescued`, in the face they wore there), when a spare bedroom of Snug or better stands (not yours: the
   bed you last woke in at home is yours) and their trade has its room (Ilse a Greenhouse, Hettie a field or a pen, a miner
   a Mine head; the townsfolk only a bed). One at a time, up to the tier's cap (1 / 2 / 4 / 8 / 12). Saved in the Hearth's
   `folk` (`Folk`, schema 1): who's known, who lives here, their beds, commissions, brews, what's kept to hand over.

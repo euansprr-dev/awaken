@@ -126,8 +126,8 @@ public final class Arrival {
         if (h.spire == null) dev.awaken.hearth.town.Town.raiseSpire(level, h);
         for (ServerPlayer p : Household.online(level.getServer(), h)) if (dev.awaken.progression.Progression.profile(p).awakened()) {
             dev.awaken.progression.Progression.markNewThing(p, "settler");
-            Rescued.settled(p, s.who, h.displayName());
         }
+        Rescued.settled(level, h, s.who, h.displayName());
     }
 
     /**

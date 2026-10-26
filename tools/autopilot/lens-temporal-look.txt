@@ -1,0 +1,99 @@
+# Temporal Lens 2 (SPEC §22, docs/perf/IDEAS-26OCT.md B): does spreading the clouds and light over frames smear?
+# A look tour (CI is fine: Far Sight off there): the same moments with `lens temporal off` and `on`, at rest and in the
+# frames during and right after a fast 180° turn, on Cinematic and Ultra; the clouds over Carillon at noon, people
+# walking in the market (AO and contact shadows on moving bodies), a low sun's long shadows.
+#   tools/tour-ci.sh tools/autopilot/lens-temporal-look.txt 1500 PACK=perf,world TECTONIC=awakened LENS=cinematic
+world lenstemporal creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+hud off
+cmd gamemode spectator
+lookswitch cinematic
+cmd time set 6000
+# ---- noon clouds over Carillon from the Roost: at rest, then a fast turn
+cmd awaken city view studio_roost
+wait 400
+lens temporal off
+wait 80
+shot lt_roost_off
+lens temporal on
+wait 80
+shot lt_roost_on
+lens temporal off
+turn 20 9
+wait 9
+shotnow lt_roost_off_turn0
+wait 2
+shotnow lt_roost_off_turn2
+wait 6
+shotnow lt_roost_off_turn8
+turn -20 9
+wait 30
+lens temporal on
+wait 40
+turn 20 9
+wait 9
+shotnow lt_roost_on_turn0
+wait 2
+shotnow lt_roost_on_turn2
+wait 6
+shotnow lt_roost_on_turn8
+turn -20 9
+wait 30
+# ---- people walking in the market at noon (AO and contact shadows on moving bodies)
+cmd awaken citizens show crowd_market
+wait 200
+lens temporal off
+wait 60
+shot lt_market_off
+lens temporal on
+wait 60
+shot lt_market_on
+# ---- a low sun: long shadows down the avenue
+cmd time set 11600
+cmd awaken city view market
+wait 200
+lens temporal off
+wait 60
+shot lt_dusk_off
+lens temporal on
+wait 60
+shot lt_dusk_on
+turn 20 9
+wait 9
+shotnow lt_dusk_on_turn0
+wait 2
+shotnow lt_dusk_on_turn2
+turn -20 9
+wait 30
+# ---- Ultra: the Roost at rest and turning
+lookswitch ultra
+cmd time set 6000
+cmd awaken city view studio_roost
+wait 200
+lens temporal off
+wait 60
+shot lt_ultra_off
+lens temporal on
+wait 60
+shot lt_ultra_on
+turn 20 9
+wait 9
+shotnow lt_ultra_on_turn0
+wait 2
+shotnow lt_ultra_on_turn2
+wait 6
+shotnow lt_ultra_on_turn8
+lens temporal setting
+quit

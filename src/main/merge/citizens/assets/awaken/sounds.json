@@ -26,6 +26,15 @@
       }
     ]
   },
+  "village.alarm": {
+    "subtitle": "subtitles.awaken.village.alarm",
+    "sounds": [
+      {
+        "name": "awaken:city/bell_alarm",
+        "attenuation_distance": 256
+      }
+    ]
+  },
   "city.handbell": {
     "subtitle": "subtitles.awaken.city.handbell",
     "sounds": [

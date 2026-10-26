@@ -1,0 +1,84 @@
+# Proof for Euan's 2026-10-26 evening bugs, one tour (build after 7b19063b).
+# 1. The overhang from afar: fs3shim (made before the soft rim, so it keeps its cliff; its rim is undercut into a cave
+#    at about 1103 -720), seen from the city's middle 570 blocks off and high, outside the render distance (15): City
+#    Sight and the far land only. Debug 3 (far land blue, far trees red, City Sight green) and City Sight off beside it.
+# 2. Euan's own world, made fresh from his seed (so the soft rim): his view from over the Commons back toward Carillon
+#    (his "BIG loading issue", farsight-ref/bugs/city-sight-from-commons.webp the before), at render distance 24 then his
+#    drop to 15, the rim close to the north, then his snowy peak (192 302 -80) over the Frost Spires' ice (purple, see-
+#    through and black trees in purple-see-through-1..3.webp) and toward Carillon.
+# Run: PACK=perf,world TECTONIC=awakened LENS=cinematic SLOT_WHO=far-sight \
+#      /Volumes/MEDIA/Awaken-carillon/tools/carillon/slot.sh tour tools/autopilot.sh tools/autopilot/farsight3-proof.txt 900
+world fs3shim survival 20261024
+waitworld
+window 1440 900
+cmd awaken opening skip
+wait 40
+screen close
+gui 0
+hud off
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+opt renderDistance 15
+cmd gamemode spectator
+cmd tp @s 671 150 -1090 -49.4 8
+wait 500
+shot fp_overhang
+farsight status
+farsight debug 3
+wait 10
+shot fp_overhang_d3
+farsight debug 0
+farsight part city off
+wait 60
+shot fp_overhang_nocity
+farsight part city on
+leave
+wait 100
+world fs3euan survival 1150487391879686904
+waitworld
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 20
+screen close
+gui 0
+hud off
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+opt renderDistance 24
+cmd gamemode spectator
+cmd tp @s 219 120 1098 0 30
+wait 800
+cmd tp @s 222 140 622 0 8
+wait 400
+shot fp_commons_rd24
+opt renderDistance 15
+wait 600
+shot fp_commons_rd15
+farsight status
+farsight debug 3
+wait 10
+shot fp_commons_rd15_d3
+farsight debug 0
+cmd tp @s 222 110 640 180 4
+wait 200
+shot fp_rim_north
+cmd tp @s 450 230 150 -48 20
+wait 300
+cmd tp @s 192 306 -80 -48 12
+wait 400
+shot fp_peak_ice
+farsight debug 3
+wait 10
+shot fp_peak_ice_d3
+farsight debug 0
+cmd tp @s 192 306 -80 -1 10
+wait 100
+shot fp_peak_city
+farsight status
+info
+quit

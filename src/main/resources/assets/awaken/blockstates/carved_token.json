@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "awaken:block/carved_token"
+    },
+    "facing=east": {
+      "model": "awaken:block/carved_token",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "awaken:block/carved_token",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "awaken:block/carved_token",
+      "y": 270
+    }
+  }
+}

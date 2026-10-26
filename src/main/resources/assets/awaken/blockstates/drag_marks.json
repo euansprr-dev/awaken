@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "facing=north,look=0": {
+      "model": "awaken:block/drag_marks_0"
+    },
+    "facing=north,look=1": {
+      "model": "awaken:block/drag_marks_1"
+    },
+    "facing=north,look=2": {
+      "model": "awaken:block/drag_marks_2"
+    },
+    "facing=north,look=3": {
+      "model": "awaken:block/drag_marks_3"
+    },
+    "facing=east,look=0": {
+      "model": "awaken:block/drag_marks_0",
+      "y": 90
+    },
+    "facing=east,look=1": {
+      "model": "awaken:block/drag_marks_1",
+      "y": 90
+    },
+    "facing=east,look=2": {
+      "model": "awaken:block/drag_marks_2",
+      "y": 90
+    },
+    "facing=east,look=3": {
+      "model": "awaken:block/drag_marks_3",
+      "y": 90
+    },
+    "facing=south,look=0": {
+      "model": "awaken:block/drag_marks_0",
+      "y": 180
+    },
+    "facing=south,look=1": {
+      "model": "awaken:block/drag_marks_1",
+      "y": 180
+    },
+    "facing=south,look=2": {
+      "model": "awaken:block/drag_marks_2",
+      "y": 180
+    },
+    "facing=south,look=3": {
+      "model": "awaken:block/drag_marks_3",
+      "y": 180
+    },
+    "facing=west,look=0": {
+      "model": "awaken:block/drag_marks_0",
+      "y": 270
+    },
+    "facing=west,look=1": {
+      "model": "awaken:block/drag_marks_1",
+      "y": 270
+    },
+    "facing=west,look=2": {
+      "model": "awaken:block/drag_marks_2",
+      "y": 270
+    },
+    "facing=west,look=3": {
+      "model": "awaken:block/drag_marks_3",
+      "y": 270
+    }
+  }
+}
