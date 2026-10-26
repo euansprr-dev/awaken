@@ -54,6 +54,8 @@ public final class FarSightClient {
     static final float WARM_SHOWN = 0.97f;
     /** How far under sea level the lowest ground in view is taken to lie (a sea floor), for what the chunks cover. */
     static final int SEA_FLOOR = 40;
+    /** The render distance's outer band where far water may lie under the real water (farsight_terrain.fsh's 80). */
+    static final float SEA_BAND = 80f;
     /** Valley cloud: its floor above sea level, its depth (blocks) and density per block (SPEC §20). */
     static final float MIST_ABOVE_SEA = 40f, MIST_DEPTH = 46f, MIST_DENSITY = 0.014f;
     private static final int UPLOADS_PER_FRAME = 48, CHANGES_PER_FRAME = 1024;
@@ -176,8 +178,11 @@ public final class FarSightClient {
         // coarsest first: a window's first patches queue ahead of the finer rings'
         int far = shown - 1;
         long farWindow = field.valid[far] ? Rings.key(field.winX[far], field.winZ[far]) : Long.MIN_VALUE;
-        // ring 0 (the render distance's own) loads all its patches: its sea is drawn under the real water (FarRenderer.rect)
-        for (int r = far; r >= 0; r--) field.place(r, cam.x, cam.z, r == 0 && (partsOff & 64) == 0 ? 0f : covered, level, store, workers);
+        // the horizon first, then from the camera outward (the nearest far land is the most seen); ring 0 loads down to
+        // the render distance's outer band, where its sea can lie under real water (FarRenderer.rect)
+        float sea = (partsOff & 64) == 0 ? Math.max(0f, covered - SEA_BAND - 32f) : covered;
+        field.place(far, cam.x, cam.z, covered, level, store, workers);
+        for (int r = 0; r < far; r++) field.place(r, cam.x, cam.z, r == 0 ? sea : covered, level, store, workers);
         for (int i = 0; i < CHANGES_PER_FRAME; i++) {
             long chunk = store.pollChanged();
             if (chunk == Long.MIN_VALUE) break;

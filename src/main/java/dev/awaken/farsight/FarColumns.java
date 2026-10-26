@@ -246,7 +246,12 @@ public final class FarColumns {
             guess = rowStart;
             for (int i = 0; i < Rings.PATCH; i++) {
                 int x = (px * Rings.PATCH + i) * s, z = (pz * Rings.PATCH + j) * s;
-                float ground = ground(x, z);
+                // the city, as its plan lays it out (whether or not terrain carved its basin, the city levels its own
+                // ground): its walls, roofs and squares at their true height and colour, never the land it was built
+                // over; its columns skip the terrain solve
+                CityLayout l = this.seed != 0 ? City.layout() : null;
+                BlockState built = l == null ? null : FarCity.plannedAt(l, seed, x, z, cityY);
+                float ground = built != null ? cityY[0] + 1 : ground(x, z);
                 if (i == 0) rowStart = guess;
                 // the sea fills to just under sea level: its surface is the top face of the block below it
                 boolean water = ground < seaLevel;
@@ -266,10 +271,6 @@ public final class FarColumns {
                 colour[k] = abgr(rgb, flags);
                 info[k] = abgr(depth, Math.min(255, look.canopy() * 4), density, cold);
                 crown[k] = abgr(look.crown(), look.shape());
-                // the city, as its plan lays it out (whether or not terrain carved its basin, the city levels its own
-                // ground): its walls, roofs and squares at their true height and colour, never the land it was built over
-                CityLayout l = this.seed != 0 ? City.layout() : null;
-                BlockState built = l == null ? null : FarCity.plannedAt(l, seed, x, z, cityY);
                 if (built != null) {
                     int brgb = FarPalette.block(built, EmptyBlockGetter.INSTANCE, pos.set(x, cityY[0], z), biome);
                     if (brgb >= 0) {

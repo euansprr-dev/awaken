@@ -21,6 +21,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.Heightmap;
 import org.joml.FrustumIntersection;
@@ -86,6 +87,9 @@ final class FarRenderer implements AutoCloseable {
     private final GpuTexture chunks;
     private final GpuTextureView chunksView;
     private final ByteBuffer chunkBytes = MemoryUtil.memCalloc(64 * 64);
+    /** Which chunk each mask slot last saw loaded, and since when (ms): a chunk settled this long counts as drawn. */
+    private final long[] slotChunk = new long[64 * 64], slotSince = new long[64 * 64];
+    static final long SETTLE_MS = 2000L;
     private final BlockPos.MutableBlockPos probe = new BlockPos.MutableBlockPos();
 
     // the frame's pieces: ring, first cell (window-local), width and height in cells
@@ -140,6 +144,7 @@ final class FarRenderer implements AutoCloseable {
         ti.flip();
         treeIndices = RenderSystem.getDevice().createBuffer(() -> "awaken far sight tree triangles", GpuBuffer.USAGE_INDEX, ti);
         MemoryUtil.memFree(ti);
+        java.util.Arrays.fill(slotChunk, Long.MIN_VALUE);
         chunks = RenderSystem.getDevice().createTexture(() -> "awaken far sight chunks", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING,
                 GpuFormat.R8_UNORM, 64, 64, 1, 1);
         chunksView = RenderSystem.getDevice().createTextureView(chunks);
@@ -155,13 +160,26 @@ final class FarRenderer implements AutoCloseable {
         radius = Math.min(radius, 31);
         var source = level.getChunkSource();
         int minY = level.getMinY(), inner = Math.max(1, radius - 3), total = 0, shownN = 0;
+        long now = net.minecraft.util.Util.getMillis();
         for (int dz = -radius; dz <= radius; dz++) {
             for (int dx = -radius; dx <= radius; dx++) {
                 int x = cx + dx, z = cz + dz;
                 boolean counts = dx * dx + dz * dz <= inner * inner;
                 var chunk = source.getChunk(x, z, ChunkStatus.FULL, false);
                 boolean shown = chunk != null;
-                if (shown) {
+                int slot = ((z & 63) << 6) | (x & 63);
+                long key = ChunkPos.pack(x, z);
+                if (chunk == null) {
+                    slotChunk[slot] = Long.MIN_VALUE;
+                } else if (slotChunk[slot] != key) {
+                    slotChunk[slot] = key;
+                    slotSince[slot] = now;
+                }
+                // a chunk loaded a while counts as drawn whether or not its sections report built: Sodium builds only the
+                // sections it can see, so one hidden behind a street's houses stays unbuilt, and far terrain must not
+                // stand there (the far city at roof height showed over the streets as a ceiling). The meshing check is
+                // for the first moments after a chunk arrives (a teleport), when far terrain covers it instead of a hole
+                if (shown && now - slotSince[slot] < SETTLE_MS) {
                     int top = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, 8, 8);
                     for (int y = top; shown && y >= Math.max(minY, top - 48); y -= 16) {
                         probe.set(x * 16 + 8, y, z * 16 + 8);

@@ -79,6 +79,9 @@ wait 20
 farsight status
 cmd awaken opening skip
 wait 60
+cmd awaken powers starter 1
+wait 20
+screen close
 cmd gamemode spectator
 gui 0
 hud off
