@@ -37,6 +37,7 @@ final class PowerCastTests {
     static void register() {
         AwakenTests.register("power_cast_profiles", 20, PowerCastTests::profiles);
         AwakenTests.registerIsolated("power_cast_windup", 200, PowerCastTests::windup);
+        AwakenTests.registerIsolated("power_cast_beats", 300, PowerCastTests::beats);
     }
 
     private static void profiles(net.minecraft.gametest.framework.GameTestHelper h) {
@@ -100,6 +101,47 @@ final class PowerCastTests {
         }
         FxEvent plain = FxEvent.of(FxKind.CAST, FxStyle.ENERGY, Vec3.ZERO).anim(CastAnim.SKYWARD).build();
         h.assertTrue(plain.profile() == 0 && plain.anim() == CastAnim.SKYWARD, "a family pose is not a profile");
+        h.succeed();
+    }
+
+    /** Every profile power that casts sends its profile beat within the cast (observers see the pose), and never a family pose beside it. */
+    private static void beats(net.minecraft.gametest.framework.GameTestHelper h) {
+        for (int x = -6; x <= 6; x++) for (int z = -6; z <= 6; z++) h.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
+        ServerPlayer sp = h.makeMockServerPlayerInLevel();
+        Vec3 at = h.absoluteVec(Vec3.atBottomCenterOf(new BlockPos(-3, 1, 0)));
+        sp.snapTo(at.x, at.y, at.z, 0f, 0f);
+        sp.setGameMode(GameType.SURVIVAL);
+        List<FxEvent> seen = new ArrayList<>();
+        List<String> silent = new ArrayList<>(), posed = new ArrayList<>();
+        int cast = 0;
+        Fx.testSink = seen::add;
+        try {
+            for (CastProfiles.Profile p : CastProfiles.all()) {
+                PowerType t = PowerRegistry.get(p.power());
+                Powers.learn(sp, t.id, 0);
+                Powers.resetCooldowns(sp);
+                Powers.fillEnergy(sp);
+                net.minecraft.world.entity.monster.zombie.Zombie z = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(0, 1, 0));
+                z.setNoAi(true);
+                Vec3 to = z.getEyePosition().subtract(sp.getEyePosition());
+                float yRot = (float) Math.toDegrees(Math.atan2(-to.x, to.z));
+                seen.clear();
+                PowerType.Result r = Casting.cast(sp, t, 0, false, yRot, 0f);
+                if (r.ok()) {
+                    cast++;
+                    if (seen.stream().noneMatch(e -> e.profile() == p.id())) silent.add(p.power());
+                    if (seen.stream().anyMatch(e -> e.profile() == 0 && e.anim() != CastAnim.NONE && e.caster() == sp.getId())) posed.add(p.power());
+                }
+                Casting.endAll(sp, Running.Why.CANCELLED);
+                z.discard();
+                for (var e : h.getLevel().getEntitiesOfClass(dev.awaken.powers.content.PowerSummon.class, sp.getBoundingBox().inflate(48), e -> e.getOwner() == sp)) e.discard();
+            }
+        } finally {
+            Fx.testSink = null;
+        }
+        h.assertTrue(cast >= 40, "most profile powers cast against a zombie (" + cast + " of " + CastProfiles.all().size() + ")");
+        h.assertTrue(silent.isEmpty(), "these powers sent no profile beat, so others would not see their pose: " + silent);
+        h.assertTrue(posed.isEmpty(), "these powers also sent a family pose beside their profile: " + posed);
         h.succeed();
     }
 
