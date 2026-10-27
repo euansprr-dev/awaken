@@ -6,6 +6,9 @@
 # Look tour: tools/tour-ci.sh tools/autopilot/power-casts.txt 1500 PACK=feel
 world powercasts survival 4261
 waitworld
+wait 60
+cmd awaken opening skip
+wait 40
 window 1440 900
 gui 0
 hud on
