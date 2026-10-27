@@ -406,3 +406,13 @@ nothing the game reads. It shows that the rig can say a stomp (knee to hip heigh
   `lens.client.LensClient` (`override`, `clearOverride`, `placeLook`, `ritual`, `motion`, `active`).
 - `powers.fx.CastClips.clip` fall-through, `powers.client.fx.Anchors.hand`, `CastAnims.offset`/`modify`, `FxRecipes.beam`/`slam`/`cone`, `EnergyPowers.beam`/`hand`,
   `KineticPowers.shockwave`, `Fx.beam`/`quake`/`feel`, `PowerSounds` and `merge/powers/assets/awaken/sounds.json`.
+
+## 10. Build log
+
+**2026-10-27: Euan approved the plan in full ("Go with all recommendations"); P0 built on this branch (SPEC §31 has the as-built list).**
+Changes from the plan as written, found while building:
+- The stamp's plant is at tick 5 (250 ms), not 6 (300 ms), so the wind-up fits the 250 ms cap (D3); the beam's arm reaches the aim at tick 5 (the plan's sheet showed 7).
+- The wind-up runs as a `Running` (key `shockwave_windup`) rather than `Scheduler.after`, so the existing per-tick GameTests drive it; `power_fx_reach_matches_hits` ticks 17 for the stamp (5 + 12).
+- The first-person palm is only a profile cast's fist (a sprint's fist is not where a charge starts); everything else HAND-anchored still starts at the drawn palm in third person.
+- Sounds ship with subtitles (the audio test requires them).
+- First tour (run 40457072925) toured the opening's balcony camera, not the platform: the script lacked `opening skip`. Fixed and re-run.
