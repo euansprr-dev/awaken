@@ -32,7 +32,7 @@ import java.util.zip.InflaterInputStream;
  * seen at once, before any chunk there loads. Written and read on its own thread; regions stay in memory once read.
  */
 public final class VoxelDisk {
-    static final int SCHEMA = 2, REGION = 32, MAGIC = 0x41575658; // "AWVX"; 2: the chunk's lowest ground
+    static final int SCHEMA = 3, REGION = 32, MAGIC = 0x41575658; // "AWVX"; 2: the chunk's lowest ground; 3: down to its sky light (2 left out caves under overhangs)
 
     private static final class Region {
         final Long2ObjectOpenHashMap<byte[]> blobs = new Long2ObjectOpenHashMap<>();
