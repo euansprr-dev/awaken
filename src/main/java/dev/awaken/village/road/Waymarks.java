@@ -125,7 +125,7 @@ final class Waymarks {
                     if (dir > 0 ? j > end : j < end) break;
                     if (rank[j] < rank[i]) holds = false;
                 }
-                if (!holds || (r.flags()[i] & (RoadPlanner.BRIDGE | RoadPlanner.BOARDWALK)) != 0) continue;
+                if (!holds || (r.flags()[i] & (RoadPlanner.BRIDGE | RoadPlanner.BOARDWALK | RoadPlanner.VIADUCT)) != 0) continue;
                 cur = rank[i];
                 float[] t = tangent(r, i);
                 int[] at = beside(r, i, r.halfWidth() + 2.0, dir);
@@ -155,7 +155,7 @@ final class Waymarks {
         int best = -1, by = Integer.MIN_VALUE;
         for (int k = 30; k < Math.min(n - 25, 150); k++) {
             int i = toTown ? n - 1 - k : k;
-            if ((r.flags()[i] & (RoadPlanner.BRIDGE | RoadPlanner.BOARDWALK)) != 0) continue;
+            if ((r.flags()[i] & (RoadPlanner.BRIDGE | RoadPlanner.BOARDWALK | RoadPlanner.VIADUCT)) != 0) continue;
             if (r.y()[i] > by) {
                 by = r.y()[i];
                 best = i;

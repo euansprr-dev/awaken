@@ -58,8 +58,13 @@ public final class SettlementPaint {
      * A bank's column (a road's embankment, SPEC §28.9): the writer raises the land to {@code ry} (from the street level)
      * where it lies lower, down to the ground: {@code top} on top (null: the rock), then {@code soilDepth} of {@code soil},
      * then the rock. Where the bank ends up only a block or two high, {@code toe} (if any) takes its top: scree at its foot.
+     * With {@code rise} set it is a footing: built up from the ground {@code rise} blocks only (a viaduct pier's base).
      */
-    public record Mound(int ry, @Nullable BlockState top, @Nullable BlockState soil, int soilDepth, @Nullable BlockState toe) {}
+    public record Mound(int ry, @Nullable BlockState top, @Nullable BlockState soil, int soilDepth, @Nullable BlockState toe, int rise) {
+        public Mound(int ry, @Nullable BlockState top, @Nullable BlockState soil, int soilDepth, @Nullable BlockState toe) {
+            this(ry, top, soil, soilDepth, toe, 0);
+        }
+    }
 
     /** The rock the writer's fills are made of at a position (plan coordinates, world y; none set: plain stone). */
     public interface Rock {

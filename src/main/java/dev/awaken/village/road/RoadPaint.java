@@ -19,8 +19,9 @@ import java.util.List;
  * earthen half step wherever it climbs a block, a timber or stone bridge with rails and piers over water, boardwalks on posts
  * over the mire's shallows, a causeway over a brook; lantern posts by turns along the last stretch into a settlement;
  * the waymarkers. Where it stands over lower land it stands on a bank of the land's own rock that steps down in faces and
- * grassy ledges to the ground (never a sheer wall of fill under the carriageway). Pure: a chunk painted alone equals the
- * same chunk painted with its neighbours.
+ * grassy ledges to the ground (never a sheer wall of fill under the carriageway); where it holds its grade high over a
+ * valley it crosses on a viaduct: stone piers on footings, an arch between each two, a cornice and a parapet. Pure: a
+ * chunk painted alone equals the same chunk painted with its neighbours.
  */
 final class RoadPaint implements SettlementPaint.Layout {
     /** Extended point flags (beside the planner's water flags): lanterns here, a town near. */
@@ -121,7 +122,7 @@ final class RoadPaint implements SettlementPaint.Layout {
                 // every cell's bank, this leg's or not (a bank's skin reads its neighbours'); none at the ends, by water or
                 // into a town
                 float e = (float) best - (hw + VERGE);
-                if (!off && e > 0 && e <= BANK && (f & (RoadPlanner.BRIDGE | RoadPlanner.BOARDWALK | RoadPlanner.CAUSEWAY | TOWN)) == 0)
+                if (!off && e > 0 && e <= BANK && (f & (RoadPlanner.BRIDGE | RoadPlanner.BOARDWALK | RoadPlanner.CAUSEWAY | RoadPlanner.VIADUCT | TOWN)) == 0)
                     bank[k] = (short) bankDrop(e, (int) Math.floor(px), (int) Math.floor(pz));
                 mine[k] = bs >= a && bs < b && !off;
                 if (!mine[k] || best > hw + REACH) {
@@ -140,9 +141,9 @@ final class RoadPaint implements SettlementPaint.Layout {
         return (px - xs[i]) * dx + (pz - zs[i]) * dz > 0;
     }
 
-    /** A water crossing's flag holds over its whole segment; lanterns and towns by the nearer point. */
+    /** A water crossing's or a viaduct's flag holds over its whole segment; lanterns and towns by the nearer point. */
     byte flagsAt(int s, double t) {
-        byte water = (byte) ((fl[s] & fl[s + 1]) & (RoadPlanner.BRIDGE | RoadPlanner.BOARDWALK | RoadPlanner.CAUSEWAY));
+        byte water = (byte) ((fl[s] & fl[s + 1]) & (RoadPlanner.BRIDGE | RoadPlanner.BOARDWALK | RoadPlanner.CAUSEWAY | RoadPlanner.VIADUCT));
         if (water == 0 && (fl[s] | fl[s + 1]) != 0 && ((fl[s] ^ fl[s + 1]) & RoadPlanner.BRIDGE) != 0) {
             // a bridge's last segment onto the bank: the deck runs to its end
             water = (byte) (t < 0.5 ? fl[s] & RoadPlanner.BRIDGE : fl[s + 1] & RoadPlanner.BRIDGE);
@@ -228,7 +229,7 @@ final class RoadPaint implements SettlementPaint.Layout {
             c.rock(this::rock);
             for (int z = c.z0(); z <= c.z1(); z++) for (int x = c.x0(); x <= c.x1(); x++) ground(c, x, z);
         } else {
-            for (int s = a; s < b; s++) if ((fl[s] & LIT) != 0 && (fl[s] & RoadPlanner.BRIDGE) == 0 && Math.floorMod(s, 4) == 0) lamp(c, s);
+            for (int s = a; s < b; s++) if ((fl[s] & LIT) != 0 && (fl[s] & (RoadPlanner.BRIDGE | RoadPlanner.VIADUCT)) == 0 && Math.floorMod(s, 4) == 0) lamp(c, s);
             for (Road.Marker m : markers) RoadMarks.post(this, c, m);
         }
     }
@@ -248,13 +249,16 @@ final class RoadPaint implements SettlementPaint.Layout {
         if (k < 0) return;
         if (bank[k] > 0 && mine[k]) mound(c, x, z, k);
         byte kind = kinds[k];
-        if (kind != CityPlan.STREET && kind != CityPlan.YARD) return;
+        if (kind == CityPlan.VOID) return;
         int s = seg[k];
         float t = along[k], d = dist[k];
         int g = lifts[k];
         byte f = flagsAt(s, t);
         int family = fam[t < 0.5f ? s : s + 1];
         int wx = ox + x, wz = oz + z;
+        boolean via = (f & RoadPlanner.VIADUCT) != 0;
+        if (via && viaduct(c, x, z, k, g, d, family)) return;
+        if (kind != CityPlan.STREET && kind != CityPlan.YARD) return;
         if ((f & RoadPlanner.BRIDGE) != 0) {
             bridge(c, x, z, g, d, s, t, family, (f & TOWN) != 0);
             return;
@@ -274,10 +278,12 @@ final class RoadPaint implements SettlementPaint.Layout {
             return;
         }
         BlockState pave = (f & RoadPlanner.CAUSEWAY) != 0 ? (pct(wx, wz, 53) < 30 ? MOSSY_COBBLE : COBBLE) : paving(family, d, (f & TOWN) != 0, wx, wz);
-        bed(c, x, g, z, family);
+        if (!via) {
+            bed(c, x, g, z, family);
+            c.plate(x, z);
+        }
         c.set(x, g, z, pave);
         c.column(x, g + 1, g + 5, z, AIR);
-        c.plate(x, z);
         // a half step where the next cell along climbs a block
         for (int q = 0; q < 4; q++) {
             int nx = x + (q == 0 ? 1 : q == 1 ? -1 : 0), nz = z + (q == 2 ? 1 : q == 3 ? -1 : 0);
@@ -371,6 +377,12 @@ final class RoadPaint implements SettlementPaint.Layout {
     BlockState rock(int x, int y, int z) {
         int k = cell(x, z), wx = ox + x, wz = oz + z;
         int family = k < 0 ? VillageStyles.TEMPERATE : fam[along[k] < 0.5f ? seg[k] : seg[k] + 1];
+        // a viaduct's pier and its rib carry their masonry down to the ground; the rest near it is a footing
+        if (k >= 0 && dist[k] <= hw + 3 && (flagsAt(seg[k], along[k]) & RoadPlanner.VIADUCT) != 0) {
+            float out = dist[k] - (hw + 1), e = pierGap(k);
+            boolean foot = !(e <= PIER_HALF && out <= 0) && !(e <= 1 && out <= 1);
+            return foot ? footing(wx, y, wz, family) : masonry(wx, y, wz, baseY + lifts[k] - y, family);
+        }
         int layer = dev.awaken.terrain.alpine.AlpineSurface.strata(wx, y, wz);
         if (family == VillageStyles.DESERT) return layer == 1 || layer == 4 ? SMOOTH_SANDSTONE : SANDSTONE;
         return switch (layer) {
@@ -446,6 +458,134 @@ final class RoadPaint implements SettlementPaint.Layout {
         if (pave == SAND || pave == SANDSTONE || pave == SMOOTH_SANDSTONE) return SANDSTONE_SLAB;
         if (pave == PACKED_MUD || pave == MUD) return MUD_BRICK_SLAB;
         return family == VillageStyles.DESERT ? SANDSTONE_SLAB : COBBLE_SLAB;
+    }
+
+    // ---- viaducts --------------------------------------------------------------------------------------------------------
+
+    /** Half a pier's thickness along the road; the deck's depth over an arch's crown. */
+    static final float PIER_HALF = 1.5f;
+    static final int DECK = 3;
+
+    /**
+     * One column of a viaduct (SPEC §28.9), {@code g} the road's surface. The deck reaches a block past the carriageway
+     * (a dressed edge with a parapet on it); a pier three blocks thick and the deck's width stands at every PIER point and
+     * is carried down to the ground, with a rib up each face and a footing that steps out round its foot; between two piers
+     * the deck is an arch (round, its crown three under the road), with a cornice a block out under the parapet. Returns
+     * true where it painted the whole column (the carriageway's own surface is the caller's).
+     */
+    private boolean viaduct(SettlementPaint.Canvas c, int x, int z, int k, int g, float d, int family) {
+        float out = d - (hw + 1), e = pierGap(k);
+        if (out > 2) return true;
+        int wx = ox + x, wz = oz + z, deckY = baseY + g;
+        boolean pier = e <= PIER_HALF;
+        float ring = Math.max(e - PIER_HALF, out);
+        int rise = !(pier && out <= 0) && !(e <= 1 && out <= 1) && ring <= 2 ? (ring <= 1 ? 5 : 2) : 0;
+        if (out <= 0) {
+            int low = g - 2;
+            if (!pier) {
+                // the arch: a round soffit from pier face to pier face, the keystone at its crown
+                float x0 = spanPos(k), span = spanLen(k), r = (span - 2 * PIER_HALF) / 2, xc = x0 - span / 2;
+                low = Math.min(g - DECK, Math.round(g - DECK - r + (float) Math.sqrt(Math.max(0, r * r - xc * xc))));
+                c.set(x, low, z, Math.abs(xc) < 0.6f ? (family == VillageStyles.DESERT ? CHISELED_SANDSTONE : CHISELED_STONE_BRICKS)
+                        : family == VillageStyles.DESERT ? CUT_SANDSTONE : STONE_BRICKS);
+                for (int ry = low + 1; ry < g; ry++) c.set(x, ry, z, masonry(wx, baseY + ry, wz, g - ry, family));
+                if (rise > 0) c.mound(x, z, new SettlementPaint.Mound(low - 1, null, null, 0, null, rise));
+            } else {
+                for (int ry = low; ry < g; ry++) c.set(x, ry, z, masonry(wx, baseY + ry, wz, g - ry, family));
+                c.plate(x, z);
+            }
+            if (d <= hw) return false;
+            // the dressed edge: a course of brick, the parapet on it, a lantern over each pier
+            c.set(x, g, z, family == VillageStyles.DESERT ? CUT_SANDSTONE : pct(wx, wz, 59) < 15 ? MOSSY_STONE_BRICKS : STONE_BRICKS);
+            c.set(x, g + 1, z, parapet(x, z, family, wx, wz));
+            c.column(x, g + 2, g + 4, z, AIR);
+            if (pier && e <= 0.5f) c.set(x, g + 2, z, LANTERN);
+            return true;
+        }
+        if (pier && e <= 1 && out <= 1) {
+            // a rib up the pier's face, capped under the cornice
+            c.set(x, g - 1, z, family == VillageStyles.DESERT ? SANDSTONE_SLAB_TOP : STONE_BRICK_SLAB_TOP);
+            c.set(x, g - 2, z, masonry(wx, deckY - 2, wz, 2, family));
+            c.plate(x, z);
+            return true;
+        }
+        if (out <= 1) c.set(x, g - 1, z, family == VillageStyles.DESERT ? SANDSTONE_SLAB_TOP : STONE_BRICK_SLAB_TOP);
+        if (rise > 0) c.mound(x, z, new SettlementPaint.Mound(g - DECK, null, null, 0, null, rise));
+        return true;
+    }
+
+    /** The PIER point at or before segment s, and the first after it (-1 past the window: built solid). */
+    private int pierBefore(int s) {
+        int p = s;
+        while (p >= 0 && (fl[p] & RoadPlanner.PIER) == 0) p--;
+        return p;
+    }
+
+    private int pierAfter(int s) {
+        int p = s + 1;
+        while (p < fl.length && (fl[p] & RoadPlanner.PIER) == 0) p++;
+        return p < fl.length ? p : -1;
+    }
+
+    private float segLen(int i) {
+        return (float) Math.hypot(xs[i + 1] - xs[i], zs[i + 1] - zs[i]);
+    }
+
+    /** Blocks along the road from the span's first pier to the cell. */
+    private float spanPos(int k) {
+        int s = seg[k], p0 = pierBefore(s);
+        if (p0 < 0) return 0;
+        float x0 = along[k] * segLen(s);
+        for (int i = p0; i < s; i++) x0 += segLen(i);
+        return x0;
+    }
+
+    /** The span's length, pier centre to pier centre. */
+    private float spanLen(int k) {
+        int s = seg[k], p0 = pierBefore(s), p1 = pierAfter(s);
+        if (p0 < 0 || p1 < 0) return 0;
+        float l = 0;
+        for (int i = p0; i < p1; i++) l += segLen(i);
+        return l;
+    }
+
+    /** Blocks along the road from a viaduct cell to the nearer pier's centre (0 where the window can't say: solid). */
+    private float pierGap(int k) {
+        float span = spanLen(k);
+        if (span <= 0) return 0;
+        float x0 = spanPos(k);
+        return Math.min(x0, span - x0);
+    }
+
+    private boolean deckEdge(int x, int z) {
+        int k = cell(x, z);
+        return k >= 0 && dist[k] > hw && dist[k] <= hw + 1 && (flagsAt(seg[k], along[k]) & RoadPlanner.VIADUCT) != 0;
+    }
+
+    /** The parapet's wall, joined to its neighbours along the edge. */
+    private BlockState parapet(int x, int z, int family, int wx, int wz) {
+        int m = (deckEdge(x, z - 1) ? 1 : 0) | (deckEdge(x + 1, z) ? 2 : 0) | (deckEdge(x, z + 1) ? 4 : 0) | (deckEdge(x - 1, z) ? 8 : 0);
+        BlockState[] w = family == VillageStyles.DESERT ? SANDSTONE_WALLS : pct(wx, wz, 60) < 25 ? MOSSY_BRICK_WALLS : BRICK_WALLS;
+        return w[m];
+    }
+
+    /**
+     * A viaduct's dressed stone, {@code depth} under the deck: stone bricks, cracked here and there, mossier the lower it
+     * stands, with a course of polished andesite every eight blocks; cut and smooth sandstone in the desert.
+     */
+    static BlockState masonry(int wx, int y, int wz, int depth, int family) {
+        int roll = pct(wx + y * 31, wz - y * 17, 58);
+        if (family == VillageStyles.DESERT) return Math.floorMod(y, 8) == 0 && depth >= 4 ? CHISELED_SANDSTONE : roll < 50 ? CUT_SANDSTONE : roll < 80 ? SMOOTH_SANDSTONE : SANDSTONE;
+        if (Math.floorMod(y, 8) == 0 && depth >= 4) return POLISHED_ANDESITE;
+        int moss = Math.min(45, 4 + depth * 3 / 2);
+        return roll < moss ? MOSSY_STONE_BRICKS : roll < moss + 12 ? CRACKED_STONE_BRICKS : roll < moss + 16 ? ANDESITE : STONE_BRICKS;
+    }
+
+    /** A pier's footing: rough stone, mossy. */
+    static BlockState footing(int wx, int y, int wz, int family) {
+        int roll = pct(wx + y * 13, wz + y * 7, 61);
+        if (family == VillageStyles.DESERT) return roll < 60 ? SANDSTONE : SMOOTH_SANDSTONE;
+        return roll < 40 ? MOSSY_COBBLE : roll < 75 ? COBBLE : MOSSY_STONE_BRICKS;
     }
 
     // ---- water ----------------------------------------------------------------------------------------------------------
@@ -549,6 +689,9 @@ final class RoadPaint implements SettlementPaint.Layout {
             MUD = VillageBlocks.of("minecraft:mud"), PACKED_MUD = VillageBlocks.of("minecraft:packed_mud"),
             TUFF = VillageBlocks.of("minecraft:tuff"), GRANITE = VillageBlocks.of("minecraft:granite"), CALCITE = VillageBlocks.of("minecraft:calcite"),
             MOSS = VillageBlocks.of("minecraft:moss_block"),
+            CHISELED_STONE_BRICKS = VillageBlocks.of("minecraft:chiseled_stone_bricks"), POLISHED_ANDESITE = VillageBlocks.of("minecraft:polished_andesite"),
+            CUT_SANDSTONE = VillageBlocks.of("minecraft:cut_sandstone"), CHISELED_SANDSTONE = VillageBlocks.of("minecraft:chiseled_sandstone"),
+            SANDSTONE_SLAB_TOP = VillageBlocks.of("minecraft:sandstone_slab[type=top]"),
             SHORT_GRASS = VillageBlocks.of("minecraft:short_grass"),
             COBBLE_SLAB = VillageBlocks.of("minecraft:cobblestone_slab[type=bottom]"), MOSSY_COBBLE_SLAB = VillageBlocks.of("minecraft:mossy_cobblestone_slab[type=bottom]"),
             STONE_BRICK_SLAB = VillageBlocks.of("minecraft:stone_brick_slab[type=bottom]"), STONE_BRICK_SLAB_TOP = VillageBlocks.of("minecraft:stone_brick_slab[type=top]"),
@@ -557,6 +700,8 @@ final class RoadPaint implements SettlementPaint.Layout {
             WALL_X = VillageBlocks.connected("minecraft:stone_brick_wall", true)[10], WALL_Z = VillageBlocks.connected("minecraft:stone_brick_wall", true)[5],
             MOSSY_COBBLE_WALL = VillageBlocks.of("minecraft:mossy_cobblestone_wall[up=true]"),
             LANTERN = VillageBlocks.of("minecraft:lantern[hanging=false]");
+    static final BlockState[] BRICK_WALLS = VillageBlocks.connected("minecraft:stone_brick_wall", true),
+            MOSSY_BRICK_WALLS = VillageBlocks.connected("minecraft:mossy_stone_brick_wall", true), SANDSTONE_WALLS = VillageBlocks.connected("minecraft:sandstone_wall", true);
     static final BlockState[] FLOWER = {VillageBlocks.of("minecraft:dandelion"), VillageBlocks.of("minecraft:poppy"), VillageBlocks.of("minecraft:oxeye_daisy"),
             VillageBlocks.of("minecraft:cornflower"), VillageBlocks.of("minecraft:azure_bluet")};
 }

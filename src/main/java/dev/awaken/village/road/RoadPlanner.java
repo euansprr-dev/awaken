@@ -24,6 +24,10 @@ public final class RoadPlanner {
     public static final int STEP = 4;
     /** Point flags: a bridge deck over water, a boardwalk over a shallow mire, a causeway over a brook. */
     public static final byte BRIDGE = 1, BOARDWALK = 2, CAUSEWAY = 4;
+    /** A dry stretch held high over a valley (a viaduct), and the points its piers stand on (8 and 16 are the painter's). */
+    public static final byte VIADUCT = 32, PIER = 64;
+    /** How far over the land a point stands before the road crosses on a viaduct instead of a bank. */
+    static final int VIADUCT_RISE = 8;
 
     /** A column the road may not cross (another settlement's ground, the city's reserve, the camp). */
     @FunctionalInterface
@@ -366,7 +370,32 @@ public final class RoadPlanner {
                 for (int i = 1; i < n; i++) if (!fixed[i]) y[i] = Math.clamp(y[i], y[i - 1] - g[i], y[i - 1] + g[i]);
                 for (int i = n - 2; i >= 0; i--) if (!fixed[i]) y[i] = Math.clamp(y[i], y[i + 1] - g[i + 1], y[i + 1] + g[i + 1]);
             }
+            viaducts(y, top, flags);
             return new Path(xs, zs, y, flags, 0, 0);
+        }
+    }
+
+    /**
+     * Where the road holds its grade {@link #VIADUCT_RISE} or more over dry land it crosses on a viaduct (SPEC §28.9): the
+     * run and a point either side (the abutments, on the land) take VIADUCT, and piers stand on the abutments and evenly
+     * between, two to four points apart (about every 12 blocks), so every span is one arch.
+     */
+    static void viaducts(int[] y, int[] top, byte[] flags) {
+        int n = y.length;
+        for (int i = 1; i + 1 < n; ) {
+            if (flags[i] != 0 || y[i] - top[i] < VIADUCT_RISE) {
+                i++;
+                continue;
+            }
+            int j = i;
+            while (j + 2 < n && flags[j + 1] == 0 && y[j + 1] - top[j + 1] >= VIADUCT_RISE) j++;
+            int a = (flags[i - 1] & (BRIDGE | BOARDWALK | CAUSEWAY)) == 0 ? i - 1 : i, b = (flags[j + 1] & (BRIDGE | BOARDWALK | CAUSEWAY)) == 0 ? j + 1 : j;
+            if (b - a >= 2) {
+                for (int k = a; k <= b; k++) flags[k] |= VIADUCT;
+                int m = Math.max(1, Math.round((b - a) / 3f));
+                for (int q = 0; q <= m; q++) flags[a + Math.round(q * (b - a) / (float) m)] |= PIER;
+            }
+            i = j + 1;
         }
     }
 }

@@ -16,7 +16,7 @@ import java.util.Optional;
  * {@code awaken:road}: the legs of the world's roads that start in a chunk on the roads' lattice (SPEC §28.9). Each leg
  * is a painter piece and, at every point on dry land, a thin-beard marker the width of the carriageway and its verges at
  * the road's height: the land eases up or down to the road instead of meeting it in a step, so a road follows the land
- * with small cuttings and banks. Placed by the Awakened Villages pack ({@link RoadPlacement}), new worlds only.
+ * with small cuttings and banks (none under a viaduct: the valley keeps its own floor). Placed by the Awakened Villages pack ({@link RoadPlacement}), new worlds only.
  */
 public class RoadStructure extends Structure {
     public static final MapCodec<RoadStructure> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(settingsCodec(i)).apply(i, RoadStructure::new));
@@ -38,7 +38,7 @@ public class RoadStructure extends Structure {
                 Road r = leg.road();
                 float hw = r.halfWidth() + 1;
                 for (int i = leg.i0(); i <= leg.i1(); i++) {
-                    if ((r.flags()[i] & (RoadPlanner.BRIDGE | RoadPlanner.BOARDWALK | RoadPlanner.CAUSEWAY)) != 0) continue;
+                    if ((r.flags()[i] & (RoadPlanner.BRIDGE | RoadPlanner.BOARDWALK | RoadPlanner.CAUSEWAY | RoadPlanner.VIADUCT)) != 0) continue;
                     int x = (int) Math.floor(r.x()[i]), z = (int) Math.floor(r.z()[i]), y = r.y()[i];
                     b.addPiece(new VillageMarker(new BoundingBox(x - (int) Math.ceil(hw), y, z - (int) Math.ceil(hw), x + (int) Math.ceil(hw), y + 6,
                             z + (int) Math.ceil(hw))));
