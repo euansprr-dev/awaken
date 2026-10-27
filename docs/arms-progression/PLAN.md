@@ -239,6 +239,35 @@ teach in dialogue; the first elite of a place drops a thing you can pick up; and
 the same style, so the first Lord-forged reveal says "this is the Daggers' master" and the Armoury lists the style.
 JEI and the page are the receipt, never the first mention (SPEC §26: the world pulls, the HUD confirms).
 
+**"How would I ever know that?"** (Euan, 2026-10-27, reading the first version: "even if it says somewhere, how do you
+know how to find anything that's going to teach you this?"). He is right: as first written, the nine places were a
+surprise you found by playing, and only the six people had a door you could walk to. The fix is a rule, **you are told at
+a place you will already be, never in a menu you have to go and find**, and it is carried by five tellings (PROPOSAL):
+
+1. **Gates tell you on their card.** Gates are the loop every hunter runs (pillars, the Horizon line, the first gate
+   announced and raised), so the home needs no hunt: the gate card, once it shows the theme (scouted, SPEC §13 gate
+   card), adds one line for a style you don't know: "The first elite here carries a pattern: Daggers." The Hive's gate
+   says Daggers, the Foundry's says Gauntlets. Nothing is shown for a style you already know.
+2. **Camps tell you when you reach them.** A riftborn camp's name and caption gets the same line when you come near it
+   (UNVERIFIED: which surface a camp has today: a Horizon site, a caption, or neither; the builder checks and adds the
+   one that fits).
+3. **People say what they pay in their own offer.** A chain's ask names the reward in plain speech ("If you help me find
+   the ten sheep, I'll show you how to use a spear. It keeps wolves off."), so the person's door is the offer itself.
+   Found scenes already announce themselves with a flare (SPEC §21.5).
+4. **Hale's rack says it on the plaque, and Hale can be asked.** Each E pattern's plaque reads "4 essence, or free:
+   the first elite in a Hive gate". Talking to Hale with nothing else to say offers "Anything on patterns?": he names the
+   nearest home you have *met* (a gate you've seen, a camp you've reached, a person you know) with a distance and a
+   direction, the same pattern as the clerk's "Anything for me?" (SPEC §27.8). When you reach a rank he says what the rack
+   gained: "D-rank. I've put four more patterns on the rack."
+5. **What you've met is kept for you.** Seeing a home you can't use yet (a gate card for a style you'd want) files it in
+   "What waits" through `core.api.Promises` ("Daggers · the Hive's first elite · 320 m NE"), and the Armoury's style list
+   shows one line for each style whose home you have met. Homes you haven't met are never listed (SPEC hard rule:
+   undiscovered things are never listed), which is why the first three tellings sit at the places themselves.
+
+**And you never have to find any of it.** Hale sells every pattern at its rank, so a player who never learns that places
+teach loses nothing but a few essence. The homes are the reason a gate is more than a gate and the reason a person's job
+pays more than shards; they are never the only way in.
+
 ### 3.5 Clarity (question 3)
 
 **Words.** Three plain words everywhere: **Hide** (the body of armour), **Part** (the hard heart: bone, flint, a horn, a
@@ -383,8 +412,7 @@ Euan to confirm the stance.
 - **Old saves:** players who already drew Blueprints keep them and are marked as knowing those styles; the issue is offered
   once to an awakened E-rank player with no styled weapon; nobody is charged for anything they already hold.
 - **Public repo:** only names, numbers and rules; no secrets.
-- **Seams:** `living` (Hale's scene, the rack placement, chain rewards), `gates/run` (the first elite of a theme),
-  `living/camp` (a camp heart), `progression` (`RecipeUnlocks`, the new-thing clock), `mobs` (the shard pity),
+- **Seams:** `living` (Hale's scene, the rack placement, chain rewards, Hale's "Anything on patterns?"), `gates` (the first elite of a theme and one line on the gate card), `living/camp` (a camp heart and its caption), `progression` (`RecipeUnlocks`, the new-thing clock), `mobs` (the shard pity),
   `compat/client/jei`. Each is a few lines through `ArmsApi` or data, agreed with its owner before building.
 
 ## 5. Phases, effort, tests, risks
@@ -398,11 +426,11 @@ mastery and their tests, ran about 4.5 hours from first to last commit on 2026-1
 | **A · Say where it comes from** | tooltips (Fang, Blueprint, Shard, Forge), Hide/Part/Binding words, `sources.json` and its generator, the Essence page, JEI chips and slot tooltips, the recipe-book fix, plain level road text | 2-3 h | `arms_sources`; ships on its own, no design change |
 | **B · The first hour** | Hale's issue and rack (menu first, the model rack if time), the first-shard find, the shard pity, Ilse's pay, the Now line | 2-3 h | `arms_issue`; **Euan plays the first 30 minutes** |
 | **C · The Armoury** | the screen, the band section, Track, Blueprint routing (rack by rank, Forge choose-list, learned styles, migration), the Forge's empty-hand door | 3-4 h | `arms_armoury`, `arms_rack` |
-| **D · Teachers and places** | the six chain rewards, the nine place hooks (`style_homes.json`), the reveal, plain dialogue | 2-3 h | `arms_homes` |
+| **D · Teachers and places** | the six chain rewards, the nine place hooks (`style_homes.json`), the reveal, plain dialogue, the gate-card and camp lines, the rack plaques, Hale's "Anything on patterns?", the "What waits" entries | 3-4 h | `arms_homes` (a person and a place each teach once; the card line shows only for a style you don't know) |
 | **E · Finds and Raise** | Marked pity, first-guaranteed, camp hearts, the miniature reveal, Raise, first-forged moments, the capability clock, the sim gear row | 2-3 h | `arms_raise`, `arms_marked_pity` |
 | **F · Tiers announced** | part jobs on Hale's board, tier cards, foreshadow, Oren's lines, the Horizon pulls | 1.5-2 h | `arms_tier_cards` |
 
-**Total about 12-18 builder-hours; with two builders (A+B then C, with D beside it, then E and F) about a day of wall
+**Total about 13-19 builder-hours; with two builders (A+B then C, with D beside it, then E and F) about a day of wall
 clock**, plus CI runs and Euan's play. **S9 named weapons** (about 30 first) are a separate later job, about 3-4 hours
 once the art pipeline's batch rate (24 to 42 weapons every 20 to 40 minutes) and the writing are counted. Bottlenecks that don't
 compress: GameTest runs on CI, Euan's play, and the three-Lord session.
@@ -430,7 +458,10 @@ the largest piece (3D previews optional).
    goes. *Recommend yes.* Alternative: menu only; Forge only.
 4. **Every style has a home:** six people teach (Spear: Hettie, Rapier: Pell, Chain-blade: Marta, Glaive: Gus,
    Twinblades: Wren, Greatblade: Oren) and nine places teach (the first elite of the theme drops its Blueprint). A style
-   you know pays its price in essence instead. *Recommend yes.* Alternative: rack only (cheaper, no world discovery).
+   you know pays its price in essence instead. **Each home tells you at the place you'll already be:** the gate card and
+   the camp say what the first elite carries, a person's offer names its reward, Hale's rack plaques say where each pattern
+   is free, and "Anything on patterns?" asks Hale. Hale's rack stays the floor. *Recommend yes.* Alternative: rack only
+   (cheaper, no world discovery).
 5. **Names and words:** keep Fang, Cleaver, Sabre, Edge, Warblade, Oathblade, add a plain type line, and use Hide, Part and
    Binding everywhere. *Recommend yes.* Alternative: rename all six blades to "<Tier> Blade".
 6. **The Armoury page in the band, Track, and Now-line hints** with a compass to known places. *Recommend yes.*

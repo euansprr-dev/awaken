@@ -263,6 +263,16 @@ footer { margin-top: 56px; font-size: 0.85rem; color: var(--muted); }
   </tbody></table></div>
 <p class="note">A place teaches when you beat the first elite of its theme (or a riftborn camp's heart): the Blueprint drops once, with a reveal. A person teaches at the end of their job. Prices at Hale's rack: 4 essence at E, then 6, 8, 10 and 12.</p>
 
+<h3 style="margin-top:32px">"How would I ever know that?"</h3>
+<p class="prose">Fair question, and the first version of this plan had no answer for the nine places. The rule now: you are told at a place you will already be, never in a menu you have to go and find.</p>
+<div class="grid g2">
+  <div class="card"><span class="tag">At a gate</span><h3>The gate card says it</h3><p>Gates are what hunters do anyway. Once the card shows the theme, it adds a line for a style you don't know: "The first elite here carries a pattern: Daggers." Nothing shows for a style you already have.</p></div>
+  <div class="card"><span class="tag">At a camp</span><h3>The camp says it</h3><p>A riftborn camp's name carries the same line when you come near it.</p></div>
+  <div class="card"><span class="tag">From a person</span><h3>Their offer says it</h3><p>"If you help me find the ten sheep, I'll show you how to use a spear. It keeps wolves off." The job is the door.</p></div>
+  <div class="card"><span class="tag">At Hale</span><h3>The plaque, and a question</h3><p>Each pattern on his rack reads "4 essence, or free: the first elite in a Hive gate". Ask him "Anything on patterns?" and he names the nearest home you have met, with a direction. At each new rank he says what he added.</p></div>
+</div>
+<p class="note">A home you have met but can't use yet is filed under "What waits" in your band. Homes you haven't met are never listed. And you never have to find any of it: Hale sells every pattern, so a player who never learns that places teach only pays a few essence.</p>
+
 <h2>Every item says where it comes from</h2>
 <p class="prose">An item has to answer three things: what is it, what is it for, where do I get more. A test fails the build if any ingredient of any gear or weapon recipe has no "where" line.</p>
 <div class="grid g2">
@@ -325,7 +335,7 @@ footer { margin-top: 56px; font-size: 0.85rem; color: var(--muted); }
 <div class="dec"><div class="no">1</div><div class="body"><h3>Fix the guidance first, on its own <span class="chip rec">Recommended</span></h3><p>Tooltips, plain words, a "where from" line on every ingredient with a test behind it, JEI, and the recipe-book fix. It answers "where do I get a Fang" without changing a number.</p><p class="alt">Instead: wait and ship everything together.</p></div></div>
 <div class="dec"><div class="no">2</div><div class="body"><h3>Hale hands over a first weapon <span class="chip rec">Recommended</span></h3><p>Pick Daggers, Axe or Maul at the High Gate. You get the finished weapon, its Blueprint and a spare Fang. Ilse covers it if you miss him. A free first weapon with a real choice is how Monster Hunter and Hades start.</p><p class="alt">Instead: hand nothing over, so everyone crafts their first.</p></div></div>
 <div class="dec"><div class="no">3</div><div class="body"><h3>The Armoury is the one door for Blueprints <span class="chip rec">Recommended</span></h3><p>Hale's rack sells them for essence only. Your Forge draws any pattern you know, with a list to choose from instead of a random cycle. Hale's yard gets a real rack of weapons. This also removes the iron wall from the first hour.</p><p class="alt">Instead: a menu at Hale with no rack, or the Forge only.</p></div></div>
-<div class="dec"><div class="no">4</div><div class="body"><h3>Every style has a home <span class="chip rec">Recommended</span></h3><p>Six people teach (Hettie, Pell, Marta, Gus, Wren, Oren) and nine places teach, when you beat the first elite of their theme. A style you know pays its price in essence. This is how you find out a style exists in the world, before JEI.</p><p class="alt">Instead: Hale's rack only. Cheaper, and no discovery.</p></div></div>
+<div class="dec"><div class="no">4</div><div class="body"><h3>Every style has a home <span class="chip rec">Recommended</span></h3><p>Six people teach (Hettie, Pell, Marta, Gus, Wren, Oren) and nine places teach, when you beat the first elite of their theme. Each home tells you where you already are: the gate card, the camp, the person's offer, Hale's plaques and his "Anything on patterns?". A style you know pays its price in essence.</p><p class="alt">Instead: Hale's rack only. Cheaper, and no discovery.</p></div></div>
 <div class="dec"><div class="no">5</div><div class="body"><h3>Keep the blade names, add a plain type line <span class="chip rec">Recommended</span></h3><p>Fang, Cleaver, Sabre, Edge, Warblade and Oathblade are good names. They just need "Hunter blade" under them. Hide, Part and Binding become the words everywhere.</p><p class="alt">Instead: rename all six to "&lt;Tier&gt; Blade".</p></div></div>
 <div class="dec"><div class="no">6</div><div class="body"><h3>An Armoury page in the band, with Track <span class="chip rec">Recommended</span></h3><p>K, then Powers. It lists the styles you know, the tier cards with have and need, and the finds. Track puts the missing parts on your screen, and the Now line points at known places.</p><p class="alt">Instead: tooltips and JEI only.</p></div></div>
 <div class="dec"><div class="no">7</div><div class="body"><h3>Say where essence comes from, and never let it dry up <span class="chip rec">Recommended</span></h3><p>A card on the first shard. The fifth kill in a row with none drops one, at E and D rank. Ilse's Moth Lights and Marta's Wheel pay a few. It already drops from creatures, so this only fixes bad luck.</p><p class="alt">Instead: leave the rates as they are.</p></div></div>
@@ -336,12 +346,12 @@ footer { margin-top: 56px; font-size: 0.85rem; color: var(--muted); }
 <div class="dec"><div class="no">12</div><div class="body"><h3>Order <span class="chip rec">Recommended</span></h3><p>A and B first, then C with D beside it, then E and F. Named weapons wait. You play the first half hour after B.</p><p class="alt">Instead: tell me which part to hold or drop.</p></div></div>
 
 <h2>What it costs</h2>
-<p class="prose">At this project's real pace, scaled from git history: Arms S7, with Marks, the Forge, Lord-forged and mastery, took about 4.5 hours from first commit to last. About 12 to 18 builder-hours in all. With two builders, about a day of wall clock, plus CI runs and your play.</p>
+<p class="prose">At this project's real pace, scaled from git history: Arms S7, with Marks, the Forge, Lord-forged and mastery, took about 4.5 hours from first commit to last. About 13 to 19 builder-hours in all. With two builders, about a day of wall clock, plus CI runs and your play.</p>
 <ul class="cost">
   <li><span class="k">A</span><span>Say where it comes from: tooltips, words, source lines, JEI, recipe book</span><span class="h">2-3 h</span></li>
   <li><span class="k">B</span><span>The first hour: Hale's issue and rack, first-shard card, shard pity</span><span class="h">2-3 h</span></li>
   <li><span class="k">C</span><span>The Armoury: screen, band page, Track, Blueprint routing</span><span class="h">3-4 h</span></li>
-  <li><span class="k">D</span><span>Teachers and places: six chain rewards, nine place hooks</span><span class="h">2-3 h</span></li>
+  <li><span class="k">D</span><span>Teachers and places: six chain rewards, nine place hooks, gate-card and camp lines, Hale's questions</span><span class="h">3-4 h</span></li>
   <li><span class="k">E</span><span>Finds and Raise: Marked pity, reveal, Raise, sim row</span><span class="h">2-3 h</span></li>
   <li><span class="k">F</span><span>Tiers announced: part jobs, tier cards, Oren's lines</span><span class="h">1.5-2 h</span></li>
 </ul>
