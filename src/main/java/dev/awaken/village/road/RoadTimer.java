@@ -13,7 +13,8 @@ import java.util.Locale;
  * queue, and any wait on the server's own thread, which is a stall and is logged at once. Summed into one log line every
  * 30 s while anything happened, with the roads, plans and noise columns made in that time. On a tour (the autopilot) a
  * watch also samples the server thread 20 times a second: how much of its ticking was spent planning roads or
- * settlements, and what it was doing when a tick ran over a second (to tell a stall of ours from anyone else's).
+ * settlements, and what it was doing when a tick, or a task between ticks (a player's packet, a command), ran over a
+ * second (to tell a stall of ours from anyone else's).
  */
 final class RoadTimer {
     private RoadTimer() {}
@@ -93,7 +94,7 @@ final class RoadTimer {
 
     // ---- the server thread watched (tours) ----------------------------------------------------------------------------
 
-    /** A tick this long is logged with the server thread's stack (once a tick). */
+    /** A tick (or a task between ticks) this long is logged with the server thread's stack (once a tick). */
     static final long LONG_TICK_NS = 1_000_000_000L;
 
     /** On a tour, from the server's start until it stops: the server thread sampled 20 times a second. */
@@ -118,13 +119,13 @@ final class RoadTimer {
                     seen = tick;
                     since = now;
                     told = false;
-                } else if (!told && ticking && now - since >= LONG_TICK_NS) {
+                } else if (!told && (ticking || calls(stack, "net.minecraft.util.thread.BlockableEventLoop", "doRunTask")) && now - since >= LONG_TICK_NS) {
                     told = true;
                     int gen = 0;
                     for (var e : Thread.getAllStackTraces().entrySet())
                         if (e.getKey() != st && calls(e.getValue(), RoadNet.class.getName(), "startsIn")) gen++;
-                    RoadNet.log("tick {} has run {} ms: {} (roads being laid for {} other threads){}", tick, ms(now - since), top(stack), gen,
-                            planning(stack) ? " (road or settlement planning)" : "");
+                    RoadNet.log("tick {} has run {} ms{}: {} (roads being laid for {} other threads){}", tick, ms(now - since),
+                            ticking ? "" : " (a task between ticks)", top(stack), gen, planning(stack) ? " (road or settlement planning)" : "");
                 }
             }
         }, "Awaken stall watch");
@@ -155,7 +156,7 @@ final class RoadTimer {
         int n = 0;
         for (StackTraceElement f : stack) {
             if (f.getMethodName().equals("tickServer")) break;
-            if (n++ == 18) {
+            if (n++ == 24) {
                 b.append(" < ...");
                 break;
             }
