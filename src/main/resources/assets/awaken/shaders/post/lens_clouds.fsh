@@ -62,6 +62,20 @@ float clearing(vec3 w) {
     return k;
 }
 
+// how far along the ray to look for it in last frame's clouds, for a pixel that met no cloud itself (and for the three
+// frames in four it doesn't march): where cloud would be on it (the layer's entry, a storm's body), or the terrain's
+// own point when that is nearer. The camera has moved since, so a point at the wrong depth is found at the wrong place
+// on screen: a block ahead (what a miss used to take) carried the history of whole storms across the screen as you
+// walked, and a storm's bounding volume (hundreds of blocks in front of its surface) slid it against the world.
+float historyDepth(float t0, float scene) {
+    float at = t0 > 0.0 ? t0 : 150.0;
+    for (int s = 0; s < 2; s++) {
+        if (s >= nStorm) break;
+        at = min(at, stormGuess(v, s, camY));
+    }
+    return max(min(at, scene), 1.0);
+}
+
 void layerPiece(float t0, float t1, int steps, vec4 cp) {
     if (t1 <= t0 || steps <= 0 || T < 0.02) return;
     const float sigma = 0.03;
@@ -241,14 +255,8 @@ void main() {
         bool flash = false;
         for (int s = 0; s < 2; s++) if (s < nStorm && stormC(s).w > 0.0) flash = true;
         if (mine != phase && !flash) {
-            // this pixel's off frame: last frame's clouds along this ray, found where it enters the layer (or a storm)
-            float at = t0 > 0.0 ? t0 : 150.0;
-            for (int s = 0; s < 2; s++) {
-                if (s >= nStorm) break;
-                float e = stormEntry(v, s, camY);
-                if (e < at && e < 1.0e8) at = max(e, 1.0);
-            }
-            vec3 q = project(frameMat(8), v * at + f13.xyz, z01);
+            // this pixel's off frame: last frame's clouds along this ray, found where cloud would be on it
+            vec3 q = project(frameMat(8), v * historyDepth(t0, scene) + f13.xyz, z01);
             if (q.x > 0.0 && q.y > 0.0 && q.x < 1.0 && q.y < 1.0) {
                 fragColor = clamp(texture(HistorySampler, q.xy) + (jitter - 0.5) / 255.0, 0.0, 1.0);
                 return;
@@ -283,7 +291,7 @@ void main() {
     // last frame's clouds along this ray, found where it first met cloud; lightning shows at once (and fades over a few
     // frames, an afterglow)
     if (f13.w > 0.5) {
-        vec3 s = project(frameMat(8), v * max(at, 1.0) + f13.xyz, z01);
+        vec3 s = project(frameMat(8), v * (tHit > 0.0 ? max(tHit, 1.0) : historyDepth(t0, scene)) + f13.xyz, z01);
         float fresh = ultra ? 0.12 : 0.15;
         // marching one frame in four: the same response over time as a march every frame (1 - (1 - f)^4)
         if (interleave) fresh = 1.0 - pow(1.0 - fresh, 4.0);

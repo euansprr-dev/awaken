@@ -4836,7 +4836,12 @@ b frost, a glow; the frame texture's texel 17 x is seconds, wrapping hourly)
   reads (an even glow over the whole cell blew a night strike out to a white disc); while a flash shows, the pixel takes up to 85% of this
   frame instead of 12-15%, so it lights at once and fades as an afterglow. The layer's clouds thin to nothing within
   330-450 blocks of a cell (it clears the sky round it), so the layer's march can skip the cell's bounds without a cut.
-  History reprojects where the ray first met cloud (was: where it entered the layer).
+  History reprojects where the ray first met cloud (was: where it entered the layer). A ray that met none looks up
+  `historyDepth` (`lens_clouds.fsh`): where cloud would be on it (the layer's entry, `stormGuess`: tight cylinders round
+  the body, shelf, anvil plate and rain core), or the terrain's own point when nearer. Never a block ahead (what a miss
+  took before 2026-10-27: its parallax carried the history across the screen as the camera moved) and never the cell's
+  bounding volume (hundreds of blocks in front of its surface: the storm swam against the world as you walked; Euan's
+  report 2026-10-27, "the storm goes crazy while I move").
 - The composite lays the cloud buffer over anything farther than where the ray enters a cell's bounds (320 radius
   round 60 downwind of its centre, ground to 48 over the top; the anvil band 245 round 150 downwind, from 72 under
   the top), never nearer than 16 blocks; the light pass darkens the
@@ -4902,8 +4907,8 @@ optimise for macOS"; docs/perf/LENS-APPLE.md):
 - The clouds: a pixel marches one frame in four, a 2×2 pattern of 8×8-pixel tiles turning with the frame counter
   (frame texel 12 w). Whole tiles, so the GPU's SIMD groups skip together: the first, per-pixel pattern left a marching
   pixel in every group and saved nothing (Cinematic 13.22 ms off, 13.25 on).
-  - On the other three frames it keeps last frame's clouds, reprojected to where its ray enters the layer (or the
-    nearer storm cell; 150 blocks when the camera is inside the layer).
+  - On the other three frames it keeps last frame's clouds, reprojected to where cloud would be on its ray (`historyDepth`:
+    the layer's entry or a storm's body, the terrain's point when nearer; 150 blocks when the camera is inside the layer).
   - A march blends in at 1 - (1 - f)^4 of the old weight f, so the clouds answer over time as before.
   - It marches anyway with no history (a cut, a teleport, a long gap), off screen, or while lightning flashes.
 - The light buffer (sun visibility, contact shadows, AO, volumetric light): a checkerboard of 8×8 tiles marches each
