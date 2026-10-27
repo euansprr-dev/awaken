@@ -70,9 +70,12 @@ public record GenTerrain(ChunkGenerator generator, LevelHeightAccessor heights, 
 
     @Override
     public int family(int x, int z) {
-        int y = top(x, z);
-        Holder<Biome> b = biomes.getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(y), QuartPos.fromBlock(z));
-        return family(b);
+        return family(x, top(x, z), z);
+    }
+
+    /** The family at a column whose top is already known (the shared land reads it once). */
+    public int family(int x, int y, int z) {
+        return family(biomes.getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(y), QuartPos.fromBlock(z)));
     }
 
     @Override

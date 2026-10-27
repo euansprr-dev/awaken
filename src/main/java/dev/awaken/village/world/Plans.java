@@ -38,7 +38,7 @@ public final class Plans {
         VillagePlan p = null;
         try {
             long t0 = System.nanoTime();
-            p = VillagePlanner.plan(request(a), t);
+            p = VillagePlanner.plan(request(a), dev.awaken.village.road.RoadWorld.shared(t));
             long ns = System.nanoTime() - t0;
             planNanos += ns;
             plans++;

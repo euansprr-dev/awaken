@@ -61,6 +61,7 @@ public final class RoadBench {
                 int cx = Road.lattice(centre[0] + Math.cos(a) * far), cz = Road.lattice(centre[1] + Math.sin(a) * far);
                 RoadNet.clear();
                 Plans.clear();
+                w.forget();
                 long r0 = RoadNet.planned, p0 = Plans.made(), col0 = GenTerrain.COLUMNS.sum(), s0 = System.nanoTime();
                 List<Road.Leg> legs = RoadNet.startsIn(cx, cz);
                 long ms = (System.nanoTime() - s0) / 1_000_000;
@@ -73,6 +74,7 @@ public final class RoadBench {
             // the area: every lattice chunk, nearest first, then its settlements and hubs
             RoadNet.clear();
             Plans.clear();
+            w.forget();
             long col0 = GenTerrain.COLUMNS.sum(), s0 = System.nanoTime();
             List<int[]> chunks = new ArrayList<>();
             int lat = Road.LATTICE;
