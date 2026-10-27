@@ -318,6 +318,14 @@ public final class LensClient {
         bloomTarget = Math.clamp(bloomTo, 0f, 1f);
     }
 
+    /**
+     * A bloom pulse (0..1): the glow lifts at once and eases away over about a second (a power's release, SPEC §31). It rides the same
+     * boost the ritual's bloom does and never lowers it; with Lens off it draws nothing.
+     */
+    public static void pulse(float strength) {
+        bloomBoost = Math.max(bloomBoost, Math.clamp(strength, 0f, 1f));
+    }
+
     // moving fast through the air: the target the Feel Director sets, and what's drawn (eased per frame)
     private static float motionTarget, motionTx = 0.5f, motionTy = 0.5f, motion, motionX = 0.5f, motionY = 0.5f;
     private static long motionAt;

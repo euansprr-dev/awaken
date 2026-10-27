@@ -51,6 +51,7 @@ final class CastFeel {
         if (m.pitch() != 0 || m.roll() != 0) CombatFeedback.kick(0f, m.pitch() * k, (p.getId() % 2 == 0 ? 1 : -1) * m.roll() * k, Math.max(1, m.kickTicks()));
         if (m.fov() != 0) FxScreen.fovPunch(m.fov() * k, m.fovTicks());
         if (m.flash() > 0 && own) FxScreen.flash(tint, m.flash(), 6);
+        if (m.flash() > 0) dev.awaken.lens.client.LensClient.pulse(m.flash() * 3f * near); // the glow lifts with the release (Lens on)
         if (own && m.holdMs() > 0) CombatFeedback.hold(m.holdMs());
     }
 }

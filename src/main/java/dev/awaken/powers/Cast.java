@@ -27,6 +27,8 @@ public final class Cast {
     public final int slot;
     /** True when the client already applied this power's motion (movement prediction). */
     public final boolean predicted;
+    /** An FX event carrying this cast's profile beat has been sent (Casting adds a pose beat if a power sent none). */
+    public boolean poseSent;
     private final float yRot;
     private final float xRot;
 

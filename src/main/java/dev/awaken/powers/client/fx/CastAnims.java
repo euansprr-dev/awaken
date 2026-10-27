@@ -179,8 +179,17 @@ final class CastAnims {
         Anim a = find(entityId);
         if (a != null && a.held && a.releasedAt < 0) {
             a.releasedAt = FxWorld.ticks;
-            if (a.profile != null) momentFor(entityId, a.profile.endMoment(), a.profile);
+            if (a.profile != null) {
+                momentFor(entityId, a.profile.endMoment(), a.profile);
+                lensFor(entityId, a.profile, true);
+            }
         }
+    }
+
+    private static void lensFor(int entityId, CastProfiles.Profile prof, boolean end) {
+        if (entityId != mcPlayerId()) return;
+        if (end) CastLens.end(prof);
+        else CastLens.release(prof);
     }
 
     private static void momentFor(int entityId, String name, CastProfiles.Profile prof) {
@@ -215,6 +224,7 @@ final class CastAnims {
             if (a.profile != null && !a.momentPlayed && age >= a.profile.release()) {
                 a.momentPlayed = true;
                 momentFor(a.entity, a.profile.moment(), a.profile);
+                lensFor(a.entity, a.profile, false);
             }
             // a profile's begin clip hands over to its hold loop where it ends (the hold starts in the pose the begin ends in)
             if (a.pal && a.profile != null && a.profile.hold3p() != null && !a.holdStarted && !a.palLetGo && a.releasedAt < 0 && age >= a.profile.holdAt()) {

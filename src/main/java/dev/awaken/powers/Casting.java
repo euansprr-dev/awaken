@@ -102,6 +102,8 @@ public final class Casting {
             // a heavy power with a profile waits a few ticks for the body (the foot lands, then the wave leaves): the press already
             // started the pose everywhere and spent the energy and the cooldown (docs/power-anims/PLAN.md D3)
             r = prof != null && prof.windup() > 0 ? windUp(c, prof) : type.behaviour.cast(c);
+            // a cast that drew no effect of its own kind (no target) still begins its pose for everyone
+            if (prof != null && r.ok() && !c.poseSent) Fx.pose(c);
         } catch (RuntimeException e) {
             errors++;
             dev.awaken.Awaken.LOG.error("Power {} failed to cast", id, e);

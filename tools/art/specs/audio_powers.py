@@ -31,6 +31,7 @@ sys.path.insert(0, HERE)
 import audiokit as K  # noqa: E402
 import ritual_sounds as R  # noqa: E402
 import audio_arms as AA  # noqa: E402  (helpers: rec, pick, shift, trim, cloth, sub, _blow, tame, master)
+import audio_power_kits as KITS  # noqa: E402  (a sound for every `power.*` event the catalog plays)
 from audio_mix import TARGETS  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, "../../.."))
@@ -126,6 +127,11 @@ EVENTS = OrderedDict([
 ])
 
 
+# the family kit: every power.* event that was a vanilla remix (fail, learn and danger stay: UI pings)
+for _name, (_fn, _v, _rms, _att, _crest) in KITS.KIT.items():
+    EVENTS["kit_" + _name] = (_fn, _v, _rms, _att, _crest)
+
+
 def seed_of(event, k):
     return 9700 + list(EVENTS).index(event) * 61 + k * 7
 
@@ -165,7 +171,9 @@ def write_json():
         entries = []
         for k in range(variants):
             entries.append(OrderedDict(name=f"awaken:powers/power_{event}_{k}", attenuation_distance=att))
-        cur["power." + event] = OrderedDict(subtitle="subtitles.awaken.power." + event, sounds=entries)
+        sid = event[4:] if event.startswith("kit_") else event
+        old = cur.get("power." + sid, {})
+        cur["power." + sid] = OrderedDict(subtitle=old.get("subtitle", "subtitles.awaken.power." + sid), sounds=entries)
     os.makedirs(MERGE, exist_ok=True)
     with open(path, "w") as f:
         json.dump(cur, f, indent=2)

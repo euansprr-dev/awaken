@@ -38,7 +38,7 @@ TARGETS = {
     # attacks -11..-14 dBFS gated RMS, its shield block near -9.5), so a found blade never sounds weaker than wood
     "arms": (-14.0, 3.0, -1.0, 4),
     # authored power casts (tools/art/specs/audio_powers.py): a stomp's thud sits with a mace's smash, a hum under it
-    "power": (-16.0, 4.0, -1.0, 4),
+    "power": (-16.0, 6.0, -1.0, 4),
     "layer": (-24.0, 12.0, -1.0, 1),  # a stem alone: any sensible level, the music's ceiling; the mixes are checked below
 }
 MANIFESTS = os.path.join(ROOT, "src/main/resources/assets/awaken/music_layers")

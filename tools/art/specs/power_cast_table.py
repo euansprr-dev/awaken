@@ -31,7 +31,7 @@ row("haymaker", None, "punch_hold", raw3p=("hold_kinetic", None, "cast_kinetic_r
 row("terrain_rip", "heave", "heave", windup=6, moment="thump_light")
 row("brace", "guard", "guard", windup=3, moment="thump_light")
 row("thunderclap", "clap_hard", "clap", windup=4, moment="thump_heavy")
-row("leap", "leap_spring", "leap_spring", moment="push")
+# leap keeps its family pose: its landing slam is an explicit pose that a profile would replace
 # Velocity: sharp
 row("dash", None, "dash", raw3p=("cast_velocity", None, None, 3), moment="push")
 row("afterimage", None, "dash", {"phantom": True}, raw3p=("cast_velocity", None, None, 3), moment="push")

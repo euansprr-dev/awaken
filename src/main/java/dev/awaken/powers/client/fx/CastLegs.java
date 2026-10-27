@@ -29,7 +29,7 @@ final class CastLegs {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null || !PowerFxConfig.animations() || FirstPerson.reducedMotion.getAsBoolean()) return false;
-        float age = CastAnims.profileAge(p.getId(), CastProfilesIds.SHOCKWAVE, pt);
+        float age = Math.max(CastAnims.profileAge(p.getId(), CastProfilesIds.SHOCKWAVE, pt), CastAnims.profileAge(p.getId(), CastProfilesIds.SPIRE, pt));
         if (age < 0 || age > 9 || !mc.options.getCameraType().isFirstPerson()) return false;
         int k = 1;
         while (k < KEYS.length - 1 && age > KEYS[k][0]) k++;

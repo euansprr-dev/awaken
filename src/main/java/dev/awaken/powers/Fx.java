@@ -40,14 +40,20 @@ public final class Fx {
         PowerFxDefs.Def def = PowerFxDefs.get(c.type.path);
         FxStyle style = def != null ? def.style() : FxStyle.of(c.type.family);
         Emit e = new Emit(c.level, FxEvent.of(kind, style, at), at);
+        e.profiled = CastProfiles.byPower(c.type.path) != null;
         e.b.caster(c.player).seed(c.player.getRandom().nextInt()).variant(c.variant);
         e.power = c.powerLevel;
         e.caster = c.player;
         CastProfiles.Profile prof = CastProfiles.byPower(c.type.path);
         if (def != null) {
             // a power with a cast profile (docs/power-anims/PLAN.md) carries its beat instead of a family pose
-            if (prof != null && kind == def.windup()) e.b.profile(prof.id(), CastProfiles.BEGIN);
-            else if (prof != null && kind == def.release()) e.b.profile(prof.id(), CastProfiles.RELEASE);
+            if (prof != null && kind == def.windup()) {
+                e.b.profile(prof.id(), CastProfiles.BEGIN);
+                c.poseSent = true;
+            } else if (prof != null && kind == def.release()) {
+                e.b.profile(prof.id(), CastProfiles.RELEASE);
+                c.poseSent = true;
+            }
             else if (kind == def.release() && def.anim() != CastAnim.NONE) e.b.anim(def.anim());
             else if (kind == def.windup() && def.windAnim() != null) e.b.anim(def.windAnim());
             if (def.ultimate()) {
@@ -74,6 +80,7 @@ public final class Fx {
         private @Nullable Entity caster;
         private int power = 1;
         private boolean ultBeat;
+        private boolean profiled;
         private double range = RANGE;
 
         Emit(ServerLevel level, FxEvent.Builder b, Vec3 origin) {
@@ -141,12 +148,12 @@ public final class Fx {
         }
 
         public Emit anim(CastAnim a) {
-            b.anim(a);
+            if (!profiled) b.anim(a); // a power with a cast profile has its own poses: a family pose here would replace them
             return this;
         }
 
         public Emit noAnim() {
-            b.anim(CastAnim.NONE);
+            if (!profiled) b.anim(CastAnim.NONE); // a profile's beat marks stay: a second effect of the release kind marking it again is harmless
             return this;
         }
 

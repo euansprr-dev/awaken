@@ -50,6 +50,13 @@ final class PowerCastTests {
         StringBuilder errors = new StringBuilder();
         Map<String, FpClipSet.Clip> fp = FpClipSet.load(errors);
         h.assertTrue(errors.isEmpty(), "first-person clips read: " + errors);
+        JsonObject looks;
+        try (InputStream in = PowerCastTests.class.getResourceAsStream("/assets/awaken/lens/looks_powers.json")) {
+            h.assertTrue(in != null, "missing assets/awaken/lens/looks_powers.json");
+            looks = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject().getAsJsonObject("looks");
+        } catch (java.io.IOException ex) {
+            throw new IllegalStateException(ex);
+        }
         Set<Integer> ids = new HashSet<>();
         for (CastProfiles.Profile p : CastProfiles.all()) {
             h.assertTrue(ids.add(p.id()) && CastProfiles.byId(p.id()) == p && CastProfiles.byPower("awaken:" + p.power()) == p, p.power() + ": ids and lookups agree");
@@ -75,6 +82,8 @@ final class PowerCastTests {
             boolean beginLoops = anims.getAsJsonObject(p.begin3p()).has("loop");
             h.assertTrue(beginLoops || hasKeyAt(anims.getAsJsonObject(p.begin3p()), p.release() / 20.0), p.power() + ": " + p.begin3p() + " has a key on the release tick " + p.release());
             h.assertTrue(p.windup() == 0 || p.windup() == p.release(), p.power() + ": a wind-up ends on the release tick");
+            h.assertTrue(p.lens() == null || looks.has(p.lens()), p.power() + ": its Lens look " + p.lens() + " exists");
+            h.assertTrue(p.beginSound() == null || net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.containsKey(net.minecraft.resources.Identifier.parse(p.beginSound())), p.power() + ": its begin sound exists");
             h.assertTrue(CastProfiles.MOMENTS.contains(p.moment()) && CastProfiles.MOMENTS.contains(p.endMoment()), p.power() + ": its screen moments exist");
             // first person: the clips exist; the begin clip says its release (the plant, the hold) on the profile's tick
             for (String n : p.hold1p() == null ? List.of(p.begin1p()) : List.of(p.begin1p(), p.hold1p())) {

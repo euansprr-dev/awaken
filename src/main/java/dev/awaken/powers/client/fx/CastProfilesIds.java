@@ -8,4 +8,5 @@ final class CastProfilesIds {
 
     static final int SHOCKWAVE = CastProfiles.byPower("shockwave").id();
     static final int BEAM = CastProfiles.byPower("beam").id();
+    static final int SPIRE = CastProfiles.byPower("spire").id();
 }

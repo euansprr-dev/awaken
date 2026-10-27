@@ -83,6 +83,7 @@ public final class FxClient {
             FxWorld.tick();
             CastAnims.tick();
             FxScreen.tick();
+            CastLens.tick();
             drainDeferred();
         } catch (RuntimeException ex) {
             // effects must never take the game down: drop them all and carry on
@@ -104,6 +105,7 @@ public final class FxClient {
         FxWorld.reset();
         CastAnims.reset();
         FxScreen.reset();
+        CastLens.reset();
     }
 
     /** An FX event from the server. */

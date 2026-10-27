@@ -31,10 +31,16 @@
     "subtitle": "subtitles.awaken.power.slam",
     "sounds": [
       {
-        "name": "minecraft:item.mace.smash_ground_heavy",
-        "type": "event",
-        "pitch": 0.9,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_slam_0",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "awaken:powers/power_kit_slam_1",
+        "attenuation_distance": 32
+      },
+      {
+        "name": "awaken:powers/power_kit_slam_2",
+        "attenuation_distance": 32
       }
     ]
   },
@@ -42,16 +48,16 @@
     "subtitle": "subtitles.awaken.power.whoosh",
     "sounds": [
       {
-        "name": "minecraft:entity.breeze.wind_burst",
-        "type": "event",
-        "pitch": 1.5,
-        "volume": 0.6
+        "name": "awaken:powers/power_kit_whoosh_0",
+        "attenuation_distance": 18
       },
       {
-        "name": "minecraft:item.trident.riptide_1",
-        "type": "event",
-        "pitch": 1.6,
-        "volume": 0.4
+        "name": "awaken:powers/power_kit_whoosh_1",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:powers/power_kit_whoosh_2",
+        "attenuation_distance": 18
       }
     ]
   },
@@ -59,16 +65,16 @@
     "subtitle": "subtitles.awaken.power.punch",
     "sounds": [
       {
-        "name": "minecraft:entity.player.attack.strong",
-        "type": "event",
-        "pitch": 0.7,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_punch_0",
+        "attenuation_distance": 22
       },
       {
-        "name": "minecraft:item.mace.smash_ground",
-        "type": "event",
-        "pitch": 1.2,
-        "volume": 0.6
+        "name": "awaken:powers/power_kit_punch_1",
+        "attenuation_distance": 22
+      },
+      {
+        "name": "awaken:powers/power_kit_punch_2",
+        "attenuation_distance": 22
       }
     ]
   },
@@ -76,10 +82,12 @@
     "subtitle": "subtitles.awaken.power.charge_up",
     "sounds": [
       {
-        "name": "minecraft:block.respawn_anchor.charge",
-        "type": "event",
-        "pitch": 1.4,
-        "volume": 0.7
+        "name": "awaken:powers/power_kit_charge_up_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:powers/power_kit_charge_up_1",
+        "attenuation_distance": 20
       }
     ]
   },
@@ -87,16 +95,12 @@
     "subtitle": "subtitles.awaken.power.rip",
     "sounds": [
       {
-        "name": "minecraft:block.rooted_dirt.break",
-        "type": "event",
-        "pitch": 0.5,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_rip_0",
+        "attenuation_distance": 24
       },
       {
-        "name": "minecraft:block.gravel.break",
-        "type": "event",
-        "pitch": 0.6,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_rip_1",
+        "attenuation_distance": 24
       }
     ]
   },
@@ -104,10 +108,16 @@
     "subtitle": "subtitles.awaken.power.impact",
     "sounds": [
       {
-        "name": "minecraft:item.mace.smash_ground",
-        "type": "event",
-        "pitch": 1.0,
-        "volume": 0.9
+        "name": "awaken:powers/power_kit_impact_0",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:powers/power_kit_impact_1",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:powers/power_kit_impact_2",
+        "attenuation_distance": 24
       }
     ]
   },
@@ -115,10 +125,12 @@
     "subtitle": "subtitles.awaken.power.shockwave",
     "sounds": [
       {
-        "name": "minecraft:entity.wind_charge.wind_burst",
-        "type": "event",
-        "pitch": 0.6,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_shockwave_0",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:powers/power_kit_shockwave_1",
+        "attenuation_distance": 28
       }
     ]
   },
@@ -126,16 +138,12 @@
     "subtitle": "subtitles.awaken.power.brace",
     "sounds": [
       {
-        "name": "minecraft:item.armor.equip_iron",
-        "type": "event",
-        "pitch": 0.7,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_brace_0",
+        "attenuation_distance": 22
       },
       {
-        "name": "minecraft:block.anvil.land",
-        "type": "event",
-        "pitch": 1.6,
-        "volume": 0.3
+        "name": "awaken:powers/power_kit_brace_1",
+        "attenuation_distance": 22
       }
     ]
   },
@@ -143,10 +151,12 @@
     "subtitle": "subtitles.awaken.power.thunder",
     "sounds": [
       {
-        "name": "minecraft:entity.lightning_bolt.thunder",
-        "type": "event",
-        "pitch": 1.0,
-        "volume": 0.6
+        "name": "awaken:powers/power_kit_thunder_0",
+        "attenuation_distance": 48
+      },
+      {
+        "name": "awaken:powers/power_kit_thunder_1",
+        "attenuation_distance": 48
       }
     ]
   },
@@ -154,10 +164,16 @@
     "subtitle": "subtitles.awaken.power.zap",
     "sounds": [
       {
-        "name": "minecraft:entity.lightning_bolt.impact",
-        "type": "event",
-        "pitch": 1.6,
-        "volume": 0.7
+        "name": "awaken:powers/power_kit_zap_0",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:powers/power_kit_zap_1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:powers/power_kit_zap_2",
+        "attenuation_distance": 28
       }
     ]
   },
@@ -165,16 +181,12 @@
     "subtitle": "subtitles.awaken.power.flow_start",
     "sounds": [
       {
-        "name": "minecraft:block.beacon.activate",
-        "type": "event",
-        "pitch": 2.0,
-        "volume": 0.8
+        "name": "awaken:powers/power_kit_flow_start_0",
+        "attenuation_distance": 24
       },
       {
-        "name": "minecraft:item.trident.riptide_2",
-        "type": "event",
-        "pitch": 0.6,
-        "volume": 0.5
+        "name": "awaken:powers/power_kit_flow_start_1",
+        "attenuation_distance": 24
       }
     ]
   },
@@ -182,10 +194,12 @@
     "subtitle": "subtitles.awaken.power.flow_end",
     "sounds": [
       {
-        "name": "minecraft:block.beacon.deactivate",
-        "type": "event",
-        "pitch": 2.0,
-        "volume": 0.7
+        "name": "awaken:powers/power_kit_flow_end_0",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:powers/power_kit_flow_end_1",
+        "attenuation_distance": 24
       }
     ]
   },
@@ -193,10 +207,12 @@
     "subtitle": "subtitles.awaken.power.hover",
     "sounds": [
       {
-        "name": "minecraft:entity.breeze.jump",
-        "type": "event",
-        "pitch": 1.2,
-        "volume": 0.7
+        "name": "awaken:powers/power_kit_hover_0",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:powers/power_kit_hover_1",
+        "attenuation_distance": 18
       }
     ]
   },
@@ -204,16 +220,12 @@
     "subtitle": "subtitles.awaken.power.gravity",
     "sounds": [
       {
-        "name": "minecraft:entity.warden.heartbeat",
-        "type": "event",
-        "pitch": 0.6,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_gravity_0",
+        "attenuation_distance": 26
       },
       {
-        "name": "minecraft:block.beacon.ambient",
-        "type": "event",
-        "pitch": 0.5,
-        "volume": 0.8
+        "name": "awaken:powers/power_kit_gravity_1",
+        "attenuation_distance": 26
       }
     ]
   },
@@ -221,10 +233,12 @@
     "subtitle": "subtitles.awaken.power.throw",
     "sounds": [
       {
-        "name": "minecraft:entity.breeze.shoot",
-        "type": "event",
-        "pitch": 0.8,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_throw_0",
+        "attenuation_distance": 22
+      },
+      {
+        "name": "awaken:powers/power_kit_throw_1",
+        "attenuation_distance": 22
       }
     ]
   },
@@ -232,16 +246,12 @@
     "subtitle": "subtitles.awaken.power.beam",
     "sounds": [
       {
-        "name": "minecraft:block.beacon.ambient",
-        "type": "event",
-        "pitch": 1.8,
-        "volume": 0.8
+        "name": "awaken:powers/power_kit_beam_0",
+        "attenuation_distance": 22
       },
       {
-        "name": "minecraft:block.conduit.ambient.short",
-        "type": "event",
-        "pitch": 1.6,
-        "volume": 0.6
+        "name": "awaken:powers/power_kit_beam_1",
+        "attenuation_distance": 22
       }
     ]
   },
@@ -249,16 +259,12 @@
     "subtitle": "subtitles.awaken.power.nova",
     "sounds": [
       {
-        "name": "minecraft:entity.generic.explode",
-        "type": "event",
-        "pitch": 1.4,
-        "volume": 0.8
+        "name": "awaken:powers/power_kit_nova_0",
+        "attenuation_distance": 36
       },
       {
-        "name": "minecraft:block.beacon.power_select",
-        "type": "event",
-        "pitch": 2.0,
-        "volume": 0.6
+        "name": "awaken:powers/power_kit_nova_1",
+        "attenuation_distance": 36
       }
     ]
   },
@@ -266,16 +272,12 @@
     "subtitle": "subtitles.awaken.power.barrier",
     "sounds": [
       {
-        "name": "minecraft:block.beacon.power_select",
-        "type": "event",
-        "pitch": 1.6,
-        "volume": 0.7
+        "name": "awaken:powers/power_kit_barrier_0",
+        "attenuation_distance": 22
       },
       {
-        "name": "minecraft:block.amethyst_block.chime",
-        "type": "event",
-        "pitch": 1.2,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_barrier_1",
+        "attenuation_distance": 22
       }
     ]
   },
@@ -283,10 +285,12 @@
     "subtitle": "subtitles.awaken.power.barrier_break",
     "sounds": [
       {
-        "name": "minecraft:block.glass.break",
-        "type": "event",
-        "pitch": 0.8,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_barrier_break_0",
+        "attenuation_distance": 26
+      },
+      {
+        "name": "awaken:powers/power_kit_barrier_break_1",
+        "attenuation_distance": 26
       }
     ]
   },
@@ -294,16 +298,16 @@
     "subtitle": "subtitles.awaken.power.shot",
     "sounds": [
       {
-        "name": "minecraft:entity.shulker.shoot",
-        "type": "event",
-        "pitch": 1.2,
-        "volume": 0.9
+        "name": "awaken:powers/power_kit_shot_0",
+        "attenuation_distance": 26
       },
       {
-        "name": "minecraft:entity.blaze.shoot",
-        "type": "event",
-        "pitch": 1.6,
-        "volume": 0.4
+        "name": "awaken:powers/power_kit_shot_1",
+        "attenuation_distance": 26
+      },
+      {
+        "name": "awaken:powers/power_kit_shot_2",
+        "attenuation_distance": 26
       }
     ]
   },
@@ -311,16 +315,12 @@
     "subtitle": "subtitles.awaken.power.overload",
     "sounds": [
       {
-        "name": "minecraft:block.respawn_anchor.charge",
-        "type": "event",
-        "pitch": 0.6,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_overload_0",
+        "attenuation_distance": 44
       },
       {
-        "name": "minecraft:entity.warden.sonic_charge",
-        "type": "event",
-        "pitch": 1.4,
-        "volume": 0.6
+        "name": "awaken:powers/power_kit_overload_1",
+        "attenuation_distance": 44
       }
     ]
   },
@@ -328,10 +328,12 @@
     "subtitle": "subtitles.awaken.power.shadow",
     "sounds": [
       {
-        "name": "minecraft:entity.enderman.teleport",
-        "type": "event",
-        "pitch": 0.7,
-        "volume": 0.8
+        "name": "awaken:powers/power_kit_shadow_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:powers/power_kit_shadow_1",
+        "attenuation_distance": 20
       }
     ]
   },
@@ -339,10 +341,12 @@
     "subtitle": "subtitles.awaken.power.cloak",
     "sounds": [
       {
-        "name": "minecraft:entity.illusioner.prepare_blindness",
-        "type": "event",
-        "pitch": 1.2,
-        "volume": 0.9
+        "name": "awaken:powers/power_kit_cloak_0",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:powers/power_kit_cloak_1",
+        "attenuation_distance": 18
       }
     ]
   },
@@ -350,10 +354,12 @@
     "subtitle": "subtitles.awaken.power.summon",
     "sounds": [
       {
-        "name": "minecraft:entity.evoker.prepare_summon",
-        "type": "event",
-        "pitch": 0.8,
-        "volume": 0.9
+        "name": "awaken:powers/power_kit_summon_0",
+        "attenuation_distance": 26
+      },
+      {
+        "name": "awaken:powers/power_kit_summon_1",
+        "attenuation_distance": 26
       }
     ]
   },
@@ -361,10 +367,12 @@
     "subtitle": "subtitles.awaken.power.mind",
     "sounds": [
       {
-        "name": "minecraft:entity.illusioner.cast_spell",
-        "type": "event",
-        "pitch": 1.2,
-        "volume": 0.9
+        "name": "awaken:powers/power_kit_mind_0",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:powers/power_kit_mind_1",
+        "attenuation_distance": 18
       }
     ]
   },
@@ -372,16 +380,12 @@
     "subtitle": "subtitles.awaken.power.pop",
     "sounds": [
       {
-        "name": "minecraft:entity.illusioner.mirror_move",
-        "type": "event",
-        "pitch": 1.2,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_pop_0",
+        "attenuation_distance": 18
       },
       {
-        "name": "minecraft:entity.firework_rocket.blast",
-        "type": "event",
-        "pitch": 0.8,
-        "volume": 0.5
+        "name": "awaken:powers/power_kit_pop_1",
+        "attenuation_distance": 18
       }
     ]
   },
@@ -389,16 +393,16 @@
     "subtitle": "subtitles.awaken.power.build",
     "sounds": [
       {
-        "name": "minecraft:block.amethyst_block.place",
-        "type": "event",
-        "pitch": 0.8,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_build_0",
+        "attenuation_distance": 22
       },
       {
-        "name": "minecraft:block.stone.place",
-        "type": "event",
-        "pitch": 1.2,
-        "volume": 0.6
+        "name": "awaken:powers/power_kit_build_1",
+        "attenuation_distance": 22
+      },
+      {
+        "name": "awaken:powers/power_kit_build_2",
+        "attenuation_distance": 22
       }
     ]
   },
@@ -406,16 +410,12 @@
     "subtitle": "subtitles.awaken.power.collapse",
     "sounds": [
       {
-        "name": "minecraft:block.heavy_core.fall",
-        "type": "event",
-        "pitch": 0.6,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_collapse_0",
+        "attenuation_distance": 36
       },
       {
-        "name": "minecraft:entity.zombie.attack_iron_door",
-        "type": "event",
-        "pitch": 0.6,
-        "volume": 0.6
+        "name": "awaken:powers/power_kit_collapse_1",
+        "attenuation_distance": 36
       }
     ]
   },
@@ -423,10 +423,12 @@
     "subtitle": "subtitles.awaken.power.construct_fade",
     "sounds": [
       {
-        "name": "minecraft:block.amethyst_block.break",
-        "type": "event",
-        "pitch": 1.6,
-        "volume": 0.5
+        "name": "awaken:powers/power_kit_construct_fade_0",
+        "attenuation_distance": 20
+      },
+      {
+        "name": "awaken:powers/power_kit_construct_fade_1",
+        "attenuation_distance": 20
       }
     ]
   },
@@ -434,16 +436,12 @@
     "subtitle": "subtitles.awaken.power.grapple",
     "sounds": [
       {
-        "name": "minecraft:item.crossbow.shoot",
-        "type": "event",
-        "pitch": 1.4,
-        "volume": 0.9
+        "name": "awaken:powers/power_kit_grapple_0",
+        "attenuation_distance": 24
       },
       {
-        "name": "minecraft:entity.fishing_bobber.retrieve",
-        "type": "event",
-        "pitch": 0.8,
-        "volume": 0.8
+        "name": "awaken:powers/power_kit_grapple_1",
+        "attenuation_distance": 24
       }
     ]
   },
@@ -451,10 +449,12 @@
     "subtitle": "subtitles.awaken.power.jet",
     "sounds": [
       {
-        "name": "minecraft:entity.firework_rocket.launch",
-        "type": "event",
-        "pitch": 0.8,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_jet_0",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:powers/power_kit_jet_1",
+        "attenuation_distance": 24
       }
     ]
   },
@@ -462,10 +462,16 @@
     "subtitle": "subtitles.awaken.power.drone_shot",
     "sounds": [
       {
-        "name": "minecraft:entity.blaze.shoot",
-        "type": "event",
-        "pitch": 2.0,
-        "volume": 0.4
+        "name": "awaken:powers/power_kit_drone_shot_0",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:powers/power_kit_drone_shot_1",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:powers/power_kit_drone_shot_2",
+        "attenuation_distance": 24
       }
     ]
   },
@@ -473,10 +479,12 @@
     "subtitle": "subtitles.awaken.power.rail",
     "sounds": [
       {
-        "name": "minecraft:entity.warden.sonic_boom",
-        "type": "event",
-        "pitch": 1.4,
-        "volume": 0.8
+        "name": "awaken:powers/power_kit_rail_0",
+        "attenuation_distance": 56
+      },
+      {
+        "name": "awaken:powers/power_kit_rail_1",
+        "attenuation_distance": 56
       }
     ]
   },
@@ -484,16 +492,12 @@
     "subtitle": "subtitles.awaken.power.nanite",
     "sounds": [
       {
-        "name": "minecraft:item.armor.equip_netherite",
-        "type": "event",
-        "pitch": 1.2,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_nanite_0",
+        "attenuation_distance": 20
       },
       {
-        "name": "minecraft:block.copper.place",
-        "type": "event",
-        "pitch": 1.4,
-        "volume": 0.6
+        "name": "awaken:powers/power_kit_nanite_1",
+        "attenuation_distance": 20
       }
     ]
   },
@@ -501,16 +505,12 @@
     "subtitle": "subtitles.awaken.power.spirit",
     "sounds": [
       {
-        "name": "minecraft:particle.soul_escape",
-        "type": "event",
-        "pitch": 1.0,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_spirit_0",
+        "attenuation_distance": 22
       },
       {
-        "name": "minecraft:block.amethyst_block.chime",
-        "type": "event",
-        "pitch": 0.6,
-        "volume": 0.8
+        "name": "awaken:powers/power_kit_spirit_1",
+        "attenuation_distance": 22
       }
     ]
   },
@@ -518,16 +518,12 @@
     "subtitle": "subtitles.awaken.power.heal",
     "sounds": [
       {
-        "name": "minecraft:block.amethyst_block.chime",
-        "type": "event",
-        "pitch": 1.4,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_heal_0",
+        "attenuation_distance": 22
       },
       {
-        "name": "minecraft:entity.player.levelup",
-        "type": "event",
-        "pitch": 2.0,
-        "volume": 0.2
+        "name": "awaken:powers/power_kit_heal_1",
+        "attenuation_distance": 22
       }
     ]
   },
@@ -535,16 +531,12 @@
     "subtitle": "subtitles.awaken.power.eye",
     "sounds": [
       {
-        "name": "minecraft:block.beacon.activate",
-        "type": "event",
-        "pitch": 1.6,
-        "volume": 0.6
+        "name": "awaken:powers/power_kit_eye_0",
+        "attenuation_distance": 20
       },
       {
-        "name": "minecraft:entity.ender_eye.launch",
-        "type": "event",
-        "pitch": 0.8,
-        "volume": 0.6
+        "name": "awaken:powers/power_kit_eye_1",
+        "attenuation_distance": 20
       }
     ]
   },
@@ -552,16 +544,12 @@
     "subtitle": "subtitles.awaken.power.lash",
     "sounds": [
       {
-        "name": "minecraft:item.trident.throw",
-        "type": "event",
-        "pitch": 1.4,
-        "volume": 0.8
+        "name": "awaken:powers/power_kit_lash_0",
+        "attenuation_distance": 24
       },
       {
-        "name": "minecraft:entity.fishing_bobber.retrieve",
-        "type": "event",
-        "pitch": 1.2,
-        "volume": 0.8
+        "name": "awaken:powers/power_kit_lash_1",
+        "attenuation_distance": 24
       }
     ]
   },
@@ -569,10 +557,12 @@
     "subtitle": "subtitles.awaken.power.ward",
     "sounds": [
       {
-        "name": "minecraft:block.conduit.activate",
-        "type": "event",
-        "pitch": 1.2,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_ward_0",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:powers/power_kit_ward_1",
+        "attenuation_distance": 24
       }
     ]
   },
@@ -580,16 +570,12 @@
     "subtitle": "subtitles.awaken.power.void",
     "sounds": [
       {
-        "name": "minecraft:entity.warden.heartbeat",
-        "type": "event",
-        "pitch": 0.5,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_void_0",
+        "attenuation_distance": 36
       },
       {
-        "name": "minecraft:particle.soul_escape",
-        "type": "event",
-        "pitch": 0.5,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_void_1",
+        "attenuation_distance": 36
       }
     ]
   },
@@ -597,16 +583,12 @@
     "subtitle": "subtitles.awaken.power.dream",
     "sounds": [
       {
-        "name": "minecraft:block.amethyst_block.resonate",
-        "type": "event",
-        "pitch": 1.4,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_dream_0",
+        "attenuation_distance": 20
       },
       {
-        "name": "minecraft:block.chorus_flower.grow",
-        "type": "event",
-        "pitch": 1.2,
-        "volume": 0.8
+        "name": "awaken:powers/power_kit_dream_1",
+        "attenuation_distance": 20
       }
     ]
   },
@@ -614,16 +596,12 @@
     "subtitle": "subtitles.awaken.power.frost",
     "sounds": [
       {
-        "name": "minecraft:block.powder_snow.break",
-        "type": "event",
-        "pitch": 0.8,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_frost_0",
+        "attenuation_distance": 26
       },
       {
-        "name": "minecraft:block.glass.break",
-        "type": "event",
-        "pitch": 1.6,
-        "volume": 0.4
+        "name": "awaken:powers/power_kit_frost_1",
+        "attenuation_distance": 26
       }
     ]
   },
@@ -631,16 +609,12 @@
     "subtitle": "subtitles.awaken.power.ember",
     "sounds": [
       {
-        "name": "minecraft:item.firecharge.use",
-        "type": "event",
-        "pitch": 1.2,
-        "volume": 0.8
+        "name": "awaken:powers/power_kit_ember_0",
+        "attenuation_distance": 22
       },
       {
-        "name": "minecraft:block.fire.ambient",
-        "type": "event",
-        "pitch": 1.0,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_ember_1",
+        "attenuation_distance": 22
       }
     ]
   },
@@ -648,10 +622,12 @@
     "subtitle": "subtitles.awaken.power.steam",
     "sounds": [
       {
-        "name": "minecraft:block.fire.extinguish",
-        "type": "event",
-        "pitch": 0.8,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_steam_0",
+        "attenuation_distance": 22
+      },
+      {
+        "name": "awaken:powers/power_kit_steam_1",
+        "attenuation_distance": 22
       }
     ]
   },
@@ -659,10 +635,12 @@
     "subtitle": "subtitles.awaken.power.blast",
     "sounds": [
       {
-        "name": "minecraft:entity.generic.explode",
-        "type": "event",
-        "pitch": 1.0,
-        "volume": 0.9
+        "name": "awaken:powers/power_kit_blast_0",
+        "attenuation_distance": 40
+      },
+      {
+        "name": "awaken:powers/power_kit_blast_1",
+        "attenuation_distance": 40
       }
     ]
   },
@@ -670,10 +648,12 @@
     "subtitle": "subtitles.awaken.power.stun",
     "sounds": [
       {
-        "name": "minecraft:entity.lightning_bolt.impact",
-        "type": "event",
-        "pitch": 2.0,
-        "volume": 0.5
+        "name": "awaken:powers/power_kit_stun_0",
+        "attenuation_distance": 22
+      },
+      {
+        "name": "awaken:powers/power_kit_stun_1",
+        "attenuation_distance": 22
       }
     ]
   },
@@ -681,10 +661,12 @@
     "subtitle": "subtitles.awaken.power.shatter",
     "sounds": [
       {
-        "name": "minecraft:block.glass.break",
-        "type": "event",
-        "pitch": 1.0,
-        "volume": 1.0
+        "name": "awaken:powers/power_kit_shatter_0",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:powers/power_kit_shatter_1",
+        "attenuation_distance": 24
       }
     ]
   },

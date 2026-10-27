@@ -88,23 +88,6 @@
    "hold1p": null
   },
   {
-   "power": "leap",
-   "windup": 0,
-   "release": 2,
-   "begin3p": "p_leap",
-   "hold3p": null,
-   "holdAt": 0,
-   "end3p": null,
-   "channel": false,
-   "moment": "push",
-   "endMoment": "none",
-   "lens": null,
-   "origin": "palm",
-   "beginSound": null,
-   "begin1p": "fp_p_leap",
-   "hold1p": null
-  },
-  {
    "power": "dash",
    "windup": 0,
    "release": 3,
