@@ -97,8 +97,16 @@ public final class SettlementGrid {
 
     /** Every anchor within a radius of a point (the first hamlet, the grid's, the regions' towns and wayhouses), nearest first. */
     public static List<Anchor> near(long worldSeed, int x, int z, int radius, int[] centre) {
+        return near(worldSeed, x, z, radius, centre, true);
+    }
+
+    /**
+     * As {@link #near(long, int, int, int, int[])}; with {@code wait} false only the towns and wayhouses whose sites are
+     * already found (the server thread's searches: it never waits for a site search; the rest are found for a later one).
+     */
+    public static List<Anchor> near(long worldSeed, int x, int z, int radius, int[] centre, boolean wait) {
         List<Anchor> out = gridNear(worldSeed, x, z, radius, centre);
-        out.addAll(dev.awaken.village.road.RoadNet.anchorsNear(x, z, radius));
+        out.addAll(dev.awaken.village.road.RoadNet.anchorsNear(x, z, radius, wait));
         out.sort((a, b) -> Double.compare(Math.hypot(a.x() - x, a.z() - z), Math.hypot(b.x() - x, b.z() - z)));
         return out;
     }

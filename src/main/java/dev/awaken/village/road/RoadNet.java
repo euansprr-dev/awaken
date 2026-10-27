@@ -170,8 +170,12 @@ public final class RoadNet {
         return out;
     }
 
-    /** The town and wayhouse anchors within a radius of a point (for the settlement grid's searches). */
-    public static List<SettlementGrid.Anchor> anchorsNear(int x, int z, int radius) {
+    /**
+     * The town and wayhouse anchors within a radius of a point (for the settlement grid's searches). With {@code wait}
+     * false (the server thread's own searches round the players) only the regions whose sites are already found answer;
+     * the others are found on the road planner for a later search, so the server thread never plans.
+     */
+    public static List<SettlementGrid.Anchor> anchorsNear(int x, int z, int radius, boolean wait) {
         RoadWorld w = RoadWorld.get();
         if (w == null) return List.of();
         long t0 = System.nanoTime();
@@ -180,10 +184,36 @@ public final class RoadNet {
             for (int j = Math.floorDiv(z - radius - 220, RegionMap.PITCH); j <= Math.floorDiv(z + radius + 220, RegionMap.PITCH); j++) {
                 int[] h = w.regions.heart(i, j);
                 if (Math.hypot(h[0] - x, h[1] - z) > radius + 220 || w.regions.swallowed(i, j)) continue;
+                if (!wait && !sitesKnown(i, j)) {
+                    sitesSoon(w, i, j);
+                    continue;
+                }
                 for (SettlementGrid.Anchor a : sites(w, i, j)) if (a != null && Math.hypot(a.x() - x, a.z() - z) <= radius) out.add(a);
             }
         if (RoadTimer.onServer()) RoadTimer.server(System.nanoTime() - t0, "the towns' and wayhouses' sites within " + radius + " of " + x + "," + z);
         return out;
+    }
+
+    private static boolean sitesKnown(int gx, int gz) {
+        var f = SITES.get(cellKey(gx, gz));
+        return f != null && f.isDone();
+    }
+
+    private static final java.util.Set<Long> SITES_SOON = ConcurrentHashMap.newKeySet();
+
+    /** A region's sites, found on the road planner (once; nothing if another thread is already finding them). */
+    private static void sitesSoon(RoadWorld w, int gx, int gz) {
+        long key = cellKey(gx, gz);
+        if (SITES.containsKey(key) || !SITES_SOON.add(key)) return;
+        planner().execute(() -> {
+            try {
+                sites(w, gx, gz);
+            } catch (RuntimeException e) {
+                Awaken.LOG.error("[road] finding region {} {}'s sites failed", gx, gz, e);
+            } finally {
+                SITES_SOON.remove(key);
+            }
+        });
     }
 
     /** The first town a player meets: its anchor, or null (no town in reach of the road north, or no city). */
@@ -411,12 +441,7 @@ public final class RoadNet {
         RoadWorld w = RoadWorld.get();
         if (w == null) return;
         int behind = 0;
-        if (ahead == null) ahead = java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
-            Thread t = new Thread(r, "Awaken road planner");
-            t.setDaemon(true);
-            t.setPriority(Thread.MIN_PRIORITY);
-            return t;
-        });
+        var pool = planner();
         for (net.minecraft.server.level.ServerPlayer p : server.overworld().players()) {
             int pcx = p.getBlockX() >> 4, pcz = p.getBlockZ() >> 4;
             int reach = AHEAD / 16 / Road.LATTICE + 1;
@@ -436,7 +461,7 @@ public final class RoadNet {
             for (int k = 0; k < Math.min(PER_PASS, want.size()); k++) {
                 long[] u = want.get(k);
                 QUEUED.add(u[3]);
-                ahead.submit(() -> {
+                pool.submit(() -> {
                     try {
                         startsIn((int) u[1], (int) u[2]);
                     } catch (RuntimeException e) {
@@ -450,14 +475,25 @@ public final class RoadNet {
         unknown = behind;
     }
 
+    private static synchronized java.util.concurrent.ExecutorService planner() {
+        if (ahead == null) ahead = java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "Awaken road planner");
+            t.setDaemon(true);
+            t.setPriority(Thread.MIN_PRIORITY);
+            return t;
+        });
+        return ahead;
+    }
+
     /** Lattice chunks within reach of the players whose legs weren't known at the last pass (the timer's line). */
     private static int unknown;
 
     /** The planner thread stops with the server (a pass under way finishes into the cleared caches harmlessly). */
-    public static void stopAhead() {
+    public static synchronized void stopAhead() {
         if (ahead != null) ahead.shutdownNow();
         ahead = null;
         QUEUED.clear();
+        SITES_SOON.clear();
     }
 
     // ---- what the network looks like, for commands and the survey -------------------------------------------------------
