@@ -95,7 +95,7 @@ final class LivingPlates {
 
     /** Whether the plate carries a level (SPEC §21.10: an animal that can't hurt you is a pig, not "Lv 68"). */
     static boolean shownLevel(CreatureTag tag) {
-        return tag.kind() != CreatureTag.Kind.PASSIVE && tag.kind() != CreatureTag.Kind.AMBIENT;
+        return dev.awaken.living.combat.PlateRules.showsLevel(tag);
     }
 
     private static void write(HoloCanvas cv) {

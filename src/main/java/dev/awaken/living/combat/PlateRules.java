@@ -28,6 +28,14 @@ public final class PlateRules {
 
     public static final int TRIVIAL_GAP = 10, FIGHT_GAP = 5, HARD_GAP = 15;
 
+    /**
+     * Whether a creature's plate shows its level chip: every creature that has one, animals and small wildlife included (Euan,
+     * 2026-10-27: a cow in E land read as vanilla with no level). A meek animal's chip is its land's level and reads grey or blue.
+     */
+    public static boolean showsLevel(dev.awaken.core.api.CreatureTag tag) {
+        return tag.kind() != dev.awaken.core.api.CreatureTag.Kind.NONE && tag.level() > 0;
+    }
+
     public static Heat heat(int creatureLevel, int mine) {
         int gap = creatureLevel - mine;
         return gap <= -TRIVIAL_GAP ? Heat.TRIVIAL : gap < FIGHT_GAP ? Heat.EASY : gap < HARD_GAP ? Heat.FIGHT : Heat.HARD;
