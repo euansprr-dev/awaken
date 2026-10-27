@@ -4025,8 +4025,8 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - Budgets registered by modules: `XpBudget.register(source, perTenMinutes)`.
 - Gate floor rewards × `Curve.WILDS_TRIM` (0.80; everything priced from a floor reward follows: anomalies, camps).
   Hunting, crafts and camps pay × `LivingModule.wildsRank(rank)` after the budget: 1.0, except C 0.55 (C is the long
-  climb in gates too). tools/sim/pacing_sim.py carries the same model; balanced player: level 5 0.98 h, 10 3.9 h,
-  25 16.8 h, 50 51.2 h (the v2 target 55-60 moved to 50-60: the open world now pays through D and C), 135 101.8 h;
+  climb in gates too). tools/sim/pacing_sim.py carries the same model; balanced player: level 5 0.99 h, 10 3.9 h,
+  25 16.8 h, 50 51.3 h (the v2 target 55-60 moved to 50-60: the open world now pays through D and C), 135 101.9 h (elites by rank, §21.10);
   main power level 5 at player level 48; gate checks unchanged.
 - `Progression.onXpGranted(listener)`: every grant after scaling (player, XP, source, world key), for the stream.
 
@@ -4319,6 +4319,35 @@ roles, offsets, the API and the Hearth's calm stand. Decisions (numbers are the 
     5 minutes (the cooldown is per region); the Commons' wall warns a player 5+ below the local level; nothing inside the city's reserve.
 13. **Existing worlds** switch on at the next load (the field is a pure function of seed and centre); `awaken:living_regions` schema 2 adds `rules` (absent = 1: names keep the old band roll, new worlds name from their new level).
 14. **Order:** Phase 1 (1-8 but the loot of 8, 12, 13), Phase 2 (11), Phase 3 with the Arms and deep builders (9, 10, the loot of 8).
+
+**Phase 1 as built (2026-10-27, `pack/regions-plan`).**
+- `living.region.RegionMap` is the field: the numbers are `data/awaken/awaken/regions/reach.json` (read once from the classpath: the map is pure and
+  runs on worldgen threads), `ceilingAt(distance)`, `levelAt` (no allocation; about 1.6 µs a call against 0.3 µs, hearts' tempers cached per cell),
+  `rankOf(level)` (`Regions.bandOf` and the Atlas use it). A region's `band` is its land rank index (the heart's level), `low`/`high` the levels
+  its land spans (its heart and eight points half a pitch round it). `RegionService` is schema 2 with `rules` (a new world 2, a save without it 1):
+  rules 1 names regions by the old deal's band (kept in `RegionMap` for naming only) and follows the same levels. `RegionService.rulesOnDisk(server)`
+  reads the flag from `dimensions/minecraft/overworld/data/awaken/living_regions.dat` before the overworld loads, so `RoadWorld` (opened at
+  ServerAboutToStart) names regions the way the live map does.
+- Placed things: `FirstHamlet.search` tries spots at level ≤ 12 first (then any; the level is read with no biome tilt), `FirstTown.find` prefers
+  hearts at level ≤ 22 (then ≤ 32, then any), `Director.firstGate` caps the land at `max(level + 5, 12)` (then any way, then any land).
+- `village.SettledCalm` (registered in `VillageModule.init`): `Regions.addLevelExtra` drops creatures 6 levels within 24 blocks of a laid road
+  (easing to 0 by 60; `RoadNet.distanceWithin`), `Regions.addLevelCap` holds them at 10 (hamlet, wayhouse), 14 (village, mining town) or 18 (town)
+  within the settlement's radius + 96. Both act on creature levels (`Regions.creatureLevel`), not on `levelAt`.
+- Elites: `LivingModule.eliteChance(land level)` (0 / 2 / 4 / 5% by rank), read from `Regions.creatureLevel(NEUTRAL)` at the spawn so a Hearth's calm
+  counts, in `Creatures.tag` and `FaunaModule`. Dens and camps keep their own guards. The pacing sim carries `ELITE_BY_RANK` and `role_mix`; the balanced
+  player is level 5 at 0.99 h, 10 at 3.90, 25 at 16.83, 50 at 51.25, 135 at 101.93, every target passing (the hunt budget caps kill XP).
+- Plates: an animal (kinds PASSIVE and AMBIENT) shows its name and no level chip (`LivingPlates.shownLevel`); creatures still carry their level for XP.
+- Warnings (`RegionTracker`): every pass (40 ticks per player) a look of 150 blocks along the heading (the way they walked since the last pass if 3 blocks a
+  second or more, else the way they face); `aheadWarns(mine, here, ahead)` = 10 or more above and 3 or more above where they stand gives a CRITICAL
+  toast "Danger · <land>" with `body(...)` in plain words ("... about six times as tough as ones at your level and hit nearly four times as hard. Turn back, or go
+  in only to look."), once per land per 5 minutes (`WARNED` per player and region; it was one per player per 10 minutes at the IMPORTANT tier). In the Commons
+  outside the city's reserve a player 5 or more below the land is warned too; the region caption's danger flag and the Promise now read the land under the player
+  (`danger(p, land)`), and the Commons is no longer exempt.
+- Atlas: six rank colours and the legend 1 · 10 · 25 · 45 · 70 · 100 (`ZoneMap`, `AtlasScreen`); a region is coloured by the middle of its span.
+- Tests: `living_region_map` (ceiling, apron, slopes, tilt, determinism, rules 1), `living_region_placed`, `living_elite_by_rank`, `living_warning_ahead`,
+  `living_region_rules_saved`. Prototype and numbers: `docs/regions/proto/`, `docs/regions/results/`.
+- Not built yet: Phase 2 (the dread tint and sound, road posts), Phase 3 (parts and trophies by land, richer game, first-step discoveries), the Atlas's smooth shading (it
+  colours whole regions), the quiet vales' name ("the Rest").
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 
