@@ -1,0 +1,3 @@
+within 1800: biggest jump over 100 blocks  current median 59 P90 71 max 139 | proposed median 4 P90 5 max 6   ||  share of steps >10 levels: current 4.2%, proposed 0.0%
+within 3000: biggest jump over 100 blocks  current median 69 P90 114 max 144 | proposed median 8 P90 10 max 12   ||  share of steps >10 levels: current 6.8%, proposed 0.0%
+within 5000: biggest jump over 100 blocks  current median 126 P90 138 max 143 | proposed median 15 P90 18 max 23   ||  share of steps >10 levels: current 8.6%, proposed 0.4%
