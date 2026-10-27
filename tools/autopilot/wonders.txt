@@ -1,0 +1,73 @@
+# The wonders (SPEC 21.11): `cmd awaken living wonder goto <kind>` walks to 46 blocks south of the nearest wonder of a kind (it generates as the
+# chunks load, through the wonders feature, so this tours the real placement), facing it; one shot from the ground, one from above (spectator).
+# Look for: the wonder standing whole on the ground (no floating pieces, no pillars buried, the foot built up on a slope), clear of trees growing
+# through it, and reading as its name. Run on CI: tools/tour-ci.sh tools/autopilot/wonders.txt 2400
+world autopilot_wonders creative 20261027
+waitworld
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd gamerule advance_time false
+cmd time set 6000
+cmd gamerule awaken:fauna_spawning false
+cmd awaken living wonder goto bell_tree
+wait 500
+look 0 6
+shot wonder_bell_tree
+cmd gamemode spectator
+cmd tp @s ~ ~22 ~-24 facing ~ ~ ~-46
+wait 60
+shot wonder_bell_tree_high
+cmd gamemode creative
+cmd awaken living wonder goto boar_throne
+wait 500
+look 0 6
+shot wonder_boar_throne
+cmd gamemode spectator
+cmd tp @s ~ ~22 ~-24 facing ~ ~ ~-46
+wait 60
+shot wonder_boar_throne_high
+cmd gamemode creative
+cmd awaken living wonder goto statue_field
+wait 500
+look 0 6
+shot wonder_statue_field
+cmd gamemode spectator
+cmd tp @s ~ ~22 ~-24 facing ~ ~ ~-46
+wait 60
+shot wonder_statue_field_high
+cmd gamemode creative
+cmd awaken living wonder goto web_cathedral
+wait 500
+look 0 6
+shot wonder_web_cathedral
+cmd gamemode spectator
+cmd tp @s ~ ~22 ~-24 facing ~ ~ ~-46
+wait 60
+shot wonder_web_cathedral_high
+cmd gamemode creative
+cmd awaken living wonder goto gravefield
+wait 500
+look 0 6
+shot wonder_gravefield
+cmd gamemode spectator
+cmd tp @s ~ ~22 ~-24 facing ~ ~ ~-46
+wait 60
+shot wonder_gravefield_high
+cmd gamemode creative
+cmd awaken living wonder goto weeping_stones
+wait 500
+look 0 6
+shot wonder_weeping_stones
+cmd gamemode spectator
+cmd tp @s ~ ~22 ~-24 facing ~ ~ ~-46
+wait 60
+shot wonder_weeping_stones_high
+cmd gamemode creative
+quit

@@ -67,6 +67,14 @@ final class LivingCommands {
                 }
                 return n;
             }));
+            // wonders (SPEC 21.11): where the nearest ones are, a walk to one (it generates as you arrive), a plan built here for a look
+            l.then(Commands.literal("wonder").requires(AwakenCommands.admin())
+                    .then(Commands.literal("list").executes(c -> wonderList(c.getSource().getPlayerOrException())))
+                    .then(Commands.literal("goto").then(Commands.argument("kind", com.mojang.brigadier.arguments.StringArgumentType.word())
+                            .suggests((c, b2) -> net.minecraft.commands.SharedSuggestionProvider.suggest(java.util.Arrays.stream(dev.awaken.living.wonder.Wonders.Kind.values()).map(k -> k.id), b2))
+                            .executes(c -> wonderGoto(c.getSource().getPlayerOrException(), com.mojang.brigadier.arguments.StringArgumentType.getString(c, "kind")))))
+                    .then(Commands.literal("build").then(Commands.argument("kind", com.mojang.brigadier.arguments.StringArgumentType.word())
+                            .executes(c -> wonderBuild(c.getSource().getPlayerOrException(), com.mojang.brigadier.arguments.StringArgumentType.getString(c, "kind"), 0)))));
             // tours: a blow at the creature you look at (no attack key in the autopilot), a drop in a pillar
             l.then(Commands.literal("strike").requires(AwakenCommands.admin())
                     .executes(c -> strike(c.getSource().getPlayerOrException(), 4, false))
@@ -356,6 +364,68 @@ final class LivingCommands {
         double a = Math.toRadians(p.getYRot());
         Vec3 f = new Vec3(-Math.sin(a), 0, Math.cos(a)), r = new Vec3(-Math.cos(a), 0, -Math.sin(a));
         return p.position().add(f.scale(forward)).add(r.scale(side));
+    }
+
+    /** The wonders of the regions round a point (every 500 blocks out to a radius), nearest first; only of {@code only} when given. */
+    private static java.util.List<dev.awaken.living.wonder.Wonders.Site> wonderSites(ServerLevel level, int cx, int cz, int radius, dev.awaken.living.wonder.Wonders.Kind only) {
+        RegionMap map = RegionService.map(level.getServer());
+        var terrain = dev.awaken.living.wonder.WonderFeature.terrain(level, level.getChunkSource().getGenerator());
+        java.util.Set<Long> seen = new java.util.HashSet<>();
+        java.util.List<dev.awaken.living.wonder.Wonders.Site> out = new java.util.ArrayList<>();
+        for (int dx = -radius; dx <= radius; dx += 500)
+            for (int dz = -radius; dz <= radius; dz += 500) {
+                var r = map.regionAt(cx + dx, cz + dz);
+                if (!seen.add(r.id())) continue;
+                var s = dev.awaken.living.wonder.Wonders.siteOf(level.getSeed(), map, r, terrain);
+                if (s != null && (only == null || s.kind() == only)) out.add(s);
+            }
+        out.sort(java.util.Comparator.comparingDouble(s -> (double) (s.x() - cx) * (s.x() - cx) + (double) (s.z() - cz) * (s.z() - cz)));
+        return out;
+    }
+
+    private static int wonderList(ServerPlayer p) {
+        for (var s : wonderSites((ServerLevel) p.level(), p.getBlockX(), p.getBlockZ(), 3000, null).stream().limit(8).toList()) {
+            double d = Math.sqrt((double) (s.x() - p.getBlockX()) * (s.x() - p.getBlockX()) + (double) (s.z() - p.getBlockZ()) * (s.z() - p.getBlockZ()));
+            p.sendSystemMessage(Component.literal(s.kind().display + " in " + s.regionName() + " at " + s.x() + ", " + s.z() + " (" + Math.round(d) + " m)"));
+        }
+        return 1;
+    }
+
+    /** Walks you to 46 blocks south of the nearest wonder of a kind, facing it, on the ground there; the chunks generate as you arrive. */
+    private static int wonderGoto(ServerPlayer p, String kindId) {
+        var kind = dev.awaken.living.wonder.Wonders.Kind.byId(kindId);
+        if (kind == null) {
+            p.sendSystemMessage(Component.literal("No wonder called " + kindId + "."));
+            return 0;
+        }
+        ServerLevel level = (ServerLevel) p.level();
+        var sites = wonderSites(level, p.getBlockX(), p.getBlockZ(), 9000, kind);
+        if (sites.isEmpty()) {
+            p.sendSystemMessage(Component.literal("None of that kind within 9,000 blocks."));
+            return 0;
+        }
+        var s = sites.getFirst();
+        int x = s.x(), z = s.z() + 46;
+        var terrain = dev.awaken.living.wonder.WonderFeature.terrain(level, level.getChunkSource().getGenerator());
+        p.teleportTo(level, x + 0.5, terrain.ground(x, z) + 2, z + 0.5, java.util.Set.of(), 180F, 8F, true);
+        p.sendSystemMessage(Component.literal(s.kind().display + " at " + s.x() + ", " + s.z() + " in " + s.regionName()));
+        return 1;
+    }
+
+    /** Builds a wonder's plan 40 blocks ahead on a flat floor of stone (a look at the plan itself, family 0 green, 1 sun, 2 frost). */
+    private static int wonderBuild(ServerPlayer p, String kindId, int fam) {
+        var kind = dev.awaken.living.wonder.Wonders.Kind.byId(kindId);
+        if (kind == null) return 0;
+        ServerLevel level = (ServerLevel) p.level();
+        Vec3 at = ahead(p, 46, 0);
+        int gy = p.getBlockY() - 1;
+        var plan = dev.awaken.living.wonder.Wonders.planOf(kind, 7L, fam);
+        for (int dx = -40; dx <= 40; dx++) for (int dz = -40; dz <= 40; dz++) level.setBlockAndUpdate(new net.minecraft.core.BlockPos((int) at.x + dx, gy, (int) at.z + dz), net.minecraft.world.level.block.Blocks.GRASS_BLOCK.defaultBlockState());
+        for (var e : plan.blocks().long2ObjectEntrySet()) {
+            long k = e.getLongKey();
+            level.setBlockAndUpdate(new net.minecraft.core.BlockPos((int) at.x + net.minecraft.core.BlockPos.getX(k), gy + net.minecraft.core.BlockPos.getY(k), (int) at.z + net.minecraft.core.BlockPos.getZ(k)), e.getValue());
+        }
+        return plan.blocks().size();
     }
 
     private static int strike(ServerPlayer p, float damage, boolean crit) {

@@ -72,6 +72,7 @@ public final class LivingClient {
         AlmanacSection.register();
         CraftsSection.register();
         // rumours: a "?" on the map where you heard something is happening
+        dev.awaken.core.api.MapMarks.register(dev.awaken.living.wonder.WonderWatch::marks);
         dev.awaken.core.api.MapMarks.register(p -> {
             var heard = p.getData(dev.awaken.living.LivingContent.RUMOURS.get()).heard();
             if (heard.isEmpty()) return java.util.List.of();

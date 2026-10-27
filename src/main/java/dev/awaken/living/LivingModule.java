@@ -100,6 +100,8 @@ public final class LivingModule {
         bus.addListener(EventPriority.LOW, FinalizeSpawnEvent.class, Creatures::onFinalizeSpawn);
         bus.addListener(EntityJoinLevelEvent.class, Creatures::onJoin);
         bus.addListener(EventPriority.HIGHEST, LivingDeathEvent.class, dev.awaken.living.combat.MarkEvents::onDeath);
+        bus.addListener(net.neoforged.neoforge.event.entity.living.MobSpawnEvent.SpawnPlacementCheck.class, dev.awaken.living.wonder.WonderWatch::onSpawnCheck);
+        bus.addListener(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post.class, dev.awaken.living.wonder.WonderWatch::onPlayerTick);
         bus.addListener(net.neoforged.neoforge.event.tick.ServerTickEvent.Post.class, dev.awaken.living.combat.MarkEvents::onTick);
         bus.addListener(net.neoforged.neoforge.event.PlayLevelSoundEvent.AtPosition.class, dev.awaken.living.combat.MarkEvents::onSound);
         bus.addListener(LivingIncomingDamageEvent.class, Creatures::onIncomingDamage);
@@ -183,6 +185,7 @@ public final class LivingModule {
             }
         });
         bus.addListener(ServerStoppedEvent.class, e -> {
+            dev.awaken.living.wonder.Wonders.reset();
             RegionService.reset();
             RegionTracker.clear();
         });

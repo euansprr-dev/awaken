@@ -163,6 +163,11 @@ public final class RegionMap {
     // ---- lookups ----------------------------------------------------------------------------------------------------
 
     /** The region a block column belongs to. */
+    /** What a region's land is made of (its heart's group and tilt). */
+    public Land landOf(Region r) {
+        return cell(r.cellX(), r.cellZ()).land;
+    }
+
     public Region regionAt(int x, int z) {
         double wx = x + warpX(x, z), wz = z + warpZ(x, z);
         double dcx = wx - cx, dcz = wz - cz;

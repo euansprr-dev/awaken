@@ -534,6 +534,61 @@ final class LivingTests {
             h.succeed();
         });
 
+        AwakenTests.register("living_wonder_sites", 200, h -> {
+            // SPEC 21.11 decision 27: one wonder per region, a pure function of the seed, in land that fits its kind, inside its region, with a plan that stands
+            var level = h.getLevel();
+            RegionMap map = RegionService.map(level.getServer());
+            long seed = level.getSeed();
+            dev.awaken.living.wonder.Wonders.reset();
+            var flat = new dev.awaken.living.wonder.Wonders.Terrain() {
+                public int ground(int x, int z) { return 70; }
+                public int seaLevel() { return 63; }
+            };
+            java.util.Set<Long> seen = new java.util.HashSet<>();
+            java.util.Set<dev.awaken.living.wonder.Wonders.Kind> kinds = new java.util.HashSet<>();
+            int made = 0;
+            for (int gx = -7; gx <= 7; gx++) for (int gz = -7; gz <= 7; gz++) {
+                RegionMap.Region r = map.regionAt(gx * 800, gz * 800);
+                if (!seen.add(r.id())) continue;
+                var s = dev.awaken.living.wonder.Wonders.siteOf(seed, map, r, flat);
+                if (r.commons()) { h.assertTrue(s == null, "the Commons has no wonder"); continue; }
+                if (s == null) continue;
+                made++;
+                kinds.add(s.kind());
+                int rank = RegionMap.rankOf(map.levelAt(r.heartX(), r.heartZ()));
+                h.assertTrue(rank >= s.kind().rankFrom && rank <= s.kind().rankTo, s.kind() + " fits rank " + rank);
+                h.assertTrue(map.regionAt(s.x(), s.z()).id() == r.id(), "the site is inside its region");
+                h.assertTrue(s.plan().blocks().get(net.minecraft.core.BlockPos.asLong(0, 0, 0)) != null, "the heart is marked");
+                for (long k : s.plan().blocks().keySet()) h.assertTrue(Math.abs(net.minecraft.core.BlockPos.getX(k)) <= dev.awaken.living.wonder.Wonders.REACH && Math.abs(net.minecraft.core.BlockPos.getZ(k)) <= dev.awaken.living.wonder.Wonders.REACH, "inside its reach");
+                int blocks = s.plan().blocks().size();
+                dev.awaken.living.wonder.Wonders.reset();
+                var again = dev.awaken.living.wonder.Wonders.siteOf(seed, map, r, flat);
+                h.assertTrue(again != null && again.key().equals(s.key()) && again.plan().blocks().size() == blocks, "the same from the seed every time");
+                h.assertTrue(dev.awaken.living.wonder.Wonders.near(seed, map, flat, s.x() - 3, s.z() - 3, s.x() + 3, s.z() + 3, dev.awaken.living.wonder.Wonders.REACH).stream().anyMatch(o -> o.key().equals(s.key())), "found from a chunk beside it");
+            }
+            h.assertTrue(made >= 25, "most regions have one: " + made);
+            h.assertTrue(kinds.size() >= 4, "and they differ: " + kinds);
+            // every kind's plan is one piece standing on the ground (everything joined to the blocks at ground level, in every family)
+            for (var kind : dev.awaken.living.wonder.Wonders.Kind.values()) for (int fam = 0; fam < 3; fam++) {
+                var plan = dev.awaken.living.wonder.Wonders.planOf(kind, 99L + fam, fam);
+                var blocks = plan.blocks();
+                h.assertTrue(blocks.size() >= 40 && blocks.size() <= 6000, kind + " has a sensible size: " + blocks.size());
+                java.util.Deque<Long> todo = new java.util.ArrayDeque<>();
+                java.util.Set<Long> reached = new java.util.HashSet<>();
+                for (long k : blocks.keySet()) if (net.minecraft.core.BlockPos.getY(k) <= 1) { todo.add(k); reached.add(k); }
+                while (!todo.isEmpty()) {
+                    long k = todo.poll();
+                    int x = net.minecraft.core.BlockPos.getX(k), y = net.minecraft.core.BlockPos.getY(k), z = net.minecraft.core.BlockPos.getZ(k);
+                    for (int dx = -1; dx <= 1; dx++) for (int dy = -1; dy <= 1; dy++) for (int dz = -1; dz <= 1; dz++) {
+                        long q = net.minecraft.core.BlockPos.asLong(x + dx, y + dy, z + dz);
+                        if (blocks.containsKey(q) && reached.add(q)) todo.add(q);
+                    }
+                }
+                h.assertTrue(reached.size() == blocks.size(), kind + " (family " + fam + ") stands as one piece: " + reached.size() + " of " + blocks.size() + " joined");
+            }
+            h.succeed();
+        });
+
         AwakenTests.register("living_plate_heat", 20, h -> {
             // the chip's colour by how a creature measures against you: grey far below, blue about your level, orange a good fight, red an insane one
             var P = dev.awaken.living.combat.PlateRules.Heat.class;
