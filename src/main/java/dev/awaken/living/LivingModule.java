@@ -99,7 +99,7 @@ public final class LivingModule {
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(EventPriority.LOW, FinalizeSpawnEvent.class, Creatures::onFinalizeSpawn);
         bus.addListener(EntityJoinLevelEvent.class, Creatures::onJoin);
-        bus.addListener(EventPriority.HIGHEST, LivingDeathEvent.class, dev.awaken.living.combat.MarkEvents::onDeath);
+        bus.addListener(EventPriority.HIGHEST, net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Pre.class, dev.awaken.living.combat.MarkEvents::onDamage);
         bus.addListener(net.neoforged.neoforge.event.entity.living.MobSpawnEvent.SpawnPlacementCheck.class, dev.awaken.living.wonder.WonderWatch::onSpawnCheck);
         bus.addListener(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post.class, dev.awaken.living.wonder.WonderWatch::onPlayerTick);
         bus.addListener(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post.class, dev.awaken.living.combat.MarkEvents::onPlayerTick);

@@ -455,15 +455,22 @@ final class LivingTests {
             float before = victim.getHealth();
             h.assertTrue(dev.awaken.living.combat.Moves.hit(level, zombie, victim, bash, 1, 0, 0.9, 0.35) && victim.getHealth() < before, "the bash hurts");
             h.assertTrue(victim.getDeltaMovement().x > 0.3, "and shoves it away");
-            // a revenant stands up once, at two fifths, and not a second time
+            // a revenant stands up from a lethal blow once, at two fifths; a finishing blow (two health bars, 400 to 900) and a second blow do not
             var rev = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, 5, 2, 1);
             rev.setData(dev.awaken.living.LivingContent.FORM.get(), new dev.awaken.living.combat.Forms.Form(4, 0, 0));
-            var die = new net.neoforged.neoforge.event.entity.living.LivingDeathEvent(rev, level.damageSources().generic());
-            dev.awaken.living.combat.MarkEvents.onDeath(die);
-            h.assertTrue(die.isCanceled() && rev.getHealth() > 0 && rev.getHealth() <= rev.getMaxHealth() * 0.45F, "it rises at two fifths");
-            var again = new net.neoforged.neoforge.event.entity.living.LivingDeathEvent(rev, level.damageSources().generic());
-            dev.awaken.living.combat.MarkEvents.onDeath(again);
-            h.assertTrue(!again.isCanceled(), "and only once");
+            float lethal = rev.getHealth() + 1F;
+            h.assertTrue(!dev.awaken.living.combat.MarkEvents.shouldRise(rev, rev.getHealth() - 1F), "a blow that does not kill is just a blow");
+            h.assertTrue(dev.awaken.living.combat.MarkEvents.shouldRise(rev, lethal), "a lethal blow raises it");
+            h.assertTrue(!dev.awaken.living.combat.MarkEvents.shouldRise(rev, 1_000_000F) && !dev.awaken.living.combat.MarkEvents.shouldRise(rev, dev.awaken.living.combat.MarkEvents.finishing(rev)), "a finishing blow does not");
+            dev.awaken.living.combat.MarkEvents.rise(level, rev);
+            h.assertTrue(rev.getHealth() > 0 && rev.getHealth() <= rev.getMaxHealth() * 0.45F, "it rises at two fifths");
+            h.assertTrue(!dev.awaken.living.combat.MarkEvents.shouldRise(rev, rev.getHealth() + 1F), "and only once");
+            var plain = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, 6, 2, 1);
+            plain.setData(dev.awaken.living.LivingContent.FORM.get(), new dev.awaken.living.combat.Forms.Form(3, 0, 0));
+            h.assertTrue(!dev.awaken.living.combat.MarkEvents.shouldRise(plain, plain.getHealth() + 1F), "only from the fourth rung");
+            // the ordinary tests' blow: one thousand kills a zombie outright, whatever it wears
+            rev.setData(dev.awaken.living.LivingContent.FORM.get(), new dev.awaken.living.combat.Forms.Form(5, 0, 0));
+            h.assertTrue(!dev.awaken.living.combat.MarkEvents.shouldRise(rev, 1000F) && dev.awaken.living.combat.MarkEvents.finishing(rev) <= 900F, "a thousand finishes a revenant, however tough");
             // voices drop with the rung
             h.assertTrue(dev.awaken.living.combat.MarkEvents.pitch(0) == 1F && Math.abs(dev.awaken.living.combat.MarkEvents.pitch(5) - 0.6F) < 1e-6, "S speaks two fifths lower");
             h.succeed();

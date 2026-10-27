@@ -18,19 +18,38 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 public final class MarkEvents {
     private MarkEvents() {}
 
-    /** A revenant (zombie form from the fourth rung) stands up once at 40% health. */
-    public static void onDeath(LivingDeathEvent e) {
-        if (!(e.getEntity() instanceof Mob mob) || !(mob.level() instanceof ServerLevel level)) return;
+    /** A blow of two health bars finishes a revenant (at least 400, never more than 900): it does not stand up again. */
+    public static final float FINISH_MIN = 400F, FINISH_MAX = 900F;
+
+    public static float finishing(Mob mob) {
+        return Math.min(FINISH_MAX, Math.max(2F * mob.getMaxHealth(), FINISH_MIN));
+    }
+
+    /** Whether this blow would kill a revenant (a zombie form from the fourth rung) that has not stood up yet, and is not a finishing blow. */
+    public static boolean shouldRise(Mob mob, float damage) {
         Form f = Forms.of(mob);
         Forms.Species sp = Forms.Species.of(mob.getType());
-        if (!f.worn() || sp == null || !sp.layout.equals("zombie") || f.rung() < 4 || (f.marks() & Forms.RISEN) != 0) return;
-        e.setCanceled(true);
+        if (!f.worn() || sp == null || !sp.layout.equals("zombie") || f.rung() < 4 || (f.marks() & Forms.RISEN) != 0) return false;
+        return damage >= mob.getHealth() && damage < finishing(mob);
+    }
+
+    /** It stands up once, at 40% health, with a ring of its rank's colour and a low groan. */
+    public static void rise(ServerLevel level, Mob mob) {
+        Form f = Forms.of(mob);
         mob.setHealth(Math.max(1F, mob.getMaxHealth() * 0.4F));
         mob.clearFire();
         mob.setInvulnerableTime(40);
         mob.setData(LivingContent.FORM.get(), new Form(f.rung(), f.family(), f.marks() | Forms.RISEN));
         level.sendParticles(new net.minecraft.core.particles.DustParticleOptions(Moves.COLOUR[Math.min(5, f.rung())], 2F), mob.getX(), mob.getY() + 1, mob.getZ(), 30, 0.4, 0.8, 0.4, 0.05);
         level.playSound(null, mob.getX(), mob.getY(), mob.getZ(), SoundEvents.ZOMBIE_AMBIENT, SoundSource.HOSTILE, 1.4F, 0.5F);
+    }
+
+    /** The lethal blow on a revenant that is not a finishing one becomes its rising instead (the totem's way: the blow is spent). */
+    public static void onDamage(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Pre e) {
+        if (e.getEntity() instanceof Mob mob && mob.level() instanceof ServerLevel level && shouldRise(mob, e.getNewDamage())) {
+            e.setNewDamage(0F);
+            rise(level, mob);
+        }
     }
 
     /**
