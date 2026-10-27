@@ -35,17 +35,18 @@ public final class Wonders {
     public static final int REACH = 38;
 
     public enum Kind {
-        BELL_TREE("bell_tree", "The Bell Tree", "A tree grown round a bell, older than the roads. It still rings.", 0xD9C27A, 0, 1),
-        BOAR_THRONE("boar_throne", "The Boar Throne", "A seat of bone and tusks, and nothing sitting in it.", 0xE4D063, 1, 2),
-        STATUE_FIELD("statue_field", "The Statue Field", "Stone people, all looking the same way.", 0xA9B4C0, 1, 3),
-        WEB_CATHEDRAL("web_cathedral", "The Web Cathedral", "Silk strung between pillars, high enough to walk under.", 0xF29A48, 2, 3),
-        GRAVEFIELD("gravefield", "The Gravefield of the Revenants", "Rows of headstones round a black house. Some of the graves are open.", 0xB07CFF, 4, 4),
-        WEEPING_STONES("weeping_stones", "The Weeping Stones", "A ring of standing stones, each one crying.", 0x8C7BFF, 5, 5);
+        BELL_TREE("bell_tree", "The Bell Tree", "A tree grown round a bell, older than the roads. It still rings.", 0xD9C27A, 0, 1, 10),
+        BOAR_THRONE("boar_throne", "The Boar Throne", "A seat of bone and tusks, and nothing sitting in it.", 0xE4D063, 1, 2, 9),
+        STATUE_FIELD("statue_field", "The Statue Field", "Stone people, all looking the same way.", 0xA9B4C0, 1, 3, 31),
+        WEB_CATHEDRAL("web_cathedral", "The Web Cathedral", "Silk strung between pillars, high enough to walk under.", 0xF29A48, 2, 3, 12),
+        GRAVEFIELD("gravefield", "The Gravefield of the Revenants", "Rows of headstones round a black house. Some of the graves are open.", 0xB07CFF, 4, 4, 16),
+        WEEPING_STONES("weeping_stones", "The Weeping Stones", "A ring of standing stones, each one crying.", 0x8C7BFF, 5, 5, 14);
 
         public final String id, display, line;
-        public final int colour, rankFrom, rankTo;
+        public final int colour, rankFrom, rankTo, clear;
 
-        Kind(String id, String display, String line, int colour, int from, int to) {
+        Kind(String id, String display, String line, int colour, int from, int to, int clear) {
+            this.clear = clear;
             this.id = id;
             this.display = display;
             this.line = line;
