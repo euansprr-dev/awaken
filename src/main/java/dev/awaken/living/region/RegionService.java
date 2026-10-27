@@ -39,6 +39,8 @@ public final class RegionService extends SavedData {
     private boolean fixed;
     private int centreX, centreZ;
     private int rules = RegionMap.RULES;
+    /** True for a record made just now (a new world): its rules are chosen for this server on first use. */
+    private transient boolean fresh;
     private transient @Nullable RegionMap map;
 
     /** Which rules named this world's regions (SPEC §21.10): 1 a save from before, {@link RegionMap#RULES} a new world. */
@@ -47,7 +49,17 @@ public final class RegionService extends SavedData {
     }
 
     /** A world with no record yet is a new one: made under the current rules. */
-    public RegionService() {}
+    public RegionService() {
+        fresh = true;
+    }
+
+    /**
+     * The rules a new world is made under: the current ones, but the GameTest server's world keeps {@link RegionMap#TEST_RULES}
+     * (its road, village and wonder tests were written on 900-block regions; the wide world has tests of its own).
+     */
+    public static int newWorldRules(MinecraftServer server) {
+        return server instanceof net.minecraft.gametest.framework.GameTestServer ? RegionMap.TEST_RULES : RegionMap.RULES;
+    }
 
     private RegionService(boolean fixed, int x, int z, int rules) {
         this.fixed = fixed;
@@ -65,6 +77,13 @@ public final class RegionService extends SavedData {
         if (s == null || currentServer != server || s.map == null) {
             synchronized (RegionService.class) {
                 s = server.overworld().getDataStorage().computeIfAbsent(TYPE);
+                if (s.fresh) {
+                    s.fresh = false;
+                    if (s.rules != newWorldRules(server)) {
+                        s.rules = newWorldRules(server);
+                        s.setDirty();
+                    }
+                }
                 if (!s.fixed) {
                     var site = CityBasin.site(server);
                     var spawn = server.getRespawnData().globalPos().pos();
@@ -93,7 +112,7 @@ public final class RegionService extends SavedData {
         try {
             java.nio.file.Path f = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.DATA).getParent()
                     .resolve("dimensions/minecraft/overworld/data/awaken/living_regions.dat");
-            if (!java.nio.file.Files.exists(f)) return RegionMap.RULES;
+            if (!java.nio.file.Files.exists(f)) return newWorldRules(server);
             var tag = net.minecraft.nbt.NbtIo.readCompressed(f, net.minecraft.nbt.NbtAccounter.unlimitedHeap());
             return tag.getCompoundOrEmpty("data").getIntOr("rules", 1);
         } catch (Exception e) {

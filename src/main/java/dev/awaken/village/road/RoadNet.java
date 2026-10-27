@@ -45,6 +45,8 @@ public final class RoadNet {
 
     /** About one region in five holds a town (its site found near the heart; none fits and it's a crossroads). */
     static final double TOWN_ODDS = 0.22;
+    /** In the wide world (regions of 1,600, SPEC §21.12) a little more often, so towns don't thin out as much as regions do. */
+    static final double TOWN_ODDS_WIDE = 0.35;
     /** The grid's settlements keep this far from a town's region's heart. */
     public static final int TOWN_CLEAR = 360;
     /** A grid settlement anchored this near a region's heart is that region's hub. */
@@ -111,14 +113,14 @@ public final class RoadNet {
         int[] h = w.regions.heart(gx, gz);
         SettlementGrid.Anchor f = SettlementGrid.first(w.seed, new int[]{w.cx, w.cz});
         if (Math.hypot(h[0] - f.x(), h[1] - f.z()) < FIRST_CLEAR) return false;
-        return w.regions.roll(gx, gz, 0x70A7_5EEDL) < TOWN_ODDS;
+        return w.regions.roll(gx, gz, 0x70A7_5EEDL) < (w.regions.rules() >= 3 ? TOWN_ODDS_WIDE : TOWN_ODDS);
     }
 
     /** Whether a grid settlement anchored at (x, z) stands down for a town's region (within {@link #TOWN_CLEAR} of its heart). */
     public static boolean nearTown(int x, int z) {
         RoadWorld w = RoadWorld.get();
         if (w == null) return false;
-        int gx = Math.floorDiv(x, RegionMap.PITCH), gz = Math.floorDiv(z, RegionMap.PITCH);
+        int gx = Math.floorDiv(x, w.regions.pitch()), gz = Math.floorDiv(z, w.regions.pitch());
         for (int i = gx - 1; i <= gx + 1; i++)
             for (int j = gz - 1; j <= gz + 1; j++) {
                 int[] h = w.regions.heart(i, j);
@@ -168,7 +170,7 @@ public final class RoadNet {
         if (w == null) return List.of();
         int bx = (chunkX << 4) + 8, bz = (chunkZ << 4) + 8;
         List<SettlementGrid.Anchor> out = new ArrayList<>(1);
-        int gx = Math.floorDiv(bx, RegionMap.PITCH), gz = Math.floorDiv(bz, RegionMap.PITCH);
+        int gx = Math.floorDiv(bx, w.regions.pitch()), gz = Math.floorDiv(bz, w.regions.pitch());
         for (int i = gx - 1; i <= gx + 1; i++)
             for (int j = gz - 1; j <= gz + 1; j++) {
                 int[] h = w.regions.heart(i, j);
@@ -190,8 +192,8 @@ public final class RoadNet {
         if (w == null) return List.of();
         long t0 = System.nanoTime();
         List<SettlementGrid.Anchor> out = new ArrayList<>();
-        for (int i = Math.floorDiv(x - radius - 220, RegionMap.PITCH); i <= Math.floorDiv(x + radius + 220, RegionMap.PITCH); i++)
-            for (int j = Math.floorDiv(z - radius - 220, RegionMap.PITCH); j <= Math.floorDiv(z + radius + 220, RegionMap.PITCH); j++) {
+        for (int i = Math.floorDiv(x - radius - 220, w.regions.pitch()); i <= Math.floorDiv(x + radius + 220, w.regions.pitch()); i++)
+            for (int j = Math.floorDiv(z - radius - 220, w.regions.pitch()); j <= Math.floorDiv(z + radius + 220, w.regions.pitch()); j++) {
                 int[] h = w.regions.heart(i, j);
                 if (Math.hypot(h[0] - x, h[1] - z) > radius + 220 || w.regions.swallowed(i, j)) continue;
                 if (!wait && !sitesKnown(i, j)) {
@@ -538,7 +540,7 @@ public final class RoadNet {
     /** The highroads (region cell and way, {gx, gz, dir}) whose straight line between hearts comes near a point. */
     private static List<int[]> trunksNear(RoadWorld w, int x, int z, int reach) {
         List<int[]> out = new ArrayList<>();
-        int pitch = RegionMap.PITCH;
+        int pitch = w.regions.pitch();
         int gx = Math.floorDiv(x, pitch), gz = Math.floorDiv(z, pitch);
         for (int i = gx - 2; i <= gx + 1; i++)
             for (int j = gz - 2; j <= gz + 1; j++)

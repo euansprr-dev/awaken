@@ -28,7 +28,7 @@ final class FirstTown {
         Terrain t = w.terrain();
         SettlementGrid.Anchor f = SettlementGrid.first(w.seed, new int[]{w.cx, w.cz});
         List<int[]> cands = new ArrayList<>();
-        int pitch = dev.awaken.living.region.RegionMap.PITCH;
+        int pitch = w.regions.pitch();
         int g0 = Math.floorDiv(w.cx, pitch), h0 = Math.floorDiv(w.cz, pitch);
         for (int i = g0 - 3; i <= g0 + 3; i++)
             for (int j = h0 - 3; j <= h0 + 3; j++) {
@@ -36,7 +36,8 @@ final class FirstTown {
                 int[] h = w.regions.heart(i, j);
                 double dx = h[0] - f.x(), dz = h[1] - f.z(), d = Math.hypot(dx, dz);
                 // ahead of the first hamlet, northward (within ninety degrees), not on top of it
-                if (d < 420 || d > 1700 || -dz / d < 0.0) continue;
+                // (a wide world's regions are 1,600 apart, SPEC §21.12: the reach grows with them)
+                if (d < 420 || d > 1700.0 * pitch / dev.awaken.living.region.RegionMap.PITCH_2 || -dz / d < 0.0) continue;
                 cands.add(new int[]{i, j, (int) (d * (2.0 - (-dz / d)))});
             }
         cands.sort((u, v) -> Integer.compare(u[2], v[2]));

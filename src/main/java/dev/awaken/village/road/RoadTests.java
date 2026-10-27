@@ -29,11 +29,62 @@ import java.util.Locale;
 public final class RoadTests {
     private RoadTests() {}
 
+    /**
+     * SPEC §21.12: a new world is the wide world (regions 1,600 apart). The GameTest server's own world keeps 900-block regions,
+     * so this opens a roads' world over a fresh generator the way the bench does and checks the network still forms on the
+     * bigger grid: the first town is found, a highroad joins its region to a neighbour, and the settlement grid is thinner.
+     */
+    private static void wideRoads(GameTestHelper h) {
+        long seed = 4242L;
+        var reg = h.getLevel().registryAccess();
+        var ns = reg.lookupOrThrow(net.minecraft.core.registries.Registries.NOISE_SETTINGS).getOrThrow(net.minecraft.world.level.levelgen.NoiseGeneratorSettings.OVERWORLD);
+        var preset = reg.lookupOrThrow(net.minecraft.core.registries.Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST)
+                .getOrThrow(net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists.OVERWORLD);
+        var gen = new net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator(net.minecraft.world.level.biome.MultiNoiseBiomeSource.createFromPreset(preset), ns);
+        var rs = net.minecraft.world.level.levelgen.RandomState.create(reg.lookupOrThrow(net.minecraft.core.registries.Registries.NOISE), seed, ns.value());
+        var heights = net.minecraft.world.level.LevelHeightAccessor.create(-64, 384);
+        RoadWorld had = RoadWorld.get();
+        var hadFirst = dev.awaken.village.world.FirstHamlet.found();
+        try {
+            RoadNet.clear();
+            dev.awaken.village.world.Plans.clear();
+            var t = dev.awaken.village.world.GenTerrain.of(gen, heights, rs);
+            var site = dev.awaken.terrain.city.SitePicker.pick(gen, rs, heights, false);
+            int[] centre = {site.x(), site.z()};
+            dev.awaken.village.world.FirstHamlet.use(dev.awaken.village.world.FirstHamlet.search(seed, centre, t));
+            RoadWorld w = RoadWorld.of(seed, centre[0], centre[1], gen, rs, heights, true);
+            RoadWorld.use(w);
+            h.assertTrue(w.regions.rules() == 3 && w.regions.pitch() == 1600, "the roads' world is the wide world: rules " + w.regions.rules());
+            int[] ft = w.firstTown;
+            h.assertTrue(ft != null, "the first town is found among the bigger regions");
+            int laid = 0;
+            int[][] tries = {{ft[0], ft[1], 0}, {ft[0], ft[1], 1}, {ft[0] - 1, ft[1], 0}, {ft[0], ft[1] - 1, 1}};
+            for (int[] tr : tries) {
+                if (w.regions.swallowed(tr[0], tr[1]) || w.regions.swallowed(tr[0] + (tr[2] == 0 ? 1 : 0), tr[1] + (tr[2] == 1 ? 1 : 0))) continue;
+                for (Road r : RoadNet.trunk(w, tr[0], tr[1], tr[2])) laid += r.points();
+                if (laid > 0) break;
+            }
+            h.assertTrue(laid > 0, "a highroad joins the first town's region to a neighbour");
+            // the grid keeps about half its settlements: a 3,000 circle 5,000 out holds about 31 (the old grid about 62)
+            int n = dev.awaken.village.world.SettlementGrid.gridNear(seed, centre[0] + 5000, centre[1], 3000, centre).size();
+            h.assertTrue(n >= 15 && n <= 45, "the wide world's settlement grid is thinner: " + n);
+            Awaken.LOG.info("[road] wide world: first town region {},{}; a highroad of {} points; {} grid settlements within 3,000 of a point 5,000 out", ft[0], ft[1], laid, n);
+        } finally {
+            RoadPlanners.settle();
+            RoadNet.clear();
+            dev.awaken.village.world.Plans.clear();
+            dev.awaken.village.world.FirstHamlet.use(hadFirst);
+            RoadWorld.use(had);
+        }
+        h.succeed();
+    }
+
     public static void register() {
         AwakenTests.registerIsolated("village_roads", 600, RoadTests::roads);
         AwakenTests.registerIsolated("village_road_banks", 200, RoadTests::banks);
         AwakenTests.registerIsolated("village_road_viaduct", 200, RoadTests::viaduct);
         AwakenTests.register("village_town_plan", 400, RoadTests::towns);
+        AwakenTests.register("village_wide_roads", 1200, RoadTests::wideRoads);
         AwakenTests.register("village_march_ranks", 20, h -> {
             // a march post writes the land's rank range plainly (SPEC §21.10)
             String[] want = {"1–9", "10–24", "25–44", "45–69", "70–99", "100+"};

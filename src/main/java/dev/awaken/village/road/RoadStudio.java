@@ -89,7 +89,7 @@ public final class RoadStudio {
             // the region hearts and hubs
             sb.append(",\"hubs\":[");
             boolean firstOut = true;
-            int pitch = dev.awaken.living.region.RegionMap.PITCH;
+            int pitch = w.regions.pitch();
             for (int gx = Math.floorDiv(centre[0] - radius, pitch) - 1; gx <= Math.floorDiv(centre[0] + radius, pitch) + 1; gx++)
                 for (int gz = Math.floorDiv(centre[1] - radius, pitch) - 1; gz <= Math.floorDiv(centre[1] + radius, pitch) + 1; gz++) {
                     int[] h = w.regions.heart(gx, gz);
