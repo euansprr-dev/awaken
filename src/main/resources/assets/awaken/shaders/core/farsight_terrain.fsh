@@ -189,8 +189,12 @@ void main() {
     // well inside the horizontal render distance); far water keeps to its own floor's reach,
     // so a real water surface drawn over a floor too far to draw keeps the far sea under it
     // City Sight draws the real blocks there: the far land steps aside (its coverage holds for 2 km)
+    // (water by where the ray meets the real water's surface, an eighth under this one at the block's top: by this
+    // one's, a strip along the edge of City Sight's chunks found this water in a chunk City Sight draws and the real
+    // surface past it in one it doesn't, and neither drew there: a dashed line of sky across a lake, Euan 2026-10-27)
+    vec2 coverXZ = water && vRel.y < -0.01 ? vRel.xz * ((vRel.y - 0.125) / vRel.y) : vRel.xz;
     if ((int(FarCam.y + 0.5) & 256) == 0 && length(vRel.xz) < 2000.0) {
-        ivec2 world = (FarCamInt.xz >> 4) + ivec2(floor((vRel.xz + FarCam.xz) / 16.0));
+        ivec2 world = (FarCamInt.xz >> 4) + ivec2(floor((coverXZ + FarCam.xz) / 16.0));
         // (a chunk dissolving in stands at its share: this land gives way in the complement of its dither)
         if (texelFetch(VoxelSampler, world & 255, 0).r > bayer4(gl_FragCoord.xy)) {
             // debug view 4: where the far land stepped aside for City Sight, magenta instead
