@@ -7494,7 +7494,29 @@ or smoothed terrain faces, no texture above 16×16.
 - **Tests**: `ground_floor_data` (every palette entry's files exist, boulder configs and every placed block state decode),
   `ground_floor_blocks`, `ground_floor_boulder`.
 
-### 31.4 Planned (PLAN.md sections 4-9; not built)
-P3 mountains (slope-led ground for every
-steep slope, strata, scree, snow layers); P4 roads in banks and bands; P5 rank palettes, wild-life habitats, footstep tags.
+### 31.4 P3 Mountains (built; new worlds only: Awakened Alpine's own pack and flag `awaken:awakened_alpine`)
+- **Slope-led ground for every steep slope** (`terrain.alpine.AlpineSurface`, D8): scree and rock reach lower (`SCREE_SLOPE`
+  1.45 -> 1.15, `ROCK_SLOPE` 1.8 -> 1.5, rise per block; the same numbers in `farsight.glsl`, held equal by
+  `ground_mountain_far_parity`), and `LOOSE_FROM` 0.7: soil that is steepening shows patches of coarse dirt and gravel
+  (`AlpineSurface.loose`, 7-block patches that grow with the slope). The scree band is no longer all gravel: its noise
+  (`pocket`, 6-block cells) leaves grass pockets where low (under 0.22) and rock showing where high (over 0.78).
+- **Every steep land, not only Alpine biomes**: the rock rule (`awaken:alpine/slopes`: rock, scree, coarse, gravel; no snow)
+  is prepended to `minecraft:overworld/biome_surface` for `#awaken:upland` at any height (`lithostitched/worldgen_modifier/alpine/
+  slopes_surface.json`); the full rule `awaken:alpine/surface` (which adds snow) still runs for `#awaken:alpine` and for upland above
+  y 150. Far Sight's shader already drew scree and rock by slope in every biome, so near now matches it.
+- **Strata** (`AlpineSurface.strata`, material condition `awaken:strata` = `StrataCondition`): the rock block follows layers of
+  three blocks in a cycle of eight (stone, andesite, stone, tuff, stone, granite, stone, andesite) and a thin calcite band (two
+  thick, one in 31), tilted by a slow noise (about 4 blocks over 40) so cliffs have dipping strata and the vanilla ore blobs
+  (white diorite streaks) are covered. Far Sight keeps its per-biome stone colour (the layers are too fine to show from afar).
+- **Snow in layers** (`terrain.alpine.SnowDriftsFeature`, feature type `awaken:snow_drifts`, added at `top_layer_modification` to
+  `#awaken:alpine` and `#awaken:upland`): in the band of about nine blocks under the snow line, in patches and thicker toward the
+  line, never on ground steeper than 1.3, one to three of vanilla's snow layers where vanilla lets one survive
+  (`AlpineSurface.driftLayers`; reads the chunk's heightmap ring, skips chunks under y 130).
+- **Scree skirts and ledges** come from P1: gravel and stone grounds take their half slabs on the foot of every step.
+- **Tests**: `ground_mountain_bands`, `ground_mountain_strata`, `ground_mountain_drifts`, `ground_mountain_far_parity`;
+  `terrain_alpine_snow_and_rock` updated for the new slopes.
+- **Not in P3**: gully planting (the Soft Land's P2 pebbles and boulders, vanilla spruce and the treeline filter cover it).
+
+### 31.5 Planned (PLAN.md sections 4-9; not built)
+P4 roads in banks and bands; P5 rank palettes, wild-life habitats, footstep tags.
 New worlds only for P1-P5, behind the data-pack flag `awaken:awakened_ground` (P3 extends Awakened Alpine's pack).

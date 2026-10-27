@@ -1,0 +1,13 @@
+{
+  "type": "lithostitched:set_material_rule",
+  "target_rules": "minecraft:overworld/biome_surface",
+  "injection_type": "prepend",
+  "material_rule": {
+    "type": "minecraft:condition",
+    "if_true": {
+      "type": "minecraft:biome",
+      "biome_is": "#awaken:upland"
+    },
+    "then_run": "awaken:alpine/slopes"
+  }
+}

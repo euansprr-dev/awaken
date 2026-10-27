@@ -25,6 +25,7 @@ import com.mojang.serialization.JsonOps;
 import dev.awaken.ground.cover.PebblesBlock;
 import dev.awaken.ground.cover.TwigsBlock;
 import net.minecraft.core.Direction;
+import dev.awaken.terrain.alpine.AlpineSurface;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
@@ -35,6 +36,7 @@ final class GroundTests {
     static void register() {
         softTests();
         floorTests();
+        mountainTests();
         // a one-block riser wraps; a two-block riser (a cliff) does not; a side against a solid block is hidden and stays 0;
         // a side against a plant counts as open
         AwakenTests.register("ground_wrap_mask", 20, h -> {
@@ -340,6 +342,10 @@ final class GroundTests {
                 for (JsonElement e : entries) {
                     String name = group.getKey() + "_" + e.getAsJsonObject().get("name").getAsString();
                     JsonObject pf = read(base + "worldgen/placed_feature/ground/" + name + ".json");
+                    // and through the game's own codecs: the world loaded the pack (its flag is on in a new world), so the registry has it
+                    h.assertTrue(h.getLevel().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.PLACED_FEATURE)
+                            .get(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.PLACED_FEATURE, dev.awaken.Awaken.id("ground/" + name))).isPresent(),
+                            name + " is a loaded placed feature");
                     String feature = pf.get("feature").getAsString();
                     h.assertTrue(!pf.getAsJsonArray("placement").isEmpty(), name + " places somewhere");
                     if (feature.startsWith("awaken:ground/")) {
@@ -358,6 +364,9 @@ final class GroundTests {
                 }
             }
             h.assertTrue(placed >= 25, "the palette places " + placed + " features");
+            h.assertTrue(h.getLevel().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.PLACED_FEATURE)
+                    .get(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.PLACED_FEATURE, dev.awaken.Awaken.id("ground/soft_steps"))).isPresent(), "the soft steps are a loaded placed feature");
+            h.assertTrue(h.getLevel().getServer().getPackRepository().getSelectedIds().contains(GroundModule.PACK_ID), "a new world loads the ground pack");
             h.succeed();
         });
 
@@ -419,6 +428,96 @@ final class GroundTests {
             h.assertFalse(forest.paint(level, at, 2, 5, level.getSeaLevel()), "no boulder on glass");
             for (int dx = 0; dx <= 16; dx++) for (int dz = 0; dz <= 16; dz++) for (int y = y0 - 3; y <= y0 + 6; y++)
                 level.setBlock(new BlockPos(x0 + dx, y, z0 + dz), Blocks.AIR.defaultBlockState(), 2);
+            h.succeed();
+        });
+    }
+
+    // ---- P3: mountains -----------------------------------------------------------------------------------------------------
+
+    private static void mountainTests() {
+        // the slope bands: grass, patches of coarse dirt and gravel, scree with grass pockets and rock showing, bare rock
+        AwakenTests.register("ground_mountain_bands", 20, h -> {
+            h.assertTrue(AlpineSurface.stone(0.5f, 0, 0.5f) == 0 && AlpineSurface.stone(1.3f, 0, 0.5f) == 1 && AlpineSurface.stone(1.7f, 0, 0.5f) == 2, "grass under, scree from 1.15, rock from 1.5");
+            int coarse = 0, gravel = 0, none = 0, n = 4000;
+            for (int k = 0; k < n; k++) {
+                float x = k * 3.7f, z = k * 1.9f - 800;
+                int l = AlpineSurface.loose(x, z, 0.9f, 0, 0.5f);
+                if (l == 1) coarse++;
+                else if (l == 2) gravel++;
+                else none++;
+                h.assertTrue(AlpineSurface.loose(x, z, 0.4f, 0, 0.5f) == 0, "no loose ground on gentle soil");
+                h.assertTrue(AlpineSurface.loose(x, z, 1.3f, 0, 0.5f) == 0, "scree takes over from the loose ground");
+            }
+            h.assertTrue(coarse > n * 0.04 && coarse < n * 0.35, "coarse dirt in patches at 0.9: " + coarse + " of " + n);
+            h.assertTrue(gravel > n * 0.03 && gravel < n * 0.30, "gravel in patches at 0.9: " + gravel + " of " + n);
+            h.assertTrue(none > n * 0.4, "grass stays on most of it: " + none);
+            int pockets = 0, rockShows = 0, scree = 0;
+            for (int k = 0; k < n; k++) {
+                float p = AlpineSurface.pocket(k * 2.3f, k * 5.1f);
+                if (p < 0.22f) pockets++;
+                else if (p > 0.78f) rockShows++;
+                else scree++;
+            }
+            h.assertTrue(pockets > n * 0.05 && rockShows > n * 0.05 && scree > n * 0.5, "scree band: pockets " + pockets + ", rock " + rockShows + ", gravel " + scree);
+            h.succeed();
+        });
+
+        // the strata: every layer occurs, stone the most, calcite thin, layers dip across the land, the same every time
+        AwakenTests.register("ground_mountain_strata", 20, h -> {
+            int[] count = new int[5];
+            int total = 0, dips = 0;
+            for (int x = -200; x < 200; x += 7) for (int z = -200; z < 200; z += 11) for (int y = 60; y < 260; y++) {
+                int l = AlpineSurface.strata(x, y, z);
+                h.assertTrue(l >= 0 && l <= 4 && l == AlpineSurface.strata(x, y, z), "a layer 0..4, the same each time");
+                count[l]++;
+                total++;
+            }
+            for (int l = 0; l < 5; l++) h.assertTrue(count[l] > 0, "layer " + l + " occurs");
+            h.assertTrue(count[0] > total * 0.40, "stone is the commonest: " + count[0] + " of " + total);
+            h.assertTrue(count[4] > total * 0.01 && count[4] < total * 0.08, "calcite is a thin band: " + count[4] + " of " + total);
+            for (int x = 0; x < 200; x += 5) for (int y = 100; y < 130; y++) if (AlpineSurface.strata(x, y, 0) != AlpineSurface.strata(x + 40, y, 0)) dips++;
+            h.assertTrue(dips > 200, "the layers dip across the land (they are not ruled lines): " + dips);
+            h.succeed();
+        });
+
+        // snow in layers below the edge: none above the line (blocks lie there) or far under it or on cliffs; one to three between,
+        // thicker toward the line
+        AwakenTests.register("ground_mountain_drifts", 20, h -> {
+            float x0 = 300, z0 = 300;
+            float line = AlpineSurface.snowLine(x0, z0, 0.2f, 0);
+            int nearSum = 0, farSum = 0, nearN = 0, farN = 0;
+            for (int k = 0; k < 3000; k++) {
+                float x = x0 + k * 1.3f, z = z0 + (k * 7 % 400);
+                float ln = AlpineSurface.snowLine(x, z, 0.2f, 0), pa = AlpineSurface.patches(x, z);
+                int above = AlpineSurface.driftLayers(x, ln - pa + 2, z, 0.2f, 0, 0.5f);
+                h.assertTrue(above == 0, "none where the snow is already blocks");
+                h.assertTrue(AlpineSurface.driftLayers(x, ln - pa - 30, z, 0.2f, 0, 0.5f) == 0, "none far under the line");
+                h.assertTrue(AlpineSurface.driftLayers(x, ln - pa - 4, z, 1.6f, 0, 0.5f) == 0, "none on cliffs");
+                int near = AlpineSurface.driftLayers(x, ln - pa - 1.5f, z, 0.2f, 0, 0.5f), far = AlpineSurface.driftLayers(x, ln - pa - 7.5f, z, 0.2f, 0, 0.5f);
+                h.assertTrue(near >= 0 && near <= 3 && far >= 0 && far <= 3, "0..3 layers");
+                nearSum += near;
+                farSum += far;
+                if (near > 0) nearN++;
+                if (far > 0) farN++;
+            }
+            h.assertTrue(nearN > 600 && farN > 50, "drifts lie in the band: near " + nearN + ", far " + farN);
+            h.assertTrue(nearSum > farSum * 1.5, "thicker and commoner toward the line: " + nearSum + " against " + farSum);
+            h.assertTrue(line > 100, "the line is where it was");
+            h.succeed();
+        });
+
+        // near and far use the same slopes: Far Sight's shader constants are the Java rule's
+        AwakenTests.register("ground_mountain_far_parity", 20, h -> {
+            String glsl;
+            try (var in = GroundTests.class.getResourceAsStream("/assets/awaken/shaders/include/farsight.glsl")) {
+                glsl = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            } catch (java.io.IOException e) {
+                throw new IllegalStateException(e);
+            }
+            String want = "const float SNOW_SLOPE = " + AlpineSurface.SNOW_SLOPE + ", SCREE_SLOPE = " + AlpineSurface.SCREE_SLOPE + ", ROCK_SLOPE = " + AlpineSurface.ROCK_SLOPE + ";";
+            h.assertTrue(glsl.contains(want), "farsight.glsl has: " + want);
+            var placed = h.getLevel().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.PLACED_FEATURE);
+            h.assertTrue(placed.get(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.PLACED_FEATURE, dev.awaken.Awaken.id("alpine/snow_drifts"))).isPresent(), "the snow drifts load");
             h.succeed();
         });
     }
