@@ -2,7 +2,7 @@
   "schema": 1,
   "level": 3,
   "title": "Hunter gear · E",
-  "text": "Creature hide, bone and essence: your first set. Recipe book.",
+  "text": "Hide from creatures, a bone or flint, a string or feather, and one Essence Shard for each piece. Creatures drop all of it. The recipes are in your recipe book.",
   "grants": [
     {
       "type": "recipe",

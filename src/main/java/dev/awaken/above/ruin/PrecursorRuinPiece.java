@@ -139,6 +139,14 @@ public class PrecursorRuinPiece extends StructurePiece implements PieceBeardifie
                 level.setBlock(at, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, rot.rotate(facing)), Block.UPDATE_CLIENTS);
                 RandomizableContainer.setBlockEntityLootTable(level, random, at, table);
             }
+
+            @Override
+            public void stand(int x, int y, int z, Direction facing, String standKind, String rank) {
+                world(x, y, z, m);
+                if (!chunkBB.isInside(m)) return;
+                BlockPos at = m.immutable();
+                dev.awaken.core.api.ArmsApi.placeStand(level, at, rot.rotate(facing), standKind, rank, at.asLong());
+            }
         });
     }
 

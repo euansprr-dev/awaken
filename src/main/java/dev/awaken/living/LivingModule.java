@@ -64,6 +64,7 @@ public final class LivingModule {
         dev.awaken.living.wayfarer.Scenes.init();
         FirstThread.init(); // the first thread out of Carillon, and chains on the Now line (SPEC §27.6)
         FirstScenes.init(); // its High Gate shot and Ilse's scene by the fire
+        IssueScene.init(); // Hale's issue: the first weapon, free (docs/arms-progression/PLAN.md §3.3)
         modBus.addListener(LivingNet::register);
         XpBudget.register(HUNT, 0.10);
         XpBudget.register("pulse", 0.15);

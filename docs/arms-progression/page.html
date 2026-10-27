@@ -1,0 +1,390 @@
+<title>The Armoury</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column of night glass, the house look of AWAKEN's plan pages. The map, the style table and the
+   decision cards break wider or scroll inside their own frames. Dark first; the light theme mirrors it. */
+:root {
+  --bg: #0a1019;          /* the night behind the Holo */
+  --glass: #0f1724;       /* the System's glass */
+  --glass-2: #142033;
+  --line: #22344d;
+  --fg: #e4f1ff;
+  --muted: #93a8c2;
+  --accent: #7fc3ff;      /* System blue */
+  --good: #9fe6d6;        /* the Horizon's sea-green: recommended */
+  --amber: #ffcf7a;       /* what waits */
+  --ember: #ff8a7a;
+  --rank-e: #f4f6fb; --rank-d: #5fd08f; --rank-c: #6fb3ff; --rank-b: #b48cff; --rank-a: #f2a541; --rank-s: #ff5a6a;
+  --chip-ink: #0a1019;
+  --display: "Chakra Petch", "Avenir Next Condensed", "Arial Narrow", sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #eef3f8; --glass: #ffffff; --glass-2: #f4f8fc; --line: #cfdbe8;
+    --fg: #0e1a2b; --muted: #4b5f76; --accent: #1f6fb5; --good: #157a68; --amber: #9a6100; --ember: #b8402f;
+    --rank-e: #6b7787; --rank-d: #23884f; --rank-c: #2468b3; --rank-b: #6f46c4; --rank-a: #a8610a; --rank-s: #c42a3d;
+    --chip-ink: #ffffff;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #eef3f8; --glass: #ffffff; --glass-2: #f4f8fc; --line: #cfdbe8;
+  --fg: #0e1a2b; --muted: #4b5f76; --accent: #1f6fb5; --good: #157a68; --amber: #9a6100; --ember: #b8402f;
+  --rank-e: #6b7787; --rank-d: #23884f; --rank-c: #2468b3; --rank-b: #6f46c4; --rank-a: #a8610a; --rank-s: #c42a3d;
+  --chip-ink: #ffffff;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #0a1019; --glass: #0f1724; --glass-2: #142033; --line: #22344d;
+  --fg: #e4f1ff; --muted: #93a8c2; --accent: #7fc3ff; --good: #9fe6d6; --amber: #ffcf7a; --ember: #ff8a7a;
+  --rank-e: #f4f6fb; --rank-d: #5fd08f; --rank-c: #6fb3ff; --rank-b: #b48cff; --rank-a: #f2a541; --rank-s: #ff5a6a;
+  --chip-ink: #0a1019;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font: 400 16px/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 72px;
+}
+.wrap { max-width: 1040px; margin: 0 auto; }
+.prose { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; letter-spacing: 0.01em; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); font-weight: 700; }
+h2 { font-size: clamp(1.4rem, 3.4vw, 1.9rem); font-weight: 600; margin-top: 56px; }
+h3 { font-size: 1.1rem; font-weight: 600; }
+p { margin: 12px 0 0; }
+a { color: var(--accent); }
+.eyebrow { font: 500 0.74rem/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.12rem; color: var(--fg); }
+.muted { color: var(--muted); }
+code, .mono { font-family: var(--mono); font-size: 0.88em; }
+header { padding-top: 56px; }
+header .eyebrow { margin-bottom: 18px; }
+blockquote {
+  margin: 28px 0 0; padding: 14px 18px; background: var(--glass); border: 1px solid var(--line); border-radius: 10px;
+  color: var(--fg); max-width: 68ch;
+}
+blockquote span { display: block; margin-top: 8px; color: var(--muted); font-size: 0.85rem; }
+
+.chip {
+  display: inline-block; padding: 2px 9px; border-radius: 999px; font: 600 0.72rem/1.5 var(--mono); letter-spacing: 0.06em;
+  background: var(--chip, var(--accent)); color: var(--chip-ink); white-space: nowrap; vertical-align: 1px;
+}
+.chip.e { --chip: var(--rank-e); } .chip.d { --chip: var(--rank-d); } .chip.c { --chip: var(--rank-c); }
+.chip.b { --chip: var(--rank-b); } .chip.a { --chip: var(--rank-a); } .chip.s { --chip: var(--rank-s); }
+.chip.rec { --chip: var(--good); }
+
+.grid { display: grid; gap: 14px; margin-top: 18px; }
+.g3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.g2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.card { background: var(--glass); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; min-width: 0; }
+.card h3 { margin-bottom: 6px; }
+.card p { margin-top: 6px; font-size: 0.95rem; }
+.card .tag { font: 500 0.7rem/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; display: block; }
+
+/* the path */
+.frame { overflow-x: auto; margin-top: 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--glass); }
+.map { min-width: 980px; display: grid; grid-template-columns: 96px repeat(7, 1fr); padding: 18px 16px 14px; column-gap: 10px; row-gap: 0; }
+.map .lane { font: 500 0.7rem/1.3 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 12px 6px 12px 0; border-top: 1px solid var(--line); }
+.map .cell { font-size: 0.82rem; line-height: 1.4; padding: 12px 4px 12px 0; border-top: 1px solid var(--line); min-width: 0; }
+.map .cell b { font-weight: 600; color: var(--fg); }
+.map .stop { position: relative; padding: 0 0 14px; text-align: left; min-width: 0; }
+.map .stop::before { content: ""; position: absolute; left: -10px; right: 0; top: 14px; height: 2px; background: var(--line); }
+.map .stop .pin { position: relative; display: block; width: 16px; height: 16px; border-radius: 50%; background: var(--c); border: 3px solid var(--glass); box-shadow: 0 0 0 1px var(--c); margin-top: 7px; }
+.map .stop .when { display: block; margin-top: 10px; font: 600 0.9rem/1.2 var(--display); }
+.map .stop .what { display: block; font-size: 0.78rem; color: var(--muted); }
+.note { font-size: 0.85rem; color: var(--muted); margin-top: 10px; }
+
+/* steps */
+.steps { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 10px; }
+.steps li { display: grid; grid-template-columns: 74px 1fr; gap: 14px; background: var(--glass); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
+.steps .t { font: 600 0.92rem/1.4 var(--mono); color: var(--accent); }
+.steps p { margin: 0; font-size: 0.95rem; }
+.say { margin-top: 6px !important; padding-left: 12px; border-left: 2px solid var(--accent); color: var(--fg); font-style: italic; }
+
+/* tables */
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th { text-align: left; font: 500 0.7rem/1.3 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.n { font-weight: 600; white-space: nowrap; }
+.tbl { overflow-x: auto; margin-top: 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--glass); }
+.tbl table { min-width: 720px; }
+
+/* tooltips: before and after */
+.tip {
+  font: 400 0.84rem/1.45 var(--mono); background: #17082e; color: #e6dcff; border: 2px solid #3b1d6b; border-radius: 4px;
+  padding: 10px 12px; min-width: 0;
+}
+.tip .t { color: #ffe27a; display: block; }
+.tip .r { color: #8fb4ff; display: block; }
+.tip .g { color: #9aa3b8; display: block; }
+.tip .m { color: #aaaaaa; display: block; margin-top: 6px; }
+.tip .nl { display: block; height: 6px; }
+.label { font: 500 0.7rem/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; display: block; }
+.card.track { font-family: var(--mono); font-size: 0.82rem; line-height: 1.55; }
+.track .ok { color: var(--good); } .track .need { color: var(--amber); } .track .src { color: var(--muted); }
+
+/* bars */
+.bars { margin-top: 18px; display: grid; gap: 8px; }
+.bar { display: grid; grid-template-columns: minmax(120px, 230px) 1fr 48px; align-items: center; gap: 12px; font-size: 0.9rem; }
+.bar .track-bg { height: 14px; background: var(--glass-2); border: 1px solid var(--line); border-radius: 3px; position: relative; overflow: hidden; }
+.bar .fill { position: absolute; inset: 0 auto 0 0; background: var(--accent); }
+.bar.skill .fill { background: var(--good); }
+.bar .v { font: 600 0.88rem var(--mono); text-align: right; }
+
+/* decisions */
+.dec { display: grid; grid-template-columns: 44px 1fr; gap: 14px; background: var(--glass); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin-top: 12px; }
+.dec .no { font: 700 1.5rem/1 var(--display); color: var(--accent); }
+.dec h3 { margin-bottom: 4px; }
+.dec p { margin: 6px 0 0; font-size: 0.95rem; }
+.dec .alt { color: var(--muted); font-size: 0.88rem; }
+.dec .why { color: var(--fg); }
+.dec .body { min-width: 0; }
+.cost { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 8px; }
+.cost li { display: grid; grid-template-columns: 34px 1fr 70px; gap: 12px; align-items: baseline; padding: 10px 16px; background: var(--glass); border: 1px solid var(--line); border-radius: 10px; }
+.cost .k { font: 700 1.1rem var(--display); color: var(--accent); }
+.cost .h { font: 600 0.9rem var(--mono); text-align: right; }
+.ask { margin-top: 28px; padding: 18px 20px; border: 1px solid var(--good); border-radius: 12px; background: var(--glass); }
+footer { margin-top: 56px; font-size: 0.85rem; color: var(--muted); }
+@media (max-width: 560px) {
+  .steps li { grid-template-columns: 1fr; gap: 4px; }
+  .bar { grid-template-columns: 1fr 48px; }
+  .bar .track-bg { grid-column: 1 / -1; grid-row: 2; }
+  .dec { grid-template-columns: 1fr; gap: 6px; }
+  .cost li { grid-template-columns: 30px 1fr; } .cost .h { grid-column: 2; text-align: left; }
+}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">AWAKEN · Arms · approved with your changes · 27 October 2026</div>
+  <h1>The Armoury</h1>
+  <p class="lede prose">The weapons are built. The way to them is invisible. Every hunter gets a first weapon at the High Gate. Every ingredient says where it comes from. Gates give you the pattern for a style, structures and villages offer more, and the world gives you the materials. Bosses drop weapons, and the cooler the weapon the rarer. All seven phases are now built on <code>pack/arms-progression</code>, tested in the game's test server and not yet seen in the client.</p>
+  <blockquote>"I have no idea where to get a fang or a blueprint ... make it truly feel triple A and not too confusing, while also not being too easy either lol. The first gear shouldn't be too difficult tho as well."<span>You, 27 October, playing build 0257c666</span></blockquote>
+</header>
+<div class="ask" style="margin-top:24px"><b>Updated 27 October after your notes.</b> Gates now teach every style: a creature on the gate's first floor carries the pattern and drops it. Structures show patterns on stands built into the place, and never in a plain chest. Villages sell patterns by their land's level. Boss fights drop weapons, rarer the cooler they are, and you can see what a boss carries. A Blueprint's tooltip says where it is found. Everything else was approved as recommended.</div>
+
+<h2>What we found</h2>
+<div class="grid g3">
+  <div class="card"><span class="tag">The Fang</span><h3>Nothing says what it is</h3><p>The tooltip reads "E-rank Hunter gear · Wildhide". It never says it is a blade, that every forged weapon starts from one, or what makes it. Blueprints and the Forge have no tooltip at all.</p></div>
+  <div class="card"><span class="tag">The Blueprint</span><h3>It hides behind iron</h3><p>You draw one by sneaking at a Forge with an empty hand. The Forge costs 7 iron, and a Blueprint needs lapis from a cave. Early gear is meant to need no iron, and nothing tells you any of this.</p></div>
+  <div class="card"><span class="tag">Essence</span><h3>It was never the problem</h3><p>Creatures already drop Essence Shards: about 0.6 a kill from a night hunter, 0.25 from a day animal. The whole first kit is about 7. The game just never says so, and our own guide page leaves creatures out.</p></div>
+</div>
+<p class="note">One correction to the brief: I checked the loot tables and 182 of 199 creatures drop essence. The first kit is a night of hunting, not a gate.</p>
+
+<h2>The path, from the first hour to S</h2>
+<p class="prose">Three things move together: what you can make, which styles you know, and what you find. Spaced by milestone, not to scale. Hours are the pacing sim's balanced player.</p>
+<div class="frame"><div class="map">
+  <div></div>
+  <div class="stop" style="--c: var(--rank-e)"><span class="pin"></span><span class="when">0:15</span><span class="what">High Gate</span></div>
+  <div class="stop" style="--c: var(--rank-e)"><span class="pin"></span><span class="when">0:30</span><span class="what">Level 3</span></div>
+  <div class="stop" style="--c: var(--rank-d)"><span class="pin"></span><span class="when">~5 h</span><span class="what">D-rank</span></div>
+  <div class="stop" style="--c: var(--rank-c)"><span class="pin"></span><span class="when">~18 h</span><span class="what">C-rank</span></div>
+  <div class="stop" style="--c: var(--rank-b)"><span class="pin"></span><span class="when">~48 h</span><span class="what">B-rank</span></div>
+  <div class="stop" style="--c: var(--rank-a)"><span class="pin"></span><span class="when">~70 h</span><span class="what">A-rank</span></div>
+  <div class="stop" style="--c: var(--rank-s)"><span class="pin"></span><span class="when">~85 h</span><span class="what">S-rank</span></div>
+
+  <div class="lane">You make</div>
+  <div class="cell"><b>A free first weapon.</b> Hale's issue.</div>
+  <div class="cell"><b>E Wildhide.</b> Hide, bone, string and shards from the first night.</div>
+  <div class="cell"><b>D Beastbound</b> at level 13. Adds iron and a beast's trophy.</div>
+  <div class="cell"><b>C Gatewrought</b> at level 22. Adds diamond and a D Lord's relic.</div>
+  <div class="cell"><b>B Veilwoven</b> at level 42. Adds Deepglass and amethyst.</div>
+  <div class="cell"><b>A Lordscale</b> at level 67. Adds netherite.</div>
+  <div class="cell"><b>S Sovereign</b> at level 97. Adds starmetal from fallen stars.</div>
+
+  <div class="lane">You learn</div>
+  <div class="cell"><b>Pick Daggers, Axe or Maul.</b> The Longsword is already yours.</div>
+  <div class="cell">The first gate hands you a second style. Hale sells 5 at E.</div>
+  <div class="cell">D gates teach Spear, Rapier, Chain-blade, Gauntlets. Hale and D villages sell them.</div>
+  <div class="cell">C gates teach Glaive, Shieldblade, Precursor Arm, Katana.</div>
+  <div class="cell">Sky gates teach Twinblades.</div>
+  <div class="cell">Abyssal gates teach Greatblade.</div>
+  <div class="cell">All 16, mastery to step V.</div>
+
+  <div class="lane">You find</div>
+  <div class="cell">Shards from hunters and rifts. The gate's bearer.</div>
+  <div class="cell">Marked weapons from elites and camp hearts. Patterns on stands.</div>
+  <div class="cell">Bosses drop weapons: often at E, about one in 2.5 at S.</div>
+  <div class="cell">Named weapons: a rumour first, then the place.</div>
+  <div class="cell"><b>Raise</b> keeps a found weapon current at the Forge.</div>
+  <div class="cell">Legendary weapons tied to the story.</div>
+  <div class="cell">Your own Lord-forged set.</div>
+
+  <div class="lane">Hale's board</div>
+  <div class="cell">"You're not going out with nothing in your hands."</div>
+  <div class="cell">Ilse and Marta pay a few shards.</div>
+  <div class="cell">Job: a Briar Tusk.</div>
+  <div class="cell">Job: a diamond.</div>
+  <div class="cell">Job: Deepglass.</div>
+  <div class="cell">Job: ancient debris.</div>
+  <div class="cell">Job: a fallen star's core.</div>
+</div></div>
+
+<h2>The first hour</h2>
+<ol class="steps">
+  <li><span class="t">0:15</span><div><p><b>Hale stops you at the High Gate.</b> His rack holds three weapons. You take one: Daggers (fast), Axe (wide cuts) or Maul (slow and heavy). You get the finished E weapon, its Blueprint and a spare Fang, taken from his hand.</p>
+    <p class="say">"Hold on. You're not going out there with nothing in your hands. The Association gives every new hunter one weapon. Take whichever one you like. They're all fine."</p></div></li>
+  <li><span class="t">0:20</span><div><p>Ilse gives you the Ember, as today. If you skipped Hale, she hands you the same issue in his name.</p></div></li>
+  <li><span class="t">first night</span><div><p><b>The first Essence Shard drops, and a card says what it is.</b> Night hunters drop about one for every two kills. A rule adds a shard on the fifth kill in a row that gave none, so bad luck never stalls you.</p></div></li>
+  <li><span class="t">0:30</span><div><p><b>Level 3 opens the armour recipes,</b> and the toast now says what to bring: hide from creatures, a bone or flint, a string or feather, and one shard for each piece. The Armoury appears in your band, with a Track button for the parts you still need.</p></div></li>
+  <li><span class="t">~1 h</span><div><p>The full E set takes about 15 hide and 7 shards. You are ready for the first gate. One creature on its first floor wields a weapon and glints: kill it and the gate's pattern drops, a second style, free. An elite may drop a Marked weapon.</p></div></li>
+</ol>
+
+<h2>Where each style comes from</h2>
+<p class="prose">Your rule: the gates give you the pattern, and you get the materials from the world. Every gate has a creature on its first floor that wields the gate's style and carries its pattern. Defeat the floor and it drops, to everyone fighting there, straight into your pack. If you already know that style, you get one you don't have of the same rank. If you somehow skip it, the Lord's hoard carries it. Hale's rack sells every pattern as a floor, so nobody is locked out by luck.</p>
+<div class="tbl"><table>
+  <thead><tr><th>Style</th><th>In plain words</th><th>The gate that teaches it</th><th>Hale sells</th><th>Taught early by</th><th>Its master</th></tr></thead>
+  <tbody>
+  <tr><td class="n">Longsword</td><td>Balanced. Good at guarding and answering.</td><td>everyone has it</td><td>-</td><td>-</td><td>none</td></tr>
+  <tr><td class="n">Daggers</td><td>Fast and close. Hardest from behind.</td><td>the Hive</td><td><span class="chip e">E</span></td><td>-</td><td>Hive Regent</td></tr>
+  <tr><td class="n">Axe</td><td>Wide, heavy cuts that break a guard.</td><td>the Ember Mines</td><td><span class="chip e">E</span></td><td>-</td><td>Ember Tyrant</td></tr>
+  <tr><td class="n">Maul</td><td>Slow and heavy. Breaks armour.</td><td>the Bell Crypt</td><td><span class="chip e">E</span></td><td>-</td><td>Bell Warden</td></tr>
+  <tr><td class="n">Scythe</td><td>Wide sweeps that cut spirits.</td><td>the Fungal Hollow</td><td><span class="chip e">E</span></td><td>-</td><td>Mother of Spores</td></tr>
+  <tr><td class="n">War-staff</td><td>Each hit charges your energy.</td><td>the Overgrown Temple</td><td><span class="chip e">E</span></td><td>-</td><td>Root Saint</td></tr>
+  <tr><td class="n">Spear</td><td>Long reach. Thrust and keep away.</td><td>the Drowned Archive</td><td><span class="chip d">D</span></td><td><b>Hettie</b></td><td>Drowned Archivist</td></tr>
+  <tr><td class="n">Rapier</td><td>Precise thrusts. Counters hit hard.</td><td>the Glass Desert</td><td><span class="chip d">D</span></td><td><b>Pell</b></td><td>Glass Serpent</td></tr>
+  <tr><td class="n">Chain-blade</td><td>A blade on a chain. Pulls things in.</td><td>the Lantern Night Market</td><td><span class="chip d">D</span></td><td><b>Marta</b></td><td>Lantern Broker</td></tr>
+  <tr><td class="n">Gauntlets</td><td>Fists. Strings of punches and counters.</td><td>the Clockwork Foundry</td><td><span class="chip d">D</span></td><td>-</td><td>Gearwright Colossus</td></tr>
+  <tr><td class="n">Glaive</td><td>Big sweeping arcs for crowds.</td><td>the Frost Monastery</td><td><span class="chip c">C</span></td><td><b>Gus</b></td><td>Abbot of Frost</td></tr>
+  <tr><td class="n">Shieldblade</td><td>Block first, then bash back.</td><td>the Mirror Palace</td><td><span class="chip c">C</span></td><td>-</td><td>Mirror Knight</td></tr>
+  <tr><td class="n">Precursor Arm</td><td>An energy blade that changes length.</td><td>the Precursor Lab</td><td><span class="chip c">C</span></td><td>-</td><td>Unit Zero</td></tr>
+  <tr><td class="n">Katana</td><td>Draw and cut. The guard is the sheath.</td><td>the Nightmare gates</td><td><span class="chip c">C</span></td><td>-</td><td>Sleeper</td></tr>
+  <tr><td class="n">Twinblades</td><td>Two blades, always spinning.</td><td>the Sky Archipelago</td><td><span class="chip b">B</span></td><td><b>Wren</b></td><td>Sky Leviathan</td></tr>
+  <tr><td class="n">Greatblade</td><td>Slow two-handed cuts that don't flinch.</td><td>the Abyssal Shrine</td><td><span class="chip a">A</span></td><td><b>Oren</b></td><td>Hollow Herald</td></tr>
+  </tbody></table></div>
+<p class="note">Patterns go straight into your pack and are known at once. They never sit in the Satchel, so dying later can't take one. Hale's prices: 4 essence at E, then 6, 8, 10 and 12.</p>
+
+<h3 style="margin-top:32px">Structures and villages</h3>
+<p class="prose">Patterns are never left in a plain chest. They sit where they look good, and you can tell at a glance that you can take them.</p>
+<div class="grid g2">
+  <div class="card"><span class="tag">In a structure</span><h3>A Pattern Stand</h3><p>A slanted drafting stand under the pylons of a Precursor vault. A weapon rack in a smithy. A lectern at the top of a spire. A fallen hunter's bedroll and rack in a lair. The weapon of that tier hangs above it, the pattern is pinned in white line on blueprint paper, and a soft light and a cue say "take it". You take it with your hand, once, and it dims for you. The stand stays for everyone else.</p></div>
+  <div class="card"><span class="tag">In a village</span><h3>The smith's rack</h3><p>A village's level sets its rank. A village in a level 70 land sells A-rank patterns. The smith shows two, picked by the village, for emeralds: 6 at E, 10 at D, 16 at C, 24 at B, 32 at A. A stranger pays a little over, a friend less. You travel somewhere hard to buy something early. His forge also opens the Armoury.</p></div>
+  <div class="card"><span class="tag">On a creature</span><h3>The bearer</h3><p>In a gate, a riftborn camp or a lair, one creature wields the style's weapon and glints. That is the one that carries the pattern.</p></div>
+  <div class="card"><span class="tag">What the tooltip says</span><h3>"Found in a C-rank gate"</h3><p>"Found in: C-rank gates, level 25-44 structures, villages of level 25-44. Hale sells it at C-rank for 8 essence." The gate's name appears once you have cleared it.</p></div>
+</div>
+<p class="note">Not in the village smith's stock: finished weapons. A bought weapon would skip the Part and the metal, and those are what make a tier earned. If you want a "buy" path, the smith can sell the Parts of his land instead.</p>
+
+<h3 style="margin-top:32px">"How would I ever know that?"</h3>
+<p class="prose">You are told where you already are, never in a menu you have to go and find.</p>
+<div class="grid g2">
+  <div class="card"><span class="tag">At a gate</span><h3>The gate card says it</h3><p>Once the card shows the theme, it adds a line for a style you don't know: "The first floor carries a pattern: Daggers." The bearer's glinting weapon says the same in the room.</p></div>
+  <div class="card"><span class="tag">From a person</span><h3>Their offer says it</h3><p>"If you help me find the ten sheep, I'll show you how to use a spear. It keeps wolves off."</p></div>
+  <div class="card"><span class="tag">At Hale</span><h3>The plaque, and a question</h3><p>Each pattern on his rack reads "4 essence, or free: the Hive's gates teach it". Ask him "Anything on patterns?" and he names the nearest home you have met, with a direction.</p></div>
+  <div class="card"><span class="tag">In your band</span><h3>"What waits"</h3><p>A home you have met but can't use yet is filed there. Homes you haven't met are never listed. And you never have to find any of it: Hale sells every pattern.</p></div>
+</div>
+
+<h2>Every item says where it comes from</h2>
+<p class="prose">An item has to answer three things: what is it, what is it for, where do I get more. A test fails the build if any ingredient of any gear or weapon recipe has no "where" line.</p>
+<div class="grid g2">
+  <div class="card"><span class="label">Now: the Fang</span>
+    <div class="tip"><span class="t">Wildhide Fang</span><span class="r">E-rank Hunter gear · Wildhide</span><span class="m">When in Main Hand:</span><span style="color:#5f5">5 Attack Damage</span><span style="color:#5f5">1.8 Attack Speed</span></div></div>
+  <div class="card"><span class="label">After</span>
+    <div class="tip"><span class="t">Wildhide Fang</span><span class="r">E-rank Hunter blade</span><span class="g">A short blade that fights like a sword. Every forged weapon is made from one.</span><span class="g">Made from: 2 Parts, 1 Binding, 1 Essence Shard</span><span class="m">Hold Shift: Bone, skeletons at night. Flint, gravel. String, spiders. Shards, any creature.</span></div></div>
+  <div class="card"><span class="label">Now: the Blueprint</span>
+    <div class="tip"><span class="t">Daggers Blueprint</span><span class="r">AWAKEN</span></div></div>
+  <div class="card"><span class="label">After</span>
+    <div class="tip"><span class="t">Daggers Blueprint</span><span class="g">A design. Put it in the crafting grid with a Fang and parts. It comes back out when the weapon is made.</span><span class="g">Found in: E-rank gates, level 1-9 structures, villages of level 1-9. Hale sells it at E-rank for 4 essence.</span><span class="r">AWAKEN</span></div></div>
+</div>
+<div class="grid g2">
+  <div class="card track"><span class="label">Track: one tap in the Armoury, then on your screen</span>
+    <b>Wildhide Daggers</b><br>
+    <span class="ok">✓ Fang 1/1</span><br>
+    <span class="need">▸ Parts 1/2</span> <span class="src">bone: skeletons, mostly at night</span><br>
+    <span class="need">  Binding 0/1</span> <span class="src">string: spiders</span><br>
+    <span class="ok">✓ Blueprint</span></div>
+  <div class="card"><h3>Plain words, one set</h3><p><b>Hide</b> is the body of armour. <b>Part</b> is the hard heart: bone, flint, a horn, a beast's trophy. <b>Binding</b> is what holds it: string, feather, moss, later a metal ingot. Tooltips, JEI and the Armoury all use them.</p><p>JEI also gets a source line on every ingredient, a Blueprint source, an Armoury category and a fixed Essence page. The recipe book stops unlocking all 16 weapons from one bone.</p></div>
+</div>
+
+<h2>The ladder, tier by tier</h2>
+<p class="prose">Each tier asks for one thing from each of three places: the hunt, the deep and the gates. A new tier is announced in three beats. First you see it locked, with what it waits for. Then it opens with a toast that names the job. Then Hale's board posts the job for its signature part, in plain words, naming the creature and the place.</p>
+<div class="tbl"><table>
+  <thead><tr><th>Tier</th><th>Opens</th><th>Part from the hunt</th><th>Metal from the deep</th><th>Hale's job</th></tr></thead>
+  <tbody>
+  <tr><td class="n"><span class="chip e">E</span> Wildhide</td><td>level 3 · 0.5 h</td><td>bone, flint, quartz, a family's horn</td><td>none</td><td>your issue</td></tr>
+  <tr><td class="n"><span class="chip d">D</span> Beastbound</td><td>level 13 · ~6 h</td><td>a named beast's trophy, or an E Lord's part</td><td>iron, 14</td><td>"Bring back a Briar Sow's tusk"</td></tr>
+  <tr><td class="n"><span class="chip c">C</span> Gatewrought</td><td>level 22 · ~14 h</td><td>a D Lord's relic</td><td>diamond, 14</td><td>a diamond lode</td></tr>
+  <tr><td class="n"><span class="chip b">B</span> Veilwoven</td><td>level 42 · ~42 h</td><td>C and B Lord parts</td><td>Deepglass, amethyst</td><td>a seep</td></tr>
+  <tr><td class="n"><span class="chip a">A</span> Lordscale</td><td>level 67 · ~66 h</td><td>B and A Lord parts</td><td>netherite</td><td>ancient debris</td></tr>
+  <tr><td class="n"><span class="chip s">S</span> Sovereign</td><td>level 97 · ~82 h</td><td>the Herald's and the Court's parts</td><td>starmetal</td><td>a fallen star</td></tr>
+  </tbody></table></div>
+<p class="note">No grind wall: a tier never needs more than one trophy, one metal run and essence you already earn. Every part slot takes several things, so one missed drop blocks nothing.</p>
+
+<h2>Finding and making both matter</h2>
+<div class="grid g3">
+  <div class="card"><span class="tag">Make it</span><h3>Forged</h3><p>The weapon of your tier in the style you choose. Reliable, and you can attune and temper it.</p></div>
+  <div class="card"><span class="tag">Try something new</span><h3>Marked</h3><p>From elites, Wardens and camp hearts: a forged weapon of your tier with a quirk you did not pick. Your first one is guaranteed. A pity rule means no long dry spell.</p></div>
+  <div class="card"><span class="tag">A keepsake</span><h3>Named</h3><p>A rumour tells you it exists. A place gives it to you. It has a name, a Mark or two and one plain line of history.</p></div>
+  <div class="card"><span class="tag">Your correction</span><h3>Boss weapons: the cooler, the rarer</h3><p>A Lord kill rolls a Marked weapon in its own style and, separately, the Lord-forged weapon. At E that is about three kills in four. At S it is two or three gates to one weapon. A pity keeps the long tail honest. Everyone in the room rolls their own, and it goes straight to the pack.</p></div>
+  <div class="card"><span class="tag">A trophy</span><h3>Lord-forged</h3><p>As today: the Lord's weapon and its signature move as the weapon's Art. It is the chase, and it stays rare.</p></div>
+  <div class="card" style="grid-column: 1 / -1"><span class="tag">The link between them</span><h3>Raise</h3><p>At a Forge, lift a found weapon to your next tier for that tier's parts. It keeps its Marks, its Art, its attunement and its name. A Maul from the Bell Warden can stay yours from E to S, and a crafted weapon is what you reach for when you want a style at your tier right now. Neither is a strict upgrade of the other.</p></div>
+</div>
+
+<h3 style="margin-top:32px">What a boss pays</h3>
+<div class="tbl"><table>
+  <thead><tr><th>Gate rank</th><th>Marked weapon</th><th>Lord-forged</th><th>Any weapon</th><th>Lords per weapon</th></tr></thead>
+  <tbody>
+  <tr><td class="n"><span class="chip e">E</span></td><td>60%</td><td>35%, certain by the third</td><td>about 74%</td><td>1.3</td></tr>
+  <tr><td class="n"><span class="chip d">D</span></td><td>45%</td><td>the same</td><td>about 64%</td><td>1.5</td></tr>
+  <tr><td class="n"><span class="chip c">C</span></td><td>30%</td><td>the same</td><td>about 55%</td><td>1.7</td></tr>
+  <tr><td class="n"><span class="chip b">B</span></td><td>22%</td><td>the same</td><td>about 49%</td><td>1.8</td></tr>
+  <tr><td class="n"><span class="chip a">A</span></td><td>15%</td><td>the same</td><td>about 45%</td><td>1.9</td></tr>
+  <tr><td class="n"><span class="chip s">S</span></td><td>40%</td><td>none until the Sovereign weapons are built</td><td>about 40%</td><td><b>2.4</b></td></tr>
+  </tbody></table></div>
+<p class="note">Everyone in the room rolls their own. A pity makes the sixth Lord kill without any weapon certain. These rates are my first numbers: a sim row sets them before they ship, and you check them when you play.</p>
+<p class="prose">You can see what a boss carries before you fight it. The Lord holds its own weapon in its hand, glinting. Your Armoury lists every Lord you have met, with its weapon as a dark silhouette until you own it, and says "The next Lord is certain to carry its weapon" when your pity comes round. Tooltips and JEI say "Dropped by the Hive Regent in E-rank gates. Sometimes."</p>
+
+<h2>How hard it is</h2>
+<p class="prose">The combat sim says gear is the floor and skill is the lever. Against the Drowned Archivist at D-rank, a player who guards well but is not great wins 6% of the time. An expert with the same weapon wins 99%. A diamond sword only moves the first number to 12%. So the first gear can be generous, and nothing in this plan changes how hard a fight is.</p>
+<div class="bars" role="img" aria-label="Win rate against the Drowned Archivist at D-rank: Tank 0 percent, Dodger 2, Parrier 6, Parrier with diamond sword 12, Expert 99">
+  <div class="bar"><span>Never defends</span><div class="track-bg"><div class="fill" style="width:0%"></div></div><span class="v">0%</span></div>
+  <div class="bar"><span>Dodges 70% of blows</span><div class="track-bg"><div class="fill" style="width:2%"></div></div><span class="v">2%</span></div>
+  <div class="bar"><span>Guards well, forged sword</span><div class="track-bg"><div class="fill" style="width:6%"></div></div><span class="v">6%</span></div>
+  <div class="bar"><span>Guards well, diamond sword</span><div class="track-bg"><div class="fill" style="width:12%"></div></div><span class="v">12%</span></div>
+  <div class="bar skill"><span>Expert, forged sword</span><div class="track-bg"><div class="fill" style="width:99%"></div></div><span class="v">99%</span></div>
+</div>
+<p class="note">From docs/combat/sim-2026-10-26.md, 400 seeded fights a cell. The hard parts stay hard: the metal run from D, the trophy hunt, the Lords, and the Marks and Arts you have to find. One risk: the sim finds only 3 of 15 Lords inside their targets even for an expert, so kits from C up could slip if the Lords stay as they are. That waits for your three-Lord session.</p>
+
+<h2>Fifteen decisions</h2>
+<p class="prose">You said to go ahead with everything recommended, and changed one. Here is where each stands.</p>
+
+<div class="dec"><div class="no">1</div><div class="body"><h3>Fix the guidance first, on its own <span class="chip rec">Approved</span></h3><p>Tooltips, plain words, a "where from" line on every ingredient with a test behind it, JEI (including "found in a C-rank gate"), and the recipe-book fix.</p></div></div>
+<div class="dec"><div class="no">2</div><div class="body"><h3>Hale hands over a first weapon <span class="chip rec">Approved</span></h3><p>Pick Daggers, Axe or Maul at the High Gate. You get the finished weapon, its Blueprint and a spare Fang. Ilse covers it if you miss him.</p></div></div>
+<div class="dec"><div class="no">3</div><div class="body"><h3>The Armoury is the one door for Blueprints <span class="chip rec">Approved</span></h3><p>Hale's rack for essence, your Forge or a village smithy's for known patterns, and a real rack of weapons in Hale's yard. The random cycle goes.</p></div></div>
+<div class="dec"><div class="no">4</div><div class="body"><h3>Where patterns come from <span class="chip">Changed by you</span></h3><p>Gates give the pattern: a creature on the first floor carries it, and every gate you clear pays. Structures hold patterns on stands, villages sell them by level, six people teach early, and Hale's rack is the floor. You then get the materials from the world.</p></div></div>
+<div class="dec"><div class="no">5</div><div class="body"><h3>Keep the blade names, add a plain type line <span class="chip rec">Approved</span></h3><p>Fang, Cleaver, Sabre, Edge, Warblade and Oathblade stay. Hide, Part and Binding become the words everywhere.</p></div></div>
+<div class="dec"><div class="no">6</div><div class="body"><h3>An Armoury page in the band, with Track <span class="chip rec">Approved</span></h3><p>K, then Powers. Styles you know, tier cards with have and need, and the finds. Track puts the missing parts on your screen.</p></div></div>
+<div class="dec"><div class="no">7</div><div class="body"><h3>Say where essence comes from, and never let it dry up <span class="chip rec">Approved</span></h3><p>A card on the first shard. The fifth kill in a row with none drops one at E and D. Ilse's Moth Lights and Marta's Wheel pay a few.</p></div></div>
+<div class="dec"><div class="no">8</div><div class="body"><h3>Tiers announce themselves <span class="chip rec">Approved</span></h3><p>See it locked, open it with a toast naming the job, then a job on Hale's board for the signature part, naming the creature and the place.</p></div></div>
+<div class="dec"><div class="no">9</div><div class="body"><h3>Marked and named weapons <span class="chip rec">Approved</span></h3><p>Keep the 4% and 10% rates. Camp hearts at 10%, a pity (certain by the 25th), a guaranteed first one. Named weapons by rumour, about 30 to start, built after the rest.</p></div></div>
+<div class="dec"><div class="no">10</div><div class="body"><h3>Raise found weapons at the Forge <span class="chip rec">Approved</span></h3><p>A found weapon can be lifted to your tier for that tier's parts, keeping its Marks, Art and attunement.</p></div></div>
+<div class="dec"><div class="no">11</div><div class="body"><h3>Difficulty stance <span class="chip rec">Approved</span></h3><p>Tiers stay one point of damage apart. No item-level multiplier. Nothing here touches a Lord's numbers.</p></div></div>
+<div class="dec"><div class="no">12</div><div class="body"><h3>Order <span class="chip rec">Approved</span></h3><p>A and B first, then the Armoury with gates and villages beside it, then boss weapons and tiers. Named weapons wait.</p></div></div>
+<div class="dec"><div class="no">13</div><div class="body"><h3>Boss weapons, rarer the cooler they are <span class="chip">Changed by you</span></h3><p>Not every boss pays. Chance of any weapon from one Lord: about 74% at E, 64% at D, 55% at C, 49% at B, 45% at A, 40% at S. So two or three S gates to one weapon. Lord-forged stays 35%, certain by the third. A pity at six.</p><p>You can see it coming: the Lord wields its weapon, the Armoury names it (the gate card does not), and tooltips and JEI say "Dropped by the Hive Regent. Sometimes."</p></div></div>
+<div class="dec"><div class="no">14</div><div class="body"><h3>Villages sell patterns <span class="chip">Your request</span></h3><p>Two patterns of the village's rank for emeralds, by its land's level. The smithy's forge opens the Armoury. No finished weapons.</p><p class="alt">If you'd rather: the smith also sells the Parts of his land.</p></div></div>
+<div class="dec"><div class="no">15</div><div class="body"><h3>Structures hold patterns on stands, not in chests <span class="chip">Your request</span></h3><p>A Pattern Stand built into vaults, labs, platforms, spires, lairs and dens. Claimed once per player, with that tier's weapon hung above and a light that says "take me".</p></div></div>
+
+<h2>What it costs</h2>
+<p class="prose">At this project's real pace, scaled from git history: Arms S7, with Marks, the Forge, Lord-forged and mastery, took about 4.5 hours from first commit to last. About 18 to 25 builder-hours in all. With three builders, about a day and a half of wall clock, plus CI runs and your play.</p>
+<ul class="cost">
+  <li><span class="k">A</span><span>Say where it comes from: tooltips, words, source lines, JEI, recipe book</span><span class="h">2-3 h</span></li>
+  <li><span class="k">B</span><span>The first hour: Hale's issue and rack, first-shard card, shard pity</span><span class="h">2-3 h</span></li>
+  <li><span class="k">C</span><span>The Armoury: screen, band page, Track, Blueprint routing</span><span class="h">3-4 h</span></li>
+  <li><span class="k">D</span><span>Gates, camps and people teach: the bearer, gate-card lines, chain rewards, Hale's questions</span><span class="h">3-4 h</span></li>
+  <li><span class="k">E</span><span>Boss weapons, finds and Raise: the boss hoard weapon, Marked pity, Raise, sim row</span><span class="h">3-4 h</span></li>
+  <li><span class="k">F</span><span>Tiers announced: part jobs, tier cards, Oren's lines</span><span class="h">1.5-2 h</span></li>
+  <li><span class="k">G</span><span>Villages and structures: smith patterns, village rank, the Pattern Stand in vaults, spires, lairs</span><span class="h">3-5 h</span></li>
+</ul>
+<div class="ask"><b>Next:</b> say if anything above is wrong. Otherwise this goes to the builders in the order in decision 12. The Armoury and the first hour come first, and you play the first half hour before the rest.</div>
+
+<footer>The long form, with the audit and the exact gaps, is <code>docs/arms-progression/PLAN.md</code> on branch <code>pack/arms-progression-plan</code>. Sources for the research are linked there. Multiplayer: every memory and counter is per player, Blueprints can be traded, and the rack and Forge never run out.</footer>
+</div>

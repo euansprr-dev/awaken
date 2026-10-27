@@ -8,6 +8,7 @@ import dev.awaken.arms.net.ArmsPayloads;
 import dev.awaken.core.api.CombatFeedback;
 import dev.awaken.core.api.FirstPerson;
 import dev.awaken.core.api.Stances;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.state.level.PlayerRenderState;
@@ -55,12 +56,15 @@ public final class ArmsClient {
         // the first-person swings (1.1 MB of JSON) load off the render thread, before anyone draws a blade
         java.util.concurrent.CompletableFuture.runAsync(dev.awaken.arms.FpSwings::warm, net.minecraft.util.Util.backgroundExecutor());
         ArmsComfort.register();
+        ArmourySection.register();
         CombatFeedback.install(ArmsFeel.INSTANCE);
         dev.awaken.progression.client.CodexEntries.addSource(ArmsCodex::entries);
         CombatFeedback.engaged = ArmsPredict::engaged;
         FirstPerson.view(ArmsHands::view);
         Stances.install(ArmsStances.INSTANCE);
         modBus.addListener(ArmsClient::onPayloads);
+        modBus.addListener((net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers e) ->
+                e.registerBlockEntityRenderer(dev.awaken.arms.ArmsStands.standType(), PatternStandRenderer::new));
         modBus.addListener((RegisterGuiLayersEvent e) -> e.registerAbove(VanillaGuiLayers.CROSSHAIR, Awaken.id("arms_hud"), ArmsHud::render));
         modBus.addListener((RegisterRenderStateModifiersEvent e) ->
                 e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, (entity, state) -> {
@@ -97,6 +101,7 @@ public final class ArmsClient {
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             ArmsPredict.reset();
             ArmsCodex.reset();
+            ArmouryCache.reset();
         });
         bus.addListener(ClientPlayerNetworkEvent.Clone.class, e -> ArmsPredict.reset());
     }
@@ -105,6 +110,9 @@ public final class ArmsClient {
         event.register(ArmsPayloads.Result.TYPE, (msg, ctx) -> ArmsPredict.onResult(msg));
         event.register(ArmsPayloads.Seen.TYPE, (msg, ctx) -> ArmsPredict.onSeen(msg));
         event.register(ArmsPayloads.Woven.TYPE, (msg, ctx) -> ArmsCodex.onWoven(msg));
+        event.register(ArmsPayloads.ArmouryView.TYPE, (msg, ctx) -> ArmouryCache.onView(msg));
+        event.register(ArmsPayloads.ArmouryDetail.TYPE, (msg, ctx) -> ArmouryCache.onDetail(msg));
+        event.register(ArmsPayloads.IssueOffer.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> Minecraft.getInstance().gui.setScreen(new IssueScreen(msg.styles()))));
         event.register(ArmsPayloads.Mastery.TYPE, (msg, ctx) -> ArmsPredict.onMastery(msg));
     }
 

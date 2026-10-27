@@ -22,13 +22,32 @@ import java.util.List;
 final class MarkedDrops {
     private MarkedDrops() {}
 
-    public static final float ELITE_CHANCE = 0.04F, WARDEN_CHANCE = 0.10F, SECOND_MARK = 0.2F;
+    public static final float SECOND_MARK = 0.2F;
+
+    /** Whether this kill drops one: the roll, or the pity once {@code without} have passed with nothing. */
+    static boolean falls(int without, float chance, float roll) {
+        return without + 1 >= ArmsHomes.markedPity() || roll < chance;
+    }
 
     static void onDeath(LivingDeathEvent e) {
         if (!(e.getEntity().level() instanceof ServerLevel level) || !(e.getSource().getEntity() instanceof ServerPlayer p)) return;
         MobRole role = MobRole.of(e.getEntity());
-        float chance = role.role() == MobRole.Role.ELITE ? ELITE_CHANCE : role.role() == MobRole.Role.WARDEN ? WARDEN_CHANCE : 0F;
-        if (chance <= 0 || level.getRandom().nextFloat() >= chance) return;
+        var tag = dev.awaken.core.api.CreatureTag.of(e.getEntity());
+        boolean heart = tag.kind() == dev.awaken.core.api.CreatureTag.Kind.CAMP && tag.elite();
+        float chance = heart ? ArmsHomes.markedCampHeart() : role.role() == MobRole.Role.ELITE ? ArmsHomes.markedElite()
+                : role.role() == MobRole.Role.WARDEN ? ArmsHomes.markedWarden() : 0F;
+        if (chance <= 0) return;
+        // a first one is certain from the first Warden or camp heart; a long dry run ends on the 25th (docs/arms-progression/PLAN.md §3.7)
+        ArmsProgress g = ArmsProgress.of(p);
+        boolean first = !g.firstMarked && (heart || role.role() == MobRole.Role.WARDEN);
+        if (!falls(g.markedWithout, chance, level.getRandom().nextFloat()) && !first) {
+            g.markedWithout++;
+            p.setData(ArmsContent.PROGRESS, g);
+            return;
+        }
+        g.markedWithout = 0;
+        g.firstMarked = true;
+        p.setData(ArmsContent.PROGRESS, g);
         ItemStack stack = roll(role.contentLevel(), level.getRandom());
         if (stack.isEmpty()) return;
         var at = e.getEntity().position();

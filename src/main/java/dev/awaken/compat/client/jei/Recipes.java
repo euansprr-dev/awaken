@@ -19,6 +19,10 @@ import dev.awaken.hearth.request.CoreShardItem;
 import dev.awaken.hearth.request.RequestContent;
 import dev.awaken.lucidium.LucidiumContent;
 import dev.awaken.powers.content.PowerContent;
+import dev.awaken.arms.Archetypes;
+import dev.awaken.arms.ArmsForge;
+import dev.awaken.arms.ArmsHomes;
+import dev.awaken.arms.ArmsItems;
 import dev.awaken.progression.Rank;
 import dev.awaken.signal.client.Glass;
 import net.minecraft.resources.Identifier;
@@ -92,6 +96,38 @@ final class Recipes {
     // ---- the Hearth -------------------------------------------------------------------------------------------------
 
     /** Tempering to one level at the Forge (Oren brings the essence himself). */
+    /** One Gate Lord's weapon and how often it falls, in words (docs/arms-progression/PLAN.md §3.7). */
+    record Boss(String lordId, ItemStack weapon, Rank rank, String style, String spoils) {}
+
+    static List<Boss> bosses() {
+        List<Boss> out = new ArrayList<>();
+        for (var f : dev.awaken.arms.LordForged.ALL) {
+            var item = ArmsItems.of(net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(Awaken.id(f.weapon())));
+            if (item == null) continue;
+            Rank rank = Rank.E;
+            for (Rank r : Rank.values()) if (r.label.equals(item.tier())) rank = r;
+            float c = ArmsHomes.spoilChance(rank);
+            out.add(new Boss(f.lord(), new ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(Awaken.id(f.weapon()))), rank, item.style(), c >= 0.5F ? "Often" : c >= 0.25F ? "Sometimes" : "Rarely"));
+        }
+        return out;
+    }
+
+    /** A Blueprint and every way to it: the Forge's draw, Hale's price, the gate and the level band (PLAN §3.4). */
+    record Pattern(String name, Rank rank, ItemStack blueprint, List<ItemStack> draw, ArmsHomes.Home home) {}
+
+    static List<Pattern> patterns() {
+        List<Pattern> out = new ArrayList<>();
+        for (ArmsHomes.Home h : ArmsHomes.all()) {
+            var item = ArmsItems.blueprintItem(h.style());
+            var style = Archetypes.get(h.style());
+            if (item == null || style == null) continue;
+            List<ItemStack> draw = List.of(new ItemStack(Items.PAPER, ArmsForge.BLUEPRINT_PAPER), new ItemStack(Items.LAPIS_LAZULI, ArmsForge.BLUEPRINT_LAPIS),
+                    new ItemStack(CoreApi.ESSENCE_SHARD.get(), ArmsForge.BLUEPRINT_ESSENCE));
+            out.add(new Pattern(style.def().name(), h.rank(), new ItemStack(item), draw, h));
+        }
+        return out;
+    }
+
     record Temper(int level, List<ItemStack> price, List<ItemStack> examples, List<ItemStack> tempered, Rank tier) {}
 
     static List<Temper> tempers() {

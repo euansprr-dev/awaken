@@ -288,6 +288,13 @@ public final class HeroCrowns {
                 RandomizableContainer.setBlockEntityLootTable(level, level.getRandom(), c, CACHE);
             }
         }
+        // a drafting lectern beside the crown with a pattern of the land's rank, for whoever climbed here (arms, docs/arms-progression PLAN §3.4)
+        BlockPos cachePos = l.cache() == null ? null : centre.offset(l.cache());
+        for (Direction d : Direction.Plane.HORIZONTAL) {
+            BlockPos at = crown.relative(d);
+            if (at.equals(cachePos) || !level.getBlockState(at).canBeReplaced() || !level.getBlockState(at.below()).isSolid()) continue;
+            if (dev.awaken.core.api.ArmsApi.placeStand(level, at, d.getOpposite(), "lectern", "", at.asLong())) break;
+        }
         dev.awaken.Awaken.LOG.info("[ascent] {} at {} crowned: the crown at {}, {} rings up the trunk", tree.getSerializedName(),
                 centre.toShortString(), crown.toShortString(), rings);
     }

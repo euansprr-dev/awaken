@@ -5520,6 +5520,57 @@ kill switch, sounds, stance rules, clips, the Art, the Plunge, assets; `mobs_hel
 `audio_events_resolve` covers the kit's files and subtitles. S2/S3: `arms_hand_pose` (the swing on Hands' view layer),
 `arms_assets` (the streams), `mobs_bolt_class`, `mobs_answered_no_burn`, `mobs_broken_idle`.
 
+**Arms progression: where weapons come from** (plan docs/arms-progression/PLAN.md, approval page https://claude.ai/artifact/DA4J66cpZkKinGbm6X18ML; Euan
+2026-10-27: "go ahead with everything else that's recommended", his changes folded in; built in seven commits on
+`pack/arms-progression`). The rule: **the gates give the pattern, the world gives the materials**; a pattern is never in a plain chest.
+- **Data**: `data/awaken/arms/style_homes.json` (schemaVersion 1; read on both sides by `ArmsHomes`): each style's gate theme and
+  rank, its master Lord, an early teacher, Hale's rack price by rank (E 4, D 6, C 8, B 10, A 12, S 12 essence), the village smith's
+  price (E 6, D 10, C 16, B 24, A 32 emeralds), the level bands (E 1-9, D 10-24, C 25-44, B 45-69, A 70-99, S 100+; one function,
+  `ArmsHomes.rankOfLevel`, to change if the regions plan moves them), the boss-weapon rates and the Marked rates.
+  `data/awaken/arms/sources.json` is written by `tools/arms/sources.py` from the recipes and creature loot tables (`--check` for CI);
+  a hand-written line (`awaken.source.<ns>.<item>`) covers what a creature table can't say.
+- **State**: attachment `awaken:arms_progress` (`ArmsProgress`, schemaVersion 1, kept through death, per player): styles known, the issue
+  taken, the shard no-drought count, the weapon and Marked pity counters, the tracked weapon, the gates (last 64), people and
+  Pattern Stands that have already taught this fighter. Cross-module calls go through `core.api.ArmsApi` (hooks installed by `ArmsIssue`).
+- **B, the first hour**: Hale's issue (pick Daggers, Axe or Maul on a card screen; the finished Wildhide weapon, its Blueprint and a spare
+  Fang; once), Ilse hands it over at the camp if Hale was missed, the Now line at priority 70; Moth Lights pays 2 shards and Marta's Wheel 1;
+  the first-shard card; **shard pity**: the 5th awakened kill in a row with no shard drops one (per player).
+- **C, the Armoury** (`ArmsArmoury`): one list, three doors (Hale's rack by sneaking and talking to him, a Forge with an empty hand, the
+  band's K > Powers > THE ARMOURY): styles you know and the ones your rank opens at Hale's rack, six tier cards with have/need and where each
+  need comes from, buy a pattern with essence, draw a copy of one you know at the Forge (the random cycle is gone), **Track** one weapon on
+  the task card and the Now line (priority 52).
+- **D, the gates teach** (`ArmsPatterns`): on a main gate's first floor the first elite (else the third creature) is the **bearer**: it
+  wields the gate's style weapon with a faint glint, and its death gives every fighter near it the Blueprint straight into the pack
+  (never the Satchel), once per gate per player; the Lord's hoard is the fallback. A style you know gives an unknown style of the same
+  rank, a whole rank known gives essence. A riftborn camp's heart is a bearer. Six people teach early at the end of their jobs. The gate
+  card names the pattern ("The first floor carries a pattern: Daggers"); it does **not** show a Lord's weapon (Euan).
+- **E, boss weapons, rarer the cooler they are** (`ArmsSpoils`, `LordForged`, `MarkedDrops`, `ArmsRaise`): each fighter in a Lord's hoard rolls
+  Spoils (a Marked weapon of the Lord's style at the gate's tier, two distinct Marks) at E 60%, D 45%, C 30%, B 22%, A 15%, S 40%, with a
+  pity (the sixth Lord without any weapon is certain); a Lord-forged weapon replaces the Spoils (unchanged, pity 3). The Lord wields its
+  Lord-forged weapon, glinting. Guardians 30%, Sovereigns 40%, named beasts 15%. `tools/sim/gear_sim.py`: Lords per weapon E 1.3, D 1.5, C 1.7,
+  B 1.8, A 1.9, S 2.4. Marked: elite 4%, Warden 10%, camp heart 10%, certain on the 25th, the first from a Warden or heart certain.
+  **Raise** at a Forge: a Marked weapon becomes the next tier's (Marks, name and attunement kept; the next tier's parts spent; level gate);
+  a Lord-forged weapon keeps its body and gains +1 damage per raise (`awaken_raised`). The Armoury lists FINDS; JEI has Boss drops.
+- **F, tiers announced** (`ArmsTiers`): the next tier's lock says what it waits for, the ones beyond only after you hold one of their parts
+  (then "What waits" files it, `Promises`); at the tier's level a toast names the job; **a part job per tier from D up is first on Hale's
+  board** (`bounty/part_job_*.json`, `featured` and `keep`: Hale looks at the part and hands it back; done once). Oren's rank lines point at the forge.
+- **G, villages and stands** (`ArmsStands`, `PatternStandBlock`): the village smith's rack sells two patterns of its land's rank (the region
+  level at the village) for emeralds, never one you know, standing in the price (`VillageService.talk`, `ArmsApi.villagePatterns`); a Hearth
+  forge stands beside every village anvil as an Armoury door (`VillagePainter`). The **Pattern Stand** (`awaken:pattern_stand`; makes rack,
+  lectern, plinth, bier; emissive Blueprint-white line; the tier's weapon turns above it) holds one pattern drawn from its rank's band by the
+  structure's seed; taken once per fighter (the stand's position is the claim id); a style you know pays its rack price in essence; a fighter
+  within 7 blocks who hasn't taken it gets the find cue. Placed through `ArmsApi.placeStand` by Precursor vaults (the door's rank), monoliths,
+  ocean labs, sky platforms and spire crowns (`RuinBuilder.Sink.stand`), hero-tree crowns (`HeroCrowns.rig`) and surface lairs
+  (`LairBuilder.Sink.stand`). A stand placed with no rank (`""`) takes its land's rank on the server thread when someone first comes near,
+  because the region map must not be read during world generation.
+- **Tests** (`arms_`): `arms_sources`, `arms_recipe_unlock`, `arms_issue`, `arms_shard_pity`, `arms_rack`, `arms_armoury`, `arms_gate_pattern`,
+  `arms_homes`, `arms_boss_weapon`, `arms_marked_pity`, `arms_raise`, `arms_tier_cards`, `arms_stand`, `arms_village_patterns`.
+- **Hale's rack** (physical): two Pattern Stands of the rack make (style `hale`) stand three blocks from Hale, turned to face him, hanging the five Wildhide weapons (three hooks each); using one with an empty hand opens his first-weapon pick while it waits, else his Armoury, like speaking to him while sneaking. `Scenes.haleRack` asks `ArmsApi.placeHaleRack` once Hale is in the world and a player is near; it finds an existing rack after a restart and adds none.
+- **Not built / unverified**: stands in camps' hollow dens (a camp is cleared and
+  repainted, so a stand would vanish with it; the heart's bearer pays instead); the camp-name caption for the bearer; every client screen
+  and the stand's look and turning weapon, because the client was never launched (a tour is the next check); retrofitting stands into
+  structures already generated in an existing world.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 26. How AWAKEN tells you things (the notification director, discovery, the rift; Euan's playtest 2026-10-26)

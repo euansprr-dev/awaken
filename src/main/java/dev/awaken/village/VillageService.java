@@ -252,6 +252,14 @@ public final class VillageService {
             deals = new ArrayList<>(deals);
             Trade.specialty(deals, came - 1);
         }
+        // the smith's rack shows two patterns of the land's rank, drawn by the village, never one this fighter knows (docs/arms-progression PLAN §3.4)
+        if (job.equals("smith")) {
+            int land = dev.awaken.living.api.Regions.levelAt((ServerLevel) p.level(), l.plan().ox, l.plan().oz);
+            deals = new ArrayList<>(deals);
+            for (var o : dev.awaken.core.api.ArmsApi.villagePatterns(p, l.plan().seed, land)) {
+                deals.add(new Trade.Deal("pattern_" + o.style(), net.minecraft.world.item.Items.EMERALD, o.emeralds(), o.blueprint(), false, 1));
+            }
+        }
         // a mining town's store has no ore while its mine is shut
         if (job.equals("assayer") && dev.awaken.village.trouble.DeepMine.shut(p.level().getServer(), l.key())) {
             deals = new ArrayList<>(deals.stream().filter(d -> d.buys() || d.id().equals("lantern")).toList());
@@ -297,6 +305,7 @@ public final class VillageService {
         if (v.count(today, "trades") % 5 == 4) v.prosperity = Math.min(100, v.prosperity + 1);
         v.add(today, "trades", 1);
         VillageState.get(server).setDirty();
+        if (d.id().startsWith("pattern_")) dev.awaken.core.api.ArmsApi.villageBought(p, d.id().substring("pattern_".length()));
         if (d.id().equals(Inn.ROOM)) Inn.grant(p, l, rec);
         else if (Math.floorMod(v.count(today, "trades"), 3) == 1) {
             int tod = (int) Math.floorMod(p.level().getOverworldClockTime(), 24000L);

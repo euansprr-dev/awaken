@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "title": "A Tusk for Beastbound",
+  "band": 1,
+  "objective": {
+    "type": "collect",
+    "target": "awaken:briar_tusk",
+    "count": 1
+  },
+  "levels": 0.3,
+  "essence": 8,
+  "requires": [
+    "level:13"
+  ],
+  "text": "A Briar Sow is rooting up the Greenwild and tearing up the roads there. Hunt it down and show me its tusk. You keep the tusk, because it's what Beastbound gear is made from.",
+  "featured": true,
+  "keep": true
+}

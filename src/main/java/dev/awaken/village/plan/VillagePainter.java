@@ -508,6 +508,15 @@ final class VillagePainter {
                 }
         c.set(bx, g + 1, bz, BLAST_FURNACE[(face + 2) & 3]);
         c.set(bx, g + 2, bz, COBBLE_SLAB);
+        // the Hearth's forge beside the anvil: an Armoury door where a hunter draws patterns, raises weapons and tempers gear
+        int[][] beside = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        for (int[] d : beside) {
+            int fx = f.anvilX() + d[0], fz = f.anvilZ() + d[1];
+            boolean corner = (fx == f.x0() || fx == f.x1()) && (fz == f.z0() || fz == f.z1());
+            if (fx < f.x0() || fx > f.x1() || fz < f.z0() || fz > f.z1() || corner || (fx == bx && fz == bz)) continue;
+            c.set(fx, g + 1, fz, FORGE[(face + 2) & 3]);
+            break;
+        }
     }
 
     static boolean touches(CityPlan.Plot q, int x, int z) {

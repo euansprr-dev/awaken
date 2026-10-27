@@ -48,6 +48,24 @@ stances that break, and the feel and sound of a blow. The plan is `docs/combat/P
   subtitles), `--check` (the checks on what is on disk) or name prefixes (`hit_ swish`). Every event needs a holder in
   `ArmsSounds` (`audio_events_resolve` fails otherwise).
 
+## Progression: where weapons come from
+
+Plan `docs/arms-progression/PLAN.md`, SPEC §25 "Arms progression". Patterns come from gates (a bearer on the first floor), villages (the
+smith's rack), structures (Pattern Stands) and people; Hale's rack sells every pattern at its rank for essence. The code, by file:
+
+- `ArmsHomes` (`data/awaken/arms/style_homes.json`: homes, prices, level bands, boss and Marked rates), `ArmsSources`
+  (`sources.json`, written by `tools/arms/sources.py --check`), `ArmsLang` (our English, readable on a server).
+- `ArmsProgress` (`awaken:arms_progress`): styles known, issue taken, pity counters, claimed gates, people and stands.
+- `ArmsIssue` (implements `core.api.ArmsApi.Hooks`): Hale's issue, `learn`, the shard pity, the hooks the other modules call.
+- `ArmsArmoury`, `ArmsTrack`, `client/ArmouryScreen`: the Armoury's three doors, Track, the Now line.
+- `ArmsPatterns`: the gate bearer, the Lord's hoard fallback, camp hearts, the six teachers. `ArmsSpoils`, `LordForged`, `MarkedDrops`: boss
+  weapons and the Marked drops. `ArmsRaise`: raising a weapon a tier.
+- `ArmsTiers`: how a tier is announced (the lock line, the open toast, "What waits"); the part jobs are `bounty/part_job_*.json`.
+- `ArmsStands`, `PatternStandBlock`, `PatternStandBlockEntity`, `StandKind`, `client/PatternStandRenderer`: the Pattern Stand, and Hale's rack (a stand with style `hale`: `placeHaleRack`, `useHaleRack`). Art:
+  `python3 tools/art/build_all.py pattern_stand` (textures) and `python3 tools/art/specs/pattern_stand.py content` (models, blockstate, name).
+- Simulation: `python3 tools/sim/gear_sim.py` sets the boss-weapon and Marked rates (Lords per weapon, hours to the first of each).
+- Tests: `tools/gradle.sh 900 runGameTestServer -Ptests=arms_` (the `arms_` prefix covers all of the above).
+
 ## Weapons
 
 A weapon is a design function in `tools/art/specs/arms_weapons.py` (its catalog row there too), built from the toolkit

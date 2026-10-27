@@ -336,6 +336,7 @@ public final class Camps extends SavedData {
         if (heart) {
             e.addTag(HEART);
             e.setCustomName(Component.literal("Heart of the " + c.name()));
+            if (e instanceof LivingEntity le) dev.awaken.core.api.ArmsApi.markBearer(le, "camp:" + c.id); // it carries its theme's pattern (docs/arms-progression/PLAN.md §3.4)
         }
         if (e instanceof Mob m) m.setPersistenceRequired();
         e.setData(CoreApi.CREATURE_TAG.get(), new CreatureTag(lv, CreatureTag.Kind.CAMP, heart, heart ? "Heart of the " + c.name() : ""));

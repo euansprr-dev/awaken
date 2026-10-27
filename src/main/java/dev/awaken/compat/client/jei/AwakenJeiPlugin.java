@@ -50,6 +50,8 @@ public final class AwakenJeiPlugin implements IModPlugin {
                 new Categories.Build(Categories.FABRICATOR, "fabricator", gui.createDrawableItemLike(AboveItems.FABRICATOR.get())),
                 new Categories.Build(Categories.FRAME_FORGE, "frame_forge", gui.createDrawableItemLike(AboveItems.machine(MachineType.FRAME_FORGE))),
                 new Categories.Temper(gui.createDrawableItemLike(HearthContent.FORGE_ITEM.get())),
+                new Categories.BossDrops(gui.createDrawableItemLike(CoreApi.LORD_HEART.get())),
+                new Categories.Blueprint(gui.createDrawableItemLike(dev.awaken.arms.ArmsItems.blueprintItem("daggers"))),
                 new Categories.Upgrade(gui.createDrawableItemLike(HearthContent.HEARTH_ANCHOR_ITEM.get())),
                 new Categories.EchoDuty(gui.createDrawableItemLike(HearthContent.ROLE_PAD_ITEMS.get(EchoRole.MINE).get())),
                 new Categories.Essence(gui.createDrawableItemLike(AboveItems.CELL.get())),
@@ -68,6 +70,10 @@ public final class AwakenJeiPlugin implements IModPlugin {
         Item forge = HearthContent.FORGE_ITEM.get();
         var tempers = Recipes.tempers();
         for (var t : tempers) SpoilerGuard.own(Categories.TEMPER, t, forge);
+        var bosses = Recipes.bosses();
+        for (var bd : bosses) SpoilerGuard.own(Categories.BOSS, bd, CoreApi.LORD_HEART.get());
+        var patterns = Recipes.patterns();
+        for (var p : patterns) SpoilerGuard.own(Categories.BLUEPRINT, p, p.blueprint().getItem());
         var upgrades = Recipes.upgrades();
         for (var u : upgrades) SpoilerGuard.own(Categories.UPGRADE, u, u.station().getItem());
         var duties = Recipes.duties();
@@ -82,6 +88,8 @@ public final class AwakenJeiPlugin implements IModPlugin {
         r.addRecipes(Categories.FABRICATOR, machines);
         r.addRecipes(Categories.FRAME_FORGE, frames);
         r.addRecipes(Categories.TEMPER, tempers);
+        r.addRecipes(Categories.BOSS, bosses);
+        r.addRecipes(Categories.BLUEPRINT, patterns);
         r.addRecipes(Categories.UPGRADE, upgrades);
         r.addRecipes(Categories.DUTY, duties);
         r.addRecipes(Categories.ESSENCE, essence);
@@ -95,6 +103,7 @@ public final class AwakenJeiPlugin implements IModPlugin {
         r.addCraftingStation(Categories.FABRICATOR, AboveItems.FABRICATOR.get());
         r.addCraftingStation(Categories.FRAME_FORGE, AboveItems.machine(MachineType.FRAME_FORGE));
         r.addCraftingStation(Categories.TEMPER, HearthContent.FORGE_ITEM.get());
+        r.addCraftingStation(Categories.BLUEPRINT, HearthContent.FORGE_ITEM.get());
         r.addCraftingStation(Categories.UPGRADE, HearthContent.HEARTH_ANCHOR_ITEM.get(), HearthContent.FORGE_ITEM.get());
         r.addCraftingStation(Categories.DUTY, HearthContent.ROLE_PAD_ITEMS.get(EchoRole.MINE).get());
         r.addCraftingStation(Categories.ESSENCE, AboveItems.CELL.get(), AboveItems.machine(MachineType.REACTOR));
