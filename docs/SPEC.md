@@ -7037,8 +7037,9 @@ same roads and plans for a seed, the bench's fingerprint unchanged):
 - a highroad is a way (its hubs, the settlements it rides through, each piece's two ends and what it keeps out of)
   worked out once, its pieces laid one by one: a lattice chunk lays only those whose ellipse comes within its legs'
   reach (100 each way), a lane only those that start or end at its settlement or could still hold a point nearer it
-  than the nearest found (nearest first); Carillon's roads out stay whole (which region they reach depends on a way
-  being found), and commands, framings and the survey still lay whole highroads;
+  than the nearest found (nearest first). Carillon's roads out are laid the same way: which region one heads for
+  turns on whether its way there has any piece at all, so its pieces are laid in order only until one is (once, by
+  whoever asks first) and the rest where they're needed. Commands, framings and the survey still lay whole highroads;
 - a settlement beside a highroad that can't ride on it wherever its site moves (46 blocks at most, 91 for the first
   hamlet) is planned only when a piece's search probes within reach of its ground;
 - the server thread never waits for a town's or wayhouse's site search: its searches ask the planners and pass the
@@ -7051,14 +7052,29 @@ within 1,600): W7 on Tectonic 51 s on average (26-83 s), the area 345 s (348k co
 planned a settlement in 3.55 s on average (96 and 86), a world's spawn took 320 s (Carillon's pregen of 1,725 chunks
 waiting for the roads round it) and the worst lattice chunk 81 s; now (run 40442457153) a piece 4.2 s and a settlement
 3.4 s (45 and 70: the runner's cores are shared with world generation, and a piece's time now holds the plans its
-search probes beside it), the spawn 274 s, the worst lattice chunk 84 s. The bench's counts are the measure:
-the runner reads a column several times slower than the Mac under that load.
+search probes beside it), the spawn 274 s, the worst lattice chunk 84 s; with Carillon's roads out laid piece by
+piece (run 40448865954) a piece 3.56 s, a settlement 2.67 s, the spawn 184 s (the runner's spread: the bench below
+lays the same). The bench's counts are the measure: the runner reads a column several times slower than the Mac under
+that load. The bench's last phase times the city's land cold (the lattice chunks within 374 of its middle, what
+Carillon's pregeneration waits for): on Tectonic 26 lattice chunks, 12 roads and 32 plans (74k columns) in 40-47 s
+whether the roads out are laid whole or piece by piece, the region each heads for being decided by a piece near
+the city; on vanilla land 9 s (22 plans, 49k columns). What the spawn waits for is the highroads round the city and
+the settlements at their far ends, up to ~2,900 blocks out.
 What still stalls: 26.3 runs a chunk's structure starts inline on the level's one "worldgen" executor, so a lattice
 chunk waiting for its roads holds all of the level's chunk generation, and the server thread blocks on any chunk it
 loads meanwhile (on the runner: progression's ledge finder, Lithium's collision sweep for a spectator flying into new
-land, a vault): the tour's "Can't keep up" (W7: 2, 4.5 and 38 s, the last the camp command laying the north road on the
-server thread, then a near-freeze; now 2 s at the start and 33 s at the first teleport, then one tick of 4.5 minutes in
-the ledge finder). On a tour a watch on the server thread (`RoadTimer.watch`) logs any tick over a second with its stack.
+land, a vault): the tour's "Can't keep up" (W7: 2, 4.5 and 38 s, the last at the first teleport, the camp's road north
+laid already, then a near-freeze; then 2 s at the start and 33 s at the first teleport, the watch's stack in the ledge
+finder reading a chunk still generating, then one tick of 4.5 minutes in it; the ledge finder now reads only chunks
+already whole). On a tour a watch on the server thread (`RoadTimer.watch`) logs any tick (or task between ticks) over
+a second with its stack. The camp command (`/awaken village road camp`) never lays a road on the server thread: a
+thread of its own lays what it needs (not the planners: their queue can be minutes deep after a pregen) and the server
+stands the player on it once it's laid (run 40448865954: at once). Still left, on the runner only: a spectator flying
+24-40 blocks a second over new land freezes the server for minutes (that run: a 10.4 s tick, then two ticks in four
+minutes), vanilla's own movement check (`handleMovePlayer`, fall damage, the fluid under the player) blocking on a chunk
+whose lattice chunks' roads world generation is laying itself while the two planners fall behind. On the Mac a cold
+teleport waits ~11 s and the planners keep 1,100 blocks ahead. Structure starts that wait off the executor (a Turbo
+mixin, approved, not built) would free world generation meanwhile but not that chunk, so it waits for a need on the Mac.
 Framings lay only the highroads through a place: the lanes round it would plan the regions about (48 s on the runner).
 
 **Decisions taken here** (none of the plan's 13): the hub rule and its numbers above (towns one region in five, the

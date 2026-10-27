@@ -21,12 +21,13 @@ import java.util.Locale;
 /**
  * The roads' bench (SPEC §28.9, Cost): the network over the real overworld's noise for a seed (Tectonic's when it is
  * installed), asked for the way world generation asks. First a few lattice chunks far out, each with every cache emptied
- * (what a teleport into new land waits for); then every lattice chunk within a radius, nearest the centre first (what
- * exploring it costs in all), and every settlement and hub there. Logs the time, the roads and plans made, the noise
- * columns read, and a fingerprint of every leg (its points, heights, flags, land and waymarkers), plan and hub in the
- * area: a change that makes the roads cheaper must leave it as it was. The GameTest roadbench_area runs it, only when
- * asked for ({@code -Ptests=roadbench_}; seed, radius and how far out the cold chunks lie from road-bench.request in the
- * server's folder).
+ * (what a teleport into new land waits for); then the city's land, cold (what its pregeneration waits for before the
+ * world opens); then every lattice chunk within a radius, nearest the centre first (what exploring it costs in all),
+ * and every settlement and hub there. Logs the time, the roads and plans made, the noise columns read, and a
+ * fingerprint of every leg (its points, heights, flags, land and waymarkers), plan and hub in the area: a change that
+ * makes the roads cheaper must leave it as it was. The GameTest roadbench_area runs it, only when asked for
+ * ({@code -Ptests=roadbench_}; seed, radius and how far out the cold chunks lie from road-bench.request in the server's
+ * folder).
  */
 public final class RoadBench {
     private RoadBench() {}
@@ -72,18 +73,25 @@ public final class RoadBench {
                         RoadNet.DRY_NS.sum() / 1e6, GenTerrain.COLUMNS.sum() - col0);
             }
             line(out, "cold chunks: %d ms on average (%d road planners beside the asking thread)", coldSum / 4, RoadPlanners.threads());
+            // the city's land, pregenerated before the world opens: its lattice chunks one after another, nearest first
+            RoadPlanners.settle();
+            RoadNet.clear();
+            Plans.clear();
+            w.forget();
+            List<int[]> city = lattice(centre, CITY);
+            long r0 = RoadNet.planned, p0 = Plans.made(), col0 = GenTerrain.COLUMNS.sum(), s0 = System.nanoTime();
+            int cityLegs = 0;
+            for (int[] c : city) cityLegs += RoadNet.startsIn(c[0], c[1]).size();
+            line(out, "the city's land, cold: %d lattice chunks within %d, %d legs in %d ms; %d roads laid, %d plans made, %d columns", city.size(), CITY,
+                    cityLegs, (System.nanoTime() - s0) / 1_000_000, RoadNet.planned - r0, Plans.made() - p0, GenTerrain.COLUMNS.sum() - col0);
             // the area: every lattice chunk, nearest first, then its settlements and hubs
             RoadPlanners.settle();
             RoadNet.clear();
             Plans.clear();
             w.forget();
-            long col0 = GenTerrain.COLUMNS.sum(), s0 = System.nanoTime();
-            List<int[]> chunks = new ArrayList<>();
-            int lat = Road.LATTICE;
-            for (int cx = Math.floorDiv(centre[0] - radius, 16 * lat) * lat; cx <= Math.floorDiv(centre[0] + radius, 16 * lat) * lat; cx += lat)
-                for (int cz = Math.floorDiv(centre[1] - radius, 16 * lat) * lat; cz <= Math.floorDiv(centre[1] + radius, 16 * lat) * lat; cz += lat)
-                    if (Math.hypot(cx * 16 + 8 - centre[0], cz * 16 + 8 - centre[1]) <= radius) chunks.add(new int[]{cx, cz});
-            chunks.sort((u, v) -> Double.compare(Math.hypot(u[0] * 16 - centre[0], u[1] * 16 - centre[1]), Math.hypot(v[0] * 16 - centre[0], v[1] * 16 - centre[1])));
+            col0 = GenTerrain.COLUMNS.sum();
+            s0 = System.nanoTime();
+            List<int[]> chunks = lattice(centre, radius);
             // the planners lay it nearest first, as ahead of a player standing at the centre; world generation follows
             for (int k = 0; k < chunks.size(); k++) {
                 int[] c = chunks.get(k);
@@ -132,6 +140,20 @@ public final class RoadBench {
             RoadWorld.use(had);
         }
         return out.toString();
+    }
+
+    /** About how far out the city pregenerates (its reach and a margin: CityPregen). */
+    static final int CITY = 374;
+
+    /** The lattice chunks within a radius of the centre, nearest first. */
+    static List<int[]> lattice(int[] centre, int radius) {
+        List<int[]> chunks = new ArrayList<>();
+        int lat = Road.LATTICE;
+        for (int cx = Math.floorDiv(centre[0] - radius, 16 * lat) * lat; cx <= Math.floorDiv(centre[0] + radius, 16 * lat) * lat; cx += lat)
+            for (int cz = Math.floorDiv(centre[1] - radius, 16 * lat) * lat; cz <= Math.floorDiv(centre[1] + radius, 16 * lat) * lat; cz += lat)
+                if (Math.hypot(cx * 16 + 8 - centre[0], cz * 16 + 8 - centre[1]) <= radius) chunks.add(new int[]{cx, cz});
+        chunks.sort((u, v) -> Double.compare(Math.hypot(u[0] * 16 - centre[0], u[1] * 16 - centre[1]), Math.hypot(v[0] * 16 - centre[0], v[1] * 16 - centre[1])));
+        return chunks;
     }
 
     /** A leg as world generation paints it: where it starts, its road's ends, its points and the waymarkers on it. */
