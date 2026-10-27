@@ -694,6 +694,8 @@ final class RunnerTests {
             a.snapTo(hold.x, hold.y, hold.z, 0F, 0F);
             h.assertTrue(RunnerServer.ledgeJump(a, m, run(Move.LEDGE_JUMP, BodyPayloads.JUMP_CLIMB, 0F, hold, stand[0], stand[1], stand[2], axis, sign), now + 12)
                     && !m.hanging, "and lets it climb out onto the roof");
+            h.assertTrue(dev.awaken.progression.Progression.profile(a).counter("awaken:body_mantle") == 1,
+                    "climbing out counts as climbing a ledge (the first moves' row, before the Mantle)");
 
             // a ceiling running far out with no lip in reach, and open air: no hang (the grip holds, or vanilla climbs)
             for (int x = -1; x <= 2; x++) for (int z = -4; z <= 0; z++) level.setBlockAndUpdate(o.offset(x, 4, z), stone);

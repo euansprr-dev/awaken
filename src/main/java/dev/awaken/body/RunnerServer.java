@@ -246,6 +246,9 @@ final class RunnerServer {
             if (dx * dx + dz * dz > 1.0 || Math.abs(stand[1] - msg.ty()) > 0.25) return false;
             endHang(m, now);
             BodyServer.didClip(p, m, Move.LEDGE_JUMP, msg.yaw(), BodyContent.CLIMB, 0.8F, now, BodyClips.MANTLE);
+            // climbing out onto a ledge is how a hunter climbs one before the Mantle (C): the first moves' ledge row and the
+            // Moving Like a Hunter trail count it (Euan 2026-10-27: climbed a ledge, the row never ticked)
+            dev.awaken.progression.Progression.count(p, "awaken:body_mantle");
             return true;
         }
         if (way == BodyPayloads.JUMP_OVER) {
