@@ -483,6 +483,13 @@ public final class CityCritters {
         if (d != null) d.discard();
     }
 
+    /** The client world is swapped: its entities never leave one by one, so its owners and their dogs go here. */
+    static void onUnload(net.neoforged.neoforge.event.level.LevelEvent.Unload e) {
+        if (!e.getLevel().isClientSide()) return;
+        BODIES.removeIf(b -> b.level() == e.getLevel());
+        DOGS.keySet().removeIf(b -> b.level() == e.getLevel());
+    }
+
     /** One citizen in seven who keeps a dog (residents, children, the Watch, porters, washers, shopkeepers). */
     static boolean keepsDog(int rec) {
         Roster r = Roster.get();

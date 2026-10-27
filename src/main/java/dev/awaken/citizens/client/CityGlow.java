@@ -118,6 +118,11 @@ public final class CityGlow {
         if (e.getLevel().isClientSide() && e.getEntity() instanceof CitizenBody b) BODIES.remove(b);
     }
 
+    /** The client world is swapped: its entities never leave one by one, so its lantern bearers go here. */
+    static void onUnload(net.neoforged.neoforge.event.level.LevelEvent.Unload e) {
+        if (e.getLevel().isClientSide()) BODIES.removeIf(b -> b.level() == e.getLevel());
+    }
+
     /** Lamp heads (CitizenFx's kind 5) and the ground under each, found once its chunk is in. */
     private static long[] lamps = new long[0];
     private static int[] lampGround = new int[0];

@@ -49,6 +49,8 @@ public final class CitizensClient {
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent e) -> CityGlow.submit(e));
         NeoForge.EVENT_BUS.addListener(CityGlow::onJoin);
         NeoForge.EVENT_BUS.addListener(CityGlow::onLeave);
+        NeoForge.EVENT_BUS.addListener(CityGlow::onUnload);
+        NeoForge.EVENT_BUS.addListener(CityCritters::onUnload);
         NeoForge.EVENT_BUS.addListener(CitizenFx::tick);
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> {
             CitizenFx.clear();

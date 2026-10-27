@@ -18,6 +18,7 @@ public final class AnomalyClient {
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent e) -> RiftGlow.submit(e));
         NeoForge.EVENT_BUS.addListener(RiftGlow::onJoin);
         NeoForge.EVENT_BUS.addListener(RiftGlow::onLeave);
+        NeoForge.EVENT_BUS.addListener(RiftGlow::onUnload);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> RiftGlow.tick());
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut e) -> RiftGlow.clear());
     }

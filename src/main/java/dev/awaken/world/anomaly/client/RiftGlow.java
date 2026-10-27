@@ -114,6 +114,15 @@ public final class RiftGlow {
         RIFTS.clear();
     }
 
+    /**
+     * The client world is swapped (a gate, a sinkhole, back to the overworld): the old world's entities never leave
+     * one by one, so its rifts are forgotten here, or one seen before the trip hangs on lit where it was, after the
+     * real one is closed (Euan 2026-10-27).
+     */
+    static void onUnload(net.neoforged.neoforge.event.level.LevelEvent.Unload e) {
+        if (e.getLevel().isClientSide()) RIFTS.removeIf(r -> r.level() == e.getLevel());
+    }
+
     /** Client tick: keep the hush round every open rift (renewed before it eases back). */
     static void tick() {
         Minecraft mc = Minecraft.getInstance();
@@ -171,7 +180,7 @@ public final class RiftGlow {
             vc = consumer;
             for (int i = 0; i < RIFTS.size(); i++) {
                 RiftEntity r = RIFTS.get(i);
-                if (!r.isRemoved()) rift(r);
+                if (!r.isRemoved() && r.level() == level) rift(r);
             }
         } catch (RuntimeException ex) {
             Awaken.LOG.error("[anomaly] rift glow failed", ex);

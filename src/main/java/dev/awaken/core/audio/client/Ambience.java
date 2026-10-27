@@ -75,6 +75,13 @@ final class Ambience {
         if (w != null) w.release(0.45F); // the impact's boom covers the last 300 ms
     }
 
+    /** The client world is swapped: its entities never leave one by one, so its emitters go here. */
+    static void onUnload(net.neoforged.neoforge.event.level.LevelEvent.Unload e) {
+        if (!e.getLevel().isClientSide()) return;
+        ENTITIES.removeIf(x -> x.level() == e.getLevel());
+        WHISTLES.keySet().removeIf(x -> x.level() == e.getLevel()); // their sounds stopped with the world
+    }
+
     static void emitters(List<AudioNet.Emitter> list) {
         emitters = List.copyOf(list);
     }

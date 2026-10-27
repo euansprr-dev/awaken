@@ -53,6 +53,7 @@ public final class AudioClient {
         NeoForge.EVENT_BUS.addListener(PlaySoundEvent.class, AudioUi::onPlaySound);
         NeoForge.EVENT_BUS.addListener(EntityJoinLevelEvent.class, Ambience::onJoin);
         NeoForge.EVENT_BUS.addListener(EntityLeaveLevelEvent.class, Ambience::onLeave);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.event.level.LevelEvent.Unload.class, Ambience::onUnload);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             CuePlayer.clear();
             Ambience.clear();
