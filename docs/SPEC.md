@@ -6866,8 +6866,8 @@ a fifth of its length or 200 to one side; in at one end of a main street, out at
 to the nearest hub within sixty degrees of their way out (up to three tried); every other settlement has a **lane** to
 the nearest road point within 650 (with a waymarker at the fork). Each road is made once by whichever thread asks first
 (`once` futures) and cut into **legs** of at most 72 points whose structure starts sit on a lattice of chunks (every
-eighth chunk each way), so a chunk off the lattice answers at once; a minimum-priority thread ("Awaken road planner")
-plans the roads within 1,100 of each player ahead of them, eight a pass.
+eighth chunk each way), so a chunk off the lattice answers at once; minimum-priority planners ("Awaken road planner N",
+`RoadPlanners`) lay the roads within 1,100 of each player ahead of them, sixteen lattice chunks a pass (see Cost).
 
 **The line** (`RoadPlanner`): an A* over a 12-32-block lattice inside an ellipse round the ends (stretch 1.45, 40,000
 nodes at most), costing grade squared, refusing cliffs (over 0.6), open water (only narrow crossings with land on both
@@ -6958,18 +6958,54 @@ settlement they're in; 3,000 stretches and 400 places at most; the whole on logi
 `RegionService.land` public), `living.pulse.People` (the caravan on a road), `core.api.MapMarks` (lines),
 `atlas.client.AtlasScreen` (draws the lines first), `citizens.Roster` (`ASSAYER` 30).
 
-**Cost** (Mac, seed 26102610, real noise): planning a road 285-355 ms on the planner thread (about 107k land reads; ~80
-roads within 2,400 of the centre), painting a road chunk 0.9-3.1 ms (cold); a town planned in 0.36-0.93 s on real land
-(the slower ones planned twice, the second with the wider wall; 48 ms on the test valley), painted at about 0.3 ms a
-chunk over ~75-110 chunks, at most 6 lights a chunk. On CI's macOS runner with Euan's terrain (Tectonic with the
-Awakened preset, the city basin): a road 1-6 s and a settlement 2-9 s to plan, Tectonic's land reads costing several
-times vanilla's. All of it runs on the planner thread or the worldgen threads, never the server's (but for commands):
-the planner keeps ahead of a walking player; past it (fast flight), a chunk on a lattice start waits for its roads.
+**Cost** (Mac, seed 26102610, real noise): planning a road 285-355 ms on a planner (about 107k land reads; ~80 roads
+within 2,400 of the centre), painting a road chunk 0.9-3.1 ms (cold); a town planned in 0.36-0.93 s on real land (the
+slower ones planned twice, the second with the wider wall; 48 ms on the test valley), painted at about 0.3 ms a chunk
+over ~75-110 chunks, at most 6 lights a chunk. On Euan's terrain (Tectonic with the Awakened preset, the city basin) a
+land read is a whole noise column (26.3 samples it all), 0.63 ms on the M4 (3x vanilla) and ~2.7 ms on CI's runner, so
+the land is nearly all of the cost and the only lever is reading fewer columns. What keeps it down (every cut exact: the
+same roads and plans for a seed, the bench's fingerprint unchanged):
+- one shared reading of the land (`SharedLand`, behind `RoadWorld.terrain()`: 64 stripes of 4,096 recent columns and
+  4,096 older ones), so a site search, the plan on its site, a village's fallback hamlet, a town's wider wall and the
+  roads over it read each column once;
+- planners (`RoadPlanners`: half the cores, two to six, minimum priority) sharing a lattice chunk's work as jobs ranked
+  urgent (world generation waits for it), soon (a site search the server thread asked for) and ahead (nearest first):
+  its settlements' plans, its highroads' hubs, then their pieces and Carillon's roads, then the lanes; each piece is
+  still made once by whoever asks first, and no thread waits for a job still queued;
+- a lattice chunk lays a lane only if it can reach it, judged from the roads the lane may join that are laid already:
+  a lane runs from a street end to the point of those roads nearest the settlement's middle and keeps inside its
+  search's ellipse (every point within 1.225 (δ + E + 24) + 44 of that street end, δ the nearest laid point or 650, E
+  the farthest street end);
+- a highroad is a way (its hubs, the settlements it rides through, each piece's two ends and what it keeps out of)
+  worked out once, its pieces laid one by one: a lattice chunk lays only those whose ellipse comes within its legs'
+  reach (100 each way), a lane only those that start or end at its settlement or could still hold a point nearer it
+  than the nearest found (nearest first); Carillon's roads out stay whole (which region they reach depends on a way
+  being found), and commands, framings and the survey still lay whole highroads;
+- a settlement beside a highroad that can't ride on it wherever its site moves (46 blocks at most, 91 for the first
+  hamlet) is planned only when a piece's search probes within reach of its ground;
+- the server thread never waits for a town's or wayhouse's site search: its searches ask the planners and pass the
+  anchor by until it's known.
+The bench (`roadbench_` with `-Ptests=roadbench_`, M4; cold lattice chunks 2,400 out, then the ~490 lattice chunks
+within 1,600): W7 on Tectonic 51 s on average (26-83 s), the area 345 s (348k columns; 85 roads at 1.55 s, 108 plans at
+1.19 s); now 11.2 s (3.6-18.8 s), the area 76 s (176k columns; 42 roads, 79 plans). On vanilla land: W7 13.1 s and 50 s
+(242k columns); now 3.1 s and 22 s (131k). On CI's runner (three cores, two planners), the roads-perf tour
+(`tools/autopilot/roads-perf.txt`, flying and teleporting over new land): W7 laid a highroad's piece in 3.35 s and
+planned a settlement in 3.55 s on average (96 and 86), a world's spawn took 320 s (Carillon's pregen of 1,725 chunks
+waiting for the roads round it) and the worst lattice chunk 81 s; now (run 40442457153) a piece 4.2 s and a settlement
+3.4 s (45 and 70: the runner's cores are shared with world generation, and a piece's time now holds the plans its
+search probes beside it), the spawn 274 s, the worst lattice chunk 84 s. The bench's counts are the measure:
+the runner reads a column several times slower than the Mac under that load.
+What still stalls: 26.3 runs a chunk's structure starts inline on the level's one "worldgen" executor, so a lattice
+chunk waiting for its roads holds all of the level's chunk generation, and the server thread blocks on any chunk it
+loads meanwhile (on the runner: progression's ledge finder, Lithium's collision sweep for a spectator flying into new
+land, a vault): the tour's "Can't keep up" (W7: 2, 4.5 and 38 s, the last the camp command laying the north road on the
+server thread, then a near-freeze; now 2 s at the start and 33 s at the first teleport, then one tick of 4.5 minutes in
+the ledge finder). On a tour a watch on the server thread (`RoadTimer.watch`) logs any tick over a second with its stack.
 Framings lay only the highroads through a place: the lanes round it would plan the regions about (48 s on the runner).
 
 **Decisions taken here** (none of the plan's 13): the hub rule and its numbers above (towns one region in five, the
 first town placed on purpose, a wayhouse at a region's heart for "a day's walk"); roads on a lattice of leg starts
-(every eighth chunk, 72-point legs) and planned ahead of players; the north road's wide-water retry; the keep rules and
+(every eighth chunk, 72-point legs) and planned ahead of players by a pool of planners, exactly lazy (see Cost); the north road's wide-water retry; the keep rules and
 the 14-wide exits (they shift W3's fields); the mining roll (one in three villages, one in ten hamlets); the town's
 numbers (wall 64, or 76 when that fits under 25 homes, square 11, lanes 24 apart, squared to the compass, 3-block
 frontage slots) and its people bounds; the mine's depths (24, then 16); the Deep Mine's cause, timings and pay; the
