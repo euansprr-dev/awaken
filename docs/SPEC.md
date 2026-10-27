@@ -7416,7 +7416,7 @@ plan this for everything." Module `trails` (`dev.awaken.trails`), `core.api.Trai
 - **Where it shows**: K, Journal page, **TRAILS** (order -38, under TRACKING): "What you can do now" (at most 3 rows, each the next step
   with Follow), and **All trails ›** opening a browse view in the same section (area chips, a card per trail with its pips, Steps,
   Follow, Not for me, silhouettes last). Following puts the trail on the **task card** (`Checklist.registerLeading`, asked before even the first-hour moves card: the trail,
-  every step done plus up to four to do, a linear trail two; the card counts the done ones) and its current step on the **Now line** (priority 55). Only Follow changes the HUD;
+  every step done plus up to four to do, a linear trail two; the card counts the done ones; a step longer than the card wraps over up to three lines, `signal.ui.TaskWrap`, with key caps kept in the line, seen on the third tour) and its current step on the **Now line** (priority 55). Only Follow changes the HUD;
   one trail is followed at a time, and the Armoury's Track gives the card up (`TrailsApi.unfollow`). "Anything for me?"
   (`Advice`) names the best next step.
 - **Catalogue shipped** (24 trails): Home (7): Set Your Fire, Your Hearth, A Room for Everything, Your Village, The Forge, Trophies and
