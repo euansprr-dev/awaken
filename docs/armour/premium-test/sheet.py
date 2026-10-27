@@ -12,7 +12,7 @@ import sys
 from PIL import Image, ImageDraw, ImageFont
 
 LEVELS = (("today", "Today (as it ships)"), ("level1", "Level 1 (planned look, glow pass)"), ("level2", "Level 2 (plus our shader)"))
-DAY = ("lineup", "front", "threequarter", "back", "side", "hood")
+DAY = ("lineup", "front", "threequarter", "back", "side", "hood", "chest")
 NIGHT = ("night_lineup", "night_hood")
 CELL_W = 640
 
