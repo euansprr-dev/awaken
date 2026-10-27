@@ -293,12 +293,12 @@ final class Highroads {
 
     // ---- lanes ---------------------------------------------------------------------------------------------------------
 
-    static List<Road> branch(RoadWorld w, SettlementGrid.Anchor a) {
-        Terrain t = w.terrain();
-        VillagePlan p = Plans.of(a, t);
-        if (p == null) return List.of();
-        // the highroads and Carillon's roads near it: if one runs through it, it needs no lane
-        List<Road> roads = new ArrayList<>();
+    /**
+     * The roads a settlement's lane may join, in the order it looks at them: the highroads ({gx, gz, dir}) whose straight
+     * line between hearts comes within a lane's reach of it, then Carillon's roads out ({which}).
+     */
+    static List<int[]> laneJoins(RoadWorld w, VillagePlan p) {
+        List<int[]> out = new ArrayList<>();
         int pitch = dev.awaken.living.region.RegionMap.PITCH;
         int gx = Math.floorDiv(p.ox, pitch), gz = Math.floorDiv(p.oz, pitch);
         for (int i = gx - 2; i <= gx + 1; i++)
@@ -307,15 +307,57 @@ final class Highroads {
                     int ni = i + (dir == 0 ? 1 : 0), nj = j + (dir == 1 ? 1 : 0);
                     if (w.regions.swallowed(i, j) || w.regions.swallowed(ni, nj)) continue;
                     int[] ha = w.regions.heart(i, j), hb = w.regions.heart(ni, nj);
-                    if (mayPass(ha[0], ha[1], hb[0], hb[1], p.ox, p.oz, LANE_REACH)) roads.addAll(RoadNet.trunk(w, i, j, dir));
+                    if (mayPass(ha[0], ha[1], hb[0], hb[1], p.ox, p.oz, LANE_REACH)) out.add(new int[]{i, j, dir});
                 }
         if (w.city) for (int k = 0; k < 3; k++) {
             for (int[] seg : portReach(w, k)) {
                 if (!mayPass(seg[0], seg[1], seg[2], seg[3], p.ox, p.oz, LANE_REACH)) continue;
-                roads.addAll(RoadNet.port(w, k));
+                out.add(new int[]{k});
                 break;
             }
         }
+        return out;
+    }
+
+    /**
+     * Whether a settlement's lane could start a leg in a lattice chunk, judged from the roads it may join that are laid
+     * already (SPEC §28.9, Cost). The lane runs from one of its street ends to the point of those roads nearest the end,
+     * the nearest point to the settlement's middle being under {@link #LANE_REACH} away, and keeps inside its search's
+     * ellipse (stretch {@link RoadPlanner#STRETCH}, a lattice of at most 32, its ends 12 out): every point of it lies
+     * within (1 + stretch) / 2 (δ + E + 24) + 32 + 12 of the street end it leaves by, where δ bounds how far the nearest
+     * point is (any point of a road laid already, else the lane's reach) and E is how far the furthest street end is from
+     * the middle. A leg that
+     * starts in a chunk has every point within {@link RoadNet#LEG_REACH} of the chunk's middle each way. False means the
+     * lane starts nothing there, so it needn't be laid to say so.
+     */
+    static boolean laneMayStart(RoadWorld w, VillagePlan p, int chunkX, int chunkZ) {
+        List<RoadNet.Entry> ends = RoadNet.entries(p);
+        if (ends.isEmpty()) return false;
+        double far = 0, delta = LANE_REACH;
+        for (RoadNet.Entry e : ends) far = Math.max(far, Math.hypot(e.x() - p.ox, e.z() - p.oz));
+        for (int[] c : laneJoins(w, p)) {
+            List<Road> laid = RoadNet.laidAs(c.length == 3 ? "T" + c[0] + "," + c[1] + "," + c[2] : "P" + c[0]);
+            if (laid == null) continue;
+            for (Road r : laid)
+                for (int i = 2; i < r.points() - 2; i++)
+                    if ((r.flags()[i] & (RoadPlanner.BRIDGE | RoadPlanner.BOARDWALK)) == 0) delta = Math.min(delta, Math.hypot(r.x()[i] - p.ox, r.z()[i] - p.oz));
+        }
+        double reach = (1 + RoadPlanner.STRETCH) / 2 * (delta + far + 24) + 32 + 12;
+        int cx = (chunkX << 4) + 8, cz = (chunkZ << 4) + 8;
+        for (RoadNet.Entry e : ends) {
+            double dx = Math.max(0, Math.abs(e.x() - cx) - RoadNet.LEG_REACH), dz = Math.max(0, Math.abs(e.z() - cz) - RoadNet.LEG_REACH);
+            if (Math.hypot(dx, dz) <= reach) return true;
+        }
+        return false;
+    }
+
+    static List<Road> branch(RoadWorld w, SettlementGrid.Anchor a) {
+        Terrain t = w.terrain();
+        VillagePlan p = Plans.of(a, t);
+        if (p == null) return List.of();
+        // the highroads and Carillon's roads near it: if one runs through it, it needs no lane
+        List<Road> roads = new ArrayList<>();
+        for (int[] c : laneJoins(w, p)) roads.addAll(c.length == 3 ? RoadNet.trunk(w, c[0], c[1], c[2]) : RoadNet.port(w, c[0]));
         for (Road r : roads) if (r.from().settlement().equals(p.key) || r.to().settlement().equals(p.key)) return List.of();
         // the nearest point of a road to the settlement
         Road best = null;

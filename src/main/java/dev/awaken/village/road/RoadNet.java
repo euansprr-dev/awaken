@@ -367,7 +367,7 @@ public final class RoadNet {
         long t0 = System.nanoTime();
         List<Road.Leg> legs = once(LEGS, key, () -> {
             List<Road.Leg> out = new ArrayList<>();
-            for (Road r : roadsNear(w, (chunkX << 4) + 8, (chunkZ << 4) + 8, LEG_REACH))
+            for (Road r : roadsAt(w, chunkX, chunkZ))
                 for (Road.Leg l : r.legs()) if (l.startX() == chunkX && l.startZ() == chunkZ) out.add(l);
             return out;
         });
@@ -391,6 +391,33 @@ public final class RoadNet {
         for (SettlementGrid.Anchor a : SettlementGrid.gridNear(w.seed, x, z, Highroads.LANE_REACH + reach, new int[]{w.cx, w.cz}))
             out.addAll(branch(w, a));
         return out;
+    }
+
+    /**
+     * The roads that may start a leg in a lattice chunk: {@link #roadsNear}'s for its middle, but for the lanes that
+     * provably can't reach it from what's laid so far ({@link Highroads#laneMayStart}), left until they're needed nearer
+     * their settlements. A lane needs the highroads round its own settlement, which need their regions' hubs: the cascade
+     * that made a chunk far out wait. The legs starting here are exactly roadsNear's.
+     */
+    static List<Road> roadsAt(RoadWorld w, int chunkX, int chunkZ) {
+        int x = (chunkX << 4) + 8, z = (chunkZ << 4) + 8;
+        List<Road> out = highroadsNear(w, x, z, LEG_REACH);
+        for (SettlementGrid.Anchor a : SettlementGrid.gridNear(w.seed, x, z, Highroads.LANE_REACH + LEG_REACH, new int[]{w.cx, w.cz}))
+            if (laneMayStart(w, a, chunkX, chunkZ)) out.addAll(branch(w, a));
+        return out;
+    }
+
+    /** Whether a settlement's lane may start a leg in a lattice chunk (laid or being laid: yes; no plan: no lane). */
+    private static boolean laneMayStart(RoadWorld w, SettlementGrid.Anchor a, int chunkX, int chunkZ) {
+        if (ROADS.containsKey("B" + a.key())) return true;
+        VillagePlan p = Plans.of(a, w.terrain());
+        return p != null && Highroads.laneMayStart(w, p, chunkX, chunkZ);
+    }
+
+    /** A road's pieces by its key if laid already, else null. */
+    static @Nullable List<Road> laidAs(String key) {
+        var f = ROADS.get(key);
+        return f != null && f.isDone() && !f.isCompletedExceptionally() ? f.join() : null;
     }
 
     /** The highroads and Carillon's roads out that may pass within {@code reach} of a point (no lanes: those cascade). */
@@ -451,7 +478,13 @@ public final class RoadNet {
         }
         for (int[] c : trunks) roadSoon("T" + c[0] + "," + c[1] + "," + c[2], tier, order * 4 + 1, () -> trunk(w, c[0], c[1], c[2]));
         for (int p : portsNear(w, x, z, LEG_REACH)) roadSoon("P" + p, tier, order * 4 + 1, () -> port(w, p));
-        for (SettlementGrid.Anchor a : grid) roadSoon("B" + a.key(), tier, order * 4 + 2, () -> branch(w, a));
+        // a lane once the highroads near the chunk are laid (they may show it can't reach it)
+        for (SettlementGrid.Anchor a : grid)
+            if (!ROADS.containsKey("B" + a.key())) RoadPlanners.job("B" + a.key() + "@" + chunkX + "," + chunkZ, tier, order * 4 + 2, () -> {
+                if (ROADS.containsKey("B" + a.key())) return;
+                highroadsNear(w, x, z, LEG_REACH);
+                if (laneMayStart(w, a, chunkX, chunkZ)) branch(w, a);
+            });
     }
 
     private static void hubSoon(RoadWorld w, int gx, int gz, int tier, long order) {
