@@ -1,5 +1,6 @@
 package dev.awaken.farsight.voxel;
 
+import dev.awaken.ground.cover.GroundCoverBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.EmptyBlockGetter;
@@ -113,6 +114,9 @@ public final class VoxelKinds {
             return SOFT;
         }
         if (shape.isEmpty()) return water ? WATER : SKIP;
+        // pebbles and twigs (SPEC §31): a stone or two a few pixels wide, under a pixel from where City Sight draws. As their
+        // bounds they were grey boxes ten sixteenths wide strewn over every far meadow, far larger than the stones they stand for
+        if (state.getBlock() instanceof GroundCoverBlock) return SKIP;
         if (shape == Shapes.block()) {
             // leaves hide their neighbours as the game's fast leaves do: from afar a canopy is a solid mass
             if (state.is(BlockTags.LEAVES)) return FULL;
