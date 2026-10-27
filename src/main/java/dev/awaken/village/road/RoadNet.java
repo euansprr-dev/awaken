@@ -54,8 +54,12 @@ public final class RoadNet {
 
     private static final ConcurrentHashMap<Long, CompletableFuture<Hub>> HUBS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, CompletableFuture<List<Road>>> ROADS = new ConcurrentHashMap<>();
-    /** The highroads' ways (by "T" key) and their pieces (by "T...#k"), each laid alone: SPEC §28.9, Cost. */
+    /**
+     * The highroads' ways (by "T" key), Carillon's roads out's (by "P" key) and their pieces (by the road's key, "T...#k",
+     * "P1#k"), each laid alone: SPEC §28.9, Cost.
+     */
     private static final ConcurrentHashMap<String, CompletableFuture<Highroads.Way>> WAYS = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, CompletableFuture<List<Highroads.Way>>> PORTS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, CompletableFuture<Optional<Road>>> PIECES = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<Long, CompletableFuture<SettlementGrid.Anchor[]>> SITES = new ConcurrentHashMap<>();
     static long planNanos, planned, reads;
@@ -66,6 +70,7 @@ public final class RoadNet {
         HUBS.clear();
         ROADS.clear();
         WAYS.clear();
+        PORTS.clear();
         PIECES.clear();
         SITES.clear();
         LEGS.clear();
@@ -339,25 +344,26 @@ public final class RoadNet {
 
     /** The highroad from region (gx, gz) east (dir 0) or south (dir 1): its pieces between the settlements on its way. */
     public static List<Road> trunk(RoadWorld w, int gx, int gz, int dir) {
-        Highroads.Way way = way(w, gx, gz, dir);
         List<Road> out = new ArrayList<>();
+        pieces(w, way(w, gx, gz, dir), out);
+        return out;
+    }
+
+    /** A way's pieces, laid. */
+    private static void pieces(RoadWorld w, Highroads.Way way, List<Road> out) {
         for (int k = 0; k < way.pieces(); k++) {
             Road r = piece(w, way, k);
             if (r != null) out.add(r);
         }
-        return out;
     }
 
-    /** That highroad's pieces that may come within {@code reach} each way of a point (the others aren't laid for it). */
-    static List<Road> trunkNear(RoadWorld w, int gx, int gz, int dir, int x, int z, int reach) {
-        Highroads.Way way = way(w, gx, gz, dir);
-        List<Road> out = new ArrayList<>();
+    /** A way's pieces that may come within {@code reach} each way of a point (the others aren't laid for it). */
+    private static void piecesNear(RoadWorld w, Highroads.Way way, int x, int z, int reach, List<Road> out) {
         for (int k = 0; k < way.pieces(); k++) {
             if (!way.mayCome(k, x, z, reach)) continue;
             Road r = piece(w, way, k);
             if (r != null) out.add(r);
         }
-        return out;
     }
 
     /** A highroad's way (its hubs, the settlements it rides through and its pieces' ends), worked out once. */
@@ -382,7 +388,37 @@ public final class RoadNet {
 
     /** Carillon's road out (0 north past the camp and the first hamlet, 1 east, 2 south) to the region beyond. */
     public static List<Road> port(RoadWorld w, int which) {
-        return once(ROADS, "P" + which, () -> index(Highroads.port(w, which)));
+        List<Road> out = new ArrayList<>();
+        for (Highroads.Way way : portWays(w, which)) pieces(w, way, out);
+        return out;
+    }
+
+    /** Its first road (north, P0#0, or where no way was found for that the first on from the first hamlet), or null: none. */
+    public static @Nullable Road portFirst(RoadWorld w, int which) {
+        for (Highroads.Way way : portWays(w, which))
+            for (int k = 0; k < way.pieces(); k++) {
+                Road r = piece(w, way, k);
+                if (r != null) return r;
+            }
+        return null;
+    }
+
+    /**
+     * Its ways, worked out once. The region it heads for is the nearest whose way has a piece: its pieces are laid in
+     * order until one is, and kept as its own; a way none of whose pieces is laid has nothing to keep.
+     */
+    static List<Highroads.Way> portWays(RoadWorld w, int which) {
+        return once(PORTS, "P" + which, () -> Highroads.portWays(w, which, way -> {
+            for (int k = 0; k < way.pieces(); k++) {
+                Road r = Highroads.piece(w, way, k);
+                if (r == null) continue;
+                for (int j = 0; j < k; j++) PIECES.putIfAbsent(way.key() + "#" + j, CompletableFuture.completedFuture(Optional.empty()));
+                PIECES.putIfAbsent(way.key() + "#" + k, CompletableFuture.completedFuture(Optional.of(r)));
+                index(List.of(r));
+                return true;
+            }
+            return false;
+        }));
     }
 
     /** A settlement's lane to the nearest road, or nothing (it lies on a highroad, or no road is near). */
@@ -457,21 +493,29 @@ public final class RoadNet {
         return p != null && Highroads.laneMayStart(w, p, chunkX, chunkZ);
     }
 
-    /** A road's pieces by its key laid already (a highroad's so far), else null. */
+    /** A highroad's or Carillon's road out's pieces by its key ("T...", "P1") laid already, else null (its way unknown). */
     static @Nullable List<Road> laidAs(String key) {
+        List<Highroads.Way> ways;
         if (key.startsWith("T")) {
             var f = WAYS.get(key);
-            if (f == null || !f.isDone() || f.isCompletedExceptionally()) return null;
-            Highroads.Way way = f.join();
-            List<Road> out = new ArrayList<>();
+            if (!done(f)) return null;
+            ways = List.of(f.join());
+        } else {
+            var f = PORTS.get(key);
+            if (!done(f)) return null;
+            ways = f.join();
+        }
+        List<Road> out = new ArrayList<>();
+        for (Highroads.Way way : ways)
             for (int k = 0; k < way.pieces(); k++) {
                 Road r = laidPiece(way, k);
                 if (r != null) out.add(r);
             }
-            return out;
-        }
-        var f = ROADS.get(key);
-        return f != null && f.isDone() && !f.isCompletedExceptionally() ? f.join() : null;
+        return out;
+    }
+
+    private static boolean done(@Nullable CompletableFuture<?> f) {
+        return f != null && f.isDone() && !f.isCompletedExceptionally();
     }
 
     /** The highroads and Carillon's roads out that may pass within {@code reach} of a point (no lanes: those cascade). */
@@ -482,11 +526,12 @@ public final class RoadNet {
         return out;
     }
 
-    /** As {@link #highroadsNear}, but of a highroad only the pieces that may come within {@code reach} each way of the point. */
+    /** As {@link #highroadsNear}, but only the pieces that may come within {@code reach} each way of the point. */
     static List<Road> highroadPiecesNear(RoadWorld w, int x, int z, int reach) {
         List<Road> out = new ArrayList<>();
-        for (int[] c : trunksNear(w, x, z, reach)) out.addAll(trunkNear(w, c[0], c[1], c[2], x, z, reach));
-        for (int p : portsNear(w, x, z, reach)) out.addAll(port(w, p));
+        for (int[] c : trunksNear(w, x, z, reach)) piecesNear(w, way(w, c[0], c[1], c[2]), x, z, reach, out);
+        for (int p : portsNear(w, x, z, reach))
+            for (Highroads.Way way : portWays(w, p)) piecesNear(w, way, x, z, reach, out);
         return out;
     }
 
@@ -540,11 +585,17 @@ public final class RoadNet {
         }
         for (int[] c : trunks) {
             var known = WAYS.get("T" + c[0] + "," + c[1] + "," + c[2]);
-            if (known != null && known.isDone() && !known.isCompletedExceptionally()) piecesSoon(w, known.join(), x, z, tier, order * 4 + 1);
+            if (done(known)) piecesSoon(w, known.join(), x, z, tier, order * 4 + 1);
             else RoadPlanners.job("T" + c[0] + "," + c[1] + "," + c[2] + "@" + chunkX + "," + chunkZ, tier, order * 4 + 1,
                     () -> piecesSoon(w, way(w, c[0], c[1], c[2]), x, z, tier, order * 4 + 1));
         }
-        for (int p : portsNear(w, x, z, LEG_REACH)) roadSoon("P" + p, tier, order * 4 + 1, () -> port(w, p));
+        for (int p : portsNear(w, x, z, LEG_REACH)) {
+            var known = PORTS.get("P" + p);
+            if (done(known)) for (Highroads.Way way : known.join()) piecesSoon(w, way, x, z, tier, order * 4 + 1);
+            else RoadPlanners.job("P" + p + "@" + chunkX + "," + chunkZ, tier, order * 4 + 1, () -> {
+                for (Highroads.Way way : portWays(w, p)) piecesSoon(w, way, x, z, tier, order * 4 + 1);
+            });
+        }
         // a lane once the highroads near the chunk are laid (they may show it can't reach it)
         for (SettlementGrid.Anchor a : grid)
             if (!ROADS.containsKey("B" + a.key())) RoadPlanners.job("B" + a.key() + "@" + chunkX + "," + chunkZ, tier, order * 4 + 2, () -> {
@@ -561,19 +612,13 @@ public final class RoadNet {
         });
     }
 
-    /** Queues a highroad's pieces that may come near a lattice chunk's middle, each its own job. */
+    /** Queues a way's pieces that may come near a lattice chunk's middle, each its own job. */
     private static void piecesSoon(RoadWorld w, Highroads.Way way, int x, int z, int tier, long order) {
         for (int k = 0; k < way.pieces(); k++) {
             int kk = k;
             if (way.mayCome(k, x, z, LEG_REACH) && !PIECES.containsKey(way.key() + "#" + k))
                 RoadPlanners.job(way.key() + "#" + k, tier, order, () -> piece(w, way, kk));
         }
-    }
-
-    private static void roadSoon(String key, int tier, long order, Runnable make) {
-        if (!ROADS.containsKey(key)) RoadPlanners.job(key, tier, order, () -> {
-            if (!ROADS.containsKey(key)) make.run();
-        });
     }
 
     // ---- laying ahead of the players -------------------------------------------------------------------------------------
