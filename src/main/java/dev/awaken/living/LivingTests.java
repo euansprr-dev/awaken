@@ -414,6 +414,9 @@ final class LivingTests {
             h.assertTrue(LivingModule.eliteChance(10) == 0.02F && LivingModule.eliteChance(24) == 0.02F, "2% in D land");
             h.assertTrue(LivingModule.eliteChance(25) == 0.04F && LivingModule.eliteChance(44) == 0.04F, "4% in C land");
             h.assertTrue(LivingModule.eliteChance(45) == 0.05F && LivingModule.eliteChance(120) == 0.05F, "5% from B up");
+            // every creature's plate carries its level, a meek cow in E land too (Euan 2026-10-27)
+            h.assertTrue(PlateRules.showsLevel(new CreatureTag(3, CreatureTag.Kind.PASSIVE, false, "")) && PlateRules.showsLevel(new CreatureTag(2, CreatureTag.Kind.AMBIENT, false, ""))
+                    && !PlateRules.showsLevel(CreatureTag.NONE), "animals and wildlife show their level; an untagged creature does not");
             h.succeed();
         });
 

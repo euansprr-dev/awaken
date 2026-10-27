@@ -4355,7 +4355,8 @@ roles, offsets, the API and the Hearth's calm stand. Decisions (numbers are the 
 14. **Order:** Phase 1 (1-8 but the loot of 8, 12, 13), Phase 2 (11), Phase 3 with the Arms and deep builders (9, 10, the loot of 8).
 15. **The plate's colour is how hard the creature is against you** (Euan, 2026-10-27): grey ten or more levels below you, blue about your level or easier (up to four above:
     easy to kill), orange from five above (a good fight that takes skill), red from fifteen above (you can win it, but only as an insane fighter; the chip pulses). The
-    same for every creature, animals included.
+    same for every creature, animals included. Every creature's plate shows its level chip, a meek animal in E land too (Euan 2026-10-27, "I still see vanilla passive mobs
+   with no level"; `PlateRules.showsLevel`): its chip is its land's level and reads grey or blue; only an untagged creature has none.
 
 **Phase 1 as built (2026-10-27, `pack/regions-plan`).**
 - `living.region.RegionMap` is the field: the numbers are `data/awaken/awaken/regions/reach.json` (read once from the classpath: the map is pure and
