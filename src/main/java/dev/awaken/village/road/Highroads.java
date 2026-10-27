@@ -9,6 +9,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * How each road is laid (SPEC §28.9): a highroad between two regions' hubs through the settlements on its way, Carillon's
@@ -84,14 +85,20 @@ final class Highroads {
         double ax = start != null ? start.x() : a.x(), az = start != null ? start.z() : a.z();
         double d = Math.hypot(b.x() - ax, b.z() - az);
         if (d < 48) return List.of();
-        // the settlements near the straight way: those well between the ends ride on it, the rest are kept clear of
+        // the settlements near the straight way: those well between the ends ride on it, the rest are kept clear of (one
+        // that can't ride on it wherever its site moves is planned only if a road's search comes near it: SPEC §28.9, Cost)
         List<VillagePlan> on = new ArrayList<>(), clear = new ArrayList<>();
+        List<SettlementGrid.Anchor> aside = new ArrayList<>();
         List<double[]> along = new ArrayList<>();
         int[] centre = {w.cx, w.cz};
         double mx = (ax + b.x()) / 2, mz = (az + b.z()) / 2;
         for (SettlementGrid.Anchor s : SettlementGrid.gridNear(w.seed, (int) mx, (int) mz, (int) (d / 2 + 0.36 * d + 120), centre)) {
             if (a != null && s.equals(a.anchor()) || s.equals(b.anchor())) continue;
             if (!corridor(ax, az, b.x(), b.z(), s.x(), s.z(), 0.36 * d + 140)) continue;
+            if (!mayRide(ax, az, b.x(), b.z(), d, s)) {
+                aside.add(s);
+                continue;
+            }
             VillagePlan p = Plans.of(s, t);
             if (p == null) continue;
             double tt = ((p.ox - ax) * (b.x() - ax) + (p.oz - az) * (b.z() - az)) / (d * d);
@@ -109,7 +116,7 @@ final class Highroads {
         keepOut.addAll(stops);
         if (a != null && a.anchor() != null && Plans.cached(a.anchor().key()) != null) keepOut.add(Plans.cached(a.anchor().key()));
         if (b.anchor() != null && Plans.cached(b.anchor().key()) != null) keepOut.add(Plans.cached(b.anchor().key()));
-        RoadPlanner.Keep keep = keep(w, keepOut, start);
+        RoadPlanner.Keep keep = keep(w, keepOut, aside, start);
         // the way, stop by stop
         List<Road> out = new ArrayList<>();
         RoadNet.Entry from = start != null ? start : hubEnd(w, a, stops.isEmpty() ? b.x() : stops.getFirst().ox, stops.isEmpty() ? b.z() : stops.getFirst().oz);
@@ -136,20 +143,44 @@ final class Highroads {
         return out;
     }
 
+    /** How far a grid settlement's site moves from its anchor at most (the planner's search, on its 16-block steps), and its radius. */
+    static final int MOVE = 46, FIRST_MOVE = 91, MAX_R = 88;
+
+    /**
+     * Whether a grid settlement could ride on the way from a to b ({@link #through}'s test on its plan's middle) wherever
+     * its site moves from its anchor: false, and it can only be kept clear of.
+     */
+    static boolean mayRide(double ax, double az, double bx, double bz, double d, SettlementGrid.Anchor s) {
+        double move = (s.first() ? FIRST_MOVE : MOVE) + 1e-6;
+        double tt = ((s.x() - ax) * (bx - ax) + (s.z() - az) * (bz - az)) / (d * d);
+        double perp = Math.abs((s.x() - ax) * (bz - az) - (s.z() - az) * (bx - ax)) / d;
+        return tt > 0.12 - move / d && tt < 0.88 + move / d && perp < Math.min(0.22 * d, 200) + move;
+    }
+
+    static RoadPlanner.Keep keep(RoadWorld w, List<VillagePlan> around, RoadNet.@Nullable Entry port) {
+        return keep(w, around, List.of(), port);
+    }
+
     /**
      * The columns a road keeps out of: other settlements' planned ground (its streets, houses, yards, fields and pens, and
-     * a few blocks round them), the city's reserve (but a port's own way out), the camp.
+     * a few blocks round them), the city's reserve (but a port's own way out), the camp. The settlements {@code aside}
+     * are planned only when the road's search first comes within reach of their ground (most never are).
      */
-    static RoadPlanner.Keep keep(RoadWorld w, List<VillagePlan> around, RoadNet.@Nullable Entry port) {
-        int n = around.size();
+    static RoadPlanner.Keep keep(RoadWorld w, List<VillagePlan> around, List<SettlementGrid.Anchor> aside, RoadNet.@Nullable Entry port) {
+        int n = around.size(), m = aside.size();
         VillagePlan[] ps = around.toArray(new VillagePlan[0]);
+        SettlementGrid.Anchor[] as = aside.toArray(new SettlementGrid.Anchor[0]);
+        java.util.concurrent.atomic.AtomicReferenceArray<Optional<VillagePlan>> got = new java.util.concurrent.atomic.AtomicReferenceArray<>(m);
         int campX = w.cx + CAMP_X, campZ = w.cz + CAMP_Z;
         return (x, z) -> {
-            for (int i = 0; i < n; i++) {
-                VillagePlan p = ps[i];
-                int dx = x - p.ox, dz = z - p.oz;
-                if (dx * dx + dz * dz > (p.r + 8) * (p.r + 8)) continue;
-                if (built(p, x, z) || built(p, x + 3, z) || built(p, x - 3, z) || built(p, x, z + 3) || built(p, x, z - 3)) return true;
+            for (int i = 0; i < n; i++) if (kept(ps[i], x, z)) return true;
+            for (int i = 0; i < m; i++) {
+                SettlementGrid.Anchor s = as[i];
+                int dx = x - s.x(), dz = z - s.z(), reach = (s.first() ? FIRST_MOVE : MOVE) + MAX_R + 9;
+                if (dx * dx + dz * dz > reach * reach) continue;
+                Optional<VillagePlan> p = got.get(i);
+                if (p == null) got.set(i, p = Optional.ofNullable(Plans.of(s, w.terrain())));
+                if (p.isPresent() && kept(p.get(), x, z)) return true;
             }
             if (w.city) {
                 int dx = x - campX, dz = z - campZ;
@@ -162,6 +193,13 @@ final class Highroads {
             }
             return false;
         };
+    }
+
+    /** Whether a road keeps out of a column for a settlement: its built ground, or within three blocks of it. */
+    static boolean kept(VillagePlan p, int x, int z) {
+        int dx = x - p.ox, dz = z - p.oz;
+        if (dx * dx + dz * dz > (p.r + 8) * (p.r + 8)) return false;
+        return built(p, x, z) || built(p, x + 3, z) || built(p, x - 3, z) || built(p, x, z + 3) || built(p, x, z - 3);
     }
 
     /** A settlement's built ground: its houses, streets, square, walls and landmarks (a road may pass its fields and pens). */
