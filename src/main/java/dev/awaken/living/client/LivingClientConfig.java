@@ -29,10 +29,13 @@ public final class LivingClientConfig {
     public static final ModConfigSpec.EnumValue<Moment> LEVEL_MOMENT = B
             .comment("Reaching a level: FULL (light rings, a column, the pane, a moment of stillness) or COMPACT (the pane only).")
             .defineEnum("levelMoment", Moment.FULL);
+    public static final ModConfigSpec.BooleanValue DREAD = B
+            .comment("A land far above your level cools the screen and brings in a low sound before any creature does (SPEC 21.10).")
+            .define("dread", true);
     public static final ModConfigSpec SPEC = B.build();
 
     // cached once a tick
-    static boolean plates = true, xpStream = true;
+    static boolean plates = true, xpStream = true, dread = true;
     static Numbers numbers = Numbers.FULL;
     static Moment moment = Moment.FULL;
 
@@ -48,6 +51,7 @@ public final class LivingClientConfig {
         try {
             plates = PLATES.get();
             xpStream = XP_STREAM.get();
+            dread = DREAD.get();
             numbers = DAMAGE_NUMBERS.get();
             moment = LEVEL_MOMENT.get();
         } catch (RuntimeException notLoaded) {

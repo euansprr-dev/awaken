@@ -14,6 +14,8 @@ quiet end of it.
   ui_living_level_up      the level-up moment, ~2.4 s: D5 F#5 A5 D6 E6 climbing and growing, then swelling into a held
                           open fifth (D-A) under a soft shimmer of high glass and an air swell; it peaks around 0.75 s
                           and has gone by 2.4 s. Majestic and restrained: no rank-up bloom, no bass
+  amb_living_dread        the bed under a land far above you (decision 11 of SPEC 21.10): 8 s, loops, low and cold, felt more than
+                          heard; DreadFx plays it looping at the land's weight
   ui_living_region_enter  entering a named region (the place caption): a low, wide, calm two-note glass chime, D4 then A4
                           (one from each side), a faint low D3 bloom and a long soft tail, ~1.5 s
 
@@ -127,6 +129,32 @@ def region_enter(seed):
     return K.declick(y + bloom + air, 0.003, 0.35)
 
 
+def dread(seed):
+    """The bed under a land far above you (SPEC 21.10), 8 s that loops without a seam: every tone makes a whole number of cycles in
+    the loop, the air is filtered noise made over the whole loop (so it is periodic too) and its movement is slow sines of the same
+    period. A low D (73.4 Hz) and a twin a cycle sharper beating once a loop, a fifth above and a cold octave over that, a wide dark
+    breath of air through them. No melody, no bell: it is felt more than heard, and its volume is the land's weight."""
+    L = 8.0
+    n = K.ns(L)
+    t = np.arange(n) / K.SR
+    rng = np.random.default_rng(seed + 401)
+
+    def cyc(c, ph=0.0):
+        return np.sin(2 * np.pi * (c * t / L) + ph)
+
+    tone = cyc(587) + 0.8 * cyc(588, 1.3) + 0.45 * cyc(880, 0.4) + 0.25 * cyc(1174, 2.0)
+    swell = 0.78 + 0.22 * np.sin(2 * np.pi * 2 * t / L + 0.5)
+    spec = np.fft.rfft(rng.standard_normal((2, n)), axis=1)
+    f = np.fft.rfftfreq(n, 1 / K.SR)
+    shape = (1 / (1 + (f / 650.0) ** 4)) * (f ** 2 / (f ** 2 + 70.0 ** 2))  # a dark band: low-passed at 650 Hz, high-passed at 70
+    air = np.fft.irfft(spec * shape, n, axis=1)
+    air /= np.std(air) + 1e-12
+    move = 0.72 + 0.28 * np.sin(2 * np.pi * 3 * t / L + 0.7)
+    left = tone * 0.42 * swell + air[0] * 0.60 * move
+    right = tone * 0.42 * np.roll(swell, K.ns(0.37)) + air[1] * 0.60 * np.roll(move, K.ns(0.61))
+    return np.stack([left, right], axis=1)
+
+
 def sounds(Snd):
     return [
         Snd("ui_living_scan", scan, rms=-26.5),
@@ -134,6 +162,7 @@ def sounds(Snd):
         Snd("ui_living_xp_tick", xp_tick, rms=-26.0),
         Snd("ui_living_level_up", level_up, rms=-24.0),
         Snd("ui_living_region_enter", region_enter, rms=-25.0),
+        Snd("amb_living_dread", dread, rms=-29.0),
     ]
 
 
@@ -144,4 +173,5 @@ def events(Evt):
         Evt("living.xp_tick", "XP gathers", files=["ui_living_xp_tick"], folder="living"),
         Evt("living.level_up", "Level up", files=["ui_living_level_up"], folder="living"),
         Evt("living.region_enter", "Region entered", files=["ui_living_region_enter"], folder="living"),
+        Evt("living.dread", "A heavy land", files=["amb_living_dread"], folder="living"),
     ]

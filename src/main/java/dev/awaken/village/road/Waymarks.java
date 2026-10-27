@@ -97,6 +97,53 @@ final class Waymarks {
     }
 
     /**
+     * March posts (SPEC §21.10, decision 11): where a road first passes into land a rank above the land behind it, a post on the
+     * walker's right whose one arm names the land and what lives in it ("Black Glades · Lv 10–24"), for a walker from each end
+     * (a boundary has to hold for 32 blocks, so one that flickers makes no post; bridges wait for dry ground; clear of the settlements'
+     * own posts). The land speaks first: this is the part of it written in the world.
+     */
+    static List<Road.Marker> marches(RoadWorld w, Road r) {
+        if (w == null) return new ArrayList<>(); // (a test's road studio has no world: no land to read)
+        return marches(r, (x, z) -> w.regions.levelAt(x, z), (x, z) -> w.regions.regionAt(x, z).name());
+    }
+
+    /** As above over any land: its level at a column and the name of the region there. */
+    static List<Road.Marker> marches(Road r, java.util.function.IntBinaryOperator levelAt, java.util.function.BiFunction<Integer, Integer, String> nameAt) {
+        List<Road.Marker> out = new ArrayList<>();
+        int n = r.points();
+        if (n < OUT * 6) return out;
+        int[] rank = new int[n];
+        for (int i = 0; i < n; i++) rank[i] = dev.awaken.living.region.RegionMap.rankOf(levelAt.applyAsInt(Math.round(r.x()[i]), Math.round(r.z()[i])));
+        for (int dir = 1; dir >= -1; dir -= 2) {
+            int start = dir > 0 ? OUT * 2 : n - 1 - OUT * 2, end = dir > 0 ? n - 1 - OUT * 2 : OUT * 2;
+            int cur = rank[start];
+            for (int i = start; i != end; i += dir) {
+                if (rank[i] <= cur) continue;
+                boolean holds = true;
+                for (int k = 1; k <= 8 && holds; k++) {
+                    int j = i + k * dir;
+                    if (dir > 0 ? j > end : j < end) break;
+                    if (rank[j] < rank[i]) holds = false;
+                }
+                if (!holds || (r.flags()[i] & (RoadPlanner.BRIDGE | RoadPlanner.BOARDWALK)) != 0) continue;
+                cur = rank[i];
+                float[] t = tangent(r, i);
+                int[] at = beside(r, i, r.halfWidth() + 2.0, dir);
+                String land = nameAt.apply(Math.round(r.x()[i]), Math.round(r.z()[i]));
+                List<Road.Arm> arms = arms(new double[][]{{t[0] * dir, t[1] * dir}}, new String[]{land + " · Lv " + rankRange(rank[i])}, new int[]{0});
+                out.add(new Road.Marker(i, at[0], r.y()[i], at[1], arms, false));
+            }
+        }
+        return out;
+    }
+
+    /** A land rank's levels as a post writes them: "10–24", "100+". */
+    static String rankRange(int rank) {
+        int[] from = dev.awaken.living.region.RegionMap.RANK_FROM;
+        return rank + 1 < from.length ? from[rank] + "–" + (from[rank + 1] - 1) : from[rank] + "+";
+    }
+
+    /**
      * The pass: on a road to (or from) a town, the crest of the last rise before it, well above the town and at least 120
      * blocks out, where it first comes into view. A cairn and a post.
      */

@@ -40,6 +40,9 @@ public final class RegionTracker {
     private static final Map<UUID, Map<Long, Long>> WARNED = new HashMap<>();
     /** Where each player stood at the last pass (their heading is the way they have been walking). */
     private static final Map<UUID, double[]> LAST = new HashMap<>();
+    /** The land level last sent to each player's tint and sound bed, and tours' forced gaps ({@code /awaken living dread}). */
+    private static final Map<UUID, Integer> LAND_SENT = new HashMap<>();
+    private static final Map<UUID, Integer> FORCED_GAP = new HashMap<>();
     /** Whether each player was inside the city's walls at the last look, and the play-day of their last way out. */
     private static final Map<UUID, Boolean> IN_CITY = new HashMap<>();
     private static final Map<UUID, Long> WENT_OUT = new HashMap<>();
@@ -50,11 +53,13 @@ public final class RegionTracker {
             if ((t + (p.getId() & 31)) % EVERY != 0) continue;
             if (!(p.level() instanceof ServerLevel level) || !Regions.on(level) || p.isSpectator()) {
                 CURRENT.remove(p.getUUID());
+                if (LAND_SENT.remove(p.getUUID()) != null) dev.awaken.core.AwakenNet.send(p, new LivingNet.LandMsg(-1)); // nothing weighs elsewhere
                 continue;
             }
             if (!Progression.profile(p).awakened()) continue;
             check(p, level);
             lookAhead(p, level);
+            sendLand(p, level);
         }
     }
 
@@ -101,6 +106,21 @@ public final class RegionTracker {
             if (!r.commons()) dev.awaken.core.api.Promises.seen(p, "region:" + r.id(), p.blockPosition(), dev.awaken.core.api.Promises.Need.level(here - DANGER + 1), r.name());
         }
         return msg;
+    }
+
+    /** The land under the player, to their client's tint and sound bed, when it changes (a tour's forced gap stands in for it). */
+    static void sendLand(ServerPlayer p, ServerLevel level) {
+        Integer forced = FORCED_GAP.get(p.getUUID());
+        int land = forced != null ? Progression.profile(p).level() + forced : Regions.levelAt(level, p.getBlockX(), p.getBlockZ());
+        Integer was = LAND_SENT.put(p.getUUID(), land);
+        if (was == null || was != land) dev.awaken.core.AwakenNet.send(p, new LivingNet.LandMsg(land));
+    }
+
+    /** Tours: pretend the land is {@code gap} levels above the player (null: the real land). */
+    public static void forceGap(ServerPlayer p, @org.jspecify.annotations.Nullable Integer gap) {
+        if (gap == null) FORCED_GAP.remove(p.getUUID());
+        else FORCED_GAP.put(p.getUUID(), gap);
+        LAND_SENT.remove(p.getUUID());
     }
 
     /** The land under the player is 5 or more above them: a danger. (The Commons was exempt before; its wall is level 8.) */
@@ -186,6 +206,8 @@ public final class RegionTracker {
         CAPTIONED.remove(id);
         WARNED.remove(id);
         LAST.remove(id);
+        LAND_SENT.remove(id);
+        FORCED_GAP.remove(id);
     }
 
     public static void clear() {
@@ -193,5 +215,7 @@ public final class RegionTracker {
         CAPTIONED.clear();
         WARNED.clear();
         LAST.clear();
+        LAND_SENT.clear();
+        FORCED_GAP.clear();
     }
 }

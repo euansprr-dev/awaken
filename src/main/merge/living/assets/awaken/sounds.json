@@ -103,5 +103,13 @@
         "name": "awaken:amb_tell_storm"
       }
     ]
+  },
+  "living.dread": {
+    "subtitle": "subtitles.awaken.living.dread",
+    "sounds": [
+      {
+        "name": "awaken:amb_living_dread"
+      }
+    ]
   }
 }

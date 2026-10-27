@@ -4346,8 +4346,24 @@ roles, offsets, the API and the Hearth's calm stand. Decisions (numbers are the 
 - Atlas: six rank colours and the legend 1 · 10 · 25 · 45 · 70 · 100 (`ZoneMap`, `AtlasScreen`); a region is coloured by the middle of its span.
 - Tests: `living_region_map` (ceiling, apron, slopes, tilt, determinism, rules 1), `living_region_placed`, `living_elite_by_rank`, `living_warning_ahead`,
   `living_region_rules_saved`. Prototype and numbers: `docs/regions/proto/`, `docs/regions/results/`.
-- Not built yet: Phase 2 (the dread tint and sound, road posts), Phase 3 (parts and trophies by land, richer game, first-step discoveries), the Atlas's smooth shading (it
-  colours whole regions), the quiet vales' name ("the Rest").
+- Not built yet: Phase 3 (parts and trophies by land, richer game, first-step discoveries), the Atlas's smooth shading (it colours whole regions), the quiet
+  vales' name ("the Rest").
+
+**Phase 2 as built (2026-10-27): the land speaks first.**
+- `LivingNet.LandMsg(level)` (`living_land`): the level of the land under the player, sent from `RegionTracker.tick` when it changes (-1 away from the overworld). Client
+  `living.client.DreadFx` turns the gap (land level minus the player's level) into `DreadRules.strength(gap)` (0 under 5, 0.15 at 5, 0.45 at 10, 1 at 20), eased in over
+  about four seconds and out a little faster, as a Lens place look over the world's own and the volume of a looping bed. Per player and client side; setting `dread`
+  in `awaken-living-client.toml` (on). It stays on with `awaken:pure_survival` (atmosphere, not a plate).
+- Lens `PLACE_LAYERS` is 3: layer 2 is `awaken:dread` (`looks_living.json`: the colour cools and drains, shadows blue, an ember haze gathers at the edges, the corners darken).
+- Sound: `living.dread`, `amb_living_dread.ogg` (`tools/art/specs/audio_living.py`: 8 s, every tone a whole number of cycles in the loop and the air periodic, so it
+  loops without a seam; D 73.4 Hz and a twin beating once a loop, a fifth, a cold octave, a dark breath of air; -29 dBFS RMS). Played looping, relative, at
+  the land's weight × 0.85. Listening is for the Mac.
+- March posts (`village.road.Waymarks.marches`, from `Highroads.lay` for highroads): where a road first passes into land a rank above the land behind it, a post on
+  the walker's right (from each end) with one arm: "<land> · Lv 10–24". A boundary must hold for 32 blocks; bridges wait for dry ground; clear of the settlements'
+  posts. Painted by the waymarker painter like any marker (new chunks only).
+- Dev: `/awaken living dread <gap|off>` (admin) forces the gap for tours; tour `tools/autopilot/regions-dread.txt` (CI).
+- Tests: `living_dread_gap`, `village_march_ranks` (a synthetic road: a post for each rise, none for a flicker).
+
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 

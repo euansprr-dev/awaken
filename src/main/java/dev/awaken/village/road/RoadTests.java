@@ -30,6 +30,22 @@ public final class RoadTests {
     public static void register() {
         AwakenTests.registerIsolated("village_roads", 600, RoadTests::roads);
         AwakenTests.register("village_town_plan", 400, RoadTests::towns);
+        AwakenTests.register("village_march_ranks", 20, h -> {
+            // a march post writes the land's rank range plainly (SPEC §21.10)
+            String[] want = {"1–9", "10–24", "25–44", "45–69", "70–99", "100+"};
+            for (int r = 0; r < want.length; r++) h.assertTrue(Waymarks.rankRange(r).equals(want[r]), "rank " + r + " reads " + Waymarks.rankRange(r));
+            // a straight road east whose land climbs 1 a 4 blocks: E, then D at level 10, then C at 25; one post for each rise, none for a flicker
+            int n = 120;
+            float[] x = new float[n], z = new float[n];
+            int[] y = new int[n];
+            for (int i = 0; i < n; i++) x[i] = i * 4;
+            var end = new Road.End("A", Road.ENTRY, "a", 0, 0, 0);
+            var road = new Road("t", Road.HIGHROAD, x, z, y, new byte[n], new byte[n], end, new Road.End("B", Road.ENTRY, "b", 480, 0, 0), java.util.List.of(), 0, 0);
+            var posts = Waymarks.marches(road, (px, pz) -> 1 + px / 4 / 2 + (px / 4 == 60 ? 20 : 0), (px, pz) -> "Black Glades"); // the level 20 spike at one point is a flicker, not a rank
+            h.assertTrue(posts.size() >= 2 && posts.stream().allMatch(m -> m.arms().size() == 1 && m.arms().get(0).name().startsWith("Black Glades · Lv ")), "a post for each rise: " + posts.size());
+            h.assertTrue(posts.stream().anyMatch(m -> m.arms().get(0).name().endsWith("10–24")) && posts.stream().anyMatch(m -> m.arms().get(0).name().endsWith("25–44")), "D and C posts");
+            h.succeed();
+        });
     }
 
     /**

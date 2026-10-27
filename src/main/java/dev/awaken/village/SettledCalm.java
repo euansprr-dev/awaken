@@ -34,7 +34,13 @@ public final class SettledCalm {
     public static int cap(ServerLevel level, BlockPos pos) {
         if (level.dimension() != Level.OVERWORLD) return Integer.MAX_VALUE;
         int cap = Integer.MAX_VALUE;
-        for (VillageService.Live l : VillageService.all()) {
+        java.util.List<VillageService.Live> all;
+        try {
+            all = VillageService.all(); // a plain map the server thread changes; a spawn on a worldgen thread may catch it mid-change
+        } catch (java.util.ConcurrentModificationException e) {
+            return Integer.MAX_VALUE;
+        }
+        for (VillageService.Live l : all) {
             VillagePlan p = l.plan();
             double reach = p.radius() + SETTLED_REACH;
             double dx = pos.getX() - p.ox, dz = pos.getZ() - p.oz;

@@ -37,6 +37,16 @@ final class LivingCommands {
                     .then(Commands.argument("radius", IntegerArgumentType.integer(500, 20000))
                             .executes(c -> regions(c.getSource(), c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "radius")))));
             l.then(Commands.literal("tag").requires(AwakenCommands.admin()).executes(c -> tag(c.getSource().getPlayerOrException())));
+            // tours: the land weighs as if it were this many levels above you (the tint and the sound bed), or the real land
+            l.then(Commands.literal("dread").requires(AwakenCommands.admin())
+                    .then(Commands.literal("off").executes(c -> {
+                        dev.awaken.living.region.RegionTracker.forceGap(c.getSource().getPlayerOrException(), null);
+                        return 1;
+                    }))
+                    .then(Commands.argument("gap", IntegerArgumentType.integer(-20, 120)).executes(c -> {
+                        dev.awaken.living.region.RegionTracker.forceGap(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "gap"));
+                        return 1;
+                    })));
             // tours: a blow at the creature you look at (no attack key in the autopilot), a drop in a pillar
             l.then(Commands.literal("strike").requires(AwakenCommands.admin())
                     .executes(c -> strike(c.getSource().getPlayerOrException(), 4, false))

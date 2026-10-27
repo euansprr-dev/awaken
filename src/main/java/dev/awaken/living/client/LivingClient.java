@@ -79,6 +79,7 @@ public final class LivingClient {
                 e -> e.registerEntityRenderer(dev.awaken.living.LivingContent.WAYFARER.get(), WayfarerRenderer::new));
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {
             e.register(LivingNet.RegionMsg.TYPE, (m, ctx) -> onRegion(m));
+            e.register(LivingNet.LandMsg.TYPE, (m, ctx) -> DreadFx.onLand(m));
             e.register(LivingNet.HitFx.TYPE, (m, ctx) -> onHit(m));
             e.register(LivingNet.XpFx.TYPE, (m, ctx) -> onXp(m));
             e.register(LivingNet.LevelUp.TYPE, (m, ctx) -> onLevelUp(m));
@@ -218,6 +219,7 @@ public final class LivingClient {
         if (pendingCaption != null && ticks % 5 == 0) caption();
         if (ticks % 5 == 0) pillars(mc, p);
         plates(mc, p);
+        DreadFx.tick(mc, p);
         if (ticks % 100 == 0) forgetOld();
     }
 

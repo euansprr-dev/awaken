@@ -99,6 +99,8 @@ public final class LivingContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> XP_TICK = sound("living.xp_tick");
     public static final DeferredHolder<SoundEvent, SoundEvent> LEVEL_UP = sound("living.level_up");
     public static final DeferredHolder<SoundEvent, SoundEvent> REGION_ENTER = sound("living.region_enter");
+    /** The low bed under a land far above you (DreadFx; tools/art/specs/audio_living.py). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> DREAD = sound("living.dread");
     // happenings heard from afar (living.client.PulseSound; tools/art/specs/audio_world.py)
     public static final DeferredHolder<SoundEvent, SoundEvent> TELL_STAMPEDE = sound("living.tell.stampede");
     public static final DeferredHolder<SoundEvent, SoundEvent> TELL_WINGS = sound("living.tell.wings");

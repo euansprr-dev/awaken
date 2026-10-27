@@ -297,6 +297,13 @@ final class LivingTests {
                 }
             }
             h.assertTrue(worst <= 15, "the land the first hamlet may stand on never passes 15: " + worst);
+            // the ring just past the wall is level 8 or more, so riftborn camps and dens still seed there (Camps.seedCell, SPEC §21.8): the Arms planner's E-theme camps stay reachable
+            int lowest = 99;
+            for (long seed = 1; seed <= 20; seed++) {
+                RegionMap m = new RegionMap(seed * 104729, 0, 0, plain);
+                for (int k = 0; k < 16; k++) lowest = Math.min(lowest, m.levelAt((int) Math.round(Math.cos(k * Math.PI / 8) * 800), (int) Math.round(Math.sin(k * Math.PI / 8) * 800)));
+            }
+            h.assertTrue(lowest >= 8, "800 blocks out is level 8 or more in every direction: " + lowest);
             h.assertTrue(dev.awaken.village.world.FirstHamlet.MAX_LEVEL == 12, "the first hamlet's cap is 12");
             // settled land and the roads between are calmer: the drop eases from 24 blocks to 60, a settlement's cap by its size
             h.assertTrue(dev.awaken.village.SettledCalm.dropShare(10) == 1 && dev.awaken.village.SettledCalm.dropShare(24) == 1, "all the drop within 24 of a road");
@@ -326,6 +333,21 @@ final class LivingTests {
             h.assertTrue(w.equals("Black Glades ahead. Creatures there are about six times as tough as ones at your level and hit nearly four times as hard. Turn back, or go in only to look."), w);
             h.assertTrue(dev.awaken.living.region.RegionTracker.times(2.0).equals("about twice") && dev.awaken.living.region.RegionTracker.times(1.5).equals("half again"), "small ratios in words");
             h.assertTrue(dev.awaken.living.region.RegionTracker.times(40).equals("many times"), "big ones too");
+            h.succeed();
+        });
+
+        AwakenTests.register("living_dread_gap", 20, h -> {
+            // the land's weight by the gap (SPEC 21.10): nothing under 5, a little under half at 10, everything at 20, never backwards
+            h.assertTrue(dev.awaken.living.combat.DreadRules.strength(-10) == 0 && dev.awaken.living.combat.DreadRules.strength(4) == 0, "nothing under five levels above");
+            h.assertTrue(Math.abs(dev.awaken.living.combat.DreadRules.strength(5) - 0.15F) < 1e-6, "faint at five");
+            h.assertTrue(Math.abs(dev.awaken.living.combat.DreadRules.strength(10) - 0.45F) < 1e-6, "a little under half at ten");
+            h.assertTrue(dev.awaken.living.combat.DreadRules.strength(20) == 1F && dev.awaken.living.combat.DreadRules.strength(90) == 1F, "everything at twenty");
+            float last = 0;
+            for (int g = 0; g <= 40; g++) {
+                float s2 = dev.awaken.living.combat.DreadRules.strength(g);
+                h.assertTrue(s2 >= last && s2 <= 1F, "it only grows with the gap: " + g);
+                last = s2;
+            }
             h.succeed();
         });
 
