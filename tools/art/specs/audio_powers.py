@@ -113,6 +113,9 @@ def beam_end(seed):
     return R.fade_out(b.render(), 0.1)
 
 
+SUBTITLES = {"stomp_lift": "A knee drives up", "stomp_plant": "A foot stamps", "beam_gather": "Light gathers",
+             "beam_loop": "A beam hums", "beam_end": "A beam fades"}
+
 # event: (render, variants, rms dBFS in the power window, attenuation blocks, crest dB)
 EVENTS = OrderedDict([
     ("stomp_lift", (stomp_lift, 3, -19.0, 16, 12.0)),
@@ -162,10 +165,17 @@ def write_json():
         entries = []
         for k in range(variants):
             entries.append(OrderedDict(name=f"awaken:powers/power_{event}_{k}", attenuation_distance=att))
-        cur["power." + event] = OrderedDict(sounds=entries)
+        cur["power." + event] = OrderedDict(subtitle="subtitles.awaken.power." + event, sounds=entries)
     os.makedirs(MERGE, exist_ok=True)
     with open(path, "w") as f:
         json.dump(cur, f, indent=2)
+        f.write("\n")
+    lpath = os.path.join(MERGE, "lang/en_us.json")
+    lang = json.load(open(lpath)) if os.path.exists(lpath) else {}
+    for event, text in SUBTITLES.items():
+        lang["subtitles.awaken.power." + event] = text
+    with open(lpath, "w") as f:
+        json.dump(lang, f, indent=2)
         f.write("\n")
     print(f"events: {len(EVENTS)} in merge/powers")
 

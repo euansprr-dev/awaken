@@ -700,6 +700,7 @@
     ]
   },
   "power.stomp_lift": {
+    "subtitle": "subtitles.awaken.power.stomp_lift",
     "sounds": [
       {
         "name": "awaken:powers/power_stomp_lift_0",
@@ -716,6 +717,7 @@
     ]
   },
   "power.stomp_plant": {
+    "subtitle": "subtitles.awaken.power.stomp_plant",
     "sounds": [
       {
         "name": "awaken:powers/power_stomp_plant_0",
@@ -736,6 +738,7 @@
     ]
   },
   "power.beam_gather": {
+    "subtitle": "subtitles.awaken.power.beam_gather",
     "sounds": [
       {
         "name": "awaken:powers/power_beam_gather_0",
@@ -748,6 +751,7 @@
     ]
   },
   "power.beam_loop": {
+    "subtitle": "subtitles.awaken.power.beam_loop",
     "sounds": [
       {
         "name": "awaken:powers/power_beam_loop_0",
@@ -764,6 +768,7 @@
     ]
   },
   "power.beam_end": {
+    "subtitle": "subtitles.awaken.power.beam_end",
     "sounds": [
       {
         "name": "awaken:powers/power_beam_end_0",
