@@ -7416,7 +7416,7 @@ plan this for everything." Module `trails` (`dev.awaken.trails`), `core.api.Trai
 - **Where it shows**: K, Journal page, **TRAILS** (order -38, under TRACKING): "What you can do now" (at most 3 rows, each the next step
   with Follow), and **All trails ›** opening a browse view in the same section (area chips, a card per trail with its pips, Steps,
   Follow, Not for me, silhouettes last). Following puts the trail on the **task card** (`Checklist.registerLeading`, asked before even the first-hour moves card: the trail,
-  at most five rows, a linear trail two) and its current step on the **Now line** (priority 55). Only Follow changes the HUD;
+  every step done plus up to four to do, a linear trail two; the card counts the done ones) and its current step on the **Now line** (priority 55). Only Follow changes the HUD;
   one trail is followed at a time, and the Armoury's Track gives the card up (`TrailsApi.unfollow`). "Anything for me?"
   (`Advice`) names the best next step.
 - **Catalogue shipped** (24 trails): Home (7): Set Your Fire, Your Hearth, A Room for Everything, Your Village, The Forge, Trophies and
@@ -7431,5 +7431,5 @@ plan this for everything." Module `trails` (`dev.awaken.trails`), `core.api.Trai
   `trail_progress_derived`, `trail_open_once`, `trail_follow_card`, `trail_silhouette`, `trail_hearth_tokens`.
 - **Seen** (CI tour `trails-journal`, 2026-10-27): the TRAILS section in the Journal (what you can do now, Follow and Stop, the browse view by area with
   steps and hints), and the rail's unread count rising as trails open. **Not built / unverified**: the task card and Now line with a followed trail on a real
-  screen (the tour caught the first-hour card covering it; fixed and tested, not re-toured); a step's `{key}` caps; a `tip` (none shipped yet); several
+  screen (the first tour caught the first-hour card covering it; fixed, and the second tour showed the trail on the card ticking as steps were done; the card's count was off until every done step was sent, fixed and tested, not re-toured; the Now line shows the followed step below the Hale and camp lines, as designed at priority 55); a step's `{key}` caps; a `tip` (none shipped yet); several
   followed trails; the Powers, Story and the remaining World trails; the Armoury's Track as a step type.

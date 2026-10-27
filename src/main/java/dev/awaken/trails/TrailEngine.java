@@ -263,20 +263,21 @@ public final class TrailEngine {
 
     // ---- the task card and the Now line ----------------------------------------------------------------------------
 
-    /** The followed trail as the task card: the last step done for context, then up to four to do (a linear trail shows two). */
+    /**
+     * The followed trail as the task card: every step done (the card counts them, and scrolls to the first still to do), then up
+     * to four steps to do (a linear trail shows two). The card's panel itself shows only a few rows round the current step.
+     */
     public static Checklist.@Nullable Task task(ServerPlayer p) {
         TrailState st = TrailState.of(p);
         if (st.followed.isEmpty()) return null;
         TrailDef def = Trails.get(st.followed);
         if (def == null || st.finished.contains(st.followed)) return null;
         List<Checklist.Row> rows = new ArrayList<>();
-        TrailDef.Step lastDone = null;
         int open = 0, room = def.linear() ? 2 : CARD_ROWS - 1;
         TrailDef.Step cur = current(p, st, st.followed, def);
         for (TrailDef.Step s : def.steps()) {
-            boolean d = done(st, st.followed, s);
-            if (d) {
-                lastDone = s;
+            if (done(st, st.followed, s)) {
+                rows.add(new Checklist.Row(s.text(), "", true, 0, 0, null));
                 continue;
             }
             if (!listed(p, st, st.followed, s) || open >= room) continue;
@@ -284,8 +285,7 @@ public final class TrailEngine {
             rows.add(new Checklist.Row(s.text(), "", false, 0, 0, at));
             open++;
         }
-        if (lastDone != null) rows.add(0, new Checklist.Row(lastDone.text(), "", true, 0, 0, null));
-        return rows.isEmpty() ? null : new Checklist.Task("trail:" + st.followed, def.title(), List.copyOf(rows));
+        return rows.isEmpty() ? null : new Checklist.Task("trail:" + st.followed, def.title(), List.copyOf(rows.subList(0, Math.min(16, rows.size()))));
     }
 
     /** The followed trail's current step on the Now line. */

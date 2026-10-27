@@ -137,7 +137,7 @@ final class TrailsTests {
             counter(p, "awaken:t_a", 1);
             TrailEngine.update(p);
             task = TrailEngine.task(p);
-            h.assertTrue(task.rows().size() == 3 && task.rows().getFirst().done() && task.rows().getFirst().text().equals("First."), "a done step stays on the card for context: " + task.rows());
+            h.assertTrue(task.rows().size() == 3 && task.rows().getFirst().done() && task.rows().getFirst().text().equals("First.") && task.rows().stream().filter(r -> r.done()).count() == 1, "a done step stays on the card, and the card counts it: " + task.rows());
             h.assertTrue(NowHooks.collect(p, 10).stream().anyMatch(s -> s.id().equals("trail:awaken:t_card:b") && s.priority() == TrailEngine.NOW_PRIORITY), "the Now line names the next step");
             TrailEngine.act(p, new TrailPayloads.Act(TrailPayloads.FOLLOW, "awaken:t_other", ""));
             task = TrailEngine.task(p);
