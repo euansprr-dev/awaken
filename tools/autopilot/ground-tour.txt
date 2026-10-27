@@ -1,0 +1,103 @@
+# The Soft Land (SPEC §31): seamless ground (P0), soft steps (P1), the floor (P2), mountains (P3). A control platform high over the
+# spawn (flat grass, a one-block step, a two-block pillar, a path, coarse dirt, gravel and sand beside grass, a soft slab run with
+# tufts and the new pebbles and twigs), shot with the setting on, off, and with the lawn drift off; then fixed spots in the world
+# (seed 779 with Tectonic's awakened preset: Lumen Forest and Elderwood), and the highest ground nearby. Spectator throughout (no
+# falling while chunks load). Look tour (CI): tools/tour-ci.sh tools/autopilot/ground-tour.txt 1500 PACK=perf,world TECTONIC=awakened
+world ground779 creative 779
+waitworld
+gui 0
+cmd gamerule advance_time false
+cmd gamerule spawn_mobs false
+cmd gamerule send_command_feedback false
+cmd weather clear 1000000
+cmd time set 7000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+camera first
+hud off
+info
+cmd awaken ground status
+# ---- the control platform: ground at y 249, feet at y 250, 330 blocks out where the city's basin is flat ----
+cmd gamemode spectator
+cmd execute at @s run tp @s ~330 250 ~0
+wait 200
+cmd execute at @s run fill ~-12 249 ~-4 ~12 249 ~26 minecraft:grass_block
+cmd execute at @s run fill ~-12 250 ~-4 ~12 258 ~26 minecraft:air
+cmd execute at @s run fill ~-5 250 ~5 ~-1 250 ~6 minecraft:grass_block
+cmd execute at @s run fill ~1 250 ~5 ~3 251 ~6 minecraft:grass_block
+cmd execute at @s run fill ~-5 249 ~9 ~5 249 ~10 minecraft:dirt_path
+cmd execute at @s run fill ~-5 249 ~12 ~-2 249 ~13 minecraft:coarse_dirt
+cmd execute at @s run fill ~0 249 ~12 ~2 249 ~13 minecraft:gravel
+cmd execute at @s run fill ~3 249 ~12 ~5 249 ~13 minecraft:sand
+cmd execute at @s run fill ~-6 250 ~8 ~6 250 ~8 minecraft:short_grass
+cmd execute at @s run fill ~-5 250 ~16 ~5 250 ~16 minecraft:grass_block
+cmd execute at @s run fill ~-5 250 ~17 ~5 250 ~17 awaken:turf_slab[tuft=1]
+cmd execute at @s run setblock ~-4 250 ~17 awaken:turf_slab[tuft=2]
+cmd execute at @s run setblock ~-2 250 ~17 awaken:turf_slab[tuft=3]
+cmd execute at @s run setblock ~0 250 ~17 awaken:turf_slab[tuft=4]
+cmd execute at @s run setblock ~2 250 ~17 awaken:turf_slab[tuft=5]
+cmd execute at @s run setblock ~4 250 ~17 awaken:turf_slab[tuft=0]
+cmd execute at @s run fill ~-5 250 ~20 ~5 250 ~20 awaken:dirt_slab
+cmd execute at @s run fill ~-5 250 ~22 ~5 250 ~22 minecraft:stone_slab
+cmd execute at @s run setblock ~-3 250 ~21 awaken:pebbles[kind=0,stones=3]
+cmd execute at @s run setblock ~-1 250 ~21 awaken:pebbles[kind=2,stones=2]
+cmd execute at @s run setblock ~1 250 ~21 awaken:twigs[wood=0,facing=east]
+cmd execute at @s run setblock ~3 250 ~21 awaken:twigs[wood=2,facing=south]
+wait 150
+look 0 -16
+shot ground_ctrl_on_a
+look 25 -26
+shot ground_ctrl_on_b
+look 0 -8
+shot ground_ctrl_on_slabs
+cmd awaken ground seamless off
+wait 160
+look 0 -16
+shot ground_ctrl_off_a
+look 25 -26
+shot ground_ctrl_off_b
+cmd awaken ground seamless on
+wait 160
+cmd awaken ground drift off
+wait 160
+look 0 -16
+shot ground_ctrl_nodrift
+cmd awaken ground drift on
+wait 120
+# ---- Lumen Forest and Elderwood at spots a visit found for this seed ----
+cmd tp @s 2258 130 1133
+wait 600
+cmd execute at @s positioned over motion_blocking_no_leaves run tp @s ~ ~ ~
+wait 200
+cmd awaken terrain at
+look 30 -8
+shot ground_lumen_a
+look 120 -8
+shot ground_lumen_b
+look 210 -8
+shot ground_lumen_c
+cmd tp @s 2316 130 1383
+wait 600
+cmd execute at @s positioned over motion_blocking_no_leaves run tp @s ~ ~ ~
+wait 200
+cmd awaken terrain at
+look 30 -8
+shot ground_elder_a
+look 120 -8
+shot ground_elder_b
+look 210 -8
+shot ground_elder_c
+# ---- the highest ground within 200 blocks of there ----
+cmd awaken terrain lookout 200
+wait 600
+look 0 12
+shot ground_lookout_a
+look 160 12
+shot ground_lookout_b
+look 80 -4
+shot ground_lookout_c
+quit
