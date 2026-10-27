@@ -2644,6 +2644,16 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
   - Clouds (same day): a puff's tone comes from its cell's hash (from its drifting position it changed every redraw and
     the blanket flickered); the view redraws every frame while it moves (the 60 Hz cap made the table lag the mouse);
     zooming across a level keeps drawing the built level until the new one is ready round the view (it blinked out).
+  - Clouds across zoom (Euan, 2026-10-27: "every time you change zoom level, the clouds and the shadows reset
+    themselves"): the blanket no longer follows the mesh's level. The zoom is a continuous level (0 at 3.6 screen
+    pixels a block, +1 each time it halves), and each level is a fixed lattice of world cells (16, 32, 64, 128, 256
+    blocks; `CloudLattice`). Between two levels every puff glides and grows toward its parent cell's puff: the puff in
+    the cell whose coordinates are both even is its parent (same look), the other three thin out as they merge, so
+    zooming out puffs merge and zooming in they split, and nothing changes at once. Cover is blended from one lattice's
+    to the next over the step; close-in rules (a soft spill over the known edge) ease into far-out ones (gone before
+    known land, smaller beside it) over the first step. The wind is one offset added up frame by frame at the zoom's
+    own speed, so a zoom never jumps it. Shadows fall at every zoom and stay while the view moves (they blinked off
+    at every orbit and zoom). The moving picture takes the level from the full-size picture's scale. Up to 8192 puffs.
   - Frame cost is judged on OpenGL: on Vulkan, MoltenVK presents at the display's rate (120 Hz) even with vsync off, so
     a capped tour can't show it.
 

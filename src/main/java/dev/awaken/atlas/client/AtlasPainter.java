@@ -98,7 +98,7 @@ final class AtlasPainter {
 
     /** Paints {@code s} into the given targets, {@code w}×{@code h} pixels; {@code px} multiplies line widths. */
     void paint(GpuDevice device, AtlasRenderState s, GpuTexture color, GpuTextureView colorView, GpuTexture depth, GpuTextureView depthView,
-               int w, int h, float guiScale, boolean thread, boolean moving) {
+               int w, int h, float guiScale, boolean thread, float cloudLevel) {
         AtlasState atlas = AtlasState.get();
         long now = System.nanoTime();
         // finished slices go up first: an upload inside the pass would end the frame
@@ -116,7 +116,7 @@ final class AtlasPainter {
         int cloudQuads, shadowQuads;
         try (GpuBufferSlice.MappedView view = cloudBuf.map(false, true)) {
             cloudQuads = atlas.clouds.write(MemoryUtil.memAddress(view.data()), Discovery.CLIENT, atlas.revealedAt, atlas.store, base, px, s.tilt(),
-                    s.lod(), s.cx(), s.cy(), s.cz(), s.time(), s.night(), now);
+                    cloudLevel, s.cx(), s.cy(), s.cz(), s.time(), s.night(), now);
             shadowQuads = atlas.clouds.shadows();
         }
         GpuBuffer lineBuf = lineRing.currentBuffer();
@@ -209,10 +209,9 @@ final class AtlasPainter {
                 pass.setPipeline(RenderSystem.getCompiledPipeline(AtlasPipelines.CLOUDS));
                 pass.setUniform("DynamicTransforms", RenderSystem.getDynamicUniforms().writeTransform(new Matrix4f()));
                 pass.setUniform("Sampler0", puff, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
-                // while the view moves, the puffs only: their shadows are a still picture's detail
-                int skip = moving ? shadowQuads : 0;
-                pass.setVertexBuffer(0, cloudBuf.slice((long) skip * 4 * AtlasClouds.VERTEX, (long) (cloudQuads - skip) * 4 * AtlasClouds.VERTEX));
-                pass.drawIndexed((cloudQuads - skip) * 6, 1, 0, 0, 0);
+                // the shadows stay while the view moves: dropping them there made them blink at every orbit and zoom
+                pass.setVertexBuffer(0, cloudBuf.slice(0, (long) cloudQuads * 4 * AtlasClouds.VERTEX));
+                pass.drawIndexed(cloudQuads * 6, 1, 0, 0, 0);
             }
             AtlasState.stats.puffs = cloudQuads - shadowQuads;
         }
