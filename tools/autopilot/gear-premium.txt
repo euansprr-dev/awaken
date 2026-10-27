@@ -4,7 +4,7 @@
 # Each fidelity: the lineup, front, three-quarter, back, side and the hood close-up by day, then the lineup and the hood at night.
 # Spectator camera so no hand or body is in the shot; the stage is a smooth_stone floor and a deepslate_tiles wall high in the
 # sky straight above the spawn (its chunks are loaded, so the server never stalls generating a far one), so the same light falls on
-# every level. Run on CI (tools/tour-ci.sh ... LENS=swift, then LENS=cinematic): look only.
+# every level. The opening is skipped first: its camera is a marker entity that holds the view at the spawn. Run on CI (tools/tour-ci.sh ... LENS=swift, then LENS=cinematic): look only.
 world armourprem creative 778
 waitworld
 gui 0
@@ -13,8 +13,9 @@ cmd gamerule awaken:fauna_spawning false
 cmd gamerule spawn_mobs false
 cmd weather clear 1000000
 cmd time set 6000
-cmd awaken admin awaken
-wait 200
+wait 60
+cmd awaken opening skip
+wait 80
 cmd awaken powers starter 1
 wait 60
 screen close
