@@ -12,7 +12,7 @@
   ],
   "quiet": false,
   "goal": {
-    "now": "Journal 'face my fear', then win",
+    "now": "Dream Journal: 'face my fear', then win",
     "done": {
       "type": "counter",
       "counter": "awaken:nightmares_beaten",

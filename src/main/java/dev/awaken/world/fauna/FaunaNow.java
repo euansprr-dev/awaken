@@ -15,9 +15,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * The Now tracker's fauna lines. A named beast that is known and near ("The Old Antler · 120 m NE"): known means the
+ * The Now tracker's fauna lines. A named beast that is known and near ("Hunt the Old Antler · 120 m NE"): known means the
  * player has seen it before, or it is close enough that the System senses it. And the nearest lair the player has
- * heard of and not yet stood in, unless its beast has just fallen ("Lair of the Briar Sow · 1.2 km NE"). Only for an
+ * heard of and not yet stood in, unless its beast has just fallen ("Find the lair of the Briar Sow · 1.2 km NE"). Only for an
  * awakened player; the beast warns before it fights, so these are invitations, not alarms.
  */
 final class FaunaNow {
@@ -50,7 +50,7 @@ final class FaunaNow {
         MobDef d = Bestiary.get(e.def());
         String name = d != null ? d.name : e.def();
         int priority = Progression.profile(sp).level() >= 3 ? 40 : 22;
-        String text = name + " · " + Math.round(dist) + " m " + compass(dx, dz);
+        String text = "Hunt " + (name.startsWith("The ") ? "the " + name.substring(4) : name) + " · " + Math.round(dist) + " m " + compass(dx, dz);
         out.add(new NowHooks.Suggestion("fauna:beast:" + e.id(), priority, Component.literal(text), Optional.of(e.pos())));
         return e.def();
     }
@@ -82,7 +82,7 @@ final class FaunaNow {
         MobDef d = Bestiary.get(best.beast());
         String whose = d == null ? "a beast" : d.name.startsWith("The ") ? "the " + d.name.substring(4) : d.name;
         double dx = bestPos.getX() - at.getX(), dz = bestPos.getZ() - at.getZ();
-        String text = "Lair of " + whose + " · " + Lairs.distance(Math.sqrt(bestD)) + " " + compass(dx, dz) + depth(bestPos.getY() - at.getY());
+        String text = "Find the lair of " + whose + " · " + Lairs.distance(Math.sqrt(bestD)) + " " + compass(dx, dz) + depth(bestPos.getY() - at.getY());
         int priority = Progression.profile(sp).level() >= 3 ? 30 : 14;
         out.add(new NowHooks.Suggestion("fauna:lair:" + best.key(), priority, Component.literal(text), Optional.of(bestPos)));
     }

@@ -12,7 +12,7 @@
   ],
   "quiet": false,
   "goal": {
-    "now": "Hold a gate break at your Hearth",
+    "now": "Defend your Hearth from a gate break",
     "done": {
       "type": "counter",
       "counter": "awaken:breaks_held_at_hearth",

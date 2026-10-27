@@ -12,7 +12,7 @@
   ],
   "quiet": false,
   "goal": {
-    "now": "Four Sovereigns fallen",
+    "now": "Defeat four of the eight Sovereigns",
     "done": {
       "type": "counter",
       "counter": "awaken:sovereigns_defeated",

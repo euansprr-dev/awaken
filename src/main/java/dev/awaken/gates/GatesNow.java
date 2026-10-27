@@ -26,7 +26,7 @@ final class GatesNow {
         if (run.active() && inGate != null) {
             if (inGate.plan.ritual()) return out; // the story's hall: the story says what's next
             if (inGate.plan.skybornTrial()) {
-                out.add(NowHooks.Suggestion.of("gate:trial", 80, inGate.bossDead ? "The sky is yours: the way out is open"
+                out.add(NowHooks.Suggestion.of("gate:trial", 80, inGate.bossDead ? "The Sky Leviathan is down: the way out is open"
                         : "The Sky Leviathan's trial: fly out past the antechamber and bring it down"));
                 return out;
             }
@@ -37,11 +37,11 @@ final class GatesNow {
             }
             int floors = run.area == 0 ? inGate.plan.floors() : 2;
             if (run.clearedFloor(run.area, run.floor)) {
-                out.add(NowHooks.Suggestion.of("gate:shrine", 80, "Rest Shrine: leave with your loot, or go deeper"));
+                out.add(NowHooks.Suggestion.of("gate:shrine", 80, "Right-click the Rest Shrine to leave with your loot, or the Seal to go deeper"));
             } else {
                 boolean last = run.area == 0 && run.floor >= floors;
                 out.add(NowHooks.Suggestion.of("gate:floor", 78, "Floor " + run.floor + " of " + floors
-                        + (last ? " · the Lord waits" : " · find the Rest Shrine")));
+                        + (last ? " · the Lord is on this floor" : " · find the Rest Shrine")));
             }
             return out;
         }
@@ -55,7 +55,7 @@ final class GatesNow {
             double d = g.pos.distSqr(p.blockPosition());
             if (g.state == GateState.BROKEN) {
                 if (d < 300 * 300) out.add(NowHooks.Suggestion.at("gate:broken:" + g.id, 72,
-                        "A broken gate's Lord roams · " + (int) Math.sqrt(d) + " m", g.mouth()));
+                        "A Lord got out of a broken gate · " + (int) Math.sqrt(d) + " m", g.mouth()));
                 continue;
             }
             if (!g.state.enterable()) continue;

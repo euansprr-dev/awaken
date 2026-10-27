@@ -20,7 +20,7 @@
   ],
   "quiet": false,
   "goal": {
-    "now": "Lucid: hold H on a wall for a door",
+    "now": "In a lucid dream, hold H at a wall",
     "done": {
       "type": "counter",
       "counter": "awaken:dream_manifests",

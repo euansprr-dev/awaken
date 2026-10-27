@@ -10,11 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * What the anomalies suggest in the Now tracker: an open rift ("Rift tear · 40 m NE", 80; "Break the rift's core · 3
- * hits", 85 when you stand at it), a procession ("Follow the lights · 30 m", 55; "Spirit cache · 12 m", 60), a fallen
- * star ("Fallen star · 60 m NE", 75; "Defeat the star's guardian", 85; "Open the fallen star", 82) and a shimmer grove
- * ("Shimmer grove · 40 m SW", 55; "Light steps · 1:52 left", 50 while you stand in it). Wandering gates are suggested by
- * the gates module, so they are left out here.
+ * What the anomalies suggest in the Now tracker: an open rift ("Close the rift · 40 m NE", 80; "Break the rift's core · 3
+ * hits", 85 when you stand at it), a procession ("Follow the lights · 30 m", 55; "Open the spirit cache · 12 m", 60), a
+ * fallen star ("A star fell · 60 m NE", 75; "Defeat the star's guardian", 85; "Right-click the fallen star to open it",
+ * 82) and a shimmer grove ("Walk into the shimmer grove · 40 m SW", 55; "Light steps · 1:52 left", 50 while you stand in
+ * it). Wandering gates are suggested by the gates module, so they are left out here.
  */
 final class AnomalyNow {
     private AnomalyNow() {}
@@ -42,10 +42,10 @@ final class AnomalyNow {
             switch (a.kind) {
                 case RIFT_TEAR -> {
                     if (d <= 8) out.add(NowHooks.Suggestion.at(id, 85, "Break the rift's core · " + a.hitsLeft + (a.hitsLeft == 1 ? " hit" : " hits"), at));
-                    else out.add(NowHooks.Suggestion.at(id, 80, "Rift tear · " + Spots.where(me, at), at));
+                    else out.add(NowHooks.Suggestion.at(id, 80, "Close the rift · " + Spots.where(me, at), at));
                 }
                 case SPIRIT_PROCESSION -> {
-                    if (a.stage == Anomaly.CACHE) out.add(NowHooks.Suggestion.at(id, 60, "Spirit cache · " + Spots.where(me, at), at));
+                    if (a.stage == Anomaly.CACHE) out.add(NowHooks.Suggestion.at(id, 60, "Open the spirit cache · " + Spots.where(me, at), at));
                     else out.add(NowHooks.Suggestion.at(id, 55, "Follow the lights · " + Spots.where(me, at), at));
                 }
                 case FALLEN_STAR -> {
@@ -53,9 +53,9 @@ final class AnomalyNow {
                         Entity g = a.guard == null ? null : p.level().getEntity(a.guard);
                         out.add(NowHooks.Suggestion.at(id, 85, "Defeat the star's guardian", g != null ? g.blockPosition() : at));
                     } else if (a.guardState != Anomaly.GUARD_NONE && a.guardState != Anomaly.GUARD_UP && d <= 12) {
-                        out.add(NowHooks.Suggestion.at(id, 82, "Open the fallen star", at));
+                        out.add(NowHooks.Suggestion.at(id, 82, "Right-click the fallen star to open it", at));
                     } else {
-                        out.add(NowHooks.Suggestion.at(id, 75, "Fallen star · " + Spots.where(me, at), at));
+                        out.add(NowHooks.Suggestion.at(id, 75, "A star fell · " + Spots.where(me, at), at));
                     }
                 }
                 case SHIMMER_GROVE -> {
@@ -64,9 +64,9 @@ final class AnomalyNow {
                         String what = v == GroveVariant.WHISPER ? "The spirit has spoken" : v.label;
                         out.add(NowHooks.Suggestion.of(id, 50, what + " · " + left(a.endsAt - now)));
                     } else if (a.stage == Anomaly.ACTIVE) {
-                        out.add(NowHooks.Suggestion.at(id, 55, "Shimmer grove · " + Spots.where(me, at) + " · " + left(a.endsAt - now), at));
+                        out.add(NowHooks.Suggestion.at(id, 55, "Walk into the shimmer grove · " + Spots.where(me, at) + " · " + left(a.endsAt - now), at));
                     } else {
-                        out.add(NowHooks.Suggestion.at(id, 55, "Shimmer grove · " + Spots.where(me, at), at));
+                        out.add(NowHooks.Suggestion.at(id, 55, "Walk into the shimmer grove · " + Spots.where(me, at), at));
                     }
                 }
                 default -> { }

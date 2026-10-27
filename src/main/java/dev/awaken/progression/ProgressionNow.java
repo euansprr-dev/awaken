@@ -24,7 +24,7 @@ final class ProgressionNow {
         }
         Rank next = p.rank().next();
         if (next == null || p.reassessmentReady()) return null;
-        return Suggestion.of("progression:capability", 50, next.label + "-rank at level " + next.levelRequired + " · gate floors pay best");
+        return Suggestion.of("progression:capability", 50, next.label + "-rank opens at level " + next.levelRequired + ": gate floors give the most XP");
     }
 
     static void register() {
@@ -35,9 +35,9 @@ final class ProgressionNow {
             if (p.reassessmentReady() && p.rank().next() != null) {
                 // where to take it (SPEC §27.9): the Spire at your Hearth, else a Monolith you craft
                 var hearth = dev.awaken.core.api.HearthHooks.hearthOf(player);
-                String text = "Reassessment ready · " + p.rank().next().label + "-rank trial";
-                out.add(hearth.isPresent() ? Suggestion.at("progression:reassessment", 72, text + " at your Spire", hearth.get())
-                        : Suggestion.of("progression:reassessment", 72, text + " · craft a Monolith"));
+                String text = "Your " + p.rank().next().label + "-rank trial is ready";
+                out.add(hearth.isPresent() ? Suggestion.at("progression:reassessment", 72, text + ": take it at the Spire in your town", hearth.get())
+                        : Suggestion.of("progression:reassessment", 72, text + ": craft a Reassessment Monolith and use it"));
             }
             // the capability clock (SPEC §27.9): 75 minutes with nothing new to do, outdoors: the nearest new thing in reach
             // set or not (a young world's clock can make "75 minutes ago" negative, so never test it against 0)
@@ -56,12 +56,12 @@ final class ProgressionNow {
             }
             if (p.unspent() > 0) {
                 out.add(Suggestion.of("progression:points", 55,
-                        "Spend " + p.unspent() + " point" + (p.unspent() == 1 ? "" : "s") + " · K"));
+                        "Press {key.awaken.status} to spend " + p.unspent() + " point" + (p.unspent() == 1 ? "" : "s")));
             }
             LevelRoad.Step next = LevelRoad.next(p);
             if (next != null) {
                 out.add(Suggestion.of("progression:road/" + next.id(), 15,
-                        "Level " + next.def().level() + ": " + next.def().title()));
+                        "At level " + next.def().level() + ": " + next.def().title()));
             }
             return out;
         });

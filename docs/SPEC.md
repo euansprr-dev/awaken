@@ -691,8 +691,9 @@ Plan v2 · the Hearth guide (details in docs/modules/hearth.md):
   server). The radius shows for 8 s as a ground-level ember ring.
 - Stairs and slabs close gaps like doors and panes (a stair or slab roof is a roof). Why a room isn't recognised comes from
   a second bounded fill inside the scan's budget: sees the sky, a hole in the roof, an opening at x y z, too big, missing X.
-- The Anchor teaches the Hearth furniture recipes when it takes root. The Now tracker teaches one line at a time: "Use the
-  Anchor for a guide", then the next room with live ticks, then why a room isn't counted yet.
+- The Anchor teaches the Hearth furniture recipes when it takes root. The task card teaches one step at a time (§28.2,
+  "Your home"): right-click the Anchor for the guide, then why a room isn't counted yet, then the next room and what it
+  needs.
 - Oren's cottage: offered once per player (a choice card after the first Anchor), free, never built over anything a player
   made (only terrain, plants and up to three natural trees give way); 9×9 outside, 7×7×4 inside, ten biome palettes,
   raised over ~7 s; its room is a Sanctuary on completion.
@@ -6240,10 +6241,10 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
 - **The capability clock** (`Progression.CAPABILITY_AT`, set inside `markNewThing` for things you can *do*: a power
   learned, a rank, a Path, a rung, a Lord-forged weapon, a first Weave, a machine or blueprint, an Echo, a Hearth or its
   tier, a latent, a townsperson; never a sight or a core). After 75 minutes without one, outdoors and out of a gate, the
-  Now line offers the nearest one in reach: a lock that is open to you now, with its place (57), else "D-rank at level 10 ·
-  gate floors pay best" (50).
-- **The Reassessment says where**: "Reassessment ready · D-rank trial at your Spire" with a compass to your Hearth, or
-  "· craft a Monolith" without one.
+  Now line offers the nearest one in reach: a lock that is open to you now, with its place (57), else "D-rank opens at
+  level 10: gate floors give the most XP" (50).
+- **The Reassessment says where**: "Your D-rank trial is ready: take it at the Spire in your town" with a compass to your
+  Hearth, or ": craft a Reassessment Monolith and use it" without one.
 - **The level road goes on to 135** (it had two steps in levels 51-135): The Precursor Foundry (52), The Halo (55, goal:
   see it from an Observatory), Wings you know (58), The Inverted Sea (62, a core), A-rank trial (70), The open sky (73,
   goal: the Sky Leviathan's trial), Any creature (77), The Dreaming Stratum (80, a core), The Sovereigns (90, goal: one
@@ -6289,11 +6290,18 @@ opening runs):
   the ledge row points at the nearest chest-high ledge within 10 blocks while it's current (every 2 s: a two-block step
   up from standing ground with room on top). All four done: the list stays ticked for 4 s (`awaken:first/moves_done`),
   then goes for good. It replaces the "Your body remembers" toast, which the director filed unread.
+- **Then where you stand** (`Checklist.registerHere`): your home's first steps while you're in its land (§28.2, "Your
+  home").
 - **Then the tracked chain** (`Checklist.register`; the living module's `FirstThread.task`): its title, its steps ticked
   as they're done (at most six: the last done, the current, what follows), a count on a step that has one or a `tally`.
   The first thread reads: Take the letters from Bram, Leave the city through the High Gate, Take the letters to the
-  Wayfarer camp up the north road, Deliver the letters 0/1, Place your Ember where you want your home.
-- Test: `progression_checklist` (the moves tick one by one, then the errand takes the card).
+  Wayfarer camp up the north road, Deliver the letters 0/1, Place your Ember where you want your home. Before it (it
+  registers first) **Your first power** while the choice waits (`powers.Starter.task`): "Press [K] to choose your first
+  power" (the Status key, drawn as a key; the cards come back on login, and K opens them instead of Status). After it a
+  weapon you track (arms, "Making: …").
+- **Last** (`Checklist.registerLast`): what waits until nothing else is on the card: your home's first steps from afar.
+- Test: `progression_checklist` (the moves tick one by one, then a first power still to choose, then the errand takes
+  the card); `powers_starter_chosen_once_and_equipped` (the first power's card and its key, gone once chosen).
 
 ### 27.11 The Now line shows only where you're going (Euan's playtest, 2026-10-27)
 "I also don't like how the top left is pulling me in so many directions. This should only appear when a checklist is
@@ -6315,6 +6323,22 @@ over "△ Sealed Vault · a sealed… ↘ 381 m", two places two ways.)
   when it first comes up (not filed). The opening's own (`opening:` ids) aren't: "The gate is opening · waiting for N
   hunters" is the square's own line (`OpeningHud`), and Bram walks you to the Registry and says so. The others today are
   the ritual hall's ("Go through the doors", "Waiting for N hunters…").
+- **What wasn't a place moved to the task card** (Euan, 2026-10-27, on "Use your fire for a guide": "I have NO CLUE what
+  that means"): the Hearth's first steps ("Your home", §28.2) and the first power ("Your first power": "Press [K] to
+  choose your first power", §27.10), which a player who closed the cards had only the corner to learn from.
+- **Plain words** (the same day): every Now suggestion says what to do, what to press or where to go, for someone who
+  doesn't know the mod. The K menu's lists show `{key.…}` placeholders in the player's own keys (`KeyText`); a line of 90+
+  (a toast) never uses one. Among them: "Press [K] to spend 3 points", "Your D-rank trial is ready: take it at the Spire
+  in your town", "D-rank opens at level 10: gate floors give the most XP", "At level 13: …", "Talk to Hale: he has a free
+  weapon for you", "Right-click the Rest Shrine to leave with your loot, or the Seal to go deeper", "Floor 3 of 3 · the
+  Lord is on this floor", "A Lord got out of a broken gate · 120 m", "Close the rift · 40 m NE", "Open the spirit cache ·
+  12 m", "A star fell · 60 m NE", "Right-click the fallen star to open it", "Walk into the shimmer grove · 40 m SW",
+  "Hunt the Old Antler · 120 m NE", "Find the lair of the Briar Sow · 1.2 km NE", "Tame the … 20 m N: sneak
+  up and feed it …", "Use a Hunter's Bridle on your …", "Your … is 300 m NE: use your Hunter's Whistle to call it",
+  "Mire Hide 3/8 for a request at your Anchor" (all in hand: "right-click your Anchor to hand it in" / "take it home to
+  your Anchor"), "Go back into the Bell Crypt for floor 2", "You can craft a Wildhide Vest at a crafting table", "You
+  have everything for …: make it at a Forge", and the level road's goals ("Defeat all eight Sovereigns", "In a lucid
+  dream, hold H at a wall", "Defend your Hearth from a gate break", …, still within the road's 200 px check).
 - Tests: `signal_corner_nothing` (no task, a step with no place, the ledge hint: nothing), `signal_corner_task_place`
   (the current step's place, named, in the task's dimension; an unnamed one says its own words),
   `signal_corner_destination_wins`; with §16.8's `signal_destination_arrival` and `signal_destination_saved`.
@@ -6423,9 +6447,33 @@ Given by: The Last Delivery's `ilse` step (reward `item: awaken:hearth_ember` an
 talking to Ilse or Hettie with no Ember and no Hearth, registered (classic worlds: always), and past that step or never on
 the chain (`PlayerInteractEvent.EntityInteract` on a `living.wayfarer.Wayfarer`, so living is unchanged; Ilse: "Lost your
 coal? Take another. The fire doesn't mind."); 60 ticks after awakening in a classic world (no `CityBasin` site). Now line
-`hearth:ember`, priority 66 (under a tracked chain step ~68): "Place your Ember where you want your home". **Bram's line is not
+`hearth:ember`, priority 66 (under a tracked chain step ~68): "Place your Ember on the ground where you want your home"
+(the K menu's lists; the task card says it too, below). **Bram's line is not
 added** (Carillon's code): for the orchestrator, Bram at the Registry: "The bells hold the city. Hunters hold the wilds.
 Ilse at the camp keeps a fire for new licences."
+
+**Your home on the task card** (`hearth.HearthTask`; Euan 2026-10-27, after "Use your fire for a guide": "I have NO CLUE
+what that means. We can't have cryptic stuff like this unless it's cryptic for a reason"). The Hearth's first steps are a
+checklist titled "Your home", not Now lines (which leave the HUD, §27.11):
+- No home: what you carry says how to make one, one row: "Place your Ember on the ground where you want your home", else
+  "Place your Hearth Anchor on the ground where you want your home", else (a Lord's Heart) "Craft a Hearth Anchor: the
+  Lord's Heart, 4 stone bricks and 4 copper ingots".
+- A fire: "Build a room near your fire: walls, a roof and a door" (done: any room read), then "Right-click your campfire
+  to see what your home needs" (done: the guide opened, `guide_seen`; it waits for the room because an empty hand on a
+  roomless fire lifts the coal), then, holding a Lord's Heart, "Hold the Lord's Heart and right-click your campfire to
+  make it an Anchor". An Anchor: "Right-click your Anchor to see what your home needs".
+- Only the step being done has a place, the fire: at home it is a hint (the card's own compass, the Now line stays
+  empty); away it is "Your home", which the Now line shows with its compass (§27.11).
+- At home those first steps lead the card (`Checklist.registerHere`, after the first moves, before a chain); away they
+  wait until nothing else is on it (`Checklist.registerLast`).
+- After them, at home only, one row, the next thing (`hearth:home`): why a room isn't counted ("Your Sanctuary isn't a
+  room yet: it sees the sky above the bed (no roof).", the spot on the card's compass), else someone waiting for a room
+  ("Oren will come when there's a bed for him"), else the next room ("Make a Sanctuary: a bed and a Meditation Mat in one
+  room" with a count of its kinds, 1/2). Away: nothing.
+- The Now suggestions (`HearthNow`) stay for the K menu's lists in the same words; the mend line reads "Rest at home to
+  heal your Fracture".
+- Test `hearth_task_steps` (no home and nothing carried: no card; the Ember's row; a fire at home: room then guide, a
+  hint; from afar: home on the Now line; an Anchor's guide; then the next room at home only).
 
 **Setting it down** (use on the top of a block). Refused, each with its reason: soft ground or no room, the city reserve
 (`CityBasin.reserved`), a Precursor ward (`WardHooks.at`), any gate not released within 64 (`GateHooks.near`), another
@@ -6878,7 +6926,7 @@ carried, the Tuning Fork reaches 16 further (perk `awaken:fork_reach`, read by `
 
 **Joined lairs**: the Crystal Nest finds cave air within 20 past either tunnel (`delve.cave.CaveJoints`) and bores on to
 it (`DeepLairs.joinTunnel`; `LairPiece` saves the joint; older pieces keep none); one laid by `/awaken fauna lair place`
-opens into a pocket. The lair line says how far down or up ("Lair of the Thousandfoot · 1.2 km NE · 40 below", nothing
+opens into a pocket. The lair line says how far down or up ("Find the lair of the Thousandfoot · 1.2 km NE · 40 below", nothing
 within 8: `FaunaNow.depth`). **The Horizon** (`CaveHorizon`): from awakening, within 900, never at home or in a gate, until
 you've stood at one: "Sinkhole · a way down" ("The Opening · a way down", raised, for the first), found by walking the
 sinkholes' placement grid and running each candidate's own site search (the same answer worldgen gets; two new

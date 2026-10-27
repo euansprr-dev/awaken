@@ -27,8 +27,10 @@ import java.util.UUID;
  * <li>First, <b>Your body remembers</b>: the four moves every hunter has, each ticked the first time you do it (the body
  * module counts them), with its key drawn as a key and, for the ledge, the nearest one to try it on. It replaces the
  * toast that listed them, which ended up in the Journal unread.</li>
+ * <li>Then what belongs where you stand ({@link #registerHere}): your home's first steps while you're in it.</li>
  * <li>Then whatever a module offers through {@link #register}: the tracked chain's steps (the living module), with a
- * count where a step has one ("0/10").</li>
+ * count where a step has one ("0/10"), a weapon you're making.</li>
+ * <li>Last, what waits when nothing else is on ({@link #registerLast}): your home's first steps from afar.</li>
  * </ul>
  * Sent only when it changes. Nothing while the opening runs.
  */
@@ -64,10 +66,20 @@ public final class Checklist {
         @Nullable Task task(ServerPlayer p);
     }
 
-    private static final List<Source> SOURCES = new ArrayList<>(), LEADING = new ArrayList<>();
+    private static final List<Source> SOURCES = new ArrayList<>(), LEADING = new ArrayList<>(), HERE = new ArrayList<>(), LAST = new ArrayList<>();
 
     public static void register(Source s) {
         SOURCES.add(s);
+    }
+
+    /** A source asked before the others (after the first moves): a task that belongs where the player stands, null elsewhere. */
+    public static void registerHere(Source s) {
+        HERE.add(s);
+    }
+
+    /** A source asked after all the others: a task that waits until nothing else is on the card. */
+    public static void registerLast(Source s) {
+        LAST.add(s);
     }
 
     /** A source that is asked before the others (a followed trail, which the player chose: docs/trails/PLAN.md §3.4). */
@@ -102,14 +114,19 @@ public final class Checklist {
     public static @Nullable Task now(ServerPlayer p) {
         Profile prof = Progression.profile(p);
         if (!prof.awakened() || OpeningHooks.inOpening(p)) return null;
-        // what the player chose to follow comes first (docs/trails/PLAN.md §3.4), then the first moves, then the rest
-        for (Source s : LEADING) {
-            Task t = s.task(p);
-            if (t != null) return t;
-        }
+        // what the player chose to follow comes first (docs/trails/PLAN.md §3.4), then the first moves, then where you
+        // stand, then the rest, then what waits
+        Task t = first(LEADING, p);
+        if (t != null) return t;
         Task moves = moves(p, prof);
         if (moves != null) return moves;
-        for (Source s : SOURCES) {
+        t = first(HERE, p);
+        if (t == null) t = first(SOURCES, p);
+        return t != null ? t : first(LAST, p);
+    }
+
+    private static @Nullable Task first(List<Source> sources, ServerPlayer p) {
+        for (Source s : sources) {
             Task t = s.task(p);
             if (t != null) return t;
         }

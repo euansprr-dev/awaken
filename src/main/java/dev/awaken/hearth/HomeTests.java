@@ -30,7 +30,8 @@ import java.util.UUID;
  * GameTests for the carried flame (SPEC §28.2), one per mechanism: the Ember founds a Hearthfire (and its refusals, the
  * lifting, the Lord's Heart raising it to the Anchor); a room is read and graded (a Bare dirt hole, a timber bedroom
  * held at Fine by its weakest reading until a fire is lit, the name, the reading saved); waking in your own bed at home
- * makes you Rested with its perks.
+ * makes you Rested with its perks; the home's steps on the task card (what you carry, a room, the guide; a hint at home,
+ * home on the Now line from afar).
  */
 final class HomeTests {
     private HomeTests() {}
@@ -102,6 +103,58 @@ final class HomeTests {
                 data.remove(sp.getUUID());
                 level.removeBlock(at, false);
                 level.removeBlock(ground, false);
+            }
+        });
+
+        AwakenTests.registerIsolated("hearth_task_steps", 200, h -> {
+            // the home's steps on the task card (SPEC §28.2 "Your home"): what you carry, then a room, then the guide
+            ServerLevel level = h.getLevel();
+            ServerPlayer sp = h.makeMockServerPlayerInLevel();
+            Progression.awaken(sp);
+            HearthData data = HearthData.get(level.getServer());
+            BlockPos origin = h.absolutePos(BlockPos.ZERO);
+            BlockPos at = new BlockPos((origin.getX() & ~15) + 8, origin.getY() + 101, (origin.getZ() & ~15) + 8);
+            var tips = HearthService.player(sp).tips;
+            try {
+                data.remove(sp.getUUID());
+                clearEmbers(sp);
+                h.assertTrue(HearthTask.task(sp) == null, "no home and nothing to make one: no card");
+                sp.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(HearthContent.EMBER_ITEM.get()));
+                var t = HearthTask.task(sp);
+                h.assertTrue(t != null && t.rows().getFirst().text().equals(HearthTask.EMBER), "the Ember says where it goes: " + t);
+                clearEmbers(sp);
+                // a fire, no room yet, at home: the card leads with a room, the fire on the card's own compass
+                HearthRecord rec = new HearthRecord(sp.getUUID(), "test", at, HearthService.OVERWORLD);
+                rec.tier = 0;
+                data.put(rec);
+                tips.remove(dev.awaken.hearth.guide.Guide.TIP_SEEN);
+                sp.setPos(at.getX() + 3.5, at.getY(), at.getZ() + 0.5);
+                t = HearthTask.here(sp);
+                h.assertTrue(t != null && t.rows().size() == 2 && t.rows().get(0).text().equals(HearthTask.SHELTER) && !t.rows().get(0).done()
+                        && at.equals(t.rows().get(0).at()) && t.rows().get(1).text().equals(HearthTask.GUIDE), "at home: a room, then the guide: " + t);
+                var dim = level.dimension().identifier();
+                h.assertTrue(dev.awaken.signal.NowCorner.taskPlace(dev.awaken.progression.Checklist.payload(t, dim)) == null,
+                        "at home the step is a hint: the Now line stays empty");
+                // from afar the same step sends you home: the Now line names it
+                sp.setPos(at.getX() + 200.5, at.getY(), at.getZ() + 0.5);
+                h.assertTrue(HearthTask.here(sp) == null, "away, the card isn't the home's first");
+                var row = dev.awaken.signal.NowCorner.taskPlace(dev.awaken.progression.Checklist.payload(HearthTask.task(sp), dim));
+                h.assertTrue(row != null && row.place().equals(HearthTask.HOME), "away: home on the Now line, got " + row);
+                // an Anchor: right-click it; once seen, the next room shows at home only
+                rec.tier = 1;
+                sp.setPos(at.getX() + 3.5, at.getY(), at.getZ() + 0.5);
+                t = HearthTask.here(sp);
+                h.assertTrue(t != null && t.rows().getFirst().text().equals(HearthTask.GUIDE_ANCHOR), "the Anchor's guide: " + t);
+                tips.add(dev.awaken.hearth.guide.Guide.TIP_SEEN);
+                t = HearthTask.task(sp);
+                h.assertTrue(HearthTask.here(sp) == null && t != null && t.id().equals("hearth:home")
+                        && t.rows().getFirst().text().equals(HearthTask.SHELTER_ANCHOR), "then, at home, the next room: " + t);
+                sp.setPos(at.getX() + 200.5, at.getY(), at.getZ() + 0.5);
+                h.assertTrue(HearthTask.task(sp) == null, "and never from afar");
+                h.succeed();
+            } finally {
+                tips.remove(dev.awaken.hearth.guide.Guide.TIP_SEEN);
+                data.remove(sp.getUUID());
             }
         });
 

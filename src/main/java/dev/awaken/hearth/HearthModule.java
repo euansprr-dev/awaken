@@ -63,6 +63,7 @@ public final class HearthModule {
         RoomEffects.init();
         HomeCrafting.init();
         HearthNow.register();
+        HearthTask.register(); // the home's steps on the task card (SPEC §28.2)
         dev.awaken.hearth.guide.Guide.init(modBus);
         Offers.init();
         Later.init();

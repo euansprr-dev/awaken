@@ -15,7 +15,7 @@
   ],
   "quiet": false,
   "goal": {
-    "now": "Lay Start, Rings, Finish: run a lap",
+    "now": "Place Start, Rings, Finish: run a lap",
     "done": {
       "type": "counter",
       "counter": "awaken:training_laps",

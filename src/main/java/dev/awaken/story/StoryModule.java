@@ -132,7 +132,7 @@ public final class StoryModule {
             StoryProgress s = Prologue.progress(p);
             int floor = Prologue.cryptNextFloor(p, s);
             if (floor <= 0) return List.of();
-            String text = "Bell Crypt · floor " + floor;
+            String text = "Go back into the Bell Crypt for floor " + floor;
             var mouth = dev.awaken.core.api.GateHooks.get(p.level().getServer().overworld(), s.prologueGate).map(g -> g.mouth());
             return List.of(mouth.isPresent() && p.level().dimension() == net.minecraft.world.level.Level.OVERWORLD
                     ? dev.awaken.core.api.NowHooks.Suggestion.at("story:bell_crypt", 70, text, mouth.get())
