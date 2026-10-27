@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#minecraft:is_overworld",
+  "features": "awaken:ground/soft_steps",
+  "step": "local_modifications"
+}

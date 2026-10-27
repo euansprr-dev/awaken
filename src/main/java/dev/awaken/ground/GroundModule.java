@@ -5,7 +5,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackSource;
+import com.mojang.serialization.MapCodec;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.level.levelgen.feature.Feature;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.event.AddPackFindersEvent;
 
 /**
@@ -20,7 +24,14 @@ public final class GroundModule {
     /** The data pack every worldgen part of the Soft Land lives in (P1-P5), behind the feature flag of the same name: new worlds only. */
     public static final String PACK_ID = "mod/awaken:datapacks/awakened_ground";
 
+    private static final DeferredRegister<MapCodec<? extends Feature>> FEATURES = DeferredRegister.create(Registries.FEATURE_TYPE, Awaken.MODID);
+    static {
+        FEATURES.register("soft_steps", () -> SoftStepsFeature.CODEC);
+    }
+
     public static void init(IEventBus modBus) {
+        SoftSlabs.init(modBus);
+        FEATURES.register(modBus);
         modBus.addListener(AddPackFindersEvent.class, e -> e.addPackFinders(Awaken.id("datapacks/awakened_ground"), PackType.SERVER_DATA,
                 Component.literal("Awakened Ground"), PackSource.BUILT_IN, false, Pack.Position.TOP));
         GroundTests.register();

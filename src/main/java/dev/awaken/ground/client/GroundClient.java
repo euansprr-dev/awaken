@@ -4,6 +4,7 @@ import com.mojang.brigadier.Command;
 import dev.awaken.Awaken;
 import dev.awaken.ground.LawnDrift;
 import dev.awaken.ground.SeamlessRules;
+import dev.awaken.ground.SoftSlabs;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.client.color.block.BlockTintSource;
@@ -82,6 +83,8 @@ public final class GroundClient {
             next.set(layer, new DriftTint(layers.get(layer)));
             e.register(next, en.getKey());
         }
+        // the grass slab is tinted and drifted as the grass block is (its top, its fringe, its tuft)
+        e.register(colors.getTintSources(Blocks.GRASS_BLOCK.defaultBlockState()), SoftSlabs.TURF_SLAB.get());
     }
 
     /** A grass colour source with the drift on it, for blocks in a world (City Sight's probe at the origin and items keep the plain colour). */
