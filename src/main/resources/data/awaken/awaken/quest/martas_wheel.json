@@ -32,5 +32,5 @@
       ]
     }
   ],
-  "finish": { "levels": 0.25 }
+  "finish": { "levels": 0.25, "item": "awaken:essence_shard", "item_count": 1 }
 }

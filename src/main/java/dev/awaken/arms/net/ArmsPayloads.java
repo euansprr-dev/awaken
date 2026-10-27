@@ -71,6 +71,22 @@ public final class ArmsPayloads {
         @Override public Type<Woven> type() { return TYPE; }
     }
 
+    /** Server → the fighter: Hale's issue, the styles on offer (docs/arms-progression/PLAN.md §3.3); opens the pick on their screen. */
+    public record IssueOffer(java.util.List<String> styles) implements CustomPacketPayload {
+        public static final Type<IssueOffer> TYPE = new Type<>(Awaken.id("arms_issue_offer"));
+        public static final StreamCodec<ByteBuf, IssueOffer> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list(8)), IssueOffer::styles, IssueOffer::new);
+        @Override public Type<IssueOffer> type() { return TYPE; }
+    }
+
+    /** Fighter → server: the style they took from Hale's issue. The server checks that it was offered and is still theirs to take. */
+    public record IssuePick(String style) implements CustomPacketPayload {
+        public static final Type<IssuePick> TYPE = new Type<>(Awaken.id("arms_issue_pick"));
+        public static final StreamCodec<ByteBuf, IssuePick> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.STRING_UTF8, IssuePick::style, IssuePick::new);
+        @Override public Type<IssuePick> type() { return TYPE; }
+    }
+
     /** Every style's mastery step, by the style's index (the client predicts the mastery strike, Slipcut and Art). */
     public record Mastery(java.util.List<Integer> steps) implements CustomPacketPayload {
         public static final Type<Mastery> TYPE = new Type<>(Awaken.id("arms_mastery"));

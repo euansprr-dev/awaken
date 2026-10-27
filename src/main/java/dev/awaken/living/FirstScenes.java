@@ -166,6 +166,11 @@ public final class FirstScenes {
         return true;
     }
 
+    /** Whether the first thread is at Ilse's step (her scene takes her talk: public for the issue, which waits for it). */
+    public static boolean atIlseStep(ServerPlayer p) {
+        return atIlse(p);
+    }
+
     /** Whether this player's errand is at Ilse's step. */
     static boolean atIlse(ServerPlayer p) {
         String chain = FirstThread.chainId();

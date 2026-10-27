@@ -234,6 +234,7 @@ public final class ArmsForge {
         List<Cost> price = blueprintPrice(p);
         if (item == null || !affords(p, price)) return false;
         pay(p, price);
+        ArmsIssue.remember(p, style);
         ItemStack bp = new ItemStack(item.get());
         if (!p.getInventory().add(bp)) p.drop(bp, false, net.minecraft.util.Prediction.SERVER_ONLY);
         p.level().playSound(null, p.blockPosition(), SoundEvents.BOOK_PAGE_TURN, SoundSource.PLAYERS, 1.0F, 0.9F);

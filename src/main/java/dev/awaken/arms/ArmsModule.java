@@ -40,6 +40,7 @@ public final class ArmsModule {
         Archetypes.all(); // fail fast on a broken timing table
         dev.awaken.core.api.WeaveHooks.install(ArmsWeaves.INSTANCE);
         ArmsForge.init();
+        dev.awaken.core.api.ArmsApi.install(ArmsIssue.INSTANCE);
         modBus.addListener(ArmsModule::registerPayloads);
         modBus.addListener(EventPriority.LOW, ArmsModule::guardComponents);
         var bus = NeoForge.EVENT_BUS;
@@ -51,6 +52,7 @@ public final class ArmsModule {
             if (e.getEntity() instanceof ServerPlayer sp) {
                 ArmsWeaves.sync(sp);
                 ArmsMastery.sync(sp);
+                ArmsIssue.migrate(sp);
             }
         });
         bus.addListener(EventPriority.HIGHEST, ArmsServer::onIncomingDamage);
@@ -63,6 +65,8 @@ public final class ArmsModule {
         bus.addListener(EventPriority.LOW, LordForged::onDeath);
         bus.addListener(EventPriority.LOW, ArmsMastery::onDeath);
         bus.addListener(EventPriority.LOW, MarkedDrops::onDeath);
+        bus.addListener(EventPriority.LOW, ArmsIssue::onDrops);
+        bus.addListener(ArmsIssue::onPlayerTick);
         bus.addListener(EventPriority.HIGH, ArmsForge::onUseBlock);
         bus.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> ArmsForge.forget(e.getEntity().getUUID()));
         bus.addListener(EventPriority.HIGH, ArmsModule::onUseStartOff);
@@ -70,6 +74,7 @@ public final class ArmsModule {
         bus.addListener(ArmsServer::onUseStop);
         registerCommands();
         ArmsTests.register();
+        ArmsProgressionTests.register();
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
@@ -80,6 +85,10 @@ public final class ArmsModule {
         r.playToServer(ArmsPayloads.Dodge.TYPE, ArmsPayloads.Dodge.STREAM_CODEC, (msg, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) ArmsServer.onDodge(sp, msg);
         });
+        r.playToServer(ArmsPayloads.IssuePick.TYPE, ArmsPayloads.IssuePick.STREAM_CODEC, (msg, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer sp) ArmsIssue.onPick(sp, msg.style());
+        });
+        r.playToClient(ArmsPayloads.IssueOffer.TYPE, ArmsPayloads.IssueOffer.STREAM_CODEC);
         r.playToClient(ArmsPayloads.Result.TYPE, ArmsPayloads.Result.STREAM_CODEC);
         r.playToClient(ArmsPayloads.Seen.TYPE, ArmsPayloads.Seen.STREAM_CODEC);
         r.playToClient(ArmsPayloads.Woven.TYPE, ArmsPayloads.Woven.STREAM_CODEC);

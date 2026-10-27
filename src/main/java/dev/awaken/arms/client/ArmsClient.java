@@ -8,6 +8,7 @@ import dev.awaken.arms.net.ArmsPayloads;
 import dev.awaken.core.api.CombatFeedback;
 import dev.awaken.core.api.FirstPerson;
 import dev.awaken.core.api.Stances;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.state.level.PlayerRenderState;
@@ -105,6 +106,7 @@ public final class ArmsClient {
         event.register(ArmsPayloads.Result.TYPE, (msg, ctx) -> ArmsPredict.onResult(msg));
         event.register(ArmsPayloads.Seen.TYPE, (msg, ctx) -> ArmsPredict.onSeen(msg));
         event.register(ArmsPayloads.Woven.TYPE, (msg, ctx) -> ArmsCodex.onWoven(msg));
+        event.register(ArmsPayloads.IssueOffer.TYPE, (msg, ctx) -> Minecraft.getInstance().execute(() -> Minecraft.getInstance().gui.setScreen(new IssueScreen(msg.styles()))));
         event.register(ArmsPayloads.Mastery.TYPE, (msg, ctx) -> ArmsPredict.onMastery(msg));
     }
 

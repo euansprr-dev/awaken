@@ -20,6 +20,10 @@ final class ArmsContent {
     static final Supplier<AttachmentType<ArmsWeaves.ArmsMemory>> MEMORY = ATTACHMENTS.register("arms_memory",
             () -> AttachmentType.builder(ArmsWeaves.ArmsMemory::fresh).serialize(ArmsWeaves.ArmsMemory.CODEC).copyOnDeath().build());
 
+    /** What a fighter has learned and been handed on the way to their weapons (docs/arms-progression/PLAN.md §4; saved, kept through death). */
+    static final Supplier<AttachmentType<ArmsProgress>> PROGRESS = ATTACHMENTS.register("arms_progress",
+            () -> AttachmentType.builder(ArmsProgress::fresh).serialize(ArmsProgress.CODEC).copyOnDeath().build());
+
     static final net.neoforged.neoforge.registries.DeferredRegister.DataComponents COMPONENTS =
             net.neoforged.neoforge.registries.DeferredRegister.createDataComponents(net.minecraft.core.registries.Registries.DATA_COMPONENT_TYPE, Awaken.MODID);
     /** A weapon's own state: its Marks and its attunement (Marks.Instance; moves with the item). */
