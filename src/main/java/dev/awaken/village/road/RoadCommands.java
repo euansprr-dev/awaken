@@ -21,7 +21,7 @@ import java.util.Set;
  * <pre>
  * info            the road nearest you: its ends, its class, its length, its bridges and waymarkers
  * plan [radius]   lays the roads within a radius of you now (they're laid as the land generates otherwise)
- * camp            stands you on the road north out of the Wayfarer camp, looking up it (once the planners lay it)
+ * camp            stands you on the road north out of the Wayfarer camp, looking up it (once it's laid)
  * walk &lt;points&gt;   moves you that many points (four blocks each) along the nearest road, toward its far end
  * marker          stands you before the nearest waymarker, reading it
  * </pre>
@@ -78,26 +78,31 @@ public final class RoadCommands {
 
     /**
      * On the road north out of the camp (Carillon's north port), at its sixth point, looking up it; where the land north
-     * gave it no way, Carillon's road east or south, else the road nearest the player. The road planners lay it (seconds
-     * on new land: never on the server thread, SPEC §28.9, Cost), and the player is stood on it once it's laid.
+     * gave it no way, Carillon's road east or south, else the road nearest the player. A thread of its own lays it
+     * (seconds on new land: never on the server thread, SPEC §28.9, Cost; not queued behind the planners' work either,
+     * which can be minutes deep), and the player is stood on it once it's laid.
      */
     private static int camp(CommandSourceStack src) throws CommandSyntaxException {
         ServerPlayer p = src.getPlayerOrException();
         RoadWorld w = RoadWorld.get();
         if (w == null) return 0;
         double x = p.getX(), z = p.getZ();
-        RoadPlanners.job("camp " + p.getUUID(), RoadPlanners.URGENT, 0, () -> {
-            Road out = null;
-            for (int port = 0; port < 3 && out == null; port++) out = RoadNet.portFirst(w, port);
-            if (out == null) RoadNet.highroadsNear(w, (int) Math.floor(x), (int) Math.floor(z), 400);
-            Road r = out;
-            RoadNet.Nearest n = r == null ? RoadNet.nearest(x, z, 1200).orElse(null) : null;
-            src.getServer().execute(() -> {
-                if (p.isRemoved()) return;
-                if (r != null) stand(src, p, r, 6, 1);
-                else if (n != null) stand(src, p, n.road(), Math.min(6, n.road().points() - 1), 1);
-                else src.sendFailure(Component.literal("No road out of Carillon or near you in this world."));
-            });
+        Thread.ofPlatform().daemon().priority(Thread.MIN_PRIORITY).name("Awaken road camp").start(() -> {
+            try {
+                Road out = null;
+                for (int port = 0; port < 3 && out == null; port++) out = RoadNet.portFirst(w, port);
+                if (out == null) RoadNet.highroadsNear(w, (int) Math.floor(x), (int) Math.floor(z), 400);
+                Road r = out;
+                RoadNet.Nearest n = r == null ? RoadNet.nearest(x, z, 1200).orElse(null) : null;
+                src.getServer().execute(() -> {
+                    if (p.isRemoved()) return;
+                    if (r != null) stand(src, p, r, 6, 1);
+                    else if (n != null) stand(src, p, n.road(), Math.min(6, n.road().points() - 1), 1);
+                    else src.sendFailure(Component.literal("No road out of Carillon or near you in this world."));
+                });
+            } catch (RuntimeException e) {
+                Awaken.LOG.error("[road] the camp command failed", e);
+            }
         });
         return 1;
     }

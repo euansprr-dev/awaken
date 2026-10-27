@@ -7061,8 +7061,9 @@ land, a vault): the tour's "Can't keep up" (W7: 2, 4.5 and 38 s, the last at the
 laid already, then a near-freeze; then 2 s at the start and 33 s at the first teleport, the watch's stack in the ledge
 finder reading a chunk still generating, then one tick of 4.5 minutes in it; the ledge finder now reads only chunks
 already whole). On a tour a watch on the server thread (`RoadTimer.watch`) logs any tick over a second with its stack.
-The camp command (`/awaken village road camp`) never lays a road on the server thread: the planners lay what it needs
-(urgent) and the server stands the player on it once it's laid.
+The camp command (`/awaken village road camp`) never lays a road on the server thread: a thread of its own lays what it
+needs (not the planners: their queue can be minutes deep after a pregen) and the server stands the player on it once
+it's laid.
 Framings lay only the highroads through a place: the lanes round it would plan the regions about (48 s on the runner).
 
 **Decisions taken here** (none of the plan's 13): the hub rule and its numbers above (towns one region in five, the
