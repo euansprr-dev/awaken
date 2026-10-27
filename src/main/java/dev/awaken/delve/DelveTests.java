@@ -60,6 +60,7 @@ final class DelveTests {
         AwakenTests.registerIsolated("delve_lode_heart", 400, DelveTests::lodeHeart);
         AwakenTests.register("delve_tier_metals", 40, DelveTests::tierMetals);
         AwakenTests.register("delve_tuning_fork", 40, DelveTests::tuningFork);
+        AwakenTests.register("delve_held_light", 20, DelveTests::heldLight);
         AwakenTests.register("progression_ore_xp", 60, DelveTests::oreXp);
     }
 
@@ -282,6 +283,36 @@ final class DelveTests {
             LodePlans.EXTRA.remove(a);
             LodePlans.EXTRA.remove(b);
         }
+        h.succeed();
+    }
+
+    // ---- light held in a hand ---------------------------------------------------------------------------------------
+
+    /**
+     * Any held block that gives light lights round its bearer at its own level, in its kind's colour: a torch's warm
+     * flame reaching 10.5, a soul torch blue, a redstone torch red, a sea lantern cool and steady; stone, a stick, the
+     * Ember and the miner's lamp (their own light) give none; the brighter hand carries.
+     */
+    private static void heldLight(GameTestHelper h) {
+        HeldLight.Kind torch = HeldLight.of(new ItemStack(Items.TORCH));
+        h.assertTrue(torch.emission() == 14 && torch.rgb() == HeldLight.FLAME && torch.flame(), "a torch: 14, a warm flame: " + torch);
+        h.assertTrue(Math.abs(torch.reach() - 10.5F) < 1e-4F, "a torch reaches 10.5: " + torch.reach());
+        HeldLight.Kind soul = HeldLight.of(new ItemStack(Items.SOUL_TORCH)), red = HeldLight.of(new ItemStack(Items.REDSTONE_TORCH));
+        h.assertTrue(soul.emission() == 10 && soul.rgb() == HeldLight.SOUL, "a soul torch: 10, soul blue: " + soul);
+        h.assertTrue(red.emission() == 7 && red.rgb() == HeldLight.REDSTONE, "a redstone torch: 7, red: " + red);
+        HeldLight.Kind lantern = HeldLight.of(new ItemStack(Items.LANTERN)), sea = HeldLight.of(new ItemStack(Items.SEA_LANTERN));
+        h.assertTrue(lantern.emission() == 15 && lantern.rgb() == HeldLight.FLAME && lantern.reach() == HeldLight.MAX_REACH, "a lantern: 15, a flame: " + lantern);
+        h.assertTrue(sea.emission() == 15 && sea.rgb() == HeldLight.SEA && !sea.flame(), "a sea lantern: cool and steady: " + sea);
+        h.assertTrue(HeldLight.of(new ItemStack(Items.SOUL_LANTERN)).rgb() == HeldLight.SOUL, "a soul lantern is blue");
+        h.assertTrue(HeldLight.of(new ItemStack(Items.GLOWSTONE)).emission() == 15, "glowstone gives 15");
+        h.assertTrue(HeldLight.of(new ItemStack(Items.JACK_O_LANTERN)).flame(), "a jack o'lantern is a flame");
+        for (Item none : new Item[]{Items.STONE, Items.STICK, Items.CANDLE, DelveContent.MINERS_LAMP.get(),
+                BuiltInRegistries.ITEM.getValue(dev.awaken.Awaken.id("hearth_ember"))}) {
+            h.assertTrue(HeldLight.of(new ItemStack(none)) == HeldLight.NONE, "no held light from " + none);
+        }
+        h.assertTrue(HeldLight.of(ItemStack.EMPTY) == HeldLight.NONE, "nothing in hand, no light");
+        h.assertTrue(HeldLight.offhandWins(new ItemStack(Items.REDSTONE_TORCH), new ItemStack(Items.LANTERN)), "the brighter hand carries");
+        h.assertTrue(!HeldLight.offhandWins(new ItemStack(Items.TORCH), new ItemStack(Items.TORCH)), "the main hand on a tie");
         h.succeed();
     }
 

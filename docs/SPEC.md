@@ -6486,6 +6486,47 @@ at the beam's 9° core falling to its edge and to nothing at 22 blocks, so the r
 dark; a faint additive haze on the faces the inner rays hit (`CityGlow`'s pass) and, seen from outside, a small flame
 on the brow; for every wearer within 40 (`LampGlow`; the lit pass is skipped if its pipeline doesn't compile).
 
+**Held light** (Euan, 2026-10-27: "lighting around you when you hold a torch, similar to when you hold the hearth lamp";
+client only, every world, setting `held_light` in `awaken-delve-client.toml`, default on). Any block item whose block's
+default state gives light, held in either hand, lights the world round its bearer, drawn and never placed (no light
+blocks, nothing relit): torches, lanterns, campfires, glowstone, sea lanterns, shroomlight, froglights, end rods, our own
+lit blocks (`delve.HeldLight`, cached per item). The brighter hand carries (the main hand on a tie). Strength is the
+block's light level; its reach is 0.75 blocks a level, at most 11.25 (a torch's 14 reaches 10.5, a redstone torch's 7
+reaches 5.25). Colour by kind (by block, then by id): warm flame `FFC48A` (torch, lantern, campfire, candle, jack
+o'lantern, anything named torch, lantern, fire, lamp or brazier), soul `86D2FF`, redstone `FF5A3C`, copper's green flame
+`A8F2B6`, sea lantern, prismarine, conduit and beacon `C2E9FF`, glowstone `FFDA94`, shroomlight `FFB070`, end rod `F2EEFF`,
+amethyst and crying obsidian `CDA8FF`, magma `FF8C44`, glow lichen `C4F0CC`, the three froglights their own; anything
+else its map colour lifted halfway to white. Flames flicker (the Ember's breath, 0.86-1.0, per player); the rest are
+steady. The Ember and the miner's lamp aren't block items, so they never get a second light; a lamp on the head and a
+torch in the hand are two lights and add. Players holding one within 48 (at most 8 lights, yours first) carry theirs,
+read from their synced hands, so it is the same for everyone in multiplayer. The flame sits in the hand at the side
+(0.98 up, 0.3 ahead, 0.38 out; 0.78 crouching), or in your own first person 0.32 under the eye, 0.4 ahead and 0.3 to
+the holding side, following your look.
+- *Finding the surfaces* (`delve.client.TorchGlow`): a flood from the flame's cell through every cell that isn't a full
+  opaque block (as the game's light spreads: round corners, never through rock), within a sphere of the reach, each
+  step costing 1 plus the cell's light dampening (leaves and water dim it). A full block it meets gives its face toward
+  the flood; a plant, slab, lantern or glass in a reached cell is taken whole. Nearest first, at most 640 surfaces for
+  your light and 240 for another's. 900 cells a frame across all lights, one light at a time into a back buffer that
+  swaps in when done (nothing copied or allocated), redone when the flame enters another block, its item changes, or
+  every 10 ticks (blocks broken and placed). A light standing where the light is already as bright as its own (noon)
+  floods and draws no surfaces.
+- *Drawing them*: each surface is drawn again over itself with its own model quads (as the miner's lamp does, and
+  tinted as the world tints it, so grass and leaves come up green), additively in the light's colour, by how much the
+  game's light curve (`v / (4 - 3v)`) at the flame's level less the distance would brighten it over the light already
+  there (block light, or sky light less the sky's darkening): nothing in daylight, the most in a pitch-black cave, a
+  torch's floor at your feet about 0.58 of full. Gain ×1.15; turned to the flame (0.4 + 0.6 of the face's cosine; 0.8
+  for a plant's crossed quads); eased to nothing over the last 30% of the reach; light that went round a wall is at
+  least 0.55 a flood step away (less 1.2), so it is dim beyond a corner. At most 2,600 quads a frame for all lights.
+- *In the open* it reads like the Ember: a soft pool at the feet under the flame (the city lanterns' profile, radius
+  0.55 of the reach, 0.15 strength at level 15 in the dark, scaled by how dark it is there) and a halo at the hand
+  (0.6 × √(level/15), half strength in daylight to full in the dark, a near-white core), hidden in your own first person.
+- *Mods that already light held items* (LambDynamicLights, Sodium Dynamic Lights, Ryoamic Lights, Dynamic Lights): only
+  the pool and the halo are drawn. If the lit pipeline doesn't compile, the surfaces are skipped as the lamp's are.
+- *Cost* (reasoned, not measured): the flood is at most 900 cells × 6 block lookups a frame while it runs (a few frames
+  each time the flame enters a new block; none while standing still between refreshes); drawing is at most 640 + 7 × 240
+  surfaces' quads, 2,600 quads at most, with one model lookup each; no allocation per frame. One GameTest,
+  `delve_held_light`, holds the rules (which items, their level, reach and colour, the brighter hand).
+
 **Sounds and art.** 25 events `delve.*` synthesised by `tools/art/specs/audio_delve.py`; textures, models, loot,
 recipes, tags, worldgen and the star's loot by `tools/art/specs/delve.py` (`build_all.py delve`, `delve.py content`,
 `delve.py preview DIR`). Own particles `delve_spark`, `delve_grit`, `delve_dust`, `delve_glint`, `delve_mote`.

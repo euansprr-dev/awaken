@@ -42,5 +42,7 @@
   "subtitles.awaken.delve.strike.redstone": "Redstone fizzes",
   "subtitles.awaken.delve.strike_last": "Rock gives way",
   "subtitles.awaken.delve.vein_crack": "Cracks run through the rock",
-  "subtitles.awaken.delve.vein_gives": "The vein gives"
+  "subtitles.awaken.delve.vein_gives": "The vein gives",
+  "awaken.configuration.held_light": "Held light",
+  "awaken.configuration.held_light.tooltip": "A torch, lantern or any light-giving block in either hand lights the ground, walls and ceiling round whoever holds it. It's drawn, never placed, so nothing is relit. Off, a held light gives no light, as in vanilla."
 }
