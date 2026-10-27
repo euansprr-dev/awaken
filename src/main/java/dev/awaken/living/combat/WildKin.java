@@ -72,6 +72,7 @@ public final class WildKin {
         var retaliate = new Retaliate(pm);
         if (rallies(rank)) retaliate.setAlertOthers();
         pm.targetSelector.addGoal(0, retaliate);
+        QuietLand.shy(pm, rank);
     }
 
     /** Hurt-by retaliation that lets go: only while the last blow was within {@link #FORGIVE} ticks. */

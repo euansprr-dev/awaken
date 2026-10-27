@@ -54,6 +54,11 @@ public final class Wildlife {
     /** A density dial for tours and taste (1 = the tables as written). */
     static float dial = 1F;
 
+    /** The dial times how quiet the land underfoot has grown: birds and insects thin with the rank and nearly stop in A and S (SPEC 21.11). */
+    static float dialNow() {
+        return dial * dev.awaken.living.combat.QuietLand.wild(dev.awaken.living.client.LivingClient.landLevel());
+    }
+
     static final List<WildCritter> LIVE = new ArrayList<>();
     static final Census CENSUS = new Census();
     private static int nextId = -1_000_000_000, clock;
@@ -184,7 +189,7 @@ public final class Wildlife {
                         far = c;
                     }
                 }
-                int step = CENSUS.decide(k, d, city, s.h, s.key, have, tod, rain, thunder, dial);
+                int step = CENSUS.decide(k, d, city, s.h, s.key, have, tod, rain, thunder, dialNow());
                 if (step < 0 && far != null) {
                     far.leaving = true;
                     CENSUS.remove(k);

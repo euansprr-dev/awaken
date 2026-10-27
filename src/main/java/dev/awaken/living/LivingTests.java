@@ -469,6 +469,71 @@ final class LivingTests {
             h.succeed();
         });
 
+        AwakenTests.register("living_signs", 100, h -> {
+            // SPEC 21.11 decision 24: none in E land, thicker with each rank; each kind builds something real that stands on its ground
+            var rnd = net.minecraft.util.RandomSource.create(11);
+            int[] total = new int[6];
+            for (int rank = 0; rank <= 5; rank++) for (int i = 0; i < 10000; i++) total[rank] += dev.awaken.living.signs.Signs.attempts(rank, rnd);
+            h.assertTrue(total[0] == 0, "E land has no signs");
+            for (int rank = 1; rank <= 5; rank++) h.assertTrue(Math.abs(total[rank] / 10000.0 - dev.awaken.living.signs.Signs.PER_CHUNK[rank]) < 0.05, "rank " + rank + " has its density: " + total[rank] / 10000.0);
+            for (int rank = 1; rank <= 5; rank++) h.assertTrue(!dev.awaken.living.signs.Signs.of(rank).isEmpty(), "rank " + rank + " has signs");
+            var level = h.getLevel();
+            int fam = 0;
+            for (var kind : dev.awaken.living.signs.Signs.Kind.values()) {
+                for (int family = 0; family < 3; family++) {
+                    // a stone floor, clear air over it
+                    BlockPos g = h.absolutePos(new BlockPos(5, 2, 5));
+                    for (int dx = -8; dx <= 8; dx++) for (int dz = -8; dz <= 8; dz++) {
+                        level.setBlockAndUpdate(g.offset(dx, 0, dz), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
+                        for (int y = 1; y <= 14; y++) level.setBlockAndUpdate(g.offset(dx, y, dz), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+                    }
+                    int placed = dev.awaken.living.signs.Signs.build(level, net.minecraft.util.RandomSource.create(kind.ordinal() * 31L + family), g, kind, family);
+                    h.assertTrue(placed >= 3, kind + " builds something: " + placed);
+                    // everything above the floor is joined to it (a block touching another, the lowest touching the floor): nothing floats
+                    java.util.Set<BlockPos> blocks = new java.util.HashSet<>();
+                    for (int dx = -8; dx <= 8; dx++) for (int dz = -8; dz <= 8; dz++) for (int y = 1; y <= 14; y++) {
+                        BlockPos p = g.offset(dx, y, dz);
+                        if (!level.getBlockState(p).isAir()) blocks.add(p);
+                    }
+                    java.util.Deque<BlockPos> todo = new java.util.ArrayDeque<>();
+                    java.util.Set<BlockPos> seen = new java.util.HashSet<>();
+                    for (BlockPos p : blocks) if (p.getY() == g.getY() + 1) { todo.add(p); seen.add(p); }
+                    while (!todo.isEmpty()) {
+                        BlockPos p = todo.poll();
+                        for (int dx = -1; dx <= 1; dx++) for (int dy = -1; dy <= 1; dy++) for (int dz = -1; dz <= 1; dz++) {
+                            BlockPos q = p.offset(dx, dy, dz);
+                            if (blocks.contains(q) && seen.add(q)) todo.add(q);
+                        }
+                    }
+                    h.assertTrue(seen.size() == blocks.size(), kind + " (family " + family + ") is all one piece standing on the ground: " + seen.size() + " of " + blocks.size());
+                    h.assertTrue(blocks.size() <= 90, kind + " stays small: " + blocks.size());
+                }
+            }
+            h.succeed();
+        });
+
+        AwakenTests.register("living_quiet_land", 100, h -> {
+            // SPEC 21.11 decision 23: animals thin by rank, the ambient life more so, the shyness grows with the rank
+            var Q = dev.awaken.living.combat.QuietLand.class;
+            h.assertTrue(dev.awaken.living.combat.QuietLand.keep(0) == 1F && dev.awaken.living.combat.QuietLand.keep(1) == 0.8F && dev.awaken.living.combat.QuietLand.keep(5) == 0.1F, "E all, D four fifths, S a tenth");
+            for (int r = 1; r <= 5; r++) h.assertTrue(dev.awaken.living.combat.QuietLand.keep(r) < dev.awaken.living.combat.QuietLand.keep(r - 1), "thinner each rank");
+            h.assertTrue(dev.awaken.living.combat.QuietLand.wild(-1) == 1F && dev.awaken.living.combat.QuietLand.wild(5) == 1F && dev.awaken.living.combat.QuietLand.wild(130) < 0.05F, "birdsong all through E and nearly gone in S");
+            h.assertTrue(dev.awaken.living.combat.QuietLand.wild(80) < dev.awaken.living.combat.QuietLand.keep(4), "A: more birds go than animals");
+            h.assertTrue(dev.awaken.living.combat.QuietLand.shy(1) == 10F && dev.awaken.living.combat.QuietLand.shy(5) == 26F, "10 blocks in D, 26 in S");
+            // a real spawn: none turned away in E land (the test land), a pig in a hearthless D land world is thinned about as often as the table says
+            var level = h.getLevel();
+            var rnd = net.minecraft.util.RandomSource.create(5);
+            var pig = h.spawn(net.minecraft.world.entity.EntityTypes.PIG, 1, 2, 1);
+            int turned = 0;
+            for (int i = 0; i < 400; i++) if (dev.awaken.living.combat.QuietLand.thins(level, pig, net.minecraft.world.entity.EntitySpawnReason.NATURAL, rnd)) turned++;
+            int rank = dev.awaken.living.region.RegionMap.rankOf(dev.awaken.living.api.Regions.creatureLevel(level, pig.blockPosition(), dev.awaken.living.api.Regions.Role.NEUTRAL));
+            double expect = rank <= 0 ? 0 : 1 - dev.awaken.living.combat.QuietLand.keep(rank);
+            if (dev.awaken.living.api.Regions.landCap(level, pig.blockPosition()) != Integer.MAX_VALUE) expect = 0;
+            h.assertTrue(Math.abs(turned / 400.0 - expect) < 0.12, "here (rank " + rank + ") " + turned + " of 400 turned away, expected about " + Math.round(expect * 400));
+            h.assertTrue(!dev.awaken.living.combat.QuietLand.thins(level, pig, net.minecraft.world.entity.EntitySpawnReason.BREEDING, rnd), "bred animals are never turned away");
+            h.succeed();
+        });
+
         AwakenTests.register("living_plate_heat", 20, h -> {
             // the chip's colour by how a creature measures against you: grey far below, blue about your level, orange a good fight, red an insane one
             var P = dev.awaken.living.combat.PlateRules.Heat.class;
@@ -588,6 +653,7 @@ final class LivingTests {
         h.getLevel().addFreshEntity(e);
         int lv = Progression.profile(p).level();
         e.setData(CoreApi.CREATURE_TAG.get(), new CreatureTag(lv, kind, elite, ""));
+        e.setData(LivingContent.FORM.get(), dev.awaken.living.combat.Forms.Form.NONE); // the test land is far out: no revenant should stand up
         e.hurtServer(h.getLevel(), p.damageSources().playerAttack(p), 10000);
         if (e.isAlive()) e.discard();
     }

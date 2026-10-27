@@ -60,6 +60,11 @@ public final class LivingClient {
     private static String pendingRank = "";
     private static long pendingSince = -1, momentAt = Long.MIN_VALUE / 2;
 
+    /** The level of the land under the player as the server last said (-1 away from the overworld), for the layers that follow the land. */
+    public static int landLevel() {
+        return DreadFx.land();
+    }
+
     public static void init(IEventBus modBus) {
         LivingClientConfig.register();
         PulseSound.init();
@@ -221,6 +226,7 @@ public final class LivingClient {
         if (ticks % 5 == 0) pillars(mc, p);
         plates(mc, p);
         DreadFx.tick(mc, p);
+        AmbientFx.tick(mc, p);
         if (ticks % 100 == 0) forgetOld();
     }
 

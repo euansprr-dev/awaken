@@ -46,6 +46,11 @@ public final class Creatures {
     public static void onFinalizeSpawn(FinalizeSpawnEvent e) {
         Mob mob = e.getEntity();
         if (!(e.getLevel().getLevel() instanceof ServerLevel level) || !Regions.on(level) || ours(mob) || mob instanceof Npc) return;
+        // a quieter land: animals are thinned by rank before they are anything (SPEC 21.11 decision 23)
+        if (QuietLand.thins(level, mob, e.getSpawnType(), mob.getRandom())) {
+            e.setSpawnCancelled(true);
+            return;
+        }
         tag(level, mob, true, e.getSpawnType());
     }
 

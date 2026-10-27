@@ -4425,6 +4425,30 @@ Continues §21.10's numbering (16-31). The long form is PLAN-2.md; this is what 
   Arms' tell glint for a form's wind-up (`Strikes.installTells` is install-once and the mobs module holds it; chaining it is a change in `core.api`), the "unless you finish it fast" clause of Rise.
 - Tests: `living_form_moves`.
 
+**Kit placement rules (2026-10-27, after Euan's screenshots: tusks over the face, spines floating over the back, claws hanging off the fists).** Every piece of a kit is checked when the art is built
+(`tools/art/forms_geom.py`, called by `tools/art/specs/forms.py`; a violation stops the build with the piece named): **attached** (it touches the vanilla body or a piece that does; a horn is a chain
+whose segments start where the last ended; only up to six marked floating shards in the top rung may hang free, within 9 blocks); **off the face** (the eye band from the face plane forward is a
+keep-out: tusks, horns and crowns go round it, marks are never painted on a head's front); **seen** (not hidden inside the body); **in reach** (7 blocks at D to 13 at S). Geometry is the
+vanilla bodies' own (`BODIES`, from the 26.3 ModelPart definitions), checked at rest. Pieces are placed on named surfaces (a ridge stands on the body's top plane, a tusk starts inside the cheek,
+a claw starts at the end of the arm and points along it). Looks are reviewed offline from four angles (`python3 tools/art/forms_preview.py OUT.png 0 <layout> --angles`) before any tour.
+
+**Build 3 as built (2026-10-27): the land, the quiet, the Atlas.**
+- **Signs** (decision 24): `living.signs.Signs` (thirteen kinds: wallow, bone pile, boulder and rust outcrop in D; skull post, cold camp and broken cart in C; snag and ribs in B; graves and a black spire in A;
+  a weeping stone and a ring of them in S; vanilla blocks by biome family) and `WildSignsFeature` (`awaken:wild_signs`, step vegetal_decoration through `neoforge:add_features`, `data/awaken/worldgen/*/living/signs.json`):
+  per new chunk 0.25 signs in D, 0.5 C, 0.9 B, 1.3 A, 1.6 S (none in E), on natural ground only, flat enough, never in water. The region map is warmed at ServerStarted so worldgen threads
+  (`RegionService.mapIfReady`) never touch saved data; chunks made before it exists (a new world's first, in the Commons) get none. The rust outcrop is the surface sign of iron (a pull; iron stays by depth). Not consulted
+  at generation: a settlement's or a road's reserve (only the natural-ground rule keeps signs off built ground).
+- **A quieter land** (decision 23): `living.combat.QuietLand`: natural animal spawns in land of rank D or up are turned away by rank (kept: D 80%, C 55%, B 35%, A 20%, S 10%; `FinalizeSpawnEvent.setSpawnCancelled` in
+  `Creatures.onFinalizeSpawn`; never a settlement's land, bred or egg animals), wild kin avoid a player who is not sneaking (`AvoidEntityGoal`, 10 blocks in D to 26 in S, below the fight goals), and the wild life
+  layer's dial is multiplied by the rank (`Wildlife.dialNow`: birds and insects 80%, 50%, 30%, 8%, 2%).
+- **Ambient air** (decision 25): `living.client.AmbientFx`: a few specks a second drifting through the land you stand in (D dust, C ash, B embers, A violet motes, S almost none; snow in the cold), off with the `dread` setting.
+  Not built: a sound bed per rank (needs `audio_living.py` work) and a colour grade per rank through Lens (the gap's dread look stays).
+- **Atlas smooth shading** (decision 26): `AtlasNet.WireTile.levels` (a level byte per explored cell, `Discovery.levels`), `ZoneMap.View.level` (blended between the four nearest cells' middles in the log), `rankRamp`
+  (the rank colours blended between the ranks' geometric middles) and `heatRamp` (the plate's colours blended at -10, +5, +15), `AtlasMesh` colours a region column by its level, **H** switches between the land's rank and
+  how hard it is for you (the legend follows). Test `atlas_levels`.
+- Tests: `living_signs` (density by rank; every kind builds one piece standing on the ground, under 90 blocks, in all three families), `living_quiet_land`. Two older tests set their zombie's form to vanilla: the test land is
+  far out, in S land, where a revenant would stand up from the kill.
+
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 
 Lens's Cinematic and Ultra tiers become a light model of their own: shadows, contact darkness and warm/cool light

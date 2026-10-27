@@ -174,6 +174,8 @@ public final class LivingModule {
             XpStream.forget(id);
             Hits.forget(id);
         });
+        // the region map is made on the main thread at start, so worldgen threads find it ready (the signs ask)
+        bus.addListener(net.neoforged.neoforge.event.server.ServerStartedEvent.class, e -> RegionService.map(e.getServer()));
         bus.addListener(net.neoforged.neoforge.event.server.ServerStartedEvent.class, e -> {
             // the GameTest server keeps the old natural herds for the fauna tests (living_ledger checks the rule itself)
             if (e.getServer() instanceof net.minecraft.gametest.framework.GameTestServer) {

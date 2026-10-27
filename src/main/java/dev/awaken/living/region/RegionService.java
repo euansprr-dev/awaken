@@ -102,6 +102,12 @@ public final class RegionService extends SavedData {
         }
     }
 
+    /** The map when this server already has one (never makes it): worldgen threads ask this, so they never touch the saved data storage. */
+    public static @Nullable RegionMap mapIfReady(MinecraftServer server) {
+        RegionService s = current;
+        return s != null && currentServer == server ? s.map : null;
+    }
+
     /** Forgets the cached map (server stop). */
     public static void reset() {
         current = null;

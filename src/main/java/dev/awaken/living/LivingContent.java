@@ -121,7 +121,12 @@ public final class LivingContent {
         return SOUNDS.register(path, () -> SoundEvent.createVariableRangeEvent(Awaken.id(path)));
     }
 
+    static final DeferredRegister<com.mojang.serialization.MapCodec<? extends net.minecraft.world.level.levelgen.feature.Feature>> FEATURES =
+            DeferredRegister.create(net.minecraft.core.registries.Registries.FEATURE_TYPE, Awaken.MODID);
+
     static void register(IEventBus modBus) {
+        FEATURES.register("wild_signs", () -> dev.awaken.living.signs.WildSignsFeature.CODEC);
+        FEATURES.register(modBus);
         RULES.register(modBus);
         ATTACHMENTS.register(modBus);
         SOUNDS.register(modBus);

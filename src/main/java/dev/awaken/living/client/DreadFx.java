@@ -24,6 +24,10 @@ final class DreadFx {
     static final String LOOK = "awaken:dread";
     /** The land's level under the player, or -1 (nothing weighs). */
     static int land = -1;
+
+    static int land() {
+        return land;
+    }
     static float weight;
     private static Bed bed;
 

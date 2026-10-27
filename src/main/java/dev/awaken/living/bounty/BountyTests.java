@@ -68,6 +68,7 @@ public final class BountyTests {
         if (e == null) return;
         e.setPos(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
         h.getLevel().addFreshEntity(e);
+        e.setData(dev.awaken.living.LivingContent.FORM.get(), dev.awaken.living.combat.Forms.Form.NONE); // the test land is far out: no revenant should stand up
         e.hurtServer(h.getLevel(), p.damageSources().playerAttack(p), 10000);
         if (e.isAlive()) e.discard();
     }
