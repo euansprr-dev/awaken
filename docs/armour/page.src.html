@@ -144,19 +144,45 @@ ul.plain li { margin-bottom: 6px; }
   <h1>Armour and Clothing</h1>
   <p class="lede">Your weapons are built like hero gear in a game. Your armour is six flat skins on vanilla's boxes. This plan builds armour the way the weapons were built: real parts you can see from the side, nine materials you can tell apart, glow that means something, cloth that moves, and sound that matches what it is made of. Every stat, recipe and set bonus stays exactly as it is.</p>
   <div class="note" style="margin-top:18px">
-    <p><b>Added after your reply ("I don't only want one set per rank, I want more variations, cool clothes").</b></p>
+    <p><b>Added after your two replies (more sets and clothes, then "clean, not glitchy").</b></p>
     <ul>
       <li><b>Houses.</b> Not one set per rank: 24 sets at launch, up to about 34 later. Each is a named hunt, and the Part you spend picks the look. <a href="#houses">See the houses</a>.</li>
       <li><b>A Wardrobe.</b> Three looks for every piece, including an off-duty coat for the city, and six slots of garments: cloaks, scarves, hats, a stowed weapon. <a href="#wardrobe">See the clothes</a>.</li>
-      <li><b>A second proof</b> with three new sets and four looks of one set, and 11 new decisions (17 to 27) at the bottom.</li>
+      <li><b>Clean.</b> You said it looked clunky and glitchy. It was: I built a checker and found 14 to 48 overlaps in every set. Every set is rebuilt in lanes and now has none. <a href="#clean">See before and after</a>.</li>
+      <li><b>Proofs and decisions:</b> three new sets, four looks of one set, and 13 new decisions (17 to 29) at the bottom.</li>
     </ul>
   </div>
 </header>
 
 <figure>
-  <div class="shot"><img src="proof/renders/sheet_B.png" alt="Veilwoven armour on a figure from four angles. Top row: today's flat set. Bottom row: the same set rebuilt from 43 parts, with a layered hood, capelet, silver cuffs, a sash and a back cape."></div>
-  <figcaption><b>Veilwoven, today (top) and proposed (bottom).</b> Front, three-quarter, side and back. Same figure, same renderer, same scale, same light. The proposed set is 43 boxes instead of 6, painted by the weapon rules. This is a rendered still from a throwaway script, not the game (what it proves and doesn't is below).</figcaption>
+  <div class="shot"><img src="proof/renders/sheet_B.png" alt="Veilwoven armour on a figure from four angles. Top row: today's flat set. Bottom row: the same set rebuilt from 35 parts, with a layered hood, capelet, silver cuffs and a back cape."></div>
+  <figcaption><b>Veilwoven, today (top) and proposed (bottom).</b> Front, three-quarter, side and back. Same figure, same renderer, same scale, same light. The proposed set is 35 boxes instead of 6, painted by the weapon rules and checked for overlaps. This is a rendered still from a throwaway script, not the game (what it proves and doesn't is below).</figcaption>
 </figure>
+
+
+<section id="clean">
+  <div class="col"><h2>Clean: what was glitchy, and what changed</h2>
+  <p>You were right. The weapons had a checker that fails a model whose faces share a plane, and my armour sets never did. I wrote one: it poses a set at rest and mid-stride, then reports faces fighting on one plane (the vertical stripes in your crops) and boxes passing through each other (the green and white boxes in the Briarguard crop). Run on the sets you saw, it found <b>14 to 48 problems in every set, and up to 65 in a look</b>.</p></div>
+  <figure>
+    <div class="shot"><img src="proof/renders/before_after_lower.png" alt="Hips, legs and boots of three armour houses. The two left columns are the first version, with crossed boxes and stripes. The two right columns are the clean version, with separate bands and a clear gap between the legs. Rows: Briarguard, Wyrmscale, Antlerhold."></div>
+    <figcaption><b>Hips, legs and boots, before (left two) and after (right two), standing and mid-stride.</b> Rows: Briarguard, Wyrmscale, Antlerhold. The first version stacked eight small pieces into ten pixels and let the two legs' layers sit on the same plane. The clean version gives every band one piece, with a visible split between the legs.</figcaption>
+  </figure>
+  <div class="grid" style="margin-top:22px">
+    <div class="card"><h3>What went wrong</h3><p>Left and right thigh panels shared a plane in the middle. The two boot cuffs overlapped by 3 pixels. A belt, sash, tails, skirt, knee plate and cuff all hung in the same band. Belts and arm cuffs fought for the hips. Some plates started exactly on the shell's plane, and a spike pierced a plate instead of standing on it.</p></div>
+    <div class="card"><h3>The fix is rules, not less detail</h3><p><b>One hero per zone</b>, with supports that never share its space. <b>Lanes</b>: every limb's height is cut into bands, one piece each, with a gap. <b>Left and right never touch</b>. <b>No flush edges</b>. <b>Stacks step</b> outward. <b>Cloth is thin</b> and hangs outside. <b>Plant a spike, never pierce</b>. Small details are painted, not modelled.</p></div>
+    <div class="card"><h3>Now a gate, like the weapons have</h3><p>A set or garment that shares a plane or passes through another part cannot ship. Your approval sheet gets one more page: the hips to the boots, standing and mid-stride, for every set, because that is where the glitches were.</p></div>
+  </div>
+  <div class="scroll" style="margin-top:22px"><table>
+    <tr><th>Set</th><th>Boxes</th><th>Problems found</th></tr>
+    <tr><td><b>Veilwoven</b></td><td>43 to 35</td><td>19 to <b>0</b></td></tr>
+    <tr><td><b>Gatewrought</b></td><td>41 to 33</td><td>48 to <b>0</b></td></tr>
+    <tr><td><b>Briarguard</b></td><td>53 to 43</td><td>18 to <b>0</b></td></tr>
+    <tr><td><b>Wyrmscale</b></td><td>49 to 42</td><td>14 to <b>0</b></td></tr>
+    <tr><td><b>Antlerhold</b></td><td>48 to 41</td><td>22 to <b>0</b></td></tr>
+    <tr><td><b>The four looks</b> (armed, travelling, wayfarer, off duty)</td><td>41, 49, 54, 25 to 33, 38, 43, 26</td><td>48, 65, 61, 4 to <b>0, 0, 0, 0</b></td></tr>
+  </table></div>
+  <div class="col" style="margin-top:14px"><p class="small">Not simpler: the tusks, antlers, fins, tail, cape and stacked pauldrons are all still there, in 7 to 10 fewer boxes a set, with the bands visible. What the checker cannot tell me is whether it is beautiful (that is your sheet), whether a texture reads as noise (I calmed the scale and fur patterns and they still need your eye), and what a full sprint does to hanging panels (looked at by eye, with a clamp as the fix).</p></div>
+</section>
 
 <section class="col">
   <h2>What the weapons got that armour never did</h2>
@@ -218,7 +244,7 @@ ul.plain li { margin-bottom: 6px; }
     <p><b>What this proof does and doesn't show.</b></p>
     <ul>
       <li>It shows the weapon rules make armour read as deep and made of different things at the player's own pixel density.</li>
-      <li>It does not show the game: no Java was run and the client was never launched. The light is a simple stand-in, the night glow is an approximation, and the walking cloth is posed by hand.</li>
+      <li>It does not show the game: no Java was run and the client was never launched. The light is a simple stand-in, the night glow is an approximation, and the walking cloth is posed by hand. Every set now passes an overlap checker at rest and mid-stride; a full sprint is looked at by eye.</li>
       <li>It is not final art. The Veilwoven hood's peak and back are still clumsy and Gatewrought has one helm cut.</li>
       <li>Triangle counts are real; the frame cost in a crowd is a gate to be measured, not a result.</li>
     </ul>
@@ -246,7 +272,7 @@ ul.plain li { margin-bottom: 6px; }
   <p>The game already has the variety. Every rank's recipe takes the trophies of real creatures: three named beasts and five Lords at D, four Lords at C, five at B, five at A, about nine at S. Today they all make the same set. In this plan <b>the Part you spend picks the look</b>. Beat the Dune Wyrm and spend its scale, and you get the Wyrmscale set. The ordinary recipe still takes any Part and gives the plain set, so nobody is ever locked out, and no rank asks for a second trophy.</p></div>
   <figure>
     <div class="shot"><img src="proof/renders/houses_D.png" alt="Four rows of armour on a figure. Top row, today's Beastbound. Then Briarguard in bone and studded leather with tusks, Wyrmscale in sand scale with glowing teal glass fins, and Antlerhold in frost fur with a glowing antler crown. Front, three-quarter, back and night."></div>
-    <figcaption><b>Three D houses, one per named beast, under today's Beastbound.</b> Briarguard (Briar Sow: boar skull, rib cuirass, thorns), Wyrmscale (Dune Wyrm: sand scales, glass fins, a three-link tail), Antlerhold (Old Antler: antler crown, frost fur, a bell). Front, three-quarter, back, and night with only the glowing parts lit. They share the Beastbound stats and set bonus exactly.</figcaption>
+    <figcaption><b>Three D houses, one per named beast, under today's Beastbound.</b> Briarguard (Briar Sow: boar skull, rib cuirass, tusks), Wyrmscale (Dune Wyrm: sand scales, glass fins, a three-link tail), Antlerhold (Old Antler: antler crown, frost fur, a bell). Front, three-quarter, back, and night with only the glowing parts lit. These are the clean versions. They share the Beastbound stats and set bonus exactly.</figcaption>
   </figure>
   <div class="grid" style="margin-top:22px">
     <div class="card"><h3><span class="rank e">E</span>Wildhide</h3>
@@ -280,7 +306,7 @@ ul.plain li { margin-bottom: 6px; }
   <p>The player has no cloak slot, and I don't want to add one. So clothing is three looks for every piece you wear and six slots of garments that sit on any set.</p></div>
   <figure>
     <div class="shot"><img src="proof/renders/garments.png" alt="The same plate armour in four looks, each from the front and back: armed, travelling with a red cloak and scarf, wayfarer with a hat, goggles, cloak, bandolier and lantern, and off duty in a teal coat with a hat and scarf."></div>
-    <figcaption><b>One set, four looks.</b> Armed. Travelling (a cloak and a scarf). Wayfarer (a hat, goggles, a cloak, a bandolier and a lantern, with the helm hidden). Off duty (the plates hide and the base layer becomes a coat). Front above, back below. Same stats in all four.</figcaption>
+    <figcaption><b>One set, four looks.</b> Armed. Travelling (a cloak and a scarf). Wayfarer (a hat, goggles, a green cloak and a scarf, with the helm hidden). Off duty (the plates hide, the base layer becomes a coat, with a hat, goggles, a scarf and a lantern). Front above, back below. Same stats in all four.</figcaption>
   </figure>
   <div class="grid" style="margin-top:22px">
     <div class="card"><h3>Three looks</h3><p><b>Armed</b>: the full armour. <b>Travelling</b>: only the soft parts, cloaks, scarves, hoods, sashes. <b>Off duty</b>: a coat and no glow, for the city. One page sets it for everything you wear. An option switches it on by itself in safe ground.</p></div>
@@ -328,8 +354,8 @@ ul.plain li { margin-bottom: 6px; }
 <section class="col">
   <h2>Cost and safety</h2>
   <div class="tiles">
-    <div class="tile"><div class="n">636</div><div class="l">triangles for the busiest house so far (Briarguard, 53 boxes). A weapon is 244 to 510; vanilla armour is 72.</div></div>
-    <div class="tile"><div class="n">63,000</div><div class="l">triangles for 60 players each in the heaviest house plus garments. A far model of six boxes takes over past 40 blocks.</div></div>
+    <div class="tile"><div class="n">516</div><div class="l">triangles for the busiest house so far (Briarguard, 43 boxes). A weapon is 244 to 510; vanilla armour is 72.</div></div>
+    <div class="tile"><div class="n">31,000</div><div class="l">triangles for 60 players each in the busiest house; about 52,000 at the worst case with garments. A far model of six boxes takes over past 40 blocks.</div></div>
     <div class="tile"><div class="n">+1.0 ms</div><div class="l">the most 60 armour stands may add, measured on your Mac before it ships. A gate, not a promise.</div></div>
     <div class="tile"><div class="n">0</div><div class="l">mixins. It stays in vanilla's armour path, so Sodium and our animations work as they do.</div></div>
   </div>
@@ -344,9 +370,9 @@ ul.plain li { margin-bottom: 6px; }
   <h2>How it is built, and when you look</h2>
   <div class="scroll"><table>
     <tr><th>Phase</th><th>What</th><th>Builder time</th><th>Gate</th></tr>
-    <tr><td><b>0 The kit</b></td><td>The part painter, packer, checks and review sheet from the proof; the house marker and the recipe generator; models for all four slots.</td><td>4 to 5 h</td><td>The sheet renders, checks pass</td></tr>
+    <tr><td><b>0 The kit</b></td><td>The part painter, packer, the overlap checker and lane helpers, and review sheet from the proof; the house marker and the recipe generator; models for all four slots.</td><td>5 to 6 h</td><td>The sheet renders, checks pass, zero overlaps</td></tr>
     <tr><td><b>1a Six default sets</b></td><td>E to S, four pieces each, glow, icons, the Frame.</td><td>3 to 4 h</td><td></td></tr>
-    <tr><td><b>1b House wave 1</b></td><td>One house a rank: Mossrunner, Briarguard, Gearwright, Rimeprayer, Skyfin, Keywright.</td><td>3 to 4 h</td><td><b>You approve a sheet of the twelve sets</b></td></tr>
+    <tr><td><b>1b House wave 1</b></td><td>One house a rank: Mossrunner, Briarguard, Gearwright, Rimeprayer, Skyfin, Keywright.</td><td>3 to 4 h</td><td><b>You approve a sheet of the twelve sets, with a hips-to-boots strip for each</b></td></tr>
     <tr><td><b>2 Light and motion</b></td><td>Glow layer, cloth and distance levels, first-person sleeve, the verb reactions, the 60-stand test.</td><td>3 to 4 h</td><td>Cost test, a look tour</td></tr>
     <tr><td><b>3 Sound and words</b></td><td>The sound kit and listening page, set moments, tooltips and the Armour tab with house chips.</td><td>3 to 4 h</td><td>You listen and read</td></tr>
     <tr><td><b>4 Uses</b></td><td>Appearance page, wear states, tells, the Frame's modules, dyeable cloth.</td><td>2 to 3 h</td><td>Tests, a short tour</td></tr>
@@ -354,12 +380,12 @@ ul.plain li { margin-bottom: 6px; }
     <tr><td><b>6 The Wardrobe</b></td><td>Three looks, 48 garments in two batches, the Tailor and unlock page, Lord and found garments, the stowed-weapon check.</td><td>8 to 10 h</td><td>A sheet, a tour</td></tr>
     <tr><td><b>7 Later, as data</b></td><td>More houses (about 34 in all), guild emblems, an armour shader, Raise.</td><td>open</td><td>Its own plan</td></tr>
   </table></div>
-  <p style="margin-top:12px"><b>About 30 to 40 builder hours for everything, about two days of wall clock with three builders</b>, scaled from the git history (all of AWAKEN took about 30 hours; a weapon batch of 24 to 42 took 20 to 40 minutes). Every wave ships on its own, so you can stop after any of them and keep a working game. What doesn't compress: CI runs, your look gates (one per wave), and the Mac's single perf slot.</p>
+  <p style="margin-top:12px"><b>About 31 to 41 builder hours for everything, about two days of wall clock with three builders</b>, scaled from the git history (all of AWAKEN took about 30 hours; a weapon batch of 24 to 42 took 20 to 40 minutes). Every wave ships on its own, so you can stop after any of them and keep a working game. What doesn't compress: CI runs, your look gates (one per wave), and the Mac's single perf slot.</p>
 </section>
 
 <section>
   <div class="col"><h2>Decisions for you</h2>
-  <p>Every one has a recommended answer. "Yes to all" is a fine reply. 3 and 11 are replaced by 17 and 18.</p></div>
+  <p>Every one has a recommended answer. "Yes to all" is a fine reply. 3 and 11 are replaced by 17 and 18; 28 and 29 are new.</p></div>
   <div class="scroll"><table>
     <tr><th>#</th><th>Decision</th><th>Recommended</th><th>Why</th></tr>
     <tr><td class="no">1</td><td>Build armour as parts, glow, cloth and sound in vanilla's armour path, for all six tiers and the Frame</td><td><span class="yes">Yes</span></td><td>Every piece has a working precedent in the repo, no mixins, the proof shows the look</td></tr>
@@ -389,11 +415,13 @@ ul.plain li { margin-bottom: 6px; }
     <tr><td class="no">25</td><td><b>Raise carries a house up a tier</b>, once the arms plan's Raise exists</td><td><span class="yes">Yes, later</span></td><td>Lets you stay in your look from E to S</td></tr>
     <tr><td class="no">26</td><td>The names are my proposals: rename any house or garment</td><td><span class="yes">Yes</span></td><td>The lore names are mine</td></tr>
     <tr><td class="no">27</td><td><b>Order:</b> the defaults plus one house a rank first, you approve the sheet, then wave 2 and the Wardrobe beside light and motion</td><td><span class="yes">Yes</span></td><td>No wave is built on a look you have not seen</td></tr>
+  <tr><td class="no">28</td><td><b>Adopt the lane rules and the overlap checker as a gate:</b> a set or garment that shares a plane or passes through another part cannot ship</td><td><span class="yes">Yes</span></td><td>The weapons have this gate; the armour needed it, and it is already written</td></tr>
+    <tr><td class="no">29</td><td><b>Your approval sheet shows hips to boots, standing and mid-stride, for every set</b>, beside the full figures</td><td><span class="yes">Yes</span></td><td>The glitches were at the hips, legs and boots</td></tr>
   </table></div>
 </section>
 
 <footer class="col small">
-  <p>Plan: <code>docs/armour/PLAN.md</code> (weapon review, audit, 26.3 checks, houses, wardrobe, failure register). Proofs: <code>docs/armour/proof/armour_proof.py</code> and <code>houses_proof.py</code>. Branch <code>pack/armour-plan</code>. Nothing here has been built or run in the game.</p>
+  <p>Plan: <code>docs/armour/PLAN.md</code> (weapon review, audit, 26.3 checks, houses, wardrobe, failure register). Proofs and the checker: <code>docs/armour/proof/</code> (<code>proof_sets.py</code>, <code>audit.py</code>, <code>render_all.py</code>). Branch <code>pack/armour-plan</code>. Nothing here has been built or run in the game.</p>
 </footer>
 
 </div>

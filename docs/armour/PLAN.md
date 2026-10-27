@@ -26,7 +26,7 @@ Sodium, other mods' poses and our own animations. About 14 to 18 builder hours a
 options. This is a good start but let's expand on the plan more." Part C (sections 12 to 15) answers it: **Houses** (24 sets at launch, up to about
 34 as data, each one a named hunt: the Part you spend picks the look), **a Wardrobe** (six slots of garments, three looks per piece including an
 off-duty look, a Tailor, a stowed weapon) and **a second proof** (`houses_D.png`, `garments.png`). Sections 1 to 11 stand; where Part C changes
-one, it says so (Decision 3 is replaced by 17, the build estimate by 15.3).
+one, it says so (Decision 3 is replaced by 17, the build estimate by 15.3). **Part D** (sections 17 to 21, after his second reply: "a lot looks glitchy... I want it clean") adds the overlap checker, the lane rules and Decisions 28 and 29; the sets in the renders are the clean versions.
 
 ## Part A. The weapons review (what Arms did, and what the armour must speak)
 
@@ -223,7 +223,7 @@ whether a 256x128 armour texture costs anything measurable; behaviour under a sh
 | Quality | better colour, still flat on E to C | deep, readable, animated; metals painted not reflective | the best light (studio metal, rim), arbitrary shapes |
 | Friction | none | none for players | needs a new skinning layer for every pose source (vanilla, PAL clips, Hands) |
 | Risk | low | low: every mechanism has an in-repo precedent (Silhouettes, WingLayer, AwLayers.Glow) | high: no precedent; mods that pose the body bypass it |
-| Perf (60 players) | trivial | about 500 triangles a set (B proof: 43 cubes), LOD down to 9 cubes | 250 to 500 triangles a piece plus a custom shader per piece |
+| Perf (60 players) | trivial | about 400 to 500 triangles a set (B proof: 35 cubes, the houses 41 to 43), LOD down to 9 cubes | 250 to 500 triangles a piece plus a custom shader per piece |
 | Cost | 4 to 6 h | 14 to 18 h | 30+ h |
 | Mixins | none | none | probably, for poses |
 
@@ -249,7 +249,7 @@ on every set rather than painted bevels, C-for-S-only after B ships; if the 60-w
 4. **Front and back both designed.** A player is seen from behind more than any other angle: every set has a back (a cape, a plate, a sigil).
 5. **Silhouette signatures** (section 4.3): each tier has one signature shape; a **silhouette check** (6.2) fails if two tiers' black
    outlines overlap more than 75% from the front, side or back.
-6. **Cube budget** per set including the six shell boxes: E 24, D 32, C 40, B 44, A 52, S 60; per piece: helmet 14, chest 24, legs 14, boots 8.
+6. **Cube budget** per set including the six shell boxes: E 28, D 46, C 44, B 46, A 52, S 60 (the clean proof sets are 33 to 43); per zone: head 9, shoulders and arms 7 a side, chest and back 8, hips and legs 5 a side, feet 2 a side. Garments add at most 12 cubes worn.
    Far model (beyond 40 blocks): the six shell boxes and at most three signature parts.
 7. **Painter** (same rules as weapons 4-6): base step by face, one-texel bevel bands lit up-left, contact shadow at joins, a hem or rim in a
    second material, a few deliberate marks, no noise. One function per material (4.2).
@@ -372,9 +372,9 @@ Names stay as they are (Hood, Vest…).
   The server decides every number; the new event is cosmetic. Guild colourways later are data, not code. Cosmetic-only monetisation is
   possible without touching power (`multiplayer-ambition`), and this plan builds the hook (`awaken:livery`) and nothing more.
 - **Privacy/ownership.** No new personal data; nothing is logged beyond a once-per-session warning on a load failure.
-- **Performance and cost (numbers).** MEASURED here: the proof sets are 43 (B) and 41 (C) cubes = 258 and 246 quads (516 and 492
-  triangles) against vanilla's 6 cubes (72 triangles) and a weapon's 244 to 510. 60 players in a full B set is about 31,000 triangles. The
-  glow pass draws 9 and 8 cubes. LOD: full cloth and glow to 24 blocks; rest pose and glow to 40; the six-cube far model beyond. Gate: **60
+- **Performance and cost (numbers).** MEASURED here: the clean proof sets are 35 (B) and 33 (C) cubes = 420 and 396 triangles (the houses 492 to
+  516) against vanilla's 6 cubes (72 triangles) and a weapon's 244 to 510. 60 players in a full B set is about 25,000 triangles. The
+  glow pass draws 8 and 7 cubes. LOD: full cloth and glow to 24 blocks; rest pose and glow to 40; the six-cube far model beyond. Gate: **60
   armour stands in S sets, 8 to 30 blocks out, at most +1.0 ms of frame time against the same stands in vanilla netherite** on the M-series
   Mac (a perf tour under `slot.sh`; perf tours do not run on CI).
 - **AI and retrieval:** not applicable. Everything is deterministic and seeded; no model, no network, no learning.
@@ -405,7 +405,7 @@ Names stay as they are (Hood, Vest…).
 ### 5.1 The proof (what was built, what it shows, what it does not)
 
 `docs/armour/proof/armour_proof.py` (disposable; reads gear.py's own software renderer, which uses the same cube, UV and pose maths as
-`ModelPart`; writes only PNGs under `docs/armour/proof/renders/`). It builds **B Veilwoven (43 cubes)** and **C Gatewrought (41 cubes)** to the
+`ModelPart`; writes only PNGs under `docs/armour/proof/renders/`). It builds **B Veilwoven (35 cubes)** and **C Gatewrought (33 cubes)** to the
 rules in A.2, paints them with a painter per material, and renders them beside today's textures (same renderer, same scale, same light).
 
 - **Shows:** the same six body boxes become a hooded robe with a layered capelet, a back cape with a sigil, a sash, split panels, silver cuffs and
@@ -634,8 +634,8 @@ three small land drops (a Greenwild pelt, a Sunscorch membrane, a Frostwild fur)
 - **A spec** like the proof's: parts (name, parent, box, pose, material, swing group, glow flag, which look shows it), written to
   `assets/awaken/gear/<house>.json` (schema 2 gets a `house` and `looks` field), and its textures (outer and inner layer, glow, two wear states), all
   generated by `gear_parts.py`.
-- **Budget.** Cubes per set including the six shell boxes: E 32, D 54, C 56, B 56, A 64, S 72 (the proof's houses: 53, 49, 48; the first proof's sets
-  43 and 41). Briarguard is 636 triangles; a weapon is 244 to 510 and vanilla's armour is 72. Garments add at most 16 cubes worn (13.2).
+- **Budget.** Cubes per set including the six shell boxes: E 28, D 46, C 44, B 46, A 52, S 60 (the clean proof's houses: 43, 42, 41; B and C: 35 and
+  33). Briarguard is 516 triangles; a weapon is 244 to 510 and vanilla's armour is 72. Garments add at most 12 cubes worn (13.2).
 - **Reaction profile.** Every house has one ambient effect, one reaction to a verb and one set moment (12.5); the engine and sprites are shared.
 - **Recipes.** Four shaped recipes per house (generated), grouped under the tier's group, stamping the house; the existing default recipes unchanged.
   JEI and the recipe book show them as alternatives; each shows "Part: Briar Tusk (the Briar Sow)" in the same plain words as the arms plan.
@@ -681,11 +681,11 @@ the data (`awaken:house`) already carries what it would need.
 ### 12.8 The second proof (what it shows, what it doesn't)
 
 `docs/armour/proof/houses_proof.py` builds **three D houses**, one for each named beast, to the same style sheet and draws them beside today's
-Beastbound (`renders/houses_D.png`: front, three-quarter, back and night, with the glow pass). Briarguard (53 cubes, 636 triangles), Wyrmscale (49, 588)
-and Antlerhold (48, 576) read as three different characters from three angles, and only the glow-bearing parts shine at night: the pollen eyes, the glass
+Beastbound (`renders/houses_D.png`: front, three-quarter, back and night, with the glow pass). Briarguard (43 cubes, 516 triangles), Wyrmscale (42, 504)
+and Antlerhold (41, 492) read as three different characters from three angles, and only the glow-bearing parts shine at night: the pollen eyes, the glass
 fins and tail barb, the antler tips.
 
-It shows that a house is not a recolour: different silhouette, different material (bone and studded leather, sand scale and glass, frost fur and
+It shows that a house is not a recolour (this is the clean version, Part D; the first version of these sets had glitches): different silhouette, different material (bone and studded leather, sand scale and glass, frost fur and
 antler), different glow. It does not show motion (the tail and cloak are posed by hand in the garments sheet only), real light, or the other 21 sets.
 The painters for scale and fur were improved for it and are still rough (the Wyrmscale scales read as banded lames, the Antlerhold fur as speckle); a
 real pass would iterate them on a sheet, as the weapons were.
@@ -715,7 +715,7 @@ off-duty hunters is the MMO-lite picture; a town full of armed ones is the other
 ### 13.2 Garments: six slots of clothes that sit on any set
 
 Garments are **small part groups that attach to the worn piece in their slot** and hide whatever they replace (a hat hides the helm's parts, a scarf sits
-under a collar). They are drawn by the same model and cloth rules, so a cloak bends and a scarf trails. They add at most 16 cubes worn and hide beyond
+under a collar). They are drawn by the same model and cloth rules, so a cloak bends and a scarf trails. They add at most 12 cubes worn and hide beyond
 24 blocks, except the cloak.
 
 | Slot (attaches to) | Launch list (about 8 each, 48 in all, in two batches) |
@@ -792,7 +792,7 @@ looks), `arms_sources` for every house Part. What CI cannot prove is how a house
 
 | Phase | Scope | Builder time | Gate |
 |---|---|---|---|
-| **0 · The kit** | the part painter, packer, checks and sheet from the proof; schema 2 with `house` and `looks`; `ArmourModels` for all four slots; the `awaken:house` component and the recipe generator | 4-5 h | the sheet renders, checks pass |
+| **0 · The kit** | the part painter, packer, **overlap checker and lane helpers (Part D)**, and sheet from the proof; schema 2 with `house` and `looks`; `ArmourModels` for all four slots; the `awaken:house` component and the recipe generator | 5-6 h | the sheet renders, checks pass |
 | **1a · The six defaults** | the six sets of 4.3 and the Frame | 3-4 h | |
 | **1b · House wave 1** | one house a rank: Mossrunner, Briarguard, Gearwright, Rimeprayer, Skyfin, Keywright (six more sets) | 3-4 h | **Look 1: Euan approves a sheet of the twelve sets beside the weapons** |
 | **2 · Light and motion** | glow layer, cloth and distance levels, first-person sleeve, the three verb reactions, the 60-stand test | 3-4 h | **Cost**, **Look 2** |
@@ -813,14 +813,14 @@ about 8 to 10 h, 48 garments 4 to 6 h, the Tailor, page and unlocks 3 to 4 h.
 - **Parts A to B alone** (the six defaults, glow, cloth, sound, moments, uses): 14 to 19 h, as before.
 - **Plus Houses** (waves 1 and 2): +8 to 11 h.
 - **Plus the Wardrobe:** +8 to 10 h.
-- **All of it: about 30 to 40 builder hours; with three builders about two days of wall clock**, every wave shippable on its own, so Euan can stop after
+- **All of it: about 31 to 41 builder hours; with three builders about two days of wall clock**, every wave shippable on its own, so Euan can stop after
   any of them and keep a working game. What doesn't compress: CI, Euan's look gates (one per wave), the listening page, and the Mac's perf slot.
 
 ### 15.4 Risks specific to Part C
 
 - **Taste at scale.** 24 sets is a lot of look to approve: Look 1 is twelve sets, then one sheet per batch, so no wave is built on an unseen look.
 - **E has no unique Parts** (12.3): three small drops may be needed under the regions plan.
-- **Cost of garments on top of houses.** Budgeted (worst worn 88 cubes, 1,056 triangles) and tested with the stand bench; garments hide with distance.
+- **Cost of garments on top of houses.** Budgeted (worst worn 72 cubes, 864 triangles; the heaviest look so far is 43) and tested with the stand bench; garments hide with distance.
 - **The stowed weapon** may not draw through a layer (13.4), with a fallback.
 - **Spoiler rule.** Houses and garments you have not met must not be listed; the Armoury and the Appearance page must filter by what the player knows (the same
   rule the arms plan already applies).
@@ -841,7 +841,120 @@ about 8 to 10 h, 48 garments 4 to 6 h, the Tailor, page and unlocks 3 to 4 h.
 | 26 | The names in 12.3 are proposals: you rename any house or garment freely | **Yes** | the lore names are mine |
 | 27 | **Order:** wave 1 (defaults plus one house a rank) first, you approve the sheet, then waves 2 and the Wardrobe in parallel with light and motion | **Yes** | no wave built on a look you haven't seen |
 
-## 17. Not verified, and left out on purpose (all parts)
+---------------------------------------------------------------------------------------------------------------------
+
+## Part D. Clean: no overlaps, one hero per zone (added after Euan's second reply)
+
+> "Okay HUGE level up, but a lot of these feel very clunky like too much is going on in a single place so things overlap. I don't want it
+> simplified, but I do want it clean looking and really AAA level. Right now a lot looks glitchy." (2026-10-27, with three crops of the
+> houses' hips, legs and boots)
+
+He is right, and it is measurable. The weapons had a checker that fails a model whose faces share a plane (`voxel.py` `check()`, A.2 rule 2), and my
+proof sets never had one. Euan's crops were the symptom; this part is the diagnosis, the rules and a gate. It keeps the richness and removes the
+clutter and the glitches. Everything in Parts A to C stands except the numbers it changes (the budgets and the triangle counts, patched above).
+
+## 17. What was wrong (MEASURED)
+
+I wrote the checker (`docs/armour/proof/audit.py`): it poses a set at rest and a stride each way (0.55 rad) and reports **zfight** (two faces on one plane
+facing the same way: the flicker you saw as vertical stripes), **cross** (one box passing through another and poking out) and **buried** (a box wholly
+inside another). A hinge on a cloth chain, a wrap around a limb's own shell, and a spike planted less than 30% into a plate are allowed. It was run on
+the sets exactly as Euan saw them (commit e6d649f2):
+
+| Set (first version) | Cubes | Findings | zfight | cross |
+|---|---|---|---|---|
+| B Veilwoven | 43 | 19 | 9 | 10 |
+| C Gatewrought | 41 | 48 | 27 | 21 |
+| Briarguard | 53 | 18 | 7 | 11 |
+| Wyrmscale | 49 | 14 | 9 | 5 |
+| Antlerhold | 48 | 22 | 15 | 7 |
+| Look: Armed / Travelling / Wayfarer / Off duty | 41 / 49 / 54 / 25 | 48 / 65 / 61 / 4 | 27 / 34 / 27 / 2 | 21 / 31 / 34 / 2 |
+
+The causes, in the order they matter:
+
+1. **The two legs' layers shared planes.** Vanilla's leg boxes overlap in the middle (my shells did too), and the thigh panels were 5 wide on legs 3.8 apart, so
+   left and right panels sat on the same plane for a 1.2 px strip: the vertical stripes in the Antlerhold and Wyrmscale crops. The boot cuffs (7 wide on legs 3.8
+   apart) were worse: the two cuffs overlapped by 3 px.
+2. **Too many things in one band.** A belt, a sash, its tails, a skirt front and back, a knee plate, a cuff and a toe cap were all hung in about 10 px of leg
+   and hip, each its own box, so they passed through one another (the green and white boxes in the Briarguard crop were its knee thorn passing through its skirt).
+3. **The arms hang beside the hips.** The belt, the sash and the belly lames were wider than the body, so they shared the hip band with the arms' cuffs: faces on
+   one plane and boxes through each other. (Of all the causes this was the one I did not see until the checker named it.)
+4. **Flush edges.** A pauldron lame started exactly on the shell's top plane, another had its inner edge 0.05 px from the shell's side, and a cuff's bottom matched the arm's.
+5. **Layered cloth with the same swing.** A scarf and a cloak swung to the same angle on the same side, so they passed through each other; a spike was set to
+   pass through a plate (not stand on it).
+
+## 18. The clean rules (these join the style sheet, 4.1; the checker enforces the ones it can)
+
+1. **One hero per zone.** The zones are head, shoulders, chest front, back, hips and legs, feet. Each has one shape that carries it (a hood, a pauldron stack, a
+   rib cuirass, a cape, a split robe, a boot cuff); supporting parts stand on it and never share its volume; one accent (the glow) at most.
+2. **Lanes.** Every limb's height is cut into bands, each owned by one part, with a gap of at least 0.3 px between bands. The proof's map is in the header of
+   `proof_sets.py`: a leg is panel (0.2 to 6.4), knee (6.9 to 9.1), boot cuff (9.5 to 10.9), toe (11.3 to 12.9); an arm is pauldron (-4.8 to 0), elbow (3.8 to 6.2),
+   cuff (6.8 to 10.2).
+3. **Left and right never touch.** The leg shell is slimmer and outer-biased (flush with the centre line inside, 0.5 out on the outside, front and back), and every leg part
+   stays on its own side of the centre line with a 0.2 gap, so the gap between the legs reads as a clean split.
+4. **Arm-clear lane.** Body-parented bands below the shoulders stay within 3 px of the centre line, and arm-parented parts stay at least 3.2 px from it, so a
+   belt can never meet a cuff. The arms hide the body's sides anyway.
+5. **No flush edges.** Two same-facing faces closer than 0.08 px are a plane fight; keep 0.25 px between a part's edge and its neighbour's (a gem 0.3 off the
+   brow's bottom, a lame never on the shell's own plane).
+6. **Stacks step.** Stacked lames touch, and each is wider or deeper than the one above by 0.25 to 1.0 px, so a stack reads as a step, never an overlap.
+7. **Hanging cloth is thin and hangs outside.** One pixel thick, hung from a pivot at its top, ending 0.4 px short of the next band; layered garments go behind
+   one another in a fixed order (a scarf's tails, then the cloak behind them) and the outer layer swings more than the inner one.
+8. **Plant, don't pierce.** A spike stands on a plate (under 30% of its volume inside it); it is never pushed through one.
+9. **Paint small detail, don't model it.** A box under 1.5 px is an accent (a gem, a clasp) and there are few of them; ribs, studs and scales are painted.
+10. **Garments hide what they replace** (a hat hides the helm, a cloak the back plate) and never share the volume.
+
+**The gate.** `python3 audit.py` (the real kit: `gear_parts.py check`, and a GameTest `gear_parts_clean`): **zero zfight, cross and buried** at rest and a stride
+each way for every set and every look. A full sprint swings the legs to 1.0 rad; the hip clips there are looked at by eye in the tour, not gated, because a
+hanging panel at that angle is the one case where the geometry honestly cannot clear and a clamp (the panel stops swinging at 0.55) is the fix in the real cloth code.
+Look 1 gets one more page: **the lower body, front and back, at rest and mid-stride, for every set** (the crops Euan took), beside the full figures.
+
+## 19. The result (MEASURED)
+
+I rebuilt all five sets and the garments to these rules (`proof_sets.py`), in lanes, and ran the checker until it reported nothing:
+
+| Set | Cubes | Triangles | Findings, before then after |
+|---|---|---|---|
+| B Veilwoven | 35 (was 43) | 420 | 19 then **0** |
+| C Gatewrought | 33 (was 41) | 396 | 48 then **0** |
+| Briarguard | 43 (was 53) | 516 | 18 then **0** |
+| Wyrmscale | 42 (was 49) | 504 | 14 then **0** |
+| Antlerhold | 41 (was 48) | 492 | 22 then **0** |
+| Looks: Armed, Travelling, Wayfarer, Off duty | 33, 38, 43, 26 | 396, 456, 516, 312 | 48, 65, 61, 4 then **0 in all four** |
+
+It is not simpler: the sets keep their silhouettes (tusks, antlers, fins, a tail, a cape, stacked pauldrons), glow and materials. They are organised: fewer, larger,
+better-placed boxes (7 to 10 fewer cubes a set), with the bands visible. `renders/before_after_lower.png` puts the first and the clean version of each house's
+hips, legs and boots side by side, front and mid-stride (the shot of Euan's crops); `renders/lower_*.png` is that strip for every set; `renders/audit.txt` is the
+checker's result.
+
+What the checker cannot tell: whether it is **beautiful** (that is Look 1), whether the **textures** are clean (a fur painter that reads as speckle is not a
+geometry fault; I calmed the scale and fur painters in this pass and they still need a sheet), and what a **full sprint** or **swimming** does to hanging parts (not posed here). It also
+only knows boxes: a gem on a cuff is checked, a gradient on a texture is not.
+
+**What this changes in the plan:**
+- Phase 0 (the kit) gains the checker and the lane helpers, which are written: +1 h (now 5 to 6 h). Nothing else moves; every set is built to the rules, which cost
+  less than rebuilding it later.
+- The cube budgets drop (4.1, 12.4) and the triangle counts with them (4.9).
+- Two decisions, 28 and 29 (section 21).
+
+## 20. Failure register and tests added by Part D
+
+| # | Case | Detection | Containment | What the player sees | Test |
+|---|---|---|---|---|---|
+| 27 | a new house or garment shares a plane or passes through another part | the checker at build time | the spec is refused | nothing (it never ships) | `gear_parts_clean` |
+| 28 | a garment lands in a lane another garment owns | each garment names its lane and layer; the checker runs on every garment pair that can be worn together | refuse the spec | | `gear_wardrobe_rules` |
+| 29 | a hanging panel clips at a full sprint | the sprint pose is looked at by eye; a clamp keeps swing at or under 0.55 rad | | a panel that stops swinging | the look tour |
+| 30 | a texture reads as noise | Look 1 sheet | repaint | | Euan's eye |
+
+Tests added (one per mechanism): `gear_parts_clean` (every set and look: no zfight, cross or buried at rest and a stride each way); the existing
+`gear_parts_valid` budgets use the new cube numbers.
+
+## 21. Decisions added by Part D
+
+| # | Decision | Recommended | Why |
+|---|---|---|---|
+| 28 | Adopt **the lane rules and the overlap checker as a gate**: a set or garment that shares a plane or passes through another part cannot ship | **Yes** | the weapons have this gate; the armour needed it, and it is already written |
+| 29 | **Look 1 shows the lower body at rest and mid-stride for every set**, beside the full figures | **Yes** | the glitches were at the hips, legs and boots; the sheet should look where the problems are |
+
+## 22. Not verified, and left out on purpose (all parts)
 
 - UNVERIFIED (Part C): which E items are land-unique (12.3); whether a render layer can draw the stowed weapon (13.4); that the Wyrmscale and Antlerhold painters (scale, fur) are still rough.
 - UNVERIFIED: Lens bloom on the emissive pass; the cost of a 256x128 armour atlas; how the Frame's client code draws its modules today; how
@@ -850,6 +963,6 @@ about 8 to 10 h, 48 garments 4 to 6 h, the Tailor, page and unlocks 3 to 4 h.
 - Not built, not run: no Java, no client, no tour, no gate. The proof is a still.
 - Left out: new stats or bonuses, mobs wearing sets, a cloak slot, vertex physics, weather-wet cloth, Marked armour, armour for animals.
 
-## 18. Files
+## 23. Files
 
-`docs/armour/PLAN.md` (this); `docs/armour/proof/armour_proof.py`, `houses_proof.py` and `docs/armour/proof/renders/*.png` (the two proofs); `docs/armour/page.src.html`, `build_page.py` and `page.html` (the approval page).
+`docs/armour/PLAN.md` (this); `docs/armour/proof/` (`armour_proof.py` the engine, `proof_sets.py` the sets, `audit.py` the checker, `render_all.py` the driver, `renders/*.png`); `docs/armour/page.src.html`, `build_page.py` and `page.html` (the approval page).

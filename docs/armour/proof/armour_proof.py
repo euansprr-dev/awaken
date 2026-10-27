@@ -1,4 +1,5 @@
-"""Armour proof of concept (docs/armour/PLAN.md §5): disposable, changes no production file.
+"""The armour proof engine (docs/armour/PLAN.md §5): materials, painters, the part model and a renderer. Disposable, changes no production file.
+The sets are in proof_sets.py, the drivers in render_all.py, the overlap checker in audit.py.
 
 Question it answers: if a set's model gets real parts (layered cloth, plates, hanging pieces, glass) painted to the weapon
 style's rules (whole-texel boxes, one-texel bevels lit from the upper left, contact shadows, three or four hue-shifted
@@ -13,7 +14,7 @@ frame, blurred a little for bloom), not the game's emissive pipeline.
 What it does NOT prove: that this runs at 60 players (it is a still image), that the parts animate (the walking frame
 poses the swinging parts by hand), that Lens bloom looks like the blur, or that the real model bakes (no Java was run).
 
-    python3 docs/armour/proof/armour_proof.py OUTDIR        sheet.png, closeup.png, materials.png, night.png
+    python3 docs/armour/proof/render_all.py OUTDIR
 """
 import math
 import os
@@ -148,17 +149,15 @@ def mail(face, i, j, fw, fh, o):
 
 
 def scale(face, i, j, fw, fh, o):
-    """Scales three texels wide and three tall, each row offset by one: a lit crown, a base tone, a shadowed lower lip and a seam."""
+    """Scales three texels wide and three tall, each row offset by one: a lit crown, a body, a shadowed lip and a seam."""
     r = o.get("ramp", "lord")
     row = j // 3
     c = (i + (row % 2)) % 3
     k = j % 3
     step = o.get("base", 3) + (1 if face == "up" else 0)
-    step += {0: 2, 1: 0, 2: -2}[k]
-    if c == 0:
+    step += {0: 1, 1: 0, 2: -1}[k]
+    if c == 0 and k != 0:
         step -= 1                           # the seam between two scales
-    elif c == 1 and k == 0:
-        step += 1                           # the crown catches the light
     step += bevel(face, i, j, fw, fh, top=1) if o.get("bevel", True) else 0
     if o.get("rim") and face in SIDES and (j >= fh - 1 or i == 0) and fh > 3:
         return col(o["rim"], 4), None
@@ -168,10 +167,8 @@ def scale(face, i, j, fw, fh, o):
 def hide(face, i, j, fw, fh, o):
     r = o.get("ramp", "pelt")
     step = o.get("base", 3) + FACE[face]
-    if (i * 5 + (j // 2) * 3) % 7 in (0, 1):
-        step -= 1                           # a strand, two texels long
-    elif (i * 3 + (j // 2) * 5) % 9 == 0:
-        step += 1
+    if i % 3 == 0 and ((j // 3) + i // 3) % 2 == 0:
+        step -= 1                           # a strand, three texels long, on a regular beat
     if o.get("fringe") and face in SIDES and j >= fh - 1:
         step += 1 if i % 2 == 0 else -2
     step += bevel(face, i, j, fw, fh, top=1) if o.get("bevel", True) else 0
@@ -360,81 +357,17 @@ def thread_diamond(i, j, fw, fh):
 
 
 def shell_parts(kind="silk", **o):
-    """The base layer: vanilla's armour boxes (outer 1.0, inner 0.5), in their vanilla UV places."""
+    """The base layer. Head, body and arms are vanilla's armour boxes (outer 1.0). The legs are slimmer and outer-biased (0.5 out
+    on the outside and front and back, flush with the centre line inside), so the two legs' layers never share a plane the way
+    vanilla's overlapping leg boxes do. The player's own leg is 0.1 wider than that on the inside, where nothing shows."""
     sh = [part("sh_head", "head", (-4, -8, -4, 8, 8, 8), kind, grow=1.0, **o),
           part("sh_body", "body", (-4, 0, -2, 8, 12, 4), kind, grow=1.0, **o),
           part("sh_arm_r", "right_arm", (-3, -2, -2, 4, 12, 4), kind, grow=1.0, **o),
-          part("sh_leg_r", "right_leg", (-2, 0, -2, 4, 12, 4), kind, grow=0.9, **o)]
-    sh[0]["uv"], sh[1]["uv"], sh[2]["uv"], sh[3]["uv"] = (0, 0), (16, 16), (40, 16), (0, 16)
+          part("sh_leg_r", "right_leg", (-2.5, -0.5, -2.5, 4.4, 13.4, 5), kind, grow=0.0, **o)]
     left = {"sh_arm_r": "sh_arm_l", "sh_leg_r": "sh_leg_l", "right_arm": "left_arm", "right_leg": "left_leg"}
     return sh + mirrored(sh[2:], left)
 
 
-def veilwoven_v2():
-    """B, the Veil's weavers: dark silk robe under a lighter hood and mantle, mirror-silver trim, spirit glass."""
-    s = []
-    for p in shell_parts("silk", base=2, fold=4):
-        if p["name"] == "sh_head":
-            p["o"].update(window=(1, 6, 3, 7))
-        if p["name"] in ("sh_arm_r", "sh_arm_l"):
-            p["o"].update(fold=0)
-        if p["name"] == "sh_body":
-            p["o"].update(thread=thread_line)
-        if p["name"] in ("sh_leg_r", "sh_leg_l"):
-            p["o"].update(base=1, fold=0)
-        s.append(p)
-    # --- Cowl: a hood of three slabs and a brim, a curling peak, a silver edge and a gem at the brow
-    hood = [
-        part("hood_top", "head", (-5.5, -10.5, -5.5, 11, 2, 11), "silk", base=3),
-        part("hood_back", "head", (-5.5, -9, 4.5, 11, 8, 2), "silk", base=3, fold=4),
-        part("hood_side_r", "head", (-7, -9, -5.5, 2, 9, 10), "silk", base=3, fold=3, hem="silver", hem_rows=1),
-        part("hood_brim", "head", (-5.5, -9, -7, 11, 3, 2), "silk", base=4, hem="silver", hem_rows=1),
-        part("peak_1", "head", (-2, -4, -2, 4, 4, 4), "silk", pose=(0, -9.5, 3.5, -0.5, 0, 0), swing=-0.15, base=3),
-        part("peak_2", "peak_1", (-1.5, -4, -1.5, 3, 4, 3), "silk", pose=(0, -4, 0, -0.7, 0, 0), swing=-0.3, base=4),
-        part("brow_gem", "head", (-1, -6.5, -7.8, 2, 2, 1), "glass"),
-        part("cape_a", "body", (-4.5, 0, 0, 9, 8, 1), "silk", pose=(0, 1.0, 4.6, 0.04, 0, 0), swing=0.28, base=3, fold=3,
-             contact=True, thread=thread_diamond),
-        part("cape_b", "cape_a", (-4.5, 0, 0, 9, 8, 1), "silk", pose=(0, 8, 0, 0.1, 0, 0), swing=0.5, base=3, fold=3,
-             hem="silver", hem_rows=2),
-    ]
-    s += hood + mirrored([hood[2]], {"hood_side_r": "hood_side_l"})
-    # --- Mantle: two layers of capelet with a silver edge, a clasp, a glass sigil, a sash with swinging tails, cuffs
-    s += [
-        part("mantle_1", "body", (-8.5, 0.3, -4, 17, 2, 8), "silk", base=4),
-        part("mantle_2", "body", (-9.5, 1.5, -4.5, 19, 2, 9), "silk", base=3, hem="silver", hem_rows=1, contact=True),
-        part("clasp", "body", (-1.5, 1.2, -5.7, 3, 3, 1), "plate", base=4),
-        part("clasp_gem", "body", (-0.5, 2.0, -6.6, 1, 1, 1), "glass", ramp="rose"),
-        part("tabard", "body", (-3.5, 0, 0, 7, 8, 1), "silk", pose=(0, 3.8, -4.1, 0, 0, 0), swing=-0.08, base=4,
-             hem="silver", hem_rows=2, thread=thread_diamond, contact=True),
-        part("belt", "body", (-4.5, 9, -3.5, 9, 2, 7), "silk", base=1, bevel=True),
-        part("buckle", "body", (-1.5, 8.8, -4.5, 3, 2.4, 1), "plate", base=4),
-        part("sash_tail_l", "body", (-1, 0, 0, 2, 9, 1), "silk", pose=(2.4, 10.5, -4.6, 0, 0, 0), swing=-0.35, base=4,
-             hem="silver", hem_rows=1, contact=True),
-        part("sash_tail_r", "body", (-1, 0, 0, 2, 7, 1), "silk", pose=(-2.4, 10.5, -4.6, 0, 0, 0), swing=-0.55, base=4,
-             hem="silver", hem_rows=1, contact=True),
-        part("cuff_r", "right_arm", (-4.5, 6.5, -3.5, 7, 4, 7), "plate", base=3, rivet=True),
-        part("cuff_gem_r", "right_arm", (-1.5, 7.5, -4.4, 2, 2, 1), "glass"),
-        part("sleeve_r", "right_arm", (-4.5, 10.2, -3.5, 7, 3, 7), "silk", base=4, hem="silver", hem_rows=1, fold=2),
-    ]
-    s += mirrored([s[-3], s[-2], s[-1]], {"cuff_r": "cuff_l", "cuff_gem_r": "cuff_gem_l", "sleeve_r": "sleeve_l",
-                                          "right_arm": "left_arm"})
-    # --- Leggings: split robe panels that hang from each thigh, front and back
-    s += [
-        part("panel_f_r", "right_leg", (-2.5, 0, 0, 5, 10, 1), "silk", pose=(0, -1, -3.9, 0, 0, 0), swing=-0.1, base=3, fold=3,
-             hem="silver", hem_rows=1, contact=True),
-        part("panel_b_r", "right_leg", (-2.5, 0, 0, 5, 10, 1), "silk", pose=(0, -1, 2.9, 0, 0, 0), swing=0.25, base=2, fold=3,
-             hem="silver", hem_rows=1, contact=True),
-        part("knee_r", "right_leg", (-2, 0, 0, 4, 3, 1), "plate", pose=(0, 4, -4.9, 0, 0, 0), base=4, rivet=True),
-    ]
-    s += mirrored(s[-3:], {"panel_f_r": "panel_f_l", "panel_b_r": "panel_b_l", "knee_r": "knee_l", "right_leg": "left_leg"})
-    # --- Treads: a turned cuff of silk, a silver toe cap, a glass stud at the ankle
-    s += [
-        part("cuff_boot_r", "right_leg", (-3.5, 8, -3.5, 7, 2, 7), "silk", base=4, hem="silver", hem_rows=1),
-        part("toe_r", "right_leg", (-2.5, 10, -4.6, 5, 2, 1.7), "plate", base=4),
-        part("ankle_gem_r", "right_leg", (-3.9, 9, -0.5, 1, 1, 1.5), "glass"),
-    ]
-    s += mirrored(s[-3:], {"cuff_boot_r": "cuff_boot_l", "toe_r": "toe_l", "ankle_gem_r": "ankle_gem_l", "right_leg": "left_leg"})
-    return s
 
 
 def rune_line(i, j, fw, fh):
@@ -449,59 +382,6 @@ def rune_cross(i, j, fw, fh):
     return (i == fw // 2 and 1 < j < fh - 1) or (j == fh // 3 and 1 < i < fw - 2)
 
 
-def gatewrought_v2():
-    """C, the Gate's own plate: gate-slate lames, brass rims, a signal-blue rune that runs up the set."""
-    S = "slate"
-    s = []
-    for p in shell_parts("plate", ramp=S, base=2):
-        if p["name"] == "sh_head":
-            p["o"].update(window=[(1, 6, 4, 4), (3, 4, 5, 7)])
-        if p["name"] == "sh_body":
-            p["o"].update(rune=rune_line, glowc="signal")
-        if p["name"] in ("sh_leg_r", "sh_leg_l"):
-            p["o"].update(base=1)
-        s.append(p)
-    P_ = lambda *a, **k: part(*a, **dict(dict(ramp=S), **k))  # noqa: E731
-    # --- Helm: a great helm with a T-slot, a brass crest, cheek guards and a rune on the brow
-    helm = [
-        P_("helm_crown", "head", (-5.5, -10, -5.5, 11, 2, 11), "plate", base=3),
-        P_("helm_brow", "head", (-5.5, -8.5, -6.5, 11, 3, 1.5), "plate", base=3, trim="brass", rune=rune_bar, glowc="signal"),
-        P_("helm_cheek_r", "head", (-6.5, -4, -6, 2, 5, 4), "plate", base=3, rivet=True),
-        P_("crest", "head", (-0.5, 0, 0, 1, 5, 11), "plate", pose=(0, -14, -5.5, 0, 0, 0), base=4, ramp="brass"),
-        P_("crest_fin", "head", (-0.5, 0, 0, 1, 3, 4), "plate", pose=(0, -16, 1.5, 0, 0, 0), base=4, ramp="brass"),
-        P_("gorget", "head", (-5, 0, -3.5, 10, 2, 7), "plate", pose=(0, 0.2, 0, 0, 0, 0), base=3, trim="brass"),
-    ]
-    s += helm + mirrored([helm[2]], {"helm_cheek_r": "helm_cheek_l"})
-    # --- Cuirass: breastplate and three belly lames, pauldrons of three lames each with a brass rim, a rune channel
-    s += [
-        P_("breast", "body", (-4.5, 0.5, -4.3, 9, 7, 1.5), "plate", base=3, rivet=True, trim="brass", rune=rune_line, glowc="signal"),
-        P_("lame_1", "body", (-4.5, 7.5, -3.9, 9, 1.5, 1.5), "plate", base=3),
-        P_("lame_2", "body", (-4.8, 8.8, -3.9, 9.6, 1.5, 1.8), "plate", base=4),
-        P_("lame_3", "body", (-5.0, 10.1, -3.9, 10, 1.5, 2.1), "plate", base=3, trim="brass"),
-        P_("back_plate", "body", (-4.5, 0.5, 2.8, 9, 8, 1.5), "plate", base=3, rivet=True, rune=rune_cross, glowc="signal"),
-        P_("pauld_1_r", "right_arm", (-5, -3.5, -4, 8, 2, 8), "plate", base=4, trim="brass"),
-        P_("pauld_2_r", "right_arm", (-5.5, -1.7, -4.4, 9, 2, 8.8), "plate", base=3),
-        P_("pauld_3_r", "right_arm", (-6, 0.1, -4.8, 10, 2, 9.6), "plate", base=3, trim="brass"),
-        P_("elbow_r", "right_arm", (-4.5, 4.5, -3.5, 7, 3, 7), "plate", base=4, ramp="brass", rivet=True),
-        P_("vambrace_r", "right_arm", (-4.5, 7.5, -3.5, 7, 4, 7), "plate", base=3, rune=rune_bar, glowc="signal", trim="brass"),
-    ]
-    s += mirrored(s[-5:], {"pauld_1_r": "pauld_1_l", "pauld_2_r": "pauld_2_l", "pauld_3_r": "pauld_3_l", "elbow_r": "elbow_l",
-                           "vambrace_r": "vambrace_l", "right_arm": "left_arm"})
-    # --- Greaves: tassets that hang from the hip, a knee cop, a shin plate, sabatons with a brass toe
-    s += [
-        P_("tasset_r1", "right_leg", (-3, 0, 0, 6, 4, 1.5), "plate", pose=(0, -1.5, -4.2, 0, 0, 0), swing=-0.08, base=3),
-        P_("tasset_r2", "right_leg", (-3, 0, 0, 6, 4, 1.5), "plate", pose=(0, 2, -4.4, 0, 0, 0), swing=-0.12, base=4, trim="brass"),
-        P_("knee_r", "right_leg", (-2.5, 0, 0, 5, 3, 2), "plate", pose=(0, 4.8, -4.5, 0, 0, 0), base=4, ramp="brass", rivet=True),
-        P_("shin_r", "right_leg", (-2.5, 8, -3.9, 5, 4, 1.2), "plate", base=3, rune=rune_line, glowc="signal"),
-        P_("sabaton_r", "right_leg", (-3.2, 9.8, -4.8, 6.4, 2.2, 2.3), "plate", base=4, ramp="brass"),
-        P_("boot_cuff_r", "right_leg", (-3.5, 7.2, -3.5, 7, 1.5, 7), "plate", base=3, trim="brass"),
-    ]
-    s += mirrored(s[-6:], {"tasset_r1": "tasset_l1", "tasset_r2": "tasset_l2", "knee_r": "knee_l", "shin_r": "shin_l",
-                           "sabaton_r": "sabaton_l", "boot_cuff_r": "boot_cuff_l", "right_leg": "left_leg"})
-    # --- the one piece of cloth: a surcoat panel in gate-blue under the lames
-    s += [part("surcoat", "body", (-3.5, 0, 0, 7, 9, 1), "silk", pose=(0, 11.5, -3.6, 0, 0, 0), swing=-0.15, ramp="signal", base=3,
-               hem="brass", hem_rows=1, contact=True, fold=3)]
-    return s
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -633,32 +513,3 @@ def grid(rows, w=W, h=H, bg=BG, labels=None):
         for c, im in enumerate(row):
             sheet.alpha_composite(im.convert("RGBA"), (c * w, r * h))
     return sheet
-
-
-def main(out):
-    os.makedirs(out, exist_ok=True)
-    size = (256, 192)
-    kw = dict(scale=8, size=(W, H), centre=CTR, pitch=-0.2)
-    yaws = [0.0, 0.7, math.pi / 2, math.pi]
-    for tier, fn, tag in (("B", veilwoven_v2, "B"), ("C", gatewrought_v2, "C")):
-        parts, alb, glw = prepare(fn(), size)
-        alb.resize((alb.width * 4, alb.height * 4), Image.NEAREST).save(os.path.join(out, "atlas_%s.png" % tag))
-
-        def today(yaw, t=tier):
-            return G.render_set(t, yaw, scale=8, size=(W, H), centre=CTR, pitch=-0.2)
-
-        grid([[today(y) for y in yaws], [render(parts, alb, y, 0.0, **kw) for y in yaws]]).save(os.path.join(out, "sheet_%s.png" % tag))
-        grid([[render(parts, alb, y, w, **kw) for y, w in ((0.7, 0.9), (math.pi / 2, 1.0), (math.pi - 0.6, 0.9))]]).save(
-            os.path.join(out, "walk_%s.png" % tag))
-        kn = {k: v for k, v in kw.items() if k != "scale"}
-        grid([[today(y) for y in (0.0, 0.7)] + [render_night(parts, alb, glw, y, **kn) for y in (0.0, 0.7)]]).save(
-            os.path.join(out, "night_%s.png" % tag))
-        big = dict(scale=20, size=(520, 560), centre=(260, 360), pitch=-0.15)
-        grid([[render(parts, alb, 0.55, 0.0, **big), render_night(parts, alb, glw, 0.55, **big)]], w=520, h=560).save(
-            os.path.join(out, "closeup_%s.png" % tag))
-        print(tier, "parts:", len(parts), "owners:", len([p for p in parts if not p["twin"]]))
-    materials(out)
-
-
-if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "out"))
