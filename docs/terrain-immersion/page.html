@@ -1,0 +1,414 @@
+<title>The Soft Land</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column, wide figures that break out of it, a ladder of pictures per scene. Before is dirt brown, after is moss green. */
+:root {
+  --bg: #f2f4f0;
+  --surface: #ffffff;
+  --fg: #1a231e;
+  --muted: #56655c;
+  --rule: #d5dcd3;
+  --moss: #2f7a46;
+  --moss-soft: #e0efe3;
+  --dirt: #8f5b32;
+  --dirt-soft: #f1e4d8;
+  --slab: #b8d6a8;
+  --stone: #8a948d;
+  --warn: #9a5a00;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101612;
+    --surface: #18201b;
+    --fg: #e5ece6;
+    --muted: #9eb0a4;
+    --rule: #2b372f;
+    --moss: #7fc48f;
+    --moss-soft: #1b2e21;
+    --dirt: #d49a6a;
+    --dirt-soft: #2d2218;
+    --slab: #5f8f56;
+    --stone: #7b867f;
+    --warn: #e0a64a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101612;
+  --surface: #18201b;
+  --fg: #e5ece6;
+  --muted: #9eb0a4;
+  --rule: #2b372f;
+  --moss: #7fc48f;
+  --moss-soft: #1b2e21;
+  --dirt: #d49a6a;
+  --dirt-soft: #2d2218;
+  --slab: #5f8f56;
+  --stone: #7b867f;
+  --warn: #e0a64a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 64px; }
+.col { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.12; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: clamp(2.4rem, 6vw, 3.8rem); font-weight: 700; }
+h2 { font-size: clamp(1.6rem, 3.4vw, 2.1rem); font-weight: 700; }
+h3 { font-size: 1.2rem; font-weight: 700; }
+p { margin: 0; }
+.lede { font-size: 1.2rem; line-height: 1.55; max-width: 62ch; }
+.meta { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+section { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.stack { display: flex; flex-direction: column; gap: 14px; }
+.muted { color: var(--muted); }
+a { color: var(--moss); }
+code { font-family: var(--font-mono); font-size: 0.88em; }
+
+/* the four causes */
+.causes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.cause { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 18px 18px 20px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.cause b { font-family: var(--font-display); font-size: 1.1rem; }
+.cause .tag { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--dirt); }
+
+/* annotated shots */
+.shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 28px 24px; }
+figure { margin: 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+figure img { display: block; width: 100%; height: auto; border-radius: 4px; border: 1px solid var(--rule); background: var(--surface); }
+figcaption { font-size: 0.92rem; color: var(--muted); }
+figcaption b { color: var(--fg); font-weight: 600; }
+ol.legend { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 0.92rem; counter-reset: n; }
+ol.legend li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; counter-increment: n; }
+ol.legend li::before { content: counter(n); width: 24px; height: 24px; border-radius: 50%; background: #ffc440; color: #14181a; font-family: var(--font-mono); font-size: 0.78rem; font-weight: 600; display: grid; place-items: center; margin-top: 1px; }
+
+/* before / after */
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pair figure { position: relative; }
+.pair .label { position: absolute; top: 10px; left: 10px; z-index: 1; font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 3px 8px; border-radius: 3px; color: #fff; }
+.pair .before .label { background: #8f5b32; color: #fff; }
+.pair .after .label { background: #2f7a46; color: #fff; }
+.ladder { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ladder figure { position: relative; }
+.ladder .label { position: absolute; top: 10px; left: 10px; z-index: 1; font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 3px 8px; border-radius: 3px; background: #14201a; color: #e9f3ea; }
+.scene { display: flex; flex-direction: column; gap: 14px; }
+.scene ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 4px; max-width: 74ch; }
+.note { border-left: 3px solid var(--warn); padding: 6px 0 6px 14px; font-size: 0.92rem; color: var(--muted); max-width: 74ch; }
+@media (max-width: 640px) { .pair, .ladder { grid-template-columns: 1fr; } }
+
+/* the profile drawing */
+.profiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 16px; }
+.profiles figure { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 14px; }
+.profiles svg { width: 100%; height: auto; display: block; }
+.profiles text { font-family: var(--font-mono); font-size: 10px; fill: var(--muted); }
+
+/* tables */
+.tablewrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; min-width: 560px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 500; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); white-space: nowrap; }
+td.good { color: var(--moss); font-weight: 600; }
+
+/* the line */
+.line { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+.line > div { border-radius: 6px; padding: 18px; display: flex; flex-direction: column; gap: 8px; }
+.line .ok { background: var(--moss-soft); }
+.line .no { background: var(--dirt-soft); }
+.line ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 4px; }
+
+/* decisions */
+.decisions { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); }
+.decision { display: grid; grid-template-columns: 52px 1fr; gap: 6px 14px; padding: 16px 18px; border-bottom: 1px solid var(--rule); min-width: 0; }
+.decision:last-child { border-bottom: 0; }
+.decision .id { font-family: var(--font-mono); font-weight: 500; color: var(--moss); padding-top: 2px; }
+.decision .q { font-weight: 600; }
+.decision .why { color: var(--muted); font-size: 0.93rem; }
+.decision .rec { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--moss); margin-top: 2px; }
+.ask { background: var(--moss-soft); border-radius: 6px; padding: 18px 20px; max-width: 74ch; }
+
+dl.fits { display: grid; grid-template-columns: minmax(130px, 200px) 1fr; gap: 12px 24px; margin: 0; }
+dl.fits dt { font-weight: 600; }
+dl.fits dd { margin: 0; color: var(--muted); }
+dl.fits dd b { color: var(--fg); font-weight: 500; }
+@media (max-width: 640px) { dl.fits { grid-template-columns: 1fr; gap: 2px; } dl.fits dd { margin-bottom: 10px; } }
+footer { font-size: 0.88rem; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
+@media (prefers-reduced-motion: no-preference) { figure img { transition: none; } }
+</style>
+
+<div class="wrap">
+
+<header class="stack">
+  <p class="meta">AWAKEN · plan for approval · 27 Oct 2026</p>
+  <h1>The Soft Land</h1>
+  <p class="lede">Your land looks rough for four plain reasons, and none of them is the shape of the terrain. This plan fixes them with AWAKEN's own code in five layers. The first layer changes your current world the moment it is built. Nothing is built yet.</p>
+  <p class="muted col">You asked for less rough terrain, a more cinematic look with stones and detail, and foliage that makes the place feel real, while it still feels like Minecraft. Immersion is the priority, so every choice below is judged by what you see at eye height.</p>
+</header>
+
+<section>
+  <h2>What is wrong in your own shots</h2>
+  <p class="col">I went through your four screenshots, read the code behind each look, and tested the main theory with AWAKEN's own erosion code. The numbers on the pictures match the lists beside them.</p>
+  <div class="causes">
+    <div class="cause"><span class="tag">Cause 1</span><b>Brown stripes</b><p>A grass block shows its dirt side wherever a step is exposed, so every hill reads as brown stairs with a thin green line on each tread. This is plain vanilla and nothing of ours touches it.</p></div>
+    <div class="cause"><span class="tag">Cause 2</span><b>Hard one-block steps</b><p>Every slope is a staircase in a block world. On a 35° hill, 43% of neighbouring columns differ by exactly one block. I tested whether the erosion's finest layer causes it. It does not: 43.1% with it, 43.0% without.</p></div>
+    <div class="cause"><span class="tag">Cause 3</span><b>Bare ground</b><p>Flat tinted lawns, one grass height, no stones, roots, litter or fallen wood. Steep slopes stay soil and show white ore streaks. Roads cut into the hill with a wall on each side and a coin-toss mosaic for a surface.</p></div>
+    <div class="cause"><span class="tag">Cause 4</span><b>Hard seams</b><p>Grass, dirt, path, gravel and sand meet in square edges. A path is also a sixteenth lower than the grass beside it, so even the edge reads as a tiny step.</p></div>
+  </div>
+  <div class="shots">
+    <figure>
+      <img src="img/audit-euan-lumen-road.jpg" alt="Your Lumen Forest road shot with six numbered marks">
+      <ol class="legend">
+        <li>The hillside is brown stairs. Each step shows bare dirt with a thin teal line on the tread.</li>
+        <li>The road zigzags up in one-block tiles, each tile chosen by a coin toss.</li>
+        <li>The shore steps down to the water in dirt-faced steps.</li>
+        <li>The floor between the trees is one flat colour with a few plants and nothing else.</li>
+        <li>The far hills are lumpy piles with no layers of rock.</li>
+        <li>Trunks stand on bare ground with no roots, litter or fallen wood.</li>
+      </ol>
+    </figure>
+    <figure>
+      <img src="img/audit-euan-river-mountain.jpg" alt="Your river and mountain shot with five numbered marks">
+      <ol class="legend">
+        <li>The bank is a strip of one-block dirt walls.</li>
+        <li>The mountain is a brown-green mound with no strata in it.</li>
+        <li>The right hill is terraces, each with a brown face.</li>
+        <li>The lawn is a flat carpet. One mushroom is all that lives on it.</li>
+        <li>Trees stand in even rows with nothing growing under them.</li>
+      </ol>
+    </figure>
+    <figure>
+      <img src="img/audit-w7-road-stepped.jpg" alt="The W7 road over stepped ground with five numbered marks">
+      <ol class="legend">
+        <li>The road is cut into the slope. A vertical wall of dirt and mud brick stands beside it.</li>
+        <li>Random grass tiles sit in the path and the edges are square and ragged.</li>
+        <li>The hill is terraces. Every step is a brown face.</li>
+        <li>Bare dirt patches and thin grass, with no stones and no leaf litter.</li>
+        <li>One tree on a bare hilltop with nothing near it.</li>
+      </ol>
+    </figure>
+    <figure>
+      <img src="img/audit-w7-mountain-town.jpg" alt="The mining town at a mountain's foot with five numbered marks">
+      <ol class="legend">
+        <li>White streaks are ore blobs showing through thin soil.</li>
+        <li>Zigzag brown and green stripes. Grass grows only on the treads.</li>
+        <li>Dirt-faced terraces all around the town.</li>
+        <li>The road is a checkerboard of cobble and path.</li>
+        <li>Dark vertical seams run between the terraces on the right.</li>
+      </ol>
+    </figure>
+  </div>
+  <p class="col muted">One more finding for the mountain: our rock and scree rule only runs in the mountain biomes and above height 150. A steep slope on forest or plains ground below that stays grass and dirt. That fits your mining-town shot, though the shot has no coordinates to prove it.</p>
+</section>
+
+<section>
+  <h2>What the plan does to the same four places</h2>
+  <p class="col">These pictures come from a small proof renderer I wrote for this plan. It draws block worlds with the game's own textures, vanilla face shading, ambient occlusion and a soft sun shadow, from the same rules the plan would build. It has no Lens and no real Sodium lighting, so read each pair as the change, and judge the final look on the real tours.</p>
+
+  <div class="scene">
+    <h3>A hillside, one layer at a time</h3>
+    <div class="ladder">
+      <figure><span class="label">Today</span><img src="img/hillside-before.jpg" alt="A grassy hillside as it is today: brown dirt faces on every step"></figure>
+      <figure><span class="label">+ Seamless grass</span><img src="img/hillside-wrap.jpg" alt="The same hillside with grass wrapping down each one-block step"></figure>
+      <figure><span class="label">+ Half-steps</span><img src="img/hillside-soft.jpg" alt="The same hillside with half-block slabs at the foot of each step"></figure>
+      <figure><span class="label">+ Cover and colour</span><img src="img/hillside-after.jpg" alt="The same hillside with varied grass, flowers, stones and patchy colour"></figure>
+    </div>
+    <ul>
+      <li><b>Seamless grass</b> turns the brown stripes green wherever a step is one block high. A real cliff keeps its dirt face.</li>
+      <li><b>Half-steps</b> put a half-block slab on the foot of each one-block rise. Walking up takes no jump, and the slope reads as a slope.</li>
+      <li><b>Cover and colour</b> adds three grass heights, drifts of flowers, pebbles, a boulder, and a lawn colour that changes in patches.</li>
+    </ul>
+  </div>
+
+  <div class="scene">
+    <h3>A forest floor</h3>
+    <div class="pair">
+      <figure class="before"><span class="label">Today</span><img src="img/forest-before.jpg" alt="A forest floor today: flat grass with a few plants"></figure>
+      <figure class="after"><span class="label">Plan</span><img src="img/forest-after.jpg" alt="The same forest with leaf litter, ferns, mossy boulders, mushrooms and a patchy floor"></figure>
+    </div>
+    <ul>
+      <li>Leaf litter gathers under the oldest trees, ferns grow where the canopy is thick, and the grass thickens in the gaps. The floor changes with the light above it.</li>
+      <li>Mossy boulders with rounded edges, roots at the foot of trunks, fallen logs with mushrooms, pebbles and twigs.</li>
+      <li>Flowers come in drifts, not an even scatter.</li>
+    </ul>
+  </div>
+
+  <div class="scene">
+    <h3>A road over a slope</h3>
+    <div class="pair">
+      <figure class="before"><span class="label">Today</span><img src="img/road-before.jpg" alt="A road today: cut into the slope with a dirt wall and random tiles"></figure>
+      <figure class="after"><span class="label">Plan</span><img src="img/road-after.jpg" alt="The same road with a graded bank, worn tracks and creeping grass edges"></figure>
+    </div>
+    <ul>
+      <li>The road sits in a bank. The ground eases from the road's level to the land's over several blocks, in half-steps, instead of a wall.</li>
+      <li>The surface runs in bands along the road: two worn tracks, a grass crown that breaks now and then, gravel at the shoulders. No more coin-toss tiles.</li>
+      <li>Grass creeps over the edges, with kerb stones and pebbles beside it.</li>
+    </ul>
+  </div>
+
+  <div class="scene">
+    <h3>A mountain face</h3>
+    <div class="pair">
+      <figure class="before"><span class="label">Today</span><img src="img/mountain-before.jpg" alt="A mountain today: brown and green stripes with white ore streaks"></figure>
+      <figure class="after"><span class="label">Plan</span><img src="img/mountain-after.jpg" alt="The same mountain with rock in layers, scree and grass where it is gentle"></figure>
+    </div>
+    <ul>
+      <li>The ground follows the slope: grass where it is gentle, patches of coarse dirt and gravel as it steepens, rock with grass pockets above that, then bare rock.</li>
+      <li>Rock comes in layers of stone, andesite, tuff and granite, so a cliff has strata and the white ore streaks are covered.</li>
+      <li>Scree at the foot of cliffs, ledges, snow in layers at the snow line, and spruce in the gullies.</li>
+    </ul>
+    <p class="note">This is the roughest of the four pictures. The rock here is flatter and darker than the final look will be, and the strata colours and snow get tuned on real tours.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Why half-steps, and where they stop helping</h2>
+  <p class="col">The rule is small. A column that has a neighbour exactly one block higher, and no lower neighbour, gets a half-block slab on top. Nothing is ever removed, and a real cliff is left alone. It only reads the heights, so a chunk comes out the same whatever order the world generates in.</p>
+  <div class="profiles">
+    <figure>
+      <svg viewBox="0 0 330 130" role="img" aria-label="A slope as six columns with one-block steps">
+        <g id="before-cols"></g>
+        <text x="4" y="124">today: 1-block steps</text>
+      </svg>
+    </figure>
+    <figure>
+      <svg viewBox="0 0 330 130" role="img" aria-label="The same slope with half-block slabs at the foot of each step">
+        <g id="after-cols"></g>
+        <text x="4" y="124">plan: half-steps (slabs in light green)</text>
+      </svg>
+    </figure>
+  </div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Land (bench on AWAKEN's own erosion)</th><th class="num">Median slope</th><th class="num">Columns raised</th><th class="num">One-block steps</th><th>What is left</th></tr></thead>
+    <tbody>
+      <tr><td>Rolling meadow</td><td class="num">0°</td><td class="num">20.6%</td><td class="num good">80,214 → 2,795 (−97%)</td><td>Almost nothing</td></tr>
+      <tr><td>Hillside</td><td class="num">35°</td><td class="num">23.4%</td><td class="num good">223,910 → 130,486 (−42%)</td><td>One-wide stair runs</td></tr>
+      <tr><td>Mountain flank</td><td class="num">58°</td><td class="num">2.4%</td><td class="num">264,679 → 254,735 (−4%)</td><td>Left to the rock rules on purpose</td></tr>
+    </tbody>
+  </table></div>
+  <p class="col muted">Cost of the pass: about 3.5 nanoseconds a column, about a microsecond per chunk. A single Tectonic column read costs 0.63 ms, so the pass is invisible beside it. Above about 40° a staircase is simply the medium, so steep ground is fixed with rock and strata instead of slabs.</p>
+</section>
+
+<section>
+  <h2>Where it stays Minecraft</h2>
+  <div class="line">
+    <div class="ok">
+      <h3>Fine</h3>
+      <ul>
+        <li>Half-block steps. A slab is core Minecraft.</li>
+        <li>16 by 16 textures, and small models on the 16-grid with at most 12 faces.</li>
+        <li>More blocks, smaller blocks, better seams.</li>
+        <li>Colour drift, light and haze.</li>
+      </ul>
+    </div>
+    <div class="no">
+      <h3>Out</h3>
+      <ul>
+        <li>Eighth-block layers to sculpt the ground. They pull toward a smooth mesh.</li>
+        <li>Bent or bevelled terrain, smoothed normals, parallax, textures over 16 by 16.</li>
+        <li>A different art style for the land.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="col">The test is a screenshot at normal size. The pixel grid and the block edges are all still there, and the one thing gone is the brown stripe. If you cannot see block edges at ten metres, it has gone too far.</p>
+</section>
+
+<section>
+  <h2>The five layers, in the order I would build them</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Phase</th><th>What you see</th><th>Works in</th><th class="num">Build</th></tr></thead>
+    <tbody>
+      <tr><td><b>P0</b> Seamless ground</td><td>Grass wraps green down a one-block step, grass creeps onto paths and dirt, the lawn colour drifts in patches. Far views match.</td><td>Every world, at once</td><td class="num">~3 h</td></tr>
+      <tr><td><b>P1</b> Soft steps</td><td>Half-block slabs on gentle ground, with plants standing inside the slab's own block so nothing floats.</td><td>New worlds</td><td class="num">~5 h</td></tr>
+      <tr><td><b>P2</b> The floor</td><td>Pebbles, twigs, three grass heights, litter, ferns, flowers in drifts, boulders, roots, fallen logs, a palette for each biome.</td><td>New worlds</td><td class="num">~5 h</td></tr>
+      <tr><td><b>P3</b> Mountains</td><td>Slope-led ground, strata, scree, ledges, snow in layers.</td><td>New worlds</td><td class="num">~3 h</td></tr>
+      <tr><td><b>P4</b> Roads that sit in the land</td><td>Graded banks, worn tracks, soft edges, no half-slabs in streets or yards.</td><td>New worlds</td><td class="num">~3 h</td></tr>
+      <tr><td><b>P5</b> The land speaks</td><td>Scrubbier and bonier ground in more dangerous regions, places for wild life to perch, footstep tags.</td><td>New worlds</td><td class="num">~2 h</td></tr>
+    </tbody>
+  </table></div>
+  <p class="col">That is about 20 builder-hours at the pace the git history shows (all of AWAKEN took about 30). P0 and P3 can run side by side, then P1, then P2 and P4 together: a day to a day and a half of wall-clock. You look after P0 and after P1. The things that do not compress are those two looks, one set of about 30 small sprites, and the CI look tours. One Mac frame tour at the end.</p>
+</section>
+
+<section>
+  <h2>How it fits what already exists</h2>
+  <dl class="fits">
+    <dt>Far Sight and City Sight</dt><dd>Half a block of difference is hidden by the dissolve. The lawn colour and the slope rules use the same maths near and far, so mountains match. City Sight already draws slabs correctly. It needs one small change so wrapped grass looks the same there.</dd>
+    <dt>Roads, towns, Carillon</dt><dd>The soft pass runs <b>before</b> the road and settlement painters, which overwrite their own ground. So a half-slab cannot survive in a street or a yard. A test checks it.</dd>
+    <dt>Movement</dt><dd>A half slab is under the step height, so you walk up with no jump. The stair slide already treats stepped slabs as a run, so a slide now carries you down a soft hillside. Three tests cover walking, sliding and mantling a lip with a slab on it.</dd>
+    <dt>Trees and sway</dt><dd>Vanilla plants and saplings refuse a slab, so nothing floats. New plants extend the vanilla plant classes, so they sway in your wind with no change.</dd>
+    <dt>Lens</dt><dd>No new pass. Lens counts a slab as a full block, which is a half-block error at a shadow edge.</dd>
+    <dt>Wild life</dt><dd>Boulders count as bare rock and fallen logs as trunks, so frogs, squirrels and birds get new places to be.</dd>
+    <dt>Regions</dt><dd>Cover follows the region rank: lush on safe land, scrubby from D up, bones and dead wood from C up. It is one table and waits for the regions work.</dd>
+    <dt>Cost</dt><dd>The pass reads no noise. Each cover feature stays under 0.5 ms a chunk, about 1 ms in all. The forest frame budget is plus 0.3 ms at most. These are estimates until the tours measure them.</dd>
+  </dl>
+</section>
+
+<section>
+  <h2>Decisions</h2>
+  <p class="col">Fifteen decisions. I recommend yes on all of them.</p>
+  <div class="decisions">
+    <div class="decision"><span class="id">D1</span><div><div class="q">Build the softening ourselves, and use the mods as references.</div><div class="why">Countered's Terrain Slabs gets a one-hour look on our land. Fast Better Grass is the fallback if P0 slips. Shadowy Path Blocks only if path edges stay dark. Our ground blocks, painters and far renderers are ours, so a mod cannot know them.</div><div class="rec">Recommended: yes</div></div></div>
+    <div class="decision"><span class="id">D2</span><div><div class="q">Build seamless ground first, client side, in every world, with an on/off setting. You look at it before P1.</div><div class="why">The biggest visible change for the least code. It works on your current world.</div><div class="rec">Recommended: yes</div></div></div>
+    <div class="decision"><span class="id">D3</span><div><div class="q">Half-block steps for gentle ground on new worlds, and no eighth-block layers to sculpt.</div><div class="why">A slab is Minecraft. Layers pull toward a smooth mesh. Rolling land loses 97% of its one-block steps.</div><div class="rec">Recommended: yes</div></div></div>
+    <div class="decision"><span class="id">D4</span><div><div class="q">Plants stand inside the slab's own block.</div><div class="why">No floating plants and no bald patches on the slope.</div><div class="rec">Recommended: yes</div></div></div>
+    <div class="decision"><span class="id">D5</span><div><div class="q">Slabs are real blocks you can break, carry and place. A grass slab breaks into a dirt slab, or into itself with silk touch. No recipe.</div><div class="why">Players build with what they find, and no recipe keeps the item list clean.</div><div class="rec">Recommended: yes</div></div></div>
+    <div class="decision"><span class="id">D6</span><div><div class="q">The soft pass runs before the painters, and roads get graded banks and bands.</div><div class="why">No half-slab in a street or yard, and roads stop being walls.</div><div class="rec">Recommended: yes</div></div></div>
+    <div class="decision"><span class="id">D7</span><div><div class="q">Leave Tectonic and the erosion alone.</div><div class="why">Measured: the steps come from the block grid, not the noise.</div><div class="rec">Recommended: yes</div></div></div>
+    <div class="decision"><span class="id">D8</span><div><div class="q">Slope-led rock and strata on every steep slope, not only in the mountain biomes.</div><div class="why">The brown stairs and white streaks sit on slopes the rock rule never reaches.</div><div class="rec">Recommended: yes</div></div></div>
+    <div class="decision"><span class="id">D9</span><div><div class="q">Ground cover is vanilla first: retune fallen trees, forest rocks, moss, bushes, wildflowers, dry grass and litter, in drifts. Add a small set of our own: pebbles, twigs, three grass heights, clover.</div><div class="why">Most of it already ships with the game. Only the small things need new art.</div><div class="rec">Recommended: yes</div></div></div>
+    <div class="decision"><span class="id">D10</span><div><div class="q">Our own boulders and outcrops with slab and stair edges, by biome.</div><div class="why">You asked for stones. A rounded boulder is the cheapest cinematic detail.</div><div class="rec">Recommended: yes</div></div></div>
+    <div class="decision"><span class="id">D11</span><div><div class="q">City Sight and Far Sight match the near view: wrapped sides, the same colour drift, the same slope rules.</div><div class="why">A seam between near and far would undo the work.</div><div class="rec">Recommended: yes</div></div></div>
+    <div class="decision"><span class="id">D12</span><div><div class="q">A slide down a soft hillside is wanted.</div><div class="why">It is the Runner's feel on every hill, and three tests hold it.</div><div class="rec">Recommended: yes</div></div></div>
+    <div class="decision"><span class="id">D13</span><div><div class="q">Worldgen changes ride a data pack and a feature flag, so only new worlds get them.</div><div class="why">The Lands, Alpine and Villages packs do the same. No old chunk changes. You make a new world to see P1 onward.</div><div class="rec">Recommended: yes</div></div></div>
+    <div class="decision"><span class="id">D14</span><div><div class="q">Cover follows the region rank, built after the regions work lands.</div><div class="why">The regions plan says the land should speak first. This gives it a physical vocabulary with one table.</div><div class="rec">Recommended: yes</div></div></div>
+    <div class="decision"><span class="id">D15</span><div><div class="q">Budgets: at most 0.5 ms a chunk per feature, about 1 ms in all, forest frame plus 0.3 ms. One Mac frame tour at the end, look tours on CI.</div><div class="why">These are the SPEC budgets and your tour-queue rule.</div><div class="rec">Recommended: yes</div></div></div>
+  </div>
+  <div class="ask"><b>To approve:</b> tell the orchestrator "go with all recommendations", or name the numbers you want changed. Nothing gets built until then.</div>
+</section>
+
+<footer>
+  <p><b>What I could not verify.</b> How plants sit on Countered's slabs (I read its page, not its source; the plan does not depend on it). The exact biome and height of the mountain shot. Sodium's mesh cost on a dense forest, which the frame tour measures. How the stair slide behaves on a long half-step hill, which the movement tests answer.</p>
+  <p>Branch <code>pack/terrain-immersion-plan</code>: <code>docs/terrain-immersion/PLAN.md</code> has the audit, the full alternatives and the failure register. The bench and renderer are in <code>docs/terrain-immersion/proof/</code>.</p>
+</footer>
+
+</div>
+
+<script>
+// the slope profiles: columns of ground, slabs as half blocks
+(function () {
+  var NS = "http://www.w3.org/2000/svg", U = 20, BASE = 110;
+  var heights = [5, 5, 4, 4, 3, 3];
+  function rect(g, x, y, w, h, cls) {
+    var r = document.createElementNS(NS, "rect");
+    r.setAttribute("x", x); r.setAttribute("y", y); r.setAttribute("width", w); r.setAttribute("height", h);
+    r.setAttribute("fill", cls); r.setAttribute("stroke", "var(--bg)"); r.setAttribute("stroke-width", "1");
+    g.appendChild(r);
+  }
+  function draw(id, slabs) {
+    var g = document.getElementById(id);
+    if (!g) return;
+    heights.forEach(function (h, i) {
+      var x = 52 + i * (U + 14);
+      for (var k = 0; k < h; k++) rect(g, x, BASE - (k + 1) * U, U, U, k === h - 1 ? "var(--moss)" : "var(--dirt)");
+      var foot = slabs && i > 0 && heights[i - 1] === h + 1;
+      if (foot) { rect(g, x, BASE - h * U - U / 2, U, U / 2, "var(--slab)"); }
+    });
+  }
+  draw("before-cols", false);
+  draw("after-cols", true);
+})();
+</script>
