@@ -2,7 +2,7 @@
 # spawn (flat grass; from the left: a one-block step, a two-block pillar, a path in grass, coarse dirt, gravel; then sand and dirt
 # patches; a soft hill of two half steps with tufts; pebbles and twigs), shot with the setting on, off, and with the lawn drift
 # off; then three lands the world made (Lumen Forest, Elderwood, windswept hills; `terrain visit` loads the chunks, slow on the
-# runner, hence the long waits). Spectator throughout (no falling while chunks load).
+# runner, hence the long waits and the short render distance). Spectator throughout (no falling while chunks load).
 # Look tour (CI): tools/tour-ci.sh tools/autopilot/ground-tour.txt 1500 PACK=perf,world TECTONIC=awakened
 world ground779 creative 779
 waitworld
@@ -21,10 +21,12 @@ window 1440 900
 camera first
 hud off
 info
+opt renderDistance 8
+opt simulationDistance 6
 cmd awaken ground status
-# ---- the control platform: ground at y 249, feet at y 250, 330 blocks out where the city's basin is flat ----
+# ---- the control platform: ground at y 249, feet at y 250, over the spawn (its chunks are loaded; the city is a floating island) ----
 cmd gamemode spectator
-cmd execute at @s run tp @s ~330 250 ~0
+cmd execute at @s run tp @s ~ 250 ~
 wait 200
 cmd execute at @s run fill ~-14 249 ~-4 ~14 249 ~30 minecraft:grass_block
 cmd execute at @s run fill ~-14 250 ~-4 ~14 258 ~30 minecraft:air
@@ -78,9 +80,9 @@ cmd awaken ground drift on
 wait 120
 # ---- three lands the world made (the visit command loads the chunks and stands you in the biome's heart) ----
 cmd awaken terrain visit awaken:lumen_forest
-wait 3600
+wait 1500
 cmd execute at @s positioned over motion_blocking_no_leaves run tp @s ~ ~ ~
-wait 300
+wait 2400
 cmd awaken terrain at
 look 30 -8
 shot ground_lumen_a
@@ -89,9 +91,9 @@ shot ground_lumen_b
 look 210 -8
 shot ground_lumen_c
 cmd awaken terrain visit awaken:elderwood
-wait 3600
+wait 1500
 cmd execute at @s positioned over motion_blocking_no_leaves run tp @s ~ ~ ~
-wait 300
+wait 2400
 cmd awaken terrain at
 look 30 -8
 shot ground_elder_a
@@ -100,9 +102,9 @@ shot ground_elder_b
 look 210 -8
 shot ground_elder_c
 cmd awaken terrain visit minecraft:windswept_hills
-wait 3600
+wait 1500
 cmd execute at @s positioned over motion_blocking_no_leaves run tp @s ~ ~ ~
-wait 300
+wait 2400
 cmd awaken terrain at
 look 0 -4
 shot ground_hills_a
