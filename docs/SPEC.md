@@ -190,6 +190,13 @@ Energy diamond, Shadow crescent cut, Mind eye, Architect notched block, Tech chi
 from the top-left shades every frame and glyph. A Power Core is a crystal with its power's glyph inside (item model
 select `awaken:core_power` on the power's path; an emissive `_glow` layer per power; no power shows a blank crystal).
 Movement powers are client-predicted (velocity applied locally, server validates and corrects).
+Dash direction: a Dash goes the way you are moving, at every power level and in every variant (Blink and Double included; a
+duplicate core or a mastery level only changes the distance, damage and cooldown, never the direction). The held movement keys
+(forward, back, left, right) ride on the cast payload (`PowerPayloads.Cast.keys`, 4 bits) and the predictor gets them as
+`strafe` (+1 left) and `forward` (+1 forward): no key or forward alone is the look's flat heading as before, back is the
+reverse, left/right are 90° to it, two keys are the diagonal, opposite keys cancel. A cast with no payload (commands, tests,
+fake players) reads `ServerPlayer.getLastClientInput()`. Only a forward-leaning air dash lifts with the look's pitch; sideways
+and back dashes run flat. Blink teleports along the same steered line (`Moves.steer`). Test `powers_dash_goes_where_you_move`.
 Feel: hit-stop 40–80 ms on heavy hits (client time scale on the hit entity's render + camera kick), shake toggle in config.
 
 Launch power list (≥45): see `powers/PowerCatalog.java` header for the authoritative list with numbers.

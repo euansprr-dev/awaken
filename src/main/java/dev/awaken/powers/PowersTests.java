@@ -179,6 +179,55 @@ final class PowersTests {
             });
         });
 
+        // SPEC §13 "Dash direction": a dash goes the way you move, at every level and in every variant (an upgrade once sent
+        // every dash forward). Facing +z, left is +x.
+        AwakenTests.register("powers_dash_goes_where_you_move", 60, h -> {
+            floor(h, 12);
+            ServerPlayer sp = player(h, new BlockPos(0, 1, 0));
+            h.runAfterDelay(3, () -> {
+                PowerType dash = PowerRegistry.get("dash");
+                Powers.learn(sp, dash.id, 0);
+                float[][] keys = {{0, 0}, {0, 1}, {0, -1}, {1, 0}, {-1, 0}, {1, 1}, {-1, 1}, {1, -1}, {-1, -1}};
+                for (int step = 0; step < 3; step++) {
+                    if (step == 1) Powers.learnOrLevel(sp, dash.id, 0, false); // a duplicate core: level 2
+                    if (step == 2) Powers.learnOrLevel(sp, dash.id, 2, true); // Double, the variant, kept at its level
+                    h.assertTrue(Powers.loadout(sp).get(dash.id.toString()).level() == (step == 0 ? 1 : 2), "the dash is at its step's level");
+                    for (float[] k : keys) {
+                        Powers.fillEnergy(sp);
+                        Powers.resetCooldowns(sp);
+                        sp.setDeltaMovement(Vec3.ZERO);
+                        PowerType.Result r = Casting.cast(sp, dash, 0, false, 0f, 0f, k[0], k[1]);
+                        h.assertTrue(r.ok(), "the dash casts: " + r.reason());
+                        Vec3 v = sp.getDeltaMovement();
+                        double hl = Math.sqrt(v.x * v.x + v.z * v.z);
+                        // no key is forward; otherwise the strafe is x and the forward key z
+                        double ex = k[0], ez = k[0] == 0 && k[1] == 0 ? 1 : k[1];
+                        double el = Math.sqrt(ex * ex + ez * ez);
+                        String at = "step " + step + " keys " + k[0] + "," + k[1] + " went " + v;
+                        h.assertTrue(hl > 1.2, "the dash is a real dash: " + at);
+                        h.assertTrue((v.x * ex + v.z * ez) / (hl * el) > 0.99, "the dash goes the way you move: " + at);
+                    }
+                }
+                // the keys the server last heard steer a cast that carries none (commands, fake players)
+                Powers.fillEnergy(sp);
+                Powers.resetCooldowns(sp);
+                sp.setDeltaMovement(Vec3.ZERO);
+                sp.setLastClientInput(new net.minecraft.world.entity.player.Input(false, false, false, true, false, false, false));
+                h.assertTrue(Casting.cast(sp, dash, 0, false, 0f, 0f).ok(), "the dash casts on held keys");
+                h.assertTrue(sp.getDeltaMovement().x < -1.2, "a held right key dashes right: " + sp.getDeltaMovement());
+                sp.setLastClientInput(net.minecraft.world.entity.player.Input.EMPTY);
+                // Blink, the teleporting variant, turns the same way
+                Powers.learnOrLevel(sp, dash.id, 1, true);
+                Powers.fillEnergy(sp);
+                Powers.resetCooldowns(sp);
+                sp.snapTo(sp.getX(), sp.getY(), sp.getZ() - 4, 0f, 0f);
+                double x0 = sp.getX(), z0 = sp.getZ();
+                h.assertTrue(Casting.cast(sp, dash, 0, false, 0f, 0f, 1f, 0f).ok(), "the blink casts sideways");
+                h.assertTrue(sp.getX() - x0 > 2 && Math.abs(sp.getZ() - z0) < 0.5, "a left blink goes left: " + (sp.getX() - x0) + "," + (sp.getZ() - z0));
+                h.succeed();
+            });
+        });
+
         AwakenTests.register("powers_energy_gate", 40, h -> {
             ServerPlayer sp = player(h, new BlockPos(0, 1, 0));
             PowerType nova = PowerRegistry.get("nova");

@@ -15,12 +15,34 @@ public final class PowerPayloads {
     public static final int PRESS = 0;
     public static final int RELEASE = 1;
 
-    /** Client → server: a power key was pressed or released. Rotation is the client's aim at that moment. */
-    public record Cast(int slot, int phase, boolean predicted, float yRot, float xRot) implements CustomPacketPayload {
+    /** The movement keys held, packed for {@link Cast#keys}: forward 1, back 2, left 4, right 8. */
+    public static final int KEY_FORWARD = 1, KEY_BACK = 2, KEY_LEFT = 4, KEY_RIGHT = 8;
+
+    public static int keysOf(boolean forward, boolean back, boolean left, boolean right) {
+        return (forward ? KEY_FORWARD : 0) | (back ? KEY_BACK : 0) | (left ? KEY_LEFT : 0) | (right ? KEY_RIGHT : 0);
+    }
+
+    /** +1 left, -1 right, 0 neither or both. */
+    public static float strafeOf(int keys) {
+        boolean l = (keys & KEY_LEFT) != 0, r = (keys & KEY_RIGHT) != 0;
+        return l == r ? 0f : l ? 1f : -1f;
+    }
+
+    /** +1 forward, -1 back, 0 neither or both. */
+    public static float forwardOf(int keys) {
+        boolean f = (keys & KEY_FORWARD) != 0, b = (keys & KEY_BACK) != 0;
+        return f == b ? 0f : f ? 1f : -1f;
+    }
+
+    /**
+     * Client → server: a power key was pressed or released. Rotation is the client's aim at that moment, {@code keys} the
+     * movement keys held then (a dash goes the way you move).
+     */
+    public record Cast(int slot, int phase, boolean predicted, float yRot, float xRot, int keys) implements CustomPacketPayload {
         public static final Type<Cast> TYPE = new Type<>(Awaken.id("power_cast"));
         public static final StreamCodec<ByteBuf, Cast> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_INT, Cast::slot, ByteBufCodecs.VAR_INT, Cast::phase, ByteBufCodecs.BOOL, Cast::predicted,
-                ByteBufCodecs.FLOAT, Cast::yRot, ByteBufCodecs.FLOAT, Cast::xRot, Cast::new);
+                ByteBufCodecs.FLOAT, Cast::yRot, ByteBufCodecs.FLOAT, Cast::xRot, ByteBufCodecs.VAR_INT, Cast::keys, Cast::new);
         @Override public Type<Cast> type() { return TYPE; }
     }
 

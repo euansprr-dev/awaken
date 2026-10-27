@@ -93,19 +93,23 @@ final class VelocityPowers {
 
     // ---- behaviours -------------------------------------------------------------------------------------------------
 
-    static Vec3 dashMotion(Player p, int variant, int level) {
+    /**
+     * The Dash goes the way you are moving (SPEC §13 "Dash direction"): forward with no key or W, back with S, sideways with
+     * A or D, diagonals with two. Every variant and level steers alike; only a forward dash lifts with the look's pitch.
+     */
+    static Vec3 dashMotion(Player p, int variant, int level, float strafe, float forward) {
         if (variant == 1) return null;
         // air has less drag than ground, so an air dash is a little gentler to travel about as far
         double speed = (variant == 2 ? 1.45 : 1.9) * (1 + 0.04 * (level - 1)) * (p.onGround() ? 1.0 : 0.8);
-        Vec3 look = p.getLookAngle();
-        Vec3 f = Moves.flat(look);
-        double y = p.onGround() ? 0.12 : Math.max(0.28, look.y * speed * 0.5);
+        Vec3 way = Moves.steer(p.getLookAngle(), strafe, forward);
+        Vec3 f = Moves.flat(way);
+        double y = p.onGround() ? 0.12 : Math.max(0.28, way.y * speed * 0.5);
         return new Vec3(f.x * speed, Math.min(0.9, y), f.z * speed);
     }
 
     static Result dash(Cast c) {
         if (c.is(1)) {
-            Vec3 to = Moves.blinkTarget(c.player, c.look(), 6 + c.powerLevel * 0.5);
+            Vec3 to = Moves.blinkTarget(c.player, c.steered(), 6 + c.powerLevel * 0.5);
             Vec3 from = c.pos();
             if (to.distanceToSqr(from) < 1) return Result.fail("blocked");
             Moves.teleport(c.player, to);
@@ -113,7 +117,7 @@ final class VelocityPowers {
             c.sound(PowerSounds.WHOOSH, 1f, 1.6f);
             return Result.OK;
         }
-        Vec3 motion = dashMotion(c.player, c.variant, c.powerLevel);
+        Vec3 motion = dashMotion(c.player, c.variant, c.powerLevel, c.strafe(), c.forward());
         if (!c.predicted) Moves.launch(c.player, motion);
         Moves.noFall(c, 30);
         // sonic ring, speed lines, red afterimages and a wind ribbon

@@ -131,7 +131,7 @@ public final class SpiritPowers {
         PowerType.builder("ember_step", "Ember Step", Family.SPIRIT, Slot.MOVEMENT)
                 .forces(Forces.Force.HEAT).cost(14).cooldown(30).damage(2).unlock(Rank.D).hidden().icon("ember").dash()
                 .desc("A latent gift from the lava. Dash forward leaving a trail of fire that burns whatever follows you.")
-                .predict((p, variant, level) -> {
+                .predict((p, variant, level, strafe, forward) -> {
                     Vec3 f = Moves.flat(p.getLookAngle());
                     return new Vec3(f.x * 1.7, p.onGround() ? 0.12 : 0.3, f.z * 1.7);
                 })
@@ -495,7 +495,7 @@ public final class SpiritPowers {
     }
 
     static Result emberStep(Cast c) {
-        if (!c.predicted) Moves.launch(c.player, c.type.predictor.motion(c.player, c.variant, c.powerLevel));
+        if (!c.predicted) Moves.launch(c.player, c.type.predictor.motion(c.player, c.variant, c.powerLevel, c.strafe(), c.forward()));
         Moves.noFall(c, 30);
         c.sound(PowerSounds.EMBER, 1f, 1f);
         Fx.at(c, FxKind.DASH, c.pos()).dir(c.player.getDeltaMovement()).ticks(10).send();

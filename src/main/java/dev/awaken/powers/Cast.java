@@ -31,8 +31,16 @@ public final class Cast {
     public boolean poseSent;
     private final float yRot;
     private final float xRot;
+    private final float strafe;
+    private final float forward;
 
+    /** A cast that reads the movement keys the player last sent (commands, tests, fake players). */
     public Cast(ServerPlayer player, PowerType type, int variant, int powerLevel, int slot, boolean predicted, float yRot, float xRot) {
+        this(player, type, variant, powerLevel, slot, predicted, yRot, xRot, strafeOf(player.getLastClientInput()), forwardOf(player.getLastClientInput()));
+    }
+
+    public Cast(ServerPlayer player, PowerType type, int variant, int powerLevel, int slot, boolean predicted, float yRot, float xRot,
+                float strafe, float forward) {
         this.player = player;
         this.level = player.level();
         this.type = type;
@@ -43,6 +51,18 @@ public final class Cast {
         this.predicted = predicted;
         this.yRot = yRot;
         this.xRot = xRot;
+        this.strafe = strafe;
+        this.forward = forward;
+    }
+
+    /** +1 left, -1 right, 0 neither or both. */
+    public static float strafeOf(net.minecraft.world.entity.player.Input in) {
+        return in.left() == in.right() ? 0f : in.left() ? 1f : -1f;
+    }
+
+    /** +1 forward, -1 back, 0 neither or both. */
+    public static float forwardOf(net.minecraft.world.entity.player.Input in) {
+        return in.forward() == in.backward() ? 0f : in.forward() ? 1f : -1f;
     }
 
     /** A cast with the player's current rotation (passives, tests, commands). */
@@ -65,6 +85,21 @@ public final class Cast {
         float j = Mth.cos(f);
         float k = Mth.sin(f);
         return new Vec3(i * j, -k, h * j);
+    }
+
+    /** The movement keys held when the power key went down: +1 left / -1 right. Dash steers by them. */
+    public float strafe() {
+        return strafe;
+    }
+
+    /** The movement keys held when the power key went down: +1 forward / -1 back. */
+    public float forward() {
+        return forward;
+    }
+
+    /** The look turned by the held keys: the way a dash goes (the look itself with none, or forward alone). */
+    public Vec3 steered() {
+        return Moves.steer(look(), strafe, forward);
     }
 
     public Vec3 flatLook() {

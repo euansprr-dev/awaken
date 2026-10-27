@@ -89,9 +89,11 @@ public final class PowerType {
     /**
      * Client-predicted movement: the motion a movement power gives. Common code (pure maths on the player's look),
      * used by the client to move instantly and by the server for players without prediction (fake players, commands).
+     * {@code strafe} (+1 left, -1 right) and {@code forward} (+1 forward, -1 back) are the movement keys held at the press;
+     * a power that goes the way you move (Dash) steers by them, the rest ignore them.
      */
     public interface Predictor {
-        @Nullable Vec3 motion(Player player, int variant, int level);
+        @Nullable Vec3 motion(Player player, int variant, int level, float strafe, float forward);
     }
 
     public record Result(boolean ok, String reason) {

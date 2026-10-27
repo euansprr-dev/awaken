@@ -52,7 +52,7 @@ final class KineticPowers {
                 .desc("A huge bound forward. You land without fall damage and the landing knocks back what's around you.")
                 .variant(Variant.of("Bound", "Further and flatter").radius(1.4f))
                 .variant(Variant.of("Pounce", "Higher; the landing hits far harder").dmg(1.8f))
-                .predict((p, variant, level) -> {
+                .predict((p, variant, level, strafe, forward) -> {
                     Vec3 f = Moves.flat(p.getLookAngle());
                     double h = variant == 1 ? 1.5 : 1.1;
                     double y = variant == 2 ? 1.15 : variant == 1 ? 0.8 : 0.95;
@@ -154,7 +154,7 @@ final class KineticPowers {
     }
 
     static Result leap(Cast c) {
-        if (!c.predicted) Moves.launch(c.player, c.type.predictor.motion(c.player, c.variant, c.powerLevel));
+        if (!c.predicted) Moves.launch(c.player, c.type.predictor.motion(c.player, c.variant, c.powerLevel, c.strafe(), c.forward()));
         Moves.noFall(c, 120);
         c.sound(PowerSounds.WHOOSH, 1f, 0.8f);
         Fx.at(c, FxKind.DASH, c.pos()).dir(c.player.getDeltaMovement()).ticks(20).send();

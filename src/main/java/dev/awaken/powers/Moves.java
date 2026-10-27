@@ -62,6 +62,23 @@ public final class Moves {
         return f.lengthSqr() < 1e-6 ? new Vec3(0, 0, 1) : f.normalize();
     }
 
+    /**
+     * The way a dash goes: {@code look} turned by the movement keys held (+1 strafe is left, +1 forward is forward). No keys,
+     * or forward alone, is the look itself. Sideways and back dashes run flat; a forward lean keeps the look's pitch in
+     * proportion. Always a unit vector.
+     */
+    public static Vec3 steer(Vec3 look, float strafe, float forward) {
+        if (strafe == 0 && forward == 0) return look;
+        Vec3 f = flat(look);
+        Vec3 left = new Vec3(f.z, 0, -f.x);
+        Vec3 h = f.scale(forward).add(left.scale(strafe));
+        if (h.lengthSqr() < 1e-6) return look;
+        h = h.normalize();
+        double y = look.y * Math.max(0, h.dot(f));
+        double hl = Math.sqrt(Math.max(0, 1 - y * y));
+        return new Vec3(h.x * hl, y, h.z * hl);
+    }
+
     /** The furthest safe spot along a direction (the player's box fits there), stopping at walls. */
     public static Vec3 blinkTarget(ServerPlayer p, Vec3 dir, double max) {
         Vec3 start = p.position();

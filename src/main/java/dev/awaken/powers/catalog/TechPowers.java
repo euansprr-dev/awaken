@@ -52,7 +52,7 @@ final class TechPowers {
                 .desc("Fire a hook up to 28 blocks. Hook a wall and you're yanked to it; hook a mob and it's yanked to you.")
                 .variant(Variant.of("Zipline", "A faster, flatter pull").radius(1.25f))
                 .variant(Variant.of("Harpoon", "Hooked mobs take more and are stunned").dmg(2f))
-                .predict(TechPowers::grappleMotion)
+                .predict((p, variant, level, strafe, forward) -> grappleMotion(p, variant, level))
                 .cast(TechPowers::grapple).register();
 
         PowerType.builder("jet_burst", "Jet Burst", Family.TECH, Slot.MOVEMENT)
@@ -60,7 +60,7 @@ final class TechPowers {
                 .desc("Kick on your boot jets for a burst in the direction you're looking. The exhaust scorches what's behind you.")
                 .variant(Variant.of("Afterburner", "Faster, slower to recover").cd(1.3f))
                 .variant(Variant.of("Vertical", "Straight up, high"))
-                .predict((p, variant, level) -> {
+                .predict((p, variant, level, strafe, forward) -> {
                     if (variant == 2) return new Vec3(p.getDeltaMovement().x, 1.55, p.getDeltaMovement().z);
                     double s = variant == 1 ? 1.95 : 1.5;
                     Vec3 l = p.getLookAngle();
@@ -153,7 +153,7 @@ final class TechPowers {
     }
 
     static Result jet(Cast c) {
-        if (!c.predicted) Moves.launch(c.player, c.type.predictor.motion(c.player, c.variant, c.powerLevel));
+        if (!c.predicted) Moves.launch(c.player, c.type.predictor.motion(c.player, c.variant, c.powerLevel, c.strafe(), c.forward()));
         Moves.noFall(c, 80);
         c.sound(PowerSounds.JET, 1f, 1f);
         Vec3 back = c.look().scale(-1);
