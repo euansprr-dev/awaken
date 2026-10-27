@@ -59,6 +59,7 @@ shot forms_chicken_34
 cmd tp @s ~-7 ~ ~-1 0 14
 cmd awaken living formclear
 cmd weather thunder 1000000
+wait 260
 cmd awaken living formrow zombie
 wait 60
 shot forms_zombie
@@ -68,7 +69,9 @@ shot forms_zombie_34
 cmd tp @s ~-7 ~ ~-1 0 14
 cmd awaken living formclear
 cmd weather clear 1000000
+wait 120
 cmd weather thunder 1000000
+wait 260
 cmd awaken living formrow skeleton
 wait 60
 shot forms_skeleton
@@ -78,6 +81,7 @@ shot forms_skeleton_34
 cmd tp @s ~-7 ~ ~-1 0 14
 cmd awaken living formclear
 cmd weather clear 1000000
+wait 120
 cmd awaken living formrow spider
 wait 60
 shot forms_spider
@@ -111,6 +115,7 @@ shot forms_cow_close34
 cmd tp @s ~-3 ~ ~-1 0 14
 cmd awaken living formclear
 cmd weather thunder 1000000
+wait 260
 cmd awaken living form zombie 5
 wait 50
 shot forms_zombie_close
@@ -120,7 +125,9 @@ shot forms_zombie_close34
 cmd tp @s ~-3 ~ ~-1 0 14
 cmd awaken living formclear
 cmd weather clear 1000000
+wait 120
 cmd weather thunder 1000000
+wait 260
 cmd awaken living form skeleton 5
 wait 50
 shot forms_skeleton_close
@@ -130,6 +137,7 @@ shot forms_skeleton_close34
 cmd tp @s ~-3 ~ ~-1 0 14
 cmd awaken living formclear
 cmd weather clear 1000000
+wait 120
 cmd awaken living formrow pig 1
 wait 60
 shot forms_pig_sun
@@ -147,6 +155,7 @@ shot forms_pig_frost_34
 cmd tp @s ~-7 ~ ~-1 0 14
 cmd awaken living formclear
 cmd weather thunder 1000000
+wait 260
 cmd awaken living formrow zombie 2
 wait 60
 shot forms_zombie_frost
@@ -156,6 +165,7 @@ shot forms_zombie_frost_34
 cmd tp @s ~-7 ~ ~-1 0 14
 cmd awaken living formclear
 cmd weather clear 1000000
+wait 120
 cmd time set 14500
 cmd awaken living formrow zombie
 wait 80

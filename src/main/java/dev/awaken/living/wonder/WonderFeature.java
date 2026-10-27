@@ -45,7 +45,10 @@ public record WonderFeature() implements Feature {
             @Override
             public boolean structureNear(int x, int z, int chunks) {
                 var gs = level.getChunkSource().getGeneratorState();
-                for (var set : gs.possibleStructureSets()) if (gs.hasStructureChunkInRange(set, x >> 4, z >> 4, chunks)) return true;
+                // only the sparse sets (ruins, villages, temples, vaults: one start every 16 chunks or more); the dense ones (the roads' lattice, small lairs) would rule out every place
+                for (var set : gs.possibleStructureSets())
+                    if (set.value().placement() instanceof net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement rs && rs.spacing() >= 16
+                            && gs.hasStructureChunkInRange(set, x >> 4, z >> 4, chunks)) return true;
                 return false;
             }
         };
