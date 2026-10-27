@@ -336,6 +336,47 @@ final class LivingTests {
             h.succeed();
         });
 
+        AwakenTests.register("living_wild_kin", 100, h -> {
+            var pig = net.minecraft.world.entity.EntityTypes.PIG;
+            // who changes: a wild pig in D land or higher, never in E land, bred, a baby, or on a settlement's land
+            h.assertTrue(!dev.awaken.living.combat.WildKin.fights(pig, true, false, false, 9), "E land is exactly as before");
+            h.assertTrue(dev.awaken.living.combat.WildKin.fights(pig, true, false, false, 10), "D land: a wild pig fights back");
+            h.assertTrue(!dev.awaken.living.combat.WildKin.fights(pig, false, false, false, 60) && !dev.awaken.living.combat.WildKin.fights(pig, true, true, false, 60)
+                    && !dev.awaken.living.combat.WildKin.fights(pig, true, false, true, 60), "bred, a baby, a settlement's: meek");
+            h.assertTrue(!dev.awaken.living.combat.WildKin.fights(net.minecraft.world.entity.EntityTypes.ZOMBIE, true, false, false, 60), "only the farm animals change");
+            h.assertTrue(dev.awaken.living.combat.WildKin.wild(net.minecraft.world.entity.EntitySpawnReason.NATURAL) && !dev.awaken.living.combat.WildKin.wild(net.minecraft.world.entity.EntitySpawnReason.BREEDING)
+                    && !dev.awaken.living.combat.WildKin.wild(net.minecraft.world.entity.EntitySpawnReason.SPAWN_ITEM_USE), "natural spawns only");
+            h.assertTrue(Math.abs(dev.awaken.living.combat.WildKin.growth(1) - 0.04) < 1e-9 && dev.awaken.living.combat.WildKin.growth(9) == 0.2, "bigger with the rank, up to a fifth");
+            h.assertTrue(!dev.awaken.living.combat.WildKin.rallies(1) && dev.awaken.living.combat.WildKin.rallies(2), "the herd rallies from C land");
+            // the animal itself: it has a bite now, and armed it has a fight and a grudge that lets go
+            var p = h.spawn(pig, 1, 2, 1);
+            h.assertTrue(p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) != null, "a pig has an attack damage attribute");
+            dev.awaken.living.combat.WildKin.arm(p, 40);
+            boolean melee = false, grudge = false;
+            for (var w : p.goalSelector.getAvailableGoals()) melee |= w.getGoal() instanceof net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+            for (var w : p.targetSelector.getAvailableGoals()) grudge |= w.getGoal() instanceof net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+            h.assertTrue(melee && grudge, "armed: it bites back");
+            h.succeed();
+        });
+
+        AwakenTests.register("living_plate_heat", 20, h -> {
+            // the chip's colour by how a creature measures against you: grey far below, blue about your level, orange a good fight, red an insane one
+            var P = dev.awaken.living.combat.PlateRules.Heat.class;
+            h.assertTrue(dev.awaken.living.combat.PlateRules.heat(5, 20) == dev.awaken.living.combat.PlateRules.Heat.TRIVIAL, "fifteen below is trivial");
+            h.assertTrue(dev.awaken.living.combat.PlateRules.heat(10, 20) == dev.awaken.living.combat.PlateRules.Heat.TRIVIAL, "ten below is trivial");
+            h.assertTrue(dev.awaken.living.combat.PlateRules.heat(11, 20) == dev.awaken.living.combat.PlateRules.Heat.EASY && dev.awaken.living.combat.PlateRules.heat(24, 20) == dev.awaken.living.combat.PlateRules.Heat.EASY, "below you and up to four above: blue");
+            h.assertTrue(dev.awaken.living.combat.PlateRules.heat(25, 20) == dev.awaken.living.combat.PlateRules.Heat.FIGHT && dev.awaken.living.combat.PlateRules.heat(34, 20) == dev.awaken.living.combat.PlateRules.Heat.FIGHT, "five to fourteen above: orange");
+            h.assertTrue(dev.awaken.living.combat.PlateRules.heat(35, 20) == dev.awaken.living.combat.PlateRules.Heat.HARD && dev.awaken.living.combat.PlateRules.heat(72, 1) == dev.awaken.living.combat.PlateRules.Heat.HARD, "fifteen or more above: red");
+            h.succeed();
+        });
+
+        AwakenTests.register("living_game_drops", 20, h -> {
+            // one more of the food per rank above E, never more than five (a pig in B land: three more chops)
+            h.assertTrue(dev.awaken.living.combat.GameDrops.extra(0) == 0 && dev.awaken.living.combat.GameDrops.extra(1) == 1 && dev.awaken.living.combat.GameDrops.extra(3) == 3, "one more per rank");
+            h.assertTrue(dev.awaken.living.combat.GameDrops.extra(9) == dev.awaken.living.combat.GameDrops.MAX_EXTRA, "never more than five");
+            h.succeed();
+        });
+
         AwakenTests.register("living_dread_gap", 20, h -> {
             // the land's weight by the gap (SPEC 21.10): nothing under 5, a little under half at 10, everything at 20, never backwards
             h.assertTrue(dev.awaken.living.combat.DreadRules.strength(-10) == 0 && dev.awaken.living.combat.DreadRules.strength(4) == 0, "nothing under five levels above");

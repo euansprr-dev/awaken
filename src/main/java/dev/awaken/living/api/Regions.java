@@ -95,6 +95,13 @@ public final class Regions {
         EXTRAS.add(extra);
     }
 
+    /** The cap a settlement puts on the land round it (SPEC §21.10), or {@link Integer#MAX_VALUE} away from any. */
+    public static int landCap(ServerLevel level, BlockPos pos) {
+        int cap = Integer.MAX_VALUE;
+        for (LevelCap c : CAPS) cap = Math.min(cap, c.cap(level, pos));
+        return cap;
+    }
+
     /** The cap a Hearth puts on its land (its household's highest level among players online), or 0 for none. */
     static int hearthCalm(ServerLevel level, BlockPos pos) {
         int best = 0;

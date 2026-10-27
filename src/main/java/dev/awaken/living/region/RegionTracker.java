@@ -60,6 +60,7 @@ public final class RegionTracker {
             check(p, level);
             lookAhead(p, level);
             sendLand(p, level);
+            firstSteps(p, level);
         }
     }
 
@@ -114,6 +115,20 @@ public final class RegionTracker {
         int land = forced != null ? Progression.profile(p).level() + forced : Regions.levelAt(level, p.getBlockX(), p.getBlockZ());
         Integer was = LAND_SENT.put(p.getUUID(), land);
         if (was == null || was != land) dev.awaken.core.AwakenNet.send(p, new LivingNet.LandMsg(land));
+    }
+
+    /**
+     * The first step into a land of a rank above your own is a small find (SPEC §21.10, decision 10): a tenth of a level, once per
+     * rank, kept through death, with a plain line. Going somewhere harder pays in finds, not in bigger XP.
+     */
+    static void firstSteps(ServerPlayer p, ServerLevel level) {
+        int rank = dev.awaken.living.region.RegionMap.rankOf(Regions.levelAt(level, p.getBlockX(), p.getBlockZ()));
+        if (rank == 0 || rank <= Progression.rank(p).ordinal()) return;
+        if (!Progression.discover(p, "land_rank/" + rank, 0.1)) return;
+        String name = "EDCBAS".substring(rank, rank + 1);
+        Signal.toast(p, Component.literal("First steps in " + name + " land · creatures here are level "
+                + dev.awaken.living.region.RegionMap.RANK_FROM[rank] + (rank + 1 < dev.awaken.living.region.RegionMap.RANK_FROM.length ? " to " + (dev.awaken.living.region.RegionMap.RANK_FROM[rank + 1] - 1) : " and up")),
+                Notices.Tier.IMPORTANT, "land");
     }
 
     /** Tours: pretend the land is {@code gap} levels above the player (null: the real land). */

@@ -4291,7 +4291,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   by the bowl meals; the pasty stands on its flat side with a crimped rope; no vanilla pixels). Its `preview DIR` checks
   colour count, distinct colours and herb silhouettes.
 
-### 21.10 The shape of danger (regions v2; plan docs/regions/PLAN.md, page https://claude.ai/artifact/MnswCydLWBrdpXzL3f84YE; Euan approved all fourteen decisions 2026-10-27, "Go with all recommendations")
+### 21.10 The shape of danger (regions v2; plan docs/regions/PLAN.md, page https://claude.ai/artifact/MnswCydLWBrdpXzL3f84YE; Euan approved all fourteen decisions 2026-10-27, "Go with all recommendations"; decision 8 amended and 15 added the same day at his word)
 Why: Euan died at the Commons' wall at level 1 (an elite, health ×4.4) and found level 72 land 20 blocks further, the first hamlet
 inside it. Causes: the neighbour cap measured to a region's heart, the 5% deck rounded to one level 45-80 region in nine per near block,
 no gradient, nothing placed on purpose asked the land. This section **replaces §21.2's bands, odds, deck and neighbour rule**; names,
@@ -4309,7 +4309,12 @@ roles, offsets, the API and the Hearth's calm stand. Decisions (numbers are the 
 6. **One band system:** E 1-9 · D 10-24 · C 25-44 · B 45-69 · A 70-99 · S 100+ (`Regions.bandOf`) is the land's rank too; the deal's 1-8 / 8-20 / 20-45 / 45-80 / 80+ goes; the Atlas
    legend is 1 · 10 · 25 · 45 · 70 · 100; a region's range is what it really spans.
 7. **Elites live in places:** roaming share E 0%, D 2%, C 4%, B and up 5% (`Creatures` and `FaunaModule`); dens and camps keep an elite guard.
-8. **Passive animals** show no level chip and aren't scaled; one more of the ordinary drop per rank above E (Phase 3).
+8. **Animals** (amended 2026-10-27, Euan's idea after the plan was approved; was "a pig is a pig, no chip"): in E land exactly as before (meek, no chip, no scaling).
+   In D land (level 10) and up a naturally spawned cow, pig, sheep, mooshroom or chicken (not bred, from an egg, a baby, penned, on a settlement's land or in a Hearth's
+   calm) is neutral: it fights back when struck (only when struck; it forgives ten seconds after the last blow), carries its level so the chip is true, is scaled like any
+   creature of that level, grows 4% a rank up to 20%, and now and then is an alpha (an elite: bigger, tougher). From C land the herd rallies when one is struck. Kill XP is
+   neutral's (0.5, not passive's 0.15). One more of its food drop per rank above E. Left for later: a client overlay (tusks, scars), wild kin with their own art, a land
+   that goes quiet; the alphas are the "Terror of <region>" trophies agreed with the Arms planner (Phase 3).
 9. **The land owns the hunt's parts and the pull** (agreed in principle with the Arms planner): trophies and hide by land ("Terror of <region>" beside the existing named
    beasts, nothing "only here"), surface signs of metal; metal stays in lodes by depth, light stays in gates; C and up tiers open three levels before their land. Phase 3, with the Arms builder.
 10. **Going above your level pays in finds,** not XP: the kill bonus stays +40%; the first step into each higher rank is a discovery (a tenth of a level); wonders and secrets rank with their land. Phase 3.
@@ -4319,6 +4324,9 @@ roles, offsets, the API and the Hearth's calm stand. Decisions (numbers are the 
     5 minutes (the cooldown is per region); the Commons' wall warns a player 5+ below the local level; nothing inside the city's reserve.
 13. **Existing worlds** switch on at the next load (the field is a pure function of seed and centre); `awaken:living_regions` schema 2 adds `rules` (absent = 1: names keep the old band roll, new worlds name from their new level).
 14. **Order:** Phase 1 (1-8 but the loot of 8, 12, 13), Phase 2 (11), Phase 3 with the Arms and deep builders (9, 10, the loot of 8).
+15. **The plate's colour is how hard the creature is against you** (Euan, 2026-10-27): grey ten or more levels below you, blue about your level or easier (up to four above:
+    easy to kill), orange from five above (a good fight that takes skill), red from fifteen above (you can win it, but only as an insane fighter; the chip pulses). The
+    same for every creature, animals included.
 
 **Phase 1 as built (2026-10-27, `pack/regions-plan`).**
 - `living.region.RegionMap` is the field: the numbers are `data/awaken/awaken/regions/reach.json` (read once from the classpath: the map is pure and
@@ -4348,6 +4356,11 @@ roles, offsets, the API and the Hearth's calm stand. Decisions (numbers are the 
   `living_region_rules_saved`. Prototype and numbers: `docs/regions/proto/`, `docs/regions/results/`.
 - Not built yet: Phase 3 (parts and trophies by land, richer game, first-step discoveries), the Atlas's smooth shading (it colours whole regions), the quiet
   vales' name ("the Rest").
+
+**Amendments built (2026-10-27).** `living.combat.WildKin` (decision 8: `fights`, `wild`, `growth`, `rallies`, `arm`; `Retaliate` is a `HurtByTargetGoal` that lets go after 200 ticks;
+an `ATTACK_DAMAGE` attribute added to pig 3, cow 3, mooshroom 3, sheep 2 and chicken 1 through `EntityAttributeModificationEvent`; goals are put back at every join since they are not
+saved), `Creatures.tag` (a wild spawn in D land or up is tagged NEUTRAL, scaled, grown, an alpha at `eliteChance`), `GameDrops` (richer game for animals that can't hurt you and for
+these), `PlateRules.heat` and `LivingFx.heatColour` (decision 15). Tests `living_wild_kin`, `living_plate_heat`, `living_game_drops`.
 
 **Phase 2 as built (2026-10-27): the land speaks first.**
 - `LivingNet.LandMsg(level)` (`living_land`): the level of the land under the player, sent from `RegionTracker.tick` when it changes (-1 away from the overworld). Client

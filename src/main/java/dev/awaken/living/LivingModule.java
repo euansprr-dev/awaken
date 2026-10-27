@@ -59,6 +59,7 @@ public final class LivingModule {
 
     public static void init(IEventBus modBus) {
         LivingContent.register(modBus);
+        modBus.addListener(net.neoforged.neoforge.event.entity.EntityAttributeModificationEvent.class, dev.awaken.living.combat.WildKin::attributes);
         dev.awaken.living.quest.Relics.register(modBus);
         dev.awaken.living.wayfarer.Scenes.init();
         FirstThread.init(); // the first thread out of Carillon, and chains on the Now line (SPEC §27.6)
@@ -99,6 +100,7 @@ public final class LivingModule {
         bus.addListener(EntityJoinLevelEvent.class, Creatures::onJoin);
         bus.addListener(LivingIncomingDamageEvent.class, Creatures::onIncomingDamage);
         bus.addListener(LivingDeathEvent.class, KillXp::onDeath);
+        bus.addListener(net.neoforged.neoforge.event.entity.living.LivingDropsEvent.class, dev.awaken.living.combat.GameDrops::onDrops);
         bus.addListener(EventPriority.LOWEST, CriticalHitEvent.class, Hits::onCrit);
         bus.addListener(LivingDamageEvent.Post.class, Hits::onDamage);
         bus.addListener(LivingDropsEvent.class, LootPillars::onDrops);

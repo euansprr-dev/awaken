@@ -84,11 +84,9 @@ final class LivingPlates {
         return tag.kind() == CreatureTag.Kind.PASSIVE || tag.kind() == CreatureTag.Kind.AMBIENT ? 0x8FA7C4 : Glass.EDGE;
     }
 
-    /** The level's colour: its rank's (E white, D green, C blue, B violet, A amber, S red), grey far below you, ember far above. */
+    /** The level chip's colour: how the creature measures against you (PlateRules.heat): grey, blue, orange, red. */
     static int levelColour(int lv, int mine) {
-        if (lv <= mine - 10) return LivingFx.GREY;
-        if (lv >= mine + 5) return LivingFx.EMBER;
-        return LivingFx.BAND[dev.awaken.living.api.Regions.bandOf(lv)];
+        return LivingFx.heatColour(lv, mine);
     }
 
     private static int chipWidth(Font font, int lv) {
@@ -114,7 +112,7 @@ final class LivingPlates {
         int cw = chip ? chipWidth(font, lv) : 0;
         float cx1 = w - PAD + 1, cx0 = cx1 - cw;
         if (chip) {
-            float pulse = lv >= mine + 5 ? 0.75F + 0.25F * Mth.sin(LivingClient.ticks * 0.5F) : 1;
+            float pulse = PlateRules.heat(lv, mine) == PlateRules.Heat.HARD ? 0.75F + 0.25F * Mth.sin(LivingClient.ticks * 0.5F) : 1;
             cv.fillF(cx0, ROW - 2, cx1, ROW + 10, argb(0.30F * pulse, col), argb(0.16F * pulse, col));
             cv.fillF(cx0, ROW + 10, cx1, ROW + 11, argb(0.85F * pulse, col), argb(0.85F * pulse, col));
             cv.textF(lvText, cx0 + 3, ROW, 0xFF000000 | col, false);

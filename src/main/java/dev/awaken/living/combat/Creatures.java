@@ -11,6 +11,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.npc.Npc;
@@ -21,6 +22,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import org.jspecify.annotations.Nullable;
 import net.neoforged.neoforge.event.entity.living.FinalizeSpawnEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
@@ -43,7 +45,7 @@ public final class Creatures {
     public static void onFinalizeSpawn(FinalizeSpawnEvent e) {
         Mob mob = e.getEntity();
         if (!(e.getLevel().getLevel() instanceof ServerLevel level) || !Regions.on(level) || ours(mob) || mob instanceof Npc) return;
-        tag(level, mob, true);
+        tag(level, mob, true, e.getSpawnType());
     }
 
     /** Creatures from before the Living Wilds (or that skipped finalizeSpawn) get a level when they join. */
@@ -59,7 +61,9 @@ public final class Creatures {
             }
             return;
         }
-        if (!tag.present() && !(living instanceof Npc) && living instanceof Mob mob) tag(level, mob, false);
+        if (!tag.present() && !(living instanceof Npc) && living instanceof Mob mob) tag(level, mob, false, null);
+        // a wild animal that fights back (WildKin) loses its goals with the chunk: put them back
+        else if (tag.kind() == CreatureTag.Kind.NEUTRAL && living instanceof Mob mob && WildKin.isKin(mob)) WildKin.arm(mob, tag.level());
     }
 
     /** Projectiles and blasts from a levelled vanilla monster hit as hard as its melee would (melee scales by attribute). */
@@ -71,13 +75,23 @@ public final class Creatures {
         e.setAmount((float) (e.getAmount() * Curve.mobDamage(tag.level())));
     }
 
-    private static void tag(ServerLevel level, Mob mob, boolean scale) {
+    private static void tag(ServerLevel level, Mob mob, boolean scale, @Nullable EntitySpawnReason reason) {
         if (mob instanceof Enemy) {
             boolean elite = scale && mob.getRandom().nextFloat() < LivingModule.eliteChance(Regions.creatureLevel(level, mob.blockPosition(), Regions.Role.NEUTRAL));
             int lv = Regions.creatureLevel(level, mob.blockPosition(), elite ? Regions.Role.ELITE : Regions.Role.HUNTER);
             if (scale) applyScaling(mob, lv, elite);
             mob.setData(CoreApi.CREATURE_TAG.get(), new CreatureTag(lv, CreatureTag.Kind.MONSTER, elite, ""));
         } else {
+            // a wild animal in D land or higher fights back (SPEC §21.10): neutral, scaled, a little bigger, sometimes an alpha
+            int land = Regions.creatureLevel(level, mob.blockPosition(), Regions.Role.NEUTRAL);
+            boolean settled = Regions.landCap(level, mob.blockPosition()) != Integer.MAX_VALUE;
+            if (scale && reason != null && WildKin.fights(mob.getType(), WildKin.wild(reason), mob.isBaby(), settled, land)) {
+                boolean alpha = mob.getRandom().nextFloat() < LivingModule.eliteChance(land);
+                int lv = Regions.creatureLevel(level, mob.blockPosition(), alpha ? Regions.Role.ELITE : Regions.Role.NEUTRAL);
+                applyScaling(mob, lv, alpha, WildKin.growth(dev.awaken.living.region.RegionMap.rankOf(land)));
+                mob.setData(CoreApi.CREATURE_TAG.get(), new CreatureTag(lv, CreatureTag.Kind.NEUTRAL, alpha, ""));
+                return;
+            }
             int lv = Regions.creatureLevel(level, mob.blockPosition(), Regions.Role.AMBIENT);
             mob.setData(CoreApi.CREATURE_TAG.get(), new CreatureTag(lv, CreatureTag.Kind.PASSIVE, false, ""));
         }
@@ -85,10 +99,15 @@ public final class Creatures {
 
     /** SPEC §2's level scaling (health, damage, armour) and an elite's size and health, as permanent modifiers. */
     static void applyScaling(LivingEntity e, int lv, boolean elite) {
+        applyScaling(e, lv, elite, 0);
+    }
+
+    /** As above, and {@code growth} bigger again (a wild animal in a harder land). */
+    static void applyScaling(LivingEntity e, int lv, boolean elite, double growth) {
         set(e, Attributes.MAX_HEALTH, HEALTH, Curve.mobHealth(lv) * (elite ? ELITE_HEALTH : 1) - 1, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
         set(e, Attributes.ATTACK_DAMAGE, DAMAGE, Curve.mobDamage(lv) - 1, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
         set(e, Attributes.ARMOR, ARMOR, Curve.mobArmor(lv), AttributeModifier.Operation.ADD_VALUE);
-        set(e, Attributes.SCALE, SCALE, elite ? 0.12 : 0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+        set(e, Attributes.SCALE, SCALE, (elite ? 0.12 : 0) + growth, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
         e.setHealth(e.getMaxHealth());
     }
 

@@ -277,7 +277,7 @@ https://claude.ai/artifact/DA4J66cpZkKinGbm6X18ML, `docs/arms-progression/PLAN.m
   Crypt, Fungal Hollow, Hive, Overgrown Temple) must stay reachable in the top of E land. SPEC §21.8 seeds camps in ledger cells of level 8 or more; the ring
   700-1,000 out is level 9-10 in the proposed field, so they stay. A Phase 1 test checks that a cell 800 out still seeds them. Hale's issue and rack sit at the High Gate and need no land rule.
 
-**The pig** (decision 8). Passive animals do not carry a danger level: the plate shows the name and no chip, they are not
+**The pig** (decision 8; **amended the same day, see §11**). Passive animals do not carry a danger level: the plate shows the name and no chip, they are not
 scaled, and the XP stays small and flat. A pig is a pig. What changes is the *game*: in D land and up each passive animal drops
 one more of its ordinary drop per rank above E (a pig in B land: four chops), which is also where the hides for the Hide
 tiers come from. A neutral or hunting creature, which can hurt you, keeps its level and its scaling.
@@ -434,3 +434,23 @@ The camp road from the High Gate to 2,500 out at three framings, with the level 
 - `docs/regions/PLAN.md` (this file); `docs/regions/page.html` (the approval page); `docs/regions/euan-black-glades.webp` (Euan's Atlas screenshot).
 - `docs/regions/proto/` (the prototype and scripts), `docs/regions/results/` (outputs quoted above, the map data, the ASCII maps, the sim runs).
 - Approval page: https://claude.ai/artifact/MnswCydLWBrdpXzL3f84YE (private to its owner until shared).
+
+---
+
+## 11. Added after approval (Euan, 2026-10-27)
+
+**Decision 8 amended: animals change with the land too.** Euan: "just removing their levels makes it boring": a level-100 pig should be shaped differently and
+fight back if hit, so the higher the land, the more the world is hostile, with caveats so it is never unbearable at the start. Built in Phase 1's follow-up:
+- **E land** (the Commons, the first ring): exactly as before. Meek animals, no chip, no scaling. The first hour is untouched.
+- **D land and up** (level 10): a *naturally spawned* cow, pig, sheep, mooshroom or chicken is neutral. It carries its level (so the chip is true), is scaled like any creature of that
+  level (a level-72 pig has about 6.4 times the health and bites about 3.9 times as hard), grows 4% a rank up to 20%, and now and then is an alpha (an elite). From C land the herd
+  rallies when one is struck. It pays kill XP as a neutral (0.5, not the passive 0.15), and one more food drop per rank above E.
+- **Caveats that keep it bearable:** only when hit (it forgives ten seconds after the last blow); never unprovoked; bred, penned, tamed, baby, an egg's, a settlement's or a
+  Hearth-calmed land's animals stay meek (farms are safe); the Commons and every settlement keep easy hunting.
+- **Cheap shape change built:** the land's rank makes them bigger (the `SCALE` attribute). **Left for later:** a client overlay (tusks, scars, a faint glow) keyed to the rank, wild kin
+  with their own art (a Tusker, closer to Monster Hunter and Valheim), and a land that goes quiet (fewer animals, ones that bolt at 40 blocks; it conflicts with hide supply, so only lightly).
+  The alphas become the "Terror of <region>" trophies agreed with the Arms planner (Phase 3).
+
+**Decision 15 added: the plate's colour is how hard the creature is against you.** The chip over a creature's head is coloured by its level against yours, the same for every creature,
+animals included: grey ten or more below you, **blue** about your level or easier (up to four above: easy to kill), **orange** from five above (a good fight that takes skill),
+**red** from fifteen above (you can win it, but only as an insane fighter; the chip pulses). It replaces the rank colours on the chip (the Atlas keeps the rank colours for lands).
