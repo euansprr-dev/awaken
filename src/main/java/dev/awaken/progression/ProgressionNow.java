@@ -13,12 +13,13 @@ final class ProgressionNow {
     /** Game ticks without a new capability before the Now line offers the nearest one (75 minutes). */
     static final long CAPABILITY_GAP = 20L * 60 * 75;
 
-    /** The nearest new thing to do: a lock that answers you now (with its place), else the next rank and how to get there. */
+    /** The nearest new thing to do: a lock that is open to you now (with its place), else the next rank and how to get there. */
     static Suggestion capability(net.minecraft.server.level.ServerPlayer player, Profile p) {
         String dim = player.level().dimension().identifier().toString();
         for (PromiseBook.Entry e : PromiseKeeper.book(player).entries()) {
-            if (e.answered() && e.where().isPresent() && e.dim().equals(dim)) {
-                return Suggestion.at("progression:capability", 57, e.what() + " · answers you", e.where().get());
+            // a land you already stand in has nothing to walk to; a place high up shows its height (NowWay), never "here"
+            if (e.answered() && e.where().isPresent() && e.dim().equals(dim) && !PromiseKeeper.inside(player, e)) {
+                return Suggestion.at("progression:capability", 57, PromiseKeeper.ready(e), e.where().get());
             }
         }
         Rank next = p.rank().next();

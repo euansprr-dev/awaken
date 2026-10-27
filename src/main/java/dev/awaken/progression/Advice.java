@@ -18,7 +18,7 @@ public final class Advice {
             return "You've outgrown " + prof.rank().label + ". Take the " + next.label + "-rank Reassessment at a Monolith, or the Spire if you've a Hearth.";
         }
         for (PromiseBook.Entry e : PromiseKeeper.book(p).entries()) {
-            if (e.answered()) return e.what() + " is open to you now. You know where to find it.";
+            if (e.answered()) return PromiseKeeper.ready(e) + ". You know where to find it.";
         }
         if (prof.unspent() > 0) return "You have points you haven't spent yet. Open your band to spend them.";
         for (Profile.DirectiveState d : prof.directives()) {

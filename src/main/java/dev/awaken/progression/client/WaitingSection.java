@@ -103,10 +103,7 @@ final class WaitingSection extends UiSection {
         if (e.where().isEmpty()) return "";
         if (!e.dim().equals(p.level().dimension().identifier().toString())) return "elsewhere";
         BlockPos to = e.where().get();
-        int dx = to.getX() - p.getBlockX(), dz = to.getZ() - p.getBlockZ();
-        double ang = (Math.toDegrees(Math.atan2(dx, -dz)) + 360) % 360;
-        String[] names = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
-        return String.format("%,d m %s", Math.round(Math.sqrt((double) dx * dx + (double) dz * dz)), names[(int) Math.round(ang / 45.0) % 8]);
+        return dev.awaken.signal.NowWay.named(to.getX() - p.getX(), to.getY() - p.getY(), to.getZ() - p.getZ());
     }
 
     private static double dist(BlockPos a, BlockPos b) {

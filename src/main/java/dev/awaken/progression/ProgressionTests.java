@@ -71,7 +71,7 @@ final class ProgressionTests {
                 h.assertTrue(b.entries().getFirst().answered(), "D-rank answers it");
                 var raised = PromiseKeeper.horizon(p);
                 h.assertTrue(raised.size() == 1 && raised.getFirst().raised() && raised.getFirst().where().equals(at)
-                        && raised.getFirst().name().equals("A sealed vault · answers you"), "and the Horizon raises it: " + raised);
+                        && raised.getFirst().name().equals("A sealed vault is open to you now"), "and the Horizon raises it: " + raised);
                 dev.awaken.core.api.Promises.kept(p, "door:1,2,3");
                 h.assertTrue(PromiseKeeper.book(p).isEmpty() && PromiseKeeper.horizon(p).isEmpty(), "kept: gone");
                 dev.awaken.core.api.Promises.seen(p, "landmark:ruin:1,1", at, dev.awaken.core.api.Promises.Need.rank("C"), "A");
@@ -83,6 +83,50 @@ final class ProgressionTests {
                 var saved = PromiseBook.MAP_CODEC.codec().encodeStart(NbtOps.INSTANCE, PromiseKeeper.book(p)).getOrThrow();
                 var back = PromiseBook.MAP_CODEC.codec().parse(NbtOps.INSTANCE, saved).getOrThrow();
                 h.assertTrue(back.entries().size() == 1 && back.entries().getFirst().where().isEmpty(), "saved and read back: " + back.entries());
+            } finally {
+                h.getLevel().getServer().getPlayerList().remove(p);
+            }
+            h.succeed();
+        });
+        // SPEC §27.1: an answered lock's line says plainly what it is, points where it really is (height included) and is
+        // never "here" unless it is in reach; a land you already stand in has nothing to walk to
+        AwakenTests.register("progression_lock_line", 40, h -> {
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            try {
+                Progression.awaken(p);
+                String dim = p.level().dimension().identifier().toString();
+                net.minecraft.core.BlockPos feet = p.blockPosition();
+                // a sky platform's lock, 60 blocks straight above the player
+                var high = new PromiseBook.Entry("landmark:sky", dim, java.util.Optional.of(feet.above(60)), "tier", "tether", "A sky platform", 1);
+                PromiseBook b = PromiseKeeper.book(p);
+                b.add(high);
+                var s = ProgressionNow.capability(p, Progression.profile(p));
+                h.assertTrue(s != null && s.where().isPresent() && s.where().get().getY() == feet.getY() + 60, "it points at the lock: " + s);
+                String text = s.text().getString();
+                h.assertFalse(text.contains("answers you") || text.contains("here"), "plain words: " + text);
+                h.assertTrue(text.equals("A sky platform is open to you now"), "what it is: " + text);
+                h.assertTrue(dev.awaken.signal.NowWay.arrow(0, 60, 0, 0).equals("60 m above you"), "straight overhead is above, never here: " + dev.awaken.signal.NowWay.arrow(0, 60, 0, 0));
+                h.assertTrue(dev.awaken.signal.NowWay.named(1, -40, 1).equals("40 m below you"), "and below: " + dev.awaken.signal.NowWay.named(1, -40, 1));
+                h.assertTrue(dev.awaken.signal.NowWay.arrow(1, 2, 1, 0).equals("here"), "in reach is here");
+                h.assertTrue(dev.awaken.signal.NowWay.named(0, 30, -100).equals("100 m N · 30 above"), "far and high: " + dev.awaken.signal.NowWay.named(0, 30, -100));
+                h.assertTrue(PromiseKeeper.bearing(feet, feet.above(60)).equals("60 m above you"), "the toast says it too");
+                b.remove("landmark:sky");
+
+                // a land (a region) is "no longer too dangerous", and not on the line while you stand in it
+                long here = dev.awaken.living.api.Regions.regionAt(h.getLevel(), p.getBlockX(), p.getBlockZ()).id();
+                var land = new PromiseBook.Entry(PromiseKeeper.REGION + here, dim, java.util.Optional.of(feet.east(2)), "level", "1", "the Sky Vale", 1);
+                b.add(land);
+                h.assertTrue(PromiseKeeper.ready(land).equals("The Sky Vale is no longer too dangerous for you"), PromiseKeeper.ready(land));
+                h.assertTrue(PromiseKeeper.inside(p, land), "you stand in it");
+                h.assertTrue(ProgressionNow.capability(p, Progression.profile(p)) == null || !ProgressionNow.capability(p, Progression.profile(p)).text().getString().contains("Sky Vale"),
+                        "inside it the line has nothing to point at");
+                h.assertTrue(PromiseKeeper.horizon(p).isEmpty(), "nor the Horizon");
+                var other = new PromiseBook.Entry(PromiseKeeper.REGION + (here + 1), dim, java.util.Optional.of(feet.east(500)), "level", "1", "the Sky Vale", 1);
+                b.remove(land.key());
+                b.add(other);
+                h.assertTrue(!PromiseKeeper.inside(p, other), "another land is not");
+                var far = ProgressionNow.capability(p, Progression.profile(p));
+                h.assertTrue(far != null && far.text().getString().equals("The Sky Vale is no longer too dangerous for you"), "from outside it points: " + far);
             } finally {
                 h.getLevel().getServer().getPlayerList().remove(p);
             }

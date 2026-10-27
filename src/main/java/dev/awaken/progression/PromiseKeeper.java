@@ -113,7 +113,7 @@ public final class PromiseKeeper {
         PromiseBook.Entry near = null;
         double best = Double.MAX_VALUE;
         for (PromiseBook.Entry e : fresh) {
-            if (e.where().isEmpty() || !e.dim().equals(dim)) continue;
+            if (e.where().isEmpty() || !e.dim().equals(dim) || inside(p, e)) continue;
             double d = horizontal(p.blockPosition(), e.where().get());
             if (d < best) {
                 best = d;
@@ -121,7 +121,7 @@ public final class PromiseKeeper {
             }
         }
         PromiseBook.Entry lead = near != null ? near : fresh.getFirst();
-        String body = lead.what() + " is open to you now"
+        String body = ready(lead)
                 + (near != null ? " · " + bearing(p.blockPosition(), near.where().get()) : "")
                 + (fresh.size() > 1 ? " · and " + (fresh.size() - 1) + " more in your band (K)" : "");
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Ready now"))
@@ -137,8 +137,8 @@ public final class PromiseKeeper {
         String dim = p.level().dimension().identifier().toString();
         List<HorizonHooks.Site> out = new ArrayList<>(2);
         for (PromiseBook.Entry e : b.entries) {
-            if (!e.answered() || e.where().isEmpty() || !e.dim().equals(dim) || now - e.answeredAt() > RAISED_FOR || now < e.answeredAt()) continue;
-            out.add(new HorizonHooks.Site("promise/" + e.key(), e.what() + " · answers you", e.where().get(), "", true));
+            if (!e.answered() || e.where().isEmpty() || !e.dim().equals(dim) || now - e.answeredAt() > RAISED_FOR || now < e.answeredAt() || inside(p, e)) continue;
+            out.add(new HorizonHooks.Site("promise/" + e.key(), ready(e), e.where().get(), "", true));
         }
         return out;
     }
@@ -159,11 +159,33 @@ public final class PromiseKeeper {
         return Math.sqrt(dx * dx + dz * dz);
     }
 
-    /** "640 m NE" (north is -Z). */
+    /** "640 m NE", with how high or low when it matters, "58 m above you" straight over your head (north is -Z). */
     static String bearing(BlockPos from, BlockPos to) {
-        int dx = to.getX() - from.getX(), dz = to.getZ() - from.getZ();
-        double ang = (Math.toDegrees(Math.atan2(dx, -dz)) + 360) % 360;
-        String[] names = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
-        return String.format("%,d m %s", Math.round(Math.sqrt((double) dx * dx + (double) dz * dz)), names[(int) Math.round(ang / 45.0) % 8]);
+        return dev.awaken.signal.NowWay.named(to.getX() - from.getX(), to.getY() - from.getY(), to.getZ() - from.getZ());
+    }
+
+    /**
+     * What an answered lock says in plain words (SPEC §27.1): a land is "no longer too dangerous for you", anything else "open
+     * to you now". Never "answers you": that told the player nothing about what was there or what to do.
+     */
+    static String ready(PromiseBook.Entry e) {
+        String what = e.what().isEmpty() ? e.what() : Character.toUpperCase(e.what().charAt(0)) + e.what().substring(1);
+        return e.key().startsWith(REGION) ? what + " is no longer too dangerous for you" : what + " is open to you now";
+    }
+
+    static final String REGION = "region:";
+
+    /**
+     * Whether the player already stands in the land this lock is (a region's place is only where they first met its danger,
+     * on its edge: with them in it there is nothing to point at, and nothing to walk to).
+     */
+    static boolean inside(ServerPlayer p, PromiseBook.Entry e) {
+        if (!e.key().startsWith(REGION) || !(p.level() instanceof net.minecraft.server.level.ServerLevel level)
+                || !dev.awaken.living.api.Regions.on(level)) return false;
+        try {
+            return dev.awaken.living.api.Regions.regionAt(level, p.getBlockX(), p.getBlockZ()).id() == Long.parseLong(e.key().substring(REGION.length()));
+        } catch (NumberFormatException ex) {
+            return false;
+        }
     }
 }
