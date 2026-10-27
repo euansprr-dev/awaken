@@ -274,7 +274,9 @@ final class CaveTests {
                     h.assertTrue(data.quiet(s.id()), "its death quiets the seep");
                     h.assertTrue(CavePlaces.levelExtra(level, inside) == 0, "a quiet seep is no harder than its region");
                     int quiet = Regions.creatureLevel(level, inside, Regions.Role.HUNTER);
-                    h.assertTrue(live - quiet == CavePlaces.SEEP_LEVELS, "the creature level falls by five (" + live + " to " + quiet + ")");
+                    // the test plot can land far enough out that the seep's five run into the level cap
+                    int expect = Math.min(dev.awaken.living.region.RegionMap.MAX_LEVEL, quiet + CavePlaces.SEEP_LEVELS);
+                    h.assertTrue(live == expect, "the creature level falls by five, or to under the cap (" + live + " to " + quiet + ")");
                     CavePlaces.live(level, p, s, true);
                     live1.leave();
                     CavePlaces.STAGED.remove(s);
