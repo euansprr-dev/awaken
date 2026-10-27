@@ -41,3 +41,21 @@ float stormEntry(vec3 v, int k, float camY) {
     vec2 i = stormBand(v, a.xy + b.xy * 60.0, 320.0, b.z - 4.0, a.z + STORM_H + 48.0, camY);
     return i.y > i.x ? i.x : 1.0e9;
 }
+
+// a good guess at where a camera-relative ray v first meets storm k's cloud, 1e9 when it meets none: the tight
+// cylinders its parts fill (body, shelf, anvil plate, rain core), where stormEntry's bounding volume lies hundreds of
+// blocks in front of the surface. For reprojecting last frame's clouds: a point at the wrong depth slides on screen
+// when the camera moves, so a storm looked up at its bounds' entry swam as you walked.
+float stormGuess(vec3 v, int k, float camY) {
+    vec4 a = stormA(k), b = stormB(k);
+    float base = a.z, best = 1.0e9;
+    vec2 i = stormBand(v, a.xy + b.xy * 12.0, 78.0, base, base + STORM_H - 72.0, camY);
+    if (i.y > i.x) best = min(best, i.x);
+    i = stormBand(v, a.xy + b.xy * 8.0, 108.0, base - 4.0, base + 30.0, camY);
+    if (i.y > i.x) best = min(best, i.x);
+    i = stormBand(v, a.xy + b.xy * 90.0, 170.0, base + STORM_H - 40.0, base + STORM_H + 8.0, camY);
+    if (i.y > i.x) best = min(best, i.x);
+    i = stormBand(v, a.xy + b.xy * 12.0, 50.0, b.z - 4.0, base - 6.0, camY);
+    if (i.y > i.x) best = min(best, i.x);
+    return best;
+}
