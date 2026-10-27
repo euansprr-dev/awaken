@@ -7384,3 +7384,51 @@ really sharp, with the clouds and everything".
   their own when they don't fit beside it.
 - **Autopilot:** `screenkey tab|t|m|c|space|q|e` (or `shift+` one) sends a key to the open screen.
 - **Tests:** `holo_band_layout` also checks the Band size steps on the owner's screens.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 31. The Soft Land (seams, steps and detail on the ground; plan docs/terrain-immersion/PLAN.md, page https://claude.ai/artifact/EHXyQyds2wzL7dGfox8gnz; Euan approved all of it 2026-10-27)
+
+Euan: "a bit less rough terrain, a bit more cinematic and natural look (stones etc.), more foliage feeling ... the priority
+really is IMMERSION", and "less like just block per block gaps, while STILL keeping it feeling like minecraft". Module
+`ground` (package `dev.awaken.ground`, client half `ground.client`). The plan's audit, alternatives, failure register and
+fifteen decisions (D1-D15, all recommended and approved) are in docs/terrain-immersion/PLAN.md; this section records what
+is built. The measured finding that shapes it: the one-block steps are the block grid, not the noise (43.1% of
+neighbouring column pairs differ by one block on a 35° hill; the same with the erosion's finest octave at 16 or 64 blocks),
+so Tectonic and the erosion stay as they are (D7). `docs/terrain-immersion/proof/` holds the bench and the renderer.
+
+**The line (D3):** blocks, pixels, half-block steps and light. No eighth-block layers to sculpt the ground, no bent
+or smoothed terrain faces, no texture above 16×16.
+
+### 31.1 P0 Seamless ground (built; client only, every world, setting `ground_seamless`)
+- **Rules** (`ground.SeamlessRules`, pure on a `BlockGetter`, held by `ground_wrap_mask` and `ground_creep_mask`): a grass
+  block, podzol or mycelium wraps on a side when the block beside it is open (not `isSolidRender`) and the ground just
+  under that is sturdy (a one-block riser), or the block beside is one of our soft slabs (`#awaken:ground/soft_slabs`,
+  empty until P1); a covered block (something solid on it) or a snowy one wraps nothing; a two-block riser keeps its dirt
+  face. Paths, dirt, coarse dirt, rooted dirt, gravel, sand and red sand get grass creeping over a top edge where bare grass
+  lies beside them at the same height (sky open over both), and a corner where only the diagonal is grass.
+- **Drawing** (`ground.client.SeamlessModel`, a `DelegateBlockStateModel` like `terrain.client.WavingModel`, wrapped in
+  `ModelEvent.ModifyBakingResult` by `GroundClient`): `collectParts(level, pos, ...)` on Sodium's meshing threads. WRAP:
+  the masked sides' base quad is re-made with the top quad's sprite and tint (each corner keeps its place in the sprite)
+  and the overlay quad is dropped; converted parts are cached per source part and mask. CREEP: up to eight unculled overlay
+  quads 0.002 above the top face (a path's top is 15/16), from our sprites `block/ground/creep_edge_0..2` and
+  `creep_corner_0..1` (grey, `tools/art/specs/ground.py`), turned to the side by their UVs, cut-out layer, no tint index:
+  the neighbouring grass block's colour (`BlockTintSource.colorInWorld`, drift included) is baked into the quad's colours.
+- **Lawn drift** (`ground.LawnDrift`, pure of (x, z); `ground_drift_range`): the grass colour moves about ±9% red, ±3%
+  green, ∓7% blue by a noise of 26-block patches plus a 7-block grain (farsight.glsl's `farHash`, so far ground can lay the
+  same). `GroundClient.drift` wraps the grass layer of `grass_block`, `short_grass`, `fern`, `bush`, `tall_grass`,
+  `large_fern`, `pink_petals`, `wildflowers` in a `BlockTintSource`; City Sight's per-biome probe (position 0, 0, 0) and
+  items keep the plain colour. Setting `lawn_drift`.
+- **Settings and commands**: `config/awaken-ground-client.toml` (`ground_seamless`, `lawn_drift`, both on); `/awaken ground
+  status | seamless on|off | drift on|off` (client; saves and redraws the chunks). Off, the client draws as vanilla.
+- **Not yet** (P0's own follow-ups): City Sight's wrapped sides (`VoxelLooks`) and Far Sight's drift (`farsight_terrain.fsh`,
+  `FarColumns`): near and far differ by a few per cent of colour and a one-block riser's colour until they land.
+- **Tour**: `tools/autopilot/ground-p0.txt` (CI look tour): a control scene (step, pillar, path, coarse dirt, gravel, sand
+  beside grass) on and off, five biomes at eye height, the drift on and off.
+
+### 31.2 Planned (PLAN.md sections 4-9; not built)
+P1 soft steps (the foot rule on the natural WG heightmap at `local_modifications`, before the painters; our slab blocks,
+tufts inside the slab's block, spawn tags, `GroundTop`, Ascent tests); P2 the floor (retuned vanilla features, pebbles,
+twigs, three grass heights, clover, boulders, roots, per-biome palettes); P3 mountains (slope-led ground for every steep
+slope, strata, scree, snow layers); P4 roads in banks and bands; P5 rank palettes, wild-life habitats, footstep tags. New
+worlds only for P1-P5, behind the data-pack flag `awaken:awakened_ground`.
