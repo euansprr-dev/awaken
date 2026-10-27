@@ -3631,6 +3631,12 @@
           "location": "awaken:lens_params",
           "width": 16,
           "height": 1
+        },
+        {
+          "sampler_name": "Frame",
+          "location": "awaken:lens_frame",
+          "width": 48,
+          "height": 1
         }
       ],
       "output": "awaken:lens_shafts",

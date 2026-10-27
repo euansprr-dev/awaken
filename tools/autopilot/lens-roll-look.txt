@@ -1,0 +1,74 @@
+# Lens under a rolled camera (SPEC §22 "The world's own projection"; Euan 2026-10-27, strafing and flying with Camera
+# Overhaul). Camera Overhaul (pack profile feel; Euan's settings are its defaults) rolls the world's projection as you
+# strafe and turn; Lens now reads that projection on the GPU. The same moments with Lens's old CPU estimate
+# (/awaken lens projection off) and the world's own (on), each with a logged check of the roll. A look tour (CI is fine):
+#   tools/tour-ci.sh tools/autopilot/lens-roll-look.txt 900 PACK=perf,feel LENS=cinematic
+world lensroll creative 20261024
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd gamerule awaken:living_herds false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+info
+hud off
+cmd gamemode spectator
+lookswitch cinematic
+cmd time set 2500
+cmd awaken city view market
+wait 300
+look 0 30
+wait 80
+cmd awaken lens projection check
+shot lr_rest
+# ---- strafe left (facing south, left is east): the world rolls. The world's projection, then the old estimate
+glide 0.35 0 0 75
+wait 30
+cmd awaken lens projection check
+shotnow lr_left_new
+cmd awaken lens projection off
+wait 10
+shotnow lr_left_old
+cmd awaken lens projection on
+wait 50
+# ---- strafe right
+glide -0.35 0 0 75
+wait 30
+cmd awaken lens projection check
+shotnow lr_right_new
+cmd awaken lens projection off
+wait 10
+shotnow lr_right_old
+cmd awaken lens projection on
+wait 50
+# ---- flying: forward and turning, toward the morning sun (shafts and halo)
+look -50 5
+wait 40
+glide 0.25 0 0.25 70
+turn -1.5 70
+wait 30
+cmd awaken lens projection check
+shotnow lr_fly_new
+cmd awaken lens projection off
+wait 10
+shotnow lr_fly_old
+cmd awaken lens projection on
+wait 50
+# ---- the textures' path (Tiles off), strafing left again
+look 0 30
+lens tiles off
+wait 40
+glide 0.35 0 0 60
+wait 30
+cmd awaken lens projection check
+shotnow lr_left_tilesoff_new
+lens tiles setting
+wait 40
+quit

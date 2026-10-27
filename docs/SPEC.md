@@ -4315,12 +4315,30 @@ magic.
   float textures (below) and the light buffer packs its distance into two bytes.
 - **Frame texture** `awaken:lens_frame` (`LensFrame`, 24×1 RGBA32F, written in `RenderLevelStageEvent.AfterLevel`,
   just before the post effects, nothing allocated): 0-3 inverse view-projection, 4-7 view-projection, 8-11 last
-  frame's view-projection (all camera-relative; the projection carries the frame's own view bob, hurt tilt and nausea
-  warp, rebuilt exactly as `GameRenderer.renderLevel` does from `CameraRenderState`, so reprojection doesn't swim while
-  walking), 12 the camera in the heightfield ring (x, z modulo 1024; y absolute; w a frame counter), 13 the camera's
+  frame's view-projection (all camera-relative; the projection the world was really drawn with, below), 12 the camera
+  in the heightfield ring (x, z modulo 1024; y absolute; w a frame counter), 13 the camera's
   move since last frame and whether history is usable (not after a teleport over 24 blocks, a gap over 0.25 s, a new
   dimension or the chain starting), 14 toward the light and its strength, 15 the heightfield (size, highest surface,
-  trusted radius 496 blocks), 16 zero-to-one depth, moon, rain, near plane. Layout in `shaders/include/lens_frame.glsl`.
+  trusted radius 496 blocks), 16 zero-to-one depth, moon, rain, near plane, 21 the sun on screen (uv; z 1 ahead of the
+  camera: the shafts and the halo use it on Cinematic and Ultra, Swift keeps the parameter texture's). Layout in
+  `shaders/include/lens_frame.glsl`.
+- **The world's own projection** (`LensProjection`, `core/lens_projection.fsh`; Euan 2026-10-27: strafing and flying
+  with Camera Overhaul, "I can visibly see shadows moving around ... the ground itself becomes darker and moves as I
+  move"). `GameRenderer.renderLevel` multiplies its bob pose stack into the projection, and a camera mod may add to that
+  stack: Camera Overhaul rolls it by up to about 10° as you strafe, turn and fly, and sways it at rest. That matrix
+  exists only in the level's projection uniform buffer (no CPU copy, no event hands it out), so Lens's own rebuild (the
+  game's bob, hurt tilt and nausea) missed the roll: every pass that rebuilds a position from depth (sun shadows,
+  contact shadows, AO, normals, volumetric light, clouds) and the temporal reprojection worked with a camera rolled
+  differently from the picture, and the shading slid and darkened across the ground as the roll changed. Now a
+  highest-priority `AfterLevel` listener takes the bound projection (perspective only; the buffer is the level's,
+  written once a frame before the world draws), and a one-row pass (13×1 RGBA32F, two targets in turn, the projection
+  block bound as `Projection`) multiplies it by the view rotation, inverts it, carries last frame's along and places the
+  sun on screen; four GPU copies put it over the CPU's estimate in the frame texture (texels 0-11 and 21) and in Tiles'
+  uniform block. No mixin, no access transformer, no read-back; the cost is one 13-pixel draw and four copies of a few
+  hundred bytes (not yet measured on the M4: the Lens bench runs on the Mac, not on CI). Where the pipeline doesn't compile, or the bound projection isn't perspective, the CPU's
+  estimate stands, as before. Development: client command `/awaken lens projection off|on|check` (off: the CPU's
+  estimate alone, for A/B shots; check: logs the roll between the world's projection and the game's own camera once).
+  Pixels' steady pass (§18) and the Holo HUD's view maths still rebuild the projection on the CPU (not Lens's).
 - **Heightfield** `awaken:lens_height` (`LensHeightfield`, 1024×1024 RG16F, mips 1-4 hold the max of their 2×2; about
   5.6 MB on the GPU and the same off-heap mirror): from the client chunks' own heightmaps (26.3 sends MOTION_BLOCKING
   and MOTION_BLOCKING_NO_LEAVES to the client): r the top of everything that blocks motion (leaves included), g without
