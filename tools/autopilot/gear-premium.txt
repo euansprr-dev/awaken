@@ -3,7 +3,8 @@
 # gear_premium/veilwoven.json, vanilla's armour light, a glow pass), 2 the same model through our own shader (arms_armour).
 # Each fidelity: the lineup, front, three-quarter, back, side and the hood close-up by day, then the lineup and the hood at night.
 # Spectator camera so no hand or body is in the shot; the stage is a smooth_stone floor and a deepslate_tiles wall high in the
-# sky, so the same light falls on every level. Run on CI (tools/tour-ci.sh ... LENS=swift, then LENS=cinematic): look only.
+# sky straight above the spawn (its chunks are loaded, so the server never stalls generating a far one), so the same light falls on
+# every level. Run on CI (tools/tour-ci.sh ... LENS=swift, then LENS=cinematic): look only.
 world armourprem creative 778
 waitworld
 gui 0
@@ -23,8 +24,8 @@ camera first
 cmd gamemode spectator
 wait 100
 screen close
-cmd tp @s ~2000 300 ~ 0 8
-wait 160
+cmd tp @s ~ 300 ~ 0 8
+wait 200
 cmd fill ~-8 ~-1 ~-8 ~8 ~-1 ~12 minecraft:smooth_stone
 cmd fill ~-8 ~ ~-8 ~8 ~10 ~12 minecraft:air
 cmd fill ~-8 ~ ~9 ~8 ~7 ~9 minecraft:deepslate_tiles
@@ -33,95 +34,98 @@ cmd summon minecraft:mannequin ~-1.8 ~ ~4 {Rotation:[205f,0f],immovable:1b,hide_
 cmd summon minecraft:mannequin ~ ~ ~4 {Rotation:[180f,0f],immovable:1b,hide_description:1b,Invulnerable:1b,Tags:["prem_m"],equipment:{head:{id:"awaken:veilwoven_helmet",count:1},chest:{id:"awaken:veilwoven_chestplate",count:1},legs:{id:"awaken:veilwoven_leggings",count:1},feet:{id:"awaken:veilwoven_boots",count:1}}}
 cmd summon minecraft:mannequin ~1.8 ~ ~4 {Rotation:[150f,0f],immovable:1b,hide_description:1b,Invulnerable:1b,Tags:["prem_r"],equipment:{head:{id:"awaken:veilwoven_helmet",count:1},chest:{id:"awaken:veilwoven_chestplate",count:1},legs:{id:"awaken:veilwoven_leggings",count:1},feet:{id:"awaken:veilwoven_boots",count:1}}}
 wait 40
+where prem_m
 armour fidelity 0
 wait 30
 cmd time set 6000
 wait 20
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-4.2 0 6
-wait 12
+wait 20
+where prem_m
 shot prem_today_lineup
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-2.7 facing entity @e[tag=prem_m,limit=1] eyes
-wait 12
+wait 20
+where prem_m
 shot prem_today_front
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-1.9 ~ ~-1.9 facing entity @e[tag=prem_m,limit=1] eyes
-wait 12
+wait 20
 shot prem_today_threequarter
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~2.7 facing entity @e[tag=prem_m,limit=1] eyes
-wait 12
+wait 20
 shot prem_today_back
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-2.7 ~ ~ facing entity @e[tag=prem_m,limit=1] eyes
-wait 12
+wait 20
 shot prem_today_side
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.5 ~ ~-1.1 facing entity @e[tag=prem_m,limit=1] eyes
-wait 12
+wait 20
 shot prem_today_hood
 cmd time set 18000
 wait 40
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-4.2 0 6
-wait 12
+wait 20
 shot prem_today_night_lineup
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.5 ~ ~-1.1 facing entity @e[tag=prem_m,limit=1] eyes
-wait 12
+wait 20
 shot prem_today_night_hood
 armour fidelity 1
 wait 30
 cmd time set 6000
 wait 20
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-4.2 0 6
-wait 12
+wait 20
 shot prem_level1_lineup
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-2.7 facing entity @e[tag=prem_m,limit=1] eyes
-wait 12
+wait 20
 shot prem_level1_front
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-1.9 ~ ~-1.9 facing entity @e[tag=prem_m,limit=1] eyes
-wait 12
+wait 20
 shot prem_level1_threequarter
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~2.7 facing entity @e[tag=prem_m,limit=1] eyes
-wait 12
+wait 20
 shot prem_level1_back
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-2.7 ~ ~ facing entity @e[tag=prem_m,limit=1] eyes
-wait 12
+wait 20
 shot prem_level1_side
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.5 ~ ~-1.1 facing entity @e[tag=prem_m,limit=1] eyes
-wait 12
+wait 20
 shot prem_level1_hood
 cmd time set 18000
 wait 40
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-4.2 0 6
-wait 12
+wait 20
 shot prem_level1_night_lineup
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.5 ~ ~-1.1 facing entity @e[tag=prem_m,limit=1] eyes
-wait 12
+wait 20
 shot prem_level1_night_hood
 armour fidelity 2
 wait 30
 cmd time set 6000
 wait 20
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-4.2 0 6
-wait 12
+wait 20
 shot prem_level2_lineup
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-2.7 facing entity @e[tag=prem_m,limit=1] eyes
-wait 12
+wait 20
 shot prem_level2_front
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-1.9 ~ ~-1.9 facing entity @e[tag=prem_m,limit=1] eyes
-wait 12
+wait 20
 shot prem_level2_threequarter
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~2.7 facing entity @e[tag=prem_m,limit=1] eyes
-wait 12
+wait 20
 shot prem_level2_back
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-2.7 ~ ~ facing entity @e[tag=prem_m,limit=1] eyes
-wait 12
+wait 20
 shot prem_level2_side
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.5 ~ ~-1.1 facing entity @e[tag=prem_m,limit=1] eyes
-wait 12
+wait 20
 shot prem_level2_hood
 cmd time set 18000
 wait 40
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-4.2 0 6
-wait 12
+wait 20
 shot prem_level2_night_lineup
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.5 ~ ~-1.1 facing entity @e[tag=prem_m,limit=1] eyes
-wait 12
+wait 20
 shot prem_level2_night_hood
 cmd time set 6000
 quit

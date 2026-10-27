@@ -405,6 +405,16 @@ public final class Autopilot {
                 if (mc.player != null) Awaken.LOG.info("[autopilot] walk from {}", mc.player.blockPosition().toShortString());
                 mc.options.keyUp.setDown(true);
             }
+            case "where" -> { // where: logs the player, the camera entity, the camera type and how many of the arg's tag the client holds
+                if (mc.player == null || mc.level == null) return false;
+                var cam = mc.getCameraEntity();
+                int tagged = 0;
+                for (var en : mc.level.entitiesForRendering()) if (en.entityTags().contains(arg.trim())) tagged++;
+                Awaken.LOG.info("[autopilot] where player {} yaw {} pitch {} camera {} at {} type {} chunk {} tagged {}: {}",
+                        mc.player.position(), mc.player.getYRot(), mc.player.getXRot(), cam == null ? "none" : cam.getType(),
+                        cam == null ? "-" : cam.position(), mc.options.getCameraType(),
+                        mc.level.getChunkSource().hasChunk(mc.player.chunkPosition().x(), mc.player.chunkPosition().z()), arg.trim(), tagged);
+            }
             case "use" -> { // the use key once (right click): places the held block where the crosshair rests
                 KeyMapping.click(mc.options.keyUse.getKey());
                 waitTicks = 2;
