@@ -86,7 +86,7 @@ final class AtlasGlance {
         double cy = a.store.groundY(x, z, mc.player.getY());
         // where you look is up the glance (the table's yaw 0 looks north; your yaw 0 faces south)
         AtlasRenderState s = new AtlasRenderState(0, 0, W, H, yaw + 180f, 56f, zoom, x, cy, z, (now % 1_000_000_000_000L) / 1e9f,
-                AtlasState.night(mc.level), true, AtlasMesh.lodFor(zoom), 10f, 0, null);
+                AtlasState.night(mc.level), true, 0, 10f, 0, null); // 2 px a block: the finest level, kept built round you
         RenderSystem.backupProjectionMatrix();
         try {
             painter.paint(RenderSystem.getDevice(), s, target.getTexture(), target.getTextureView(), target.depth, target.depthView, W, H, 1f, true, false);

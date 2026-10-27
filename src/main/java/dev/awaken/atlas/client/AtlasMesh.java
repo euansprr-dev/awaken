@@ -1,7 +1,11 @@
 package dev.awaken.atlas.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.renderpearl.api.GpuFormat;
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
+import com.mojang.renderpearl.api.commands.CommandEncoder;
+import com.mojang.renderpearl.api.textures.GpuTexture;
+import com.mojang.renderpearl.api.textures.GpuTextureView;
 import dev.awaken.atlas.Explored;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.lwjgl.system.MemoryUtil;
@@ -13,10 +17,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * The diorama mesh (SPEC §16.8), in slices of 64×64 columns, one GPU vertex buffer each: POSITION_COLOR quads with the
- * light baked in (a low west sun with cast shadows, slope shade, darker side faces, cut edges down to a base like a
- * diorama block). Three levels of detail: a column is 1, 4 or 16 blocks, so a slice covers 64, 256 or 1024 blocks and
- * the quads on screen stay about the same at every zoom. Only explored columns are meshed.
+ * The diorama mesh (SPEC §16.8), in slices of 64×64 columns, each a GPU vertex buffer and a texture: the tops are
+ * textured quads, merged wherever the height matches, painted from the slice's lit texture ({@link SliceSampler}: a
+ * texel a block, lit block by block by a low west sun with cast shadows, slope shade and occlusion); the sides are
+ * coloured quads (darker side faces, cut edges down to a base like a diorama block). Five levels of detail: a column is
+ * 1, 2, 4, 8 or 16 blocks, so a slice covers 64 to 1024 blocks and a column stays 3 to 6 screen pixels at every zoom,
+ * while the texture keeps the land's detail down to the pixel. Only explored columns are meshed.
  * <p>
  * Memory is bounded (spike S5's finding: ~100 B per explored column): only a window of slices round the view is kept
  * per level, slices of a level not drawn for a while are dropped, and the whole mesh stays under {@link #GPU_LIMIT}.
@@ -29,10 +35,11 @@ final class AtlasMesh {
     /** The diorama's base: the cut edges go down to it and the holo grid lies on it (lower under a roof: the Nether's
      *  lava sea is at 31). Set per dimension, with the mesh cleared. */
     static volatile int BASE_Y = 44;
-    static final int LODS = 3;
+    static final int LODS = SliceSampler.LODS;
     /** Blocks per column at each level, and its shift. */
-    static final int[] STEP = {1, 4, 16}, STEP_SHIFT = {0, 2, 4};
-    /** Slices kept round the view centre at each level (7 → a 15×15 window: 960, 3840, 15360 blocks across). */
+    static final int[] STEP = {1, 2, 4, 8, 16}, STEP_SHIFT = {0, 1, 2, 3, 4};
+    /** Slices kept round the view centre at each level (7 → a 15×15 window: 960 blocks across at the finest, 15360 at
+     *  the coarsest). */
     static final int WINDOW = 7;
     static final long GPU_LIMIT = 96L << 20;
     /** A level not drawn for this long lets its slices go. */
@@ -42,7 +49,10 @@ final class AtlasMesh {
     static final class Slice {
         final int lod, sx, sz;
         GpuBuffer buffer;
-        int quads;
+        GpuTexture texture;
+        GpuTextureView view;
+        /** The tops come first in the buffer (POSITION_TEX), then the sides (POSITION_COLOR). */
+        int quads, tops;
         long bytes;
         boolean dirty = true, building;
         /** Lit columns (x and z in blocks from the slice's corner, the column's top y), for the lights at night. */
@@ -69,10 +79,15 @@ final class AtlasMesh {
         }
     }
 
-    private record Done(Slice slice, ByteBuffer data, int quads, int[] lights, long nanos) {}
+    private record Done(Slice slice, ByteBuffer data, int quads, int tops, ByteBuffer texture, int texels, int[] lights, long nanos) {}
 
     @SuppressWarnings("unchecked")
-    final Long2ObjectOpenHashMap<Slice>[] slices = new Long2ObjectOpenHashMap[]{new Long2ObjectOpenHashMap<>(), new Long2ObjectOpenHashMap<>(), new Long2ObjectOpenHashMap<>()};
+    final Long2ObjectOpenHashMap<Slice>[] slices = new Long2ObjectOpenHashMap[LODS];
+    {
+        for (int l = 0; l < LODS; l++) slices[l] = new Long2ObjectOpenHashMap<>();
+    }
+    /** The level the table is drawing: only its own new slices rise; slices built ahead for another level don't. */
+    int shown = -1;
     private final long[] lastDrawn = new long[LODS];
     private final ColumnStore store;
     private final Queue<Done> done = new ConcurrentLinkedQueue<>();
@@ -88,7 +103,10 @@ final class AtlasMesh {
     /** The zones the worker colours by (set by the main thread before each update). */
     volatile ZoneMap.View zones;
     private int snapshotVersion = -1;
-    private final int[] windowCx = {Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE}, windowCz = new int[LODS];
+    private final int[] windowCx = new int[LODS], windowCz = new int[LODS];
+    {
+        java.util.Arrays.fill(windowCx, Integer.MIN_VALUE);
+    }
     private int generation;
 
     // stats
@@ -99,9 +117,9 @@ final class AtlasMesh {
         this.store = store;
     }
 
-    /** The level to draw at this many GUI pixels per block. */
+    /** The level to draw at this many screen (physical) pixels per block. */
     static int lodFor(float pxPerBlock) {
-        return pxPerBlock >= 0.9f ? 0 : pxPerBlock >= 0.22f ? 1 : 2;
+        return SliceSampler.lodFor(pxPerBlock);
     }
 
     static long key(int sx, int sz) {
@@ -113,9 +131,11 @@ final class AtlasMesh {
     /** Blocks in [bx, bx + size) × [bz, bz + size) changed (a cell explored, a chunk sampled): rebuild what draws them. */
     void changed(int bx, int bz, int size) {
         for (int lod = 0; lod < LODS; lod++) {
-            int shift = SHIFT + STEP_SHIFT[lod], pad = Builder.PADW << STEP_SHIFT[lod];
-            int sx0 = (bx - (1 << STEP_SHIFT[lod])) >> shift, sx1 = (bx + size + pad) >> shift;
-            int sz0 = (bz - (1 << STEP_SHIFT[lod])) >> shift, sz1 = (bz + size + (1 << STEP_SHIFT[lod])) >> shift;
+            // a slice reads texels PAD_W west of it (the shadows cast into it) and PAD round its other sides
+            int shift = SHIFT + STEP_SHIFT[lod], b = SliceSampler.blocksPerTexel(lod);
+            int west = SliceSampler.PAD_W * b, round = SliceSampler.PAD * b;
+            int sx0 = (bx - round) >> shift, sx1 = (bx + size + west) >> shift;
+            int sz0 = (bz - round) >> shift, sz1 = (bz + size + round) >> shift;
             for (int sz = sz0; sz <= sz1; sz++)
                 for (int sx = sx0; sx <= sx1; sx++) {
                     Slice s = slices[lod].get(key(sx, sz));
@@ -139,9 +159,9 @@ final class AtlasMesh {
             map.clear();
         }
         totalQuads = totalBytes = 0;
-        windowCx[0] = windowCx[1] = windowCx[2] = Integer.MIN_VALUE;
+        java.util.Arrays.fill(windowCx, Integer.MIN_VALUE);
         Done d;
-        while ((d = done.poll()) != null) MemoryUtil.memFree(d.data);
+        while ((d = done.poll()) != null) free(d);
     }
 
     // ---- the per-frame step (main thread, outside any render pass) -------------------------------------------------------
@@ -204,20 +224,24 @@ final class AtlasMesh {
         int gen = generation;
         worker.execute(() -> {
             long t0 = System.nanoTime();
-            ByteBuffer data = null;
-            int quads = 0;
+            ByteBuffer data = null, texture = null;
+            int quads = 0, tops = 0, texels = 0;
             int[] lights = new int[0];
             try {
                 quads = builder.build(store, ex, zv, s.lod, s.x0(), s.z0());
                 if (quads > 0) {
                     data = builder.copyOut();
+                    texture = builder.textureOut();
+                    tops = builder.topQuads();
+                    texels = builder.texels();
                     lights = builder.lights();
                 }
             } catch (RuntimeException e) {
                 dev.awaken.Awaken.LOG.debug("[atlas] slice build failed: {}", e.toString());
             }
-            if (gen == generation) done.add(new Done(s, data, quads, lights, System.nanoTime() - t0));
-            else if (data != null) MemoryUtil.memFree(data);
+            Done d = new Done(s, data, quads, tops, texture, texels, lights, System.nanoTime() - t0);
+            if (gen == generation) done.add(d);
+            else free(d);
         });
     }
 
@@ -229,19 +253,37 @@ final class AtlasMesh {
             s.building = false;
             boolean had = s.quads > 0;
             close(s);
-            if (d.quads > 0 && d.data != null) {
-                s.buffer = RenderSystem.getDevice().createBuffer(() -> "Atlas slice", GpuBuffer.USAGE_VERTEX, d.data);
+            if (d.quads > 0 && d.data != null && d.texture != null) {
+                var device = RenderSystem.getDevice();
+                s.buffer = device.createBuffer(() -> "Atlas slice", GpuBuffer.USAGE_VERTEX, d.data);
+                int t = d.texels, mips = Builder.mipLevels(t);
+                s.texture = device.createTexture(() -> "Atlas slice tops", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING,
+                        GpuFormat.RGBA8_UNORM, t, t, 1, mips);
+                s.view = device.createTextureView(s.texture);
+                CommandEncoder enc = device.createCommandEncoder();
+                long at = MemoryUtil.memAddress(d.texture);
+                for (int m = 0, w = t; m < mips; m++, w >>= 1) {
+                    enc.writeToTexture(s.texture, MemoryUtil.memByteBuffer(at, w * w * 4), m, 0, 0, 0, w, w);
+                    at += (long) w * w * 4;
+                }
                 s.quads = d.quads;
-                s.bytes = d.data.remaining();
+                s.tops = d.tops;
+                s.bytes = d.data.remaining() + d.texture.remaining();
                 s.lights = d.lights;
                 totalQuads += s.quads;
                 totalBytes += s.bytes;
-                if (!had) s.builtAt = now;
+                // new land rises where it appears; a level built ahead of a zoom is already there when it's shown
+                if (!had && s.lod == shown) s.builtAt = now;
             }
-            if (d.data != null) MemoryUtil.memFree(d.data);
+            free(d);
             buildNanos[(int) (builds & 1023)] = d.nanos;
             builds++;
         }
+    }
+
+    private static void free(Done d) {
+        if (d.data != null) MemoryUtil.memFree(d.data);
+        if (d.texture != null) MemoryUtil.memFree(d.texture);
     }
 
     private void close(Slice s) {
@@ -249,9 +291,13 @@ final class AtlasMesh {
             s.buffer.close();
             s.buffer = null;
         }
+        if (s.view != null) s.view.close();
+        if (s.texture != null) s.texture.close();
+        s.view = null;
+        s.texture = null;
         totalQuads -= s.quads;
         totalBytes -= s.bytes;
-        s.quads = 0;
+        s.quads = s.tops = 0;
         s.bytes = 0;
         s.lights = new int[0];
     }
@@ -298,172 +344,150 @@ final class AtlasMesh {
 
     /** Builds one slice into its own scratch. One instance, used only by the worker. */
     static final class Builder {
-        static final int PADW = 48; // shadow casters up to 48 columns west of a slice
-        /** Sun from the west, 40° up: a shadow line drops tan(40°) = 0.84 blocks per block east. */
-        static final float SUN_DROP = 0.84f;
-        private static final int GW = PADW + S + 1, GH = S + 2, VERTEX = 16;
-        private final short[] gh = new short[GW * GH];
-        private final int[] gc = new int[GW * GH];
-        private final byte[] gi = new byte[GW * GH];
-        private final boolean[] gd = new boolean[GW * GH];
-        private final int[] gz = new int[GW * GH];
-        private final int[] top = new int[S * S];
+        static final int TOP_VERTEX = 20, SIDE_VERTEX = 16; // POSITION_TEX, POSITION_COLOR
+        private final SliceSampler sampler = new SliceSampler();
         private final boolean[] used = new boolean[S * S];
-        private long vb = MemoryUtil.nmemAlloc(1 << 20);
-        private long vbCap = 1 << 20, vbPos;
-        private int step;
+        private final Scratch tops = new Scratch(), sides = new Scratch();
+        private final int[] mip = new int[SliceSampler.MAX_TEX * SliceSampler.MAX_TEX / 4], mip2 = new int[mip.length];
+        private int step, topQuads;
+        private float uvScale;
         private final it.unimi.dsi.fastutil.ints.IntArrayList lit = new it.unimi.dsi.fastutil.ints.IntArrayList();
         static final int MAX_LIGHTS = 1500;
+
+        /** A growing native buffer of vertices. */
+        private static final class Scratch {
+            long address = MemoryUtil.nmemAlloc(1 << 20), cap = 1 << 20, pos;
+
+            long reserve(int bytes) {
+                if (pos + bytes > cap) {
+                    cap = Math.max(cap * 2, pos + bytes);
+                    address = MemoryUtil.nmemRealloc(address, cap);
+                }
+                long p = address + pos;
+                pos += bytes;
+                return p;
+            }
+        }
 
         int[] lights() {
             return lit.toIntArray();
         }
 
-        private static int g(int x, int z) {
-            return (z + 1) * GW + (x + PADW);
+        int topQuads() {
+            return topQuads;
         }
 
+        int texels() {
+            return sampler.tex;
+        }
+
+        /** The vertices: the textured tops first, then the coloured sides. */
         ByteBuffer copyOut() {
-            ByteBuffer out = MemoryUtil.memAlloc((int) vbPos);
-            MemoryUtil.memCopy(vb, MemoryUtil.memAddress(out), vbPos);
+            ByteBuffer out = MemoryUtil.memAlloc((int) (tops.pos + sides.pos));
+            MemoryUtil.memCopy(tops.address, MemoryUtil.memAddress(out), tops.pos);
+            MemoryUtil.memCopy(sides.address, MemoryUtil.memAddress(out) + tops.pos, sides.pos);
             return out;
         }
 
+        static int mipLevels(int texels) {
+            return Integer.numberOfTrailingZeros(texels) + 1;
+        }
+
+        /** The top texture and its mip chain down to 1×1, RGBA bytes, level after level (each a box filter of the last). */
+        ByteBuffer textureOut() {
+            int t = sampler.tex;
+            long bytes = 0;
+            for (int w = t; w >= 1; w >>= 1) bytes += (long) w * w * 4;
+            ByteBuffer out = MemoryUtil.memAlloc((int) bytes);
+            long p = MemoryUtil.memAddress(out);
+            int[] src = sampler.lit;
+            p = rgba(p, src, t * t);
+            int w = t;
+            while (w > 1) {
+                int h = w >> 1;
+                int[] dst = src == mip ? mip2 : mip;
+                for (int z = 0; z < h; z++)
+                    for (int x = 0; x < h; x++) {
+                        int a = src[2 * z * w + 2 * x], b = src[2 * z * w + 2 * x + 1], c = src[(2 * z + 1) * w + 2 * x], d = src[(2 * z + 1) * w + 2 * x + 1];
+                        int r = (((a >> 16) & 255) + ((b >> 16) & 255) + ((c >> 16) & 255) + ((d >> 16) & 255) + 2) >> 2;
+                        int g = (((a >> 8) & 255) + ((b >> 8) & 255) + ((c >> 8) & 255) + ((d >> 8) & 255) + 2) >> 2;
+                        int bl = ((a & 255) + (b & 255) + (c & 255) + (d & 255) + 2) >> 2;
+                        dst[z * h + x] = 0xFF000000 | r << 16 | g << 8 | bl;
+                    }
+                p = rgba(p, dst, h * h);
+                src = dst;
+                w = h;
+            }
+            return out;
+        }
+
+        private static long rgba(long p, int[] argb, int n) {
+            for (int i = 0; i < n; i++, p += 4) {
+                int v = argb[i];
+                MemoryUtil.memPutByte(p, (byte) (v >> 16));
+                MemoryUtil.memPutByte(p + 1, (byte) (v >> 8));
+                MemoryUtil.memPutByte(p + 2, (byte) v);
+                MemoryUtil.memPutByte(p + 3, (byte) 255);
+            }
+            return p;
+        }
+
+        /** Builds the slice at {@code lod} with its corner at block (x0, z0); returns the quads (0: no known land in it). */
         int build(ColumnStore store, Explored explored, ZoneMap.View zones, int lod, int x0, int z0) {
-            int sh = STEP_SHIFT[lod];
-            step = 1 << sh;
-            int half = step >> 1;
-            // 1. gather the columns this level draws (the middle column of each step × step square)
-            boolean any = false;
-            ColumnStore.Tile tile = null;
-            int lastTx = Integer.MIN_VALUE, lastTz = Integer.MIN_VALUE;
-            for (int z = -1; z <= S; z++) {
-                int wz = z0 + (z << sh) + half;
-                for (int x = -PADW; x <= S; x++) {
-                    int wx = x0 + (x << sh) + half, gi0 = g(x, z);
-                    int tx = wx >> ColumnStore.TILE_SHIFT, tz = wz >> ColumnStore.TILE_SHIFT;
-                    if (tx != lastTx || tz != lastTz) {
-                        lastTx = tx;
-                        lastTz = tz;
-                        tile = store.peek(tx, tz);
-                    }
-                    int i = ColumnStore.index(wx, wz);
-                    boolean d = tile != null && (tile.color[i] >>> 24) != 0 && explored.explored(wx >> 4, wz >> 4);
-                    gd[gi0] = d;
-                    if (d) {
-                        gh[gi0] = tile.height[i];
-                        gc[gi0] = tile.color[i];
-                        gi[gi0] = tile.info[i];
-                        gz[gi0] = zones == null || x < -1 ? 0 : zones.zone(wx, wz);
-                        if (x >= 0 && x < S && z >= 0 && z < S) any = true;
-                    }
-                }
-            }
-            vbPos = 0;
+            tops.pos = sides.pos = 0;
+            topQuads = 0;
             lit.clear();
-            if (!any) return 0;
-            int quads = 0;
-            float drop = SUN_DROP * step;
-            // 2. top colours: map colour × slope shade × cast shadow from the west sun
-            for (int z = 0; z < S; z++) {
-                float level = -1e9f;
-                for (int x = -PADW; x < S; x++) {
-                    int gg = g(x, z);
-                    if (x >= 0 && gd[gg]) {
-                        int h = gh[gg], c = gc[gg], info = gi[gg], depth = info & 15, kind = (info >> 4) & 7;
-                        float shade = 1f;
-                        if (depth > 0) {
-                            shade = Math.max(0.55f, 1.02f - depth * 0.035f);
-                        } else {
-                            int w = g(x - 1, z), n = g(x, z - 1);
-                            if (gd[w]) shade += clamp((h - gh[w]) * 0.06f / step, -0.16f, 0.16f);
-                            if (gd[n]) shade += clamp((h - gh[n]) * 0.04f / step, -0.10f, 0.10f);
-                            // a little per-block grain on natural ground so it reads as voxels, not paint
-                            if (kind == ColumnStore.K_SOIL || kind == ColumnStore.K_LEAVES || kind == ColumnStore.K_SAND)
-                                shade += ((hash(x0 + (x << sh), z0 + (z << sh)) & 7) - 3.5f) * 0.008f;
-                        }
-                        // ambient occlusion: ground hemmed in by taller neighbours (a forest floor, a lane between
-                        // houses) sits darker, so dense canopy reads as clumps instead of noise
-                        int e = g(x + 1, z), s2 = g(x, z + 1), w2 = g(x - 1, z), n2 = g(x, z - 1), hemmed = 0;
-                        if (gd[e] && gh[e] - h >= 2 * step) hemmed++;
-                        if (gd[s2] && gh[s2] - h >= 2 * step) hemmed++;
-                        if (gd[w2] && gh[w2] - h >= 2 * step) hemmed++;
-                        if (gd[n2] && gh[n2] - h >= 2 * step) hemmed++;
-                        shade -= hemmed * 0.045f;
-                        float shadow = clamp((level - h) * 0.5f, 0f, 1f);
-                        shade *= 1f - 0.30f * shadow;
-                        top[z * S + x] = zone(scale(c, shade), gg, zones);
-                        if ((info & ColumnStore.LIT) != 0 && lit.size() < MAX_LIGHTS * 3) {
-                            lit.add(x << sh);
-                            lit.add(h);
-                            lit.add(z << sh);
-                        }
-                    }
-                    if (gd[gg]) level = Math.max(level, gh[gg]);
-                    level -= drop;
-                }
-            }
-            // 3. top faces, merged greedily into rectangles where the height matches and the colour is within a hair
-            // (the grain, a touch of AO): one quad per column made the land the open table's biggest cost
+            if (!sampler.sample(store, explored, zones, lod, x0, z0)) return 0;
+            SliceSampler sm = sampler;
+            step = 1 << lod;
+            uvScale = sm.cpt / (float) sm.tex;
+            // tops, merged greedily into rectangles wherever the height matches: their colour is the texture's, block by
+            // block, so a field or a roof is one quad however much detail it carries
             java.util.Arrays.fill(used, false);
             for (int z = 0; z < S; z++) {
                 for (int x = 0; x < S; x++) {
-                    int gg = g(x, z), k = z * S + x;
-                    if (!gd[gg] || used[k]) continue;
-                    int h = gh[gg], c = top[k], run = 1;
-                    while (x + run < S && !used[k + run] && gd[gg + run] && gh[gg + run] == h && near(top[k + run], c)) run++;
+                    int ci = SliceSampler.c(x, z), k = z * S + x;
+                    if (!sm.cd[ci] || used[k]) continue;
+                    int h = sm.ch[ci], run = 1;
+                    while (x + run < S && !used[k + run] && sm.cd[ci + run] && sm.ch[ci + run] == h) run++;
                     int rows = 1;
                     grow:
                     while (z + rows < S) {
-                        int rk = (z + rows) * S + x, rg = g(x, z + rows);
+                        int rk = (z + rows) * S + x, rc = SliceSampler.c(x, z + rows);
                         for (int i = 0; i < run; i++)
-                            if (used[rk + i] || !gd[rg + i] || gh[rg + i] != h || !near(top[rk + i], c)) break grow;
+                            if (used[rk + i] || !sm.cd[rc + i] || sm.ch[rc + i] != h) break grow;
                         rows++;
                     }
                     for (int r = 0; r < rows; r++) java.util.Arrays.fill(used, (z + r) * S + x, (z + r) * S + x + run, true);
-                    float y = h + 1 - Y_REF;
-                    quad(x, y, z, x + run, y, z, x + run, y, z + rows, x, y, z + rows, c, c);
-                    quads++;
+                    top(x, z, x + run, z + rows, h + 1 - Y_REF);
+                    topQuads++;
                 }
             }
-            // 4. side faces down to the lower neighbour, or to the base at the explored edge (the diorama cut)
+            int quads = topQuads;
+            // sides down to the lower neighbour, or to the base at the explored edge (the diorama cut); lights at night
             for (int z = 0; z < S; z++) {
                 for (int x = 0; x < S; x++) {
-                    int gg = g(x, z);
-                    if (!gd[gg]) continue;
-                    int h = gh[gg], c = top[z * S + x], kind = (gi[gg] >> 4) & 7;
-                    quads += side(gg + 1, h, c, kind, x + 1, z, x + 1, z + 1, 0.62f);  // east
-                    quads += side(gg - 1, h, c, kind, x, z + 1, x, z, 0.94f);          // west, sunlit
-                    quads += side(gg + GW, h, c, kind, x + 1, z + 1, x, z + 1, 0.80f); // south
-                    quads += side(gg - GW, h, c, kind, x, z, x + 1, z, 0.70f);         // north
+                    int ci = SliceSampler.c(x, z);
+                    if (!sm.cd[ci]) continue;
+                    int h = sm.ch[ci], c = sm.cc[z * S + x], kind = sm.ck[ci];
+                    quads += side(ci + 1, h, c, kind, x + 1, z, x + 1, z + 1, 0.62f);                  // east
+                    quads += side(ci - 1, h, c, kind, x, z + 1, x, z, 0.94f);                          // west, sunlit
+                    quads += side(ci + SliceSampler.CW, h, c, kind, x + 1, z + 1, x, z + 1, 0.80f); // south
+                    quads += side(ci - SliceSampler.CW, h, c, kind, x, z, x + 1, z, 0.70f);         // north
+                    if (sm.cl[z * S + x] && lit.size() < MAX_LIGHTS * 3) {
+                        lit.add((x << lod) + (step >> 1));
+                        lit.add(h);
+                        lit.add((z << lod) + (step >> 1));
+                    }
                 }
             }
             return quads;
         }
 
-        /**
-         * The zone's colour over a column: a wash of its colour over the land, and where the next known column belongs
-         * to another zone, a bright line of it, so each side of a boundary carries its own colour and you see exactly
-         * where one district or region ends and the next begins.
-         */
-        private int zone(int c, int g, ZoneMap.View zones) {
-            int zn = gz[g];
-            if (zn == 0 || zones == null) return c;
-            int zc = zones.colour(zn);
-            if (zc == 0) return c;
-            boolean edge = differs(g + 1, zn) || differs(g - 1, zn) || differs(g + GW, zn) || differs(g - GW, zn);
-            if (edge) return mix(c, lighten(zc), 0.90f);
-            return mix(c, zc, 0.30f);
-        }
-
-        private boolean differs(int n, int zone) {
-            return gd[n] && gz[n] != zone && gz[n] != 0;
-        }
-
-        /** One vertical face between column g's top and its neighbour n; returns the quads written. */
+        /** One vertical face between column ci's top and its neighbour n; returns the quads written. */
         private int side(int n, int h, int topColor, int kind, int ax, int az, int bx, int bz, float dir) {
-            boolean edge = !gd[n];
-            int low = edge ? BASE_Y - 1 : gh[n];
+            boolean edge = !sampler.cd[n];
+            int low = edge ? BASE_Y - 1 : sampler.ch[n];
             if (low >= h) return 0;
             float yTop = h + 1 - Y_REF, yLow = low + 1 - Y_REF;
             int face = scale(topColor, dir);
@@ -491,20 +515,33 @@ final class AtlasMesh {
             };
         }
 
-        /** A quad in column units (scaled to blocks here): the first two corners take colour a, the last two colour b. */
+        /** A top from column (x1, z1) to (x2, z2) at height y, its texture coordinates the same corners in texels. */
+        private void top(int x1, int z1, int x2, int z2, float y) {
+            long p = tops.reserve(4 * TOP_VERTEX);
+            float s = step, u = uvScale;
+            topVertex(p, x1 * s, y, z1 * s, x1 * u, z1 * u);
+            topVertex(p + TOP_VERTEX, x1 * s, y, z2 * s, x1 * u, z2 * u);
+            topVertex(p + 2 * TOP_VERTEX, x2 * s, y, z2 * s, x2 * u, z2 * u);
+            topVertex(p + 3 * TOP_VERTEX, x2 * s, y, z1 * s, x2 * u, z1 * u);
+        }
+
+        private static void topVertex(long p, float x, float y, float z, float u, float v) {
+            MemoryUtil.memPutFloat(p, x);
+            MemoryUtil.memPutFloat(p + 4, y);
+            MemoryUtil.memPutFloat(p + 8, z);
+            MemoryUtil.memPutFloat(p + 12, u);
+            MemoryUtil.memPutFloat(p + 16, v);
+        }
+
+        /** A side quad in column units (scaled to blocks here): the first two corners take colour a, the last two colour b. */
         private void quad(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3,
                           float x4, float y4, float z4, int a, int b) {
-            if (vbPos + 4L * VERTEX > vbCap) {
-                vbCap *= 2;
-                vb = MemoryUtil.nmemRealloc(vb, vbCap);
-            }
-            long p = vb + vbPos;
+            long p = sides.reserve(4 * SIDE_VERTEX);
             float s = step;
             vertex(p, x1 * s, y1, z1 * s, a);
-            vertex(p + VERTEX, x2 * s, y2, z2 * s, a);
-            vertex(p + 2 * VERTEX, x3 * s, y3, z3 * s, b);
-            vertex(p + 3 * VERTEX, x4 * s, y4, z4 * s, b);
-            vbPos += 4L * VERTEX;
+            vertex(p + SIDE_VERTEX, x2 * s, y2, z2 * s, a);
+            vertex(p + 2 * SIDE_VERTEX, x3 * s, y3, z3 * s, b);
+            vertex(p + 3 * SIDE_VERTEX, x4 * s, y4, z4 * s, b);
         }
 
         private static void vertex(long p, float x, float y, float z, int argb) {
@@ -518,17 +555,8 @@ final class AtlasMesh {
         }
     }
 
-    /** Two colours a hair apart (each channel within 5 of 255), so they may share a quad. */
-    static boolean near(int a, int b) {
-        return Math.abs(((a >> 16) & 255) - ((b >> 16) & 255)) <= 5 && Math.abs(((a >> 8) & 255) - ((b >> 8) & 255)) <= 5
-                && Math.abs((a & 255) - (b & 255)) <= 5;
-    }
-
     static int mix(int a, int b, float t) {
-        int r = (int) (((a >> 16) & 255) * (1 - t) + ((b >> 16) & 255) * t);
-        int g = (int) (((a >> 8) & 255) * (1 - t) + ((b >> 8) & 255) * t);
-        int bl = (int) ((a & 255) * (1 - t) + (b & 255) * t);
-        return (a & 0xFF000000) | (r << 16) | (g << 8) | bl;
+        return SliceSampler.mix(a, b, t);
     }
 
     static int lighten(int argb) {
@@ -536,20 +564,10 @@ final class AtlasMesh {
     }
 
     static int scale(int argb, float f) {
-        int r = Math.min(255, (int) (((argb >> 16) & 255) * f));
-        int g = Math.min(255, (int) (((argb >> 8) & 255) * f));
-        int b = Math.min(255, (int) ((argb & 255) * f));
-        return (argb & 0xFF000000) | (r << 16) | (g << 8) | b;
-    }
-
-    private static float clamp(float v, float lo, float hi) {
-        return v < lo ? lo : Math.min(v, hi);
+        return SliceSampler.scale(argb, f);
     }
 
     static int hash(int x, int z) {
-        int h = x * 0x27d4eb2d ^ z * 0x165667b1;
-        h ^= h >>> 15;
-        h *= 0x85ebca6b;
-        return h ^ (h >>> 13);
+        return SliceSampler.hash(x, z);
     }
 }

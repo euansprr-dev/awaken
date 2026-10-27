@@ -17,7 +17,7 @@ import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
 final class AtlasPipelines {
     private AtlasPipelines() {}
 
-    /** Opaque, depth-tested and depth-written voxel columns with baked vertex colours. */
+    /** Opaque, depth-tested and depth-written voxel sides with baked vertex colours. */
     static final RenderPipeline TERRAIN = RenderPipeline.builder(RenderPipelines.GLOBALS_SNIPPET)
             .withLocation(Identifier.fromNamespaceAndPath(Awaken.MODID, "pipeline/atlas_terrain"))
             .withBindGroupLayout(BindGroupLayouts.PROJECTION)
@@ -26,6 +26,21 @@ final class AtlasPipelines {
             .withFragmentShader("core/position_color")
             .withColorTargetState(ColorTargetState.DEFAULT)
             .withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR)
+            .withPrimitiveTopology(PrimitiveTopology.QUADS)
+            .withDepthStencilState(DepthStencilState.DEFAULT)
+            .withCull(false)
+            .build();
+
+    /** The land's tops: opaque, depth-tested and written, coloured from the slice's lit texture. */
+    static final RenderPipeline TERRAIN_TOPS = RenderPipeline.builder(RenderPipelines.GLOBALS_SNIPPET)
+            .withLocation(Identifier.fromNamespaceAndPath(Awaken.MODID, "pipeline/atlas_terrain_tops"))
+            .withBindGroupLayout(BindGroupLayouts.PROJECTION)
+            .withBindGroupLayout(BindGroupLayouts.DYNAMIC_TRANSFORMS)
+            .withBindGroupLayout(BindGroupLayouts.SAMPLER0)
+            .withVertexShader("core/position_tex")
+            .withFragmentShader("core/position_tex")
+            .withColorTargetState(ColorTargetState.DEFAULT)
+            .withVertexBinding(0, DefaultVertexFormat.POSITION_TEX)
             .withPrimitiveTopology(PrimitiveTopology.QUADS)
             .withDepthStencilState(DepthStencilState.DEFAULT)
             .withCull(false)
@@ -81,6 +96,7 @@ final class AtlasPipelines {
     static void register(RegisterRenderPipelinesEvent e) {
         e.registerPipeline(GLOW);
         e.registerPipeline(TERRAIN);
+        e.registerPipeline(TERRAIN_TOPS);
         e.registerPipeline(OVERLAY);
         e.registerPipeline(CLOUDS);
     }
