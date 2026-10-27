@@ -1831,7 +1831,10 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   view the ray-cast went from 713 sky pixels to none (43 left without the neighbours). Most chunks don't change: their
   lowest sky light lies at or above the old cut. Test `farsight_voxels_overhang`: a tunnel at the foot of a 44-block
   rock, lit from the next chunk's cliff and dark where it crosses into this one, is in the snapshot and closed by its
-  curtain.
+  curtain. Tour `tools/autopilot/farsight-cave-river.txt` (a copy of his world, his spot, RD 15): the mouths draw
+  dark, no band. Still open there: a pale wedge 265 to 305 m out behind the left bank's trees (red in debug 2: the far
+  terrain hidden, City Sight not painting; with City Sight off the far terrain fills it), through lit air under a ledge,
+  so not the cut.
 - **Ring 0's sea under the city**: a sea piece wholly inside the band where far water stays under real water, over
   chunks all shown and within Sodium's reach up and down, has every fragment hidden by the mask; it is no longer drawn
   (ring 0 at the Roost 0.70 → 0.15 ms: discarded fragments under Carillon's canals).
