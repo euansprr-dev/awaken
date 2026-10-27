@@ -1,0 +1,553 @@
+# Armour and clothing: gear that looks and moves like the weapons do (plan for Euan's approval, 2026-10-27)
+
+Status: **plan only, nothing built, nothing in production changed.** Branch `pack/armour-plan`. Approval page (private until shared):
+https://claude.ai/artifact/MPDTTbEFZSPhDr1m9gxfgX (source `docs/armour/page.src.html`, built to `page.html` by `build_page.py`). Written to Euan's planning method (`/Volumes/MEDIA/arms-ref/planning-method.md`).
+Labels used below: **READ** (read in this repo at c9482190, or in the 26.3 / NeoForge sources under `.ref/`), **MEASURED**
+(computed or rendered here), **PROPOSAL** (not built, nothing measured), **UNVERIFIED** (the first builder must check it).
+The one isolated proof is in `docs/armour/proof/` (section 5.1): it renders two armour sets with the weapon style's rules beside
+today's. It changes no production file.
+
+## 0. What Euan said, and the one-line answer
+
+> "start a sonnet agent that reviews the arm weapons and the level of effort put into them, then it should plan a whole armor set in
+> the same language since we don't have much rn. Like really EPIC looking armour, clothing, etc. Not just boring flat stuff, but
+> actually feels like different fabrics, materials, depth, etc and looks really awesome. With different effects, animations, and
+> uses too." (2026-10-27)
+
+**The answer.** Give armour the treatment the weapons got. Today a set is one flat 64x32 skin on vanilla's six boxes (the two late
+sets add 17 to 20 extra boxes that never move). The plan: every set becomes a **model of real parts** (stacked plates, hanging
+cloth, hoods, capes, gems), painted to the weapon style's rules, in **nine materials you can tell apart**; a second **glow pass**
+that carries the runes, gems and threads; **cloth that moves** (client only, cheap, switched off with distance); **sound by
+material**; a **set moment** when a set completes; the **first-person arm** wearing its sleeve; and a few **uses** that need no new
+stats. Nothing in `SetBonus`, any recipe or any stat changes. It stays in vanilla's armour path (no mixins), so it works with
+Sodium, other mods' poses and our own animations. About 14 to 18 builder hours at this project's pace (section 6.4).
+
+## Part A. The weapons review (what Arms did, and what the armour must speak)
+
+### A.1 How much went into the weapons (MEASURED from git and the tree)
+
+| Measure | Arms (weapons) | Gear (armour) today |
+|---|---|---|
+| Time from first commit to the last weapon batch | 2026-10-25 10:46 to 10-26 21:57, about 35 h, 61 commits that mention Arms | 2026-10-23 20:41 to 10-24 00:01, 3 commits, about 3.5 h. Since then only W2's recipes touched it (8072f40a) |
+| Java | about 8,500 lines (`arms/**`) | about 2,300 lines (`gear/**`) |
+| Art generator | `arms_weapons.py` 3,513 lines + `voxel.py` (box kit) + `mesh.py`/`mesh_render.py` + holds, moves and rig tools (about 5,000 lines more) | `gear.py` 2,157 lines (item icons, 64x32 layers, 37 silhouette parts, a preview) |
+| Models | 111 meshes (96 forged + 15 Lord-forged), 244 to 510 triangles each, in a custom `.mesh` format | 6 sets of 6 vanilla boxes; Lordscale +20 and Sovereign +17 boxes |
+| Shader | `arms_weapon` (painted light, studio metal, rim, emissive flow) + glow + shade pipelines, with a vanilla fallback | none: vanilla armour light only |
+| Sound | 26 events, about 80 files, layered and checked for loudness, transient and harshness; a listening page | none: vanilla `ARMOR_EQUIP_*` per tier (`HunterTier.java:33-45`) |
+| Motion | first-person swings baked per move, wrists, holds, third-person rig (one weapon part leads the blow) | none: parts are rigid |
+| Systems on top | 48 Marks, attunement, mastery, Lord-forged reveal, Arts | set bonuses only |
+| Review loop | a contact sheet beside Euan's reference image per batch, a lab (`anim_lab.py`), five audit and research notes, a listening page, 27 GameTests | one preview image |
+| Rework | two passes thrown out by Euan before the third (plain cubes: "still very, very blocky"; lofted meshes: "too thin and noisy") | none; never reviewed against a reference |
+
+Armour was built in one evening, two days before the weapon style existed (`docs/combat/weapon-style.md` first committed
+2026-10-26 01:51). It was never brought up to it. That is the whole gap.
+
+### A.2 The visual language (concrete rules the armour must follow)
+
+From `docs/combat/weapon-style.md`, `tools/art/voxel.py`, `tools/art/specs/arms_weapons.py` and SPEC §25. The rules a builder can
+test; the proof (section 5.1) follows 1 to 7.
+
+1. **Density.** 1 texel = 1 skin pixel (1/16 block). Every box has whole-texel sizes (halves only for centring). Every face is its own
+   chart at that density, so texels are square and match the player's arm.
+2. **Construction from bold parts, not noise and not staircases.** A few big boxes per part; layers step out 1 to 2 texels and get
+   different depths so no two faces share a plane (`check()` fails on a plane fight). A diagonal is a turned box, never a staircase.
+3. **Silhouette.** The outline alone says what it is, and no two designs share one. Bolder with tier: bone and antler at the bottom,
+   wings, crowns and framed stones at the top.
+4. **Painted bevels.** A one-texel band on every outer edge: lit (+2 steps) toward the painted light (up and the upper left), +1 across
+   it, dark (-1, -2) away; a contact shadow (base -3) where a face runs into another part. Top and bottom faces take at most ±1.
+5. **Palette.** Three or four hand-picked, hue-shifted ramps per piece, one of them dark and one warm; metals keep their colour in the
+   albedo (a light base step for gold and brass).
+6. **Detail budget.** A few deliberate marks per part (a highlight streak, wrap bands, studs, scales in offset rows, a rune channel),
+   never per-texel noise; at most one or two dither patterns, only where they are the material (fur).
+7. **Glow is information and sits on specific texels.** Stones are concentric rings, albedo kept two steps under the top so glow adds
+   colour instead of whitening; emissive 0.4-0.55 for stones, 0.6-1 for runes and edges; anything that pulses has a **flow** that runs
+   along the piece (hilt to tip). Streams of embers, wisps and motes only on the top tiers (B, A, S): light is a reward.
+8. **Check every look on a sheet before writing:** three-quarter, other side, back, close-up, at rest and in use, night, the icon at 4x
+   and 1x, all beside the reference. Ask: chunky? bevels big and clean? material contrast? reads at a glance? more than plain cubes?
+   free of noise?
+9. **Tiers are a ladder of form, not of tint.** Each of the six tiers has its own outline and its own signature material (E bone and
+   antler, D tusk and bronze, C slate and brass with signal runes, B Veil silver and violet, A black scale and gold, S void weave and crimson).
+
+Mechanical language (how weapons *behave*, which armour should mirror):
+
+10. **It reacts to the player's verbs.** The blade fills with light as a heavy charges, flares on the glint, hums when Resonance is full
+    (SPEC §25 "It carries the fight").
+11. **One effect engine, one budget, one setting.** Trails, sparks and motes go through the powers module's engine (`FxClient`, `FxPool`)
+    with our own sprites (EMBER, WISP, MOTE), never vanilla particles.
+12. **Server decides, every client draws it the same way.** `arms_seen` goes to players within 48 blocks; the rest is derived.
+13. **Sound is layered and checked:** a transient, a body for the material, a tail, a sweetener, 2 to 5 seeded variants, loudness-gated.
+14. **Optional pipelines with a plain fallback.** If the shader can't build, the same mesh draws with vanilla's light.
+15. **Plain words everywhere** (`plain-dialogue`): the name, the type line and where to get more.
+
+### A.3 Where the weapons themselves still fall short (READ)
+
+- **Third person is the weak spot.** The blade itself clips less than before (17 of 89 rigged moves put it more than 1.5 px into the body,
+  against 23 shipped), but counting hilts and hafts 39 moves have some part of the weapon in the body, against 24 shipped; the whole-game
+  audit has 3 fails (two Veilwoven dagger moves, the Veilwoven Spear's second thrust). The CI runner draws
+  about 10 frames a second, so the sheets show poses, not motion. (Arms note `arms-blade-first.md`.)
+- **Lower tiers differ by model and trail colour only.** E, D and C shed no light (by design); SPEC §25 "Sounds" picks the swish by the
+  move and the impact by what is struck, and nothing picks by the weapon's tier, so a Wildhide and a Sovereign Longsword sound alike.
+- **No stowed weapon.** I found no code that draws a weapon on the body when it isn't held (searched: sheath, scabbard, holster).
+- **Named and legendary weapons are unbuilt (S9)**; a Marked weapon looks like the plain forged one.
+- **The route to a weapon was invisible** (arms-progression plan, now approved).
+- **Armour doesn't match.** A Sovereign Longsword in a Sovereign Weave suit is a painted blade over a flat skin.
+
+## Part B. The armour plan
+
+## 1. Understanding and success contract
+
+### 1.1 The brief, restated
+
+- **The job.** Wear gear that makes a hunter look like what they are (their rank, their style, what they killed) to themselves in third
+  person, to other players in a city, and in the Hearth's Hall, for 80+ hours of play.
+- **The pain.** Armour reads as dyed leather in six colours. E, D, C and B are vanilla's six boxes with a texture (READ: `gear_silhouettes/`
+  has only lordscale.json and sovereign.json). Nothing moves, nothing glows, nothing sounds like what it is made of, and a completed set
+  fires vanilla's CRIT, FLAME and SNOWFLAKE particles and vanilla chimes (`GearCombat.java:96-119, 160-173, 239-240`).
+- **The desired experience.** "Really EPIC" armour and clothing with real depth; fabrics and materials you can tell apart; effects,
+  animations and uses; in the same language as the weapons.
+- **Euan's proposed solutions.** None beyond "same language as the weapons". The mechanism is mine to choose.
+- **Hard constraints.** No mixins unless unavoidable (Turbo contract); server authoritative; designs multiplayer-safe (guilds, cosmetics only
+  for money, later); public repo, no Mojang assets; 60 players in a city; plain words; fit the arms-progression and regions plans; no stat changes.
+- **Unknowns to verify (all answered in 2.4):** what the 26.3 equipment path can render; whether a custom layer can add glow and motion
+  without a mixin; how first-person arms are drawn; what Sodium, Iris and Lens do to it.
+
+**Interpretation, in one line:** make armour as good as the weapons by giving it the same *pipeline* (a kit, a painter, a review sheet,
+checks) and then using it to author six sets, not by repainting six textures.
+
+### 1.2 "Epic" as observable behaviour
+
+| | Strong | Weak | Unacceptable |
+|---|---|---|---|
+| Silhouette | the six tiers are told apart from their black outline at 24 blocks; each set has parts that stand 1 to 3 texels off the body | tiers differ by colour only (today E to C) | two tiers share an outline |
+| Materials | hide, studded leather, plate, mail, silk, scale, weave, alloy and Deepglass each read as themselves at 1x | metal and cloth painted the same way | noise instead of material |
+| Motion | hoods, capes, sashes and tassets lag and settle with the body; plates stay rigid | everything rigid (today) | cloth through the legs or head, jitter, or stretch |
+| Light | glow carries runes, gems and thread, brighter as more of the set is worn | glow always on | glow on armour that has none, or glare in a gate |
+| Sound | a step in silk and a step in plate sound different at 8 blocks | vanilla equip sounds only (today) | a sound per piece per step (a wall of noise in a city) |
+| Moments | a complete set announces itself once, then is quiet | nothing (today) | a flourish every time the set is touched |
+| Cost | within the budget in 1.3 | | frame drops in a crowd |
+
+### 1.3 Success contract
+
+- **Usefulness.** You can read a stranger's rank and style from across the street; you can read your own set's state (is the full
+  bonus on, is it primed) without looking at a HUD. Armour is a thing you want to find, wear and show.
+- **Correctness.** Set numbers, recipes, stats, repairs and tags are unchanged (existing `gear_*` tests stay green). Every texture and
+  part spec passes the kit's checks. A piece always draws: a model that fails falls back to vanilla's plain layer (logged once).
+- **Effort.** No new menus to learn. Appearance options (hood, glow) live in one place, defaults are good.
+- **Responsiveness.** Nothing in the frame waits on the server. Moments arrive within one tick of the event.
+- **Control.** The player decides appearance only; the server decides every number. Effects have one setting (Off / Low / High) and obey
+  reduced motion.
+- **Reliability.** Every effect has a plain fallback (static pose, no glow, vanilla model).
+- **Cost.** Per full set in view: at most 60 cubes (S), 720 triangles; at most 0.02 ms of main-thread time for cloth within 24 blocks;
+  glow pass limited to the nearest wearers; no per-tick allocation; at most 4 tiny network events per player per second. Measured gate in 6.2.
+
+**Non-goals.** New stats or set bonuses; a cloak slot (the player has none: `EquipmentSlot.BODY` and `SADDLE` are animal and saddle
+slots, READ); mobs wearing sets (later); vertex physics; any pay-for-power; changing Arms.
+
+## 2. Verified audit and diagnosis
+
+### 2.1 Map: component → what it does → evidence → consequence → verdict
+
+| Component | What it actually does | Evidence | Consequence | Verdict |
+|---|---|---|---|---|
+| `assets/awaken/equipment/<set>.json` + `textures/entity/equipment/humanoid*/` | one albedo layer per body area, drawn by vanilla's `EquipmentLayerRenderer` with `armorCutoutNoCull` for every layer | `EquipmentLayerRenderer.java:88`; the 8 JSON files | no glow, no tint control, no depth: layers are all cutout, lit by the world | **Keep the path, replace the content** (JSON stays the entry point) |
+| `gear.py` `equipment_layer` and the 16x16 icons | paints 64x32 skins from hand tables and ramps | `gear.py:759-940`, `gear_figures.png` | flat; E to B look alike at 10 blocks | **Replace the painter** with the weapon-style painter; keep names, tags, recipes, level road (the same file writes them) |
+| `Silhouette` / `gear.client.Silhouettes` | A and S only: extra boxes on a 128x64 sheet, built into a `HumanoidModel` per tier and slot, cached, fallback to plain; head, chest and boots only | `Silhouette.java`, `Silhouettes.java:74-90`, `gear_silhouettes/*.json` (20 and 17 parts) | the right idea, applied to two tiers, static, leggings excluded | **Extend**: schema 2, every tier, all four slots, cloth chains, glow flags, far LOD |
+| NeoForge `IClientItemExtensions` | `getHumanoidArmorModel`, `getArmorTexture`, `getArmorLayerTintColor`, called per layer type incl. leggings | `.ref/neo/.../IClientItemExtensions.java:99,229,196` | gives us model and texture control without a mixin | **Use** (already used) |
+| `SetBonus`, `GearCombat` | counts worn pieces, applies attributes and combat parts; feedback is vanilla particles and sounds | `SetBonus.java`, `GearCombat.java:96-119` | the numbers are good, the feel is "an add-on" (visual-quality bar) | **Keep numbers; replace feedback** with a gear event and our own effects |
+| `HunterGearItem` tooltip | tier line + "2 worn: …" lines; the blade has none; no type line or source line | `HunterGearItem.java:25-42`; arms-progression G2 | player can't tell what a piece is or where to get more | **Joins arms-progression Phase A** (words), adds appearance lines |
+| `HunterSense` | Wildhide full set outlines creatures through walls (client) | `HunterSense.java` | a good tell with no visual on the wearer | **Keep; add a visible tell** on the wearer |
+| Hands (first person) | draws your arm itself in the hand pass (skin + sleeves, tint, glow) | `WorldBody.drawFist/limb`, SPEC §24; `RenderArmEvent` exists in NeoForge | your own armour never shows on your arms | **Extend**: sleeve of the worn chest piece on that arm |
+| `WingLayer` (Ascent) | a `RenderLayer<AvatarRenderState, PlayerModel>` added with `AddLayers`, per-entity slots (32), per-tick state, two passes (body + additive glow) | `WingLayer.java`, `AscentClient.java:82` | proves the exact mechanism needed here, in this repo, working | **Reuse the pattern** |
+| `AwLayers.Glow` (mobs) | submits the parent model again with `entityTranslucentEmissive` at full bright, alpha by state | `AwLayers.java:46-80` | proves a glow pass on a model without a mixin | **Reuse the pattern** |
+| Arms effects (`FxClient`, `WeaponMotes`, `arms_seen`) | one engine, one budget; observers get the event | SPEC §25 | the place armour effects go | **Reuse** |
+| `ArmorStandRenderer` | draws armour with the same `HumanoidArmorLayer` | `ArmorStandRenderer.java:34` | stands (and the Hall) show our models for free | **Benefit** |
+| Precursor Frame, miner's lamp | own equipment assets and 64x32 textures; Frame modules have effects (Jet Boots thrust, Shield Emitter…) | `AboveItems.java`, `docs/modules/above.md:81-93`, `DelveContent.java:106` | no worn visual for a module (UNVERIFIED: I did not read the Frame's client code) | **Extend** (Phase 4) |
+| Sound | vanilla `ARMOR_EQUIP_LEATHER, TURTLE, IRON, DIAMOND, NETHERITE` on equip; nothing else | `HunterTier.java:33-45` | silent gear | **Replace** with a kit |
+
+**What existing information doesn't reach the player:** the set count, the primed strike, Cornered, Flicker readiness and Overflow's counter
+are all known to the server and none is visible on the wearer. (A stored value isn't a displayed one.)
+
+### 2.2 The cases (reproduction; renders made here, `gear.py preview` and the proof)
+
+| Case | What I looked at | What it shows |
+|---|---|---|
+| Disappointing | E Wildhide, D Beastbound, C Gatewrought, B Veilwoven side by side (`docs/armour/proof/renders/sheet_B.png` top row is today's B) | four recoloured vanilla boxes: same outline, a stripe or two, no part that stands off the body |
+| Strong existing | A Lordscale and S Sovereign (`gear_late.png`) | horns, spines, talons, a crown, a collar, a cape: the silhouette approach works and reads at once |
+| Ordinary | B Veilwoven | dark violet blocks with silver bands |
+| Ambiguous | leggings and boots | the inner layer is a 64x32 skin on 0.5-grown boxes: nothing to see; A and S silhouettes exclude leggings entirely |
+| Missing-data / failure | silhouette JSON missing or invalid | falls back to the plain layer and logs once (`Silhouettes.java:86-90`): a safe failure, kept |
+
+### 2.3 Root causes (hypothesis → evidence → smallest test → impact)
+
+| # | Symptom | Cause | Evidence for | Against | Smallest test | If fixed |
+|---|---|---|---|---|---|---|
+| H1 | armour looks flat and generic | armour never got the weapon pipeline (no kit, no style rules, no review against a reference) | built in 3.5 h, before the style doc; 2.3k vs 8.5k lines; never reviewed | none found | the proof: same renderer, weapon rules, B and C sets | the biggest gain; proven in 5.1 |
+| H2 | no depth on E to B | no extra geometry: vanilla armour is one texture on six boxes | A and S have parts and read better | tier colour also differs | add parts to B and C only (the proof) | silhouette and depth |
+| H3 | nothing glows or moves | equipment layers can only draw cutout, and parts are rigid | `EquipmentLayerRenderer.java:88`; static cape pose 0.18 in `gear.py:1567` | the pattern for a glow layer exists in `AwLayers`/`WingLayer` | a prototype layer on one stand | fixes glow and cloth |
+| H4 | set bonuses feel invisible | feedback uses vanilla particles/sounds and shows to nobody | `GearCombat.java:96-119` | the numbers are strong | none needed | fixes "an add-on" |
+| H5 | tiers don't feel like a ladder | identity is colour, not form, in E to C | sheets | S/A silhouettes help | silhouette-distinctness test (6.2) | readable rank |
+| H6 | gear is silent | no sounds beyond vanilla equip | `HunterTier.java` | | listening page | feel |
+| H7 | first-person has no armour | Hands draws your arm itself with no armour pass | `WorldBody.java` | `RenderArmEvent` exists | one stand-in sleeve on the arm | presence |
+
+Source-data problem vs processing problem: it is **content and pipeline**, not engine. Nothing in the engine blocks this.
+
+### 2.4 What 26.3 and NeoForge allow (READ before promising anything)
+
+| Claim | Source (read) | What it means here | Validate in build |
+|---|---|---|---|
+| Equipment layers submit every layer with `RenderTypes.armorCutoutNoCull` (or its glint twin) and no other type | `EquipmentLayerRenderer.java:72-90` | JSON layers can't glow, blend or animate; glow and motion need our own layer | a stand with a test glow |
+| `getHumanoidArmorModel(stack, layerType, original)` and `getArmorTexture(stack, type, layer, default)` replace model and texture per layer type; leggings are a layer type | `IClientItemExtensions.java:99, 229`; `EquipmentClientInfo.LayerType` (HUMANOID, HUMANOID_LEGGINGS, HUMANOID_BABY…) | all four slots can have their own model and texture; wear states by durability can pick the texture from the stack | leggings model test |
+| `ModelFeatureRenderer` calls `model.setupAnim(state)` when the submitted model is drawn | `ModelFeatureRenderer.java:38` | a model subclass can pose swinging parts from the render state; the model is shared, so per-wearer state is keyed by entity id (as `WingLayer` does) | two stands, two poses, one model |
+| `HumanoidRenderState` carries the four equipment stacks; `AvatarRenderState` has `id`, `ageInTicks`, `capeFlap`, `capeLean`, `isCrouching`, `isFallFlying`; `LivingEntityRenderState.isInWater` | `HumanoidRenderState.java`, `AvatarRenderState.java:15-37` | a layer can read what is worn and the pose without touching the entity | |
+| `RenderLayer` + `EntityRenderersEvent.AddLayers`, one layer per player renderer, works today | `WingLayer.java`, `AscentClient.java:82`, `AwLayers.java` | no mixin; submit extra passes with `entityTranslucentEmissive` or `eyes` | |
+| Custom render pipelines are registered with `RegisterRenderPipelinesEvent` and fall back cleanly | `WeaponPipelines.java`, SPEC §25 "Optional pipelines" | an armour shader (painted light, metal sheen) is possible later, with a fallback | |
+| `RenderArmEvent` is "for rendering armor on the arm" in first person; our Hands also draws arms itself | `.ref/neo/.../event/RenderArmEvent.java` | two paths to cover (vanilla's arm and Hands') | tour in both states |
+| `ArmorStandRenderer` uses `HumanoidArmorLayer`; `AddLayers` can add a layer to stands too | `ArmorStandRenderer.java:34` | the Hall and stands show everything | |
+| Iris: absent (pinned to a Sodium that crashes); Sodium does not draw entities; Lens Swift/Cinematic draw after | SPEC §14 lines 1165, 1308 | vanilla render types are safe | one CI look tour |
+| No mixin is needed for any of this | the rows above | the Turbo contract is not triggered | |
+
+Not verified (UNVERIFIED, first builder's checks): whether Lens bloom picks up `entityTranslucentEmissive` pixels (weapon halos do, SPEC §25);
+whether a 256x128 armour texture costs anything measurable; behaviour under a shader pack other than Lens (none shipped).
+
+## 3. Alternatives and recommendation
+
+| | A. Targeted repair | **B. Armour as parts (recommended)** | C. Armour as skinned meshes |
+|---|---|---|---|
+| What | repaint the 64x32 layers to the weapon style; add silhouettes to B and C; swap particles and sounds | a part model for every tier and slot (generalise `Silhouettes`), the weapon painter, a glow layer, cloth that moves, sounds, moments, first-person sleeve, uses | the weapon `.mesh` and `arms_weapon` shader on the body, skinned to the player's bones |
+| Quality | better colour, still flat on E to C | deep, readable, animated; metals painted not reflective | the best light (studio metal, rim), arbitrary shapes |
+| Friction | none | none for players | needs a new skinning layer for every pose source (vanilla, PAL clips, Hands) |
+| Risk | low | low: every mechanism has an in-repo precedent (Silhouettes, WingLayer, AwLayers.Glow) | high: no precedent; mods that pose the body bypass it |
+| Perf (60 players) | trivial | about 500 triangles a set (B proof: 43 cubes), LOD down to 9 cubes | 250 to 500 triangles a piece plus a custom shader per piece |
+| Cost | 4 to 6 h | 14 to 18 h | 30+ h |
+| Mixins | none | none | probably, for poses |
+
+**Recommendation: B**, with one named option kept open: **B+**, an armour fragment shader (the weapons' painted light, metal sheen and
+rim) on our own layer for the metal parts of the top tiers, off by default behind the same fallback the weapons use. It is a Phase 5 option
+because it is the one part with a measurable cost and no read-through on a shader-pack-free pipeline yet.
+
+Why A loses: it is the "bigger sprite" fix. The proof shows that depth, not paint, is what separates the weapons from today's armour.
+Why C loses: a skinning layer means every animation source needs a second path, and the whole point of staying in vanilla's armour path is that
+our own wrists, PAL clips and other mods pose it for free. **What would change my recommendation:** if Euan wants true metal reflections
+on every set rather than painted bevels, C-for-S-only after B ships; if the 60-wearer bench exceeds the budget even with LOD, A for the lower tiers.
+
+## 4. Behaviour and architecture (the contract)
+
+### 4.1 The Armour Style Sheet (the rules, to be copied into `docs/armour/style.md` and the checker)
+
+1. **Density, whole texels, each face its own chart** (weapon rules 1-2). The base layer keeps vanilla's boxes (outer 1.0 grow, inner 0.5)
+   as the "shell" and every set adds parts on top.
+2. **Three layers of depth per piece:** the shell (what you'd see today), a **mid layer** 1 to 2 texels proud (plates, folds, a capelet), and
+   **accents** 2 to 4 texels proud (horns, spikes, gems, crests). Stacked lames step out and get different depths (1.5, 1.8, 2.1).
+3. **Hanging parts hang from a pivot at their top edge** (a sash, a tasset, a tabard, a cape). They are separate boxes with a swing group.
+   A long cloth is two or three boxes in a chain so it can bend.
+4. **Front and back both designed.** A player is seen from behind more than any other angle: every set has a back (a cape, a plate, a sigil).
+5. **Silhouette signatures** (section 4.3): each tier has one signature shape; a **silhouette check** (6.2) fails if two tiers' black
+   outlines overlap more than 75% from the front, side or back.
+6. **Cube budget** per set including the six shell boxes: E 24, D 32, C 40, B 44, A 52, S 60; per piece: helmet 14, chest 24, legs 14, boots 8.
+   Far model (beyond 40 blocks): the six shell boxes and at most three signature parts.
+7. **Painter** (same rules as weapons 4-6): base step by face, one-texel bevel bands lit up-left, contact shadow at joins, a hem or rim in a
+   second material, a few deliberate marks, no noise. One function per material (4.2).
+8. **Glow channel:** a second texture of the same size. Emissive only on runes, gems, thread, eyes and molten edges. Albedo under a gem stays
+   two steps under its ramp's top. Every glow part carries a **flow** (0..1 along the piece) so light travels.
+9. **Each tier is checked on a sheet with the weapon beside it**: four angles, walking, night with glow, silhouette, icon at 4x and 1x.
+
+### 4.2 Materials (nine, each with a painter, a sound family and a behaviour)
+
+| Material | Painter rule (what makes it read) | Used by | Sound family | Behaviour |
+|---|---|---|---|---|
+| **Hide** (fur, pelt) | fur strokes (the one allowed dither), fringe at the hem, bone toggles | E hood, vest; D under-layer | soft creak, bone clatter | fringe and tails sway; hackles lift when Hunter's Sense is on |
+| **Studded leather** | leather ramp with bronze studs in a 3-texel grid, stitched seams | D hauberk, greaves | leather, a light bronze clink | stiff: little sway |
+| **Plate** | slate lames with a brass rim, a broken highlight streak, rivets, stepped lames | C (all), A pauldrons | a clank with a short ring | rigid; settles with a small clank on landing |
+| **Mail** | 4-texel rings, each row offset half a ring, lit on the ring, dark in the hole | D hauberk skirt, C undershirt, optional | jingle | a fine ripple on landing and sprint |
+| **Silk** | pleats (a dark line every 4th column and a ridge beside it), a silver hem, a thread line | B robe, hood, mantle, sash | a rustle, a faint chime from glass | the most motion: long sway, lifts on glide and meditation |
+| **Scale** | scales in offset rows, lit edge on top, gold rim | A body | a dry rasp, a gold ring | rigid with a slight shimmer on movement |
+| **Weave** (void weave) | a diagonal weave, gold filigree borders | S regalia, cape | low shimmer | cape trails, collar stands |
+| **Precursor alloy** | panel seams with a circuit line in signal blue | Precursor Frame | servo, tick | modules extend and retract |
+| **Deepglass** | crystal facets, a bright heart and a dark rim, rings | B gems (Deepglass is B's metal), Frame visor | a glass chime | pulses with the set |
+
+The **proof** renders eight of these on one shoulder (`renders/materials.png`) so you can compare them at the same scale.
+
+### 4.3 The six sets, the Frame and the lamp (what each one is)
+
+The parts below are the design; the proof built B and C to the same rules so the claims are checked, not drawn from imagination.
+Names stay as they are (Hood, Vest…).
+
+| Tier | The idea | Silhouette signature | Materials | Glow | Motion | Sound | Set moment (existing bonus, now visible) |
+|---|---|---|---|---|---|---|---|
+| **E Wildhide** (Hood, Vest, Leggings, Boots) | a hunter's hide kit with a lantern | a deep fur-trimmed hood with a bent tip, bone toggles, fringe at sleeves and hem, a belt pouch and a small amber lantern | hide, bone, sinew, a little leather | **only the lantern** (a slow amber flicker); nothing else | fringe and hood tail sway | leather creak, bone clatter | 2 pieces: the lantern brightens. 4: the hackles rise and the hood eyes glint amber while **Hunter's Sense** is on |
+| **D Beastbound** (Helm, Hauberk, Greaves, Boots) | the armour of someone who hunted a named beast: **it wears the trophy you used** | wide shoulders carrying the trophy (tusk, antler or scale), a heavy bronze collar, a beast-skull belt clasp | studded leather, bronze, bone/tusk, moss | a few moss-green spore dots on the trophy | a belt chain and a pelt cape tail | leather, bronze clink | **Cornered**: the trophy and the eyes warm to ember while below half health, and breath steams |
+| **C Gatewrought** (Helm, Cuirass, Greaves, Sabatons) | gate-slate plate with brass and signal runes | square stacked pauldrons (three lames), a T-slot great helm with a brass crest, tassets, a surcoat in gate blue | plate, brass, a little cloth | signal-blue runes up the chest, vambraces and shins; they **pulse in order** up the body | rigid; the surcoat and tassets swing | clank, rune hum | a power hit **primes** the next melee hit: the runes flare in the Force's colour (Heat orange, Frost white, Charge yellow, Gravity violet, Spirit green) and run to the weapon hand |
+| **B Veilwoven** (Cowl, Mantle, Leggings, Treads) | the Veil's weavers: layered silk over mirror silver | a deep hood with a curling peak, a two-layer capelet, a hanging sash, a back cape with a sigil, robe panels split at the front | silk, mirror silver, spirit glass, thread | a brow gem, a clasp gem, thread lines and the cape sigil | the most cloth: peak, cape (two links), sash tails, panels | silk rustle, glass chime | meditating: the thread lights and the cloth lifts. **Veil Flicker**: the wearer flickers (a one-frame translucent pass and an afterimage) as the hit passes through |
+| **A Lordscale** (Greathelm, Warplate, Tassets, Talons) | the Lords' black scale with molten gold | horns, a crest, three layers of pauldron with spikes, a spined back, talons (already built; keep and deepen) | scale, gold, pearl | molten gold edges shed embers (the weapon motes, B/A/S only); a pearl in the brow | rigid with a tassets swing | dry rasp, gold ring | **Overflow**: on every fifth power hit the scales flare gold and a ring bursts at the target |
+| **S Sovereign Weave** (Crown, Regalia, Legwraps, Striders) | the Hollow Court's regalia | a crown of spires, a standing collar, disc pauldrons, a long multi-link cape, ankle fins (already built; deepen) | void weave, gold filigree, crimson | crown spires and filigree; in the god form (Sovereign) the whole set turns radiant gold (the same cue the wings use) | the cape trails in two or three links; collar stands | low shimmer, a faint choral swell | **Sovereign's Measure**: the crown's centre gem takes the colour of your highest stat (STR red, AGI cyan, VIT green, INT blue, PER amber, SPI violet) |
+| **Precursor Frame** (helm, chest, legs, boots) | hard-light alloy | alloy panels, a visor strip | alloy, Deepglass | the visor and a circuit line | **modules show**: Jet Boots vent, the Shield Emitter's disc deploys, Stealth Field shimmers | servo, tick | each module says when it fires |
+| **Miner's lamp** | already lights the rock ahead | unchanged | | | | | unchanged |
+
+(Colour mapping for Measure uses the six stats the game already has; the six colours are a PROPOSAL to be read on the sheet.)
+
+### 4.4 Motion: cloth and hanging parts (client only, no network)
+
+- **The rule:** cloth parts are boxes hung from a pivot at the top edge, posed in the model's `setupAnim` from two inputs: the wearer's smoothed
+  velocity and turn rate (two floats per wearer, updated once per client tick like `WingLayer`), and the pose (crouching, gliding, wings,
+  swimming, riding). A chain of two or three links gets a lagged angle per link (each link follows the one above with a delay), which is what
+  makes a cape bend instead of swing as a board.
+- **Limits:** each part has a min and max angle (so nothing passes through legs or head), a damping, and a "fold away" pose for wings open or
+  glide. `reducedMotion` halves amplitude; the **Effects setting** Off pins every part to rest.
+- **Leg-hung panels hang from the thigh**, not the body (robe and tabard panels follow the legs exactly; this is why the proof's B skirt can't
+  clip a stride).
+- **Cost:** two floats and a sin per cloth part within 24 blocks; the nearest 32 wearers animate (the same slot count as the wings); farther
+  wearers draw the rest pose; beyond 40 blocks the far model. State resets on teleport, dimension change and respawn so nothing can explode.
+- **Not simulated:** vertex cloth, collision, wind from the world. (A world-wind tilt from the existing grass-sway wind field is a cheap
+  later option.)
+
+### 4.5 Glow, light and effects
+
+- **The glow layer** (`GearGlowLayer`, added to the player renderers and the armour stand, like `WingLayer` and `AwLayers.Glow`) submits only the
+  **glow submodel** (the 8 to 10 cubes per set that carry glow texels) with `entityTranslucentEmissive(glowTexture)` at full bright, alpha by
+  level. It reads what is worn from the render state, so every client draws every wearer the same way with no extra network.
+- **Level rule:** 0 with no piece; 0.35 with 1; 0.55 with 2 (half bonus on); 1.0 with 4 (full), times a slow flow along each part. E: only the
+  lantern. It never glows in a way that hides the world: capped at 0.8 beyond 32 blocks, off beyond 48.
+- **Effects** go through the powers module's engine with our own sprites (EMBER, WISP, MOTE, FLARE, a new RUNE_PULSE), never vanilla particles:
+  A's molten embers (B/A/S only, as for weapons), B's afterimage, C's rune run, D's breath, S's gem. Each set has **one** ambient effect and
+  **one** moment effect. Nothing spawns beyond 24 blocks (16 for particles). The existing set-bonus particles in `GearCombat` are replaced by
+  these through one `Gear.seen(...)` event.
+- **Tells (uses with no stats):** a set can react to something near it, using data the client already has (Atlas, nearby alerts, Hunter's Sense):
+  Gatewrought's runes brighten toward the nearest gate or rift you've found; Veilwoven's gems turn to the nearest spirit in Spirit sight;
+  Lordscale hums near a Gate Lord's floor. These are hints, never new information beyond what the Atlas and alerts show (a pull, not a push).
+  **Decision 9.**
+
+### 4.6 Sound (an armour kit, built like the arms kit)
+
+- Written by `tools/art/specs/audio_gear.py` from the audio kit (`audiokit.py`, Kenney CC0 for transients), loudness-checked like Arms (a new
+  category `gear` near -20 dBFS, quieter than weapons: gear is ambience, not event), 2 to 4 seeded variants, a listening page for Euan.
+- Events, **one per material family, not per piece**: `gear.equip.<material>` (fastening), `gear.move.<material>` (the footstep layer, quiet,
+  only with two or more pieces of that family, at most one per entity per 8 ticks, silent beyond 16 blocks), `gear.land.<material>`,
+  `gear.hit.<material>` (what you hear when a blow lands on **you**, in your own armour's voice), `gear.set.<tier>` (the set-complete chime,
+  one per tier), `gear.module.*` for the Frame.
+- Wildhide, Beastbound and the rest keep their current vanilla `equipSound` as a fallback so nothing is silent if the kit is off.
+
+### 4.7 Set moments and uses
+
+- **Equip.** A piece being equipped plays a 6 to 10 tick fastening beat: a sound by material and one small flare (plates settle, silk lifts).
+  Derived from the equipment change on the client; no packet.
+- **A set completing.** The first time a player completes a set they get the System line once ("VEILWOVEN · the set is complete. Below 40%
+  health, some hits will pass straight through you."), a 1.2 s flourish on the set (crown flare, runes run, thread lights), then the set is
+  quiet. Two pieces give a smaller "stirs" (a glint). Never again until a piece changes.
+- **Bonus moments.** Cornered, Prime, Veil Flicker, Overflow, Measure's gem: `Gear.seen(player, kind, arg)` sends a 5-byte event to players
+  within 48 blocks (at most 4 a second per player). Everyone sees the same moment; only the wearer gets the toast.
+- **Uses without stats** (all optional, each a decision): (1) **tells** (4.5); (2) **Appearance** page in the band: hood up or down, cape on
+  or off, glow Low/Normal, saved on the piece as `awaken:livery` (schemaVersion 1); (3) **wear states**: a worn piece draws one of three
+  textures by durability (new, scuffed, battered) through `getArmorTexture`, so repairing shows; (4) **trophy trims**: a Beastbound set shows
+  the trophy it was made from (Briar Tusk, Antler Tine, Wyrm Scale) and every set can show its **land colourway** (the hide's origin); both are
+  cosmetic and recorded on the item when crafted; (5) **dyes**: a cloth-only layer, tinted by dye, never the metal; (6) **Hall and stands**
+  display the full effect set; (7) the Frame's modules show.
+
+### 4.8 First person, the Armoury and the Hall
+
+- **First person.** The sleeve and vambrace parts of the worn chest piece are drawn on your arm in the hand pass (both paths: Hands'
+  `drawFist`/`limb` and vanilla's arm through `RenderArmEvent`), with the same material and glow, reduced to the arm's own boxes. HUD hidden = hidden.
+- **The Armoury** (arms-progression §3.2): a fifth tab, **ARMOUR**, listing the six tier cards with their four pieces, what each needs
+  (Hide, Part, Binding, Metal, Shard: same four plain words), Track and source lines (their planned `arms_sources` test, Phase A, covers every gear
+  recipe). The **locked tier card is a black silhouette of the real set** drawn from our model: this is the same "silhouette until you've
+  seen it" idea the arms plan proposes, and the model makes it free.
+- **The Hall and stands** show whatever you put on them, effects included.
+
+### 4.9 Data, state, lifecycle, privacy, performance
+
+| Thing | Where | Saved? | Notes |
+|---|---|---|---|
+| Set spec | `assets/awaken/gear/<set>.json`, schemaVersion 2 (schema 1 `gear_silhouettes` still reads, A and S migrate) | resource | written by `tools/art/specs/gear_parts.py` (new, uses the proof's code); a GameTest reads it on the server |
+| Textures | `textures/entity/equipment/parts/<set>_<slot>.png` (+ `_glow`, `_worn1`, `_worn2`) | resource | generated, deterministic, seeded |
+| Item icons | `textures/item/<set>_<piece>.png` 32x32, rendered from the parts, vanilla outline | resource | like the weapons' icons |
+| Livery | item component `awaken:livery` {hood, cape, glow, colourway, trophy}, schemaVersion 1, optional | saved with the stack (synced to all by vanilla) | cosmetic only; a stack without it renders defaults |
+| Cloth and glow state | per wearer id, client only | no | cleared on level change |
+| Gear event | `gear_seen` payload (entity id, kind, arg), to players within 48 blocks | no | rate-capped 4 a second per player; server sends only on a real bonus event |
+| Settings | `awaken-client.toml`: `gearEffects` OFF / LOW / HIGH, `gearGlow`, `gearCloth` | client | reduced motion respected |
+
+- **Multiplayer-safe.** Appearance is on the item; everything else is derived from what the server already syncs (equipment, health, pose).
+  The server decides every number; the new event is cosmetic. Guild colourways later are data, not code. Cosmetic-only monetisation is
+  possible without touching power (`multiplayer-ambition`), and this plan builds the hook (`awaken:livery`) and nothing more.
+- **Privacy/ownership.** No new personal data; nothing is logged beyond a once-per-session warning on a load failure.
+- **Performance and cost (numbers).** MEASURED here: the proof sets are 43 (B) and 41 (C) cubes = 258 and 246 quads (516 and 492
+  triangles) against vanilla's 6 cubes (72 triangles) and a weapon's 244 to 510. 60 players in a full B set is about 31,000 triangles. The
+  glow pass draws 9 and 8 cubes. LOD: full cloth and glow to 24 blocks; rest pose and glow to 40; the six-cube far model beyond. Gate: **60
+  armour stands in S sets, 8 to 30 blocks out, at most +1.0 ms of frame time against the same stands in vanilla netherite** on the M-series
+  Mac (a perf tour under `slot.sh`; perf tours do not run on CI).
+- **AI and retrieval:** not applicable. Everything is deterministic and seeded; no model, no network, no learning.
+
+### 4.10 How it fits the two approved plans
+
+**Arms progression** (`docs/arms-progression/PLAN.md`, approved 2026-10-27):
+- **Words.** Hide, Part, Binding for armour as for weapons; Metal is already the fourth. Every armour ingredient gets a source line, enforced by their planned
+  `arms_sources` test (it fails if any ingredient of any Awaken gear or weapon recipe has no line; not built yet, their Phase A). Tooltip copy follows §3.5.
+- **The Armoury page** gets an ARMOUR tab (4.8) with Track; tier cards use the same foreshadow, open and job beats (§3.6); "Hale's job" names the
+  trophy and the land.
+- **Gear stays the floor, not the lever** (§3.8): nothing here changes a stat or a recipe.
+- **Order.** This plan's tooltip and Armoury work (Phase 3) waits for their Phase A and C; the art phases (0 to 2) don't touch the same files.
+- **First hour.** A decision asks the Arms planner to have Hale hand a plain Hunter's Coat (E look, 1 armour point) with the first weapon, so the
+  first hour looks like a hunter's (Decision 12).
+
+**Regions** (`docs/regions/PLAN.md`, approved 2026-10-27):
+- **The land owns the hunt's part.** A hide's origin land gives the set a **colourway** (a Greenwild hood is mossy green, a Frostwild one
+  white fur): cosmetic, recorded when crafted. "Terror of <region>" trophies join `#awaken:hunter_core_d` and show as D's trophy trim. Nothing
+  becomes "only here"; every tag slot still takes several items.
+- **Metal stays depth-native, light gate-native** (as the Arms planner agreed): unchanged. C and up open three levels before their land: the locked
+  tier card (the silhouette) and "What waits" do the pulling, and no kit needs a land-native part before the land is reachable.
+- **Land tells** (tint, sound) belong to the regions plan; armour doesn't repeat them. Armour tells (4.5) are about gates, rifts, spirits and Lords only.
+- **Ranks E to S** are the same words everywhere (one band system).
+
+## 5. Concrete demonstrations
+
+### 5.1 The proof (what was built, what it shows, what it does not)
+
+`docs/armour/proof/armour_proof.py` (disposable; reads gear.py's own software renderer, which uses the same cube, UV and pose maths as
+`ModelPart`; writes only PNGs under `docs/armour/proof/renders/`). It builds **B Veilwoven (43 cubes)** and **C Gatewrought (41 cubes)** to the
+rules in A.2, paints them with a painter per material, and renders them beside today's textures (same renderer, same scale, same light).
+
+- **Shows:** the same six body boxes become a hooded robe with a layered capelet, a back cape with a sigil, a sash, split panels, silver cuffs and
+  glass gems (B), or a stacked-plate suit with a crested great helm, three-lame pauldrons, tassets and runes (C). The tiers have different
+  outlines and the materials are told apart (`renders/sheet_B.png`, `sheet_C.png`, `closeup_*.png`, `materials.png`). The glow texture is a
+  separate small set of texels (`night_*.png`). Cube and triangle counts are as in 4.9.
+- **Does not show:** that it runs in the game (no Java was run, the client was never launched); the real light (vanilla entity light differs from
+  the proof's single directional light); real glow and bloom (the night frame is an approximation: dimmed albedo plus the glow texture, blurred);
+  that cloth moves well (the walking frame poses the swinging parts by hand: stills, not motion); that 60 players are affordable (a count, not a
+  measurement); and it is not final art: the B hood's peak and back are still clumsy, C's helm slot is only one cut.
+- **What it settles:** that the weapon style's rules, applied through the existing box model, make armour read as deep and made of different things at the
+  player's own pixel density. It does not settle the motion or the cost; section 6 gates those.
+
+### 5.2 Before and after, the same inputs
+
+| Case | Today | Proposed |
+|---|---|---|
+| **Ordinary: you put on a Veilwoven Cowl** | the hood is a recoloured helmet; a vanilla leather/diamond sound | the hood unfolds over the brow (a 8-tick beat and a silk sound); the brow gem lights; at two pieces, the thread lights |
+| **The disappointing case: a stranger in a plaza** | six tiers look alike beyond 10 blocks | you read C from its square shoulders and crest, B from its peak and cape, S from the crown and long cape |
+| **Strong: a complete Lordscale set, fifth power hit** | CRIT sparks | the scales flare gold, a ring bursts at the target, everyone near sees it; your own first-person arm shows scale and gold |
+| **Ambiguous: the wearer hides the hood** | n/a | Appearance page: hood down; every client sees it down (item component) |
+| **Missing data: the model JSON failed to load** | falls back to the plain layer (logged once) | the same; nothing else changes |
+
+## 6. Evaluation and delivery
+
+### 6.1 Baseline
+
+Today's sets in the same renderer (`proof/renders/sheet_*.png`, `gear_today/` in the scratch, `gear_late.png`); the existing `gear_*` tests (13
+registered in `GearTests.java`); the six figures at 8x. There is no frame-time baseline for worn armour: **the first task of Phase 2 is to measure
+60 stands in vanilla netherite** so the +1.0 ms gate means something (PROPOSAL: the Mac's own perf tour, `slot.sh`, not CI).
+
+### 6.2 Tests (one per mechanism; the full suite once at hand-off; CI does the rest)
+
+`gear_parts_valid` (every set JSON reads, cube budget by tier, uv inside and apart, parents known, no coplanar faces, both layer types for all four
+slots), `gear_glow_channel` (glow texels only on glow-flagged parts; level function 0/0.35/0.55/1.0), `gear_cloth_rules` (pure maths: angle limits,
+determinism, reset on teleport, LOD), `gear_seen_event` (kinds, rate cap, 48-block radius, bonus numbers unchanged), `gear_livery` (codec round trip,
+sync, default render), `gear_silhouettes_distinct` (a generated black silhouette from front, side and back for each tier; no pair above 75% overlap),
+`gear_sounds` (events resolve; `audio_events_resolve` covers the files), plus `arms_sources` for armour ingredients and the existing 13 `gear_*`.
+What CI cannot prove: how it looks and moves, and the frame cost. Those are gates.
+
+### 6.3 Acceptance gates (set before rollout)
+
+| Gate | Pass | Who/where |
+|---|---|---|
+| **Look 1** | one contact sheet of all six sets beside Euan's reference and the weapon sheets; every set answers the weapon checklist (A.2 rule 8) and no two share a silhouette | Euan, from the sheet (no code wired yet) |
+| **Look 2** | in-game CI look tour: the sets worn on stands, walking, glow at night, first-person arm | CI (`tools/tour-ci.sh`), Euan reviews |
+| **Cost** | 60-stand bench ≤ +1.0 ms; glow ≤ +0.3 ms of that; no allocation per frame in the layer | Mac, perf tour, under `slot.sh` |
+| **Sound** | the listening page: keep, remake or cut per event | Euan's ear |
+| **Words** | every line read aloud (`plain-dialogue`) | Euan / the builder |
+| **No regression** | set bonuses, stats, recipes and repair unchanged (the existing tests) | CI |
+
+### 6.4 Phases, effort, rollout, rollback
+
+Effort is builder time at this project's pace (all of AWAKEN about 30 hours; Arms S7 with Marks, the Forge and mastery about 4.5 hours; a batch of 24 to
+42 weapons every 20 to 40 minutes). The proof is a head start (the painter, the part model and the renderer exist).
+
+| Phase | Scope | Effort | Gate |
+|---|---|---|---|
+| **0 · The kit** | `tools/art/specs/gear_parts.py` (part spec, nine material painters, atlas packer, glow texture, wear states, icon render, checks, the review sheet); `Silhouette` schema 2 and `ArmourModels` (generalised `Silhouettes`, all slots, far model); `gear_parts_valid` | 3-4 h | the sheet renders; the checks pass |
+| **1 · The six sets** | E to S, one signature cut each, four pieces, textures, glow, icons, equipment JSON; the Frame's alloy set; wired with the fallback | 3-4 h | **Look 1** (Euan), then CI green |
+| **2 · Light and motion** | `GearGlowLayer`, cloth state and LOD, settings, first-person sleeve (both paths), armour stand; the 60-stand baseline and bench | 3-4 h | **Cost**, **Look 2** |
+| **3 · Sound, moments, words** | `audio_gear.py` kit and listening page, `Gear.seen`, the equip beat and set-complete moment, the effect sprites, tooltips and the ARMOUR tab (after arms-progression A and C) | 3-4 h | **Sound**, **Words** |
+| **4 · Uses and cosmetics** | Appearance page and `awaken:livery`, wear states, trophy trims and land colourways, cloth-only dye layer, tells, the Frame's module visuals | 2-3 h | tests; a short look tour |
+| **5 · Options** (only if asked) | armour shader B+ (painted light, metal sheen), cuts (Heavy, Fleet, Adept) per tier, Marked armour | 4-8 h | its own plan |
+
+**Total 14 to 19 hours for phases 0 to 4; about a day of wall clock with two builders** (art kit and sets, then layers) plus CI runs and Euan's
+look gates. What doesn't compress: CI, Euan's three look gates and the listening page, the Mac's perf slot. **Discoveries that would change the
+scope:** Lens not blooming the emissive pass (then glow costs a custom pipeline: +2 h); the 60-stand bench missing the gate even with LOD
+(fewer parts on the lower tiers: +1 h); `RenderArmEvent` and Hands' arm drawing conflicting (+1 h).
+
+**Rollout and rollback.** Phase 1 ships behind the existing fallback: every piece has the plain layer it has today, and the client setting
+`gearModels` (default on) turns the models off. Resource-only changes (textures, JSON) can be reverted per set by deleting its JSON. The glow
+layer and cloth are separate settings and separate commits so each can be switched off alone. In-flight items and saves are unaffected (ids,
+recipes and components are unchanged; `awaken:livery` is optional). Rollback triggers: the cost gate failing, a crash from a layer (the layer turns
+itself off on first exception and logs once, as `WorldBody` does for fists), or Euan rejecting Look 1.
+
+### 6.5 Risks
+
+- **The look is a taste call** (Euan rejected the weapons twice): Look 1 comes before any code is wired; the proof already shows the direction.
+- **Clipping** (cloth through legs when running, capes through wings): leg-hung panels, angle limits and a fold-away pose; a tour checks sprint,
+  slide, glide, wings and sneak.
+- **Cost in a crowd:** budgets, LOD and a measured gate; the far model is six cubes.
+- **A texture per layer type:** four slots times two layer types times glow and wear states is about 40 small textures per set, all generated.
+- **Scope:** cuts and the shader are Phase 5 on purpose.
+
+## 7. Failure register (priority: severity, likelihood, reversibility)
+
+| # | Case | Detection | Containment | What the player sees | Recovery | Test |
+|---|---|---|---|---|---|---|
+| 1 | a set's JSON or texture is missing or invalid | `problems()` at first use | that tier falls back to the plain layer, logged once | today's flat set | fix the file | `gear_parts_valid`; fallback case |
+| 2 | the glow layer throws | try/catch around the layer | the layer turns itself off for the session, logged once | no glow | restart | forced-failure test |
+| 3 | cloth state goes wrong (NaN, a teleport, a huge frame gap) | clamp each tick; compare position jump | reset to rest | the cloth snaps to rest once | automatic | `gear_cloth_rules` |
+| 4 | cloth clips legs, head or wings | angle limits; fold-away for wings, glide, swim, riding | | a small visible overlap at worst | tune | look tour |
+| 5 | a crowd (60 players) | the cost gate | LOD tiers; cap on animated wearers; glow only near | lower detail beyond 24 blocks | automatic | the stand bench |
+| 6 | glow too strong by day or in gates | look tour | level cap by distance; Effects setting | | player setting | look tour |
+| 7 | reduced motion or Effects Off | settings read each frame | rest pose, no flicker | still armour | | `gear_cloth_rules` |
+| 8 | another mod's armour layer or a resource pack replaces ours | the extension is not consulted | plain layer | vanilla look | | none (documented) |
+| 9 | baby or other humanoid renderers | no `humanoid_baby` layer in our JSON | nothing drawn (as today) | no armour on babies | | existing |
+| 10 | the first-person arm has two drawing paths (Hands and vanilla) | tour in both states | the sleeve draws on both | | | Look 2 tour |
+| 11 | a spectator, invisible, sleeping, swimming, riding, projecting player | render state flags | no cloth, no glow when invisible | | | look tour |
+| 12 | the event arrives after a piece is removed | the client checks the set before drawing | skip | | | `gear_seen_event` |
+| 13 | a dedicated server loads client classes | client code stays in `...client` packages | | | | the existing dedicated-server GameTests |
+| 14 | an old save | items and recipes are unchanged; livery is optional | | the same gear, better looking | | the existing tests |
+| 15 | a text line is cryptic | read aloud | rewrite | | | words gate |
+
+## 8. Challenging the plan (the method's last questions)
+
+- **Real frustration or an internal metric?** Euan said the armour is flat and boring and wants it epic: the cases and the proof show the gap in the
+  picture itself, not in a count.
+- **Fewer decisions, or just moved?** No new menu to learn; one Appearance page with good defaults; sets are quiet unless something happens.
+- **Could a simpler change deliver most of it?** Alternative A would deliver colour and a little depth on B and C only. The proof says depth comes
+  from parts, so the part model is the minimum; the glow, cloth and sound are separable commits so Euan can stop after Phase 1 and still have the look.
+- **What evidence would show the plan is wrong?** Look 1 rejected; the 60-stand cost; Lens not blooming the glow; cloth clipping that LOD and limits can't fix.
+- **Uncertain, unavailable, stale?** Every effect falls back to a static, plain, quiet version.
+- **Can the player inspect, correct, trust it?** The Appearance page and the Armoury tab; every number is the one that already existed.
+- **Improvement without losing capability?** The existing tests stay the regression net; no stat or recipe moves.
+
+## 9. Decisions for Euan (each with a recommended answer)
+
+| # | Decision | Recommended | Why |
+|---|---|---|---|
+| 1 | Build armour as **parts, glow, cloth and sound in vanilla's armour path** (alternative B), for all six tiers and the Frame | **Yes** | proven in-repo mechanisms, no mixins, works with Sodium and our animations; the proof shows the look |
+| 2 | **Look 1 first**: you approve a contact sheet of all six sets (beside the weapons) before anything is wired | **Yes** | the weapons were rejected twice on look; this protects your time |
+| 3 | **One signature cut per tier first**; Heavy, Fleet and Adept cuts as cosmetic variants only later | **Yes** | the per-tier outline is the point; cuts triple the art for little first-hour value |
+| 4 | **Glow carries information** (set count, the lantern at E, runes at C, thread at B, embers at A and S) and E has only its lantern | **Yes** | keeps light a reward (the weapon rule) and keeps crowds readable |
+| 5 | **Cloth moves** (client only, nearest 32 wearers, off with distance, halved by reduced motion) | **Yes** | the biggest "alive" win for little cost |
+| 6 | **A set completing is a moment** (System line once, 1.2 s flourish) and **bonus moments are visible to others** (a 5-byte event) | **Yes** | makes the set bonus felt; cheap on the network |
+| 7 | **First-person armour on your arm** (sleeve and vambrace) | **Yes** | most of your screen time is your own arm |
+| 8 | **An armour sound kit by material** (equip, a quiet step layer, landing, being hit, one chime per set) | **Yes** | gear is silent today; quiet by design |
+| 9 | **Armour tells** (runes brighten toward a gate or rift you've found, gems toward a spirit, a hum near a Lord's floor) | **Yes, small** | a "use" with no stats; they only point at what the Atlas already shows |
+| 10 | **Appearance page** (hood up or down, cape on or off, glow Low/Normal) saved on the piece | **Yes** | clothing you can wear your way; the multiplayer cosmetics hook |
+| 11 | **Trophy trims and land colourways** (a Beastbound set shows the tusk it was made from; a hide's land colours the hood); **dyeable cloth** later | **Yes, Phase 4** | links armour to the hunt and the land (your arms and regions plans), stat-neutral |
+| 12 | Ask the Arms planner to have **Hale also hand a plain Hunter's Coat** with the first weapon | **Yes** | the first hour looks like a hunter's; it is their file to change |
+| 13 | The **Frame's modules show** on the suit (vents, a shield disc, a shimmer) | **Yes** | feedback for a thing you pay essence for |
+| 14 | Stands and the Hall show the full effects; mobs wearing sets wait | **Yes** | free from the render path |
+| 15 | **Phase 5 options** (the armour shader, cuts, Marked armour) only after you've seen Phase 2 | **Yes** | cost and taste both want evidence first |
+| 16 | Order: **Phases 0 and 1 now** (art only), 2 after Look 1, 3 after arms-progression A and C | **Yes** | no file conflict with the other plans |
+
+## 10. Not verified, and left out on purpose
+
+- UNVERIFIED: Lens bloom on the emissive pass; the cost of a 256x128 armour atlas; how the Frame's client code draws its modules today; how
+  `RenderArmEvent` and Hands' arm drawing interact in the states they alternate; the exact player-facing words (a builder writes them and reads
+  them aloud).
+- Not built, not run: no Java, no client, no tour, no gate. The proof is a still.
+- Left out: new stats or bonuses, mobs wearing sets, a cloak slot, vertex physics, weather-wet cloth, Marked armour, armour for animals.
+
+## 11. Files
+
+`docs/armour/PLAN.md` (this); `docs/armour/proof/armour_proof.py` and `docs/armour/proof/renders/*.png`; `docs/armour/page.src.html`, `build_page.py` and `page.html` (the approval page).

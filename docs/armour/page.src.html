@@ -1,0 +1,326 @@
+<title>Armour and Clothing</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; the renders break out wider, because the pictures are the argument.
+   Palette: night ink like the game's HUD, the Veil's violet as the one accent, the rank colours only for rank.
+   Dark first; the light theme mirrors it. */
+:root {
+  --bg: #0d1120;
+  --surface: #141a2e;
+  --surface-2: #1b2340;
+  --ink: #e7eaf6;
+  --muted: #9aa4c4;
+  --rule: #2a3358;
+  --accent: #a58cf5;
+  --accent-soft: #261f4d;
+  --ok: #5fd08f;
+  --ok-soft: #14301f;
+  --warn: #f0b36b;
+  --warn-soft: #3a2a14;
+  --rank-e: #f4f6fb;
+  --rank-d: #5fd08f;
+  --rank-c: #6fb3ff;
+  --rank-b: #b48cff;
+  --rank-a: #f2a541;
+  --rank-s: #ff5a6a;
+  --frame: #121622;
+  --font-display: "Rajdhani", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f1f3fa;
+    --surface: #ffffff;
+    --surface-2: #e6e9f5;
+    --ink: #151a2e;
+    --muted: #55608a;
+    --rule: #cdd3e8;
+    --accent: #5b3fc4;
+    --accent-soft: #e6e0fa;
+    --ok: #1d7a4d;
+    --ok-soft: #d8f0e3;
+    --warn: #9a5a0c;
+    --warn-soft: #f6e8d2;
+    --rank-e: #6b7390;
+    --rank-d: #1f9d5c;
+    --rank-c: #2f78d6;
+    --rank-b: #7c55d6;
+    --rank-a: #c9791a;
+    --rank-s: #d63a4c;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f1f3fa;
+  --surface: #ffffff;
+  --surface-2: #e6e9f5;
+  --ink: #151a2e;
+  --muted: #55608a;
+  --rule: #cdd3e8;
+  --accent: #5b3fc4;
+  --accent-soft: #e6e0fa;
+  --ok: #1d7a4d;
+  --ok-soft: #d8f0e3;
+  --warn: #9a5a0c;
+  --warn-soft: #f6e8d2;
+  --rank-e: #6b7390;
+  --rank-d: #1f9d5c;
+  --rank-c: #2f78d6;
+  --rank-b: #7c55d6;
+  --rank-a: #c9791a;
+  --rank-s: #d63a4c;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.55;
+  padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 72px;
+}
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 52px; }
+.wrap > * { min-width: 0; }
+.col { max-width: 720px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.08; margin: 0; text-wrap: balance; letter-spacing: 0.01em; }
+h1 { font-size: clamp(2.8rem, 8vw, 4.6rem); }
+h2 { font-size: clamp(1.8rem, 4vw, 2.4rem); margin-bottom: 14px; }
+h3 { font-size: 1.3rem; margin-bottom: 6px; }
+p { margin: 0 0 12px; }
+a { color: var(--accent); }
+.eyebrow { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+.lede { font-size: 1.22rem; line-height: 1.5; color: var(--ink); }
+.small { font-size: 0.92rem; color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+
+figure { margin: 0; }
+.shot { background: var(--frame); border: 1px solid var(--rule); border-radius: 6px; padding: 10px; }
+.shot img { display: block; width: 100%; height: auto; image-rendering: pixelated; border-radius: 3px; }
+figcaption { font-size: 0.94rem; color: var(--muted); margin-top: 8px; max-width: 760px; }
+figcaption b { color: var(--ink); font-weight: 600; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 18px; align-items: start; }
+.pair > * { min-width: 0; }
+.tag { display: inline-block; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 3px; background: var(--accent-soft); color: var(--accent); margin-right: 6px; vertical-align: 2px; }
+
+.scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.97rem; }
+th, td { text-align: left; vertical-align: top; padding: 10px 14px; border-bottom: 1px solid var(--rule); }
+th { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--surface-2); }
+tr:last-child td { border-bottom: 0; }
+td.no { white-space: nowrap; font-family: var(--font-mono); color: var(--muted); }
+td b { font-weight: 600; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+.grid > * { min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 16px 18px; }
+.card h3 { margin-bottom: 4px; }
+.card p { margin: 0; color: var(--muted); font-size: 0.97rem; }
+.rank { display: inline-block; min-width: 1.7em; text-align: center; font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; padding: 0 6px; border-radius: 3px; color: #0d1120; margin-right: 8px; }
+.rank.e { background: var(--rank-e); } .rank.d { background: var(--rank-d); } .rank.c { background: var(--rank-c); }
+.rank.b { background: var(--rank-b); } .rank.a { background: var(--rank-a); } .rank.s { background: var(--rank-s); } .rank.f { background: var(--muted); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 14px; }
+.tile { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; }
+.tile .n { font-family: var(--font-display); font-weight: 700; font-size: 2rem; line-height: 1; color: var(--accent); }
+.tile .l { font-size: 0.93rem; color: var(--muted); margin-top: 6px; }
+.note { background: var(--warn-soft); border-left: 3px solid var(--warn); padding: 12px 16px; border-radius: 3px; }
+.note p:last-child { margin-bottom: 0; }
+.note ul { margin: 6px 0 0; padding-left: 1.2em; }
+.yes { display: inline-block; font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 2px 8px; border-radius: 3px; background: var(--ok-soft); color: var(--ok); white-space: nowrap; }
+ul.plain { margin: 0; padding-left: 1.2em; }
+ul.plain li { margin-bottom: 6px; }
+@media (max-width: 560px) { body { font-size: 16px; } th, td { padding: 8px 10px; } }
+</style>
+
+<div class="wrap">
+
+<header class="col">
+  <div class="eyebrow">Plan for your approval · 27 October 2026 · nothing is built</div>
+  <h1>Armour and Clothing</h1>
+  <p class="lede">Your weapons are built like hero gear in a game. Your armour is six flat skins on vanilla's boxes. This plan builds armour the way the weapons were built: real parts you can see from the side, nine materials you can tell apart, glow that means something, cloth that moves, and sound that matches what it is made of. Every stat, recipe and set bonus stays exactly as it is.</p>
+</header>
+
+<figure>
+  <div class="shot"><img src="proof/renders/sheet_B.png" alt="Veilwoven armour on a figure from four angles. Top row: today's flat set. Bottom row: the same set rebuilt from 43 parts, with a layered hood, capelet, silver cuffs, a sash and a back cape."></div>
+  <figcaption><b>Veilwoven, today (top) and proposed (bottom).</b> Front, three-quarter, side and back. Same figure, same renderer, same scale, same light. The proposed set is 43 boxes instead of 6, painted by the weapon rules. This is a rendered still from a throwaway script, not the game (what it proves and doesn't is below).</figcaption>
+</figure>
+
+<section class="col">
+  <h2>What the weapons got that armour never did</h2>
+  <div class="scroll"><table>
+    <tr><th></th><th>Weapons (Arms)</th><th>Armour today (Gear)</th></tr>
+    <tr><td><b>Time</b></td><td>about 35 hours, 61 commits</td><td>about 3.5 hours, 3 commits, two days before the weapon style existed</td></tr>
+    <tr><td><b>Code</b></td><td>about 8,500 lines of Java and 8,900 of art tools</td><td>about 2,300 and 2,200</td></tr>
+    <tr><td><b>Shapes</b></td><td>111 voxel models in your reference style</td><td>six vanilla boxes a set; Lordscale and Sovereign add 20 and 17 that never move</td></tr>
+    <tr><td><b>Light</b></td><td>its own shader: painted light, metal sheen, glow that runs along the blade</td><td>vanilla light</td></tr>
+    <tr><td><b>Sound</b></td><td>26 events, about 80 layered, loudness-checked files</td><td>vanilla equip clicks</td></tr>
+    <tr><td><b>Motion</b></td><td>baked swings, wrists, holds</td><td>nothing moves</td></tr>
+    <tr><td><b>Review</b></td><td>a sheet beside your reference every batch, audits, a listening page</td><td>one preview image, never checked against the reference</td></tr>
+    <tr><td><b>Rework</b></td><td>you rejected two passes before the third landed</td><td>none</td></tr>
+  </table></div>
+  <p class="small" style="margin-top:12px">The weapons are not perfect. In third person, 39 of 89 moves still put some of the hilt or haft into the body. A Wildhide and a Sovereign Longsword sound alike. Nothing is drawn on the body when a weapon is stowed. Named weapons are not built yet. The full review is in the plan.</p>
+</section>
+
+<section>
+  <div class="col"><h2>The language the armour will speak</h2>
+  <p>Taken from the weapon style and written as rules a builder can test.</p></div>
+  <div class="grid">
+    <div class="card"><h3>Parts, not paint</h3><p>The body shell, then plates and folds one or two texels proud, then horns, gems and crests two to four proud. Stacked plates step out at different depths.</p></div>
+    <div class="card"><h3>An outline you know at 24 blocks</h3><p>Each tier has its own shape. A check renders every set in black from three sides and fails if two overlap too much.</p></div>
+    <div class="card"><h3>Painted light, clean bevels</h3><p>A one-texel lit edge up and left, a dark one down and right, contact shadows at joins, three or four colour ramps per piece. No noise.</p></div>
+    <div class="card"><h3>Glow that tells you something</h3><p>Runes, gems, thread and eyes only. It rises as more of the set is on, and only the top tiers shed embers, like the weapons.</p></div>
+    <div class="card"><h3>Cloth that lags and settles</h3><p>Hoods, capes, sashes and tassets hang from a pivot and trail the body. Plates stay rigid. Long cloth is two or three links so it bends.</p></div>
+    <div class="card"><h3>Sound by material</h3><p>Silk, hide, mail, plate, scale and glass each sound like themselves, quietly, one sound per material instead of one per piece.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="col"><h2>Look at it</h2>
+  <p>I built two sets to the rules, Veilwoven (cloth and silver) and Gatewrought (plate and brass), with the renderer the repo already has. Each is a hand-written list of boxes with a painter per material.</p></div>
+  <div style="display:grid;gap:30px">
+  <figure>
+    <div class="shot"><img src="proof/renders/closeup_B.png" alt="Close-up of the proposed Veilwoven hood, capelet, clasp and cape sigil, lit on the left and at night with glow on the right."></div>
+    <figcaption><b>Veilwoven close-up.</b> Left: as the game would light it. Right: night, with the glow pass added (brow gem, clasp gem, cape sigil, cuff gems). The night frame is an approximation of the glow, not the game's own.</figcaption>
+  </figure>
+  <figure>
+    <div class="shot"><img src="proof/renders/sheet_C.png" alt="Gatewrought plate armour from four angles. Top row today, bottom row proposed, with stacked pauldrons, a crested helm and signal-blue runes."></div>
+    <figcaption><b>Gatewrought, today (top) and proposed (bottom).</b> Three-lame pauldrons with brass rims, a crested great helm, tassets, shin plates and a rune channel down the chest.</figcaption>
+  </figure>
+  <div class="pair">
+    <figure>
+      <div class="shot"><img src="proof/renders/materials.png" alt="The same shoulder and upper arm in nine materials: hide, studded leather, plate, mail, silk, scale, weave, Precursor alloy and Deepglass."></div>
+      <figcaption><b>One shoulder, nine materials.</b> Hide, studded leather, plate, mail, silk, scale, void weave, Precursor alloy, Deepglass. Each has its own painter, sound and way of moving.</figcaption>
+    </figure>
+    <figure>
+      <div class="shot"><img src="proof/renders/walk_B.png" alt="Proposed Veilwoven armour in three walking poses, the cape, sash and panels swung back."></div>
+      <figcaption><b>Walking (posed by hand).</b> The cape and sash lag, the robe panels hang from the thighs so they follow each stride. Stills, not motion.</figcaption>
+    </figure>
+  </div>
+  <figure>
+    <div class="shot"><img src="proof/renders/today_all.png" alt="Today's six armour tiers, Wildhide to Sovereign Weave, front and back."></div>
+    <figcaption><b>Today, all six tiers.</b> Wildhide, Beastbound, Gatewrought and Veilwoven share one outline and differ by colour. Lordscale and Sovereign have extra parts and read better, which is the point of the whole plan.</figcaption>
+  </figure>
+  </div>
+  <div class="col note" style="margin-top:26px">
+    <p><b>What this proof does and doesn't show.</b></p>
+    <ul>
+      <li>It shows the weapon rules make armour read as deep and made of different things at the player's own pixel density.</li>
+      <li>It does not show the game: no Java was run and the client was never launched. The light is a simple stand-in, the night glow is an approximation, and the walking cloth is posed by hand.</li>
+      <li>It is not final art. The Veilwoven hood's peak and back are still clumsy and Gatewrought has one helm cut.</li>
+      <li>Triangle counts are real; the frame cost in a crowd is a gate to be measured, not a result.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col"><h2>The six sets, the Frame and the lamp</h2>
+  <p>Names, stats and set bonuses stay as they are. This is what you would see.</p></div>
+  <div class="scroll"><table>
+    <tr><th>Set</th><th>The idea and its shape</th><th>Materials and glow</th><th>Its set bonus, made visible</th></tr>
+    <tr><td><span class="rank e">E</span><b>Wildhide</b></td><td>A hunter's hide kit with a lantern. A deep fur-trimmed hood, bone toggles, fringe at sleeves and hem.</td><td>Hide, bone, sinew. Glow: only the amber lantern, flickering.</td><td>Hunter's Sense: the hackles rise and the hood's eyes glint amber while it is on.</td></tr>
+    <tr><td><span class="rank d">D</span><b>Beastbound</b></td><td>It wears the trophy you hunted: the tusk, antler or scale you used sits on the shoulders. Bronze collar, skull belt clasp.</td><td>Studded leather, bronze, bone, moss. A few green spore dots.</td><td>Cornered: the trophy and eyes warm to ember below half health, and breath steams.</td></tr>
+    <tr><td><span class="rank c">C</span><b>Gatewrought</b></td><td>Gate-slate plate. Square, stacked pauldrons, a crested great helm, tassets, a gate-blue surcoat.</td><td>Plate, brass. Signal-blue runes that pulse in order up the body.</td><td>A power hit primes the next blow: the runes flare in the Force's colour and run to your weapon hand.</td></tr>
+    <tr><td><span class="rank b">B</span><b>Veilwoven</b></td><td>The Veil's weavers. A deep hood with a curling peak, a two-layer capelet, a sash, a back cape with a sigil, robe panels split at the front.</td><td>Silk, mirror silver, spirit glass, thread. The most cloth of any set.</td><td>Veil Flicker: you flicker for a frame and leave an afterimage as the hit passes through.</td></tr>
+    <tr><td><span class="rank a">A</span><b>Lordscale</b></td><td>The Lords' black scale and molten gold. Horns, a crest, three-layer spiked pauldrons, a spined back, talons (kept and deepened).</td><td>Scale, gold, pearl. Gold edges shed embers.</td><td>Overflow: the scales flare gold on every fifth power hit, and a ring bursts at the target.</td></tr>
+    <tr><td><span class="rank s">S</span><b>Sovereign Weave</b></td><td>The Hollow Court's regalia. A crown of spires, a standing collar, disc pauldrons, a long multi-link cape, ankle fins (kept and deepened).</td><td>Void weave, gold filigree, crimson. Radiant gold in the Sovereign form.</td><td>Sovereign's Measure: the crown's centre gem takes the colour of your highest stat.</td></tr>
+    <tr><td><span class="rank f">+</span><b>Precursor Frame</b></td><td>Hard-light alloy panels and a visor.</td><td>Alloy, Deepglass.</td><td>Each module shows: Jet Boots vent, the Shield Emitter's disc deploys, Stealth shimmers.</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <div class="col"><h2>What it does</h2>
+  <p>Effects, animation and uses, none of which change a number.</p></div>
+  <div class="grid">
+    <div class="card"><h3>Putting a piece on</h3><p>A short fastening beat and a sound for the material: plates settle, silk lifts.</p></div>
+    <div class="card"><h3>Completing a set</h3><p>Once only: a line from the System and a one-second flourish. Then the set stays quiet. Two pieces give a smaller glint.</p></div>
+    <div class="card"><h3>Everyone sees your bonus</h3><p>Cornered, a primed strike, Veil Flicker and Overflow are visible to players within 48 blocks through a 5-byte message. The numbers stay on the server.</p></div>
+    <div class="card"><h3>Your own arm</h3><p>In first person your arm wears the sleeve and vambrace of the chest piece, in the same material and glow.</p></div>
+    <div class="card"><h3>Armour that points</h3><p>Runes brighten toward a gate or rift you have found, gems toward a spirit, and Lordscale hums near a Lord's floor. Hints only, from what the Atlas already shows.</p></div>
+    <div class="card"><h3>Wear it your way</h3><p>An Appearance page: hood up or down, cape on or off, glow low or normal. Saved on the piece, so everyone sees it. Later: dyeable cloth.</p></div>
+    <div class="card"><h3>Trophies and lands</h3><p>A Beastbound set shows the trophy it was made from, and a hide's land colours the hood: a mossy Greenwild one, a white Frostwild one.</p></div>
+    <div class="card"><h3>Stands and the Hall</h3><p>Armour stands and the Trophy Hall show the full set with its effects, because they use the same drawing path.</p></div>
+    <div class="card"><h3>Wear shows</h3><p>A piece looks new, scuffed or battered by its durability, so repairing it is something you can see.</p></div>
+  </div>
+</section>
+
+<section class="col">
+  <h2>How it fits your other two plans</h2>
+  <div class="grid" style="margin-top:6px">
+    <div class="card"><h3>Arms progression</h3>
+      <ul class="plain small">
+        <li>The same plain words: Hide, Part, Binding, Metal. Every armour ingredient gets a source line from the same test.</li>
+        <li>The Armoury gets an Armour tab with Track. A locked tier card shows a black silhouette of the real set, which is the idea they proposed, drawn from our model.</li>
+        <li>Gear stays the floor: no stat or recipe moves. Tooltip and Armoury work waits for their phases A and C.</li>
+      </ul></div>
+    <div class="card"><h3>Regions</h3>
+      <ul class="plain small">
+        <li>The land owns the hide and the trophy: its hide gives the set a colourway, and a "Terror of" trophy becomes Beastbound's shoulder piece. Nothing becomes "only here".</li>
+        <li>Metal stays by depth and light stays from gates. C and up open before their land, so the locked card and "What waits" do the pulling.</li>
+        <li>The land's own tint and sound stay theirs; armour only points at gates, rifts, spirits and Lords.</li>
+      </ul></div>
+  </div>
+</section>
+
+<section class="col">
+  <h2>Cost and safety</h2>
+  <div class="tiles">
+    <div class="tile"><div class="n">516</div><div class="l">triangles for a full Veilwoven set. A weapon is 244 to 510; vanilla armour is 72.</div></div>
+    <div class="tile"><div class="n">31,000</div><div class="l">triangles for 60 players each in one. A far model of six boxes takes over past 40 blocks.</div></div>
+    <div class="tile"><div class="n">+1.0 ms</div><div class="l">the most 60 armour stands may add, measured on your Mac before it ships. A gate, not a promise.</div></div>
+    <div class="tile"><div class="n">0</div><div class="l">mixins. It stays in vanilla's armour path, so Sodium and our animations work as they do.</div></div>
+  </div>
+  <ul class="plain" style="margin-top:16px">
+    <li><b>If anything fails</b> the piece draws the plain armour it draws today, and logs once. Glow, cloth and models each have a switch.</li>
+    <li><b>Multiplayer:</b> the look lives on the item and in what the server already syncs. Cloth and glow are drawn by each client. The only new message is a tiny, rate-capped, cosmetic one.</li>
+    <li><b>Setting:</b> Effects Off, Low or High, and reduced motion halves every sway.</li>
+  </ul>
+</section>
+
+<section class="col">
+  <h2>How it is built, and when you look</h2>
+  <div class="scroll"><table>
+    <tr><th>Phase</th><th>What</th><th>Builder time</th><th>Gate</th></tr>
+    <tr><td><b>0 The kit</b></td><td>The part painter, packer, checks and the review sheet, from the proof. Models for all four slots.</td><td>3 to 4 h</td><td>The sheet renders, checks pass</td></tr>
+    <tr><td><b>1 The six sets</b></td><td>E to S, four pieces each, glow, icons, the Frame.</td><td>3 to 4 h</td><td><b>You approve the sheet</b>, then CI</td></tr>
+    <tr><td><b>2 Light and motion</b></td><td>Glow layer, cloth and distance levels, first-person sleeve, the 60-stand test.</td><td>3 to 4 h</td><td>Cost test, a look tour</td></tr>
+    <tr><td><b>3 Sound and moments</b></td><td>The sound kit and listening page, set moments, tooltips and the Armour tab.</td><td>3 to 4 h</td><td>You listen and read</td></tr>
+    <tr><td><b>4 Uses</b></td><td>Appearance page, wear states, trophy and land trims, tells, Frame modules.</td><td>2 to 3 h</td><td>Tests, a short tour</td></tr>
+    <tr><td><b>5 Options</b></td><td>An armour shader, Heavy, Fleet and Adept cuts, Marked armour. Only if you ask after Phase 2.</td><td>4 to 8 h</td><td>Its own plan</td></tr>
+  </table></div>
+  <p style="margin-top:12px"><b>14 to 19 builder hours for phases 0 to 4, about a day of wall clock with two builders,</b> scaled from the git history (all of AWAKEN took about 30 hours). What doesn't compress: CI runs, your three look and listen gates, and the Mac's single perf slot.</p>
+</section>
+
+<section>
+  <div class="col"><h2>Decisions for you</h2>
+  <p>Every one has a recommended answer. "Yes to all" is a fine reply.</p></div>
+  <div class="scroll"><table>
+    <tr><th>#</th><th>Decision</th><th>Recommended</th><th>Why</th></tr>
+    <tr><td class="no">1</td><td>Build armour as parts, glow, cloth and sound in vanilla's armour path, for all six tiers and the Frame</td><td><span class="yes">Yes</span></td><td>Every piece has a working precedent in the repo, no mixins, the proof shows the look</td></tr>
+    <tr><td class="no">2</td><td>You approve a sheet of all six sets, beside the weapons, before anything is wired in</td><td><span class="yes">Yes</span></td><td>You rejected the weapons twice on look; this protects your time</td></tr>
+    <tr><td class="no">3</td><td>One signature design per tier first; Heavy, Fleet and Adept cuts only later, as cosmetic variants</td><td><span class="yes">Yes</span></td><td>The outline per tier is the point; cuts triple the art for little first-hour value</td></tr>
+    <tr><td class="no">4</td><td>Glow carries information; E has only its lantern</td><td><span class="yes">Yes</span></td><td>Keeps light a reward, like the weapons, and crowds readable</td></tr>
+    <tr><td class="no">5</td><td>Cloth moves: client only, the nearest 32 wearers, off with distance, halved by reduced motion</td><td><span class="yes">Yes</span></td><td>The biggest "alive" win for little cost</td></tr>
+    <tr><td class="no">6</td><td>A completed set is a moment (one System line, a one-second flourish), and bonus moments are visible to others</td><td><span class="yes">Yes</span></td><td>Makes the bonus felt; a 5-byte cosmetic message</td></tr>
+    <tr><td class="no">7</td><td>First-person armour on your arm</td><td><span class="yes">Yes</span></td><td>Most of your screen time is your own arm</td></tr>
+    <tr><td class="no">8</td><td>An armour sound kit by material, quiet by design</td><td><span class="yes">Yes</span></td><td>Gear is silent today</td></tr>
+    <tr><td class="no">9</td><td>Armour tells: runes toward a gate or rift, gems toward a spirit, a hum near a Lord's floor</td><td><span class="yes">Yes, small</span></td><td>A use with no stats; points only at what the Atlas shows</td></tr>
+    <tr><td class="no">10</td><td>An Appearance page (hood, cape, glow) saved on the piece</td><td><span class="yes">Yes</span></td><td>Clothing you wear your way; the hook for cosmetics later</td></tr>
+    <tr><td class="no">11</td><td>Trophy trims and land colourways in Phase 4, dyeable cloth after</td><td><span class="yes">Yes</span></td><td>Ties armour to the hunt and the land, with no stat change</td></tr>
+    <tr><td class="no">12</td><td>Ask the Arms planner to have Hale also hand a plain Hunter's Coat with the first weapon</td><td><span class="yes">Yes</span></td><td>The first hour looks like a hunter's; it is their file to change</td></tr>
+    <tr><td class="no">13</td><td>The Frame's modules show on the suit</td><td><span class="yes">Yes</span></td><td>Feedback for something you pay essence for</td></tr>
+    <tr><td class="no">14</td><td>Stands and the Hall show full effects; mobs wearing sets wait</td><td><span class="yes">Yes</span></td><td>Free from the drawing path</td></tr>
+    <tr><td class="no">15</td><td>Phase 5 options (shader, cuts, Marked armour) only after you have seen Phase 2</td><td><span class="yes">Yes</span></td><td>Cost and taste both want evidence first</td></tr>
+    <tr><td class="no">16</td><td>Order: Phases 0 and 1 now (art only), 2 after you approve the sheet, 3 after arms-progression A and C</td><td><span class="yes">Yes</span></td><td>No file conflict with the other plans</td></tr>
+  </table></div>
+</section>
+
+<footer class="col small">
+  <p>Plan: <code>docs/armour/PLAN.md</code> (weapon review, audit, 26.3 checks, failure register). Proof: <code>docs/armour/proof/</code>. Branch <code>pack/armour-plan</code>. Nothing here has been built or run in the game.</p>
+</footer>
+
+</div>
