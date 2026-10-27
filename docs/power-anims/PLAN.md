@@ -416,3 +416,13 @@ Changes from the plan as written, found while building:
 - The first-person palm is only a profile cast's fist (a sprint's fist is not where a charge starts); everything else HAND-anchored still starts at the drawn palm in third person.
 - Sounds ship with subtitles (the audio test requires them).
 - First tour (run 40457072925) toured the opening's balcony camera, not the platform: the script lacked `opening skip`. Fixed and re-run.
+
+**2026-10-27: Euan looked at the proof ("The proof looks right"); P1-P6 built on this branch (SPEC §31, "P1-P6 as built").**
+- 54 profiles from one table (`tools/art/specs/power_cast_table.py` -> `data/awaken/powers/casts.json`); ground_slam, meteor_dive, hover, flight
+  and leap stay on their family poses (movement already owns their bodies).
+- The 14 heavy powers' wind-ups run generically in `Casting.windUp`; every client holds a caster's events back to the clips' release tick.
+- 43 authored sound events (`audio_power_kits.py`, 115 files) replace the vanilla remixes under `power.*`.
+- Families tour (run 40465447138, `tools/autopilot/power-casts-2.txt`, slow motion): gestures read and effects land after them (dominate's
+  halo after the brow point, prism lance from the core, void maw's dark look, flow's vignette). Found: release_big's flash doubled the nova and
+  prism recipes' own flash, so it went 0.10 -> 0.05; Wall's constructs block the front camera for the shots after it (tour order only).
+- Not yet seen or heard: the sound kits (no audio on CI), most first-person gestures beyond the six toured, other players' view of a cast.

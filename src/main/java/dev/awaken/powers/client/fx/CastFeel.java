@@ -24,7 +24,8 @@ final class CastFeel {
             Map.entry("thump_heavy", new Moment(2.6f, 0.7f, 9, -0.03f, 7, 55, 0f)),
             Map.entry("thump_light", new Moment(1.2f, 0.4f, 7, -0.015f, 6, 30, 0f)),
             Map.entry("recoil_light", new Moment(-0.7f, 0f, 6, 0f, 0, 0, 0f)),
-            Map.entry("release_big", new Moment(2.0f, 0.5f, 10, -0.04f, 9, 40, 0.10f)),
+            // a small flash: the big releases (nova, prism lance) already flash in their own recipes
+            Map.entry("release_big", new Moment(2.0f, 0.5f, 10, -0.04f, 9, 40, 0.05f)),
             Map.entry("push", new Moment(-0.5f, 0f, 4, 0f, 0, 0, 0f)),
             Map.entry("breath", new Moment(0f, 0f, 0, -0.015f, 18, 0, 0f)),
             Map.entry("lift", new Moment(0f, 0f, 0, 0.012f, 12, 0, 0f)),
