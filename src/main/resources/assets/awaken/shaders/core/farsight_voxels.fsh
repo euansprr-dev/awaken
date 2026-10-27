@@ -91,7 +91,15 @@ void main() {
     else if ((flags & 8) != 0) albedo = mix(vLook.yzw, tex.rgb, tex.a);
 #endif
     float blockLight = (flags & 4) != 0 ? 15.0 : vLight.x;
-    vec3 c = albedo * vTint * farLight(vNormal, smoothstep(9.0, 15.0, vLight.y));
+    vec3 c = albedo * vTint, light = farLight(vNormal, smoothstep(9.0, 15.0, vLight.y));
+    // water's surface as the far terrain's water past it draws it (farsight_terrain): lit a little toward white, and
+    // grazing it reflects the sky by the horizon. As its plain tinted texture it stood darker and bluer than both Lens's
+    // real water nearer and the far water past it, in bands (Euan, 2026-10-27: a lake's hard contrasts)
+    if ((flags & 2) != 0 && vNormal.y > 0.5) {
+        light = mix(light, vec3(1.0), 0.4);
+        c = mix(c, FogColor.rgb, pow(1.0 - abs(normalize(vRel).y), 5.0) * 0.55);
+    }
+    c *= light;
     c *= texture(LightSampler, (vec2(blockLight, vLight.y) + 0.5) / 16.0).rgb;
     if (FarCam.w > 2.5) { fragColor = vec4(0.1, 0.9, 0.2, 1.0); return; } // debug view 3: City Sight in green
     fragColor = vec4(farAir(c, vRel), 1.0);

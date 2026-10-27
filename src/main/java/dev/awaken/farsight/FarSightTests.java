@@ -243,6 +243,78 @@ final class FarSightTests {
             h.succeed();
         });
 
+        // City Sight's water: its colour blends over a biome border, and every level lays the surface where the real one is
+        AwakenTests.registerIsolated("farsight_voxels_water", 100, h -> {
+            ServerLevel level = h.getLevel();
+            BlockPos o = h.absolutePos(BlockPos.ZERO);
+            int bx = o.getX() & ~15, bz = o.getZ() & ~15, top = (o.getY() + 12) & ~3;
+            // a lake four deep in a stone rim, its surface at a cell's lowest row on levels 1 and 2 (y a multiple of 4)
+            for (int x = bx; x < bx + 16; x++) {
+                for (int z = bz + 3; z < bz + 13; z++) {
+                    for (int y = top - 4; y <= level.getMaxY(); y++) {
+                        boolean rim = x == bx || x == bx + 15 || z <= bz + 4 || z >= bz + 11;
+                        BlockState b = y == top - 4 || rim && y <= top ? Blocks.STONE.defaultBlockState()
+                                : y <= top ? Blocks.WATER.defaultBlockState() : Blocks.AIR.defaultBlockState();
+                        level.setBlock(new BlockPos(x, y, z), b, Block.UPDATE_CLIENTS);
+                    }
+                }
+            }
+            // the chunk's west half one biome, its east half another, kept to put back
+            LevelChunk chunk = level.getChunkAt(new BlockPos(bx, top, bz));
+            var biomes = level.registryAccess().lookupOrThrow(Registries.BIOME);
+            Holder<Biome> west = biomes.getOrThrow(Biomes.PLAINS), east = biomes.getOrThrow(Biomes.WARM_OCEAN);
+            java.util.Map<Long, Holder<Biome>> was = new java.util.HashMap<>();
+            for (int qy = QuartPos.fromBlock(level.getMinY()); qy <= QuartPos.fromBlock(level.getMaxY()); qy++) {
+                for (int qz = 0; qz < 4; qz++) {
+                    for (int qx = 0; qx < 4; qx++) {
+                        was.put(BlockPos.asLong(qx, qy, qz), chunk.getNoiseBiome(QuartPos.fromBlock(bx) + qx, qy, QuartPos.fromBlock(bz) + qz));
+                    }
+                }
+            }
+            chunk.fillBiomesFromNoise((qx, qy, qz) -> qx - QuartPos.fromBlock(bx) < 2 ? west : east);
+            AwakenTests.awaitLight(h, new BlockPos(bx, top - 4, bz + 3), new BlockPos(bx + 15, top + 4, bz + 12));
+            VoxelSnapshot snap = VoxelSnapshot.take(level, chunk);
+            chunk.fillBiomesFromNoise((qx, qy, qz) -> was.get(BlockPos.asLong(qx - QuartPos.fromBlock(bx), qy, qz - QuartPos.fromBlock(bz))));
+            h.assertTrue(snap != null, "the chunk has blocks");
+            int water = Block.BLOCK_STATE_REGISTRY.getId(Blocks.WATER.defaultBlockState());
+            VoxelMesh mesh = new VoxelMesher(new VoxelMesher.Looks() {
+                @Override
+                public int face(int id, int dir) {
+                    return id == water ? id | 1 << 16 : id & 0xFFFF;
+                }
+
+                @Override
+                public int tint(int id, int tintIndex, Holder<Biome> biome) {
+                    return id == water && biome != null ? biome.value().getWaterColor() & 0xFFFFFF : 0xFFFFFF;
+                }
+
+                @Override
+                public int window(int id, int dir) {
+                    return id & 0xFFFF;
+                }
+            }).mesh(snap, 0);
+            int surface = (top - level.getMinY()) * 16 + 14;
+            for (int l = 0; l < 3; l++) {
+                int[] q = waterTop(mesh, l, water, 8, 7);
+                h.assertTrue(q != null, "level " + l + " has the lake's surface");
+                h.assertTrue((q[1] & 16383) == surface, "level " + l + "'s surface where the real one is: "
+                        + ((q[1] & 16383) - surface) + " sixteenths off");
+            }
+            int a = west.value().getWaterColor() & 0xFFFFFF, b = east.value().getWaterColor() & 0xFFFFFF;
+            h.assertTrue((waterTop(mesh, 0, water, 1, 7)[3] & 0xFFFFFF) == a, "the west shore its own biome's water");
+            h.assertTrue((waterTop(mesh, 0, water, 14, 7)[3] & 0xFFFFFF) == b, "the east shore its own biome's water");
+            for (int x = 6; x <= 9; x++) {
+                int t = waterTop(mesh, 0, water, x, 7)[3] & 0xFFFFFF;
+                boolean between = true;
+                for (int sh = 0; sh <= 16; sh += 8) {
+                    int c = t >> sh & 255, ca = a >> sh & 255, cb = b >> sh & 255;
+                    between &= c > Math.min(ca, cb) && c < Math.max(ca, cb) || ca == cb && c == ca;
+                }
+                h.assertTrue(between, "at the border (x " + x + ") the two waters blend: " + Integer.toHexString(t));
+            }
+            h.succeed();
+        });
+
         AwakenTests.registerIsolated("farsight_voxels_mesh", 100, h -> {
             ServerLevel level = h.getLevel();
             BlockPos o = h.absolutePos(BlockPos.ZERO);
@@ -584,6 +656,18 @@ final class FarSightTests {
                 return id == cross;
             }
         };
+    }
+
+    /** Level l's water top over chunk column (x, z): its quad's four ints, or null. */
+    private static int[] waterTop(VoxelMesh mesh, int l, int water, int x, int z) {
+        int[] q = mesh.quads()[l];
+        for (int i = 0; i + 3 < mesh.quadCount(l) * 4; i += 4) {
+            int qx = q[i] & 511, qz = q[i] >> 9 & 511, d = q[i] >> 18 & 7, eu = q[i] >> 21 & 511, ev = q[i + 1] >> 14 & 16383;
+            if (d == 1 && (q[i + 2] & 0xFFFF) == (water & 0xFFFF) && x * 16 >= qx && x * 16 < qx + eu && z * 16 >= qz && z * 16 < qz + ev) {
+                return new int[] {q[i], q[i + 1], q[i + 2], q[i + 3]};
+            }
+        }
+        return null;
     }
 
     /** The area (square sixteenths) of level l's faces toward dir lying on plane, within the face's u and v ranges. */

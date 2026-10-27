@@ -50,6 +50,8 @@ public final class VoxelMesher {
     }
 
     public static final int LEVELS = 4, INTS = 4;
+    /** Blocks each way water's colour blends over (the game's default blend is 2: a little wider, seen from afar). */
+    static final int BLEND = 4;
     private static final int[] DX = {0, 0, 0, 0, -1, 1}, DY = {-1, 1, 0, 0, 0, 0}, DZ = {0, 0, -1, 1, 0, 0};
     private static final long PRESENT = 1L << 63;
 
@@ -67,7 +69,8 @@ public final class VoxelMesher {
     private VoxelSnapshot snap;
     private int height, yBase, slot, lod;
     private int minY16, maxY16;
-    // the coarse grids: solid look per cell (0 empty, -1 water, else state id + 1) and the up faces' look
+    // the coarse grids: solid look per cell (0 empty, -1 water, else state id + 1) and the up faces' look (a water
+    // cell's: -1 - the row of its highest water block in the cell)
     private int[] coarse = new int[0], coarseTop = new int[0];
 
     public VoxelMesher(Looks looks) {
@@ -218,7 +221,9 @@ public final class VoxelMesher {
         }
         if (look < 0) return 0;
         int tint = 0xFFFFFF;
-        if (!curtain && (look >>> 16) != 0) tint = looks.tint(id, (look >>> 16) - 1, snap.biome(x, y, z)) & 0xFFFFFF;
+        if (!curtain && (look >>> 16) != 0) {
+            tint = id == waterId ? waterTint(x, y, z, (look >>> 16) - 1) : looks.tint(id, (look >>> 16) - 1, snap.biome(x, y, z)) & 0xFFFFFF;
+        }
         int sky = curtain ? 0 : step(snap.skyLight(nx, ny, nz)), block = curtain ? 0 : step(snap.blockLight(nx, ny, nz));
         return PRESENT | (long) offset << 52 | (long) block << 48 | (long) sky << 44 | (long) tint << 16 | (look & 0xFFFF);
     }
@@ -377,13 +382,43 @@ public final class VoxelMesher {
         }
     }
 
+    /**
+     * Water's colour at (x, y, z), its biome's blended with the biomes' within {@link #BLEND} blocks (in the chunk),
+     * block by block, as the game blends it: unblended, a biome border's 4-block steps drew hard-edged patches of
+     * another water colour across a lake (Euan, 2026-10-27: the lumen forest's teal against the river's blue).
+     */
+    private int waterTint(int x, int y, int z, int tintIndex) {
+        Holder<Biome> here = snap.biome(x, y, z);
+        int own = looks.tint(waterId, tintIndex, here) & 0xFFFFFF;
+        int x0 = Math.max(0, x - BLEND), x1 = Math.min(15, x + BLEND), z0 = Math.max(0, z - BLEND), z1 = Math.min(15, z + BLEND);
+        long r = 0, g = 0, b = 0, n = 0;
+        boolean mixed = false;
+        // the biome cells (4 blocks) the square reaches, each weighed by the blocks of it inside
+        for (int cz = z0 >> 2; cz <= z1 >> 2; cz++) {
+            int wz = Math.min(z1, cz * 4 + 3) - Math.max(z0, cz * 4) + 1;
+            for (int cx = x0 >> 2; cx <= x1 >> 2; cx++) {
+                int wx = Math.min(x1, cx * 4 + 3) - Math.max(x0, cx * 4) + 1;
+                Holder<Biome> biome = snap.biome(cx * 4, y, cz * 4);
+                int t = biome == here ? own : looks.tint(waterId, tintIndex, biome) & 0xFFFFFF;
+                mixed |= t != own;
+                int w = wx * wz;
+                r += (long) (t >> 16 & 255) * w;
+                g += (long) (t >> 8 & 255) * w;
+                b += (long) (t & 255) * w;
+                n += w;
+            }
+        }
+        if (!mixed) return own;
+        return (int) ((r + n / 2) / n) << 16 | (int) ((g + n / 2) / n) << 8 | (int) ((b + n / 2) / n);
+    }
+
     /** Water's sides where it meets open air (a fall, a fountain's rim seen from outside), up to its surface. */
     private void waterSides(int x, int y, int z) {
         int look = looks.face(waterId, 2);
         if (look < 0) return;
         boolean under = kindAt(x, y + 1, z) == VoxelKinds.WATER;
         int top = under ? 16 : 14;
-        int tint = (look >>> 16) != 0 ? looks.tint(waterId, (look >>> 16) - 1, snap.biome(x, y, z)) & 0xFFFFFF : 0xFFFFFF;
+        int tint = (look >>> 16) != 0 ? waterTint(x, y, z, (look >>> 16) - 1) : 0xFFFFFF;
         for (int dir = 2; dir < 6; dir++) {
             int nx = x + DX[dir], nz = z + DZ[dir];
             byte nk = kindAt(nx, y, nz);
@@ -439,14 +474,16 @@ public final class VoxelMesher {
         for (int cy = 0; cy < ny; cy++) {
             for (int cz = 0; cz < n; cz++) {
                 for (int cx = 0; cx < n; cx++) {
-                    int solid = 0, water = 0, distinct = 0;
+                    int solid = 0, water = 0, distinct = 0, waterTop = -1;
                     for (int y = cy * c; y < cy * c + c; y++) {
                         for (int z = cz * c; z < cz * c + c; z++) {
                             for (int x = cx * c; x < cx * c + c; x++) {
                                 int i = index(x, y, z);
                                 byte k = kinds[i];
-                                if (k == VoxelKinds.WATER) water++;
-                                else if (k == VoxelKinds.FULL || k == VoxelKinds.SOFT || k == VoxelKinds.BOX) {
+                                if (k == VoxelKinds.WATER) {
+                                    water++;
+                                    waterTop = y - cy * c;
+                                } else if (k == VoxelKinds.FULL || k == VoxelKinds.SOFT || k == VoxelKinds.BOX) {
                                     solid++;
                                     distinct = count(seenId, seenN, distinct, ids[i]);
                                 }
@@ -470,9 +507,14 @@ public final class VoxelMesher {
                             }
                         }
                         coarseTop[ci] = td == 0 ? coarse[ci] : top(seenId, seenN, td) + 1;
-                    } else if (solid + water >= half && water > 0) {
+                    } else if (water > 0 && (solid + water >= half
+                            || water * 2 >= c * c && (cy == 0 || coarse[cellIndex(cx, cy - 1, cz, n)] != 0))) {
+                        // water, its surface where the real one is (a cell's top put a lake a block high or low, by how
+                        // its surface met the cells: off the real water's, Lens's ripples missed it and levels
+                        // cross-fading over the lake left holes to the sky); a cell holding the surface's last half
+                        // layer over water or ground is water too, never the empty cell over a surface a block low
                         coarse[ci] = -1;
-                        coarseTop[ci] = -1;
+                        coarseTop[ci] = -1 - waterTop;
                     } else {
                         coarse[ci] = 0;
                         coarseTop[ci] = 0;
@@ -525,7 +567,7 @@ public final class VoxelMesher {
             if (dir != 1 || nb != 0) return 0;
             id = waterId;
             look = looks.face(waterId, 1);
-            offset = c * 16 - 2;
+            offset = (-1 - coarseTop[ci]) * 16 + 14;
         }
         if (look < 0) return 0;
         // the light of the air in front of the face: the brightest of the blocks a block out across the whole face.
@@ -550,7 +592,8 @@ public final class VoxelMesher {
             }
         }
         int sky = step(skyMax), block = step(blockMax);
-        int tint = (look >>> 16) != 0 ? looks.tint(id, (look >>> 16) - 1, snap.biome(mx, my, mz)) & 0xFFFFFF : 0xFFFFFF;
+        int tint = (look >>> 16) == 0 ? 0xFFFFFF : cell < 0 ? waterTint(mx, my, mz, (look >>> 16) - 1)
+                : looks.tint(id, (look >>> 16) - 1, snap.biome(mx, my, mz)) & 0xFFFFFF;
         return PRESENT | (long) (offset & 255) << 52 | (long) block << 48 | (long) sky << 44 | (long) tint << 16 | (look & 0xFFFF);
     }
 

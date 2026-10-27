@@ -1694,6 +1694,18 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   away across the whole chunk aren't drawn. Chunks clear of the render distance's edge and of a level's fade draw with
   a pipeline that never discards (cut-out holes take the room's darkness, leaves' their colour), so Apple GPUs'
   hidden-surface removal works. Measured at the Roost: about 1.1 M quads, 1.6 to 4.7 ms on a loaded M4.
+  Water (2026-10-27, Euan: a lake in the lumen forest drew in hard bands from afar, worked out offline from his save:
+  Sodium's real water to 240 m, City Sight's to the edge of the chunks it held, about 340 m, the far terrain's past it):
+  City Sight's water surface is lit and reflects the sky by the horizon as the far terrain's water does (lit 0.4 toward
+  white, the fog's colour by (1 - facing)^5 × 0.55), where it drew its plain tinted texture, darker and bluer than both
+  beside it. Its colour blends over the biomes within 4 blocks in the chunk (`VoxelMesher.BLEND`; the game blends 2),
+  each 4-block biome cell weighed by its blocks: unblended, the lumen forest's teal water (#2a93a6) against the river's
+  blue drew hard-edged stepped patches. Coarse levels lay a lake's surface at its highest water block in the cell, 14/16
+  up, as level 0 does (a cell's top put it a block high or low by how the surface met the cells: Lens's ripples missed it
+  and levels cross-fading left holes), and a cell holding at least half a layer of the surface over water or ground is
+  water. The far terrain tests City Sight's coverage for water where the ray meets the real surface, an eighth under its
+  own (a block's top): at its own, a strip along the edge of City Sight's chunks fell to neither, a dashed line of sky.
+  Test `farsight_voxels_water` (blend, every level's surface height); the two shader changes aren't in a test.
 - **Hand-off with the real chunks**: while Far Sight draws, the game's chunk fade-in is held at none (new chunks
   faded in from the fog colour, a white veil sweeping over the city; the far view already shows them), and the
   player's own value comes back when Far Sight stops. A loaded chunk's 2 s settling clock starts only once it is
