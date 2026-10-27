@@ -47,7 +47,8 @@ public final class Casting {
             feedback(player, msg.slot(), "", "empty", msg.predicted());
             return;
         }
-        PowerType.Result r = cast(player, type, msg.slot(), msg.predicted(), msg.yRot(), msg.xRot());
+        PowerType.Result r = cast(player, type, msg.slot(), msg.predicted(), msg.yRot(), msg.xRot(),
+                PowerPayloads.strafeOf(msg.keys()), PowerPayloads.forwardOf(msg.keys()));
         if (!r.ok()) feedback(player, msg.slot(), type.id.toString(), r.reason(), msg.predicted());
     }
 
@@ -68,6 +69,13 @@ public final class Casting {
 
     /** Cast a power the player owns. Used by the key payload, commands and tests. */
     public static PowerType.Result cast(ServerPlayer player, PowerType type, int slot, boolean predicted, float yRot, float xRot) {
+        net.minecraft.world.entity.player.Input in = player.getLastClientInput();
+        return cast(player, type, slot, predicted, yRot, xRot, Cast.strafeOf(in), Cast.forwardOf(in));
+    }
+
+    /** As above, with the movement keys held at the press (+1 left / -1 right, +1 forward / -1 back). */
+    public static PowerType.Result cast(ServerPlayer player, PowerType type, int slot, boolean predicted, float yRot, float xRot,
+                                        float strafe, float forward) {
         Loadout l = Powers.loadout(player);
         String id = type.id.toString();
         Loadout.Owned owned = l.get(id);
@@ -93,7 +101,7 @@ public final class Casting {
         // a power cast in a Weave's beat (Arms, SPEC §25) fuses with the weapon and costs less
         float cost = costOf(player, type, owned.variant()) * dev.awaken.core.api.WeaveHooks.costScale(player);
         if (l.energy < cost) return PowerType.Result.fail("energy");
-        Cast c = new Cast(player, type, owned.variant(), owned.level(), slot, predicted, yRot, xRot);
+        Cast c = new Cast(player, type, owned.variant(), owned.level(), slot, predicted, yRot, xRot, strafe, forward);
         PowerType.Result r;
         PowerType prevCtx = Mastery.enter(type);
         boolean prevCast = Mastery.beginCast();
@@ -143,7 +151,8 @@ public final class Casting {
         Running w = start(c, c.type.id + "_windup", wait);
         w.tick(rr -> {
             if (rr.age != wait - 1 || !c.player.isAlive() || c.player.isSpectator()) return;
-            Cast at = new Cast(c.player, c.type, c.variant, c.powerLevel, c.slot, c.predicted, c.player.getYRot(), c.player.getXRot());
+            Cast at = new Cast(c.player, c.type, c.variant, c.powerLevel, c.slot, c.predicted, c.player.getYRot(), c.player.getXRot(),
+                    c.strafe(), c.forward());
             PowerType prevCtx = Mastery.enter(c.type);
             try {
                 c.type.behaviour.cast(at);

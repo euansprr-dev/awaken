@@ -81,16 +81,18 @@ final class ClientCasting {
             ClientPowers.flash(slot, ClientPowers.reasonText("energy"));
             return;
         }
+        var keyed = p.input.keyPresses;
+        int keys = PowerPayloads.keysOf(keyed.forward(), keyed.backward(), keyed.left(), keyed.right());
         boolean predicted = false;
         if (!toggleOff && t.predictor != null) {
-            Vec3 v = t.predictor.motion(p, o.variant(), o.level());
+            Vec3 v = t.predictor.motion(p, o.variant(), o.level(), PowerPayloads.strafeOf(keys), PowerPayloads.forwardOf(keys));
             if (v != null) {
                 p.setDeltaMovement(v);
                 p.resetFallDistance();
                 predicted = true;
             }
         }
-        ClientPacketDistributor.sendToServer(new PowerPayloads.Cast(slot, PowerPayloads.PRESS, predicted, p.getYRot(), p.getXRot()));
+        ClientPacketDistributor.sendToServer(new PowerPayloads.Cast(slot, PowerPayloads.PRESS, predicted, p.getYRot(), p.getXRot(), keys));
         dev.awaken.core.api.MovementHooks.clientCastStarting(p, t.id.toString(), t.family.name(), predicted); // the body: sprint ends, a slide yields to motion
         if (!toggleOff) dev.awaken.powers.client.fx.FxClient.predictCast(p, t);
         if (t.mode == PowerType.Mode.CHANNEL) channeling[slot] = true;
@@ -109,7 +111,7 @@ final class ClientCasting {
         channeling[slot] = false;
         LocalPlayer p = Minecraft.getInstance().player;
         if (p == null) return;
-        ClientPacketDistributor.sendToServer(new PowerPayloads.Cast(slot, PowerPayloads.RELEASE, false, p.getYRot(), p.getXRot()));
+        ClientPacketDistributor.sendToServer(new PowerPayloads.Cast(slot, PowerPayloads.RELEASE, false, p.getYRot(), p.getXRot(), 0));
         dev.awaken.powers.client.fx.FxClient.predictRelease(p);
     }
 
