@@ -698,5 +698,81 @@
         "volume": 0.4
       }
     ]
+  },
+  "power.stomp_lift": {
+    "sounds": [
+      {
+        "name": "awaken:powers/power_stomp_lift_0",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:powers/power_stomp_lift_1",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:powers/power_stomp_lift_2",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "power.stomp_plant": {
+    "sounds": [
+      {
+        "name": "awaken:powers/power_stomp_plant_0",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:powers/power_stomp_plant_1",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:powers/power_stomp_plant_2",
+        "attenuation_distance": 28
+      },
+      {
+        "name": "awaken:powers/power_stomp_plant_3",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "power.beam_gather": {
+    "sounds": [
+      {
+        "name": "awaken:powers/power_beam_gather_0",
+        "attenuation_distance": 16
+      },
+      {
+        "name": "awaken:powers/power_beam_gather_1",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "power.beam_loop": {
+    "sounds": [
+      {
+        "name": "awaken:powers/power_beam_loop_0",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:powers/power_beam_loop_1",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:powers/power_beam_loop_2",
+        "attenuation_distance": 18
+      }
+    ]
+  },
+  "power.beam_end": {
+    "sounds": [
+      {
+        "name": "awaken:powers/power_beam_end_0",
+        "attenuation_distance": 18
+      },
+      {
+        "name": "awaken:powers/power_beam_end_1",
+        "attenuation_distance": 18
+      }
+    ]
   }
 }

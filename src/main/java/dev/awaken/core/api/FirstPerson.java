@@ -149,6 +149,8 @@ public final class FirstPerson {
          */
         public final float[] gripMain = new float[4], gripOff = new float[4];
         public boolean drawOff, hideMain, hideOff;
+        /** A cast clip's fists are drawn even when a hand holds something: the held thing is out of view while it plays. */
+        public boolean stow;
         /** A colour the fists' arms are tinted (RGB; 0 for none): the Sovereign's gold. */
         public int tint;
         /** How lit the fists are from within (0..1, the most of the sources): a palm on a waystone, a charging cast. */
@@ -166,6 +168,7 @@ public final class FirstPerson {
             java.util.Arrays.fill(gripMain, 0F);
             java.util.Arrays.fill(gripOff, 0F);
             drawOff = hideMain = hideOff = false;
+            stow = false;
             tint = 0;
             glow = 0;
         }
@@ -210,6 +213,16 @@ public final class FirstPerson {
     public static List<ViewPose> viewSources() {
         return VIEW;
     }
+
+    // ---- where the hands were drawn last frame (for effects that start at a hand) ---------------------------------------
+
+    /**
+     * The fists a clip keyed in the last composed frame, in view space (x, y, z, then the summed weight; weight 0 = none),
+     * and the System.nanoTime() they were composed at (0 = never). An effect that starts at your hand (a beam) reads them: Hands writes them
+     * every frame it composes, so they are a frame old at most when the world is drawn.
+     */
+    public static final float[] LAST_FIST_MAIN = new float[4], LAST_FIST_OFF = new float[4];
+    public static volatile long lastFistNanos;
 
     // ---- clips and their events -------------------------------------------------------------------------------------
 

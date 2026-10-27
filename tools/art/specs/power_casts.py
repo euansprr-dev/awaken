@@ -544,6 +544,33 @@ hold("hover", H_BASE, [nudge(H_BASE, rise=0.7, ra=(0, 0, 4), la=(0, 0, -4), rl=(
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+# Per-power casts (docs/power-anims/PLAN.md section 5.3): a power whose gesture is not its family's gets its own clips,
+# named in powers.fx.CastProfiles. The release key of each is the tick the effect leaves (CastProfile.release).
+
+# Stomp (Shockwave, Kinetic): coil on the off leg, the knee to hip height and a one-tick hang, then the plant (tick 5,
+# 250 ms: the wave starts under the planted foot), a deep knee as the weight drops, rebound, settle. The raised leg is the
+# main-side one; the straight twin lifts it straight (the library's elbows and knees are the bent twin's).
+ST_COIL = pose(lean=-5, rise=0.6, ra=(-52, 0, 22), la=(-52, 0, -22), re=100, le=100, rl=(-64, 0, 4), ll=(6, 0, -3), rk=100, lk=14)
+ST_HANG = pose(lean=-9, rise=1.4, ra=(-26, 0, 42), la=(-26, 0, -42), re=45, le=45, rl=(-80, 0, 4), ll=(6, 0, -3), rk=104, lk=12)
+ST_PLANT = pose(lean=15, shift=1.0, ra=(-22, 0, 16), la=(-22, 0, -16), re=38, le=38, rl=(-10, 0, 6), ll=(12, 0, -8), rk=22, lk=70)
+ST_REBOUND = pose(ST_PLANT, lean=9, shift=0.4, ra=(-12, 0, 14), la=(-12, 0, -14), rl=(-6, 0, 6), ll=(8, 0, -7), rk=18, lk=40)
+ST_SETTLE = pose(lean=3, ra=(-6, 0, 8), la=(-6, 0, -8), re=20, le=20, rl=(0, 0, 4), ll=(2, 0, -4), rk=8, lk=12)
+clip("stomp", [(0, NEUTRAL, "linear"), (2, ST_COIL, "easeoutquad"), (3, ST_HANG, "easeoutsine"), (4, ST_HANG, "linear"),
+               (5, ST_PLANT, "easeinexpo"), (7, ST_REBOUND, "easeoutsine"), (11, ST_SETTLE, "easeinoutsine")], 15, end=11,
+     note="coil, knee up, hang, plant at tick 5 (250 ms), rebound")
+
+# Beam (Energy), through the core: both hands gather at the sternum, the main arm lays along the aim with the open palm to
+# the target and the off hand steadies its wrist; a braced stance. beam_gather ends in beam_hold's first pose (the game
+# plays the hold the moment the gather ends); beam_hold trembles and loops; beam_hold_end lets go.
+BC_GATHER = pose(lean=-3, twist=8, ra=(-62, -34, 0), la=(-62, 34, 0), re=105, le=105, rl=(14, 0, 8), ll=(-10, 0, -8), rk=30, lk=34)
+BC_DRAW = pose(BC_GATHER, lean=-6, twist=14, ra=(-50, -30, 0), la=(-50, 30, 0), re=110, le=110, rk=36, lk=40)
+BC_AIM = pose(lean=10, shift=1.2, twist=-10, ra=(-90, -2, 0), ra_aim=True, re=0, la=(-78, 50, 0), le=70, rl=(22, 0, 9), ll=(-16, 0, -9), rk=14, lk=40)
+clip("beam_gather", [(0, NEUTRAL, "linear"), (2, BC_GATHER, "easeoutquad"), (3, BC_DRAW, "easeinoutsine"), (5, BC_AIM, "easeoutexpo")], 6,
+     end=5, note="hands gather at the sternum, the arm to the aim at tick 5 (ends in beam_hold's pose)")
+hold("beam_hold", BC_AIM, [nudge(BC_AIM, lean=-1, ra=(0.8, 0.5, 0), la=(-0.8, -0.5, 0)), nudge(BC_AIM, lean=0.8, ra=(-0.6, -0.4, 0))], 4,
+     "braced on the aim, the off hand at the wrist, trembling")
+
+# ---------------------------------------------------------------------------------------------------------------------
 # Output
 
 def document():

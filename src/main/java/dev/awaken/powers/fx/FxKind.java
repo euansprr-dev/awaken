@@ -83,7 +83,9 @@ public enum FxKind {
     /** The screen beat of an ultimate for players within scale blocks: impact frame, flash, FOV punch. */
     ULT,
     /** A flash on the caster's own screen; scale = strength. */
-    FLASH;
+    FLASH,
+    /** Only the caster's cast profile beat (flags): its clips begin; no particles. */
+    POSE;
 
     private static final FxKind[] VALUES = values();
 

@@ -2,6 +2,7 @@ package dev.awaken.powers;
 
 import dev.awaken.core.AwakenNet;
 import dev.awaken.powers.fx.CastAnim;
+import dev.awaken.powers.fx.CastProfiles;
 import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
 import dev.awaken.powers.fx.FxStyle;
@@ -42,8 +43,12 @@ public final class Fx {
         e.b.caster(c.player).seed(c.player.getRandom().nextInt()).variant(c.variant);
         e.power = c.powerLevel;
         e.caster = c.player;
+        CastProfiles.Profile prof = CastProfiles.byPower(c.type.path);
         if (def != null) {
-            if (kind == def.release() && def.anim() != CastAnim.NONE) e.b.anim(def.anim());
+            // a power with a cast profile (docs/power-anims/PLAN.md) carries its beat instead of a family pose
+            if (prof != null && kind == def.windup()) e.b.profile(prof.id(), CastProfiles.BEGIN);
+            else if (prof != null && kind == def.release()) e.b.profile(prof.id(), CastProfiles.RELEASE);
+            else if (kind == def.release() && def.anim() != CastAnim.NONE) e.b.anim(def.anim());
             else if (kind == def.windup() && def.windAnim() != null) e.b.anim(def.windAnim());
             if (def.ultimate()) {
                 e.b.flag(FxEvent.ULT);
@@ -145,6 +150,12 @@ public final class Fx {
             return this;
         }
 
+        /** Marks the event as a beat of a cast profile. */
+        public Emit profile(int id, int beat) {
+            b.profile(id, beat);
+            return this;
+        }
+
         public Emit seed(int s) {
             b.seed(s);
             return this;
@@ -208,7 +219,20 @@ public final class Fx {
      * that aura, -2 = domes and shells.
      */
     public static void end(Cast c, Entity on, int what) {
-        at(c, FxKind.CHARGE_END, on.position()).caster(on).aux(what).noAnim().send();
+        Emit e = at(c, FxKind.CHARGE_END, on.position()).caster(on).aux(what).noAnim();
+        CastProfiles.Profile prof = CastProfiles.byPower(c.type.path);
+        if (what == 0 && prof != null) e.profile(prof.id(), CastProfiles.END);
+        e.send();
+    }
+
+    /**
+     * Begins a cast profile's pose for everyone who can see the caster (the key press already started it on their own
+     * client): the clips run, nothing is drawn. For a power with a wind-up, the effect follows {@code windup} ticks later.
+     */
+    public static void pose(Cast c) {
+        CastProfiles.Profile prof = CastProfiles.byPower(c.type.path);
+        if (prof == null) return;
+        at(c, FxKind.POSE, c.pos()).noAnim().profile(prof.id(), CastProfiles.BEGIN).send();
     }
 
     /** A glowing trail on a thrown block (Terrain Rip, Collapse, wall rams). */

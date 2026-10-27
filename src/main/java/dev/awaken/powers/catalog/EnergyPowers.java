@@ -114,11 +114,14 @@ final class EnergyPowers {
 
     static Result beam(Cast c) {
         double range = c.is(2) ? 32 : 24;
-        c.sound(PowerSounds.BEAM, 0.8f, 1.2f);
-        // a quick gather at the palm, then the layered beam itself (see beamRay)
+        c.sound(PowerSounds.BEAM_GATHER, 0.9f, 1f);
+        // the light gathers at the palm while the arm comes up, then the layered beam itself (see beamRay)
         Fx.at(c, FxKind.CHARGE, hand(c.player)).ticks(c.type.maxDuration).scale(0.7).send();
         Running r = Casting.channel(c, c.type.maxDuration);
-        r.end((rr, why) -> Fx.end(c, c.player, 0));
+        r.end((rr, why) -> {
+            Fx.end(c, c.player, 0);
+            c.sound(PowerSounds.BEAM_END, 0.8f, 1f);
+        });
         r.tick(rr -> {
             Vec3 eye = c.player.getEyePosition();
             Vec3 look = c.player.getLookAngle();
@@ -130,7 +133,8 @@ final class EnergyPowers {
                     beamRay(c, rr, eye, side, range * 0.8, c.dmg() * 0.55f, pulse, false, 0.08f);
                 }
             }
-            if (rr.age % 10 == 0) c.sound(PowerSounds.BEAM, 0.5f, 1.1f + c.player.getRandom().nextFloat() * 0.2f);
+            // the hum starts when the arm is up (tick 5) and is re-laid every half second over a 0.62 s file
+            if (rr.age % 10 == 5) c.sound(PowerSounds.BEAM_LOOP, 0.6f, 1f);
         });
         return Result.OK;
     }

@@ -18,6 +18,7 @@ import dev.awaken.powers.PowerType.Variant;
 import dev.awaken.powers.Running;
 import dev.awaken.powers.TerrainLedger;
 import dev.awaken.powers.fx.CastAnim;
+import dev.awaken.powers.fx.CastProfiles;
 import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
 import dev.awaken.powers.fx.FxStyle;
@@ -277,14 +278,33 @@ final class KineticPowers {
         return Result.OK;
     }
 
+    /**
+     * The stamp: the key press starts the knee lifting (everyone sees it), and the wave leaves when the foot lands, a
+     * short wind-up later (CastProfiles "shockwave": energy and cooldown are spent on the press). The wave goes where
+     * you look when the foot lands.
+     */
     static Result shockwave(Cast c) {
+        CastProfiles.Profile prof = CastProfiles.byPower(c.type.path);
+        int wait = prof == null ? 1 : Math.max(1, prof.windup());
+        Fx.pose(c);
+        c.sound(PowerSounds.STOMP_LIFT, 0.8f, 1f);
+        Running w = Casting.start(c, "shockwave_windup", wait);
+        w.tick(rr -> {
+            if (rr.age != wait - 1) return;
+            if (!c.player.isAlive() || c.player.isSpectator()) return;
+            shockwaveRelease(new Cast(c.player, c.type, c.variant, c.powerLevel, c.slot, c.predicted, c.player.getYRot(), c.player.getXRot()));
+        });
+        return Result.OK;
+    }
+
+    static void shockwaveRelease(Cast c) {
         double range = c.is(1) ? 7 : c.is(2) ? 14 : 9;
         double half = c.is(1) ? 50 : c.is(2) ? 15 : 30;
         Vec3 origin = c.pos().add(0, 0.5, 0);
         Vec3 dir = c.flatLook();
         float dmg = c.dmg();
-        c.sound(PowerSounds.SHOCKWAVE, 1.1f, 0.9f);
-        // a curved wall of force rolls out, tearing dust and chunks out of the ground at its front
+        c.sound(PowerSounds.STOMP_PLANT, 1.3f, 1f);
+        // a curved wall of force rolls out from the planted foot, tearing dust and chunks out of the ground at its front
         Fx.at(c, FxKind.CONE, c.pos()).dir(dir).scale(range).aux(half).ticks(10).flag(FxEvent.REACH).send();
         Running r = Casting.start(c, 10);
         r.tick(rr -> {
@@ -297,13 +317,13 @@ final class KineticPowers {
                 c.hurt(e, dmg, null);
                 Combat.knockFrom(e, origin, 1.4, 0.35);
                 if (rr.hit.size() <= 5) Fx.at(c, FxKind.IMPACT, e.getBoundingBox().getCenter()).dir(dir).scale(0.8).noAnim().send();
+                if (rr.hit.size() == 1) c.feel(e, 50, 0f); // the first body struck freezes a beat
             }
             for (LivingEntity e : Combat.bystandersInCone(c.player, origin, dir, front, half)) {
                 if (rr.hit.add(e.getId())) Combat.knockFrom(e, origin, 0.9, 0.3);
             }
         });
         Fx.quake(c.level, origin, 10, 1.5f);
-        return Result.OK;
     }
 
     static Result brace(Cast c) {

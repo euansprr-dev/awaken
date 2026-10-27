@@ -135,6 +135,7 @@ public final class ClientPowers {
     /** A power's hit lands with the same freeze as any blow (core.api.CombatFeedback), plus the power's own shake. */
     static void onFeel(PowerPayloads.Feel msg) {
         dev.awaken.core.api.CombatFeedback.hitstop(msg.entityId(), msg.hitstopMs());
+        dev.awaken.core.api.CombatFeedback.hold(msg.hitstopMs()); // the caster's own hands and view hold for the same beat
         if (msg.shake() > 0) CombatFeel.kick(msg.shake(), 8 + (int) (msg.shake() * 2));
         dev.awaken.powers.client.fx.FxClient.onFeel(msg.entityId(), msg.hitstopMs());
     }

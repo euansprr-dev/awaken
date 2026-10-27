@@ -50,6 +50,21 @@ public record FxEvent(FxKind kind, FxStyle style, int caster, int target, double
         return CastAnim.byId(flags >>> 16);
     }
 
+    /** High-bit values from here on are a cast profile and its beat, not a {@link CastAnim} ordinal. */
+    public static final int PROFILE_BASE = 128;
+
+    /** The cast profile this event belongs to (CastProfiles ids start at 1), or 0. */
+    public int profile() {
+        int hi = flags >>> 16;
+        return hi >= PROFILE_BASE ? (hi - PROFILE_BASE) >> 2 : 0;
+    }
+
+    /** The beat of the profile ({@link CastProfiles#BEGIN}, RELEASE, END). */
+    public int beat() {
+        int hi = flags >>> 16;
+        return hi >= PROFILE_BASE ? (hi - PROFILE_BASE) & 3 : 0;
+    }
+
     public int variant() {
         return (flags >> VARIANT_SHIFT) & 3;
     }
@@ -146,6 +161,12 @@ public record FxEvent(FxKind kind, FxStyle style, int caster, int target, double
 
         public Builder anim(CastAnim a) {
             this.flags = (flags & 0xFFFF) | (a.ordinal() << 16);
+            return this;
+        }
+
+        /** Marks the event as a beat of a cast profile (replaces any pose). */
+        public Builder profile(int id, int beat) {
+            this.flags = (flags & 0xFFFF) | ((PROFILE_BASE + (id << 2 | beat)) << 16);
             return this;
         }
 

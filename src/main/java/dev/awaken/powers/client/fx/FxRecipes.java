@@ -90,6 +90,9 @@ final class FxRecipes {
             case FLASH -> {
                 if (mine) FxScreen.flash(st.mid, e.scale(), 6);
             }
+            case POSE -> {
+                // only the caster's cast profile began (FxClient); nothing is drawn
+            }
         }
     }
 
@@ -695,6 +698,13 @@ final class FxRecipes {
 
     private static void cone(FxEvent e, FxStyle st, float big) {
         double x = e.x(), z = e.z();
+        // a stamp (a cast profile's release): the wave starts under the planted foot, with a thump
+        Entity stamper = e.profile() != 0 && e.caster() >= 0 && Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getEntity(e.caster()) : null;
+        if (stamper != null) {
+            Anchors.of(stamper, Anchors.PLANT, 1f, P);
+            x = P[0];
+            z = P[2];
+        }
         double y = FxWorld.groundY(x, e.y(), z);
         float range = Math.max(2, e.scale());
         float half = (float) Math.toRadians(Math.max(8, e.aux()));
@@ -724,6 +734,18 @@ final class FxRecipes {
         ring(x, y + 0.08, z, 0.2f, 1.6f, 0.5f, 0.1f, 7, alpha(st.core, 0.9f), alpha(st.mid, 0), 0, 1, 0);
         decal(x + dx * 0.8, y, z + dz * 0.8, CRACK, 2.2f, 0xC02A2420, 60);
         dustRing(x, y, z, 0.8f, n(5), st, 0.05f);
+        if (stamper != null) plantPuff(x, y, z, st, big, stamper);
+    }
+
+    /** The foot landing: a flare, a heel's cracks and rubble, dust kicked up and sparks off the stone, and the thump. */
+    private static void plantPuff(double x, double y, double z, FxStyle st, float big, Entity stamper) {
+        flare(x, y + 0.25, z, 1.3f * big, st, 5);
+        decal(x, y, z, CRACK, 1.1f, 0xD82A2420, 70);
+        debris(x, y, z, 0.45f, n((int) (8 * big)), 0.5f, 0.14f);
+        dustRing(x, y, z, 1.1f, n((int) (12 * big)), st, 0.07f);
+        sparks(x, y + 0.1, z, n(8), 0.4f, st, 6, 0.02f, 0, 0.35, 0, 0.25f);
+        Minecraft mc = Minecraft.getInstance();
+        CastFeel.thump(x, y, z, 1f, mc.player != null && stamper.getId() == mc.player.getId());
     }
 
     private static void beam(FxEvent e, FxStyle st, Entity caster, boolean mine) {

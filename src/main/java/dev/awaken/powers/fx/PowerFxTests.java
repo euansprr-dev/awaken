@@ -135,6 +135,7 @@ final class PowerFxTests {
         AwakenTests.register("power_fx_cast_clips", 20, PowerFxTests::castClips);
         AwakenTests.registerIsolated("power_fx_every_cast_emits", 200, PowerFxTests::everyCastEmits);
         AwakenTests.registerIsolated("power_fx_reach_matches_hits", 400, PowerFxTests::reachMatchesHits);
+        PowerCastTests.register();
     }
 
     private static final Set<String> CLIP_BONES = Set.of("body", "torso", "head", "right_arm", "left_arm", "right_leg", "left_leg");
@@ -210,7 +211,7 @@ final class PowerFxTests {
     private static final List<Probe> PROBES = List.of(
             new Probe("ground_slam", 0, false), new Probe("nova", 0, false), new Probe("frost_nova", 0, false),
             new Probe("thunderclap", 3, false), new Probe("gravity_flip", 0, false), new Probe("overload", 22, false),
-            new Probe("brace", 64, false), new Probe("shockwave", 12, true), new Probe("spire", 0, false)); // spire last: it builds a pillar
+            new Probe("brace", 64, false), new Probe("shockwave", 17, true), new Probe("spire", 0, false)); // spire last: it builds a pillar
 
     /**
      * Every area power draws exactly the volume it hits: mobs stand in a row at 1..13 blocks, the power is cast, and

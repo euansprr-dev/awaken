@@ -62,6 +62,12 @@ public final class PowerSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> STUN = s("power.stun");
     public static final DeferredHolder<SoundEvent, SoundEvent> SHATTER = s("power.shatter");
     public static final DeferredHolder<SoundEvent, SoundEvent> DANGER = s("power.danger");
+    // authored cast sounds (tools/art/specs/audio_powers.py): layered, not vanilla remixes
+    public static final DeferredHolder<SoundEvent, SoundEvent> STOMP_LIFT = s("power.stomp_lift");
+    public static final DeferredHolder<SoundEvent, SoundEvent> STOMP_PLANT = s("power.stomp_plant");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BEAM_GATHER = s("power.beam_gather");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BEAM_LOOP = s("power.beam_loop");
+    public static final DeferredHolder<SoundEvent, SoundEvent> BEAM_END = s("power.beam_end");
 
     private static DeferredHolder<SoundEvent, SoundEvent> s(String name) {
         return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(Awaken.id(name)));

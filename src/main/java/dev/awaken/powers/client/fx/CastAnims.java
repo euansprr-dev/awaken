@@ -5,6 +5,7 @@ import com.mojang.math.Axis;
 import dev.awaken.powers.PowerType.Family;
 import dev.awaken.powers.fx.CastAnim;
 import dev.awaken.powers.fx.CastClips;
+import dev.awaken.powers.fx.CastProfiles;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
@@ -50,6 +51,10 @@ final class CastAnims {
         Family family = Family.ENERGY;
         boolean palFrozen;
         boolean palLetGo;
+        /** The power's cast profile (its own clips and first-person clips), or null: the family's pose. */
+        CastProfiles.@Nullable Profile profile;
+        /** The profile's hold loop has taken over from its begin clip. */
+        boolean holdStarted;
     }
 
     /** The Player Animation Library is installed (and took our layer): casts get full-body clips in third person. */
@@ -82,9 +87,18 @@ final class CastAnims {
 
     /** Starts an animation on an entity; a held one stays until {@link #release}. */
     static void play(int entityId, CastAnim kind, int ticks, @Nullable Family family) {
+        start(entityId, kind, ticks, family, null);
+    }
+
+    /** Starts a power's cast profile: its own clips (third person), the vanilla pose {@code fallback} without the library. */
+    static void playProfile(int entityId, CastProfiles.Profile profile, @Nullable Family family) {
+        start(entityId, profile.fallback(), 0, family, profile);
+    }
+
+    private static void start(int entityId, CastAnim kind, int ticks, @Nullable Family family, CastProfiles.@Nullable Profile profile) {
         if (kind == CastAnim.NONE || entityId < 0) return;
         Anim a = find(entityId);
-        boolean afterHold = a != null && a.held && a.pal && !kind.held;
+        boolean afterHold = profile == null && a != null && a.held && a.pal && !kind.held;
         boolean wasPal = a != null && a.pal;
         if (a == null) {
             a = free();
@@ -102,8 +116,10 @@ final class CastAnims {
         a.palFrozen = false;
         a.palLetGo = false;
         a.pal = false;
+        a.profile = profile;
+        a.holdStarted = false;
         if (pal && PowerFxConfig.animations()) {
-            String clip = CastClips.clip(a.family, kind, afterHold);
+            String clip = profile != null ? profile.begin3p() : CastClips.clip(a.family, kind, afterHold);
             a.pal = clip != null && PalCasts.play(entityId, clip, fadeIn(kind));
         }
         if (wasPal && !a.pal) PalCasts.stop(entityId);
@@ -123,6 +139,35 @@ final class CastAnims {
     static boolean recently(int entityId, CastAnim kind, int withinTicks) {
         Anim a = find(entityId);
         return a != null && a.kind == kind && FxWorld.ticks - a.start <= withinTicks;
+    }
+
+    /** True when the entity started this cast profile within the last few ticks (prediction already played it). */
+    static boolean recentlyProfile(int entityId, int profileId, int withinTicks) {
+        Anim a = find(entityId);
+        return a != null && a.profile != null && a.profile.id() == profileId && FxWorld.ticks - a.start <= withinTicks;
+    }
+
+    /** The cast profile an entity is in (CastProfiles ids start at 1), or 0. */
+    static int profileOf(int entityId) {
+        Anim a = find(entityId);
+        return a == null || a.profile == null ? 0 : a.profile.id();
+    }
+
+    /** Whether an entity has a cast pose running (the sampling layer reads only those bodies). */
+    static boolean live(int entityId) {
+        return find(entityId) != null;
+    }
+
+    /** Whether the entity is in this cast profile and has not let go of it (a channel's hold). */
+    static boolean holding(int entityId, int profileId) {
+        Anim a = find(entityId);
+        return a != null && a.profile != null && a.profile.id() == profileId && a.releasedAt < 0;
+    }
+
+    /** Ticks since the entity's cast profile began (with the frame's partial tick), or -1 when it is not in that profile. */
+    static float profileAge(int entityId, int profileId, float pt) {
+        Anim a = find(entityId);
+        return a == null || a.profile == null || a.profile.id() != profileId ? -1 : now(pt) - a.start;
     }
 
     static void release(int entityId) {
@@ -152,9 +197,15 @@ final class CastAnims {
             float age = FxWorld.ticks - a.start;
             boolean done = a.held ? (a.releasedAt >= 0 && FxWorld.ticks - a.releasedAt > 5) || age > 20 * 30 : age > a.ticks + 2;
             // a held clip lets go a moment after release, so a release cast arriving just behind it takes over smoothly
+            // a profile's begin clip hands over to its hold loop where it ends (the hold starts in the pose the begin ends in)
+            if (a.pal && a.profile != null && a.profile.hold3p() != null && !a.holdStarted && !a.palLetGo && a.releasedAt < 0 && age >= a.profile.holdAt()) {
+                a.holdStarted = true;
+                if (!PalCasts.play(a.entity, a.profile.hold3p(), 2)) a.pal = false;
+                if (a.entity == mcPlayerId()) CastFeel.beamStart();
+            }
             if (a.pal && a.held && !a.palLetGo && (done || a.releasedAt >= 0 && FxWorld.ticks - a.releasedAt >= 2)) {
                 a.palLetGo = true;
-                String clip = CastClips.letGo(a.family, a.kind);
+                String clip = a.profile != null ? a.profile.end3p() : CastClips.letGo(a.family, a.kind);
                 if (clip == null || !PalCasts.play(a.entity, clip, 2)) PalCasts.stop(a.entity);
             }
             if (done && a.pal && a.palFrozen) PalCasts.freeze(a.entity, false);
@@ -167,6 +218,11 @@ final class CastAnims {
             if (a.entity >= 0 && a.pal) PalCasts.stop(a.entity);
             a.entity = -1;
         }
+    }
+
+    private static int mcPlayerId() {
+        var p = Minecraft.getInstance().player;
+        return p == null ? -1 : p.getId();
     }
 
     private static Anim find(int id) {
@@ -349,6 +405,9 @@ final class CastAnims {
 
     static void onHand(RenderHandEvent e) {
         Minecraft mc = Minecraft.getInstance();
+        // a cast profile's first person is Hands' (fp_casts.py clips), not these offsets
+        Anim own = mc.player == null ? null : find(mc.player.getId());
+        if (own != null && own.profile != null) return;
         if (e.getHand() == InteractionHand.OFF_HAND) {
             if (pushedHand) {
                 e.getPoseStack().popPose();

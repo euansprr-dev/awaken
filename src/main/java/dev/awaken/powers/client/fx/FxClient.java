@@ -1,9 +1,11 @@
 package dev.awaken.powers.client.fx;
 
 import com.google.common.reflect.TypeToken;
+import dev.awaken.core.api.FirstPerson;
 import dev.awaken.powers.PowerType;
 import dev.awaken.powers.fx.CastAnim;
 import dev.awaken.powers.fx.CastClips;
+import dev.awaken.powers.fx.CastProfiles;
 import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
 import dev.awaken.powers.fx.FxStyle;
@@ -19,6 +21,7 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
@@ -47,6 +50,17 @@ public final class FxClient {
         modBus.addListener(RegisterGuiLayersEvent.class, FxScreen::register);
         modBus.addListener(RegisterRenderStateModifiersEvent.class,
                 e -> e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, CastAnims::modify));
+        // where a cast's palm, core and foot are on a drawn body (Muzzles)
+        modBus.addListener(EntityRenderersEvent.AddLayers.class, e -> {
+            for (var type : e.getSkins()) {
+                var r = e.getPlayerRenderer(type);
+                if (r != null) MuzzleLayer.addTo(r);
+            }
+        });
+        // casts in first person are Hands': the stamp's boot, the lit palm, the clips' hand-overs
+        FirstPerson.world("powers_stomp", 350, CastLegs::pose);
+        FirstPerson.view(CastLegs::glow);
+        FirstPerson.listen(FxClient::onFirstPerson);
 
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
@@ -69,6 +83,7 @@ public final class FxClient {
             FxWorld.tick();
             CastAnims.tick();
             FxScreen.tick();
+            drainDeferred();
         } catch (RuntimeException ex) {
             // effects must never take the game down: drop them all and carry on
             dev.awaken.Awaken.LOG.warn("Power FX tick failed; clearing effects", ex);
@@ -94,16 +109,93 @@ public final class FxClient {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
         CastAnim anim = e.anim();
-        if (anim != CastAnim.NONE && e.caster() >= 0) {
-            boolean own = mc.player != null && e.caster() == mc.player.getId();
+        boolean own = mc.player != null && e.caster() == mc.player.getId();
+        CastProfiles.Profile prof = e.caster() >= 0 ? CastProfiles.byId(e.profile()) : null;
+        if (prof != null) {
+            onProfile(e, prof, own);
+        } else if (anim != CastAnim.NONE && e.caster() >= 0) {
             // the local key press already started this pose; don't restart it when the server echoes it
             if (!(own && CastAnims.recently(e.caster(), anim, 8))) CastAnims.play(e.caster(), anim, 0, CastClips.family(e));
         }
+        if (defer(e)) return;
+        build(e);
+    }
+
+    private static void build(FxEvent e) {
         try {
             FxRecipes.build(e);
         } catch (RuntimeException ex) {
             // an effect must never take the game down; log once per kind
             logOnce(e.kind(), ex);
+        }
+    }
+
+    /** A cast profile's beat from the server: everyone but the caster starts its clips here (the caster's key press did). */
+    private static void onProfile(FxEvent e, CastProfiles.Profile prof, boolean own) {
+        switch (e.beat()) {
+            case CastProfiles.BEGIN -> {
+                // your own key press already started both views; a cast that began on the server alone (a command) starts them here
+                if (!(own && CastAnims.recentlyProfile(e.caster(), prof.id(), 8))) {
+                    CastAnims.playProfile(e.caster(), prof, CastClips.family(e));
+                    if (own && animations()) FirstPerson.play(prof.begin1p());
+                }
+            }
+            case CastProfiles.END -> {
+                if (own) stopFirstPerson(prof);
+            }
+            default -> {
+            }
+        }
+    }
+
+    private static void stopFirstPerson(CastProfiles.Profile prof) {
+        FirstPerson.stop(prof.begin1p());
+        if (prof.hold1p() != null) FirstPerson.stop(prof.hold1p());
+    }
+
+    /** A first-person clip's keyed event: a profile's begin clip hands over to its hold loop where it ends. */
+    private static void onFirstPerson(String clip, String event) {
+        if (!"hold".equals(event)) return;
+        var p = Minecraft.getInstance().player;
+        if (p == null) return;
+        for (CastProfiles.Profile prof : CastProfiles.all()) {
+            if (prof.hold1p() != null && prof.begin1p().equals(clip) && CastAnims.holding(p.getId(), prof.id())) FirstPerson.play(prof.hold1p());
+        }
+    }
+
+    // ---- the effect waits for the body's release frame (decision D4) --------------------------------------------------
+
+    private static final FxEvent[] DEFERRED = new FxEvent[16];
+    private static final int[] DEFERRED_AT = new int[16];
+
+    /**
+     * A beam from a caster whose arm is still coming up waits for the tick the arm arrives (the profile's release), so the
+     * beam leaves the palm that is on the aim and not the hands still gathering. Returns true when it took the event.
+     */
+    private static boolean defer(FxEvent e) {
+        if (e.kind() != FxKind.BEAM || e.caster() < 0) return false;
+        CastProfiles.Profile prof = CastProfiles.byId(CastAnims.profileOf(e.caster()));
+        if (prof == null) return false;
+        float age = CastAnims.profileAge(e.caster(), prof.id(), 1f);
+        int wait = (int) Math.ceil(prof.release() - age);
+        if (wait <= 0) return false;
+        for (int i = 0; i < DEFERRED.length; i++) {
+            if (DEFERRED[i] == null) {
+                DEFERRED[i] = e;
+                DEFERRED_AT[i] = FxWorld.ticks + wait;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void drainDeferred() {
+        for (int i = 0; i < DEFERRED.length; i++) {
+            if (DEFERRED[i] != null && FxWorld.ticks >= DEFERRED_AT[i]) {
+                FxEvent e = DEFERRED[i];
+                DEFERRED[i] = null;
+                build(e);
+            }
         }
     }
 
@@ -122,8 +214,14 @@ public final class FxClient {
         PowerFxDefs.Def def = PowerFxDefs.get(type.path);
         if (def == null) return;
         boolean channel = type.mode == PowerType.Mode.CHANNEL;
+        CastProfiles.Profile prof = CastProfiles.byPower(type.path);
         CastAnim anim = channel && def.windAnim() != null ? def.windAnim() : def.anim();
-        if (anim != CastAnim.NONE) CastAnims.play(p.getId(), anim, 0, type.family);
+        if (prof != null && animations()) {
+            CastAnims.playProfile(p.getId(), prof, type.family);
+            FirstPerson.play(prof.begin1p());
+        } else if (anim != CastAnim.NONE) {
+            CastAnims.play(p.getId(), anim, 0, type.family);
+        }
         if (channel && def.windup() == FxKind.CHARGE && FxWorld.findAttached(p.getId(), Shape.DISC, FxRecipes.E_CHARGE) == null) {
             Vec3 at = p.position();
             if (FxWorld.begin(at.x, at.y, at.z, p.getId() * 7919 + FxWorld.ticks)) {
@@ -249,6 +347,9 @@ public final class FxClient {
     /** The local player let go of a channelled power key. */
     public static void predictRelease(LocalPlayer p) {
         CastAnims.release(p.getId());
+        int id = CastAnims.profileOf(p.getId());
+        CastProfiles.Profile prof = CastProfiles.byId(id);
+        if (prof != null) stopFirstPerson(prof);
     }
 
     /** Combat feel from the server: the caster's own pose pauses for the hit-stop too. */
