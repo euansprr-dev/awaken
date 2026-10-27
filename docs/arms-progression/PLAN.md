@@ -2,7 +2,7 @@
 
 Status: **approved 2026-10-27 with changes** (Euan, in chat to the plan session: "go ahead with everything else that's
 recommended", with patterns taught by gates, villages and structures instead of the first-elite rule, and weapons from
-boss fights); still plan only, nothing built. Branch `pack/arms-progression-plan`. Approval page:
+boss fights). **Built 2026-10-27, phases A to G, on `pack/arms-progression`** (SPEC §25 "Arms progression" records what shipped, and what did not). Plan branch `pack/arms-progression-plan`. Approval page:
 https://claude.ai/artifact/DA4J66cpZkKinGbm6X18ML (source `docs/arms-progression/page.html`).
 Labels used below: **VERIFIED** (read in this repo at 7de77457 or computed from it), **RESEARCH** (an outside source,
 §2), **PROPOSAL** (not built, nothing measured), **UNVERIFIED** (to be checked by the first builder).
