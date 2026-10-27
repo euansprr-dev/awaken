@@ -13,7 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * First-person view clips: {@code assets/awaken/fp_clips/*.json}, written by {@code tools/art/specs/fp_moves.py} (edit
+ * First-person view clips: {@code assets/awaken/fp_clips/*.json}, written by {@code tools/art/specs/fp_moves.py} and {@code fp_casts.py} (edit
  * the poses there, never the JSON). Each clip moves the main and the off hand on top of vanilla's own (view space:
  * x right, y up, z toward the viewer, blocks; then pitch, yaw, roll in degrees), keyed in ticks, each key eased in by
  * its curve ({@link Ease}); events fire at their ticks. Authored right-handed: the game mirrors x, yaw and roll for a
@@ -30,7 +30,7 @@ public final class FpClipSet {
 
     public static final int SCHEMA = 1;
     /** The files read, in order (a later file's clip replaces an earlier one's of the same name). */
-    public static final String[] FILES = {"assets/awaken/fp_clips/fp_moves.json"};
+    public static final String[] FILES = {"assets/awaken/fp_clips/fp_moves.json", "assets/awaken/fp_clips/fp_casts.json"};
 
     /** One key: its tick, the six values, the curve that eases into it. */
     public record Key(float t, float[] v, int ease) {}
@@ -43,6 +43,8 @@ public final class FpClipSet {
         public final boolean fists;
         /** A clip played over a stance (a hang's ledge jumps): it ends where the stance holds the hands. */
         public boolean toStance;
+        /** A cast clip (fp_casts.py): its fists are drawn even when a hand holds something (the weapon is out of view). */
+        public boolean stow;
         final Key[] main, off;
         public final float[] eventAt;
         public final String[] events;
@@ -131,6 +133,7 @@ public final class FpClipSet {
                     c.has("both") && c.get("both").getAsBoolean(), c.has("fists") && c.get("fists").getAsBoolean(), keys(c, "main"), keys(c, "off"), at,
                     names));
             out.get(e.getKey()).toStance = c.has("toStance") && c.get("toStance").getAsBoolean();
+            out.get(e.getKey()).stow = c.has("stow") && c.get("stow").getAsBoolean();
         }
         return out;
     }

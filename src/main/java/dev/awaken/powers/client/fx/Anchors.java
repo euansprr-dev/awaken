@@ -7,7 +7,7 @@ import net.minecraft.world.entity.player.Player;
 
 /**
  * Where on an entity an effect attaches (feet, casting hand, chest, eyes...), interpolated to the frame, without
- * allocating. The local player's hand in first person sits where the drawn hand is on screen.
+ * allocating. A player's hand is where the drawn palm is while a cast shows it ({@link Muzzles}), else a fixed offset.
  */
 final class Anchors {
     private Anchors() {}
@@ -19,6 +19,10 @@ final class Anchors {
     static final int OFFHAND = 4;
     static final int HEAD = 5;
     static final int BACK = 6;
+    /** The ground under the stamping foot (Muzzles). */
+    static final int PLANT = 7;
+    /** The sternum: the core (Muzzles). */
+    static final int CORE = 8;
 
     /** Writes the anchor's world position into out[0..2]. */
     static void of(Entity e, int anchor, float pt, double[] out) {
@@ -47,6 +51,8 @@ final class Anchors {
                 out[2] = z;
             }
             case HAND, OFFHAND -> hand(e, anchor == OFFHAND, pt, x, y, z, out);
+            case PLANT -> Muzzles.plant(e, pt, out);
+            case CORE -> Muzzles.core(e, pt, out);
             case BACK -> {
                 float yaw = e.getViewYRot(pt) * Mth.DEG_TO_RAD;
                 out[0] = x + Mth.sin(yaw) * 0.35;
@@ -68,14 +74,16 @@ final class Anchors {
             out[2] = z;
             return;
         }
+        Minecraft mc = Minecraft.getInstance();
+        boolean firstPerson = e == mc.getCameraEntity() && mc.options.getCameraType().isFirstPerson();
+        // where the drawn palm is (Muzzles: your fist in first person, the posed model otherwise), else the old offsets below
+        if (Muzzles.palm(e, off, pt, firstPerson, out)) return;
         float yaw = e.getViewYRot(pt) * Mth.DEG_TO_RAD;
         float pitch = e.getViewXRot(pt) * Mth.DEG_TO_RAD;
         // look = (-sin(yaw) cos(pitch), -sin(pitch), cos(yaw) cos(pitch)); right = (-cos(yaw), 0, -sin(yaw))
         float cp = Mth.cos(pitch);
         double lx = -Mth.sin(yaw) * cp, ly = -Mth.sin(pitch), lz = Mth.cos(yaw) * cp;
         double rx = -Mth.cos(yaw), rz = -Mth.sin(yaw);
-        Minecraft mc = Minecraft.getInstance();
-        boolean firstPerson = e == mc.getCameraEntity() && mc.options.getCameraType().isFirstPerson();
         double side = (off ? -1 : 1) * (firstPerson ? 0.32 : 0.36);
         double fwd = firstPerson ? 0.55 : 0.35;
         double down = firstPerson ? 0.3 : 0.45;

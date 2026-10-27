@@ -277,14 +277,15 @@ final class KineticPowers {
         return Result.OK;
     }
 
+    /** The stamp: the wave leaves when the foot lands (the profile's wind-up, run by Casting) from where you look then. */
     static Result shockwave(Cast c) {
         double range = c.is(1) ? 7 : c.is(2) ? 14 : 9;
         double half = c.is(1) ? 50 : c.is(2) ? 15 : 30;
         Vec3 origin = c.pos().add(0, 0.5, 0);
         Vec3 dir = c.flatLook();
         float dmg = c.dmg();
-        c.sound(PowerSounds.SHOCKWAVE, 1.1f, 0.9f);
-        // a curved wall of force rolls out, tearing dust and chunks out of the ground at its front
+        c.sound(PowerSounds.STOMP_PLANT, 1.3f, 1f);
+        // a curved wall of force rolls out from the planted foot, tearing dust and chunks out of the ground at its front
         Fx.at(c, FxKind.CONE, c.pos()).dir(dir).scale(range).aux(half).ticks(10).flag(FxEvent.REACH).send();
         Running r = Casting.start(c, 10);
         r.tick(rr -> {
@@ -297,6 +298,7 @@ final class KineticPowers {
                 c.hurt(e, dmg, null);
                 Combat.knockFrom(e, origin, 1.4, 0.35);
                 if (rr.hit.size() <= 5) Fx.at(c, FxKind.IMPACT, e.getBoundingBox().getCenter()).dir(dir).scale(0.8).noAnim().send();
+                if (rr.hit.size() == 1) c.feel(e, 50, 0f); // the first body struck freezes a beat
             }
             for (LivingEntity e : Combat.bystandersInCone(c.player, origin, dir, front, half)) {
                 if (rr.hit.add(e.getId())) Combat.knockFrom(e, origin, 0.9, 0.3);

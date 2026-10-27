@@ -1,0 +1,198 @@
+{
+  "schemaVersion": 1,
+  "_about": "The powers' casts (dev.awaken.powers.client.fx.CastLens; docs/power-anims/PLAN.md D8), merged with looks.json by Lens. Played through LensClient.override for the cast's length only; Lens off: the screen flash of FxScreen carries it.",
+  "looks": {
+    "awaken:cast_flow": {
+      "_name": "Flow: the world slows to a quarter speed, the colour drains a little, the frame cools and closes in",
+      "exposure": 0.96,
+      "contrast": 1.08,
+      "saturation": 0.62,
+      "warmth": -0.08,
+      "shadowTint": [
+        0.4,
+        0.48,
+        0.62
+      ],
+      "highlightTint": [
+        0.88,
+        0.95,
+        1.0
+      ],
+      "splitTone": 0.18,
+      "vignette": 0.3,
+      "bloom": 1.2,
+      "bloomThreshold": 0.6,
+      "haze": 0.04,
+      "hazeStart": 0.5,
+      "hazeDesaturate": 0.2
+    },
+    "awaken:cast_foresight": {
+      "_name": "Foresight: gold, a held breath, the near future glowing",
+      "exposure": 1.0,
+      "contrast": 1.06,
+      "saturation": 0.92,
+      "warmth": 0.24,
+      "shadowTint": [
+        0.55,
+        0.42,
+        0.28
+      ],
+      "highlightTint": [
+        1.0,
+        0.92,
+        0.7
+      ],
+      "splitTone": 0.22,
+      "vignette": 0.26,
+      "bloom": 1.35,
+      "bloomThreshold": 0.55,
+      "haze": 0.05,
+      "hazeStart": 0.5,
+      "hazeDesaturate": 0.0
+    },
+    "awaken:cast_overload": {
+      "_name": "Overload: the surge, white-blue, everything lit from inside",
+      "exposure": 1.08,
+      "contrast": 1.1,
+      "saturation": 1.1,
+      "warmth": -0.06,
+      "shadowTint": [
+        0.3,
+        0.4,
+        0.7
+      ],
+      "highlightTint": [
+        0.92,
+        0.97,
+        1.0
+      ],
+      "splitTone": 0.2,
+      "vignette": 0.2,
+      "bloom": 1.9,
+      "bloomThreshold": 0.48,
+      "haze": 0.0,
+      "hazeStart": 0.5,
+      "hazeDesaturate": 0.0
+    },
+    "awaken:cast_legion": {
+      "_name": "Legion: the light dims and the shadows lean in",
+      "exposure": 0.9,
+      "contrast": 1.12,
+      "saturation": 0.7,
+      "warmth": -0.1,
+      "shadowTint": [
+        0.3,
+        0.22,
+        0.46
+      ],
+      "highlightTint": [
+        0.8,
+        0.78,
+        0.95
+      ],
+      "splitTone": 0.3,
+      "vignette": 0.4,
+      "bloom": 1.1,
+      "bloomThreshold": 0.6,
+      "haze": 0.05,
+      "hazeStart": 0.5,
+      "hazeDesaturate": 0.2
+    },
+    "awaken:cast_citadel": {
+      "_name": "Citadel: warm stone light, the ground answering",
+      "exposure": 1.02,
+      "contrast": 1.1,
+      "saturation": 0.95,
+      "warmth": 0.12,
+      "shadowTint": [
+        0.42,
+        0.36,
+        0.3
+      ],
+      "highlightTint": [
+        1.0,
+        0.95,
+        0.82
+      ],
+      "splitTone": 0.18,
+      "vignette": 0.22,
+      "bloom": 1.25,
+      "bloomThreshold": 0.58,
+      "haze": 0.03,
+      "hazeStart": 0.5,
+      "hazeDesaturate": 0.0
+    },
+    "awaken:cast_void": {
+      "_name": "Void Maw: heavy, dark, the colour pulled out of the frame",
+      "exposure": 0.88,
+      "contrast": 1.14,
+      "saturation": 0.5,
+      "warmth": -0.12,
+      "shadowTint": [
+        0.26,
+        0.2,
+        0.42
+      ],
+      "highlightTint": [
+        0.78,
+        0.76,
+        0.92
+      ],
+      "splitTone": 0.3,
+      "vignette": 0.5,
+      "bloom": 1.15,
+      "bloomThreshold": 0.6,
+      "haze": 0.06,
+      "hazeStart": 0.45,
+      "hazeDesaturate": 0.3
+    },
+    "awaken:cast_beam": {
+      "_name": "A channelled beam: the light lifts, the glow blooms (held for the channel)",
+      "exposure": 1.03,
+      "contrast": 1.04,
+      "saturation": 1.04,
+      "warmth": 0.06,
+      "shadowTint": [
+        0.48,
+        0.4,
+        0.34
+      ],
+      "highlightTint": [
+        1.0,
+        0.95,
+        0.86
+      ],
+      "splitTone": 0.12,
+      "vignette": 0.14,
+      "bloom": 1.45,
+      "bloomThreshold": 0.52,
+      "haze": 0.0,
+      "hazeStart": 0.5,
+      "hazeDesaturate": 0.0
+    },
+    "awaken:cast_prism": {
+      "_name": "Prism Lance: cold white light, the colours split at the edges",
+      "exposure": 1.04,
+      "contrast": 1.06,
+      "saturation": 1.12,
+      "warmth": -0.04,
+      "shadowTint": [
+        0.38,
+        0.44,
+        0.64
+      ],
+      "highlightTint": [
+        0.96,
+        0.98,
+        1.0
+      ],
+      "splitTone": 0.2,
+      "vignette": 0.16,
+      "bloom": 1.6,
+      "bloomThreshold": 0.5,
+      "haze": 0.0,
+      "hazeStart": 0.5,
+      "hazeDesaturate": 0.0
+    }
+  }
+}

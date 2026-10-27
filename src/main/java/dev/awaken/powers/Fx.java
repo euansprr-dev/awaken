@@ -2,6 +2,7 @@ package dev.awaken.powers;
 
 import dev.awaken.core.AwakenNet;
 import dev.awaken.powers.fx.CastAnim;
+import dev.awaken.powers.fx.CastProfiles;
 import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
 import dev.awaken.powers.fx.FxStyle;
@@ -39,11 +40,21 @@ public final class Fx {
         PowerFxDefs.Def def = PowerFxDefs.get(c.type.path);
         FxStyle style = def != null ? def.style() : FxStyle.of(c.type.family);
         Emit e = new Emit(c.level, FxEvent.of(kind, style, at), at);
+        e.profiled = CastProfiles.byPower(c.type.path) != null;
         e.b.caster(c.player).seed(c.player.getRandom().nextInt()).variant(c.variant);
         e.power = c.powerLevel;
         e.caster = c.player;
+        CastProfiles.Profile prof = CastProfiles.byPower(c.type.path);
         if (def != null) {
-            if (kind == def.release() && def.anim() != CastAnim.NONE) e.b.anim(def.anim());
+            // a power with a cast profile (docs/power-anims/PLAN.md) carries its beat instead of a family pose
+            if (prof != null && kind == def.windup()) {
+                e.b.profile(prof.id(), CastProfiles.BEGIN);
+                c.poseSent = true;
+            } else if (prof != null && kind == def.release()) {
+                e.b.profile(prof.id(), CastProfiles.RELEASE);
+                c.poseSent = true;
+            }
+            else if (kind == def.release() && def.anim() != CastAnim.NONE) e.b.anim(def.anim());
             else if (kind == def.windup() && def.windAnim() != null) e.b.anim(def.windAnim());
             if (def.ultimate()) {
                 e.b.flag(FxEvent.ULT);
@@ -69,6 +80,7 @@ public final class Fx {
         private @Nullable Entity caster;
         private int power = 1;
         private boolean ultBeat;
+        private boolean profiled;
         private double range = RANGE;
 
         Emit(ServerLevel level, FxEvent.Builder b, Vec3 origin) {
@@ -136,12 +148,18 @@ public final class Fx {
         }
 
         public Emit anim(CastAnim a) {
-            b.anim(a);
+            if (!profiled) b.anim(a); // a power with a cast profile has its own poses: a family pose here would replace them
             return this;
         }
 
         public Emit noAnim() {
-            b.anim(CastAnim.NONE);
+            if (!profiled) b.anim(CastAnim.NONE); // a profile's beat marks stay: a second effect of the release kind marking it again is harmless
+            return this;
+        }
+
+        /** Marks the event as a beat of a cast profile. */
+        public Emit profile(int id, int beat) {
+            b.profile(id, beat);
             return this;
         }
 
@@ -208,7 +226,30 @@ public final class Fx {
      * that aura, -2 = domes and shells.
      */
     public static void end(Cast c, Entity on, int what) {
-        at(c, FxKind.CHARGE_END, on.position()).caster(on).aux(what).noAnim().send();
+        Emit e = at(c, FxKind.CHARGE_END, on.position()).caster(on).aux(what).noAnim();
+        CastProfiles.Profile prof = CastProfiles.byPower(c.type.path);
+        if (what == 0 && prof != null) e.profile(prof.id(), CastProfiles.END);
+        e.send();
+    }
+
+    /**
+     * A power's sound as an FX event: every client in range plays it at {@code at} on the cast's release frame (the same frame as
+     * the effect and the camera moment), not on the press tick, so sound, hands and light land together.
+     */
+    public static void sound(Cast c, Vec3 at, net.minecraft.core.Holder<net.minecraft.sounds.SoundEvent> sound, float volume, float pitch) {
+        int id = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.getId(sound.value());
+        if (id < 0) return;
+        at(c, FxKind.SOUND, at).noAnim().colour(id).scale(volume).aux(pitch).send();
+    }
+
+    /**
+     * Begins a cast profile's pose for everyone who can see the caster (the key press already started it on their own
+     * client): the clips run, nothing is drawn. For a power with a wind-up, the effect follows {@code windup} ticks later.
+     */
+    public static void pose(Cast c) {
+        CastProfiles.Profile prof = CastProfiles.byPower(c.type.path);
+        if (prof == null) return;
+        at(c, FxKind.POSE, c.pos()).noAnim().profile(prof.id(), CastProfiles.BEGIN).send();
     }
 
     /** A glowing trail on a thrown block (Terrain Rip, Collapse, wall rams). */

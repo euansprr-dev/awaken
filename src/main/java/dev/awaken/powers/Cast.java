@@ -27,6 +27,8 @@ public final class Cast {
     public final int slot;
     /** True when the client already applied this power's motion (movement prediction). */
     public final boolean predicted;
+    /** An FX event carrying this cast's profile beat has been sent (Casting adds a pose beat if a power sent none). */
+    public boolean poseSent;
     private final float yRot;
     private final float xRot;
 
@@ -131,11 +133,16 @@ public final class Cast {
     }
 
     public void sound(Holder<SoundEvent> sound, float volume, float pitch) {
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), sound, SoundSource.PLAYERS, volume, pitch);
+        sound(player.position(), sound, volume, pitch);
     }
 
+    /**
+     * A power with a cast profile plays its sounds on its release frame (an FX event, played by each client); the rest play now,
+     * on the server, as before.
+     */
     public void sound(Vec3 at, Holder<SoundEvent> sound, float volume, float pitch) {
-        level.playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, volume, pitch);
+        if (dev.awaken.powers.fx.CastProfiles.byPower(type.path) != null) Fx.sound(this, at, sound, volume, pitch);
+        else level.playSound(null, at.x, at.y, at.z, sound, SoundSource.PLAYERS, volume, pitch);
     }
 
     public <T extends ParticleOptions> void particles(T p, Vec3 at, int count, double spread, double speed) {

@@ -7779,6 +7779,100 @@ P4's banks are open. New worlds only for P1-P5 (flag `awaken:awakened_ground`; P
 
 ---------------------------------------------------------------------------------------------------------------------
 
+## 32. Power casts (plan docs/power-anims/PLAN.md, page https://claude.ai/artifact/KBCT1me9LHaDXeUmGS5Xak; Euan approved all of it 2026-10-27: "Go with all recommendations")
+
+Euan, playing, 2026-10-27: the beam "doesn't even come out of the core place it should... it's more so coming from the wrist";
+the stamp "doesn't feel like you're actually stamping, with your foot... a small animation and a thump". The audit (59 casts,
+mean 8.8 of 18) found one fault under all of them: family poses, effects at constant offsets, first person outside Hands, the
+effect on the press tick, three camera paths, vanilla-remix sounds. Decisions D1-D14 are in the plan (section 6); all taken as
+recommended: the whole system with a proof first (D1, D14: Euan's look at the proof before the families), the beam from the palm
+fed from the core (D2), a 3-6 tick wind-up for 14 heavy powers (D3), the effect on the body's release frame on your screen for
+the rest (D4), a stylised boot in first person (D5), one camera director (D6), authored layered sound (D7), small Lens light (D8),
+a signature per power (D9), PAL and Bendable Cuboids stay (D10), mirrored for left hands (D11), PvP tells (D12), one comfort
+setting (D13).
+
+**P0, the proof (built 2026-10-27, branch pack/power-anims-plan): the stamp and the beam.**
+- **Cast profiles** (`powers.fx.CastProfiles`): per power, its wind-up (server ticks), release tick, third-person clips (begin, hold
+  loop and when it takes over, end), first-person clips and the vanilla fallback pose. Today: `shockwave` (wind-up 5, release 5,
+  clip `stomp`, `fp_stomp`) and `beam` (release 5, `beam_gather` -> `beam_hold` -> `beam_hold_end`, `fp_beam_gather` -> `fp_beam_hold`).
+  On the wire a profile id and a beat (BEGIN, RELEASE, END) ride the FxEvent's high flag bits (values from 128 up; below that is a
+  `CastAnim` ordinal): `FxEvent.profile()`, `beat()`, `Builder.profile(id, beat)`. `Fx.at` marks a power's wind-up kind BEGIN and its
+  release kind RELEASE; `Fx.end(.., 0)` marks END; `Fx.pose(c)` sends a new FxKind `POSE` (a beat with no particles). Tests:
+  `power_cast_profiles` (every clip in both files, the release tick a key in both, the wire), `power_cast_windup`.
+- **The stamp** (`KineticPowers.shockwave`): the press starts the knee (POSE BEGIN, sound `power.stomp_lift`) and a `shockwave_windup` Running
+  (5 ticks; energy and cooldown on the press); the wave (`shockwaveRelease`) leaves when it ends, aimed where you look then, with the
+  sound `power.stomp_plant`, a 50 ms hit-stop on the first body struck. Third person: clip `stomp` (power_casts.py: coil on the off leg,
+  knee to hip height, a one-tick hang, plant at tick 5 = 250 ms, rebound; straight and bent twins). First person (`fp_casts.py`):
+  `fp_stomp` (hands up, flare, drop with the plant) and a Hands world source `powers_stomp` (priority 350, `client.fx.CastLegs`): the
+  stamping leg comes up from under the frame, hangs at its bottom edge and drives down on the plant; authored on screen in the hands'
+  view space (a real stamp is out of frame). `FxRecipes.cone` starts the wave under the planted foot (`Anchors.PLANT`) with a flare, cracks,
+  rubble, dust and sparks, and `CastFeel.thump`: the view dips 2.6 degrees (Arms' `CombatFeedback.kick`, 9 ticks), the field narrows 3%, and your
+  hands and view hold 55 ms (`CombatFeedback.hold`). Any power's hit-stop now also holds the caster's own hands and view (`ClientPowers.onFeel`).
+- **The beam** (`EnergyPowers.beam`): the gather pose and the light at the palm begin on the press (sounds `power.beam_gather`, then
+  `power.beam_loop` every 10 ticks from tick 5, `power.beam_end` on release); the beam FX is deferred on the client to tick 5, the arm
+  arriving on the aim (`FxClient.defer`, decision D4); a micro-recoil (`CastFeel.beamStart`) as the hold begins; the hands glow
+  (`View.glow`) while it is held. Third person: `beam_gather` (both hands to the sternum, the main arm to the aim at tick 5), then
+  `beam_hold` (braced, the off hand at the wrist, trembling), `beam_hold_end`. First person: `fp_beam_gather` (fists, `stow`) -> `fp_beam_hold`.
+- **Cast points** (`client.fx.Muzzles`, `MuzzleLayer`): `Anchors.HAND` first asks `Muzzles.palm`: your own first person = the clip's fist
+  (`FirstPerson.LAST_FIST_MAIN`, written by Hands each frame) plus a hand's depth, put into the world with the lens factor; a drawn body
+  = the posed model's palm sampled by `MuzzleLayer` (like Arms' `BladeTraceLayer`: `translateToHand`, the torso and the main-side leg's
+  sole for CORE and FOOT); an undrawn body = the stance's baked numbers (`proof/numbers.json`). Anything else keeps the old constant offsets.
+  Every HAND-anchored effect of every power now starts at the drawn palm while a cast pose shows it.
+- **Hands additions**: `FpClipSet.FILES` also reads `fp_casts.json`; a clip may be `stow` (its fists are drawn even when a hand holds
+  something, so a held weapon is out of view while you cast); `FirstPerson.View.stow`, `FirstPerson.LAST_FIST_MAIN/OFF`, `lastFistNanos`.
+- **Sound**: `tools/art/specs/audio_powers.py` renders `sounds/powers/power_{stomp_lift,stomp_plant,beam_gather,beam_loop,beam_end}_*.ogg`
+  (CC0 transients and the audio kit, audio_arms' mastering, window `power` -16 +-4 dBFS) and merges their events into
+  `merge/powers/.../sounds.json`. Not yet listened to by Euan.
+- **Tour**: `tools/autopilot/power-casts.txt` (`tools/tour-ci.sh ... PACK=feel`): both casts in first person, third person from the front and
+  from behind, clips `pc_*`, filmed at `/tick rate 4` (the runner renders a few frames a second, so at full speed a 15-tick cast is two
+  frames; the game's own tick rate slows the animation, the effects and the hit-stop together). It skips the opening and waits for the
+  chunks before it builds its platform (the first runs toured the opening's balcony camera, then the sea). Run 40460497291, shots in
+  `docs/power-anims/proof/p0/`: the beam leaves the main fist in first person and the palm in third person (halo orb at the hand, the
+  fists lit); the stamp's hands rise and flare, the boot comes up into the bottom of the frame (it hid behind the hotbar, so its keys were
+  raised afterwards: not re-toured), the wave starts at the foot with a flare, cracks, rubble and dust, and in third person the knee comes up
+  and the foot plants before the dust. The held item leaves the frame the moment a stow clip starts (a pop, not a lowering).
+- **Not in P0** (plan phases P1-P6): profiles for the other 57 casts, sound played on the clients at the muzzle, the Lens pulse and looks, the
+  action camera's drop in the shoulder view, the off-hand/CORE light line, the release on the clip's frame for casters with latency, one
+  "Cast animation" comfort setting. The weapon pops out of view when a stow clip starts (a lowering is polish).
+
+**P1-P6 (built 2026-10-27, same branch): the other casts and the system under them.**
+- **The table is data.** `tools/art/specs/power_cast_table.py` has one row per power (gesture and accents in third and first person, wind-up,
+  screen moment, Lens look, origin, begin sound); `power_gestures.py` (third person, figure-term poses, straight and bent twins, the clipping check)
+  and `fp_gestures.py` (first person: fist clips that stow what the hands hold, offset clips for quick casts) register the clips as `p_<power>`,
+  `p_<power>_hold`, `p_<power>_end` and `fp_p_<power>`, `fp_p_<power>_hold`, with a `release` event on the profile's release tick;
+  `power_gestures.write_table()` writes `data/awaken/powers/casts.json`, which `powers.fx.CastProfiles` reads (ids are the rows' order). 54 profiles;
+  left on their family poses: `ground_slam`, `meteor_dive`, `hover`, `flight` (already designed) and `leap` (its landing slam is an explicit pose a
+  profile would replace). 208 third-person clips (547 KB), 62 first-person clips.
+- **Wind-ups run in `Casting`** (`windUp`): a profile with `windup` > 0 sends the pose beat (`Fx.pose`) and its begin sound on the press, spends energy
+  and cooldown, and runs the power's own behaviour `windup` ticks later (a `<id>_windup` Running) aimed where you look then. The 14: Shockwave, Spire,
+  Frost Nova 5; Terrain Rip, Collapse, Rampart, Legion, Citadel, Void Maw, Storm Call 6; Thunderclap 4; Brace 3; Gravity Flip, Drone Swarm 5.
+  `windup` must equal the gesture's release tick (the generator asserts it).
+- **Everything lands on the release frame, on every client** (D4): `FxClient.defer` holds each effect, beam and sound from a caster whose profile pose has
+  not reached its release tick until it does (a ring of 64; the pose, the gathering light and the let-go never wait). An observer's first event of an instant
+  power (its RELEASE beat) starts the pose, then the effect waits the same ticks. `Cast.sound` for a profile power sends an `FxKind.SOUND` event
+  (`Fx.sound`: registry id in colour, volume in scale, pitch in aux) that each client plays at the release frame (`ClientLevel.playLocalSound`), so the
+  server no longer plays those sounds on the press tick. `Fx.Emit.anim`/`noAnim` do nothing for a profile power (a family pose would replace its own);
+  `Casting` adds a pose beat if a cast sent none.
+- **The screen moment** (`CastFeel.MOMENTS`: thump_heavy, thump_light, recoil_light, release_big, push, breath, lift, none) plays on the release tick
+  (`CastAnims.tick`) and at a channel's let-go (`endMoment`): your view kick and hold through Arms' `CombatFeedback`, the field of view through `FxScreen`, a
+  flash and a Lens bloom pulse on the big ones; others feel it by distance (16 blocks). Reduced motion halves it; the camera shake setting turns the kicks off.
+- **Lens** (`lens.client.LensClient.pulse`, `assets/awaken/lens/looks_powers.json`, `CastLens`): your own cast's look for its length (Flow, Foresight, Overload,
+  Legion, Citadel, Void Maw; the beam and Prism Lance while held), never over a story's or Arms' moment, only while Lens draws.
+- **Beams from the core** (`origin: "core"` in a profile; Prism Lance): `Anchors.CORE` (the sternum sampled from the model; in your first person a point low in
+  the view); its orb and beam start there.
+- **Sound** (`tools/art/specs/audio_power_kits.py`): the 43 vanilla-remix `power.*` events are now authored (115 files, 1.4 MB): Kinetic weight, Velocity air,
+  gravity low pulses, Energy rising light, Shadow ink, Mind pads, Architect set stone, Tech clicks and lasers, Spirit bells; `fail`, `learn` and `danger` stay.
+  Not listened to by Euan yet.
+- **Comfort** (D13): Full is the default; Reduced is the body's reduced-motion setting (halves the boot, the kick, the field's push and the tremble); Off is the
+  existing "Cast animations" setting (no profile pose, no boot).
+- **Tests**: `power_cast_profiles` (every name in both clip files, a key on the release tick, wind-up = release, moments, Lens looks, begin sounds),
+  `power_cast_windup`, `power_cast_beats` (every profile power sends its beat and no family pose beside it); `power_fx_reach_matches_hits` gives the
+  wind-up powers their ticks. Tour: `tools/autopilot/power-casts-2.txt`.
+- **Open** (needs the game or Euan): the first-person gestures are authored from the numbers, not yet seen except the stamp and the beam; the weapon pops out of
+  view on a fist clip; the sounds are unheard; `ground_slam`, `meteor_dive`, `hover`, `flight` and `leap` first person and the Lens look timings are untouched.
+
+---------------------------------------------------------------------------------------------------------------------
+
 ## 33. Trails (optional guidance for everything; plan docs/trails/PLAN.md, page https://claude.ai/artifact/QvuzZLthjqdy1dmXFgNit4; Euan approved all ten recommendations 2026-10-27)
 
 Euan: "...the moment you place your hearth, you unlock a whole hearth discovery program, ... that you don't have to follow.

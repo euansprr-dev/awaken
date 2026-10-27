@@ -2,6 +2,7 @@ package dev.awaken.powers;
 
 import dev.awaken.core.AwakenNet;
 import dev.awaken.powers.content.PowerContent;
+import dev.awaken.powers.fx.CastProfiles;
 import dev.awaken.powers.net.PowerPayloads;
 import dev.awaken.progression.Counters;
 import dev.awaken.progression.Progression;
@@ -97,7 +98,12 @@ public final class Casting {
         PowerType prevCtx = Mastery.enter(type);
         boolean prevCast = Mastery.beginCast();
         try {
-            r = type.behaviour.cast(c);
+            CastProfiles.Profile prof = CastProfiles.byPower(type.path);
+            // a heavy power with a profile waits a few ticks for the body (the foot lands, then the wave leaves): the press already
+            // started the pose everywhere and spent the energy and the cooldown (docs/power-anims/PLAN.md D3)
+            r = prof != null && prof.windup() > 0 ? windUp(c, prof) : type.behaviour.cast(c);
+            // a cast that drew no effect of its own kind (no target) still begins its pose for everyone
+            if (prof != null && r.ok() && !c.poseSent) Fx.pose(c);
         } catch (RuntimeException e) {
             errors++;
             dev.awaken.Awaken.LOG.error("Power {} failed to cast", id, e);
@@ -123,6 +129,31 @@ public final class Casting {
         dev.awaken.core.api.WeaveHooks.cast(player, type.family.name(), type.forces.isEmpty() ? null : type.forces.iterator().next().name(), owned.level());
         st.markCombatIfFoesNear(player);
         Powers.markDirty(player);
+        return PowerType.Result.OK;
+    }
+
+    /** Begins a wind-up: the pose for everyone, then the power itself {@code windup} ticks later, aimed where the caster looks then. */
+    private static PowerType.Result windUp(Cast c, CastProfiles.Profile prof) {
+        Fx.pose(c);
+        if (prof.beginSound() != null) {
+            var sound = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.get(net.minecraft.resources.Identifier.parse(prof.beginSound()));
+            sound.ifPresent(h -> c.sound(h, 0.8f, 1f));
+        }
+        int wait = Math.max(1, prof.windup());
+        Running w = start(c, c.type.id + "_windup", wait);
+        w.tick(rr -> {
+            if (rr.age != wait - 1 || !c.player.isAlive() || c.player.isSpectator()) return;
+            Cast at = new Cast(c.player, c.type, c.variant, c.powerLevel, c.slot, c.predicted, c.player.getYRot(), c.player.getXRot());
+            PowerType prevCtx = Mastery.enter(c.type);
+            try {
+                c.type.behaviour.cast(at);
+            } catch (RuntimeException e) {
+                errors++;
+                dev.awaken.Awaken.LOG.error("Power {} failed to cast after its wind-up", c.type.id, e);
+            } finally {
+                Mastery.exit(prevCtx);
+            }
+        });
         return PowerType.Result.OK;
     }
 

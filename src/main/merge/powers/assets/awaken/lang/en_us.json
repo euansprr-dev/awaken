@@ -62,5 +62,10 @@
   "awaken.configuration.castAnimations": "Cast animations",
   "awaken.configuration.castAnimations.tooltip": "Arms and body move when you or others cast powers, in third and first person.",
   "awaken.configuration.screenFlashes": "Screen flashes",
-  "awaken.configuration.screenFlashes.tooltip": "Brief flashes and impact frames on big hits and ultimates."
+  "awaken.configuration.screenFlashes.tooltip": "Brief flashes and impact frames on big hits and ultimates.",
+  "subtitles.awaken.power.stomp_lift": "A knee drives up",
+  "subtitles.awaken.power.stomp_plant": "A foot stamps",
+  "subtitles.awaken.power.beam_gather": "Light gathers",
+  "subtitles.awaken.power.beam_loop": "A beam hums",
+  "subtitles.awaken.power.beam_end": "A beam fades"
 }

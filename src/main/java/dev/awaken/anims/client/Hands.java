@@ -161,6 +161,7 @@ final class Hands implements FirstPerson.Player {
                 // a clip's fists take the hand from any stance's (a ledge jump over the hang's fists)
                 if (p.clip.hasMain()) FirstPerson.View.fist(CLIP_MAIN, k, M[0], M[1], M[2]);
                 if (p.clip.hasOff()) FirstPerson.View.fist(CLIP_OFF, k, O[0], O[1], O[2]);
+                if (p.clip.stow) VIEW.stow = true;
                 continue;
             }
             FirstPerson.View.add(VIEW.main, k, M[0], M[1], M[2], M[3], M[4], M[5]);
@@ -169,6 +170,14 @@ final class Hands implements FirstPerson.Player {
         }
         if (CLIP_MAIN[3] > 0) System.arraycopy(CLIP_MAIN, 0, VIEW.fistMain, 0, 4);
         if (CLIP_OFF[3] > 0) System.arraycopy(CLIP_OFF, 0, VIEW.fistOff, 0, 4);
+        publishFists();
+    }
+
+    /** The fists this frame's clips keyed, for effects that start at a hand (FirstPerson.LAST_FIST_*). */
+    private static void publishFists() {
+        System.arraycopy(VIEW.fistMain, 0, FirstPerson.LAST_FIST_MAIN, 0, 4);
+        System.arraycopy(VIEW.fistOff, 0, FirstPerson.LAST_FIST_OFF, 0, 4);
+        FirstPerson.lastFistNanos = System.nanoTime();
     }
 
     private static void mirror(float[] a, float[] b) {
@@ -203,7 +212,7 @@ final class Hands implements FirstPerson.Player {
             if (!VIEW.moved()) return;
             PoseStack ps = e.getPoseStack();
             var pl = Minecraft.getInstance().player;
-            boolean offEmpty = pl != null && pl.getOffhandItem().isEmpty(), mainEmpty = pl != null && pl.getMainHandItem().isEmpty();
+            boolean offEmpty = pl != null && (VIEW.stow || pl.getOffhandItem().isEmpty()), mainEmpty = pl != null && (VIEW.stow || pl.getMainHandItem().isEmpty());
             // fists first, before any offset: each empty hand with one has its arm drawn rising to it
             if (VIEW.fistMain[3] > 0 && mainEmpty) {
                 fist(e, !leftMain, VIEW.fistMain);

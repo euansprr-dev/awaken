@@ -41,6 +41,10 @@ final class FxRecipes {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
         if (level == null) return;
+        if (e.kind() == FxKind.SOUND) {
+            sound(e, level);
+            return;
+        }
         if (!FxWorld.begin(e.x(), e.y(), e.z(), e.seed())) return;
         FxStyle st = e.style();
         Entity caster = e.caster() >= 0 ? level.getEntity(e.caster()) : null;
@@ -90,7 +94,22 @@ final class FxRecipes {
             case FLASH -> {
                 if (mine) FxScreen.flash(st.mid, e.scale(), 6);
             }
+            case POSE -> {
+                // only the caster's cast profile began (FxClient); nothing is drawn
+            }
         }
+    }
+
+    /** A power's sound on its release frame: the registry id rides in colour (Fx.sound). */
+    private static void sound(FxEvent e, ClientLevel level) {
+        net.minecraft.sounds.SoundEvent ev = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.byId(e.colour());
+        if (ev != null) level.playLocalSound(e.x(), e.y(), e.z(), ev, net.minecraft.sounds.SoundSource.PLAYERS, e.scale(), e.aux(), false);
+    }
+
+    /** Where a caster's beams and orbs start: their palm, or the core for a profile that opens the chest. */
+    static int originAnchor(Entity caster) {
+        var prof = dev.awaken.powers.fx.CastProfiles.byId(CastAnims.profileOf(caster.getId()));
+        return prof != null && prof.core() ? Anchors.CORE : Anchors.HAND;
     }
 
     // ---- shared layers ----------------------------------------------------------------------------------------------
@@ -305,7 +324,8 @@ final class FxRecipes {
     /** The charge orb at the hand: a pulsing core in a halo that gathers sparks; also used for local prediction. */
     static void startCharge(Entity caster, FxStyle st, float scale, int life, int seed) {
         float sc = Math.max(0.5f, scale) * 1.3f;
-        Shape halo = attach(disc(0, 0, 0, HALO, 0.5f * sc, 1.8f * sc, life, alpha(st.mid, 0.9f), alpha(st.mid, 1f)), caster, Anchors.HAND);
+        int origin = originAnchor(caster);
+        Shape halo = attach(disc(0, 0, 0, HALO, 0.5f * sc, 1.8f * sc, life, alpha(st.mid, 0.9f), alpha(st.mid, 1f)), caster, origin);
         if (halo != null) {
             halo.emitter = E_CHARGE;
             halo.style = st;
@@ -313,7 +333,7 @@ final class FxRecipes {
             halo.flags |= Shape.PULSE;
             halo.fadeOut = 3;
         }
-        Shape core = attach(disc(0, 0, 0, st == FxStyle.KINETIC ? FLARE : GLOW, 0.1f * sc, 0.45f * sc, life, st.core, 0xFFFFFFFF), caster, Anchors.HAND);
+        Shape core = attach(disc(0, 0, 0, st == FxStyle.KINETIC ? FLARE : GLOW, 0.1f * sc, 0.45f * sc, life, st.core, 0xFFFFFFFF), caster, origin);
         if (core != null) {
             core.emitter = E_CHARGE;
             core.emitParam = -1; // the core emits nothing
@@ -695,6 +715,15 @@ final class FxRecipes {
 
     private static void cone(FxEvent e, FxStyle st, float big) {
         double x = e.x(), z = e.z();
+        // a stamp (a cast profile's release): the wave starts under the planted foot, with a thump
+        var prof = dev.awaken.powers.fx.CastProfiles.byId(e.profile());
+        Entity stamper = prof != null && prof.power().equals("shockwave") && e.caster() >= 0 && Minecraft.getInstance().level != null
+                ? Minecraft.getInstance().level.getEntity(e.caster()) : null;
+        if (stamper != null) {
+            Anchors.of(stamper, Anchors.PLANT, 1f, P);
+            x = P[0];
+            z = P[2];
+        }
         double y = FxWorld.groundY(x, e.y(), z);
         float range = Math.max(2, e.scale());
         float half = (float) Math.toRadians(Math.max(8, e.aux()));
@@ -724,6 +753,16 @@ final class FxRecipes {
         ring(x, y + 0.08, z, 0.2f, 1.6f, 0.5f, 0.1f, 7, alpha(st.core, 0.9f), alpha(st.mid, 0), 0, 1, 0);
         decal(x + dx * 0.8, y, z + dz * 0.8, CRACK, 2.2f, 0xC02A2420, 60);
         dustRing(x, y, z, 0.8f, n(5), st, 0.05f);
+        if (stamper != null) plantPuff(x, y, z, st, big, stamper);
+    }
+
+    /** The foot landing: a flare, a heel's cracks and rubble, dust kicked up and sparks off the stone, and the thump. */
+    private static void plantPuff(double x, double y, double z, FxStyle st, float big, Entity stamper) {
+        flare(x, y + 0.25, z, 1.3f * big, st, 5);
+        decal(x, y, z, CRACK, 1.1f, 0xD82A2420, 70);
+        debris(x, y, z, 0.35f, n((int) (4 * big)), 0.35f, 0.1f); // few and low: they start a stride from your eyes
+        dustRing(x, y, z, 1.1f, n((int) (12 * big)), st, 0.07f);
+        sparks(x, y + 0.1, z, n(8), 0.4f, st, 6, 0.02f, 0, 0.35, 0, 0.25f);
     }
 
     private static void beam(FxEvent e, FxStyle st, Entity caster, boolean mine) {
@@ -761,7 +800,7 @@ final class FxRecipes {
         b.range = e.scale();
         if (st == FxStyle.CHARGE) b.flags |= Shape.FLICKER;
         if (caster != null) {
-            attach(b, caster, Anchors.HAND);
+            attach(b, caster, originAnchor(caster));
             if (mine && follow) {
                 b.flags |= Shape.AIM;
                 if (Minecraft.getInstance().player != null) FxBeams.tickAim(b, Minecraft.getInstance().player);
