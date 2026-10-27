@@ -1,6 +1,8 @@
 package dev.awaken.arms;
 
 import dev.awaken.Awaken;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import dev.awaken.arms.net.ArmsPayloads;
 import dev.awaken.core.api.CreatureTag;
 import dev.awaken.core.api.MobRole;
@@ -64,6 +66,54 @@ final class ArmsTests {
         AwakenTests.register("arms_tap_or_hold", 40, ArmsTests::tapOrHold);
         AwakenTests.register("arms_strikes_things", 40, ArmsTests::strikesThings);
         AwakenTests.register("arms_untold_parry", 40, ArmsTests::untoldParry);
+        AwakenTests.register("arms_sources", 20, ArmsTests::sources);
+    }
+
+    /**
+     * Every ingredient of every Hunter gear and Arms recipe says where it comes from (docs/arms-progression/PLAN.md §3.5):
+     * it is in sources.json (so the file isn't stale), and it has a creature that drops it or a hand-written line in the
+     * lang file. A new material can't ship without saying where it comes from.
+     */
+    static void sources(GameTestHelper h) {
+        var recipes = h.getLevel().getServer().getRecipeManager().getRecipes();
+        int checked = 0;
+        for (var r : recipes) {
+            if (!r.id().identifier().getNamespace().equals(Awaken.MODID)) continue;
+            String group = r.value().group();
+            if (!group.startsWith("awaken_hunter_") && !group.startsWith("awaken_arms_")) continue;
+            for (var ing : r.value().placementInfo().ingredients()) {
+                ing.items().map(net.minecraft.core.Holder::value).forEach(item -> {
+                    Identifier id = BuiltInRegistries.ITEM.getKey(item);
+                    h.assertTrue(ArmsSources.isIngredient(id), id + " is an ingredient of " + r.id().identifier() + " but not in sources.json: run python3 tools/arms/sources.py");
+                });
+            }
+            checked++;
+        }
+        h.assertTrue(checked >= 138, "the gear and arms recipes were read (42 gear pieces and 96 weapons): " + checked);
+        java.util.Set<String> lang = new java.util.HashSet<>();
+        try (var in = ArmsTests.class.getResourceAsStream("/assets/awaken/lang/en_us.json")) {
+            h.assertTrue(in != null, "the merged lang file is on the classpath");
+            var json = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+            lang.addAll(json.keySet());
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException(e);
+        }
+        for (Identifier id : ArmsSources.ingredients()) {
+            if (ArmsItems.blueprintStyle(BuiltInRegistries.ITEM.getValue(id)) != null) continue; // a Blueprint's tooltip is built from ArmsHomes
+            h.assertTrue(lang.contains(ArmsSources.langKey(id)) || !ArmsSources.creatures(id).isEmpty(),
+                    id + " says where it comes from: a creature that drops it (sources.json) or a line " + ArmsSources.langKey(id));
+        }
+        for (Archetypes.Loaded style : Archetypes.all()) {
+            if (style.id().equals(Arms.LONGSWORD)) continue;
+            h.assertTrue(ArmsHomes.of(style.id()) != null, style.id() + " has a home in style_homes.json");
+            h.assertTrue(ArmsItems.blueprintItem(style.id()) != null, style.id() + " has a Blueprint");
+        }
+        for (var e : ArmsData.WEAPONS) h.assertTrue(e.tier() != null, e.id());
+        for (net.minecraft.world.item.Item item : BuiltInRegistries.ITEM) {
+            Identifier id = BuiltInRegistries.ITEM.getKey(item);
+            if (id.getNamespace().equals(Awaken.MODID) && id.getPath().endsWith("_blade")) h.assertTrue(ArmsSources.blade(id) != null, id + " has its made-from line");
+        }
+        h.succeed();
     }
 
     /** At most this many triangle corners in one weapon (6,000 triangles: a few weapons in view cost what a mob does). */

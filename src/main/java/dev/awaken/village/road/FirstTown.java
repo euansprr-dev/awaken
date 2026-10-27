@@ -40,16 +40,25 @@ final class FirstTown {
                 cands.add(new int[]{i, j, (int) (d * (2.0 - (-dz / d)))});
             }
         cands.sort((u, v) -> Integer.compare(u[2], v[2]));
-        int[] fallback = null;
-        for (int[] c : cands) {
-            int[] h = w.regions.heart(c[0], c[1]);
-            int[] site = TownPlanner.site(t, h[0], h[1], (x, z) -> dev.awaken.terrain.api.CityBasin.reservedWithin(x, z, 140));
-            if (site == null) continue;
-            if (fallback == null) fallback = new int[]{c[0], c[1]};
-            if (crest(t, f.x(), f.z(), site[0], site[1])) return new int[]{c[0], c[1]};
+        // SPEC §21.10: the first town is the 3-5 hour stop, so a land of level MAX_LEVEL or less first; only when none of those
+        // takes a town, a harder one, then any
+        for (int cap : new int[]{MAX_LEVEL, MAX_LEVEL + 10, Integer.MAX_VALUE}) {
+            int[] fallback = null;
+            for (int[] c : cands) {
+                int[] h = w.regions.heart(c[0], c[1]);
+                if (cap != Integer.MAX_VALUE && w.regions.levelAt(h[0], h[1]) > cap) continue;
+                int[] site = TownPlanner.site(t, h[0], h[1], (x, z) -> dev.awaken.terrain.api.CityBasin.reservedWithin(x, z, 140));
+                if (site == null) continue;
+                if (fallback == null) fallback = new int[]{c[0], c[1]};
+                if (crest(t, f.x(), f.z(), site[0], site[1])) return new int[]{c[0], c[1]};
+            }
+            if (fallback != null) return fallback;
         }
-        return fallback;
+        return null;
     }
+
+    /** The most a creature's land may be at the first town's heart (SPEC §21.10), before the cap is relaxed. */
+    static final int MAX_LEVEL = 22;
 
     /** Whether the straight way from a to b rises well above both ends somewhere in its last two thirds. */
     static boolean crest(Terrain t, int ax, int az, int bx, int bz) {

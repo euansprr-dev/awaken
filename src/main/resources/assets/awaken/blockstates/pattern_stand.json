@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "facing=north,kind=rack": {
+      "model": "awaken:block/pattern_stand_rack"
+    },
+    "facing=east,kind=rack": {
+      "model": "awaken:block/pattern_stand_rack",
+      "y": 90
+    },
+    "facing=south,kind=rack": {
+      "model": "awaken:block/pattern_stand_rack",
+      "y": 180
+    },
+    "facing=west,kind=rack": {
+      "model": "awaken:block/pattern_stand_rack",
+      "y": 270
+    },
+    "facing=north,kind=lectern": {
+      "model": "awaken:block/pattern_stand_lectern"
+    },
+    "facing=east,kind=lectern": {
+      "model": "awaken:block/pattern_stand_lectern",
+      "y": 90
+    },
+    "facing=south,kind=lectern": {
+      "model": "awaken:block/pattern_stand_lectern",
+      "y": 180
+    },
+    "facing=west,kind=lectern": {
+      "model": "awaken:block/pattern_stand_lectern",
+      "y": 270
+    },
+    "facing=north,kind=plinth": {
+      "model": "awaken:block/pattern_stand_plinth"
+    },
+    "facing=east,kind=plinth": {
+      "model": "awaken:block/pattern_stand_plinth",
+      "y": 90
+    },
+    "facing=south,kind=plinth": {
+      "model": "awaken:block/pattern_stand_plinth",
+      "y": 180
+    },
+    "facing=west,kind=plinth": {
+      "model": "awaken:block/pattern_stand_plinth",
+      "y": 270
+    },
+    "facing=north,kind=bier": {
+      "model": "awaken:block/pattern_stand_bier"
+    },
+    "facing=east,kind=bier": {
+      "model": "awaken:block/pattern_stand_bier",
+      "y": 90
+    },
+    "facing=south,kind=bier": {
+      "model": "awaken:block/pattern_stand_bier",
+      "y": 180
+    },
+    "facing=west,kind=bier": {
+      "model": "awaken:block/pattern_stand_bier",
+      "y": 270
+    }
+  }
+}

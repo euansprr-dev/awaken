@@ -71,6 +71,22 @@ public final class ArmsPayloads {
         @Override public Type<Woven> type() { return TYPE; }
     }
 
+    /** Server → the fighter: Hale's issue, the styles on offer (docs/arms-progression/PLAN.md §3.3); opens the pick on their screen. */
+    public record IssueOffer(java.util.List<String> styles) implements CustomPacketPayload {
+        public static final Type<IssueOffer> TYPE = new Type<>(Awaken.id("arms_issue_offer"));
+        public static final StreamCodec<ByteBuf, IssueOffer> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list(8)), IssueOffer::styles, IssueOffer::new);
+        @Override public Type<IssueOffer> type() { return TYPE; }
+    }
+
+    /** Fighter → server: the style they took from Hale's issue. The server checks that it was offered and is still theirs to take. */
+    public record IssuePick(String style) implements CustomPacketPayload {
+        public static final Type<IssuePick> TYPE = new Type<>(Awaken.id("arms_issue_pick"));
+        public static final StreamCodec<ByteBuf, IssuePick> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.STRING_UTF8, IssuePick::style, IssuePick::new);
+        @Override public Type<IssuePick> type() { return TYPE; }
+    }
+
     /** Every style's mastery step, by the style's index (the client predicts the mastery strike, Slipcut and Art). */
     public record Mastery(java.util.List<Integer> steps) implements CustomPacketPayload {
         public static final Type<Mastery> TYPE = new Type<>(Awaken.id("arms_mastery"));
@@ -85,5 +101,60 @@ public final class ArmsPayloads {
                 ByteBufCodecs.VAR_INT, Seen::entity, ByteBufCodecs.VAR_INT, Seen::what, ByteBufCodecs.VAR_INT, Seen::other,
                 ByteBufCodecs.VAR_INT, Seen::aux, ByteBufCodecs.VAR_INT, Seen::aux2, Seen::new);
         @Override public Type<Seen> type() { return TYPE; }
+    }
+
+    // ---- the Armoury (docs/arms-progression/PLAN.md §3.2) ------------------------------------------------------------
+
+    /** One style in the Armoury's list: 0 known, 1 on Hale's rack for its price in essence (not known yet), and whether the fighter can pay now. */
+    public record StyleEntry(String id, int state, int price, boolean afford) {
+        public static final StreamCodec<ByteBuf, StyleEntry> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.STRING_UTF8, StyleEntry::id, ByteBufCodecs.VAR_INT, StyleEntry::state,
+                ByteBufCodecs.VAR_INT, StyleEntry::price, ByteBufCodecs.BOOL, StyleEntry::afford, StyleEntry::new);
+    }
+
+    /** Server → the fighter: the Armoury's list (door 0 the band, 1 Hale's rack, 2 the Forge), their essence, how many styles aren't shown yet and at which rank Hale shows more, and the tracked weapon ("daggers:E" or ""). */
+    public record ArmouryView(int door, int essence, java.util.List<StyleEntry> styles, int hidden, String hiddenRank, String tracked, boolean open,
+                              String raise, java.util.List<String> finds)
+            implements CustomPacketPayload {
+        public static final Type<ArmouryView> TYPE = new Type<>(Awaken.id("arms_armoury_view"));
+        public static final StreamCodec<ByteBuf, ArmouryView> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, ArmouryView::door, ByteBufCodecs.VAR_INT, ArmouryView::essence,
+                StyleEntry.STREAM_CODEC.apply(ByteBufCodecs.list(32)), ArmouryView::styles,
+                ByteBufCodecs.VAR_INT, ArmouryView::hidden, ByteBufCodecs.STRING_UTF8, ArmouryView::hiddenRank,
+                ByteBufCodecs.STRING_UTF8, ArmouryView::tracked, ByteBufCodecs.BOOL, ArmouryView::open,
+                ByteBufCodecs.STRING_UTF8, ArmouryView::raise, ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list(8)), ArmouryView::finds, ArmouryView::new);
+        @Override public Type<ArmouryView> type() { return TYPE; }
+    }
+
+    /** A tier of a style: its letter, the level it opens at and whether the fighter has reached it. */
+    public record TierRow(String tier, int level, boolean reached, String pull) {
+        public static final StreamCodec<ByteBuf, TierRow> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.STRING_UTF8, TierRow::tier, ByteBufCodecs.VAR_INT, TierRow::level, ByteBufCodecs.BOOL, TierRow::reached,
+                ByteBufCodecs.STRING_UTF8, TierRow::pull, TierRow::new);
+    }
+
+    /** One thing a weapon needs: "tag" or "item", its id, how many, and how many the fighter holds. */
+    public record NeedRow(String kind, String id, int need, int have) {
+        public static final StreamCodec<ByteBuf, NeedRow> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.STRING_UTF8, NeedRow::kind, ByteBufCodecs.STRING_UTF8, NeedRow::id,
+                ByteBufCodecs.VAR_INT, NeedRow::need, ByteBufCodecs.VAR_INT, NeedRow::have, NeedRow::new);
+    }
+
+    /** Server → the fighter: one style's tiers and what the chosen tier needs (have against need). */
+    public record ArmouryDetail(String style, String tier, java.util.List<TierRow> tiers, java.util.List<NeedRow> needs) implements CustomPacketPayload {
+        public static final Type<ArmouryDetail> TYPE = new Type<>(Awaken.id("arms_armoury_detail"));
+        public static final StreamCodec<ByteBuf, ArmouryDetail> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.STRING_UTF8, ArmouryDetail::style, ByteBufCodecs.STRING_UTF8, ArmouryDetail::tier,
+                TierRow.STREAM_CODEC.apply(ByteBufCodecs.list(8)), ArmouryDetail::tiers,
+                NeedRow.STREAM_CODEC.apply(ByteBufCodecs.list(16)), ArmouryDetail::needs, ArmouryDetail::new);
+        @Override public Type<ArmouryDetail> type() { return TYPE; }
+    }
+
+    /** Fighter → server: ask for a style's detail, buy a pattern at Hale's, draw a copy at the Forge, or track or untrack a weapon (see ArmsArmoury.Op). */
+    public record ArmouryAct(int op, String style, String tier) implements CustomPacketPayload {
+        public static final Type<ArmouryAct> TYPE = new Type<>(Awaken.id("arms_armoury_act"));
+        public static final StreamCodec<ByteBuf, ArmouryAct> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, ArmouryAct::op, ByteBufCodecs.STRING_UTF8, ArmouryAct::style, ByteBufCodecs.STRING_UTF8, ArmouryAct::tier, ArmouryAct::new);
+        @Override public Type<ArmouryAct> type() { return TYPE; }
     }
 }

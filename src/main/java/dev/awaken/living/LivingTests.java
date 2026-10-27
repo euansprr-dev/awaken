@@ -221,54 +221,488 @@ final class LivingTests {
         AwakenTests.register("living_region_map", 200, h -> {
             RegionMap.Probe plain = (x, z) -> RegionMap.Land.PLAIN;
             RegionMap map = new RegionMap(1234L, 0, 0, plain);
-            // the Commons: everything within its radius, level 1 by the wall, at most 8 at its edge
+            // the Commons: everything within its radius, level 1 by the wall, 8 at its edge
             h.assertTrue(map.regionAt(0, 0).commons() && map.regionAt(300, -200).commons(), "the centre is the Commons");
             h.assertTrue(map.levelAt(0, 0) == 1 && map.levelAt(240, 0) == 1, "level 1 by the wall: " + map.levelAt(240, 0));
-            h.assertTrue(map.levelAt(690, 0) <= 8 && map.levelAt(690, 0) >= 6, "about 8 at the Commons' edge: " + map.levelAt(690, 0));
-            // its neighbours never above 20; far out every band turns up, and a 3x3 block holds a spread
-            int maxNear = 0;
-            Set<Integer> farBands = new HashSet<>();
-            for (int i = -40; i <= 40; i++) {
-                for (int j = -40; j <= 40; j++) {
-                    int x = i * 230, z = j * 230;
-                    RegionMap.Region r = map.regionAt(x, z);
-                    if (r.commons()) continue;
-                    double heart = Math.hypot(r.heartX(), r.heartZ());
-                    if (heart <= 1600) maxNear = Math.max(maxNear, r.high());
-                    if (heart > 5000) farBands.add(r.band());
-                    h.assertTrue(r.high() - r.low() <= RegionMap.SPAN && r.low() >= 1 && r.high() <= RegionMap.MAX_LEVEL, "a region spans at most 6 levels");
+            h.assertTrue(map.levelAt(690, 0) <= 8 && map.levelAt(690, 0) >= 7, "about 8 at the Commons' edge: " + map.levelAt(690, 0));
+            // distance sets a ceiling (SPEC 21.10): nothing above it anywhere, nothing but the ceiling inside the apron
+            int maxApron = 0, maxTo2500 = 0, lowFar = Integer.MAX_VALUE, highFar = 0;
+            for (int i = -30; i <= 30; i++) {
+                for (int j = -30; j <= 30; j++) {
+                    int x = i * 190, z = j * 190;
+                    double d = Math.hypot(x, z);
                     int lv = map.levelAt(x, z);
-                    h.assertTrue(lv >= r.low() && lv <= r.high(), "a column's level is inside its region's span");
+                    h.assertTrue(lv >= 1 && lv <= RegionMap.MAX_LEVEL, "levels stay 1-150: " + lv);
+                    h.assertTrue(lv <= map.ceilingAt(d) + 1, "no land above its ceiling: " + lv + " at " + (int) d);
+                    if (d <= 1000) maxApron = Math.max(maxApron, lv);
+                    if (d <= 2500) maxTo2500 = Math.max(maxTo2500, lv);
+                    if (d >= 3000 && d <= 4500) { lowFar = Math.min(lowFar, lv); highFar = Math.max(highFar, lv); }
+                    RegionMap.Region r = map.regionAt(x, z);
+                    if (!r.commons()) h.assertTrue(r.low() >= 1 && r.low() <= r.high() && r.high() <= RegionMap.MAX_LEVEL, "a region's span is ordered");
                 }
             }
-            h.assertTrue(maxNear <= 20, "the Commons' neighbours stay under 20: " + maxNear);
-            h.assertTrue(farBands.size() == 5, "far out every band turns up: " + farBands);
-            Set<Integer> block = new HashSet<>();
-            for (int gx = 9; gx < 12; gx++) for (int gz = 9; gz < 12; gz++) block.add(map.regionAt(gx * RegionMap.PITCH + 450, gz * RegionMap.PITCH + 450).band());
-            h.assertTrue(block.size() >= 3, "a 3x3 block of regions holds a spread: " + block);
-            // the heart is the region's top; the land tilts it (harsh up, gentle down) on the same cells
-            RegionMap.Region r = map.regionAt(20000, 20000);
-            h.assertTrue(map.levelAt(r.heartX(), r.heartZ()) >= r.high() - 1, "the heart is the hardest part");
+            h.assertTrue(maxApron <= 12, "the apron to 1,000 never passes 12: " + maxApron);
+            h.assertTrue(maxTo2500 <= 42, "nothing above 42 within 2,500 (it was level 72 at 800): " + maxTo2500);
+            h.assertTrue(highFar - lowFar >= 20, "it is still a patchwork far out: " + lowFar + " to " + highFar);
+            // quiet vales: some far regions are named like shelters and are calm, and a world from before keeps its old names
+            int quietSeen = 0;
+            for (int i = -60; i <= 60; i++) for (int j = -60; j <= 60; j++) {
+                var r = map.regionAt(i * 160, j * 160);
+                if (!r.commons() && r.name().matches(".*(Rest|Vale|Hush|Haven|Shelter|Stillwater)$")) quietSeen++;
+            }
+            h.assertTrue(quietSeen > 0, "quiet vales are named like shelters");
+            // borders are slopes: no 100 blocks change by much, in any direction
+            int worst = 0;
+            for (int k = 0; k < 16; k++) {
+                double a = k * Math.PI / 8 + 0.05;
+                int prev = -1;
+                int[] ring = new int[(3000 - 650) / 25 + 1];
+                for (int d = 650, n = 0; d <= 3000; d += 25, n++) ring[n] = map.levelAt((int) Math.round(Math.cos(a) * d), (int) Math.round(Math.sin(a) * d));
+                for (int n = 4; n < ring.length; n++) worst = Math.max(worst, Math.abs(ring[n] - ring[n - 4]));
+            }
+            h.assertTrue(worst <= 16, "no 100 blocks change by more than 16 levels inside 3,000: " + worst);
+            // the land tilts the temper (harsh up, gentle down), a region is worst at its heart
             RegionMap harsh = new RegionMap(1234L, 0, 0, (x, z) -> new RegionMap.Land(RegionMap.Group.DARK, 1));
             RegionMap gentle = new RegionMap(1234L, 0, 0, (x, z) -> new RegionMap.Land(RegionMap.Group.PLAINS, -1));
-            int up = 0, down = 0;
+            long up = 0, down = 0;
             for (int i = 0; i < 400; i++) {
-                int x = 6000 + (i % 20) * 900, z = 6000 + (i / 20) * 900;
-                up += harsh.regionAt(x, z).band();
-                down += gentle.regionAt(x, z).band();
+                int x = 3000 + (i % 20) * 160, z = 3000 + (i / 20) * 160;
+                up += harsh.levelAt(x, z);
+                down += gentle.levelAt(x, z);
             }
-            h.assertTrue(up > down, "harsh land tilts bands up, gentle down: " + up + " vs " + down);
+            h.assertTrue(up > down, "harsh land tilts levels up, gentle down: " + up + " vs " + down);
+            RegionMap.Region far = map.regionAt(9000, 9000);
+            h.assertTrue(map.levelAt(far.heartX(), far.heartZ()) >= far.low() && map.levelAt(far.heartX(), far.heartZ()) <= far.high(), "the heart is inside the region's span");
             // the same seed always gives the same world; another seed another one
             RegionMap again = new RegionMap(1234L, 0, 0, plain), other = new RegionMap(99L, 0, 0, plain);
             boolean differs = false;
             for (int i = 1; i < 30; i++) {
                 h.assertTrue(again.regionAt(i * 1700, -i * 1300).name().equals(map.regionAt(i * 1700, -i * 1300).name()), "deterministic names");
+                h.assertTrue(again.levelAt(i * 1700, -i * 1300) == map.levelAt(i * 1700, -i * 1300), "deterministic levels");
                 differs |= !other.regionAt(i * 1700, -i * 1300).name().equals(map.regionAt(i * 1700, -i * 1300).name());
             }
             h.assertTrue(differs, "another seed, another patchwork");
+            // a world made before keeps the old names but follows the same levels
+            RegionMap old = new RegionMap(1234L, 0, 0, plain, 1);
+            for (int i = 1; i < 30; i++) h.assertTrue(old.levelAt(i * 1700, -i * 1300) == map.levelAt(i * 1700, -i * 1300), "rules 1 has the same levels");
+            h.assertTrue(old.regionAt(5000, 5000).band() >= 0 && old.regionAt(5000, 5000).band() <= 4, "rules 1 names by the old deal's band");
             // the server's map: centred once on Carillon or the world spawn, level 1 there
             RegionMap live = RegionService.map(h.getLevel().getServer());
             h.assertTrue(live.levelAt(live.centreX(), live.centreZ()) == 1, "level 1 at the world's centre");
+            h.succeed();
+        });
+
+        AwakenTests.register("living_region_placed", 200, h -> {
+            // SPEC §21.10: wherever the first hamlet goes (700-1,100 out, any way), the land is no harder than level 15 in any world
+            RegionMap.Probe plain = (x, z) -> RegionMap.Land.PLAIN;
+            int worst = 0;
+            for (long seed = 1; seed <= 40; seed++) {
+                RegionMap m = new RegionMap(seed * 7919, 100, -300, plain);
+                for (int k = 0; k < 24; k++) {
+                    double a = k * Math.PI / 12;
+                    for (int d = 700; d <= 1100; d += 50) worst = Math.max(worst, m.levelAt(100 + (int) Math.round(Math.cos(a) * d), -300 + (int) Math.round(Math.sin(a) * d)));
+                }
+            }
+            h.assertTrue(worst <= 15, "the land the first hamlet may stand on never passes 15: " + worst);
+            // the ring just past the wall is level 8 or more, so riftborn camps and dens still seed there (Camps.seedCell, SPEC §21.8): the Arms planner's E-theme camps stay reachable
+            int lowest = 99;
+            for (long seed = 1; seed <= 20; seed++) {
+                RegionMap m = new RegionMap(seed * 104729, 0, 0, plain);
+                for (int k = 0; k < 16; k++) lowest = Math.min(lowest, m.levelAt((int) Math.round(Math.cos(k * Math.PI / 8) * 800), (int) Math.round(Math.sin(k * Math.PI / 8) * 800)));
+            }
+            h.assertTrue(lowest >= 8, "800 blocks out is level 8 or more in every direction: " + lowest);
+            h.assertTrue(dev.awaken.village.world.FirstHamlet.MAX_LEVEL == 12, "the first hamlet's cap is 12");
+            // settled land and the roads between are calmer: the drop eases from 24 blocks to 60, a settlement's cap by its size
+            h.assertTrue(dev.awaken.village.SettledCalm.dropShare(10) == 1 && dev.awaken.village.SettledCalm.dropShare(24) == 1, "all the drop within 24 of a road");
+            h.assertTrue(Math.abs(dev.awaken.village.SettledCalm.dropShare(42) - 0.5) < 1e-9 && dev.awaken.village.SettledCalm.dropShare(60) == 0, "easing to nothing by 60");
+            h.assertTrue(dev.awaken.village.SettledCalm.capOf(dev.awaken.village.plan.VillagePlan.Kind.HAMLET) == 10
+                    && dev.awaken.village.SettledCalm.capOf(dev.awaken.village.plan.VillagePlan.Kind.VILLAGE) == 14
+                    && dev.awaken.village.SettledCalm.capOf(dev.awaken.village.plan.VillagePlan.Kind.TOWN) == 18, "a hamlet 10, a village 14, a town 18");
+            h.succeed();
+        });
+
+        AwakenTests.register("living_elite_by_rank", 20, h -> {
+            h.assertTrue(LivingModule.eliteChance(1) == 0 && LivingModule.eliteChance(9) == 0, "none roam the heartland");
+            h.assertTrue(LivingModule.eliteChance(10) == 0.02F && LivingModule.eliteChance(24) == 0.02F, "2% in D land");
+            h.assertTrue(LivingModule.eliteChance(25) == 0.04F && LivingModule.eliteChance(44) == 0.04F, "4% in C land");
+            h.assertTrue(LivingModule.eliteChance(45) == 0.05F && LivingModule.eliteChance(120) == 0.05F, "5% from B up");
+            h.succeed();
+        });
+
+        AwakenTests.register("living_warning_ahead", 20, h -> {
+            // the look ahead: 10 or more above you and rising
+            h.assertTrue(dev.awaken.living.region.RegionTracker.aheadWarns(1, 8, 12), "level 12 ahead of a level-1 player at 8 warns");
+            h.assertTrue(!dev.awaken.living.region.RegionTracker.aheadWarns(1, 8, 10), "level 10 is nine above: no");
+            h.assertTrue(!dev.awaken.living.region.RegionTracker.aheadWarns(5, 30, 30), "already there, not rising: the caption's job");
+            h.assertTrue(!dev.awaken.living.region.RegionTracker.aheadWarns(40, 30, 45), "five above is not ten");
+            // the words, plain, with what the numbers mean against your own level (Euan's old Black Glades at level 72)
+            String w = dev.awaken.living.region.RegionTracker.body("Black Glades", 72, 1);
+            h.assertTrue(w.equals("Black Glades ahead. Creatures there are about six times as tough as ones at your level and hit nearly four times as hard. Turn back, or go in only to look."), w);
+            h.assertTrue(dev.awaken.living.region.RegionTracker.times(2.0).equals("about twice") && dev.awaken.living.region.RegionTracker.times(1.5).equals("half again"), "small ratios in words");
+            h.assertTrue(dev.awaken.living.region.RegionTracker.times(40).equals("many times"), "big ones too");
+            h.succeed();
+        });
+
+        AwakenTests.register("living_wild_kin", 100, h -> {
+            var pig = net.minecraft.world.entity.EntityTypes.PIG;
+            // who changes: a wild pig in D land or higher, never in E land, bred, a baby, or on a settlement's land
+            h.assertTrue(!dev.awaken.living.combat.WildKin.fights(pig, true, false, false, 9), "E land is exactly as before");
+            h.assertTrue(dev.awaken.living.combat.WildKin.fights(pig, true, false, false, 10), "D land: a wild pig fights back");
+            h.assertTrue(!dev.awaken.living.combat.WildKin.fights(pig, false, false, false, 60) && !dev.awaken.living.combat.WildKin.fights(pig, true, true, false, 60)
+                    && !dev.awaken.living.combat.WildKin.fights(pig, true, false, true, 60), "bred, a baby, a settlement's: meek");
+            h.assertTrue(!dev.awaken.living.combat.WildKin.fights(net.minecraft.world.entity.EntityTypes.ZOMBIE, true, false, false, 60), "only the farm animals change");
+            h.assertTrue(dev.awaken.living.combat.WildKin.wild(net.minecraft.world.entity.EntitySpawnReason.NATURAL) && !dev.awaken.living.combat.WildKin.wild(net.minecraft.world.entity.EntitySpawnReason.BREEDING)
+                    && !dev.awaken.living.combat.WildKin.wild(net.minecraft.world.entity.EntitySpawnReason.SPAWN_ITEM_USE), "natural spawns only");
+            h.assertTrue(Math.abs(dev.awaken.living.combat.WildKin.growth(1) - 0.04) < 1e-9 && dev.awaken.living.combat.WildKin.growth(9) == 0.2, "bigger with the rank, up to a fifth");
+            h.assertTrue(!dev.awaken.living.combat.WildKin.rallies(1) && dev.awaken.living.combat.WildKin.rallies(2), "the herd rallies from C land");
+            // the animal itself: it has a bite now, and armed it has a fight and a grudge that lets go
+            var p = h.spawn(pig, 1, 2, 1);
+            h.assertTrue(p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) != null, "a pig has an attack damage attribute");
+            dev.awaken.living.combat.WildKin.arm(p, 40);
+            boolean melee = false, grudge = false;
+            for (var w : p.goalSelector.getAvailableGoals()) melee |= w.getGoal() instanceof net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+            for (var w : p.targetSelector.getAvailableGoals()) grudge |= w.getGoal() instanceof net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+            h.assertTrue(melee && grudge, "armed: it bites back");
+            h.succeed();
+        });
+
+        AwakenTests.register("living_form_mix", 100, h -> {
+            // SPEC 21.11 decision 22: nothing in E land (the first hour), then 70% the land's rung, 25% below (half in a rank's first three levels), 5% above
+            var rnd = net.minecraft.util.RandomSource.create(7);
+            for (int lv : new int[]{1, 5, 9}) for (int i = 0; i < 500; i++) h.assertTrue(dev.awaken.living.combat.Forms.rungFor(lv, rnd) == 0, "E land wears no form: " + lv);
+            int[][] counts = new int[4][7];
+            int[] levels = {10, 18, 40, 130};
+            for (int k = 0; k < levels.length; k++) for (int i = 0; i < 20000; i++) counts[k][dev.awaken.living.combat.Forms.rungFor(levels[k], rnd)]++;
+            // level 10 is the first of D: half and half with vanilla, a twentieth of C
+            h.assertTrue(Math.abs(counts[0][0] / 20000.0 - 0.50) < 0.03 && Math.abs(counts[0][2] / 20000.0 - 0.05) < 0.015 && counts[0][1] > 0.4 * 20000, "the first levels of D: half vanilla, half D, a taste of C");
+            h.assertTrue(Math.abs(counts[1][0] / 20000.0 - 0.25) < 0.03 && Math.abs(counts[1][1] / 20000.0 - 0.70) < 0.03, "mid D: a quarter vanilla, seven tenths D");
+            h.assertTrue(Math.abs(counts[2][1] / 20000.0 - 0.25) < 0.03 && Math.abs(counts[2][2] / 20000.0 - 0.70) < 0.03 && Math.abs(counts[2][3] / 20000.0 - 0.05) < 0.015, "C land: a quarter D, seven tenths C, a twentieth B");
+            h.assertTrue(counts[3][5] / 20000.0 > 0.7 && counts[3][4] / 20000.0 > 0.2 && counts[3][6] == 0, "S land: S and A only, never past the fifth rung");
+            h.succeed();
+        });
+
+        AwakenTests.register("living_form_state", 100, h -> {
+            var level = h.getLevel();
+            // an alpha wears at least its land's rung and the crown; a baby and a creature that is not on the list wear nothing
+            var zombie = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, 1, 2, 1);
+            dev.awaken.living.combat.Forms.roll(level, zombie, 40, true);
+            var f = dev.awaken.living.combat.Forms.of(zombie);
+            h.assertTrue(f.rung() >= 2 && f.crowned(), "an elite in C land wears C or more, and the crown: " + f);
+            var plain = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, 2, 2, 1);
+            dev.awaken.living.combat.Forms.roll(level, plain, 5, false);
+            h.assertTrue(!dev.awaken.living.combat.Forms.of(plain).worn() && plain.hasData(dev.awaken.living.LivingContent.FORM.get()), "E land: rolled once, vanilla");
+            var bat = h.spawn(net.minecraft.world.entity.EntityTypes.BAT, 3, 2, 1);
+            dev.awaken.living.combat.Forms.roll(level, bat, 90, false);
+            h.assertTrue(!bat.hasData(dev.awaken.living.LivingContent.FORM.get()), "a bat is not on the list");
+            var calf = h.spawn(net.minecraft.world.entity.EntityTypes.COW, 4, 2, 1);
+            calf.setBaby(true);
+            dev.awaken.living.combat.Forms.roll(level, calf, 90, false);
+            h.assertTrue(!calf.hasData(dev.awaken.living.LivingContent.FORM.get()), "a baby wears nothing");
+            // saved and sent: the codec and the stream codec round-trip
+            var form = new dev.awaken.living.combat.Forms.Form(4, 2, 1);
+            var enc = dev.awaken.living.combat.Forms.Form.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, form).result().orElseThrow();
+            h.assertTrue(dev.awaken.living.combat.Forms.Form.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, enc).result().orElseThrow().equals(form), "saved form round-trips");
+            var buf = io.netty.buffer.Unpooled.buffer();
+            dev.awaken.living.combat.Forms.Form.STREAM_CODEC.encode(buf, form);
+            h.assertTrue(dev.awaken.living.combat.Forms.Form.STREAM_CODEC.decode(buf).equals(form), "sent form round-trips");
+            // the materials: cold land wears rime, hot land sun-baked bone
+            var biomes = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.BIOME);
+            h.assertTrue(dev.awaken.living.combat.Forms.family(biomes.getOrThrow(net.minecraft.world.level.biome.Biomes.SNOWY_PLAINS).value()) == dev.awaken.living.combat.Forms.FROST
+                    && dev.awaken.living.combat.Forms.family(biomes.getOrThrow(net.minecraft.world.level.biome.Biomes.DESERT).value()) == dev.awaken.living.combat.Forms.SUN
+                    && dev.awaken.living.combat.Forms.family(biomes.getOrThrow(net.minecraft.world.level.biome.Biomes.PLAINS).value()) == dev.awaken.living.combat.Forms.GREEN, "the family follows the climate");
+            // every species the client dresses has its kit data (kit.json is read by the client; here, that the file lists each layout and rung)
+            try (var in = LivingTests.class.getResourceAsStream("/assets/awaken/forms/kit.json")) {
+                var root = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in)).getAsJsonObject().getAsJsonObject("layouts");
+                for (var sp : dev.awaken.living.combat.Forms.Species.values()) {
+                    h.assertTrue(root.has(sp.layout), "kit.json has the layout " + sp.layout);
+                    for (int r = 1; r <= 5; r++) h.assertTrue(root.getAsJsonObject(sp.layout).getAsJsonObject("ranks").has(String.valueOf(r)), sp.layout + " has rung " + r);
+                }
+            } catch (java.io.IOException | RuntimeException e) {
+                h.fail("kit.json: " + e);
+            }
+            h.succeed();
+        });
+
+        AwakenTests.register("living_form_moves", 100, h -> {
+            var M = dev.awaken.living.combat.Moves.class;
+            var Sp = dev.awaken.living.combat.Forms.Species.class;
+            // the tell shortens with the rung, 1.2 s in D to 0.7 s in S
+            h.assertTrue(dev.awaken.living.combat.Moves.windup(1) == 24 && dev.awaken.living.combat.Moves.windup(5) == 14, "tells run 24 down to 14 ticks");
+            // every species but the creeper has a move at every rung but the two that are not goals (a revenant rises, a bonepicker keeps its distance); none hits harder than 1.3 times a normal blow
+            for (var sp : dev.awaken.living.combat.Forms.Species.values()) {
+                for (int r = 1; r <= 5; r++) {
+                    var moves = dev.awaken.living.combat.Moves.of(sp, r, false);
+                    boolean none = sp.layout.equals("creeper") || (sp.layout.equals("zombie") && r == 4) || (sp.layout.equals("skeleton") && r == 1);
+                    h.assertTrue(moves.isEmpty() == none, sp.id + " rung " + r + (none ? " has no goal move" : " has a move"));
+                    for (var d : moves) h.assertTrue(d.power() <= 1.3F && d.windup() >= 14 && d.windup() <= 40, sp.id + " " + d.name() + " keeps to the caps");
+                }
+            }
+            h.assertTrue(dev.awaken.living.combat.Moves.of(dev.awaken.living.combat.Forms.Species.PIG, 4, true).size() == 2
+                    && dev.awaken.living.combat.Moves.of(dev.awaken.living.combat.Forms.Species.PIG, 1, true).size() == 1, "a crowned one from the third rung has the rung below's move too");
+            // a formed creature gets its goal once, however many times it joins
+            var level = h.getLevel();
+            var pig = h.spawn(net.minecraft.world.entity.EntityTypes.PIG, 1, 2, 1);
+            pig.setData(dev.awaken.living.LivingContent.FORM.get(), new dev.awaken.living.combat.Forms.Form(3, 0, 0));
+            dev.awaken.living.combat.Moves.arm(pig);
+            dev.awaken.living.combat.Moves.arm(pig);
+            int goals = 0;
+            for (var w : pig.goalSelector.getAvailableGoals()) if (w.getGoal().getClass().getSimpleName().equals("MarkGoal")) goals++;
+            h.assertTrue(goals == 1, "one move goal, not two: " + goals);
+            // a bash lands as a blow: it hurts what it hits and shoves it away
+            var zombie = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, 3, 2, 1);
+            var victim = h.spawn(net.minecraft.world.entity.EntityTypes.SHEEP, 4, 2, 1);
+            var bash = dev.awaken.living.combat.Moves.of(dev.awaken.living.combat.Forms.Species.ZOMBIE, 2, false).get(0);
+            float before = victim.getHealth();
+            h.assertTrue(dev.awaken.living.combat.Moves.hit(level, zombie, victim, bash, 1, 0, 0.9, 0.35) && victim.getHealth() < before, "the bash hurts");
+            h.assertTrue(victim.getDeltaMovement().x > 0.3, "and shoves it away");
+            // a revenant stands up from a lethal blow once, at two fifths; a finishing blow (two health bars, 400 to 900) and a second blow do not
+            var rev = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, 5, 2, 1);
+            rev.setData(dev.awaken.living.LivingContent.FORM.get(), new dev.awaken.living.combat.Forms.Form(4, 0, 0));
+            float lethal = rev.getHealth() + 1F;
+            h.assertTrue(!dev.awaken.living.combat.MarkEvents.shouldRise(rev, rev.getHealth() - 1F), "a blow that does not kill is just a blow");
+            h.assertTrue(dev.awaken.living.combat.MarkEvents.shouldRise(rev, lethal), "a lethal blow raises it");
+            h.assertTrue(!dev.awaken.living.combat.MarkEvents.shouldRise(rev, 1_000_000F) && !dev.awaken.living.combat.MarkEvents.shouldRise(rev, dev.awaken.living.combat.MarkEvents.finishing(rev)), "a finishing blow does not");
+            dev.awaken.living.combat.MarkEvents.rise(level, rev);
+            h.assertTrue(rev.getHealth() > 0 && rev.getHealth() <= rev.getMaxHealth() * 0.45F, "it rises at two fifths");
+            h.assertTrue(!dev.awaken.living.combat.MarkEvents.shouldRise(rev, rev.getHealth() + 1F), "and only once");
+            var plain = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, 6, 2, 1);
+            plain.setData(dev.awaken.living.LivingContent.FORM.get(), new dev.awaken.living.combat.Forms.Form(3, 0, 0));
+            h.assertTrue(!dev.awaken.living.combat.MarkEvents.shouldRise(plain, plain.getHealth() + 1F), "only from the fourth rung");
+            // the ordinary tests' blow: one thousand kills a zombie outright, whatever it wears
+            rev.setData(dev.awaken.living.LivingContent.FORM.get(), new dev.awaken.living.combat.Forms.Form(5, 0, 0));
+            h.assertTrue(!dev.awaken.living.combat.MarkEvents.shouldRise(rev, 1000F) && dev.awaken.living.combat.MarkEvents.finishing(rev) <= 900F, "a thousand finishes a revenant, however tough");
+            // voices drop with the rung
+            h.assertTrue(dev.awaken.living.combat.MarkEvents.pitch(0) == 1F && Math.abs(dev.awaken.living.combat.MarkEvents.pitch(5) - 0.6F) < 1e-6, "S speaks two fifths lower");
+            h.succeed();
+        });
+
+        AwakenTests.register("living_signs", 100, h -> {
+            // SPEC 21.11 decision 24: none in E land, thicker with each rank; each kind builds something real that stands on its ground
+            var rnd = net.minecraft.util.RandomSource.create(11);
+            int[] total = new int[6];
+            for (int rank = 0; rank <= 5; rank++) for (int i = 0; i < 10000; i++) total[rank] += dev.awaken.living.signs.Signs.attempts(rank, rnd);
+            h.assertTrue(total[0] == 0, "E land has no signs");
+            for (int rank = 1; rank <= 5; rank++) h.assertTrue(Math.abs(total[rank] / 10000.0 - dev.awaken.living.signs.Signs.PER_CHUNK[rank]) < 0.05, "rank " + rank + " has its density: " + total[rank] / 10000.0);
+            for (int rank = 1; rank <= 5; rank++) h.assertTrue(!dev.awaken.living.signs.Signs.of(rank).isEmpty(), "rank " + rank + " has signs");
+            var level = h.getLevel();
+            int fam = 0;
+            for (var kind : dev.awaken.living.signs.Signs.Kind.values()) {
+                for (int family = 0; family < 3; family++) {
+                    // a stone floor, clear air over it
+                    BlockPos g = h.absolutePos(new BlockPos(5, 2, 5));
+                    for (int dx = -8; dx <= 8; dx++) for (int dz = -8; dz <= 8; dz++) {
+                        level.setBlockAndUpdate(g.offset(dx, 0, dz), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
+                        for (int y = 1; y <= 14; y++) level.setBlockAndUpdate(g.offset(dx, y, dz), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+                    }
+                    int placed = dev.awaken.living.signs.Signs.build(level, net.minecraft.util.RandomSource.create(kind.ordinal() * 31L + family), g, kind, family);
+                    h.assertTrue(placed >= 3, kind + " builds something: " + placed);
+                    // everything above the floor is joined to it (a block touching another, the lowest touching the floor): nothing floats
+                    java.util.Set<BlockPos> blocks = new java.util.HashSet<>();
+                    for (int dx = -8; dx <= 8; dx++) for (int dz = -8; dz <= 8; dz++) for (int y = 1; y <= 14; y++) {
+                        BlockPos p = g.offset(dx, y, dz);
+                        if (!level.getBlockState(p).isAir()) blocks.add(p);
+                    }
+                    java.util.Deque<BlockPos> todo = new java.util.ArrayDeque<>();
+                    java.util.Set<BlockPos> seen = new java.util.HashSet<>();
+                    for (BlockPos p : blocks) if (p.getY() == g.getY() + 1) { todo.add(p); seen.add(p); }
+                    while (!todo.isEmpty()) {
+                        BlockPos p = todo.poll();
+                        for (int dx = -1; dx <= 1; dx++) for (int dy = -1; dy <= 1; dy++) for (int dz = -1; dz <= 1; dz++) {
+                            BlockPos q = p.offset(dx, dy, dz);
+                            if (blocks.contains(q) && seen.add(q)) todo.add(q);
+                        }
+                    }
+                    h.assertTrue(seen.size() == blocks.size(), kind + " (family " + family + ") is all one piece standing on the ground: " + seen.size() + " of " + blocks.size());
+                    h.assertTrue(blocks.size() <= 90, kind + " stays small: " + blocks.size());
+                }
+            }
+            h.succeed();
+        });
+
+        AwakenTests.register("living_quiet_land", 100, h -> {
+            // SPEC 21.11 decision 23: animals thin by rank, the ambient life more so, the shyness grows with the rank
+            var Q = dev.awaken.living.combat.QuietLand.class;
+            h.assertTrue(dev.awaken.living.combat.QuietLand.keep(0) == 1F && dev.awaken.living.combat.QuietLand.keep(1) == 0.8F && dev.awaken.living.combat.QuietLand.keep(5) == 0.1F, "E all, D four fifths, S a tenth");
+            for (int r = 1; r <= 5; r++) h.assertTrue(dev.awaken.living.combat.QuietLand.keep(r) < dev.awaken.living.combat.QuietLand.keep(r - 1), "thinner each rank");
+            h.assertTrue(dev.awaken.living.combat.QuietLand.wild(-1) == 1F && dev.awaken.living.combat.QuietLand.wild(5) == 1F && dev.awaken.living.combat.QuietLand.wild(130) < 0.05F, "birdsong all through E and nearly gone in S");
+            h.assertTrue(dev.awaken.living.combat.QuietLand.wild(80) < dev.awaken.living.combat.QuietLand.keep(4), "A: more birds go than animals");
+            h.assertTrue(dev.awaken.living.combat.QuietLand.shy(1) == 10F && dev.awaken.living.combat.QuietLand.shy(5) == 26F, "10 blocks in D, 26 in S");
+            // a real spawn: none turned away in E land (the test land), a pig in a hearthless D land world is thinned about as often as the table says
+            var level = h.getLevel();
+            var rnd = net.minecraft.util.RandomSource.create(5);
+            var pig = h.spawn(net.minecraft.world.entity.EntityTypes.PIG, 1, 2, 1);
+            int turned = 0;
+            for (int i = 0; i < 400; i++) if (dev.awaken.living.combat.QuietLand.thins(level, pig, net.minecraft.world.entity.EntitySpawnReason.NATURAL, rnd)) turned++;
+            int rank = dev.awaken.living.region.RegionMap.rankOf(dev.awaken.living.api.Regions.creatureLevel(level, pig.blockPosition(), dev.awaken.living.api.Regions.Role.NEUTRAL));
+            double expect = rank <= 0 ? 0 : 1 - dev.awaken.living.combat.QuietLand.keep(rank);
+            if (dev.awaken.living.api.Regions.landCap(level, pig.blockPosition()) != Integer.MAX_VALUE) expect = 0;
+            h.assertTrue(Math.abs(turned / 400.0 - expect) < 0.12, "here (rank " + rank + ") " + turned + " of 400 turned away, expected about " + Math.round(expect * 400));
+            h.assertTrue(!dev.awaken.living.combat.QuietLand.thins(level, pig, net.minecraft.world.entity.EntitySpawnReason.BREEDING, rnd), "bred animals are never turned away");
+            h.succeed();
+        });
+
+        AwakenTests.register("living_wonder_sites", 200, h -> {
+            // SPEC 21.11 decision 27: one wonder per region, a pure function of the seed, in land that fits its kind, inside its region, with a plan that stands
+            var level = h.getLevel();
+            RegionMap map = RegionService.map(level.getServer());
+            long seed = level.getSeed();
+            dev.awaken.living.wonder.Wonders.reset();
+            var flat = new dev.awaken.living.wonder.Wonders.Terrain() {
+                public int ground(int x, int z) { return 70; }
+                public int seaLevel() { return 63; }
+            };
+            java.util.Set<Long> seen = new java.util.HashSet<>();
+            java.util.Set<dev.awaken.living.wonder.Wonders.Kind> kinds = new java.util.HashSet<>();
+            int made = 0;
+            for (int gx = -7; gx <= 7; gx++) for (int gz = -7; gz <= 7; gz++) {
+                RegionMap.Region r = map.regionAt(gx * 800, gz * 800);
+                if (!seen.add(r.id())) continue;
+                var s = dev.awaken.living.wonder.Wonders.siteOf(seed, map, r, flat);
+                if (r.commons()) { h.assertTrue(s == null, "the Commons has no wonder"); continue; }
+                if (s == null) continue;
+                made++;
+                kinds.add(s.kind());
+                int rank = RegionMap.rankOf(map.levelAt(r.heartX(), r.heartZ()));
+                h.assertTrue(rank >= s.kind().rankFrom && rank <= s.kind().rankTo, s.kind() + " fits rank " + rank);
+                h.assertTrue(map.regionAt(s.x(), s.z()).id() == r.id(), "the site is inside its region");
+                h.assertTrue(s.plan().blocks().get(net.minecraft.core.BlockPos.asLong(0, 0, 0)) != null, "the heart is marked");
+                for (long k : s.plan().blocks().keySet()) h.assertTrue(Math.abs(net.minecraft.core.BlockPos.getX(k)) <= dev.awaken.living.wonder.Wonders.REACH && Math.abs(net.minecraft.core.BlockPos.getZ(k)) <= dev.awaken.living.wonder.Wonders.REACH, "inside its reach");
+                int blocks = s.plan().blocks().size();
+                dev.awaken.living.wonder.Wonders.reset();
+                var again = dev.awaken.living.wonder.Wonders.siteOf(seed, map, r, flat);
+                h.assertTrue(again != null && again.key().equals(s.key()) && again.plan().blocks().size() == blocks, "the same from the seed every time");
+                h.assertTrue(dev.awaken.living.wonder.Wonders.near(seed, map, flat, s.x() - 3, s.z() - 3, s.x() + 3, s.z() + 3, dev.awaken.living.wonder.Wonders.REACH).stream().anyMatch(o -> o.key().equals(s.key())), "found from a chunk beside it");
+            }
+            h.assertTrue(made >= 25, "most regions have one: " + made);
+            h.assertTrue(kinds.size() >= 4, "and they differ: " + kinds);
+            // with the real generator's ground and the real structure sets: every kind can be found somewhere within 9,000 blocks of the centre
+            dev.awaken.living.wonder.Wonders.reset();
+            var real = dev.awaken.living.wonder.WonderFeature.terrain(level, level.getChunkSource().getGenerator());
+            java.util.Map<dev.awaken.living.wonder.Wonders.Kind, Integer> census = new java.util.EnumMap<>(dev.awaken.living.wonder.Wonders.Kind.class);
+            java.util.Set<Long> seen2 = new java.util.HashSet<>();
+            int cx = map.regionAt(0, 0).heartX(), cz = map.regionAt(0, 0).heartZ();
+            int considered = 0, wet = 0;
+            for (int dx = -9000; dx <= 9000; dx += 500) for (int dz = -9000; dz <= 9000; dz += 500) {
+                RegionMap.Region r = map.regionAt(dx, dz);
+                if (!seen2.add(r.id()) || r.commons()) continue;
+                considered++;
+                var s2 = dev.awaken.living.wonder.Wonders.siteOf(seed, map, r, real);
+                if (s2 == null) wet++;
+                else census.merge(s2.kind(), 1, Integer::sum);
+            }
+            for (var kind : dev.awaken.living.wonder.Wonders.Kind.values()) h.assertTrue(census.getOrDefault(kind, 0) > 0, kind + " is found somewhere in 9,000 blocks (regions " + considered + ", without a site " + wet + ", by kind " + census + ")");
+            // every kind's plan is one piece standing on the ground (everything joined to the blocks at ground level, in every family)
+            for (var kind : dev.awaken.living.wonder.Wonders.Kind.values()) for (int fam = 0; fam < 3; fam++) {
+                var plan = dev.awaken.living.wonder.Wonders.planOf(kind, 99L + fam, fam);
+                var blocks = plan.blocks();
+                h.assertTrue(blocks.size() >= 40 && blocks.size() <= 6000, kind + " has a sensible size: " + blocks.size());
+                java.util.Deque<Long> todo = new java.util.ArrayDeque<>();
+                java.util.Set<Long> reached = new java.util.HashSet<>();
+                for (long k : blocks.keySet()) if (net.minecraft.core.BlockPos.getY(k) <= 1) { todo.add(k); reached.add(k); }
+                while (!todo.isEmpty()) {
+                    long k = todo.poll();
+                    int x = net.minecraft.core.BlockPos.getX(k), y = net.minecraft.core.BlockPos.getY(k), z = net.minecraft.core.BlockPos.getZ(k);
+                    for (int dx = -1; dx <= 1; dx++) for (int dy = -1; dy <= 1; dy++) for (int dz = -1; dz <= 1; dz++) {
+                        long q = net.minecraft.core.BlockPos.asLong(x + dx, y + dy, z + dz);
+                        if (blocks.containsKey(q) && reached.add(q)) todo.add(q);
+                    }
+                }
+                h.assertTrue(reached.size() == blocks.size(), kind + " (family " + fam + ") stands as one piece: " + reached.size() + " of " + blocks.size() + " joined");
+            }
+            h.succeed();
+        });
+
+        AwakenTests.register("living_secret_sites", 200, h -> {
+            // SPEC 21.11 decision 28: three secrets a region at most, inside it, small and joined, each with a cache that has a loot table at every rank
+            var level = h.getLevel();
+            RegionMap map = RegionService.map(level.getServer());
+            long seed = level.getSeed();
+            dev.awaken.living.wonder.Secrets.reset();
+            var flat = new dev.awaken.living.wonder.Wonders.Terrain() {
+                public int ground(int x, int z) { return 70; }
+                public int seaLevel() { return 63; }
+            };
+            java.util.Set<Long> seen = new java.util.HashSet<>();
+            int made = 0;
+            for (int gx = -6; gx <= 6; gx++) for (int gz = -6; gz <= 6; gz++) {
+                RegionMap.Region r = map.regionAt(gx * 800, gz * 800);
+                if (!seen.add(r.id())) continue;
+                var list = dev.awaken.living.wonder.Secrets.of(seed, map, r, flat);
+                if (r.commons()) { h.assertTrue(list.isEmpty(), "none in the Commons"); continue; }
+                h.assertTrue(list.size() <= 3, "at most three a region: " + list.size());
+                java.util.Set<String> kinds = new java.util.HashSet<>();
+                for (var s : list) {
+                    made++;
+                    h.assertTrue(kinds.add(s.kind().id), "no kind twice in a region");
+                    h.assertTrue(map.regionAt(s.x(), s.z()).id() == r.id(), "inside its region");
+                    h.assertTrue(!s.plan().caches().isEmpty(), "holds a cache");
+                    for (var c : s.plan().caches()) {
+                        var st = s.plan().blocks().get(net.minecraft.core.BlockPos.asLong(c.dx(), c.dy(), c.dz()));
+                        h.assertTrue(st != null && (c.brushable() ? st.is(net.minecraft.world.level.block.Blocks.SUSPICIOUS_GRAVEL) : st.is(net.minecraft.world.level.block.Blocks.BARREL) || st.is(net.minecraft.world.level.block.Blocks.CHEST)), "the cache is where the plan says");
+                    }
+                }
+            }
+            h.assertTrue(made >= 50, "regions have their secrets: " + made);
+            for (int rank = 0; rank <= 5; rank++) for (boolean brush : new boolean[]{false, true}) {
+                var table = level.getServer().reloadableRegistries().getLootTable(dev.awaken.living.wonder.Secrets.table(rank, brush));
+                h.assertTrue(table != net.minecraft.world.level.storage.loot.LootTable.EMPTY, "a loot table for rank " + rank + (brush ? " (brushed)" : ""));
+            }
+            for (var kind : dev.awaken.living.wonder.Secrets.Kind.values()) {
+                var plan = dev.awaken.living.wonder.Secrets.planOf(kind, 5L);
+                h.assertTrue(plan.blocks().size() >= 5 && plan.blocks().size() <= 40, kind + " is small: " + plan.blocks().size());
+            }
+            h.succeed();
+        });
+
+        AwakenTests.register("living_plate_heat", 20, h -> {
+            // the chip's colour by how a creature measures against you: grey far below, blue about your level, orange a good fight, red an insane one
+            var P = dev.awaken.living.combat.PlateRules.Heat.class;
+            h.assertTrue(dev.awaken.living.combat.PlateRules.heat(5, 20) == dev.awaken.living.combat.PlateRules.Heat.TRIVIAL, "fifteen below is trivial");
+            h.assertTrue(dev.awaken.living.combat.PlateRules.heat(10, 20) == dev.awaken.living.combat.PlateRules.Heat.TRIVIAL, "ten below is trivial");
+            h.assertTrue(dev.awaken.living.combat.PlateRules.heat(11, 20) == dev.awaken.living.combat.PlateRules.Heat.EASY && dev.awaken.living.combat.PlateRules.heat(24, 20) == dev.awaken.living.combat.PlateRules.Heat.EASY, "below you and up to four above: blue");
+            h.assertTrue(dev.awaken.living.combat.PlateRules.heat(25, 20) == dev.awaken.living.combat.PlateRules.Heat.FIGHT && dev.awaken.living.combat.PlateRules.heat(34, 20) == dev.awaken.living.combat.PlateRules.Heat.FIGHT, "five to fourteen above: orange");
+            h.assertTrue(dev.awaken.living.combat.PlateRules.heat(35, 20) == dev.awaken.living.combat.PlateRules.Heat.HARD && dev.awaken.living.combat.PlateRules.heat(72, 1) == dev.awaken.living.combat.PlateRules.Heat.HARD, "fifteen or more above: red");
+            h.succeed();
+        });
+
+        AwakenTests.register("living_game_drops", 20, h -> {
+            // one more of the food per rank above E, never more than five (a pig in B land: three more chops)
+            h.assertTrue(dev.awaken.living.combat.GameDrops.extra(0) == 0 && dev.awaken.living.combat.GameDrops.extra(1) == 1 && dev.awaken.living.combat.GameDrops.extra(3) == 3, "one more per rank");
+            h.assertTrue(dev.awaken.living.combat.GameDrops.extra(9) == dev.awaken.living.combat.GameDrops.MAX_EXTRA, "never more than five");
+            h.assertTrue(dev.awaken.living.combat.GameDrops.hideTier(1).equals("d") && dev.awaken.living.combat.GameDrops.hideTier(5).equals("s") && dev.awaken.living.combat.GameDrops.hideTier(0).equals("e"), "an alpha's hide is its land's tier");
+            for (int r = 1; r <= 5; r++) {
+                var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, dev.awaken.Awaken.id("hunter_hide_" + dev.awaken.living.combat.GameDrops.hideTier(r)));
+                h.assertTrue(net.minecraft.core.registries.BuiltInRegistries.ITEM.getTagOrEmpty(tag).iterator().hasNext(), "the tier's hide tag has items: " + tag.location());
+            }
+            h.succeed();
+        });
+
+        AwakenTests.register("living_dread_gap", 20, h -> {
+            // the land's weight by the gap (SPEC 21.10): nothing under 5, a little under half at 10, everything at 20, never backwards
+            h.assertTrue(dev.awaken.living.combat.DreadRules.strength(-10) == 0 && dev.awaken.living.combat.DreadRules.strength(4) == 0, "nothing under five levels above");
+            h.assertTrue(Math.abs(dev.awaken.living.combat.DreadRules.strength(5) - 0.15F) < 1e-6, "faint at five");
+            h.assertTrue(Math.abs(dev.awaken.living.combat.DreadRules.strength(10) - 0.45F) < 1e-6, "a little under half at ten");
+            h.assertTrue(dev.awaken.living.combat.DreadRules.strength(20) == 1F && dev.awaken.living.combat.DreadRules.strength(90) == 1F, "everything at twenty");
+            float last = 0;
+            for (int g = 0; g <= 40; g++) {
+                float s2 = dev.awaken.living.combat.DreadRules.strength(g);
+                h.assertTrue(s2 >= last && s2 <= 1F, "it only grows with the gap: " + g);
+                last = s2;
+            }
+            h.succeed();
+        });
+
+        AwakenTests.register("living_region_rules_saved", 20, h -> {
+            // a save from before §21.10 has no rules: it is rules 1 and keeps its old names; a new world is the current rules
+            var old = new net.minecraft.nbt.CompoundTag();
+            old.putBoolean("fixed", true);
+            old.putInt("centre_x", 5);
+            old.putInt("centre_z", -6);
+            var parsed = RegionService.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE, old).result();
+            h.assertTrue(parsed.isPresent() && parsed.get().rules() == 1, "a save without rules is rules 1");
+            h.assertTrue(new RegionService().rules() == RegionMap.RULES, "a new world is made under the current rules");
+            var written = RegionService.CODEC.encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, new RegionService()).result();
+            h.assertTrue(written.isPresent() && ((net.minecraft.nbt.CompoundTag) written.get()).getIntOr("rules", 0) == RegionMap.RULES, "and writes it down");
             h.succeed();
         });
 
@@ -339,6 +773,7 @@ final class LivingTests {
         h.getLevel().addFreshEntity(e);
         int lv = Progression.profile(p).level();
         e.setData(CoreApi.CREATURE_TAG.get(), new CreatureTag(lv, kind, elite, ""));
+        e.setData(LivingContent.FORM.get(), dev.awaken.living.combat.Forms.Form.NONE); // the test land is far out: no revenant should stand up
         e.hurtServer(h.getLevel(), p.damageSources().playerAttack(p), 10000);
         if (e.isAlive()) e.discard();
     }

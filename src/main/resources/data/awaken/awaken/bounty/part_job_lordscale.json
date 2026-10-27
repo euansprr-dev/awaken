@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "title": "A Fin for Lordscale",
+  "band": 3,
+  "objective": {
+    "type": "collect",
+    "target": "awaken:leviathan_fin",
+    "count": 1
+  },
+  "levels": 0.3,
+  "essence": 14,
+  "requires": [
+    "level:67"
+  ],
+  "text": "The Sky Leviathan sheds a fin when it falls, over the Sky Archipelago, which is a B-rank gate. Bring one back and show me. You keep it, because Lordscale gear is made from parts like it.",
+  "featured": true,
+  "keep": true
+}

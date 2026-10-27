@@ -1,0 +1,484 @@
+{
+ "schemaVersion": 1,
+ "ingredients": [
+  "awaken:abbot_prayer_beads",
+  "awaken:abyssal_glass",
+  "awaken:antler_tine",
+  "awaken:architect_key",
+  "awaken:archivist_quill",
+  "awaken:ash_heart",
+  "awaken:axe_blueprint",
+  "awaken:beastbound_blade",
+  "awaken:bell_clapper",
+  "awaken:blossom_fur",
+  "awaken:briar_tusk",
+  "awaken:broker_lantern",
+  "awaken:canopy_scale",
+  "awaken:chainblade_blueprint",
+  "awaken:coil_plume",
+  "awaken:colossus_gear",
+  "awaken:crag_feather",
+  "awaken:crag_horn",
+  "awaken:crypt_bronze",
+  "awaken:daggers_blueprint",
+  "awaken:deepglass_shard",
+  "awaken:dream_residue",
+  "awaken:dusk_feather",
+  "awaken:dusk_shell",
+  "awaken:empress_scale",
+  "awaken:essence_shard",
+  "awaken:furnace_engine_core",
+  "awaken:gatewrought_blade",
+  "awaken:gauntlets_blueprint",
+  "awaken:gilded_ledger",
+  "awaken:glacier_heart",
+  "awaken:glaive_blueprint",
+  "awaken:greatblade_blueprint",
+  "awaken:herald_halo",
+  "awaken:hollow_chitin",
+  "awaken:hollow_crystal",
+  "awaken:hollow_wick",
+  "awaken:hunger_fang",
+  "awaken:katana_blueprint",
+  "awaken:knight_reflection",
+  "awaken:leviathan_fin",
+  "awaken:lord_heart",
+  "awaken:lordscale_blade",
+  "awaken:machine_crown",
+  "awaken:mainspring",
+  "awaken:maul_blueprint",
+  "awaken:maw_lantern",
+  "awaken:mire_hide",
+  "awaken:mirror_heart",
+  "awaken:mirror_shard_crown",
+  "awaken:molten_core",
+  "awaken:moon_scale",
+  "awaken:mother_cap",
+  "awaken:mycel_heart",
+  "awaken:precursor_alloy",
+  "awaken:precursor_blueprint",
+  "awaken:precursor_circuit",
+  "awaken:queen_silk",
+  "awaken:rapier_blueprint",
+  "awaken:regent_shadow",
+  "awaken:regent_stinger",
+  "awaken:root_heart",
+  "awaken:royal_jelly",
+  "awaken:saint_heartwood",
+  "awaken:sand_glass_fang",
+  "awaken:scythe_blueprint",
+  "awaken:seed_shard",
+  "awaken:seep_heartglass",
+  "awaken:serpent_scale",
+  "awaken:shieldblade_blueprint",
+  "awaken:silence_ear",
+  "awaken:sky_pearl",
+  "awaken:sleep_feather",
+  "awaken:sleeper_eyelid",
+  "awaken:sleepers_lullaby",
+  "awaken:sovereign_blade",
+  "awaken:spear_blueprint",
+  "awaken:spore_gel",
+  "awaken:spore_sac",
+  "awaken:starmetal_ingot",
+  "awaken:stonehorn_shard",
+  "awaken:storm_core",
+  "awaken:temple_resin",
+  "awaken:thousandfoot_mandible",
+  "awaken:tide_gel",
+  "awaken:tide_pelt",
+  "awaken:tide_scale",
+  "awaken:toadstone",
+  "awaken:twinblades_blueprint",
+  "awaken:tyrant_crown",
+  "awaken:veilwoven_blade",
+  "awaken:warstaff_blueprint",
+  "awaken:waterlogged_codex",
+  "awaken:wildhide_blade",
+  "awaken:wyrm_scale",
+  "awaken:zero_core",
+  "awaken:zero_plating",
+  "minecraft:amethyst_shard",
+  "minecraft:armadillo_scute",
+  "minecraft:bone",
+  "minecraft:copper_ingot",
+  "minecraft:diamond",
+  "minecraft:echo_shard",
+  "minecraft:feather",
+  "minecraft:flint",
+  "minecraft:gold_ingot",
+  "minecraft:iron_ingot",
+  "minecraft:leather",
+  "minecraft:moss_block",
+  "minecraft:netherite_scrap",
+  "minecraft:phantom_membrane",
+  "minecraft:quartz",
+  "minecraft:rabbit_hide",
+  "minecraft:shulker_shell",
+  "minecraft:stick",
+  "minecraft:string",
+  "minecraft:turtle_scute",
+  "minecraft:wind_charge"
+ ],
+ "drops": {
+  "awaken:abbot_prayer_beads": [
+   "awaken:abbot_of_frost"
+  ],
+  "awaken:abyssal_glass": [
+   "awaken:hollow_herald"
+  ],
+  "awaken:antler_tine": [
+   "awaken:old_antler"
+  ],
+  "awaken:architect_key": [
+   "awaken:guardian_dreaming"
+  ],
+  "awaken:archivist_quill": [
+   "awaken:drowned_archivist"
+  ],
+  "awaken:ash_heart": [
+   "awaken:sovereign_ash"
+  ],
+  "awaken:bell_clapper": [
+   "awaken:bell_warden"
+  ],
+  "awaken:blossom_fur": [
+   "awaken:empress_moth",
+   "awaken:honey_bear"
+  ],
+  "awaken:briar_tusk": [
+   "awaken:briar_sow"
+  ],
+  "awaken:broker_lantern": [
+   "awaken:lantern_broker"
+  ],
+  "awaken:canopy_scale": [
+   "awaken:crested_basilisk",
+   "awaken:plumed_coil"
+  ],
+  "awaken:coil_plume": [
+   "awaken:plumed_coil"
+  ],
+  "awaken:colossus_gear": [
+   "awaken:gearwright_colossus"
+  ],
+  "awaken:crag_feather": [
+   "awaken:peak_kite"
+  ],
+  "awaken:crag_horn": [
+   "awaken:crag_ram",
+   "awaken:stonehorn"
+  ],
+  "awaken:crypt_bronze": [
+   "awaken:bell_warden"
+  ],
+  "awaken:deepglass_shard": [
+   "awaken:seep_heart"
+  ],
+  "awaken:dusk_feather": [
+   "awaken:hollow_owl"
+  ],
+  "awaken:dusk_shell": [
+   "awaken:gloam_snail",
+   "awaken:weaver_queen"
+  ],
+  "awaken:empress_scale": [
+   "awaken:empress_moth"
+  ],
+  "awaken:essence_shard": [
+   "awaken:abbot_of_frost",
+   "awaken:abyss_watcher",
+   "awaken:arc_drone",
+   "awaken:archive_eye",
+   "awaken:bell_jelly"
+  ],
+  "awaken:furnace_engine_core": [
+   "awaken:guardian_foundry"
+  ],
+  "awaken:gilded_ledger": [
+   "awaken:lantern_broker"
+  ],
+  "awaken:glacier_heart": [
+   "awaken:abbot_of_frost"
+  ],
+  "awaken:herald_halo": [
+   "awaken:hollow_herald"
+  ],
+  "awaken:hollow_chitin": [
+   "awaken:drip_lurker",
+   "awaken:thousandfoot"
+  ],
+  "awaken:hollow_crystal": [
+   "awaken:chime_cricket",
+   "awaken:seep_heart",
+   "awaken:thousandfoot"
+  ],
+  "awaken:hollow_wick": [
+   "awaken:wickling"
+  ],
+  "awaken:hunger_fang": [
+   "awaken:sovereign_hunger"
+  ],
+  "awaken:knight_reflection": [
+   "awaken:mirror_knight"
+  ],
+  "awaken:leviathan_fin": [
+   "awaken:sky_leviathan"
+  ],
+  "awaken:machine_crown": [
+   "awaken:sovereign_machines"
+  ],
+  "awaken:mainspring": [
+   "awaken:gearwright_colossus"
+  ],
+  "awaken:maw_lantern": [
+   "awaken:lantern_maw"
+  ],
+  "awaken:mire_hide": [
+   "awaken:bog_toad",
+   "awaken:mire_mother"
+  ],
+  "awaken:mirror_heart": [
+   "awaken:sovereign_mirrors"
+  ],
+  "awaken:mirror_shard_crown": [
+   "awaken:mirror_knight"
+  ],
+  "awaken:molten_core": [
+   "awaken:ember_tyrant"
+  ],
+  "awaken:moon_scale": [
+   "awaken:guardian_inverted"
+  ],
+  "awaken:mother_cap": [
+   "awaken:mother_of_spores"
+  ],
+  "awaken:mycel_heart": [
+   "awaken:mycelord"
+  ],
+  "awaken:queen_silk": [
+   "awaken:weaver_queen"
+  ],
+  "awaken:regent_shadow": [
+   "awaken:guardian_court"
+  ],
+  "awaken:regent_stinger": [
+   "awaken:hive_regent"
+  ],
+  "awaken:root_heart": [
+   "awaken:sovereign_roots"
+  ],
+  "awaken:royal_jelly": [
+   "awaken:hive_regent"
+  ],
+  "awaken:saint_heartwood": [
+   "awaken:root_saint"
+  ],
+  "awaken:sand_glass_fang": [
+   "awaken:glass_serpent"
+  ],
+  "awaken:seed_shard": [
+   "awaken:guardian_seed"
+  ],
+  "awaken:seep_heartglass": [
+   "awaken:seep_heart"
+  ],
+  "awaken:serpent_scale": [
+   "awaken:glass_serpent"
+  ],
+  "awaken:silence_ear": [
+   "awaken:sovereign_silence"
+  ],
+  "awaken:sky_pearl": [
+   "awaken:sky_leviathan"
+  ],
+  "awaken:sleep_feather": [
+   "awaken:sovereign_sleep"
+  ],
+  "awaken:sleeper_eyelid": [
+   "awaken:the_sleeper"
+  ],
+  "awaken:sleepers_lullaby": [
+   "awaken:the_sleeper"
+  ],
+  "awaken:spore_gel": [
+   "awaken:mycelord",
+   "awaken:sporeback_snail"
+  ],
+  "awaken:spore_sac": [
+   "awaken:mother_of_spores"
+  ],
+  "awaken:stonehorn_shard": [
+   "awaken:stonehorn"
+  ],
+  "awaken:storm_core": [
+   "awaken:sovereign_storms"
+  ],
+  "awaken:temple_resin": [
+   "awaken:root_saint"
+  ],
+  "awaken:thousandfoot_mandible": [
+   "awaken:thousandfoot"
+  ],
+  "awaken:tide_gel": [
+   "awaken:breathbell",
+   "awaken:lantern_maw"
+  ],
+  "awaken:tide_pelt": [
+   "awaken:brook_otter"
+  ],
+  "awaken:tide_scale": [
+   "awaken:glimmerfin",
+   "awaken:lantern_maw",
+   "awaken:tidesteed"
+  ],
+  "awaken:toadstone": [
+   "awaken:mire_mother"
+  ],
+  "awaken:tyrant_crown": [
+   "awaken:ember_tyrant"
+  ],
+  "awaken:waterlogged_codex": [
+   "awaken:drowned_archivist"
+  ],
+  "awaken:wyrm_scale": [
+   "awaken:dune_wyrm"
+  ],
+  "awaken:zero_core": [
+   "awaken:unit_zero"
+  ],
+  "awaken:zero_plating": [
+   "awaken:unit_zero"
+  ],
+  "minecraft:amethyst_shard": [
+   "awaken:chime_cricket",
+   "awaken:dream_wisp",
+   "awaken:dreamling",
+   "awaken:glass_duelist",
+   "awaken:glint_mite"
+  ],
+  "minecraft:bone": [
+   "awaken:bell_warden",
+   "awaken:bell_wisp",
+   "awaken:canopy_prowler",
+   "awaken:crypt_archer",
+   "awaken:crypt_keeper"
+  ],
+  "minecraft:copper_ingot": [
+   "awaken:arc_drone",
+   "awaken:cog_hound",
+   "awaken:coil_unit",
+   "awaken:foundry_marshal",
+   "awaken:foundry_sentinel"
+  ],
+  "minecraft:echo_shard": [
+   "awaken:abyss_watcher",
+   "awaken:cord_eater",
+   "awaken:guardian_silent",
+   "awaken:hollow_herald",
+   "awaken:hollow_priest"
+  ],
+  "minecraft:feather": [
+   "awaken:cloud_breeze",
+   "awaken:frostfinch",
+   "awaken:gale_harpy",
+   "awaken:hollow_owl",
+   "awaken:peak_kite"
+  ],
+  "minecraft:flint": [
+   "awaken:scree_marmot"
+  ],
+  "minecraft:gold_ingot": [
+   "awaken:court_hound",
+   "awaken:court_shadow",
+   "awaken:guardian_court",
+   "awaken:hollow_courtier",
+   "awaken:sovereign_ash"
+  ],
+  "minecraft:iron_ingot": [
+   "awaken:stonehorn"
+  ],
+  "minecraft:leather": [
+   "awaken:briar_sow",
+   "awaken:canopy_prowler",
+   "awaken:crested_basilisk",
+   "awaken:dune_ray",
+   "awaken:frost_stag"
+  ],
+  "minecraft:moss_block": [
+   "awaken:glowcap",
+   "awaken:guardian_rim",
+   "awaken:incense_priest",
+   "awaken:moss_shambler",
+   "awaken:mossback"
+  ],
+  "minecraft:phantom_membrane": [
+   "awaken:cord_eater",
+   "awaken:dream_wisp",
+   "awaken:dreamling",
+   "awaken:dune_ray",
+   "awaken:guardian_dreaming"
+  ],
+  "minecraft:quartz": [
+   "awaken:dune_wyrm",
+   "awaken:glass_duelist",
+   "awaken:glass_husk",
+   "awaken:glass_scarab",
+   "awaken:glass_serpent"
+  ],
+  "minecraft:rabbit_hide": [
+   "awaken:scree_marmot"
+  ],
+  "minecraft:stick": [
+   "awaken:thornling"
+  ],
+  "minecraft:string": [
+   "awaken:gloomstalker",
+   "awaken:thornling",
+   "awaken:weaver_queen"
+  ],
+  "minecraft:turtle_scute": [
+   "awaken:mossback"
+  ],
+  "minecraft:wind_charge": [
+   "awaken:cloud_breeze",
+   "awaken:gale_harpy",
+   "awaken:sky_leviathan",
+   "awaken:sky_raider",
+   "awaken:the_gale"
+  ]
+ },
+ "blades": {
+  "awaken:beastbound_blade": {
+   "binding": 1,
+   "essence": 1,
+   "metal": 1,
+   "part": 1
+  },
+  "awaken:gatewrought_blade": {
+   "essence": 1,
+   "metal": 1,
+   "part": 2
+  },
+  "awaken:lordscale_blade": {
+   "essence": 1,
+   "metal": 1,
+   "part": 2
+  },
+  "awaken:sovereign_blade": {
+   "essence": 1,
+   "metal": 1,
+   "part": 2
+  },
+  "awaken:veilwoven_blade": {
+   "essence": 1,
+   "metal": 1,
+   "part": 2
+  },
+  "awaken:wildhide_blade": {
+   "binding": 1,
+   "essence": 1,
+   "part": 2
+  }
+ }
+}

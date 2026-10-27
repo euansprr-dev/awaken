@@ -37,6 +37,44 @@ final class LivingCommands {
                     .then(Commands.argument("radius", IntegerArgumentType.integer(500, 20000))
                             .executes(c -> regions(c.getSource(), c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "radius")))));
             l.then(Commands.literal("tag").requires(AwakenCommands.admin()).executes(c -> tag(c.getSource().getPlayerOrException())));
+            // tours: the land weighs as if it were this many levels above you (the tint and the sound bed), or the real land
+            l.then(Commands.literal("dread").requires(AwakenCommands.admin())
+                    .then(Commands.literal("off").executes(c -> {
+                        dev.awaken.living.region.RegionTracker.forceGap(c.getSource().getPlayerOrException(), null);
+                        return 1;
+                    }))
+                    .then(Commands.argument("gap", IntegerArgumentType.integer(-20, 120)).executes(c -> {
+                        dev.awaken.living.region.RegionTracker.forceGap(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "gap"));
+                        return 1;
+                    })));
+            // forms (SPEC 21.11): one creature in a form, or a row of a species at every rung, standing still ahead of you (tours)
+            l.then(Commands.literal("form").requires(AwakenCommands.admin())
+                    .then(Commands.argument("species", com.mojang.brigadier.arguments.StringArgumentType.word())
+                            .suggests((c, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(java.util.Arrays.stream(dev.awaken.living.combat.Forms.Species.values()).map(s -> s.id), b))
+                            .then(Commands.argument("rung", IntegerArgumentType.integer(0, 5)).executes(c -> form(c.getSource().getPlayerOrException(), c, 0))
+                                    .then(Commands.argument("family", IntegerArgumentType.integer(0, 2)).executes(c -> form(c.getSource().getPlayerOrException(), c, IntegerArgumentType.getInteger(c, "family")))))));
+            l.then(Commands.literal("formrow").requires(AwakenCommands.admin())
+                    .then(Commands.argument("species", com.mojang.brigadier.arguments.StringArgumentType.word())
+                            .suggests((c, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(java.util.Arrays.stream(dev.awaken.living.combat.Forms.Species.values()).map(s -> s.id), b))
+                            .executes(c -> formRow(c.getSource().getPlayerOrException(), c, 0))
+                            .then(Commands.argument("family", IntegerArgumentType.integer(0, 2)).executes(c -> formRow(c.getSource().getPlayerOrException(), c, IntegerArgumentType.getInteger(c, "family"))))));
+            l.then(Commands.literal("formclear").requires(AwakenCommands.admin()).executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                int n = 0;
+                for (var e : p.level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(40), m -> m.isNoAi() && dev.awaken.living.combat.Forms.Species.of(m.getType()) != null)) {
+                    e.discard();
+                    n++;
+                }
+                return n;
+            }));
+            // wonders (SPEC 21.11): where the nearest ones are, a walk to one (it generates as you arrive), a plan built here for a look
+            l.then(Commands.literal("wonder").requires(AwakenCommands.admin())
+                    .then(Commands.literal("list").executes(c -> wonderList(c.getSource().getPlayerOrException())))
+                    .then(Commands.literal("goto").then(Commands.argument("kind", com.mojang.brigadier.arguments.StringArgumentType.word())
+                            .suggests((c, b2) -> net.minecraft.commands.SharedSuggestionProvider.suggest(java.util.Arrays.stream(dev.awaken.living.wonder.Wonders.Kind.values()).map(k -> k.id), b2))
+                            .executes(c -> wonderGoto(c.getSource().getPlayerOrException(), com.mojang.brigadier.arguments.StringArgumentType.getString(c, "kind")))))
+                    .then(Commands.literal("build").then(Commands.argument("kind", com.mojang.brigadier.arguments.StringArgumentType.word())
+                            .executes(c -> wonderBuild(c.getSource().getPlayerOrException(), com.mojang.brigadier.arguments.StringArgumentType.getString(c, "kind"), 0)))));
             // tours: a blow at the creature you look at (no attack key in the autopilot), a drop in a pillar
             l.then(Commands.literal("strike").requires(AwakenCommands.admin())
                     .executes(c -> strike(c.getSource().getPlayerOrException(), 4, false))
@@ -293,6 +331,101 @@ final class LivingCommands {
                 .forEach(r -> src.sendSuccess(() -> Component.literal(String.format("%-22s Lv %3d-%-3d %s", r.name(), r.low(), r.high(),
                         r.commons() ? "(home)" : "heart " + r.heartX() + " " + r.heartZ())), false));
         return found.size();
+    }
+
+    /** {@code form <species> <rung> [family]}: one creature in that form, 4 blocks ahead, facing you. */
+    private static int form(ServerPlayer p, com.mojang.brigadier.context.CommandContext<CommandSourceStack> c, int family) {
+        var sp = dev.awaken.living.combat.Forms.Species.byId(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "species"));
+        if (sp == null) {
+            c.getSource().sendFailure(Component.literal("Unknown species."));
+            return 0;
+        }
+        Vec3 at = ahead(p, 4.0, 0.0);
+        dev.awaken.living.combat.Forms.still((ServerLevel) p.level(), sp, IntegerArgumentType.getInteger(c, "rung"), family, at.x, at.y, at.z, p.getYRot() + 180.0F);
+        return 1;
+    }
+
+    /** {@code formrow <species> [family]}: the species at rungs 0 to 5 in a row 7 blocks ahead, each facing you. */
+    private static int formRow(ServerPlayer p, com.mojang.brigadier.context.CommandContext<CommandSourceStack> c, int family) {
+        var sp = dev.awaken.living.combat.Forms.Species.byId(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "species"));
+        if (sp == null) {
+            c.getSource().sendFailure(Component.literal("Unknown species."));
+            return 0;
+        }
+        for (int r = 0; r <= 5; r++) {
+            Vec3 at = ahead(p, 7.0, (r - 2.5) * 2.0);
+            dev.awaken.living.combat.Forms.still((ServerLevel) p.level(), sp, r, family, at.x, at.y, at.z, p.getYRot() + 180.0F);
+        }
+        return 6;
+    }
+
+    /** A point {@code forward} blocks along the way the player faces and {@code side} to their right, at their feet's height. */
+    private static Vec3 ahead(ServerPlayer p, double forward, double side) {
+        double a = Math.toRadians(p.getYRot());
+        Vec3 f = new Vec3(-Math.sin(a), 0, Math.cos(a)), r = new Vec3(-Math.cos(a), 0, -Math.sin(a));
+        return p.position().add(f.scale(forward)).add(r.scale(side));
+    }
+
+    /** The wonders of the regions round a point (every 500 blocks out to a radius), nearest first; only of {@code only} when given. */
+    private static java.util.List<dev.awaken.living.wonder.Wonders.Site> wonderSites(ServerLevel level, int cx, int cz, int radius, dev.awaken.living.wonder.Wonders.Kind only) {
+        RegionMap map = RegionService.map(level.getServer());
+        var terrain = dev.awaken.living.wonder.WonderFeature.terrain(level, level.getChunkSource().getGenerator());
+        java.util.Set<Long> seen = new java.util.HashSet<>();
+        java.util.List<dev.awaken.living.wonder.Wonders.Site> out = new java.util.ArrayList<>();
+        for (int dx = -radius; dx <= radius; dx += 500)
+            for (int dz = -radius; dz <= radius; dz += 500) {
+                var r = map.regionAt(cx + dx, cz + dz);
+                if (!seen.add(r.id())) continue;
+                var s = dev.awaken.living.wonder.Wonders.siteOf(level.getSeed(), map, r, terrain);
+                if (s != null && (only == null || s.kind() == only)) out.add(s);
+            }
+        out.sort(java.util.Comparator.comparingDouble(s -> (double) (s.x() - cx) * (s.x() - cx) + (double) (s.z() - cz) * (s.z() - cz)));
+        return out;
+    }
+
+    private static int wonderList(ServerPlayer p) {
+        for (var s : wonderSites((ServerLevel) p.level(), p.getBlockX(), p.getBlockZ(), 3000, null).stream().limit(8).toList()) {
+            double d = Math.sqrt((double) (s.x() - p.getBlockX()) * (s.x() - p.getBlockX()) + (double) (s.z() - p.getBlockZ()) * (s.z() - p.getBlockZ()));
+            p.sendSystemMessage(Component.literal(s.kind().display + " in " + s.regionName() + " at " + s.x() + ", " + s.z() + " (" + Math.round(d) + " m)"));
+        }
+        return 1;
+    }
+
+    /** Walks you to 46 blocks south of the nearest wonder of a kind, facing it, on the ground there; the chunks generate as you arrive. */
+    private static int wonderGoto(ServerPlayer p, String kindId) {
+        var kind = dev.awaken.living.wonder.Wonders.Kind.byId(kindId);
+        if (kind == null) {
+            p.sendSystemMessage(Component.literal("No wonder called " + kindId + "."));
+            return 0;
+        }
+        ServerLevel level = (ServerLevel) p.level();
+        var sites = wonderSites(level, p.getBlockX(), p.getBlockZ(), 9000, kind);
+        if (sites.isEmpty()) {
+            p.sendSystemMessage(Component.literal("None of that kind within 9,000 blocks."));
+            return 0;
+        }
+        var s = sites.getFirst();
+        int x = s.x(), z = s.z() + 46;
+        var terrain = dev.awaken.living.wonder.WonderFeature.terrain(level, level.getChunkSource().getGenerator());
+        p.teleportTo(level, x + 0.5, terrain.ground(x, z) + 2, z + 0.5, java.util.Set.of(), 180F, 8F, true);
+        p.sendSystemMessage(Component.literal(s.kind().display + " at " + s.x() + ", " + s.z() + " in " + s.regionName()));
+        return 1;
+    }
+
+    /** Builds a wonder's plan 40 blocks ahead on a flat floor of stone (a look at the plan itself, family 0 green, 1 sun, 2 frost). */
+    private static int wonderBuild(ServerPlayer p, String kindId, int fam) {
+        var kind = dev.awaken.living.wonder.Wonders.Kind.byId(kindId);
+        if (kind == null) return 0;
+        ServerLevel level = (ServerLevel) p.level();
+        Vec3 at = ahead(p, 46, 0);
+        int gy = p.getBlockY() - 1;
+        var plan = dev.awaken.living.wonder.Wonders.planOf(kind, 7L, fam);
+        for (int dx = -40; dx <= 40; dx++) for (int dz = -40; dz <= 40; dz++) level.setBlockAndUpdate(new net.minecraft.core.BlockPos((int) at.x + dx, gy, (int) at.z + dz), net.minecraft.world.level.block.Blocks.GRASS_BLOCK.defaultBlockState());
+        for (var e : plan.blocks().long2ObjectEntrySet()) {
+            long k = e.getLongKey();
+            level.setBlockAndUpdate(new net.minecraft.core.BlockPos((int) at.x + net.minecraft.core.BlockPos.getX(k), gy + net.minecraft.core.BlockPos.getY(k), (int) at.z + net.minecraft.core.BlockPos.getZ(k)), e.getValue());
+        }
+        return plan.blocks().size();
     }
 
     private static int strike(ServerPlayer p, float damage, boolean crit) {

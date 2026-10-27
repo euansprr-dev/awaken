@@ -31,5 +31,5 @@
     }
   ],
   "relic": "awaken:lumen_tonic",
-  "finish": { "levels": 0.4 }
+  "finish": { "levels": 0.4, "item": "awaken:essence_shard", "item_count": 2 }
 }

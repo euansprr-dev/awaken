@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "title": "Ash on the Wind",
+  "band": 3,
+  "requires": [
+    "level:45"
+  ],
+  "scene": "cliff",
+  "giver": "wren",
+  "summary": "Wren is stranded on a ledge above land where the skeletons wear scorched cloaks. She needs a way down and some bones for the rope.",
+  "ask": [
+    "Wren: Don't come up! Stay down there! Actually, do come up, but quietly.",
+    "Wren: The archers below keep shooting at anyone who moves. I need a way off this ledge and you look like someone who has a plan."
+  ],
+  "steps": [
+    {
+      "id": "ledge",
+      "objective": {
+        "type": "reach",
+        "target": "site",
+        "radius": 10
+      },
+      "text": "Reach Wren's ledge",
+      "done": [
+        "Wren: You made it! Good. Now there are archers between us and the road."
+      ],
+      "reward": {
+        "levels": 0.15
+      }
+    },
+    {
+      "id": "archers",
+      "objective": {
+        "type": "kill",
+        "target": "minecraft:skeleton",
+        "count": 4
+      },
+      "text": "Silence the archers below",
+      "spawn": {
+        "entity": "minecraft:skeleton",
+        "count": 4,
+        "at": "site"
+      },
+      "start": [
+        "An arrow thumps into the rock beside your hand. Then three more."
+      ],
+      "done": [
+        "The last of them folds up like a deckchair. The wind stops carrying arrows."
+      ]
+    },
+    {
+      "id": "bones",
+      "objective": {
+        "type": "collect",
+        "target": "minecraft:bone",
+        "count": 6
+      },
+      "text": "Gather six bones for the rope",
+      "done": [
+        "Wren: Perfect. Strong, dry, and the right length. Don't ask what it was before."
+      ]
+    },
+    {
+      "id": "back",
+      "objective": {
+        "type": "talk",
+        "target": "wren"
+      },
+      "text": "Help Wren down",
+      "done": [
+        "Wren: Rope's done. I'm going down first, no arguments.",
+        "Wren: Here. Something for the climb, and the company."
+      ]
+    }
+  ],
+  "finish": {
+    "levels": 0.7,
+    "item": "awaken:essence_shard",
+    "item_count": 4
+  }
+}

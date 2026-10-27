@@ -44,6 +44,17 @@ final class LivingFx {
 
     static final int SIGNAL = 0x7FC3FF, LIGHT = 0xDCEFFF, AMBER = 0xFFCF7A, EMBER = 0xFF7A52, WARM = 0xFFA27A, GREY = 0x8A97A8;
     static final int[] BAND = {0xF4F6FB, 0x5FD08F, 0x6FB3FF, 0xB48CFF, 0xF2A541, 0xFF5A6A};
+    /** The level chip's colour by how the creature measures against you (PlateRules.heat): grey, blue, orange, red. */
+    static final int EASY_BLUE = 0x6FB3FF, FIGHT_ORANGE = 0xFF9A3C, HARD_RED = 0xFF4F5E;
+
+    static int heatColour(int lv, int mine) {
+        return switch (dev.awaken.living.combat.PlateRules.heat(lv, mine)) {
+            case TRIVIAL -> GREY;
+            case EASY -> EASY_BLUE;
+            case FIGHT -> FIGHT_ORANGE;
+            case HARD -> HARD_RED;
+        };
+    }
     /** Damage colours by Force (HEAT, CHARGE, GRAVITY, SPIRIT, FROST), and kinetic, and a crit's gold. */
     static final int[] FORCE = {0xFF9A5A, 0xFFE36A, 0xC59CFF, 0x7FF0D0, 0xA8E6FF};
     static final int KINETIC = 0xE8F4FF, CRIT = 0xFFD36A;
@@ -212,7 +223,7 @@ final class LivingFx {
         Minecraft mc = Minecraft.getInstance();
         Font font = mc.font;
         // wide enough for its words: [ELITE] name ... Lv nn, and the title under them
-        int words = font.width(name(e, tag, Progression.profile(mc.player))) + font.width("Lv " + tag.level()) + 22
+        int words = font.width(name(e, tag, Progression.profile(mc.player))) + (LivingPlates.shownLevel(tag) ? font.width("Lv " + tag.level()) : 0) + 22
                 + (tag.elite() ? font.width("ELITE ") + 2 : 0);
         int titleW = tag.title().isEmpty() ? 0 : (int) (font.width(tag.title()) * 0.78F) + 10;
         float halfW = (float) Math.max(Mth.clamp(e.getBbWidth() * 0.65, 0.5, 1.4), Math.max(words, titleW) * TEXT * 0.5F + 0.06F);
@@ -354,10 +365,11 @@ final class LivingFx {
             float left = (-hw + 0.06F) / s, top = (-hh + 0.03F) / s, right = (hw - 0.06F) / s;
             // the level, in its band's colour (grey far below you, ember far above)
             int lv = tag.level();
-            int lvCol = lv <= mine - 10 ? GREY : lv >= mine + 5 ? EMBER : BAND[dev.awaken.living.api.Regions.bandOf(lv)];
+            int lvCol = heatColour(lv, mine);
             String lvText = "Lv " + lv;
-            float lvX = right - font.width(lvText) - (lv >= mine + 5 ? 0.07F / s : 0);
-            lightText(out, ps, font, lvText, lvX, top, lvCol, vis);
+            boolean chip = LivingPlates.shownLevel(tag);
+            float lvX = chip ? right - font.width(lvText) - (lv >= mine + 5 ? 0.07F / s : 0) : right;
+            if (chip) lightText(out, ps, font, lvText, lvX, top, lvCol, vis);
             // the name (unknown until the Codex has it); an elite says so first
             String name = name(e, tag, prof);
             float nx = left;

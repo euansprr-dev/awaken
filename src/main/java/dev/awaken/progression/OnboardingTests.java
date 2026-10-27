@@ -188,6 +188,22 @@ final class OnboardingTests {
             h.succeed();
         });
 
+        // A recipe that takes a Blueprint is learned from the Blueprint, not from a bone it also uses (arms progression PLAN G5).
+        AwakenTests.register("arms_recipe_unlock", 40, h -> {
+            ServerPlayer sp = h.makeMockServerPlayerInLevel();
+            Progression.awaken(sp);
+            ResourceKey<net.minecraft.world.item.crafting.Recipe<?>> daggers = ResourceKey.create(Registries.RECIPE, Identifier.parse("awaken:wildhide_daggers"));
+            ResourceKey<net.minecraft.world.item.crafting.Recipe<?>> longsword = ResourceKey.create(Registries.RECIPE, Identifier.parse("awaken:wildhide_longsword"));
+            sp.getInventory().add(new ItemStack(Items.BONE));
+            RecipeUnlocks.check(sp);
+            h.assertTrue(sp.getRecipeBook().contains(longsword), "a bone teaches the Longsword, which needs no Blueprint");
+            h.assertTrue(!sp.getRecipeBook().contains(daggers), "a bone doesn't teach the Daggers, which need their Blueprint");
+            sp.getInventory().add(new ItemStack(dev.awaken.arms.ArmsItems.blueprintItem("daggers")));
+            RecipeUnlocks.check(sp);
+            h.assertTrue(sp.getRecipeBook().contains(daggers), "the Daggers Blueprint teaches the Daggers");
+            h.succeed();
+        });
+
         // In the world: overworld kills and mining go through the budget (and bank before awakening).
         AwakenTests.register("progression_world_xp_in_play", 40, h -> {
             ServerPlayer sp = h.makeMockServerPlayerInLevel();
