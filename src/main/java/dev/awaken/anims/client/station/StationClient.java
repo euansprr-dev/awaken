@@ -3,6 +3,9 @@ package dev.awaken.anims.client.station;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.awaken.anims.Ease;
+import dev.awaken.anims.station.StationView;
+import dev.awaken.anims.station.StationView.Kind;
+import dev.awaken.anims.station.StationView.Station;
 import dev.awaken.core.api.FirstPerson;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractFurnaceScreen;
@@ -37,7 +40,7 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Station scenes (Hands P5; SPEC §24). At a crafting table the view leans in over the table top, the 3×3 grid IS the
- * table top (each ingredient lies on its square in the world, the result floats over the middle), and your hands lay
+ * table top (each ingredient lies on its square in the world, the result floats over the far edge), and your hands lay
  * every ingredient on its square and take the result. At a furnace, smoker or blast furnace the view crouches to its
  * front: what cooks sits in the mouth, the fuel in the firebox below, the result floats out beside it, and the cooking
  * and the fuel left run along the strip. The screen ({@link StationScreen}) is the station's vanilla menu, so every item
@@ -45,37 +48,24 @@ import org.jspecify.annotations.Nullable;
  * on the screen. A hand moves only after your own click (cooking on its own moves none). Sneak + use opens the plain
  * screen; moving, jumping, E or Esc leaves. Drawn for you (others see you at the station as before).
  * <p>
- * Lean-in 12 ticks (6 if you come back within 12 s), out 10; the view turns to the station and narrows a little;
- * nothing moves the player's own look.
+ * Lean-in 12 ticks (6 if you come back within 12 s), out 10; the view turns and opens or narrows to frame every slot in
+ * the room above the strip (StationView.frame), so the strip, the hint and JEI never cover one; nothing moves the
+ * player's own look.
  */
 public final class StationClient {
     private StationClient() {}
-
-    /** A kind of station: its slots (the menu's first), its result slot, its hint and how far the view narrows. */
-    enum Kind {
-        TABLE(10, 0, "screen.awaken.table.hint", 0.36F),
-        FURNACE(3, AbstractFurnaceMenu.RESULT_SLOT, "screen.awaken.furnace.hint", 0.22F);
-
-        final int slots, result;
-        final String hint;
-        final float zoom;
-
-        Kind(int slots, int result, String hint, float zoom) {
-            this.slots = slots;
-            this.result = result;
-            this.hint = hint;
-            this.zoom = zoom;
-        }
-    }
 
     /** The station being worked (null: none), its kind, the way into it (horizontal, along an axis). */
     static @Nullable BlockPos table;
     static Kind kind = Kind.TABLE;
     static double fx, fz, rx, rz;
+    static @Nullable Station station;
+    /** The view that frames the station's slots above the strip (yaw, pitch, field of view), and whether it is set. */
+    private static final float[] FRAME = new float[3];
+    private static boolean framed;
     private static int openedAt = -1000, closedAt = -1000, ticks, usedAt = -100, clickedAt = -100;
     private static @Nullable BlockPos used;
     private static boolean open;
-    private static float lastFov = 70F;
     private static final ItemStack[] SEEN = new ItemStack[10];
     private static final ItemStackRenderState[] ITEMS = new ItemStackRenderState[10];
     /** A hand's tap toward a spot (world), per hand (0 right, 1 left). */
@@ -93,7 +83,6 @@ public final class StationClient {
         bus.addListener(EventPriority.LOW, ScreenEvent.Opening.class, StationClient::onOpening);
         bus.addListener(EventPriority.LOW, ViewportEvent.ComputeCameraAngles.class, StationClient::onAngles);
         bus.addListener(ComputeFovModifierEvent.class, StationClient::onFovModifier);
-        bus.addListener(EventPriority.LOWEST, ViewportEvent.ComputeFov.class, e -> lastFov = (float) e.getFOV());
         bus.addListener(SubmitCustomGeometryEvent.class, StationClient::onSubmit);
         FirstPerson.world("anims_station", 200, StationClient::pose);
     }
@@ -101,6 +90,7 @@ public final class StationClient {
     public static void tick() {
         ticks++;
         if (!open || !(Minecraft.getInstance().gui.screen() instanceof StationScreen<?> s)) return;
+        reframe(s);
         // what changed on the station: a hand lays it there (or takes the result), but only after your own click
         AbstractContainerMenu menu = s.getMenu();
         boolean yours = ticks - clickedAt <= 6, tapped = false;
@@ -190,6 +180,8 @@ public final class StationClient {
         }
         rx = -fz;
         rz = fx;
+        station = new Station(pos, k, fx, fz);
+        framed = false;
         boolean quick = ticks - closedAt < 240;
         openedAt = ticks - (quick ? 6 : 0);
         open = true;
@@ -213,88 +205,39 @@ public final class StationClient {
 
     // ---- the slots on the station -----------------------------------------------------------------------------------
 
-    /** What the view leans in to: a table's top, a furnace's front. */
+    /** What the view leans in to before it is framed: a table's top, a furnace's front. */
     static Vec3 top() {
         BlockPos b = table;
         if (b == null) return Vec3.ZERO;
-        // a furnace's front a little below its middle, so the firebox clears the strip at the screen's foot
         if (kind == Kind.FURNACE) return new Vec3(b.getX() + 0.5 - fx * 0.5, b.getY() + 0.36, b.getZ() + 0.5 - fz * 0.5);
         return new Vec3(b.getX() + 0.5, b.getY() + 1.0, b.getZ() + 0.5);
     }
 
-    /**
-     * Where a slot lies on the station. A table: 0 the result, floating over the middle; 1..9 the grid, row 0 the far
-     * one. A furnace: what cooks in the mouth, the fuel in the firebox below it, the result floating out at the right.
-     */
+    /** Where a slot lies on the station (StationView.spot). */
     static void spot(int slot, double[] out, int at) {
-        BlockPos b = table;
-        if (b == null) return;
-        if (kind == Kind.FURNACE) {
-            // out of the front face (n = -f), along it (r)
-            double fx0 = b.getX() + 0.5 - fx * 0.5, fz0 = b.getZ() + 0.5 - fz * 0.5;
-            double away = slot == AbstractFurnaceMenu.RESULT_SLOT ? 0.34 : 0.06, side = slot == AbstractFurnaceMenu.RESULT_SLOT ? 0.36 : 0;
-            out[at] = fx0 - fx * away + rx * side;
-            out[at + 1] = b.getY() + (slot == AbstractFurnaceMenu.FUEL_SLOT ? 0.24 : slot == AbstractFurnaceMenu.RESULT_SLOT ? 0.62 : 0.68);
-            out[at + 2] = fz0 - fz * away + rz * side;
-            return;
-        }
-        double cx = b.getX() + 0.5, cy = b.getY() + 1.0, cz = b.getZ() + 0.5;
-        if (slot == 0) {
-            out[at] = cx;
-            out[at + 1] = cy + 0.42;
-            out[at + 2] = cz;
-            return;
-        }
-        int row = (slot - 1) / 3, col = (slot - 1) % 3;
-        double u = (col - 1) * 0.3, v = (1 - row) * 0.3;
-        out[at] = cx + rx * u + fx * v;
-        out[at + 1] = cy + 0.01;
-        out[at + 2] = cz + rz * u + fz * v;
+        if (station != null) StationView.spot(station, slot, out, at);
     }
 
-    /**
-     * The slot under the screen's cursor (gui coordinates), from a ray through the view: a grid cell on the top or the
-     * floating result (a table), the nearest spot the ray passes close to (a furnace); -1 for none.
-     */
-    static int pick(double mx, double my, int guiW, int guiH) {
+    /** The slot under the screen's cursor (gui coordinates) in the view as drawn; -1 for none or outside the room. */
+    static int pick(StationView.Layout l, double mx, double my, int guiW, int guiH) {
         Minecraft mc = Minecraft.getInstance();
-        if (table == null) return -1;
+        if (station == null) return -1;
         var cam = mc.gameRenderer.mainCamera();
         Vec3 o = cam.position();
-        float tan = (float) Math.tan(Math.toRadians(lastFov) / 2);
         float aspect = (float) mc.getWindow().getWidth() / Math.max(1, mc.getWindow().getHeight());
-        float nx = (float) (mx / guiW * 2 - 1), ny = (float) (1 - my / guiH * 2);
-        org.joml.Vector3f d = new org.joml.Vector3f(nx * tan * aspect, ny * tan, -1).normalize().rotate(cam.rotation());
-        double[] r = new double[3];
-        if (kind == Kind.FURNACE) {
-            int best = -1;
-            double bestAlong = Double.MAX_VALUE;
-            for (int i = 0; i < kind.slots; i++) {
-                spot(i, r, 0);
-                double wx = r[0] - o.x, wy = r[1] - o.y, wz = r[2] - o.z, along = wx * d.x + wy * d.y + wz * d.z;
-                double px = wx - d.x * along, py = wy - d.y * along, pz = wz - d.z * along;
-                if (along > 0 && along < bestAlong && px * px + py * py + pz * pz < 0.16 * 0.16) {
-                    best = i;
-                    bestAlong = along;
-                }
-            }
-            return best;
-        }
-        // the result: near the ray, over the middle
-        spot(0, r, 0);
-        double wx = r[0] - o.x, wy = r[1] - o.y, wz = r[2] - o.z, along = wx * d.x + wy * d.y + wz * d.z;
-        double px = wx - d.x * along, py = wy - d.y * along, pz = wz - d.z * along;
-        if (along > 0 && px * px + py * py + pz * pz < 0.15 * 0.15) return 0;
-        // the top's plane
-        double topY = table.getY() + 1.0;
-        if (Math.abs(d.y) < 1e-4) return -1;
-        double t = (topY - o.y) / d.y;
-        if (t <= 0) return -1;
-        double hx = o.x + d.x * t - (table.getX() + 0.5), hz = o.z + d.z * t - (table.getZ() + 0.5);
-        double u = hx * rx + hz * rz, v = hx * fx + hz * fz;
-        if (Math.abs(u) > 0.45 || Math.abs(v) > 0.45) return -1;
-        int col = Mth.clamp((int) Math.floor((u + 0.45) / 0.3), 0, 2), row = Mth.clamp((int) Math.floor((0.45 - v) / 0.3), 0, 2);
-        return 1 + row * 3 + col;
+        return StationView.pick(station, l, o.x, o.y, o.z, cam.rotation(), cam.getFov(), aspect, mx, my, guiW, guiH);
+    }
+
+    /** The view that frames every slot in the screen's room, from where you stand (each tick: the screen may resize). */
+    private static void reframe(StationScreen<?> s) {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer p = mc.player;
+        if (station == null || p == null || s.layout == null) return;
+        Vec3 eye = p.getEyePosition(1F);
+        float aspect = (float) mc.getWindow().getWidth() / Math.max(1, mc.getWindow().getHeight());
+        float most = Math.min(StationView.MAX_FOV, mc.options.fov().get() * 1.5F);
+        StationView.frame(station, eye.x, eye.y, eye.z, s.layout, s.width, s.height, aspect, most, FRAME);
+        framed = true;
     }
 
     // ---- the view ---------------------------------------------------------------------------------------------------
@@ -302,10 +245,18 @@ public final class StationClient {
     private static void onAngles(ViewportEvent.ComputeCameraAngles e) {
         float w = weight((float) e.getPartialTick());
         if (w <= 0 || table == null) return;
-        Vec3 o = e.getCamera().position(), t = top();
-        // aim at the middle of the top (a furnace's front), the view leaning in
-        double ax = t.x - o.x, ay = t.y - o.y, az = t.z - o.z;
-        float yaw = (float) (Mth.atan2(-ax, az) * Mth.RAD_TO_DEG), pitch = (float) (-Mth.atan2(ay, Math.sqrt(ax * ax + az * az)) * Mth.RAD_TO_DEG);
+        if (!framed && Minecraft.getInstance().gui.screen() instanceof StationScreen<?> s) reframe(s);
+        float yaw, pitch;
+        if (framed) {
+            // the view that frames every slot above the strip
+            yaw = FRAME[0];
+            pitch = FRAME[1];
+        } else {
+            Vec3 o = e.getCamera().position(), t = top();
+            double ax = t.x - o.x, ay = t.y - o.y, az = t.z - o.z;
+            yaw = (float) (Mth.atan2(-ax, az) * Mth.RAD_TO_DEG);
+            pitch = (float) (-Mth.atan2(ay, Math.sqrt(ax * ax + az * az)) * Mth.RAD_TO_DEG);
+        }
         e.setYaw(e.getYaw() + Mth.wrapDegrees(yaw - e.getYaw()) * w);
         e.setPitch(Mth.lerp(w, e.getPitch(), pitch));
         // the slightest breath while you work
@@ -314,7 +265,8 @@ public final class StationClient {
 
     private static void onFovModifier(ComputeFovModifierEvent e) {
         float w = weight(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
-        if (w > 0) e.setNewFovModifier(e.getNewFovModifier() * (1 - kind.zoom * w));
+        // the field of view the frame asks for, whatever the speed or the setting would make it
+        if (w > 0 && framed) e.setNewFovModifier(Mth.lerp(w, e.getNewFovModifier(), FRAME[2] / Minecraft.getInstance().options.fov().get()));
     }
 
     // ---- the world: the items on the station, the hovered slot --------------------------------------------------------
@@ -335,8 +287,11 @@ public final class StationClient {
         int light = LightCoordsUtil.pack(mc.level.getBrightness(LightLayer.BLOCK, above), mc.level.getBrightness(LightLayer.SKY, above));
         float t = ticks + mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         float yaw = (float) (Mth.atan2(-fx, fz) * Mth.RAD_TO_DEG);
+        ItemStack carried = s.getMenu().getCarried();
         for (int i = 0; i < kind.slots; i++) {
             ItemStack st = s.getMenu().getSlot(i).getItem();
+            // a square a drag has passed over shows what it will get
+            if (st.isEmpty() && s.dragging(i)) st = carried;
             if (st.isEmpty()) continue;
             spot(i, P, 0);
             ItemStackRenderState r = ITEMS[i];
@@ -362,9 +317,9 @@ public final class StationClient {
             r.submit(ps, e.getSubmitNodeCollector(), light, OverlayTexture.NO_OVERLAY, 0);
             ps.popPose();
         }
-        int hover = s.hovered;
-        if (hover >= 0 && hover != kind.result) {
-            spot(hover, P, 0);
+        for (int i = 0; i < kind.slots; i++) {
+            if (i == kind.result || i != s.hovered && !s.dragging(i)) continue;
+            spot(i, P, 0);
             ps.pushPose();
             ps.translate(P[0] - cam.x, P[1] - cam.y, P[2] - cam.z);
             e.getSubmitNodeCollector().submitShapeOutline(ps, furnace ? (fx == 0 ? FACE_Z : FACE_X) : CELL, RenderTypes.lines(), 0xCC7FC3FF, 2F, true);
