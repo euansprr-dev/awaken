@@ -24,6 +24,7 @@ public final class GearClient {
         modBus.addListener(GearClient::onModifiers);
         modBus.addListener(Silhouettes::registerExtensions);
         modBus.addListener(Silhouettes::addReloadListener);
+        dev.awaken.gear.premium.client.PremiumArmour.init(modBus); // the premium test (pack/armour-premium-test, never merged)
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> HunterSense.tick());
         NeoForge.EVENT_BUS.addListener(ItemTooltipEvent.class, GearClient::onTooltip);
     }

@@ -81,6 +81,7 @@ final class GearTests {
         AwakenTests.register("gear_late_set_bonuses", 20, GearTests::lateBonuses);
         AwakenTests.registerIsolated("gear_lordscale_overflow", 40, GearTests::overflow);
         AwakenTests.register("gear_silhouettes_valid", 20, GearTests::silhouettes);
+        AwakenTests.register("gear_premium_spec", 20, GearTests::premiumSpec);
     }
 
     // ---- registry, tags, recipes ------------------------------------------------------------------------------------
@@ -595,6 +596,31 @@ final class GearTests {
             } catch (java.io.IOException e) {
                 h.fail(file + ": " + e);
             }
+        }
+        h.succeed();
+    }
+
+    /** The premium test's spec (pack/armour-premium-test): it reads, is whole texels, is inside the albedo half, and covers all four slots. */
+    private static void premiumSpec(GameTestHelper h) {
+        String file = "/assets/awaken/" + dev.awaken.gear.premium.PremiumSpec.PATH;
+        try (var in = GearTests.class.getResourceAsStream(file)) {
+            h.assertTrue(in != null, file + " is on the classpath");
+            var json = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8));
+            var spec = dev.awaken.gear.premium.PremiumSpec.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, json).getOrThrow();
+            List<String> bad = spec.problems();
+            h.assertTrue(bad.isEmpty(), String.join("; ", bad));
+            for (String slot : dev.awaken.gear.premium.PremiumSpec.SLOTS) {
+                h.assertTrue(spec.parts().stream().anyMatch(p -> p.slot().equals(slot)), "the " + slot + " slot has parts");
+            }
+            for (String png : List.of(dev.awaken.gear.premium.PremiumSpec.TEXTURE, dev.awaken.gear.premium.PremiumSpec.GLOW)) {
+                try (var img = GearTests.class.getResourceAsStream("/assets/awaken/" + png)) {
+                    h.assertTrue(img != null, png + " is on the classpath");
+                    var im = javax.imageio.ImageIO.read(img);
+                    h.assertTrue(im.getWidth() == spec.texture().get(0) && im.getHeight() == spec.texture().get(1), png + " matches the spec's size");
+                }
+            }
+        } catch (java.io.IOException e) {
+            h.fail(file + ": " + e);
         }
         h.succeed();
     }

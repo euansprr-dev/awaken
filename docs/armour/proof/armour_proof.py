@@ -321,7 +321,7 @@ def uvsize(box):
     return int(math.ceil(2 * (d + w))), int(math.ceil(d + h))
 
 
-def pack(parts, size):
+def pack(parts, size, y0=64):
     """Shelf-pack every owning part's UV rectangle (twins share); shell parts keep their vanilla places."""
     used = []
     for p in parts:
@@ -333,7 +333,7 @@ def pack(parts, size):
     free_y = 0
     owners = sorted([p for p in parts if p["uv"] is None and not p["twin"]], key=lambda p: -uvsize(p["box"])[1])
     # start below the vanilla 64x32 layer and the leggings/second-skin area
-    y = 64
+    y = y0
     sh = 0
     for p in owners:
         w, h = uvsize(p["box"])
@@ -500,7 +500,7 @@ def materials(out):
     sheet.save(os.path.join(out, "materials.png"))
 
 
-def prepare(parts, size=(256, 192)):
+def prepare(parts, size=(256, 192), y0=64):
     seen = set()
     uniq = []
     for p in parts:
@@ -520,7 +520,7 @@ def prepare(parts, size=(256, 192)):
             order[p["name"]] = 1
             out.append(p)
             pending.remove(p)
-    pack(out, size)
+    pack(out, size, y0)
     alb, glw = paint(out, size)
     return out, alb, glw
 
