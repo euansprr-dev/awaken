@@ -6,19 +6,29 @@
 # Look tour (CI): tools/tour-ci.sh tools/autopilot/ground-tour.txt 1500 PACK=perf,world TECTONIC=awakened
 world ground779 creative 779
 waitworld
-gui 0
+camera first
+cmd gamerule send_command_feedback false
 cmd gamerule advance_time false
 cmd gamerule spawn_mobs false
-cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
 cmd weather clear 1000000
 cmd time set 7000
+# the opening's sky flight holds the camera (every shot would be its frame): skip it first, as the W7 tour does
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
 cmd awaken admin awaken
 wait 200
+screen close
 cmd awaken powers starter 1
 wait 20
 screen close
+wait 40
+key dismiss
+wait 10
+gui 0
 window 1440 900
-camera first
 hud off
 info
 opt renderDistance 8
