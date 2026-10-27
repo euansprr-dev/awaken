@@ -1,7 +1,7 @@
 # Power animations: every cast as something your body does
 
 Status: PLAN, awaiting Euan's approval (2026-10-27). Nothing in `src/` is changed by this branch. Branch `pack/power-anims-plan`.
-Page: the approval page is linked from the hand-back. Proof: `docs/power-anims/proof/` (pose sheets, numbers, the scripts).
+Page: https://claude.ai/artifact/KBCT1me9LHaDXeUmGS5Xak (a copy is `docs/power-anims/plan.html`). Proof: `docs/power-anims/proof/` (pose sheets, numbers, the scripts).
 
 Euan, playing, 2026-10-27: "the beam spell... it doesn't even come out of the core place it should... it's more so coming from the
 wrist or something, and it's just like putting up your wrist slightly in a weird position"; "the stamping one, the one where you
