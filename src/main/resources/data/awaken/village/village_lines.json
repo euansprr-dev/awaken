@@ -605,6 +605,26 @@
     "I told the neighbours you're ours, {name}. They agreed.",
     "[n]Can't sleep, {name}? Nor can I. Sit with me."
    ]
+  },
+  "assayer": {
+   "stranger": [
+    "[m]Morning. If you've come for ore, you've come to the right door.",
+    "Looking to buy? Iron's fresh up from the second level.",
+    "Mind the carts on the way in. They don't stop for anyone."
+   ],
+   "known": [
+    "{name}. Back for more of the mine's iron?",
+    "[e]Evening, {name}. The night's haul is just in.",
+    "There's a lode map on the shelf if you're of a mind to go looking."
+   ],
+   "friend": [
+    "{name}! The miners asked after you this morning.",
+    "For you, friend, the good ore. Not the slag the strangers get."
+   ],
+   "kin": [
+    "{name}, you're family here. Take what you need.",
+    "Kin of the mine, are you? Then you'll know where the good seams run."
+   ]
   }
  },
  "calls": {
@@ -747,6 +767,11 @@
    "Mind your ears!",
    "[n]Softly, softly. Sleepers about.",
    "Rope's slick. Grip tight."
+  ],
+  "assayer": [
+   "Raw iron! Copper! Up from the deep this morning!",
+   "Lode maps! Find your own seam, read it with lapis!",
+   "Coal by the sack, ingots by the bar!"
   ]
  },
  "news": {
@@ -1326,6 +1351,46 @@
     "{name}! I still dream about that place. Then I dream about you coming through.",
     "Look who it is. The one who carried me home.",
     "{name}. Every time I see you I remember how cold it was. Thank you, again."
+   ]
+  },
+  "deep_mine": {
+   "mouth": [
+    "Can you hear anything? Anything at all?",
+    "{person}! {person}, can you hear me?",
+    "They were on the second level. Right at the face.",
+    "Somebody bring more rope. And a lamp.",
+    "Nobody goes down alone. Not now.",
+    "I heard them knocking. I swear I heard knocking."
+   ],
+   "ask": [
+    "They broke through into something on the second level. A nest. {person}'s down there with the others. Please, you can climb, you can fight. Go down for them.",
+    "The bell's for the mine. {person} and two more are trapped on the second level, past the winze. Something's down there with them. Will you go?",
+    "The face gave and there were Hollows behind it. Our people are cut off at the bottom. The ladder goes all the way down. Please."
+   ],
+   "again": [
+    "Down the shaft, along the first level to the winze, then down again. They were working the face at the end.",
+    "Please hurry. The lamps down there won't last forever.",
+    "The ladder's on the town side of the shaft. Mind the winze, it's a long drop."
+   ],
+   "thanks": [
+    "Thank you. Bring them up. Bring them all up.",
+    "We'll keep the rope and the lamps ready up here.",
+    "Go. I'll be right here at the mouth."
+   ],
+   "found": [
+    "You came! Stay close, we'll follow you out.",
+    "Is it gone? Then get us out of here. We're right behind you.",
+    "My leg's hurt, but I can walk. Lead the way.",
+    "Lantern's out. I'll follow your light."
+   ],
+   "guarded": [
+    "Not yet! They're still out there in the dark!",
+    "Get rid of them first, or we'll never make the winze."
+   ],
+   "up": [
+    "Air. Real air. Oh, thank you.",
+    "I thought I'd never see the sky again.",
+    "Where's my family? Are they here?"
    ]
   }
  }

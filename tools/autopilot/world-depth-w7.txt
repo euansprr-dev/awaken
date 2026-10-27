@@ -1,0 +1,149 @@
+# Between the Gates W7, "Roads and towns" (SPEC §28.9): the road north out of the Wayfarer camp with its waymarker,
+# followed to a hamlet you didn't know; a wayhouse and its waymarker at dusk; a caravan walking a road; the first walled
+# town from the pass, its gate, its market and its scribe; a mining town at a mountain's foot over its mine; the Deep
+# Mine (the mine bell and the families at the shaft head, going down, the nest, the roof coming down behind, bringing
+# them up); the Atlas with the roads walked. The road shots a creative player's standing on the road with the HUD off (the
+# Atlas records roads walked by players, not spectators); the rest a spectator's.
+# Run on GitHub (the terrain Euan plays): tools/tour-ci.sh tools/autopilot/world-depth-w7.txt 1800 PACK=perf,world TECTONIC=awakened
+world autopilot_world_depth_w7 creative 26102610
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+# the opening's sky flight holds the camera and ends on a question a closed screen never answers: skip it first
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+# the Ascent's gift card holds the director while it's up: put it away
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd awaken village trouble quiet on
+hud off
+# ---- the road north out of the camp, its waymarker, followed to a hamlet you didn't know ----
+cmd time set 2400
+cmd awaken village road camp
+wait 400
+cmd awaken village road info
+shot w7_01_the_road_out_of_the_camp
+cmd awaken village road marker
+wait 80
+shot w7_02_its_waymarker
+cmd awaken village road walk 45
+wait 260
+shot w7_03_on_the_road
+cmd awaken village road walk 45
+wait 260
+shot w7_04_the_road_on
+cmd awaken village view first street
+wait 260
+cmd awaken village start
+wait 100
+shot w7_05_a_hamlet_you_didnt_know
+# a slow runner's server falls behind starting a settlement and laying what's round it: let it catch up
+wait 600
+cmd gamemode spectator
+# ---- a wayhouse and its waymarker at dusk ----
+# (the server plans what a framing needs on its own thread while the client waits on: there first, then the roads round it)
+cmd time set 12650
+cmd awaken village view nearest_wayhouse stable
+wait 1200
+cmd awaken village view nearest_wayhouse marker
+wait 1200
+cmd awaken village start
+wait 100
+shot w7_06_the_wayhouse_and_its_waymarker_at_dusk
+cmd awaken village view nearest_wayhouse stable
+wait 80
+shot w7_07_its_stable_and_inn
+# ---- a caravan walking a road ----
+cmd time set 3200
+cmd awaken village road walk 20
+wait 200
+cmd awaken living happen caravan
+wait 400
+cmd awaken village road watch
+wait 60
+shot w7_08_a_caravan_on_the_road
+# ---- the first town from the pass: its gate, its market, its scribe ----
+cmd time set 4200
+cmd awaken village view first_town market
+wait 700
+cmd awaken village view first_town pass
+wait 900
+shot w7_09_the_town_from_the_pass
+cmd awaken village view first_town gate
+wait 300
+cmd awaken village start
+wait 400
+shot w7_10_the_town_gate
+cmd awaken village view first_town market
+wait 120
+shot w7_11_the_market_square
+cmd awaken village view first_town scribe
+wait 80
+shot w7_12_the_scribes_shop
+cmd awaken village view first_town wall
+wait 80
+shot w7_13_on_the_wall
+# ---- a mining town at a mountain's foot over its mine ----
+cmd time set 5200
+cmd awaken village view nearest_mine hill
+wait 2400
+cmd awaken village start
+wait 400
+shot w7_14_the_mining_town_at_the_mountains_foot
+cmd awaken village view nearest_mine head
+wait 100
+shot w7_15_the_shaft_head
+# ---- the Deep Mine: the bell, the families at the mouth, down, the nest, the roof, up ----
+cmd awaken village trouble start deep_mine
+wait 300
+cmd awaken village trouble info
+cmd awaken village view nearest_mine head
+wait 100
+shot w7_16_the_mine_bell_families_at_the_shaft_head
+cmd awaken village trouble help
+cmd awaken village view nearest_mine shaft
+wait 80
+shot w7_17_down_the_shaft
+cmd awaken village view nearest_mine level1
+wait 120
+shot w7_18_the_first_level
+cmd awaken village view nearest_mine face
+wait 120
+cmd awaken village trouble mine wake
+wait 60
+shot w7_19_the_nest_behind_the_face
+cmd awaken village trouble mine clear
+cmd awaken village trouble mine lead
+wait 20
+cmd awaken village trouble mine fall
+wait 30
+shot w7_20_the_roof_comes_down_behind
+cmd awaken village trouble mine up
+cmd awaken village view nearest_mine head
+wait 120
+shot w7_21_bringing_them_up
+# ---- the Atlas: the roads walked and the places found ----
+cmd time set 6000
+cmd gamemode creative
+cmd awaken village road camp
+wait 100
+cmd atlas open 20 60 0.35
+wait 120
+shot w7_22_the_atlas_roads_walked
+screen close
+quit

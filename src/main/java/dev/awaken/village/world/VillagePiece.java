@@ -42,8 +42,10 @@ public class VillagePiece extends StructurePiece implements PieceBeardifierModif
 
     public VillagePiece(CompoundTag tag) {
         super(VillageWorldgen.PIECE.get(), tag);
+        // the kind's ordinal since W7 (SPEC §28.9); earlier pieces kept whether it was a village
+        int kind = tag.getIntOr("kind", tag.getBooleanOr("village", false) ? 1 : 0);
         this.anchor = new SettlementGrid.Anchor(tag.getStringOr("key", "?"), tag.getIntOr("ax", 0), tag.getIntOr("az", 0),
-                tag.getBooleanOr("village", false) ? VillagePlan.Kind.VILLAGE : VillagePlan.Kind.HAMLET, tag.getBooleanOr("first", false),
+                VillagePlan.Kind.values()[Math.clamp(kind, 0, VillagePlan.Kind.values().length - 1)], tag.getBooleanOr("first", false),
                 tag.getLongOr("seed", 0L));
         this.version = tag.getIntOr("version", 1);
         setOrientation(null);
@@ -55,6 +57,7 @@ public class VillagePiece extends StructurePiece implements PieceBeardifierModif
         tag.putInt("ax", anchor.x());
         tag.putInt("az", anchor.z());
         tag.putBoolean("village", anchor.kind() == VillagePlan.Kind.VILLAGE);
+        tag.putInt("kind", anchor.kind().ordinal());
         tag.putBoolean("first", anchor.first());
         tag.putLong("seed", anchor.seed());
         tag.putInt("version", version);
@@ -99,6 +102,7 @@ public class VillagePiece extends StructurePiece implements PieceBeardifierModif
                 case "cow" -> EntityTypes.COW;
                 case "chicken" -> EntityTypes.CHICKEN;
                 case "goat" -> EntityTypes.GOAT;
+                case "horse" -> EntityTypes.HORSE;
                 default -> EntityTypes.SHEEP;
             };
             int count = 2 + (int) Math.floorMod(p.seed + k * 31L, 4L);

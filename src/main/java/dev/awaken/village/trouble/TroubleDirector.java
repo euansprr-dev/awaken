@@ -79,6 +79,7 @@ public final class TroubleDirector {
         PLOTS.put(TroubleKind.MISSING, new Missing());
         PLOTS.put(TroubleKind.GREY_FIELDS, new GreyFields());
         PLOTS.put(TroubleKind.FESTIVAL, new Festival());
+        PLOTS.put(TroubleKind.DEEP_MINE, new DeepMine());
     }
 
     /** Tests and tours: the director's own starts held (only troubles started by hand run). */
@@ -195,7 +196,8 @@ public final class TroubleDirector {
             BlockPos origin = new BlockPos(l.plan().ox, l.plan().baseY, l.plan().oz);
             if (HearthHooks.inside(level, origin) || crowded(level, st, origin)) continue;
             // what the world holds: a gate due to break near it, its bell gone, a lair or a den near, a storm, its damage
-            for (TroubleKind k : new TroubleKind[]{TroubleKind.GREY_FIELDS, TroubleKind.BELL, TroubleKind.TAKEN, TroubleKind.MISSING, TroubleKind.REBUILD}) {
+            for (TroubleKind k : new TroubleKind[]{TroubleKind.GREY_FIELDS, TroubleKind.BELL, TroubleKind.DEEP_MINE, TroubleKind.TAKEN, TroubleKind.MISSING,
+                    TroubleKind.REBUILD}) {
                 String cause = cause(c, l, k);
                 if (cause == null) continue;
                 if (start(level, l, k, cause) != null) break;
@@ -231,6 +233,7 @@ public final class TroubleDirector {
             case MISSING -> Missing.cause(c, l);
             case GREY_FIELDS -> GreyFields.cause(c, l);
             case REBUILD -> Rebuild.cause(c, l);
+            case DEEP_MINE -> DeepMine.cause(c, l);
             default -> null;
         };
     }

@@ -74,6 +74,10 @@ public final class TroubleCommands {
                 .then(Commands.literal("hang").executes(TroubleCommands::hang))
                 .then(Commands.literal("ruin").executes(TroubleCommands::ruin))
                 .then(Commands.literal("site").executes(TroubleCommands::site))
+                // (SPEC §28.9) the Deep Mine's steps for tours: the nest woken, cleared, the miners led out, the roof's fall, up at the mouth
+                .then(Commands.literal("mine").then(Commands.argument("step", StringArgumentType.word())
+                        .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("wake", "clear", "lead", "fall", "up"), b))
+                        .executes(c -> mine(c, StringArgumentType.getString(c, "step")))))
                 .then(Commands.literal("quiet").then(Commands.argument("on", StringArgumentType.word()).executes(c -> {
                     TroubleDirector.quiet = StringArgumentType.getString(c, "on").equals("on");
                     return 1;
@@ -141,6 +145,7 @@ public final class TroubleCommands {
             case GREY_FIELDS -> GreyFields.cause(ctx, l);
             case REBUILD -> "damage";
             case FESTIVAL -> "calendar";
+            case DEEP_MINE -> l.plan().mine == null ? null : "nest";
         };
         if (cause == null) return fail(c, "Nothing in the world here could cause " + kind.title + " (no lair, den, camp or gate near).");
         Trouble t = TroubleDirector.start(level, l, kind, cause);
@@ -321,6 +326,18 @@ public final class TroubleCommands {
         t.stage = Taken.FREED;
         Taken.homecoming(ctx, t, l, r);
         ok(c, "home at " + w);
+        return 1;
+    }
+
+    private static int mine(CommandContext<CommandSourceStack> c, String step) throws CommandSyntaxException {
+        ServerPlayer p = c.getSource().getPlayerOrException();
+        VillageService.Live l = here(p);
+        Trouble t = l == null ? null : trouble(p, l);
+        if (t == null || !t.kind.equals(TroubleKind.DEEP_MINE.id)) return fail(c, "No Deep Mine here.");
+        Plot.Ctx ctx = TroubleDirector.ctx(c.getSource().getServer().overworld(), t.village);
+        String what = DeepMine.step(ctx, t, p, step);
+        if (what == null) return fail(c, "The Deep Mine can't " + step + " now.");
+        ok(c, "deep mine: " + what);
         return 1;
     }
 

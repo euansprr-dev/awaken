@@ -12,12 +12,12 @@ import net.minecraft.world.level.block.state.properties.Property;
  * The block states a settlement's own painter places (its ground, fields, pens, the dock, lamps, the bell, the forge
  * and the mill wheel), resolved once by id on the first paint. Sides index 0 N, 1 E, 2 S, 3 W.
  */
-final class VillageBlocks {
+public final class VillageBlocks {
     private VillageBlocks() {}
 
     static final String[] DIR = {"north", "east", "south", "west"};
 
-    static BlockState of(String spec) {
+    public static BlockState of(String spec) {
         String id = spec, props = null;
         int b = spec.indexOf('[');
         if (b >= 0) {
@@ -48,14 +48,14 @@ final class VillageBlocks {
         return prop.getValue(value).map(v -> state.setValue(prop, v)).orElse(state);
     }
 
-    static BlockState[] dirs(String spec) {
+    public static BlockState[] dirs(String spec) {
         BlockState[] r = new BlockState[4];
         for (int i = 0; i < 4; i++) r[i] = of(spec.formatted(DIR[i]));
         return r;
     }
 
     /** Fence or wall runs by a mask of neighbours: 1 north, 2 east, 4 south, 8 west. */
-    static BlockState[] connected(String id, boolean wall) {
+    public static BlockState[] connected(String id, boolean wall) {
         BlockState[] out = new BlockState[16];
         for (int m = 0; m < 16; m++) {
             String on = wall ? "low" : "true", off = wall ? "none" : "false";

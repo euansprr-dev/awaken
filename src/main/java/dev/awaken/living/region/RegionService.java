@@ -90,7 +90,7 @@ public final class RegionService extends SavedData {
     }
 
     /** A vanilla biome path's name group and tilt (harsh one band up, gentle one band down). */
-    static RegionMap.Land land(String path) {
+    public static RegionMap.Land land(String path) {
         String p = path.toLowerCase(Locale.ROOT);
         RegionMap.Group g;
         if (p.contains("mushroom")) g = RegionMap.Group.MUSHROOM;

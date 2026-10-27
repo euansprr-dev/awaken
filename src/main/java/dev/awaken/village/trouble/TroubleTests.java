@@ -42,6 +42,7 @@ final class TroubleTests {
         AwakenTests.registerIsolated("village_trouble_taken", 600, TroubleTests::taken);
         AwakenTests.registerIsolated("village_burning_rebuild", 600, TroubleTests::burningRebuild);
         AwakenTests.registerIsolated("village_director_caps", 600, TroubleTests::caps);
+        AwakenTests.registerIsolated("village_deep_mine", 600, TroubleTests::deepMine);
     }
 
     private static boolean journalHas(ServerPlayer p, String title) {
@@ -131,6 +132,105 @@ final class TroubleTests {
             if (l != null) {
                 st.memory(l.key()).sealed.clear();
                 VillageService.stop(l);
+            }
+            live.leave();
+        }
+        h.succeed();
+    }
+
+    /**
+     * The Deep Mine (SPEC §28.9): a mining town's miners break into the nest behind the face (they're away, the mine bell
+     * rings, the store has no ore); the nest wakes when you come down (its creatures, the miners found), and with it cleared
+     * they follow you; up at the mouth they go to their families, it pays and the mine works again. Missed at another town,
+     * the shaft is sealed for good and its store sells no ore from then on.
+     */
+    private static void deepMine(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = h.absolutePos(BlockPos.ZERO);
+        VillagePlan plan = dev.awaken.village.TestMountain.at(8181L, o.getX(), o.getY(), o.getZ()).plan("test:w7_mine", 8182L);
+        h.assertTrue(plan != null && plan.mine != null, "a mining town fits under the test mountain");
+        VillagePlan sealedPlan = dev.awaken.village.TestMountain.at(8191L, o.getX() + 300, o.getY(), o.getZ()).plan("test:w7_mine_b", 8192L);
+        h.assertTrue(sealedPlan != null && sealedPlan.mine != null, "and another");
+        AwakenTests.Live live = AwakenTests.survivalPlayer(h, "w7-mine", BlockPos.ZERO.above(2));
+        ServerPlayer p = live.player();
+        boolean quiet = TroubleDirector.quiet;
+        TroubleDirector.quiet = true;
+        VillageService.Live l = null, l2 = null;
+        Trouble t = null, t2 = null;
+        TroubleState st = TroubleState.get(level.getServer());
+        List<int[]> forced = new ArrayList<>();
+        try {
+            l = VillageService.register(level, plan);
+            h.assertTrue(l != null, "its people start");
+            BlockPos cav = DeepMine.cavern(plan);
+            forced.add(new int[]{cav.getX() >> 4, cav.getZ() >> 4});
+            BlockPos head = DeepMine.head(plan);
+            forced.add(new int[]{head.getX() >> 4, head.getZ() >> 4});
+            for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) forced.add(new int[]{(cav.getX() >> 4) + dx, (cav.getZ() >> 4) + dz});
+            for (int[] f : forced) {
+                level.setChunkForced(f[0], f[1], true);
+                level.getChunk(f[0], f[1]);
+            }
+            // bodies go into the world only where it's ticking (as when a player is down there)
+            long until = System.nanoTime() + 20_000_000_000L;
+            for (int[] f : forced) {
+                BlockPos at = new BlockPos((f[0] << 4) + 8, cav.getY(), (f[1] << 4) + 8);
+                while (!level.isPositionEntityTicking(at) && System.nanoTime() < until)
+                    if (!level.getChunkSource().pollTask()) java.util.concurrent.locks.LockSupport.parkNanos(1_000_000L);
+            }
+            t = TroubleDirector.start(level, l, TroubleKind.DEEP_MINE, "nest");
+            h.assertTrue(t != null, "the Deep Mine begins");
+            int miners = (int) t.get("miners", 0);
+            h.assertTrue(miners >= 1 && l.settlement().isAway(t.person), "its miners are trapped below (away): " + miners);
+            h.assertTrue(DeepMine.shut(level.getServer(), l.key()), "the store has no ore while the mine is shut");
+            TroubleDirector.answer(p, TroubleDirector.ACTION + ":" + t.id, true);
+            h.assertTrue(t.helped(p.getUUID()) && journalHas(p, "The Deep Mine"), "in the Journal once you said Help");
+            Plot.Ctx c = TroubleDirector.ctx(level, l.key());
+            h.assertTrue(DeepMine.step(c, t, p, "wake") != null && DeepMine.miner(c, t, 0) != null, "the nest wakes: the miners are found");
+            Rescuee r = DeepMine.miner(c, t, 0);
+            TroubleDirector.touched(level, p, r);
+            boolean guarded = r.mode() == Rescuee.LOST;
+            String cleared = DeepMine.step(c, t, p, "clear");
+            TroubleDirector.touched(level, p, r);
+            h.assertTrue(r.mode() == Rescuee.FOLLOW, "with the nest cleared they follow you (" + (guarded ? "not while it was guarded" : "the nest was empty")
+                    + "; " + cleared + ", mode " + r.mode() + ", trouble " + (st.byId(t.id) != null) + ")");
+            DeepMine.step(c, t, p, "lead");
+            DeepMine.step(c, t, p, "up");
+            p.teleportTo(head.getX() + 0.5, head.getY(), head.getZ() + 4.5);
+            long em = EconomyHooks.balance(p);
+            TroubleDirector.plot(t).tick(c, t);
+            h.assertTrue(t.stage == DeepMine.HOME, "up at the mouth, they go to their families");
+            t.since = level.getGameTime() - 80;
+            TroubleDirector.plot(t).tick(c, t);
+            h.assertTrue(EconomyHooks.balance(p) > em, "always paid: " + em + " -> " + EconomyHooks.balance(p));
+            t.since = level.getGameTime() - 400;
+            TroubleDirector.plot(t).tick(c, t);
+            h.assertTrue(st.byId(t.id) == null && !DeepMine.shut(level.getServer(), l.key()), "it's over, and the mine works again");
+            h.assertTrue(!l.settlement().isAway(t.person), "the miners are back in their town's day");
+            List<String> hist = Villages.history(level.getServer(), l.key());
+            h.assertTrue(hist.getLast().contains("working again"), "the town remembers: " + hist.getLast());
+            // missed: sealed for good
+            l2 = VillageService.register(level, sealedPlan);
+            h.assertTrue(l2 != null, "the other town's people start");
+            t2 = TroubleDirector.start(level, l2, TroubleKind.DEEP_MINE, "nest");
+            h.assertTrue(t2 != null, "its Deep Mine begins");
+            Plot.Ctx c2 = TroubleDirector.ctx(level, l2.key());
+            TroubleDirector.plot(t2).miss(c2, t2);
+            TroubleDirector.end(c2, t2);
+            h.assertTrue(DeepMine.shut(level.getServer(), l2.key()) && st.byId(t2.id) == null, "nobody came: sealed for good, its store without ore");
+            h.assertTrue(!l2.settlement().isAway(t2.person), "its miners got out on their own, never dead");
+        } finally {
+            TroubleDirector.quiet = quiet;
+            if (t != null && st.byId(t.id) != null) TroubleDirector.end(TroubleDirector.ctx(level, t.village), t);
+            if (t2 != null && st.byId(t2.id) != null) TroubleDirector.end(TroubleDirector.ctx(level, t2.village), t2);
+            for (int[] f : forced) level.setChunkForced(f[0], f[1], false);
+            if (l != null) {
+                st.memory(l.key()).data.clear();
+                VillageService.stop(l);
+            }
+            if (l2 != null) {
+                st.memory(l2.key()).data.clear();
+                VillageService.stop(l2);
             }
             live.leave();
         }

@@ -144,6 +144,18 @@ final class Trade {
                 d.add(sells("candles", Items.CANDLE, 4, 1));
                 d.add(sells("name_tag", Items.NAME_TAG, 1, 6));
             }
+            case "assayer" -> {
+                // (SPEC §28.9) a mining town's store: what its mine brings up, ingots, and a lode map read with lapis
+                d.add(sells("raw_iron", Items.RAW_IRON, 4, 1));
+                d.add(sells("raw_copper", Items.RAW_COPPER, 8, 1));
+                d.add(sells("coal", Items.COAL, 12, 1));
+                d.add(sells("iron_ingot", Items.IRON_INGOT, 2, 1));
+                d.add(sells("gold_nugget", Items.GOLD_NUGGET, 6, 1));
+                d.add(sells("lapis", Items.LAPIS_LAZULI, 4, 1));
+                d.add(new Deal("lode_map", Items.EMERALD, 8, dev.awaken.delve.cave.CaveItems.map(), false, 2));
+                d.add(buys("torches", Items.TORCH, 32, 1, 6));
+                d.add(sells("lantern", Items.LANTERN, 1, 2));
+            }
             case "carter" -> {
                 d.add(sells("lead", Items.LEAD, 2, 1));
                 d.add(sells("saddle", Items.SADDLE, 1, 6));

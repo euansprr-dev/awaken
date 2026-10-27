@@ -36,6 +36,47 @@ final class Names {
         return first + end;
     }
 
+    private static final String[] TOWN_FIRST = {"Ash", "King", "West", "High", "Bright", "Elder", "Stone", "Mark", "Wolf", "Raven", "Salt",
+            "Iron", "Oak", "Gold", "Thorn", "Ember", "Riven", "Hart", "Grey", "Kettle"};
+    private static final String[] TOWN_END = {"bury", "bridge", "minster", "castle", "march", "ford", "chester", "wick", "haven", "gate",
+            "hold", "stead"};
+    private static final String[] TOWN_END_DESERT = {"gate", "court", "spring", "well", "haven"};
+    private static final String[] TOWN_END_FROST = {"hold", "gard", "vik", "march", "holm"};
+
+    /** A town's name: grander parts than a village's ("Kingsbridge", "Westmarch"), by its land. */
+    static String town(int family, long seed) {
+        Random r = new Random(seed ^ 0x70A75EEDL);
+        String first = family == VillageStyles.DESERT ? DESERT_FIRST[r.nextInt(DESERT_FIRST.length)] : TOWN_FIRST[r.nextInt(TOWN_FIRST.length)];
+        String[] ends = family == VillageStyles.DESERT ? TOWN_END_DESERT : family == VillageStyles.FROST ? TOWN_END_FROST : TOWN_END;
+        String end = ends[r.nextInt(ends.length)];
+        if (first.toLowerCase(java.util.Locale.ROOT).endsWith(end.substring(0, 1))) end = ends[(java.util.Arrays.asList(ends).indexOf(end) + 1) % ends.length];
+        return first + (first.equals("King") ? "s" : "") + end;
+    }
+
+    private static final String[] MINE_FIRST = {"Iron", "Copper", "Black", "Deep", "Grey", "Coal", "Lode", "Stone", "Red", "Tin", "Ore", "Silver"};
+    private static final String[] MINE_END = {"pit", "shaft", "heugh", "hollow", "delve", "brough", "dale", "gill"};
+
+    /** A mining town's name ("Blackshaft", "Copperheugh"). */
+    static String mining(int family, long seed) {
+        Random r = new Random(seed ^ 0x313EDL);
+        return MINE_FIRST[r.nextInt(MINE_FIRST.length)] + MINE_END[r.nextInt(MINE_END.length)];
+    }
+
+    private static final String[] INN_A = {"Grey", "Green", "Golden", "Old", "Wandering", "Drover's", "Crossed", "Three", "Laughing", "Sleeping",
+            "Red", "Lantern", "Wayfarer's", "Last", "Silver", "Tired"};
+    private static final String[] INN_B = {"Goose", "Hart", "Keys", "Bells", "Mare", "Plough", "Lantern", "Rest", "Hound", "Fox", "Wheel",
+            "Anchor", "Ox", "Kettle", "Mile", "Pilgrim"};
+
+    /** A wayhouse's name, as its sign says it ("The Grey Goose", "The Drover's Rest"). */
+    static String inn(long seed) {
+        Random r = new Random(seed ^ 0x1AA5EEDL);
+        String a = INN_A[r.nextInt(INN_A.length)], b = INN_B[r.nextInt(INN_B.length)];
+        if (a.equals("Three")) b = b.endsWith("s") ? b : r.nextBoolean() ? "Bells" : "Keys";
+        if (a.equals("Crossed")) b = "Keys";
+        if (b.equals("Lantern") && a.equals("Lantern")) b = "Rest";
+        return "The " + a + " " + b;
+    }
+
     private static final String[] GIVEN_M = {"Bren", "Corin", "Tam", "Aldo", "Harl", "Oswin", "Piet", "Rowan", "Edric", "Fenn", "Gus",
             "Hob", "Ivo", "Jory", "Kel", "Lorn", "Mattis", "Ned", "Osric", "Perrin", "Quill", "Ruel", "Sefton", "Tobin", "Ulric", "Walt",
             "Yorick", "Bastian", "Dunstan", "Garrick"};

@@ -34,7 +34,8 @@ final class VillageCommands {
     private VillageCommands() {}
 
     static final List<String> VIEWS = List.of("hill", "green", "street", "inn", "smithy", "mill", "dock", "field", "pen", "notice", "bell",
-            "house1", "house2", "night");
+            "house1", "house2", "night", "gate", "gate_out", "market", "scribe", "wall", "pass", "head", "shaft", "level1", "winze", "face", "cavern",
+            "stable", "marker", "assay");
 
     static void register() {
         AwakenCommands.add((root, ctx) -> root.then(Commands.literal("village").requires(AwakenCommands.admin())
@@ -53,7 +54,10 @@ final class VillageCommands {
                 .then(Commands.literal("start").executes(c -> start(c.getSource())))
                 .then(dev.awaken.village.trouble.TroubleCommands.node())
                 .then(Commands.literal("grow").executes(c -> grow(c.getSource(), false)).then(Commands.literal("now").executes(c -> grow(c.getSource(), true))))
+                .then(dev.awaken.village.road.RoadCommands.node())
                 .then(Commands.literal("view").then(Commands.argument("key", StringArgumentType.word())
+                        .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("first", "nearest", "nearest_village", "nearest_town", "first_town",
+                                "nearest_mine", "nearest_wayhouse"), b))
                         .then(Commands.argument("name", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(VIEWS, b))
                                 .executes(c -> view(c.getSource(), StringArgumentType.getString(c, "key"), StringArgumentType.getString(c, "name"))))))));
     }
@@ -167,12 +171,34 @@ final class VillageCommands {
     static @Nullable VillagePlan find(ServerLevel level, ServerPlayer p, String key) {
         long seed = level.getSeed();
         int[] centre = SettlementGrid.centre();
-        List<SettlementGrid.Anchor> near = SettlementGrid.near(seed, p.getBlockX(), p.getBlockZ(), 4000, centre);
         if (key.equals("first")) return Plans.of(SettlementGrid.first(seed, centre), terrain(level));
+        // (SPEC §28.9) the first town a player meets: its region's town
+        if (key.equals("first_town")) {
+            var town = dev.awaken.village.road.RoadNet.firstTown();
+            VillagePlan plan = town == null ? null : Plans.of(town, terrain(level));
+            if (plan != null) return plan;
+            key = "nearest_town";
+        }
+        VillagePlan.Kind want = switch (key) {
+            case "nearest_village" -> VillagePlan.Kind.VILLAGE;
+            case "nearest_town" -> VillagePlan.Kind.TOWN;
+            case "nearest_mine" -> VillagePlan.Kind.MINING;
+            case "nearest_wayhouse" -> VillagePlan.Kind.WAYHOUSE;
+            default -> null;
+        };
+        List<SettlementGrid.Anchor> near = new java.util.ArrayList<>(SettlementGrid.near(seed, p.getBlockX(), p.getBlockZ(),
+                want == VillagePlan.Kind.TOWN || want == VillagePlan.Kind.MINING ? 3200 : 4000, centre));
+        // the nearest first: each one asked may have to be planned
+        near.sort(java.util.Comparator.comparingDouble(a -> Math.hypot(a.x() - p.getX(), a.z() - p.getZ())));
         for (SettlementGrid.Anchor a : near) {
-            if (!key.equals("nearest") && !key.equals(a.key()) && !(key.equals("nearest_village") && a.kind() == VillagePlan.Kind.VILLAGE)) continue;
+            if (!key.equals("nearest") && !key.equals(a.key()) && want == null) continue;
+            // the kind a plan takes may differ from its anchor's (a village with no room is a hamlet; a mining town with no
+            // mountain is a village)
+            if (want == VillagePlan.Kind.TOWN && a.kind() != VillagePlan.Kind.TOWN || want == VillagePlan.Kind.WAYHOUSE && a.kind() != VillagePlan.Kind.WAYHOUSE
+                    || want == VillagePlan.Kind.MINING && a.kind() != VillagePlan.Kind.MINING
+                    || want == VillagePlan.Kind.VILLAGE && a.kind() != VillagePlan.Kind.VILLAGE && a.kind() != VillagePlan.Kind.MINING) continue;
             VillagePlan plan = Plans.of(a, terrain(level));
-            if (plan != null && (!key.equals("nearest_village") || plan.kind == VillagePlan.Kind.VILLAGE)) return plan;
+            if (plan != null && (want == null || plan.kind == want)) return plan;
         }
         return null;
     }
@@ -282,6 +308,14 @@ final class VillageCommands {
                 VillagePlan.Dock d = p.dock;
                 if (d == null) return null;
                 return new double[]{d.x0() - 6, d.lift() + 5, d.z0() - 6, d.endX(), d.lift(), d.endZ()};
+            }
+            case "gate", "gate_out", "market", "wall", "pass", "head", "shaft", "level1", "winze", "face", "cavern", "stable", "marker" -> {
+                return dev.awaken.village.road.RoadCommands.frame(p, name);
+            }
+            case "scribe", "assay" -> {
+                // (SPEC §28.9) in a town's packed streets the nearest street point may be behind the shop: frame its door
+                if (p.kind == VillagePlan.Kind.TOWN || p.kind == VillagePlan.Kind.MINING) return dev.awaken.village.road.RoadCommands.frame(p, name);
+                return frameBuilding(p, name);
             }
             default -> {
                 return frameBuilding(p, name);

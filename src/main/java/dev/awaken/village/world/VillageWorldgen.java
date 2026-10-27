@@ -29,6 +29,16 @@ public final class VillageWorldgen {
             () -> (StructurePieceType) (context, tag) -> new VillageMarker(tag));
     public static final DeferredHolder<MapCodec<? extends StructurePlacement>, MapCodec<SettlementPlacement>> GRID = PLACEMENTS.register(
             "settlement_grid", () -> SettlementPlacement.CODEC);
+    /** (SPEC §28.9) A mining town's workings under it. */
+    public static final DeferredHolder<StructurePieceType, StructurePieceType> MINE = PIECES.register("settlement_mine",
+            () -> (StructurePieceType) (context, tag) -> new MinePiece(tag));
+    /** (SPEC §28.9) The roads: a structure of legs on a lattice of chunks, a painter piece per leg. */
+    public static final DeferredHolder<StructureType<?>, StructureType<dev.awaken.village.road.RoadStructure>> ROAD = TYPES.register("road",
+            () -> () -> dev.awaken.village.road.RoadStructure.CODEC);
+    public static final DeferredHolder<StructurePieceType, StructurePieceType> ROAD_PIECE = PIECES.register("road",
+            () -> (StructurePieceType) (context, tag) -> new dev.awaken.village.road.RoadPiece(tag));
+    public static final DeferredHolder<MapCodec<? extends StructurePlacement>, MapCodec<dev.awaken.village.road.RoadPlacement>> ROAD_LATTICE =
+            PLACEMENTS.register("road_lattice", () -> dev.awaken.village.road.RoadPlacement.CODEC);
 
     public static void init(IEventBus modBus) {
         TYPES.register(modBus);

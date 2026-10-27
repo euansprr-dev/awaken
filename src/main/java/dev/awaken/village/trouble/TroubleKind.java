@@ -2,7 +2,7 @@ package dev.awaken.village.trouble;
 
 import org.jspecify.annotations.Nullable;
 
-/** The launch set (SPEC §28.7, PLAN 6.3), the Deep Mine waiting for W7's mining towns. The festival runs through the same director. */
+/** The launch set (SPEC §28.7, PLAN 6.3; the Deep Mine with W7's mining towns, §28.9). The festival runs through the same director. */
 public enum TroubleKind {
     TAKEN("taken", "Taken"),
     BURNING("burning", "The Burning"),
@@ -10,7 +10,8 @@ public enum TroubleKind {
     BELL("bell", "The Bell"),
     MISSING("missing", "Gone Missing"),
     GREY_FIELDS("grey_fields", "The Grey Fields"),
-    FESTIVAL("festival", "The Festival");
+    FESTIVAL("festival", "The Festival"),
+    DEEP_MINE("deep_mine", "The Deep Mine");
 
     public final String id, title;
 

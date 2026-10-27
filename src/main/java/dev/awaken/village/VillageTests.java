@@ -23,6 +23,7 @@ final class VillageTests {
     static void register() {
         AwakenTests.register("village_plan_deterministic", 400, VillageTests::deterministic);
         AwakenTests.registerIsolated("village_trade", 400, VillageTests::trade);
+        dev.awaken.village.road.RoadTests.register();
     }
 
     /**
@@ -204,6 +205,18 @@ final class VillageTests {
                 survey(h, 26102610L, 2600);
             } catch (java.io.IOException e) {
                 h.fail("survey: " + e);
+                return;
+            }
+        }
+        if (java.nio.file.Files.exists(dir.resolve("road-survey.request"))) {
+            try {
+                String[] ask = java.nio.file.Files.readString(dir.resolve("road-survey.request")).trim().split("\\s+");
+                long seed = ask.length > 0 && !ask[0].isEmpty() ? Long.parseLong(ask[0]) : 26102610L;
+                int radius = ask.length > 1 ? Integer.parseInt(ask[1]) : 2400;
+                dev.awaken.village.road.RoadStudio.survey(h.getLevel(), seed, radius, dir);
+            } catch (java.io.IOException | RuntimeException e) {
+                Awaken.LOG.error("[road] survey failed", e);
+                h.fail("road survey: " + e);
                 return;
             }
         }

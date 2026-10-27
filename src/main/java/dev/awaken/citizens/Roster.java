@@ -37,11 +37,13 @@ public final class Roster {
             CRIER = 7, BOATMAN = 8, WASHER = 9, MASON = 10, RUNNER = 11, SHOPKEEPER = 12, TAVERNKEEPER = 13, CLERK = 14,
             ARCHIVIST = 15, HEALER = 16, MILLER = 17, CHILD = 18, RESIDENT = 19, THIEF = 20,
             // (SPEC §28.6) the villages' own trades, appended: the city's ids never move
-            FARMER = 21, SHEPHERD = 22, WOODCUTTER = 23, MINER = 24, FISHER = 25, HUNTER = 26, CARTER = 27, ELDER = 28, SCRIBE = 29;
+            FARMER = 21, SHEPHERD = 22, WOODCUTTER = 23, MINER = 24, FISHER = 25, HUNTER = 26, CARTER = 27, ELDER = 28, SCRIBE = 29,
+            // (SPEC §28.9) a mining town's store
+            ASSAYER = 30;
     public static final String[] JOBS = {"lamplighter", "bellringer", "porter", "stallkeeper", "baker", "smith", "watch",
             "crier", "boatman", "washer", "mason", "runner", "shopkeeper", "tavernkeeper", "clerk", "archivist", "healer",
             "miller", "child", "resident", "thief", "farmer", "shepherd", "woodcutter", "miner", "fisher", "hunter", "carter",
-            "elder", "scribe"};
+            "elder", "scribe", "assayer"};
     // schedule acts
     public static final byte HOME = 0, INSIDE = 1, STAND = 2, ROUND = 3, CARRY = 4, WANDER = 5;
     public static final String[] ACTS = {"home", "inside", "stand", "round", "carry", "wander"};

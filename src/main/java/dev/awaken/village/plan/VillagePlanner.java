@@ -32,7 +32,12 @@ public final class VillagePlanner {
      * (the city's reserve) over world columns.
      */
     public record Request(String key, long seed, int anchorX, int anchorZ, Kind kind, boolean first, int minX, int minZ, int maxX, int maxZ,
-                          BiPredicate<Integer, Integer> reserved) {}
+                          BiPredicate<Integer, Integer> reserved) {
+        /** The same request for another kind (a village that has no room plans as a hamlet). */
+        public Request as(Kind k) {
+            return new Request(key, seed, anchorX, anchorZ, k, first, minX, minZ, maxX, maxZ, reserved);
+        }
+    }
 
     public static final int SEARCH = 32, FIRST_SEARCH = 64;
     static final int STEP = 6;
@@ -50,11 +55,26 @@ public final class VillagePlanner {
      * room for itself becomes a hamlet on the same anchor.
      */
     public static @Nullable VillagePlan plan(Request q, Terrain t) {
+        // (SPEC §28.9) a region's town, a crossroads' wayhouse, a mining town (where no mountain is near, a village)
+        switch (q.kind()) {
+            case TOWN -> {
+                return TownPlanner.plan(q, t);
+            }
+            case WAYHOUSE -> {
+                return new WayhousePlanner.WayWork(q, t).run();
+            }
+            case MINING -> {
+                VillagePlan m = MinePlanner.plan(q, t);
+                if (m != null) return m;
+                q = q.as(Kind.VILLAGE);
+            }
+            default -> {
+            }
+        }
         VillagePlan p = new Work(q, t).run();
         if (p == null && q.kind() == Kind.VILLAGE) {
             String why = WHY.get();
-            p = new Work(new Request(q.key(), q.seed(), q.anchorX(), q.anchorZ(), Kind.HAMLET, q.first(), q.minX(), q.minZ(), q.maxX(), q.maxZ(),
-                    q.reserved()), t).run();
+            p = new Work(q.as(Kind.HAMLET), t).run();
             if (p == null) WHY.set("village: " + why + "; hamlet: " + WHY.get());
         }
         return p;
@@ -62,7 +82,7 @@ public final class VillagePlanner {
 
     // ---- the work of one plan -------------------------------------------------------------------------------------
 
-    private static final class Work {
+    static class Work {
         final Request q;
         final Terrain t;
         final Random rnd;
@@ -78,7 +98,7 @@ public final class VillagePlanner {
             this.q = q;
             this.t = t;
             this.rnd = new Random(q.seed() ^ 0x77A1_1A6EL);
-            this.village = q.kind() == Kind.VILLAGE;
+            this.village = q.kind() == Kind.VILLAGE || q.kind() == Kind.MINING || q.kind() == Kind.TOWN;
         }
 
         /** The land at a column, read once ({top, water}). */
@@ -118,6 +138,7 @@ public final class VillagePlanner {
             ground();
             green();
             streets();
+            keepExits();
             buildings();
             if (plan.plots.size() < (village ? 6 : q.first() ? 2 : 3)) {
                 WHY.set("only " + plan.plots.size() + " buildings fit");
@@ -283,7 +304,39 @@ public final class VillagePlanner {
         }
 
         boolean free(int x, int z) {
-            return plan.kind(x, z) == FREE;
+            return plan.kind(x, z) == FREE && !kept(x, z);
+        }
+
+        /** (SPEC §28.9) The ground kept clear beyond each street end roads leave by: no field, pen, garden, tree or house there. */
+        boolean[] kept;
+
+        boolean kept(int x, int z) {
+            return kept != null && plan.inRaster(x, z) && kept[plan.idx(x, z)];
+        }
+
+        /** Keeps a way fourteen wide clear from each exit's street end out to the raster's edge, for the road. */
+        void keepExits() {
+            kept = new boolean[plan.n * plan.n];
+            for (VillagePlan.Street st : plan.streets) {
+                if (!plan.exits(st) || st.points() < 2) continue;
+                for (int end = 0; end < 2; end++) {
+                    if (!plan.exitAt(st, end)) continue;
+                    int a = end == 0 ? 0 : st.points() - 1, b = end == 0 ? 1 : st.points() - 2;
+                    float dx = st.x()[a] - st.x()[b], dz = st.z()[a] - st.z()[b];
+                    float l = (float) Math.hypot(dx, dz);
+                    if (l < 1e-3f) continue;
+                    dx /= l;
+                    dz /= l;
+                    for (int k = 0; k <= 2 * r; k++) {
+                        float px = st.x()[a] + dx * k, pz = st.z()[a] + dz * k;
+                        if (!plan.inRaster(Math.round(px), Math.round(pz))) break;
+                        for (int w = -7; w <= 7; w++) {
+                            int cxk = Math.round(px - dz * w), czk = Math.round(pz + dx * w);
+                            if (plan.inRaster(cxk, czk)) kept[plan.idx(cxk, czk)] = true;
+                        }
+                    }
+                }
+            }
         }
 
         boolean dry(int x, int z) {
@@ -350,6 +403,21 @@ public final class VillagePlanner {
             }
         }
 
+        /** Where a street may run (a town keeps its lanes inside its walls). */
+        boolean walkable(int x, int z) {
+            return x * x + z * z <= (r - 12) * (r - 12);
+        }
+
+        /** Where a building, garden or tree may stand. */
+        boolean within(int x, int z, int margin) {
+            return x * x + z * z <= (r - margin) * (r - margin);
+        }
+
+        /** How far out from the green fields and pens lie: {nearest, furthest}. */
+        int[] fieldBand() {
+            return new int[]{plan.greenR + 10, plan.greenR + 10 + Math.max(1, Math.min(r - plan.greenR - 24, 48))};
+        }
+
         /** A street's centre line from (x, z) toward a heading, step by step along the easiest ground; stops at water, cliffs, the edge. */
         List<float[]> walk(float x0, float z0, double heading, int length, double climb) {
             List<float[]> pts = new ArrayList<>();
@@ -364,12 +432,12 @@ public final class VillagePlanner {
                     double th = h + turn * Math.toRadians(12);
                     float nx = x + (float) (Math.cos(th) * STEP), nz = z + (float) (Math.sin(th) * STEP);
                     int ix = Math.round(nx), iz = Math.round(nz);
-                    if (ix * ix + iz * iz > (r - 12) * (r - 12) || !dry(ix, iz) || water(ix, iz) > 0.2f) continue;
+                    if (!walkable(ix, iz) || !dry(ix, iz) || water(ix, iz) > 0.2f) continue;
                     if (q.reserved().test(cx + ix, cz + iz)) continue;
                     byte k = plan.kind(ix, iz);
-                    if ((k == STREET || k == LANE) && s > 1) continue; // never back across a street
+                    if ((k == STREET || k == LANE) && s > 1 && !joins()) continue; // never back across a street (a town's lane joins it)
                     float dh = Math.abs(height(ix, iz) - height(Math.round(x), Math.round(z)));
-                    double cost = dh * 3 + Math.abs(turn) * 0.7 + Math.abs(height(ix, iz) - baseY) * 0.05;
+                    double cost = dh * 3 + Math.abs(turn) * turnCost() + Math.abs(height(ix, iz) - baseY) * 0.05;
                     if (dh > 3 * climb) continue;
                     if (cost < bestCost) {
                         bestCost = cost;
@@ -379,12 +447,41 @@ public final class VillagePlanner {
                     }
                 }
                 if (bestCost == Double.MAX_VALUE) break;
+                // (a town's grid) a lane that meets another street stops there: a T-junction, never a crossing
+                if (joins() && s > 0) {
+                    float[] hit = meets(x, z, bx, bz);
+                    if (hit != null) {
+                        pts.add(hit);
+                        break;
+                    }
+                }
                 x = bx;
                 z = bz;
                 h = bestH;
                 pts.add(new float[]{x, z});
             }
             return pts;
+        }
+
+        /** What a street's walk pays to turn a step (a town's lanes keep straighter than a village's). */
+        double turnCost() {
+            return 0.7;
+        }
+
+        /** Whether lanes end where they meet another street (a town's grid; a village's lanes keep W3's ways). */
+        boolean joins() {
+            return false;
+        }
+
+        /** The first street cell on the step from (x, z) to (bx, bz), a block at a time, or null. */
+        float @Nullable [] meets(float x, float z, float bx, float bz) {
+            int n = (int) Math.ceil(Math.hypot(bx - x, bz - z));
+            for (int k = 1; k <= n; k++) {
+                float px = x + (bx - x) * k / n, pz = z + (bz - z) * k / n;
+                byte kk = plan.kind(Math.round(px), Math.round(pz));
+                if (kk == STREET || kk == LANE) return new float[]{px, pz};
+            }
+            return null;
         }
 
         void addStreet(int rank, float width, List<float[]> pts, int fixedIndex) {
@@ -499,19 +596,28 @@ public final class VillagePlanner {
             }
         }
 
-        private void place(Want w, List<int[]> slots) {
-            for (int[] sl : slots) if (place(w, sl[0], sl[1], sl[2])) return;
+        void place(Want w, List<int[]> slots) {
+            for (int[] sl : slots) if (place(w, sl[0], sl[1], sl[2], sl.length > 3 ? sl[3] : 0)) return;
         }
 
         double slotDist(int[] sl) {
             VillagePlan.Street st = plan.streets.get(sl[0]);
-            double d = Math.hypot(st.x()[sl[1]], st.z()[sl[1]]);
+            int k = sl[1], k1 = Math.min(st.points() - 1, k + 1);
+            float f = sl.length > 3 ? sl[3] / (float) STEP : 0;
+            double d = Math.hypot(st.x()[k] + (st.x()[k1] - st.x()[k]) * f, st.z()[k] + (st.z()[k1] - st.z()[k]) * f);
             // each side of a street fills house by house; lanes a little after the main street
             return d + st.rank() * 6 + (sl[2] > 0 ? 0.5 : 0);
         }
 
-        /** Tries a building beside street s at point k on one side: front to the street, a yard round it, level with the paving. */
         boolean place(Want w, int s, int k, int side) {
+            return place(w, s, k, side, 0);
+        }
+
+        /**
+         * Tries a building beside street s at point k on one side (moved {@code shift} blocks along the street): front to
+         * the street, a yard round it, level with the paving.
+         */
+        boolean place(Want w, int s, int k, int side, int shift) {
             VillagePlan.Street st = plan.streets.get(s);
             int n = st.points();
             float tx = st.x()[Math.min(n - 1, k + 1)] - st.x()[Math.max(0, k - 1)], tz = st.z()[Math.min(n - 1, k + 1)] - st.z()[Math.max(0, k - 1)];
@@ -532,12 +638,12 @@ public final class VillagePlanner {
             }
             int wx = alongX ? w.w() : w.d(), wz = alongX ? w.d() : w.w();
             float off = st.width() / 2f + w.setback() + 0.5f + (alongX ? wz : wx) / 2f;
-            float hx = st.x()[k] + nx * off, hz = st.z()[k] + nz * off;
+            float hx = st.x()[k] + nx * off + tx * shift, hz = st.z()[k] + nz * off + tz * shift;
             int x0 = Math.round(hx - (wx - 1) / 2f), z0 = Math.round(hz - (wz - 1) / 2f), x1 = x0 + wx - 1, z1 = z0 + wz - 1;
             // all of it inside, on free dry ground, a free ring round it
             for (int z = z0 - 1; z <= z1 + 1; z++) {
                 for (int x = x0 - 1; x <= x1 + 1; x++) {
-                    if (x * x + z * z > (r - 4) * (r - 4)) return false;
+                    if (!within(x, z, 4) || kept(x, z)) return false;
                     byte kk = plan.kind(x, z);
                     boolean ring = x < x0 || x > x1 || z < z0 || z > z1;
                     if (ring ? kk != FREE && kk != YARD && kk != GARDEN : kk != FREE) return false;
@@ -859,7 +965,7 @@ public final class VillagePlanner {
             float lo = Float.MAX_VALUE, hi = -Float.MAX_VALUE;
             for (int z = z0; z <= z1; z++) {
                 for (int x = x0; x <= x1; x++) {
-                    if (x * x + z * z > (r - 3) * (r - 3)) return false;
+                    if (!within(x, z, 3) || kept(x, z)) return false;
                     byte k = plan.kind(x, z);
                     if (k != FREE && k != YARD) return false;
                     if (q.reserved().test(cx + x, cz + z)) return false;
@@ -884,7 +990,7 @@ public final class VillagePlanner {
                 for (int dz = -2; dz <= 2 && ok; dz++)
                     for (int dx = -2; dx <= 2 && ok; dx++) {
                         byte k = plan.kind(x + dx, z + dz);
-                        ok = (k == FREE || k == YARD) && (Math.abs(dx) == 2 || Math.abs(dz) == 2 || k != YARD || !nextToPlot(x + dx, z + dz));
+                        ok = (k == FREE || k == YARD) && !kept(x + dx, z + dz) && (Math.abs(dx) == 2 || Math.abs(dz) == 2 || k != YARD || !nextToPlot(x + dx, z + dz));
                     }
                 // the canopy keeps clear of every wall
                 for (int dz = -3; dz <= 3 && ok; dz++) for (int dx = -3; dx <= 3 && ok; dx++) ok = plan.kind(x + dx, z + dz) != PLOT;
@@ -938,7 +1044,8 @@ public final class VillagePlanner {
             int made = 0;
             for (int tries = 0; tries < 420 && made < want; tries++) {
                 double ang = rnd.nextDouble() * Math.PI * 2;
-                int dist = plan.greenR + 10 + rnd.nextInt(Math.max(1, Math.min(r - plan.greenR - 24, 48)));
+                int[] band = fieldBand();
+                int dist = band[0] + rnd.nextInt(Math.max(1, band[1] - band[0]));
                 int fcx = (int) Math.round(Math.cos(ang) * dist), fcz = (int) Math.round(Math.sin(ang) * dist);
                 boolean rowsX = rnd.nextBoolean();
                 int fw = 9 + rnd.nextInt(4) * 2, fd = 7 + rnd.nextInt(2) * 2;
@@ -968,7 +1075,8 @@ public final class VillagePlanner {
             int made = 0;
             for (int tries = 0; tries < 200 && made < want; tries++) {
                 double ang = rnd.nextDouble() * Math.PI * 2;
-                int dist = plan.greenR + 10 + rnd.nextInt(Math.max(1, r - plan.greenR - 24));
+                int[] band = fieldBand();
+                int dist = band[0] + rnd.nextInt(Math.max(1, band[1] - band[0]));
                 int pcx = (int) Math.round(Math.cos(ang) * dist), pcz = (int) Math.round(Math.sin(ang) * dist);
                 int wx = 7 + rnd.nextInt(2), wz = 6 + rnd.nextInt(2);
                 int x0 = pcx - wx / 2, z0 = pcz - wz / 2, x1 = x0 + wx - 1, z1 = z0 + wz - 1;
@@ -1036,7 +1144,7 @@ public final class VillagePlanner {
         // ---- lamps, the bell, the well and the street's things -----------------------------------------------------
 
         void lamps() {
-            int max = village ? 14 : 5;
+            int max = maxLamps();
             // round the green first: four at its corners, then along the streets every fourteen blocks or so
             int g = plan.greenR;
             int[][] corners = {{g - 1, g - 1}, {-g + 1, g - 1}, {g - 1, -g + 1}, {-g + 1, -g + 1}};
@@ -1060,6 +1168,10 @@ public final class VillagePlanner {
             }
         }
 
+        int maxLamps() {
+            return village ? 14 : 5;
+        }
+
         void lamp(int x, int z) {
             int[] near = nearestPoint(x, z);
             if (near == null) return;
@@ -1067,6 +1179,12 @@ public final class VillagePlanner {
         }
 
         void props() {
+            civic();
+            around();
+        }
+
+        /** The green's things: the well, the bell, the notice board, benches round the well, a village's stall. */
+        void civic() {
             int g = plan.greenR;
             // the well a little off the green's middle (the street runs through it), the bell across from it
             VillagePlan.Street main = plan.streets.getFirst();
@@ -1120,6 +1238,10 @@ public final class VillagePlanner {
                 for (int z = sz; z <= sz + 1 && ok; z++) for (int x = sx; x <= sx + 3 && ok; x++) ok = plan.kind(x, z) == SQUARE;
                 if (ok) plan.props.add(new Prop("stall", sx, sz, sx + 3, sz + 1, 0, "S", rnd.nextInt(6), ""));
             }
+        }
+
+        /** Round the buildings and the edge: carts, stacks, planters, the woodcutter's log stack, nets by the dock. */
+        void around() {
             // round the buildings: a cart by the inn and the barn, crates by the smithy and the granary, a planter by doors
             for (VillagePlan.Building bd : plan.buildings) {
                 Plot p = plan.plots.get(bd.plot());
@@ -1227,6 +1349,13 @@ public final class VillagePlanner {
 
         // ---- the people ---------------------------------------------------------------------------------------------
 
+        int[] peopleBounds() {
+            return village ? new int[]{20, 50} : new int[]{8, 16};
+        }
+
+        /** Jobs a bigger place adds to the list (the town's Watch at its gates, its stallkeepers, its scribe). */
+        void moreJobs(List<String[]> jobs) {}
+
         void people() {
             Random pr = new Random(q.seed() ^ 0x9E0B1E5L);
             // the jobs the place has work for, in the order they're handed out to the households' adults
@@ -1241,7 +1370,8 @@ public final class VillagePlanner {
                 }
             }
             for (int f = 0; f < plan.fields.size(); f++) jobs.add(new String[]{"farmer", "field", String.valueOf(f)});
-            for (int p = 0; p < plan.pens.size(); p++) jobs.add(new String[]{"shepherd", "pen", String.valueOf(p)});
+            // a wayhouse's paddock is kept by its stable hand (leads, saddles, hay), every other pen by a shepherd
+            for (int p = 0; p < plan.pens.size(); p++) jobs.add(new String[]{plan.pens.get(p).beast().equals("horse") ? "carter" : "shepherd", "pen", String.valueOf(p)});
             if (plan.dock != null) jobs.add(new String[]{"fisher", "dock", "0"});
             if (woods >= 0) jobs.add(new String[]{"woodcutter", "post", String.valueOf(woods)});
             jobs.add(new String[]{"hunter", "post", "0"});
@@ -1257,6 +1387,7 @@ public final class VillagePlanner {
                 jobs.add(new String[]{"carter", "green", "3"});
                 if (plan.fields.size() > 3) jobs.add(new String[]{"farmer", "field", "0"});
                 if (plan.family == VillageStyles.HIGHLAND) jobs.add(new String[]{"miner", "post", "0"});
+                moreJobs(jobs);
             } else {
                 jobs.add(new String[]{"elder", "green", "0"});
                 jobs.add(new String[]{"lamplighter", "lamps", "0"});
@@ -1266,7 +1397,7 @@ public final class VillagePlanner {
             // households: one per house and the inn; the smithy's smith lives in the house nearest it
             for (int k = 0; k < plan.buildings.size(); k++) {
                 VillagePlan.Building b = plan.buildings.get(k);
-                if (!b.use().equals("house") && !b.use().equals("inn")) continue;
+                if (!b.use().equals("house") && !b.use().equals("inn") && !b.use().equals("scribe") && !b.use().equals("hall") && !b.use().equals("assay")) continue;
                 int hid = plan.households.size();
                 String fam = Names.family(pr);
                 plan.households.add(new VillagePlan.Household(hid, k, fam));
@@ -1286,6 +1417,21 @@ public final class VillagePlanner {
                                 jobs.remove(j);
                                 break;
                             }
+                    } else if (b.use().equals("scribe") && a == 0) {
+                        // (SPEC §28.9) the town's scribe keeps the shop they live over
+                        job = "scribe";
+                        work = "scribe";
+                        wi = k;
+                        jobs.removeIf(j -> j[0].equals("scribe"));
+                    } else if (b.use().equals("assay") && a == 0) {
+                        // (SPEC §28.9) a mining town's assayer keeps the store of the mine's ore
+                        job = "assayer";
+                        work = "assay";
+                        wi = k;
+                    } else if (b.use().equals("hall") && a == 0) {
+                        job = "elder";
+                        work = "green";
+                        jobs.removeIf(j -> j[0].equals("elder"));
                     } else if (age < 3 && next < jobs.size()) {
                         String[] j = jobs.get(next++);
                         job = j[0];
@@ -1305,7 +1451,8 @@ public final class VillagePlanner {
             }
             // a hamlet is eight to sixteen people, a village twenty to fifty: children fill a short count, the youngest
             // leave a long one (a lodger or a grandchild, never a worker)
-            int min = village ? 20 : 8, max = village ? 50 : 16;
+            int[] bounds = peopleBounds();
+            int min = bounds[0], max = bounds[1];
             for (int k = 0; plan.people.size() < min && !plan.households.isEmpty() && k < 64; k++) {
                 VillagePlan.Household h = plan.households.get(k % plan.households.size());
                 boolean female = pr.nextBoolean();

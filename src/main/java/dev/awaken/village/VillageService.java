@@ -222,7 +222,7 @@ public final class VillageService {
     // ---- talking, trading ---------------------------------------------------------------------------------------------
 
     static final Set<String> TRADERS = Set.of("farmer", "shepherd", "woodcutter", "miner", "fisher", "hunter", "smith", "miller", "tavernkeeper",
-            "healer", "scribe", "carter", "stallkeeper");
+            "healer", "scribe", "carter", "stallkeeper", "assayer");
 
     /** Someone a player spoke to: a trader opens their goods, the elder tells the news; anyone else greets them. */
     static boolean talk(ServerPlayer p, Settlement s, int rec) {
@@ -246,6 +246,16 @@ public final class VillageService {
         if (!TRADERS.contains(job)) return false;
         List<Trade.Deal> deals = Trade.deals(job, l.plan().family, l.plan().seed ^ rec, today(p.level().getServer()), (ServerLevel) p.level());
         if (deals == null || deals.isEmpty()) return false;
+        // (SPEC §28.9) the day a caravan came in, the stalls carry what it brought from where it set out
+        int came = l.rec().count(today(p.level().getServer()), "caravan_land");
+        if (job.equals("stallkeeper") && came > 0) {
+            deals = new ArrayList<>(deals);
+            Trade.specialty(deals, came - 1);
+        }
+        // a mining town's store has no ore while its mine is shut
+        if (job.equals("assayer") && dev.awaken.village.trouble.DeepMine.shut(p.level().getServer(), l.key())) {
+            deals = new ArrayList<>(deals.stream().filter(d -> d.buys() || d.id().equals("lantern")).toList());
+        }
         String opener = switch (job) {
             case "tavernkeeper" -> lines.pick(seed, tod, "village.inn.offer");
             case "scribe" -> lines.pick(seed, tod, "village.scribe.open");
@@ -292,6 +302,15 @@ public final class VillageService {
             int tod = (int) Math.floorMod(p.level().getOverworldClockTime(), 24000L);
             say(p, l, rec, Lines.get().pick(p.level().getGameTime(), tod, "village.trade.done"), 70);
         }
+    }
+
+    /** (SPEC §28.9) A caravan came in: today its stalls sell the goods of the land it set out from. */
+    public static void caravan(MinecraftServer server, Live l, String from) {
+        long today = today(server);
+        int fam = Math.floorMod(from.hashCode(), dev.awaken.city.VillageStyles.FAMILIES.length);
+        if (fam == l.plan().family) fam = (fam + 3) % dev.awaken.city.VillageStyles.FAMILIES.length;
+        if (l.rec().count(today, "caravan_land") == 0) l.rec().add(today, "caravan_land", fam + 1);
+        VillageState.get(server).setDirty();
     }
 
     // ---- the voice: standing names and place names in lines ----------------------------------------------------------

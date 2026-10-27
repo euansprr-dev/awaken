@@ -41,19 +41,31 @@ public final class VillageModule {
 
     public static void init(IEventBus modBus) {
         VillageWorldgen.init(modBus);
+        dev.awaken.village.road.RoadAtlas.init(modBus);
         VillageContent.register(modBus);
         modBus.addListener(VillageModule::onAddPackFinders);
         modBus.addListener(VillageNet::register);
         // after terrain has chosen the city's site (default priority): plans cleared, the first hamlet's spot found
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, (ServerAboutToStartEvent e) -> {
             Plans.clear();
-            if (VillageService.enabled(e.getServer())) dev.awaken.village.world.FirstHamlet.find(e.getServer());
+            dev.awaken.village.road.RoadNet.clear();
+            dev.awaken.village.road.RoadWorld.close();
+            if (VillageService.enabled(e.getServer())) {
+                dev.awaken.village.world.FirstHamlet.find(e.getServer());
+                // (SPEC §28.9) the roads read the same land, the region map's hearts and the first town from here on
+                dev.awaken.village.road.RoadWorld.open(e.getServer());
+            }
         });
         NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> {
+            dev.awaken.village.road.RoadNet.stopAhead();
             Plans.clear();
+            dev.awaken.village.road.RoadNet.clear();
+            dev.awaken.village.road.RoadWorld.close();
             VillageService.serverStopped();
         });
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> VillageService.tick(e.getServer()));
+        NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> dev.awaken.village.road.RoadAtlas.tick(e.getServer()));
+        NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> dev.awaken.village.road.RoadNet.prefetch(e.getServer()));
         NeoForge.EVENT_BUS.addListener(Inn::onRespawn);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, VillageModule::onBroken);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, VillageModule::onExploded);
@@ -65,6 +77,9 @@ public final class VillageModule {
         Settlements.installVoice(new VillageService.Voice());
         EconomyHooks.install(new Emeralds());
         Villages.install(new VillagesAccess());
+        // (SPEC §28.9) the roads for the World Pulse's caravans
+        dev.awaken.core.api.RoadHooks.install(new dev.awaken.village.road.RoadAccess());
+        dev.awaken.village.road.RoadAccess.installHearths();
         MusicLayers.register(MusicLayers.Slot.AMBIENCE, 90, "village", VillageModule::soundscape);
         VillageCommands.register();
         VillageTests.register();

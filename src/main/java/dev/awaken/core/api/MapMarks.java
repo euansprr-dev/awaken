@@ -33,6 +33,28 @@ public final class MapMarks {
         List<Gate> gates(Player player);
     }
 
+    /**
+     * (SPEC §28.9) A line on the map: a road walked, its points (x, z pairs in world blocks) in order, its colour and
+     * width in GUI pixels. Drawn on land the player knows, under the marks.
+     */
+    public record Line(int[] xz, int colour, int width) {}
+
+    public interface LineSource {
+        List<Line> lines(Player player);
+    }
+
+    private static final List<LineSource> LINES = new CopyOnWriteArrayList<>();
+
+    public static void registerLines(LineSource source) {
+        LINES.add(source);
+    }
+
+    public static List<Line> lines(Player player) {
+        List<Line> out = new ArrayList<>();
+        for (LineSource s : LINES) out.addAll(s.lines(player));
+        return out;
+    }
+
     private static final List<Source> SOURCES = new CopyOnWriteArrayList<>();
     private static final List<GateSource> GATES = new CopyOnWriteArrayList<>();
 
