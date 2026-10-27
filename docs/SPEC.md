@@ -4446,8 +4446,27 @@ a claw starts at the end of the arm and points along it). Looks are reviewed off
 - **Atlas smooth shading** (decision 26): `AtlasNet.WireTile.levels` (a level byte per explored cell, `Discovery.levels`), `ZoneMap.View.level` (blended between the four nearest cells' middles in the log), `rankRamp`
   (the rank colours blended between the ranks' geometric middles) and `heatRamp` (the plate's colours blended at -10, +5, +15), `AtlasMesh` colours a region column by its level, **H** switches between the land's rank and
   how hard it is for you (the legend follows). Test `atlas_levels`.
+- **First sight** (decision 21, done in Build 6's place): `MarkEvents.onPlayerTick`: once a second, a formed creature within 24 blocks in plain view is a discovery (`form/<layout>/<rung>`, a tenth of a level) and one
+  line ("New form · Tusker: Watch for its gore.", `Forms.nameOf`). The Almanac's Forms page is not built.
 - Tests: `living_signs` (density by rank; every kind builds one piece standing on the ground, under 90 blocks, in all three families), `living_quiet_land`. Two older tests set their zombie's form to vanilla: the test land is
   far out, in S land, where a revenant would stand up from the kill.
+
+**Builds 4 and 5 as built (2026-10-27): Phase F, the part that stands in the world.**
+- **Wonders** (decision 27): `living.wonder.Wonders` (a region's wonder: its kind by the rank of its heart's land, its site 70-200 blocks from the heart on dry, flat ground inside the region, its plan of blocks from a seed;
+  all a pure function of the seed and the region, cached), `WonderFeature` (`awaken:wonders`, step surface_structures, data `worldgen/*/living/wonders.json`: each new chunk writes the share of every wonder within 38
+  blocks, only inside itself, building the ground up under the foot). The ground is the chunk generator's own `getBaseHeight`, so every chunk and the server later agree. Six kinds: the Bell Tree (E-D; a real bell hangs
+  in it), the Boar Throne (D-C), the Statue Field (D-B), the Web Cathedral (C-B), the Gravefield of the Revenants (A: a black house and rows of graves, some open), the Weeping Stones (S). `WonderWatch`:
+  warded (no hostile spawns within 44 blocks), found by standing within 30 blocks (a discovery of 0.15 of a level plus 0.07 a rank, a "New wonder" line, the counter `awaken:wonders_found`, the player's list
+  `awaken:wonders` kept through death) and drawn on the Atlas through `MapMarks`. The region map is warmed at ServerStarted and worldgen asks `RegionService.mapIfReady`.
+- **Surface secrets** (decision 28): `Secrets` and `SecretFeature` (`awaken:secrets`): three per region (a cairn over a brushable cache, a cold camp with a barrel, a marked mound over a chest), 150-400 blocks from the
+  heart on flat dry ground, each cache filled from its rank's loot table (`data/awaken/loot_table/chests/living/secret_0..5.json` and `archaeology/living/secret_0..5.json`: emeralds, iron, gold, essence shards, diamonds,
+  from a netherite scrap in S). Finding one is walking up to it (6 blocks): the "Secrets found" counter, a line, a small discovery for the first of each kind.
+- Dev: `/awaken living wonder list|goto <kind>|build <kind>`; tours `tools/autopilot/wonders.txt`. Tests `living_wonder_sites` (sites inside their regions and ranks, the same every time, the Commons has none; every kind's plan
+  is one piece standing on the ground in all three families), `living_secret_sites`.
+- **Not built, and why**: ten of the sixteen wonder kinds (Frozen Gate, Glass Sea, Upside-down Falls, Giant's Arch, Singing Canyon, Sunken Spire, Petrified Herd, Star Crater, Chain Bridge, Mirror Lake: each is a
+  structure of its own and wants its own look), wonder effects and Codex pages (the Bell Tree's bell rings as any bell does), per-player caches, **treasure maps** (an item with its own art and a clue
+  reader), **the legendary beasts** (Old Greymane, Hush, the Glass Wyrm: they need bodies and a place in the beast registry, the fauna module's), the **eleven chains and nineteen happenings** (Build 6), a sound bed and a
+  colour grade per rank, the Almanac's Forms page, moves for creepers, Arms' tell glint for forms. Signs and wonders consult no settlement's or road's reserve (only natural ground keeps signs off built ground).
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 

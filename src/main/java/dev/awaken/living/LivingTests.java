@@ -589,6 +589,48 @@ final class LivingTests {
             h.succeed();
         });
 
+        AwakenTests.register("living_secret_sites", 200, h -> {
+            // SPEC 21.11 decision 28: three secrets a region at most, inside it, small and joined, each with a cache that has a loot table at every rank
+            var level = h.getLevel();
+            RegionMap map = RegionService.map(level.getServer());
+            long seed = level.getSeed();
+            dev.awaken.living.wonder.Secrets.reset();
+            var flat = new dev.awaken.living.wonder.Wonders.Terrain() {
+                public int ground(int x, int z) { return 70; }
+                public int seaLevel() { return 63; }
+            };
+            java.util.Set<Long> seen = new java.util.HashSet<>();
+            int made = 0;
+            for (int gx = -6; gx <= 6; gx++) for (int gz = -6; gz <= 6; gz++) {
+                RegionMap.Region r = map.regionAt(gx * 800, gz * 800);
+                if (!seen.add(r.id())) continue;
+                var list = dev.awaken.living.wonder.Secrets.of(seed, map, r, flat);
+                if (r.commons()) { h.assertTrue(list.isEmpty(), "none in the Commons"); continue; }
+                h.assertTrue(list.size() <= 3, "at most three a region: " + list.size());
+                java.util.Set<String> kinds = new java.util.HashSet<>();
+                for (var s : list) {
+                    made++;
+                    h.assertTrue(kinds.add(s.kind().id), "no kind twice in a region");
+                    h.assertTrue(map.regionAt(s.x(), s.z()).id() == r.id(), "inside its region");
+                    h.assertTrue(!s.plan().caches().isEmpty(), "holds a cache");
+                    for (var c : s.plan().caches()) {
+                        var st = s.plan().blocks().get(net.minecraft.core.BlockPos.asLong(c.dx(), c.dy(), c.dz()));
+                        h.assertTrue(st != null && (c.brushable() ? st.is(net.minecraft.world.level.block.Blocks.SUSPICIOUS_GRAVEL) : st.is(net.minecraft.world.level.block.Blocks.BARREL) || st.is(net.minecraft.world.level.block.Blocks.CHEST)), "the cache is where the plan says");
+                    }
+                }
+            }
+            h.assertTrue(made >= 50, "regions have their secrets: " + made);
+            for (int rank = 0; rank <= 5; rank++) for (boolean brush : new boolean[]{false, true}) {
+                var table = level.getServer().reloadableRegistries().getLootTable(dev.awaken.living.wonder.Secrets.table(rank, brush));
+                h.assertTrue(table != net.minecraft.world.level.storage.loot.LootTable.EMPTY, "a loot table for rank " + rank + (brush ? " (brushed)" : ""));
+            }
+            for (var kind : dev.awaken.living.wonder.Secrets.Kind.values()) {
+                var plan = dev.awaken.living.wonder.Secrets.planOf(kind, 5L);
+                h.assertTrue(plan.blocks().size() >= 5 && plan.blocks().size() <= 40, kind + " is small: " + plan.blocks().size());
+            }
+            h.succeed();
+        });
+
         AwakenTests.register("living_plate_heat", 20, h -> {
             // the chip's colour by how a creature measures against you: grey far below, blue about your level, orange a good fight, red an insane one
             var P = dev.awaken.living.combat.PlateRules.Heat.class;

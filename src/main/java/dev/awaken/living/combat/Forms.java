@@ -143,6 +143,22 @@ public final class Forms {
         mob.setData(LivingContent.FORM.get(), new Form(rung, family(level.getBiome(mob.blockPosition()).value()), marks));
     }
 
+    /** The names of the five forms of each layout (SPEC §21.11), D to S (what a first sight is called). */
+    private static final java.util.Map<String, String[]> NAMES = java.util.Map.of(
+            "pig", new String[]{"Tusker", "Rootbreaker", "Ember boar", "Boarlord", "Hollow tusk"},
+            "cow", new String[]{"Bullock", "Aurochs", "Thunderhorn", "Stormbull", "Skyhorn"},
+            "sheep", new String[]{"Bighorn", "Ironram", "Cinderfleece", "Stormfleece", "Moonram"},
+            "chicken", new String[]{"Spurhen", "Cockerel", "Firecrest", "Roc-chick", "Sunfowl"},
+            "zombie", new String[]{"Gnawer", "Ironhusk", "Reaver", "Revenant", "Hollow King"},
+            "skeleton", new String[]{"Bonepicker", "Marksman", "Volley", "Wraith archer", "Bone warden"},
+            "spider", new String[]{"Webspinner", "Ambusher", "Spitter", "Broodmother", "Void weaver"},
+            "creeper", new String[]{"Hisser", "Stormbred", "Cinder", "Sapper", "Stormwalker"});
+
+    public static String nameOf(Species sp, int rung) {
+        String[] n = sp == Species.MOOSHROOM ? new String[]{"Sporecow", "Mycelid", "Bloom", "Blightbull", "Heartshroom"} : NAMES.get(sp.layout);
+        return n == null || rung < 1 || rung > n.length ? sp.id : n[rung - 1];
+    }
+
     /** Dev and tours: a creature standing still (no AI, silent, unhurtable) wearing a chosen form, facing {@code yaw} (degrees). */
     public static @Nullable Mob still(ServerLevel level, Species sp, int rung, int family, double x, double y, double z, float yaw) {
         Mob mob = sp.type.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);

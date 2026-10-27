@@ -55,6 +55,12 @@ public final class LivingContent {
                     .serialize(com.mojang.serialization.Codec.STRING.listOf().fieldOf("wonders"), l -> !l.isEmpty())
                     .sync(ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list())).copyOnDeath().build());
 
+    /** The surface secrets a player has found ("kind@x,z"): saved, kept through death, synced to its owner. */
+    public static final Supplier<AttachmentType<java.util.List<String>>> SECRETS = ATTACHMENTS.register("secrets",
+            () -> AttachmentType.<java.util.List<String>>builder(() -> java.util.List.of())
+                    .serialize(com.mojang.serialization.Codec.STRING.listOf().fieldOf("secrets"), l -> !l.isEmpty())
+                    .sync(ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list())).copyOnDeath().build());
+
     /** The form a creature wears (SPEC §21.11): rolled once, saved on the creature, synced to everyone who sees it. */
     public static final Supplier<AttachmentType<dev.awaken.living.combat.Forms.Form>> FORM = ATTACHMENTS.register("wild_form",
             () -> AttachmentType.builder(() -> dev.awaken.living.combat.Forms.Form.UNSET)
@@ -133,6 +139,7 @@ public final class LivingContent {
     static void register(IEventBus modBus) {
         FEATURES.register("wild_signs", () -> dev.awaken.living.signs.WildSignsFeature.CODEC);
         FEATURES.register("wonders", () -> dev.awaken.living.wonder.WonderFeature.CODEC);
+        FEATURES.register("secrets", () -> dev.awaken.living.wonder.SecretFeature.CODEC);
         FEATURES.register(modBus);
         RULES.register(modBus);
         ATTACHMENTS.register(modBus);

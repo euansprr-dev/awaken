@@ -33,6 +33,27 @@ public final class MarkEvents {
         level.playSound(null, mob.getX(), mob.getY(), mob.getZ(), SoundEvents.ZOMBIE_AMBIENT, SoundSource.HOSTILE, 1.4F, 0.5F);
     }
 
+    /**
+     * The first sight of a form is a moment (SPEC §21.11, decision 21): once a second per player, a formed creature within 24 blocks in plain view is a discovery
+     * (a tenth of a level, once for each form of each species) and one line saying what it is and what to watch for.
+     */
+    public static void onPlayerTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post e) {
+        if (!(e.getEntity() instanceof net.minecraft.server.level.ServerPlayer p) || (p.tickCount + p.getId()) % 20 != 0 || !dev.awaken.living.api.Regions.on(p.level())) return;
+        int seen = 0;
+        for (Mob m : p.level().getEntitiesOfClass(Mob.class, p.getBoundingBox().inflate(24), m -> Forms.of(m).worn())) {
+            if (seen++ >= 8) break;
+            Forms.Species sp = Forms.Species.of(m.getType());
+            if (sp == null || !p.hasLineOfSight(m)) continue;
+            int rung = Forms.of(m).rung();
+            if (!dev.awaken.progression.Progression.discover(p, "form/" + sp.layout + "/" + rung, 0.1)) continue;
+            String name = Forms.nameOf(sp, rung);
+            dev.awaken.progression.Progression.markNewThing(p, name);
+            Moves.Def d = Moves.moveOf(sp, rung);
+            String hint = d == null ? "A new body, and a new way of fighting." : "Watch for its " + d.name().toLowerCase(java.util.Locale.ROOT) + ".";
+            dev.awaken.signal.Finds.tell(p, dev.awaken.signal.Finds.Find.of("form", "New form · " + name, name, hint, Moves.COLOUR[Math.max(1, Math.min(5, rung))], false));
+        }
+    }
+
     /** Remember a cobweb to take away. */
     static void expire(ServerLevel level, BlockPos pos, long until) {
         if (Moves.WEBS.size() > 96) Moves.WEBS.poll();

@@ -65,6 +65,7 @@ public final class WonderWatch {
     public static void onPlayerTick(PlayerTickEvent.Post e) {
         if (!(e.getEntity() instanceof ServerPlayer p) || (p.tickCount + p.getId()) % 20 != 0 || !Regions.on(p.level())) return;
         ServerLevel level = (ServerLevel) p.level();
+        findSecrets(p, level);
         for (Wonders.Site s : near(level, p.getBlockX(), p.getBlockZ(), FIND)) {
             if (Math.abs(p.getY() - s.y()) > 60) continue;
             List<String> have = found(p);
@@ -77,6 +78,26 @@ public final class WonderWatch {
             Progression.count(p, "awaken:wonders_found");
             if (fresh) Progression.markNewThing(p, s.kind().display);
             Finds.tell(p, Finds.Find.of("wonder", "New wonder · " + s.kind().display, s.kind().display, s.kind().line + " " + s.regionName() + ".", s.kind().colour, true));
+        }
+    }
+
+    /** Standing at a secret for the first time finds it: a count on "Secrets found", a line once, and the first of each kind is a small discovery. */
+    static void findSecrets(ServerPlayer p, ServerLevel level) {
+        RegionMap map = RegionService.mapIfReady(level.getServer());
+        if (map == null) return;
+        var all = Secrets.near(level.getSeed(), map, terrain(level), p.getBlockX(), p.getBlockZ(), p.getBlockX(), p.getBlockZ(), Secrets.FIND);
+        for (Secrets.Site s : all) {
+            double dx = s.x() - p.getX(), dz = s.z() - p.getZ();
+            if (dx * dx + dz * dz > (double) Secrets.FIND * Secrets.FIND || Math.abs(p.getY() - s.y()) > 6) continue;
+            List<String> have = p.getExistingData(LivingContent.SECRETS).orElse(List.of());
+            if (have.contains(s.key())) continue;
+            List<String> next = new ArrayList<>(have);
+            next.add(s.key());
+            p.setData(LivingContent.SECRETS.get(), List.copyOf(next));
+            Progression.count(p, "awaken:secrets_found");
+            boolean fresh = Progression.discover(p, "secret/" + s.kind().id, 0.1 + 0.03 * s.rank());
+            if (fresh) Progression.markNewThing(p, s.kind().display);
+            Finds.tell(p, Finds.Find.of("secret", "Secret · " + s.kind().display, s.kind().display, s.kind().line, 0xF0C060, true));
         }
     }
 

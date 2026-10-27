@@ -60,7 +60,7 @@ public final class Moves {
     }
 
     /** The move a species has at a rung (none: Retreat and Rise are not goals' work, see {@link #arm}), or null. */
-    static Def moveOf(Species sp, int rung) {
+    public static Def moveOf(Species sp, int rung) {
         Strikes.Kind G = Strikes.Kind.GRAB, P = Strikes.Kind.PERILOUS, H = Strikes.Kind.HEAVY, L = Strikes.Kind.LIGHT, N = Strikes.Kind.NONE;
         switch (sp.layout) {
             case "pig": return switch (rung) {
