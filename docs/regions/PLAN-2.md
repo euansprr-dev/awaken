@@ -1,7 +1,9 @@
 # The Wild Grows Teeth (regions plan 2, Living Wilds finished)
 
-Status: **plan only, nothing built** (2026-10-27). Branch `pack/regions-plan`. Builds on `docs/regions/PLAN.md` (the field, approved and built) and
-`docs/living-wilds/PLAN.md` (the phases). Decisions here continue the regions numbering: **16 to 31**. Page: https://claude.ai/artifact/LhA8jeGxTmYTktau4mmgia (source `docs/regions/page2.html`). SPEC §21.11 is written when Euan approves.
+Status (2026-10-27, after Euan's "go with all recommendations"): **built in `pack/regions-plan`; SPEC §21.11 is the record of what and how**, and says what was not built. In short:
+built are the five forms with their bodies, moves and voices (Builds 1 and 2), the land's signs, a quieter land, ambient air and the Atlas's smooth shading (Build 3), six wonders and the surface secrets with their loot
+(Builds 4 and 5), five more chains for C, B and A land, first sights of forms as discoveries. Not built: ten of the sixteen wonder kinds, treasure maps, the legendary beasts, six of the eleven chains and all nineteen
+new happenings, the creepers' moves, a sound bed and colour grade per rank, the Almanac's Forms page. Page: https://claude.ai/artifact/LhA8jeGxTmYTktau4mmgia (source `docs/regions/page2.html`).
 
 ---
 

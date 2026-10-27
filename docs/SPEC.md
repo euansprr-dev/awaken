@@ -4463,9 +4463,12 @@ a claw starts at the end of the arm and points along it). Looks are reviewed off
   from a netherite scrap in S). Finding one is walking up to it (6 blocks): the "Secrets found" counter, a line, a small discovery for the first of each kind.
 - Dev: `/awaken living wonder list|goto <kind>|build <kind>`; tours `tools/autopilot/wonders.txt`. Tests `living_wonder_sites` (sites inside their regions and ranks, the same every time, the Commons has none; every kind's plan
   is one piece standing on the ground in all three families), `living_secret_sites`.
+- **Chains** (Build 6, the part done): five more for the lands the first nine skip (`data/awaken/awaken/quest/`): Silk on the Road (band 2, Pell, spiders on a road), Iron in the Ranks (band 2, Gus, zombies in scrap iron), Ash on the Wind
+  (band 3, Wren, archers below a ledge), The Bell at the Crossing (band 3, Pell, the dead and a bell), Crowns in the Dark (band 4, Gus, a bone crown on a crag). They use the engine's own objectives and what the land's forms already
+  drop; no new relic.
 - **Not built, and why**: ten of the sixteen wonder kinds (Frozen Gate, Glass Sea, Upside-down Falls, Giant's Arch, Singing Canyon, Sunken Spire, Petrified Herd, Star Crater, Chain Bridge, Mirror Lake: each is a
   structure of its own and wants its own look), wonder effects and Codex pages (the Bell Tree's bell rings as any bell does), per-player caches, **treasure maps** (an item with its own art and a clue
-  reader), **the legendary beasts** (Old Greymane, Hush, the Glass Wyrm: they need bodies and a place in the beast registry, the fauna module's), the **eleven chains and nineteen happenings** (Build 6), a sound bed and a
+  reader), **the legendary beasts** (Old Greymane, Hush, the Glass Wyrm: they need bodies and a place in the beast registry, the fauna module's), six of the **eleven chains** and all **nineteen happenings** (Build 6), a sound bed and a
   colour grade per rank, the Almanac's Forms page, moves for creepers, Arms' tell glint for forms. Signs and wonders consult no settlement's or road's reserve (only natural ground keeps signs off built ground).
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
