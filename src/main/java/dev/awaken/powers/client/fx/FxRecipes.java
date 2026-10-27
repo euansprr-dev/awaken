@@ -741,7 +741,7 @@ final class FxRecipes {
     private static void plantPuff(double x, double y, double z, FxStyle st, float big, Entity stamper) {
         flare(x, y + 0.25, z, 1.3f * big, st, 5);
         decal(x, y, z, CRACK, 1.1f, 0xD82A2420, 70);
-        debris(x, y, z, 0.45f, n((int) (8 * big)), 0.5f, 0.14f);
+        debris(x, y, z, 0.35f, n((int) (4 * big)), 0.35f, 0.1f); // few and low: they start a stride from your eyes
         dustRing(x, y, z, 1.1f, n((int) (12 * big)), st, 0.07f);
         sparks(x, y + 0.1, z, n(8), 0.4f, st, 6, 0.02f, 0, 0.35, 0, 0.25f);
         Minecraft mc = Minecraft.getInstance();

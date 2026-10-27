@@ -8,7 +8,7 @@ import net.minecraft.world.entity.HumanoidArm;
 
 /**
  * Your own boot in first person for the stamp (docs/power-anims/PLAN.md section 5.4, decision D5), a world source of the
- * Hands system: the stamping leg comes up from under the frame, the boot hangs at the bottom of the view for a beat, then
+ * Hands system: the stamping leg comes up from under the frame, the boot hangs at the bottom of the view, above the hotbar, for a beat, then
  * drives down out of it on the plant (tick 5 of {@code CastProfiles} "shockwave"). A real stomp is out of frame (the foot is
  * 75 degrees below the eye), so the boot's places are authored on screen, in the hands' view space, and put into the world
  * the way the hands are ({@link Muzzles#viewToWorld}); Hands draws a leg that near the eye in its own pass. Off with the first
@@ -19,8 +19,8 @@ final class CastLegs {
 
     /** The boot's sole on screen, right-handed (view space: x right, y up, z toward you), by tick: x, y, z, how much shows. */
     private static final float[][] KEYS = {
-            {0, 0.14f, -1.35f, -0.55f, 0f}, {1, 0.15f, -1.10f, -0.75f, 0.6f}, {2, 0.16f, -0.70f, -0.92f, 1f},
-            {3, 0.16f, -0.50f, -0.95f, 1f}, {4, 0.16f, -0.50f, -0.95f, 1f}, {5, 0.14f, -1.00f, -1.00f, 1f},
+            {0, 0.14f, -1.35f, -0.55f, 0f}, {1, 0.15f, -1.05f, -0.75f, 0.6f}, {2, 0.17f, -0.62f, -0.95f, 1f},
+            {3, 0.18f, -0.36f, -1.00f, 1f}, {4, 0.18f, -0.36f, -1.00f, 1f}, {5, 0.14f, -1.00f, -1.00f, 1f},
             {7, 0.14f, -1.25f, -0.90f, 0.6f}, {9, 0.14f, -1.40f, -0.80f, 0f}};
     private static final double[] FOOT = new double[3];
 

@@ -7433,7 +7433,13 @@ setting (D13).
   (CC0 transients and the audio kit, audio_arms' mastering, window `power` -16 +-4 dBFS) and merges their events into
   `merge/powers/.../sounds.json`. Not yet listened to by Euan.
 - **Tour**: `tools/autopilot/power-casts.txt` (`tools/tour-ci.sh ... PACK=feel`): both casts in first person, third person from the front and
-  from behind, clips `pc_*`.
+  from behind, clips `pc_*`, filmed at `/tick rate 4` (the runner renders a few frames a second, so at full speed a 15-tick cast is two
+  frames; the game's own tick rate slows the animation, the effects and the hit-stop together). It skips the opening and waits for the
+  chunks before it builds its platform (the first runs toured the opening's balcony camera, then the sea). Run 40460497291, shots in
+  `docs/power-anims/proof/p0/`: the beam leaves the main fist in first person and the palm in third person (halo orb at the hand, the
+  fists lit); the stamp's hands rise and flare, the boot comes up into the bottom of the frame (it hid behind the hotbar, so its keys were
+  raised afterwards: not re-toured), the wave starts at the foot with a flare, cracks, rubble and dust, and in third person the knee comes up
+  and the foot plants before the dust. The held item leaves the frame the moment a stow clip starts (a pop, not a lowering).
 - **Not in P0** (plan phases P1-P6): profiles for the other 57 casts, sound played on the clients at the muzzle, the Lens pulse and looks, the
   action camera's drop in the shoulder view, the off-hand/CORE light line, the release on the clip's frame for casters with latency, one
   "Cast animation" comfort setting. The weapon pops out of view when a stow clip starts (a lowering is polish).
