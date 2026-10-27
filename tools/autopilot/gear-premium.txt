@@ -52,7 +52,7 @@ shot prem_today_threequarter
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~2.4 180 2
 wait 20
 shot prem_today_back
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-2.4 ~ ~ -90 2
+cmd execute at @e[tag=prem_l,limit=1] run tp @s ~-2.4 ~ ~ -90 2
 wait 20
 shot prem_today_side
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.45 ~ ~-1.0 -24 0
@@ -85,7 +85,7 @@ shot prem_level1_threequarter
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~2.4 180 2
 wait 20
 shot prem_level1_back
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-2.4 ~ ~ -90 2
+cmd execute at @e[tag=prem_l,limit=1] run tp @s ~-2.4 ~ ~ -90 2
 wait 20
 shot prem_level1_side
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.45 ~ ~-1.0 -24 0
@@ -118,7 +118,7 @@ shot prem_level2_threequarter
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~2.4 180 2
 wait 20
 shot prem_level2_back
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-2.4 ~ ~ -90 2
+cmd execute at @e[tag=prem_l,limit=1] run tp @s ~-2.4 ~ ~ -90 2
 wait 20
 shot prem_level2_side
 cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.45 ~ ~-1.0 -24 0
