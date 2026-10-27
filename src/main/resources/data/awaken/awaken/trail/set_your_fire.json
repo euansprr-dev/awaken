@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "title": "Set Your Fire",
+  "area": "home",
+  "blurb": "Find your ground, light the Ember on it, and give it a name.",
+  "weight": 10,
+  "opens": [
+    "holds:awaken:hearth_ember"
+  ],
+  "order": "linear",
+  "steps": [
+    {
+      "id": "carry",
+      "text": "Carry the Hearth Ember.",
+      "done": [
+        "holds:awaken:hearth_ember|hearth"
+      ],
+      "hint": "Ilse or Hettie gives you one when you have none."
+    },
+    {
+      "id": "ground",
+      "text": "Find open, level ground away from gates and the city.",
+      "hint": "The Ember refuses soft or open air, the city, anywhere within 64 blocks of a gate, and another Hearth's ground.",
+      "manual": true
+    },
+    {
+      "id": "set",
+      "text": "Set the Ember down on the top of a block.",
+      "done": [
+        "hearth"
+      ]
+    },
+    {
+      "id": "name",
+      "text": "Name your ground.",
+      "done": [
+        "named"
+      ],
+      "where": "hearth",
+      "hint": "A card offers a name from the land's own words. Enter keeps it."
+    }
+  ],
+  "finish": {
+    "line": "Your fire is lit.",
+    "levels": 0.05
+  }
+}

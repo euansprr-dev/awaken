@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "title": "A Room for Everything",
+  "area": "home",
+  "blurb": "Kitchen, Study, Greenhouse, Stable, Hall and more: each room gives something back.",
+  "weight": 30,
+  "opens": [
+    "room:shelter"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "kitchen",
+      "text": "Make a Kitchen: a stove, a crafting table and a barrel.",
+      "done": [
+        "room:kitchen"
+      ],
+      "hint": "Food made there is home-cooked and lasts half again as long."
+    },
+    {
+      "id": "study",
+      "text": "Make a Study: a lectern and six bookshelves.",
+      "done": [
+        "room:study"
+      ],
+      "hint": "A Study halves the paper your Blueprints cost."
+    },
+    {
+      "id": "greenhouse",
+      "text": "Make a Greenhouse: soil or planted pots under a glass roof.",
+      "done": [
+        "room:greenhouse"
+      ],
+      "hint": "Herbs ripen faster there."
+    },
+    {
+      "id": "stable",
+      "text": "Make a Stable: hay and a fence gate.",
+      "done": [
+        "room:stable"
+      ],
+      "hint": "Your whistle reaches twice as far from home."
+    },
+    {
+      "id": "hall",
+      "text": "Make a Hall: six seats and a table on a floor of 48 or more.",
+      "done": [
+        "room:hall"
+      ],
+      "hint": "A meal eaten there feeds everyone in it."
+    },
+    {
+      "id": "lookout",
+      "text": "Make a Lookout: 12 or more up, with glass on three sides.",
+      "done": [
+        "room:lookout"
+      ],
+      "hint": "It reveals the land 256 blocks round home on the Atlas."
+    },
+    {
+      "id": "bell",
+      "text": "Make a Bell tower: a bell, 8 or more above the ground outside.",
+      "done": [
+        "room:bell_tower"
+      ],
+      "hint": "It warns of a gate break two days ahead."
+    },
+    {
+      "id": "workshop",
+      "text": "Make a Workshop: any Precursor machine in a closed room.",
+      "done": [
+        "room:workshop"
+      ],
+      "hint": "Machines cost less essence to run there."
+    },
+    {
+      "id": "fine",
+      "text": "Raise any room to Fine.",
+      "done": [
+        "grade:fine"
+      ],
+      "hint": "Your Hearth names what a room is missing: light, warmth, room, care or detail."
+    },
+    {
+      "id": "grand",
+      "text": "Raise one room to Grand.",
+      "done": [
+        "grade:grand"
+      ],
+      "hint": "Grand is the top grade, and tier III needs one."
+    }
+  ],
+  "finish": {
+    "line": "Every room you build now gives you something.",
+    "levels": 0.05
+  }
+}

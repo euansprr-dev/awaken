@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "title": "Your Village",
+  "area": "home",
+  "blurb": "People move in, work with what you bring home, and the home grows.",
+  "weight": 40,
+  "opens": [
+    "hearth_tier:1"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "beds",
+      "text": "Build a second bedroom, Snug or better.",
+      "done": [
+        "rooms:bedroom:2"
+      ],
+      "hint": "A spare bed is how someone knows there is room."
+    },
+    {
+      "id": "first",
+      "text": "Welcome the first person who moves in.",
+      "done": [
+        "settlers:1"
+      ],
+      "hint": "Someone you know arrives when a spare bedroom stands and their trade has a room."
+    },
+    {
+      "id": "second",
+      "text": "Welcome a second person.",
+      "done": [
+        "settlers:2"
+      ],
+      "hint": "Ilse wants a Greenhouse, Hettie a field or a pen, a miner a Mine head."
+    },
+    {
+      "id": "tier2",
+      "text": "Reach tier II: four rooms with a Fine one, and a field or a pen.",
+      "done": [
+        "hearth_tier:2"
+      ],
+      "hint": "It needs D-rank. The upgrade is on the Your Hearth screen."
+    },
+    {
+      "id": "tier3",
+      "text": "Reach tier III: a Grand room.",
+      "done": [
+        "hearth_tier:3"
+      ],
+      "show": [
+        "hearth_tier:2"
+      ],
+      "hint": "It needs C-rank."
+    },
+    {
+      "id": "mine",
+      "text": "Build a Mine head: a hatch over 16 or more blocks of climbable shaft.",
+      "done": [
+        "room:mine_head"
+      ],
+      "hint": "Each evening the ore of its depth comes up."
+    },
+    {
+      "id": "tier4",
+      "text": "Reach tier IV: a bell tower and four people.",
+      "done": [
+        "hearth_tier:4"
+      ],
+      "show": [
+        "hearth_tier:3"
+      ],
+      "hint": "Your village is named on the Atlas."
+    },
+    {
+      "id": "tier5",
+      "text": "Reach tier V: eight people with the old ranks and materials.",
+      "done": [
+        "hearth_tier:5"
+      ],
+      "show": [
+        "hearth_tier:4"
+      ]
+    }
+  ],
+  "finish": {
+    "line": "Your home is a village.",
+    "levels": 0.05
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "title": "The Training Grounds",
+  "area": "home",
+  "blurb": "Lay out a course, run it, and beat your own ghost.",
+  "weight": 70,
+  "opens": [
+    "hearth_tier:1"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "course",
+      "text": "Place a Start Gate, numbered Checkpoint Rings and a Finish Gate.",
+      "hint": "Rings join the nearest Start Gate in the order you place them.",
+      "manual": true
+    },
+    {
+      "id": "lap",
+      "text": "Run the course.",
+      "done": [
+        "counter:awaken:training_laps"
+      ],
+      "hint": "Step onto the start to begin. The clock holds at zero while you stand there."
+    },
+    {
+      "id": "record",
+      "text": "Beat your best time.",
+      "done": [
+        "counter:awaken:training_records"
+      ],
+      "hint": "Your best run is replayed as a ghost the next time you leave the start."
+    },
+    {
+      "id": "dummy",
+      "text": "Add a Target Dummy beside the course and strike it.",
+      "hint": "A dummy counts when it is struck or hit by your projectile.",
+      "manual": true
+    }
+  ],
+  "finish": {
+    "line": "You have a course of your own.",
+    "levels": 0.05
+  }
+}

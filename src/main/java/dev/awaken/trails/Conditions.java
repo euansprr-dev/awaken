@@ -23,7 +23,16 @@ public final class Conditions {
         return true;
     }
 
+    /** A token may name alternatives with "|": "cottage|room:sanctuary" holds when either does. */
     public static boolean met(ServerPlayer p, String token) {
+        if (token.indexOf('|') >= 0) {
+            for (String part : token.split("\\|")) if (metOne(p, part)) return true;
+            return false;
+        }
+        return metOne(p, token);
+    }
+
+    private static boolean metOne(ServerPlayer p, String token) {
         int c = token.indexOf(':');
         String family = c < 0 ? token : token.substring(0, c), rest = c < 0 ? "" : token.substring(c + 1);
         switch (family) {
@@ -48,6 +57,10 @@ public final class Conditions {
 
     /** Whether a token is well formed and has an owner (the content test checks every trail with this). */
     public static boolean known(String token) {
+        if (token.indexOf('|') >= 0) {
+            for (String part : token.split("\\|")) if (!known(part)) return false;
+            return true;
+        }
         int c = token.indexOf(':');
         String family = c < 0 ? token : token.substring(0, c), rest = c < 0 ? "" : token.substring(c + 1);
         if (family.equals("holds")) return Identifier.tryParse(rest) != null;
