@@ -439,7 +439,6 @@ from an elite, Warden or camp heart); the final bosses wait for S9's legendary w
 
 - **The boss wields it.** A Lord holds its own Lord-forged weapon in its hand, glinting (a creature's held weapon is only a look,
   `AwakenMob.gearStack`; `docs/combat` already has the weapon models), so you can see what you are fighting for before the fight starts.
-- **The gate card says it** once it shows the Lord: "The Hive Regent may carry its daggers: Royal Dive."
 - **The Armoury's FINDS lists every Lord you have met** with its weapon as a dark silhouette until you own it ("Hive Regent · Daggers
   · not yet", "Lord-forged 1 of 15"), and says "The next Lord is certain to carry its weapon" when the pity has come round.
 - **Tooltips and JEI say it, in words, not percentages:** a Lord-forged or Spoils weapon's tooltip reads "Dropped by: the Hive Regent
@@ -508,7 +507,7 @@ mastery and their tests, ran about 4.5 hours from first to last commit on 2026-1
 | **B · The first hour** | Hale's issue and rack (menu first, the model rack if time), the first-shard find, the shard pity, Ilse's and Marta's pay, the Now line | 2-3 h | `arms_issue`; **Euan plays the first 30 minutes** |
 | **C · The Armoury** | the screen, the band section, Track, Blueprint routing (rack by rank, Forge choose-list, learned styles, migration), the Forge's empty-hand door | 3-4 h | `arms_armoury`, `arms_rack` |
 | **D · Gates, camps and people teach** | the bearer on a gate's first floor and the hoard fallback, the camp heart as a bearer, `style_homes.json`, the gate-card and camp lines, the six chain rewards, the rack plaques, Hale's "Anything on patterns?", the "What waits" entries, plain dialogue | 3-4 h | `arms_gate_pattern` (the bearer drops once per fighter, the fallback pays, a known style gives another of its rank, never the Satchel), `arms_homes` |
-| **E · Boss weapons, finds and Raise** | the two boss rolls per fighter by rank and the weapon pity, the reveal, the Lord wielding its weapon, the gate-card line, the Armoury's FINDS and JEI's Boss drops, guardians, Sovereigns and named beasts, Marked pity and the guaranteed first, Raise, salvage, first-forged moments, the capability clock, the sim gear row (the rates above are set from it) | 3-4 h | `arms_boss_weapon`, `arms_raise`, `arms_marked_pity` |
+| **E · Boss weapons, finds and Raise** | the two boss rolls per fighter by rank and the weapon pity, the reveal, the Lord wielding its weapon, the Armoury's FINDS and JEI's Boss drops, guardians, Sovereigns and named beasts, Marked pity and the guaranteed first, Raise, salvage, first-forged moments, the capability clock, the sim gear row (the rates above are set from it) | 3-4 h | `arms_boss_weapon`, `arms_raise`, `arms_marked_pity` |
 | **F · Tiers announced** | part jobs on Hale's board, tier cards, foreshadow, Oren's lines, the Horizon pulls | 1.5-2 h | `arms_tier_cards` |
 | **G · Villages and structures** | the smith's two patterns for emeralds and the village's rank, the smithy forge door, the Pattern Stand block and its model, placing it in vaults, labs, platforms, spires, lairs and dens | 3-5 h | `arms_village_patterns`, `arms_stand` (once per player, dims, a known style pays essence) |
 
@@ -562,7 +561,7 @@ asked, and 13-15 are his three additions, with the design written for his check.
 13. **Boss weapons: rarer the cooler they are (Euan's request, then his correction: not every boss).** A Gate Lord kill rolls a Marked
     "Spoils" weapon in the Lord's style (60% at E falling to 15% at A, 40% at S) and the Lord-forged weapon (35%, certain by the third);
     that is about 74% of Lords at E and about 40% at S, **two or three S gates to one weapon**, with a pity at six. The Lord wields its
-    weapon, the gate card and the Armoury name it, and tooltips and JEI say "Dropped by... Sometimes". *Design in §3.7; the rates are set
+    weapon (Euan: the gate card does not show it), the Armoury names it, and tooltips and JEI say "Dropped by... Sometimes". *Design in §3.7; the rates are set
     from the Phase E sim row and Euan checks them when he plays it.*
 14. **Villages sell patterns (Euan's request).** Two patterns of the village's rank, for emeralds, by its region's level; the smithy's
     forge is an Armoury door. Not finished weapons (they would skip the Part and the metal). *Design in §3.4.3; alternative if he wants it:
