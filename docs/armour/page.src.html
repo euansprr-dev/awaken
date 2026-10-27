@@ -150,7 +150,8 @@ ul.plain li { margin-bottom: 6px; }
       <li><b>A Wardrobe.</b> Three looks for every piece, including an off-duty coat for the city, and six slots of garments: cloaks, scarves, hats, a stowed weapon. <a href="#wardrobe">See the clothes</a>.</li>
       <li><b>Clean.</b> You said it looked clunky and glitchy. It was: I built a checker and found 14 to 48 overlaps in every set. Every set is rebuilt in lanes and now has none. <a href="#clean">See before and after</a>.</li>
       <li><b>Your three style references</b> (trimmed robes, horned steel, skeleton armour) now have a place, plus fixes for the missing eyes and the loose crystal fins. <a href="#styles">See them</a>.</li>
-      <li><b>Proofs and decisions:</b> seven new sets and four looks, and 18 new decisions (17 to 34) at the bottom.</li>
+      <li><b>Is it premium enough?</b> My honest answer and a costed test of three fidelity levels. <a href="#premium">See the test</a>.</li>
+      <li><b>Proofs and decisions:</b> seven new sets and four looks, and 23 new decisions (17 to 39) at the bottom.</li>
     </ul>
   </div>
 </header>
@@ -202,6 +203,28 @@ ul.plain li { margin-bottom: 6px; }
     <div class="card"><h3>New clothes from them</h3><p>The bandolier, a horned crown, a skull mask and epaulettes become garments any set can wear, in the Wardrobe.</p></div>
     <div class="card"><h3>E now uses its own Parts</h3><p>E's recipe takes bone, flint or quartz. Each now picks a house, so no new land drop is needed for launch. The land houses (Mossrunner, Dunewrap, Frostfur) are the second wave.</p></div>
   </div>
+</section>
+
+
+<section id="premium">
+  <div class="col"><h2>Is this the most premium it can get? A test, and what it costs</h2>
+  <p>No. The plan keeps armour in vanilla's drawing path, so it gets vanilla's flat light, and every part is a box. The weapons look premium mostly because of their own shader and glow. So before the plan is locked, one set is built at three levels and you pick by looking at one sheet.</p></div>
+  <div class="grid">
+    <div class="card"><h3>Level 1: as planned</h3><p>The set in the real game with vanilla light and the planned glow pass. What the clean renders show, in game.</p></div>
+    <div class="card"><h3>Level 2: plus the weapon shader and bloom</h3><p>Metal that shines, painted light, a rim in the tier's colour, glow that runs along the thread and feeds Lens's bloom. The same shader the weapons use, with the same plain fallback.</p></div>
+    <div class="card"><h3>Level 3: plus mesh hero parts and a chain cape</h3><p>A tapered, peaked hood, a scalloped capelet, chamfered cuffs, a cut gem, one side bigger than the other, and a four-link cape that lags and settles. It breaks the box, and it does it with the game's own model parts.</p></div>
+  </div>
+  <div class="scroll" style="margin-top:22px"><table>
+    <tr><th>Step</th><th>Builder time</th><th>Is it work the plan needs anyway?</th></tr>
+    <tr><td><b>Level 1</b>: the set through the real model path</td><td>3 h</td><td>Yes, a slice of phases 0 to 2</td></tr>
+    <tr><td><b>Level 2</b>: the armour shader, material map, layer, bloom tuning</td><td>3 h</td><td>Yes if adopted: it is the optional phase-5 shader, moved up</td></tr>
+    <tr><td><b>Level 3</b>: polygon parts, new shapes, a four-link cape</td><td>4.5 h</td><td>New</td></tr>
+    <tr><td>The tour and comparison sheet</td><td>1.5 h</td><td>No</td></tr>
+    <tr><td>Cost check at 60 mannequins on your Mac</td><td>0.5 h</td><td>No</td></tr>
+    <tr><td><b>Total</b></td><td><b>12.5 h, about 2 h of CI and Mac time</b></td><td></td></tr>
+  </table></div>
+  <div class="col" style="margin-top:14px"><p><b>Staged.</b> Levels 1 and 2 plus a tour give you a first sheet (Level 1 beside Level 2) after about 7 hours. Level 3 starts only if you want it, or runs beside Level 2 with a second builder (about 9 hours to the three-up sheet). If you adopt both, expect about 5 to 8 builder hours on top of the plan's total; if neither, nothing.</p>
+  <p class="small">What is checked in the source: our own shader can draw armour (the weapons already do, optional with a fallback), the vanilla layer can be switched off for ours, a model part can hold non-box polygons with the game's own classes and no mixin, and CI tours show the shader and Lens. Not checked: whether Lens's bloom picks up armour pixels, and whether non-box parts render in game. The CI sheet shows poses, not motion.</p></div>
 </section>
 
 <section class="col">
@@ -405,7 +428,7 @@ ul.plain li { margin-bottom: 6px; }
 
 <section>
   <div class="col"><h2>Decisions for you</h2>
-  <p>Every one has a recommended answer. "Yes to all" is a fine reply. 3 and 11 are replaced by 17 and 18; 28 to 34 are new.</p></div>
+  <p>Every one has a recommended answer. "Yes to all" is a fine reply. 3 and 11 are replaced by 17 and 18; 28 to 39 are new.</p></div>
   <div class="scroll"><table>
     <tr><th>#</th><th>Decision</th><th>Recommended</th><th>Why</th></tr>
     <tr><td class="no">1</td><td>Build armour as parts, glow, cloth and sound in vanilla's armour path, for all six tiers and the Frame</td><td><span class="yes">Yes</span></td><td>Every piece has a working precedent in the repo, no mixins, the proof shows the look</td></tr>
@@ -442,6 +465,11 @@ ul.plain li { margin-bottom: 6px; }
     <tr><td class="no">32</td><td><b>E's houses are picked by its three Parts:</b> bone, flint, quartz; the land houses become wave 2</td><td><span class="yes">Yes</span></td><td>Uses items that exist; two skeletons from one model</td></tr>
     <tr><td class="no">33</td><td><b>The face always shows, and everything that sticks out is fastened</b>: two more checks in the gate</td><td><span class="yes">Yes</span></td><td>The two faults you found, now impossible to ship</td></tr>
     <tr><td class="no">34</td><td><b>Robe colours follow the Force catalyst</b> in the Binding slot, and you wear the colours you have attuned</td><td><span class="yes">Yes</span></td><td>Ties armour to attunement, which weapons already use</td></tr>
+  <tr><td class="no">35</td><td>The test's hero set is <b>Veilwoven</b> (cloth, metal, glass, a cape), not Wyrmscale</td><td><span class="yes">Veilwoven</span></td><td>Shows what each level does to every material</td></tr>
+    <tr><td class="no">36</td><td><b>Staged:</b> first sheet is Level 1 beside Level 2; Level 3 only if you want it, or both at once with two builders</td><td><span class="yes">Staged</span></td><td>Level 2 is cheap and likely the big step; Level 3 is the costly, uncertain one</td></tr>
+    <tr><td class="no">37</td><td>The test lives on its own branch and is <b>never merged</b>; only reviewed parts are cherry-picked</td><td><span class="yes">Yes</span></td><td>A spike must not leave half-finished code in the mod</td></tr>
+    <tr><td class="no">38</td><td>If Level 2 wins, <b>the armour shader moves from phase 5 to phase 2</b>, with the weapons' fallback</td><td><span class="yes">Yes</span></td><td>The largest single quality step, already proven in the repo</td></tr>
+    <tr><td class="no">39</td><td>You judge on the CI sheet; a <b>Mac film of the cape moving</b> only if you ask</td><td><span class="yes">Yes</span></td><td>CI frames are poses; a film costs one perf-slot tour</td></tr>
   </table></div>
 </section>
 

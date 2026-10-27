@@ -1054,6 +1054,16 @@ four garments (bandolier, horns, skull mask, epaulettes: +0.5 h). **New total ab
 | 33 | **The face always shows, and everything that sticks out is fastened**: two more checks in the gate | **Yes** | the two faults you found, now impossible to ship |
 | 34 | **Robe colours follow the Force catalyst in the Binding slot**, and you wear the colours you have attuned | **Yes** | ties armour to attunement, which the weapons already use |
 
+---------------------------------------------------------------------------------------------------------------------
+
+## Part F. The premium test (added after Euan's fourth reply)
+
+Euan asked why the proof sets look chunky and whether this is the best premium level Minecraft can reach (my answer: no; the biggest gap is lighting and material shading, which the plan
+left to an optional Phase 5, and the second is that every part is a box). He then asked for a plan to test it. **`docs/armour/PREMIUM-TEST.md`** is that plan: one hero set (Veilwoven) at three
+levels (as planned; plus the weapon shader and bloom; plus rigid-mesh hero parts and a chain cape), judged on a CI look tour, **12.5 builder hours and about 2 hours of CI and Mac time**, staged so
+Look A (Level 1 beside Level 2) comes after about 7 hours. Decisions 35 to 39 are in that file. Nothing in Parts A to E changes until the test is seen; if Level 2 wins, the armour shader moves from
+Phase 5 to Phase 2, and if Level 3 wins a new Phase 2b ("hero parts as meshes") is added.
+
 ## 30. Not verified, and left out on purpose (all parts)
 
 - UNVERIFIED (Part C): which E items are land-unique (12.3); whether a render layer can draw the stowed weapon (13.4); that the Wyrmscale and Antlerhold painters (scale, fur) are still rough.
@@ -1065,4 +1075,4 @@ four garments (bandolier, horns, skull mask, epaulettes: +0.5 h). **New total ab
 
 ## 31. Files
 
-`docs/armour/PLAN.md` (this); `docs/armour/proof/` (`armour_proof.py` the engine, `proof_sets.py` the sets, `audit.py` the checker, `render_all.py` the driver, `renders/*.png`); `docs/armour/page.src.html`, `build_page.py` and `page.html` (the approval page).
+`docs/armour/PLAN.md` (this); `docs/armour/PREMIUM-TEST.md` (the premium test plan); `docs/armour/proof/` (`armour_proof.py` the engine, `proof_sets.py` the sets, `audit.py` the checker, `render_all.py` the driver, `renders/*.png`); `docs/armour/page.src.html`, `build_page.py` and `page.html` (the approval page).
