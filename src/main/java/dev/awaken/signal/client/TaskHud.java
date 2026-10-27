@@ -29,8 +29,8 @@ import java.util.Locale;
 final class TaskHud {
     private TaskHud() {}
 
-    /** The widest line (unscaled px) before a step is shortened; how long a ticked step lingers; the flash. */
-    static final int MAX_W = 185, LINGER = 50, FLASH = 24;
+    /** The widest line (unscaled px) before a step wraps (it was 185 and a long step lost its end; 215 keeps most steps on one line or two); how long a ticked step lingers; the flash. */
+    static final int MAX_W = 215, LINGER = 50, FLASH = 24;
     /** Half the Now card's size, but never so small a font pixel is under two screen pixels. */
     static final float SIZE = 0.45F, MIN_PIXEL = 2.0F;
     /** Rows after the current one, and the most lines one step may wrap over. */
