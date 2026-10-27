@@ -71,9 +71,12 @@ final class PremiumLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
                     collector.order(1).submitModel(model, state, pose, PremiumPipelines.plain(PremiumArmour.TEXTURE), light, OverlayTexture.NO_OVERLAY,
                             -1, null, state.outlineColor);
                 }
-                RenderType glow = RenderTypes.entityTranslucentEmissive(PremiumArmour.GLOW);
+                // a cutout pass at full light, not the translucent emissive type: that one goes through the order-independent
+                // path, which drew nothing here on CI's Vulkan (Look A, 2026-10-27)
+                RenderType glow = RenderTypes.armorCutoutNoCull(PremiumArmour.GLOW);
+                int v = Math.round(level * 255);
                 collector.order(2).submitModel(model, state, pose, glow, LightCoordsUtil.FULL_BRIGHT, OverlayTexture.NO_OVERLAY,
-                        ARGB.white(level), null, state.outlineColor);
+                        ARGB.color(255, v, v, v), null, state.outlineColor);
             }
         }
     }
