@@ -4362,6 +4362,16 @@ an `ATTACK_DAMAGE` attribute added to pig 3, cow 3, mooshroom 3, sheep 2 and chi
 saved), `Creatures.tag` (a wild spawn in D land or up is tagged NEUTRAL, scaled, grown, an alpha at `eliteChance`), `GameDrops` (richer game for animals that can't hurt you and for
 these), `PlateRules.heat` and `LivingFx.heatColour` (decision 15). Tests `living_wild_kin`, `living_plate_heat`, `living_game_drops`.
 
+**Phase 3 as built (2026-10-27, after the Arms builder finished; `pack/arms-progression` A to G and the base are merged into `pack/regions-plan`, the two road-file conflicts kept both sides).**
+- Decision 9, the land owns the hunt's parts: an alpha (decision 8) is titled "Alpha of <region>" and always drops hide of its land's tier (`GameDrops.alphaHide`: one, one more
+  from B land, two more from S, from the gear tier's `#awaken:hunter_hide_<tier>` tag); so the next tier's hide is where the harder land is. The named beasts keep their species
+  trophies and their "Terror of <region>" title exactly as they were (Arms' `#awaken:hunter_core_d` is a list of species parts; nothing was removed or made "only here").
+- Quiet vales are named like shelters ("Willow Rest", "the Heron Hush": `Names.quiet`), in worlds made under rules 2 only.
+- Not built, and why: **a generic "Terror" trophy item** (Arms' D part is the species list; a new item needs Arms' `sources.json` line, JEI and tests, which are Arms' to extend),
+  **surface signs of metal** (a worldgen feature over Tectonic; metal stays in lodes by depth per §28.0.7, the pull is Arms' part jobs and "What waits"), **shard scaling for
+  vanilla creatures** (Arms' shard economy and pity are calibrated without it), **the Atlas's smooth shading** (the client does not have the field), **tusks and scars, wild kin
+  art, a quieter land** (art), **wonders and secrets ranked by land** (Living Wilds Phase F is unbuilt).
+
 **Phase 2 as built (2026-10-27): the land speaks first.**
 - `LivingNet.LandMsg(level)` (`living_land`): the level of the land under the player, sent from `RegionTracker.tick` when it changes (-1 away from the overworld). Client
   `living.client.DreadFx` turns the gap (land level minus the player's level) into `DreadRules.strength(gap)` (0 under 5, 0.15 at 5, 0.45 at 10, 1 at 20), eased in over

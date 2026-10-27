@@ -244,6 +244,13 @@ final class LivingTests {
             h.assertTrue(maxApron <= 12, "the apron to 1,000 never passes 12: " + maxApron);
             h.assertTrue(maxTo2500 <= 42, "nothing above 42 within 2,500 (it was level 72 at 800): " + maxTo2500);
             h.assertTrue(highFar - lowFar >= 20, "it is still a patchwork far out: " + lowFar + " to " + highFar);
+            // quiet vales: some far regions are named like shelters and are calm, and a world from before keeps its old names
+            int quietSeen = 0;
+            for (int i = -60; i <= 60; i++) for (int j = -60; j <= 60; j++) {
+                var r = map.regionAt(i * 160, j * 160);
+                if (!r.commons() && r.name().matches(".*(Rest|Vale|Hush|Haven|Shelter|Stillwater)$")) quietSeen++;
+            }
+            h.assertTrue(quietSeen > 0, "quiet vales are named like shelters");
             // borders are slopes: no 100 blocks change by much, in any direction
             int worst = 0;
             for (int k = 0; k < 16; k++) {
@@ -374,6 +381,11 @@ final class LivingTests {
             // one more of the food per rank above E, never more than five (a pig in B land: three more chops)
             h.assertTrue(dev.awaken.living.combat.GameDrops.extra(0) == 0 && dev.awaken.living.combat.GameDrops.extra(1) == 1 && dev.awaken.living.combat.GameDrops.extra(3) == 3, "one more per rank");
             h.assertTrue(dev.awaken.living.combat.GameDrops.extra(9) == dev.awaken.living.combat.GameDrops.MAX_EXTRA, "never more than five");
+            h.assertTrue(dev.awaken.living.combat.GameDrops.hideTier(1).equals("d") && dev.awaken.living.combat.GameDrops.hideTier(5).equals("s") && dev.awaken.living.combat.GameDrops.hideTier(0).equals("e"), "an alpha's hide is its land's tier");
+            for (int r = 1; r <= 5; r++) {
+                var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, dev.awaken.Awaken.id("hunter_hide_" + dev.awaken.living.combat.GameDrops.hideTier(r)));
+                h.assertTrue(net.minecraft.core.registries.BuiltInRegistries.ITEM.getTagOrEmpty(tag).iterator().hasNext(), "the tier's hide tag has items: " + tag.location());
+            }
             h.succeed();
         });
 

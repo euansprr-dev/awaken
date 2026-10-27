@@ -4,7 +4,7 @@ Plan only; nothing is built. Written from a code audit of the build Euan plays (
 `New World (3)` (read only, never written) and its log, six open-world references, and a prototype of the proposed rules
 that I ran against the real `RegionMap` over hundreds of random worlds (`docs/regions/proto/`, outputs in
 `docs/regions/results/`). Approval page: https://claude.ai/artifact/MnswCydLWBrdpXzL3f84YE (source `docs/regions/page.html`).
-Status: **approved by Euan on 2026-10-27 ("Go with all recommendations": all fourteen decisions)**. SPEC §21.10 holds the decisions. **Phase 1 built on `pack/regions-plan` (2026-10-27; SPEC §21.10 "Phase 1 as built")**; **Phase 2 (the land speaks) built the same day** (SPEC §21.10 "Phase 2 as built"); Phase 3 (finds by land, with the Arms builder) is not started.
+Status: **approved by Euan on 2026-10-27 ("Go with all recommendations": all fourteen decisions)**. SPEC §21.10 holds the decisions. **Phase 1 built on `pack/regions-plan` (2026-10-27; SPEC §21.10 "Phase 1 as built")**; **Phase 2 (the land speaks) and the buildable part of Phase 3 are built** (SPEC §21.10 "Phase 2 as built", "Phase 3 as built"): alphas as the land's hide-bearers, quiet vales named. What was not built, and why, is in the SPEC.
 As built, the first gate's cap is `max(level + 5, 12)` (never below the heartland's 12, so a level-1 player at the wall still gets one).
 Builds on SPEC §21.2 (regions), §27 (The Way Forward: the world pulls first, no hand-holding) and §28.9 (roads and towns).
 

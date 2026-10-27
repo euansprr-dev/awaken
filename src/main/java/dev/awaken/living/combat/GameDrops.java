@@ -30,7 +30,8 @@ public final class GameDrops {
         var kind = CreatureTag.of(e.getEntity()).kind();
         // an animal that can't hurt you, or a wild one that fights back (WildKin): both carry the land's game
         if (kind != CreatureTag.Kind.PASSIVE && !(kind == CreatureTag.Kind.NEUTRAL && e.getEntity() instanceof net.minecraft.world.entity.Mob m && WildKin.isKin(m))) return;
-        int extra = extra(RegionMap.rankOf(Regions.creatureLevel(level, e.getEntity().blockPosition(), Regions.Role.NEUTRAL)));
+        int rank = RegionMap.rankOf(Regions.creatureLevel(level, e.getEntity().blockPosition(), Regions.Role.NEUTRAL));
+        int extra = extra(rank);
         if (extra == 0) return;
         for (ItemEntity d : e.getDrops()) {
             ItemStack s = d.getItem();
@@ -39,7 +40,30 @@ public final class GameDrops {
             ItemEntity add = new ItemEntity(level, d.getX(), d.getY(), d.getZ(), more);
             add.setDeltaMovement(d.getDeltaMovement());
             e.getDrops().add(add);
-            return; // one food drop gets more, not every stack
+            break; // one food drop gets more, not every stack
         }
+        alphaHide(level, e, rank);
+    }
+
+    /**
+     * An alpha is its land's own trophy-bearer (SPEC §21.10, decision 9: the land owns the hunt's parts): it always drops hide of its
+     * land's tier (one, two from B land, three from S), picked from the tier's hide tag, so going somewhere harder is where the next
+     * tier's hide is. The named beasts' trophies stay as they are (species parts, nothing removed).
+     */
+    static void alphaHide(ServerLevel level, LivingDropsEvent e, int rank) {
+        if (!CreatureTag.of(e.getEntity()).elite() || rank == 0) return;
+        net.minecraft.tags.TagKey<net.minecraft.world.item.Item> key = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM,
+                dev.awaken.Awaken.id("hunter_hide_" + hideTier(rank)));
+        java.util.List<net.minecraft.world.item.Item> pool = new java.util.ArrayList<>();
+        for (var h : net.minecraft.core.registries.BuiltInRegistries.ITEM.getTagOrEmpty(key)) pool.add(h.value());
+        if (pool.isEmpty()) return;
+        var at = e.getEntity().position();
+        ItemStack hide = new ItemStack(pool.get(e.getEntity().getRandom().nextInt(pool.size())), 1 + rank / 2);
+        e.getDrops().add(new ItemEntity(level, at.x, at.y + 0.2, at.z, hide));
+    }
+
+    /** The gear tier letter of a land rank (E, D, C, B, A, S), lower case, for its hide tag. */
+    public static String hideTier(int rank) {
+        return String.valueOf("edcbas".charAt(Math.max(0, Math.min(5, rank))));
     }
 }

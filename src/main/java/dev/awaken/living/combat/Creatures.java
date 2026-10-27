@@ -89,7 +89,8 @@ public final class Creatures {
                 boolean alpha = mob.getRandom().nextFloat() < LivingModule.eliteChance(land);
                 int lv = Regions.creatureLevel(level, mob.blockPosition(), alpha ? Regions.Role.ELITE : Regions.Role.NEUTRAL);
                 applyScaling(mob, lv, alpha, WildKin.growth(dev.awaken.living.region.RegionMap.rankOf(land)));
-                mob.setData(CoreApi.CREATURE_TAG.get(), new CreatureTag(lv, CreatureTag.Kind.NEUTRAL, alpha, ""));
+                String title = alpha ? "Alpha of " + Regions.regionAt(level, mob.getBlockX(), mob.getBlockZ()).name() : "";
+                mob.setData(CoreApi.CREATURE_TAG.get(), new CreatureTag(lv, CreatureTag.Kind.NEUTRAL, alpha, title));
                 return;
             }
             int lv = Regions.creatureLevel(level, mob.blockPosition(), Regions.Role.AMBIENT);

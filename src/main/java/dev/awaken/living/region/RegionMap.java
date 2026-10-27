@@ -304,7 +304,7 @@ public final class RegionMap {
     private double makeTemper(int gx, int gz, Land land) {
         Reach r = Reach.INSTANCE;
         int hx = heartX(gx, gz), hz = heartZ(gx, gz);
-        if (r.quietShare > 0 && Math.hypot(hx - cx, hz - cz) > r.quietFrom && unit(hash(gx, gz, 131)) < r.quietShare) return 0;
+        if (quiet(gx, gz)) return 0;
         int bx = Math.floorDiv(gx, 3), bz = Math.floorDiv(gz, 3);
         int slot = Math.floorMod(gx, 3) * 3 + Math.floorMod(gz, 3);
         // seeded Fisher-Yates over the nine strata, keeping only where our slot ends up
@@ -323,6 +323,12 @@ public final class RegionMap {
         q = 0.5 + (q - 0.5) * r.contrast;
         if (land != null && land.tilt() != 0 && unit(hash(gx, gz, 41)) < 0.4) q += land.tilt() * r.tilt;
         return clamp(q, 0, 1);
+    }
+
+    /** Whether a cell is a quiet vale (SPEC §21.10): one in eight beyond 2,000 is calm however far out. */
+    boolean quiet(int gx, int gz) {
+        Reach r = Reach.INSTANCE;
+        return r.quietShare > 0 && Math.hypot(heartX(gx, gz) - cx, heartZ(gx, gz) - cz) > r.quietFrom && unit(hash(gx, gz, 131)) < r.quietShare;
     }
 
     /** The region record of a grid cell, made once. */
@@ -348,7 +354,8 @@ public final class RegionMap {
             high = Math.max(high, lv);
         }
         int band = rules >= 2 ? rankOf(heart) : legacyBand(gx, gz, land, Math.hypot(hx - cx, hz - cz));
-        String name = Names.name(land.group(), band, hash(gx, gz, 67));
+        // a quiet vale is named like one ("Willow Rest"); worlds made before keep every name they had
+        String name = rules >= 2 && quiet(gx, gz) ? Names.quiet(land.group(), hash(gx, gz, 67)) : Names.name(land.group(), band, hash(gx, gz, 67));
         return new Region(key(gx, gz), gx, gz, hx, hz, name, band, low, high, false);
     }
 
