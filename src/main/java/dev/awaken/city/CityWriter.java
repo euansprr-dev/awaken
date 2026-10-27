@@ -20,6 +20,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.Heightmap;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Commits a painted buffer to the world. Worldgen writes straight into the proto chunk's sections (never setBlock:
@@ -69,30 +70,7 @@ final class CityWriter {
                     }
                 }
             }
-            // the plate: below the lowest painted row, stone down to the first solid block (fills valleys and lakes
-            // where no basin was carved; in a carved basin the first block down is already rock)
-            for (int lz = 0; lz < 16; lz++) {
-                for (int lx = 0; lx < 16; lx++) {
-                    if (!buf.plate[lz * 16 + lx]) continue;
-                    int low = CityBuffer.YMIN;
-                    while (low <= CityBuffer.YMAX && buf.cells[buf.index(lx, low, lz)] == null) low++;
-                    for (int k = 1; k <= MAX_FILL; k++) {
-                        int y = streetY + low - k;
-                        if (y < minY) break;
-                        int si = chunk.getSectionIndex(y);
-                        LevelChunkSection sec = chunk.getSection(si);
-                        int sy = SectionPos.sectionRelative(y);
-                        BlockState below = sec.getBlockState(lx, sy, lz);
-                        if (!below.isAir() && below.getFluidState().isEmpty()) break;
-                        if (held[si] == null) {
-                            sec.acquire();
-                            held[si] = sec;
-                        }
-                        sec.setBlockState(lx, sy, lz, CityBlocks.STONE, false);
-                        n++;
-                    }
-                }
-            }
+            n += fills(new SectionColumn(chunk, held), buf, streetY, minY);
         } finally {
             for (LevelChunkSection s : held) if (s != null) s.release();
         }
@@ -224,7 +202,7 @@ final class CityWriter {
                 || b instanceof net.minecraft.world.level.block.HangingMossBlock || b == Blocks.SNOW;
     }
 
-    /** Dev repaint of a live chunk. Returns blocks changed. */
+    /** Dev repaint of a live chunk (its plates and banks too). Returns blocks changed. */
     static int toLevel(ServerLevel level, LevelChunk chunk, CityBuffer buf, int streetY) {
         int bx = chunk.getPos().getMinBlockX(), bz = chunk.getPos().getMinBlockZ();
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
@@ -241,6 +219,141 @@ final class CityWriter {
                 }
             }
         }
+        return n + fills(new LevelColumn(level, chunk), buf, streetY, chunk.getMinY());
+    }
+
+    // ---- fills: the plate under what the city paints, and banks ---------------------------------------------------------
+
+    /** How thick a crust over open air may be and still be passed (a beard's slab under a raised road): thicker is the ground. */
+    static final int CRUST = 3;
+
+    /** One column of the chunk being written, for the fills. */
+    abstract static class Column {
+        /** In the chunk (0..15), and in plan coordinates (the rock's). */
+        int x, z, px, pz;
+
+        abstract BlockState get(int y);
+
+        abstract void set(int y, BlockState s);
+
+        Column at(int x, int z, int px, int pz) {
+            this.x = x;
+            this.z = z;
+            this.px = px;
+            this.pz = pz;
+            return this;
+        }
+    }
+
+    /** The plates and the banks of a painted buffer (one chunk). Returns blocks written. */
+    static int fills(Column c, CityBuffer buf, int streetY, int minY) {
+        int n = 0;
+        for (int lz = 0; lz < buf.d; lz++) {
+            for (int lx = 0; lx < buf.w; lx++) {
+                c.at(lx, lz, buf.px0 + lx, buf.pz0 + lz);
+                // the plate: below the lowest painted row down to the ground (fills valleys and lakes where no basin was
+                // carved; in a carved basin the first block down is already rock)
+                if (buf.plate[lz * buf.w + lx]) {
+                    int low = CityBuffer.YMIN;
+                    while (low <= CityBuffer.YMAX && buf.cells[buf.index(lx, low, lz)] == null) low++;
+                    if (low <= CityBuffer.YMAX) n += fill(c, streetY + low - 1, minY, true, null, buf.rock);
+                }
+                SettlementPaint.Mound m = buf.mounds[lz * buf.w + lx];
+                if (m != null) n += fill(c, streetY + m.ry(), minY, false, m, buf.rock);
+            }
+        }
         return n;
+    }
+
+    /**
+     * Carries a fill down from {@code y0} to the ground, at most {@link #MAX_FILL} blocks: open cells (air, plants, the
+     * lands' trees; water too when {@code wet}) take the fill, a crust up to {@link #CRUST} thick with open air under it is
+     * passed (its blocks stay), and anything thicker is the ground. A dry fill (a bank) that would come down on water lays
+     * nothing, so a bank never dams a stream. A bank's column takes its top and soil, then the rock; one only a block or two
+     * high takes its toe. Returns blocks written.
+     */
+    static int fill(Column c, int y0, int minY, boolean wet, SettlementPaint.@Nullable Mound m, SettlementPaint.@Nullable Rock rock) {
+        int bottom = Math.max(minY, y0 - MAX_FILL + 1), y = y0;
+        while (y >= bottom) {
+            BlockState s = c.get(y);
+            if (open(s, wet)) {
+                y--;
+                continue;
+            }
+            if (!wet && !s.getFluidState().isEmpty()) return 0;
+            int t = 1;
+            while (t <= CRUST && y - t >= bottom && !open(c.get(y - t), wet)) t++;
+            if (t > CRUST || y - t < bottom) break;
+            y -= t;
+        }
+        int n = 0;
+        for (int yy = y0; yy > y; yy--) {
+            if (!open(c.get(yy), wet)) continue;
+            int depth = y0 - yy;
+            BlockState s = m != null && depth == 0 && m.top() != null ? m.top()
+                    : m != null && depth >= 1 && depth <= m.soilDepth() && m.soil() != null ? m.soil()
+                    : rock != null ? rock.at(c.px, yy, c.pz) : CityBlocks.STONE;
+            c.set(yy, s);
+            n++;
+        }
+        if (m != null && m.toe() != null && n > 0 && y0 - y <= 2) c.set(y0, m.toe());
+        return n;
+    }
+
+    /** What a fill may take: air, plants, the lands' trees and snow; fluids only for a wet fill. */
+    static boolean open(BlockState s, boolean wet) {
+        if (s.isAir()) return true;
+        if (!s.getFluidState().isEmpty()) return wet;
+        return vegetation(s) || s.canBeReplaced();
+    }
+
+    /** The proto chunk's sections. */
+    private static final class SectionColumn extends Column {
+        final ChunkAccess chunk;
+        final LevelChunkSection[] held;
+
+        SectionColumn(ChunkAccess chunk, LevelChunkSection[] held) {
+            this.chunk = chunk;
+            this.held = held;
+        }
+
+        @Override
+        BlockState get(int y) {
+            return chunk.getSection(chunk.getSectionIndex(y)).getBlockState(x, SectionPos.sectionRelative(y), z);
+        }
+
+        @Override
+        void set(int y, BlockState s) {
+            int si = chunk.getSectionIndex(y);
+            LevelChunkSection sec = chunk.getSection(si);
+            if (held[si] == null) {
+                sec.acquire();
+                held[si] = sec;
+            }
+            sec.setBlockState(x, SectionPos.sectionRelative(y), z, s, false);
+        }
+    }
+
+    /** A live chunk (dev repaints and tests), block by block. */
+    private static final class LevelColumn extends Column {
+        final ServerLevel level;
+        final int bx, bz;
+        final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+
+        LevelColumn(ServerLevel level, LevelChunk chunk) {
+            this.level = level;
+            bx = chunk.getPos().getMinBlockX();
+            bz = chunk.getPos().getMinBlockZ();
+        }
+
+        @Override
+        BlockState get(int y) {
+            return level.getBlockState(pos.set(bx + x, y, bz + z));
+        }
+
+        @Override
+        void set(int y, BlockState s) {
+            level.setBlock(pos.set(bx + x, y, bz + z), s, FLAGS);
+        }
     }
 }

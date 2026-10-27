@@ -54,6 +54,18 @@ public final class SettlementPaint {
      */
     public record Interior(int adults, int children, String trade, int seed) {}
 
+    /**
+     * A bank's column (a road's embankment, SPEC §28.9): the writer raises the land to {@code ry} (from the street level)
+     * where it lies lower, down to the ground: {@code top} on top (null: the rock), then {@code soilDepth} of {@code soil},
+     * then the rock. Where the bank ends up only a block or two high, {@code toe} (if any) takes its top: scree at its foot.
+     */
+    public record Mound(int ry, @Nullable BlockState top, @Nullable BlockState soil, int soilDepth, @Nullable BlockState toe) {}
+
+    /** The rock the writer's fills are made of at a position (plan coordinates, world y; none set: plain stone). */
+    public interface Rock {
+        BlockState at(int x, int y, int z);
+    }
+
     /** What the settlement paints on: the chunk's buffer in plan coordinates, and the world seed's detail draw. */
     public static final class Canvas {
         final CityBuffer buf;
@@ -86,6 +98,16 @@ public final class SettlementPaint {
         /** The writer carries this column's ground down to solid rock (a fill over a dip or a pond). */
         public void plate(int x, int z) {
             buf.plate(x, z);
+        }
+
+        /** The writer raises this column's land into a bank (see {@link Mound}). */
+        public void mound(int x, int z, Mound m) {
+            buf.mound(x, z, m);
+        }
+
+        /** The rock the writer's fills (plates and banks) are made of in this canvas. */
+        public void rock(Rock r) {
+            buf.rock = r;
         }
 
         public boolean contains(int x, int z) {

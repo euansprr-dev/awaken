@@ -1,6 +1,7 @@
 package dev.awaken.city;
 
 import net.minecraft.world.level.block.state.BlockState;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -16,6 +17,10 @@ final class CityBuffer {
     final BlockState[] cells;
     /** Columns whose ground the writer must carry down to solid rock (the plate, where terrain did not flatten it). */
     final boolean[] plate;
+    /** Columns the writer raises into a bank (a road's embankment), or null. */
+    final SettlementPaint.Mound[] mounds;
+    /** What the writer's fills are made of here (null: plain stone). */
+    SettlementPaint.@Nullable Rock rock;
     /** Plan coordinates of the buffer's north-west cell. */
     int px0, pz0;
 
@@ -24,6 +29,7 @@ final class CityBuffer {
         this.d = d;
         cells = new BlockState[w * d * H];
         plate = new boolean[w * d];
+        mounds = new SettlementPaint.Mound[w * d];
     }
 
     private static final ThreadLocal<CityBuffer> LOCAL = ThreadLocal.withInitial(() -> new CityBuffer(16, 16));
@@ -36,6 +42,8 @@ final class CityBuffer {
     void reset(int px0, int pz0) {
         Arrays.fill(cells, null);
         Arrays.fill(plate, false);
+        Arrays.fill(mounds, null);
+        rock = null;
         this.px0 = px0;
         this.pz0 = pz0;
     }
@@ -73,6 +81,12 @@ final class CityBuffer {
         int lx = px - px0, lz = pz - pz0;
         if (lx < 0 || lz < 0 || lx >= w || lz >= d) return;
         plate[lz * w + lx] = true;
+    }
+
+    void mound(int px, int pz, SettlementPaint.Mound m) {
+        int lx = px - px0, lz = pz - pz0;
+        if (lx < 0 || lz < 0 || lx >= w || lz >= d) return;
+        mounds[lz * w + lx] = m;
     }
 
     int x1() {
