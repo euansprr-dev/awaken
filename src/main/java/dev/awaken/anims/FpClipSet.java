@@ -45,6 +45,8 @@ public final class FpClipSet {
         public boolean toStance;
         /** A cast clip (fp_casts.py): its fists are drawn even when a hand holds something (the weapon is out of view). */
         public boolean stow;
+        /** A climb's clip (fp_moves.py "climb": a catch, a mantle): the hands grip the world, what they hold is put away. */
+        public boolean climb;
         final Key[] main, off;
         public final float[] eventAt;
         public final String[] events;
@@ -134,6 +136,7 @@ public final class FpClipSet {
                     names));
             out.get(e.getKey()).toStance = c.has("toStance") && c.get("toStance").getAsBoolean();
             out.get(e.getKey()).stow = c.has("stow") && c.get("stow").getAsBoolean();
+            out.get(e.getKey()).climb = c.has("climb") && c.get("climb").getAsBoolean();
         }
         return out;
     }

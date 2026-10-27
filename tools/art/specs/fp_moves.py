@@ -16,7 +16,9 @@ left main arm. "both": the off arm is drawn even when it holds nothing. Keys are
 the curves the body's clips use (linear, easeoutcubic, easeinoutsine, easeinquad, easeoutquad, easeoutsine,
 easeoutback). A one-shot ends at rest (every value 0), so it gives the hands back to vanilla with nothing to fade; it may
 start away from rest when another layer (the world body) hands the arms over. Events: (tick, name), heard through
-core.api.FirstPerson.listen (a sound, a hit-stop, a flash).
+core.api.FirstPerson.listen (a sound, a hit-stop, a flash). "climb": the hands grip the world (a lip, a rope), so what
+they hold is put away while it plays (FirstPerson.View.climb: it sinks out of view as the fists come up, and rises back
+after).
 """
 import json
 import math
@@ -42,7 +44,7 @@ def mirror(h):
     return (-h[0], h[1], h[2], h[3], -h[4], -h[5])
 
 
-def clip(name, length, main=(), off=(), both=False, loop=False, events=(), note="", fists=False, to_stance=False):
+def clip(name, length, main=(), off=(), both=False, loop=False, events=(), note="", fists=False, to_stance=False, climb=False):
     if name in CLIPS:
         raise ValueError(f"duplicate clip {name}")
     for track in (main, off):
@@ -62,7 +64,7 @@ def clip(name, length, main=(), off=(), both=False, loop=False, events=(), note=
         if off and off[-1][1][1] > -0.9 and any(abs(a - b) > 1e-6 for a, b in zip(off[-1][1][:3], (-REST_FIST[0],) + REST_FIST[1:3])):
             raise ValueError(f"{name}: the off fist must end at rest or under the frame")
     CLIPS[name] = dict(length=length, loop=loop, both=both, main=list(main), off=list(off), events=list(events), note=note, fists=fists,
-                       to_stance=to_stance)
+                       to_stance=to_stance, climb=climb)
 
 
 # Fist clips (FirstPerson.View fists): each empty hand keyed by where it is on screen, in view space (x right, y up, z
@@ -152,7 +154,7 @@ clip("fp_vault", 10, fists=True,
 
 # The mantle (and every climb out over a lip): both hands slap up onto the lip, then press down as you rise over it.
 MN_REACH, MN_PRESS, MN_PUSH = fist(0.3, 0.1, -0.9), fist(0.28, -0.06, -0.85), fist(0.4, -0.4, -0.8)
-clip("fp_mantle", 12, fists=True,
+clip("fp_mantle", 12, fists=True, climb=True,
      main=[(0, REST_FIST, "linear"), (2, MN_REACH, "easeoutcubic"), (5, MN_PRESS, "easeinquad"), (9, MN_PUSH, "easeinoutsine"), (12, REST_FIST, "easeinoutsine")],
      off=[(0, OFF_OUT, "linear"), (2, mf(MN_REACH), "easeoutcubic"), (5, mf(MN_PRESS), "easeinquad"), (9, mf(MN_PUSH), "easeinoutsine"), (12, OFF_OUT, "easeinoutsine")],
      events=[(2, "slap")], note="palms slap the lip, press over it")
@@ -192,13 +194,13 @@ clip("fp_walljump_r", 12, fists=True, main=m, off=o, events=[(2, "shove")], note
 # Hanging (body.client.BodyFp's hang stance holds both fists at HANG_FIST on the lip). These play over it, from the
 # hang's fists and back to them (or, leaving the lip, out to rest).
 # The catch: the hands come up from below and slam onto the lip, with a jolt.
-clip("fp_grab", 8, fists=True, to_stance=True,
+clip("fp_grab", 8, fists=True, to_stance=True, climb=True,
      main=[(0, fist(0.4, -0.5, -0.8), "linear"), (1.5, fist(0.26, 0.04, -0.82), "easeoutcubic"), (3.5, fist(0.26, -0.05, -0.82), "easeinoutsine"),
            (8, HANG_FIST, "easeinoutsine")],
      off=[(0, fist(-0.4, -0.5, -0.8), "linear"), (1.5, fist(-0.26, 0.03, -0.82), "easeoutcubic"), (3.5, fist(-0.26, -0.05, -0.82), "easeinoutsine"),
           (8, mf(HANG_FIST), "easeinoutsine")], events=[(1.5, "catch")], note="hands slam onto the lip with a jolt")
 # Lowering over an edge into a hang: the hands go down to the edge first, then take the weight.
-clip("fp_lower", 8, fists=True, to_stance=True,
+clip("fp_lower", 8, fists=True, to_stance=True, climb=True,
      main=[(0, fist(0.3, -0.6, -0.7), "linear"), (5, fist(0.26, -0.04, -0.82), "easeinoutsine"), (8, HANG_FIST, "easeoutsine")],
      off=[(0, fist(-0.3, -0.6, -0.7), "linear"), (5, fist(-0.26, -0.04, -0.82), "easeinoutsine"), (8, mf(HANG_FIST), "easeoutsine")],
      note="down onto the hands at the edge")
@@ -208,7 +210,7 @@ clip("fp_lower", 8, fists=True, to_stance=True,
 # hang over it at the apex, slam down onto the new lip and take the weight.
 LU = [(0, HANG_FIST, "linear"), (2, fist(0.27, -0.24, -0.8), "easeinquad"), (5, fist(0.24, 0.3, -0.86), "easeoutcubic"),
       (7, fist(0.25, 0.26, -0.85), "linear"), (8.5, fist(0.26, -0.09, -0.82), "easeinquad"), (10, HANG_FIST, "easeoutsine")]
-clip("fp_ledge_up", 10, fists=True, to_stance=True, main=LU, off=[(t, mf(h), e) for t, h, e in LU], events=[(2, "load"), (8.5, "catch")],
+clip("fp_ledge_up", 10, fists=True, to_stance=True, climb=True, main=LU, off=[(t, mf(h), e) for t, h, e in LU], events=[(2, "load"), (8.5, "catch")],
      note="pull down on the load, fly up past the lip, hang, slam onto the new lip")
 
 
@@ -222,9 +224,9 @@ def ledge_side(left):
 
 
 m, o = ledge_side(True)
-clip("fp_ledge_side_l", 9, fists=True, to_stance=True, main=m, off=o, events=[(6, "catch")], note="the left hand reaches for the next lip")
+clip("fp_ledge_side_l", 9, fists=True, to_stance=True, climb=True, main=m, off=o, events=[(6, "catch")], note="the left hand reaches for the next lip")
 m, o = ledge_side(False)
-clip("fp_ledge_side_r", 9, fists=True, to_stance=True, main=m, off=o, events=[(6, "catch")], note="the right hand reaches for the next lip")
+clip("fp_ledge_side_r", 9, fists=True, to_stance=True, climb=True, main=m, off=o, events=[(6, "catch")], note="the right hand reaches for the next lip")
 # The ledge jump back: the hands leave the lip, thrown out wide as the body turns away, and drop back to rest.
 clip("fp_ledge_back", 12, fists=True,
      main=[(0, HANG_FIST, "linear"), (3, fist(0.8, 0.0, -0.9), "easeoutcubic"), (12, REST_FIST, "easeinoutsine")],
@@ -242,7 +244,7 @@ ROPE_FIST = fist(0.3, -0.02, -0.72)
 GLIDE_FIST = fist(0.86, -0.04, -0.86)
 
 # The rope: thrown with the main arm (a forward fling, the wrist flicked), then held where it leaves the hand.
-clip("fp_rope_fire", 6, fists=True, to_stance=True,
+clip("fp_rope_fire", 6, fists=True, to_stance=True, climb=True,
      main=[(0, REST_FIST, "linear"), (2, fist(0.42, -0.08, -1.08), "easeoutcubic"), (6, ROPE_FIST, "easeinoutsine")],
      events=[(2, "throw")], note="the rope flung out of the hand")
 # Letting go of the rope: the hand opens and drops back to rest.
@@ -378,6 +380,8 @@ def document():
             d["fists"] = True
         if c["to_stance"]:
             d["toStance"] = True
+        if c["climb"]:
+            d["climb"] = True
         for track in ("main", "off"):
             if c[track]:
                 d[track] = [[t] + [round(v, 4) for v in h] + [e] for t, h, e in c[track]]

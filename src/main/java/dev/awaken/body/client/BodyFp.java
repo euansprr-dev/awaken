@@ -178,7 +178,10 @@ final class BodyFp {
             FirstPerson.View.add(left == leftMain(p) ? v.off : v.main, w, 0, pump, -pump, pump * 40F, 0, 0);
         }
         // a wall climb (Wall Stride): hands slapping up the face in turn
-        float c = Ease.hold(t, RunnerMoves.runStart, RunnerMoves.runEnd, RunnerMoves.state == RunnerMoves.State.RUN && RunnerMoves.runClimb, 2F, 4F);
+        boolean climbing = RunnerMoves.state == RunnerMoves.State.RUN && RunnerMoves.runClimb;
+        float c = Ease.hold(t, RunnerMoves.runStart, RunnerMoves.runEnd, climbing, 2F, 4F);
+        // on a wall or a lip the hands hold the world: what they hold is put away (Hands eases it out and back)
+        if (climbing || RunnerMoves.hanging()) v.climb = true;
         float m = leftMain(p) ? -1 : 1; // the main hand's side of the frame
         if (c > 0) {
             float phase = Mth.sin((RunnerMoves.runAge + pt) * Mth.PI / 4F);
@@ -302,7 +305,10 @@ final class BodyFp {
         rig.fx = fx;
         rig.fz = fz;
         rig.handDistance = 0.8;
-        boolean leftMain = leftMain(p), both = v.twoHands() && p.getMainHandItem().isEmpty();
+        // a climb over a rail (on a block, or out of a hang) takes both hands even when one holds something: it's put
+        // away while the world has that arm (Hands); a vault and a hop leave a held item as it is
+        boolean leftMain = leftMain(p), climbOver = v.kind() == dev.awaken.body.VaultRules.HIGH || v.kind() == dev.awaken.body.VaultRules.OVER;
+        boolean both = v.twoHands() && (p.getMainHandItem().isEmpty() || climbOver);
         var level = p.level();
         for (int i = 0; i < 2; i++) {
             boolean main = i == 0;
