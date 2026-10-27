@@ -1,0 +1,346 @@
+<title>Trails</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column of night glass, the house look of AWAKEN's plan pages. The K-menu mock-ups and the tables
+   scroll inside their own frames. Dark first; the light theme mirrors it. */
+:root {
+  --bg: #0a1019;
+  --glass: #0f1724;
+  --glass-2: #142033;
+  --line: #22344d;
+  --fg: #e4f1ff;
+  --muted: #93a8c2;
+  --accent: #7fc3ff;
+  --good: #9fe6d6;
+  --amber: #ffcf7a;
+  --ember: #ff8a7a;
+  --chip-ink: #0a1019;
+  --display: "Chakra Petch", "Avenir Next Condensed", "Arial Narrow", sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #eef3f8; --glass: #ffffff; --glass-2: #f4f8fc; --line: #cfdbe8;
+    --fg: #0e1a2b; --muted: #4b5f76; --accent: #1f6fb5; --good: #157a68; --amber: #9a6100; --ember: #b8402f;
+    --chip-ink: #ffffff;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #eef3f8; --glass: #ffffff; --glass-2: #f4f8fc; --line: #cfdbe8;
+  --fg: #0e1a2b; --muted: #4b5f76; --accent: #1f6fb5; --good: #157a68; --amber: #9a6100; --ember: #b8402f;
+  --chip-ink: #ffffff;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #0a1019; --glass: #0f1724; --glass-2: #142033; --line: #22344d;
+  --fg: #e4f1ff; --muted: #93a8c2; --accent: #7fc3ff; --good: #9fe6d6; --amber: #ffcf7a; --ember: #ff8a7a;
+  --chip-ink: #0a1019;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font: 400 16px/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 72px;
+}
+.wrap { max-width: 1040px; margin: 0 auto; }
+.prose { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; letter-spacing: 0.01em; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2.4rem, 7vw, 3.8rem); font-weight: 700; }
+h2 { font-size: clamp(1.4rem, 3.4vw, 1.9rem); font-weight: 600; margin-top: 56px; }
+h3 { font-size: 1.08rem; font-weight: 600; }
+p { margin: 12px 0 0; }
+a { color: var(--accent); }
+.eyebrow { font: 500 0.74rem/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.12rem; color: var(--fg); }
+.muted { color: var(--muted); }
+code, .mono { font-family: var(--mono); font-size: 0.88em; }
+header { padding-top: 56px; }
+header .eyebrow { margin-bottom: 18px; }
+blockquote {
+  margin: 28px 0 0; padding: 14px 18px; background: var(--glass); border: 1px solid var(--line); border-radius: 10px;
+  color: var(--fg); max-width: 68ch;
+}
+blockquote span { display: block; margin-top: 8px; color: var(--muted); font-size: 0.85rem; }
+
+.chip {
+  display: inline-block; padding: 2px 9px; border-radius: 999px; font: 600 0.72rem/1.5 var(--mono); letter-spacing: 0.06em;
+  background: var(--chip, var(--accent)); color: var(--chip-ink); white-space: nowrap; vertical-align: 1px;
+}
+.chip.rec { --chip: var(--good); }
+.chip.warn { --chip: var(--amber); }
+
+.grid { display: grid; gap: 14px; margin-top: 18px; }
+.g3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.g2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.card { background: var(--glass); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; min-width: 0; }
+.card h3 { margin-bottom: 6px; }
+.card p { margin-top: 6px; font-size: 0.95rem; }
+.card .tag { font: 500 0.7rem/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; display: block; }
+.note { font-size: 0.85rem; color: var(--muted); margin-top: 10px; }
+.label { font: 500 0.7rem/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; display: block; }
+
+/* tables */
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th { text-align: left; font: 500 0.7rem/1.3 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.n { font-weight: 600; white-space: nowrap; }
+.tbl { overflow-x: auto; margin-top: 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--glass); }
+.tbl table { min-width: 720px; }
+
+/* the K menu, drawn: a band on night, six pages on a rail, glass sections */
+.screens { display: grid; gap: 18px; margin-top: 18px; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); align-items: start; }
+.screen { border: 1px solid var(--line); border-radius: 12px; background: var(--glass); overflow: hidden; min-width: 0; }
+.screen > .cap { font: 500 0.7rem/1.3 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.band { display: grid; grid-template-columns: 64px 1fr; min-height: 320px; }
+.rail { border-right: 1px solid var(--line); padding: 10px 0; display: grid; align-content: start; gap: 2px; background: var(--glass-2); }
+.rail span { font: 500 0.68rem/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 9px 8px; position: relative; }
+.rail span.on { color: var(--accent); box-shadow: inset 2px 0 0 var(--accent); background: var(--glass); }
+.rail span .dot { position: absolute; right: 8px; top: 9px; width: 7px; height: 7px; border-radius: 50%; background: var(--amber); }
+.pane { padding: 12px 14px 16px; min-width: 0; display: grid; gap: 10px; align-content: start; }
+.sec { font: 600 0.7rem/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); display: flex; justify-content: space-between; gap: 8px; }
+.sec em { font-style: normal; color: var(--muted); letter-spacing: 0.06em; }
+.sub { font: 500 0.68rem/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+.row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--bg); min-width: 0; }
+.row b { display: block; font: 600 0.82rem/1.2 var(--display); }
+.row small { display: block; font-size: 0.78rem; color: var(--muted); line-height: 1.35; }
+.btn { font: 600 0.7rem/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; border: 1px solid var(--accent); color: var(--accent); border-radius: 6px; padding: 6px 9px; white-space: nowrap; }
+.btn.on { background: var(--accent); color: var(--chip-ink); }
+.pips { display: inline-flex; gap: 3px; vertical-align: middle; margin-left: 6px; }
+.pips i { width: 8px; height: 8px; border-radius: 2px; background: var(--line); display: block; }
+.pips i.f { background: var(--good); }
+.fade { opacity: 0.55; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips span { font: 500 0.68rem/1 var(--mono); letter-spacing: 0.06em; border: 1px solid var(--line); border-radius: 999px; padding: 5px 9px; color: var(--muted); }
+.chips span.on { border-color: var(--accent); color: var(--accent); }
+.hud { position: relative; min-height: 320px; background:
+  linear-gradient(180deg, rgba(127,195,255,0.06), transparent 60%), var(--bg); padding: 14px; }
+.hud .left { font: 500 0.78rem/1.4 var(--mono); color: var(--fg); max-width: 55%; }
+.hud .left small { display: block; color: var(--muted); }
+.task { position: absolute; top: 14px; right: 14px; width: min(232px, 52%); background: var(--glass); border: 1px solid var(--line); border-radius: 8px; padding: 10px 11px; font-size: 0.8rem; line-height: 1.35; }
+.task h4 { margin: 0 0 6px; font: 600 0.74rem/1.2 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+.task p { margin: 4px 0 0; display: grid; grid-template-columns: 16px 1fr; gap: 4px; font-size: 0.78rem; }
+.task .ok { color: var(--good); } .task .cur { color: var(--amber); }
+.kc { display: inline-block; font: 600 0.68rem/1 var(--mono); border: 1px solid var(--muted); border-radius: 4px; padding: 2px 5px; color: var(--fg); }
+.toast { position: absolute; bottom: 14px; left: 14px; right: 14px; background: var(--glass-2); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; font-size: 0.8rem; }
+.toast b { color: var(--amber); font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; display: block; }
+
+pre { margin: 18px 0 0; background: var(--glass); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; overflow-x: auto; font: 400 0.8rem/1.6 var(--mono); }
+pre .c { color: var(--muted); } pre .k { color: var(--accent); } pre .s { color: var(--good); }
+
+/* numbers */
+.nums { display: grid; gap: 12px; margin-top: 18px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.num { background: var(--glass); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.num b { display: block; font: 700 2rem/1 var(--display); color: var(--accent); }
+.num span { display: block; margin-top: 6px; font-size: 0.85rem; color: var(--muted); }
+
+/* decisions */
+.dec { display: grid; grid-template-columns: 44px 1fr; gap: 14px; background: var(--glass); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin-top: 12px; }
+.dec .no { font: 700 1.5rem/1 var(--display); color: var(--accent); }
+.dec h3 { margin-bottom: 4px; }
+.dec p { margin: 6px 0 0; font-size: 0.95rem; }
+.dec .alt { color: var(--muted); font-size: 0.88rem; }
+.dec .body { min-width: 0; }
+.cost { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 8px; }
+.cost li { display: grid; grid-template-columns: 44px 1fr 90px; gap: 12px; align-items: baseline; padding: 10px 16px; background: var(--glass); border: 1px solid var(--line); border-radius: 10px; }
+.cost .k { font: 700 1.1rem var(--display); color: var(--accent); }
+.cost .h { font: 600 0.9rem var(--mono); text-align: right; }
+.cost small { display: block; color: var(--muted); font-size: 0.85rem; }
+.ask { margin-top: 28px; padding: 18px 20px; border: 1px solid var(--good); border-radius: 12px; background: var(--glass); }
+footer { margin-top: 56px; font-size: 0.85rem; color: var(--muted); }
+@media (max-width: 560px) {
+  .dec { grid-template-columns: 1fr; gap: 6px; }
+  .cost li { grid-template-columns: 38px 1fr; } .cost .h { grid-column: 2; text-align: left; }
+  .band { grid-template-columns: 52px 1fr; }
+  .hud .left { max-width: 100%; margin-top: 150px; }
+  .task { width: calc(100% - 28px); }
+}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">AWAKEN · plan for approval · 27 Oct 2026</div>
+  <h1>Trails</h1>
+  <p class="lede prose">A way to be guided without being pushed. Each part of the game gets a short list of things to try. They open when you reach them, wait in the K menu, and only show on your screen if you choose to follow one. When you have no idea what to do, you open one place and it tells you.</p>
+  <blockquote>"Whenever you don't know what to do at all, you can always go in there and find, okay, these are the things that are available for me to do right now. ... If you want to be guided, you can, but it's not like a forced thing. ... Really plan this for everything."<span>Euan, 27 Oct 2026</span></blockquote>
+</header>
+
+<h2>The idea in three lines</h2>
+<div class="grid g3">
+  <div class="card"><span class="tag">It opens</span><h3>At a moment you reach</h3><p>The moment you set your fire down, "Your Hearth" opens. One short toast and a dot on the Journal. Nothing pops up again, and it never starts by itself.</p></div>
+  <div class="card"><span class="tag">You choose</span><h3>Follow it, or don't</h3><p>Press Follow and its next steps appear on the checklist card top right, with the current one on the Now line. Press again to drop it. Nothing else on your screen changes.</p></div>
+  <div class="card"><span class="tag">Always an answer</span><h3>"What can I do now?"</h3><p>The top of the Journal lists the three best next steps across everything you have open. If nothing is open, it says what opens the next one.</p></div>
+</div>
+
+<h2>What the Hearth does</h2>
+<p class="prose muted">I read the Hearth's docs and code. Every row is something a player can do or find, which makes it a step in a trail. Only the first two rows have any pointer today.</p>
+<div class="tbl"><table>
+<tr><th>Part</th><th>What is there</th><th>Taught today?</th></tr>
+<tr><td class="n">The carried flame</td><td>The Ember; set it down to make the Hearthfire (radius 24, respawn, rest heals, calm land); name your ground; lift it again until a room stands</td><td>Now line</td></tr>
+<tr><td class="n">The Anchor and its tiers</td><td>A Lord's Heart makes it the Anchor (tier I, radius 48); tiers II to V at D, C, B, A; using it opens Your Hearth</td><td>Now line, screen</td></tr>
+<tr><td class="n">Room reading</td><td>Every closed room graded Bare, Snug, Fine or Grand from light, warmth, room, care and detail; it names itself, says what to fix and why it is not recognised</td><td>Screen only</td></tr>
+<tr><td class="n">Fifteen kinds of room</td><td>Shelter, Bedroom, Sanctuary, Kitchen, Forge, Study, Greenhouse, Stable, Hall, Bell tower, Lookout, Trophy Hall, Workshop, Barracks, Mine head</td><td>Screen only</td></tr>
+<tr><td class="n">Comfort, Rested, healing</td><td>Comfort 0 to 12; waking in your own bed gives Rested; Fracture heals at home</td><td>No</td></tr>
+<tr><td class="n">Oren's cottage, the town</td><td>A free first Sanctuary; Oren, Mira, Teodor and Sun arrive by rank, each with a service</td><td>Offer card</td></tr>
+<tr><td class="n">Your village</td><td>Settlers move in to spare bedrooms and work with what you bring home; tiers by rooms and people</td><td>No</td></tr>
+<tr><td class="n">The Forge</td><td>Tempering, Forge tiers, the Armory room, and now the Armoury door (copy a Blueprint, Raise, attune)</td><td>Tooltip only</td></tr>
+<tr><td class="n">Trophies and Echoes</td><td>Trophy Mount and Hall bonuses; binding Echoes; role pads (Guard, Haul, Farm, Mine, Train); Echoes on duty</td><td>No</td></tr>
+<tr><td class="n">Training Grounds</td><td>Start and Finish Gates, numbered rings, dummies, laps, records, a ghost of your best</td><td>No</td></tr>
+<tr><td class="n">Breaks, Bell tower, trials</td><td>Guards hold a gate that breaks near home; the bell warns two days ahead; the Monolith runs rank trials</td><td>No</td></tr>
+<tr><td class="n">Home crafting, kits, requests</td><td>A crafting table pulls from chests within 8 blocks; drainpipes, trellis, ivy; small household requests</td><td>No</td></tr>
+</table></div>
+
+<h2>What you would see</h2>
+<p class="prose muted">Drawn from the K menu's real structure: six pages on the rail, Journal active, the new section on top. The proportions are rough; the order and the words are the proposal.</p>
+<div class="screens">
+  <div class="screen">
+    <div class="cap">K · Journal · the top of the page</div>
+    <div class="band">
+      <div class="rail"><span>Status</span><span>Powers</span><span class="on">Journal<i class="dot"></i></span><span>Truths</span><span>Codex</span><span>Map</span></div>
+      <div class="pane">
+        <div class="sec">Trails <em>All trails ›</em></div>
+        <div class="sub">What you can do now</div>
+        <div class="row"><div><b>Your Hearth<span class="pips"><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i></span></b><small>Make a Sanctuary: a bed and a Meditation Mat in a closed room.</small></div><span class="btn on">Following</span></div>
+        <div class="row"><div><b>The Forge</b><small>Craft a Forge. The Anchor taught you the recipe.</small></div><span class="btn">Follow</span></div>
+        <div class="row"><div><b>Your First Weapon</b><small>Hale has your hunter's issue at the High Gate.</small></div><span class="btn">Follow</span></div>
+        <div class="sub">Hidden trails 1 · Finished 2</div>
+        <div class="sec" style="margin-top:6px">Waiting for you <em>2</em></div>
+        <div class="row fade"><div><small>Sealed vault · opens at D-rank</small></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="screen">
+    <div class="cap">In the world · top left and top right</div>
+    <div class="hud">
+      <div class="left">Now · Make a Sanctuary<small>Bed ✓ · Meditation Mat ✗ · 14 m ↗</small></div>
+      <div class="task"><h4>Your Hearth</h4>
+        <p><span class="ok">✓</span><span>Open Your Hearth.</span></p>
+        <p><span class="ok">✓</span><span>Build a closed, roofed room.</span></p>
+        <p><span class="ok">✓</span><span>Sleep in your own bed.</span></p>
+        <p><span class="cur">▸</span><span>Make a Sanctuary: a bed and a Meditation Mat. <span class="kc">K</span></span></p>
+        <p><span>·</span><span class="muted">Take Oren's cottage, or build your own.</span></p>
+      </div>
+      <div class="toast"><b>A new trail</b>The Forge. Open the Journal (K) to follow it.</div>
+    </div>
+  </div>
+  <div class="screen">
+    <div class="cap">K · Journal · All trails</div>
+    <div class="band">
+      <div class="rail"><span>Status</span><span>Powers</span><span class="on">Journal</span><span>Truths</span><span>Codex</span><span>Map</span></div>
+      <div class="pane">
+        <div class="sec">Trails <em>‹ Back</em></div>
+        <div class="chips"><span class="on">Home</span><span>Weapons</span><span>Gates</span><span>Powers</span><span>Body</span><span>World</span><span>Deep</span></div>
+        <div class="row"><div><b>Your Hearth<span class="pips"><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i></span></b><small>A fire, a roof, a bed, and the town that comes with them.</small></div><span class="btn on">Following</span></div>
+        <div class="row"><div><b>A Room for Everything<span class="pips"><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></b><small>Kitchen, Study, Greenhouse, Stable, Hall and more.</small></div><span class="btn">Follow</span></div>
+        <div class="row"><div><b>Trophies and Echoes</b><small>Hang what you have beaten; bind what has fallen.</small></div><span class="btn">Follow</span></div>
+        <div class="row fade"><div><b>The Training Grounds</b><small>Opens at tier I of your Hearth.</small></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="note">The unread dot, the toast and the card are the only things that appear on their own, once. Following is the only thing that puts anything on your HUD.</p>
+
+<h2>How a trail is written</h2>
+<p class="prose">A trail is a small JSON file, like a quest or a bounty. The owner of each area writes their own in plain speech. A step is a condition on the world, so the game ticks it by reading state, not by asking you to report.</p>
+<pre><span class="c">// data/awaken/awaken/trail/your_hearth.json</span>
+{
+  <span class="k">"title"</span>: <span class="s">"Your Hearth"</span>,   <span class="k">"area"</span>: <span class="s">"home"</span>,
+  <span class="k">"blurb"</span>: <span class="s">"A fire, a roof, a bed, and the town that comes with them."</span>,
+  <span class="k">"opens"</span>: [<span class="s">"hearth"</span>],   <span class="k">"order"</span>: <span class="s">"free"</span>,
+  <span class="k">"steps"</span>: [
+    { <span class="k">"text"</span>: <span class="s">"Use your fire to open Your Hearth."</span>,           <span class="k">"done"</span>: [<span class="s">"counter:awaken:hearth_guide_seen"</span>] },
+    { <span class="k">"text"</span>: <span class="s">"Build a closed, roofed room next to it."</span>,       <span class="k">"done"</span>: [<span class="s">"room:shelter"</span>],
+      <span class="k">"hint"</span>: <span class="s">"Your Hearth says what a room is missing."</span> },
+    { <span class="k">"text"</span>: <span class="s">"Make a Sanctuary: a bed and a Meditation Mat."</span>,  <span class="k">"done"</span>: [<span class="s">"room:sanctuary"</span>], <span class="k">"where"</span>: <span class="s">"hearth"</span> }
+  ],
+  <span class="k">"finish"</span>: { <span class="k">"line"</span>: <span class="s">"Your Hearth is a home now."</span>, <span class="k">"levels"</span>: 0.05 }
+}</pre>
+<div class="grid g3">
+  <div class="card"><span class="tag">Already ticked</span><h3>Reads what you did</h3><p>A step you finished before the trail opened is ticked the moment it opens. A step you finish without following still counts. Once ticked, it stays ticked.</p></div>
+  <div class="card"><span class="tag">Each module owns its words</span><h3>Tokens, not code</h3><p><code>room:sanctuary</code> belongs to the Hearth, <code>style:spear</code> to Arms. A module adds a family of tokens in one line. Most steps use counters the game already keeps.</p></div>
+  <div class="card"><span class="tag">An escape hatch</span><h3>Mark it done</h3><p>A step the world cannot read can be marked by hand. A test checks that every token in every trail resolves, so a typo fails the build, not a player.</p></div>
+</div>
+
+<h2>Not overwhelming, as numbers</h2>
+<div class="nums">
+  <div class="num"><b>2</b><span>new trails announced a play-day, at most</span></div>
+  <div class="num"><b>3</b><span>rows under "What you can do now"</span></div>
+  <div class="num"><b>5</b><span>steps on the card at once</span></div>
+  <div class="num"><b>1</b><span>followed trail, and one thing on the card</span></div>
+  <div class="num"><b>0</b><span>trails shown for places you have not met</span></div>
+</div>
+<p class="prose muted">A trail whose lock you have not seen is invisible. One whose lock you have seen ("opens at D-rank") shows as a faded silhouette and files a "What waits" entry, the same rule The Way Forward set. Finished trails fold away and never reopen.</p>
+
+<h2>Trails for everything</h2>
+<p class="prose muted">About 30 trails in eight areas. The Hearth is the pilot and is written out in full in the plan (7 trails, about 45 steps). The rest are sketches: the module's owner writes the steps when their wave runs.</p>
+<div class="tbl"><table>
+<tr><th>Area</th><th>Trails</th><th>Opens at</th></tr>
+<tr><td class="n">Home (Hearth)</td><td>Set Your Fire · Your Hearth · A Room for Everything · Your Village · The Forge · Trophies and Echoes · The Training Grounds</td><td>the Ember; the fire placed; the first room; tier I; a Forge; a trophy; tier I</td></tr>
+<tr><td class="n">Weapons</td><td>Your First Weapon · Finding Patterns · Making Your Next Weapon · Boss Weapons</td><td>awakening; the issue taken; each tier opening; the first Lord</td></tr>
+<tr><td class="n">Body</td><td>Moving Like a Hunter · The Line · Wings</td><td>awakening; Tether; Wings</td></tr>
+<tr><td class="n">Powers</td><td>Your First Power · The Five Forces · Weaves · The Second Awakening</td><td>the first pick; D-rank; a weave; C-rank</td></tr>
+<tr><td class="n">Gates</td><td>Your First Gate · Floors and the Satchel · Gate Lords · Breaks</td><td>the first gate seen; first clear; first Lord; first break</td></tr>
+<tr><td class="n">World</td><td>The Commons · Wayfarers and Camps · Villages · Beasts and Lairs · Digging Down · Rumours</td><td>leaving the walls; the camp; a village; a lair rumour; first ore</td></tr>
+<tr><td class="n">Deep</td><td>The Well · The Veil · Dreams · The Precursors</td><td>the Well found; meditation; first sleep; first ruin</td></tr>
+<tr><td class="n">Story</td><td>Ranks and Trials · Titles and Truths</td><td>D-rank level; the first Truth</td></tr>
+</table></div>
+<p class="note">The Forge question you asked earlier is answered here. Raising a weapon, copying a Blueprint and attuning become steps of "The Forge" trail, so a player is shown they exist instead of finding them by accident.</p>
+
+<h2>How it plugs into what exists</h2>
+<p class="prose muted">Nothing new on the HUD. Trails feeds the channels that are already there.</p>
+<div class="tbl"><table>
+<tr><th>Existing system</th><th>What changes</th></tr>
+<tr><td class="n">Task card (top right)</td><td>The followed trail is a source for it. Follow, the tracked chain and the Armoury's Track share one slot; the last one you chose shows.</td></tr>
+<tr><td class="n">Now line (top left)</td><td>The current step, at priority 55: under danger, rifts and a tracked chain, over bookkeeping. With a place, it carries the compass.</td></tr>
+<tr><td class="n">K, Journal page</td><td>A TRAILS section on top and a browse view inside the page. The band keeps its six pages.</td></tr>
+<tr><td class="n">What waits</td><td>A silhouette trail files a promise, called back when it opens.</td></tr>
+<tr><td class="n">Tips</td><td>A step can offer a tip once, when it becomes current.</td></tr>
+<tr><td class="n">The Hearth's own Now lines</td><td>Keep the first-ten-minutes nudge. The room-by-room lines hand over to the trail when you follow it, so there is one voice.</td></tr>
+<tr><td class="n">Clerk, Hale, Oren, Mira</td><td>"Anything for me?" says the first step of your best trail in their own voice.</td></tr>
+<tr><td class="n">Directives, quest chains</td><td>Untouched. Directives stay random and daily; chains stay story. A trail step can point at a chain.</td></tr>
+</table></div>
+
+<h2>What it costs</h2>
+<p class="prose muted">At AI pace, scaled from the git history of the project (all of Awaken took about 30 hours). One new small module, <code>trails</code>.</p>
+<ul class="cost">
+  <li><span class="k">T0</span><span>Engine<small>Format, loader, saved state, tokens, evaluation, network, task card and Now line, the validity test.</small></span><span class="h">4 to 5 h</span></li>
+  <li><span class="k">T1</span><span>The K menu<small>Journal section, browse view, unread dot, opening toast, one look tour on the CI runners.</small></span><span class="h">3 to 4 h</span></li>
+  <li><span class="k">T2</span><span>The Hearth pilot<small>The seven trails, the Hearth's tokens, the Forge steps, the hand-over of the Now lines.</small></span><span class="h">3 to 4 h</span></li>
+  <li><span class="k">T3</span><span>Waves by area<small>Weapons and Body first, then Gates and Powers, World, Deep and Story. One builder each, in parallel.</small></span><span class="h">8 to 10 h</span></li>
+  <li><span class="k">T4</span><span>Polish<small>"Anything for me?", silhouette promises, tips, the Armoury's Track as a step type.</small></span><span class="h">1 to 2 h</span></li>
+</ul>
+<p class="note">About 20 to 25 builder hours, a third of that in wall-clock time with the waves in parallel. T0 and T1 carry the risk (the K menu is where everything meets); T2 proves the format on the biggest area before the waves copy it.</p>
+
+<h2>Decisions for you</h2>
+<p class="prose muted">My recommendation is first in each. Say "go with all recommendations" or change any.</p>
+<div class="dec"><div class="no">1</div><div class="body"><h3>Name <span class="chip rec">recommended: Trails</span></h3><p>It reads as something you walk, which is the idea.</p><p class="alt">Other names: Guides (clashes with the Your Hearth screen, which already calls itself a guide), Pursuits, "Things to try".</p></div></div>
+<div class="dec"><div class="no">2</div><div class="body"><h3>Where it lives <span class="chip rec">recommended: top of the Journal page</span></h3><p>A section on top plus a browse view inside the page. The band keeps its six pages.</p><p class="alt">Other: a seventh page. Cleaner to find, but it breaks the six-page rule the K menu was built on.</p></div></div>
+<div class="dec"><div class="no">3</div><div class="body"><h3>Announcing a new trail <span class="chip rec">recommended: one toast and a dot</span></h3><p>The toast comes through the notification director, so it waits for a calm moment.</p><p class="alt">Other: the dot only, fully silent.</p></div></div>
+<div class="dec"><div class="no">4</div><div class="body"><h3>How many you can follow <span class="chip rec">recommended: one</span></h3><p>There is one task card. Following a second one replaces the first, and the first is one press away.</p><p class="alt">Other: up to three, with the card cycling.</p></div></div>
+<div class="dec"><div class="no">5</div><div class="body"><h3>Rewards <span class="chip rec">recommended: 5% of a level, once, on finishing</span></h3><p>Small, real, and nothing is locked behind a trail.</p><p class="alt">Other: no reward at all.</p></div></div>
+<div class="dec"><div class="no">6</div><div class="body"><h3>Trails you have not met <span class="chip rec">recommended: hidden, then a silhouette</span></h3><p>You only see a trail once you have met its lock, so the list never spoils.</p><p class="alt">Other: show every trail from the start.</p></div></div>
+<div class="dec"><div class="no">7</div><div class="body"><h3>Progress <span class="chip rec">recommended: read from the world</span></h3><p>Latched, with a hand tick for the rare step the world cannot read.</p></div></div>
+<div class="dec"><div class="no">8</div><div class="body"><h3>The Hearth's existing Now lines <span class="chip rec">recommended: keep the first nudge, hand the rest over</span></h3><p>So the trail and the old lines never say two different things.</p></div></div>
+<div class="dec"><div class="no">9</div><div class="body"><h3>Order of work <span class="chip rec">recommended: engine, K menu, Hearth, then waves</span></h3><p>Weapons and Body are the first waves.</p></div></div>
+<div class="dec"><div class="no">10</div><div class="body"><h3>The Forge steps <span class="chip rec">recommended: inside The Forge trail</span></h3><p>The four prompts I proposed earlier become steps of that trail instead of separate toasts.</p></div></div>
+
+<div class="ask"><h3>If you approve</h3><p>Say "go with all recommendations" and I will start T0 and T1, then the Hearth. The Journal page changes in T1, so you see it in a tour before anything else is built on it.</p></div>
+
+<h2>What I could not check</h2>
+<ul class="prose">
+  <li>That the Hearth's saved record holds everything the new Hearth tokens need. The docs say it does; the builder reads it first.</li>
+  <li>Whether the task card can carry a per-player "what is on the card" choice without touching the living module's tracked-chain code.</li>
+  <li>How the Journal page looks with a section added. The mock-ups above are drawn from its structure, not from a screenshot; one tour will show it.</li>
+  <li>The 20 to 25 hour figure is a scaled guess from the project's own history, not a measurement.</li>
+</ul>
+
+<footer>Source: <code>docs/trails/PLAN.md</code> on <code>pack/trails-plan</code>. The Hearth inventory is from <code>docs/modules/hearth.md</code> and the code in <code>dev.awaken.hearth</code> at commit 2a0b6da3.</footer>
+</div>
