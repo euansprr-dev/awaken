@@ -72,9 +72,9 @@ public class RoadPiece extends StructurePiece implements net.neoforged.neoforge.
         this.boundingBox = box(paint());
     }
 
-    /** The window of the road a leg keeps: its points and two more either side. */
+    /** The window of the road a leg keeps: its points and four more either side (a viaduct's span reaches its piers). */
     private static int[] window(Road.Leg leg) {
-        return new int[]{Math.max(0, leg.i0() - 2), Math.min(leg.road().points() - 1, leg.i1() + 2)};
+        return new int[]{Math.max(0, leg.i0() - 4), Math.min(leg.road().points() - 1, leg.i1() + 4)};
     }
 
     public RoadPiece(CompoundTag tag) {

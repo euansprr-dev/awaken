@@ -286,10 +286,11 @@ final class CityWriter {
             if (t > CRUST || y - t < bottom) break;
             y -= t;
         }
-        int n = 0;
-        for (int yy = y0; yy > y; yy--) {
+        // a footing (rise set) is built up from the ground only that far
+        int top = m != null && m.rise() > 0 ? Math.min(y0, y + m.rise()) : y0, n = 0;
+        for (int yy = top; yy > y; yy--) {
             if (!open(c.get(yy), wet)) continue;
-            int depth = y0 - yy;
+            int depth = top - yy;
             BlockState s = m != null && depth == 0 && m.top() != null ? m.top()
                     : m != null && depth >= 1 && depth <= m.soilDepth() && m.soil() != null ? m.soil()
                     : rock != null ? rock.at(c.px, yy, c.pz) : CityBlocks.STONE;

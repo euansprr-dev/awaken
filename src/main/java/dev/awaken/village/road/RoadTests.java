@@ -22,6 +22,7 @@ import java.util.Locale;
 /**
  * Roads and towns' GameTests (prefix {@code village_}, SPEC §28.9), one per mechanism: a road laid over the land and
  * painted ({@code village_roads}); a road held high over low land stands on stepped banks ({@code village_road_banks});
+ * one held high over a valley crosses on a viaduct of piers and arches ({@code village_road_viaduct});
  * a town, a wayhouse and a mining town planned ({@code village_town_plan}). The Deep Mine's is with the troubles'
  * ({@code village_deep_mine}).
  */
@@ -31,6 +32,7 @@ public final class RoadTests {
     public static void register() {
         AwakenTests.registerIsolated("village_roads", 600, RoadTests::roads);
         AwakenTests.registerIsolated("village_road_banks", 200, RoadTests::banks);
+        AwakenTests.registerIsolated("village_road_viaduct", 200, RoadTests::viaduct);
         AwakenTests.register("village_town_plan", 400, RoadTests::towns);
         AwakenTests.register("village_march_ranks", 20, h -> {
             // a march post writes the land's rank range plainly (SPEC §21.10)
@@ -170,6 +172,71 @@ public final class RoadTests {
      * the way to the floor, through the crust; its banks step down to the floor, no face taller than 10, with turf on
      * their ledges and the land's layered rock in their faces (the old fill was one sheer wall 30 high).
      */
+    private static void viaduct(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = h.absolutePos(BlockPos.ZERO);
+        int ox = o.getX(), oz = o.getZ(), floor = o.getY(), roadY = floor + 24;
+        BlockState stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        for (int x = ox - 36; x <= ox + 36; x++) {
+            for (int z = oz - 8; z <= oz + 48; z++) {
+                for (int y = floor - 4; y < floor; y++) level.setBlock(at.set(x, y, z), stone, 2);
+                for (int y = floor; y <= roadY + 6; y++) level.setBlock(at.set(x, y, z), air, 2);
+            }
+        }
+        // the planner: land at the road's height at the ends, the floor between
+        int n = 14;
+        float[] xs = new float[n], zs = new float[n];
+        int[] ys = new int[n], top = new int[n];
+        for (int i = 0; i < n; i++) {
+            // the line on a block edge: far out on the test grid (x near -15 million) a float can't hold the half
+            xs[i] = ox;
+            zs[i] = oz - 8 + 4 * i;
+            ys[i] = roadY;
+            top[i] = i < 2 || i > 11 ? roadY : floor - 1;
+        }
+        byte[] fl = new byte[n];
+        RoadPlanner.viaducts(ys, top, fl);
+        int piers = 0;
+        for (int i = 0; i < n; i++) {
+            h.assertTrue(((fl[i] & RoadPlanner.VIADUCT) != 0) == (i >= 1 && i <= 12), "the viaduct runs from abutment to abutment: point " + i);
+            if ((fl[i] & RoadPlanner.PIER) != 0) piers++;
+        }
+        h.assertTrue((fl[1] & fl[12] & RoadPlanner.PIER) != 0 && piers == 5, "piers on the abutments and evenly between: " + piers);
+        RoadPaint p = new RoadPaint(0, xs, zs, ys, fl, new byte[n], 0, n - 1, Road.HIGHROAD, List.of());
+        for (int cx = (p.ox + p.rx0) >> 4; cx <= (p.ox + p.rx0 + p.rw) >> 4; cx++)
+            for (int cz = (p.oz + p.rz0) >> 4; cz <= (p.oz + p.rz0 + p.rd) >> 4; cz++) SettlementPaint.repaint(p, level, cx, cz);
+        java.util.Set<net.minecraft.world.level.block.Block> kinds = new java.util.HashSet<>();
+        for (int i : new int[]{4, 7}) {
+            int z = oz - 8 + 4 * i;
+            for (int y = floor; y < roadY; y++) {
+                BlockState b = level.getBlockState(at.set(ox, y, z));
+                h.assertTrue(!b.isAir(), "a pier stands from the floor to the deck: air at " + (y - floor) + " under point " + i);
+                kinds.add(b.getBlock());
+            }
+            for (int y = floor; y < roadY - 1; y++)
+                h.assertTrue(!level.getBlockState(at.set(ox + 4, y, z)).isAir(), "a rib runs up the pier's face: air at " + (y - floor));
+            h.assertTrue(!level.getBlockState(at.set(ox + 5, floor + 1, z)).isAir() && level.getBlockState(at.set(ox + 5, floor + 2, z)).isAir(),
+                    "a footing steps out round the pier's foot");
+            h.assertTrue(level.getBlockState(at.set(ox + 3, roadY + 2, z)).is(net.minecraft.world.level.block.Blocks.LANTERN), "a lantern over the pier");
+        }
+        // the arch between points 4 and 7: open under its crown, three of deck over it
+        for (int y = floor; y <= roadY - 4; y++) h.assertTrue(level.getBlockState(at.set(ox, y, oz + 14)).isAir(), "the arch is open: a block at " + (y - floor));
+        for (int y = roadY - 3; y < roadY; y++) h.assertTrue(!level.getBlockState(at.set(ox, y, oz + 14)).isAir(), "the deck over the crown at " + (y - roadY));
+        for (int z = oz + 9; z <= oz + 27; z++) {
+            for (int side = -4; side <= 3; side += 7)
+                h.assertTrue(level.getBlockState(at.set(ox + side, roadY + 1, z)).is(net.minecraft.tags.BlockTags.WALLS), "a parapet along the edge at " + side + ", " + (z - oz));
+            for (int x = ox - 4; x <= ox + 3; x++)
+                for (int y = floor; y < roadY; y++) {
+                    BlockState b = level.getBlockState(at.set(x, y, z));
+                    h.assertTrue(!b.is(net.minecraft.world.level.block.Blocks.DIRT) && !b.is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK), "no raw earth under the deck");
+                }
+        }
+        h.assertTrue(kinds.size() >= 3, "dressed stone of a few kinds, not one: " + kinds);
+        Awaken.LOG.info("[road] viaduct: {} piers, pier stone {}", piers, kinds);
+        h.succeed();
+    }
+
     private static void banks(GameTestHelper h) {
         ServerLevel level = h.getLevel();
         BlockPos o = h.absolutePos(BlockPos.ZERO);

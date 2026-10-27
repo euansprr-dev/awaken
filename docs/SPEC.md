@@ -7219,9 +7219,28 @@ side, the place's name and distance on both faces (waxed; white ink on dark wood
 settlement (the next place and the one behind), one at every fork; at the crest where the first town comes into view, a
 cairn of field stones.
 
+**Viaducts** (`RoadPlanner.viaducts`, `RoadPaint.viaduct`; Euan, 2026-10-27: he likes the raised road over a valley, "it
+adds a sense of fantasy", but its support was one plain grey post): where the graded road stands 8 or more over dry land
+(`VIADUCT_RISE`, against the land at the point) it crosses on a viaduct. The planner flags the run and one point either
+side (the abutments, on the land) VIADUCT (32), and PIER (64) on the abutments and evenly between, 2-4 points apart
+(about every 12 blocks), so each span is one arch. A piece keeps 4 points either side of its leg (was 2), so every span's
+piers are in its window. The painter, across the deck (the carriageway and a block past it):
+- **Deck**: the road's own paving on dressed stone, no earth bed; a dressed edge of stone bricks with a parapet of stone
+  brick wall (a quarter mossy) joined along the edge; a cornice of top slabs a block out, one under the road.
+- **Piers**: three blocks thick and the deck's width at each PIER point, carried down to the ground by the plate (at most
+  48 blocks, like any fill); a rib a block out up each face, under a slab cap; a lantern on the parapet over each pier.
+- **Footings**: round each pier's foot the fill builds up from the ground only (`Mound.rise`): 5 high a block out, 2 high
+  the next, rough stone (cobble, mossy cobble, mossy stone bricks).
+- **Arches**: between two piers a round arch from face to face, its crown three blocks under the road, a chiseled
+  keystone; open under it, so the valley keeps its own floor (no road markers' beard under a viaduct).
+- **Stone**: stone bricks, cracked here and there, mossier the lower it stands (about 5% under the deck to 45%), a course of
+  polished andesite every eight blocks; in the desert cut, smooth and chiseled sandstone. Every face has a grid and
+  courses that read up close (a plain stone face with no seams read as stretched).
+- Waymarks, lane joins and lantern posts keep off viaducts. New chunks only. Test `village_road_viaduct`.
+
 **Banks** (`RoadPaint.bankDrop`, `CityWriter.fills`; Euan, 2026-10-27, "the cliff needs to look a bit more natural"): where
-a road holds its grade above the land (a highroad across a valley), the painter raises a bank out to 26 blocks past the
-verge instead of leaving a sheer wall under the footprint. The bank comes down in tiers: each a rise of 4-8 blocks over a
+a road stands over lower land short of a viaduct (a rise under 8, or a hillside falling away beside it), the painter
+raises a bank out to 26 blocks past the verge instead of leaving a sheer wall under the footprint. The bank comes down in tiers: each a rise of 4-8 blocks over a
 face 0.7-1.7 blocks out, then a ledge of 0.9-2.5 blocks, the tier sizes from value noise (13-15 blocks a cell) and the
 edge wandering about 3 blocks, so faces break and step, and one column in seven or ten pokes up or dips a block. Ledges
 and the top take the road's turf (grass; podzol in the elder woods, sand in the desert) over 2-3 of dirt; steps of 2-3
@@ -7231,7 +7250,7 @@ the strata (`AlpineSurface.strata`: stone, andesite, tuff, granite, calcite band
 reads as layered rock, not one flat stone sheet. A fill passes a solid crust up to 3 thick with air under it (the thin
 road-marker beard over a valley) and stops on the ground below, so no stretch of road floats on a slab; a dry fill that
 meets water stops, as before. The rim stays walkable: the road's own width plus verge is untouched. No bank on bridges,
-boardwalks, causeways or in towns. The banks reach new chunks only. Test `village_road_banks`.
+boardwalks, causeways, viaducts or in towns. The banks reach new chunks only. Test `village_road_banks`.
 
 **Towns** (`TownPlanner`, `TownPainter`; `Kind.TOWN`): a raster of 112 round a site near the region's heart (broad,
 gentle, dry, water near). A wall ring of mean radius 64 (planned again at 76 where the land fits fewer than 25 homes,

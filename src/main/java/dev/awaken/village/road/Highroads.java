@@ -492,7 +492,7 @@ final class Highroads {
         double bd = LANE_REACH;
         for (Road r : roads) {
             for (int i = 2; i < r.points() - 2; i++) {
-                if ((r.flags()[i] & (RoadPlanner.BRIDGE | RoadPlanner.BOARDWALK)) != 0) continue;
+                if ((r.flags()[i] & (RoadPlanner.BRIDGE | RoadPlanner.BOARDWALK | RoadPlanner.VIADUCT)) != 0) continue;
                 double d = Math.hypot(r.x()[i] - p.ox, r.z()[i] - p.oz);
                 if (d < bd) {
                     bd = d;
@@ -507,7 +507,7 @@ final class Highroads {
         // the lane meets the road where it's nearest the street's end
         double ed = Double.MAX_VALUE;
         for (int i = 2; i < best.points() - 2; i++) {
-            if ((best.flags()[i] & (RoadPlanner.BRIDGE | RoadPlanner.BOARDWALK)) != 0) continue;
+            if ((best.flags()[i] & (RoadPlanner.BRIDGE | RoadPlanner.BOARDWALK | RoadPlanner.VIADUCT)) != 0) continue;
             double d = Math.hypot(best.x()[i] - e.x(), best.z()[i] - e.z());
             if (d < ed) {
                 ed = d;
