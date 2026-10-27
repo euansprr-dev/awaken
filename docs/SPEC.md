@@ -7415,7 +7415,7 @@ plan this for everything." Module `trails` (`dev.awaken.trails`), `core.api.Trai
   tokens are a rank or a level shows as a silhouette ("Opens at D-rank") and files a "What waits" entry; any other lock keeps it unseen.
 - **Where it shows**: K, Journal page, **TRAILS** (order -38, under TRACKING): "What you can do now" (at most 3 rows, each the next step
   with Follow), and **All trails ›** opening a browse view in the same section (area chips, a card per trail with its pips, Steps,
-  Follow, Not for me, silhouettes last). Following puts the trail on the **task card** (`Checklist.registerLeading`: the trail,
+  Follow, Not for me, silhouettes last). Following puts the trail on the **task card** (`Checklist.registerLeading`, asked before even the first-hour moves card: the trail,
   at most five rows, a linear trail two) and its current step on the **Now line** (priority 55). Only Follow changes the HUD;
   one trail is followed at a time, and the Armoury's Track gives the card up (`TrailsApi.unfollow`). "Anything for me?"
   (`Advice`) names the best next step.
@@ -7429,6 +7429,7 @@ plan this for everything." Module `trails` (`dev.awaken.trails`), `core.api.Trai
   tour `tools/autopilot/trails-journal.txt`.
 - **Tests** (`trail_`): `trail_defs_valid` (every shipped trail passes the checks, and the checks catch what they should),
   `trail_progress_derived`, `trail_open_once`, `trail_follow_card`, `trail_silhouette`, `trail_hearth_tokens`.
-- **Not built / unverified**: the look of the Journal section until the tour is read; the unread dot (the opening toast is filed
-  in the Journal's log, which feeds the rail's count; not seen); a step's `{key}` caps; a `tip` (none shipped yet); several
+- **Seen** (CI tour `trails-journal`, 2026-10-27): the TRAILS section in the Journal (what you can do now, Follow and Stop, the browse view by area with
+  steps and hints), and the rail's unread count rising as trails open. **Not built / unverified**: the task card and Now line with a followed trail on a real
+  screen (the tour caught the first-hour card covering it; fixed and tested, not re-toured); a step's `{key}` caps; a `tip` (none shipped yet); several
   followed trails; the Powers, Story and the remaining World trails; the Armoury's Track as a step type.

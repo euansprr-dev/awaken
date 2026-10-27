@@ -130,6 +130,8 @@ final class TrailsTests {
             h.assertTrue(TrailEngine.task(p) == null, "nothing on the card until you follow");
             h.assertTrue(NowHooks.collect(p, 10).stream().noneMatch(s -> s.id().startsWith("trail:")), "or on the Now line");
             TrailEngine.act(p, new TrailPayloads.Act(TrailPayloads.FOLLOW, "awaken:t_card", ""));
+            var shown = dev.awaken.progression.Checklist.now(p);
+            h.assertTrue(shown != null && shown.id().equals("trail:awaken:t_card"), "a followed trail is the card, ahead of the first-hour moves: " + (shown == null ? null : shown.id()));
             var task = TrailEngine.task(p);
             h.assertTrue(task != null && task.title().equals("Card") && task.rows().size() == 3 && task.rows().stream().noneMatch(r -> r.done()), "the card shows its three steps");
             counter(p, "awaken:t_a", 1);

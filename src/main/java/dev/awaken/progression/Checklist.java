@@ -87,12 +87,13 @@ public final class Checklist {
     public static @Nullable Task now(ServerPlayer p) {
         Profile prof = Progression.profile(p);
         if (!prof.awakened() || OpeningHooks.inOpening(p)) return null;
-        Task moves = moves(p, prof);
-        if (moves != null) return moves;
+        // what the player chose to follow comes first (docs/trails/PLAN.md §3.4), then the first moves, then the rest
         for (Source s : LEADING) {
             Task t = s.task(p);
             if (t != null) return t;
         }
+        Task moves = moves(p, prof);
+        if (moves != null) return moves;
         for (Source s : SOURCES) {
             Task t = s.task(p);
             if (t != null) return t;
