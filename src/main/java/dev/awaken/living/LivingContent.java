@@ -49,6 +49,12 @@ public final class LivingContent {
     public static final Supplier<AttachmentType<Integer>> LOOT_PILLAR = ATTACHMENTS.register("loot_pillar",
             () -> AttachmentType.builder(() -> 0).sync(ByteBufCodecs.VAR_INT).build());
 
+    /** The form a creature wears (SPEC §21.11): rolled once, saved on the creature, synced to everyone who sees it. */
+    public static final Supplier<AttachmentType<dev.awaken.living.combat.Forms.Form>> FORM = ATTACHMENTS.register("wild_form",
+            () -> AttachmentType.builder(() -> dev.awaken.living.combat.Forms.Form.UNSET)
+                    .serialize(dev.awaken.living.combat.Forms.Form.CODEC.fieldOf("form"), f -> f.rung() >= 0)
+                    .sync(dev.awaken.living.combat.Forms.Form.STREAM_CODEC).build());
+
     /** The Wayfarer chains a player took (SPEC §21, Phase C): saved, kept through death, synced to its owner. */
     public static final Supplier<AttachmentType<dev.awaken.living.quest.QuestState>> QUESTS = ATTACHMENTS.register("quests",
             () -> AttachmentType.builder(dev.awaken.living.quest.QuestState::new).serialize(dev.awaken.living.quest.QuestState.CODEC.fieldOf("quests"))

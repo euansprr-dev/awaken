@@ -366,6 +366,63 @@ final class LivingTests {
             h.succeed();
         });
 
+        AwakenTests.register("living_form_mix", 100, h -> {
+            // SPEC 21.11 decision 22: nothing in E land (the first hour), then 70% the land's rung, 25% below (half in a rank's first three levels), 5% above
+            var rnd = net.minecraft.util.RandomSource.create(7);
+            for (int lv : new int[]{1, 5, 9}) for (int i = 0; i < 500; i++) h.assertTrue(dev.awaken.living.combat.Forms.rungFor(lv, rnd) == 0, "E land wears no form: " + lv);
+            int[][] counts = new int[4][7];
+            int[] levels = {10, 18, 40, 130};
+            for (int k = 0; k < levels.length; k++) for (int i = 0; i < 20000; i++) counts[k][dev.awaken.living.combat.Forms.rungFor(levels[k], rnd)]++;
+            // level 10 is the first of D: half and half with vanilla, a twentieth of C
+            h.assertTrue(Math.abs(counts[0][0] / 20000.0 - 0.50) < 0.03 && Math.abs(counts[0][2] / 20000.0 - 0.05) < 0.015 && counts[0][1] > 0.4 * 20000, "the first levels of D: half vanilla, half D, a taste of C");
+            h.assertTrue(Math.abs(counts[1][0] / 20000.0 - 0.25) < 0.03 && Math.abs(counts[1][1] / 20000.0 - 0.70) < 0.03, "mid D: a quarter vanilla, seven tenths D");
+            h.assertTrue(Math.abs(counts[2][1] / 20000.0 - 0.25) < 0.03 && Math.abs(counts[2][2] / 20000.0 - 0.70) < 0.03 && Math.abs(counts[2][3] / 20000.0 - 0.05) < 0.015, "C land: a quarter D, seven tenths C, a twentieth B");
+            h.assertTrue(counts[3][5] / 20000.0 > 0.7 && counts[3][4] / 20000.0 > 0.2 && counts[3][6] == 0, "S land: S and A only, never past the fifth rung");
+            h.succeed();
+        });
+
+        AwakenTests.register("living_form_state", 100, h -> {
+            var level = h.getLevel();
+            // an alpha wears at least its land's rung and the crown; a baby and a creature that is not on the list wear nothing
+            var zombie = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, 1, 2, 1);
+            dev.awaken.living.combat.Forms.roll(level, zombie, 40, true);
+            var f = dev.awaken.living.combat.Forms.of(zombie);
+            h.assertTrue(f.rung() >= 2 && f.crowned(), "an elite in C land wears C or more, and the crown: " + f);
+            var plain = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, 2, 2, 1);
+            dev.awaken.living.combat.Forms.roll(level, plain, 5, false);
+            h.assertTrue(!dev.awaken.living.combat.Forms.of(plain).worn() && plain.hasData(dev.awaken.living.LivingContent.FORM.get()), "E land: rolled once, vanilla");
+            var bat = h.spawn(net.minecraft.world.entity.EntityTypes.BAT, 3, 2, 1);
+            dev.awaken.living.combat.Forms.roll(level, bat, 90, false);
+            h.assertTrue(!bat.hasData(dev.awaken.living.LivingContent.FORM.get()), "a bat is not on the list");
+            var calf = h.spawn(net.minecraft.world.entity.EntityTypes.COW, 4, 2, 1);
+            calf.setBaby(true);
+            dev.awaken.living.combat.Forms.roll(level, calf, 90, false);
+            h.assertTrue(!calf.hasData(dev.awaken.living.LivingContent.FORM.get()), "a baby wears nothing");
+            // saved and sent: the codec and the stream codec round-trip
+            var form = new dev.awaken.living.combat.Forms.Form(4, 2, 1);
+            var enc = dev.awaken.living.combat.Forms.Form.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, form).result().orElseThrow();
+            h.assertTrue(dev.awaken.living.combat.Forms.Form.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, enc).result().orElseThrow().equals(form), "saved form round-trips");
+            var buf = io.netty.buffer.Unpooled.buffer();
+            dev.awaken.living.combat.Forms.Form.STREAM_CODEC.encode(buf, form);
+            h.assertTrue(dev.awaken.living.combat.Forms.Form.STREAM_CODEC.decode(buf).equals(form), "sent form round-trips");
+            // the materials: cold land wears rime, hot land sun-baked bone
+            var biomes = level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.BIOME);
+            h.assertTrue(dev.awaken.living.combat.Forms.family(biomes.getOrThrow(net.minecraft.world.level.biome.Biomes.SNOWY_PLAINS).value()) == dev.awaken.living.combat.Forms.FROST
+                    && dev.awaken.living.combat.Forms.family(biomes.getOrThrow(net.minecraft.world.level.biome.Biomes.DESERT).value()) == dev.awaken.living.combat.Forms.SUN
+                    && dev.awaken.living.combat.Forms.family(biomes.getOrThrow(net.minecraft.world.level.biome.Biomes.PLAINS).value()) == dev.awaken.living.combat.Forms.GREEN, "the family follows the climate");
+            // every species the client dresses has its kit data (kit.json is read by the client; here, that the file lists each layout and rung)
+            try (var in = LivingTests.class.getResourceAsStream("/assets/awaken/forms/kit.json")) {
+                var root = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in)).getAsJsonObject().getAsJsonObject("layouts");
+                for (var sp : dev.awaken.living.combat.Forms.Species.values()) {
+                    h.assertTrue(root.has(sp.layout), "kit.json has the layout " + sp.layout);
+                    for (int r = 1; r <= 5; r++) h.assertTrue(root.getAsJsonObject(sp.layout).getAsJsonObject("ranks").has(String.valueOf(r)), sp.layout + " has rung " + r);
+                }
+            } catch (java.io.IOException | RuntimeException e) {
+                h.fail("kit.json: " + e);
+            }
+            h.succeed();
+        });
+
         AwakenTests.register("living_plate_heat", 20, h -> {
             // the chip's colour by how a creature measures against you: grey far below, blue about your level, orange a good fight, red an insane one
             var P = dev.awaken.living.combat.PlateRules.Heat.class;

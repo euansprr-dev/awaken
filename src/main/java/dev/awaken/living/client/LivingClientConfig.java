@@ -32,12 +32,23 @@ public final class LivingClientConfig {
     public static final ModConfigSpec.BooleanValue DREAD = B
             .comment("A land far above your level cools the screen and brings in a low sound before any creature does (SPEC 21.10).")
             .define("dread", true);
+    public enum FormsMode { FULL, LITE, OFF }
+
+    public static final ModConfigSpec.EnumValue<FormsMode> FORMS = B
+            .comment("How creatures in harder land look (SPEC 21.11): FULL (scars, plates, tusks, horns, a glow), LITE (no attached pieces) or OFF.")
+            .defineEnum("forms", FormsMode.FULL);
     public static final ModConfigSpec SPEC = B.build();
 
     // cached once a tick
     static boolean plates = true, xpStream = true, dread = true;
     static Numbers numbers = Numbers.FULL;
     static Moment moment = Moment.FULL;
+    static FormsMode forms = FormsMode.FULL;
+
+    /** 0 off, 1 lite, 2 full. */
+    public static int formsMode() {
+        return forms == FormsMode.OFF ? 0 : forms == FormsMode.LITE ? 1 : 2;
+    }
 
     static void register() {
         try {
@@ -54,6 +65,7 @@ public final class LivingClientConfig {
             dread = DREAD.get();
             numbers = DAMAGE_NUMBERS.get();
             moment = LEVEL_MOMENT.get();
+            forms = FORMS.get();
         } catch (RuntimeException notLoaded) {
             // defaults until the config loads
         }

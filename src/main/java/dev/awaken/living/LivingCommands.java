@@ -47,6 +47,26 @@ final class LivingCommands {
                         dev.awaken.living.region.RegionTracker.forceGap(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "gap"));
                         return 1;
                     })));
+            // forms (SPEC 21.11): one creature in a form, or a row of a species at every rung, standing still ahead of you (tours)
+            l.then(Commands.literal("form").requires(AwakenCommands.admin())
+                    .then(Commands.argument("species", com.mojang.brigadier.arguments.StringArgumentType.word())
+                            .suggests((c, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(java.util.Arrays.stream(dev.awaken.living.combat.Forms.Species.values()).map(s -> s.id), b))
+                            .then(Commands.argument("rung", IntegerArgumentType.integer(0, 5)).executes(c -> form(c.getSource().getPlayerOrException(), c, 0))
+                                    .then(Commands.argument("family", IntegerArgumentType.integer(0, 2)).executes(c -> form(c.getSource().getPlayerOrException(), c, IntegerArgumentType.getInteger(c, "family")))))));
+            l.then(Commands.literal("formrow").requires(AwakenCommands.admin())
+                    .then(Commands.argument("species", com.mojang.brigadier.arguments.StringArgumentType.word())
+                            .suggests((c, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(java.util.Arrays.stream(dev.awaken.living.combat.Forms.Species.values()).map(s -> s.id), b))
+                            .executes(c -> formRow(c.getSource().getPlayerOrException(), c, 0))
+                            .then(Commands.argument("family", IntegerArgumentType.integer(0, 2)).executes(c -> formRow(c.getSource().getPlayerOrException(), c, IntegerArgumentType.getInteger(c, "family"))))));
+            l.then(Commands.literal("formclear").requires(AwakenCommands.admin()).executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                int n = 0;
+                for (var e : p.level().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(40), m -> m.isNoAi() && dev.awaken.living.combat.Forms.Species.of(m.getType()) != null)) {
+                    e.discard();
+                    n++;
+                }
+                return n;
+            }));
             // tours: a blow at the creature you look at (no attack key in the autopilot), a drop in a pillar
             l.then(Commands.literal("strike").requires(AwakenCommands.admin())
                     .executes(c -> strike(c.getSource().getPlayerOrException(), 4, false))
@@ -303,6 +323,39 @@ final class LivingCommands {
                 .forEach(r -> src.sendSuccess(() -> Component.literal(String.format("%-22s Lv %3d-%-3d %s", r.name(), r.low(), r.high(),
                         r.commons() ? "(home)" : "heart " + r.heartX() + " " + r.heartZ())), false));
         return found.size();
+    }
+
+    /** {@code form <species> <rung> [family]}: one creature in that form, 4 blocks ahead, facing you. */
+    private static int form(ServerPlayer p, com.mojang.brigadier.context.CommandContext<CommandSourceStack> c, int family) {
+        var sp = dev.awaken.living.combat.Forms.Species.byId(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "species"));
+        if (sp == null) {
+            c.getSource().sendFailure(Component.literal("Unknown species."));
+            return 0;
+        }
+        Vec3 at = ahead(p, 4.0, 0.0);
+        dev.awaken.living.combat.Forms.still((ServerLevel) p.level(), sp, IntegerArgumentType.getInteger(c, "rung"), family, at.x, at.y, at.z, p.getYRot() + 180.0F);
+        return 1;
+    }
+
+    /** {@code formrow <species> [family]}: the species at rungs 0 to 5 in a row 9 blocks ahead, each facing you. */
+    private static int formRow(ServerPlayer p, com.mojang.brigadier.context.CommandContext<CommandSourceStack> c, int family) {
+        var sp = dev.awaken.living.combat.Forms.Species.byId(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "species"));
+        if (sp == null) {
+            c.getSource().sendFailure(Component.literal("Unknown species."));
+            return 0;
+        }
+        for (int r = 0; r <= 5; r++) {
+            Vec3 at = ahead(p, 9.0, (r - 2.5) * 2.4);
+            dev.awaken.living.combat.Forms.still((ServerLevel) p.level(), sp, r, family, at.x, at.y, at.z, p.getYRot() + 180.0F);
+        }
+        return 6;
+    }
+
+    /** A point {@code forward} blocks along the way the player faces and {@code side} to their right, at their feet's height. */
+    private static Vec3 ahead(ServerPlayer p, double forward, double side) {
+        double a = Math.toRadians(p.getYRot());
+        Vec3 f = new Vec3(-Math.sin(a), 0, Math.cos(a)), r = new Vec3(-Math.cos(a), 0, -Math.sin(a));
+        return p.position().add(f.scale(forward)).add(r.scale(side));
     }
 
     private static int strike(ServerPlayer p, float damage, boolean crit) {

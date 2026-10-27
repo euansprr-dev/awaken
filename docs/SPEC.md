@@ -4390,6 +4390,26 @@ these), `PlateRules.heat` and `LivingFx.heatColour` (decision 15). Tests `living
 - Tests: `living_dread_gap`, `village_march_ranks` (a synthetic road: a post for each rise, none for a flicker).
 
 
+### 21.11 The Wild Grows Teeth (plan docs/regions/PLAN-2.md, page https://claude.ai/artifact/LhA8jeGxTmYTktau4mmgia; Euan approved all sixteen decisions 2026-10-27, "Go with all recommendations", and said to do the work without sub-agents)
+Continues §21.10's numbering (16-31). The long form is PLAN-2.md; this is what builders hold to.
+16. **Five forms.** Every common creature in D land or higher (level 10 up) wears one of five forms (rung 1-5 = ranks D, C, B, A, S): a new body, one new move, a new voice. E land and the first hour are vanilla.
+17. **First drop species:** zombie (husk), skeleton (stray), spider (cave spider), creeper, pig, cow (mooshroom), sheep, chicken; enderman, slime, witch and drowned in a second pass.
+18. **One kit on the vanilla bodies, no mixin.** `living.client.FormLayers` adds a layer to each species' renderer: a skin overlay (the parent model drawn again with `textures/entity/forms/<layout>/o<rung>_<family>.png`), the kit (a second model of the vanilla class whose own cubes were cleared and replaced by the
+    kit's pieces, `assets/awaken/forms/kit.json`, drawn with `k<rung>_<family>.png`), and an emissive glow (`g<rung>.png`, a white mask tinted by the rank's colour: D gold, C orange, B red, A violet, S indigo, the Atlas's). The biome family (green, sun, frost; from the biome's base temperature) sets the material.
+    Client setting `forms` (awaken-living-client.toml): FULL, LITE (no kit) or OFF. The plate chip stays relative to the viewer; the glow is absolute rank.
+19. **Moves (Build 2):** one telegraphed move per rung (a second on alphas from C), tells 1.2 s (D) down to 0.7 s (S), damage at most 1.3 times a normal blow, delivered with `Strikes.deliver` naming its class.
+20. **Voices (Build 2):** `PlayLevelSoundEvent.AtEntity` lowers the pitch and layers a growl by rung; each move has a tell sound.
+21. **First sight** of a form is a discovery (a tenth of a level, `form/<species>/<rung>`), an Almanac line, no toast stack.
+22. **The mix:** a creature's rung is its land's rank 70% of the time, one below 25% (50% in the first three levels of a rank), one above 5% (D land and up only: the foreshadow). Alphas wear the land's rung at least, and the crown piece (mark bit 1).
+23-31. A quieter land, signs and ambient by rank, the Atlas's smooth shading, wonders, surface secrets and treasure maps, legends, the rest of the chains and happenings, order: Builds 3 to 6 (PLAN-2.md sections 6-9 and 11); recorded here as each is built.
+
+**Build 1 as built (2026-10-27).**
+- `living.combat.Forms` (pure rules and the assigner): `rungFor(landLevel, random)`, `Species` by entity type, `family(biome)`; attachment `awaken:wild_form` (`LivingContent.FORM`, `Forms.Form(rung, family, marks)`, rung -1 = not rolled yet, saved and synced to trackers), rolled by `Creatures.tag` for a levelled vanilla monster or a wild kin and, for creatures from before it existed,
+  once on join. Only creatures the Living Wilds tagged MONSTER or wild NEUTRAL get a form (never AWAKEN's own, never a settlement's or a Hearth's calm: those are below D).
+- Art: `tools/art/specs/forms.py` writes the overlays, kit textures, glow masks and `forms/kit.json` (one source for the Python painter and the Java model builder).
+- Dev: `/awaken living form <species> <rung> [family]`, `/awaken living formparade [family]` (every species, rungs 0-5, in rows, still), tour `tools/autopilot/forms-parade.txt`.
+- Tests: `living_form_mix`, `living_form_state`.
+
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 
 Lens's Cinematic and Ultra tiers become a light model of their own: shadows, contact darkness and warm/cool light

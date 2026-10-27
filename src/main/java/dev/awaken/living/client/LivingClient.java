@@ -75,6 +75,7 @@ public final class LivingClient {
             return out;
         });
         modBus.addListener(RegisterGuiLayersEvent.class, LivingHud::register);
+        FormLayers.init(modBus);
         modBus.addListener(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers.class,
                 e -> e.registerEntityRenderer(dev.awaken.living.LivingContent.WAYFARER.get(), WayfarerRenderer::new));
         modBus.addListener(RegisterClientPayloadHandlersEvent.class, e -> {

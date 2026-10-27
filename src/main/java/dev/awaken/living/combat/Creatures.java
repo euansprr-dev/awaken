@@ -3,6 +3,7 @@ package dev.awaken.living.combat;
 import dev.awaken.Awaken;
 import dev.awaken.core.api.CoreApi;
 import dev.awaken.core.api.CreatureTag;
+import dev.awaken.living.LivingContent;
 import dev.awaken.living.LivingModule;
 import dev.awaken.living.api.Regions;
 import dev.awaken.progression.Curve;
@@ -64,6 +65,12 @@ public final class Creatures {
         if (!tag.present() && !(living instanceof Npc) && living instanceof Mob mob) tag(level, mob, false, null);
         // a wild animal that fights back (WildKin) loses its goals with the chunk: put them back
         else if (tag.kind() == CreatureTag.Kind.NEUTRAL && living instanceof Mob mob && WildKin.isKin(mob)) WildKin.arm(mob, tag.level());
+        // a creature from before forms, or that skipped finalizeSpawn, is dressed once
+        if (living instanceof Mob mob && !mob.hasData(LivingContent.FORM.get())) {
+            CreatureTag now = CreatureTag.of(mob);
+            if (now.kind() == CreatureTag.Kind.MONSTER || (now.kind() == CreatureTag.Kind.NEUTRAL && WildKin.isKin(mob)))
+                Forms.roll(level, mob, Regions.creatureLevel(level, mob.blockPosition(), Regions.Role.NEUTRAL), now.elite());
+        }
     }
 
     /** Projectiles and blasts from a levelled vanilla monster hit as hard as its melee would (melee scales by attribute). */
@@ -77,10 +84,12 @@ public final class Creatures {
 
     private static void tag(ServerLevel level, Mob mob, boolean scale, @Nullable EntitySpawnReason reason) {
         if (mob instanceof Enemy) {
-            boolean elite = scale && mob.getRandom().nextFloat() < LivingModule.eliteChance(Regions.creatureLevel(level, mob.blockPosition(), Regions.Role.NEUTRAL));
+            int landLvl = Regions.creatureLevel(level, mob.blockPosition(), Regions.Role.NEUTRAL);
+            boolean elite = scale && mob.getRandom().nextFloat() < LivingModule.eliteChance(landLvl);
             int lv = Regions.creatureLevel(level, mob.blockPosition(), elite ? Regions.Role.ELITE : Regions.Role.HUNTER);
             if (scale) applyScaling(mob, lv, elite);
             mob.setData(CoreApi.CREATURE_TAG.get(), new CreatureTag(lv, CreatureTag.Kind.MONSTER, elite, ""));
+            Forms.roll(level, mob, landLvl, elite);
         } else {
             // a wild animal in D land or higher fights back (SPEC §21.10): neutral, scaled, a little bigger, sometimes an alpha
             int land = Regions.creatureLevel(level, mob.blockPosition(), Regions.Role.NEUTRAL);
@@ -91,6 +100,7 @@ public final class Creatures {
                 applyScaling(mob, lv, alpha, WildKin.growth(dev.awaken.living.region.RegionMap.rankOf(land)));
                 String title = alpha ? "Alpha of " + Regions.regionAt(level, mob.getBlockX(), mob.getBlockZ()).name() : "";
                 mob.setData(CoreApi.CREATURE_TAG.get(), new CreatureTag(lv, CreatureTag.Kind.NEUTRAL, alpha, title));
+                Forms.roll(level, mob, land, alpha);
                 return;
             }
             int lv = Regions.creatureLevel(level, mob.blockPosition(), Regions.Role.AMBIENT);
