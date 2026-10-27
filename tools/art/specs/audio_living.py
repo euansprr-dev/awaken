@@ -152,7 +152,7 @@ def dread(seed):
     move = 0.72 + 0.28 * np.sin(2 * np.pi * 3 * t / L + 0.7)
     left = tone * 0.42 * swell + air[0] * 0.60 * move
     right = tone * 0.42 * np.roll(swell, K.ns(0.37)) + air[1] * 0.60 * np.roll(move, K.ns(0.61))
-    return np.stack([left, right], axis=1)
+    return (left + right) * 0.5  # mono: a sound played in the world is mono (the audio test holds every such file to it)
 
 
 def sounds(Snd):
@@ -162,7 +162,7 @@ def sounds(Snd):
         Snd("ui_living_xp_tick", xp_tick, rms=-26.0),
         Snd("ui_living_level_up", level_up, rms=-24.0),
         Snd("ui_living_region_enter", region_enter, rms=-25.0),
-        Snd("amb_living_dread", dread, rms=-29.0),
+        Snd("amb_living_dread", dread, rms=-29.0, mono=True),
     ]
 
 

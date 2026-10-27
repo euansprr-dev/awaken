@@ -4375,6 +4375,8 @@ these), `PlateRules.heat` and `LivingFx.heatColour` (decision 15). Tests `living
   the walker's right (from each end) with one arm: "<land> · Lv 10–24". A boundary must hold for 32 blocks; bridges wait for dry ground; clear of the settlements'
   posts. Painted by the waymarker painter like any marker (new chunks only).
 - Dev: `/awaken living dread <gap|off>` (admin) forces the gap for tours; tour `tools/autopilot/regions-dread.txt` (CI).
+  CI tour 40444955175 (reviewed 2026-10-27): the tint eases in and out as designed (blue sky at gap 0 to a grey lavender at 25), but the first values read only as a slightly greyer sky, so
+  the look was strengthened (saturation 0.5, exposure 0.84, vignette 0.75, haze 0.4, ember mix 0.75) without a second tour (one a hand-back); the next playtest judges it. The sound is for the Mac's ears.
 - Tests: `living_dread_gap`, `village_march_ranks` (a synthetic road: a post for each rise, none for a flicker).
 
 
