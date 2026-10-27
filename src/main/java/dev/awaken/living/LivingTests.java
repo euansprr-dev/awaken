@@ -568,6 +568,22 @@ final class LivingTests {
             }
             h.assertTrue(made >= 25, "most regions have one: " + made);
             h.assertTrue(kinds.size() >= 4, "and they differ: " + kinds);
+            // with the real generator's ground and the real structure sets: every kind can be found somewhere within 9,000 blocks of the centre
+            dev.awaken.living.wonder.Wonders.reset();
+            var real = dev.awaken.living.wonder.WonderFeature.terrain(level, level.getChunkSource().getGenerator());
+            java.util.Map<dev.awaken.living.wonder.Wonders.Kind, Integer> census = new java.util.EnumMap<>(dev.awaken.living.wonder.Wonders.Kind.class);
+            java.util.Set<Long> seen2 = new java.util.HashSet<>();
+            int cx = map.regionAt(0, 0).heartX(), cz = map.regionAt(0, 0).heartZ();
+            int considered = 0, wet = 0;
+            for (int dx = -9000; dx <= 9000; dx += 500) for (int dz = -9000; dz <= 9000; dz += 500) {
+                RegionMap.Region r = map.regionAt(dx, dz);
+                if (!seen2.add(r.id()) || r.commons()) continue;
+                considered++;
+                var s2 = dev.awaken.living.wonder.Wonders.siteOf(seed, map, r, real);
+                if (s2 == null) wet++;
+                else census.merge(s2.kind(), 1, Integer::sum);
+            }
+            for (var kind : dev.awaken.living.wonder.Wonders.Kind.values()) h.assertTrue(census.getOrDefault(kind, 0) > 0, kind + " is found somewhere in 9,000 blocks (regions " + considered + ", without a site " + wet + ", by kind " + census + ")");
             // every kind's plan is one piece standing on the ground (everything joined to the blocks at ground level, in every family)
             for (var kind : dev.awaken.living.wonder.Wonders.Kind.values()) for (int fam = 0; fam < 3; fam++) {
                 var plan = dev.awaken.living.wonder.Wonders.planOf(kind, 99L + fam, fam);
