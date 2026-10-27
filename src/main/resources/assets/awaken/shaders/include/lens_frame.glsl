@@ -2,7 +2,7 @@
 // heights (lens_height.glsl). Needs FrameSampler declared before it; lens_height.glsl needs HeightSampler and
 // lens_normal.glsl DepthSampler.
 //   0-3  inverse view-projection (NDC -> camera-relative world), from the projection the world was drawn with (its
-//        bob, hurt tilt, nausea and any camera mod's roll; LensProjection)
+//        bob, hurt tilt, nausea and any camera mod's roll; WorldProjection)
 //   4-7  view-projection          8-11 last frame's view-projection (relative to last frame's camera)
 //   12   camera in the heightfield ring: x, z modulo 1024, y absolute; w frame counter
 //   13   camera moved since last frame (now - then); w 1 when last frame's history is usable
@@ -12,7 +12,7 @@
 //   17   x seconds, wrapping every hour (ripples, shimmer); y 1 when clouds and light are spread over frames
 //   18-19 the clouds (lens_clouds.glsl)
 //   20   x the Holo world plates drawn this frame, y the storm cells
-//   21   the sun on screen: xy uv, z 1 when it is ahead of the camera (LensProjection)
+//   21   the sun on screen: xy uv, z 1 when it is ahead of the camera (WorldProjection)
 //   24-41 each plate: camera-relative centre,
 //        half-width and half-height vectors (3 texels a plate); 42-47 the storm cells (lens_storm_frame.glsl)
 

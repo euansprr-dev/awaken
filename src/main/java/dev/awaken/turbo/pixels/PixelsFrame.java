@@ -65,6 +65,8 @@ final class PixelsFrame {
         // the steady pass takes the world at native resolution too (into a same-size target); it needs the world's depth
         // at the end, which the game keeps only when a post effect runs (Lens): otherwise the hand clears it first
         steady = Pixels.usable() && Pixels.steady() && !net.minecraft.client.Minecraft.getInstance().gameRenderer.getRequestedPostEffects().isEmpty();
+        // its reprojection from the projection the world is really drawn with (a camera mod's roll included)
+        if (steady) dev.awaken.lens.client.WorldProjection.want();
         if (!steady && (scale >= 1f || sw >= w && sh >= h) || !Pixels.usable()) {
             release();
             logIfChanged(w, h, null);
