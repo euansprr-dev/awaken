@@ -1,0 +1,249 @@
+# Power casts, the families (docs/power-anims/PLAN.md, phases P1-P6): a cast from each family in third person from the front and a few in first
+# person, filmed with the clip recorder (clips: run-autopilot/clips/pc_*) in slow
+# motion (/tick rate 4: the CI runner renders a few frames a second, so at full speed a 15-tick cast is two frames). Run with PACK=feel (the animation library, Bendable Cuboids and Shoulder Surfing are what third person is made of),
+# HUD on. Watch: the boot rising into the bottom of the frame and the plant; the wave starting under the planted foot; the
+# beam leaving the main palm in first person and from behind and the front; the gather at the chest; nothing through the body.
+# Look tour: tools/tour-ci.sh tools/autopilot/power-casts.txt 1500 PACK=feel
+world powercasts survival 4261
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+window 1440 900
+gui 0
+hud on
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule fall_damage false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:slow_falling 60 1 true
+cmd tp @s 0.5 201 0.5 0 12
+wait 400
+cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
+cmd fill -14 200 -6 14 214 30 minecraft:air
+cmd fill -14 200 22 14 210 22 minecraft:deepslate_tiles
+wait 40
+cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
+cmd fill -14 200 22 14 210 22 minecraft:deepslate_tiles
+cmd tp @s 0.5 200 0.5 0 0
+wait 60
+cmd awaken admin power learn shockwave
+cmd awaken admin power learn beam
+cmd awaken admin energy full
+cmd summon minecraft:husk 0.5 200 6.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 4.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -3.5 200 12.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 18.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+wait 60
+camera first
+look 0 6
+wait 20
+shotnow pc2_rest_fp
+cmd awaken admin power reset
+camera front
+look 0 4
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc2_nova_3p 32 4
+cmd awaken admin power cast nova
+wait 40
+cmd tick rate 20
+wait 30
+cmd awaken admin power reset
+camera front
+look 0 4
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc2_charged_shot_3p 32 4
+cmd awaken admin power cast charged_shot
+wait 40
+cmd tick rate 20
+wait 30
+cmd awaken admin power reset
+camera front
+look 0 4
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc2_cloak_3p 32 4
+cmd awaken admin power cast cloak
+wait 40
+cmd tick rate 20
+wait 30
+cmd awaken admin power reset
+camera front
+look 0 4
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc2_dominate_3p 32 4
+cmd awaken admin power cast dominate
+wait 40
+cmd tick rate 20
+wait 30
+cmd awaken admin power reset
+camera front
+look 0 4
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc2_wall_3p 32 4
+cmd awaken admin power cast wall
+wait 40
+cmd tick rate 20
+wait 30
+cmd awaken admin power reset
+camera front
+look 0 4
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc2_mend_3p 32 4
+cmd awaken admin power cast mend
+wait 40
+cmd tick rate 20
+wait 30
+cmd awaken admin power reset
+camera front
+look 0 4
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc2_railgun_3p 32 4
+cmd awaken admin power cast railgun
+wait 40
+cmd tick rate 20
+wait 30
+cmd awaken admin power reset
+camera front
+look 0 4
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc2_storm_call_3p 32 4
+cmd awaken admin power cast storm_call
+wait 40
+cmd tick rate 20
+wait 30
+cmd awaken admin power reset
+camera front
+look 0 4
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc2_spire_3p 32 4
+cmd awaken admin power cast spire
+wait 40
+cmd tick rate 20
+wait 30
+cmd awaken admin power reset
+camera front
+look 0 4
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc2_prism_lance_3p 32 4
+cmd awaken admin power cast prism_lance
+wait 40
+cmd tick rate 20
+wait 30
+cmd awaken admin power reset
+camera front
+look 0 4
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc2_void_maw_3p 32 4
+cmd awaken admin power cast void_maw
+wait 40
+cmd tick rate 20
+wait 30
+cmd awaken admin power reset
+camera front
+look 0 4
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc2_legion_3p 32 4
+cmd awaken admin power cast legion
+wait 40
+cmd tick rate 20
+wait 30
+cmd awaken admin power reset
+camera first
+look 0 4
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc2_nova_1p 32 4
+cmd awaken admin power cast nova
+wait 40
+cmd tick rate 20
+wait 30
+cmd awaken admin power reset
+camera first
+look 0 4
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc2_wall_1p 32 4
+cmd awaken admin power cast wall
+wait 40
+cmd tick rate 20
+wait 30
+cmd awaken admin power reset
+camera first
+look 0 4
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc2_dominate_1p 32 4
+cmd awaken admin power cast dominate
+wait 40
+cmd tick rate 20
+wait 30
+cmd awaken admin power reset
+camera first
+look 0 4
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc2_spire_1p 32 4
+cmd awaken admin power cast spire
+wait 40
+cmd tick rate 20
+wait 30
+cmd awaken admin power reset
+camera first
+look 0 4
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc2_flow_1p 32 4
+cmd awaken admin power cast flow
+wait 40
+cmd tick rate 20
+wait 30
+cmd awaken admin power reset
+camera first
+look 0 4
+wait 24
+cmd tick rate 4
+wait 4
+cmd awaken ascent pilot rec pc2_prism_lance_1p 32 4
+cmd awaken admin power cast prism_lance
+wait 40
+cmd tick rate 20
+wait 30
+quit
