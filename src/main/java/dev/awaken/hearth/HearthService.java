@@ -22,6 +22,7 @@ import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -65,6 +66,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * The Hearth's server side: Anchors, pads, room scans, protection, respawn, Fracture healing, and the per-second upkeep
  * that drives the town, the Echoes on duty and breaks near home. All of it is budgeted (SPEC performance header).
@@ -99,6 +102,7 @@ public final class HearthService {
             activeScan = null;
             scanQueue.clear();
             REST.clear();
+            RESPAWNING.clear();
             forgetPeople();
         });
     }
@@ -419,13 +423,83 @@ public final class HearthService {
     }
 
     // ---- respawn ----------------------------------------------------------------------------------------------------
+    //
+    // Once you use your fire or Anchor you wake there after any fall, anywhere, until you choose another bed yourself: a
+    // bed or respawn anchor you sleep in (or set your spawn at) outside your Hearth's land, and you're told so (SPEC
+    // §28.10). Nothing else moves it: not the old body's bed copied onto the new one at every respawn, not a reset to
+    // nothing, not our own systems (an inn room is lent for one fall, then given back), not /spawnpoint. With no bed
+    // elsewhere (none set, or gone) a player with a Hearth wakes there rather than at world spawn.
+
+    /** The server tick each player's respawn ran: their old bed, copied onto the new body in that tick, is no choice. */
+    private static final Map<UUID, Integer> RESPAWNING = new HashMap<>();
+    /** Set while one of our own systems moves a respawn point ({@link #systemRespawn}). */
+    private static boolean systemSpawn;
 
     private static void onSetSpawn(PlayerSetSpawnEvent e) {
-        // Sleeping in a bed elsewhere moves your respawn there; using your Anchor brings it back.
-        if (e.getEntity() instanceof ServerPlayer sp && !e.isForced()) {
-            Optional<HearthRecord> h = wakeHearth(sp);
-            if (h.isEmpty() || e.getNewSpawn() == null || !h.get().contains(e.getNewSpawn())) player(sp).respawnAtHearth = false;
+        if (!(e.getEntity() instanceof ServerPlayer sp) || systemSpawn || e.isForced() || e.getNewSpawn() == null) return;
+        MinecraftServer server = sp.level().getServer();
+        if (Integer.valueOf(server.getTickCount()).equals(RESPAWNING.get(sp.getUUID()))) return;
+        ServerLevel level = server.getLevel(e.getSpawnLevel());
+        BlockPos bed = e.getNewSpawn();
+        if (level == null || !level.isLoaded(bed) || !isBed(level.getBlockState(bed))) return;
+        HearthPlayer hp = player(sp);
+        hp.lent = null;
+        String dim = e.getSpawnLevel().identifier().toString();
+        Optional<HearthRecord> home = data(server).hearthsOf(sp.getUUID()).stream()
+                .filter(h -> h.dimension.equals(dim) && h.contains(bed)).findFirst();
+        if (home.isPresent()) {
+            // a bed at home: you wake at home (this one, of those you share)
+            hp.respawnAtHearth = true;
+            hp.respawnHearth = home.get().owner;
+            return;
         }
+        Optional<HearthRecord> was = wakeHearth(sp);
+        if (!hp.respawnAtHearth || was.isEmpty()) return;
+        hp.respawnAtHearth = false;
+        HearthRecord h = was.get();
+        Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("You'll wake at this bed now"))
+                .body(Component.literal("If you fall, you wake here, not at " + h.displayName() + ". Use your "
+                        + (h.hearthfire() ? "fire" : "Anchor") + " there to wake at home again."))
+                .ttl(20 * 8).priority(4).build());
+        dev.awaken.Awaken.LOG.info("[hearth] {} chose a bed at {} in {}: they wake there now, not at {} ({})",
+                sp.getGameProfile().name(), bed.toShortString(), dim, h.displayName(), h.pos.toShortString());
+        DirectorLog.log(sp, "hearth", "chose a bed at " + bed.toShortString() + " in " + dim + ": wakes there now, not at " + h.displayName() + " (told)");
+        HearthViews.refresh(sp);
+    }
+
+    /** A bed or a respawn anchor: the blocks a player sets their own spawn at. */
+    private static boolean isBed(BlockState s) {
+        return s.getBlock() instanceof net.minecraft.world.level.block.AbstractBedBlock
+                || s.getBlock() instanceof net.minecraft.world.level.block.RespawnAnchorBlock;
+    }
+
+    /**
+     * One of our own systems moves the player's respawn point ({@link dev.awaken.core.api.HearthHooks#lendRespawn}):
+     * never read as the player choosing another bed. {@code lent}: a bed for the next fall only (an inn room), which a
+     * player who wakes at their Hearth wakes at once; else the point is given back.
+     */
+    public static void systemRespawn(ServerPlayer sp, ServerPlayer.@Nullable RespawnConfig to, boolean lent) {
+        systemSpawn = true;
+        try {
+            sp.setRespawnPosition(to, false);
+        } finally {
+            systemSpawn = false;
+        }
+        player(sp).lent = lent && to != null ? to.respawnData().globalPos() : null;
+    }
+
+    /**
+     * The Hearth this player wakes at if they fall now: the one they chose (their fire or Anchor used last, or a bed at
+     * home), or any home of theirs when they have no other bed (none set, or the one set is gone). Empty: a bed elsewhere.
+     */
+    public static Optional<HearthRecord> wakesAt(ServerPlayer sp) {
+        Optional<HearthRecord> h = wakeHearth(sp);
+        if (h.isEmpty() || player(sp).respawnAtHearth) return h;
+        ServerPlayer.RespawnConfig bed = sp.getRespawnConfig();
+        if (bed == null) return h;
+        ServerLevel level = sp.level().getServer().getLevel(bed.respawnData().globalPos().dimension());
+        BlockPos at = bed.respawnData().pos();
+        return level == null || level.isLoaded(at) && !isBed(level.getBlockState(at)) ? h : Optional.empty();
     }
 
     /** The Hearth this player wakes at: the shared one whose Anchor they used last, else their home. */
@@ -439,14 +513,42 @@ public final class HearthService {
     }
 
     private static void onRespawnPosition(PlayerRespawnPositionEvent e) {
-        if (!(e.getEntity() instanceof ServerPlayer sp) || e.isFromEndFight() || !enabled()) return;
-        if (!player(sp).respawnAtHearth) return;
+        if (!(e.getEntity() instanceof ServerPlayer sp)) return;
+        MinecraftServer server = sp.level().getServer();
+        RESPAWNING.put(sp.getUUID(), server.getTickCount());
+        if (e.isFromEndFight()) return;
         Optional<HearthRecord> h = wakeHearth(sp);
         if (h.isEmpty()) return;
-        ServerLevel level = levelOf(sp.level().getServer(), h.get());
-        Vec3 spot = safeSpotNear(level, h.get().pos);
+        HearthPlayer hp = player(sp);
         TeleportTransition old = e.getTeleportTransition();
+        ServerPlayer.RespawnConfig bed = sp.getRespawnConfig();
+        // vanilla is sending them to world spawn: no bed set (and no other module chose a place), or the bed is gone
+        boolean worldSpawn = old.missingRespawnBlock() || bed == null && old.newLevel() == server.findRespawnDimension();
+        String who = sp.getGameProfile().name();
+        if (!enabled()) {
+            if (worldSpawn) dev.awaken.Awaken.LOG.info("[hearth] {} wakes at world spawn though they have a Hearth: the Hearth is off in the config", who);
+            return;
+        }
+        GlobalPos lent = hp.lent;
+        hp.lent = null;
+        String why;
+        if (hp.respawnAtHearth) {
+            if (lent != null && bed != null && !worldSpawn && lent.equals(bed.respawnData().globalPos())) {
+                dev.awaken.Awaken.LOG.info("[hearth] {} wakes at the bed lent for one fall at {} (an inn room); at {} after", who,
+                        lent.pos().toShortString(), h.get().displayName());
+                return;
+            }
+            why = "the Hearth they chose";
+        } else if (worldSpawn) {
+            why = bed == null ? "no bed elsewhere" : "their bed at " + bed.respawnData().pos().toShortString() + " is gone or blocked";
+        } else {
+            return; // a bed they chose elsewhere: vanilla wakes them there
+        }
+        ServerLevel level = levelOf(server, h.get());
+        Vec3 spot = safeSpotNear(level, h.get().pos);
         e.setTeleportTransition(new TeleportTransition(level, spot, Vec3.ZERO, old.yRot(), old.xRot(), old.postTeleportTransition()));
+        dev.awaken.Awaken.LOG.info("[hearth] {} wakes at {} ({}): {}", who, h.get().displayName(), h.get().pos.toShortString(), why);
+        DirectorLog.log(sp, "hearth", "wakes at " + h.get().displayName() + ": " + why);
     }
 
     /** A standing spot next to the Anchor (two air blocks over something solid), or right on top of it. */

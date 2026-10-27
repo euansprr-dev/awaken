@@ -90,7 +90,9 @@ final class GuideSections {
             ui.pair("Radius", d.radius() + " blocks around " + (d.tier() <= 0 ? "your fire" : "the Anchor"), label, text);
             ui.pair("Rest heals a Fracture", "in " + d.rest() + " s standing still (" + d.sanctuaryRest() + " s in a Sanctuary)", label, text);
             String home = d.tier() <= 0 ? "the fire" : "the Anchor";
-            ui.pair("You respawn", d.respawnHere() ? "here, by " + home : "at a bed elsewhere (using " + home + " brings it back)", label, text);
+            // where you wake after a fall, said plainly (SPEC §28.10)
+            ui.pair("If you fall", d.respawnHere() ? "you wake here, by " + home + ", wherever you are"
+                    : "you wake at the bed you chose last. Use " + home + " to wake here again", label, text);
         }
     }
 

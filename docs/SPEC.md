@@ -7774,6 +7774,45 @@ Hearth). Travellers on foot on the roads (caravans only). Horses to hire at the 
 leads and saddles; the paddock's horses are the stable's). A hamlet growing into a town (W4's growth stops at village
 size). The town's own troubles beyond W4's eight.
 
+### 28.10 Waking at your Hearth (respawn; Euan 2026-10-27: "respawned at the city instead of my hearth")
+**The bug.** At every respawn vanilla builds a new body and copies the old one's respawn point onto it
+(`PlayerList.respawn` → `copyRespawnPosition`), which fires `PlayerSetSpawnEvent` once more. The Hearth read that copy
+(nothing, with no bed; or any bed off the land) as choosing a bed elsewhere and cleared `respawn_at_hearth`: the first
+fall after using your fire still woke you at home, and every fall after it at world spawn. An inn room did the same (its
+bed set your point; giving the room back left you none).
+
+**The rule.** Once you use your fire or Anchor (or set the Ember down, or sleep in a bed on your Hearth's land) you wake
+there after any fall, anywhere: the overworld, a gate, the Descent (the Hearth's listener runs after the Descent's
+checkpoint, as before), other dimensions. Only the End fight's exit is left to vanilla. It holds until you choose another
+bed yourself.
+- **Choosing another bed** (`HearthService.onSetSpawn`): a spawn the player sets in play, not forced, at a bed or a
+  respawn anchor (the block there is checked), outside the land of every Hearth they belong to. A bed on the land of a
+  Hearth they belong to chooses that Hearth (`respawn_hearth` = its owner) and turns waking there back on. Choosing a bed
+  elsewhere tells you: a notice "You'll wake at this bed now" ("If you fall, you wake here, not at <name>. Use your
+  fire/Anchor there to wake at home again."), a `[hearth]` log line and a director-log line.
+- **Never a choice**: the old body's point copied in a respawn (any spawn set in the server tick a respawn ran is
+  ignored), a reset to nothing, a forced point (`/spawnpoint`), and our own systems, which move a respawn point through
+  `HearthHooks.lendRespawn` / `returnRespawn` (`HearthHooks.Lookup.systemRespawn`).
+- **An inn room** (`village.Inn`, one-line hook at both of its calls): lent for one fall. `lendRespawn` sets the vanilla
+  point and remembers the bed (`HearthPlayer` schema 4, `home.lent`); a player who wakes at their Hearth wakes once at
+  the room while their point is still that bed, then at home. `returnRespawn` gives the old point back and forgets the
+  room.
+- **No bed elsewhere**: a player with a Hearth whose respawn would go to world spawn (no point set, or its bed gone or
+  blocked) wakes at their Hearth instead, whatever the flag says. The one world-spawn respawn left with a Hearth is the
+  Hearth turned off in the config (`features.hearth = false`), logged `[hearth] <name> wakes at world spawn though they have a
+  Hearth`.
+- Every Hearth respawn logs `[hearth] <name> wakes at <hearth> (<pos>): <why>` and a director-log line.
+- **Said plainly**: Your Hearth's facts row "If you fall": "you wake here, by the fire, wherever you are" or "you wake
+  at the bed you chose last. Use the fire to wake here again" (`HearthService.wakesAt`, the respawn's own rule).
+- **Saves**: `respawn_at_hearth` true is written; false is left out and reads as false (the same thing). Schema 4 adds
+  `home.lent`.
+- Tests: `hearth_respawn_survives_death` (the reproduction: a Hearthfire, no bed, three falls through the server's own
+  respawn, each by the fire with home kept; with the flag off and no bed, still home), `hearth_respawn_gate_relog` (the
+  save holds it, quit and come back through the login's load, a fall in the gates level wakes by the fire),
+  `hearth_respawn_inn_keeps` (a room's one fall at the inn, home after; a room given back unused), and
+  `hearth_respawn_bed_elsewhere` (a reset and a bed at home keep it; a bed elsewhere moves it and says so; the fall wakes
+  there; that bed broken, home).
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 29. Wild life (the wild's small ambient life, client-only; Euan 2026-10-26, built without an approval page)
