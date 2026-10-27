@@ -55,6 +55,11 @@ final class VoxelLayer implements AutoCloseable {
     private final IntArrayList fading = new IntArrayList();
     /** The cross-fade between two levels, as a share of the nearer one's reach. */
     static final float BAND = 0.15f;
+    /**
+     * Thin things and plants (the detail run, SPEC §20 C) draw while a block spans at least this many pixels: a fence's
+     * post (a quarter block) a pixel, a tuft of grass four. Past it they're under a pixel, as City Sight always took them.
+     */
+    static final float DETAIL_PIXELS = 4f;
 
     private static final class Page {
         final GpuBuffer buffer;
@@ -73,8 +78,8 @@ final class VoxelLayer implements AutoCloseable {
         long appeared;
         int fade;
         final int[] page = new int[VoxelMesher.LEVELS], first = new int[VoxelMesher.LEVELS], count = new int[VoxelMesher.LEVELS];
-        /** Per level, each face's first quad within the level's run (down, up, north, south, west, east, end). */
-        final int[][] starts = new int[VoxelMesher.LEVELS][7];
+        /** Per level, each face's first quad within the level's run (down, up, north, south, west, east, detail, end). */
+        final int[][] starts = new int[VoxelMesher.LEVELS][8];
     }
 
     private final List<Page> pages = new ArrayList<>();
@@ -116,7 +121,8 @@ final class VoxelLayer implements AutoCloseable {
      */
     private static final class Plan {
         final IntArrayList page = new IntArrayList(), quads = new IntArrayList(), first = new IntArrayList();
-        int quadsDrawn, chunksDrawn;
+        /** Quads drawn, those by the discarding pipeline (edges, fades, cut-outs), and the detail run's (status). */
+        int quadsDrawn, chunksDrawn, edgedQuads, detailQuads;
         final MappableRingBuffer commands;
         boolean used;
 
@@ -130,6 +136,8 @@ final class VoxelLayer implements AutoCloseable {
             first.clear();
             quadsDrawn = 0;
             chunksDrawn = 0;
+            edgedQuads = 0;
+            detailQuads = 0;
         }
     }
 
@@ -145,6 +153,8 @@ final class VoxelLayer implements AutoCloseable {
     /** Chunks whose drawn blocks changed since the cached horizon last heard (a mesh up, a dissolve's step, one let go). */
     final it.unimi.dsi.fastutil.longs.LongArrayList changed = new it.unimi.dsi.fastutil.longs.LongArrayList();
     private final float[] reach = new float[VoxelMesher.LEVELS];
+    /** How far the detail run draws this frame (blocks). */
+    private float detailReach;
 
     VoxelLayer(int levelMinY) {
         this.levelMinY = levelMinY;
@@ -262,7 +272,7 @@ final class VoxelLayer implements AutoCloseable {
             int count = q.length / VoxelMesher.INTS;
             c.count[l] = count;
             quadsKept += count;
-            System.arraycopy(m.starts()[l], 0, c.starts[l], 0, 7);
+            System.arraycopy(m.starts()[l], 0, c.starts[l], 0, 8);
             if (count == 0) continue;
             int[] at = allocate(count);
             c.page[l] = at[0];
@@ -397,15 +407,19 @@ final class VoxelLayer implements AutoCloseable {
             for (int k = 0; k < 3; k++) d = (1 << l) * pixelsPerBlockAt1 / PIXELS * (float) Math.exp(-haze * d);
             reach[l] = d;
         }
+        float dr = pixelsPerBlockAt1 / DETAIL_PIXELS;
+        for (int k = 0; k < 3; k++) dr = pixelsPerBlockAt1 / DETAIL_PIXELS * (float) Math.exp(-haze * dr);
+        detailReach = dr;
         try (var view = params.currentBuffer().map(false, true)) {
             ByteBuffer d = view.data();
             d.putFloat(0, reach[0]).putFloat(4, reach[1]).putFloat(8, reach[2]).putFloat(12, BAND);
-            d.putFloat(16, levelMinY).putFloat(20, FarRenderer.SECTIONS).putFloat(24, 0f).putFloat(28, 0f);
+            d.putFloat(16, levelMinY).putFloat(20, FarRenderer.SECTIONS).putFloat(24, detailReach).putFloat(28, 0f);
         }
         collect(screen, renderer, null, horizon, camX, camY, camZ, realWithin);
         quadsDrawn = screen.quadsDrawn;
         chunksDrawn = screen.chunksDrawn;
     }
+
 
     private boolean planned;
 
@@ -471,6 +485,11 @@ final class VoxelLayer implements AutoCloseable {
                     if (st[e] > st[d]) fits &= add(p, c.page[l] | pageFlag, c.first[l] + st[d], st[e] - st[d]);
                     d = e;
                 }
+                // thin things and plants, while a block shows big enough for them (always the discarding pipeline: cut-outs)
+                if (l == 0 && st[7] > st[6] && near < detailReach * (1f + BAND)) {
+                    fits &= add(p, c.page[l] | EDGED, c.first[l] + st[6], st[7] - st[6]);
+                    p.detailQuads += st[7] - st[6];
+                }
                 drawn = true;
             }
             if (!fits) {
@@ -512,8 +531,14 @@ final class VoxelLayer implements AutoCloseable {
             p.quads.add(n);
             p.first.add(first + at);
             p.quadsDrawn += n;
+            if ((page & EDGED) != 0) p.edgedQuads += n;
         }
         return true;
+    }
+
+    /** The screen's quads by the discarding pipeline and the detail run's (status). */
+    String quadsStatus() {
+        return " edged=" + screen.edgedQuads + " detail=" + screen.detailQuads;
     }
 
     /** This frame's draw commands on the screen (status). */

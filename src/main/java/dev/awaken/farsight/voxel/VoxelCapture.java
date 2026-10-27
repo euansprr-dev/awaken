@@ -67,7 +67,9 @@ public final class VoxelCapture {
         VoxelAhead.loaded(key);
         synchronized (PENDING) {
             LOADED.add(key);
-            if (wanted && started && CITY.add(key)) PENDING.add(key);
+            // (ahead of what's waiting: a chunk loading now is the player's surroundings, which Sodium no longer draws
+            // past the near chunks; behind a restart's backlog of the city it stood as the far view's guess for a minute)
+            if (wanted && started && CITY.add(key)) PENDING.addAndMoveToFirst(key);
         }
     }
 
@@ -132,25 +134,18 @@ public final class VoxelCapture {
         synchronized (PENDING) {
             if (!started) {
                 started = true;
+                // the city's chunks and every chunk already loaded (the player's surroundings) together, nearest the player
+                // first: with Sodium drawing only the near chunks City Sight draws the rest of the player's surroundings
+                // (perf build C), and those waited behind all of the city's (the first tour's countryside)
                 CityLayout city = City.layout();
-                if (city != null) {
-                    long[] keys = city.chunks.clone();
-                    var players = overworld.players();
-                    int px = players.isEmpty() ? city.cx >> 4 : players.getFirst().blockPosition().getX() >> 4;
-                    int pz = players.isEmpty() ? city.cz >> 4 : players.getFirst().blockPosition().getZ() >> 4;
-                    it.unimi.dsi.fastutil.longs.LongArrays.quickSort(keys, (a, b) -> Long.compare(dist(a, px, pz), dist(b, px, pz)));
-                    for (long k : keys) {
-                        CITY.add(k);
-                        PENDING.add(k);
-                    }
-                }
-                // then every chunk already loaded (the player's surroundings), nearest first
                 var players = overworld.players();
-                int px = players.isEmpty() ? 0 : players.getFirst().blockPosition().getX() >> 4;
-                int pz = players.isEmpty() ? 0 : players.getFirst().blockPosition().getZ() >> 4;
-                long[] loaded = LOADED.toLongArray();
-                it.unimi.dsi.fastutil.longs.LongArrays.quickSort(loaded, (a, b) -> Long.compare(dist(a, px, pz), dist(b, px, pz)));
-                for (long k : loaded) if (CITY.add(k)) PENDING.add(k);
+                int px = !players.isEmpty() ? players.getFirst().blockPosition().getX() >> 4 : city != null ? city.cx >> 4 : 0;
+                int pz = !players.isEmpty() ? players.getFirst().blockPosition().getZ() >> 4 : city != null ? city.cz >> 4 : 0;
+                it.unimi.dsi.fastutil.longs.LongOpenHashSet all = new it.unimi.dsi.fastutil.longs.LongOpenHashSet(LOADED);
+                if (city != null) for (long k : city.chunks) all.add(k);
+                long[] keys = all.toLongArray();
+                it.unimi.dsi.fastutil.longs.LongArrays.quickSort(keys, (a, b) -> Long.compare(dist(a, px, pz), dist(b, px, pz)));
+                for (long k : keys) if (CITY.add(k)) PENDING.add(k);
                 lastDiskTick = Integer.MIN_VALUE;
             }
         }

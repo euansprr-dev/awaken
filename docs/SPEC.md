@@ -1784,6 +1784,44 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
     its band; the per-patch band check that ends that came after the tour. The 2 ms target at the Roost isn't reached:
     the composite (0.34 ms), the live rings 0-1 (0.68) and the held rings' pieces that reach past the cone or into a
     stale slice are what's left. 102 MB of video memory.
+- **Far blocks handed to City Sight** (frame-budget build C, 2026-10-26; `FarNear`, setting `farSightNear` (chunks,
+  0 off, the default: held back, see the result), autopilot `farsight near <n>|off|setting`). With it set, Far Sight on
+  in single player, in the overworld with Carillon's City Sight, Sodium draws only the near chunks (12 measured) and
+  City Sight draws the real chunks past them from its greedy meshes; the world still loads, simulates and sends
+  everything to the render distance. Sodium and the rest of
+  the renderer read the client's effective render distance (the setting capped by the server's): at the start of each
+  frame (`RenderFrameEvent.Pre`, after the tick's packets, before anything reads it) the client's server value is set to
+  the near distance; the integrated server keeps loading to the setting. Lens gets the setting's render-distance fog
+  end (its haze was made for it). Entities draw to the game's own distance for the near one (the view scale it derives
+  from the effective distance has no hook short of a mixin): a one-block mob to 96 blocks at 12 against 160 at 24, none
+  past 12 chunks either way; the entity distance setting at 175% gives the 160 back (Awaken doesn't set it: that turns
+  the player's graphics preset to custom).
+  - **City Sight's detail run**: thin things (fences, walls, panes, bars, doors: their own shape's boxes, at most four)
+    and plants (a cross model: two crossed quads with the plant's sprite, cut out) go in a level-0 run of their own,
+    drawn with the discarding pipeline while a block spans at least 4 pixels (a fence post a pixel; past that they're
+    under a pixel, as City Sight always took them), fading out over the level band. They're the near world's that City
+    Sight left out past the render distance and must keep at 200-300 m.
+  - **City Sight's capture order**: the chunks it waits on (the loaded ones and the city's) are taken nearest the
+    player first, and a chunk loading now goes ahead of what waits (the countryside stood as the far guess behind the
+    city's backlog).
+  - **No fill of what Sodium culls**: City Sight drew, for a while, the sections on screen inside Sodium's distance that
+    Sodium didn't (culled, or never built), after Sodium's opaque terrain with the game's depth. Taken out: 0.45-0.8 ms
+    at the Roost, and it never closed the rim cave's void (a dark cave isn't in City Sight's meshes). Sodium's occlusion
+    culling (autopilot `farsight occlusion on|off|setting`, from the game's `smartCull`) isn't the void either: off, it
+    costs 1.3 ms at the Roost and the market at RD 24 and the void stays as it was, at 24, at 15 and with the hand-off.
+    The void shrinks as Sodium's distance grows (12 → 15 → 24): it lies at and past Sodium's reach, where City Sight's
+    meshes don't hold the cave under the overhang.
+  - **Result** (2026-10-27, `tools/autopilot/farsight-handoff.txt` on build 76ddb396 (Lens on Apple), perf-26oct's
+    set-up: a new world from seed 20261024, Cinematic, RD 24, render scale 0.95, the hand-off off and on at the same
+    spot; the GPU's world pass p50, the last of three tours, the Roost and the market within 0.4 ms of the others): the Roost 10.72 → 9.87 ms (frame p50
+    12.27 → 11.39, 81 → 88 fps); the market avenue 12.48 → 12.62; the countryside 900 blocks out 19.24 → 15.58 (16.48 →
+    15.02 in the first tour, with the order the other way round); a 20 s glide over the city 18.53 → 19.68 (City Sight
+    12.3 ms against 8.9, half its quads cut out); in a copy of Euan's world over the Commons 17.13 → 11.75 (off measured first, 25 s after arriving). Same-moment
+    shots at the Roost, the market and over the city show no seam. It is held back (0) because it opens holes: City
+    Sight's meshes past 12 chunks leave out caves under overhangs (the rim cave's void grows to most of the undercut;
+    900 blocks out, in a sinkhole, the ground below shows sky). It pays where City Sight's meshes are light (the
+    countryside, the Roost) and not over the city; it can be turned on once City Sight closes a cave's mouth wherever
+    it is drawn.
 - **Ring 0's sea under the city**: a sea piece wholly inside the band where far water stays under real water, over
   chunks all shown and within Sodium's reach up and down, has every fragment hidden by the mask; it is no longer drawn
   (ring 0 at the Roost 0.70 → 0.15 ms: discarded fragments under Carillon's canals).

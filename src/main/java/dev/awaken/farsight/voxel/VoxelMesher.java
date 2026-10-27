@@ -15,15 +15,18 @@ import java.util.Arrays;
  * <p>Level 0: every face of a cube (FULL or SOFT) that no opaque cube hides, merged into the largest rectangles of the
  * same look, tint and light (greedy meshing), so a wall of one brick is a few quads; slabs, beds and the like as their
  * box, carpets and snow layers as their top, water as its surface (at 14/16) and the sides it shows. Each face carries
- * the light of the air in front of it, as the game lights it. Coarser levels: a cell is solid where at least half its
+ * the light of the air in front of it, as the game lights it. Thin things (fences, panes, bars, doors) as their own
+ * boxes and plants as two crossed quads go in a level-0 detail run of their own, drawn only while a block is big enough
+ * on screen to show them (SPEC §20 C). Coarser levels: a cell is solid where at least half its
  * blocks are (so thin things thin out with distance, never swell), wearing the look most of its blocks have, and on
  * top the look most of its columns' highest blocks have (roofs from above).
  *
- * <p>A quad is four ints: {@code x16 | z16 << 9 | dir << 18 | eu << 21 | lod << 30}, {@code y16 | ev << 14},
+ * <p>A quad is four ints: {@code x16 | z16 << 9 | dir << 18 | eu << 21 | lod << 30}, {@code y16 | ev << 14 | detail << 28},
  * {@code look | slot << 16}, {@code tint | sky << 24 | block << 28}: its least corner in sixteenths of a block (x, z in
- * the chunk, y from the level's floor), its face (down, up, north, south, west, east), its extent along the face's
- * u and v axes (x and z for up and down, x and y for north and south, z and y for west and east) in sixteenths, its
- * look and chunk slot, its tint (0xRRGGBB) and light.
+ * the chunk, y from the level's floor), its face (down, up, north, south, west, east; 6 and 7 a plant's two diagonals,
+ * from the corner toward +x +z and toward +x -z), its extent along the face's u and v axes (x and z for up and down, x
+ * and y for north and south, z and y for west and east, the diagonal and y for a plant) in sixteenths, its look and
+ * chunk slot, its tint (0xRRGGBB) and light.
  */
 public final class VoxelMesher {
     /** How a block's faces look: the client's models and colours (a test's stand-in). */
@@ -39,6 +42,11 @@ public final class VoxelMesher {
 
         /** A thin block (a pane, a door) closing a dark room, seen from outside: its face toward dir, drawn as a window. */
         int window(int id, int dir);
+
+        /** Whether the state's model is a plant's cross (drawn as two crossed quads, not its boxes). */
+        default boolean cross(int id) {
+            return false;
+        }
     }
 
     public static final int LEVELS = 4, INTS = 4;
@@ -86,13 +94,13 @@ public final class VoxelMesher {
                     byte k = id == 0 ? VoxelKinds.AIR : VoxelKinds.kind(id);
                     ids[i] = id;
                     kinds[i] = k;
-                    darkAir[i] = (k == VoxelKinds.AIR || k == VoxelKinds.SKIP) && s.skyLight(x, y, z) == 0 && s.blockLight(x, y, z) <= 2;
+                    darkAir[i] = VoxelKinds.open(k) && s.skyLight(x, y, z) == 0 && s.blockLight(x, y, z) <= 2;
                 }
             }
         }
         int lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE;
         int[][] quads = new int[LEVELS][];
-        int[][] starts = new int[LEVELS][7];
+        int[][] starts = new int[LEVELS][8];
         for (int l = 0; l < LEVELS; l++) {
             lod = l;
             size[l] = 0;
@@ -112,18 +120,25 @@ public final class VoxelMesher {
                 hi == Integer.MIN_VALUE ? 0 : levelMin + Math.floorDiv(hi + 15, 16), s.ground(), quads, starts);
     }
 
-    /** The level's quads grouped by face (down, up, north, south, west, east); starts[d] the first of face d, in quads. */
+    /**
+     * The level's quads grouped by face (down, up, north, south, west, east), then the detail run; starts[d] the first
+     * of group d, in quads ([7] the count).
+     */
     private static int[] byFace(int[] q, int n, int[] starts) {
-        int[] count = new int[6];
-        for (int i = 0; i < n; i += INTS) count[q[i] >> 18 & 7]++;
+        int[] count = new int[7];
+        for (int i = 0; i < n; i += INTS) count[group(q, i)]++;
         starts[0] = 0;
-        for (int d = 0; d < 6; d++) starts[d + 1] = starts[d] + count[d];
-        int[] at = Arrays.copyOf(starts, 6), sorted = new int[n];
+        for (int d = 0; d < 7; d++) starts[d + 1] = starts[d] + count[d];
+        int[] at = Arrays.copyOf(starts, 7), sorted = new int[n];
         for (int i = 0; i < n; i += INTS) {
-            int d = q[i] >> 18 & 7, to = at[d]++ * INTS;
+            int to = at[group(q, i)]++ * INTS;
             System.arraycopy(q, i, sorted, to, INTS);
         }
         return sorted;
+    }
+
+    private static int group(int[] q, int i) {
+        return (q[i + 1] >>> 28 & 1) != 0 ? 6 : q[i] >> 18 & 7;
     }
 
     /**
@@ -157,6 +172,10 @@ public final class VoxelMesher {
                     if (k == VoxelKinds.BOX || k == VoxelKinds.FLAT) box(x, y, z, k);
                     else if (k == VoxelKinds.WATER) waterSides(x, y, z);
                     else if (k == VoxelKinds.SKIP) thinWalls(x, y, z);
+                    else if (k == VoxelKinds.THIN) {
+                        thinWalls(x, y, z);
+                        detail(x, y, z);
+                    }
                 }
             }
         }
@@ -185,7 +204,7 @@ public final class VoxelMesher {
             id = waterId;
             look = looks.face(waterId, 1);
             offset = 14;
-        } else if (darkAir[i] && ny >= 0 && ny < height && (nk == VoxelKinds.AIR || nk == VoxelKinds.SKIP) && !dark(nx, ny, nz)) {
+        } else if (darkAir[i] && ny >= 0 && ny < height && VoxelKinds.open(nk) && !dark(nx, ny, nz)) {
             // a dark room open to the light (an undercut, a cave's mouth): its faces aren't drawn, so where the light
             // ends it gets an unlit curtain, as the dark there looks from afar, never a hole through to the sky
             // (Euan, 2026-10-26: the sky showed under the ledge at the basin's rim). Past the chunk's side counts as
@@ -313,6 +332,51 @@ public final class VoxelMesher {
         }
     }
 
+    /**
+     * A thin thing or a plant, for the detail run: a plant's cross (its sprite on the two diagonals, lit by its own
+     * block), else the thing's boxes, every face that no opaque cube hides.
+     */
+    private void detail(int x, int y, int z) {
+        int i = index(x, y, z), id = ids[i];
+        if (id == 0 || dark(x, y, z)) return;
+        int bx = x * 16, by = y * 16, bz = z * 16;
+        int sky = step(snap.skyLight(x, y, z)), block = step(snap.blockLight(x, y, z));
+        if (looks.cross(id)) {
+            int look = looks.face(id, 2);
+            if (look < 0) return;
+            int tint = (look >>> 16) != 0 ? looks.tint(id, (look >>> 16) - 1, snap.biome(x, y, z)) & 0xFFFFFF : 0xFFFFFF;
+            quad(bx, by, bz, 6, 16, 16, look, tint, sky, block, true);
+            quad(bx, by, bz + 16, 7, 16, 16, look, tint, sky, block, true);
+            return;
+        }
+        for (int b : VoxelKinds.parts(id)) {
+            int x0 = VoxelKinds.x0(b), y0 = VoxelKinds.y0(b), z0 = VoxelKinds.z0(b), x1 = VoxelKinds.x1(b), y1 = VoxelKinds.y1(b), z1 = VoxelKinds.z1(b);
+            if (x1 <= x0 || y1 <= y0 || z1 <= z0) continue;
+            for (int dir = 0; dir < 6; dir++) {
+                boolean edge = switch (dir) {
+                    case 0 -> y0 == 0;
+                    case 1 -> y1 == 16;
+                    case 2 -> z0 == 0;
+                    case 3 -> z1 == 16;
+                    case 4 -> x0 == 0;
+                    default -> x1 == 16;
+                };
+                if (edge && kindAt(x + DX[dir], y + DY[dir], z + DZ[dir]) == VoxelKinds.FULL) continue;
+                int look = looks.face(id, dir);
+                if (look < 0) continue;
+                int tint = (look >>> 16) != 0 ? looks.tint(id, (look >>> 16) - 1, snap.biome(x, y, z)) & 0xFFFFFF : 0xFFFFFF;
+                switch (dir) {
+                    case 0 -> quad(bx + x0, by + y0, bz + z0, 0, x1 - x0, z1 - z0, look, tint, sky, block, true);
+                    case 1 -> quad(bx + x0, by + y1, bz + z0, 1, x1 - x0, z1 - z0, look, tint, sky, block, true);
+                    case 2 -> quad(bx + x0, by + y0, bz + z0, 2, x1 - x0, y1 - y0, look, tint, sky, block, true);
+                    case 3 -> quad(bx + x0, by + y0, bz + z1, 3, x1 - x0, y1 - y0, look, tint, sky, block, true);
+                    case 4 -> quad(bx + x0, by + y0, bz + z0, 4, z1 - z0, y1 - y0, look, tint, sky, block, true);
+                    default -> quad(bx + x1, by + y0, bz + z0, 5, z1 - z0, y1 - y0, look, tint, sky, block, true);
+                }
+            }
+        }
+    }
+
     /** Water's sides where it meets open air (a fall, a fountain's rim seen from outside), up to its surface. */
     private void waterSides(int x, int y, int z) {
         int look = looks.face(waterId, 2);
@@ -323,7 +387,7 @@ public final class VoxelMesher {
         for (int dir = 2; dir < 6; dir++) {
             int nx = x + DX[dir], nz = z + DZ[dir];
             byte nk = kindAt(nx, y, nz);
-            if (nk != VoxelKinds.AIR && nk != VoxelKinds.SKIP && nk != VoxelKinds.FLAT) continue;
+            if (!VoxelKinds.open(nk) && nk != VoxelKinds.FLAT) continue;
             // the chunk's edge: its neighbour draws its own side if it has one
             if (nx < 0 || nx > 15 || nz < 0 || nz > 15) continue;
             int sky = step(snap.skyLight(nx, y, nz)), block = step(snap.blockLight(nx, y, nz));
@@ -338,13 +402,17 @@ public final class VoxelMesher {
     }
 
     private void quad(int x16, int y16, int z16, int dir, int eu, int ev, int look, int tint, int sky, int block) {
+        quad(x16, y16, z16, dir, eu, ev, look, tint, sky, block, false);
+    }
+
+    private void quad(int x16, int y16, int z16, int dir, int eu, int ev, int look, int tint, int sky, int block, boolean detail) {
         int l = lod;
         if (size[l] + INTS > out[l].length) out[l] = Arrays.copyOf(out[l], out[l].length * 2);
         int[] o = out[l];
         int at = size[l];
         int y = yBase + y16;
         o[at] = x16 | z16 << 9 | dir << 18 | eu << 21 | l << 30;
-        o[at + 1] = y | ev << 14;
+        o[at + 1] = y | ev << 14 | (detail ? 1 << 28 : 0);
         o[at + 2] = (look & 0xFFFF) | slot << 16;
         o[at + 3] = (tint & 0xFFFFFF) | sky << 24 | block << 28;
         size[l] = at + INTS;

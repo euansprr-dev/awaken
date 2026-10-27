@@ -65,6 +65,39 @@ final class VoxelLooks implements VoxelMesher.Looks {
     }
 
     private final ConcurrentHashMap<Long, Integer> windows = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, Boolean> crosses = new ConcurrentHashMap<>();
+
+    /** Whether the state's model is a plant's cross: quads, none of them on a cube face, every one standing diagonally. */
+    @Override
+    public boolean cross(int id) {
+        Boolean known = crosses.get(id);
+        if (known != null) return known;
+        boolean cross = false;
+        try {
+            BlockState state = Block.BLOCK_STATE_REGISTRY.byId(id);
+            if (state != null) {
+                BlockStateModel model = Minecraft.getInstance().getModelManager().getBlockStateModelSet().get(state);
+                List<BlockStateModelPart> parts = new ArrayList<>();
+                model.collectParts(RandomSource.create(42L), parts);
+                int diagonal = 0, other = 0;
+                for (BlockStateModelPart p : parts) {
+                    for (Direction d : Direction.values()) other += p.getQuads(d).size();
+                    for (BakedQuad q : p.getQuads(null)) {
+                        org.joml.Vector3f a = new org.joml.Vector3f(q.position(1)).sub(q.position(0)), b = new org.joml.Vector3f(q.position(2)).sub(q.position(0));
+                        org.joml.Vector3f n = a.cross(b);
+                        float len = n.length();
+                        if (len > 1e-6f && Math.abs(n.y) / len < 0.2f && Math.abs(n.x) / len > 0.3f && Math.abs(n.z) / len > 0.3f) diagonal++;
+                        else other++;
+                    }
+                }
+                cross = diagonal > 0 && other == 0;
+            }
+        } catch (RuntimeException e) {
+            cross = false;
+        }
+        crosses.put(id, cross);
+        return cross;
+    }
 
     @Override
     public int window(int id, int dir) {
