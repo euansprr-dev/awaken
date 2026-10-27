@@ -74,7 +74,7 @@ public final class Creatures {
         if (living instanceof Mob mob && !mob.hasData(LivingContent.FORM.get())) {
             CreatureTag now = CreatureTag.of(mob);
             if (now.kind() == CreatureTag.Kind.MONSTER || (now.kind() == CreatureTag.Kind.NEUTRAL && WildKin.isKin(mob)))
-                Forms.roll(level, mob, Regions.creatureLevel(level, mob.blockPosition(), Regions.Role.NEUTRAL), now.elite());
+                Forms.rollIfOn(level, mob, Regions.creatureLevel(level, mob.blockPosition(), Regions.Role.NEUTRAL), now.elite());
         }
         // a formed creature's moves are goals, and goals are not saved
         if (living instanceof Mob mob) Moves.arm(mob);
@@ -96,7 +96,7 @@ public final class Creatures {
             int lv = Regions.creatureLevel(level, mob.blockPosition(), elite ? Regions.Role.ELITE : Regions.Role.HUNTER);
             if (scale) applyScaling(mob, lv, elite);
             mob.setData(CoreApi.CREATURE_TAG.get(), new CreatureTag(lv, CreatureTag.Kind.MONSTER, elite, ""));
-            Forms.roll(level, mob, landLvl, elite);
+            Forms.rollIfOn(level, mob, landLvl, elite);
         } else {
             // a wild animal in D land or higher fights back (SPEC §21.10): neutral, scaled, a little bigger, sometimes an alpha
             int land = Regions.creatureLevel(level, mob.blockPosition(), Regions.Role.NEUTRAL);
@@ -107,7 +107,7 @@ public final class Creatures {
                 applyScaling(mob, lv, alpha, WildKin.growth(dev.awaken.living.region.RegionMap.rankOf(land)));
                 String title = alpha ? "Alpha of " + Regions.regionAt(level, mob.getBlockX(), mob.getBlockZ()).name() : "";
                 mob.setData(CoreApi.CREATURE_TAG.get(), new CreatureTag(lv, CreatureTag.Kind.NEUTRAL, alpha, title));
-                Forms.roll(level, mob, land, alpha);
+                Forms.rollIfOn(level, mob, land, alpha);
                 return;
             }
             int lv = Regions.creatureLevel(level, mob.blockPosition(), Regions.Role.AMBIENT);

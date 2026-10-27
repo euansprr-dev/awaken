@@ -183,6 +183,7 @@ public final class LivingModule {
             // the GameTest server keeps the old natural herds for the fauna tests (living_ledger checks the rule itself)
             if (e.getServer() instanceof net.minecraft.gametest.framework.GameTestServer) {
                 e.getServer().overworld().getGameRules().set(LivingContent.LIVING_HERDS.get(), false, e.getServer());
+                e.getServer().overworld().getGameRules().set(LivingContent.WILD_FORMS.get(), false, e.getServer());
             }
         });
         bus.addListener(ServerStoppedEvent.class, e -> {

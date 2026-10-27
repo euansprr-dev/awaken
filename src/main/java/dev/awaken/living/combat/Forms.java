@@ -130,6 +130,17 @@ public final class Forms {
         return t <= 0.2F ? FROST : t >= 1.0F ? SUN : GREEN;
     }
 
+    /** Whether this world dresses its creatures in forms (the game rule {@code awaken:wild_forms}, on by default). */
+    public static boolean enabled(ServerLevel level) {
+        return level.getGameRules().get(LivingContent.WILD_FORMS.get());
+    }
+
+    /** As {@link #roll}, when the world has forms on; else the creature is rolled vanilla (so it is not asked again). */
+    public static void rollIfOn(ServerLevel level, Mob mob, int landLevel, boolean alpha) {
+        if (enabled(level)) roll(level, mob, landLevel, alpha);
+        else mob.setData(LivingContent.FORM.get(), Form.NONE);
+    }
+
     /** Rolls a creature's form, once. An alpha or an elite wears at least its land's rung, and the crown. */
     public static void roll(ServerLevel level, Mob mob, int landLevel, boolean alpha) {
         if (Species.of(mob.getType()) == null || mob.isBaby()) return;

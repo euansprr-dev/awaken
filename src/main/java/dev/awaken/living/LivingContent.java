@@ -43,6 +43,14 @@ public final class LivingContent {
                     Codec.BOOL, b -> b ? 1 : 0, true, FeatureFlagSet.of()));
 
     /**
+     * {@code /gamerule awaken:wild_forms false}: creatures keep their vanilla bodies and moves (SPEC §21.11). The GameTest server starts with it off, so the older
+     * tests that kill a zombie outright in far land (where forms are the rule) see what they always did; the form tests roll and set forms themselves.
+     */
+    public static final DeferredHolder<GameRule<?>, GameRule<Boolean>> WILD_FORMS = RULES.register("wild_forms",
+            () -> new GameRule<>(GameRuleCategory.SPAWNING, GameRuleType.BOOL, BoolArgumentType.bool(), (visitor, rule) -> visitor.visitBoolean(rule),
+                    Codec.BOOL, b -> b ? 1 : 0, true, FeatureFlagSet.of()));
+
+    /**
      * A drop worth a light pillar (SPEC §21.1): 0 none, 1 rare (blue), 2 epic (violet), 3 a Power Core (white-gold).
      * Set on the dropped item entity when a creature dies; synced to everyone who sees it, never saved.
      */

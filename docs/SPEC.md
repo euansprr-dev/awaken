@@ -4425,6 +4425,10 @@ Continues §21.10's numbering (16-31). The long form is PLAN-2.md; this is what 
   Arms' tell glint for a form's wind-up (`Strikes.installTells` is install-once and the mobs module holds it; chaining it is a change in `core.api`), the "unless you finish it fast" clause of Rise.
 - Tests: `living_form_moves`.
 
+**Rise and the tests (2026-10-27, after CI).** A revenant rises from a lethal blow that is not a finishing one (`MarkEvents.shouldRise`: at least its health, under two health bars, 400 to 900), in `LivingDamageEvent.Pre`
+(the blow is spent, as a totem's), not from every death. Game rule `awaken:wild_forms` (default on; the GameTest server starts with it off, like `living_herds`) switches forms off for a world: older tests that kill a zombie
+outright in far land (where forms are the rule) failed on CI when a revenant stood up. The form tests roll and set forms themselves.
+
 **Kit placement rules (2026-10-27, after Euan's screenshots: tusks over the face, spines floating over the back, claws hanging off the fists).** Every piece of a kit is checked when the art is built
 (`tools/art/forms_geom.py`, called by `tools/art/specs/forms.py`; a violation stops the build with the piece named): **attached** (it touches the vanilla body or a piece that does; a horn is a chain
 whose segments start where the last ended; only up to six marked floating shards in the top rung may hang free, within 9 blocks); **off the face** (the eye band from the face plane forward is a
