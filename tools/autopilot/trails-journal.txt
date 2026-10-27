@@ -35,12 +35,18 @@ trails browse weapons
 wait 20
 shot t04_browse_weapons
 screen close
-cmd awaken admin trails follow your_hearth
-wait 60
+# follow a trail: the card top right and the Now line top left become the trail, ahead of the first-hour moves
+cmd awaken admin trails follow moving_like_a_hunter
+wait 100
 shot t05_task_card_following
-trails now
+# do the first two things on it: the steps tick, the next one is the current step
+cmd awaken admin counter "awaken:body_roll" 1
+cmd awaken admin counter "awaken:body_sprint" 1
+wait 100
+shot t06_task_card_two_done
 screen holo journal
 wait 40
-shot t06_journal_following
+trails now
+shot t07_journal_following
 screen close
 quit
