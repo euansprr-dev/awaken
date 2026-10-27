@@ -1,0 +1,38 @@
+# Euan's cave void by a river in a new world (2026-10-27; WORLD_FROM, a copy of "New World (3)", never the original):
+# his view at render distance 15 with Far Sight on, the cave mouths 265-295 m out past Sodium's reach. Shots as City
+# Sight's snapshots come in (schema 3 takes the place again), then debug 2 (red: a mask hides far land or City Sight),
+# City Sight off and Far Sight off. Run: PACK=perf,world TECTONIC=awakened RD=15 LENS=cinematic WORLD_FROM=...
+world copied
+waitworld
+window 1440 900
+wait 40
+screen close
+gui 0
+hud off
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+opt renderDistance 15
+cmd gamemode spectator
+cmd tp @s -1217.18 70.68 -1275.60 121.92 3.65
+wait 1200
+shot cr_1min
+farsight status
+wait 2400
+shot cr_3min
+farsight status
+farsight debug 2
+wait 10
+shot cr_d2
+farsight debug 0
+farsight part city off
+wait 60
+shot cr_nocity
+farsight part city on
+farsight off
+wait 100
+shot cr_nofar
+farsight on
+info
+quit
