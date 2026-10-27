@@ -343,6 +343,51 @@ final class FarSightTests {
             h.succeed();
         });
 
+        // What floats isn't ground (Euan, 2026-10-27: a sky platform stood on "huge spiky pillars" in the far view): a deck
+        // 30 blocks up with a chain and a lone block under it keeps the ground under it in its cells, while a sealed dark
+        // room under a crust (a cave) keeps the crust.
+        AwakenTests.registerIsolated("farsight_floating_ground", 100, h -> {
+            ServerLevel level = h.getLevel();
+            BlockPos o = h.absolutePos(BlockPos.ZERO);
+            int bx = o.getX() & ~15, bz = o.getZ() & ~15, y0 = o.getY() + 2;
+            BlockState stone = Blocks.STONE.defaultBlockState(), air = Blocks.AIR.defaultBlockState();
+            // the fixture owns its columns (it can land under real terrain): open to the sky over a stone floor, deep
+            // enough to stand (the test world's ground is far under it)
+            for (int x = bx + 2; x < bx + 16; x++) {
+                for (int z = bz + 2; z < bz + 16; z++) {
+                    if (x >= bx + 10 != z >= bz + 10) continue;
+                    for (int y = y0 - FarChunk.FLOAT_RUN; y <= y0; y++) level.setBlock(new BlockPos(x, y, z), stone, Block.UPDATE_CLIENTS);
+                    for (int y = y0 + 1; y <= level.getMaxY(); y++) level.setBlock(new BlockPos(x, y, z), air, Block.UPDATE_CLIENTS);
+                }
+            }
+            // the deck: cells (2, 2) to (3, 3), two thick; a chain from one corner down to 3 over the floor, a block on it
+            // 18 over the chain's foot
+            for (int x = bx + 4; x < bx + 8; x++) {
+                for (int z = bz + 4; z < bz + 8; z++) {
+                    for (int y = y0 + 30; y < y0 + 32; y++) level.setBlock(new BlockPos(x, y, z), stone, Block.UPDATE_CLIENTS);
+                }
+            }
+            BlockState chain = Blocks.IRON_CHAIN.defaultBlockState();
+            for (int y = y0 + 4; y < y0 + 30; y++) level.setBlock(new BlockPos(bx + 4, y, bz + 4), y == y0 + 22 ? stone : chain, Block.UPDATE_CLIENTS);
+            // the cave: a 6x6 stone block standing on the floor, its 4x4 room (cells (6, 6) inside it) 21 high and sealed
+            for (int x = bx + 10; x < bx + 16; x++) {
+                for (int z = bz + 10; z < bz + 16; z++) {
+                    boolean room = x > bx + 10 && x < bx + 15 && z > bz + 10 && z < bz + 15;
+                    for (int y = y0 + 1; y <= y0 + 24; y++) level.setBlock(new BlockPos(x, y, z), room && y <= y0 + 21 ? air : stone, Block.UPDATE_CLIENTS);
+                }
+            }
+            AwakenTests.awaitLight(h, new BlockPos(bx, y0, bz), new BlockPos(bx + 15, y0 + 40, bz + 15));
+            FarChunk c = FarChunk.of(level.getChunkAt(new BlockPos(bx, y0, bz)));
+            for (int k = 0; k < 4; k++) {
+                int i = (2 + (k >> 1)) * FarChunk.SIDE + 2 + (k & 1);
+                h.assertTrue(FarChunk.top(c.cell()[i]) == y0 + 1 && FarChunk.canopy(c.cell()[i]) == 0,
+                        "the ground under the deck, not the deck: cell " + i + " top " + FarChunk.top(c.cell()[i]) + " canopy " + FarChunk.canopy(c.cell()[i]));
+            }
+            int cave = 6 * FarChunk.SIDE + 6;
+            h.assertTrue(FarChunk.top(c.cell()[cave]) == y0 + 25, "a cave's crust stands: top " + FarChunk.top(c.cell()[cave]) + " not " + (y0 + 25));
+            h.succeed();
+        });
+
         // The generated layer: a real chunk summed into 2-block cells (a stone pillar's top, a pool's surface and depth),
         // kept through the disk cache, and read back as a ring 0 patch.
         AwakenTests.registerIsolated("farsight_generated_layer", 100, h -> {
@@ -356,7 +401,13 @@ final class FarSightTests {
                     for (int y = y0; y <= level.getMaxY(); y++) level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
                 }
             }
-            // the pillar: chunk cell (2, 2), 12 high; the pool: cell (4, 2), 3 deep on a stone floor
+            // the pillar: chunk cell (2, 2), 12 high; the pool: cell (4, 2), 3 deep on a stone floor; both on a foundation
+            // (standing in the air over the test world's ground they would float, and far terrain keeps the ground under it)
+            for (int x = x0; x < x0 + 6; x++) {
+                for (int z = z0; z < z0 + 2; z++) {
+                    for (int y = y0 - FarChunk.FLOAT_RUN; y < y0; y++) level.setBlock(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
+                }
+            }
             for (int y = y0; y < y0 + 12; y++) {
                 for (int k = 0; k < 4; k++) level.setBlockAndUpdate(new BlockPos(x0 + (k & 1), y, z0 + (k >> 1)), Blocks.STONE.defaultBlockState());
             }
@@ -445,8 +496,11 @@ final class FarSightTests {
             var cmd = level.getServer().createCommandSourceStack().withLevel(level).withSuppressedOutput();
             level.getServer().getCommands().performPrefixedCommand(cmd, "fillbiome " + (x0 - 4) + " " + (y0 - 4) + " " + (z0 - 4) + " "
                     + (x0 + 11) + " " + (y0 + 40) + " " + (z0 + 11) + " minecraft:plains");
-            for (int y = y0; y < y0 + 23; y++) {
-                for (int k = 0; k < 4; k++) level.setBlock(new BlockPos(x0 + (k & 1), y, z0 + (k >> 1)), Blocks.STONE_BRICKS.defaultBlockState(), Block.UPDATE_CLIENTS);
+            // (on a foundation: standing in the air over the test world's ground it would float, and far terrain keeps the
+            // ground under what floats)
+            for (int y = y0 - FarChunk.FLOAT_RUN; y < y0 + 23; y++) {
+                for (int k = 0; k < 4; k++) level.setBlock(new BlockPos(x0 + (k & 1), y, z0 + (k >> 1)),
+                        (y < y0 ? Blocks.STONE : Blocks.STONE_BRICKS).defaultBlockState(), Block.UPDATE_CLIENTS);
             }
             boolean was = FarStore.collecting;
             FarStore.collecting = false;

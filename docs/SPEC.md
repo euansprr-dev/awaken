@@ -1850,11 +1850,20 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   Sight hidden for the real chunks paint red); red only in the debug frame, eroded by 5 pixels (outline slivers where
   City Sight's cubes are hidden for thinner real blocks are expected), is a hole. Tour `farsight3-city.txt` takes the
   pairs at the Roost, the quay and high over the walls; 0 hole pixels at all three (2026-10-26).
-- **Generated layer** (stage 1, schema 2): `FarChunk` keeps per 2×2-block cell the ground's top (MOTION_BLOCKING_NO_LEAVES;
+- **Generated layer** (stage 1, store schema 4): `FarChunk` keeps per 2×2-block cell the ground's top (MOTION_BLOCKING_NO_LEAVES;
   water counts), water depth, the ground's colour, the canopy's height above it and its colour (leaves at
   MOTION_BLOCKING). `FarStore.patch` averages the cells within half a cell of each corner (known once a quarter is
   seen) into the same four texels, flagged generated; its trees get their biome's shape (looked up only where trees
   stand). It wins over the prediction.
+  What floats isn't ground (2026-10-27, Euan: a sky platform stood on "huge spiky pillars from the ground up" in the far
+  view; the store went to schema 4, older regions are re-learned): from the heightmap's top down, a piece with 16 or more
+  open blocks under it (air, chains, plants, leaves: anything not a solid cube or a fluid), sky light in them, floats, and
+  the cell keeps the ground under it (its water depth and crown read from there too). A dark gap is a cave under the
+  ground's crust, which stands; a piece 40 blocks deep without such a gap under it stands. `FarChunk.groundTop` probes
+  every 8 blocks (a few reads a column on solid ground). A sky platform's deck (y 274+), its islands and the anchor
+  rings down its chain (22 apart) all float; City Sight draws them floating where it holds their chunks (1.9 km), and
+  past that they aren't drawn (the far terrain has one top a column). Bridges and viaduct decks over 16 open blocks go
+  the same way. Test `farsight_floating_ground`.
 - **Drawing** (`AfterSky`, before any chunk, its own D32 reversed-Z depth, planes 1 and 32768): each ring's window
   minus the next finer window is cut into pieces of up to 64×64 cells, culled on the CPU, each one draw of a continuous
   mesh: vertex `v` is the piece's corner `(v % 65, v / 65)`, one index buffer per piece width (8..64). A corner takes
