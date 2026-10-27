@@ -158,7 +158,12 @@ final class LivingTests {
                 // the errand takes the panel: its title, its steps, the letters counted
                 h.runAfterDelay(dev.awaken.progression.Checklist.DONE_HOLD + 4, () -> {
                     try {
+                        // a first power still to choose (the cards were closed) comes before the errand, then goes
                         var t = dev.awaken.progression.Checklist.now(p);
+                        h.assertTrue(t != null && t.id().equals("powers:first"), "the first power before the errand: " + t);
+                        dev.awaken.powers.Starter.offer(p);
+                        dev.awaken.powers.Starter.choose(p, dev.awaken.powers.Starter.state(p).offer().getFirst());
+                        t = dev.awaken.progression.Checklist.now(p);
                         var d = dev.awaken.living.quest.QuestBook.get(FirstThread.chainId());
                         h.assertTrue(t != null && t.title().equals(d.title()) && t.rows().getFirst().text().startsWith("Take the letters"),
                                 "then the errand you're on: " + t);

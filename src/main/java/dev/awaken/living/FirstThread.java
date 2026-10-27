@@ -56,11 +56,15 @@ public final class FirstThread {
         if (d == null || a.step() >= d.steps().size()) return null;
         List<dev.awaken.progression.Checklist.Row> rows = new java.util.ArrayList<>();
         int from = Math.max(0, Math.min(a.step() - 1, d.steps().size() - TASK_ROWS));
+        // the step being done carries its place (the scenes are in the overworld): the Now line shows it (SPEC §27.11)
+        BlockPos here = a.step() < d.steps().size() && p.level().dimension() == net.minecraft.world.level.Level.OVERWORLD
+                ? where(p, a, d.steps().get(a.step())) : null;
         for (int i = from; i < d.steps().size() && rows.size() < TASK_ROWS; i++) {
             QuestDef.Step st = d.steps().get(i);
             boolean done = i < a.step(), counted = st.tally() || st.objective().count() > 1;
             int need = st.objective().count(), have = done ? need : i == a.step() ? a.progress() : 0;
-            rows.add(new dev.awaken.progression.Checklist.Row(st.text(), "", done, counted ? have : 0, counted ? need : 0, null));
+            rows.add(new dev.awaken.progression.Checklist.Row(st.text(), "", done, counted ? have : 0, counted ? need : 0,
+                    i == a.step() ? here : null, st.place().orElse(null)));
         }
         return new dev.awaken.progression.Checklist.Task("chain:" + a.chain(), d.title(), rows);
     }

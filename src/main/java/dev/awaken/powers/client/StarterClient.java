@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * Client side of the first-power choice. The cards open as soon as nothing else is on screen (never over a loading
  * screen, the inventory or chat). While the choice is waiting, K opens the cards instead of Status, because that's
- * what the Now tracker's "Choose your first power · K" promises.
+ * what the task card's "Press [K] to choose your first power" promises.
  */
 public final class StarterClient {
     private StarterClient() {}

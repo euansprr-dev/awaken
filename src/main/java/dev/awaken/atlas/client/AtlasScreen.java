@@ -34,7 +34,8 @@ import java.util.Locale;
  * In the map scene ({@link MapScene}, SPEC §30.5) the same table is the band's projection: a card in front of you while
  * the camera stands over your shoulder, the legend on its own glass beside it, the world dimmed behind. Keys move the
  * map while your body stays still (WASD, Q/E turn, R/F tilt, +/- zoom); Tab steps through the gates you know and T
- * points the Now line at the one picked.
+ * makes the one picked your destination. On either, a click on a place picks it and its card sets it as your
+ * destination ({@link AtlasDestination}).
  */
 public final class AtlasScreen extends Screen implements dev.awaken.signal.client.QuietScreen {
     private static final int MARGIN = 12;
@@ -94,13 +95,17 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
     private int shareX0 = -1, shareX1 = -1, buttonsY;
     /** The band's projection in the map scene (SPEC §30.5), not the full-screen table. */
     final boolean scene;
-    // the gates in the legend (nearest first), the one picked (Tab, a click), and its "Point me there" row
+    // the gates in the legend (nearest first), the one picked (Tab, a click), and its "Set as destination" row
     private final java.util.List<MapMarks.Gate> gateRows = new java.util.ArrayList<>();
     private int gateRowY0, pointY = -1000;
     private @org.jspecify.annotations.Nullable BlockPos chosen;
     static final int GATE_ROWS = 4;
     // keys held down (the map moves while they are)
     private int held;
+    /** Choosing a destination (SPEC §16.8): a click that didn't move picks a place, the card beside it sets it. */
+    private final AtlasDestination destination = new AtlasDestination();
+    private double pressX, pressY;
+    private boolean pressDouble;
     private static final int K_FWD = 1, K_BACK = 2, K_LEFT = 4, K_RIGHT = 8, K_TURN_L = 16, K_TURN_R = 32, K_TILT_UP = 64,
             K_TILT_DOWN = 128, K_ZOOM_IN = 256, K_ZOOM_OUT = 512;
 
@@ -255,6 +260,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             legendLayout(mc, atlas, x0, y0, zoom >= CLOSE_IN);
             float marks = scene ? 0.30f : 0.45f;
             if (age > marks) markers(g, mc, atlas, x0, y0, x1, y1, zoom >= CLOSE_IN);
+            if (age > marks) destination.draw(g, font, atlas, this::screenAt, x0, y0, x1, y1, age, zoom, mouseX, mouseY);
             if (age > marks) {
                 legend(g, mc, atlas, mouseX, mouseY);
                 hover(g, mc, atlas, mouseX, mouseY, x0, y0, x1, y1);
@@ -293,12 +299,12 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             right = shareX0 - 14;
         }
         String[] hints = scene
-                ? new String[]{"drag turn  ·  right-drag or WASD move  ·  scroll zoom  ·  Tab gates  ·  T point me there  ·  C you  ·  Shift+M table  ·  M close",
-                        "drag turn  ·  WASD move  ·  scroll zoom  ·  Tab gates  ·  T point me there  ·  C you  ·  M close",
-                        "drag · WASD · scroll · Tab · T · C · M close"}
-                : new String[]{"drag orbit  ·  right-drag pan  ·  scroll zoom  ·  double-click pin  ·  Tab gates  ·  C you  ·  L legend  ·  H danger for you",
-                        "drag orbit  ·  right-drag pan  ·  scroll zoom  ·  double-click pin  ·  C you",
-                        "drag orbit  ·  right-drag pan  ·  scroll zoom  ·  C you", "drag · right-drag · scroll · C"};
+                ? new String[]{"click a place to go there  ·  drag turn  ·  right-drag or WASD move  ·  scroll zoom  ·  Tab gates  ·  C you  ·  Shift+M table  ·  M close",
+                        "click a place to go there  ·  drag turn  ·  WASD move  ·  scroll zoom  ·  Tab gates  ·  C you  ·  M close",
+                        "click to go · drag · WASD · scroll · Tab · C · M close"}
+                : new String[]{"click a place to go there  ·  drag orbit  ·  right-drag pan  ·  scroll zoom  ·  double-click pin  ·  Tab gates  ·  C you  ·  L legend  ·  H danger for you",
+                        "click a place to go there  ·  drag orbit  ·  right-drag pan  ·  scroll zoom  ·  double-click pin  ·  C you",
+                        "click to go there  ·  drag orbit  ·  right-drag pan  ·  scroll zoom  ·  C you", "click · drag · right-drag · scroll · C"};
         int left = scene ? Math.round(width * 0.025f) : x0 + 2;
         for (String hint : hints) {
             if (left + font.width(hint) < right - 12) {
@@ -594,7 +600,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
     private java.util.List<net.minecraft.util.FormattedCharSequence> noGates = java.util.List.of();
     private static final String NO_GATES = "You haven't seen a gate yet. Their light shows from far off: look for a pillar in the sky.";
 
-    /** The legend: the gates you know (pick one, then "Point me there"), the lands and what their colours mean. */
+    /** The legend: the gates you know (pick one, then "Set as destination"), the lands and what their colours mean. */
     private void legend(GuiGraphicsExtractor g, Minecraft mc, AtlasState atlas, int mouseX, int mouseY) {
         if (legendRows.isEmpty() && gateRows.isEmpty() && noGates.isEmpty()) return;
         int x = legendX0, y = legendY0, w = legendX1 - legendX0;
@@ -627,14 +633,14 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
                 plain(g, dist, x + w - 6 - dw, ry, Glass.a(gt.broken() ? Glass.WARN : Glass.LABEL, 0.95f));
             }
             if (pointY > -1000) {
-                boolean pointing = pinned().map(at -> at.equals(chosen)).orElse(false);
-                String label = pointing ? "Pointing you there" : "Point me there";
-                String key = pointing ? "" : "T";
+                boolean pointing = chosen != null && AtlasDestination.isDestination(chosen);
+                String label = pointing ? "Clear destination" : "Set as destination";
+                String key = "T";
                 boolean over = mouseX >= x && mouseX < x + w && mouseY >= pointY - 1 && mouseY < pointY + ROW - 1;
                 int bx0 = x + 15, bx1 = x + w - 6;
                 g.fill(bx0, pointY - 1, bx1, pointY + ROW - 1, Glass.a(0x7FC3FF, pointing ? 0.12f : over ? 0.34f : 0.22f));
                 g.fill(bx0, pointY - 1, bx0 + 1, pointY + ROW - 1, 0xFF7FC3FF);
-                plain(g, (pointing ? "✓ " : "› ") + label, bx0 + 5, pointY + 1, pointing ? Glass.a(Glass.LABEL, 1f) : 0xFFFFFFFF);
+                plain(g, (pointing ? "\u2715 " : "› ") + label, bx0 + 5, pointY + 1, pointing ? Glass.a(Glass.LABEL, 1f) : 0xFFFFFFFF);
                 if (!key.isEmpty()) plain(g, key, bx1 - 4 - font.width(key), pointY + 1, Glass.a(Glass.LABEL, 0.8f));
             }
         }
@@ -672,10 +678,6 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         }
     }
 
-    private static java.util.Optional<BlockPos> pinned() {
-        return dev.awaken.signal.client.NowClient.pinned();
-    }
-
     /** "120 m" along the ground from you to a gate. */
     private static String gateDistance(Minecraft mc, MapMarks.Gate gt) {
         if (mc.player == null) return "";
@@ -684,27 +686,43 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         return m >= 1000 ? String.format(Locale.ROOT, "%.1f km", m / 1000.0) : m + " m";
     }
 
-    /** Picks a gate: the map glides to it and the legend offers "Point me there". */
+    /** Picks a gate: the map glides to it and the legend offers "Set as destination". */
     private void choose(MapMarks.Gate gt) {
         chosen = gt.pos();
         dev.awaken.progression.client.StatusSections.narrate(gt.name() + ", " + gateDistance(Minecraft.getInstance(), gt)
-                + (gt.when().isEmpty() ? "" : ", " + gt.when()) + ". Press T to be pointed there.");
+                + (gt.when().isEmpty() ? "" : ", " + gt.when()) + ". Press T to make it your destination.");
         flyX = gt.pos().getX() + 0.5;
         flyZ = gt.pos().getZ() + 0.5;
         Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(HoloSounds.HOVER.get(), 1.1f, 0.7f));
     }
 
-    /** "Point me there": the Now line, its compass and the Signal's thread lead to the gate picked, until you reach it. */
+    /**
+     * The gate picked becomes your destination (SPEC §16.8): the Now line, its compass and the Signal's thread lead there
+     * until you arrive. On the destination itself it clears it.
+     */
     private void pointAtChosen() {
         if (chosen == null) return;
         for (MapMarks.Gate gt : gateRows) {
             if (!gt.pos().equals(chosen)) continue;
-            dev.awaken.signal.client.NowClient.pin("Go to the " + (gt.broken() ? "broken " : "") + gt.name(), gt.pos());
-            Minecraft mc = Minecraft.getInstance();
-            mc.getSoundManager().play(SimpleSoundInstance.forUI(HoloSounds.CONFIRM.get(), 1.0f, 0.7f));
-            if (mc.player != null) mc.player.sendOverlayMessage(Component.translatable("atlas.awaken.point"));
+            AtlasDestination.toggle((gt.broken() ? "Broken " : "") + gt.name(), "gate", gt.pos());
             return;
         }
+    }
+
+    /** Where (x, y, z) lands on the table this frame (the destination's marker and picking), false off it. */
+    private boolean screenAt(double x, double y, double z, float[] out) {
+        if (!project(x, y, z, px0(), py0())) return false;
+        out[0] = v.x;
+        out[1] = v.y;
+        return true;
+    }
+
+    /** The zone whose name chip was drawn under (mx, my) this frame, or 0. */
+    private int chipAt(double mx, double my) {
+        for (int i = 0; i < placedCount; i++) {
+            if (Math.abs(placedAt[i * 2] - mx) <= 40 && Math.abs(placedAt[i * 2 + 1] - my) <= 11) return placedZones[i];
+        }
+        return 0;
     }
 
     /** Under the cursor: which district or region that land is, and its levels. */
@@ -885,6 +903,10 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
 
     @Override
     public boolean mouseClicked(MouseButtonEvent e, boolean doubleClick) {
+        pressX = e.x();
+        pressY = e.y();
+        pressDouble = doubleClick;
+        if (e.button() == InputConstants.MOUSE_BUTTON_LEFT && destination.overCard(e.x(), e.y())) return true; // released on it, it acts
         boolean inLegend = e.x() >= legendX0 && e.x() < legendX1 && e.y() >= legendY0 && e.y() < legendY1;
         if (inLegend && e.button() == InputConstants.MOUSE_BUTTON_LEFT && !gateRows.isEmpty()) {
             if (e.y() >= pointY - 1 && e.y() < pointY + ROW - 1) {
@@ -912,6 +934,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         // double-click: drop a pin on the ground there (your party sees it), or take back your own pin under the cursor
         double[] at = new double[3];
         if (doubleClick && e.button() == InputConstants.MOUSE_BUTTON_LEFT && ground(e.x(), e.y(), at)) {
+            destination.deselect(); // the first click of the two picked the spot: the pin is what was meant
             boolean remove = false;
             AtlasRenderState.view(gui, px1() - px0(), py1() - py0(), zoom, yaw, tilt);
             for (dev.awaken.atlas.AtlasNet.PinView pin : AtlasState.get().pins) {
@@ -932,6 +955,22 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             return true;
         }
         return super.mouseClicked(e, doubleClick);
+    }
+
+    /** A click that didn't move (not a drag, not a double-click's second): pick a place, or press the card's button. */
+    @Override
+    public boolean mouseReleased(MouseButtonEvent e) {
+        boolean still = Math.abs(e.x() - pressX) <= 3 && Math.abs(e.y() - pressY) <= 3;
+        boolean inLegend = e.x() >= legendX0 && e.x() < legendX1 && e.y() >= legendY0 && e.y() < legendY1;
+        if (e.button() == InputConstants.MOUSE_BUTTON_LEFT && still && !pressDouble && (!inLegend || destination.overCard(e.x(), e.y()))
+                && e.x() >= px0() && e.x() <= px1() && e.y() >= py0() && e.y() <= py1()) {
+            Minecraft mc = Minecraft.getInstance();
+            AtlasRenderState.view(gui, px1() - px0(), py1() - py0(), zoom, yaw, tilt);
+            double[] at = new double[3];
+            destination.click(mc, AtlasState.get(), this::screenAt, e.x(), e.y(), chipAt(e.x(), e.y()), ground(e.x(), e.y(), at) ? at : null);
+            return true;
+        }
+        return super.mouseReleased(e);
     }
 
     @Override
@@ -986,6 +1025,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             pointAtChosen();
             return true;
         }
+        if ((e.key() == InputConstants.KEY_RETURN || e.key() == InputConstants.KEY_NUMPADENTER) && destination.act()) return true;
         int k = heldKey(mc, e);
         if (k != 0) {
             held |= k;

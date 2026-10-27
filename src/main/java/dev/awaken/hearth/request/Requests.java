@@ -481,7 +481,7 @@ public final class Requests {
             int progress = Math.min(r.count(), r.delivered() + RequestRules.carried(sp, r.target()));
             boolean ready = progress >= r.count();
             MutableComponent text = Component.empty().append(name(r)).append(" " + progress + "/" + r.count()
-                    + (ready ? (near ? " · use the Anchor" : " · bring it home") : " · Anchor"));
+                    + (ready ? (near ? ": right-click your Anchor to hand it in" : ": take it home to your Anchor") : " for a request at your Anchor"));
             out.add(new NowHooks.Suggestion("request:" + r.id(), ready ? NOW_READY : NOW_GATHER, text, Optional.of(anchor)));
         }
         return out;

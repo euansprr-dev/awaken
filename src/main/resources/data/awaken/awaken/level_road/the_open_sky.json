@@ -12,7 +12,7 @@
   ],
   "quiet": false,
   "goal": {
-    "now": "The Sky Leviathan (it finds you)",
+    "now": "Beat the Sky Leviathan in its gate",
     "done": {
       "type": "counter",
       "counter": "awaken:ascent_skyborn_trial",

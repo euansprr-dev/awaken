@@ -291,7 +291,8 @@ then New Game+ "Ascension" tiers.
 
 difficulty: STORY | HUNTER (default) | HARDLINE | HARDCORE · storyLength: 0.5 | 1.0 | 1.5 · features: gates, descent,
 lucidium, veil, above, hearth, story, anomalies, landmarks, wards, wilds (bools) · cameraShake · signalTypeSpeed ·
-playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the rest of `AwakenConfig.Client`.
+playtestMode (off). Client: nowTracker, horizonLineShown (§17, off by default since §27.11), systemScale and the rest
+of `AwakenConfig.Client`.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -414,6 +415,10 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   wards for sites placed by code; structures just join `#awaken:warded`), `ArrivalHooks` (`report(player, Way, ticks)` for
   movement systems, `byMovement(player)` for rewards, `history(player)`), `HorizonHooks` (`register(Source)` of sites,
   `addReach(Reach)` for needs such as `WINGS`, `collect(player)`, the pure `pick`).
+- `dev.awaken.core.api.Destinations` (§16.8, §27.11; 2026-10-27) — where the player chose to go: `Target(name,
+  dimension, at, kind)`; server `get(ServerPlayer)`, `set(ServerPlayer, Target | null)`, `clear`; client `mine()` (the
+  server's last word), `request(Optional<Target>)` (the Atlas asks; empty clears). `ARRIVED` 16, `ARRIVED_UP` 48. The
+  signal module installs both sides (`signal.Destination`, payloads `signal_destination`, `signal_set_destination`).
 - `dev.awaken.progression.Progression.xpLedger(player)` — XP by `XpSource` and by world-XP source key (§17 telemetry).
   `Progression.onXpGranted(listener)` (every grant after scaling), `Progression.worldXp(player, source, fraction,
   afterBudget)` (a multiplier applied after the budget), `XpBudget.register(source, perTenMinutes)` (§21.3).
@@ -686,8 +691,9 @@ Plan v2 · the Hearth guide (details in docs/modules/hearth.md):
   server). The radius shows for 8 s as a ground-level ember ring.
 - Stairs and slabs close gaps like doors and panes (a stair or slab roof is a roof). Why a room isn't recognised comes from
   a second bounded fill inside the scan's budget: sees the sky, a hole in the roof, an opening at x y z, too big, missing X.
-- The Anchor teaches the Hearth furniture recipes when it takes root. The Now tracker teaches one line at a time: "Use the
-  Anchor for a guide", then the next room with live ticks, then why a room isn't counted yet.
+- The Anchor teaches the Hearth furniture recipes when it takes root. The task card teaches one step at a time (§28.2,
+  "Your home"): right-click the Anchor for the guide, then why a room isn't counted yet, then the next room and what it
+  needs.
 - Oren's cottage: offered once per player (a choice card after the first Anchor), free, never built over anything a player
   made (only terrain, plants and up to three natural trees give way); 9×9 outside, 7×7×4 inside, ten biome palettes,
   raised over ~7 s; its room is a Sanctuary on completion.
@@ -2715,6 +2721,27 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
       sight, which leaves every block on screen where it was: the land moves exactly with the mouse. It used to snap to
       the one column under the centre at every mouse move, so the land jumped up and down at each tree and roof; the
       clouds lie on the centre's plane and now rise and fall with the broad height, smoothly.
+  - **Destinations** (Euan, 2026-10-27: "We need to make sure I can actually choose destinations on the map too";
+    `atlas.client.AtlasDestination`, `signal.Destination`, `core.api.Destinations`): a click that doesn't move (3 GUI px
+    at most between press and release; not a drag, not a double-click's second) picks the place under the cursor: a
+    gate (anywhere along its pillar), a mark or a rumour, a Hearth, a party pin (within 12 px), else a region's or district's name
+    chip, else a spot on ground you know ("A spot in the Commons"); a click on nothing lets the pick go. A small card
+    beside it names it, with **› Set as destination** (Enter); on the destination itself **✕ Clear destination**. The
+    legend's picked gate offers the same ("Set as destination" / "Clear destination", T), where "Point me there" was
+    (the client-only map pin is gone). Setting it says "That's your destination now. The top left of your screen will
+    point the way." The destination stands on the table in its own look: a white-gold pin with a beam above it and a
+    slow ring at its foot, "DESTINATION" over its name (on the clouds where the land isn't known). Drag to orbit,
+    right-drag, a click on a legend row to glide and the double-click party pin are unchanged (a double-click drops
+    the first click's pick). The key line starts "click a place to go there".
+  - The server keeps one per player (attachment `awaken:destination`, schemaVersion 1, kept through death): name (48
+    characters at most), dimension (the one the player stands in when the Atlas asks), block, kind (`gate`, `mark`,
+    `rumour`, `region`, `pin`, `spot`, `home`, else `place`). Sent on change, login, respawn and dimension change. Every 20
+    ticks: within 16 blocks across and 48 up or down (a rumour, whose height is a guess: across only), in its dimension,
+    it clears itself with a fleeting toast "Destination reached · <name>". Setting another replaces it. A mark's height
+    is taken from the Atlas's ground where the land is known (a landmark's mark says 64).
+  - Tests: `signal_destination_arrival` (not yet at 60 blocks or 80 above; there within 16; a rumour across only;
+    never in another dimension), `signal_destination_saved` (the Atlas's request named and placed in your dimension, the
+    codec, a whole save and load, Clear, a nameless request ignored).
 
 ### 16.9 Public hooks (`core.api`, v0; signatures may change only through the orchestrator)
 - `CityHooks`: `inCity(Level, BlockPos)`, `district(Level, BlockPos)` (id or null), `isCivic(Level, BlockPos)`,
@@ -2968,7 +2995,8 @@ How you arrived (`wilds.arrival`, behind `core.api.ArrivalHooks`; config `featur
 The Horizon line (`core.api.HorizonHooks`; signal `HorizonSync`, `TrackerHud`):
 - A second HUD card under the Now tracker (or in its place), in the Horizon's pale sea-green (#9FE6D6), drawn through
   `HudLook` (the calm FRAME card with the projected look): "△ Sealed Vault  ↗ 420 m". Its own client setting
-  `horizonLine`; nothing in the Now tracker (gates 45, requests 42, unspent points 55) can take it.
+  `horizonLineShown`, off by default since 2026-10-27 (§27.11: the corner shows only where you're going); nothing in
+  the Now tracker (gates 45, requests 42, unspent points 55) can take it.
 - Sources list the sites near a player; each names a need (empty: on foot; `wings` for the sky). The line is the nearest
   site the player can reach (`Reach` answers: the Flight power, a Frame with Jet Boots and essence; later the tiers),
   a raised one (a spirit's whisper) first. A tease (the nearest site they can't reach: "Sky Platform · needs Wings",
@@ -6132,6 +6160,8 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   spend 55 and the next level's unlock 15; under a waiting Reassessment 72, rifts and danger), with a compass to its
   place: a "reach" step's marker; a "talk" step's person (Kestrel: the Roost, `OpeningHooks.place("roost")`; Hale: his
   quartermaster spot; Ilse and Hettie: the camp; a Wayfarer: their scene). Before, tracked chains never reached the HUD.
+  Since §27.11 (2026-10-27) the corner shows the step's place from the task card (the quest step's `place`, its
+  compass), not this suggestion; the suggestion stays in the band's lists.
 - **The camp is findable**: its marker falls back to its nominal spot until someone has come near (the compass knows the
   way); a Horizon site "Wayfarer camp" until the player has stood within 24 of it (counter
   `awaken:camp_reached`); and a signal fire on a bale by Ilse (`Scenes.campFire`), its smoke a column seen from the High
@@ -6244,7 +6274,8 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
     minutes; those first minutes don't count against the 5, or a tip offered at registration lapses as the world
     settles), then shows for its `show_for`.
   - The first stretch (`assets/awaken/tips/first/`): `band` (registration + 6 s: "K opens your band: what you hold, what
-    waits for you, and the way up."; done when K opens), `now` (registration + 26 s: the two lines at the top), `atlas`
+    waits for you, and the way up."; done when K opens), `now` (registration + 26 s: "The top left of your screen shows where you're heading, with an arrow. To go
+    somewhere else, open your map with M and click a place.", §27.11), `atlas`
     (the first way out through the walls; done when the Atlas opens), `power` (the first power chosen; done at the first
     cast), `level` (a level-up with points; done when a point is spent: "You grow by finding new things, hunting, and
     clearing gate floors."), `gate` (the first gate placed; done on entering a gate), `night` (the first dusk outside
@@ -6274,10 +6305,10 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
 - **The capability clock** (`Progression.CAPABILITY_AT`, set inside `markNewThing` for things you can *do*: a power
   learned, a rank, a Path, a rung, a Lord-forged weapon, a first Weave, a machine or blueprint, an Echo, a Hearth or its
   tier, a latent, a townsperson; never a sight or a core). After 75 minutes without one, outdoors and out of a gate, the
-  Now line offers the nearest one in reach: a lock that is open to you now, with its place (57), else "D-rank at level 10 ·
-  gate floors pay best" (50).
-- **The Reassessment says where**: "Reassessment ready · D-rank trial at your Spire" with a compass to your Hearth, or
-  "· craft a Monolith" without one.
+  Now line offers the nearest one in reach: a lock that is open to you now, with its place (57), else "D-rank opens at
+  level 10: gate floors give the most XP" (50).
+- **The Reassessment says where**: "Your D-rank trial is ready: take it at the Spire in your town" with a compass to your
+  Hearth, or ": craft a Reassessment Monolith and use it" without one.
 - **The level road goes on to 135** (it had two steps in levels 51-135): The Precursor Foundry (52), The Halo (55, goal:
   see it from an Observatory), Wings you know (58), The Inverted Sea (62, a core), A-rank trial (70), The open sky (73,
   goal: the Sky Leviathan's trial), Any creature (77), The Dreaming Stratum (80, a core), The Sovereigns (90, goal: one
@@ -6297,9 +6328,12 @@ the System scale, never under two screen pixels a font pixel, widest line 185 px
 and done/total, then only what matters now, one line each: the current step bright with ▸, the next two dim, and a step
 that just ticked (a soft green flash, then it fades out over 2.5 s); a long step is shortened with "…" (the Journal has
 the whole of it). Keys are drawn as key caps from "{key}" in the words, a count where a step has one ("0/10"), and a
-compass to a place nearby ("↗ 9 m"). While the System's toasts are up it eases down under them, and below a boss bar
-it would reach (on a narrow screen). Hidden with the HUD.
-The Now line, top left, keeps the where; the card keeps the what.
+compass to a hint nearby ("↗ 9 m", the ledge). While the System's toasts are up it eases down under them, and below
+a boss bar it would reach (on a narrow screen). Hidden with the HUD. The Now line, top left, keeps the where (§27.11):
+a step that sends you somewhere carries its place (`Row.at` and `Row.place`, the name the Now line gives it: null for
+the step's own words, "" for a hint nearby, which stays the card's), and its compass is the Now line's, not the card's.
+The quest step's optional `place` names it ("High Gate", "Wayfarer camp", "Ilse"); the task payload carries the
+dimension it was sent from.
 - **The top-right stack** (Euan, 2026-10-27: "let's move the floors to the top right where the current active things
   to do are"): the task card heads it and the gate's run panel (`gates.client.RunHudLayer`, the floor HUD that sat on
   the left at mid-height) sits 3 GUI px under it, or takes the corner itself when there is no task; the same margin,
@@ -6320,11 +6354,58 @@ opening runs):
   the ledge row points at the nearest chest-high ledge within 10 blocks while it's current (every 2 s: a two-block step
   up from standing ground with room on top). All four done: the list stays ticked for 4 s (`awaken:first/moves_done`),
   then goes for good. It replaces the "Your body remembers" toast, which the director filed unread.
+- **Then where you stand** (`Checklist.registerHere`): your home's first steps while you're in its land (§28.2, "Your
+  home").
 - **Then the tracked chain** (`Checklist.register`; the living module's `FirstThread.task`): its title, its steps ticked
   as they're done (at most six: the last done, the current, what follows), a count on a step that has one or a `tally`.
   The first thread reads: Take the letters from Bram, Leave the city through the High Gate, Take the letters to the
-  Wayfarer camp up the north road, Deliver the letters 0/1, Place your Ember where you want your home.
-- Test: `progression_checklist` (the moves tick one by one, then the errand takes the card).
+  Wayfarer camp up the north road, Deliver the letters 0/1, Place your Ember where you want your home. Before it (it
+  registers first) **Your first power** while the choice waits (`powers.Starter.task`): "Press [K] to choose your first
+  power" (the Status key, drawn as a key; the cards come back on login, and K opens them instead of Status). After it a
+  weapon you track (arms, "Making: …").
+- **Last** (`Checklist.registerLast`): what waits until nothing else is on the card: your home's first steps from afar.
+- Test: `progression_checklist` (the moves tick one by one, then a first power still to choose, then the errand takes
+  the card); `powers_starter_chosen_once_and_equipped` (the first power's card and its key, gone once chosen).
+
+### 27.11 The Now line shows only where you're going (Euan's playtest, 2026-10-27)
+"I also don't like how the top left is pulling me in so many directions. This should only appear when a checklist is
+active and requires me to go somewhere, or if I choose a destination on the map." (His screen: "◇ E-rank gate · 270 m"
+over "△ Sealed Vault · a sealed… ↘ 381 m", two places two ways.)
+- **The corner shows at most one place** (`signal.NowCorner`, drawn by `signal.client.TrackerHud`): the destination
+  you chose on the Atlas (§16.8), "◆ E-rank gate  ↖ 270 m" in white; else the current task step's place when it sends
+  you somewhere (§27.10: a row with a place name), "◇ Wayfarer camp  ↗ 120 m"; else nothing. Its compass counts height
+  (§27.1) and only in the place's dimension. A step's place that moves less than 24 blocks (Ilse walking) is the same
+  place: no fade, no new thread.
+- **Gone from the corner:** what the Now tracker suggests (the nearest gate, the best idea, a lesson, a rift, a request,
+  the way home underground) and "N decisions waiting · K" (the K menu's badges count them). The suggestions are still
+  collected and synced (`NowSync`): the band's Now section and the Journal's "Anything for me?" list them.
+- **The Horizon line** under it is a client setting, off by default (`horizonLineShown`; a new key, so a saved
+  `horizonLine = true` doesn't keep it on).
+- **The Signal's thread** (§27.7) runs toward the corner's place, not the top suggestion: once when a place is new (a
+  destination the moment the map closes, even if a thread ran lately), once more on standing still 8 s with it.
+- **Urgent lines** (priority 90+, `NowSync.URGENT`) no longer have the corner: each is said once as a fleeting toast
+  when it first comes up (not filed). The opening's own (`opening:` ids) aren't: "The gate is opening · waiting for N
+  hunters" is the square's own line (`OpeningHud`), and Bram walks you to the Registry and says so. The others today are
+  the ritual hall's ("Go through the doors", "Waiting for N hunters…").
+- **What wasn't a place moved to the task card** (Euan, 2026-10-27, on "Use your fire for a guide": "I have NO CLUE what
+  that means"): the Hearth's first steps ("Your home", §28.2) and the first power ("Your first power": "Press [K] to
+  choose your first power", §27.10), which a player who closed the cards had only the corner to learn from.
+- **Plain words** (the same day): every Now suggestion says what to do, what to press or where to go, for someone who
+  doesn't know the mod. The K menu's lists show `{key.…}` placeholders in the player's own keys (`KeyText`); a line of 90+
+  (a toast) never uses one. Among them: "Press [K] to spend 3 points", "Your D-rank trial is ready: take it at the Spire
+  in your town", "D-rank opens at level 10: gate floors give the most XP", "At level 13: …", "Talk to Hale: he has a free
+  weapon for you", "Right-click the Rest Shrine to leave with your loot, or the Seal to go deeper", "Floor 3 of 3 · the
+  Lord is on this floor", "A Lord got out of a broken gate · 120 m", "Close the rift · 40 m NE", "Open the spirit cache ·
+  12 m", "A star fell · 60 m NE", "Right-click the fallen star to open it", "Walk into the shimmer grove · 40 m SW",
+  "Hunt the Old Antler · 120 m NE", "Find the lair of the Briar Sow · 1.2 km NE", "Tame the … 20 m N: sneak
+  up and feed it …", "Use a Hunter's Bridle on your …", "Your … is 300 m NE: use your Hunter's Whistle to call it",
+  "Mire Hide 3/8 for a request at your Anchor" (all in hand: "right-click your Anchor to hand it in" / "take it home to
+  your Anchor"), "Go back into the Bell Crypt for floor 2", "You can craft a Wildhide Vest at a crafting table", "You
+  have everything for …: make it at a Forge", and the level road's goals ("Defeat all eight Sovereigns", "In a lucid
+  dream, hold H at a wall", "Defend your Hearth from a gate break", …, still within the road's 200 px check).
+- Tests: `signal_corner_nothing` (no task, a step with no place, the ledge hint: nothing), `signal_corner_task_place`
+  (the current step's place, named, in the task's dimension; an unnamed one says its own words),
+  `signal_corner_destination_wins`; with §16.8's `signal_destination_arrival` and `signal_destination_saved`.
 
 ## 28. Between the Gates (home, people, below; plan docs/world-depth/PLAN.md, page https://claude.ai/artifact/ATZfZSczLg95kNSgnLF42M; Euan approved all of it 2026-10-26)
 
@@ -6430,9 +6511,33 @@ Given by: The Last Delivery's `ilse` step (reward `item: awaken:hearth_ember` an
 talking to Ilse or Hettie with no Ember and no Hearth, registered (classic worlds: always), and past that step or never on
 the chain (`PlayerInteractEvent.EntityInteract` on a `living.wayfarer.Wayfarer`, so living is unchanged; Ilse: "Lost your
 coal? Take another. The fire doesn't mind."); 60 ticks after awakening in a classic world (no `CityBasin` site). Now line
-`hearth:ember`, priority 66 (under a tracked chain step ~68): "Place your Ember where you want your home". **Bram's line is not
+`hearth:ember`, priority 66 (under a tracked chain step ~68): "Place your Ember on the ground where you want your home"
+(the K menu's lists; the task card says it too, below). **Bram's line is not
 added** (Carillon's code): for the orchestrator, Bram at the Registry: "The bells hold the city. Hunters hold the wilds.
 Ilse at the camp keeps a fire for new licences."
+
+**Your home on the task card** (`hearth.HearthTask`; Euan 2026-10-27, after "Use your fire for a guide": "I have NO CLUE
+what that means. We can't have cryptic stuff like this unless it's cryptic for a reason"). The Hearth's first steps are a
+checklist titled "Your home", not Now lines (which leave the HUD, §27.11):
+- No home: what you carry says how to make one, one row: "Place your Ember on the ground where you want your home", else
+  "Place your Hearth Anchor on the ground where you want your home", else (a Lord's Heart) "Craft a Hearth Anchor: the
+  Lord's Heart, 4 stone bricks and 4 copper ingots".
+- A fire: "Build a room near your fire: walls, a roof and a door" (done: any room read), then "Right-click your campfire
+  to see what your home needs" (done: the guide opened, `guide_seen`; it waits for the room because an empty hand on a
+  roomless fire lifts the coal), then, holding a Lord's Heart, "Hold the Lord's Heart and right-click your campfire to
+  make it an Anchor". An Anchor: "Right-click your Anchor to see what your home needs".
+- Only the step being done has a place, the fire: at home it is a hint (the card's own compass, the Now line stays
+  empty); away it is "Your home", which the Now line shows with its compass (§27.11).
+- At home those first steps lead the card (`Checklist.registerHere`, after the first moves, before a chain); away they
+  wait until nothing else is on it (`Checklist.registerLast`).
+- After them, at home only, one row, the next thing (`hearth:home`): why a room isn't counted ("Your Sanctuary isn't a
+  room yet: it sees the sky above the bed (no roof).", the spot on the card's compass), else someone waiting for a room
+  ("Oren will come when there's a bed for him"), else the next room ("Make a Sanctuary: a bed and a Meditation Mat in one
+  room" with a count of its kinds, 1/2). Away: nothing.
+- The Now suggestions (`HearthNow`) stay for the K menu's lists in the same words; the mend line reads "Rest at home to
+  heal your Fracture".
+- Test `hearth_task_steps` (no home and nothing carried: no card; the Ember's row; a fire at home: room then guide, a
+  hint; from afar: home on the Now line; an Anchor's guide; then the next room at home only).
 
 **Setting it down** (use on the top of a block). Refused, each with its reason: soft ground or no room, the city reserve
 (`CityBasin.reserved`), a Precursor ward (`WardHooks.at`), any gate not released within 64 (`GateHooks.near`), another
@@ -6885,7 +6990,7 @@ carried, the Tuning Fork reaches 16 further (perk `awaken:fork_reach`, read by `
 
 **Joined lairs**: the Crystal Nest finds cave air within 20 past either tunnel (`delve.cave.CaveJoints`) and bores on to
 it (`DeepLairs.joinTunnel`; `LairPiece` saves the joint; older pieces keep none); one laid by `/awaken fauna lair place`
-opens into a pocket. The lair line says how far down or up ("Lair of the Thousandfoot · 1.2 km NE · 40 below", nothing
+opens into a pocket. The lair line says how far down or up ("Find the lair of the Thousandfoot · 1.2 km NE · 40 below", nothing
 within 8: `FaunaNow.depth`). **The Horizon** (`CaveHorizon`): from awakening, within 900, never at home or in a gate, until
 you've stood at one: "Sinkhole · a way down" ("The Opening · a way down", raised, for the first), found by walking the
 sinkholes' placement grid and running each candidate's own site search (the same answer worldgen gets; two new
@@ -7905,12 +8010,14 @@ really sharp, with the clouds and everything".
   your wrist to the card's near bottom edge (`holo.client.HoloScene`, drawn by the wrist layer). The card scans in from 120 ms
   and the land prints in from the middle, faster than on the table.
 - **The legend** floats on its own glass over your head, on the near side: GATES (the four nearest you know, with
-  their distance; Tab steps through them, a click picks one and the map glides to it), the picked gate's **Point me
-  there** (T), KNOWN LANDS (click to fly there) and the DANGER key. It never reaches lower than 56% of the height.
-- **Point me there** (scene and table): the Now line leads with "Go to the D-rank gate" (`NowClient.pin`, id
-  `awaken:map_pin`, priority 86, client-side), with its compass and the Signal's thread, until you're within 12 blocks.
+  their distance; Tab steps through them, a click picks one and the map glides to it), the picked gate's **Set as
+  destination** (T), KNOWN LANDS (click to fly there) and the DANGER key. It never reaches lower than 56% of the height.
+- **Set as destination** (scene and table; was "Point me there", 2026-10-27): any place clicked on the map, or the
+  legend's gate, becomes your destination, saved on the server (§16.8); the Now line leads to it (§27.11) with its
+  compass and the Signal's thread until you're within 16 blocks.
 - **Keys** (one line along the bottom): drag turns the map, right-drag or WASD moves across it (your body stays still),
-  scroll or +/- zooms, Q/E turn, R/F tilt, C comes back to you, Tab gates, T point me there, 1–5 open a band page, M,
+  scroll or +/- zooms, Q/E turn, R/F tilt, C comes back to you, Tab gates, T sets the gate as your destination, a
+  click picks a place (Enter sets it), 1–5 open a band page, M,
   Esc, K or Space close (250 ms back to your eyes). The table takes the same held keys and Tab/T.
 - **The table instead,** at once: Shift+M, or M again within 0.3 s of opening (from the scene); in a fight
   (`SystemHud.inCombat`: hurt in the last 5 s or a hostile within 8); with reduced motion; with the setting "Map opens

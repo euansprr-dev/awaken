@@ -416,6 +416,100 @@ final class SignalTests {
             h.succeed();
         });
 
+        // SPEC §27.11: the corner, top left, shows at most one place: the destination you chose, else the task step's
+        AwakenTests.register("signal_corner_nothing", 20, h -> {
+            var dim = net.minecraft.resources.Identifier.withDefaultNamespace("overworld");
+            h.assertTrue(NowCorner.of(null, dev.awaken.progression.Checklist.payload(null, dim)) == null, "no task, no destination: nothing");
+            var plain = new dev.awaken.progression.Checklist.Task("t", "Errand", List.of(
+                    dev.awaken.progression.Checklist.Row.of("Done already", true), dev.awaken.progression.Checklist.Row.of("Craft a rope", false)));
+            h.assertTrue(NowCorner.of(null, dev.awaken.progression.Checklist.payload(plain, dim)) == null, "a step with no place: nothing");
+            var ledge = new dev.awaken.progression.Checklist.Task("moves", "Your body remembers", List.of(
+                    new dev.awaken.progression.Checklist.Row("Press {key} at a ledge to climb it", "key.jump", false, 0, 0, new BlockPos(3, 64, 3), "")));
+            h.assertTrue(NowCorner.of(null, dev.awaken.progression.Checklist.payload(ledge, dim)) == null, "a hint nearby (a ledge) is the card's own: nothing");
+            h.succeed();
+        });
+
+        AwakenTests.register("signal_corner_task_place", 20, h -> {
+            var dim = net.minecraft.resources.Identifier.withDefaultNamespace("overworld");
+            BlockPos camp = new BlockPos(120, 70, -400);
+            var task = new dev.awaken.progression.Checklist.Task("chain:x", "The Last Delivery", List.of(
+                    new dev.awaken.progression.Checklist.Row("Leave the city through the High Gate", "", true, 0, 0, null, "High Gate"),
+                    new dev.awaken.progression.Checklist.Row("Take the letters to the Wayfarer camp", "", false, 0, 0, camp, "Wayfarer camp"),
+                    dev.awaken.progression.Checklist.Row.of("Deliver the letters", false)));
+            NowCorner.Place at = NowCorner.of(null, dev.awaken.progression.Checklist.payload(task, dim));
+            h.assertTrue(at != null && !at.destination() && at.name().equals("Wayfarer camp") && at.at().equals(camp) && at.dimension().equals(dim),
+                    "the current step's place, named, where the task was sent: " + at);
+            var unnamed = new dev.awaken.progression.Checklist.Task("trail:x", "A trail", List.of(
+                    new dev.awaken.progression.Checklist.Row("Find the Well", "", false, 0, 0, camp)));
+            at = NowCorner.of(null, dev.awaken.progression.Checklist.payload(unnamed, dim));
+            h.assertTrue(at != null && at.name().equals("Find the Well"), "a step with a place and no name says its own words: " + at);
+            h.succeed();
+        });
+
+        AwakenTests.register("signal_corner_destination_wins", 20, h -> {
+            var dim = net.minecraft.resources.Identifier.withDefaultNamespace("overworld");
+            var task = new dev.awaken.progression.Checklist.Task("chain:x", "Errand", List.of(
+                    new dev.awaken.progression.Checklist.Row("Go to the camp", "", false, 0, 0, new BlockPos(5, 64, 5), "Wayfarer camp")));
+            var gate = new dev.awaken.core.api.Destinations.Target("E-rank gate", dim, new BlockPos(-300, 64, 90), "gate");
+            NowCorner.Place at = NowCorner.of(gate, dev.awaken.progression.Checklist.payload(task, dim));
+            h.assertTrue(at != null && at.destination() && at.name().equals("E-rank gate") && at.at().equals(gate.at()), "the destination you chose wins: " + at);
+            h.succeed();
+        });
+
+        AwakenTests.register("signal_destination_arrival", 20, h -> {
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            var dim = p.level().dimension().identifier();
+            BlockPos feet = p.blockPosition();
+            dev.awaken.core.api.Destinations.set(p, new dev.awaken.core.api.Destinations.Target("Far off", dim, feet.offset(60, 0, 0), "spot"));
+            h.assertFalse(Destination.check(p), "60 blocks off: not there yet");
+            h.assertTrue(dev.awaken.core.api.Destinations.get(p).isPresent(), "and still set");
+            dev.awaken.core.api.Destinations.set(p, new dev.awaken.core.api.Destinations.Target("Over your head", dim, feet.offset(2, 80, 0), "mark"));
+            h.assertFalse(Destination.check(p), "right over you but 80 up: not there");
+            dev.awaken.core.api.Destinations.set(p, new dev.awaken.core.api.Destinations.Target("Close by", dim,
+                    feet.offset(dev.awaken.core.api.Destinations.ARRIVED - 4, 3, 5), "gate"));
+            h.assertTrue(Destination.check(p), "within " + dev.awaken.core.api.Destinations.ARRIVED + " blocks: arrived");
+            h.assertTrue(dev.awaken.core.api.Destinations.get(p).isEmpty(), "and it cleared itself");
+            dev.awaken.core.api.Destinations.set(p, new dev.awaken.core.api.Destinations.Target("A rumour", dim, feet.offset(3, 120, 3), "rumour"));
+            h.assertTrue(Destination.check(p), "a rumour's height is a guess: across is enough");
+            var other = net.minecraft.resources.Identifier.withDefaultNamespace("the_nether");
+            dev.awaken.core.api.Destinations.set(p, new dev.awaken.core.api.Destinations.Target("Elsewhere", other, feet, "spot"));
+            h.assertFalse(Destination.check(p), "the same block in another dimension isn't there");
+            dev.awaken.core.api.Destinations.clear(p);
+            h.succeed();
+        });
+
+        AwakenTests.register("signal_destination_saved", 40, h -> {
+            ServerPlayer p = h.makeMockServerPlayerInLevel();
+            var level = h.getLevel();
+            BlockPos at = p.blockPosition().offset(200, 0, -150);
+            // the Atlas's request: named, in the dimension you stand in, an unknown kind read as a place
+            Destination.request(p, new dev.awaken.signal.net.SignalPayloads.SetDestination(true, "  Mossbank  ", at, "nonsense"));
+            var set = dev.awaken.core.api.Destinations.get(p).orElse(null);
+            h.assertTrue(set != null && set.name().equals("Mossbank") && set.at().equals(at) && set.kind().equals("place")
+                    && set.dimension().equals(level.dimension().identifier()), "the request sets it: " + set);
+            // the attachment codec on its own
+            var ops = level.registryAccess().createSerializationContext(NbtOps.INSTANCE);
+            var tag = Destination.Data.MAP_CODEC.codec().encodeStart(ops, p.getData(Destination.DATA)).getOrThrow();
+            Destination.Data back = Destination.Data.MAP_CODEC.codec().parse(ops, tag).getOrThrow();
+            h.assertTrue(back.schemaVersion() == Destination.SCHEMA && back.target().map(t -> t.name().equals("Mossbank") && t.at().equals(at)).orElse(false),
+                    "codec round trip keeps it: " + back);
+            // the whole player, saved and loaded the way a relog does
+            TagValueOutput out = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, level.registryAccess());
+            p.saveWithoutId(out);
+            CompoundTag saved = out.buildResult();
+            saved.remove("UUID");
+            ServerPlayer again = h.makeMockServerPlayerInLevel();
+            again.load(TagValueInput.create(ProblemReporter.DISCARDING, level.registryAccess(), saved));
+            var loaded = dev.awaken.core.api.Destinations.get(again).orElse(null);
+            h.assertTrue(loaded != null && loaded.equals(set), "still set after save and load: " + loaded);
+            Destination.request(again, new dev.awaken.signal.net.SignalPayloads.SetDestination(false, "", BlockPos.ZERO, ""));
+            h.assertTrue(dev.awaken.core.api.Destinations.get(again).isEmpty(), "Clear destination clears it");
+            Destination.request(p, new dev.awaken.signal.net.SignalPayloads.SetDestination(true, "   ", at, "spot"));
+            h.assertTrue(dev.awaken.core.api.Destinations.get(p).map(t -> t.name().equals("Mossbank")).orElse(false), "a nameless request changes nothing");
+            dev.awaken.core.api.Destinations.clear(p);
+            h.succeed();
+        });
+
         AwakenTests.register("signal_now_sync_only_when_changed", 20, h -> {
             ServerPlayer p = h.makeMockServerPlayerInLevel();
             UUID id = p.getUUID();

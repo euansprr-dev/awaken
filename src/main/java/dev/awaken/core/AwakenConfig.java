@@ -74,12 +74,14 @@ public final class AwakenConfig {
                 .comment("V2: small toasts, choice cards and story lines. CLASSIC: the old centre window (rollback).")
                 .defineEnum("systemStyle", SystemStyle.V2);
         public static final ModConfigSpec.BooleanValue NOW_TRACKER = C
-                .comment("Show the Now tracker: one line in the top-left corner with something you could do next.")
+                .comment("Show the Now line: top left, where you're going (the destination you chose on the map, or where your",
+                        "current task sends you), with its compass. Nothing when you're not going anywhere.")
                 .define("nowTracker", true);
+        /** Off by default since 2026-10-27 (SPEC §27.11): a new key, so the old "horizonLine = true" in a saved file is dropped. */
         public static final ModConfigSpec.BooleanValue HORIZON_LINE = C
-                .comment("Show the Horizon line under the Now tracker: the nearest place worth exploring, and now and then one you",
+                .comment("Show the Horizon line under the Now line: the nearest place worth exploring, and now and then one you",
                         "can't reach yet.")
-                .define("horizonLine", true);
+                .define("horizonLineShown", false);
         /** How much the System tells you unasked (SPEC §26). */
         public enum Notifications { MINIMAL, STANDARD, GUIDED }
 

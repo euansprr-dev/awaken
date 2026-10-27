@@ -33,11 +33,13 @@ import java.util.function.Supplier;
 
 /**
  * The first power (plan v2 §4.1): on awakening you choose one of three E-tier attack powers, each from a different
- * family. Closing the cards without choosing is fine: the Now tracker says "Choose your first power · K" and the
- * cards come back on login. The choice is saved before the power is learned, so it can never be granted twice.
+ * family. Closing the cards without choosing is fine: the task card says "Press [K] to choose your first power" and
+ * the cards come back on login. The choice is saved before the power is learned, so it can never be granted twice.
  */
 public final class Starter {
     private Starter() {}
+
+    static final String CARD_STEP = "Press {key} to choose your first power";
 
     /** The pool, in display order. Never hidden powers (those are Latent and Path gifts). */
     public static final List<String> POOL = List.of("awaken:haymaker", "awaken:shockwave", "awaken:charged_shot",
@@ -84,8 +86,10 @@ public final class Starter {
             if (pending(p)) Later.run(p.level().getServer(), 60, () -> offer(p));
         });
         NowHooks.register(p -> pending(p) && !dev.awaken.core.api.OpeningHooks.inOpening(p)
-                ? List.of(NowHooks.Suggestion.of("powers:first_power", 85, "Choose your first power · K"))
+                ? List.of(NowHooks.Suggestion.of("powers:first_power", 85, "Press {key.awaken.status} to choose your first power"))
                 : List.of());
+        // and on the task card, where tasks live (the Now line shows only places since SPEC §27.11): the key drawn as a key
+        dev.awaken.progression.Checklist.register(Starter::task);
         Requirements.powerCheck = Starter::meets;
         commands();
     }
@@ -97,6 +101,12 @@ public final class Starter {
         r.playToServer(StarterPayloads.Choose.TYPE, StarterPayloads.Choose.STREAM_CODEC, (msg, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) choose(sp, msg.power());
         });
+    }
+
+    /** The task card while the choice waits: "Press [K] to choose your first power", the key drawn as a key. */
+    static dev.awaken.progression.Checklist.@org.jspecify.annotations.Nullable Task task(ServerPlayer p) {
+        return pending(p) ? new dev.awaken.progression.Checklist.Task("powers:first", "Your first power",
+                List.of(new dev.awaken.progression.Checklist.Row(CARD_STEP, "key.awaken.status", false, 0, 0, null))) : null;
     }
 
     public static State state(ServerPlayer p) {

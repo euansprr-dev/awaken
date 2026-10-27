@@ -27,18 +27,35 @@ import java.util.UUID;
  * <li>First, <b>Your body remembers</b>: the four moves every hunter has, each ticked the first time you do it (the body
  * module counts them), with its key drawn as a key and, for the ledge, the nearest one to try it on. It replaces the
  * toast that listed them, which ended up in the Journal unread.</li>
+ * <li>Then what belongs where you stand ({@link #registerHere}): your home's first steps while you're in it.</li>
  * <li>Then whatever a module offers through {@link #register}: the tracked chain's steps (the living module), with a
- * count where a step has one ("0/10").</li>
+ * count where a step has one ("0/10"), a weapon you're making.</li>
+ * <li>Last, what waits when nothing else is on ({@link #registerLast}): your home's first steps from afar.</li>
  * </ul>
  * Sent only when it changes. Nothing while the opening runs.
  */
 public final class Checklist {
     private Checklist() {}
 
-    /** One step: its words ("{key}" where the key cap goes), the key's mapping name, done, a count, a place to do it. */
-    public record Row(String text, String key, boolean done, int have, int need, @Nullable BlockPos at) {
+    /**
+     * One step: its words ("{key}" where the key cap goes), the key's mapping name, done, a count, a place to do it, and
+     * what to call that place on the Now line (SPEC §27.11): null, the step's own words; "" when the place is only a hint
+     * nearby (a ledge to try), which the card points at and the Now line leaves alone.
+     */
+    public record Row(String text, String key, boolean done, int have, int need, @Nullable BlockPos at, @Nullable String place) {
+        public Row(String text, String key, boolean done, int have, int need, @Nullable BlockPos at) {
+            this(text, key, done, have, need, at, null);
+        }
+
         public static Row of(String text, boolean done) {
             return new Row(text, "", done, 0, 0, null);
+        }
+
+        /** The name the Now line gives this row's place ("" when it gives none). */
+        String placeName() {
+            if (at == null) return "";
+            if (place != null) return place;
+            return text.replace("{key}", "").replaceAll("\\s+", " ").strip();
         }
     }
 
@@ -49,10 +66,20 @@ public final class Checklist {
         @Nullable Task task(ServerPlayer p);
     }
 
-    private static final List<Source> SOURCES = new ArrayList<>(), LEADING = new ArrayList<>();
+    private static final List<Source> SOURCES = new ArrayList<>(), LEADING = new ArrayList<>(), HERE = new ArrayList<>(), LAST = new ArrayList<>();
 
     public static void register(Source s) {
         SOURCES.add(s);
+    }
+
+    /** A source asked before the others (after the first moves): a task that belongs where the player stands, null elsewhere. */
+    public static void registerHere(Source s) {
+        HERE.add(s);
+    }
+
+    /** A source asked after all the others: a task that waits until nothing else is on the card. */
+    public static void registerLast(Source s) {
+        LAST.add(s);
     }
 
     /** A source that is asked before the others (a followed trail, which the player chose: docs/trails/PLAN.md §3.4). */
@@ -72,7 +99,7 @@ public final class Checklist {
     };
     static final String MOVES_TITLE = "Your body remembers";
 
-    private static final Map<UUID, Task> SENT = new HashMap<>();
+    private static final Map<UUID, SignalPayloads.Task> SENT = new HashMap<>();
     private static final Map<UUID, BlockPos> LEDGE = new HashMap<>();
 
     static void init() {
@@ -87,14 +114,19 @@ public final class Checklist {
     public static @Nullable Task now(ServerPlayer p) {
         Profile prof = Progression.profile(p);
         if (!prof.awakened() || OpeningHooks.inOpening(p)) return null;
-        // what the player chose to follow comes first (docs/trails/PLAN.md §3.4), then the first moves, then the rest
-        for (Source s : LEADING) {
-            Task t = s.task(p);
-            if (t != null) return t;
-        }
+        // what the player chose to follow comes first (docs/trails/PLAN.md §3.4), then the first moves, then where you
+        // stand, then the rest, then what waits
+        Task t = first(LEADING, p);
+        if (t != null) return t;
         Task moves = moves(p, prof);
         if (moves != null) return moves;
-        for (Source s : SOURCES) {
+        t = first(HERE, p);
+        if (t == null) t = first(SOURCES, p);
+        return t != null ? t : first(LAST, p);
+    }
+
+    private static @Nullable Task first(List<Source> sources, ServerPlayer p) {
+        for (Source s : sources) {
             Task t = s.task(p);
             if (t != null) return t;
         }
@@ -116,7 +148,7 @@ public final class Checklist {
                 current = true;
                 if (m[0].equals("awaken:body_mantle")) at = LEDGE.get(p.getUUID());
             }
-            rows.add(new Row(m[1], m[2], did, 0, 0, at));
+            rows.add(new Row(m[1], m[2], did, 0, 0, at, "")); // a ledge to try is a hint, not somewhere to go
         }
         if (all && done == 0) Progression.setCounter(p, MOVES_DONE, Math.max(1, now));
         return new Task("moves", MOVES_TITLE, rows);
@@ -127,22 +159,22 @@ public final class Checklist {
         if (t % 10 != 0) return;
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             if (t % 40 == 0) findLedge(p);
-            Task task = now(p);
-            Task was = SENT.get(p.getUUID());
-            if (task == null ? was == null : task.equals(was)) continue;
-            if (task == null) SENT.remove(p.getUUID());
-            else SENT.put(p.getUUID(), task);
-            AwakenNet.send(p, payload(task));
+            SignalPayloads.Task task = payload(now(p), p.level().dimension().identifier());
+            SignalPayloads.Task was = SENT.get(p.getUUID());
+            if (task.equals(was) || was == null && task.title().isEmpty()) continue;
+            SENT.put(p.getUUID(), task);
+            AwakenNet.send(p, task);
         }
     }
 
-    static SignalPayloads.Task payload(@Nullable Task t) {
-        if (t == null) return new SignalPayloads.Task("", "", List.of());
+    public static SignalPayloads.Task payload(@Nullable Task t, net.minecraft.resources.Identifier dimension) {
+        if (t == null) return new SignalPayloads.Task("", "", List.of(), dimension);
         List<SignalPayloads.TaskRow> rows = new ArrayList<>(t.rows().size());
         for (Row r : t.rows()) {
-            rows.add(new SignalPayloads.TaskRow(r.text(), r.key(), r.done(), r.have(), r.need(), r.at() != null, r.at() == null ? BlockPos.ZERO : r.at()));
+            rows.add(new SignalPayloads.TaskRow(r.text(), r.key(), r.done(), r.have(), r.need(), r.at() != null, r.at() == null ? BlockPos.ZERO : r.at(),
+                    r.placeName()));
         }
-        return new SignalPayloads.Task(t.id(), t.title(), List.copyOf(rows.subList(0, Math.min(16, rows.size()))));
+        return new SignalPayloads.Task(t.id(), t.title(), List.copyOf(rows.subList(0, Math.min(16, rows.size()))), dimension);
     }
 
     /**

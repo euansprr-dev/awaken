@@ -89,6 +89,6 @@ final class ArmsTrack {
             String text = weaponName(t) + ": still need " + (n.need() - n.have()) + " more " + label(n);
             return List.of(NowHooks.Suggestion.of("arms:track", PRIORITY, text));
         }
-        return List.of(NowHooks.Suggestion.of("arms:track", PRIORITY, "You have everything for " + weaponName(t)));
+        return List.of(NowHooks.Suggestion.of("arms:track", PRIORITY, "You have everything for " + weaponName(t) + ": make it at a Forge"));
     }
 }

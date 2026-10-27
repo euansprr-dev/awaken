@@ -1,5 +1,5 @@
 {
-  "text": "The line at the top of your screen is a good thing to do next. The one below it points to somewhere worth visiting.",
+  "text": "The top left of your screen shows where you're heading, with an arrow. To go somewhere else, open your map with {key.awaken.atlas} and click a place.",
   "priority": 45,
   "show_for": 200,
   "retire_after_done": 1,

@@ -283,12 +283,12 @@ public final class Mounts {
             Entity e = p.level().getEntity(b.mount().get());
             if (e instanceof WildMount m && m.ownedBy(p)) {
                 if (m.trusted() && !m.bridled()) {
-                    out.add(NowHooks.Suggestion.at("fauna:mount/bridle", 44, "Bridle your " + m.def().name + " · Hunter's Bridle", m.blockPosition()));
+                    out.add(NowHooks.Suggestion.at("fauna:mount/bridle", 44, "Use a Hunter's Bridle on your " + m.def().name, m.blockPosition()));
                 } else if (p.getVehicle() != m && m.distanceTo(p) > 48) {
-                    out.add(NowHooks.Suggestion.at("fauna:mount/far", 18, "Your " + m.def().name + " · " + where(p, m.blockPosition()) + " · whistle", m.blockPosition()));
+                    out.add(NowHooks.Suggestion.at("fauna:mount/far", 18, "Your " + m.def().name + " is " + where(p, m.blockPosition()) + ": use your Hunter's Whistle to call it", m.blockPosition()));
                 }
             } else if (e == null && b.dimension().equals(p.level().dimension().identifier().toString()) && !b.resting()) {
-                out.add(NowHooks.Suggestion.at("fauna:mount/far", 16, "Your " + name(b) + " · " + where(p, b.last()), b.last()));
+                out.add(NowHooks.Suggestion.at("fauna:mount/far", 16, "Your " + name(b) + " was last " + where(p, b.last()), b.last()));
             }
             return out;
         }
@@ -298,7 +298,7 @@ public final class Mounts {
             if (prof.counter("awaken:mount_met") == 0) Progression.setCounter(p, "awaken:mount_met", 1);
             Fauna3Kinds.Kind k = near.kind();
             String food = k == null ? "its food" : new net.minecraft.world.item.ItemStack(k.favouriteItem()).getHoverName().getString().toLowerCase(java.util.Locale.ROOT);
-            out.add(NowHooks.Suggestion.at("fauna:mount/tame", 46, near.def().name + " " + where(p, near.blockPosition()) + " · sneak, feed " + food, near.blockPosition()));
+            out.add(NowHooks.Suggestion.at("fauna:mount/tame", 46, "Tame the " + near.def().name + " " + where(p, near.blockPosition()) + ": sneak up and feed it " + food, near.blockPosition()));
         }
         return out;
     }

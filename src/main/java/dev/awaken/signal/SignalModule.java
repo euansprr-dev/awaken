@@ -15,11 +15,16 @@ public final class SignalModule {
 
     public static void init(IEventBus modBus) {
         PendingChoices.ATTACHMENTS.register(modBus);
+        Destination.ATTACHMENTS.register(modBus);
+        Destination.init();
         modBus.addListener(SignalModule::registerPayloads);
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(SignalModule::onLogin);
         bus.addListener(SignalModule::onLogout);
         bus.addListener(SignalModule::onChangedDimension);
+        bus.addListener((PlayerEvent.PlayerRespawnEvent e) -> {
+            if (e.getEntity() instanceof ServerPlayer p) Destination.sync(p);
+        });
         bus.addListener(SignalModule::onServerTick);
         bus.addListener((ServerStoppingEvent e) -> {
             NowSync.clear();
@@ -48,6 +53,10 @@ public final class SignalModule {
         r.playToClient(SignalPayloads.Horizon.TYPE, SignalPayloads.Horizon.STREAM_CODEC);
         r.playToClient(SignalPayloads.Tip.TYPE, SignalPayloads.Tip.STREAM_CODEC);
         r.playToClient(SignalPayloads.Task.TYPE, SignalPayloads.Task.STREAM_CODEC);
+        r.playToClient(SignalPayloads.Destination.TYPE, SignalPayloads.Destination.STREAM_CODEC);
+        r.playToServer(SignalPayloads.SetDestination.TYPE, SignalPayloads.SetDestination.STREAM_CODEC, (msg, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer sp) Destination.request(sp, msg);
+        });
         r.playToServer(SignalPayloads.Answer.TYPE, SignalPayloads.Answer.STREAM_CODEC, (msg, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) Signal.answer(sp, msg.action(), msg.accepted());
         });
@@ -60,6 +69,7 @@ public final class SignalModule {
         PendingChoices.sync(p); // folded: they show in the tracker and the Status screen, not as cards
         NowSync.update(p);
         HorizonSync.update(p);
+        Destination.sync(p);
     }
 
     private static void onLogout(PlayerEvent.PlayerLoggedOutEvent e) {
@@ -72,6 +82,7 @@ public final class SignalModule {
         if (e.getEntity() instanceof ServerPlayer p) {
             NowSync.update(p);
             HorizonSync.update(p);
+            Destination.sync(p);
         }
     }
 
@@ -79,6 +90,7 @@ public final class SignalModule {
         var server = e.getServer();
         NowSync.tick(server);
         HorizonSync.tick(server);
+        Destination.tick(server);
         if (server.getTickCount() % 100 == 37) {
             for (ServerPlayer p : server.getPlayerList().getPlayers()) PendingChoices.sweep(p);
         }

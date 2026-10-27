@@ -482,7 +482,7 @@ final class WildTests {
                 var lair = lines.stream().filter(s -> s.id().startsWith("fauna:lair:")).findFirst();
                 h.assertTrue(lair.isPresent(), "the tracker points at it: " + lines);
                 String text = lair.get().text().getString();
-                h.assertTrue(text.startsWith("Lair of the Briar Sow · ") && text.endsWith("E"), "names it, how far and which way: " + text);
+                h.assertTrue(text.startsWith("Find the lair of the Briar Sow · ") && text.endsWith("E"), "names it, how far and which way: " + text);
                 h.assertTrue(lair.get().where().isPresent(), "with a compass target");
                 h.assertTrue(Lairs.heardNow(p, "mire_mother") == null, "no rumour when there is no lair near");
                 // a first sighting of a family's creature from level 3 queues its beast's rumour

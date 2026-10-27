@@ -38,6 +38,9 @@ final class StarterTests {
             h.assertFalse(Starter.pending(p), "nothing to choose before awakening");
             Progression.awaken(p);
             h.assertTrue(Starter.pending(p), "awakened: the choice is waiting");
+            var card = Starter.task(p);
+            h.assertTrue(card != null && card.rows().getFirst().key().equals("key.awaken.status") && card.rows().getFirst().text().contains("{key}"),
+                    "the task card says which key opens the cards: " + card);
             Starter.offer(p);
             List<String> cards = Starter.state(p).offer();
             h.assertTrue(cards.size() == 3, "three cards offered");
@@ -50,6 +53,7 @@ final class StarterTests {
             h.assertTrue(l.owns(pick), "the power is learned");
             h.assertTrue(l.slotOf(pick) >= 0 && l.slotOf(pick) < 4, "and on a power key, slot " + l.slotOf(pick));
             h.assertFalse(Starter.pending(p), "nothing waiting any more");
+            h.assertTrue(Starter.task(p) == null, "and the card goes");
             h.assertFalse(Starter.choose(p, cards.get(0)), "never a second card");
             h.assertFalse(Powers.loadout(p).owns(cards.get(0)), "the other cards stay closed");
             // saved and loaded (a relog): still chosen, so never offered again

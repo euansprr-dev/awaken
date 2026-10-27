@@ -56,7 +56,7 @@ final class GearNow {
 
     private static Component text(Item item) {
         boolean plural = item instanceof HunterGearItem g && (g.piece == Piece.LEGGINGS || g.piece == Piece.BOOTS);
-        return Component.literal(plural ? "You can craft " : "You can craft a ").append(Component.translatable(item.getDescriptionId()));
+        return Component.literal(plural ? "You can craft " : "You can craft a ").append(Component.translatable(item.getDescriptionId())).append(" at a crafting table");
     }
 
     private static String key(Item item) {

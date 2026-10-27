@@ -91,7 +91,7 @@ public final class IssueScene {
         if (!ready(p)) return List.of();
         BlockPos at = Scenes.residentAt(p.level().getServer(), "hale");
         if (at == null) at = CityHooks.spot(p.level(), "quartermaster");
-        String text = "Hale has your hunter's issue";
+        String text = "Talk to Hale: he has a free weapon for you";
         return List.of(at == null ? NowHooks.Suggestion.of("arms:issue", 70, text) : NowHooks.Suggestion.at("arms:issue", 70, text, at));
     }
 }

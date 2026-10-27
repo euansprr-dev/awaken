@@ -106,8 +106,8 @@ final class StoryTests {
                         // the gate waits, and the Now tracker says where you left off
                         h.assertTrue(Prologue.cryptNextFloor(p, s) == 1, "next is floor 1, got " + Prologue.cryptNextFloor(p, s));
                         var now = dev.awaken.core.api.NowHooks.collect(p, 8);
-                        h.assertTrue(now.stream().anyMatch(x -> x.id().equals("story:bell_crypt") && x.text().getString().equals("Bell Crypt · floor 1")
-                                && x.where().isPresent()), "Now: Bell Crypt · floor 1, got " + now);
+                        h.assertTrue(now.stream().anyMatch(x -> x.id().equals("story:bell_crypt") && x.text().getString().equals("Go back into the Bell Crypt for floor 1")
+                                && x.where().isPresent()), "Now: the Bell Crypt's floor 1, got " + now);
                         GateService.release(server, g);
                         h.assertTrue(Prologue.cryptNextFloor(p, s) == 0, "a released gate is no longer suggested");
                     })

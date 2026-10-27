@@ -18,7 +18,7 @@
   ],
   "quiet": false,
   "goal": {
-    "now": "Sweep the Scanner: find a ruin",
+    "now": "Hold the Scanner up: sweep for a ruin",
     "done": {
       "type": "counter",
       "counter": "awaken:ruins_found",

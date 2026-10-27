@@ -38,6 +38,10 @@ public final class SignalClient {
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ScreenEvent.MouseButtonPressed.Post.class, e -> Herald.acted());
         SignalSections.register();
         Journal.register();
+        // the Atlas asks for a destination through core.api (SPEC §16.8); the server answers with the one now set
+        dev.awaken.core.api.Destinations.installSender(t -> net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(
+                t.map(d -> new SignalPayloads.SetDestination(true, d.name(), d.at(), d.kind()))
+                        .orElseGet(() -> new SignalPayloads.SetDestination(false, "", net.minecraft.core.BlockPos.ZERO, ""))));
         Herald.install();
         Tips.install();
         modBus.addListener(net.neoforged.neoforge.client.event.AddClientReloadListenersEvent.class, e -> e.addListener(dev.awaken.Awaken.id("tips"),
@@ -73,6 +77,7 @@ public final class SignalClient {
         event.register(SignalPayloads.Now.TYPE, (msg, ctx) -> NowClient.accept(msg));
         event.register(SignalPayloads.Horizon.TYPE, (msg, ctx) -> HorizonClient.accept(msg));
         event.register(SignalPayloads.Task.TYPE, (msg, ctx) -> TaskHud.onTask(msg));
+        event.register(SignalPayloads.Destination.TYPE, (msg, ctx) -> dev.awaken.core.api.Destinations.accept(msg.target().orElse(null)));
         event.register(SignalPayloads.Tip.TYPE, (msg, ctx) -> {
             if (msg.offer()) Tips.serverOffer(msg.id());
             else Tips.done(msg.id());

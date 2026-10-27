@@ -12,5 +12,5 @@
   "awaken.configuration.mapOpens.tooltip": "SCENE: the camera pulls back over your shoulder and the band projects the map in front of you. TABLE: the flat table opens at once. Shift+M, or M pressed twice, always opens the table.",
   "awaken.configuration.clearAtlasCache": "Clear the Atlas cache",
   "awaken.configuration.clearAtlasCache.tooltip": "Turn this on to clear the Atlas's saved picture of the land on this computer. It fills in again as you explore, and the setting turns itself off once it's done.",
-  "atlas.awaken.point": "The map will point you there."
+  "atlas.awaken.point": "That's your destination now. The top left of your screen will point the way."
 }

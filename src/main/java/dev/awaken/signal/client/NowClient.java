@@ -1,95 +1,90 @@
 package dev.awaken.signal.client;
 
+import dev.awaken.core.api.Destinations;
 import dev.awaken.core.api.NowHooks;
+import dev.awaken.signal.NowCorner;
 import dev.awaken.signal.net.SignalPayloads;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
 
-/** The client's copy of the Now tracker's suggestions, and the compass that points at them. */
+/**
+ * The client's copy of the Now tracker's suggestions (the band's lists and "Anything for me?" read them), the compass
+ * that points at them, and the one place the corner shows (SPEC §27.11): the destination you chose, else the current
+ * task step's place.
+ */
 public final class NowClient {
     private NowClient() {}
 
-    private static SignalPayloads.Now current = new SignalPayloads.Now(net.minecraft.resources.Identifier.withDefaultNamespace("overworld"), List.of());
-    private static String topId = "";
-    private static int changedAt;
+    private static SignalPayloads.Now current = new SignalPayloads.Now(Identifier.withDefaultNamespace("overworld"), List.of());
     private static int ticks;
     private static int version;
 
     static void accept(SignalPayloads.Now now) {
         version++;
         current = now;
-        joined = null;
-        String id = top().map(NowHooks.Suggestion::id).orElse("");
-        if (!id.equals(topId)) {
-            topId = id;
-            changedAt = ticks;
-            dev.awaken.core.audio.client.AudioUi.nowChanged(top().map(NowHooks.Suggestion::priority).orElse(0));
-        }
     }
 
-    // ---- a place the map points you at (SPEC §30.5) ------------------------------------------------------------------
+    // ---- where you're going (SPEC §27.11) -----------------------------------------------------------------------------
 
-    /** The map's "Point me there": it leads the Now line until you're within {@link #PIN_REACHED} blocks of it. */
-    public static final String PIN_ID = "awaken:map_pin";
-    static final int PIN_PRIORITY = 86, PIN_REACHED = 12;
-    private static NowHooks.Suggestion pin;
-    private static net.minecraft.resources.Identifier pinDimension;
-    private static List<NowHooks.Suggestion> joined;
+    private static NowCorner.@Nullable Place heading;
+    /** What the heading was worked out from (the same objects: nothing changed). */
+    private static Destinations.@Nullable Target fromTarget;
+    private static SignalPayloads.@Nullable TaskRow fromRow;
+    private static int headingVersion, headingAt;
+    /** A step's place that moves (a person walking) less than this is the same place: no fade, no new thread. */
+    static final int SAME_PLACE = 24;
 
-    /** Points the Now line (and its compass and thread) at {@code at} in the player's dimension, until reached. */
-    public static void pin(String text, BlockPos at) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) return;
-        pin = NowHooks.Suggestion.at(PIN_ID, PIN_PRIORITY, text, at.immutable());
-        pinDimension = mc.player.level().dimension().identifier();
-        joined = null;
-        version++;
-        topId = PIN_ID;
-        changedAt = ticks;
-        threadFor = ""; // a new place: its thread may run
-        lastThread = -100_000;
-        dev.awaken.core.audio.client.AudioUi.nowChanged(PIN_PRIORITY);
+    /** Where you're going, if anywhere: the one place the corner shows ({@link NowCorner}). */
+    public static Optional<NowCorner.Place> heading() {
+        return Optional.ofNullable(heading);
     }
 
-    public static void unpin() {
-        if (pin == null) return;
-        pin = null;
-        joined = null;
-        version++;
-        topId = current.top().map(NowHooks.Suggestion::id).orElse("");
+    /** The same, for the corner's frame (no wrapper). */
+    static NowCorner.@Nullable Place current() {
+        return heading;
     }
 
-    /** Where the map's pin is, if one is set. */
-    public static Optional<BlockPos> pinned() {
-        return pin == null ? Optional.empty() : pin.where();
+    private static void updateHeading() {
+        Destinations.Target d = Destinations.mine().orElse(null);
+        SignalPayloads.TaskRow row = d != null ? null : TaskHud.place();
+        if (d == fromTarget && row == fromRow) return;
+        fromTarget = d;
+        fromRow = row;
+        NowCorner.Place next = NowCorner.of(d, TaskHud.task());
+        if (java.util.Objects.equals(next, heading)) return;
+        boolean same = next != null && heading != null && next.destination() == heading.destination() && next.name().equals(heading.name())
+                && next.at().distSqr(heading.at()) < SAME_PLACE * SAME_PLACE;
+        heading = next;
+        headingVersion++;
+        if (same) return;
+        headingAt = ticks;
+        if (next != null) dev.awaken.core.audio.client.AudioUi.nowChanged(next.destination() ? 86 : 68);
     }
 
-    private static Optional<NowHooks.Suggestion> top() {
-        return pin != null ? Optional.of(pin) : current.top();
+    /** Changes whenever the corner's place changes (the tracker rebuilds its text then). */
+    static int headingVersion() {
+        return headingVersion;
     }
 
-    /** Reached (within 12 blocks, in its dimension): the pin has done its job. */
-    private static void checkPin() {
-        Minecraft mc = Minecraft.getInstance();
-        if (pin == null || mc.player == null || pin.where().isEmpty()) return;
-        if (!mc.player.level().dimension().identifier().equals(pinDimension)) return;
-        BlockPos at = pin.where().get();
-        double dx = at.getX() + 0.5 - mc.player.getX(), dz = at.getZ() + 0.5 - mc.player.getZ();
-        if (dx * dx + dz * dz < PIN_REACHED * PIN_REACHED) unpin();
+    /** Ticks since the corner's place last changed (a new one fades in). */
+    static int sinceHeading() {
+        return ticks - headingAt;
     }
 
-    /** Changes whenever new suggestions arrive (the tracker rebuilds its text then). */
+    /** Changes whenever new suggestions arrive. */
     static int version() {
         return version;
     }
 
     static void tick() {
         ticks++;
-        if (ticks % 10 == 0) checkPin();
+        updateHeading();
         thread();
     }
 
@@ -97,14 +92,14 @@ public final class NowClient {
 
     /** How far the thread runs along the ground, how fast (blocks a tick), and how often at most. */
     static final int THREAD_LEN = 26, THREAD_EVERY = 2400, IDLE = 160;
-    private static String threadFor = "";
-    private static int lastThread = -100_000, still, runAt = -1;
+    private static int threadFor = -1, lastThread = -100_000, still, runAt = -1;
     private static double lastX, lastZ, runX, runY, runZ, runDx, runDz;
 
     /**
-     * Toward the top suggestion's place, a thread of the Signal's light runs low along the ground for a few seconds: once
-     * when that place is new, and once more if the player stands still outdoors for 8 s with it. At most every two
-     * minutes, never in a screen. The guiding wind, in our blue: nothing stays on screen.
+     * Toward where you're going (the corner's place), a thread of the Signal's light runs low along the ground for a few
+     * seconds: once when that place is new, and once more if the player stands still outdoors for 8 s with it. At most
+     * every two minutes (a destination you just chose runs at once), never in a screen. The guiding wind, in our blue:
+     * nothing stays on screen.
      */
     private static void thread() {
         Minecraft mc = Minecraft.getInstance();
@@ -127,17 +122,16 @@ public final class NowClient {
         lastX = p.getX();
         lastZ = p.getZ();
         still = moved ? 0 : still + 1;
-        var top = top();
-        var dim = pin != null ? pinDimension : current.dimension();
-        if (top.isEmpty() || top.get().where().isEmpty() || ownsWay(top.get().id()) || mc.gui.screen() != null
-                || !p.level().dimension().identifier().equals(dim)) return;
-        BlockPos at = top.get().where().get();
+        NowCorner.Place h = heading;
+        if (h == null || mc.gui.screen() != null || !p.level().dimension().identifier().equals(h.dimension())) return;
+        BlockPos at = h.at();
         double dx = at.getX() + 0.5 - p.getX(), dz = at.getZ() + 0.5 - p.getZ(), dist = Math.sqrt(dx * dx + dz * dz);
-        if (dist < 12 || ticks - lastThread < THREAD_EVERY) return;
-        // the map's pin runs its thread the first moment after the map has closed
-        boolean fresh = !topId.equals(threadFor) && (sinceChange() == 30 || topId.equals(PIN_ID) && sinceChange() >= 30);
-        if (!fresh && still != IDLE) return;
-        threadFor = topId;
+        if (dist < 12) return;
+        // a new place runs its thread once things settle (a destination the first moment after the map has closed),
+        // a destination even if a thread ran lately; after that, only standing still with it, every two minutes at most
+        boolean fresh = threadFor != headingAt && sinceHeading() >= 30;
+        if (fresh ? !h.destination() && ticks - lastThread < THREAD_EVERY : still != IDLE || ticks - lastThread < THREAD_EVERY) return;
+        threadFor = headingAt;
         lastThread = runAt = ticks;
         runX = p.getX();
         runY = p.getY();
@@ -146,27 +140,15 @@ public final class NowClient {
         runDz = dz / dist;
     }
 
-    /** Ticks since the top suggestion last changed (the tracker fades a new one in). */
-    static int sinceChange() {
-        return ticks - changedAt;
-    }
-
-    /** What the Now line offers, the map's pin first when one is set. */
+    /** What the Now tracker offers (the band's lists; the corner shows only {@link #heading}). */
     public static List<NowHooks.Suggestion> suggestions() {
-        if (pin == null) return current.suggestions();
-        if (joined == null) {
-            var all = new java.util.ArrayList<NowHooks.Suggestion>(current.suggestions().size() + 1);
-            all.add(pin);
-            all.addAll(current.suggestions());
-            joined = List.copyOf(all);
-        }
-        return joined;
+        return current.suggestions();
     }
 
     /** " ↗ 40 m" for a suggestion with a place in the player's dimension; empty otherwise. */
     public static Optional<String> compass(NowHooks.Suggestion s) {
         if (s.where().isEmpty() || ownsWay(s.id())) return Optional.empty();
-        return compass(s.where().get(), s == pin ? pinDimension : current.dimension());
+        return compass(s.where().get(), current.dimension());
     }
 
     /** Ids (prefixes) of suggestions that show their own way: no straight thread, no compass after their text. */
@@ -189,7 +171,7 @@ public final class NowClient {
     }
 
     /** " ↗ 40 m" toward {@code at}, when the player stands in {@code dimension} (the Horizon line uses it too). */
-    static Optional<String> compass(BlockPos at, net.minecraft.resources.Identifier dimension) {
+    static Optional<String> compass(BlockPos at, Identifier dimension) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || !mc.player.level().dimension().identifier().equals(dimension)) return Optional.empty();
         // height counts: a place over your head is never "here" (SPEC §27.1)
@@ -200,8 +182,10 @@ public final class NowClient {
     static void clear() {
         version++;
         current = new SignalPayloads.Now(current.dimension(), List.of());
-        topId = "";
-        pin = null;
-        joined = null;
+        Destinations.accept(null);
+        heading = null;
+        fromTarget = null;
+        fromRow = null;
+        headingVersion++;
     }
 }

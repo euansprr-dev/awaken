@@ -19,9 +19,10 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * What the Hearth suggests right now (the Now tracker), one step at a time: find your home; use the Anchor for the
- * guide; then, at home, the next room to make with live progress ("Sanctuary: bed ✓ · mat ✗"), or why a room you're
- * building isn't recognised yet ("Sanctuary: no roof", with a compass to the spot); and go home to mend.
+ * What the Hearth suggests right now (the Now tracker's lists in the K menu; the steps themselves are on the task card,
+ * {@link HearthTask}), one step at a time: find your home; right-click the fire or Anchor for the guide; then, at home,
+ * the next room to make with live progress ("Sanctuary: bed ✓ · mat ✗"), or why a room you're building isn't recognised
+ * yet ("Sanctuary: no roof", with a compass to the spot); and go home to mend.
  */
 public final class HearthNow {
     private HearthNow() {}
@@ -40,11 +41,11 @@ public final class HearthNow {
         if (home.isEmpty()) {
             // the carried flame: under a tracked chain's step (~68), over bookkeeping
             if (holds(p, HearthContent.EMBER_ITEM.get())) {
-                out.add(NowHooks.Suggestion.of("hearth:ember", 66, "Place your Ember where you want your home"));
+                out.add(NowHooks.Suggestion.of("hearth:ember", 66, HearthTask.EMBER));
             } else if (holds(p, HearthContent.HEARTH_ANCHOR_ITEM.get())) {
-                out.add(NowHooks.Suggestion.of("hearth:place", 72, "Place your Hearth Anchor where you want your home"));
+                out.add(NowHooks.Suggestion.of("hearth:place", 72, HearthTask.ANCHOR));
             } else if (holds(p, CoreApi.LORD_HEART.get())) {
-                out.add(NowHooks.Suggestion.of("hearth:craft", 70, "Craft a Hearth Anchor: Lord's Heart, 4 stone bricks, 4 copper"));
+                out.add(NowHooks.Suggestion.of("hearth:craft", 70, HearthTask.CRAFT));
             }
             return out;
         }
@@ -52,22 +53,21 @@ public final class HearthNow {
         var prof = Progression.profile(p);
         long now = p.level().getGameTime();
         if (prof.fractureUntil() > now) {
-            out.add(NowHooks.Suggestion.at("hearth:mend", 60, "Rest at your Hearth to mend the Fracture", h.pos));
+            out.add(NowHooks.Suggestion.at("hearth:mend", 60, "Rest at home to heal your Fracture", h.pos));
         }
-        boolean atHome = p.level().dimension() == Level.OVERWORLD && h.contains(p.blockPosition());
-        if (!atHome) return out;
+        if (!atHome(p, h)) return out;
         HearthPlayer hp = HearthService.player(p);
         if (h.hearthfire() && h.rooms.isEmpty()) {
             // the first night: walls and a roof (using the fire now would lift the coal again)
-            out.add(NowHooks.Suggestion.of("hearth:shelter", 58, "Build a shelter: walls and a roof"));
+            out.add(NowHooks.Suggestion.of("hearth:shelter", 58, HearthTask.SHELTER));
             return out;
         }
         if (h.hearthfire() && holds(p, CoreApi.LORD_HEART.get())) {
-            out.add(NowHooks.Suggestion.at("hearth:heart", 64, "Use the Lord's Heart on your fire", h.pos));
+            out.add(NowHooks.Suggestion.at("hearth:heart", 64, "Hold the Lord's Heart and right-click your campfire", h.pos));
         }
         if (!hp.tips.contains(Guide.TIP_SEEN)) {
             boolean fresh = h.placedAt > 0 && now - h.placedAt < FRESH_TICKS;
-            out.add(NowHooks.Suggestion.of("hearth:guide", fresh ? 74 : 56, h.hearthfire() ? "Right-click your campfire" : "Right-click your Anchor"));
+            out.add(NowHooks.Suggestion.of("hearth:guide", fresh ? 74 : 56, h.hearthfire() ? HearthTask.GUIDE : HearthTask.GUIDE_ANCHOR));
             return out;
         }
         NowHooks.Suggestion why = whyLine(p, h);
@@ -76,13 +76,11 @@ public final class HearthNow {
             return out;
         }
         // (W6) someone you know waits for a bed, or a room for their work: "Oren will come when there's a bed for him"
-        if (!h.hearthfire() && p.level() instanceof net.minecraft.server.level.ServerLevel sl) {
-            for (var w : dev.awaken.hearth.settle.Settlers.waiting(sl, h)) {
-                if (w.why().startsWith("Tier") || w.why().startsWith("on the")) continue;
-                out.add(NowHooks.Suggestion.of("hearth:people/" + w.who().id(), 52, dev.awaken.hearth.guide.Fit.first(dev.awaken.hearth.guide.Fit.TRACKER,
-                        w.line(), w.who().given() + " needs a room", w.who().given() + ": a room")));
-                return out;
-            }
+        var w = waitingFor(p, h);
+        if (w != null) {
+            out.add(NowHooks.Suggestion.of("hearth:people/" + w.who().id(), 52, Fit.first(Fit.TRACKER,
+                    w.line(), w.who().given() + " needs a room", w.who().given() + ": a room")));
+            return out;
         }
         RoomType next = nextRoom(p, h);
         if (next != null) out.add(NowHooks.Suggestion.of("hearth:room/" + next.name().toLowerCase(java.util.Locale.ROOT), 50, progress(next, h)));
@@ -91,18 +89,44 @@ public final class HearthNow {
 
     /** A room being built that isn't recognised, and why (one line, the first that applies). */
     static NowHooks.@Nullable Suggestion whyLine(ServerPlayer p, HearthRecord h) {
+        WhyNot.Reason reason = why(p, h);
+        if (reason == null) return null;
+        String id = "hearth:why/" + reason.type().name().toLowerCase(java.util.Locale.ROOT);
+        return reason.compass() && reason.at() != null
+                ? NowHooks.Suggestion.at(id, 62, reason.tracker(), reason.at())
+                : NowHooks.Suggestion.of(id, 62, reason.tracker());
+    }
+
+    /** Why the room being built isn't recognised (the first that applies), or null. */
+    static WhyNot.@Nullable Reason why(ServerPlayer p, HearthRecord h) {
         RoomType goal = nextRoom(p, h);
         for (RoomType t : RoomType.values()) {
             if (t != goal && !clearlyBuilding(t, h)) continue;
             Optional<WhyNot.Reason> r = WhyNot.of(t, h.rooms, h.misses);
-            if (r.isEmpty()) continue;
-            String id = "hearth:why/" + t.name().toLowerCase(java.util.Locale.ROOT);
-            WhyNot.Reason reason = r.get();
-            return reason.compass() && reason.at() != null
-                    ? NowHooks.Suggestion.at(id, 62, reason.tracker(), reason.at())
-                    : NowHooks.Suggestion.of(id, 62, reason.tracker());
+            if (r.isPresent()) return r.get();
         }
         return null;
+    }
+
+    /** Someone you know who waits for a bed or a room for their work (W6), or null. */
+    static dev.awaken.hearth.settle.Settlers.@Nullable Waiting waitingFor(ServerPlayer p, HearthRecord h) {
+        if (h.hearthfire() || !(p.level() instanceof net.minecraft.server.level.ServerLevel sl)) return null;
+        for (var w : dev.awaken.hearth.settle.Settlers.waiting(sl, h)) {
+            if (w.why().startsWith("Tier") || w.why().startsWith("on the")) continue;
+            return w;
+        }
+        return null;
+    }
+
+    /** The same, as the card says it ("Oren will come when there's a bed for him"), or null. */
+    static @Nullable String waiting(ServerPlayer p, HearthRecord h) {
+        var w = waitingFor(p, h);
+        return w == null ? null : w.line();
+    }
+
+    /** Standing in the home's land (the overworld, inside its radius). */
+    static boolean atHome(ServerPlayer p, HearthRecord h) {
+        return p.level().dimension() == Level.OVERWORLD && h.contains(p.blockPosition());
     }
 
     /**
@@ -183,7 +207,7 @@ public final class HearthNow {
         return false;
     }
 
-    private static boolean holds(ServerPlayer p, Item item) {
+    static boolean holds(ServerPlayer p, Item item) {
         var inv = p.getInventory();
         for (int i = 0; i < inv.getContainerSize(); i++) if (inv.getItem(i).is(item)) return true;
         return false;

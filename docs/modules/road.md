@@ -17,20 +17,20 @@ needs its rank). Only the newest open goal shows, so the tracker never turns int
 |---|---|---|---|
 | 1-12 | (P1) first power, crafts, Dash + Wildhide, a core, Truths, Hearth Anchor, Echo binding, essence, a core, Reassessment, Meditation, Lucid dreams | see onboarding.md | meditation and dreams are taught by lessons (§3) |
 | 13 | Beastbound gear · D | 7 recipes | |
-| 14 | **Training Grounds** | Start Gate, Checkpoint Ring, Finish Gate recipes | Lay Start, Rings, Finish: run a lap → `training_laps` |
+| 14 | **Training Grounds** | Start Gate, Checkpoint Ring, Finish Gate recipes | Place Start, Rings, Finish: run a lap → `training_laps` |
 | 15 | The Veil | Stillpoint Shrine recipe, flag | taught by a lesson (§3) |
-| 16 | **The Scanner** | a Precursor Scanner + its recipe | Sweep the Scanner: find a ruin → `ruins_found` |
+| 16 | **The Scanner** | a Precursor Scanner + its recipe | Hold the Scanner up: sweep for a ruin → `ruins_found` |
 | 17 | **The Fabricator** | Fabricator, circuit recipes | Scan a broken machine in a ruin → `machines_scanned` |
 | 18 | **Machines, not mounts** | an essence cell; cell, void glass recipes | Build a machine at the Fabricator → `machines_built` |
 | 19 | **Scout from the Veil** | 8 essence | As a spirit, drift into a gate → `gates_scouted` (needs the Veil) |
 | 20 | The Well | flag, a core | |
-| 21 | **The Dream Bell** | Dream Bell recipe, dream residue | Arm a Dream Bell; be lucid again → `lucid_dreams` 2 |
+| 21 | **The Dream Bell** | Dream Bell recipe, dream residue | Arm a Dream Bell by your bed; sleep → `lucid_dreams` 2 |
 | 22 | Gatewrought gear · C | 7 recipes | |
-| 23 | **Shape the dream** | dream glass, cloud, shifting stone recipes, 2 residue | Lucid: hold H on a wall for a door → `dream_manifests` |
+| 23 | **Shape the dream** | dream glass, cloud, shifting stone recipes, 2 residue | In a lucid dream, hold H at a wall → `dream_manifests` |
 | 24 | **The Hanging Gardens** | 8 essence | Descend to stratum 2 → `depth_record` 2 (D-rank) |
 | 25 | Second Awakening | flag | |
 | 26 | **The town grows** | Spire Board recipe, 10 essence | Hang a Lord's trophy in your Hall → `trophies_placed` (Hearth) |
-| 27 | **Face the nightmare** | 2 dream residue | Journal 'face my fear', then win → `nightmares_beaten` |
+| 27 | **Face the nightmare** | 2 dream residue | Dream Journal: 'face my fear', then win → `nightmares_beaten` |
 | 28 | **Twisted gates** | a Power Core | Clear a gate with a twist → `twists_seen` |
 | 29 | **Your mentor** | a Lord's Heart | Beat your mentor in a dream → `mentor_duels_won` (needs a Path) |
 | 30 | Echo roles | 5 role pad recipes, flag | |
@@ -44,7 +44,7 @@ needs its rank). Only the newest open goal shows, so the tracker never turns int
 | 38 | **Stratum guardians** | 12 essence | Beat a guardian → `guardians_defeated` |
 | 39 | **Beasts everywhere** | a Power Core | Fell three named beasts → `beasts_felled` 3 |
 | 40 | The deep calls | flag, a core | |
-| 41 | **Hold the line** | a Lord's Heart | Hold a gate break at your Hearth → `breaks_held_at_hearth` |
+| 41 | **Hold the line** | a Lord's Heart | Defend your Hearth from a gate break → `breaks_held_at_hearth` |
 | 42 | Veilwoven gear · B | 7 recipes | |
 | 43 | **Push past comfort** | 16 essence | Clear a floor deeper than usual → `floors_pushed_past_comfort` |
 | 44 | **An army of Echoes** | 12 essence | Fight beside four Echoes at once → `echo_army_peak` 4 |

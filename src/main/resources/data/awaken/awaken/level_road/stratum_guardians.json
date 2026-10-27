@@ -12,7 +12,7 @@
   ],
   "quiet": false,
   "goal": {
-    "now": "Beat a guardian (north of a pit)",
+    "now": "Beat a stratum guardian, north of a pit",
     "done": {
       "type": "counter",
       "counter": "awaken:guardians_defeated",
