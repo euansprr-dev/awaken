@@ -1,0 +1,46 @@
+# Trails (docs/trails/PLAN.md): the Journal page's TRAILS section: what you can do now, the browse view by area with a
+# trail unfolded, and the task card top right once one is followed. Run on CI:
+#   tools/tour-ci.sh tools/autopilot/trails-journal.txt 1200 PACK=perf,world TECTONIC=awakened
+world trailsJournal survival 20261027
+waitworld
+gui 0
+window 1440 900
+info
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 5000
+cmd awaken opening skip
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd awaken admin xp 2000
+wait 20
+# every trail the Hearth teaches, as if the fire had been lit
+cmd awaken admin trails open set_your_fire
+cmd awaken admin trails open your_hearth
+cmd awaken admin trails open the_forge
+wait 120
+screen holo journal
+wait 40
+shot t01_journal_now
+trails browse home
+wait 20
+shot t02_browse_home
+trails open
+wait 20
+shot t03_browse_home_steps
+trails browse weapons
+wait 20
+shot t04_browse_weapons
+screen close
+cmd awaken admin trails follow your_hearth
+wait 60
+shot t05_task_card_following
+trails now
+screen holo journal
+wait 40
+shot t06_journal_following
+screen close
+quit

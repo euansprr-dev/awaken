@@ -57,7 +57,12 @@ public final class TrailEngine {
             TrailDef def = e.getValue();
             if (st.finished.contains(id)) continue;
             if (!st.opened.contains(id)) {
-                if (!canOpen(p, st, def)) continue;
+                if (!canOpen(p, st, def)) {
+                    String lock = lockToken(p, st, def);
+                    if (lock != null) Promises.seen(p, "trail:" + id, null, lock.startsWith("rank:") ? Promises.Need.rank(lock.substring(5)) : Promises.Need.level(number(lock.substring(6))),
+                            "The " + def.title() + " trail"); // What waits: a lock you have met (idempotent)
+                    continue;
+                }
                 open(p, st, id, def, true);
                 dirty = true;
             }
@@ -191,16 +196,30 @@ public final class TrailEngine {
      * something they have not met (an unmet token that is not a level or a rank): then the trail is not shown at all.
      */
     static @Nullable String silhouette(ServerPlayer p, TrailState st, TrailDef def) {
-        String need = null;
+        String lock = lockToken(p, st, def);
+        if (lock == null) return null;
+        return lock.startsWith("rank:") ? "Opens at " + lock.substring(5) + "-rank" : "Opens at level " + lock.substring(6);
+    }
+
+    /** The one unmet token of a trail that is a rank or a level (and nothing else unmet), or null. */
+    static @Nullable String lockToken(ServerPlayer p, TrailState st, TrailDef def) {
+        String lock = null;
         for (String t : def.opens()) {
             if (Conditions.met(p, t)) continue;
-            if (t.startsWith("rank:") && need == null) need = "Opens at " + t.substring(5) + "-rank";
-            else if (t.startsWith("level:") && need == null) need = "Opens at level " + t.substring(6);
+            if ((t.startsWith("rank:") || t.startsWith("level:")) && lock == null) lock = t;
             else return null;
         }
-        if (need == null) return null;
+        if (lock == null) return null;
         for (String a : def.after()) if (!st.finished.contains(a)) return null;
-        return need;
+        return lock;
+    }
+
+    private static int number(String s) {
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            return 1;
+        }
     }
 
     private static void send(ServerPlayer p, TrailPayloads.View v) {

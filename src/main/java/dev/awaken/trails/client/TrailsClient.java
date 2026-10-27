@@ -16,6 +16,22 @@ public final class TrailsClient {
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> TrailCache.reset());
     }
 
+    /** The autopilot's hook (tools/autopilot/trails-*.txt): "now", "browse [area]", "open" (unfold every trail's steps). */
+    public static void debug(String arg) {
+        String[] w = arg.trim().split("\\s+");
+        switch (w[0]) {
+            case "browse" -> {
+                TrailCache.browse = true;
+                if (w.length > 1) TrailCache.area = w[1];
+            }
+            case "open" -> {
+                var v = TrailCache.view;
+                if (v != null) for (var t : v.trails()) TrailCache.expanded.add(t.id());
+            }
+            default -> TrailCache.browse = false;
+        }
+    }
+
     private static void onPayloads(RegisterClientPayloadHandlersEvent event) {
         event.register(TrailPayloads.View.TYPE, (msg, ctx) -> TrailCache.onView(msg));
     }

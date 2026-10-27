@@ -61,6 +61,7 @@ public final class TrailsModule {
                 TrailEngine.update(p);
             }
         });
+        TrailsCommands.register();
         TrailsTests.register();
     }
 
