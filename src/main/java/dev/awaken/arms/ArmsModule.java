@@ -70,6 +70,8 @@ public final class ArmsModule {
         bus.addListener(EventPriority.LOW, ArmsIssue::onDrops);
         bus.addListener(EventPriority.LOW, ArmsPatterns::onDeath);
         bus.addListener(EventPriority.LOW, ArmsSpoils::onDeath);
+        bus.addListener(ArmsTiers::onPickup);
+        dev.awaken.progression.Progression.onLevelReached(ArmsTiers::onLevel);
         bus.addListener(ArmsPatterns::onJoin);
         bus.addListener(ArmsPatterns::onServerTick);
         bus.addListener(ArmsIssue::onPlayerTick);

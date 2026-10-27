@@ -127,12 +127,8 @@ public final class ArmsArmoury {
         if (st == null) return;
         int level = Progression.profile(p).level();
         List<ArmsPayloads.TierRow> tiers = new ArrayList<>();
-        int best = 0;
-        for (int i = 0; i < TIERS.length; i++) {
-            boolean reached = level >= LEVEL[i];
-            if (reached) best = i;
-            tiers.add(new ArmsPayloads.TierRow(TIERS[i], LEVEL[i], reached));
-        }
+        int best = Math.max(0, ArmsTiers.best(p));
+        for (int i = 0; i < TIERS.length; i++) tiers.add(new ArmsPayloads.TierRow(TIERS[i], LEVEL[i], level >= LEVEL[i], ArmsTiers.pull(p, i, ArmsTiers.best(p))));
         int at = tier == null ? best : Math.max(0, tierIndex(tier));
         AwakenNet.send(p, new ArmsPayloads.ArmouryDetail(style, TIERS[at], tiers, needs(p, style, at)));
     }

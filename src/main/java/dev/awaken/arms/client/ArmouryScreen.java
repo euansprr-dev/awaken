@@ -133,7 +133,16 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
             g.text(font, weapon.getName(new ItemStack(weapon)), dx + 20, y2 + 4, rankColour(d.tier()), false);
         }
         y2 += 20;
-        for (var n : d.needs()) {
+        var cur = d.tiers().get(Math.min(tierIdx, d.tiers().size() - 1));
+        boolean locked = !cur.reached();
+        if (locked) {
+            // the lock is seen before it opens: what it waits for once you've met it, else only the level
+            String line = cur.pull().isEmpty() ? "This tier opens at level " + cur.level() + "." : cur.pull();
+            List<FormattedCharSequence> lines = font.split(Component.literal(line), dw);
+            for (int i = 0; i < Math.min(4, lines.size()); i++) g.text(font, lines.get(i), dx, y2 + i * 10, LANTERN, false);
+            y2 += 44;
+        }
+        for (var n : locked && cur.pull().isEmpty() ? List.<ArmsPayloads.NeedRow>of() : d.needs()) {
             if (y2 > py + ph - 56) break;
             Identifier id = Identifier.parse(n.id());
             Component label = n.kind().equals("tag")

@@ -4,11 +4,11 @@
   "arrives_at": "E",
   "lines": {
     "E": "Another hunter. Try not to die before you pay me.",
-    "D": "D-rank. Your sword still looks like it's apologising. Bring it here.",
-    "C": "Heard you picked a Path. Good. Indecision rusts.",
-    "B": "Lord's hearts make the best steel. Don't tell the Healer I said that.",
-    "A": "People ask me if I forged your gear. I say yes. Don't correct me.",
-    "S": "I'm putting your name on the wall. Don't let it go to your head. Okay, a little.",
+    "D": "D-rank already. Beastbound gear is open to you now, and my forge is free whenever you bring iron and a beast's trophy. Hale has a job on his board for the first trophy.",
+    "C": "Heard you picked a Path. Good. Gatewrought needs diamonds and a relic from a D-rank Lord, and Hale has a job for the relic. Bring them to the forge.",
+    "B": "Lord's hearts make the best steel. Don't tell the Healer I said that. Veilwoven needs Deepglass and amethyst, plus a part from a C-rank Lord, and the forge is ready when you are.",
+    "A": "People ask me if I forged your gear. I say yes. Don't correct me. Lordscale needs netherite scrap and a part from a B-rank Lord or a deep guardian, and I'll keep the forge hot for it.",
+    "S": "I'm putting your name on the wall. Don't let it go to your head. Okay, a little. A Sovereign weapon needs starmetal from a fallen star and a part from the Herald or the Court.",
     "SOVEREIGN": "I made you a sword. It's not for fighting. It's for hanging over a fireplace. Yours."
   }
 }

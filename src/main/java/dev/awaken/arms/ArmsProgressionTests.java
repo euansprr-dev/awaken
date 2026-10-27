@@ -34,6 +34,7 @@ final class ArmsProgressionTests {
         AwakenTests.register("arms_boss_weapon", 60, ArmsProgressionTests::bossWeapon);
         AwakenTests.register("arms_marked_pity", 40, ArmsProgressionTests::markedPity);
         AwakenTests.register("arms_raise", 40, ArmsProgressionTests::raise);
+        AwakenTests.register("arms_tier_cards", 60, ArmsProgressionTests::tierCards);
     }
 
     /** A mock player in survival (the helper's are creative, where nothing is paid). */
@@ -299,5 +300,50 @@ final class ArmsProgressionTests {
                     : BuiltInRegistries.ITEM.getValue(id);
             sp.getInventory().add(new ItemStack(give, n.need()));
         }
+    }
+
+    private static void levelTo(ServerPlayer sp, int level) {
+        for (int i = 0; i < 20 && Progression.profile(sp).level() < level; i++) Progression.grantLevels(sp, 6, Progression.XpSource.COMMAND);
+    }
+
+    /** A tier is announced: its part job is on Hale's board first, the lock shows what it waits for, a part you hold files it. */
+    static void tierCards(net.minecraft.gametest.framework.GameTestHelper h) {
+        String[] jobs = {"part_job_beastbound", "part_job_gatewrought", "part_job_veilwoven", "part_job_lordscale", "part_job_sovereign"};
+        for (int i = 0; i < jobs.length; i++) {
+            var d = dev.awaken.living.bounty.Bounties.all().get("awaken:" + jobs[i]);
+            h.assertTrue(d != null && d.featured() && d.keep(), jobs[i] + " is a featured notice that Hale only looks at");
+            Item part = BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.parse(d.objective().target()));
+            String tier = ArmsArmoury.TIERS[i + 1].toLowerCase();
+            h.assertTrue(part != Items.AIR && new ItemStack(part).is(net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, Awaken.id("hunter_core_" + tier))),
+                    jobs[i] + " asks for a part of its own tier: " + d.objective().target());
+            h.assertTrue(d.requires().contains("level:" + ArmsArmoury.LEVEL[i + 1]), jobs[i] + " opens at its tier's level");
+            h.assertTrue(ArmsLang.get("awaken.armoury.pull." + ArmsArmoury.TIERS[i + 1]) != null && ArmsLang.get("awaken.armoury.open." + ArmsArmoury.TIERS[i + 1]) != null,
+                    "the tier has its two lines");
+        }
+        // the lock: the tier after the one you have is seen, the ones beyond only once you hold one of their parts
+        ServerPlayer sp = survivor(h);
+        levelTo(sp, 3);
+        int best = ArmsTiers.best(sp);
+        h.assertTrue(best == 0, "Wildhide is open at level 3: " + best);
+        h.assertTrue(!ArmsTiers.pull(sp, 1, best).isEmpty() && ArmsTiers.pull(sp, 1, best).contains("level 13"), "Beastbound's lock says what it waits for");
+        h.assertTrue(ArmsTiers.pull(sp, 2, best).isEmpty(), "Gatewrought stays a silhouette");
+        ArmsTiers.seen(sp, new ItemStack(item("mainspring")));
+        h.assertTrue(ArmsTiers.pull(sp, 2, best).contains("level 22"), "until you hold its part");
+        h.assertTrue(ArmsTiers.pull(sp, 0, best).isEmpty() && ArmsTiers.pull(sp, 1, 1).isEmpty(), "an open tier needs no lock line");
+        ArmsTiers.onLevel(sp, 13);
+
+        // the job: first on the board at the tier's level, kept after it is shown, and not put up again
+        levelTo(sp, 13);
+        dev.awaken.progression.Progression.awaken(sp);
+        h.assertTrue(dev.awaken.living.bounty.Bounties.board(sp), "Hale has a board");
+        String id = "awaken:part_job_beastbound";
+        h.assertTrue(dev.awaken.living.bounty.Bounties.state(sp).offered().getFirst().equals(id), "the tier's job is the first notice: " + dev.awaken.living.bounty.Bounties.state(sp).offered());
+        dev.awaken.living.bounty.Bounties.answer(sp, dev.awaken.living.bounty.Bounties.ACTION + ":" + id, true);
+        sp.getInventory().add(new ItemStack(item("briar_tusk")));
+        dev.awaken.living.bounty.Bounties.board(sp);
+        h.assertTrue(dev.awaken.living.bounty.Bounties.state(sp).taken().isEmpty() && dev.awaken.living.bounty.Bounties.state(sp).done() == 1, "shown, so it is done");
+        h.assertTrue(count(sp, item("briar_tusk")) == 1, "and the tusk goes back to the hunter");
+        h.assertTrue(Progression.profile(sp).counter("awaken:featured_done/" + id) == 1, "a featured notice is done for good");
+        h.succeed();
     }
 }

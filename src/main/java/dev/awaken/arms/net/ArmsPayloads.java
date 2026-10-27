@@ -127,9 +127,10 @@ public final class ArmsPayloads {
     }
 
     /** A tier of a style: its letter, the level it opens at and whether the fighter has reached it. */
-    public record TierRow(String tier, int level, boolean reached) {
+    public record TierRow(String tier, int level, boolean reached, String pull) {
         public static final StreamCodec<ByteBuf, TierRow> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.STRING_UTF8, TierRow::tier, ByteBufCodecs.VAR_INT, TierRow::level, ByteBufCodecs.BOOL, TierRow::reached, TierRow::new);
+                ByteBufCodecs.STRING_UTF8, TierRow::tier, ByteBufCodecs.VAR_INT, TierRow::level, ByteBufCodecs.BOOL, TierRow::reached,
+                ByteBufCodecs.STRING_UTF8, TierRow::pull, TierRow::new);
     }
 
     /** One thing a weapon needs: "tag" or "item", its id, how many, and how many the fighter holds. */

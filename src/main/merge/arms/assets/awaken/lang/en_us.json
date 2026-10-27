@@ -279,5 +279,15 @@
   "tag.item.awaken.tier_metal_b": "B-rank Metal",
   "tag.item.awaken.tier_metal_c": "C-rank Metal",
   "tag.item.awaken.tier_metal_d": "D-rank Metal",
-  "tag.item.awaken.tier_metal_s": "S-rank Metal"
+  "tag.item.awaken.tier_metal_s": "S-rank Metal",
+  "awaken.armoury.pull.D": "Beastbound opens at level 13. It needs iron from the deep and a trophy from a named beast, and Hale will have a job on his board for the first trophy.",
+  "awaken.armoury.pull.C": "Gatewrought opens at level 22. It needs diamonds from the deep and a relic from a D-rank Lord, and Hale will have a job on his board for the relic.",
+  "awaken.armoury.pull.B": "Veilwoven opens at level 42. It needs Deepglass and amethyst from the deep and parts from C-rank and B-rank Lords, and Hale will have a job on his board for the first part.",
+  "awaken.armoury.pull.A": "Lordscale opens at level 67. It needs netherite scrap from the Nether and parts from B-rank and A-rank Lords or the deep guardians, and Hale will have a job on his board for the first part.",
+  "awaken.armoury.pull.S": "Sovereign opens at level 97. It needs starmetal from the fallen stars and parts from the Hollow Herald or the Court, and Hale will have a job on his board for the first part.",
+  "awaken.armoury.open.D": "You will need iron from the deep and a trophy from a named beast. Hale has a job on his board for the first trophy.",
+  "awaken.armoury.open.C": "You will need diamonds from the deep and a relic from a D-rank Lord. Hale has a job on his board for the relic.",
+  "awaken.armoury.open.B": "You will need Deepglass and amethyst from the deep and parts from C-rank and B-rank Lords. Hale has a job on his board for the first part.",
+  "awaken.armoury.open.A": "You will need netherite scrap from the Nether and parts from B-rank and A-rank Lords or the deep guardians. Hale has a job on his board for the first part.",
+  "awaken.armoury.open.S": "You will need starmetal from the fallen stars and parts from the Hollow Herald or the Court. Hale has a job on his board for the first part."
 }
