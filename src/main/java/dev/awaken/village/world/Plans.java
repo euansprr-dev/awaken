@@ -38,10 +38,12 @@ public final class Plans {
         VillagePlan p = null;
         try {
             long t0 = System.nanoTime();
-            p = VillagePlanner.plan(request(a), t);
+            p = VillagePlanner.plan(request(a), dev.awaken.village.road.RoadWorld.shared(t));
             long ns = System.nanoTime() - t0;
-            planNanos += ns;
-            plans++;
+            synchronized (Plans.class) {
+                planNanos += ns;
+                plans++;
+            }
             if (p != null) Awaken.LOG.info("[village] planned {} in {} ms", p, String.format(java.util.Locale.ROOT, "%.1f", ns / 1e6));
             else Awaken.LOG.info("[village] no site near {} {} for {} ({}; {} ms)", a.x(), a.z(), a.key(), VillagePlanner.WHY.get(),
                     String.format(java.util.Locale.ROOT, "%.1f", ns / 1e6));
@@ -77,6 +79,11 @@ public final class Plans {
     /** Tests and commands: a plan made elsewhere under its key. */
     public static void put(VillagePlan p) {
         CACHE.put(p.key, java.util.concurrent.CompletableFuture.completedFuture(Optional.of(p)));
+    }
+
+    /** How many plans were made this session (with a site or without). */
+    public static long made() {
+        return plans;
     }
 
     public static String stats() {

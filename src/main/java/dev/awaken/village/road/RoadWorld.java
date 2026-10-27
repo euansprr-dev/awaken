@@ -2,8 +2,10 @@ package dev.awaken.village.road;
 
 import dev.awaken.Awaken;
 import dev.awaken.living.region.RegionMap;
+import dev.awaken.village.plan.Terrain;
 import dev.awaken.village.world.GenTerrain;
 import dev.awaken.village.world.SettlementGrid;
+import dev.awaken.village.world.SharedLand;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.registries.Registries;
@@ -17,8 +19,8 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * What the roads read of this server's overworld from any thread (SPEC §28.9): its seed, the centre (Carillon's site or
- * the origin, as the settlement grid has it), the generator's estimate of the land (one {@link GenTerrain} per thread:
- * their climate samplers cache) and the region map's geometry (hearts, the Commons). Made once at the server's start,
+ * the origin, as the settlement grid has it), the generator's estimate of the land (one {@link SharedLand}: each column
+ * worked out once for every thread) and the region map's geometry (hearts, the Commons). Made once at the server's start,
  * after terrain has chosen the city's site and before any chunk generates, the way the first hamlet is found; gone when
  * it stops.
  */
@@ -33,7 +35,8 @@ public final class RoadWorld {
     public final boolean city;
     /** The region cell of the first town a player meets ({@link FirstTown}), or null. */
     volatile int @Nullable [] firstTown;
-    private final ThreadLocal<GenTerrain> terrain;
+    /** The generator's estimate of the land, each column worked out once for every thread (one {@link GenTerrain} per thread). */
+    private final SharedLand land;
 
     private static volatile @Nullable RoadWorld current;
 
@@ -45,7 +48,7 @@ public final class RoadWorld {
         this.random = rs;
         this.heights = heights;
         this.city = city;
-        this.terrain = ThreadLocal.withInitial(() -> GenTerrain.of(gen, heights, rs));
+        this.land = new SharedLand(ThreadLocal.withInitial(() -> GenTerrain.of(gen, heights, rs)));
         var source = gen.getBiomeSource();
         // the probe names a region once, from any thread: a sampler of its own each time (no caches to share)
         this.regions = new RegionMap(seed, cx, cz, (x, z) -> land(source.createResolver(
@@ -60,9 +63,23 @@ public final class RoadWorld {
         return dev.awaken.living.region.RegionService.land(path);
     }
 
-    /** This thread's reading of the land. */
-    public GenTerrain terrain() {
-        return terrain.get();
+    /** The land as every planner reads it. */
+    public Terrain terrain() {
+        return land;
+    }
+
+    /**
+     * The shared reading of the land in place of a reading of the same generator's (a settlement's plan made at world
+     * generation, by its people or by a command reads the columns the roads and the other plans already read).
+     */
+    public static Terrain shared(Terrain t) {
+        RoadWorld w = current;
+        return w != null && t instanceof GenTerrain g && g.generator() == w.generator ? w.land : t;
+    }
+
+    /** Forgets the land read so far (the bench's cold runs). */
+    void forget() {
+        land.clear();
     }
 
     public static @Nullable RoadWorld get() {
@@ -80,6 +97,8 @@ public final class RoadWorld {
         int[] c = SettlementGrid.centre();
         RoadWorld w = new RoadWorld(seed, c[0], c[1], gen, rs, LevelHeightAccessor.create(type.minY(), type.height()),
                 dev.awaken.terrain.api.CityBasin.current() != null);
+        RoadTimer.server = server.getRunningThread();
+        RoadTimer.watch(server);
         w.prepare();
         current = w;
     }
