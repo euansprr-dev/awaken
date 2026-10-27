@@ -1,6 +1,6 @@
 # Trails: optional guidance for everything (plan for Euan's approval, 2026-10-27)
 
-Status: **plan only, nothing built.** Branch `pack/trails-plan`. Approval page: `docs/trails/page.html` (published as an
+Status: **approved 2026-10-27 (all ten recommendations); T0 to T4 built** on `pack/trails` (SPEC §31 records what shipped and what did not). Plan branch `pack/trails-plan`. Approval page: `docs/trails/page.html` (published as an
 Artifact, link in the hand-back). Labels: **VERIFIED** (read in this repo at 2a0b6da3), **PROPOSAL** (not built, nothing
 measured), **UNVERIFIED** (the first builder checks it).
 
