@@ -221,7 +221,7 @@ public final class HearthService {
         level.sendParticles(HearthContent.HEARTH_EMBER.get(), pos.getX() + 0.5, pos.getY() + 1.2, pos.getZ() + 0.5, 40, 0.6, 0.6, 0.6, 0.02);
         anchorTookRoot(sp, level, r, base != null, base != null ? "A second home" : "Home exists",
                 "Within " + r.radius() + " blocks: yours" + (base != null ? " and your household's" : "")
-                        + ". You wake here, you heal here, and people will come. Use the Anchor for a guide to your Hearth.");
+                        + ". You wake here, you heal here, and people will come. Right-click the Anchor any time to open your Hearth's guide.");
     }
 
     /**

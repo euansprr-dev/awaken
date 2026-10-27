@@ -67,7 +67,7 @@ public final class HearthNow {
         }
         if (!hp.tips.contains(Guide.TIP_SEEN)) {
             boolean fresh = h.placedAt > 0 && now - h.placedAt < FRESH_TICKS;
-            out.add(NowHooks.Suggestion.of("hearth:guide", fresh ? 74 : 56, h.hearthfire() ? "Use your fire for a guide" : "Use the Anchor for a guide"));
+            out.add(NowHooks.Suggestion.of("hearth:guide", fresh ? 74 : 56, h.hearthfire() ? "Right-click your campfire" : "Right-click your Anchor"));
             return out;
         }
         NowHooks.Suggestion why = whyLine(p, h);

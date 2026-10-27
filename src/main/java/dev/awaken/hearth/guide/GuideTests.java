@@ -76,7 +76,7 @@ public final class GuideTests {
                     }
                 }
             }
-            h.assertTrue(Fit.px("Use the Anchor for a guide") <= Fit.TRACKER, "the guide nudge fits");
+            h.assertTrue(Fit.px("Right-click your campfire") <= Fit.TRACKER && Fit.px("Right-click your Anchor") <= Fit.TRACKER, "the guide nudge fits");
             h.assertTrue(Fit.px("Within 48 blocks: yours.") <= Fit.TOAST && Fit.px("Free: your first Sanctuary.") <= Fit.TOAST, "welcome and offer lines fit");
             // the guide's data survives the wire
             GuideData d = new GuideData(2, 56, 26, 13, true, new BlockPos(1, 2, 3),

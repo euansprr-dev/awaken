@@ -435,7 +435,7 @@ public final class Embers {
         HearthService.dirty(level.getServer());
         level.sendParticles(HearthContent.HEARTH_EMBER.get(), h.pos.getX() + 0.5, h.pos.getY() + 1.2, h.pos.getZ() + 0.5, 60, 0.8, 0.8, 0.8, 0.03);
         HearthService.anchorTookRoot(sp, level, h, false, "The fire takes the Heart",
-                "Your Hearthfire stands as an Anchor now. Within " + h.radius() + " blocks: yours, and people will come. Use the Anchor for a guide to your Hearth.");
+                "Your Hearthfire stands as an Anchor now. Within " + h.radius() + " blocks: yours, and people will come. Right-click the Anchor any time to open your Hearth's guide.");
     }
 
     /** Called from {@link HearthService#forgetPeople}: nothing held across worlds. */
