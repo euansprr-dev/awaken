@@ -86,6 +86,16 @@ def bevel(face, i, j, fw, fh, top=2):
 # ---------------------------------------------------------------------------------------------------------------------
 # Materials: f(face, i, j, fw, fh, o) -> (albedo or None, glow or None). o is the part's options.
 
+def _ring(w, i, j):
+    """True for a texel touching the opening (one texel out from it), so a robe's hood can be framed in its trim."""
+    if isinstance(w[0], int):
+        w = [w]
+    for a, b, c, d in w:
+        if a - 1 <= i <= b + 1 and c - 1 <= j <= d + 1 and not (a <= i <= b and c <= j <= d):
+            return True
+    return False
+
+
 def in_window(w, i, j):
     if not w:
         return False
@@ -221,8 +231,64 @@ def alloy(face, i, j, fw, fh, o):
     return col(r, step), None
 
 
+def robe(face, i, j, fw, fh, o):
+    """Flat colour fields with bold trim (the wizard-robe reference): a border, vertical stripes down the front, bands, a hem."""
+    r = o.get("ramp", "silk")
+    trim = o.get("trim", "gold")
+    step = o.get("base", 3) + (1 if face == "up" else 0)
+    t = False
+    if face in SIDES and fw >= 3 and fh >= 3:
+        if o.get("border") and (i == 0 or i == fw - 1 or j == 0 or j == fh - 1):
+            t = True
+        if face == "north" and o.get("stripes") and j >= o.get("stripe_from", 0) and i in o["stripes"]:
+            t = True
+        if face == "south" and o.get("back_stripes") and j >= o.get("stripe_from", 0) and i in o["back_stripes"]:
+            t = True
+        for a, b in o.get("bands", ()):
+            if a <= j <= b:
+                t = True
+        if o.get("hem") and j >= fh - o["hem"]:
+            t = True
+    if t:
+        lit = 5 if (j == 0 or i == 0) else 4
+        return col(trim, lit - (1 if face in ("east", "south") else 0)), (col(trim, 3) if o.get("glowtrim") else None)
+    step += bevel(face, i, j, fw, fh, top=1) if o.get("bevel", True) else 0
+    if face in SIDES and o.get("fold") and i % o["fold"] == o["fold"] - 1 and fw >= 4:
+        step -= 1
+    return col(r, step), None
+
+
+def bone(face, i, j, fw, fh, o):
+    """Skeleton armour: bone on a marrow base. skull=True paints a skull on the head's front (the eye sockets are the opening, so the
+    player's own eyes show in them); ribs=True paints the ribcage front and the spine behind."""
+    r = o.get("ramp", "bone")
+    m = o.get("marrow", "cream")
+    step = o.get("base", 4) + FACE[face] + bevel(face, i, j, fw, fh)
+    if face in SIDES and fw >= 3 and fh >= 3:
+        if o.get("skull") and face == "north":
+            if fw == 8 and i in (3, 4) and j in (5, 6):
+                return col(r, 0), None                      # the nose
+            if j == fh - 1:
+                return col(r, 5 if i % 2 == 0 else 1), None   # the teeth
+            if j in (fh - 3, fh - 2) and i in (0, fw - 1):
+                return col(r, 2), None                      # the hollow of a cheek
+        if o.get("ribs") and face == "north":
+            if j % 2 == 1 and 0 < i < fw - 1:
+                return col(r, 4 if j % 4 == 1 else 3), None
+            return col(m, 2), None
+        if o.get("ribs") and face == "south":
+            if i in (fw // 2 - 1, fw // 2):
+                return col(r, 4), None
+            if j % 3 == 0 and 0 < i < fw - 1:
+                return col(r, 3), None
+            return col(m, 2), None
+        if o.get("marrow_shell"):
+            return col(m, 2 + (1 if face == "up" else 0)), None
+    return col(r, step), None
+
+
 MATS = {"silk": silk, "plate": plate, "mail": mail, "scale": scale, "hide": hide, "studded": studded, "glass": glass,
-        "weave": weave, "alloy": alloy}
+        "weave": weave, "alloy": alloy, "robe": robe, "bone": bone}
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Parts
@@ -241,7 +307,11 @@ def mirrored(parts, rename):
     for p in parts:
         x, y, z, w, h, d = p["box"]
         px, py, pz, xr, yr, zr = p["pose"]
-        out.append(dict(p, name=rename[p["name"]], parent=rename.get(p["parent"], p["parent"]),
+        o = dict(p["o"])
+        r = o.get("rooted")
+        if isinstance(r, str) and r[1] == "x":
+            o["rooted"] = ("-" if r[0] == "+" else "+") + "x"        # a mirrored part's socket is on the other side
+        out.append(dict(p, name=rename[p["name"]], parent=rename.get(p["parent"], p["parent"]), o=o,
                         box=[-x - w, y, z, w, h, d], pose=[-px, py, pz, xr, -yr, -zr], twin=p["name"], uv=None))
     return out
 
@@ -296,7 +366,12 @@ def paint(parts, size):
         for face, (x0, y0, fw, fh) in faces_of(p["uv"][0], p["uv"][1], p["box"]).items():
             for j in range(fh):
                 for i in range(fw):
+                    if face == "north" and in_window(p["o"].get("window"), i, j):
+                        continue                   # the face's opening, for every material (it was honoured by silk and plate only)
                     a, g = fn(face, i, j, fw, fh, p["o"])
+                    fr = p["o"].get("frame")
+                    if fr and face == "north" and a is not None and p["o"].get("window") and _ring(p["o"]["window"], i, j):
+                        a = col(fr, 4)             # a trim ring round the opening (the robe's hood border)
                     if a is not None:
                         alb.set(x0 + i, y0 + j, a)
                     if g is not None:

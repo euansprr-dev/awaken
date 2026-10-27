@@ -43,7 +43,7 @@ def main(out):
     built = {}
     for name, fn in S.SETS.items():
         parts, alb, glw = A.prepare(fn(), SIZE)
-        found = U.audit(parts)
+        found = U.check_all(parts, alb)
         bad += len(found)
         cubes = len(parts)
         report.append("%-16s %2d cubes %4d triangles  %d findings" % (name, cubes, cubes * 12, len(found)))
@@ -51,7 +51,7 @@ def main(out):
     lk = []
     for name, parts in S.looks():
         ps, alb, glw = A.prepare(parts, SIZE)
-        found = U.audit(ps)
+        found = U.check_all(ps, alb)
         bad += len(found)
         report.append("%-16s %2d cubes %4d triangles  %d findings" % ("look: " + name, len(ps), len(ps) * 12, len(found)))
         lk.append((name, ps, alb, glw))
@@ -85,6 +85,25 @@ def main(out):
         top.append(A.render(ps, alb, 0.45, 0.15, **KW))
         back.append(A.render(ps, alb, math.pi - 0.45, 0.3, **KW))
     A.grid([top, back]).save(os.path.join(out, "garments.png"))
+    # the three inspirations: the five Force robes (one design, a palette swap), horned steel, the two skeletons
+    robes = [[], []]
+    for force, ramp in S.FORCE_ROBES.items():
+        parts, alb, glw = A.prepare(S.cantor(main=ramp), SIZE)
+        robes[0].append(A.render(parts, alb, 0.0, 0.0, **KW))
+        robes[1].append(A.render(parts, alb, 0.7, 0.0, **KW))
+    A.grid(robes).save(os.path.join(out, "robes.png"))
+    parts, alb, glw = A.prepare(S.cantor(main="robe_purple", glowtrim=True), SIZE)
+    A.grid([[A.render(parts, alb, 0.55, 0.0, **BIG), A.render_night(parts, alb, glw, 0.55, **BIG)]], w=520, h=560).save(os.path.join(out, "closeup_robe.png"))
+    lower(parts, alb, "robe", out)
+    rows = []
+    for name in ("Ironhorn", "Bonewright", "Flintguard"):
+        parts, alb, glw = built[name]
+        rows.append([A.render(parts, alb, 0.0, 0.0, **KW), A.render(parts, alb, 0.7, 0.0, **KW), A.render(parts, alb, math.pi, 0.0, **KW),
+                     A.render_night(parts, alb, glw, 0.7, **KN)])
+        A.grid([[A.render(parts, alb, 0.55, 0.0, **BIG), A.render_night(parts, alb, glw, 0.55, **BIG)]], w=520, h=560).save(
+            os.path.join(out, "closeup_%s.png" % name))
+        lower(parts, alb, name, out)
+    A.grid(rows).save(os.path.join(out, "inspired.png"))
     A.materials(out)
     if bad:
         raise SystemExit("the checker found %d overlaps" % bad)

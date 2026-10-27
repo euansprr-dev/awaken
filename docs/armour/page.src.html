@@ -144,12 +144,13 @@ ul.plain li { margin-bottom: 6px; }
   <h1>Armour and Clothing</h1>
   <p class="lede">Your weapons are built like hero gear in a game. Your armour is six flat skins on vanilla's boxes. This plan builds armour the way the weapons were built: real parts you can see from the side, nine materials you can tell apart, glow that means something, cloth that moves, and sound that matches what it is made of. Every stat, recipe and set bonus stays exactly as it is.</p>
   <div class="note" style="margin-top:18px">
-    <p><b>Added after your two replies (more sets and clothes, then "clean, not glitchy").</b></p>
+    <p><b>Added after your three replies (more sets and clothes, then "clean, not glitchy", then three styles and two faults).</b></p>
     <ul>
-      <li><b>Houses.</b> Not one set per rank: 24 sets at launch, up to about 34 later. Each is a named hunt, and the Part you spend picks the look. <a href="#houses">See the houses</a>.</li>
+      <li><b>Houses.</b> Not one set per rank: 25 sets at launch, up to about 34 later. Each is a named hunt, and the Part you spend picks the look. <a href="#houses">See the houses</a>.</li>
       <li><b>A Wardrobe.</b> Three looks for every piece, including an off-duty coat for the city, and six slots of garments: cloaks, scarves, hats, a stowed weapon. <a href="#wardrobe">See the clothes</a>.</li>
       <li><b>Clean.</b> You said it looked clunky and glitchy. It was: I built a checker and found 14 to 48 overlaps in every set. Every set is rebuilt in lanes and now has none. <a href="#clean">See before and after</a>.</li>
-      <li><b>Proofs and decisions:</b> three new sets, four looks of one set, and 13 new decisions (17 to 29) at the bottom.</li>
+      <li><b>Your three style references</b> (trimmed robes, horned steel, skeleton armour) now have a place, plus fixes for the missing eyes and the loose crystal fins. <a href="#styles">See them</a>.</li>
+      <li><b>Proofs and decisions:</b> seven new sets and four looks, and 18 new decisions (17 to 34) at the bottom.</li>
     </ul>
   </div>
 </header>
@@ -182,6 +183,25 @@ ul.plain li { margin-bottom: 6px; }
     <tr><td><b>The four looks</b> (armed, travelling, wayfarer, off duty)</td><td>41, 49, 54, 25 to 33, 38, 43, 26</td><td>48, 65, 61, 4 to <b>0, 0, 0, 0</b></td></tr>
   </table></div>
   <div class="col" style="margin-top:14px"><p class="small">Not simpler: the tusks, antlers, fins, tail, cape and stacked pauldrons are all still there, in 7 to 10 fewer boxes a set, with the bands visible. What the checker cannot tell me is whether it is beautiful (that is your sheet), whether a texture reads as noise (I calmed the scale and fur patterns and they still need your eye), and what a full sprint does to hanging panels (looked at by eye, with a clamp as the fix).</p></div>
+</section>
+
+
+<section id="styles">
+  <div class="col"><h2>Your three styles, and the two faults</h2>
+  <p><b>The eyes.</b> The brown set was Briarguard. Only the cloth and plate sets ever cut the face opening in the helm, so the fur, scale and studded sets covered the face, and I had removed the green glints that stood in for eyes. Every material now cuts the opening, and a new check fails any set whose eyes or mouth are covered. <b>The blue fins.</b> They were tilted boxes sitting on the cap by an edge, and my overlap checker never asked whether a part was fastened to anything. Now every crystal, horn, fin, tusk and gem has a setting it grows from (the Wyrmscale's three crystals stand in a brass crown mount), and two new checks fail anything that touches by a corner. On the sets as they stood, 26 parts failed that test.</p></div>
+  <figure>
+    <div class="shot"><img src="proof/renders/robes.png" alt="The same hooded robe in five colours, red, purple, lilac, black and olive, each with gold trim round the hood opening, two stripes down the front and bands at the cuffs. Front view above, three-quarter below."></div>
+    <figcaption><b>1. Trimmed robes, in the five Force colours.</b> Heat red, Gravity purple, Frost lilac, Charge black, Spirit olive. One design of 21 boxes and a palette swap: big flat colour, one trim colour for the hood border, front stripes and cuff bands. The catalyst you put in the Binding slot, the same five the Forge uses to attune a weapon, picks the colour. The trim is the rank's metal (bone at E, bronze, brass, silver, gold, then gold and crimson).</figcaption>
+  </figure>
+  <figure style="margin-top:26px">
+    <div class="shot"><img src="proof/renders/inspired.png" alt="Three armour sets, each shown from the front, three-quarter, back and at night. Top, Ironhorn: white steel with a horned helm, a leather bandolier and belt. Middle, Bonewright: white skeleton armour with a skull face and a rib cuirass. Bottom, Flintguard: the same skeleton in black."></div>
+    <figcaption><b>2. Horned steel, 3. skeleton armour in white and black.</b> Ironhorn is a D house (white steel is D's iron; the horned crown is the Ember Tyrant's, and its tips smoulder at night). Bonewright is picked by bone, Flintguard by flint, which is black, so the two skeletons are one model in two palettes. The skull's eye sockets are the helm's opening: your own eyes show in them.</figcaption>
+  </figure>
+  <div class="grid" style="margin-top:22px">
+    <div class="card"><h3>Where the robes live</h3><p>The Adept look at every rank: Hedgerobe at E (quartz), Mothcap at D (Mother of Spores), Inkbound at C, Rimeprayer and Veilwoven at B, Haloweave at A, Sovereign Weave at S. You wear the colours you have attuned.</p></div>
+    <div class="card"><h3>New clothes from them</h3><p>The bandolier, a horned crown, a skull mask and epaulettes become garments any set can wear, in the Wardrobe.</p></div>
+    <div class="card"><h3>E now uses its own Parts</h3><p>E's recipe takes bone, flint or quartz. Each now picks a house, so no new land drop is needed for launch. The land houses (Mossrunner, Dunewrap, Frostfur) are the second wave.</p></div>
+  </div>
 </section>
 
 <section class="col">
@@ -276,9 +296,9 @@ ul.plain li { margin-bottom: 6px; }
   </figure>
   <div class="grid" style="margin-top:22px">
     <div class="card"><h3><span class="rank e">E</span>Wildhide</h3>
-      <p><b>Mossrunner</b> (Greenwild): mossy hooded cloak, herb pouches, a lantern of lumen moths.<br><b>Dunewrap</b> (Sunscorch): veils, wraps, a long sash, glass beads.<br><b>Frostfur</b> (Frostwild): fur mantle, feather cord, bone toggles.</p></div>
+      <p><b>Bonewright</b> (bone): white skeleton armour, a skull whose sockets show your eyes, a rib cuirass.<br><b>Flintguard</b> (flint): the same skeleton in black.<br><b>Hedgerobe</b> (quartz): a trimmed hooded robe in a Force colour.<br><span class="small">Later: the three land houses, Mossrunner, Dunewrap, Frostfur.</span></p></div>
     <div class="card"><h3><span class="rank d">D</span>Beastbound</h3>
-      <p><b>Briarguard</b> (Briar Tusk): boar-skull helm, rib cuirass, thorns.<br><b>Wyrmscale</b> (Wyrm Scale): sand scales, glass fins, a tail.<br><b>Antlerhold</b> (Antler Tine): antler crown, frost fur, a bell.<br><span class="small">Later: five more, one for each E-rank Lord.</span></p></div>
+      <p><b>Briarguard</b> (Briar Tusk): boar-skull helm, rib cuirass, tusks.<br><b>Wyrmscale</b> (Wyrm Scale): sand scales, glass fins, a tail.<br><b>Antlerhold</b> (Antler Tine): antler crown, frost fur, a bell.<br><b>Ironhorn</b> (Tyrant's Crown): white steel, a horned helm, a bandolier.<br><span class="small">Later: Tollguard, Mothcap (a robe), Hivecarapace, Heartwood.</span></p></div>
     <div class="card"><h3><span class="rank c">C</span>Gatewrought</h3>
       <p><b>Gearwright</b> (Colossus Gear): brass clockwork plate, turning gears, steam vents.<br><b>Inkbound</b> (Archivist's Quill): scholar's robe, a chained book, loose pages.<br><b>Gilded</b> (Broker's Lantern): long coat, hook lantern, coin chains.</p></div>
     <div class="card"><h3><span class="rank b">B</span>Veilwoven</h3>
@@ -380,12 +400,12 @@ ul.plain li { margin-bottom: 6px; }
     <tr><td><b>6 The Wardrobe</b></td><td>Three looks, 48 garments in two batches, the Tailor and unlock page, Lord and found garments, the stowed-weapon check.</td><td>8 to 10 h</td><td>A sheet, a tour</td></tr>
     <tr><td><b>7 Later, as data</b></td><td>More houses (about 34 in all), guild emblems, an armour shader, Raise.</td><td>open</td><td>Its own plan</td></tr>
   </table></div>
-  <p style="margin-top:12px"><b>About 31 to 41 builder hours for everything, about two days of wall clock with three builders</b>, scaled from the git history (all of AWAKEN took about 30 hours; a weapon batch of 24 to 42 took 20 to 40 minutes). Every wave ships on its own, so you can stop after any of them and keep a working game. What doesn't compress: CI runs, your look gates (one per wave), and the Mac's single perf slot.</p>
+  <p style="margin-top:12px"><b>About 33 to 43 builder hours for everything, about two days of wall clock with three builders</b>, scaled from the git history (all of AWAKEN took about 30 hours; a weapon batch of 24 to 42 took 20 to 40 minutes). Every wave ships on its own, so you can stop after any of them and keep a working game. What doesn't compress: CI runs, your look gates (one per wave), and the Mac's single perf slot.</p>
 </section>
 
 <section>
   <div class="col"><h2>Decisions for you</h2>
-  <p>Every one has a recommended answer. "Yes to all" is a fine reply. 3 and 11 are replaced by 17 and 18; 28 and 29 are new.</p></div>
+  <p>Every one has a recommended answer. "Yes to all" is a fine reply. 3 and 11 are replaced by 17 and 18; 28 to 34 are new.</p></div>
   <div class="scroll"><table>
     <tr><th>#</th><th>Decision</th><th>Recommended</th><th>Why</th></tr>
     <tr><td class="no">1</td><td>Build armour as parts, glow, cloth and sound in vanilla's armour path, for all six tiers and the Frame</td><td><span class="yes">Yes</span></td><td>Every piece has a working precedent in the repo, no mixins, the proof shows the look</td></tr>
@@ -417,6 +437,11 @@ ul.plain li { margin-bottom: 6px; }
     <tr><td class="no">27</td><td><b>Order:</b> the defaults plus one house a rank first, you approve the sheet, then wave 2 and the Wardrobe beside light and motion</td><td><span class="yes">Yes</span></td><td>No wave is built on a look you have not seen</td></tr>
   <tr><td class="no">28</td><td><b>Adopt the lane rules and the overlap checker as a gate:</b> a set or garment that shares a plane or passes through another part cannot ship</td><td><span class="yes">Yes</span></td><td>The weapons have this gate; the armour needed it, and it is already written</td></tr>
     <tr><td class="no">29</td><td><b>Your approval sheet shows hips to boots, standing and mid-stride, for every set</b>, beside the full figures</td><td><span class="yes">Yes</span></td><td>The glitches were at the hips, legs and boots</td></tr>
+  <tr><td class="no">30</td><td><b>The trim-robe look is the Adept look at every rank</b>, coloured by the five Forces (a palette swap), with Hedgerobe (E) and Mothcap (D) added</td><td><span class="yes">Yes</span></td><td>One design, five colours, matched to the Forge's catalysts</td></tr>
+    <tr><td class="no">31</td><td><b>Ironhorn</b> is a D house (the Ember Tyrant's Part); the bandolier, horns and skull mask become garments</td><td><span class="yes">Yes</span></td><td>White steel is D's metal; the references become reusable clothes</td></tr>
+    <tr><td class="no">32</td><td><b>E's houses are picked by its three Parts:</b> bone, flint, quartz; the land houses become wave 2</td><td><span class="yes">Yes</span></td><td>Uses items that exist; two skeletons from one model</td></tr>
+    <tr><td class="no">33</td><td><b>The face always shows, and everything that sticks out is fastened</b>: two more checks in the gate</td><td><span class="yes">Yes</span></td><td>The two faults you found, now impossible to ship</td></tr>
+    <tr><td class="no">34</td><td><b>Robe colours follow the Force catalyst</b> in the Binding slot, and you wear the colours you have attuned</td><td><span class="yes">Yes</span></td><td>Ties armour to attunement, which weapons already use</td></tr>
   </table></div>
 </section>
 

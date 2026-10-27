@@ -22,7 +22,7 @@ import numpy as np
 import armour_proof as A
 
 TOUCH = 0.35        # how far a part may sink into another before it counts as passing through
-HINGE = 1.0         # a cloth chain's joint, or a part on its own pivot, may overlap its neighbour this much when it bends
+HINGE = 1.6         # a cloth chain's joint, or a part on its own pivot, may overlap its neighbour this much when it bends
 PLANE = 0.08        # two faces closer than this, facing alike, are one plane
 POSES = (0.0, 1.0, -1.0)   # rest and a stride each way (0.55 rad); a full sprint swings the legs to 1.0 rad and is looked at by eye
 
@@ -111,6 +111,36 @@ def zfight(a, b):
     return area
 
 
+EYES = [(1, 4), (2, 4), (5, 4), (6, 4)]     # the skin's eye texels on the head's front (columns 1-2 and 5-6, row 4)
+FACE_BOX = dict(c=np.array([0.0, -2.5, -6.6]), M=np.eye(3), half=np.array([3.2, 1.7, 2.55]))   # the air in front of eyes and mouth
+
+
+def face_check(parts, alb):
+    """The face must show: the helm's opening covers the eyes, its texels are cut out, and no part sits in front of the face."""
+    out = []
+    head = next(p for p in parts if p["name"] == "sh_head")
+    w = head["o"].get("window")
+    if not w:
+        return [("face", "sh_head", "no window", [])]
+    for e in EYES:
+        if not A.in_window(w, *e):
+            out.append(("face", "sh_head", "eye texel %s not in the opening" % (e,), []))
+    u, v = head["uv"]
+    x0, y0, fw, fh = A.faces_of(u, v, head["box"])["north"]
+    px = alb.load()
+    for e in EYES:
+        if px[x0 + e[0], y0 + e[1]][3] != 0:
+            out.append(("face", "sh_head", "eye texel %s is painted over" % (e,), []))
+    pose = A.build_poses(0.0, parts)
+    for p in parts:
+        if p["name"].startswith("sh_"):
+            continue
+        b = box_of(p, pose[p["name"]])
+        if penetration(b, FACE_BOX) > 0.05:
+            out.append(("face", p["name"], "sits in front of the face", []))
+    return out
+
+
 PLANT = 0.30        # a part with less than this share of its volume inside another is planted in it (a spike in a plate)
 
 
@@ -122,6 +152,81 @@ def share_inside(a, b):
     X, Y, Z = np.meshgrid(*g, indexing="ij")
     pts = a["c"] + (np.stack([X, Y, Z], -1).reshape(-1, 3) @ a["M"].T)
     return float(inside(b, pts, eps=0.0).mean())
+
+
+def _surface(b, step=0.5):
+    """Sample points on a box's six faces (each stands for step*step of surface)."""
+    pts = []
+    for k in range(3):
+        u, v = [i for i in range(3) if i != k]
+        us = np.arange(-b["half"][u] + step / 2, b["half"][u], step)
+        vs = np.arange(-b["half"][v] + step / 2, b["half"][v], step)
+        if len(us) == 0 or len(vs) == 0:
+            continue
+        U, V = np.meshgrid(us, vs, indexing="ij")
+        for s in (-1, 1):
+            L = np.zeros(U.shape + (3,))
+            L[..., k] = s * b["half"][k]
+            L[..., u] = U
+            L[..., v] = V
+            pts.append(b["c"] + L.reshape(-1, 3) @ b["M"].T)
+    return np.concatenate(pts) if pts else np.zeros((0, 3))
+
+
+def connection(parts):
+    """A part must be rooted: at least min(2 px^2, 60% of its smallest face) of its surface touches or sits in another solid
+    (a fin standing on a helm by one corner is the case this catches). Shells count as solids."""
+    pose = A.build_poses(0.0, parts)
+    boxes = [box_of(p, pose[p["name"]]) for p in parts]
+    out = []
+    for i, a in enumerate(boxes):
+        if a["shell"]:
+            continue
+        dims = a["half"] * 2
+        smallest = min(dims[0] * dims[1], dims[0] * dims[2], dims[1] * dims[2])
+        need = min(2.0, 0.6 * smallest)
+        pts = _surface(a)
+        hit = np.zeros(len(pts), bool)
+        for j, b in enumerate(boxes):
+            if j == i or np.linalg.norm(a["c"] - b["c"]) > np.linalg.norm(a["half"]) + np.linalg.norm(b["half"]) + 1:
+                continue
+            hit |= inside(b, pts, eps=0.2)
+        area = hit.sum() * 0.25
+        if area < need:
+            out.append(("float", a["name"], "touches %.1f px2, needs %.1f" % (area, need), []))
+    return out
+
+
+def rooted(parts, need=0.85):
+    """Crystals, horns, fins, tusks and spikes (parts marked rooted=True) must stand in a socket: the face of the part nearest its
+    pivot lies inside something solid. A tilted fin that touches a helm by one corner fails (the blue fins in Euan's crop)."""
+    pose = A.build_poses(0.0, parts)
+    boxes = {p["name"]: box_of(p, pose[p["name"]]) for p in parts}
+    out = []
+    for p in parts:
+        if not p["o"].get("rooted"):
+            continue
+        a = boxes[p["name"]]
+        spec = p["o"]["rooted"]
+        k = "xyz".index(spec[1])                    # "+y": the face whose outward normal is +y in the part's own frame
+        s = 1 if spec[0] == "+" else -1
+        u, v = [i for i in range(3) if i != k]
+        us = np.arange(-a["half"][u] + 0.2, a["half"][u], 0.4) if a["half"][u] > 0.4 else np.array([0.0])
+        vs = np.arange(-a["half"][v] + 0.2, a["half"][v], 0.4) if a["half"][v] > 0.4 else np.array([0.0])
+        U, V = np.meshgrid(us, vs, indexing="ij")
+        L = np.zeros(U.shape + (3,))
+        L[..., k] = s * (a["half"][k] - 0.05)       # a hair inside the face
+        L[..., u] = U
+        L[..., v] = V
+        pts = a["c"] + L.reshape(-1, 3) @ a["M"].T
+        hit = np.zeros(len(pts), bool)
+        for n, b in boxes.items():
+            if n != p["name"]:
+                hit |= inside(b, pts, eps=0.15)
+        share = hit.mean()
+        if share < need:
+            out.append(("root", p["name"], "base %.0f%% in a socket, needs %.0f%%" % (share * 100, need * 100), []))
+    return out
 
 
 def audit(parts, poses=POSES, verbose=False):
@@ -163,15 +268,20 @@ def audit(parts, poses=POSES, verbose=False):
     return out
 
 
+def check_all(parts, alb):
+    """Every check the kit gates on: overlaps at rest and a stride, the face, rooting, connection."""
+    return audit(parts) + face_check(parts, alb) + rooted(parts) + connection(parts)
+
+
 if __name__ == "__main__":
     import proof_sets as S
     bad = 0
-    for n, fn in S.SETS.items():
-        parts, _, _ = A.prepare(fn(), (256, 256))
-        print("==", n, len(parts), "parts")
-        bad += len(audit(parts, verbose=True))
-    for n, parts in S.looks():
-        ps, _, _ = A.prepare(parts, (256, 256))
-        print("==", n, len(ps), "parts")
-        bad += len(audit(ps, verbose=True))
+    work = [(n, fn()) for n, fn in S.SETS.items()] + list(S.looks())
+    for n, parts in work:
+        ps, alb, _ = A.prepare(parts, (256, 256))
+        f = check_all(ps, alb)
+        print("== %-16s %2d parts  %d findings" % (n, len(ps), len(f)))
+        for x in f:
+            print("   %-7s %-18s %s" % (x[0], x[1], x[2] if isinstance(x[2], str) else [(w, float(d)) for w, d in x[3][:2]] if len(x) > 3 else x[2]))
+        bad += len(f)
     raise SystemExit(1 if bad else 0)

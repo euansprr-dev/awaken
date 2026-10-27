@@ -23,10 +23,10 @@ stats. Nothing in `SetBonus`, any recipe or any stat changes. It stays in vanill
 Sodium, other mods' poses and our own animations. About 14 to 18 builder hours at this project's pace (section 6.4).
 
 **Revision, same day.** Euan: "I don't only want one set per rank, I want more variations, cool clothes, and really get creative so you have
-options. This is a good start but let's expand on the plan more." Part C (sections 12 to 15) answers it: **Houses** (24 sets at launch, up to about
+options. This is a good start but let's expand on the plan more." Part C (sections 12 to 15) answers it: **Houses** (25 sets at launch, up to about
 34 as data, each one a named hunt: the Part you spend picks the look), **a Wardrobe** (six slots of garments, three looks per piece including an
 off-duty look, a Tailor, a stowed weapon) and **a second proof** (`houses_D.png`, `garments.png`). Sections 1 to 11 stand; where Part C changes
-one, it says so (Decision 3 is replaced by 17, the build estimate by 15.3). **Part D** (sections 17 to 21, after his second reply: "a lot looks glitchy... I want it clean") adds the overlap checker, the lane rules and Decisions 28 and 29; the sets in the renders are the clean versions.
+one, it says so (Decision 3 is replaced by 17, the build estimate by 15.3). **Part E** (sections 24 to 29, after his third reply: three more styles, "where did the eyes go", fins that touch only at a corner) adds the Force robes, Ironhorn, the skeleton houses, a face check and a rooting check, and Decisions 30 to 34. **Part D** (sections 17 to 21, after his second reply: "a lot looks glitchy... I want it clean") adds the overlap checker, the lane rules and Decisions 28 and 29; the sets in the renders are the clean versions.
 
 ## Part A. The weapons review (what Arms did, and what the armour must speak)
 
@@ -587,20 +587,21 @@ the tier's, unchanged. What changes is the **Part**:
   share the shell, so they mix cleanly.
 - An item without the component renders the default house. No save is touched, no item id changes.
 
-### 12.3 The roster: 24 sets at launch, about 34 as data
+### 12.3 The roster: 25 sets at launch, about 34 as data
 
-Six defaults (the sets of section 4.3) plus three houses a rank. The look column is a design brief for the builder, to be drawn to the style sheet and
+Six defaults (the sets of section 4.3) plus three houses a rank (four at D). **Revised by Part E:** the E houses are now picked by E's three real Parts (bone, flint, quartz); the land houses (Mossrunner, Dunewrap, Frostfur) move to wave 2; D gains Ironhorn. The look column is a design brief for the builder, to be drawn to the style sheet and
 reviewed on a sheet before it is wired. All names are proposals for Euan to rename.
 
 | Rank | House (the Part that picks it) | The look | Reacts to | Glow and motion |
 |---|---|---|---|---|
 | **E** | *Wildhide* (any Part): the default | hooded hide kit with a lantern | Hunter's Sense | amber lantern |
-| | **Mossrunner** (Greenwild: moss, Gloomstalker leather) | a mossy hooded cloak, herb pouches, a lantern of lumen moths | dodge | moths orbit the lantern; the cloak flares |
-| | **Dunewrap** (Sunscorch: Dune Ray membrane, Glass Scarab quartz) | veils and wraps, a long sash, glass beads | dodge | beads glint; the sash flutters |
-| | **Frostfur** (Frostwild: Frost Stag leather, feathers, Wisp Hound bone) | a fur mantle, a feather cord, bone toggles | guard | breath mist; fur sways |
+| | **Bonewright** (bone) | white skeleton armour: a skull whose eye sockets are the opening, a rib cuirass, scapula pauldrons, hanging bone plates | guard | none (E has no glow but the lantern); the plates settle with a dry clack |
+| | **Flintguard** (flint) | the same skeleton in black flint, with flaked grey edges | guard | none; a harder, higher clink |
+| | **Hedgerobe** (quartz) | a trimmed hooded robe in a Force colour, bone-white trim | dodge | the trim catches the light |
 | **D** | *Beastbound* (any Part): the default | studded leather and bronze, trophy trims | Cornered | ember eyes |
 | | **Briarguard** (Briar Tusk) | a boar-skull helm with swept tusks, a rib cuirass, tusk pauldrons, a thorn spine | guard | pollen-green eyes; thorns bloom on a deflect |
 | | **Wyrmscale** (Wyrm Scale) | overlapping sand scales, glass fins, a three-link tail | dodge | teal glass; the tail whips and the fins flare |
+| | **Ironhorn** (Tyrant's Crown, Molten Core) | white steel, a horned helm with ember tips, a leather bandolier, belt and pouch | guard | the horn tips smoulder; the plates ring on a deflect |
 | | **Antlerhold** (Antler Tine) | a branching antler crown, a frost-fur mantle, a bell | Art | tine tips light; the bell rings on landing |
 | **C** | *Gatewrought* (any Part): the default | gate-slate plate, brass, signal runes | primed strike | runes pulse up the body |
 | | **Gearwright** (Colossus Gear, Mainspring) | brass clockwork plate, gear pauldrons, steam vents | guard | small gears turn; vents puff on a deflect |
@@ -620,11 +621,11 @@ reviewed on a sheet before it is wired. All names are proposals for Euan to rena
 | | **Nightshroud** (Regent's Shadow, Silence Ear, Sleep Feather) | a star-field cloak, ragged void edges | dodge | the cloak turns to shadow and leaves an afterimage |
 
 **More, as data, any time** (a house is a spec file and its textures, like a weapon batch, which suits the live-updates dream in
-`multiplayer-ambition`): D: Tollguard (Bell Warden), Sporeweave (Mother of Spores), Emberplate (Ember Tyrant), Hivecarapace (Hive Regent), Heartwood
+`multiplayer-ambition`): E (land houses, need land drops): Mossrunner (Greenwild), Dunewrap (Sunscorch), Frostfur (Frostwild); D: Tollguard (Bell Warden), Mothcap (Mother of Spores, a Force robe in mushroom colours), Hivecarapace (Hive Regent), Heartwood
 (Root Saint); C: Serpentskin (Glass Serpent); B: Dreamshroud (the Sleeper); A: Moonscale (the Drowned Moon); S: Hungerfang, Rootcrown, Ashcrown,
 Seedbearer, Mirrorheart. That is about 34 houses beyond the defaults without inventing a new creature.
 
-**Not yet true (UNVERIFIED):** E has only three generic Parts (bone, flint, quartz), so the three E houses need land-native items. Greenwild (moss,
+**Resolved by Part E (was UNVERIFIED):** E has only three Parts (bone, flint, quartz), and each now picks a house, so no land-native item is needed for launch. The land houses stay a second wave that would need them. The old note, kept for wave 2: E has only three generic Parts, so the three land houses need land-native items. Greenwild (moss,
 Gloomstalker leather), Sunscorch (Dune Ray membrane, Glass Scarab quartz) and Frostwild (Frost Stag leather, Frostfinch feathers, Wisp Hound bone) already
 drop things, but several of them are vanilla items (leather, string) that any land can give. The first builder checks which are land-unique and adds up to
 three small land drops (a Greenwild pelt, a Sunscorch membrane, a Frostwild fur) under the regions plan's "the land owns the hide" rule.
@@ -818,7 +819,7 @@ about 8 to 10 h, 48 garments 4 to 6 h, the Tailor, page and unlocks 3 to 4 h.
 
 ### 15.4 Risks specific to Part C
 
-- **Taste at scale.** 24 sets is a lot of look to approve: Look 1 is twelve sets, then one sheet per batch, so no wave is built on an unseen look.
+- **Taste at scale.** 25 sets is a lot of look to approve: Look 1 is twelve sets, then one sheet per batch, so no wave is built on an unseen look.
 - **E has no unique Parts** (12.3): three small drops may be needed under the regions plan.
 - **Cost of garments on top of houses.** Budgeted (worst worn 72 cubes, 864 triangles; the heaviest look so far is 43) and tested with the stand bench; garments hide with distance.
 - **The stowed weapon** may not draw through a layer (13.4), with a fallback.
@@ -829,7 +830,7 @@ about 8 to 10 h, 48 garments 4 to 6 h, the Tailor, page and unlocks 3 to 4 h.
 
 | # | Decision | Recommended | Why |
 |---|---|---|---|
-| 17 | **Houses:** the six defaults plus three houses a rank at launch (24 sets), and every other Lord, beast and Court Part becomes a house later as data (about 34) | **Yes** | answers "more than one set per rank" with content the game already has; each house is a named hunt |
+| 17 | **Houses:** the six defaults plus three houses a rank (four at D) at launch (25 sets), and every other Lord, beast and Court Part becomes a house later as data (about 34) | **Yes** | answers "more than one set per rank" with content the game already has; each house is a named hunt |
 | 18 | **The Part you spend picks the house** (a recipe stamps `awaken:house`); the default recipe keeps accepting any Part, so nobody is locked out and no tier needs a second trophy | **Yes** | choice without grind; no new crafting screen; fits the arms and regions plans |
 | 19 | Houses are **look and reaction only at launch** (the tier's numbers; a mixed set still counts); sidegrade bonuses of equal worth only after a sim row | **Yes (no sidegrades now)** | keeps the sim, the difficulty stance and the tests intact |
 | 20 | Houses **react to your verbs** (Hold, Slip, Cast: six houses each) | **Yes** | real "uses" with no new numbers; every playstyle has gear that answers it |
@@ -954,7 +955,106 @@ Tests added (one per mechanism): `gear_parts_clean` (every set and look: no zfig
 | 28 | Adopt **the lane rules and the overlap checker as a gate**: a set or garment that shares a plane or passes through another part cannot ship | **Yes** | the weapons have this gate; the armour needed it, and it is already written |
 | 29 | **Look 1 shows the lower body at rest and mid-stride for every set**, beside the full figures | **Yes** | the glitches were at the hips, legs and boots; the sheet should look where the problems are |
 
-## 22. Not verified, and left out on purpose (all parts)
+---------------------------------------------------------------------------------------------------------------------
+
+## Part E. Three more styles, and two faults (added after Euan's third reply)
+
+> "There are 3 more styles I really like to get inspired by if we can find place for them. Also a few things: Where [have] the eyes gone for
+> the husk one? The blue things here don't connect well with the head, only their corners are connected." (2026-10-27, with three reference
+> images and two crops)
+
+## 24. The two faults (MEASURED), fixed and gated
+
+**The eyes.** The brown set is Briarguard. The face opening in the helm was cut by the cloth and plate painters only (`silk` and `plate` honoured it); the fur,
+scale and studded shells never cut it, so Briarguard, Antlerhold and Wyrmscale covered the face. In the clean pass I had also taken out Briarguard's green
+"eyes", which were the only sign of a face. The opening is now cut by the kit for every material, and a new **face check** (`audit.py face_check`) fails a set
+when: an eye texel of the skin (columns 1-2 and 5-6, row 4) is not inside the opening; the opening's texels are painted over; or any part sits in the air in
+front of the eyes and mouth. All nine sets and four looks pass. (Rule 11, 25.)
+
+**The fins.** The Wyrmscale's blue crystals were tilted boxes standing on the cap by an edge. My overlap checker looked for boxes passing through each other and
+never asked whether a part was fastened to anything, so a floating part passed. Two new checks:
+- **Rooted** (`rooted`): a crystal, horn, fin, tusk, spike or gem names its base face, and at least 85% of that face must lie inside a solid. First run on the sets as they
+  stood, 26 such parts failed (Wyrmscale 13, Briarguard 8, Veilwoven 5): the fins and tail, the tusks (which also hung in front of the mouth), the thorn crest, the gems.
+- **Connected** (`connection`): every part must touch or sit in something for at least min(2 px², 60% of its smallest face).
+
+The fix is the same idea in every case: **a setting**. The Wyrmscale's three crystals now grow out of a brass crown mount along the ridge of the cap, the dorsal fin
+out of a back mount, the tail out of a mount under the sash, and each chain link is embedded 0.6 px in the one above; Briarguard's tusks grow from the corners of
+the brow, outside the face; the Antlerhold's beams are set 0.6 px into the cap. This is the weapon style's rule for stones ("stones stand in frames and stand proud
+of what holds them", `weapon-style.md` rule 2) applied to everything that sticks out.
+
+## 25. The rules added (they join 4.1 and 18)
+
+11. **The face always shows.** Eyes and mouth are never covered; headgear opens round them, and a mask's eye sockets are the opening (a skull helm shows your own
+    eyes in its sockets). Checked.
+12. **Everything is fastened.** Every crystal, horn, fin, tusk, spike and gem stands in a setting or a plate it grows from, its base inside it, never on a corner or an
+    edge; every part touches something. Checked.
+13. **A robe is colour fields and trim.** Large flat colour, one trim colour used for the border, stripes and bands; painted, not modelled; the shell does the work (the
+    robe is 21 boxes, the lightest set).
+14. **A skeleton is bone on marrow.** Bone plates and ribs on a darker marrow base; the skull is painted on the helm's front with the sockets cut out.
+
+## 26. The three styles, placed
+
+**1. Trimmed robes in five colours = the Adept line, coloured by the five Forces.** The reference (a hooded robe in purple, red, black, olive and lilac with gold trim
+round the hood, two stripes down the front, cuff bands) is the look the cloth sets were missing. The game already has five Forces (Heat, Frost, Charge, Gravity, Spirit),
+five Force catalysts at the Forge (Sunshard, Frostspar, Copper Ingot, Fault Seam, Deepglass Shard; SPEC §25 "The Forge") and weapons attuned to a Force. So:
+- **The robe colour follows a Force:** Heat red, Gravity purple, Frost lilac, Charge black with gold, Spirit olive (the reference's five). Which one you get is picked by
+  the catalyst you put in the Binding slot; no catalyst, a plain undyed cloth. It is one design and a palette swap, so five colours cost one set of art (the proof shows
+  all five from the same 21 boxes). At night the trim carries a glow in the Force's colour (as in `closeup_robe.png`).
+- **It is the Adept look at every rank.** The adept houses already planned (Inkbound at C, Rimeprayer at B, Haloweave at A, the Veilwoven and Sovereign defaults) adopt
+  this trim-robe language; two new robe houses fill the ranks that had none: **Hedgerobe** (E, picked by quartz) and **Mothcap** (D, picked by the Mother of Spores' Part,
+  mushroom colours; wave 2). The trim is the rank's metal: bone at E, bronze at D, brass at C, silver at B, gold at A, gold and crimson at S.
+- Wardrobe tie: you unlock robe colours you have attuned (Decision 34); the Appearance page can wear any you own.
+
+**2. Horned steel with a bandolier = Ironhorn, a D house.** White steel is literally D's metal (iron), and the horned crown fits the Ember Tyrant (its Tyrant's Crown and
+Molten Core are in D's Part list). White steel plate, a horned helm whose horn tips smoulder ember, three-lame pauldrons, a leather belt and pouch, and the diagonal leather
+strap across the chest. The **bandolier is also a garment** (Waist and chest slot) for any set, and so are **horns** as a headwear piece. (The first proof tried a bandolier on
+Gatewrought and it read as clutter; it is placed properly here, in front of the breastplate, 0.9 px proud, in its own band.)
+
+**3. Skeleton armour in white and black = two E houses picked by E's own Parts.** E's recipe takes bone, flint or quartz. **Bone makes Bonewright** (white skeleton armour:
+a skull whose eye sockets are the helm's opening, a rib cuirass over a marrow base, scapula pauldrons, a pelvis, hanging bone plates) and **flint (which is black) makes
+Flintguard**, the black skeleton, the same geometry in a flint palette (a second palette, not a second model). **Quartz makes Hedgerobe.** This also resolves the open
+question about E (12.3): no land-native drop is needed, because E's three Parts are real and distinct. A **skull mask** is a head garment for any set.
+
+## 27. The proof (MEASURED)
+
+`renders/robes.png` (five colours, front and three-quarter), `renders/inspired.png` (Ironhorn, Bonewright, Flintguard: front, three-quarter, back, night) and the close-ups.
+All pass every check.
+
+| Set | Cubes | Triangles | Findings |
+|---|---|---|---|
+| Force robe (one colour; five from the same boxes) | 21 | 252 | 0 |
+| Ironhorn | 44 | 528 | 0 |
+| Bonewright | 33 | 396 | 0 |
+| Flintguard | 33 | 396 | 0 |
+| The earlier five (Wyrmscale now 45: its mounts) | 35, 33, 43, 45, 41 | 420, 396, 516, 540, 492 | 0 |
+
+The checks are now: overlaps (zfight, cross, buried), the face, rooted bases, connection. The same limits as before: stills, no game, textures need Look 1, a sprint
+is looked at by eye. The robe's flat colour is easy to get wrong in the real shader; the proof's light is a stand-in.
+
+## 28. Failure register, tests, delivery
+
+| # | Case | Detection | Containment | Test |
+|---|---|---|---|---|
+| 31 | a helm covers the face | `face_check`: eye texels in the opening, transparent, nothing in front | the spec is refused | `gear_face_visible` |
+| 32 | a crystal, horn, fin, tusk or gem floats or stands on a corner | `rooted` and `connection` | the spec is refused | `gear_parts_rooted` |
+| 33 | a Force colour is missing from a robe | the palette table lists the five; a house with a robe look must list them | the plain colour renders | `gear_robe_colours` |
+| 34 | a catalyst picks a colour the player has not unlocked | the server checks the unlock on apply | the plain colour | `gear_wardrobe_apply` |
+
+Effort: the robe and bone painters and the four sets are written (the proof); a builder reuses them. About **+2 builder hours** over Part D's total: Phase 0 gets the
+two painters and two checks (+0.5 h), House wave 1 swaps its E trio (no change), wave 2 gains Ironhorn, Mothcap and the second-wave land houses (+1 h), the Wardrobe gains
+four garments (bandolier, horns, skull mask, epaulettes: +0.5 h). **New total about 33 to 43 builder hours**, still shippable in waves.
+
+## 29. Decisions added by Part E
+
+| # | Decision | Recommended | Why |
+|---|---|---|---|
+| 30 | **The trim-robe language is the Adept look at every rank**, coloured by the five Forces (a palette swap), with **Hedgerobe** (E, quartz) and **Mothcap** (D) added | **Yes** | one design, five colours, matched to the Forge's catalysts; the lightest set to draw |
+| 31 | **Ironhorn** is a D house (the Ember Tyrant's Part); the **bandolier**, **horns** and **skull mask** are garments | **Yes** | white steel is D's metal; the references become reusable clothes |
+| 32 | **The E houses are picked by E's three Parts:** bone is **Bonewright** (white), flint is **Flintguard** (black), quartz is **Hedgerobe**; the land houses become wave 2 | **Yes** | uses items that exist; the two skeletons are one model in two palettes |
+| 33 | **The face always shows, and everything that sticks out is fastened**: two more checks in the gate | **Yes** | the two faults you found, now impossible to ship |
+| 34 | **Robe colours follow the Force catalyst in the Binding slot**, and you wear the colours you have attuned | **Yes** | ties armour to attunement, which the weapons already use |
+
+## 30. Not verified, and left out on purpose (all parts)
 
 - UNVERIFIED (Part C): which E items are land-unique (12.3); whether a render layer can draw the stowed weapon (13.4); that the Wyrmscale and Antlerhold painters (scale, fur) are still rough.
 - UNVERIFIED: Lens bloom on the emissive pass; the cost of a 256x128 armour atlas; how the Frame's client code draws its modules today; how
@@ -963,6 +1063,6 @@ Tests added (one per mechanism): `gear_parts_clean` (every set and look: no zfig
 - Not built, not run: no Java, no client, no tour, no gate. The proof is a still.
 - Left out: new stats or bonuses, mobs wearing sets, a cloak slot, vertex physics, weather-wet cloth, Marked armour, armour for animals.
 
-## 23. Files
+## 31. Files
 
 `docs/armour/PLAN.md` (this); `docs/armour/proof/` (`armour_proof.py` the engine, `proof_sets.py` the sets, `audit.py` the checker, `render_all.py` the driver, `renders/*.png`); `docs/armour/page.src.html`, `build_page.py` and `page.html` (the approval page).

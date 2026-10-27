@@ -107,16 +107,16 @@ def veilwoven():
         part("hood_back", "head", (-5.5, -8.5, 4.5, 11, 8, 2), "silk", base=3, fold=4),
         part("hood_side_r", "head", (-7, -8.5, -5.5, 2, 8, 10), "silk", base=3, fold=3, hem="silver", hem_rows=1),
         part("hood_brim", "head", (-5, -8.5, -7, 10, 3, 2), "silk", base=4, hem="silver", hem_rows=1),
-        part("peak_1", "head", (-2, -4, -2, 4, 4, 4), "silk", pose=(0, -10.5, 3.5, -0.5, 0, 0), swing=-0.15, base=3),
-        part("peak_2", "peak_1", (-1.5, -4, -1.5, 3, 4, 3), "silk", pose=(0, -4, 0, -0.7, 0, 0), swing=-0.3, base=4),
-        part("brow_gem", "head", (-1, -7.8, -8, 2, 2, 1), "glass"),
+        part("peak_1", "head", (-2, -4, -2, 4, 4, 4), "silk", pose=(0, -9.9, 3.5, -0.3, 0, 0), swing=-0.1, base=3, rooted="+y"),
+        part("peak_2", "peak_1", (-1.5, -4, -1.5, 3, 4, 3), "silk", pose=(0, -3.4, 0, -0.5, 0, 0), swing=-0.2, base=4, rooted="+y"),
+        part("brow_gem", "head", (-1, -7.8, -7.9, 2, 2, 1), "glass", rooted="+z"),
     ]
     s += hood + twins([hood[2]], ["hood_side_r"])
     s += [
         part("mantle_1", "body", (-8.5, 0.2, -4.0, 17, 2, 8), "silk", base=4),
         part("mantle_2", "body", (-9.45, 2.2, -4.6, 18.9, 2, 9.2), "silk", base=3, hem="silver", hem_rows=1),
         part("clasp", "body", (-1.2, 2.5, -5.6, 2.4, 2.4, 1), "plate", base=4),
-        part("clasp_gem", "body", (-0.5, 3.1, -6.5, 1, 1.2, 0.9), "glass", ramp="rose"),
+        part("clasp_gem", "body", (-0.5, 3.1, -6.5, 1, 1.2, 0.9), "glass", ramp="rose", rooted="+z"),
         part("tabard", "body", (-3.5, 0, 0, 7, 7.8, 1), "silk", pose=(0, 5.0, -4.6, 0, 0, 0), swing=-0.05, base=4, hem="silver", hem_rows=2,
              thread=A.thread_diamond),
         part("belt", "body", (-3.0, 8.7, -3.5, 6.0, 2.4, 7), "silk", base=1, bevel=True),
@@ -126,7 +126,7 @@ def veilwoven():
         part("cape_b", "cape_a", (-4.5, 0, 0, 9, 7, 1), "silk", pose=(0, 7, 0, 0.1, 0, 0), swing=0.5, base=3, fold=3, hem="silver", hem_rows=2),
     ]
     arm = [arm_cuff("plate", "silver", base=3, rivet=True),
-           part("cuff_gem_r", "right_arm", (-5.6, 7.6, -1, 1.1, 1.6, 2), "glass")]
+           part("cuff_gem_r", "right_arm", (-5.6, 7.6, -1, 1.1, 1.6, 2), "glass", rooted="+x")]
     s += pair(arm, ["cuff_r", "cuff_gem_r"])
     s += legs_all(leg_panel("silk", "silk", base=3, fold=3, hem="silver", hem_rows=1, contact=True),
                   boot=leg_boot("silk", "silk", "plate", "silver", {"base": 4, "hem": "silver", "hem_rows": 1}, {"base": 4}))
@@ -151,7 +151,7 @@ def gatewrought(helm=True, back=True):
         head = [
             part("helm_crown", "head", (-5.5, -10, -5.5, 11, 2, 11), "plate", base=3, **S),
             part("helm_brow", "head", (-5, -8, -6.5, 10, 3, 1.5), "plate", base=3, trim="brass", rune=A.rune_bar, glowc="signal", **S),
-            part("crest", "head", (-0.5, -14, -5.5, 1, 4, 11), "plate", ramp="brass", base=4),
+            part("crest", "head", (-0.5, -14, -5.5, 1, 4, 11), "plate", ramp="brass", base=4, rooted="+y"),
         ]
         s += head
     s += [
@@ -191,10 +191,10 @@ def briarguard():
     head = [
         part("skull_cap", "head", (-5.5, -10, -5.5, 11, 2.5, 11), "plate", ramp="bone", base=3),
         part("brow", "head", (-5, -7.5, -6.7, 10, 1.8, 1.7), "plate", ramp="bone", base=4),
-        part("tusk_r", "head", (-0.7, -0.7, -3.2, 1.4, 1.4, 3.2), "plate", ramp="bone", base=4, pose=(-3.4, -2.2, -5.4, 0.45, 0, 0)),
-        part("tusk_r2", "tusk_r", (-0.5, -0.5, -3, 1, 1, 3), "plate", ramp="bone", base=5, pose=(0, 0, -3.1, -0.85, 0, 0)),
-        part("thorn_crest", "head", (-0.5, -13, -3, 1, 3, 6), "plate", ramp="thorn", base=4, pose=(0, -10, 0, 0, 0, 0)),
-        part("pollen_bud", "head", (-0.6, -14.2, -0.6, 1.2, 1.4, 1.2), "glass", ramp="pollen"),
+        part("tusk_r", "head", (-0.7, -0.7, -3.2, 1.4, 1.4, 3.2), "plate", ramp="bone", base=4, pose=(-4.1, -6.6, -5.6, 0.5, 0, 0), rooted="+z"),
+        part("tusk_r2", "tusk_r", (-0.5, -0.5, -3, 1, 1, 3), "plate", ramp="bone", base=5, pose=(0, 0, -2.6, -0.9, 0, 0), rooted="+z"),
+        part("thorn_crest", "head", (-0.5, -3, -3, 1, 3, 6), "plate", ramp="thorn", base=4, pose=(0, -9.6, 0, 0, 0, 0), rooted="+y"),
+        part("pollen_bud", "head", (-0.6, -1.4, -0.6, 1.2, 1.4, 1.2), "glass", ramp="pollen", pose=(0, -12.3, 0, 0, 0, 0), rooted="+y"),
     ]
     s += head + twins(head[2:4], ["tusk_r", "tusk_r2"], {"tusk_r": "tusk_l", "tusk_r2": "tusk_l2"})
     s += [
@@ -207,8 +207,8 @@ def briarguard():
         part("pelt", "body", (-4.5, 0, 0, 9, 7.8, 1.4), "hide", ramp="pelt", fringe=True, pose=(0, 1.0, 3.4, 0.05, 0, 0), swing=0.5, base=3),
     ]
     arm = pauldron("plate", "leather", n=2) + [
-        part("shoulder_tusk_r", "right_arm", (-0.8, -5, -0.8, 1.6, 5, 1.6), "plate", ramp="bone", base=4, pose=(-2.4, -4.8, 0, 0, 0, -0.45)),
-        part("shoulder_tusk_r2", "shoulder_tusk_r", (-0.6, -3.5, -0.6, 1.2, 3.5, 1.2), "plate", ramp="bone", base=5, pose=(0, -5, 0, 0, 0, 0.6)),
+        part("shoulder_tusk_r", "right_arm", (-0.8, -5, -0.8, 1.6, 5, 1.6), "plate", ramp="bone", base=4, pose=(-2.4, -4.1, 0, 0, 0, -0.35), rooted="+y"),
+        part("shoulder_tusk_r2", "shoulder_tusk_r", (-0.6, -3.5, -0.6, 1.2, 3.5, 1.2), "plate", ramp="bone", base=5, pose=(0, -4.4, 0, 0, 0, 0.5), rooted="+y"),
         part("vambrace_r", "right_arm", (-4.7, 4.0, -3.7, 6.4, 3.6, 7.4), "studded", ramp="leather", stud="bronze"),
         part("band_r", "right_arm", (-4.9, 7.6, -3.9, 6.6, 1.4, 7.8), "plate", ramp="bronze", base=4),
     ]
@@ -229,27 +229,31 @@ def wyrmscale():
     head = [
         part("helm_cap", "head", (-5.5, -10, -5.5, 11, 2.5, 11), "scale", ramp="sandscale", base=4, rim="amber"),
         part("helm_brow", "head", (-5, -7.5, -6.5, 10, 2, 1.5), "scale", ramp="sandscale", base=3, rim="amber"),
-        part("fin_c", "head", (-0.7, -6, -2.5, 1.4, 6, 4), "glass", ramp="deep", pose=(0, -10, 1, -0.5, 0, 0), swing=-0.1),
-        part("fin_r", "head", (-0.6, -5, -2, 1.2, 5, 3), "glass", ramp="deep", pose=(-4.0, -9.8, 1.5, -0.55, -0.35, -0.35), swing=-0.1),
+        # a setting along the ridge: the three crystals stand in it, not on a corner of the cap
+        part("crown_mount", "head", (-4.4, -11.7, -3.4, 8.8, 1.9, 6.8), "plate", ramp="brass", base=4),
+        part("fin_c", "head", (-0.7, -6, -2.0, 1.4, 6, 3.6), "glass", ramp="deep", pose=(0, -10.8, 0.4, -0.3, 0, 0), swing=-0.08, rooted="+y"),
+        part("fin_r", "head", (-0.6, -5, -1.5, 1.2, 5, 3.0), "glass", ramp="deep", pose=(-3.4, -10.8, 0.4, -0.3, 0, -0.32), swing=-0.08, rooted="+y"),
     ]
-    s += head + twins(head[3:], ["fin_r"], {"fin_r": "fin_l"})
+    s += head + twins(head[4:], ["fin_r"], {"fin_r": "fin_l"})
     s += [
         part("belly_1", "body", (-3.0, 1.0, -4.0, 6, 2, 1.0), "scale", ramp="sandscale", base=4, rim="amber"),
         part("belly_2", "body", (-3.0, 3.0, -4.3, 6, 2, 1.3), "scale", ramp="sandscale", base=3, rim="amber"),
         part("belly_3", "body", (-3.0, 5.0, -4.6, 6, 2, 1.6), "scale", ramp="sandscale", base=4, rim="amber"),
         part("belly_4", "body", (-3.0, 7.0, -4.9, 6, 2, 1.9), "scale", ramp="sandscale", base=3, rim="amber"),
         part("sash", "body", (-3.0, 9.3, -3.5, 6.0, 2.2, 7), "silk", ramp="sand", base=3, bevel=True),
-        part("sash_gem", "body", (-0.8, 9.6, -4.6, 1.6, 1.6, 0.9), "glass", ramp="deep"),
-        part("back_fin_1", "body", (-0.7, -5, -1.5, 1.4, 5, 3), "glass", ramp="deep", pose=(0, 3.2, 3.4, -0.6, 0, 0), swing=-0.05),
-        part("tail_1", "body", (-1.5, 0, -1.5, 3, 4.6, 3), "scale", ramp="sandscale", base=3, pose=(0, 11.6, 3.2, 0.5, 0, 0), swing=0.25),
-        part("tail_2", "tail_1", (-1.2, 0, -1.2, 2.4, 4.6, 2.4), "scale", ramp="sandscale", base=4, pose=(0, 4.6, 0, 0.45, 0, 0), swing=0.4, rim="amber"),
-        part("tail_3", "tail_2", (-0.9, 0, -0.9, 1.8, 3.8, 1.8), "scale", ramp="sandscale", base=3, pose=(0, 4.6, 0, 0.45, 0, 0), swing=0.5),
-        part("tail_barb", "tail_3", (-0.55, 0, -0.55, 1.1, 3.4, 1.1), "glass", ramp="deep", pose=(0, 3.8, 0, 0.3, 0, 0), swing=0.2),
+        part("sash_gem", "body", (-0.8, 9.6, -4.4, 1.6, 1.6, 0.9), "glass", ramp="deep", rooted="+z"),
+        part("dorsal_mount", "body", (-1.8, 2.4, 3.0, 3.6, 5.6, 1.6), "plate", ramp="brass", base=4),
+        part("back_fin_1", "body", (-0.7, -5, -0.8, 1.4, 5, 1.6), "glass", ramp="deep", pose=(0, 3.0, 3.8, -0.4, 0, 0), swing=-0.05, rooted="+y"),
+        part("tail_mount", "body", (-2.0, 10.6, 2.4, 4.0, 2.0, 2.6), "plate", ramp="brass", base=4),
+        part("tail_1", "body", (-1.3, 0, -1.1, 2.6, 4.6, 2.2), "scale", ramp="sandscale", base=3, pose=(0, 11.9, 3.7, 0.5, 0, 0), swing=0.25, rooted="-y"),
+        part("tail_2", "tail_1", (-1.1, 0, -1.0, 2.2, 4.6, 2.0), "scale", ramp="sandscale", base=4, pose=(0, 4.0, 0, 0.45, 0, 0), swing=0.4, rim="amber", rooted="-y"),
+        part("tail_3", "tail_2", (-0.9, 0, -0.9, 1.8, 3.8, 1.8), "scale", ramp="sandscale", base=3, pose=(0, 4.0, 0, 0.45, 0, 0), swing=0.5, rooted="-y"),
+        part("tail_barb", "tail_3", (-0.55, 0, -0.55, 1.1, 3.4, 1.1), "glass", ramp="deep", pose=(0, 3.2, 0, 0.3, 0, 0), swing=0.2, rooted="-y"),
     ]
     arm = pauldron("scale", "sandscale", n=2, rim="amber") + [
-        part("shoulder_fin_r", "right_arm", (-0.6, -6, -2, 1.2, 6, 4), "glass", ramp="deep", pose=(-2.8, -4.4, 1, -0.5, 0, -0.5), swing=-0.1),
+        part("shoulder_fin_r", "right_arm", (-0.6, -6, -1.4, 1.2, 6, 2.8), "glass", ramp="deep", pose=(-2.8, -4.1, 0.6, -0.3, 0, -0.3), swing=-0.05, rooted="+y"),
         part("bracer_r", "right_arm", (-4.7, 3.9, -3.7, 6.4, 3.2, 7.4), "scale", ramp="sandscale", base=3, rim="amber"),
-        part("bracer_gem_r", "right_arm", (-5.6, 4.7, -1, 1.1, 1.6, 2), "glass", ramp="deep"),
+        part("bracer_gem_r", "right_arm", (-5.6, 4.7, -1, 1.1, 1.6, 2), "glass", ramp="deep", rooted="+x"),
         part("wrap_r", "right_arm", (-4.7, 7.5, -3.7, 6.4, 2.7, 7.4), "silk", ramp="sand", base=3, fold=2),
     ]
     s += pair(arm, ["pauld_1_r", "pauld_2_r", "shoulder_fin_r", "bracer_r", "bracer_gem_r", "wrap_r"], {"shoulder_fin_r": "shoulder_fin_l"})
@@ -270,11 +274,11 @@ def antlerhold():
         part("hood_fur", "head", (-5.5, -10, -5.5, 11, 2.5, 11), "hide", ramp="frostfur", fringe=True, base=4),
         part("fur_brim", "head", (-5, -7.5, -6.6, 10, 2, 1.6), "hide", ramp="frostfur", fringe=True, base=5),
         part("hood_side_r", "head", (-6.6, -7.5, -4.6, 1.6, 7.5, 9.2), "hide", ramp="frostfur", fringe=True, base=3),
-        part("beam_r", "head", (-0.8, -7, -0.8, 1.6, 7, 1.6), "plate", ramp="bone", base=4, pose=(-3.2, -9.8, 0.5, -0.25, 0, -0.45)),
-        part("tine_r1", "beam_r", (-0.6, -5, -0.6, 1.2, 5, 1.2), "plate", ramp="bone", base=5, pose=(0, -3.5, 0, 0, 0, -0.7)),
-        part("tine_r2", "beam_r", (-0.6, -4, -0.6, 1.2, 4, 1.2), "plate", ramp="bone", base=4, pose=(0, -6.5, 0, -0.4, 0, 0.5)),
-        part("tip_r1", "tine_r1", (-0.5, -1.4, -0.5, 1, 1.4, 1), "glass", ramp="frostglow", pose=(0, -5, 0, 0, 0, 0)),
-        part("tip_r2", "tine_r2", (-0.5, -1.4, -0.5, 1, 1.4, 1), "glass", ramp="frostglow", pose=(0, -4, 0, 0, 0, 0)),
+        part("beam_r", "head", (-0.8, -7, -0.8, 1.6, 7, 1.6), "plate", ramp="bone", base=4, pose=(-3.2, -9.4, 0.5, -0.2, 0, -0.4), rooted="+y"),
+        part("tine_r1", "beam_r", (-0.5, -5, -0.5, 1.0, 5, 1.0), "plate", ramp="bone", base=5, pose=(0, -3.5, 0, 0, 0, -0.55), rooted="+y"),
+        part("tine_r2", "beam_r", (-0.5, -4, -0.5, 1.0, 4, 1.0), "plate", ramp="bone", base=4, pose=(0, -6.0, 0, -0.35, 0, 0.45), rooted="+y"),
+        part("tip_r1", "tine_r1", (-0.5, -1.4, -0.5, 1, 1.4, 1), "glass", ramp="frostglow", pose=(0, -4.4, 0, 0, 0, 0), rooted="+y"),
+        part("tip_r2", "tine_r2", (-0.5, -1.4, -0.5, 1, 1.4, 1), "glass", ramp="frostglow", pose=(0, -3.4, 0, 0, 0, 0), rooted="+y"),
     ]
     s += head + twins(head[2:], ["hood_side_r", "beam_r", "tine_r1", "tine_r2", "tip_r1", "tip_r2"],
                       {"hood_side_r": "hood_side_l", "beam_r": "beam_l", "tine_r1": "tine_l1", "tine_r2": "tine_l2", "tip_r1": "tip_l1", "tip_r2": "tip_l2"})
@@ -384,4 +388,129 @@ def looks():
     return [("Armed", armed), ("Travelling", travelling), ("Wayfarer", wayfarer), ("Off duty", off)]
 
 
-SETS = {"B Veilwoven": veilwoven, "C Gatewrought": gatewrought, "Briarguard": briarguard, "Wyrmscale": wyrmscale, "Antlerhold": antlerhold}
+# ---------------------------------------------------------------------------------------------------------------------
+# Three more styles (Euan's references, 2026-10-27): trimmed robes in five colours, horned steel with a bandolier, skeleton armour
+
+A.R.update({
+    "robe_red": ["#240808", "#4a1010", "#7a1c1c", "#b02a2a", "#d8433f", "#f07a6c"],
+    "robe_purple": ["#1c0f33", "#33195c", "#4d2488", "#6a35b3", "#8b53d6", "#b08af0"],
+    "robe_lilac": ["#3a3550", "#5a5278", "#8478a6", "#a99cc8", "#cbc0e2", "#ece6f6"],
+    "robe_black": ["#07070a", "#0e0e13", "#16161d", "#202029", "#2c2c38", "#3d3d4e"],
+    "robe_olive": ["#1d2113", "#343b1f", "#4f5a2c", "#6c7a3a", "#8c9c52", "#b2c47a"],
+    "ironleather": ["#1a0f08", "#2e1b0e", "#472b16", "#62401f", "#80592c", "#a07840"],
+})
+FORCE_ROBES = {"Heat": "robe_red", "Gravity": "robe_purple", "Frost": "robe_lilac", "Charge": "robe_black", "Spirit": "robe_olive"}
+
+
+def cantor(main="robe_purple", trim="gold", glowtrim=False):
+    """The trimmed robe: flat colour, a bold gold border round the hood's opening, two stripes down the front and on the skirt, bands
+    at the cuffs, small epaulettes. One design, five Force colours (a palette swap)."""
+    R = dict(ramp=main, trim=trim, glowtrim=glowtrim)
+    s = []
+    for p in shell_parts("robe", base=3, **R):
+        if p["name"] == "sh_head":
+            p["o"].update(window=(1, 6, 3, 7), frame=trim)
+        if p["name"] == "sh_body":
+            p["o"].update(stripes=(2, 5), stripe_from=1, back_stripes=(3, 4), hem=1)
+        if p["name"] in ("sh_arm_r", "sh_arm_l"):
+            p["o"].update(bands=[(8, 9)])
+        if p["name"] in ("sh_leg_r", "sh_leg_l"):
+            p["o"].update(stripes=(2,), back_stripes=(2,), hem=2, base=2)
+        s.append(p)
+    hood = [
+        part("hood_top", "head", (-5.5, -10.5, -5.5, 11, 2, 11), "robe", border=True, base=3, **R),
+        part("hood_back", "head", (-5.5, -8.5, 4.5, 11, 8, 2), "robe", border=True, base=3, **R),
+        part("hood_side_r", "head", (-7, -8.5, -5.5, 2, 5, 10), "robe", border=True, base=3, **R),
+        part("hood_brim", "head", (-5, -8.5, -7, 10, 3, 2), "robe", border=True, base=4, **R),
+    ]
+    s += hood + twins([hood[2]], ["hood_side_r"])
+    ep = [part("epaulette_r", "right_arm", (-5.4, -4.1, -2.4, 4.4, 1.5, 4.8), "robe", border=True, base=4, **R)]
+    s += pair(ep, ["epaulette_r"])
+    s += legs_all(leg_panel("robe", main, stripes=(2,), back_stripes=(2,), hem=1, base=3, trim=trim, glowtrim=glowtrim),
+                  boot=leg_boot("robe", main, "robe", main, {"base": 3, "border": True, "trim": trim}, {"base": 4, "border": True, "trim": trim}))
+    return s
+
+
+def ironhorn():
+    """D, the Ember Tyrant's crown: white steel, a horned helm, a leather bandolier and belt, a pouch at the back."""
+    ST, LE = dict(ramp="steel"), dict(ramp="ironleather")
+    s = []
+    for p in shell_parts("plate", ramp="steel", base=3):
+        if p["name"] == "sh_head":
+            p["o"].update(window=(1, 6, 3, 7))
+        if p["name"] in ("sh_leg_r", "sh_leg_l"):
+            p["o"].update(base=3)
+        s.append(p)
+    head = [
+        part("helm_cap", "head", (-5.5, -10, -5.5, 11, 2.5, 11), "plate", base=4, **ST),
+        part("helm_band", "head", (-5, -7.5, -6.5, 10, 1.6, 1.5), "plate", base=3, **ST),
+        part("horn_socket_r", "head", (-7.0, -9.6, -1.4, 1.8, 3.0, 2.8), "plate", base=4, rivet=True, **ST),
+        part("horn_1_r", "head", (-3.4, -0.8, -0.8, 3.4, 1.6, 1.6), "plate", base=5, pose=(-6.4, -8.1, 0, 0, 0, 0.3), rooted="+x", **ST),
+        part("horn_2_r", "horn_1_r", (-3.0, -0.7, -0.7, 3.0, 1.4, 1.4), "plate", base=5, pose=(-2.8, 0, 0, 0, 0, 0.55), rooted="+x", **ST),
+        part("horn_3_r", "horn_2_r", (-2.6, -0.6, -0.6, 2.6, 1.2, 1.2), "plate", base=5, pose=(-2.4, 0, 0, 0, 0, 0.6), rooted="+x", **ST),
+        part("horn_tip_r", "horn_3_r", (-1.2, -0.5, -0.5, 1.2, 1.0, 1.0), "glass", ramp="ember", pose=(-2.1, 0, 0, 0, 0, 0), rooted="+x"),
+    ]
+    s += head + twins(head[2:], ["horn_socket_r", "horn_1_r", "horn_2_r", "horn_3_r", "horn_tip_r"])
+    s += [
+        part("breast", "body", (-3, 2.7, -4.4, 6, 5.4, 1.4), "plate", base=3, rivet=True, **ST),
+        part("belt", "body", (-3.0, 8.6, -3.5, 6.0, 2.0, 7), "plate", base=3, **LE),
+        part("buckle", "body", (-1.3, 8.8, -4.3, 2.6, 1.6, 0.8), "plate", base=5, **ST),
+        part("strap", "body", (-0.9, 0, -0.45, 1.8, 9.2, 0.9), "plate", base=3, pose=(-2.4, 3.3, -4.85, 0, 0, -0.4), **LE),
+        part("pouch", "body", (-1.5, 0, 0, 3, 3, 1.8), "studded", pose=(-1.6, 10.0, 3.0, 0, 0, 0), stud="bronze", **LE),
+        part("back_plate", "body", (-3, 2.8, 3.2, 6, 5.8, 1.4), "plate", base=3, rivet=True, **ST),
+    ]
+    arm = pauldron("plate", "steel", n=3) + [
+        part("elbow_r", "right_arm", (-4.7, 3.8, -3.7, 6.4, 2.4, 7.4), "plate", base=4, rivet=True, **ST),
+        arm_cuff("plate", "ironleather", y0=6.9, h=3.3, base=3),
+    ]
+    s += pair(arm, ["pauld_1_r", "pauld_2_r", "pauld_3_r", "elbow_r", "cuff_r"])
+    s += legs_all([part("tasset_1_r", "right_leg", (-2.4, 0, 0, 4.1, 2.9, 0.8), "plate", base=3, pose=(0, 0.5, -3.4, 0, 0, 0), swing=-0.06, **ST),
+                   part("tasset_2_r", "right_leg", (-2.4, 0, 0, 4.1, 3.0, 1.1), "plate", base=4, pose=(0, 3.4, -3.7, 0, 0, 0), swing=-0.1, **ST)],
+                  knee=leg_knee("plate", "steel", base=4, rivet=True),
+                  boot=leg_boot("plate", "ironleather", "plate", "steel", {"base": 3}, {"base": 4}))
+    return s
+
+
+def bonewright(ramp="bone", marrow="cream"):
+    """E, skeleton armour: a skull whose eye sockets are the helm's opening (your own eyes show in them), a rib cuirass, scapula
+    pauldrons, a pelvis, hanging bone plates. Flintguard is the same set in flint, the black skeleton."""
+    B = dict(ramp=ramp, marrow=marrow)
+    s = []
+    for p in shell_parts("bone", base=3, **B):
+        if p["name"] == "sh_head":
+            p["o"].update(skull=True, window=[(1, 2, 4, 5), (5, 6, 4, 5)], base=4)
+        if p["name"] == "sh_body":
+            p["o"].update(ribs=True)
+        s.append(p)
+    head = [
+        part("skull_crown", "head", (-5.5, -10.2, -5.5, 11, 2.2, 11), "plate", base=4, **B),
+        part("skull_brow", "head", (-5, -8.0, -6.5, 10, 1.6, 1.5), "plate", base=4, **B),
+    ]
+    s += head
+    s += [
+        part("clavicle", "body", (-3.0, 1.9, -4.2, 6, 0.9, 1.2), "plate", base=4, **B),
+        part("rib_1", "body", (-3.0, 3.2, -4.2, 6, 1.0, 1.2), "plate", base=4, **B),
+        part("rib_2", "body", (-3.0, 5.0, -4.2, 6, 1.0, 1.2), "plate", base=4, **B),
+        part("rib_3", "body", (-3.0, 6.8, -4.2, 6, 1.0, 1.2), "plate", base=3, **B),
+        part("sternum", "body", (-0.6, 3.2, -5.0, 1.2, 4.6, 0.8), "plate", base=5, **B),
+        part("pelvis", "body", (-3.0, 8.8, -3.6, 6.0, 2.4, 7.2), "plate", base=3, **B),
+        part("spine", "body", (-0.7, 2.8, 3.1, 1.4, 6.0, 1.3), "plate", base=5, **B),
+    ]
+    arm = pauldron("plate", ramp, n=2) + [
+        part("elbow_r", "right_arm", (-4.7, 3.8, -3.7, 6.4, 2.4, 7.4), "plate", base=4, **B),
+        arm_cuff("plate", ramp, y0=6.9, h=3.3, base=3, ramp_=None) if False else arm_cuff("plate", ramp, y0=6.9, h=3.3, base=3),
+    ]
+    s += pair(arm, ["pauld_1_r", "pauld_2_r", "elbow_r", "cuff_r"])
+    s += legs_all([part("tasset_1_r", "right_leg", (-2.4, 0, 0, 4.1, 2.9, 0.8), "plate", ramp=ramp, base=4, pose=(0, 0.5, -3.4, 0, 0, 0), swing=-0.06),
+                   part("tasset_2_r", "right_leg", (-2.4, 0, 0, 4.1, 3.0, 1.1), "plate", ramp=ramp, base=3, pose=(0, 3.4, -3.7, 0, 0, 0), swing=-0.1)],
+                  knee=leg_knee("plate", ramp, base=5),
+                  boot=leg_boot("plate", ramp, "plate", ramp, {"base": 3}, {"base": 4}))
+    return s
+
+
+def flintguard():
+    return bonewright(ramp="flint", marrow="slate")
+
+
+SETS = {"B Veilwoven": veilwoven, "C Gatewrought": gatewrought, "Briarguard": briarguard, "Wyrmscale": wyrmscale, "Antlerhold": antlerhold,
+        "Force robe": cantor, "Ironhorn": ironhorn, "Bonewright": bonewright, "Flintguard": flintguard}

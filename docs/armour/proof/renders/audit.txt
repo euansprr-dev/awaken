@@ -1,8 +1,12 @@
 B Veilwoven      35 cubes  420 triangles  0 findings
 C Gatewrought    33 cubes  396 triangles  0 findings
 Briarguard       43 cubes  516 triangles  0 findings
-Wyrmscale        42 cubes  504 triangles  0 findings
+Wyrmscale        45 cubes  540 triangles  0 findings
 Antlerhold       41 cubes  492 triangles  0 findings
+Force robe       21 cubes  252 triangles  0 findings
+Ironhorn         44 cubes  528 triangles  0 findings
+Bonewright       33 cubes  396 triangles  0 findings
+Flintguard       33 cubes  396 triangles  0 findings
 look: Armed      33 cubes  396 triangles  0 findings
 look: Travelling 38 cubes  456 triangles  0 findings
 look: Wayfarer   43 cubes  516 triangles  0 findings
