@@ -30,6 +30,8 @@ public final class SignalClient {
         modBus.addListener(SignalClient::onLayers);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> tick());
         NeoForge.EVENT_BUS.addListener(CustomizeGuiOverlayEvent.BossEventProgress.class, TrackerHud::onBossBar);
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RenderGuiEvent.Pre.class, e -> TrackerHud.frameStart());
+        dev.awaken.core.api.UiHooks.installTopRight(TaskHud.STACK); // the task card heads the top-right stack
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> clear());
         // the player's own clicks and keys: what the server says right after answers them (SPEC §26.2)
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.InputEvent.InteractionKeyMappingTriggered.class, e -> Herald.acted());

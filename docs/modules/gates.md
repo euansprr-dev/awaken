@@ -22,7 +22,7 @@ floors that push back the longer you stay, a Satchel you have to carry out, and 
 | `/awaken gate interior goto <start\|piece\|small\|shrine\|ante\|lord>` | admin | Inside a gate: stand where that place reads best, facing it (`ante` and `lord` go to the Lord's floor). |
 
 A quick tour: `/awaken admin awaken`, `/awaken gate open C clockwork_foundry`, walk into the core (or
-`/awaken gate enter <id>`), clear floors, read the run HUD on the left, open K → Gate Map for the run summary and the
+`/awaken gate enter <id>`), clear floors, read the run panel top right (under the task card), open K → Gate Map for the run summary and the
 Satchel button, extract at a Rest Shrine or break the Seal. `/awaken gate break <id>` on another gate shows the blight.
 
 Creative tab (AWAKEN): frame, cracked frame, Rest Shrine, Seal, Cache, Rune Bars, Rune, Entrance Sigil, Lost Lantern,
@@ -408,7 +408,8 @@ prologue: a scripted gate 20 blocks ahead that never breaks), `near(level, pos, 
 
 ## Client
 
-Run HUD (left: gate, floor, Satchel, kills, floor clock, pressure, noise, collapse countdown, twist hint), Satchel screen
+Run panel (top right, under the task card, SPEC §27.10: gate, floor, Satchel, kills, floor clock, pressure, noise,
+collapse countdown, twist hint; never over a screen), Satchel screen
 (read-only 9×3), Status → Gate Map (top-down map with rings at 500/1000/1500, list with distance/direction/breaks-in, run
 summary with a View Satchel button), pillars, blight fog + post effect, Lightless fog, renderers for the shade/ghost/
 follower (player model with the owner's skin, tinted) and the hoarder (baby zombie with a chest).

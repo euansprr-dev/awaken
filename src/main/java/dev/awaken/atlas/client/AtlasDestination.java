@@ -17,7 +17,7 @@ import java.util.Optional;
 
 /**
  * Choosing where you're going on the Atlas (SPEC §16.8; Euan 2026-10-27: "make sure I can actually choose destinations on
- * the map"). Click a place on the table (a gate, a mark, a rumour, a region's name, a pin, or a spot on ground you know)
+ * the map"). Click a place on the table (a gate, a mark, a rumour, a Hearth, a region's name, a pin, or ground you know)
  * and a small card offers <b>Set as destination</b> (Enter); on the current destination it offers <b>Clear
  * destination</b>. The destination is the server's ({@link Destinations}): the Now line leads you there with its compass
  * until you arrive. It stands on the table in its own look, a white-gold pin with a beam and a slow ring, wherever it is.
@@ -95,6 +95,16 @@ final class AtlasDestination {
                     BlockPos where = rumour ? at : new BlockPos(at.getX(), (int) Math.round(y), at.getZ());
                     best = new Pick(name, rumour ? "rumour" : "mark", where);
                 }
+            }
+        }
+        // your Hearths: the little gold house over each Anchor (on the clouds where the land isn't known)
+        for (dev.awaken.atlas.AtlasNet.HomeView home : atlas.homes) {
+            double y = Discovery.CLIENT.explored(home.x() >> 4, home.z() >> 4) ? atlas.store.groundY(home.x(), home.z(), home.y()) + 1
+                    : atlas.store.groundY(home.x(), home.z(), 64) + 34;
+            double d = near(proj, home.x() + 0.5, y, home.z() + 0.5, mx, my + 6);
+            if (d < bestD) {
+                bestD = d;
+                best = new Pick(home.name(), "home", new BlockPos(home.x(), home.y(), home.z()));
             }
         }
         for (dev.awaken.atlas.AtlasNet.PinView pin : atlas.pins) {

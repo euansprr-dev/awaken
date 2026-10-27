@@ -11,7 +11,7 @@
   "steps": [
     {
       "id": "guide",
-      "text": "Use your fire to open Your Hearth.",
+      "text": "Right-click your campfire to open your Hearth's guide.",
       "done": [
         "tip:guide_seen"
       ],

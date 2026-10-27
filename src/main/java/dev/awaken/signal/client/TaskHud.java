@@ -19,8 +19,10 @@ import java.util.Locale;
  * a done/total count, then only what matters now: the current step bright, the next one or two dim, each on one line
  * (a long one shortened; the Journal has the whole of it), and a step that just ticked, which flashes green and fades
  * away. Keys are drawn as key caps ("Double-tap [Left Control] to sprint harder"), a count where a step has one, a
- * compass to a place nearby. While the System's toasts are up it steps down under them. The server
- * ({@code progression.Checklist}) sends it when it changes; an empty title clears it. Never when the HUD is hidden.
+ * compass to a place nearby. While the System's toasts are up it steps down under them, and below a boss bar it would
+ * reach. The server ({@code progression.Checklist}) sends it when it changes; an empty title clears it. Never when the
+ * HUD is hidden. It heads the top-right stack ({@link #STACK}, {@code UiHooks.TopRight}): the gate's run panel sits
+ * under it, or takes the corner when there is no task.
  *
  * <p>Measured once a tick at most, and only when the task, the rows shown, a compass reading, a key binding or the GUI
  * scale changed ({@link Layout}); a frame only draws what the layout holds (the perf pass of 26 Oct found the card
@@ -103,18 +105,45 @@ final class TaskHud {
         return out;
     }
 
+    /** Whether the card draws this frame (the layout is the task's). */
+    private static boolean showing(Minecraft mc, SignalPayloads.Task t, @org.jspecify.annotations.Nullable Layout lay) {
+        return !t.title().isEmpty() && lay != null && lay.task == t && mc.player != null && !mc.gui.hud.isHidden() && !mc.getDebugOverlay().showDebugScreen();
+    }
+
+    /** Half the Now card, following the System's own scale (and so the GUI scale), but always legible. */
+    private static double cardScale(int guiScale) {
+        return Math.max(SystemHud.scale() * SIZE, MIN_PIXEL / Math.max(1, guiScale));
+    }
+
+    /** The top-right stack as the run panel reads it: under the toasts, this card and the boss bars it would reach. */
+    static final dev.awaken.core.api.UiHooks.TopRight STACK = new dev.awaken.core.api.UiHooks.TopRight() {
+        @Override
+        public float below(float partialTick, float width) {
+            Minecraft mc = Minecraft.getInstance();
+            Layout lay = layout;
+            boolean card = showing(mc, task, lay);
+            return SignalLayout.stackBelow(Mth.lerp(partialTick, topO, top), card ? (float) (lay.w * lay.scale) : 0, card ? (float) (lay.h * lay.scale) : 0,
+                    mc.getWindow().getGuiScaledWidth(), width, TrackerHud.bossBottom());
+        }
+
+        @Override
+        public float scale() {
+            return (float) cardScale(Minecraft.getInstance().getWindow().getGuiScale());
+        }
+    };
+
     static void render(GuiGraphicsExtractor g, DeltaTracker dt) {
         Minecraft mc = Minecraft.getInstance();
         SignalPayloads.Task t = task;
         Layout lay = layout;
-        if (t.title().isEmpty() || lay == null || lay.task != t || mc.player == null || mc.gui.hud.isHidden() || mc.getDebugOverlay().showDebugScreen()) return;
+        if (!showing(mc, t, lay)) return;
         Font font = mc.font;
         float pt = dt.getGameTimeDeltaPartialTick(false);
         float fade = Mth.clamp((ticks - since + pt) / 10F, 0, 1);
         double s = lay.scale;
         int w = lay.w, h = lay.h;
         int sw = g.guiWidth();
-        float y = Mth.lerp(pt, topO, top);
+        float y = SignalLayout.clearBossBars(Mth.lerp(pt, topO, top), sw, (float) (w * s), TrackerHud.bossBottom());
         int x = (int) Math.round(sw - w * s - SignalLayout.MARGIN);
 
         g.pose().pushMatrix();
@@ -182,8 +211,7 @@ final class TaskHud {
         if (was != null && was.task == t && was.guiScale == gui && was.shown.equals(shown) && was.compasses.equals(compasses) && was.keys.equals(keys)) {
             return was;
         }
-        // half the Now card, following the System's own scale (and so the GUI scale), but always legible
-        double scale = Math.max(SystemHud.scale() * SIZE, MIN_PIXEL / Math.max(1, gui));
+        double scale = cardScale(gui);
         int done = 0;
         for (SignalPayloads.TaskRow r : t.rows()) if (r.done()) done++;
         String title = t.title().toUpperCase(Locale.ROOT), count = done + "/" + t.rows().size();

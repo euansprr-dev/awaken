@@ -447,6 +447,15 @@ of `AwakenConfig.Client`.
   texture (a DynamicTexture or a registered render target) on a panel or a flat screen, one tinted quad.
 - `dev.awaken.core.api.UiHooks` (client) — `setFocus(Object owner, float value)`, `clearFocus(Object owner)`, `focus()`
   (the largest source, 0..1; Lens reads it). Reading panels only; toasts, cards and HUD lines never report.
+  The HUD under screens (Euan, 2026-10-27: the gate's run panel drew over the K menu): the game draws the HUD under
+  every screen and leaves the screen's blurred background to cover it, and the band, the holo inventory and the Atlas
+  draw none, so `core.client.HudUnderScreens` skips every layer in Awaken's namespace while any screen but chat is open.
+  A scene's layer that must draw over its own screen opts back in with `drawsOverScreens(Identifier layer)` at
+  registration (today only `awaken:opening_hud`, the sky shot's bars over the view choice). Vanilla's layers are left
+  alone. The top-right stack (§27.10): `installTopRight(TopRight)` (signal installs the task card's),
+  `topRightBelow(partialTick, width)` (where a card that wide against the right margin starts this frame: under the
+  toasts, the task card and any boss bar it would reach; the bare margin when none is installed), `topRightScale()`
+  (the stack's card scale) and `TOP_RIGHT_MARGIN` (4 GUI px).
 - `dev.awaken.core.client.skin` (client) — `SkinnedMobRenderer<T extends Mob, S extends SkinRenderState>`, `SkinModel`,
   `SkinRenderState` (`wear(PlayerSkin)`, `wear(texture, slim)`, overlay toggles): the renderer for every non-player body
   with a player-format skin (townsfolk, training ghost, gate shades, Shadow Self, HUMAN and MIMIC mobs). The player mesh
@@ -2684,10 +2693,37 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     at every orbit and zoom). The moving picture takes the level from the full-size picture's scale. Up to 8192 puffs.
   - Frame cost is judged on OpenGL: on Vulkan, MoltenVK presents at the display's rate (120 Hz) even with vsync off, so
     a capped tour can't show it.
+  - Hearths, the land's edge, dragging (Euan, 2026-10-27: "make the hearth show up on the atlas"; "make the edges go
+    under the clouds"; "dragging the map makes the land super jittery and lagging up and down"):
+    - Hearths: the server sends each player their Hearths (`AtlasNet.Homes`, a whole list, checked every 5 s and sent
+      only when it changes, and on joining or changing dimension; empty outside the overworld), read only through the
+      Hearth module's public API (§12: `Hearth.hearthsOf`, `Hearth.villages` for a village's name, `HearthHooks.household`):
+      every Hearth the player owns or belongs to (their own first) and each housemate's own, each Anchor once, at most
+      64. Each is a little lit house in warm gold over its Anchor (yours solid, a shared one outlined, a housemate's
+      paler) with a slow glow and its name at every zoom (a village's name, else "Your Hearth" / "Ana's Hearth"); on
+      the clouds over its Anchor if the land there isn't known. Your own Hearth, when it is off the table, waits at the
+      table's edge toward where it is, with how far it is from you. The hearth module's Tier IV village mark is not
+      drawn twice. Builds: a chunk was sampled once, when it arrived, so what you built at home never reached the map
+      until the chunk reloaded. Now the chunks round the player (4 each way) are read again in turn, two a tick (one
+      every other tick under a roof), and a reading that changes no column (height, colour, kind or light) rebuilds
+      nothing.
+    - The land's edge goes under the clouds: a flat cloud floor (`SliceSampler.SEA`, a pale blue-grey) lies under the
+      land, as wide as the blanket and thinning with its rim, so where no land is drawn the table shows cloud, never a
+      dark gap. The known land's last texels (3 columns close in, 5 texels further out) mist into the floor's colour
+      (72% at the very edge, thinning inward with a little grain), and the face of a column at the edge is a short skirt
+      (3 blocks, or 2 columns) fading into the floor's colour instead of a cliff down to the base. A puff's opacity is
+      one rule at every zoom (`CloudLattice.opacity`): whole over unknown ground and its cell's edge, reaching part way
+      over the known cells beside it; zoomed out a puff beside known land keeps its full size (the old far-out rule,
+      gone before known land, left the edge bare).
+    - Dragging: the view's centre height is the land's broad height (the ground averaged round each point of a
+      64-block lattice and blended between them), and after a pan the centre moves to it along the view's own line of
+      sight, which leaves every block on screen where it was: the land moves exactly with the mouse. It used to snap to
+      the one column under the centre at every mouse move, so the land jumped up and down at each tree and roof; the
+      clouds lie on the centre's plane and now rise and fall with the broad height, smoothly.
   - **Destinations** (Euan, 2026-10-27: "We need to make sure I can actually choose destinations on the map too";
     `atlas.client.AtlasDestination`, `signal.Destination`, `core.api.Destinations`): a click that doesn't move (3 GUI px
     at most between press and release; not a drag, not a double-click's second) picks the place under the cursor: a
-    gate (anywhere along its pillar), a mark or a rumour, a party pin (within 12 px), else a region's or district's name
+    gate (anywhere along its pillar), a mark or a rumour, a Hearth, a party pin (within 12 px), else a region's or district's name
     chip, else a spot on ground you know ("A spot in the Commons"); a click on nothing lets the pick go. A small card
     beside it names it, with **› Set as destination** (Enter); on the destination itself **✕ Clear destination**. The
     legend's picked gate offers the same ("Set as destination" / "Clear destination", T), where "Point me there" was
@@ -2698,7 +2734,7 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     the first click's pick). The key line starts "click a place to go there".
   - The server keeps one per player (attachment `awaken:destination`, schemaVersion 1, kept through death): name (48
     characters at most), dimension (the one the player stands in when the Atlas asks), block, kind (`gate`, `mark`,
-    `rumour`, `region`, `pin`, `spot`, else `place`). Sent on change, login, respawn and dimension change. Every 20
+    `rumour`, `region`, `pin`, `spot`, `home`, else `place`). Sent on change, login, respawn and dimension change. Every 20
     ticks: within 16 blocks across and 48 up or down (a rumour, whose height is a guess: across only), in its dimension,
     it clears itself with a fleeting toast "Destination reached · <name>". Setting another replaces it. A mark's height
     is taken from the Atlas's ground where the land is known (a landmark's mark says 64).
@@ -6227,11 +6263,24 @@ the System scale, never under two screen pixels a font pixel, widest line 185 px
 and done/total, then only what matters now, one line each: the current step bright with ▸, the next two dim, and a step
 that just ticked (a soft green flash, then it fades out over 2.5 s); a long step is shortened with "…" (the Journal has
 the whole of it). Keys are drawn as key caps from "{key}" in the words, a count where a step has one ("0/10"), and a
-compass to a hint nearby ("↗ 9 m", the ledge). While the System's toasts are up it eases down under them. Hidden with
-the HUD. The Now line, top left, keeps the where (§27.11): a step that sends you somewhere carries its place (`Row.at`
-and `Row.place`, the name the Now line gives it: null for the step's own words, "" for a hint nearby, which stays the
-card's), and its compass is the Now line's, not the card's. The quest step's optional `place` names it ("High Gate",
-"Wayfarer camp", "Ilse"); the task payload carries the dimension it was sent from.
+compass to a hint nearby ("↗ 9 m", the ledge). While the System's toasts are up it eases down under them, and below
+a boss bar it would reach (on a narrow screen). Hidden with the HUD. The Now line, top left, keeps the where (§27.11):
+a step that sends you somewhere carries its place (`Row.at` and `Row.place`, the name the Now line gives it: null for
+the step's own words, "" for a hint nearby, which stays the card's), and its compass is the Now line's, not the card's.
+The quest step's optional `place` names it ("High Gate", "Wayfarer camp", "Ilse"); the task payload carries the
+dimension it was sent from.
+- **The top-right stack** (Euan, 2026-10-27: "let's move the floors to the top right where the current active things
+  to do are"): the task card heads it and the gate's run panel (`gates.client.RunHudLayer`, the floor HUD that sat on
+  the left at mid-height) sits 3 GUI px under it, or takes the corner itself when there is no task; the same margin,
+  look (`HudLook` projected or flat glass, accent red in a Red Gate) and scale (`UiHooks.topRightScale`). The run panel
+  steps down under the toasts and below boss bars it would reach (`UiHooks.topRightBelow`; the layer draws after the
+  boss overlay, which counts the bars afresh each frame), moves down at once when the task card arrives and eases up
+  into the room when it goes. It keeps everything: rank and gate name with the floor beside them ("Deeper · Floor 1/4",
+  a ✓ when cleared), Satchel slots and XP, kills and the floor clock with the pressure word (stirring, awake, Warden),
+  the Noise bar under Silence, the collapse countdown and the twist's hint (shortened with "…"); widest line 215 px,
+  narrowest card 96. Never dims; hidden with the HUD, under F3 and, like all of Awaken's HUD, while any screen but
+  chat is open (§12 `UiHooks`). Its strings are built only when the server's run update changes. Test
+  `signal_layout_every_gui_size` (the stack's maths at every GUI size: never over the card, a toast or a boss bar).
 The server decides (`progression.Checklist`, sent only when it changes, payload `signal_task`; nothing while the
 opening runs):
 - **Your body remembers** first, from the awakening: "Hold [Shift] as you land to roll", "Double-tap [Ctrl] to sprint

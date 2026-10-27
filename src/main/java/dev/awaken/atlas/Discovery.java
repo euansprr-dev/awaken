@@ -43,6 +43,8 @@ public final class Discovery {
         int ox, oz;
         String stage;
         Bells.Bell lastBell;
+        /** What the client last heard of this player's Hearths (a hash of the list; see {@link Homes}). */
+        int homes;
         /** Each explored cell's zone (its region, 1-based), per tile of this dimension, worked out once per cell. */
         final it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<byte[]> zones = new it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<>();
         /** Each explored cell's land level (0 = not worked out yet), likewise. */
@@ -92,8 +94,10 @@ public final class Discovery {
             sendCity(p);
             sendAll(p);
             sendPins(p);
+            Homes.send(p, l, true);
         }
         trail(p, l, phase);
+        if (phase % Homes.PERIOD == 0) Homes.send(p, l, false);
         if (!mapped(dim)) return;
         int bx = p.getBlockX(), bz = p.getBlockZ();
         if (l.lx == Integer.MIN_VALUE || Math.abs(bx - l.lx) >= STEP || Math.abs(bz - l.lz) >= STEP) {
@@ -378,6 +382,7 @@ public final class Discovery {
         if (!d.trail.isEmpty()) AwakenNet.send(p, new AtlasNet.Trail(List.copyOf(d.trail), false));
         if (!d.regions.isEmpty()) AwakenNet.send(p, new AtlasNet.Regions(List.copyOf(d.regions)));
         for (ServerPlayer m : party(p)) sendPins(m);
+        Homes.send(p, l, true);
     }
 
     // ---- the party ----------------------------------------------------------------------------------------------------

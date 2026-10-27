@@ -134,7 +134,7 @@ Package `dev.awaken.hearth.settle` (and `TierRules`, `stage/HomeStage`, `kit/Hom
    (copper ingot corners, stone bricks, Lord's Heart in the middle; copper rather than obsidian so your first base needs only stone tools). Place it: radius 48, respawn here, Oren arrives and a small
    Spire (Spire Board + Reassessment Monolith + lanterns) rises on open ground near the Anchor. The recipe book learns the
    Hearth's furniture (Meditation Mat, Forge, Trophy Mount, role pads). A toast says "Home exists"; the Now line says
-   "Use the Anchor for a guide"; six seconds later Oren offers a cottage (see *The Hearth guide*).
+   "Right-click your campfire" (an Anchor: "Right-click your Anchor"); six seconds later Oren offers a cottage (see *The Hearth guide*).
 2. Use the Anchor: the **Your Hearth** screen (below). The radius shows in the world for eight seconds. The upgrade
    button (or Y) builds the next tier. `/awaken hearth guide` opens it from anywhere; the Status screen's HEARTH section
    has a button for it too.
@@ -214,7 +214,7 @@ shows the radius in the world for 8 s: amber motes along the square edge at grou
 While the screen is open, and 30 s after, a pulsing signal-blue mark sits on each leak (`hearth_ring`, `hearth_leak`).
 
 **Taught in play** (`HearthNow`, one line on the Now tracker, never a list). Placing the Anchor: the toast "Home exists ·
-Within 48 blocks: yours."; at home, "Use the Anchor for a guide" (priority 74 for ten minutes, then 56) until the screen
+Within 48 blocks: yours."; at home, "Right-click your campfire" (an Anchor: "Right-click your Anchor") (priority 74 for ten minutes, then 56) until the screen
 has been opened once; then the next room with live ticks ("Sanctuary: bed ✓ · mat ✗", shortened to fit 148 px) for a
 Sanctuary, then an Armory, then a Barracks, Trophy Hall or Workshop once you hold or placed what it's made of; and, when a
 room you're building isn't recognised, why ("Sanctuary: no roof", "Armory: wall gap", with a compass to the spot,
@@ -369,7 +369,7 @@ a Sanctuary) · `hearth_cottage_offer_once` (one card, never twice, not after a 
 5. Oren's cottage: offered once per player (a choice card six seconds after the first Anchor), free, never on anything a
    player made: only terrain, plants, natural leaves and up to three natural trees give way. 9 × 9 outside, 7 × 7 × 4
    inside, ten biome palettes, four blocks a tick (~7 s). Its room is a Sanctuary on completion. No paid cottages yet.
-6. The Now tracker teaches the Hearth one line at a time: "Use the Anchor for a guide" (74 for ten minutes, then 56) until
+6. The Now tracker teaches the Hearth one line at a time: "Right-click your campfire" (an Anchor: "Right-click your Anchor") (74 for ten minutes, then 56) until
    the screen is opened once; then the next room with live ticks (50); a why-line for a room being built (62). Lines are
    chosen server side to fit 148 px (100 with a compass), toasts' first sentences 144 px.
 7. Using the Anchor shows the radius (a square, |dx|, |dz| ≤ r) as a ground-level ember ring for 8 s, client side.

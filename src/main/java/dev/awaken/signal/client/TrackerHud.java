@@ -36,12 +36,22 @@ final class TrackerHud {
         return dim.getNamespace().equals(Awaken.MODID) && (dim.getPath().startsWith("stratum_") || dim.getPath().equals("endless"));
     }
 
-    /** Where the boss bars drawn this frame end (0 when none); they draw before this layer. */
+    /** Where the boss bars drawn this frame end (0 when none); they draw before this layer and the run panel. */
     private static int bossBottom;
 
     /** Each boss bar as vanilla places it: the bar is 5 tall, its name sits above it. */
     static void onBossBar(CustomizeGuiOverlayEvent.BossEventProgress e) {
         bossBottom = Math.max(bossBottom, e.getY() + 5);
+    }
+
+    /** Before any layer of a frame: the bars are counted afresh. */
+    static void frameStart() {
+        bossBottom = 0;
+    }
+
+    /** Where this frame's boss bars end so far (all of them, from the boss overlay's layer on). */
+    static int bossBottom() {
+        return bossBottom;
     }
 
     private record Line(String text, String compass, boolean destination, Rect rect) {}
@@ -70,7 +80,6 @@ final class TrackerHud {
 
     static void render(GuiGraphicsExtractor g, DeltaTracker dt) {
         int bars = bossBottom;
-        bossBottom = 0;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.gui.hud.isHidden() || mc.getDebugOverlay().showDebugScreen()) return;
         // the band and the Atlas show where you're going themselves; the cards would sit on their top edge (SPEC §30)
