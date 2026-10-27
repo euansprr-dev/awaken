@@ -30,6 +30,8 @@ public final class Forms {
 
     /** Mark bit 1: the form's crown (an alpha, or an elite monster). */
     public static final int CROWN = 1;
+    /** Mark bit 2: a revenant has already stood up once. */
+    public static final int RISEN = 2;
 
     /** Biome families: the material a form is made of (moss and bark, sun-baked bone, rime). */
     public static final int GREEN = 0, SUN = 1, FROST = 2;

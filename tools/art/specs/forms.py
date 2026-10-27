@@ -370,6 +370,8 @@ def crack(canvas, rect, rng, colour, glow=None):
         canvas.set(px, py, colour)
         if glow is not None:
             glow.set(px, py, (255, 255, 255, 255))
+            if px + 1 < x + w:
+                glow.set(px + 1, py, (255, 255, 255, 255))
         px += rng.choice((-1, 0, 0, 1))
         py += 1
 
@@ -399,7 +401,7 @@ def overlay_and_glow(layout, r, fam):
                 for _ in range(n):
                     crack(ov, rect, rng, pal["dark"][0], gl)
     for (u, v, w, h) in LAYOUT[layout]["eyes"]:
-        for yy in range(v, v + h):
+        for yy in range(v, v + max(h, 2)):
             for xx in range(u, u + w):
                 gl.set(xx, yy, (255, 255, 255, 255))
     return ov, gl

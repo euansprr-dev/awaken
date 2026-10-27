@@ -423,6 +423,52 @@ final class LivingTests {
             h.succeed();
         });
 
+        AwakenTests.register("living_form_moves", 100, h -> {
+            var M = dev.awaken.living.combat.Moves.class;
+            var Sp = dev.awaken.living.combat.Forms.Species.class;
+            // the tell shortens with the rung, 1.2 s in D to 0.7 s in S
+            h.assertTrue(dev.awaken.living.combat.Moves.windup(1) == 24 && dev.awaken.living.combat.Moves.windup(5) == 14, "tells run 24 down to 14 ticks");
+            // every species but the creeper has a move at every rung but the two that are not goals (a revenant rises, a bonepicker keeps its distance); none hits harder than 1.3 times a normal blow
+            for (var sp : dev.awaken.living.combat.Forms.Species.values()) {
+                for (int r = 1; r <= 5; r++) {
+                    var moves = dev.awaken.living.combat.Moves.of(sp, r, false);
+                    boolean none = sp.layout.equals("creeper") || (sp.layout.equals("zombie") && r == 4) || (sp.layout.equals("skeleton") && r == 1);
+                    h.assertTrue(moves.isEmpty() == none, sp.id + " rung " + r + (none ? " has no goal move" : " has a move"));
+                    for (var d : moves) h.assertTrue(d.power() <= 1.3F && d.windup() >= 14 && d.windup() <= 40, sp.id + " " + d.name() + " keeps to the caps");
+                }
+            }
+            h.assertTrue(dev.awaken.living.combat.Moves.of(dev.awaken.living.combat.Forms.Species.PIG, 4, true).size() == 2
+                    && dev.awaken.living.combat.Moves.of(dev.awaken.living.combat.Forms.Species.PIG, 1, true).size() == 1, "a crowned one from the third rung has the rung below's move too");
+            // a formed creature gets its goal once, however many times it joins
+            var level = h.getLevel();
+            var pig = h.spawn(net.minecraft.world.entity.EntityTypes.PIG, 1, 2, 1);
+            pig.setData(dev.awaken.living.LivingContent.FORM.get(), new dev.awaken.living.combat.Forms.Form(3, 0, 0));
+            dev.awaken.living.combat.Moves.arm(pig);
+            dev.awaken.living.combat.Moves.arm(pig);
+            int goals = 0;
+            for (var w : pig.goalSelector.getAvailableGoals()) if (w.getGoal().getClass().getSimpleName().equals("MarkGoal")) goals++;
+            h.assertTrue(goals == 1, "one move goal, not two: " + goals);
+            // a bash lands as a blow: it hurts what it hits and shoves it away
+            var zombie = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, 3, 2, 1);
+            var victim = h.spawn(net.minecraft.world.entity.EntityTypes.SHEEP, 4, 2, 1);
+            var bash = dev.awaken.living.combat.Moves.of(dev.awaken.living.combat.Forms.Species.ZOMBIE, 2, false).get(0);
+            float before = victim.getHealth();
+            h.assertTrue(dev.awaken.living.combat.Moves.hit(level, zombie, victim, bash, 1, 0, 0.9, 0.35) && victim.getHealth() < before, "the bash hurts");
+            h.assertTrue(victim.getDeltaMovement().x > 0.3, "and shoves it away");
+            // a revenant stands up once, at two fifths, and not a second time
+            var rev = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, 5, 2, 1);
+            rev.setData(dev.awaken.living.LivingContent.FORM.get(), new dev.awaken.living.combat.Forms.Form(4, 0, 0));
+            var die = new net.neoforged.neoforge.event.entity.living.LivingDeathEvent(rev, level.damageSources().generic());
+            dev.awaken.living.combat.MarkEvents.onDeath(die);
+            h.assertTrue(die.isCanceled() && rev.getHealth() > 0 && rev.getHealth() <= rev.getMaxHealth() * 0.45F, "it rises at two fifths");
+            var again = new net.neoforged.neoforge.event.entity.living.LivingDeathEvent(rev, level.damageSources().generic());
+            dev.awaken.living.combat.MarkEvents.onDeath(again);
+            h.assertTrue(!again.isCanceled(), "and only once");
+            // voices drop with the rung
+            h.assertTrue(dev.awaken.living.combat.MarkEvents.pitch(0) == 1F && Math.abs(dev.awaken.living.combat.MarkEvents.pitch(5) - 0.6F) < 1e-6, "S speaks two fifths lower");
+            h.succeed();
+        });
+
         AwakenTests.register("living_plate_heat", 20, h -> {
             // the chip's colour by how a creature measures against you: grey far below, blue about your level, orange a good fight, red an insane one
             var P = dev.awaken.living.combat.PlateRules.Heat.class;

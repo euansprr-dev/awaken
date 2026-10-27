@@ -4408,7 +4408,22 @@ Continues §21.10's numbering (16-31). The long form is PLAN-2.md; this is what 
   once on join. Only creatures the Living Wilds tagged MONSTER or wild NEUTRAL get a form (never AWAKEN's own, never a settlement's or a Hearth's calm: those are below D).
 - Art: `tools/art/specs/forms.py` writes the overlays, kit textures, glow masks and `forms/kit.json` (one source for the Python painter and the Java model builder).
 - Dev: `/awaken living form <species> <rung> [family]`, `/awaken living formparade [family]` (every species, rungs 0-5, in rows, still), tour `tools/autopilot/forms-parade.txt`.
-- Tests: `living_form_mix`, `living_form_state`.
+- Tests: `living_form_mix`, `living_form_state`. CI tour 40454849731 (forms-parade, 14 shots) reviewed: every species' rungs read as an escalation in the real game (tusks, horns, helms, spines, crests, the rank's glow at the eyes); the kit follows the animation.
+  Offline look: `tools/art/forms_preview.py` renders the kit on the vanilla bodies (the vanilla textures are read from `.ref` for the preview only).
+
+**Build 2 as built (2026-10-27): moves and voices.**
+- `living.combat.Moves` (the table and the shapes), `MarkGoal` (the goal, priority -1, flags MOVE and LOOK: a roll every few ticks only with a target; wind-up standing still and facing,
+  strike once, a lunge or a charge carried through, a rest), `MarkEvents` (a revenant's rise, spider webs taken away, voices). Armed at every join (`Creatures.onJoin` -> `Moves.arm`; goals are not saved).
+  Tells run 24 ticks in D down to 14 in S (`Moves.windup`); a tell is a ring or a line of dust in the rank's colour on the ground and a sound; damage is the creature's attack times `power` (at most 1.3)
+  delivered with `Strikes.deliver` naming its class (a lunge or a charge GRAB, a stomp PERILOUS, a bash HEAVY, shots LIGHT). A crowned creature from the third rung has the rung below's move too.
+- Shapes: LUNGE, CHARGE, STOMP, BASH, RALLY, ROAR (slows or blinds, no damage), VOLLEY and SNIPE (arrows), BLINK, SPIT (a ray with poison), WEB (a cobweb at your feet, taken away after 8 s), SUMMON (never past eight of a kind
+  within 24 blocks), PULL; RISE (a zombie form from the fourth rung stands up once at 40%, `Forms.RISEN`, in `MarkEvents.onDeath` at highest priority) and RETREAT (a first-rung skeleton gets an `AvoidEntityGoal` for players).
+  Pig: Gore, Root-up, Trample, Quake, Roar. Cow (and mooshroom): Back-kick, Charge, Stomp, Storm charge, Bellow. Sheep: Headbutt, Charge, Spark, Charge, Bleat. Chicken: Flap-jump, Crow, Burst, Flap-jump, Screech.
+  Zombie (husk): Groan, Shield bash, Pounce, Rise, Dread call. Skeleton (stray): Retreat, Marksman, Volley, Wraith step, Volley of five. Spider (cave spider): Web, Drop, Spit, Brood, Pull.
+- Voices: `PlayLevelSoundEvent.AtPosition` (mob sounds are played at a position): a formed creature within half a block of the sound has its pitch lowered 8% a rung (S: 0.6) and its volume raised 5% a rung.
+- Not built, and why: the creeper's moves (the explosion is vanilla's; its five forms are bodies only), a growl layered under the voice and custom tell sounds (the tells use vanilla sounds repitched; `tools/art/specs/audio_living.py` is the place),
+  Arms' tell glint for a form's wind-up (`Strikes.installTells` is install-once and the mobs module holds it; chaining it is a change in `core.api`), the "unless you finish it fast" clause of Rise.
+- Tests: `living_form_moves`.
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 

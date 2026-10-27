@@ -337,7 +337,7 @@ final class LivingCommands {
         return 1;
     }
 
-    /** {@code formrow <species> [family]}: the species at rungs 0 to 5 in a row 9 blocks ahead, each facing you. */
+    /** {@code formrow <species> [family]}: the species at rungs 0 to 5 in a row 7 blocks ahead, each facing you. */
     private static int formRow(ServerPlayer p, com.mojang.brigadier.context.CommandContext<CommandSourceStack> c, int family) {
         var sp = dev.awaken.living.combat.Forms.Species.byId(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "species"));
         if (sp == null) {
@@ -345,7 +345,7 @@ final class LivingCommands {
             return 0;
         }
         for (int r = 0; r <= 5; r++) {
-            Vec3 at = ahead(p, 9.0, (r - 2.5) * 2.4);
+            Vec3 at = ahead(p, 7.0, (r - 2.5) * 2.0);
             dev.awaken.living.combat.Forms.still((ServerLevel) p.level(), sp, r, family, at.x, at.y, at.z, p.getYRot() + 180.0F);
         }
         return 6;

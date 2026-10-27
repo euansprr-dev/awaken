@@ -71,6 +71,8 @@ public final class Creatures {
             if (now.kind() == CreatureTag.Kind.MONSTER || (now.kind() == CreatureTag.Kind.NEUTRAL && WildKin.isKin(mob)))
                 Forms.roll(level, mob, Regions.creatureLevel(level, mob.blockPosition(), Regions.Role.NEUTRAL), now.elite());
         }
+        // a formed creature's moves are goals, and goals are not saved
+        if (living instanceof Mob mob) Moves.arm(mob);
     }
 
     /** Projectiles and blasts from a levelled vanilla monster hit as hard as its melee would (melee scales by attribute). */

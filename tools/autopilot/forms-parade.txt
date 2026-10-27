@@ -41,6 +41,7 @@ cmd awaken living formrow chicken
 wait 60
 shot forms_chicken
 cmd awaken living formclear
+cmd weather rain 1000000
 cmd awaken living formrow zombie
 wait 60
 shot forms_zombie
@@ -53,6 +54,7 @@ cmd awaken living formrow spider
 wait 60
 shot forms_spider
 cmd awaken living formclear
+cmd weather clear 1000000
 cmd awaken living formrow creeper
 wait 60
 shot forms_creeper
@@ -65,6 +67,7 @@ cmd awaken living formrow pig 2
 wait 60
 shot forms_pig_frost
 cmd awaken living formclear
+cmd weather rain 1000000
 cmd awaken living formrow zombie 2
 wait 60
 shot forms_zombie_frost
