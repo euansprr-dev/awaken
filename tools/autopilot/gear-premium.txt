@@ -35,97 +35,95 @@ cmd summon minecraft:mannequin ~-1.8 ~ ~4 {Rotation:[205f,0f],immovable:1b,hide_
 cmd summon minecraft:mannequin ~ ~ ~4 {Rotation:[180f,0f],immovable:1b,hide_description:1b,Invulnerable:1b,Tags:["prem_m"],equipment:{head:{id:"awaken:veilwoven_helmet",count:1},chest:{id:"awaken:veilwoven_chestplate",count:1},legs:{id:"awaken:veilwoven_leggings",count:1},feet:{id:"awaken:veilwoven_boots",count:1}}}
 cmd summon minecraft:mannequin ~1.8 ~ ~4 {Rotation:[150f,0f],immovable:1b,hide_description:1b,Invulnerable:1b,Tags:["prem_r"],equipment:{head:{id:"awaken:veilwoven_helmet",count:1},chest:{id:"awaken:veilwoven_chestplate",count:1},legs:{id:"awaken:veilwoven_leggings",count:1},feet:{id:"awaken:veilwoven_boots",count:1}}}
 wait 40
-where prem_m
 armour fidelity 0
 wait 30
 cmd time set 6000
 wait 20
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-4.2 0 6
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-3.4 0 3
 wait 20
 where prem_m
 shot prem_today_lineup
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-2.7 facing entity @e[tag=prem_m,limit=1] eyes
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-2.4 0 2
 wait 20
-where prem_m
 shot prem_today_front
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-1.9 ~ ~-1.9 facing entity @e[tag=prem_m,limit=1] eyes
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-1.7 ~ ~-1.7 -45 2
 wait 20
 shot prem_today_threequarter
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~2.7 facing entity @e[tag=prem_m,limit=1] eyes
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~2.4 180 2
 wait 20
 shot prem_today_back
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-2.7 ~ ~ facing entity @e[tag=prem_m,limit=1] eyes
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-2.4 ~ ~ -90 2
 wait 20
 shot prem_today_side
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.5 ~ ~-1.1 facing entity @e[tag=prem_m,limit=1] eyes
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.45 ~ ~-1.0 -24 0
 wait 20
 shot prem_today_hood
 cmd time set 18000
 wait 40
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-4.2 0 6
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-3.4 0 3
 wait 20
 shot prem_today_night_lineup
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.5 ~ ~-1.1 facing entity @e[tag=prem_m,limit=1] eyes
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.45 ~ ~-1.0 -24 0
 wait 20
 shot prem_today_night_hood
 armour fidelity 1
 wait 30
 cmd time set 6000
 wait 20
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-4.2 0 6
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-3.4 0 3
 wait 20
 shot prem_level1_lineup
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-2.7 facing entity @e[tag=prem_m,limit=1] eyes
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-2.4 0 2
 wait 20
 shot prem_level1_front
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-1.9 ~ ~-1.9 facing entity @e[tag=prem_m,limit=1] eyes
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-1.7 ~ ~-1.7 -45 2
 wait 20
 shot prem_level1_threequarter
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~2.7 facing entity @e[tag=prem_m,limit=1] eyes
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~2.4 180 2
 wait 20
 shot prem_level1_back
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-2.7 ~ ~ facing entity @e[tag=prem_m,limit=1] eyes
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-2.4 ~ ~ -90 2
 wait 20
 shot prem_level1_side
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.5 ~ ~-1.1 facing entity @e[tag=prem_m,limit=1] eyes
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.45 ~ ~-1.0 -24 0
 wait 20
 shot prem_level1_hood
 cmd time set 18000
 wait 40
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-4.2 0 6
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-3.4 0 3
 wait 20
 shot prem_level1_night_lineup
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.5 ~ ~-1.1 facing entity @e[tag=prem_m,limit=1] eyes
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.45 ~ ~-1.0 -24 0
 wait 20
 shot prem_level1_night_hood
 armour fidelity 2
 wait 30
 cmd time set 6000
 wait 20
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-4.2 0 6
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-3.4 0 3
 wait 20
 shot prem_level2_lineup
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-2.7 facing entity @e[tag=prem_m,limit=1] eyes
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-2.4 0 2
 wait 20
 shot prem_level2_front
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-1.9 ~ ~-1.9 facing entity @e[tag=prem_m,limit=1] eyes
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-1.7 ~ ~-1.7 -45 2
 wait 20
 shot prem_level2_threequarter
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~2.7 facing entity @e[tag=prem_m,limit=1] eyes
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~2.4 180 2
 wait 20
 shot prem_level2_back
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-2.7 ~ ~ facing entity @e[tag=prem_m,limit=1] eyes
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-2.4 ~ ~ -90 2
 wait 20
 shot prem_level2_side
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.5 ~ ~-1.1 facing entity @e[tag=prem_m,limit=1] eyes
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.45 ~ ~-1.0 -24 0
 wait 20
 shot prem_level2_hood
 cmd time set 18000
 wait 40
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-4.2 0 6
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-3.4 0 3
 wait 20
 shot prem_level2_night_lineup
-cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.5 ~ ~-1.1 facing entity @e[tag=prem_m,limit=1] eyes
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.45 ~ ~-1.0 -24 0
 wait 20
 shot prem_level2_night_hood
 cmd time set 6000
