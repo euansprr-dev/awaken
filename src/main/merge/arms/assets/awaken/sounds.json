@@ -498,5 +498,26 @@
         "attenuation_distance": 22
       }
     ]
+  },
+  "arms.glance": {
+    "subtitle": "subtitles.awaken.arms.glance",
+    "sounds": [
+      {
+        "name": "awaken:arms/arms_glance_0",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:arms/arms_glance_1",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:arms/arms_glance_2",
+        "attenuation_distance": 24
+      },
+      {
+        "name": "awaken:arms/arms_glance_3",
+        "attenuation_distance": 24
+      }
+    ]
   }
 }

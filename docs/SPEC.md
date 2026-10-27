@@ -5178,18 +5178,37 @@ of the plan). No mixins.
   full nothing. Settings (feel): `firstPersonMoves` (P1-P3) and `firstPersonTouches` (P4), both on.
 - **Station scenes** (P5, `anims.client.station`): at a crafting table (used within 10 ticks of its screen opening, not
   sneaking: sneak + use is the plain screen) the screen is replaced by `StationScreen` (kind `TABLE`), the vanilla
-  crafting menu with its grid and result drawn on the table in the world instead of on the screen. The view turns to the table's top and
-  narrows (×0.64) over 12 ticks (6 coming back within 12 s), out over 10; the player's own look never moves. Each
+  crafting menu with its grid and result drawn on the table in the world instead of on the screen. Each
   ingredient lies on its square (the grid square to the block, row 0 the far one; the way in snapped to an axis), the
-  result floats over the middle turning, the square under the cursor is outlined (Holo blue). A click on a square or on
-  the result is the same click on that slot (`slotClicked`, the menu's own path: stacks, splits, shift-clicks, the server
-  checks), and the grid's screen places are never hovered or drawn. Your inventory is a glass strip at the foot of the
-  screen. Your hands (world source `anims_station`, 200) rest off the table's near corners and one goes out to every
+  result floats over the top's far edge (0.5 out from the middle, 0.25 up; over the middle it hid the far middle square)
+  turning, the square under the cursor (and every square a drag has passed over,
+  showing what it will get) is outlined (Holo blue).
+  - **Layout** (`anims.station.StationView`, common so the tests run it headless): your inventory is a glass strip at
+    the foot of the screen (vanilla's image, `top` = screen height - 165, the strip over its rows), the hint over it
+    (wrapped to the room's width, centred), and above the hint the *room*: the middle half of the screen's width with
+    JEI loaded (at least the strip's width), else the screen's width less 8 each side, from 6 px down to 4 px over the
+    hint. The screen reports room and strip as its area (`getLeftPos`/`getTopPos`/`getImageWidth`/`getImageHeight`),
+    so JEI's list and bookmarks keep to the sides. Hints: "Works just like a crafting grid. Sneak as you open it for the
+    usual screen." and the furnace's.
+  - **The view** frames the station: from your eye, the yaw, pitch and vertical field of view that fit every slot (a
+    grid square ±0.15, the result ±0.15, a furnace's opening) inside the room, 6 % to spare, turned so they sit in its
+    middle (`StationView.frame`, recomputed each tick; at most 100° or 1.5× your FOV setting). It eases in over 12 ticks
+    (6 coming back within 12 s), out over 10; the player's own look never moves. Standing 1 to 4 blocks from a table at
+    any GUI scale the framing stays under 100°; pressed right against it (under 1 block) the near edge can reach the hint.
+  - **Clicks are vanilla's**: the scene screen is vanilla's own container screen, and a station slot is under the
+    cursor where the world shows its square (`isHovering` answers from a ray through the view as drawn; the slots'
+    old screen places are never hovered or drawn). So every mouse and key rule of the crafting grid holds: left click
+    lays the held stack or takes it, right click lays one or takes half, left-drag splits evenly, right-drag lays one
+    per square, double-click collects, shift-click on the result crafts all it can into the inventory and a plain click
+    takes one craft, number keys, Q and the pick key work on the hovered square or slot, shift-click from the inventory
+    moves into the grid; all through the menu's own clicks, which the server checks. Only a point inside the room picks
+    a square: a click on the strip, the hint or a side panel never reaches the station. A click outside the room and
+    the strip drops what you carry, as off any container screen. Your hands (world source `anims_station`, 200) rest off the table's near corners and one goes out to every
   square whose contents change (and to the result as it is taken), over 9 ticks; moving, jumping, E or Esc leave.
   A hand moves only within 6 ticks of your own click on a slot, so a furnace cooking on its own moves none; taking a
   result moves the hand to the result only. Furnaces (kind `FURNACE`: furnace, smoker, blast furnace, any
   `AbstractFurnaceScreen`): worked from the front (the way in against `FACING`), the view turned to the front's middle
-  (a little below its middle) and narrowed ×0.78; what cooks sits upright in the mouth (0.68 up, 0.06 out), the fuel in the firebox (0.24 up), the
+  (a little below its middle) and framed like the table; what cooks sits upright in the mouth (0.68 up, 0.06 out), the fuel in the firebox (0.24 up), the
   result floats out at the right (0.34 out, 0.36 across, 0.62 up) turning; a slot is picked by the nearest one the ray
   passes within 0.16 of, outlined flat to the front; the cooking (Holo blue) and the fuel left (fire) run as two thin
   lines over the strip; the hands wait at your sides under the frame (the fuel is the off hand's, the rest the main's). The
@@ -5199,7 +5218,11 @@ of the plan). No mixins.
   legs) has its view x and y scaled by tan(35°) / tan(world FOV / 2), so it lands where the world shows it on screen even
   with the view narrowed or widened (a station's zoom, the speed FOV).
 - Test: `anims_fp_clips` (the file reads, every clip the body and the touches play is in it, every one-shot gives the
-  hands back). Tours: `tools/autopilot/anims-pipe.txt` (P1), `anims-runner.txt` (P2), `anims-ascent.txt` (P3),
+  hands back). The table scene: `anims_station_frame` (seven GUI sizes from 320×240 to 1280×720, with and without JEI,
+  standing 1 to 4 blocks off each side: every slot lies inside the room and a click on its middle picks it),
+  `anims_station_panel_click` (a square under the strip while leaning in: a click there picks nothing), and the clicks
+  vanilla's screen sends on a real crafting menu: `anims_station_right_click`, `_right_drag`, `_left_drag`,
+  `_shift_result`. Tours: `tools/autopilot/anims-pipe.txt` (P1), `anims-runner.txt` (P2), `anims-ascent.txt` (P3),
   `anims-touch.txt` (P4: filmed with the pilot's clip recorder, since a command reaches the client a few ticks late),
   `anims-station.txt` (P5), PACK=feel, HUD on. Pilot lines `use`, `attack`, `usehold <ticks>` press the real keys;
   `station <slot> [button]` clicks a slot of the open station scene.
@@ -5272,7 +5295,8 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   shimmer, the falling star), through `damageSources().playerAttack` at the move's strength (`ArmsServer.strikeThing`),
   with the impact sound, the hit-stop and the ribbon's flash; the thing decides what a blow does (a core loses a hit).
   Test `arms_strikes_things`.
-- **Guard** (use key, the `blocks_attacks` component Arms gives every sword: no delay, 120° front): the first 4 ticks
+- **Guard** (use key, the `blocks_attacks` component Arms gives every weapon that fights with a style: no delay, a front
+  within 120° of where the head faces, vanilla's `horizontal_blocking_angle`; the Shieldblade 150, the Gauntlets 100): the first 4 ticks
   after the raise deflect a LIGHT or HEAVY (no damage, the attacker's stance takes 18 or 26, Resonance +20, a riposte
   for 12 ticks); after that LIGHT is blocked (70% less), HEAVY breaks the guard (50% less, the guard drops, 15 ticks
   before it can rise); PERILOUS and GRAB pass through. A raise within 8 ticks of lowering one that deflected nothing can
@@ -5288,6 +5312,46 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   untold table (`combat_sim.py --untold`, docs/combat/untold-parry-2026-10-26.md): a Parrier against zombies, deflects
   40% → 70% and damage taken 117 → 58 per 100 blows once they raise into the wider window (Resonance per blow 8.0 →
   8.4); no Gate Lord or summon is untold, so the Lord table is unchanged. Test `arms_untold_parry`.
+- **Shots** (Euan 2026-10-27: "Add blocking for arrows or projectiles, so if I have a weapon I can block the shot").
+  Why a raised weapon seemed to stop nothing: the guard did judge shots, but past its first ticks it only took 70% off
+  and the arrow still reached the body (it stuck in you, its tipped effect and fire took, the hurt thump and kick
+  played); a blaze's or a ghast's fireball counted as fire (Strikes' NONE) and passed every guard and dodge unanswered;
+  and the front was judged by the point on the body a shot reached. Now:
+  - **Which weapons guard**: everything that fights with a style (every sword: vanilla's, other mods' `_sword`, the
+    Hunter blades; every axe; the mace; every forged weapon: daggers, spears, glaives, the War-staff, twinblades and
+    the rest) gets the guard, unless another mod gave it its own. Vanilla's spears and the trident keep their own right
+    mouse and raise nothing.
+  - **What a shot is** (`ArmsServer.shot`): a projectile struck, or the damage is `#is_projectile`: arrows, tridents,
+    fireballs, wither skulls, wind charges, llama spit, our creatures' bolts, other mods' projectiles. A shot is at
+    least LIGHT (`ArmsServer.kind`; Ability BOLT and ARROWS are LIGHT), so a fireball's hit is answered like an arrow's.
+    A blast stays PERILOUS (a ghast's fireball, a wither skull and a firework burst through a guard: dodge them), and a
+    bolt fired by a HEAVY or PERILOUS ability keeps its class (a HEAVY one breaks the guard and lands at half).
+  - **Its front is its own path**: it comes from the way it flies, flat, whoever loosed it and wherever they stand;
+    straight down, by where it meets the body. The guard's angle as for any blow; from outside it, the shot lands as
+    ever, and sticks.
+  - **In the window it glances off** (the style's deflect ticks, 3 to 5): no damage, nothing sticks, no effect or fire.
+    The arrow is set just off the blade, clear of the body, and knocked up and aside back the way it came (0.18 back,
+    0.16 to the side it came in on, 0.26 up, blocks a tick) to drop a few blocks off, harmless: its damage is spent. A
+    bolt or a fireball breaks on the steel by its own hit; anything else with no weight to fall by breaks on it. It pays
+    as a deflect (Resonance, Mastery III's charge, the Weave's beat), but opens no riposte and takes no stance: there's
+    no one in reach.
+  - **After the window it's blocked**: the shot stops on the blade (nothing sticks, nothing takes) and drops at your
+    feet, and only its share (1 minus the style's reduction: the Longsword's 30%) comes through at the tick's end, with
+    no hurt thump: the guard's own answer says it. The share already carries every scaling the shot had (a creature's
+    level, a power's cut), so `ArmsServer.onIncomingPinned` (LOWEST) pins it back after the listeners' second pass.
+  - A shot is never held for the latency grace: holding it would stop it at your body at once and land it after.
+  - **Unanswered on purpose**: a piercing arrow (a Piercing crossbow) goes through any guard, vanilla's rule for
+    shields; a damage type in `#bypasses_shield` (another mod's own choice); a shot that does no damage (a snowball on
+    a player; a thrown potion breaks and splashes as on anyone).
+  - **How it shows**: in first person the guard jolts (knocked back toward the eye, up and away from the side it struck,
+    the tip thrown back 9°, ringing out over 9 ticks; the hands go with it), a spark off the blade back the way it came
+    (`FxClient.guardSpark` on the effects engine, drawn at sword's length from the eye: a white-hot flash, a ring off the
+    edge on a deflect, sparks in the weapon's light), the view's kick and, on a deflect, a smaller snap of the field
+    than a blade's. Its own sound, `arms.glance` (tools/art/specs/audio_arms.py: a lighter, higher ring than a blade's
+    deflect, sparks, the ricochet whining away); a blocked shot plays the block at ×1.2 pitch and 0.8 volume. Everyone
+    near hears it, sees the body's jolt (the clip `arms_guard_jolt`, 6 ticks, then the guard held again) and the spark
+    at its guard (`ArmsPayloads.SHOT`). On an onlooker's screen vanilla ends its own copy of an arrow at the guard, so
+    they see it stop at the blade, not fall. Test `arms_shots`.
 - **Dodge** (sprint pressed with back, left, right or no direction, on the ground; sprint + forward still runs): 6
   ticks, 2.6 blocks, client-predicted, server-validated (position within 1.5 blocks, charges, not in a wind-up or blow:
   a recovery can be dodged out of, which drops the rhythm). Ticks 0–4 evade any class (**the SPEC amendment: the only
@@ -8042,6 +8106,30 @@ or smoothed terrain faces, no texture above 16×16.
   items keep the plain colour. Setting `lawn_drift`.
 - **Settings and commands**: `config/awaken-ground-client.toml` (`ground_seamless`, `lawn_drift`, both on); `/awaken ground
   status | seamless on|off | drift on|off` (client; saves and redraws the chunks). Off, the client draws as vanilla.
+- **Fresh sides** (`ground.FreshSides`, `ground.GroundFresh`, `ground.client.FreshView`; Euan 2026-10-27: a dug lawn's
+  neighbour was green down its new face at once). A grass side bared a moment ago shows its own face (vanilla's dirt and
+  fringe) and grows green, where the shape rule alone would wrap it on the first frame; a riser the world was made with has
+  no record and wraps as before. **Recorded** when it happens, never by scanning, on the server: a player's break of a
+  hider (`isSolidRender`) whose ground under stays sturdy (`BreakBlockEvent`, lowest priority), an explosion's hiders
+  (`ExplosionEvent.Detonate`, minding the blocks it takes beside and under), a sturdy block placed under the open block
+  beside a grass block (a cliff's face becomes a riser's), and a grass block placed beside open ground. Placing a hider
+  beside drops the side's record at once; breaking the grass block drops its four. Not caught (they wrap at once, as
+  before): pistons, endermen, fire, other mods' block changes. **Kept** per chunk in the attachment `awaken:fresh_sides`
+  (key = block in chunk + side, value = lit ticks; `schemaVersion` 1; saved while not empty; never loads a chunk to write
+  one). **Grows** every 100 ticks over the loaded chunks that hold records: a side whose open block beside has
+  `getMaxLocalRawBrightness` >= 9 (vanilla's own rule for grass to spread) gains 100 lit ticks; dark or roofed it waits.
+  **Stages** by lit ticks: 0 bare dirt (0), 1 grass a third of the way down (2,400 = 2 minutes of light), 2 most of the way
+  (6,000 = 5 minutes), wrapped at 12,000 (10 minutes of light, about a day with nights): the record goes and the side is a
+  riser like any other. A side that stops being a riser's face (filled, its ground under gone, its grass gone) loses its
+  record on the next growth. **Sync**: each record's stage (not its ticks) to every player who sees the chunk, sent the
+  moment it changes, so all players see the same stage and a stage change redraws one section. **Client**: `FreshView`
+  keeps an immutable key-to-stage map per chunk (Sodium's meshing threads read it; nothing to look up when no chunk has
+  records); `SeamlessModel` leaves a fresh side unwrapped and, on a grass block, lays a quad 0.002 out over the side with
+  our sprite `block/ground/creep_side_0` (stage 1) or `_1` (stage 2), grey and tinted as the grass (tint index 0, drift
+  included). While the local player mines a hider beside grass, the sides it would bare count as stage 0 for two seconds
+  (`PlayerInteractEvent.LeftClickBlock`), so the hole is dirt the frame it opens, not green until the server's word.
+  Tests: `ground_fresh_dig` (dug: dirt; lit: stage 1, 2, wrapped; roofed: stays dirt; filled: record gone; dug again),
+  `ground_fresh_natural`, `ground_fresh_saved`.
 - **Not yet** (P0's own follow-ups): City Sight's wrapped sides (`VoxelLooks`) and Far Sight's drift (`farsight_terrain.fsh`,
   `FarColumns`): near and far differ by a few per cent of colour and a one-block riser's colour until they land.
 - **Tour**: `tools/autopilot/ground-p0.txt` (CI look tour): a control scene (step, pillar, path, coarse dirt, gravel, sand

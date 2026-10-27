@@ -460,6 +460,39 @@ final class FxRecipes {
         }
     }
 
+    /**
+     * A shot on a raised guard (FxClient.guardSpark): a flash where it struck the steel, a ring off the edge on a
+     * deflect, and sparks thrown back the way it came (a wide cone, a little up), falling and cooling to the weapon's
+     * light. Near the eye (the fighter's own blade) everything is drawn at a fifth of its size: it is at arm's length.
+     */
+    static void guardSpark(double x, double y, double z, double dx, double dy, double dz, int argb, float size, boolean near) {
+        int nf = near ? FxPool.NEAR : 0;
+        float sc = near ? 0.2f : 1f;
+        int hot = FxWorld.mix(argb, 0xFFFFFFFF, 0.62f);
+        int f = FxWorld.sprite(FLARE, x, y, z, 0, 0, 0, 3, 0.7f * size * sc, 0.15f * size * sc, hot, alpha(argb, 0), FxPool.ADD | FxPool.ANIM | nf);
+        FxWorld.spin(f, R.f(0, 6.28f), 0);
+        FxWorld.sprite(GLOW, x, y, z, 0, 0, 0, 5, 0.75f * size * sc, 0.4f * size * sc, alpha(argb, 0.55f), alpha(argb, 0), FxPool.ADD | nf);
+        if (size >= 0.9f) {
+            FxWorld.sprite(RING, x, y, z, 0, 0, 0, 5, 0.12f * sc, 1.0f * sc, alpha(hot, 0.85f), alpha(argb, 0), FxPool.ADD | nf);
+        }
+        int count = n(Math.round(6 + 8 * size));
+        float speed = (0.12f + 0.12f * size) * (near ? 0.45f : 1f);
+        for (int i = 0; i < count; i++) {
+            double vx = R.s(), vy = R.s() + 0.4, vz = R.s();
+            double l = Math.sqrt(vx * vx + vy * vy + vz * vz) + 1e-4;
+            vx = vx / l + dx * 0.9;
+            vy = vy / l + dy * 0.9;
+            vz = vz / l + dz * 0.9;
+            l = Math.sqrt(vx * vx + vy * vy + vz * vz) + 1e-4;
+            float sp = speed * R.f(0.5f, 1.3f);
+            int s = FxWorld.sprite(SPARK, x, y, z, vx / l * sp, vy / l * sp, vz / l * sp, 5 + R.i(5), R.f(0.14f, 0.24f) * sc, 0.03f * sc,
+                    FxWorld.mix(hot, argb, 0.25f), alpha(argb, 0), FxPool.ADD | FxPool.STRETCH | nf);
+            FxWorld.drag(s, 0.84f);
+            FxWorld.grav(s, near ? 0.012f : 0.03f);
+            FxWorld.stretch(s, 1.5f);
+        }
+    }
+
     static void sphereBurst(double x, double y, double z, float r0, float r1, int life, FxStyle st) {
         Shape sp = FxWorld.shape(Shape.SPHERE, life);
         if (sp == null) return;

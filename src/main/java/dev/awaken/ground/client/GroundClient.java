@@ -39,6 +39,7 @@ public final class GroundClient {
 
     public static void init(IEventBus modBus) {
         GroundClientConfig.register(modBus);
+        FreshView.init();
         modBus.addListener(GroundClient::wrapModels);
         modBus.addListener(GroundClient::drift);
         NeoForge.EVENT_BUS.addListener(GroundClient::commands);

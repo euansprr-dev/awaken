@@ -52,6 +52,15 @@ final class ArmsBodies {
         PlayerClips.play(e.getId(), ArmsClips.dodge(rel), 1);
     }
 
+    /** Players whose guard a shot jolted: entity id → the tick its jolt is over and the guard is held again. */
+    private static final Map<Integer, Integer> JOLTED = new HashMap<>();
+
+    /** A shot struck a raised guard: the jolt plays over it, then the guard is held again (ArmsBodies.tick). */
+    static void jolt(Entity e) {
+        if (!ArmsClips.GUARD.equals(HELD.get(e.getId()))) return;
+        if (PlayerClips.play(e.getId(), ArmsClips.GUARD_JOLT, 0)) JOLTED.put(e.getId(), ArmsPredict.ticks + ArmsClips.GUARD_JOLT_TICKS);
+    }
+
     /** A refused or cancelled move: whatever is held settles. */
     static void settle(Entity e) {
         ArmsWrist.stop(e);
@@ -68,18 +77,26 @@ final class ArmsBodies {
             if (p.distanceToSqr(mc.player) > 48 * 48) continue;
             boolean guarding = p.isUsingItem() && Arms.guards(p.getUseItem());
             String held = HELD.get(p.getId());
+            Integer jolted = JOLTED.get(p.getId());
             if (guarding && !ArmsClips.GUARD.equals(held)) {
                 if (PlayerClips.play(p.getId(), ArmsClips.GUARD, 2)) HELD.put(p.getId(), ArmsClips.GUARD);
             } else if (!guarding && ArmsClips.GUARD.equals(held)) {
+                JOLTED.remove(p.getId());
                 settle(p);
+            } else if (jolted != null && ArmsPredict.ticks >= jolted) {
+                // the jolt ended on the guard's own pose: hold it again
+                JOLTED.remove(p.getId());
+                if (ArmsClips.GUARD.equals(held)) PlayerClips.play(p.getId(), ArmsClips.GUARD, 1);
             }
         }
         if (!HELD.isEmpty()) HELD.keySet().removeIf(id -> mc.level.getEntity(id) == null);
+        if (!JOLTED.isEmpty()) JOLTED.keySet().removeIf(id -> !ArmsClips.GUARD.equals(HELD.get(id)));
         ArmsWrist.prune(mc.level);
     }
 
     static void reset() {
         HELD.clear();
+        JOLTED.clear();
         ArmsWrist.reset();
     }
 }

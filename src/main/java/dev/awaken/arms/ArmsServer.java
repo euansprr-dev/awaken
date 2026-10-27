@@ -16,6 +16,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
@@ -29,6 +30,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.npc.Npc;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.PlayLevelSoundEvent;
@@ -79,6 +82,18 @@ final class ArmsServer {
     private record Hold(ServerPlayer victim, DamageSource source, float amount, long at, int grace, Strikes.Kind kind) {}
 
     private static final List<Hold> HOLDS = new ArrayList<>();
+
+    /**
+     * A shot the guard stopped this tick (SPEC §25 "Shots"): at the tick's end, after its own hit has run, it leaves
+     * the blade ({@code from}: the way it came, flat), and a block's share ({@code through}) comes through the guard.
+     */
+    private record Stopped(ServerPlayer victim, @Nullable Projectile shot, Vec3 from, boolean deflected, float through, DamageSource source) {}
+
+    private static final List<Stopped> STOPPED = new ArrayList<>();
+    // a stopped shot's share coming through the guard: the guard lets it by, and it's no new blow on the fighter
+    private static boolean chipping;
+    private static @Nullable LivingEntity chipVictim;
+    private static float chipShare;
 
     /** Attackers slowed by a perfect dodge: entity id → the tick the beat ends. */
     private static final Map<Integer, Long> SLOWED = new HashMap<>();
@@ -538,7 +553,7 @@ final class ArmsServer {
             return;
         }
         if (!(victim instanceof ServerPlayer p) || !Arms.fights(p) || reapplying) return;
-        Strikes.Kind kind = Strikes.of(src);
+        Strikes.Kind kind = kind(src);
         if (kind == Strikes.Kind.NONE) return;
         ArmsState s = state(p);
         long now = now(p);
@@ -555,50 +570,112 @@ final class ArmsServer {
             return;
         }
         int grace = grace(p);
-        if (grace > 0 && kind.deflectable() && by != null && !p.isBlocking() && Arms.guards(p.getMainHandItem())) {
+        // never a shot: holding it would stop it at your body at once (it bounces off), and land it after
+        if (grace > 0 && kind.deflectable() && by != null && !shot(src) && !p.isBlocking() && Arms.guards(p.getMainHandItem())) {
             e.setCanceled(true);
             HOLDS.add(new Hold(p, src, e.getAmount(), now, grace, kind));
         }
     }
 
+    /** Whether a blow is a shot: something that flew to you (a projectile struck, or its damage says it was one). */
+    static boolean shot(DamageSource src) {
+        return src.getDirectEntity() instanceof Projectile || src.is(DamageTypeTags.IS_PROJECTILE);
+    }
+
+    /**
+     * A blow's class as Arms answers it: Strikes' word, except that a shot is never nothing. A blaze's or a ghast's
+     * fireball strikes as fire, which Strikes counts as no attack, so it passed every guard and dodge unanswered; any
+     * shot is at least LIGHT. A blast is still PERILOUS, and what bypasses invulnerability still nothing.
+     */
+    static Strikes.Kind kind(DamageSource src) {
+        Strikes.Kind k = Strikes.of(src);
+        if (k == Strikes.Kind.NONE && shot(src) && !src.is(DamageTypeTags.IS_EXPLOSION) && !src.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            return Strikes.Kind.LIGHT;
+        }
+        return k;
+    }
+
+    /**
+     * Where a shot came from, flat and unit: by its own path (it flies in from the way it's going, wherever its archer
+     * stands); straight down, or with nothing flying, by where it meets the body (vanilla's own judge). Null: nowhere.
+     */
+    static @Nullable Vec3 shotFrom(ServerPlayer p, DamageSource src) {
+        if (src.getDirectEntity() instanceof Projectile pr) {
+            Vec3 v = pr.getDeltaMovement();
+            if (v.x * v.x + v.z * v.z > 1e-4) return new Vec3(-v.x, 0, -v.z).normalize();
+        }
+        Vec3 at = src.getSourcePosition();
+        if (at == null) return null;
+        Vec3 d = new Vec3(at.x - p.getX(), 0, at.z - p.getZ());
+        return d.lengthSqr() < 1e-6 ? null : d.normalize();
+    }
+
+    /** Whether something from {@code from} meets the guard: within its angle of where the head faces (vanilla's rule). */
+    static boolean inFront(ServerPlayer p, Vec3 from, float angle) {
+        float yaw = p.getYHeadRot() * Mth.DEG_TO_RAD;
+        double dot = -Mth.sin(yaw) * from.x + Mth.cos(yaw) * from.z;
+        return Math.acos(Mth.clamp(dot, -1, 1)) <= angle * Mth.DEG_TO_RAD;
+    }
+
     /** The guard's answer: deflect in its first ticks, block after, a broken guard on a heavy, nothing for the rest. */
     static void onShieldBlock(LivingShieldBlockEvent e) {
+        if (chipping) {
+            e.setBlocked(false);
+            return;
+        }
         if (!(e.getEntity() instanceof ServerPlayer p) || !Arms.fights(p) || !Arms.guards(p.getUseItem())) return;
         Archetypes.Loaded style = Arms.styleOf(p.getUseItem());
         if (style == null) return;
         ArmsState s = state(p);
-        Strikes.Kind kind = heldKind != null ? heldKind : Strikes.of(e.getDamageSource());
+        DamageSource src = e.getDamageSource();
+        Strikes.Kind kind = heldKind != null ? heldKind : kind(src);
         int grace = grace(p);
-        boolean inArc = e.getOriginalBlockedDamage() > 0;
         Archetype.Guard g = style.def().guard();
-        boolean untold = Arms.untold(e.getDamageSource());
+        // a shot's front is judged by its own path, not by the point on the body it reached
+        boolean shot = shot(src);
+        Vec3 from = shot ? shotFrom(p, src) : null;
+        boolean inArc = from != null ? inFront(p, from, g.angle()) : e.getOriginalBlockedDamage() > 0;
+        boolean untold = Arms.untold(src);
         ArmsRules.Answer a = ArmsRules.guard(g, kind, p.getTicksUsingItem(), heldTicks, grace, s.lockedOut, inArc, untold);
         float incoming = e.getDamageContainer().getNewDamage();
-        Entity by = e.getDamageSource().getEntity();
+        Entity by = src.getEntity();
         long now = now(p);
         switch (a) {
             case DEFLECT -> {
                 e.setBlockedDamage(incoming);
                 e.setShieldDamage(0);
                 s.raiseDeflected = true;
-                s.deflectAt = now;
-                s.deflected = by == null ? -1 : by.getId();
+                if (!shot) { // a riposte answers a blow in reach, never an archer's
+                    s.deflectAt = now;
+                    s.deflected = by == null ? -1 : by.getId();
+                }
                 // mastery III: a charged deflect; an untold blow's wider window pays a little less
                 float charged = ArmsMastery.deflect(ArmsMastery.step(p, style)) * (untold ? ArmsRules.UNTOLD_REWARD : 1F);
                 resonance(p, s, ArmsRules.RESONANCE_DEFLECT * charged);
-                if (by instanceof LivingEntity attacker && e.getDamageSource().getDirectEntity() == by) {
+                if (by instanceof LivingEntity attacker && src.getDirectEntity() == by) {
                     addPosture(attacker, (int) ((kind == Strikes.Kind.HEAVY ? ArmsRules.DEFLECT_POSTURE_HEAVY : ArmsRules.DEFLECT_POSTURE_LIGHT) * charged), p);
                 }
-                soundForOthers(p, ArmsSounds.DEFLECT.get(), 1.0F, 1.0F);
                 ArmsWeaves.open(p, s, ArmsWeaves.DEFLECT, now, by == null ? -1 : by.getId());
                 Marks.fire(p, Marks.Trigger.DEFLECT, by instanceof LivingEntity l ? l : null);
-                answer(p, s, ArmsPayloads.DEFLECT, by);
+                if (shot) {
+                    stop(p, s, src, from, true, 0F, by);
+                } else {
+                    soundForOthers(p, ArmsSounds.DEFLECT.get(), 1.0F, 1.0F);
+                    answer(p, s, ArmsPayloads.DEFLECT, by);
+                }
             }
             case BLOCK -> {
-                e.setBlockedDamage(incoming * g.reduction());
-                soundForOthers(p, ArmsSounds.BLOCK.get(), 1.0F, 1.0F);
                 Marks.fire(p, Marks.Trigger.GUARD, by instanceof LivingEntity l ? l : null);
-                answer(p, s, ArmsPayloads.BLOCK, by);
+                if (shot) {
+                    // the shot stops on the blade (it never reaches the body to stick, poison or burn); its share
+                    // through the guard lands at the tick's end
+                    e.setBlockedDamage(incoming);
+                    stop(p, s, src, from, false, incoming * (1F - g.reduction()), by);
+                } else {
+                    e.setBlockedDamage(incoming * g.reduction());
+                    soundForOthers(p, ArmsSounds.BLOCK.get(), 1.0F, 1.0F);
+                    answer(p, s, ArmsPayloads.BLOCK, by);
+                }
             }
             case GUARD_BREAK -> {
                 e.setBlockedDamage(incoming * g.heavyReduction());
@@ -607,6 +684,83 @@ final class ArmsServer {
                 answer(p, s, ArmsPayloads.GUARD_BREAK, by);
             }
             case PASS -> e.setBlocked(false);
+        }
+    }
+
+    /**
+     * The guard stopped a shot: it leaves the blade at the tick's end; the fighter feels it there (the hands jolt, the
+     * spark, the ring) and so does everyone near (the body's jolt, the spark).
+     */
+    private static void stop(ServerPlayer p, ArmsState s, DamageSource src, @Nullable Vec3 from, boolean deflected, float through, @Nullable Entity by) {
+        Vec3 way = from != null ? from : flatFacing(p);
+        STOPPED.add(new Stopped(p, src.getDirectEntity() instanceof Projectile pr ? pr : null, way, deflected, through, src));
+        if (deflected) soundForOthers(p, ArmsSounds.GLANCE.get(), 1.0F, 1.0F);
+        else soundForOthers(p, ArmsSounds.BLOCK.get(), ArmsSounds.SHOT_BLOCK_VOLUME, ArmsSounds.SHOT_BLOCK_PITCH);
+        int yaw = (int) (Mth.atan2(way.z, way.x) * Mth.RAD_TO_DEG) - 90; // HURT's convention: the world yaw it came from
+        int id = by == null ? -1 : by.getId(), what = deflected ? ArmsPayloads.DEFLECT : ArmsPayloads.BLOCK;
+        AwakenNet.send(p, new ArmsPayloads.Result(s.seq, ArmsPayloads.SHOT, id, what, yaw));
+        seen(p, new ArmsPayloads.Seen(p.getId(), ArmsPayloads.SHOT, id, what, yaw));
+    }
+
+    private static Vec3 flatFacing(ServerPlayer p) {
+        float yaw = p.getYHeadRot() * Mth.DEG_TO_RAD;
+        return new Vec3(-Mth.sin(yaw), 0, Mth.cos(yaw));
+    }
+
+    /**
+     * A block's share comes in already carrying every scaling the shot had (a creature's level, a buff's cut); the
+     * second pass through the listeners would apply each again, so the share is pinned back last.
+     */
+    static void onIncomingPinned(LivingIncomingDamageEvent e) {
+        if (chipping && e.getEntity() == chipVictim) e.setAmount(chipShare);
+    }
+
+    /** This tick's stopped shots leave the guard, after their own hits ran: each off the blade, then a block's share. */
+    private static void releaseStopped() {
+        int n = STOPPED.size();
+        for (int i = 0; i < n; i++) {
+            Stopped st = STOPPED.get(i);
+            Projectile pr = st.shot;
+            if (pr != null && !pr.isRemoved() && pr.level() == st.victim.level()) {
+                // a bolt or a fireball broke on the steel by its own hit; one still whole leaves the blade, and
+                // one with no weight to fall by breaks on it
+                if (pr.getGravity() > 0) glance(st.victim, pr, st.from, st.deflected);
+                else pr.discard();
+            }
+            if (st.through > 0 && st.victim.isAlive() && !st.victim.isRemoved() && st.victim.level() instanceof ServerLevel level) {
+                chipping = reapplying = true;
+                chipVictim = st.victim;
+                chipShare = st.through;
+                try {
+                    st.victim.hurtServer(level, st.source, st.through);
+                } finally {
+                    chipping = reapplying = false;
+                    chipVictim = null;
+                }
+            }
+        }
+        STOPPED.subList(0, n).clear();
+    }
+
+    /**
+     * A stopped shot leaves the guard: set just off the blade, clear of the body, and sent away. A deflect knocks it
+     * up and aside, back the way it came, to drop a few blocks off; a block lets it fall at your feet. It hurts
+     * nothing after (an arrow's damage is spent on the steel).
+     */
+    static void glance(ServerPlayer p, Projectile pr, Vec3 from, boolean deflected) {
+        Vec3 face = flatFacing(p);
+        // it skips off on the side it came in from; one dead ahead goes either way
+        double cross = face.x * from.z - face.z * from.x;
+        double way = Math.abs(cross) > 0.15 ? Math.signum(cross) : (pr.getId() & 1) == 0 ? 1 : -1;
+        Vec3 side = new Vec3(-from.z, 0, from.x).scale(way);
+        Vec3 at = new Vec3(p.getX(), p.getY() + p.getBbHeight() * 0.7, p.getZ()).add(from.scale(p.getBbWidth() * 0.5 + 0.5));
+        Vec3 v = deflected ? from.scale(0.18).add(side.scale(0.16)).add(0, 0.26, 0) : from.scale(0.07).add(side.scale(0.04)).add(0, 0.05, 0);
+        pr.setPos(at);
+        pr.setDeltaMovement(v);
+        pr.needsSync = true;
+        if (pr instanceof AbstractArrow arrow) {
+            arrow.setBaseDamage(0);
+            arrow.setCritArrow(false);
         }
     }
 
@@ -631,6 +785,7 @@ final class ArmsServer {
     /** Waits out each held blow's grace, then lands it (a guard raised in the meantime meets it). */
     static void onServerTick(ServerTickEvent.Post e) {
         LordForged.revealPending();
+        if (!STOPPED.isEmpty()) releaseStopped();
         if (!HOLDS.isEmpty()) {
             long now = e.getServer().overworld().getGameTime();
             for (Iterator<Hold> it = HOLDS.iterator(); it.hasNext(); ) {
@@ -682,8 +837,9 @@ final class ArmsServer {
 
     /** A blow that lands on a player tells their client where it came from and how hard (the hurt's sound and kick). */
     static void onDamaged(LivingDamageEvent.Post e) {
-        if (!(e.getEntity() instanceof ServerPlayer p) || !ArmsConfig.enabled() || e.getInflictedDamage() <= 0) return;
-        if (Strikes.of(e.getSource()) == Strikes.Kind.NONE) return;
+        // a stopped shot's share through the guard is no blow landing: the guard's own answer already told it
+        if (!(e.getEntity() instanceof ServerPlayer p) || !ArmsConfig.enabled() || e.getInflictedDamage() <= 0 || chipping) return;
+        if (kind(e.getSource()) == Strikes.Kind.NONE) return;
         Vec3 from = e.getSource().getSourcePosition();
         int yaw = from == null ? Integer.MIN_VALUE : (int) (Mth.atan2(from.z - p.getZ(), from.x - p.getX()) * Mth.RAD_TO_DEG) - 90;
         Entity by = e.getSource().getEntity();
@@ -847,7 +1003,10 @@ final class ArmsServer {
 
     static void onLeave(EntityLeaveLevelEvent e) {
         if (!SLOWED.isEmpty()) SLOWED.remove(e.getEntity().getId());
-        if (e.getEntity() instanceof ServerPlayer p) HOLDS.removeIf(h -> h.victim == p);
+        if (e.getEntity() instanceof ServerPlayer p) {
+            HOLDS.removeIf(h -> h.victim == p);
+            STOPPED.removeIf(st -> st.victim == p);
+        }
     }
 
     private static void seen(ServerPlayer p, ArmsPayloads.Seen msg) {
@@ -869,6 +1028,7 @@ final class ArmsServer {
     /** Tests: forget what was held for this player (tests run side by side, so never anyone else's). */
     static void clear(ServerPlayer p) {
         HOLDS.removeIf(h -> h.victim == p);
+        STOPPED.removeIf(st -> st.victim == p);
     }
 
     static boolean slowed(Entity e) {

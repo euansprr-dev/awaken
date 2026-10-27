@@ -18,10 +18,14 @@ public final class ArmsClips {
 
     /** Held while they last (loops), each with an {@code _end} settle. */
     public static final String GUARD = "arms_guard", CHARGE = "arms_heavy_charge";
+    /** A shot struck the guard: the blade knocked back toward the chest, the body rocked, braced again (once, back to {@link #GUARD}). */
+    public static final String GUARD_JOLT = "arms_guard_jolt";
+    /** The jolt's length in ticks (its last key: the guard pose again). */
+    public static final int GUARD_JOLT_TICKS = 6;
     public static final String DODGE_BACK = "arms_dodge_back", DODGE_LEFT = "arms_dodge_left", DODGE_RIGHT = "arms_dodge_right";
 
     public static final List<String> ALL = List.of("arms_strike_1", "arms_strike_2", "arms_strike_3", "arms_strike_4", "arms_heavy",
-            "arms_riposte", "arms_slipcut", "arms_execution", "arms_art", "arms_undercut", "arms_plunge", GUARD, GUARD + "_end", CHARGE, CHARGE + "_end", DODGE_BACK, DODGE_LEFT, DODGE_RIGHT);
+            "arms_riposte", "arms_slipcut", "arms_execution", "arms_art", "arms_undercut", "arms_plunge", GUARD, GUARD + "_end", GUARD_JOLT, CHARGE, CHARGE + "_end", DODGE_BACK, DODGE_LEFT, DODGE_RIGHT);
 
     /**
      * Styles with their own slide, fall and dodge moves (arms_<style>_<move>): the Gauntlets punch them (before, every

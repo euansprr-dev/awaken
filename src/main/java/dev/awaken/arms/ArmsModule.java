@@ -59,6 +59,7 @@ public final class ArmsModule {
             }
         });
         bus.addListener(EventPriority.HIGHEST, ArmsServer::onIncomingDamage);
+        bus.addListener(EventPriority.LOWEST, ArmsServer::onIncomingPinned);
         bus.addListener(ArmsServer::onShieldBlock);
         bus.addListener(EventPriority.HIGHEST, ArmsServer::onAttack);
         bus.addListener(ArmsServer::onSweep);

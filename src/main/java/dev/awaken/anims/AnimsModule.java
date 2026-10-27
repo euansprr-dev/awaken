@@ -11,5 +11,6 @@ public final class AnimsModule {
 
     public static void init(IEventBus modBus) {
         AnimsTests.register();
+        dev.awaken.anims.station.StationTests.register();
     }
 }

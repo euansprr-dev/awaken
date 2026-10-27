@@ -325,6 +325,17 @@ public final class FxClient {
         FxRecipes.bladeHit(at.x, at.y, at.z, dir.x, dir.y, dir.z, size, material);
     }
 
+    /**
+     * A shot meeting a raised guard (Arms, SPEC §25 "Shots"): a white-hot flash where it struck the steel and sparks
+     * thrown back along {@code (dx, dy, dz)}, the way it came, in the weapon's light (rgb). {@code size} 1 is a
+     * deflect's bright glance (with a ring off the edge), less a block's dull stop. {@code near}: the fighter's own
+     * blade in first person, drawn even at sword's length from the eye, and sized for it.
+     */
+    public static void guardSpark(double x, double y, double z, double dx, double dy, double dz, int rgb, float size, boolean near) {
+        if (!FxWorld.begin(x, y, z, (int) (x * 47 + z * 23) + FxWorld.ticks * 389)) return;
+        FxRecipes.guardSpark(x, y, z, dx, dy, dz, 0xFF000000 | rgb, size, near);
+    }
+
     /** A weapon's own light (Arms' streams): an ember that rises and cools to red. */
     public static final int MOTE_EMBER = 1;
     /** A wisp that drifts, swells and curls away to nothing. */
