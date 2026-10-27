@@ -151,6 +151,13 @@ public final class FirstPerson {
         public boolean drawOff, hideMain, hideOff;
         /** A cast clip's fists are drawn even when a hand holds something: the held thing is out of view while it plays. */
         public boolean stow;
+        /**
+         * The hands grip the world (a hang, a wall climb, a rope, a catch, a mantle): the stances' and clips' fists are
+         * drawn even when a hand holds something. Unlike {@link #stow} it eases both ways, as vanilla's equip does: what
+         * the hands hold sinks out of view as the fists come up, and once nothing asks for it any more it rises back as
+         * they sink away.
+         */
+        public boolean climb;
         /** A colour the fists' arms are tinted (RGB; 0 for none): the Sovereign's gold. */
         public int tint;
         /** How lit the fists are from within (0..1, the most of the sources): a palm on a waystone, a charging cast. */
@@ -168,7 +175,7 @@ public final class FirstPerson {
             java.util.Arrays.fill(gripMain, 0F);
             java.util.Arrays.fill(gripOff, 0F);
             drawOff = hideMain = hideOff = false;
-            stow = false;
+            stow = climb = false;
             tint = 0;
             glow = 0;
         }

@@ -3,6 +3,7 @@ package dev.awaken.anims.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.awaken.Awaken;
+import dev.awaken.anims.Ease;
 import dev.awaken.anims.FpClipSet;
 import dev.awaken.core.api.FirstPerson;
 import net.minecraft.client.Minecraft;
@@ -22,6 +23,10 @@ import java.util.Map;
  * <p>
  * Order with the other hand listeners (casts still draw their own arms): this runs first for each hand; the off hand's
  * part runs last ({@link #lastOff}), after anything else has undone its own main-hand moves.
+ * <p>
+ * What the hands hold is put away while a cast ({@code View.stow}: at once), a climb ({@code View.climb}) or the world
+ * layer's arm on that side asks: it sinks out of view as vanilla's equip lowers an item while the fists come up from
+ * under the frame, then is hidden; once nothing asks it rises back the same way as the last fists sink away.
  */
 final class Hands implements FirstPerson.Player {
     static final Hands INSTANCE = new Hands();
@@ -109,6 +114,57 @@ final class Hands implements FirstPerson.Player {
     static void reset() {
         for (Playing p : PLAYING) p.clip = null;
         mainPushed = false;
+        java.util.Arrays.fill(STOW, 0F);
+        STOW_FIST_MAIN[3] = STOW_FIST_OFF[3] = 0;
+        stowClock = Float.NaN;
+        sinkMain = sinkOff = 0;
+    }
+
+    // ---- putting away what the hands hold (FirstPerson.View stow and climb) ---------------------------------------------
+
+    /** How far each hand's held thing is put away (main, off; 0 in hand, 1 out of view), and whether this frame asks it. */
+    private static final float[] STOW = new float[2];
+    private static final boolean[] STOW_ASKED = new boolean[2];
+    /** Each hand's fist while what it holds was put away (x, y, z, then 1 if it had one): it sinks from there after. */
+    private static final float[] STOW_FIST_MAIN = new float[4], STOW_FIST_OFF = new float[4];
+    /** Ticks to put a held thing away and to bring it back (vanilla's equip moves 0.4 a tick: 2.5). */
+    private static final float STOW_DOWN = 2.5F, STOW_UP = 3F;
+    /**
+     * How far a held thing sinks (vanilla's equip lowers an item 0.6) and how far under its place a fist comes up from
+     * (out of the frame at the hand pass's 70°, even from a hang's lip).
+     */
+    private static final float ITEM_DROP = 0.6F, FIST_DROP = 0.8F;
+    private static float stowClock = Float.NaN;
+    /** This frame's sink of what each hand holds (blocks), for both hand passes. */
+    private static float sinkMain, sinkOff;
+
+    /** Each hand's stow toward what this frame asks: a cast's at once, a climb's (and the world's arms') eased. */
+    private static void stepStow(float now, boolean atOnce) {
+        float dt = Float.isNaN(stowClock) ? 0 : Math.max(0, Math.min(2, now - stowClock));
+        stowClock = now;
+        for (int h = 0; h < 2; h++) {
+            if (atOnce) STOW[h] = 1;
+            else STOW[h] = STOW_ASKED[h] ? Math.min(1, STOW[h] + dt / STOW_DOWN) : Math.max(0, STOW[h] - dt / STOW_UP);
+        }
+        if (STOW[0] == 0) STOW_FIST_MAIN[3] = 0;
+        if (STOW[1] == 0) STOW_FIST_OFF[3] = 0;
+    }
+
+    /** This frame's sinks from the stows, for what each hand holds (an empty hand has nothing to sink). */
+    private static void sinks(boolean holdsMain, boolean holdsOff) {
+        sinkMain = holdsMain ? Ease.at(Ease.SMOOTH, STOW[0]) * ITEM_DROP : 0;
+        sinkOff = holdsOff ? Ease.at(Ease.SMOOTH, STOW[1]) * ITEM_DROP : 0;
+    }
+
+    private static void keep(float[] to, float[] f) {
+        to[0] = f[0] / f[3];
+        to[1] = f[1] / f[3];
+        to[2] = f[2] / f[3];
+        to[3] = 1;
+    }
+
+    private static boolean holdsOff(net.minecraft.client.player.LocalPlayer p) {
+        return !p.getOffhandItem().isEmpty() || FirstPerson.offHandShows.getAsBoolean();
     }
 
     // ---- the hand pass ----------------------------------------------------------------------------------------------
@@ -157,6 +213,7 @@ final class Hands implements FirstPerson.Player {
             p.clip.sample(age, M, O);
             float k = p.stopAt < 0 ? 1 : Math.max(0, 1 - (ticks + pt - p.stopAt) / FADE);
             if (leftMain) mirror(M, O);
+            if (p.clip.climb) VIEW.climb = true;
             if (p.clip.fists) {
                 // a clip's fists take the hand from any stance's (a ledge jump over the hang's fists)
                 if (p.clip.hasMain()) FirstPerson.View.fist(CLIP_MAIN, k, M[0], M[1], M[2]);
@@ -192,49 +249,87 @@ final class Hands implements FirstPerson.Player {
     /** First for each hand: the world layer's arms hide vanilla's; the moves go on. */
     static void first(RenderHandEvent e) {
         if (broken) return;
-        if (e.getHand() == InteractionHand.MAIN_HAND) WorldBody.drawNearLegs(e); // before any of the hands' moves
+        boolean main = e.getHand() == InteractionHand.MAIN_HAND;
+        if (main) {
+            WorldBody.drawNearLegs(e); // before any of the hands' moves
+            mainPushed = false;
+        }
+        var pl = Minecraft.getInstance().player;
+        if (pl == null) return;
+        // the off hand holding a pair's twin is full: it pumps and moves with the dagger in it, never a stance's fist
+        boolean holdsMain = !pl.getMainHandItem().isEmpty(), holdsOff = holdsOff(pl);
         if (WorldBody.armsThisFrame) {
-            // the world layer's arms take the hand pass: vanilla's hand (and what it holds) steps aside on each side the
-            // world body has an arm; the other stays as it is (a touch with one hand leaves the sword in the other)
-            if (e.getHand() == InteractionHand.MAIN_HAND) WorldBody.drawArms(e);
+            // the world layer's arms take the hand pass: vanilla's hand steps aside on each side the world body has an
+            // arm, what it holds sinking away first as the arm comes up (back up after); the other stays as it is (a
+            // touch with one hand leaves the sword in the other)
             AvatarRenderState av = e.getPlayerState().avatarRenderState;
             boolean rightMain = av == null || av.mainArm != HumanoidArm.LEFT;
-            if (WorldBody.armShown((e.getHand() == InteractionHand.MAIN_HAND) == rightMain)) e.setCanceled(true);
-            mainPushed = false;
+            if (main) {
+                WorldBody.drawArms(e);
+                STOW_ASKED[0] = WorldBody.armShown(rightMain);
+                STOW_ASKED[1] = WorldBody.armShown(!rightMain);
+                STOW_FIST_MAIN[3] = STOW_FIST_OFF[3] = 0; // the world's arms let go in the world
+                stepStow(ticks + e.getPartialTick(), false);
+                sinks(holdsMain, holdsOff);
+            }
+            int h = main ? 0 : 1;
+            if (main ? holdsMain : holdsOff) {
+                if (STOW[h] >= 1) e.setCanceled(true);
+                else if (main && sinkMain > 0) {
+                    e.getPoseStack().pushPose();
+                    mainPushed = true;
+                    e.getPoseStack().translate(0, -sinkMain, 0);
+                }
+            } else if (WorldBody.armShown(main == rightMain)) {
+                e.setCanceled(true);
+            }
             return;
         }
-        if (e.getHand() != InteractionHand.MAIN_HAND) return;
-        mainPushed = false;
+        if (!main) return;
         try {
             AvatarRenderState avatar = e.getPlayerState().avatarRenderState;
             boolean leftMain = avatar != null && avatar.mainArm == HumanoidArm.LEFT;
             compose(e.getPartialTick(), leftMain);
-            if (!VIEW.moved()) return;
+            // what the hands hold is put away while a cast or a climb asks (a climb's sinks as the fists come up)
+            boolean ask = VIEW.stow || VIEW.climb;
+            STOW_ASKED[0] = STOW_ASKED[1] = ask;
+            stepStow(ticks + e.getPartialTick(), VIEW.stow);
+            sinks(holdsMain, holdsOff);
+            if (!VIEW.moved() && sinkMain == 0 && sinkOff == 0) return;
             PoseStack ps = e.getPoseStack();
-            var pl = Minecraft.getInstance().player;
-            // the off hand holding a pair's twin is full: it pumps and moves with the dagger in it, never a fist
-            boolean offEmpty = pl != null && (VIEW.stow || (pl.getOffhandItem().isEmpty() && !FirstPerson.offHandShows.getAsBoolean())), mainEmpty = pl != null && (VIEW.stow || pl.getMainHandItem().isEmpty());
-            // fists first, before any offset: each empty hand with one has its arm drawn rising to it
-            if (VIEW.fistMain[3] > 0 && mainEmpty) {
-                fist(e, !leftMain, VIEW.fistMain);
-                VIEW.hideMain = true;
+            float upMain = -FIST_DROP * (1 - sinkMain / ITEM_DROP), upOff = -FIST_DROP * (1 - sinkOff / ITEM_DROP);
+            // fists first, before any offset: each empty hand with one has its arm drawn rising to it; a hand putting
+            // away what it holds has its fist come up from under the frame as that sinks, and sink again as it returns
+            boolean mainFist = VIEW.fistMain[3] > 0 && (!holdsMain || ask);
+            if (mainFist) {
+                if (holdsMain) keep(STOW_FIST_MAIN, VIEW.fistMain);
+                fist(e, !leftMain, VIEW.fistMain, holdsMain ? upMain : 0);
+            } else if (holdsMain && !ask && STOW_FIST_MAIN[3] > 0 && sinkMain > 0) {
+                fist(e, !leftMain, STOW_FIST_MAIN, upMain);
             }
-            boolean offFist = VIEW.fistOff[3] > 0 && offEmpty;
+            boolean offFist = VIEW.fistOff[3] > 0 && (!holdsOff || ask);
             if (offFist) {
-                fist(e, leftMain, VIEW.fistOff);
-                VIEW.hideOff = true;
+                if (holdsOff) keep(STOW_FIST_OFF, VIEW.fistOff);
+                fist(e, leftMain, VIEW.fistOff, holdsOff ? upOff : 0);
+            } else if (holdsOff && !ask && STOW_FIST_OFF[3] > 0 && sinkOff > 0) {
+                fist(e, leftMain, STOW_FIST_OFF, upOff);
             }
+            // vanilla's hand steps aside for an empty hand's fist, and for a held thing once it's out of view
+            if (mainFist && !holdsMain || holdsMain && STOW[0] >= 1) VIEW.hideMain = true;
+            if (offFist && !holdsOff || holdsOff && STOW[1] >= 1) VIEW.hideOff = true;
             apply(ps, VIEW.both); // stays on the stack for the off hand too
-            // grips: a held thing swung far from its resting place is held by an arm rising to its grip (it still draws)
-            if (VIEW.gripMain[3] > 0 && !VIEW.hideMain) fist(e, !leftMain, VIEW.gripMain);
-            if (VIEW.gripOff[3] > 0 && !offFist) fist(e, leftMain, VIEW.gripOff);
-            if (VIEW.drawOff && !offFist && avatar != null && offEmpty) drawArm(e, avatar, !leftMain);
+            // grips: a held thing swung far from its resting place is held by an arm rising to its grip (it still draws,
+            // and sinks with it while it's put away)
+            if (VIEW.gripMain[3] > 0 && !VIEW.hideMain) fist(e, !leftMain, VIEW.gripMain, -sinkMain);
+            if (VIEW.gripOff[3] > 0 && !VIEW.hideOff) fist(e, leftMain, VIEW.gripOff, -sinkOff);
+            if (VIEW.drawOff && !offFist && avatar != null && (!holdsOff || STOW[1] >= 1)) drawArm(e, avatar, !leftMain);
             if (VIEW.hideMain) {
                 e.setCanceled(true);
                 return;
             }
             ps.pushPose();
             mainPushed = true;
+            if (sinkMain > 0) ps.translate(0, -sinkMain, 0); // straight down the view, as its grip goes
             apply(ps, VIEW.main);
         } catch (RuntimeException ex) {
             broken = true;
@@ -250,17 +345,24 @@ final class Hands implements FirstPerson.Player {
             ps.popPose();
             mainPushed = false;
         }
-        if (broken || e.isCanceled() || WorldBody.armsThisFrame) return;
+        if (broken || e.isCanceled()) return;
+        // the hand pass's stack is new every frame: nothing to undo after the last hand
+        if (WorldBody.armsThisFrame) {
+            if (sinkOff > 0) ps.translate(0, -sinkOff, 0);
+            return;
+        }
         if (VIEW.hideOff) {
             e.setCanceled(true);
             return;
         }
-        apply(ps, VIEW.off); // the hand pass's stack is new every frame: nothing to undo after the last hand
+        if (sinkOff > 0) ps.translate(0, -sinkOff, 0);
+        apply(ps, VIEW.off);
     }
 
-    private static void fist(RenderHandEvent e, boolean right, float[] f) {
+    /** A fist (or a grip) at its weighted place, moved dy up the view (down when negative). */
+    private static void fist(RenderHandEvent e, boolean right, float[] f, float dy) {
         float w = f[3];
-        WorldBody.drawFist(e, right, f[0] / w, f[1] / w, f[2] / w, VIEW.tint, VIEW.glow);
+        WorldBody.drawFist(e, right, f[0] / w, f[1] / w + dy, f[2] / w, VIEW.tint, VIEW.glow);
     }
 
     private static void apply(PoseStack ps, float[] m) {

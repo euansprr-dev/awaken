@@ -22,6 +22,12 @@ final class AnimsTests {
             h.assertTrue(clips.containsKey(name), name + " is in the file");
             if (!AnimsClips.twoHanded(name)) h.assertTrue(clips.containsKey(name + "_off"), name + "_off is in the file");
         }
+        // a climb's clips put what the hands hold away (SPEC §24 "Put away"); letting go of the lip brings it back
+        for (String name : java.util.List.of(dev.awaken.body.BodyClips.FP_GRAB, dev.awaken.body.BodyClips.FP_LOWER, dev.awaken.body.BodyClips.FP_LEDGE_UP,
+                dev.awaken.body.BodyClips.FP_LEDGE_SIDE_L, dev.awaken.body.BodyClips.FP_LEDGE_SIDE_R, dev.awaken.body.BodyClips.FP_MANTLE, "fp_rope_fire")) {
+            h.assertTrue(clips.containsKey(name) && clips.get(name).climb, name + " is a climb's");
+        }
+        h.assertFalse(clips.get(dev.awaken.body.BodyClips.FP_LEDGE_BACK).climb, "the ledge jump back lets go");
         float[] m = new float[6], o = new float[6];
         for (FpClipSet.Clip c : clips.values()) {
             h.assertTrue(c.length > 0, c.name + " has a length");

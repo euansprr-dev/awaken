@@ -119,6 +119,8 @@ public final class AscentFp {
         float m = p.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT ? -1 : 1; // the main hand's side
         if (SovereignClient.active()) v.tint = GOLD;
         float in = Ease.at(Ease.SMOOTH, age / 4F);
+        // on a rope or a zip line the hands hold it: what they hold is put away (Hands eases it out and back)
+        if (st == AscentState.TETHER || st == AscentState.ZIP || st == AscentState.RAPPEL) v.climb = true;
         switch (st) {
             case TETHER -> {
                 FirstPerson.View.fist(v.fistMain, 1, m * ROPE_X, ROPE_Y, ROPE_Z);

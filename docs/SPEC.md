@@ -3739,7 +3739,8 @@ builds with vanilla's). Approved feel: the free-run is as before (§17.14), only
   `body_moves`): up from under the frame onto the rail a hand's width to their side of your line, held there in the
   world as the body goes over it (the hand slides back under you), peeled off as you come down; the free hand over a
   running vault, empty, thrown up and out wide for balance, drawn in the world too (while the world body has an arm the
-  view's own moves stand aside); a held item stays as it is. Up onto a top, the mantle's `fp_mantle`. The hands meet
+  view's own moves stand aside); a held item stays as it is, except climbing over a rail on a block or out of a hang
+  (`HIGH`, `OVER`), where both hands plant and what they hold is put away (§24 "Put away"). Up onto a top, the mantle's `fp_mantle`. The hands meet
   the rail as the body comes level with it, a rail on a block's at the eyes (2 ticks in: the body rises past them), a
   rail hung from at once. The view dips 16° toward a low rail as the hand meets it, so it's seen landing (the rail is
   about 45° under the eye then), rolls 4° toward the legs over a running vault and takes the landing with a 4° dip; at a
@@ -4997,7 +4998,7 @@ of the plan). No mixins.
   view (±0.48, -0.84, -0.53), vanilla's own arm start), so a hand can be lifted anywhere without its forearm floating into
   view (offsets that lift a vanilla arm show its end: the P2 preview). Vanilla's resting fist is
   `FirstPerson.View.REST_FIST` (0.744, -0.455, -1.072); a clip's fists replace a stance's for that hand; a hand holding
-  an item ignores fists (vanilla draws it). A fist clip gives the hands back at rest (or the off hand out under the
+  an item ignores fists (vanilla draws it) unless a cast or a climb puts the item away (below). A fist clip gives the hands back at rest (or the off hand out under the
   frame), or, marked `toStance`, where its stance holds them (the hang's ledge jumps).
 - **Grips** (Arms 2026-10-26, Euan: "it feels like the weapon is just floating and attacking on its own"): a source may
   key where a hand that HOLDS something closes on it (`View.gripMain`/`gripOff`, view space, weighted as fists): that
@@ -5005,6 +5006,20 @@ of the plan). No mixins.
   hands, so it sways with what it holds), and the held thing still draws (a grip never hides the hand). Unset (weight 0)
   nothing changes. Arms keys them every frame a styled weapon is held: at rest, through each swing's turn, the guard
   and the equip rise, the off hand's on a pair's twin. Test `arms_grip`.
+- **Put away** (Euan 2026-10-27: "climbing while a weapon is out doesn't hide the weapon, so it looks really weird"):
+  whenever the hands grip the world, what they hold goes out of view and the fists take its place. Asked by a cast clip
+  (`View.stow`, `"stow"`: at once, as before), by a climb (`View.climb`: the hang and its shimmy and every move between
+  holds while `RunnerMoves.hanging()`, a wall climb, the Ascent's rope, zip line and rappel; and the clips marked
+  `"climb"` in fp_moves.py: `fp_grab`, `fp_lower`, `fp_ledge_up`, `fp_ledge_side_l/_r`, `fp_mantle` (every mantle and
+  climb out, a fence or wall climbed onto), `fp_rope_fire`), and on each side the world layer has an arm (the pipe's
+  grip, a crossing's planted hand, the slide's trailing hand, a hard landing's palms). Each hand eases separately
+  (`Hands.STOW`): going away it sinks 0.6 down the view (vanilla's equip drop) over 2.5 ticks (smoothstep; its grip arm
+  sinks with it) while that hand's fist comes up into place from 0.8 under it, then is hidden; once nothing asks, it rises
+  back over 3 ticks while the hand's last fist sinks 0.8 away (a world arm lets go in the world instead). A pair's twin
+  goes with the off hand. Letting go of the lip (a drop, `fp_ledge_back`, a wall jump), the rope (`fp_rope_release`,
+  `fp_rope_launch`) or the line brings the weapon back at once; a climb out keeps it away to the end of `fp_mantle`. The
+  tactical sprint, slide (its main hand), roll, wall-run, vault and hop keep it in hand. Third person is unchanged (the
+  body's climb clips still show held items: hiding them for other players needs a client query of remote climbs).
 - **Look-lag** (P2): the hands trail fast turns of the view on a damped spring (up to 0.06 sideways, 0.045 up, 4° of
   roll), halved with reduced motion (`FirstPerson.reducedMotion`, the body's setting).
 - **Near legs** (P2): a foot nearer the eye than 1.15 is drawn in the hand pass, pushed out along its line of sight to
@@ -5016,7 +5031,7 @@ of the plan). No mixins.
   across it. A world rig sets `handDistance` (nearer reads bigger: touches 0.75, both hands 0.85, stations 0.8, the
   pipe 0.85, the slide and landing 0.78), `held[]` (an item at the fist: a plucked flower, food being laid) and `glow`.
   Vanilla's hand steps aside only on the side the world body has an arm (a touch with one hand leaves the sword in the
-  other). In the hand pass the frame shows y down to about 0.7·|z|: keep keyed fists inside it.
+  other); what it holds sinks away first (§24 "Put away"). In the hand pass the frame shows y down to about 0.7·|z|: keep keyed fists inside it.
 - **The Runner's Kit in first person** (P2, `body.client.BodyFp`): each move's view clip starts from the same event as
   its third-person clip (BodyAnims hands the clip's name over): `fp_roll`, `fp_mantle` (and every climb out),
   `fp_grab`, `fp_lower`, `fp_ledge_up`, `fp_ledge_side_l/_r`, `fp_ledge_back`, `fp_walljump_l/_r` (the run's wall side),
