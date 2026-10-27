@@ -217,6 +217,13 @@ strike("arms_plunge", "plunge", PL_COCK, PL_THRU, "out of a fall: both hands hig
 GD = pose(lean=8, rl=(-14, 0, 6), rk=22, ll=(12, 0, -6), lk=18, ra=(-78, -46, 6), re=46, la=(-62, 34, -10), le=60)
 held("arms_guard", GD, [nudge(GD, ra=(1, 0, 0), la=(-1, 0, 0)), nudge(GD, ra=(-1, 0, 0), la=(1, 0, 0))], 8,
      "the guard: blade across the front, off hand braced, knees soft")
+# A shot strikes the guard (SPEC §25 "Shots"): the blade knocked in toward the chest at once, the body rocked back on
+# its heels, a small rebound, braced again; it ends on the guard's own pose (ArmsClips.GUARD_JOLT_TICKS) and the game
+# holds the guard again.
+GD_HIT = nudge(GD, lean=-7, shift=-0.6, ra=(9, 5, 0), re=14, la=(7, -4, 0), le=12, rk=4, lk=4)
+GD_BACK = nudge(GD, lean=1.5, ra=(-2, -1, 0), re=-3, la=(-2, 1, 0))
+clip("arms_guard_jolt", [(0, GD, "linear"), (1, GD_HIT, "easeoutcubic"), (3, GD_BACK, "easeinoutsine"), (6, GD, "easeinoutsine")], 8,
+     note="a shot strikes the guard: the blade knocked in, the body rocked back, braced again")
 
 # The dodge (6 ticks): a quick low step away, the arms out for balance, back to the ready stance.
 def dodge(name, legs, tilt, lean, note):

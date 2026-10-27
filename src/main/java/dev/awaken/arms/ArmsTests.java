@@ -25,6 +25,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.entity.projectile.arrow.Arrow;
 import dev.awaken.progression.Rank;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.level.GameType;
@@ -66,6 +67,7 @@ final class ArmsTests {
         AwakenTests.register("arms_tap_or_hold", 40, ArmsTests::tapOrHold);
         AwakenTests.register("arms_strikes_things", 40, ArmsTests::strikesThings);
         AwakenTests.register("arms_untold_parry", 40, ArmsTests::untoldParry);
+        AwakenTests.register("arms_shots", 80, ArmsTests::shots);
         AwakenTests.register("arms_sources", 20, ArmsTests::sources);
     }
 
@@ -898,6 +900,71 @@ final class ArmsTests {
         Strikes.deliver(by, Strikes.Kind.LIGHT, () -> by.doHurtTarget(h.getLevel(), p));
         h.assertTrue(s.raiseDeflected && p.getHealth() == hp, by.getType().getDescription().getString() + "'s blow on the raise is deflected");
         return s.resonance - was;
+    }
+
+    /**
+     * A shot meets the guard (SPEC §25 "Shots"): in the raise's window it glances off (no damage, nothing stuck in the
+     * fighter, the arrow knocked away and no riposte opened); after it the guard blocks it (it stops on the blade, and
+     * only its share comes through); from behind it lands and sticks. Every weapon that fights with a style raises a
+     * guard, and a fireball is a shot to answer.
+     */
+    static void shots(GameTestHelper h) {
+        for (Item weapon : new Item[]{Items.IRON_SWORD, Items.IRON_AXE, Items.MACE, ArmsTests.item("wildhide_daggers"), ArmsTests.item("gatewrought_spear"),
+                ArmsTests.item("beastbound_warstaff"), ArmsTests.item("beastbound_twinblades"), ArmsTests.item("wildhide_glaive")}) {
+            h.assertTrue(Arms.guards(new ItemStack(weapon)), BuiltInRegistries.ITEM.getKey(weapon) + " raises a guard");
+        }
+        var src = h.getLevel().damageSources();
+        Mob skeleton = put(h, EntityTypes.SKELETON, -3.5, 6.5, 40);
+        var fireball = EntityTypes.SMALL_FIREBALL.create(h.getLevel(), EntitySpawnReason.COMMAND);
+        h.assertTrue(ArmsServer.kind(src.fireball(fireball, skeleton)) == Strikes.Kind.LIGHT, "a fireball is a shot to answer, not fire passing through");
+        h.assertTrue(ArmsServer.kind(src.explosion(fireball, skeleton)) == Strikes.Kind.PERILOUS, "its blast is still perilous");
+        ServerPlayer deflecter = fighter(h, -1.5, 0.5, 0F);
+        ServerPlayer blocker = fighter(h, 1.5, 0.5, 0F);
+        ServerPlayer behind = fighter(h, 4.5, 0.5, 0F);
+        for (ServerPlayer p : new ServerPlayer[]{deflecter, blocker, behind}) {
+            // a far plot's skeleton hits five times as hard; no shot may kill, or the full measure is capped
+            p.getAttribute(Attributes.MAX_HEALTH).setBaseValue(400);
+            p.setHealth(400);
+            raise(p);
+        }
+        ArmsServer.state(blocker).lockedOut = true; // a raise after one that deflected nothing can only block
+        float hp = deflecter.getHealth();
+        Arrow ahead = loose(h, skeleton, deflecter, 4.5), blocked = loose(h, skeleton, blocker, 4.5);
+        loose(h, skeleton, behind, -4.5);
+        h.startSequence().thenWaitUntil(() -> h.assertTrue(ArmsServer.state(deflecter).raiseDeflected && blocker.getHealth() < hp && behind.getHealth() < hp,
+                "every shot has met its fighter")).thenIdle(1).thenExecute(() -> {
+            ArmsState s = ArmsServer.state(deflecter);
+            h.assertTrue(deflecter.getHealth() == hp && deflecter.getArrowCount() == 0, "a shot in the raise's window glances off: no damage (took "
+                    + (hp - deflecter.getHealth()) + "), nothing stuck");
+            h.assertTrue(ahead.isAlive() && ahead.getZ() > deflecter.getZ() + 0.5 && ahead.getDeltaMovement().z > 0, "the arrow is knocked off the blade, back the way it came");
+            h.assertTrue(ArmsServer.now(deflecter) - s.deflectAt > 12, "a shot deflected opens no riposte (there's no one in reach)");
+            float full = hp - behind.getHealth(), through = hp - blocker.getHealth();
+            h.assertTrue(behind.getArrowCount() == 1, "from behind the guard, the shot lands and sticks (" + full + ")");
+            // the Longsword's share, once: a creature's level scales the shot, never the share again
+            h.assertTrue(Math.abs(through - full * 0.3F) < 1.01F && blocker.getArrowCount() == 0, "after the window the guard blocks it: "
+                    + through + " of " + full + " comes through (30%), nothing sticks");
+            h.assertTrue(blocked.isAlive() && blocked.getZ() > blocker.getZ() + 0.3, "the blocked arrow drops off the blade in front");
+            done(h, deflecter, blocker, behind);
+        });
+    }
+
+    private static void raise(ServerPlayer p) {
+        p.startUsingItem(InteractionHand.MAIN_HAND);
+        ArmsServer.onUseStart(new net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent.Start(p, p.getMainHandItem(), InteractionHand.MAIN_HAND, 72000));
+    }
+
+    /** An arrow from {@code dz} blocks ahead of {@code at} (behind when negative), at its chest, shot by {@code by}. */
+    private static Arrow loose(GameTestHelper h, Mob by, ServerPlayer at, double dz) {
+        Vec3 chest = at.position().add(0, 1.3, 0);
+        Arrow a = new Arrow(h.getLevel(), chest.x, chest.y, chest.z + dz, new ItemStack(Items.ARROW), null);
+        a.setOwner(by);
+        a.shoot(0, 0.05, -dz, 3.0F, 0F);
+        h.getLevel().addFreshEntity(a);
+        return a;
+    }
+
+    private static Item item(String id) {
+        return BuiltInRegistries.ITEM.getValue(Awaken.id(id));
     }
 
     /** Every listener after the Arms stage still applies: the momentum hit's +30% from a slide-speed run. */

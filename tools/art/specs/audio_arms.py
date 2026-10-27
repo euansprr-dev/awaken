@@ -330,6 +330,33 @@ def deflect(seed):
     return _blow(layers, 1.1, "field", 0.25, drive=1.35)
 
 
+def glance(seed):
+    """A shot glances off the guard (SPEC §25 "Shots"): a smaller thing than a blade strikes the steel, so the strike
+    is lighter and the ring higher and shorter; sparks; the shot's ricochet whining away as it's thrown off; the
+    deflect's rising shimmer, briefer (you still did it right)."""
+    r = K.rng(seed)
+    strike = rec(pick(["impactMetal_light_001", "impactMetal_light_002", "impactMetal_light_004", "impactGlass_light_002"], r))
+    f0 = r.uniform(1380, 1560)
+    n = K.ns(0.8)
+    shimmer = K.glass(f0 * 1.5, n, 0.9, 0.8, seed + 5, 0.6) * R.bp(n, [(0, 0), (0.03, 0.6), (0.14, 1.0), (0.8, 0)])
+    # the ricochet: a thin pitched whine falling away, its own little doppler, under a band of air
+    wn = K.ns(0.34)
+    fa = r.uniform(2300, 2700)
+    whine = K.sine(K.glide(wn, fa, fa * r.uniform(0.42, 0.52)), wn) * R.bp(wn, [(0, 0), (0.012, 1.0), (0.12, 0.55), (0.34, 0)])
+    air = R.unit(K.bandpass(K.noise(wn, "white", seed + 6), fa * 0.8, 3.0)) * R.bp(wn, [(0, 0), (0.02, 1.0), (0.34, 0)])
+    layers = [
+        (trim(shift(strike, r.uniform(1.08, 1.18)), 0.22), 0.0, 1.0),
+        (ring(f0, 0.45, 0.8, seed + 2, 0.6), 0.0, 0.55),
+        (ring(f0 * 1.497, 0.3, 0.7, seed + 3, 0.4), 0.002, 0.18),
+        (spark(0.2, seed + 4), 0.001, 0.28),
+        (shimmer, 0.0, 0.1),
+        (whine, 0.035, 0.12),
+        (air, 0.03, 0.04),
+        (sub(0.08, 220, 120, 0.03, 1.1), 0.0, 0.22),
+    ]
+    return _blow(layers, 0.85, "field", 0.22, drive=1.35)
+
+
 def block(seed):
     """A block: the guard takes the blow. Heavy, dull, the weapon shuddering in your grip; no song."""
     r = K.rng(seed)
@@ -581,6 +608,7 @@ EVENTS = OrderedDict([
     ("hurt", (hurt, 4, -14.0, 12, "You're hit", True, 12.0, 0.9)),
     ("heartbeat", (heartbeat, 2, -16.0, 8, "Heartbeat pounds", False, 12.0, 0.55)),
     ("hit_blunt", (hit_blunt, 4, -12.0, 22, "Heavy blow crashes home", True, 12.0, 1.0)),
+    ("glance", (glance, 4, -13.5, 24, "Shot glances off a blade", True, 13.5, 1.0)),
 ])
 
 

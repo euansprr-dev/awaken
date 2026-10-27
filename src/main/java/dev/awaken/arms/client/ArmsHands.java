@@ -91,9 +91,10 @@ final class ArmsHands {
         ps.translate(inv * HX, HY + equip * -0.6F, HZ);
         float g = guard(p, partial);
         if (g > 0) {
-            // across the body, edge out (vanilla's own blocking pose, eased in)
-            ps.translate(inv * -0.141F * g, 0.08F * g, 0.141F * g);
-            ps.rotateDegrees(Axis.XP, -102.25F * g);
+            // across the body, edge out (vanilla's own blocking pose, eased in), knocked back by a shot on it
+            float j = jolt(partial) * g;
+            ps.translate(inv * -0.141F * g + joltSide * JOLT_X * j, 0.08F * g + JOLT_Y * j, 0.141F * g + JOLT_Z * j);
+            ps.rotateDegrees(Axis.XP, -102.25F * g + JOLT_TIP * j);
             ps.rotateDegrees(Axis.YP, inv * 13.37F * g);
             ps.rotateDegrees(Axis.ZP, inv * 78.05F * g);
         }
@@ -110,6 +111,26 @@ final class ArmsHands {
     private static float guard(LocalPlayer p, float partial) {
         if (!p.isUsingItem() || p.getUseItem() != p.getMainHandItem()) return 0;
         return Math.min(1F, p.getTicksUsingItem(partial) / GUARD_RISE);
+    }
+
+    // a shot on the guard (SPEC §25 "Shots"): the blade knocked back toward the eye, up, and away from the side it
+    // struck (blocks), its tip thrown back (degrees); it rings out over JOLT_TICKS
+    private static final float JOLT_X = 0.035F, JOLT_Y = 0.03F, JOLT_Z = 0.075F, JOLT_TIP = 9F, JOLT_TICKS = 9F;
+    private static int joltAt = -1000;
+    private static float joltSize, joltSide;
+
+    /** A shot struck the guard: {@code side} -1..1 (+ from the right), {@code size} 1 for a deflect's knock. */
+    static void jolt(float side, float size) {
+        joltAt = ArmsPredict.ticks;
+        joltSize = size;
+        joltSide = -Mth.clamp(side, -1F, 1F); // pushed away from it
+    }
+
+    /** The jolt now: at once, then a damped rebound. */
+    private static float jolt(float partial) {
+        float t = ArmsPredict.ticks - joltAt + partial;
+        if (t < 0 || t >= JOLT_TICKS) return 0;
+        return joltSize * (float) Math.exp(-t / 2.2F) * Mth.cos(t * 1.25F) * (1 - t / JOLT_TICKS);
     }
 
     private static final org.joml.Vector3f D = new org.joml.Vector3f();
@@ -187,10 +208,11 @@ final class ArmsHands {
         G.set(ours ? st.hand() : st.vanillaGrip());
         float g = guard(p, partial);
         if (g > 0) {
-            // the guard (transform below): across the body, edge out
-            GUARD.identity().rotateX(-102.25F * g * Mth.DEG_TO_RAD).rotateY(13.37F * g * Mth.DEG_TO_RAD).rotateZ(78.05F * g * Mth.DEG_TO_RAD);
+            // the guard (transform below): across the body, edge out, and its jolt (the hands go with the blade)
+            float j = jolt(partial) * g;
+            GUARD.identity().rotateX((-102.25F * g + JOLT_TIP * j) * Mth.DEG_TO_RAD).rotateY(13.37F * g * Mth.DEG_TO_RAD).rotateZ(78.05F * g * Mth.DEG_TO_RAD);
             GUARD.transform(G);
-            G.add(-0.141F * g, 0.08F * g, 0.141F * g);
+            G.add(-0.141F * g + inv * joltSide * JOLT_X * j, 0.08F * g + JOLT_Y * j, 0.141F * g + JOLT_Z * j);
         }
         MAIN_Q.transform(G);
         G.add(MAIN_D).add(HX, HY + equip * -0.6F, HZ);

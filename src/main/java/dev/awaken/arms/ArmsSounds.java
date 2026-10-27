@@ -33,6 +33,10 @@ public final class ArmsSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> HIT_SPIRIT = sound("hit_spirit");
     public static final DeferredHolder<SoundEvent, SoundEvent> HIT_SLIME = sound("hit_slime");
     public static final DeferredHolder<SoundEvent, SoundEvent> DEFLECT = sound("deflect");
+    /** A shot deflected off the guard: a lighter, brighter ring than a blade's, and its ricochet whining away. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> GLANCE = sound("glance");
+    /** A shot blocked on the guard: the block's own sound, lighter (a smaller thing struck the steel). */
+    public static final float SHOT_BLOCK_VOLUME = 0.8F, SHOT_BLOCK_PITCH = 1.2F;
     public static final DeferredHolder<SoundEvent, SoundEvent> BLOCK = sound("block");
     public static final DeferredHolder<SoundEvent, SoundEvent> GUARD_BREAK = sound("guard_break");
     public static final DeferredHolder<SoundEvent, SoundEvent> BREAK = sound("break");

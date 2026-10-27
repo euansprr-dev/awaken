@@ -488,6 +488,23 @@ public final class ArmsPredict {
                 CombatFeedback.kick(0F, 1.2F, 0F, 5);
                 ArmsAudio.block(p);
             }
+            case ArmsPayloads.SHOT -> {
+                // a shot on the guard: the blade takes it (its jolt, its spark, its ring), no freeze (nothing in
+                // reach was answered), no riposte
+                fightAt = ticks;
+                boolean deflected = r.aux() == ArmsPayloads.DEFLECT;
+                float side = Mth.sin(Mth.wrapDegrees(r.aux2() - p.getYRot()) * Mth.DEG_TO_RAD);
+                ArmsHands.jolt(side, deflected ? 1F : 0.7F);
+                ArmsBodies.jolt(p);
+                ArmsFx.guardSpark(p, r.aux2(), deflected);
+                if (deflected) {
+                    CombatFeedback.kick(-side * 0.6F, -1.1F, 0.7F, 6);
+                    ArmsFeel.glanced();
+                } else {
+                    CombatFeedback.kick(-side * 0.5F, 0.9F, 0F, 5);
+                }
+                ArmsAudio.shot(p, deflected);
+            }
             case ArmsPayloads.GUARD_BREAK -> {
                 fightAt = ticks;
                 CombatFeedback.kick(0F, 3.5F, -2F, 10);
@@ -567,6 +584,13 @@ public final class ArmsPredict {
                 CombatFeedback.hitstop(s.entity(), s.aux());
             }
             case ArmsPayloads.BREAK -> BROKEN.put(s.entity(), ticks + s.aux());
+            case ArmsPayloads.SHOT -> {
+                Entity e = mc.level.getEntity(s.entity());
+                if (e != null) {
+                    ArmsBodies.jolt(e);
+                    ArmsFx.guardSpark(e, s.aux2(), s.aux() == ArmsPayloads.DEFLECT);
+                }
+            }
             case ArmsPayloads.POSTURE -> ArmsStances.onSnapshot(s.entity(), s.aux() / 10F, s.aux2(), s.other());
             default -> { }
         }

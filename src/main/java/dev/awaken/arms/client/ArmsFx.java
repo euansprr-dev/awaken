@@ -163,6 +163,37 @@ final class ArmsFx {
         FxClient.bladeHit(at, dir, size, BodyMaterial.of(target));
     }
 
+    /**
+     * Where a shot met a raised guard (SPEC §25 "Shots"), from the world yaw it came from: sparks off the blade back the
+     * way it came, in the weapon's light. The fighter's own in first person on the guard's blade (just ahead of the eye,
+     * toward the side it struck); anyone else's at the body's guard, chest high, out on that side.
+     */
+    static void guardSpark(Entity e, int fromYaw, boolean deflected) {
+        Minecraft mc = Minecraft.getInstance();
+        float yaw = fromYaw * Mth.DEG_TO_RAD;
+        Vec3 from = new Vec3(-Mth.sin(yaw), 0, Mth.cos(yaw));
+        boolean own = mc.player != null && e.getId() == mc.player.getId() && mc.options.getCameraType().isFirstPerson();
+        Vec3 at;
+        if (own) {
+            float look = e.getYRot() * Mth.DEG_TO_RAD;
+            int inv = e instanceof LivingEntity l && l.getMainArm() == HumanoidArm.LEFT ? -1 : 1;
+            Vec3 forward = e.getViewVector(1F);
+            Vec3 right = new Vec3(-Mth.cos(look), 0, -Mth.sin(look));
+            Vec3 up = right.cross(forward);
+            float side = Mth.clamp(Mth.sin(Mth.wrapDegrees(fromYaw - e.getYRot()) * Mth.DEG_TO_RAD), -0.7F, 0.7F);
+            at = e.getEyePosition(1F).add(forward.scale(GUARD_DEPTH)).add(right.scale(inv * GUARD_X + side * GUARD_SIDE)).add(up.scale(GUARD_Y));
+        } else {
+            at = e.position().add(0, e.getBbHeight() * 0.68, 0).add(from.scale(e.getBbWidth() * 0.5 + 0.3));
+        }
+        ItemStack held = e instanceof LivingEntity l ? l.getMainHandItem() : ItemStack.EMPTY;
+        int rgb = colour(held, 0, false, Archetype.Move.STRIKE_1) & 0xFFFFFF;
+        FxClient.guardSpark(at.x, at.y, at.z, from.x, 0.15, from.z, rgb, deflected ? 1F : 0.55F, own);
+    }
+
+    // the guard's blade in first person (ArmsHands' guard pose), camera space: ahead, right of centre, below the eye;
+    // a shot from one side meets the blade further out on that side
+    private static final float GUARD_DEPTH = 0.8F, GUARD_X = 0.1F, GUARD_Y = -0.2F, GUARD_SIDE = 0.2F;
+
     static void reset() {
         java.util.Arrays.fill(PENDING, null);
     }
