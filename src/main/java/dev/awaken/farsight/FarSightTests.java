@@ -16,12 +16,14 @@ import net.minecraft.core.QuartPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.LevelHeightAccessor;
+import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
@@ -246,27 +248,7 @@ final class FarSightTests {
             LevelChunk chunk = level.getChunkAt(new BlockPos(x0, y0, z0));
             VoxelSnapshot snap = VoxelSnapshot.take(level, chunk);
             h.assertTrue(snap != null, "the chunk has blocks");
-            VoxelMesher mesher = new VoxelMesher(new VoxelMesher.Looks() {
-                @Override
-                public int face(int id, int dir) {
-                    return id & 0xFFFF;
-                }
-
-                @Override
-                public int tint(int id, int tintIndex, Holder<Biome> biome) {
-                    return 0xFFFFFF;
-                }
-
-                @Override
-                public int window(int id, int dir) {
-                    return id & 0xFFFF;
-                }
-
-                @Override
-                public boolean cross(int id) {
-                    return id == poppy;
-                }
-            });
+            VoxelMesher mesher = new VoxelMesher(looks(poppy));
             long t0 = System.nanoTime();
             VoxelMesh mesh = mesher.mesh(snap, 7);
             double ms = (System.nanoTime() - t0) / 1e6;
@@ -310,6 +292,36 @@ final class FarSightTests {
             }
             Awaken.LOG.info("[farsight] voxel mesh: {} ms, quads by level {} {} {} {}", String.format(java.util.Locale.ROOT, "%.2f", ms),
                     mesh.quadCount(0), mesh.quadCount(1), mesh.quadCount(2), mesh.quadCount(3));
+            h.succeed();
+        });
+
+        // A cave's mouth under an overhang (Euan, 2026-10-27: a white band at a river's cave mouths in a new world): a
+        // tunnel at the foot of a 44-block rock, lit from the next chunk's cliff and dark by the time it crosses into
+        // this one, lies far under this chunk's ground (the rock's top). City Sight's snapshot still reaches down to it,
+        // since the chunk beside it has sky light there, and the mesh closes the tunnel's dark end with its curtain.
+        AwakenTests.registerIsolated("farsight_voxels_overhang", 100, h -> {
+            ServerLevel level = h.getLevel();
+            BlockPos o = h.absolutePos(BlockPos.ZERO);
+            int ax = o.getX() & ~15, bx = ax + 16, z0 = o.getZ() & ~15, gy = level.getMinY() + 4, top = gy + 43;
+            BlockState stone = Blocks.STONE.defaultBlockState(), air = Blocks.AIR.defaultBlockState();
+            for (int x = ax; x < bx + 16; x++) {
+                boolean cliff = x >= bx + 14;
+                for (int z = z0; z < z0 + 16; z++) {
+                    boolean tunnel = x >= ax + 6 && z >= z0 + 2 && z <= z0 + 4;
+                    for (int y = gy - 1; y <= (cliff ? o.getY() + 26 : top); y++) {
+                        boolean open = cliff && y >= gy || tunnel && y >= gy && y <= gy + 2;
+                        level.setBlock(new BlockPos(x, y, z), open ? air : stone, Block.UPDATE_CLIENTS);
+                    }
+                }
+            }
+            AwakenTests.awaitLight(h, new BlockPos(ax - 1, gy, z0 - 1), new BlockPos(bx + 16, top + 1, z0 + 16));
+            h.assertTrue(level.getBrightness(LightLayer.SKY, new BlockPos(bx, gy, z0 + 3)) > 0
+                    && level.getBrightness(LightLayer.SKY, new BlockPos(ax + 15, gy, z0 + 3)) == 0, "the tunnel is lit in the cliff's chunk, dark here");
+            VoxelSnapshot snap = VoxelSnapshot.take(level, level.getChunkAt(new BlockPos(ax, gy, z0)));
+            h.assertTrue(snap != null && snap.minY() <= gy - 1, "the snapshot reaches the tunnel under the rock: from " + (snap == null ? "none" : snap.minY()));
+            VoxelMesh mesh = new VoxelMesher(looks(-1)).mesh(snap, 1);
+            int v0 = (gy - level.getMinY()) * 16, closed = area(mesh, 0, 5, 256, 2 * 16, 5 * 16, v0, v0 + 48);
+            h.assertTrue(closed == 48 * 48, "the tunnel's dark end is closed where it leaves the chunk: " + closed);
             h.succeed();
         });
 
@@ -464,6 +476,31 @@ final class FarSightTests {
             }
             h.succeed();
         });
+    }
+
+    /** Plain looks for the mesher: a face is its block's id, untinted; {@code cross} is drawn as crossed quads. */
+    private static VoxelMesher.Looks looks(int cross) {
+        return new VoxelMesher.Looks() {
+            @Override
+            public int face(int id, int dir) {
+                return id & 0xFFFF;
+            }
+
+            @Override
+            public int tint(int id, int tintIndex, Holder<Biome> biome) {
+                return 0xFFFFFF;
+            }
+
+            @Override
+            public int window(int id, int dir) {
+                return id & 0xFFFF;
+            }
+
+            @Override
+            public boolean cross(int id) {
+                return id == cross;
+            }
+        };
     }
 
     /** The area (square sixteenths) of level l's faces toward dir lying on plane, within the face's u and v ranges. */

@@ -1675,7 +1675,8 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   within 1.9 km, the city's at any distance, at most 16 M quads, farthest first; the coverage mask holds chunks within
   2 km only, so its 4 km torus never stands a far chunk in for a near one). A snapshot starts just under
   the chunk's lowest ground (MOTION_BLOCKING_NO_LEAVES - 8; OCEAN_FLOOR counts leaves, and under a closed canopy the
-  cut fell at the leaves: trees floating over a hole): deeper never shows. A chunk is taken again 2 s after its last block
+  cut fell at the leaves: trees floating over a hole), or at the lowest sky light in it or the four chunks beside it if
+  that lies deeper (caves under overhangs, below): dark rock deeper never shows. A chunk is taken again 2 s after its last block
   change (the neighbour-update event), not on save (the city's hold saves every chunk as it lets go: the city
   "loaded twice"), and a worker skips a snapshot that hashes as the mesh already up. Faces into dark rooms (no sky
   light, block light ≤ 2) aren't drawn; panes, doors and bars between such a room and the light draw their outward
@@ -1701,7 +1702,8 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   timer (876 chunks, 0.75 M quads).
   City Sight's meshes stay across Far Sight off and on in the same world (the capture starts over; unchanged chunks
   hash the same and are skipped).
-- **City Sight on disk** (`VoxelDisk`, schema 1): every snapshot taken is kept, deflated (sections in the game's own
+- **City Sight on disk** (`VoxelDisk`, schema 3; 3 since snapshots reach down to the sky light: the ones kept before
+  are dropped and taken again as their chunks load): every snapshot taken is kept, deflated (sections in the game's own
   network form, light), in regions of 32×32 chunks at `<world>/awaken/farsight/voxels/overworld/r.<x>.<z>.bin`, written
   on its own thread at each level save and, waited for (at most 10 s), when the server stops. A start, and every 10 s
   after, reads back what lies within 1.7 km of the player and isn't tracked (the world's own copy wins), handed over
@@ -1803,7 +1805,7 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
     culling (autopilot `farsight occlusion on|off|setting`, from the game's `smartCull`) isn't the void either: off, it
     costs 1.3 ms at the Roost and the market at RD 24 and the void stays as it was, at 24, at 15 and with the hand-off.
     The void shrinks as Sodium's distance grows (12 → 15 → 24): it lies at and past Sodium's reach, where City Sight's
-    meshes don't hold the cave under the overhang.
+    snapshots had cut the cave under the overhang off (found the next day: caves under overhangs, below).
   - **Result** (2026-10-27, `tools/autopilot/farsight-handoff.txt` on build 76ddb396 (Lens on Apple), perf-26oct's
     set-up: a new world from seed 20261024, Cinematic, RD 24, render scale 0.95, the hand-off off and on at the same
     spot; the GPU's world pass p50, the last of three tours, the Roost and the market within 0.4 ms of the others): the Roost 10.72 → 9.87 ms (frame p50
@@ -1813,8 +1815,23 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
     shots at the Roost, the market and over the city show no seam. It is held back (0) because it opens holes: City
     Sight's meshes past 12 chunks leave out caves under overhangs (the rim cave's void grows to most of the undercut;
     900 blocks out, in a sinkhole, the ground below shows sky). It pays where City Sight's meshes are light (the
-    countryside, the Roost) and not over the city; it can be turned on once City Sight closes a cave's mouth wherever
-    it is drawn.
+    countryside, the Roost) and not over the city. The holes were the snapshots' cut, fixed the next day (caves under
+    overhangs, below); the hand-off wants measuring again with it before it is turned on.
+- **Caves under overhangs** (2026-10-27, Euan in a new world at RD 15: a white band and a pale arch at a river's cave
+  mouths, 265 to 295 m out; worked out offline from a copy of his world's region files, with a ray-cast of City Sight's
+  own rules from his camera): nothing drew there, and Lens's haze filled the depth-far pixels with the sky's colour.
+  Sodium's reach ends at 240 m, the far terrain steps aside under every chunk City Sight holds (the coverage mask), and
+  City Sight's snapshot had cut the mouths off: it started 8 blocks under the chunk's lowest column top, and under an
+  overhang a column's top is the overhang, so the mouths at the river's foot lay 15 to 40 blocks under the cut. Not the
+  cached horizon (those chunks are nearer than its 288 m), not Sodium's occlusion culling, not Lens's water. Now a
+  snapshot reaches down to the lowest section with sky light in the chunk or in the four beside it (a neighbour's lit
+  cave runs on into this chunk's dark one, which then closes it with its curtain), read by the game's own rule for a
+  section it keeps no sky light for: the bottom row of the nearest kept one above, and open sky with none above (they
+  read as full sky before, so a cave inside the mountain was drawn lit and pale where a curtain belongs). At Euan's
+  view the ray-cast went from 713 sky pixels to none (43 left without the neighbours). Most chunks don't change: their
+  lowest sky light lies at or above the old cut. Test `farsight_voxels_overhang`: a tunnel at the foot of a 44-block
+  rock, lit from the next chunk's cliff and dark where it crosses into this one, is in the snapshot and closed by its
+  curtain.
 - **Ring 0's sea under the city**: a sea piece wholly inside the band where far water stays under real water, over
   chunks all shown and within Sodium's reach up and down, has every fragment hidden by the mask; it is no longer drawn
   (ring 0 at the Roost 0.70 → 0.15 ms: discarded fragments under Carillon's canals).
