@@ -13,8 +13,6 @@ import java.util.Optional;
 public final class NowClient {
     private NowClient() {}
 
-    private static final String[] ARROWS = {"↑", "↗", "→", "↘", "↓", "↙", "←", "↖"};
-
     private static SignalPayloads.Now current = new SignalPayloads.Now(net.minecraft.resources.Identifier.withDefaultNamespace("overworld"), List.of());
     private static String topId = "";
     private static int changedAt;
@@ -194,13 +192,9 @@ public final class NowClient {
     static Optional<String> compass(BlockPos at, net.minecraft.resources.Identifier dimension) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || !mc.player.level().dimension().identifier().equals(dimension)) return Optional.empty();
-        double dx = at.getX() + 0.5 - mc.player.getX(), dz = at.getZ() + 0.5 - mc.player.getZ();
-        double dist = Math.sqrt(dx * dx + dz * dz);
-        if (dist < 4) return Optional.of("here");
-        double targetYaw = Math.toDegrees(Math.atan2(-dx, dz));
-        double rel = Mth.wrapDegrees(targetYaw - mc.player.getYRot());
-        int idx = Math.floorMod((int) Math.round(rel / 45.0), 8);
-        return Optional.of(ARROWS[idx] + " " + Math.round(dist) + " m");
+        // height counts: a place over your head is never "here" (SPEC §27.1)
+        return Optional.of(dev.awaken.signal.NowWay.arrow(at.getX() + 0.5 - mc.player.getX(), at.getY() - mc.player.getY(),
+                at.getZ() + 0.5 - mc.player.getZ(), mc.player.getYRot()));
     }
 
     static void clear() {

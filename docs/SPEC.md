@@ -5948,9 +5948,17 @@ play it; the world remembers the locks you met and calls you back once when you 
 - **Needs**: `rank:<label>` and `level:<n>` answered by progression; `tier:<tether|leaper|wings|skyborn>` answered by the
   Ascent (`Promises.addAnswer`). Words: "D-rank", "level 20", "the Tether".
 - **The call back**: on a rank-up, a level reached or a rung granted, every waiting lock the player now meets is
-  answered. The nearest one with a place in this dimension leads one NOTICE toast "Ready now · <what> answers you now ·
-  640 m NE" (+ "and N more in your band (K)"), and for 10 minutes (`RAISED_FOR`) the Horizon line raises it over
-  everything near as "<what> · answers you" (a raised site). `markNewThing("promise_answered")`.
+  answered. The nearest one with a place in this dimension leads one NOTICE toast "Ready now · <line> · 640 m NE" (+
+  "and N more in your band (K)"), and for 10 minutes (`RAISED_FOR`) the Horizon line raises it over everything near
+  (a raised site, same line). `markNewThing("promise_answered")`.
+- **The line says what it is, and where** (Euan 2026-10-27: "the Sky Vale · answers you … here, but there's nothing
+  here"): an answered lock reads `PromiseKeeper.ready` in plain words, "<What> is open to you now" ("A sealed vault is
+  open to you now"), and for a land (`region:`) "<The Sky Vale> is no longer too dangerous for you"; never "answers you".
+  A region's place is only where the player first met its danger, on its edge, so with the player standing in that land
+  (`PromiseKeeper.inside`) the lock is off the Now line, the Horizon and the toast's compass: nothing to walk to.
+  Every way to a place counts height (`signal.NowWay`, one place for the Now line's arrow, the band and the toast):
+  **"here" only within 4 blocks across and 6 up or down**; straight over or under you it says "60 m above you" / "below
+  you"; elsewhere "↗ 58 m · 30 above" (the height past 8, rounded to 5). Test: `progression_lock_line`.
 - **`kept` / `keptAll(prefix)`**: a rank door opened (`door:`), a spire's crown climbed (`landmark:ruin:`), Wings from
   a sky core (`wing_core:`).
 - **Sources today**: the Tether Vow's stir and every rank door's reading ("A sealed vault" / "A sealed door", the door's
@@ -6142,7 +6150,7 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
   Wayfarers' camp. Before, every line in the city was flavour.
 - **Kestrel speaks** before you click her (`named.kestrel`: "Runner! You still haven't told me what happened in the square.").
 - **"Anything for me?"** (`progression.Advice.next`, after Terraria's Guide): a free Registry clerk you right-click says
-  the one next step that fits you: a Reassessment waiting, a lock that answers you now, points to spend, the Directive
+  the one next step that fits you: a Reassessment waiting, a lock that is open to you now, points to spend, the Directive
   you've taken, else the next rank and what it opens for you ("D-rank at level 10. It opens a sealed vault for you, and
   more.").
 - **A level-1 found scene**: Marta's Wheel (`quest/martas_wheel.json`, band 0, a road scene): eight sticks for her
@@ -6154,7 +6162,7 @@ A first draft of it is on `pack/progression-p3-wip` (48d09e19).
 - **The capability clock** (`Progression.CAPABILITY_AT`, set inside `markNewThing` for things you can *do*: a power
   learned, a rank, a Path, a rung, a Lord-forged weapon, a first Weave, a machine or blueprint, an Echo, a Hearth or its
   tier, a latent, a townsperson; never a sight or a core). After 75 minutes without one, outdoors and out of a gate, the
-  Now line offers the nearest one in reach: a lock that answers you now, with its place (57), else "D-rank at level 10 ·
+  Now line offers the nearest one in reach: a lock that is open to you now, with its place (57), else "D-rank at level 10 ·
   gate floors pay best" (50).
 - **The Reassessment says where**: "Reassessment ready · D-rank trial at your Spire" with a compass to your Hearth, or
   "· craft a Monolith" without one.
