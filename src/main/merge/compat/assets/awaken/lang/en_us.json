@@ -8,10 +8,9 @@
   "awaken.jei.category.essence": "Essence",
   "awaken.jei.category.core_fusing": "Core Fusing",
   "awaken.jei.category.codex": "Codex",
-
   "awaken.jei.codex.essence_shard.title": "Essence Shard",
   "awaken.jei.codex.essence_shard.kind": "Material · the awakened world's currency",
-  "awaken.jei.codex.essence_shard.text": "What awakened creatures leave behind: gate monsters, Lords, named beasts, anomalies and ruin caches all drop it. Nearly every Awaken recipe takes a few. It charges Essence Cells, feeds the Reactor, pays the Forge and the Hearth Anchor's upgrades, and buys from gate markets.",
+  "awaken.jei.codex.essence_shard.text": "What awakened creatures leave behind. Hunters at night drop about one for every two kills, most other creatures drop some, and gate monsters, Lords, named beasts, anomalies and ruin caches drop more. Nearly every Awaken recipe takes a few. It charges Essence Cells, feeds the Reactor, pays the Forge and the Hearth Anchor's upgrades, and buys from gate markets.",
   "awaken.jei.codex.lord_heart.title": "Lord's Heart",
   "awaken.jei.codex.lord_heart.kind": "Material · from Gate Lords",
   "awaken.jei.codex.lord_heart.text": "The heart of a Gate Lord. Lords drop it; gate breaks and treasure hoards give it up, and a Lord's market stall sells one for 12 shards. It is the core of the Hearth Anchor, of higher Hunter gear (C and B chests and foci, most of A and S), of Precursor alloy, the Clone Vat and the Launch Ring.",
@@ -63,7 +62,6 @@
   "awaken.jei.codex.gear_sovereign.title": "Sovereign Weave",
   "awaken.jei.codex.gear_sovereign.kind": "S-rank Hunter gear",
   "awaken.jei.codex.gear_sovereign.text": "The Herald's parts, the Architect's Key and, in time, the Hollow Court's own: the last set there is.",
-
   "config.jade.plugin_awaken": "AWAKEN",
   "config.jade.plugin_awaken.gate": "Gates: rank, state, break clock, what your Perception reads",
   "config.jade.plugin_awaken.machine": "Precursor machines: builder, power, progress",
@@ -76,5 +74,6 @@
   "config.jade.plugin_awaken.creature": "Creatures: temperament, level, rank",
   "config.jade.plugin_awaken.townsperson": "Townsfolk: job and town",
   "jade.theme.awaken.system": "AWAKEN System",
-  "key.awaken.look": "Look: Swift · Cinematic · Ultra"
+  "key.awaken.look": "Look: Swift · Cinematic · Ultra",
+  "awaken.jei.category.blueprint": "Blueprint"
 }

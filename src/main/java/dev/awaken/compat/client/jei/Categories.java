@@ -1,6 +1,9 @@
 package dev.awaken.compat.client.jei;
 
 import dev.awaken.Awaken;
+import dev.awaken.arms.ArmsData;
+import dev.awaken.arms.ArmsHomes;
+import dev.awaken.arms.ArmsItems;
 import dev.awaken.gear.HunterGearItem;
 import dev.awaken.gear.SetBonus;
 import dev.awaken.hearth.HearthRecord;
@@ -45,6 +48,7 @@ final class Categories {
     static final IRecipeType<Recipes.Essence> ESSENCE = IRecipeType.create(Awaken.MODID, "essence", Recipes.Essence.class);
     static final IRecipeType<Recipes.Fuse> FUSE = IRecipeType.create(Awaken.MODID, "core_fusing", Recipes.Fuse.class);
     static final IRecipeType<Recipes.Page> CODEX = IRecipeType.create(Awaken.MODID, "codex", Recipes.Page.class);
+    static final IRecipeType<Recipes.Pattern> BLUEPRINT = IRecipeType.create(Awaken.MODID, "blueprint", Recipes.Pattern.class);
 
     static final int W = 176;
 
@@ -62,7 +66,7 @@ final class Categories {
         private final Map<Identifier, String> source = new HashMap<>();
 
         Crafting(IDrawable icon) {
-            super(CRAFTING, title("crafting"), icon, W, 78);
+            super(CRAFTING, title("crafting"), icon, W, 90);
         }
 
         @Override
@@ -98,6 +102,14 @@ final class Categories {
             JeiLook.arrow(g, 66, 32, Glass.EDGE);
             JeiLook.resultSlot(g, 94, 20, accent(r));
             HunterGearItem gear = gear(r);
+            ArmsData.Weapon arms = arms(r);
+            if (arms != null) {
+                Rank tier = rankOf(arms.tier());
+                JeiLook.chip(g, tier.label + "-RANK", 124, 9, tier.colour);
+                var style = dev.awaken.arms.Archetypes.get(arms.style());
+                JeiLook.fit(g, style == null ? arms.style() : style.def().name(), 124, 25, W - 128, Glass.TEXT);
+                JeiLook.fit(g, "weapon", 124, 35, W - 128, Glass.LABEL);
+            }
             if (gear != null) {
                 JeiLook.chip(g, gear.tier.rank.label + "-RANK", 124, 9, gear.tier.rank.colour);
                 JeiLook.fit(g, "Hunter", 124, 25, W - 128, Glass.LABEL);
@@ -106,6 +118,11 @@ final class Categories {
             }
             JeiLook.rule(g, 6, W - 6, 63);
             JeiLook.fit(g, source(r), 8, 66, W - 16, Glass.LABEL);
+            if (arms != null && ArmsHomes.of(arms.style()) != null) {
+                Rank home = ArmsHomes.of(arms.style()).rank();
+                JeiLook.fit(g, "Blueprint: Hale, " + home.label + "-rank, " + ArmsHomes.rackPrice(home) + " essence; or " + ArmsHomes.of(arms.style()).gate(),
+                        8, 78, W - 16, Glass.VIOLET);
+            }
         }
 
         @Override
@@ -114,6 +131,17 @@ final class Categories {
             if (gear == null || !gear.piece.isArmour() || !JeiLook.inside(mx, my, 124, 6, 50, 52)) return;
             t.add(Component.literal(gear.tier.setName + " set").withColor(gear.tier.rank.colour));
             for (SetBonus.Line line : SetBonus.lines(gear.tier)) t.add(Component.literal(line.pieces() + " worn: " + line.text()).withColor(Glass.TEXT));
+        }
+
+        private static ArmsData.Weapon arms(RecipeHolder<CraftingRecipe> r) {
+            RecipeDisplay d = r.value().display().getFirst();
+            var item = dev.awaken.compat.Discovered.resultOf(d.result());
+            return item == null ? null : ArmsItems.of(item);
+        }
+
+        private static Rank rankOf(String letter) {
+            for (Rank k : Rank.values()) if (k.label.equals(letter)) return k;
+            return Rank.E;
         }
 
         private static HunterGearItem gear(RecipeHolder<CraftingRecipe> r) {
@@ -200,6 +228,45 @@ final class Categories {
             String where = r.level() == 1 ? "At any Forge, or by Oren the Blacksmith, who brings the shards"
                     : "In an Armory with a tier " + Upgrades.roman((r.level() + 1) / 2) + " Forge, or by Oren, who brings the shards";
             JeiLook.wrap(g, where, 9, 70, W - 18, Glass.LABEL, 2);
+        }
+    }
+
+    /** Every way to one Blueprint: the Forge's draw, Hale's price, the gate that teaches it and the level band (PLAN §3.4). */
+    static final class Blueprint extends SystemCategory<Recipes.Pattern> {
+        Blueprint(IDrawable icon) {
+            super(BLUEPRINT, title("blueprint"), icon, W, 118);
+        }
+
+        @Override
+        public void setRecipe(IRecipeLayoutBuilder b, Recipes.Pattern r, IFocusGroup focuses) {
+            for (int i = 0; i < r.draw().size(); i++) b.addInputSlot(9 + 19 * i, 23).add(r.draw().get(i));
+            b.addOutputSlot(141, 23).add(r.blueprint());
+        }
+
+        @Override
+        int accent(Recipes.Pattern r) {
+            return r.rank().colour;
+        }
+
+        @Override
+        void drawRecipe(Recipes.Pattern r, GuiGraphicsExtractor g, double mx, double my) {
+            JeiLook.title(g, r.name() + " Blueprint", 9, 8, Glass.TITLE);
+            String chip = r.rank().label + "-RANK";
+            int cw = JeiLook.font().width(chip) + 8;
+            JeiLook.chip(g, chip, W - 8 - cw, 6, r.rank().colour);
+            for (int i = 0; i < r.draw().size(); i++) JeiLook.slot(g, 9 + 19 * i, 23);
+            JeiLook.arrow(g, 110, 31, r.rank().colour);
+            JeiLook.resultSlot(g, 137, 19, r.rank().colour);
+            JeiLook.wrap(g, "Draw it at a Forge. A Study at home halves the paper.", 9, 46, W - 18, Glass.LABEL, 2);
+            String rank = r.rank().label;
+            JeiLook.wrap(g, "Found in " + rank + "-rank gates (" + r.home().gate() + "), and in level " + ArmsHomes.band(r.rank()) + " structures.", 9, 62, W - 18, Glass.TEXT, 3);
+            JeiLook.wrap(g, "Hale sells it at " + rank + "-rank for " + ArmsHomes.rackPrice(r.rank()) + " essence. A village of level " + ArmsHomes.band(r.rank())
+                    + " sells it for " + ArmsHomes.villagePrice(r.rank()) + " emeralds.", 9, 86, W - 18, Glass.TEXT, 3);
+            if (r.home().teacher() != null) JeiLook.fit(g, "Also taught early by " + cap(r.home().teacher().person()) + ".", 9, 108, W - 18, Glass.VIOLET);
+        }
+
+        private static String cap(String s) {
+            return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
         }
     }
 

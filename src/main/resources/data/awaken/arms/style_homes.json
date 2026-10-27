@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "rackPrice": { "E": 4, "D": 6, "C": 8, "B": 10, "A": 12, "S": 12 },
+  "villagePrice": { "E": 6, "D": 10, "C": 16, "B": 24, "A": 32, "S": 32 },
+  "bands": { "E": [1, 9], "D": [10, 24], "C": [25, 44], "B": [45, 69], "A": [70, 99], "S": [100, 999] },
+  "styles": [
+    { "id": "daggers", "theme": "awaken:hive", "gate": "the Hive", "rank": "E", "lord": "Hive Regent" },
+    { "id": "axe", "theme": "awaken:ember_mines", "gate": "the Ember Mines", "rank": "E", "lord": "Ember Tyrant" },
+    { "id": "maul", "theme": "awaken:bell_crypt", "gate": "the Bell Crypt", "rank": "E", "lord": "Bell Warden" },
+    { "id": "scythe", "theme": "awaken:fungal_hollow", "gate": "the Fungal Hollow", "rank": "E", "lord": "Mother of Spores" },
+    { "id": "warstaff", "theme": "awaken:overgrown_temple", "gate": "the Overgrown Temple", "rank": "E", "lord": "Root Saint" },
+    { "id": "spear", "theme": "awaken:drowned_archive", "gate": "the Drowned Archive", "rank": "D", "lord": "Drowned Archivist", "teacher": { "person": "hettie", "chain": "ten_sheep_short" } },
+    { "id": "rapier", "theme": "awaken:glass_desert", "gate": "the Glass Desert", "rank": "D", "lord": "Glass Serpent", "teacher": { "person": "pell", "chain": "pells_message" } },
+    { "id": "chainblade", "theme": "awaken:lantern_market", "gate": "the Lantern Night Market", "rank": "D", "lord": "Lantern Broker", "teacher": { "person": "marta", "chain": "caravan_road" } },
+    { "id": "gauntlets", "theme": "awaken:clockwork_foundry", "gate": "the Clockwork Foundry", "rank": "D", "lord": "Gearwright Colossus" },
+    { "id": "glaive", "theme": "awaken:frost_monastery", "gate": "the Frost Monastery", "rank": "C", "lord": "Abbot of Frost", "teacher": { "person": "gus", "chain": "hermits_horn" } },
+    { "id": "shieldblade", "theme": "awaken:mirror_palace", "gate": "the Mirror Palace", "rank": "C", "lord": "Mirror Knight" },
+    { "id": "precursor", "theme": "awaken:precursor_lab", "gate": "the Precursor Lab", "rank": "C", "lord": "Unit Zero" },
+    { "id": "katana", "theme": "awaken:nightmare", "gate": "the Nightmare gates", "rank": "C", "lord": "Sleeper" },
+    { "id": "twinblades", "theme": "awaken:sky_archipelago", "gate": "the Sky Archipelago", "rank": "B", "lord": "Sky Leviathan", "teacher": { "person": "wren", "chain": "wrens_rope" } },
+    { "id": "greatblade", "theme": "awaken:abyssal_shrine", "gate": "the Abyssal Shrine", "rank": "A", "lord": "Hollow Herald", "teacher": { "person": "oren", "chain": "orens_first_steel" } }
+  ]
+}
