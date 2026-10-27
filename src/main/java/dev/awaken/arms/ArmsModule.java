@@ -68,6 +68,9 @@ public final class ArmsModule {
         bus.addListener(EventPriority.LOW, ArmsMastery::onDeath);
         bus.addListener(EventPriority.LOW, MarkedDrops::onDeath);
         bus.addListener(EventPriority.LOW, ArmsIssue::onDrops);
+        bus.addListener(EventPriority.LOW, ArmsPatterns::onDeath);
+        bus.addListener(ArmsPatterns::onJoin);
+        bus.addListener(ArmsPatterns::onServerTick);
         bus.addListener(ArmsIssue::onPlayerTick);
         bus.addListener(EventPriority.HIGH, ArmsForge::onUseBlock);
         bus.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) -> { ArmsForge.forget(e.getEntity().getUUID()); ArmsArmoury.forget(e.getEntity().getUUID()); });

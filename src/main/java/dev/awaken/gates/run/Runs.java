@@ -479,6 +479,7 @@ public final class Runs {
             if (Satchel.add(run.satchel, s) == 0 || !s.isEmpty()) run.satchel.add(s); // the hoard never gets lost to a full Satchel
         }
         bankSatchel(p, g, run, label(f.area, f.floor), "boss", "");
+        if (main) dev.awaken.core.api.ArmsApi.lordPattern(p, g.key(), plan.theme().id); // the Lord's hoard carries the pattern when the bearer wasn't downed
         Progression.count(p, Counters.FLOORS_CLEARED);
         if (main) {
             Progression.count(p, Counters.GATES_CLEARED);

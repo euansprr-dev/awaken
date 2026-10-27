@@ -128,6 +128,10 @@ public final class GateCard {
         }
         w.row("Omen", plan.theme().omen);
         if (scouted) w.row("Theme", plan.theme().displayName);
+        if (scouted) {
+            String pattern = dev.awaken.core.api.ArmsApi.patternLine(p, plan.theme().id);
+            if (pattern != null) w.row("Pattern", pattern);
+        }
         if (per >= 20 || scouted) w.row("Layout", plan.layout().displayName);
         if (per >= 40 || scouted) {
             w.row("Modifiers", plan.modifiers().isEmpty() ? "None" : String.join(", ", plan.modifiers().stream().map((Modifier m) -> m.displayName).toList()));

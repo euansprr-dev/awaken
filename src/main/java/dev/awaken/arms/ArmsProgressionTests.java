@@ -29,6 +29,8 @@ final class ArmsProgressionTests {
         AwakenTests.register("arms_shard_pity", 40, ArmsProgressionTests::shardPity);
         AwakenTests.register("arms_rack", 40, ArmsProgressionTests::rack);
         AwakenTests.register("arms_armoury", 40, ArmsProgressionTests::armoury);
+        AwakenTests.register("arms_gate_pattern", 60, ArmsProgressionTests::gatePattern);
+        AwakenTests.register("arms_homes", 40, ArmsProgressionTests::homes);
     }
 
     /** A mock player in survival (the helper's are creative, where nothing is paid). */
@@ -149,6 +151,70 @@ final class ArmsProgressionTests {
         h.assertTrue(ArmsTrack.task(sp) == null && ArmsProgress.of(sp).tracked.isEmpty(), "and lets go once the weapon is in the pack");
         ArmsArmoury.onAct(sp, new dev.awaken.arms.net.ArmsPayloads.ArmouryAct(ArmsArmoury.TRACK, "katana", "E"));
         h.assertTrue(ArmsProgress.of(sp).tracked.isEmpty(), "a style you don't know can't be tracked");
+        h.succeed();
+    }
+
+    private static net.minecraft.world.entity.LivingEntity bearer(net.minecraft.gametest.framework.GameTestHelper h, String gate, boolean elite, BlockPos at) {
+        var mob = h.spawn(EntityTypes.ZOMBIE, at);
+        mob.setData(CoreApi.MOB_ROLE, new MobRole(elite ? MobRole.Role.ELITE : MobRole.Role.NORMAL, 3, "awaken:hive", Optional.empty(), gate));
+        return mob;
+    }
+
+    /** A gate's bearer: chosen on the first floor, wielding the style, and its death teaches each fighter near it once; the Lord's hoard is the fallback. */
+    static void gatePattern(net.minecraft.gametest.framework.GameTestHelper h) {
+        ServerPlayer sp = survivor(h);
+        var first = bearer(h, "gate-1", true, new BlockPos(1, 1, 1));
+        ArmsApi.gateSpawn(first, "gate-1", 0, 1, true);
+        h.assertTrue(first.entityTags().contains(ArmsPatterns.BEARER) && first.getMainHandItem().is(item("wildhide_daggers")), "the first elite of the first floor is the bearer and wields the Hive's daggers");
+        var second = bearer(h, "gate-1", true, new BlockPos(2, 1, 1));
+        ArmsApi.gateSpawn(second, "gate-1", 0, 1, true);
+        h.assertTrue(!second.entityTags().contains(ArmsPatterns.BEARER), "only one bearer to a gate");
+        var deeper = bearer(h, "gate-9", true, new BlockPos(3, 1, 1));
+        ArmsApi.gateSpawn(deeper, "gate-9", 0, 2, true);
+        h.assertTrue(!deeper.entityTags().contains(ArmsPatterns.BEARER), "nothing on the second floor");
+        var crowd = new net.minecraft.world.entity.LivingEntity[3];
+        for (int i = 0; i < 3; i++) {
+            crowd[i] = bearer(h, "gate-2", false, new BlockPos(1 + i, 1, 3));
+            ArmsApi.gateSpawn(crowd[i], "gate-2", 0, 1, false);
+        }
+        h.assertTrue(!crowd[0].entityTags().contains(ArmsPatterns.BEARER) && !crowd[1].entityTags().contains(ArmsPatterns.BEARER) && crowd[2].entityTags().contains(ArmsPatterns.BEARER),
+                "with no elite, the third creature is the bearer");
+
+        ArmsPatterns.bearerFell(first, List.of(sp));
+        h.assertTrue(ArmsApi.knows(sp, "daggers") && count(sp, item("daggers_blueprint")) == 1, "its fall teaches the fighter the Hive's Daggers, Blueprint in the pack");
+        ArmsPatterns.lordPattern(sp, "gate-1", "awaken:hive");
+        h.assertTrue(count(sp, item("daggers_blueprint")) == 1 && ArmsProgress.of(sp).styles.size() == 1, "once for the gate: the Lord adds nothing");
+
+        ServerPlayer skipped = survivor(h);
+        ArmsPatterns.lordPattern(skipped, "gate-1", "awaken:hive");
+        h.assertTrue(ArmsApi.knows(skipped, "daggers"), "a fighter who never downed the bearer gets it from the Lord's hoard");
+
+        // a style you know gives another of its rank, and a whole rank known gives essence
+        ArmsPatterns.bearerFell(crowd[2], List.of(sp));
+        int known = (int) java.util.stream.Stream.of("daggers", "axe", "maul", "scythe", "warstaff").filter(st -> ArmsApi.knows(sp, st)).count();
+        h.assertTrue(known == 2, "a style you know hands over another E pattern instead: " + known);
+        for (String st : List.of("axe", "maul", "scythe", "warstaff")) ArmsIssue.INSTANCE.learn(sp, st, "a test");
+        int essence = count(sp, CoreApi.ESSENCE_SHARD.get());
+        ArmsPatterns.teach(sp, ArmsHomes.of("daggers"), "a test");
+        h.assertTrue(count(sp, CoreApi.ESSENCE_SHARD.get()) == essence + 4, "all five E patterns known: 4 essence instead");
+        h.assertTrue(ArmsPatterns.patternLine(skipped, "awaken:hive") == null && ArmsPatterns.patternLine(h.makeMockServerPlayerInLevel(), "awaken:ember_mines") != null,
+                "the gate card names a pattern only for a style you don't know");
+        h.succeed();
+    }
+
+    /** The people who teach early: a chain's end pays its style once, or its price if it is already yours. */
+    static void homes(net.minecraft.gametest.framework.GameTestHelper h) {
+        ServerPlayer sp = survivor(h);
+        ArmsApi.install(ArmsIssue.INSTANCE);
+        ArmsPatterns.questDone(sp, "ten_sheep_short");
+        h.assertTrue(ArmsApi.knows(sp, "spear") && count(sp, item("spear_blueprint")) == 1, "Hettie teaches the Spear at the end of Ten Sheep Short");
+        ArmsPatterns.questDone(sp, "ten_sheep_short");
+        h.assertTrue(count(sp, item("spear_blueprint")) == 1, "once");
+        ServerPlayer knows = survivor(h);
+        ArmsIssue.INSTANCE.learn(knows, "greatblade", "a test");
+        ArmsPatterns.questDone(knows, "orens_first_steel");
+        h.assertTrue(count(knows, CoreApi.ESSENCE_SHARD.get()) == ArmsHomes.rackPrice(ArmsHomes.of("greatblade").rank()), "a style you know pays its price instead");
+        h.assertTrue(ArmsHomes.all().stream().filter(x -> x.teacher() != null).count() == 6, "six people teach");
         h.succeed();
     }
 }

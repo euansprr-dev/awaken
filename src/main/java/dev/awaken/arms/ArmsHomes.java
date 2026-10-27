@@ -29,7 +29,7 @@ public final class ArmsHomes {
     static final String PATH = "/data/awaken/arms/style_homes.json";
 
     /** A person who teaches a style as the last step of a job. */
-    public record Teacher(String person, String chain) {}
+    public record Teacher(String person, String chain, String line) {}
 
     /** One style's homes: its gate theme (an id and a name), its rank, its master Lord, and an early teacher if any. */
     public record Home(String style, String theme, String gate, Rank rank, String lord, @Nullable Teacher teacher) {}
@@ -60,7 +60,7 @@ public final class ArmsHomes {
                 Teacher t = null;
                 if (o.has("teacher")) {
                     JsonObject to = o.getAsJsonObject("teacher");
-                    t = new Teacher(to.get("person").getAsString(), to.get("chain").getAsString());
+                    t = new Teacher(to.get("person").getAsString(), to.get("chain").getAsString(), to.get("line").getAsString());
                 }
                 Home h = new Home(o.get("id").getAsString(), o.get("theme").getAsString(), o.get("gate").getAsString(),
                         rank(o.get("rank").getAsString()), o.get("lord").getAsString(), t);

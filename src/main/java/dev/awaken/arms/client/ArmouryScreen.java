@@ -134,7 +134,7 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
         }
         y2 += 20;
         for (var n : d.needs()) {
-            if (y2 > py + ph - 44) break;
+            if (y2 > py + ph - 56) break;
             Identifier id = Identifier.parse(n.id());
             Component label = n.kind().equals("tag")
                     ? Component.translatable("tag.item." + id.getNamespace() + "." + id.getPath())
@@ -151,6 +151,15 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
                 y2 += 9;
             }
             y2 += 11;
+        }
+
+        // the plaque: where else the pattern comes from (a pattern on offer at the rack, or one you hold)
+        var home = dev.awaken.arms.ArmsHomes.of(d.style());
+        if (home != null && ArmouryCache.known(d.style()) | entry(d.style()) != null) {
+            String plaque = "Free: " + home.gate() + " teaches it, in " + home.rank().label + "-rank gates."
+                    + (home.teacher() == null ? "" : " " + Character.toUpperCase(home.teacher().person().charAt(0)) + home.teacher().person().substring(1) + " teaches it early.");
+            List<FormattedCharSequence> lines = font.split(Component.literal(plaque), dw);
+            for (int i = 0; i < Math.min(2, lines.size()); i++) g.text(font, lines.get(i), dx, py + ph - 44 + i * 10, DIM, false);
         }
 
         // the buttons

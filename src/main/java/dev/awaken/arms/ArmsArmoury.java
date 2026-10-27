@@ -43,7 +43,7 @@ public final class ArmsArmoury {
 
     /** The six tiers, their weapons' name prefixes and the level each opens at (the level road, SPEC §28.3). */
     public static final String[] TIERS = {"E", "D", "C", "B", "A", "S"};
-    static final String[] PREFIX = {"wildhide", "beastbound", "gatewrought", "veilwoven", "lordscale", "sovereign"};
+    public static final String[] PREFIX = {"wildhide", "beastbound", "gatewrought", "veilwoven", "lordscale", "sovereign"};
     public static final int[] LEVEL = {3, 13, 22, 42, 67, 97};
 
     private static final long DOOR_TICKS = 20L * 60 * 3;

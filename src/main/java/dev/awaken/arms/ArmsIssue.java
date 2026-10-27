@@ -112,6 +112,31 @@ public final class ArmsIssue implements ArmsApi.Hooks {
     }
 
     @Override
+    public void gateSpawn(LivingEntity mob, String gateKey, int area, int floor, boolean elite) {
+        ArmsPatterns.gateSpawn(mob, gateKey, area, floor, elite);
+    }
+
+    @Override
+    public void markBearer(LivingEntity mob, String claimKey) {
+        ArmsPatterns.markBearer(mob, claimKey);
+    }
+
+    @Override
+    public void lordPattern(ServerPlayer p, String gateKey, String themeId) {
+        ArmsPatterns.lordPattern(p, gateKey, themeId);
+    }
+
+    @Override
+    public @Nullable String patternLine(ServerPlayer p, String themeId) {
+        return ArmsPatterns.patternLine(p, themeId);
+    }
+
+    @Override
+    public void questDone(ServerPlayer p, String chain) {
+        ArmsPatterns.questDone(p, chain);
+    }
+
+    @Override
     public boolean issueTaken(ServerPlayer p) {
         migrate(p);
         return ArmsProgress.of(p).issued;

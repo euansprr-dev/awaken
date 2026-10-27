@@ -31,6 +31,21 @@ public final class ArmsApi {
 
         /** Opens the Armoury at Hale's rack. */
         void openRack(ServerPlayer player);
+
+        /** A gate creature spawned: on the main gate's first floor the first elite or the third creature becomes the bearer of the gate's pattern. */
+        void gateSpawn(net.minecraft.world.entity.LivingEntity mob, String gateKey, int area, int floor, boolean elite);
+
+        /** This creature carries its theme's pattern (a riftborn camp's heart), claimed once per fighter under the key. */
+        void markBearer(net.minecraft.world.entity.LivingEntity mob, String claimKey);
+
+        /** The Lord's hoard carries the gate's pattern for a fighter who never downed the bearer. */
+        void lordPattern(ServerPlayer player, String gateKey, String themeId);
+
+        /** What a gate's card says of the pattern its first floor carries, or null (known, or none). */
+        @org.jspecify.annotations.Nullable String patternLine(ServerPlayer player, String themeId);
+
+        /** A chain of the living module ended: the person who teaches a style at its end pays it. */
+        void questDone(ServerPlayer player, String chain);
     }
 
     private static Hooks hooks;
@@ -62,6 +77,26 @@ public final class ArmsApi {
 
     public static void openRack(ServerPlayer player) {
         if (hooks != null) hooks.openRack(player);
+    }
+
+    public static void gateSpawn(net.minecraft.world.entity.LivingEntity mob, String gateKey, int area, int floor, boolean elite) {
+        if (hooks != null) hooks.gateSpawn(mob, gateKey, area, floor, elite);
+    }
+
+    public static void markBearer(net.minecraft.world.entity.LivingEntity mob, String claimKey) {
+        if (hooks != null) hooks.markBearer(mob, claimKey);
+    }
+
+    public static void lordPattern(ServerPlayer player, String gateKey, String themeId) {
+        if (hooks != null) hooks.lordPattern(player, gateKey, themeId);
+    }
+
+    public static @org.jspecify.annotations.Nullable String patternLine(ServerPlayer player, String themeId) {
+        return hooks == null ? null : hooks.patternLine(player, themeId);
+    }
+
+    public static void questDone(ServerPlayer player, String chain) {
+        if (hooks != null) hooks.questDone(player, chain);
     }
 
     /** The living module says what people say ("Hale: ...") on screen; arms asks it to, without knowing how. */
