@@ -25,12 +25,17 @@ cmd awaken powers starter 1
 wait 20
 screen close
 cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:slow_falling 60 1 true
 cmd tp @s 0.5 201 0.5 0 12
-wait 200
+wait 400
 cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
 cmd fill -14 200 -6 14 214 30 minecraft:air
 cmd fill -14 200 22 14 210 22 minecraft:deepslate_tiles
+wait 40
+cmd fill -14 199 -6 14 199 30 minecraft:smooth_stone
+cmd fill -14 200 22 14 210 22 minecraft:deepslate_tiles
 cmd tp @s 0.5 200 0.5 0 0
+wait 60
 cmd awaken admin power learn shockwave
 cmd awaken admin power learn beam
 cmd awaken admin energy full
