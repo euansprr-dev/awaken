@@ -98,6 +98,7 @@ public final class RoadWorld {
         RoadWorld w = new RoadWorld(seed, c[0], c[1], gen, rs, LevelHeightAccessor.create(type.minY(), type.height()),
                 dev.awaken.terrain.api.CityBasin.current() != null);
         RoadTimer.server = server.getRunningThread();
+        RoadTimer.watch(server);
         w.prepare();
         current = w;
     }

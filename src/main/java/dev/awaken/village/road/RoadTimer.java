@@ -11,7 +11,9 @@ import java.util.Locale;
  * What waiting on the roads costs (SPEC §28.9, Cost): every lattice chunk whose legs weren't known yet when world
  * generation or the planner ahead of the players asked (how long, on which thread, planned or waited for), the planner's
  * queue, and any wait on the server's own thread, which is a stall and is logged at once. Summed into one log line every
- * 30 s while anything happened, with the roads, plans and noise columns made in that time.
+ * 30 s while anything happened, with the roads, plans and noise columns made in that time. On a tour (the autopilot) a
+ * watch also samples the server thread 20 times a second: how much of its ticking was spent planning roads or
+ * settlements, and what it was doing when a tick ran over a second (to tell a stall of ours from anyone else's).
  */
 final class RoadTimer {
     private RoadTimer() {}
@@ -21,7 +23,7 @@ final class RoadTimer {
     /** A wait on the server thread longer than this is logged at once. */
     static final long STALL_NS = 50_000_000L;
 
-    private static int cold, waited, onServer;
+    private static int cold, waited, onServer, samples, planning;
     private static long coldNs, waitNs, serverNs, worstNs, roads0, plans0, columns0;
     private static String worst = "";
 
@@ -67,10 +69,10 @@ final class RoadTimer {
             plans = Plans.made();
             if (cold + waited + onServer == 0 && roads == roads0 && plans == plans0 && queued == 0) return;
             line = String.format(Locale.ROOT, "timer 30 s: %d chunks planned (%s ms), %d waited for (%s ms), worst %s ms (%s); server thread %d waits (%s ms); "
-                            + "planner queue %d, %d lattice chunks unknown ahead; %d roads, %d plans, %d noise columns",
+                            + "planner queue %d, %d lattice chunks unknown ahead; %d roads, %d plans, %d noise columns%s",
                     cold, ms(coldNs), waited, ms(waitNs), ms(worstNs), worst, onServer, ms(serverNs), queued, unknown, roads - roads0, plans - plans0,
-                    columns - columns0);
-            cold = waited = onServer = 0;
+                    columns - columns0, samples == 0 ? "" : "; server thread planning in " + planning + " of " + samples + " tick samples");
+            cold = waited = onServer = samples = planning = 0;
             coldNs = waitNs = serverNs = worstNs = 0;
             worst = "";
             roads0 = roads;
@@ -82,11 +84,86 @@ final class RoadTimer {
 
     static void reset() {
         synchronized (RoadTimer.class) {
-            cold = waited = onServer = 0;
+            cold = waited = onServer = samples = planning = 0;
             coldNs = waitNs = serverNs = worstNs = roads0 = plans0 = 0;
             columns0 = GenTerrain.COLUMNS.sum();
             worst = "";
         }
+    }
+
+    // ---- the server thread watched (tours) ----------------------------------------------------------------------------
+
+    /** A tick this long is logged with the server thread's stack (once a tick). */
+    static final long LONG_TICK_NS = 1_000_000_000L;
+
+    /** On a tour, from the server's start until it stops: the server thread sampled 20 times a second. */
+    static void watch(net.minecraft.server.MinecraftServer s) {
+        if (System.getProperty("awaken.autopilot") == null) return;
+        Thread st = s.getRunningThread();
+        Thread t = new Thread(() -> {
+            int seen = -1;
+            long since = System.nanoTime();
+            boolean told = false;
+            while (s.isRunning()) {
+                java.util.concurrent.locks.LockSupport.parkNanos(50_000_000L);
+                StackTraceElement[] stack = st.getStackTrace();
+                boolean ticking = calls(stack, "net.minecraft.server.MinecraftServer", "tickServer");
+                synchronized (RoadTimer.class) {
+                    if (ticking) samples++;
+                    if (ticking && planning(stack)) planning++;
+                }
+                int tick = s.getTickCount();
+                long now = System.nanoTime();
+                if (tick != seen) {
+                    seen = tick;
+                    since = now;
+                    told = false;
+                } else if (!told && ticking && now - since >= LONG_TICK_NS) {
+                    told = true;
+                    int gen = 0;
+                    for (var e : Thread.getAllStackTraces().entrySet())
+                        if (e.getKey() != st && calls(e.getValue(), RoadNet.class.getName(), "startsIn")) gen++;
+                    RoadNet.log("tick {} has run {} ms: {} (roads being laid for {} other threads){}", tick, ms(now - since), top(stack), gen,
+                            planning(stack) ? " (road or settlement planning)" : "");
+                }
+            }
+        }, "Awaken stall watch");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private static boolean calls(StackTraceElement[] stack, String cls, String method) {
+        for (StackTraceElement f : stack) if (f.getMethodName().equals(method) && f.getClassName().equals(cls)) return true;
+        return false;
+    }
+
+    /** In the roads', the settlements' or the land's planning code. */
+    private static boolean planning(StackTraceElement[] stack) {
+        for (StackTraceElement f : stack) {
+            String c = f.getClassName();
+            if (c.startsWith("dev.awaken.village.road.RoadNet") || c.startsWith("dev.awaken.village.road.Highroads")
+                    || c.startsWith("dev.awaken.village.road.RoadPlanner") || c.startsWith("dev.awaken.village.plan.")
+                    || c.startsWith("dev.awaken.village.world.Plans") || c.startsWith("dev.awaken.village.world.GenTerrain")
+                    || c.startsWith("dev.awaken.village.world.SharedLand")) return true;
+        }
+        return false;
+    }
+
+    /** The stack's first frames, our own and the game's, down to the tick. */
+    private static String top(StackTraceElement[] stack) {
+        StringBuilder b = new StringBuilder();
+        int n = 0;
+        for (StackTraceElement f : stack) {
+            if (f.getMethodName().equals("tickServer")) break;
+            if (n++ == 18) {
+                b.append(" < ...");
+                break;
+            }
+            String c = f.getClassName();
+            if (n > 1) b.append(" < ");
+            b.append(c.substring(c.lastIndexOf('.') + 1)).append('.').append(f.getMethodName()).append(':').append(f.getLineNumber());
+        }
+        return b.toString();
     }
 
     static String ms(long ns) {
