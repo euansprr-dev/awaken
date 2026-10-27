@@ -43,6 +43,30 @@ final class SignalTests {
         Signal.onAction("signaltest", (p, action, accepted) -> ANSWERS.incrementAndGet());
         NowHooks.register(p -> TEST_NOW.getOrDefault(p.getUUID(), List.of()));
 
+        // the task card wraps a long step instead of cutting it (Euan, 2026-10-27): no line wider than the card, the words and the
+        // key kept in order, the count and compass on the last line or one of their own, an ellipsis only past the last line
+        AwakenTests.register("signal_task_wrap", 20, h -> {
+            java.util.function.ToIntFunction<String> w = str -> str.length() * 5;
+            String long1 = "Run at a fence or a wall and vault it, then keep your speed on the far side.";
+            var lines = dev.awaken.signal.ui.TaskWrap.wrap(long1, null, 0, "", 140, 3, w);
+            h.assertTrue(lines.size() >= 2 && lines.size() <= 3 && lines.stream().allMatch(l -> l.stream().mapToInt(dev.awaken.signal.ui.TaskWrap.Seg::w).sum() <= 140), "a long step wraps within the card: " + lines);
+            String joined = lines.stream().flatMap(l -> l.stream()).map(dev.awaken.signal.ui.TaskWrap.Seg::text).reduce("", (a, b) -> a.isEmpty() ? b : a + " " + b);
+            h.assertTrue(joined.equals(long1), "and keeps every word in order: '" + joined + "'");
+            var keyed = dev.awaken.signal.ui.TaskWrap.wrap("Hold {key} while sprinting to slide.", "Left Shift", 70, "", 120, 3, w);
+            long caps = keyed.stream().flatMap(l -> l.stream()).filter(x -> x.kind() == dev.awaken.signal.ui.TaskWrap.KEY).count();
+            h.assertTrue(caps == 1 && keyed.size() >= 2 && keyed.stream().allMatch(l -> l.stream().mapToInt(dev.awaken.signal.ui.TaskWrap.Seg::w).sum() <= 120), "a key cap sits in the line like a word: " + keyed);
+            var one = dev.awaken.signal.ui.TaskWrap.wrap("Build a room.", null, 0, "2/5", 200, 3, w);
+            h.assertTrue(one.size() == 1 && one.getFirst().getLast().kind() == dev.awaken.signal.ui.TaskWrap.TAIL, "the tail follows a short step on its line");
+            var own = dev.awaken.signal.ui.TaskWrap.wrap("Build a room with a bed in it.", null, 0, "  \u2197 120 m", 150, 3, w);
+            h.assertTrue(own.getLast().size() == 1 && own.getLast().getFirst().kind() == dev.awaken.signal.ui.TaskWrap.TAIL, "a tail that does not fit has a line of its own: " + own);
+            var cut = dev.awaken.signal.ui.TaskWrap.wrap(long1, null, 0, "", 60, 2, w);
+            var last = cut.getLast().getLast();
+            h.assertTrue(cut.size() == 2 && last.text().endsWith("\u2026") && cut.getLast().stream().mapToInt(dev.awaken.signal.ui.TaskWrap.Seg::w).sum() <= 60, "past the last line it ends in an ellipsis that fits: " + cut);
+            var word = dev.awaken.signal.ui.TaskWrap.wrap("Supercalifragilisticexpialidocious", null, 0, "", 50, 3, w);
+            h.assertTrue(word.size() == 1 && word.getFirst().getFirst().w() <= 50, "one word wider than the card is cut: " + word);
+            h.succeed();
+        });
+
         // SPEC §27.7: tips, the pure rules: the context settles, the higher priority wins, a gap between tips, a cooldown
         // for the same one, retired after its dones or showings, the short text once done, and only if the director allows
         AwakenTests.register("signal_tip_rules", 20, h -> {

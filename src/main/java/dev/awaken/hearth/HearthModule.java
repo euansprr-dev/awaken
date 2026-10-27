@@ -40,6 +40,7 @@ public final class HearthModule {
     private HearthModule() {}
 
     public static void init(IEventBus modBus) {
+        HearthTrails.init();
         HearthContent.register(modBus);
         dev.awaken.hearth.kit.HomeKit.init(modBus);
         modBus.addListener(HearthModule::attributes);
@@ -157,6 +158,7 @@ public final class HearthModule {
         HearthCommands.register();
         HearthTests.register();
         HomeTests.register();
+        HearthTrailTests.register();
         dev.awaken.hearth.settle.SettleTests.register();
         TogetherHearthTests.register();
         dev.awaken.hearth.guide.GuideTests.register();

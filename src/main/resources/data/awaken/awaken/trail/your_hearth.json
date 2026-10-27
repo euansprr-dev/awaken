@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "title": "Your Hearth",
+  "area": "home",
+  "blurb": "A fire, a roof, a bed, and the town that comes with them.",
+  "weight": 20,
+  "opens": [
+    "hearth"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "guide",
+      "text": "Use your fire to open Your Hearth.",
+      "done": [
+        "tip:guide_seen"
+      ],
+      "where": "hearth",
+      "hint": "It lists every room and what each is missing."
+    },
+    {
+      "id": "shelter",
+      "text": "Build a closed, roofed room beside it.",
+      "done": [
+        "room:shelter"
+      ],
+      "where": "hearth",
+      "hint": "Walls, a roof and a door, at most 32 blocks wide. Rest heals inside it."
+    },
+    {
+      "id": "bedroom",
+      "text": "Put a bed in it.",
+      "done": [
+        "room:bedroom"
+      ],
+      "hint": "A bed makes the room a Bedroom."
+    },
+    {
+      "id": "rested",
+      "text": "Sleep in your own bed at home.",
+      "done": [
+        "counter:awaken:rested"
+      ],
+      "hint": "You wake Rested: energy and crafting come back faster, for longer in a comfortable home."
+    },
+    {
+      "id": "sanctuary",
+      "text": "Make a Sanctuary: a bed and a Meditation Mat in one room.",
+      "done": [
+        "room:sanctuary"
+      ],
+      "hint": "Sleeping there heals a Fracture."
+    },
+    {
+      "id": "cottage",
+      "text": "Let Oren raise a cottage, or build a Sanctuary yourself.",
+      "done": [
+        "cottage|room:sanctuary"
+      ],
+      "hint": "Oren offers it once, free, a few seconds after the Anchor takes root."
+    },
+    {
+      "id": "anchor",
+      "text": "Turn the fire into the Anchor with a Lord's Heart.",
+      "done": [
+        "hearth_tier:1"
+      ],
+      "hint": "The Anchor brings the town, small requests and the furniture recipes."
+    }
+  ],
+  "finish": {
+    "line": "Your Hearth is a home now.",
+    "levels": 0.05
+  }
+}

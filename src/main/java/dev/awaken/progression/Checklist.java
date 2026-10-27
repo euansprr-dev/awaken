@@ -49,10 +49,15 @@ public final class Checklist {
         @Nullable Task task(ServerPlayer p);
     }
 
-    private static final List<Source> SOURCES = new ArrayList<>();
+    private static final List<Source> SOURCES = new ArrayList<>(), LEADING = new ArrayList<>();
 
     public static void register(Source s) {
         SOURCES.add(s);
+    }
+
+    /** A source that is asked before the others (a followed trail, which the player chose: docs/trails/PLAN.md §3.4). */
+    public static void registerLeading(Source s) {
+        LEADING.add(s);
     }
 
     /** When the first four moves were all done (game time; 0: not yet). The finished list stays a moment, then goes. */
@@ -82,6 +87,11 @@ public final class Checklist {
     public static @Nullable Task now(ServerPlayer p) {
         Profile prof = Progression.profile(p);
         if (!prof.awakened() || OpeningHooks.inOpening(p)) return null;
+        // what the player chose to follow comes first (docs/trails/PLAN.md §3.4), then the first moves, then the rest
+        for (Source s : LEADING) {
+            Task t = s.task(p);
+            if (t != null) return t;
+        }
         Task moves = moves(p, prof);
         if (moves != null) return moves;
         for (Source s : SOURCES) {

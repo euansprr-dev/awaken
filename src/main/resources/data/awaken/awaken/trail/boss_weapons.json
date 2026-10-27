@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "title": "Boss Weapons",
+  "area": "weapons",
+  "blurb": "Gate Lords carry weapons of their own, and the cooler it is, the rarer.",
+  "weight": 96,
+  "opens": [
+    "count:awaken:bosses_killed:1"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "marked",
+      "text": "Get a Marked weapon from a Lord, an elite or a warden.",
+      "done": [
+        "arms:marked"
+      ],
+      "hint": "A Marked weapon has two special properties. Lords drop one often at low rank and rarely at high rank."
+    },
+    {
+      "id": "forged",
+      "text": "Hold a Lord-forged weapon.",
+      "done": [
+        "arms:lordforged"
+      ],
+      "hint": "Each Gate Lord has one. A Lord-forged weapon is certain after three Lords without one."
+    },
+    {
+      "id": "raise",
+      "text": "Raise a Marked weapon to the next tier at a Forge.",
+      "done": [
+        "counter:awaken:weapons_raised"
+      ],
+      "hint": "Open the Armoury at a Forge and press Raise. It needs the next tier's parts."
+    }
+  ],
+  "finish": {
+    "line": "You know what the Lords carry.",
+    "levels": 0.05
+  }
+}

@@ -64,6 +64,7 @@ public final class Rested {
         HearthPlayer hp = HearthService.player(sp);
         int minutes = Comfort.restedMinutes(h.comfort);
         hp.restedUntil = level.getGameTime() + 20L * 60 * minutes;
+        Progression.count(sp, "awaken:rested"); // a trail step (docs/trails/PLAN.md §4.1)
         hp.restedComfort = h.comfort;
         HearthViews.refresh(sp);
         DirectorLog.log(sp, "hearth", "rested " + minutes + " min (comfort " + h.comfort + ")");

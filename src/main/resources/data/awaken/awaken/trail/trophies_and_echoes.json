@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "title": "Trophies and Echoes",
+  "area": "home",
+  "blurb": "Hang what you have beaten, and bind what has fallen.",
+  "weight": 60,
+  "opens": [
+    "hearth_tier:1"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "trophy",
+      "text": "Hang a boss trophy on a Trophy Mount.",
+      "done": [
+        "counter:awaken:trophies_placed"
+      ],
+      "hint": "The first time you beat each Gate Lord it drops its trophy."
+    },
+    {
+      "id": "hall",
+      "text": "Make a Trophy Hall.",
+      "done": [
+        "room:trophy_hall"
+      ],
+      "hint": "Each different boss in it adds 1% damage and half a heart."
+    },
+    {
+      "id": "bind",
+      "text": "Bind an Echo from a fallen elite, warden or boss.",
+      "done": [
+        "counter:awaken:echoes_bound"
+      ],
+      "hint": "Tap B within 6 blocks during the ten seconds it lingers."
+    },
+    {
+      "id": "pad",
+      "text": "Place a role pad.",
+      "done": [
+        "pads:1"
+      ],
+      "hint": "Guard, Haul, Farm, Mine or Train: an Echo works the pad while you are away."
+    },
+    {
+      "id": "duty",
+      "text": "Put an Echo to work on a pad.",
+      "done": [
+        "duty:1"
+      ],
+      "hint": "Pads take Echoes that aren't marching, strongest first."
+    },
+    {
+      "id": "barracks",
+      "text": "Make a Barracks.",
+      "done": [
+        "room:barracks"
+      ],
+      "hint": "Echoes heal and train faster there."
+    },
+    {
+      "id": "break",
+      "text": "Hold a gate break near home.",
+      "done": [
+        "counter:awaken:breaks_held_at_hearth"
+      ],
+      "hint": "Your Guards go to it, and the Hearth shields you while it lasts."
+    }
+  ],
+  "finish": {
+    "line": "Your home has a guard, and a hall of what you have beaten.",
+    "levels": 0.05
+  }
+}

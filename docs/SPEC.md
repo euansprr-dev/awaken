@@ -43,6 +43,7 @@ Hard rules:
 | `anims` | Hands (§24): the first-person system (the world body, the view layer, view clips), `core.api.FirstPerson` |
 | `living` | The Living Wilds (§21): regions, the Holo combat layer, Wayfarers and quests, bounties, the World Pulse and happenings, populations and camps, crafts, wonders, settlers and villages |
 | `arms` | Weapons and combat (§25): the three verbs (strike, guard, dodge) on every melee weapon, fighting styles on one timing table, deflect, block, posture, Resonance, the feel of a blow (`core.api.CombatFeedback`), its sounds |
+| `trails` | Trails (§33): optional guidance for every part of the game, short lists of things to try that open at a moment, wait in the Journal and reach the task card only when followed |
 
 Rules for builders:
 - Touch only your module's package, your module's resources (namespaced file names), and your merge folder
@@ -7775,3 +7776,52 @@ or smoothed terrain faces, no texture above 16×16.
 ### 31.6 Where things stand
 P0 (client, every world), P1 soft steps, P2 the floor and P3 mountains are built and tested; P4 has its bands; P5's rank palettes and
 P4's banks are open. New worlds only for P1-P5 (flag `awaken:awakened_ground`; P3 rides Awakened Alpine's).
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 33. Trails (optional guidance for everything; plan docs/trails/PLAN.md, page https://claude.ai/artifact/QvuzZLthjqdy1dmXFgNit4; Euan approved all ten recommendations 2026-10-27)
+
+Euan: "...the moment you place your hearth, you unlock a whole hearth discovery program, ... that you don't have to follow.
+... you can click it, and then it creates the side checklist ... so that whenever you don't know what to do at all, you can
+always go in there and find ... the things that are available for me to do right now ... not just for the hearth, really
+plan this for everything." Module `trails` (`dev.awaken.trails`), `core.api.TrailsApi`, docs/modules/trails.md.
+
+- **A trail** is one JSON file, `data/<ns>/awaken/trail/<id>.json` (schemaVersion 1, `TrailDef`): `title`, `area` (home, weapons,
+  gates, powers, body, world, deep, story), `blurb`, `weight` (catalogue order), `opens` (tokens, all must hold), `after`
+  (trails to finish first), `order` (`free` or `linear`), `steps` and a `finish` (a line and a share of a level, 0.05 by
+  default, paid once through the Discovery XP source). A step has an `id`, `text` (at most 76 characters), `done` tokens, optional
+  `show` tokens (hidden until they hold), `where` (a kind of place for the compass), `hint` (at most 140), `tip` (a tip id offered
+  once when the step is current) and `manual` (a step with no `done` must be manual: the player marks it).
+- **Tokens** (`Conditions`): the `Requirements` tokens, `holds:<item>`, `count:<counter>:<n>`, `a|b` alternatives, and the families
+  other modules add through `TrailsApi.condition(prefix, test)`. The Hearth's (`HearthTrails`): `room:<kind>`, `rooms:<kind>:<n>`,
+  `grade:<snug|fine|grand>`, `hearth_tier:<n>`, `forge_tier:<n>`, `settlers:<n>`, `pads:<n>`, `duty:<n>`, `cottage`, `named`,
+  `tip:<marker>`, `furniture:<name>`, and the place `hearth`. Arms' (`ArmsTrails`): `style:<id>`, `styles:<n>`, `arms:issued|marked|lordforged`,
+  `armstier:<n>`, and the place `quartermaster` (Hale). An unknown token is never met; `trail_defs_valid` fails the build on one.
+- **State** (`TrailState`, attachment `awaken:trails`, schemaVersion 1, kept through death, per player): trails opened, finished,
+  hidden, the followed one, and `latched` steps ("trail|step"): a step seen done stays done. Progress is read from the world, so
+  a step done before the trail opened is ticked at once.
+- **The engine** (`TrailEngine`): every two seconds per player, staggered, it opens the trails whose tokens hold (at most
+  **2** announced a play-day, one IMPORTANT toast "A new trail: X. Open the Journal (K) to follow it.", topic `trail`; the rest open
+  quietly), latches done steps, finishes a trail when every step is done (an AMBIENT toast filed in the Journal, the reward, the
+  Director's new-thing tick), and sends the screen's copy (`TrailPayloads.View`) when it changed. A trail whose only unmet
+  tokens are a rank or a level shows as a silhouette ("Opens at D-rank") and files a "What waits" entry; any other lock keeps it unseen.
+- **Where it shows**: K, Journal page, **TRAILS** (order -38, under TRACKING): "What you can do now" (at most 3 rows, each the next step
+  with Follow), and **All trails ›** opening a browse view in the same section (area chips, a card per trail with its pips, Steps,
+  Follow, Not for me, silhouettes last). Following puts the trail on the **task card** (`Checklist.registerLeading`, asked before even the first-hour moves card: the trail,
+  every step done plus up to four to do, a linear trail two; the card counts the done ones; a step longer than the card wraps over up to three lines, `signal.ui.TaskWrap`, with key caps kept in the line, seen on the third tour) and its current step on the **Now line** (priority 55). Only Follow changes the HUD;
+  one trail is followed at a time, and the Armoury's Track gives the card up (`TrailsApi.unfollow`). "Anything for me?"
+  (`Advice`) names the best next step.
+- **Catalogue shipped** (24 trails): Home (7): Set Your Fire, Your Hearth, A Room for Everything, Your Village, The Forge, Trophies and
+  Echoes, The Training Grounds. Weapons (4): Your First Weapon, Finding Patterns, Making Your Next Weapon, Boss Weapons. Body (3):
+  Moving Like a Hunter, The Line, Wings. Gates (1): Your First Gate. World (2): Out in the Commons, Wayfarers and Camps. Deep (4):
+  The Veil, Dreams, The Precursors, The Well. Not yet written: Powers, Story, Villages, Beasts and Lairs, Digging Down, Rumours.
+- **Counters added** for steps (docs/COUNTERS.md): `rested`, `armoury_forge`, `armoury_opened`, `blueprint_copies`, `weapons_attuned`,
+  `weapons_raised`, `patterns_bought`, `patterns_from_gates`, `patterns_from_people`, `patterns_from_stands`, `patterns_from_villages`.
+- **Admin**: `/awaken admin trails list | open <id> | follow <id> | done <id> | reset`. Autopilot: `trails now|browse [area]|open`,
+  tour `tools/autopilot/trails-journal.txt`.
+- **Tests** (`trail_`): `trail_defs_valid` (every shipped trail passes the checks, and the checks catch what they should),
+  `trail_progress_derived`, `trail_open_once`, `trail_follow_card`, `trail_silhouette`, `trail_hearth_tokens`.
+- **Seen** (CI tour `trails-journal`, 2026-10-27): the TRAILS section in the Journal (what you can do now, Follow and Stop, the browse view by area with
+  steps and hints), and the rail's unread count rising as trails open. **Not built / unverified**: the task card and Now line with a followed trail on a real
+  screen (the first tour caught the first-hour card covering it; fixed, and the second tour showed the trail on the card ticking as steps were done; the card's count was off until every done step was sent, fixed and tested, not re-toured; the Now line shows the followed step below the Hale and camp lines, as designed at priority 55); a step's `{key}` caps; a `tip` (none shipped yet); several
+  followed trails; the Powers, Story and the remaining World trails; the Armoury's Track as a step type.

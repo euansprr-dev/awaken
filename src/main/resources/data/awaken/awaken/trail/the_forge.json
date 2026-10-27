@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "title": "The Forge",
+  "area": "home",
+  "blurb": "Temper gear, copy Blueprints, attune and raise weapons: the Forge does more than it looks.",
+  "weight": 50,
+  "opens": [
+    "hearth_tier:1"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "craft",
+      "text": "Craft a Forge. The Anchor taught you the recipe.",
+      "done": [
+        "holds:awaken:forge|furniture:forge"
+      ],
+      "hint": "Bricks around, iron on both sides, a blast furnace in the middle."
+    },
+    {
+      "id": "temper",
+      "text": "Temper a weapon or an armour piece at the Forge.",
+      "done": [
+        "counter:awaken:gear_tempered"
+      ],
+      "hint": "Hold the piece and use the Forge. Each level adds damage or armour."
+    },
+    {
+      "id": "armory",
+      "text": "Make an Armory: an anvil, a Forge and an armour stand in one room.",
+      "done": [
+        "room:forge"
+      ],
+      "hint": "Gear tempers two levels higher for every Forge tier there."
+    },
+    {
+      "id": "armoury",
+      "text": "Use the Forge with an empty hand to open the Armoury.",
+      "done": [
+        "counter:awaken:armoury_forge"
+      ],
+      "hint": "It lists every pattern you know and what each weapon needs."
+    },
+    {
+      "id": "copy",
+      "text": "Draw a copy of a Blueprint you know.",
+      "done": [
+        "counter:awaken:blueprint_copies"
+      ],
+      "hint": "Open the Armoury at the Forge and press Draw a copy. It costs essence and lapis."
+    },
+    {
+      "id": "attune",
+      "text": "Attune a weapon: hold a catalyst in your off hand and sneak at the Forge.",
+      "done": [
+        "counter:awaken:weapons_attuned"
+      ],
+      "hint": "A Copper Ingot is the easy catalyst. It gives the weapon a Force."
+    },
+    {
+      "id": "raise",
+      "text": "Raise a Marked weapon to the next tier.",
+      "done": [
+        "counter:awaken:weapons_raised"
+      ],
+      "hint": "Hold it, open the Armoury at the Forge, and press Raise. It needs the next tier's parts."
+    },
+    {
+      "id": "tier2",
+      "text": "Upgrade the Forge to tier II.",
+      "done": [
+        "forge_tier:2"
+      ],
+      "hint": "Sneak and use the Forge with an empty hand. It needs D-rank."
+    }
+  ],
+  "finish": {
+    "line": "You know what the Forge can do.",
+    "levels": 0.05
+  }
+}

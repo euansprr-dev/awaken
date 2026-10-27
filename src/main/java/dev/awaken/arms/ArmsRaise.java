@@ -97,6 +97,7 @@ final class ArmsRaise {
         dev.awaken.signal.Signal.toast(p, Component.literal("RAISED · ").withColor(0xE2B450).append(out.getHoverName().copy().withColor(0xFFE3A0))
                 .append(Component.literal(" · " + ArmsArmoury.TIERS[plan.next()] + " tier").withColor(0xC8C2B0)));
         p.level().playSound(null, p.blockPosition(), net.minecraft.sounds.SoundEvents.ANVIL_USE, net.minecraft.sounds.SoundSource.PLAYERS, 0.7F, 1.3F);
+        Progression.count(p, "awaken:weapons_raised");
         Progression.markNewThing(p, "raise");
         return true;
     }

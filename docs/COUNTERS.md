@@ -114,3 +114,12 @@ Counters that content in data/awaken/awaken/** reads. Each owning module must co
 | `awaken:shadows_defeated` | descent | Status → Records |
 | `awaken:sovereigns_defeated` | story | revelation/first_sovereign, Status → Records |
 | `awaken:story/seed_reached` | story | revelation/seed_reached |
+
+## Counted for trails (docs/trails/PLAN.md)
+
+| Counter | Owner | Read by |
+|---|---|---|
+| `awaken:rested` | hearth | trail/your_hearth |
+| `awaken:armoury_forge`, `awaken:armoury_opened` | arms | trail/the_forge, trail/your_first_weapon |
+| `awaken:blueprint_copies`, `awaken:weapons_attuned`, `awaken:weapons_raised` | arms | trail/the_forge, trail/boss_weapons |
+| `awaken:patterns_bought`, `awaken:patterns_from_gates`, `awaken:patterns_from_people`, `awaken:patterns_from_stands`, `awaken:patterns_from_villages` | arms | trail/finding_patterns |

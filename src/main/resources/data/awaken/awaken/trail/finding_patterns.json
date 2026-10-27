@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "title": "Finding Patterns",
+  "area": "weapons",
+  "blurb": "Every style has a place that teaches it: gates, villages, stands, people and Hale's rack.",
+  "weight": 92,
+  "opens": [
+    "arms:issued"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "rack",
+      "text": "Buy a pattern at Hale's rack.",
+      "done": [
+        "counter:awaken:patterns_bought"
+      ],
+      "where": "quartermaster",
+      "hint": "E-rank patterns cost 4 essence each."
+    },
+    {
+      "id": "gate",
+      "text": "Take a pattern from a gate: the creature on its first floor carries it.",
+      "done": [
+        "counter:awaken:patterns_from_gates"
+      ],
+      "hint": "It glints. Defeat it and the pattern goes straight into your pack."
+    },
+    {
+      "id": "person",
+      "text": "Learn a style from a person who teaches it.",
+      "done": [
+        "counter:awaken:patterns_from_people"
+      ],
+      "hint": "Hettie, Pell, Marta, Gus, Wren and Oren each teach one at the end of a job."
+    },
+    {
+      "id": "stand",
+      "text": "Take a pattern from a Pattern Stand.",
+      "done": [
+        "counter:awaken:patterns_from_stands"
+      ],
+      "hint": "Stands are built into vaults, monoliths, spires, hero-tree crowns and beasts' lairs."
+    },
+    {
+      "id": "village",
+      "text": "Buy a pattern from a village smith.",
+      "done": [
+        "counter:awaken:patterns_from_villages"
+      ],
+      "hint": "A village sells patterns of its land's level for emeralds."
+    },
+    {
+      "id": "five",
+      "text": "Know five styles.",
+      "done": [
+        "styles:5"
+      ],
+      "hint": "Each style plays differently, so try them."
+    }
+  ],
+  "finish": {
+    "line": "You know where patterns come from.",
+    "levels": 0.05
+  }
+}

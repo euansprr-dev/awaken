@@ -58,6 +58,7 @@ public final class ArmsArmoury {
     // ---- what the screen is sent -------------------------------------------------------------------------------------
 
     public static void open(ServerPlayer p, int door) {
+        dev.awaken.progression.Progression.count(p, "awaken:armoury_opened");
         OPEN.put(p.getUUID(), new Opened(door, p.level().getGameTime()));
         AwakenNet.send(p, view(p, door, true));
         sendDetail(p, defaultStyle(p), null);
@@ -246,6 +247,7 @@ public final class ArmsArmoury {
                     ArmsProgress g = ArmsProgress.of(p);
                     g.tracked = st.id() + ":" + TIERS[t];
                     p.setData(ArmsContent.PROGRESS, g);
+                    dev.awaken.core.api.TrailsApi.unfollow(p); // the task card is one thing at a time
                     sendView(p);
                 }
             }
@@ -272,6 +274,7 @@ public final class ArmsArmoury {
         var price = List.of(ArmsForge.cost(CoreApi.ESSENCE_SHARD.get(), ArmsHomes.rackPrice(h.rank())));
         if (!ArmsForge.affords(p, price)) return false;
         ArmsForge.pay(p, price);
+        dev.awaken.progression.Progression.count(p, "awaken:patterns_bought");
         return ArmsIssue.INSTANCE.learn(p, style, "Hale's rack");
     }
 }

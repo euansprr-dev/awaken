@@ -159,6 +159,7 @@ public final class ArmsForge {
         if (!p.isShiftKeyDown()) {
             // a plain use with an empty hand opens the Armoury; with anything in it, the Hearth's tempering stays as it was
             if (!p.getMainHandItem().isEmpty()) return;
+            dev.awaken.progression.Progression.count(p, "awaken:armoury_forge"); // a trail step (docs/trails/PLAN.md §4.1)
             ArmsArmoury.open(p, ArmsArmoury.FORGE);
             e.setCanceled(true);
             e.setCancellationResult(InteractionResult.SUCCESS);
@@ -207,6 +208,7 @@ public final class ArmsForge {
         if (!affords(p, price)) return false;
         pay(p, price);
         weapon.set(ArmsContent.INSTANCE.get(), Marks.of(weapon).attuned(f));
+        dev.awaken.progression.Progression.count(p, "awaken:weapons_attuned");
         ServerLevel level = p.level();
         level.playSound(null, p.blockPosition(), SoundEvents.ANVIL_USE, SoundSource.PLAYERS, 0.7F, 1.3F);
         level.playSound(null, p.blockPosition(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0F, 0.8F);
@@ -222,6 +224,7 @@ public final class ArmsForge {
         if (item == null || !affords(p, price)) return false;
         pay(p, price);
         ArmsIssue.remember(p, style);
+        dev.awaken.progression.Progression.count(p, "awaken:blueprint_copies");
         ItemStack bp = new ItemStack(item.get());
         if (!p.getInventory().add(bp)) p.drop(bp, false, net.minecraft.util.Prediction.SERVER_ONLY);
         p.level().playSound(null, p.blockPosition(), SoundEvents.BOOK_PAGE_TURN, SoundSource.PLAYERS, 1.0F, 0.9F);

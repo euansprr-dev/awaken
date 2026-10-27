@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "title": "Making Your Next Weapon",
+  "area": "weapons",
+  "blurb": "Each tier takes a part from the hunt, metal from the deep and light from the gates.",
+  "weight": 94,
+  "opens": [
+    "arms:issued"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "e",
+      "text": "Make a Wildhide weapon.",
+      "done": [
+        "armstier:0"
+      ],
+      "hint": "Bone, a family's horn, hide and one essence shard from the hunt."
+    },
+    {
+      "id": "d",
+      "text": "Make a Beastbound weapon.",
+      "done": [
+        "armstier:1"
+      ],
+      "show": [
+        "level:13"
+      ],
+      "hint": "Iron from the deep and a named beast's trophy. Hale's board has the first job."
+    },
+    {
+      "id": "c",
+      "text": "Make a Gatewrought weapon.",
+      "done": [
+        "armstier:2"
+      ],
+      "show": [
+        "level:22"
+      ],
+      "hint": "Diamonds and a relic from a D-rank Lord. Hale's board has a job for the relic."
+    },
+    {
+      "id": "b",
+      "text": "Make a Veilwoven weapon.",
+      "done": [
+        "armstier:3"
+      ],
+      "show": [
+        "level:42"
+      ],
+      "hint": "Deepglass and amethyst and parts from C-rank and B-rank Lords."
+    },
+    {
+      "id": "a",
+      "text": "Make a Lordscale weapon.",
+      "done": [
+        "armstier:4"
+      ],
+      "show": [
+        "level:67"
+      ],
+      "hint": "Netherite scrap and parts from B-rank and A-rank Lords or the deep guardians."
+    },
+    {
+      "id": "s",
+      "text": "Make a Sovereign weapon.",
+      "done": [
+        "armstier:5"
+      ],
+      "show": [
+        "level:97"
+      ],
+      "hint": "Starmetal from the fallen stars and parts from the Herald or the Court."
+    }
+  ],
+  "finish": {
+    "line": "You have walked the whole ladder.",
+    "levels": 0.05
+  }
+}

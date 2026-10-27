@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "title": "Out in the Commons",
+  "area": "world",
+  "blurb": "Biomes, landmarks, rifts and the beasts' lairs outside the walls.",
+  "weight": 110,
+  "opens": [
+    "level:3"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "biomes",
+      "text": "Discover two new biomes.",
+      "done": [
+        "count:awaken:biomes_discovered:2"
+      ],
+      "hint": "The Atlas shows where you have been."
+    },
+    {
+      "id": "landmark",
+      "text": "Reach a landmark.",
+      "done": [
+        "count:awaken:landmarks_reached:1"
+      ],
+      "hint": "A light stands over each one at dusk."
+    },
+    {
+      "id": "anomaly",
+      "text": "Witness an anomaly.",
+      "done": [
+        "count:awaken:anomalies_seen:1"
+      ],
+      "hint": "A fallen star, a spirit procession, a grove."
+    },
+    {
+      "id": "rift",
+      "text": "Close a rift.",
+      "done": [
+        "count:awaken:rifts_closed:1"
+      ]
+    },
+    {
+      "id": "lair",
+      "text": "Hear of a named beast's lair.",
+      "done": [
+        "count:awaken:lairs_heard:1"
+      ]
+    }
+  ],
+  "finish": {
+    "line": "You know the Commons.",
+    "levels": 0.05
+  }
+}

@@ -2,6 +2,7 @@ package dev.awaken.signal.client;
 
 import dev.awaken.signal.net.SignalPayloads;
 import dev.awaken.signal.ui.SignalLayout;
+import dev.awaken.signal.ui.TaskWrap;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -28,12 +29,12 @@ import java.util.Locale;
 final class TaskHud {
     private TaskHud() {}
 
-    /** The widest line (unscaled px) before a step is shortened; how long a ticked step lingers; the flash. */
-    static final int MAX_W = 185, LINGER = 50, FLASH = 24;
+    /** The widest line (unscaled px) before a step wraps (it was 185 and a long step lost its end; 215 keeps most steps on one line or two); how long a ticked step lingers; the flash. */
+    static final int MAX_W = 215, LINGER = 50, FLASH = 24;
     /** Half the Now card's size, but never so small a font pixel is under two screen pixels. */
     static final float SIZE = 0.45F, MIN_PIXEL = 2.0F;
-    /** Rows after the current one. */
-    static final int AHEAD = 2;
+    /** Rows after the current one, and the most lines one step may wrap over. */
+    static final int AHEAD = 2, MAX_LINES = 3;
 
     private static SignalPayloads.Task task = new SignalPayloads.Task("", "", List.of());
     private static long since, ticks;
@@ -111,28 +112,34 @@ final class TaskHud {
             // a step that just ticked: one soft flash of green, then it fades out of the list
             long ago = i < TICKED.length ? ticks - TICKED[i] : 1000;
             float rowFade = fade * (r.done() && ago < LINGER ? Mth.clamp((LINGER - ago - pt) / 16F, 0, 1) : 1f);
-            if (ago < FLASH) g.fill(2, ry - 1, w - 2, ry + 9, Glass.a(Glass.GOOD, 0.35f * (1 - (ago + pt) / FLASH) * fade));
+            if (ago < FLASH) g.fill(2, ry - 1, w - 2, ry - 1 + row.height() - (row.lines.size() > 1 ? 2 : 0), Glass.a(Glass.GOOD, 0.35f * (1 - (ago + pt) / FLASH) * fade));
             int markColour = r.done() ? Glass.GOOD : row.now ? Glass.AMBER : Glass.LABEL;
             HudLook.text(g, font, row.mark, 3, ry, Glass.a(markColour, rowFade), true);
             int textColour = r.done() || !row.now ? Glass.LABEL : Glass.TEXT;
             int argb = Glass.a(textColour, rowFade * (r.done() || row.now ? 1f : 0.8f));
-            int cx = 11;
-            HudLook.text(g, font, row.before, cx, ry, argb, true);
-            cx += row.beforeW;
-            if (row.key != null) {
-                cx += keyCap(g, font, row.key, row.keyW, cx, ry, rowFade);
-                HudLook.text(g, font, row.after, cx, ry, argb, true);
-                cx += row.afterW;
+            for (List<TaskWrap.Seg> line : row.lines) {
+                int cx = 11;
+                for (TaskWrap.Seg seg : line) {
+                    if (seg.kind() == TaskWrap.KEY) cx += keyCap(g, font, seg.text(), row.keyW, cx, ry, rowFade);
+                    else {
+                        HudLook.text(g, font, seg.text(), cx, ry, seg.kind() == TaskWrap.TAIL ? Glass.a(Glass.EDGE, rowFade) : argb, true);
+                        cx += seg.w();
+                    }
+                }
+                ry += 10;
             }
-            if (!row.tail.isEmpty()) HudLook.text(g, font, row.tail, cx, ry, Glass.a(Glass.EDGE, rowFade), true);
-            ry += 10;
+            ry += row.lines.size() > 1 ? 2 : 0;
         }
         g.pose().popMatrix();
     }
 
     /** One shown step, measured: its mark, its words (shortened to fit), a key cap, then the count and compass. */
-    private record Row(int index, boolean now, String mark, String before, int beforeW, @org.jspecify.annotations.Nullable String key, int keyW,
-                       String after, int afterW, String tail) {}
+    private record Row(int index, boolean now, String mark, List<List<TaskWrap.Seg>> lines, int keyW) {
+        /** Rows are a line high for each of their lines, and a little more after one that wrapped. */
+        int height() {
+            return lines.size() * 10 + (lines.size() > 1 ? 2 : 0);
+        }
+    }
 
     /** The card as measured: kept until what it shows or the GUI scale changes. */
     private record Layout(SignalPayloads.Task task, List<Integer> shown, List<String> compasses, List<String> keys, int guiScale, double scale,
@@ -164,9 +171,9 @@ final class TaskHud {
         for (int k = 0; k < shown.size(); k++) w = Math.max(w, 11 + rowWidth(font, t.rows().get(shown.get(k)), keys.get(k), compasses.get(k)));
         w = Math.min(MAX_W, w) + 8;
         int room = w - 15;
-        int h = 4 + 10 + shown.size() * 10 + 2;
         List<Row> rows = new java.util.ArrayList<>(shown.size());
         boolean current = false;
+        int h = 4 + 10 + 2;
         for (int k = 0; k < shown.size(); k++) {
             int i = shown.get(k);
             SignalPayloads.TaskRow r = t.rows().get(i);
@@ -174,21 +181,13 @@ final class TaskHud {
             if (now) current = true;
             String mark = r.done() ? "\u2714" : now ? "\u25B8" : "\u00B7";
             String tail = (r.need() > 0 ? " " + r.have() + "/" + r.need() : "") + (r.marked() ? "  " + compasses.get(k) : "");
-            int left = room - font.width(tail);
-            int at = r.text().indexOf("{key}");
-            String before = SignalTextFit.fit(font, at < 0 ? r.text() : r.text().substring(0, at), left);
-            int beforeW = font.width(before);
-            left -= beforeW;
-            String key = null, after = "";
-            int keyW = 0, afterW = 0;
-            if (at >= 0 && left > font.width(keys.get(k)) + 6) {
-                key = keys.get(k);
-                keyW = font.width(key) + 4;
-                left -= keyW + 2;
-                after = SignalTextFit.fit(font, r.text().substring(at + 5), left);
-                afterW = font.width(after);
-            }
-            rows.add(new Row(i, now, mark, before, beforeW, key, keyW, after, afterW, tail));
+            boolean hasKey = r.text().contains("{key}");
+            int keyW = hasKey ? font.width(keys.get(k)) + 4 : 0;
+            // a long step wraps over up to three lines; the key cap sits in the line like a word
+            var lines = TaskWrap.wrap(r.text(), hasKey ? keys.get(k) : null, keyW + 2, tail, room, MAX_LINES, font::width);
+            Row row = new Row(i, now, mark, lines, keyW);
+            rows.add(row);
+            h += row.height();
         }
         String fitTitle = SignalTextFit.fit(font, title, w - 12 - countW);
         return new Layout(t, shown, compasses, keys, gui, scale, fitTitle, count, countW, done == t.rows().size(), w, h, rows);

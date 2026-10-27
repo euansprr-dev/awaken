@@ -25,6 +25,8 @@ public final class Advice {
             var def = d.accepted() ? dev.awaken.progression.content.Content.DIRECTIVES.get(d.id()) : null;
             if (def != null) return "The Signal has you working on this: " + def.text();
         }
+        String trail = dev.awaken.core.api.TrailsApi.suggest(p);
+        if (trail != null) return "You have a trail with a next step. " + trail;
         if (next != null) {
             var opens = new java.util.ArrayList<String>();
             for (PromiseBook.Entry e : PromiseKeeper.book(p).entries()) {

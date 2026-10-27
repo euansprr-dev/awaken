@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "title": "Your First Weapon",
+  "area": "weapons",
+  "blurb": "Take Hale's issue, learn the three verbs, and open the Armoury.",
+  "weight": 90,
+  "opens": [],
+  "order": "free",
+  "steps": [
+    {
+      "id": "issue",
+      "text": "Take Hale's hunter's issue at the High Gate.",
+      "done": [
+        "arms:issued"
+      ],
+      "where": "quartermaster",
+      "hint": "Talk to Hale, or to Ilse at the camp if you missed him. You pick Daggers, an Axe or a Maul."
+    },
+    {
+      "id": "fight",
+      "text": "Fight with your new weapon: strike, guard and dodge.",
+      "done": [
+        "count:awaken:kills:3"
+      ],
+      "hint": "Tap to strike, hold right mouse to guard, sprint and tap a direction to dodge."
+    },
+    {
+      "id": "armoury",
+      "text": "Open the Armoury: sneak and talk to Hale.",
+      "done": [
+        "counter:awaken:armoury_opened"
+      ],
+      "where": "quartermaster",
+      "hint": "It lists every style, what each weapon needs and where each part comes from."
+    },
+    {
+      "id": "second",
+      "text": "Learn a second style.",
+      "done": [
+        "styles:2"
+      ],
+      "hint": "Hale's rack sells every pattern at your rank for essence."
+    }
+  ],
+  "finish": {
+    "line": "You know your weapon.",
+    "levels": 0.05
+  }
+}

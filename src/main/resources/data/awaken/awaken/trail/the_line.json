@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "title": "The Line",
+  "area": "body",
+  "blurb": "The Tether: a rope that climbs spires and swings between roofs.",
+  "weight": 82,
+  "opens": [
+    "tier:tether"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "vow",
+      "text": "Keep the Tether Vow.",
+      "done": [
+        "counter:awaken:ascent_vow_kept"
+      ]
+    },
+    {
+      "id": "spire",
+      "text": "Climb a Tether Spire by rope.",
+      "done": [
+        "counter:awaken:ascent_spires_climbed"
+      ],
+      "hint": "Its platforms answer to a line. The crown pays for the climb."
+    },
+    {
+      "id": "chain",
+      "text": "Chain rope zips from ring to ring.",
+      "done": [
+        "counter:awaken:ascent_chains"
+      ],
+      "hint": "Each ring is a zip from the one below."
+    },
+    {
+      "id": "crown",
+      "text": "Reach a hero tree's crown.",
+      "done": [
+        "counter:awaken:ascent_crowns_reached"
+      ],
+      "hint": "The Elder Colossus and the Lumen Spire both have one."
+    }
+  ],
+  "finish": {
+    "line": "The Line is yours.",
+    "levels": 0.05
+  }
+}

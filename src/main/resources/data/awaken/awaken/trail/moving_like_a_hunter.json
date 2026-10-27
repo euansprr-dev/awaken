@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "title": "Moving Like a Hunter",
+  "area": "body",
+  "blurb": "Roll, sprint, slide, climb and vault: the moves every awakened body has.",
+  "weight": 80,
+  "opens": [],
+  "order": "free",
+  "steps": [
+    {
+      "id": "roll",
+      "text": "Hold sneak as you land to roll.",
+      "done": [
+        "counter:awaken:body_roll"
+      ],
+      "hint": "A roll takes the sting out of a long fall."
+    },
+    {
+      "id": "sprint",
+      "text": "Double-tap forward to sprint harder.",
+      "done": [
+        "counter:awaken:body_sprint"
+      ]
+    },
+    {
+      "id": "slide",
+      "text": "Hold sneak while sprinting to slide.",
+      "done": [
+        "counter:awaken:body_slide"
+      ]
+    },
+    {
+      "id": "mantle",
+      "text": "Press jump at a ledge to climb it.",
+      "done": [
+        "counter:awaken:body_mantle"
+      ],
+      "hint": "Ledges up to two blocks high."
+    },
+    {
+      "id": "vault",
+      "text": "Run at a fence or a wall and vault it.",
+      "done": [
+        "counter:awaken:body_vault"
+      ],
+      "hint": "Every fence and wall is movement."
+    }
+  ],
+  "finish": {
+    "line": "Your body knows its moves.",
+    "levels": 0.05
+  }
+}

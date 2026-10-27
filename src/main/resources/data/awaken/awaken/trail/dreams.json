@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "title": "Dreams",
+  "area": "deep",
+  "blurb": "Sleep with an intention and wake in the Lucidium.",
+  "weight": 122,
+  "opens": [
+    "count:awaken:dreams:1"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "check",
+      "text": "Do a reality check: press H.",
+      "done": [
+        "count:awaken:reality_checks:1"
+      ],
+      "hint": "It raises your lucidity."
+    },
+    {
+      "id": "lucid",
+      "text": "Dream lucidly.",
+      "done": [
+        "count:awaken:lucid_dreams:1"
+      ],
+      "hint": "Knowing you are dreaming changes what you can do."
+    },
+    {
+      "id": "manifest",
+      "text": "Manifest something in a dream.",
+      "done": [
+        "count:awaken:dream_manifests:1"
+      ]
+    },
+    {
+      "id": "nightmare",
+      "text": "Beat a nightmare.",
+      "done": [
+        "count:awaken:nightmares_beaten:1"
+      ]
+    }
+  ],
+  "finish": {
+    "line": "You walk your dreams.",
+    "levels": 0.05
+  }
+}

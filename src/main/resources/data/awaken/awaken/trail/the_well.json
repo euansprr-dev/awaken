@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "title": "The Well",
+  "area": "deep",
+  "blurb": "The Descent: ten strata below, each with its own rules.",
+  "weight": 126,
+  "opens": [
+    "count:awaken:depth_record:1"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "light",
+      "text": "Light a Waystone.",
+      "done": [
+        "count:awaken:waystones_lit:1"
+      ],
+      "hint": "A Waystone is a place to come back to."
+    },
+    {
+      "id": "sleep",
+      "text": "Sleep in the Descent.",
+      "done": [
+        "count:awaken:slept_in_descent:1"
+      ]
+    },
+    {
+      "id": "deeper",
+      "text": "Reach the third stratum.",
+      "done": [
+        "count:awaken:depth_record:3"
+      ]
+    }
+  ],
+  "finish": {
+    "line": "You know how to go down.",
+    "levels": 0.05
+  }
+}

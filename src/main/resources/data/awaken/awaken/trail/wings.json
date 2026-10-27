@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "title": "Wings",
+  "area": "body",
+  "blurb": "Flight: the rings, the cores and the open sky.",
+  "weight": 84,
+  "opens": [
+    "tier:wings"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "core",
+      "text": "Wake a sky platform's Wing Core.",
+      "done": [
+        "counter:awaken:ascent_wings_core"
+      ],
+      "hint": "Its rings climb to it by rope."
+    },
+    {
+      "id": "skyborn",
+      "text": "Pass the Skyborn trial.",
+      "done": [
+        "counter:awaken:ascent_skyborn_trial"
+      ]
+    },
+    {
+      "id": "kills",
+      "text": "Defeat something while you are in the air.",
+      "done": [
+        "counter:awaken:ascent_aerial_kills"
+      ]
+    }
+  ],
+  "finish": {
+    "line": "The sky is open to you.",
+    "levels": 0.05
+  }
+}

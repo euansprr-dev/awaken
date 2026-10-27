@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "title": "The Precursors",
+  "area": "deep",
+  "blurb": "Ruins, doors and machines left by those before.",
+  "weight": 124,
+  "opens": [
+    "count:awaken:precursor_logs_read:1|count:awaken:precursor_doors_opened:1|count:awaken:machines_scanned:1"
+  ],
+  "order": "free",
+  "steps": [
+    {
+      "id": "log",
+      "text": "Read a Precursor log.",
+      "done": [
+        "count:awaken:precursor_logs_read:1"
+      ],
+      "hint": "Terminals in the ruins keep them."
+    },
+    {
+      "id": "door",
+      "text": "Open a Precursor door.",
+      "done": [
+        "count:awaken:precursor_doors_opened:1"
+      ],
+      "hint": "The door shows the rank it waits for."
+    },
+    {
+      "id": "scan",
+      "text": "Scan a machine.",
+      "done": [
+        "count:awaken:machines_scanned:1"
+      ],
+      "hint": "The Scanner reads what a machine does."
+    },
+    {
+      "id": "build",
+      "text": "Build a machine of your own.",
+      "done": [
+        "count:awaken:machines_built:1"
+      ],
+      "hint": "Machines cost less essence in a Workshop."
+    }
+  ],
+  "finish": {
+    "line": "You can read what they left.",
+    "levels": 0.05
+  }
+}
