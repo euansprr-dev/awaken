@@ -75,5 +75,6 @@
   "config.jade.plugin_awaken.townsperson": "Townsfolk: job and town",
   "jade.theme.awaken.system": "AWAKEN System",
   "key.awaken.look": "Look: Swift · Cinematic · Ultra",
-  "awaken.jei.category.blueprint": "Blueprint"
+  "awaken.jei.category.blueprint": "Blueprint",
+  "awaken.jei.category.boss_drops": "Boss drops"
 }

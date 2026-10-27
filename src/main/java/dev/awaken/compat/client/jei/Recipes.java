@@ -96,6 +96,22 @@ final class Recipes {
     // ---- the Hearth -------------------------------------------------------------------------------------------------
 
     /** Tempering to one level at the Forge (Oren brings the essence himself). */
+    /** One Gate Lord's weapon and how often it falls, in words (docs/arms-progression/PLAN.md §3.7). */
+    record Boss(String lordId, ItemStack weapon, Rank rank, String style, String spoils) {}
+
+    static List<Boss> bosses() {
+        List<Boss> out = new ArrayList<>();
+        for (var f : dev.awaken.arms.LordForged.ALL) {
+            var item = ArmsItems.of(net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(Awaken.id(f.weapon())));
+            if (item == null) continue;
+            Rank rank = Rank.E;
+            for (Rank r : Rank.values()) if (r.label.equals(item.tier())) rank = r;
+            float c = ArmsHomes.spoilChance(rank);
+            out.add(new Boss(f.lord(), new ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(Awaken.id(f.weapon()))), rank, item.style(), c >= 0.5F ? "Often" : c >= 0.25F ? "Sometimes" : "Rarely"));
+        }
+        return out;
+    }
+
     /** A Blueprint and every way to it: the Forge's draw, Hale's price, the gate and the level band (PLAN §3.4). */
     record Pattern(String name, Rank rank, ItemStack blueprint, List<ItemStack> draw, ArmsHomes.Home home) {}
 

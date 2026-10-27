@@ -39,6 +39,9 @@ public final class ArmsHomes {
     private static final Map<Rank, Integer> RACK = new EnumMap<>(Rank.class);
     private static final Map<Rank, Integer> VILLAGE = new EnumMap<>(Rank.class);
     private static final Map<Rank, int[]> BANDS = new EnumMap<>(Rank.class);
+    private static final Map<Rank, Float> SPOILS = new EnumMap<>(Rank.class);
+    private static int spoilsPity = 6, markedPity = 25;
+    private static float guardian = 0.30F, sovereign = 0.40F, beast = 0.15F, elite = 0.04F, warden = 0.10F, campHeart = 0.10F;
 
     static {
         load();
@@ -55,6 +58,17 @@ public final class ArmsHomes {
                 JsonArray a = e.getValue().getAsJsonArray();
                 BANDS.put(rank(e.getKey()), new int[] {a.get(0).getAsInt(), a.get(1).getAsInt()});
             }
+            JsonObject sp = root.getAsJsonObject("spoils");
+            for (var e : sp.getAsJsonObject("chance").entrySet()) SPOILS.put(rank(e.getKey()), e.getValue().getAsFloat());
+            spoilsPity = sp.get("pity").getAsInt();
+            guardian = sp.get("guardian").getAsFloat();
+            sovereign = sp.get("sovereign").getAsFloat();
+            beast = sp.get("beast").getAsFloat();
+            JsonObject mk = root.getAsJsonObject("marked");
+            elite = mk.get("elite").getAsFloat();
+            warden = mk.get("warden").getAsFloat();
+            campHeart = mk.get("campHeart").getAsFloat();
+            markedPity = mk.get("pity").getAsInt();
             for (JsonElement el : root.getAsJsonArray("styles")) {
                 JsonObject o = el.getAsJsonObject();
                 Teacher t = null;
@@ -101,6 +115,45 @@ public final class ArmsHomes {
     /** What Hale's rack asks for a pattern of this rank, in essence. */
     public static int rackPrice(Rank rank) {
         return RACK.getOrDefault(rank, RACK.get(Rank.S));
+    }
+
+    /** The chance a Gate Lord of this rank drops Spoils (a Marked weapon of its style), per fighter. */
+    public static float spoilChance(Rank rank) {
+        return SPOILS.getOrDefault(rank, SPOILS.get(Rank.S));
+    }
+
+    /** Certain on this Lord kill without any weapon (the sixth). */
+    public static int spoilsPity() {
+        return spoilsPity;
+    }
+
+    public static float guardianChance() {
+        return guardian;
+    }
+
+    public static float sovereignChance() {
+        return sovereign;
+    }
+
+    public static float beastChance() {
+        return beast;
+    }
+
+    public static float markedElite() {
+        return elite;
+    }
+
+    public static float markedWarden() {
+        return warden;
+    }
+
+    public static float markedCampHeart() {
+        return campHeart;
+    }
+
+    /** Certain on this elite, Warden or camp-heart kill without a Marked weapon (the 25th). */
+    public static int markedPity() {
+        return markedPity;
     }
 
     /** What a village smith asks for a pattern of this rank, in emeralds. */

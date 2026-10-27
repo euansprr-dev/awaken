@@ -46,6 +46,12 @@ public final class ArmsApi {
 
         /** A chain of the living module ended: the person who teaches a style at its end pays it. */
         void questDone(ServerPlayer player, String chain);
+
+        /** A fighter in a main gate's Lord room: their roll for Spoils, a Marked weapon of the Lord's style (docs/arms-progression/PLAN.md §3.7). */
+        void lordSpoils(ServerPlayer player, String rankLabel, String themeId);
+
+        /** A Lord spawned: it holds its own Lord-forged weapon in its hand, glinting, so you can see what you fight for. */
+        void lordWields(net.minecraft.world.entity.LivingEntity lord);
     }
 
     private static Hooks hooks;
@@ -97,6 +103,14 @@ public final class ArmsApi {
 
     public static void questDone(ServerPlayer player, String chain) {
         if (hooks != null) hooks.questDone(player, chain);
+    }
+
+    public static void lordSpoils(ServerPlayer player, String rankLabel, String themeId) {
+        if (hooks != null) hooks.lordSpoils(player, rankLabel, themeId);
+    }
+
+    public static void lordWields(net.minecraft.world.entity.LivingEntity lord) {
+        if (hooks != null) hooks.lordWields(lord);
     }
 
     /** The living module says what people say ("Hale: ...") on screen; arms asks it to, without knowing how. */

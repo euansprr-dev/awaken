@@ -137,6 +137,16 @@ public final class ArmsIssue implements ArmsApi.Hooks {
     }
 
     @Override
+    public void lordSpoils(ServerPlayer p, String rankLabel, String themeId) {
+        ArmsSpoils.lordKill(p, rankLabel, themeId);
+    }
+
+    @Override
+    public void lordWields(LivingEntity lord) {
+        ArmsSpoils.wield(lord);
+    }
+
+    @Override
     public boolean issueTaken(ServerPlayer p) {
         migrate(p);
         return ArmsProgress.of(p).issued;

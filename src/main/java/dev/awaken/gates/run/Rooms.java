@@ -131,6 +131,7 @@ public final class Rooms {
         else if (role == MobRole.Role.BOSS) partyLord(e, partyOnFloor(level, g, f));
         GateMobs.register(e, new GateMobs.Key(g.id, f.area, f.floor, roomKey));
         Modifiers.onSpawn(g, e);
+        if (role == MobRole.Role.BOSS && f.area == 0) dev.awaken.core.api.ArmsApi.lordWields(e);
         if (role != MobRole.Role.BOSS && !g.scripted) dev.awaken.core.api.ArmsApi.gateSpawn(e, g.key(), f.area, f.floor, role == MobRole.Role.ELITE); // the bearer of the gate's pattern (docs/arms-progression/PLAN.md §3.4)
         return e;
     }

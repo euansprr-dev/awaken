@@ -155,7 +155,7 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
 
         // the plaque: where else the pattern comes from (a pattern on offer at the rack, or one you hold)
         var home = dev.awaken.arms.ArmsHomes.of(d.style());
-        if (home != null && ArmouryCache.known(d.style()) | entry(d.style()) != null) {
+        if (home != null && v.door() != ArmouryCache.FORGE && (ArmouryCache.known(d.style()) || entry(d.style()) != null)) {
             String plaque = "Free: " + home.gate() + " teaches it, in " + home.rank().label + "-rank gates."
                     + (home.teacher() == null ? "" : " " + Character.toUpperCase(home.teacher().person().charAt(0)) + home.teacher().person().substring(1) + " teaches it early.");
             List<FormattedCharSequence> lines = font.split(Component.literal(plaque), dw);
@@ -176,6 +176,18 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
         } else if (entry != null && entry.state() == 1) {
             g.text(font, "Buy it at Hale's rack", dx + 88, buttonY + 4, DIM, false);
         }
+        if (!v.raise().isEmpty() && v.door() == ArmouryCache.FORGE) {
+            String[] r = v.raise().split("\\|", 2);
+            boolean ready = r.length > 1 && r[1].equals("ready");
+            int by = buttonY;
+            buttonY = by - 20;
+            button(g, dx, "Raise it to " + r[0], ready, mouseX, mouseY);
+            buttonY = by;
+            int tx = dx + bw("Raise it to " + r[0]) + 8;
+            List<FormattedCharSequence> lines = font.split(Component.literal(ready ? "The weapon in your hand is ready to raise." : "The weapon in your hand: " + (r.length > 1 ? r[1] : "")), dx + dw - tx);
+            for (int i = 0; i < Math.min(2, lines.size()); i++) g.text(font, lines.get(i), tx, py + ph - 46 + i * 10, ready ? GOOD : LANTERN, false);
+        }
+        for (int i = 0; i < v.finds().size(); i++) g.text(font, v.finds().get(i), px + 10, py + ph - 24 - (v.finds().size() - 1 - i) * 10, i == 0 ? LABEL : GOOD, false);
         g.text(font, "Esc: close", px + pw - 8 - font.width("Esc: close"), py + ph - 12, DIM, false);
     }
 
@@ -246,6 +258,17 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
         if (tracked && buttonHit(dx, "Stop tracking", mx, my)) {
             ArmouryCache.ask(ArmsArmoury.UNTRACK, d.style(), d.tier());
             return true;
+        }
+        if (!v.raise().isEmpty() && v.door() == ArmouryCache.FORGE) {
+            String[] r = v.raise().split("\\|", 2);
+            int by = buttonY;
+            buttonY = by - 20;
+            boolean hit = r.length > 1 && r[1].equals("ready") && buttonHit(dx, "Raise it to " + r[0], mx, my);
+            buttonY = by;
+            if (hit) {
+                ArmouryCache.ask(ArmsArmoury.RAISE, d.style(), d.tier());
+                return true;
+            }
         }
         var entry = entry(d.style());
         if (entry != null && v.door() == ArmouryCache.HALE && entry.state() == 1 && entry.afford() && buttonHit(dx + 88, "Buy pattern · " + entry.price() + " essence", mx, my)) {

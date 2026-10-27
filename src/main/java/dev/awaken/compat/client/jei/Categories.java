@@ -48,6 +48,7 @@ final class Categories {
     static final IRecipeType<Recipes.Essence> ESSENCE = IRecipeType.create(Awaken.MODID, "essence", Recipes.Essence.class);
     static final IRecipeType<Recipes.Fuse> FUSE = IRecipeType.create(Awaken.MODID, "core_fusing", Recipes.Fuse.class);
     static final IRecipeType<Recipes.Page> CODEX = IRecipeType.create(Awaken.MODID, "codex", Recipes.Page.class);
+    static final IRecipeType<Recipes.Boss> BOSS = IRecipeType.create(Awaken.MODID, "boss_drops", Recipes.Boss.class);
     static final IRecipeType<Recipes.Pattern> BLUEPRINT = IRecipeType.create(Awaken.MODID, "blueprint", Recipes.Pattern.class);
 
     static final int W = 176;
@@ -267,6 +268,34 @@ final class Categories {
 
         private static String cap(String s) {
             return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
+        }
+    }
+
+    /** A Gate Lord, and the weapons that may fall from it (docs/arms-progression/PLAN.md §3.7). */
+    static final class BossDrops extends SystemCategory<Recipes.Boss> {
+        BossDrops(IDrawable icon) {
+            super(BOSS, title("boss_drops"), icon, W, 96);
+        }
+
+        @Override
+        public void setRecipe(IRecipeLayoutBuilder b, Recipes.Boss r, IFocusGroup focuses) {
+            b.addOutputSlot(141, 23).add(r.weapon());
+        }
+
+        @Override
+        int accent(Recipes.Boss r) {
+            return r.rank().colour;
+        }
+
+        @Override
+        void drawRecipe(Recipes.Boss r, GuiGraphicsExtractor g, double mx, double my) {
+            JeiLook.title(g, Component.translatable("entity.awaken." + r.lordId()).getString(), 9, 8, Glass.TITLE);
+            String chip = r.rank().label + "-RANK";
+            int cw = JeiLook.font().width(chip) + 8;
+            JeiLook.chip(g, chip, W - 8 - cw, 6, r.rank().colour);
+            JeiLook.resultSlot(g, 137, 19, r.rank().colour);
+            JeiLook.wrap(g, "Its own weapon, with its Lord's move as the Art. Sometimes: certain by the third Lord without one.", 9, 24, 120, Glass.TEXT, 4);
+            JeiLook.wrap(g, r.spoils() + ": a " + r.style() + " of " + r.rank().label + "-rank with two Marks, from the Lord's hoard. Everyone who fights it rolls their own.", 9, 58, W - 18, Glass.LABEL, 3);
         }
     }
 

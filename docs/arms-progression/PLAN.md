@@ -422,12 +422,16 @@ Regent's Daggers"). Two rolls on a Gate Lord kill (PROPOSAL; the Phase E sim row
 
 | Gate rank | Spoils: a Marked weapon of the Lord's style, two Marks | Lord-forged (unchanged) | Any weapon from one Lord | Lords per weapon |
 |---|---|---|---|---|
-| E | 60% | 35%, certain by the third without one | about 74% | 1.4 |
-| D | 45% | the same | about 64% | 1.6 |
-| C | 30% | the same | about 55% | 1.8 |
-| B | 22% | the same | about 49% | 2.0 |
-| A | 15% | the same | about 45% | 2.2 |
-| S | 40% (no Lord-forged weapon exists at S until S9; then Spoils drop to 15% and the Lord-forged takes the slot) | none yet | about 40% | **2.5** |
+| E | 60% | 35%, certain by the third without one | about 74% a Lord | 1.3 (simulated, with both pities) |
+| D | 45% | the same | about 64% | 1.5 |
+| C | 30% | the same | about 55% | 1.7 |
+| B | 22% | the same | about 49% | 1.8 |
+| A | 15% | the same | about 45% | 1.9 |
+| S | 40% (no Lord-forged weapon exists at S until S9; then Spoils drop to 15% and the Lord-forged takes the slot) | none yet | about 40% | **2.4** |
+
+(`tools/sim/gear_sim.py`, 40,000 fighters a rank, reading these rates from `data/awaken/arms/style_homes.json` and the Lord-forged constants:
+the pities pull the mean down from the naive 1/chance. The Lord-forged weapon alone falls about every 2.1 Lords, which is Euan's "2-3 gates
+to one" for the cool one; at S the 40% Spoils with the pity of six is 2.4 Lords, median 2, one fighter in ten needing five.)
 
 So a low-rank Lord usually pays and a high-rank one is a **real grind, two or three S gates to one weapon**, as Euan said.
 A **weapon pity** keeps the tail honest: certain by the sixth Lord kill without any weapon (per player, in

@@ -39,7 +39,7 @@ public final class ArmsArmoury {
 
     public static final int BAND = 0, HALE = 1, FORGE = 2;
     /** What the screen asks. */
-    public static final int DETAIL = 0, BUY = 1, DRAW = 2, TRACK = 3, UNTRACK = 4;
+    public static final int DETAIL = 0, BUY = 1, DRAW = 2, TRACK = 3, UNTRACK = 4, RAISE = 5;
 
     /** The six tiers, their weapons' name prefixes and the level each opens at (the level road, SPEC §28.3). */
     public static final String[] TIERS = {"E", "D", "C", "B", "A", "S"};
@@ -98,7 +98,21 @@ public final class ArmsArmoury {
                 if (h != null && (lowest == null || h.rank().ordinal() < lowest.ordinal())) lowest = h.rank();
             }
         }
-        return new ArmsPayloads.ArmouryView(door, essence, out, hidden, lowest == null ? "" : lowest.label, ArmsProgress.of(p).tracked, open);
+        return new ArmsPayloads.ArmouryView(door, essence, out, hidden, lowest == null ? "" : lowest.label, ArmsProgress.of(p).tracked, open,
+                door == FORGE ? ArmsRaise.status(p) : "", finds(p));
+    }
+
+    /** What the fighter has found: the Lord-forged weapons they hold of the fifteen, and when the next Lord is certain to carry one. */
+    static List<String> finds(ServerPlayer p) {
+        List<String> out = new ArrayList<>();
+        int owned = 0;
+        for (LordForged.Forged f : LordForged.ALL) {
+            Item item = ArmsItems.item(f.weapon());
+            if (item != null && ArmsForge.count(p, item) > 0) owned++;
+        }
+        out.add("Lord-forged " + owned + " of " + LordForged.ALL.size());
+        if (p.getData(ArmsContent.MEMORY).lordsWithout() + 1 >= LordForged.PITY) out.add("The next Lord is certain to carry its weapon.");
+        return out;
     }
 
     private static String defaultStyle(ServerPlayer p) {
@@ -179,6 +193,20 @@ public final class ArmsArmoury {
         return out;
     }
 
+    /** Takes what a need asked for out of the pack (a tag's items or the item, up to the count). */
+    static void take(ServerPlayer p, ArmsPayloads.NeedRow n) {
+        int left = n.need();
+        TagKey<Item> tag = n.kind().equals("tag") ? TagKey.create(Registries.ITEM, Identifier.parse(n.id())) : null;
+        Item item = tag == null ? BuiltInRegistries.ITEM.getValue(Identifier.parse(n.id())) : null;
+        for (ItemStack s : p.getInventory().getNonEquipmentItems()) {
+            if (left <= 0) break;
+            if (s.isEmpty() || !(tag != null ? s.is(tag) : s.is(item))) continue;
+            int t = Math.min(left, s.getCount());
+            s.shrink(t);
+            left -= t;
+        }
+    }
+
     private static int have(ServerPlayer p, Raw r) {
         int n = 0;
         if (r.kind().equals("tag")) {
@@ -222,6 +250,12 @@ public final class ArmsArmoury {
                     ArmsProgress g = ArmsProgress.of(p);
                     g.tracked = st.id() + ":" + TIERS[t];
                     p.setData(ArmsContent.PROGRESS, g);
+                    sendView(p);
+                }
+            }
+            case RAISE -> {
+                if (door == FORGE && ArmsRaise.raise(p)) {
+                    OPEN.put(p.getUUID(), new Opened(door, p.level().getGameTime()));
                     sendView(p);
                 }
             }

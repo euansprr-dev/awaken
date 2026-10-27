@@ -31,6 +31,9 @@ final class ArmsProgressionTests {
         AwakenTests.register("arms_armoury", 40, ArmsProgressionTests::armoury);
         AwakenTests.register("arms_gate_pattern", 60, ArmsProgressionTests::gatePattern);
         AwakenTests.register("arms_homes", 40, ArmsProgressionTests::homes);
+        AwakenTests.register("arms_boss_weapon", 60, ArmsProgressionTests::bossWeapon);
+        AwakenTests.register("arms_marked_pity", 40, ArmsProgressionTests::markedPity);
+        AwakenTests.register("arms_raise", 40, ArmsProgressionTests::raise);
     }
 
     /** A mock player in survival (the helper's are creative, where nothing is paid). */
@@ -216,5 +219,85 @@ final class ArmsProgressionTests {
         h.assertTrue(count(knows, CoreApi.ESSENCE_SHARD.get()) == ArmsHomes.rackPrice(ArmsHomes.of("greatblade").rank()), "a style you know pays its price instead");
         h.assertTrue(ArmsHomes.all().stream().filter(x -> x.teacher() != null).count() == 6, "six people teach");
         h.succeed();
+    }
+
+    /** Boss weapons: the cooler the weapon the rarer, a pity at six, a Lord-forged weapon replaces the Spoils, two distinct Marks. */
+    static void bossWeapon(net.minecraft.gametest.framework.GameTestHelper h) {
+        h.assertTrue(ArmsHomes.spoilChance(dev.awaken.progression.Rank.E) > ArmsHomes.spoilChance(dev.awaken.progression.Rank.D)
+                && ArmsHomes.spoilChance(dev.awaken.progression.Rank.D) > ArmsHomes.spoilChance(dev.awaken.progression.Rank.C)
+                && ArmsHomes.spoilChance(dev.awaken.progression.Rank.C) > ArmsHomes.spoilChance(dev.awaken.progression.Rank.B)
+                && ArmsHomes.spoilChance(dev.awaken.progression.Rank.B) > ArmsHomes.spoilChance(dev.awaken.progression.Rank.A), "Spoils fall rarer from E to A");
+        h.assertTrue(ArmsSpoils.falls(0, 0.15F, 0.14F) && !ArmsSpoils.falls(0, 0.15F, 0.16F), "a roll under the chance falls");
+        h.assertTrue(!ArmsSpoils.falls(4, 0.15F, 0.99F) && ArmsSpoils.falls(5, 0.15F, 0.99F), "and the sixth Lord without a weapon is certain");
+        var rng = net.minecraft.util.RandomSource.create(7);
+        ItemStack spear = ArmsSpoils.stack(dev.awaken.progression.Rank.D, ArmsHomes.of("spear"), rng);
+        h.assertTrue(spear.is(item("beastbound_spear")) && Marks.of(spear).marks().size() == 2 && !Marks.of(spear).marks().get(0).equals(Marks.of(spear).marks().get(1)),
+                "a D Lord's Spoils: a Beastbound Spear with two different Marks");
+        ItemStack any = ArmsSpoils.stack(dev.awaken.progression.Rank.S, null, rng);
+        h.assertTrue(!any.isEmpty() && BuiltInRegistries.ITEM.getKey(any.getItem()).getPath().startsWith("sovereign_"), "an S Lord with no style of its own: a Sovereign weapon of some style");
+
+        ServerPlayer lucky = survivor(h);
+        ArmsProgress.of(lucky).lordsWithoutWeapon = 5;
+        ArmsSpoils.lordKill(lucky, "E", "awaken:hive");
+        ServerPlayer forged = survivor(h);
+        ArmsProgress.of(forged).lordsWithoutWeapon = 5;
+        ArmsSpoils.noteForged(forged);
+        ArmsSpoils.lordKill(forged, "E", "awaken:hive");
+        h.runAfterDelay(8, () -> {
+            h.assertTrue(count(lucky, item("wildhide_daggers")) == 1 && ArmsProgress.of(lucky).lordsWithoutWeapon == 0, "the pity hands over the Hive's Daggers and starts again");
+            h.assertTrue(count(forged, item("wildhide_daggers")) == 0 && ArmsProgress.of(forged).lordsWithoutWeapon == 0, "a Lord-forged weapon replaces the Spoils");
+            h.succeed();
+        });
+    }
+
+    /** Marked weapons: a pity on the 25th, and the first one certain from a Warden. */
+    static void markedPity(net.minecraft.gametest.framework.GameTestHelper h) {
+        h.assertTrue(!MarkedDrops.falls(23, 0.04F, 0.99F) && MarkedDrops.falls(24, 0.04F, 0.99F), "certain on the 25th without one");
+        ServerPlayer sp = survivor(h);
+        var warden = h.spawn(EntityTypes.ZOMBIE, new BlockPos(1, 1, 1));
+        warden.setData(CoreApi.MOB_ROLE, new MobRole(MobRole.Role.WARDEN, 3, "awaken:hive", Optional.empty(), ""));
+        var source = h.getLevel().damageSources().playerAttack(sp);
+        h.assertTrue(!ArmsProgress.of(sp).firstMarked, "none yet");
+        MarkedDrops.onDeath(new net.neoforged.neoforge.event.entity.living.LivingDeathEvent(warden, source));
+        h.assertTrue(ArmsProgress.of(sp).firstMarked && ArmsProgress.of(sp).markedWithout == 0, "the first Warden you down drops one for certain");
+        var drops = h.getLevel().getEntitiesOfClass(ItemEntity.class, new net.minecraft.world.phys.AABB(warden.blockPosition()).inflate(6));
+        h.assertTrue(drops.stream().anyMatch(d -> !Marks.of(d.getItem()).marks().isEmpty()), "and it carries its Marks");
+        h.succeed();
+    }
+
+    /** Raise: a Marked forged weapon becomes the next tier's, keeping its Marks; a Lord-forged one keeps its body and gains damage. */
+    static void raise(net.minecraft.gametest.framework.GameTestHelper h) {
+        ServerPlayer sp = survivor(h);
+        for (int i = 0; i < 10 && Progression.profile(sp).level() < 13; i++) Progression.grantLevels(sp, 6, Progression.XpSource.COMMAND);
+        h.assertTrue(Progression.profile(sp).level() >= 13, "level 13 reached for the test: " + Progression.profile(sp).level());
+        ItemStack marked = new ItemStack(item("wildhide_daggers"));
+        marked.set(ArmsContent.INSTANCE.get(), Marks.Instance.EMPTY.withMark(Marks.random(net.minecraft.util.RandomSource.create(3)).id()));
+        sp.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, marked);
+        h.assertTrue(!ArmsRaise.raise(sp), "without the next tier's parts nothing is raised");
+        giveNeeds(sp, ArmsRaise.plan(sp).needs());
+        h.assertTrue(ArmsRaise.raise(sp), "with them it is");
+        ItemStack up = sp.getMainHandItem();
+        h.assertTrue(up.is(item("beastbound_daggers")) && Marks.of(up).marks().equals(Marks.of(marked).marks()), "a Beastbound Daggers with the same Marks");
+        h.assertTrue(ArmsArmoury.needs(sp, "daggers", 1).stream().filter(n -> !n.id().endsWith("_blueprint")).allMatch(n -> n.have() == 0), "and the parts are spent");
+
+        ItemStack lord = new ItemStack(item("hive_regent_daggers"));
+        sp.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, lord);
+        giveNeeds(sp, ArmsRaise.plan(sp).needs());
+        h.assertTrue(ArmsRaise.raise(sp), "a Lord-forged weapon is raised too");
+        ItemStack lf = sp.getMainHandItem();
+        h.assertTrue(lf.is(item("hive_regent_daggers")) && ArmsRaise.raised(lf) == 1, "it keeps its own body, marked as raised once");
+        h.assertTrue(lf.getOrDefault(net.minecraft.core.component.DataComponents.ATTRIBUTE_MODIFIERS, net.minecraft.world.item.component.ItemAttributeModifiers.EMPTY)
+                .modifiers().stream().anyMatch(m -> m.modifier().id().getPath().equals("raise_1")), "and a point of damage");
+        h.succeed();
+    }
+
+    private static void giveNeeds(ServerPlayer sp, List<dev.awaken.arms.net.ArmsPayloads.NeedRow> needs) {
+        for (var n : needs) {
+            net.minecraft.resources.Identifier id = net.minecraft.resources.Identifier.parse(n.id());
+            Item give = n.kind().equals("tag")
+                    ? BuiltInRegistries.ITEM.get(net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, id)).orElseThrow().stream().findFirst().orElseThrow().value()
+                    : BuiltInRegistries.ITEM.getValue(id);
+            sp.getInventory().add(new ItemStack(give, n.need()));
+        }
     }
 }

@@ -113,14 +113,16 @@ public final class ArmsPayloads {
     }
 
     /** Server → the fighter: the Armoury's list (door 0 the band, 1 Hale's rack, 2 the Forge), their essence, how many styles aren't shown yet and at which rank Hale shows more, and the tracked weapon ("daggers:E" or ""). */
-    public record ArmouryView(int door, int essence, java.util.List<StyleEntry> styles, int hidden, String hiddenRank, String tracked, boolean open)
+    public record ArmouryView(int door, int essence, java.util.List<StyleEntry> styles, int hidden, String hiddenRank, String tracked, boolean open,
+                              String raise, java.util.List<String> finds)
             implements CustomPacketPayload {
         public static final Type<ArmouryView> TYPE = new Type<>(Awaken.id("arms_armoury_view"));
         public static final StreamCodec<ByteBuf, ArmouryView> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_INT, ArmouryView::door, ByteBufCodecs.VAR_INT, ArmouryView::essence,
                 StyleEntry.STREAM_CODEC.apply(ByteBufCodecs.list(32)), ArmouryView::styles,
                 ByteBufCodecs.VAR_INT, ArmouryView::hidden, ByteBufCodecs.STRING_UTF8, ArmouryView::hiddenRank,
-                ByteBufCodecs.STRING_UTF8, ArmouryView::tracked, ByteBufCodecs.BOOL, ArmouryView::open, ArmouryView::new);
+                ByteBufCodecs.STRING_UTF8, ArmouryView::tracked, ByteBufCodecs.BOOL, ArmouryView::open,
+                ByteBufCodecs.STRING_UTF8, ArmouryView::raise, ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list(8)), ArmouryView::finds, ArmouryView::new);
         @Override public Type<ArmouryView> type() { return TYPE; }
     }
 

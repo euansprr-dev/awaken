@@ -41,6 +41,7 @@ final class ArmsTooltip {
         Archetypes.Loaded style = Arms.styleOf(stack);
         if (style == null) return;
         int at = Math.min(1, lines.size());
+        at = found(stack, item, lines, at);
         Marks.Instance inst = Marks.of(stack);
         for (String id : inst.marks()) {
             Marks.Mark m = Marks.get(id);
@@ -83,6 +84,22 @@ final class ArmsTooltip {
             lines.add(at, gray("awaken.tooltip.forge.blueprint"));
         }
         if (blueprint == null && ArmsSources.isIngredient(id)) source(id, lines);
+    }
+
+    /** Where a found weapon comes from, in words: a Lord-forged one names its Lord, a Marked one says what drops them; and what Raise did to it. */
+    private static int found(ItemStack stack, Identifier item, List<Component> lines, int at) {
+        var forged = dev.awaken.arms.LordForged.byWeapon(item.getPath());
+        if (forged != null) {
+            var home = ArmsHomes.of(Arms.styleOf(stack) == null ? "" : Arms.styleOf(stack).id());
+            String rank = home == null ? "" : home.rank().label + "-rank ";
+            lines.add(at++, Component.translatable("awaken.tooltip.lord_forged", Component.translatable("entity.awaken." + forged.lord()), rank).withStyle(ChatFormatting.GRAY));
+        } else if (!Marks.of(stack).marks().isEmpty()) {
+            lines.add(at++, gray("awaken.tooltip.marked"));
+        }
+        var data = stack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+        int raised = data == null ? 0 : data.copyTag().getIntOr("awaken_raised", 0);
+        if (raised > 0) lines.add(at++, Component.translatable("awaken.tooltip.raised", raised).withStyle(ChatFormatting.GRAY));
+        return at;
     }
 
     private static final Identifier ESSENCE = Identifier.fromNamespaceAndPath("awaken", "essence_shard");
