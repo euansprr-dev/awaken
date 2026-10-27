@@ -53,6 +53,8 @@ public final class LensClient {
     private static LensParams params;
     // Lens 2's light (Cinematic and Ultra): created the first time either tier is chosen, kept until the game closes
     private static LensFrame lensFrame;
+    // the exact matrices, from the projection the world was really drawn with (a camera mod's roll included)
+    private static LensProjection projection;
     private static LensHeightfield heightfield;
     private static boolean lit, sunHere;
     private static float lightStrength, rain, warmth;
@@ -135,13 +137,30 @@ public final class LensClient {
                     lookFor = null; // re-resolve the current place's look
                     biomeFor = null;
                     java.util.Arrays.fill(placeStale, true);
+                    LensProjection.recheck();
                 }));
+        modBus.addListener(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent.class, LensProjection::onRegister);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> tick());
         // after every other fog listener (Blight, the Veil): Lens hazes toward the fog the player actually sees
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ViewportEvent.RenderFog.class, LensClient::frame);
+        // first after the level: the projection the world was drawn with is still bound (LensProjection)
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, RenderLevelStageEvent.AfterLevel.class, e -> {
+            if (active && lit && projection != null) projection.capture();
+        });
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.AfterLevel.class, LensClient::afterLevel);
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent.class, LensParticles::register);
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, LensClient::extract);
+        // development: /awaken lens projection off|on|check (A/B shots of the CPU's estimate against the world's own)
+        NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RegisterClientCommandsEvent.class, e -> e.getDispatcher().register(
+                net.minecraft.commands.Commands.literal(Awaken.MODID).then(net.minecraft.commands.Commands.literal("lens")
+                        .then(net.minecraft.commands.Commands.literal("projection")
+                                .then(net.minecraft.commands.Commands.argument("what", com.mojang.brigadier.arguments.StringArgumentType.word())
+                                        .executes(c -> {
+                                            String line = LensProjection.command(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "what"));
+                                            Awaken.LOG.info("[lens] {}", line);
+                                            Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal(line));
+                                            return 1;
+                                        }))))));
         NeoForge.EVENT_BUS.addListener(ChunkEvent.Load.class, e -> {
             if (heightfield != null && e.getLevel().isClientSide()) heightfield.loaded(e.getChunk());
         });
@@ -187,7 +206,10 @@ public final class LensClient {
         if (want != null) {
             ensureParams();
             if (lit) ensureLight();
-            if (lit && !wasLit) lensFrame.reset();
+            if (lit && !wasLit) {
+                lensFrame.reset();
+                projection.reset();
+            }
             int at = effects.indexOf(want);
             if (at != 0) {
                 if (at > 0) effects.remove(at);
@@ -208,7 +230,10 @@ public final class LensClient {
             // a new dimension eases in over about 1.5 s, one biome's look into another's over about 3 s; a story scene
             // keeps the pace override/clearOverride set
             if (placeChanged && !overrideChanged && overrideLook == null) ease = dim != lookFor ? 0.06f : 0.03f;
-            if (dim != lookFor && lensFrame != null) lensFrame.reset();
+            if (dim != lookFor && lensFrame != null) {
+                lensFrame.reset();
+                projection.reset();
+            }
             // with Lens off the look rests at neutral, so a scene eases in from (and back out to) the plain frame
             if (overrideLook != null) Looks.resolve(overrideLook, null, base);
             else if (off) System.arraycopy(NEUTRAL, 0, base, 0, Look.SIZE);
@@ -364,6 +389,7 @@ public final class LensClient {
         if (lensFrame != null) return;
         // registered before the chain that reads them first loads: a post pass keeps the texture it found then
         lensFrame = new LensFrame();
+        projection = new LensProjection();
         heightfield = new LensHeightfield();
         Minecraft.getInstance().getTextureManager().register(FRAME, lensFrame.texture);
         Minecraft.getInstance().getTextureManager().register(HEIGHT, heightfield.texture);
@@ -393,6 +419,7 @@ public final class LensClient {
         if (params != null) {
             if (block == null) block = new LensBlock();
             block.write(lit ? lensFrame : null, params);
+            if (lit && lensFrame != null) projection.copyTo(block.buffer);
             dev.awaken.turbo.tiles.Tiles.lensBlock(block.buffer);
         }
     }
@@ -410,6 +437,7 @@ public final class LensClient {
         lensFrame.clouds(cloudsHere ? cloudHeight : 0f, cover, (ticks % 768_000L) * 0.04, cloudColour);
         lensFrame.write(state.cameraRenderState, state.playerRenderState, zeroToOne, lx, ly, lz, lightStrength, moonLight, rain,
                 sunHere ? heightfield : null, temporal);
+        projection.write(state.cameraRenderState, sunDir, lensFrame.history(), lensFrame.texture.getTexture(), lensFrame.viewProj());
     }
 
     private static void ensureParams() {
@@ -444,6 +472,7 @@ public final class LensClient {
                 float onScreen = 1f - smooth(Math.max(outside, 0f) / 0.6f);
                 visible = Math.clamp(sunDir.y * 5f + 0.25f, 0f, 1f) * (1f - mc.level.getRainLevel(partial)) * onScreen;
             }
+            if (lensFrame != null) lensFrame.sun(u, v, clip.w > 1.0e-4f);
             // Lens 2's light: the sun by day, a faint moon by night, both dimmed by rain; nothing at the horizon crossing
             rain = mc.level.getRainLevel(partial);
             float day = smooth((sunDir.y + 0.02f) / 0.14f), night = smooth((-sunDir.y + 0.02f) / 0.14f) * 0.4f;

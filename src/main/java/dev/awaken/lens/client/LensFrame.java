@@ -17,9 +17,11 @@ import org.lwjgl.system.MemoryUtil;
 import java.nio.ByteBuffer;
 
 /**
- * Lens 2's per-frame values that need full float precision (SPEC §22): the frame's exact view-projection (the
- * game's projection with its view bob, hurt tilt and nausea, times the view rotation; camera-relative), its inverse,
- * the previous frame's (for temporal accumulation), the camera within the heightfield's ring and the light's direction.
+ * Lens 2's per-frame values that need full float precision (SPEC §22): the frame's view-projection (camera-relative),
+ * its inverse, the previous frame's (for temporal accumulation), the sun on screen, the camera within the heightfield's
+ * ring and the light's direction. The matrices and the sun written here are the CPU's estimate (the game's projection
+ * with its own bob, hurt tilt and nausea); LensProjection then puts the exact ones over them on the GPU, from the
+ * projection the world was really drawn with (a camera mod's roll included).
  * A 48×1 RGBA32F texture ({@code awaken:lens_frame}), written once a frame just before the post effects run; layout in
  * {@code shaders/include/lens_frame.glsl}. Nothing is allocated per frame.
  */
@@ -34,7 +36,8 @@ final class LensFrame {
     private long prevNs;
     private final long start = System.nanoTime();
     private int frame;
-    private boolean hasPrev;
+    private boolean hasPrev, history;
+    private float sunU = 0.5f, sunV = 0.5f, sunFront;
 
     private float cloudBase, cloudCover;
     // the Holo world plates drawn this frame (HoloWorld.lensPlates): Lens keeps its light, AO and haze off them
@@ -51,6 +54,23 @@ final class LensFrame {
         cloudCover = cover;
         cloudDrift = drift;
         cloudColour = colour;
+    }
+
+    /** The sun's place on screen by the CPU's estimate (uv; {@code front} whether it is ahead of the camera). */
+    void sun(float u, float v, boolean front) {
+        sunU = u;
+        sunV = v;
+        sunFront = front ? 1f : 0f;
+    }
+
+    /** This frame's view-projection by the CPU's estimate: after {@link #write}. */
+    Matrix4f viewProj() {
+        return viewProj;
+    }
+
+    /** Whether this frame's history is usable (last frame's matrices hold): after {@link #write}. */
+    boolean history() {
+        return history;
     }
 
     /** Forget the previous frame (a new chain, a new place): the next frame starts its history fresh. */
@@ -87,6 +107,7 @@ final class LensFrame {
         // history holds across ordinary frames; not across a teleport, a long gap or a fresh start
         boolean valid = hasPrev && now - prevNs < 250_000_000L && Math.abs(x - prevX) + Math.abs(y - prevY) + Math.abs(z - prevZ) < 24.0;
         if (!valid) prevViewProj.set(viewProj);
+        history = valid;
 
         data.clear();
         putMatrix(0, inverse);
@@ -111,7 +132,9 @@ final class LensFrame {
         plateCount = dev.awaken.holo.client.HoloWorld.lensPlates(plates);
         int stormCount = dev.awaken.living.client.StormSky.lensCells(storms, x, y, z);
         put(20, plateCount, stormCount, 0f, 0f);
-        for (int i = 21; i < 24; i++) put(i, 0f, 0f, 0f, 0f);
+        // 21: the sun on screen (uv; z 1 when it is ahead), the estimate LensProjection replaces
+        put(21, sunU, sunV, sunFront, 0f);
+        for (int i = 22; i < 24; i++) put(i, 0f, 0f, 0f, 0f);
         for (int k = 0; k < dev.awaken.holo.client.HoloWorld.MAX; k++) {
             int o = k * 9, t = 24 + k * 3;
             boolean on = k < plateCount;

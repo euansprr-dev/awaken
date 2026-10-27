@@ -9,6 +9,7 @@
 uniform sampler2D InSampler;      // quarter-size frame; alpha = open-sky brightness
 uniform sampler2D WideSampler;    // the wide glow, eighth size
 uniform sampler2D ParamsSampler;
+uniform sampler2D FrameSampler;   // LensFrame: texel 21 the sun on screen
 
 layout(location = 0) in vec2 texCoord;
 
@@ -22,8 +23,7 @@ layout(location = 0) out vec4 fragColor;
 #include <awaken:lens_block.glsl>
 
 vec4 P(int i) { return LensUse.x > 0.5 ? LensP[i] : texelFetch(ParamsSampler, ivec2(i, 0), 0); }
-
-float unpack16(vec2 v) { return (v.x * 255.0 * 256.0 + v.y * 255.0) / 65535.0; }
+vec4 F(int i) { return LensUse.x > 0.5 ? LensF[i] : texelFetch(FrameSampler, ivec2(i, 0), 0); }
 
 void main() {
     // fog glow: the wide glow on two rings around this pixel (a soft halo several times the glow's own reach)
@@ -38,13 +38,13 @@ void main() {
         }
     }
     vec4 s1 = P(1);                   // b sun visible, a sunset strength
-    vec4 s2 = P(2);                   // sun position on screen, 16 bits each, mapped from [-1, 2]
     float strength = P(6).a * s1.b;
     if (strength <= 0.0) {
         fragColor = vec4(0.0, fog);
         return;
     }
-    vec2 sun = vec2(unpack16(s2.rg), unpack16(s2.ba)) * 3.0 - 1.0;
+    // where the world was really drawn (LensProjection: a camera mod's roll included)
+    vec2 sun = clamp(F(21).xy, -1.0, 2.0);
     const int STEPS = 24;
     vec2 dir = (sun - texCoord) * (0.92 / float(STEPS));
     vec2 p = texCoord;

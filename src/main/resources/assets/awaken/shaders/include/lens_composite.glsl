@@ -443,7 +443,12 @@ void main() {
     c = screen(c, glow * (b.r + rit.b) * 2.0);
     // the sun's halo: light scattering around the disc, warm at sunset, gone when hills or trees hide the sun
     if (p1.b > 0.0 && p12.r > 0.0) {
+#ifdef LENS_LIGHT
+        // where the world was really drawn (a camera mod's roll included), not where the game's own camera puts it
+        vec2 sun = clamp(F(21).xy, -1.0, 2.0);
+#else
         vec2 sun = vec2((sunPos.r * 255.0 * 256.0 + sunPos.g * 255.0) / 65535.0, (sunPos.b * 255.0 * 256.0 + sunPos.a * 255.0) / 65535.0) * 3.0 - 1.0;
+#endif
         float open = (texture(SkySampler, sun).a + texture(SkySampler, sun + vec2(0.01, 0.0)).a + texture(SkySampler, sun - vec2(0.01, 0.0)).a) / 3.0;
         // (on Cinematic and Ultra the sky's alpha carries Lens 2's clouds too, so the halo dims behind them)
         float r = length((texCoord - sun) * vec2(OutSize.x / OutSize.y, 1.0));

@@ -1,7 +1,8 @@
 // AWAKEN Lens 2 (SPEC §22): the frame's float values (dev.awaken.lens.client.LensFrame, 24x1 RGBA32F) and the terrain's
 // heights (lens_height.glsl). Needs FrameSampler declared before it; lens_height.glsl needs HeightSampler and
 // lens_normal.glsl DepthSampler.
-//   0-3  inverse view-projection (NDC -> camera-relative world), with the frame's own bob and nausea
+//   0-3  inverse view-projection (NDC -> camera-relative world), from the projection the world was drawn with (its
+//        bob, hurt tilt, nausea and any camera mod's roll; LensProjection)
 //   4-7  view-projection          8-11 last frame's view-projection (relative to last frame's camera)
 //   12   camera in the heightfield ring: x, z modulo 1024, y absolute; w frame counter
 //   13   camera moved since last frame (now - then); w 1 when last frame's history is usable
@@ -10,7 +11,9 @@
 //   16   x 1 for zero-to-one depth, y 1 when the light is the moon, z rain, w the near plane
 //   17   x seconds, wrapping every hour (ripples, shimmer); y 1 when clouds and light are spread over frames
 //   18-19 the clouds (lens_clouds.glsl)
-//   20   x the Holo world plates drawn this frame, y the storm cells; 24-41 each plate: camera-relative centre,
+//   20   x the Holo world plates drawn this frame, y the storm cells
+//   21   the sun on screen: xy uv, z 1 when it is ahead of the camera (LensProjection)
+//   24-41 each plate: camera-relative centre,
 //        half-width and half-height vectors (3 texels a plate); 42-47 the storm cells (lens_storm_frame.glsl)
 
 #include <awaken:lens_block.glsl>
