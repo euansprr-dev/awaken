@@ -503,8 +503,39 @@ final class SignalTests {
                     }
                 }
             }
+            stackChecks(bad, w, hgt);
         }
         return bad;
+    }
+
+    /**
+     * The top-right stack (SPEC §27.10): the run panel under the task card (or in the corner without one) never meets
+     * the card, the System's toasts or a boss bar, and stays on the screen.
+     */
+    private static void stackChecks(List<String> bad, int w, int hgt) {
+        for (int bars : new int[]{0, 17, 36, 55}) {
+            Rect boss = new Rect(w / 2 - 91, 0, 182, bars);
+            for (int toasts = 0; toasts <= SignalLayout.MAX_TOASTS; toasts++) {
+                float top = SignalLayout.MARGIN + toasts * SignalLayout.TOAST_H;
+                Rect toastsRect = new Rect(w - SignalLayout.TOAST_W, 0, SignalLayout.TOAST_W, toasts * SignalLayout.TOAST_H);
+                for (int cardW : new int[]{0, 60, 110}) {
+                    int cardH = cardW == 0 ? 0 : 40;
+                    for (int runW : new int[]{50, 70, 110}) {
+                        String at = w + "x" + hgt + " bars " + bars + " toasts " + toasts + " card " + cardW + " run " + runW;
+                        float cy = SignalLayout.clearBossBars(top, w, cardW, bars);
+                        Rect card = new Rect(w - SignalLayout.MARGIN - cardW, Math.round(cy), cardW, cardH);
+                        float ry = SignalLayout.stackBelow(top, cardW, cardH, w, runW, bars);
+                        Rect run = new Rect(w - SignalLayout.MARGIN - runW, Math.round(ry), runW, 35);
+                        if (run.intersects(card)) bad.add(at + ": the run panel covers the task card " + run + " vs " + card);
+                        if (run.intersects(toastsRect)) bad.add(at + ": the run panel covers a toast " + run);
+                        if (bars > 0 && run.intersects(boss)) bad.add(at + ": the run panel covers a boss bar " + run);
+                        if (bars > 0 && card.intersects(boss)) bad.add(at + ": the task card covers a boss bar " + card);
+                        if (run.x() < 0 || run.right() > w) bad.add(at + ": the run panel leaves the screen " + run);
+                        if (cardW == 0 && bars == 0 && Math.round(ry) != Math.round(top)) bad.add(at + ": the run panel doesn't take the empty corner " + run);
+                    }
+                }
+            }
+        }
     }
 
     private static void storyChecks(List<String> bad, String at, int w, int h, double s, Rect avoid, Rect cross) {

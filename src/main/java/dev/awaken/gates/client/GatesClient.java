@@ -38,6 +38,7 @@ public final class GatesClient {
         bus.addListener(Blight::onFogColour);
         bus.addListener(Blight::onFog);
         bus.addListener(GateHum::onTick);
+        bus.addListener(GatesClient::tick);
         bus.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> ClientGates.clear());
         StatusSections.add(StatusSections.Tab.STATUS, new RunSection()); // a run's summary on the band's Status page
         dev.awaken.core.api.MapMarks.registerGates(RunSection::marks); // the gates on the Atlas (the Gate Map is gone, SPEC §30)
@@ -79,10 +80,12 @@ public final class GatesClient {
     }
 
     private static void layers(RegisterGuiLayersEvent e) {
-        e.registerAbove(VanillaGuiLayers.EFFECTS, HUD, RunHudLayer::render);
+        // after the boss bars, so the top-right stack knows where they end this frame
+        e.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, HUD, RunHudLayer::render);
         e.registerAbove(VanillaGuiLayers.BOSS_OVERLAY, Awaken.id("gate_rig_clock"), RigRunHud::render);
     }
 
     static void tick(ClientTickEvent.Post e) {
+        RunHudLayer.tick();
     }
 }

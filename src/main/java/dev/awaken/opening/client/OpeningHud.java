@@ -30,6 +30,7 @@ final class OpeningHud {
 
     static void register(RegisterGuiLayersEvent e) {
         e.registerAboveAll(LAYER, OpeningHud::render);
+        dev.awaken.core.api.UiHooks.drawsOverScreens(LAYER); // the sky shot's bars stay over the view choice
     }
 
     // ---- what's on screen -------------------------------------------------------------------------------------------

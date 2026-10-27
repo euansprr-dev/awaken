@@ -442,6 +442,15 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   texture (a DynamicTexture or a registered render target) on a panel or a flat screen, one tinted quad.
 - `dev.awaken.core.api.UiHooks` (client) — `setFocus(Object owner, float value)`, `clearFocus(Object owner)`, `focus()`
   (the largest source, 0..1; Lens reads it). Reading panels only; toasts, cards and HUD lines never report.
+  The HUD under screens (Euan, 2026-10-27: the gate's run panel drew over the K menu): the game draws the HUD under
+  every screen and leaves the screen's blurred background to cover it, and the band, the holo inventory and the Atlas
+  draw none, so `core.client.HudUnderScreens` skips every layer in Awaken's namespace while any screen but chat is open.
+  A scene's layer that must draw over its own screen opts back in with `drawsOverScreens(Identifier layer)` at
+  registration (today only `awaken:opening_hud`, the sky shot's bars over the view choice). Vanilla's layers are left
+  alone. The top-right stack (§27.10): `installTopRight(TopRight)` (signal installs the task card's),
+  `topRightBelow(partialTick, width)` (where a card that wide against the right margin starts this frame: under the
+  toasts, the task card and any boss bar it would reach; the bare margin when none is installed), `topRightScale()`
+  (the stack's card scale) and `TOP_RIGHT_MARGIN` (4 GUI px).
 - `dev.awaken.core.client.skin` (client) — `SkinnedMobRenderer<T extends Mob, S extends SkinRenderState>`, `SkinModel`,
   `SkinRenderState` (`wear(PlayerSkin)`, `wear(texture, slim)`, overlay toggles): the renderer for every non-player body
   with a player-format skin (townsfolk, training ghost, gate shades, Shadow Self, HUMAN and MIMIC mobs). The player mesh
@@ -6197,8 +6206,21 @@ the System scale, never under two screen pixels a font pixel, widest line 185 px
 and done/total, then only what matters now, one line each: the current step bright with ▸, the next two dim, and a step
 that just ticked (a soft green flash, then it fades out over 2.5 s); a long step is shortened with "…" (the Journal has
 the whole of it). Keys are drawn as key caps from "{key}" in the words, a count where a step has one ("0/10"), and a
-compass to a place nearby ("↗ 9 m"). While the System's toasts are up it eases down under them. Hidden with the HUD.
+compass to a place nearby ("↗ 9 m"). While the System's toasts are up it eases down under them, and below a boss bar
+it would reach (on a narrow screen). Hidden with the HUD.
 The Now line, top left, keeps the where; the card keeps the what.
+- **The top-right stack** (Euan, 2026-10-27: "let's move the floors to the top right where the current active things
+  to do are"): the task card heads it and the gate's run panel (`gates.client.RunHudLayer`, the floor HUD that sat on
+  the left at mid-height) sits 3 GUI px under it, or takes the corner itself when there is no task; the same margin,
+  look (`HudLook` projected or flat glass, accent red in a Red Gate) and scale (`UiHooks.topRightScale`). The run panel
+  steps down under the toasts and below boss bars it would reach (`UiHooks.topRightBelow`; the layer draws after the
+  boss overlay, which counts the bars afresh each frame), moves down at once when the task card arrives and eases up
+  into the room when it goes. It keeps everything: rank and gate name with the floor beside them ("Deeper · Floor 1/4",
+  a ✓ when cleared), Satchel slots and XP, kills and the floor clock with the pressure word (stirring, awake, Warden),
+  the Noise bar under Silence, the collapse countdown and the twist's hint (shortened with "…"); widest line 215 px,
+  narrowest card 96. Never dims; hidden with the HUD, under F3 and, like all of Awaken's HUD, while any screen but
+  chat is open (§12 `UiHooks`). Its strings are built only when the server's run update changes. Test
+  `signal_layout_every_gui_size` (the stack's maths at every GUI size: never over the card, a toast or a boss bar).
 The server decides (`progression.Checklist`, sent only when it changes, payload `signal_task`; nothing while the
 opening runs):
 - **Your body remembers** first, from the awakening: "Hold [Shift] as you land to roll", "Double-tap [Ctrl] to sprint
