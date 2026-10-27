@@ -567,7 +567,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
 
     private int dangerY, moreGates;
     private boolean dangerWrap;
-    private static final String[] DANGER_LEVELS = {"1", "8", "20", "45", "80"};
+    private static final String[] DANGER_LEVELS = {"1", "10", "25", "45", "70", "100"};
     private java.util.List<net.minecraft.util.FormattedCharSequence> noGates = java.util.List.of();
     private static final String NO_GATES = "You haven't seen a gate yet. Their light shows from far off: look for a pillar in the sky.";
 

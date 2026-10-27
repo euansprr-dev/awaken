@@ -212,7 +212,7 @@ final class LivingFx {
         Minecraft mc = Minecraft.getInstance();
         Font font = mc.font;
         // wide enough for its words: [ELITE] name ... Lv nn, and the title under them
-        int words = font.width(name(e, tag, Progression.profile(mc.player))) + font.width("Lv " + tag.level()) + 22
+        int words = font.width(name(e, tag, Progression.profile(mc.player))) + (LivingPlates.shownLevel(tag) ? font.width("Lv " + tag.level()) : 0) + 22
                 + (tag.elite() ? font.width("ELITE ") + 2 : 0);
         int titleW = tag.title().isEmpty() ? 0 : (int) (font.width(tag.title()) * 0.78F) + 10;
         float halfW = (float) Math.max(Mth.clamp(e.getBbWidth() * 0.65, 0.5, 1.4), Math.max(words, titleW) * TEXT * 0.5F + 0.06F);
@@ -356,8 +356,9 @@ final class LivingFx {
             int lv = tag.level();
             int lvCol = lv <= mine - 10 ? GREY : lv >= mine + 5 ? EMBER : BAND[dev.awaken.living.api.Regions.bandOf(lv)];
             String lvText = "Lv " + lv;
-            float lvX = right - font.width(lvText) - (lv >= mine + 5 ? 0.07F / s : 0);
-            lightText(out, ps, font, lvText, lvX, top, lvCol, vis);
+            boolean chip = LivingPlates.shownLevel(tag);
+            float lvX = chip ? right - font.width(lvText) - (lv >= mine + 5 ? 0.07F / s : 0) : right;
+            if (chip) lightText(out, ps, font, lvText, lvX, top, lvCol, vis);
             // the name (unknown until the Codex has it); an elite says so first
             String name = name(e, tag, prof);
             float nx = left;

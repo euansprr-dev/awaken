@@ -23,26 +23,27 @@ import java.util.zip.Inflater;
  */
 final class ZoneMap {
     static final int DISTRICT = 1000;
-    /** Danger bands by a region's lowest level (SPEC §21.2 bands 1–8, 8–20, 20–45, 45–80, 80+): safe green to violet. */
-    static final int[] BAND_COLOUR = {0xFF62D99A, 0xFFE4D063, 0xFFF29A48, 0xFFEC5656, 0xFFB07CFF};
-    static final String[] BAND_NAME = {"Lv 1–8", "Lv 8–20", "Lv 20–45", "Lv 45–80", "Lv 80+"};
+    /** Land ranks E, D, C, B, A, S (SPEC §21.10: 1, 10, 25, 45, 70, 100), safe green to deep violet. */
+    static final int[] BAND_COLOUR = {0xFF62D99A, 0xFFE4D063, 0xFFF29A48, 0xFFEC5656, 0xFFB07CFF, 0xFF6C47C6};
+    static final String[] BAND_NAME = {"Lv 1–9", "Lv 10–24", "Lv 25–44", "Lv 45–69", "Lv 70–99", "Lv 100+"};
     /** District colours, by the plan's district id (1 market … 7 wallring). */
     static final int[] DISTRICT_COLOUR = {0, 0xFFE8A85E, 0xFF7E9BFF, 0xFF4FD2C6, 0xFFF4E4A2, 0xFFFF7E52, 0xFF86E06E, 0xFFB4BCC8};
     static final String[] DISTRICT_NAME = {"", "Choir Square and the Market", "Bellwatch", "Lantern Quay", "High Terrace", "The Works",
             "Garden Ward", "The Wallring"};
 
     /**
-     * A region's colour: its danger band's, in one of three shades picked by the region (lighter, as is, deeper), so
+     * A region's colour: its rank's, in one of three shades picked by the region (lighter, as is, deeper), so
      * two neighbours in the same band still read as two lands, not one.
      */
     static int regionColour(AtlasData.Region r) {
-        int c = BAND_COLOUR[band(r.low())];
+        int c = BAND_COLOUR[band((r.low() + r.high()) / 2)];
         int shade = (int) Math.floorMod(r.id() * 0x9E3779B97F4A7C15L >>> 40, 3L);
         return shade == 0 ? AtlasMesh.mix(c, 0xFFFFFFFF, 0.30f) : shade == 1 ? c : AtlasMesh.mix(c, 0xFF000000, 0.28f);
     }
 
-    static int band(int low) {
-        return low < 8 ? 0 : low < 20 ? 1 : low < 45 ? 2 : low < 80 ? 3 : 4;
+    /** A land's rank index by its level (a region: the middle of what it spans). */
+    static int band(int level) {
+        return dev.awaken.living.region.RegionMap.rankOf(level);
     }
 
     /** An immutable picture of the zones for the worker. */

@@ -73,7 +73,7 @@ public final class Creatures {
 
     private static void tag(ServerLevel level, Mob mob, boolean scale) {
         if (mob instanceof Enemy) {
-            boolean elite = scale && mob.getRandom().nextFloat() < LivingModule.ELITE_CHANCE;
+            boolean elite = scale && mob.getRandom().nextFloat() < LivingModule.eliteChance(Regions.creatureLevel(level, mob.blockPosition(), Regions.Role.NEUTRAL));
             int lv = Regions.creatureLevel(level, mob.blockPosition(), elite ? Regions.Role.ELITE : Regions.Role.HUNTER);
             if (scale) applyScaling(mob, lv, elite);
             mob.setData(CoreApi.CREATURE_TAG.get(), new CreatureTag(lv, CreatureTag.Kind.MONSTER, elite, ""));

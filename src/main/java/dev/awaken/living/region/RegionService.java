@@ -17,31 +17,41 @@ import org.jspecify.annotations.Nullable;
 import java.util.Locale;
 
 /**
- * The world's region map (SPEC §21.2), one per server. Its centre is fixed the first time it is asked for and saved
- * ({@code awaken:living_regions}, schema 1), so moving the world spawn later never reshuffles the map: Carillon's site in
+ * The world's region map (SPEC §21.2, §21.10), one per server. Its centre is fixed the first time it is asked for and saved
+ * ({@code awaken:living_regions}, schema 2), so moving the world spawn later never reshuffles the map: Carillon's site in
  * a Carillon world, otherwise the world spawn. The heart probe reads the land from the biome source, so it works for
- * chunks nobody has generated yet.
+ * chunks nobody has generated yet. {@code rules} says which rules named the world's regions: absent (a save from before
+ * §21.10) is 1 and keeps the old names; a new world is {@link RegionMap#RULES}.
  */
 public final class RegionService extends SavedData {
-    static final int SCHEMA = 1;
+    static final int SCHEMA = 2;
 
     public static final Codec<RegionService> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.INT.optionalFieldOf("schemaVersion", SCHEMA).forGetter(r -> SCHEMA),
             Codec.BOOL.optionalFieldOf("fixed", false).forGetter(r -> r.fixed),
             Codec.INT.optionalFieldOf("centre_x", 0).forGetter(r -> r.centreX),
-            Codec.INT.optionalFieldOf("centre_z", 0).forGetter(r -> r.centreZ)
-    ).apply(i, (schema, fixed, x, z) -> new RegionService(fixed, x, z)));
+            Codec.INT.optionalFieldOf("centre_z", 0).forGetter(r -> r.centreZ),
+            Codec.INT.optionalFieldOf("rules", 1).forGetter(r -> r.rules)
+    ).apply(i, (schema, fixed, x, z, rules) -> new RegionService(fixed, x, z, rules)));
 
     public static final SavedDataType<RegionService> TYPE = new SavedDataType<>(Awaken.id("living_regions"), RegionService::new, CODEC);
 
     private boolean fixed;
     private int centreX, centreZ;
+    private int rules = RegionMap.RULES;
     private transient @Nullable RegionMap map;
 
+    /** Which rules named this world's regions (SPEC §21.10): 1 a save from before, {@link RegionMap#RULES} a new world. */
+    public int rules() {
+        return rules;
+    }
+
+    /** A world with no record yet is a new one: made under the current rules. */
     public RegionService() {}
 
-    private RegionService(boolean fixed, int x, int z) {
+    private RegionService(boolean fixed, int x, int z, int rules) {
         this.fixed = fixed;
+        this.rules = rules;
         this.centreX = x;
         this.centreZ = z;
     }
@@ -66,13 +76,30 @@ public final class RegionService extends SavedData {
                 }
                 if (s.map == null) {
                     ServerLevel level = server.overworld();
-                    s.map = new RegionMap(level.getSeed(), s.centreX, s.centreZ, (x, z) -> land(level, x, z));
+                    s.map = new RegionMap(level.getSeed(), s.centreX, s.centreZ, (x, z) -> land(level, x, z), s.rules);
                 }
                 current = s;
                 currentServer = server;
             }
         }
         return s.map;
+    }
+
+    /**
+     * Which rules this world's regions are named under, read from the save before the overworld loads (the roads' world
+     * opens that early): no record means a new world (the current rules), a record without the field is 1.
+     */
+    public static int rulesOnDisk(MinecraftServer server) {
+        try {
+            java.nio.file.Path f = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.DATA).getParent()
+                    .resolve("dimensions/minecraft/overworld/data/awaken/living_regions.dat");
+            if (!java.nio.file.Files.exists(f)) return RegionMap.RULES;
+            var tag = net.minecraft.nbt.NbtIo.readCompressed(f, net.minecraft.nbt.NbtAccounter.unlimitedHeap());
+            return tag.getCompoundOrEmpty("data").getIntOr("rules", 1);
+        } catch (Exception e) {
+            Awaken.LOG.warn("[living] could not read the region record's rules, keeping the old names: {}", e.toString());
+            return 1;
+        }
     }
 
     /** Forgets the cached map (server stop). */

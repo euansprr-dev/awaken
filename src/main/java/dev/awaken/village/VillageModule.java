@@ -41,6 +41,9 @@ public final class VillageModule {
 
     public static void init(IEventBus modBus) {
         VillageWorldgen.init(modBus);
+        // (SPEC §21.10) settled land and the roads between are calmer: creatures there are held down or a few levels lower
+        dev.awaken.living.api.Regions.addLevelExtra(SettledCalm::roadExtra);
+        dev.awaken.living.api.Regions.addLevelCap(SettledCalm::cap);
         dev.awaken.village.road.RoadAtlas.init(modBus);
         VillageContent.register(modBus);
         modBus.addListener(VillageModule::onAddPackFinders);

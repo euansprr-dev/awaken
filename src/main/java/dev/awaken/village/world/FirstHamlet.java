@@ -63,8 +63,23 @@ public final class FirstHamlet {
         return search(seed, centre, t, new VillagePlan[1]);
     }
 
-    /** As {@link #search}, handing back the winning spot's plan in {@code found[0]}. */
+    /** The most a creature's land may be at the first hamlet (SPEC §21.10): the first place a level-3 player goes. */
+    public static final int MAX_LEVEL = 12;
+
+    /**
+     * As {@link #search}, handing back the winning spot's plan in {@code found[0]}. The land's level is checked too
+     * (SPEC §21.10: nothing the first thread sends you to is a trap): the spots at level {@link #MAX_LEVEL} or less are
+     * tried first, then, only if none takes a hamlet, any. The level reads the region map with no biome tilt, which moves
+     * a land by a couple of levels at most.
+     */
     static SettlementGrid.@org.jspecify.annotations.Nullable Anchor search(long seed, int[] centre, dev.awaken.village.plan.Terrain t, VillagePlan[] found) {
+        var map = new dev.awaken.living.region.RegionMap(seed, centre[0], centre[1], (x, z) -> dev.awaken.living.region.RegionMap.Land.PLAIN);
+        SettlementGrid.Anchor a = search(seed, centre, t, found, map, MAX_LEVEL);
+        return a != null ? a : search(seed, centre, t, found, map, Integer.MAX_VALUE);
+    }
+
+    private static SettlementGrid.@org.jspecify.annotations.Nullable Anchor search(long seed, int[] centre, dev.awaken.village.plan.Terrain t, VillagePlan[] found,
+                                                                             dev.awaken.living.region.RegionMap map, int maxLevel) {
         SettlementGrid.Anchor nominal = SettlementGrid.nominalFirst(seed, centre);
         int[][] roads = {{0, -1}, {1, 0}, {-1, 0}, {0, 1}};
         for (int pass = 0; pass < 2; pass++) {
@@ -75,6 +90,7 @@ public final class FirstHamlet {
                         int x = centre[0] + road[0] * far + (road[0] == 0 ? 6 + side : 0), z = centre[1] + road[1] * far + (road[1] == 0 ? side : 0);
                         boolean nominalSpot = pass == 0 && road[1] == -1 && out == OUT[0] && side == 0;
                         SettlementGrid.Anchor a = nominalSpot ? nominal : new SettlementGrid.Anchor("first", x, z, VillagePlan.Kind.HAMLET, true, nominal.seed());
+                        if (maxLevel != Integer.MAX_VALUE && map.levelAt(a.x(), a.z()) > maxLevel) continue;
                         // a site, and room for a proper hamlet there: four homes at least (plan() is null without a site, so the
                         // site isn't read twice)
                         VillagePlan p = VillagePlanner.plan(Plans.request(a), t);

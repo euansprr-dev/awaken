@@ -503,6 +503,25 @@ public final class RoadNet {
         return best;
     }
 
+    /** The distance to the laid road point nearest (x, z) if one is within {@code reach} (any reach: it scans the chunks round), else -1. */
+    public static double distanceWithin(double x, double z, double reach) {
+        int cx = (int) Math.floor(x) >> 4, cz = (int) Math.floor(z) >> 4, w = (int) Math.ceil(reach / 16) + 1;
+        double best = Double.MAX_VALUE;
+        for (int dx = -w; dx <= w; dx++)
+            for (int dz = -w; dz <= w; dz++) {
+                List<int[]> l = BY_CHUNK.get(net.minecraft.world.level.ChunkPos.pack(cx + dx, cz + dz));
+                if (l == null) continue;
+                for (int[] e : l) {
+                    Road r;
+                    synchronized (ALL) {
+                        r = ALL.get(e[0]);
+                    }
+                    best = Math.min(best, Math.hypot(r.x()[e[1]] - x, r.z()[e[1]] - z));
+                }
+            }
+        return best <= reach ? best : -1;
+    }
+
     /** The seed mixer the grid uses (a stable hash). */
     static final class SettlementGridMix {
         private SettlementGridMix() {}

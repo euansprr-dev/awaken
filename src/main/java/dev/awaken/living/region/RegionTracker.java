@@ -4,6 +4,7 @@ import dev.awaken.core.PlayDays;
 import dev.awaken.core.api.Notices;
 import dev.awaken.living.LivingNet;
 import dev.awaken.living.api.Regions;
+import dev.awaken.progression.Curve;
 import dev.awaken.progression.Progression;
 import dev.awaken.signal.Signal;
 import dev.awaken.signal.SignalWindow;
@@ -19,18 +20,26 @@ import java.util.UUID;
 /**
  * Which region each player stands in (SPEC §21.2). Every 2 s per player (staggered), a change sends the region to the
  * client: a place caption the first time in a play-day, an ember caption and an amber warning (at most once per 10
- * minutes) when the region is 5+ levels above the player. Nothing is saved; a relog may caption again.
+ * minutes) when the land is 5+ levels above the player. Every pass also looks {@link #AHEAD} blocks along the player's heading
+ * (SPEC §21.10): land 10 or more above them and rising gives one CRITICAL toast in plain words, once per land per five
+ * minutes. Nothing is saved; a relog may caption again.
  */
 public final class RegionTracker {
     private RegionTracker() {}
 
     static final int EVERY = 40;
+    /** A land this many levels above you is a danger (the ember caption). */
     static final int DANGER = 5;
-    static final long WARN_COOLDOWN = 20L * 60 * 10;
+    /** How far ahead the look reaches, how far above you the land ahead must be to warn, and how much it must rise. */
+    static final int AHEAD = 150, AHEAD_GAP = 10, AHEAD_RISE = 3;
+    /** One warning per land per five minutes (it was one per player per ten, so a second danger land was silent). */
+    static final long WARN_COOLDOWN = 20L * 60 * 5;
 
     private static final Map<UUID, Long> CURRENT = new HashMap<>();
     private static final Map<UUID, Map<Long, Long>> CAPTIONED = new HashMap<>();
-    private static final Map<UUID, Long> WARNED = new HashMap<>();
+    private static final Map<UUID, Map<Long, Long>> WARNED = new HashMap<>();
+    /** Where each player stood at the last pass (their heading is the way they have been walking). */
+    private static final Map<UUID, double[]> LAST = new HashMap<>();
     /** Whether each player was inside the city's walls at the last look, and the play-day of their last way out. */
     private static final Map<UUID, Boolean> IN_CITY = new HashMap<>();
     private static final Map<UUID, Long> WENT_OUT = new HashMap<>();
@@ -45,12 +54,14 @@ public final class RegionTracker {
             }
             if (!Progression.profile(p).awakened()) continue;
             check(p, level);
+            lookAhead(p, level);
         }
     }
 
     /** Looks at the player's region now; returns the message sent, or null when nothing changed. */
     public static LivingNet.RegionMsg check(ServerPlayer p, ServerLevel level) {
         Regions.Region r = Regions.regionAt(level, p.getBlockX(), p.getBlockZ());
+        int here = Regions.levelAt(level, p.getBlockX(), p.getBlockZ());
         Long was = CURRENT.put(p.getUUID(), r.id());
         // out through the walls: the region's caption once a play-day (SPEC §27.6; the Commons spans the city's edge,
         // so leaving had no moment at all)
@@ -70,7 +81,7 @@ public final class RegionTracker {
             // the first time out through the High Gate its shot names the land (FirstScenes): no second caption on top
             boolean named = last == null && Progression.profile(p).counter("awaken:first/gate_shot") > 0;
             if (!named && (last == null || last != day)) {
-                var out = new LivingNet.RegionMsg(r.name(), r.low(), r.high(), r.commons(), true, danger(p, r));
+                var out = new LivingNet.RegionMsg(r.name(), r.low(), r.high(), r.commons(), true, danger(p, here));
                 dev.awaken.core.AwakenNet.send(p, out);
                 return out;
             }
@@ -82,29 +93,90 @@ public final class RegionTracker {
         Long last = captioned.get(r.id());
         boolean caption = last == null || last != day;
         if (caption) captioned.put(r.id(), day);
-        boolean danger = danger(p, r);
+        boolean danger = danger(p, here);
         var msg = new LivingNet.RegionMsg(r.name(), r.low(), r.high(), r.commons(), caption, danger);
         dev.awaken.core.AwakenNet.send(p, msg);
         if (danger) {
-            warn(p, r);
-            dev.awaken.core.api.Promises.seen(p, "region:" + r.id(), p.blockPosition(), dev.awaken.core.api.Promises.Need.level(r.high() - DANGER + 1), r.name());
+            warn(p, level, r.id(), r.name(), here);
+            if (!r.commons()) dev.awaken.core.api.Promises.seen(p, "region:" + r.id(), p.blockPosition(), dev.awaken.core.api.Promises.Need.level(here - DANGER + 1), r.name());
         }
         return msg;
     }
 
-    /** A region far above the player is a danger; the Commons, the land round the city where everyone starts, never is. */
-    static boolean danger(ServerPlayer p, Regions.Region r) {
-        return !r.commons() && r.high() >= Progression.profile(p).level() + DANGER;
+    /** The land under the player is 5 or more above them: a danger. (The Commons was exempt before; its wall is level 8.) */
+    static boolean danger(ServerPlayer p, int land) {
+        return land >= Progression.profile(p).level() + DANGER;
     }
 
-    private static void warn(ServerPlayer p, Regions.Region r) {
-        long now = p.level().getGameTime();
-        Long at = WARNED.get(p.getUUID());
+    /**
+     * Looks {@link #AHEAD} blocks along the heading (the way they have been walking, else the way they face): land 10 or more
+     * above the player and rising warns once, early, before the first creature does. In the Commons a level-1 player at its
+     * wall (level 8) is told the land rises. Never inside the city's reserve.
+     */
+    static void lookAhead(ServerPlayer p, ServerLevel level) {
+        if (dev.awaken.terrain.api.CityBasin.reserved(p.getBlockX(), p.getBlockZ())) {
+            LAST.remove(p.getUUID());
+            return;
+        }
+        double[] last = LAST.put(p.getUUID(), new double[]{p.getX(), p.getZ()});
+        double hx = p.getLookAngle().x, hz = p.getLookAngle().z;
+        if (last != null) {
+            double dx = p.getX() - last[0], dz = p.getZ() - last[1];
+            if (dx * dx + dz * dz >= 36) { // 3 blocks a second or more: the way they are going
+                hx = dx;
+                hz = dz;
+            }
+        }
+        double len = Math.hypot(hx, hz);
+        if (len < 1e-3) return;
+        int mine = Progression.profile(p).level();
+        int here = Regions.levelAt(level, p.getBlockX(), p.getBlockZ());
+        int ax = (int) Math.round(p.getX() + hx / len * AHEAD), az = (int) Math.round(p.getZ() + hz / len * AHEAD);
+        int ahead = Regions.levelAt(level, ax, az);
+        if (aheadWarns(mine, here, ahead)) {
+            Regions.Region r = Regions.regionAt(level, ax, az);
+            warn(p, level, r.id(), r.name(), ahead);
+        } else if (here - mine >= DANGER) {
+            Regions.Region r = Regions.regionAt(level, p.getBlockX(), p.getBlockZ());
+            if (r.commons()) warn(p, level, r.id(), r.name(), here);
+        }
+    }
+
+    /** Whether the land ahead is a warning: 10 or more above the player, and rising. */
+    public static boolean aheadWarns(int mine, int here, int ahead) {
+        return ahead - mine >= AHEAD_GAP && ahead >= here + AHEAD_RISE;
+    }
+
+    private static void warn(ServerPlayer p, ServerLevel level, long regionId, String name, int land) {
+        long now = level.getGameTime();
+        Map<Long, Long> seen = WARNED.computeIfAbsent(p.getUUID(), k -> new HashMap<>());
+        Long at = seen.get(regionId);
         if (at != null && now - at < WARN_COOLDOWN) return;
-        WARNED.put(p.getUUID(), now);
-        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("Danger · " + r.name()))
-                .body(Component.literal("The creatures here are level " + r.low() + " to " + r.high() + ". That's well above you, so be careful."))
-                .presentation(SignalWindow.Presentation.TOAST).tier(Notices.Tier.IMPORTANT).topic("danger").ttl(20 * 6).build());
+        if (seen.size() > 32) seen.clear();
+        seen.put(regionId, now);
+        int mine = Progression.profile(p).level();
+        Signal.send(p, SignalWindow.builder(SignalWindow.Kind.WARNING, Component.literal("Danger · " + name))
+                .body(Component.literal(body(name, land, mine)))
+                .presentation(SignalWindow.Presentation.TOAST).tier(Notices.Tier.CRITICAL).topic("danger").ttl(20 * 8).build());
+    }
+
+    /** The warning's words (plain, with what the numbers mean against the player's own level). */
+    public static String body(String name, int land, int mine) {
+        double hp = Curve.mobHealth(land) / Curve.mobHealth(mine), hit = Curve.mobDamage(land) / Curve.mobDamage(mine);
+        return name + " ahead. Creatures there are " + times(hp) + " as tough as ones at your level and hit " + times(hit)
+                + " as hard. Turn back, or go in only to look.";
+    }
+
+    /** A ratio in words: "twice", "about three times", "nearly four times". */
+    public static String times(double r) {
+        if (r < 1.25) return "a little";
+        if (r < 1.75) return "half again";
+        if (r < 2.15) return "about twice";
+        long n = Math.round(r);
+        if (n >= 10) return "many times";
+        String[] words = {"", "", "two", "three", "four", "five", "six", "seven", "eight", "nine"};
+        String w = words[(int) n];
+        return (r < n - 0.2 ? "nearly " : r > n + 0.2 ? "just over " : "about ") + w + " times";
     }
 
     public static void forget(UUID id) {
@@ -113,11 +185,13 @@ public final class RegionTracker {
         WENT_OUT.remove(id);
         CAPTIONED.remove(id);
         WARNED.remove(id);
+        LAST.remove(id);
     }
 
     public static void clear() {
         CURRENT.clear();
         CAPTIONED.clear();
         WARNED.clear();
+        LAST.clear();
     }
 }

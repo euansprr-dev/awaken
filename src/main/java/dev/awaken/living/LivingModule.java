@@ -43,6 +43,20 @@ public final class LivingModule {
     /** Share of neutral and hunter spawns that are elites (SPEC §21.0.6). */
     public static final float ELITE_CHANCE = 0.05F;
 
+    /**
+     * The share of neutral and hunter spawns that are elites on land of this level (SPEC §21.10): none roam the heartland
+     * (an elite there is a den's guard), 2% in D land, 4% in C, 5% from B. An elite was 4.4 times a skeleton's health at the
+     * Commons' wall, which killed a level-1 player; the land's rank, not a flat share, decides.
+     */
+    public static float eliteChance(int landLevel) {
+        return switch (dev.awaken.living.region.RegionMap.rankOf(landLevel)) {
+            case 0 -> 0F;
+            case 1 -> 0.02F;
+            case 2 -> 0.04F;
+            default -> ELITE_CHANCE;
+        };
+    }
+
     public static void init(IEventBus modBus) {
         LivingContent.register(modBus);
         dev.awaken.living.quest.Relics.register(modBus);

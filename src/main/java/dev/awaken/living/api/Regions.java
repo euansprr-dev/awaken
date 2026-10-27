@@ -64,6 +64,10 @@ public final class Regions {
         for (LevelExtra e : EXTRAS) lv += e.extra(level, pos);
         int calm = hearthCalm(level, pos);
         if (calm > 0) lv = Math.min(lv, calm + Math.max(0, role.offset));
+        // settled land is calm (SPEC §21.10): a hamlet, a village or a town caps the land round it
+        int cap = Integer.MAX_VALUE;
+        for (LevelCap c : CAPS) cap = Math.min(cap, c.cap(level, pos));
+        if (cap != Integer.MAX_VALUE) lv = Math.min(lv, cap + Math.max(0, role.offset));
         return Math.max(1, Math.min(RegionMap.MAX_LEVEL, lv));
     }
 
@@ -71,6 +75,18 @@ public final class Regions {
     @FunctionalInterface
     public interface LevelExtra {
         int extra(ServerLevel level, BlockPos pos);
+    }
+
+    /** A place that holds the creatures round it down (SPEC §21.10: a settlement's land); {@link Integer#MAX_VALUE} for none. */
+    @FunctionalInterface
+    public interface LevelCap {
+        int cap(ServerLevel level, BlockPos pos);
+    }
+
+    private static final java.util.List<LevelCap> CAPS = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    public static void addLevelCap(LevelCap cap) {
+        CAPS.add(cap);
     }
 
     private static final java.util.List<LevelExtra> EXTRAS = new java.util.concurrent.CopyOnWriteArrayList<>();
@@ -98,8 +114,8 @@ public final class Regions {
         return p == null ? 0 : Math.max(1, Progression.profile(p).level());
     }
 
-    /** The rank band of a level, for colours (E 1-9, D 10-24, C 25-44, B 45-69, A 70-99, S 100+): 0..5. */
+    /** The rank of a level, for colours and for the land itself (E 1-9, D 10-24, C 25-44, B 45-69, A 70-99, S 100+): 0..5. */
     public static int bandOf(int level) {
-        return level < 10 ? 0 : level < 25 ? 1 : level < 45 ? 2 : level < 70 ? 3 : level < 100 ? 4 : 5;
+        return RegionMap.rankOf(level);
     }
 }
