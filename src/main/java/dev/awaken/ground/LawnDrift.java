@@ -28,6 +28,12 @@ public final class LawnDrift {
         return (rgb & 0xFF000000) | r << 16 | g << 8 | b;
     }
 
+    /** Whether a colour is a lawn's green (what Far Sight's ground colours are checked by: its other grounds are left alone). */
+    public static boolean greenish(int rgb) {
+        int r = rgb >> 16 & 255, g = rgb >> 8 & 255, b = rgb & 255;
+        return g >= r * 1.05f && g >= b * 1.25f;
+    }
+
     private static int clamp(float v) {
         return Math.clamp(Math.round(v), 0, 255);
     }

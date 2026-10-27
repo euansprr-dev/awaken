@@ -175,6 +175,13 @@ final class VoxelLooks implements VoxelMesher.Looks {
                 if (info.lightEmission() > 0) flags |= GLOW;
                 faces[dir] = look(info.sprite(), flags, 0) | (info.isTinted() ? (info.tintIndex() + 1) << 16 : 0);
             }
+            // seamless ground (SPEC §31): from here a one-block riser is a pixel, so a lawn's sides read as green as its top, as
+            // the near view wraps them
+            if (dev.awaken.ground.SeamlessRules.wrapperBlock(state.getBlock()) && dev.awaken.ground.client.GroundClientConfig.seamless()
+                    && !(state.hasProperty(net.minecraft.world.level.block.SnowyBlock.SNOWY) && state.getValue(net.minecraft.world.level.block.SnowyBlock.SNOWY))) {
+                int top = faces[Direction.UP.get3DDataValue()];
+                if (top >= 0) for (Direction side : Direction.Plane.HORIZONTAL) faces[side.get3DDataValue()] = top;
+            }
         } catch (RuntimeException e) {
             // a model that can't be read here: nothing drawn for it
         }

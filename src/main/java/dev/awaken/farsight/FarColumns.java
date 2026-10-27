@@ -1,5 +1,7 @@
 package dev.awaken.farsight;
 
+import dev.awaken.ground.GroundSettings;
+import dev.awaken.ground.LawnDrift;
 import dev.awaken.Awaken;
 import dev.awaken.city.City;
 import dev.awaken.city.CityLayout;
@@ -364,6 +366,8 @@ public final class FarColumns {
                 if (alpine && (biome.is(ALPINE_BIOMES) || top >= UPLAND_FROM && biome.is(UPLAND_BIOMES))) flags |= ALPINE;
                 if (biome.value().coldEnoughToSnow(pos.set(x, (int) top, z), seaLevel)) flags |= COLD;
                 int rgb = water ? FarPalette.water(biome) : look.ground();
+                // the lawn's colour drift (SPEC §31): the same patches the near grass has, so the far land is not flatter than the near
+                if (!water && built == null && GroundSettings.drift() && LawnDrift.greenish(rgb)) rgb = LawnDrift.apply(rgb, x, z);
                 int depth = water ? Math.clamp(Math.round(seaLevel - ground), 1, MAX_DEPTH) : 0;
                 // Awakened Alpine plants spruce in the mountain biomes: the far forests stand there too
                 int cold = coldness(biome, x, (int) Math.floor(top), z);

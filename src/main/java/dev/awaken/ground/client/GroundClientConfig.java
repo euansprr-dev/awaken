@@ -1,6 +1,7 @@
 package dev.awaken.ground.client;
 
 import dev.awaken.Awaken;
+import dev.awaken.ground.GroundSettings;
 import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.config.ModConfigEvent;
@@ -26,6 +27,7 @@ public final class GroundClientConfig {
     private static volatile boolean seamless = true, drift = true;
 
     static void register(net.neoforged.bus.api.IEventBus modBus) {
+        GroundSettings.set(true, true);                  // the defaults, until the file is read
         try {
             ModLoadingContext.get().getActiveContainer().registerConfig(ModConfig.Type.CLIENT, SPEC, Awaken.MODID + "-ground-client.toml");
         } catch (RuntimeException e) {
@@ -44,6 +46,7 @@ public final class GroundClientConfig {
             seamless = true;
             drift = true;
         }
+        GroundSettings.set(seamless, drift);
     }
 
     public static boolean seamless() {
@@ -57,6 +60,7 @@ public final class GroundClientConfig {
     static void set(boolean seamlessOn, boolean driftOn) {
         seamless = seamlessOn;
         drift = driftOn;
+        GroundSettings.set(seamlessOn, driftOn);
         if (!SPEC.isLoaded()) return;
         SEAMLESS.set(seamlessOn);
         DRIFT.set(driftOn);
