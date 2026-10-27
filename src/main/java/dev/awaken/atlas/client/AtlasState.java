@@ -54,6 +54,8 @@ final class AtlasState {
     /** The Living Wilds regions you've been in, and your party's pins here (from the server). */
     java.util.List<dev.awaken.atlas.AtlasData.Region> regions = java.util.List.of();
     java.util.List<AtlasNet.PinView> pins = java.util.List.of();
+    /** Your Hearths and your household's (SPEC §16.8), as the server last sent them. */
+    java.util.List<AtlasNet.HomeView> homes = java.util.List.of();
     private int ticks;
 
     // ---- the server's word ----------------------------------------------------------------------------------------------
@@ -267,11 +269,32 @@ final class AtlasState {
         }
     }
 
+    /** The chunks round the player (this many each way) are read again, a few a tick. */
+    static final int REREAD_R = 4;
+    private int reread;
+
+    /**
+     * (SPEC §16.8) A chunk is sampled when it arrives; what changes in it later (what you build at your Hearth, a tree
+     * you fell) would never reach the map. So the chunks round the player are read again in turn, two a tick (a full
+     * round every two seconds; one every other tick under a roof, where a read costs more), and only a chunk whose
+     * columns really changed rebuilds its slices.
+     */
+    private void reread(ClientLevel l, net.minecraft.world.entity.player.Player p) {
+        int side = REREAD_R * 2 + 1, n = side * side, per = roofed ? (ticks & 1) : 2;
+        for (int k = 0; k < per; k++) {
+            reread = (reread + 1) % n;
+            int cx = (p.getBlockX() >> 4) + reread % side - REREAD_R, cz = (p.getBlockZ() >> 4) + reread / side - REREAD_R;
+            if (l.getChunkSource().getChunk(cx, cz, false) instanceof LevelChunk c && store.sample(c, roofed))
+                mesh.changed(cx << 4, cz << 4, 16);
+        }
+    }
+
     void tick(Minecraft mc, boolean open) {
         if (mc.level == null || mc.player == null) return;
         sameLevel();
         ripple(System.nanoTime());
         if (roofed && !roofQueue.isEmpty()) roofedTick(mc.level);
+        if (Discovery.mapped(dim)) reread(mc.level, mc.player);
         ColumnStore.Tile t;
         int adopted = 0;
         while ((t = cache.loaded.poll()) != null && adopted++ < 4) {
@@ -330,6 +353,7 @@ final class AtlasState {
         trailStart = 0;
         regions = java.util.List.of();
         pins = java.util.List.of();
+        homes = java.util.List.of();
         zones.clear();
         revealPending = false;
         level = null;

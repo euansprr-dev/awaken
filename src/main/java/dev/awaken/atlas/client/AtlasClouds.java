@@ -20,8 +20,9 @@ import java.util.Arrays;
  * every frame, sorted far to near, the whole blanket drifting on one slow wind and breathing a little, each puff casting
  * a soft shadow on known land. The cells follow the zoom continuously ({@link CloudLattice}): zooming out, puffs glide
  * together and merge into bigger ones, zooming in they split, so the blanket keeps its density on screen and never
- * changes all at once. Close in, the explored edge gets a soft spill of cloud; far out, the cloud is gone before it
- * reaches known land. Cells that just cleared thin out over a second, and a bell's reveal ripples out from the tower.
+ * changes all at once. At every zoom the bank reaches over the last stretch of known land, and a flat cloud floor
+ * ({@link #sea}) lies under it all, so the land's edge goes under the clouds and never shows a dark gap. Cells that just
+ * cleared thin out over a second, and a bell's reveal ripples out from the tower.
  */
 final class AtlasClouds {
     /** Cells either side of the centre at a lattice's own zoom (the blanket's rim is 0.84 R cells out). */
@@ -158,13 +159,62 @@ final class AtlasClouds {
         return u;
     }
 
+    /** The blanket's rim, blocks from the centre, at the zoom's continuous level: it thins out over {@link #rimSoft}. */
+    static float rim(float level) {
+        return R * 16f * (float) Math.pow(2, level) * 0.62f;
+    }
+
+    static float rimSoft(float level) {
+        return R * 16f * (float) Math.pow(2, level) * 0.22f;
+    }
+
+    /** How much of the blanket is left this far from the centre: whole inside the rim, gone past its soft edge. */
+    static float rimFade(float dist, float level) {
+        return 1f - smooth((dist - rim(level)) / rimSoft(level));
+    }
+
+    static final int SEA_SEGMENTS = 64, SEA_BANDS = 5, SEA_QUADS = SEA_SEGMENTS * SEA_BANDS;
+    private static final float[] SEA_RING = {0f, 1f, 1.25f, 1.5f, 1.75f, 2f}; // 0, the rim, then quarters of its soft edge
+
     /**
-     * How opaque a puff is over cover {@code f}: close in ({@code far} 0) a soft spill over the edge of what you know;
-     * far out (1) gone before it reaches known land, so that land stays in view at every zoom.
+     * (SPEC §16.8) The cloud floor: a flat disc of the sea's colour ({@link SliceSampler#SEA}) under the land, as wide as
+     * the blanket and thinning with it, so wherever no land is drawn (unknown ground, a gap between puffs, under the
+     * land's edge) the table shows cloud, never a dark void. Written as POSITION_COLOR quads (16 bytes a vertex) at the
+     * view centre's height; returns the quad count.
      */
-    private static float opacity(float f, float far) {
-        float near = smooth((f - 0.12f) / 0.5f), out = smooth((f - 0.55f) / 0.35f);
-        return near + (out - near) * far;
+    int sea(long dst, Matrix4f base, float level) {
+        float rim = rim(level), soft = rimSoft(level);
+        int r = (SliceSampler.SEA >> 16) & 255, g = (SliceSampler.SEA >> 8) & 255, b = SliceSampler.SEA & 255;
+        long p = dst;
+        for (int band = 0; band < SEA_BANDS; band++) {
+            float r0 = ring(band, rim, soft), r1 = ring(band + 1, rim, soft);
+            int a0 = Math.round(255 * rimFade(r0, level)), a1 = Math.round(255 * rimFade(r1, level));
+            for (int k = 0; k < SEA_SEGMENTS; k++) {
+                double t0 = k * Math.PI * 2 / SEA_SEGMENTS, t1 = (k + 1) * Math.PI * 2 / SEA_SEGMENTS;
+                float c0 = (float) Math.cos(t0), s0 = (float) Math.sin(t0), c1 = (float) Math.cos(t1), s1 = (float) Math.sin(t1);
+                p = seaVtx(p, base, r0 * c0, r0 * s0, r, g, b, a0);
+                p = seaVtx(p, base, r1 * c0, r1 * s0, r, g, b, a1);
+                p = seaVtx(p, base, r1 * c1, r1 * s1, r, g, b, a1);
+                p = seaVtx(p, base, r0 * c1, r0 * s1, r, g, b, a0);
+            }
+        }
+        return SEA_QUADS;
+    }
+
+    private static float ring(int i, float rim, float soft) {
+        return i == 0 ? 0f : rim + (SEA_RING[i] - 1f) * soft;
+    }
+
+    private long seaVtx(long p, Matrix4f base, float x, float z, int r, int g, int b, int a) {
+        base.transformPosition(x, 0f, z, v);
+        MemoryUtil.memPutFloat(p, v.x);
+        MemoryUtil.memPutFloat(p + 4, v.y);
+        MemoryUtil.memPutFloat(p + 8, v.z);
+        MemoryUtil.memPutByte(p + 12, (byte) r);
+        MemoryUtil.memPutByte(p + 13, (byte) g);
+        MemoryUtil.memPutByte(p + 14, (byte) b);
+        MemoryUtil.memPutByte(p + 15, (byte) a);
+        return p + 16;
     }
 
     /**
@@ -189,11 +239,10 @@ final class AtlasClouds {
         if (t > 0f)
             refresh(coarse, explored, revealedAt, lv + 1, Math.floorDiv((int) Math.floor(cx), 2 * cell), Math.floorDiv((int) Math.floor(cz), 2 * cell));
         int n = 0;
-        float far = Math.min(1f, level); // close-in rules to far-out rules over the first step
         // each puff is placed where its cell's ground is on screen and lifted ~30 blocks only in depth: drawn at real
         // height, the tilt would slide the blanket north of the cells it covers and open dark gaps on the north rim
         float liftPerScale = pxPerBlock * (float) Math.sin(Math.toRadians(tiltDeg));
-        float rim = R * 16f * scaleNow * 0.62f, rimSoft = R * 16f * scaleNow * 0.22f;
+        float rim = rim(level), rimSoft = rimSoft(level);
         int reach = (int) Math.ceil((rim + rimSoft) / cell) + 1;
         int li0 = (int) Math.floor((cx - windX) / cell), lj0 = (int) Math.floor((cz - windZ) / cell);
         for (int j = -reach; j <= reach; j++) {
@@ -205,12 +254,12 @@ final class AtlasClouds {
                 float s = (float) at[2];
                 float wx = (float) (pxw - cx), wz = (float) (pzw - cz);
                 float dist = (float) Math.sqrt(wx * wx + wz * wz);
-                float edge = 1f - smooth((dist - rim) / rimSoft); // the blanket thins out at the table's rim
+                float edge = rimFade(dist, level); // the blanket thins out at the table's rim
                 if (edge <= 0f) continue;
                 // its cover where it is now, blended from its own lattice's to its parent's over the step
                 float f = cover(fine, pxw, pzw, cell, now);
                 if (t > 0f) f += (cover(coarse, pxw, pzw, 2 * cell, now) - f) * t;
-                float a = opacity(f, far) * edge * left;
+                float a = CloudLattice.opacity(f) * edge * left;
                 if (a <= 0.01f) continue;
                 int hsh = CloudLattice.hash(li, lj, lv);
                 float r1 = (hsh & 255) / 255f, r2 = ((hsh >> 8) & 255) / 255f, r3 = ((hsh >> 16) & 255) / 255f, ph = r3 * 6.28f;
@@ -218,8 +267,7 @@ final class AtlasClouds {
                 boolean flip = (hsh & 0x800000) != 0;
                 // a slow breath, each puff on its own long phase
                 float breathe = 1f + 0.05f * (float) Math.sin(time * 0.3f + ph);
-                // far out a puff beside known land is smaller, keeping to its own cell
-                float size = (34f + 26f * r1) * (0.6f + 0.4f * a) * s * breathe * (1f + (0.55f + 0.45f * f - 1f) * far);
+                float size = (34f + 26f * r1) * (0.6f + 0.4f * a) * s * breathe;
                 // its shadow, on explored ground only: a little east and south of it (the sun is low in the west)
                 float shx = wx + 10f * s, shz = wz + 4f * s;
                 double gx = cx + shx, gz = cz + shz;

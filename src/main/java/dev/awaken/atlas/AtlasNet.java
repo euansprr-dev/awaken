@@ -125,6 +125,34 @@ public final class AtlasNet {
         }
     }
 
+    /**
+     * (SPEC §16.8) A Hearth on the Atlas: its name, where its Anchor stands, its tier, and whose it is to the viewer
+     * ({@link Homes#OWN} their own, {@link Homes#SHARED} one they are a member of, {@link Homes#HOUSEHOLD} a housemate's own).
+     */
+    public record HomeView(String name, int x, int y, int z, int tier, int kind) {
+        static final StreamCodec<ByteBuf, HomeView> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.stringUtf8(64), HomeView::name,
+                ByteBufCodecs.VAR_INT, HomeView::x,
+                ByteBufCodecs.VAR_INT, HomeView::y,
+                ByteBufCodecs.VAR_INT, HomeView::z,
+                ByteBufCodecs.VAR_INT, HomeView::tier,
+                ByteBufCodecs.VAR_INT, HomeView::kind,
+                HomeView::new);
+    }
+
+    /** The Hearths the viewer belongs to and their household's own, whole (empty outside the overworld). */
+    public record Homes(List<HomeView> homes) implements CustomPacketPayload {
+        public static final int OWN = 0, SHARED = 1, HOUSEHOLD = 2;
+        public static final Type<Homes> TYPE = new Type<>(Awaken.id("atlas_homes"));
+        public static final StreamCodec<ByteBuf, Homes> STREAM_CODEC = StreamCodec.composite(
+                HomeView.STREAM_CODEC.apply(ByteBufCodecs.list(64)), Homes::homes, Homes::new);
+
+        @Override
+        public Type<Homes> type() {
+            return TYPE;
+        }
+    }
+
     /** Drop a pin at (x, y, z), or with {@code remove}, take back your own pin nearest it. */
     public record Pin(int x, int y, int z, boolean remove) implements CustomPacketPayload {
         public static final Type<Pin> TYPE = new Type<>(Awaken.id("atlas_pin"));
@@ -158,6 +186,7 @@ public final class AtlasNet {
         r.playToClient(Trail.TYPE, Trail.STREAM_CODEC);
         r.playToClient(Regions.TYPE, Regions.STREAM_CODEC);
         r.playToClient(Pins.TYPE, Pins.STREAM_CODEC);
+        r.playToClient(Homes.TYPE, Homes.STREAM_CODEC);
         r.playToClient(City.TYPE, City.STREAM_CODEC);
         r.playToServer(Pin.TYPE, Pin.STREAM_CODEC, (m, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) Discovery.pin(sp, m.x(), m.y(), m.z(), m.remove());

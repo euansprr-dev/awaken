@@ -22,6 +22,13 @@ public final class SliceSampler {
     static final float SUN_DROP = 0.84f;
     static final float GRAIN = 0.009f;
     static final int CW = S + 2;
+    /**
+     * The cloud floor's colour (SPEC §16.8): what lies under the clouds wherever no land is drawn, the colour the known
+     * land's edge mists into and its cut sides fade to, so the land's edge goes under the clouds, never over a dark gap.
+     */
+    static final int SEA = 0xFFC6D0DE;
+    /** How much of the sea's colour the very edge of known land takes (it thins over {@link #mistTexels}). */
+    static final float MIST = 0.72f;
 
     /**
      * The level to draw at this many screen pixels per block: the coarsest whose column still covers 3.6 pixels (where
@@ -49,6 +56,8 @@ public final class SliceSampler {
     private final byte[] info = new byte[GW_MAX * GH_MAX];
     private final boolean[] drawn = new boolean[GW_MAX * GH_MAX];
     private final int[] zone = new int[GW_MAX * GH_MAX];
+    /** Texels along the row to the nearest texel off the known land (capped), for the mist at the land's edge. */
+    private final byte[] rowGap = new byte[GW_MAX * GH_MAX];
     private int gw;
 
     // ---- the result -------------------------------------------------------------------------------------------------
@@ -177,6 +186,7 @@ public final class SliceSampler {
                 level -= drop;
             }
         }
+        mist(T, x0, z0);
         fillGaps(T);
         // 3. the columns: drawn where any texel is, half way between the square's mean and its top
         for (int cz = -1; cz <= S; cz++) {
@@ -240,6 +250,62 @@ public final class SliceSampler {
         return drawn[n] && zone[n] != zn && zone[n] != 0;
     }
 
+    /** Texels of mist at the known land's edge: three columns close in, the pad's five texels further out. */
+    int mistTexels() {
+        return Math.min(PAD, 3 * cpt);
+    }
+
+    /**
+     * (SPEC §16.8) The last few texels of known land before the unknown mist into the cloud floor's colour, thinning
+     * inward with a little grain, so the land's edge reads as going under the clouds rather than as a cut line. Exact
+     * distance (rows, then columns over them); a slice with no unknown texel near it costs one sweep.
+     */
+    private void mist(int T, int x0, int z0) {
+        int m = mistTexels();
+        boolean hole = false;
+        for (int z = -m; z < T + m && !hole; z++)
+            for (int x = -m; x < T + m; x++)
+                if (!drawn[g(x, z)]) {
+                    hole = true;
+                    break;
+                }
+        if (!hole) return;
+        int cap = m + 1;
+        for (int z = -m; z < T + m; z++) {
+            int last = -1 << 20;
+            for (int x = -PAD_W; x < T + PAD; x++) {
+                int k = g(x, z);
+                if (!drawn[k]) last = x;
+                rowGap[k] = (byte) Math.min(cap, x - last);
+            }
+            last = 1 << 20;
+            for (int x = T + PAD - 1; x >= -PAD_W; x--) {
+                int k = g(x, z);
+                if (!drawn[k]) last = x;
+                rowGap[k] = (byte) Math.min(rowGap[k], Math.min(cap, last - x));
+            }
+        }
+        for (int z = 0; z < T; z++)
+            for (int x = 0; x < T; x++) {
+                int k = g(x, z);
+                if (!drawn[k]) continue;
+                float best = cap * cap;
+                for (int dz = -m; dz <= m; dz++) {
+                    int rg = rowGap[k + dz * gw];
+                    float d2 = rg * rg + dz * dz;
+                    if (d2 < best) best = d2;
+                }
+                float edge = (float) Math.sqrt(best) - 0.5f + ((hash(x0 + x * bpt, z0 + z * bpt) & 15) / 15f - 0.5f) * 0.9f;
+                float t = 1f - smooth(edge / m);
+                if (t > 0.001f) lit[z * T + x] = mix(lit[z * T + x], SEA, MIST * t);
+            }
+    }
+
+    static float smooth(float t) {
+        t = clamp(t, 0f, 1f);
+        return t * t * (3 - 2 * t);
+    }
+
     /**
      * Texels off the known land take the colour of the nearest known texel in their row (else their column), so the
      * mips never bleed a dark or see-through rim into the land's edge.
@@ -296,8 +362,8 @@ public final class SliceSampler {
 
     /**
      * A field with a road a block wide and a wall a block thick, read at the coarsest level: the road keeps its colour in
-     * its texel with a quarter's weight, the wall's column still rises, and the finest level is the blocks exactly.
-     * Returns null when it holds, else what failed.
+     * its texel with a quarter's weight, the wall's column still rises, and the finest level is the blocks exactly; the
+     * known land's last texels mist into the cloud floor. Returns null when it holds, else what failed.
      */
     public static String selfTest() {
         if (lodFor(4f) != 0 || lodFor(2f) != 1 || lodFor(1f) != 2 || lodFor(0.5f) != 3 || lodFor(0.2f) != 4)
@@ -321,11 +387,11 @@ public final class SliceSampler {
         // the road runs through texel column 9 (blocks 36..39); compare it with its neighbours two texels away, down a run
         // of rows clear of the wall, so the grain averages out
         float onRoad = 0f, off = 0f;
-        for (int z = 2; z < 22; z++) {
+        for (int z = 7; z < 23; z++) { // clear of the mist along the known land's north edge
             onRoad += (s.lit[z * s.tex + 9] >> 16) & 255;
             off += ((s.lit[z * s.tex + 7] >> 16) & 255) * 0.5f + ((s.lit[z * s.tex + 11] >> 16) & 255) * 0.5f;
         }
-        float lift = (onRoad - off) / 20f, want = (((road >> 16) & 255) - ((grass >> 16) & 255)) * 0.25f;
+        float lift = (onRoad - off) / 16f, want = (((road >> 16) & 255) - ((grass >> 16) & 255)) * 0.25f;
         if (Math.abs(lift - want) > 2.5f) return "the road keeps a quarter of its texel: red +" + lift + ", want +" + want;
         int wallCol = c(2, 6); // blocks 32..47 × 96..111: one row of the wall in it
         if (!s.cd[wallCol] || s.ch[wallCol] <= 66 || s.ch[wallCol] >= 74) return "the wall's column rises, was " + s.ch[wallCol];
@@ -333,6 +399,16 @@ public final class SliceSampler {
         if (!s.sample(store, ex, null, 0, 0, 64)) return "the finest slice holds known land";
         if (s.ch[c(37, 100 - 64)] != 74 || s.ch[c(36, 0)] != 64 || s.lit[(100 - 64) * s.tex + 37] == s.lit[0])
             return "the finest level is the blocks exactly";
+        // the land's edge mists into the cloud floor: known to block 127, the last texel before the unknown takes much of
+        // the sea's colour, while land a few columns in is exactly as it was with everything known
+        Explored half = new Explored();
+        for (int cz = 0; cz < 16; cz++) for (int cx = 0; cx < 8; cx++) half.mark(cx, cz);
+        if (!s.sample(store, half, null, 0, 64, 0)) return "the half-known slice holds known land";
+        int edgeHalf = s.lit[30 * s.tex + 63], inHalf = s.lit[30 * s.tex + 40];
+        s.sample(store, ex, null, 0, 64, 0);
+        int edgeAll = s.lit[30 * s.tex + 63], inAll = s.lit[30 * s.tex + 40];
+        if ((edgeHalf & 255) < (edgeAll & 255) + 40) return "the last texel of known land mists toward the cloud floor";
+        if (inHalf != inAll) return "land a few columns from the edge keeps its colour";
         return null;
     }
 }

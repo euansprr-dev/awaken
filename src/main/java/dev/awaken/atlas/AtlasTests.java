@@ -53,6 +53,35 @@ final class AtlasTests {
             h.assertTrue(failed == null, String.valueOf(failed));
             h.succeed();
         });
+        // (SPEC §16.8) the Hearths on the Atlas: your own first and named as yours, a shared one by its owner, a village by
+        // its name, a housemate's own Hearth but not one they merely share with you twice; each Anchor once
+        AwakenTests.register("atlas_hearths", 20, h -> {
+            java.util.UUID me = new java.util.UUID(0, 1), ana = new java.util.UUID(0, 2), bo = new java.util.UUID(0, 3);
+            var mine = new dev.awaken.hearth.Hearth.HearthInfo(me, "Me", new BlockPos(10, 70, 20), 2, 48, java.util.List.of(ana), java.util.Optional.empty());
+            var anas = new dev.awaken.hearth.Hearth.HearthInfo(ana, "Ana", new BlockPos(-300, 64, 90), 4, 64, java.util.List.of(me), java.util.Optional.empty());
+            var bos = new dev.awaken.hearth.Hearth.HearthInfo(bo, "Bo", new BlockPos(500, 80, -40), 1, 48, java.util.List.of(), java.util.Optional.empty());
+            java.util.Map<java.util.UUID, java.util.List<dev.awaken.hearth.Hearth.HearthInfo>> mates = new java.util.TreeMap<>();
+            mates.put(ana, java.util.List.of(anas, mine));
+            mates.put(bo, java.util.List.of(bos, mine));
+            var homes = Homes.assemble(me, java.util.List.of(mine, anas), mates, java.util.Map.of(ana, "Willowmere"));
+            h.assertTrue(homes.size() == 3, "three Hearths, each once: " + homes);
+            h.assertTrue(homes.get(0).kind() == AtlasNet.Homes.OWN && homes.get(0).name().equals("Your Hearth") && homes.get(0).x() == 10 && homes.get(0).z() == 20,
+                    "your own first, as yours, at its Anchor: " + homes.get(0));
+            h.assertTrue(homes.get(1).kind() == AtlasNet.Homes.SHARED && homes.get(1).name().equals("Willowmere"), "the one you share, by its village's name: " + homes.get(1));
+            h.assertTrue(homes.get(2).kind() == AtlasNet.Homes.HOUSEHOLD && homes.get(2).name().equals("Bo's Hearth"), "a housemate's own: " + homes.get(2));
+            h.assertTrue(Homes.assemble(me, java.util.List.of(), java.util.Map.of(), java.util.Map.of()).isEmpty(), "no Hearth, no mark");
+            h.succeed();
+        });
+        // (SPEC §16.8) what you build reaches the map: the chunks round you are read again, and a reading tells a change
+        // (a pillar raised on the land) from none (an unchanged chunk costs no rebuild)
+        AwakenTests.register("atlas_reread_builds", 20, h -> {
+            BlockPos rel = new BlockPos(1, 1, 1), at = h.absolutePos(rel);
+            String failed = dev.awaken.atlas.client.ColumnStore.rereadTest(h.getLevel().getChunkAt(at), at.getX(), at.getZ(), () -> {
+                for (int y = 0; y < 6; y++) h.setBlock(rel.above(y), net.minecraft.world.level.block.Blocks.STONE);
+            });
+            h.assertTrue(failed == null, String.valueOf(failed));
+            h.succeed();
+        });
         // the record: cells mark once, tiles merge, and the saved form round-trips with its schema
         AwakenTests.register("atlas_bits_codec", 20, h -> {
             Explored e = new Explored();

@@ -45,7 +45,7 @@ final class AtlasPainter {
     private final MappableRingBuffer cloudRing = new MappableRingBuffer(() -> "Atlas clouds",
             GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_MAP_WRITE, AtlasClouds.MAX_QUADS * 4 * AtlasClouds.VERTEX);
     private final MappableRingBuffer lineRing = new MappableRingBuffer(() -> "Atlas grid and thread",
-            GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_MAP_WRITE, (GRID_LINES + TRAIL_QUADS * 2) * 4 * 16);
+            GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_MAP_WRITE, (AtlasClouds.SEA_QUADS + GRID_LINES + TRAIL_QUADS * 2) * 4 * 16);
     private final MappableRingBuffer lightRing = new MappableRingBuffer(() -> "Atlas lights",
             GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_MAP_WRITE, LIGHTS * 4 * 24);
     private final Matrix4f base = new Matrix4f();
@@ -120,9 +120,11 @@ final class AtlasPainter {
             shadowQuads = atlas.clouds.shadows();
         }
         GpuBuffer lineBuf = lineRing.currentBuffer();
-        int gridQuads, trailQuads;
+        int seaQuads, gridQuads, trailQuads;
         try (GpuBufferSlice.MappedView view = lineBuf.map(false, true)) {
             long p = MemoryUtil.memAddress(view.data());
+            seaQuads = atlas.clouds.sea(p, base, cloudLevel); // the cloud floor first, then the grid and the thread
+            p += (long) seaQuads * 64;
             gridQuads = grid(p, s, 0.75f * guiScale);
             trailQuads = thread ? trail(p + (long) gridQuads * 64, s, atlas, guiScale) : 0;
         }
@@ -136,7 +138,7 @@ final class AtlasPainter {
                 lightQuads = lights(MemoryUtil.memAddress(view.data()), s, map, blocks, r2, px, now, w, h);
             }
         }
-        int maxQuads = Math.max(Math.max(cloudQuads, lightQuads), gridQuads + trailQuads);
+        int maxQuads = Math.max(Math.max(cloudQuads, lightQuads), Math.max(seaQuads, gridQuads + trailQuads));
         for (AtlasMesh.Slice sl : map.values()) if (sl.quads > maxQuads) maxQuads = sl.quads;
         RenderSystem.AutoStorageIndexBuffer quadIndex = RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
         GpuBuffer indices = quadIndex.getBuffer(Math.max(1, maxQuads) * 6);
@@ -149,6 +151,12 @@ final class AtlasPainter {
         try (RenderPass pass = enc.createRenderPass(() -> "Atlas", colorView, Optional.empty(), depthView, OptionalDouble.empty())) {
             RenderSystem.bindDefaultUniforms(pass);
             pass.setIndexBuffer(indices, indexType);
+            if ((AtlasScreen.prof & AtlasScreen.PROF_NO_CLOUDS) == 0) { // the cloud floor under everything, never written to depth
+                pass.setPipeline(RenderSystem.getCompiledPipeline(AtlasPipelines.OVERLAY));
+                pass.setUniform("DynamicTransforms", RenderSystem.getDynamicUniforms().writeTransform(new Matrix4f(), tint));
+                pass.setVertexBuffer(0, lineBuf.slice(0, (long) seaQuads * 64));
+                pass.drawIndexed(seaQuads * 6, 1, 0, 0, 0);
+            }
             int drawn = 0;
             for (AtlasMesh.Slice sl : map.values()) {
                 if (sl.buffer == null || sl.view == null || (AtlasScreen.prof & AtlasScreen.PROF_NO_LAND) != 0) continue;
@@ -195,7 +203,7 @@ final class AtlasPainter {
             if (gridQuads + trailQuads > 0) {
                 pass.setPipeline(RenderSystem.getCompiledPipeline(AtlasPipelines.OVERLAY));
                 pass.setUniform("DynamicTransforms", RenderSystem.getDynamicUniforms().writeTransform(new Matrix4f()));
-                pass.setVertexBuffer(0, lineBuf.slice(0, (long) (gridQuads + trailQuads) * 64));
+                pass.setVertexBuffer(0, lineBuf.slice((long) seaQuads * 64, (long) (gridQuads + trailQuads) * 64));
                 pass.drawIndexed((gridQuads + trailQuads) * 6, 1, 0, 0, 0);
             }
             if (lightQuads > 0) {

@@ -118,7 +118,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         var p = mc.player;
         cx = p.getX();
         cz = p.getZ();
-        cy = AtlasState.get().store.groundY(cx, cz, p.getY());
+        cy = broadGround(cx, cz, p.getY());
     }
 
     /** Opens the table from where the player stands (the M key, the glance, a dev command). */
@@ -160,7 +160,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         }
         cx = (x0 + x1) / 2;
         cz = (z0 + z1) / 2;
-        cy = a.store.groundY(cx, cz, cy);
+        cy = broadGround(cx, cz, cy);
         double span = Math.max(160, Math.max(x1 - x0, z1 - z0) * 1.6);
         zoomScale = (float) (OPEN_SPAN / span);
         tilt = 60f;
@@ -205,7 +205,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             float k = Math.min(1f, dt * 6f);
             cx += (flyX - cx) * k;
             cz += (flyZ - cz) * k;
-            cy = atlas.store.groundY(cx, cz, cy);
+            cy = broadGround(cx, cz, cy);
             if (Math.abs(flyX - cx) + Math.abs(flyZ - cz) < 0.5) flyX = Double.NaN;
         }
         float age = age();
@@ -382,8 +382,14 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         for (dev.awaken.atlas.AtlasNet.PinView pin : atlas.pins)
             if (project(pin.x() + 0.5, pin.y() + 1, pin.z() + 0.5, x0, y0))
                 placed = box(placed, Math.round(v.x) - 7, Math.round(v.y) - 26, Math.round(v.x) + 7, Math.round(v.y) + 4);
+        for (dev.awaken.atlas.AtlasNet.HomeView home : atlas.homes)
+            if (project(home.x() + 0.5, homeY(atlas, home), home.z() + 0.5, x0, y0)) {
+                int lw = font.width(home.name()) / 2 + 4;
+                placed = box(placed, Math.round(v.x) - Math.max(10, lw), Math.round(v.y) - 30, Math.round(v.x) + Math.max(10, lw), Math.round(v.y) + 4);
+            }
         if (mc.player != null) for (MapMarks.Mark m : MapMarks.collect(mc.player)) {
             BlockPos p = m.pos();
+            if (atHome(atlas, p)) continue;
             if (!m.label().startsWith("? ") && !Discovery.CLIENT.explored(p.getX() >> 4, p.getZ() >> 4)) continue;
             if (project(p.getX() + 0.5, atlas.store.groundY(p.getX(), p.getZ(), p.getY()), p.getZ() + 0.5, x0, y0))
                 placed = box(placed, Math.round(v.x) - 8, Math.round(v.y) - 8, Math.round(v.x) + 8, Math.round(v.y) + 8);
@@ -425,10 +431,24 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
                     continue;
                 }
                 if (!Discovery.CLIENT.explored(p.getX() >> 4, p.getZ() >> 4)) continue; // only what you know
+                if (atHome(atlas, p)) continue; // a Hearth's own marker names it (a village's name included)
                 if (!project(p.getX() + 0.5, atlas.store.groundY(p.getX(), p.getZ(), p.getY()), p.getZ() + 0.5, x0, y0)) continue;
                 int sx = Math.round(v.x), sy = Math.round(v.y), c = 0xFF000000 | m.colour();
                 diamond(g, sx, sy, 4, c, m.visited());
                 if (zoom > 0.6f) label(g, m.label(), sx, sy - 14, c);
+            }
+            // your Hearths and your household's: a little lit house over each Anchor, named at every zoom (SPEC §16.8);
+            // your own, when it is off the table, waits at the table's edge on the way to it
+            for (dev.awaken.atlas.AtlasNet.HomeView home : atlas.homes) {
+                if (project(home.x() + 0.5, homeY(atlas, home), home.z() + 0.5, x0, y0)) hearth(g, Math.round(v.x), Math.round(v.y), home, home.name());
+                else if (home.kind() == dev.awaken.atlas.AtlasNet.Homes.OWN && home == atlas.homes.getFirst()) {
+                    float mx = (x0 + x1) * 0.5f, my = (y0 + y1) * 0.5f, dx = v.x - mx, dy = v.y - my;
+                    float hw = Math.max(1f, (x1 - x0) * 0.5f - 24f), hh = Math.max(1f, (y1 - y0) * 0.5f - 30f);
+                    float t = Math.min(hw / Math.max(1e-3f, Math.abs(dx)), hh / Math.max(1e-3f, Math.abs(dy)));
+                    int ex = Math.round(mx + dx * t), ey = Math.round(my + dy * t) + 12;
+                    long far = Math.round(Math.hypot(home.x() + 0.5 - mc.player.getX(), home.z() + 0.5 - mc.player.getZ()));
+                    hearth(g, ex, ey, home, home.name() + "  ·  " + (far >= 1000 ? String.format(Locale.ROOT, "%.1fk", far / 1000.0) : far) + " blocks");
+                }
             }
             // the gates you know: a pillar of each one's light, over the land or riding the clouds (SPEC §30)
             for (MapMarks.Gate gate : MapMarks.gates(mc.player))
@@ -720,6 +740,50 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
                 : atlas.store.groundY(p.getX(), p.getZ(), 64) + 34;
     }
 
+    /** Where a Hearth's marker stands: on its roofs where you know the land, else on the clouds over it. */
+    private static double homeY(AtlasState atlas, dev.awaken.atlas.AtlasNet.HomeView h) {
+        return Discovery.CLIENT.explored(h.x() >> 4, h.z() >> 4) ? atlas.store.groundY(h.x(), h.z(), h.y()) + 1
+                : atlas.store.groundY(h.x(), h.z(), 64) + 34;
+    }
+
+    /** Whether a mark stands on one of your Hearths' Anchors (the hearth module's village mark, which the Hearth's own marker replaces). */
+    private static boolean atHome(AtlasState atlas, BlockPos p) {
+        for (dev.awaken.atlas.AtlasNet.HomeView h : atlas.homes)
+            if (Math.abs(h.x() - p.getX()) <= 2 && Math.abs(h.z() - p.getZ()) <= 2) return true;
+        return false;
+    }
+
+    static final int HEARTH_GOLD = 0xE2B450;
+
+    /**
+     * A Hearth: a little house in warm gold standing on (sx, sy), its door lit, a slow glow round it, and its name over
+     * it at every zoom. Your own is solid; one you share is outlined; a housemate's own is paler.
+     */
+    private void hearth(GuiGraphicsExtractor g, int sx, int sy, dev.awaken.atlas.AtlasNet.HomeView h, String name) {
+        int kind = h.kind();
+        int c = kind == dev.awaken.atlas.AtlasNet.Homes.HOUSEHOLD ? 0xFFD8C79E : 0xFF000000 | HEARTH_GOLD;
+        boolean solid = kind == dev.awaken.atlas.AtlasNet.Homes.OWN;
+        float pulse = 0.5f + 0.5f * (float) Math.sin(age() * 1.6);
+        int top = sy - 13;
+        ring(g, sx, top + 7, 10 + Math.round(pulse * 2), Glass.a(HEARTH_GOLD, 0.18f + 0.3f * (1 - pulse)));
+        for (int pass = 0; pass < 2; pass++) { // a dark casing a pixel wider, then the house
+            int grow = pass == 0 ? 1 : 0, col = pass == 0 ? 0xFF0B1626 : c;
+            for (int i = 0; i < 6; i++) { // the roof
+                int half = i + 1 + grow;
+                g.fill(sx - half, top + i - grow, sx + half + 1, top + i + 1, col);
+            }
+            int bx0 = sx - 4 - grow, bx1 = sx + 5 + grow;
+            if (pass == 0 || solid) g.fill(bx0, top + 6, bx1, top + 12 + grow, col);
+            else { // an outlined house: its walls and floor
+                g.fill(bx0, top + 6, bx0 + 1, top + 12, col);
+                g.fill(bx1 - 1, top + 6, bx1, top + 12, col);
+                g.fill(bx0, top + 11, bx1, top + 12, col);
+            }
+        }
+        g.fill(sx - 1, top + 8, sx + 2, top + 12, Glass.a(0xFFE6A0, 0.75f + 0.25f * pulse)); // the fire through the door
+        label(g, name, sx, top - 13, c);
+    }
+
     /** A gate's pillar of light in its rank's colour, its rank and how long it holds over it (a scanner's reading paler). */
     private void pillar(GuiGraphicsExtractor g, int sx, int sy, MapMarks.Gate gate) {
         float a = gate.read() ? 0.6f : 1f;
@@ -878,7 +942,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             double r = Math.toRadians(yaw), k = 1.0 / zoom, fwd = dy / Math.max(0.3, Math.sin(Math.toRadians(tilt)));
             cx -= (Math.cos(r) * dx - Math.sin(r) * fwd) * k;
             cz -= (Math.sin(r) * dx + Math.cos(r) * fwd) * k;
-            cy = AtlasState.get().store.groundY(cx, cz, cy);
+            settle();
             return true;
         }
         yaw += (float) dx * 0.6f;
@@ -940,7 +1004,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             var p = Minecraft.getInstance().player;
             cx = p.getX();
             cz = p.getZ();
-            cy = AtlasState.get().store.groundY(cx, cz, p.getY());
+            cy = broadGround(cx, cz, p.getY());
             return true;
         }
         return super.keyPressed(e);
@@ -973,6 +1037,47 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         };
     }
 
+    /** The lattice the view's centre height is read on (blocks), and how its points are averaged. */
+    static final int BROAD = 64;
+
+    /**
+     * (SPEC §16.8) The land's broad height round (x, z): the ground averaged round each point of a 64-block lattice and
+     * blended between them, so it changes smoothly as the map moves, never column by column ({@code fallback} where
+     * nothing is sampled).
+     */
+    static double broadGround(double x, double z, double fallback) {
+        ColumnStore store = AtlasState.get().store;
+        double fx = x / BROAD, fz = z / BROAD;
+        int i0 = (int) Math.floor(fx), j0 = (int) Math.floor(fz);
+        double tx = fx - i0, tz = fz - j0, h = 0;
+        for (int c = 0; c < 4; c++) {
+            int i = i0 + (c & 1), j = j0 + (c >> 1);
+            double w = ((c & 1) == 0 ? 1 - tx : tx) * ((c >> 1) == 0 ? 1 - tz : tz), sum = 0;
+            for (int dz = -1; dz <= 1; dz++)
+                for (int dx = -1; dx <= 1; dx++)
+                    sum += store.groundY(i * BROAD + dx * (BROAD / 3.0), j * BROAD + dz * (BROAD / 3.0), fallback);
+            h += w * sum / 9;
+        }
+        return h;
+    }
+
+    /**
+     * (SPEC §16.8) After a pan the view's centre goes to the land's broad height along the view's own line of sight:
+     * that leaves every block on screen exactly where it was, so a drag moves the land with the mouse and nothing else
+     * (snapping the centre to the column under it made the land jump up and down at every tree and roof). The clouds
+     * and their floor lie on the centre's plane and follow the broad height smoothly.
+     */
+    private void settle() {
+        Vector3f d = AtlasRenderState.view(new Matrix4f(), 1f, 1f, zoom, yaw, tilt).invert().transformDirection(0f, 0f, 1f, new Vector3f());
+        if (Math.abs(d.y) < 1e-4f) return;
+        for (int i = 0; i < 2; i++) {
+            double t = (broadGround(cx, cz, cy) - cy) / d.y;
+            cx += d.x * t;
+            cy += d.y * t;
+            cz += d.z * t;
+        }
+    }
+
     /** Moves the map by the keys held, this frame. */
     private void keysHeld(float dt) {
         lastInput = System.nanoTime();
@@ -985,7 +1090,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             double dx = -right * px, dy = fwd * px / Math.max(0.3, Math.sin(Math.toRadians(tilt)));
             cx -= (Math.cos(r) * dx - Math.sin(r) * dy) * k;
             cz -= (Math.sin(r) * dx + Math.cos(r) * dy) * k;
-            cy = AtlasState.get().store.groundY(cx, cz, cy);
+            settle();
             flyX = Double.NaN;
         }
         if ((held & K_TURN_L) != 0) yaw -= 90f * dt;

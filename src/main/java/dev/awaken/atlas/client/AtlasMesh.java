@@ -32,8 +32,8 @@ import java.util.concurrent.Executors;
 final class AtlasMesh {
     static final int S = 64, SHIFT = 6;
     static final int Y_REF = 64;
-    /** The diorama's base: the cut edges go down to it and the holo grid lies on it (lower under a roof: the Nether's
-     *  lava sea is at 31). Set per dimension, with the mesh cleared. */
+    /** The diorama's base: the holo grid lies on it and a slice rises from it (lower under a roof: the Nether's lava sea
+     *  is at 31). Set per dimension, with the mesh cleared. */
     static volatile int BASE_Y = 44;
     static final int LODS = SliceSampler.LODS;
     /** Blocks per column at each level, and its shift. */
@@ -464,7 +464,7 @@ final class AtlasMesh {
                 }
             }
             int quads = topQuads;
-            // sides down to the lower neighbour, or to the base at the explored edge (the diorama cut); lights at night
+            // sides down to the lower neighbour, or a short skirt into the cloud floor at the explored edge; lights at night
             for (int z = 0; z < S; z++) {
                 for (int x = 0; x < S; x++) {
                     int ci = SliceSampler.c(x, z);
@@ -484,14 +484,24 @@ final class AtlasMesh {
             return quads;
         }
 
-        /** One vertical face between column ci's top and its neighbour n; returns the quads written. */
+        /**
+         * One vertical face between column ci's top and its neighbour n; returns the quads written. Where the neighbour is
+         * unknown (the land's edge, under the clouds) the face is a short skirt fading into the cloud floor's colour, never
+         * a cliff down to the base (SPEC §16.8).
+         */
         private int side(int n, int h, int topColor, int kind, int ax, int az, int bx, int bz, float dir) {
             boolean edge = !sampler.cd[n];
-            int low = edge ? BASE_Y - 1 : sampler.ch[n];
+            if (edge) {
+                float yTop = h + 1 - Y_REF, yLow = yTop - Math.max(3, 2 * step);
+                int face = scale(topColor, dir);
+                quad(ax, yTop, az, bx, yTop, bz, bx, yLow, bz, ax, yLow, az, mix(face, SliceSampler.SEA, 0.35f), SliceSampler.SEA);
+                return 1;
+            }
+            int low = sampler.ch[n];
             if (low >= h) return 0;
             float yTop = h + 1 - Y_REF, yLow = low + 1 - Y_REF;
             int face = scale(topColor, dir);
-            if (!edge && h - low <= 2) {
+            if (h - low <= 2) {
                 quad(ax, yTop, az, bx, yTop, bz, bx, yLow, bz, ax, yLow, az, face, scale(face, 0.84f));
                 return 1;
             }
@@ -499,7 +509,7 @@ final class AtlasMesh {
             float yLip = yTop - 1;
             quad(ax, yTop, az, bx, yTop, bz, bx, yLip, bz, ax, yLip, az, face, scale(face, 0.9f));
             int under = scale(under(kind, topColor), dir);
-            int bottom = edge ? scale(under, 0.42f) : scale(under, 0.72f);
+            int bottom = scale(under, 0.72f);
             quad(ax, yLip, az, bx, yLip, bz, bx, yLow, bz, ax, yLow, az, under, bottom);
             return 2;
         }
