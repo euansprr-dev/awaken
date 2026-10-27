@@ -39,8 +39,11 @@ import java.util.stream.Stream;
  * Chunks that changed queue up in {@link #pollChanged} for whoever draws them.
  */
 public final class FarStore {
-    /** 3 (2026-10-26): ice read as its textures' pale blue, not its lavender map colour (purple far ice); 2's are re-learned. */
-    public static final int SCHEMA = 3, REGION = 32, RESIDENT = 64;
+    /**
+     * 3 (2026-10-26): ice read as its textures' pale blue, not its lavender map colour (purple far ice); 4 (2026-10-27):
+     * the ground under what floats, not a sky platform's deck (pillars from the ground up to it). Older ones are re-learned.
+     */
+    public static final int SCHEMA = 4, REGION = 32, RESIDENT = 64;
 
     private record RegionFile(int schemaVersion, List<FarChunk> chunks) {
         static final Codec<RegionFile> CODEC = RecordCodecBuilder.create(i -> i.group(
