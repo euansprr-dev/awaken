@@ -4,7 +4,7 @@ Plan only; nothing is built. Written from a code audit of the build Euan plays (
 `New World (3)` (read only, never written) and its log, six open-world references, and a prototype of the proposed rules
 that I ran against the real `RegionMap` over hundreds of random worlds (`docs/regions/proto/`, outputs in
 `docs/regions/results/`). Approval page: https://claude.ai/artifact/MnswCydLWBrdpXzL3f84YE (source `docs/regions/page.html`).
-Status: **waiting for Euan's approval**; nothing is built.
+Status: **approved by Euan on 2026-10-27 ("Go with all recommendations": all fourteen decisions)**. SPEC §21.10 holds the decisions. Phase 1 building on `pack/regions-plan`.
 Builds on SPEC §21.2 (regions), §27 (The Way Forward: the world pulls first, no hand-holding) and §28.9 (roads and towns).
 
 ---

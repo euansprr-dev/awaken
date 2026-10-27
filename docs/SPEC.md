@@ -3995,7 +3995,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   ten-segment bar with its amber drain, the panels' scan line when the band first reads a creature; readable at any
   distance. Off with reduced motion and in pure survival; LivingFx's fallback glass only when the holo shaders failed.
 
-### 21.2 Regions (Phase B)
+### 21.2 Regions (Phase B; the bands, odds, deck and neighbour rule below are replaced by §21.10, 2026-10-27)
 - A patchwork of named regions 600-1,400 blocks across: hearts on a jittered grid (pitch 900, jitter ±35%), borders
   from the nearest heart after a domain warp (amplitude 220, wavelength 700), seeded from the world seed.
 - The Commons: the region round Carillon's site (`CityBasin.site`) or, in classic worlds, world spawn; everything
@@ -4290,6 +4290,35 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - Art: the 15 icons are drawn by `tools/art/specs/items_crafts.py` (16×16, our own palette, one wooden bowl shape shared
   by the bowl meals; the pasty stands on its flat side with a crimped rope; no vanilla pixels). Its `preview DIR` checks
   colour count, distinct colours and herb silhouettes.
+
+### 21.10 The shape of danger (regions v2; plan docs/regions/PLAN.md, page https://claude.ai/artifact/MnswCydLWBrdpXzL3f84YE; Euan approved all fourteen decisions 2026-10-27, "Go with all recommendations")
+Why: Euan died at the Commons' wall at level 1 (an elite, health ×4.4) and found level 72 land 20 blocks further, the first hamlet
+inside it. Causes: the neighbour cap measured to a region's heart, the 5% deck rounded to one level 45-80 region in nine per near block,
+no gradient, nothing placed on purpose asked the land. This section **replaces §21.2's bands, odds, deck and neighbour rule**; names,
+roles, offsets, the API and the Hearth's calm stand. Decisions (numbers are the plan's):
+1. **Ceiling by distance, temper by region.** The highest a land can be at distance `d` from the centre (`reach.json`, data, straight lines):
+   240→1, 700→8, 1,000→12, 1,500→20, 2,000→30, 3,000→52, 4,000→74, 5,500→105, 8,000→150. Inside 700 it is the Commons' ramp. A region's
+   temper (0-1: its own roll dealt per 3×3 block, a smooth 2,400-wide "mood", the biome tilt ±0.15, contrast 2.2) places a land between a
+   floor (8% of the ceiling, fading in from 700 to 1,300) and the ceiling; a region is 20% worse at its heart than at its edge.
+2. **Soft borders.** Every heart near a point votes on its temper, weight `exp(-(d - dmin)/240)`: no 100 blocks change by more than about 15 levels inside 5 km.
+3. **A safe start.** The Commons stays 1-8 and the ring to 1,000 follows the ceiling (8-12). The first hamlet's site must be level ≤ 12, the first town's
+   ≤ 22 (prefer), the Director's first gate ≤ the player's level + 5 (re-roll the bearing).
+4. **Quiet vales.** One region in eight beyond 2,000 is calm (temper 0) wherever it is.
+5. **Roads and settled land are calmer.** −6 levels within 24 blocks of a laid road (easing to 0 by 60); within 96 of a settlement's built ground the land is capped at
+   10 (hamlet), 14 (village), 18 (town).
+6. **One band system:** E 1-9 · D 10-24 · C 25-44 · B 45-69 · A 70-99 · S 100+ (`Regions.bandOf`) is the land's rank too; the deal's 1-8 / 8-20 / 20-45 / 45-80 / 80+ goes; the Atlas
+   legend is 1 · 10 · 25 · 45 · 70 · 100; a region's range is what it really spans.
+7. **Elites live in places:** roaming share E 0%, D 2%, C 4%, B and up 5% (`Creatures` and `FaunaModule`); dens and camps keep an elite guard.
+8. **Passive animals** show no level chip and aren't scaled; one more of the ordinary drop per rank above E (Phase 3).
+9. **The land owns the hunt's parts and the pull** (agreed in principle with the Arms planner): trophies and hide by land ("Terror of <region>" beside the existing named
+   beasts, nothing "only here"), surface signs of metal; metal stays in lodes by depth, light stays in gates; C and up tiers open three levels before their land. Phase 3, with the Arms builder.
+10. **Going above your level pays in finds,** not XP: the kill bonus stays +40%; the first step into each higher rank is a discovery (a tenth of a level); wonders and secrets rank with their land. Phase 3.
+11. **The land speaks first** (client, per player, gap = the land's level minus yours): 5-9 a faint cold tint and a low bed, 10-19 stronger with an ember edge, 20+ strongest, eased over ~4 s;
+    a post on a road where a land one rank higher begins. Phase 2.
+12. **Warn early, plainly:** every 2 s a 150-block look-ahead along the heading; a land 10+ above you and rising gives one CRITICAL-tier toast with numbers in plain words, once per land per
+    5 minutes (the cooldown is per region); the Commons' wall warns a player 5+ below the local level; nothing inside the city's reserve.
+13. **Existing worlds** switch on at the next load (the field is a pure function of seed and centre); `awaken:living_regions` schema 2 adds `rules` (absent = 1: names keep the old band roll, new worlds name from their new level).
+14. **Order:** Phase 1 (1-8 but the loot of 8, 12, 13), Phase 2 (11), Phase 3 with the Arms and deep builders (9, 10, the loot of 8).
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 
