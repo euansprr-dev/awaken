@@ -307,6 +307,7 @@ final class AtlasMesh {
         private final byte[] gi = new byte[GW * GH];
         private final boolean[] gd = new boolean[GW * GH];
         private final int[] gz = new int[GW * GH];
+        private final float[] gl = new float[GW * GH]; // a region column's land level, blended between cells (0: none)
         private final int[] top = new int[S * S];
         private final boolean[] used = new boolean[S * S];
         private long vb = MemoryUtil.nmemAlloc(1 << 20);
@@ -355,6 +356,7 @@ final class AtlasMesh {
                         gc[gi0] = tile.color[i];
                         gi[gi0] = tile.info[i];
                         gz[gi0] = zones == null || x < -1 ? 0 : zones.zone(wx, wz);
+                        gl[gi0] = gz[gi0] > 0 && gz[gi0] < ZoneMap.DISTRICT ? zones.level(wx, wz) : 0;
                         if (x >= 0 && x < S && z >= 0 && z < S) any = true;
                     }
                 }
@@ -449,11 +451,11 @@ final class AtlasMesh {
         private int zone(int c, int g, ZoneMap.View zones) {
             int zn = gz[g];
             if (zn == 0 || zones == null) return c;
-            int zc = zones.colour(zn);
+            int zc = gl[g] > 0 ? zones.smoothColour(gl[g]) : zones.colour(zn);
             if (zc == 0) return c;
             boolean edge = differs(g + 1, zn) || differs(g - 1, zn) || differs(g + GW, zn) || differs(g - GW, zn);
             if (edge) return mix(c, lighten(zc), 0.90f);
-            return mix(c, zc, 0.30f);
+            return mix(c, zc, gl[g] > 0 ? 0.36f : 0.30f);
         }
 
         private boolean differs(int n, int zone) {

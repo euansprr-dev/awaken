@@ -211,7 +211,16 @@ final class AtlasState {
 
     /** The zones as the mesh worker should see them now. */
     ZoneMap.View zoneView() {
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.player != null) zones.setMyLevel(dev.awaken.progression.Progression.profile(mc.player).level());
         return zones.view(regions);
+    }
+
+    /** H: colour the land by its rank, or by how a creature there measures against you. */
+    boolean toggleDanger() {
+        boolean me = zones.toggleForMe();
+        mesh.changedAll();
+        return me;
     }
 
     void onTrail(AtlasNet.Trail m) {
