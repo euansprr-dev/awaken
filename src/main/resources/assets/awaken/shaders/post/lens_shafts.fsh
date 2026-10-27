@@ -43,7 +43,7 @@ void main() {
         fragColor = vec4(0.0, fog);
         return;
     }
-    // where the world was really drawn (LensProjection: a camera mod's roll included)
+    // where the world was really drawn (WorldProjection: a camera mod's roll included)
     vec2 sun = clamp(F(21).xy, -1.0, 2.0);
     const int STEPS = 24;
     vec2 dir = (sun - texCoord) * (0.92 / float(STEPS));

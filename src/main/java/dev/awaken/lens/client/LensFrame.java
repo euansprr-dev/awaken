@@ -4,7 +4,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.renderpearl.api.GpuFormat;
 import com.mojang.renderpearl.api.textures.FilterMode;
 import com.mojang.renderpearl.api.textures.GpuTexture;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.state.level.PlayerRenderState;
@@ -20,13 +19,15 @@ import java.nio.ByteBuffer;
  * Lens 2's per-frame values that need full float precision (SPEC §22): the frame's view-projection (camera-relative),
  * its inverse, the previous frame's (for temporal accumulation), the sun on screen, the camera within the heightfield's
  * ring and the light's direction. The matrices and the sun written here are the CPU's estimate (the game's projection
- * with its own bob, hurt tilt and nausea); LensProjection then puts the exact ones over them on the GPU, from the
- * projection the world was really drawn with (a camera mod's roll included).
+ * with its own bob, hurt tilt and nausea); LensClient then copies WorldProjection's exact ones over them on the GPU,
+ * from the projection the world was really drawn with (a camera mod's roll included).
  * A 48×1 RGBA32F texture ({@code awaken:lens_frame}), written once a frame just before the post effects run; layout in
  * {@code shaders/include/lens_frame.glsl}. Nothing is allocated per frame.
  */
 final class LensFrame {
     static final int WIDTH = 48;
+    /** The sun on screen (layout in lens_frame.glsl). */
+    static final int SUN = 21;
     final Texture texture = new Texture();
     private final ByteBuffer data = MemoryUtil.memAlloc(WIDTH * 16);
     private final Matrix4f proj = new Matrix4f(), bob = new Matrix4f(), viewProj = new Matrix4f(), inverse = new Matrix4f(),
@@ -36,7 +37,7 @@ final class LensFrame {
     private long prevNs;
     private final long start = System.nanoTime();
     private int frame;
-    private boolean hasPrev, history;
+    private boolean hasPrev;
     private float sunU = 0.5f, sunV = 0.5f, sunFront;
 
     private float cloudBase, cloudCover;
@@ -63,16 +64,6 @@ final class LensFrame {
         sunFront = front ? 1f : 0f;
     }
 
-    /** This frame's view-projection by the CPU's estimate: after {@link #write}. */
-    Matrix4f viewProj() {
-        return viewProj;
-    }
-
-    /** Whether this frame's history is usable (last frame's matrices hold): after {@link #write}. */
-    boolean history() {
-        return history;
-    }
-
     /** Forget the previous frame (a new chain, a new place): the next frame starts its history fresh. */
     void reset() {
         hasPrev = false;
@@ -86,10 +77,7 @@ final class LensFrame {
             float light, boolean moon, float rain, LensHeightfield height, boolean temporal) {
         Minecraft mc = Minecraft.getInstance();
         // the projection GameRenderer.renderLevel draws the world with: its bob and hurt tilt, then the nausea warp
-        bob.identity();
-        bobHurt(cam, mc.options.damageTiltStrength().get().floatValue());
-        if (mc.options.bobView().get()) bobView(cam);
-        proj.set(cam.projectionMatrix).mul(bob);
+        proj.set(cam.projectionMatrix).mul(WorldProjection.vanillaBob(cam, bob));
         float screenEffect = mc.options.screenEffectScale().get().floatValue();
         float spin = Math.max(player.portalEffectIntensity, player.nauseaEffectIntensity) * (screenEffect * screenEffect);
         if (spin > 0f) {
@@ -105,9 +93,10 @@ final class LensFrame {
         double x = cam.pos.x, y = cam.pos.y, z = cam.pos.z;
         long now = System.nanoTime();
         // history holds across ordinary frames; not across a teleport, a long gap or a fresh start
-        boolean valid = hasPrev && now - prevNs < 250_000_000L && Math.abs(x - prevX) + Math.abs(y - prevY) + Math.abs(z - prevZ) < 24.0;
+        // (and where the world's own matrices replace these, only when theirs carry last frame's too)
+        boolean valid = hasPrev && now - prevNs < 250_000_000L && Math.abs(x - prevX) + Math.abs(y - prevY) + Math.abs(z - prevZ) < 24.0
+                && (!WorldProjection.ready() || WorldProjection.history());
         if (!valid) prevViewProj.set(viewProj);
-        history = valid;
 
         data.clear();
         putMatrix(0, inverse);
@@ -132,8 +121,8 @@ final class LensFrame {
         plateCount = dev.awaken.holo.client.HoloWorld.lensPlates(plates);
         int stormCount = dev.awaken.living.client.StormSky.lensCells(storms, x, y, z);
         put(20, plateCount, stormCount, 0f, 0f);
-        // 21: the sun on screen (uv; z 1 when it is ahead), the estimate LensProjection replaces
-        put(21, sunU, sunV, sunFront, 0f);
+        // 21: the sun on screen (uv; z 1 when it is ahead), the estimate WorldProjection's replaces
+        put(SUN, sunU, sunV, sunFront, 0f);
         for (int i = 22; i < 24; i++) put(i, 0f, 0f, 0f, 0f);
         for (int k = 0; k < dev.awaken.holo.client.HoloWorld.MAX; k++) {
             int o = k * 9, t = 24 + k * 3;
@@ -173,33 +162,6 @@ final class LensFrame {
     void close() {
         texture.close();
         MemoryUtil.memFree(data);
-    }
-
-    // GameRenderer.bobHurt and bobView, on a matrix instead of a pose stack (the same order of operations)
-    private void bobHurt(CameraRenderState cam, float tiltStrength) {
-        var e = cam.entityRenderState;
-        if (!e.isLiving) return;
-        float hurt = e.hurtTime;
-        if (e.isDeadOrDying) {
-            float duration = Math.min(e.deathTime, 20.0F);
-            bob.rotate(Axis.ZP.rotationDegrees(40.0F - 8000.0F / (duration + 200.0F)));
-        }
-        if (hurt < 0.0F || e.preventFlinch) return;
-        hurt /= e.hurtDuration;
-        hurt = Mth.sin(hurt * hurt * hurt * hurt * (float) Math.PI);
-        float rr = e.hurtDir;
-        bob.rotate(Axis.YP.rotationDegrees(-rr));
-        bob.rotate(Axis.ZP.rotationDegrees((float) (-hurt * 14.0 * tiltStrength)));
-        bob.rotate(Axis.YP.rotationDegrees(rr));
-    }
-
-    private void bobView(CameraRenderState cam) {
-        var e = cam.entityRenderState;
-        if (!e.isPlayer) return;
-        float walk = e.backwardsInterpolatedWalkDistance, b = e.bob;
-        bob.translate(Mth.sin(walk * (float) Math.PI) * b * 0.5F, -Math.abs(Mth.cos(walk * (float) Math.PI) * b), 0.0F);
-        bob.rotate(Axis.ZP.rotationDegrees(Mth.sin(walk * (float) Math.PI) * b * 3.0F));
-        bob.rotate(Axis.XP.rotationDegrees(Math.abs(Mth.cos(walk * (float) Math.PI - 0.2F) * b) * 5.0F));
     }
 
     private void putMatrix(int texel, Matrix4f m) {

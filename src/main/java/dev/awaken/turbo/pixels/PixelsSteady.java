@@ -4,17 +4,15 @@ import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.math.Axis;
 import com.mojang.renderpearl.api.GpuFormat;
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import com.mojang.renderpearl.api.commands.CommandEncoder;
 import com.mojang.renderpearl.api.commands.RenderPass;
 import com.mojang.renderpearl.api.textures.FilterMode;
 import com.mojang.renderpearl.api.textures.GpuTextureView;
-import net.minecraft.client.Minecraft;
+import dev.awaken.lens.client.WorldProjection;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
-import net.minecraft.util.Mth;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
@@ -56,14 +54,13 @@ final class PixelsSteady {
     private static long prevNs;
     private static boolean captured, hasPrev, zeroToOne, zeroToOneKnown;
 
-    /** In AfterLevel: the matrices this frame drew the world with (as Lens reads them: the bob and hurt tilt included). */
+    /**
+     * In AfterLevel: the CPU's estimate of the matrices this frame drew the world with (the game's bob and hurt tilt), for
+     * when the world's own (WorldProjection, a camera mod's roll included) aren't there.
+     */
     static void capture(RenderLevelStageEvent.AfterLevel e) {
         CameraRenderState cam = e.getLevelRenderState().cameraRenderState;
-        Minecraft mc = Minecraft.getInstance();
-        bob.identity();
-        bobHurt(cam, mc.options.damageTiltStrength().get().floatValue());
-        if (mc.options.bobView().get()) bobView(cam);
-        proj.set(cam.projectionMatrix).mul(bob);
+        proj.set(cam.projectionMatrix).mul(WorldProjection.vanillaBob(cam, bob));
         viewProj.set(proj).mul(cam.viewRotationMatrix);
         camX = cam.pos.x;
         camY = cam.pos.y;
@@ -87,7 +84,10 @@ final class PixelsSteady {
             zeroToOne = RenderSystem.getDevice().getDeviceInfo().isZZeroToOne();
             zeroToOneKnown = true;
         }
-        if (ubo == null) ubo = new MappableRingBuffer(() -> "awaken pixels steady", GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_UNIFORM, UBO_SIZE);
+        if (ubo == null) {
+            ubo = new MappableRingBuffer(() -> "awaken pixels steady", GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_COPY_DST,
+                    UBO_SIZE);
+        }
         boolean resized = a == null || a.width != w || a.height != h;
         a = sized(a, "Pixels steady A", w, h);
         b = sized(b, "Pixels steady B", w, h);
@@ -109,6 +109,9 @@ final class PixelsSteady {
         try (var view = frame.map(false, true)) {
             Std140Builder.intoBuffer(view.data()).putMat4f(reproject).putVec4(valid ? 1f : 0f, zeroToOne ? 1f : 0f, BLEND, 0f);
         }
+        // the world's own reprojection over the CPU's estimate, from the projection it was really drawn with (a camera
+        // mod's roll included: Camera Overhaul's would ghost the steady image otherwise)
+        if (valid && WorldProjection.history()) WorldProjection.copyReprojection(encoder, frame, 0L);
         try (RenderPass pass = encoder.createRenderPass(LABEL, out.getColorTextureView(), CLEAR)) {
             pass.setPipeline(RenderSystem.getCompiledPipeline(PixelsPipelines.STEADY));
             pass.setUniform("InSampler", low.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
@@ -142,32 +145,5 @@ final class PixelsSteady {
         if (t == null) return new TextureTarget(label, w, h, GpuFormat.RGB10A2_UNORM, null);
         if (t.width != w || t.height != h) t.resize(w, h);
         return t;
-    }
-
-    // GameRenderer.bobHurt and bobView, on a matrix instead of a pose stack (as LensFrame does)
-    private static void bobHurt(CameraRenderState cam, float tiltStrength) {
-        var e = cam.entityRenderState;
-        if (!e.isLiving) return;
-        float hurt = e.hurtTime;
-        if (e.isDeadOrDying) {
-            float duration = Math.min(e.deathTime, 20.0F);
-            bob.rotate(Axis.ZP.rotationDegrees(40.0F - 8000.0F / (duration + 200.0F)));
-        }
-        if (hurt < 0.0F || e.preventFlinch) return;
-        hurt /= e.hurtDuration;
-        hurt = Mth.sin(hurt * hurt * hurt * hurt * (float) Math.PI);
-        float rr = e.hurtDir;
-        bob.rotate(Axis.YP.rotationDegrees(-rr));
-        bob.rotate(Axis.ZP.rotationDegrees((float) (-hurt * 14.0 * tiltStrength)));
-        bob.rotate(Axis.YP.rotationDegrees(rr));
-    }
-
-    private static void bobView(CameraRenderState cam) {
-        var e = cam.entityRenderState;
-        if (!e.isPlayer) return;
-        float walk = e.backwardsInterpolatedWalkDistance, s = e.bob;
-        bob.translate(Mth.sin(walk * (float) Math.PI) * s * 0.5F, -Math.abs(Mth.cos(walk * (float) Math.PI) * s), 0.0F);
-        bob.rotate(Axis.ZP.rotationDegrees(Mth.sin(walk * (float) Math.PI) * s * 3.0F));
-        bob.rotate(Axis.XP.rotationDegrees(Math.abs(Mth.cos(walk * (float) Math.PI - 0.2F) * s) * 5.0F));
     }
 }
