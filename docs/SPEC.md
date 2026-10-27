@@ -2672,6 +2672,33 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     at every orbit and zoom). The moving picture takes the level from the full-size picture's scale. Up to 8192 puffs.
   - Frame cost is judged on OpenGL: on Vulkan, MoltenVK presents at the display's rate (120 Hz) even with vsync off, so
     a capped tour can't show it.
+  - Hearths, the land's edge, dragging (Euan, 2026-10-27: "make the hearth show up on the atlas"; "make the edges go
+    under the clouds"; "dragging the map makes the land super jittery and lagging up and down"):
+    - Hearths: the server sends each player their Hearths (`AtlasNet.Homes`, a whole list, checked every 5 s and sent
+      only when it changes, and on joining or changing dimension; empty outside the overworld), read only through the
+      Hearth module's public API (§12: `Hearth.hearthsOf`, `Hearth.villages` for a village's name, `HearthHooks.household`):
+      every Hearth the player owns or belongs to (their own first) and each housemate's own, each Anchor once, at most
+      64. Each is a little lit house in warm gold over its Anchor (yours solid, a shared one outlined, a housemate's
+      paler) with a slow glow and its name at every zoom (a village's name, else "Your Hearth" / "Ana's Hearth"); on
+      the clouds over its Anchor if the land there isn't known. Your own Hearth, when it is off the table, waits at the
+      table's edge toward where it is, with how far it is from you. The hearth module's Tier IV village mark is not
+      drawn twice. Builds: a chunk was sampled once, when it arrived, so what you built at home never reached the map
+      until the chunk reloaded. Now the chunks round the player (4 each way) are read again in turn, two a tick (one
+      every other tick under a roof), and a reading that changes no column (height, colour, kind or light) rebuilds
+      nothing.
+    - The land's edge goes under the clouds: a flat cloud floor (`SliceSampler.SEA`, a pale blue-grey) lies under the
+      land, as wide as the blanket and thinning with its rim, so where no land is drawn the table shows cloud, never a
+      dark gap. The known land's last texels (3 columns close in, 5 texels further out) mist into the floor's colour
+      (72% at the very edge, thinning inward with a little grain), and the face of a column at the edge is a short skirt
+      (3 blocks, or 2 columns) fading into the floor's colour instead of a cliff down to the base. A puff's opacity is
+      one rule at every zoom (`CloudLattice.opacity`): whole over unknown ground and its cell's edge, reaching part way
+      over the known cells beside it; zoomed out a puff beside known land keeps its full size (the old far-out rule,
+      gone before known land, left the edge bare).
+    - Dragging: the view's centre height is the land's broad height (the ground averaged round each point of a
+      64-block lattice and blended between them), and after a pan the centre moves to it along the view's own line of
+      sight, which leaves every block on screen where it was: the land moves exactly with the mouse. It used to snap to
+      the one column under the centre at every mouse move, so the land jumped up and down at each tree and roof; the
+      clouds lie on the centre's plane and now rise and fall with the broad height, smoothly.
 
 ### 16.9 Public hooks (`core.api`, v0; signatures may change only through the orchestrator)
 - `CityHooks`: `inCity(Level, BlockPos)`, `district(Level, BlockPos)` (id or null), `isCivic(Level, BlockPos)`,

@@ -48,6 +48,7 @@ public final class AtlasClient {
             e.register(AtlasNet.Regions.TYPE, (m, ctx) -> AtlasState.get().onRegions(m.regions()));
             e.register(AtlasNet.City.TYPE, (m, ctx) -> AtlasState.get().onCity(m));
             e.register(AtlasNet.Pins.TYPE, (m, ctx) -> AtlasState.get().pins = List.copyOf(m.pins()));
+            e.register(AtlasNet.Homes.TYPE, (m, ctx) -> AtlasState.get().homes = List.copyOf(m.homes()));
         });
         NeoForge.EVENT_BUS.addListener(RegisterClientCommandsEvent.class, AtlasClient::commands);
         NeoForge.EVENT_BUS.addListener(ChunkEvent.Load.class, e -> {

@@ -50,6 +50,16 @@ public final class CloudLattice {
         out[2] = s;
     }
 
+    /**
+     * How opaque a puff is over cover {@code f} (0 known .. 1 unknown, blended between cell centres), the same at every
+     * zoom: whole over unknown ground and its cells' edge, so the bank reaches over the last stretch of known land; a puff
+     * in a known cell shows only as far as it leans toward the unknown.
+     */
+    static float opacity(float f) {
+        float t = Math.clamp((f - 0.08f) / 0.42f, 0f, 1f);
+        return t * t * (3 - 2 * t);
+    }
+
     private static final ThreadLocal<double[]> PARENT = ThreadLocal.withInitial(() -> new double[3]);
 
     /**
@@ -70,12 +80,15 @@ public final class CloudLattice {
 
     /**
      * The seam between two levels: an heir at the end of its step is its parent at the start of the next, in place, size
-     * and look; the other three are gone; the level follows the zoom smoothly. Null when it holds, else what failed.
+     * and look; the other three are gone; the level follows the zoom smoothly; the bank is whole over unknown ground at
+     * every level. Null when it holds, else what failed.
      */
     public static String selfTest() {
         if (level(3.6f) != 0f || Math.abs(level(1.8f) - 1f) > 1e-5f || Math.abs(level(0.9f) - 2f) > 1e-5f || level(0.01f) != LEVELS - 1
                 || !(level(2.5f) > 0f && level(2.5f) < 1f))
             return "the level follows screen pixels a block: 3.6 → 0, 1.8 → 1, 0.9 → 2, between them between";
+        if (opacity(0f) != 0f || opacity(0.5f) < 0.999f || opacity(1f) != 1f || !(opacity(0.3f) > 0.3f && opacity(0.3f) < 1f))
+            return "a puff is whole over unknown ground and the edge of its cell, and reaches part way over known land";
         double[] a = new double[3], b = new double[3];
         double ox = 123.4, oz = -56.7;
         for (int k = 0; k < LEVELS - 1; k++) {

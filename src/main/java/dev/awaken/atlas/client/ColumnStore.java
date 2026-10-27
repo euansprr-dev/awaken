@@ -16,7 +16,7 @@ import net.minecraft.world.level.material.MapColor;
  * columns. Colour is the block's map colour, with the biome's grass, foliage and water tint where vanilla tints the
  * block. Main thread only; the mesh worker reads tiles without a lock (a torn read is one stale column for a frame).
  */
-final class ColumnStore {
+public final class ColumnStore {
     static final int TILE_SHIFT = 9, TILE = 1 << TILE_SHIFT, MASK = TILE - 1;
     /** Material classes, for the colour under the surface on cliffs and cut edges. Three bits. */
     static final int K_NONE = 0, K_SOIL = 1, K_SAND = 2, K_STONE = 3, K_WATER = 4, K_SNOW = 5, K_LEAVES = 6, K_BUILT = 7;
@@ -80,17 +80,20 @@ final class ColumnStore {
     }
 
     /** Samples all 256 columns of a chunk the client just received. Main thread. */
-    void sample(LevelChunk chunk, boolean ceiling) {
+    /** Samples the chunk's columns; whether any column differs from what was there (a new tile always does). */
+    boolean sample(LevelChunk chunk, boolean ceiling) {
         long t0 = System.nanoTime();
         int bx0 = chunk.getPos().getMinBlockX(), bz0 = chunk.getPos().getMinBlockZ(), minY = chunk.getMinY();
         int before = tiles.size();
         Tile t = tile(bx0, bz0, true);
-        if (tiles.size() != before) published();
+        boolean changed = tiles.size() != before;
+        if (changed) published();
         for (int lz = 0; lz < 16; lz++) {
             for (int lx = 0; lx < 16; lx++) {
                 int bx = bx0 + lx, bz = bz0 + lz, i = index(bx, bz);
                 int y = ceiling ? underRoof(chunk, bx, bz, minY) : chunk.getHeight(Heightmap.Types.MOTION_BLOCKING, lx, lz);
                 if (y < minY) { // void column (End islands' gaps), or no floor under a roof
+                    changed |= t.color[i] != 0;
                     t.color[i] = 0;
                     continue;
                 }
@@ -133,16 +136,35 @@ final class ColumnStore {
                     BlockState below = chunk.getBlockState(pos);
                     lit = dy <= 5 && below.getLightEmission(chunk, pos) >= 10 || window() != net.minecraft.world.level.block.Blocks.AIR && below.getBlock() == window();
                 }
+                byte info = (byte) (depth | (kind << 4) | (lit ? LIT : 0));
+                changed |= t.height[i] != (short) y || t.color[i] != argb || t.info[i] != info;
                 t.height[i] = (short) y;
                 t.color[i] = argb;
-                t.info[i] = (byte) (depth | (kind << 4) | (lit ? LIT : 0));
+                t.info[i] = info;
             }
         }
-        t.dirty = true;
+        if (changed) t.dirty = true;
         t.touched = System.currentTimeMillis();
         long dt = System.nanoTime() - t0;
         sampleNanos[(int) (samples & 4095)] = dt;
         samples++;
+        return changed;
+    }
+
+    /**
+     * (SPEC §16.8, GameTest atlas_reread_builds) Reading a chunk again: unchanged, it changes nothing (so it costs no
+     * rebuild); after {@code build} raises the land at (bx, bz), the column there is higher. Null when it holds.
+     */
+    public static String rereadTest(LevelChunk chunk, int bx, int bz, Runnable build) {
+        ColumnStore s = new ColumnStore();
+        if (!s.sample(chunk, false)) return "a chunk's first reading is new";
+        if (s.sample(chunk, false)) return "reading an unchanged chunk again changes nothing";
+        Tile t = s.peek(bx >> TILE_SHIFT, bz >> TILE_SHIFT);
+        int before = t.height[index(bx, bz)];
+        build.run();
+        if (!s.sample(chunk, false)) return "what you build changes the chunk's columns";
+        if (t.height[index(bx, bz)] <= before) return "the column under the build rises, was " + before + ", now " + t.height[index(bx, bz)];
+        return null;
     }
 
     /** A roofed dimension (the Nether) starts sampling this far under its roof. */
