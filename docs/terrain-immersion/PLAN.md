@@ -1,6 +1,8 @@
 # The Soft Land: AWAKEN's own terrain softening and foliage (plan)
 
-Plan only. Nothing here is built; nothing in `src/` changed. Written 2026-10-27 on branch `pack/terrain-immersion-plan`
+**Status (2026-10-27, after Euan approved all 15 decisions):** P0 seamless ground, P1 soft steps, P2 the floor (without the three own grass heights, clover and roots) and P3 mountains are built and tested; P4 has its road bands but not its banks, P5 waits for the regions plan's level field. What is built, with the numbers and the tests, is SPEC §31 (`docs/SPEC.md`); this file is the plan and its reasoning. The text below is the plan as approved.
+
+Written 2026-10-27 on branch `pack/terrain-immersion-plan`
 for Euan's brief ("a bit less rough terrain, a bit more cinematic and natural look (stones etc.), more foliage feeling
 that creates a more immersive look; the priority really is IMMERSION", and earlier "how the vegetation, paths, and
 mountains look to be less like just block per block gaps, while STILL keeping it feeling like minecraft").
