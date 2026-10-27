@@ -245,21 +245,36 @@ levels the ground allows (decision 7).
 legend: **E 1-9 · D 10-24 · C 25-44 · B 45-69 · A 70-99 · S 100+**. The deal's 1-8 / 8-20 / 20-45 / 45-80 / 80+ goes; the
 Atlas legend becomes 1 · 10 · 25 · 45 · 70 · 100. A region's caption is the range it really has ("Lv 9-24").
 
-**What each rank changes, beyond health and damage** (decisions 7-9; the "finds" column is proposed to the Arms planner):
+**What each rank changes, beyond health and damage** (decisions 7-9; the "finds" column was checked with the Arms planner, see below):
 
 | Land | Elites that roam | Dens and lairs | What the land says (decision 11) | What it holds (decision 9) |
 |---|---|---|---|---|
-| **E** (the Commons, the first ring, quiet vales) | **0%**: none roaming. An elite is a den's guard, visible, in a named place | the first den at the wall | nothing (home) | hide, bone and flint (the E kit), Hale's issue, the camp, the first hamlet |
-| **D** | 2% | camps, dens, a named beast's lair (level 3+ players hear of them) | a cool tint and a low sound for anyone 5+ below it | iron outcrops and shallow iron lodes; the **D beast's trophy**; lair rumours |
-| **C** | 4% | riftborn camps, bigger beasts | a stronger tint and sound | diamond lodes; the D Lord's relic chase; Marked weapons from elites at 4% |
-| **B** | 5% | Lords' camps | strong, with an ember edge | Deepglass seeps and amethyst; B and C Lords' parts |
+| **E** (the Commons, the first ring, quiet vales) | **0%**: none roaming. An elite is a den's guard, visible, in a named place | the first den at the wall | nothing (home) | hide, bone and flint (the E kit), the E beasts' trophies (kept), Hale's issue, the camp, the first hamlet; E-theme riftborn camps in the top of E land |
+| **D** | 2% | camps, dens, a named beast's lair (level 3+ players hear of them) | a cool tint and a low sound for anyone 5+ below it | a surface sign of iron (a pull: iron itself stays in lodes by depth); **D trophies**, "Terror of <region>" beside the existing named beasts; lair rumours |
+| **C** | 4% | riftborn camps, bigger beasts | a stronger tint and sound | a surface sign of diamond (a pull: diamond stays by depth, any region); Marked weapons from elites |
+| **B** | 5% | Lords' camps | strong, with an ember edge | B and C Lords' parts from camps (Deepglass seeps stay below y 0 in any region) |
 | **A** | 5% | guardians' camps | strongest | the deep guardians' parts; Lord-forged finds |
-| **S** | 5% | the Court's | strongest | **starmetal** falls (Starfall only here); the Herald's parts |
+| **S** | 5% | the Court's | strongest | Starfall comes more often here (weighted, not exclusive); the Herald's parts |
 
-A tier's signature part is *native* to the land of its own rank (it opens at 13 / 22 / 42 / 67 / 97 a couple of levels after the
-land of that rank becomes walkable), so the world pulls and the Armoury's toast confirms (§27, "the world pulls first").
-**Agreed with the Arms planner? Proposed to them 2026-10-27; their reply will be added here** (they own the parts list and
-Hale's jobs; nothing here edits their files).
+**What the land owns, agreed in principle with the Arms planner** (their reply of 2026-10-27, with four corrections that are now in
+this plan; their own plan is a proposal too: Euan has not answered its 12 decisions, page
+https://claude.ai/artifact/DA4J66cpZkKinGbm6X18ML, `docs/arms-progression/PLAN.md` on `pack/arms-progression-plan`, §3.6 and decisions 8 and 9):
+- **The land owns the hunt's part**: hide and a named beast's trophy. Hale's part-job text can name the land by its in-world name
+  (regions have stable ids). Every part slot is a tag with several entries, so the existing named beasts stay in
+  `#awaken:hunter_core_d` and "Terror of <region>" joins them: nothing is removed, no save is stranded, nothing becomes "only here".
+- **Metal stays depth-native** (SPEC §28.0.7, W2): iron, diamond (y -58 to -18) and Deepglass (below y 0) are in lodes by depth in
+  any region. A higher land may show a surface sign as a pull, but diamond must not exist only in C land (the pacing sim has diamond in hand at
+  about 13.8 h against the C tier at 13.9 h).
+- **Light stays gate-native**: C's part is a D Lord's relic from D gates, and gate rank rolls from your rank, not from the land.
+- **For C and up the tier opens before its land.** Tiers open at 13 (D, after rank 10), 22 (C, rank 25), 42 (B, 45), 67 (A, 70) and 97 (S, 100),
+  so C and up open three levels before their rank. The locked tier card and a "What waits" promise that names the land do the pulling, and a tier's kit
+  never needs a land-native part before the player can reach that land. (An earlier version of this plan said the land came first.)
+- **Marked odds** keep their rates (4% elite, 10% Warden, camp hearts at 10%, a guaranteed first one and a pity). Their pity counts qualifying kills (elite,
+  Warden, camp heart), not spawns, with its threshold from their sim row, probably lower at E where elites are rarer. With no roaming elites in E land the
+  first Marked comes from a camp heart or a gate elite, which is what their plan assumed.
+- **Their assumptions about the Commons hold**: nothing needs the Commons above level 8 or elites roaming there, and E-theme riftborn camps (Ember Mines, Bell
+  Crypt, Fungal Hollow, Hive, Overgrown Temple) must stay reachable in the top of E land. SPEC §21.8 seeds camps in ledger cells of level 8 or more; the ring
+  700-1,000 out is level 9-10 in the proposed field, so they stay. A Phase 1 test checks that a cell 800 out still seeds them. Hale's issue and rack sit at the High Gate and need no land rule.
 
 **The pig** (decision 8). Passive animals do not carry a danger level: the plate shows the name and no chip, they are not
 scaled, and the XP stays small and flat. A pig is a pig. What changes is the *game*: in D land and up each passive animal drops
@@ -338,7 +353,7 @@ camp's safe ground and Together's group rules are unchanged. Nothing is stored p
 | 6 | **One band system**: land ranks E-S = the plate and Atlas ranks (1 · 10 · 25 · 45 · 70 · 100) | **Yes** | the chip, the gate and the land say the same word |
 | 7 | **Elites live at places**: roaming share E 0 / D 2 / C 4 / B+ 5 %; dens keep an elite guard | **Yes** | the thing that killed him; pacing sim unchanged (7.2) |
 | 8 | **Passive animals** carry no level chip, no scaling; richer game by rank | **Yes** | the pig |
-| 9 | **The land owns the tier materials** (signature part native to its rank): confirm with the Arms planner | **Yes** | going somewhere harder pays; Valheim and Monster Hunter |
+| 9 | **The land owns the hunt's parts and the pull**: trophies and hide by land, surface signs of metal; metal stays by depth, light stays in gates; nothing is "only here" (agreed in principle with the Arms planner; their plan is not approved yet) | **Yes** | going somewhere harder pays, and no save or tier gets a wall; Valheim and Monster Hunter |
 | 10 | **Going above your level pays in finds**; kill-XP bonus stays at +40%; first steps into a rank are a discovery | **Yes** | no reward for suicide |
 | 11 | **The land speaks first**: dread tint and sound by the gap, march posts on roads | **Yes** | "danger is the honest soft gate" only works if it looks like danger |
 | 12 | **Warn early and plainly**: 150-block look-ahead, CRITICAL tier, per-region cooldown, numbers in the words; the Commons' wall warns a level-1 player | **Yes** | the 19 s delay, the missing warning at the wall |
@@ -387,7 +402,7 @@ per two seconds and on the Atlas, so it is not a budget item.
 |---|---|---|---|
 | **1. The fix** (decisions 1-8, 12, 13) | the level field and its data file; one band system; `Region` low/high from the field; `rules` flag and name freeze; placed-thing caps; road and settlement calm; elites by rank on both paths; passive plates with no chip; look-ahead warning at CRITICAL with plain words; the Atlas's smooth shading and legend; SPEC §21.2 rewritten; the sim's elite and zone knobs added to `pacing_sim.py` and `Curve`'s mirror | `living/region`, `living/api`, `living/combat`, `living/client`, `village` (hamlet, town placement), `gates` (first gate), `atlas`, tests | **4-5 h** |
 | **2. The land speaks** (11) | `living:dread` Lens look, the sound bed, March posts, client settings, a CI look tour (gap 0 / +5 / +15) and a listening pass on the Mac | `lens`, `living/client`, `village/road`, audio, `tools/autopilot` | **3-4 h** |
-| **3. Finds by land** (9, 10) | land rank on the Arms `sources.json` places, lodes and trophies by rank (the W2 and Arms owners), richer game, shard scaling for vanilla creatures, "first steps" discoveries | `arms`, `delve`, `mobs` loot, `living` | **2-3 h of ours**, inside the Arms and deep builders' files |
+| **3. Finds by land** (9, 10) | land rank on the Arms `sources.json` places, "Terror of <region>" trophies beside the existing named beasts, surface signs for lodes (W2 owner; a pull only), richer game, shard scaling for vanilla creatures, "first steps" discoveries | `arms`, `delve`, `mobs` loot, `living` | **2-3 h of ours**, inside the Arms and deep builders' files |
 
 **Total 9-12 hours of builder time at the pace git history shows** (Living Wilds Phase B, regions, levels, XP and plates,
 landed in one working morning; Between the Gates W7, roads and towns, in a day). Phases 1 and 2 back to back are about one working day.
@@ -408,7 +423,7 @@ The camp road from the High Gate to 2,500 out at three framings, with the level 
   five-minute change). Euan's play decides whether it feels too tame or too far.
 - **The near ring is flat by design** (levels 8 to 12 out to 1,000). It is where distance is the whole answer.
 - **Biome tilt is approximate** in my numbers (random 10% harsh, 25% gentle for both models). The real tilt moves single regions, not the shape.
-- **The Arms reply is pending** (decision 9), and the loot changes in Phase 3 depend on it.
+- **Decision 9 follows the Arms plan,** which Euan has not approved either. If they change a tier's part, the "holds" column changes with it.
 - **Roaming elites at 0% in E** could make the first hours feel quieter; dens keep a signposted fight in reach from the wall.
 - **Not covered:** the Nether and the End (they keep vanilla danger, §21.0.15), gates (their own levels), the deep dark (+10, unchanged).
 
