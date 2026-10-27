@@ -16,14 +16,16 @@ public final class AtlasNet {
 
     /**
      * A tile on the wire: its explored bits, and the zone of each explored cell (32×32 bytes: the Living Wilds region
-     * it lies in, 1-based into the player's known regions, 0 for none; empty where regions don't apply).
+     * it lies in, 1-based into the player's known regions, 0 for none; empty where regions don't apply), and the Living Wilds'
+     * level of the land at each explored cell (a byte, 255 at most; SPEC §21.11: the map shades smoothly by it).
      */
-    public record WireTile(int tx, int tz, long[] bits, byte[] zones) {
+    public record WireTile(int tx, int tz, long[] bits, byte[] zones, byte[] levels) {
         static final StreamCodec<ByteBuf, WireTile> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_INT, WireTile::tx,
                 ByteBufCodecs.VAR_INT, WireTile::tz,
                 ByteBufCodecs.LONG_ARRAY, WireTile::bits,
                 ByteBufCodecs.BYTE_ARRAY, WireTile::zones,
+                ByteBufCodecs.BYTE_ARRAY, WireTile::levels,
                 WireTile::new);
     }
 

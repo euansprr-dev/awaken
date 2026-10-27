@@ -122,8 +122,6 @@ public final class ArmsForge {
     private record Pending(long expires, Consumer<ServerPlayer> onAccept) {}
 
     private static final Map<UUID, Pending> PENDING = new HashMap<>();
-    /** The style each fighter's next empty-handed use shows (turns on each use). */
-    private static final Map<UUID, Integer> NEXT_BLUEPRINT = new HashMap<>();
 
     static void init() {
         Signal.onAction(PREFIX, (player, action, accepted) -> {
@@ -135,7 +133,6 @@ public final class ArmsForge {
 
     static void forget(UUID player) {
         PENDING.remove(player);
-        NEXT_BLUEPRINT.remove(player);
     }
 
     private static String offer(ServerPlayer p, Consumer<ServerPlayer> onAccept) {
@@ -157,11 +154,19 @@ public final class ArmsForge {
 
     /** Sneak and use the Forge: Arms' window (attunement, or a Blueprint); a plain use stays the Hearth's. */
     static void onUseBlock(PlayerInteractEvent.RightClickBlock e) {
-        if (!(e.getEntity() instanceof ServerPlayer p) || e.getHand() != InteractionHand.MAIN_HAND || !p.isShiftKeyDown()) return;
+        if (!(e.getEntity() instanceof ServerPlayer p) || e.getHand() != InteractionHand.MAIN_HAND) return;
         if (!(p.level() instanceof ServerLevel level) || !isForge(level, e.getPos())) return;
+        if (!p.isShiftKeyDown()) {
+            // a plain use with an empty hand opens the Armoury; with anything in it, the Hearth's tempering stays as it was
+            if (!p.getMainHandItem().isEmpty()) return;
+            ArmsArmoury.open(p, ArmsArmoury.FORGE);
+            e.setCanceled(true);
+            e.setCancellationResult(InteractionResult.SUCCESS);
+            return;
+        }
         ItemStack held = p.getMainHandItem();
-        if (held.isEmpty()) offerBlueprint(p);
-        else if (ArmsItems.of(held.getItem()) != null) offerAttunement(p);
+        if (held.isEmpty()) return; // sneak with an empty hand is the Hearth's window; the Armoury is a plain use (below)
+        if (ArmsItems.of(held.getItem()) != null) offerAttunement(p);
         else return;
         e.setCanceled(true);
         e.setCancellationResult(InteractionResult.SUCCESS);
@@ -211,40 +216,17 @@ public final class ArmsForge {
         return true;
     }
 
-    static void offerBlueprint(ServerPlayer p) {
-        List<String> styles = blueprintStyles();
-        int i = Math.floorMod(NEXT_BLUEPRINT.getOrDefault(p.getUUID(), 0), styles.size());
-        NEXT_BLUEPRINT.put(p.getUUID(), i + 1);
-        String style = styles.get(i);
-        Archetypes.Loaded st = Archetypes.get(style);
-        var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Forge · Blueprints"));
-        w.row(Component.literal("Design"), Component.literal(st.def().name() + " (" + (i + 1) + " of " + styles.size() + ")"));
-        if (owns(p, style)) w.row(Component.literal("You have it"), Component.literal("yes"));
-        List<Cost> price = blueprintPrice(p);
-        for (Cost c : price) w.row(c.label(), Component.literal(count(p, c.item()) + " / " + c.n()));
-        if (HearthHooks.study(p)) w.row(Component.literal("Your Study"), Component.literal("halves the paper"));
-        w.body(Component.literal("A Blueprint goes in the crafting grid with a forged weapon's parts and comes back out. Sneak and use "
-                + "the Forge again for the next design."));
-        if (affords(p, price)) w.choice(offer(p, pl -> drawBlueprint(pl, style)), "Draw the " + st.def().name() + " Blueprint", "Not now");
-        Signal.send(p, w.ttl(20 * 15).build());
-    }
-
     static boolean drawBlueprint(ServerPlayer p, String style) {
         var item = ArmsItems.BLUEPRINTS.get(style);
         List<Cost> price = blueprintPrice(p);
         if (item == null || !affords(p, price)) return false;
         pay(p, price);
+        ArmsIssue.remember(p, style);
         ItemStack bp = new ItemStack(item.get());
         if (!p.getInventory().add(bp)) p.drop(bp, false, net.minecraft.util.Prediction.SERVER_ONLY);
         p.level().playSound(null, p.blockPosition(), SoundEvents.BOOK_PAGE_TURN, SoundSource.PLAYERS, 1.0F, 0.9F);
         p.level().playSound(null, p.blockPosition(), SoundEvents.ANVIL_USE, SoundSource.PLAYERS, 0.4F, 1.6F);
         return true;
-    }
-
-    static List<String> blueprintStyles() {
-        List<String> out = new ArrayList<>();
-        for (Archetypes.Loaded a : Archetypes.all()) if (ArmsItems.BLUEPRINTS.containsKey(a.id())) out.add(a.id());
-        return out;
     }
 
     static boolean owns(ServerPlayer p, String style) {
@@ -289,7 +271,7 @@ public final class ArmsForge {
                 cost(dev.awaken.core.api.CoreApi.ESSENCE_SHARD.get(), BLUEPRINT_ESSENCE));
     }
 
-    private static Cost cost(Item item, int n) {
+    static Cost cost(Item item, int n) {
         return new Cost(item, n, item.getName(new ItemStack(item)));
     }
 

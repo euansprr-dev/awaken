@@ -18,6 +18,21 @@ public final class PlateRules {
     public static final int FIGHT_FADE = 60, LOOK_FADE = 12;
     public static final double NOTABLE_RANGE = 16;
 
+    /**
+     * How a creature measures against you, for the colour of its level chip (SPEC §21.10, Euan 2026-10-27): {@code TRIVIAL} grey
+     * (ten or more levels below you), {@code EASY} blue (about your level or below: easy to kill), {@code FIGHT} orange (five or
+     * more above: a good fight that takes skill), {@code HARD} red (fifteen or more above: you can win it, but only as an
+     * insane fighter). The same for every creature, animals included.
+     */
+    public enum Heat { TRIVIAL, EASY, FIGHT, HARD }
+
+    public static final int TRIVIAL_GAP = 10, FIGHT_GAP = 5, HARD_GAP = 15;
+
+    public static Heat heat(int creatureLevel, int mine) {
+        int gap = creatureLevel - mine;
+        return gap <= -TRIVIAL_GAP ? Heat.TRIVIAL : gap < FIGHT_GAP ? Heat.EASY : gap < HARD_GAP ? Heat.FIGHT : Heat.HARD;
+    }
+
     /** How far the band reads a creature under the crosshair: 24 blocks, 32 from PER 20, 40 from PER 40. */
     public static double lookRange(int per) {
         return per >= 40 ? 40 : per >= 20 ? 32 : 24;

@@ -4004,7 +4004,7 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   ten-segment bar with its amber drain, the panels' scan line when the band first reads a creature; readable at any
   distance. Off with reduced motion and in pure survival; LivingFx's fallback glass only when the holo shaders failed.
 
-### 21.2 Regions (Phase B)
+### 21.2 Regions (Phase B; the bands, odds, deck and neighbour rule below are replaced by §21.10, 2026-10-27)
 - A patchwork of named regions 600-1,400 blocks across: hearts on a jittered grid (pitch 900, jitter ±35%), borders
   from the nearest heart after a domain warp (amplitude 220, wavelength 700), seeded from the world seed.
 - The Commons: the region round Carillon's site (`CityBasin.site`) or, in classic worlds, world spawn; everything
@@ -4034,8 +4034,8 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - Budgets registered by modules: `XpBudget.register(source, perTenMinutes)`.
 - Gate floor rewards × `Curve.WILDS_TRIM` (0.80; everything priced from a floor reward follows: anomalies, camps).
   Hunting, crafts and camps pay × `LivingModule.wildsRank(rank)` after the budget: 1.0, except C 0.55 (C is the long
-  climb in gates too). tools/sim/pacing_sim.py carries the same model; balanced player: level 5 0.98 h, 10 3.9 h,
-  25 16.8 h, 50 51.2 h (the v2 target 55-60 moved to 50-60: the open world now pays through D and C), 135 101.8 h;
+  climb in gates too). tools/sim/pacing_sim.py carries the same model; balanced player: level 5 0.99 h, 10 3.9 h,
+  25 16.8 h, 50 51.3 h (the v2 target 55-60 moved to 50-60: the open world now pays through D and C), 135 101.9 h (elites by rank, §21.10);
   main power level 5 at player level 48; gate checks unchanged.
 - `Progression.onXpGranted(listener)`: every grant after scaling (player, XP, source, world key), for the stream.
 
@@ -4299,6 +4299,193 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - Art: the 15 icons are drawn by `tools/art/specs/items_crafts.py` (16×16, our own palette, one wooden bowl shape shared
   by the bowl meals; the pasty stands on its flat side with a crimped rope; no vanilla pixels). Its `preview DIR` checks
   colour count, distinct colours and herb silhouettes.
+
+### 21.10 The shape of danger (regions v2; plan docs/regions/PLAN.md, page https://claude.ai/artifact/MnswCydLWBrdpXzL3f84YE; Euan approved all fourteen decisions 2026-10-27, "Go with all recommendations"; decision 8 amended and 15 added the same day at his word)
+Why: Euan died at the Commons' wall at level 1 (an elite, health ×4.4) and found level 72 land 20 blocks further, the first hamlet
+inside it. Causes: the neighbour cap measured to a region's heart, the 5% deck rounded to one level 45-80 region in nine per near block,
+no gradient, nothing placed on purpose asked the land. This section **replaces §21.2's bands, odds, deck and neighbour rule**; names,
+roles, offsets, the API and the Hearth's calm stand. Decisions (numbers are the plan's):
+1. **Ceiling by distance, temper by region.** The highest a land can be at distance `d` from the centre (`reach.json`, data, straight lines):
+   240→1, 700→8, 1,000→12, 1,500→20, 2,000→30, 3,000→52, 4,000→74, 5,500→105, 8,000→150. Inside 700 it is the Commons' ramp. A region's
+   temper (0-1: its own roll dealt per 3×3 block, a smooth 2,400-wide "mood", the biome tilt ±0.15, contrast 2.2) places a land between a
+   floor (8% of the ceiling, fading in from 700 to 1,300) and the ceiling; a region is 20% worse at its heart than at its edge.
+2. **Soft borders.** Every heart near a point votes on its temper, weight `exp(-(d - dmin)/240)`: no 100 blocks change by more than about 15 levels inside 5 km.
+3. **A safe start.** The Commons stays 1-8 and the ring to 1,000 follows the ceiling (8-12). The first hamlet's site must be level ≤ 12, the first town's
+   ≤ 22 (prefer), the Director's first gate ≤ the player's level + 5 (re-roll the bearing).
+4. **Quiet vales.** One region in eight beyond 2,000 is calm (temper 0) wherever it is.
+5. **Roads and settled land are calmer.** −6 levels within 24 blocks of a laid road (easing to 0 by 60); within 96 of a settlement's built ground the land is capped at
+   10 (hamlet), 14 (village), 18 (town).
+6. **One band system:** E 1-9 · D 10-24 · C 25-44 · B 45-69 · A 70-99 · S 100+ (`Regions.bandOf`) is the land's rank too; the deal's 1-8 / 8-20 / 20-45 / 45-80 / 80+ goes; the Atlas
+   legend is 1 · 10 · 25 · 45 · 70 · 100; a region's range is what it really spans.
+7. **Elites live in places:** roaming share E 0%, D 2%, C 4%, B and up 5% (`Creatures` and `FaunaModule`); dens and camps keep an elite guard.
+8. **Animals** (amended 2026-10-27, Euan's idea after the plan was approved; was "a pig is a pig, no chip"): in E land exactly as before (meek, no chip, no scaling).
+   In D land (level 10) and up a naturally spawned cow, pig, sheep, mooshroom or chicken (not bred, from an egg, a baby, penned, on a settlement's land or in a Hearth's
+   calm) is neutral: it fights back when struck (only when struck; it forgives ten seconds after the last blow), carries its level so the chip is true, is scaled like any
+   creature of that level, grows 4% a rank up to 20%, and now and then is an alpha (an elite: bigger, tougher). From C land the herd rallies when one is struck. Kill XP is
+   neutral's (0.5, not passive's 0.15). One more of its food drop per rank above E. Left for later: a client overlay (tusks, scars), wild kin with their own art, a land
+   that goes quiet; the alphas are the "Terror of <region>" trophies agreed with the Arms planner (Phase 3).
+9. **The land owns the hunt's parts and the pull** (agreed in principle with the Arms planner): trophies and hide by land ("Terror of <region>" beside the existing named
+   beasts, nothing "only here"), surface signs of metal; metal stays in lodes by depth, light stays in gates; C and up tiers open three levels before their land. Phase 3, with the Arms builder.
+10. **Going above your level pays in finds,** not XP: the kill bonus stays +40%; the first step into each higher rank is a discovery (a tenth of a level); wonders and secrets rank with their land. Phase 3.
+11. **The land speaks first** (client, per player, gap = the land's level minus yours): 5-9 a faint cold tint and a low bed, 10-19 stronger with an ember edge, 20+ strongest, eased over ~4 s;
+    a post on a road where a land one rank higher begins. Phase 2.
+12. **Warn early, plainly:** every 2 s a 150-block look-ahead along the heading; a land 10+ above you and rising gives one CRITICAL-tier toast with numbers in plain words, once per land per
+    5 minutes (the cooldown is per region); the Commons' wall warns a player 5+ below the local level; nothing inside the city's reserve.
+13. **Existing worlds** switch on at the next load (the field is a pure function of seed and centre); `awaken:living_regions` schema 2 adds `rules` (absent = 1: names keep the old band roll, new worlds name from their new level).
+14. **Order:** Phase 1 (1-8 but the loot of 8, 12, 13), Phase 2 (11), Phase 3 with the Arms and deep builders (9, 10, the loot of 8).
+15. **The plate's colour is how hard the creature is against you** (Euan, 2026-10-27): grey ten or more levels below you, blue about your level or easier (up to four above:
+    easy to kill), orange from five above (a good fight that takes skill), red from fifteen above (you can win it, but only as an insane fighter; the chip pulses). The
+    same for every creature, animals included.
+
+**Phase 1 as built (2026-10-27, `pack/regions-plan`).**
+- `living.region.RegionMap` is the field: the numbers are `data/awaken/awaken/regions/reach.json` (read once from the classpath: the map is pure and
+  runs on worldgen threads), `ceilingAt(distance)`, `levelAt` (no allocation; about 1.6 µs a call against 0.3 µs, hearts' tempers cached per cell),
+  `rankOf(level)` (`Regions.bandOf` and the Atlas use it). A region's `band` is its land rank index (the heart's level), `low`/`high` the levels
+  its land spans (its heart and eight points half a pitch round it). `RegionService` is schema 2 with `rules` (a new world 2, a save without it 1):
+  rules 1 names regions by the old deal's band (kept in `RegionMap` for naming only) and follows the same levels. `RegionService.rulesOnDisk(server)`
+  reads the flag from `dimensions/minecraft/overworld/data/awaken/living_regions.dat` before the overworld loads, so `RoadWorld` (opened at
+  ServerAboutToStart) names regions the way the live map does.
+- Placed things: `FirstHamlet.search` tries spots at level ≤ 12 first (then any; the level is read with no biome tilt), `FirstTown.find` prefers
+  hearts at level ≤ 22 (then ≤ 32, then any), `Director.firstGate` caps the land at `max(level + 5, 12)` (then any way, then any land).
+- `village.SettledCalm` (registered in `VillageModule.init`): `Regions.addLevelExtra` drops creatures 6 levels within 24 blocks of a laid road
+  (easing to 0 by 60; `RoadNet.distanceWithin`), `Regions.addLevelCap` holds them at 10 (hamlet, wayhouse), 14 (village, mining town) or 18 (town)
+  within the settlement's radius + 96. Both act on creature levels (`Regions.creatureLevel`), not on `levelAt`.
+- Elites: `LivingModule.eliteChance(land level)` (0 / 2 / 4 / 5% by rank), read from `Regions.creatureLevel(NEUTRAL)` at the spawn so a Hearth's calm
+  counts, in `Creatures.tag` and `FaunaModule`. Dens and camps keep their own guards. The pacing sim carries `ELITE_BY_RANK` and `role_mix`; the balanced
+  player is level 5 at 0.99 h, 10 at 3.90, 25 at 16.83, 50 at 51.25, 135 at 101.93, every target passing (the hunt budget caps kill XP).
+- Plates: an animal (kinds PASSIVE and AMBIENT) shows its name and no level chip (`LivingPlates.shownLevel`); creatures still carry their level for XP.
+- Warnings (`RegionTracker`): every pass (40 ticks per player) a look of 150 blocks along the heading (the way they walked since the last pass if 3 blocks a
+  second or more, else the way they face); `aheadWarns(mine, here, ahead)` = 10 or more above and 3 or more above where they stand gives a CRITICAL
+  toast "Danger · <land>" with `body(...)` in plain words ("... about six times as tough as ones at your level and hit nearly four times as hard. Turn back, or go
+  in only to look."), once per land per 5 minutes (`WARNED` per player and region; it was one per player per 10 minutes at the IMPORTANT tier). In the Commons
+  outside the city's reserve a player 5 or more below the land is warned too; the region caption's danger flag and the Promise now read the land under the player
+  (`danger(p, land)`), and the Commons is no longer exempt.
+- Atlas: six rank colours and the legend 1 · 10 · 25 · 45 · 70 · 100 (`ZoneMap`, `AtlasScreen`); a region is coloured by the middle of its span.
+- Tests: `living_region_map` (ceiling, apron, slopes, tilt, determinism, rules 1), `living_region_placed`, `living_elite_by_rank`, `living_warning_ahead`,
+  `living_region_rules_saved`. Prototype and numbers: `docs/regions/proto/`, `docs/regions/results/`.
+- Not built yet: Phase 3 (parts and trophies by land, richer game, first-step discoveries), the Atlas's smooth shading (it colours whole regions), the quiet
+  vales' name ("the Rest").
+
+**Amendments built (2026-10-27).** `living.combat.WildKin` (decision 8: `fights`, `wild`, `growth`, `rallies`, `arm`; `Retaliate` is a `HurtByTargetGoal` that lets go after 200 ticks;
+an `ATTACK_DAMAGE` attribute added to pig 3, cow 3, mooshroom 3, sheep 2 and chicken 1 through `EntityAttributeModificationEvent`; goals are put back at every join since they are not
+saved), `Creatures.tag` (a wild spawn in D land or up is tagged NEUTRAL, scaled, grown, an alpha at `eliteChance`), `GameDrops` (richer game for animals that can't hurt you and for
+these), `PlateRules.heat` and `LivingFx.heatColour` (decision 15). Tests `living_wild_kin`, `living_plate_heat`, `living_game_drops`.
+
+**Phase 3 as built (2026-10-27, after the Arms builder finished; `pack/arms-progression` A to G and the base are merged into `pack/regions-plan`, the two road-file conflicts kept both sides).**
+- Decision 9, the land owns the hunt's parts: an alpha (decision 8) is titled "Alpha of <region>" and always drops hide of its land's tier (`GameDrops.alphaHide`: one, one more
+  from B land, two more from S, from the gear tier's `#awaken:hunter_hide_<tier>` tag); so the next tier's hide is where the harder land is. The named beasts keep their species
+  trophies and their "Terror of <region>" title exactly as they were (Arms' `#awaken:hunter_core_d` is a list of species parts; nothing was removed or made "only here").
+- Quiet vales are named like shelters ("Willow Rest", "the Heron Hush": `Names.quiet`), in worlds made under rules 2 only.
+- Not built, and why: **a generic "Terror" trophy item** (Arms' D part is the species list; a new item needs Arms' `sources.json` line, JEI and tests, which are Arms' to extend),
+  **surface signs of metal** (a worldgen feature over Tectonic; metal stays in lodes by depth per §28.0.7, the pull is Arms' part jobs and "What waits"), **shard scaling for
+  vanilla creatures** (Arms' shard economy and pity are calibrated without it), **the Atlas's smooth shading** (the client does not have the field), **tusks and scars, wild kin
+  art, a quieter land** (art), **wonders and secrets ranked by land** (Living Wilds Phase F is unbuilt).
+
+**Phase 2 as built (2026-10-27): the land speaks first.**
+- `LivingNet.LandMsg(level)` (`living_land`): the level of the land under the player, sent from `RegionTracker.tick` when it changes (-1 away from the overworld). Client
+  `living.client.DreadFx` turns the gap (land level minus the player's level) into `DreadRules.strength(gap)` (0 under 5, 0.15 at 5, 0.45 at 10, 1 at 20), eased in over
+  about four seconds and out a little faster, as a Lens place look over the world's own and the volume of a looping bed. Per player and client side; setting `dread`
+  in `awaken-living-client.toml` (on). It stays on with `awaken:pure_survival` (atmosphere, not a plate).
+- Lens `PLACE_LAYERS` is 3: layer 2 is `awaken:dread` (`looks_living.json`: the colour cools and drains, shadows blue, an ember haze gathers at the edges, the corners darken).
+- Sound: `living.dread`, `amb_living_dread.ogg` (`tools/art/specs/audio_living.py`: 8 s, every tone a whole number of cycles in the loop and the air periodic, so it
+  loops without a seam; D 73.4 Hz and a twin beating once a loop, a fifth, a cold octave, a dark breath of air; -29 dBFS RMS). Played looping, relative, at
+  the land's weight × 0.85. Listening is for the Mac.
+- March posts (`village.road.Waymarks.marches`, from `Highroads.lay` for highroads): where a road first passes into land a rank above the land behind it, a post on
+  the walker's right (from each end) with one arm: "<land> · Lv 10–24". A boundary must hold for 32 blocks; bridges wait for dry ground; clear of the settlements'
+  posts. Painted by the waymarker painter like any marker (new chunks only).
+- Dev: `/awaken living dread <gap|off>` (admin) forces the gap for tours; tour `tools/autopilot/regions-dread.txt` (CI).
+  CI tour 40444955175 (reviewed 2026-10-27): the tint eases in and out as designed (blue sky at gap 0 to a grey lavender at 25), but the first values read only as a slightly greyer sky, so
+  the look was strengthened (saturation 0.5, exposure 0.84, vignette 0.75, haze 0.4, ember mix 0.75) without a second tour (one a hand-back); the next playtest judges it. The sound is for the Mac's ears.
+- Tests: `living_dread_gap`, `village_march_ranks` (a synthetic road: a post for each rise, none for a flicker).
+
+
+### 21.11 The Wild Grows Teeth (plan docs/regions/PLAN-2.md, page https://claude.ai/artifact/LhA8jeGxTmYTktau4mmgia; Euan approved all sixteen decisions 2026-10-27, "Go with all recommendations", and said to do the work without sub-agents)
+Continues §21.10's numbering (16-31). The long form is PLAN-2.md; this is what builders hold to.
+16. **Five forms.** Every common creature in D land or higher (level 10 up) wears one of five forms (rung 1-5 = ranks D, C, B, A, S): a new body, one new move, a new voice. E land and the first hour are vanilla.
+17. **First drop species:** zombie (husk), skeleton (stray), spider (cave spider), creeper, pig, cow (mooshroom), sheep, chicken; enderman, slime, witch and drowned in a second pass.
+18. **One kit on the vanilla bodies, no mixin.** `living.client.FormLayers` adds a layer to each species' renderer: a skin overlay (the parent model drawn again with `textures/entity/forms/<layout>/o<rung>_<family>.png`), the kit (a second model of the vanilla class whose own cubes were cleared and replaced by the
+    kit's pieces, `assets/awaken/forms/kit.json`, drawn with `k<rung>_<family>.png`), and an emissive glow (`g<rung>.png`, a white mask tinted by the rank's colour: D gold, C orange, B red, A violet, S indigo, the Atlas's). The biome family (green, sun, frost; from the biome's base temperature) sets the material.
+    Client setting `forms` (awaken-living-client.toml): FULL, LITE (no kit) or OFF. The plate chip stays relative to the viewer; the glow is absolute rank.
+19. **Moves (Build 2):** one telegraphed move per rung (a second on alphas from C), tells 1.2 s (D) down to 0.7 s (S), damage at most 1.3 times a normal blow, delivered with `Strikes.deliver` naming its class.
+20. **Voices (Build 2):** `PlayLevelSoundEvent.AtEntity` lowers the pitch and layers a growl by rung; each move has a tell sound.
+21. **First sight** of a form is a discovery (a tenth of a level, `form/<species>/<rung>`), an Almanac line, no toast stack.
+22. **The mix:** a creature's rung is its land's rank 70% of the time, one below 25% (50% in the first three levels of a rank), one above 5% (D land and up only: the foreshadow). Alphas wear the land's rung at least, and the crown piece (mark bit 1).
+23-31. A quieter land, signs and ambient by rank, the Atlas's smooth shading, wonders, surface secrets and treasure maps, legends, the rest of the chains and happenings, order: Builds 3 to 6 (PLAN-2.md sections 6-9 and 11); recorded here as each is built.
+
+**Build 1 as built (2026-10-27).**
+- `living.combat.Forms` (pure rules and the assigner): `rungFor(landLevel, random)`, `Species` by entity type, `family(biome)`; attachment `awaken:wild_form` (`LivingContent.FORM`, `Forms.Form(rung, family, marks)`, rung -1 = not rolled yet, saved and synced to trackers), rolled by `Creatures.tag` for a levelled vanilla monster or a wild kin and, for creatures from before it existed,
+  once on join. Only creatures the Living Wilds tagged MONSTER or wild NEUTRAL get a form (never AWAKEN's own, never a settlement's or a Hearth's calm: those are below D).
+- Art: `tools/art/specs/forms.py` writes the overlays, kit textures, glow masks and `forms/kit.json` (one source for the Python painter and the Java model builder).
+- Dev: `/awaken living form <species> <rung> [family]`, `/awaken living formparade [family]` (every species, rungs 0-5, in rows, still), tour `tools/autopilot/forms-parade.txt`.
+- Tests: `living_form_mix`, `living_form_state`. CI tour 40454849731 (forms-parade, 14 shots) reviewed: every species' rungs read as an escalation in the real game (tusks, horns, helms, spines, crests, the rank's glow at the eyes); the kit follows the animation.
+  Offline look: `tools/art/forms_preview.py` renders the kit on the vanilla bodies (the vanilla textures are read from `.ref` for the preview only).
+
+**Build 2 as built (2026-10-27): moves and voices.**
+- `living.combat.Moves` (the table and the shapes), `MarkGoal` (the goal, priority -1, flags MOVE and LOOK: a roll every few ticks only with a target; wind-up standing still and facing,
+  strike once, a lunge or a charge carried through, a rest), `MarkEvents` (a revenant's rise, spider webs taken away, voices). Armed at every join (`Creatures.onJoin` -> `Moves.arm`; goals are not saved).
+  Tells run 24 ticks in D down to 14 in S (`Moves.windup`); a tell is a ring or a line of dust in the rank's colour on the ground and a sound; damage is the creature's attack times `power` (at most 1.3)
+  delivered with `Strikes.deliver` naming its class (a lunge or a charge GRAB, a stomp PERILOUS, a bash HEAVY, shots LIGHT). A crowned creature from the third rung has the rung below's move too.
+- Shapes: LUNGE, CHARGE, STOMP, BASH, RALLY, ROAR (slows or blinds, no damage), VOLLEY and SNIPE (arrows), BLINK, SPIT (a ray with poison), WEB (a cobweb at your feet, taken away after 8 s), SUMMON (never past eight of a kind
+  within 24 blocks), PULL; RISE (a zombie form from the fourth rung stands up once at 40%, `Forms.RISEN`, in `MarkEvents.onDeath` at highest priority) and RETREAT (a first-rung skeleton gets an `AvoidEntityGoal` for players).
+  Pig: Gore, Root-up, Trample, Quake, Roar. Cow (and mooshroom): Back-kick, Charge, Stomp, Storm charge, Bellow. Sheep: Headbutt, Charge, Spark, Charge, Bleat. Chicken: Flap-jump, Crow, Burst, Flap-jump, Screech.
+  Zombie (husk): Groan, Shield bash, Pounce, Rise, Dread call. Skeleton (stray): Retreat, Marksman, Volley, Wraith step, Volley of five. Spider (cave spider): Web, Drop, Spit, Brood, Pull.
+- Voices: `PlayLevelSoundEvent.AtPosition` (mob sounds are played at a position): a formed creature within half a block of the sound has its pitch lowered 8% a rung (S: 0.6) and its volume raised 5% a rung.
+- Not built, and why: the creeper's moves (the explosion is vanilla's; its five forms are bodies only), a growl layered under the voice and custom tell sounds (the tells use vanilla sounds repitched; `tools/art/specs/audio_living.py` is the place),
+  Arms' tell glint for a form's wind-up (`Strikes.installTells` is install-once and the mobs module holds it; chaining it is a change in `core.api`), the "unless you finish it fast" clause of Rise.
+- Tests: `living_form_moves`.
+
+**Rise and the tests (2026-10-27, after CI).** A revenant rises from a lethal blow that is not a finishing one (`MarkEvents.shouldRise`: at least its health, under two health bars, 400 to 900), in `LivingDamageEvent.Pre`
+(the blow is spent, as a totem's), not from every death. Game rule `awaken:wild_forms` (default on; the GameTest server starts with it off, like `living_herds`) switches forms off for a world: older tests that kill a zombie
+outright in far land (where forms are the rule) failed on CI when a revenant stood up. The form tests roll and set forms themselves.
+
+**Kit placement rules (2026-10-27, after Euan's screenshots: tusks over the face, spines floating over the back, claws hanging off the fists).** Every piece of a kit is checked when the art is built
+(`tools/art/forms_geom.py`, called by `tools/art/specs/forms.py`; a violation stops the build with the piece named): **attached** (it touches the vanilla body or a piece that does; a horn is a chain
+whose segments start where the last ended; only up to six marked floating shards in the top rung may hang free, within 9 blocks); **off the face** (the eye band from the face plane forward is a
+keep-out: tusks, horns and crowns go round it, marks are never painted on a head's front); **seen** (not hidden inside the body); **in reach** (7 blocks at D to 13 at S). Geometry is the
+vanilla bodies' own (`BODIES`, from the 26.3 ModelPart definitions), checked at rest. Pieces are placed on named surfaces (a ridge stands on the body's top plane, a tusk starts inside the cheek,
+a claw starts at the end of the arm and points along it). Looks are reviewed offline from four angles (`python3 tools/art/forms_preview.py OUT.png 0 <layout> --angles`) before any tour.
+
+**Build 3 as built (2026-10-27): the land, the quiet, the Atlas.**
+- **Signs** (decision 24): `living.signs.Signs` (thirteen kinds: wallow, bone pile, boulder and rust outcrop in D; skull post, cold camp and broken cart in C; snag and ribs in B; graves and a black spire in A;
+  a weeping stone and a ring of them in S; vanilla blocks by biome family) and `WildSignsFeature` (`awaken:wild_signs`, step vegetal_decoration through `neoforge:add_features`, `data/awaken/worldgen/*/living/signs.json`):
+  per new chunk 0.25 signs in D, 0.5 C, 0.9 B, 1.3 A, 1.6 S (none in E), on natural ground only, flat enough, never in water. The region map is warmed at ServerStarted so worldgen threads
+  (`RegionService.mapIfReady`) never touch saved data; chunks made before it exists (a new world's first, in the Commons) get none. The rust outcrop is the surface sign of iron (a pull; iron stays by depth). Not consulted
+  at generation: a settlement's or a road's reserve (only the natural-ground rule keeps signs off built ground).
+- **A quieter land** (decision 23): `living.combat.QuietLand`: natural animal spawns in land of rank D or up are turned away by rank (kept: D 80%, C 55%, B 35%, A 20%, S 10%; `FinalizeSpawnEvent.setSpawnCancelled` in
+  `Creatures.onFinalizeSpawn`; never a settlement's land, bred or egg animals), wild kin avoid a player who is not sneaking (`AvoidEntityGoal`, 10 blocks in D to 26 in S, below the fight goals), and the wild life
+  layer's dial is multiplied by the rank (`Wildlife.dialNow`: birds and insects 80%, 50%, 30%, 8%, 2%).
+- **Ambient air** (decision 25): `living.client.AmbientFx`: a few specks a second drifting through the land you stand in (D dust, C ash, B embers, A violet motes, S almost none; snow in the cold), off with the `dread` setting.
+  Not built: a sound bed per rank (needs `audio_living.py` work) and a colour grade per rank through Lens (the gap's dread look stays).
+- **Atlas smooth shading** (decision 26): `AtlasNet.WireTile.levels` (a level byte per explored cell, `Discovery.levels`), `ZoneMap.View.level` (blended between the four nearest cells' middles in the log), `rankRamp`
+  (the rank colours blended between the ranks' geometric middles) and `heatRamp` (the plate's colours blended at -10, +5, +15), `AtlasMesh` colours a region column by its level, **H** switches between the land's rank and
+  how hard it is for you (the legend follows). Test `atlas_levels`.
+- **First sight** (decision 21, done in Build 6's place): `MarkEvents.onPlayerTick`: once a second, a formed creature within 24 blocks in plain view is a discovery (`form/<layout>/<rung>`, a tenth of a level) and one
+  line ("New form · Tusker: Watch for its gore.", `Forms.nameOf`). The Almanac's Forms page is not built.
+- Tests: `living_signs` (density by rank; every kind builds one piece standing on the ground, under 90 blocks, in all three families), `living_quiet_land`. Two older tests set their zombie's form to vanilla: the test land is
+  far out, in S land, where a revenant would stand up from the kill.
+
+**Builds 4 and 5 as built (2026-10-27): Phase F, the part that stands in the world.**
+- **Wonders** (decision 27): `living.wonder.Wonders` (a region's wonder: its kind by the rank of its heart's land, its site 70-200 blocks from the heart on dry, flat ground inside the region, its plan of blocks from a seed;
+  all a pure function of the seed and the region, cached), `WonderFeature` (`awaken:wonders`, step surface_structures, data `worldgen/*/living/wonders.json`: each new chunk writes the share of every wonder within 38
+  blocks, only inside itself, building the ground up under the foot). The ground is the chunk generator's own `getBaseHeight`, so every chunk and the server later agree. Six kinds: the Bell Tree (E-D; a real bell hangs
+  in it), the Boar Throne (D-C), the Statue Field (D-B), the Web Cathedral (C-B), the Gravefield of the Revenants (A: a black house and rows of graves, some open), the Weeping Stones (S). `WonderWatch`:
+  warded (no hostile spawns within 44 blocks), found by standing within 30 blocks (a discovery of 0.15 of a level plus 0.07 a rank, a "New wonder" line, the counter `awaken:wonders_found`, the player's list
+  `awaken:wonders` kept through death) and drawn on the Atlas through `MapMarks`. The region map is warmed at ServerStarted and worldgen asks `RegionService.mapIfReady`.
+- **Surface secrets** (decision 28): `Secrets` and `SecretFeature` (`awaken:secrets`): three per region (a cairn over a brushable cache, a cold camp with a barrel, a marked mound over a chest), 150-400 blocks from the
+  heart on flat dry ground, each cache filled from its rank's loot table (`data/awaken/loot_table/chests/living/secret_0..5.json` and `archaeology/living/secret_0..5.json`: emeralds, iron, gold, essence shards, diamonds,
+  from a netherite scrap in S). Finding one is walking up to it (6 blocks): the "Secrets found" counter, a line, a small discovery for the first of each kind.
+- Review of the first real-generation tour (CI 40458312323): wonders generate through the feature as intended (statues, ring stones, a black house with graves, found by walking up with the toast); it showed a wonder on a Precursor ruin's floor and one on stilts
+  at a cliff, so a wonder's site keeps three chunks clear of any structure that may start (`Terrain.structureNear`, from the generator state's structure sets), a secret one chunk, a column whose real ground is more than three blocks from the
+  heart's level is left out, the foot is built up at most four blocks, and what grows through a wonder's ground (leaves, logs, tall grass: `Kind.clear` blocks round the heart) is cleared. Not handled: a road passing through a wonder.
+- Dev: `/awaken living wonder list|goto <kind>|build <kind>`; tours `tools/autopilot/wonders.txt`. Tests `living_wonder_sites` (sites inside their regions and ranks, the same every time, the Commons has none; every kind's plan
+  is one piece standing on the ground in all three families), `living_secret_sites`.
+- **Chains** (Build 6, the part done): five more for the lands the first nine skip (`data/awaken/awaken/quest/`): Silk on the Road (band 2, Pell, spiders on a road), Iron in the Ranks (band 2, Gus, zombies in scrap iron), Ash on the Wind
+  (band 3, Wren, archers below a ledge), The Bell at the Crossing (band 3, Pell, the dead and a bell), Crowns in the Dark (band 4, Gus, a bone crown on a crag). They use the engine's own objectives and what the land's forms already
+  drop; no new relic.
+- **Not built, and why**: ten of the sixteen wonder kinds (Frozen Gate, Glass Sea, Upside-down Falls, Giant's Arch, Singing Canyon, Sunken Spire, Petrified Herd, Star Crater, Chain Bridge, Mirror Lake: each is a
+  structure of its own and wants its own look), wonder effects and Codex pages (the Bell Tree's bell rings as any bell does), per-player caches, **treasure maps** (an item with its own art and a clue
+  reader), **the legendary beasts** (Old Greymane, Hush, the Glass Wyrm: they need bodies and a place in the beast registry, the fauna module's), six of the **eleven chains** and all **nineteen happenings** (Build 6), a sound bed and a
+  colour grade per rank, the Almanac's Forms page, moves for creepers, Arms' tell glint for forms. Signs and wonders consult no settlement's or road's reserve (only natural ground keeps signs off built ground).
 
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 
@@ -5439,6 +5626,57 @@ in 1–2 hits from D up) and let a Tank win at C and A. No extra level is carrie
 kill switch, sounds, stance rules, clips, the Art, the Plunge, assets; `mobs_held_weapon_damage`, `mobs_told_melee`, `mobs_ability_classes`, `mobs_body_materials`;
 `audio_events_resolve` covers the kit's files and subtitles. S2/S3: `arms_hand_pose` (the swing on Hands' view layer),
 `arms_assets` (the streams), `mobs_bolt_class`, `mobs_answered_no_burn`, `mobs_broken_idle`.
+
+**Arms progression: where weapons come from** (plan docs/arms-progression/PLAN.md, approval page https://claude.ai/artifact/DA4J66cpZkKinGbm6X18ML; Euan
+2026-10-27: "go ahead with everything else that's recommended", his changes folded in; built in seven commits on
+`pack/arms-progression`). The rule: **the gates give the pattern, the world gives the materials**; a pattern is never in a plain chest.
+- **Data**: `data/awaken/arms/style_homes.json` (schemaVersion 1; read on both sides by `ArmsHomes`): each style's gate theme and
+  rank, its master Lord, an early teacher, Hale's rack price by rank (E 4, D 6, C 8, B 10, A 12, S 12 essence), the village smith's
+  price (E 6, D 10, C 16, B 24, A 32 emeralds), the level bands (E 1-9, D 10-24, C 25-44, B 45-69, A 70-99, S 100+; one function,
+  `ArmsHomes.rankOfLevel`, to change if the regions plan moves them), the boss-weapon rates and the Marked rates.
+  `data/awaken/arms/sources.json` is written by `tools/arms/sources.py` from the recipes and creature loot tables (`--check` for CI);
+  a hand-written line (`awaken.source.<ns>.<item>`) covers what a creature table can't say.
+- **State**: attachment `awaken:arms_progress` (`ArmsProgress`, schemaVersion 1, kept through death, per player): styles known, the issue
+  taken, the shard no-drought count, the weapon and Marked pity counters, the tracked weapon, the gates (last 64), people and
+  Pattern Stands that have already taught this fighter. Cross-module calls go through `core.api.ArmsApi` (hooks installed by `ArmsIssue`).
+- **B, the first hour**: Hale's issue (pick Daggers, Axe or Maul on a card screen; the finished Wildhide weapon, its Blueprint and a spare
+  Fang; once), Ilse hands it over at the camp if Hale was missed, the Now line at priority 70; Moth Lights pays 2 shards and Marta's Wheel 1;
+  the first-shard card; **shard pity**: the 5th awakened kill in a row with no shard drops one (per player).
+- **C, the Armoury** (`ArmsArmoury`): one list, three doors (Hale's rack by sneaking and talking to him, a Forge with an empty hand, the
+  band's K > Powers > THE ARMOURY): styles you know and the ones your rank opens at Hale's rack, six tier cards with have/need and where each
+  need comes from, buy a pattern with essence, draw a copy of one you know at the Forge (the random cycle is gone), **Track** one weapon on
+  the task card and the Now line (priority 52).
+- **D, the gates teach** (`ArmsPatterns`): on a main gate's first floor the first elite (else the third creature) is the **bearer**: it
+  wields the gate's style weapon with a faint glint, and its death gives every fighter near it the Blueprint straight into the pack
+  (never the Satchel), once per gate per player; the Lord's hoard is the fallback. A style you know gives an unknown style of the same
+  rank, a whole rank known gives essence. A riftborn camp's heart is a bearer. Six people teach early at the end of their jobs. The gate
+  card names the pattern ("The first floor carries a pattern: Daggers"); it does **not** show a Lord's weapon (Euan).
+- **E, boss weapons, rarer the cooler they are** (`ArmsSpoils`, `LordForged`, `MarkedDrops`, `ArmsRaise`): each fighter in a Lord's hoard rolls
+  Spoils (a Marked weapon of the Lord's style at the gate's tier, two distinct Marks) at E 60%, D 45%, C 30%, B 22%, A 15%, S 40%, with a
+  pity (the sixth Lord without any weapon is certain); a Lord-forged weapon replaces the Spoils (unchanged, pity 3). The Lord wields its
+  Lord-forged weapon, glinting. Guardians 30%, Sovereigns 40%, named beasts 15%. `tools/sim/gear_sim.py`: Lords per weapon E 1.3, D 1.5, C 1.7,
+  B 1.8, A 1.9, S 2.4. Marked: elite 4%, Warden 10%, camp heart 10%, certain on the 25th, the first from a Warden or heart certain.
+  **Raise** at a Forge: a Marked weapon becomes the next tier's (Marks, name and attunement kept; the next tier's parts spent; level gate);
+  a Lord-forged weapon keeps its body and gains +1 damage per raise (`awaken_raised`). The Armoury lists FINDS; JEI has Boss drops.
+- **F, tiers announced** (`ArmsTiers`): the next tier's lock says what it waits for, the ones beyond only after you hold one of their parts
+  (then "What waits" files it, `Promises`); at the tier's level a toast names the job; **a part job per tier from D up is first on Hale's
+  board** (`bounty/part_job_*.json`, `featured` and `keep`: Hale looks at the part and hands it back; done once). Oren's rank lines point at the forge.
+- **G, villages and stands** (`ArmsStands`, `PatternStandBlock`): the village smith's rack sells two patterns of its land's rank (the region
+  level at the village) for emeralds, never one you know, standing in the price (`VillageService.talk`, `ArmsApi.villagePatterns`); a Hearth
+  forge stands beside every village anvil as an Armoury door (`VillagePainter`). The **Pattern Stand** (`awaken:pattern_stand`; makes rack,
+  lectern, plinth, bier; emissive Blueprint-white line; the tier's weapon turns above it) holds one pattern drawn from its rank's band by the
+  structure's seed; taken once per fighter (the stand's position is the claim id); a style you know pays its rack price in essence; a fighter
+  within 7 blocks who hasn't taken it gets the find cue. Placed through `ArmsApi.placeStand` by Precursor vaults (the door's rank), monoliths,
+  ocean labs, sky platforms and spire crowns (`RuinBuilder.Sink.stand`), hero-tree crowns (`HeroCrowns.rig`) and surface lairs
+  (`LairBuilder.Sink.stand`). A stand placed with no rank (`""`) takes its land's rank on the server thread when someone first comes near,
+  because the region map must not be read during world generation.
+- **Tests** (`arms_`): `arms_sources`, `arms_recipe_unlock`, `arms_issue`, `arms_shard_pity`, `arms_rack`, `arms_armoury`, `arms_gate_pattern`,
+  `arms_homes`, `arms_boss_weapon`, `arms_marked_pity`, `arms_raise`, `arms_tier_cards`, `arms_stand`, `arms_village_patterns`.
+- **Hale's rack** (physical): two Pattern Stands of the rack make (style `hale`) stand three blocks from Hale, turned to face him, hanging the five Wildhide weapons (three hooks each); using one with an empty hand opens his first-weapon pick while it waits, else his Armoury, like speaking to him while sneaking. `Scenes.haleRack` asks `ArmsApi.placeHaleRack` once Hale is in the world and a player is near; it finds an existing rack after a restart and adds none.
+- **Not built / unverified**: stands in camps' hollow dens (a camp is cleared and
+  repainted, so a stand would vanish with it; the heart's bearer pays instead); the camp-name caption for the bearer; every client screen
+  and the stand's look and turning weapon, because the client was never launched (a tour is the next check); retrofitting stands into
+  structures already generated in an existing world.
 
 ---------------------------------------------------------------------------------------------------------------------
 

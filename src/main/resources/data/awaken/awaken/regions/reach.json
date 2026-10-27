@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "_": "SPEC 21.10. points: [distance from the city's centre, the highest level a land can have there]; straight lines between, flat past the last. Inside 700 it is the Commons' ramp.",
+  "points": [[240, 1], [700, 8], [1000, 12], [1500, 20], [2000, 30], [3000, 52], [4000, 74], [5500, 105], [8000, 150]],
+  "floor": 0.08,
+  "floorFrom": 700,
+  "floorTo": 1300,
+  "march": 240,
+  "mood": 0.4,
+  "contrast": 2.2,
+  "heartWorse": 0.2,
+  "tilt": 0.15,
+  "quietShare": 0.125,
+  "quietFrom": 2000
+}

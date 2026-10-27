@@ -226,6 +226,7 @@ public final class QuestEngine {
             Progression.setCounter(p, claim, 1);
             RewardHooks.apply(p, d.finish(), Progression.XpSource.WORLD);
             d.relic().ifPresent(relic -> giveRelic(p, s, chain, relic));
+            dev.awaken.core.api.ArmsApi.questDone(p, chain); // whoever teaches a style at the end of a chain pays it (docs/arms-progression/PLAN.md §3.4)
         }
         Progression.count(p, "awaken:quests_done");
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Chain complete · " + d.title()))

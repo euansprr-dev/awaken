@@ -61,7 +61,7 @@ final class LivingPlates {
             curProf = prof;
             Font font = mc.font;
             String name = LivingFx.name(ent, tag, prof);
-            int words = font.width(name) + chipWidth(font, tag.level()) + 10 + (tag.elite() ? font.width("ELITE") + 5 : 0);
+            int words = font.width(name) + (shownLevel(tag) ? chipWidth(font, tag.level()) : 0) + 10 + (tag.elite() ? font.width("ELITE") + 5 : 0);
             int titleW = tag.title().isEmpty() ? 0 : (int) (font.width(tag.title()) * 0.78F);
             SPEC.w = Mth.clamp(Math.max(words, titleW) + PAD * 2, 70, 220);
             SPEC.h = (tag.title().isEmpty() ? 27 : 35) + (stanceShown(ent) ? STANCE_H + 1 : 0);
@@ -84,15 +84,18 @@ final class LivingPlates {
         return tag.kind() == CreatureTag.Kind.PASSIVE || tag.kind() == CreatureTag.Kind.AMBIENT ? 0x8FA7C4 : Glass.EDGE;
     }
 
-    /** The level's colour: its rank's (E white, D green, C blue, B violet, A amber, S red), grey far below you, ember far above. */
+    /** The level chip's colour: how the creature measures against you (PlateRules.heat): grey, blue, orange, red. */
     static int levelColour(int lv, int mine) {
-        if (lv <= mine - 10) return LivingFx.GREY;
-        if (lv >= mine + 5) return LivingFx.EMBER;
-        return LivingFx.BAND[dev.awaken.living.api.Regions.bandOf(lv)];
+        return LivingFx.heatColour(lv, mine);
     }
 
     private static int chipWidth(Font font, int lv) {
         return font.width("Lv " + lv) + 6;
+    }
+
+    /** Whether the plate carries a level (SPEC §21.10: an animal that can't hurt you is a pig, not "Lv 68"). */
+    static boolean shownLevel(CreatureTag tag) {
+        return tag.kind() != CreatureTag.Kind.PASSIVE && tag.kind() != CreatureTag.Kind.AMBIENT;
     }
 
     private static void write(HoloCanvas cv) {
@@ -105,12 +108,15 @@ final class LivingPlates {
         int lv = tag.level();
         String lvText = "Lv " + lv;
         int col = levelColour(lv, mine);
-        int cw = chipWidth(font, lv);
+        boolean chip = shownLevel(tag);
+        int cw = chip ? chipWidth(font, lv) : 0;
         float cx1 = w - PAD + 1, cx0 = cx1 - cw;
-        float pulse = lv >= mine + 5 ? 0.75F + 0.25F * Mth.sin(LivingClient.ticks * 0.5F) : 1;
-        cv.fillF(cx0, ROW - 2, cx1, ROW + 10, argb(0.30F * pulse, col), argb(0.16F * pulse, col));
-        cv.fillF(cx0, ROW + 10, cx1, ROW + 11, argb(0.85F * pulse, col), argb(0.85F * pulse, col));
-        cv.textF(lvText, cx0 + 3, ROW, 0xFF000000 | col, false);
+        if (chip) {
+            float pulse = PlateRules.heat(lv, mine) == PlateRules.Heat.HARD ? 0.75F + 0.25F * Mth.sin(LivingClient.ticks * 0.5F) : 1;
+            cv.fillF(cx0, ROW - 2, cx1, ROW + 10, argb(0.30F * pulse, col), argb(0.16F * pulse, col));
+            cv.fillF(cx0, ROW + 10, cx1, ROW + 11, argb(0.85F * pulse, col), argb(0.85F * pulse, col));
+            cv.textF(lvText, cx0 + 3, ROW, 0xFF000000 | col, false);
+        }
         // the name; an elite says so first
         float nx = PAD;
         if (tag.elite()) {

@@ -103,6 +103,7 @@ public final class VillageBlocks {
             of("minecraft:cornflower"), of("minecraft:azure_bluet"), of("minecraft:allium")};
     static final BlockState ANVIL = of("minecraft:anvil[facing=north]");
     static final BlockState[] ANVIL_FACING = dirs("minecraft:anvil[facing=%s]");
+    static final BlockState[] FORGE = dirs("awaken:forge[facing=%s]");
     static final BlockState[] BLAST_FURNACE = dirs("minecraft:blast_furnace[facing=%s,lit=true]");
     static final BlockState GRINDSTONE = of("minecraft:grindstone[face=floor,facing=north]");
     static final BlockState BELL_CEILING_X = of("minecraft:bell[attachment=ceiling,facing=north]");

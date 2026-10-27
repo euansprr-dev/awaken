@@ -282,6 +282,7 @@ final class Highroads {
         if (to.kind() != Road.CROSSROADS && to.kind() != Road.JUNCTION) marks.add(Waymarks.leaving(bare, false));
         Road.Marker pass = Waymarks.pass(w, bare);
         if (pass != null) marks.add(pass);
+        if (cls == Road.HIGHROAD) marks.addAll(Waymarks.marches(w, bare)); // SPEC §21.10: where a higher land begins
         marks.removeIf(m -> m == null);
         RoadNet.log("{} {} from {} to {}: {} blocks, {} points, {} bridged, in {} ms ({} reads)", cls == Road.HIGHROAD ? "highroad" : "lane", key,
                 from.name(), to.name(), (int) bare.between(0, bare.points() - 1), bare.points(), bridged(p.flags()),

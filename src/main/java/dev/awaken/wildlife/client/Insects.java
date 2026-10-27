@@ -115,7 +115,7 @@ final class Insects {
                 }
                 // a couple a pass at most, so a meadow fills in over seconds, not all at once
                 for (int step = 0; step < 2; step++) {
-                    int dec = census.decide(k, d, city, s.h, s.key, have, Wildlife.tod, Wildlife.rain, Wildlife.thunder, Wildlife.dial);
+                    int dec = census.decide(k, d, city, s.h, s.key, have, Wildlife.tod, Wildlife.rain, Wildlife.thunder, Wildlife.dialNow());
                     if (dec < 0 && far >= 0) {
                         leaving[far] = true;
                         census.remove(k);

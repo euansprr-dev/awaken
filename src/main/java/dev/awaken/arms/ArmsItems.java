@@ -36,6 +36,7 @@ public final class ArmsItems {
     private ArmsItems() {}
 
     static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Awaken.MODID);
+    static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.BlockItem> STAND_ITEM = ITEMS.registerSimpleBlockItem(ArmsContent.STAND);
 
     private static final Map<String, ArmsData.Weapon> BY_ID = ArmsData.WEAPONS.stream()
             .collect(Collectors.toUnmodifiableMap(ArmsData.Weapon::id, Function.identity()));
@@ -103,6 +104,21 @@ public final class ArmsItems {
     static @Nullable Item item(String id) {
         DeferredItem<Item> d = ITEM_BY_ID.get(id);
         return d == null ? null : d.get();
+    }
+
+    /** The Blueprint item of a style, or null (the Longsword has none). */
+    public static @Nullable Item blueprintItem(String style) {
+        DeferredItem<Item> d = BLUEPRINTS.get(style);
+        return d == null ? null : d.get();
+    }
+
+    /** The style a Blueprint item is the design of, or null for any other item. */
+    public static @Nullable String blueprintStyle(Item item) {
+        Identifier id = BuiltInRegistries.ITEM.getKey(item);
+        String path = id.getPath();
+        if (!id.getNamespace().equals(Awaken.MODID) || !path.endsWith("_blueprint")) return null;
+        String style = path.substring(0, path.length() - "_blueprint".length());
+        return BLUEPRINTS.containsKey(style) ? style : null;
     }
 
     /** The row behind one of our weapons by its id, or null for any other item. */

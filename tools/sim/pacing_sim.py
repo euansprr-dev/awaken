@@ -68,6 +68,15 @@ BUDGET = {"hunt": 0.10, "ore": 0.06, "build": 0.03, "world": 0.25,              
           "forage": 0.012, "mine": 0.012, "fish": 0.012, "cook": 0.007, "smith": 0.007, "camp": 0.10}  # JAVA
 KILL_K = 0.03         # JAVA: share of a level per kill of an on-level hunter-role creature (before role and diff)
 ROLE_MIX = ((0.55, 1.0), (0.30, 0.5), (0.10, 0.15), (0.05, 4.0))  # JAVA roles: (share of kills, multiplier): hunter, neutral, ambient, elite
+# JAVA LivingModule.eliteChance (SPEC 21.10): elites roam by the land's rank, none in E land (a den's guard only), 2% D, 4% C, 5% B and up.
+# By the player's level here (they hunt on-level land); the share an elite no longer takes goes to hunters and neutrals in proportion.
+ELITE_BY_RANK = (0.0, 0.02, 0.04, 0.05)
+
+
+def role_mix(level):
+    e = ELITE_BY_RANK[0 if level < 10 else 1 if level < 25 else 2 if level < 45 else 3]
+    spare = 0.05 - e
+    return ((0.55 + spare * 0.55 / 0.85, 1.0), (0.30 + spare * 0.30 / 0.85, 0.5), (0.10, 0.15), (e, 4.0))
 CRAFT_ACTION = 0.008  # JAVA: share of a level per craft action that pays (a herb, an ore vein, a catch, a meal, a temper)
 QUEST_STEP = 0.12     # JAVA: mean reward of a Wayfarer step or bounty, in levels (a chain's finale pays ~0.8)
 CAMP_K = 0.4          # JAVA: a cleared camp or nest pays CAMP_K x floor 1 of the zone's rank (through the camp budget)
@@ -411,7 +420,7 @@ def simulate(kind, rng):
                     delta = rng.randint(-2, 2) if rng.random() < p["zone_fit"] else -rng.randint(4, 12)
                     role = 1.0
                     x = rng.random()
-                    for share, mult in ROLE_MIX:
+                    for share, mult in role_mix(lv):
                         x -= share
                         if x <= 0:
                             role = mult

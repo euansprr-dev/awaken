@@ -170,7 +170,7 @@ public final class SliceSampler {
                     shade -= hemmed * 0.045f;
                     float shadow = clamp((level - h) * 0.5f, 0f, 1f);
                     shade *= 1f - 0.30f * shadow;
-                    lit[z * T + x] = zoned(scale(colour[k], shade), k, edge, zones);
+                    lit[z * T + x] = zoned(scale(colour[k], shade), k, edge, zones, x0 + x * b + (b >> 1), z0 + z * b + (b >> 1));
                 }
                 if (drawn[k]) level = Math.max(level, hMax[k]);
                 level -= drop;
@@ -220,17 +220,19 @@ public final class SliceSampler {
 
     /**
      * The zone's colour over a texel: a wash of its colour over the land, and where a known texel within {@code edge}
-     * belongs to another zone, a bright line of it, so each side of a boundary carries its own colour.
+     * belongs to another zone, a bright line of it, so each side of a boundary carries its own colour. A region's colour
+     * follows its land level smoothly, blended between cells (SPEC §21.11), read at the texel's middle block.
      */
-    private int zoned(int c, int k, int edge, ZoneMap.View zones) {
+    private int zoned(int c, int k, int edge, ZoneMap.View zones, int bx, int bz) {
         int zn = zone[k];
         if (zn == 0 || zones == null) return c;
-        int zc = zones.colour(zn);
+        float level = zn < ZoneMap.DISTRICT ? zones.level(bx, bz) : 0f;
+        int zc = level > 0 ? zones.smoothColour(level) : zones.colour(zn);
         if (zc == 0) return c;
         for (int d = 1; d <= edge; d++)
             if (differs(k + d, zn) || differs(k - d, zn) || differs(k + d * gw, zn) || differs(k - d * gw, zn))
                 return mix(c, mix(zc, 0xFFFFFFFF, 0.50f), 0.90f);
-        return mix(c, zc, 0.30f);
+        return mix(c, zc, level > 0 ? 0.36f : 0.30f);
     }
 
     private boolean differs(int n, int zn) {
