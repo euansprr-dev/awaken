@@ -2549,15 +2549,24 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     Saved every 30 s and on leaving; the whole cache is kept ≤ 64 MB by deleting the oldest tiles down to 56 MB.
     "Clear Atlas cache" deletes every world's tiles and the sampled columns; what you explored is the server's and
     stays. Roofed dimensions (the Nether) draw no terrain yet.
-  - Mesh: three levels (a column is 1, 4 or 16 blocks; the level follows zoom: ≥ 0.9, ≥ 0.22, below), slices of 64×64
-    columns, a 15×15-slice window per level, ≤ 96 MB of GPU buffers (farthest dropped first); a level not drawn for 20 s
-    lets its slices go. Slices build on one worker thread from snapshots; the main thread only uploads, before the
+  - Mesh (detail at every zoom, Euan 2026-10-27: "zooming out looses SO much detail"): five levels, a column of 1, 2, 4,
+    8 or 16 blocks, picked by screen pixels a block (zoom × GUI scale: 3, 1.5, 0.75, 0.375), so a column is 3 to 6 screen
+    pixels at every zoom and each step only halves. A coarse column is read from its whole square, never its middle
+    block: it stands half way between the square's mean height and its top (a wall or a clump of trees still rises). The
+    tops are textured quads merged wherever the height matches, painted from the slice's own texture: a texel a block
+    (two and four blocks at the two coarsest levels, ≤ 256×256 a slice), each texel the mean colour of its blocks lit on
+    its own (the west sun's cast shadows, slope shade, occlusion, grain, the zone wash, and borders 1 to 2 texels wide
+    each side), with a mip chain, sampled anisotropically (×8) with nearest-texel magnification at the two finest
+    levels. A road, a stream or a roof a block wide keeps its colour, with its weight, at every zoom. Sides stay
+    coloured quads from the column's mean lit colour. Districts are named from 0.9 GUI px a block, as before. Slices of a
+    level built ahead of a zoom don't rise when it's shown. Slices of 64×64 columns, a 15×15-slice window per level,
+    ≤ 96 MB of GPU buffers and textures (farthest dropped first); a level not drawn for 20 s lets its slices go. Slices build on one worker thread from snapshots; the main thread only uploads, before the
     pass opens. The finest level is kept built round the player while the table is shut.
   - The table opens on M (Xaero's key), in the Holo's projected glass (`HudLook` FRAME | DRIFT, text as light), sets
     `UiHooks` focus while open, and plays the Holo's open and close sounds. C centres on you. Dev: `/awaken atlas
     stats|share|reveal <r>|ring <city|district>|clear` and the client's `/atlas open|view|spin|freeze|reveal|stats`.
   - The look (phase 2): night lights from the lit bit (a light-emitting block in the top 6 of a column) as warm soft
-    sprites, flickering a little, at the two finer levels; cloud shadows on explored ground beside the blanket's edge
+    sprites, flickering a little, at the levels of 1 to 4 blocks a column; cloud shadows on explored ground beside the blanket's edge
     (east and south of each puff: the sun is low in the west); ambient occlusion on the top faces (darker for each
     taller neighbour); three cloud sprites with sunlit rims and a tone per puff; zoomed out, a coarse cell that is
     mostly known carries no cloud. Rumours (`MapMarks` labelled "? …") hang in the clouds as an amber "?" with their
