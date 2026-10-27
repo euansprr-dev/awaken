@@ -52,7 +52,22 @@ public final class ArmsApi {
 
         /** A Lord spawned: it holds its own Lord-forged weapon in its hand, glinting, so you can see what you fight for. */
         void lordWields(net.minecraft.world.entity.LivingEntity lord);
+
+        /** Places a Pattern Stand: its make ("rack", "lectern", "plinth", "bier"), facing, and the pattern its rank's band draws by the structure's seed. False if nothing could be placed. */
+        boolean placeStand(net.minecraft.world.level.LevelAccessor level, net.minecraft.core.BlockPos pos, net.minecraft.core.Direction facing, String kind, String rankLabel, long seed);
+
+        /** The rank label ("E" to "S") of a level, by the plate bands. */
+        String rankOfLevel(int level);
+
+        /** The patterns a village smith sells this fighter: two of the village's rank, drawn by its seed, never one they know. */
+        java.util.List<VillageOffer> villagePatterns(ServerPlayer player, long seed, int landLevel);
+
+        /** The smith's pattern was bought: it is known at once. */
+        void villageBought(ServerPlayer player, String style);
     }
+
+    /** One pattern on a village smith's rack: the style, its Blueprint to hand over, and its price in emeralds (before standing). */
+    public record VillageOffer(String style, net.minecraft.world.item.ItemStack blueprint, int emeralds) {}
 
     private static Hooks hooks;
     private static BiConsumer<ServerPlayer, String> speech = (p, line) -> {};
@@ -111,6 +126,22 @@ public final class ArmsApi {
 
     public static void lordWields(net.minecraft.world.entity.LivingEntity lord) {
         if (hooks != null) hooks.lordWields(lord);
+    }
+
+    public static boolean placeStand(net.minecraft.world.level.LevelAccessor level, net.minecraft.core.BlockPos pos, net.minecraft.core.Direction facing, String kind, String rankLabel, long seed) {
+        return hooks != null && hooks.placeStand(level, pos, facing, kind, rankLabel, seed);
+    }
+
+    public static String rankOfLevel(int level) {
+        return hooks == null ? "E" : hooks.rankOfLevel(level);
+    }
+
+    public static java.util.List<VillageOffer> villagePatterns(ServerPlayer player, long seed, int landLevel) {
+        return hooks == null ? java.util.List.of() : hooks.villagePatterns(player, seed, landLevel);
+    }
+
+    public static void villageBought(ServerPlayer player, String style) {
+        if (hooks != null) hooks.villageBought(player, style);
     }
 
     /** The living module says what people say ("Hale: ...") on screen; arms asks it to, without knowing how. */

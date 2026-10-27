@@ -137,6 +137,26 @@ public final class ArmsIssue implements ArmsApi.Hooks {
     }
 
     @Override
+    public boolean placeStand(net.minecraft.world.level.LevelAccessor level, net.minecraft.core.BlockPos pos, net.minecraft.core.Direction facing, String kind, String rankLabel, long seed) {
+        return ArmsStands.place(level, pos, facing, kind, rankLabel, seed);
+    }
+
+    @Override
+    public String rankOfLevel(int level) {
+        return ArmsHomes.rankOfLevel(level).label;
+    }
+
+    @Override
+    public java.util.List<ArmsApi.VillageOffer> villagePatterns(ServerPlayer p, long seed, int landLevel) {
+        return ArmsStands.villagePatterns(p, seed, landLevel);
+    }
+
+    @Override
+    public void villageBought(ServerPlayer p, String style) {
+        ArmsStands.villageBought(p, style);
+    }
+
+    @Override
     public void lordSpoils(ServerPlayer p, String rankLabel, String themeId) {
         ArmsSpoils.lordKill(p, rankLabel, themeId);
     }

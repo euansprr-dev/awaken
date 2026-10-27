@@ -289,5 +289,6 @@
   "awaken.armoury.open.C": "You will need diamonds from the deep and a relic from a D-rank Lord. Hale has a job on his board for the relic.",
   "awaken.armoury.open.B": "You will need Deepglass and amethyst from the deep and parts from C-rank and B-rank Lords. Hale has a job on his board for the first part.",
   "awaken.armoury.open.A": "You will need netherite scrap from the Nether and parts from B-rank and A-rank Lords or the deep guardians. Hale has a job on his board for the first part.",
-  "awaken.armoury.open.S": "You will need starmetal from the fallen stars and parts from the Hollow Herald or the Court. Hale has a job on his board for the first part."
+  "awaken.armoury.open.S": "You will need starmetal from the fallen stars and parts from the Hollow Herald or the Court. Hale has a job on his board for the first part.",
+  "block.awaken.pattern_stand": "Pattern Stand"
 }

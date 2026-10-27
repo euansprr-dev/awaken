@@ -63,6 +63,8 @@ public final class ArmsClient {
         FirstPerson.view(ArmsHands::view);
         Stances.install(ArmsStances.INSTANCE);
         modBus.addListener(ArmsClient::onPayloads);
+        modBus.addListener((net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers e) ->
+                e.registerBlockEntityRenderer(dev.awaken.arms.ArmsStands.standType(), PatternStandRenderer::new));
         modBus.addListener((RegisterGuiLayersEvent e) -> e.registerAbove(VanillaGuiLayers.CROSSHAIR, Awaken.id("arms_hud"), ArmsHud::render));
         modBus.addListener((RegisterRenderStateModifiersEvent e) ->
                 e.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, (entity, state) -> {

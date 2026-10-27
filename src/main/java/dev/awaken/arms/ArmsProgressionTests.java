@@ -35,6 +35,8 @@ final class ArmsProgressionTests {
         AwakenTests.register("arms_marked_pity", 40, ArmsProgressionTests::markedPity);
         AwakenTests.register("arms_raise", 40, ArmsProgressionTests::raise);
         AwakenTests.register("arms_tier_cards", 60, ArmsProgressionTests::tierCards);
+        AwakenTests.register("arms_stand", 60, ArmsProgressionTests::stand);
+        AwakenTests.register("arms_village_patterns", 40, ArmsProgressionTests::villagePatterns);
     }
 
     /** A mock player in survival (the helper's are creative, where nothing is paid). */
@@ -344,6 +346,67 @@ final class ArmsProgressionTests {
         h.assertTrue(dev.awaken.living.bounty.Bounties.state(sp).taken().isEmpty() && dev.awaken.living.bounty.Bounties.state(sp).done() == 1, "shown, so it is done");
         h.assertTrue(count(sp, item("briar_tusk")) == 1, "and the tusk goes back to the hunter");
         h.assertTrue(Progression.profile(sp).counter("awaken:featured_done/" + id) == 1, "a featured notice is done for good");
+        h.succeed();
+    }
+
+    /** A Pattern Stand: its pattern is drawn from its rank's band by the seed, the same every time; taken once per fighter; a style you know pays essence. */
+    static void stand(net.minecraft.gametest.framework.GameTestHelper h) {
+        var level = h.getLevel();
+        BlockPos at = h.absolutePos(new BlockPos(2, 1, 2));
+        h.assertTrue(ArmsApi.placeStand(level, at, net.minecraft.core.Direction.NORTH, "lectern", "C", 5L), "a stand is placed");
+        var be = (PatternStandBlockEntity) level.getBlockEntity(at);
+        var home = ArmsHomes.of(be.style());
+        h.assertTrue(home != null && home.rank() == dev.awaken.progression.Rank.C && be.tier() == 2, "a C-rank stand holds a C-rank pattern at the C tier: " + be.style() + " " + be.tier());
+        String first = be.style();
+        ArmsApi.placeStand(level, at, net.minecraft.core.Direction.NORTH, "lectern", "C", 5L);
+        h.assertTrue(((PatternStandBlockEntity) level.getBlockEntity(at)).style().equals(first), "the same seed shows the same pattern");
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        for (long seed = 1; seed <= 24; seed++) {
+            ArmsApi.placeStand(level, at, net.minecraft.core.Direction.NORTH, "rack", "E", seed);
+            seen.add(((PatternStandBlockEntity) level.getBlockEntity(at)).style());
+        }
+        h.assertTrue(seen.size() >= 3, "different seeds draw different E patterns: " + seen);
+        ArmsApi.placeStand(level, at, net.minecraft.core.Direction.NORTH, "lectern", "C", 5L);
+        be = (PatternStandBlockEntity) level.getBlockEntity(at);
+
+        ServerPlayer a = survivor(h), b = survivor(h);
+        h.assertTrue(!ArmsApi.knows(a, first), "unknown to start with");
+        ArmsStands.take(a, level, at, be);
+        h.assertTrue(ArmsApi.knows(a, first) && count(a, ArmsItems.blueprintItem(first)) == 1, "the first take teaches the pattern and hands over its Blueprint");
+        ArmsStands.take(a, level, at, be);
+        h.assertTrue(count(a, ArmsItems.blueprintItem(first)) == 1 && ArmsStands.taken(a, level, at), "and only once per fighter");
+        ArmsIssue.remember(b, first);
+        ArmsStands.take(b, level, at, be);
+        h.assertTrue(count(b, CoreApi.ESSENCE_SHARD.get()) == ArmsHomes.rackPrice(dev.awaken.progression.Rank.C), "a fighter who knows it is paid its price in essence");
+
+        // no rank given: the pattern is drawn from the land's rank when someone first comes near
+        BlockPos lazy = h.absolutePos(new BlockPos(4, 1, 2));
+        h.assertTrue(ArmsApi.placeStand(level, lazy, net.minecraft.core.Direction.EAST, "plinth", "", 99L), "a stand with no rank is placed");
+        var lazyBe = (PatternStandBlockEntity) level.getBlockEntity(lazy);
+        h.assertTrue(lazyBe.pending() && lazyBe.style().isEmpty(), "and waits");
+        ArmsStands.resolve(level, lazy, lazyBe);
+        h.assertTrue(!lazyBe.pending() && ArmsHomes.of(lazyBe.style()) != null, "until someone comes near: " + lazyBe.style());
+        h.succeed();
+    }
+
+    /** The smith's rack: two patterns of the village's rank, the same every time, never one you know; paying teaches it. */
+    static void villagePatterns(net.minecraft.gametest.framework.GameTestHelper h) {
+        ServerPlayer sp = survivor(h);
+        var near = ArmsStands.villagePatterns(sp, 12345L, 5);
+        h.assertTrue(near.size() == 2 && near.stream().allMatch(o -> ArmsHomes.of(o.style()).rank() == dev.awaken.progression.Rank.E && o.emeralds() == 6),
+                "a level 5 village sells two E patterns at 6 emeralds: " + near);
+        h.assertTrue(near.stream().map(ArmsApi.VillageOffer::style).toList().equals(ArmsStands.villagePatterns(sp, 12345L, 5).stream().map(ArmsApi.VillageOffer::style).toList()), "and the same two every time");
+        var far = ArmsStands.villagePatterns(sp, 12345L, 30);
+        h.assertTrue(far.size() == 2 && far.stream().allMatch(o -> ArmsHomes.of(o.style()).rank() == dev.awaken.progression.Rank.C && o.emeralds() == 16),
+                "a level 30 village sells two C patterns at 16 emeralds: " + far);
+        var top = ArmsStands.villagePatterns(sp, 12345L, 150);
+        h.assertTrue(top.size() == 2 && top.stream().allMatch(o -> ArmsHomes.of(o.style()) != null), "a land above every band still has two patterns to sell: " + top);
+        String first = near.getFirst().style();
+        ArmsIssue.remember(sp, first);
+        h.assertTrue(ArmsStands.villagePatterns(sp, 12345L, 5).stream().noneMatch(o -> o.style().equals(first)), "a pattern you know is not on the rack");
+        String bought = far.getFirst().style();
+        ArmsApi.villageBought(sp, bought);
+        h.assertTrue(ArmsApi.knows(sp, bought), "paying teaches it");
         h.succeed();
     }
 }

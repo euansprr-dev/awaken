@@ -54,6 +54,9 @@ public final class LairBuilder {
         default int @org.jspecify.annotations.Nullable [] joint() {
             return null;
         }
+
+        /** A Pattern Stand (arms, docs/arms-progression/PLAN.md §3.4): a fallen hunter's rack, with a pattern of the land's rank. Sinks that don't place stands ignore it. */
+        default void stand(int x, int y, int z, net.minecraft.core.Direction facing, String kind) {}
     }
 
     /** The blueprint's version, saved on each piece (1 = before the structures redesign). */
@@ -77,6 +80,12 @@ public final class LairBuilder {
         // the den itself stays clear: carpets, petals and snow round it, never on it (the sea floor's den is open water)
         if (style.placement != LairStyle.Placement.SEABED && s.here(style.denX, style.denZ)) {
             for (int dy = 0; dy < 4; dy++) s.set(style.denX, style.denY + dy, style.denZ, AIR);
+        }
+        // a fallen hunter's rack a few blocks from the den, turned to face it: the one who lost to this beast left their pattern
+        if (style.placement == LairStyle.Placement.SURFACE) {
+            double a = noise(seed, 7, 11) * Math.PI * 2;
+            int x = style.denX + (int) Math.round(Math.cos(a) * 6), z = style.denZ + (int) Math.round(Math.sin(a) * 6);
+            if (s.here(x, z)) s.stand(x, s.ground(x, z) + 1, z, net.minecraft.core.Direction.getApproximateNearest(style.denX - x, 0, style.denZ - z), "rack");
         }
     }
 

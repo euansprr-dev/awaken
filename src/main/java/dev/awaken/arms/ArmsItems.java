@@ -36,6 +36,7 @@ public final class ArmsItems {
     private ArmsItems() {}
 
     static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Awaken.MODID);
+    static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.BlockItem> STAND_ITEM = ITEMS.registerSimpleBlockItem(ArmsContent.STAND);
 
     private static final Map<String, ArmsData.Weapon> BY_ID = ArmsData.WEAPONS.stream()
             .collect(Collectors.toUnmodifiableMap(ArmsData.Weapon::id, Function.identity()));
