@@ -21,7 +21,7 @@ import java.util.concurrent.Executors;
  * textured quads, merged wherever the height matches, painted from the slice's lit texture ({@link SliceSampler}: a
  * texel a block, lit block by block by a low west sun with cast shadows, slope shade and occlusion); the sides are
  * coloured quads (darker side faces, cut edges down to a base like a diorama block). Five levels of detail: a column is
- * 1, 2, 4, 8 or 16 blocks, so a slice covers 64 to 1024 blocks and a column stays 3 to 6 screen pixels at every zoom,
+ * 1, 2, 4, 8 or 16 blocks, so a slice covers 64 to 1024 blocks and a column stays 3.6 to 7 screen pixels at every zoom,
  * while the texture keeps the land's detail down to the pixel. Only explored columns are meshed.
  * <p>
  * Memory is bounded (spike S5's finding: ~100 B per explored column): only a window of slices round the view is kept

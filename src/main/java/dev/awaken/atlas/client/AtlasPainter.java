@@ -92,7 +92,7 @@ final class AtlasPainter {
             sharp = device.createSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.LINEAR, FilterMode.NEAREST, aniso, OptionalDouble.empty());
             soft = device.createSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.LINEAR, FilterMode.LINEAR, aniso, OptionalDouble.empty());
         }
-        // close in a texel is 1.5 pixels or more: nearest keeps each block's edge; further out it is a pixel or less
+        // close in a texel is 1.8 pixels or more: nearest keeps each block's edge; further out it is a pixel or less
         return lod <= 1 ? sharp : soft;
     }
 

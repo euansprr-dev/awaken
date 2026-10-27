@@ -2550,8 +2550,8 @@ for sealing and shared rewards; `story` hands the Ritual's end to `opening` in C
     "Clear Atlas cache" deletes every world's tiles and the sampled columns; what you explored is the server's and
     stays. Roofed dimensions (the Nether) draw no terrain yet.
   - Mesh (detail at every zoom, Euan 2026-10-27: "zooming out looses SO much detail"): five levels, a column of 1, 2, 4,
-    8 or 16 blocks, picked by screen pixels a block (zoom × GUI scale: 3, 1.5, 0.75, 0.375), so a column is 3 to 6 screen
-    pixels at every zoom and each step only halves. A coarse column is read from its whole square, never its middle
+    8 or 16 blocks, picked by screen pixels a block (zoom × GUI scale: 3.6, 1.8, 0.9, 0.45), so a column is 3.6 to 7 screen
+    pixels at every zoom (no more columns on screen than the old finest level at its closest) and each step only halves. A coarse column is read from its whole square, never its middle
     block: it stands half way between the square's mean height and its top (a wall or a clump of trees still rises). The
     tops are textured quads merged wherever the height matches, painted from the slice's own texture: a texel a block
     (two and four blocks at the two coarsest levels, ≤ 256×256 a slice), each texel the mean colour of its blocks lit on

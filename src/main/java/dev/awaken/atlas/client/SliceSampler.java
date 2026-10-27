@@ -24,12 +24,13 @@ public final class SliceSampler {
     static final int CW = S + 2;
 
     /**
-     * The level to draw at this many screen pixels per block: the coarsest whose column still covers 3 pixels, so a
-     * column is 3 to 6 pixels wide at every zoom (the 15×15-slice window spans the screen at 3) and each step halves.
+     * The level to draw at this many screen pixels per block: the coarsest whose column still covers 3.6 pixels (where
+     * the finest level always began on a Retina screen), so a column is 3.6 to 7 pixels wide at every zoom, never more
+     * columns on screen than before, and each step only halves; the texture carries the detail below a column.
      */
     static int lodFor(float physicalPxPerBlock) {
         float p = physicalPxPerBlock;
-        return p >= 3f ? 0 : p >= 1.5f ? 1 : p >= 0.75f ? 2 : p >= 0.375f ? 3 : 4;
+        return p >= 3.6f ? 0 : p >= 1.8f ? 1 : p >= 0.9f ? 2 : p >= 0.45f ? 3 : 4;
     }
 
     static int texels(int lod) {
