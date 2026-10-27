@@ -82,7 +82,8 @@ public final class SoftStepsFeature implements Feature {
         Ground ground = new Ground() {
             @Override
             public int top(int x, int z) {
-                return chunk(x, z).getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x & 15, z & 15) - 1;
+                // ChunkAccess.getHeight already answers with the top block's y (the first free block, less one)
+                return chunk(x, z).getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x & 15, z & 15);
             }
 
             @Override

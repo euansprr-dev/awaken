@@ -229,6 +229,37 @@ final class GroundTests {
             h.succeed();
         });
 
+        // the same through the feature itself, with the real heightmaps the generator reads (the first version double-counted the "- 1"
+        // of a chunk's heightmap and placed nothing in a real world): a sloped chunk, place(), the foot columns take their slabs
+        AwakenTests.registerIsolated("ground_soft_steps_world", 60, h -> {
+            ServerLevel level = h.getLevel();
+            BlockPos o = h.absolutePos(BlockPos.ZERO);
+            int cx = (o.getX() >> 4) + 7, cz = (o.getZ() >> 4) + 7;           // a chunk of its own, loaded for the test
+            level.getChunk(cx, cz);
+            int x0 = cx << 4, z0 = cz << 4, y0 = o.getY();
+            for (int dx = 0; dx < 16; dx++) for (int dz = 0; dz < 16; dz++) for (int yy = level.getMinY(); yy <= Math.min(level.getMaxY(), y0 + 12); yy++) {
+                int y = y0 + dx / 2;
+                level.setBlock(new BlockPos(x0 + dx, yy, z0 + dz), yy < y ? Blocks.STONE.defaultBlockState() : yy == y ? Blocks.GRASS_BLOCK.defaultBlockState() : Blocks.AIR.defaultBlockState(), 2);
+            }
+            // the biome there is whatever the test level has: skip the cold ones by checking first
+            if (level.getBiome(new BlockPos(x0 + 8, y0 + 1, z0 + 8)).value().coldEnoughToSnow(new BlockPos(x0 + 8, y0 + 1, z0 + 8), level.getSeaLevel())) {
+                h.succeed();
+                return;
+            }
+            SoftStepsFeature.INSTANCE.place(level, level.getChunkSource().getGenerator(), level.getRandom(), new BlockPos(x0, level.getMinY(), z0));
+            int slabs = 0;
+            for (int dx = 1; dx <= 14; dx++) for (int dz = 1; dz <= 14; dz++) {
+                boolean foot = dx % 2 == 1 && dx <= 13;
+                BlockState over = level.getBlockState(new BlockPos(x0 + dx, y0 + dx / 2 + 1, z0 + dz));
+                if (over.is(SoftSlabs.TURF_SLAB.get())) slabs++;
+                h.assertTrue(foot == over.is(SoftSlabs.TURF_SLAB.get()), "a turf slab on the foot columns only, at " + dx + "," + dz + ": " + over);
+            }
+            h.assertTrue(slabs == 7 * 14, "the feature placed " + slabs + " of " + 7 * 14 + " in a real chunk");
+            for (int dx = 0; dx < 16; dx++) for (int dz = 0; dz < 16; dz++) for (int yy = y0 - 2; yy <= y0 + 12; yy++)
+                level.setBlock(new BlockPos(x0 + dx, yy, z0 + dz), Blocks.AIR.defaultBlockState(), 2);
+            h.succeed();
+        });
+
         // the slabs: spawn on, no plants grow on (nothing floats), grass smothered under a block goes to dirt, items and loot exist
         AwakenTests.register("ground_soft_slab_rules", 20, h -> {
             BlockState turf = SoftSlabs.TURF_SLAB.get().defaultBlockState();

@@ -46,7 +46,7 @@ public final class SnowDriftsFeature implements Feature {
             for (int i = 0; i < 18; i++) {
                 int x = cx - 1 + i, z = cz - 1 + j;
                 ChunkAccess c = chunks[((x >> 4) - (cx >> 4) + 1) * 3 + (z >> 4) - (cz >> 4) + 1];
-                h[j * 18 + i] = c.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x & 15, z & 15) - 1;
+                h[j * 18 + i] = c.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x & 15, z & 15);   // the top block's y already
                 if (i >= 1 && i <= 16 && j >= 1 && j <= 16) max = Math.max(max, h[j * 18 + i]);
             }
         }
