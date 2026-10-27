@@ -149,7 +149,7 @@ public final class Checklist {
         BlockPos.MutableBlockPos q = new BlockPos.MutableBlockPos();
         for (int dx = -10; dx <= 10; dx++) for (int dz = -10; dz <= 10; dz++) for (int dy = -2; dy <= 1; dy++) {
             q.set(feet.getX() + dx, feet.getY() + dy, feet.getZ() + dz);
-            if (!level.hasChunkAt(q) || !standable(level, q)) continue;
+            if (!loaded(level, q) || !standable(level, q)) continue;
             for (Direction d : Direction.Plane.HORIZONTAL) {
                 BlockPos w = q.relative(d);
                 if (solid(level, w) && solid(level, w.above()) && !solid(level, w.above(2)) && !solid(level, w.above(3))) {
@@ -170,6 +170,14 @@ public final class Checklist {
     }
 
     private static boolean solid(ServerLevel level, BlockPos at) {
-        return level.getBlockState(at).isCollisionShapeFullBlock(level, at);
+        return loaded(level, at) && level.getBlockState(at).isCollisionShapeFullBlock(level, at);
+    }
+
+    /**
+     * Only a chunk that is already whole: hasChunkAt is true for one still generating, and reading it then waits for it
+     * on the server thread (a chunk waiting on its roads held the server for seconds, roads-perf 2026-10-27).
+     */
+    private static boolean loaded(ServerLevel level, BlockPos at) {
+        return level.getChunkSource().getChunkNow(at.getX() >> 4, at.getZ() >> 4) != null;
     }
 }
