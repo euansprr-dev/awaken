@@ -28,7 +28,8 @@ you have dug for iron. So:
    in the band, with a **Track** button that puts the missing parts on the screen (§3.2, §3.5).
 5. Each new tier announces itself with a named job on Hale's board for its signature part, and never needs more than one
    trophy, one metal run and the essence you already earn (§3.6).
-6. Every boss fight drops a weapon (the Lord-forged one, else a Marked one in the Lord's own style), and found weapons
+6. Boss fights are where the steel comes from, and the cooler the weapon the rarer it is: weaker ones often, an A or S
+   weapon about one boss in two or three, and you can see what a boss carries before you fight it. Found weapons
    can be **raised** to your tier at the Forge, so finding and making both stay worth doing (§3.7).
 7. Gear stays the floor, not the lever: the sim says skill decides fights, so the first gear can be generous (§3.8).
 
@@ -400,7 +401,7 @@ has the metal in hand at about the level: iron 6.3 h against level 13 at 6.3 h, 
 | **Forged** (crafted) | you make it, at your tier | the tier's weapon: reliable, chosen, attunable and temperable | your build; always current |
 | **Marked** (blue) | an elite, a Warden or a riftborn camp's heart drops a forged weapon of your tier with 1-2 Marks | the same weapon with a quirk you didn't choose | try something new |
 | **Named** | a place gives it: a theme's last-floor cache, a region's secret, a troubled village's reward, a chain's end; **told by a rumour first** (an Atlas "?") | a fixed weapon with a name, 1-2 Marks and one plain line of history | a keepsake from somewhere you went |
-| **Boss weapon** (blue, two Marks) | every Gate Lord kill that isn't a Lord-forged drop; guardians, Sovereigns and named beasts too (below) | a forged weapon of the boss's rank in the boss's own style | the boss fight always pays in steel |
+| **Boss weapon** (blue, two Marks) | a chance on every Gate Lord kill, falling with rank (60% at E to 15% at A); guardians, Sovereigns and named beasts too (below) | a forged weapon of the boss's rank in the boss's own style | a boss often pays in steel at low ranks and rarely at high ones |
 | **Lord-forged** (ember-gold) | 35% a Lord kill, certain by the third without one (unchanged) | the Lord's weapon and its signature move as the Art | a trophy of a kill |
 | **Legendary** | authored, tied to the story | unique model and moveset twist | the long goal (S9, later) |
 
@@ -411,20 +412,42 @@ give Marked drops the Lord-forged reveal in miniature (a short pillar and the sa
 overworld kills are elites) 4% is about one in 500 kills; the sim doesn't say kills an hour, so **Phase E adds a gear row
 to `pacing_sim.py`** (kits, Blueprints, Marked) and the pity is set from it. UNVERIFIED: how often this fires today.
 
-**Boss weapons** (Euan, 2026-10-27: "weapon drops from boss fights would be great, would be a really good reward").
-Every boss kill drops a weapon to every fighter in the room, straight into the pack (never the Satchel), with the
-Lord-forged reveal's smaller twin: a pillar of the boss's colour and the System naming it ("SPOILS · Hive Regent's Daggers"):
+**Boss weapons** (Euan, 2026-10-27: "weapon drops from boss fights would be great", then: "I don't think EVERY boss fight should
+drop a weapon. It should still feel like an achievement ... weaker ones more often is fine, but really cool ones should still
+be a bit of luck so you might have to do 2-3 S rank gates to get one weapon ... a real grind to it. But again it should be
+clear you can find it in these drops."). So **the cooler the weapon, the rarer**, rolled per fighter in the Lord's hoard
+(like `Loot.boss` and the Power Cores, so a party each rolls their own), straight into the pack (never the Satchel), with the
+Lord-forged reveal's smaller twin for a Spoils drop (a pillar of the boss's colour and the System naming it: "SPOILS · Hive
+Regent's Daggers"). Two rolls on a Gate Lord kill (PROPOSAL; the Phase E sim row tunes them):
 
-- **Gate Lord:** the Lord-forged weapon (35%, certain by the third without one, unchanged), **else a Marked weapon of the
-  Lord's own style at the gate's rank, with two Marks.** A broken gate's Lord drops one more Marked weapon. No Lord kill
-  ends empty-handed and the Lord-forged stays the chase.
-- **Descent guardians, Sovereigns, the final bosses:** a Marked weapon of their stratum's rank in a themed style, two Marks
-  (their own Lord-forged-style weapons arrive with S9's named weapons).
-- **Named beasts** (the overworld's bosses): the first kill of each beast drops a Marked weapon of your tier; later kills
-  15% (PROPOSAL; the Phase E sim row sets it).
+| Gate rank | Spoils: a Marked weapon of the Lord's style, two Marks | Lord-forged (unchanged) | Any weapon from one Lord | Lords per weapon |
+|---|---|---|---|---|
+| E | 60% | 35%, certain by the third without one | about 74% | 1.4 |
+| D | 45% | the same | about 64% | 1.6 |
+| C | 30% | the same | about 55% | 1.8 |
+| B | 22% | the same | about 49% | 2.0 |
+| A | 15% | the same | about 45% | 2.2 |
+| S | 40% (no Lord-forged weapon exists at S until S9; then Spoils drop to 15% and the Lord-forged takes the slot) | none yet | about 40% | **2.5** |
 
-It is rolled per fighter in the hoard (like `Loot.boss` and the Power Cores), so a party each gets their own. A spare
-weapon can be **salvaged** at any Armoury door for essence (the tier's pattern price), so drops are never clutter (optional).
+So a low-rank Lord usually pays and a high-rank one is a **real grind, two or three S gates to one weapon**, as Euan said.
+A **weapon pity** keeps the tail honest: certain by the sixth Lord kill without any weapon (per player, in
+`awaken:arms_memory`). A broken gate's Lord rolls one extra Spoils. Other bosses (PROPOSAL): Descent guardians 30%,
+Sovereigns 40%, named beasts 15% (no guaranteed first kill; the one guaranteed first is the lowest rung, a first Marked weapon
+from an elite, Warden or camp heart); the final bosses wait for S9's legendary weapons.
+
+**It must be clear where a weapon comes from** (Euan: "it should be clear you can find it in these drops"):
+
+- **The boss wields it.** A Lord holds its own Lord-forged weapon in its hand, glinting (a creature's held weapon is only a look,
+  `AwakenMob.gearStack`; `docs/combat` already has the weapon models), so you can see what you are fighting for before the fight starts.
+- **The gate card says it** once it shows the Lord: "The Hive Regent may carry its daggers: Royal Dive."
+- **The Armoury's FINDS lists every Lord you have met** with its weapon as a dark silhouette until you own it ("Hive Regent · Daggers
+  · not yet", "Lord-forged 1 of 15"), and says "The next Lord is certain to carry its weapon" when the pity has come round.
+- **Tooltips and JEI say it, in words, not percentages:** a Lord-forged or Spoils weapon's tooltip reads "Dropped by: the Hive Regent
+  in E-rank gates. Sometimes: certain by the third Lord." JEI gets a **Boss drops** category: each boss, its weapon, and Often,
+  Sometimes or Rarely (Often is half or more, Sometimes a quarter to a half, Rarely less). Names show once you have met the boss
+  (the spoiler rule).
+
+A spare weapon can be **salvaged** at any Armoury door for essence (the tier's pattern price), so drops are never clutter (optional).
 
 **Raise (the answer to "finding versus making").** At a Forge, the Armoury's *Raise* tab takes the weapon in your hand
 and lifts it to your next tier for that tier's parts (the same Fang, Parts, Binding, metal and shards the crafted version
@@ -485,7 +508,7 @@ mastery and their tests, ran about 4.5 hours from first to last commit on 2026-1
 | **B · The first hour** | Hale's issue and rack (menu first, the model rack if time), the first-shard find, the shard pity, Ilse's and Marta's pay, the Now line | 2-3 h | `arms_issue`; **Euan plays the first 30 minutes** |
 | **C · The Armoury** | the screen, the band section, Track, Blueprint routing (rack by rank, Forge choose-list, learned styles, migration), the Forge's empty-hand door | 3-4 h | `arms_armoury`, `arms_rack` |
 | **D · Gates, camps and people teach** | the bearer on a gate's first floor and the hoard fallback, the camp heart as a bearer, `style_homes.json`, the gate-card and camp lines, the six chain rewards, the rack plaques, Hale's "Anything on patterns?", the "What waits" entries, plain dialogue | 3-4 h | `arms_gate_pattern` (the bearer drops once per fighter, the fallback pays, a known style gives another of its rank, never the Satchel), `arms_homes` |
-| **E · Boss weapons, finds and Raise** | the boss hoard weapon per fighter and its reveal, guardians, Sovereigns and named beasts, Marked pity and the guaranteed first, Raise, salvage, first-forged moments, the capability clock, the sim gear row | 3-4 h | `arms_boss_weapon`, `arms_raise`, `arms_marked_pity` |
+| **E · Boss weapons, finds and Raise** | the two boss rolls per fighter by rank and the weapon pity, the reveal, the Lord wielding its weapon, the gate-card line, the Armoury's FINDS and JEI's Boss drops, guardians, Sovereigns and named beasts, Marked pity and the guaranteed first, Raise, salvage, first-forged moments, the capability clock, the sim gear row (the rates above are set from it) | 3-4 h | `arms_boss_weapon`, `arms_raise`, `arms_marked_pity` |
 | **F · Tiers announced** | part jobs on Hale's board, tier cards, foreshadow, Oren's lines, the Horizon pulls | 1.5-2 h | `arms_tier_cards` |
 | **G · Villages and structures** | the smith's two patterns for emeralds and the village's rank, the smithy forge door, the Pattern Stand block and its model, placing it in vaults, labs, platforms, spires, lairs and dens | 3-5 h | `arms_village_patterns`, `arms_stand` (once per player, dims, a known style pays essence) |
 
@@ -498,8 +521,7 @@ don't compress: GameTest runs on CI, Euan's play, and the three-Lord session.
 **Tests** (one per mechanism; the full suite once at hand-off, CI the rest): `arms_sources`, `arms_issue` (once per player, the
 pick gives weapon, Blueprint and Fang, Ilse's fallback), `arms_rack` (stock by rank, price, refusal below rank), `arms_gate_pattern`,
 `arms_homes` (a person teaches once; a known style pays its price), `arms_village_patterns` (two patterns of the village's rank, never
-a known one, emerald price with standing), `arms_stand`, `arms_boss_weapon` (every fighter in the hoard gets one, the Lord-forged
-replaces it), `arms_marked_pity`, `arms_raise` (keeps Marks, Art, attunement; costs the next tier's parts), `arms_tier_cards`,
+a known one, emerald price with standing), `arms_stand`, `arms_boss_weapon` (each fighter rolls their own, the odds fall with rank, the pity fires at six, a Lord-forged replaces the Spoils), `arms_marked_pity`, `arms_raise` (keeps Marks, Art, attunement; costs the next tier's parts), `arms_tier_cards`,
 `progression_shard_pity`, `arms_recipe_unlock` (a Blueprint recipe appears with its Blueprint, not a bone).
 
 **Risks:** Hale's yard belongs to the city and living modules (the rack needs a spot beside him, agreed with their owners); the
@@ -537,9 +559,11 @@ asked, and 13-15 are his three additions, with the design written for his check.
 11. **Difficulty stance:** tiers stay one point of damage apart, no item-level multiplier, nothing here touches a Lord's numbers (those
     wait for the three-Lord session). *Approved.*
 12. **Order:** A and B first, then C with D and G beside it, then E and F; named weapons wait. *Approved, with G added.*
-13. **Boss weapons (Euan's request).** Every boss kill drops a weapon to every fighter, straight to the pack with a reveal: the
-    Lord-forged weapon (35%, certain by the third), else a Marked weapon in the Lord's own style with two Marks; guardians,
-    Sovereigns and named beasts too. *Design in §3.7; Euan to check the numbers when he plays it.*
+13. **Boss weapons: rarer the cooler they are (Euan's request, then his correction: not every boss).** A Gate Lord kill rolls a Marked
+    "Spoils" weapon in the Lord's style (60% at E falling to 15% at A, 40% at S) and the Lord-forged weapon (35%, certain by the third);
+    that is about 74% of Lords at E and about 40% at S, **two or three S gates to one weapon**, with a pity at six. The Lord wields its
+    weapon, the gate card and the Armoury name it, and tooltips and JEI say "Dropped by... Sometimes". *Design in §3.7; the rates are set
+    from the Phase E sim row and Euan checks them when he plays it.*
 14. **Villages sell patterns (Euan's request).** Two patterns of the village's rank, for emeralds, by its region's level; the smithy's
     forge is an Armoury door. Not finished weapons (they would skip the Part and the metal). *Design in §3.4.3; alternative if he wants it:
     the smith also sells the Parts of his land.*

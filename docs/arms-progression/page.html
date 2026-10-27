@@ -168,10 +168,10 @@ footer { margin-top: 56px; font-size: 0.85rem; color: var(--muted); }
 <header>
   <div class="eyebrow">AWAKEN · Arms · approved with your changes · 27 October 2026</div>
   <h1>The Armoury</h1>
-  <p class="lede prose">The weapons are built. The way to them is invisible. Every hunter gets a first weapon at the High Gate. Every ingredient says where it comes from. Gates give you the pattern for a style, structures and villages offer more, and the world gives you the materials. Every boss drops a weapon. Nothing is built yet.</p>
+  <p class="lede prose">The weapons are built. The way to them is invisible. Every hunter gets a first weapon at the High Gate. Every ingredient says where it comes from. Gates give you the pattern for a style, structures and villages offer more, and the world gives you the materials. Bosses drop weapons, and the cooler the weapon the rarer. Nothing is built yet.</p>
   <blockquote>"I have no idea where to get a fang or a blueprint ... make it truly feel triple A and not too confusing, while also not being too easy either lol. The first gear shouldn't be too difficult tho as well."<span>You, 27 October, playing build 0257c666</span></blockquote>
 </header>
-<div class="ask" style="margin-top:24px"><b>Updated 27 October after your notes.</b> Gates now teach every style: a creature on the gate's first floor carries the pattern and drops it. Structures show patterns on stands built into the place, and never in a plain chest. Villages sell patterns by their land's level. Every boss fight drops a weapon. A Blueprint's tooltip says where it is found. Everything else was approved as recommended.</div>
+<div class="ask" style="margin-top:24px"><b>Updated 27 October after your notes.</b> Gates now teach every style: a creature on the gate's first floor carries the pattern and drops it. Structures show patterns on stands built into the place, and never in a plain chest. Villages sell patterns by their land's level. Boss fights drop weapons, rarer the cooler they are, and you can see what a boss carries. A Blueprint's tooltip says where it is found. Everything else was approved as recommended.</div>
 
 <h2>What we found</h2>
 <div class="grid g3">
@@ -214,7 +214,7 @@ footer { margin-top: 56px; font-size: 0.85rem; color: var(--muted); }
   <div class="lane">You find</div>
   <div class="cell">Shards from hunters and rifts. The gate's bearer.</div>
   <div class="cell">Marked weapons from elites and camp hearts. Patterns on stands.</div>
-  <div class="cell">Every boss drops a weapon. Lord-forged: 35%, certain by the third.</div>
+  <div class="cell">Bosses drop weapons: often at E, about one in 2.5 at S.</div>
   <div class="cell">Named weapons: a rumour first, then the place.</div>
   <div class="cell"><b>Raise</b> keeps a found weapon current at the Forge.</div>
   <div class="cell">Legendary weapons tied to the story.</div>
@@ -324,10 +324,24 @@ footer { margin-top: 56px; font-size: 0.85rem; color: var(--muted); }
   <div class="card"><span class="tag">Make it</span><h3>Forged</h3><p>The weapon of your tier in the style you choose. Reliable, and you can attune and temper it.</p></div>
   <div class="card"><span class="tag">Try something new</span><h3>Marked</h3><p>From elites, Wardens and camp hearts: a forged weapon of your tier with a quirk you did not pick. Your first one is guaranteed. A pity rule means no long dry spell.</p></div>
   <div class="card"><span class="tag">A keepsake</span><h3>Named</h3><p>A rumour tells you it exists. A place gives it to you. It has a name, a Mark or two and one plain line of history.</p></div>
-  <div class="card"><span class="tag">Your request</span><h3>Every boss drops a weapon</h3><p>Every Gate Lord kill pays out steel, to everyone in the room, straight to the pack with a reveal. Either the Lord-forged weapon (35%, certain by the third), or a Marked weapon in the Lord's own style with two Marks. Guardians, Sovereigns and named beasts drop one too.</p></div>
-  <div class="card"><span class="tag">A trophy</span><h3>Lord-forged</h3><p>As today: the Lord's weapon and its signature move as the weapon's Art. It is the chase, and the other drops are never empty-handed.</p></div>
+  <div class="card"><span class="tag">Your correction</span><h3>Boss weapons: the cooler, the rarer</h3><p>A Lord kill rolls a Marked weapon in its own style and, separately, the Lord-forged weapon. At E that is about three kills in four. At S it is two or three gates to one weapon. A pity keeps the long tail honest. Everyone in the room rolls their own, and it goes straight to the pack.</p></div>
+  <div class="card"><span class="tag">A trophy</span><h3>Lord-forged</h3><p>As today: the Lord's weapon and its signature move as the weapon's Art. It is the chase, and it stays rare.</p></div>
   <div class="card" style="grid-column: 1 / -1"><span class="tag">The link between them</span><h3>Raise</h3><p>At a Forge, lift a found weapon to your next tier for that tier's parts. It keeps its Marks, its Art, its attunement and its name. A Maul from the Bell Warden can stay yours from E to S, and a crafted weapon is what you reach for when you want a style at your tier right now. Neither is a strict upgrade of the other.</p></div>
 </div>
+
+<h3 style="margin-top:32px">What a boss pays</h3>
+<div class="tbl"><table>
+  <thead><tr><th>Gate rank</th><th>Marked weapon</th><th>Lord-forged</th><th>Any weapon</th><th>Lords per weapon</th></tr></thead>
+  <tbody>
+  <tr><td class="n"><span class="chip e">E</span></td><td>60%</td><td>35%, certain by the third</td><td>about 74%</td><td>1.4</td></tr>
+  <tr><td class="n"><span class="chip d">D</span></td><td>45%</td><td>the same</td><td>about 64%</td><td>1.6</td></tr>
+  <tr><td class="n"><span class="chip c">C</span></td><td>30%</td><td>the same</td><td>about 55%</td><td>1.8</td></tr>
+  <tr><td class="n"><span class="chip b">B</span></td><td>22%</td><td>the same</td><td>about 49%</td><td>2.0</td></tr>
+  <tr><td class="n"><span class="chip a">A</span></td><td>15%</td><td>the same</td><td>about 45%</td><td>2.2</td></tr>
+  <tr><td class="n"><span class="chip s">S</span></td><td>40%</td><td>none until the Sovereign weapons are built</td><td>about 40%</td><td><b>2.5</b></td></tr>
+  </tbody></table></div>
+<p class="note">Everyone in the room rolls their own. A pity makes the sixth Lord kill without any weapon certain. These rates are my first numbers: a sim row sets them before they ship, and you check them when you play.</p>
+<p class="prose">You can see what a boss carries before you fight it. The Lord holds its own weapon in its hand, glinting. The gate card says "The Hive Regent may carry its daggers". Your Armoury lists every Lord you have met, with its weapon as a dark silhouette until you own it, and says "The next Lord is certain to carry its weapon" when your pity comes round. Tooltips and JEI say "Dropped by the Hive Regent in E-rank gates. Sometimes."</p>
 
 <h2>How hard it is</h2>
 <p class="prose">The combat sim says gear is the floor and skill is the lever. Against the Drowned Archivist at D-rank, a player who guards well but is not great wins 6% of the time. An expert with the same weapon wins 99%. A diamond sword only moves the first number to 12%. So the first gear can be generous, and nothing in this plan changes how hard a fight is.</p>
@@ -355,7 +369,7 @@ footer { margin-top: 56px; font-size: 0.85rem; color: var(--muted); }
 <div class="dec"><div class="no">10</div><div class="body"><h3>Raise found weapons at the Forge <span class="chip rec">Approved</span></h3><p>A found weapon can be lifted to your tier for that tier's parts, keeping its Marks, Art and attunement.</p></div></div>
 <div class="dec"><div class="no">11</div><div class="body"><h3>Difficulty stance <span class="chip rec">Approved</span></h3><p>Tiers stay one point of damage apart. No item-level multiplier. Nothing here touches a Lord's numbers.</p></div></div>
 <div class="dec"><div class="no">12</div><div class="body"><h3>Order <span class="chip rec">Approved</span></h3><p>A and B first, then the Armoury with gates and villages beside it, then boss weapons and tiers. Named weapons wait.</p></div></div>
-<div class="dec"><div class="no">13</div><div class="body"><h3>Every boss drops a weapon <span class="chip">Your request</span></h3><p>Every Gate Lord kill drops steel to everyone in the room: the Lord-forged weapon (35%, certain by the third) or else a Marked weapon in the Lord's style with two Marks. Guardians, Sovereigns and named beasts too. Tell me if the numbers feel wrong when you play it.</p></div></div>
+<div class="dec"><div class="no">13</div><div class="body"><h3>Boss weapons, rarer the cooler they are <span class="chip">Changed by you</span></h3><p>Not every boss pays. Chance of any weapon from one Lord: about 74% at E, 64% at D, 55% at C, 49% at B, 45% at A, 40% at S. So two or three S gates to one weapon. Lord-forged stays 35%, certain by the third. A pity at six.</p><p>You can see it coming: the Lord wields its weapon, the gate card and the Armoury name it, and tooltips and JEI say "Dropped by the Hive Regent. Sometimes."</p></div></div>
 <div class="dec"><div class="no">14</div><div class="body"><h3>Villages sell patterns <span class="chip">Your request</span></h3><p>Two patterns of the village's rank for emeralds, by its land's level. The smithy's forge opens the Armoury. No finished weapons.</p><p class="alt">If you'd rather: the smith also sells the Parts of his land.</p></div></div>
 <div class="dec"><div class="no">15</div><div class="body"><h3>Structures hold patterns on stands, not in chests <span class="chip">Your request</span></h3><p>A Pattern Stand built into vaults, labs, platforms, spires, lairs and dens. Claimed once per player, with that tier's weapon hung above and a light that says "take me".</p></div></div>
 
