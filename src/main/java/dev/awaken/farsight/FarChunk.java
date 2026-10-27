@@ -89,7 +89,9 @@ public record FarChunk(int x, int z, int[] cell, int[] colour, int[] crown) {
                     b += rgb & 255;
                     n++;
                     // leaves above the ground: a tree's crown
-                    int crownY = under ? leavesOver(chunk, pos.set(bx + lx, y, bz + lz)) : chunk.getHeight(Heightmap.Types.MOTION_BLOCKING, lx, lz);
+                    // (the heightmap's leaves can be a floating island's over open air: read up from the ground then)
+                    int crownY = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING, lx, lz);
+                    if (under || crownY - y > TREE_GAP) crownY = leavesOver(chunk, pos.set(bx + lx, y, bz + lz));
                     if (crownY > y) {
                         canopy = Math.max(canopy, crownY - y);
                         pos.setY(crownY);
@@ -118,6 +120,8 @@ public record FarChunk(int x, int z, int[] cell, int[] colour, int[] crown) {
     static final int FLOAT_GAP = 16;
     /** A piece standing this deep from its top without such a gap under it stands on the ground. */
     static final int FLOAT_RUN = 40;
+    /** Open blocks under leaves that make them float: more than a tall tree's crown spreads over the air beside its trunk. */
+    static final int TREE_GAP = 32;
 
     /**
      * The ground's top block in column (x, z) from {@code y}, the heightmap's top, down: under a piece with a gap of
@@ -174,12 +178,18 @@ public record FarChunk(int x, int z, int[] cell, int[] colour, int[] crown) {
         return y;
     }
 
-    /** The highest leaves over the ground at {@code pos}, up to what floats over it (for the crown), or its own y. */
+    /**
+     * The top of the tree standing on the ground at {@code pos}: its highest leaves, up its trunk and through its crown,
+     * until a solid block or TREE_GAP open blocks over the last of it (leaves past those float: a sky platform's
+     * islands carry trees, and as the column's crown they stood a trunk from the ground up to the platform, Euan
+     * 2026-10-27: "a long fake pillar under the floating island"). Its own y where no tree stands.
+     */
     private static int leavesOver(LevelChunk chunk, BlockPos.MutableBlockPos pos) {
-        int ground = pos.getY(), crown = ground;
-        for (int y = ground + 1; y <= ground + 48 && y <= chunk.getMaxY(); y++) {
+        int ground = pos.getY(), crown = ground, last = ground;
+        for (int y = ground + 1; y <= ground + 64 && y <= chunk.getMaxY() && y - last < TREE_GAP; y++) {
             BlockState s = chunk.getBlockState(pos.setY(y));
-            if (s.is(net.minecraft.tags.BlockTags.LEAVES)) crown = y;
+            if (s.is(net.minecraft.tags.BlockTags.LEAVES)) crown = last = y;
+            else if (s.is(net.minecraft.tags.BlockTags.LOGS)) last = y;
             else if (filled(chunk, pos)) break;
         }
         return crown;

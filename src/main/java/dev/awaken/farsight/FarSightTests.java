@@ -344,8 +344,9 @@ final class FarSightTests {
         });
 
         // What floats isn't ground (Euan, 2026-10-27: a sky platform stood on "huge spiky pillars" in the far view): a deck
-        // 30 blocks up with a chain and a lone block under it keeps the ground under it in its cells, while a sealed dark
-        // room under a crust (a cave) keeps the crust.
+        // 30 blocks up with a chain and a lone block under it keeps the ground under it in its cells, an island's leaves over
+        // open air aren't a tree's crown (a trunk up to it) while a tall tree keeps its own, and a sealed dark room under a
+        // crust (a cave) keeps the crust.
         AwakenTests.registerIsolated("farsight_floating_ground", 100, h -> {
             ServerLevel level = h.getLevel();
             BlockPos o = h.absolutePos(BlockPos.ZERO);
@@ -369,6 +370,12 @@ final class FarSightTests {
             }
             BlockState chain = Blocks.IRON_CHAIN.defaultBlockState();
             for (int y = y0 + 4; y < y0 + 30; y++) level.setBlock(new BlockPos(bx + 4, y, bz + 4), y == y0 + 22 ? stone : chain, Block.UPDATE_CLIENTS);
+            // an island's leaves 45 over the floor in cell (1, 1), nothing under them; a tree 20 tall in cell (4, 4), its crown
+            // spreading over the air beside its trunk
+            for (int k = 0; k < 4; k++) level.setBlock(new BlockPos(bx + 2 + (k & 1), y0 + 45, bz + 2 + (k >> 1)),
+                    Blocks.OAK_LEAVES.defaultBlockState().setValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT, true), Block.UPDATE_CLIENTS);
+            for (int y = y0 + 1; y <= y0 + 20; y++) level.setBlock(new BlockPos(bx + 8, y, bz + 8), Blocks.OAK_LOG.defaultBlockState(), Block.UPDATE_CLIENTS);
+            for (int k = 0; k < 4; k++) level.setBlock(new BlockPos(bx + 8 + (k & 1), y0 + 21, bz + 8 + (k >> 1)), Blocks.OAK_LEAVES.defaultBlockState(), Block.UPDATE_CLIENTS);
             // the cave: a 6x6 stone block standing on the floor, its 4x4 room (cells (6, 6) inside it) 21 high and sealed
             for (int x = bx + 10; x < bx + 16; x++) {
                 for (int z = bz + 10; z < bz + 16; z++) {
@@ -383,6 +390,10 @@ final class FarSightTests {
                 h.assertTrue(FarChunk.top(c.cell()[i]) == y0 + 1 && FarChunk.canopy(c.cell()[i]) == 0,
                         "the ground under the deck, not the deck: cell " + i + " top " + FarChunk.top(c.cell()[i]) + " canopy " + FarChunk.canopy(c.cell()[i]));
             }
+            int island = FarChunk.SIDE + 1, tree = 4 * FarChunk.SIDE + 4;
+            h.assertTrue(FarChunk.top(c.cell()[island]) == y0 + 1 && FarChunk.canopy(c.cell()[island]) == 0,
+                    "an island's leaves over open air aren't a tree's crown: canopy " + FarChunk.canopy(c.cell()[island]));
+            h.assertTrue(FarChunk.canopy(c.cell()[tree]) == 21, "a tall tree keeps its crown: canopy " + FarChunk.canopy(c.cell()[tree]));
             int cave = 6 * FarChunk.SIDE + 6;
             h.assertTrue(FarChunk.top(c.cell()[cave]) == y0 + 25, "a cave's crust stands: top " + FarChunk.top(c.cell()[cave]) + " not " + (y0 + 25));
             h.succeed();

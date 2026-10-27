@@ -1850,7 +1850,7 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   Sight hidden for the real chunks paint red); red only in the debug frame, eroded by 5 pixels (outline slivers where
   City Sight's cubes are hidden for thinner real blocks are expected), is a hole. Tour `farsight3-city.txt` takes the
   pairs at the Roost, the quay and high over the walls; 0 hole pixels at all three (2026-10-26).
-- **Generated layer** (stage 1, store schema 4): `FarChunk` keeps per 2×2-block cell the ground's top (MOTION_BLOCKING_NO_LEAVES;
+- **Generated layer** (stage 1, store schema 5): `FarChunk` keeps per 2×2-block cell the ground's top (MOTION_BLOCKING_NO_LEAVES;
   water counts), water depth, the ground's colour, the canopy's height above it and its colour (leaves at
   MOTION_BLOCKING). `FarStore.patch` averages the cells within half a cell of each corner (known once a quarter is
   seen) into the same four texels, flagged generated; its trees get their biome's shape (looked up only where trees
@@ -1863,7 +1863,11 @@ terrain half is Awakened Alpine (§15). The bar is Euan's five reference shots (
   every 8 blocks (a few reads a column on solid ground). A sky platform's deck (y 274+), its islands and the anchor
   rings down its chain (22 apart) all float; City Sight draws them floating where it holds their chunks (1.9 km), and
   past that they aren't drawn (the far terrain has one top a column). Bridges and viaduct decks over 16 open blocks go
-  the same way. Test `farsight_floating_ground`.
+  the same way. Nor is a floating island's leaves a tree's crown (2026-10-27, Euan: "a long fake pillar under the
+  floating island", which was FarTrees' trunk from the ground to the islands' leaves; schema 5): where the cell keeps
+  the ground under something floating, or the heightmap's leaves lie more than 32 open blocks over the ground, the crown
+  is read up from the ground through leaves and logs and ends at 32 open blocks over the last of them
+  (`FarChunk.TREE_GAP`); a tall tree's crown spreading over the air beside its trunk keeps its height. Same test.
 - **Drawing** (`AfterSky`, before any chunk, its own D32 reversed-Z depth, planes 1 and 32768): each ring's window
   minus the next finer window is cut into pieces of up to 64×64 cells, culled on the CPU, each one draw of a continuous
   mesh: vertex `v` is the piece's corner `(v % 65, v / 65)`, one index buffer per piece width (8..64). A corner takes
