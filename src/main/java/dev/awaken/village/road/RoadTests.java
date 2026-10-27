@@ -21,14 +21,16 @@ import java.util.Locale;
 
 /**
  * Roads and towns' GameTests (prefix {@code village_}, SPEC §28.9), one per mechanism: a road laid over the land and
- * painted ({@code village_roads}); a town, a wayhouse and a mining town planned ({@code village_town_plan}). The Deep
- * Mine's is with the troubles' ({@code village_deep_mine}).
+ * painted ({@code village_roads}); a road held high over low land stands on stepped banks ({@code village_road_banks});
+ * a town, a wayhouse and a mining town planned ({@code village_town_plan}). The Deep Mine's is with the troubles'
+ * ({@code village_deep_mine}).
  */
 public final class RoadTests {
     private RoadTests() {}
 
     public static void register() {
         AwakenTests.registerIsolated("village_roads", 600, RoadTests::roads);
+        AwakenTests.registerIsolated("village_road_banks", 200, RoadTests::banks);
         AwakenTests.register("village_town_plan", 400, RoadTests::towns);
         AwakenTests.register("village_march_ranks", 20, h -> {
             // a march post writes the land's rank range plainly (SPEC §21.10)
@@ -160,6 +162,74 @@ public final class RoadTests {
                 "a sign with no level takes its words, both faces, waxed");
         Awaken.LOG.info(String.format(Locale.ROOT, "[road] test road: %d points, %d bridged, worst step %d, worst cut %d, laid in %.1f ms (twice), %d legs, "
                 + "painted %.2f ms a chunk", a.points(), bridged, worstStep, worstCut, ns / 1e6, legs.size(), paintNs / 1e6));
+        h.succeed();
+    }
+
+    /**
+     * A highroad held 30 over a flat floor, a beard's crust left under its middle (SPEC §28.9): it stands on its rock all
+     * the way to the floor, through the crust; its banks step down to the floor, no face taller than 10, with turf on
+     * their ledges and the land's layered rock in their faces (the old fill was one sheer wall 30 high).
+     */
+    private static void banks(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = h.absolutePos(BlockPos.ZERO);
+        int ox = o.getX(), oz = o.getZ(), floor = o.getY(), roadY = floor + 30;
+        BlockState stone = net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), air = net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        for (int x = ox - 36; x <= ox + 36; x++) {
+            for (int z = oz - 8; z <= oz + 48; z++) {
+                for (int y = floor - 4; y < floor; y++) level.setBlock(at.set(x, y, z), stone, 2);
+                for (int y = floor; y <= roadY + 6; y++) level.setBlock(at.set(x, y, z), air, 2);
+            }
+        }
+        for (int x = ox - 4; x <= ox + 4; x++)
+            for (int z = oz + 16; z <= oz + 24; z++) for (int y = roadY - 5; y <= roadY - 4; y++) level.setBlock(at.set(x, y, z), stone, 2);
+        int n = 14;
+        float[] xs = new float[n], zs = new float[n];
+        int[] ys = new int[n];
+        for (int i = 0; i < n; i++) {
+            xs[i] = ox + 0.5f;
+            zs[i] = oz - 8 + 4 * i;
+            ys[i] = roadY;
+        }
+        RoadPaint p = new RoadPaint(0, xs, zs, ys, new byte[n], new byte[n], 0, n - 1, Road.HIGHROAD, List.of());
+        for (int cx = (p.ox + p.rx0) >> 4; cx <= (p.ox + p.rx0 + p.rw) >> 4; cx++)
+            for (int cz = (p.oz + p.rz0) >> 4; cz <= (p.oz + p.rz0 + p.rd) >> 4; cz++) SettlementPaint.repaint(p, level, cx, cz);
+        int worst = 0, bankCols = 0, turf = 0;
+        java.util.Set<net.minecraft.world.level.block.Block> rocks = new java.util.HashSet<>();
+        for (int z = oz + 12; z <= oz + 28; z++) {
+            for (int x = ox - 3; x <= ox + 3; x++)
+                for (int y = floor; y < roadY; y++)
+                    h.assertTrue(!level.getBlockState(at.set(x, y, z)).isAir(), "the road stands on its rock to the floor: air at " + (x - ox) + ", " + (y - floor) + ", " + (z - oz));
+            for (int side = -1; side <= 1; side += 2) {
+                int last = roadY;
+                for (int dx = 4; dx <= 34; dx++) {
+                    int x = ox + side * dx, top = floor - 1;
+                    for (int y = roadY; y >= floor; y--) {
+                        BlockState s = level.getBlockState(at.set(x, y, z));
+                        if (s.isAir()) continue;
+                        top = y;
+                        if (top > floor - 1) {
+                            bankCols++;
+                            if (s.is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK)) turf++;
+                        }
+                        break;
+                    }
+                    for (int y = floor; y < top; y++) {
+                        var b = level.getBlockState(at.set(x, y, z)).getBlock();
+                        if (b == net.minecraft.world.level.block.Blocks.STONE || b == net.minecraft.world.level.block.Blocks.ANDESITE || b == net.minecraft.world.level.block.Blocks.TUFF
+                                || b == net.minecraft.world.level.block.Blocks.GRANITE || b == net.minecraft.world.level.block.Blocks.CALCITE) rocks.add(b);
+                    }
+                    worst = Math.max(worst, last - top);
+                    last = top;
+                }
+                h.assertTrue(last == floor - 1, "the bank comes down to the floor by 34 out: " + (last - floor + 1) + " high there");
+            }
+        }
+        h.assertTrue(worst <= 10, "no face of the bank taller than 10: " + worst);
+        h.assertTrue(turf * 5 >= bankCols, "turf on the ledges: " + turf + " of " + bankCols + " columns");
+        h.assertTrue(rocks.size() >= 3, "the land's layered rock, not one stone: " + rocks);
+        Awaken.LOG.info("[road] banks: worst face {}, turf {} of {} columns, rock {}", worst, turf, bankCols, rocks);
         h.succeed();
     }
 

@@ -327,7 +327,7 @@ playtestMode (off). Client: nowTracker, horizonLine (§17), systemScale and the 
   placement keep out), constants `STREET_Y` 70, `CORE_RADIUS` 330, `BLEND_RADIUS` 700, `RIVER` (the city's fixed path).
 - `dev.awaken.terrain.alpine.Erosion` / `AlpineSurface` — Awakened Alpine's erosion and snow-and-rock rule as pure,
   allocation-free maths (§15): `Erosion.erode(x, z, gx, gz, strength, finestCell, out)`, `AlpineSurface.snowLine/snow/
-  stone/erosionStrength`. Far Sight predicts and shades with the same numbers; its shaders mirror them.
+  stone/erosionStrength/strata` (`strata(x, y, z)`: the rock layer there, 0-4, which the road banks read too, §28.9). Far Sight predicts and shades with the same numbers; its shaders mirror them.
 - `dev.awaken.city.City.skyline(layout, chunkX, chunkZ, worldSeed, topY[256], top[256])` — the city as planned over one
   chunk, from the plan alone (any thread): each column's highest placed block and its world y, or none where the city
   leaves the land; false outside the city. Far Sight's far skyline reads it (§20).
@@ -7252,6 +7252,20 @@ settlement. **Waymarkers**: a stripped-log post on a stone foot with a lantern, 
 side, the place's name and distance on both faces (waxed; white ink on dark woods); one a little way out of every
 settlement (the next place and the one behind), one at every fork; at the crest where the first town comes into view, a
 cairn of field stones.
+
+**Banks** (`RoadPaint.bankDrop`, `CityWriter.fills`; Euan, 2026-10-27, "the cliff needs to look a bit more natural"): where
+a road holds its grade above the land (a highroad across a valley), the painter raises a bank out to 26 blocks past the
+verge instead of leaving a sheer wall under the footprint. The bank comes down in tiers: each a rise of 4-8 blocks over a
+face 0.7-1.7 blocks out, then a ledge of 0.9-2.5 blocks, the tier sizes from value noise (13-15 blocks a cell) and the
+edge wandering about 3 blocks, so faces break and step, and one column in seven or ten pokes up or dips a block. Ledges
+and the top take the road's turf (grass; podzol in the elder woods, sand in the desert) over 2-3 of dirt; steps of 2-3
+get grass, coarse dirt, moss or rock; faces of 4 or more are rock with moss (10%) and mossy cobble (8%), and every face
+foot gets a toe of gravel, coarse dirt or (mossy) cobble. The rock in the banks and in the plate under the road follows
+the strata (`AlpineSurface.strata`: stone, andesite, tuff, granite, calcite bands; sandstone in the desert), so a face
+reads as layered rock, not one flat stone sheet. A fill passes a solid crust up to 3 thick with air under it (the thin
+road-marker beard over a valley) and stops on the ground below, so no stretch of road floats on a slab; a dry fill that
+meets water stops, as before. The rim stays walkable: the road's own width plus verge is untouched. No bank on bridges,
+boardwalks, causeways or in towns. The banks reach new chunks only. Test `village_road_banks`.
 
 **Towns** (`TownPlanner`, `TownPainter`; `Kind.TOWN`): a raster of 112 round a site near the region's heart (broad,
 gentle, dry, water near). A wall ring of mean radius 64 (planned again at 76 where the land fits fewer than 25 homes,

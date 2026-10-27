@@ -18,7 +18,9 @@ import java.util.List;
  * the heartland, cobbles and setts near a town, sand and sandstone in the desert, mud and packed earth in the mire), an
  * earthen half step wherever it climbs a block, a timber or stone bridge with rails and piers over water, boardwalks on posts
  * over the mire's shallows, a causeway over a brook; lantern posts by turns along the last stretch into a settlement;
- * the waymarkers. Pure: a chunk painted alone equals the same chunk painted with its neighbours.
+ * the waymarkers. Where it stands over lower land it stands on a bank of the land's own rock that steps down in faces and
+ * grassy ledges to the ground (never a sheer wall of fill under the carriageway). Pure: a chunk painted alone equals the
+ * same chunk painted with its neighbours.
  */
 final class RoadPaint implements SettlementPaint.Layout {
     /** Extended point flags (beside the planner's water flags): lanterns here, a town near. */
@@ -41,6 +43,9 @@ final class RoadPaint implements SettlementPaint.Layout {
     final short[] lifts;
     final short[] seg;
     final float[] dist, along;
+    /** How far a bank's top stands under the road (0: no bank there), and whether this leg raises it. */
+    final short[] bank;
+    final boolean[] mine;
 
     RoadPaint(int w0, float[] xs, float[] zs, int[] ys, byte[] fl, byte[] fam, int a, int b, int cls, List<Road.Marker> markers) {
         this.w0 = w0;
@@ -66,7 +71,7 @@ final class RoadPaint implements SettlementPaint.Layout {
         this.ox = (int) Math.floor(xs[a]);
         this.oz = (int) Math.floor(zs[a]);
         this.baseY = lo - 2;
-        int reach = (int) Math.ceil(hw + REACH) + 1;
+        int reach = (int) Math.ceil(hw + VERGE + BANK) + 1;
         rx0 = (int) Math.floor(minX) - reach - ox;
         rz0 = (int) Math.floor(minZ) - reach - oz;
         rw = (int) Math.ceil(maxX) + reach - ox - rx0 + 1;
@@ -76,12 +81,16 @@ final class RoadPaint implements SettlementPaint.Layout {
         seg = new short[rw * rd];
         dist = new float[rw * rd];
         along = new float[rw * rd];
+        bank = new short[rw * rd];
+        mine = new boolean[rw * rd];
         raster();
     }
 
     /** How far past the carriageway's edge the land's trees are felled. */
     static final float REACH = 4.0f;
     static final float VERGE = 1.6f;
+    /** How far past the verge a bank may reach (at its steepness about 50 blocks under the road, the writer's deepest fill). */
+    static final float BANK = 26.0f;
 
     /** Each cell's nearest segment of the whole window; cells owned by this leg's segments get their kind and height. */
     private void raster() {
@@ -106,13 +115,19 @@ final class RoadPaint implements SettlementPaint.Layout {
                 along[k] = (float) bt;
                 // the road's ends: a cell past the first or last point belongs to the settlement or road it meets
                 boolean off = bs == 0 && bt <= 0 && a == 0 && endsHere(0, px, pz) || bs == xs.length - 2 && bt >= 1 && b == xs.length - 1 && endsHere(xs.length - 1, px, pz);
-                if (bs < a || bs >= b || off || best > hw + REACH) {
-                    kinds[k] = CityPlan.VOID;
-                    continue;
-                }
                 double y = ys[bs] + (ys[bs + 1] - ys[bs]) * bt;
                 lifts[k] = (short) (Math.round(y) - baseY);
                 byte f = flagsAt(bs, bt);
+                // every cell's bank, this leg's or not (a bank's skin reads its neighbours'); none at the ends, by water or
+                // into a town
+                float e = (float) best - (hw + VERGE);
+                if (!off && e > 0 && e <= BANK && (f & (RoadPlanner.BRIDGE | RoadPlanner.BOARDWALK | RoadPlanner.CAUSEWAY | TOWN)) == 0)
+                    bank[k] = (short) bankDrop(e, (int) Math.floor(px), (int) Math.floor(pz));
+                mine[k] = bs >= a && bs < b && !off;
+                if (!mine[k] || best > hw + REACH) {
+                    kinds[k] = CityPlan.VOID;
+                    continue;
+                }
                 kinds[k] = best <= hw ? CityPlan.STREET : best <= hw + VERGE && (f & (RoadPlanner.BRIDGE | RoadPlanner.BOARDWALK)) == 0 ? CityPlan.YARD : CityPlan.FREE;
             }
         }
@@ -210,6 +225,7 @@ final class RoadPaint implements SettlementPaint.Layout {
     @Override
     public void paint(SettlementPaint.Canvas c, boolean before) {
         if (before) {
+            c.rock(this::rock);
             for (int z = c.z0(); z <= c.z1(); z++) for (int x = c.x0(); x <= c.x1(); x++) ground(c, x, z);
         } else {
             for (int s = a; s < b; s++) if ((fl[s] & LIT) != 0 && (fl[s] & RoadPlanner.BRIDGE) == 0 && Math.floorMod(s, 4) == 0) lamp(c, s);
@@ -230,6 +246,7 @@ final class RoadPaint implements SettlementPaint.Layout {
     private void ground(SettlementPaint.Canvas c, int x, int z) {
         int k = cell(x, z);
         if (k < 0) return;
+        if (bank[k] > 0 && mine[k]) mound(c, x, z, k);
         byte kind = kinds[k];
         if (kind != CityPlan.STREET && kind != CityPlan.YARD) return;
         int s = seg[k];
@@ -270,6 +287,99 @@ final class RoadPaint implements SettlementPaint.Layout {
             c.set(x, g + 1, z, slabOf(pave, family));
             break;
         }
+    }
+
+    // ---- banks ----------------------------------------------------------------------------------------------------------
+
+    /**
+     * How far under the road a bank's top stands, {@code e} blocks past the verge (SPEC §28.9): tiers of a face 4 to 8
+     * high over a block or so, then a ledge one to two and a half wide, about two down for one out (a 35-block bank
+     * reaches about 17 out); the tiers' sizes drift along the road (11-15-block noise) and the edge wanders out in
+     * outcrops and in in bays (9 blocks), with a block proud or sunk here and there. Pure of position.
+     */
+    static int bankDrop(float e, int wx, int wz) {
+        e += 2.5f * (noise(wx, wz, 9f, 81) - 0.5f) + 0.8f * (noise(wx, wz, 3f, 82) - 0.5f);
+        if (e <= 0) return 1;
+        float d = 1, at = 0;
+        for (int i = 0; i < 16; i++) {
+            float rise = 4 + 4 * noise(wx, wz, 13f, 90 + i), face = 0.7f + noise(wx, wz, 11f, 110 + i), ledge = 0.9f + 1.6f * noise(wx, wz, 15f, 130 + i);
+            if (e < at + face) {
+                d += rise * (e - at) / face;
+                break;
+            }
+            d += rise;
+            at += face;
+            if (e < at + ledge) break;
+            at += ledge;
+        }
+        int r = Math.round(d) + (pct(wx, wz, 83) < 15 ? 1 : 0) - (pct(wx, wz, 84) < 10 ? 1 : 0);
+        return Math.max(1, r);
+    }
+
+    /** Smooth value noise in 0..1 on cells of {@code cell} blocks. */
+    static float noise(int wx, int wz, float cell, int salt) {
+        float fx = wx / cell, fz = wz / cell;
+        int ix = (int) Math.floor(fx), iz = (int) Math.floor(fz);
+        float tx = fx - ix, tz = fz - iz;
+        tx = tx * tx * (3 - 2 * tx);
+        tz = tz * tz * (3 - 2 * tz);
+        float a = pct(ix, iz, salt), b = pct(ix + 1, iz, salt), c = pct(ix, iz + 1, salt), d = pct(ix + 1, iz + 1, salt);
+        return ((a + (b - a) * tx) * (1 - tz) + (c + (d - c) * tx) * tz) / 99f;
+    }
+
+    /** A bank's top here, from the street level (a cell past the bank: well under it). */
+    private int bankTop(int k, int below) {
+        if (k < 0) return below;
+        if (bank[k] > 0) return lifts[k] - bank[k];
+        return dist[k] <= hw + VERGE ? lifts[k] : below;
+    }
+
+    /**
+     * One column of the bank: its top by how far the land falls away beside it. A ledge (a block or less to the next
+     * column out) is the land's turf on its soil; a step (two or three) is grass, coarse dirt, moss or bare rock; a face
+     * (four or more) is the rock, now and then moss on top. The rock is the land's layered rock ({@link #rock}); at the
+     * bank's foot a low column is scree.
+     */
+    private void mound(SettlementPaint.Canvas c, int x, int z, int k) {
+        int top = lifts[k] - bank[k], fall = 0;
+        for (int q = 0; q < 4; q++) {
+            int nk = cell(x + (q == 0 ? 1 : q == 1 ? -1 : 0), z + (q == 2 ? 1 : q == 3 ? -1 : 0));
+            fall = Math.max(fall, top - bankTop(nk, top - 9));
+        }
+        int s = seg[k];
+        int family = fam[along[k] < 0.5f ? s : s + 1];
+        int wx = ox + x, wz = oz + z, roll = pct(wx, wz, 57);
+        boolean sand = family == VillageStyles.DESERT;
+        BlockState turf = sand ? SAND : family == VillageStyles.ELDER && roll < 40 ? PODZOL : GRASS, soil = sand ? SAND : DIRT;
+        BlockState toe = sand ? SAND : roll < 40 ? GRAVEL : roll < 70 ? COARSE_DIRT : roll < 90 ? COBBLE : MOSSY_COBBLE;
+        SettlementPaint.Mound m;
+        if (fall <= 1) m = new SettlementPaint.Mound(top, turf, soil, 2 + (roll & 1), null);
+        else if (fall <= 3) m = roll < 45 ? new SettlementPaint.Mound(top, turf, soil, 1, toe)
+                : roll < 65 ? new SettlementPaint.Mound(top, sand ? SAND : COARSE_DIRT, soil, 1, toe)
+                : roll < 80 && !sand ? new SettlementPaint.Mound(top, MOSS, DIRT, 1, toe)
+                : new SettlementPaint.Mound(top, null, null, 0, toe);
+        else m = roll < 10 && !sand ? new SettlementPaint.Mound(top, MOSS, null, 0, toe)
+                : roll < 18 && !sand ? new SettlementPaint.Mound(top, MOSSY_COBBLE, null, 0, toe)
+                : new SettlementPaint.Mound(top, null, null, 0, toe);
+        c.mound(x, z, m);
+    }
+
+    /**
+     * The rock under the road and in its banks, at a plan position: the land's own strata (stone with bands of andesite,
+     * tuff and granite and a thin pale calcite, tilted: Awakened Alpine's rule), sandstone in the desert.
+     */
+    BlockState rock(int x, int y, int z) {
+        int k = cell(x, z), wx = ox + x, wz = oz + z;
+        int family = k < 0 ? VillageStyles.TEMPERATE : fam[along[k] < 0.5f ? seg[k] : seg[k] + 1];
+        int layer = dev.awaken.terrain.alpine.AlpineSurface.strata(wx, y, wz);
+        if (family == VillageStyles.DESERT) return layer == 1 || layer == 4 ? SMOOTH_SANDSTONE : SANDSTONE;
+        return switch (layer) {
+            case 1 -> ANDESITE;
+            case 2 -> TUFF;
+            case 3 -> GRANITE;
+            case 4 -> CALCITE;
+            default -> STONE;
+        };
     }
 
     static void bed(SettlementPaint.Canvas c, int x, int g, int z, int family) {
@@ -437,6 +547,8 @@ final class RoadPaint implements SettlementPaint.Layout {
             STONE_BRICKS = VillageBlocks.of("minecraft:stone_bricks"), MOSSY_STONE_BRICKS = VillageBlocks.of("minecraft:mossy_stone_bricks"),
             CRACKED_STONE_BRICKS = VillageBlocks.of("minecraft:cracked_stone_bricks"), ANDESITE = VillageBlocks.of("minecraft:andesite"),
             MUD = VillageBlocks.of("minecraft:mud"), PACKED_MUD = VillageBlocks.of("minecraft:packed_mud"),
+            TUFF = VillageBlocks.of("minecraft:tuff"), GRANITE = VillageBlocks.of("minecraft:granite"), CALCITE = VillageBlocks.of("minecraft:calcite"),
+            MOSS = VillageBlocks.of("minecraft:moss_block"),
             SHORT_GRASS = VillageBlocks.of("minecraft:short_grass"),
             COBBLE_SLAB = VillageBlocks.of("minecraft:cobblestone_slab[type=bottom]"), MOSSY_COBBLE_SLAB = VillageBlocks.of("minecraft:mossy_cobblestone_slab[type=bottom]"),
             STONE_BRICK_SLAB = VillageBlocks.of("minecraft:stone_brick_slab[type=bottom]"), STONE_BRICK_SLAB_TOP = VillageBlocks.of("minecraft:stone_brick_slab[type=top]"),
