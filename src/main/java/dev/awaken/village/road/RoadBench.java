@@ -121,7 +121,7 @@ public final class RoadBench {
                     settled++;
                 }
             }
-            int pitch = dev.awaken.living.region.RegionMap.PITCH;
+            int pitch = w.regions.pitch();
             for (int gx = Math.floorDiv(centre[0] - radius, pitch); gx <= Math.floorDiv(centre[0] + radius, pitch); gx++)
                 for (int gz = Math.floorDiv(centre[1] - radius, pitch); gz <= Math.floorDiv(centre[1] + radius, pitch); gz++) {
                     int[] h = w.regions.heart(gx, gz);

@@ -11,5 +11,20 @@
   "heartWorse": 0.2,
   "tilt": 0.15,
   "quietShare": 0.125,
-  "quietFrom": 2000
+  "quietFrom": 2000,
+  "wide": {
+    "_": "SPEC 21.12, the wide world (rules 3, new worlds). odds: [distance from the centre, [E, D, C, B, A, S] weights]; straight lines between, flat past the last.",
+    "pitch": 1600,
+    "province": 4800,
+    "safe": 1300,
+    "march": 240,
+    "wayHalf": 110,
+    "wayEdge": 180,
+    "wayEdgePerLevel": 4,
+    "pushFrom": 2000,
+    "pushTo": 12000,
+    "moodPull": 1.6,
+    "odds": [[1300, [100, 0, 0, 0, 0, 0]], [2500, [55, 35, 10, 0, 0, 0]], [4500, [30, 30, 25, 12, 3, 0]],
+             [7000, [14, 24, 26, 21, 12, 3]], [11000, [5, 13, 20, 24, 22, 16]], [18000, [3, 8, 14, 23, 25, 27]]]
+  }
 }

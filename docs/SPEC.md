@@ -4507,6 +4507,41 @@ a claw starts at the end of the arm and points along it). Looks are reviewed off
   reader), **the legendary beasts** (Old Greymane, Hush, the Glass Wyrm: they need bodies and a place in the beast registry, the fauna module's), six of the **eleven chains** and all **nineteen happenings** (Build 6), a sound bed and a
   colour grade per rank, the Almanac's Forms page, moves for creepers, Arms' tell glint for forms. Signs and wonders consult no settlement's or road's reserve (only natural ground keeps signs off built ground).
 
+### 21.12 The wide world (regions v3; Euan 2026-10-27: "I don't want to be blocked from exploring if you're still rank E or D or C"; approved "go ahead with all of it")
+Why: under §21.10 danger was a ceiling by distance, so low land ended about 2.6 km out: a level 1-5 player had about 9 km² to
+explore, a level 20 about 36 km², and a region was crossed in three and a half minutes. Euan wants Minecraft's go-anywhere
+exploration at any level, bigger regions, a mix where calm land turns up far out, and still more danger the further you go.
+Numbers below were measured on a script copy of the field (two seeds, 32 km across) before it was built.
+1. **Rules 3, new worlds only.** `RegionMap.RULES` is 3; a world made before keeps the rules on its record (its roads and settlements
+   were laid on 900-block regions). The GameTest server's world is made under `TEST_RULES` 2 (`RegionService.newWorldRules`): the road,
+   village and wonder tests were written on 900-block regions; the wide world's own test builds a rules 3 map directly.
+2. **Bigger regions:** hearts 1,600 apart (`pitch()`, data `wide.pitch`), about six minutes' walk across; borders warp 380 over 1,300-block waves.
+3. **A rank by odds, not a ceiling.** Each region rolls its rank from odds that shift with its heart's distance (data `wide.odds`, straight lines
+   between rows, flat past the last): 1,300 all E · 2,500 E 55 D 35 C 10 · 4,500 E 30 D 30 C 25 B 12 A 3 · 7,000 E 14 D 24 C 26 B 21 A 12 S 3 ·
+   11,000 E 5 D 13 C 20 B 24 A 22 S 16 · 18,000 E 3 D 8 C 14 B 23 A 25 S 27. The roll is dealt in nine strata per 3×3 block (every block holds the
+   spread), tilted by a 6,000-wide mood (`u^exp(-1.6(mood-0.5))`, which keeps both ends reachable) and by the biome (±0.12, 40% of regions). Inside its
+   band a region sits higher the further out (`push` 2,000 → 12,000); B, A and S start 10%, 30%, 50% up their band so a border's slope does not wear
+   them into the rank below. A region is 10% worse at its heart and 10% calmer at its edge; neighbours blend with weight `exp(-(d - dmin)/240)`.
+4. **Calm ways.** Along every border of a province (three regions wide, 4,800, jittered) runs a wandering valley of E land (levels 3-8 by noise), about
+   220 blocks wide (wobbling ±50%), warped 900 over 3,200-block waves and 260 over 800. Its edge eases into the land round it over
+   `180 + 4 × (level − calm)` blocks, so beside S land the climb takes about 650 blocks. The ways join into one net: a level 1 player can walk
+   calm land to the edge of the world.
+5. **The safe start.** The Commons' ramp inside 700 as before; 8-9 to 1,000 (camps and dens still seed by the wall); regions with hearts inside
+   1,300 are E (3-8), easing into the mix by 1,600. Calm regions beyond 2,000 are named like shelters ("Willow Rest"); §21.10's one-in-eight quiet vales
+   are not rolled in the wide world (the calm ways and rolled E regions replace them).
+6. **Measured.** The real field (`living_region_wide` logs its census; seed 1234): calm land walks from the wall to 12,000 out (the test's
+   edge); 11-15 km out E 18%, A and S 24%, S 6% (S keeps growing past 15 km); mean level 15 at 3-5 km, 45 at 11-15 km; inside 5,000 no 100
+   blocks change by more than 25 levels, nowhere by more than 50. The plan's script copy (before borders were softened to 240), two seeds: share of land by rank 0.7-2 km E ~90%; 2-4 km E ~60 D 23 C 12; 4-7 km E 30 D 28 C 25 B 11 A 4 S 1; 7-11 km E 20 D 23
+   C 21 B 20 A 11 S 6; 11-16 km E 15 D 12 C 17 B 22 A 18 S 15. Land a player can walk to on land no more than four levels above their own, out to
+   16 km: level 1-5 from 9 km² (2.6 km out) to about 165 km² (16 km out); level 10 from 18 to about 200; level 20 from 36 to about 310. First S
+   land about 6.3 km out (was 5.2), first A about 3.5 km (was about 4).
+7. **What follows the size.** Roads join neighbouring regions' hubs, so the highroad grid is now about 1,600 apart (`w.regions.pitch()` in
+   `village.road`); a region holds a town at 0.35 (was 0.22, `RoadNet.TOWN_ODDS_WIDE`); the settlement grid (640) leaves half its cells empty
+   besides the usual tenth (`SettlementGrid.WIDE_EMPTY`): about one settlement every 900 blocks. A region keeps nine secrets (three of each kind,
+   150 to 0.42 × pitch from the heart; was three); one wonder per region as before.
+- `RegionMap.levelAt` in the wide world costs about the same as before (25 hearts' cached levels, nine province hearts, a few noise samples). Test
+  `living_region_wide`; `living_region_map` pins rules 2.
+
 ## 22. Lens 2 (cinematic light on Vulkan and Apple Silicon; Euan's brief 2026-10-25, three steps, one builder)
 
 Lens's Cinematic and Ultra tiers become a light model of their own: shadows, contact darkness and warm/cool light

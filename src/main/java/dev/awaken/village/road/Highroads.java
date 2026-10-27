@@ -322,7 +322,7 @@ final class Highroads {
         int[] s = PORTS[which];
         double sx = w.cx + s[0], sz = w.cz + s[1];
         List<int[]> out = new ArrayList<>();
-        int g0 = Math.floorDiv(w.cx, dev.awaken.living.region.RegionMap.PITCH), h0 = Math.floorDiv(w.cz, dev.awaken.living.region.RegionMap.PITCH);
+        int g0 = Math.floorDiv(w.cx, w.regions.pitch()), h0 = Math.floorDiv(w.cz, w.regions.pitch());
         for (int i = g0 - 3; i <= g0 + 3; i++)
             for (int j = h0 - 3; j <= h0 + 3; j++) {
                 if (w.regions.swallowed(i, j)) continue;
@@ -385,7 +385,7 @@ final class Highroads {
      */
     static List<int[]> laneJoins(RoadWorld w, VillagePlan p) {
         List<int[]> out = new ArrayList<>();
-        int pitch = dev.awaken.living.region.RegionMap.PITCH;
+        int pitch = w.regions.pitch();
         int gx = Math.floorDiv(p.ox, pitch), gz = Math.floorDiv(p.oz, pitch);
         for (int i = gx - 2; i <= gx + 1; i++)
             for (int j = gz - 2; j <= gz + 1; j++)

@@ -220,7 +220,8 @@ final class LivingTests {
         });
         AwakenTests.register("living_region_map", 200, h -> {
             RegionMap.Probe plain = (x, z) -> RegionMap.Land.PLAIN;
-            RegionMap map = new RegionMap(1234L, 0, 0, plain);
+            // rules 2 (a world made before the wide world, and the GameTest server's own): the ceiling by distance, SPEC §21.10
+            RegionMap map = new RegionMap(1234L, 0, 0, plain, 2);
             // the Commons: everything within its radius, level 1 by the wall, 8 at its edge
             h.assertTrue(map.regionAt(0, 0).commons() && map.regionAt(300, -200).commons(), "the centre is the Commons");
             h.assertTrue(map.levelAt(0, 0) == 1 && map.levelAt(240, 0) == 1, "level 1 by the wall: " + map.levelAt(240, 0));
@@ -262,8 +263,8 @@ final class LivingTests {
             }
             h.assertTrue(worst <= 16, "no 100 blocks change by more than 16 levels inside 3,000: " + worst);
             // the land tilts the temper (harsh up, gentle down), a region is worst at its heart
-            RegionMap harsh = new RegionMap(1234L, 0, 0, (x, z) -> new RegionMap.Land(RegionMap.Group.DARK, 1));
-            RegionMap gentle = new RegionMap(1234L, 0, 0, (x, z) -> new RegionMap.Land(RegionMap.Group.PLAINS, -1));
+            RegionMap harsh = new RegionMap(1234L, 0, 0, (x, z) -> new RegionMap.Land(RegionMap.Group.DARK, 1), 2);
+            RegionMap gentle = new RegionMap(1234L, 0, 0, (x, z) -> new RegionMap.Land(RegionMap.Group.PLAINS, -1), 2);
             long up = 0, down = 0;
             for (int i = 0; i < 400; i++) {
                 int x = 3000 + (i % 20) * 160, z = 3000 + (i / 20) * 160;
@@ -274,7 +275,7 @@ final class LivingTests {
             RegionMap.Region far = map.regionAt(9000, 9000);
             h.assertTrue(map.levelAt(far.heartX(), far.heartZ()) >= far.low() && map.levelAt(far.heartX(), far.heartZ()) <= far.high(), "the heart is inside the region's span");
             // the same seed always gives the same world; another seed another one
-            RegionMap again = new RegionMap(1234L, 0, 0, plain), other = new RegionMap(99L, 0, 0, plain);
+            RegionMap again = new RegionMap(1234L, 0, 0, plain, 2), other = new RegionMap(99L, 0, 0, plain, 2);
             boolean differs = false;
             for (int i = 1; i < 30; i++) {
                 h.assertTrue(again.regionAt(i * 1700, -i * 1300).name().equals(map.regionAt(i * 1700, -i * 1300).name()), "deterministic names");
@@ -289,6 +290,93 @@ final class LivingTests {
             // the server's map: centred once on Carillon or the world spawn, level 1 there
             RegionMap live = RegionService.map(h.getLevel().getServer());
             h.assertTrue(live.levelAt(live.centreX(), live.centreZ()) == 1, "level 1 at the world's centre");
+            h.assertTrue(live.rules() == RegionMap.TEST_RULES && RegionService.newWorldRules(h.getLevel().getServer()) == RegionMap.TEST_RULES,
+                    "the GameTest server's world keeps 900-block regions: " + live.rules());
+            h.succeed();
+        });
+
+        AwakenTests.register("living_region_wide", 400, h -> {
+            // SPEC §21.12, the wide world (rules 3): bigger regions, ranks rolled by odds that shift with distance, calm ways everywhere
+            RegionMap.Probe plain = (x, z) -> RegionMap.Land.PLAIN;
+            RegionMap map = new RegionMap(1234L, 0, 0, plain, 3);
+            h.assertTrue(RegionMap.RULES == 3 && map.pitch() == 1600, "a new world's regions are 1,600 apart: " + map.pitch());
+            h.assertTrue(map.levelAt(0, 0) == 1 && map.levelAt(240, 0) == 1, "the Commons' ramp starts at 1");
+            int worstNear = 0, lowest800 = 99;
+            for (int k = 0; k < 24; k++) {
+                double a = k * Math.PI / 12;
+                lowest800 = Math.min(lowest800, map.levelAt((int) Math.round(Math.cos(a) * 800), (int) Math.round(Math.sin(a) * 800)));
+                for (int d = 700; d <= 1300; d += 50) worstNear = Math.max(worstNear, map.levelAt((int) Math.round(Math.cos(a) * d), (int) Math.round(Math.sin(a) * d)));
+            }
+            h.assertTrue(lowest800 >= 8, "800 out is 8 or more, so camps and dens still seed by the wall: " + lowest800);
+            h.assertTrue(worstNear <= 12, "the safe start to 1,300 never passes 12: " + worstNear);
+            // a low player is never walled in: land of 9 or less runs from the wall to 12,000 out (a flood over a 100-block grid)
+            int n = 241, c = n / 2;
+            boolean[] seen = new boolean[n * n];
+            int[] queue = new int[n * n];
+            int head = 0, tail = 0, reach = 0;
+            seen[c * n + c] = true;
+            queue[tail++] = c * n + c;
+            while (head < tail) {
+                int q = queue[head++], qi = q / n, qj = q % n;
+                reach = Math.max(reach, (int) (Math.hypot(qi - c, qj - c) * 100));
+                for (int di = -1; di <= 1; di++)
+                    for (int dj = -1; dj <= 1; dj++) {
+                        int a = qi + di, b = qj + dj;
+                        if (a < 0 || b < 0 || a >= n || b >= n || seen[a * n + b]) continue;
+                        if (Math.hypot(a - c, b - c) * 100 > 12000 || map.levelAt((a - c) * 100, (b - c) * 100) > 9) continue;
+                        seen[a * n + b] = true;
+                        queue[tail++] = a * n + b;
+                    }
+            }
+            h.assertTrue(reach >= 11500, "a level 1 player can walk calm land to 12,000 out: " + reach);
+            // mixed, yet harder further out: far land holds both calm and the worst, and is harder on the whole than near land
+            int calmFar = 0, sFar = 0, highFar = 0, countFar = 0;
+            long sumNear = 0, sumFar = 0;
+            int countNear = 0;
+            for (int i = -150; i <= 150; i++)
+                for (int j = -150; j <= 150; j++) {
+                    int x = i * 100, z = j * 100;
+                    double d = Math.hypot(x, z);
+                    if (d >= 3000 && d <= 5000) { sumNear += map.levelAt(x, z); countNear++; }
+                    if (d >= 11000 && d <= 15000) {
+                        int lv = map.levelAt(x, z);
+                        sumFar += lv;
+                        countFar++;
+                        if (lv <= 9) calmFar++;
+                        if (lv >= 70) highFar++;
+                        if (lv >= 100) sFar++;
+                    }
+                }
+            double calmShare = calmFar / (double) countFar, highShare = highFar / (double) countFar, sShare = sFar / (double) countFar;
+            dev.awaken.Awaken.LOG.info("[living] wide world census (seed 1234): calm walk to {} out; 11-15 km E {}% A+S {}% S {}%; mean level 3-5 km {}, 11-15 km {}",
+                    reach, Math.round(calmShare * 100), Math.round(highShare * 100), Math.round(sShare * 100), sumNear / countNear, sumFar / countFar);
+            h.assertTrue(calmShare >= 0.06 && calmShare <= 0.30, "far out some land is still calm, not most: " + calmShare);
+            h.assertTrue(highShare >= 0.20 && sShare >= 0.04, "far out A and S land are common: " + highShare + ", S " + sShare);
+            h.assertTrue(sumFar / (double) countFar > sumNear / (double) countNear + 20, "harder further out: " + sumNear / countNear + " near, " + sumFar / countFar + " far");
+            // borders and the calm ways' edges are slopes, not walls: gentle where a new player walks, never a cliff far out
+            int worst = 0, worstNear5k = 0;
+            for (int k = 0; k < 16; k++) {
+                double a = k * Math.PI / 8 + 0.05;
+                int[] ring = new int[(14000 - 700) / 25 + 1];
+                for (int d = 700, m = 0; d <= 14000; d += 25, m++) ring[m] = map.levelAt((int) Math.round(Math.cos(a) * d), (int) Math.round(Math.sin(a) * d));
+                for (int m = 4; m < ring.length; m++) {
+                    int step = Math.abs(ring[m] - ring[m - 4]);
+                    worst = Math.max(worst, step);
+                    if (700 + m * 25 <= 5000) worstNear5k = Math.max(worstNear5k, step);
+                }
+            }
+            h.assertTrue(worstNear5k <= 25, "inside 5,000 no 100 blocks change by more than 25 levels: " + worstNear5k);
+            h.assertTrue(worst <= 50, "nowhere do 100 blocks change by more than 50 levels: " + worst);
+            // regions: spans ordered, the heart inside its span, the same seed the same world
+            RegionMap.Region far = map.regionAt(9000, 9000);
+            int heart = map.levelAt(far.heartX(), far.heartZ());
+            h.assertTrue(heart >= far.low() && heart <= far.high() && far.band() == RegionMap.rankOf(heart), "the heart is inside the region's span");
+            RegionMap again = new RegionMap(1234L, 0, 0, plain, 3);
+            for (int i = 1; i < 30; i++) {
+                h.assertTrue(again.levelAt(i * 1700, -i * 1300) == map.levelAt(i * 1700, -i * 1300), "deterministic levels");
+                h.assertTrue(again.regionAt(i * 1700, -i * 1300).name().equals(map.regionAt(i * 1700, -i * 1300).name()), "deterministic names");
+            }
+            h.assertTrue(new RegionMap(1234L, 0, 0, plain, 2).pitch() == RegionMap.PITCH_2, "a world made before keeps 900-block regions");
             h.succeed();
         });
 

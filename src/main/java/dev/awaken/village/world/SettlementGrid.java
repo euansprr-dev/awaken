@@ -19,6 +19,8 @@ public final class SettlementGrid {
     private SettlementGrid() {}
 
     public static final int PITCH = 640;
+    /** The share of grid cells the wide world leaves empty besides the usual tenth. */
+    static final double WIDE_EMPTY = 0.5;
     /** No grid settlement this near the centre (the Commons is 700; the city's own fields and the camp road). */
     static final int COMMONS = 760;
     /** No grid settlement this near the first hamlet. */
@@ -69,6 +71,9 @@ public final class SettlementGrid {
         long h = mix(worldSeed ^ (i * 0x9E3779B97F4A7C15L) ^ (j * 0xC2B2AE3D27D4EB4FL) ^ 0x5E771EL);
         double roll = unit(h);
         if (roll < 0.10) return null;
+        // the wide world (SPEC §21.12) keeps about half: one settlement every 900 blocks or so, more open land between
+        var rw = dev.awaken.village.road.RoadWorld.get();
+        if (rw != null && rw.regions.rules() >= 3 && unit(mix(h + 9)) < WIDE_EMPTY) return null;
         Kind kind = roll < 0.35 ? Kind.VILLAGE : Kind.HAMLET;
         int x = i * PITCH + (int) Math.round(PITCH * (0.18 + 0.64 * unit(mix(h + 1))));
         int z = j * PITCH + (int) Math.round(PITCH * (0.18 + 0.64 * unit(mix(h + 2))));

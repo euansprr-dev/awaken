@@ -83,23 +83,25 @@ public final class Secrets {
         return h;
     }
 
-    /** A region's secrets (up to three; ground that is wet or steep gives one up). */
+    /** A region's secrets (up to three, nine in the wide world's bigger regions; ground that is wet or steep gives one up). */
     public static List<Site> of(long seed, RegionMap map, RegionMap.Region r, Wonders.Terrain t) {
         if (r.commons()) return List.of();
         Site[] all = CACHE.computeIfAbsent(mix(seed, r.id()), k -> make(seed, map, r, t));
-        List<Site> out = new ArrayList<>(3);
+        List<Site> out = new ArrayList<>(all.length);
         for (Site s : all) if (s != NONE) out.add(s);
         return out;
     }
 
     private static Site[] make(long seed, RegionMap map, RegionMap.Region r, Wonders.Terrain t) {
-        Site[] out = new Site[3];
-        for (int i = 0; i < 3; i++) {
+        // the wide world's regions hold about three times the land (SPEC §21.12): three of each kind, spread further out
+        boolean wide = map.pitch() > RegionMap.PITCH_2;
+        Site[] out = new Site[wide ? 9 : 3];
+        for (int i = 0; i < out.length; i++) {
             out[i] = NONE;
             long h = mix(mix(seed, r.id()), i + 1);
             for (int attempt = 0; attempt < 5; attempt++) {
                 double angle = ((h >>> 8) & 0xFFFF) / 65536.0 * Math.PI * 2 + attempt * 2.1;
-                double dist = 150 + ((h >>> 28) & 0xFF) + attempt * 15;
+                double dist = wide ? 150 + ((h >>> 28) & 0xFF) / 255.0 * (map.pitch() * 0.42 - 150) + attempt * 15 : 150 + ((h >>> 28) & 0xFF) + attempt * 15;
                 int x = r.heartX() + (int) Math.round(Math.cos(angle) * dist), z = r.heartZ() + (int) Math.round(Math.sin(angle) * dist);
                 if (map.regionAt(x, z).id() != r.id() || t.structureNear(x, z, 1)) continue;
                 int[] hs = {t.ground(x, z), t.ground(x + 3, z), t.ground(x - 3, z), t.ground(x, z + 3), t.ground(x, z - 3)};
@@ -109,7 +111,7 @@ public final class Secrets {
                     hi = Math.max(hi, v);
                 }
                 if (lo <= t.seaLevel() + 1 || hi - lo > 3) continue;
-                Kind kind = Kind.values()[i];
+                Kind kind = Kind.values()[i % 3];
                 int rank = RegionMap.rankOf(map.levelAt(x, z));
                 Plan plan = new Plan();
                 build(kind, plan, RandomSource.create(mix(h, 7)));
