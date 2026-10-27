@@ -54,6 +54,8 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
     private boolean reveal;
     private int drawLod = -1;
     private long lodSince;
+    /** GUI pixels a block from which the city's districts are named (the old finest level's zoom). */
+    static final float CLOSE_IN = 0.9f;
     // the legend: where it sits (names keep clear of it), its rows (for clicks), and a flight to the row picked
     private int legendX0, legendY0, legendX1, legendY1;
     private final java.util.List<AtlasState.ZoneLabel> legendRows = new java.util.ArrayList<>();
@@ -212,7 +214,8 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         if (held != 0) keysHeld(dt);
         // zooming across a level: keep drawing the level we have until the new one is built round the view (it builds
         // on the worker meanwhile), or the land blinks out for a moment
-        int want = AtlasMesh.lodFor(zoom);
+        // the level follows screen pixels a block (the picture is drawn at the window's full resolution)
+        int want = AtlasMesh.lodFor(zoom * mc.getWindow().getGuiScale());
         if (drawLod < 0) drawLod = want;
         if (want != drawLod) {
             if (lodSince == 0) lodSince = now;
@@ -249,9 +252,9 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
             beams(x0, y0, x1, y1);
         }
         if ((prof & PROF_NO_OVERLAY) == 0) {
-            legendLayout(mc, atlas, x0, y0, lod);
+            legendLayout(mc, atlas, x0, y0, zoom >= CLOSE_IN);
             float marks = scene ? 0.30f : 0.45f;
-            if (age > marks) markers(g, mc, atlas, x0, y0, x1, y1, lod);
+            if (age > marks) markers(g, mc, atlas, x0, y0, x1, y1, zoom >= CLOSE_IN);
             if (age > marks) {
                 legend(g, mc, atlas, mouseX, mouseY);
                 hover(g, mc, atlas, mouseX, mouseY, x0, y0, x1, y1);
@@ -365,7 +368,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         return best == null ? "Carillon" : "Carillon  ·  " + best.name();
     }
 
-    private void markers(GuiGraphicsExtractor g, Minecraft mc, AtlasState atlas, int x0, int y0, int x1, int y1, int lod) {
+    private void markers(GuiGraphicsExtractor g, Minecraft mc, AtlasState atlas, int x0, int y0, int x1, int y1, boolean closeIn) {
         float w = x1 - x0, h = y1 - y0;
         AtlasRenderState.view(gui, w, h, zoom, yaw, tilt);
         g.enableScissor(x0, y0, x1, y1);
@@ -394,7 +397,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         // would overlap the bigger one keeps its place and the other moves or waits for a closer zoom
         for (AtlasState.ZoneLabel z : atlas.zoneLabels()) {
             boolean district = z.zone() >= ZoneMap.DISTRICT;
-            if (district && lod != 0) continue;
+            if (district && !closeIn) continue;
             if (!project(z.x(), atlas.store.groundY(z.x(), z.z(), cy) + 4, z.z(), x0, y0)) continue;
             String name = z.name().toUpperCase(Locale.ROOT);
             int cw = Math.max(font.width(name), font.width(z.sub())) + 14, ch = 22, sy = Integer.MIN_VALUE;
@@ -510,7 +513,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
     }
 
     /** The gates you know (nearest first), the zone you're in, then the nearest others: the legend's rows. */
-    private void legendLayout(Minecraft mc, AtlasState atlas, int x0, int y0, int lod) {
+    private void legendLayout(Minecraft mc, AtlasState atlas, int x0, int y0, boolean closeIn) {
         legendRows.clear();
         gateRows.clear();
         legendX0 = legendY0 = legendX1 = legendY1 = -1000;
@@ -536,7 +539,7 @@ public final class AtlasScreen extends Screen implements dev.awaken.signal.clien
         int lands = Math.max(0, (maxY - (scene ? py0() : y0 + 6) - fixed) / ROW);
         // close in, the city's districts and the land round you; zoomed out, the regions (their danger matters there)
         for (AtlasState.ZoneLabel z : sorted)
-            if (legendRows.size() < Math.min(LEGEND_ROWS, lands) && (lod == 0 || z.zone() < ZoneMap.DISTRICT)) legendRows.add(z);
+            if (legendRows.size() < Math.min(LEGEND_ROWS, lands) && (closeIn || z.zone() < ZoneMap.DISTRICT)) legendRows.add(z);
         if (legendRows.isEmpty() && gateRows.isEmpty() && noGates.isEmpty()) return;
         legendX0 = scene ? sideX0() : x0 + 6;
         legendY0 = scene ? py0() : y0 + 6;

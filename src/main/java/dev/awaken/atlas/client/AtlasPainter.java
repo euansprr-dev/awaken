@@ -11,7 +11,9 @@ import com.mojang.renderpearl.api.commands.RenderPass;
 import com.mojang.renderpearl.api.device.GpuDevice;
 import com.mojang.renderpearl.api.pipeline.IndexType;
 import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
+import com.mojang.renderpearl.api.textures.AddressMode;
 import com.mojang.renderpearl.api.textures.FilterMode;
+import com.mojang.renderpearl.api.textures.GpuSampler;
 import com.mojang.renderpearl.api.textures.GpuTexture;
 import com.mojang.renderpearl.api.textures.GpuTextureView;
 import dev.awaken.atlas.Discovery;
@@ -50,6 +52,11 @@ final class AtlasPainter {
     private final Vector3f a = new Vector3f(), b = new Vector3f();
     private static GpuTexture glow;
     private static GpuTextureView glowView;
+    /** The tops' samplers: mipmapped and anisotropic (the table is tilted), blocks kept crisp close in (sharp) or not. */
+    private static GpuSampler sharp, soft;
+    // this frame's drawn slices and their transforms
+    private AtlasMesh.Slice[] drawList = new AtlasMesh.Slice[64];
+    private GpuBufferSlice[] drawTransforms = new GpuBufferSlice[64];
 
     private static float smooth(float t) {
         t = Math.clamp(t, 0f, 1f);
@@ -78,6 +85,17 @@ final class AtlasPainter {
         return glowView;
     }
 
+    private static GpuSampler topSampler(int lod) {
+        if (sharp == null) {
+            GpuDevice device = RenderSystem.getDevice();
+            int aniso = Math.clamp(device.getDeviceInfo().limits().maxAnisotropy(), 1, 8);
+            sharp = device.createSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.LINEAR, FilterMode.NEAREST, aniso, OptionalDouble.empty());
+            soft = device.createSampler(AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, FilterMode.LINEAR, FilterMode.LINEAR, aniso, OptionalDouble.empty());
+        }
+        // close in a texel is 1.8 pixels or more: nearest keeps each block's edge; further out it is a pixel or less
+        return lod <= 1 ? sharp : soft;
+    }
+
     /** Paints {@code s} into the given targets, {@code w}×{@code h} pixels; {@code px} multiplies line widths. */
     void paint(GpuDevice device, AtlasRenderState s, GpuTexture color, GpuTextureView colorView, GpuTexture depth, GpuTextureView depthView,
                int w, int h, float guiScale, boolean thread, boolean moving) {
@@ -85,6 +103,7 @@ final class AtlasPainter {
         long now = System.nanoTime();
         // finished slices go up first: an upload inside the pass would end the frame
         atlas.mesh.zones = atlas.zoneView();
+        atlas.mesh.shown = s.lod();
         atlas.mesh.update(s.cx(), s.cz(), s.lod(), Discovery.CLIENT, now);
         CommandEncoder enc = device.createCommandEncoder();
         enc.clearColorAndDepthTextures(color, new Vector4f(0f), depth, 0.0);
@@ -112,7 +131,7 @@ final class AtlasPainter {
         double r = (AtlasMesh.WINDOW + 0.75) * blocks, r2 = r * r;
         GpuBuffer lightBuf = lightRing.currentBuffer();
         int lightQuads = 0;
-        if (s.night() > 0.05f && s.lod() < 2) {
+        if (s.night() > 0.05f && s.lod() <= 2) {
             try (GpuBufferSlice.MappedView view = lightBuf.map(false, true)) {
                 lightQuads = lights(MemoryUtil.memAddress(view.data()), s, map, blocks, r2, px, now, w, h);
             }
@@ -130,10 +149,9 @@ final class AtlasPainter {
         try (RenderPass pass = enc.createRenderPass(() -> "Atlas", colorView, Optional.empty(), depthView, OptionalDouble.empty())) {
             RenderSystem.bindDefaultUniforms(pass);
             pass.setIndexBuffer(indices, indexType);
-            pass.setPipeline(RenderSystem.getCompiledPipeline(AtlasPipelines.TERRAIN));
             int drawn = 0;
             for (AtlasMesh.Slice sl : map.values()) {
-                if (sl.buffer == null || (AtlasScreen.prof & AtlasScreen.PROF_NO_LAND) != 0) continue;
+                if (sl.buffer == null || sl.view == null || (AtlasScreen.prof & AtlasScreen.PROF_NO_LAND) != 0) continue;
                 double ox = sl.x0() - s.cx(), oz = sl.z0() - s.cz();
                 double mx = ox + blocks / 2.0, mz = oz + blocks / 2.0;
                 if (mx * mx + mz * mz > r2 || !onScreen(ox, oz, blocks, s.cy(), w, h)) continue;
@@ -141,10 +159,37 @@ final class AtlasPainter {
                 if (rise <= 0.001f) continue;
                 Matrix4f mv = new Matrix4f(base).translate((float) ox, (float) (AtlasMesh.BASE_Y - s.cy()), (float) oz)
                         .scale(1f, rise, 1f).translate(0f, AtlasMesh.Y_REF - AtlasMesh.BASE_Y, 0f);
-                pass.setUniform("DynamicTransforms", RenderSystem.getDynamicUniforms().writeTransform(mv, tint));
-                pass.setVertexBuffer(0, sl.buffer.slice());
-                pass.drawIndexed(sl.quads * 6, 1, 0, 0, 0);
-                drawn++;
+                if (drawn == drawList.length) {
+                    drawList = java.util.Arrays.copyOf(drawList, drawn * 2);
+                    drawTransforms = java.util.Arrays.copyOf(drawTransforms, drawn * 2);
+                }
+                drawList[drawn] = sl;
+                drawTransforms[drawn++] = RenderSystem.getDynamicUniforms().writeTransform(mv, tint);
+            }
+            // the tops, each slice with its own texture, then every slice's sides
+            if (drawn > 0) {
+                GpuSampler sampler = topSampler(s.lod());
+                pass.setPipeline(RenderSystem.getCompiledPipeline(AtlasPipelines.TERRAIN_TOPS));
+                for (int i = 0; i < drawn; i++) {
+                    AtlasMesh.Slice sl = drawList[i];
+                    if (sl.tops == 0) continue;
+                    pass.setUniform("DynamicTransforms", drawTransforms[i]);
+                    pass.setUniform("Sampler0", sl.view, sampler);
+                    pass.setVertexBuffer(0, sl.buffer.slice(0, (long) sl.tops * 4 * AtlasMesh.Builder.TOP_VERTEX));
+                    pass.drawIndexed(sl.tops * 6, 1, 0, 0, 0);
+                }
+                pass.setPipeline(RenderSystem.getCompiledPipeline(AtlasPipelines.TERRAIN));
+                for (int i = 0; i < drawn; i++) {
+                    AtlasMesh.Slice sl = drawList[i];
+                    int sides = sl.quads - sl.tops;
+                    if (sides <= 0) continue;
+                    long at = (long) sl.tops * 4 * AtlasMesh.Builder.TOP_VERTEX;
+                    pass.setUniform("DynamicTransforms", drawTransforms[i]);
+                    pass.setVertexBuffer(0, sl.buffer.slice(at, (long) sides * 4 * AtlasMesh.Builder.SIDE_VERTEX));
+                    pass.drawIndexed(sides * 6, 1, 0, 0, 0);
+                }
+                java.util.Arrays.fill(drawList, 0, drawn, null);
+                java.util.Arrays.fill(drawTransforms, 0, drawn, null);
             }
             AtlasState.stats.slicesDrawn = drawn;
             if (gridQuads + trailQuads > 0) {

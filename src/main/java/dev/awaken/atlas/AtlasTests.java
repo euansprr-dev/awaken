@@ -39,6 +39,13 @@ final class AtlasTests {
             h.assertTrue(dev.awaken.holo.HoloKind.byId(3) == dev.awaken.holo.HoloKind.MAP && dev.awaken.holo.HoloKind.byId(4) == null, "the MAP relay kind");
             h.succeed();
         });
+        // the diorama at every zoom: the level follows screen pixels, a coarse column is read from its whole square (a road
+        // a block wide keeps its colour in the texture, a wall still rises), and the finest level is the blocks exactly
+        AwakenTests.register("atlas_coarse_columns", 20, h -> {
+            String failed = dev.awaken.atlas.client.SliceSampler.selfTest();
+            h.assertTrue(failed == null, String.valueOf(failed));
+            h.succeed();
+        });
         // the record: cells mark once, tiles merge, and the saved form round-trips with its schema
         AwakenTests.register("atlas_bits_codec", 20, h -> {
             Explored e = new Explored();

@@ -356,8 +356,8 @@ final class AtlasState {
     }
 
     String memory() {
-        return String.format(Locale.ROOT, "columns=%d tiles (%.1f MB) explored=%d cells mesh=%d/%d/%d slices built, %d quads, %.1f MB GPU",
-                store.tiles.size(), store.bytes() / 1048576.0, Discovery.CLIENT.count(), mesh.built(0), mesh.built(1), mesh.built(2),
+        return String.format(Locale.ROOT, "columns=%d tiles (%.1f MB) explored=%d cells mesh=%d/%d/%d/%d/%d slices built, %d quads, %.1f MB GPU",
+                store.tiles.size(), store.bytes() / 1048576.0, Discovery.CLIENT.count(), mesh.built(0), mesh.built(1), mesh.built(2), mesh.built(3), mesh.built(4),
                 mesh.totalQuads, mesh.totalBytes / 1048576.0);
     }
 
