@@ -45,6 +45,8 @@ public final class Discovery {
         Bells.Bell lastBell;
         /** Each explored cell's zone (its region, 1-based), per tile of this dimension, worked out once per cell. */
         final it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<byte[]> zones = new it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<>();
+        /** Each explored cell's land level (0 = not worked out yet), likewise. */
+        final it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<byte[]> levels = new it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap<>();
     }
 
     private static final Map<UUID, Live> LIVE = new HashMap<>();
@@ -86,6 +88,7 @@ public final class Discovery {
             l.lx = Integer.MIN_VALUE;
             l.dirty.clear();
             l.zones.clear();
+            l.levels.clear();
             sendCity(p);
             sendAll(p);
             sendPins(p);
@@ -312,6 +315,7 @@ public final class Discovery {
         if (!dim.equals(l.dim)) {
             l.dim = dim;
             l.zones.clear();
+            l.levels.clear();
         }
         int regions = data(p).regions.size();
         List<AtlasNet.WireTile> tiles = new ArrayList<>();
@@ -322,7 +326,19 @@ public final class Discovery {
 
     /** A tile for the wire, with the zone of each of its explored cells (worked out now for cells new since last time). */
     static AtlasNet.WireTile wire(ServerPlayer p, Live l, int tx, int tz, long[] bits) {
-        return new AtlasNet.WireTile(tx, tz, bits.clone(), zones(p, l, tx, tz, bits));
+        return new AtlasNet.WireTile(tx, tz, bits.clone(), zones(p, l, tx, tz, bits), levels(p, l, tx, tz, bits));
+    }
+
+    /** The land level at each explored cell's middle, worked out once per cell (the field is pure; 0 outside the overworld). */
+    static byte[] levels(ServerPlayer p, Live l, int tx, int tz, long[] bits) {
+        if (!dev.awaken.living.api.Regions.on(p.level())) return new byte[0];
+        byte[] z = l.levels.computeIfAbsent(Explored.key(tx, tz), k -> new byte[Explored.TILE * Explored.TILE]);
+        for (int i = 0; i < z.length; i++) {
+            if (z[i] != 0 || (bits[i >> 6] & (1L << (i & 63))) == 0) continue;
+            int cx = (tx << Explored.TILE_SHIFT) + (i & (Explored.TILE - 1)), cz = (tz << Explored.TILE_SHIFT) + (i >> Explored.TILE_SHIFT);
+            z[i] = (byte) Math.max(1, Math.min(255, dev.awaken.living.api.Regions.levelAt((net.minecraft.server.level.ServerLevel) p.level(), (cx << 4) + 8, (cz << 4) + 8)));
+        }
+        return z.clone();
     }
 
     static byte[] zones(ServerPlayer p, Live l, int tx, int tz, long[] bits) {

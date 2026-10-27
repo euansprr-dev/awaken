@@ -25,38 +25,9 @@ VANILLA_TEX = {"pig": "pig/pig_temperate.png", "cow": "cow/cow_temperate.png", "
 PI2 = math.pi / 2
 GLOW = {1: (228, 208, 99), 2: (242, 154, 72), 3: (236, 86, 86), 4: (176, 124, 255), 5: (140, 123, 255)}
 
-# the vanilla bodies: part -> (offset, rotation, [(u, v, (x, y, z, w, h, d), mirror)])
-def quad(legs, box, uv=(0, 16)):
-    return [(n, o, (0, 0, 0), [(uv[0], uv[1], box, m)]) for n, o, m in legs]
-
-BODY = {
-    "pig": [("head", (0, 12, -6), (0, 0, 0), [(0, 0, (-4, -4, -8, 8, 8, 8), False), (16, 16, (-2, 0, -9, 4, 3, 1), False)]),
-            ("body", (0, 11, 2), (PI2, 0, 0), [(28, 8, (-5, -10, -7, 10, 16, 8), False)])]
-           + quad([("l1", (-3, 18, 7), False), ("l2", (3, 18, 7), True), ("l3", (-3, 18, -5), False), ("l4", (3, 18, -5), True)], (-2, 0, -2, 4, 6, 4)),
-    "cow": [("head", (0, 4, -8), (0, 0, 0), [(0, 0, (-4, -4, -6, 8, 8, 6), False), (1, 33, (-3, 1, -7, 6, 3, 1), False), (22, 0, (-5, -5, -5, 1, 3, 1), False), (22, 0, (4, -5, -5, 1, 3, 1), False)]),
-            ("body", (0, 5, 2), (PI2, 0, 0), [(18, 4, (-6, -10, -7, 12, 18, 10), False), (52, 0, (-2, 2, -8, 4, 6, 1), False)])]
-           + quad([("l1", (-4, 12, 7), False), ("l2", (4, 12, 7), True), ("l3", (-4, 12, -5), False), ("l4", (4, 12, -5), True)], (-2, 0, -2, 4, 12, 4)),
-    "sheep": [("head", (0, 6, -8), (0, 0, 0), [(0, 0, (-3, -4, -6, 6, 6, 8), False)]),
-              ("body", (0, 5, 2), (PI2, 0, 0), [(28, 8, (-4, -10, -7, 8, 16, 6), False)])]
-             + quad([("l1", (-3, 12, 7), False), ("l2", (3, 12, 7), True), ("l3", (-3, 12, -5), False), ("l4", (3, 12, -5), True)], (-2, 0, -2, 4, 12, 4)),
-    "chicken": [("head", (0, 15, -4), (0, 0, 0), [(0, 0, (-2, -6, -2, 4, 6, 3), False), (14, 0, (-2, -4, -4, 4, 2, 2), False), (14, 4, (-1, -2, -3, 2, 2, 2), False)]),
-                ("body", (0, 16, 0), (PI2, 0, 0), [(0, 9, (-3, -4, -3, 6, 8, 6), False)]),
-                ("right_leg", (-2, 19, 1), (0, 0, 0), [(26, 0, (-1, 0, -3, 3, 5, 3), False)]), ("left_leg", (1, 19, 1), (0, 0, 0), [(26, 0, (-1, 0, -3, 3, 5, 3), False)]),
-                ("rw", (-4, 13, 0), (0, 0, 0), [(24, 13, (0, 0, -3, 1, 4, 6), False)]), ("lw", (4, 13, 0), (0, 0, 0), [(24, 13, (-1, 0, -3, 1, 4, 6), True)])],
-    "zombie": [("head", (0, 0, 0), (0, 0, 0), [(0, 0, (-4, -8, -4, 8, 8, 8), False)]), ("body", (0, 0, 0), (0, 0, 0), [(16, 16, (-4, 0, -2, 8, 12, 4), False)]),
-               ("right_arm", (-5, 2, 0), (-1.45, 0.1, 0), [(40, 16, (-3, -2, -2, 4, 12, 4), False)]), ("left_arm", (5, 2, 0), (-1.45, -0.1, 0), [(40, 16, (-1, -2, -2, 4, 12, 4), True)]),
-               ("right_leg", (-1.9, 12, 0), (0, 0, 0), [(0, 16, (-2, 0, -2, 4, 12, 4), False)]), ("left_leg", (1.9, 12, 0), (0, 0, 0), [(0, 16, (-2, 0, -2, 4, 12, 4), True)])],
-    "skeleton": [("head", (0, 0, 0), (0, 0, 0), [(0, 0, (-4, -8, -4, 8, 8, 8), False)]), ("body", (0, 0, 0), (0, 0, 0), [(16, 16, (-4, 0, -2, 8, 12, 4), False)]),
-                 ("right_arm", (-5, 2, 0), (-1.2, 0.2, 0), [(40, 16, (-1, -2, -1, 2, 12, 2), False)]), ("left_arm", (5, 2, 0), (-1.5, -0.2, 0), [(40, 16, (-1, -2, -1, 2, 12, 2), True)]),
-                 ("right_leg", (-2, 12, 0), (0, 0, 0), [(0, 16, (-1, 0, -1, 2, 12, 2), False)]), ("left_leg", (2, 12, 0), (0, 0, 0), [(0, 16, (-1, 0, -1, 2, 12, 2), True)])],
-    "spider": [("head", (0, 15, -3), (0, 0, 0), [(32, 4, (-4, -4, -8, 8, 8, 8), False)]), ("body0", (0, 15, 0), (0, 0, 0), [(0, 0, (-3, -3, -3, 6, 6, 6), False)]),
-               ("body1", (0, 15, 9), (0, 0, 0), [(0, 12, (-5, -4, -6, 10, 8, 12), False)])]
-              + [(f"leg{i}", (s * 4, 15, z), (0, s * ry, s * rz), [(18, 0, (-15 if s < 0 else -1, -1, -1, 16, 2, 2), s > 0)])
-                 for s in (-1, 1) for i, (z, ry, rz) in enumerate(((2, -0.78, 0.78), (1, -0.39, 0.58), (0, 0.39, 0.58), (-1, 0.78, 0.78)))],
-    "creeper": [("head", (0, 6, 0), (0, 0, 0), [(0, 0, (-4, -8, -4, 8, 8, 8), False)]), ("body", (0, 6, 0), (0, 0, 0), [(16, 16, (-4, 0, -2, 8, 12, 4), False)])]
-              + quad([("l1", (-2, 18, 4), False), ("l2", (2, 18, 4), True), ("l3", (-2, 18, -4), False), ("l4", (2, 18, -4), True)], (-2, 0, -2, 4, 6, 4)),
-}
-PART_ALIAS = {"pig": {}, "chicken": {}, "spider": {}, "zombie": {}, "skeleton": {}, "creeper": {}, "cow": {}, "sheep": {}}
+import forms_geom as G  # noqa: E402
+BODY = G.BODIES
+POSES = G.POSES
 
 
 def R(rx, ry, rz):
@@ -105,6 +76,7 @@ def render(layout, rung, fam, yaw, pitch, S=9, size=(300, 260)):
     view = R(pitch, 0, 0) @ R(0, yaw, 0)
     items = []  # (verts_world, uv, centre_world, sampler)
     for name, off, rt, cubes in BODY[layout]:
+        rt = POSES.get(layout, {}).get(name, rt)
         M = R(*rt)
         for (u, v, box, mirror) in cubes:
             for verts, uv, c in polys(box, mirror, (u, v)):
@@ -113,6 +85,7 @@ def render(layout, rung, fam, yaw, pitch, S=9, size=(300, 260)):
         if k["part"] not in parts:
             continue
         _, off, rt, _ = parts[k["part"]]
+        rt = POSES.get(layout, {}).get(k["part"], rt)
         M = R(*rt)
         pose = k["pose"]
         Mc = R(*pose[3:])
@@ -185,7 +158,24 @@ def render(layout, rung, fam, yaw, pitch, S=9, size=(300, 260)):
     return Image.fromarray(img.astype(np.uint8)[..., :3])
 
 
+def angles_sheet(out, layout, fam, rungs, tile=(300, 270)):
+    """One layout: a row per view (front, three-quarter, side, back), a column per rung."""
+    views = [("front", 0), ("3/4", -40), ("side", -90), ("back", 180)]
+    sheet = Image.new("RGB", (tile[0] * len(rungs), tile[1] * len(views)), (20, 22, 30))
+    d = ImageDraw.Draw(sheet)
+    for j, (name, yaw) in enumerate(views):
+        for i, r in enumerate(rungs):
+            sheet.paste(render(layout, r, fam, math.radians(yaw), math.radians(14), 9, tile), (i * tile[0], j * tile[1]))
+            d.text((i * tile[0] + 6, j * tile[1] + 4), f"{layout} rung {r} {name}", fill=(210, 215, 225))
+    sheet.save(out)
+    print(out, sheet.size)
+
+
 def main():
+    if "--angles" in sys.argv:
+        args = [a for a in sys.argv[1:] if not a.startswith("--")]
+        angles_sheet(args[0], args[2], int(args[1]), [0, 1, 2, 3, 4, 5])
+        return
     out = sys.argv[1]
     fam = int(sys.argv[2]) if len(sys.argv) > 2 and sys.argv[2].isdigit() else 0
     args = [a for a in sys.argv[3:] if not a.startswith("--")]

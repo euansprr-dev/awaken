@@ -1,9 +1,9 @@
-# The forms (SPEC 21.11): a species at every rung in a row, rung 0 (vanilla) to 5, 9 blocks ahead on a flat floor by day; then the
-# same pig and zombie in the three families (green, sun, frost) and at night for the glow. `cmd awaken living formrow <species> [family]`
-# stands them still, facing you. Look for: each rung visibly more dangerous than the last (shape first, then colour); pieces sitting on the
-# right parts (tusks on the jaw, horns on the head, helm on the head, shield on the arm), no floating or sunk cubes, the overlay lining up
-# with the body, the glow at the eyes and in the veins (gold, orange, red, violet, indigo by rung).
-# Run on CI: tools/tour-ci.sh tools/autopilot/forms-parade.txt 1500
+# The forms (SPEC 21.11): a species at every rung in a row, rung 0 (vanilla) to 5, 7 blocks ahead on a flat floor, from the front and from
+# three quarters; the top rung close from the front and three quarters (pig, cow, zombie, skeleton); then the same pig and zombie in the three
+# families (green, sun, frost) and at night for the glow. `cmd awaken living formrow <species> [family]` stands them still, facing you; undead
+# are shot in rain so they do not burn. Look for: each rung visibly more dangerous than the last; every piece attached to the body where it
+# belongs and none over a face (tools/art/forms_geom.py checks this when the art is built); the glow at the eyes and in the veins.
+# Run on CI: tools/tour-ci.sh tools/autopilot/forms-parade.txt 1700
 world autopilot_forms creative 20261027
 waitworld
 cmd gamerule spawn_mobs false
@@ -25,53 +25,137 @@ wait 10
 cmd tp @s ~ 139 ~ 0 6
 wait 80
 look 0 14
+
 cmd awaken living formrow pig
 wait 60
 shot forms_pig
+cmd tp @s ~7 ~ ~1 facing ~ ~ ~7
+wait 20
+shot forms_pig_34
+cmd tp @s ~-7 ~ ~-1 0 14
 cmd awaken living formclear
 cmd awaken living formrow cow
 wait 60
 shot forms_cow
+cmd tp @s ~7 ~ ~1 facing ~ ~ ~7
+wait 20
+shot forms_cow_34
+cmd tp @s ~-7 ~ ~-1 0 14
 cmd awaken living formclear
 cmd awaken living formrow sheep
 wait 60
 shot forms_sheep
+cmd tp @s ~7 ~ ~1 facing ~ ~ ~7
+wait 20
+shot forms_sheep_34
+cmd tp @s ~-7 ~ ~-1 0 14
 cmd awaken living formclear
 cmd awaken living formrow chicken
 wait 60
 shot forms_chicken
+cmd tp @s ~7 ~ ~1 facing ~ ~ ~7
+wait 20
+shot forms_chicken_34
+cmd tp @s ~-7 ~ ~-1 0 14
 cmd awaken living formclear
 cmd weather rain 1000000
 cmd awaken living formrow zombie
 wait 60
 shot forms_zombie
+cmd tp @s ~7 ~ ~1 facing ~ ~ ~7
+wait 20
+shot forms_zombie_34
+cmd tp @s ~-7 ~ ~-1 0 14
 cmd awaken living formclear
+cmd weather clear 1000000
+cmd weather rain 1000000
 cmd awaken living formrow skeleton
 wait 60
 shot forms_skeleton
+cmd tp @s ~7 ~ ~1 facing ~ ~ ~7
+wait 20
+shot forms_skeleton_34
+cmd tp @s ~-7 ~ ~-1 0 14
 cmd awaken living formclear
+cmd weather clear 1000000
 cmd awaken living formrow spider
 wait 60
 shot forms_spider
+cmd tp @s ~7 ~ ~1 facing ~ ~ ~7
+wait 20
+shot forms_spider_34
+cmd tp @s ~-7 ~ ~-1 0 14
 cmd awaken living formclear
-cmd weather clear 1000000
 cmd awaken living formrow creeper
 wait 60
 shot forms_creeper
+cmd tp @s ~7 ~ ~1 facing ~ ~ ~7
+wait 20
+shot forms_creeper_34
+cmd tp @s ~-7 ~ ~-1 0 14
 cmd awaken living formclear
+cmd awaken living form pig 5
+wait 50
+shot forms_pig_close
+cmd tp @s ~3 ~ ~1 facing ~ ~ ~4
+wait 20
+shot forms_pig_close34
+cmd tp @s ~-3 ~ ~-1 0 14
+cmd awaken living formclear
+cmd awaken living form cow 5
+wait 50
+shot forms_cow_close
+cmd tp @s ~3 ~ ~1 facing ~ ~ ~4
+wait 20
+shot forms_cow_close34
+cmd tp @s ~-3 ~ ~-1 0 14
+cmd awaken living formclear
+cmd weather rain 1000000
+cmd awaken living form zombie 5
+wait 50
+shot forms_zombie_close
+cmd tp @s ~3 ~ ~1 facing ~ ~ ~4
+wait 20
+shot forms_zombie_close34
+cmd tp @s ~-3 ~ ~-1 0 14
+cmd awaken living formclear
+cmd weather clear 1000000
+cmd weather rain 1000000
+cmd awaken living form skeleton 5
+wait 50
+shot forms_skeleton_close
+cmd tp @s ~3 ~ ~1 facing ~ ~ ~4
+wait 20
+shot forms_skeleton_close34
+cmd tp @s ~-3 ~ ~-1 0 14
+cmd awaken living formclear
+cmd weather clear 1000000
 cmd awaken living formrow pig 1
 wait 60
 shot forms_pig_sun
+cmd tp @s ~7 ~ ~1 facing ~ ~ ~7
+wait 20
+shot forms_pig_sun_34
+cmd tp @s ~-7 ~ ~-1 0 14
 cmd awaken living formclear
 cmd awaken living formrow pig 2
 wait 60
 shot forms_pig_frost
+cmd tp @s ~7 ~ ~1 facing ~ ~ ~7
+wait 20
+shot forms_pig_frost_34
+cmd tp @s ~-7 ~ ~-1 0 14
 cmd awaken living formclear
 cmd weather rain 1000000
 cmd awaken living formrow zombie 2
 wait 60
 shot forms_zombie_frost
+cmd tp @s ~7 ~ ~1 facing ~ ~ ~7
+wait 20
+shot forms_zombie_frost_34
+cmd tp @s ~-7 ~ ~-1 0 14
 cmd awaken living formclear
+cmd weather clear 1000000
 cmd time set 14500
 cmd awaken living formrow zombie
 wait 80

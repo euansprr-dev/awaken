@@ -72,6 +72,7 @@ final class AtlasState {
         boolean animate = !m.reset();
         for (AtlasNet.WireTile t : m.tiles()) {
             zones.put(t.tx(), t.tz(), t.zones());
+            zones.putLevels(t.tx(), t.tz(), t.levels());
             long[] old = mine.tile(t.tx(), t.tz()), bits = t.bits().clone();
             if (animate) {
                 for (int w = 0; w < Explored.WORDS; w++) {

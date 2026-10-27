@@ -39,36 +39,9 @@ FAMILIES = {
 SILK = _r("#8d94a0", "#b4bcc8", "#dde2ea", "#ffffff")
 
 # ---------------------------------------------------------------------------------------------------------------------
-# Geometry helpers
-
-
-def rot(rx, ry, rz):
-    cx, sx, cy, sy, cz, sz = math.cos(rx), math.sin(rx), math.cos(ry), math.sin(ry), math.cos(rz), math.sin(rz)
-    Rx = [[1, 0, 0], [0, cx, -sx], [0, sx, cx]]
-    Ry = [[cy, 0, sy], [0, 1, 0], [-sy, 0, cy]]
-    Rz = [[cz, -sz, 0], [sz, cz, 0], [0, 0, 1]]
-    def mul(a, b):
-        return [[sum(a[i][k] * b[k][j] for k in range(3)) for j in range(3)] for i in range(3)]
-    return mul(Rz, mul(Ry, Rx))
-
-
-def apply(R, v):
-    return [sum(R[i][k] * v[k] for k in range(3)) for i in range(3)]
-
-
-def cube(part, name, box, pose=(0, 0, 0, 0, 0, 0), mat="bone"):
-    return dict(part=part, name=name, box=tuple(box), pose=tuple(pose), mat=mat)
-
-
-def curve(part, name, base, segs, thick, mat="bone"):
-    """A bent horn or tusk: segments (length, rx, ry, rz) starting at base, each pointing along its own up (-y), each starting where the last ended."""
-    out, pos = [], list(base)
-    for i, (length, rx, ry, rz) in enumerate(segs):
-        t = max(1, thick - (1 if i >= 2 else 0))
-        out.append(cube(part, f"{name}{i}", (-t / 2, -length, -t / 2, t, length, t), (*pos, rx, ry, rz), mat))
-        d = apply(rot(rx, ry, rz), (0, -length, 0))
-        pos = [pos[k] + d[k] for k in range(3)]
-    return out
+# The kits: per layout, rung -> cubes, each in the frame of one vanilla part and standing on a surface of it. The placement rules
+# (tools/art/forms_geom.py) fail the build when a piece is not attached, sits over a face, hides in the body or reaches too far.
+from forms_geom import BODIES, aim, apply, centre_x, cube, curve, rot, spike, validate  # noqa: E402
 
 
 def sym(fn):
@@ -78,178 +51,190 @@ def sym(fn):
         out += fn(s, tag)
     return out
 
-# ---------------------------------------------------------------------------------------------------------------------
-# The kits: per layout, rung -> cubes. Sizes grow with the rung; every rung is its own full list.
+
+def ring(n, radius, y, tilt=0.35):
+    """n points round a circle (x, y, z, outward lean x, outward lean z)."""
+    return [(math.sin(a) * radius, y, math.cos(a) * radius, math.sin(a) * tilt, math.cos(a) * tilt) for a in (k * 2 * math.pi / n for k in range(n))]
 
 
 def pig(r):
     c = []
-    L = [3, 4, 5, 6, 7][r - 1]
-    c += sym(lambda s, t: curve("head", f"tusk{t}", (s * 2.6, 3.0, -8.6), [(L * 0.55, 0.3, 0, -s * 0.15), (L * 0.5, 1.0, 0, -s * 0.4)] if r >= 2 else [(L, 0.5, 0, -s * 0.2)], 1 if r < 4 else 2))
+    L = [2.2, 2.6, 3.0, 3.4, 3.8][r - 1]
+    # tusks come from the cheeks, out and up beside the snout, never across it
+    c += sym(lambda s, t: curve("head", f"tusk{t}", (s * 3.5, 2.6, -6.0), [(L, (s * 0.85, -0.3, -0.2)), (L * 0.9, (s * 0.35, -1.0, -0.2))], 1 if r < 4 else 2))
     h = [2, 3, 4, 5, 6][r - 1]
-    for i, yy in enumerate(range(-9, 5, 3)):
+    for i, yy in enumerate(range(-3, 6, 3)):
         c.append(cube("body", f"ridge{i}", (-0.5, yy, 1, 1, 2, h), mat="bone" if r >= 4 else "cloth"))
     if r >= 2:
-        for i, (y0, y1) in enumerate(((-8, -2), (0, 5))):
+        for i, (y0, y1) in enumerate(((-6, -1), (1, 5))):
             c += sym(lambda s, t: [cube("body", f"plate{t}{i}", (1.5 if s > 0 else -4.5, y0, 1, 3, y1 - y0, 1), mat="plate")])
     if r >= 3:
-        c.append(cube("head", "brow", (-4.3, -2.6, -8.5, 8.6, 1, 1), mat="plate"))
+        c.append(cube("head", "brow", (-4.2, -4.3, -8.8, 8.4, 1.2, 1.0), mat="plate"))
     if r >= 4:
         for i, x in enumerate((-2.5, 0, 2.5)):
-            c += curve("head", f"crown{i}", (x, -4, -3.5), [(5 if x == 0 else 4, -0.15, 0, 0)], 1, "bone")
+            c += spike("head", f"crown{i}", x, -4, -3.5, 4 if x == 0 else 3, (0, -1, -0.1))
         for i, x in enumerate((-3, -1.5, 0, 1.5, 3)):
-            c.append(cube("head", f"mane{i}", (x - 0.5, -5.5, -1, 1, 5, 2), mat="bone"))
+            c += spike("head", f"mane{i}", x, -4, -0.8, 3 + (i % 2), (0, -1, 0.3))
     if r >= 5:
-        for i, (x, yy, hz, a) in enumerate(((-3, -7, 7, 0.4), (2, -2, 9, -0.5), (-1, 3, 8, 0.7))):
-            c.append(cube("body", f"shard{i}", (x - 1, yy, hz, 2, 1, 2), (0, 0, 0, a, a, 0), mat="bone"))
+        for i, (x, y, z) in enumerate(((-3.5, -4, 6), (3.5, -4, 7), (-3.5, 2, 6.5), (3.5, 2, 7))):
+            c.append(cube("body", f"shard{i}", (x - 1, y, z, 2, 1.5, 1), (0, 0, 0, 0.3 * (i % 2 - 0.5), 0, 0.3), "bone", float_=True))
     return c
 
 
 def cow(r):
     c = []
-    L = [3, 4, 5, 6, 7][r - 1]
-    c += sym(lambda s, t: curve("head", f"horn{t}", (s * 4.4, -3.5, -4.2), [(L * 0.55, 0, 0, -s * 0.9), (L * 0.55, -0.5, 0, -s * 0.2)] if r >= 2 else [(L * 0.8, 0, 0, -s * 0.7)], 1 if r < 4 else 2))
+    L = [2.4, 2.8, 3.2, 3.6, 4.0][r - 1]
+    def horn(s, t):
+        segs = [(L, (s * 1.0, -0.25, -0.1)), (L, (s * 0.45, -1.0, -0.25))]
+        if r >= 3:
+            segs.append((L * 0.7, (-s * 0.1, -0.5, -1.0)))
+        return curve("head", f"horn{t}", (s * 3.8, -3.4, -4.4), segs, 1 if r < 3 else 2)
+    c += sym(horn)
     if r >= 2:
-        c.append(cube("body", "hump", (-4, -9, 3, 8, 6, 3), mat="plate" if r == 2 else "dark"))
+        c.append(cube("body", "hump", (-3.5, -8, 3, 7, 7, 3), mat="plate" if r == 2 else "cloth"))
     if r >= 3:
-        for i, yy in enumerate(range(-9, 7, 4)):
-            c.append(cube("body", f"ridge{i}", (-0.5, yy, 6 if r >= 2 else 3, 1, 2, 2 + r), mat="bone"))
-        c.append(cube("head", "brow", (-4.3, -2.6, -6.4, 8.6, 1, 1), mat="plate"))
+        for i, yy in enumerate((-7, -4, -1.5)):
+            c.append(cube("body", f"ridge{i}", (-0.5, yy, 6, 1, 2, 2 + r), mat="bone"))
+        c.append(cube("head", "brow", (-4.2, -4.3, -6.8, 8.4, 1.2, 1.0), mat="plate"))
     if r >= 4:
-        for i, x in enumerate((-2.5, 0, 2.5)):
-            c += curve("head", f"crown{i}", (x, -4, -2.5), [(4, -0.15, 0, 0)], 1, "bone")
+        for i, x in enumerate((-2, 0, 2)):
+            c += spike("head", f"crown{i}", x, -4, -2.5, 3, (0, -1, -0.1))
     if r >= 5:
-        for i, (x, yy, hz, a) in enumerate(((-4, -6, 9, 0.4), (3, 0, 10, -0.5), (0, 5, 9, 0.7))):
-            c.append(cube("body", f"shard{i}", (x - 1, yy, hz, 2, 1, 2), (0, 0, 0, a, a, 0), mat="bone"))
+        for i, (x, y, z) in enumerate(((-4, -6, 10), (4, -3, 11), (0, 1, 10))):
+            c.append(cube("body", f"shard{i}", (x - 1, y, z, 2, 1.5, 1), (0, 0, 0, 0.3, 0, 0.3 * (i - 1)), "bone", float_=True))
     return c
 
 
 def sheep(r):
     c = []
-    n = r + 2
     def horn(s, t):
-        segs = [(2, 0, 0, -s * 0.9), (2, 0.4, 0, -s * 1.7), (2, 0.9, 0, -s * 2.6)][: min(3, 1 + r)]
-        return curve("head", f"horn{t}", (s * 2.2, -3.5, -2.0), segs, 2 if r >= 2 else 1)
+        segs = [(1.8, (s * 1.0, -0.15, 0.45)), (1.8, (s * 0.35, 0.7, 0.55))]
+        if r >= 2:
+            segs.append((1.6, (-s * 0.35, 0.65, -0.3)))
+        return curve("head", f"horn{t}", (s * 2.9, -2.6, -2.0), segs, 2)
     c += sym(horn)
     if r >= 2:
-        c += sym(lambda s, t: [cube("head", f"band{t}", (s * 2.2 - 1.5, -4.5, -3.5, 3, 1, 3), mat="plate")])
+        for i, yy in enumerate(range(-7, 5, 3)):
+            c.append(cube("body", f"ridge{i}", (-0.5, yy, -1.2, 1, 2, [3, 4, 5, 6, 7][r - 1])), )
     if r >= 3:
-        c.append(cube("head", "brow", (-3.3, -2.0, -6.4, 6.6, 1, 1), mat="plate"))
+        c.append(cube("head", "brow", (-3.2, -4.3, -6.8, 6.4, 1.2, 1.0), mat="plate"))
     if r >= 4:
         for i, x in enumerate((-2, 0, 2)):
-            c += curve("head", f"crown{i}", (x, -4, 0), [(4, -0.15, 0, 0)], 1, "bone")
-    for i in range(n):
-        c.append(cube("body", f"ridge{i}", (-0.5, -8 + i * 3, 0, 1, 2, 1 + r), mat="cloth" if r < 4 else "bone"))
+            c += spike("head", f"crown{i}", x, -4, -2, 3, (0, -1, -0.1))
+    if r >= 5:
+        for i, (x, y, z) in enumerate(((-4, -5, 4), (4, -1, 4.5), (0, 3, 4))):
+            c.append(cube("body", f"shard{i}", (x - 1, y, z, 2, 1.5, 1), (0, 0, 0, 0.3, 0, 0.3 * (i - 1)), "bone", float_=True))
     return c
 
 
 def chicken(r):
     c = []
-    c.append(cube("head", "crest0", (-0.5, -8 - (r // 2), -1.5, 1, 2 + (r // 2), 3), mat="plate" if r >= 2 else "bone"))
-    if r >= 2:
-        c.append(cube("head", "crest1", (-0.5, -7, -2.5, 1, 2, 1), mat="plate"))
-    c += sym(lambda s, t: [cube("right_leg" if s < 0 else "left_leg", f"spur{t}", (0.5 if s > 0 else -0.5, 3, 0, 1, 2 + (r > 2), 1), (0, 0, 0, 0.5, 0, 0), "bone")])
+    h = [1.5, 2, 2.5, 3, 3.5][r - 1]
+    c.append(cube("head", "crest", (-0.5, -6 - h, -1.5, 1, h, 3), mat="plate" if r >= 2 else "bone"))
+    for part, tag in (("right_leg", "r"), ("left_leg", "l")):
+        c.append(cube(part, f"spur{tag}", (0, 2.2, 0, 1, 2 + (r > 2), 1), mat="bone"))
     if r >= 3:
         for i, x in enumerate((-2, 0, 2)):
-            c.append(cube("body", f"plume{i}", (x - 0.5, 2 + i % 2, -2, 1, 5 + r, 1), (0, 0, 0, 0, 0, 0), "plate"))
+            c.append(cube("body", f"plume{i}", (x - 0.5, 2.5, 3, 1, 1.5, 2 + r), mat="cloth"))
     if r >= 4:
-        for i, x in enumerate((-1.5, 0, 1.5)):
-            c += curve("head", f"crown{i}", (x, -6, -0.5), [(3, -0.1, 0, 0)], 1, "bone")
+        c += sym(lambda s, t: spike("head", f"crown{t}", s * 1.2, -6, -0.5, 2.5, (s * 0.15, -1, -0.1)))
+    if r >= 5:
+        for i, (x, y, z) in enumerate(((-3, -2, 5), (3, -2, 5), (0, 3, 5.5))):
+            c.append(cube("body", f"shard{i}", (x - 0.5, y, z, 1, 1, 1), (0, 0, 0, 0.3, 0, 0.3), "bone", float_=True))
     return c
 
 
 def zombie(r):
-    c = []
-    c += [cube("body", "rag0", (-4.5, 9, -2.5, 3, 3, 1), mat="cloth"), cube("body", "rag1", (1.5, 10, -2.5, 3, 3, 1), mat="cloth"),
-          cube("body", "rag2", (-3, 9, 1.5, 6, 3, 1), mat="cloth")]
-    c.append(cube("right_arm", "bone", (-0.5, 4, 2, 1, 3, 1), (0, 0, 0, -0.2, 0, 0), "bone"))
+    # rags hang from the waist in strips, front and back; a bone shows on the right forearm
+    c = [cube("body", "rag0", (-3.5, 9.5, -3, 2, 4, 1), mat="cloth"), cube("body", "rag1", (-1, 10, -3, 2, 3, 1), mat="cloth"), cube("body", "rag2", (1.5, 9.5, -3, 2, 4, 1), mat="cloth"),
+         cube("body", "rag3", (-2.5, 9.5, 2, 2, 4, 1), mat="cloth"), cube("body", "rag4", (0.5, 10, 2, 2, 3, 1), mat="cloth"),
+         cube("right_arm", "bone", (-1.5, 5, 2, 1, 3, 1), mat="bone")]
     if r >= 2:
-        c += [cube("head", "helm", (-4.5, -9, -4.5, 9, 4, 9), mat="plate"), cube("head", "guard", (-0.5, -5, -5, 1, 4, 1), mat="plate"),
-              cube("right_arm", "pauldron", (-3.5, -2.6, -2.6, 5, 3, 5), mat="plate"), cube("left_arm", "pauldron", (-1.5, -2.6, -2.6, 5, 3, 5), mat="plate"),
-              cube("left_arm", "shield", (3.2, 1, -4, 1, 9, 8), mat="plate")]
+        c.append(cube("head", "helm", (-4.5, -9, -4.5, 9, 3.4, 9), mat="plate"))
+        for part, cx in (("right_arm", centre_x("zombie", "right_arm")), ("left_arm", centre_x("zombie", "left_arm"))):
+            c += [cube(part, "pauldron", (cx - 2.6, -2.8, -2.6, 5.2, 3, 5.2), mat="plate"), cube(part, "bracer", (cx - 2.4, 5.5, -2.4, 4.8, 3, 4.8), mat="plate")]
     if r >= 3:
-        for s, t, part in ((-1, "r", "right_arm"), (1, "l", "left_arm")):
-            for i in range(3):
-                c.append(cube(part, f"claw{t}{i}", (-1.5 + i * 1.4 + (0.5 if s > 0 else 0), 10, -0.5, 1, 3, 1), (0, 0, 0, 0.35, 0, 0), "bone"))
+        for part, cx, tag in (("right_arm", centre_x("zombie", "right_arm"), "r"), ("left_arm", centre_x("zombie", "left_arm"), "l")):
+            for i, dx in enumerate((-1.7, -0.5, 0.7)):
+                c.append(cube(part, f"claw{tag}{i}", (cx + dx, 10, -0.5, 1, 2.5, 1), mat="bone"))
         for i in range(4):
-            c.append(cube("body", f"spine{i}", (-0.5, 1 + i * 2.6, 2, 1, 1, 2 + i % 2), mat="bone"))
+            c.append(cube("body", f"spine{i}", (-0.5, 1 + i * 2.6, 2, 1, 1.4, 1.5 + i % 2), mat="bone"))
     if r >= 4:
-        c += sym(lambda s, t: curve("head", f"horn{t}", (s * 3.6, -9, -1), [(3, 0, 0, -s * 0.5), (2, 0, 0, -s * 0.1)], 1, "bone"))
-        c += sym(lambda s, t: [cube("body", f"spike{t}", (s * 4 - 0.5, -0.5, -1, 1, 1, 2), mat="bone")])
+        c += sym(lambda s, t: curve("head", f"horn{t}", (s * 3.4, -9, -0.5), [(2.4, (s * 0.6, -1, 0)), (2.0, (s * 0.1, -1, -0.1))], 1, "bone"))
+        for part, cx, tag in (("right_arm", centre_x("zombie", "right_arm"), "r"), ("left_arm", centre_x("zombie", "left_arm"), "l")):
+            c += spike(part, f"spike{tag}", cx, -2.8, 0, 2.2, (0, -1, 0))
     if r >= 5:
-        for i in range(5):
-            a = (i - 2) * 0.55
-            c += curve("head", f"thorn{i}", (math.sin(a) * 3.2, -9, math.cos(a) * 3.2 - 0.4), [(5 + (i == 2) * 2, 0.0, 0, math.sin(a) * 0.4)], 1, "bone")
-        for i, (x, yy, z, a) in enumerate(((-6, 2, 3, 0.5), (6, 5, 3, -0.5), (0, -3, 4, 0.3))):
-            c.append(cube("body", f"shard{i}", (x - 1, yy, z, 2, 2, 1), (0, 0, 0, a, a, a), "bone"))
+        for i, (x, y, z, ox, oz) in enumerate(ring(5, 3.0, -9)):
+            c += spike("head", f"thorn{i}", x, y, z, 5 if i == 0 else 4, (ox, -1, oz))
+        for i, (x, y, z) in enumerate(((-6, 3, 5), (6, 5, 5), (0, 7, 7))):
+            c.append(cube("body", f"shard{i}", (x - 1, y, z, 2, 2, 1), (0, 0, 0, 0.3, 0.3, 0.3), "bone", float_=True))
     return c
 
 
 def skeleton(r):
-    c = [cube("head", "band", (-4.5, -6.5, -4.5, 9, 1, 9), mat="cloth"),
-         cube("body", "quiver", (1.5, 1, 2, 3, 9, 2), (0, 0, 0, 0, 0, 0.2), "cloth")]
-    for i in range(2):
-        c.append(cube("body", f"fletch{i}", (2 + i, -2, 2.5, 1, 3, 1), (0, 0, 0, 0, 0, 0.2), "bone"))
+    c = [cube("body", "quiver", (1.2, 1, 2, 3, 9, 2), mat="cloth"), cube("body", "fletch", (2, -0.8, 2.4, 1, 2, 1), mat="bone")]
+    top = -8.2
+    if r == 1:
+        c.append(cube("head", "band", (-4.5, -8.2, -4.5, 9, 1.2, 9), mat="cloth"))
     if r >= 2:
-        c += [cube("head", "hood0", (-4.5, -9, -0.5, 9, 9, 5), mat="cloth"), cube("head", "hood1", (-4.5, -9.5, -4.5, 9, 1, 9), mat="cloth"),
-              cube("right_arm", "bracer", (-1.5, 6, -1.5, 3, 3, 3), mat="plate"), cube("left_arm", "bracer", (-1.5, 6, -1.5, 3, 3, 3), mat="plate")]
+        c += [cube("head", "hood0", (-4.5, -9, -0.5, 9, 9, 5), mat="cloth"), cube("head", "hood1", (-4.5, -9.8, -4.5, 9, 1.8, 9), mat="cloth")]
+        c += [cube("right_arm", "bracer", (-1.5, 6, -1.5, 3, 3, 3), mat="plate"), cube("left_arm", "bracer", (-1.5, 6, -1.5, 3, 3, 3), mat="plate")]
+        top = -9.8
     if r >= 3:
-        c += sym(lambda s, t: [cube("head", f"horn{t}", (s * 4 - 0.5, -9, -1, 1, 3, 1), (0, 0, 0, 0, 0, -s * 0.4), "bone")])
-        c += [cube("right_arm", "pad", (-2.5, -2.6, -1.8, 4, 2, 3.6), mat="plate"), cube("left_arm", "pad", (-1.5, -2.6, -1.8, 4, 2, 3.6), mat="plate")]
+        c += sym(lambda s, t: curve("head", f"horn{t}", (s * 3.5, top, -0.5), [(2.2, (s * 0.7, -1, 0)), (1.8, (s * 0.15, -1, -0.1))], 1, "bone"))
+        c += [cube("right_arm", "pad", (-2, -2.8, -1.8, 4, 1.6, 3.6), mat="plate"), cube("left_arm", "pad", (-2, -2.8, -1.8, 4, 1.6, 3.6), mat="plate")]
     if r >= 4:
         for i in range(3):
-            c.append(cube("body", f"cloak{i}", (-3 + i * 2.2, 0, 2.5, 2, 13 + (i % 2) * 2, 1), mat="cloth"))
+            c.append(cube("body", f"cloak{i}", (-3 + i * 2.6, 0, 2, 2, 12 + (i % 2) * 2, 1), mat="cloth"))
     if r >= 5:
-        for i in range(6):
-            a = i * math.pi / 3
-            c.append(cube("body", f"bone{i}", (math.sin(a) * 8 - 0.5, 3 + (i % 3) * 3, math.cos(a) * 8 - 0.5, 1, 4, 1), (0, 0, 0, 0, 0, 0.3 * (i % 2 - 0.5)), "bone"))
-        for i in range(5):
-            a = (i - 2) * 0.55
-            c += curve("head", f"thorn{i}", (math.sin(a) * 3.2, -8, math.cos(a) * 3.2), [(4 + (i == 2) * 2, 0, 0, math.sin(a) * 0.4)], 1, "bone")
+        for i, (x, y, z, ox, oz) in enumerate(ring(6, 8.5, 3, 0)):
+            c.append(cube("body", f"bone{i}", (x - 0.5, y + (i % 3) * 3, z - 0.5, 1, 4, 1), (0, 0, 0, 0, 0, 0.3 * (i % 2 - 0.5)), "bone", float_=True))
+        for i, (x, y, z, ox, oz) in enumerate(ring(5, 3.0, top)):
+            c += spike("head", f"thorn{i}", x, y, z, 4 + (i == 0), (ox, -1, oz))
     return c
 
 
 def spider(r):
-    c = []
-    c += sym(lambda s, t: [cube("head", f"fang{t}", (s * 1.5 - 0.5, 2, -8.5, 1, 2 + (r > 2), 1), (0, 0, 0, 0.2, 0, 0), "bone")])
-    c.append(cube("body1", "spinneret", (-1.5, -1.5, 6, 3, 3, 3), mat="silk"))
-    c.append(cube("body1", "thread", (-0.5, 0, 9, 1, 1, 3 + r), mat="silk"))
+    c = sym(lambda s, t: [cube("head", f"fang{t}", (s * 1.6 - 0.5, 2.2, -8.6, 1, 2.2 + (r > 2), 1.2), mat="bone")])
+    c += [cube("body1", "spinneret", (-1.5, -1.5, 6, 3, 3, 3), mat="silk"), cube("body1", "thread", (-0.5, 0, 9, 1, 1, 3 + r), mat="silk")]
+    hh = 2 if r < 3 else 3
     for i in range(4 + r):
-        c.append(cube("body1", f"hair{i}", (-4 + (i % 3) * 3.5, -5.2, -5 + (i // 3) * 4, 1, 2 + (r > 2), 1), mat="cloth"))
+        c.append(cube("body1", f"hair{i}", (-3.5 + (i % 3) * 3.5 - 0.5, -4 - hh, -4 + (i // 3) * 4, 1, hh, 1), mat="cloth"))
+    top = -4
     if r >= 2:
         c.append(cube("head", "plate", (-4.5, -5, -8.5, 9, 1, 9), mat="plate"))
-        for i in range(3):
-            c.append(cube("body1", f"dorsal{i}", (-0.5, -7, -5 + i * 4, 1, 3 + i % 2, 2), mat="plate"))
+        for i, zz in enumerate((-4, 0, 4)):
+            c.append(cube("body1", f"dorsal{i}", (-0.5, -7, zz, 1, 3, 2), mat="plate"))
+        top = -5
     if r >= 3:
-        c.append(cube("body1", "sac", (-4, -6.5, 0, 8, 3, 6), mat="dark"))
+        c.append(cube("body1", "sac", (-4, -6.5, -1, 8, 3, 6), mat="dark"))
     if r >= 4:
-        for i, (x, y, z) in enumerate(((-3, 3.5, -3), (3, 3.5, 0), (-3, 3.5, 4), (3, 3.5, 6))):
-            c.append(cube("body1", f"egg{i}", (x - 1.5, y, z, 3, 3, 3), mat="silk"))
+        for i, (x, zz) in enumerate(((-3, -3), (3, 0), (-3, 4), (3, 6.5))):
+            c.append(cube("body1", f"egg{i}", (x - 1.5, 3.6, zz - 1.5, 3, 3, 3), mat="silk"))
     if r >= 5:
-        for i, (x, y) in enumerate(((-3, -3), (3, -3), (-1.5, -4.5), (1.5, -4.5))):
-            c.append(cube("head", f"eye{i}", (x - 1, y - 1, -8.6, 2, 2, 1), mat="bone"))
-        for i, (x, yy, z, a) in enumerate(((-6, -8, 0, 0.5), (6, -9, 3, -0.5), (0, -11, 6, 0.3))):
-            c.append(cube("body1", f"shard{i}", (x - 1, yy, z, 2, 1, 2), (0, 0, 0, a, a, 0), "bone"))
+        for i, x in enumerate((-3, -1, 1, 3)):
+            c += spike("head", f"thorn{i}", x, top, -3, 3, (x * 0.05, -1, -0.1))
+        for i, (x, y, z) in enumerate(((-6, -8, 0), (6, -9, 3), (0, -11, 6))):
+            c.append(cube("body1", f"shard{i}", (x - 1, y, z, 2, 1, 2), (0, 0, 0, 0.3, 0.3, 0), "bone", float_=True))
     return c
 
 
 def creeper(r):
     c = []
-    for i, x in enumerate((-3, 0, 3)):
-        c.append(cube("body", f"frill{i}", (x - 0.5, 1 + i, 2, 1, 4, 1 + r), mat="bone"))
+    for i, x in enumerate((-3.5, -0.5, 2.5)):
+        c.append(cube("body", f"frill{i}", (x, 1.5 + i * 0.5, 2, 1, 4, 1 + r * 0.6), mat="bone"))
     c.append(cube("head", "frillh", (-3.5, -7, 4, 7, 2, 1), mat="plate"))
     if r >= 2:
-        c += sym(lambda s, t: curve("head", f"rod{t}", (s * 2.5, -8, 0), [(4 + r, 0, 0, s * 0.15)], 1, "plate"))
+        c += sym(lambda s, t: spike("head", f"rod{t}", s * 2.5, -8, 0, 3 + r, (s * 0.12, -1, 0), 1, "plate"))
     if r >= 3:
-        for i, x in enumerate((-3, 3)):
-            c.append(cube("body", f"vent{i}", (x - 1, 0, 2.2, 2, 4, 2), mat="dark"))
+        c += sym(lambda s, t: [cube("body", f"vent{t}", (s * 2.5 - 1, 0.5, 2, 2, 4, 2), mat="dark")])
+        c.append(cube("head", "frillh2", (-3.5, -4.5, 4, 7, 2, 1), mat="plate"))
     if r >= 4:
         c.append(cube("body", "belt", (-4.5, 6, -2.5, 9, 2, 5), mat="plate"))
-        c += sym(lambda s, t: [cube("body", f"pack{t}", (s * 4.2 - 1.5 + (1.5 if s > 0 else 0), 1, -1.5, 3, 5, 3), mat="plate")])
+        c += [cube("body", "packr", (-7, 1, -1.5, 3, 5, 3), mat="plate"), cube("body", "packl", (4, 1, -1.5, 3, 5, 3), mat="plate")]
     if r >= 5:
-        for i in range(5):
-            a = (i - 2) * 0.5
-            c += curve("head", f"bolt{i}", (math.sin(a) * 3.5, -8, 0), [(5 + (i == 2) * 3, 0, 0, math.sin(a) * 0.3)], 1, "plate")
+        for i, x in enumerate((-3, -1.5, 0, 1.5, 3)):
+            c += spike("head", f"bolt{i}", x, -8, 0, 5 + (i == 2) * 3, (x * 0.07, -1, 0), 1, "plate")
     return c
 
 
@@ -261,8 +246,8 @@ KITS = {"pig": pig, "cow": cow, "sheep": sheep, "chicken": chicken, "zombie": zo
 LAYOUT = {
     "pig": dict(size=(64, 64), cubes=[(0, 0, 8, 8, 8, "head"), (16, 16, 4, 3, 1, "head"), (28, 8, 10, 16, 8, "body"), (0, 16, 4, 6, 4, "leg")], eyes=[(8, 11, 2, 1), (14, 11, 2, 1)]),
     "cow": dict(size=(64, 64), cubes=[(0, 0, 8, 8, 6, "head"), (18, 4, 12, 18, 10, "body"), (0, 16, 4, 12, 4, "leg")], eyes=[(6, 9, 2, 1), (12, 9, 2, 1)]),
-    "sheep": dict(size=(64, 32), cubes=[(0, 0, 6, 6, 8, "head"), (28, 8, 8, 16, 6, "body"), (0, 16, 4, 12, 4, "leg")], eyes=[(9, 11, 1, 1), (13, 11, 1, 1)]),
-    "chicken": dict(size=(64, 32), cubes=[(0, 0, 4, 6, 3, "head"), (0, 9, 6, 8, 6, "body"), (26, 0, 3, 5, 3, "leg"), (24, 13, 1, 4, 6, "limb")], eyes=[(3, 5, 1, 1), (6, 5, 1, 1)]),
+    "sheep": dict(size=(64, 32), cubes=[(0, 0, 6, 6, 8, "head"), (28, 8, 8, 16, 6, "body"), (0, 16, 4, 12, 4, "leg")], eyes=[(8, 10, 2, 1), (12, 10, 2, 1)]),
+    "chicken": dict(size=(64, 32), cubes=[(0, 0, 4, 6, 3, "head"), (0, 9, 6, 8, 6, "body"), (26, 0, 3, 5, 3, "leg"), (24, 13, 1, 4, 6, "limb")], eyes=[(3, 4, 1, 1), (6, 4, 1, 1)]),
     "zombie": dict(size=(64, 64), cubes=[(0, 0, 8, 8, 8, "head"), (16, 16, 8, 12, 4, "body"), (40, 16, 4, 12, 4, "limb"), (0, 16, 4, 12, 4, "leg"), (32, 48, 4, 12, 4, "limb"), (16, 48, 4, 12, 4, "leg")], eyes=[(9, 12, 2, 1), (13, 12, 2, 1)]),
     "skeleton": dict(size=(64, 32), cubes=[(0, 0, 8, 8, 8, "head"), (16, 16, 8, 12, 4, "body"), (40, 16, 2, 12, 2, "limb"), (0, 16, 2, 12, 2, "leg")], eyes=[(9, 11, 2, 2), (13, 11, 2, 2)]),
     "spider": dict(size=(64, 32), cubes=[(32, 4, 8, 8, 8, "head"), (0, 0, 6, 6, 6, "body"), (0, 12, 10, 8, 12, "body"), (18, 0, 16, 2, 2, "leg")], eyes=[(41, 14, 2, 1), (45, 14, 2, 1), (42, 16, 1, 1), (45, 16, 1, 1), (40, 13, 1, 1), (47, 13, 1, 1)]),
@@ -386,7 +371,8 @@ def overlay_and_glow(layout, r, fam):
             # weathering of the family on what faces up and back (moss, sand dust, rime)
             if name in ("top", "back"):
                 scatter(ov, rect, pal["weather"], rng, 0.05 + 0.015 * r)
-            if role in ("body", "limb", "head") and name in ("front", "left", "right", "back"):
+            # marks never go on a face: a head carries them on its top, sides and back only
+            if role in ("body", "limb", "head") and name in ("front", "left", "right", "back") and not (role == "head" and name == "front"):
                 for _ in range(1 + r // 2):
                     slash(ov, rect, rng, (pal["dark"][1], pal["bone"][2]))
             if r >= 2 and role in ("body", "limb") and name in ("front", "back", "left", "right") and rect[2] >= 4 and rect[3] >= 4:
@@ -395,13 +381,13 @@ def overlay_and_glow(layout, r, fam):
                 for yy in range(py, min(py + 3, rect[1] + rect[3])):
                     for xx in range(px, min(px + 3, rect[0] + rect[2])):
                         ov.set(xx, yy, pal["plate"][3 if yy == py else 1 + (xx + yy) % 2])
-            if r >= 3 and name == "front" and role in ("body", "limb", "head"):
-                # a few thin veins: the body's front most, a limb's one from the fourth rung, the head's at the fifth
-                n = {"body": r - 2, "limb": 1 if r >= 4 else 0, "head": 1 if r >= 5 else 0}[role]
+            if r >= 3 and name == "front" and role in ("body", "limb"):
+                # a few thin veins: the body's front most, a limb's one from the fourth rung (never the face)
+                n = {"body": r - 2, "limb": 1 if r >= 4 else 0}[role]
                 for _ in range(n):
                     crack(ov, rect, rng, pal["dark"][0], gl)
     for (u, v, w, h) in LAYOUT[layout]["eyes"]:
-        for yy in range(v, v + max(h, 2)):
+        for yy in range(v, v + h):
             for xx in range(u, u + w):
                 gl.set(xx, yy, (255, 255, 255, 255))
     return ov, gl
@@ -410,6 +396,13 @@ def overlay_and_glow(layout, r, fam):
 
 
 def build(out):
+    problems = []
+    for layout in LAYOUT:
+        for r in range(1, 6):
+            for line in validate(layout, r, KITS[layout](r)):
+                problems.append(f"{layout} rung {r}: {line}")
+    if problems:
+        raise SystemExit("the forms' kits are not where they should be:\n  " + "\n  ".join(problems))
     kit = {"schema": 1, "layouts": {}}
     for layout in LAYOUT:
         ranks = {}
