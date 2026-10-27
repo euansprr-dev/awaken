@@ -209,9 +209,9 @@ final class PowerFxTests {
     private record Probe(String power, int ticks, boolean forward) {}
 
     private static final List<Probe> PROBES = List.of(
-            new Probe("ground_slam", 0, false), new Probe("nova", 0, false), new Probe("frost_nova", 0, false),
-            new Probe("thunderclap", 3, false), new Probe("gravity_flip", 0, false), new Probe("overload", 22, false),
-            new Probe("brace", 64, false), new Probe("shockwave", 17, true), new Probe("spire", 0, false)); // spire last: it builds a pillar
+            new Probe("ground_slam", 0, false), new Probe("nova", 0, false), new Probe("frost_nova", 7, false),
+            new Probe("thunderclap", 8, false), new Probe("gravity_flip", 7, false), new Probe("overload", 22, false),
+            new Probe("brace", 68, false), new Probe("shockwave", 17, true), new Probe("spire", 7, false)); // wind-ups wait their profile's ticks; spire last: it builds a pillar
 
     /**
      * Every area power draws exactly the volume it hits: mobs stand in a row at 1..13 blocks, the power is cast, and

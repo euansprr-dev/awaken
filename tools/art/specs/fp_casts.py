@@ -20,6 +20,8 @@ ROOT = os.path.abspath(os.path.join(HERE, "../../.."))
 sys.path.insert(0, HERE)
 import fp_moves as F  # noqa: E402
 
+sys.modules.setdefault("fp_casts", sys.modules[__name__])  # fp_gestures imports this module back, also when it is the script
+
 OUT_REL = "assets/awaken/fp_clips/fp_casts.json"
 fist, hand, REST, REST_FIST, OFF_OUT = F.fist, F.hand, F.REST, F.REST_FIST, F.OFF_OUT
 CLIPS = {}
@@ -107,10 +109,12 @@ def write(root=None):
 
 def build(out):
     """build_all.py entry."""
+    import fp_gestures  # noqa: F401
     write(out.root)
 
 
 def main(argv):
+    import fp_gestures  # noqa: F401  (registers the per-power clips)
     cmd = argv[0] if argv else "build"
     if cmd == "build":
         print(f"{len(CLIPS)} clips -> {os.path.relpath(write(), ROOT)}")

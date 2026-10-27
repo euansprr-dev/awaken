@@ -226,6 +226,16 @@ public final class Fx {
     }
 
     /**
+     * A power's sound as an FX event: every client in range plays it at {@code at} on the cast's release frame (the same frame as
+     * the effect and the camera moment), not on the press tick, so sound, hands and light land together.
+     */
+    public static void sound(Cast c, Vec3 at, net.minecraft.core.Holder<net.minecraft.sounds.SoundEvent> sound, float volume, float pitch) {
+        int id = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.getId(sound.value());
+        if (id < 0) return;
+        at(c, FxKind.SOUND, at).noAnim().colour(id).scale(volume).aux(pitch).send();
+    }
+
+    /**
      * Begins a cast profile's pose for everyone who can see the caster (the key press already started it on their own
      * client): the clips run, nothing is drawn. For a power with a wind-up, the effect follows {@code windup} ticks later.
      */

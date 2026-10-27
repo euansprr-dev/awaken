@@ -18,7 +18,6 @@ import dev.awaken.powers.PowerType.Variant;
 import dev.awaken.powers.Running;
 import dev.awaken.powers.TerrainLedger;
 import dev.awaken.powers.fx.CastAnim;
-import dev.awaken.powers.fx.CastProfiles;
 import dev.awaken.powers.fx.FxEvent;
 import dev.awaken.powers.fx.FxKind;
 import dev.awaken.powers.fx.FxStyle;
@@ -278,26 +277,8 @@ final class KineticPowers {
         return Result.OK;
     }
 
-    /**
-     * The stamp: the key press starts the knee lifting (everyone sees it), and the wave leaves when the foot lands, a
-     * short wind-up later (CastProfiles "shockwave": energy and cooldown are spent on the press). The wave goes where
-     * you look when the foot lands.
-     */
+    /** The stamp: the wave leaves when the foot lands (the profile's wind-up, run by Casting) from where you look then. */
     static Result shockwave(Cast c) {
-        CastProfiles.Profile prof = CastProfiles.byPower(c.type.path);
-        int wait = prof == null ? 1 : Math.max(1, prof.windup());
-        Fx.pose(c);
-        c.sound(PowerSounds.STOMP_LIFT, 0.8f, 1f);
-        Running w = Casting.start(c, "shockwave_windup", wait);
-        w.tick(rr -> {
-            if (rr.age != wait - 1) return;
-            if (!c.player.isAlive() || c.player.isSpectator()) return;
-            shockwaveRelease(new Cast(c.player, c.type, c.variant, c.powerLevel, c.slot, c.predicted, c.player.getYRot(), c.player.getXRot()));
-        });
-        return Result.OK;
-    }
-
-    static void shockwaveRelease(Cast c) {
         double range = c.is(1) ? 7 : c.is(2) ? 14 : 9;
         double half = c.is(1) ? 50 : c.is(2) ? 15 : 30;
         Vec3 origin = c.pos().add(0, 0.5, 0);
@@ -324,6 +305,7 @@ final class KineticPowers {
             }
         });
         Fx.quake(c.level, origin, 10, 1.5f);
+        return Result.OK;
     }
 
     static Result brace(Cast c) {

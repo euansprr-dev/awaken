@@ -1,7 +1,14 @@
 package dev.awaken.powers.fx;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.jspecify.annotations.Nullable;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,44 +17,77 @@ import java.util.Map;
 /**
  * A cast profile: what makes one power's cast its own (docs/power-anims/PLAN.md section 5.1). A power without one keeps
  * its family's clip and its {@link CastAnim}. A profile names the full-body clips (third person), the first-person clips,
- * the tick the effect leaves on (the same tick in both, the clips are authored to it) and how long the server waits
- * before the power happens (a short wind-up: the foot has to land before the wave leaves). The id travels in an
- * {@link FxEvent}'s high flag bits with a beat ({@link FxEvent#profile()}); the table is built in a fixed order, so both
- * sides agree on ids. Clips are written by tools/art/specs/power_casts.py and fp_casts.py; the {@code cast_profiles}
- * GameTest holds every name here to those files.
+ * the tick the effect leaves on (the same tick in both: the clips are authored to it), how long the server waits before the
+ * power happens (a short wind-up: the foot has to land before the wave leaves), the screen moment at the release and the
+ * Lens look. The table is {@code data/awaken/powers/casts.json}, written by tools/art/specs/power_gestures.py from
+ * power_cast_table.py; ids are the rows' order (1 up), so both sides, built from one jar, agree. An id and a beat
+ * ({@link FxEvent#profile()}) ride an event's high flag bits. The {@code power_cast_profiles} GameTest holds every name to
+ * the clip files.
  */
 public final class CastProfiles {
     private CastProfiles() {}
+
+    public static final String FILE = "data/awaken/powers/casts.json";
+    public static final int SCHEMA = 1;
+
+    /** The screen moments a profile may name (powers.client.fx.CastFeel plays them; the test holds the table to this list). */
+    public static final java.util.Set<String> MOMENTS = java.util.Set.of("thump_heavy", "thump_light", "recoil_light", "release_big", "push",
+            "breath", "lift", "none");
 
     /** The beats an event can carry. */
     public static final int BEGIN = 0, RELEASE = 1, END = 2;
 
     /**
-     * @param windup   server ticks between the key press and the power happening (0: on the press tick)
-     * @param release  the tick of the clips the effect leaves on (the plant, the thrust)
-     * @param fallback the vanilla pose used when the animation library is not installed
-     * @param begin3p  third-person clip started at the press; {@code hold3p} the loop it moves into after {@code holdAt} ticks
-     *                 (null: none); {@code end3p} the clip that lets go of the hold
-     * @param begin1p  first-person clip started at the press; {@code hold1p} the loop it moves into when {@code begin1p} ends
+     * @param windup    server ticks between the key press and the power happening (0: on the press tick)
+     * @param release   the tick of the clips the effect leaves on (the plant, the thrust); events wait for it (decision D4)
+     * @param fallback  the vanilla pose used when the animation library is not installed (from PowerFxDefs)
+     * @param begin3p   third-person clip started at the press; {@code hold3p} the loop it moves into after {@code holdAt} ticks
+     *                  (null: none); {@code end3p} the clip that lets go (a strike or a plain fade)
+     * @param begin1p   first-person clip started at the press; {@code hold1p} the loop it moves into when {@code begin1p} ends
+     * @param moment    the screen moment at the release tick ({@code CastFeel.MOMENTS}), {@code endMoment} at a channel's let-go
+     * @param lens      a Lens look id, or null
+     * @param origin    where a beam or bolt starts: "palm" or "core"
      */
     public record Profile(int id, String power, int windup, int release, CastAnim fallback, String begin3p, @Nullable String hold3p,
-                          int holdAt, @Nullable String end3p, String begin1p, @Nullable String hold1p) {}
+                          int holdAt, @Nullable String end3p, String begin1p, @Nullable String hold1p, boolean channel, String moment,
+                          String endMoment, @Nullable String lens, String origin, @Nullable String beginSound) {
+        public boolean core() {
+            return "core".equals(origin);
+        }
+    }
 
     private static final List<Profile> LIST = new ArrayList<>();
     private static final Map<String, Profile> BY_POWER = new HashMap<>();
 
-    private static void add(String power, int windup, int release, CastAnim fallback, String begin3p, @Nullable String hold3p, int holdAt,
-                            @Nullable String end3p, String begin1p, @Nullable String hold1p) {
-        Profile p = new Profile(LIST.size() + 1, power, windup, release, fallback, begin3p, hold3p, holdAt, end3p, begin1p, hold1p);
-        LIST.add(p);
-        BY_POWER.put(power, p);
+    static {
+        try (InputStream in = CastProfiles.class.getClassLoader().getResourceAsStream(FILE)) {
+            if (in == null) throw new IllegalStateException("missing " + FILE + " (python3 tools/art/specs/power_casts.py build)");
+            JsonObject root = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject();
+            int schema = root.get("schemaVersion").getAsInt();
+            if (schema != SCHEMA) throw new IllegalStateException(FILE + " schemaVersion " + schema + ", expected " + SCHEMA);
+            JsonArray rows = root.getAsJsonArray("profiles");
+            for (JsonElement e : rows) {
+                JsonObject r = e.getAsJsonObject();
+                String power = r.get("power").getAsString();
+                boolean channel = r.get("channel").getAsBoolean();
+                PowerFxDefs.Def def = PowerFxDefs.get(power);
+                CastAnim fallback = def == null ? CastAnim.PALM : channel && def.windAnim() != null ? def.windAnim() : def.anim();
+                if (fallback == CastAnim.NONE) fallback = CastAnim.PALM;
+                Profile p = new Profile(LIST.size() + 1, power, r.get("windup").getAsInt(), r.get("release").getAsInt(), fallback,
+                        r.get("begin3p").getAsString(), str(r, "hold3p"), r.get("holdAt").getAsInt(), str(r, "end3p"), r.get("begin1p").getAsString(),
+                        str(r, "hold1p"), channel, r.get("moment").getAsString(), r.get("endMoment").getAsString(), str(r, "lens"),
+                        r.get("origin").getAsString(), str(r, "beginSound"));
+                LIST.add(p);
+                BY_POWER.put(power, p);
+            }
+        } catch (java.io.IOException ex) {
+            throw new IllegalStateException(ex);
+        }
     }
 
-    static {
-        // Kinetic's stamp: knee up, hang, plant at tick 5 (250 ms); the wave leaves from the planted foot
-        add("shockwave", 5, 5, CastAnim.STOMP, "stomp", null, 0, null, "fp_stomp", null);
-        // Energy's beam through the core: gather at the sternum, the arm to the aim by tick 5, then a braced, trembling hold
-        add("beam", 0, 5, CastAnim.AIM_HOLD, "beam_gather", "beam_hold", 5, "beam_hold_end", "fp_beam_gather", "fp_beam_hold");
+    private static @Nullable String str(JsonObject r, String key) {
+        JsonElement e = r.get(key);
+        return e == null || e.isJsonNull() ? null : e.getAsString();
     }
 
     public static @Nullable Profile byPower(String powerPath) {
@@ -63,7 +103,7 @@ public final class CastProfiles {
         return LIST;
     }
 
-    /** Every clip a profile names (third person, then first person): for the asset test. */
+    /** Every third-person clip a profile names. */
     public static List<String> clips3p() {
         List<String> out = new ArrayList<>();
         for (Profile p : LIST) {
@@ -74,6 +114,7 @@ public final class CastProfiles {
         return out;
     }
 
+    /** Every first-person clip a profile names. */
     public static List<String> clips1p() {
         List<String> out = new ArrayList<>();
         for (Profile p : LIST) {

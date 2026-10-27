@@ -126,6 +126,12 @@ final class Muzzles {
 
     /** The sternum: the drawn model's, else a point on the chest. */
     static void core(Entity e, float pt, double[] out) {
+        Minecraft mc = Minecraft.getInstance();
+        // your own first person: the chest is below the frame, so the core is a point low in the view, in front of the chest
+        if (e == mc.getCameraEntity() && mc.options.getCameraType().isFirstPerson() && CastAnims.profileOf(e.getId()) != 0) {
+            viewToWorld(0f, -0.50f, -0.70f, out);
+            return;
+        }
         if (sampled(e.getId(), CORE, out)) return;
         baked(e, CORE, pt, out);
         if (out[1] == 0) {

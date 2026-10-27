@@ -33,6 +33,8 @@ import math
 import os
 import sys
 
+sys.modules.setdefault("power_casts", sys.modules[__name__])  # power_gestures imports this module back, also when it is the script
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 ART = os.path.abspath(os.path.join(HERE, ".."))
 ROOT = os.path.abspath(os.path.join(HERE, "../../.."))
@@ -589,8 +591,10 @@ def write(root=None):
 
 
 def build(out):
-    """build_all.py entry: writes the clips JSON (no textures)."""
+    """build_all.py entry: writes the clips JSON (no textures) and the profile table."""
+    import power_gestures  # noqa: F401
     write(out.root)
+    power_gestures.write_table(out.root)
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -829,9 +833,11 @@ def silhouette(img, scale=0.22):
 
 
 def main(argv):
+    import power_gestures  # noqa: F401  (registers the per-power clips and the profile table)
     cmd = argv[0] if argv else "build"
     if cmd == "build":
         path = write()
+        power_gestures.write_table()
         print(f"{len(CLIPS)} clips -> {os.path.relpath(path, ROOT)}")
         bad = check(quiet=True)
         for b in bad:

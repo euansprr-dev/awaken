@@ -99,6 +99,8 @@ public final class FxClient {
     }
 
     private static void reset() {
+        java.util.Arrays.fill(DEFERRED, null);
+        head = count = 0;
         FxWorld.reset();
         CastAnims.reset();
         FxScreen.reset();
@@ -140,6 +142,13 @@ public final class FxClient {
                     if (own && animations()) FirstPerson.play(prof.begin1p());
                 }
             }
+            case CastProfiles.RELEASE -> {
+                // a power with no wind-up has only this event: it starts the pose too (the caster's own press did already)
+                if (CastAnims.profileOf(e.caster()) != prof.id()) {
+                    CastAnims.playProfile(e.caster(), prof, CastClips.family(e));
+                    if (own && animations()) FirstPerson.play(prof.begin1p());
+                }
+            }
             case CastProfiles.END -> {
                 if (own) stopFirstPerson(prof);
             }
@@ -165,37 +174,42 @@ public final class FxClient {
 
     // ---- the effect waits for the body's release frame (decision D4) --------------------------------------------------
 
-    private static final FxEvent[] DEFERRED = new FxEvent[16];
-    private static final int[] DEFERRED_AT = new int[16];
+    /** A ring of events waiting for their tick; due ticks only grow (every wait is the profile's release minus the cast's age). */
+    private static final FxEvent[] DEFERRED = new FxEvent[64];
+    private static final int[] DEFERRED_AT = new int[64];
+    private static int head, count;
+
+    /** Kinds that never wait: the pose itself, the gathering light (it begins with the press) and the let-go. */
+    private static boolean immediate(FxKind k) {
+        return k == FxKind.POSE || k == FxKind.CHARGE || k == FxKind.CHARGE_END || k == FxKind.FLASH;
+    }
 
     /**
-     * A beam from a caster whose arm is still coming up waits for the tick the arm arrives (the profile's release), so the
-     * beam leaves the palm that is on the aim and not the hands still gathering. Returns true when it took the event.
+     * An effect, sound or beam from a caster whose body is still on its way to the release (the arm to the aim, the knee to the
+     * plant) waits for the tick the clips say, so everything lands on the frame the body does, on every client. Returns true when
+     * it took the event.
      */
     private static boolean defer(FxEvent e) {
-        if (e.kind() != FxKind.BEAM || e.caster() < 0) return false;
+        if (e.caster() < 0 || immediate(e.kind())) return false;
         CastProfiles.Profile prof = CastProfiles.byId(CastAnims.profileOf(e.caster()));
-        if (prof == null) return false;
+        if (prof == null || prof.release() <= 0) return false;
         float age = CastAnims.profileAge(e.caster(), prof.id(), 1f);
         int wait = (int) Math.ceil(prof.release() - age);
-        if (wait <= 0) return false;
-        for (int i = 0; i < DEFERRED.length; i++) {
-            if (DEFERRED[i] == null) {
-                DEFERRED[i] = e;
-                DEFERRED_AT[i] = FxWorld.ticks + wait;
-                return true;
-            }
-        }
-        return false;
+        if (wait <= 0 || count == DEFERRED.length) return false;
+        int at = (head + count) % DEFERRED.length;
+        DEFERRED[at] = e;
+        DEFERRED_AT[at] = FxWorld.ticks + wait;
+        count++;
+        return true;
     }
 
     private static void drainDeferred() {
-        for (int i = 0; i < DEFERRED.length; i++) {
-            if (DEFERRED[i] != null && FxWorld.ticks >= DEFERRED_AT[i]) {
-                FxEvent e = DEFERRED[i];
-                DEFERRED[i] = null;
-                build(e);
-            }
+        while (count > 0 && FxWorld.ticks >= DEFERRED_AT[head]) {
+            FxEvent e = DEFERRED[head];
+            DEFERRED[head] = null;
+            head = (head + 1) % DEFERRED.length;
+            count--;
+            build(e);
         }
     }
 

@@ -5,7 +5,9 @@ import com.mojang.math.Axis;
 import dev.awaken.powers.PowerType.Family;
 import dev.awaken.powers.fx.CastAnim;
 import dev.awaken.powers.fx.CastClips;
+import dev.awaken.powers.PowerType;
 import dev.awaken.powers.fx.CastProfiles;
+import dev.awaken.powers.fx.FxStyle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
@@ -55,6 +57,8 @@ final class CastAnims {
         CastProfiles.@Nullable Profile profile;
         /** The profile's hold loop has taken over from its begin clip. */
         boolean holdStarted;
+        /** The profile's screen moment has played (once, on the release tick). */
+        boolean momentPlayed;
     }
 
     /** The Player Animation Library is installed (and took our layer): casts get full-body clips in third person. */
@@ -118,6 +122,7 @@ final class CastAnims {
         a.pal = false;
         a.profile = profile;
         a.holdStarted = false;
+        a.momentPlayed = false;
         if (pal && PowerFxConfig.animations()) {
             String clip = profile != null ? profile.begin3p() : CastClips.clip(a.family, kind, afterHold);
             a.pal = clip != null && PalCasts.play(entityId, clip, fadeIn(kind));
@@ -172,7 +177,16 @@ final class CastAnims {
 
     static void release(int entityId) {
         Anim a = find(entityId);
-        if (a != null && a.held && a.releasedAt < 0) a.releasedAt = FxWorld.ticks;
+        if (a != null && a.held && a.releasedAt < 0) {
+            a.releasedAt = FxWorld.ticks;
+            if (a.profile != null) momentFor(entityId, a.profile.endMoment(), a.profile);
+        }
+    }
+
+    private static void momentFor(int entityId, String name, CastProfiles.Profile prof) {
+        var level = Minecraft.getInstance().level;
+        Entity who = level == null ? null : level.getEntity(entityId);
+        if (who != null) CastFeel.moment(name, who, FxStyle.of(dev.awaken.powers.PowerRegistry.get(prof.power()) == null ? PowerType.Family.ENERGY : dev.awaken.powers.PowerRegistry.get(prof.power()).family).mid);
     }
 
     /** Freezes an entity's animation for a hit-stop. */
@@ -197,11 +211,15 @@ final class CastAnims {
             float age = FxWorld.ticks - a.start;
             boolean done = a.held ? (a.releasedAt >= 0 && FxWorld.ticks - a.releasedAt > 5) || age > 20 * 30 : age > a.ticks + 2;
             // a held clip lets go a moment after release, so a release cast arriving just behind it takes over smoothly
+            // the profile's screen moment lands on the tick its clips release on
+            if (a.profile != null && !a.momentPlayed && age >= a.profile.release()) {
+                a.momentPlayed = true;
+                momentFor(a.entity, a.profile.moment(), a.profile);
+            }
             // a profile's begin clip hands over to its hold loop where it ends (the hold starts in the pose the begin ends in)
             if (a.pal && a.profile != null && a.profile.hold3p() != null && !a.holdStarted && !a.palLetGo && a.releasedAt < 0 && age >= a.profile.holdAt()) {
                 a.holdStarted = true;
                 if (!PalCasts.play(a.entity, a.profile.hold3p(), 2)) a.pal = false;
-                if (a.entity == mcPlayerId()) CastFeel.beamStart();
             }
             if (a.pal && a.held && !a.palLetGo && (done || a.releasedAt >= 0 && FxWorld.ticks - a.releasedAt >= 2)) {
                 a.palLetGo = true;

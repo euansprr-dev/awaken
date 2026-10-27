@@ -85,7 +85,9 @@ public enum FxKind {
     /** A flash on the caster's own screen; scale = strength. */
     FLASH,
     /** Only the caster's cast profile beat (flags): its clips begin; no particles. */
-    POSE;
+    POSE,
+    /** A power's sound, played by every client in range at pos on the cast's release frame: colour = the sound event's registry id, scale = volume, aux = pitch. */
+    SOUND;
 
     private static final FxKind[] VALUES = values();
 

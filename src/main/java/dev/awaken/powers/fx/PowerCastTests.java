@@ -1,5 +1,6 @@
 package dev.awaken.powers.fx;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.awaken.anims.FpClipSet;
@@ -63,17 +64,25 @@ final class PowerCastTests {
                     h.assertTrue(anims.has(name), p.power() + ": clip " + name + " missing from " + CastClips.FILE + " (python3 tools/art/specs/power_casts.py build)");
                     JsonObject a = anims.getAsJsonObject(name);
                     boolean loops = a.has("loop") && a.get("loop").getAsBoolean();
-                    h.assertTrue(loops == n.equals(p.hold3p()), name + (loops ? " loops but is not the hold" : " should loop"));
+                    // only a hold loops (or a channel's begin clip that is itself the family's wind-up loop)
+                    h.assertTrue(!loops || n.equals(p.hold3p()) || n.equals(p.begin3p()) && p.channel() && p.hold3p() == null, name + " loops but is not a hold");
+                    if (!loops) {
+                        JsonElement end = a.has("player_animation_library") ? a.getAsJsonObject("player_animation_library").get("endTick") : null;
+                        h.assertTrue(end != null && end.getAsFloat() < a.get("animation_length").getAsFloat() * 20, name + " eases back to the vanilla pose (endTick)");
+                    }
                 }
             }
-            h.assertTrue(hasKeyAt(anims.getAsJsonObject(p.begin3p()), p.release() / 20.0), p.power() + ": " + p.begin3p() + " has a key on the release tick " + p.release());
+            boolean beginLoops = anims.getAsJsonObject(p.begin3p()).has("loop");
+            h.assertTrue(beginLoops || hasKeyAt(anims.getAsJsonObject(p.begin3p()), p.release() / 20.0), p.power() + ": " + p.begin3p() + " has a key on the release tick " + p.release());
+            h.assertTrue(p.windup() == 0 || p.windup() == p.release(), p.power() + ": a wind-up ends on the release tick");
+            h.assertTrue(CastProfiles.MOMENTS.contains(p.moment()) && CastProfiles.MOMENTS.contains(p.endMoment()), p.power() + ": its screen moments exist");
             // first person: the clips exist; the begin clip says its release (the plant, the hold) on the profile's tick
             for (String n : p.hold1p() == null ? List.of(p.begin1p()) : List.of(p.begin1p(), p.hold1p())) {
                 h.assertTrue(fp.containsKey(n), p.power() + ": first-person clip " + n + " missing (python3 tools/art/specs/fp_casts.py build)");
             }
             FpClipSet.Clip c = fp.get(p.begin1p());
             boolean says = false;
-            for (int i = 0; i < c.events.length; i++) says |= Math.abs(c.eventAt[i] - p.release()) < 1e-3 && (c.events[i].equals("plant") || c.events[i].equals("hold"));
+            for (int i = 0; i < c.events.length; i++) says |= Math.abs(c.eventAt[i] - p.release()) < 1e-3 && (c.events[i].equals("plant") || c.events[i].equals("hold") || c.events[i].equals("release"));
             h.assertTrue(says, p.power() + ": " + p.begin1p() + " has its release event on tick " + p.release());
             h.assertTrue(p.hold1p() == null || fp.get(p.hold1p()).loop, p.power() + ": the first-person hold loops");
             // the beat rides the wire flags and is not read as a pose
