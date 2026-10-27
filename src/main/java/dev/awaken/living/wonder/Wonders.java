@@ -67,6 +67,11 @@ public final class Wonders {
         int ground(int x, int z);
 
         int seaLevel();
+
+        /** Whether a structure (a ruin, a village, a vault) may start within {@code chunks} chunks of (x, z): a wonder keeps clear of them. */
+        default boolean structureNear(int x, int z, int chunks) {
+            return false;
+        }
     }
 
     /** A wonder: its kind and the region it belongs to, its heart and the ground level there, and its plan (blocks relative to the heart, at the ground block's level). */
@@ -126,7 +131,7 @@ public final class Wonders {
             double angle = ((h >>> 8) & 0xFFFF) / 65536.0 * Math.PI * 2 + attempt * 1.9;
             double dist = 70 + ((h >>> 28) & 0x7F) + attempt * 10;
             int x = r.heartX() + (int) Math.round(Math.cos(angle) * dist), z = r.heartZ() + (int) Math.round(Math.sin(angle) * dist);
-            if (map.regionAt(x, z).id() != r.id()) continue;
+            if (map.regionAt(x, z).id() != r.id() || t.structureNear(x, z, 3)) continue;
             int[] hs = {t.ground(x, z), t.ground(x + 12, z), t.ground(x - 12, z), t.ground(x, z + 12), t.ground(x, z - 12)};
             int lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE;
             for (int v : hs) {

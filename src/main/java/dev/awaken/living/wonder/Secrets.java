@@ -101,7 +101,7 @@ public final class Secrets {
                 double angle = ((h >>> 8) & 0xFFFF) / 65536.0 * Math.PI * 2 + attempt * 2.1;
                 double dist = 150 + ((h >>> 28) & 0xFF) + attempt * 15;
                 int x = r.heartX() + (int) Math.round(Math.cos(angle) * dist), z = r.heartZ() + (int) Math.round(Math.sin(angle) * dist);
-                if (map.regionAt(x, z).id() != r.id()) continue;
+                if (map.regionAt(x, z).id() != r.id() || t.structureNear(x, z, 1)) continue;
                 int[] hs = {t.ground(x, z), t.ground(x + 3, z), t.ground(x - 3, z), t.ground(x, z + 3), t.ground(x, z - 3)};
                 int lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE;
                 for (int v : hs) {

@@ -4461,6 +4461,9 @@ a claw starts at the end of the arm and points along it). Looks are reviewed off
 - **Surface secrets** (decision 28): `Secrets` and `SecretFeature` (`awaken:secrets`): three per region (a cairn over a brushable cache, a cold camp with a barrel, a marked mound over a chest), 150-400 blocks from the
   heart on flat dry ground, each cache filled from its rank's loot table (`data/awaken/loot_table/chests/living/secret_0..5.json` and `archaeology/living/secret_0..5.json`: emeralds, iron, gold, essence shards, diamonds,
   from a netherite scrap in S). Finding one is walking up to it (6 blocks): the "Secrets found" counter, a line, a small discovery for the first of each kind.
+- Review of the first real-generation tour (CI 40458312323): wonders generate through the feature as intended (statues, ring stones, a black house with graves, found by walking up with the toast); it showed a wonder on a Precursor ruin's floor and one on stilts
+  at a cliff, so a wonder's site keeps three chunks clear of any structure that may start (`Terrain.structureNear`, from the generator state's structure sets), a secret one chunk, a column whose real ground is more than three blocks from the
+  heart's level is left out, the foot is built up at most four blocks, and what grows through a wonder's ground (leaves, logs, tall grass: `Kind.clear` blocks round the heart) is cleared. Not handled: a road passing through a wonder.
 - Dev: `/awaken living wonder list|goto <kind>|build <kind>`; tours `tools/autopilot/wonders.txt`. Tests `living_wonder_sites` (sites inside their regions and ranks, the same every time, the Commons has none; every kind's plan
   is one piece standing on the ground in all three families), `living_secret_sites`.
 - **Chains** (Build 6, the part done): five more for the lands the first nine skip (`data/awaken/awaken/quest/`): Silk on the Road (band 2, Pell, spiders on a road), Iron in the Ranks (band 2, Gus, zombies in scrap iron), Ash on the Wind

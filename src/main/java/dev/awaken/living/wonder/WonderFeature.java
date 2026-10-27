@@ -41,6 +41,13 @@ public record WonderFeature() implements Feature {
             public int seaLevel() {
                 return gen.getSeaLevel();
             }
+
+            @Override
+            public boolean structureNear(int x, int z, int chunks) {
+                var gs = level.getChunkSource().getGeneratorState();
+                for (var set : gs.possibleStructureSets()) if (gs.hasStructureChunkInRange(set, x >> 4, z >> 4, chunks)) return true;
+                return false;
+            }
         };
     }
 
@@ -73,13 +80,15 @@ public record WonderFeature() implements Feature {
                 long k = e.getLongKey();
                 int x = site.x() + BlockPos.getX(k), z = site.z() + BlockPos.getZ(k);
                 if (x < x0 || x > x0 + 15 || z < z0 || z > z0 + 15) continue;
+                // a column whose ground is far from the wonder's level (a cliff, a gully) is left out: nothing stands on stilts or sunk in a bank
+                if (Math.abs(level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 1 - site.y()) > 3) continue;
                 int y = site.y() + BlockPos.getY(k);
                 m.set(x, y, z);
                 BlockState put = e.getValue();
                 level.setBlock(m, put, Block.UPDATE_CLIENTS);
                 any = true;
                 if (BlockPos.getY(k) <= 1) { // build the ground up under the foot of the wonder, and clear what grows through it
-                    for (int d = 1; d <= 10; d++) {
+                    for (int d = 1; d <= 4; d++) {
                         m.set(x, y - d, z);
                         BlockState below = level.getBlockState(m);
                         if (below.isSolidRender() && !below.is(net.minecraft.tags.BlockTags.LEAVES)) break;
