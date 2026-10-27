@@ -38,6 +38,7 @@ public final class GroundModule {
         SoftSlabs.init(modBus);
         GroundCover.init(modBus);
         FEATURES.register(modBus);
+        GroundFresh.init(modBus);
         modBus.addListener(AddPackFindersEvent.class, e -> e.addPackFinders(Awaken.id("datapacks/awakened_ground"), PackType.SERVER_DATA,
                 Component.literal("Awakened Ground"), PackSource.BUILT_IN, false, Pack.Position.TOP));
         GroundTests.register();

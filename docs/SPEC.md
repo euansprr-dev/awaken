@@ -7935,6 +7935,30 @@ or smoothed terrain faces, no texture above 16×16.
   items keep the plain colour. Setting `lawn_drift`.
 - **Settings and commands**: `config/awaken-ground-client.toml` (`ground_seamless`, `lawn_drift`, both on); `/awaken ground
   status | seamless on|off | drift on|off` (client; saves and redraws the chunks). Off, the client draws as vanilla.
+- **Fresh sides** (`ground.FreshSides`, `ground.GroundFresh`, `ground.client.FreshView`; Euan 2026-10-27: a dug lawn's
+  neighbour was green down its new face at once). A grass side bared a moment ago shows its own face (vanilla's dirt and
+  fringe) and grows green, where the shape rule alone would wrap it on the first frame; a riser the world was made with has
+  no record and wraps as before. **Recorded** when it happens, never by scanning, on the server: a player's break of a
+  hider (`isSolidRender`) whose ground under stays sturdy (`BreakBlockEvent`, lowest priority), an explosion's hiders
+  (`ExplosionEvent.Detonate`, minding the blocks it takes beside and under), a sturdy block placed under the open block
+  beside a grass block (a cliff's face becomes a riser's), and a grass block placed beside open ground. Placing a hider
+  beside drops the side's record at once; breaking the grass block drops its four. Not caught (they wrap at once, as
+  before): pistons, endermen, fire, other mods' block changes. **Kept** per chunk in the attachment `awaken:fresh_sides`
+  (key = block in chunk + side, value = lit ticks; `schemaVersion` 1; saved while not empty; never loads a chunk to write
+  one). **Grows** every 100 ticks over the loaded chunks that hold records: a side whose open block beside has
+  `getMaxLocalRawBrightness` >= 9 (vanilla's own rule for grass to spread) gains 100 lit ticks; dark or roofed it waits.
+  **Stages** by lit ticks: 0 bare dirt (0), 1 grass a third of the way down (2,400 = 2 minutes of light), 2 most of the way
+  (6,000 = 5 minutes), wrapped at 12,000 (10 minutes of light, about a day with nights): the record goes and the side is a
+  riser like any other. A side that stops being a riser's face (filled, its ground under gone, its grass gone) loses its
+  record on the next growth. **Sync**: each record's stage (not its ticks) to every player who sees the chunk, sent the
+  moment it changes, so all players see the same stage and a stage change redraws one section. **Client**: `FreshView`
+  keeps an immutable key-to-stage map per chunk (Sodium's meshing threads read it; nothing to look up when no chunk has
+  records); `SeamlessModel` leaves a fresh side unwrapped and, on a grass block, lays a quad 0.002 out over the side with
+  our sprite `block/ground/creep_side_0` (stage 1) or `_1` (stage 2), grey and tinted as the grass (tint index 0, drift
+  included). While the local player mines a hider beside grass, the sides it would bare count as stage 0 for two seconds
+  (`PlayerInteractEvent.LeftClickBlock`), so the hole is dirt the frame it opens, not green until the server's word.
+  Tests: `ground_fresh_dig` (dug: dirt; lit: stage 1, 2, wrapped; roofed: stays dirt; filled: record gone; dug again),
+  `ground_fresh_natural`, `ground_fresh_saved`.
 - **Not yet** (P0's own follow-ups): City Sight's wrapped sides (`VoxelLooks`) and Far Sight's drift (`farsight_terrain.fsh`,
   `FarColumns`): near and far differ by a few per cent of colour and a one-block riser's colour until they land.
 - **Tour**: `tools/autopilot/ground-p0.txt` (CI look tour): a control scene (step, pillar, path, coarse dirt, gravel, sand

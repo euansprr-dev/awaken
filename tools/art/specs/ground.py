@@ -4,6 +4,8 @@ drift) into the quad, the way vanilla tints its grass top. The blades lie along 
 north-west corner (corners); the model turns them to the side they are wanted on.
 
   textures/block/ground/creep_edge_0..2.png, creep_corner_0..1.png
+  textures/block/ground/creep_side_0..1.png   grass growing down a freshly dug side (SPEC §31.1), stages 1 and 2, from the
+                                              top edge of a side face (vanilla's own fringe covers the first two rows)
 """
 import random
 
@@ -62,8 +64,31 @@ def _corner(seed):
     return c
 
 
+def _side(stage):
+    """Grass reaching down a side face from its top edge: stage 0 about a third of the way, stage 1 most of it. Blades in
+    tufts of uneven length with ragged tips and a few gaps, so the dirt shows between them, never a straight hem."""
+    rng = random.Random("creep_side_%d" % stage)
+    c = Canvas(16, 16)
+    lo, hi = (4, 7) if stage == 0 else (9, 14)
+    depth = [rng.randint(lo, hi) for _ in range(16)]
+    # tufts: neighbours pull towards each other, so the edge reads as clumps of blades
+    for _ in range(2):
+        depth = [max(lo - 1, (depth[max(x - 1, 0)] + 2 * depth[x] + depth[min(x + 1, 15)]) // 4 + rng.randint(-1, 1)) for x in range(16)]
+    for x in range(16):
+        for y in range(depth[x]):
+            tip = y >= depth[x] - 1
+            if y >= 3 and y < depth[x] - 1 and rng.random() < 0.12:
+                continue                               # a gap inside the mat: a speck of dirt
+            c.set(x, y, _grey(rng, tip))
+        if rng.random() < 0.3 and depth[x] < 15:
+            c.set(x, depth[x], _grey(rng, True))       # a stray blade tip below the rest
+    return c
+
+
 def build(out):
     for i in range(3):
         out.block("ground/creep_edge_%d" % i, _edge(i))
     for i in range(2):
         out.block("ground/creep_corner_%d" % i, _corner(i))
+    for i in range(2):
+        out.block("ground/creep_side_%d" % i, _side(i))
