@@ -56,6 +56,8 @@ public final class RoadNet {
     private static final ConcurrentHashMap<String, CompletableFuture<List<Road>>> ROADS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<Long, CompletableFuture<SettlementGrid.Anchor[]>> SITES = new ConcurrentHashMap<>();
     static long planNanos, planned, reads;
+    /** Time spent finding towns' and wayhouses' sites and the settlements near hearts, and bare crossroads (the bench). */
+    static final java.util.concurrent.atomic.LongAdder SITE_NS = new java.util.concurrent.atomic.LongAdder(), DRY_NS = new java.util.concurrent.atomic.LongAdder();
 
     public static void clear() {
         HUBS.clear();
@@ -67,6 +69,9 @@ public final class RoadNet {
             BY_CHUNK.clear();
         }
         planNanos = planned = reads = 0;
+        SITE_NS.reset();
+        DRY_NS.reset();
+        RoadTimer.reset();
     }
 
     static long cellKey(int gx, int gz) {
@@ -118,6 +123,7 @@ public final class RoadNet {
      */
     static SettlementGrid.Anchor[] sites(RoadWorld w, int gx, int gz) {
         return once(SITES, cellKey(gx, gz), () -> {
+            long t0 = System.nanoTime();
             SettlementGrid.Anchor town = null, way = null;
             if (!w.regions.swallowed(gx, gz)) {
                 int[] h = w.regions.heart(gx, gz);
@@ -132,6 +138,7 @@ public final class RoadNet {
                     if (s != null) way = new SettlementGrid.Anchor("w" + gx + "_" + gz, s[0], s[1], VillagePlan.Kind.WAYHOUSE, false, SettlementGridMix.mix(seed + 1));
                 }
             }
+            SITE_NS.add(System.nanoTime() - t0);
             return new SettlementGrid.Anchor[]{town, way};
         });
     }
@@ -167,6 +174,7 @@ public final class RoadNet {
     public static List<SettlementGrid.Anchor> anchorsNear(int x, int z, int radius) {
         RoadWorld w = RoadWorld.get();
         if (w == null) return List.of();
+        long t0 = System.nanoTime();
         List<SettlementGrid.Anchor> out = new ArrayList<>();
         for (int i = Math.floorDiv(x - radius - 220, RegionMap.PITCH); i <= Math.floorDiv(x + radius + 220, RegionMap.PITCH); i++)
             for (int j = Math.floorDiv(z - radius - 220, RegionMap.PITCH); j <= Math.floorDiv(z + radius + 220, RegionMap.PITCH); j++) {
@@ -174,6 +182,7 @@ public final class RoadNet {
                 if (Math.hypot(h[0] - x, h[1] - z) > radius + 220 || w.regions.swallowed(i, j)) continue;
                 for (SettlementGrid.Anchor a : sites(w, i, j)) if (a != null && Math.hypot(a.x() - x, a.z() - z) <= radius) out.add(a);
             }
+        if (RoadTimer.onServer()) RoadTimer.server(System.nanoTime() - t0, "the towns' and wayhouses' sites within " + radius + " of " + x + "," + z);
         return out;
     }
 
@@ -199,7 +208,9 @@ public final class RoadNet {
             VillagePlan p = Plans.of(s[0], t);
             if (p != null) return new Hub(gx, gz, HubKind.TOWN, p.ox, p.oz, s[0], region);
         }
+        long t0 = System.nanoTime();
         SettlementGrid.Anchor near = nearHeart(w, gx, gz);
+        SITE_NS.add(System.nanoTime() - t0);
         if (near != null) {
             VillagePlan p = Plans.of(near, t);
             if (p != null) return new Hub(gx, gz, HubKind.SETTLEMENT, p.ox, p.oz, near, region);
@@ -209,7 +220,9 @@ public final class RoadNet {
             if (p != null) return new Hub(gx, gz, HubKind.WAYHOUSE, p.ox, p.oz, s[1], region);
         }
         // a bare crossroads on the driest gentle ground near the heart, or none (the heart's in the sea)
+        long t1 = System.nanoTime();
         int[] dry = dryNear(t, h[0], h[1], 128);
+        DRY_NS.add(System.nanoTime() - t1);
         return dry == null ? new Hub(gx, gz, HubKind.NONE, h[0], h[1], null, region) : new Hub(gx, gz, HubKind.CROSSROADS, dry[0], dry[1], null, region);
     }
 
@@ -322,12 +335,18 @@ public final class RoadNet {
         if (Math.floorMod(chunkX, Road.LATTICE) != 0 || Math.floorMod(chunkZ, Road.LATTICE) != 0) return List.of();
         RoadWorld w = RoadWorld.get();
         if (w == null) return List.of();
-        return once(LEGS, ((long) chunkX << 32) ^ (chunkZ & 0xffffffffL), () -> {
+        long key = ((long) chunkX << 32) ^ (chunkZ & 0xffffffffL);
+        var known = LEGS.get(key);
+        if (known != null && known.isDone()) return known.join();
+        long t0 = System.nanoTime();
+        List<Road.Leg> legs = once(LEGS, key, () -> {
             List<Road.Leg> out = new ArrayList<>();
             for (Road r : roadsNear(w, (chunkX << 4) + 8, (chunkZ << 4) + 8, 100))
                 for (Road.Leg l : r.legs()) if (l.startX() == chunkX && l.startZ() == chunkZ) out.add(l);
             return out;
         });
+        RoadTimer.startsIn(chunkX, chunkZ, System.nanoTime() - t0, known == null);
+        return legs;
     }
 
     /** Whether a lattice chunk's legs are known yet (the planner ahead of the players asks this). */
@@ -387,9 +406,11 @@ public final class RoadNet {
      * generation seldom waits for them (it asks the same cache: a chunk that needs a road being laid waits for that one).
      */
     public static void prefetch(net.minecraft.server.MinecraftServer server) {
+        RoadTimer.tick(server, QUEUED.size(), unknown);
         if (server.getTickCount() % 40 != 21) return;
         RoadWorld w = RoadWorld.get();
         if (w == null) return;
+        int behind = 0;
         if (ahead == null) ahead = java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
             Thread t = new Thread(r, "Awaken road planner");
             t.setDaemon(true);
@@ -411,6 +432,7 @@ public final class RoadNet {
                     want.add(new long[]{d, cx, cz, key});
                 }
             want.sort((u, v) -> Long.compare(u[0], v[0]));
+            behind += want.size();
             for (int k = 0; k < Math.min(PER_PASS, want.size()); k++) {
                 long[] u = want.get(k);
                 QUEUED.add(u[3]);
@@ -425,7 +447,11 @@ public final class RoadNet {
                 });
             }
         }
+        unknown = behind;
     }
+
+    /** Lattice chunks within reach of the players whose legs weren't known at the last pass (the timer's line). */
+    private static int unknown;
 
     /** The planner thread stops with the server (a pass under way finishes into the cleared caches harmlessly). */
     public static void stopAhead() {

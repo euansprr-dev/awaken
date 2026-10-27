@@ -79,6 +79,11 @@ public final class Plans {
         CACHE.put(p.key, java.util.concurrent.CompletableFuture.completedFuture(Optional.of(p)));
     }
 
+    /** How many plans were made this session (with a site or without). */
+    public static long made() {
+        return plans;
+    }
+
     public static String stats() {
         return String.format(java.util.Locale.ROOT, "%d plans made, %.1f ms each on average", plans, plans == 0 ? 0 : planNanos / 1e6 / plans);
     }

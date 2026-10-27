@@ -20,6 +20,9 @@ import java.util.Locale;
  * biome's family. What the planner reads at world generation, in commands and when a settlement's people start.
  */
 public record GenTerrain(ChunkGenerator generator, LevelHeightAccessor heights, RandomState random, BiomeResolver biomes) implements Terrain {
+    /** Noise columns the generator has worked out for the planners, on every thread (the roads' timer and bench). */
+    public static final java.util.concurrent.atomic.LongAdder COLUMNS = new java.util.concurrent.atomic.LongAdder();
+
     /** For one thread's planning: its own biome resolver (the climate sampler caches). */
     public static GenTerrain of(ChunkGenerator generator, LevelHeightAccessor heights, RandomState random) {
         var sampler = random.createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.builder().enableCaches().build());
@@ -28,12 +31,14 @@ public record GenTerrain(ChunkGenerator generator, LevelHeightAccessor heights, 
 
     @Override
     public int top(int x, int z) {
+        COLUMNS.increment();
         return generator.getFirstOccupiedHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, heights, random);
     }
 
     @Override
     public int water(int x, int z) {
         int top = top(x, z);
+        COLUMNS.increment();
         int floor = generator.getFirstOccupiedHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, heights, random);
         return Math.max(0, top - floor);
     }
@@ -45,6 +50,7 @@ public record GenTerrain(ChunkGenerator generator, LevelHeightAccessor heights, 
      */
     @Override
     public long both(int x, int z) {
+        COLUMNS.increment();
         net.minecraft.world.level.NoiseColumn col = generator.getBaseColumn(x, z, heights, random);
         int min = heights.getMinY(), top = min - 1, floor = min - 1;
         if (col != null) {
