@@ -32,11 +32,11 @@ cmd gamerule advance_time false
 cmd gamemode spectator
 hud off
 # ---- 1. up the road north out of the camp and on: 24 blocks a second for 90 s (about 2,200 blocks of new land)
-cmd awaken village road camp
+# (over the camp road's sixth point in this world: "awaken village road camp" lays the road north on the server thread
+# when it isn't laid yet, a command's wait the tour isn't measuring)
+cmd tp @s 813.5 240 302.5 180 25
 wait 200
 info
-cmd tp @s ~ 240 ~ 180 25
-wait 40
 glide 0 0 -1.2 1800
 wait 1800
 info
