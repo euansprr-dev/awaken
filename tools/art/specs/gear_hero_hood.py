@@ -39,16 +39,16 @@ HALF = 512
 # ---- the shape -----------------------------------------------------------------------------------------------------
 TH = 0.34                   # silk shell thickness
 W_OPEN = 3.75               # half-width of the face opening (the eyes are within x = +-3)
-Y5, H_ARCH = 4.9, 1.6       # the opening is straight-sided to Y5, then a round arch up to the apex
+Y5, H_ARCH = 4.9, 1.3       # the opening is straight-sided to Y5, then a round arch up to the apex
 APEX = Y5 + H_ARCH
 YS, YT = 7.7, 11.3          # the cowl starts to close above the head at YS; its point is at YT
 AX, AZF, AZB = 5.12, 5.25, 5.62
 PEAK_BACK = 2.6             # how far back the point falls
 CORD_R = 0.22               # the satin cord bound around the face (round 1: at 0.30 and pale it read as a cable)
 BAND_OUT, BAND_IN = 0.12, 0.07
-NU = 64                     # columns of the shell, left rim around the back to the right rim
-NB = 80                     # columns of the circlet
-BAND_CAP, BAND_FACE = 5, 9  # rows of each rounded edge and of the face
+NU = 48                     # columns of the shell, left rim around the back to the right rim
+NB = 48                     # columns of the circlet
+BAND_CAP, BAND_FACE = 4, 7  # rows of each rounded edge and of the face
 THREAD_FROM = 3.4           # the thread starts this far down the face edge from the arch's top (the circlet owns the brow)
 
 
@@ -121,15 +121,15 @@ def hem_y(theta):
     return -1.55 + 1.6 * np.sin(theta) ** 2
 
 
-LOW = 15                    # rows from the hem to Y5, each a fraction of its column's height
+LOW = 12                    # rows from the hem to Y5, each a fraction of its column's height
 
 
 def rows():
     """(Y, opening half-width) per row above Y5, arch to crown; the low rows are made per column in shell_grid."""
     out = []
-    for g in np.linspace(0, math.pi / 2, 15):
+    for g in np.linspace(0, math.pi / 2, 12):
         out.append((Y5 + H_ARCH * math.sin(g), W_OPEN * math.cos(g)))
-    for u in np.linspace(0, 1, 15)[1:]:
+    for u in np.linspace(0, 1, 12)[1:]:
         out.append((APEX + (YT - APEX) * (1 - (1 - u) ** 2), 0.0))
     return out
 
@@ -245,7 +245,7 @@ def build():
     # the lining only where it can be seen: round the face and up from the hem (the rest is hidden by the head)
     for j in range(nv):
         for i in range(NU):
-            if j <= 6 or (j <= apex + 5 and (i < 12 or i >= NU - 12)):
+            if j <= 6 or (j <= apex + 5 and (i < 10 or i >= NU - 10)):
                 idx = [(j, i), (j, i + 1), (j + 1, i + 1), (j + 1, i)]
                 m.quads.append([(Pin[a, b], -N[a, b], (U2[a, b], V2[a, b])) for a, b in idx])
 
@@ -274,7 +274,7 @@ def build():
     B = np.where(np.sum(B * inward, -1, keepdims=True) > 0, -B, B)   # B points out of the silk, into the opening
     CC = EP - TH / 2 * Nn + 0.10 * B
     arc = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(CC, axis=0), axis=-1))])
-    ring = 12
+    ring = 10
     phis = np.linspace(0, 2 * math.pi, ring + 1)
     CP = np.zeros((len(CC), ring + 1, 3))
     CN = np.zeros_like(CP)
@@ -318,7 +318,7 @@ def band_rise(theta):
 
 def band_mid(theta):
     """The circlet sits low on the brow and higher at the back, the way a circlet is worn."""
-    return 7.75 + 1.45 * ((1 + np.cos(theta)) / 2) ** 1.3
+    return 7.3 + 1.9 * ((1 + np.cos(theta)) / 2) ** 1.2
 
 
 def band_span(theta):
@@ -406,7 +406,7 @@ def gem_mesh(m):
     for quad in ([0, 1, 2, 3], [0, 3, 4, 7], [4, 5, 6, 7]):
         facet([table[q] for q in quad], 12)                           # the table
     # the bezel: a silver ring round the girdle, sunk into the circlet
-    segs, ring = 40, 8
+    segs, ring = 24, 6
     ring_pts = []
     for a in np.linspace(0, 2 * math.pi, segs + 1):
         ring_pts.append(G - 0.04 * n + 1.12 * (0.29 * math.cos(a) * side + 0.40 * math.sin(a) * up))
@@ -517,7 +517,7 @@ def paint(geo):
         if name == "outer":
             lo, hi = band_span(bilerp(TH_[..., None], fj, fi)[..., 0])
             d_band = np.maximum(lo - Yq, Yq - hi)
-            ao = (1 - 0.48 * np.clip(-fold, 0, 1) ** 1.3) * (1 + 0.10 * np.clip(fold, 0, 1))
+            ao = (1 - 0.48 * np.clip(-fold, 0, 1) ** 1.3) * (1 + 0.18 * np.clip(fold, 0, 1) ** 2)
             ao *= 0.55 + 0.45 * smooth(0.06, 0.45, d_e)
             ao *= 1 - 0.30 * np.exp(-(np.maximum(d_band, 0) / 0.16) ** 2) * (d_band > -0.05)
             ao *= 0.86 + 0.14 * smooth(-1.4, 9.0, Yq)

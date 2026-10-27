@@ -44,7 +44,10 @@ final class PremiumPipelines {
     private static final Map<Identifier, RenderType> TYPES = new HashMap<>();
     private static int ok = -1; // -1 unknown, 0 failed, 1 compiled
     private static int heroOk = -1;
-    private static @org.jspecify.annotations.Nullable RenderType hero;
+    // one render type per hood in view, so each hood is its own small draw: batched together (3 x 27k vertices) on CI the
+    // other draws of the frame vanished (round 1 the shadows, round 2 the rest of the armour)
+    private static final RenderType[] HEROES = new RenderType[8];
+    private static int nextHero;
 
     static void onRegister(RegisterRenderPipelinesEvent e) {
         e.registerOptionalPipeline(ARMOUR);
@@ -67,7 +70,7 @@ final class PremiumPipelines {
     static void recheck() {
         ok = -1;
         heroOk = -1;
-        hero = null;
+        java.util.Arrays.fill(HEROES, null);
         TYPES.clear();
     }
 
@@ -82,12 +85,13 @@ final class PremiumPipelines {
             if (heroOk == 0) Awaken.LOG.warn("[gear] the hero hood's shader did not load; it draws with vanilla's armour render type");
         }
         if (heroOk == 0) return plain(texture);
-        if (hero == null) {
-            hero = RenderType.create("awaken_armour_hero", RenderSetup.builder(HERO)
+        int i = nextHero = (nextHero + 1) % HEROES.length;
+        if (HEROES[i] == null) {
+            HEROES[i] = RenderType.create("awaken_armour_hero_" + i, RenderSetup.builder(HERO)
                     .withTexture("Sampler0", texture, () -> RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR))
                     .useLightmap().affectsCrumbling().createRenderSetup());
         }
-        return hero;
+        return HEROES[i];
     }
 
     /** The armour shader on this texture. */

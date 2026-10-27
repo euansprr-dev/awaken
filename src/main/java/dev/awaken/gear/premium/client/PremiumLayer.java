@@ -23,6 +23,9 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
  * Everything it needs is in the render state: what is worn and how much of the set.
  */
 final class PremiumLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
+    /** After every armour layer, trim and glint (those take orders from 1 up). */
+    private static final int HOOD_ORDER = 16;
+
     private PremiumLayer(AvatarRenderer<?> parent) {
         super(parent);
     }
@@ -57,7 +60,9 @@ final class PremiumLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
             pose.pushPose();
             getParentModel().root().translateAndRotate(pose);
             getParentModel().translateToHead(pose);
-            collector.order(1).submitModelPart(hood, pose, PremiumPipelines.hero(HeroHood.TEXTURE), light, OverlayTexture.NO_OVERLAY, null, -1, state.outlineColor);
+            // its own late order, so the armour's draws are built ahead of the hood's (round 2: drawn in the armour's order, the
+            // chest, legs and boots vanished on CI)
+            collector.order(HOOD_ORDER).submitModelPart(hood, pose, PremiumPipelines.hero(HeroHood.TEXTURE), light, OverlayTexture.NO_OVERLAY, null, -1, state.outlineColor);
             pose.popPose();
             return;
         }
