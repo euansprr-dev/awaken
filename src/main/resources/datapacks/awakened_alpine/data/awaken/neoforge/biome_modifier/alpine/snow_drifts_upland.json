@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#awaken:upland",
+  "features": "awaken:alpine/snow_drifts",
+  "step": "top_layer_modification"
+}

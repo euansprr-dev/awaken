@@ -9,14 +9,14 @@ import net.minecraft.world.level.levelgen.material.condition.ConditionEvaluator;
 import net.minecraft.world.level.levelgen.material.condition.MaterialCondition;
 
 /**
- * {@code awaken:alpine} material condition (SPEC §15, Alpine): {@link AlpineSurface}'s rule for the block being
+ * {@code awaken:alpine} material condition (SPEC §15, Alpine; slopes lowered in SPEC §31, P3): {@link AlpineSurface}'s rule for the block being
  * placed, from the column's surface gradient (the height difference across its two neighbours, as vanilla's
  * {@code steep} reads it). {@code kind}: {@code snow} (above the snow line and gentle enough to hold it), {@code scree}
  * (loose stone under cliffs) or {@code rock} (a bare face).
  */
 public record AlpineCondition(Kind kind) implements MaterialCondition {
     public enum Kind implements StringRepresentable {
-        SNOW, SCREE, ROCK;
+        SNOW, SCREE, ROCK, COARSE, GRAVEL;
         static final Codec<Kind> CODEC = StringRepresentable.fromEnum(Kind::values);
 
         @Override
@@ -41,8 +41,11 @@ public record AlpineCondition(Kind kind) implements MaterialCondition {
                 float j = AlpineSurface.jitter(x, y, z);
                 return switch (kind) {
                     case SNOW -> AlpineSurface.snow(x, y, z, gx, gz, j);
-                    case SCREE -> AlpineSurface.stone(gx, gz, j) == 1;
-                    case ROCK -> AlpineSurface.stone(gx, gz, j) == 2;
+                    // the scree band: gravel mostly, grass pockets where the noise is low, rock showing through where it is high
+                    case SCREE -> AlpineSurface.stone(gx, gz, j) == 1 && AlpineSurface.pocket(x, z) >= 0.22f && AlpineSurface.pocket(x, z) <= 0.78f;
+                    case ROCK -> AlpineSurface.stone(gx, gz, j) == 2 || AlpineSurface.stone(gx, gz, j) == 1 && AlpineSurface.pocket(x, z) > 0.78f;
+                    case COARSE -> AlpineSurface.loose(x, z, gx, gz, j) == 1;
+                    case GRAVEL -> AlpineSurface.loose(x, z, gx, gz, j) == 2;
                 };
             }
         };

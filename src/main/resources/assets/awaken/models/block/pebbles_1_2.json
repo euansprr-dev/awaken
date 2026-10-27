@@ -1,0 +1,90 @@
+{
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "texture": "#t"
+        },
+        "east": {
+          "texture": "#t"
+        },
+        "north": {
+          "texture": "#t"
+        },
+        "south": {
+          "texture": "#t"
+        },
+        "up": {
+          "texture": "#t"
+        },
+        "west": {
+          "texture": "#t"
+        }
+      },
+      "from": [
+        3,
+        0,
+        4
+      ],
+      "rotation": {
+        "angle": 22.5,
+        "axis": "y",
+        "origin": [
+          5.25,
+          0,
+          6.25
+        ]
+      },
+      "to": [
+        7.5,
+        2,
+        8.5
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#t"
+        },
+        "east": {
+          "texture": "#t"
+        },
+        "north": {
+          "texture": "#t"
+        },
+        "south": {
+          "texture": "#t"
+        },
+        "up": {
+          "texture": "#t"
+        },
+        "west": {
+          "texture": "#t"
+        }
+      },
+      "from": [
+        9,
+        0,
+        8
+      ],
+      "rotation": {
+        "angle": -22.5,
+        "axis": "y",
+        "origin": [
+          10.75,
+          0,
+          10.0
+        ]
+      },
+      "to": [
+        12.5,
+        3,
+        12
+      ]
+    }
+  ],
+  "textures": {
+    "particle": "minecraft:block/andesite",
+    "t": "minecraft:block/andesite"
+  }
+}

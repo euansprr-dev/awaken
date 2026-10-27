@@ -201,7 +201,7 @@ final class Sites {
                 if (top.is(BlockTags.DIRT) || top.is(BlockTags.SAND) || top.is(BlockTags.SNOW)) {
                     ground++;
                     keep(s.ground, ground, M.set(x, mb + 1, z).asLong(), seed + 4, null);
-                } else if (top.is(BlockTags.BASE_STONE_OVERWORLD)) {
+                } else if (top.is(BlockTags.BASE_STONE_OVERWORLD) || top.is(dev.awaken.ground.GroundModule.PERCH_ROCK)) { // boulders count (SPEC §31)
                     perches++;
                     int slot = keep(s.perch, perches, M.set(x, mb + 1, z).asLong(), seed + 2, null);
                     if (slot >= 0) {

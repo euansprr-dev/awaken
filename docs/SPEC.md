@@ -7384,3 +7384,156 @@ really sharp, with the clouds and everything".
   their own when they don't fit beside it.
 - **Autopilot:** `screenkey tab|t|m|c|space|q|e` (or `shift+` one) sends a key to the open screen.
 - **Tests:** `holo_band_layout` also checks the Band size steps on the owner's screens.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 31. The Soft Land (seams, steps and detail on the ground; plan docs/terrain-immersion/PLAN.md, page https://claude.ai/artifact/EHXyQyds2wzL7dGfox8gnz; Euan approved all of it 2026-10-27)
+
+Euan: "a bit less rough terrain, a bit more cinematic and natural look (stones etc.), more foliage feeling ... the priority
+really is IMMERSION", and "less like just block per block gaps, while STILL keeping it feeling like minecraft". Module
+`ground` (package `dev.awaken.ground`, client half `ground.client`). The plan's audit, alternatives, failure register and
+fifteen decisions (D1-D15, all recommended and approved) are in docs/terrain-immersion/PLAN.md; this section records what
+is built. The measured finding that shapes it: the one-block steps are the block grid, not the noise (43.1% of
+neighbouring column pairs differ by one block on a 35° hill; the same with the erosion's finest octave at 16 or 64 blocks),
+so Tectonic and the erosion stay as they are (D7). `docs/terrain-immersion/proof/` holds the bench and the renderer.
+
+**The line (D3):** blocks, pixels, half-block steps and light. No eighth-block layers to sculpt the ground, no bent
+or smoothed terrain faces, no texture above 16×16.
+
+### 31.1 P0 Seamless ground (built; client only, every world, setting `ground_seamless`)
+- **Rules** (`ground.SeamlessRules`, pure on a `BlockGetter`, held by `ground_wrap_mask` and `ground_creep_mask`): a grass
+  block, podzol or mycelium wraps on a side when the block beside it is open (not `isSolidRender`) and the ground just
+  under that is sturdy (a one-block riser), or the block beside is one of our soft slabs (`#awaken:ground/soft_slabs`,
+  empty until P1); a covered block (something solid on it) or a snowy one wraps nothing; a two-block riser keeps its dirt
+  face. Paths, dirt, coarse dirt, rooted dirt, gravel, sand and red sand get grass creeping over a top edge where bare grass
+  lies beside them at the same height (sky open over both), and a corner where only the diagonal is grass.
+- **Drawing** (`ground.client.SeamlessModel`, a `DelegateBlockStateModel` like `terrain.client.WavingModel`, wrapped in
+  `ModelEvent.ModifyBakingResult` by `GroundClient`): `collectParts(level, pos, ...)` on Sodium's meshing threads. WRAP:
+  the masked sides' base quad is re-made with the top quad's sprite and tint (each corner keeps its place in the sprite)
+  and the overlay quad is dropped; converted parts are cached per source part and mask. CREEP: up to eight unculled overlay
+  quads 0.002 above the top face (a path's top is 15/16), from our sprites `block/ground/creep_edge_0..2` and
+  `creep_corner_0..1` (grey, `tools/art/specs/ground.py`), turned to the side by their UVs, cut-out layer, no tint index:
+  the neighbouring grass block's colour (`BlockTintSource.colorInWorld`, drift included) is baked into the quad's colours.
+- **Lawn drift** (`ground.LawnDrift`, pure of (x, z); `ground_drift_range`): the grass colour moves about ±9% red, ±3%
+  green, ∓7% blue by a noise of 26-block patches plus a 7-block grain (farsight.glsl's `farHash`, so far ground can lay the
+  same). `GroundClient.drift` wraps the grass layer of `grass_block`, `short_grass`, `fern`, `bush`, `tall_grass`,
+  `large_fern`, `pink_petals`, `wildflowers` in a `BlockTintSource`; City Sight's per-biome probe (position 0, 0, 0) and
+  items keep the plain colour. Setting `lawn_drift`.
+- **Settings and commands**: `config/awaken-ground-client.toml` (`ground_seamless`, `lawn_drift`, both on); `/awaken ground
+  status | seamless on|off | drift on|off` (client; saves and redraws the chunks). Off, the client draws as vanilla.
+- **Not yet** (P0's own follow-ups): City Sight's wrapped sides (`VoxelLooks`) and Far Sight's drift (`farsight_terrain.fsh`,
+  `FarColumns`): near and far differ by a few per cent of colour and a one-block riser's colour until they land.
+- **Tour**: `tools/autopilot/ground-p0.txt` (CI look tour): a control scene (step, pillar, path, coarse dirt, gravel, sand
+  beside grass) on and off, five biomes at eye height, the drift on and off.
+
+- **The pack** (skeleton, so every later phase shares it): `datapacks/awakened_ground` behind the feature flag
+  `awaken:awakened_ground` (declared in META-INF/feature_flags.json; `GroundModule.PACK_ID`), the way Lands, Alpine and
+  Villages are: a world created with the flag loads it, an older world never does. P1, P2 and P4 put their worldgen in it
+  (P3 extends Awakened Alpine's own pack and flag).
+
+### 31.2 P1 Soft steps (built; new worlds only: pack `awakened_ground`, flag `awaken:awakened_ground`)
+- **The rule** (`ground.SoftRule.foot`, the bench's: docs/terrain-immersion/proof/SoftBench.java): a column takes a half slab on
+  top of its ground when a cardinal neighbour is exactly one block higher, none is lower, and none of the eight is two or more
+  higher. It only adds; it reads ground heights only. Measured on AWAKEN's own erosion: one-block risers -97% on rolling land,
+  -42% on a 35° hill, -4% on a 58° flank (cliffs untouched by design); 3.5 ns a column.
+- **The pass** (`ground.SoftStepsFeature`, feature type `awaken:soft_steps`, a placed feature with no placement added to
+  `#minecraft:is_overworld` by `neoforge/biome_modifier/ground/soft_steps.json` at step `local_modifications`): once per
+  chunk. Heights are the chunk's and its one-column ring's `OCEAN_FLOOR_WG` heightmaps (read from the nine chunk objects; no
+  noise column, so Tectonic's cost is unchanged), dryness `WORLD_SURFACE_WG == OCEAN_FLOOR_WG`; only this chunk's columns are
+  written, so a chunk comes out the same in any order. Skipped: wet columns, cold columns (snow layers can't lie on a slab),
+  a block or plant over the ground (not air), a ground with no slab. Grass and podzol under a slab become dirt at once.
+  **Order**: roads and settlements paint at `top_layer_modification` (`awakened_villages` structures `road` and `settlement`),
+  after this pass, and overwrite their own columns (streets and yards clear `g+1..g+4`), so no half-slab can survive in a
+  street or a yard (`ground_soft_before_painters` holds the two steps); vegetation (`vegetal_decoration`) comes after it too,
+  and plants and saplings refuse the slab (not in `#minecraft:supports_vegetation`), so nothing floats.
+- **The slabs** (`ground.SoftSlabs`, `SoftSlabBlock extends SlabBlock`, generated by `tools/content/ground_content.py`): turf
+  (grass), dirt, coarse dirt, podzol, mud, gravel, sand, red sand; stone, andesite, granite, diorite, tuff, sandstone and red
+  sandstone steps use vanilla's own slabs. All in `#awaken:ground/soft_slabs` and `#minecraft:slabs`, shovel-mineable,
+  monsters spawn on them (`isValidSpawn`), the turf slab in the animal spawn tags. Breaking gives the slab (a turf slab gives a
+  dirt slab unless silk-touched); no recipe. The turf slab's side shows the top half of the grass side texture so its fringe
+  sits at its top; double slabs show vanilla's full block models. Unhandled in P1: our Lands grounds (hoarfrost, mirepeat,
+  riven shale, faultstone, fused glass) and snow country (cold columns are skipped).
+- **Tufts**: `TurfSlabBlock.TUFT` (0 none, 1 short grass, 2 tall grass, 3 fern, 4 flower, 5 bush; chosen by `SoftRule.tuft` from
+  the seed and column: about 45% carry one) draws a plant inside the slab's own block from its top up; tinted as the grass is
+  (`GroundClient` registers the grass block's drifted tint for the slab); sways through `PlantSway.SLAB_TUFT` (rooted at y 0.5).
+  A turf slab under a solid block decays to a dirt slab on a random tick; it does not spread.
+- **API**: `ground.api.GroundTop.standingY(level, x, z)`: where a body really stands over a column (a heightmap counts a slab
+  as a whole block). Use it for anything placed on the ground after generation (camps, anomalies, Hearth pieces, gates); the
+  callers of `getHeight(` in other modules are not changed in P1 (an audit list for the owners: a thing placed by heightmap alone
+  floats half a block over a foot column).
+- **Ascent**: no change. A half slab is under the step height (0.6), so walking up needs no jump; a descending run of half
+  steps is a run for the stair slide (§17.22: it slides down a soft hill); a wall topped with a slab has a ledge at its top
+  (`ground_soft_hill_body`).
+- **Tests**: `ground_soft_rule` (plateaus, one-wide stairs, cliffs, tufts), `ground_soft_steps_paint` (the pass on real
+  blocks: foot columns take slabs, grass below turns to dirt, plants and blocks stay, standing height), `ground_soft_slab_rules`
+  (spawning, no vegetation support, decay), `ground_soft_before_painters`, `ground_soft_hill_body`.
+
+### 31.3 P2 The floor (built; new worlds only, the `awakened_ground` pack)
+- **Palette table** (`tools/terrain/ground_palette.py`, the one source; run it to rewrite `datapacks/awakened_ground/data/awaken/
+  worldgen/{feature,placed_feature}/ground/` and `neoforge/biome_modifier/ground/floor_*.json`, and `datapacks/awakened_ground/palette.json`):
+  per group of biomes (forest, birch and Elderwood, Lumen Forest, taiga, hills and mountains, plains and meadow, savanna, desert,
+  badlands, swamp) a list of placed features, each with a `ranks` slot (E, D, C, B, A, S; all for now; P5 will fill it from the regions
+  plan). Added at `vegetal_decoration`. Patterns: `drift` (a chunk in `rarity` gets `count` of them within `spread` blocks of a spot:
+  a cluster, never an even scatter; the air-over-a-whole-block filter keeps them off slabs) and `single` (one where a chunk picks).
+  Vanilla pieces reused by name: `fallen_oak_tree`, `fallen_birch_tree`, `fallen_spruce_tree`, `moss_patch`, `bush`. Our Lands
+  biomes already have their own fallen trees; Lumen Forest gets boulders and pebbles but no oak twigs or logs.
+- **Pebbles and twigs** (`ground.GroundCover`, `cover.PebblesBlock` kind 0-3 stone/andesite/granite/diorite and 1-3 stones;
+  `cover.TwigsBlock` wood 0-2 oak/birch/spruce bark, four ways): `VegetationBlock`s that need a whole block's top under them
+  (never a slab), no collision, broken by a touch, replaceable, not swaying; models are small boxes on the 16-grid with the game's
+  own stone and bark textures (no new art), generated by `tools/content/ground_content.py` (`cover_assets`). Twigs drop sticks.
+- **Boulders** (`ground.BoulderFeature`, feature type `awaken:boulder`, config `palette` and `min_radius..max_radius`): a rounded
+  ellipsoid of its palette's rock (forest: mossy cobblestone, stone, cobblestone; highland: stone, andesite, granite, tuff; plains;
+  desert: sandstone; badlands: red sandstone), half sunk (two blocks for radius 3 and up), crowned with the rock's own half-block
+  slabs where the height has a half left; never over water, logs, leaves or a non-natural ground. Radii: forest 1-3, highland 2-5,
+  plains 1-2, desert and badlands 1-3.
+- **Wild life**: bare stone is a ROCK perch (`wildlife.client.Sites`); boulders count: `#awaken:ground/perch_rock` (mossy cobblestone,
+  cobblestone, sandstone, red sandstone and their slabs) joins `BASE_STONE_OVERWORLD` there. Fallen logs are trunks as they are.
+- **Footstep tags** for later: `#awaken:ground/litter`, `brush`, `gravel`, `small_things`.
+- **Not in P2** (listed in the plan, deferred): three own grass heights and clover (they need new art), roots at tree feet (hero
+  trees have their own), rank palettes (P5).
+- **Tests**: `ground_floor_data` (every palette entry's files exist, boulder configs and every placed block state decode),
+  `ground_floor_blocks`, `ground_floor_boulder`.
+
+### 31.4 P3 Mountains (built; new worlds only: Awakened Alpine's own pack and flag `awaken:awakened_alpine`)
+- **Slope-led ground for every steep slope** (`terrain.alpine.AlpineSurface`, D8): scree and rock reach lower (`SCREE_SLOPE`
+  1.45 -> 1.15, `ROCK_SLOPE` 1.8 -> 1.5, rise per block; the same numbers in `farsight.glsl`, held equal by
+  `ground_mountain_far_parity`), and `LOOSE_FROM` 0.7: soil that is steepening shows patches of coarse dirt and gravel
+  (`AlpineSurface.loose`, 7-block patches that grow with the slope). The scree band is no longer all gravel: its noise
+  (`pocket`, 6-block cells) leaves grass pockets where low (under 0.22) and rock showing where high (over 0.78).
+- **Every steep land, not only Alpine biomes**: the rock rule (`awaken:alpine/slopes`: rock, scree, coarse, gravel; no snow)
+  is prepended to `minecraft:overworld/biome_surface` for `#awaken:upland` at any height (`lithostitched/worldgen_modifier/alpine/
+  slopes_surface.json`); the full rule `awaken:alpine/surface` (which adds snow) still runs for `#awaken:alpine` and for upland above
+  y 150. Far Sight's shader already drew scree and rock by slope in every biome, so near now matches it.
+- **Strata** (`AlpineSurface.strata`, material condition `awaken:strata` = `StrataCondition`): the rock block follows layers of
+  three blocks in a cycle of eight (stone, andesite, stone, tuff, stone, granite, stone, andesite) and a thin calcite band (two
+  thick, one in 31), tilted by a slow noise (about 4 blocks over 40) so cliffs have dipping strata and the vanilla ore blobs
+  (white diorite streaks) are covered. Far Sight keeps its per-biome stone colour (the layers are too fine to show from afar).
+- **Snow in layers** (`terrain.alpine.SnowDriftsFeature`, feature type `awaken:snow_drifts`, added at `top_layer_modification` to
+  `#awaken:alpine` and `#awaken:upland`): in the band of about nine blocks under the snow line, in patches and thicker toward the
+  line, never on ground steeper than 1.3, one to three of vanilla's snow layers where vanilla lets one survive
+  (`AlpineSurface.driftLayers`; reads the chunk's heightmap ring, skips chunks under y 130).
+- **Scree skirts and ledges** come from P1: gravel and stone grounds take their half slabs on the foot of every step.
+- **Tests**: `ground_mountain_bands`, `ground_mountain_strata`, `ground_mountain_drifts`, `ground_mountain_far_parity`;
+  `terrain_alpine_snow_and_rock` updated for the new slopes.
+- **Not in P3**: gully planting (the Soft Land's P2 pebbles and boulders, vanilla spruce and the treeline filter cover it).
+
+### 31.5 P4 Roads that sit in the land (partly built) and P5 (blocked)
+- **Built: bands** (`village.road.RoadPaint.paving`, held by `ground_road_bands`): the carriageway's ground was drawn block by block
+  from a coin toss (`pct(wx, wz, 50)`); it now draws once per four-by-four patch (`pct(wx >> 2, wz >> 2, 50)`) with a ragged edge
+  (one block in seven draws for itself), so the crown's grass and the wheel ruts' path read as bands along the road, and a town's
+  setts stay a mix. The paving tables, the planner and the half step where a road climbs are unchanged (the road bench's
+  fingerprint is a plan and does not move). The grass creeping over the road's edges is P0's.
+- **Not built: banks** (the ground eased from the road's level to the land's in half steps, instead of a wall). I built and backed
+  it out: a leg's painter writes only its own raster, and a bank band 4-5 blocks wide (past the 1.6 verge) can lie over another
+  road's carriageway at a junction or over a settlement's yard; whichever structure paints last wins, so a bank would damage a road
+  or a house it meets. The safe design needs the planner to say which sides of a leg are free (no other road or settlement within
+  the bank's reach) and the painter to read the generator's heightmap (`Canvas.natural`: the chunk's `OCEAN_FLOOR_WG`, pure across
+  chunk borders, no noise column) to grade only those sides, with the ground softened by the Soft Land's slabs
+  (`SoftSlabs`). That is the next step for roads, before which roads still cut into a slope with a wall past the verge.
+- **P5**: the habitats (boulders are rock perches) and the footstep tags are built (§31.3); the rank palettes wait for the regions
+  plan's level field (SPEC §21.10, on `pack/regions-plan`): `datapacks/awakened_ground/palette.json` already carries each
+  entry's `ranks` slot, so the table is ready for it.
+
+### 31.6 Where things stand
+P0 (client, every world), P1 soft steps, P2 the floor and P3 mountains are built and tested; P4 has its bands; P5's rank palettes and
+P4's banks are open. New worlds only for P1-P5 (flag `awaken:awakened_ground`; P3 rides Awakened Alpine's).

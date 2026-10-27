@@ -1,0 +1,12 @@
+{
+  "features": {
+    "enabled": [
+      "awaken:awakened_ground"
+    ]
+  },
+  "pack": {
+    "description": "Awakened Ground: soft steps, ground cover, mountain rock and road banks (new worlds only)",
+    "max_format": 121,
+    "min_format": 121
+  }
+}

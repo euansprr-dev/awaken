@@ -1,0 +1,9 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "minecraft:desert",
+  "features": [
+    "awaken:ground/desert_boulder_desert",
+    "awaken:ground/desert_pebbles"
+  ],
+  "step": "vegetal_decoration"
+}

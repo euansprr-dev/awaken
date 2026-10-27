@@ -1,0 +1,16 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": [
+    "minecraft:forest",
+    "minecraft:flower_forest",
+    "minecraft:dark_forest"
+  ],
+  "features": [
+    "awaken:ground/forest_fallen_oak",
+    "awaken:ground/forest_boulder_forest",
+    "awaken:ground/forest_pebbles",
+    "awaken:ground/forest_twigs_oak",
+    "awaken:ground/forest_moss_patch"
+  ],
+  "step": "vegetal_decoration"
+}

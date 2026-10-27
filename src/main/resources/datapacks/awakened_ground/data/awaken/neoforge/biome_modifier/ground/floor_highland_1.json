@@ -1,0 +1,9 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#minecraft:is_mountain",
+  "features": [
+    "awaken:ground/highland_boulder_highland",
+    "awaken:ground/highland_pebbles"
+  ],
+  "step": "vegetal_decoration"
+}

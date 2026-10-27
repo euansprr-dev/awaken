@@ -90,7 +90,9 @@ public final class PlantSway {
         /** a strand hanging from the top of a run of the same plant (weeping and cave vines, hanging moss, vines) */
         STRAND(false, true),
         /** floating on water: the whole pad bobs */
-        PAD(false, false);
+        PAD(false, false),
+        /** a plant standing in a slab's own block (the soft steps' tuft): rooted at the block's half height, nothing below it moves */
+        SLAB(false, false);
 
         public final boolean readsBelow, readsAbove;
 
@@ -151,10 +153,12 @@ public final class PlantSway {
     public static final Rule MOSS = new Rule("moss", Motion.AIR, Anchor.STRAND, 0.9F, F_MOSS);
     public static final Rule VINE = new Rule("vine", Motion.WALL, Anchor.STRAND, 0.5F, F_VINE);
     public static final Rule PAD = new Rule("pad", Motion.FLOAT, Anchor.PAD, 1F, F_NONE);
+    /** the turf slab's tuft (dev.awaken.ground): grass, fern, flower or bush drawn from the slab's top, y 0.5, up */
+    public static final Rule SLAB_TUFT = new Rule("slab_tuft", Motion.AIR, Anchor.SLAB, 1F, F_NONE);
 
     /** Every rule, in a fixed order (the client keeps one model cache per rule). */
     public static final Rule[] RULES = {ROOTED, ROOTED_WET, LOWER, UPPER, LOWER_WET, UPPER_WET, FLOWERBED, SHRUB, CANE, BAMBOO,
-            TWISTING, KELP, HANGING, HANGING_WET, WEEPING, CAVE_VINES, MOSS, VINE, PAD};
+            TWISTING, KELP, HANGING, HANGING_WET, WEEPING, CAVE_VINES, MOSS, VINE, PAD, SLAB_TUFT};
 
     /** True for blocks whose models get the leaf marker (the canopy sway). */
     public static boolean isLeaf(BlockState state) {
@@ -171,6 +175,7 @@ public final class PlantSway {
         Block b = state.getBlock();
         boolean wet = !state.getFluidState().isEmpty();
         if (b instanceof LeavesBlock || b instanceof CrystalClusterBlock || b instanceof LumenCapBlock) return null;
+        if (b instanceof dev.awaken.ground.TurfSlabBlock) return SLAB_TUFT;      // its tuft sways; the slab's own vertices (y <= 0.5) stay
         // underwater plants
         if (b instanceof TallSeagrassBlock) return state.getValue(DoublePlantBlock.HALF) == DoubleBlockHalf.UPPER ? UPPER_WET : LOWER_WET;
         if (b instanceof SeagrassBlock) return ROOTED_WET;
@@ -232,6 +237,7 @@ public final class PlantSway {
         boolean hanging;
         switch (rule.anchor) {
             case GROUND -> { h = yy; hanging = false; }
+            case SLAB -> { h = Math.max(0F, (yy - 0.5F) * 2F); hanging = false; }
             case LOWER -> { h = yy; hanging = false; }
             case UPPER -> { h = 1F + yy; hanging = false; }
             case STALK -> { h = Math.min(below + yy, CHAIN_REACH); hanging = false; }

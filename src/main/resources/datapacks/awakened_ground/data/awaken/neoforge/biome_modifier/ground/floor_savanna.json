@@ -1,0 +1,9 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#minecraft:is_savanna",
+  "features": [
+    "awaken:ground/savanna_boulder_plains",
+    "awaken:ground/savanna_pebbles"
+  ],
+  "step": "vegetal_decoration"
+}
