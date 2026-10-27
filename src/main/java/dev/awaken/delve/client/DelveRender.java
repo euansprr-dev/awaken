@@ -154,6 +154,87 @@ final class DelveRender {
         return n;
     }
 
+    /** Light that cares which way a quad faces (null: a quad of no one face, a plant's cross). */
+    interface QuadLight {
+        int at(double x, double y, double z, @org.jspecify.annotations.Nullable Direction normal);
+    }
+
+    private static final Direction[] DIRS = Direction.values();
+
+    /**
+     * A block drawn again over itself lit, like {@link #face}, but tinted as the world tints it (grass and leaves come up
+     * green, not grey): one face ({@code face} 0-5, a {@link Direction} ordinal) or, with 6, every quad it has. Returns
+     * the quads drawn.
+     */
+    static int litBlock(VertexConsumer vc, ClientLevel level, BlockState s, BlockPos pos, int face, QuadLight light,
+                        double cx, double cy, double cz) {
+        BlockStateModel model = Minecraft.getInstance().getModelManager().getBlockStateModelSet().get(s);
+        PARTS.clear();
+        RANDOM.setSeed(s.getSeed(pos));
+        model.collectParts(level, pos, s, RANDOM, PARTS);
+        int n = 0;
+        for (BlockStateModelPart part : PARTS) {
+            if (face < 6) n += litQuads(vc, level, s, pos, part.getQuads(DIRS[face]), light, cx, cy, cz);
+            else {
+                for (Direction d : DIRS) n += litQuads(vc, level, s, pos, part.getQuads(d), light, cx, cy, cz);
+                n += litQuads(vc, level, s, pos, part.getQuads(null), light, cx, cy, cz);
+            }
+        }
+        return n;
+    }
+
+    private static int litQuads(VertexConsumer vc, ClientLevel level, BlockState s, BlockPos pos, List<BakedQuad> quads, QuadLight light,
+                                double cx, double cy, double cz) {
+        int n = 0;
+        for (int k = 0; k < quads.size(); k++) {
+            BakedQuad q = quads.get(k);
+            Direction d = q.direction();
+            boolean any = false;
+            for (int v = 0; v < 4; v++) {
+                Vector3fc pv = q.position(v);
+                C[v] = light.at(pos.getX() + pv.x(), pos.getY() + pv.y(), pos.getZ() + pv.z(), d);
+                any |= (C[v] >>> 24) > 1;
+            }
+            if (!any) continue;
+            int tint = q.materialInfo().tintIndex();
+            if (tint >= 0) {
+                var src = Minecraft.getInstance().getBlockColors().getTintSource(s, tint);
+                if (src != null) {
+                    int t = src.colorInWorld(s, level, pos);
+                    for (int v = 0; v < 4; v++) C[v] = tinted(C[v], t);
+                }
+            }
+            float nx = d.getStepX() * 0.0015F, ny = d.getStepY() * 0.0015F, nz = d.getStepZ() * 0.0015F;
+            for (int v = 0; v < 4; v++) {
+                Vector3fc pv = q.position(v);
+                long uv = q.packedUV(v);
+                vc.addVertex((float) (pos.getX() + pv.x() + nx - cx), (float) (pos.getY() + pv.y() + ny - cy), (float) (pos.getZ() + pv.z() + nz - cz))
+                        .setUv(UVPair.unpackU(uv), UVPair.unpackV(uv)).setColor(C[v]);
+            }
+            n++;
+        }
+        return n;
+    }
+
+    private static int tinted(int c, int t) {
+        int r = (c >> 16 & 255) * (t >> 16 & 255) / 255, g = (c >> 8 & 255) * (t >> 8 & 255) / 255, b = (c & 255) * (t & 255) / 255;
+        return c & 0xFF000000 | r << 16 | g << 8 | b;
+    }
+
+    /**
+     * A pool of light lying flat (camera-relative centre), the city lanterns' profile (a broad bright middle, then a long
+     * tail easing out to nothing, no rim) in the given colour.
+     */
+    static void softPool(VertexConsumer vc, float x, float y, float z, float r, int rgb, float a) {
+        if (a <= 0.003F) return;
+        ring(vc, x, y, z, 1, 0, 0, 0, 0, 1, 0F, r * 0.2F, col(rgb, a), col(rgb, a * 0.95F));
+        ring(vc, x, y, z, 1, 0, 0, 0, 0, 1, r * 0.2F, r * 0.4F, col(rgb, a * 0.95F), col(rgb, a * 0.78F));
+        ring(vc, x, y, z, 1, 0, 0, 0, 0, 1, r * 0.4F, r * 0.6F, col(rgb, a * 0.78F), col(rgb, a * 0.5F));
+        ring(vc, x, y, z, 1, 0, 0, 0, 0, 1, r * 0.6F, r * 0.78F, col(rgb, a * 0.5F), col(rgb, a * 0.24F));
+        ring(vc, x, y, z, 1, 0, 0, 0, 0, 1, r * 0.78F, r * 0.92F, col(rgb, a * 0.24F), col(rgb, a * 0.07F));
+        ring(vc, x, y, z, 1, 0, 0, 0, 0, 1, r * 0.92F, r, col(rgb, a * 0.07F), col(rgb, 0F));
+    }
+
     /** A block-atlas sprite laid over a whole face of a block (its rotation picked by {@code turn}, 0-3). */
     static void sprite(VertexConsumer vc, TextureAtlasSprite sp, BlockPos pos, Direction face, int turn, int argb, double cx, double cy, double cz) {
         float o = 0.002F;
