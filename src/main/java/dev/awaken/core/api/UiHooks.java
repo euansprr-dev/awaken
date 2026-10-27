@@ -1,5 +1,10 @@
 package dev.awaken.core.api;
 
+import net.minecraft.resources.Identifier;
+import org.jspecify.annotations.Nullable;
+
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.DoubleSupplier;
 
 /**
@@ -7,7 +12,8 @@ import java.util.function.DoubleSupplier;
  * attention, 0..1: about 1 while the K menu, the first-power choice or another reading screen is fully open, eased
  * through their open and close. Lens reads it to dim the world behind a panel. Several sources may report at once
  * ({@link #setFocus}, one slot per owner); focus is the largest. Toasts, cards and HUD lines never report. Client
- * only; 0 on a server or when nothing reports.
+ * only; 0 on a server or when nothing reports. Also: which HUD layers draw over screens ({@link #drawsOverScreens}),
+ * and the top-right stack of HUD cards ({@link TopRight}).
  */
 public final class UiHooks {
     private UiHooks() {}
@@ -56,5 +62,59 @@ public final class UiHooks {
         double f = legacy.getAsDouble();
         for (int i = 0; i < MAX_SOURCES; i++) if (OWNERS[i] != null && VALUES[i] > f) f = VALUES[i];
         return f <= 0 ? 0f : f >= 1 ? 1f : (float) f;
+    }
+
+    // ---- the HUD under screens ------------------------------------------------------------------------------------
+
+    private static volatile Set<Identifier> overScreens = Set.of();
+
+    /**
+     * Awaken's HUD layers stand aside while any screen but chat is open (core.client.HudUnderScreens); a layer that
+     * belongs to a scene drawn over its own screen (the opening's letterbox over the view choice) says so here, once,
+     * when it registers.
+     */
+    public static synchronized void drawsOverScreens(Identifier layer) {
+        Set<Identifier> next = new HashSet<>(overScreens);
+        next.add(layer);
+        overScreens = Set.copyOf(next);
+    }
+
+    public static boolean drawsOverScreen(Identifier layer) {
+        return overScreens.contains(layer);
+    }
+
+    // ---- the top-right stack (SPEC §27.10) ------------------------------------------------------------------------
+
+    /** The stack's margin from the screen's top and right edges, GUI px (the Now card's). */
+    public static final int TOP_RIGHT_MARGIN = 4;
+
+    /** The top-right stack: the task card first (the signal module installs it), then the cards under it. */
+    public interface TopRight {
+        /**
+         * Where a card {@code width} GUI px wide, set against the right margin, starts this frame: under the System's
+         * toasts, the task card and any boss bar it would reach.
+         */
+        float below(float partialTick, float width);
+
+        /** GUI px per card px for the stack's cards: half the Now card's, never under two screen pixels a font pixel. */
+        float scale();
+    }
+
+    private static @Nullable TopRight topRight;
+
+    public static void installTopRight(TopRight source) {
+        topRight = source;
+    }
+
+    /** {@link TopRight#below}; the bare margin when nothing is installed. */
+    public static float topRightBelow(float partialTick, float width) {
+        TopRight t = topRight;
+        return t == null ? TOP_RIGHT_MARGIN : t.below(partialTick, width);
+    }
+
+    /** {@link TopRight#scale}; 0.5 when nothing is installed. */
+    public static float topRightScale() {
+        TopRight t = topRight;
+        return t == null ? 0.5f : t.scale();
     }
 }

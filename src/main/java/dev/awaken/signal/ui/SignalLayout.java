@@ -199,4 +199,30 @@ public final class SignalLayout {
         Rect slot = tracker(w, h, scale, textW, 1, lowered);
         return above == null ? slot : new Rect(slot.x(), above.bottom() + HORIZON_GAP, slot.w(), slot.h());
     }
+
+    // ---- the top-right stack (SPEC §27.10) ------------------------------------------------------------------------
+
+    /** Space between the cards of the top-right stack. */
+    public static final int STACK_GAP = 3;
+    /** Half a vanilla boss bar (182 wide, centred), and a pixel. */
+    public static final int BOSS_HALF = 92;
+
+    /**
+     * A card {@code width} wide against the right margin, wanting to start at {@code y}: below the boss bars ({@code bars}
+     * is where this frame's end, 0 when there are none) when it would reach them, else where it wanted.
+     */
+    public static float clearBossBars(float y, int w, float width, int bars) {
+        boolean reaches = w - MARGIN - width < w / 2f + BOSS_HALF;
+        return bars > 0 && reaches && y < bars + 3 ? bars + 3 : y;
+    }
+
+    /**
+     * Where the next card of the top-right stack starts: {@code top} is the stack's own top (the margin, eased down
+     * under the System's toasts); the card already there is {@code aboveW}×{@code aboveH} (0×0 when there is none), set
+     * below any boss bar it reaches; the next card, {@code width} wide, goes under it and under the bars too.
+     */
+    public static float stackBelow(float top, float aboveW, float aboveH, int w, float width, int bars) {
+        float y = aboveH > 0 ? clearBossBars(top, w, aboveW, bars) + aboveH + STACK_GAP : top;
+        return clearBossBars(y, w, width, bars);
+    }
 }
