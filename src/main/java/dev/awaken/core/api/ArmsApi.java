@@ -64,6 +64,9 @@ public final class ArmsApi {
 
         /** The smith's pattern was bought: it is known at once. */
         void villageBought(ServerPlayer player, String style);
+
+        /** Hale's rack stands beside him (two racks that hang the Wildhide weapons and open his Armoury): placed if there is none near, true when one stands. */
+        boolean placeHaleRack(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos hale);
     }
 
     /** One pattern on a village smith's rack: the style, its Blueprint to hand over, and its price in emeralds (before standing). */
@@ -142,6 +145,10 @@ public final class ArmsApi {
 
     public static void villageBought(ServerPlayer player, String style) {
         if (hooks != null) hooks.villageBought(player, style);
+    }
+
+    public static boolean placeHaleRack(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos hale) {
+        return hooks != null && hooks.placeHaleRack(level, hale);
     }
 
     /** The living module says what people say ("Hale: ...") on screen; arms asks it to, without knowing how. */

@@ -44,6 +44,11 @@ public final class ArmsStands {
     /** Stands already cued to a fighter this session (not saved: the cue may repeat after a relog). */
     private static final Map<UUID, Set<Long>> CUED = new HashMap<>();
 
+    /** The style a stand holds when it is Hale's rack: it hangs the Wildhide weapons and opens his Armoury (the tier field is the first of its three hooks). */
+    public static final String HALE = "hale";
+    /** How many weapons one of Hale's racks hangs, and how many racks stand. */
+    public static final int RACK_SLOTS = 3, RACKS = 2;
+
     /** The block entity type of a stand (for its renderer). */
     public static net.minecraft.world.level.block.entity.BlockEntityType<PatternStandBlockEntity> standType() {
         return ArmsContent.STAND_BE.get();
@@ -103,6 +108,45 @@ public final class ArmsStands {
         return Rank.E;
     }
 
+    /** Hale's rack was used: his first-weapon pick while it waits, else his Armoury (the same as speaking to him while sneaking). */
+    static void useHaleRack(ServerPlayer p) {
+        if (ArmsApi.issuePending(p)) ArmsApi.openIssue(p);
+        else ArmsApi.openRack(p);
+    }
+
+    /**
+     * Two racks beside Hale, turned to face him, three hooks each: the five Wildhide weapons Hale's rack always has for
+     * essence. Placed once (nothing is added where a rack of his already stands within 6 blocks); the first free pair of
+     * cells 3 blocks out on solid ground, east first. False when there is no room.
+     */
+    static boolean placeHaleRack(ServerLevel level, BlockPos hale) {
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        for (int dx = -6; dx <= 6; dx++)
+            for (int dy = -2; dy <= 2; dy++)
+                for (int dz = -6; dz <= 6; dz++) {
+                    m.set(hale.getX() + dx, hale.getY() + dy, hale.getZ() + dz);
+                    if (level.hasChunkAt(m) && level.getBlockEntity(m) instanceof PatternStandBlockEntity be && be.style().equals(HALE)) return true;
+                }
+        for (Direction d : new Direction[] {Direction.EAST, Direction.WEST, Direction.SOUTH, Direction.NORTH}) {
+            for (int dy : new int[] {0, 1, -1}) {
+                BlockPos first = hale.relative(d, 3).above(dy), second = first.relative(d.getClockWise());
+                if (!rackCell(level, first) || !rackCell(level, second)) continue;
+                for (int i = 0; i < RACKS; i++) {
+                    BlockPos at = i == 0 ? first : second;
+                    level.setBlock(at, ArmsContent.STAND.get().defaultBlockState().setValue(PatternStandBlock.FACING, d.getOpposite())
+                            .setValue(PatternStandBlock.KIND, StandKind.RACK), 2);
+                    if (level.getBlockEntity(at) instanceof PatternStandBlockEntity be) be.set(HALE, i * RACK_SLOTS);
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean rackCell(ServerLevel level, BlockPos at) {
+        return level.hasChunkAt(at) && level.getBlockState(at).canBeReplaced() && level.getBlockState(at.above()).isAir() && level.getBlockState(at.below()).isSolid();
+    }
+
     /** The weapon a stand shows: its tier's weapon of its style. */
     public static ItemStack weapon(String style, int tier) {
         Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(dev.awaken.Awaken.id(PREFIX[Math.max(0, Math.min(5, tier))] + "_" + style));
@@ -119,6 +163,10 @@ public final class ArmsStands {
 
     /** A fighter uses a stand with an empty hand: the pattern, once; a style they know pays its price in essence. */
     static void take(ServerPlayer p, ServerLevel level, BlockPos pos, PatternStandBlockEntity be) {
+        if (be.style().equals(HALE)) {
+            useHaleRack(p);
+            return;
+        }
         resolve(level, pos, be);
         String style = be.style();
         if (style.isEmpty()) return;
@@ -148,7 +196,7 @@ public final class ArmsStands {
             BlockPos pos = BlockPos.of(packed);
             if (pos.distSqr(p.blockPosition()) > CUE_RANGE_SQ) continue;
             if (CUED.computeIfAbsent(p.getUUID(), k -> new HashSet<>()).contains(packed) || taken(p, level, pos)) continue;
-            if (!(level.getBlockEntity(pos) instanceof PatternStandBlockEntity be)) continue;
+            if (!(level.getBlockEntity(pos) instanceof PatternStandBlockEntity be) || be.style().equals(HALE)) continue;
             resolve(level, pos, be);
             if (be.style().isEmpty()) continue;
             CUED.get(p.getUUID()).add(packed);

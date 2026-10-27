@@ -36,6 +36,7 @@ final class ArmsProgressionTests {
         AwakenTests.register("arms_raise", 40, ArmsProgressionTests::raise);
         AwakenTests.register("arms_tier_cards", 60, ArmsProgressionTests::tierCards);
         AwakenTests.register("arms_stand", 60, ArmsProgressionTests::stand);
+        AwakenTests.register("arms_hale_rack", 40, ArmsProgressionTests::haleRack);
         AwakenTests.register("arms_village_patterns", 40, ArmsProgressionTests::villagePatterns);
     }
 
@@ -407,6 +408,43 @@ final class ArmsProgressionTests {
         String bought = far.getFirst().style();
         ArmsApi.villageBought(sp, bought);
         h.assertTrue(ArmsApi.knows(sp, bought), "paying teaches it");
+        h.succeed();
+    }
+
+    /** Hale's rack: two racks three blocks from him, turned to face him, placed once, and not a pattern anyone can take. */
+    static void haleRack(net.minecraft.gametest.framework.GameTestHelper h) {
+        var level = h.getLevel();
+        for (int x = 0; x <= 12; x++) for (int z = 0; z <= 12; z++) {
+            h.setBlock(new BlockPos(x, 0, z), net.minecraft.world.level.block.Blocks.STONE);
+            for (int y = 1; y <= 3; y++) h.setBlock(new BlockPos(x, y, z), net.minecraft.world.level.block.Blocks.AIR);
+        }
+        BlockPos hale = h.absolutePos(new BlockPos(6, 1, 6));
+        h.assertTrue(ArmsStands.placeHaleRack(level, hale), "a rack is placed beside Hale");
+        int racks = 0;
+        PatternStandBlockEntity any = null;
+        for (BlockPos q : BlockPos.betweenClosed(hale.offset(-6, -1, -6), hale.offset(6, 1, 6))) {
+            if (level.getBlockEntity(q) instanceof PatternStandBlockEntity be && be.style().equals(ArmsStands.HALE)) {
+                racks++;
+                any = be;
+                var facing = level.getBlockState(q).getValue(PatternStandBlock.FACING);
+                h.assertTrue(q.relative(facing, 3).distSqr(hale) <= 1, "turned toward him");
+            }
+        }
+        h.assertTrue(racks == ArmsStands.RACKS, "two racks stand: " + racks);
+        h.assertTrue(ArmsStands.placeHaleRack(level, hale), "asked again, one is found");
+        int again = 0;
+        for (BlockPos q : BlockPos.betweenClosed(hale.offset(-6, -1, -6), hale.offset(6, 1, 6)))
+            if (level.getBlockEntity(q) instanceof PatternStandBlockEntity be && be.style().equals(ArmsStands.HALE)) again++;
+        h.assertTrue(again == racks, "and none added");
+        ServerPlayer sp = survivor(h);
+        int claimed = ArmsProgress.of(sp).claimedStands.size();
+        ArmsStands.take(sp, level, any.getBlockPos(), any);
+        h.assertTrue(ArmsProgress.of(sp).claimedStands.size() == claimed, "using a rack claims no pattern");
+        // no room: a cell that is not solid ground gives no rack
+        for (BlockPos q : BlockPos.betweenClosed(hale.offset(-6, -1, -6), hale.offset(6, 1, 6)))
+            if (level.getBlockEntity(q) instanceof PatternStandBlockEntity) level.removeBlock(q, false);
+        for (int x = 0; x <= 12; x++) for (int z = 0; z <= 12; z++) h.setBlock(new BlockPos(x, 0, z), net.minecraft.world.level.block.Blocks.AIR);
+        h.assertTrue(!ArmsStands.placeHaleRack(level, hale), "over a void there is no room");
         h.succeed();
     }
 }

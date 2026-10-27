@@ -157,6 +157,11 @@ public final class ArmsIssue implements ArmsApi.Hooks {
     }
 
     @Override
+    public boolean placeHaleRack(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos hale) {
+        return ArmsStands.placeHaleRack(level, hale);
+    }
+
+    @Override
     public void lordSpoils(ServerPlayer p, String rankLabel, String themeId) {
         ArmsSpoils.lordKill(p, rankLabel, themeId);
     }

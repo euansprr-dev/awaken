@@ -5476,7 +5476,8 @@ kill switch, sounds, stance rules, clips, the Art, the Plunge, assets; `mobs_hel
   because the region map must not be read during world generation.
 - **Tests** (`arms_`): `arms_sources`, `arms_recipe_unlock`, `arms_issue`, `arms_shard_pity`, `arms_rack`, `arms_armoury`, `arms_gate_pattern`,
   `arms_homes`, `arms_boss_weapon`, `arms_marked_pity`, `arms_raise`, `arms_tier_cards`, `arms_stand`, `arms_village_patterns`.
-- **Not built / unverified**: the model rack in Hale's yard (the menu is the rack); stands in camps' hollow dens (a camp is cleared and
+- **Hale's rack** (physical): two Pattern Stands of the rack make (style `hale`) stand three blocks from Hale, turned to face him, hanging the five Wildhide weapons (three hooks each); using one with an empty hand opens his first-weapon pick while it waits, else his Armoury, like speaking to him while sneaking. `Scenes.haleRack` asks `ArmsApi.placeHaleRack` once Hale is in the world and a player is near; it finds an existing rack after a restart and adds none.
+- **Not built / unverified**: stands in camps' hollow dens (a camp is cleared and
   repainted, so a stand would vanish with it; the heart's bearer pays instead); the camp-name caption for the bearer; every client screen
   and the stand's look and turning weapon, because the client was never launched (a tour is the next check); retrofitting stands into
   structures already generated in an existing world.

@@ -61,7 +61,7 @@ smith's rack), structures (Pattern Stands) and people; Hale's rack sells every p
 - `ArmsPatterns`: the gate bearer, the Lord's hoard fallback, camp hearts, the six teachers. `ArmsSpoils`, `LordForged`, `MarkedDrops`: boss
   weapons and the Marked drops. `ArmsRaise`: raising a weapon a tier.
 - `ArmsTiers`: how a tier is announced (the lock line, the open toast, "What waits"); the part jobs are `bounty/part_job_*.json`.
-- `ArmsStands`, `PatternStandBlock`, `PatternStandBlockEntity`, `StandKind`, `client/PatternStandRenderer`: the Pattern Stand. Art:
+- `ArmsStands`, `PatternStandBlock`, `PatternStandBlockEntity`, `StandKind`, `client/PatternStandRenderer`: the Pattern Stand, and Hale's rack (a stand with style `hale`: `placeHaleRack`, `useHaleRack`). Art:
   `python3 tools/art/build_all.py pattern_stand` (textures) and `python3 tools/art/specs/pattern_stand.py content` (models, blockstate, name).
 - Simulation: `python3 tools/sim/gear_sim.py` sets the boss-weapon and Marked rates (Lords per weapon, hours to the first of each).
 - Tests: `tools/gradle.sh 900 runGameTestServer -Ptests=arms_` (the `arms_` prefix covers all of the above).

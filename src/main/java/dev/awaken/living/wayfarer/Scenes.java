@@ -476,6 +476,18 @@ public final class Scenes extends SavedData {
         BlockPos post = dev.awaken.core.api.CityHooks.spot(level, "quartermaster");
         if (post != null) placeAt(level, "hale", post);
         else if (CityBasin.site(server).isEmpty()) place(level, "hale", haleColumn(server), 24, true);
+        haleRack(level, post != null ? post : haleColumn(server));
+    }
+
+    /** Whether Hale's rack has been looked for this session (arms places it beside him once, and finds it again after a restart). */
+    private boolean haleRackDone;
+
+    /** Hale's rack (docs/arms-progression/PLAN.md §3.3) stands beside him, once he is in the world and a player is near. */
+    private void haleRack(ServerLevel level, BlockPos anchor) {
+        if (haleRackDone || !residents.contains("hale") || !near(level, anchor, 96)) return;
+        var found = level.getEntitiesOfClass(Wayfarer.class, new net.minecraft.world.phys.AABB(anchor).inflate(32), w -> w.who().equals("hale") && w.isAlive());
+        if (found.isEmpty()) return;
+        haleRackDone = dev.awaken.core.api.ArmsApi.placeHaleRack(level, found.getFirst().blockPosition());
     }
 
     /** A resident exactly here (a spot another module keeps clear), once a player is within 96. */
