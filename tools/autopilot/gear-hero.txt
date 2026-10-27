@@ -1,0 +1,99 @@
+# The hero hood (branch pack/armour-hero-piece, never merged): Veilwoven's helmet as a real mesh (tools/art/specs/gear_hero_hood.py,
+# drawn by shaders/core/armour_hero) beside the helmet as it ships. Three mannequins: left and middle wear the whole set, the right
+# one only the helmet. Each look: the lineup, front, three-quarter, side, back, two hood close-ups by day, a hood close-up at night.
+# "armour fidelity 0" is as it ships, "armour fidelity 3" the hero hood (the other pieces stay as they ship). Spectator camera, a
+# smooth_stone floor and a deepslate_tiles wall high above the spawn (its chunks are loaded). Run on CI: tools/tour-ci.sh ... LENS=swift.
+world armourhero creative 778
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+wait 60
+cmd awaken opening skip
+wait 80
+cmd awaken powers starter 1
+wait 60
+screen close
+window 1440 900
+hud off
+camera first
+cmd gamemode spectator
+wait 100
+screen close
+cmd tp @s ~ 300 ~ 0 8
+wait 200
+cmd fill ~-8 ~-1 ~-8 ~8 ~-1 ~12 minecraft:smooth_stone
+cmd fill ~-8 ~ ~-8 ~8 ~10 ~12 minecraft:air
+cmd fill ~-8 ~ ~9 ~8 ~7 ~9 minecraft:deepslate_tiles
+wait 40
+cmd summon minecraft:mannequin ~-1.8 ~ ~4 {Rotation:[205f,0f],immovable:1b,hide_description:1b,Invulnerable:1b,Tags:["prem_l"],equipment:{head:{id:"awaken:veilwoven_helmet",count:1},chest:{id:"awaken:veilwoven_chestplate",count:1},legs:{id:"awaken:veilwoven_leggings",count:1},feet:{id:"awaken:veilwoven_boots",count:1}}}
+cmd summon minecraft:mannequin ~ ~ ~4 {Rotation:[180f,0f],immovable:1b,hide_description:1b,Invulnerable:1b,Tags:["prem_m"],equipment:{head:{id:"awaken:veilwoven_helmet",count:1},chest:{id:"awaken:veilwoven_chestplate",count:1},legs:{id:"awaken:veilwoven_leggings",count:1},feet:{id:"awaken:veilwoven_boots",count:1}}}
+cmd summon minecraft:mannequin ~1.8 ~ ~4 {Rotation:[150f,0f],immovable:1b,hide_description:1b,Invulnerable:1b,Tags:["prem_r"],equipment:{head:{id:"awaken:veilwoven_helmet",count:1}}}
+wait 40
+armour fidelity 0
+wait 30
+cmd time set 6000
+wait 20
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-3.4 0 3
+wait 20
+where prem_m
+shot hero_today_lineup
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-2.4 0 2
+wait 20
+shot hero_today_front
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-1.7 ~ ~-1.7 -45 2
+wait 20
+shot hero_today_threequarter
+cmd execute at @e[tag=prem_l,limit=1] run tp @s ~-2.4 ~ ~ -90 2
+wait 20
+shot hero_today_side
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~2.4 180 2
+wait 20
+shot hero_today_back
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.45 ~ ~-1.0 -24 0
+wait 20
+shot hero_today_hood
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-0.95 0 0
+wait 20
+shot hero_today_hoodfront
+cmd time set 18000
+wait 40
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.45 ~ ~-1.0 -24 0
+wait 20
+shot hero_today_night_hood
+armour fidelity 3
+wait 30
+cmd time set 6000
+wait 20
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-3.4 0 3
+wait 20
+where prem_m
+shot hero_hood_lineup
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-2.4 0 2
+wait 20
+shot hero_hood_front
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-1.7 ~ ~-1.7 -45 2
+wait 20
+shot hero_hood_threequarter
+cmd execute at @e[tag=prem_l,limit=1] run tp @s ~-2.4 ~ ~ -90 2
+wait 20
+shot hero_hood_side
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~2.4 180 2
+wait 20
+shot hero_hood_back
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.45 ~ ~-1.0 -24 0
+wait 20
+shot hero_hood_hood
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~ ~ ~-0.95 0 0
+wait 20
+shot hero_hood_hoodfront
+cmd time set 18000
+wait 40
+cmd execute at @e[tag=prem_m,limit=1] run tp @s ~-0.45 ~ ~-1.0 -24 0
+wait 20
+shot hero_hood_night_hood
+cmd time set 6000
+quit

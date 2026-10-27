@@ -3,6 +3,7 @@ package dev.awaken.gear.premium.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.renderpearl.api.pipeline.ColorTargetState;
 import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.textures.FilterMode;
 import dev.awaken.Awaken;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
@@ -31,11 +32,23 @@ final class PremiumPipelines {
             .withCull(false) // a hood is seen from inside, as vanilla's armour is
             .build();
 
+    /** The hero hood's shader (pack/armour-hero-piece): smooth normals, per-material light, read with a linear sampler. */
+    static final RenderPipeline HERO = RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
+            .withLocation(Awaken.id("pipeline/armour_hero"))
+            .withVertexShader(Awaken.id("core/armour_hero"))
+            .withFragmentShader(Awaken.id("core/armour_hero"))
+            .withColorTargetState(ColorTargetState.DEFAULT)
+            .withCull(false) // the lining is seen from inside
+            .build();
+
     private static final Map<Identifier, RenderType> TYPES = new HashMap<>();
     private static int ok = -1; // -1 unknown, 0 failed, 1 compiled
+    private static int heroOk = -1;
+    private static @org.jspecify.annotations.Nullable RenderType hero;
 
     static void onRegister(RegisterRenderPipelinesEvent e) {
         e.registerOptionalPipeline(ARMOUR);
+        e.registerOptionalPipeline(HERO);
     }
 
     /** Whether the armour shader compiled (checked once per reload). */
@@ -53,7 +66,28 @@ final class PremiumPipelines {
 
     static void recheck() {
         ok = -1;
+        heroOk = -1;
+        hero = null;
         TYPES.clear();
+    }
+
+    /** The hero hood's render type, or vanilla's armour type on the same atlas if the shader did not compile. */
+    static RenderType hero(Identifier texture) {
+        if (heroOk < 0) {
+            try {
+                heroOk = RenderSystem.getCompiledPipelineNullable(HERO) != null ? 1 : 0;
+            } catch (RuntimeException ex) {
+                heroOk = 0;
+            }
+            if (heroOk == 0) Awaken.LOG.warn("[gear] the hero hood's shader did not load; it draws with vanilla's armour render type");
+        }
+        if (heroOk == 0) return plain(texture);
+        if (hero == null) {
+            hero = RenderType.create("awaken_armour_hero", RenderSetup.builder(HERO)
+                    .withTexture("Sampler0", texture, () -> RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR))
+                    .useLightmap().affectsCrumbling().createRenderSetup());
+        }
+        return hero;
     }
 
     /** The armour shader on this texture. */

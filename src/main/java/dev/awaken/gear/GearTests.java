@@ -82,6 +82,7 @@ final class GearTests {
         AwakenTests.registerIsolated("gear_lordscale_overflow", 40, GearTests::overflow);
         AwakenTests.register("gear_silhouettes_valid", 20, GearTests::silhouettes);
         AwakenTests.register("gear_premium_spec", 20, GearTests::premiumSpec);
+        AwakenTests.register("gear_premium_hood", 20, GearTests::premiumHood);
     }
 
     // ---- registry, tags, recipes ------------------------------------------------------------------------------------
@@ -618,6 +619,27 @@ final class GearTests {
                     var im = javax.imageio.ImageIO.read(img);
                     h.assertTrue(im.getWidth() == spec.texture().get(0) && im.getHeight() == spec.texture().get(1), png + " matches the spec's size");
                 }
+            }
+        } catch (java.io.IOException e) {
+            h.fail(file + ": " + e);
+        }
+        h.succeed();
+    }
+
+    /** The hero hood (pack/armour-hero-piece): the mesh reads and is sound, and its atlas is the size the mesh's uvs assume. */
+    private static void premiumHood(GameTestHelper h) {
+        String file = "/assets/awaken/" + dev.awaken.gear.premium.HoodMesh.PATH;
+        try (var in = GearTests.class.getResourceAsStream(file)) {
+            h.assertTrue(in != null, file + " is on the classpath");
+            var mesh = dev.awaken.gear.premium.HoodMesh.read(in);
+            List<String> bad = mesh.problems();
+            h.assertTrue(bad.isEmpty(), String.join("; ", bad));
+            h.assertTrue(mesh.quads() > 2000, "the hood is a real mesh, not a few boxes: " + mesh.quads() + " quads");
+            try (var img = GearTests.class.getResourceAsStream("/assets/awaken/" + dev.awaken.gear.premium.HoodMesh.TEXTURE)) {
+                h.assertTrue(img != null, "the hood's atlas is on the classpath");
+                var im = javax.imageio.ImageIO.read(img);
+                h.assertTrue(im.getWidth() == dev.awaken.gear.premium.HoodMesh.ATLAS_W && im.getHeight() == dev.awaken.gear.premium.HoodMesh.ATLAS_H,
+                        "the hood's atlas is " + dev.awaken.gear.premium.HoodMesh.ATLAS_W + "x" + dev.awaken.gear.premium.HoodMesh.ATLAS_H);
             }
         } catch (java.io.IOException e) {
             h.fail(file + ": " + e);

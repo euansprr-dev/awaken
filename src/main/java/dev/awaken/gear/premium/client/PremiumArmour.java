@@ -18,6 +18,7 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.core.component.DataComponents;
@@ -27,6 +28,8 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.equipment.Equippable;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.client.event.RenderLivingEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
@@ -55,8 +58,9 @@ import java.util.Map;
 public final class PremiumArmour {
     private PremiumArmour() {}
 
-    /** 0 shipped, 1 planned look, 2 plus the shader. */
+    /** 0 shipped, 1 planned look, 2 plus the shader, 3 the hero hood alone (pack/armour-hero-piece). */
     public static volatile int fidelity = 0;
+    public static final int HERO = 3;
 
     public static final Identifier TEXTURE = Awaken.id(PremiumSpec.TEXTURE);
     public static final Identifier GLOW = Awaken.id(PremiumSpec.GLOW);
@@ -72,8 +76,10 @@ public final class PremiumArmour {
         modBus.addListener(AddClientReloadListenersEvent.class, e -> e.addListener(Awaken.id("gear_premium"), (ResourceManagerReloadListener) m -> {
             models = null;
             failed = false;
+            HeroHood.reset();
             PremiumPipelines.recheck();
         }));
+        NeoForge.EVENT_BUS.addListener(RenderLivingEvent.Pre.class, e -> hideHat((RenderLivingEvent.Pre<?, ?, ?>) e));
         modBus.addListener(RegisterRenderPipelinesEvent.class, PremiumPipelines::onRegister);
         modBus.addListener(EntityRenderersEvent.AddLayers.class, PremiumLayer::onAddLayers);
     }
@@ -86,10 +92,21 @@ public final class PremiumArmour {
     public static String autopilot(String arg) {
         String[] w = arg.trim().split("\\s+");
         if (w.length == 2 && w[0].equals("fidelity")) {
-            fidelity = Math.max(0, Math.min(2, Integer.parseInt(w[1])));
+            fidelity = Math.max(0, Math.min(HERO, Integer.parseInt(w[1])));
+            if (fidelity == HERO) return "fidelity 3, the hero hood" + (HeroHood.data() == null ? " (the mesh did not load: the helmet as it ships)" : "");
             return "fidelity " + fidelity + (fidelity == 2 && !PremiumPipelines.ok() ? " (the shader did not load: plain render type)" : "");
         }
-        return "usage: armour fidelity 0|1|2";
+        return "usage: armour fidelity 0|1|2|3";
+    }
+
+    /** Under the hero hood the skin's hat layer (hair, a hat) would poke through the silk: hidden while it is worn. */
+    private static void hideHat(RenderLivingEvent.Pre<?, ?, ?> e) {
+        if (fidelity == HERO && e.getRenderState() instanceof AvatarRenderState s && isHeroHead(s.headEquipment)) s.showHat = false;
+    }
+
+    /** The hero hood is drawn: Veilwoven's helmet at fidelity 3, with its mesh loaded. */
+    static boolean isHeroHead(ItemStack stack) {
+        return stack.getItem() instanceof HunterGearItem g && g.tier == HunterTier.B && g.piece == Piece.HELMET && HeroHood.data() != null;
     }
 
     public static boolean isHero(ItemStack stack) {
@@ -181,7 +198,7 @@ public final class PremiumArmour {
 
         @Override
         public Model getHumanoidArmorModel(ItemStack stack, EquipmentClientInfo.LayerType type, Model original) {
-            if (fidelity < 1) return original;
+            if (fidelity < 1 || fidelity == HERO) return original;
             EquipmentSlot slot = slotFor(stack, type);
             HumanoidModel<HumanoidRenderState> m = slot == null ? null : model(slot);
             return m == null ? original : m;
@@ -189,12 +206,13 @@ public final class PremiumArmour {
 
         @Override
         public @Nullable Identifier getArmorTexture(ItemStack stack, EquipmentClientInfo.LayerType type, EquipmentClientInfo.Layer layer, Identifier fallback) {
-            EquipmentSlot slot = fidelity < 1 ? null : slotFor(stack, type);
+            EquipmentSlot slot = fidelity < 1 || fidelity == HERO ? null : slotFor(stack, type);
             return slot == null || model(slot) == null ? null : TEXTURE;
         }
 
         @Override
         public int getArmorLayerTintColor(ItemStack stack, EquipmentClientInfo.Layer layer, int layerIdx, int fallbackColor) {
+            if (fidelity == HERO) return isHeroHead(stack) ? 0 : EquipmentLayerRenderer.getColorForLayer(layer, fallbackColor); // the layer draws the hood
             return fidelity >= 2 && model(slotOf(stack) == EquipmentSlot.MAINHAND ? EquipmentSlot.CHEST : slotOf(stack)) != null
                     ? 0 // our own layer draws it
                     : EquipmentLayerRenderer.getColorForLayer(layer, fallbackColor);

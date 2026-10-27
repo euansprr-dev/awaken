@@ -50,6 +50,17 @@ final class PremiumLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
     public void submit(PoseStack pose, SubmitNodeCollector collector, int light, AvatarRenderState state, float yRot, float xRot) {
         int fidelity = PremiumArmour.fidelity;
         if (fidelity < 1 || state.isInvisible) return;
+        if (fidelity == PremiumArmour.HERO) {
+            // the hero hood alone (pack/armour-hero-piece): our own mesh on the head; the other pieces draw as they ship
+            float[] mesh = PremiumArmour.isHero(state.headEquipment) ? HeroHood.data() : null;
+            if (mesh == null) return;
+            pose.pushPose();
+            getParentModel().root().translateAndRotate(pose);
+            getParentModel().translateToHead(pose);
+            collector.order(1).submitCustomGeometry(pose, PremiumPipelines.hero(HeroHood.TEXTURE), (p, out) -> HeroHood.emit(p, out, mesh, light));
+            pose.popPose();
+            return;
+        }
         EquipmentSlot[] slots = PremiumArmour.slots();
         int worn = 0;
         for (EquipmentSlot slot : slots) if (PremiumArmour.isHero(stackOf(state, slot))) worn++;
