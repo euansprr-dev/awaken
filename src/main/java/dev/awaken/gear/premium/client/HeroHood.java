@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.awaken.Awaken;
 import dev.awaken.gear.premium.HoodMesh;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import org.joml.Matrix4f;
@@ -14,6 +15,8 @@ import org.jspecify.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Veilwoven's hero hood (pack/armour-hero-piece, never merged): the mesh from tools/art/specs/gear_hero_hood.py, drawn on the
@@ -27,6 +30,7 @@ final class HeroHood {
     static final Identifier TEXTURE = Awaken.id(HoodMesh.TEXTURE);
 
     private static float @Nullable [] data;
+    private static @Nullable ModelPart part;
     private static boolean failed;
     // the geometry callback runs on the render thread only
     private static final Vector3f POS = new Vector3f();
@@ -34,7 +38,34 @@ final class HeroHood {
 
     static void reset() {
         data = null;
+        part = null;
         failed = false;
+    }
+
+    /**
+     * The hood as a model part with one cube that draws the mesh, so it goes through the model path like every other armour layer
+     * (Look A's). Drawn as custom geometry instead, the entities' shadows vanished on CI (round 1, 2026-10-27).
+     */
+    static @Nullable ModelPart part() {
+        float[] d = data();
+        if (d == null) return null;
+        if (part == null) part = new ModelPart(List.of(new MeshCube(d)), Map.of());
+        return part;
+    }
+
+    /** A cube with no box faces whose compile writes the mesh instead (ModelPart.Cube is open for this; no mixin). */
+    private static final class MeshCube extends ModelPart.Cube {
+        private final float[] mesh;
+
+        MeshCube(float[] mesh) {
+            super(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false, 1, 1, Set.of());
+            this.mesh = mesh;
+        }
+
+        @Override
+        public void compile(PoseStack.Pose pose, VertexConsumer builder, int lightCoords, int overlayCoords, int color) {
+            emit(pose, builder, mesh, lightCoords);
+        }
     }
 
     static float @Nullable [] data() {

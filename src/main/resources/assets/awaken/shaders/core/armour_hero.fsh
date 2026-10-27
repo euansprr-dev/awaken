@@ -49,15 +49,15 @@ void main() {
     float ndv = clamp(dot(n, v), 0.0, 1.0);
 
     // vanilla's two lights, wrapped so cloth turns softly from light into shade
-    float w = 0.35;
+    float w = 0.15;
     float l0 = clamp((dot(Light0_Direction, nw) + w) / (1.0 + w), 0.0, 1.0);
     float l1 = clamp((dot(Light1_Direction, nw) + w) / (1.0 + w), 0.0, 1.0);
     float diffuse = min(1.0, (l0 + l1) * MINECRAFT_LIGHT_POWER + MINECRAFT_AMBIENT_LIGHT);
 
     // cloth: the velvet sheen rises toward the silhouette, so every fold catches a rim of lighter violet
     vec3 cloth = alb.rgb * diffuse;
-    float sheen = (1.0 - metal) * (1.0 - gloss) * pow(1.0 - ndv, 2.5);
-    cloth += (alb.rgb * 0.5 + SHEEN * 0.35) * sheen * (0.45 + 0.55 * diffuse) * 1.1;
+    float sheen = (1.0 - metal) * (1.0 - gloss) * pow(1.0 - ndv, 2.2);
+    cloth += (alb.rgb * 0.6 + SHEEN * 0.32) * sheen * (0.35 + 0.65 * diffuse) * 1.6;
 
     // metal: the studio it reflects
     vec3 r = reflect(-v, n);

@@ -44,10 +44,10 @@ APEX = Y5 + H_ARCH
 YS, YT = 7.7, 11.3          # the cowl starts to close above the head at YS; its point is at YT
 AX, AZF, AZB = 5.12, 5.25, 5.62
 PEAK_BACK = 2.6             # how far back the point falls
-CORD_R = 0.30               # the satin cord bound around the face
+CORD_R = 0.22               # the satin cord bound around the face (round 1: at 0.30 and pale it read as a cable)
 BAND_OUT, BAND_IN = 0.12, 0.07
-NU = 72                     # columns of the shell, left rim around the back to the right rim
-NB = 96                     # columns of the circlet
+NU = 64                     # columns of the shell, left rim around the back to the right rim
+NB = 80                     # columns of the circlet
 BAND_CAP, BAND_FACE = 5, 9  # rows of each rounded edge and of the face
 THREAD_FROM = 3.4           # the thread starts this far down the face edge from the arch's top (the circlet owns the brow)
 
@@ -79,6 +79,8 @@ def surf(theta, Y):
     cz = PEAK_BACK * smooth(7.8, YT, Y) ** 1.5                  # the point falls back
     # the brow leans forward a little over the face
     z = z - 0.85 * np.exp(-(x / 2.0) ** 2) * np.exp(-((Y - 7.1) / 1.2) ** 2) * np.where(c < 0, c * c, 0.0)
+    # a deep cowl: the front stands forward of the face, so the lining and its shadow show round it (round 1 looked pasted on)
+    z = z - 0.75 * smooth(2.05, 2.8, np.abs(theta)) * (1 - smooth(8.0, 9.6, Y))
     # drape folds from the point down the back and sides, none near the face
     A = 0.44 * smooth(8.0, -1.4, Y)
     wf = 1 - smooth(2.1, 2.7, np.abs(theta))
@@ -322,7 +324,7 @@ def band_mid(theta):
 def band_span(theta):
     mm = band_rise(theta)
     mid = band_mid(theta)
-    return mid - (0.21 + 0.2 * mm), mid + (0.21 + 0.66 * mm)
+    return mid - (0.17 + 0.22 * mm), mid + (0.17 + 0.66 * mm)
 
 
 def band_mesh(m):
@@ -430,10 +432,10 @@ def srgb(c):
     return np.array(c, dtype=float) / 255.0
 
 
-SILK = srgb((50, 36, 104))        # midnight violet silk
-SILK_DEEP = srgb((30, 20, 66))
+SILK = srgb((40, 27, 88))         # midnight violet silk
+SILK_DEEP = srgb((20, 13, 48))
 LINING = srgb((76, 30, 84))       # plum satin
-CORD = srgb((196, 190, 226))      # silver-lavender satin cord
+CORD = srgb((132, 116, 184))      # violet-silver satin cord, a step lighter than the silk
 THREAD = srgb((222, 206, 255))
 SILVER = srgb((206, 210, 224))
 GEM = srgb((176, 92, 255))
@@ -515,8 +517,8 @@ def paint(geo):
         if name == "outer":
             lo, hi = band_span(bilerp(TH_[..., None], fj, fi)[..., 0])
             d_band = np.maximum(lo - Yq, Yq - hi)
-            ao = (1 - 0.34 * np.clip(-fold, 0, 1)) * (1 + 0.08 * np.clip(fold, 0, 1))
-            ao *= 0.60 + 0.40 * smooth(0.12, 0.55, d_e)
+            ao = (1 - 0.48 * np.clip(-fold, 0, 1) ** 1.3) * (1 + 0.10 * np.clip(fold, 0, 1))
+            ao *= 0.55 + 0.45 * smooth(0.06, 0.45, d_e)
             ao *= 1 - 0.30 * np.exp(-(np.maximum(d_band, 0) / 0.16) ** 2) * (d_band > -0.05)
             ao *= 0.86 + 0.14 * smooth(-1.4, 9.0, Yq)
             ao *= 1 - 0.18 * np.exp(-(np.maximum(d_hem, 0) / 0.35) ** 2)
@@ -528,18 +530,18 @@ def paint(geo):
             # the embroidered thread: one line round the face with a small diamond every 1.35 px, faintly lit from within
             px = 0.08                                                 # about a texel, in skin pixels: soft edges
             cov = lambda dist: np.clip(0.5 - dist / px, 0, 1)
-            line = cov(np.abs(d_e - 0.62) - 0.065) * smooth(THREAD_FROM - 0.05, THREAD_FROM + 0.05, sarc)
+            line = cov(np.abs(d_e - 0.55) - 0.06) * smooth(THREAD_FROM - 0.05, THREAD_FROM + 0.05, sarc)
             ph = ((sarc - THREAD_FROM) / 1.35 + 0.5) % 1.0
-            dd = np.abs(ph - 0.5) * 1.35 + np.abs(d_e - 0.62)
-            diamond = cov(dd - 0.19) * (sarc > THREAD_FROM - 0.3)
-            hollow = cov(dd - 0.09)
+            dd = np.abs(ph - 0.5) * 1.35 + np.abs(d_e - 0.55)
+            diamond = cov(dd - 0.17) * (sarc > THREAD_FROM - 0.3)
+            hollow = cov(dd - 0.08)
             thread = np.maximum(line, diamond) * (1 - hollow) * (d_e < 1.0) * (arc > 0.7) * (arc < L - 0.7)
             col = col * (1 - thread)[..., None] + THREAD * (0.85 + 0.15 * ao)[..., None] * thread[..., None]
             mtl = mtl * (1 - thread)[..., None] + np.array([0.30, 0.62, 0.55]) * thread[..., None]
             put("outer", col, mtl)
         else:
             depth = np.minimum(d_e, np.maximum(d_hem, 0) * 1.2)
-            ao = 0.20 + 0.80 * np.exp(-depth / 0.85)
+            ao = 0.16 + 0.84 * np.exp(-depth / 0.7)
             weave = 1 + 0.025 * np.sign(np.sin(2 * math.pi * (circ * 2 + Yq) / 0.3))
             col = LINING * (ao * weave)[..., None]
             mtl = np.stack([0 * ao, 0.55 + 0 * ao, 0 * ao], -1)
@@ -654,7 +656,7 @@ def checks(m, geo):
         bad.append("the silk crosses the face")
     # the hem roll and the shell share their edge vertices (watertight), and the circlet sits on the silk, not above it
     lo, hi = band_span(np.linspace(-math.pi, math.pi, 64))
-    if np.any(hi - lo < 0.4):
+    if np.any(hi - lo < 0.3):
         bad.append("the circlet is too thin somewhere")
     if float(band_span(math.pi)[0]) < APEX + CORD_R + 0.45:
         bad.append("the circlet crowds the cord above the face")

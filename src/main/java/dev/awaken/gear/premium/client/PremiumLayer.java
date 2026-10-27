@@ -52,12 +52,12 @@ final class PremiumLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         if (fidelity < 1 || state.isInvisible) return;
         if (fidelity == PremiumArmour.HERO) {
             // the hero hood alone (pack/armour-hero-piece): our own mesh on the head; the other pieces draw as they ship
-            float[] mesh = PremiumArmour.isHero(state.headEquipment) ? HeroHood.data() : null;
-            if (mesh == null) return;
+            var hood = PremiumArmour.isHero(state.headEquipment) ? HeroHood.part() : null;
+            if (hood == null) return;
             pose.pushPose();
             getParentModel().root().translateAndRotate(pose);
             getParentModel().translateToHead(pose);
-            collector.order(1).submitCustomGeometry(pose, PremiumPipelines.hero(HeroHood.TEXTURE), (p, out) -> HeroHood.emit(p, out, mesh, light));
+            collector.order(1).submitModelPart(hood, pose, PremiumPipelines.hero(HeroHood.TEXTURE), light, OverlayTexture.NO_OVERLAY, null, -1, state.outlineColor);
             pose.popPose();
             return;
         }
