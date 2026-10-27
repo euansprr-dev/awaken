@@ -179,7 +179,7 @@ final class Touches {
     /** Starts a touch with the free hand (the main, else the off one); a two-handed one only with both free. */
     private static void play(LocalPlayer p, Touch t, Reaches.Anchor a) {
         if (ticks - lastAt < 4) return; // a held click repeats the event; once is enough
-        boolean mainFree = p.getMainHandItem().isEmpty(), offFree = p.getOffhandItem().isEmpty(), rm = rightMain(p);
+        boolean mainFree = p.getMainHandItem().isEmpty(), offFree = p.getOffhandItem().isEmpty() && !FirstPerson.offHandShows.getAsBoolean(), rm = rightMain(p);
         trace(t.name() + " (main " + p.getMainHandItem() + ", off " + p.getOffhandItem() + ")");
         if (t.both()) {
             if (!mainFree || !offFree) return;
@@ -263,7 +263,7 @@ final class Touches {
             // the stem, a little above the ground; the flower is in the hand once it's pinched
             Reaches.Anchor a = fixed(box.getCenter().x, box.minY + Math.min(0.25, box.getYsize() * 0.5), box.getCenter().z);
             if (ticks - lastAt < 4) return;
-            boolean mainFree = p.getMainHandItem().isEmpty(), offFree = p.getOffhandItem().isEmpty();
+            boolean mainFree = p.getMainHandItem().isEmpty(), offFree = p.getOffhandItem().isEmpty() && !FirstPerson.offHandShows.getAsBoolean();
             if (!mainFree && !offFree) return;
             lastAt = ticks;
             trace(PLUCK.name());

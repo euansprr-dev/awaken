@@ -195,10 +195,10 @@ final class ArmsHands {
         MAIN_Q.transform(G);
         G.add(MAIN_D).add(HX, HY + equip * -0.6F, HZ);
         FirstPerson.View.fist(v.gripMain, 1, inv * G.x, G.y, G.z);
-        if (!ArmsOffHand.twinOf(p).isEmpty()) {
+        if (!ArmsOffHand.shownTwin(p).isEmpty()) {
             G.set(st.hand());
             OFF_Q.transform(G);
-            G.add(OFF_D).add(HX, HY, HZ);
+            G.add(OFF_D).add(HX, HY + ArmsOffHand.equip() * -0.6F, HZ); // the twin rises with the main hand
             FirstPerson.View.fist(v.gripOff, 1, -inv * G.x, G.y, G.z);
         }
     }

@@ -3,6 +3,7 @@ package dev.awaken.arms.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.awaken.arms.Archetypes;
 import dev.awaken.arms.Arms;
+import dev.awaken.arms.ArmsConfig;
 import dev.awaken.arms.FpSwings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -33,7 +34,10 @@ final class ArmsOffHand {
 
     /** The twin of a holder's main-hand stack, if its style is a pair and the off hand is free (else empty). */
     static ItemStack twinOf(Player p) {
-        ItemStack main = p.getMainHandItem();
+        return twinOf(p, p.getMainHandItem());
+    }
+
+    private static ItemStack twinOf(Player p, ItemStack main) {
         if (main.isEmpty() || !p.getOffhandItem().isEmpty()) return ItemStack.EMPTY;
         Archetypes.Loaded style = Arms.styleOf(main);
         FpSwings.Style st = style == null ? null : FpSwings.style(style.id());
@@ -41,19 +45,50 @@ final class ArmsOffHand {
         return TWINS.computeIfAbsent(main, ItemStack::copy);
     }
 
+    /** What the main hand shows this frame (still the old stack while it sinks after a switch) and its equip drop. */
+    private static ItemStack shownMain = ItemStack.EMPTY;
+    private static float mainEquip;
+
+    /** The main hand's pass (HIGHEST, cancelled or not): the twin comes up and goes down with what it shows. */
+    static void onMainHand(RenderHandEvent e) {
+        if (e.getHand() != InteractionHand.MAIN_HAND) return;
+        shownMain = e.getItemStack();
+        mainEquip = e.getEquipProgress();
+    }
+
+    /** The twin first person draws this frame (else empty): the main hand shows a pair and the off hand is free. */
+    static ItemStack shownTwin(LocalPlayer p) {
+        if (!Minecraft.getInstance().options.getCameraType().isFirstPerson() || p.isScoping() || !ArmsConfig.enabled() || p.isSpectator()) {
+            return ItemStack.EMPTY;
+        }
+        return twinOf(p, shownMain);
+    }
+
+    /** How far the twin is dropped by the main hand's equip (vanilla's inverse arm height: 0 up, 1 down). */
+    static float equip() {
+        return mainEquip;
+    }
+
+    /** For Hands (FirstPerson.offHandShows): the off hand holds the twin, so a stance's fist never takes its place. */
+    static boolean shows() {
+        LocalPlayer p = Minecraft.getInstance().player;
+        return p != null && !shownTwin(p).isEmpty();
+    }
+
     /** First person: the twin in the empty off hand, after Hands has moved it (registered after Anims, LOWEST). */
     static void onRenderHand(RenderHandEvent e) {
         if (e.getHand() != InteractionHand.OFF_HAND) return;
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
-        if (p == null || !mc.options.getCameraType().isFirstPerson() || p.isScoping() || !ArmsPredict.fights(p)) return;
-        ItemStack t = twinOf(p);
+        if (p == null) return;
+        ItemStack t = shownTwin(p);
         if (t.isEmpty()) return;
         HumanoidArm arm = p.getMainArm().getOpposite();
         int inv = arm == HumanoidArm.RIGHT ? 1 : -1;
         PoseStack ps = e.getPoseStack();
         ps.pushPose();
-        ps.translate(inv * 0.56F, -0.52F, -0.72F); // vanilla's resting hand, on the off side
+        // vanilla's resting hand on the off side, risen as far as the main hand (a pair is drawn together)
+        ps.translate(inv * 0.56F, -0.52F + mainEquip * -0.6F, -0.72F);
         mc.getItemModelResolver().updateForLiving(FIRST, t, arm == HumanoidArm.RIGHT ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
                 : ItemDisplayContext.FIRST_PERSON_LEFT_HAND, p);
         FIRST.submit(ps, e.getSubmitNodeCollector(), e.getPackedLight(), OverlayTexture.NO_OVERLAY, 0);

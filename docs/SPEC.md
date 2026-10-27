@@ -5256,7 +5256,10 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   hand reads there, not in an onion-skin).
 - **A pair, and the left hand** (Euan 2026-10-26: "the left hand... looks like it's just floating near the hand"; "the
   gauntlet should be on the hand"): the Daggers and the Gauntlets are pairs (ArmsOffHand: the main hand's twin worn or
-  held in the empty off hand, first and third person); the Gauntlets' combo alternates fists (jab, cross, hook, the other
+  held in the empty off hand, first and third person; in first person it rises and sinks with the main hand's equip, and
+  the view counts that hand as full (`FirstPerson.offHandShows`), so a stance's fist never takes the twin's place: both
+  daggers stay in hand through the tactical sprint's pump, a wall-run or a touch. Euan 2026-10-27: "you can't just make
+  one disappear". A two-handed weapon sprints with one hand, the off fist pumping); the Gauntlets' combo alternates fists (jab, cross, hook, the other
   fist's uppercut, a straight; heavy both) and each fist closes inside its gauntlet (the mesh's centre), so the arm wears
   it rather than holding it. Every weapon's left-hand hold is its right hand's true mirror (arms_holds.mirror_display):
   26.3 mirrors any left-hand transform as it applies it (x translation, y and z rotation), so a left transform written

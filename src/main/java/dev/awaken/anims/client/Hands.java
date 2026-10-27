@@ -212,7 +212,8 @@ final class Hands implements FirstPerson.Player {
             if (!VIEW.moved()) return;
             PoseStack ps = e.getPoseStack();
             var pl = Minecraft.getInstance().player;
-            boolean offEmpty = pl != null && (VIEW.stow || pl.getOffhandItem().isEmpty()), mainEmpty = pl != null && (VIEW.stow || pl.getMainHandItem().isEmpty());
+            // the off hand holding a pair's twin is full: it pumps and moves with the dagger in it, never a fist
+            boolean offEmpty = pl != null && (VIEW.stow || (pl.getOffhandItem().isEmpty() && !FirstPerson.offHandShows.getAsBoolean())), mainEmpty = pl != null && (VIEW.stow || pl.getMainHandItem().isEmpty());
             // fists first, before any offset: each empty hand with one has its arm drawn rising to it
             if (VIEW.fistMain[3] > 0 && mainEmpty) {
                 fist(e, !leftMain, VIEW.fistMain);

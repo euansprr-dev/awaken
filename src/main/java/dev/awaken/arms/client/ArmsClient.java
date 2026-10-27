@@ -89,6 +89,8 @@ public final class ArmsClient {
         bus.addListener(ArmsTooltip::onTooltip);
         // the off hand's twin (a pair): after Hands' own off-hand pass (Anims registers before Arms, both LOWEST)
         bus.addListener(net.neoforged.bus.api.EventPriority.LOWEST, net.neoforged.neoforge.client.event.RenderHandEvent.class, ArmsOffHand::onRenderHand);
+        bus.addListener(net.neoforged.bus.api.EventPriority.HIGHEST, true, net.neoforged.neoforge.client.event.RenderHandEvent.class, ArmsOffHand::onMainHand);
+        dev.awaken.core.api.FirstPerson.offHandShows = ArmsOffHand::shows; // a stance's fist never replaces the twin
         bus.addListener(EventPriority.HIGH, InputEvent.InteractionKeyMappingTriggered.class, ArmsPredict::onKey);
         bus.addListener(ClientTickEvent.Post.class, e -> {
             ArmsPredict.tick();

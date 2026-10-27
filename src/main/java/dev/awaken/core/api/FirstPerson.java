@@ -298,6 +298,12 @@ public final class FirstPerson {
     /** The touches' switch (the feel settings' firstPersonTouches): hands on the things you use. */
     public static volatile java.util.function.BooleanSupplier touchesOn = () -> true;
 
+    /**
+     * Whether the empty off hand shows something drawn as if held (Arms' twin of a pair of daggers): the view and the
+     * touches treat that hand as full, so a stance's fist (the tactical sprint's pump) never takes the twin's place.
+     */
+    public static volatile java.util.function.BooleanSupplier offHandShows = () -> false;
+
     /** The comfort setting (the body's reduced motion): halves the procedural layer (look-lag) when true. */
     public static volatile java.util.function.BooleanSupplier reducedMotion = () -> false;
 
