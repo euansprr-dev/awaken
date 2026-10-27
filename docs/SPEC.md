@@ -7057,9 +7057,12 @@ the runner reads a column several times slower than the Mac under that load.
 What still stalls: 26.3 runs a chunk's structure starts inline on the level's one "worldgen" executor, so a lattice
 chunk waiting for its roads holds all of the level's chunk generation, and the server thread blocks on any chunk it
 loads meanwhile (on the runner: progression's ledge finder, Lithium's collision sweep for a spectator flying into new
-land, a vault): the tour's "Can't keep up" (W7: 2, 4.5 and 38 s, the last the camp command laying the north road on the
-server thread, then a near-freeze; now 2 s at the start and 33 s at the first teleport, then one tick of 4.5 minutes in
-the ledge finder). On a tour a watch on the server thread (`RoadTimer.watch`) logs any tick over a second with its stack.
+land, a vault): the tour's "Can't keep up" (W7: 2, 4.5 and 38 s, the last at the first teleport, the camp's road north
+laid already, then a near-freeze; then 2 s at the start and 33 s at the first teleport, the watch's stack in the ledge
+finder reading a chunk still generating, then one tick of 4.5 minutes in it; the ledge finder now reads only chunks
+already whole). On a tour a watch on the server thread (`RoadTimer.watch`) logs any tick over a second with its stack.
+The camp command (`/awaken village road camp`) never lays a road on the server thread: the planners lay what it needs
+(urgent) and the server stands the player on it once it's laid.
 Framings lay only the highroads through a place: the lanes round it would plan the regions about (48 s on the runner).
 
 **Decisions taken here** (none of the plan's 13): the hub rule and its numbers above (towns one region in five, the
