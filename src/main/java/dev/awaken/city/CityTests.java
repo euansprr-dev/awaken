@@ -269,7 +269,9 @@ final class CityTests {
         // alone, because the city's own trunks are bark, so a cut elder tree left its limbs hanging. The lands' bark is the
         // trees' now; the city's trunks, timber and leaves are still its own; and a limb that rests on nothing is found.
         AwakenTests.register("city_sweep_takes_elder_wood", 40, h -> {
-            for (var b : List.of(dev.awaken.terrain.LandsBlocks.ELDER_WOOD, dev.awaken.terrain.LandsBlocks.ELDER_LOG, dev.awaken.terrain.LandsBlocks.LUMEN_WOOD)) {
+            // the Lumen Forest's vines too (Euan, 2026-10-27: they hung in the air over the trail once their canopy was cut)
+            for (var b : List.of(dev.awaken.terrain.LandsBlocks.ELDER_WOOD, dev.awaken.terrain.LandsBlocks.ELDER_LOG, dev.awaken.terrain.LandsBlocks.LUMEN_WOOD,
+                    dev.awaken.terrain.LandsBlocks.LUMEN_VINES)) {
                 h.assertTrue(CityWriter.vegetation(b.get().defaultBlockState()), b.getId() + " is the trees' to sweep");
             }
             for (BlockState own : new BlockState[]{CityBlocks.OAK_TRUNK, CityBlocks.BIRCH_TRUNK, CityBlocks.CHERRY_TRUNK, CityBlocks.DARK_WOOD,
